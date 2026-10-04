@@ -194,6 +194,9 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #c-gas { right: calc(14px + var(--sr)); }
 #c-brake { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); background: rgba(140, 30, 25, .4); border-color: rgba(255, 140, 120, .6); }
 #c-brake.on { background: rgba(240, 70, 50, .5); }
+/* the handbrake: over the brake pedal (same side in every steering mode) */
+#c-drift { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); bottom: calc(24px + var(--sb) + clamp(80px, 29vh, 132px)); width: clamp(62px, 20vh, 92px); height: clamp(40px, 13vh, 56px); border-radius: 14px; background: rgba(150, 100, 20, .4); border-color: rgba(255, 200, 110, .6); }
+#c-drift.on { background: rgba(240, 170, 40, .5); }
 #c-wheel { position: absolute; left: calc(10px + var(--sl)); bottom: calc(8px + var(--sb)); width: clamp(130px, 44vh, 200px); height: clamp(130px, 44vh, 200px); display: none; }
 #wheel-rot { width: 100%; height: 100%; }
 #wheel-rot svg { width: 100%; height: 100%; display: block; }
@@ -204,7 +207,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #touch.m-wheel .steer, #touch.m-tilt .steer { display: none; }
 #touch.m-wheel #c-wheel { display: block; }
 #touch.m-tilt #tilt-ind { display: flex; }
-#touch.m-tilt #c-brake { right: auto; left: calc(14px + var(--sl)); }
+#touch.m-tilt #c-brake, #touch.m-tilt #c-drift { right: auto; left: calc(14px + var(--sl)); }
 #btn-pause { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(8px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
 #btn-pause svg { width: 22px; height: 22px; fill: var(--chalk); }
 /* the camera during a race (under the pause button; a phone held upright has only the one behind the car) */
@@ -343,6 +346,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   .pedal { width: clamp(56px, 17vw, 84px); height: clamp(84px, 26vw, 128px); bottom: calc(18px + var(--sb)); }
   .pedal.gas { width: clamp(62px, 19vw, 92px); height: clamp(100px, 32vw, 150px); }
   #c-brake { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); }
+  #c-drift { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); bottom: calc(28px + var(--sb) + clamp(84px, 26vw, 128px)); width: clamp(56px, 17vw, 84px); height: clamp(38px, 12vw, 52px); }
   #c-wheel { width: clamp(120px, 44vw, 190px); height: clamp(120px, 44vw, 190px); bottom: calc(14px + var(--sb)); }
   #tilt-ind { bottom: calc(30px + var(--sb) + clamp(100px, 32vw, 150px)); width: clamp(62px, 19vw, 92px); }
   .screen { padding: calc(12px + var(--st)) calc(10px + var(--sr)) calc(12px + var(--sb)) calc(10px + var(--sl)); }

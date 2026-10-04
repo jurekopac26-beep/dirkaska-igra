@@ -4869,13 +4869,13 @@ const Render = (function () {
     ck.cam.position.set(ck.sway, 0, 0); ck.cam.rotation.set(-eyeOf(c.m).tilt - (v ? v.pitch : 0), -ck.look, v ? v.roll : 0, 'YXZ');
   }
 
-  // the feel of speed (quality 'high', the post pass): from about 110 km/h the picture streaks out from the point the followed car drives
+  // the feel of speed (quality 'high', the post pass; only behind the car, never in the landscape views, where the cars must stay sharp): from about 110 km/h the picture streaks out from the point the followed car drives
   // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode, a TV shot or the cockpit. And the summer's
   // heat: by day, dry, the air over the far asphalt trembles just under the horizon (seen from a low camera)
   const _mf = new THREE.Vector3();
   function speedLook(target, alpha, U) {
     let mb = 0;
-    if (target && !cam.shot && !cam.ck && (lastMode === 'chase' || lastMode === 'kino')) {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
+    if (target && !cam.shot && !cam.ck && lastMode === 'chase') {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
       const sp = target.speed || 0; mb = clamp((sp - 30) / 45, 0, 1) * 0.75;
       if (mb > 0) { const x = lerp(target.px, target.x, alpha), z = lerp(target.pz, target.z, alpha), y = target.y || 0, v = Math.hypot(target.vx || 0, target.vz || 0) || 1;
         _mf.set(x + (target.vx || 0) / v * 150, y, z + (target.vz || 0) / v * 150).project(camera); U.uMF.value.set(clamp(_mf.x * 0.5 + 0.5, -0.5, 1.5), clamp(_mf.y * 0.5 + 0.5, -0.5, 1.5));
