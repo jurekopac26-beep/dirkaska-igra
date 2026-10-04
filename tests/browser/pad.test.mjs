@@ -63,6 +63,12 @@ try {
   const back = await page.evaluate(() => { const t = document.getElementById('touch'); t.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 5, clientX: 60, clientY: 300, bubbles: true })); t.dispatchEvent(new PointerEvent('pointerup', { pointerId: 5, clientX: 60, clientY: 300, bubbles: true })); return !t.classList.contains('pad'); });
   T.check('a touch on the screen: the on-screen controls again', back, '');
 
+  // 6. the on-screen handbrake ("ROČNA"): held with a finger it sets the handbrake input, released it clears it
+  const hb = await page.evaluate(() => { const t = document.getElementById('touch'), e = document.getElementById('c-drift'); Input.layout(); const b = e.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;
+    t.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 6, clientX: x, clientY: y, bubbles: true })); const down = Input.update(0.016).hand, lit = e.classList.contains('on');
+    t.dispatchEvent(new PointerEvent('pointerup', { pointerId: 6, clientX: x, clientY: y, bubbles: true })); return { shown: e.offsetParent !== null, down, lit, up: Input.update(0.016).hand }; });
+  T.check('the on-screen handbrake button: shown, held = handbrake on (lit), released = off', hb.shown && hb.down === 1 && hb.lit && hb.up === 0, JSON.stringify(hb));
+
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through', false, e.stack || String(e));
