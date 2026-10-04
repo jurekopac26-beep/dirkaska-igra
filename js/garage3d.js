@@ -61,32 +61,63 @@ const Garage3D = (function () {
   const TX = {};
   function makeTextures() {
     const R = Core.rng(4242);
-    // the epoxy floor: a grey resin with fine flecks, faint mottling, a few old tyre marks (1 texture = 4 m)
+    // the epoxy floor: a grey resin with fine flecks and a faint mottling (1 texture = 4 m; what changes over the room: TX.floorL)
     TX.floor = canvasTex(1024, 1024, (g, w, h) => {
       g.fillStyle = 'rgb(66,68,72)'; g.fillRect(0, 0, w, h);
-      for (let i = 0; i < 40; i++) { const x = R() * w, y = R() * h, r = 60 + R() * 220, gr = g.createRadialGradient(x, y, 0, x, y, r), d = R() < 0.5;
-        gr.addColorStop(0, d ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.04)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+      for (let i = 0; i < 24; i++) { const x = R() * w, y = R() * h, r = 60 + R() * 220, gr = g.createRadialGradient(x, y, 0, x, y, r), d = R() < 0.5;
+        gr.addColorStop(0, d ? 'rgba(0,0,0,0.045)' : 'rgba(255,255,255,0.03)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
       for (let i = 0; i < 16000; i++) { const v = R(); g.fillStyle = v < 0.5 ? 'rgba(20,22,26,0.35)' : v < 0.85 ? 'rgba(150,155,165,0.2)' : 'rgba(205,210,220,0.22)'; g.fillRect(R() * w, R() * h, 1 + (R() < 0.1), 1 + (R() < 0.1)); }
-      g.strokeStyle = 'rgba(12,12,14,0.06)'; g.lineWidth = 22;
-      for (let i = 0; i < 3; i++) { g.beginPath(); const x = R() * w, y = R() * h, r = 300 + R() * 400, a = R() * TAU; g.arc(x, y, r, a, a + 0.8 + R()); g.stroke(); }
     }, true);
-    // the walls: big grey panels with their seams, darker at the joints, a little grime low down (1 texture = 3 m x 3.8 m)
-    TX.wall = canvasTex(512, 640, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgb(44,48,56)'); gr.addColorStop(0.55, 'rgb(58,63,72)'); gr.addColorStop(1, 'rgb(50,54,62)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-      for (let i = 0; i < 9000; i++) { g.fillStyle = R() < 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.035)'; g.fillRect(R() * w, R() * h, 2, 2); }
-      for (let px = 0; px < 2; px++) for (let py = 0; py < 2; py++) {   // each panel: a faint sheen, a darker edge
-        const x0 = px * w / 2, y0 = py * h / 2, pg = g.createLinearGradient(x0, y0, x0 + w / 2, y0 + h / 2); pg.addColorStop(0, 'rgba(255,255,255,0.045)'); pg.addColorStop(1, 'rgba(0,0,0,0.05)');
-        g.fillStyle = pg; g.fillRect(x0 + 3, y0 + 3, w / 2 - 6, h / 2 - 6);
-      }
-      g.fillStyle = 'rgba(10,12,16,0.85)'; g.fillRect(0, 0, w, 3); g.fillRect(0, h / 2 - 2, w, 4); g.fillRect(0, 0, 3, h); g.fillRect(w / 2 - 2, 0, 4, h);
-      g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(0, h / 2 + 2, w, 1); g.fillRect(w / 2 + 2, 0, 1, h);
-      for (let px = 0; px < 2; px++) for (let py = 0; py < 2; py++) for (const [ax, ay] of [[14, 14], [w / 2 - 14, 14], [14, h / 2 - 14], [w / 2 - 14, h / 2 - 14]]) {   // rivets
-        g.fillStyle = 'rgba(0,0,0,0.5)'; g.beginPath(); g.arc(px * w / 2 + ax + 1, py * h / 2 + ay + 1, 3, 0, TAU); g.fill();
-        g.fillStyle = 'rgba(190,196,206,0.55)'; g.beginPath(); g.arc(px * w / 2 + ax, py * h / 2 + ay, 2.4, 0, TAU); g.fill(); }
+    // the floor's layout over the whole room (no repeat: x across, z up from the canvas's bottom): r its albedo (160 = x 1), g its gloss
+    // (200 = x 1; the mirror image's strength and sharpness). The saw-cut joints, the dull scuffed lane from each door to the table and
+    // round it, the tyres' tracks, the dust along the walls and in the doorways, a few soft patches (floorMaterial, the painted lines)
+    TX.floorL = canvasTex(1024, 1024, (g, w, h) => {
+      const Rl = Core.rng(4243), { x0, x1, z0, z1, door } = ROOM, sx = w / (x1 - x0), sz = h / (z1 - z0), M = () => g.setTransform(sx, 0, 0, -sz, -x0 * sx, h + z0 * sz);
+      const rad = (x, z, r0, r1, col, a) => { const gr = g.createRadialGradient(x, z, r0, x, z, r1); gr.addColorStop(0, 'rgba(' + col + ',' + a + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)'); g.fillStyle = gr; g.fillRect(x - r1, z - r1, r1 * 2, r1 * 2); };
+      g.fillStyle = 'rgb(160,200,0)'; g.fillRect(0, 0, w, h); M();   // (from here on in metres)
+      for (let i = 0; i < 30; i++) { const x = x0 + Rl() * (x1 - x0), z = z0 + Rl() * (z1 - z0), r = 1 + Rl() * 2, k = Rl();   // (soft patches: lighter, darker, glossier, duller)
+        rad(x, z, 0, r, k < 0.3 ? '0,0,0' : k < 0.5 ? '255,255,0' : k < 0.75 ? '160,255,0' : '160,120,0', k < 0.3 ? 0.05 : k < 0.5 ? 0.03 : 0.07); }
+      // the lanes the cars take: from each door to the table and round it, scuffed (duller, a little darker), most at the doors
+      for (const sd of [-1, 1]) for (let x = 3.1; x < x1; x += 0.1) { const a = 0.08 + 0.2 * smooth(3.1, x1, x), gr = g.createLinearGradient(0, -1.9, 0, 1.9);
+        gr.addColorStop(0, 'rgba(140,120,0,0)'); gr.addColorStop(0.18, 'rgba(140,120,0,' + a + ')'); gr.addColorStop(0.82, 'rgba(140,120,0,' + a + ')'); gr.addColorStop(1, 'rgba(140,120,0,0)'); g.fillStyle = gr; g.fillRect(sd > 0 ? x : -x - 0.1, -1.9, 0.1, 3.8); }
+      g.lineWidth = 0.5; g.strokeStyle = 'rgba(140,125,0,0.12)'; g.beginPath(); g.arc(0, 0, 3.45, 0, TAU); g.stroke(); g.lineWidth = 0.25; g.stroke();
+      // the doorways: grit walked and driven in from outside (lighter, matt), fading into the room
+      for (const sd of [-1, 1]) { g.save(); g.translate(sd * x1, 0); g.scale(1, 1.6); rad(0, 0, 0, 1.9, '200,110,0', 0.35); g.restore(); }
+      // the tyres' tracks: each wheel's line a few times over (other cars, other widths), darker and duller; most at the doors, fading
+      // towards the table
+      g.lineCap = 'round';
+      for (const sd of [-1, 1]) for (const sz of [-1, 1]) for (let k = 0; k < 4; k++) {
+        const z = sz * (0.62 + Rl() * 0.3), j = () => (Rl() - 0.5) * 0.16, xa = sd * (x1 - 0.05), xb = sd * (3.15 + Rl() * 0.3), al = 0.06 + Rl() * 0.05;
+        for (const [a, b, a0, a1] of [[xa, sd * (x1 - 1.6), 0.13, 0], [xa, xb, al, al * 0.35]]) { const s = g.createLinearGradient(a, 0, b, 0); s.addColorStop(0, 'rgba(8,6,4,' + a0 + ')'); s.addColorStop(1, 'rgba(8,6,4,' + a1 + ')');
+          g.strokeStyle = s; g.lineWidth = 0.16 + Rl() * 0.1; g.beginPath(); g.moveTo(a, z + j()); g.bezierCurveTo(a + (b - a) * 0.33, z + j(), a + (b - a) * 0.66, z + j(), b, z + j() * 0.5); g.stroke(); } }
+      g.lineWidth = 0.14; for (const [x, z, r, a] of [[-1.2, 6.4, 3.1, 4.1], [2.6, 6.9, 2.7, 3.3], [-6.4, -0.2, 2.4, -0.4]]) { g.strokeStyle = 'rgba(8,6,4,0.06)'; g.beginPath(); g.arc(x, z, r, a, a + 1.1); g.stroke(); }   // (a few arcs where one was turned)
+      // the dust along the walls (not in the doorways) and in the corners
+      const foot = (ax, az, bx, bz, nx, nz) => { const gr = g.createLinearGradient(ax, az, ax + nx * 0.6, az + nz * 0.6); gr.addColorStop(0, 'rgba(70,95,0,0.32)'); gr.addColorStop(1, 'rgba(70,95,0,0)'); g.fillStyle = gr;
+        g.fillRect(Math.min(ax, bx, ax + nx * 0.6), Math.min(az, bz, az + nz * 0.6), Math.abs(bx - ax) + Math.abs(nx) * 0.6, Math.abs(bz - az) + Math.abs(nz) * 0.6); };
+      foot(x0, z0, x1, z0, 0, 1); foot(x0, z1, x1, z1, 0, -1);
+      for (const [x, n] of [[x0, 1], [x1, -1]]) for (let z = z0; z < z1 - 1e-3; z += 0.1) { const k = smooth(door - 0.2, door + 0.6, Math.abs(z + 0.05)), gr = g.createLinearGradient(x, 0, x + n * 0.6, 0);   // (thinning out into the doorway)
+        gr.addColorStop(0, 'rgba(70,95,0,' + (0.32 * k).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(70,95,0,0)'); g.fillStyle = gr; g.fillRect(n > 0 ? x : x - 0.6, z, 0.6, 0.1); }
+      for (const x of [x0, x1]) for (const z of [z0, z1]) rad(x, z, 0, 1, '60,80,0', 0.22);
+      // the saw-cut joints (the table's hole hides them under it): a dark cut and its chipped edge (in pixels: crisp)
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      for (const x of [-4.5, 0, 4.5]) { const p = Math.round((x - x0) * sx); g.fillStyle = 'rgba(20,10,0,0.9)'; g.fillRect(p - 1, 0, 2, h); g.fillStyle = 'rgba(215,150,0,0.4)'; g.fillRect(p + 1, 0, 1, h); }
+      for (const z of [0, 4.5]) { const p = Math.round(h - (z - z0) * sz); g.fillStyle = 'rgba(20,10,0,0.9)'; g.fillRect(0, p - 1, w, 2); g.fillStyle = 'rgba(215,150,0,0.4)'; g.fillRect(0, p + 1, w, 1); }
+    });
+    // the walls: insulated sandwich panels laid across, 1.2 m a panel (their joints at 1.0, 2.2, 3.4, 4.6 m), fine ribs along them, a
+    // butt joint every 3 m, a few streaks under the joints (1 texture = 3 m x 1.2 m; each panel's tint a shade apart: the wall's shader)
+    TX.wall = canvasTex(512, 256, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h), jy = Math.round(h / 6);
+      gr.addColorStop(0, 'rgb(57,58,61)'); gr.addColorStop(jy / h, 'rgb(55,56,59)'); gr.addColorStop(jy / h + 0.001, 'rgb(64,65,68)'); gr.addColorStop(1, 'rgb(57,58,61)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);   // (a panel: lighter at its top, under the joint above it)
+      for (let y = jy % 32; y < h; y += 32) { g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(0, y, w, 1); g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, y + 1, w, 1); }
+      for (let i = 0; i < 30; i++) { const x = R() * w, wd = 4 + R() * 12, l = 40 + R() * 80, s = g.createLinearGradient(0, jy, 0, jy + l); s.addColorStop(0, 'rgba(0,0,0,' + (0.03 + R() * 0.02).toFixed(3) + ')'); s.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = s; g.fillRect(x, jy, wd, l); }
+      for (let i = 0; i < 6000; i++) { g.fillStyle = R() < 0.5 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'; g.fillRect(R() * w, R() * h, 2, 2); }
+      const sh = g.createLinearGradient(0, jy + 2, 0, jy + 12); sh.addColorStop(0, 'rgba(0,0,0,0.12)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(0, jy + 2, w, 10);
+      g.fillStyle = 'rgba(8,10,14,0.85)'; g.fillRect(0, jy - 2, w, 4); g.fillStyle = 'rgba(255,255,255,0.1)'; g.fillRect(0, jy + 2, w, 2);
+      g.fillStyle = 'rgba(8,10,14,0.4)'; g.fillRect(0, 0, 1, h); g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(1, 0, 1, h);
     }, true);
     // the low wall: aluminium tread plate (1 texture = 1.5 m x 1 m)
     TX.plate = canvasTex(384, 256, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, 'rgb(132,137,146)'); gr.addColorStop(0.5, 'rgb(158,163,172)'); gr.addColorStop(1, 'rgb(122,127,136)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, 'rgb(84,87,92)'); gr.addColorStop(0.5, 'rgb(100,103,108)'); gr.addColorStop(1, 'rgb(78,81,86)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       for (let i = 0; i < 3000; i++) { g.fillStyle = 'rgba(255,255,255,' + (R() * 0.08).toFixed(3) + ')'; g.fillRect(R() * w, R() * h, R() * 30, 1); }
       for (let y = 0; y < h; y += 16) for (let x = (y / 16) % 2 ? 8 : 0; x < w; x += 16) {
         g.save(); g.translate(x + 8, y + 8); g.rotate((((x / 8) + (y / 16)) % 2) ? 0.7 : -0.7);
@@ -102,42 +133,67 @@ const Garage3D = (function () {
       }
     }, true);
     TX.carbon.repeat.set(6, 6);
-    // the pegboard over the bench: holes, and the tools on it (outlines, as a workshop's shadow board)
+    // the pegboard over the bench: holes, the tools on it, each on its outline painted in yellow (a shadow board; two of them in use)
     TX.peg = canvasTex(1024, 512, (g, w, h) => {
       g.fillStyle = 'rgb(48,52,60)'; g.fillRect(0, 0, w, h);
       g.fillStyle = 'rgba(8,9,12,0.9)'; for (let y = 12; y < h; y += 24) for (let x = 12; x < w; x += 24) { g.beginPath(); g.arc(x, y, 3.2, 0, TAU); g.fill(); }
-      const tool = (x, y, a, f) => { g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = 'rgba(0,0,0,0.45)'; g.translate(5, 6); f(); g.translate(-5, -6); g.fillStyle = '#c8ced8'; f(); g.restore(); };
+      const tool = (x, y, a, f, gone) => { g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = '#d9ad2b';   // (f(true): the tool in its colours)
+        for (let k = 0; k < 8; k++) { const dx = Math.cos(k / 8 * TAU) * 4, dy = Math.sin(k / 8 * TAU) * 4; g.translate(dx, dy); f(); g.translate(-dx, -dy); }   // (the outline: the shape grown)
+        if (gone) { g.fillStyle = 'rgb(40,43,50)'; f(); } else { g.fillStyle = 'rgba(0,0,0,0.45)'; g.translate(5, 6); f(); g.translate(-5, -6); g.fillStyle = '#c8ced8'; f(true); } g.restore(); };
       const wrench = (L) => () => { g.fillRect(-L / 2, -7, L, 14); g.beginPath(); g.arc(-L / 2, 0, 17, 0, TAU); g.arc(L / 2, 0, 15, 0, TAU); g.fill(); };
-      for (let i = 0; i < 7; i++) tool(110 + i * 52, 150 + i * 6, Math.PI / 2, wrench(150 + i * 14));
-      const sd = (col) => () => { g.fillRect(-4, -90, 8, 110); g.save(); g.fillStyle = col; g.fillRect(-13, 20, 26, 70); g.restore(); };
-      for (let i = 0; i < 6; i++) tool(520 + i * 44, 170, 0, sd(['#e63b2e', '#f2c230', '#2f7de0', '#e63b2e', '#f2c230', '#2f7de0'][i]));
+      for (let i = 0; i < 7; i++) tool(110 + i * 52, 150 + i * 6, Math.PI / 2, wrench(150 + i * 14), i === 4);
+      const sd = (col) => (real) => { g.fillRect(-4, -90, 8, 110); if (real) g.fillStyle = col; g.fillRect(-13, 20, 26, 70); };
+      for (let i = 0; i < 6; i++) tool(520 + i * 44, 170, 0, sd(['#b8443a', '#c9a640', '#3f6fa8', '#b8443a', '#c9a640', '#3f6fa8'][i]));
       tool(860, 140, 0.15, () => { g.fillRect(-6, -40, 12, 150); g.fillRect(-48, -70, 96, 36); });   // a hammer
-      tool(940, 150, -0.1, () => { g.beginPath(); g.ellipse(0, 0, 36, 70, 0, 0, TAU); g.fill(); g.fillRect(-8, 60, 16, 70); });   // a mallet
+      tool(940, 150, -0.1, () => { g.beginPath(); g.ellipse(0, 0, 36, 70, 0, 0, TAU); g.fill(); g.fillRect(-8, 60, 16, 70); }, true);   // a mallet (in use)
       for (let i = 0; i < 9; i++) tool(110 + i * 40, 380, 0, () => { g.beginPath(); g.arc(0, 0, 13 + i * 1.2, 0, TAU); g.fill(); g.fillRect(-5, 0, 10, 60); });   // sockets
       tool(560, 400, 0, () => { g.fillRect(-120, -14, 240, 28); g.beginPath(); g.arc(-120, 0, 26, 0, TAU); g.fill(); });   // a torque wrench
       tool(820, 390, 0.6, () => { g.fillRect(-10, -80, 20, 160); g.fillRect(-36, -80, 72, 20); });   // pliers / a clamp
-      g.strokeStyle = '#f2c230'; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
+      g.strokeStyle = '#d9ad2b'; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
     });
-    // the turntable's top: brushed dark steel with fine rings, a tread pattern ring at the rim (planar uv over the disc)
+    // the turntable's top: a plate of brushed dark steel in eight segments (their seams), a lighter band at the rim bolted down, a cap
+    // in the middle, the gold arrows (planar uv over the disc)
     TX.disc = canvasTex(1024, 1024, (g, w, h) => {
-      const c = w / 2; g.fillStyle = 'rgb(40,43,49)'; g.fillRect(0, 0, w, h);
-      for (let r = 6; r < c; r += 3) { g.strokeStyle = 'rgba(' + (R() < 0.5 ? '255,255,255,' + (R() * 0.05).toFixed(3) : '0,0,0,' + (R() * 0.09).toFixed(3)) + ')'; g.lineWidth = 2; g.beginPath(); g.arc(c, c, r, 0, TAU); g.stroke(); }
-      g.strokeStyle = 'rgba(10,11,14,0.9)'; g.lineWidth = 6; for (const r of [c * 0.36, c * 0.985]) { g.beginPath(); g.arc(c, c, r, 0, TAU); g.stroke(); }
-      for (let k = 0; k < 24; k++) { const a = k / 24 * TAU; g.fillStyle = 'rgba(0,0,0,0.5)'; g.beginPath(); g.arc(c + Math.cos(a) * c * 0.93, c + Math.sin(a) * c * 0.93, 7, 0, TAU); g.fill();
-        g.fillStyle = 'rgba(170,176,188,0.6)'; g.beginPath(); g.arc(c + Math.cos(a) * c * 0.93 - 1, c + Math.sin(a) * c * 0.93 - 1, 5, 0, TAU); g.fill(); }
-      g.fillStyle = 'rgba(255,198,41,0.85)'; for (let k = 0; k < 4; k++) { g.save(); g.translate(c, c); g.rotate(k * Math.PI / 2); g.beginPath(); g.moveTo(c * 0.3, -14); g.lineTo(c * 0.42, 0); g.lineTo(c * 0.3, 14); g.fill(); g.restore(); }
+      const c = w / 2; g.fillStyle = 'rgb(56,58,62)'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 9000; i++) { const r = Math.sqrt(R()) * c * 0.93, a = R() * TAU, l = 6 + R() * 14, x = c + Math.cos(a) * r, y = c + Math.sin(a) * r, dx = -Math.sin(a) * l / 2, dy = Math.cos(a) * l / 2;   // (brushed round the middle)
+        g.strokeStyle = R() < 0.5 ? 'rgba(255,255,255,' + (0.02 + R() * 0.03).toFixed(3) + ')' : 'rgba(0,0,0,' + (0.02 + R() * 0.03).toFixed(3) + ')'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - dx, y - dy); g.lineTo(x + dx, y + dy); g.stroke(); }
+      g.fillStyle = 'rgb(44,46,50)'; g.beginPath(); g.arc(c, c, c * 0.36, 0, TAU); g.fill();
+      for (let k = 0; k < 8; k++) { const a = (k + 0.5) / 8 * TAU, ca = Math.cos(a), sa = Math.sin(a);   // (the segments' seams)
+        g.lineWidth = 2; g.strokeStyle = 'rgba(8,9,11,0.8)'; g.beginPath(); g.moveTo(c + ca * c * 0.36, c + sa * c * 0.36); g.lineTo(c + ca * c * 0.93, c + sa * c * 0.93); g.stroke();
+        g.lineWidth = 1; g.strokeStyle = 'rgba(170,175,185,0.25)'; g.beginPath(); g.moveTo(c + ca * c * 0.36 - sa * 2, c + sa * c * 0.36 + ca * 2); g.lineTo(c + ca * c * 0.93 - sa * 2, c + sa * c * 0.93 + ca * 2); g.stroke(); }
+      g.lineWidth = c * 0.055; g.strokeStyle = 'rgb(94,97,102)'; g.beginPath(); g.arc(c, c, c * 0.9575, 0, TAU); g.stroke();
+      g.lineWidth = 3; g.strokeStyle = 'rgba(8,9,11,0.85)'; for (const r of [c * 0.36, c * 0.93, c * 0.985]) { g.beginPath(); g.arc(c, c, r, 0, TAU); g.stroke(); }
+      for (let k = 0; k < 24; k++) { const a = (k + 0.5) / 24 * TAU, x = c + Math.cos(a) * c * 0.9575, y = c + Math.sin(a) * c * 0.9575;   // (countersunk bolts)
+        g.fillStyle = 'rgba(20,21,24,0.85)'; g.beginPath(); g.arc(x, y, 7, 0, TAU); g.fill(); g.fillStyle = 'rgb(150,154,160)'; g.beginPath(); g.arc(x - 0.5, y - 0.5, 3.5, 0, TAU); g.fill(); }
+      g.fillStyle = 'rgba(255,198,41,0.7)'; for (let k = 0; k < 4; k++) { g.save(); g.translate(c, c); g.rotate(k * Math.PI / 2); g.beginPath(); g.moveTo(c * 0.3, -10); g.lineTo(c * 0.384, 0); g.lineTo(c * 0.3, 10); g.fill(); g.restore(); }
     });
-    // yellow and black hazard stripes (the door jambs, the turntable's rim, the lift)
-    TX.hazard = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#111215'; g.fillRect(0, 0, w, h); g.fillStyle = '#f2c230'; for (let x = -h; x < w + h; x += 48) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 24, 0); g.lineTo(x + 24 - h, h); g.lineTo(x - h, h); g.fill(); } }, true);
-    // the roll-up doors' slats
-    TX.slats = canvasTex(64, 256, (g, w, h) => { for (let y = 0; y < h; y += 16) { const gr = g.createLinearGradient(0, y, 0, y + 16); gr.addColorStop(0, '#9aa1ab'); gr.addColorStop(0.5, '#c4cad3'); gr.addColorStop(1, '#6d737c'); g.fillStyle = gr; g.fillRect(0, y, w, 16); } }, true);
-    // the windows' glass: a faint sheen, two light streaks across it
-    TX.glass = canvasTex(128, 64, (g, w, h) => { g.fillStyle = 'rgba(120,170,210,0.18)'; g.fillRect(0, 0, w, h);
-      for (const [x, k] of [[30, 0.32], [62, 0.16]]) { const gr = g.createLinearGradient(x, 0, x + 26, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,' + k + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.save(); g.transform(1, 0, -0.6, 1, 0, 0); g.fillRect(x, 0, 26 + h, h); g.restore(); } });
-    // the back-lit sign: the game's own name
+    // the roll-up doors' atlas: the top half the curtain's slats (8, galvanised), bottom left a period of 45-degree hazard stripes (its
+    // period the cell's inset width: they run on from quad to quad), bottom right a drain's grate (the cells inset 4 px)
+    TX.doorA = canvasTex(256, 256, (g) => {
+      for (let i = 0; i < 8; i++) { const y = i * 16, gr = g.createLinearGradient(0, y, 0, y + 16);
+        gr.addColorStop(0, '#5d636b'); gr.addColorStop(0.12, '#9ba2ab'); gr.addColorStop(0.5, '#b9bfc7'); gr.addColorStop(0.85, '#8d949d'); gr.addColorStop(1, '#4a4f56'); g.fillStyle = gr; g.fillRect(0, y, 256, 16); }
+      for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(30,26,20,' + (0.03 + R() * 0.05).toFixed(3) + ')'; g.fillRect(R() * 256, 0, 2 + R() * 10, 128); }   // (grime run down it)
+      g.save(); g.beginPath(); g.rect(0, 128, 128, 128); g.clip(); g.translate(0, 128); g.fillStyle = '#17181b'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#e0b41e';
+      for (let k = -2; k < 3; k++) { const s0 = 8 + k * 120, s1 = s0 + 60; g.beginPath(); g.moveTo(s0 + 300, -300); g.lineTo(s1 + 300, -300); g.lineTo(s1 - 300, 300); g.lineTo(s0 - 300, 300); g.fill(); }   // (yellow where x + y - 8 is in 0..60 of each 120)
+      for (let i = 0; i < 300; i++) { g.fillStyle = R() < 0.6 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.12)'; g.fillRect(R() * 128, R() * 128, 1 + R() * 3, 1); }   // (worn)
+      g.restore(); g.save(); g.translate(128, 128); g.fillStyle = '#0c0d0f'; g.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 6; i++) { const x = 4 + (i + 0.5) * 20, gr = g.createLinearGradient(x - 4, 0, x + 4, 0); gr.addColorStop(0, '#3c4046'); gr.addColorStop(0.5, '#8b9098'); gr.addColorStop(1, '#2c2f34'); g.fillStyle = gr; g.fillRect(x - 4, 0, 8, 128); }
+      g.restore();
+    });
+    // the ceiling's deck: the steel sheet's ribs (5 to a metre; the top half), plain white under them (what the ceiling's other parts
+    // take: their vertex colours are their light)
+    TX.deck = canvasTex(128, 64, (g, w, h) => { g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 5; i++) for (const [a, b, v] of [[0, 0.3, 210], [0.3, 0.42, 120], [0.42, 0.88, 180], [0.88, 1, 235]]) { g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.fillRect((i + a) * w / 5, 0, (b - a) * w / 5 + 0.5, h / 2); } }, true);
+    // the windows' glass: a pale haze (more at the top), faint vertical lines of its sheet, two soft streaks
+    TX.glass = canvasTex(128, 64, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(236,240,245,0.35)'); gr.addColorStop(1, 'rgba(236,240,245,0.15)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let x = 2; x < w; x += 4) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(x, 0, 1, h); }
+      for (const [x, k] of [[30, 0.18], [66, 0.1]]) { const s = g.createLinearGradient(x, 0, x + 26, 0); s.addColorStop(0, 'rgba(255,255,255,0)'); s.addColorStop(0.5, 'rgba(255,255,255,' + k + ')'); s.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = s; g.save(); g.transform(1, 0, -0.6, 1, 0, 0); g.fillRect(x, 0, 26 + h, h); g.restore(); } });
+    // the back-lit sign: the game's own name, channel letters (each one's dark side under it, then the lit face)
     TX.sign = canvasTex(1024, 256, (g, w, h) => {
       g.font = 'italic 900 150px Roboto, "Arial Black", Arial, sans-serif'; g.textBaseline = 'middle';
       const a = g.measureText('APEX ').width, b = g.measureText('RACING').width, x = (w - a - b) / 2;
+      g.fillStyle = 'rgba(14,15,18,0.9)'; g.fillText('APEX', x + 5, h / 2 + 13); g.fillText('RACING', x + a + 5, h / 2 + 13);
       g.shadowColor = 'rgba(255,190,40,0.9)'; g.shadowBlur = GLOW.blur; g.fillStyle = '#ffd23f'; g.fillText('APEX', x, h / 2 + 6);
       g.shadowColor = 'rgba(160,210,255,0.9)'; g.fillStyle = '#f4f8ff'; g.fillText('RACING', x + a, h / 2 + 6);
     });
@@ -363,88 +419,261 @@ const Garage3D = (function () {
     WALLS.back = piece([0, 1, z0]); WALLS.front = piece([0, -1, -z1]); WALLS.left = piece([1, 0, x0]); WALLS.right = piece([-1, 0, -x1]);
     buildShell(); buildFurniture(); buildFloorMarks(); buildMotes();
   }
-  // the shell: the walls and their windows, the ceiling, the kerb stripe, the doors, what hangs on the back wall, the honeycomb of lamps
+  // the shell: the walls (the cladding over a tread-plate dado, a coved skirting at the floor), the steel frame (the columns, the eaves
+  // beams; the rafters are the ceiling's), the kerb stripe round the walls and the columns, the windows, the roll-up doors, the building's
+  // services, the sign, the pegboard, the telemetry screen, the wall washers; the ceiling and its lamps
   function buildShell() {
     const { x0, x1, z0, z1, h, door, doorH } = ROOM, { back: PB, front: PF, left: PL, right: PR } = WALLS;
     const lam = (o) => new THREE.MeshLambertMaterial(o);
     let g = PB.g;
     const box = (cx, cy, cz, sx, sy, sz, col, top, rot) => World.box(g, cx, cy, cz, sx, sy, sz, rot || 0, col, top);
-    // walls (panels over a tread-plate skirt 1 m high): a door in each side wall, a band of windows high in the back and the front wall
-    const wq = new QB(), pq = new QB(), WY = 1.0;
-    const wallRun = (ax, az, bx, bz, n, holes) => {   // a wall from a to b; its openings [from, to, bottom, top] along it (a door, a window)
-      const L = Math.hypot(bx - ax, bz - az), dx = (bx - ax) / L, dz = (bz - az) / L, at = (s) => [ax + dx * s, az + dz * s];
-      const cuts = [0, L]; for (const o of holes) cuts.push(o[0], o[1]); cuts.sort((p, q) => p - q);
+    // a box in a frame of its own, T(a, y, b) -> world (a wall's: along it, up, out from it; a door's: into the room, up, along it), into
+    // g (or G); cb: its bottom's colour (the sides shade from it up); skip: the faces left out ('a' at a0, 'A' at a1, 'b' at b0, 'B' at
+    // b1, 't' the top, 'd' the bottom)
+    const lbox = (T, a0, a1, y0, y1, b0, b1, col, cb, skip, G) => {
+      const gg = G || g, s = skip || '', lo = cb || col, c = T((a0 + a1) / 2, (y0 + y1) / 2, (b0 + b1) / 2), v = (i, j, k) => T(i ? a1 : a0, j ? y1 : y0, k ? b1 : b0);
+      const side = (f, p, q, r, t) => { if (!s.includes(f)) gg.quadO(p, q, r, t, col, c, null, [lo, lo, col, col]); };   // (p, q at the bottom)
+      side('b', v(0, 0, 0), v(1, 0, 0), v(1, 1, 0), v(0, 1, 0)); side('B', v(0, 0, 1), v(1, 0, 1), v(1, 1, 1), v(0, 1, 1));
+      side('a', v(0, 0, 0), v(0, 0, 1), v(0, 1, 1), v(0, 1, 0)); side('A', v(1, 0, 0), v(1, 0, 1), v(1, 1, 1), v(1, 1, 0));
+      if (!s.includes('t')) gg.quadO(v(0, 1, 0), v(1, 1, 0), v(1, 1, 1), v(0, 1, 1), col, c);
+      if (!s.includes('d')) gg.quadO(v(0, 0, 0), v(1, 0, 0), v(1, 0, 1), v(0, 0, 1), lo, c);
+    };
+    // a round post up y (bands [y0, y1, colour] from the bottom), a low cone on top; a drum (sides, a cap under it, one on top if capT)
+    const post = (G, x, z, r, bands, n, cap) => { const P = (a, y) => [x + Math.cos(a) * r, y, z + Math.sin(a) * r], yt = bands[bands.length - 1][1], ct = bands[bands.length - 1][2];
+      for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU;
+        for (const [y0, y1, col] of bands) G.quadO(P(a0, y0), P(a1, y0), P(a1, y1), P(a0, y1), col, [x, (y0 + y1) / 2, z]);
+        G.triO([x, yt + cap, z], P(a0, yt), P(a1, yt), ct, [x, yt - 1, z]); } };
+    const drum = (G, x, z, r, y0, y1, col, n, capB, capT) => { const P = (a, y) => [x + Math.cos(a) * r, y, z + Math.sin(a) * r];
+      for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU; G.quadO(P(a0, y0), P(a1, y0), P(a1, y1), P(a0, y1), col, [x, (y0 + y1) / 2, z]);
+        if (capB) G.triO([x, y0, z], P(a0, y0), P(a1, y0), capB, [x, y0 + 1, z]); if (capT) G.triO([x, y1, z], P(a0, y1), P(a1, y1), capT, [x, y1 - 1, z]); } };
+    // the walls' frames (s along the wall from its start, t out from it into the room), the columns on each (s; the corners too)
+    const WF = {};
+    for (const [k, ox, oz, dx, dz, P, cs] of [['back', x0, z0, 1, 0, PB, COLS.backFront.map(x => x - x0)], ['front', x1, z1, -1, 0, PF, COLS.backFront.map(x => x1 - x)],
+      ['left', x0, z1, 0, -1, PL, COLS.sides.map(z => z1 - z)], ['right', x1, z0, 0, 1, PR, COLS.sides.map(z => z - z0)]]) {
+      const L = Math.abs(dx) ? x1 - x0 : z1 - z0; WF[k] = { P, L, T: (s, y, t) => [ox + dx * s - dz * t, y, oz + dz * s + dx * t], cols: cs.concat(dz || !COLS.corners ? [] : [0.12, L - 0.12]) }; }
+    // walls: the cladding over a tread-plate dado 1 m high, a coved skirting where they meet the floor (a quarter round 9 cm, its lip); a
+    // door in each side wall, a band of windows high in the back and the front wall
+    const wq = new QB(), pq = new QB(), WY = 1.0, COVE = [0.4, 0.42, 0.45], LIP = [0.46, 0.48, 0.52];
+    const wallRun = (w, holes) => {   // a wall from its start to its end; its openings [from, to, bottom, top] along it (a door, a window)
+      const { T, P, L } = WF[w], o0 = T(0, 0, 0), o1 = T(0, 0, 1), n = [o1[0] - o0[0], 0, o1[2] - o0[2]], cuts = [0, L];
+      for (const o of holes) cuts.push(o[0], o[1]); cuts.sort((p, q) => p - q); g = P.g;
       for (let i = 0; i + 1 < cuts.length; i++) {
         const s0 = cuts[i], s1 = cuts[i + 1]; if (s1 - s0 < 1e-4) continue;
-        const p = at(s0), q = at(s1), o = holes.find(o => o[0] <= s0 + 1e-4 && o[1] >= s1 - 1e-4), y0 = o ? o[2] : h, y1 = o ? o[3] : h;   // (the gap y0..y1)
-        if (y0 > 0) pq.wall(p[0], p[1], q[0], q[1], 0, Math.min(WY, y0), n, 1.5, 1, s0);
-        if (y0 > WY) wq.wall(p[0], p[1], q[0], q[1], WY, y0, n, 3, 3.8, s0);
-        if (y1 < h) wq.wall(p[0], p[1], q[0], q[1], Math.max(WY, y1), h, n, 3, 3.8, s0);
+        const p = T(s0, 0, 0), q = T(s1, 0, 0), o = holes.find(o => o[0] <= s0 + 1e-4 && o[1] >= s1 - 1e-4), y0 = o ? o[2] : h, y1 = o ? o[3] : h, sm = (s0 + s1) / 2;   // (the gap y0..y1)
+        if (y0 > 0) { pq.wall(p[0], p[2], q[0], q[2], 0, Math.min(WY, y0), n, 1.5, 1, s0);
+          const cv = (a) => [0.09 - 0.09 * Math.cos(a), 0.094 - 0.09 * Math.sin(a)];   // (y, t)
+          for (let k = 0; k < 3; k++) { const A = cv(k / 3 * Math.PI / 2), B = cv((k + 1) / 3 * Math.PI / 2); g.quadO(T(s0, A[0], A[1]), T(s1, A[0], A[1]), T(s1, B[0], B[1]), T(s0, B[0], B[1]), COVE, T(sm, -1, -1)); }
+          lbox(T, s0, s1, 0.09, 0.12, 0, 0.012, LIP, null, 'aAbd'); }
+        if (y0 > WY) wq.wall(p[0], p[2], q[0], q[2], WY, y0, n, 3, 1.2, s0);
+        if (y1 < h) wq.wall(p[0], p[2], q[0], q[2], Math.max(WY, y1), h, n, 3, 1.2, s0);
       }
     };
-    wallRun(x0, z0, x1, z0, [0, 0, 1], BACKW.map(x => [x - x0 - WW / 2, x - x0 + WW / 2, WIN[0], WIN[1]]));    // back
-    wallRun(x1, z1, x0, z1, [0, 0, -1], FRONTW.map(x => [x1 - x - WW / 2, x1 - x + WW / 2, WIN[0], WIN[1]]));  // front
-    wallRun(x0, z1, x0, z0, [1, 0, 0], [[z1 - door, z1 + door, 0, doorH]]);       // left (the way in)
-    wallRun(x1, z0, x1, z1, [-1, 0, 0], [[-z0 - door, -z0 + door, 0, doorH]]);    // right (the way out)
-    const wallM = wq.mesh(roomLit(lam({ map: TX.wall }), 'room')), plateM = pq.mesh(roomLit(new THREE.MeshPhongMaterial({ map: TX.plate, specular: 0x666666, shininess: 40 }), 'room'));
+    wallRun('back', BACKW.map(x => [x - x0 - WW / 2, x - x0 + WW / 2, WIN[0], WIN[1]]));
+    wallRun('front', FRONTW.map(x => [x1 - x - WW / 2, x1 - x + WW / 2, WIN[0], WIN[1]]));
+    wallRun('left', [[z1 - door, z1 + door, 0, doorH]]); wallRun('right', [[-z0 - door, -z0 + door, 0, doorH]]);
+    // (the cladding's panels each a shade apart: a row, 6 m along it; the hash's inputs small whole numbers)
+    const tint = 'diffuseColor.rgb *= 0.94 + 0.12 * fract(sin(dot(floor(vec2(vUv.y + 0.1667, vUv.x * 0.5)), vec2(12.9898, 78.233))) * 43758.5453);';
+    const wallM = wq.mesh(roomLit(lam({ map: TX.wall }), 'wallL', { mapFrag: tint })), plateM = pq.mesh(roomLit(new THREE.MeshPhongMaterial({ map: TX.plate, specular: 0x666666, shininess: 40 }), 'room'));
     wallM.receiveShadow = plateM.receiveShadow = true; scene.add(wallM, plateM);
-    // the windows: a deep reveal, an aluminium frame and its mullion, the glass's sheen (the daylight outside)
-    const glassM = new THREE.MeshBasicMaterial({ map: TX.glass, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.55 });
-    const windows = (P, zw, nz, xs) => { g = P.g; const D = 0.3, zo = zw - nz * D, zf = zw - nz * 0.12, [y0, y1] = WIN, RV = [0.34, 0.36, 0.4], FR = [0.14, 0.15, 0.17];
+    // the steel frame: I columns (a web, the flange to the room, a base plate; their feet darker), the eaves beams along the back and the
+    // front wall (the rafters: the ceiling's); an aluminium cap on the dado where no light line runs
+    const FLG = [0.6, 0.63, 0.68], WEB = [0.48, 0.51, 0.56], PLT = [0.3, 0.31, 0.34], dk = (c) => c.map(v => v * 0.7);
+    for (const w in WF) { const { T, P, L, cols } = WF[w]; g = P.g; gloss(P, 1);
+      for (const sc of cols) { lbox(T, Math.max(0, sc - 0.14), Math.min(L, sc + 0.14), 0, 0.02, 0, 0.36, PLT, null, 'b');
+        for (const [y0, y1, lo] of [[0.02, 0.7, 1], [0.7, h, 0]]) { lbox(T, sc - 0.006, sc + 0.006, y0, y1, 0, 0.25, WEB, lo && dk(WEB), 'bBtd'); lbox(T, sc - 0.12, sc + 0.12, y0, y1, 0.25, 0.272, FLG, lo && dk(FLG), 'td'); } }
+      if (w === 'back' || w === 'front') lbox(T, 0, L, 4.55, h, 0, 0.22, [0.5, 0.53, 0.58], null, 'bt');
+    }
+    for (const [w, s0, s1] of [['front', 0, x1 - x0], ['left', 0, z1 - door - 0.4], ['right', door - z0 + 0.4, z1 - z0]]) { g = WF[w].P.g; lbox(WF[w].T, s0, s1, 0.99, 1.015, 0, 0.025, [0.62, 0.64, 0.68], null, 'b'); }
+    // the kerb stripe round the walls at 2.0..2.16 m (the menu's red and white, 0.6 m a block from each wall's start), round the columns
+    // it passes (the flange's face and edges, the web's sides), not across the doors
+    const KR = [0.74, 0.14, 0.12], KW = [0.86, 0.86, 0.84], kc = (s) => Math.floor(s / 0.6 + 1e-6) % 2 ? KW : KR;
+    const kerb = (w, s0, s1, t) => { const { T, P } = WF[w]; g = P.g;
+      for (let a = s0; a < s1 - 1e-4;) { const b = Math.min(s1, (Math.floor(a / 0.6 + 1e-6) + 1) * 0.6); g.quadO(T(a, 2.0, t), T(b, 2.0, t), T(b, 2.16, t), T(a, 2.16, t), kc((a + b) / 2), T((a + b) / 2, 2.08, t - 1)); a = b; } };
+    for (const [w, s0, s1] of [['back', 0, x1 - x0], ['front', 0, x1 - x0], ['left', 0, z1 - door - 0.4], ['left', z1 + door + 0.4, z1 - z0], ['right', 0, -z0 - door - 0.4], ['right', door - z0 + 0.4, z1 - z0]]) {
+      kerb(w, s0, s1, 0.02); const { T, cols } = WF[w];
+      for (const sc of cols) { if (sc < s0 - 0.2 || sc > s1 + 0.2) continue; const f = 0.125;
+        kerb(w, sc - f, sc + f, 0.277);
+        for (const e of [-1, 1]) { g.quadO(T(sc + e * f, 2.0, 0.25), T(sc + e * f, 2.0, 0.277), T(sc + e * f, 2.16, 0.277), T(sc + e * f, 2.16, 0.25), kc(sc + e * (f - 0.002)), T(sc, 2.08, 0.26));
+          g.quadO(T(sc + e * 0.009, 2.0, 0.02), T(sc + e * 0.009, 2.0, 0.25), T(sc + e * 0.009, 2.16, 0.25), T(sc + e * 0.009, 2.16, 0.02), kc(sc), T(sc, 2.08, 0.1)); } } }
+    // the windows: a deep reveal (its sill in the light, its head in shade), an aluminium frame and its mullion, an inner sill; the glass
+    // of a wall's windows in one mesh: a pale haze over the daylight (the main camera's only; it fades with its wall)
+    const glassM = new THREE.MeshBasicMaterial({ map: TX.glass, vertexColors: true, transparent: true, depthWrite: false, color: new THREE.Color().setScalar(OUTK * 0.85) }), Rw = Core.rng(4245);
+    const windows = (P, zw, nz, xs) => { g = P.g; const D = 0.3, zo = zw - nz * D, zf = zw - nz * 0.12, zg = zf + nz * 0.01, [y0, y1] = WIN, FR = [0.14, 0.15, 0.17], SIDE = [0.5, 0.52, 0.56], gq = new World.GB(true);
       for (const x of xs) { const a = x - WW / 2, b = x + WW / 2, ym = (y0 + y1) / 2;
-        g.quadO([a, y0, zw], [b, y0, zw], [b, y0, zo], [a, y0, zo], RV, [x, y0 - 1, zw]); g.quadO([a, y1, zw], [b, y1, zw], [b, y1, zo], [a, y1, zo], RV, [x, y1 + 1, zw]);
-        g.quadO([a, y0, zw], [a, y1, zw], [a, y1, zo], [a, y0, zo], RV, [a - 1, ym, zw]); g.quadO([b, y0, zw], [b, y1, zw], [b, y1, zo], [b, y0, zo], RV, [b + 1, ym, zw]);
+        g.quadO([a, y0, zw], [b, y0, zw], [b, y0, zo], [a, y0, zo], [0.62, 0.64, 0.68], [x, y0 - 1, zw]); g.quadO([a, y1, zw], [b, y1, zw], [b, y1, zo], [a, y1, zo], [0.36, 0.38, 0.42], [x, y1 + 1, zw]);
+        g.quadO([a, y0, zw], [a, y1, zw], [a, y1, zo], [a, y0, zo], SIDE, [a - 1, ym, zw]); g.quadO([b, y0, zw], [b, y1, zw], [b, y1, zo], [b, y0, zo], SIDE, [b + 1, ym, zw]);
         obox(g, [a, y0 + 0.03, zf], [b, y0 + 0.03, zf], 0.06, 0.07, FR); obox(g, [a, y1 - 0.03, zf], [b, y1 - 0.03, zf], 0.06, 0.07, FR);
         obox(g, [a + 0.03, y0, zf], [a + 0.03, y1, zf], 0.06, 0.07, FR); obox(g, [b - 0.03, y0, zf], [b - 0.03, y1, zf], 0.06, 0.07, FR); obox(g, [x, y0, zf], [x, y1, zf], 0.05, 0.06, FR);
-        box(x, y0 - 0.06, zw + nz * 0.06, WW + 0.16, 0.06, 0.14, [0.5, 0.52, 0.56]);   // (the sill inside)
-        const gl = new THREE.Mesh(new THREE.PlaneGeometry(WW, y1 - y0), glassM); gl.position.set(x, ym, zf + nz * 0.01); if (nz < 0) gl.rotation.y = Math.PI; gl.renderOrder = 2; P.root.add(mainOnly(gl)); } };
+        box(x, y0 - 0.06, zw + nz * 0.06, WW + 0.16, 0.06, 0.14, [0.62, 0.64, 0.68]);   // (the sill inside)
+        for (const [pa, pb] of [[a + 0.03, x - 0.025], [x + 0.025, b - 0.03]]) { const k = 0.93 + Rw() * 0.07;   // (both panes, either side of the mullion)
+          gq.quadO([pa, y0 + 0.035, zg], [pb, y0 + 0.035, zg], [pb, y1 - 0.035, zg], [pa, y1 - 0.035, zg], [k, k, k], [x, ym, zg - nz], [[0, 0], [1, 0], [1, 1], [0, 1]]); } }
+      const gm = new THREE.Mesh(gq.geometry(), glassM); gm.renderOrder = 2; P.root.add(mainOnly(gm)); };
     windows(PB, z0, 1, BACKW); windows(PF, z1, -1, FRONTW);
-    // ceiling: dark, steel beams across, the honeycomb of LED tubes over the car
-    const cq = new QB(); cq.quad([x0, h, z1], [x1, h, z1], [x1, h, z0], [x0, h, z0], [0, -1, 0], [[0, 0], [6, 0], [6, 4], [0, 4]]);
-    scene.add(cq.mesh(roomLit(lam({ color: 0x1c1f25, side: THREE.DoubleSide }), 'room')));
-    const gb = new World.GB();   // (the beams: they cast no shadow, the lamps hang under them)
-    for (let x = -7.5; x <= 7.6; x += 3) { World.box(gb, x, h - 0.32, (z0 + z1) / 2, 0.22, 0.32, z1 - z0, 0, [0.13, 0.14, 0.16], [0.13, 0.14, 0.16]); World.box(gb, x, h - 0.34, (z0 + z1) / 2, 0.36, 0.04, z1 - z0, 0, [0.17, 0.18, 0.2]); }
-    scene.add(new THREE.Mesh(gb.geometry(), roomLit(lam({ vertexColors: true }), 'room')));
-    // the curb stripe round the walls (the menu's red and white), at 2.05 m
-    const cb = (P, ax, az, bx, bz, nx, nz) => { g = P.g; const L = Math.hypot(bx - ax, bz - az), n = Math.round(L / 0.6); for (let i = 0; i < n; i++) { const t0 = i / n, t1 = (i + 1) / n, c = i % 2 ? [0.95, 0.94, 0.9] : [0.86, 0.16, 0.13];
-      const p0 = [ax + (bx - ax) * t0 + nx * 0.02, az + (bz - az) * t0 + nz * 0.02], p1 = [ax + (bx - ax) * t1 + nx * 0.02, az + (bz - az) * t1 + nz * 0.02];
-      g.quadO([p0[0], 2.0, p0[1]], [p1[0], 2.0, p1[1]], [p1[0], 2.16, p1[1]], [p0[0], 2.16, p0[1]], c, [p0[0] - nx, 2.08, p0[1] - nz]); } };
-    cb(PB, x0, z0, x1, z0, 0, 1); cb(PL, x0, z1, x0, z1 - (z1 - door - 0.4), 1, 0); cb(PL, x0, -door - 0.4, x0, z0, 1, 0); cb(PR, x1, z0, x1, -door - 0.4, -1, 0); cb(PR, x1, door + 0.4, x1, z1, -1, 0); cb(PF, x1, z1, x0, z1, 0, -1);
-    // the doors: jambs in hazard stripes, the rolled-up shutter's drum and the last slats showing (the world outside: buildOutside)
-    const hzTex = (u, v) => { const t = TX.hazard.clone(); t.needsUpdate = true; t.repeat.set(u, v); return t; };
-    const hzV = new THREE.MeshLambertMaterial({ map: hzTex(0.25, 4) }), hzH = new THREE.MeshLambertMaterial({ map: hzTex(5, 0.6) }), slM = new THREE.MeshLambertMaterial({ map: TX.slats });
+    // the roll-up doors (each in a frame of its own: lx into the room, y up, lz along the wall; the right one the left one mirrored): the
+    // opening's reveal (the wall's thickness) and its edge trims, the guide rails, the hood over the curtain, the coil on its brackets, the
+    // motor with its hand chain, the push-buttons and their conduit, the curtain's bottom bar, a bollard either side, a drain's edges
+    // across the threshold (into the wall's piece: they cast, they dissolve with it); the curtain, the coil's slats, the hazard bands and
+    // the grate in one mesh of the atlas TX.doorA
+    const dm = lam({ map: TX.doorA }), A = 1 / 256, WH = [1, 1, 1], REV = [0.42, 0.44, 0.48], RAIL = [0.6, 0.62, 0.66], STL = [0.5, 0.52, 0.56], CND = [0.52, 0.54, 0.58];
+    const HZ = [4 * A, 124 * A], GU = [132 * A, 252 * A], slat = (i, n) => [1 - (4 + (i + n) * 16) * A, 1 - (4 + i * 16) * A], uq = (u0, u1, v0, v1) => [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
     for (const sd of [-1, 1]) {
-      const X = sd * 9, o = new THREE.Group(); o.position.set(X, 0, 0); if (sd > 0) o.rotation.y = Math.PI; (sd < 0 ? PL : PR).root.add(o);   // (local: +x into the room)
-      for (const zz of [-door - 0.12, door + 0.12]) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.3, doorH, 0.24), hzV); j.position.set(0.05, doorH / 2, zz); o.add(j); }
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, door * 2 + 0.48), hzH); head.position.set(0.05, doorH + 0.1, 0); o.add(head);
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, door * 2 + 0.3, 16), new THREE.MeshLambertMaterial({ color: 0x5a5f68 })); drum.rotation.x = Math.PI / 2; drum.position.set(0.45, doorH + 0.42, 0); o.add(drum);
-      const sl = new THREE.Mesh(new THREE.PlaneGeometry(door * 2, 0.55), slM); sl.rotation.y = Math.PI / 2; sl.position.set(0.12, doorH - 0.27, 0); sl.material.map.repeat.set(1, 1); o.add(sl);
+      const P = sd < 0 ? PL : PR, T = (lx, y, lz) => [sd * (x1 - lx), y, -sd * lz], B = (a0, a1, y0, y1, b0, b1, col, cb, sk) => lbox(T, a0, a1, y0, y1, b0, b1, col, cb, sk), dq = new World.GB(true);
+      const tq = (p, q, r, s, inside, uv) => dq.quadO(p, q, r, s, WH, inside, uv);
+      g = P.g; gloss(P, 1);
+      for (const s of [-1, 1]) {   // (the reveal's sides, the trims on its outer edges)
+        g.quadO(T(0, 0, s * door), T(-0.3, 0, s * door), T(-0.3, doorH, s * door), T(0, doorH, s * door), REV, T(-0.15, doorH / 2, s * (door + 1)));
+        B(-0.3, -0.27, 0, doorH, s > 0 ? door - 0.03 : -door, s > 0 ? door : -door + 0.03, [0.62, 0.64, 0.68], null, 'a'); }
+      g.quadO(T(0, doorH, -door), T(-0.3, doorH, -door), T(-0.3, doorH, door), T(0, doorH, door), [0.36, 0.38, 0.42], T(-0.15, doorH + 1, 0));
+      B(-0.3, -0.27, doorH - 0.03, doorH, -door, door, [0.62, 0.64, 0.68], null, 'a');
+      // the curtain's bottom bar (the door up), the bollards, yellow and black
+      B(0.035, 0.115, 3.5, 3.56, -door - 0.08, door + 0.08, [0.7, 0.72, 0.75]);
+      const YB = [0.93, 0.72, 0.12], KB = [0.08, 0.08, 0.09];
+      for (const s of [-1, 1]) { const c = T(0.45, 0, s * 3.05); drum(g, c[0], c[2], 0.12, 0, 0.015, [0.3, 0.31, 0.34], 12, null, [0.3, 0.31, 0.34]);
+        post(g, c[0], c[2], 0.08, [[0.015, 0.55, YB], [0.55, 0.65, KB], [0.65, 0.85, YB], [0.85, 0.95, KB], [0.95, 1.0, YB]], 12, 0.03); }
+      // the push-buttons (green, red, black) on the jamb's column, their conduit up it into the motor
+      B(0.272, 0.372, 1.35, 1.57, 2.73, 2.87, [0.85, 0.86, 0.82], null, 'a');
+      for (const [y, col] of [[1.52, [0.15, 0.6, 0.25]], [1.46, [0.8, 0.12, 0.1]], [1.4, [0.08, 0.08, 0.09]]]) B(0.372, 0.392, y - 0.016, y + 0.016, 2.784, 2.816, col, null, 'a');
+      obox(g, T(0.29, 1.57, 2.84), T(0.29, 4.3, 2.84), 0.025, 0.025, CND);
+      // the galvanised steel: the guide rails (the curtain's slot dark), the hood, the coil's brackets and their hubs, the motor's
+      // gearbox, the motor, its terminal box, the hand chain, the drain's edges
+      gloss(P, 1.8);
+      for (const s of [-1, 1]) { B(0, 0.12, 0, 4.05, s > 0 ? door : -door - 0.16, s > 0 ? door + 0.16 : -door, RAIL, null, 'a');
+        g.quadO(T(0.035, 0, s * (door - 0.002)), T(0.085, 0, s * (door - 0.002)), T(0.085, doorH, s * (door - 0.002)), T(0.035, doorH, s * (door - 0.002)), [0.07, 0.07, 0.08], T(0.06, 2, s * (door + 1)));
+        B(0.11, 0.73, 3.99, 4.61, s > 0 ? 2.66 : -2.672, s > 0 ? 2.672 : -2.66, [0.32, 0.34, 0.38]); cylA(g, T(0.42, 4.3, s * 2.69), 'z', 0.07, 0.036, 10, [0.18, 0.19, 0.22]); }
+      B(0, 0.2, doorH, 4.05, -door - 0.16, door + 0.16, STL, null, 'a');
+      B(0.3, 0.54, 4.16, 4.44, 2.672, 2.76, [0.22, 0.24, 0.28]); cylA(g, T(0.42, 4.3, 2.92), 'z', 0.12, 0.32, 14, [0.16, 0.18, 0.22]); cylA(g, T(0.42, 4.3, 3.1), 'z', 0.1, 0.04, 14, [0.09, 0.09, 0.1]);
+      B(0.36, 0.48, 4.42, 4.52, 2.84, 2.98, [0.2, 0.22, 0.26]);
+      for (const lz of [2.7, 2.74]) obox(g, T(0.556, 4.22, lz), T(0.556, 1.75, lz), 0.012, 0.012, [0.34, 0.35, 0.37]);
+      obox(g, T(0.556, 1.75, 2.694), T(0.556, 1.75, 2.746), 0.012, 0.012, [0.34, 0.35, 0.37]);
+      for (const lx of [0.105, 0.28]) B(lx, lx + 0.015, 0, 0.007, -door, door, [0.55, 0.57, 0.6], null, 'd');
+      gloss(P, 0.15); B(0.05, 0.1, 3.47, 3.5, -door - 0.06, door + 0.06, [0.05, 0.05, 0.06]); gloss(P, 1);   // (the bottom bar's rubber seal)
+      // the atlas's mesh: the curtain's last slats under the hood and up to the coil, the coil (a slat a facet), the hazard band on the
+      // hood, a hazard hatch on the floor inside, the drain's grate
+      const cu = [4 * A, 252 * A], [vc0] = slat(0, 7.4), vh = slat(0, 2.6)[0];
+      tq(T(0.06, 3.56, -door - 0.06), T(0.06, 3.56, door + 0.06), T(0.06, 4.05, door + 0.06), T(0.06, 4.05, -door - 0.06), T(-1, 3.8, 0), uq(cu[0], cu[1], vc0, vh));
+      tq(T(0.06, 4.05, -door - 0.06), T(0.06, 4.05, door + 0.06), T(0.12, 4.3, door + 0.06), T(0.12, 4.3, -door - 0.06), T(-1, 3.8, 0), uq(cu[0], cu[1], vh, 1 - 4 * A));
+      for (let k = 0; k < 24; k++) { const a0 = k / 24 * TAU, a1 = (k + 1) / 24 * TAU, C = (a, lz) => T(0.42 + Math.cos(a) * 0.3, 4.3 + Math.sin(a) * 0.3, lz), v0 = 1 - (k % 8 + 1) / 16 + A, v1 = 1 - (k % 8) / 16 - A;   // (a whole slat a facet)
+        tq(C(a0, -2.66), C(a0, 2.66), C(a1, 2.66), C(a1, -2.66), T(0.42, 4.3, 0), uq(cu[0], cu[1], v0, v1)); }
+      const hb = 5.32 / 13, hv = HZ[0] + (0.15 / hb) * (HZ[1] - HZ[0]);
+      for (let i = 0; i < 13; i++) { const la = -2.66 + i * hb; tq(T(0.202, doorH, la), T(0.202, doorH, la + hb), T(0.202, 4.05, la + hb), T(0.202, 4.05, la), T(-1, 3.97, la), uq(HZ[0], HZ[1], HZ[0], hv)); }
+      for (let i = 0; i < 8; i++) { const la = -door + i * door / 4; tq(T(0.35, 0.004, la), T(0.35, 0.004, la + door / 4), T(0.35 + door / 4, 0.004, la + door / 4), T(0.35 + door / 4, 0.004, la), T(0.6, -1, la), uq(HZ[0], HZ[1], HZ[0], HZ[1])); }
+      for (let i = 0; i < 20; i++) { const la = -door + i * door / 10; tq(T(0.12, 0.004, la), T(0.12, 0.004, la + door / 10), T(0.28, 0.004, la + door / 10), T(0.28, 0.004, la), T(0.2, -1, la), uq(GU[0], GU[1], HZ[0], HZ[1])); }
+      const dme = new THREE.Mesh(dq.geometry(), dm); dme.castShadow = dme.receiveShadow = true; P.root.add(dme);
     }
-    // the sign, and its glow on the wall
+    // the building's services. Back wall: a sub-board (its conduits up to the ceiling, one along to a socket box on the column at
+    // x -4.75), the air main under the eaves (on round the right wall), a drop on the column at x 5 (a valve, the regulator and its
+    // gauge, the filter bowl, a coupler, a coiled hose on a hook). Right wall: the riser from the compressor. Left wall: the main board,
+    // its conduits up to the cable tray. A warning triangle on each board (no words)
+    const BRD = [0.6, 0.62, 0.62], AIR = [0.2, 0.4, 0.66];
+    const warn = (T, s, y, t) => { const tri = (r, col, dt) => g.triO(T(s - r, y - r * 0.58, t + dt), T(s + r, y - r * 0.58, t + dt), T(s, y + r * 1.15, t + dt), col, T(s, y, t - 1));
+      tri(0.065, [0.08, 0.08, 0.09], 0.002); tri(0.05, [0.93, 0.74, 0.12], 0.003); g.triO(T(s + 0.012, y + 0.035, t + 0.004), T(s - 0.016, y - 0.008, t + 0.004), T(s + 0.004, y - 0.006, t + 0.004), [0.08, 0.08, 0.09], T(s, y, t - 1));
+      g.triO(T(s - 0.012, y - 0.03, t + 0.004), T(s + 0.016, y + 0.006, t + 0.004), T(s - 0.004, y + 0.004, t + 0.004), [0.08, 0.08, 0.09], T(s, y, t - 1)); };
+    { const { T } = WF.back, S = (x) => x - x0; g = PB.g;
+      lbox(T, S(-8.62), S(-8.02), 1.35, 2.25, 0, 0.2, BRD, null, 'b'); lbox(T, S(-8.323), S(-8.317), 1.37, 2.23, 0.2, 0.203, [0.12, 0.12, 0.13], null, 'b'); lbox(T, S(-8.11), S(-8.08), 1.72, 1.86, 0.2, 0.225, [0.16, 0.16, 0.18], null, 'b');
+      warn(T, S(-8.47), 1.98, 0.2);
+      for (const x of [-8.52, -8.4, -8.28, -8.16]) obox(g, T(S(x), 2.25, 0.05), T(S(x), 4.6, 0.05), 0.035, 0.035, CND);
+      for (const [a, b] of [[[-8.08, 2.25, 0.05], [-8.08, 2.7, 0.05]], [[-8.08, 2.7, 0.05], [-4.92, 2.7, 0.05]], [[-4.92, 2.7, 0.05], [-4.92, 2.7, 0.3]], [[-4.92, 2.7, 0.3], [-4.82, 2.7, 0.3]], [[-4.82, 2.7, 0.3], [-4.82, 1.31, 0.3]]])
+        obox(g, T(S(a[0]), a[1], a[2]), T(S(b[0]), b[1], b[2]), 0.035, 0.035, CND);
+      lbox(T, S(-4.87), S(-4.63), 0.99, 1.31, 0.272, 0.372, [0.74, 0.75, 0.73], null, 'b');
+      for (const [x, col] of [[-4.81, [0.78, 0.13, 0.1]], [-4.69, [0.14, 0.34, 0.72]]]) lbox(T, S(x) - 0.035, S(x) + 0.035, 1.04, 1.12, 0.372, 0.41, col, null, 'b');   // (the sockets: 400 V red, 230 V blue)
+      obox(g, T(0.3, 4.45, 0.07), T(S(8.945), 4.45, 0.07), 0.03, 0.03, AIR);
+      obox(g, T(S(4.94), 4.45, 0.07), T(S(4.94), 4.45, 0.3), 0.03, 0.03, AIR); obox(g, T(S(4.94), 4.45, 0.3), T(S(4.94), 1.7, 0.3), 0.03, 0.03, AIR);
+      lbox(T, S(4.92), S(4.96), 1.86, 1.9, 0.3, 0.36, [0.8, 0.12, 0.1]);   // (a ball valve's handle)
+      lbox(T, S(4.905), S(4.975), 1.55, 1.7, 0.265, 0.335, [0.3, 0.32, 0.35]); cylA(g, T(S(4.94), 1.64, 0.345), 'z', 0.024, 0.02, 10, [0.85, 0.86, 0.84]);
+      cylA(g, T(S(4.94), 1.49, 0.3), 'y', 0.03, 0.12, 10, [0.62, 0.7, 0.78]); cylA(g, T(S(4.94), 1.4, 0.3), 'y', 0.016, 0.06, 8, [0.8, 0.64, 0.28]);
+      lbox(T, S(5.0) - 0.01, S(5.0) + 0.01, 1.3, 1.36, 0.272, 0.33, [0.2, 0.21, 0.24]);   // (the hose's hook)
+      for (let k = 0; k < 3; k++) { const cx = 5.02 + k * 0.004, cy = 1.17 - k * 0.006, cz = z0 + 0.3 + k * 0.014, R = 0.15 - k * 0.008;   // (its coils: rings of 14 facets, 4 sides)
+        for (let i = 0; i < 14; i++) for (let j = 0; j < 4; j++) { const P = (a, b) => { const r = R + Math.cos(b) * 0.011; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r, cz + Math.sin(b) * 0.011]; }, a0 = i / 14 * TAU, a1 = (i + 1) / 14 * TAU, b0 = j / 4 * TAU, b1 = (j + 1) / 4 * TAU;
+          g.quadO(P(a0, b0), P(a1, b0), P(a1, b1), P(a0, b1), [0.93, 0.72, 0.12], [cx + Math.cos((a0 + a1) / 2) * R, cy + Math.sin((a0 + a1) / 2) * R, cz]); } }
+      obox(g, T(S(4.94), 1.37, 0.3), T(S(4.99), 1.29, 0.31), 0.022, 0.022, [0.93, 0.72, 0.12]); }
+    { const { T } = WF.right; g = PR.g;
+      obox(g, T(0.055, 4.45, 0.07), T(9.82, 4.45, 0.07), 0.03, 0.03, AIR); obox(g, T(9.82, 4.45, 0.07), T(9.82, 0.95, 0.07), 0.03, 0.03, AIR);
+      lbox(T, 9.8, 9.84, 1.6, 1.64, 0.07, 0.13, [0.8, 0.12, 0.1]); obox(g, T(9.82, 0.95, 0.07), T(9.8, 0.55, 0.3), 0.03, 0.03, [0.1, 0.1, 0.11]); }
+    { const { T } = WF.left; g = PL.g;
+      lbox(T, 1.3, 2.3, 0.6, 2.0, 0, 0.3, BRD, null, 'b'); lbox(T, 1.797, 1.803, 0.62, 1.98, 0.3, 0.303, [0.12, 0.12, 0.13], null, 'b');
+      for (const s of [1.72, 1.88]) lbox(T, s - 0.015, s + 0.015, 1.2, 1.36, 0.3, 0.325, [0.16, 0.16, 0.18], null, 'b');
+      warn(T, 1.55, 1.75, 0.3);
+      for (let i = 0; i < 6; i++) { const s = 1.38 + i * 0.168; obox(g, T(s, 2.0, 0.06), T(s, 4.42, 0.06), 0.035, 0.035, CND); obox(g, T(s, 4.42, 0.06), T(s, 4.42, 1.27), 0.035, 0.035, CND); } }
+    // the sign: channel letters on a black acrylic backing with a brushed edge; its glow on the wall round it
+    { const { T } = WF.back, s = -2.5 - x0; g = PB.g; lbox(T, s - 2.2, s + 2.2, 2.2, 3.36, 0, 0.05, [0.55, 0.57, 0.6], null, 'b');
+      g.quadO(T(s - 2.18, 2.22, 0.0505), T(s + 2.18, 2.22, 0.0505), T(s + 2.18, 3.34, 0.0505), T(s - 2.18, 3.34, 0.0505), [0.06, 0.07, 0.09], T(s, 2.78, -1)); }
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
     signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: GLOW.sign }));
     signGlow.position.set(-2.5, 2.78, z0 + 0.03); PB.root.add(signGlow);
-    // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows; their light: the room light's)
+    // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows; their light: the room light's,
+    // their lenses: the lamps' mesh)
     g = PB.g;
     for (const x of WASH_X) box(x, h - 0.5, z0 + 0.1, 0.5, 0.08, 0.2, [0.1, 0.1, 0.11]);
-    // the pegboard over the chests
-    const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshLambertMaterial({ map: TX.peg })); peg.position.set(-6.15, 1.92, z0 + 0.03); PB.root.add(peg);
+    // the pegboard over the chests, on its frame off the wall
+    lbox(WF.back.T, -6.2 - 1.25 - x0, -6.2 + 1.25 - x0, 1.27, 2.57, 0, 0.02, [0.2, 0.21, 0.24], null, 'b');
+    const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.3), lam({ map: TX.peg })); peg.position.set(-6.2, 1.92, z0 + 0.026); PB.root.add(peg);
     // a telemetry screen on the wall (a glowing trace)
     monitor = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.86), new THREE.MeshBasicMaterial({ map: monitorTex(), color: emi(0xffffff, EMI.screen) })); monitor.position.set(6.45, 2.85, z0 + 0.08); PB.root.add(monitor);
     box(6.45, 2.4, z0 + 0.02, 1.6, 0.94, 0.08, [0.06, 0.06, 0.07]);
-    // the honeycomb of LED tubes over the car
-    const hexG = new World.GB(), L = 0.6, seen = new Set(), WHITE = [1, 1, 1];
+    for (const P of [PB, PF, PL, PR]) gloss(P, 1);   // (what the other builders put in the walls' pieces: a gloss of its own from 1)
+    // the ceiling, its light baked in its vertex colours (no lights of its own, no shadows): the ribbed deck, the purlins, the frames'
+    // rafters with their haunches, the sprinkler mains and their heads, a ladder cable tray, a spiral duct and its diffusers, the linear
+    // lamps' housings. Brighter over the table, under the lamps and by the windows; the sides of things darker, their tops darker still
+    const cg = new World.GB(true), ID = (x, y, z) => [x, y, z], C = (a0, a1, y0, y1, b0, b1, col, sk) => lbox(ID, a0, a1, y0, y1, b0, b1, col, null, sk, cg);
+    cg.dUV = [0.5, 0.2];   // (the texture's plain white half)
+    const FIX = [[-6.5, -3.9, 1], [-2.2, -3.9, 1], [2.2, -3.9, 1], [6.5, -3.9, 1], [-6.5, 6.2, 1], [-2.2, 6.2, 1], [2.2, 6.2, 1], [6.5, 6.2, 1], [-6.6, 0, 0], [6.4, 0, 0]];   // (the linear lamps: x, z, along x)
+    for (let x = x0; x < x1; x++) for (let z = z0; z < z1; z++) cg.quadO([x, h, z], [x + 1, h, z], [x + 1, h, z + 1], [x, h, z + 1], [0.5, 0.53, 0.58], [x + 0.5, h + 1, z + 0.5], uq(x, x + 1, 0.75, 0.75));
+    for (const zc of [-3.25, -1, 1.25, 3.5, 5.75, 8]) for (let x = x0; x < x1 - 1e-3; x += 1.5) { C(x, x + 1.5, h - 0.16, h, zc - 0.002, zc + 0.002, [0.4, 0.43, 0.48], 'aAt'); C(x, x + 1.5, h - 0.16, h - 0.15, zc, zc + 0.06, [0.4, 0.43, 0.48], 'aA'); }
+    const RAF = [0.46, 0.49, 0.54], yb = (z) => h - 0.45 - 0.4 * Math.max(0, 1 - (z - z0) / 1.4, 1 - (z1 - z) / 1.4), ZS = [z0, z0 + 0.7, z0 + 1.4];
+    for (let z = z0 + 2.4; z < z1 - 1.9; z++) ZS.push(z); ZS.push(z1 - 1.4, z1 - 0.7, z1);
+    for (const xc of COLS.backFront) for (let i = 0; i + 1 < ZS.length; i++) { const za = ZS[i], zb = ZS[i + 1], ya = yb(za), yc = yb(zb);
+      for (const e of [-1, 1]) { const x = xc + e * 0.006, xf = xc + e * 0.12; cg.quadO([x, ya, za], [x, yc, zb], [x, h, zb], [x, h, za], RAF, [xc, (ya + h) / 2, (za + zb) / 2]);   // (the web)
+        cg.quadO([xf, ya, za], [xf, yc, zb], [xf, yc + 0.02, zb], [xf, ya + 0.02, za], RAF, [xc, ya, za]); }   // (the flange's edges)
+      cg.quadO([xc - 0.12, ya, za], [xc + 0.12, ya, za], [xc + 0.12, yc, zb], [xc - 0.12, yc, zb], RAF, [xc, ya + 1, za]);
+      cg.quadO([xc - 0.12, ya + 0.02, za], [xc + 0.12, ya + 0.02, za], [xc + 0.12, yc + 0.02, zb], [xc - 0.12, yc + 0.02, zb], RAF, [xc, ya - 1, za]); }
+    const SPR = [0.62, 0.09, 0.07], HEAD = [0.75, 0.75, 0.78];
+    for (const xc of [-6.0, -1.8, 2.4, 6.95]) { for (let z = z0 + 0.25; z < z1 - 0.26; z += 1.25) C(xc - 0.03, xc + 0.03, 4.53, 4.59, z, Math.min(z + 1.25, z1 - 0.25), SPR, 't');
+      for (let z = z0 + 1; z < z1 - 0.5; z += 3) { C(xc - 0.004, xc + 0.004, 4.59, h, z - 0.004, z + 0.004, CND, 'td');
+        const zh = z + 1.5; if (zh > z1 - 0.5 || xc * xc / 20 + zh * zh / 9.5 < 1.4) continue;   // (a head between the hangers; none over the honeycomb)
+        C(xc - 0.012, xc + 0.012, 4.47, 4.53, zh - 0.012, zh + 0.012, HEAD, 't'); C(xc - 0.028, xc + 0.028, 4.462, 4.47, zh - 0.028, zh + 0.028, HEAD); } }
+    const TRAY = [0.6, 0.62, 0.66], CAB = [0.06, 0.06, 0.07];
+    for (let z = z0 + 0.3; z < z1 - 0.31; z += 1.5) { const zb = Math.min(z + 1.5, z1 - 0.3);
+      for (const xr of [-7.75, -7.47]) C(xr, xr + 0.02, 4.385, 4.455, z, zb, TRAY, 'aA');
+      for (const xc of [-7.68, -7.6, -7.52]) C(xc - 0.013, xc + 0.013, 4.4, 4.426, z, zb, CAB, 'aAd'); }
+    for (let z = z0 + 0.45; z < z1 - 0.3; z += 0.3) C(-7.73, -7.47, 4.385, 4.4, z - 0.012, z + 0.012, TRAY, 'aAt');   // (the rungs)
+    for (let z = z0 + 0.6; z < z1 - 0.3; z += 1.5) for (const xr of [-7.76, -7.46]) C(xr - 0.004, xr + 0.004, 4.455, h, z - 0.004, z + 0.004, CND, 'td');   // (the rods it hangs from)
+    const DUCT = [0.66, 0.68, 0.72], DX = 7.5, DY = 4.25, DR = 0.25, dP = (a, r, z) => [DX + Math.cos(a) * r, DY + Math.sin(a) * r, z];
+    for (let z = -4.6; z < 8.59; z += 1.1) { const zb = Math.min(z + 1.1, 8.6);
+      for (let i = 0; i < 12; i++) { const a0 = i / 12 * TAU, a1 = (i + 1) / 12 * TAU; cg.quadO(dP(a0, DR, z), dP(a1, DR, z), dP(a1, DR, zb), dP(a0, DR, zb), DUCT, [DX, DY, (z + zb) / 2]);
+        if (zb < 8.6) cg.quadO(dP(a0, DR + 0.005, zb - 0.012), dP(a1, DR + 0.005, zb - 0.012), dP(a1, DR + 0.005, zb + 0.012), dP(a0, DR + 0.005, zb + 0.012), [0.5, 0.52, 0.56], [DX, DY, zb]); } }   // (its spiral seam)
+    for (const [z, e] of [[-4.6, -1], [8.6, 1]]) for (let i = 0; i < 12; i++) cg.triO([DX, DY, z], dP(i / 12 * TAU, DR, z), dP((i + 1) / 12 * TAU, DR, z), DUCT, [DX, DY, z - e]);
+    for (const z of [-2.5, 2.5, 6.5]) { drum(cg, DX, z, 0.12, DY - DR - 0.06, DY - DR + 0.02, DUCT, 10); drum(cg, DX, z, 0.18, DY - DR - 0.18, DY - DR - 0.06, DUCT, 12, [0.14, 0.14, 0.15]);
+      drum(cg, DX, z, 0.1, DY - DR - 0.19, DY - DR - 0.18, [0.3, 0.31, 0.33], 10, [0.08, 0.08, 0.09]); }   // (a diffuser: its neck, its body, the grille's cone)
+    for (const z of [-3.2, 0.6, 4.4, 8.0]) C(DX - 0.012, DX + 0.012, DY + DR, h, z - 0.02, z + 0.02, [0.3, 0.31, 0.34], 'td');   // (its straps)
+    for (const [x, z, ax] of FIX) { const lx = ax ? 0.7 : 0.11, lz = ax ? 0.11 : 0.7; C(x - lx, x + lx, 4.3, 4.37, z - lz, z + lz, [0.16, 0.17, 0.19], 't');   // (a lamp's housing and its two wires)
+      for (const e of [-0.55, 0.55]) C(x + (ax ? e : 0) - 0.004, x + (ax ? e : 0) + 0.004, 4.37, h, z + (ax ? 0 : e) - 0.004, z + (ax ? 0 : e) + 0.004, CND, 'td'); }
+    { const lt = (x, z) => { let l = 0.22 + 0.55 * Math.exp(-(x * x / 14 + z * z / 7));   // (the light at a point of the ceiling)
+        for (const [fx, fz] of FIX) l += 0.3 * Math.exp(-((x - fx) * (x - fx) + (z - fz) * (z - fz)) / 2.5);
+        for (const [zw, xs, s] of [[z0, BACKW, 1], [z1, FRONTW, -1]]) { let wx = 0; for (const c of xs) wx = Math.max(wx, 1 - smooth(WW / 2 - 0.3, WW / 2 + 0.5, Math.abs(x - c))); l += 0.25 * Math.exp(-Math.max(0, (z - zw) * s) / 0.9) * wx; }
+        return clamp(l, 0, 1); };
+      const { P: Pp, N, C: Cc } = cg; for (let i = 0; i < Pp.length; i += 3) { const k = lt(Pp[i], Pp[i + 2]) * (0.7 - 0.3 * N[i + 1]); Cc[i] *= k; Cc[i + 1] *= k; Cc[i + 2] *= k; } }
+    scene.add(new THREE.Mesh(cg.geometry(), new THREE.MeshBasicMaterial({ map: TX.deck, vertexColors: true })));
+    // the lamps (they glow: lampMat, over 1 with HDR): the honeycomb of LED tubes over the table hung under the pipes, dark joints at its
+    // corners, a few hanger wires; the linear lamps' diffusers; the wall washers' lenses
+    const lg = new World.GB(), L = 0.6, yl = h - 0.36, seen = new Set(), hubs = new Map(), Kd = 1 / EMI.hex, HUB = [0.08 * Kd, 0.08 * Kd, 0.09 * Kd];
     for (let q = -7; q <= 7; q++) for (let r = -7; r <= 7; r++) {
       const cx = 1.5 * L * q, cz = Math.sqrt(3) * L * (r + q / 2);
       if (Math.abs(cx) > 4.2 || Math.abs(cz) > 2.9 || (cx * cx) / 20 + (cz * cz) / 9.5 > 1) continue;
       for (let k = 0; k < 6; k++) {
         const a0 = k / 6 * TAU, a1 = (k + 1) / 6 * TAU, p0 = [cx + Math.cos(a0) * L, cz + Math.sin(a0) * L], p1 = [cx + Math.cos(a1) * L, cz + Math.sin(a1) * L];
         const key = Math.round((p0[0] + p1[0]) * 50) + ',' + Math.round((p0[1] + p1[1]) * 50); if (seen.has(key)) continue; seen.add(key);
-        const mx = (p0[0] + p1[0]) / 2, mz = (p0[1] + p1[1]) / 2, ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]);
-        World.box(hexG, mx, h - 0.16, mz, L * 0.93, 0.035, 0.05, ang, WHITE, WHITE);
+        for (const p of [p0, p1]) hubs.set(Math.round(p[0] * 50) + ',' + Math.round(p[1] * 50), p);
+        const mx = (p0[0] + p1[0]) / 2, mz = (p0[1] + p1[1]) / 2, c = (p1[0] - p0[0]) / L, s = (p1[1] - p0[1]) / L;   // (a tube; its top never seen)
+        lbox((a, y, b) => [mx + a * c - b * s, y, mz + a * s + b * c], -L * 0.43, L * 0.43, yl, yl + 0.035, -0.025, 0.025, WH, null, 't', lg);
       }
     }
-    lampMat = new THREE.MeshBasicMaterial({ color: emi(0xf2f7ff, EMI.hex) }); scene.add(new THREE.Mesh(hexG.geometry(), lampMat));
+    let nh = 0;
+    for (const [x, z] of hubs.values()) { lbox((a, y, b) => [x + a, y, z + b], -0.04, 0.04, yl - 0.012, yl + 0.047, -0.04, 0.04, HUB, null, 't', lg);
+      if (nh++ % 17 === 0) World.box(lg, x, yl + 0.047, z, 0.006, h - yl - 0.047, 0.006, 0, HUB, HUB); }   // (a few of them hung from the deck)
+    const lens = (xa, xb, za, zb, y, c) => lg.quadO([xa, y, za], [xb, y, za], [xb, y, zb], [xa, y, zb], c, [(xa + xb) / 2, y + 1, (za + zb) / 2]);
+    for (const [x, z, ax] of FIX) { const lx = ax ? 0.65 : 0.08, lz = ax ? 0.08 : 0.65; lens(x - lx, x + lx, z - lz, z + lz, 4.298, [1, 1, 0.97]); }
+    for (const x of WASH_X) lens(x - 0.22, x + 0.22, z0 + 0.03, z0 + 0.17, h - 0.502, [1, 0.95, 0.86]);
+    lampMat = new THREE.MeshBasicMaterial({ vertexColors: true, color: emi(0xf2f7ff, EMI.hex) }); scene.add(new THREE.Mesh(lg.geometry(), lampMat));
   }
   // the furniture along the walls, the oil drums
   function buildFurniture() {
@@ -488,23 +717,45 @@ const Garage3D = (function () {
     for (let i = 0; i < 6; i++) box(-3 + i * 0.62, 0, z1 - 0.32, 0.6, 1.9, 0.55, [0.2, 0.32, 0.55], [0.16, 0.26, 0.45]);
     box(3.5, 0, z1 - 0.4, 3.2, 0.9, 0.7, [0.2, 0.21, 0.24], [0.3, 0.31, 0.34]);
   }
-  // the floor's marks: the turntable's lit ring, the painted lines
+  // the floor's marks: the turntable's lit ring, the painted lines, a gully
   function buildFloorMarks() {
-    const { x0, x1, door } = ROOM;
-    // the turntable's lit ring in the floor, its glow
-    ringMat = new THREE.MeshBasicMaterial({ color: emi(0x55c4ff, EMI.led) });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(ROOM.R + 0.01, ROOM.R + 0.07, 128), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.004; scene.add(mainOnly(ring));
-    ringGlow = new THREE.Mesh(new THREE.RingGeometry(ROOM.R - 0.5, ROOM.R + 0.9, 128, 1), new THREE.ShaderMaterial({
+    const { x0, x1, z1, door, R } = ROOM;
+    // the turntable's lit ring in the floor between two dark steel channels (the inner one over the table's gap), its glow
+    const rg = new World.GB(), band = (r0, r1, c) => { for (let i = 0; i < 128; i++) { const a0 = i / 128 * TAU, a1 = (i + 1) / 128 * TAU, P = (a, r) => [Math.cos(a) * r, 0.004, Math.sin(a) * r]; rg.quadUp(P(a0, r0), P(a0, r1), P(a1, r1), P(a1, r0), [c, c, c, c]); } };
+    band(R, R + 0.015, [0.06 / EMI.led, 0.065 / EMI.led, 0.07 / EMI.led]); band(R + 0.015, R + 0.065, hexRgb(0x55c4ff)); band(R + 0.065, R + 0.09, [0.27 / EMI.led, 0.28 / EMI.led, 0.3 / EMI.led]);
+    ringMat = new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color().setScalar(EMI.led) }); scene.add(mainOnly(new THREE.Mesh(rg.geometry(), ringMat)));
+    ringGlow = new THREE.Mesh(new THREE.RingGeometry(R - 0.5, R + 0.9, 128, 1), new THREE.ShaderMaterial({
       uniforms: { uC: { value: new THREE.Color(0x3aa8ff) }, uK: { value: 0.3 * GLOW.ring } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-      fragmentShader: 'uniform vec3 uC; uniform float uK; varying vec2 vP; void main(){ float d = length(vP) - ' + (ROOM.R + 0.04).toFixed(2) + '; float a = exp(-d * d * (d < 0.0 ? 60.0 : 5.0)); gl_FragColor = vec4(uC * a * uK, 1.0); }',
+      fragmentShader: 'uniform vec3 uC; uniform float uK; varying vec2 vP; void main(){ float d = length(vP) - ' + (R + 0.04).toFixed(2) + '; float a = exp(-d * d * (d < 0.0 ? 60.0 : 5.0)); gl_FragColor = vec4(uC * a * uK, 1.0); }',
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     ringGlow.rotation.x = -Math.PI / 2; ringGlow.position.y = 0.008; ringGlow.renderOrder = -1; scene.add(mainOnly(ringGlow));
-    // painted lines on the floor: the bay's yellow edges, the arrows of the way through
-    const fl = new World.GB(), Y = [0.85, 0.66, 0.12], line = (ax, az, bx, bz, w) => { const L2 = Math.hypot(bx - ax, bz - az), nx = -(bz - az) / L2 * w / 2, nz = (bx - ax) / L2 * w / 2; fl.quadUp([ax - nx, 0.006, az - nz], [ax + nx, 0.006, az + nz], [bx + nx, 0.006, bz + nz], [bx - nx, 0.006, bz - nz], [Y, Y, Y, Y]); };
-    for (const sz of [-1, 1]) { line(x0, sz * (door + 0.25), -ROOM.R - 0.4, sz * (door + 0.25), 0.1); line(ROOM.R + 0.4, sz * (door + 0.25), x1, sz * (door + 0.25), 0.1); }
-    for (const ax of [-6.2, 5.2]) { for (const s of [-1, 1]) line(ax, s * 0.55, ax + 0.9, 0, 0.12); }
-    const flM = new THREE.Mesh(fl.geometry(), roomLit(new THREE.MeshLambertMaterial({ vertexColors: true }), 'room')); flM.receiveShadow = true; scene.add(mainOnly(flM));
+    // painted lines (worn: in half-metre lengths a shade apart, chipped here and there; the layout map makes them duller and darker where
+    // the tyres run): the bay's lane edges from the doors, the arrows of the way through, the bay's corners, a keep-clear hatch before
+    // the main board on the left wall; a gully back right of the table (its steel edges, the dark sump, the bars)
+    const fl = new World.GB(), Rl = Core.rng(4244), Y = [0.74, 0.6, 0.2], q = (a, b, c, d, y, col) => fl.quadUp([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], [d[0], y, d[1]], [col, col, col, col]);
+    const line = (ax, az, bx, bz, w) => { const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / 0.5)), ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz * w / 2, nz = ux * w / 2;
+      for (let i = 0; i < n; i++) { const t0 = i / n * L + (i && Rl() < 0.25 ? 0.01 + Rl() * 0.02 : 0), t1 = (i + 1) / n * L, k = 0.94 + Rl() * 0.12, c = [Y[0] * k, Y[1] * k, Y[2] * k], p = [ax + ux * t0, az + uz * t0], e = [ax + ux * t1, az + uz * t1];
+        q([p[0] - nx, p[1] - nz], [p[0] + nx, p[1] + nz], [e[0] + nx, e[1] + nz], [e[0] - nx, e[1] - nz], 0.005, c); } };
+    for (const sz of [-1, 1]) { line(x0 + 0.38, sz * (door + 0.25), -R - 0.4, sz * (door + 0.25), 0.1); line(R + 0.4, sz * (door + 0.25), x1 - 0.38, sz * (door + 0.25), 0.1); }
+    for (const ax of [-6.2, 5.2]) for (const s of [-1, 1]) line(ax, s * 0.55, ax + 0.9, 0, 0.12);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { line(sx * 4.35, sz * 3.9, sx * 3.4, sz * 3.9, 0.1); line(sx * 4.3, sz * 3.95, sx * 4.3, sz * 3.0, 0.1); }
+    { const xa = x0 + 0.12, xb = -8.2, za = 6.6, zb = 7.8;   // (the keep-clear box: its frame, stripes at 45 degrees clipped to it)
+      line(xa, za, xb, za, 0.08); line(xa, zb, xb, zb, 0.08); line(xb, za - 0.04, xb, zb + 0.04, 0.08); line(xa, za - 0.04, xa, zb + 0.04, 0.08);
+      for (let c = za - xb + 0.15; c < zb - xa; c += 0.3) { const P = []; for (const [x, z] of [[xa, xa + c], [xb, xb + c], [za - c, za], [zb - c, zb]]) if (x >= xa - 1e-6 && x <= xb + 1e-6 && z >= za - 1e-6 && z <= zb + 1e-6) P.push([x, z]);
+        if (P.length >= 2) { P.sort((p, r) => p[0] - r[0]); line(P[0][0], P[0][1], P[P.length - 1][0], P[P.length - 1][1], 0.1); } } }
+    { const gx = 4.0, gz = -2.6, a = 0.17, e = 0.025, ST = [0.55, 0.57, 0.6];
+      q([gx - a, gz - a], [gx + a, gz - a], [gx + a, gz + a], [gx - a, gz + a], 0.004, [0.04, 0.04, 0.05]);
+      for (const s of [-1, 1]) { q([gx - a, gz + s * a - (s > 0 ? e : 0)], [gx + a, gz + s * a - (s > 0 ? e : 0)], [gx + a, gz + s * a + (s < 0 ? e : 0)], [gx - a, gz + s * a + (s < 0 ? e : 0)], 0.006, ST);
+        q([gx + s * a - (s > 0 ? e : 0), gz - a], [gx + s * a + (s < 0 ? e : 0), gz - a], [gx + s * a + (s < 0 ? e : 0), gz + a], [gx + s * a - (s > 0 ? e : 0), gz + a], 0.006, ST); }
+      for (let i = 0; i < 7; i++) { const x = gx - a + e + (i + 0.5) * (2 * (a - e)) / 7; q([x - 0.01, gz - a], [x + 0.01, gz - a], [x + 0.01, gz + a], [x - 0.01, gz + a], 0.006, [0.42, 0.44, 0.47]); } }
+    // (the layout map over the room by the world's x, z: the paint wears with the floor)
+    const lu = (a, b) => [1 / (b - a), -a / (b - a)].map(v => v.toFixed(5)), U = lu(x0, x1), V = lu(ROOM.z0, z1), fm = new THREE.MeshLambertMaterial({ vertexColors: true });
+    fm.onBeforeCompile = (sh) => { sh.uniforms.tLay = { value: TX.floorL };
+      roomPatch(sh, 'vec4 lay = texture2D(tLay, vRp.xz * vec2(' + U[0] + ', ' + V[0] + ') + vec2(' + U[1] + ', ' + V[1] + ')); diffuseColor.rgb *= mix(1.0, lay.r * 1.6, 0.8) * (0.85 + 0.15 * lay.g);');
+      sh.fragmentShader = 'uniform sampler2D tLay;\n' + sh.fragmentShader; };
+    fm.customProgramCacheKey = () => 'flL'; fm.polygonOffset = true; fm.polygonOffsetFactor = -1; fm.polygonOffsetUnits = -2;
+    const flM = new THREE.Mesh(fl.geometry(), fm); flM.receiveShadow = true; scene.add(mainOnly(flM));
   }
   // dust, seen only where the light falls through it: in the sun's shafts from the front windows (the motes put along them) and in the
   // doors' daylight; elsewhere almost nothing (soft and out of focus, faint)
@@ -894,13 +1145,16 @@ const Garage3D = (function () {
     ttTop = new THREE.Group(); tt.add(ttTop);
     const discTop = new THREE.Mesh(new THREE.CircleGeometry(R, 96), floorMaterial(TX.disc, 1.05, { rough: 0.8, metal: 0.7 }));   // (polished steel: the tyres crisp in it)
     discTop.rotation.x = -Math.PI / 2; discTop.position.y = 0.002; discTop.receiveShadow = true; ttTop.add(discTop);
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 96, 1, true), new THREE.MeshLambertMaterial({ map: TX.hazard }));
-    rim.material.map = TX.hazard.clone(); rim.material.map.needsUpdate = true; rim.material.map.repeat.set(24, 1); rim.position.y = -0.058; tt.add(rim);
-    const under = new THREE.Mesh(new THREE.CircleGeometry(R, 48), new THREE.MeshLambertMaterial({ color: 0x15171b })); under.rotation.x = Math.PI / 2; under.position.y = -0.118; tt.add(under);
+    // its edge in hazard stripes (the doors' atlas: a period a facet), its underside (a dark texel of the grate's); with the pit's wall
+    // and floor drawn only while the table is up (at rest they lie under the table and the ring: setLift)
+    const rg = new World.GB(true), A = 1 / 256, n = 96, P = (a, y) => [Math.cos(a) * R, y, Math.sin(a) * R], WH = [1, 1, 1], hv = (4 + 120 * 0.12 / (TAU * R / n)) * A;
+    for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU; rg.quadO(P(a0, -0.118), P(a1, -0.118), P(a1, 0.002), P(a0, 0.002), WH, [0, -0.058, 0], [[4 * A, 4 * A], [124 * A, 4 * A], [124 * A, hv], [4 * A, hv]]);
+      if (i % 2 === 0) { rg.dUV = [152 * A, 0.25]; rg.triO([0, -0.118, 0], P(a0, -0.118), P(i + 2 < n ? (i + 2) / n * TAU : TAU, -0.118), WH, [0, 0, 0]); rg.dUV = null; } }
+    const rim = new THREE.Mesh(rg.geometry(), new THREE.MeshLambertMaterial({ map: TX.doorA })); tt.add(rim);
     // the pit (seen only with the table up): its wall, its floor, the scissor lift
     const pit = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.07, R + 0.07, 1.0, 64, 1, true), new THREE.MeshLambertMaterial({ color: 0x24272d, side: THREE.BackSide })); pit.position.y = -0.5; scene.add(mainOnly(pit));
     const pf = new THREE.Mesh(new THREE.CircleGeometry(R + 0.07, 48), new THREE.MeshLambertMaterial({ color: 0x101114 })); pf.rotation.x = -Math.PI / 2; pf.position.y = -1.0; scene.add(mainOnly(pf));
-    scis = { bars: [], mat: new THREE.MeshPhongMaterial({ color: 0xd9a514, specular: 0x555555, shininess: 40 }) };
+    scis = { bars: [], low: [rim, pit, pf], mat: new THREE.MeshPhongMaterial({ color: 0xd9a514, specular: 0x555555, shininess: 40 }) };
     for (const z of [-1.1, 1.1]) for (const k of [0, 1]) for (const lvl of [0, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.09, 0.08), scis.mat); b.userData = { z: z + (k ? 0.1 : -0.1), k, lvl }; scene.add(b); scis.bars.push(b); }
     const ram = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1, 12), new THREE.MeshPhongMaterial({ color: 0xc8ccd2, specular: 0xffffff, shininess: 120 })); scene.add(ram); scis.ram = ram;
     setLift(0);
@@ -910,6 +1164,7 @@ const Garage3D = (function () {
     // the scissors: two levels of crossed bars between the pit floor (-1.0) and the table's underside (h - 0.12)
     const top = h - 0.12, bot = -0.98, H2 = (top - bot) / 2, L = 2.0, a = Math.asin(clamp(H2 / L, 0, 0.99));
     for (const b of scis.bars) { const { z, k, lvl } = b.userData; b.position.set(0, bot + H2 * (lvl + 0.5), z); b.rotation.set(0, 0, k ? a : -a); b.visible = h > 0.02; }
+    for (const o of scis.low) o.visible = h > 0.02;
     scis.ram.visible = h > 0.02; scis.ram.scale.y = Math.max(0.01, top - bot); scis.ram.position.set(0, bot + (top - bot) / 2, 0);
   }
 
