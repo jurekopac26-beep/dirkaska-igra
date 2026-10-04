@@ -3135,6 +3135,104 @@
    "repairs": 0
   }
  },
+ "longford/race/cs": {
+  "digest": "616944242c142c4d79b332b7",
+  "lead": 2712.6,
+  "car0": [
+   -1772.7,
+   744.58
+  ],
+  "cover": {
+   "dmg": 0.52,
+   "loose": 20,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longford/demo/cs": {
+  "digest": "9d34396a824d816cc62e9d65",
+  "lead": 2819.1,
+  "car0": [
+   -1942.33,
+   461.75
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longford/upg/cs": {
+  "digest": "b778e3742a434d5c3ae77bbf",
+  "lead": 2810.2,
+  "car0": [
+   -1940.03,
+   470.97
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longford/crash/cs": {
+  "digest": "d25b9cc49802c4df153a193d",
+  "lead": 11943.7,
+  "car0": [
+   -2157.1,
+   -394.41
+  ],
+  "cover": {
+   "dmg": 0.9,
+   "loose": 27,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "longford/formula/cs": {
+  "digest": "236ff7f18a17fd2020213ef4",
+  "lead": 15279.9,
+  "car0": [
+   44.37,
+   -282.61
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 27,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "longford/lm/cs": {
+  "digest": "b7033e9b13c125f50f9bb6a9",
+  "lead": 15243.8,
+  "car0": [
+   -243.96,
+   -334.05
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 34,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "longford/car/cs": {
+  "digest": "afd3bb94d4ba80814e75ef0b",
+  "lead": 12507.7,
+  "car0": [
+   -2316.54,
+   -240.48
+  ],
+  "cover": {
+   "dmg": 0.8,
+   "loose": 15,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
  "newcastle/race/cs": {
   "digest": "c450e0f694e9d651639301b8",
   "lead": 1921.2,

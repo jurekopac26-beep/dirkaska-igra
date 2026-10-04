@@ -108,7 +108,7 @@ try {
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     await startTrack(page, 'jezero'); await wait(800);
     const st = () => page.evaluate(() => ({ show: document.getElementById('rotate').classList.contains('show'), txt: document.getElementById('rotate-txt').textContent, why: document.getElementById('rotate-why').textContent, btn: document.getElementById('rotate-cam').textContent, cam: window.__game.S.camera }));
