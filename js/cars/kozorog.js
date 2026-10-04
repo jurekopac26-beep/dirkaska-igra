@@ -123,7 +123,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.box(2.08, 0.097, sd * 0.92, 0.3, 0.06, 0.02, 0, CF);
         });
         // ---- the tail: the slim lamps in black surrounds; the bumper's black lower half, the diffuser and its fins, the exhaust ----
-        for (const sd of [-1, 1]) { K.rect(-2.172, 0.86, sd * 0.6, 0.42, 0.1, B, { dir: '-x', part: 'body' }); K.tailLamp(-2.174, 0.86, sd * 0.6, 0.38, 0.07); }
+        for (const sd of [-1, 1]) { K.rect(-2.172, 0.86, sd * 0.6, 0.44, 0.11, B, { dir: '-x', part: 'body' }); K.tailLamp(-2.174, 0.86, sd * 0.6, 0.4, 0.08); }
         K.rect(-2.172, 0.86, 0, 0.78, 0.06, B, { dir: '-x', part: 'body' });   // (a black band between them)
         K.rect(-2.172, 0.58, 0, 1.6, 0.012, SH, { dir: '-x', part: 'body' });   // (the bumper's shut line)
         K.part('bumperR', () => {
@@ -131,6 +131,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.1, 0.1, 0, 0.2, 0.16, 1.5, 0, CF);                          // the diffuser
           for (const z of [-0.45, -0.15, 0.15, 0.45]) K.rect(-2.202, 0.18, z, 0.025, 0.16, D, { dir: '-x' });   // (its fins)
           K.rect(-2.175, 0.47, -0.38, 0.05, 0.1, RD, { dir: '-x' });          // the tow strap
+          for (const sd of [-1, 1]) K.rect(-2.174, 0.42, sd * 0.76, 0.1, 0.035, [0.6, 0.05, 0.04], { dir: '-x' });   // (the reflectors)
         });
         K.exhaust(-2.2, 0.2, 0.62, 0.05, 0.2, { part: 'body', n: 6 });
         // ---- the wing on the boot lid: one black plane on two stands, its endplates and the gurney along its trailing edge in the stripe colour ----
@@ -148,8 +149,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the mirrors, the wiper ----
         for (const sd of [-1, 1]) K.mirror(0.6, 1.0, sd * 0.965, { w: 0.1, h: 0.07, d: 0.11, col: S });
         K.bar([0.8, 0.915, -0.5], [0.74, 0.94, 0.3], 0.01, B, { n: 4, part: 'body' });
-        // the scuttle seen from the seat (the outer shell: the cockpit draws no cabin): no seeing under the bonnet through the car
-        K.rect(0.7, 0.74, 0, 1.68, 0.34, D, { dir: '-x', part: 'body' });
+        // the dashboard's top up to the windscreen's base as the driver sees it (the outer shell: the cockpit draws no cabin): no seeing
+        // under the bonnet through the car
+        face([[0.42, 0.79, -0.84], [0.42, 0.79, 0.84], [0.79, 0.902, 0.84], [0.79, 0.902, -0.84]], D, [-0.3, 1, 0], { part: 'body' });
         // ---- hinges: the bonnet at the cowl, the boot lid at the rear glass, the doors at their front edges ----
         K.hinge('hood', [0.8, 0.905, -0.6], [0.8, 0.905, 0.6]);
         K.hinge('trunk', [-1.52, 1.0, -0.6], [-1.52, 1.0, 0.6]);
@@ -168,6 +170,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [[-0.66, 1.2, -0.55], [-1.6, 0.6, -0.6]], [[-0.66, 1.2, 0.55], [-1.6, 0.6, 0.6]], [[-0.66, 1.2, -0.55], [-0.66, 0.2, 0.75]],
         ], 0.022, cg, { n: 4 });
         K.engine(1.45, 0.28, 0, { l: 0.5, w: 0.66, h: 0.42 });
+        K.box(1.98, 0.2, 0, 0.06, 0.36, 1.2, 0, D, null, false, { inner: true, part: 'body' });                    // the radiator behind the mouth
+        K.bar([1.3, 0.8, -0.62], [1.3, 0.8, 0.62], 0.02, [0.62, 0.12, 0.1], { n: 4, inner: true, part: 'body' });   // the strut brace
       },
     },
   });
