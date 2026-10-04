@@ -17028,7 +17028,7 @@ const World = (function () {
       for (let o = 0; o < P.length; o += 9) g.triN(tp(o), tp(o + 3), tp(o + 6), tn(o), tn(o + 3), tn(o + 6), tc(o), tc(o + 3), tc(o + 6)); };
     let nTrees = 0, nPlants = 0;
     {
-      const G = P.G, Lt = VRC * VRT, maxT = Math.round(90000 * dens), RT = rng(4171), SP = 6.0 / Math.sqrt(dens);
+      const G = P.G, Lt = VRC * VRT, maxT = Math.round(90000 * dens), RT = rng(4171), SP = 6.5 / Math.sqrt(dens);
       const wat = wi ? [2.9, 2.4, 0.55] : null, ft = su ? [1, 0.96, 0.84] : wi ? [0.6, 0.86, 0.5] : [0.82, 0.92, 0.7];
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;

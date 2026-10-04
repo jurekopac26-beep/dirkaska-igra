@@ -563,6 +563,26 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "greatalpine": {
+  "meshes": 2101,
+  "verts": 1199283,
+  "instances": 59259,
+  "props": 384,
+  "crowd": 957,
+  "world": "befed465",
+  "propsHash": "21251469",
+  "floor": "9e01ab7c/17136",
+  "groups": {
+   "-:MeshLambertMaterial": "69c44f00",
+   "-:MeshPhongMaterial": "ed77d675",
+   "-:MeshBasicMaterial": "3fa74cd8",
+   "gaFar:MeshLambertMaterial": "91d3d5f3",
+   "crowd:MeshLambertMaterial": "18100baf",
+   "ao:MeshBasicMaterial": "c62dba62",
+   "tyremarks:MeshBasicMaterial": "e895b12b",
+   "roadwear:MeshLambertMaterial": "3aaae60d"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

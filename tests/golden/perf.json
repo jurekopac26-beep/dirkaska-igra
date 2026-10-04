@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "greatalpine": {
+  "calls": 237,
+  "maxCalls": 326,
+  "kverts": 872,
+  "maxKverts": 1092,
+  "jsMs": 1.28
  }
 }
