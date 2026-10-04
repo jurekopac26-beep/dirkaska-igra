@@ -195,6 +195,13 @@
   "maxKverts": 376,
   "jsMs": 0.7
  },
+ "diriyah": {
+  "calls": 268,
+  "maxCalls": 323,
+  "kverts": 579,
+  "maxKverts": 777,
+  "jsMs": 0.84
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,

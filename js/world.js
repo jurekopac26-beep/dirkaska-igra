@@ -22657,7 +22657,7 @@ const World = (function () {
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
-    const W1 = [1, 1, 1], CH = 128, scen = new Chunks(192);
+    const W1 = [1, 1, 1], CH = 128, scen = new Chunks(288);
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const PIT = def.pit, pitZone = (i, side) => { if (!PIT || side < 0) return false; const d = dS(i * ds); return d > PIT[1] - 2 && d < PIT[2] + 2; };
 
@@ -22805,7 +22805,7 @@ const World = (function () {
     roads.addTo(root, roadMat, false, true);
 
     /* ---- the town (def.bld) in the Najdi manner ---- */
-    const facade = ownTex(drFacadeTex()), bMat = new THREE.MeshLambertMaterial({ map: facade, vertexColors: true }), bch = new Chunks(200, true);
+    const facade = ownTex(drFacadeTex()), bMat = new THREE.MeshLambertMaterial({ map: facade, vertexColors: true }), bch = new Chunks(300, true);
     const FV = (row, t) => 1 - (row + 1 - t) / 4 + (t > 0.5 ? -0.002 : 0.002);
     const WALL = [[[0.92, 0.82, 0.66], [0.95, 0.88, 0.76], [0.88, 0.76, 0.6], [0.96, 0.93, 0.86], [0.86, 0.74, 0.58]], [[0.78, 0.6, 0.42], [0.74, 0.56, 0.4], [0.8, 0.64, 0.46]], [[0.9, 0.78, 0.6], [0.86, 0.72, 0.54]]];
     let nBld = 0, nMerl = 0;
@@ -22919,7 +22919,7 @@ const World = (function () {
       box(g, x - 1.6, y + 9.7, z, 3.4, 0.12, 0.12, 0, [0.6, 0.62, 0.64]); for (const e of [-1, 1]) box(g, x + e * 1.7, y + 9.55, z, 0.7, 0.16, 0.3, 0, [0.4, 0.42, 0.45], [0.9, 0.88, 0.8]); nLamp++; }
 
     /* ---- parked cars along the side streets and in the lots by the town (beyond the walls) ---- */
-    const cars = new IChunks(drCarGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
+    const cars = new IChunks(drCarGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
     const CARC = [[0.95, 0.95, 0.95], [0.92, 0.92, 0.9], [0.85, 0.86, 0.88], [0.2, 0.2, 0.22], [0.7, 0.72, 0.75], [0.75, 0.68, 0.56], [0.5, 0.12, 0.12], [0.2, 0.3, 0.5]];
     let nCars = 0;
     for (let k = 0; k < RD.length;) { const n = RD[k], c = RD[k + 1], cls = c >> 4, lanes = (c >> 1) & 7, pts = []; for (let q = 0; q < n; q++) pts.push([RD[k + 2 + q * 2] / 2, RD[k + 3 + q * 2] / 2]); k += 2 + n * 2;
@@ -22933,10 +22933,10 @@ const World = (function () {
     /* ---- palms: the OpenStreetMap trees, the groves of the land cover (lc 1), down the avenues' medians, on the islands, by the walls ---- */
     for (let k = 0; k < (def.trees || []).length; k += 2) palmAdd(def.trees[k] / 2, def.trees[k + 1] / 2, 9 + R() * 6);
     { const LC = P.L; for (let j = 0; j < LC.nz; j++) for (let i = 0; i < LC.nx; i++) { if (P.lc[j * LC.nx + i] !== 1) continue;
-        for (let q = 0; q < 3; q++) { if (R() > 0.55 * dens) continue; palmAdd(LC.x0 + (i + R()) * LC.cell, LC.z0 + (j + R()) * LC.cell, 7 + R() * 9); } } }
+        for (let q = 0; q < 3; q++) { if (R() > 0.42 * dens) continue; palmAdd(LC.x0 + (i + R()) * LC.cell, LC.z0 + (j + R()) * LC.cell, 7 + R() * 9); } } }
     for (let d = -L / 2; d < L / 2; d += 13) for (const side of [-1, 1]) { const s = sAt(d), [x, z, i] = onSide(s, side, 6.5 + R() * 2); if (jOpen(i, side) || pitZone(i, side) || R() < 0.45) continue; palmAdd(x, z, 8 + R() * 5); }   // (the streets' palms behind the walls)
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    const pn = new IChunks(drPalmGeo(0), tMat, 160), pf = new IChunks(drPalmGeo(1), tMat, 256);
+    const pn = new IChunks(drPalmGeo(0), tMat, 160), pf = new IChunks(drPalmGeo(1), tMat, 320);
     let nPalm = 0;
     for (const [x, z, hgt] of palms) { if (excluded(x, z)) continue; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 1.5) continue;
       const near = nrDist(x, z) < 110, cv = 0.86 + R() * 0.26; (near ? pn : pf).add(x, nrGround(x, z) - 0.1, z, R() * TAU, hgt, hgt, [cv, cv * (0.95 + R() * 0.1), cv * 0.92]); nrShade(x, z, hgt * 0.3, 0.7); nPalm++; }

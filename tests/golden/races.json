@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "diriyah/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 133.03,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e2dda34ed5b08f048423b353"
+ },
+ "diriyah/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 141.53,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9ecb6fb50bd3913f1568af71"
+ },
+ "diriyah/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 117.33,
+  "spins": 3,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9e96be1465523c33dab4256a"
+ },
+ "diriyah/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 117.53,
+  "spins": 0,
+  "walls": 11,
+  "rescues": 0,
+  "nan": false,
+  "digest": "163d4017602f62ed2d3e2c3d"
+ },
+ "diriyah/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 133.07,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "82de2adb410b34b9a16b86e6"
  }
 }

@@ -563,6 +563,23 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "diriyah": {
+  "meshes": 438,
+  "verts": 520039,
+  "instances": 3195,
+  "props": 307,
+  "crowd": 0,
+  "world": "f2935fb0",
+  "propsHash": "e4fc8374",
+  "floor": "86994eca/4620",
+  "groups": {
+   "-:MeshLambertMaterial": "3f860934",
+   "-:MeshBasicMaterial": "9dff184a",
+   "ao:MeshBasicMaterial": "f6e48eac",
+   "tyremarks:MeshBasicMaterial": "577f2ff4",
+   "roadwear:MeshLambertMaterial": "faa55e9a"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
