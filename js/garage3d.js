@@ -299,7 +299,7 @@ const Garage3D = (function () {
   // (rubber, cloth 0.15; paint 1; bare metal 2.2)
   function gloss(p, k) { p.gl.push([p.g.P.length / 3, k]); }
   // drawn by the main camera only (not in the floor's mirror, not in the cars' cube map): what lies on the floor or under it, glass,
-  // dust (layers are each object's own: on each mesh)
+  // dust, a car's small parts (layers are each object's own: on each mesh; it still casts: the shadow map is the main pass's)
   function mainOnly(o) { o.layers.set(NOREFL); return o; }
 
   /* ---------------- the room's pieces that step aside: what comes between the camera and the car dissolves ---------------- */
@@ -892,7 +892,7 @@ const Garage3D = (function () {
     const R = ROOM.R;
     tt = new THREE.Group(); scene.add(tt);
     ttTop = new THREE.Group(); tt.add(ttTop);
-    const discTop = new THREE.Mesh(new THREE.CircleGeometry(R, 96), floorMaterial(TX.disc, 0.7, { rough: 1.2 }));   // (spun steel: a softer mirror than the resin)
+    const discTop = new THREE.Mesh(new THREE.CircleGeometry(R, 96), floorMaterial(TX.disc, 1.05, { rough: 0.8, metal: 0.7 }));   // (polished steel: the tyres crisp in it)
     discTop.rotation.x = -Math.PI / 2; discTop.position.y = 0.002; discTop.receiveShadow = true; ttTop.add(discTop);
     const rim = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 96, 1, true), new THREE.MeshLambertMaterial({ map: TX.hazard }));
     rim.material.map = TX.hazard.clone(); rim.material.map.needsUpdate = true; rim.material.map.repeat.set(24, 1); rim.position.y = -0.058; tt.add(rim);
@@ -914,44 +914,52 @@ const Garage3D = (function () {
   }
 
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
-  // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): how far over the floor a reflected thing is
-  const REF = { rt: null, cam: new THREE.PerspectiveCamera(), tm: new THREE.Matrix4(), invP: new THREE.Matrix4(), k: { value: 0.85 }, size: 0.5, depth: false };
+  // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): a pass (REF.gm) then writes the image again into REF.gt
+  // with each texel's gap in its alpha (how far over the floor the reflected point is), so the floor's taps read both, filtered
+  const REF = { rt: null, gt: null, gm: null, cam: new THREE.PerspectiveCamera(), tm: new THREE.Matrix4(), invP: new THREE.Matrix4(), k: { value: 0.85 }, size: 0.5, depth: false };
   // the floor's material (the turntable's top's too): the room light on it, then the mirror image (k: how strong; opts.rough: how much
-  // it blurs; opts.lay: a layout map over the room, r the albedo x 1.6, g the gloss x 1.27). With the depth the blur grows with how high
-  // over the floor the reflected thing is and the image fades with it: a tyre crisp where it stands, the walls soft and faint, only
-  // bright things (the doorway, the lamps) keep a long faint smear. Epoxy's fresnel, the taps stretched into vertical streaks.
+  // it blurs; opts.metal: how much of its own colour the image takes away, 0.25 the resin; opts.lay: a layout map over the room, r the
+  // albedo x 1.6, g the gloss x 1.27). With the gap the blur grows with how high over the floor the reflected thing is, and every tap
+  // fades by its own gap: a tyre crisp where it stands, the walls soft and faint, only bright things (the doorway, the lamps) keep a long
+  // faint smear, and no seam where a near thing's edge crosses a far one. Epoxy's fresnel, the taps stretched into vertical streaks.
   function floorMaterial(map, k, opts) {
     const o = opts || {}, m = new THREE.MeshPhongMaterial({ map, specular: 0x444444, shininess: 60 }), uK = { value: k }, lay = o.lay, { x0, x1, z0, z1 } = ROOM;
     m.onBeforeCompile = (sh) => {
-      Object.assign(sh.uniforms, { tRefl: { get value() { return REF.rt.texture; } }, tReflD: { get value() { return REF.rt.depthTexture; } }, uTexM: { value: REF.tm }, uRefInvP: { value: REF.invP },
-        uReflK: REF.k, uK, uRough: { value: o.rough || 1 }, uTexel: { get value() { return REF.texel; } }, tLay: { value: lay } });
+      Object.assign(sh.uniforms, { tRefl: { get value() { return (REF.gt || REF.rt).texture; } }, uTexM: { value: REF.tm }, uReflK: REF.k, uK, uRough: { value: o.rough || 1 }, uMetal: { value: o.metal || 0.25 },
+        uTexel: { get value() { return REF.texel; } }, tLay: { value: lay } });
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform mat4 uTexM; varying vec4 vRefl;').replace('#include <project_vertex>', '#include <project_vertex>\nvRefl = uTexM * vec4(vRp, 1.0);');
       const lu = (a, b) => [1 / (b - a), -a / (b - a)].map(v => v.toFixed(5));   // (the map over the room: u along x, v along z)
       roomPatch(sh, lay && 'vec4 lay = texture2D(tLay, vRp.xz * vec2(' + lu(x0, x1)[0] + ', ' + lu(z0, z1)[0] + ') + vec2(' + lu(x0, x1)[1] + ', ' + lu(z0, z1)[1] + ')); diffuseColor.rgb *= lay.r * 1.6;', false);   // (vRp set before vRefl)
       sh.fragmentShader = (REF.depth ? '#define REFL_DEPTH\n' : '') + (lay ? '#define LAY\n' : '') + sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform sampler2D tRefl; uniform sampler2D tLay; uniform float uReflK; uniform float uK; uniform float uRough; uniform vec2 uTexel; varying vec4 vRefl;\n#ifdef REFL_DEPTH\nuniform sampler2D tReflD; uniform mat4 uRefInvP;\n#endif')
+        .replace('#include <common>', ['#include <common>', 'uniform sampler2D tRefl; uniform sampler2D tLay; uniform float uReflK; uniform float uK; uniform float uRough; uniform float uMetal; uniform vec2 uTexel; varying vec4 vRefl;',
+          'float rFade(vec4 t) {',   // (a tap's weight: it fades with its gap, the alpha (25 a^2 metres); bright things keep a faint long smear)
+          '#ifdef REFL_DEPTH',
+          '  return max(exp(-2.5 * t.a * t.a * uRough), 0.18 * smoothstep(0.75, 1.5, dot(t.rgb, vec3(0.3333))));',
+          '#else',
+          '  return 1.0;',
+          '#endif',
+          '}'].join('\n'))
         .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', [
           'outgoingLight = roomLight(outgoingLight, diffuseColor.rgb);',
-          'vec2 ruv = vRefl.xy / vRefl.w; float gap = 0.0, bl = uRough;',
-          '#ifdef REFL_DEPTH',   // (the gap: metres from the floor to the reflected point, along the ray; the sky far off)
-          'float zb = texture2D(tReflD, ruv).r; vec4 vp = uRefInvP * vec4(ruv * 2.0 - 1.0, zb * 2.0 - 1.0, 1.0);',
-          'float dc = length(cameraPosition - vRp); gap = zb > 0.99999 ? 25.0 : max(0.0, length(vp.xyz / vp.w) - dc);',
-          'bl *= 0.5 + 6.0 * gap / (gap + dc);',   // (the blur's spot as the eye sees it: it grows with the gap, over the whole way to the eye)
+          'vec2 ruv = vRefl.xy / vRefl.w; vec4 r0 = texture2D(tRefl, ruv); float bl = uRough;',
+          '#ifdef REFL_DEPTH',   // (the blur's spot as the eye sees it: it grows with the gap, over the whole way to the eye; none at a contact)
+          'float gap = 25.0 * r0.a * r0.a, dc = length(cameraPosition - vRp); bl *= 0.25 + 6.0 * gap / (gap + dc);',
           '#endif',
           '#ifdef LAY',
           'bl *= 1.0 + 2.5 * (1.0 - lay.g);',
           '#endif',
-          // (8 taps on a golden-angle spiral turned per pixel, the resin's flecks jittering it: no banding, a fine grain)
+          // (the middle and 7 taps on a golden-angle spiral turned per pixel, the resin's flecks jittering it: no banding, a fine grain)
           'float rot = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2832; vec2 j = (vec2(texelColor.r, fract(texelColor.r * 7.3)) - 0.5) * uTexel * 1.6 * bl;',
-          'vec3 rc = vec3(0.0); float ws = 0.0;',
-          'for (int i = 0; i < 8; i++) { float a = float(i) * 2.39996 + rot, w = 1.0 / (1.0 + float(i) * 0.3); rc += texture2D(tRefl, ruv + j + vec2(cos(a) * 0.6, sin(a) * 1.5) * (0.6 + float(i) * 0.32) * bl * uTexel).rgb * w; ws += w; }',
-          'rc /= ws;',
+          'float f = rFade(r0), ws = 1.0, fk = f; vec3 rc = r0.rgb * f;',
+          'for (int i = 1; i < 8; i++) { float a = float(i) * 2.39996 + rot, w = 1.0 / (1.0 + float(i) * 0.3); vec4 t = texture2D(tRefl, ruv + j + vec2(cos(a) * 0.6, sin(a) * 1.5) * (0.28 + float(i) * 0.32) * bl * uTexel);',
+          '  f = rFade(t) * w; rc += t.rgb * f; fk += f; ws += w; }',
+          'rc /= ws; fk /= ws;',
           'vec3 vd = normalize(cameraPosition - vRp); float fr = 0.18 + 0.82 * pow(1.0 - clamp(vd.y, 0.0, 1.0), 4.0);',
-          'float rk = fr * uReflK * uK * max(exp(-gap * 0.1 * uRough), 0.18 * smoothstep(0.75, 1.5, dot(rc, vec3(0.3333))));',
+          'float rk = fr * uReflK * uK;',
           '#ifdef LAY',
           'rk *= lay.g * 1.27;',
           '#endif',
-          'outgoingLight = outgoingLight * (1.0 - 0.25 * rk) + rc * rk * 1.15;',
+          'outgoingLight = outgoingLight * (1.0 - uMetal * rk * fk) + rc * rk * 1.15;',
           'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'].join('\n'));
     };
     m.customProgramCacheKey = () => 'garageFloor' + (REF.depth ? 'D' : '') + (lay ? 'L' : '');
@@ -967,9 +975,18 @@ const Garage3D = (function () {
     floorMat = floorMaterial(TX.floor, 1, { rough: 1.0, lay: TX.floorL || TX.layN });
     const f = new THREE.Mesh(geo, floorMat); f.receiveShadow = true; scene.add(f); refl = f;
     // the mirror image: half-float with HDR (the lamps and the doorway over 1 in it too), its depth in a texture where there can be one
-    REF.rt = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType });
-    REF.rt.texture.generateMipmaps = false; REF.texel = new THREE.Vector2(0.25, 0.25);
-    if (renderer.capabilities.isWebGL2 || renderer.extensions.has('WEBGL_depth_texture')) { REF.rt.depthTexture = new THREE.DepthTexture(4, 4); REF.rt.depthTexture.type = THREE.UnsignedIntType; REF.depth = true; }
+    const o = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType };
+    REF.rt = new THREE.WebGLRenderTarget(4, 4, o); REF.rt.texture.generateMipmaps = false; REF.texel = new THREE.Vector2(0.25, 0.25);
+    if (!renderer.capabilities.isWebGL2 && !renderer.extensions.has('WEBGL_depth_texture')) return;
+    REF.rt.depthTexture = new THREE.DepthTexture(4, 4); REF.rt.depthTexture.type = THREE.UnsignedIntType; REF.depth = true;
+    // the gap: the point back from the depth (the clipped projection's inverse), its height over the floor; the gap is the part of the
+    // ray beyond the floor, length x y / (y + the camera's depth under the floor); the sky 25 m. Kept as sqrt(gap / 25): fine near 0
+    REF.gt = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false, stencilBuffer: false }, o)); REF.gt.texture.generateMipmaps = false;
+    REF.gm = fsMat({ tC: { value: REF.rt.texture }, tZ: { value: REF.rt.depthTexture }, uInvP: { value: REF.invP }, uW: { value: REF.cam.matrixWorld } }, [
+      'uniform sampler2D tC; uniform sampler2D tZ; uniform mat4 uInvP; uniform mat4 uW; varying vec2 vUv;',
+      'void main(){ float z = texture2D(tZ, vUv).r; vec4 v = uInvP * vec4(vUv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); v /= v.w;',
+      '  float y = max((uW * v).y, 0.0), g = z > 0.99999 ? 25.0 : length(v.xyz) * y / max(y - uW[3].y, 1e-3);',
+      '  gl_FragColor = vec4(texture2D(tC, vUv).rgb, sqrt(min(g, 25.0) / 25.0)); }'].join('\n'));
   }
   // the mirror camera under the floor (as three.js's Reflector: the camera reflected in y = 0, its near plane cut along the floor)
   const _v = new V3(), _t = new V3(), _q = new THREE.Vector4(), _pl = new THREE.Plane();
@@ -985,9 +1002,11 @@ const Garage3D = (function () {
     const cp = new THREE.Vector4(_pl.normal.x, _pl.normal.y, _pl.normal.z, _pl.constant), pm = rc.projectionMatrix.elements;
     _q.x = (Math.sign(cp.x) + pm[8]) / pm[0]; _q.y = (Math.sign(cp.y) + pm[9]) / pm[5]; _q.z = -1; _q.w = (1 + pm[10]) / pm[14];
     cp.multiplyScalar(2 / cp.dot(_q)); pm[2] = cp.x; pm[6] = cp.y; pm[10] = cp.z + 1 - 0.003; pm[14] = cp.w;
-    REF.invP.copy(rc.projectionMatrix).invert();   // (the clipped projection's inverse: the floor's shader finds the reflected points' depth)
+    REF.invP.copy(rc.projectionMatrix).invert();   // (the clipped projection's inverse: the gap pass finds the reflected points from the depth)
     refl.visible = false; ttTop.visible = false;   // (what lies on the floor is the main camera's only: mainOnly)
-    renderer.setRenderTarget(REF.rt); renderer.clear(); renderer.render(scene, rc); renderer.setRenderTarget(null);   // (the shadow map, when it is due, is drawn here)
+    renderer.setRenderTarget(REF.rt); renderer.clear(); renderer.render(scene, rc);
+    if (REF.gm) fsPass(REF.gm, REF.gt);
+    renderer.setRenderTarget(null);
     refl.visible = true; ttTop.visible = true;
   }
 
@@ -1186,7 +1205,7 @@ const Garage3D = (function () {
     const cv = { M, spec: Object.assign({}, spec, { upg: Object.assign({}, spec.upg), cond: Object.assign({ clean: 1, body: 1, engine: 1 }, spec.cond) }), v, root, clip: new THREE.Plane(new V3(-1, 0, 0), 1e4), parts: {}, glows: [], spin: 0, pitch: 0, bounce: 0, roll: 0, shake: 0 };
     const pb = bodyProbe(v); cv.probe = pb; cv.bb = pb.bb;
     cv.wheels = wheelsOf(v, M); root.userData.cv = cv;
-    carMats(cv);
+    carMats(cv); carDiet(cv, v.grp, false);
     if (v.blob) { v.blob.material.map = TX.under; v.blob.material.opacity = 0.9; v.blob.scale.set(1, 1, 1); v.blob.position.y = 0.012; mainOnly(v.blob); }
     // where the tyres stand: a dark patch under each (one mesh, on the floor: it stays when the body moves on its springs; it fades
     // when the car goes up on its jacks, poseCar)
@@ -1316,7 +1335,7 @@ const Garage3D = (function () {
         for (const sd of [-1, 1]) {
           const vg = new THREE.Group(), x = K.hoodX, y = (cv.probe.top(x, sd * 0.32) || K.hoodY) + 0.006;
           vg.position.set(x, y, sd * 0.32); vg.rotation.z = K.hoodSlope;
-          mesh(bx(0.34, 0.012, 0.24), PM.black, 0, 0, 0, vg);
+          mesh(bx(0.34, 0.012, 0.24), PM.black, 0, 0, 0, vg).castShadow = false;   // (flush on the bonnet: no shadow to speak of)
           for (let i = 0; i < 4; i++) mesh(bx(0.035, 0.022, 0.22), PM.carbonFlat, -0.12 + i * 0.08, 0.012, 0, vg).rotation.z = 0.5;
           grp.add(item(vg, 'up'));
         }
@@ -1381,8 +1400,21 @@ const Garage3D = (function () {
         ring.position.set(w.x, w.y, w.z + sd * (w.side + 0.0025)); if (sd < 0) ring.rotation.y = Math.PI; grp.add(item(ring, 'ring'));
       }
     }
-    (kind === 'zavore' || kind === 'gume' ? v.grp : v.bodyG).add(grp);
+    (kind === 'zavore' || kind === 'gume' ? v.grp : v.bodyG).add(grp); carDiet(cv, grp, true);
     return grp;
+  }
+  // a car's meshes on a diet (each measured in the car's space, the parts at home): no shadow from the small ones, nor from the low
+  // parts (they stand in the car's own); the tiny ones out of the floor's mirror, and of the parts only the big ones low on the car stay
+  // in it (the rest would be a blur there, or hidden by the body)
+  const _pm = new THREE.Matrix4(), _pm2 = new THREE.Matrix4(), _pb = new THREE.Box3(), _ps = new V3();
+  function carDiet(cv, o, part) {
+    cv.root.updateMatrixWorld(true); _pm.copy(cv.root.matrixWorld).invert();
+    o.traverse(m => {
+      if (!m.isMesh) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+      const b = _pb.copy(m.geometry.boundingBox).applyMatrix4(_pm2.multiplyMatrices(_pm, m.matrixWorld)), d = b.getSize(_ps).length();
+      m.castShadow = m.castShadow && d > 0.3 && (!part || b.min.y > 0.4);
+      if (d < 0.15 || part && (d < 0.5 || b.min.y > 0.45 || b.max.y < 0.05)) mainOnly(m);
+    });
   }
   function ringUV(r0, r1, n) {   // a flat ring in the xy plane, its uv round it (u: the angle, v: across)
     const P = [], U = [], I = [];
@@ -1869,6 +1901,13 @@ const Garage3D = (function () {
   const POST = { on: true, rt: null, expo: 1.08 };
   const STATS = { shadow: 0, refl: 0, main: 0, post: 0, tris: 0 };   // (the last frame's draws by pass: _dbg.stats)
   let shT = 0;   // (the shadow pass's triangles, taken off the main pass's)
+  // a pass over a whole target: one quad, its own scene and camera (the mirror's gap, the bloom, the composite)
+  const FS = { vs: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', q: null };
+  function fsMat(u, fs) { return new THREE.ShaderMaterial({ uniforms: u, vertexShader: FS.vs, fragmentShader: fs, depthTest: false, depthWrite: false }); }
+  function fsPass(m, to) {
+    if (!FS.q) { FS.q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m); FS.q.frustumCulled = false; FS.s = new THREE.Scene(); FS.s.add(FS.q); FS.c = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); }
+    FS.q.material = m; renderer.setRenderTarget(to); renderer.render(FS.s, FS.c);
+  }
   function buildPost() {
     if (!POST.on) return;
     const o = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType, stencilBuffer: false };
@@ -1877,47 +1916,49 @@ const Garage3D = (function () {
     if (renderer.capabilities.isWebGL2 || renderer.extensions.has('WEBGL_depth_texture')) { rt.depthTexture = new THREE.DepthTexture(2, 2); rt.depthTexture.type = THREE.UnsignedIntType; }
     const bo = Object.assign({}, o, { depthBuffer: false }), bA = POST.bA = new THREE.WebGLRenderTarget(2, 2, bo), bB = POST.bB = new THREE.WebGLRenderTarget(2, 2, bo);
     bA.texture.generateMipmaps = bB.texture.generateMipmaps = false;
-    const px = POST.px = new THREE.Vector2(), bpx = POST.bpx = new THREE.Vector2(), vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
-    const sm = (u, fs) => new THREE.ShaderMaterial({ uniforms: u, vertexShader: vs, fragmentShader: fs, depthTest: false, depthWrite: false });
-    // the bright parts: four bilinear taps (a 4 x 4 block), kept by how far over white they are (LDR: what is near white)
-    POST.bright = sm({ tD: { value: rt.texture }, uPx: { value: px } }, 'uniform sampler2D tD; uniform vec2 uPx; varying vec2 vUv;'
-      + ' vec3 bp(vec2 o){ vec3 c = texture2D(tD, vUv + o * uPx).rgb; return c * smoothstep(' + (HDR ? '0.8, 1.6' : '0.72, 1.0') + ', max(c.r, max(c.g, c.b))); }'
+    const px = POST.px = new THREE.Vector2(), bpx = POST.bpx = new THREE.Vector2();
+    // the bright parts: four bilinear taps (a 4 x 4 block), kept by how far over white they are (HDR: the luminous things, not the
+    // paint's highlights; LDR: what is near white)
+    POST.bright = fsMat({ tD: { value: rt.texture }, uPx: { value: px } }, 'uniform sampler2D tD; uniform vec2 uPx; varying vec2 vUv;'
+      + ' vec3 bp(vec2 o){ vec3 c = texture2D(tD, vUv + o * uPx).rgb; return c * smoothstep(' + (HDR ? '1.2, 2.4' : '0.72, 1.0') + ', max(c.r, max(c.g, c.b))); }'
       + ' void main(){ gl_FragColor = vec4((bp(vec2(-1.0)) + bp(vec2(1.0, -1.0)) + bp(vec2(-1.0, 1.0)) + bp(vec2(1.0))) * 0.25, 1.0); }');
     // the blur: a 9-tap gaussian in 5 bilinear fetches, across and down, then again 2.4 times wider (bA -> bB -> bA -> bB -> bA)
-    POST.blur = [[1, 0], [0, 1], [2.4, 0], [0, 2.4]].map(([x, y], i) => sm({ tD: { value: (i % 2 ? bB : bA).texture }, uDir: { value: new THREE.Vector2(x, y) }, uPx: { value: bpx } },
+    POST.blur = [[1, 0], [0, 1], [2.4, 0], [0, 2.4]].map(([x, y], i) => fsMat({ tD: { value: (i % 2 ? bB : bA).texture }, uDir: { value: new THREE.Vector2(x, y) }, uPx: { value: bpx } },
       'uniform sampler2D tD; uniform vec2 uDir; uniform vec2 uPx; varying vec2 vUv; void main(){ vec2 d = uDir * uPx;'
       + ' gl_FragColor = vec4(texture2D(tD, vUv).rgb * 0.227 + (texture2D(tD, vUv + d * 1.385).rgb + texture2D(tD, vUv - d * 1.385).rgb) * 0.316 + (texture2D(tD, vUv + d * 3.231).rgb + texture2D(tD, vUv - d * 3.231).rgb) * 0.07, 1.0); }'));
-    POST.comp = sm({ tD: { value: rt.texture }, tB: { value: bA.texture }, uExpo: { value: POST.expo }, uBloom: { value: 0.5 }, uPx: { value: px } }, [
+    POST.comp = fsMat({ tD: { value: rt.texture }, tB: { value: bA.texture }, uExpo: { value: POST.expo }, uBloom: { value: 0.5 }, uPx: { value: px } }, [
       'uniform sampler2D tD; uniform sampler2D tB; uniform float uExpo; uniform float uBloom; uniform vec2 uPx; varying vec2 vUv;',
       'float lum(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }',
+      'const float K = 0.72; vec3 sh(vec3 x){ return mix(x, K + (1.0 - K) * (1.0 - exp((K - x) / (1.0 - K))), step(K, x)); }',   // (a soft shoulder over 0.72; under it nothing changes)
       'void main(){ vec3 c = texture2D(tD, vUv).rgb;',
       HDR ? '' : [   // (no MSAA: the edges softened along themselves where the light changes sharply)
         '  float lC = lum(c), lN = lum(texture2D(tD, vUv + vec2(0.0, uPx.y)).rgb), lS = lum(texture2D(tD, vUv - vec2(0.0, uPx.y)).rgb), lE = lum(texture2D(tD, vUv + vec2(uPx.x, 0.0)).rgb), lW = lum(texture2D(tD, vUv - vec2(uPx.x, 0.0)).rgb);',
         '  if (max(max(lN, lS), max(max(lE, lW), lC)) - min(min(lN, lS), min(min(lE, lW), lC)) > 0.08) { vec2 d = vec2(lS - lN, lE - lW); d = d / (length(d) + 1e-4) * uPx * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + d).rgb + texture2D(tD, vUv - d).rgb), 0.55); }'].join('\n'),
       '  c = c * uExpo + texture2D(tB, vUv).rgb * uBloom;',
       '  float l = lum(c); c = mix(c, vec3(l), smoothstep(1.0, 4.0, l) * 0.6);',   // (hot light goes white)
-      '  const float K = 0.72; c = mix(c, K + (1.0 - K) * (1.0 - exp((K - c) / (1.0 - K))), step(K, c));',   // (a soft shoulder over 0.72; the colours under it stay)
+      // (the shoulder on the brightest channel keeps the hue (the cyan stays cyan); some of it per channel: a very bright colour pales a little)
+      '  float m = max(max(c.r, c.g), max(c.b, 1e-4)); c = mix(c * sh(vec3(m)).x / m, sh(c), 0.6);',
       '  c = mix(c, c * c * (3.0 - 2.0 * c), 0.2);',   // (a gentle S: deeper darks)
-      '  c *= mix(vec3(0.97, 1.0, 1.05), vec3(1.04, 1.0, 0.95), smoothstep(0.15, 0.75, l));',   // (cool shade, warm light)
+      // (cool shade, warm light, but only on the greys: the colours keep their hue, the whites stay white)
+      '  float s = (max(max(c.r, c.g), max(c.b, 1e-4)) - min(min(c.r, c.g), c.b)) / max(max(c.r, c.g), max(c.b, 1e-4));',
+      '  c *= 1.0 + (mix(vec3(0.98, 1.0, 1.03), vec3(1.02, 1.0, 0.98), smoothstep(0.15, 0.6, l)) - 1.0) * (1.0 - s) * (1.0 - smoothstep(0.7, 0.95, l));',
       '  vec2 q = vUv - 0.5; c *= 1.0 - 0.44 * dot(q, q);',   // (the vignette)
       '  c += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;',   // (a still dither: no bands in the dark gradients)
       '  gl_FragColor = vec4(c, 1.0); }'].join('\n'));
-    POST.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), POST.comp); POST.quad.frustumCulled = false;
-    POST.scene = new THREE.Scene(); POST.scene.add(POST.quad); POST.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   }
-  // the targets at the drawing buffer's size (the bloom's at a quarter); a big buffer gets 2 samples, not 4
+  // the targets at the drawing buffer's size (the bloom's at a quarter); a bigger buffer (a phone held sideways) gets 2 samples, not 4:
+  // the targets stay under ~40 MB
   const _sz = new THREE.Vector2();
   function sizePost() {
     if (!POST.rt) return;
     const s = renderer.getDrawingBufferSize(_sz), w = s.x, h = s.y, bw = Math.max(1, w >> 2), bh = Math.max(1, h >> 2);
-    if (POST.rt.isWebGLMultisampleRenderTarget) POST.rt.samples = w * h > 1.2e6 ? 2 : Math.min(4, renderer.capabilities.maxSamples);
+    if (POST.rt.isWebGLMultisampleRenderTarget) POST.rt.samples = w * h > 0.6e6 ? 2 : Math.min(4, renderer.capabilities.maxSamples);
     POST.rt.setSize(w, h); POST.bA.setSize(bw, bh); POST.bB.setSize(bw, bh); POST.px.set(1 / w, 1 / h); POST.bpx.set(1 / bw, 1 / bh);
   }
   function postPass() {
-    const q = POST.quad, pass = (m, to) => { q.material = m; renderer.setRenderTarget(to); renderer.render(POST.scene, POST.cam); };
-    pass(POST.bright, POST.bA);
-    POST.blur.forEach((m, i) => pass(m, i % 2 ? POST.bA : POST.bB));
-    pass(POST.comp, null);
+    fsPass(POST.bright, POST.bA);
+    POST.blur.forEach((m, i) => fsPass(m, i % 2 ? POST.bA : POST.bB));
+    fsPass(POST.comp, null);
   }
   // the eye's adaptation: looking into a bright doorway the picture darkens a little, away from it it opens up again (no read-back:
   // how squarely the camera faces a door, how near it is)
@@ -1934,9 +1975,12 @@ const Garage3D = (function () {
 
   /* ---------------- set-up, size, the frame ---------------- */
   function init(canvas) {
-    renderer = Render.init(canvas);
     // the post pass (unless ?gfx=low), HDR where half-float targets can be drawn to: the luminous things over 1, the daylight brighter
     POST.on = !(typeof location !== 'undefined' && /[?&]gfx=low\b/.test(location.search));
+    // (with it the room is drawn into a target with MSAA of its own and the canvas gets one quad: its context made here without MSAA,
+    // Render.init's renderer takes it as it is)
+    if (POST.on) { const a = { antialias: false, alpha: false, stencil: false, powerPreference: 'high-performance' }; canvas.getContext('webgl2', a) || canvas.getContext('webgl', a); }
+    renderer = Render.init(canvas);
     HDR = POST.on && renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float');
     if (HDR) Object.assign(EMI, { hex: 3.0, led: 1.6, sign: 1.3, screen: 1.2, tail: 2.5, spark: 2.0 });
     OUTK = HDR ? 1.6 : 1.12; makeRoomLight();
@@ -1951,11 +1995,12 @@ const Garage3D = (function () {
     camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.25, 700); camera.layers.enable(NOREFL);
     makeTextures(); makeLightTextures();
     buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor(); buildOutside(); buildPost();
-    // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is (HDR: half-float, the lamps over
-    // 1 in it, but at 2.2 while it is made: brighter, the glass would go white; the cube's depth is 16-bit: near 0.5)
-    cubeRT = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+    // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is (HDR: half-float, the lamps
+    // just over 1 in it while it is made: brighter, the paint's highlights would glow and the glass go white; the cube's depth is 16-bit:
+    // near 0.5)
+    cubeRT = new THREE.WebGLCubeRenderTarget(192, { format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     const cc = new THREE.CubeCamera(0.5, 600, cubeRT); cc.position.set(0, 0.9, 0); scene.add(cc);
-    const rk = REF.k.value, lc = lampMat.color.clone(); REF.k.value = 0; lampMat.color.multiplyScalar(Math.min(1, 2.2 / EMI.hex)); ttTop.visible = true; renderer.shadowMap.needsUpdate = true;
+    const rk = REF.k.value, lc = lampMat.color.clone(); REF.k.value = 0; lampMat.color.multiplyScalar(Math.min(1, 1.3 / EMI.hex)); ttTop.visible = true; renderer.shadowMap.needsUpdate = true;
     cc.update(renderer, scene); REF.k.value = rk; lampMat.color.copy(lc); scene.remove(cc);
     env = cubeRT.texture;
     for (const m of decorEnv) { m.envMap = env; m.needsUpdate = true; }
@@ -1969,7 +2014,7 @@ const Garage3D = (function () {
     W = Math.max(2, w); H = Math.max(2, h);
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     const rw = Math.max(2, Math.round(W * pr * REF.size)), rh = Math.max(2, Math.round(H * pr * REF.size));
-    REF.rt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
+    REF.rt.setSize(rw, rh); if (REF.gt) REF.gt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
     const sc = H * pr / (2 * Math.tan(HOME.fov * Math.PI / 360));
     puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc;
     sizePost(); shadowDirty = 2;
@@ -1995,14 +2040,16 @@ const Garage3D = (function () {
     if (autoSpin && !busy && !user.drag) rig.yaw += dt * 0.32;
     placeCamera(dt); stepPieces(dt); adaptExposure(dt);
     if (noDraw) return;
-    const ri = renderer.info.render, post = POST.on && POST.rt;
-    renderer.shadowMap.needsUpdate = busy > 0 || tasks.length > 0 || shadowDirty > 0; if (shadowDirty > 0) shadowDirty--;   // (a show, a move, a piece gone or back)
-    STATS.shadow = shT = 0; renderer.info.reset(); drawReflection(); STATS.refl = ri.calls - STATS.shadow;   // (the first pass draws the shadow map when it is due)
-    const s0 = STATS.shadow, t0 = shT; renderer.info.reset();   // (from here: what the page's test counts)
+    const ri = renderer.info.render, post = POST.on && POST.rt, dirty = busy > 0 || tasks.length > 0 || shadowDirty > 0;   // (a show, a move, a piece gone or back)
+    if (shadowDirty > 0) shadowDirty--;
+    // the mirror first, with the last frame's shadow map; then the main pass draws the shadow map when it is due (with the main camera's
+    // layers: what is kept out of the mirror still casts) and the room. From the second reset on: what the page's test counts
+    STATS.shadow = shT = 0; renderer.info.reset(); renderer.shadowMap.needsUpdate = false; drawReflection(); STATS.refl = ri.calls;
+    renderer.info.reset(); renderer.shadowMap.needsUpdate = dirty;
     renderer.setRenderTarget(post ? POST.rt : null); renderer.render(scene, camera);
-    STATS.main = ri.calls - STATS.shadow + s0; STATS.tris = ri.triangles - shT + t0;
+    STATS.main = ri.calls - STATS.shadow; STATS.tris = ri.triangles - shT;
     if (post) postPass();
-    STATS.post = ri.calls - STATS.main - STATS.shadow + s0;
+    STATS.post = ri.calls - STATS.main - STATS.shadow;
   }
   // (every car's root knows its car: the frame poses them all, the one driving out too)
   const live = new Set();
