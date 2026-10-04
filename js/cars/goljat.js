@@ -96,8 +96,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      mouth forward, rising to it); the hole's trim on the bonnet ----
         K.part('body', () => {
           K.box(1.72, 2.08, 0, 0.5, 0.2, 0.36, 0, D);
-          K.box(1.72, 2.26, 0, 0.66, 0.23, 0.44, 0, ALU);
-          for (const sd of [-1, 1]) for (const y of [2.32, 2.375, 2.43]) K.rect(1.72, y, sd * 0.222, 0.62, 0.014, D, { dir: sd < 0 ? '-z' : 'z' });
+          K.box(1.72, 2.26, 0, 0.7, 0.24, 0.46, 0, ALU);
+          for (const sd of [-1, 1]) for (const y of [2.32, 2.38, 2.44]) K.rect(1.72, y, sd * 0.232, 0.66, 0.014, D, { dir: sd < 0 ? '-z' : 'z' });
           K.cyl([2.05, 2.37, 0], [2.13, 2.37, 0], 0.1, D, { n: 8, capA: null });
           K.skin([[[1.5, 2.49, -0.17], [1.5, 2.61, -0.17], [1.5, 2.61, 0.17], [1.5, 2.49, 0.17]], [[1.93, 2.49, -0.19], [1.93, 2.72, -0.19], [1.93, 2.72, 0.19], [1.93, 2.49, 0.19]]],
             (k, e) => e === 1 ? [0.82, 0.83, 0.86] : ALU, ALU, B);
@@ -163,7 +163,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             coil([K.fx + dx, 0.9, sd * 0.56], [K.fx + dx * 1.3, 1.95, sd * 0.44], 0.06, 0.5);
             coil([K.rx + dx, 0.9, sd * 0.56], [K.rx + dx * 1.3, 2.3, sd * 0.44], 0.58, 0.95);
           }
-          for (const dx of [-0.24, 0.24]) bar([K.rx + dx * 1.3, 2.3, -0.5], [K.rx + dx * 1.3, 2.3, 0.5], 0.05);   // the rear shocks' tower (in the bed)
+          for (const dx of [-0.24, 0.24]) { const x = K.rx + dx * 1.3;   // the rear shocks' tower (in the bed): a hoop over each pair
+            bar([x, 2.3, -0.5], [x, 2.3, 0.5], 0.05); for (const sd of [-1, 1]) bar([x, 1.8, sd * 0.5], [x, 2.3, sd * 0.5], 0.045); }
         });
         // ---- the cab inside (in sight through the open windows: the outer shell): the roll cage, the seat on its pedestal, the dashboard, the
         //      driver in the middle (helmet, shoulders, arms: never crushed or dented) ----
@@ -186,6 +187,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { noCrush: true, noDent: true });
         // ---- inside the bonnet (seen once it is off): the engine under the blower, the radiator behind the grille ----
         K.engine(1.7, 1.4, 0, { l: 0.86, w: 0.7, h: 0.7 });
+        K.inner(() => K.part('body', () => { for (const sd of [-1, 1]) {   // (the V8's banks: the valve covers either side of the blower, the manifolds out to the headers)
+          K.box(1.7, 1.98, sd * 0.3, 0.74, 0.1, 0.16, 0, [0.62, 0.1, 0.08]);
+          K.box(1.6, 1.86, sd * 0.68, 0.62, 0.12, 0.56, 0, [0.4, 0.41, 0.43]); } }));
         K.box(2.36, 1.42, 0, 0.08, 0.62, 1.4, 0, [0.14, 0.14, 0.15], null, false, { inner: true, part: 'body' });
       },
     },
