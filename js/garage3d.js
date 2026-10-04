@@ -2042,7 +2042,7 @@ const Garage3D = (function () {
         const zf = (y) => zb - 0.4 - 0.035 * y / 0.75 - 0.002; g.quadO([x - 0.065, 0.46, zf(0.46)], [x + 0.065, 0.46, zf(0.46)], [x + 0.065, 0.56, zf(0.56)], [x - 0.065, 0.56, zf(0.56)], [0.88, 0.88, 0.85], [x, 0.5, zb]); });
       gl(SATIN); obox(g, [-3.335, 0.1, 8.62], [-3.335, 1.32, 8.977], 0.024, 0.024, [0.55, 0.42, 0.26]); box(-3.335, 0.035, 8.63, 0.055, 0.06, 0.34, [0.16, 0.3, 0.55]);
       gl(MATTE); box(-3.335, 0, 8.63, 0.05, 0.035, 0.33, [0.07, 0.07, 0.07]);
-      gl(METAL); obox(g, [-3.405, 0.07, 8.55], [-3.405, 1.25, 8.977], 0.022, 0.022, ALU); gl(PAINT); box(-3.405, 0.022, 8.55, 0.03, 0.045, 0.45, [0.6, 0.12, 0.1]);
+      obox(g, [-3.405, 0.07, 8.55], [-3.405, 1.25, 8.977], 0.022, 0.022, [0.3, 0.32, 0.35]); gl(PAINT);   // (the squeegee's pole coated grey: a bare alu one read as a white line from the orbit) box(-3.405, 0.022, 8.55, 0.03, 0.045, 0.45, [0.6, 0.12, 0.1]);
       gl(MATTE); box(-3.405, 0, 8.55, 0.02, 0.022, 0.45, [0.05, 0.05, 0.05]);
       WALLAO.push(['f', -4.5, -3.3, 0, 0.8, 0.45, PK]); BLOBS.push([-3.97, 8.68, 1.3, 0.6, 0.6, 0, PK]); }
     // three maps of the game's tracks in black frames (a white mat, the navy field, the line in white, its start in gold, the north
