@@ -2447,6 +2447,7 @@ const Render = (function () {
       this.vel = new Float32Array(max * 3); this.life = new Float32Array(max); this.ml = new Float32Array(max);
       this.floor = new Float32Array(max);
       this.s0 = new Float32Array(max); this.s1 = new Float32Array(max); this.a0 = new Float32Array(max); this.grav = new Float32Array(max); this.drag = new Float32Array(max);
+      this.keep = new Uint8Array(max);   // (a fire's flames: clear(true) leaves them, the photo mode keeps a burning car burning)
       const g = new THREE.BufferGeometry();
       this.aPos = new THREE.BufferAttribute(this.pos, 3); this.aPos.setUsage(THREE.DynamicDrawUsage);
       this.aCol = new THREE.BufferAttribute(this.col, 4); this.aCol.setUsage(THREE.DynamicDrawUsage);
@@ -2461,8 +2462,8 @@ const Render = (function () {
       });
       this.points = new THREE.Points(g, this.mat); this.points.frustumCulled = false; this.points.renderOrder = additive ? 6 : 5;
     }
-    emit(x, y, z, vx, vy, vz, life, s0, s1, r, g, b, a, grav, drag, floor) {
-      const i = this.cur; this.cur = (this.cur + 1) % this.max; this.n++;
+    emit(x, y, z, vx, vy, vz, life, s0, s1, r, g, b, a, grav, drag, floor, keep) {
+      const i = this.cur; this.cur = (this.cur + 1) % this.max; this.n++; this.keep[i] = keep ? 1 : 0;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
       this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z;
       this.vel[i * 3] = vx; this.vel[i * 3 + 1] = vy; this.vel[i * 3 + 2] = vz;
@@ -2484,7 +2485,7 @@ const Render = (function () {
       }
       this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.aSize.needsUpdate = true;
     }
-    clear() { this.life.fill(0); }
+    clear(keep) { if (!keep) { this.life.fill(0); return; } for (let i = 0; i < this.max; i++) if (!this.keep[i]) this.life[i] = 0; }   // (keep: the flames stay)
   }
 
   /* ---------------- car light glows ---------------- */
@@ -4639,7 +4640,7 @@ const Render = (function () {
     const M = c.m, sd = k % 2 ? 1 : -1, w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === sd);
     if (w) { w.visible = false; const old = v.loose[KIT_WHEEL[k]]; if (old && !old.shared) old.geo.dispose(); v.loose[KIT_WHEEL[k]] = { wheel: true, shared: true, geo: w.geometry, mat: w.material, k }; }
     const lx = k < 2 ? M.a : -M.b, lz = sd * v.kit.E.body.hw, ch = Math.cos(h), sh = Math.sin(h);
-    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(kitHubGeo(v.kit.E), matWheel); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner)
+    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(kitHubGeo(v.kit.E), v.lampsOut ? matLensBroken : matWheel); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner; burnt: dark)
     v.hubs[k].visible = true;
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
@@ -4876,7 +4877,7 @@ const Render = (function () {
         while (v.flameAcc >= 1) { v.flameAcc -= 1;
           const ox = (rRnd() - 0.5) * fw, oz = (rRnd() - 0.5) * fz, hot = rRnd();
           sparkP.emit(sx + ox * ch - oz * sh, sy + 0.04 + rRnd() * 0.12, sz + ox * sh + oz * ch, c.vx * 0.55 + (rRnd() - 0.5) * 0.7, 1.1 + rRnd() * 1.5, c.vz * 0.55 + (rRnd() - 0.5) * 0.7,
-            0.32 + rRnd() * 0.36, (0.5 + 0.28 * rRnd()) * sc, 0.1 * sc, 1, 0.4 + hot * 0.4, 0.07 + hot * 0.12, 0.85, -2.2, 1.2, y); }
+            0.32 + rRnd() * 0.36, (0.5 + 0.28 * rRnd()) * sc, 0.1 * sc, 1, 0.4 + hot * 0.4, 0.07 + hot * 0.12, 0.85, -2.2, 1.2, y, 1); }
       }
       v.fsmAcc = (v.fsmAcc || 0) + dt * (lit ? 4 + 7 * k : 11);
       while (v.fsmAcc >= 1) { v.fsmAcc -= 1;
@@ -4890,9 +4891,11 @@ const Render = (function () {
     }
   }
   // a car burnt a while: its lamps out (no glow, the head lamps' lenses dark, the tail lamps out: a kit car's sides of its tail mesh, one of
-  // the 11's whole tail mesh dark), its night beam gone. No bits (the 11's lamps broke with Math.random's shards: not here)
+  // the 11's whole tail mesh dark), its night beam gone, a kit car's bare hubs dark too. No bits (the 11's lamps broke with Math.random's
+  // shards: not here)
   function lampsBurnt(v) {
-    v.lampsOut = true; if (!v.lightBroken) return;
+    v.lampsOut = true; for (const hb of v.hubs || []) if (hb) hb.material = matLensBroken;
+    if (!v.lightBroken) return;
     for (let k = 0; k < 4; k++) { if (v.lightBroken[k]) continue; v.lightBroken[k] = 1;
       if (v.kit) { if (k < 2) kitLampOut(v, k); else kitTailOut(v, k === 2 ? 'L' : 'R'); }
       else if (k < 2 && v.lens && v.lens[k]) v.lens[k].material = matLensBroken; }
@@ -5585,7 +5588,7 @@ const Render = (function () {
     resize();
     return out;
   }
-  function clearSparks() { if (sparkP) { sparkP.clear(); sparkP.update(0); } }   // (the photo mode: no contact's flash frozen in the picture)
+  function clearSparks() { if (sparkP) { sparkP.clear(true); sparkP.update(0); } }   // (the photo mode: no contact's flash frozen in the picture; a fire's flames stay)
   function ckDraw() { const a = renderer.autoClear; renderer.autoClear = false; renderer.clearDepth(); renderer.render(ck.scene, ck.cam); renderer.autoClear = a; }   // (the cockpit over the world)
 
   function setStartLights(n, go) {
