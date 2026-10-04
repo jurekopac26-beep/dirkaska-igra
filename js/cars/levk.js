@@ -59,7 +59,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.76, 0.655, 0.12, 0.58, 0.46, 0.72, 0.045, 'b', 0.07],
           [1.82, 0.55, 0.12, 0.56, 0.38, 0.675, 0.04, 'b', 0.06],
           [1.87, 0.42, 0.14, 0.555, 0.28, 0.635, 0.025, 'b', 0.05]],          // the face (the end cap: the mouth, the slim grille)
-        eye: { x: -0.32, y: 1.13, near: 0.2, tilt: 0.05, style: 'open' },    // (behind the windscreen, its header 0.15 over the eyes)
+        eye: { x: -0.32, y: 1.13, near: 0.2, tilt: 0.05, style: 'open' },    // (behind the windscreen, its header 0.7 ahead, 0.14 over the eyes)
         door: [0.72, -0.62], bumpF: 0.4, bumpR: 0.2649, bumpY: [0.62, 0.66], wz: 0.1515,
         crush: { x0: 0.0, x1: 0.55, z: 0.62 },                               // (a roll-over folds the windscreen's frame; the hoops stand)
         decalX: -1.33, decalY: 1.06, decalRz: 0.01, decalS: 0.5, decalPart: 'trunk',   // (the start number on the deck)
@@ -91,9 +91,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const pr = (x, k) => L.prop(x, k), DC = L.decal;
         // the half width at (x, y): the flat side to the belt, then the window band to the top's edge
         const wAt = (x, y) => { const w = pr(x, 'w'), yb = pr(x, 'ybelt'), wt = pr(x, 'wt'), yt = pr(x, 'yt'); return y <= yb ? w : y >= yt ? wt : w + (wt - w) * (y - yb) / (yt - yb); };
-        // a flat polygon facing out (its points' order turned to face dir), one primitive
-        const F = (pts, col, dir, o) => { const a = pts[0], b = pts[1], c = pts[2], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-          const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; K.face(n[0] * dir[0] + n[1] * dir[1] + n[2] * dir[2] < 0 ? pts.slice().reverse() : pts, col, o); };
+        // a flat polygon facing out (its points' order turned to face dir), one primitive: repeated points dropped (a clip at a section
+        // repeats a corner) and the corner whose turn is the widest put first (K.face takes its facing from its first three points)
+        const F = (pts, col, dir, o) => {
+          const P = pts.filter((p, i) => { const q = pts[(i + pts.length - 1) % pts.length]; return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > 1e-5; }); if (P.length < 3) return;
+          const cr = (i) => { const a = P[i], b = P[(i + 1) % P.length], c = P[(i + 2) % P.length], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+            return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; };
+          let k = 0, best = -1; for (let i = 0; i < P.length; i++) { const l = Math.hypot(...cr(i)); if (l > best) { best = l; k = i; } }
+          const Q = P.slice(k).concat(P.slice(0, k)), n = cr(k);
+          K.face(n[0] * dir[0] + n[1] * dir[1] + n[2] * dir[2] < 0 ? [Q[2], Q[1], Q[0]].concat(Q.slice(3).reverse()) : Q, col, o); };
         // a point on the right (sd 1) or left (-1) half's top at x: s 0..1 the window band (the belt to the top's edge), 1..2 the edge,
         // 2..3 the crown; lifted off it in the section's plane
         const on = (x, s, sd, lift) => { const w = pr(x, 'w'), yb = pr(x, 'ybelt'), wt = pr(x, 'wt'), yt = pr(x, 'yt'), cr = pr(x, 'cr');
@@ -123,6 +129,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const x of [0.713, -0.613]) { DC.side([[x - 0.006, 0.24], [x + 0.006, 0.24], [x + 0.006, 1.2], [x - 0.006, 1.2]], D, null, 0.009);
           DC.band([[x - 0.006, 0], [x + 0.006, 0], [x + 0.006, 1], [x - 0.006, 1]], D, null, 0.009); }
         DC.side([[-0.955, 0.575], [0.78, 0.515], [0.78, 0.57], [-0.955, 0.632]], B, null, 0.01);
+        DC.band([[-0.82, 0.5], [0.6, 0.5], [0.6, 1], [-0.82, 1]], B, null, 0.006);              // (the rubber seal along the door tops and the quarters' by the hoops)
+        K.face([0, 1, 2, 3, 4, 5].map(i => [-1.27 + Math.cos(-i * Math.PI / 3) * 0.045, 0.8 + Math.sin(-i * Math.PI / 3) * 0.045, pr(-1.27, 'w') + 0.007]), D);   // (the fuel filler's flap, right)
         for (const sd of [-1, 1]) {
           K.rect(-0.5, 0.86, sd * (pr(-0.5, 'w') + 0.008), 0.15, 0.028, D, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
           K.rect(0.83, 0.66, sd * (pr(0.83, 'w') + 0.007), 0.055, 0.022, AMBER, { dir: sd < 0 ? '-z' : 'z' });
@@ -159,26 +167,27 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[0.97, 0.95, -0.6], [0.97, 0.95, 0.6]] });
 
         // ---- the windscreen: a pane of its own (three facets, wrapping a little; one-sided, facing out: the driver sees through it) from
-        //      the cowl up to the header, raked 22 degrees; its frame bright: the A-pillars and the header; the wipers parked on it ----
-        const WB = [[0.958, 0.966, 0.68], [0.958, 1.018, 0.26]], WT = [[0.3, 1.252, 0.6], [0.3, 1.26, 0.24]];   // (the base's and the header's corner and inner points, right side)
+        //      the cowl up to the header, raked 25 degrees; its frame bright: the A-pillars and the header; the wipers parked on it ----
+        const WB = [[0.958, 0.966, 0.68], [0.958, 1.018, 0.26]], WT = [[0.38, 1.252, 0.605], [0.38, 1.26, 0.24]];   // (the base's and the header's corner and inner points, right side)
         const mz = (p, sd) => [p[0], p[1], p[2] * sd];
         K.part('body', () => {
           F([mz(WB[1], -1), mz(WB[1], 1), mz(WT[1], 1), mz(WT[1], -1)], G, [0.3, 1, 0]);
           for (const sd of [-1, 1]) F([mz(WB[0], sd), mz(WB[1], sd), mz(WT[1], sd), mz(WT[0], sd)], G, [0.3, 1, sd * 0.25]);
-          for (const sd of [-1, 1]) K.bar([0.962, 0.966, sd * 0.7], [0.293, 1.266, sd * 0.624], 0.032, BRIGHT, { n: 5 });   // the A-pillars
-          K.bar([0.29, 1.27, -0.645], [0.29, 1.27, 0.645], 0.032, BRIGHT, { n: 6 });             // the header
-          for (const z of [-0.36, 0.2]) K.bar([0.94, 1.012, z - 0.26], [0.88, 1.04, z + 0.26], 0.01, B, { n: 3 });   // the wipers
+          for (const sd of [-1, 1]) K.bar([0.962, 0.966, sd * 0.7], [0.373, 1.266, sd * 0.628], 0.032, BRIGHT, { n: 5 });   // the A-pillars
+          K.bar([0.37, 1.27, -0.65], [0.37, 1.27, 0.65], 0.032, BRIGHT, { n: 6 });               // the header
+          for (const z of [-0.36, 0.2]) F([[0.94, 1.032, z - 0.26], [0.932, 1.037, z - 0.26], [0.872, 1.064, z + 0.26], [0.88, 1.059, z + 0.26]], B, [0.4, 1, 0]);   // the wipers
         });
         // ---- the tail: the lamps round the corners (a chrome surround, the red lenses; the lit part at their inner ends on the boot lid's
         //      face), the black garnish across the boot lid between them; the strip over the bumper, its red fog lamp, the exhaust ----
         const fX = (y) => -1.91 + Math.max(0, Math.min(1, (y - 0.69) / 0.185)) * 0.015, fP = (y, z, l) => [fX(y) - l, y, z];   // (the boot lid's face: upright, leaning in 1.5 cm)
-        for (const sd of [-1, 1]) {
-          F([[0.705, 0.355], [0.705, 0.63], [0.872, 0.6], [0.872, 0.325]].map(([y, z]) => fP(y, sd * z, 0.004)), B, [-1, 0, 0], LO);       // (the housing)
-          F([[0.716, 0.37], [0.716, 0.62], [0.86, 0.592], [0.86, 0.34]].map(([y, z]) => fP(y, sd * z, 0.008)), LENS, [-1, 0, 0], LO);     // (the lens)
-          F([[0.735, 0.38], [0.735, 0.43], [0.84, 0.425], [0.84, 0.36]].map(([y, z]) => fP(y, sd * z, 0.011)), [0.86, 0.86, 0.83], [-1, 0, 0], LO);   // (the reversing light)
-          onBand([[-1.895, 0.08], [-1.895, 0.96], [-1.84, 0.9], [-1.76, 0.76], [-1.69, 0.62], [-1.65, 0.53], [-1.69, 0.44], [-1.76, 0.3], [-1.84, 0.12]], B, sd, [-0.4, 0.3, sd * 0.85], null, LO);
-          onBand([[-1.895, 0.16], [-1.895, 0.9], [-1.84, 0.84], [-1.76, 0.72], [-1.7, 0.6], [-1.67, 0.53], [-1.7, 0.47], [-1.76, 0.34], [-1.84, 0.2]], LENS, sd, [-0.4, 0.3, sd * 0.85], null, Object.assign({ lift: 0.01 }, LO));
-          K.tailLamp(fX(0.79) - 0.004, 0.79, sd * 0.5, 0.16, 0.1, { d: 0.006, host: 'body' });   // (the lit part: the face's)
+        const cP = (s, sd, l) => { const p = on(-1.895, s, sd, 0); return [p[0] - l, p[1], p[2]]; };   // (the face's corner: the band's line at its top section)
+        for (const sd of [-1, 1]) {   // (each: on the face from its slanted inner end out to the corner, then round it on the band)
+          F([fP(0.708, sd * 0.42, 0.004), cP(0.12, sd, 0.004), cP(0.98, sd, 0.004), fP(0.87, sd * 0.33, 0.004)], B, [-1, 0, 0], LO);                    // (the housing)
+          F([fP(0.72, sd * 0.43, 0.008), cP(0.2, sd, 0.008), cP(0.92, sd, 0.008), fP(0.858, sd * 0.345, 0.008)], LENS, [-1, 0, 0], LO);                 // (the lens)
+          F([fP(0.735, sd * 0.425, 0.011), fP(0.735, sd * 0.47, 0.011), fP(0.843, sd * 0.405, 0.011), fP(0.843, sd * 0.36, 0.011)], [0.86, 0.86, 0.83], [-1, 0, 0], LO);   // (the reversing light)
+          onBand([[-1.895, 0.12], [-1.895, 0.98], [-1.84, 0.92], [-1.76, 0.78], [-1.69, 0.64], [-1.65, 0.55], [-1.69, 0.45], [-1.76, 0.31], [-1.84, 0.16]], B, sd, [-0.4, 0.3, sd * 0.85], null, LO);
+          onBand([[-1.895, 0.2], [-1.895, 0.92], [-1.84, 0.86], [-1.76, 0.74], [-1.7, 0.62], [-1.67, 0.55], [-1.7, 0.48], [-1.76, 0.36], [-1.84, 0.24]], LENS, sd, [-0.4, 0.3, sd * 0.85], null, Object.assign({ lift: 0.01 }, LO));
+          K.tailLamp(fX(0.79) - 0.004, 0.79, sd * 0.525, 0.1, 0.09, { d: 0.006, host: 'body' });   // (the lit part, on the face)
         }
         K.rect(fX(0.79) - 0.004, 0.79, 0, 0.6, 0.05, B, { dir: '-x', part: 'body' });          // the garnish
         K.hinge('trunk', [-0.86, 1.02, -0.6], [-0.86, 1.02, 0.6]);
@@ -192,12 +201,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.mirror(0.6, 0.99, sd * 0.89, { w: 0.1, h: 0.1, d: 0.15, z0: sd * 0.8 });
         // ---- the hinges: the doors at their front edges ----
         K.hinge('doorL', [0.71, 0.4, -0.82], [0.71, 0.85, -0.82]); K.hinge('doorR', [0.71, 0.4, 0.82], [0.71, 0.85, 0.82]);
-        // ---- the cockpit (in sight): the two seats with their head rests, the dashboard, the steering wheel (left); the roll hoops behind
-        //      the seats, bright, never crushed or dented ----
+        // ---- the cockpit (in sight): the two seats (the head rests in their backs), the dashboard, the steering wheel (left); the roll
+        //      hoops behind the seats, bright, never crushed or dented ----
         for (const sd of [-1, 1]) { const z = sd * 0.36, b0 = [-0.54, 0.47], b1 = [-0.54 - Math.sin(0.26) * 0.7, 0.47 + Math.cos(0.26) * 0.7];
           K.box(-0.34, 0.38, z, 0.5, 0.12, 0.48, 0, SEAT, null, false, { part: 'body' });
           K.plate([[b0[0], b0[1], z - 0.235], [b0[0], b0[1], z + 0.235], [b1[0], b1[1], z + 0.14], [b1[0], b1[1], z - 0.14]], 0.1, SEAT, { part: 'body' }); }
         K.box(0.4, 0.66, 0, 0.12, 0.28, 1.46, 0, D, null, true, { part: 'body' });
+        K.part('body', () => {   // (the steering wheel, leaning back on its column: low enough that the cockpit's own dashboard hides it from the seat)
+          const C = [0.17, 0.82, -0.36], u = [-Math.sin(0.5), Math.cos(0.5), 0], pt = (a) => [C[0] + 0.17 * Math.sin(a) * u[0], C[1] + 0.17 * Math.sin(a) * u[1], C[2] + 0.17 * Math.cos(a)];
+          for (let i = 0; i < 6; i++) K.bar(pt(i / 6 * Math.PI * 2), pt((i + 1) / 6 * Math.PI * 2), 0.016, B, { n: 3 });
+          K.bar(C, [0.36, 0.72, -0.36], 0.02, D, { n: 3 });
+        });
         for (const sd of [-1, 1]) { const zc = sd * 0.36, x = -0.875, y0 = 0.99, y1 = 1.225, h = 0.18, r = 0.025;   // (a square tube along the hoop's arch)
           K.sweep([[-r, -r], [r, -r], [r, r], [-r, r]], [[x, y0, zc - h], [x, y1 - 0.05, zc - h], [x, y1, zc - h + 0.05], [x, y1, zc + h - 0.05], [x, y1 - 0.05, zc + h], [x, y0, zc + h]],
             BRIGHT, { part: 'body', noCrush: true, noDent: true });
