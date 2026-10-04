@@ -50,8 +50,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         door: [0.25, -0.92], bumpF: 0.3, bumpR: 0.2, bumpY: [0.72, 0.62], cage: true,
         crush: { x0: -1.72, x1: -0.37, z: 0.66 } },                     // (the roof and the fastback's glass; clear of the deck under the wing)
       wheels: { style: 'slick', w: 0.3, wR: 0.33, gap: 0.06 },
-      // the standard regions, and the nose's upper corners (the band over the bumper, under the lamps' slope) with the fenders
-      regions: (std) => std.flatMap(r => r.part === 'fenderR' ? [r, ...['L', 'R'].map(s => ({ part: 'fender' + s, x: [2.03, 2.6], bands: ['window'], side: s }))] : [r]),
+      // the standard regions; the bonnet from the cowl (the windscreen's base: its second section, at the sails, would start it there), the
+      // nose's upper corners (the band over the bumper, by the lamps) with the fenders
+      regions: (std) => std.flatMap(r => r.part === 'hood' ? [Object.assign({}, r, { x: [0.05, r.x[1]] })]
+        : r.part === 'fenderR' ? [r, ...['L', 'R'].map(s => ({ part: 'fender' + s, x: [2.03, 2.6], bands: ['window'], side: s }))] : [r]),
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, D = K.dark, G = K.GLASS, RED = K.rgb(0xd0141a);
         // ---- the shell: the paint, the glass (windscreen, side windows, the fastback's glass), the tuck all round black (the skirts, the arches' ledges) ----
@@ -131,7 +133,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.bar([0.05, 0.872, s * 0.905], [0.01, 0.935, s * 0.96], 0.016, B, { n: 4, part: s < 0 ? 'mirrorL' : 'mirrorR' }); }
         K.bar([0.04, 0.935, -0.52], [0.0, 0.95, 0.22], 0.01, B, { n: 4, part: 'body' });
         // ---- the hinges: the bonnet at the cowl, the boot lid at the rear glass, the doors at their front edges, the bumpers at their tops ----
-        K.hinge('hood', [0.08, 0.92, -0.6], [0.08, 0.92, 0.6]);
+        K.hinge('hood', [0.07, 0.885, -0.6], [0.07, 0.885, 0.6]);
         K.hinge('trunk', [-1.9, 0.965, -0.6], [-1.9, 0.965, 0.6]);
         for (const s of [-1, 1]) K.hinge(s < 0 ? 'doorL' : 'doorR', [0.25, 0.25, s * 0.93], [0.25, 0.85, s * 0.93]);
         K.hinge('bumperR', [-2.2, 0.6, -0.85], [-2.2, 0.6, 0.85]);
@@ -141,9 +143,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.cyl([-0.56, 0.74, -0.36], [-0.53, 0.72, -0.36], 0.15, B, { n: 8, inner: true, part: 'body' });
         K.box(-0.42, 0.52, 0, 0.32, 0.22, 1.5, 0, D, null, false, { inner: true, part: 'body' });
         K.cyl([-0.85, 0.24, 0.36], [-1.2, 0.24, 0.36], 0.07, RED, { n: 6, inner: true, part: 'body' });   // (the extinguisher on the passenger's side)
-        const hoop = (s) => [[[-1.32, 0.17, s * 0.8], [-1.32, 0.86, s * 0.86]], [[-1.32, 0.86, s * 0.86], [-1.3, 1.1, s * 0.52]], [[-1.3, 1.1, s * 0.52], [-0.68, 1.13, s * 0.55]],
-          [[-0.68, 1.13, s * 0.55], [-0.24, 0.62, s * 0.78]], [[-1.32, 0.45, s * 0.84], [-0.26, 0.5, s * 0.8]]];
-        K.cage(hoop(-1).concat(hoop(1), [[[-1.3, 1.1, -0.52], [-1.3, 1.1, 0.52]], [[-1.32, 0.17, 0.8], [-1.3, 1.1, -0.52]]]), 0.022, null, { n: 4 });
+        const hoop = (s) => [[[-1.32, 0.17, s * 0.8], [-1.32, 0.86, s * 0.86]], [[-1.32, 0.86, s * 0.86], [-1.3, 1.08, s * 0.52]], [[-1.3, 1.08, s * 0.52], [-0.68, 1.11, s * 0.55]],
+          [[-0.68, 1.11, s * 0.55], [-0.24, 0.62, s * 0.78]], [[-1.32, 0.45, s * 0.84], [-0.26, 0.5, s * 0.8]]];   // (the main hoop, the roof and A-pillar bars, the door bars)
+        K.cage(hoop(-1).concat(hoop(1), [[[-1.3, 1.08, -0.52], [-1.3, 1.08, 0.52]], [[-1.32, 0.17, 0.8], [-1.3, 1.08, -0.52]]]), 0.022, null, { n: 4 });
         K.engine(0.72, 0.22, 0, { l: 0.72, w: 0.62, h: 0.5, col: [0.6, 0.61, 0.64] });
         K.box(2.12, 0.18, 0, 0.08, 0.36, 1.2, 0, D, null, false, { inner: true, part: 'body' });
         K.box(-2.08, 0.36, 0, 0.36, 0.3, 0.9, 0, [0.26, 0.26, 0.28], null, false, { inner: true, part: 'body' });
