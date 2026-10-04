@@ -8,6 +8,9 @@
 //    targa's default number lies on its roof, clear of the hole
 //  - body.door in either order (the same doors); body.crush with its ends swapped or a negative z fails, { 0, 0, 0 } builds
 //  - K.number: every digit's seven bars full length (the bars across the whole digit, the uprights to the middle bar's far edge)
+//  - every registered vehicle (its look, or a place-holder's generic hatch): each part's range centroid within 0.35 m of where the core
+//    throws its piece from (a lost part's copy lies where the part was: stage B2); its burning engine's seat (body.engine) inside the
+//    body, the shell's top over it (where the flames come out) within its height
 //   node tests/kit.test.js
 'use strict';
 const fs = require('fs');
@@ -176,6 +179,57 @@ function raysThrough(res) {
     res.geo.dispose();
   }
   check('K.number: every digit\'s bars full length (a, d, g the whole digit wide; b, c, e, f from their end to the middle bar\'s far edge), 3 places x 7 bars', !rows.length, rows.slice(0, 4).join(' | '));
+}
+
+// ---- 5. every registered vehicle (its look, or the generic hatch of a place-holder): each part's range has its centroid within 0.35 m of
+//         where the core throws the part's piece from (the part table's lx, lz of the half length / width, y): a lost part's copy (stage B2)
+//         lies where the part was. A look that puts a part elsewhere moves its table entry (parts.over / extra) ----
+{
+  const rows = [], w0 = console.warn; let worst = ['', 0], n0 = 0;
+  console.warn = () => { };   // (the place-holders' fallback warnings as their bodies are built)
+  for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
+    const I = R.kitInfo(M.id), PT = Core.partsOf(M);
+    for (const k in PT) { const p = PT[k], c = I.ranges[k] && I.ranges[k].c; if (p.wh != null) continue; n0++;
+      if (!c) { rows.push(`${M.id} ${k}: no range`); continue; }
+      const d = Math.hypot(c[0] - p.lx * M.len / 2, c[1] - p.y, c[2] - p.lz * M.wid / 2); if (d > worst[1]) worst = [M.id + ' ' + k, d];
+      if (d > 0.35) rows.push(`${M.id} ${k}: ${d.toFixed(2)} m (range at ${c.map(v => v.toFixed(2)).join(', ')})`); }
+  }
+  console.warn = w0;
+  check(`every registered vehicle's parts lie where the core throws their pieces from (each range's centroid within 0.35 m of its spawn point; ${n0} parts)`, !rows.length && n0 > 0,
+    rows.slice(0, 6).join(' | ') || `the farthest: ${worst[0]} ${worst[1].toFixed(3)} m`);
+}
+
+// ---- 6. every registered vehicle's burning engine (stage B2: body.engine, its seat; Render.kitInfo(id).fire): the seat inside the body (along
+//         it between its tail and its nose, between 5 cm and its height), the shell's top over it (where the flames and the smoke come out,
+//         the car whole: a bonnet, an engine cover, a cab) within its height; nothing over it: the flames from the engine itself ----
+{
+  const rows = [], w0 = console.warn, tops = []; let n6 = 0;
+  console.warn = () => { };
+  for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
+    const I = R.kitInfo(M.id), F = I.fire, b = I.body, S = F && F.seat; n6++;
+    if (!S || !S.every(Number.isFinite)) { rows.push(`${M.id}: no seat`); continue; }
+    if (S[0] < b.tail - 0.01 || S[0] > b.nose + 0.01 || S[1] < 0.05 || S[1] > b.height) rows.push(`${M.id}: the seat at ${S.map(v => v.toFixed(2)).join(', ')} outside the body (x ${b.tail.toFixed(2)}..${b.nose.toFixed(2)}, y 0.05..${b.height.toFixed(2)})`);
+    if (F.top != null && F.top > b.height + 0.01) rows.push(`${M.id}: the top over the seat ${F.top.toFixed(2)} over the body's height ${b.height.toFixed(2)}`);
+    if (M.def.look) tops.push(`${M.id} ${S[0].toFixed(2)}, ${S[1].toFixed(2)} -> ${F.top == null ? 'open' : F.top.toFixed(2)}`);
+  }
+  console.warn = w0;
+  check(`every registered vehicle's engine seat (body.engine) inside its body, the shell's top over it within its height (${n6} vehicles)`, !rows.length && n6 > 0, rows.slice(0, 6).join(' | ') || tops.join(', '));
+}
+
+// ---- 7. every registered vehicle's lost parts lie flat (stage B2: a piece on the road laid on its broadest face, Render.kitInfo(id).lay: how
+//         tall each part's piece lies, its ranges as built): at most max(0.3 m, 3 x its part table's h). A part that cannot (a skirt with its
+//         brackets to the frame in it, a bumper region taking half the front) stands up like a sign: move what holds it on into 'body', or
+//         give the table's h the piece's real thickness ----
+{
+  const rows = [], w0 = console.warn, all = []; let n7 = 0;
+  console.warn = () => { };
+  for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
+    const I = R.kitInfo(M.id), PT = Core.partsOf(M);
+    for (const k in I.lay) { const h = PT[k] ? PT[k].h : 0, lim = Math.max(0.3, 3 * h); n7++; all.push([I.lay[k] / lim, `${M.id} ${k} ${I.lay[k].toFixed(2)} m (h ${h})`]);
+      if (!(I.lay[k] <= lim)) rows.push(`${M.id} ${k}: lies ${I.lay[k].toFixed(2)} m tall > ${lim.toFixed(2)} (h ${h})`); }
+  }
+  console.warn = w0; all.sort((a, b) => b[0] - a[0]);
+  check(`every registered vehicle's lost parts lie flat: each piece at most max(0.3 m, 3 x its h) tall (${n7} parts)`, !rows.length && n7 > 0, rows.slice(0, 6).join(' | ') || 'the tallest for their h: ' + all.slice(0, 4).map(q => q[1]).join(', '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} kit checks (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
