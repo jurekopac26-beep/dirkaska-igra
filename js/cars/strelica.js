@@ -27,10 +27,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // the look (KIT API v1, render.js; look units = metres): a section loft for the cigar, open over the cockpit (lined, floored, its
     // bulkheads), its upper panels behind the cockpit the engine cover ('cover'); the nose cone a skin of its own over the front bulkhead
     // (the radiator) with the oval intake recessed into it ('nose'); the driver reclined under the wrap-around screen, the roll hoop behind
-    // his head; the wishbones, coil-overs and drive shafts out to the wire wheels; four exhaust pipes a side out of the engine bay, along
-    // the tail and curling up behind it; small chrome mirrors on stalks ('mirrorL' / 'mirrorR'). The livery: the paint, a stripe along
-    // the top from the nose to the tail and round the intake (the stripe colour), white number roundels on the flanks and the start number
-    // on the engine cover
+    // his head; the wishbones, coil-overs and drive shafts out to the wire wheels; the V8's four exhaust stacks a side out of the cover's
+    // flanks, curling up behind the engine (flared, fanned across); small chrome mirrors on stalks ('mirrorL' / 'mirrorR'). Under the
+    // cover (the inner block) the V8 with its trumpets and the stacks' roots, the gearbox; behind the nose the radiator. The livery: the
+    // paint, a stripe along the top from the nose to the tail and round the intake (the stripe colour), louvres in the cover, white number
+    // roundels on the flanks and the start number on the cover
     look: {
       body: {
         //       x      w      yb    ybelt  wt     yt     cr     kind  tuck
@@ -47,10 +48,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         wz: 0.09,
         eye: { x: -0.11, y: 0.8, near: 0.12, tilt: 0.06, style: 'open' },    // (in the helmet, over the screen: a round wheel and dials)
         decalX: -0.7, decalY: 0.652, decalRz: 0.068, decalS: 0.24, decalPart: 'cover',   // (the start number on the engine cover's crown)
-        engine: [-0.72, 0.52], engRear: true, crush: { x0: 0, x1: 0, z: 0 },                       // (no roof: a crushed roof bends nothing; the hoop stands)
+        engine: [-0.72, 0.52], engRear: true, crush: { x0: 0, x1: 0, z: 0 },   // (the V8's top under the cover; no roof: a crushed roof bends nothing)
       },
       wheels: { style: 'wire', w: 0.135, wR: 0.175, rimK: 0.62, arch: false },
-      regions: [{ part: 'cover', x: [-2, -0.34], bands: ['window', 'edge', 'crown'] }],   // (the loft's panels only: every primitive is in an explicit part)
+      regions: [{ part: 'cover', x: [-2, -0.34], bands: ['window', 'edge', 'crown'] }],   // (for the loft's panels and decals: every primitive is in an explicit part)
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, CH = K.chrome, UND = K.shade(P, 0.55), WH = [0.95, 0.95, 0.93];
         const STEEL = [0.8, 0.77, 0.71], HOLE = K.black, ARM = [0.6, 0.61, 0.64], SHAFT = [0.3, 0.3, 0.32], SPRING = [0.86, 0.6, 0.16], WOOD = [0.45, 0.27, 0.13];
@@ -61,7 +62,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const dia = (r) => [[r, 0], [0, r], [-r, 0], [0, -r]];
         // ---- the cigar: the paint, the stripe along its crown, the chamfers under it darker; open on top over the cockpit ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => at.end ? P : kind === 'r' && e >= 3 && e <= 5 ? null : e === 0 || e === 8 ? UND : e === 4 ? S : P,
-          { caps: { front: false, rear: { col: [0.12, 0.12, 0.13], cut: 0.32, low: 'body', high: 'cover' } } });
+          { caps: { front: false, rear: { col: [0.16, 0.16, 0.17], cut: 0.32, low: 'body', high: 'cover' } } });
         // ---- the nose cone: a skin from the cigar's section (5 mm over it) to the oval mouth, the stripe along its top and round the mouth;
         //      the intake recessed into it (its wall facing in, dark), the grille at the back ----
         const s0 = {}; for (const k of ['w', 'yb', 'tk', 'ybelt', 'wt', 'yt', 'cr']) s0[k] = L.prop(1.19, k);
@@ -127,9 +128,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         { const F = {}; for (const k of ['w', 'yb', 'tk', 'ybelt', 'wt', 'yt', 'cr']) F[k] = L.prop(1.22, k);   // (the loft open at the front: its bulkhead here, inside the nose)
           const half = [[F.yb, 0.93 * F.w], [F.yb + F.tk, F.w], [F.ybelt, F.w], [F.yt, F.wt], [F.yt + F.cr, 0.38 * F.wt]];
           K.part('body', () => K.inner(() => { face(half.map(([y, z]) => [1.22, y, z]).concat(half.slice().reverse().map(([y, z]) => [1.22, y, -z])), [0.2, 0.2, 0.21], [3, 0.33, 0]);
-            K.grille(1.222, 0.33, 0, 0.34, 0.24, { slats: 5, col: [0.08, 0.08, 0.085], slatCol: [0.42, 0.42, 0.44] }); })); }
+            K.grille(1.222, 0.33, 0, 0.34, 0.24, { slats: 5, col: B, slatCol: [0.42, 0.42, 0.44] }); })); }
         K.part('body', () => K.inner(() => {
-          const EN = [0.45, 0.46, 0.48], CAM = [0.12, 0.12, 0.13];
+          const EN = [0.45, 0.46, 0.48], CAM = [0.55, 0.12, 0.09];   // (the block, the cam covers in red crackle)
           K.box(-0.72, 0.15, 0, 0.62, 0.22, 0.34, 0, EN);
           for (const sd of [-1, 1]) { K.box(-0.72, 0.37, sd * 0.11, 0.58, 0.1, 0.13, 0, EN); K.box(-0.72, 0.47, sd * 0.11, 0.56, 0.035, 0.11, 0, CAM);
             for (let j = 0; j < 4; j++) K.cyl([-0.52 - 0.13 * j, 0.42, sd * 0.03], [-0.52 - 0.13 * j, 0.56, sd * 0.03], 0.024, CH, { n: 6, capA: null, capB: B }); }
