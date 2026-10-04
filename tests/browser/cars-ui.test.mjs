@@ -1,4 +1,4 @@
-// The fleet in the menus and in a race (42 vehicles in 10 categories, Core.CATS):
+// The fleet in the menus and in a race (every vehicle in its category, Core.CATS):
 // - the car screen at 844×390 and at 390×844: the categories (chips) and the strip of the chosen category's cars over the showroom, in
 //   their places (nothing off the screen, clear of the panel and the arrows), the panel as it was (and the category under the name);
 //   the chosen chips in view; no chip is an arrow (LB / RB, data-act ...car-next / car-prev); switching by touch (a category: its car, the
@@ -97,10 +97,10 @@ try {
       for (let k = 0; k < want.length; k++) { seen.push(Core.MODELS[g.S.car].id); g.onAction('car-next'); }
       const wrap = Core.MODELS[g.S.car].id;
       for (let k = 0; k < want.length; k++) { g.onAction('car-prev'); back.push(Core.MODELS[g.S.car].id); }
-      return { want, game: g.carOrder, seen, wrap, back };
+      return { want, game: g.carOrder, seen, wrap, back, n: Core.MODELS.filter(m => !m.retired).length };
     }, expectOrder.toString());
-    T.check('the display order: by category (Core.CATS), the cheapest first, then by id; the arrows visit all 42 cars in it and come round again, the other way back',
-      ord.want.length === 42 && ord.game.join() === ord.want.join() && ord.seen.join() === ord.want.join() && ord.wrap === ord.want[0] && ord.back.join() === ord.want.slice().reverse().join(),
+    T.check('the display order: by category (Core.CATS), the cheapest first, then by id; the arrows visit every car in it and come round again, the other way back',
+      ord.want.length === ord.n && ord.n >= 42 && ord.game.join() === ord.want.join() && ord.seen.join() === ord.want.join() && ord.wrap === ord.want[0] && ord.back.join() === ord.want.slice().reverse().join(),
       JSON.stringify({ n: ord.want.length, game: ord.game.slice(0, 8), seen: ord.seen.slice(0, 8), wrap: ord.wrap }));
 
     // 5. the online picker in the same order (a room made without the network: Net stood in for)
@@ -117,8 +117,10 @@ try {
         return { ids, prev, shown, sent: sent.filter(m => m.t === 'me').map(m => m.car) };
       } finally { Object.assign(Net, keep); }
     });
-    T.check('the online picker: the same order (PICO TURBO → MIŠKA → KOLIBRI → RAKETA 16V → PEUGEOT 206 → LISICA), the friend told each time',
-      net.ids.join() === 'miska,kolibri,raketa,p206,lisica,kaze' && net.prev === 'lisica' && net.sent.join() === net.ids.concat(['lisica']).join() && net.shown === 'LISICA', JSON.stringify(net));
+    const netWant = await page.evaluate((src) => { const want = (0, eval)('(' + src + ')')(), i = want.indexOf('pico'); return [1, 2, 3, 4, 5, 6].map(k => want[(i + k) % want.length]); }, expectOrder.toString());
+    const netPrev = await page.evaluate((id) => Core.MODELS.find(m => m.id === id).name, netWant[4]);
+    T.check('the online picker: the same order (from the PICO TURBO: the next six of the display order, then one back), the friend told each time',
+      net.ids.join() === netWant.join() && net.prev === netWant[4] && net.sent.join() === net.ids.concat([netWant[4]]).join() && net.shown === netPrev, JSON.stringify({ net, netWant }));
     // 5b. the championship's picker in the same order too (the arrows; Y on a pad: the next category's car)
     const chp = await page.evaluate(async () => { const g = window.__game, id = () => Core.MODELS[g.S.car].id, ids = [];
       g.onAction('to-champ'); await new Promise(r => setTimeout(r, 150)); g.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
@@ -163,9 +165,9 @@ try {
     const wantKids = await page.evaluate((src) => { const want = (0, eval)('(' + src + ')')(), out = [];
       for (const c of Core.CATS) { const L = want.filter(id => Core.MODELS.find(m => m.id === id).cat === c.id); if (!L.length) continue; out.push('#' + c.name); for (const id of L) out.push(c.id + ':' + Core.MODELS.find(m => m.id === id).name); }
       return out; }, expectOrder.toString());
-    const heads = car.kids.filter(k => k[0] === '#');
+    const heads = car.kids.filter(k => k[0] === '#'), Core_n = await page.evaluate(() => Core.MODELS.filter(m => !m.retired).length);
     T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni), in the display order',
-      car.kids.join('|') === wantKids.join('|') && car.kids.length === 52 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni', JSON.stringify(car.kids.slice(0, 8)));
+      car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 10 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni', JSON.stringify(car.kids.slice(0, 8)));
     T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 €), a tick on the one in the garage',
       car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /€|✓/.test(t)), JSON.stringify(car.chips));
     T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 €, all three levels 23.000 €), the MRAVLJA (5.000 €) no cheaper than it (×1), the TITAN ×1.2 (4.800 €), ŠKORPIJON H ×2 (8.000 €; all three levels 46.000 €)',
