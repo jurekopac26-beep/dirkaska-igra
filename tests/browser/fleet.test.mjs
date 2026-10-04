@@ -20,6 +20,11 @@
 //    its colour); the start number lit on every K.number panel; the driver sees out (no pane of glass ahead of the eyes turned to them); a part lost: the whole buffer in the chase view, the outer shell only from
 //    the cockpit; a crushed roof (roofDmg 1) only inside body.crush, its noCrush ranges moved whole, the lining with its shell (the twins),
 //    the cabin unmoved; dents never move a noDent range
+//  - the wreck (stage B2; sections 4b-4e): Core.wreckCar's parts off as pieces of their own (their ranges' copies), loose parts hinged, the
+//    wheels off with the body sagged, the lamps and panes, the pit crew and the marshals' refit, a repair; as the player sees it (every
+//    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, the cockpit not blacked out under a
+//    crushed roof, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
+//    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
 //  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices): perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
@@ -429,8 +434,23 @@ try {
       for (const k in r.pics) fs.writeFileSync(path.join(dir, `${r.id}-${k}.png`), Buffer.from(r.pics[k].split(',')[1], 'base64')); delete r.pics; }
     R6.push(r);
   }
+  // ---- 4e. a field on fire (stage B2's caps): every car of a race wrecked where it stands (the field held still: no contact sparks, no
+  //          dust), burning: at most 6 emit (the nearest to the camera), each at most 40 flames (sparks) and 12 smoke particles a second ----
+  const FI = await page.evaluate((id) => {
+    const g = window.__game; let seed = 2024; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    g.S.car = Core.MODELS.findIndex(m => m.id === id); g.onAction('restart'); g.pause();
+    const R = g.race, P = R.player, step = (n) => { for (let i = 0; i < n; i++) { for (let j = 0; j < 12; j++) { for (const c of R.cars) { c.vx = 0; c.vz = 0; c.w = 0; } R.step(1 / 120); } Render.frame(0.1, 1, P, 'chase', {}); } };
+    step(2); for (const c of R.cars) Core.wreckCar(c);
+    step(20);   // (2 s: the bits of the wrecks over, every fire up)
+    const f0 = Render.fxStats(); step(10); const f1 = Render.fxStats();
+    const V = R.cars.map(c => Render.viewOf(c)).filter(Boolean), burning = V.filter(v => v.fire), emit = V.filter(v => v.fireEmit), cp = Render.camera.position, d = (v) => Math.hypot(v.car.x - cp.x, v.car.z - cp.z);
+    const near = burning.slice().sort((a, b) => d(a) - d(b)).slice(0, 6);
+    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: near.every(v => v.fireEmit), sparks: f1.sparks - f0.sparks, smoke: f1.total - f0.total };
+  }, kits.length ? kits[0].id : 'kaze');
   await page.evaluate(() => Render.setDynScale(1));
   console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles (${R6.filter(r => !r.kit).length} of the 11); fire / smoke pixels in sight: ` + R6.map(r => `${r.id} ${r.fireV}/${r.smokeV}`).join(', '));
+  T.check('a field on fire (every car wrecked where it stands): at most 6 emit, the nearest to the camera, each at most 40 flames and 12 smoke particles a second',
+    FI.burning === FI.cars && FI.emit === Math.min(6, FI.burning) && FI.nearest && FI.sparks > 0 && FI.sparks <= 40 * FI.emit && FI.smoke > 0 && FI.smoke <= 12 * FI.emit, JSON.stringify(FI));
   const seenOk = (r) => r.diff >= 0.35 && r.fire && r.flames > 0 && r.smoke > 0 && r.fireV >= 12 && r.smokeV >= 12;
   T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire (flames out of the body) and smoke in sight',
     R6.length === seen.length && R6.every(seenOk),
