@@ -216,5 +216,21 @@ function raysThrough(res) {
   check(`every registered vehicle's engine seat (body.engine) inside its body, the shell's top over it within its height (${n6} vehicles)`, !rows.length && n6 > 0, rows.slice(0, 6).join(' | ') || tops.join(', '));
 }
 
+// ---- 7. every registered vehicle's lost parts lie flat (stage B2: a piece on the road laid on its broadest face, Render.kitInfo(id).lay: how
+//         tall each part's piece lies, its ranges as built): at most max(0.3 m, 3 x its part table's h). A part that cannot (a skirt with its
+//         brackets to the frame in it, a bumper region taking half the front) stands up like a sign: move what holds it on into 'body', or
+//         give the table's h the piece's real thickness ----
+{
+  const rows = [], w0 = console.warn, all = []; let n7 = 0;
+  console.warn = () => { };
+  for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
+    const I = R.kitInfo(M.id), PT = Core.partsOf(M);
+    for (const k in I.lay) { const h = PT[k] ? PT[k].h : 0, lim = Math.max(0.3, 3 * h); n7++; all.push([I.lay[k] / lim, `${M.id} ${k} ${I.lay[k].toFixed(2)} m (h ${h})`]);
+      if (!(I.lay[k] <= lim)) rows.push(`${M.id} ${k}: lies ${I.lay[k].toFixed(2)} m tall > ${lim.toFixed(2)} (h ${h})`); }
+  }
+  console.warn = w0; all.sort((a, b) => b[0] - a[0]);
+  check(`every registered vehicle's lost parts lie flat: each piece at most max(0.3 m, 3 x its h) tall (${n7} parts)`, !rows.length && n7 > 0, rows.slice(0, 6).join(' | ') || 'the tallest for their h: ' + all.slice(0, 4).map(q => q[1]).join(', '));
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} kit checks (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
 process.exit(bad ? 1 : 0);

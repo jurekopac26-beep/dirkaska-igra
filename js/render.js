@@ -839,9 +839,10 @@ const Render = (function () {
 
      BREAKING APART (stage B2: render only, from the core's state, the same every time; kitParts)
        loose   a part whose zone has taken 60 % of what knocks it off (c.dz[z] >= 0.6 th) turns once about its hinge, its shell and its
-               lining together: a bonnet (hood) pops 8 degrees, a boot lid or a tailgate (trunk, tailgate) opens 25, a cover 14, a hardtop
-               and a deflector 10, a door hangs 15 ajar, a fender or a quarter stands 6 out (a side extra 8), a mirror dangles 30, a bumper's
-               free end drops 6 cm, a wing's 8 cm, an extra at an end of the car tips 6 off it (one on top tilts as a wing). The hinge:
+               lining together (enough to see from the chase camera): a bonnet (hood) pops 18 degrees, a boot lid or a tailgate (trunk,
+               tailgate) opens 30, a cover 20, a hardtop and a deflector 14, a door hangs 28 ajar, a fender or a quarter stands 12 out (a
+               side extra 12), a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, an extra at an end of the car tips 10
+               off it (one on top tilts as a wing); what lies on it (its lamps, its start number) turns with it. The hinge:
                K.part opts.hinge / K.hinge [a, b] (look units); else from the range's box (a lid across at its edge by the cabin, at its top
                there; a deflector across at its front foot; a door upright at its front edge, on its face; a side panel upright at its edge
                by the car's middle; a mirror along the car at its arm's root; a bumper or a wing along the car at its end on the less
@@ -853,20 +854,21 @@ const Render = (function () {
                checks), drawn with the car's own body material (its dirt, scratches and char stay), laid on its broadest face, paint up, a
                shadow only from 0.5 m across; then the ranges collapse (nothing drawn, never dented or crushed again) and the inner block
                shows. With it go: its o.host sub-ranges (lamps, grilles, numbers), the start number (body.decalPart), its glass (out of the
-               panes: a pane with nothing left breaks no more), a head lamp hosted on it (its glow, the night beam), a tail lamp whose
-               nearest shell point is on it (its side of the tail mesh)
+               panes: a pane with nothing left breaks no more), a head lamp hosted on it (its glow, the night beam), a tail lamp on it
+               (K.tailLamp's o.host, else the part of the shell's surface nearest the lamp's middle: its side of the tail mesh)
        lamps   c.lightOut: a head lamp's lens dark (while its host is on), a tail lamp's side of the tail mesh gone; the night beam with the
                head lamps left (one: half, on its side)
        wheels  a wheel off (c.wreck.wl): hidden and latched (the pit crew never puts it back), a bare hub and brake disc in its place, its
-               piece the model's own wheel; the body sags onto that corner by min(0.6 rw, the shell's lowest point within 0.7 m of that hub:
-               a low splitter keeps it up), turning about the diagonal through the two corners next to it (the lamps' glow and the cockpit's
-               eye stay with the car); its hub sparks while the car moves; the marshals' refit (c.wreck.fix) puts them back, a repair
-               builds the car afresh
+               piece the model's own wheel; the body sags onto that corner by 0.6 rw, turning about the diagonal through the two corners
+               next to it, no point of the shell left on it lower than 1 cm over the road (a low splitter, a skirt, a long overhang's
+               corner keeps it up: the sag is scaled back) (the lamps' glow and the cockpit's eye stay with the car); its hub sparks while
+               the car moves; the marshals' refit (c.wreck.fix) puts them back, a repair builds the car afresh
        fire    (every vehicle: engineFx) dmg >= 0.9, or the hood / cover off and dmg >= 0.75 (game.js's fireOn, sfx's crackle): 20 s of
                race time of flames out of the shell over body.engine (the bonnet, the cover, a cab's top; the bared engine), black smoke
-               over them, a glow, then heavy black smoke; soot spreads from the engine over the whole body (dirtyCarMat's char: the pieces
-               too) and some 8 s in the panes' cracks and every lamp go. The inside (the lining, the cabin, the engine bay: the body's
-               aIn) never gets the dirt or the scratches, and has no gloss
+               over them, a glow, then heavy black smoke thinning out over the next 40 s; soot spreads from the engine over the whole body
+               (dirtyCarMat's char; the wheels, bare hubs and the 11's panels and under-parts with it; a piece already on the road keeps the
+               dirt, scratches and char it came off with) and some 8 s in the panes' cracks and every lamp go. The inside (the lining, the
+               cabin, the engine bay: the body's aIn) never gets the dirt or the scratches, and has no gloss
        (tests) Render.viewOf(car): v.kit.dead / ajar, v.loose (copies waiting for their pieces), v.wheelOff, v.hubs, v.sagQ, v.fire;
        Render.fxStats().total / .sparks: how many bits and sparks were ever emitted
 
@@ -961,7 +963,8 @@ const Render = (function () {
        K.headLamp(x, y, z, r, o)       a head lamp at its lens' centre (z > 0 the right one): o { shape: 'rect' (w, h) | round, ring (colour,
                                null: none; default chrome), col (K.lampHead), host, dir (1), n (10) }; its lens is the sub-range lampFL / lampFR
        K.tailLamp(x, y, z, w, h, o)    a tail lamp (lights up when braking): the tail mesh's left / right range; o { round (a disc of
-                               diameter w), d (depth), dir (-1) }. Its surround: draw it in the body (K.rect, K.box)
+                               diameter w), d (depth), dir (-1), host (the part it sits on: its side goes and turns with it; default
+                               the part of the shell's surface nearest it) }. Its surround: draw it in the body (K.rect, K.box)
        K.grille(x, y, z, w, h, o)      a grille facing o.dir (1 forward, -1 back), centred there: o { col (K.black), slats (3), slatCol, slatH,
                                frame (a colour: a line over and under it), frameH, box (a solid panel instead of a flat one), host }
        K.mirror(x, y, z, o)            a door mirror (z > 0 the right one): its housing (o.col, default the paint) at (x, y, z), the glass
@@ -1004,10 +1007,12 @@ const Render = (function () {
          } }
        The regions do the rest: the bonnet, the tailgate with its glass, the fenders, the doors (their glass too), the quarters.
      CHECKING A LOOK: node tools/carshots.mjs <id> (test-results/carshots/<id>/sheet.png: the views with the grid and the target box, the
-       cut-away (the inside), the chase camera, the wreck: chase-wreck / wreck-34 / wreck-34r a staged one (the front off, the left side torn
-       off, the right side and the rear hanging loose, the front left wheel off, lamps and panes broken: check each part comes off whole,
-       hangs the right way from its hinge, the inside behind it), chase-total / total-34 after Core.wreckCar, burning (the flames out of
-       the body, not inside it), chase-burnt / burnt-34l 20 s on (burnt out: soot all over, black smoke), the cockpit); --cat <category>
+       cut-away (the inside), the chase camera, chase-loose / loose-34r every part hanging loose, none lost (each hangs the right way
+       from its hinge, seen from the chase camera; the inside through the gaps), the wreck: chase-wreck / wreck-34 / wreck-34r a staged
+       one (the front off, the left side torn off, the right side and the rear hanging loose, the front left wheel off, lamps and panes
+       broken: check each part comes off whole, hangs the right way from its hinge, the inside behind it), chase-total / total-34 after
+       Core.wreckCar, burning (the flames out of the body, not inside it), chase-burnt / burnt-34l 20 s on (burnt out: soot all over,
+       black smoke), the cockpit, cockpit-wreck (the staged wreck from the seat: the engine bay where the bonnet was)); --cat <category>
        (the category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
        seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
@@ -1170,7 +1175,7 @@ const Render = (function () {
   // ---- one vehicle's build: the context (K is its face) ----
   function kitCtx(M, look, body, fb) {
     const sx = M.len / body.len, sz = M.wid / body.wid, PT = Core.partsOf(M);
-    const kx = { M, look, body, fb, sx, sz, PT, B: new Map(), order: [], ex: null, pr: null, inner: 0, hinges: {}, heads: [], tails: { L: new GB(), R: new GB() }, tailAt: [], engineAt: null, nums: [], twins: new Map(), tubs: [], openings: [],
+    const kx = { M, look, body, fb, sx, sz, PT, B: new Map(), order: [], ex: null, pr: null, inner: 0, hinges: {}, heads: [], tails: { L: new GB(), R: new GB() }, tailAt: [], tailHost: {}, engineAt: null, nums: [], twins: new Map(), tubs: [], openings: [],
       S: body.secs.map(kitRow).map(q => Object.assign(q, { x: q.x * sx, w: q.w * sz, wt: q.wt * sz })), wheels: kitWheelSpec(M, look), regions: null, lofts: 0 };
     kx.g = new KitGB(kx);
     kx.partOk = (n) => { if (n === 'body') return; if (typeof n !== 'string' || !(n in PT) || PT[n].wh != null) kitFail('part "' + n + '" is not in this vehicle\'s part table (body, ' + Object.keys(PT).filter(k => PT[k].wh == null).join(', ') + ')'); };
@@ -1676,6 +1681,7 @@ const Render = (function () {
       o = o || {}; const side = z < 0 ? 'L' : 'R', T = kx.tails[side], dir = o.dir || -1, sc = (p) => [p[0] * sx, p[1], p[2] * sz], tg = { quadO: (a, b, c, d, cl, i) => T.quadO(sc(a), sc(b), sc(c), sc(d), cl, sc(i)), triO: (a, b, c, cl, i) => T.triO(sc(a), sc(b), sc(c), cl, sc(i)) };
       if (o.round) discX(tg, x + dir * 0.006, y, z, w / 2, o.n || 10, [1, 1, 1], dir); else World.box(tg, x + dir * 0.008, y - h / 2, z, o.d || 0.03, h, w, 0, [1, 1, 1]);
       kx.tailAt.push([x * sx, y, z * sz]);
+      if (o.host) { kx.partOk(o.host); if (!kx.tailHost[side]) kx.tailHost[side] = o.host; }   // (the part it sits on: its side of the tail mesh goes with it, turns with it)
     };
     K.grille = (x, y, z, w, h, o) => {   // a grille facing forward (o.dir -1: back) at (x, y, z) (its centre), w wide, h tall: dark, with slats; o.frame: a frame colour
       o = o || {}; const dir = o.dir || 1, col = o.col || K.black, sl = o.slatCol || [0.16, 0.16, 0.17], n = o.slats == null ? 3 : o.slats;
@@ -1780,15 +1786,36 @@ const Render = (function () {
     const order = ['body'].concat(Object.keys(kx.PT).filter(k => kx.PT[k].wh == null)), P = [], N = [], Cl = [], ranges = {}, pI = [], pK = [], sI = [], sK = [], lamps = {}, noCrush = [], noDent = [];
     for (const name of order) ranges[name] = { o: [0, 0], i: [0, 0], subs: [] };
     for (const t of kx.order) if (order.indexOf(t.part) < 0) kitFail('part "' + t.part + '" not in the part table');
-    let outerN = 0;
+    // the inner block's front: what lies ahead of the windscreen's foot (the main loft's first section past its 'gf' run, metres) comes first,
+    // the parts there (their lining) and the body's triangles there (the bay's floor, the engine, the front's lining), so a prefix of the
+    // inner block (U.engN vertices) is the engine bay: the cockpit draws it once a part is off (kitRange); none without a windscreen
+    const SM = kx.mainS, gi = SM ? SM.findIndex(q => q.k === 'gf') : -1; let xBay = null;
+    if (gi >= 0) { let j = gi; while (j < SM.length && SM[j].k === 'gf') j++; if (j < SM.length) xBay = SM[j].x * kx.sx; }
+    const bodyIn = [], innerOrder = order.slice();
+    if (xBay != null) {
+      for (const t of kx.order) { if (!t.inner || t.part !== 'body') continue;
+        if (t.sub || t.nc || t.nd || t.num) { bodyIn.push(Object.assign(t, { bay: false })); continue; }
+        const A = { part: 'body', inner: true, sub: '', g: { P: [], N: [], C: [] }, tag: [], bay: true }, B = Object.assign({}, A, { g: { P: [], N: [], C: [] }, tag: [], bay: false }), nv = t.g.P.length / 3, map = new Int32Array(nv), to = new Uint8Array(nv);
+        for (let tri = 0; tri < nv / 3; tri++) { const o = tri * 9, T = (t.g.P[o] + t.g.P[o + 3] + t.g.P[o + 6]) / 3 > xBay ? A : B, b0 = T.g.P.length / 3;
+          for (let q = 0; q < 9; q++) { T.g.P.push(t.g.P[o + q]); T.g.N.push(t.g.N[o + q]); T.g.C.push(t.g.C[o + q]); }
+          for (let q = 0; q < 3; q++) { map[tri * 3 + q] = b0 + q; to[tri * 3 + q] = T === A ? 1 : 0; } }
+        for (let i = 0; i < t.tag.length; i += 3) (to[t.tag[i]] ? A : B).tag.push(map[t.tag[i]], t.tag[i + 1], t.tag[i + 2]);
+        if (A.g.P.length) bodyIn.push(A); if (B.g.P.length) bodyIn.push(B); }
+      const cx = (n) => { let s = 0, k = 0; for (const t of kx.order) if (t.inner && t.part === n) for (let i = 0; i < t.g.P.length; i += 3) { s += t.g.P[i]; k++; } return k ? s / k : -1e9; };
+      const front = order.filter(n => n !== 'body' && cx(n) > xBay);
+      innerOrder.length = 0; innerOrder.push(...front, 'body', ...order.filter(n => n !== 'body' && front.indexOf(n) < 0));
+    }
+    let outerN = 0, engN = 0;
     for (const inner of [false, true]) {
-      for (const name of order) {
-        const R = ranges[name], start = P.length / 3, bk = kx.order.filter(t => t.inner === inner && t.part === name).sort((a, b) => (a.sub || a.nc || a.nd ? 1 : 0) - (b.sub || b.nc || b.nd ? 1 : 0));
+      for (const name of inner ? innerOrder : order) {
+        const R = ranges[name], start = P.length / 3, rank = (t) => (t.bay ? 0 : 2) + (t.sub || t.nc || t.nd ? 1 : 0);
+        const bk = (inner && name === 'body' && xBay != null ? bodyIn.slice() : kx.order.filter(t => t.inner === inner && t.part === name)).sort((a, b) => rank(a) - rank(b));
+        if (inner && name === 'body' && xBay != null) engN = start - outerN;   // (the front parts' linings before it: in the prefix)
         for (const t of bk) {
           const s0 = P.length / 3; for (let i = 0; i < t.g.P.length; i++) { P.push(t.g.P[i]); N.push(t.g.N[i]); Cl.push(t.g.C[i]); }
           for (let i = 0; i < t.tag.length; i += 3) { if (t.tag[i + 1]) { sI.push(s0 + t.tag[i]); sK.push(t.tag[i + 2]); } else { pI.push(s0 + t.tag[i]); pK.push(t.tag[i + 2]); } }
           if (t.num) for (const q of t.num) kx.nums[q[2]].slots[q[3]][q[4]] = [s0 + q[0], s0 + q[1]];   // (K.number's segments: where they ended up)
-          const s1 = P.length / 3;
+          const s1 = P.length / 3; if (t.bay) engN = s1 - outerN;
           if ((t.sub || t.nc || t.nd) && s1 > s0) { R.subs.push({ name: t.sub || '', o: inner ? null : [s0, s1], i: inner ? [s0, s1] : null, noCrush: t.nc, noDent: t.nd });
             if (/^lampF[LR]$/.test(t.sub) && !inner) lamps[t.sub.slice(4)] = (lamps[t.sub.slice(4)] || []).concat([[s0, s1, name]]);   // ([first, end, host part])
             if (t.nc) noCrush.push([s0, s1]); if (t.nd) noDent.push([s0, s1]); }
@@ -1815,10 +1842,10 @@ const Render = (function () {
     const twin = new Int32Array(total - outerN).fill(-1), kM = (x, y, z) => Math.round(x * 1e5) + ',' + Math.round(y * 1e5) + ',' + Math.round(z * 1e5);
     if (kx.twins.size && total > outerN) { const idx = new Map(); for (let i = 0; i < outerN; i++) { const k = kM(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!idx.has(k)) idx.set(k, i); }
       for (let i = outerN; i < total; i++) { const o = kx.twins.get(kM(P[i * 3], P[i * 3 + 1], P[i * 3 + 2])); if (o) { const j = idx.get(kM(o[0], o[1], o[2])); if (j != null) twin[i - outerN] = j; } } }
-    geo.userData = { kit: true, outerN, N: total, ranges, order, paint: { i: Uint32Array.from(pI), k: Float32Array.from(pK) }, strp: { i: Uint32Array.from(sI), k: Float32Array.from(sK) }, lamps, noCrush, noDent, twin, tris, budget: B, nums: kx.nums.length ? kx.nums : null };
+    geo.userData = { kit: true, outerN, N: total, engN, ranges, order, paint: { i: Uint32Array.from(pI), k: Float32Array.from(pK) }, strp: { i: Uint32Array.from(sI), k: Float32Array.from(sK) }, lamps, noCrush, noDent, twin, tris, budget: B, nums: kx.nums.length ? kx.nums : null };
     // the tail lamps: their own mesh (lit when braking), the left ones then the right ones
     const tl = kx.tails, tg = new GB(); for (const s of ['L', 'R']) { const T = tl[s]; for (let i = 0; i < T.P.length; i++) { tg.P.push(T.P[i]); tg.N.push(T.N[i]); tg.C.push(T.C[i]); } }
-    const tail = tg.geometry(), nL = tl.L.P.length / 3; tail.userData = { tail: { L: [0, nL], R: [nL, tg.P.length / 3] } };
+    const tail = tg.geometry(), nL = tl.L.P.length / 3; tail.userData = { tail: { L: [0, nL], R: [nL, tg.P.length / 3] }, host: Object.assign({}, kx.tailHost) };
     return { geo, tail, tris };
   }
 
@@ -1941,16 +1968,18 @@ const Render = (function () {
     while (kitShowLRU.length > 2) kitShowLRU.shift().geo.dispose();
     return q.geo;
   }
-  // the kit's draw range: the outer shell while the car is whole; from its first lost part (a wheel aside) the inner block too (the lining,
-  // the cabin, the engine bay behind the hole; stage B2 takes the part's ranges off). A repaired car is a new view: whole again. The car the
-  // cockpit camera sits in draws its outer shell only, whatever it has lost (from the seat, the lining, the cabin and the engine bay would
-  // fill the view under the bonnet's edge; frame sets v.kit.ck)
+  // the kit's draw range: the outer shell while the car is whole; from its first part hanging loose or lost (a wheel aside) the inner block
+  // too (the lining, the cabin, the engine bay behind the gap or the hole; stage B2 turns a loose part, takes a lost one's ranges off). A
+  // repaired car is a new view: whole again. The car the cockpit camera sits in (frame sets v.kit.ck) draws its outer shell and of the inner
+  // block only what lies ahead of the windscreen's foot (U.engN: the engine bay, the front's lining and floor: what the driver sees through
+  // a lost bonnet); the lining, the cabin and the rest round the seat would fill the view
   function kitLod(v, c) {
-    const n = Object.keys(c.lost).length;
-    if (n !== v.kit.nLost) { v.kit.nLost = n; const PT = Core.partsOf(c.m); v.kit.full = Object.keys(c.lost).some(k => !(PT[k] && PT[k].wh != null)); }
+    const K = v.kit, n = Object.keys(c.lost).length;
+    if (n !== K.nLost || K.ver !== K.lodV) { K.nLost = n; K.lodV = K.ver; const PT = Core.partsOf(c.m);
+      K.full = Object.keys(K.ajar).length > 0 || Object.keys(c.lost).some(k => !(PT[k] && PT[k].wh != null)); }
     kitRange(v);
   }
-  function kitRange(v) { const g = v.body.geometry, U = g.userData, want = v.kit.full && !v.kit.ck ? U.N : U.outerN; if (g.drawRange.count !== want) g.setDrawRange(0, want); }
+  function kitRange(v) { const g = v.body.geometry, U = g.userData, K = v.kit, want = !K.full ? U.outerN : K.ck ? U.outerN + (U.engN || 0) : U.N; if (g.drawRange.count !== want) g.setDrawRange(0, want); }
   // a head lamp smashed (k 0 left, 1 right): its lens dark (only while it is on the car: its host part still there)
   function kitLampOut(v, k) {
     const U = v.kit && v.body.geometry.userData, L = U && U.lamps[k ? 'FR' : 'FL']; if (!L) return;
@@ -1985,9 +2014,9 @@ const Render = (function () {
     const pa = E.geo.attributes.position.array;
     for (const n in U.ranges) { const R = U.ranges[n], c = [0, 0, 0]; let k = 0; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++, k++) for (let j = 0; j < 3; j++) c[j] += pa[i * 3 + j];
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
-    return { id, status: E.status, tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
+    return { id, status: E.status, tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, engN: U.engN, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
       wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
-      bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, clear: kitClear(E).slice(), fire: kitFireOf(M, E) };   // (clear: how far each corner's body may sag, FL FR RL RR, metres)
+      bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, fire: kitFireOf(M, E), tailHost: Object.assign({}, kitTailHost(E)), lay: Object.assign({}, kitLayH(E)) };   // (tailHost: the part each tail lamp sits on; lay: how tall each part's piece lies, metres)
   }
 
 
@@ -2071,13 +2100,14 @@ const Render = (function () {
   // material for all; crackWarm: one degenerate triangle of it drawn in a race's first frame, so its shader compiles at the start, not at the
   // first broken window: attachRace, frame)
   // scratches: thin bright streaks through the paint, mostly lengthwise, patchy; strongest on the roof/upper body (never inside a kit body:
-  // its lining, cabin, engine bay, vIn)
+  // its lining, cabin, engine bay, vIn). Antialiased: a line thinner than a pixel (most of them, a few metres off) shows as the faint tint
+  // of what it covers of the pixel (its width over the pixel's: fwidth), never as single bright pixels glittering
   const SCRATCH_GLSL = [
     '{ vec3 p = vLp;',
-    '  float band = fract(p.z * 23.0 + sin(p.x * 3.1) * 0.35 + floor(p.x * 1.7) * 0.37);',
-    '  float ln = smoothstep(0.045, 0.0, abs(band - 0.5));',
-    '  float band2 = fract(p.x * 17.0 + p.z * 5.0 + sin(p.z * 7.0) * 0.4);',
-    '  float ln2 = smoothstep(0.03, 0.0, abs(band2 - 0.5)) * 0.7;',
+    '  float b1 = p.z * 23.0 + sin(p.x * 3.1) * 0.35 + floor(p.x * 1.7) * 0.37, band = fract(b1), aa1 = fwidth(b1);',
+    '  float ln = (1.0 - smoothstep(0.03, 0.03 + aa1, abs(band - 0.5))) * clamp(0.06 / max(aa1, 0.06), 0.0, 1.0);',
+    '  float b2 = p.x * 17.0 + p.z * 5.0 + sin(p.z * 7.0) * 0.4, band2 = fract(b2), aa2 = fwidth(b2);',
+    '  float ln2 = (1.0 - smoothstep(0.02, 0.02 + aa2, abs(band2 - 0.5))) * clamp(0.04 / max(aa2, 0.04), 0.0, 1.0) * 0.7;',
     '  float patchN = fract(sin(dot(floor(vec2(p.x * 2.3, p.z * 9.0 + p.y * 3.0)), vec2(12.9898, 78.233))) * 43758.5453);',
     '  float top = smoothstep(0.8, 1.15, p.y);',
     '  float s = max(ln, ln2) * step(0.5, patchN) * clamp(uScr * (0.3 + top * 1.3), 0.0, 1.0) * (1.0 - vIn);',
@@ -2125,7 +2155,7 @@ const Render = (function () {
   }
   function cgMat(m, glass, key) {
     const ob = m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile ? m.onBeforeCompile : null, ug = { value: glass ? 1 : 0 };
-    cgOb.set(m, ob);   // (Pikes Peak's own layer goes on what was there before this one: see pkCarMat)
+    cgOb.set(m, ob); m.userData.cg = { glass: !!glass, key };   // (Pikes Peak's own layer goes on what was there before this one: see pkCarMat; cg: a copy's own (pieceMat))
     m.onBeforeCompile = (sh, r) => { if (ob) ob(sh, r); cgPatch(sh, ug, true); };
     m.customProgramCacheKey = () => key;
     return m;
@@ -2174,6 +2204,17 @@ const Render = (function () {
       else if (gf && gr) C = { x0: gr[0] * sx, x1: gf[0] * sx + 0.25, z: Math.max(...S.map(q => q[4])) * sz }; }
     return (v.crushF = C && C.x1 > C.x0 && C.z > 0 ? C : null);
   }
+  // the crush's and the dents' jitter: value noise over 25 cm cells (smooth: deterministic per position, so faces sharing a point move alike,
+  // and a decal, a rect or a lining millimetres off its panel moves with it, not through it), stretched to spread over 0..1 as evenly as
+  // the old per-point hash did
+  const jh = (a, b, c, s) => { const q = Math.sin(a * 127.1 + b * 311.7 + c * 74.7 + s * 19.19) * 43758.5453; return q - Math.floor(q); };
+  function jitN(x, y, z, s) {
+    const X = x * 4, Y = y * 4, Z = z * 4, i = Math.floor(X), j = Math.floor(Y), k = Math.floor(Z), L = (a, b, t) => a + (b - a) * t;
+    let u = X - i, v = Y - j, w = Z - k; u = u * u * (3 - 2 * u); v = v * v * (3 - 2 * v); w = w * w * (3 - 2 * w);
+    const n = L(L(L(jh(i, j, k, s), jh(i + 1, j, k, s), u), L(jh(i, j + 1, k, s), jh(i + 1, j + 1, k, s), u), v),
+      L(L(jh(i, j, k + 1, s), jh(i + 1, j, k + 1, s), u), L(jh(i, j + 1, k + 1, s), jh(i + 1, j + 1, k + 1, s), u), v), w);
+    return clamp(0.5 + (n - 0.5) * 1.57, 0, 1);
+  }
   // roof and upper body sag, the roof edges crumple (deterministic per position → no cracks between faces): only inside the roof's footprint
   // (crushOf: fading out over 15 cm in x, 10 cm in z; none: nothing: a kart, the formula), over 58 % of the body's height. A kit body (KIT
   // API v1): never its noCrush ranges (they sit on the roof under them and go down with it, whole: a deflector, a light bar), the lining
@@ -2190,8 +2231,7 @@ const Render = (function () {
       const x = a[k * 3], y = a[k * 3 + 1], z = a[k * 3 + 2];
       if (y < y0 || (nc && nc[k]) || (dv && dv[k])) continue;
       const w = Math.max(0, 1 - Math.max(C.x0 - x, x - C.x1, 0) / 0.15) * Math.max(0, 1 - Math.max(Math.abs(z) - C.z, 0) / 0.1); if (w <= 0) continue;
-      const up = (y - y0) / Math.max(0.1, bb.max.y - y0), h1 = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453, n1 = h1 - Math.floor(h1);
-      const h2 = Math.sin(x * 39.34 + z * 11.13) * 24634.63, n2 = h2 - Math.floor(h2), edge = Math.min(1, Math.abs(z) / (hz * 0.72));
+      const up = (y - y0) / Math.max(0.1, bb.max.y - y0), n1 = jitN(x, y, z, 1), n2 = jitN(x, 0, z, 2), edge = Math.min(1, Math.abs(z) / (hz * 0.72));
       const m = amt * up * (0.35 + 0.65 * n1) * w, dy = -m * (0.2 + 0.2 * edge), dz = -Math.sign(z) * m * (0.04 + 0.26 * (n1 - 0.3)) * edge, dx = (n2 - 0.5) * m * 0.2;
       a[k * 3 + 1] += dy;                    // roof sags, its edges drop most
       a[k * 3 + 2] += dz;                    // jagged edge: bits pushed in, bits bulging out
@@ -2212,7 +2252,7 @@ const Render = (function () {
         a[k * 3] += D[t * 3]; a[k * 3 + 1] += D[t * 3 + 1]; a[k * 3 + 2] += D[t * 3 + 2]; tris.add((k / 3) | 0); }
     }
     pos.needsUpdate = true; if (ca) geo.attributes.color.needsUpdate = true;
-    refacet(geo, tris);
+    refacet(geo, tris); if (v.kit) v.kit.ver++;
   }
   // glass panes of this car's body, grouped: 0 windscreen, 1 rear window, 2 left, 3 right (found by the glass colours)
   function findGlass(v) {
@@ -2266,7 +2306,7 @@ const Render = (function () {
   // (the 11's) reads WebGL's default for it (0, or 1 left by another program's default): the outside, either way
   function dirtyCarMat() {
     const m = matCar.clone(), u = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) };
-    m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc;
+    m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));');
@@ -2401,7 +2441,7 @@ const Render = (function () {
     if (noHead) { lights[0].set(2.62, 0.26, -0.05); lights[1].set(2.62, 0.26, 0.05); lights[2].set(-2.49, 0.34, -0.02); lights[3].set(-2.49, 0.34, 0.02); }
     // (the kit: its ranges (immutable, shared), this car's own state: dead (parts off), deadV (their vertices: dents and the roof's crush
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
-    const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false } : null;
+    const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
     return { grp, bodyG, body, tail, dec, wf, wr, glb, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
       dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
@@ -2456,13 +2496,15 @@ const Render = (function () {
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       this.mat = new THREE.ShaderMaterial({
         uniforms: { uScale: { value: 400 } },
-        vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; varying vec4 vC; void main(){ vC = pcolor; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
+        vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; varying vec4 vC; void main(){ vC = pcolor; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv;' +
+          (additive ? ' }' : ' vC.a *= smoothstep(1.5, 4.0, -mv.z); }'),   // (smoke, dust, spray: a puff the camera is in fades out, never a sprite over the whole screen)
         fragmentShader: 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); gl_FragColor = vec4(vC.rgb, a); }',
         transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
       this.points = new THREE.Points(g, this.mat); this.points.frustumCulled = false; this.points.renderOrder = additive ? 6 : 5;
     }
     emit(x, y, z, vx, vy, vz, life, s0, s1, r, g, b, a, grav, drag, floor, keep) {
+      if (this.mute) return;   // (a view's first frame: its old news not emitted again, the random numbers for it drawn all the same: updateCars)
       const i = this.cur; this.cur = (this.cur + 1) % this.max; this.n++; this.keep[i] = keep ? 1 : 0;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
       this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z;
@@ -3189,7 +3231,7 @@ const Render = (function () {
   }
   // dusk and night: the headlights' beam on the road ahead of a car (a soft fan, additive)
   function beams(v) {
-    const LB = v.lightBroken, nOk = LB ? (LB[0] ? 0 : 1) + (LB[1] ? 0 : 1) : 2;   // (the head lamps still working: a smashed one (lightOut) or one gone with its part throws no light)
+    const LB = v.lightBroken, nOk = v.lampsOut ? 0 : LB ? (LB[0] ? 0 : 1) + (LB[1] ? 0 : 1) : 2;   // (the head lamps still working: a smashed one (lightOut), one gone with its part or burnt out throws no light)
     const on = atmos.tod !== 'day' && !(v.kit && v.kit.noHeadGlow) && nOk > 0;   // (a kit vehicle without head lamps (a kart): no beam either)
     if (!on) { if (v.beam) v.beam.visible = false; return; }
     if (!v.beam) {
@@ -3318,7 +3360,7 @@ const Render = (function () {
     const v = makeCarMesh(c);
     if (v.kit) v.tail.geometry = v.tail.geometry.clone();   // (the kit's body is already this car's own copy; its tail lamps too: their L / R ranges go out one by one)
     else v.body.geometry = v.body.geometry.clone();
-    v.ownGeo = true; v.smokeAcc = 0;   // own copy: dents stay on this car
+    v.ownGeo = true; v.smokeAcc = 0; v.fresh = true;   // own copy: dents stay on this car (fresh: its first frame to come)
     v.car = c; v.roll = 0; v.pitch = 0; v.gpitch = 0; v.spin = 0; v.sk = [null, null, null, null]; v.acc = [0, 0, 0, 0]; v.repairN = c.repairN || 0; v.wheelFix = c.wreck ? c.wreck.fix : 0;
     v.grp.rotation.order = 'YXZ';   // yaw first, then pitch about the car's own lateral axis (slopes/jumps)
     buildParts(v);
@@ -3374,6 +3416,7 @@ const Render = (function () {
     scDrop();
     const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris(); rRng.s = 90217; dust = race.track.def.dust ? Object.assign({}, DUST0, race.track.def.dust) : null;
+    if (race.debris) for (const d of race.debris) d.mesh = null;   // (a race under way drawn afresh: its pieces on the road made again from the new views: syncDebris)
     birds.reset(birds.gull);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same)
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
@@ -4325,7 +4368,7 @@ const Render = (function () {
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0);
+      v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
@@ -4337,13 +4380,13 @@ const Render = (function () {
         for (const w of v.wf) w.geometry = W(H.fr, H.fw, col); for (const w of v.wr) w.geometry = W(H.rr, H.rw, col); } }
       const braking = (c.inBrk > 0.08 && c.vl > 0.5 && c.gear !== -1) || c.gear === -1 || c.inHand > 0.5;
       const rainL = v.noHead && (wet > 0 || (braking && time % 0.25 < 0.125));   // the formula's rain light: on in the rain, blinking while it brakes (harvesting)
-      v.tail.material = v.tailDead ? matLensBroken : (v.noHead ? rainL : braking) ? matTailOn : matTailOff;   // (tailDead: one of the 11's, both its tail lamps smashed or burnt out)
+      v.tail.material = v.tailDead ? vMat(v, matLensBroken) : (v.noHead ? rainL : braking) ? matTailOn : matTailOff;   // (tailDead: one of the 11's, both its tail lamps smashed or burnt out)
       if (v.glb) v.glb.tail.emissive.setHex(v.tailDead ? 0 : braking ? 0xff1a0a : 0x3a0000);
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking
       v.grp.updateMatrixWorld(true);
       for (let k = 0; k < 4 && c !== ck.car && v.grp.visible; k++) {   // (not the lamps of the car the cockpit camera sits in, nor a hidden car's)
-        if (v.lightBroken && v.lightBroken[k]) continue;   // smashed lamp: no glow
+        if (v.lampsOut || (v.lightBroken && v.lightBroken[k])) continue;   // smashed lamp (burnt out: all of them): no glow
         if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
         _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
         const rl = (1 + Math.max(0, wet) * 0.9) * (atmos.tod === 'night' ? 1.5 : atmos.tod === 'dusk' ? 1.25 : 1);   // (rain, dusk, night: the lights stand out more in the gloom)
@@ -4363,7 +4406,10 @@ const Render = (function () {
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
       v.wasAir = !!c.air;
       if (c.dents && c.dents.length) { for (const d of c.dents) applyDent(v, d); c.dents.length = 0; }
-      if (v.parts) updateParts(v, c, x, y, z, h);
+      if (v.parts) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
+        // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
+        const mute = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
+        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = false; } }
       if (v.sagQ) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
     }
@@ -4453,22 +4499,22 @@ const Render = (function () {
     }
   }
   function updateParts(v, c, x, y, z, h) {
-    if (v.kit) kitLod(v, c);
     const rnd = v.kit ? rRnd : Math.random;   // (the kit's effects: the renderer's own random numbers; the 11's as they always were)
     // lamps
     for (let k = 0; k < 4; k++) if (c.lightOut[k] && !v.lightBroken[k]) {
       v.lightBroken[k] = 1;
       const L = v.lights[k];
-      if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = matLensBroken; if (v.beam) beams(v); }   // (the night beam: the head lamps left)
+      if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = vMat(v, matLensBroken); if (v.beam) beams(v); }   // (the night beam: the head lamps left)
       else if (v.kit) kitTailOut(v, k === 2 ? 'L' : 'R');   // (the kit's tail lamps: their side of its own tail mesh goes out)
-      else if (!v.glb) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), matLensBroken); m.position.set(L.x + 0.02, L.y, L.z); v.bodyG.add(m); }
+      else if (!v.glb) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), vMat(v, matLensBroken)); m.position.set(L.x + 0.02, L.y, L.z); v.bodyG.add(m); }
       if (!v.kit && v.lightBroken[2] && v.lightBroken[3]) v.tailDead = true;   // (both tail lamps of one of the 11 smashed: its whole tail mesh dark, not lit round the covers)
       const ch = Math.cos(h), sh = Math.sin(h), wx = x + L.x * ch - L.z * sh, wz = z + L.x * sh + L.z * ch;
       for (let n = 0; n < 14; n++) particles.emit(wx, y + L.y, wz, c.vx * 0.5 + (rnd() - 0.5) * 4, 1 + rnd() * 2.5, c.vz * 0.5 + (rnd() - 0.5) * 4, 0.7 + rnd() * 0.5, 0.18, 0.12, 0.86, 0.92, 0.98, 0.95, 9, 0.6, y);   // glass shards
     }
-    if (v.kit) kitParts(v, c, x, y, z, h);   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof)
+    if (v.kit) { kitParts(v, c, x, y, z, h); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); }
-    while (v.roofStep < 4 && c.roofDmg >= (v.roofStep + 1) * 0.25) { v.roofStep++; crumpleRoof(v, 0.25); }
+    const r0 = v.roofStep; while (v.roofStep < 4 && c.roofDmg >= (v.roofStep + 1) * 0.25) { v.roofStep++; crumpleRoof(v, 0.25); }
+    if (v.roofStep !== r0 || v.crackDirty) { for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].length && (v.roofStep !== r0 || v.crackDirty[k])) crackDecal(v, k); v.crackDirty = null; }   // (a broken pane's glass moved since its crack decal was laid (the roof sank, a dent): laid again on it, never hanging in the air)
     if (v.roofStep >= 2 || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c);
     if (v.kit) return;
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
@@ -4495,8 +4541,9 @@ const Render = (function () {
   /* ---------------- the kit's destruction (stage B2: KIT API v1, PARTS AND RANGES): how a registered vehicle comes apart ----------------
      Render only, from the core's state (c.dz, c.cd, c.lost, c.lightOut, c.winOut, c.wreck.wl / fix), the same each time it is drawn:
      - loose: a part whose zone has taken 60 % of what knocks it off (dz >= 0.6 th) turns once about its hinge (K.part opts.hinge,
-       K.hinge; else one from its range's box: KIT_LOOSE): a bonnet pops 8 degrees open, a boot lid or a tailgate 25, a door hangs 15 ajar, a
-       fender or a quarter stands 6 out, a mirror dangles 30, a bumper's free end drops 6 cm, a wing's 8 cm, a deflector tilts 10 up
+       K.hinge; else one from its range's box: KIT_LOOSE): a bonnet pops 18 degrees open, a boot lid or a tailgate 30, a door hangs 28 ajar,
+       a fender or a quarter stands 12 out, a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, a deflector tilts 14 up;
+       the inner block shows from then on (the gap it opens is not a hole into nothing)
      - lost (c.lost): its live ranges (dented, scraped, loose, frosted) are copied into a geometry of its own (car space: v.loose[name],
        waiting for the core's piece of that car and part: syncDebris), then collapsed to one point inside the car (v.kit.deadV: dents and the
        roof's crush leave them be); the inner block shows from then on (kitLod: the lining, the cabin, the engine bay behind the hole); its
@@ -4508,13 +4555,13 @@ const Render = (function () {
        wheel geometry (shared: never freed); the body sags onto that corner (kitSag), its hub sparks while the car moves (emitFx); the
        marshals' refit (c.wreck.fix changes) puts them back, a repair builds the car afresh
      Its random numbers: the renderer's own (rRnd). */
-  const KIT_LOOSE = { hood: ['lid', 8], trunk: ['lid', 25], tailgate: ['lid', 25], cover: ['lid', 14], hardtop: ['lid', 10], deflector: ['lid', 10], doorL: ['door', 15], doorR: ['door', 15],
-    fenderL: ['side', 6], fenderR: ['side', 6], quarterL: ['side', 6], quarterR: ['side', 6], mirrorL: ['mirror', 30], mirrorR: ['mirror', 30], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
+  const KIT_LOOSE = { hood: ['lid', 18], trunk: ['lid', 30], tailgate: ['lid', 30], cover: ['lid', 20], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 28], doorR: ['door', 28],
+    fenderL: ['side', 12], fenderR: ['side', 12], quarterL: ['side', 12], quarterR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
   const KIT_WHEEL = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
   function kitParts(v, c, x, y, z, h) {
     const K = v.kit, U = v.body.geometry.userData, PT = Core.partsOf(c.m), W = c.wreck;
     // the wheels: the marshals' refit puts every one back (and the body up); a wheel off is latched once
-    if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix;
+    if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix; K.ver++;
       for (let k = 0; k < 4; k++) if (v.wheelOff[k]) { v.wheelOff[k] = 0; const w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (k % 2 ? 1 : -1)); if (w) w.visible = true; if (v.hubs[k]) v.hubs[k].visible = false; }
       kitSag(v); }
     if (W && W.wl) for (let k = 0; k < 4; k++) if ((W.wl & (1 << k)) && !v.wheelOff[k]) kitWheelOff(v, c, k, x, y, z, h);
@@ -4526,6 +4573,7 @@ const Render = (function () {
       if (!K.ajar[name] && P.th != null && c.dz[P.z] >= 0.6 * P.th) kitLoosen(v, c, name);
       if (c.lost[name]) { kitDetach(v, c, name, x, y, z, h, nOff); nOff = -Math.abs(nOff); }   // (negative: the frame's flash is out)
     }
+    if (K.sagV !== K.ver && v.wheelOff.some(Boolean)) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
   }
   // a part's or a wheel's bits (dark, some in the car's colour) and a spray of small sparks where it came off, a flash with the first of
   // the frame (n parts at once: each its share)
@@ -4538,12 +4586,12 @@ const Render = (function () {
   // the loose stage: part `name` turned once about its hinge (both its ranges, the points and their normals); what lies on it turns with it
   function kitLoosen(v, c, name) {
     const K = v.kit, geo = v.body.geometry, R = geo.userData.ranges[name], pa = geo.attributes.position.array, na = geo.attributes.normal.array, M = c.m;
-    K.ajar[name] = 1; if (!R || R.o[1] <= R.o[0]) return;
+    K.ajar[name] = 1; K.ver++; if (!R || R.o[1] <= R.o[0]) return;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9; const cen = [0, 0, 0], N = [0, 0, 0], no = R.o[1] - R.o[0];
     for (let i = R.o[0]; i < R.o[1]; i++) { const px = pa[i * 3], py = pa[i * 3 + 1], pz = pa[i * 3 + 2];
       if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; if (pz < z0) z0 = pz; if (pz > z1) z1 = pz;
       cen[0] += px / no; cen[1] += py / no; cen[2] += pz / no; N[0] += na[i * 3]; N[1] += na[i * 3 + 1]; N[2] += na[i * 3 + 2]; }
-    const sd = cen[2] < 0 ? -1 : 1, T = KIT_LOOSE[name] || (Math.abs(cen[2]) > 0.15 * M.wid ? ['side', 8] : Math.abs(cen[0]) > 0.15 * M.len ? ['drop', 6] : ['wing', 0]), kind = T[0];   // (an extra: a side one swings out, one at an end drops, one on top tilts)
+    const sd = cen[2] < 0 ? -1 : 1, T = KIT_LOOSE[name] || (Math.abs(cen[2]) > 0.15 * M.wid ? ['side', 12] : Math.abs(cen[0]) > 0.15 * M.len ? ['drop', 10] : ['wing', 0]), kind = T[0];   // (an extra: a side one swings out, one at an end drops, one on top tilts)
     const xin = Math.abs(x0) < Math.abs(x1) ? x0 : x1, zo = sd < 0 ? z0 : z1, zin = sd < 0 ? z1 : z0;   // (its edge by the car's middle; its outer and inner face)
     let A, B;
     if (R.hinge) { A = R.hinge[0]; B = R.hinge[1]; }
@@ -4569,9 +4617,9 @@ const Render = (function () {
     const nl = Math.hypot(N[0], N[1], N[2]), Nn = nl > 0.15 * no ? [N[0] / nl, N[1] / nl, N[2] / nl] : null, out = [0, 0, sd], down = [0, -1, 0], end = [cen[0] < 0 ? -1 : 1, 0, 0];   // (a part whose normals cancel out (a tube, a box): no face to go by)
     const pref = (kind === 'lid' ? [Nn, [0, 1, 0]] : kind === 'door' || kind === 'side' ? [out, Nn] : kind === 'bumper' || kind === 'drop' ? [end, down] : [down, out, Nn]).filter(Boolean);
     let sg = 1; for (const Q of pref) { const d = m[0] * Q[0] + m[1] * Q[1] + m[2] * Q[2]; if (Math.abs(d) > 0.2 * ml) { sg = Math.sign(d); break; } }
-    // how far: the table's angle; a bumper's free end 6 cm, a wing's 8 cm
+    // how far: the table's angle; a bumper's free end 16 cm, a wing's 12 cm (a short one at most 30 / 17 degrees)
     let th = T[1] * Math.PI / 180;
-    if (kind === 'bumper' || kind === 'wing') th = Math.asin(Math.min(kind === 'wing' ? 0.2 : 0.45, (kind === 'wing' ? 0.08 : 0.06) / Math.max(0.05, rm)));
+    if (kind === 'bumper' || kind === 'wing') th = Math.asin(Math.min(kind === 'wing' ? 0.3 : 0.5, (kind === 'wing' ? 0.12 : 0.16) / Math.max(0.05, rm)));
     th *= sg;
     const cs = Math.cos(th), sn = Math.sin(th), O = [0, 0, 0], turn = (a, i, b) => {   // (Rodrigues: about the axis u through b)
       const qx = a[i] - b[0], qy = a[i + 1] - b[1], qz = a[i + 2] - b[2], d = (qx * u[0] + qy * u[1] + qz * u[2]) * (1 - cs);
@@ -4579,11 +4627,16 @@ const Render = (function () {
     for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { turn(pa, i * 3, A); turn(na, i * 3, O); }
     geo.attributes.position.needsUpdate = true; geo.attributes.normal.needsUpdate = true;
     if (v.dec && K.E.body.decalPart === name) { const p = v.dec.position, q = [p.x, p.y, p.z]; turn(q, 0, A); p.set(q[0], q[1], q[2]); v.dec.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(u[0], u[1], u[2]), th)); }
+    // the lamps on it turn with it: a tail lamp's side of the tail mesh (its host: kitTailHost), the glow points of the lamps it carries
+    const TH = kitTailHost(K.E), tg = v.tail.geometry, TR = tg.userData.tail || {}, LU = geo.userData.lamps || {}, glow = (k) => { const L = v.lights[k], q = [L.x, L.y, L.z]; turn(q, 0, A); L.set(q[0], q[1], q[2]); };
+    for (const [s, k] of [['L', 2], ['R', 3]]) if (TH[s] === name && TR[s] && TR[s][1] > TR[s][0]) { const ta = tg.attributes.position.array, tn = tg.attributes.normal.array;
+      for (let i = TR[s][0]; i < TR[s][1]; i++) { turn(ta, i * 3, A); turn(tn, i * 3, O); } tg.attributes.position.needsUpdate = true; tg.attributes.normal.needsUpdate = true; glow(k); }
+    for (const [s, k] of [['FL', 0], ['FR', 1]]) if ((LU[s] || []).some(e => e[2] === name)) glow(k);
     kitPanes(v, R, true);
   }
   // part `name` off: its live ranges copied (its piece's geometry, v.loose[name]), collapsed, its bits and sparks once where it was; what was on it goes
   function kitDetach(v, c, name, x, y, z, h, nOff) {
-    const K = v.kit, geo = v.body.geometry, U = geo.userData, R = U.ranges[name]; K.dead[name] = 1; if (!R) return;
+    const K = v.kit, geo = v.body.geometry, U = geo.userData, R = U.ranges[name]; K.dead[name] = 1; K.ver++; if (!R) return;
     const pa = geo.attributes.position.array, na = geo.attributes.normal.array, ca = geo.attributes.color.array, no = R.o[1] - R.o[0], n = no + R.i[1] - R.i[0];
     if (!n) return;
     // the copy: the ranges as they are now (dented, scraped, loose, frosted), car space: the shell first, then its lining and what is inside
@@ -4624,23 +4677,40 @@ const Render = (function () {
     const a = g.attributes.position.array; for (let i = r[0] + 1; i < r[1]; i++) { a[i * 3] = a[r[0] * 3]; a[i * 3 + 1] = a[r[0] * 3 + 1]; a[i * 3 + 2] = a[r[0] * 3 + 2]; }
     g.attributes.position.needsUpdate = true;
   }
-  // (per model) the part each tail lamp (L / R) sits on: the part of the shell's point nearest its middle ('body': it never goes)
+  // (per model) the part each tail lamp (L / R) sits on: K.tailLamp's o.host, else the part of the outer shell's surface nearest its middle
+  // (the closest point on any of its triangles, not its nearest corner: a coarse loft's corners lie a panel away); 'body': it never goes
   function kitTailHost(E) {
     if (E.tailHost) return E.tailHost;
-    const H = E.tailHost = { L: 'body', R: 'body' }, T = E.tail.userData.tail || {}, tp = E.tail.attributes.position.array, U = E.geo.userData, pa = E.geo.attributes.position.array;
+    const H = E.tailHost = { L: 'body', R: 'body' }, T = E.tail.userData.tail || {}, X = E.tail.userData.host || {}, tp = E.tail.attributes.position.array, U = E.geo.userData, pa = E.geo.attributes.position.array;
     for (const s of ['L', 'R']) { const r = T[s]; if (!r || r[1] <= r[0]) continue;
+      if (X[s]) { H[s] = X[s]; continue; }
       const m = [0, 0, 0], nr = r[1] - r[0]; for (let i = r[0]; i < r[1]; i++) for (let q = 0; q < 3; q++) m[q] += tp[i * 3 + q] / nr;
-      let best = 1e9, bi = -1; for (let i = 0; i < U.outerN; i++) { const d = (pa[i * 3] - m[0]) ** 2 + (pa[i * 3 + 1] - m[1]) ** 2 + (pa[i * 3 + 2] - m[2]) ** 2; if (d < best) { best = d; bi = i; } }
-      for (const n in U.ranges) { const o = U.ranges[n].o; if (bi >= o[0] && bi < o[1]) H[s] = n; } }
+      let best = 1e9, bt = -1; for (let o = 0; o < U.outerN * 3; o += 9) { const d = kitTriD2(m, pa, o); if (d < best) { best = d; bt = o / 3; } }
+      for (const n in U.ranges) { const o = U.ranges[n].o; if (bt >= o[0] && bt < o[1]) H[s] = n; } }
     return H;
+  }
+  // the squared distance from point p to the triangle at a[o..o+8] (its closest point: a corner, an edge or its face)
+  function kitTriD2(p, a, o) {
+    const ax = a[o], ay = a[o + 1], az = a[o + 2], abx = a[o + 3] - ax, aby = a[o + 4] - ay, abz = a[o + 5] - az, acx = a[o + 6] - ax, acy = a[o + 7] - ay, acz = a[o + 8] - az;
+    const apx = p[0] - ax, apy = p[1] - ay, apz = p[2] - az, d1 = abx * apx + aby * apy + abz * apz, d2 = acx * apx + acy * apy + acz * apz;
+    const q = (u, w) => { const x = ax + abx * u + acx * w - p[0], y = ay + aby * u + acy * w - p[1], z = az + abz * u + acz * w - p[2]; return x * x + y * y + z * z; };
+    if (d1 <= 0 && d2 <= 0) return q(0, 0);
+    const bpx = apx - abx, bpy = apy - aby, bpz = apz - abz, d3 = abx * bpx + aby * bpy + abz * bpz, d4 = acx * bpx + acy * bpy + acz * bpz;
+    if (d3 >= 0 && d4 <= d3) return q(1, 0);
+    const vc = d1 * d4 - d3 * d2; if (vc <= 0 && d1 >= 0 && d3 <= 0) return q(d1 / (d1 - d3 || 1), 0);
+    const cpx = apx - acx, cpy = apy - acy, cpz = apz - acz, d5 = abx * cpx + aby * cpy + abz * cpz, d6 = acx * cpx + acy * cpy + acz * cpz;
+    if (d6 >= 0 && d5 <= d6) return q(0, 1);
+    const vb = d5 * d2 - d1 * d6; if (vb <= 0 && d2 >= 0 && d6 <= 0) return q(0, d2 / (d2 - d6 || 1));
+    const va = d3 * d6 - d5 * d4; if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) { const w = (d4 - d3) / ((d4 - d3) + (d5 - d6) || 1); return q(1 - w, w); }
+    const den = 1 / (va + vb + vc || 1); return q(vb * den, vc * den);
   }
   // wheel k off: hidden (latched), its piece the model's own wheel (v.loose: shared geometry, never freed), bits and sparks once, the body sags
   function kitWheelOff(v, c, k, x, y, z, h) {
-    v.wheelOff[k] = 1;
+    v.wheelOff[k] = 1; v.kit.ver++;
     const M = c.m, sd = k % 2 ? 1 : -1, w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === sd);
     if (w) { w.visible = false; const old = v.loose[KIT_WHEEL[k]]; if (old && !old.shared) old.geo.dispose(); v.loose[KIT_WHEEL[k]] = { wheel: true, shared: true, geo: w.geometry, mat: w.material, k }; }
     const lx = k < 2 ? M.a : -M.b, lz = sd * v.kit.E.body.hw, ch = Math.cos(h), sh = Math.sin(h);
-    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(kitHubGeo(v.kit.E), v.lampsOut ? matLensBroken : matWheel); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner; burnt: dark)
+    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(kitHubGeo(v.kit.E), vMat(v, v.lampsOut ? matLensBroken : matWheel)); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner; burnt: dark)
     v.hubs[k].visible = true;
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
@@ -4653,19 +4723,24 @@ const Render = (function () {
     kitTube(g, [0, 0, -0.06], [0, 0, 0.06], 0.17 * r, 8, H, H, H);
     return (E.hub = g.geometry());
   }
-  // the body's sag onto the corners without a wheel (v.wheelOff): a plane through the four hubs' feet, a corner with no wheel min(0.6 rw,
-  // the body's clearance there) down. One wheel off: the plane through the two corners next to it (they stay; the one across rises as
-  // much: the turn about that diagonal); more: the plane nearest. bodyG turned to it and lifted (v.sagQ, v.sagP), after its own pose each
-  // frame (updateCars): the lamps' glow points, the cockpit's eye and the wheels stay with the car
+  // the body's sag onto the corners without a wheel (v.wheelOff): a plane through the four hubs' feet, a corner with no wheel 0.6 rw down.
+  // One wheel off: the plane through the two corners next to it (they stay; the one across rises as much: the turn about that diagonal);
+  // more: the plane nearest. Then scaled back (all of it) as far as it takes to keep every point of the body's outer shell left on it (a
+  // splitter, a skirt, a long overhang's corner: not the parts it has lost) 1 cm over the road; again whenever the body's shape changes
+  // (v.kit.ver: kitParts). bodyG turned to it and lifted (v.sagQ, v.sagP), after its own pose each frame (updateCars): the lamps' glow
+  // points, the cockpit's eye and the wheels stay with the car
   function kitSag(v) {
     const off = v.wheelOff, n = off[0] + off[1] + off[2] + off[3]; v.sagQ = v.sagP = null; if (!n || !v.kit) return;
-    const M = v.car.m, hw = v.kit.E.body.hw, X = [M.a, M.a, -M.b, -M.b], Z = [-hw, hw, -hw, hw], clr = kitClear(v.kit.E), t = [0, 1, 2, 3].map(k => off[k] ? -Math.max(0, Math.min(0.6 * M.rw, clr[k])) : 0);
+    const M = v.car.m, K = v.kit, hw = K.E.body.hw, X = [M.a, M.a, -M.b, -M.b], Z = [-hw, hw, -hw, hw], t = [0, 1, 2, 3].map(k => off[k] ? -0.6 * M.rw : 0); K.sagV = K.ver;
     let rows;
     if (n === 1) { const k = off.indexOf(1), nb = [[1, 2], [0, 3], [0, 3], [1, 2]][k]; rows = [k, nb[0], nb[1]].map(i => [1, X[i], Z[i], t[i]]); }
     else { const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];   // (least squares: the normal equations)
       for (let i = 0; i < 4; i++) { const r = [1, X[i], Z[i]]; for (let p = 0; p < 3; p++) { b[p] += r[p] * t[i]; for (let q = 0; q < 3; q++) A[p][q] += r[p] * r[q]; } }
       rows = A.map((r, p) => [r[0], r[1], r[2], b[p]]); }
     const s = kitSolve3(rows); if (!s) return;   // (y = s0 + s1 x + s2 z)
+    const pa = v.body.geometry.attributes.position.array, dv = K.deadV; let a = 1;   // (each point drops by about s0 + s1 x + s2 z: no lower than 1 cm over the road)
+    for (let i = 0, nO = v.body.geometry.userData.outerN; i < nO; i++) { if (dv && dv[i]) continue; const d = s[0] + s[1] * pa[i * 3] + s[2] * pa[i * 3 + 2]; if (d < 0) a = Math.min(a, Math.max(0, pa[i * 3 + 1] - 0.01) / -d); }
+    if (!(a > 1e-3)) return; s[0] *= a; s[1] *= a; s[2] *= a;
     v.sagQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-s[1], 1, -s[2]).normalize()); v.sagP = new THREE.Vector3(0, s[0], 0);
   }
   function kitSolve3(R) {   // rows [a, b, c, d] of a x + b y + c z = d (Cramer's rule); null when singular
@@ -4673,17 +4748,18 @@ const Render = (function () {
     const A = R.map(r => r.slice(0, 3)), D = det(A); if (!(Math.abs(D) > 1e-12)) return null;
     return [0, 1, 2].map(j => det(A.map((r, i) => r.map((q, cc) => cc === j ? R[i][3] : q))) / D);
   }
-  // (per model) how far each corner's body may drop (FL FR RL RR): the lowest point of its outer shell within 0.7 m of that hub, on that side
-  function kitClear(E) {
-    if (E.clr) return E.clr;
-    const M = E.M, U = E.geo.userData, pa = E.geo.attributes.position.array, X = [M.a, M.a, -M.b, -M.b], c = [9, 9, 9, 9];
-    for (let i = 0; i < U.outerN; i++) { const px = pa[i * 3], py = pa[i * 3 + 1], pz = pa[i * 3 + 2]; for (let k = 0; k < 4; k++) if (Math.abs(px - X[k]) < 0.7 && (k % 2 ? pz > 0 : pz < 0) && py < c[k]) c[k] = py; }
-    return (E.clr = c.map(q => q > 8 ? 0.6 * M.rw : Math.max(0, q - 0.01)));
-  }
-  // a loose piece's turn that lays it on its broadest face (its thinnest principal axis up, the outer face up): a quaternion
+  // a loose piece's turn that lays it on its broadest face, the outer face up: a quaternion. Of the principal axes of its outer shell's
+  // surface (each triangle by its area: a panel's two big faces outweigh the many small ones of a bracket or a rim) and the normals of its
+  // biggest faces (a wedge, a curved cover lies on a face of its own), the one it lies lowest on (all its points) goes up; the outer
+  // shell's faces (by their area, outward) say which way up
   function kitLayQ(geo, cen, outerN) {
-    const p = geo.attributes.position.array, nn = geo.attributes.normal.array, n = p.length / 3, S = [0, 0, 0, 0, 0, 0];
-    for (let i = 0; i < n; i++) { const dx = p[i * 3] - cen[0], dy = p[i * 3 + 1] - cen[1], dz = p[i * 3 + 2] - cen[2]; S[0] += dx * dx; S[1] += dx * dy; S[2] += dx * dz; S[3] += dy * dy; S[4] += dy * dz; S[5] += dz * dz; }
+    const p = geo.attributes.position.array, n = p.length / 3, no = Math.min(outerN || n, n) - (Math.min(outerN || n, n) % 3), S = [0, 0, 0, 0, 0, 0], on = new THREE.Vector3(), big = [];
+    let W = 0; const add = (i, w) => { const dx = p[i * 3] - cen[0], dy = p[i * 3 + 1] - cen[1], dz = p[i * 3 + 2] - cen[2]; S[0] += w * dx * dx; S[1] += w * dx * dy; S[2] += w * dx * dz; S[3] += w * dy * dy; S[4] += w * dy * dz; S[5] += w * dz * dz; };
+    for (let t = 0; t < no; t += 3) { const o = t * 3, ux = p[o + 3] - p[o], uy = p[o + 4] - p[o + 1], uz = p[o + 5] - p[o + 2], vx = p[o + 6] - p[o], vy = p[o + 7] - p[o + 1], vz = p[o + 8] - p[o + 2];
+      const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx, ar = 0.5 * Math.hypot(cx, cy, cz); if (!(ar > 1e-9)) continue;
+      on.x += cx; on.y += cy; on.z += cz; W += ar; for (let q = 0; q < 3; q++) add(t + q, ar / 3);
+      if (big.length < 8 || ar > big[big.length - 1][0]) { big.push([ar, cx / (2 * ar), cy / (2 * ar), cz / (2 * ar)]); big.sort((a, b) => b[0] - a[0]); if (big.length > 8) big.pop(); } }
+    if (!(W > 1e-9)) for (let i = 0; i < n; i++) add(i, 1);   // (no area at all: its points alike)
     const a = [[S[0], S[1], S[2]], [S[1], S[3], S[4]], [S[2], S[4], S[5]]], V = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
     for (let it = 0; it < 30; it++) {   // (Jacobi: the covariance's principal axes)
       let pp = 0, qq = 1; if (Math.abs(a[0][2]) > Math.abs(a[pp][qq])) { pp = 0; qq = 2; } if (Math.abs(a[1][2]) > Math.abs(a[pp][qq])) { pp = 1; qq = 2; }
@@ -4693,11 +4769,26 @@ const Render = (function () {
       for (let k = 0; k < 3; k++) { const pk = a[pp][k], qk = a[qq][k]; a[pp][k] = cs * pk - sn * qk; a[qq][k] = sn * pk + cs * qk; }
       for (let k = 0; k < 3; k++) { const vp = V[k][pp], vq = V[k][qq]; V[k][pp] = cs * vp - sn * vq; V[k][qq] = sn * vp + cs * vq; }
     }
-    let lo = 0; for (let k = 1; k < 3; k++) if (a[k][k] < a[lo][lo]) lo = k;
-    const e = new THREE.Vector3(V[0][lo], V[1][lo], V[2][lo]).normalize(), on = new THREE.Vector3();
-    for (let i = 0; i < Math.min(outerN || n, n); i++) { on.x += nn[i * 3]; on.y += nn[i * 3 + 1]; on.z += nn[i * 3 + 2]; }
-    if (on.dot(e) < 0) e.negate();   // (the paint up: the outer shell's mean normal)
+    const C = [0, 1, 2].map(k => [V[0][k], V[1][k], V[2][k]]).concat(big.map(b => [b[1], b[2], b[3]]));
+    let lo = 0, hB = Infinity; for (let k = 0; k < C.length; k++) { const [ex, ey, ez] = C[k]; let mn = Infinity, mx = -Infinity;   // (the axis it lies lowest on: a principal axis unless a face lies 2 % lower)
+      for (let i = 0; i < n; i++) { const d = p[i * 3] * ex + p[i * 3 + 1] * ey + p[i * 3 + 2] * ez; if (d < mn) mn = d; if (d > mx) mx = d; }
+      if (mx - mn < hB * (k < 3 ? 1 : 0.98) - 1e-6) { hB = mx - mn; lo = k; } }
+    const e = new THREE.Vector3(C[lo][0], C[lo][1], C[lo][2]).normalize();
+    if (on.dot(e) < 0) e.negate();   // (the paint up: the outer shell's faces, by their area, outward)
     return new THREE.Quaternion().setFromUnitVectors(e, new THREE.Vector3(0, 1, 0));
+  }
+  // (kitInfo, tests) how tall each part's piece lies on the road (metres): its ranges in the colour-neutral body as built, laid by kitLayQ
+  function kitLayH(E) {
+    if (E.layH) return E.layH;
+    const U = E.geo.userData, pa = E.geo.attributes.position.array, H = {};
+    for (const nm in U.ranges) { if (nm === 'body') continue; const R = U.ranges[nm], no = R.o[1] - R.o[0], n = no + R.i[1] - R.i[0]; if (!n) continue;
+      const P = new Float32Array(n * 3); let j = 0; for (const [a, b] of [R.o, R.i]) { if (b > a) { P.set(pa.subarray(a * 3, b * 3), j * 3); j += b - a; } }
+      const cen = [0, 0, 0]; for (let i = 0; i < n; i++) for (let q = 0; q < 3; q++) cen[q] += P[i * 3 + q] / n;
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+      const q = kitLayQ(g, cen, no), w = new THREE.Vector3(); let lo = Infinity, hi = -Infinity;
+      for (let i = 0; i < n; i++) { w.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]).applyQuaternion(q); lo = Math.min(lo, w.y); hi = Math.max(hi, w.y); }
+      H[nm] = +(hi - lo).toFixed(3); g.dispose(); }
+    return (E.layH = H);
   }
   // a kit car's loose piece for the core's debris d: the part's copy (v.loose: its own geometry, drawn with the car's own body material, so
   // the dirt, the scratches and the char stay as they were) or the model's wheel; the copy's middle at the holder's origin (inner.position =
@@ -4708,7 +4799,7 @@ const Render = (function () {
     const L = v.loose[d.part];
     if (!L) { const PT = Core.partsOf(v.car.m), P = PT[d.part]; return P && v.car.lost[d.part] && (P.wh != null ? !v.wheelOff[P.wh] : !v.kit.dead[d.part]) ? null : false; }
     delete v.loose[d.part];
-    const inner = new THREE.Mesh(L.geo, L.wheel ? L.mat : v.body.material), lay = new THREE.Group(), m = new THREE.Group(); m.rotation.order = 'YXZ';
+    const inner = new THREE.Mesh(L.geo, pieceMat(v, L.wheel ? L.mat : v.body.material)), lay = new THREE.Group(), m = new THREE.Group(); m.rotation.order = 'YXZ';
     const cen = L.wheel ? [0, 0, 0] : L.c, q = L.wheel ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2) : kitLayQ(L.geo, cen, L.outerN);
     inner.position.set(-cen[0], -cen[1], -cen[2]); lay.quaternion.copy(q);
     const p = L.geo.attributes.position.array, w = new THREE.Vector3(); let lo = 1e9, hi = -1e9;
@@ -4730,7 +4821,7 @@ const Render = (function () {
       const src = v && v.parts && v.parts[d.part];
       if (!src) { d.mesh = true; continue; }
       // a loose panel lies on its biggest face: turn the thinnest box dimension upright inside a holder
-      const inner = new THREE.Mesh(src.geometry, src.material); inner.castShadow = true; inner.receiveShadow = true;
+      const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); inner.castShadow = true; inner.receiveShadow = true;
       const pr = src.geometry.parameters || {}, dims = [pr.width || 1, pr.height || 1, pr.depth || 1], thin = dims.indexOf(Math.min(...dims));
       if (thin === 2) inner.rotation.x = Math.PI / 2; else if (thin === 0) inner.rotation.z = Math.PI / 2;
       const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner);
@@ -4770,14 +4861,15 @@ const Render = (function () {
       const dx = x - cx, dy = (y - cy) * 0.6, dz = z - cz, dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (dist >= R) continue;
       const f = (1 - dist / R) * (1 - dist / R);
-      const hs = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453, jit = 0.7 + 0.6 * (hs - Math.floor(hs));
+      const jit = 0.7 + 0.6 * jitN(x, y, z, 3);
       const m = depth * f * jit;
       a[k * 3] += ix * m; a[k * 3 + 2] += iz * m; a[k * 3 + 1] -= m * 0.25;
       if (ca) { const sK = 1 - 0.38 * f * scr; for (let q = 0; q < 3; q++) ca[k * 3 + q] = ca[k * 3 + q] * sK + 0.21 * (1 - sK); }
       dentTris.add((k / 3) | 0);
     }
     pos.needsUpdate = true; if (col) col.needsUpdate = true;
-    refacet(geo, dentTris);
+    refacet(geo, dentTris); if (v.kit) v.kit.ver++;
+    if (v.winBroken) for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].some(t => dentTris.has(t))) (v.crackDirty || (v.crackDirty = [0, 0, 0, 0]))[k] = 1;   // (a broken pane under it: its crack decal laid again, updateParts)
   }
 
   /* ---------------- the engine: its smoke, its fire, the char (stage B2: every vehicle, render only, from the core's state) ----------------
@@ -4796,7 +4888,7 @@ const Render = (function () {
        separate panels darken with it (charParts)
      The renderer's own random numbers (rRnd), but the 11's damage smoke: Math.random, as it always drew it (the same draws, emitted or not:
      the browser tests' races run as before) */
-  const FIRE_T = 20, FIRE_EMIT = 6, SOOT = new THREE.Color(0.06, 0.055, 0.05), _fsv = new THREE.Vector3();
+  const FIRE_T = 20, FIRE_EMIT = 6, FIRE_SMOKE = 60, SOOT = new THREE.Color(0.06, 0.055, 0.05), _fsv = new THREE.Vector3();   // (FIRE_SMOKE: how long the black smoke goes on after it, thinning out)
   const fireOn = (c) => c.dmgMode > 0 && (c.dmg >= 0.9 || (!!(c.lost.hood || c.lost.cover) && c.dmg >= 0.75));
   // where the fire and the smoke come from (the car's frame, metres): BODIES[body].engine (x as the sections, y metres: the kit's look's
   // body.engine, the 11's entries); else at the front or the rear (engRear), 12 cm under the top there
@@ -4810,11 +4902,12 @@ const Render = (function () {
   // where a kit body's fire and smoke come out (the car's frame, metres): 2 cm over the highest face of its shell straight over the seat
   // (along the car's middle and 20 % of its width to either side: the bonnet, the engine cover, a cab-over truck's cab: the flames seen,
   // not burning inside it; never a noCrush range: a wing, a deflector, a light bar, a cage, the driver over a kart's engine), or the seat
-  // itself when nothing of the shell is left over it (the bonnet gone, an open engine). Found again when the car loses a part or its roof
-  // sinks. One of the 11: its seat (a little under its bonnet: the flames rise through it)
+  // itself when nothing of the shell is left over it (the bonnet gone, an open engine). Found again whenever the body's shape changes
+  // (v.kit.ver: a part loose or lost, a wheel off or back, the roof sinking, a dent). One of the 11: its seat (a little under its bonnet:
+  // the flames rise through it)
   function fireSpot(v, S) {
     const K = v.kit; if (!K) return S;
-    const key = K.nLost * 8 + v.roofStep; if (v.spot && v.spot.key === key) return v.spot.p;
+    const key = K.ver; if (v.spot && v.spot.key === key) return v.spot.p;
     const top = kitFireTop(v.body.geometry, S, v.car.m.wid, K.deadV);
     v.spot = { key, p: top > -1e8 ? [S[0], top + 0.02, S[2]] : S }; return v.spot.p;
   }
@@ -4837,11 +4930,14 @@ const Render = (function () {
   }
   // the fires this frame (before the cars are drawn): a fire starts once (v.fire.t0: the race's time then); the ones that emit (fireEmit):
   // the FIRE_EMIT nearest to the camera of all that burn or smoke after burning
+  const fireMem = new WeakMap();   // (a car's fire, whichever of its views draws it: a view built afresh mid-race takes it over, burnt out or not)
   function fireScan(now) {
     let n = 0;
-    for (const v of views) { v.fireEmit = false; const c = v.car; if (!v.fire && c && c.lost && fireOn(c)) v.fire = { t0: now }; if (v.fire) n++; }
+    for (const v of views) { v.fireEmit = false; const c = v.car;
+      if (!v.fire && c && c.lost && fireOn(c)) { let F = fireMem.get(c); if (!F || F.race !== curRace || F.rn !== (c.repairN || 0)) { F = { t0: now, race: curRace, rn: c.repairN || 0 }; fireMem.set(c, F); } v.fire = F; }   // (a repair: afresh)
+      if (v.fire) n++; }
     if (!n) return;
-    const B = views.filter(v => v.fire), cp = camera.position;
+    const B = views.filter(v => v.fire && now - v.fire.t0 < FIRE_T + FIRE_SMOKE), cp = camera.position;   // (one whose smoke is over: no more)
     if (B.length > FIRE_EMIT) B.sort((a, b) => Math.hypot(a.car.x - cp.x, a.car.z - cp.z) - Math.hypot(b.car.x - cp.x, b.car.z - cp.z));
     for (let i = 0; i < Math.min(FIRE_EMIT, B.length); i++) B[i].fireEmit = true;
   }
@@ -4879,38 +4975,39 @@ const Render = (function () {
           sparkP.emit(sx + ox * ch - oz * sh, sy + 0.04 + rRnd() * 0.12, sz + ox * sh + oz * ch, c.vx * 0.55 + (rRnd() - 0.5) * 0.7, 1.1 + rRnd() * 1.5, c.vz * 0.55 + (rRnd() - 0.5) * 0.7,
             0.32 + rRnd() * 0.36, (0.5 + 0.28 * rRnd()) * sc, 0.1 * sc, 1, 0.4 + hot * 0.4, 0.07 + hot * 0.12, 0.85, -2.2, 1.2, y, 1); }
       }
-      v.fsmAcc = (v.fsmAcc || 0) + dt * (lit ? 4 + 7 * k : 11);
+      const u = e - FIRE_T, thin = lit ? 1 : u < 30 ? 1 - 0.3 * u / 30 : Math.max(0, 0.7 * (1 - (u - 30) / 30));   // (after the fire: 11 puffs a second down to 3 over 30 s, then a wisp, none at 60 s)
+      v.fsmAcc = (v.fsmAcc || 0) + dt * (lit ? 4 + 7 * k : u < 30 ? 11 - 8 * u / 30 : 3 * thin / 0.7);
       while (v.fsmAcc >= 1) { v.fsmAcc -= 1;
-        const g = 0.05 + rRnd() * 0.06, s1 = ((lit ? 4.2 : 5.4) + rRnd() * 2.2) * sc;
+        const g = 0.05 + rRnd() * 0.06, s1 = Math.min(4.5, (lit ? 4.2 : 5.4) + rRnd() * 2.2) * sc;   // (a puff at most 4.5 m across a car's size)
         particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5, 1.3 + rRnd() * 1.1, c.vz * 0.3 + (rRnd() - 0.5) * 0.5,
-          (lit ? 2.5 : 3.1) + rRnd() * 1.4, 0.8 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? 0.62 : 0.72, -0.35, 0.8, y); }
+          (lit ? 2.5 : 3.1) + rRnd() * 1.4, 0.8 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? 0.62 : 0.72 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }
     }
     if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames)
       const fl = 0.55 + 0.25 * Math.sin(time * 17.3 + c.id * 1.7) + 0.2 * Math.sin(time * 6.1 + c.id);
       glows.add(sx, sy + 0.35, sz, (1.6 + 1.2 * fl) * sc * (0.5 + 0.5 * k), 1, 0.52, 0.16, (0.32 + 0.42 * fl) * k);
     }
   }
-  // a car burnt a while: its lamps out (no glow, the head lamps' lenses dark, the tail lamps out: a kit car's sides of its tail mesh, one of
-  // the 11's whole tail mesh dark), its night beam gone, a kit car's bare hubs dark too. No bits (the 11's lamps broke with Math.random's
-  // shards: not here)
+  // a car burnt a while (v.lampsOut): its lamps out (no glow, the head lamps' lenses dark, the tail lamps out: a kit car's sides of its tail
+  // mesh, one of the 11's whole tail mesh dark), its night beam gone, a kit car's bare hubs dark too. No bits. (One of the 11 keeps its
+  // v.lightBroken to updateParts: a lamp smashed later still breaks with its shards, Math.random drawn for them as it always was)
   function lampsBurnt(v) {
-    v.lampsOut = true; for (const hb of v.hubs || []) if (hb) hb.material = matLensBroken;
+    v.lampsOut = true; for (const hb of v.hubs || []) if (hb) hb.material = vMat(v, matLensBroken);
     if (!v.lightBroken) return;
-    for (let k = 0; k < 4; k++) { if (v.lightBroken[k]) continue; v.lightBroken[k] = 1;
-      if (v.kit) { if (k < 2) kitLampOut(v, k); else kitTailOut(v, k === 2 ? 'L' : 'R'); }
-      else if (k < 2 && v.lens && v.lens[k]) v.lens[k].material = matLensBroken; }
-    if (!v.kit) v.tailDead = true;
+    if (v.kit) { for (let k = 0; k < 4; k++) if (!v.lightBroken[k]) { v.lightBroken[k] = 1; if (k < 2) kitLampOut(v, k); else kitTailOut(v, k === 2 ? 'L' : 'R'); } }
+    else { for (const m of v.lens || []) if (m) m.material = vMat(v, matLensBroken); v.tailDead = true; }
     if (v.beam) beams(v);
   }
-  // the 11's separate panels darken with the char, all alike, as the soot spreads over the body (one paint for them all and the trim; the
-  // formula's and the prototype's: an own copy of the shared paint for the car first; the Peugeot's model: all of its body, its own copies
-  // of the shared materials first)
+  // a shared material as this car wears it: its own charred copy once it burns (charParts), else the shared one
+  const vMat = (v, m) => (v.charSh && v.charSh.get(m)) || m;
+  // the char of what the body's shader does not reach: the 11's separate panels darken with it, all alike, as the soot spreads over the body
+  // (one paint for them all and the trim; the formula's and the prototype's: an own copy of the shared paint for the car first; the
+  // Peugeot's model: all of its body, its own copies of the shared materials first); every car's shared under-parts (the engine block, the
+  // crash beams a lost panel bares), smashed lenses, bare hubs and wheels: an own copy each (v.charSh), swapped in as they are put on
   function charParts(v, w) {
-    if (v.kit) return;
     let L = v.charMats;
     if (!L) {
       if (w <= 0) return;
-      L = v.charMats = [];
+      L = v.charMats = []; v.charSh = new Map();
       if (v.partMats) for (const m of v.partMats) if (m && m.color) L.push(m);
       if (v.glb && v.glb.bodyH) {   // (the Peugeot's model: its paint, its tail lamps, and an own copy of each shared material of its body but the black)
         const sh = new Map(); if (p206Mats) for (const k in p206Mats) if (k !== 'black') sh.set(p206Mats[k], null);
@@ -4924,9 +5021,22 @@ const Render = (function () {
         if (pm) L.push(pm); }
       for (const m of L) m.userData.col0 = m.color.clone();
     }
+    const SH = [matUnder, matEngine, matLensBroken, matWheel], sw = (o) => { if (!o.isMesh || !o.material || SH.indexOf(o.material) < 0) return;
+      let q = v.charSh.get(o.material); if (!q) { q = o.material.clone(); q.userData.col0 = q.color.clone(); v.charSh.set(o.material, q); L.push(q); } o.material = q; };
+    v.bodyG.traverse(sw); for (const q of v.wf.concat(v.wr)) q.traverse(sw);
     const k = clamp((7 * w - 0.5) / ((v.glb ? 0.5 : 0.8) * v.car.m.len), 0, 1) * 0.92;   // (as much as the body's soot (7 w m round the seat) would cover of the car; the
     // Peugeot's model, all of it alike (no soot of its own), a little sooner)
     for (const m of L) m.color.copy(m.userData.col0).lerp(SOOT, k);
+  }
+  // a loose piece's own copy of the material it wore on its car, as it is at that moment (the car's dirt, scratches and char go on without
+  // it: it lies elsewhere); a shared one (it never changes) as it is. Pikes Peak: the car's own (its dust layer reads where the car is)
+  function pieceMat(v, m) {
+    if (!m || v.pk) return m;
+    if (m === v.body.material && m.userData.dirt) {   // (a kit car's body: the same program, its uniforms copied)
+      const q = dirtyCarMat(); q.userData.dirt.value = m.userData.dirt.value; q.userData.scr.value = m.userData.scr.value; q.userData.char.value.copy(m.userData.char.value);
+      if (m.emissive) q.emissive.copy(m.emissive); return q; }
+    if (sharedCarRes().m.has(m)) return m;
+    const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q;   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)
   }
 
   function emitFx(v, c, dt, x, z, h) {
