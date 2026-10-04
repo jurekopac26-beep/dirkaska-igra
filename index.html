@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=39b58a37">
+<link rel="stylesheet" href="css/style.css?v=d3d99a82">
 </head>
 <body>
 <div id="app">
@@ -63,7 +63,7 @@
       <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span><span id="h-delta"></span></div>
       <div id="h-sec" aria-hidden="true"><i></i><i></i><i></i></div>
       <div id="h-split"></div>
-      <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><span id="h-flat"></span></div>
+      <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><div id="h-hide"><i id="h-hidebar"></i></div><span id="h-hidel"></span><span id="h-flat"></span><div id="h-chk"></div></div>
       <div id="h-gap"></div>
     </div>
     <div id="h-map"><canvas id="minimap"></canvas></div>
@@ -72,13 +72,15 @@
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
-    <div id="h-radio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer -->
+    <div id="h-teamradio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer (#47) -->
+    <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio -->
+    <div id="h-tail" aria-hidden="true"><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i></div><!-- the run from the police: arrows for the patrol cars behind, how far back -->
     <div id="h-school"></div><!-- the driving school: the lesson under way -->
     <div id="podium-cap"></div>
     <div id="h-ttsp"></div>
     <div id="pk-cer" aria-live="polite"></div><!-- Pikes Peak: the summit ceremony -->
   </div>
-  <div id="pk-fly" aria-hidden="true"><small>PRELET PROGE</small><b></b><span></span><em>Tapni ali pritisni tipko za preskok</em></div><!-- Pikes Peak: the course flyover's captions -->
+  <div id="pk-fly" aria-hidden="true"><small>PRELET PROGE</small><b></b><span></span><em>Tapni ali pritisni tipko za preskok</em></div><!-- Pikes Peak, Katu-Jaryk: the course flyover's captions -->
 
   <!-- ============ TOUCH CONTROLS ============ -->
   <div id="touch" class="m-buttons off">
@@ -96,6 +98,7 @@
       </div>
     </div>
     <div id="c-brake" class="tb pedal"><span>ZAVORA</span></div>
+    <div id="c-drift" class="tb"><span>ROČNA</span></div>
     <div id="c-gas" class="tb pedal gas"><span>PLIN</span></div>
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
@@ -211,16 +214,16 @@
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
         <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="cockpit">Kokpit · ležeče</button></div></div>
-        <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
+        <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="1.1">Blizu</button><button data-v="1.4">Srednje</button><button data-v="1.7">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
-        <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button></div></div>
+        <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Časovna tabela</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Idealna linija na cesti pred avtom: zeleno plin, rumeno ovinek, rdeče zaviranje"><span class="rlbl">Idealna linija</span><div class="seg" data-set="line"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila na ovinke <small class="pk-sub">Pikes Peak</small></span><div class="seg" data-set="pkNotes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak, Katu-Jaryk)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
@@ -392,40 +395,56 @@
     </div>
   </section>
 
-  <div id="rotate"><div class="phone"></div><p id="rotate-txt">Obrni telefon v ležeči položaj</p></div>
+  <div id="rotate"><div class="phone"></div><p id="rotate-txt">Obrni telefon v ležeči položaj</p><p id="rotate-why"></p><button class="btn primary" data-act="rot-cam" id="rotate-cam">Igraj pokončno</button></div>
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">APEX RACING</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
 
 <script src="js/vendor/three.r128.min.js?v=04c3c2be"></script>
-<script src="js/tracks/jezero.js?v=1ed8375b"></script>
-<script src="js/tracks/riviera.js?v=07d292b6"></script>
-<script src="js/tracks/gora.js?v=261e8e92"></script>
+<script src="js/tracks/jezero.js?v=cf630a99"></script>
+<script src="js/tracks/riviera.js?v=a7ed9b58"></script>
+<script src="js/tracks/gora.js?v=fca52133"></script>
 <script src="js/tracks/ljubljana.js?v=5337c131"></script>
-<script src="js/tracks/monaco.js?v=4a250ff9"></script>
-<script src="js/tracks/gozd.js?v=c8546159"></script>
-<script src="js/tracks/toskana.js?v=e415be89"></script>
-<script src="js/tracks/grom.js?v=fefe46e7"></script>
-<script src="js/tracks/pikes.js?v=a4570445"></script>
-<script src="js/tracks/ouninpohja.js?v=dd47c565"></script>
-<script src="js/tracks/vrsic.js?v=10709185"></script>
-<script src="js/tracks/nring.js?v=d00cc693"></script>
-<script src="js/tracks/spa.js?v=19166d8e"></script>
+<script src="js/tracks/monaco.js?v=bc1f32f7"></script>
+<script src="js/tracks/gozd.js?v=62ae97ed"></script>
+<script src="js/tracks/toskana.js?v=c4596b40"></script>
+<script src="js/tracks/grom.js?v=97cb1d6e"></script>
+<script src="js/tracks/pikes.js?v=da779273"></script>
+<script src="js/tracks/ouninpohja.js?v=f41c403f"></script>
+<script src="js/tracks/vrsic.js?v=452c0fe4"></script>
+<script src="js/tracks/nring.js?v=1b2aea1c"></script>
+<script src="js/tracks/spa.js?v=e3d3c018"></script>
 <script src="js/tracks/rbring.js?v=d48ab134"></script>
-<script src="js/tracks/suzuka.js?v=8aebe76c"></script>
-<script src="js/tracks/pikesg.js?v=9d05a281"></script>
-<script src="js/tracks/caracoles.js?v=84009a26"></script>
-<script src="js/lang.js?v=714b5a00"></script>
-<script src="js/core.js?v=a6dd2667"></script>
+<script src="js/tracks/suzuka.js?v=3550848d"></script>
+<script src="js/tracks/pikesg.js?v=5fdc4e68"></script>
+<script src="js/tracks/caracoles.js?v=d6805879"></script>
+<script src="js/tracks/katu.js?v=9c79afc9"></script>
+<script src="js/tracks/harju.js?v=530db216"></script>
+<script src="js/tracks/bathurst.js?v=6387e681"></script>
+<script src="js/tracks/chapman.js?v=56b588a8"></script>
+<script src="js/tracks/bigsur.js?v=544ea546"></script>
+<script src="js/tracks/tianmen.js?v=4ca15f94"></script>
+<script src="js/tracks/uncompahgre.js?v=e3eed14a"></script>
+<script src="js/tracks/sani.js?v=c2f3d8e1"></script>
+<script src="js/tracks/iroha.js?v=a43ef4e0"></script>
+<script src="js/tracks/mulholland.js?v=21fe4a12"></script>
+<script src="js/tracks/beartooth.js?v=45b7b832"></script>
+<script src="js/tracks/rastro.js?v=ff315e74"></script>
+<script src="js/tracks/moki.js?v=6f877ff1"></script>
+<script src="js/tracks/cpalace.js?v=1ff113aa"></script>
+<script src="js/tracks/riverside.js?v=e2cec4ed"></script>
+<script src="js/tracks/longford.js?v=3076a712"></script>
+<script src="js/lang.js?v=6490d181"></script>
+<script src="js/core.js?v=3708bd54"></script>
 <script src="js/tex.js?v=c8d887ce"></script>
-<script src="js/world.js?v=a232e1cc"></script>
+<script src="js/world.js?v=8d92a3f2"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=4871a588"></script>
-<script src="js/sfx.js?v=cc97e5e8"></script>
-<script src="js/input.js?v=6659ae08"></script>
-<script src="js/comm.js?v=a5473d60"></script>
+<script src="js/render.js?v=47718304"></script>
+<script src="js/sfx.js?v=4275d2ee"></script>
+<script src="js/input.js?v=d3dda4cf"></script>
+<script src="js/comm.js?v=86b3df24"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=9cafd422"></script>
+<script src="js/game.js?v=48d4a8f5"></script>
 </body>
 </html>

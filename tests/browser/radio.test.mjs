@@ -18,13 +18,13 @@ try {
   const until = (fn, max) => page.evaluate(async ([src, max]) => { const g = window.__game, f = new Function('g', 'return (' + src + ')(g)');
     for (let k = 0; k < max; k++) { if (f(g)) return true; g.pause(); g.sim(2, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
     return !!f(g); }, [fn.toString(), max || 200]);
-  const radio = () => page.evaluate(() => { const g = window.__game, el = document.getElementById('h-radio'); return { log: g.radio.log, on: el.classList.contains('on'), text: el.lastElementChild.textContent, clicks: window.__clicks, lap: g.race.player.lap, laps: g.race.laps }; });
+  const radio = () => page.evaluate(() => { const g = window.__game, el = document.getElementById('h-teamradio'); return { log: g.teamRadio.log, on: el.classList.contains('on'), text: el.lastElementChild.textContent, clicks: window.__clicks, lap: g.race.player.lap, laps: g.race.laps }; });
   const lang = (l) => page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); }, l);
 
   // 1. three laps: at the second lap's line the gaps (the box at the top, its click)
   await startTrack(page, 'toskana');
   await setUp();
-  await until((g) => g.race.player.lap >= 2 && g.radio.log.length > 0, 60);
+  await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 60);
   const r1 = await radio(), gapRe = /^(.+ je \d+,\d s pred tabo(, .+ \d+,\d s za tabo)?\.|Vodiš(, .+ je \d+,\d s za tabo)?\.)$/;
   T.check('at the line: the engineer on the radio (the box at the top, its click), the gaps to the cars ahead and behind ("... je 1,2 s pred tabo, ... 0,8 s za tabo.")',
     r1.laps === 3 && r1.on && r1.log.length === 1 && gapRe.test(r1.log[0]) && r1.text === r1.log[0] && r1.clicks === 1, JSON.stringify(r1));
@@ -44,7 +44,7 @@ try {
 
   // 4. in English, at the last lap's line: "Last lap! ... is 1.2 s ahead of you"
   await lang('en');
-  await until((g) => g.race.player.lap >= 3 && g.radio.log.length > 1, 60);
+  await until((g) => g.race.player.lap >= 3 && g.teamRadio.log.length > 1, 60);
   const en = (await radio()).log.slice(1);
   await lang('sl');
   T.check('in English, the last lap: "Last lap! ... is 1.2 s ahead of you, ... 0.8 s behind you." (or "You are leading")',
@@ -55,11 +55,11 @@ try {
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="fuel"] button[data-v="1"]').click(); document.querySelector('[data-set="length"] button[data-v="long"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'toskana');
   await setUp();
-  await until((g) => g.race.player.lap >= 2 && g.radio.log.length > 0, 80);
+  await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 80);
   const w = await radio();
   T.check('a race with fuel (6 laps): at the line the window for the stop the fuel needs', w.laps === 6 && /^Gorivo ne bo zdržalo do cilja\. (Okno za postanek: od \d\. do \d\. kroga\.|Postanek bo v \d\. krogu\.)$/.test(w.log[0]), JSON.stringify(w));
-  await until((g) => { const P = g.race.player; if (g.radio.log.some(t => /Boksi v tem krogu!/.test(t)) && !P.repairN && !P.inPit) P.pitWant = true; if (P.repairN && !P.inPit) P.pitWant = false;
-    return g.radio.log.some(t => /^Dober postanek/.test(t)) || P.lap >= 6; }, 200);
+  await until((g) => { const P = g.race.player; if (g.teamRadio.log.some(t => /Boksi v tem krogu!/.test(t)) && !P.repairN && !P.inPit) P.pitWant = true; if (P.repairN && !P.inPit) P.pitWant = false;
+    return g.teamRadio.log.some(t => /^Dober postanek/.test(t)) || P.lap >= 6; }, 200);
   const r5 = await radio(), msgs = await page.evaluate(() => window.__msgs.splice(0)), box = r5.log.find(t => /Boksi v tem krogu!/.test(t)), good = r5.log.find(t => /^Dober postanek/.test(t));
   T.check('... on the lap it must be made: BOKSI V TEM KROGU, "Boksi v tem krogu!" with the place the stop gives (and the tyres it gets)',
     !!box && /^Gorivo ne bo zdržalo do cilja\. Boksi v tem krogu! Po postanku boš (\d+\., .+ bo \d+,\d s pred tabo|še vedno prvi)\. Dobiš (mehke|srednje|trde) gume\.$/.test(box) && msgs.includes('BOKSI V TEM KROGU'), JSON.stringify({ box, msgs }));
@@ -69,7 +69,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="radio"] button[data-v="0"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'toskana');
   await until((g) => g.race.player.lap >= 3, 120);
-  const off = await page.evaluate(() => ({ mk: !!window.__game.race.mk, log: window.__game.radio.log, on: document.getElementById('h-radio').classList.contains('on'), pause: (() => { const g = window.__game; g.pause(); const v = !document.getElementById('pause-strat').classList.contains('off'); g.resume(); return v; })(), stored: JSON.parse(localStorage.getItem('tdgp-settings')).radio }));
+  const off = await page.evaluate(() => ({ mk: !!window.__game.race.mk, log: window.__game.teamRadio.log, on: document.getElementById('h-teamradio').classList.contains('on'), pause: (() => { const g = window.__game; g.pause(); const v = !document.getElementById('pause-strat').classList.contains('off'); g.resume(); return v; })(), stored: JSON.parse(localStorage.getItem('tdgp-settings')).radio }));
   T.check('switched off in the settings: no radio, no strategy in the pause menu (kept)', !off.mk && !off.log.length && !off.on && !off.pause && off.stored === 0, JSON.stringify(off));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {

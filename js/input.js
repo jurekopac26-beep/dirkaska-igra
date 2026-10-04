@@ -5,7 +5,7 @@ const Input = (function () {
   'use strict';
   const { clamp, sstep, wrapPi } = Core;
   const DEG = Math.PI / 180;
-  const S = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true };
+  const S = { steer: 0, thr: 0, brk: 0, hand: 0, gas: 0, digital: true };
   let mode = 'buttons';
   let layer = null;
   const ptrs = new Map();
@@ -275,6 +275,7 @@ const Input = (function () {
     S.steer = steer; S.digital = digital;
     S.brk = Math.max(brake ? 1 : 0, pad.on ? pad.brk : 0);
     S.thr = Math.max(gas ? 1 : (autoGas && !brake ? 1 : 0), pad.on ? pad.thr : 0);
+    S.gas = gas || (pad.on && pad.thr > 0.05) ? 1 : 0;   // (the gas itself pressed: not the automatic one)
     S.hand = drift || (pad.on && pad.hand) ? 1 : 0;
     // visuals
     setPressed('left', left || kL); setPressed('right', right || kR); setPressed('gas', gas || (autoGas && !brake)); setPressed('brake', brake); setPressed('drift', drift);

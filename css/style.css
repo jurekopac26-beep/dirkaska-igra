@@ -67,6 +67,48 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-pol.warn #h-bust { opacity: 1; }
 #h-bustbar { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #3a78ff, #ff3b3b); }
 #h-flat { font: 700 clamp(9px, 2.4vh, 12px)/1.2 var(--f-ui); color: #ff6a4d; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+/* out of their sight: the hiding meter; lost: the stars grey, the label */
+#h-hide { width: clamp(90px, 22vw, 150px); height: 5px; border-radius: 3px; background: rgba(10, 13, 18, 0.55); overflow: hidden; display: none; }
+#h-pol.hid #h-hide { display: block; }
+#h-hidebar { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #3fbf74, #b8f5cc); }
+#h-hidel { font: 700 clamp(8px, 2.2vh, 11px)/1.2 var(--f-ui); color: #7ee3a2; letter-spacing: 1px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#h-pol.lost #h-heat { color: #8b93a3; }
+#h-pol.pre #h-heat, #h-pol.pre #h-bust { display: none; }   /* (before the chase: no stars, no busted meter) */
+/* the run from the police: the checkpoint ahead and what to do there (before the chase), the hideout at the top near the end */
+#h-chk { display: none; }
+#h-chk.on { display: flex; flex-direction: column; align-items: center; gap: 1px; margin-top: 3px; padding: 3px 9px 4px; max-width: min(46vw, 380px); border-radius: 5px; border-bottom: 2px solid #3a78ff; background: rgba(8, 16, 36, 0.78); text-align: center; }
+#h-chk b { font: 700 italic clamp(10px, 2.9vh, 14px)/1.2 var(--f-ui); color: #ffd23c; letter-spacing: 0.04em; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#h-chk span { font: 600 clamp(9px, 2.4vh, 12px)/1.25 var(--f-ui); color: #e3ebff; }
+/* the police radio: a line at a time at the bottom, between the steering and the pedals, over the arrows (the speaker's call sign first; in person:
+   the officer, the driver, in yellow) */
+#h-radio { display: none; }
+#hud.pol #h-radio { display: block; position: absolute; left: 50%; bottom: calc(50px + var(--sb)); transform: translateX(-50%); width: max-content; max-width: min(44vw, 430px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); padding: 4px 9px;
+  border-left: 3px solid #3a78ff; border-radius: 4px; background: rgba(8, 16, 36, 0.78); font: 600 clamp(9px, 2.4vh, 12px)/1.3 var(--f-ui); color: #e3ebff; text-align: left; opacity: 0; transition: opacity 0.25s; }
+#hud.pol #h-radio.show { opacity: 1; }
+#hud.pol #h-radio.person { border-left-color: #ffd23c; background: rgba(28, 24, 10, 0.8); color: #fff6dc; font-style: italic; }
+#h-radio b { margin-right: 6px; color: #8fb3ff; font-size: 0.85em; letter-spacing: 1px; font-style: normal; }
+#h-radio.person b { color: #ffd23c; }
+@media (orientation: landscape) { #hud.pol.shot #h-radio { bottom: calc(12px + var(--sb)); } }   /* (a TV shot: no arrows under it) */
+/* the patrol cars behind the player: an arrow for each (where it is from the car's heading, across the bar by that), the metres back along the road */
+#h-tail { display: none; }
+#hud.pol #h-tail { display: block; position: absolute; left: 50%; bottom: calc(6px + var(--sb)); width: min(46vw, 440px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); height: 40px; transform: translateX(-50%); }   /* (between the steering and the pedals) */
+#h-tail i { display: none; position: absolute; bottom: 0; width: 52px; margin-left: -26px; flex-direction: column; align-items: center; gap: 1px; font-style: normal; transition: left 0.25s; }
+#h-tail i.on { display: flex; }
+#h-tail svg { width: clamp(16px, 4.6vh, 22px); height: clamp(16px, 4.6vh, 22px); transform-origin: 50% 50%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.9)); }
+#h-tail path { fill: #3a78ff; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.2; stroke-linejoin: round; }
+#h-tail i.r path { fill: #ff3b3b; }
+#h-tail i.s path { fill: #9aa3b5; stroke: rgba(255, 255, 255, 0.5); }
+#h-tail span { font: 700 clamp(9px, 2.4vh, 12px)/1 var(--f-ui); color: #e3ebff; text-shadow: 0 1px 2px #000; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#h-tail i.s span { color: #c2c8d4; }
+#h-tail i.n svg { width: clamp(20px, 5.8vh, 28px); height: clamp(20px, 5.8vh, 28px); }   /* (the nearest one) */
+#h-tail i.n span { color: #fff; }
+@media (orientation: portrait) {   /* (a phone upright: above the steering and the pedals) */
+  #hud.pol #h-tail { bottom: calc(26px + clamp(100px, 32vw, 150px) + var(--sb)); width: 84vw; }   /* (above the gas pedal, the tallest control) */
+  #hud.pol #h-radio { bottom: calc(70px + clamp(100px, 32vw, 150px) + var(--sb)); max-width: 86vw; }
+  #h-chk.on { max-width: 42vw; padding: 2px 6px 3px; }   /* (between the place and the map) */
+  #h-chk b { font-size: clamp(10px, 3.1vw, 13px); }
+  #h-chk span { font-size: clamp(9px, 2.7vw, 11px); }
+}
 #hud.duel #h-gap { display: block; margin-top: 3px; font: 700 clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui); color: #ffb86a; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
 #hud.duel #h-gap.behind { color: #9fe07a; }
 #h-split { height: 1.2em; margin-top: 2px; font: 700 italic clamp(11px, 3vh, 15px)/1.2 var(--f-ui); color: var(--meter); text-shadow: 0 1px 2px #000; opacity: 0; transition: opacity .3s; }
@@ -103,11 +145,11 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-msg.show { opacity: 1; transform: scale(1); }
 /* the team radio: the engineer's message at the top, left of the corner arrow (upright: on the right under the map and the buttons, the
    arrow moved down below it while it shows) */
-#h-radio { position: absolute; right: calc(50% + 36px); top: calc(84px + var(--st)); transform: translateY(-6px); max-width: min(28vw, 320px); display: flex; gap: 8px; align-items: flex-start; padding: 6px 10px 7px 8px; border-radius: 8px; background: rgba(10, 14, 20, .82); border-left: 4px solid var(--lcd); color: #fff; font: 600 clamp(11px, 3.2vh, 14px)/1.3 var(--f-ui); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
-#h-radio.on { opacity: 1; transform: none; }
-#h-radio b { flex: none; margin-top: 1px; padding: 1px 5px; border-radius: 4px; background: var(--lcd); color: #111; font: 800 italic 10px/1.4 var(--f-ui); letter-spacing: .04em; }
-@media (orientation: portrait) { #h-radio { right: calc(10px + var(--sr)); top: calc(var(--st) + clamp(150px, 18vh, 170px)); max-width: 62vw; } #hud:has(#h-radio.on) #h-note { top: calc(24% + 64px); } }
-#hud.shot > *:not(#podium-cap) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium): no HUD */
+#h-teamradio { position: absolute; right: calc(50% + 36px); top: calc(84px + var(--st)); transform: translateY(-6px); max-width: min(28vw, 320px); display: flex; gap: 8px; align-items: flex-start; padding: 6px 10px 7px 8px; border-radius: 8px; background: rgba(10, 14, 20, .82); border-left: 4px solid var(--lcd); color: #fff; font: 600 clamp(11px, 3.2vh, 14px)/1.3 var(--f-ui); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
+#h-teamradio.on { opacity: 1; transform: none; }
+#h-teamradio b { flex: none; margin-top: 1px; padding: 1px 5px; border-radius: 4px; background: var(--lcd); color: #111; font: 800 italic 10px/1.4 var(--f-ui); letter-spacing: .04em; }
+@media (orientation: portrait) { #h-teamradio { right: calc(10px + var(--sr)); top: calc(var(--st) + clamp(150px, 18vh, 170px)); max-width: 62vw; } #hud:has(#h-teamradio.on) #h-note { top: calc(24% + 64px); } }
+#hud.shot > *:not(#podium-cap):not(#h-radio) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium; busted: the arrest, the radio on): no HUD */
 #podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
 #podium-cap.show { opacity: 1; }
 #podium-cap b { color: #ffcf2e; }
@@ -160,6 +202,9 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #c-gas { right: calc(14px + var(--sr)); }
 #c-brake { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); background: rgba(140, 30, 25, .4); border-color: rgba(255, 140, 120, .6); }
 #c-brake.on { background: rgba(240, 70, 50, .5); }
+/* the handbrake: over the brake pedal (same side in every steering mode) */
+#c-drift { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); bottom: calc(24px + var(--sb) + clamp(80px, 29vh, 132px)); width: clamp(62px, 20vh, 92px); height: clamp(40px, 13vh, 56px); border-radius: 14px; background: rgba(150, 100, 20, .4); border-color: rgba(255, 200, 110, .6); }
+#c-drift.on { background: rgba(240, 170, 40, .5); }
 #c-wheel { position: absolute; left: calc(10px + var(--sl)); bottom: calc(8px + var(--sb)); width: clamp(130px, 44vh, 200px); height: clamp(130px, 44vh, 200px); display: none; }
 #wheel-rot { width: 100%; height: 100%; }
 #wheel-rot svg { width: 100%; height: 100%; display: block; }
@@ -170,7 +215,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #touch.m-wheel .steer, #touch.m-tilt .steer { display: none; }
 #touch.m-wheel #c-wheel { display: block; }
 #touch.m-tilt #tilt-ind { display: flex; }
-#touch.m-tilt #c-brake { right: auto; left: calc(14px + var(--sl)); }
+#touch.m-tilt #c-brake, #touch.m-tilt #c-drift { right: auto; left: calc(14px + var(--sl)); }
 #btn-pause { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(8px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
 #btn-pause svg { width: 22px; height: 22px; fill: var(--chalk); }
 /* the camera during a race (under the pause button; a phone held upright has only the one behind the car) */
@@ -280,12 +325,15 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #res-table th { text-align: left; color: var(--muted); font-weight: 700; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.15); }
 #res-table td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.05); white-space: nowrap; }
 #res-table tr.me td { color: #111; background: var(--lcd); }
+#res-table td.wrap { white-space: normal; }   /* (the rap sheet: the offences one a line) */
 #res-table .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.4); }
 #rotate { position: absolute; inset: 0; z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--asphalt); text-align: center; padding: 24px; }
 #rotate p { font: 700 italic 18px/1.3 var(--f-ui); margin: 0; }
 #rotate .phone { width: 54px; height: 92px; border: 4px solid var(--chalk); border-radius: 10px; animation: rot 2.2s ease-in-out infinite; }
 @keyframes rot { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
 #rotate.show { display: flex; }
+#rotate #rotate-why { font: 500 14px/1.4 var(--f-ui); font-style: normal; color: #c7d0e0; max-width: 34em; }   /* (why: the camera chosen is for the other way round; the button: the one for the way it is held) */
+#rotate #rotate-cam { margin-top: 6px; }
 #rotate.to-portrait .phone { animation-name: rotp; }
 @keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
 #toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
@@ -322,6 +370,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   .pedal { width: clamp(56px, 17vw, 84px); height: clamp(84px, 26vw, 128px); bottom: calc(18px + var(--sb)); }
   .pedal.gas { width: clamp(62px, 19vw, 92px); height: clamp(100px, 32vw, 150px); }
   #c-brake { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); }
+  #c-drift { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); bottom: calc(28px + var(--sb) + clamp(84px, 26vw, 128px)); width: clamp(56px, 17vw, 84px); height: clamp(38px, 12vw, 52px); }
   #c-wheel { width: clamp(120px, 44vw, 190px); height: clamp(120px, 44vw, 190px); bottom: calc(14px + var(--sb)); }
   #tilt-ind { bottom: calc(30px + var(--sb) + clamp(100px, 32vw, 150px)); width: clamp(62px, 19vw, 92px); }
   .screen { padding: calc(12px + var(--st)) calc(10px + var(--sr)) calc(12px + var(--sb)) calc(10px + var(--sl)); }
@@ -381,6 +430,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .trk-btns { align-items: center; } .trk-btns #cmp-row { margin: 0 auto 0 0; min-width: 0; flex-wrap: nowrap; }   /* the slicks for the start (the circuits with pits) beside Nazaj and Start, where the buttons leave room (narrower: smaller letters, fitSegs) */
 @media (orientation: portrait) { .trk-btns { flex-wrap: wrap; } .trk-btns #cmp-row { flex: 1 0 100%; flex-wrap: wrap; } }   /* (upright: above the buttons) */
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }
+.track-sep { flex: 0 0 auto; align-self: center; max-width: 150px; padding: 6px 10px; border-left: 2px dashed rgba(255,255,255,.3); font: 700 italic clamp(11px, 3vh, 13px)/1.3 var(--f-ui); color: var(--muted); text-transform: uppercase; }   /* the made-up tracks kept for testing (def.test) come after the real ones, under this heading */
 .track-card { flex: 1 0 220px; max-width: 340px; border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .track-card.sel { border-color: var(--curb); background: rgba(230,59,46,.14); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
 .track-card canvas { width: 100%; height: clamp(70px, 24vh, 120px); display: block; background: rgba(8,11,16,.55); border-radius: 8px; }
@@ -394,7 +444,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .track-card .tc-mode button { flex: 1 1 auto; min-height: 30px; padding: 4px 7px; font-size: clamp(11px, 3.1vh, 13px); white-space: nowrap; }
 @media (orientation: landscape) { .track-card.modes { flex-basis: 390px; max-width: 440px; } }   /* (on its side: wide enough for the name and the switch in one row) */
 @media (max-width: 370px) { .track-card .tc-mode { display: grid; grid-template-columns: 1fr 1fr; width: 100%; } .track-card .tc-mode button:nth-child(odd) { border-left: 0; } .track-card .tc-mode button:nth-child(n+3) { border-top: 2px solid rgba(255,255,255,.14); } }   /* a narrow phone: the four ways to drive Vršič in two rows */
-@media (orientation: portrait) { .track-list { flex-direction: column; overflow-y: auto; } .track-card { flex: 0 0 auto; max-width: none; padding: 8px 10px; } .track-card canvas { height: clamp(52px, 10vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 6px; } .track-card .tc-head { margin-top: 6px; } .track-card .tc-head h3 { margin-top: 0; } }
+@media (orientation: portrait) { .track-list { flex-direction: column; overflow-y: auto; } .track-sep { max-width: none; align-self: stretch; border-left: 0; border-top: 2px dashed rgba(255,255,255,.3); } .track-card { flex: 0 0 auto; max-width: none; padding: 8px 10px; } .track-card canvas { height: clamp(52px, 10vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 6px; } .track-card .tc-head { margin-top: 6px; } .track-card .tc-head h3 { margin-top: 0; } }
 @media (orientation: landscape) and (max-height: 520px) { .track-card { padding: 7px 9px; } .track-card canvas { height: clamp(44px, 15vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 5px; } .track-card .tc-head { margin-top: 5px; } .track-card .tc-head h3 { margin-top: 0; } .wx-row { margin: 1px 0 0; } }   /* a phone on its side: smaller cards, so their names stay in sight above the options */
 
 /* ================= UPGRADES (Nadgradnje, over the showroom) ================= */

@@ -100,7 +100,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   for (const c of C.CHAMPS) { if (!c.en || !c.en.desc) miss.push('championship desc ' + c.id); if (!(c.en && c.en.name) && !SAME_NAME.has(c.name)) miss.push('championship name ' + c.id); }
   check('Core: upgrades, credit, tracks, championships and jumps in English', !miss.length, miss.join(' | '));
   const sl = [];
-  for (const d of C.TRACKS) if (d.en && /[čšžČŠŽ]/.test((d.en.desc || '').replace(/Vršič/g, '') + (d.en.name || ''))) sl.push(d.id);
+  for (const d of C.TRACKS) if (d.en && /[čšžČŠŽ]/.test((d.en.desc || '').replace(/Vršič/g, '') + (d.en.name || '').replace(/Vršič/g, ''))) sl.push(d.id);
   check('Core: the English descriptions have no Slovenian letters (but the name Vršič)', !sl.length, sl.join(', '));
 }
 
@@ -118,7 +118,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   check('English: Track: X, Mountain Rally, 3,048, 1.9, €12,300, 3rd, Hairpin 4 · 1,060 m, an unknown text as it is', en === 'Track: X|Mountain Rally|3,048|1.9|€12,300|3rd|Hairpin 4 · 1,060 m|neznano', en);
   check('English places: 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords === '1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords);
   check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Fairmont Hairpin', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Fairmont Hairpin', pl);
-  check('Vršič keeps its name in English; its description is English', Lang.of(v, 'name') === 'Vršič' && /^The road over the Vršič pass/.test(v.en.desc));
+  check('Vršič: "Vršič, Slovenija" in Slovenian, "Vršič, Slovenia" in English; its description is English', Lang.of(v, 'name') === 'Vršič, Slovenija' && v.en.name === 'Vršič, Slovenia' && /^The road over the Vršič pass/.test(v.en.desc));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);
