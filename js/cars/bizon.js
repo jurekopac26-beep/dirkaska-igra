@@ -25,16 +25,19 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         fenderR: { lx: 0.53, lz: 0.88, f: 0.56 },
       },
     },
-    // the look (KIT API v1, render.js; look units = metres): one loft from the tail to the nose, low and wide: the rear wings bulging over
-    // the fat rear tyres and the front fenders over the front ones, each a crest with the deck between them lower (a saddle: the crown
-    // under the crests), the cockpit open between its bulkheads (lined, floored), the scuttle under the screen. Its parts: the front
-    // fenders' flanks ('fenderL' / 'fenderR', with their mirrors), the nose (everything ahead of the front arches and the deck between
-    // the fenders back to the screen, the radiator's mouth in its leading edge: 'nose'), the whole rear body behind the cockpit (the
-    // engine cover with the rear wings and the tail panel, its lamps: 'cover'); the high wing on its two tall struts and stays ('wing').
-    // In 'body': the tub's flanks with the number roundels, the wrap-around screen, the driver, his seat and wheel, the roll hoop with its
-    // headrest and brace, the V8's eight intake stacks standing out of the cover, the megaphones, the gearbox and the drive shafts under
-    // the tail. Inside (seen once a part is off): the big-block V8 under the stacks, its headers, the radiator in the nose, the front
-    // wishbones. The livery: the paint, the nose's leading edge and the wing in the stripe colour, white roundels
+    // the look (KIT API v1, render.js; look units = metres): low and wide, two lofts: the main one from the cockpit's rear bulkhead to the
+    // nose (the cockpit open between its bulkheads, lined and floored, the scuttle under the screen, the wide flat nose ending in a wedge)
+    // and the rear body (unlined: a few faces of the lining's colour under it); a flat deck over each axle (a loft's crown much under its
+    // crests there would turn inside out) with a bulge skinned on it over each wheel: the front fenders' and, back to the tail panel, the
+    // rear wings' over the fat rear tyres. Its parts: the front fenders' flanks with their bulges ('fenderL' / 'fenderR'), the nose (all
+    // of it ahead of the front arches and the deck between the fenders back to the screen, the radiator's mouth in its leading edge:
+    // 'nose'), the whole rear body (the engine cover, the rear wings, the tail panel with the oil cooler's mesh and the lamps: 'cover',
+    // a clamshell hinged at the tail), the high wing on its two tall struts ('wing'). In 'body': the tub's flanks with the number
+    // roundels, the wrap-around screen, the driver (a lean one of skins and bars) and his seat, the roll hoop with its headrest, the V8's
+    // eight chrome intake stacks standing out of the cover, the megaphones and the gearbox under the tail. Inside (seen once a part is
+    // off): the big-block V8 under the stacks with its headers, the rear beam the struts stand on, the drive shafts, the radiator in the
+    // nose, the front wishbones. The livery: the paint; a stripe down the nose and the deck, the nose's leading edge and the wing's plank
+    // in the stripe colour; white number roundels
     look: {
       body: { len: 4.2, wid: 2.05, roofY: 1.0, wz: 0.21,
         //       x      w      yb     ybelt  wt     yt     cr     kind  tuck
@@ -66,7 +69,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const face = (Q, col, out, o) => K.face(dot(crs(sub(Q[1], Q[0]), sub(Q[2], Q[0])), sub(out, mid(Q))) >= 0 ? Q : Q.slice().reverse(), col, o);   // (a flat convex polygon facing the point out)
         const ngon = (n, f) => { const Q = []; for (let i = 0; i < n; i++) Q.push(f(i * Math.PI * 2 / n)); return Q; };
         // ---- the shell: the paint, the tuck darker; the cockpit open on top (its deck to the rim stays, a black edge on it); the caps:
-        //      the radiator's mouth (black) under the nose's leading edge (the stripe colour), the tail panel dark under its lamps ----
+        //      the radiator's mouth (black) under the nose's leading edge (the stripe colour), the bulkhead behind the seat, the tail panel
+        //      dark under its lamps ----
         const shell = (k, e, kind, at) => {
           if (at.end) return at.x > 0 ? S : P;
           if (kind === 'r' && e >= 3 && e <= 5) return null;
@@ -104,6 +108,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(2.07, 0.095, 0, 0.1, 0.03, 1.46, 0, B, null, true);
         }, { hinge: [[2.02, 0.14, -0.7], [2.02, 0.14, 0.7]] });
         K.hinge('cover', [-2.08, 0.63, -0.7], [-2.08, 0.63, 0.7]);   // (a clamshell hinged at the tail: its front lifts over the stacks and the hoop, clear of the wing)
+        LC.decal.side([[-0.46, 0.3], [-0.86, 0.3], [-0.86, 0.5], [-0.46, 0.56]], B, null, 0.006);   // (the oil cooler's intakes in the rear wings' flanks, ahead of the wheels)
         // ---- the tub's flanks: the number in a white roundel each side; the wrap-around screen on the scuttle (one-sided panes facing
         //      out: the driver sees through them); the dash on the front bulkhead ----
         K.part('body', () => {
@@ -139,7 +144,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the big intakes: the V8's eight stacks out of the cover behind the hoop (two rows of four, flared, dark in their mouths) ----
         K.part('body', () => { for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) { const x = -0.66 - 0.12 * i;
           K.cyl([x, 0.56, sd * 0.12], [x, 0.94, sd * 0.12], 0.034, K.chrome, { n: 5, r2: 0.054, capA: null, capB: B }); } });
-        // ---- the high wing on its tall struts and stays: its plank in the stripe colour, the endplates in the paint ----
+        // ---- the high wing on its two tall struts: its plank in the stripe colour, the endplates in the paint ----
         K.part('wing', () => {
           K.wingPlank(-1.57, 1.19, -2.03, 1.26, 0.035, -0.82, 0.82, S);
           for (const sd of [-1, 1]) {
@@ -166,7 +171,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { K.box(-1.0, 0.36, sd * 0.2, 0.68, 0.14, 0.2, 0, EN); K.box(-1.0, 0.5, sd * 0.24, 0.62, 0.05, 0.13, 0, CAM);
             K.sweep([[0.03, 0], [0, 0.03], [-0.03, 0], [0, -0.03]], [[-0.8, 0.38, sd * 0.32], [-1.0, 0.3, sd * 0.36], [-1.5, 0.28, sd * 0.33], [-1.78, 0.3, sd * 0.3]], STEEL); }
           K.box(-0.99, 0.47, 0, 0.6, 0.09, 0.3, 0, ALU);
-          face([[-0.4, 0.14, -0.62], [-0.4, 0.14, 0.62], [-1.62, 0.14, 0.62], [-1.62, 0.14, -0.62]], K.lining, [-1, -1, 0]);   // (the engine bay's floor)
+          face([[-0.4, 0.14, -0.62], [-0.4, 0.14, 0.62], [-1.62, 0.14, 0.62], [-1.62, 0.14, -0.62]], K.lining, [-1, 2, 0]);   // (the engine bay's floor)
           K.bar([-1.42, 0.42, -0.62], [-1.42, 0.42, 0.62], 0.025, D, { n: 4 });   // (the rear subframe's top beam: the wing's struts stand on it)
           for (const sd of [-1, 1]) K.bar([-1.25, 0.32, sd * 0.13], [-1.25, 0.34, sd * 0.62], 0.025, D, { n: 4 });   // (the drive shafts)
           K.box(1.8, 0.15, 0, 0.07, 0.3, 0.9, 0, D); K.grille(1.84, 0.3, 0, 0.84, 0.26, { slats: 5, col: B, slatCol: [0.4, 0.4, 0.42] });
