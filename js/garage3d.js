@@ -107,7 +107,7 @@ const Garage3D = (function () {
     // butt joint every 3 m, a few streaks under the joints (1 texture = 3 m x 1.2 m; each panel's tint a shade apart: the wall's shader)
     TX.wall = canvasTex(512, 256, (g, w, h) => {
       const gr = g.createLinearGradient(0, 0, 0, h), jy = Math.round(h / 6);
-      gr.addColorStop(0, 'rgb(57,58,61)'); gr.addColorStop(jy / h, 'rgb(55,56,59)'); gr.addColorStop(jy / h + 0.001, 'rgb(64,65,68)'); gr.addColorStop(1, 'rgb(57,58,61)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);   // (a panel: lighter at its top, under the joint above it)
+      gr.addColorStop(0, 'rgb(70,71,74)'); gr.addColorStop(jy / h, 'rgb(67,68,72)'); gr.addColorStop(jy / h + 0.001, 'rgb(78,79,83)'); gr.addColorStop(1, 'rgb(70,71,74)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);   // (a panel: lighter at its top, under the joint above it)
       for (let y = jy % 32; y < h; y += 32) { g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(0, y, w, 1); g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, y + 1, w, 1); }
       for (let i = 0; i < 30; i++) { const x = R() * w, wd = 4 + R() * 12, l = 40 + R() * 80, s = g.createLinearGradient(0, jy, 0, jy + l); s.addColorStop(0, 'rgba(0,0,0,' + (0.03 + R() * 0.02).toFixed(3) + ')'); s.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = s; g.fillRect(x, jy, wd, l); }
       for (let i = 0; i < 6000; i++) { g.fillStyle = R() < 0.5 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'; g.fillRect(R() * w, R() * h, 2, 2); }
@@ -310,7 +310,8 @@ const Garage3D = (function () {
   /* ---------------- the room's light: one chunk in the shaders of the room's own materials (walls, ceiling, floor, every piece's), no
      lights and no draws of its own. Brighter under the lamps over the table, darker towards the walls, in the corners, along the floor's
      and the ceiling's edges; the daylight through the doors (the right one in the sun: warm; the left one in the building's shade: cool),
-     the wall washers' scallops on the back wall, the sun through the front windows in patches of their shape ---------------- */
+     the wall washers' scallops on the back wall, the sun through the front windows in patches of their shape, the light floor's bounce
+     on the walls and on what stands (most low down) ---------------- */
   let ROOMLIGHT_GLSL = '', RL_SUN = '';
   function makeRoomLight() {   // (made from the room's fixed lines, once HDR is known: a window or a washer moved, its light moves too)
     const { x0, x1, z0, z1, h, door, doorH } = ROOM, f = (v) => v.toFixed(3), v3 = (a) => 'vec3(' + a.map(f).join(', ') + ')';
@@ -338,7 +339,8 @@ const Garage3D = (function () {
       '    wash *= smoothstep(0.8, 3.6, p.y) * (1.0 - smoothstep(' + f(ly - 0.05) + ', ' + f(ly + 0.05) + ', p.y)); }',
       '  float sun = 0.0, ns = dot(n, rlS); if (ns > 0.0 && p.z < ' + f(zw - 0.01) + ') sun = ns * rlSun(p);',   // (the sun: on what faces it)
       '  return c * k + alb * (' + v3([0.55, 0.506, 0.44]) + ' * rlDoor(p, n, ' + f(x1) + ', 1.0) + ' + v3([0.213, 0.228, 0.248]) + ' * rlDoor(p, n, ' + f(x0) + ', -1.0)',   // (the doors: 0.55 x (1, 0.92, 0.8); 0.55 x 0.45 x (0.86, 0.92, 1))
-      '    + vec3(0.9, 0.864, 0.81) * wash + vec3(1.0, 0.88, 0.7) * sun * ' + f(HDR ? 1.8 : 0.9) + ');',
+      '    + vec3(0.9, 0.864, 0.81) * wash + vec3(1.0, 0.88, 0.7) * sun * ' + f(HDR ? 1.8 : 0.9),
+      '    + ' + v3([0.3, 0.295, 0.285]) + ' * (1.0 - abs(n.y)) * (1.0 - 0.65 * smoothstep(0.0, 3.8, p.y)));',   // (the light floor's bounce on what stands: most low down)
       '}'].join('\n');
   }
   // the chunk in a Lambert or Phong shader: the world position and normal passed on, the colour scaled at the end (call false: the
@@ -1191,24 +1193,32 @@ const Garage3D = (function () {
       gl(MATTE); for (const sz of [-1, 1]) cylA(g, [X - 0.18, 0.1, Z + sz * 0.45], 'x', 0.1, 0.06, 10, DK);
       tube(g, [[x1 - 0.3, RY - 0.18, RZ - 0.03], [x1 - 0.36, RY - 0.5, RZ - 0.12], [X + 0.02, 0.98, Z + 0.12], [X, 0.7, Z + 0.25]], 0.016, HC, 14, 5);
       BLOBS.push([X, Z, 0.9, 1.4, 0.8, 0, P]); }
-    // race suits on a rail on the right wall (the team's colours, no marks), their boots on a bench under them
-    { use(WALLS.right, METAL); const X = 8.83, Y = 2.2;
+    // race suits on a rail on the right wall (the team's colours, no marks), hanging clear of the bench under them; their boots in pairs
+    // on the floor under the bench
+    { use(WALLS.right, METAL); const X = 8.83, Y = 2.32;
       seg(g, [X, Y, 3.05], [X, Y, 4.75], 0.014, STEEL); for (const z of [3.1, 4.7]) seg(g, [x1 - 0.02, Y, z], [X, Y, z], 0.012, STEEL);
       const SN = [0.13, 0.17, 0.34]; [[SN, GOLD, CYAN], [SN, GOLD, CYAN], [WHITE, [0.82, 0.12, 0.1], SN], [[0.07, 0.07, 0.08], CYAN, GOLD]].forEach((v, i) => suit(cp, M4(X - 0.02, Y - 0.15, 3.35 + i * 0.4, 0, -Math.PI / 2 + (i % 2 ? 0.1 : -0.08), 0), v[0], v[1], v[2]));
       gl(SATIN); box(8.72, 0.42, 4.0, 0.38, 0.04, 1.4, PAL.wood, [0.5, 0.36, 0.22]); gl(PAINT); for (const z of [3.4, 4.6]) box(8.72, 0, z, 0.34, 0.42, 0.04, DK);
-      gl(MATTE); for (const z of [3.45, 3.62, 3.95, 4.12, 4.42, 4.59]) { box(8.66, 0.46, z, 0.26, 0.09, 0.09, [0.06, 0.06, 0.07]); box(8.74, 0.46, z, 0.1, 0.17, 0.09, [0.06, 0.06, 0.07]); } }
-    // spare bodywork on wall arms by the back corner: a rear wing standing on its edge (navy end plates, a gold edge), a front wing under
-    // it (white end plates, a red edge), a nose cone leaning on the wall in the corner (flat and wide; a red tip, a navy band)
+      gl(MATTE); for (const [z, dx] of [[3.68, 0], [4.02, -0.05], [4.36, 0.02]]) for (const e of [-1, 1]) { box(8.66 + dx, 0, z + e * 0.065, 0.26, 0.09, 0.09, [0.06, 0.06, 0.07]); box(8.74 + dx, 0, z + e * 0.065, 0.1, 0.17, 0.09, [0.06, 0.06, 0.07]); } }
+    // spare bodywork on wall arms by the back corner: a rear wing standing on its edge (navy end plates, a gold edge); under it a front
+    // wing lying on longer arms as it sits on a car (three elements, carbon end plates with a thin red edge); a spare nose along the wall
+    // on two foam blocks (wide and low; navy, a red tip, a blank white plate on top)
     { use(WALLS.right, METAL); const X = x1 - 0.05, ZC = -4.05, S = 1.1, CB = [0.1, 0.11, 0.13];
-      for (const z of [ZC - 0.4, ZC, ZC + 0.4]) for (const y of [1.3, 2.25]) { box(X - 0.12, y - 0.035, z, 0.24, 0.035, 0.035, STEEL); box(X - 0.015, y - 0.2, z, 0.03, 0.2, 0.06, STEEL); }
+      for (const z of [ZC - 0.4, ZC, ZC + 0.4]) for (const [y, l] of [[1.3, 0.56], [2.25, 0.24]]) { box(X - l / 2, y - 0.035, z, l, 0.035, 0.035, STEEL); box(X - 0.015, y - 0.2, z, 0.03, 0.2, 0.06, STEEL); }
       gl(PAINT); gAdd(g, foil(0.36, S, 0.05), M4(X - 0.17, 2.48, ZC, 0, 0, -Math.PI / 2), CB); gAdd(g, foil(0.17, S, 0.03), M4(X - 0.13, 2.74, ZC, 0, 0, -Math.PI / 2 + 0.25), CB);
       for (const sz of [-1, 1]) { gBox(g, null, X - 0.2, 2.55, ZC + sz * (S / 2 + 0.008), 0.3, 0.56, 0.014, NAVY); gBox(g, null, X - 0.2, 2.84, ZC + sz * (S / 2 + 0.01), 0.3, 0.025, 0.018, GOLD); }
-      for (let k = 0; k < 3; k++) gAdd(g, foil(0.24 - k * 0.04, S, 0.03), M4(X - 0.16 - k * 0.02, 1.45 + k * 0.17, ZC, 0, 0, -Math.PI / 2 + k * 0.12), CB);
-      for (const sz of [-1, 1]) { gBox(g, null, X - 0.18, 1.6, ZC + sz * (S / 2 + 0.008), 0.32, 0.6, 0.014, [0.92, 0.92, 0.9]); gBox(g, null, X - 0.18, 1.9, ZC + sz * (S / 2 + 0.01), 0.32, 0.03, 0.018, [0.78, 0.14, 0.1]); }
-      gl(MATTE); for (const z of [ZC - 0.4, ZC, ZC + 0.4]) for (const y of [1.3, 2.25]) box(X - 0.2, y, z, 0.05, 0.02, 0.05, DK);
-      gl(PAINT); gAdd(g, new THREE.LatheGeometry([[0, 0.6], [0.05, 0.585], [0.085, 0.55], [0.11, 0.47], [0.15, 0.2], [0.165, -0.05], [0.178, -0.2], [0.19, -0.5]].map(q => new THREE.Vector2(q[0], q[1])), 16), M4(8.76, 0.53, -4.6, 0, 0, -0.3, 0.5, 1, 1.25),
-        (c) => c[1] > 0.48 ? [0.78, 0.14, 0.1] : c[1] < -0.05 && c[1] > -0.2 ? NAVY : [0.93, 0.93, 0.91]);
-      BLOBS.push([8.6, -4.6, 0.5, 0.65, 0.6, 0, WALLS.right]); }
+      const FW = M4(X - 0.36, 1.315, ZC, 0, Math.PI, 0);   // (the front wing's frame: its nose to the room, the flaps rising toward the wall)
+      for (const [c, x, y, a] of [[0.24, 0.07, 0.02, -0.08], [0.18, -0.12, 0.085, -0.32], [0.13, -0.25, 0.155, -0.55]]) gAdd(g, foil(c, S, 0.03), FW.clone().multiply(M4(x, y, 0, 0, 0, a)), CB);
+      for (const sz of [-1, 1]) { gBox(g, null, X - 0.38, 1.4, ZC + sz * (S / 2 + 0.008), 0.56, 0.23, 0.014, CB); gBox(g, null, X - 0.38, 1.52, ZC + sz * (S / 2 + 0.01), 0.56, 0.016, 0.018, [0.78, 0.14, 0.1]); }
+      gl(MATTE); for (const z of [ZC - 0.4, ZC, ZC + 0.4]) { box(X - 0.2, 2.25, z, 0.05, 0.02, 0.05, DK); box(X - 0.44, 1.3, z, 0.05, 0.012, 0.05, DK); }
+      for (const z of [-4.36, -3.68]) box(8.62, 0, z, 0.44, 0.1, 0.14, [0.24, 0.25, 0.27]);   // (the foam blocks)
+      // (the nose: a lathe from its back to its tip (the faces outward), its underside flattened, laid along the wall with its tip toward
+      // the door; closed at both ends)
+      const ng = new THREE.LatheGeometry([[0, -0.55], [1, -0.55], [1, -0.55], [0.95, -0.38], [0.87, -0.18], [0.74, 0.08], [0.55, 0.36], [0.4, 0.5], [0.26, 0.55], [0.26, 0.55], [0, 0.55]].map(q => new THREE.Vector2(q[0], q[1])), 14), np = ng.attributes.position;
+      for (let i = 0; i < np.count; i++) if (np.getZ(i) > 0) np.setZ(i, np.getZ(i) * 0.15);
+      ng.computeVertexNormals(); gl(PAINT);
+      gAdd(g, ng, M4(8.62, 0.117, -4.0, Math.PI / 2, 0, 0, 0.25, 1, 0.11), (c) => c[1] > 0.47 ? [0.78, 0.14, 0.1] : c[1] < -0.54 ? CB : -c[2] > 0.9 * Math.hypot(c[0], c[2]) && c[1] > -0.2 && c[1] < 0.08 ? [0.9, 0.9, 0.88] : [0.14, 0.18, 0.34]);
+      BLOBS.push([8.62, -4.0, 0.62, 1.25, 0.55, 0, WALLS.right]); }
     // the pit's air line: a reel under the roof by the back right corner, its hose dropping in a coil, a wheel gun hanging over the bare set
     // (the bare set's piece: it hangs 2 m out from the wall, where the wall's piece would not step aside; it goes with the trolley)
     { use(TB); const X = 6.95, Z = -3.3, Y = 4.34, YC = 3.7, YB = 2.4, YG = 1.85, HY = [0.95, 0.75, 0.12];
@@ -1293,12 +1303,12 @@ const Garage3D = (function () {
   // all of it lit once, in its colours (the sun on its faces, the haze of the distance): no lights, cheap to draw. The ground's shader
   // has the shadows: the near boxes' swept from their footprints, the trees' and the far buildings' painted into a map once. What stands
   // out there is the main camera's only (mainOnly): the floor's mirror and the cars' cube map get the sky and the ground
-  const SUNH = new THREE.Vector2(SUN.x, SUN.z).normalize(), AIR = 420;   // (the haze of the distance d: 0.85 (1 - exp(-d / AIR)))
+  const SUNH = new THREE.Vector2(SUN.x, SUN.z).normalize(), AIR = 700, HAZE = 0.6;   // (the haze of the distance d: HAZE (1 - exp(-d / AIR)): a clear day)
   // the horizon's colour round the panorama, warmer and paler toward the sun, bluer away from it: what everything far fades into
   // (horz() in the shaders the same)
   const horzJS = (dx, dz) => { const s = (dx * SUNH.x + dz * SUNH.y) / (Math.hypot(dx, dz) || 1), p = Math.max(s, 0), q = Math.max(-s, 0); return [0.78 + 0.09 * p - 0.05 * q, 0.85 + 0.06 * p - 0.03 * q, 0.93 + 0.01 * p]; };
   // the shaders' shared part: the sun, a hash without sin (no stripes far out), value noise (vp: periodic in x with the period N, round
-  // the panorama: no seam), horz(), the last line (OUTK: the daylight brighter than the room; a little less colour)
+  // the panorama: no seam), horz(), the last line (OUTK: the daylight brighter than the room; a little less colour), oSky
   function outGL() {
     const f = (v) => v.toFixed(4);
     return ['const vec3 oSun = vec3(' + f(SUN.x) + ', ' + f(SUN.y) + ', ' + f(SUN.z) + '); const vec2 oSunH = vec2(' + f(SUNH.x) + ', ' + f(SUNH.y) + ');',
@@ -1307,14 +1317,15 @@ const Garage3D = (function () {
       'float vp(vec2 p, float N){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); float a = mod(i.x, N), b = mod(i.x + 1.0, N);',
       '  return mix(mix(hs(vec2(a, i.y)), hs(vec2(b, i.y)), f.x), mix(hs(vec2(a, i.y + 1.0)), hs(vec2(b, i.y + 1.0)), f.x), f.y); }',
       'vec3 horz(vec2 h){ float s = dot(h, oSunH) * inversesqrt(dot(h, h) + 1e-6); return vec3(0.78, 0.85, 0.93) + vec3(0.09, 0.06, 0.01) * max(s, 0.0) - vec3(0.05, 0.03, 0.0) * max(-s, 0.0); }',
-      'vec4 outC(vec3 c){ return vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }'].join('\n');
+      'vec4 outC(vec3 c){ return vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }',
+      'const float oSky = ' + (HDR ? '1.3' : '1.0') + ';'].join('\n');   // (the sky over the land's light: HDR only, 8 bits would clip it white)
   }
   // the far things' colours: the sun on each face (a darker foot), the haze toward the horizon's colour, a little less colour (as the
   // shaders' last line); unlit: vertex ranges that keep their colour (glass: the sky in it)
   function bakeOut(gb, unlit) {
     const geo = gb.geometry(), P = geo.attributes.position, N = geo.attributes.normal, C = geo.attributes.color;
     for (let i = 0; i < P.count; i++) {
-      const x = P.getX(i), z = P.getZ(i), ny = N.getY(i), H = horzJS(x, z), k = 0.85 * (1 - Math.exp(-Math.hypot(x, z) / AIR));
+      const x = P.getX(i), z = P.getZ(i), ny = N.getY(i), H = horzJS(x, z), k = HAZE * (1 - Math.exp(-Math.hypot(x, z) / AIR));
       const l = unlit.some(([a, b]) => i >= a && i < b) ? 1 : (0.6 + 0.6 * Math.max(0, N.getX(i) * SUN.x + ny * SUN.y + N.getZ(i) * SUN.z) + 0.06 * ny) * (0.8 + 0.2 * smooth(0, 2.5, P.getY(i)));
       const r = lerp(C.getX(i) * l, H[0], k), g = lerp(C.getY(i) * l, H[1], k), b = lerp(C.getZ(i) * l, H[2], k), m = (r + g + b) / 3;
       C.setXYZ(i, lerp(r, m, 0.15), lerp(g, m, 0.15), lerp(b, m, 0.15));
@@ -1341,7 +1352,7 @@ const Garage3D = (function () {
     'void main(){ vec3 d = normalize(vD); float lh = max(length(d.xz), 1e-4), t = d.y / lh, u = atan(d.z, d.x) / 6.2831853;',
     '  vec2 dh = d.xz / lh; float px = max(fwidth(t), 1e-5); vec3 hz = horz(dh);',
     '  float e = max(d.y, 0.0), s = max(dot(d, oSun), 0.0);',
-    '  vec3 c = mix(hz, vec3(0.19, 0.41, 0.83), 1.0 - exp(-e * 4.5)); c = mix(c, vec3(1.0, 0.96, 0.88), pow(s, 8.0) * 0.3); c += vec3(1.0, 0.9, 0.7) * pow(s, 900.0) * 3.0;',
+    '  vec3 c = mix(hz, vec3(0.15, 0.36, 0.8), 1.0 - exp(-e * 4.5)); c = mix(c, vec3(1.0, 0.96, 0.88), pow(s, 8.0) * 0.3); c += vec3(1.0, 0.9, 0.7) * pow(s, 900.0) * 3.0;',
     // (the clouds overhead, in perspective: small and flat toward the horizon, the side toward the sun brighter)
     '  if (d.y > 0.05) { vec2 p = d.xz / d.y * 0.9 + vec2(3.0, 7.0); float n = vn(p) * 0.5 + vn(p * 2.2 + 4.1) * 0.3 + vn(p * 5.3 + 9.7) * 0.2;',
     '    float cov = smoothstep(0.3, 0.75, vn(p * 0.23 + 1.7)), k = smoothstep(0.58, 0.72, n * (0.75 + 0.45 * cov)) * smoothstep(0.05, 0.14, d.y);',
@@ -1356,7 +1367,7 @@ const Garage3D = (function () {
     '    float k = smoothstep(0.0, 0.1, ed) * smoothstep(0.0, 0.05, y), sf = dot(dh, oSunH);',
     '    float lt = clamp(0.3 + 0.5 * y + (bl - 0.5) * 0.9 - 0.3 * sf, 0.0, 1.0) + (1.0 - smoothstep(0.0, 0.25, ed)) * max(sf, 0.0) * 0.6;',
     '    c = mix(c, mix(mix(vec3(0.62, 0.67, 0.76), vec3(1.0, 0.98, 0.94), lt), hz, 0.3), k * 0.92); }',
-    '  float fl = smoothstep(0.08, 0.7, abs(dh.y)), h1 = H1(u);',
+    '  c *= oSky; float fl = smoothstep(0.08, 0.7, abs(dh.y)), h1 = H1(u);',   // (the sky brighter than what stands under it)
     // (the limestone: lit and shaded faces under each summit (the shade lit by the blue sky), ribs and gullies, a few ledges, the summer's
     // last snow in the high gullies and on the summits, scree, dwarf pine, forest at its foot; darker than the sky but for its snow)
     '  if (t < h1 + px) { float ee = 0.0012, sl = (H1(u + ee) - H1(u - ee)) / (2.0 * ee), hn = clamp((h1 - t) / max(h1 - 0.004, 0.01), 0.0, 1.0);',
@@ -1376,19 +1387,19 @@ const Garage3D = (function () {
     '    float sn = smoothstep(0.0, 0.004, t - (0.052 + 0.012 * vp(vec2(u * 40.0, 3.0), 40.0))) * smoothstep(0.56, 0.66, gl + (0.5 - g) * 0.25);',
     '    sn = clamp(sn + (1.0 - smoothstep(0.0, 0.07, hn)) * smoothstep(0.07, 0.09, h1) * smoothstep(0.4, 0.52, gl), 0.0, 1.0) * (1.0 - smoothstep(0.24, 0.38, hn));',
     '    col = mix(col, vec3(0.92, 0.94, 0.97), sn) * (vec3(0.2, 0.23, 0.29) + vec3(0.78, 0.74, 0.68) * lit);',
-    '    c = mix(c, mix(col, hz, 0.2 + 0.25 * hn), 1.0 - smoothstep(h1 - px, h1 + px, t)); }',
+    '    c = mix(c, mix(col, hz, 0.1 + 0.22 * hn), 1.0 - smoothstep(h1 - px, h1 + px, t)); }',
     // (the forested ridges: their slopes lit by their lie, clearings of meadow on them; the near wooded hills)
     '  float h2 = H2(u, fl);',
     '  if (t < h2 + px) { float ee = 0.002, sl = (H2(u + ee, fl) - H2(u - ee, fl)) / (2.0 * ee), hn = clamp((h2 - t) / h2, 0.0, 1.0);',
     '    float g = vp(vec2(u * 1500.0, t * 600.0), 1500.0), lit = faceLit(dh, sl * (1.0 - smoothstep(0.0, 0.5, hn)) + (g - 0.5) * 0.9, 0.45);',
     '    vec3 col = mix(vec3(0.09, 0.15, 0.11), vec3(0.16, 0.25, 0.16), g);',
     '    col = mix(col, vec3(0.22, 0.31, 0.16), smoothstep(0.68, 0.72, vp(vec2(u * 300.0, t * 420.0), 300.0) * 0.6 + vp(vec2(u * 37.0, 2.0), 37.0) * 0.4) * smoothstep(0.1, 0.3, hn)) * (0.5 + 0.7 * lit);',
-    '    c = mix(c, mix(col, hz, 0.34), 1.0 - smoothstep(h2 - px, h2 + px, t)); }',
+    '    c = mix(c, mix(col, hz, 0.25), 1.0 - smoothstep(h2 - px, h2 + px, t)); }',
     '  float h3 = H3(u, fl);',
     '  if (t < h3 + px) { float g = vp(vec2(u * 2600.0, t * 1100.0), 2600.0), lit = faceLit(dh, (g - 0.5) * 1.4, 0.45);',
     '    vec3 col = mix(vec3(0.08, 0.15, 0.09), vec3(0.18, 0.28, 0.15), g) * (0.6 + 0.6 * lit);',
-    '    c = mix(c, mix(col, hz, 0.18), 1.0 - smoothstep(h3 - px, h3 + px, t)); }',
-    '  if (t < 0.0) c = mix(vec3(0.31, 0.42, 0.18), hz, 0.58);',   // (under the horizon, beyond the ground: the valley's floor far off)
+    '    c = mix(c, mix(col, hz, 0.12), 1.0 - smoothstep(h3 - px, h3 + px, t)); }',
+    '  if (t < 0.0) c = mix(vec3(0.31, 0.42, 0.18), hz, ' + (HAZE * (1 - Math.exp(-470 / AIR))).toFixed(3) + ');',   // (under the horizon, beyond the ground: the valley's floor far off, hazed as the ground's edge)
     '  gl_FragColor = outC(c); }'];
   function buildOutside() {
     const { x0, x1, z0, z1 } = ROOM, GL = outGL();
@@ -1462,7 +1473,8 @@ const Garage3D = (function () {
       World.box(og, X0 - 0.02, 0.62, Z, 0.08, 0.7, Wd - 0.3, 0, DK, DK);   // (the grille and the bumper)
       for (const sd of [-1, 1]) { obox(og, [X0 + 0.15, 2.2, Z + sd * (Wd / 2)], [X0 - 0.05, 2.25, Z + sd * (Wd / 2 + 0.32)], 0.04, 0.04, DK); World.box(og, X0 - 0.05, 1.85, Z + sd * (Wd / 2 + 0.36), 0.08, 0.42, 0.18, 0, DK, DK); }
       World.box(og, B + L / 2, 0.32, Z, L, 0.45, Wd - 0.5, 0, DK, DK);   // (the chassis)
-      for (const wx of [X0 + 1.2, B + L - 2.1, B + L - 0.8]) for (const sd of [-1, 1]) cylA(og, [wx, 0.5, Z + sd * (Wd / 2 - 0.16)], 'z', 0.5, 0.34, 10, DK, [0.5, 0.52, 0.55]);
+      for (const wx of [X0 + 1.2, B + L - 2.1, B + L - 0.8]) for (const sd of [-1, 1]) { const z = Z + sd * (Wd / 2 - 0.16);   // (the wheels: the tyre, the hub a pale disc, its dark centre)
+        cylA(og, [wx, 0.5, z], 'z', 0.5, 0.34, 10, DK); cylA(og, [wx, 0.5, z + sd * 0.175], 'z', 0.29, 0.012, 10, [0.5, 0.52, 0.55]); cylA(og, [wx, 0.5, z + sd * 0.183], 'z', 0.1, 0.008, 6, [0.2, 0.21, 0.23]); }
       for (const sd of [-1, 1]) { const zz = Z + sd * (Wd / 2 - 0.02);
         World.box(og, B + L - 1.45, 0.98, zz, 2.6, 0.12, 0.12, 0, DK, DK); World.box(og, X0 + 1.2, 1.0, zz + sd * 0.02, 1.2, 0.1, 0.1, 0, DK, DK);   // (the arches)
         World.box(og, B + 2.4, 0.34, zz, 4.6, 0.42, 0.05, 0, DK, DK);   // (the skirt between the axles)
@@ -1562,7 +1574,7 @@ const Garage3D = (function () {
         '  float bend = max(ax - 36.0, 0.0), zc = 0.011 * bend * bend, sl = 0.022 * bend, rz = p.y - zc, az = abs(rz) / sqrt(1.0 + sl * sl), rw = mix(6.0, 3.1, smoothstep(15.5, 17.5, ax));',
         '  float rd = ax > 9.0 ? az - rw : 99.0, fcd = min(rect(p, vec4(-37.5, 3.0, -14.0, 20.5)), rect(p, vec4(14.0, -18.5, 40.0, -3.0))), pv = min(rd, fcd), pad = rect(p, vec4(-24.0, -7.6, -14.0, -2.5));',
         '  c = mix(c, gv, max(1.0 - smoothstep(0.6, 1.0, min(pv, dw - 0.2)), 1.0 - smoothstep(-e, e, pad)));',   // (gravel round the walls, along the road and the paddock, the truck's pad)
-        '  vec3 a = vec3(0.31, 0.32, 0.34) * (0.84 + 0.28 * n3) * (0.93 + 0.12 * n1);',   // (asphalt; worn tracks along the road)
+        '  vec3 a = vec3(0.35, 0.36, 0.38) * (0.84 + 0.28 * n3) * (0.93 + 0.12 * n1);',   // (asphalt; worn tracks along the road)
         '  a *= 1.0 - 0.08 * (1.0 - smoothstep(0.3, 0.9, abs(abs(rz) - 1.5))) * step(14.5, ax) * step(rd, 0.0);',
         '  vec3 cr = vec3(0.6, 0.6, 0.58) * (0.86 + 0.2 * n3) * (0.94 + 0.1 * n1) * (1.0 - 0.18 * smoothstep(0.55, 0.8, A.g));',   // (concrete: 4 m slabs, old stains)
         '  vec2 jt = abs(fract(p / 4.0) - 0.5) * 4.0; cr *= 1.0 - 0.3 * line(min(jt.x, jt.y), 0.05, e) * (1.0 - smoothstep(0.1, 0.3, px));',
@@ -1579,7 +1591,7 @@ const Garage3D = (function () {
         '  if (d < 70.0) { shd = max(shd, ' + mx(BX.map(b => 'sweep(p, ' + v4(b) + ', ' + b[4].toFixed(2) + ')')) + ');',
         '    c *= 0.8 + 0.2 * smoothstep(0.0, 1.0, min(min(rect(p, ' + v4(BX[1]) + '), rect(p, ' + v4(BX[3]) + ')), rect(p, ' + v4(BX[4]) + '))); }',
         '  c *= mix(vec3(1.0), vec3(0.5, 0.56, 0.68), shd);',
-        '  gl_FragColor = outC(mix(c, horz(p), 0.85 * (1.0 - exp(-d / ' + AIR.toFixed(1) + ')))); }'].join('\n') }));
+        '  gl_FragColor = outC(mix(c, horz(p), ' + HAZE.toFixed(2) + ' * (1.0 - exp(-d / ' + AIR.toFixed(1) + ')))); }'].join('\n') }));
     ground.position.y = -0.002; ground.renderOrder = 9; scene.add(ground);
     // the team's flags by the way in, in its colours: a slow wave running out along each (the vertex shader: fw, how far out along its
     // flag; the time set as it is drawn)
@@ -2737,7 +2749,7 @@ const Garage3D = (function () {
     renderer = Render.init(canvas);
     HDR = POST.on && renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float');
     if (HDR) Object.assign(EMI, { hex: 3.0, led: 1.6, sign: 1.3, screen: 1.2, tail: 2.5, spark: 2.0 });
-    OUTK = HDR ? 1.45 : 1.12; makeRoomLight();
+    OUTK = HDR ? 1.75 : 1.25; makeRoomLight();
     if (POST.on) Object.assign(GLOW, { sign: 0.06, ring: 0.73, lamp: 0.6, blur: 8 });
     renderer.info.autoReset = false;   // (frame() counts the passes itself: _dbg.stats; the page's test reads the main pass and the post pass)
     { const sm = renderer.shadowMap, r0 = sm.render;   // (the shadow map is drawn inside the main pass's render: its draws counted apart)
