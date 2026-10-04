@@ -118,7 +118,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- inside (seen once a part is off): the bucket seats low, the dashboard, the wheel, the tunnel, the bulkhead behind the seats; the V8
         //      behind it with the hybrid's orange cables, the front axle's electric motor and the radiators in the nose ----
         for (const sd of [-1, 1]) K.seat(-0.3, 0.33, sd * 0.34, { w: 0.46, l: 0.46, back: 0.6, tilt: 0.42, col: [0.46, 0.09, 0.07] });
-        K.box(0.4, 0.42, 0, 0.32, 0.22, 1.36, 0, DK, null, false, { inner: true, part: 'body' });
+        fc([[0.1, 0.7, -0.72], [0.1, 0.7, 0.72], [0.93, 0.765, 0.72], [0.93, 0.765, -0.72]], CF, [-0.1, 1, 0], { part: 'body' });   // the dashboard's top under the windscreen (the outer shell, one-sided:
+        //   from the seat it closes the view under the low cowl; from outside the glass hides it)
+        K.box(0.42, 0.4, 0, 0.36, 0.3, 1.36, 0, DK, null, false, { inner: true, part: 'body' });
+        K.box(1.43, 0.46, 0, 0.2, 0.06, 0.3, 0, [0.95, 0.45, 0.08], null, false, { inner: true, part: 'body' });   // (the front motor's orange junction box)
         K.cyl([0.14, 0.6, -0.34], [0.17, 0.64, -0.34], 0.16, [0.06, 0.06, 0.065], { n: 6, inner: true, part: 'body' });
         K.box(0, 0.17, 0, 0.9, 0.2, 0.22, 0, DK, null, false, { inner: true, part: 'body' });
         K.box(-0.66, 0.17, 0, 0.04, 0.68, 1.5, 0, K.lining, null, false, { inner: true, part: 'body' });
