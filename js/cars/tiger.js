@@ -61,7 +61,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (kind === 'r') return e === 2 || e === 6 ? G : P;
           if (kind === 'gr') return e >= 3 && e <= 5 ? G : P;
           return P;
-        }, { caps: { front: { col: P }, rear: { col: P, colLow: B } } });
+        }, { caps: { front: { col: P, colLow: B, cut: 0.215, high: 'bumperF' }, rear: { col: P, colLow: B } } });   // (the fascia's black lip over the splitter, the rear bumper's black face)
         const D2 = L.decal, XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
         // the livery: twin stripes over the bonnet, the roof and the deck (off the glass); the skirts black from arch to arch
         for (const s of [-1, 1]) for (const [x0, x1] of [[0.1, 2.31], [-1.12, -0.66], [-2.33, -1.92]]) D2.top([[x0, s * 0.05], [x1, s * 0.05], [x1, s * 0.2], [x0, s * 0.2]], S, 0.008);
@@ -76,6 +76,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         D2.side([[0.56, 0.44], [0.7, 0.44], [0.8, 0.7], [0.66, 0.7]], B, null, 0.006);
         D2.top([[1.52, -0.26], [1.86, -0.26], [1.86, 0.26], [1.52, 0.26]], B, 0.014);
         for (let i = 0; i < 3; i++) { const x = 1.58 + i * 0.09; D2.top([[x, -0.24], [x + 0.03, -0.24], [x + 0.03, 0.24], [x, 0.24]], D, 0.018); }
+        // the sun strip across the windscreen's top (the stripe colour), the louvres behind the rear wheels
+        for (const [z0, z1] of [[-0.6, -0.245], [-0.23, 0.23], [0.245, 0.6]]) D2.top([[-0.62, z0], [-0.55, z0], [-0.55, z1], [-0.62, z1]], S, 0.008);
+        for (let i = 0; i < 4; i++) { const x = -1.9 - i * 0.05; D2.side([[x - 0.025, 0.42], [x, 0.42], [x, 0.66], [x - 0.025, 0.66]], B, null, 0.006); }
         // the quick-fill valves on the sails (the C-pillars)
         D2.band([0, 1, 2, 3, 4, 5].map(i => [-1.47 + Math.cos(i * Math.PI / 3) * 0.035, 0.52 + Math.sin(i * Math.PI / 3) * 0.09]), [0.55, 0.56, 0.6], null, 0.008);
         // the start number on the doors
