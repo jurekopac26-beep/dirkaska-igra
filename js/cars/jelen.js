@@ -101,7 +101,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const z of [-0.33, 0.27]) { const a = [0.11, 0, z - 0.27], b = [0.07, 0, z + 0.27]; a[1] = L.topY(a[0], a[2]) + 0.012; b[1] = L.topY(b[0], b[2]) + 0.012; K.bar(a, b, 0.008, B, { n: 4, part: 'body' }); }
         // ---- the tail: the quad round lamps in silver rings (the lit lenses are the tail mesh), the plate; the bumper's black valance
         //      low down, four pipes in chrome rings out of it ----
-        for (const sd of [-1, 1]) for (const z of [0.48, 0.68]) { K.discX(-2.283, 0.78, sd * z, 0.083, 10, [0.5, 0.51, 0.54], -1, { part: 'body' }); K.tailLamp(-2.284, 0.78, sd * z, 0.135, 0.135, { round: true }); }
+        for (const sd of [-1, 1]) for (const z of [0.475, 0.68]) { K.discX(-2.283, 0.78, sd * z, 0.088, 10, [0.5, 0.51, 0.54], -1, { part: 'body' }); K.tailLamp(-2.284, 0.78, sd * z, 0.146, 0.146, { round: true }); }
         K.rect(-2.282, 0.585, 0, 0.46, 0.09, [0.93, 0.93, 0.9], { dir: '-x', part: 'body' });
         K.part('bumperR', () => {
           K.rect(-2.282, 0.33, 0, 1.4, 0.15, B, { dir: '-x' });                // the black valance the pipes come out of
