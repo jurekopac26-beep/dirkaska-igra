@@ -61,7 +61,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const dia = (r) => [[r, 0], [0, r], [-r, 0], [0, -r]];
         // ---- the cigar: the paint, the stripe along its crown, the chamfers under it darker; open on top over the cockpit ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => at.end ? P : kind === 'r' && e >= 3 && e <= 5 ? null : e === 0 || e === 8 ? UND : e === 4 ? S : P,
-          { caps: { front: { col: [0.2, 0.2, 0.21] }, rear: { col: [0.12, 0.12, 0.13], cut: 0.32, low: 'body', high: 'cover' } } });
+          { caps: { front: false, rear: { col: [0.12, 0.12, 0.13], cut: 0.32, low: 'body', high: 'cover' } } });
         // ---- the nose cone: a skin from the cigar's section (5 mm over it) to the oval mouth, the stripe along its top and round the mouth;
         //      the intake recessed into it (its wall facing in, dark), the grille at the back ----
         const s0 = {}; for (const k of ['w', 'yb', 'tk', 'ybelt', 'wt', 'yt', 'cr']) s0[k] = L.prop(1.19, k);
@@ -80,7 +80,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[1.2, 0.13, -0.25], [1.2, 0.13, 0.25]] });
         // ---- the driver, reclined, his hands on the wooden wheel; the wrap-around screen on the scuttle (one-sided panes facing out: he
         //      sees through them); the roll hoop behind his head ----
-        K.driver(-0.13, 0.8, 0, { r: 0.125, lean: 0.6, suit: [0.7, 0.75, 0.82], band: S, hands: [0.27, 0.5, 0.14] });
+        K.driver(-0.13, 0.8, 0, { r: 0.125, lean: 0.6, suit: [0.7, 0.75, 0.82], band: P, hands: [0.27, 0.5, 0.14] });
         K.part('body', () => {
           const C = [0.27, 0.5, 0], u = [0.33, 0.944, 0], rr = 0.14, pt = (a) => [C[0] + u[0] * rr * Math.sin(a), C[1] + u[1] * rr * Math.sin(a), rr * Math.cos(a)];
           for (let i = 0; i < 6; i++) K.bar(pt(i * Math.PI / 3), pt((i + 1) * Math.PI / 3), 0.013, WOOD, { n: 3 });
@@ -108,8 +108,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         // ---- the exhausts: the V8's four stacks a side out of its flanks, back along the cover and curling up behind the engine ----
         K.part('body', () => {
-          for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) { const x0 = -0.72 - 0.08 * i, zo = 0.3 - 0.035 * i;   // (fanned across: four pipes from behind; flared tips)
-            K.sweep(dia(0.021), [[x0, 0.43, sd * 0.19], [x0 - 0.09, 0.5, sd * zo], [x0 - 0.2, 0.56, sd * zo], [x0 - 0.28, 0.66, sd * zo], [x0 - 0.31, 0.8 - 0.015 * i, sd * zo]], STEEL, { capB: HOLE, scale: (k) => k === 4 ? 1.4 : 1 }); }
+          const zb = (x, y) => { const w = L.prop(x, 'w'), wt = L.prop(x, 'wt'), y0 = L.prop(x, 'ybelt'), y1 = L.prop(x, 'yt'); return w + (wt - w) * Math.max(0, Math.min(1, (y - y0) / (y1 - y0))); };   // (the shell's half width at y, on its band)
+          for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) {   // (fanned across: four pipes from behind; flared tips. Each from 3 cm inside the shell: its root from the engine in
+            // the inner block, drawn once the cover is off)
+            const x0 = -0.72 - 0.08 * i, zo = 0.3 - 0.035 * i, r = [x0 - 0.12, 0.52, sd * Math.min(zo, zb(x0 - 0.12, 0.52) - 0.03)];
+            K.inner(() => K.sweep(dia(0.021), [[x0, 0.43, sd * 0.19], r], STEEL));
+            K.sweep(dia(0.021), [r, [x0 - 0.2, 0.56, sd * zo], [x0 - 0.28, 0.66, sd * zo], [x0 - 0.31, 0.8 - 0.015 * i, sd * zo]], STEEL, { capB: HOLE, scale: (k) => k === 3 ? 1.4 : 1 });
+          }
         });
         // ---- louvres in the engine cover's flanks, behind the cockpit (decals on its band: they go with it); the number roundels ----
         for (let i = 0; i < 5; i++) { const x = -0.6 + 0.045 * i; L.decal.band([[x, 0.28], [x + 0.022, 0.28], [x + 0.022, 0.78], [x, 0.78]], [0.1, 0.1, 0.11], null, 0.004); }
@@ -119,7 +124,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.number(x, y, z + sd * 0.002, 0.12, { dir: sd < 0 ? '-z' : 'z', bg: WH, w: 0.14, part: 'body' });
         }
         // ---- inside (seen once a part is off): the radiator behind the nose, the V8 under the cover, the gearbox ----
-        K.part('body', () => K.inner(() => K.grille(1.222, 0.33, 0, 0.34, 0.24, { slats: 5, col: [0.08, 0.08, 0.085], slatCol: [0.42, 0.42, 0.44] })));
+        { const F = {}; for (const k of ['w', 'yb', 'tk', 'ybelt', 'wt', 'yt', 'cr']) F[k] = L.prop(1.22, k);   // (the loft open at the front: its bulkhead here, inside the nose)
+          const half = [[F.yb, 0.93 * F.w], [F.yb + F.tk, F.w], [F.ybelt, F.w], [F.yt, F.wt], [F.yt + F.cr, 0.38 * F.wt]];
+          K.part('body', () => K.inner(() => { face(half.map(([y, z]) => [1.22, y, z]).concat(half.slice().reverse().map(([y, z]) => [1.22, y, -z])), [0.2, 0.2, 0.21], [3, 0.33, 0]);
+            K.grille(1.222, 0.33, 0, 0.34, 0.24, { slats: 5, col: [0.08, 0.08, 0.085], slatCol: [0.42, 0.42, 0.44] }); })); }
         K.part('body', () => K.inner(() => {
           const EN = [0.45, 0.46, 0.48], CAM = [0.12, 0.12, 0.13];
           K.box(-0.72, 0.15, 0, 0.62, 0.22, 0.34, 0, EN);
