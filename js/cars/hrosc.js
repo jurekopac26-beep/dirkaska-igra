@@ -47,12 +47,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.77, 0.5, 0.56, 0.72, 0.42, 0.75, 0.04, 'b', 0.1],
           [1.82, 0.47, 0.57, 0.68, 0.38, 0.7, 0.03, 'b', 0.08]],           // the short nose
         eye: { x: -0.06, y: 1.22, style: 'closed' },
-        lamps: [[1.75, 0.86, 0.69], [-1.47, 0.86, 0.71]],
+        lamps: [[1.75, 0.865, 0.69], [-1.47, 0.86, 0.71]],
         engine: [-1.4, 0.76], engRear: true },
       wheels: { style: 'knob', w: 0.26, wR: 0.3, rim: [0.86, 0.86, 0.84], cap: [0.24, 0.24, 0.26] },
       regions: [{ part: 'hood', x: [0.98, 1.9], bands: ['edge', 'crown'] }],
       build(K) {
-        const P = K.paint, S = K.strp, G = K.GLASS, B = K.black, D = [0.13, 0.13, 0.14], CG = [0.08, 0.08, 0.09], AL = [0.62, 0.63, 0.65], RB = [0.1, 0.1, 0.11];
+        const P = K.paint, S = K.strp, G = K.GLASS, B = K.black, D = [0.16, 0.16, 0.165], CG = [0.1, 0.1, 0.105], AL = [0.62, 0.63, 0.65], RB = [0.1, 0.1, 0.11];
         const SH = K.shade(P, 0.55), SP = [0.95, 0.72, 0.1];
         // ---- the body: the paint, the glass (the windscreen, the side windows, a small rear window), dark under its lower edge; the firewall
         //      behind the rear seat (the loft's tail: under the engine lid) dark; the rear wheel's arch (the front wheels stand clear of it) ----
@@ -67,6 +67,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         DL.band([[-0.36, 0], [-0.28, 0], [-0.28, 1], [-0.36, 1]], P, null, 0.01);               // the B-pillar
         DL.band([[-0.9, 0], [-0.74, 0], [-0.84, 1], [-0.9, 1]], P, null, 0.01);                 // the C-pillar's lean (the quarter window's back)
         DL.band([[0.54, 0.84], [0.8, 0.3], [0.8, 1], [0.54, 1]], P, null, 0.01);                 // the A-pillar's foot
+        K.hinge('hood', [0.99, 0.98, -0.4], [0.99, 0.98, 0.4]);                                   // (the front lid hinges at the cowl)
         for (const sd of [-1, 1]) DL.top([[0.99, sd * 0.07], [1.79, sd * 0.07], [1.79, sd * 0.17], [0.99, sd * 0.17]], S, 0.006);   // the livery: twin stripes along the front lid
         // ---- the engine lid: cut short over the engine (the lower lid and the apron gone), its louvres ----
         const deck = [[-1.18, 0.6, 0.9, 0.44, 1.0, 0.12], [-1.3, 0.585, 0.88, 0.43, 0.955, 0.11], [-1.41, 0.565, 0.85, 0.415, 0.905, 0.095],
@@ -82,8 +83,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) {
           K.part(sd < 0 ? 'fenderL' : 'fenderR', () => {
             K.skin(wing(K.fx, 0.56, 2.88, 5, [[0.5, 0.5], [0.57, 0.51], [0.625, 0.62], [0.62, 0.76], [0.575, 0.865], [0.505, 0.885]], sd), wcol, P, P);
-            K.cyl([1.52, 0.86, sd * 0.69], [1.745, 0.86, sd * 0.69], 0.095, P, { n: 6, capA: null, capB: null });   // the lamp's pod on the wing's nose
-            K.headLamp(1.75, 0.86, sd * 0.69, 0.085);
+            K.cyl([1.52, 0.865, sd * 0.69], [1.745, 0.865, sd * 0.69], 0.105, P, { n: 6, capA: null, capB: null });   // the lamp's pod on the wing's nose
+            K.headLamp(1.75, 0.865, sd * 0.69, 0.092);
           }, { hinge: [[0.95, 0.86, sd * 0.52], [1.7, 0.86, sd * 0.52]] });
           K.part('body', () => {
             K.skin(wing(K.rx, 0.24, 2.27, 5, [[0.515, 0.5], [0.585, 0.51], [0.64, 0.64], [0.635, 0.78], [0.59, 0.885], [0.52, 0.915]], sd), wcol, P, P);
