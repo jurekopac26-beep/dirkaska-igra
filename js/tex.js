@@ -33,14 +33,14 @@ const Tex = (function () {
   const cl = (v) => v < 0 ? 0 : v > 255 ? 255 : v;
 
   function grass() {
-    const n1 = makeNoise(8, 3), n2 = makeNoise(32, 4), n3 = makeNoise(64, 5);
+    const n1 = makeNoise(8, 3), n2 = makeNoise(32, 4), n3 = makeNoise(64, 5), sum = [0, 0, 0];
     const c = pixels(256, 256, (i, j) => {
       const u = i / 256, v = j / 256;
       const n = n1(u * 8, v * 8) * 0.5 + n2(u * 32, v * 32) * 0.35 + n3(u * 64, v * 64) * 0.15;
       const stripe = j < 128 ? 1.035 : 0.965;
       const sp = R() < 0.08 ? (R() < 0.5 ? 0.86 : 1.12) : 1;
-      const k = (0.84 + n * 0.3) * stripe * sp;
-      return [cl(88 * k), cl(146 * k), cl(58 * k)];
+      const k = (0.84 + n * 0.3) * stripe * sp, col = [cl(88 * k), cl(146 * k), cl(58 * k)];
+      sum[0] += col[0]; sum[1] += col[1]; sum[2] += col[2]; return col;
     });
     const x = c.getContext('2d');
     for (let k = 0; k < 900; k++) { // blades
@@ -48,7 +48,7 @@ const Tex = (function () {
       x.strokeStyle = R() < 0.5 ? 'rgba(40,86,30,0.45)' : 'rgba(150,196,90,0.35)';
       x.lineWidth = 1; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (R() - 0.5) * 2, py - l); x.stroke();
     }
-    return mk(c, true);
+    const t = mk(c, true); t.avgCol = sum.map(v => v / 65536 / 255); return t;   // (its average colour, 0..1: the world's clumps of grass take it)
   }
 
   function asphalt() {
@@ -61,12 +61,15 @@ const Tex = (function () {
       return [cl(104 * k), cl(107 * k), cl(112 * k)];
     });
     const x = c.getContext('2d');
-    // a few seams / cracks
-    x.strokeStyle = 'rgba(40,40,44,0.35)'; x.lineWidth = 1;
-    for (let k = 0; k < 6; k++) {
-      let px = R() * 256, py = R() * 256; x.beginPath(); x.moveTo(px, py);
-      for (let s = 0; s < 8; s++) { px += (R() - 0.5) * 18; py += (R() - 0.3) * 14; x.lineTo(px, py); }
-      x.stroke();
+    // (the six faint seams it once had, drawn again in every 8 m tile: their draws only, so the textures after it stay the same)
+    for (let k = 0; k < 6; k++) { R(); R(); for (let s = 0; s < 8; s++) { R(); R(); } }
+    // the grain a phone shows from the chase camera (a pixel of the texture is 3 cm, the screen's 4-8 cm): the stones of the aggregate in
+    // little clusters, lighter, and darker spots where the binder is rich; its own random stream
+    const g = Core.rng(1311);
+    for (let k = 0; k < 1500; k++) {
+      const px = g() * 256, py = g() * 256, s = 1.5 + g() * 2.5, lite = g() < 0.62, a = (lite ? 0.1 + g() * 0.14 : 0.08 + g() * 0.1).toFixed(3);
+      x.fillStyle = lite ? `rgba(196,196,192,${a})` : `rgba(36,36,40,${a})`;
+      for (const [ox, oy] of [[0, 0], [-256, 0], [0, -256], [-256, -256]]) x.fillRect(px + ox, py + oy, s, s * (0.7 + g() * 0.6));   // (wrapped: the tile stays seamless)
     }
     return mk(c, true);
   }
@@ -128,19 +131,38 @@ const Tex = (function () {
   }
 
   function crowd() {
-    const c = cv(256, 128), x = c.getContext('2d');
-    x.fillStyle = '#3b3f48'; x.fillRect(0, 0, 256, 128);
-    const cols = ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#e85aa8', '#7d4bd6', '#111', '#1bbfd6'];
-    for (let row = 0; row < 16; row++) {
-      x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, row * 8 + 6, 256, 2);
-      for (let k = 0; k < 64; k++) {
-        if (R() < 0.12) continue;
-        const px = k * 4 + (R() - 0.5) * 1.2, py = row * 8 + 1;
-        x.fillStyle = cols[Math.floor(R() * cols.length)]; x.fillRect(px, py + 2, 3, 4);
-        x.fillStyle = R() < 0.5 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 0.5, py, 2, 2);
+    for (let row = 0; row < 16; row++) for (let k = 0; k < 64; k++) { if (R() < 0.12) continue; R(); R(); R(); }   // (the draws of the picture this one replaced: the textures made after it stay as they were)
+    return crowdPic(['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#e85aa8', '#7d4bd6', '#1a1b1f', '#1bbfd6'], 311);
+  }
+  // a seated crowd for the grandstand tiers, seen from the front and above: 8 rows of 32 people, 16 x 32 px each (a row for a tier of the
+  // stands, 32 people across 12 m: the stands' shader maps each tier on a row, see crowdStands in World). A head with its hair, long hair
+  // or a cap, a neck, a shirt catching the light on the shoulders, the arms along it with the hands on the lap, the legs; now and then an
+  // empty seat, a pair of arms in the air, a scarf held up. cols: the shirts
+  function crowdPic(cols, seed) {
+    const W = 512, H = 256, c = cv(W, H), x = c.getContext('2d'), r = Core.rng(seed), pick = (L) => L[Math.floor(r() * L.length)], f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
+    const SKIN = ['#f1c7a1', '#e6b48e', '#c99169', '#9a6443', '#5e3b26'], HAIR = ['#1c1410', '#3b2518', '#6b4524', '#b58a4c', '#dccaa6', '#8a8580'], LEG = ['#2b3346', '#1c1d22', '#4a5570', '#6e604c', '#39414f'], SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4c'];
+    f('#3a3e47', 0, 0, W, H);
+    for (let row = 0; row < 8; row++) {
+      const y0 = row * 32;
+      f('#23262d', 0, y0, W, 3); f('#4a4f59', 0, y0 + 27, W, 5);   // the step behind, the seat's front edge
+      for (let k = 0; k < 32; k++) {
+        const X = k * 16 + Math.round((r() - 0.5) * 2), t = r();
+        if (t < 0.07) { const sc = pick(SEAT); f(sc, X + 2, y0 + 10, 12, 12); f(sc, X + 2, y0 + 22, 12, 5); f('rgba(0,0,0,0.3)', X + 2, y0 + 21, 12, 1); continue; }   // an empty seat
+        const shirt = pick(cols), skin = SKIN[Math.floor(r() * r() * SKIN.length)], leg = pick(LEG), dy = Math.round(r() * 2), hr = r(), a = r(), sleeve = r() < 0.5 ? shirt : skin;   // (dy: some sit up taller)
+        f(leg, X + 3, y0 + 23, 4, 7); f(leg, X + 9, y0 + 23, 4, 7); f('#1a1a1e', X + 3, y0 + 29, 4, 2); f('#1a1a1e', X + 9, y0 + 29, 4, 2);   // the legs, the shoes
+        f(shirt, X + 3, y0 + 13 - dy, 10, 11 + dy); f(shirt, X + 2, y0 + 14 - dy, 12, 9 + dy);   // the shirt (rounded shoulders)
+        f('rgba(255,255,255,0.22)', X + 3, y0 + 13 - dy, 10, 1); f('rgba(0,0,0,0.25)', X + 3, y0 + 22, 10, 2);
+        if (a < 0.07) { f(skin, X + 1, y0 + 1 - dy, 2, 14); f(skin, X + 13, y0 + 1 - dy, 2, 14); }   // arms up
+        else if (a < 0.1) { const sf = pick(cols); f(sf, X - 2, y0 + 1 - dy, 20, 3); f('rgba(255,255,255,0.35)', X - 2, y0 + 2 - dy, 20, 1); f(skin, X + 1, y0 + 4 - dy, 2, 11); f(skin, X + 13, y0 + 4 - dy, 2, 11); }   // a scarf held up
+        else { f(sleeve, X + 1, y0 + 15 - dy, 2, 7 + dy); f(sleeve, X + 13, y0 + 15 - dy, 2, 7 + dy); f(skin, X + 4, y0 + 22, 3, 2); f(skin, X + 9, y0 + 22, 3, 2); }   // the arms down, the hands on the lap
+        f(skin, X + 6, y0 + 11 - dy, 4, 3);   // the neck
+        f(skin, X + 4, y0 + 4 - dy, 8, 8); f(skin, X + 5, y0 + 3 - dy, 6, 10);   // the head
+        if (hr < 0.2) { const cc = pick(cols); f(cc, X + 4, y0 + 2 - dy, 8, 3); f(cc, X + 3, y0 + 5 - dy, 10, 1); }   // a cap
+        else if (hr < 0.93) { const hc = pick(HAIR); f(hc, X + 4, y0 + 3 - dy, 8, 3); f(hc, X + 5, y0 + 2 - dy, 6, 1); if (hr > 0.72) { f(hc, X + 3, y0 + 5 - dy, 2, 8); f(hc, X + 11, y0 + 5 - dy, 2, 8); } }   // hair (some long)
+        f('rgba(0,0,0,0.18)', X + 5, y0 + 11 - dy, 6, 1);   // (the chin's shadow)
       }
     }
-    return mk(c, true);
+    const t = mk(c, true); t.crowdPic = true; return t;
   }
 
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
@@ -514,14 +536,15 @@ const Tex = (function () {
     for (let j = 256; j < W; j++) for (let i = 0; i < W; i++) {
       const o = (j * W + i) * 4;
       if (i >= 256) { const k = col[i - 256] * 255; d[o] = d[o + 1] = d[o + 2] = k; d[o + 3] = 255; continue; }
-      const u = i / 256, v = (j - 256) / 256, inR = i > 12 + edge[0] && i < 244 - edge[1] && j - 256 > 12 + edge[2] && j - 256 < 244 - edge[3];
-      if (!inR) { d[o + 3] = 0; continue; }
+      const u = i / 256, v = (j - 256) / 256;
       const k = (0.9 + (n1(u * 8, v * 8) * 0.6 + n2(u * 32, v * 32) * 0.4) * 0.14 + (r() - 0.5) * 0.16 + (r() < 0.02 ? 0.22 : 0)) * 0.97;   // (the road's own grain, finer)
       d[o] = cl(104 * k); d[o + 1] = cl(107 * k); d[o + 2] = cl(112 * k); d[o + 3] = 255;
     }
     x.putImageData(img, 0, 0);
     x.lineCap = x.lineJoin = 'round';
-    const band = (pts, wd) => { for (const [lw, a] of [[wd * 1.9, 0.28], [wd, 0.92]]) { x.strokeStyle = 'rgba(13,13,15,' + a + ')'; x.lineWidth = lw; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts) x.lineTo(p[0], p[1]); x.stroke(); } };
+    // a sealed crack: the tar over it in a band, dusty dark grey rather than black, a faint overband round it and the crack's darker line down
+    // its middle
+    const band = (pts, wd) => { for (const [lw, a, k] of [[wd * 2.8, 0.1, 42], [wd * 1.5, 0.42, 37], [wd * 0.6, 0.5, 25]]) { x.strokeStyle = `rgba(${k},${k},${k + 2},${a})`; x.lineWidth = lw; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts) x.lineTo(p[0], p[1]); x.stroke(); } };
     const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
     // a crack across a box (x0, y0, x1, y1) from its left end to its right: a walk that keeps its heading, wandering a little
     const across = (x0, y0, x1, y1) => { const P = [], m = (y0 + y1) / 2, hh = (y1 - y0) / 2 - 8; let px = x0 + 6, py = m + (r() - 0.5) * hh, a = 0;
@@ -536,8 +559,20 @@ const Tex = (function () {
       for (let b = 0; b < 3; b++) { const q = P[2 + Math.floor(r() * (P.length - 4))], Q = [q]; let a = (r() < 0.5 ? 1 : -1) * (0.8 + r() * 0.8), px = q[0], py = q[1];
         for (let s = 0; s < 8; s++) { a += (r() - 0.5) * 0.6; px += Math.cos(a) * 7; py += Math.sin(a) * 7; if (py < 134 || py > 250 || px < 262 || px > 506) break; Q.push([px, py]); }
         if (Q.length > 1) band(Q, 2.6); } }
-    x.strokeStyle = 'rgba(16,16,18,0.85)'; x.lineWidth = 5;   // the patch's seam
-    x.strokeRect(12 + edge[0], 268 + edge[2], 232 - edge[0] - edge[1], 232 - edge[2] - edge[3]);
+    // the patch's outline: a rounded box, its sides a little wavy (no ruler-straight edges), clear outside it; its seam sealed, a faint
+    // darker band over the joint
+    const pl = [], q0 = [12 + edge[0], 268 + edge[2], 244 - edge[1], 500 - edge[3]], cr = 18 + r() * 14;
+    for (let k = 0; k < 48; k++) {
+      const t = k / 48 * 4, e = Math.floor(t), f = t - e, cx = (q0[0] + q0[2]) / 2, cy = (q0[1] + q0[3]) / 2, hx = (q0[2] - q0[0]) / 2, hy = (q0[3] - q0[1]) / 2;
+      const a = [[-1, -1], [1, -1], [1, 1], [-1, 1]][e], b = [[1, -1], [1, 1], [-1, 1], [-1, -1]][e];
+      let px = cx + (a[0] + (b[0] - a[0]) * f) * hx, py = cy + (a[1] + (b[1] - a[1]) * f) * hy;
+      const ix = clamp(px, q0[0] + cr, q0[2] - cr), iy = clamp(py, q0[1] + cr, q0[3] - cr), dx = px - ix, dy = py - iy, dl = Math.hypot(dx, dy);   // (round the corners off)
+      if (dl > cr) { px = ix + dx / dl * cr; py = iy + dy / dl * cr; }
+      pl.push([px + (r() - 0.5) * 5, py + (r() - 0.5) * 5]);
+    }
+    const path = () => { x.beginPath(); pl.forEach((p, k) => (k ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.closePath(); };
+    x.save(); x.beginPath(); x.rect(0, 256, 256, 256); x.clip(); x.globalCompositeOperation = 'destination-in'; path(); x.fill(); x.restore();
+    path(); x.strokeStyle = 'rgba(34,34,37,0.16)'; x.lineWidth = 9; x.stroke(); x.strokeStyle = 'rgba(30,30,33,0.34)'; x.lineWidth = 3; x.stroke();
     return mk(c, false);
   }
 
@@ -553,6 +588,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, SPONSORS };
+  return { all, number, crowdPic, SPONSORS };
 })();
 

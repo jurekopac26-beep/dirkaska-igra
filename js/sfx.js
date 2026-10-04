@@ -9,7 +9,7 @@ const Sfx = (function () {
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
   let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
-  let sirenV = null;   // the open road: the police siren (the nearest patrol car chasing)
+  let sirenV = null, radioV = null;   // the open road: the police siren (the nearest patrol car chasing), the police radio's static
   let lastCrash = 0, running = false;
 
   function create() {
@@ -26,7 +26,7 @@ const Sfx = (function () {
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     eng = engineVoice(1.0, false);
-    ai = [engineVoice(0.28, true), engineVoice(0.22, true)];
+    ai = [engineVoice(0.28, true), engineVoice(0.22, true), engineVoice(0.18, true)];
     squeal = squealVoice();
     rumble = noiseVoice('lowpass', 220, 0.8);
     curbV = noiseVoice('bandpass', 90, 4);
@@ -35,7 +35,7 @@ const Sfx = (function () {
     hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
-    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx(); sirenV = sirenVoice();
+    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx(); sirenV = sirenVoice(); radioV = radioBedVoice();
     return true;
   }
   function shaperCurve(k) {
@@ -43,40 +43,107 @@ const Sfx = (function () {
     for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); }
     return c;
   }
+  /* ---------------- engines: each car's own character ----------------
+     An engine type (ENG, by the car's model: CAR_ENG; the police cars a V8): its cylinders and how evenly they fire. One oscillator runs
+     at the engine's cycle (two turns of the crank: rpm / 120) with a wave of its first 48 harmonics: the firing order leaves the multiples
+     of the cylinder count strong (the firing frequency: cylinders x rpm / 120), an uneven one (a boxer's, a cross-plane V8's) the half
+     orders too, the burble. Over it a band of noise pulsed at the firing frequency (the exhaust's rasp), a turbo's whistle with its boost
+     and its blow-off when the throttle shuts, pops and bangs on the overrun (the rally car's anti-lag whenever it is off the throttle), a
+     clack at every gear change and a blip on the way down. The electric car (ev) has no engine: only its motors' whine, rising with the
+     speed. The other cars' engines (the three nearest) with the Doppler shift of their speed towards or away from the camera. */
+  const ENG = {
+    i4: { cyl: 4, odd: 0.16, rasp: 0.55, lp: 1, turbo: 0, pops: 0.3 },                    // a four-cylinder (the retired hatch, p206): buzzy, rasping at the top
+    i4t: { cyl: 4, odd: 0.14, rasp: 0.4, lp: 0.9, turbo: 0.9, pops: 0.35 },               // a small turbo four (PICO TURBO): the whistle, the blow-off
+    b4t: { cyl: 4, odd: 0.4, rasp: 0.3, lp: 0.8, turbo: 1, pops: 0.35, burble: 0.75 },    // a turbo boxer (VORTEX 4WD): the flat-four's uneven burble
+    i6t: { cyl: 6, odd: 0.08, rasp: 0.3, lp: 1.1, turbo: 0.7, pops: 0.25 },               // a straight six with a turbo (KAZE RS): smooth, silky
+    v6: { cyl: 6, odd: 0.28, rasp: 0.6, lp: 1.25, turbo: 0, pops: 0.2 },                  // a mid-engined V6 (STREGA MR): a howl
+    al4: { cyl: 4, odd: 0.2, rasp: 0.65, lp: 0.95, turbo: 1.2, pops: 1, antiLag: 1 },     // the 80s rally car (BURJA R7): turbo and anti-lag bangs
+    v10: { cyl: 10, odd: 0.06, rasp: 0.85, lp: 1.5, turbo: 0, pops: 0.15 },               // the formula (ORKAN): a V10's scream
+    v8: { cyl: 8, odd: 0.55, rasp: 0.45, lp: 0.7, turbo: 0, pops: 0.45, burble: 0.9 },    // a cross-plane V8 (the police, VIHAR V8): its burble
+    v8t: { cyl: 8, odd: 0.5, rasp: 0.35, lp: 0.55, turbo: 0, pops: 0.3, burble: 0.8 },    // the trophy truck's big V8 (SAMUM 4x4): heavier, duller
+    v8r: { cyl: 8, odd: 0.08, rasp: 0.8, lp: 1.4, turbo: 0, pops: 0.2 },                  // a flat-plane racing V8 (TAIFUN LM): even firing, a hard scream
+    ev: { cyl: 1, ev: 1, odd: 0, rasp: 0, lp: 1, turbo: 0, pops: 0 },                     // the electric motors (STRELA EV): no engine, their whine
+  };
+  const CAR_ENG = { p206: 'i4', pico: 'i4t', vortex: 'b4t', kaze: 'i6t', strega: 'v6', rally: 'al4', formula: 'v10', muscle: 'v8', truck: 'v8t', lm: 'v8r', ev: 'ev' };
+  const engKind = (c) => c.police ? 'v8' : CAR_ENG[c.m.id] || (c.m.ev ? 'ev' : c.m.snd === 'v8' ? 'v8' : 'i4');
+  const waves = {};
+  function engWave(k) {   // the wave of one engine cycle (cached per type)
+    if (waves[k]) return waves[k];
+    const E = ENG[k], H = 48, re = new Float32Array(H + 1), im = new Float32Array(H + 1), R = Core.rng(k.length * 131 + E.cyl * 7);
+    if (E.ev) { im[2] = 1; im[3] = 0.3; im[6] = 0.35; return (waves[k] = ctx.createPeriodicWave(re, im)); }   // (the whine: its note, a fifth over it and near its third harmonic; the oscillator runs at half the note)
+    for (let h = 1; h <= H; h++) {
+      const fire = h % E.cyl === 0, half = E.burble && h % (E.cyl / 2) === 0;
+      const a = (fire ? 1 : half ? E.burble * 0.7 : E.odd * (0.25 + 0.5 * R())) * (h <= E.cyl ? 1 : Math.pow(h / E.cyl, -1.15)), ph = R() * Math.PI * 2;
+      re[h] = a * Math.sin(ph); im[h] = a * Math.cos(ph);
+    }
+    return (waves[k] = ctx.createPeriodicWave(re, im));
+  }
   function engineVoice(level, pan) {
-    const o1 = ctx.createOscillator(); o1.type = 'sawtooth';
-    const o2 = ctx.createOscillator(); o2.type = 'square';
-    const o3 = ctx.createOscillator(); o3.type = 'sawtooth';
-    const g1 = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain();
-    g1.gain.value = 0.5; g2.gain.value = 0.32; g3.gain.value = 0.16;
-    const sh = ctx.createWaveShaper(); sh.curve = shaperCurve(2.2);
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 2.2;
+    const o = ctx.createOscillator(); o.setPeriodicWave(engWave('i4'));
+    const sh = ctx.createWaveShaper(); sh.curve = shaperCurve(1.8);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 1.6;
     const out = ctx.createGain(); out.gain.value = 0;
-    o1.connect(g1); o2.connect(g2); o3.connect(g3);
-    g1.connect(sh); g2.connect(sh); g3.connect(sh);
-    sh.connect(lp); lp.connect(out);
+    // the rasp: noise round three times the firing frequency, pulsed at it
+    const ns = ctx.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; ns.playbackRate.value = 0.8 + Math.random() * 0.3;
+    const nb = ctx.createBiquadFilter(); nb.type = 'bandpass'; nb.frequency.value = 600; nb.Q.value = 0.9;
+    const nv = ctx.createGain(); nv.gain.value = 0.5;
+    const pm = ctx.createOscillator(); pm.type = 'sine'; pm.frequency.value = 100; const pg = ctx.createGain(); pg.gain.value = 0.5; pm.connect(pg); pg.connect(nv.gain);
+    const rg = ctx.createGain(); rg.gain.value = 0;
+    ns.connect(nb); nb.connect(nv); nv.connect(rg); rg.connect(lp);
+    // the turbo's whistle
+    const tw = ctx.createOscillator(); tw.type = 'sine'; tw.frequency.value = 2600; const tg = ctx.createGain(); tg.gain.value = 0; tw.connect(tg); tg.connect(out);
+    const pre = ctx.createGain(); pre.gain.value = 1;   // (into the shaper: the electric motors' whine only lightly)
+    o.connect(pre); pre.connect(sh); sh.connect(lp); lp.connect(out);
+    const fx = ctx.createGain(); fx.gain.value = 1;   // (the one-shots of this engine: pops, the blow-off, the gear clack)
     let pn = null;
-    if (pan && ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); pn.connect(bus); } else out.connect(bus);
-    // a big V8's lope: the note's loudness wobbling at half the firing rate (its uneven beat); nothing on the other engines
-    const lope = ctx.createOscillator(); lope.type = 'triangle'; const lopeG = ctx.createGain(); lopeG.gain.value = 0; lope.connect(lopeG); lopeG.connect(out.gain);
-    o1.start(); o2.start(); o3.start(); lope.start();
-    return { o1, o2, o3, g1, g2, g3, lp, out, pn, level, lope, lopeG, kind: 'ice' };
+    if (pan && ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); fx.connect(pn); pn.connect(bus); } else { out.connect(bus); fx.connect(bus); }
+    o.start(); ns.start(0, Math.random()); pm.start(); tw.start();
+    return { o, pre, lp, out, pn, fx, nb, pm, rg, tw, tg, level, kind: 'i4', car: null, boost: 0, thrHi: 9, thrP: 0, popT: 0, pops: 0, dop: 1 };
   }
-  // the voice's character for a car: an engine's rasp; a V8's heavier low note (and its lope); an electric motor's clean whine (sine waves)
-  function voiceKind(v, M) {
-    const k = M.ev ? 'ev' : M.snd === 'v8' ? 'v8' : 'ice';
-    if (v.kind === k) return;
-    v.kind = k; const ev = k === 'ev';
-    v.o1.type = ev ? 'sine' : 'sawtooth'; v.o2.type = ev ? 'triangle' : 'square'; v.o3.type = ev ? 'sine' : 'sawtooth';
-    v.g1.gain.value = ev ? 0.34 : 0.5; v.g2.gain.value = ev ? 0.1 : k === 'v8' ? 0.48 : 0.32; v.g3.gain.value = ev ? 0.12 : 0.16;
-    if (k !== 'v8') set(v.lopeG.gain, 0, 0.02);
+  function engKindSet(v, k) { if (v.kind !== k) { v.kind = k; v.o.setPeriodicWave(engWave(k)); v.pre.gain.value = ENG[k].ev ? 0.3 : 1; } }   // (the motors' whine clean: hardly through the shaper)
+  // one engine this frame: its revs, throttle, pitch (the Doppler factor), level; the turbo's boost, what the throttle shutting does
+  function engSet(v, c, rpm, thr, dop, gain, dt, now) {
+    const E = ENG[v.kind], R = c.m.redline || 7500, r = clamp(rpm / R, 0.05, 1.08);
+    if (E.ev) {   // the electric motors: they turn with the wheels, so the whine rises with the speed (no revving, no gear changes), louder under power
+      const sp = c.speed || 0;
+      set(v.o.frequency, (110 + sp * 21) * dop / 2, 0.015); set(v.lp.frequency, 5200, 0.05); set(v.rg.gain, 0, 0.04); set(v.tg.gain, 0, 0.05); v.boost = 0;
+      set(v.out.gain, gain * (0.3 + 0.6 * clamp(sp / 40, 0, 1) + (c.locked ? 0 : 0.5 * thr)), 0.03); v.thrP = thr;   // (on the grid nothing to rev)
+      return;
+    }
+    const fc = Math.max(4, rpm / 120) * dop, fire = fc * E.cyl;
+    set(v.o.frequency, fc, 0.012); set(v.pm.frequency, fire, 0.012);
+    set(v.lp.frequency, clamp(fire * (2 + thr * 2.6) * E.lp + 220, 180, 9000), 0.03);
+    set(v.nb.frequency, clamp(fire * 3, 120, 8000), 0.03);
+    set(v.rg.gain, E.rasp * (0.12 + 0.55 * thr) * (0.3 + r) * 0.3, 0.04);
+    const bt = E.turbo ? clamp(thr, 0, 1) * clamp((r - 0.28) / 0.45, 0, 1) : 0;   // (the boost builds with the throttle and the revs, lags behind)
+    v.boost += (bt - v.boost) * clamp(dt * (bt > v.boost ? 2.2 : E.antiLag ? 1.5 : 6), 0, 1);
+    set(v.tw.frequency, (2300 + v.boost * 5400) * dop, 0.05); set(v.tg.gain, E.turbo * v.boost * v.boost * 0.045, 0.05);
+    // the throttle shut: the blow-off (a boost built up), pops on the overrun for ~0.7 s from high revs; anti-lag: bangs whenever off it
+    v.thrHi = thr > 0.55 ? 0 : v.thrHi + dt;
+    if (thr < 0.2 && v.thrP >= 0.5 && v.boost > 0.4 && E.turbo) blowOff(v, v.boost, now);
+    const over = thr < 0.12 && r > 0.45 && (v.thrHi < 0.75 || E.antiLag);
+    if (over && now >= v.popT) { v.popT = now + (E.antiLag ? 0.07 + Math.random() * 0.2 : 0.05 + Math.random() * 0.25); if (Math.random() < (E.antiLag ? 0.8 : E.pops)) crack(v, E.antiLag ? 0.7 + Math.random() * 0.5 : 0.35 + Math.random() * 0.4, now); }
+    v.thrP = thr;
+    set(v.out.gain, gain, 0.02);
   }
-  // an electric motor's whine: rising with the speed (it turns with the wheels: no revving, no gear changes), louder under power
-  function evWhine(v, speed, load, gain, tc) {
-    const f = 110 + speed * 21;
-    set(v.o1.frequency, f, tc); set(v.o2.frequency, f * 1.5, tc); set(v.o3.frequency, f * 2.98, tc);
-    set(v.lp.frequency, 5200, 0.05);
-    set(v.out.gain, gain * (0.02 + 0.06 * clamp(speed / 40, 0, 1) + 0.05 * load), 0.03);
+  // a pop on the overrun: a crack of noise and a low thump, through the engine's own panner
+  function crack(v, vol, now) {
+    v.pops++;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = 0.7 + Math.random() * 0.5;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400 + Math.random() * 1800;
+    const g = ctx.createGain(), d = 0.025 + Math.random() * 0.04; g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.32 * vol * v.level, now + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, now + d);
+    src.connect(lp); lp.connect(g); g.connect(v.fx); src.start(now, Math.random() * 1.5); src.stop(now + d + 0.02);
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(95 + Math.random() * 40, now); o.frequency.exponentialRampToValueAtTime(45, now + 0.07);
+    const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, now); og.gain.exponentialRampToValueAtTime(0.35 * vol * v.level, now + 0.004); og.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    o.connect(og); og.connect(v.fx); o.start(now); o.stop(now + 0.1);
+  }
+  // the blow-off valve: a hiss of the boost let out, falling
+  function blowOff(v, b, now) {
+    if (now - (v.bovT || 0) < 0.6) return; v.bovT = now; v.bov = (v.bov || 0) + 1;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4; bp.frequency.setValueAtTime(3600, now); bp.frequency.exponentialRampToValueAtTime(1300, now + 0.35);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.14 * b * v.level, now + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+    src.connect(bp); bp.connect(g); g.connect(v.fx); src.start(now, Math.random()); src.stop(now + 0.42);
   }
   function squealVoice() {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
@@ -164,6 +231,47 @@ const Sfx = (function () {
     const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.35 * vol, now); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
     src.connect(lp); lp.connect(g2); g2.connect(bus); src.start(now, Math.random()); src.stop(now + 0.14);
   }
+  // the police radio (the run from the police; the speech itself cannot go through Web Audio's filters, so these carry the radio's sound):
+  // the squelch opening (a burst of band-passed noise and the click of the key), the roger beep and a short tail as it closes, and a bed of
+  // thin static (radioV, fluttering) while a line plays
+  function radioOpen() {
+    if (!ctx || ctx.state !== 'running' || !running) return;
+    const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.3;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now + 0.008); g.gain.setValueAtTime(0.1, now + 0.1); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.18);
+    const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 2300;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now); g2.gain.exponentialRampToValueAtTime(0.025, now + 0.002); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
+    o.connect(g2); g2.connect(bus); o.start(now); o.stop(now + 0.03);
+  }
+  function radioClose() {
+    if (!ctx || ctx.state !== 'running' || !running) return;
+    const now = ctx.currentTime, o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 1250;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05, now + 0.008); g.gain.setValueAtTime(0.05, now + 0.07); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
+    o.connect(g); g.connect(bus); o.start(now); o.stop(now + 0.1);
+    const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(); src.buffer = noiseBuf; bp.type = 'bandpass'; bp.frequency.value = 1600; bp.Q.value = 1.1;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now + 0.09); g2.gain.exponentialRampToValueAtTime(0.09, now + 0.1); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    src.connect(bp); bp.connect(g2); g2.connect(bus); src.start(now + 0.09, Math.random()); src.stop(now + 0.26);
+  }
+  function radioBedVoice() {
+    const v = noiseVoice('bandpass', 1900, 0.8), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.type = 'triangle'; lfo.frequency.value = 5.3; lg.gain.value = 260; lfo.connect(lg); lg.connect(v.flt.frequency); lfo.start();   // (the static fluttering)
+    return v;
+  }
+  function radioBed(on) { if (ctx && radioV) set(radioV.out.gain, on && running ? 0.024 : 0, on ? 0.04 : 0.07); }
+  // thunder after a lightning (delay: the sound's way from where it struck, vol: nearer is louder, with a crack): a low roll, swelling and fading
+  function thunder(delay, vol) {
+    if (!ctx || ctx.state !== 'running' || !running) return;
+    const now = ctx.currentTime + Math.max(0, delay || 0), v = clamp(vol || 0.5, 0.1, 1), dur = 2.5 + v * 2.5 + Math.random();
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.3 + Math.random() * 0.1;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(v > 0.7 ? 1500 : 520, now); lp.frequency.exponentialRampToValueAtTime(110, now + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.55 * v, now + (v > 0.7 ? 0.03 : 0.45));
+    for (let k = 1; k < 4; k++) g.gain.exponentialRampToValueAtTime(0.55 * v * (0.3 + Math.random() * 0.55), now + dur * k / 4);   // (it rolls)
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(lp); lp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + dur + 0.1);
+    thunders++;
+  }
+  let thunders = 0;
   // a tyre over the spikes: a sharp pop, then the air hissing out
   function pop() {
     if (!ctx || ctx.state !== 'running' || !running) return;
@@ -423,10 +531,11 @@ const Sfx = (function () {
   }
   function pkxUpdate(race, player, cam, dt, now) {
     const X = atmo.x, { sstep } = Core, T = race.track, spd = player.speed || 0, y = player.roadY || 0, wet = race.rain || 0;
-    // crunch: the wheels on the verge (surface 3) on each side of the car, louder and denser with the speed (nothing in the air or at a standstill)
+    // crunch: the wheels on the verge (surface 3), and on the historic gravel road on the road itself (5, 6), on each side of the car, louder and denser
+    // with the speed (nothing in the air or at a standstill)
     let dot = 1; if (cam) { const e = cam.matrixWorld.elements, h = player.h || 0; dot = clamp(-Math.sin(h) * e[0] + Math.cos(h) * e[2], -1, 1); }   // (the car's +side on the screen)
     const v = player.air ? 0 : PX_CRUNCH * (0.12 + 0.88 * sstep(2, 38, spd)) * Math.min(1, spd / 2.5) * (1 - 0.4 * wet), W = player.ws || [];
-    for (let k = 0; k < 2; k++) { const c = X.cr[k], nw = (W[k] === 3 ? 1 : 0) + (W[k + 2] === 3 ? 1 : 0);   // (k 0: the -side wheels 0 and 2, k 1: the +side ones)
+    for (let k = 0; k < 2; k++) { const c = X.cr[k], lz = (w) => w === 3 || w === 5 || w === 6 ? 1 : 0, nw = lz(W[k]) + lz(W[k + 2]);   // (k 0: the -side wheels 0 and 2, k 1: the +side ones)
       set(c.g.gain, c.src ? v * nw / 2 : 0, 0.04); if (c.src) set(c.src.playbackRate, 0.7 + 0.55 * sstep(3, 40, spd), 0.1); if (c.pn.pan) set(c.pn.pan, (k ? 0.55 : -0.55) * dot, 0.1); }
     set(X.cf.frequency, 900 + 2600 * sstep(3, 35, spd), 0.1);
     // the rock echo: fades in and out along the road; the slap's delay changes only while it is silent (no pitch glide)
@@ -529,9 +638,9 @@ const Sfx = (function () {
      peaking filter); then the kind's own layers: a clatter of noise pulsed by the firings (a diesel's knock, an air-cooled engine's
      valves, a flat six's rasp, a two-stroke's ring), a blower's whine (v8s, i8s), a hybrid's motor, a lumpy cam's lope; on any kind
      snd.turbo's whistle, its blow-off on a lift and, from 0.9, a rally anti-lag's bangs; overrun pops; a truck's air brakes. snd.loud:
-     the gain (and how far a rival is heard). The 11 models without a preset keep their old voices untouched (engineVoice, voiceKind,
-     evWhine): these are separate voices (kitVoice: the player's and two for the nearest rivals, made the first time a vehicle with a
-     preset is heard), the old ones silent while one plays. Their random numbers are their own (KR), never Math.random ---- */
+     the gain (and how far a rival is heard). The 11 models without a preset keep their own voices untouched (engineVoice, their engine
+     type: ENG, CAR_ENG): these are separate voices (kitVoice: the player's and three for the nearest rivals, made the first time a vehicle
+     with a preset is heard), the old ones silent while one plays. Their random numbers are their own (KR), never Math.random ---- */
   const KR = Core.rng(0x5fd1e7), num = (v, d) => (Number.isFinite(v) ? v : d);
   // a cycle's firings ([crank angle, strength]) in this order of cylinders, deg/n apart; bank B's (bOf) weaker (bAmp) and a little later
   // (bDel: its longer pipe); each cylinder a little different (vary). lumpy: the same firings off the throttle, less even (k: how much)
@@ -756,11 +865,11 @@ const Sfx = (function () {
     else if (K.sp) kitShot(V, 'pop' + Math.floor(KR() * 3), loud * K.sp * 0.35, 0.75 + 0.3 * KR(), 0.01);
   }
   let kitPl = null, plM = null;   // the player's voice with a preset (and its model while it plays)
-  const kitAI = [null, null];     // the nearest rivals' (pinned to their cars while they stay among the two nearest)
-  const kitW = [], aiSeen = [null, null];   // (update's list of the rivals with a preset among the two nearest; what each rank plays: Sfx.levels)
+  const kitAI = [null, null, null];   // the nearest rivals' (pinned to their cars while they stay among the three nearest)
+  const kitW = [], aiSeen = [null, null, null];   // (update's list of the rivals with a preset among the three nearest; what each one plays: Sfx.levels)
   const engTaps = () => [echo && echo.send, tun && tun.send, atmo && atmo.x && atmo.x.hp];   // (the player's engine feeds the Pikes echo, a tunnel's ring, the rock slap)
   function kitPlayer(P, M, revInput, dt) {
-    set(eng.out.gain, 0, 0.02); set(eng.lopeG.gain, 0, 0.02);   // (the old voice silent)
+    set(eng.out.gain, 0, 0.02); set(eng.tg.gain, 0, 0.02);   // (the old voice silent)
     if (!kitPl) kitPl = kitVoice(ctx, bus, 1.0, false, engTaps());
     if (kitPl.car !== P) kitReset(kitPl, P);
     const thr = clamp(num(revInput, 0), 0, 1), locked = !!P.locked;
@@ -769,7 +878,7 @@ const Sfx = (function () {
     kitStep(kitPl, M, { rpm, load: locked ? thr : P.inThr, speed: P.speed, brk: P.inBrk, cut: P.shiftT > 0 ? 0.35 : 1, pl: true, dt, tc: 0.015, locked });
     plM = M;
   }
-  // the rivals with a preset among the two nearest (W: [car, its rank k, distance, dx]): each keeps its voice while it stays there
+  // the rivals with a preset among the three nearest (W: [car, its engine slot k, distance, dx]): each keeps its voice while it stays there
   function kitRivals(W, dt) {
     for (const V of kitAI) if (V) V.keep = false;
     for (const w of W) { const V = kitAI.find(V => V && V.car === w[0]); if (V && !V.keep) { V.keep = true; w[4] = V; } }
@@ -1173,50 +1282,44 @@ const Sfx = (function () {
     const tNow = ctx.currentTime, dt = clamp(tNow - lastT, 0, 0.1), tU = performance.now(); lastT = tNow;
     const M = player.m;
     if (race && !prepRaces.has(race)) { prepRaces.add(race); raceKinds(race, player); }   // (a new race: its presets' waves made first, prep)
-    // player engine (a registered vehicle, model.sndP: its preset's own voice, kitPlayer; the 11 others as always)
+    // player engine (a registered vehicle, model.sndP: its preset's own voice, kitPlayer; the 11 others: their engine type, engSet)
     if (M.sndP) kitPlayer(player, M, revInput, dt);
     else {
       if (kitPl && kitPl.on) kitOff(kitPl, 0.02);
       plM = null;
-      voiceKind(eng, M);
-      if (M.ev) evWhine(eng, player.speed, player.locked ? 0 : player.inThr, eng.level, 0.015);   // (the electric car: the motors' whine)
-      else {
-        let rpm = player.rpm;
-        if (player.locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * (revInput || 0) + Math.random() * 60 * (revInput || 0);
-        const r = clamp(rpm / M.redline, 0.08, 1.05);
-        const base = (22 + r * 205) * (M.engHz || 1); // firing freq Hz (the formula screams higher, the V8s rumble lower)
-        set(eng.o1.frequency, base, 0.015); set(eng.o2.frequency, base * 0.5, 0.015); set(eng.o3.frequency, base * 2.01, 0.015);
-        const load = player.locked ? (revInput || 0) : player.inThr;
-        set(eng.lp.frequency, (380 + r * 1700 + load * 1300) * (M.engHz > 1 ? 1.35 : M.engHz < 1 ? 0.8 : 1), 0.03);
-        const cut = player.shiftT > 0 ? 0.35 : 1, gq = (0.1 + 0.1 * r + 0.1 * load) * cut * eng.level;
-        set(eng.out.gain, gq, 0.02);
-        if (eng.kind === 'v8') { set(eng.lope.frequency, base * 0.5, 0.015); set(eng.lopeG.gain, gq * 0.7 * clamp(1 - r * 1.4, 0.15, 1) * (1 - 0.5 * load), 0.05); }   // (the lope: strongest at idle and off the throttle)
-      }
+      let rpm = player.rpm;
+      if (player.locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * (revInput || 0) + Math.random() * 60 * (revInput || 0);
+      const r = clamp(rpm / M.redline, 0.08, 1.05);
+      const load = player.locked ? (revInput || 0) : player.inThr;
+      const cut = player.shiftT > 0 ? 0.35 : 1;
+      engKindSet(eng, engKind(player));
+      engSet(eng, player, rpm, clamp(load, 0, 1), 1, (0.1 + 0.1 * r + 0.1 * load) * cut * eng.level, dt, tNow);
     }
-    // two nearest AI engines (a registered vehicle among them: its own voice, kitRivals, the old one silent); then what breaks (dStep)
+    // the three nearest other engines, each kept on its car while it stays among them; the Doppler shift of their speed along the line to
+    // the camera (the listener moves with the player's car). A registered vehicle among them: its preset's own voice (kitRivals, the old
+    // one silent); then what breaks (dStep)
     if (race) {
-      const others = [], kw = kitW; kw.length = 0;
-      for (const c of race.cars) { if (c === player) continue; const dx = c.x - player.x, dz = c.z - player.z; others.push([dx * dx + dz * dz, c, dx]); }
-      others.sort((a, b) => a[0] - b[0]);
+      const cam = typeof Render !== 'undefined' ? Render.camera : null, lx = cam ? cam.position.x : player.x, lz = cam ? cam.position.z : player.z;
+      const near = [], kw = kitW; kw.length = 0;
+      for (const c of race.cars) { if (c === player || c.x === 1e5) continue; const dx = c.x - lx, dz = c.z - lz; near.push([dx * dx + dz * dz, c]); }
+      near.sort((a, b) => a[0] - b[0]); near.length = Math.min(near.length, ai.length);
+      const cars = near.map(e => e[1]);
+      for (const v of ai) if (v.car && cars.indexOf(v.car) < 0) v.car = null;
+      for (const c of cars) if (!ai.some(v => v.car === c)) { const v = ai.find(w => !w.car); if (v) { v.car = c; v.dop = 1; v.boost = 0; v.thrHi = 9; } }
       for (let k = 0; k < ai.length; k++) {
-        const v = ai[k], o = others[k];
-        if (!o) { set(v.out.gain, 0); set(v.lopeG.gain, 0); aiSeen[k] = null; continue; }
-        const c = o[1], d = Math.sqrt(o[0]), att = clamp(1 - d / 70, 0, 1);
-        if (c.m.sndP) { set(v.out.gain, 0); set(v.lopeG.gain, 0); kw.push([c, k, d, o[2], null]); continue; }
-        voiceKind(v, c.m); aiSeen[k] = [c.m.id, v.kind];
-        if (c.m.ev) evWhine(v, c.speed, c.inThr || 0, att * att * v.level * 2.4, 0.03);   // (a friend's electric car)
-        else {
-          const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
-          const f = (22 + rr * 205) * (c.m.engHz || 1);
-          set(v.o1.frequency, f); set(v.o2.frequency, f * 0.5); set(v.o3.frequency, f * 2.02);
-          set(v.lp.frequency, 400 + rr * 1500 + c.inThr * 800);
-          const gq = att * att * (0.06 + 0.1 * rr) * v.level * 3;
-          set(v.out.gain, gq, 0.05);
-          if (v.kind === 'v8') { set(v.lope.frequency, f * 0.5); set(v.lopeG.gain, gq * 0.7 * clamp(1 - rr * 1.4, 0.15, 1), 0.05); }
-        }
-        if (v.pn) set(v.pn.pan, clamp(o[2] / 40, -0.9, 0.9), 0.05);
+        const v = ai[k], c = v.car; if (!c) { set(v.out.gain, 0); set(v.tg.gain, 0); aiSeen[k] = null; continue; }
+        const dx = c.x - lx, dz = c.z - lz, d = Math.max(1, Math.hypot(dx, dz));
+        if (c.m.sndP) { set(v.out.gain, 0); set(v.tg.gain, 0); kw.push([c, k, d, dx, null]); continue; }   // (a registered vehicle: kitRivals)
+        engKindSet(v, engKind(c)); aiSeen[k] = [c.m.id, v.kind];
+        const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
+        const vr = ((c.vx || 0) - (player.vx || 0)) * dx / d + ((c.vz || 0) - (player.vz || 0)) * dz / d;   // (+: away from the listener)
+        v.dop += (clamp(343 / (343 + vr), 0.75, 1.3) - v.dop) * clamp(dt * 12, 0, 1);
+        const att = clamp(1 - d / 80, 0, 1);
+        engSet(v, c, c.rpm, clamp(c.inThr || 0, 0, 1), v.dop, att * att * (0.06 + 0.1 * rr) * v.level * 3, dt, tNow);
+        v.fx.gain.value = att;
+        if (v.pn && cam) { const e = cam.matrixWorld.elements; set(v.pn.pan, clamp((dx * e[0] + dz * e[2]) / Math.max(d, 12) * 1.2, -0.9, 0.9), 0.05); }
       }
-      if (kw.length || kitAI[0] || kitAI[1]) kitRivals(kw, dt);
+      if (kw.length || kitAI.some(Boolean)) kitRivals(kw, dt);
       dStep(race, player);
       const left = PREP_FRAME - (performance.now() - tU);   // (prep: what is still to be made ahead, in what is left of the frame's budget)
       if (enabled && running && left > 0.3 && prepLeft() && !(atmo && (atmo.gen || (atmo.x && atmo.x.gen)))) prepRun(Math.min(PREP_RACE, left));
@@ -1249,9 +1352,9 @@ const Sfx = (function () {
     set(spray.out.gain, air ? 0 : loose / 4 * spf * 0.14 * wet, 0.05);
     if (pud && !pudPrev && !air && spd > 5) splash(clamp(spd / 30, 0.3, 1));
     pudPrev = pud;
-    // the fans (a rally stage: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by (more
-    // over a jump), with whoops and air horns
-    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && race.track.def.rally && Wd ? Wd.crowdCells : null;
+    // the fans (a rally stage, a descent: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by
+    // (more over a jump), with whoops and air horns
+    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && (race.track.def.rally || race.track.def.descent) && Wd ? Wd.crowdCells : null;
     let cl = 0;
     if (cc) {
       const cx = Math.floor(player.x / 24), cz = Math.floor(player.z / 24); let n = 0;
@@ -1263,10 +1366,10 @@ const Sfx = (function () {
     if (ex > 0.25 && Math.random() < dt * ex * 3) cheer(Math.min(1, ex));
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
-    const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
-    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    const pikes = !!(race && race.track && race.track.def && race.track.def.theme === 'pikes');   // (on asphalt and on the historic gravel road)
+    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : race && race.track && race.track.def && race.track.def.id === 'caracoles' ? 0.16 : 0, 0.6);   // (Los Caracoles: off the rock walls of the ladder)
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
-      set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
+      set(tun.send.gain, tn && (tn.ranges ? tn.ranges.some(r => sq > r[0] - 3 && sq < r[1] + 3) : sq > tn.s0 - 3 && sq < tn.s1 + 3) ? 0.85 : 0, 0.08); }   // (Los Caracoles: two galleries, tn.ranges)
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
@@ -1275,6 +1378,9 @@ const Sfx = (function () {
       hv = a * a * 0.5;
       if (cam) { const e = cam.matrixWorld.elements; hp = clamp(((q.x - lx) * e[0] + (q.y - ly) * e[1] + (q.z - lz) * e[2]) / Math.max(d, 1) * 1.2, -0.8, 0.8); }
     }
+    const PH = race && race.pol && race.pol.heli;   // (Vršič, the run from the police: their helicopter)
+    if (PH) { const lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : (player.roadY || 0), lz = cam ? cam.position.z : player.z, d = Math.hypot(PH.x - lx, PH.y - ly, PH.z - lz), a = clamp(1 - d / 380, 0, 1);
+      if (a * a * 0.55 > hv) { hv = a * a * 0.55; if (cam) { const e = cam.matrixWorld.elements; hp = clamp(((PH.x - lx) * e[0] + (PH.y - ly) * e[1] + (PH.z - lz) * e[2]) / Math.max(d, 1) * 1.2, -0.8, 0.8); } } }
     set(heli.out.gain, hv, 0.35);
     if (heli.pn) set(heli.pn.pan, hp, 0.1);
     standsStep(race, player, W, cam);
@@ -1343,14 +1449,39 @@ const Sfx = (function () {
     o.connect(f); f.connect(g); g.connect(master); o.start(now); o.stop(now + dur + 0.02);
   }
   function click() { beep(1400, 0.04, 0.06); }
-  function shiftPop() {
-    if (!ctx || ctx.state !== 'running' || !running) return;
-    if (plM) { kitShift(); return; }   // (a registered vehicle: its preset's own, kitShift)
-    const now = ctx.currentTime;
+  // the team radio: the squelch of the radio opening (a short burst of band-passed noise) and its beep
+  function radio() {
+    if (!ctx || ctx.state !== 'running') return;
+    const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.2;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.1, now + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    src.connect(bp); bp.connect(g); g.connect(master); src.start(now, Math.random()); src.stop(now + 0.18);
+    beep(1250, 0.07, 0.05);
+  }
+  function shiftPop() { shift(true); }
+  // a gear change of the player's car: the gearbox's clack (a racing sequential's bang for the formula and the rally car), the turbo's
+  // flutter on the way up, a blip of the throttle with a pop on the way down. A registered vehicle (a preset): its own on the way up
+  // (kitShift), nothing of the old voice's
+  let shifts = 0;
+  function shift(up) {
+    if (!ctx || ctx.state !== 'running' || !running || !eng) return;
+    if (plM) { if (up) kitShift(); return; }
+    const now = ctx.currentTime, E = ENG[eng.kind], seq = eng.kind === 'v10' || eng.kind === 'al4'; shifts++;
     const src = ctx.createBufferSource(); src.buffer = noiseBuf;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 320; bp.Q.value = 1.5;
-    const g = ctx.createGain(); g.gain.setValueAtTime(0.25, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = seq ? 900 : 320; bp.Q.value = seq ? 2.5 : 1.5;
+    const g = ctx.createGain(); g.gain.setValueAtTime(seq ? 0.32 : 0.25, now); g.gain.exponentialRampToValueAtTime(0.001, now + (seq ? 0.05 : 0.09));
     src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.12);
+    const k = ctx.createOscillator(); k.type = 'square'; k.frequency.setValueAtTime(seq ? 180 : 120, now); k.frequency.exponentialRampToValueAtTime(60, now + 0.03);
+    const kg = ctx.createGain(); kg.gain.setValueAtTime(0.0001, now); kg.gain.exponentialRampToValueAtTime(seq ? 0.12 : 0.07, now + 0.002); kg.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    k.connect(kg); kg.connect(bus); k.start(now); k.stop(now + 0.05);
+    if (up && E.turbo && eng.boost > 0.3) {   // (the flutter: the boost chattering against the closed throttle)
+      const f = ctx.createBufferSource(); f.buffer = noiseBuf; const fb = ctx.createBiquadFilter(); fb.type = 'bandpass'; fb.frequency.value = 2400; fb.Q.value = 2;
+      const fg = ctx.createGain(); fg.gain.setValueAtTime(0.0001, now);
+      for (let i = 0; i < 4; i++) { const t = now + 0.01 + i * 0.03; fg.gain.exponentialRampToValueAtTime(0.06 * eng.boost, t); fg.gain.exponentialRampToValueAtTime(0.004, t + 0.02); }
+      fg.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      f.connect(fb); fb.connect(fg); fg.connect(bus); f.start(now, Math.random()); f.stop(now + 0.18);
+    }
+    if (!up) { crack(eng, 0.45, now + 0.04); set(eng.out.gain, 0.34 * eng.level, 0.01); }   // (the blip)
   }
   // a knocked-over trackside prop: hollow plastic 'tock' for a cone, rubbery thump for tyres, soft thud for straw, woody knock for a crate
   let lastKnock = 0;
@@ -1380,20 +1511,23 @@ const Sfx = (function () {
   }
   function silence() {
     if (!ctx) return;
-    for (const v of [eng, ...ai]) { set(v.out.gain, 0, 0.02); set(v.lopeG.gain, 0, 0.02); }   // (a V8's lope too: it would still beat on a silent note)
-    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV]) set(v.out.gain, 0, 0.02);
+    for (const v of [eng, ...ai]) { set(v.out.gain, 0, 0.02); set(v.tg.gain, 0, 0.02); v.car = null; }
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV, radioV]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
     if (atmo) atmoOff(0.02);
     for (const V of [kitPl, ...kitAI]) if (V) kitOff(V, 0.02);   // (the fleet's: the engines with a preset, the fires and the hubs)
     for (const v of [...dFireV, ...dScrV]) if (v) { set(v.g.gain, 0, 0.02); if (v.amg) set(v.amg.gain, 0, 0.02); v.car = null; }
   }
 
-  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
     engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
-      : { kind: eng.kind, preset: eng.kind, wave: eng.o1.type, f: eng.o1.frequency.value, gain: eng.out.gain.value, lope: eng.lopeG.gain.value, fs: [eng.o1, eng.o2, eng.o3, eng.lope].map(o => o.frequency.value) },   // Pikes Peak's sounds, the player's engine note: preset its
-    ai: aiSeen.map(a => a && { id: a[0], preset: a[1] }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // kind / model.sndP.kind, a kit
-    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the two nearest rivals'; dest: what broke, heard; prep: what is still to be made ahead)
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
+      : eng ? { kind: eng.kind, preset: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value, fs: [eng.o, eng.pm, eng.tw].map(o => o.frequency.value).concat(eng.lp.frequency.value, eng.nb.frequency.value) } : null,   // Pikes Peak's sounds, the player's engine note: preset its
+    ai: aiSeen.map(a => a && { id: a[0], preset: a[1] }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
+    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the three nearest rivals'; dest: what broke, heard; prep: what is still to be made ahead)
+  // (tests: the engines as they sound now; a rival in a registered vehicle: its preset)
+  const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
+    ai: ai.map(v => ({ kind: v.car && v.car.m.sndP ? v.car.m.sndP.kind : v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

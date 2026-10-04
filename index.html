@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=1ff94008">
+<link rel="stylesheet" href="css/style.css?v=f274223a">
 </head>
 <body>
 <div id="app">
@@ -33,6 +33,7 @@
       <button data-act="rp-hl" id="rp-hl" aria-label="Najboljši trenutki">&#9733; Trenutki</button>
       <button data-act="rp-photo" id="rp-photo">Foto</button>
       <button data-act="rp-exit" class="rp-exit">Končaj</button>
+      <button data-act="rp-skip" id="rp-skip" class="rp-skip">Preskoči</button>
     </div>
     <div id="rp-hl-cap" class="off"></div>
   </div>
@@ -48,18 +49,21 @@
       <span id="h-pkcls" class="h-lbl"></span><!-- Pikes Peak: the class of the car -->
       <div id="speedo">
         <canvas id="speedo-c"></canvas>
-        <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div>
+        <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div><div id="h-tow">ZAVETRJE</div>
       </div>
       <div id="h-dmg" aria-label="Poškodbe avta"><svg viewBox="0 0 30 50"><rect x="5" y="3" width="20" height="44" rx="6" class="dmg-body"/><rect id="dz0" x="7.5" y="5.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz1" x="7.5" y="35.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz2" x="7.5" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect id="dz3" x="18" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect x="13" y="17" width="4" height="16" rx="1.5" class="dmg-cab"/><rect id="wh0" x="1" y="8" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh1" x="25" y="8" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh2" x="1" y="33" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh3" x="25" y="33" width="4" height="9" rx="1.3" class="dmg-wh"/></svg></div>
       <div id="h-tyre" aria-label="Gume"></div>
+      <div id="h-fuel" aria-label="Gorivo"></div>
+      <div id="h-flt" aria-label="Okvare"></div>
       <div id="h-flag" aria-label="Zastave"></div>
+      <div id="h-tower" aria-hidden="true"></div><!-- the timing tower: the order with the gaps, as on TV -->
     </div>
     <div id="h-times">
       <div id="h-time">00:00.000</div>
       <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span><span id="h-delta"></span></div>
       <div id="h-sec" aria-hidden="true"><i></i><i></i><i></i></div>
       <div id="h-split"></div>
-      <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><span id="h-flat"></span></div>
+      <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><div id="h-hide"><i id="h-hidebar"></i></div><span id="h-hidel"></span><span id="h-flat"></span><div id="h-chk"></div></div>
       <div id="h-gap"></div>
     </div>
     <div id="h-map"><canvas id="minimap"></canvas></div>
@@ -69,11 +73,15 @@
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
+    <div id="h-teamradio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer (#47) -->
+    <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio -->
+    <div id="h-tail" aria-hidden="true"><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i></div><!-- the run from the police: arrows for the patrol cars behind, how far back -->
+    <div id="h-school"></div><!-- the driving school: the lesson under way -->
     <div id="podium-cap"></div>
     <div id="h-ttsp"></div>
     <div id="pk-cer" aria-live="polite"></div><!-- Pikes Peak: the summit ceremony -->
   </div>
-  <div id="pk-fly" aria-hidden="true"><small>PRELET PROGE</small><b></b><span></span><em>Tapni ali pritisni tipko za preskok</em></div><!-- Pikes Peak: the course flyover's captions -->
+  <div id="pk-fly" aria-hidden="true"><small>PRELET PROGE</small><b></b><span></span><em>Tapni ali pritisni tipko za preskok</em></div><!-- Pikes Peak, Katu-Jaryk: the course flyover's captions -->
 
   <!-- ============ TOUCH CONTROLS ============ -->
   <div id="touch" class="m-buttons off">
@@ -91,10 +99,12 @@
       </div>
     </div>
     <div id="c-brake" class="tb pedal"><span>ZAVORA</span></div>
+    <div id="c-drift" class="tb"><span>ROČNA</span></div>
     <div id="c-gas" class="tb pedal gas"><span>PLIN</span></div>
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
   <button id="btn-cam" class="off" aria-label="Kamera"><svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.2h6.8L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.4" r="3.4" class="lens"/></svg></button>
+  <button id="btn-tyre" class="off" aria-label="Gume za postanek"><i></i><span></span></button>
   <button id="btn-pause" class="off" aria-label="Pavza"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
   <button id="btn-rescue" class="off">&#8634; Na progo</button>
 
@@ -105,10 +115,13 @@
       <p class="sub" id="title-sub">Jezero Ring &middot; 3 krogi &middot; 12 nasprotnikov</p>
       <div class="btns">
         <button class="btn primary" data-act="to-car">Dirkaj</button>
+        <button class="btn chalbtn off" data-act="to-chal" id="btn-chal">Izziv</button>
         <button class="btn champbtn" data-act="to-champ" id="btn-champ">Prvenstvo</button>
         <button class="btn careerbtn" data-act="to-career" id="btn-career">Kariera</button>
         <button class="btn netbtn" data-act="to-online">Dirka s prijateljem</button>
         <button class="btn" data-act="to-board">Lestvica</button>
+        <button class="btn" data-act="to-stats">Dosežki</button>
+        <button class="btn" data-act="to-school">Šola vožnje</button>
         <button class="btn" data-act="to-settings">Nastavitve</button>
         <button class="btn fsbtn" data-act="fullscreen" id="btn-fs">Celoten zaslon</button>
         <button class="btn appbtn off" data-act="install" id="btn-install">Namesti igro</button>
@@ -149,6 +162,7 @@
     <div class="panel career-panel">
       <div class="car-head"><h2>Kariera</h2><span id="career-money" class="tag money">10.000 €</span></div>
       <p id="career-info" class="desc"></p>
+      <p id="career-rival" class="desc rival"></p>
       <div id="career-garage" class="garage"></div>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Nazaj</button>
@@ -175,10 +189,12 @@
       <h2>Izberi progo</h2>
       <div id="track-list" class="track-list"></div>
       <div class="trk-opts">
-        <div class="row wx-row"><span class="rlbl">Vreme</span><div class="seg" data-set="weather"><button data-v="dry">Suho</button><button data-v="rain">Dež</button><button data-v="random">Naključno</button><button data-v="change">Menljivo</button></div></div>
+        <div class="row wx-row"><span class="rlbl">Vreme</span><div class="seg" data-set="weather"><button data-v="dry">Suho</button><button data-v="rain">Dež</button><button data-v="random">Naključno</button><button data-v="change">Menljivo</button><button data-v="storm">Nevihta</button></div></div>
         <div class="row wx-row"><span class="rlbl">Kvalifikacije</span><div class="seg" data-set="quali"><button data-v="1">Vklop</button><button data-v="0">Izklop</button></div></div>
         <div class="row wx-row"><span class="rlbl">Letni čas</span><div class="seg" data-set="season"><button data-v="summer">Poletje</button><button data-v="autumn">Jesen</button><button data-v="winter">Zima</button></div></div>
-        <div class="row wx-row"><span class="rlbl">Čas dneva</span><div class="seg" data-set="tod"><button data-v="day">Dan</button><button data-v="dusk">Večer</button><button data-v="night">Noč</button></div></div>
+        <div class="row wx-row"><span class="rlbl">Čas dneva</span><div class="seg" data-set="tod"><button data-v="dawn">Jutro</button><button data-v="day">Dan</button><button data-v="dusk">Večer</button><button data-v="night">Noč</button></div></div>
+        <div class="row wx-row"><span class="rlbl">Dolžina dirke</span><div class="seg" data-set="length"><button data-v="short">Kratka</button><button data-v="normal">Običajna</button><button data-v="long">Dolga</button><button data-v="endurance">Vzdržljivostna</button></div></div>
+        <div class="row wx-row"><span class="rlbl">Gorivo</span><div class="seg" data-set="fuel"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row wx-row off" id="pk-gh-row" title="Pikes Peak: proti komu voziš (legenda: avtopilot z najhitrejšim avtom razreda, na zlati čas)"><span class="rlbl">Duh</span><div class="seg" data-set="pkGhost"><button data-v="best">Moj najboljši</button><button data-v="legend">Legenda</button><button data-v="off">Brez</button></div></div>
         <div class="row wx-row" title="Nastavitev avta za izbrano progo"><span class="rlbl">Krilo</span><div class="seg" data-set="wing"><button data-v="0">Malo</button><button data-v="1">Srednje</button><button data-v="2">Veliko</button></div></div>
         <div class="row wx-row" title="Nastavitev avta za izbrano progo"><span class="rlbl">Prestave</span><div class="seg" data-set="gear"><button data-v="0">Kratke</button><button data-v="1">Srednje</button><button data-v="2">Dolge</button></div></div>
@@ -195,28 +211,49 @@
     <div class="panel set-panel">
       <h2>Nastavitve</h2>
       <div class="set-list">
+        <div class="row"><span class="rlbl">Jezik · Language</span><div class="seg" data-set="lang"><button data-v="sl">Slovenščina</button><button data-v="en">English</button></div></div>
         <div class="row"><span class="rlbl">Ime voznika</span><input type="text" id="set-name" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Ime voznika za lestvico"></div>
         <div class="row"><span class="rlbl">Upravljanje</span><div class="seg" data-set="control"><button data-v="buttons">Tipke</button><button data-v="wheel">Volan</button><button data-v="tilt">Nagib</button></div></div>
         <div class="row tiltrow"><span class="rlbl">Občutljivost nagiba</span><input type="range" id="tilt-sens" min="10" max="40" step="1"><span id="tilt-sens-v" class="val"></span></div>
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
+        <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="cockpit">Kokpit · ležeče</button></div></div>
-        <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
+        <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="1.1">Blizu</button><button data-v="1.4">Srednje</button><button data-v="1.7">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
-        <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button></div></div>
+        <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Časovna tabela</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Idealna linija na cesti pred avtom: zeleno plin, rumeno ovinek, rdeče zaviranje"><span class="rlbl">Idealna linija</span><div class="seg" data-set="line"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila na ovinke <small class="pk-sub">Pikes Peak</small></span><div class="seg" data-set="pkNotes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak, Katu-Jaryk)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Okvare (predrta guma, vroče zavore in motor)</span><div class="seg" data-set="faults"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Video najboljšega trenutka po dirki</span><div class="seg" data-set="hlv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
+        <div class="row" title="Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone."><span class="rlbl">Podrobnosti</span><div class="seg" data-set="detail"><button data-v="low">Nizka</button><button data-v="med">Srednja</button><button data-v="high">Visoka</button><button data-v="auto">Samodejno</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Varčevanje z baterijo</span><div class="seg" data-set="saver"><button data-v="off">Izklop</button><button data-v="auto">Samodejno</button><button data-v="on">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
       </div>
       <div class="btns horiz"><button class="btn primary" data-act="settings-done">Končano</button></div>
+    </div>
+  </section>
+
+  <!-- Kontrole (from Nastavitve): the keys, the pad's or the wheel's buttons and axes -->
+  <section id="s-ctrl" class="screen">
+    <div class="panel set-panel ctrl-panel">
+      <h2>Kontrole</h2>
+      <div class="seg ctrl-tabs" id="ctrl-tabs"><button data-act="ctrl-tab" data-v="keys">Tipkovnica</button><button data-act="ctrl-tab" data-v="pad">Plošček in volan</button></div>
+      <div id="ctrl-body" class="set-list"></div>
+      <p id="ctrl-note" class="desc small"></p>
+      <div class="btns horiz"><button class="btn" data-act="ctrl-reset">Ponastavi</button><button class="btn primary" data-act="ctrl-done">Končano</button></div>
     </div>
   </section>
 
@@ -252,6 +289,7 @@
         <button class="btn" data-act="to-settings">Nastavitve</button>
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
       </div>
+      <p id="pause-strat" class="pause-strat off"></p>
       <div class="row pit-row off" id="pit-row" title="Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)"><span class="rlbl">Gume v boksih</span><div class="seg" data-set="pitCmp"><button data-v="auto">Samodejno</button><button data-v="S">Mehke</button><button data-v="M">Srednje</button><button data-v="H">Trde</button></div></div>
     </div>
   </section>
@@ -260,12 +298,12 @@
     <div class="panel set-panel online-panel">
       <h2>Dirka s prijateljem</h2>
       <div id="on-pick" class="set-list">
-        <p class="desc">Dirkaj proti prijatelju na drugem telefonu. Vpiši ime in tapni <b>Počakaj prijatelja</b>: ko prijatelj (ali kdorkoli drug) tapne isto, sta takoj povezana. Oba potrebujeta internetno povezavo.</p>
+        <p class="desc">Dirkaj proti prijatelju na drugem telefonu. Vpiši ime in tapni <b>Počakaj prijatelja</b>: ko prijatelj (ali kdorkoli drug) tapne isto, sta takoj povezana. Za dirko treh ali štirih ustvari zasebno sobo s kodo. Vsi potrebujejo internetno povezavo.</p>
         <div class="row"><span class="rlbl">Tvoje ime</span><input type="text" id="on-name" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Tvoje ime"></div>
         <div class="btns"><button class="btn primary" data-act="net-wait">Počakaj prijatelja</button></div>
         <div class="btns on-privbtn"><button class="btn mini" data-act="net-private" id="on-priv-btn" aria-expanded="false" aria-controls="on-priv">Zasebna soba s kodo</button></div>
         <div id="on-priv" class="on-priv off">
-          <p class="desc small">Ustvari sobo in prijatelju pošlji kodo, ali vpiši kodo, ki si jo dobil.</p>
+          <p class="desc small">Ustvari sobo in kodo pošlji prijateljem (v sobi so lahko štirje), ali vpiši kodo, ki si jo dobil.</p>
           <div class="btns"><button class="btn" data-act="net-host">Ustvari sobo</button></div>
           <div class="row on-join"><input type="text" id="on-code" class="txt code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="KODA" aria-label="Koda sobe"><button class="btn" data-act="net-join">Pridruži se</button></div>
         </div>
@@ -278,6 +316,8 @@
         <div class="row"><span class="rlbl">Moj avto</span><button class="btn mini" data-act="net-car-prev" aria-label="Prejšnji avto">&#9664;</button><span id="on-mycar" class="on-mycar"></span><button class="btn mini" data-act="net-car-next" aria-label="Naslednji avto">&#9654;</button></div>
         <div class="row"><span class="rlbl">Proga</span><select id="on-track" class="txt" aria-label="Proga"></select></div>
         <div class="row"><span class="rlbl">Krogi</span><select id="on-laps" class="txt" aria-label="Število krogov"></select></div>
+        <div class="row off" id="on-chrow"><span class="rlbl">Prvenstvo</span><div class="seg" id="on-chseg"><button data-act="net-ch-off">Izklop</button><button data-act="net-ch-on">Vklop</button></div></div>
+        <div id="on-ch" class="on-ch off"></div>
         <p id="on-note" class="desc small"></p>
       </div>
       <div class="btns horiz">
@@ -290,13 +330,30 @@
   <section id="s-results" class="screen">
     <div class="panel res-panel">
       <div class="res-head" id="res-head"><div id="res-pos" class="res-pos">1.</div><div><h2 id="res-title">Zmaga!</h2><p id="res-sub" class="desc"></p></div></div>
-      <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table></div>
+      <div id="res-vid" class="res-vid off" data-act="vid-big"><video id="res-vid-v" muted loop playsinline aria-label="Najboljši trenutek"></video><div class="rv-txt"><b>Najboljši trenutek</b><span id="res-vid-cap"></span></div><button class="btn primary rv-share" data-act="vid-share" id="res-vid-share">Deli</button></div>
+      <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div><div id="res-ch" class="off"></div></div>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
         <button class="btn" data-act="replay" id="res-replay">Posnetek</button>
+        <button class="btn off" data-act="to-school" id="res-school">Šola vožnje</button>
         <button class="btn off" data-act="replay-hl" id="res-hl">Najboljši trenutki</button>
+        <button class="btn off" data-act="chal-send" id="res-chal">Izzovi prijatelja</button>
+        <button class="btn off" data-act="chal-reply" id="res-reply">Pošlji odgovor</button>
         <button class="btn" data-act="car-view" id="res-view">Ogled vozila</button>
         <button class="btn primary" data-act="restart" id="res-restart">Ponovi dirko</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-chal" class="screen">
+    <div class="panel small-panel chal-panel">
+      <h2>Izziv</h2>
+      <p id="chal-who" class="desc"></p>
+      <div id="chal-card" class="chal-card"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="chal-drop">Zavrni</button>
+        <button class="btn ghost" data-act="chal-later">Kasneje</button>
+        <button class="btn primary" data-act="chal-go">Sprejmi izziv</button>
       </div>
     </div>
   </section>
@@ -314,6 +371,27 @@
     </div>
   </section>
 
+  <section id="s-school" class="screen">
+    <div class="panel board-panel">
+      <h2>Šola vožnje</h2>
+      <p class="desc">Štiri vaje z medaljami, vse z avtom KAZE RS (serijski, na suhem). Medalje za štart in drift ter časovna omejitev idealne linije so merjene ob vožnji avtopilota z istim avtom in fiziko.</p>
+      <div id="school-list" class="res-table-wrap school-list"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="to-title">Nazaj</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-stats" class="screen">
+    <div class="panel board-panel">
+      <h2>Dosežki</h2>
+      <div id="stats-body" class="res-table-wrap"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="to-title">Nazaj</button>
+      </div>
+    </div>
+  </section>
+
   <section id="s-board" class="screen">
     <div class="panel board-panel">
       <h2>Lestvica</h2>
@@ -325,27 +403,46 @@
     </div>
   </section>
 
-  <div id="rotate"><div class="phone"></div><p id="rotate-txt">Obrni telefon v ležeči položaj</p></div>
+  <div id="rotate"><div class="phone"></div><p id="rotate-txt">Obrni telefon v ležeči položaj</p><p id="rotate-why"></p><button class="btn primary" data-act="rot-cam" id="rotate-cam">Igraj pokončno</button></div>
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">APEX RACING</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
 
 <script src="js/vendor/three.r128.min.js?v=04c3c2be"></script>
-<script src="js/tracks/jezero.js?v=0fe49d77"></script>
-<script src="js/tracks/riviera.js?v=891ec58d"></script>
-<script src="js/tracks/gora.js?v=673a2aac"></script>
-<script src="js/tracks/ljubljana.js?v=1f2710f5"></script>
-<script src="js/tracks/monaco.js?v=0432bda7"></script>
-<script src="js/tracks/gozd.js?v=87bf8586"></script>
-<script src="js/tracks/toskana.js?v=7439009f"></script>
-<script src="js/tracks/grom.js?v=6e327f0f"></script>
-<script src="js/tracks/pikes.js?v=59b27e83"></script>
-<script src="js/tracks/ouninpohja.js?v=cbd4a12a"></script>
-<script src="js/tracks/vrsic.js?v=bfdd3e02"></script>
-<script src="js/tracks/nring.js?v=4c9b798c"></script>
-<script src="js/tracks/spa.js?v=33cb3477"></script>
-<script src="js/tracks/rbring.js?v=e89bd384"></script>
-<script src="js/tracks/suzuka.js?v=52b89a62"></script>
+<script src="js/tracks/jezero.js?v=cf630a99"></script>
+<script src="js/tracks/riviera.js?v=a7ed9b58"></script>
+<script src="js/tracks/gora.js?v=fca52133"></script>
+<script src="js/tracks/ljubljana.js?v=5337c131"></script>
+<script src="js/tracks/monaco.js?v=bc1f32f7"></script>
+<script src="js/tracks/gozd.js?v=62ae97ed"></script>
+<script src="js/tracks/toskana.js?v=c4596b40"></script>
+<script src="js/tracks/grom.js?v=97cb1d6e"></script>
+<script src="js/tracks/pikes.js?v=da779273"></script>
+<script src="js/tracks/ouninpohja.js?v=f41c403f"></script>
+<script src="js/tracks/vrsic.js?v=452c0fe4"></script>
+<script src="js/tracks/nring.js?v=1b2aea1c"></script>
+<script src="js/tracks/spa.js?v=e3d3c018"></script>
+<script src="js/tracks/rbring.js?v=d48ab134"></script>
+<script src="js/tracks/suzuka.js?v=e7950a25"></script>
+<script src="js/tracks/pikesg.js?v=5fdc4e68"></script>
+<script src="js/tracks/caracoles.js?v=3461e78e"></script>
+<script src="js/tracks/katu.js?v=08066aec"></script>
+<script src="js/tracks/harju.js?v=530db216"></script>
+<script src="js/tracks/bathurst.js?v=6387e681"></script>
+<script src="js/tracks/chapman.js?v=ae2c02a7"></script>
+<script src="js/tracks/bigsur.js?v=db66c519"></script>
+<script src="js/tracks/tianmen.js?v=4ca15f94"></script>
+<script src="js/tracks/uncompahgre.js?v=f351b94f"></script>
+<script src="js/tracks/sani.js?v=c2f3d8e1"></script>
+<script src="js/tracks/iroha.js?v=a43ef4e0"></script>
+<script src="js/tracks/mulholland.js?v=e4f992b3"></script>
+<script src="js/tracks/beartooth.js?v=45b7b832"></script>
+<script src="js/tracks/rastro.js?v=ff315e74"></script>
+<script src="js/tracks/moki.js?v=6f877ff1"></script>
+<script src="js/tracks/cpalace.js?v=1ff113aa"></script>
+<script src="js/tracks/riverside.js?v=e2cec4ed"></script>
+<script src="js/tracks/longford.js?v=3076a712"></script>
+<script src="js/lang.js?v=c8939575"></script>
 <script src="js/cars/miska.js?v=6cefb03a"></script>
 <script src="js/cars/kolibri.js?v=0c8dd3c5"></script>
 <script src="js/cars/raketa.js?v=5d4dbce1"></script>
@@ -379,15 +476,15 @@
 <script src="js/cars/goljat.js?v=bee6c887"></script>
 <script src="js/cars/levs.js?v=9b87c0ea"></script>
 <script src="js/cars/levk.js?v=8a1e8fea"></script>
-<script src="js/core.js?v=7d52e695"></script>
-<script src="js/tex.js?v=a4078fc3"></script>
-<script src="js/world.js?v=753aac8d"></script>
-<script src="js/render.js?v=5182efae"></script>
-<script src="js/sfx.js?v=659270d2"></script>
-<script src="js/input.js?v=d322f5e4"></script>
-<script src="js/comm.js?v=c7018b92"></script>
+<script src="js/core.js?v=6ac70df7"></script>
+<script src="js/tex.js?v=c8d887ce"></script>
+<script src="js/world.js?v=67365612"></script>
+<script src="js/render.js?v=238807fb"></script>
+<script src="js/sfx.js?v=e0cd8706"></script>
+<script src="js/input.js?v=6983328c"></script>
+<script src="js/comm.js?v=15f9cf70"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
-<script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=398b139d"></script>
+<script src="js/net.js?v=ba863f32"></script>
+<script src="js/game.js?v=d9eb03de"></script>
 </body>
 </html>

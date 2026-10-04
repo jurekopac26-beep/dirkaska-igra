@@ -1,8 +1,11 @@
 // The crowd's sound and a tunnel's ring (Monaco, the player on autopilot, the sound on): every circuit's world knows where its crowds are
 // (World.build: crowdPts, from the spectators and the grandstands); the crowd louder near them; in the tunnel under the hotel the engine
-// rings off its walls (a short reverb), outside it not. The fleet's sounds: every vehicle's engine preset (Core.SND_KINDS, Sfx.probe
-// rendered offline: plausible and every two apart), what breaks (a rival wrecked: clang, glass, a wheel, the crunch, the fire; a pile-up),
-// a turbo's blow-off and anti-lag (only when the throttle shuts), and what is made ahead in slices (prep).
+// rings off its walls (a short reverb), outside it not. The engines: each car its own type (the rally car a turbo four with anti-lag: pops
+// and the blow-off off the throttle, a clack at each gear), the rivals' engines on the nearest cars with the Doppler shift, the formula a V10.
+// The police radio (Vršič, the run from the police): static under its lines only.
+// The fleet's sounds: every vehicle's engine preset (Core.SND_KINDS, Sfx.probe rendered offline: plausible and every two apart), what
+// breaks (a rival wrecked: clang, glass, a wheel, the crunch, the fire; a pile-up), a turbo's blow-off and anti-lag (only when the throttle
+// shuts), and what is made ahead in slices (prep).
 //   node tests/browser/sound.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -31,16 +34,39 @@ try {
     const inside = samples.filter(x => x.inT), outside = samples.filter(x => x.s < x.s0 - 10 || x.s > x.s1 + 10);   // (its mouths: a few metres either way)
     T.check('the tunnel rings while the car is in it, and only then', inside.length >= 2 && inside.every(x => x.lv.tunnel > 0.5) && outside.every(x => x.lv.tunnel < 0.2), JSON.stringify(samples.map(x => [Math.round(x.s), +x.lv.tunnel.toFixed(2)])));
     T.check('the crowd heard near the spectators', samples.some(x => x.lv.stands > 0.2 && x.lv.standsGain > 0.02), JSON.stringify(samples.map(x => +x.lv.stands.toFixed(2))));
-
-    // 3. every vehicle's engine (the player's car given each model in turn for a few sound frames): its preset (a registered vehicle's
-    //    def.snd.kind; the 11 others keep their old voice: ice / v8 / ev), every frequency finite at idle and near the redline on the
-    //    throttle; a frame of nonsense (no number for the revs, the speed, the throttle) throws nothing
+  }
+  // 3. the engines (the race at Monaco on autopilot, the rally car BURJA R7): its own type (a turbo four with anti-lag), the gears changed with
+  // a clack, pops on the overrun and the blow-off; the nearest rivals' engines by their cars, with the Doppler shift as they pass
+  if (ready) {
+    const eng = [];
+    for (let k = 0; k < 16; k++) eng.push(await page.evaluate(() => new Promise(res => { const g = window.__game; g.resume(); g.sim(1, true);   // (the sound on while the second is simulated: its gear changes heard)
+ requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(Sfx.engines()); })); })));
+    const last = eng[eng.length - 1], kinds = new Set(eng.flatMap(e => e.ai.filter(a => a.car).map(a => a.kind))), dops = eng.flatMap(e => e.ai.filter(a => a.car).map(a => a.dop));
+    // the blow-off: the engine held high on the throttle for a second of sound (the boost builds), then the throttle shut (the race paused: only the sound runs)
+    const bo = await page.evaluate(async () => { const g = window.__game, P = g.race.player; g.pause(); Sfx.resume(); const b0 = Sfx.engines().player.bov;
+      P.rpm = P.m.redline * 0.85; P.inThr = 1; for (let k = 0; k < 25; k++) { Sfx.update(g.race, P, null, 1); await new Promise(r => setTimeout(r, 40)); }
+      P.inThr = 0; for (let k = 0; k < 3; k++) { Sfx.update(g.race, P, null, 0); await new Promise(r => setTimeout(r, 40)); }
+      return { b0, b1: Sfx.engines().player.bov }; });
+    last.player.bov = bo.b1 - bo.b0;
+    T.check('the player\'s engine: the rally car\'s turbo four with anti-lag (its pitch with the revs), gear changes, pops and a blow-off off the throttle',
+      last.player.kind === 'al4' && eng.some(e => e.player.f > 30) && last.shifts > 0 && last.player.pops > 0 && last.player.bov > 0, JSON.stringify(last.player) + ' shifts ' + last.shifts);
+    T.check('the rivals\' engines: on the nearest cars, each its own type (i6t, b4t, i4t, v6 by the model), the Doppler shift as they pass', eng.some(e => e.ai.filter(a => a.car).length >= 2) && [...kinds].every(k => ['i6t', 'b4t', 'i4t', 'v6', 'i4', 'al4', 'v10'].includes(k)) &&
+      dops.some(d => d < 0.99) && dops.some(d => d > 1.01), JSON.stringify({ kinds: [...kinds], dop: [Math.min(...dops), Math.max(...dops)] }));
+    // the formula: a V10 screaming several times higher at the same share of its revs
+    await page.evaluate(() => { const g = window.__game; g.resume(); g.onAction('to-title'); g.S.car = Core.MODELS.findIndex(m => m.id === 'formula'); });
+    await startTrack(page, 'jezero');
+    const f = await page.evaluate(() => new Promise(res => { const g = window.__game; g.sim(4, true); requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); const P = g.race.player; res({ e: Sfx.engines().player, r: P.rpm / P.m.redline }); })); }));
+    T.check('the formula: a V10 (ten firings a cycle: several hundred Hz)', f.e.kind === 'v10' && f.e.f * 10 > 300, JSON.stringify(f));
+    // 4. every vehicle's engine (the player's car given each model in turn for a few sound frames): its preset (a registered vehicle's
+    //    def.snd.kind; the 11 others keep their own engine type, Sfx's CAR_ENG), every frequency finite at idle and near the redline on
+    //    the throttle; a frame of nonsense (no number for the revs, the speed, the throttle) throws nothing
     const E = await page.evaluate(() => {
       const g = window.__game, P = g.race.player, m0 = P.m, rpm0 = P.rpm, thr0 = P.inThr, out = []; g.pause();
+      const OLD = { p206: 'i4', pico: 'i4t', vortex: 'b4t', kaze: 'i6t', strega: 'v6', rally: 'al4', formula: 'v10', muscle: 'v8', truck: 'v8t', lm: 'v8r', ev: 'ev' };
       for (const M of Core.MODELS) {
         P.m = M; let fin = true;
         for (const [rpm, thr] of [[M.idle, 0], [M.redline * 0.95, 1]]) { P.rpm = rpm; P.inThr = thr; Sfx.update(g.race, P, null, thr); const L = Sfx.levels().engine; if (![L.f, L.gain, ...L.fs].every(Number.isFinite)) fin = false; }
-        out.push({ id: M.id, preset: Sfx.levels().engine.preset, want: M.sndP ? M.sndP.kind : M.ev ? 'ev' : M.snd === 'v8' ? 'v8' : 'ice', fin });
+        out.push({ id: M.id, preset: Sfx.levels().engine.preset, want: M.sndP ? M.sndP.kind : OLD[M.id], fin });
       }
       let threw = '';
       try { P.m = Core.MODELS.find(m => m.sndP && m.sndP.turbo); P.rpm = NaN; P.inThr = NaN; Sfx.update(g.race, P, null, NaN); Sfx.crash(NaN); Sfx.knock('cone', NaN); } catch (e) { threw = e.message; }
@@ -52,7 +78,7 @@ try {
     T.check(`every vehicle's engine: its preset, every frequency finite (${E.out.length} models)`, E.out.length >= 42 && !badE.length, badE.map(x => `${x.id} ${x.preset}/${x.want} finite ${x.fin}`).join(', ') || E.out.map(x => x.id + ':' + x.preset).join(' '));
     T.check('a frame with no numbers (NaN revs, throttle, impact) throws nothing', !E.threw, E.threw);
 
-    // 4. every preset rendered offline (Sfx.probe: the same voice in an OfflineAudioContext, settled): finite, not clipping, heard; its
+    // 5. every preset rendered offline (Sfx.probe: the same voice in an OfflineAudioContext, settled): finite, not clipping, heard; its
     //    firing line where the engine fires (cylinders/2 x rpm/60 on a four-stroke, once a turn on the kart's two-stroke, 2 x rpm/60 on the
     //    two-rotor) within 3 %; and every two presets apart at the same revs and throttle: >= 3 dB RMS over the 1/3-octave bands
     const O = await page.evaluate(async () => {
@@ -83,13 +109,18 @@ try {
       (badO.length ? 'BAD ' : '') + (badO.length ? badO : O.rows).map(r => `${r.kind}@${r.rpm}/${r.load} ff ${r.ff.toFixed(1)} f0 ${r.f0.toFixed(1)} pk ${r.pk.toFixed(2)} rms ${r.rms.toFixed(3)}`).join(', '));
     T.check('every two presets sound apart (>= 3 dB RMS across 1/3-octave bands, 5000 rpm full throttle)', O.near && O.near[2] >= 3, O.near && `closest: ${O.near[0]}-${O.near[1]} ${O.near[2].toFixed(2)} dB`);
 
-    // 5. a race in a registered vehicle (ZMAJ 85, a one-make field: i5, turbo 1): its preset and its rivals'; the nearest rival wrecked on
+    // 6. a race in a registered vehicle (ZMAJ 85, a one-make field: i5, turbo 1): its preset and its rivals'; the nearest rival wrecked on
     //    the grid (Core.wreckCar with damage on: every part, the glass, its wheels): the clang of its panels, the glass, a wheel off and the
     //    crunch heard, then its fire crackling
     await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = Core.MODELS.findIndex(m => m.id === 'zmaj'); });
     await startTrack(page, 'jezero');
-    const R1 = await page.evaluate(() => new Promise(res => { const g = window.__game; g.resume(); setTimeout(() => { const L = Sfx.levels(); res({ id: g.race.player.m.id, eng: L.engine.preset, ai: L.ai }); }, 1500); }));
-    T.check('a race in ZMAJ 85: its i5 voice, its rivals\' too', R1.id === 'zmaj' && R1.eng === 'i5' && R1.ai.filter(Boolean).length === 2 && R1.ai.every(a => a && a.preset === 'i5'), JSON.stringify(R1));
+    // (1.5 s from the race's first frame: on the track already loaded (the formula's, above) no loading screen compiles the new race's
+    // materials ahead, so its first frame does it, which can take seconds in software WebGL)
+    const R1 = await page.evaluate(() => new Promise(res => { const g = window.__game, f0 = g.fr.drawn, t0 = performance.now(); g.resume();
+      const first = () => { if (g.fr.drawn === f0 && performance.now() - t0 < 60000) { setTimeout(first, 50); return; }
+        setTimeout(() => { const L = Sfx.levels(); res({ id: g.race.player.m.id, eng: L.engine.preset, ai: L.ai }); }, 1500); };
+      first(); }));
+    T.check('a race in ZMAJ 85: its i5 voice, its rivals\' too (the three nearest)', R1.id === 'zmaj' && R1.eng === 'i5' && R1.ai.length === 3 && R1.ai.every(a => a && a.preset === 'i5'), JSON.stringify(R1));
     const R2 = await page.evaluate(() => new Promise(res => {
       const g = window.__game, P = g.race.player; g.pause();
       const c = g.race.cars.filter(c => c !== P).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z))[0], d0 = Sfx.levels().dest;
@@ -101,7 +132,7 @@ try {
     T.check('the nearest rival wrecked: its panels\' clang, the glass, a wheel off and the crunch heard, its fire crackling', dd('clang') >= 1 && dd('glass') >= 1 && dd('wheel') >= 1 && dd('crunch') >= 1 && R2.d1.fire >= 1,
       `at ${R2.dist.toFixed(1)} m, ${R2.parts} parts off, wheels ${R2.wl}: ` + JSON.stringify(R2.d1));
 
-    // 6. (paused, the sound's own frames on the audio clock) ZMAJ's turbo (1: anti-lag): easing off to hold a speed (1 -> 0.45, as the AI
+    // 7. (paused, the sound's own frames on the audio clock) ZMAJ's turbo (1: anti-lag): easing off to hold a speed (1 -> 0.45, as the AI
     //    does) blows nothing off and bangs nothing; the throttle shut: one blow-off and the anti-lag's bangs, which stop when it opens
     //    again; a gear change: its chuff and its bang, a lift right after it no second blow-off. A pile-up (six rivals wrecked in one
     //    frame): a sound at most twice in that frame, every kind heard (not eight crunches), at most 8 playing. What is made ahead (prep):
@@ -131,6 +162,20 @@ try {
     T.check('a pile-up (six rivals wrecked at once): a sound at most twice in that frame, panels, glass, wheels and crunch all heard, at most 8 playing',
       most <= 2 && ['clang', 'glass', 'wheel', 'crunch'].every(heard) && R3.d1.live <= 8, `at ${R3.dist.join(', ')} m: ` + JSON.stringify(F) + ` live ${R3.d1.live}, merged +${R3.d1.merged - R3.d0.merged}, dropped +${R3.d1.dropped - R3.d0.dropped}`);
     T.check('the sounds made ahead (prep): all of it, in slices', R3.prep.left === 0 && R3.prep.slices >= 10, JSON.stringify(R3.prep));
+    // 8. the run from the police (Vršič, last: the race it starts is the police's, no rivals): the police radio's static under each line it says (the squelch opens, a bed of static, the roger
+    //    beep), quiet between the lines
+    await page.evaluate(() => { window.__game.S.mode = 'police'; });
+    await startTrack(page, 'vrsic');
+    const rad = await page.evaluate(async () => {
+      const g = window.__game, out = { on: [], off: [], caps: [] };
+      for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)
+        await new Promise(r => setTimeout(r, 100)); const c = g.radio.cur, lv = Sfx.levels().radio;
+        if (c && /^(OKC|KG)/.test(c)) { out.on.push(+lv.toFixed(3)); out.caps.push(c); } else if (!c && !g.radio.cap) out.off.push(+lv.toFixed(3));
+      }
+      return out;
+    });
+    T.check('the police radio: static under a line it says, none between the lines', rad.on.length >= 3 && rad.on.filter(v => v > 0.012).length >= 2 && rad.off.length >= 1 && rad.off.some(v => v < 0.004),
+      JSON.stringify({ on: rad.on.slice(0, 8), off: rad.off.slice(0, 8), said: [...new Set(rad.caps)].slice(0, 2) }));
   }
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

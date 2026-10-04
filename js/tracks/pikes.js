@@ -9,8 +9,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
   //   elev                 : [x, z, h] keyframes (h = metres above the start line), snapped to samples, interpolated along s (not periodic)
   //   alt                  : real altitude shown in the HUD at the start line and at the finish (linear in h)
   TRACK_DEFS.push({
-    id: 'pikes', name: 'Pikes Peak', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 7,
+    id: 'pikes', name: 'Pikes Peak, ZDA', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 7,
     desc: 'Vzpon na Pikes Peak: kronometer od starta na 2862 m do vrha na 4301 m. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom. Ni nasprotnikov, dirkaš proti uri.',
+    en: { name: 'Pikes Peak, USA', desc: 'The climb up Pikes Peak: a time trial from the start at 2862 m to the summit at 4301 m. Forest bends, the “W” hairpins, a fast ridge and switchbacks below the snowy summit. No rivals, you race against the clock.' },   // (the English page: Jezik · Language)
     realKm: 19.99, alt: [2862, 4301],
     // the real course's 156 turns: every modelled corner between the start and the finish carries the number the real turn at its place would
     // have (from the share of the course before it, strictly rising), for the corner boards (World) and the HUD counter (Game): [{ s, n, sev, dir }] in road order

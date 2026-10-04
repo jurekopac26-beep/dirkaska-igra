@@ -3,10 +3,13 @@
    Lines are chosen at random from pools (never the same line twice in a row).
    Only one line plays at a time; while busy, only the most important pending
    line is kept, and urgent news (lead change, finish) cuts in.
+   The run from the police has no commentator: the police radio speaks instead
+   (radio(): Slovenian lines in a voice that reads them; game.js directs them).
    ========================================================================= */
 const Comm = (() => {
   const synth = (typeof window !== 'undefined' && window.speechSynthesis) || null;
   let on = true, speech = true, voice = null, speaking = false, cur = null, lastEnd = 0, queue = null, notesOn = true, voice2 = null;
+  let voiceRadio = null, voiceRadio2 = null, radioMode = false;   // (the police radio's voices; radioMode: the commentator and the co-driver silent)
   const log = [], lastPick = {};
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -16,7 +19,8 @@ const Comm = (() => {
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
-    // the open road (Vršič with its traffic): the duel with one rival, the run from the police
+    introNetN: ['Welcome to {track}! {n} friends on the grid today, {laps}, and no one else. Let the best driver win!', 'Here we are at {track}: {n} of you over {laps}. Friends now, rivals for a while!', 'Good day and welcome to {track}! {n} players, {laps}. Who takes this one?'],
+    // the open road (Vršič, Los Caracoles: traffic both ways): the duel with one rival, the run from the police (on Vršič the police radio instead, game.js)
     introTraffic: ['Welcome to {track}, and the road is open today: traffic both ways, cyclists and people on foot. Just you and {rival}, first to the pass wins!', 'Here we are in Kranjska Gora, at the foot of {track}. A duel with {rival} through the everyday traffic. Mind the walkers in the village!', 'Welcome to {track}! No closed road this time: cars, buses and bikes coming both ways. Beat {rival} to the top!'],
     goTraffic: ["And they're off! Watch the traffic!", 'Go! Two cars racing up an open road, what could possibly go wrong?', 'Away they go! Keep your eyes on the oncoming cars!'],
     introPolice: ['Welcome to {track}! The police want a word with you, and they are right behind. Get over the pass without getting caught!', 'Here we are in Kranjska Gora, and the blue lights are already flashing. Twelve kilometres to the pass. Do not stop!', 'Welcome to {track}! A patrol car on your tail, spike strips and roadblocks up the mountain. Run for the top!'],
@@ -96,6 +100,37 @@ const Comm = (() => {
     penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
     // a changing weather (the rain starts or stops during the race) and the tyres
     rainStart: ['And here comes the rain! The track is getting wet!', 'Spots of rain on the visors! Slicks or rain tyres now?', 'It is starting to rain! The grip is going away!'],
+    // fuel (a race with fuel on) and an endurance race's evening and night
+    fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
+    fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
+    puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    // a friend's challenge (the challenge link): the run, beaten or not
+    chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
+    chalWon: ["You beat {name}'s time! Challenge done!", "Faster than {name}, by {delta}! Send that one back!"],
+    chalLost: ["Not quite, {name} is still faster, by {delta}.", "{name}'s time stands, {delta} quicker. Try again!"],
+    // the team's engineer on the radio (radio(): the co-driver's voice)
+    radioBox: ['Box, box, box this lap!', 'Box this lap, box this lap.', 'Box this lap, we are ready for you.'],
+    radioBoxWet: ['It is wet out there, box this lap for wets!', 'Box this lap for rain tyres!'],
+    radioBoxDry: ['The line is dry, box this lap for slicks.', 'Box this lap, slicks are ready.'],
+    radioBoxFix: ['Box this lap, we will fix the car.', 'Box this lap, box this lap, we have new parts ready.'],
+    radioBoxTyre: ['Puncture! Box this lap, we have a new tyre ready.', 'Box this lap for a new tyre!'],
+    radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
+    radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
+    radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
+    radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
+    radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
+    radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],
+    brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
+    engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
+    fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
+    // the rivals' characters: a duel with the player, the standing rival, a mistake under pressure
+    duel: ['A proper duel with {name} now! Nose to tail, lap after lap.', 'You and {name}, this is a real fight!', 'This battle with {name} is getting intense!'],
+    duelRival: ['Here we go again: you and your old rival {name}, wheel to wheel!', 'The rivalry continues! {name} will not give you an inch.', '{name} again! These two just cannot stay away from each other.'],
+    duelWon: ['And you have shaken off {name}! Duel won.', 'That is the end of the fight with {name}, and you came out on top!'],
+    duelLost: ['{name} has got away from you this time.', 'The duel goes to {name}, for now.'],
+    aiMistake: ['{name} has run wide under the pressure!', 'A mistake from {name}! Locked up into the corner!', 'Oh, {name} cracks under pressure and goes wide!'],
+    dusk: ['The sun is going down, the shadows are getting long.', 'Evening now, the light is fading over the circuit.'],
+    nightFall: ['Night has fallen! Headlights on, the floodlights are blazing.', 'It is dark now, racing under the lights!'],
     rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],
     dryLine: ['A dry line is appearing! Those rain tyres are overheating!', 'The racing line is dry now. Time for slicks?', 'Dry line! The rain tyres will not last on this.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
@@ -118,6 +153,8 @@ const Comm = (() => {
     // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
     introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],
+    // the same hill climb on its historic gravel road (Pikes Peak (makadam): the Highway as it was until 2011)
+    introTTg: ['Welcome to Pikes Peak, the old way! Gravel all the way to the summit, as it was before the road was paved!', 'The Race to the Clouds on the historic gravel road! Loose granite, ruts and dust, a hundred and fifty-six turns of it!', "Back to the gravel days on America's Mountain! No tarmac up here, just dirt, stones and the clock!"],
     goTT: ['Green flag at the start line... the car is away!', 'The green flag drops, and the car is away!', 'Green flag! The car is away, next stop, the clouds!'],
     // the time trial up a mountain pass (Vršič: the hairpins, the clock)
     introPassTT: ['Welcome to {track}! Twenty-four hairpins, most of them cobbled, and just you and the clock.', 'Here we are in Kranjska Gora, at the foot of {track}. {cps} checkpoints between you and the top of the pass.', 'Welcome to {track}! No rivals this time, only the clock. Get to the pass as fast as you can.'],
@@ -151,6 +188,9 @@ const Comm = (() => {
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
     medal: ['That is a {medal} medal time!', 'And that is worth a {medal} medal!', 'A {medal} medal on this stage!'],
+    // the city stage (def.cityStage: Harju): tarmac, gravel and cobbles through the town, the whole of Jyvaskyla watching
+    introCity: ['Welcome to {track}, the city stage of the Rally of Finland, right in the heart of Jyvaskyla!', 'Here we are at {track}. Tarmac, gravel and cobbles, and the whole town is watching!', 'Welcome to {track}! Up the ridge, round the water tower and back into town. {cps} splits, just you and the clock.'],
+    goCity: ['Go! Down the boulevard!', "And you're away! Flat out down the university street!", 'Green light! Listen to that crowd!'],
     goStage: ['Go! Flat out into the forest!', "And you're away! Keep it flat over the crests!", 'Green light! The clock is running!'],
     cpFirstStage: ['Split {cp}, {time}.', 'Through split {cp}. Keep it flat!', 'Split {cp}, {time}. Hold on tight!'],
     stageRecord: ['Flying finish! A new personal best, {time}!', 'Record run through {track}! {time}!', 'What a stage! A new personal best, {time}!'],
@@ -161,7 +201,14 @@ const Comm = (() => {
     pkFinFirst: ['Across the line at the summit! The official time, {time}! That is the record to beat on the mountain!', 'At the top in {time}! The first time on the board, and the new record!', 'The clock stops at {time}! A record at the summit, now go and beat it!'],
     pkFinEven: ['Across the line at the summit! {time}, and that equals the record, to the thousandth!', 'The clock stops at {time}, dead level with the best time on the mountain!'],
     pkFinOff: ['Across the line at the summit! The official time, {time}. That is {delta} seconds off the record.', 'At the top in {time}, {delta} seconds short of the best time on the mountain.', 'The clock stops at {time}. {delta} seconds away from the record.'],
-    stageEnd: ['Flying finish in {time}, {delta} seconds off your best.', 'Across the line. {time}, just {delta} short of the record.', "That's the end of the stage. {time}. {delta} seconds to find next time."]
+    stageEnd: ['Flying finish in {time}, {delta} seconds off your best.', 'Across the line. {time}, just {delta} short of the record.', "That's the end of the stage. {time}. {delta} seconds to find next time."],
+    // time trial down a mountain road (def.descent: Katu-Yaryk, from the Ulagan plateau down the canyon's face to the Chulyshman)
+    introDescTT: ['Welcome to {track}! Seven hairpins and over five hundred metres down to the river, just you and the clock.', 'Here we are on the Ulagan plateau, at the top of {track}. {cps} checkpoints between you and the valley floor.', 'Welcome to {track}, the famous descent in the Altai mountains! No rivals, only the clock. Brake early!'],
+    goDescTT: ['Green light! Over the edge we go!', "Go! And it's all downhill from here!", "And you're away! Down into the canyon!"],
+    cpFirstDesc: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep it on the road!', 'Checkpoint {cp}. Still a long way down!'],
+    descRecord: ['Down in the valley! A new personal best, {time}!', 'Record run! {time} down {track}!', 'What a descent! New personal best, {time}!'],
+    descEven: ['At the bottom in {time}. That is your record to the thousandth!', '{time} at the finish, dead level with your best!'],
+    descEnd: ['Down in the valley in {time}, {delta} seconds off your best.', 'Across the line at the bottom. {time}, just {delta} short of the record.', "That's the descent. {time}. {delta} seconds to find next time."]
   };
 
   // Speech engines don't report gender, so voices are scored by known name/URI markers.
@@ -196,10 +243,23 @@ const Comm = (() => {
       if (sc > s2) { s2 = sc; b2 = v; }
     }
     voice2 = b2;
+    // the police radio: a voice that reads Slovenian text (a Slovenian one, else a Croatian, Serbian or Bosnian one, else a Slovak or Czech
+    // one; a man's first), and another of its language for the dispatcher and the player's driver (none: the same voice, pitched apart)
+    let rb = null, rs = 0;
+    for (const v of vs) {
+      const L = RADIO_LANG.find(r => r[0].test(v.lang || '')); if (!L) continue;
+      const id = (v.name || '') + ' ' + (v.voiceURI || ''), sc = L[1] + (RMALE.test(id) ? 1 : RFEMALE.test(id) ? -0.5 : 0) + (v.localService ? 0.2 : 0);
+      if (sc > rs) { rs = sc; rb = v; }
+    }
+    const lg = (v) => (v.lang || '').slice(0, 2).toLowerCase();
+    voiceRadio = rb; voiceRadio2 = rb ? vs.find(v => v !== rb && lg(v) === lg(rb)) || null : null;
     if (typeof onVoice === 'function') onVoice(voiceInfo());
   }
+  const RADIO_LANG = [[/^sl([-_]|$)/i, 10], [/^hr([-_]|$)/i, 7], [/^(bs|sr)([-_]|$)/i, 6], [/^(sk|cs)([-_]|$)/i, 4]];
+  const RMALE = /\bmale\b|lado|\brok\b|sre[cć]ko|matej|jakub|anton[ií]n|filip|luk[aá][sš]|nicholas|goran|\bivan\b|marko|smtm/i;
+  const RFEMALE = /female|petra|\blana\b|zuzana|laura|gabrijela|vesna|sophie|vlasta|smtf|smtl/i;
   let onVoice = null;
-  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '' });
+  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '', radio: voiceRadio ? voiceRadio.name : '', radioLang: voiceRadio ? voiceRadio.lang : '' });
   if (synth) { pickVoice(); try { synth.addEventListener('voiceschanged', pickVoice); } catch (_) { synth.onvoiceschanged = pickVoice; } }
 
   function speakNow(item) {
@@ -207,13 +267,14 @@ const Comm = (() => {
     const me = cur = { prio: item.prio, t: now(), maxT, item };
     if (!synth || !speech) { speaking = false; return; }
     try {
-      const u = new SpeechSynthesisUtterance(item.text), v = item.note ? voice2 || voice : voice;
+      const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note ? voice2 || voice : voice;
       if (v) u.voice = v;
       u.lang = v ? v.lang : 'en-GB'; u.volume = 1;
-      if (item.note) { u.rate = 1.22; u.pitch = voice2 ? 1 : 1.3; }   // the co-driver: brisk (in the commentator's voice, higher)
+      if (item.radio) { u.rate = item.rate; u.pitch = item.pitch; }   // (the police radio: each speaker pitched apart)
+      else if (item.note) { u.rate = 1.22; u.pitch = voice2 ? 1 : 1.3; }   // the co-driver: brisk (in the commentator's voice, higher)
       else { u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; }   // deeper tone when no male voice exists
       // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
-      u.onend = u.onerror = () => { if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
+      u.onend = u.onerror = () => { item.done = true; if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
       speaking = true; synth.speak(u); item.spoken = true;
     } catch (_) { speaking = false; lastEnd = now() + item.text.length * 60; }
   }
@@ -227,11 +288,12 @@ const Comm = (() => {
   // prio: 0 = ambient (named places: anything from prio 2 cuts in, it only waits in an empty queue), 1 = chatter ... 5 = finish.
   // opt.ttl = how long (ms) the line may wait in the queue. Returns the logged item (item.spoken / item.cut are set later), or null.
   function say(key, vars, prio, opt) {
-    if (!on || !speech || !synth) return null;   // audio-only commentary: silent when sound is off
-    if (key === 'summitRecord' || key === 'summitEven' || key === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds)
+    if (!on || !speech || !synth || radioMode) return null;   // audio-only commentary: silent when sound is off (and in the run from the police on Vršič: the radio)
+    const kb = key.split('@')[0];   // (a road's own pool: key@track, see game.js ownLine)
+    if (kb === 'summitRecord' || kb === 'summitEven' || kb === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds); a road's own lines keep theirs
       const t = vars && String(vars.time || ''), m = /^(\d+) minutes? ([\d.]+)$/.exec(t);
       vars = Object.assign({}, vars, { time: m ? m[1] + (m[1] === '1' ? ' minute and ' : ' minutes and ') + m[2] + ' seconds' : t });
-      key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
+      if (kb === key) key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
     }
     const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);
@@ -251,7 +313,7 @@ const Comm = (() => {
   // the co-driver's pace notes (a rally stage, game.js reads them ahead of the car): its own voice, said at once. The commentator's line
   // is cut off; the co-driver's own call is not: the next one waits in line (before any chatter) and is dropped if it cannot start in 1.5 s
   function note(text) {
-    if (!notesOn || !speech || !synth || !text) return null;
+    if (!notesOn || !speech || !synth || !text || radioMode) return null;
     const item = { key: 'note', text, prio: 4, t: now(), note: true, ttl: 1500 };
     log.push(item); if (log.length > 200) log.shift();
     if (!busy()) { speakNow(item); return item; }
@@ -259,6 +321,46 @@ const Comm = (() => {
     queue = item;
     return item;
   }
+
+  // the team's engineer on the radio (game.js radioHUD): a line of LINES in the co-driver's voice, said at once (the commentator's line is
+  // cut off), else next in line for a few seconds
+  function teamRadio(key, vars) {
+    if (!on || !speech || !synth) return null;
+    const pool = LINES[key]; if (!pool) return null;
+    let k = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
+    lastPick[key] = k;
+    const text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
+    const item = { key, text, prio: 3, t: now(), note: true, ttl: 4000 };
+    log.push(item); if (log.length > 200) log.shift();
+    if (!busy()) { speakNow(item); return item; }
+    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    queue = item;
+    return item;
+  }
+  // a line of the police radio, said at once (game.js's radio director keeps the lines in turn): o.who 'okc' (the dispatcher), 'u' (a unit;
+  // o.u its number: each a little different), 'heli', 'bov' (the station across the pass), in person 'cop' (the officer) and 'drv' (the
+  // player's driver); text in Slovenian, o.en the same in English with the places spelt for an English voice (said when no voice reads
+  // Slovenian). Returns the item (item.done once said, item.cut if cut off), or null: no speech (captions only). Not the commentator: heard
+  // with the sound on even when the commentator is switched off
+  function radio(text, o) {
+    o = o || {};
+    if (!speech || !synth || !text) return null;
+    const en = !voiceRadio || !!o.enOnly, w = o.who, two = w === 'okc' || w === 'drv', v2 = en ? voice2 : voiceRadio2, v = two && v2 ? v2 : en ? voice : voiceRadio;
+    if (!v || (en && !o.en)) return null;
+    const own = two && !!v2, low = en && !voiceMale && !own ? 0.82 : 1;   // (its own voice: hardly pitched; an English woman's voice: lower)
+    const pitch = low * (own ? (w === 'drv' ? 1.06 : 1) : w === 'okc' ? 1.1 : w === 'drv' ? 1.2 : w === 'cop' ? 0.86 : w === 'heli' ? 0.92 : w === 'bov' ? 1.0 : 0.8 + 0.1 * ((o.u || 0) % 3));
+    const rate = w === 'cop' || w === 'drv' ? 1.02 : w === 'okc' ? 1.06 : 1.13;
+    cancelSpeech(); queue = null;
+    const item = { key: 'radio', text: en ? o.en : text, prio: 9, t: now(), radio: true, voice: v, pitch, rate, who: w, lang: v.lang };
+    log.push(item); if (log.length > 200) log.shift();
+    speakNow(item);
+    return item;
+  }
+  function radioStop() { if (cur && cur.item && cur.item.radio) cancelSpeech(); }
+  // the run from the police: only the radio speaks (say() and note() silent)
+  function setRadioMode(v) { radioMode = !!v; if (radioMode) { queue = null; if (cur && cur.item && !cur.item.radio) cancelSpeech(); } }
+  const radioVoice = () => voiceRadio ? { name: voiceRadio.name, lang: voiceRadio.lang, two: !!voiceRadio2 } : null;
 
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
@@ -281,7 +383,8 @@ const Comm = (() => {
   function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
   function stop() { cancelSpeech(); queue = null; }
   // call from a tap handler: some browsers only allow speech after a user gesture
-  function unlock() { if (!synth || !speech || !on) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
+  function unlock() { if (!synth || !speech) return; try {   // (also with the commentator off: the police radio speaks then, and iOS wants the first line from a tap)
+    const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
   function test() { cancelSpeech(); queue = null; speakNow({ key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
   function setOnVoice(fn) { onVoice = fn; fn(voiceInfo()); }
   function setEnabled(v) { on = !!v; if (!on) stop(); }
@@ -298,7 +401,7 @@ const Comm = (() => {
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
 
-  return { say, note, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
+  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 

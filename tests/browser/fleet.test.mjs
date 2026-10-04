@@ -28,7 +28,8 @@
 //    crushed roof, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
 //    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
 //  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
-//    (+10 % +5 calls, +10 % +20k vertices): perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
+//    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
+//    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
 //    drawn there (its rivals' calls / vertices in that frame over one default rival's whole cost; at most the field's size). Also printed:
 //    every rival of the field drawn in full (the worst case)
@@ -457,7 +458,7 @@ try {
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
       Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; });
-      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparks - f0.sparks, smoke: f1.total - f0.total, fireV, smokeV, up, up0, roof: v.roofStep, crush: !!v.crushF, intact, wk, pcs, n: mine.length, cracks, pics: keep };
+      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, up, up0, roof: v.roofStep, crush: !!v.crushF, intact, wk, pcs, n: mine.length, cracks, pics: keep };
     }, m.id);
     if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)
       for (const k in r.pics) fs.writeFileSync(path.join(dir, `${r.id}-${k}.png`), Buffer.from(r.pics[k].split(',')[1], 'base64')); delete r.pics; }
@@ -474,7 +475,7 @@ try {
     const f0 = Render.fxStats(); step(10); const f1 = Render.fxStats();
     const V = R.cars.map(c => Render.viewOf(c)).filter(Boolean), burning = V.filter(v => v.fire), emit = V.filter(v => v.fireEmit), cp = Render.camera.position, d = (v) => Math.hypot(v.car.x - cp.x, v.car.z - cp.z);
     const far = Math.max(0, ...emit.map(d)), next = Math.min(1e9, ...burning.filter(v => !v.fireEmit).map(d));   // (the farthest that emits no farther than the nearest that does not)
-    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparks - f0.sparks, smoke: f1.total - f0.total };
+    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total };
   }, kits.length ? kits[0].id : 'kaze');
   await page.evaluate(() => Render.setDynScale(1));
   console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles (${R6.filter(r => !r.kit).length} of the 11); fire / smoke pixels in sight: ` + R6.map(r => `${r.id} ${r.fireV}/${r.smokeV}`).join(', '));
@@ -524,6 +525,9 @@ try {
   // ---- 5. the field's cost on Jezero and the Nordschleife: the frame without the default field's rivals (perf.test.mjs's samples) plus
   //         the vehicle as the player and its field of rivals (all of them, as if all were in view), within the phone budget ----
   const fields = R4.filter(r => !r.swapped);
+  // (perf.json's budget is measured on the NIZKA tier (perf.test.mjs: detail 'low'), so the field's cost is too: both worlds are built
+  // again at it here (4c left Vršič built); the vehicles themselves cost the same on every tier)
+  await page.evaluate(() => { window.__game.S.detail = 'low'; });
   for (const tid of ['jezero', 'nring']) {
     await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'rally'); });
     await startTrack(page, tid);

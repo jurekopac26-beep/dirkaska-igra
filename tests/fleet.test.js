@@ -86,7 +86,7 @@ const t0 = Date.now(), orig = Math.random;
   const S = pageScripts(path.join(ROOT, 'index.html')), cars = S.filter(s => /^js\/cars\//.test(s)), iCars = S.map((s, i) => /^js\/cars\//.test(s) ? i : -1).filter(i => i >= 0);
   const iTrack = Math.max(...S.map((s, i) => /^js\/tracks\//.test(s) ? i : -1)), iCore = S.findIndex(s => /(^|\/)core\.js$/.test(s));
   check('index.html: the vehicle files after the tracks, before core.js, in the roster (registration) order', cars.map(s => s.slice(8, -3)).join() === ROSTER.join() &&
-    iCars[0] === iTrack + 1 && iCars[iCars.length - 1] === iCore - 1 && iCars.every((v, i) => !i || v === iCars[i - 1] + 1), cars.length + ' tags');
+    iCars[0] > iTrack && iCars[iCars.length - 1] < iCore && iCars.every((v, i) => !i || v === iCars[i - 1] + 1), cars.length + ' tags');   // (js/lang.js may sit between the tracks and the vehicles)
   // the real car the retired model at index 5 once was: gone from the game, its packed model (js/data/p206.js) and its source (a .glb file),
   // its maker's name nowhere in the page, the scripts, the styles, the tools, the tests or the READMEs, nor in a file's name (the name is
   // split here, so this file does not carry it either)
