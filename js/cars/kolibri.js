@@ -114,7 +114,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }
         K.face([0, 1, 2, 3, 4, 5].map(i => [-1.25 + Math.cos(i * Math.PI / 3) * 0.045, 0.74 + Math.sin(i * Math.PI / 3) * 0.045, 0.734]), D, { host: 'quarterR' });
         // ---- the nose: the big square head lamps on the lamp face (with the fenders), the slim grille between them (with the bonnet) ----
-        for (const sd of [-1, 1]) K.headLamp(1.687, 0.675, sd * 0.468, 0.1, { shape: 'rect', w: 0.27, h: 0.21, ring: B, host: sd < 0 ? 'fenderL' : 'fenderR' });
+        for (const sd of [-1, 1]) { K.headLamp(1.687, 0.675, sd * 0.468, 0.1, { shape: 'rect', w: 0.27, h: 0.21, ring: B, host: sd < 0 ? 'fenderL' : 'fenderR' });
+          K.rect(1.6925, 0.7, sd * 0.468, 0.27, 0.009, [0.36, 0.37, 0.4], { host: sd < 0 ? 'fenderL' : 'fenderR' }); }   // (the lens' divide: the main and the dipped beam)
         K.grille(1.684, 0.705, 0, 0.6, 0.065, { slats: 2, host: 'hood' });
         // ---- the front bumper: its intake, the plate, the indicators, the black lip under it ----
         K.part('bumperF', () => {
@@ -122,7 +123,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(1.704, 0.44, 0, 0.34, 0.1, WH);
           for (const sd of [-1, 1]) K.rect(1.703, 0.46, sd * 0.52, 0.16, 0.045, AMB);
           K.box(1.64, 0.19, 0, 0.13, 0.05, 1.28, 0, B);
-        }, { hinge: [[1.66, 0.4, -0.6], [1.66, 0.4, 0.6]] });
+        });
         // ---- the bonnet's scoop (the intercooler under it): a box rising from the bonnet, its black mouth facing forward ----
         K.part('hood', () => {
           const ring = (x, h) => { const y = L.topY(x, 0); return [[x, y - 0.012, -0.26], [x, y + h, -0.225], [x, y + h, 0.225], [x, y - 0.012, 0.26]]; };
@@ -166,6 +167,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.seat(-0.22, 0.47, sd * 0.31, { w: 0.44, l: 0.46, back: 0.66, tilt: 0.2, col: [0.34, 0.07, 0.07] });
         K.seat(-1.0, 0.45, 0, { w: 1.0, l: 0.42, back: 0.55 });
         K.box(0.52, 0.6, 0, 0.34, 0.25, 1.32, 0, D, null, false, { inner: true, part: 'body' });
+        K.box(0.12, 0.21, 0, 0.6, 0.2, 0.16, 0, D, null, true, { inner: true, part: 'body' });   // (the console between the seats)
+        for (const sd of [-1, 1]) {   // (the B- and the D-pillar's posts: a stripped shell's roof stands on them)
+          K.bar([-0.385, 0.87, sd * 0.69], [-0.385, 1.33, sd * 0.6], 0.035, D, { n: 4, inner: true, part: 'body' });
+          K.bar([-1.47, 0.87, sd * 0.69], [-1.5, 1.33, sd * 0.56], 0.045, D, { n: 4, inner: true, part: 'body' });
+        }
         K.cyl([0.3, 0.93, -0.31], [0.27, 0.97, -0.31], 0.17, [0.06, 0.06, 0.07], { n: 8, inner: true, part: 'body' });
         K.engine(1.24, 0.3, 0, { l: 0.4, w: 0.62, h: 0.36 });
         K.box(1.24, 0.69, 0, 0.3, 0.05, 0.42, 0, [0.62, 0.63, 0.66], null, false, { inner: true, part: 'body' });
