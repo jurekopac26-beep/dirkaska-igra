@@ -4509,7 +4509,7 @@ const Core = (function () {
       const loss = this.pitLoss(c);
       let pos = 1, ahead = null, gapA = Infinity, behind = null, gapB = Infinity;
       for (const o of this.cars) {
-        if (o === c || o.finished) continue;
+        if (o === c || o.finished || dnf(o)) continue;   // (a retired car: no place to lose to it)
         const g = this.gap(c, o); if (g == null && o.dist <= c.dist) continue;   // (one behind that has not been where c was yet: no gap known)
         let h = g == null ? -1 : g;   // (o behind c by h s; negative: ahead of it)
         const owe = o.inPit ? (o.pitDone ? 0 : 0.5) : o.pitWant || (o.fuel != null && this.fuelRate && o.fuel < (end - o.dist) * o.fuelPm * 1.03) ? 1 : 0;
@@ -4645,6 +4645,7 @@ const Core = (function () {
       // repairN stays, the renderer's and the commentator's lost-wheel latches follow W.fix)
       const W = c.wreck, fix = !!(W && W.wl && !W.dnf && (!T.def.pit || this.opts.noPlayer));   // (the demo: with pits too)
       if (fix) {
+        if (c.flt && c.flt.pw >= 0 && W.wl & (1 << c.flt.pw)) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a cut tyre that came off with its wheel: a new one)
         for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.hold = 6; W.fix++;
         const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
         c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;

@@ -342,6 +342,7 @@
     ' {0}: brez točk, skupaj {1} in {2} mesto': ' {0}: no points, {1} in total and {2} place', ' in še {0}': ' and {0} more', 'različni avti': 'various cars', ' · tekmeci: {0}': ' · rivals: {0}',
     '\u21ba Namesti kolo': '\u21ba Fit a wheel', 'KOLO JE ODPADLO!': 'WHEEL OFF!', 'Izgubil si kolo: v boksih ti namestijo novo.': 'You lost a wheel: the crew fits a new one in the pits.',
     'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.': 'You lost a wheel: tap Fit a wheel (6 s) or drive on, on three.', 'NOVO KOLO \u00b7 {0} s': 'NEW WHEEL \u00b7 {0} s',
+    'ODSTOP': 'OUT', 'TEKMEC JE ODSTOPIL': 'RIVAL RETIRED', ' Stalni tekmec {0}: odstop (skupaj ti {1}, tekmec {2}).': ' Your rival {0}: retired (overall you {1}, rival {2}).',
     'KOLO JE ODPADLO': 'WHEEL OFF', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
     // the categories (Core.CATS; Dirkalni is above: Racing)
     'Mali avti': 'Small cars', 'Športni': 'Sports cars', 'Superšportni': 'Supercars', 'Klasika': 'Classics', 'Reli': 'Rally', 'Terenski': 'Off-road', 'Tovornjaki': 'Trucks', 'Električni': 'Electric', 'Posebni': 'Specials',

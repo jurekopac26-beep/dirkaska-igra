@@ -516,6 +516,23 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
   check('no pits: a rival\'s lost wheel refitted by the marshals after 1.5 s, the player\'s with the rescue button; each stands 6 s, then drives on; every refit counted (wreck.fix, kept through a repair)', still && fixed && pf && stood && A.speed > 5 && P.speed > 3 && !A.wreck.dnf && kept,
     `rival ${still}/${fixed}, player ${pf}, stood ${stood}, then ${A.speed.toFixed(1)} / ${P.speed.toFixed(1)} m/s, refits after a repair ${A.wreck.fix}`);
 }
+{ // failures (okvare) and a lost wheel: a cut tyre that came off with its wheel is gone with it (the marshals fit a new wheel, its tyre
+  // whole); a cut tyre on a wheel that stayed on stays cut (no pits here: it limps on, as always)
+  const T = track('jezero'), mk = (seed) => { Math.random = seeded(seed); const r = new C.Race(T, { numAI: 2, playerGrid: 3, laps: 2, playerModel: model('kozorog'), assist: 2, seed, difficulty: 1, damage: 2, faults: true }); r.start(); return r; };
+  const cut = (wh, lost) => { const r = mk(31 + wh), P = r.player; for (let i = 0; i < 6 / DT; i++) { C.aiControl(P, r, DT); r.step(DT); }
+    P.flt.pw = wh; P.flt.pk = 1; C.detachPart(P, lost); r.rescue(P); return { pw: P.flt.pw, pk: P.flt.pk, fix: P.wreck.fix, wl: P.wreck.wl }; };
+  const same = cut(2, 'wheelRL'), other = cut(1, 'wheelRL');
+  check('failures: a cut tyre that came off with its wheel is gone when the marshals refit it (a new wheel); one on a wheel that stayed on stays cut',
+    same.fix === 1 && same.wl === 0 && same.pw === -1 && same.pk === 0 && other.fix === 1 && other.pw === 1 && other.pk === 1, JSON.stringify({ same, other }));
+}
+{ // the team radio's plan for a stop (Race.plan: the place a stop now would give): a retired car is no car to lose a place to
+  const T = track('toskana'); Math.random = seeded(41);
+  const r = new C.Race(T, { numAI: 5, playerGrid: 6, laps: 4, playerModel: model('kozorog'), assist: 2, seed: 41, difficulty: 1, damage: 0, radio: true, tyres: true });
+  r.start(); const P = r.player; for (let k = 0; k < 45 / DT; k++) { Math.random = seeded(4100 + k); C.aiControl(P, r, DT); r.step(DT); }
+  const A = r.order[r.order.indexOf(P) - 1] || null, p1 = r.plan(P); if (A) r.retire(A); const p2 = r.plan(P);
+  check('the team radio: a stop\'s place (Race.plan) leaves a retired car out (one ahead retires: one place better, never the car ahead or behind after the stop)',
+    !!A && !!p1 && !!p2 && p2.pos === p1.pos - 1 && p2.ahead !== A && p2.behind !== A, JSON.stringify({ A: A && A.name, p1: p1 && p1.pos, p2: p2 && p2.pos, ahead: p2 && p2.ahead && p2.ahead.name }));
+}
 { // a pit track, a race with tyres: a rival with a wheel off comes in for a new one (the stop 1 s longer for it)
   const T = track('gozd'); Math.random = seeded(31);
   const r = new C.Race(T, { numAI: 5, playerGrid: 6, laps: 4, playerModel: model('modras'), assist: 2, seed: 31, difficulty: 1, damage: 2, tyres: true });
