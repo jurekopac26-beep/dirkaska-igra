@@ -16,11 +16,12 @@ window.RM = (function () {
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, sunOff: [-86, 78, 52] },
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62 },
   };
+  const SEASONS = { vrsic: 'autumn' };
   let B = null, R = null, CV = null;
   function build(id) {
     if (B && B.id === id) return B;
     const def = Core.TRACKS.find(d => d.id === id), T = new Core.Track(def), sc = new THREE.Scene(), tex = Tex.all(1);
-    const w = World.build(sc, T, tex, { density: 1 });
+    const w = World.build(sc, T, tex, { density: 1, season: SEASONS[id] });   // (Vršič in its October colours, as the published maps show it; the others as built)
     sc.updateMatrixWorld(true);
     w.root.traverse(o => { if (o.isMesh || o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
     B = { id, def, T, sc, w, tex, open: T.finishS > T.startS };
