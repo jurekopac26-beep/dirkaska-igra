@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "401eb766bdb1ce27c56de5bf"
+ },
+ "newcastle/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 159.92,
+  "spins": 1,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6b0c3b216696db9fd5ae384e"
+ },
+ "newcastle/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 170.53,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b6a65f07bc1acca22121ea18"
+ },
+ "newcastle/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 142.99,
+  "spins": 2,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "188b9acde58a0b2c325aa40f"
+ },
+ "newcastle/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 143.27,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c80458b15d4d54acf7026319"
+ },
+ "newcastle/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 159.96,
+  "spins": 1,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "46a00200eb746bd18282792d"
  }
 }
