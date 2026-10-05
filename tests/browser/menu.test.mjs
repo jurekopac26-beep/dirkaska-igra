@@ -71,6 +71,20 @@ try {
       T.check(`${mode}: every track of every group shows its picture (${seen} tracks, ${urls.size} picture files, none missing)`, !bad.length && !gone.length && seen === Object.values(exp).reduce((a, b) => a + b, 0), JSON.stringify({ bad, gone }));
       await page.click('.topbar [data-act="back"]');   // (back to the modes)
     }
+    // the wide maps: for every track in MENU.wideMaps the painted land (dry, rain) is the map and a margin all round it (the margin in the map's
+    // pixels, half as many pixels in the file), and the isle (dry, rain) the map's own size
+    const dims = await page.evaluate(async () => {
+      const load = (u) => new Promise((res) => { const i = new Image(); i.onload = () => res([i.naturalWidth, i.naturalHeight]); i.onerror = () => res(null); i.src = u; });
+      const out = [];
+      for (const [id, E] of Object.entries(window.MENU.wideMaps || {})) {
+        const T = window.ROUTES[id].top, A = 'assets/maps/';
+        out.push({ id, E, W: T.W, H: T.H, w: await load(A + 'wide-' + id + '.webp'), r: await load(A + 'wide-' + id + '-rain.webp'), a: await load(A + 'isle-' + id + '.webp'), b: await load(A + 'isle-' + id + '-rain.webp') });
+      }
+      return out;
+    });
+    const wbad = dims.filter(d => !(d.w && d.r && d.a && d.b && d.a[0] === d.W && d.a[1] === d.H && d.b[0] === d.W && d.b[1] === d.H && d.r[0] === d.w[0] && d.r[1] === d.w[1] &&
+      Math.abs(d.w[0] - (d.W + 2 * d.E) / 2) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) / 2) <= 2)).map(d => d.id);
+    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
     T.check('no page errors in the title, the modes and the track lists', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -245,7 +259,7 @@ try {
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg"), pc = root.querySelector(".pcount");
       const out = { name: root.querySelector(".card h1").firstChild.textContent, count: pc ? pc.textContent : "", total: +root.querySelector(".groups [aria-selected=true] i").textContent, dots: !!st.querySelector(".dots"), pic: c(pic), arr: [...st.querySelectorAll(".arrow")].map(c), cnt: pc ? c(pc) : null, scr: [innerWidth, innerHeight] };
-      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...svg.querySelectorAll(".mk text")].map(c); }
+      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...svg.querySelectorAll(".mk text")].map(c); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; }
       return out;`;
     await click(page, 'group:road'); await click(page, 'mapv:2'); await page.waitForTimeout(500);
     const v1 = await ev(page, MEASURE);
@@ -260,16 +274,20 @@ try {
     T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame: Kranjska Gora (the start) below, Vršič (the finish) above' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, turned === tall && !!upright, JSON.stringify({ rot: v1.rot, pic: v1.pic, s: v1.s, f: v1.f }));
     const inPic = (r, p, e) => r.l >= p.l - e && r.r <= p.r + e && r.t >= p.t - e && r.b <= p.b + e;
     T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 6) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
+    // the real land painted round the map (wide-<id>.webp, wide_map.py) covers the whole picture: no blurred or empty edge, in the frame turned or not
+    const covers = (l, p) => !!l && l.l <= p.l + 1 && l.r >= p.r - 1 && l.t <= p.t + 1 && l.b >= p.b - 1;
+    T.check(`${w}x${h}: the open road's map has the real land painted over the whole picture (the wide map reaches every edge of the frame)`, covers(v1.land, v1.pic), JSON.stringify({ land: v1.land, pic: v1.pic }));
     await click(page, 'group:circuit'); await page.waitForTimeout(400);
     const nCirc = +(await ev(page, 'return root.querySelector("[data-act=\\"group:circuit\\"] i").textContent;'));
-    const cut = []; let maps = 0;
+    const cut = [], bare = []; let maps = 0;
     for (let k = 0; k < nCirc; k++) {
       await page.waitForTimeout(300);
       const m = await ev(page, MEASURE);
-      if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); }
+      if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); }
       await click(page, 'track:1');
     }
     T.check(`${w}x${h}: on every circuit's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
+    T.check(`${w}x${h}: on every circuit's map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
