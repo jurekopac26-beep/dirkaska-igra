@@ -2319,6 +2319,10 @@ const Render = (function () {
       for (let q = 0; q < 3; q++) { const i = o + q * 3; P.push(p[i] + nx * 0.014, p[i + 1] + ny * 0.014, p[i + 2] + nz * 0.014); U.push(((side ? p[i] : p[i + 2]) - u0) / Math.max(0.05, u1 - u0), (p[i + 1] - w0) / Math.max(0.05, w1 - w0)); }
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+    // (one of the 11: the four draws of Math.random its crack's own material was named with, before the decals shared matCrack, drawn as
+    // ever: three.js names every object with Math.random, which the browser tests seed and share with the race (the AI, the knocks), so
+    // a race in the browser runs as it always did (perf.test.mjs's samples the same as perf.json's); a kit car's decal: ownRnd, none)
+    if (!v.kit) THREE.MathUtils.generateUUID();
     const m = new THREE.Mesh(g, matCrack);
     v.bodyG.add(m); v.crack[k] = m;
     return [sx, sy, sz];
