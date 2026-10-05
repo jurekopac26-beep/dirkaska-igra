@@ -286,6 +286,21 @@ const MEAS = {};
     }
     check(`every contact circle of a long vehicle touches (${longs.length} with more than 3): a car, a loose part and a cone at its nose`, longs.length >= 4 && !miss.length, miss.join('; '));
   }
+  { // the run from the police (Core.crashCollide: two boxes, len x wid) looks only at pairs whose centres are within 7 m. Two boxes can touch
+    // with their centres as far apart as their half diagonals together: the biggest box of all, the KAMEN PUŠČAVA's (6.3 x 2.5 m, larger
+    // both ways than any patrol car: the van is 5.3 x 2.0), against every vehicle corner to corner (3 cm into each other, closing): every
+    // contact caught; the farthest a vehicle can touch the van (its half diagonal and the van's) under 7 m too (so no early-out by length)
+    const BIG = model('kamen'), hd = (L, W) => Math.hypot(L / 2, W / 2), miss = []; let far = 0;
+    for (const M of C.MODELS) {
+      const A = new C.Car(M, { phys: 'cs' }), B = new C.Car(BIG, { phys: 'cs' }), e = 0.03;
+      A.place(0, 0, 0); B.place((M.len + BIG.len) / 2 - e, (M.wid + BIG.wid) / 2 - e, 0); A.vx = 2; A.vz = 2;
+      far = Math.max(far, Math.hypot(B.x - A.x, B.z - A.z));
+      if (!(C.crashCollide(A, B) > 0)) miss.push(M.id);
+    }
+    const van = Math.max(...C.MODELS.map(M => hd(M.len, M.wid))) + hd(5.3, 2.0);
+    check(`the run from the police: every vehicle touching the biggest box corner to corner is caught by the 7 m early-out (centres ${far.toFixed(2)} m apart at most; any vehicle and the police van ${van.toFixed(2)} m)`,
+      !miss.length && far < 7 && van < 7, miss.join(', '));
+  }
 }
 
 // ---- 5. lost wheels: any two of them still leave 40 km/h on flat asphalt (the hub on the road: LOSTW) ----
