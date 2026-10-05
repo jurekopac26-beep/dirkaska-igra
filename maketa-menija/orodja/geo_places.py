@@ -9,7 +9,6 @@ from geo_lib import RAW, DEM, Geo, track, radii, haversine
 M = json.load(open(os.path.join(RAW, 'match.json')))
 CFG = {
     'vrsic': dict(kind='real', start='Kranjska Gora', finish='Vršič pass', country='Slovenia', region='Julian Alps', l1='alps'),
-    'ljubljana': dict(kind='real', lat0=46.05112, lon0=14.50631, rot=0.0, start='Ljubljana', country='Slovenia', region='Ljubljana', l1='alps'),
     'monaco': dict(kind='real', start='Monaco', country='Monaco', region='Côte d\'Azur', l1='riviera'),
     'rbring': dict(kind='real', start='Spielberg', country='Austria', region='Styria', l1='alps'),
     'suzuka': dict(kind='real', start='Suzuka', country='Japan', region='Mie', l1='japan'),

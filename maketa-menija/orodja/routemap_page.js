@@ -10,7 +10,6 @@ window.RM = (function () {
     vrsic:    { fog: 0xc6d4e0, sun: 0xffe4b8, sunI: 1.16, sky: 0xcfe0f4, gnd: 0x6a5a3a, hemiI: 0.58, sunOff: [-84, 70, 56] },
     pikes:    { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, sunOff: [104, 48, -60] },
     city:     { fog: 0xd8e3ea, sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6 },
-    ljubljana: { fog: 0xcadbe9, sun: 0xffe6c2, sunI: 1.04, sky: 0xd8e9ff, gnd: 0x7a6e56, hemiI: 0.6 },
     monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6 },
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, sunOff: [-80, 76, 70] },
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64 },
@@ -75,7 +74,7 @@ window.RM = (function () {
     ouni: [[-0.2, 0x3b562a], [0.5, 0x4a6632], [1.2, 0x5c7a3d]],
     mountain: [[-0.2, 0x587637], [0.6, 0x6d7d44], [1.3, 0x8b8c7b]],
     lake: [[-0.2, 0x587637], [1.2, 0x6d7d44]],
-    city: [[-0.2, 0x6f7a44], [1.2, 0x7d8450]], ljubljana: [[-0.2, 0x5f7a3a], [1.2, 0x6c7d45]], monaco: [[-0.2, 0x7a7a52], [0.8, 0x8a8666], [1.4, 0x9a9478]],
+    city: [[-0.2, 0x6f7a44], [1.2, 0x7d8450]], monaco: [[-0.2, 0x7a7a52], [0.8, 0x8a8666], [1.4, 0x9a9478]],
     nring: [[-0.2, 0x3e5a2a], [1.2, 0x4f6a32]], spa: [[-0.2, 0x44602e], [1.2, 0x52703a]], rbring: [[-0.2, 0x4f6c30], [0.8, 0x5b7a3a], [1.4, 0x6d7d58]], suzuka: [[-0.2, 0x55683a], [1.2, 0x62763f]],
   };
   function skirt(Bw, margin, cell) {
@@ -102,7 +101,7 @@ window.RM = (function () {
     }
     const vn = (x, z) => { const xi = Math.floor(x), zi = Math.floor(z), fx = x - xi, fz = z - zi, h = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); }, sm = (t) => t * t * (3 - 2 * t);
       const a = h(xi, zi), b2 = h(xi + 1, zi), c2 = h(xi, zi + 1), d = h(xi + 1, zi + 1), u = sm(fx), v = sm(fz); return (a * (1 - u) + b2 * u) * (1 - v) + (c2 * (1 - u) + d * u) * v; };
-    const amp = { vrsic: 620, pikes: 460, ouni: 30, mountain: 150, lake: 60, city: 20, ljubljana: 60, monaco: 90, nring: 160, spa: 140, rbring: 260, suzuka: 60 }[Bw.def.theme] || 120;
+    const amp = { vrsic: 620, pikes: 460, ouni: 30, mountain: 150, lake: 60, city: 20, monaco: 90, nring: 160, spa: 140, rbring: 260, suzuka: 60 }[Bw.def.theme] || 120;
     for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
       const k = j * W1 + i; if (near[k]) continue;
       const x = x0 + i * cell, z = z0 + j * cell, f = Math.min(1, (dist[k] - 520) / 1400);
