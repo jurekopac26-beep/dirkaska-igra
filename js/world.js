@@ -23917,14 +23917,19 @@ const World = (function () {
     const onRoadB = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0) { const S = T.stubs[q.k]; if (q.st <= S.Lend && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + m) return true; } return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (the buildings: a side road's own width past its mouth; walls.js the same)
     const onRoad = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0 && Math.abs(q.u) <= T.stubHw(T.stubs[q.k], q.st) + m) return true; return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (on the asphalt or a sidewalk, or a side road's, m metres more)
 
+    /* ---- the fence (built further down, FENCE): the lines where the cars' free ground ends (Track.fenceRuns). What stands inside that ground by more than 30 cm
+       could be driven through, so it is left out: a house the lines cut into or that stands inside it, a hedge, garden wall or fence (def.fences) inside it ---- */
+    const tF0 = performance.now(), FR = T.fenceRuns(), wFree = T.wallFree(0.3), wallHit = T.wallHitter(FR.runs, wFree), msRuns = performance.now() - tF0;
+
     /* ---- the buildings (def.bld): clear of the road, its sidewalks and the side roads; their footprints marked (no trees in them) ---- */
-    const blds = [];
+    const blds = []; let nWallDrop = 0;
     for (const b of def.bld || []) {
       const [x, z, L, W, ang, hgt, kind, name] = b, poly = b[8] ? b[8].reduce((a, v, k) => (k % 2 ? a[a.length - 1].push(v) : a.push([v]), a), []) : null;
       if (L < 2.2 || W < 2.2) continue;
       const c = Math.cos(ang), s = Math.sin(ang), pts = poly || [[-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]].map(([p, q]) => [x + c * p - s * q, z + s * p + c * q]);
       let ok = true; for (const [px, pz] of pts.concat([[x, z]])) if (onRoadB(px, pz, 0.3) || mvW(px, pz).e > 1) { ok = false; break; }
       if (!ok) continue;
+      if (kind !== 2 && kind !== 6 && wallHit(pts, x, z)) { nWallDrop++; continue; }   // (the fence: nothing to drive into; not the churches, not the castle)
       blds.push({ x, z, L, W, ang, hgt, kind, name: name || '', poly, pts }); occPoly(pts, 3);
     }
     out.marks = {}; for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
@@ -24359,7 +24364,7 @@ const World = (function () {
       for (const [kind, p] of def.fences || []) {
         const D = []; for (let k = 0; k + 3 < p.length; k += 2) { const ax = p[k], az = p[k + 1], bx = p[k + 2], bz = p[k + 3], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2.5)); for (let t = 0; t < m; t++) D.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); }
         D.push([p[p.length - 2], p[p.length - 1]]);
-        const ok = D.map(([x, z]) => !onRoad(x, z, 0.5) && mvW(x, z).e < -0.5 && vrDist(x, z) < 440);
+        const ok = D.map(([x, z]) => !onRoad(x, z, 0.5) && mvW(x, z).e < -0.5 && vrDist(x, z) < 440 && !wFree.any(x, z));   // (the fence: not inside the free ground)
         for (let k = 0; k + 1 < D.length; k++) { if (!ok[k] || !ok[k + 1]) continue;
           const [ax, az] = D[k], [bx, bz] = D[k + 1], ya = mvGround(ax, az), yb = mvGround(bx, bz), g = gF.get(ax, az), Le = Math.hypot(bx - ax, bz - az) || 1, nx = -(bz - az) / Le, nz = (bx - ax) / Le;
           if (kind === 1) { const hh = 1.15, t = 0.4, c = vary(hedge, () => crH(ax, az, 9), 0.18), ct = [c[0] * 1.25, c[1] * 1.2, c[2] * 1.08];
@@ -24484,6 +24489,76 @@ const World = (function () {
         let s = sStart + q.d; for (let t = s; t > s - 600; t -= 4) { if (bu(t) < 0.25 && bu(t - 12) < 0.25) { s = t; break; } }
         const [x, z, i] = onSide(s, 1, 0.8); if (vrStubAt(x, z, 1)) return;
         out.props.push({ kind: 'vboard', x, z, yaw: T.hd[i], col: 0, i }); exclPush(x, z, 1.5); });   // (the board on its two poles: knockable, Render.propGeometry; the name's lettering is lost on it)
+    }
+
+    /* ---- FENCE: a light timber post-and-rail fence on the whole barrier (FR, Track.fenceRuns: the route's barriers on both sides, each side road's two limits,
+       the roundabout zones' circles, not across a side road's mouth, the bridge's parapet, the overpass), 8 cm outside the line where wallCollide acts, so a
+       car's body touches it where it hits the wall; the houses, garden walls and fences stand behind it. It stands on the ground (the terrain, the verge's
+       surface). Indexed geometry in 320 m chunks, one mesh each, casting no shadow: a top rail (its flat top and its face), a lower rail, a post every ~3 m
+       (two crossed planks); the columns are thinned out along straight, level stretches. out.fence holds the lines as built (tests/browser/medvode-fence.test.mjs) ---- */
+    {
+      const tG0 = performance.now(), EPS = 0.08, HT = 1.1, CK = 320, PS = 3.5, TOL = 0.05, TOLY = 0.08;
+      const TIM = [0.96, 0.85, 0.62], FACE = [0.87, 0.72, 0.5], MID = [0.8, 0.65, 0.44], LOW = [0.72, 0.57, 0.38], POST = [0.42, 0.3, 0.2];
+      const chunks = new Map(), fl = { lines: [], posts: [], len: 0, cols: 0, np: 0 };
+      const getC = (x, z) => { const k = Math.floor(x / CK) + ',' + Math.floor(z / CK); let c = chunks.get(k); if (!c) chunks.set(k, c = { P: [], N: [], C: [], I: [], v: 0 }); return c; };
+      const vtx = (c, x, y, z, nx, ny, nz, col, k) => { c.P.push(x, y, z); c.N.push(nx, ny, nz); c.C.push(col[0] * k, col[1] * k, col[2] * k); return c.v++; };
+      const tri = (c, a, b, d) => { const P = c.P, ux = P[b * 3] - P[a * 3], uy = P[b * 3 + 1] - P[a * 3 + 1], uz = P[b * 3 + 2] - P[a * 3 + 2], vx = P[d * 3] - P[a * 3], vy = P[d * 3 + 1] - P[a * 3 + 1], vz = P[d * 3 + 2] - P[a * 3 + 2];   // (a triangle wound to face where its vertices' normals point: the two-sided material lights the other side with the flipped normal)
+        if ((uy * vz - uz * vy) * c.N[a * 3] + (uz * vx - ux * vz) * c.N[a * 3 + 1] + (ux * vy - uy * vx) * c.N[a * 3 + 2] >= 0) c.I.push(a, b, d); else c.I.push(a, d, b); };
+      const vh = (si, i, off) => { const A = vp[si][i]; if (off <= A[0][0]) return A[0][1]; for (let k = 1; k < A.length; k++) if (off <= A[k][0]) return A[k - 1][1] + (A[k][1] - A[k - 1][1]) * (off - A[k - 1][0]) / Math.max(1e-6, A[k][0] - A[k - 1][0]); return A[A.length - 1][1]; };   // (the verge's height above the road at that distance from the centre line)
+      for (const r of FR.runs) {
+        const P = r.pts, n = P.length / 2, sg = r.sg, ix = r.ix, sd = r.side, si = sd > 0 ? 1 : 0, X = [], Z = [], Y = [];
+        for (let j = 0; j < n; j++) {   // the line 8 cm outside, the ground under it (the verge's surface where it lies over the terrain)
+          const a = Math.max(0, j - 1), b = Math.min(n - 1, j + 1); let dx = P[2 * b] - P[2 * a], dz = P[2 * b + 1] - P[2 * a + 1]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
+          const x = P[2 * j] - dz * sg * EPS, z = P[2 * j + 1] + dx * sg * EPS; let y = mvGround(x, z);
+          if (r.k === 0 && ix[j] >= 0) { const i = ix[j]; y = Math.max(y, T.hy[i] + vh(si, i, ((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]) * sd)); }
+          if (X.length && Math.hypot(x - X[X.length - 1], z - Z[Z.length - 1]) < 0.05) continue;   // (a cut point on top of a sample)
+          X.push(x); Z.push(z); Y.push(y);
+        }
+        const m = X.length; if (m < 2) continue;
+        const keep = [0];   // the columns: thinned out where the line is straight and the ground level (chords up to 8 m)
+        for (let a = 0; a < m - 1;) {
+          let b = a + 1;
+          while (b + 1 < m) { const c = b + 1, dxc = X[c] - X[a], dzc = Z[c] - Z[a], lc = Math.hypot(dxc, dzc); if (lc > 8) break; let good = true;
+            for (let k = a + 1; k <= b; k++) { const t = ((X[k] - X[a]) * dxc + (Z[k] - Z[a]) * dzc) / (lc * lc || 1), ex = X[a] + dxc * t - X[k], ez = Z[a] + dzc * t - Z[k], ey = Y[a] + (Y[c] - Y[a]) * t - Y[k]; if (ex * ex + ez * ez > TOL * TOL || Math.abs(ey) > TOLY) { good = false; break; } }
+            if (!good) break; b = c; }
+          keep.push(b); a = b;
+        }
+        const C = keep.map(k => [X[k], Y[k], Z[k]]), nc = C.length, nrm = [], cum = [0];
+        for (let j = 0; j < nc; j++) { const a = Math.max(0, j - 1), b = Math.min(nc - 1, j + 1); let dx = C[b][0] - C[a][0], dz = C[b][2] - C[a][2]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l; nrm.push([-dz * sg, dx * sg]); if (j) cum.push(cum[j - 1] + Math.hypot(C[j][0] - C[j - 1][0], C[j][2] - C[j - 1][2])); }
+        const memo = new Map();
+        const colV = (c, j) => {   // a column's eight vertices in a chunk: the top rail's flat top (two, 40 cm wide, on the outer side of the plane), its face, the middle rail, the lower rail (two each)
+          let M = memo.get(c); if (!M) memo.set(c, M = []); if (M[j]) return M[j];
+          const q = C[j], [nx, nz] = nrm[j], k = 0.93 + 0.14 * rpHash(Math.round(q[0] * 3) + j, Math.round(q[2] * 3));
+          return M[j] = [vtx(c, q[0] - nx * 0.03, q[1] + HT, q[2] - nz * 0.03, 0, 1, 0, TIM, k), vtx(c, q[0] + nx * 0.37, q[1] + HT, q[2] + nz * 0.37, 0, 1, 0, TIM, k),
+            vtx(c, q[0], q[1] + HT - 0.26, q[2], nx, 0, nz, FACE, k), vtx(c, q[0], q[1] + HT, q[2], nx, 0, nz, FACE, k),
+            vtx(c, q[0], q[1] + 0.55, q[2], nx, 0, nz, MID, k), vtx(c, q[0], q[1] + 0.75, q[2], nx, 0, nz, MID, k),
+            vtx(c, q[0], q[1] + 0.14, q[2], nx, 0, nz, LOW, k), vtx(c, q[0], q[1] + 0.32, q[2], nx, 0, nz, LOW, k)];
+        };
+        for (let j = 0; j + 1 < nc; j++) { const c = getC((C[j][0] + C[j + 1][0]) / 2, (C[j][2] + C[j + 1][2]) / 2), A = colV(c, j), B = colV(c, j + 1);
+          for (const [lo, hi] of [[0, 1], [2, 3], [4, 5], [6, 7]]) { tri(c, A[lo], B[lo], B[hi]); tri(c, A[lo], B[hi], A[hi]); } }
+        const Lt = cum[nc - 1], np = Math.max(1, Math.round(Lt / PS));
+        for (let q = 0; q <= np; q++) {   // the posts, behind the rails (14 cm out): a dark plank along the line from 30 cm in the ground to 7 cm over the top rail, a dark cap on it (seen from above)
+          const s = Lt * q / np; let j = 0; while (j < nc - 2 && cum[j + 1] < s) j++;
+          const u = cum[j + 1] > cum[j] ? (s - cum[j]) / (cum[j + 1] - cum[j]) : 0, y = lerp(C[j][1], C[j + 1][1], u);
+          const tx = C[j + 1][0] - C[j][0], tz = C[j + 1][2] - C[j][2], tl = Math.hypot(tx, tz) || 1, ux = tx / tl, uz = tz / tl, nx = -uz * sg, nz = ux * sg;
+          const x = lerp(C[j][0], C[j + 1][0], u) + nx * 0.14, z = lerp(C[j][2], C[j + 1][2], u) + nz * 0.14, c = getC(x, z), y0 = y - 0.3, y1 = y + HT + 0.07, kk = 0.9 + 0.2 * rpHash(Math.round(x * 5), Math.round(z * 5));
+          const a = vtx(c, x - ux * 0.1, y0, z - uz * 0.1, nx, 0, nz, POST, kk * 0.75), b = vtx(c, x + ux * 0.1, y0, z + uz * 0.1, nx, 0, nz, POST, kk * 0.75), d = vtx(c, x + ux * 0.1, y1, z + uz * 0.1, nx, 0, nz, POST, kk), e = vtx(c, x - ux * 0.1, y1, z - uz * 0.1, nx, 0, nz, POST, kk);
+          tri(c, a, b, d); tri(c, a, d, e);
+          const w0 = vtx(c, x - ux * 0.13 - nx * 0.1, y1, z - uz * 0.13 - nz * 0.1, 0, 1, 0, POST, kk), w1 = vtx(c, x + ux * 0.13 - nx * 0.1, y1, z + uz * 0.13 - nz * 0.1, 0, 1, 0, POST, kk), w2 = vtx(c, x + ux * 0.13 + nx * 0.1, y1, z + uz * 0.13 + nz * 0.1, 0, 1, 0, POST, kk), w3 = vtx(c, x - ux * 0.13 + nx * 0.1, y1, z - uz * 0.13 + nz * 0.1, 0, 1, 0, POST, kk);
+          tri(c, w0, w1, w2); tri(c, w0, w2, w3);
+          fl.posts.push(x - nx * 0.14, z - nz * 0.14, y);
+        }
+        fl.lines.push({ k: r.k, side: r.side, ref: r.ref, sg, closed: r.closed, len: Lt, posts: np + 1, cols: Float32Array.from(C.flat()) }); fl.len += Lt; fl.cols += nc; fl.np += np + 1;
+      }
+      const fMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }); let verts = 0, tris = 0;
+      for (const c of chunks.values()) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(c.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 3));
+        g.setIndex(c.v > 65535 ? new THREE.Uint32BufferAttribute(c.I, 1) : new THREE.Uint16BufferAttribute(c.I, 1)); g.computeBoundingSphere();
+        const m = new THREE.Mesh(g, fMat); m.name = 'mvFence'; m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); verts += c.v; tris += c.I.length / 3;
+      }
+      const bxz = [], boff = [0]; for (const b of blds) { for (const [x, z] of b.pts) bxz.push(x, z); boff.push(bxz.length / 2); }   // (the footprints that were built: for the test that no house is inside the free ground)
+      out.fence = { lines: fl.lines, posts: Float32Array.from(fl.posts), skips: FR.skips, bld: { xz: Float32Array.from(bxz), off: Int32Array.from(boff) },
+        stats: { length: fl.len, runs: fl.lines.length, columns: fl.cols, posts: fl.np, vertices: verts, triangles: tris, meshes: chunks.size, housesLeftOut: nWallDrop, EPS, HT, msRuns: Math.round(msRuns), msGeometry: Math.round(performance.now() - tG0) } };
     }
 
     /* ---- the trees: where the canopy map has them (its height class), the kind by the land under them (the woods: spruce, Scots pine, beech, a few

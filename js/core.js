@@ -330,6 +330,158 @@ const Core = (function () {
     }
     // is (x, z) within a roundabout's zone (def.rings, wz: its road and the approaches 14 m out): no wrong way there, either way round is fine
     inRingZone(x, z) { for (const R of this.rings) { const dx = x - R.x, dz = z - R.z; if (dx * dx + dz * dz < R.wz * R.wz) return true; } return false; }
+    // the walls' free regions as tests (x, z -> true when the point lies inside by more than tol m): route (the road's own barriers), ring(x, z, skip)
+    // (a zone circle, except ring `skip`), stub(x, z, skip) (a side road's corridor up to its rail, except side road `skip`), alt (an oncoming
+    // lane), any: inside one of them (a car goes there freely: Track.fenceRuns, tests/medvode-fence.test.js)
+    wallFree(tol) {
+      tol = tol != null ? tol : 0.04;
+      const N = this.N, px = this.px, pz = this.pz, stubs = this.stubs || [], rings = this.rings || [], alts = this.altC || [];
+      const HC = 32, hash = new Map(), hk = (a, b) => a * 65536 + b;   // the route's samples in a 32 m grid: the nearest one to a point
+      for (let i = 0; i < N; i++) { const k = hk(Math.floor(px[i] / HC), Math.floor(pz[i] / HC)); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
+      const nearest = (x, z) => { const cx = Math.floor(x / HC), cz = Math.floor(z / HC); let bi = -1, bd = 1e18;
+        for (let r = 0; r < 14; r++) { for (let a = cx - r; a <= cx + r; a++) for (let b = cz - r; b <= cz + r; b++) { if (Math.max(Math.abs(a - cx), Math.abs(b - cz)) !== r) continue; const L = hash.get(hk(a, b)); if (L) for (const i of L) { const d = (px[i] - x) ** 2 + (pz[i] - z) ** 2; if (d < bd) { bd = d; bi = i; } } }
+          if (bi >= 0 && Math.sqrt(bd) < r * HC) break; }
+        return bi; };
+      const qq = {}, sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 };
+      const F = {
+        insetNear: (x, z, h) => { let bi = h, bd = 1e18;   // (as Track.query with a car's hint h: the nearest of the 21 samples round h, the whole road when that is over 60 m away: in a hairpin a car sees the leg it is on)
+          for (let i = Math.max(0, h - 10); i <= Math.min(N - 1, h + 10); i++) { const e = (px[i] - x) ** 2 + (pz[i] - z) ** 2; if (e < bd) { bd = e; bi = i; } }
+          if (bd > 3600) bi = nearest(x, z);
+          const q = this._qMain(x, z, bi, qq); return q.over ? NaN : (q.d > 0 ? q.br : q.bl) - Math.abs(q.d); },
+        offRoad: (x, z, m) => { const i = nearest(x, z); if (i < 0) return true; const q = this._qMain(x, z, i, qq); return q.over !== 0 || Math.abs(q.d) - (this.wAt(q.a) + (this.walk ? this.walk[q.d > 0 ? 1 : 0][q.a] : 0)) > (m != null ? m : 0.25); },   // (clear of every leg's asphalt and sidewalks by m)
+        route: (x, z, m) => { const i = nearest(x, z); if (i < 0) return false; const q = this._qMain(x, z, i, qq); return !q.over && Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - (m != null ? m : tol); },
+        ring: (x, z, skip) => { for (let r = 0; r < rings.length; r++) { if (r === skip) continue; const R = rings[r], dx = x - R.x, dz = z - R.z, m = R.zr - tol; if (dx * dx + dz * dz < m * m) return true; } return false; },
+        stub: (x, z, skip) => { for (const S of stubs) { if (S.k === skip) continue; const b = S.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue;
+          sp.S = null; if (!this._stubProj(S, x, z, sp)) continue; const t = sp.t; if (t > 0 && t < S.L && Math.abs(sp.u) < this.stubHw(S, t) + S.lim - tol) return true; } return false; },
+        alt: (x, z) => { for (const L of alts) { const b = L.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue; const P = L.pts, h = L.hw - tol, h2 = h * h;
+          for (let k = 0; k + 3 < P.length; k += 2) { const ax = P[k], az = P[k + 1], dx = P[k + 2] - ax, dz = P[k + 3] - az, l2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)), ex = x - ax - dx * t, ez = z - az - dz * t; if (ex * ex + ez * ez < h2) return true; } }
+          return false; },
+      };
+      F.any = (x, z) => F.route(x, z) || F.ring(x, z, -1) || F.stub(x, z, -1) || F.alt(x, z);
+      return F;
+    }
+    /* ---- the fence along the walls (Medvode's visible fence, World.buildMedvode): where wallCollide stops a car, as lines. The cars are free
+       inside the route's barriers (bl / br), inside a side road's corridor (stubHw + lim, up to its rail L), inside a roundabout's zone circle
+       (zr) and on an oncoming lane (altC, half width + 0.4); the wall is the edge of that union. Every boundary line is sampled (the route's
+       barriers every sample, more between two far apart, each point moved along the normal onto the line where the car's nearest sample puts the
+       wall; each side road's two limits and its end where nothing closes it; each lane's two edges and ends; each zone's circle) and a point stays
+       where it lies on the edge of the union (not inside another free region by more than tol m); the ends of a run are cut to the other region's
+       edge by bisection, and ends that stop a little short of each other are joined. Not fenced: the route's barrier across a side road's mouth
+       (gap), inside a ring zone, on the bridge (the parapet is the barrier) and under the overpass (def.overpass d: the abutments), unless o.skip
+       is false. Returns { runs: [{ k: 0 the route / 1 a side road / 2 a ring's circle / 3 a lane's edge, side: -1 left / 1 right / 0, ref: the
+       side road, ring or lane (-1 the route), sg: which side of the run's direction is outside (+1 its right), closed, pts: [x, z, ...] the line
+       itself, ix: the route's sample each point belongs to (-1 on the others) } ], skips: [[from, to] (s), ...] } ---- */
+    fenceRuns(o) {
+      o = o || {};
+      const N = this.N, ds = this.ds, px = this.px, pz = this.pz, nx = this.nx, nz = this.nz, def = this.def, stubs = this.stubs || [], rings = this.rings || [], alts = this.altC || [];
+      const step = o.step || 2, tol = o.tol != null ? o.tol : 0.04, minLen = o.minLen != null ? o.minLen : 1.2, runs = [], skips = [];
+      if (o.skip !== false) { for (const [a, b] of def.bridges || []) skips.push([this.startS + a - 1, this.startS + b + 1]); for (const O of def.overpass || []) if (O.d) skips.push([this.startS + O.d[0], this.startS + O.d[1]]); }
+      const F = this.wallFree(tol), inRoute = F.route, inRing = F.ring, inStub = F.stub, inAlt = F.alt;
+      // one boundary line: P its points (x, z, ...) in order, flag[j] a point to leave out whatever the geometry says, geo(x, z) true where the wall stands, mid(a, b, t) a point between two
+      const add = (P, flag, closed, geo, mid, meta, ids) => {
+        const n = P.length / 2, ok = new Uint8Array(n); for (let j = 0; j < n; j++) ok[j] = !flag[j] && geo(P[2 * j], P[2 * j + 1], ids ? ids[j] : -1) ? 1 : 0;
+        const edge = (j0, j1) => {   // the line's end between point j0 (the wall stands) and j1 (not): bisected; when only the flag says no, j1 itself (a gap: on the corridor's edge) or j0 (a skipped stretch)
+          const ax = P[2 * j0], az = P[2 * j0 + 1], bx = P[2 * j1], bz = P[2 * j1 + 1], h0 = ids ? ids[j0] : -1; if (geo(bx, bz, ids ? ids[j1] : -1)) return flag[j1] === 1 ? [bx, bz] : [ax, az];
+          let lo = 0, hi = 1; for (let it = 0; it < 9; it++) { const m = (lo + hi) / 2, q = mid(ax, az, bx, bz, m); if (geo(q[0], q[1], h0)) lo = m; else hi = m; }
+          return mid(ax, az, bx, bz, lo); };
+        const push = (pts, cl, ix) => { let L = 0; for (let k = 2; k < pts.length; k += 2) L += Math.hypot(pts[k] - pts[k - 2], pts[k + 1] - pts[k - 1]); if (L >= minLen || cl) runs.push(Object.assign({ closed: cl, pts: Float64Array.from(pts), ix: Int32Array.from(ix) }, meta)); };
+        let f0 = -1; if (closed) { for (let j = 0; j < n; j++) if (!ok[j]) { f0 = j; break; } if (f0 < 0) { const pts = []; const ix = []; for (let j = 0; j < n; j++) { pts.push(P[2 * j], P[2 * j + 1]); ix.push(ids ? ids[j] : -1); } pts.push(P[0], P[1]); ix.push(ids ? ids[0] : -1); push(pts, true, ix); return; } }
+        const at = (j) => (closed ? (j % n + n) % n : j); let j = closed ? f0 + 1 : 0;
+        const end = closed ? f0 + n : n - 1;   // (a closed line: from just after an invalid point once round)
+        while (j <= end) {
+          if (!ok[at(j)]) { j++; continue; }
+          let e = j; while (e + 1 <= end && ok[at(e + 1)]) e++;
+          const pts = [], ix = [], a = at(j), b = at(e);
+          if (closed || j > 0) { pts.push(...edge(a, at(j - 1))); ix.push(ids ? ids[a] : -1); }
+          for (let q = j; q <= e; q++) { pts.push(P[2 * at(q)], P[2 * at(q) + 1]); ix.push(ids ? ids[at(q)] : -1); }
+          if (closed || e < n - 1) { pts.push(...edge(b, at(e + 1))); ix.push(ids ? ids[b] : -1); }
+          push(pts, false, ix); j = e + 1;
+        }
+      };
+      const lerp2 = (ax, az, bx, bz, t) => [ax + (bx - ax) * t, az + (bz - az) * t];
+      // the route's barriers: a point per sample, more between two samples that are far apart (the barrier eases in or out fast). Each point on the line where wallCollide's wall
+      // is: along the normal to where the nearest sample's projection puts |d| = bar (where the barrier changes fast along the road that is not sample i's own offset)
+      for (const sd of [-1, 1]) {
+        const P = [], ids = [], flag = [], G = this.gap ? this.gap[sd > 0 ? 1 : 0] : null, B = sd > 0 ? this.br : this.bl;
+        const at = (i, f) => { const j = Math.min(N - 1, i + 1), b = B[i] + (B[j] - B[i]) * f; let ux = nx[i] + (nx[j] - nx[i]) * f, uz = nz[i] + (nz[j] - nz[i]) * f; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l;
+          let x = px[i] + (px[j] - px[i]) * f + ux * sd * b, z = pz[i] + (pz[j] - pz[i]) * f + uz * sd * b;
+          const g0 = F.insetNear(x, z, i);
+          if (Math.abs(g0) > 0.03) { const dir = g0 > 0 ? 1 : -1; let lo = -1, hi = 0;
+            for (let u = 0.25; u <= 3.01 && lo < 0; u += 0.25) { const g = F.insetNear(x + ux * sd * dir * u, z + uz * sd * dir * u, i); if (g === g && (g > 0) !== (g0 > 0)) { lo = u - 0.25; hi = u; } }
+            if (lo >= 0) { for (let it = 0; it < 8; it++) { const m = (lo + hi) / 2, g = F.insetNear(x + ux * sd * dir * m, z + uz * sd * dir * m, i); if ((g > 0) === (g0 > 0)) lo = m; else hi = m; } x += ux * sd * dir * (lo + hi) / 2; z += uz * sd * dir * (lo + hi) / 2; } }
+          return [x, z]; };
+        const base = []; for (let i = 0; i < N; i++) base.push(at(i, 0));
+        for (let i = 0; i < N; i++) {
+          const s = i * ds, fl = skips.some(([a, c]) => s >= a && s <= c) ? 2 : (G && G[i]) ? 1 : 0, p = base[i]; P.push(p[0], p[1]); ids.push(i); flag.push(fl);
+          if (i + 1 < N) { const q = base[i + 1], m = Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 2.5), s2 = (i + 1) * ds, fl2 = skips.some(([a, c]) => s2 >= a && s2 <= c) ? 2 : (G && G[i + 1]) ? 1 : 0;
+            for (let k = 1; k < m; k++) { const r = at(i, k / m); P.push(r[0], r[1]); ids.push(i); flag.push(Math.max(fl, fl2)); } }
+        }
+        add(P, flag, false, (x, z, h) => Math.abs(F.insetNear(x, z, h)) < 0.2 && F.offRoad(x, z) && !inRing(x, z, -1) && !inStub(x, z, -1) && !inAlt(x, z), lerp2, { k: 0, side: sd, ref: -1, sg: sd }, ids);   // (on the edge of the corridor the car's sample sees, within 20 cm, and not over any leg's road: at a hairpin's tip the lines of the two legs cross, each is the wall of the cars on its own leg)
+      }
+      // the side roads' limits (stubHw + lim across, up to 0.25 m short of the rail at L)
+      for (const S of stubs) for (const sd of [-1, 1]) {
+        const P = [], T1 = S.L - 0.25, out = {}, ts = []; for (let t = 0; t < T1 - 0.3; t += step) ts.push(t); ts.push(T1);
+        for (const t of ts) { const p = this.stubPt(S.k, t, out), u = sd * (this.stubHw(S, t) + S.lim); P.push(p.x - p.tz * u, p.z + p.tx * u); }
+        if (ts.length > 1) add(P, new Uint8Array(P.length / 2), false, (x, z) => !inRoute(x, z) && !inRing(x, z, -1) && !inStub(x, z, S.k) && !inAlt(x, z), lerp2, { k: 1, side: sd, ref: S.k, sg: sd });
+      }
+      // a side road stops at its limit L - 0.5 (stubPen): a fence across its end where nothing is drawn there (end 2: a path or a street that stops) and where the rail or gate does not
+      // cover it (a short one, ending at the barrier line: the wall across its flared mouth)
+      for (const S of stubs) if (S.end === 2 || S.L < S.tb + 3) {
+        const t = S.L - 0.25, p = this.stubPt(S.k, t, {}), hc = this.stubHw(S, t) + S.lim, n = Math.max(2, Math.ceil(2 * hc / step) + 1), P = [];
+        for (let j = 0; j < n; j++) { const u = -hc + 2 * hc * j / (n - 1); P.push(p.x - p.tz * u, p.z + p.tx * u); }
+        add(P, new Uint8Array(n), false, (x, z) => !inRoute(x, z) && !inRing(x, z, -1) && !inStub(x, z, S.k) && !inAlt(x, z), lerp2, { k: 1, side: 0, ref: S.k, sg: -1, cap: true });   // (from the left to the right across the road: the outside, past its end, is on the left of that direction)
+      }
+      // the oncoming lanes' edges (their half width altHw + 0.4 from the centre line, round both ends): the wall where the band reaches past the route's barrier
+      alts.forEach((L, li) => {
+        const A = L.pts, n = A.length / 2, hw = L.hw, nxv = [], nzv = [], tx = [], tz = [];
+        if (n < 2) return;
+        for (let j = 0; j < n; j++) { const a = Math.max(0, j - 1), b = Math.min(n - 1, j + 1), dx = A[2 * b] - A[2 * a], dz = A[2 * b + 1] - A[2 * a + 1], l = Math.hypot(dx, dz) || 1; tx.push(dx / l); tz.push(dz / l); nxv.push(-dz / l); nzv.push(dx / l); }
+        const P = [], at = (j, o) => P.push(A[2 * j] + nxv[j] * o, A[2 * j + 1] + nzv[j] * o);
+        for (let j = 0; j < n; j++) at(j, -hw);   // (the left edge forward, the end's cap, the right edge back, the start's cap: outside on the left of the direction all the way round)
+        for (let q = 1; q < 8; q++) { const a = q / 8 * Math.PI; P.push(A[2 * n - 2] + hw * (-nxv[n - 1] * Math.cos(a) + tx[n - 1] * Math.sin(a)), A[2 * n - 1] + hw * (-nzv[n - 1] * Math.cos(a) + tz[n - 1] * Math.sin(a))); }
+        for (let j = n - 1; j >= 0; j--) at(j, hw);
+        for (let q = 1; q < 8; q++) { const a = q / 8 * Math.PI; P.push(A[0] + hw * (nxv[0] * Math.cos(a) - tx[0] * Math.sin(a)), A[1] + hw * (nzv[0] * Math.cos(a) - tz[0] * Math.sin(a))); }
+        add(P, new Uint8Array(P.length / 2), true, (x, z) => !inRoute(x, z) && !inRing(x, z, -1) && !inStub(x, z, -1) && !inAlt(x, z), lerp2, { k: 3, side: 0, ref: li, sg: -1 });
+      });
+      // the roundabouts' circles (just past the zone: wallCollide)
+      rings.forEach((R, r) => {
+        const n = Math.max(24, Math.ceil(Math.PI * 2 * R.zr / step)), P = [];
+        for (let j = 0; j < n; j++) { const a = j / n * Math.PI * 2; P.push(R.x + Math.cos(a) * R.zr, R.z + Math.sin(a) * R.zr); }
+        const mid = (ax, az, bx, bz, t) => { const x = ax + (bx - ax) * t - R.x, z = az + (bz - az) * t - R.z, l = Math.hypot(x, z) || 1; return [R.x + x / l * R.zr, R.z + z / l * R.zr]; };
+        add(P, new Uint8Array(n), true, (x, z) => !inRoute(x, z) && !inStub(x, z, -1) && !inAlt(x, z) && !inRing(x, z, r), mid, { k: 2, side: 0, ref: r, sg: -1 });
+      });
+      // the corners: two ends of runs (of two boundary lines meeting at a mouth, a ring zone, a lane's edge, or the two sides of an inner corner of a bend) that stop a little short of
+      // each other (the lines cross at a shallow angle, a few centimetres either way move the end a metre): a straight piece joins them, up to `weld` m (6 m between two pieces of the route)
+      const ends = []; runs.forEach((r, ri) => { if (!r.closed) { const P = r.pts, n = P.length; ends.push({ ri, first: true, x: P[0], z: P[1] }, { ri, first: false, x: P[n - 2], z: P[n - 1] }); } });
+      const pairs = []; for (let a = 0; a < ends.length; a++) for (let b = a + 1; b < ends.length; b++) { const A = ends[a], B = ends[b], d = Math.hypot(A.x - B.x, A.z - B.z), lim = runs[A.ri].k === 0 && runs[B.ri].k === 0 ? 6 : (o.weld != null ? o.weld : 3.5);
+        if (d > 0.02 && d <= lim && (A.ri !== B.ri || runs[A.ri].pts.length > 8)) pairs.push([d, a, b]); }
+      pairs.sort((u, v) => u[0] - v[0]);
+      const used = new Set(), add2 = new Map();   // (run -> the points to put before / after it)
+      for (const [, a, b] of pairs) { if (used.has(a) || used.has(b)) continue; used.add(a); used.add(b);
+        const A = ends[a], B = ends[b], [e, f] = runs[A.ri].k === 0 && runs[B.ri].k !== 0 ? [B, A] : [A, B];   // (the side road's, lane's, ring's end goes to the route's; else the first to the second)
+        if (!add2.has(e.ri)) add2.set(e.ri, { pre: null, post: null }); add2.get(e.ri)[e.first ? 'pre' : 'post'] = [f.x, f.z]; }
+      for (const [ri, w] of add2) { const r = runs[ri], P = Array.from(r.pts), ix = Array.from(r.ix); if (w.pre) { P.unshift(w.pre[0], w.pre[1]); ix.unshift(-1); } if (w.post) { P.push(w.post[0], w.post[1]); ix.push(-1); } r.pts = Float64Array.from(P); r.ix = Int32Array.from(ix); }
+      return { runs, skips };
+    }
+    // for the scenery the fence would have to cut through: hit(pts, cx, cz) is true for a footprint (pts: [[x, z], ...], its centre cx, cz) whose centre stands in the
+    // free ground (free: Track.wallFree) or that one of the runs' lines cuts into by more than `depth` m (Medvode: such a house is left out, nothing to drive into)
+    wallHitter(runs, free, depth) {
+      depth = depth != null ? depth : 0.3; const grid = new Map();
+      for (const r of runs) { const P = r.pts; for (let k = 0; k + 3 < P.length; k += 2) { const ax = P[k], az = P[k + 1], dx = P[k + 2] - ax, dz = P[k + 3] - az, m = Math.max(1, Math.ceil(Math.hypot(dx, dz)));
+        for (let q = 0; q < m; q++) { const x = ax + dx * q / m, z = az + dz * q / m, key = Math.floor(x / 16) + ',' + Math.floor(z / 16); let L = grid.get(key); if (!L) grid.set(key, L = []); L.push(x, z); } } }
+      const inside = (pts, x, z) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const xi = pts[i][0], zi = pts[i][1], xj = pts[j][0], zj = pts[j][1]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; };
+      return (pts, cx, cz) => {
+        if (free.any(cx, cz)) return true;
+        let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+        let near = false;
+        for (let a = Math.floor(x0 / 16); a <= Math.floor(x1 / 16); a++) for (let b = Math.floor(z0 / 16); b <= Math.floor(z1 / 16); b++) { const L = grid.get(a + ',' + b); if (!L) continue; near = true;
+          for (let k = 0; k < L.length; k += 2) { const x = L[k], z = L[k + 1]; if (x < x0 || x > x1 || z < z0 || z > z1 || !inside(pts, x, z)) continue;
+            let dm = 1e9; for (let e = 0, n = pts.length; e < n; e++) { const p = pts[e], q = pts[(e + 1) % n], ex = q[0] - p[0], ez = q[1] - p[1], t = Math.max(0, Math.min(1, ((x - p[0]) * ex + (z - p[1]) * ez) / (ex * ex + ez * ez || 1e-9))); dm = Math.min(dm, Math.hypot(x - p[0] - ex * t, z - p[1] - ez * t)); }
+            if (dm > depth) return true; } }
+        if (near) for (let e = 0, n = pts.length; e < n; e++) { const p = pts[e], q = pts[(e + 1) % n], m = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 1.5));   // (a corner or a wall point of the footprint deep in the free ground: a sharp corner the lines cut too thinly)
+          for (let k = 0; k < m; k++) if (free.any(p[0] + (q[0] - p[0]) * k / m, p[1] + (q[1] - p[1]) * k / m)) return true; }
+        return false; };
+    }
     _stubQ(x, z, i, out, main, pk, pj) {
       const SN = this.stubNear, sp = _sp, pick = this.def.stubPick;
       for (let pass = pick ? 0 : 1; pass < 2; pass++) for (let c = 0; c < 3; c++) {   // (def.stubPick: a first pass for one it lies inside the limit of)
