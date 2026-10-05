@@ -574,10 +574,10 @@ V premoru je pod gumbi **strategija**: za koliko krogov imaš še goriva, koliko
 
 ## Prvenstvo
 
-Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Gorski reli, Riviera), **Superstars** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa-Francorchamps, Red Bull Ring, Suzuka, Nordschleife) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (12 tekmecev, tudi na Nordschleife, kjer jih je sicer 20; pred vsako dirko kvalifikacije, brez njih štart z 12. mesta; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi avti, zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).
+Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Gorski reli, Riviera), **Superstars** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa-Francorchamps, Red Bull Ring, Suzuka, Nordschleife) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (12 tekmecev, z velikimi vozili 5 do 9, tudi na Nordschleife, kjer jih je sicer 20; pred vsako dirko kvalifikacije, brez njih štart z 12. mesta, z velikimi vozili z zadnjega; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi vozili: s tistimi, s katerimi dirkajo proti avtu, s katerim si prvenstvo začel (npr. proti TITAN-u tovornjaki TITAN, proti formuli formule, proti starejšim cestnim avtom KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR; glej **Vozni park**), zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).
 
-- Po vsaki dirki pokaže rezultat tudi osvojene točke, gumb **Lestvica prvenstva** pa lestvico in naslednjo dirko. Med dirkami lahko zamenjaš avto; težavnost ostane tista, s katero si prvenstvo začel.
-- Dirka šteje, ko prečkaš cilj. Če jo prej zapustiš ali ponoviš (Pavza → Ponovi dirko), jo odpelješ znova.
+- Po vsaki dirki pokaže rezultat tudi osvojene točke, gumb **Lestvica prvenstva** pa lestvico in naslednjo dirko. Med dirkami lahko zamenjaš avto (◀ ▶ ali **Izberi avto**, ki odpre izbiro avta in se vrne v prvenstvo); tekmeci in težavnost ostanejo tisti, s katerimi si prvenstvo začel.
+- Dirka šteje, ko prečkaš cilj ali odstopiš z uničenim vozilom (glej **Razpadanje vozil**). Če jo prej zapustiš ali ponoviš (Pavza → Ponovi dirko), jo odpelješ znova.
 - Prvenstvo se shrani v brskalnik: ko se vrneš, gumb na naslovnem zaslonu pokaže, katera dirka je na vrsti (npr. »Prvenstvo · 2/4«). **Opusti** (z drugim tapom za potrditev) ga konča predčasno.
 - Po zadnji dirki je na vrsti končna razvrstitev; najboljše končno mesto in število naslovov prvaka se shranita pri vsaki seriji.
 
@@ -585,9 +585,9 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
 
-- **Nagrade:** po vsaki dirki (tudi v prvenstvu) dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (PEUGEOT 206 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, SAMUM 4x4 55.000 €, BURJA R7 60.000 €, STRELA EV 75.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
-- **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
+- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
+- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 € za kart MRAVLJA do 150.000 € za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 €, RAKETA 16V 14.000 €, LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, TITAN 60.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
+- **Nadgradnje:** za vozila do 50.000 € stane vsaka stopnja 4.000 €, 7.000 € ali 12.000 €, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 € naprej; zaokroženo na 100 €). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
 ## Šola vožnje
@@ -613,7 +613,7 @@ Vsak voznik AI ima svoj značaj, ki je v vsaki dirki enak: vožnja je **agresivn
 - **Obramba:** ko je agresivnemu vozniku pred zaviranjem nekdo tik za petami, enkrat zapre notranjo linijo ovinka in jo drži skozi zaviranje (ne vijuga); previdni ne branijo.
 - **Napake pod pritiskom:** kdor ima nekoga tik za sabo več sekund, lahko pred ovinkom zavira prepozno in zapelje široko; nervozni vozniki pogosteje (v dirki jih je nekaj). Če se to zgodi blizu tebe, se na zaslonu pokaže **NAPAKA: IME**, komentator pa to omeni.
 - **Dvoboji:** ko se z voznikom tik pred tabo ali za tabo boriš dlje časa (manj kot 25 m narazen 15 s), se pokaže **DVOBOJ: IME**, v časovni tabeli je njegova vrstica obrobljena, komentator spremlja boj in pove, kdo ga je dobil. Voznik v dvoboju s tabo je bolj borben.
-- **Stalni tekmec v karieri:** po prvi dirki v karieri postane voznik, ki je bil tik pred tabo (če zmagaš, drugi), tvoj stalni tekmec. Na zaslonu Kariera sta njegov značaj in medsebojni izid (ti : tekmec), v dirkah je nad njegovim avtom njegovo ime, v časovni tabeli je rdeč, vozi malo hitreje in bolj borbeno, v rezultatih pa je njegovo mesto in skupni izid.
+- **Stalni tekmec v karieri:** po prvi dirki v karieri postane voznik, ki je bil tik pred tabo (če zmagaš, drugi), tvoj stalni tekmec. Na zaslonu Kariera sta njegov značaj in medsebojni izid (ti : tekmec), v dirkah je nad njegovim avtom njegovo ime, v časovni tabeli je rdeč, vozi malo hitreje in bolj borbeno, v rezultatih pa je njegovo mesto (ali odstop) in skupni izid. Z velikimi vozili je tekmecev manj, zato stalnega tekmeca v dirki včasih ni.
 
 ## Kvalifikacije
 
@@ -630,7 +630,7 @@ Krog na krožni progi je razdeljen na tri enake dele (S1, S2, S3). Pod uro kroga
 
 ## Časovna tabela in rezultati
 
-Med dirko je na levi pod mestom **časovna tabela** kot na televiziji: vodilni (VODI), prva tri mesta in ti (TI, poudarjeno) z dvema avtoma pred sabo in dvema za sabo, pri vsakem pa zaostanek za vodilnim v sekundah (izmerjen na zadnji točki, ki jo je avto prevozil; točke so vsakih 25 m), zaostanek za krog ali več (+1 KROG) oziroma BOKSI za avto v boksih. Na ležečem telefonu je desno pod zemljevidom, z enim avtom pred tabo in enim za tabo. Izklopiš jo v Nastavitvah (**Časovna tabela**). V rezultatih dirke na krožni progi je še tabela **Krogi vseh voznikov**: časi vseh krogov vsakega voznika (najboljši krog vsakega zeleno, najhitrejši krog dirke vijolično) in število postankov v boksih.
+Med dirko je na levi pod mestom **časovna tabela** kot na televiziji: vodilni (VODI), prva tri mesta in ti (TI, poudarjeno) z dvema avtoma pred sabo in dvema za sabo, pri vsakem pa zaostanek za vodilnim v sekundah (izmerjen na zadnji točki, ki jo je avto prevozil; točke so vsakih 25 m), zaostanek za krog ali več (+1 KROG) oziroma BOKSI za avto v boksih in ODSTOP za avto, ki je odstopil (na dnu tabele). Na ležečem telefonu je desno pod zemljevidom, z enim avtom pred tabo in enim za tabo. Izklopiš jo v Nastavitvah (**Časovna tabela**). V rezultatih dirke na krožni progi je še tabela **Krogi vseh voznikov**: časi vseh krogov vsakega voznika (najboljši krog vsakega zeleno, najhitrejši krog dirke vijolično) in število postankov v boksih.
 
 ## Nastavitev avta za progo
 
@@ -657,7 +657,7 @@ Na zaslonu **Izberi progo** je vrstica **Dolžina dirke**: **Kratka** (pol krogo
 
 Z vrstico **Gorivo** (Vklop) na progah z boksi (Bakreni gozd, Toskana, Gromski rt, Spa, Red Bull Ring, Longford) šteje gorivo:
 
-- Vsi avti štartajo s polnim rezervoarjem (45 kg goriva, reli avto 60 kg, prototip TAIFUN LM 75 kg, tovornjak SAMUM 4x4 90 kg, formula 105 kg), ki je teža na avtu: s polnim avto pospešuje malo počasneje, ko se prazni, je lažji. Električni STRELA EV ima namesto goriva baterijo (na zaslonu BATERIJA), ki je polna in prazna enako težka; v boksih jo mehaniki napolnijo.
+- Vsi avti štartajo s polnim rezervoarjem (45 kg goriva, reli avto 60 kg, prototip TAIFUN LM 75 kg, tovornjak SAMUM 4x4 90 kg, formula 105 kg; nova vozila po kategoriji in masi, od 10 kg karta MRAVLJA do 280 kg tovornjaka KAMEN PUŠČAVA), ki je teža na avtu: s polnim avto pospešuje malo počasneje, ko se prazni, je lažji. Električna STRELA EV in JEŽEK E imata namesto goriva baterijo (na zaslonu BATERIJA), ki je polna in prazna enako težka; v boksih jo mehaniki napolnijo (BATERIJA POLNA).
 - Poraba je odvisna od plina (s polnim plinom štirikrat več kot v prostem teku). Poln rezervoar zadošča za približno 1,3 dirke običajne dolžine: na običajni dirki ni treba v bokse, na dolgi enkrat, na vzdržljivostni dvakrat.
 - Na zaslonu je pod gumami merilnik **GORIVO** z belo oznako, koliko goriva potrebuješ do cilja (po tvoji dosedanji porabi): če je rumeni pas daljši od oznake, prideš do cilja brez postanka. V krogu, ko goriva ne bo dovolj za še en krog, te igra in komentator opozorita, da je čas za bokse.
 - V boksih mehaniki natočijo poln rezervoar (skupaj s popravilom in gumami). Postanek traja 1,6 s in še 0,9 s za vsako desetino rezervoarja (s četrtino goriva približno 8 s).
@@ -795,7 +795,140 @@ Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, troben
 
 ## Zvok motorjev
 
-Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik PEUGEOT 206 brenči in hrešči pri visokih vrtljajih, PICO TURBO ima turbo (žvižg in odpihovalni ventil, ko spustiš plin), VORTEX 4WD boksarski motor z neenakomernim brbotanjem, KAZE RS gladek vrstni šestvaljnik s turbom, STREGA MR tuleč V6, reli avto BURJA R7 turbo z »anti-lag« poki, formula ORKAN kričeč V10, policija pa brbotajoč V8. Ob prestavljanju se sliši menjalnik (pri formuli in reli avtu trd sekvenčni), navzgor še turbo, navzdol medgas s pokom; ko spustiš plin, iz izpuha poka. Trije najbližji tekmeci se slišijo s svojimi motorji in z Dopplerjevim pojavom: ko pripeljejo mimo, se ton zniža.
+Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik LEV S brenči in hrešči pri visokih vrtljajih, PICO TURBO ima turbo (žvižg in odpihovalni ventil, ko spustiš plin), VORTEX 4WD boksarski motor z neenakomernim brbotanjem, KAZE RS gladek vrstni šestvaljnik s turbom, STREGA MR tuleč V6, reli avto BURJA R7 turbo z »anti-lag« poki, formula ORKAN kričeč V10, policija pa brbotajoč V8. Ob prestavljanju se sliši menjalnik (pri formuli in reli avtu trd sekvenčni), navzgor še turbo, navzdol medgas s pokom; ko spustiš plin, iz izpuha poka. Trije najbližji tekmeci se slišijo s svojimi motorji in z Dopplerjevim pojavom: ko pripeljejo mimo, se ton zniža.
+
+## Vozni park
+
+V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
+
+- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju zaslon za izbiro avta odpre vrstica *Your car* na koraku s progo; **Nazaj** ali **Naprej** te vrne na isto progo.
+- **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK z 9 tekmeci, GOLJAT s 7, KAMEN PUŠČAVA s 5. S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
+- V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
+- Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
+
+### Mali avti
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
+| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 € | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
+| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 € | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
+| **RAKETA 16V** | prednji | 190 KM | 880 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. |
+| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 € | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
+| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 € | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+
+### Športni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 € | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
+| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 € | Rad obrne rep, rojen za drift. |
+| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 € | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
+| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 € | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
+| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 € | Veliko oprijema, stabilen tudi na robu. |
+| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 € | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+
+### Superšportni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 € | Oster in živahen, hitro zavrti. |
+| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 € | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
+| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 € | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
+| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 € | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
+
+### Klasika
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 € | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
+| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 € | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
+| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 € | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
+| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 € | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
+
+### Reli
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 € | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
+| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 € | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
+| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 € | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+
+### Terenski
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 € | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
+| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 € | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
+| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 € | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
+| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 € | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
+| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 € | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+
+### Dirkalni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 € | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
+| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 € | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
+| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 € | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
+| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 € | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
+| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 € | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
+| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 € | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
+| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 € | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
+| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 € | Prototip za vzdržljivostne dirke (glej spodaj). |
+
+### Tovornjaki
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 € | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
+| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 € | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+
+### Električni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 € | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
+| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 € | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+
+### Posebni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 € | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
+| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 € | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
+| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 € | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
+
+### Dirkalni tovornjak TITAN
+
+**TITAN** je dirkalni tovornjak, kot jih vozijo na evropskih dirkah tovornjakov po asfaltnih dirkališčih: vlačilec s ploščato kabino nad motorjem, veliko rešetko in štirimi žarometi, strešnim deflektorjem, stranskima oklepoma med osema, dvema navpičnima izpušnima cevema za kabino in golo dirkalno šasijo zadaj, na velikih kolesih z globokimi platišči. Številka je na deflektorju in na obeh vratih.
+
+- 1115 KM, 5300 kg, deset prestav, zvok turbo dizla. Od 0 do 100 km/h pospeši v ~7 s, pri 160 km/h ga ustavi omejilnik hitrosti (kot na pravih dirkah tovornjakov), zato ga na dolgih ravninah avti prehitijo, iz ovinkov pa ga potegne ogromen navor.
+- Težak je: zavira dlje (s 100 km/h na ~32 m), v ovinkih se nagne in ima manj oprijema, obrne se šele v širšem krogu kot avto. Zadnji pogon mu rad obrne rep. Ima trdno šasijo, zato ga trki poškodujejo manj kot avto.
+- Ob trkih odletijo odbijača, rešetka, strešni deflektor, stranska oklepa, vrata kabine, ogledali in kolesa.
+- Z njim dirka do 9 tekmecev v enakih tovornjakih (vsak v svoji barvi).
+
+### Družina LEV
+
+Trije izmišljeni avti z isto karoserijo kompaktnega trivratnega hatchbacka z velikimi mandljastimi žarometi:
+
+- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 € v karieri.
+- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 €.
+- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 €.
+
+## Razpadanje vozil
+
+Pri vklopljenih poškodbah (Nastavitve → Poškodbe avtov: **Samo videz** ali **Vklop**) se vsa nova vozila ob trkih razbijajo po delih, tako da se na prvi pogled vidi, kako uničen je avto:
+
+- **Deli:** vsak del karoserije (odbijača, pokrov motorja, prtljažnik ali zadnja vrata, blatniki, vrata, ogledali, krilo, pri posebnih vozilih še njihovi: deflektor in stranska oklepa tovornjaka, rezervni kolesi, keson pošastnega tovornjaka, zadnja vrata in zastavici limuzine, oklepi karta …) ima svojo cono poškodb. Udarec v tisto stran ga najprej zrahlja: pokrov motorja se privzdigne, vrata obvisijo priprta, blatnik odstopi, odbijač in krilo se povesita, ogledalo bingla. Ob naslednjih udarcih del odpade, odleti na cesto in tam obleži z udrtinami, umazanijo in praskami, ki jih je imel na avtu. Na avtu ostane luknja, skozi katero se vidijo notranjost, kabina ali motor.
+- **Stekla in luči:** z delom gredo tudi njegova stekla in luči. Razbit žaromet ugasne (ponoči cesto osvetljuje le še drugi), razbita zadnja luč prav tako.
+- **Kolesa:** pri nastavitvi **Vklop** lahko ob hudem udarcu v vogal odpade tudi kolo. Odkotali se po cesti, avto se nagne na tisti vogal in pelje naprej po pestu, ki med vožnjo iskri; brez kolesa ima manj oprijema in je počasnejši. Na prikazu poškodb so narisana štiri kolesa, izgubljeno je rdeče in črtkano. V boksih mehaniki namestijo novo kolo (postanek je za vsako kolo sekundo daljši), na progah brez boksov pa ga z gumbom **Namesti kolo** namestijo redarji ob cesti (avto 6 s stoji). Na kronometrih in v kvalifikacijah se pokaže **KOLO JE ODPADLO** z gumbom za ponovitev vožnje.
+- **Ogenj:** pri 90 % poškodb (ali pri 75 %, če je pokrov motorja že odpadel) avto zagori: 20 s gori iz motornega prostora, nato se kadi črn dim. Karoserija se počrni od saj (tudi deli, ki ležijo na cesti), stekla zgorijo, luči ugasnejo. Sliši se prasketanje ognja, komentator to omeni.
+- **Uničeno vozilo:** od 96 % poškodb avto izgublja vse, kar še visi na njem, del za delom (pokrov motorja, prtljažnik, odbijača, krilo in kolo na najbolj zmečkanem vogalu). Pri 98 % se pod zemljevidom izpiše **VOZILO UNIČENO** z gumbom **Odstopi** (dvakrat tapni v 4 s; tudi v pavzi). Ko odstopiš, avto zapelje s proge, ti pa greš na rezultate, kjer piše »Odstop«: dirka šteje (v karieri in med dirkami v statistiki), a brez mesta, nagrade, točk v prvenstvu, rekorda dirke in dosežkov za cilj; prevoženi kilometri in odpeljani krogi (rekord kroga) štejejo. Lahko pa šepaš naprej do cilja ali do boksov. V dirki s prijateljem in v begu pred policijo se izpiše le napis.
+- **Tekmeci:** tekmec, ki izgubi kolo, gre po novega v bokse, na progah brez boksov pa mu ga namestijo redarji. Kdor izgubi dve kolesi, odstopi: zapelje na varno mesto ob progi in tam obstane (če obtiči na cesti, ga redarji prestavijo). Zastave in varnostni avto ga obravnavajo kot ustavljen avto.
+- **Ogled vozila:** gumb v pavzi in na rezultatih pokaže tvoj avto od blizu v foto načinu, da si lahko ogledaš razbitino.
+- Komentator pove, ko izgubiš kolo, ko voziš po treh kolesih, ko je avto uničen, ko gori in ko odstopiš, pa tudi, ko kolo izgubi ali zagori tekmec.
+- Starejših deset avtov (PICO TURBO, KAZE RS, VORTEX 4WD, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV, SAMUM 4x4) se razbija kot doslej (odpadejo jim posamezni deli, kolesa ostanejo), ob hudih poškodbah pa tudi oni zagorijo in se počrnijo.
 
 ## Dirkalnik formule
 
@@ -864,11 +997,11 @@ Telefoni so povezani neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.co
 
 ## Jezik (angleščina)
 
-V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
+V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
 
 ## Dosežki in statistika
 
-Gumb **Dosežki** na naslovnem zaslonu odpre statistiko voznika: prevoženi kilometri, čas vožnje, dirke, zmage, stopničke, prva štartna mesta, najhitrejši krogi, kronometri, medalje, naslovi prvaka, pobegi policiji, dirke s prijatelji, najvišja hitrost, najdaljši skok, najdaljše drsenje in proge, na katerih si pripeljal do cilja. Spodaj je 27 dosežkov, npr. **Z zadnjega na prvo** (zmaga z zadnjega štartnega mesta), **Čist krog** (krog brez dotika ograje), **Brez praske** (dirka brez dotika ograje in drugih avtov), **Hat-trick** (prvo štartno mesto, zmaga in najhitrejši krog), **Zeleni pekel** (Nordschleife), **Letalec** (skok 40 m), **Kralj drsenja**, **Nočna ptica**, **Mojster dežja** in **Neulovljiv**. Doseženi so zlati z datumom, pri tistih, ki se štejejo (100 in 1000 km, deset zmag, vse proge …), piše, koliko še manjka. Nov dosežek se pokaže takoj med vožnjo in še v rezultatih.
+Gumb **Dosežki** na naslovnem zaslonu odpre statistiko voznika: prevoženi kilometri, čas vožnje, dirke, zmage, stopničke, prva štartna mesta, najhitrejši krogi, kronometri, medalje, naslovi prvaka, pobegi policiji, dirke s prijatelji, najvišja hitrost, najdaljši skok, najdaljše drsenje in proge, na katerih si pripeljal do cilja. Dirka šteje, ko jo pripelješ do cilja ali iz nje odstopiš (odstop ni cilj: brez zmage, stopničk, proge do cilja in dosežkov za cilj); prevoženi kilometri in čas vožnje štejejo vedno, tudi pri dirki, ki jo zapustiš v pavzi. Spodaj je 30 dosežkov, npr. **Z zadnjega na prvo** (zmaga z zadnjega štartnega mesta), **Čist krog** (krog brez dotika ograje), **Brez praske** (dirka brez dotika ograje in drugih avtov), **Hat-trick** (prvo štartno mesto, zmaga in najhitrejši krog), **Zeleni pekel** (Nordschleife), **Letalec** (skok 40 m), **Kralj drsenja**, **Nočna ptica**, **Mojster dežja** in **Neulovljiv**. Doseženi so zlati z datumom, pri tistih, ki se štejejo (100 in 1000 km, deset zmag, vse proge …), piše, koliko še manjka. Nov dosežek se pokaže takoj med vožnjo in še v rezultatih.
 
 ## Varčevanje z baterijo in hitrejše nalaganje
 
@@ -887,7 +1020,7 @@ Naslovnica, izbira načina in izbira proge so nov meni (`js/menu.js`, `css/menu.
 
 - **Naslovnica:** *Single race*, *Multiplayer* (dirka s prijateljem), *Career* (garaža, prvenstva, šola vožnje, dosežki), *Settings*, *Leaderboard*, celozaslonski način, namestitev, izziv prijatelja in *Credits*. Ozadje je živa scena igre. Novi igralec začne na prvi pravi progi, ne na testni (Jezero).
 - **Načini** (*Single race*): *Circuit race*, *Police chase*, *Time trial*, *Traffic duel*. Vsaka proga je v načinih, ki jih podpira (`modes` oz. `timeTrial` v datoteki proge), v skupini *Circuits* / *Open roads* / *Rally* / *Test* (proge s `test: true`, na koncu). Izbira v meniju je izbira igre (`S.track`, `S.mode`, `S.weather`, `S.length` …).
-- **Izbira proge:** vsaka proga ima sliko. Proge, ki imajo pot v `js/routes.js`, imajo preletni posnetek (stikalo **1**) ali zemljevid od zgoraj (stikalo **2**; z potekom proge, zastavicama in točko, ki teče po njej); vse druge imajo maketo svojega terena (`assets/tracks/<id>.webp`, v dežju `<id>-rain.webp`). Zemljevid pokaže celo progo, od starta do cilja, in sega do robov slike (kar ne sega, zapolni zamegljen izrez istega zemljevida); napis zastavice, ki bi pri robu ušel iz slike, se prestavi na drugo stran zastavice. Cestne proge (*Open roads*) so zasukane tako, da tečejo navzgor: start spodaj, cilj zgoraj (Kranjska Gora spodaj, Vršič zgoraj); v široki in nizki sliki (npr. telefon pokonci od 360 × 640) ostanejo vodoravne, ker bi se drugače skrčile. Pod sliko vsake proge (makete, preleta in zemljevida) je vrstica s puščicama za prejšnjo in naslednjo progo ter številko proge v skupini (npr. `3/14`; ob pritisku desne puščice `4/14`), tako da je puščica vedno na istem mestu. Pod vrstico so ime, opis, rekord ali zlati čas, dolžina, ovinki, avto (odpre igrin zaslon za izbiro avta in se vrne na isto progo) in vreme (*Dry* / *Rain* / *Random*, krogi, v *···* še letni čas, čas dneva, dolžina dirke, kvalifikacije, gorivo, gume, krilo, prestave, cesta na Pikes Peaku).
+- **Izbira proge:** vsaka proga ima sliko. Proge, ki imajo pot v `js/routes.js`, imajo preletni posnetek (stikalo **1**) ali zemljevid od zgoraj (stikalo **2**; z potekom proge, zastavicama in točko, ki teče po njej); vse druge imajo maketo svojega terena (`assets/tracks/<id>.webp`, v dežju `<id>-rain.webp`). Zemljevid pokaže celo progo, od starta do cilja, in sega do robov slike: trak podrobnega sveta iz igre (»otok«) leži z mehkim robom čez pravo pokrajino, naslikano iz resničnih višin in rabe tal (okolica proge, `maketa-menija/orodja/wide_map.py`, datoteke `assets/maps/wide-<id>.webp` in `isle-<id>.webp`, dež ima svoji različici); kjer proga nima širokega zemljevida (`wideMaps` v `js/menu-data.js`), kar ostane, zapolni zamegljen izrez zemljevida; napis zastavice, ki bi pri robu ušel iz slike, se prestavi na drugo stran zastavice. Cestne proge (*Open roads*) so zasukane tako, da tečejo navzgor: start spodaj, cilj zgoraj (Kranjska Gora spodaj, Vršič zgoraj); v široki in nizki sliki (npr. telefon pokonci od 360 × 640) ostanejo vodoravne, ker bi se drugače skrčile. Pod sliko vsake proge (makete, preleta in zemljevida) je vrstica s puščicama za prejšnjo in naslednjo progo ter številko proge v skupini (npr. `3/14`; ob pritisku desne puščice `4/14`), tako da je puščica vedno na istem mestu. Pod vrstico so ime, opis, rekord ali zlati čas, dolžina, ovinki, avto (odpre igrin zaslon za izbiro avta in se vrne na isto progo) in vreme (*Dry* / *Rain* / *Random*, krogi, v *···* še letni čas, čas dneva, dolžina dirke, kvalifikacije, gorivo, gume, krilo, prestave, cesta na Pikes Peaku).
 - **Pred dirko** (Nastavitve: **Uvod pred dirko**): *Polni* je globus od zadnje proge do te (z Zemljo iz javnih podatkov) in helikopterski prelet čez progo z imeni krajev in višinskim profilom, *Kratki* samo prelet, *Brez* gre takoj na štartne luči. Pod njo se dirka že nalaga; *Skip* ali konec preleta pomeni štart. **Glasba v uvodu** (Nastavitve) vklopi izvirno glasbo države proge. Prelet imajo proge, ki imajo `assets/maps/heli-<id>.webm`; nove proge ga še nimajo in gredo takoj na štartne luči (preleti se izrišejo pozneje).
 - **Postavitve:** pokonci en stolpec (od 360 × 640), ležeče oder (zemljevid, model ali prelet) levo ter naslov, skupine, kartica in gumbi desno (od 640 × 360 do računalnika). Na računalniku v pokončnem oknu stoji meni v okvirju telefona.
 - **Igralni plošček:** kot na drugih zaslonih (križec ali palčka premika označbo, **A** pritisne, **Start** gre naprej oziroma začne dirko, **B** nazaj); na koraku s progo **LB** in **RB** zamenjata progo, med uvodom ga **A**, **B** ali **Start** preskoči.
@@ -904,14 +1037,14 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
+| `js/cars/<id>.js` | ena datoteka na vozilo (33 novih vozil): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
 | `js/lang.js` | besedila v angleščini (slovar: slovensko besedilo → angleško), številke, denar in mesta po jeziku, prevod strani (`index.html`) ob zamenjavi jezika |
-| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet (tudi tovornjaki in enosmerne ceste; po levi na progah z `leftHand`) in pešci na odprti cesti, galerije proti plazovom, prepadi brez ograj (avto zgrmi čez rob), policija (brez DOM in three.js) |
+| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet (tudi tovornjaki in enosmerne ceste; po levi na progah z `leftHand`) in pešci na odprti cesti, galerije proti plazovom, prepadi brez ograj (avto zgrmi čez rob), policija, vozni park (vozila in kategorije, deli, ki odpadejo, izgubljena kolesa, odstop) (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg), Los Caracoles si deli njegove pomožne funkcije za teren, okolico pa gradi svoj graditelj (andska pokrajina, podporni zidovi lestve, galeriji, železnica, Portillo, kondorji), Harju ima svojega (mesto in park na pravem terenu, dan relija), prav tako Katu-Jaryk (teren in raba tal, reka Čulišman, macesni in cedre, skale, parapeti, kioski in jurte), tako tudi Chapman's Peak (`buildChapman`: morje, granit in peščenjak, fynbos, lovilne mreže, cestninska postaja, razgledišča), tako tudi Big Sur (`buildBigSur`: ocean s peno, pečine, ločna mostova, Old Coast Road, razgledišča, obalna megla); Tianmen uporablja teren Los Caracoles, okolico pa gradi `buildTianmen` (apnenčaste stene, subtropski gozd, most zanke, jama s stopnicami, žičnica, megla); tudi Uncompahgre ima svojega (prepadi brez ograj, gozd s trepetlikami, potoki in slap, predor in galerija, stari rudniki); Sani Pass (`buildSani`) prav tako (bazalt, travnata pobočja po letnih časih, potoki in slapovi, koče in obori na vrhu, ovce, mejni prehod); prav tako Irohazaka (`buildIroha`: japonski gozd, podporni zidovi, table s hiragano, pogled na goro Nantai); Mulholland Highway prav tako (chaparral, hrasti, platane, peščenjak, lesene ograje, Elephant Rock); Moki Dugway prav tako (`buildMoki`: puščava, plasti pečine, makadam z asfaltnima koncema, nasip namesto ograj, razgledišče, osamelci); Bathurst in Crystal Palace uporabljata graditelja Red Bull Ringa v svojem videzu (`RB_LOOK`), Crystal Palace v starinskem (bale, lesene ograje in boksi) s parkom v svoji funkciji (`cpPark`: jezera, kipi, terase, stolp, hiše; `cpTrees`), Riverside ima svojega (`buildRiverside`: pomožne funkcije Nordschleife za teren, okolica iz leta 1960 in gore na obzorju iz višinskega modela, `rsFar`), Longford pa svojega (koridorski teren Nordschleife, svoj graditelj `buildLongford`: reke, železnica z viaduktom, lesena mostova, mesto, pašniki, boksi iz 1960-ih), Newcastle ima svojega (`buildNewcastle`: teren, morje in plaže, stavbe, ulice z oznakami, podirljiva ulična oprema v križiščih, drevesa, svetilnik, ladje, Stockton, obzorje) |
-| `js/data/p206.js` | 3D model Peugeota 206 |
-| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet (tudi tovornjaki), pešci, patrulje in bodičasti trakovi |
+| `js/render.js` | izris, avti (gradniki KIT za modele vozil, razpadanje po delih, ogenj in saje), delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet (tudi tovornjaki), pešci, patrulje in bodičasti trakovi |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
-| `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
+| `js/net.js`, `js/vendor/peerjs.min.js` | povezava do štirih telefonov za dirko s prijatelji (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
 | `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
 | `js/menu.js`, `css/menu.css`, `js/menu-data.js` | nov meni: naslovnica, načini, proge, vreme in možnosti, predstavitev pred dirko; besedila in podatki menija (načini, skupine, imena zemljevidov, zasluge) |
 | `js/routes.js`, `js/geo.js`, `js/journey.js`, `js/intro-data.js` | poti prog nad zemljevidom in prelet (ustvari jih `maketa-menija/orodja/routes.py` in `intro_data.py`), podatki o Zemlji, globus iz three.js, podatki predstavitve (glasba, znamenitosti) |
@@ -922,8 +1055,17 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |
 | `tools/stamp.js` | po vsaki spremembi datoteke v `js/` ali `css/` zaženi `node tools/stamp.js`: povezave v `index.html` dobijo oznako vsebine (`?v=…`), da brskalnik po posodobitvi ne pomeša starih in novih datotek |
+| `tools/carshots.mjs` | slike vozila za pregled: `node tools/carshots.mjs <id>` (od strani, spredaj, zadaj in zgoraj z mrežo 1 m, razstavni pogled, pogled za avtom, zrahljani deli, razbitina, zgorelo vozilo, kokpit; vse skupaj v `sheet.png`) ali `node tools/carshots.mjs --cat <kategorija>` (vsa vozila kategorije drugo ob drugem); slike so v `test-results/carshots/` |
 
 Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) ne deluje. Z diska (brez spletnega strežnika) igra deluje, le brez igranja brez interneta in namestitve.
+
+### Novo vozilo
+
+1. Nova datoteka `js/cars/<id>.js` po vzoru obstoječih (npr. `js/cars/levs.js`): `VEHICLE_DEFS.push({ id, name, cat, drive, desc, phys, arc, stats, price, field, snd, expect, parts, look, … })`. Na vrhu je opis vozila (mere, medosna razdalja, prepoznavni deli), `look` pa je 3D model iz gradnikov KIT (opis je na začetku `js/render.js`: karoserija iz prerezov, deli, ki odpadejo, in njihovi tečaji, luči, številka, voznik, kolesa). Neobvezno je `tank` (kg goriva v polnem rezervoarju; brez njega ga igra določi po kategoriji in masi).
+2. Opis (`desc`) prevedi v angleščino v slovarju `js/lang.js` (ime vozila ostane, kot je).
+3. V `index.html` dodaj `<script src="js/cars/<id>.js"></script>` za zadnjim vozilom, pred `js/core.js` (vozila se dodajajo le na konec: nobeno se ne briše ali premakne, staro se le upokoji z `retired: true`), id dodaj na konec seznama `ROSTER` v `tests/fleet.test.js` in zaženi `node tools/stamp.js`.
+4. Videz preveri s `node tools/carshots.mjs <id>` in `node tools/carshots.mjs --cat <kategorija>`.
+5. `node tests/fleet.test.js` (vozne lastnosti po `expect`, deli in kolesa, ki odpadejo, rezervoar), `node tests/kit.test.js`, `node tests/lang.test.js` (angleški opis) in `node tests/browser/fleet.test.mjs` (proračun trikotnikov). Vozilo z napako v opisu igra preskoči (test pove, kaj je narobe), druga vozila in referenčne vrednosti testov (golden) ostanejo enaki.
 
 ### Nova proga
 
@@ -938,7 +1080,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 
 - Meni (globus, zemljevidi od zgoraj, prelet): podoba Zemlje NASA Blue Marble (NASA Earth Observatory, javna domena); raba tal © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); višine: Terrain Tiles (Mapzen/Tilezen: SRTM, 3DEP, GMTED2010, ETOPO1; javna domena), EU-DEM (Produced using Copernicus data and information funded by the European Union - EU-DEM layers) in © offene Daten Österreichs – Digitales Geländemodell (DGM) Österreich, CC BY 4.0; obrisi in imena držav: Natural Earth (javna domena). Podatki so tudi v meniju pod *Credits*.
 - Meni: pisava [Roboto](https://github.com/googlefonts/roboto-3-classic) (© The Roboto Project Authors), licenca [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) (besedilo v `fonts/LICENSE-Roboto.txt`). Glasba in zvoki predstavitve so izvirni, narejeni za igro.
-- Avto PEUGEOT 206: 3D model [„Peugeot 206“](https://sketchfab.com/) avtorja **Alvier** (Sketchfab), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Model je poenostavljen in shranjen v `js/data/p206.js`.
 - Povezava telefonov: knjižnica [PeerJS](https://peerjs.com) 1.5.5 (Michelle Bu, Eric Zhang in sodelavci), licenca MIT, shranjena v `js/vendor/peerjs.min.js`. Za iskanje sobe in posredovanje uporablja brezplačni javni strežnik PeerJS.
 - Proga Nordschleife (sredinska črta, raba tal, stavbe, mostovi, imena ovinkov): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Podatki so vzeti iz OpenStreetMap, ki je na voljo pod licenco [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Iz njih izpeljani podatki v `js/tracks/nring.js` so prav tako na voljo pod ODbL 1.0.
 - Višine Nordschleife: SRTM (NASA/USGS, javna domena) in Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.

@@ -81,7 +81,13 @@ Vse proge (dirkališča, ceste in reli etape) imajo dve različici zemljevida. P
    - Pot se nariše od starta do cilja, start in cilj imata zastavici (na reli etapah in dirkališčih še oznaki vmesnih časov S1 in S2).
    - Čez progo ni nobenega pasu, da se pot vidi v celoti.
 
-Zemljevidi in posnetki so zajeti iz sveta igre. Igra ima pokrajino samo ob progi, zato je pokrajina dlje od proge na zemljevidih dodana (hribi in gore iz višin ob progi). Vršič je vzet iz veje `ccr-461bd7ea-r4na44`, kjer se ta cesta gradi. Višine so na cestah prave (start in cilj), na reli etapah in dirkališčih približne (višina starta v `data.js`, ostalo iz sveta igre).
+**Okolica zemljevida od zgoraj (Map).** Igra ima pokrajino samo ob progi (»otok« podrobnega sveta), na zemljevidu pa jo obdaja izmišljena gladka podlaga (`skirt` v `orodja/routemap_page.js`). Zato je okolica zemljevida naslikana iz pravih podatkov in otok leži čez njo z mehkim robom:
+
+1. `node routemap.mjs isle.json` (z `GAME=` na kopijo igre) izriše otoke brez podlage (`skirt: false`): `raw/maps/isle-<id>.png` in `-rain.png` s prosojnim robom. Vršič se izrisuje v jesenski barvi (`SEASONS` v `routemap_page.js`), kot ga kaže meni.
+2. `python3 wide_map.py vrsic,pikes,… --write` (npr. vse proge iz `isle.json`) naslika pokrajino v okvirju zemljevida: višine so iz AWS Terrain Tiles, raba tal iz ESA WorldCover (kot pri globusu, `geo_lib.py`, `geo_paint.py`), senčena s soncem iste teme kot v igri (`SUN` v skripti, kot `THEMES` v `routemap_page.js`; vržene sence šibkeje, `SHADOW_K`). Pot pikslov zemljevida do Zemlje dajeta `fit` v `js/intro-data.js` in `js/geo.js`; skrajšana kopija prave ceste (Pikes Peak) je raztegnjena do prave ciljne točke. Barve okolice se ujemajo z otokom po vrstah rabe tal (gozd, trava, skale …), blizu otoka še lokalno; sneg ostane bel. Dežne različice dobijo isti barvni premik kot otok v dežju. Otok izgubi izmišljeni obroč gladkih celic ob robu (`RING_M`), rob je mehek (`FEATHER`); velike luknje (notranjost Nordschleife) ostanejo, pri Monacu se vodna ravnina igre izpusti.
+3. Izhod: `assets/maps/wide-<id>.webp`, `wide-<id>-rain.webp` (pokrajina, zemljevid in rob okoli njega; polovica pikslov zemljevida) in `isle-<id>.webp`, `isle-<id>-rain.webp` (otok z alfa kanalom, velikost zemljevida). Velikost roba je v `js/menu-data.js` (`wideMaps`, v pikslih zemljevida: 300 za 824 × 620, 240 za 1100 × 830; enako kot `EXT` v skripti).
+
+Podatki (`raw/geo/`) se prenesejo ob prvem zagonu in niso v gitu. Zemljevidi in posnetki so zajeti iz sveta igre. Igra ima pokrajino samo ob progi, zato je pokrajina dlje od proge na zemljevidih dodana (hribi in gore iz višin ob progi). Vršič je vzet iz veje `ccr-461bd7ea-r4na44`, kjer se ta cesta gradi. Višine so na cestah prave (start in cilj), na reli etapah in dirkališčih približne (višina starta v `data.js`, ostalo iz sveta igre).
 
 ## Pred dirko: pot po Zemlji in let s helikopterjem
 

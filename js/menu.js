@@ -249,13 +249,23 @@
     const q = Math.round((-90 - Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI) / 90) * 90;
     return ((q % 360) + 540) % 360 - 180;
   };
+  // The map's layers. The game draws only a strip of detailed world (the "isle") round the road, on a made-up smooth land; where a track has
+  // a wide map (D.wideMaps: the margin in the map's pixels) the isle is put, with a soft edge, over the real land painted from the real
+  // heights and land cover (wide-<id>.webp, a margin all round the map), so the map goes on to every edge of the frame with the real land
+  // (wide_map.py). Otherwise the map as it is, and the blurred copy of it behind.
+  function mapLayers(t, T) {
+    const E = (D.wideMaps || {})[t.id], id = t.id, W = T.W, H = T.H, A = 'assets/maps/';
+    if (!E) return { bg: A + 'top-' + id + '.webp', html: '<image href="' + A + 'top-' + id + '.webp" width="' + W + '" height="' + H + '"/><image class="wet" href="' + A + 'top-' + id + '-rain.webp" width="' + W + '" height="' + H + '"/>' };
+    const land = (wet) => '<image class="land' + (wet ? ' wet' : '') + '" href="' + A + 'wide-' + id + (wet ? '-rain' : '') + '.webp" x="' + -E + '" y="' + -E + '" width="' + (W + 2 * E) + '" height="' + (H + 2 * E) + '" preserveAspectRatio="none"/>';
+    const isle = (wet) => '<image class="isle' + (wet ? ' wet' : '') + '" href="' + A + 'isle-' + id + (wet ? '-rain' : '') + '.webp" width="' + W + '" height="' + H + '" preserveAspectRatio="none"/>';
+    return { bg: A + 'wide-' + id + '.webp', html: land(0) + land(1) + isle(0) + isle(1) };
+  }
   function topView(t, R, M, lockd) {   // the whole map to the stage's edges (fitMaps: the route as big as fits)
-    const T = R.top, pts = T.route, rally = t.group === 'rally', turn = turnOf(t, R);
-    // a soft, blurred copy of the map fills the stage behind the fitted map, so a long route that does not fill the frame has no empty bars;
+    const T = R.top, pts = T.route, rally = t.group === 'rally', turn = turnOf(t, R), L = mapLayers(t, T);
+    // a soft, blurred copy of the map fills the stage behind the fitted map (beyond even the wide map), so nothing is ever left empty;
     // everything on the map is in g.rot, which fitMaps turns (an open road) about the middle of the map
-    return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(assets/maps/top-' + t.id + '.webp)"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
-      '<image href="assets/maps/top-' + t.id + '.webp" width="' + T.W + '" height="' + T.H + '"/><image class="wet" href="assets/maps/top-' + t.id + '-rain.webp" width="' + T.W + '" height="' + T.H + '"/>' +
-      routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div>';
+    return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
+      L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div>';
   }
   function routeView(t, lockd) {
     const R = RT[t.id], M = D.routeMaps[t.id] || {};
