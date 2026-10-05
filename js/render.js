@@ -1512,6 +1512,7 @@ const Render = (function () {
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
+    birds.off = !!(track.def && track.def.noBirds);   // (def.noBirds: a world without birds)
     valleyFog(); rainbow(false); setMarks(null);   // (the morning mist, no rainbow or school marks from the last world)
     return world;
   }
@@ -1521,6 +1522,7 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel']);   // (the small street furniture: no shadow pass of its own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1557,19 +1559,70 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else streetPropGeo(g, kind, W);
+    if (propRg === 'au' && (kind === 'signal' || kind === 'signalm')) for (let q = 0; q < g.C.length; q += 3) { const c = g.C[q] === 0.98 && g.C[q + 1] === 0.78 ? [0.95, 0.95, 0.93] : g.C[q] === 0.95 && g.C[q + 1] === 0.5 ? [0.92, 0.1, 0.08] : g.C[q] === 0.92 && g.C[q + 2] === 0.88 ? [0.2, 0.86, 0.42] : null; if (c) { g.C[q] = c[0]; g.C[q + 1] = c[1]; g.C[q + 2] = c[2]; } }   // (Australia: the black target boards' white border, the red and green men)
     return g.geometry();
+  }
+  let propRg = '';   // the street furniture's region (def.propRegion): 'au' the Australian signals' boards
+  // the street furniture (Core's PROPK: signal ... barrel), its origin at the centre as it stands, local +x towards the road for those with an arm
+  function streetPropGeo(g, kind, W) {
+    if (kind === 'signal' || kind === 'signalm') { const g0 = new W.GB(); streetPropGeo2(g0, kind, W); const k = 1.2; for (let q = 0; q < g0.P.length; q += 3) { g.P.push(g0.P[q] * k, g0.P[q + 1], g0.P[q + 2] * k); } g.N.push(...g0.N); g.C.push(...g0.C); if (g.U) for (let q = 0; q < g0.P.length / 3; q++) g.U.push(0, 0); return; }   // (the signals a fifth wider and deeper: they read from above)
+    streetPropGeo2(g, kind, W);
+  }
+  function streetPropGeo2(g, kind, W) {
+    const gy = [0.58, 0.6, 0.62], dk = [0.12, 0.12, 0.13], bk = [0.06, 0.06, 0.07], ye = [0.98, 0.78, 0.1], wh = [0.95, 0.95, 0.93];
+    const head = (x, y, z, ped) => {   // a signal head facing both ways along local z (a yellow-rimmed backplate; red, amber, green), or a pedestrian head
+      if (ped) { W.box(g, x, y, z, 0.3, 0.42, 0.3, 0, dk, dk); for (const f of [-1, 1]) { W.box(g, x, y + 0.24, z + f * 0.155, 0.2, 0.13, 0.01, 0, [0.95, 0.5, 0.15], null, true); W.box(g, x, y + 0.06, z + f * 0.155, 0.2, 0.13, 0.01, 0, [0.92, 0.92, 0.88], null, true); } return; }
+      W.box(g, x, y - 0.12, z, 0.6, 1.24, 0.05, 0, ye, ye); W.box(g, x, y - 0.06, z, 0.5, 1.12, 0.06, 0, bk, bk); W.box(g, x, y, z, 0.34, 1.0, 0.28, 0, dk, dk);
+      [[0.82, 0.86, 0.12, 0.1], [0.5, 0.98, 0.62, 0.1], [0.18, 0.2, 0.9, 0.45]].forEach(([yy, r, gg, b]) => { for (const f of [-1, 1]) W.box(g, x, y + yy - 0.11, z + f * 0.145, 0.22, 0.22, 0.012, 0, [r, gg, b], null, true); });
+    };
+    if (kind === 'signal') {   // a corner pole: two heads back to back on top, a pedestrian head and a push button lower down
+      W.cyl(g, 0, -2.3, 0, 0.11, 4.6, 8, gy, gy, 0.09); W.cyl(g, 0, -2.3, 0, 0.2, 0.18, 8, [0.5, 0.5, 0.5]);
+      head(0.05, 1.32, 0); head(0.3, -0.1, 0, true); W.box(g, 0.1, -1.25, 0, 0.12, 0.18, 0.1, 0, ye, ye);
+    } else if (kind === 'signalm') {   // a mast arm over the road (along +x) with two heads, a pedestrian head on the pole
+      W.cyl(g, 0, -3.2, 0, 0.16, 6.4, 8, gy, gy, 0.13); W.cyl(g, 0, -3.2, 0, 0.28, 0.2, 8, [0.5, 0.5, 0.5]);
+      W.box(g, 3.5, 2.62, 0, 7.0, 0.16, 0.16, 0, gy, gy); W.box(g, 1.1, 2.3, 0, 2.2, 0.08, 0.08, -0.3, gy, gy);
+      head(4.2, 1.85, 0); head(6.6, 1.85, 0); head(0.3, -1.6, 0, true);
+    } else if (kind === 'lamp') {   // a tall grey pole, a davit arm, a cobra head over the road
+      W.cyl(g, 0, -4.5, 0, 0.14, 8.9, 8, gy, gy, 0.08); W.cyl(g, 0, -4.5, 0, 0.24, 0.5, 8, [0.5, 0.5, 0.5]);
+      W.box(g, 0.95, 4.15, 0, 1.9, 0.09, 0.09, 0, gy, gy); W.box(g, 1.95, 3.98, 0, 0.75, 0.2, 0.34, 0, [0.7, 0.71, 0.73], [0.72, 0.73, 0.75]); W.box(g, 1.98, 3.95, 0, 0.55, 0.04, 0.26, 0, [1, 0.96, 0.82]);
+    } else if (kind === 'sign') {   // a regulatory sign on a square post (white face both ways, a red ring)
+      W.box(g, 0, -1.3, 0, 0.06, 2.6, 0.06, 0, gy, gy); W.box(g, 0, 0.62, 0, 0.6, 0.75, 0.03, 0, wh, wh);
+      for (const f of [-1, 1]) { W.box(g, 0, 0.71, f * 0.017, 0.46, 0.06, 0.004, 0, [0.85, 0.12, 0.1], null, true); W.box(g, 0, 0.92, f * 0.017, 0.46, 0.06, 0.004, 0, [0.85, 0.12, 0.1], null, true); W.box(g, 0, 0.98, f * 0.017, 0.3, 0.22, 0.004, 0, bk, null, true); }
+    } else if (kind === 'hydrant') {   // a red hydrant: barrel, a white bonnet, two side nozzles, the flange at its foot
+      const rd = [0.82, 0.13, 0.1]; W.cyl(g, 0, -0.42, 0, 0.21, 0.08, 8, [0.5, 0.48, 0.46]); W.cyl(g, 0, -0.34, 0, 0.16, 0.56, 8, rd, rd);
+      W.cyl(g, 0, 0.22, 0, 0.18, 0.06, 8, rd, rd); W.cone(g, 0, 0.28, 0, 0.16, 0.12, 8, wh, wh, 0); W.cyl(g, 0, 0.38, 0, 0.035, 0.05, 6, wh, wh);
+      W.box(g, 0, 0.0, 0, 0.5, 0.11, 0.11, 0, rd, rd); W.box(g, 0.18, -0.12, 0, 0.12, 0.16, 0.16, 0, [0.9, 0.9, 0.88], [0.9, 0.9, 0.88]);
+    } else if (kind === 'bin') {   // a square black metal litter bin, a silver band and a dark lid
+      W.box(g, 0, -0.5, 0, 0.62, 0.94, 0.62, 0, [0.16, 0.17, 0.18], null); W.box(g, 0, 0.18, 0, 0.64, 0.12, 0.64, 0, [0.7, 0.72, 0.74], [0.7, 0.72, 0.74]); W.box(g, 0, 0.3, 0, 0.6, 0.18, 0.6, 0, [0.1, 0.1, 0.11], [0.2, 0.21, 0.23]);
+      for (const f of [-1, 1]) W.box(g, f * 0.316, -0.1, 0, 0.01, 0.12, 0.32, 0, bk, null, true);
+    } else if (kind === 'cabinet') {   // an electrical cabinet on its plinth, the doors' seams and a vent
+      const cb = [0.66, 0.68, 0.62]; W.box(g, 0, -0.7, 0, 1.06, 0.12, 0.66, 0, [0.55, 0.55, 0.53]); W.box(g, 0, -0.58, 0, 1.0, 1.24, 0.6, 0, cb, [0.72, 0.74, 0.68]);
+      for (const f of [-1, 1]) { W.box(g, 0, -0.5, f * 0.302, 0.02, 1.05, 0.01, 0, [0.4, 0.42, 0.38], null, true); W.box(g, -0.3, 0.32, f * 0.302, 0.25, 0.12, 0.01, 0, [0.35, 0.36, 0.33], null, true); }
+    } else if (kind === 'bollard') {   // a black steel bollard with a reflective band and a domed cap
+      W.cyl(g, 0, -0.5, 0, 0.11, 0.92, 8, [0.12, 0.12, 0.13], null); W.cyl(g, 0, 0.18, 0, 0.113, 0.08, 8, [0.95, 0.92, 0.85]); W.cone(g, 0, 0.42, 0, 0.11, 0.08, 8, [0.15, 0.15, 0.16], [0.25, 0.25, 0.27], 0);
+    } else if (kind === 'shelter') {   // a bus shelter open towards the road (+x): four posts, a flat roof, glass at the back and the ends, an advertising panel
+      const fr = [0.24, 0.25, 0.27], gl = [0.62, 0.72, 0.78];
+      for (const x of [-0.72, 0.72]) for (const z of [-1.74, 1.74]) W.box(g, x, -1.25, z, 0.08, 2.4, 0.08, 0, fr, fr);
+      W.box(g, 0, 1.12, 0, 1.75, 0.13, 3.75, 0, fr, [0.32, 0.33, 0.36]); W.box(g, -0.72, -1.05, 0, 0.03, 2.1, 3.4, 0, gl, gl);
+      W.box(g, 0, -1.05, -1.74, 1.3, 2.1, 0.03, 0, gl, gl); W.box(g, 0.05, -1.05, 1.74, 1.3, 2.1, 0.06, 0, [0.9, 0.9, 0.86], [0.9, 0.9, 0.86]);
+      W.box(g, -0.55, -0.82, 0, 0.3, 0.06, 2.2, 0, [0.4, 0.4, 0.42]);
+    } else if (kind === 'barrel') {   // an orange construction drum with white reflective bands and a black base
+      const or = [0.98, 0.42, 0.08]; W.cyl(g, 0, -0.47, 0, 0.32, 0.1, 10, bk, bk); W.cyl(g, 0, -0.37, 0, 0.28, 0.84, 10, or, or, 0.26);
+      for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);
+    }
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
   function setupProps(race) {
     if (!race || !race.props) { for (const k in propMeshes) propMeshes[k].visible = false; return; }
     if (!propMat) { propMat = new THREE.MeshLambertMaterial({ vertexColors: true }); propMatTyre = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.tyreTex }); }
-    const cap = race.propCap || {};
+    const cap = race.propCap || {}, rg = (race.track && race.track.def && race.track.def.propRegion) || '';
     for (const kind in cap) {
       let m = propMeshes[kind];
-      if (!m || m.userData.cap < cap[kind]) {
+      if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
         if (m) { scene.remove(m); m.geometry.dispose(); }
-        m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind];
-        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false;
+        m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind]; m.userData.rg = rg;
+        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;
         scene.add(m); propMeshes[kind] = m;
       }
       m.visible = true;
@@ -1683,6 +1736,8 @@ const Render = (function () {
     longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
+  THEMES.newcastle = { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-58, 86, -66] };   // Newcastle: a clear late-spring afternoon on the coast, the sun from the north-west (the southern hemisphere), a light sea haze
+  SPLIT.newcastle = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
@@ -2086,7 +2141,7 @@ const Render = (function () {
     winU.value = (todK >= 1 ? 1 : todK <= 0.5 ? 0.8 * todK : 0.4 + 1.2 * (todK - 0.5)) * (dawn ? 0.75 : 1);   // (day 0, dusk 0.4, night 1: with the time of day, also as it moves on in an endurance race; in the morning a few)
     if (!winU.value || !world || !world.root || world.winLit) return;
     world.winLit = true;
-    const maps = [tex.facade, tex.facadeBal].filter(Boolean);
+    const maps = [tex.facade, tex.facadeBal].concat(world.winMaps || []).filter(Boolean);   // (world.winMaps: a world's own facades)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
       const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)
@@ -4928,7 +4983,7 @@ const Render = (function () {
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
     if (vfog) { vfog.U.uT.value = time; vfog.U.uC.value.copy(scene.fog.color).lerp(_c2.setRGB(1, 0.97, 0.96), 0.55); }
-    if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
+    if (birds.mesh.visible && !birds.off && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
       const U = rain.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];   // (the cockpit: the streaks close round the car)
