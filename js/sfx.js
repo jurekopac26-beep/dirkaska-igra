@@ -640,7 +640,9 @@ const Sfx = (function () {
      snd.turbo's whistle, its blow-off on a lift and, from 0.9, a rally anti-lag's bangs; overrun pops; a truck's air brakes. snd.loud:
      the gain (and how far a rival is heard). The 11 models without a preset keep their own voices untouched (engineVoice, their engine
      type: ENG, CAR_ENG): these are separate voices (kitVoice: the player's and three for the nearest rivals, made the first time a vehicle
-     with a preset is heard), the old ones silent while one plays. Their random numbers are their own (KR), never Math.random ---- */
+     with a preset is heard), the old ones silent while one plays: a rival's with the old voices' Doppler shift (update's dop, by its speed
+     to or from the camera, on every pitch of it), the player's gear changes with their clack and blip (kitGear). Their random numbers are
+     their own (KR), never Math.random ---- */
   const KR = Core.rng(0x5fd1e7), num = (v, d) => (Number.isFinite(v) ? v : d);
   // a cycle's firings ([crank angle, strength]) in this order of cylinders, deg/n apart; bank B's (bOf) weaker (bAmp) and a little later
   // (bDel: its longer pipe); each cylinder a little different (vary). lumpy: the same firings off the throttle, less even (k: how much)
@@ -754,7 +756,7 @@ const Sfx = (function () {
     for (const t of taps || []) if (t) out.connect(t);
     const t0 = ac.currentTime; for (const o of [oA, oB, oC, wA, lope]) o.start(t0);
     const V = { ac, oA, oB, oC, gA, gB, gC, sh, lp, pk, ns: null, nf, nG, nm, wA, wG, lope, lopeG, out, pn, dst: pn || dest, level, kind: '', car: null, on: false, tg: null,
-      b: 0, lm: 0, al: 0, hb: 0, mv: 0, stopped: true, tShot: 0, tBov: 0, n: { bov: 0, pop: 0, air: 0 } };
+      b: 0, lm: 0, al: 0, hb: 0, mv: 0, stopped: true, tShot: 0, tBov: 0, n: { bov: 0, pop: 0, air: 0, gear: 0, blip: 0 } };
     kitNoiseOn(V); return V;
   }
   function kitNoiseOn(V) {   // the clatter's noise into the voice (the game's: once prep has made it; until then the clatter is silent)
@@ -774,36 +776,37 @@ const Sfx = (function () {
   function kitReset(V, c) { V.car = c; V.b = 0; V.lm = 0; V.al = 0; V.hb = 0; V.mv = 0; V.stopped = true; }
   function kitOff(V, tc) { for (const g of [V.out, V.lopeG, V.gC, V.wG, V.nG, V.nm]) vset(V, g.gain, 0, tc || 0.03); V.on = false; }
   // one engine frame on a voice: M the model (M.sndP), s = { rpm, load, speed, brk, cut (a gear change), pl (the player's: its level
-  // formula), att (a rival's distance, 0..1), dt, tc (the pitch's time constant), locked (on the grid), probe (Sfx.probe: settled at once,
-  // no one-shots) }. Leaves the targets in V.tg (Sfx.levels)
+  // formula), att (a rival's distance, 0..1), dop (a rival's Doppler factor, as the old voices': every pitch of it times it), dt, tc (the
+  // pitch's time constant), locked (on the grid), probe (Sfx.probe: settled at once, no one-shots) }. Leaves the targets in V.tg (Sfx.levels)
   function kitStep(V, M, s) {
     const P = M.sndP, kind = KITS[P.kind] ? P.kind : 'i4', K = KITS[kind], hz = clamp(num(P.hz, 1), 0.3, 3), loud = clamp(num(P.loud, 1), 0.1, 3), tb = clamp(num(P.turbo, 0), 0, 1);
     kitKind(V, kind); V.on = true; if (!V.ns) kitNoiseOn(V);
-    const load = clamp(num(s.load, 0), 0, 1), sp = Math.max(0, num(s.speed, 0)), dt = clamp(num(s.dt, 0.016), 0, 0.1), tc = s.tc, sstep = Core.sstep;
+    const load = clamp(num(s.load, 0), 0, 1), sp = Math.max(0, num(s.speed, 0)), dt = clamp(num(s.dt, 0.016), 0, 0.1), tc = s.tc, sstep = Core.sstep, dop = clamp(num(s.dop, 1), 0.5, 2);
+    V.dop = dop;
     if (K.ev) {   // the electric motors (as evWhine), at the preset's pitch and loudness
-      const f = (110 + sp * 21) * hz, g = (s.pl ? V.level : num(s.att, 0) ** 2 * V.level * 2.4) * loud * (0.02 + 0.06 * clamp(sp / 40, 0, 1) + 0.05 * load);
+      const f = (110 + sp * 21) * hz * dop, g = (s.pl ? V.level : num(s.att, 0) ** 2 * V.level * 2.4) * loud * (0.02 + 0.06 * clamp(sp / 40, 0, 1) + 0.05 * load);
       vset(V, V.oA.frequency, f, tc); vset(V, V.oB.frequency, f * 1.5, tc); vset(V, V.oC.frequency, f * 2.98, tc);
       vset(V, V.gA.gain, 0.34, 0.05); vset(V, V.gB.gain, 0.1, 0.05); vset(V, V.gC.gain, 0.12, 0.05);
       vset(V, V.lp.frequency, 5200, 0.05); vset(V, V.out.gain, g, 0.03);
-      V.tg = { ff: f, fc: f, lp: 5200, gain: g, lope: 0, fs: [f, f * 1.5, f * 2.98] };
+      V.tg = { ff: f, fc: f, lp: 5200, gain: g, lope: 0, dop, fs: [f, f * 1.5, f * 2.98] };
       return;
     }
     const red = M.redline > 0 ? M.redline : 7000, idle = clamp(num(M.idle, red * 0.12), 0, red * 0.9);
     const rpm = clamp(num(s.rpm, idle), Math.max(300, idle * 0.6), red * 1.08), r = clamp(rpm / red, 0.05, 1.08);
-    const fc = rpm / 60 * 360 / K.deg * hz, ff = fc * K.F.length, sr = V.ac.sampleRate;
+    const fc = rpm / 60 * 360 / K.deg * hz * dop, ff = fc * K.F.length, sr = V.ac.sampleRate;   // (a rival's: its Doppler factor on every pitch below)
     // the two waves (one cycle each, locked in step), harder into the clipper under load; the low-pass, the resonance
     const on = sstep(0.04, 0.75, load), pre = 0.62 + 0.36 * load;
     vset(V, V.oA.frequency, fc, tc); vset(V, V.oB.frequency, fc, tc);
     vset(V, V.gA.gain, pre * on, 0.04); vset(V, V.gB.gain, pre * (1 - on), 0.04);
-    const lpf = clamp((K.l0 + K.l1 * ff) * Math.sqrt(hz) * (1 + K.lL * load), 150, sr * 0.45);
+    const lpf = clamp((K.l0 * dop + K.l1 * ff) * Math.sqrt(hz) * (1 + K.lL * load), 150, sr * 0.45);
     vset(V, V.lp.frequency, lpf, 0.03);
-    if (K.pk) vset(V, V.pk.frequency, K.pk[0] * Math.sqrt(hz), 0.1); else vset(V, V.pk.frequency, clamp(K.pkR[0] * ff, 120, sr * 0.4), 0.03);
+    if (K.pk) vset(V, V.pk.frequency, K.pk[0] * Math.sqrt(hz) * dop, 0.1); else vset(V, V.pk.frequency, clamp(K.pkR[0] * ff, 120, sr * 0.4), 0.03);
     // the level (the old voices' formulas: the player's, a rival's by its distance), x the preset's loudness
     const gq = (s.pl ? (0.1 + 0.1 * r + 0.1 * load) * num(s.cut, 1) * V.level : num(s.att, 0) ** 2 * (0.05 + 0.08 * r + 0.04 * load) * V.level * 3) * loud * (K.vol || 1);
     vset(V, V.out.gain, gq, 0.02);
     // the clatter, pulsed by the firings (wave A drives nm into its gain)
     const nz = K.nz * 2 * (0.35 + 0.65 * load);
-    vset(V, V.nG.gain, nz * (1 - K.nAm), 0.05); vset(V, V.nm.gain, nz * K.nAm * 1.2, 0.05); vset(V, V.nf.frequency, K.nF * Math.sqrt(hz), 0.1);
+    vset(V, V.nG.gain, nz * (1 - K.nAm), 0.05); vset(V, V.nm.gain, nz * K.nAm * 1.2, 0.05); vset(V, V.nf.frequency, K.nF * Math.sqrt(hz) * dop, 0.1);
     // a lumpy cam: the loudness beating at the cycle's rate, strongest at idle and off the throttle (the rotary's brap: at idle only)
     let lg = 0;
     if (K.lope) { vset(V, V.lope.frequency, fc * K.lope[0], tc); lg = gq * K.lope[1] * (K.lope[2] ? clamp(1 - K.lope[2] * r, 0, 1) : clamp(1 - r * 1.4, 0.15, 1) * (1 - 0.5 * load)); }
@@ -811,7 +814,7 @@ const Sfx = (function () {
     // a blower's whine (a multiple of the firing frequency, with the throttle) or a hybrid's motor (with the speed)
     let wf = 0, wg = 0;
     if (K.blow) { wf = ff * K.blow[0]; wg = K.blow[1] * (0.12 + 0.88 * Math.pow(load, K.blow[2])) * sstep(0.03, 0.4, r); }
-    else if (K.motor) { wf = (260 + sp * 38) * hz; wg = K.motor * (0.3 + 0.7 * load) * clamp(sp / 20, 0.12, 1); }
+    else if (K.motor) { wf = (260 + sp * 38) * hz * dop; wg = K.motor * (0.3 + 0.7 * load) * clamp(sp / 20, 0.12, 1); }
     if (wf) vset(V, V.wA.frequency, clamp(wf, 40, sr * 0.45), tc);
     vset(V, V.wG.gain, wg, 0.06);
     // the turbo: boost builds with the revs under load (lag), falls on a lift; its whistle; the blow-off when the throttle snaps shut on boost
@@ -821,7 +824,7 @@ const Sfx = (function () {
     if (tb > 0) {
       const goal = load * sstep(0.18, 0.7, r);
       V.b = s.probe ? goal : V.b + (goal - V.b) * (1 - Math.exp(-dt / (goal > V.b ? 0.5 : 0.14)));
-      tf = (K.tf || 1) * (1600 + 4200 * V.b) * (0.92 + 0.16 * r);
+      tf = (K.tf || 1) * (1600 + 4200 * V.b) * (0.92 + 0.16 * r) * dop;
       vset(V, V.oC.frequency, Math.min(tf, sr * 0.45), 0.05); vset(V, V.gC.gain, tb * 0.16 * Math.pow(V.b, 1.5), 0.04);
     } else vset(V, V.gC.gain, 0, 0.05);
     V.lm = Math.max(load, V.lm - dt * 2.5);
@@ -843,7 +846,7 @@ const Sfx = (function () {
         if (sp < 0.5) { if (!V.stopped && V.mv > 0) kitShot(V, 'air1', lev * 0.42, 0.95 + 0.1 * KR(), 0); V.stopped = true; } else if (sp > 2) V.stopped = false;
       }
     }
-    V.tg = { ff, fc, lp: lpf, gain: gq, lope: lg, whine: wf, turbo: tf, boost: V.b, fs: [fc, ff, lpf, wf, tf, fc * (K.lope ? K.lope[0] : 1)] };
+    V.tg = { ff, fc, lp: lpf, gain: gq, lope: lg, whine: wf, turbo: tf, boost: V.b, dop, fs: [fc, ff, lpf, wf, tf, fc * (K.lope ? K.lope[0] : 1)] };
   }
   // a one-shot on a voice's side (its panner; the player's: the bus): a buffer of the destruction / exhaust set (dBuf)
   function kitShot(V, name, vol, rate, t, also) {   // (also: one more right after the last, not held off by it: a gear change's bang after its chuff)
@@ -854,8 +857,8 @@ const Sfx = (function () {
     s.connect(g); g.connect(V.dst); s.start(now + (t || 0));
     const k = name.slice(0, 3); if (k in V.n) V.n[k]++;   // (Sfx.levels: the player's blow-offs, bangs, air brakes)
   }
-  // the gear change of a vehicle with a preset (game.js calls shiftPop on every upshift): a turbo's chuff (the boost dumped, as a lift's:
-  // no second blow-off right after it), an anti-lag's bang, an exhaust's pop
+  // a vehicle with a preset changing up (kitGear, with the gearbox's clack): a turbo's chuff (the boost dumped, as a lift's: no second
+  // blow-off right after it), an anti-lag's bang, an exhaust's pop
   function kitShift() {
     const V = kitPl; if (!V || !V.on) return;
     const K = KITS[V.kind], P = plM && plM.sndP; if (!K || K.ev || !P) return;
@@ -878,7 +881,8 @@ const Sfx = (function () {
     kitStep(kitPl, M, { rpm, load: locked ? thr : P.inThr, speed: P.speed, brk: P.inBrk, cut: P.shiftT > 0 ? 0.35 : 1, pl: true, dt, tc: 0.015, locked });
     plM = M;
   }
-  // the rivals with a preset among the three nearest (W: [car, its engine slot k, distance, dx]): each keeps its voice while it stays there
+  // the rivals with a preset among the three nearest (W: [car, its engine slot k, distance, pan (its side of the camera; null: none)]): each
+  // keeps its voice while it stays there, at its slot's Doppler factor (update: as the old voices')
   function kitRivals(W, dt) {
     for (const V of kitAI) if (V) V.keep = false;
     for (const w of W) { const V = kitAI.find(V => V && V.car === w[0]); if (V && !V.keep) { V.keep = true; w[4] = V; } }
@@ -888,13 +892,13 @@ const Sfx = (function () {
       const V = kitAI[j]; V.keep = true; kitReset(V, w[0]); w[4] = V;
     }
     for (const V of kitAI) if (V && !V.keep && V.on) kitOff(V, 0.05);
-    for (const [c, k, d, dx, V] of W) {
+    for (const [c, k, d, pan, V] of W) {
       if (!V) continue;
       const M = c.m, loud = clamp(num(M.sndP.loud, 1), 0.1, 3), att = clamp(1 - d / (70 * (0.5 + 0.5 * loud)), 0, 1);
       V.level = ai[k].level;
-      kitStep(V, M, { rpm: c.rpm, load: c.inThr || 0, speed: c.speed, brk: c.inBrk, cut: 1, pl: false, att, dt, tc: 0.03, locked: !!c.locked });
-      aiSeen[k] = [M.id, V.kind];
-      if (V.pn) set(V.pn.pan, clamp(dx / 40, -0.9, 0.9), 0.05);
+      kitStep(V, M, { rpm: c.rpm, load: c.inThr || 0, speed: c.speed, brk: c.inBrk, cut: 1, pl: false, att, dop: ai[k].dop, dt, tc: 0.03, locked: !!c.locked });
+      aiSeen[k] = [M.id, V.kind, V.dop, V.tg ? V.tg.ff : null];
+      if (V.pn && pan != null) set(V.pn.pan, pan, 0.05);
     }
   }
   // tests: one preset rendered offline (no one-shots): o = { kind, hz, turbo, loud, rpm, redline, idle, load, speed, dur, sr }, settled at
@@ -1309,15 +1313,16 @@ const Sfx = (function () {
       for (let k = 0; k < ai.length; k++) {
         const v = ai[k], c = v.car; if (!c) { set(v.out.gain, 0); set(v.tg.gain, 0); aiSeen[k] = null; continue; }
         const dx = c.x - lx, dz = c.z - lz, d = Math.max(1, Math.hypot(dx, dz));
-        if (c.m.sndP) { set(v.out.gain, 0); set(v.tg.gain, 0); kw.push([c, k, d, dx, null]); continue; }   // (a registered vehicle: kitRivals)
-        engKindSet(v, engKind(c)); aiSeen[k] = [c.m.id, v.kind];
-        const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
         const vr = ((c.vx || 0) - (player.vx || 0)) * dx / d + ((c.vz || 0) - (player.vz || 0)) * dz / d;   // (+: away from the listener)
-        v.dop += (clamp(343 / (343 + vr), 0.75, 1.3) - v.dop) * clamp(dt * 12, 0, 1);
+        v.dop += (clamp(343 / (343 + vr), 0.75, 1.3) - v.dop) * clamp(dt * 12, 0, 1);   // (every rival's, a preset's too: kitRivals)
+        const e = cam ? cam.matrixWorld.elements : null, pan = e ? clamp((dx * e[0] + dz * e[2]) / Math.max(d, 12) * 1.2, -0.9, 0.9) : null;   // (its side of the camera)
+        if (c.m.sndP) { set(v.out.gain, 0); set(v.tg.gain, 0); kw.push([c, k, d, pan, null]); continue; }   // (a registered vehicle: kitRivals)
+        engKindSet(v, engKind(c)); aiSeen[k] = [c.m.id, v.kind, v.dop];
+        const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
         const att = clamp(1 - d / 80, 0, 1);
         engSet(v, c, c.rpm, clamp(c.inThr || 0, 0, 1), v.dop, att * att * (0.06 + 0.1 * rr) * v.level * 3, dt, tNow);
         v.fx.gain.value = att;
-        if (v.pn && cam) { const e = cam.matrixWorld.elements; set(v.pn.pan, clamp((dx * e[0] + dz * e[2]) / Math.max(d, 12) * 1.2, -0.9, 0.9), 0.05); }
+        if (v.pn && pan != null) set(v.pn.pan, pan, 0.05);
       }
       if (kw.length || kitAI.some(Boolean)) kitRivals(kw, dt);
       dStep(race, player);
@@ -1460,20 +1465,13 @@ const Sfx = (function () {
   }
   function shiftPop() { shift(true); }
   // a gear change of the player's car: the gearbox's clack (a racing sequential's bang for the formula and the rally car), the turbo's
-  // flutter on the way up, a blip of the throttle with a pop on the way down. A registered vehicle (a preset): its own on the way up
-  // (kitShift), nothing of the old voice's
+  // flutter on the way up, a blip of the throttle with a pop on the way down. A registered vehicle (a preset): kitGear
   let shifts = 0;
   function shift(up) {
     if (!ctx || ctx.state !== 'running' || !running || !eng) return;
-    if (plM) { if (up) kitShift(); return; }
+    if (plM) { kitGear(up); return; }
     const now = ctx.currentTime, E = ENG[eng.kind], seq = eng.kind === 'v10' || eng.kind === 'al4'; shifts++;
-    const src = ctx.createBufferSource(); src.buffer = noiseBuf;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = seq ? 900 : 320; bp.Q.value = seq ? 2.5 : 1.5;
-    const g = ctx.createGain(); g.gain.setValueAtTime(seq ? 0.32 : 0.25, now); g.gain.exponentialRampToValueAtTime(0.001, now + (seq ? 0.05 : 0.09));
-    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.12);
-    const k = ctx.createOscillator(); k.type = 'square'; k.frequency.setValueAtTime(seq ? 180 : 120, now); k.frequency.exponentialRampToValueAtTime(60, now + 0.03);
-    const kg = ctx.createGain(); kg.gain.setValueAtTime(0.0001, now); kg.gain.exponentialRampToValueAtTime(seq ? 0.12 : 0.07, now + 0.002); kg.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-    k.connect(kg); kg.connect(bus); k.start(now); k.stop(now + 0.05);
+    gearClack(seq, now, Math.random);
     if (up && E.turbo && eng.boost > 0.3) {   // (the flutter: the boost chattering against the closed throttle)
       const f = ctx.createBufferSource(); f.buffer = noiseBuf; const fb = ctx.createBiquadFilter(); fb.type = 'bandpass'; fb.frequency.value = 2400; fb.Q.value = 2;
       const fg = ctx.createGain(); fg.gain.setValueAtTime(0.0001, now);
@@ -1482,6 +1480,29 @@ const Sfx = (function () {
       f.connect(fb); fb.connect(fg); fg.connect(bus); f.start(now, Math.random()); f.stop(now + 0.18);
     }
     if (!up) { crack(eng, 0.45, now + 0.04); set(eng.out.gain, 0.34 * eng.level, 0.01); }   // (the blip)
+  }
+  // the gearbox's clack: a short knock of noise and a click (seq: a racing sequential's sharper, louder bang); rnd: where in the noise it
+  // starts (the old voices' Math.random, as ever; a preset's its own numbers, KR)
+  function gearClack(seq, now, rnd) {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = seq ? 900 : 320; bp.Q.value = seq ? 2.5 : 1.5;
+    const g = ctx.createGain(); g.gain.setValueAtTime(seq ? 0.32 : 0.25, now); g.gain.exponentialRampToValueAtTime(0.001, now + (seq ? 0.05 : 0.09));
+    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, rnd()); src.stop(now + 0.12);
+    const k = ctx.createOscillator(); k.type = 'square'; k.frequency.setValueAtTime(seq ? 180 : 120, now); k.frequency.exponentialRampToValueAtTime(60, now + 0.03);
+    const kg = ctx.createGain(); kg.gain.setValueAtTime(0.0001, now); kg.gain.exponentialRampToValueAtTime(seq ? 0.12 : 0.07, now + 0.002); kg.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    k.connect(kg); kg.connect(bus); k.start(now); k.stop(now + 0.05);
+  }
+  // a gear change of a vehicle with a preset, as the old voices' (shift): the gearbox's clack (a racing sequential's bang for the racers and
+  // the rally cars: categories dirkalni, reli), on the way up the preset's own (kitShift: a turbo's chuff, an anti-lag's bang, a pop), on
+  // the way down a blip of the throttle (the voice louder for a moment) with a pop where the preset pops (none from a diesel). No gearbox,
+  // none of it: the electric motors (ev) and the kart (kart2t: one gear each, so game.js never changes one)
+  function kitGear(up) {
+    const V = kitPl, P = plM.sndP, K = V && KITS[V.kind]; if (!V || !V.on || !K || K.ev || V.kind === 'kart2t') return;
+    const now = ctx.currentTime, loud = clamp(num(P.loud, 1), 0.1, 3); shifts++; V.n.gear++;
+    gearClack(plM.cat === 'dirkalni' || plM.cat === 'reli', now, KR);
+    if (up) { kitShift(); return; }
+    if (K.pop > 0) kitShot(V, 'pop' + Math.floor(KR() * 3), loud * Math.min(1, K.pop) * 0.3, 0.8 + 0.3 * KR(), 0.04);
+    vset(V, V.out.gain, 0.34 * V.level * loud * (K.vol || 1), 0.01); V.n.blip++;   // (the blip: back to its level at the next frame, kitPlayer)
   }
   // a knocked-over trackside prop: hollow plastic 'tock' for a cone, rubbery thump for tyres, soft thud for straw, woody knock for a crate
   let lastKnock = 0;
@@ -1522,8 +1543,8 @@ const Sfx = (function () {
   const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
     engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
       : eng ? { kind: eng.kind, preset: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value, fs: [eng.o, eng.pm, eng.tw].map(o => o.frequency.value).concat(eng.lp.frequency.value, eng.nb.frequency.value) } : null,   // Pikes Peak's sounds, the player's engine note: preset its
-    ai: aiSeen.map(a => a && { id: a[0], preset: a[1] }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
-    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the three nearest rivals'; dest: what broke, heard; prep: what is still to be made ahead)
+    ai: aiSeen.map(a => a && { id: a[0], preset: a[1], dop: +a[2].toFixed(3), f: a[3] == null ? null : +a[3].toFixed(2) }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
+    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the three nearest rivals' (their Doppler factor; a preset's firing pitch, f); dest: what broke, heard; prep: what is still to be made ahead)
   // (tests: the engines as they sound now; a rival in a registered vehicle: its preset)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.car && v.car.m.sndP ? v.car.m.sndP.kind : v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
