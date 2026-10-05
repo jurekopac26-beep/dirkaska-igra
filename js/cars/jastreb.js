@@ -16,8 +16,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'i6', hz: 0.95, loud: 1 },
     expect: { t100: [3.32, 3.9], vmax: [202, 214], latG: [2.04, 2.14], d100: [25, 27.6] },
     parts: { set: 'car', ht: 1.22, y0: 0.2,   // (the debris thrown from where the look has the parts: the tailgate is the fastback's glass, the wings run to the nose)
-      over: { trunk: { lx: -0.5, y: 1.07 }, fenderL: { lx: 0.71, lz: -0.77, y: 0.57 }, fenderR: { lx: 0.71, lz: 0.77, y: 0.57 }, doorL: { lx: -0.085, lz: -0.94, y: 0.67 }, doorR: { lx: -0.085, lz: 0.94, y: 0.67 },
-        mirrorL: { lx: 0.09, lz: -0.89, y: 0.94 }, mirrorR: { lx: 0.09, lz: 0.89, y: 0.94 }, quarterL: { lx: -0.575, lz: -0.84, y: 0.68 }, quarterR: { lx: -0.575, lz: 0.84, y: 0.68 } } },
+      over: { trunk: { lx: -0.5, y: 1.07 }, fenderL: { lx: 0.71, lz: -0.77, y: 0.57, h: 0.15 }, fenderR: { lx: 0.71, lz: 0.77, y: 0.57, h: 0.15 }, doorL: { lx: -0.085, lz: -0.94, y: 0.67 }, doorR: { lx: -0.085, lz: 0.94, y: 0.67 },
+        mirrorL: { lx: 0.09, lz: -0.89, y: 0.94 }, mirrorR: { lx: 0.09, lz: 0.89, y: 0.94 }, quarterL: { lx: -0.575, lz: -0.84, y: 0.68, h: 0.15 }, quarterR: { lx: -0.575, lz: 0.84, y: 0.68, h: 0.15 } } },   // (the wings with their tops lie as thick as they are)
     // the look (KIT API v1, render.js; look units = metres): one loft through the sections below, cut by the regions into the bonnet's top (with
     // the power bulge), the wings to the nose (the covered lamps with them), the doors (their glass), the rear wings (the quarter lights), the
     // tailgate (the fastback's glass in its frame) and the nose and tail ends (bumpers: the mouth, the chrome blades); the windows and their
@@ -149,6 +149,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }));
         K.engine(0.85, 0.28, 0, { l: 0.85, w: 0.46, h: 0.44, cover: [0.72, 0.73, 0.76] });                               // (its polished cam covers)
         K.box(1.96, 0.3, 0, 0.06, 0.28, 0.62, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });       // the radiator behind the mouth
+        for (const sd of [-1, 1]) K.box(1.33, 0.2, sd * 0.54, 0.74, 0.5, 0.04, 0, D, null, true, { inner: true, part: 'body' });   // the inner wings (no tyre in the bay)
       },
     },
   });
