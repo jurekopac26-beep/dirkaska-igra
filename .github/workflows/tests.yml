@@ -18,7 +18,7 @@ jobs:
   node:
     name: Fizika, AI in dirke
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40   # (nabor traja na CI ~20 min: omejitev mora imeti rezervo)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

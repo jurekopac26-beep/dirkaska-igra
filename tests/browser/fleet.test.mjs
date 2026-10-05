@@ -448,13 +448,16 @@ try {
       // the wreck from the chase camera, then the same frame without the particles (the flames, the smoke, the bits: what they add is what
       // shows of them, not what burns inside the body)
       Render.setShot(shot); run(6, 'chase', true); v = Render.viewOf(P); const B = pic('chase', 'wreck'), f1 = Render.fxStats();
-      const pts = S.children.filter(o => o.isPoints && o.visible); for (const o of pts) o.visible = false; const B0 = pic('chase', 'nofx'); for (const o of pts) o.visible = true;
+      const pts = S.children.filter(o => o.isPoints && o.visible); for (const o of pts) o.visible = false; const B0 = pic('chase', 'nofx');
+      for (const o of pts) o.visible = !!o.geometry.attributes.pinfo; const B1 = pic('chase', 'smoke'); for (const o of pts) o.visible = true;   // (the smoke's puffs alone: the only pool with a pinfo)
       let diff = 0, n = 0; for (let y = box[2]; y <= box[3]; y++) for (let x = box[0]; x <= box[1]; x++) { const o = (y * A.w + x) * 4; n++; if (Math.abs(A.d[o] - B.d[o]) + Math.abs(A.d[o + 1] - B.d[o + 1]) + Math.abs(A.d[o + 2] - B.d[o + 2]) > 60) diff++; }
       // the fire in sight: flame-coloured pixels (bright, orange to yellow) that the particles add round the car (its box and the box over
-      // it); the smoke: pixels there they darken (black smoke against the fog, the car)
+      // it); the smoke: pixels there its puffs darken (black smoke against the fog, the car), the puffs drawn alone: the fire's glow (additive,
+      // flickering with the renderer's clock, which runs on in real time) brightens the smoke back where it lies over it, so with the glow
+      // in the picture the count was a coin toss from one run to the next (3 to 160 pixels for the same wreck)
       const flame = (D, o) => D[o] >= 200 && D[o] - D[o + 2] >= 100 && D[o + 1] >= 60, lum = (D, o) => 0.299 * D[o] + 0.587 * D[o + 1] + 0.114 * D[o + 2];
       let fireV = 0, smokeV = 0; for (let y = over[2]; y <= over[3]; y++) for (let x = over[0]; x <= over[1]; x++) { const o = (y * A.w + x) * 4;
-        if (flame(B.d, o) && !flame(B0.d, o)) fireV++; if (lum(B0.d, o) - lum(B.d, o) > 25) smokeV++; }
+        if (flame(B.d, o) && !flame(B0.d, o)) fireV++; if (lum(B0.d, o) - lum(B1.d, o) > 25) smokeV++; }
       // the draw calls: the car and its pieces against the car whole; its pieces alone
       const mine = R.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).map(d => d.mesh), cracks = v.crack.filter(q => q && q.visible).length;
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
