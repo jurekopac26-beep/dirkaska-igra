@@ -41,7 +41,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: 0.12, y: 1.22, near: 0.25, tilt: 0.06, style: 'closed' },   // (high and upright, as in a van; the roll cage round it)
         door: [1.12, -0.06], bumpF: 0.15, bumpR: 0.14, bumpY: [0.5, 0.56],
         engine: [-0.85, 0.68], engRear: true, cage: true,                    // (the race engine behind the seats, between the axles: its top)
-        crush: { x0: -2.29, x1: -0.55, z: 0.84 } },                          // (the roof over the engine sinks; the cage holds the cabin's)
+        crush: { x0: -2.34, x1: -0.55, z: 0.84 } },                          // (the roof over the engine sinks, the wing on it to its trailing edge; the cage holds the cabin's)
       wheels: { style: 'slick', w: 0.27, wR: 0.31, rim: [0.17, 0.17, 0.19], gap: 0.04 },
       // (the tailgate is its glass and the panel under it: the D-pillars beside the glass stay on the body with the tail lamps)
       regions: (std) => std.map(r => r.part === 'trunk' ? Object.assign({}, r, { bands: ['edge', 'crown'] }) : r),
@@ -119,11 +119,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.2, 0.09, 0, 0.28, 0.07, 1.5, 0, B);                                            // the diffuser
           for (const sd of [-1, 1]) K.exhaust(-2.37, 0.32, sd * 0.22, 0.05, 0.2, { n: 6 });       // (the V10's twin tailpipes)
         });
-        // ---- the wing across the roof's back edge: its plane in the stripe colour, the endplates in the paint, black struts (never crushed,
-        //      never dented) ----
+        // ---- the wing across the roof's back edge: its plane black (apart from the roof's stripes in any livery), overhanging the tail;
+        //      the endplates in the paint, black struts (never crushed, never dented) ----
         K.part('wing', () => {
-          K.wingPlank(-1.95, 1.7, -2.38, 1.73, 0.04, -0.9, 0.9, S);                               // (its top 1.77: 14 cm over the roof)
-          for (const sd of [-1, 1]) { K.endplate([[-1.93, 1.675], [-2.4, 1.675], [-2.4, 1.78], [-1.95, 1.755]], sd * 0.915, 0.014, P);
+          K.wingPlank(-1.95, 1.7, -2.46, 1.73, 0.04, -0.9, 0.9, B);                               // (its top 1.77: 14 cm over the roof)
+          for (const sd of [-1, 1]) { K.endplate([[-1.93, 1.675], [-2.48, 1.675], [-2.48, 1.78], [-1.95, 1.755]], sd * 0.915, 0.014, P);
             K.box(-2.16, 1.58, sd * 0.45, 0.14, 0.13, 0.025, 0, B); }
         }, { noCrush: true, noDent: true });
         // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard and the wheel; the race engine behind them (the
