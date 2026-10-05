@@ -20527,7 +20527,7 @@ const World = (function () {
     const skyT = def.sky ? rioSkyTex(def.sky, ownTex) : null;   // (the mountains mirrored in the lagoon)
     /* the lagoon: the water flat at its level, a shore band where it meets the terrain (the foam lapping at the waterline) */
     if (L) {
-      const WO = { len: 1.4, amp: 0.55, refl: 0.42, land: 0.35, shal: 0.6, lap: 0.35, surf: 0, sky: skyT && { tex: skyT, col: scene.fog.color } }, wMat = waterMat(tex, Object.assign({ color: 0x5a5e38 }, WO));   // (a murky green-brown lagoon, the mountains in it)
+      const WO = { len: 1.4, amp: 0.55, refl: 0.42, land: 0.35, shal: 0.6, lap: 0.35, surf: 0, sky: skyT && { tex: skyT, col: scene.fog ? scene.fog.color : new THREE.Color(0xd3dfe6) } }, wMat = waterMat(tex, Object.assign({ color: 0x5a5e38 }, WO));   // (a murky green-brown lagoon, the mountains in it)
       const shape = L.poly.map(([x, z]) => new THREE.Vector2(x, z)), tri = THREE.ShapeUtils.triangulateShape(shape, []), g = new GB(true), W1 = [1, 1, 1];
       for (const [a, b, c] of tri) { const A = L.poly[a], B = L.poly[b], C = L.poly[c], P3 = (q) => [q[0], L.y, q[1]], U = (q) => [q[0] / 30, -q[1] / 30]; g.quadUp(P3(A), P3(B), P3(C), P3(C), [W1, W1, W1, W1], [U(A), U(B), U(C), U(C)]); }
       const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
