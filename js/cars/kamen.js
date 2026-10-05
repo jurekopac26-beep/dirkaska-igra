@@ -12,13 +12,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.4, kv: 1.8, rmin: 8 },
     csp: { bx: 0.12, coast: -0.07, thr: -0.015, liftP: 0, pwr: 0.03, out: 1.1, turn: 0.7, w: 0.9, tv: 1.25 },   // (the AWD layer: steady, straightens quickly; its own bx, coast, thr, pwr, out, turn, w, tv)
     stats: { power: 10, grip: 1, weight: 1, drift: 10 },
-    price: 70000, pk: 'open', field: ['kamen'], fieldN: 7,
+    price: 70000, pk: 'open', field: ['kamen'], fieldN: 5,   // (5 rivals: its field and 40 of its pieces in view within the phone's budget)
     snd: { kind: 'diesel', hz: 0.85, turbo: 0.7, loud: 1.3 },
     expect: { t100: [6.01, 7.06], vmax: [135, 143], latG: [1.79, 1.89], d100: [33.7, 37.3] },
     partNames: { spareL: 'spare wheel', spareR: 'spare wheel' },
     parts: { set: 'truck', ht: 3.3, y0: 0.75,
       extra: {
-        hood: { lx: 0.7, y: 1.48 },                                                  // (the tilting front: the bonnet with its wings)
+        hood: { lx: 0.7, y: 1.48, h: 0.35 },                                         // (the tilting front: the bonnet with its wings; h: it lies 1.02 m tall)
         spareL: { z: 2, th: 0.62, m: 12, r: 0.6, h: 0.4, lx: -0.356, lz: -0.928, y: 1.88 },
         spareR: { z: 3, th: 0.62, m: 12, r: 0.6, h: 0.4, lx: -0.356, lz: 0.928, y: 1.88 },
       },
@@ -82,39 +82,42 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('body', () => {
           K.box(0.86, 3.02, 0, 0.14, 0.07, 1.74, 0, D);
           for (const z of [-0.66, -0.22, 0.22, 0.66]) {
-            K.cyl([0.8, 3.18, z], [0.96, 3.18, z], 0.1, D, { n: 8, capB: null });
-            K.discX(0.955, 3.18, z, 0.082, 8, K.lampHead, 1);
+            K.cyl([0.8, 3.18, z], [0.96, 3.18, z], 0.1, D, { n: 6, capB: null });
+            K.discX(0.955, 3.18, z, 0.082, 6, K.lampHead, 1);
           }
         }, { noCrush: true });
         // ---- the tilting front ('hood'): the wings over the front wheels (the loft cuts their tall arches, its tubs over the tyres), the
-        //      bonnet over the engine with its grille, the head lamps in the wings' fronts, the black arch flares, the front mud flaps ----
+        //      bonnet over the engine with its grille, the head lamps in the wings' fronts, the black arch flares ----
         K.part('hood', () => {
           const WG = K.loft(K.secs([[1.22, 1.22, 1.08, 1.6, 1.17, 1.66, 0.005, 'b', 0.08], [2.66, 1.22, 1.08, 1.6, 1.17, 1.66, 0.005, 'b', 0.08],
             [2.95, 1.17, 1.16, 1.48, 1.1, 1.55, 0.005, 'b', 0.08]]),
             (k, e, kind, at) => at.end ? P : e === 0 || e === 8 ? (at.arch ? B : D) : P, { lining: false, floor: false, arches: [{ x: K.fx }] });
-          WG.decal.side([[1.22, 1.5], [2.95, 1.5], [2.95, 1.66], [1.22, 1.66]], S, null, 0.008);   // (the stripe band on, cut by the arch, up to the wing's top)
+          for (const sd of [-1, 1]) {   // the stripe band on the wing's flat side over the arch, up to its belt (2.66: its taper to the nose, the belt falling to 1.48)
+            const zw = (x) => sd * (1.22 - 0.05 * Math.max(0, x - 2.66) / 0.29 + 0.008), f = (q) => { const r = q.map(([x, y]) => [x, y, zw(x)]); K.face(sd > 0 ? r : r.reverse(), S); };
+            f([[1.22, 1.5], [2.66, 1.5], [2.66, 1.6], [1.22, 1.6]]); f([[2.66, 1.5], [2.902, 1.5], [2.66, 1.6]]); }
           const BN = K.loft(K.secs([[1.22, 0.8, 1.45, 1.97, 0.74, 2.06, 0.03, 'b', 0.05], [2.86, 0.8, 1.4, 1.95, 0.74, 2.03, 0.03, 'b', 0.05],
-            [2.98, 0.78, 1.25, 1.91, 0.71, 1.98, 0.02, 'b', 0.05], [3.03, 0.75, 1.2, 1.85, 0.66, 1.91, 0.01, 'b', 0.05]]),
-            () => P, { lining: false, floor: false, arches: false });
+            [3.03, 0.75, 1.2, 1.85, 0.66, 1.91, 0.01, 'b', 0.05]]),
+            (k, e) => e === 0 || e === 8 ? null : P, { lining: false, floor: false, arches: false });   // (its bottom tuck inside the wings: none)
           for (const sd of [-1, 1]) BN.decal.top([[1.26, sd * 0.1], [2.98, sd * 0.1], [2.98, sd * 0.24], [1.26, sd * 0.24]], S, 0.008);   // the two bonnet stripes
           K.grille(3.033, 1.55, 0, 1.24, 0.6, { slats: 6, slatCol: [0.3, 0.31, 0.33], frame: D, frameH: 0.03 });
           for (const sd of [-1, 1]) { K.rect(2.6, 1.82, sd * 0.806, 0.46, 0.15, B, { dir: side(sd) }); for (const y of [1.79, 1.85]) K.rect(2.6, y, sd * 0.809, 0.44, 0.012, [0.3, 0.31, 0.33], { dir: side(sd) }); }   // the louvres in the bonnet's sides
           for (const sd of [-1, 1]) {
-            K.headLamp(2.955, 1.36, sd * 0.96, 0.07, { shape: 'rect', w: 0.34, h: 0.15, ring: B });
+            K.headLamp(2.955, 1.36, sd * 0.96, 0.07, { shape: 'rect', w: 0.34, h: 0.15, ring: null }); K.rect(2.952, 1.36, sd * 0.96, 0.364, 0.174, B);   // (its black frame flat on the wing's face)
             K.rect(2.952, 1.2, sd * 0.98, 0.2, 0.07, K.rgb(0xf29a1a), { dir: 'x' });           // the indicator under it
-            K.flare(K.fx, 0.75, 0.86, sd * 1.19, sd * 1.26, B, { a0: 0.72, a1: Math.PI - 0.72, n: 6 });
-            for (const dx of [-1, 1]) K.rect(1.24 + dx * 0.01, 0.76, sd * 1.03, 0.42, 0.68, B, { dir: dx < 0 ? '-x' : 'x' });   // the mud flap behind the front wheel
+            K.flare(K.fx, 0.75, 0.86, sd * 1.19, sd * 1.26, B, { a0: 0.72, a1: Math.PI - 0.72, n: 5 });
           }
         }, { hinge: [[2.95, 1.15, -1.0], [2.95, 1.15, 1.0]] });
+        // (the mud flaps behind the front wheels hang from the cab's floor, not from the tilting front: they stay when it goes)
+        for (const sd of [-1, 1]) for (const dx of [-1, 1]) K.rect(1.24 + dx * 0.01, 0.86, sd * 1.02, 0.38, 0.88, B, { dir: dx < 0 ? '-x' : 'x', part: 'body' });
         // ---- the steel bumper with the grille guard over the grille and the lamps, the towing hooks ----
         K.part('bumperF', () => {
           K.box(3.01, 0.86, 0, 0.22, 0.28, 2.36, 0, STL, D);
           for (const sd of [-1, 1]) K.box(3.11, 0.93, sd * 0.42, 0.1, 0.1, 0.07, 0, RED);
           const GG = [0.5, 0.51, 0.53];   // (the guard's tubes: light steel against the black grille)
-          for (const z of [-0.74, -0.3, 0.3, 0.74]) K.bar([3.1, 1.12, z], [3.1, 1.9, z], 0.035, GG, { n: 6 });
-          K.bar([3.1, 1.9, -0.76], [3.1, 1.9, 0.76], 0.035, GG, { n: 6 });
-          K.bar([3.1, 1.5, -0.76], [3.1, 1.5, 0.76], 0.035, GG, { n: 6 });
-          for (const sd of [-1, 1]) K.bar([3.1, 1.5, sd * 0.74], [3.0, 1.45, sd * 1.16], 0.035, GG, { n: 6 });
+          for (const z of [-0.74, -0.3, 0.3, 0.74]) K.bar([3.1, 1.12, z], [3.1, 1.9, z], 0.035, GG, { n: 4 });
+          K.bar([3.1, 1.9, -0.76], [3.1, 1.9, 0.76], 0.035, GG, { n: 4 });
+          K.bar([3.1, 1.5, -0.76], [3.1, 1.5, 0.76], 0.035, GG, { n: 4 });
+          for (const sd of [-1, 1]) K.bar([3.1, 1.5, sd * 0.74], [3.0, 1.45, sd * 1.16], 0.035, GG, { n: 4 });
         }, { hinge: [[2.92, 0.9, -1.0], [2.92, 0.9, 1.0]] });
         // ---- the service body: a box narrower than the cab (the spare wheels stand on its flanks), its roof hatch, the lockers on its sides,
         //      the rear door, the tail lamps, the ladder ----
@@ -147,13 +150,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }
         for (const z of [0.5, 0.78]) K.bar([-3.15, 0.98, z], [-3.15, 2.81, z], 0.02, D, { n: 4 });   // the ladder up to the roof (its rungs facing back)
         for (let i = 0; i < 5; i++) K.rect(-3.152, 1.2 + i * 0.35, 0.64, 0.28, 0.03, D, { dir: '-x' });
-        // ---- the spare wheels standing on the flanks behind the cab (a rival's detail of the wheel, its rim's face as the road wheels'), each
-        //      clamped at its hub (never dented) ----
+        // ---- the spare wheels standing on the flanks behind the cab (a rival's detail of the wheel: its rim's face the road wheels' colour),
+        //      each clamped at its hub (never dented) ----
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'spareL' : 'spareR', () => {
           K.tyre(-1.12, 1.88, sd * 1.08, { axis: 'z', face: sd, w: 0.38 });
-          const rim = [0, 1, 2, 3, 4, 5, 6, 7].map(i => [-1.12 + Math.cos(i * Math.PI / 4) * 0.29, 1.88 + Math.sin(i * Math.PI / 4) * 0.29, sd * 1.273]);
-          K.face(sd > 0 ? rim : rim.reverse(), K.wheels.rim);
-          K.cyl([-1.12, 1.88, sd * 1.26], [-1.12, 1.88, sd * 1.3], 0.09, D, { n: 6 });
+          K.cyl([-1.12, 1.88, sd * 1.26], [-1.12, 1.88, sd * 1.3], 0.09, D, { n: 5, capA: null });   // (its inner end in the tyre)
         }, { noDent: true, hinge: [[-1.75, 1.26, sd * 0.92], [-0.5, 1.26, sd * 0.92]] });
         for (const sd of [-1, 1]) K.box(-1.12, 1.18, sd * 1.0, 1.0, 0.07, 0.22, 0, FRM);   // (their cradles on the frame)
         // ---- the frame, the axles, the drive shafts, the fuel tanks, the steps, the rear mud guards and flaps ----
@@ -161,15 +162,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.box(-0.05, 0.94, sd * 0.45, 6.0, 0.24, 0.1, 0, FRM);
           for (const x of [-2.95, 2.85]) K.box(x, 0.98, 0, 0.1, 0.16, 0.8, 0, FRM);
           K.box(K.fx, 0.56, 0, 0.16, 0.16, 1.7, 0, D); K.box(K.fx, 0.44, 0, 0.36, 0.3, 0.4, 0, D);
-          K.cyl([K.rx, 0.65, -0.86], [K.rx, 0.65, 0.86], 0.1, D, { n: 8 }); K.box(K.rx, 0.42, 0, 0.4, 0.4, 0.42, 0, D);
+          K.cyl([K.rx, 0.65, -0.86], [K.rx, 0.65, 0.86], 0.1, D, { n: 6 }); K.box(K.rx, 0.42, 0, 0.4, 0.4, 0.42, 0, D);
           K.cyl([1.5, 0.84, 0], [K.rx + 0.2, 0.6, 0], 0.06, D, { n: 6, capA: null, capB: null });
           K.cyl([1.5, 0.84, 0.06], [K.fx - 0.2, 0.6, 0.06], 0.06, D, { n: 6, capA: null, capB: null });
           for (const sd of [-1, 1]) K.box(-0.98, 0.7, sd * 0.72, 0.95, 0.45, 0.42, 0, AL);
           for (const sd of [-1, 1]) {
             for (const y of [0.66, 1.0]) K.box(0.72, y, sd * 1.08, 0.55, 0.05, 0.22, 0, STL);
             for (const x of [0.46, 0.98]) K.rect(x, 0.99, sd * 1.12, 0.05, 0.66, FRM, { dir: side(sd) });   // (their hangers)
-            K.flare(K.rx, 0.71, 0.79, sd * 0.78, sd * 1.26, B, { a0: 0.5, a1: Math.PI - 0.1, n: 7 });
-            K.box(-2.98, 0.32, sd * 1.03, 0.02, 0.6, 0.42, 0, B);
+            K.flare(K.rx, 0.71, 0.79, sd * 0.78, sd * 1.26, B, { a0: 0.5, a1: Math.PI - 0.1, n: 5 });
+            for (const dx of [-1, 1]) K.rect(-2.98 + dx * 0.01, 0.62, sd * 1.03, 0.42, 0.6, B, { dir: dx < 0 ? '-x' : 'x' });   // (the mud flap behind it)
           }
         });
         // ---- the rear bumper bar across the frame's end, the towing hitch, the reflectors ----
