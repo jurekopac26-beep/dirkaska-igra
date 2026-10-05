@@ -1,8 +1,9 @@
 /* =========================================================================
-   GARAGE 3D — the garage (garaza.html): the workshop, the car on its turntable lift, the parts of its upgrades, and an animation for
-   every change (a new car drives in, a part is fitted, the car is washed, mended, serviced, painted).
+   GARAGE 3D — the garage (garaza.html): the workshop, the car on its turntable with the single-post lift behind it, the parts of its
+   upgrades, and an animation for every change (a new car drives in, a part is fitted, the car is washed, mended, serviced, painted).
    The cars are the race's own meshes (Render.garageCar); the room is a scene of its own, drawn with the renderer Render.init made.
-   Car space: x forward, y up, z to the right (as the race's). The car stands on the turntable at the room's centre, its nose to +x.
+   Car space: x forward, y up, z to the right (as the race's). The car stands on the turntable at the room's centre, its nose to +x (the
+   table no longer turns nor rises: the camera goes round the car, the lift raises it).
    ========================================================================= */
 const Garage3D = (function () {
   'use strict';
@@ -19,7 +20,7 @@ const Garage3D = (function () {
   const hexRgb = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
 
   let renderer = null, scene = null, camera = null, W = 2, H = 1, time = 0, ready = false;
-  let tt = null, ttTop = null, lift = 0, ttAng = 0, scis = null, env = null, cubeRT = null;
+  let tt = null, ttTop = null, lift = 0, env = null, cubeRT = null;   // (lift: the car's height on the lift)
   let floorMat = null, refl = null, keyLight = null;
   let cur = null;   // the car on the turntable: { M, spec, v (Render's view), root, kit, parts, ... }
   let hud = () => {};   // (the page's overlay: hud(kind, data))
@@ -40,7 +41,8 @@ const Garage3D = (function () {
   /* ---------------- coroutines: every animation is a generator stepped once a frame with the frame's dt ---------------- */
   const tasks = [];
   let speed = 1;   // (a tap on the picture: the animation runs faster)
-  function spawn(gen) { let res; const p = new Promise(r => { res = r; }); const t = { g: gen, res }; tasks.push(t); stepTask(t, 0); return p; }
+  function spawn(gen, quiet) { let res; const p = new Promise(r => { res = r; }); const t = { g: gen, res, quiet }; tasks.push(t); stepTask(t, 0); return p; }
+  const moving = () => { for (const t of tasks) if (!t.quiet) return true; return false; };   // (quiet: a task that moves nothing (a measurement): the picture needs no redraw for it)
   function stepTask(t, dt) { if (t.done) return; let r; try { r = t.g.next(dt); } catch (e) { console.error(e); r = { done: true }; } if (r.done) { t.done = true; t.res(r.value); } }
   let fast = 1;   // (tests: the animations' time runs this much faster)
   function runTasks(dt) { for (let i = 0; i < tasks.length; i++) stepTask(tasks[i], dt); for (let i = tasks.length - 1; i >= 0; i--) if (tasks[i].done) tasks.splice(i, 1); }
@@ -251,13 +253,13 @@ const Garage3D = (function () {
       const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(236,240,245,0.35)'); gr.addColorStop(1, 'rgba(236,240,245,0.15)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       for (let x = 2; x < w; x += 4) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(x, 0, 1, h); }
       for (const [x, k] of [[30, 0.18], [66, 0.1]]) { const s = g.createLinearGradient(x, 0, x + 26, 0); s.addColorStop(0, 'rgba(255,255,255,0)'); s.addColorStop(0.5, 'rgba(255,255,255,' + k + ')'); s.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = s; g.save(); g.transform(1, 0, -0.6, 1, 0, 0); g.fillRect(x, 0, 26 + h, h); g.restore(); } });
-    // the back-lit sign: the game's own name, channel letters (each one's dark side under it, then the lit face)
-    TX.sign = canvasTex(1024, 256, (g, w, h) => {
-      g.font = 'italic 900 150px Roboto, "Arial Black", Arial, sans-serif'; g.textBaseline = 'middle';
-      const a = g.measureText('APEX ').width, b = g.measureText('RACING').width, x = (w - a - b) / 2;
-      g.fillStyle = 'rgba(14,15,18,0.9)'; g.fillText('APEX', x + 5, h / 2 + 13); g.fillText('RACING', x + a + 5, h / 2 + 13);
-      g.shadowColor = 'rgba(255,190,40,0.9)'; g.shadowBlur = GLOW.blur; g.fillStyle = '#ffd23f'; g.fillText('APEX', x, h / 2 + 6);
-      g.shadowColor = 'rgba(160,210,255,0.9)'; g.fillStyle = '#f4f8ff'; g.fillText('RACING', x + a, h / 2 + 6);
+    // the back-lit sign: the game's own name, channel letters in two lines of one width (each one's dark side under it, then the lit face;
+    // two lines: it fits left of the lift's column as the home view sees it; 237 texels a metre, as the old one's 256)
+    TX.sign = canvasTex(512, 256, (g, w, h) => {
+      const F = (px) => 'italic 900 ' + px + 'px Roboto, "Arial Black", Arial, sans-serif', W = 380; g.textBaseline = 'alphabetic'; g.textAlign = 'center';
+      g.font = F(50); const sa = 50 * W / g.measureText('APEX').width, sb = 50 * W / g.measureText('RACING').width, ya = 20 + sa * 0.72, yb = ya + 17 + sb * 0.72;
+      const line = (t, px, y, col, glow) => { g.font = F(px); g.shadowBlur = 0; g.fillStyle = 'rgba(14,15,18,0.9)'; g.fillText(t, w / 2 + 3, y + 4.5); g.shadowColor = glow; g.shadowBlur = GLOW.blur / 2; g.fillStyle = col; g.fillText(t, w / 2, y); };
+      line('APEX', sa, ya, '#ffd23f', 'rgba(255,190,40,0.9)'); line('RACING', sb, yb, '#f4f8ff', 'rgba(160,210,255,0.9)');
     });
     // the car's contact shadow: a rounded rectangle, darkest under the body, soft at its edge (on the blob plane: len x 1.25, wid x 1.45)
     TX.under = canvasTex(128, 128, (g, w, h) => {
@@ -375,7 +377,7 @@ const Garage3D = (function () {
 
   /* ---------------- the room ---------------- */
   // the workshop: 18 m x 14 m, 4.8 m high. The back wall (z = -5) faces the camera; a roll-up door in each side wall (x = +-9, 5 m wide):
-  // the cars drive in through the left one and out through the right one. In the middle of the floor the turntable, a lift under it.
+  // the cars drive in through the left one and out through the right one. In the middle of the floor the turntable, the lift behind it.
   const ROOM = { x0: -9, x1: 9, z0: -5, z1: 9, h: 4.8, door: 2.5, doorH: 3.9, R: 3.0 };
   let signGlow = null, ringMat = null, ringGlow = null, motes = null, monitor = null;
 
@@ -502,7 +504,7 @@ const Garage3D = (function () {
         if (!m) { m = o.material.clone(); if (decorEnv.includes(o.material)) decorEnv.push(m);
           if (m.transparent) { m.userData.op = m.opacity; p.fades.push(m); } else hideMat(m, p.u, m.userData.gl); done.set(o.material, m); }
         o.material = m; });
-      p.box.setFromObject(p.root); p.box.expandByScalar(0.05); p.boxH = p.box.clone().expandByScalar(0.06);
+      p.box.setFromObject(p.root); if (p.boxIn) p.box.intersect(p.boxIn); p.box.expandByScalar(0.05); p.boxH = p.box.clone().expandByScalar(0.06);
       p.g = p.sm = p.gl = null;   // (the builders' arrays: in the meshes now, the phone's memory back)
     }
   }
@@ -510,19 +512,28 @@ const Garage3D = (function () {
   const _ray = new THREE.Ray(), _hit = new V3(), CORN = [new V3()], _cp = [new V3()];   // (the car's middle, its sills and its roof, on the table)
   for (const x of [-2.2, -1.1, 0, 1.1, 2.2]) for (const z of [-1, 1]) { CORN.push(new V3(x, 0.25, z)); _cp.push(new V3()); }
   for (const x of [-1.4, 0, 1.4]) { CORN.push(new V3(x, 1.25, 0)); _cp.push(new V3()); }
+  const LIFT_SKIP = CORN.map(q => Math.abs(q.x) > 2);   // (the lift's column: the sills' far ends not counted)
+  // (box b between the camera c and the point q)
+  const hides = (b, c, q) => { _ray.origin.copy(c); _ray.direction.subVectors(q, c); const L = _ray.direction.length(); _ray.direction.divideScalar(L); return !!_ray.intersectBox(b, _hit) && _hit.distanceTo(c) < L; };
   function stepPieces(dt) {
     const c = camera.position; tt.updateMatrixWorld();
-    _cp[0].set(rig.tx, rig.ty, rig.tz); for (let i = 1; i < CORN.length; i++) tt.localToWorld(_cp[i].copy(CORN[i]));
+    _cp[0].set(rig.tx, rig.ty, rig.tz); for (let i = 1; i < CORN.length; i++) tt.localToWorld(_cp[i].copy(CORN[i])).y += lift;   // (the car up on the lift: its points with it)
     for (const p of pieces) {   // (one gone comes back a little further out: held still at the edge, the camera's breathing does not flick it)
       let want = false; const h = p.want ? 1 : 0, bx = h ? p.boxH : p.box;
       if (p.wall) { want = p.wall[0] * c.x + p.wall[1] * c.z - p.wall[2] < 0.4 + 0.1 * h; for (const b of p.solid) if (b.distanceToPoint(c) < 0.3 + 0.1 * h) want = true;   // (or in its tall furniture)
         if (want && p.boxH.containsPoint(c)) p.k = 1; }   // (the camera in among its things (a view's way cuts a corner): gone at once, not a dark veil fading over the picture)
+      else if (p.lift) {   // (the lift: at work it stays, it holds the car up (its arms hang from it): only the camera in it takes it away; at rest
+        // its slim column goes when it hides two of the car's inner points (beside the car's ends, over a corner, it stays)
+        const at = LIFT.on || LIFT.s > 1e-3; if (bx.distanceToPoint(c) < (at ? 0.35 : p.near) + (at ? 0.1 : 0.15) * h) want = true;
+        else if (!at) { let n = 0; for (let i = 0; i < _cp.length && n < 2; i++) if (!LIFT_SKIP[i] && hides(bx, c, _cp[i])) n++; want = n >= 2; } }
       else if (bx.distanceToPoint(c) < p.near + 0.15 * h) want = true;
-      else for (const q of _cp) { _ray.origin.copy(c); _ray.direction.subVectors(q, c); const L = _ray.direction.length(); _ray.direction.divideScalar(L); if (_ray.intersectBox(bx, _hit) && _hit.distanceTo(c) < L) { want = true; break; } }
+      else for (const q of _cp) if (hides(bx, c, q)) { want = true; break; }
       p.want = want; p.k = want ? Math.min(1, p.k + dt * 5) : Math.max(0, p.k - dt * 5);
       p.u.value = p.k; if ((p.k < 0.999) !== p.root.visible) { p.root.visible = !p.root.visible; shadowDirty = 2; }   // (gone or back: its shadow too)
       for (const m of p.fades) m.opacity = m.userData.op * (1 - p.k);
     }
+    // (the lift's carriage and arms: stowed they go with the column; out under the car they stay, they carry it)
+    const lk = LIFT.s > 1e-3 || LIFT.on ? 0 : LIFT.piece.k; LIFT.u.value = lk; if ((lk < 0.999) !== LIFT.mesh.visible) { LIFT.mesh.visible = !LIFT.mesh.visible; shadowDirty = 2; }
   }
 
   function buildRoom() {
@@ -722,11 +733,13 @@ const Garage3D = (function () {
       warn(T, 1.55, 1.75, 0.3);
       for (let i = 0; i < 6; i++) { const s = 1.38 + i * 0.168; obox(g, T(s, 2.0, 0.06), T(s, 4.42, 0.06), 0.035, 0.035, CND); obox(g, T(s, 4.42, 0.06), T(s, 4.42, 1.27), 0.035, 0.035, CND); } }
     // the sign: channel letters on a black acrylic backing with a brushed edge; its glow on the wall round it
-    { const { T } = WF.back, s = -2.5 - x0; g = PB.g; lbox(T, s - 2.2, s + 2.2, 2.2, 3.36, 0, 0.05, [0.55, 0.57, 0.6], null, 'b');
-      g.quadO(T(s - 2.18, 2.22, 0.0505), T(s + 2.18, 2.22, 0.0505), T(s + 2.18, 3.34, 0.0505), T(s - 2.18, 3.34, 0.0505), [0.06, 0.07, 0.09], T(s, 2.78, -1)); }
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
-    signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: GLOW.sign }));
-    signGlow.position.set(-2.5, 2.78, z0 + 0.03); PB.root.add(signGlow);
+    // (left of the lift's column as the home view sees it: from 0.2 m off the steel column to clear of the lift's)
+    const SX0 = -3.2;
+    { const { T } = WF.back, s = SX0 - x0; g = PB.g; lbox(T, s - 1.15, s + 1.15, 2.2, 3.36, 0, 0.05, [0.55, 0.57, 0.6], null, 'b');
+      g.quadO(T(s - 1.13, 2.22, 0.0505), T(s + 1.13, 2.22, 0.0505), T(s + 1.13, 3.34, 0.0505), T(s - 1.13, 3.34, 0.0505), [0.06, 0.07, 0.09], T(s, 2.78, -1)); }
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.16, 1.08), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(SX0, 2.78, z0 + 0.06); PB.root.add(sign);
+    signGlow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.9), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: GLOW.sign }));
+    signGlow.position.set(SX0, 2.78, z0 + 0.03); PB.root.add(signGlow);
     // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows; their light: the room light's,
     // their lenses: the lamps' mesh)
     g = PB.g;
@@ -2567,35 +2580,260 @@ const Garage3D = (function () {
     monTexObj.needsUpdate = true;
   }
 
-  /* ---------------- the turntable: a steel disc flush with the floor on a scissor lift in a pit ---------------- */
+  /* ---------------- the turntable: a steel disc flush with the floor (it neither turns nor rises: the camera goes round the car, the
+     lift behind it raises it) ---------------- */
   function buildTurntable() {
     const R = ROOM.R;
     tt = new THREE.Group(); scene.add(tt);
     ttTop = new THREE.Group(); tt.add(ttTop);
     const discTop = new THREE.Mesh(new THREE.CircleGeometry(R, 96), floorMaterial(TX.disc, 0.8, { rough: 1.6, metal: 0.75 }));   // (brushed steel: the car soft in it, not a chrome mirror)
     discTop.rotation.x = -Math.PI / 2; discTop.position.y = 0.002; discTop.receiveShadow = true; ttTop.add(discTop);
-    // its edge in hazard stripes (the doors' atlas: a period a facet), its underside (a dark texel of the grate's); with the pit's wall
-    // and floor drawn only while the table is up (at rest they lie under the table and the ring: setLift)
-    const rg = new World.GB(true), A = 1 / 256, n = 96, P = (a, y) => [Math.cos(a) * R, y, Math.sin(a) * R], WH = [1, 1, 1], hv = (4 + 120 * 0.12 / (TAU * R / n)) * A;
-    for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU; rg.quadO(P(a0, -0.118), P(a1, -0.118), P(a1, 0.002), P(a0, 0.002), WH, [0, -0.058, 0], [[4 * A, 4 * A], [124 * A, 4 * A], [124 * A, hv], [4 * A, hv]]);
-      if (i % 2 === 0) { rg.dUV = [152 * A, 0.25]; rg.triO([0, -0.118, 0], P(a0, -0.118), P(i + 2 < n ? (i + 2) / n * TAU : TAU, -0.118), WH, [0, 0, 0]); rg.dUV = null; } }
-    const rim = new THREE.Mesh(rg.geometry(), new THREE.MeshLambertMaterial({ map: TX.doorA })); tt.add(rim);
-    // the pit (seen only with the table up): its wall, its floor, the scissor lift
-    const pit = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.07, R + 0.07, 1.0, 64, 1, true), new THREE.MeshLambertMaterial({ color: 0x24272d, side: THREE.BackSide })); pit.position.y = -0.5; scene.add(mainOnly(pit));
-    const pf = new THREE.Mesh(new THREE.CircleGeometry(R + 0.07, 48), new THREE.MeshLambertMaterial({ color: 0x101114 })); pf.rotation.x = -Math.PI / 2; pf.position.y = -1.0; scene.add(mainOnly(pf));
-    scis = { bars: [], low: [rim, pit, pf], mat: new THREE.MeshPhongMaterial({ color: 0xd9a514, specular: 0x555555, shininess: 40 }) };
-    for (const z of [-1.1, 1.1]) for (const k of [0, 1]) for (const lvl of [0, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.09, 0.08), scis.mat); b.userData = { z: z + (k ? 0.1 : -0.1), k, lvl }; scene.add(b); scis.bars.push(b); }
-    const ram = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1, 12), new THREE.MeshPhongMaterial({ color: 0xc8ccd2, specular: 0xffffff, shininess: 120 })); scene.add(ram); scis.ram = ram;
-    setLift(0);
+    buildLift();
   }
+
+  /* ---------------- the lift: a single-post lift behind the car (the far side from the home view), always there ----------------
+     The column (blue powder coat, its edges cut off) on its base plate (yellow-black edges, the same band round the column's foot), the
+     hydraulic power unit on its back, the controls and a blank plate on its side: a free piece (it dissolves when it comes between the
+     camera and the car; not while it holds the car up). On its inner face the carriage runs up and down; under its crosshead two pins (a
+     front and a rear one), each with two telescopic swing arms on it (the outer tube in the column's blue, two zinc ones in it, a rubber
+     pad in a yellow cup on a screw at the end, a height adapter on the screw when it would stand out far): a long one down, which passes
+     under the car to its near sill, a short one up, to its far sill. The carriage and the arms are built once and their vertices moved as
+     they move (poseLift): the carriage goes with the column; the arms, out under the car, never dissolve (they carry it), stowed they go
+     with the column.
+     Stowed (whenever nothing is lifted) the arms lie along x in front of the column, out of the cars' lane (|z| > 1.38): the front pin's
+     pointing back, the rear pin's forward (each pair swings in on the side where the car's far wheels are beyond its reach; the rear
+     pair after the front one: it passes the front pin). A lift: the arms swing in, run out to the pads, the screws turn up to each
+     pad's height, the carriage takes up the slack till the pads touch, then the car goes up with it (setLift: its v.grp). ---------------- */
+  const LIFT = { x: 0, z: -1.72, hz: 0.115, c0: 0.04, du: 0.055, s: 0, c: 0.04, on: false, plan: null, mesh: null, piece: null, u: { value: 0 }, geo: null, cmesh: null, n0: 0, q: null,
+    // (each arm: its pin, its level (1 up: the short ones), its stowed angle (in the floor's plane: 0 along +x, pi/2 along +z), its length
+    // collapsed (pin to pad), the car's end it lifts (1 the front), the sill (1 the near one, +z); stowed the front pin's pads and
+    // knuckles keep 1.38 m off the middle, the rear pin's long arm's pad clears the front pin's short arm, its knuckle the column)
+    arms: [{ p: [0.64, -1.445], lv: 0, a0: Math.PI, lc: 1.15, end: 1, sd: 1 }, { p: [0.64, -1.445], lv: 1, a0: Math.PI, lc: 0.58, end: 1, sd: -1 },
+      { p: [-0.64, -1.55], lv: 0, a0: 0, lc: 1.15, end: -1, sd: 1 }, { p: [-0.64, -1.55], lv: 1, a0: 0, lc: 0.58, end: -1, sd: -1 }] };
+  // (a pad's top over its arm's middle, its screw left out: half the outer tube, the collar, the rubber; the screw's reach and its height
+  // stowed; an arm's reach: each inner tube runs out till 8 cm of it are left in the one round it; the carriage's lowest (the arms'
+  // tubes 2 mm over the disc); the screw's run before an adapter goes on it, the screw the arms are built with)
+  const PADH = 0.0565, PMIN = 0.008, PMAX = 0.24, PDEF = 0.02, armMax = (A) => 3 * A.lc - 0.5, CMIN = 0.0245, SX = 0.06, PB0 = 0.15;
+  const LBL = [0.08, 0.22, 0.58], LBLt = [0.12, 0.29, 0.69], LBLd = [0.05, 0.14, 0.4], LZN = [0.6, 0.62, 0.65], LAR = [0.35, 0.37, 0.41], LRB = [0.1, 0.1, 0.105], LYL = [0.92, 0.7, 0.1];   // (the lift's blue, its top faces, its ribs; the zinc of the inner tubes; dark steel; the rubber; safety yellow)
+  // yellow and black stripes at 45 degrees on a rectangle: from its corner o along u (w long) and across it along v (h), a point inside
+  // what they lie on; the yellow ones only (laid over black), each clipped to the rectangle
+  function hazard(g, o, u, v, w, h, pitch, inside) {
+    const P = (a, b) => [o[0] + u[0] * a + v[0] * b, o[1] + u[1] * a + v[1] * b, o[2] + u[2] * a + v[2] * b], YL = [0.92, 0.7, 0.1];
+    const clip = (pts, x0, sg) => { const out = []; for (let j = 0; j < pts.length; j++) { const a = pts[j], b = pts[(j + 1) % pts.length], ia = sg * (a[0] - x0) >= 0, ib = sg * (b[0] - x0) >= 0;
+      if (ia) out.push(a); if (ia !== ib) out.push([x0, a[1] + (b[1] - a[1]) * (x0 - a[0]) / (b[0] - a[0])]); } return out; };
+    for (let i = -Math.ceil(h / pitch) - 1; i * pitch < w; i++) { if (i & 1) continue;
+      const q = clip(clip([[i * pitch, 0], [(i + 1) * pitch, 0], [(i + 1) * pitch + h, h], [i * pitch + h, h]], 0, 1), w, -1);
+      for (let j = 1; j + 1 < q.length; j++) g.triO(P(...q[0]), P(...q[j]), P(...q[j + 1]), YL, inside); }
+  }
+  // an upright prism round (cx, cz): a box 2 hx by 2 hz with its upright edges cut off by ch, from y0 to y1 (its top capped)
+  function prism(g, cx, cz, hx, hz, ch, y0, y1, col, top) {
+    const q = [[hx - ch, hz], [-hx + ch, hz], [-hx, hz - ch], [-hx, -hz + ch], [-hx + ch, -hz], [hx - ch, -hz], [hx, -hz + ch], [hx, hz - ch]], c = [cx, (y0 + y1) / 2, cz], P = (i, y) => [cx + q[i % 8][0], y, cz + q[i % 8][1]];
+    for (let i = 0; i < 8; i++) g.quadO(P(i, y0), P(i + 1, y0), P(i + 1, y1), P(i, y1), col, c);
+    for (let i = 1; i < 7; i++) g.triO(P(0, y1), P(i, y1), P(i + 1, y1), top || col, c);
+  }
+  function buildLift() {
+    const P = LIFT.piece = piece(), g = P.g, gl = (k) => gloss(P, k), box = (...a) => fbox(g, ...a), { x: X, z: Z, hz: HZ } = LIFT, zf = Z + HZ, zb = Z - HZ, xs = X + 0.18;
+    const DK = PAL.dk, ST = PAL.steel, PL = [0.24, 0.25, 0.27], BLK = [0.07, 0.07, 0.08];
+    P.lift = true; P.near = 2.2; P.boxIn = new THREE.Box3(new V3(X - 0.24, 0, Z - 0.32), new V3(X + 0.3, 3.1, Z + 0.16));   // (what can stand in the way: the column, not the plate round it)
+    // the base plate (its tread a shade lighter on top), its edges in yellow and black, the anchor bolts: flush with the column's face at
+    // the front (the stowed rear arms lie on the disc before it, a low car's arms down by the disc)
+    const pz0 = zf, pz1 = -2.24, pzc = (pz0 + pz1) / 2, pd = pz0 - pz1, ps = pd - 0.14;
+    gl(1.3); box(X, 0, pzc, 1.12, 0.012, pd, PL, [0.29, 0.3, 0.32]);
+    gl(PAINT); const yt = 0.015, ins = [X, -1, pzc];
+    for (const [bx, bz, sx, sz] of [[X, pz0 - 0.035, 1.12, 0.07], [X, pz1 + 0.035, 1.12, 0.07], [X - 0.525, pzc, 0.07, ps], [X + 0.525, pzc, 0.07, ps]]) box(bx, 0.012, bz, sx, 0.0015, sz, BLK);
+    hazard(g, [X - 0.56, yt, pz0], [1, 0, 0], [0, 0, -1], 1.12, 0.07, 0.07, ins); hazard(g, [X + 0.56, yt, pz1], [-1, 0, 0], [0, 0, 1], 1.12, 0.07, 0.07, ins);
+    hazard(g, [X - 0.56, yt, pz1 + 0.07], [0, 0, 1], [1, 0, 0], ps, 0.07, 0.07, ins); hazard(g, [X + 0.56, yt, pz0 - 0.07], [0, 0, -1], [-1, 0, 0], ps, 0.07, 0.07, ins);
+    gl(METAL); for (const [bx, bz] of [[-0.4, -1.71], [0.4, -1.71], [-0.4, -2.12], [0.4, -2.12], [-0.13, -2.12], [0.13, -2.12]]) cylA(g, [X + bx, 0.019, bz], 'y', 0.02, 0.014, 6, ST);
+    // the column: its foot in yellow and black (on all four faces), its slot on the inner face (the lock's teeth in it, a steel rail
+    // either side: the carriage runs there), the cap; a blank plate and the controls on its side (up, down, the red stop on yellow)
+    gl(PAINT); prism(g, X, Z, 0.18, HZ, 0.025, 0.012, 0.24, BLK); prism(g, X, Z, 0.18, HZ, 0.025, 0.24, 2.98, LBL, LBLt);
+    hazard(g, [X - 0.155, 0.012, zf + 0.003], [1, 0, 0], [0, 1, 0], 0.31, 0.228, 0.075, [X, 0.1, Z]); hazard(g, [X + 0.155, 0.012, zb - 0.003], [-1, 0, 0], [0, 1, 0], 0.31, 0.228, 0.075, [X, 0.1, Z]);
+    hazard(g, [xs + 0.003, 0.012, zf - 0.025], [0, 0, -1], [0, 1, 0], 2 * HZ - 0.05, 0.228, 0.075, [X, 0.1, Z]); hazard(g, [X - 0.183, 0.012, zb + 0.025], [0, 0, 1], [0, 1, 0], 2 * HZ - 0.05, 0.228, 0.075, [X, 0.1, Z]);
+    g.quadO([X - 0.045, 0.3, zf + 0.002], [X + 0.045, 0.3, zf + 0.002], [X + 0.045, 2.84, zf + 0.002], [X - 0.045, 2.84, zf + 0.002], [0.035, 0.038, 0.045], [X, 1.5, Z]);
+    for (let y = 0.36; y < 2.8; y += 0.1) g.quadO([X - 0.045, y, zf + 0.004], [X + 0.045, y, zf + 0.004], [X + 0.045, y + 0.022, zf + 0.004], [X - 0.045, y + 0.022, zf + 0.004], [0.2, 0.21, 0.23], [X, y, Z]);
+    gl(METAL); for (const s of [-1, 1]) box(X + s * 0.062, 0.26, zf + 0.004, 0.032, 2.6, 0.012, LZN);
+    gl(PAINT); box(X, 2.98, Z, 0.42, 0.055, 0.34, DK, [0.17, 0.18, 0.2]); box(X, 3.035, Z, 0.22, 0.05, 0.16, [0.16, 0.17, 0.19]);
+    box(xs + 0.002, 1.42, Z, 0.006, 0.2, 0.13, [0.82, 0.83, 0.8]); box(xs + 0.006, 1.6, Z, 0.004, 0.02, 0.13, [0.92, 0.7, 0.1]);   // (the plate: no words on it)
+    box(xs + 0.03, 0.98, Z - 0.035, 0.06, 0.24, 0.15, [0.15, 0.16, 0.18]);   // the controls (behind the carriage's guides)
+    box(xs + 0.061, 1.14, Z, 0.004, 0.04, 0.04, [0.12, 0.55, 0.22]); box(xs + 0.061, 1.08, Z, 0.004, 0.04, 0.04, [0.06, 0.06, 0.07]);
+    cylA(g, [xs + 0.064, 1.1, Z - 0.075], 'x', 0.032, 0.008, 12, [0.92, 0.7, 0.1]); cylA(g, [xs + 0.078, 1.1, Z - 0.075], 'x', 0.021, 0.022, 10, [0.72, 0.1, 0.08]);
+    // the power unit on its back: the plate, the oil tank (grey plastic), the pump, the motor and its fan cover; the pressure line into
+    // the column, the motor's lead down to the floor
+    box(X, 0.72, zb - 0.006, 0.3, 0.56, 0.012, DK); box(X - 0.03, 0.76, zb - 0.088, 0.22, 0.27, 0.15, [0.62, 0.64, 0.66], [0.7, 0.72, 0.74]);
+    gl(1.3); box(X - 0.03, 1.03, zb - 0.075, 0.17, 0.07, 0.13, [0.5, 0.52, 0.55]);
+    gl(PAINT); cylA(g, [X - 0.03, 1.21, zb - 0.075], 'y', 0.075, 0.22, 12, [0.2, 0.21, 0.23]); cylA(g, [X - 0.03, 1.335, zb - 0.075], 'y', 0.07, 0.03, 12, BLK);
+    gl(MATTE); tube(g, [[X + 0.055, 1.06, zb - 0.075], [X + 0.11, 1.0, zb - 0.06], [X + 0.12, 0.86, zb - 0.02], [X + 0.12, 0.74, zb + 0.004]], 0.014, BLK, 10, 6);
+    tube(g, [[X - 0.03, 1.33, zb - 0.15], [X + 0.1, 1.2, zb - 0.17], [X + 0.13, 0.5, zb - 0.06], [X + 0.12, 0.08, zb - 0.03], [X + 0.12, 0.016, zb - 0.14]], 0.009, BLK, 16, 5);
+    BLOBS.push([X, -1.92, 1.7, 1.1, 0.75, 0, P]);
+    // the carriage and the arms: built once (liftGeo), their vertices moved to where they are (poseLift); the carriage in the column's
+    // piece (it goes with it: finishPieces gives it the piece's dissolve), the arms a mesh of their own (stowed they go with the column;
+    // out under the car they stay, they carry it: stepPieces)
+    const B = LIFT.geo = liftGeo(), n = B.arm.length, n0 = B.arm.indexOf(0);
+    const mk = (a, b, m) => { const geo = new THREE.BufferGeometry();
+      for (const [nm, k] of [['position', 3], ['normal', 3], ['color', 3]]) geo.setAttribute(nm, new THREE.BufferAttribute(new Float32Array((b - a) * k), k).setUsage(THREE.DynamicDrawUsage));
+      geo.setAttribute('gloss', new THREE.BufferAttribute(B.gl.slice(a, b), 1)); geo.boundingSphere = new THREE.Sphere(new V3(X, 1.2, -0.6), 3.4);   // (all it can reach)
+      const o = new THREE.Mesh(geo, m); o.castShadow = o.receiveShadow = true; return o; };
+    const cm = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 }); cm.userData.gl = true; LIFT.cmesh = mk(0, n0, cm); P.root.add(LIFT.cmesh);
+    const am = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 }); hideMat(am, LIFT.u, true); LIFT.mesh = mk(n0, n, am); scene.add(LIFT.mesh);
+    LIFT.q = LIFT.arms.map(() => ({})); LIFT.n0 = n0; poseLift();
+  }
+  // where an arm is at s (0 stowed .. 1 at the pads) on the way plan (none: stowed): the front pair swings and runs out, then the rear
+  // pair; the screws turn up last
+  const sub = (a, b, s) => clamp((s - a) / (b - a), 0, 1);
+  function armPose(A, i, s, pl) {
+    if (!pl) return { a: A.a0, len: A.lc, post: PDEF };
+    const f = i < 2, sw = EZ.io(f ? sub(0, 0.3, s) : sub(0.32, 0.62, s)), ex = EZ.io(f ? sub(0.3, 0.62, s) : sub(0.6, 0.94, s));
+    return { a: lerp(A.a0, pl.ang[i], sw), len: lerp(A.lc, pl.len[i], ex), post: lerp(PDEF, pl.post[i], EZ.sine(sub(0.55, 1, s))) };
+  }
+  // the carriage and the arms, built once: the carriage at its lowest (its level 0), each arm in its own frame (its pin at 0, along +x,
+  // its tubes in, its screw at PB0); each vertex marked with what moves it: arm (-1 the carriage), kd (how many tubes' run-outs carry
+  // it along the arm), kp (1: the screw's top, by the screw's run; 2: the adapter's top and the pad, by the whole post), kr (the adapter:
+  // drawn to a line while the screw alone reaches)
+  function liftGeo() {
+    const g = new World.GB(), L = LIFT, n = () => g.P.length / 3, T = { arm: [], kd: [], kp: [], kr: [] }, gls = [];
+    let m0 = 0; const tag = (arm, kd, kp, kr, ym) => { for (let i = m0, e = n(); i < e; i++) { T.arm[i] = arm; T.kd[i] = kd; T.kp[i] = ym != null ? (g.P[i * 3 + 1] > ym ? kp[1] : kp[0]) : kp; T.kr[i] = kr; } m0 = n(); };
+    const gl = (k) => gls.push([n(), k]), cy = L.du + PADH + PDEF + 0.0135, zf = L.z + L.hz;   // (cy: the crosshead's underside, over the stowed pads; zf: the column's face)
+    // the carriage: a plate up the column's face (its edges cut off, two ribs across it), steel guides round the column's front corners,
+    // the lock's latch and its lever at the top, a blank plate; at its foot the yoke over the two pins, a steel boss on each pin
+    gl(PAINT); prism(g, 0, zf + 0.028, 0.205, 0.026, 0.012, cy + 0.075, cy + 0.9, LBL, LBLt); World.box(g, 0, cy, (zf - 1.39) / 2, 1.4, 0.075, -1.392 - zf, 0, LBL, LBLt);
+    World.box(g, 0, cy + 0.075, zf + 0.079, 0.3, 0.13, 0.05, 0, LBL, LBLt);   // (the gusset between them)
+    for (const y of [0.26, 0.64]) World.box(g, 0, cy + y, zf + 0.058, 0.38, 0.04, 0.008, 0, LBLd, LBL);
+    World.box(g, 0.1, cy + 0.5, zf + 0.056, 0.11, 0.075, 0.004, 0, [0.82, 0.83, 0.8]);
+    gl(METAL); for (const sx of [-1, 1]) World.box(g, sx * 0.2, cy + 0.11, zf - 0.02, 0.016, 0.74, 0.1, 0, LZN);
+    World.box(g, 0, cy + 0.72, zf + 0.069, 0.1, 0.09, 0.03, 0, LAR); World.box(g, 0.055, cy + 0.69, zf + 0.087, 0.012, 0.012, 0.012, 0, LZN); obox(g, [0.05, cy + 0.75, zf + 0.09], [0.15, cy + 0.79, zf + 0.09], 0.016, 0.01, [0.72, 0.12, 0.09]);
+    for (const i of [0, 2]) { const [px, pz] = L.arms[i].p; cylA(g, [px, (0.0225 + cy) / 2, pz], 'y', 0.024, cy - 0.0225, 8, LZN); cylA(g, [px, cy + 0.11, pz], 'y', 0.048, 0.07, 12, LZN, [0.4, 0.42, 0.45]); }
+    tag(-1, 0, 0, 0);
+    // the arms: the knuckle on its pin and the outer tube (blue), the two inner ones (zinc) run out by the same amount, the pad's seat,
+    // its screw and the adapter on it, the yellow cup and the rubber
+    for (let i = 0; i < 4; i++) {
+      const lc = L.arms[i].lc;
+      gl(PAINT); cylA(g, [0, 0, 0], 'y', 0.052, 0.045, 10, LBL, LBLt); obox(g, [0.04, 0, 0], [lc - 0.06, 0, 0], 0.075, 0.045, LBL); tag(i, 0, 0, 0);
+      gl(METAL); obox(g, [0.11, 0, 0], [lc + 0.02, 0, 0], 0.062, 0.036, LZN); tag(i, 1, 0, 0);
+      obox(g, [0.16, 0, 0], [lc + 0.04, 0, 0], 0.05, 0.029, LZN); World.box(g, lc, 0.0145, 0, 0.07, 0.008, 0.07, 0, LAR); tag(i, 2, 0, 0);
+      cylA(g, [lc, 0.0225 + SX / 2, 0], 'y', 0.02, SX, 8, LZN); tag(i, 2, [0, 1], 0, 0.0225 + SX / 2);
+      cylA(g, [lc, 0.0225 + (SX + PB0) / 2, 0], 'y', 0.04, PB0 - SX, 12, LAR, LZN); tag(i, 2, [1, 2], 1, 0.0225 + (SX + PB0) / 2);
+      gl(PAINT); cylA(g, [lc, 0.0285 + PB0, 0], 'y', 0.062, 0.012, 14, LYL); tag(i, 2, 2, 0);
+      gl(MATTE); cylA(g, [lc, 0.0455 + PB0, 0], 'y', 0.06, 0.022, 14, LRB); tag(i, 2, 2, 0);
+    }
+    const N = n(), gl1 = new Float32Array(N).fill(1); gls.forEach(([i, k], j) => gl1.fill(k, i, j + 1 < gls.length ? gls[j + 1][0] : N));
+    return { P: new Float32Array(g.P), N: new Float32Array(g.N), C: new Float32Array(g.C), gl: gl1, arm: Int8Array.from(T.arm), kd: Uint8Array.from(T.kd), kp: Uint8Array.from(T.kp), kr: Uint8Array.from(T.kr) };
+  }
+  // the lift's meshes to where it is now: the carriage at its level, each arm swung, run out and its screw turned (its colours darker low
+  // down, as the pieces': stowed by the floor, up in the light). The built vertices moved, nothing made (no garbage on the phone)
+  function poseLift() {
+    const L = LIFT, B = L.geo, n = B.arm.length, n0 = L.n0, G0 = L.cmesh.geometry.attributes, G1 = L.mesh.geometry.attributes;
+    for (let i = 0; i < 4; i++) { const A = L.arms[i], ps = armPose(A, i, L.s, L.plan), q = L.q[i];
+      q.ca = Math.cos(ps.a); q.sa = Math.sin(ps.a); q.d = (ps.len - A.lc) / 2; q.sh = Math.min(ps.post, SX) - SX; q.ph = ps.post - PB0; q.kr = ps.post - SX < 0.001; q.x = A.p[0]; q.z = A.p[1]; q.y = L.c + A.lv * L.du; q.lc = A.lc; }
+    let pa = G0.position.array, na = G0.normal.array, ca = G0.color.array;
+    for (let v = 0, j = 0; v < n; v++, j += 3) {
+      if (v === n0) { pa = G1.position.array; na = G1.normal.array; ca = G1.color.array; }   // (the carriage's vertices, then the arms')
+      const a = B.arm[v], o = v < n0 ? j : j - 3 * n0; let x = B.P[j], y = B.P[j + 1], z = B.P[j + 2], nx = B.N[j], nz = B.N[j + 2];
+      if (a < 0) y += L.c;
+      else { const q = L.q[a], k = B.kd[v], p = B.kp[v];
+        x += k * q.d; if (p) y += p === 1 ? q.sh : q.ph; if (B.kr[v] && q.kr) { x = q.lc + k * q.d; z = 0; }
+        const wx = q.x + x * q.ca - z * q.sa; z = q.z + x * q.sa + z * q.ca; x = wx; y += q.y;
+        const mx = nx * q.ca - nz * q.sa; nz = nx * q.sa + nz * q.ca; nx = mx; }
+      pa[o] = x; pa[o + 1] = y; pa[o + 2] = z; na[o] = nx; na[o + 1] = B.N[j + 1]; na[o + 2] = nz;
+      const s = y < 0.4 ? 0.5 + 0.5 * smooth(0, 0.4, y) : 1; ca[o] = B.C[j] * s; ca[o + 1] = B.C[j + 1] * s; ca[o + 2] = B.C[j + 2] * s;
+    }
+    for (const G of [G0, G1]) G.position.needsUpdate = G.normal.needsUpdate = G.color.needsUpdate = true;
+    shadowDirty = Math.max(shadowDirty, 1);
+  }
+
+  // where the pads go under this car (measured on its body and on its upgrades' parts when it comes in, again after a new aero kit or
+  // engine; the car at rest on the table): at each end just inside the axle, under the sill (a low car: under its side pod's
+  // step, further in if need be, else under its floor, well inside it: there the pads go into it a little, out of sight), where the underside
+  // over the whole rubber is flat (the pad's top at its lowest: no pad up into a lip, none under a step); moved in along the car where an
+  // arm cannot reach. The carriage's level when the pads touch (cc: no screw shorter than its least, the long arms under the body, not
+  // under the floor), the level the arms swing in at (cs); each arm's angle, length and screw. Measured a few milliseconds a frame (planG:
+  // the rays through the body are many), or at once (liftPlan)
+  function liftPlan(cv) { if (cv.lp) return cv.lp; const g = planG(cv, 1e9); let r; do r = g.next(0); while (!r.done); return (cv.lp = r.value); }
+  // (measured in the background at a quiet moment (the car shown, a new one in, new parts on it): no show waits for it, the first lift
+  // starts at once; cv.lpG while it is measured (a lift asked for meanwhile waits for it); given up when the car goes or its parts change)
+  function planAhead(cv) {
+    if (!cv || cv.lp || cv.lpG) return; const tk = cv.lpG = {}, g = planG(cv, 3);
+    spawn((function* () { yield; for (;;) { if (cv.lpG !== tk || cv.lp || cv !== cur) break; const r = g.next(); if (r.done) { cv.lp = r.value; break; } yield; } if (cv.lpG === tk) cv.lpG = null; })(), true);
+  }
+  function* planG(cv, ms) {
+    const K = cv.kit, L = LIFT, A = L.arms, bm = ms || 3; cv.v.grp.updateMatrixWorld(true);
+    // (the rays: through the body and its parts that reach down there (the skirts, the light strips; not the light's pool on the floor);
+    // each side's measured once (the pads' heights ask for the same ones again and again); a frame's share of them, then on in the next)
+    const mesh = [], bb = new THREE.Box3(), add = (o) => { if (o.isMesh && o.visible && bb.setFromObject(o).min.y < 1.3) mesh.push(o); };
+    cv.probe.meshes.forEach(add); for (const k of ['aero', 'motor']) { const g = cv.parts[k]; if (g) g.traverse(o => { if (o !== g.userData.pool) add(o); }); }
+    const PB = probeOf(mesh, true), memo = new Map(); let t0 = performance.now();
+    function* tick() { if (performance.now() - t0 > bm) { yield; t0 = performance.now(); } }
+    const side = (x, y) => { const k = Math.round(x * 1000 + 5000) * 4096 + Math.round(y * 1000); let v = memo.get(k); if (v === undefined) memo.set(k, v = PB.side(x, y, 1) || 0); return v; };
+    function* low(x) { for (let y = 0.03; y < 0.9; y += 0.03) { yield* tick(); if (side(x, y)) { for (let y2 = y - 0.025; y2 < y; y2 += 0.005) if (side(x, y2)) return y2; return y; } } return null; }
+    // the body's underside over a pad at (x, z): the lowest height where the body covers the whole rubber
+    const covers = (x, y, z) => Math.min(side(x - 0.06, y), side(x, y), side(x + 0.06, y)) >= z + 0.05;
+    function* under(x, z, y1) { for (let y = 0.02; y < y1; y += 0.03) { yield* tick(); if (covers(x, y, z)) { for (let y2 = y - 0.025; y2 < y; y2 += 0.005) if (covers(x, y2, z)) return y2; return y; } } return null; }
+    // a pad at x: [z, its top]: just in from the sill; a low car: under its side pod if it has one, else under its floor where the body
+    // over it is high enough to hide the pad going into it
+    function* padAt(x) { const y0 = yield* low(x); if (y0 == null) return null; const s0 = side(x, y0 + 0.01);
+      if (y0 < 0.12) { for (let y = y0 + 0.04; y < 0.24; y += 0.02) { yield* tick(); const sp = side(x, y); if (sp > s0 + 0.12) { const t = yield* under(x, sp - 0.08, 0.27); if (t != null) return [sp - 0.08, t]; break; } }
+        return [Math.max(0.08, Math.min(s0, side(x, 0.15)) - 0.08), y0, 1]; }
+      for (let z = s0 - 0.08; z > 0.08; z -= 0.03) { const t = yield* under(x, z, y0 + 0.2); if (t != null) return [z, t]; }
+      return null; }
+    // the underside over the rubber found at height t, both sides (rays up at its middle and round its rim; where none meets the body near
+    // t, it is open below: the sill's edge there at t): its lowest and highest
+    function* face(x, z, t) { let lo = 9, hi = -9; for (const sd of [1, -1]) { for (let k = 0; k < 9; k++) { const a = k * TAU / 8, r = k ? 0.065 : 0, y = PB.bottom(x + Math.cos(a) * r, sd * z + Math.sin(a) * r), v = y == null || y > t + 0.1 ? t : y;
+      lo = Math.min(lo, v); hi = Math.max(hi, v); } yield* tick(); } return [lo, hi]; }
+    const reach = (a, x, z) => { const d = Math.hypot(x - a.p[0], z - a.p[1]); return d >= a.lc + 0.02 && d <= armMax(a) - 0.02; };
+    const pads = [];
+    for (const end of [1, -1]) {
+      const w = cv.wheels.filter(q => q.front === (end > 0)), ax = end > 0 ? K.wfx : K.wrx, r = w.length ? Math.max(...w.map(q => q.r)) : K.wr, x0 = ax - end * (r + 0.2);
+      const lg = A.find(a => a.end === end && a.sd > 0), sh = A.find(a => a.end === end && a.sd < 0);
+      let best = null, near = null, floor = null;
+      for (const dx of [0, 0.03, -0.04, -0.08, -0.12, -0.16, -0.2, -0.24, -0.28, -0.32, -0.38, -0.44, -0.5, -0.56]) {   // (out a little while the tyre stays 15 cm off, else in)
+        const x = x0 + end * dx; if (end * (ax - x) < r + 0.15 || end * x < 0.15) continue;
+        const pz = yield* padAt(x); if (!pz || !reach(lg, x, pz[0]) || !reach(sh, x, -pz[0])) continue;
+        if (pz[2]) { floor = floor || [x, pz[0], pz[1]]; continue; }   // (under the floor: only if no side pod further in will do)
+        const f = yield* face(x, pz[0], pz[1]), c = [x, pz[0], f[0], f[1] - f[0]]; if (c[3] < 0.03) { best = c; break; } if (!near || c[3] < near[3]) near = c;   // (a step, a lip, an edge over it: on along)
+      }
+      best = best || floor || near; if (!best) { const pz = (yield* padAt(x0)) || [K.sideZ - 0.1, K.bottom]; best = [x0, pz[0], pz[1]]; }
+      pads[A.indexOf(lg)] = [best[0], best[1], best[2]]; pads[A.indexOf(sh)] = [best[0], -best[1], best[2]];
+    }
+    let cc = Math.min(K.bottom, cv.under.position.y) - 0.0275;
+    for (let i = 0; i < 4; i++) cc = Math.min(cc, pads[i][2] - A[i].lv * L.du - PADH - PMIN);
+    // (and no arm's tube up into the body on its way to its pad: a mud flap, a skirt, a low lip at the far side, measured close there
+    // (thin things), every 10 cm under the middle; the screws longer)
+    for (let i = 0; i < 4; i++) { const a = A[i], [px, pz] = a.p, dx = pads[i][0] - px, dz = pads[i][1] - pz, n = Math.hypot(dx, dz), ux = dx / n, uz = dz / n, pa = Math.abs(pads[i][1]);
+      for (let r = 0.1; r < n - 0.1;) { const z = pz + uz * r, az = Math.abs(z), edge = az > pa - 0.05;
+        if (az < K.hw + 0.05) for (const o of edge ? [-0.035, 0, 0.035] : [0]) { const y = PB.bottom(px + ux * r - uz * o, z + ux * o); if (y != null) cc = Math.min(cc, y - a.lv * L.du - 0.0275); }
+        r += edge ? 0.025 : 0.1; yield* tick(); } }
+    cc = Math.max(cc, CMIN);   // (a car on a low floor: the arms down by the disc, the pads up into the floor)
+    const plan = { pads, cc, cs: Math.min(L.c0, cc), post: [], ang: [], len: [] };
+    for (let i = 0; i < 4; i++) { const [x, z, t] = pads[i], a = A[i]; plan.post[i] = clamp(t - cc - a.lv * L.du - PADH, PMIN, PMAX); plan.ang[i] = Math.atan2(z - a.p[1], x - a.p[0]); plan.len[i] = clamp(Math.hypot(x - a.p[0], z - a.p[1]), a.lc, armMax(a)); }
+    return plan;
+  }
+  // the car at height h on the lift (every car on the table: the paint show's new body under the old one too); the carriage with it
+  // while the pads are on the sills
   function setLift(h) {
-    lift = h; tt.position.y = h; GROUND.value = h;   // (the cars' floor: their occlusion measured from it)
-    // the scissors: two levels of crossed bars between the pit floor (-1.0) and the table's underside (h - 0.12)
-    const top = h - 0.12, bot = -0.98, H2 = (top - bot) / 2, L = 2.0, a = Math.asin(clamp(H2 / L, 0, 0.99));
-    for (const b of scis.bars) { const { z, k, lvl } = b.userData; b.position.set(0, bot + H2 * (lvl + 0.5), z); b.rotation.set(0, 0, k ? a : -a); b.visible = h > 0.02; }
-    for (const o of scis.low) o.visible = h > 0.02;
-    scis.ram.visible = h > 0.02; scis.ram.scale.y = Math.max(0.01, top - bot); scis.ram.position.set(0, bot + (top - bot) / 2, 0);
+    lift = h;
+    for (const cv of liveCars()) cv.v.grp.position.y = h;
+    if (LIFT.on && LIFT.plan) { LIFT.c = LIFT.plan.cc + h; poseLift(); }
   }
+  // the lift's moves for the shows: the arms in (1) or out (0), the carriage to a level, the car up (the camera's point with it when
+  // follow; follow a function of the plan and the height: the camera's point and pitch it goes to meanwhile) and down onto its wheels
+  // again (lowerCar: the pads off the sills, the arms still under it), liftDown: then the arms stowed and the carriage at its foot
+  function* armsTo(k, s) { const s0 = LIFT.s; if (Math.abs(k - s0) < 1e-3) return; SFX.servo(s * 0.9); yield* tween(s, (e) => { LIFT.s = lerp(s0, k, e); poseLift(); }); LIFT.s = k; }
+  function* carriageTo(c, s) { const c0 = LIFT.c; if (Math.abs(c - c0) < 1e-3) return; yield* tween(s, (e) => { LIFT.c = lerp(c0, c, e); poseLift(); }, EZ.io); }
+  function* liftUp(cv, h, follow) {
+    while (!cv.lp && cv.lpG) yield;   // (its plan being measured: a moment more)
+    const pl = cv.lp || (cv.lp = yield* planG(cv));
+    if (LIFT.plan !== pl) { if (LIFT.s > 0) yield* armsTo(0, 0.8); LIFT.plan = pl; }
+    if (LIFT.s < 1) { yield* carriageTo(pl.cs, 0.25); yield* armsTo(1, 1.0); }
+    if (!LIFT.on) { const T = 0.25 + Math.abs(pl.cc - LIFT.c) * 1.2; SFX.servo(T); yield* carriageTo(pl.cc, T); LIFT.on = true; SFX.clunk(0.35); }   // (the slack taken up: the pads on the sills)
+    const h0 = lift, T = 0.5 + Math.abs(h - h0) * 1.25, f = typeof follow === 'function' ? follow(pl, h) : null, dy = f ? f.ty - rig.ty : 0, dp = f ? f.pitch - rig.pitch : 0; SFX.servo(T);
+    let e0 = 0;   // (the camera moved by steps: another move at the same time adds to them)
+    yield* tween(T, (e) => { const y = lerp(h0, h, e); if (f) { rig.ty += dy * (e - e0); rig.pitch += dp * (e - e0); e0 = e; } else if (follow) rig.ty += y - lift; setLift(y); }, EZ.io);
+  }
+  function* lowerCar(cv, follow) {
+    if (lift > 1e-3) { const h0 = lift, T = 0.4 + h0 * 1.1; SFX.servo(T);
+      yield* tween(T, (e) => { const y = lerp(h0, 0, e); if (follow) rig.ty += y - lift; setLift(y); }, EZ.io); setLift(0); SFX.clunk(0.6); if (cv) yield* settle(cv, 0.012); }
+    if (LIFT.on) { LIFT.on = false; yield* carriageTo(LIFT.plan ? LIFT.plan.cs : LIFT.c0, 0.3); }
+  }
+  function* liftDown(cv, follow) { yield* lowerCar(cv, follow); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); }
 
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
   // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): a pass (REF.gm) then writes the image again into REF.gt
@@ -2721,7 +2959,7 @@ const Garage3D = (function () {
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
     const aspect = W / H, fov = rig.fov, th = Math.tan(fov * Math.PI / 360), need = 3.5 / (th * aspect), fit = Math.max(1, need / HOME.dist);
-    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.02, 1.2), d = rig.dist * fit;
+    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit;   // (under 0: a show's look up at the car on the lift)
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
     const ty = rig.ty + Math.sin(time * 0.31) * 0.012;
     camera.position.set(rig.tx + Math.sin(yaw) * Math.cos(pitch) * d, ty + Math.sin(pitch) * d, rig.tz + Math.cos(yaw) * Math.cos(pitch) * d);
@@ -2729,11 +2967,11 @@ const Garage3D = (function () {
     // (always as far from the car: out beyond a wall the wall's things step aside, stepPieces)
     camera.lookAt(rig.tx, ty, rig.tz);
   }
-  // a camera position: around a point of the car (car space, after the turntable has turned to angle ang and the table is at height lf)
-  function view(o, ang, lf) {
-    const p = new V3(...(o.at || [0, 0.6, 0])), c = Math.cos(ang), s = Math.sin(ang);
-    const x = p.x * c + p.z * s, z = -p.x * s + p.z * c;
-    return { yaw: o.yaw != null ? o.yaw : HOME.yaw, pitch: o.pitch != null ? o.pitch : HOME.pitch, dist: o.dist || HOME.dist, tx: x, ty: p.y + (lf || 0), tz: z, fov: o.fov || HOME.fov };
+  // a camera position: round a point of the car (car space; the car at height lf on the lift), rel radians further round it than the
+  // view's own yaw (the table used to turn the car by rel; the camera goes round it now, so every view is as it was seen from the car)
+  function view(o, rel, lf) {
+    const p = o.at || [0, 0.6, 0];
+    return { yaw: (o.yaw != null ? o.yaw : HOME.yaw) - (rel || 0), pitch: o.pitch != null ? o.pitch : HOME.pitch, dist: o.dist || HOME.dist, tx: p[0], ty: p[1] + (lf || 0), tz: p[2], fov: o.fov || HOME.fov };
   }
   function* camTo(to, s, ez, stop) {
     const from = Object.assign({}, rig), u0 = Object.assign({}, user);
@@ -2822,16 +3060,21 @@ const Garage3D = (function () {
   };
 
   /* ---------------- a car in the garage ---------------- */
-  const ray = new THREE.Raycaster();
-  // where the body is: its box, the height of its top at (x, z), the side at (x, y), the front and the back at (y, z) (car space)
+  const ray = new THREE.Raycaster(), rayAll = new THREE.Raycaster(); rayAll.layers.enableAll();   // (rayAll: the car's small bits too, drawn by the main camera only)
+  // where the body is: its box, the height of its top at (x, z), its underside's, the side at (x, y), the front and the back at (y, z)
+  // (car space; probeOf: the same on any meshes)
   function bodyProbe(v) {
     v.grp.updateMatrixWorld(true);
     const meshes = []; v.bodyG.traverse(o => { if (o.isMesh && o.visible && o !== v.dec && !(v.dec && o.material === v.dec.material) && o !== v.tail) meshes.push(o); });
-    const bb = new THREE.Box3(); for (const m of meshes) bb.expandByObject(m);
-    const hit = (o, d) => { ray.set(o, d); ray.far = 20; const h = ray.intersectObjects(meshes, false); return h.length ? h[0].point : null; };
+    return probeOf(meshes);
+  }
+  function probeOf(meshes, all) {
+    const bb = new THREE.Box3(), rc = all ? rayAll : ray; for (const m of meshes) bb.expandByObject(m);
+    const hit = (o, d) => { rc.set(o, d); rc.far = 20; const h = rc.intersectObjects(meshes, false); return h.length ? h[0].point : null; };
     return {
       bb, meshes,
       top: (x, z) => { const p = hit(new V3(x, 6, z), new V3(0, -1, 0)); return p ? p.y : null; },
+      bottom: (x, z) => { const p = hit(new V3(x, -1, z), new V3(0, 1, 0)); return p ? p.y : null; },
       side: (x, y, sd) => { const p = hit(new V3(x, y, sd * 5), new V3(0, 0, -sd)); return p ? Math.abs(p.z) : null; },
       front: (y, z) => { const p = hit(new V3(8, y, z), new V3(-1, 0, 0)); return p ? p.x : null; },
       back: (y, z) => { const p = hit(new V3(-8, y, z), new V3(1, 0, 0)); return p ? p.x : null; },
@@ -2860,7 +3103,7 @@ const Garage3D = (function () {
   }
   // every material of the car becomes its own copy (the shader patches kept): the reflections of the garage, and the paint shop's
   // cut (the body's materials only: the wheels and the shadow are never cut); the floor's occlusion on what is solid (darker down to
-  // the sills, the bumpers' undersides, the wheels' feet: GROUND, the table's top, setLift)
+  // the sills, the bumpers' undersides, the wheels' feet: GROUND, the floor's height; up on the lift the car leaves it behind)
   const GROUND = { value: 0 };
   // (the race's wheels: their tyres' near-black lifted to a rubber grey, the rims as they are)
   function floorAO(c, key) {
@@ -2901,7 +3144,7 @@ const Garage3D = (function () {
     carMats(cv); carDiet(cv, v.grp, false);
     if (v.blob) { v.blob.material.map = TX.under; v.blob.material.opacity = 0.9; v.blob.scale.set(1, 1, 1); v.blob.position.y = 0.012; mainOnly(v.blob); }
     // where the tyres stand: a dark patch under each (one mesh, on the floor: it stays when the body moves on its springs; it fades
-    // when the car goes up on its jacks, poseCar)
+    // when the car goes up on the lift, poseCar)
     { const P = [], U = [], I = [];
       for (const w of cv.wheels) { const hx = w.r * 0.85, hz = w.wd * 0.8, n = P.length / 3;
         P.push(w.x - hx, 0.016, w.z - hz, w.x - hx, 0.016, w.z + hz, w.x + hx, 0.016, w.z + hz, w.x + hx, 0.016, w.z - hz); U.push(0, 0, 0, 1, 1, 1, 1, 0); I.push(n, n + 1, n + 2, n, n + 2, n + 3); }
@@ -2953,7 +3196,10 @@ const Garage3D = (function () {
     v.bodyG.rotation.x = cv.roll + (sh ? (Math.random() - 0.5) * 0.006 * sh : 0);
     v.bodyG.position.y = cv.bounce + (sh ? (Math.random() - 0.5) * 0.004 * sh : 0);
     for (const w of cv.wheels) if (w.obj) w.obj.rotation.z = -cv.spin * (cv.M.rw / Math.max(0.2, w.r));
-    cv.contact.material.opacity = 0.85 * (1 - smooth(0, 0.07, v.grp.position.y));   // (up on the jacks: the tyres off the floor)
+    const hy = v.grp.position.y; cv.contact.material.opacity = 0.85 * (1 - smooth(0, 0.07, hy));   // (up on the lift: the tyres off the floor)
+    const k = smooth(0, 0.9, hy), pl = cv.parts.motor && cv.parts.motor.userData.pool;
+    if (v.blob) { v.blob.position.y = 0.012 - hy; v.blob.material.opacity = 0.9 * (1 - 0.65 * k); v.blob.scale.set(1 + 0.2 * k, 1, 1 + 0.3 * k); }   // (its shadow stays on the floor, softer and fainter the higher it is)
+    if (pl) { pl.position.y = 0.016 - hy; pl.material.color.copy(pl.userData.c0).multiplyScalar(1 - 0.55 * k); pl.scale.set(1 + 0.2 * k, 1 + 0.3 * k, 1); }   // (the electric car's light under it: on the floor too, wider and fainter)
     const gp = cv.parts.gume; if (gp) for (const it of gp.userData.items) { const w = it.o.userData.wheel; if (w && !w.own) it.o.rotation.z = -cv.spin * w.sd; }   // (the rear wheels are in the body: their lettering turns)
   }
 
@@ -3009,6 +3255,7 @@ const Garage3D = (function () {
           const s = new THREE.Mesh(bx(K.wfx - K.wrx - 0.6, 0.035, 0.03), PM.blueGlow); for (const sd of [-1, 1]) { const m = s.clone(); m.position.set((K.wfx + K.wrx) / 2, K.bottom + 0.02, sd * (K.sideZ - 0.04)); grp.add(item(m, 'side')); }
           const pool = new THREE.Mesh(new THREE.PlaneGeometry(K.front - K.rear + 0.4, K.hw * 2 + 0.7), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2a8cff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4 + lv * 0.2 }));
           pool.material.userData.own = true; pool.rotation.x = -Math.PI / 2; pool.position.set((K.front + K.rear) / 2, 0.016, 0); pool.renderOrder = 4; grp.add(item(pool, 'fade'));
+          grp.userData.pool = pool; pool.userData.c0 = pool.material.color.clone();   // (on the floor when the car is up on the lift: poseCar)
           if (lv >= 2) { const d = new THREE.Mesh(bx(0.02, 0.025, K.hw * 1.2), PM.blueGlow); d.position.set(K.exXc - 0.01, K.exY + 0.12, 0); grp.add(item(d, 'back')); }
           grp.userData.tips = [];
         }
@@ -3198,18 +3445,18 @@ const Garage3D = (function () {
 
   /* ---------------- the workshop's machines: the wash / paint arch, the scanner ---------------- */
   // an arch over the car on rails: two posts and a beam with nozzles; runs along the car (x) and sprays (water, then paint)
-  function makeArch(cv, col) {
-    const K = cv.kit, g = new THREE.Group(), hw = K.hw + 0.5, hgt = K.top + 0.45;
+  function makeArch(cv, col) {   // (its legs inside 1.35 m of the middle: clear of the lift's stowed arms and its column; the truck's tyres clear)
+    const K = cv.kit, g = new THREE.Group(), hw = Math.min(K.hw + 0.5, 1.27), hgt = K.top + 0.45;
     const fm = new THREE.MeshPhongMaterial({ color: col || 0xd9dde4, specular: 0xffffff, shininess: 90, envMap: env.texture || env, combine: THREE.MixOperation, reflectivity: 0.3 }); fm.userData.own = true;
     const ym = new THREE.MeshLambertMaterial({ color: 0x1e2a3a }); ym.userData.own = true;
-    for (const sd of [-1, 1]) { mesh(bx(0.16, hgt, 0.16), fm, 0, hgt / 2, sd * hw, g); mesh(bx(0.5, 0.06, 0.34), ym, 0, 0.03, sd * hw, g); }
+    for (const sd of [-1, 1]) { mesh(bx(0.16, hgt, 0.16), fm, 0, hgt / 2, sd * hw, g); mesh(bx(0.5, 0.06, 0.16), ym, 0, 0.03, sd * hw, g); }
     mesh(bx(0.18, 0.18, hw * 2 + 0.16), fm, 0, hgt, 0, g);
     const lm = new THREE.MeshBasicMaterial({ color: emi(0x47c6ff, EMI.led) }); lm.userData.own = true;
     mesh(bx(0.03, 0.03, hw * 2 - 0.1), lm, 0.1, hgt - 0.1, 0, g);
-    for (const sd of [-1, 1]) mesh(bx(0.03, hgt - 0.3, 0.03), lm, 0.1, hgt / 2, sd * (hw - 0.1), g);
+    for (const sd of [-1, 1]) mesh(bx(0.03, hgt - 0.3, 0.03), lm, 0.1, hgt / 2, sd * (hw - 0.08), g);
     g.userData.noz = [];
     for (let i = 0; i < 7; i++) g.userData.noz.push({ p: new V3(0, hgt - 0.1, (i / 6 - 0.5) * (hw * 2 - 0.3)), d: new V3(0, -1, 0) });
-    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) g.userData.noz.push({ p: new V3(0, 0.25 + i * (hgt - 0.5) / 3, sd * (hw - 0.1)), d: new V3(0, -0.15, -sd) });
+    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) g.userData.noz.push({ p: new V3(0, 0.25 + i * (hgt - 0.5) / 3, sd * (hw - 0.08)), d: new V3(0, -0.15, -sd) });
     g.userData.h = hgt;
     cv.v.grp.add(g); return g;
   }
@@ -3269,12 +3516,6 @@ const Garage3D = (function () {
   }
 
   /* ---------------- the shows: what plays for each change ---------------- */
-  function* turnTo(a, s) {
-    let d = a - ttAng; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < 0.01) { ttAng = a; tt.rotation.y = a; return; }
-    const a0 = ttAng; SFX.servo(s);
-    yield* tween(s, (k) => { ttAng = a0 + d * k; tt.rotation.y = ttAng; }, EZ.io);
-  }
-  function* liftTo(h, s) { const h0 = lift; SFX.servo(s); yield* tween(s, (k) => setLift(lerp(h0, h, k)), EZ.io); }
   function* settle(cv, amp) { yield* tween(0.9, (k, u) => { cv.bounce = -amp * Math.exp(-u * 5) * Math.cos(u * 18); cv.pitch = amp * 0.4 * Math.exp(-u * 5) * Math.sin(u * 16); }); cv.bounce = 0; cv.pitch = 0; }
   function* revs(cv, n, hard) {   // the engine revved: n blips, pops and flames as the throttle shuts, the body rocking on its mounts
     for (let i = 0; i < n; i++) {
@@ -3319,12 +3560,14 @@ const Garage3D = (function () {
       const old = cur, nw = makeCar(spec);
       // (the new car's shaders are made now, while the old one still stands: no stutter when it rolls in)
       nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);
-      // away at once: the car pulls out the instant the arrow is tapped; the camera eases home and the table drops to level at the same time
+      // away at once: the car pulls out the instant the arrow is tapped, the camera easing home (the lift is down and its arms stowed:
+      // every show ends so; after one cut short they go down first)
+      if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(old, false);
       if (old) {
         engStart(old.M); lamps(old, 1, 0.3); old.shake = 0.6; eng.locked = false; eng.thr = 1;
         puffSmoke(old, 3, old.spec.cond.engine < 0.5);
         const acc = 7 + (old.M.kw || 250) / 110, T0 = 1.25;
-        yield* par(home(0.6), turnTo(0, 0.4), lift > 0.01 ? liftTo(0, 0.4) : null, (function* () {
+        yield* par(home(0.6), (function* () {
           yield* tween(T0, (k, u) => {
             const t = u * T0, vel = acc * t, x = 0.5 * acc * t * t; old.spin += (x - old.root.position.x) / old.M.rw; old.root.position.x = x;
             old.pitch = 0.035 * Math.exp(-u * 3) * (1 - Math.exp(-u * 20)); eng.speed = vel; eng.rpm = old.M.idle + (old.M.redline - old.M.idle) * clamp(0.35 + vel / 30, 0, 0.95);
@@ -3332,9 +3575,7 @@ const Garage3D = (function () {
           });
         })());
         lamps(old, 0, 0); old.root.visible = false;
-      } else {
-        yield* par(home(0.6), turnTo(0, 0.4), lift > 0.01 ? liftTo(0, 0.4) : null);
-      }
+      } else yield* home(0.6);
       engStop();
       // in: from the left door, braking hard onto the table, the nose diving, the brake lamps on
       cur = nw; engStart(nw.M); eng.locked = false; lamps(nw, 1, 0.5);
@@ -3357,10 +3598,12 @@ const Garage3D = (function () {
       engStop(); nw.shake = 0;
       if (old) freeCar(old);
       rig.tx = HOME.tx;
+      planAhead(nw);   // (where the lift's pads go under it, measured while it stands: its first lift starts at once)
     }));
   }
 
-  // an upgrade fitted (or taken off): the car turns to show the place, the old parts go, the new ones come, then it shows what they do
+  // an upgrade fitted (or taken off): the camera goes round to the place (the tyres and the brakes: the car up on the lift), the old parts
+  // go, the new ones come, then it shows what they do
   const WHEEL_VIEW = (cv) => { const w = cv.wheels.find(q => q.front && q.sd > 0) || cv.wheels[0]; return { at: [w.x - 0.35, w.y + 0.12, w.z + 0.15], yaw: 0.55, pitch: 0.08, dist: 4.3, fov: 32 }; };
   function upgrade(kind, lv) {
     return play(function* () {
@@ -3387,11 +3630,12 @@ const Garage3D = (function () {
         if (!running) { hud('power', { kind, lv, from }); yield* goZone(cv, kind, 'rear'); yield* start(); if (cv.M.ev) yield* evPulse(cv, nw, 1); else yield* revs(cv, 1, false); }
         yield* wait(0.3); lamps(cv, 0, 0); engStop(); cv.shake = 0;
       } else if (kind === 'gume' || kind === 'zavore') {
-        const ang = 0.1;
-        yield* par(turnTo(ang, 1.0), camTo(view(WHEEL_VIEW(cv), ang, lift), 1.2));
-        // up on the air jacks, the wheels free
-        SFX.hiss(0.5, 1.2);
-        yield* tween(0.45, (k) => { cv.v.grp.position.y = 0.09 * EZ.back(k); });
+        // the camera round to the wheel while the lift's arms swing in under the sills (the column's foot between the wheels, not under
+        // this one); the car up on the lift, the wheels free, the camera with it, looking up at it a little: from under the sills' line,
+        // the pads and the arms holding the car in sight (a truck's behind its arches, a racer's under its side pods)
+        const low = (pl, h) => { const ty = rig.ty + h - lift, d = camera.position.distanceTo(new V3(rig.tx, rig.ty, rig.tz)), yc = Math.min(...pl.pads.map(q => q[2])) + h - 0.15;
+          return { ty, pitch: clamp(Math.asin(clamp((yc - ty) / d, -1, 1)), -0.12, rig.pitch) }; };
+        yield* par(camTo(view(WHEEL_VIEW(cv), 0.3, lift), 1.2), liftUp(cv, 0.55, low));
         let sp = 0;
         const spinT = function* (s, v) { yield* tween(s, (k) => { sp = v * Math.sin(Math.PI * Math.min(1, k * 1.3)); }); };
         const spinner = { done: false };
@@ -3414,9 +3658,6 @@ const Garage3D = (function () {
           sparkle(cv, 6);
         }
         spinner.done = true;
-        SFX.hiss(0.4, 0.8);
-        yield* tween(0.35, (k) => { cv.v.grp.position.y = 0.09 * (1 - EZ.in(k)); });
-        cv.v.grp.position.y = 0; SFX.clunk(0.8); yield* settle(cv, 0.02);
       } else if (kind === 'aero') {   // the back (the wing, the lip, the diffuser), the front (splitter, dive planes), the sides (skirts); then the wind tunnel
         for (const zone of ['rear', 'front', 'side']) {
           if (!hasZone(old, zone) && !hasZone(nw, zone)) continue;
@@ -3435,8 +3676,9 @@ const Garage3D = (function () {
       }
       if (old) dropParts(old);
       cv.parts[kind] = nw;
+      if (kind === 'aero' || kind === 'motor') { cv.lp = cv.lpG = null; planAhead(cv); }   // (the lift's pads planned again while the camera goes home: new skirts, light strips under the sills)
       hud('done', { kind, lv });
-      yield* par(turnTo(0, 1.0), home(1.2));
+      yield* par(home(1.4), lift > 1e-3 || LIFT.s > 1e-3 ? liftDown(cv, false) : null);   // (off the lift: the car down, the arms out)
     });
   }
   const hasZone = (grp, z) => !!grp && grp.userData.items.some(it => !z || it.zone === z);
@@ -3454,7 +3696,7 @@ const Garage3D = (function () {
     partsK(grp, 1, zone);
     const box = zoneBox(grp, zone); if (!box.isEmpty()) { const c = box.getCenter(new V3()), sz = box.getSize(new V3()); for (let i = 0; i < 5; i++) glint(c.clone().add(new V3((Math.random() - 0.5) * sz.x, (Math.random() - 0.3) * sz.y, (Math.random() - 0.5) * sz.z)), 0.3, 0xffffff); SFX.ping(2093); }
   }
-  // where the car turns and the camera goes to show a zone of the car (the turntable's angle; the camera round a point of the car)
+  // where the camera goes to show a zone of the car: round a point of the car, rel radians further round than the view's yaw
   function zoneView(cv, kind, zone) {
     const K = cv.kit, mid = (K.top + K.bottom) / 2;
     const V = {
@@ -3466,9 +3708,9 @@ const Garage3D = (function () {
       'aero.side': [0.55, { at: [0, K.bottom + 0.3, 0], pitch: 0.12, dist: 6.8 }],
       'aero.tunnel': [0.55, { at: [0, mid + 0.1, 0], pitch: 0.2, dist: 8.2 }],
     }[kind + '.' + zone];
-    return { ang: V[0], cam: view(Object.assign({ yaw: HOME.yaw, fov: 33 }, V[1]), V[0], lift) };
+    return view(Object.assign({ yaw: HOME.yaw, fov: 33 }, V[1]), V[0], lift);
   }
-  function* goZone(cv, kind, zone, s) { const z = zoneView(cv, kind, zone); yield* par(turnTo(z.ang, s || 1.1), camTo(z.cam, (s || 1.1) + 0.1)); }
+  function* goZone(cv, kind, zone, s) { yield* camTo(zoneView(cv, kind, zone), (s || 1.1) + 0.1); }
   function* weld(cv, grp, zone) {   // a welder's flicker and sparks where the new parts go
     partsK(grp, 1, zone); const box = zoneBox(grp, zone); partsK(grp, 0, zone); if (box.isEmpty()) return;
     const c = box.getCenter(new V3()), sz = box.getSize(new V3());
@@ -3482,15 +3724,14 @@ const Garage3D = (function () {
     scene.remove(fl); fl.material.dispose();
   }
 
-  // the service: wash (clean), body (scratches), engine (on the lift); all three in a row for a full service
+  // the service: wash (clean), body (scratches), engine (up on the lift); all three in a row for a full service
   function service(items, cond) {
     return play(function* () {
       const cv = cur; if (!cv) return;
       const K = cv.kit;
       for (const it of items) {
         if (it === 'clean') {
-          const ang = 0.55;
-          yield* par(turnTo(ang, 0.9), camTo(view({ at: [0, 0.75, 0], yaw: HOME.yaw, pitch: 0.2, dist: 7.0 }, ang, lift), 1.1));
+          yield* camTo(view({ at: [0, 0.75, 0], yaw: HOME.yaw, pitch: 0.2, dist: 7.0 }, 0.55, lift), 1.1);
           const arch = makeArch(cv, 0xd9dde4); arch.position.x = K.front + 0.9; arch.scale.y = 0.01;
           SFX.servo(0.6); yield* tween(0.6, (k) => { arch.scale.y = EZ.back(k); });
           sLoop('water', 'bandpass', 2200, 0.4, 0.22);
@@ -3502,8 +3743,7 @@ const Garage3D = (function () {
           setCond(cv, { clean: cond.clean }); sparkle(cv, 14); SFX.ping(2349); yield* wait(0.7);
           hud('done', { kind: 'clean' });
         } else if (it === 'body') {
-          const ang = 0.55;
-          yield* par(turnTo(ang, 0.9), camTo(view({ at: [0, 0.7, 0], yaw: HOME.yaw + 0.1, pitch: 0.22, dist: 6.6 }, ang, lift), 1.1));
+          yield* camTo(view({ at: [0, 0.7, 0], yaw: HOME.yaw + 0.1, pitch: 0.22, dist: 6.6 }, 0.55, lift), 1.1);
           const sc = makeScan(cv), x0 = K.front + 0.4, x1 = K.rear - 0.4, s0 = cv.v.scrU ? cv.v.scrU.value : 0;
           SFX.whoosh(0.5);
           yield* tween(1.6, (k, u) => { sc.position.x = lerp(x0, x1, u); sc.userData.mat.uniforms.uT.value = time; if (Math.random() < 0.3) sparkle(cv, 1, 0x9fe0ff); });   // (scan: the damage found)
@@ -3514,8 +3754,9 @@ const Garage3D = (function () {
           disposeTree(sc); setCond(cv, { body: cond.body }); sparkle(cv, 12); SFX.ping(2637); yield* wait(0.6);
           hud('done', { kind: 'body' });
         } else if (it === 'engine') {
-          const ang = 0.55 + 0.5;
-          yield* par(turnTo(ang, 0.9), camTo(view({ at: [0, 0.45, 0], yaw: HOME.yaw, pitch: 0.0, dist: 7.8 }, ang, 0.75), 1.3), liftTo(0.75, 1.3));
+          // up on the lift (its arms in while the camera goes round low to the side, then the car up, the camera with it)
+          const rel = 0.55 + 0.5;
+          yield* par(camTo(view({ at: [0, 0.45, 0], yaw: HOME.yaw, pitch: 0.0, dist: 7.8 }, rel, lift), 1.3), liftUp(cv, 1.35, true));
           // the old engine first: it smokes and runs rough if worn
           engStart(cv.M);
           if (cv.spec.cond.engine < 0.5) { for (let i = 0; i < 10; i++) { puffSmoke(cv, 1, true); cv.shake = 2.5; yield* wait(0.12); } }
@@ -3530,14 +3771,15 @@ const Garage3D = (function () {
             yield* wait(0.32);
           }
           setCond(cv, { engine: cond.engine });
-          yield* par(liftTo(0, 1.2), camTo(view({ at: [0, 0.6, 0], yaw: HOME.yaw, pitch: 0.12, dist: 6.4 }, ang, 0), 1.2));
-          SFX.clunk(0.7);
+          // down (the arms swing out while the mended engine is started)
+          yield* par(lowerCar(cv, false), camTo(view({ at: [0, 0.6, 0], yaw: HOME.yaw, pitch: 0.12, dist: 6.4 }, rel, 0), 1.5));
           engStart(cv.M); lamps(cv, 1, 0.4); cv.shake = 1;
-          yield* wait(0.3); yield* revs(cv, 2, false); yield* wait(0.4); lamps(cv, 0, 0); engStop(); cv.shake = 0;
+          yield* par(armsTo(0, 1.1), (function* () { yield* wait(0.3); yield* revs(cv, 2, false); yield* wait(0.4); })()); yield* carriageTo(LIFT.c0, 0.25);
+          lamps(cv, 0, 0); engStop(); cv.shake = 0;
           hud('done', { kind: 'engine' });
         }
       }
-      yield* par(turnTo(0, 1.0), home(1.2));
+      yield* home(1.2);
     });
   }
 
@@ -3547,8 +3789,8 @@ const Garage3D = (function () {
     return play(function* () {
       const cv = cur; if (!cv) return;
       if (cv.spec.color === color && (cv.spec.stripe !== false) === (stripe !== false)) return;
-      const K = cv.kit, ang = 0.55;
-      yield* par(turnTo(ang, 0.9), camTo(view({ at: [0, 0.7, 0], yaw: HOME.yaw, pitch: 0.16, dist: 6.9 }, ang, lift), 1.1));
+      const K = cv.kit;
+      yield* camTo(view({ at: [0, 0.7, 0], yaw: HOME.yaw, pitch: 0.16, dist: 6.9 }, 0.55, lift), 1.1);
       const col = hexRgb(color), x0 = K.front + 0.25, x1 = K.rear - 0.25, fwd = new V3(), o = new V3();
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
@@ -3574,7 +3816,7 @@ const Garage3D = (function () {
       if (!spec.num) { nw.v.dec.visible = false; nw.v.bodyG.traverse(o2 => { if (o2.isMesh && o2.material === nw.v.dec.material) o2.visible = false; }); }
       nw.clip.set(new V3(-1, 0, 0), 1e4);
       for (const k in nw.parts) nw.parts[k].visible = true;
-      tt.add(nw.root); nw.root.position.copy(cv.root.position); cur = nw; tt.remove(cv.root);
+      tt.add(nw.root); nw.root.position.copy(cv.root.position); cur = nw; tt.remove(cv.root); nw.lp = cv.lp; planAhead(nw);   // (the same body, the same parts: the lift's pads where they were (not measured yet: now))
       freeCar(cv);
       // drying under the lamps: a warm glow sweeping, glints on the fresh paint
       const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(7, 3, 1); scene.add(warm);
@@ -3583,7 +3825,7 @@ const Garage3D = (function () {
       sparkle(nw, 16); SFX.ping(2093); SFX.ping(2793);
       hud('done', { kind: 'paint' });
       yield* wait(0.6);
-      yield* par(turnTo(0, 1.0), home(1.2));
+      yield* home(1.2);
     });
   }
   const isIn = (o, p) => { for (let q = o; q; q = q.parent) if (q === p) return true; return false; };
@@ -3725,6 +3967,7 @@ const Garage3D = (function () {
       if (o.visible && (txt.includes(m.map) || (m.userData && m.userData.noCube))) { o.visible = false; hid.push(o); }
       else if (m.map === TX.deck) { dim.push([m, m.color.clone()]); m.color.multiplyScalar(0.5); } });
     if (signGlow && signGlow.visible) { signGlow.visible = false; hid.push(signGlow); }
+    for (const o of [LIFT.piece.root, LIFT.mesh]) if (o.visible) { o.visible = false; hid.push(o); }   // (nor the lift, 1.7 m off: gone from the far side's view, its ghost would stay in the glass)
     cc.update(renderer, scene); REF.k.value = rk; lampMat.color.copy(lc); scene.remove(cc);
     for (const o of hid) o.visible = true; for (const [m, c] of dim) m.color.copy(c);
     env = cubeRT.texture; ENVU.value = env;
@@ -3747,8 +3990,10 @@ const Garage3D = (function () {
   // the car shown first: no drive-in, it stands there
   function show(spec) {
     if (cur) freeCar(cur);
+    if (lift || LIFT.on || LIFT.s || LIFT.c !== LIFT.c0) { lift = 0; Object.assign(LIFT, { s: 0, on: false, plan: null, c: LIFT.c0 }); poseLift(); }   // (the lift down, its arms stowed)
     cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2;
     renderer.compile(scene, camera);   // (the shaders of what is hidden for now too: the lamps' glows, the sparks; no stutter when they show)
+    planAhead(cur);
   }
   function frame(dt, noDraw) {
     if (!ready) return;
@@ -3765,7 +4010,7 @@ const Garage3D = (function () {
     if (autoSpin && !busy && !user.drag) rig.yaw += dt * 0.32;
     placeCamera(dt); stepPieces(dt); adaptExposure(dt);
     if (noDraw) return;
-    const ri = renderer.info.render, post = POST.on && POST.rt, dirty = busy > 0 || tasks.length > 0 || shadowDirty > 0;   // (a show, a move, a piece gone or back)
+    const ri = renderer.info.render, post = POST.on && POST.rt, dirty = busy > 0 || moving() || shadowDirty > 0;   // (a show, a move, a piece gone or back)
     if (shadowDirty > 0) shadowDirty--;
     // the mirror first, with the last frame's shadow map; then the main pass draws the shadow map when it is due (with the main camera's
     // layers: what is kept out of the mirror still casts) and the room. From the second reset on: what the page's test counts
@@ -3803,12 +4048,23 @@ const Garage3D = (function () {
     set onHud(f) { hud = f || (() => {}); },
     set fast(k) { fast = k > 0 ? k : 1; },
     get busy() { return busy > 0; }, get ready() { return ready; },
-    get idle() { return !busy && !tasks.length && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !flames.length && !glints.length; },   // (nothing moving but the dust: the page draws less often)
+    get idle() { return !busy && !moving() && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !flames.length && !glints.length; },   // (nothing moving but the dust: the page draws less often)
     sound(on) { sndInit(); if (SND.out) SND.out.gain.value = on ? 0.7 : 0; SND.vol = on ? 0.7 : 0; if (typeof Sfx !== 'undefined') { Sfx.resume(); Sfx.setEnabled(on); } },
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },
-    get info() { return cur ? { car: cur.M.id, color: cur.spec.color, stripe: cur.spec.stripe !== false, upg: Object.assign({}, cur.spec.upg), parts: Object.keys(cur.parts).reduce((o, k) => (o[k] = cur.parts[k].userData.items.length, o), {}), dirt: cur.v.dirtU ? +cur.v.dirtU.value.toFixed(3) : null, scr: cur.v.scrU ? +cur.v.scrU.value.toFixed(3) : null, lift: +lift.toFixed(3), ang: +ttAng.toFixed(3) } : null; },
-    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, post: POST, stats: STATS, get floorMat() { return floorMat; }, get keyLight() { return keyLight; } },
+    get info() { return cur ? { car: cur.M.id, color: cur.spec.color, stripe: cur.spec.stripe !== false, upg: Object.assign({}, cur.spec.upg), parts: Object.keys(cur.parts).reduce((o, k) => (o[k] = cur.parts[k].userData.items.length, o), {}), dirt: cur.v.dirtU ? +cur.v.dirtU.value.toFixed(3) : null, scr: cur.v.scrU ? +cur.v.scrU.value.toFixed(3) : null, lift: +lift.toFixed(3), ang: +tt.rotation.y.toFixed(3) } : null; },
+    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, post: POST, stats: STATS, get floorMat() { return floorMat; }, get keyLight() { return keyLight; },
+      // (the lift: one column, where it stands, its piece's box; the arms (0 stowed .. 1 at the pads), the carriage's level, the table's
+      // height, the carriage's and the arms' nearest to the cars' lane (|z|); its parts for the pictures' checks; raise: the car put up
+      // on it at once, as a show cut short would leave it)
+      // (raw: the column's piece's nearest to the car (|z|) over all its vertices, not its box clipped to the column: a post put in front
+      // of the car would show there; its meshes are in world space)
+      get lift() { const b = LIFT.piece.box, zm = (o) => { const P = o.geometry.attributes.position.array; let z = -9; for (let i = 2; i < P.length; i += 3) z = Math.max(z, P[i]); return z; };
+        let zr = -9; LIFT.piece.root.traverse(o => { if (o.isMesh) zr = Math.max(zr, zm(o)); });
+        return { posts: pieces.filter(p => p.lift).length, x: LIFT.x, z: LIFT.z, box: [b.min.toArray(), b.max.toArray()], raw: +zr.toFixed(3), arms: +LIFT.s.toFixed(3), carriage: +LIFT.c.toFixed(3), on: LIFT.on, table: +tt.position.y.toFixed(3),
+          lane: +(-Math.max(zm(LIFT.cmesh), zm(LIFT.mesh))).toFixed(3), gone: +LIFT.piece.k.toFixed(3), plan: LIFT.plan }; },
+      raise(h) { if (!cur) return; Object.assign(LIFT, { plan: liftPlan(cur), s: 1, on: true }); setLift(h); },
+      LIFT, PAD: { h: PADH, min: PMIN, cmin: CMIN }, armPose, liftPlan, planG, poseLift },
     get renderer() { return renderer; }, get camera() { return camera; }, get scene() { return scene; },
   };
 })();
