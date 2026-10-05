@@ -613,19 +613,21 @@
   }
  },
  "toronto": {
-  "meshes": 100,
-  "verts": 253036,
-  "instances": 454,
-  "props": 0,
-  "crowd": 454,
-  "world": "bde8d625",
-  "propsHash": "811c9dc5",
-  "floor": null,
+  "meshes": 247,
+  "verts": 355665,
+  "instances": 3578,
+  "props": 633,
+  "crowd": 785,
+  "world": "c51b483f",
+  "propsHash": "35e949d6",
+  "floor": "55644925/5852",
   "groups": {
-   "-:MeshLambertMaterial": "e6e1f5b6",
-   "-:MeshBasicMaterial": "a631d052",
-   "crowd:MeshLambertMaterial": "18923c1f",
-   "ao:MeshBasicMaterial": "4ebdc670",
+   "-:MeshLambertMaterial": "12530750",
+   "-:MeshBasicMaterial": "d7139b92",
+   "-:MeshPhongMaterial": "917393b4",
+   "toSky:MeshLambertMaterial": "b1a79441",
+   "crowd:MeshLambertMaterial": "98bc4bc1",
+   "ao:MeshBasicMaterial": "5b00ccab",
    "tyremarks:MeshBasicMaterial": "a0d078ce",
    "roadwear:MeshLambertMaterial": "af03a0b0"
   }

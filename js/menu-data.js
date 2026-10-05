@@ -56,6 +56,17 @@ window.MENU = {
    "name": "Map"
   }
  ],
+ "wideMaps": {
+  "vrsic": 300,
+  "pikes": 300,
+  "ouninpohja": 300,
+  "riviera": 240,
+  "monaco": 240,
+  "rbring": 240,
+  "suzuka": 240,
+  "spa": 240,
+  "nring": 240
+ },
  "routeMaps": {
   "vrsic": {
    "start": "Kranjska Gora",
