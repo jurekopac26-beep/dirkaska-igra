@@ -19,6 +19,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       over: {
         wing: { f: 0.62, lx: -0.97, m: 4 },
         trunk: { lx: -0.83, y: 1.02 },   // (the deck lid behind the long rear glass, where the look has it)
+        fenderL: { h: 0.14 }, fenderR: { h: 0.14 },   // (the piece's real thickness lying on the road: the front fender with its wheel tub)
       },
     },
     // the look (KIT API v1, render.js; look units = metres): a long two-door saloon on one loft, low and slab-sided, the wheels flush under

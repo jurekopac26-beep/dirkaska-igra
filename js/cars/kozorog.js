@@ -20,6 +20,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       over: {
         bumperF: { df: 0 },
         trunk: { lx: -0.82, y: 1.0 },   // (the boot lid behind the rear glass, where the look has it)
+        wing: { h: 0.11 },              // (the wing with its stands and endplates lies 0.31 m tall on the road)
       },
       extra: {
         splitter: { z: 0, th: 0.45, m: 3, rW: 0.4, h: 0.04, lx: 1, lz: 0, f: 0.02, df: 0.3 },
@@ -48,7 +49,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: -0.45, y: 1.1, style: 'closed' }, cage: true,          // (low in the bucket, the roll cage round the driver)
         door: [0.78, -0.25], bumpF: 0.32, bumpR: 0.2, bumpY: [0.5, 0.58],
         decalX: -0.3, decalY: 1.349, decalRz: 0.0148, decalS: 0.6 },    // (the start number on the roof's front half, 5 mm over it: the fin is behind it)
-      wheels: { style: 'slick', w: 0.25, gap: 0.04 },
+      wheels: { style: 'slick', w: 0.25, gap: 0.04, rim: [0.92, 0.92, 0.9] },   // (white dishes, grey spokes, the red centre-lock nut: not the GT racer's dark ones)
       // the lids take their tops only (the nose's and the tail's sloping corners stay with the body); the sill under the rear door stays too
       regions: (std) => [{ part: 'body', x: [-0.98, -0.25], bands: ['tuck'], y: [-1, 0.2] }]
         .concat(std.map(r => r.part === 'hood' || r.part === 'trunk' ? Object.assign({}, r, { bands: ['edge', 'crown'] }) : r)),
@@ -150,8 +151,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           }
         }, { noCrush: true, noDent: true });
         // ---- the fin on the roof's back (never crushed out of shape: it goes down with the roof), the rain light at its foot ----
-        K.part('body', () => K.endplate([[-0.56, 1.347], [-0.985, 1.333], [-0.975, 1.44]], 0, 0.03, CF), { noCrush: true, noDent: true });
-        K.rect(-0.99, 1.36, 0, 0.1, 0.06, B, { dir: '-x', part: 'body' }); K.tailLamp(-0.992, 1.36, 0, 0.08, 0.04);
+        // (in the stripe colour and 6 cm thick: it reads from the showroom's angles and edge-on from the chase camera)
+        K.part('body', () => K.endplate([[-0.56, 1.347], [-0.985, 1.333], [-0.975, 1.44]], 0, 0.06, S), { noCrush: true, noDent: true });
+        K.rect(-0.99, 1.36, 0, 0.14, 0.07, B, { dir: '-x', part: 'body' }); K.tailLamp(-0.992, 1.36, 0, 0.12, 0.05);
         // ---- the mirrors, the wiper ----
         for (const sd of [-1, 1]) K.mirror(0.6, 1.0, sd * 0.965, { w: 0.1, h: 0.07, d: 0.11, col: S });
         K.bar([0.8, 0.915, -0.5], [0.74, 0.94, 0.3], 0.01, B, { n: 4, part: 'body' });
