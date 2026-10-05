@@ -241,7 +241,8 @@
   }
   function topView(t, R, M, lockd) {   // the whole map to the stage's edges (fitMaps: the route as big as fits)
     const T = R.top, pts = T.route, rally = t.group === 'rally';
-    return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '">' +
+    // a soft, blurred copy of the map fills the stage behind the fitted map, so a long route that does not fill the frame has no empty bars
+    return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"><div class="mapbg" style="background-image:url(assets/maps/top-' + t.id + '.webp)"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '">' +
       '<image href="assets/maps/top-' + t.id + '.webp" width="' + T.W + '" height="' + T.H + '"/><image class="wet" href="assets/maps/top-' + t.id + '-rain.webp" width="' + T.W + '" height="' + T.H + '"/>' +
       routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</svg></div>';
   }
@@ -261,14 +262,17 @@
   function fitMaps() {
     if (!app) return;   // (the old menu is on: the menu is not built, and a window that changes its size must not stumble on it)
     for (const box of app.querySelectorAll('.dio.topmap[data-map]')) {   // (the track screen's maps: the intro's is fitted by fitIntroMap)
-      const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight, oh = 40;
+      const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight;
       if (!W || !H) continue;
       if (!T.bb) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of T.route) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } T.bb = [x0, y0, x1, y1]; }
-      const [x0, y0, x1, y1] = T.bb, top = 44, free = Math.max(40, H - oh - top);   // (room at the top for the switch and the ribbon, at the bottom for the arrows)
-      const cover = Math.max(W / T.W, H / T.H), fit = Math.min((W - 32) / (x1 - x0), (free - 40) / (y1 - y0));
-      const s = Math.max(cover, Math.min(fit, 0.72)), k = 0.5 / s;
-      const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 - 20 / s;
-      const vx = Math.min(Math.max(0, cx - vw / 2), Math.max(0, T.W - vw)), vy = Math.min(Math.max(0, cy - (top + free / 2) / s), Math.max(0, T.H - vh));
+      // the whole route (start to finish) fits between the side arrows, with room at the top for the switch and at the bottom for the
+      // dots; the route is centred and the blurred backdrop fills whatever falls outside the map tile, so nothing is cropped or left empty.
+      // padX clears the arrows (48 px wide, 12 px in) so the start and finish names are never hidden behind them
+      const [x0, y0, x1, y1] = T.bb, rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0);
+      const padX = 72, padTop = 48, padBot = 30, availW = Math.max(60, W - 2 * padX), availH = Math.max(60, H - padTop - padBot);
+      const s = Math.min(availW / rw, availH / rh), k = 0.5 / s;
+      const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      const vx = cx - vw / 2, vy = cy - (padTop + availH / 2) / s;
       svg.setAttribute('viewBox', vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + vw.toFixed(1) + ' ' + vh.toFixed(1));
       svg.style.setProperty('--k', k.toFixed(3));
       for (const g of svg.querySelectorAll('.mk, .sp')) { if (!g.dataset.at) g.dataset.at = g.getAttribute('transform'); g.setAttribute('transform', g.dataset.at + ' scale(' + k.toFixed(3) + ')'); }

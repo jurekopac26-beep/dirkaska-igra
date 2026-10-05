@@ -18,25 +18,6 @@
    "roadwear:MeshLambertMaterial": "c64a615c"
   }
  },
- "ljubljana": {
-  "meshes": 158,
-  "verts": 509014,
-  "instances": 2346,
-  "props": 92,
-  "crowd": 2346,
-  "world": "8f4e2bf7",
-  "propsHash": "2315e742",
-  "floor": "7addfae4/3752",
-  "groups": {
-   "-:MeshLambertMaterial": "b9461f44",
-   "-:MeshBasicMaterial": "9dbdf42b",
-   "-:MeshPhongMaterial": "429e7f0f",
-   "crowd:MeshLambertMaterial": "56818ce0",
-   "ao:MeshBasicMaterial": "eebb1615",
-   "tyremarks:MeshBasicMaterial": "1b34ab5c",
-   "roadwear:MeshLambertMaterial": "b49874c"
-  }
- },
  "monaco": {
   "meshes": 301,
   "verts": 752257,
