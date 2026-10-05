@@ -87,6 +87,9 @@ try {
     await click(page, 'weather:1');
     let s = await page.evaluate(() => ({ w: window.__game.S.weather, rainy: document.getElementById('menu-host').shadowRoot.querySelector('#track-stage').classList.contains('rainy') }));
     T.check('the weather sheet: Rain sets the game\'s weather, the model/map goes wet', s.w === 'rain' && s.rainy, JSON.stringify(s));
+    // the rain covers the whole picture (a canvas is not stretched by top and bottom: it once stopped half way) and stops above the bar with the arrows
+    const rc = await ev(page, 'const cv = root.querySelector("#track-stage canvas.rainfx"), pic = root.querySelector("#track-stage .dio"), ar = root.querySelector("#track-stage .arrow"); const r = cv.getBoundingClientRect(), p = pic.getBoundingClientRect(); return { cv: [r.top, r.bottom, r.width], pic: [p.top, p.bottom, p.width], arrow: ar.getBoundingClientRect().top };');
+    T.check('the rain covers the whole picture and stops above the bar with the arrows', Math.abs(rc.cv[0] - rc.pic[0]) < 1.5 && Math.abs(rc.cv[1] - rc.pic[1]) < 1.5 && Math.abs(rc.cv[2] - rc.pic[2]) < 1.5 && rc.cv[1] <= rc.arrow + 1, JSON.stringify(rc));
     await click(page, 'more-options'); await click(page, 'opt:season:autumn'); await click(page, 'opt:tod:dusk'); await click(page, 'opt:length:short');
     s = await page.evaluate(() => ({ season: __game.S.season, tod: __game.S.tod, length: __game.S.length }));
     T.check('the race options sheet: Autumn, Dusk and a Short race are the game\'s settings', s.season === 'autumn' && s.tod === 'dusk' && s.length === 'short', JSON.stringify(s));
@@ -234,6 +237,39 @@ try {
     T.check(`${w}x${h}: the track step${side ? ' (on its side: the stage left, the card right)' : ''}: Race! and Back inside the screen, the card above them, the stage next to it`,
       inside(g.go) && inside(g.foot) && g.card.bottom <= g.foot.top + 1 && g.card.top >= g.groups.bottom - 1 && g.drows.every(inside) && (side ? g.st.right <= g.card.left + 1 && g.st.height >= g.H - 2 : g.st.bottom <= g.card.top + 40), JSON.stringify({ st: g.st, card: g.card, go: g.go }));
     T.check(`${w}x${h}: the card shows its car and weather boxes without scrolling`, g.cardScroll <= 2, 'scroll ' + g.cardScroll);
+
+    // the bar under the picture (the arrows and the track's number, 3/14, no dots) is in the same place on a map (Vršič) and on a model (the
+    // next track); an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it
+    // lies; the whole route and the names of its flags inside the picture
+    const MEASURE = `
+      const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
+      const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg"), pc = root.querySelector(".pcount");
+      const out = { name: root.querySelector(".card h1").firstChild.textContent, count: pc ? pc.textContent : "", total: +root.querySelector(".groups [aria-selected=true] i").textContent, dots: !!st.querySelector(".dots"), pic: c(pic), arr: [...st.querySelectorAll(".arrow")].map(c), cnt: pc ? c(pc) : null, scr: [innerWidth, innerHeight] };
+      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...svg.querySelectorAll(".mk text")].map(c); }
+      return out;`;
+    await click(page, 'group:road'); await click(page, 'mapv:2'); await page.waitForTimeout(500);
+    const v1 = await ev(page, MEASURE);
+    await click(page, 'track:1'); await page.waitForTimeout(500);
+    const v2 = await ev(page, MEASURE);
+    const same = (a, b) => Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
+    const barOk = (v) => !v.dots && v.arr.length === 2 && v.arr.every(a => a.t >= v.pic.b - 1 && a.b <= v.scr[1] + 0.5) && v.cnt && v.cnt.x > v.arr[0].x && v.cnt.x < v.arr[1].x;
+    T.check(`${w}x${h}: under the picture a bar with the arrows and the track's number (1/${v1.total}, then 2/${v1.total}), no dots; the arrows at the same place on a map and on a model`,
+      !!v1.line && !v2.line && v1.count === '1/' + v1.total && v2.count === '2/' + v2.total && barOk(v1) && barOk(v2) && same(v1.arr[0], v2.arr[0]) && same(v1.arr[1], v2.arr[1]), JSON.stringify({ v1: { count: v1.count, arr: v1.arr, pic: v1.pic }, v2: { count: v2.count, arr: v2.arr } }));
+    const tall = v1.pic.w / v1.pic.h < 1.3, turned = /^rotate\(-90 /.test(v1.rot);
+    const upright = tall ? v1.f && v1.s.y > v1.f.y + v1.pic.h * 0.4 && Math.abs(v1.s.x - v1.f.x) < v1.pic.w * 0.35 : v1.f && v1.f.x > v1.s.x + v1.pic.w * 0.4;
+    T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame: Kranjska Gora (the start) below, Vršič (the finish) above' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, turned === tall && !!upright, JSON.stringify({ rot: v1.rot, pic: v1.pic, s: v1.s, f: v1.f }));
+    const inPic = (r, p, e) => r.l >= p.l - e && r.r <= p.r + e && r.t >= p.t - e && r.b <= p.b + e;
+    T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 6) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
+    await click(page, 'group:circuit'); await page.waitForTimeout(400);
+    const nCirc = +(await ev(page, 'return root.querySelector("[data-act=\\"group:circuit\\"] i").textContent;'));
+    const cut = []; let maps = 0;
+    for (let k = 0; k < nCirc; k++) {
+      await page.waitForTimeout(300);
+      const m = await ev(page, MEASURE);
+      if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); }
+      await click(page, 'track:1');
+    }
+    T.check(`${w}x${h}: on every circuit's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

@@ -75,6 +75,15 @@ svg { display: block; }
 .dots i.on { background: #fff; width: 18px; border-radius: 4px; }
 .dots i.lock { background: rgba(255, 198, 41, .45); }
 .dots i.lock.on { background: var(--gold); }
+/* the track step: the picture, and under it a bar with the previous / next arrows and the number of the track (3/14), the same on every
+   track (a model, a flyover or a map), so Next is always in the same place */
+.stage.navbar .dio { bottom: 50px; }
+.stage.navbar canvas.rainfx { height: calc(100% - 50px); }   /* (a canvas is not stretched between top and bottom: the height is given) */
+.stage.navbar .arrow { top: auto; bottom: 4px; margin-top: 0; width: 42px; height: 42px; }
+.stage.navbar .arrow.l { left: 50%; margin-left: -98px; }
+.stage.navbar .arrow.r { right: 50%; margin-right: -98px; }
+.pcount { position: absolute; left: 0; right: 0; bottom: 16px; z-index: 3; display: flex; align-items: baseline; justify-content: center; font: 800 italic 15px/1 var(--f-ui); color: rgba(255, 255, 255, .6); font-variant-numeric: tabular-nums; pointer-events: none; text-shadow: 0 2px 6px rgba(0, 0, 0, .55); }
+.pcount b { font-size: 21px; color: #fff; }
 .drag { position: absolute; left: 0; right: 0; top: 6px; text-align: center; font: 600 11.5px/1 var(--f-ui); color: rgba(174, 181, 247, .7); letter-spacing: .06em; z-index: 3; pointer-events: none; }
 .soon-note { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); font: 900 italic 22px/1 var(--f-ui); color: rgba(63, 208, 255, .85); letter-spacing: .12em; text-shadow: 0 0 18px rgba(63, 208, 255, .5); pointer-events: none; z-index: 2; }
 .dio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -423,8 +432,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .topmap image.wet { opacity: 0; transition: opacity .7s ease; }
 .stage.rainy .dio image.wet { opacity: 1; }
 .dio.topmap.lock .mapsvg image, .dio.fly.lock video { filter: saturate(.55) brightness(.8); }
-/* the flyover and the map keep the same big arrows at the sides (and dots at the bottom) as the track models (e.g. Los Caracoles), for one look across all tracks */
-/* the flyover and the intro: the place the video has reached and its height, low in the right corner (above the arrows) */
+/* (every track, model, flyover or map, has the same arrows and track number in the bar under its picture: see .stage.navbar) */
+/* the flyover and the intro: the place the video has reached and its height, high in the right corner */
 .hud { position: absolute; right: 10px; top: 10px; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; max-width: calc(100% - 20px); }
 .hud b { background: #fff; color: #10151d; font: 900 italic 14px/1 var(--f-ui); letter-spacing: .02em; padding: 6px 10px 5px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .hud small { background: var(--gold); color: var(--gold-ink); font: 900 italic 12px/1 var(--f-ui); padding: 4px 9px 3px; transform: skewX(-10deg); margin-right: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
