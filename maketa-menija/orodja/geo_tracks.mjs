@@ -22,7 +22,7 @@ page.on('pageerror', e => console.log('pageerror:', e.message));
 await page.addInitScript(() => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify({ sound: 0, comm: 0, quality: 'low' })); });
 await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'domcontentloaded' });
 for (let i = 0; i < 300 && !(await page.evaluate(() => !!(window.Core && Core.TRACKS && window.__game))); i++) await new Promise(r => setTimeout(r, 400));
-const ids = process.argv[2] ? process.argv[2].split(',') : ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'ljubljana', 'monaco', 'rbring', 'suzuka', 'spa', 'nring'];
+const ids = process.argv[2] ? process.argv[2].split(',') : ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring'];
 for (const id of ids) {
   const r = await page.evaluate((id) => {
     const def = Core.TRACKS.find(d => d.id === id), T = new Core.Track(def), step = Math.max(1, Math.round(10 / T.ds)), P = [];

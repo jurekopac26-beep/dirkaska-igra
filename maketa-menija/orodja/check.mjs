@@ -65,7 +65,7 @@ const plan = [
   ['full', 'track', { mode: 'chase', trackId: 'monaco' }], ['full', 'title', { sub: 'career' }, 1200], ['full', 'cup', {}],
   ['veteran', 'title', {}, 1200], ['veteran', 'title', { sub: 'career' }, 1200], ['veteran', 'car', { carIdx: 2, colorIdx: 0 }, 2000], ['veteran', 'car', { carIdx: 5 }, 1800], ['veteran', 'car', { carIdx: 6, colorIdx: 3 }, 2000],
   ['veteran', 'track', { mode: 'race', trackId: 'spa' }], ['veteran', 'track', { mode: 'race', trackId: 'nring' }], ['veteran', 'track', { mode: 'race', trackId: 'gora', weatherSheet: true }],
-  ['veteran', 'track', { mode: 'trial', trackId: 'suzuka' }], ['veteran', 'track', { mode: 'chase', trackId: 'ljubljana', weatherSheet: true }],
+  ['veteran', 'track', { mode: 'trial', trackId: 'suzuka' }], ['veteran', 'track', { mode: 'chase', trackId: 'vrsic', weatherSheet: true }],
   ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 2 }], ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 2, weather: 1 }, 1600],
   ['veteran', 'track', { mode: 'trial', trackId: 'pikes', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja', mapV: 1, weather: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja', mapV: 2 }],
   ['veteran', 'track', { mode: 'race', trackId: 'gora', mapV: 2 }], ['veteran', 'track', { mode: 'chase', trackId: 'vrsic', mapV: 2, weatherSheet: true }],

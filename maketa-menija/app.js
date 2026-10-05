@@ -177,7 +177,7 @@
   }
 
   /* ---------------- persistent parts: video background, 3D car ---------------- */
-  const CLIPS = ['jezero', 'ljubljana', 'gora'];
+  const CLIPS = ['jezero', 'gora'];
   const bg = (function () {
     const el = document.createElement('div'); el.className = 'bgv'; el.setAttribute('aria-hidden', 'true');
     const poster = new Image(); poster.src = 'assets/video/poster-' + CLIPS[0] + '.jpg'; poster.alt = ''; el.appendChild(poster);
