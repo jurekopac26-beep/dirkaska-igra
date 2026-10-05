@@ -21,8 +21,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         bumperF: { df: 0, y: 0.45 },
         // (where the look has them: the front clip up to the bonnet, the doors behind the long bonnet, the mirrors at the cowl, the boot lid
         // behind the fastback)
-        doorL: { lx: -0.15, y: 0.62 }, doorR: { lx: -0.15, y: 0.62 }, mirrorL: { lx: 0.01, lz: -0.96, y: 0.97 }, mirrorR: { lx: 0.01, lz: 0.96, y: 0.97 },
+        doorL: { lx: -0.15, y: 0.62, h: 0.11 }, doorR: { lx: -0.15, y: 0.62, h: 0.11 }, mirrorL: { lx: 0.01, lz: -0.96, y: 0.97 }, mirrorR: { lx: 0.01, lz: 0.96, y: 0.97 },
         trunk: { lx: -0.95, y: 0.96 },
+        quarterL: { h: 0.13 }, quarterR: { h: 0.13 },   // (the pieces' real thickness lying on the road: a door with its glass leaning in, a quarter with its haunch and flare)
       },
       extra: {
         splitter: { z: 0, th: 0.45, m: 3, rW: 0.42, h: 0.04, lx: 1, lz: 0, f: 0.02, df: 0.3 },
@@ -43,7 +44,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-0.62, 0.91, 0.12, 0.89, 0.62, 1.17, 0.03, 'gf', 0.09],       // the windscreen's top (the cabin narrower than the arches)
           [-0.2, 0.91, 0.126, 0.874, 0.683, 0.985, 0.0175, 'gf', 0.09],  // (the side glass ends here: the mirror sails ahead of it)
           [0.05, 0.91, 0.13, 0.865, 0.72, 0.875, 0.01, 'b', 0.09],       // the cowl (the windscreen's base, far back: the long bonnet; low under the eyes)
-          [1.30, 1.00, 0.15, 0.875, 0.77, 0.89, -0.07, 'b', 0.09],       // the front axle: the bonnet sunk between the fenders' flat tops (the louvres on them)
+          [1.30, 1.00, 0.15, 0.875, 0.77, 0.89, -0.03, 'b', 0.09],       // the front axle: the bonnet sunk between the fenders' flat tops (the louvres on them)
+          // (no deeper: the arch lifts this section's foot and the loft's inside point with it; a crown much under the edge turns the bonnet's edge band face down)
           [2.03, 1.00, 0.15, 0.75, 0.82, 0.77, -0.04, 'b', 0.09],
           [2.24, 0.98, 0.15, 0.645, 0.82, 0.665, -0.02, 'b', 0.09],
           [2.33, 0.93, 0.15, 0.56, 0.79, 0.58, -0.01, 'b', 0.08]],       // the nose (the cap: the fascia with the grille and the lamps)
