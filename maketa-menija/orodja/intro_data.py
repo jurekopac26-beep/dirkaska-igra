@@ -18,7 +18,7 @@ MAPS = os.path.join(HERE, 'raw', 'maps')
 P = json.load(open(os.path.join(RAW, 'places.json')))['tracks']
 LM = json.load(open(os.path.join(HERE, 'landmarks.json')))
 SUMMIT = {'vrsic': 'Vršič'}   # (a mountain's name in the corner only where no trademark is near: the Colorado hill climb's mountain shows its height only)   # (a road over a mountain: its top's name; the circuits show the height only)
-NO_FLIGHT = {'ljubljana'}   # (tracks to be taken out of the game before its release: no helicopter flight, the intro goes straight to the start lights)
+NO_FLIGHT = set()   # (tracks without a helicopter flight: the intro goes straight to the start lights)
 MUSIC = {'Slovenia': 'slovenia', 'USA': 'usa', 'Finland': 'finland', 'Japan': 'japan', 'Monaco': 'monaco', 'Austria': 'austria', 'Belgium': 'belgium', 'Germany': 'germany'}
 
 def at_s(T, pts, s):   # the road at s metres from the track's own start: x, z, y

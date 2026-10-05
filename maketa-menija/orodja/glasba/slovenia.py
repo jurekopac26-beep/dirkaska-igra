@@ -1,4 +1,4 @@
-"""Slovenia (Vrsic, Ljubljana, the lake with the island church, the gravel rally, the coast): alpine house.
+"""Slovenia (Vrsic, the lake with the island church, the gravel rally, the coast): alpine house.
 A bright accordion hook sung by two voices in parallel thirds (as two singers do in the country's folk songs), a zither-like plucked
 arpeggio, warm pads, the accordion's left hand on the offbeats, a bouncy offbeat bass over a four-on-the-floor kick (house's 'oom-pah'),
 the church bell across the lake, and in the breath the belfry's bells struck by hand in an interlocking rhythm (pritrkavanje: the

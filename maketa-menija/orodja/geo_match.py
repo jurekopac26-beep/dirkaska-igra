@@ -9,7 +9,6 @@ from geo_lib import DEM, Geo, RAW, track, radii
 # first guesses: the origin of each world (lat, lon) and how far round it to look (m)
 GUESS = {
     'vrsic': (46.4865, 13.7880, 1500),      # the junction in Kranjska Gora (the pass: 46.4356, 13.7444)
-    'ljubljana': (46.05112, 14.50631, 300), # the Triple Bridge
     'monaco': (43.7372, 7.4212, 700),       # Sainte-Devote
     'rbring': (47.2197, 14.7647, 1500),     # the start / finish line
     'suzuka': (34.8431, 136.5406, 1500),
