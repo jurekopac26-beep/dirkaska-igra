@@ -18,19 +18,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     partNames: { nose: 'front panel', cover: 'engine cover', spareL: 'spare wheel', spareR: 'spare wheel', snorkel: 'snorkel' },
     parts: { set: 'none', ht: 1.85, y0: 0.45,
       extra: {
-        nose: { z: 0, th: 0.55, m: 6, rW: 0.35, h: 0.1, lx: 0.95, lz: 0, f: 0.21 },
-        cover: { z: 1, th: 0.72, m: 9, rW: 0.38, h: 0.08, lx: -0.52, lz: 0, f: 0.42 },
+        nose: { z: 0, th: 0.55, m: 6, rW: 0.35, h: 0.21, lx: 0.93, lz: 0, f: 0.24 },
+        cover: { z: 1, th: 0.72, m: 9, rW: 0.38, h: 0.23, lx: -0.52, lz: 0, f: 0.42 },
+        fenderL: { lz: -0.77, y: 0.95, h: 0.12 }, fenderR: { lz: 0.77, y: 0.95, h: 0.12 },   // (the standard entries; their ranges' middles, how thick they lie: a
+        quarterL: { lx: -0.66, lz: -0.78, y: 0.89, h: 0.27 }, quarterR: { lx: -0.66, lz: 0.78, y: 0.89, h: 0.27 },   // fender with the top's edge, a rear one with its flap)
         spareL: { z: 2, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: -0.79, f: 0.43 },
         spareR: { z: 3, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: 0.79, f: 0.43 },
         snorkel: { z: 3, th: 0.5, m: 2, r: 0.25, h: 0.1, lx: 0.34, lz: 0.77, f: 0.77 },
       },   // (where the look has them: each entry at its range's centroid, the debris flies off from there)
     },
-    // the look (KIT API v1, render.js; look units = metres): one loft, the low body (its regions: the nose panel; the deck's middle under
-    // the engine cover's spine), open over the cockpit (an open top, lined in the outer shell); the tube frame over it and its rear bumper
-    // tube (in the stripe colour), the roof panel with the light pod, the windscreen, the mirrors, the seats and the dashboard in 'body';
-    // the engine cover's spine with its louvres, the spare wheels in their bays behind the cabin, the snorkel up the right A-pillar, the
-    // blunt nose's lamps and skid plate in their parts; the engine, the gearbox and the frame's front in the inner block. The livery: the
-    // paint, a stripe down the middle (bonnet, roof, spine) and along the sides; the start number on the spine and on the cockpit's sides
+    // the look (KIT API v1, render.js; look units = metres): one loft, the low body (its regions: the nose panel with the front deck's
+    // middle; the deck's middle under the engine cover's spine; the front fenders, the rear ones with the deck's sides and the tail's
+    // flanks (the quarters, their mudflaps with them): off, they bare the frame's front, the engine and the wheels), open over the cockpit
+    // (an open top, lined in the outer shell); the tube frame over it and its rear bumper tube (in the stripe colour), the roof panel with
+    // the light pod, the windscreen, the mirrors, the seats and the dashboard in 'body'; the engine cover's spine with its louvres, the
+    // spare wheels in their bays behind the cabin, the snorkel up the right A-pillar, the blunt nose's lamps and skid plate in their
+    // parts; the engine, the gearbox and the frame's front in the inner block. The livery: the paint, a stripe down the middle (bonnet,
+    // roof, spine) and along the sides; the start number on the spine and on the cockpit's sides
     look: {
       body: { len: 4.6, wid: 2.3, roofY: 1.66,
         //       x       w     yb    ybelt  wt    yt    cr     kind  tuck
@@ -65,8 +69,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (e === 4 && x < -0.06) return DK;
           return P;
         }, { caps: { front: { col: P, colLow: DK, cut: 0.62, low: 'nose', high: 'nose' }, rear: { col: P, colLow: DK, cut: 0.72, low: 'body', high: 'body' } },
-          regions: [{ part: 'nose', x: [1.9543, 2.6], bands: ['tuck', 'side', 'window', 'edge', 'crown'] },
-            { part: 'cover', x: [-2.6, -0.06], bands: ['crown'] }] });
+          regions: [{ part: 'nose', x: [1.9543, 2.6], bands: ['tuck', 'side', 'window', 'edge', 'crown'] }, { part: 'nose', x: [1.0057, 2.6], bands: ['crown'] },
+            { part: 'cover', x: [-2.6, -0.06], bands: ['crown'] },
+            { part: 'fenderL', x: [1.0057, 1.9543], bands: ['tuck', 'side', 'window', 'edge'], side: 'L' }, { part: 'fenderR', x: [1.0057, 1.9543], bands: ['tuck', 'side', 'window', 'edge'], side: 'R' },
+            { part: 'quarterL', x: [-2.16, -0.8745], bands: ['tuck', 'side', 'window', 'edge'], side: 'L' }, { part: 'quarterR', x: [-2.16, -0.8745], bands: ['tuck', 'side', 'window', 'edge'], side: 'R' }] });
         const D = L.decal;
         D.side([[-0.86, 0.58], [0.93, 0.58], [0.93, 0.64], [-0.86, 0.64]], S, null, 0.006);        // the band along the sides, over the sill
         D.top([[1.02, -0.1], [2.29, -0.1], [2.29, 0.1], [1.02, 0.1]], S, 0.006);                   // the stripe down the bonnet (the roof's, the spine's)
@@ -113,20 +119,19 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.tyre(-0.5, 1.05, s * 0.9, { axis: 'z', face: s });
           K.bar([-0.5, 1.05, s * 0.6], [-0.5, 1.05, s * 0.76], 0.035, DK, { n: 4 });
         }, { noCrush: true, noDent: true, hinge: [[-0.95, 0.7, s * 0.9], [-0.05, 0.7, s * 0.9]] });
-        // ---- the nose panel: two lamps a side in black pods in its flat face, the intake between them, the skid plate under it with
-        //      its towing eyes ----
+        // ---- the nose panel (the front deck's middle with it, between the fenders): two lamps a side in black pods in its flat face, the
+        //      intake between them, the skid plate under it with its towing eyes ----
         K.part('nose', () => {
           for (const s of [-1, 1]) { K.rect(2.302, 0.73, s * 0.46, 0.46, 0.2, B);
             K.headLamp(2.306, 0.73, s * 0.58, 0.084, { ring: null, n: 10 }); K.headLamp(2.306, 0.73, s * 0.35, 0.066, { ring: null, n: 8 });
             K.rect(2.307, 0.565, s * 0.44, 0.07, 0.05, RED); }
           K.rect(2.302, 0.73, 0, 0.32, 0.1, DK);
           K.plate([[2.3, 0.56, -0.66], [2.3, 0.56, 0.66], [1.95, 0.4, 0.72], [1.95, 0.4, -0.72]], 0.03, AL);
-        }, { hinge: [[1.96, 0.97, -0.85], [1.96, 0.97, 0.85]] });
+        }, { hinge: [[1.0057, 1.0, -0.6], [1.0057, 1.0, 0.6]] });   // (with the deck's middle over the front: it droops from the cowl)
         // ---- the tail: the lamps, the cooling outlet between them, the plate, the exhaust, the frame's bumper tube under it with its
         //      towing eye, the skid plate, the mudflaps; the start numbers on the cockpit's sides ----
         K.part('body', () => {
           for (const s of [-1, 1]) { K.rect(-2.303, 0.83, s * 0.56, 0.28, 0.16, B, { dir: '-x' }); K.tailLamp(-2.305, 0.83, s * 0.56, 0.24, 0.12);
-            K.rect(-2.0, 0.45, s * 0.98, 0.3, 0.46, B, { dir: '-x' });
             K.number(0.5, 0.69, s * 0.982, 0.24, { dir: s < 0 ? '-z' : 'z' }); }
           K.grille(-2.302, 0.83, 0, 0.56, 0.13, { dir: -1, slats: 2 });                                // the cooling outlet between the lamps
           K.rect(-2.303, 0.68, 0.06, 0.34, 0.09, [0.93, 0.93, 0.9], { dir: '-x' });                    // the plate
@@ -136,6 +141,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(-2.314, 0.57, 0.3, 0.06, 0.07, RED, { dir: '-x' });                                   // (its towing eye)
           K.plate([[-2.3, 0.6, 0.6], [-2.3, 0.6, -0.6], [-1.98, 0.44, -0.66], [-1.98, 0.44, 0.66]], 0.03, AL);   // the skid plate under the tail
         });
+        for (const s of [-1, 1]) K.rect(-2.0, 0.45, s * 0.98, 0.3, 0.46, B, { dir: '-x', part: s < 0 ? 'quarterL' : 'quarterR' });   // the mudflaps (with the rear fenders)
         // ---- inside: the seats, the dashboard and the wheel (the cockpit is open: in the outer shell); the engine and the gearbox
         //      (the inner block: seen once the cover is off) ----
         for (const s of [-1, 1]) K.seat(0.45, 0.52, s * 0.37, { w: 0.46, l: 0.44, back: 0.72, tilt: 0.24, col: SEAT, inner: false });
