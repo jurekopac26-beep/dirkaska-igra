@@ -21,18 +21,21 @@ try {
   await pick('carLow', '0'); const c0 = await carY('chase'); const w0 = await wiring();
   await pick('carLow', '1'); const c1 = await carY('chase'); const w1 = await wiring();
   await pick('carLow', '2'); const c2 = await carY('chase'); const w2 = await wiring();
-  T.check('the choice is saved and maps to metres (0, 2, 5)', w0.set === 0 && w0.back === 0 && w1.set === 1 && w1.back === 2 && w2.set === 2 && w2.back === 5, JSON.stringify([w0, w1, w2]));
+  await pick('carLow', '3'); const c3 = await carY('chase'); const w3 = await wiring();
+  await pick('carLow', '4'); const c4 = await carY('chase'); const w4 = await wiring();
+  T.check('the choice is saved and maps to metres (0, 2, 5, 7, 10)', w0.set === 0 && w0.back === 0 && w1.set === 1 && w1.back === 2 && w2.set === 2 && w2.back === 5 && w3.set === 3 && w3.back === 7 && w4.set === 4 && w4.back === 10, JSON.stringify([w0, w1, w2, w3, w4]));
 
   // chase (phone upright): the more it is set back, the lower the car sits (NDC y decreases)
-  T.check('chase: the car sits lower the more it is set back', c2.y < c1.y && c1.y < c0.y, JSON.stringify([c0, c1, c2]));
+  T.check('chase: the car sits lower the more it is set back', c4.y < c3.y && c3.y < c2.y && c2.y < c1.y && c1.y < c0.y, JSON.stringify([c0, c1, c2, c3, c4]));
 
   // iso (phone lying): the car shifts further from its default spot the more it is set; the default moves nothing
   await pick('camera', 'iso');
   await pick('carLow', '0'); const i0 = await carY('iso');
   await pick('carLow', '1'); const i1 = await carY('iso');
   await pick('carLow', '2'); const i2 = await carY('iso');
-  const d1 = Math.hypot(i1.x - i0.x, i1.y - i0.y), d2 = Math.hypot(i2.x - i0.x, i2.y - i0.y);
-  T.check('iso: the car moves further back the more it is set', d2 > d1 && d1 > 0.001, JSON.stringify([i0, i1, i2, +d1.toFixed(4), +d2.toFixed(4)]));
+  await pick('carLow', '4'); const i4 = await carY('iso');
+  const d1 = Math.hypot(i1.x - i0.x, i1.y - i0.y), d2 = Math.hypot(i2.x - i0.x, i2.y - i0.y), d4 = Math.hypot(i4.x - i0.x, i4.y - i0.y);
+  T.check('iso: the car moves further back the more it is set', d4 > d2 && d2 > d1 && d1 > 0.001, JSON.stringify([i0, i1, i2, i4, +d1.toFixed(4), +d2.toFixed(4), +d4.toFixed(4)]));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {
