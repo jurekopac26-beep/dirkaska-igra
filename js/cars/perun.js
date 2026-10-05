@@ -18,8 +18,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'race', ht: 1.07, y0: 0.16,
       // (where the look has them: the engine cover from the rear glass's foot to the tail, the front lid with the nose's top, the doors with
       // their glass, the quarters with their airboxes, the mirrors on stalks at the windscreen's foot, the wing high over the tail)
-      over: { trunk: { lx: -0.82, y: 0.88 }, hood: { lx: 0.67 }, doorL: { lx: -0.01, y: 0.66 }, doorR: { lx: -0.01, y: 0.66 }, quarterL: { y: 0.68 }, quarterR: { y: 0.68 },
-        mirrorL: { lx: 0.11, lz: -0.97, y: 0.87 }, mirrorR: { lx: 0.11, lz: 0.97, y: 0.87 }, wing: { lx: -0.87, y: 1.0 } } },
+      over: { trunk: { lx: -0.82, y: 0.88 }, hood: { lx: 0.67 }, doorL: { lx: -0.01, y: 0.66 }, doorR: { lx: -0.01, y: 0.66 }, quarterL: { y: 0.68, h: 0.15 }, quarterR: { y: 0.68, h: 0.15 },
+        mirrorL: { lx: 0.11, lz: -0.92, y: 0.87 }, mirrorR: { lx: 0.11, lz: 0.92, y: 0.87 }, wing: { lx: -0.87, y: 1.0 } } },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the low tail with its black lamp panel, the flat engine
     // cover between the hips, the rear glass between the buttresses, the short roof, the long raked windscreen, the front lid falling in
     // one wedge to the low nose. The standard regions split it: the doors (scissor doors, hinged across the car at their front: their glass,
@@ -129,9 +129,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-1.99, 0.22, 0, 0.16, 0.05, 1.5, 0, B);
           K.rect(tx - 0.004, 0.36, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x' });
         });
-        for (const z of [-0.2, -0.09, 0.09, 0.2]) K.exhaust(-2.11, 0.3, z, 0.038, 0.2, { part: 'body' });
+        for (const z of [-0.2, -0.09, 0.09, 0.2]) K.exhaust(-2.11, 0.26, z, 0.038, 0.2, { part: 'body' });   // (at the valance's foot, under the plate)
         // ---- the mirrors (black, on stalks at the windscreen's foot), the single wiper ----
-        for (const sd of [-1, 1]) K.mirror(0.22, 0.88, sd * 1.0, { col: B, w: 0.09, h: 0.075, d: 0.17, arm: B, z0: sd * 0.84 });
+        for (const sd of [-1, 1]) K.mirror(0.22, 0.88, sd * 0.95, { col: B, w: 0.09, h: 0.075, d: 0.17, arm: B, z0: sd * 0.84 });
         K.bar([0.37, L.topY(0.37, -0.6) + 0.012, -0.6], [0.2, L.topY(0.2, 0.35) + 0.012, 0.35], 0.01, B, { n: 4, part: 'body' });
         // ---- the hinges: the front lid at the cowl, the engine cover at the rear glass, the scissor doors across the car at their front ----
         K.hinge('hood', [0.43, 0.81, -0.6], [0.43, 0.81, 0.6]);

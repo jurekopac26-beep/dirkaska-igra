@@ -19,7 +19,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'none', ht: 1.1, y0: 0.22,
       extra: {
         nose: { z: 0, th: 0.5, m: 6, r: 0.4, h: 0.3, lx: 0.95, lz: 0, f: 0.45 },
-        cover: { z: 0, th: 0.75, m: 8, rW: 0.3, h: 0.06, lx: 0.51, lz: 0, f: 0.53 },
+        cover: { z: 0, th: 0.75, m: 8, rW: 0.3, h: 0.19, lx: 0.51, lz: 0, f: 0.53 },   // (its sides and its top: it lies as thick as it is)
         tail: { z: 1, th: 0.6, m: 7, r: 0.5, h: 0.3, lx: -0.75, lz: 0, f: 0.43 },
       },
     },
@@ -34,21 +34,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     look: {
       body: { len: 3.7, wid: 1.35, roofY: 1.1,
         //       x      w      yb     ybelt  wt     yt     cr     kind  tuck
+        // (as few sections as the shapes need: every segment is paid for by the field and by each piece on the road (the field under a wreck))
         secs: [[-1.85, 0.028, 0.45, 0.49, 0.022, 0.51, 0.006, 'b', 0.02],     // the boat tail's point
-          [-1.74, 0.11, 0.395, 0.55, 0.09, 0.595, 0.02, 'b', 0.05],
           [-1.58, 0.19, 0.35, 0.615, 0.155, 0.675, 0.035, 'b', 0.065],
-          [-1.38, 0.265, 0.31, 0.675, 0.215, 0.745, 0.048, 'b', 0.075],
           [-1.15, 0.33, 0.28, 0.72, 0.27, 0.795, 0.055, 'b', 0.08],           // (over the rear axle: the taper starts here)
-          [-0.95, 0.36, 0.265, 0.745, 0.295, 0.82, 0.058, 'b', 0.08],
           [-0.75, 0.365, 0.26, 0.765, 0.3, 0.83, 0.058, 'r', 0.08],           // the cockpit's rear edge (open from here to the scuttle)
           [-0.45, 0.37, 0.255, 0.705, 0.305, 0.835, 0.058, 'r', 0.08],        // (its sides cut down at the elbows)
           [-0.15, 0.37, 0.255, 0.725, 0.305, 0.835, 0.058, 'r', 0.08],
           [0.08, 0.365, 0.255, 0.765, 0.3, 0.835, 0.058, 'gf', 0.08],         // the scuttle (the aero screen on it)
-          [0.4, 0.33, 0.265, 0.735, 0.27, 0.83, 0.058, 'b', 0.08],            // the bonnet's rear edge
-          [0.95, 0.305, 0.28, 0.705, 0.245, 0.805, 0.062, 'b', 0.09],
+          [0.4, 0.33, 0.265, 0.735, 0.27, 0.83, 0.058, 'b', 0.08],            // the bonnet's rear edge (one straight taper to its front)
           [1.52, 0.275, 0.3, 0.645, 0.21, 0.785, 0.066, 'b', 0.11]],          // its front: the radiator cowl's skin goes on from this ring
         eye: { x: -0.37, y: 0.99, near: 0.1, tilt: 0.06, style: 'open', wheel: { r: 0.2, tilt: 1.15 } },   // (in the helmet, over the aero screen)
-        decalX: -1.0, decalY: 0.871, decalRz: 0.14, decalS: 0.4, decalPart: 'tail',   // (the start number on the tail's deck behind the driver)
+        decalX: -1.0, decalY: 0.864, decalRz: 0.095, decalS: 0.4, decalPart: 'tail',   // (the start number on the tail's deck behind the driver)
         engine: [0.95, 0.76], crush: { x0: 0, x1: 0, z: 0 } },                // (no roof, no hoop: nothing to crush)
       wheels: { style: 'wire', w: 0.13, wR: 0.15, rim: [0.74, 0.75, 0.78], cap: [0.88, 0.89, 0.91], gap: 0.06, arch: false },
       regions: [{ part: 'tail', x: [-2.0, -0.75] }, { part: 'cover', x: [0.4, 1.6], bands: ['side', 'window', 'edge', 'crown'] }],
@@ -60,7 +57,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           return [[x, yb, w * 0.93], [x, yb + tk, w], [x, ybelt, w], [x, yt, wt], [x, yt + cr, wt * 0.38], [x, yt + cr, -wt * 0.38], [x, yt, -wt], [x, ybelt, -w], [x, yb + tk, -w], [x, yb, -w * 0.93]]; };
         // ---- the shell: the paint; the bottom tuck darker; the cockpit open on top (its sides, lined, cut down at the elbows) ----
         const L = K.loft(K.secs(SEC), (k, e, kind) => e === 0 || e === 8 ? TUCK : kind === 'r' && e >= 2 && e <= 6 ? null : P,
-          { arches: false, floor: false, caps: { front: false, rear: { col: P, low: 'tail', high: 'tail' } } });
+          { arches: false, floor: false, caps: { front: false, rear: { col: P, low: 'tail', high: 'tail', cut: 0 } } });   // (the tail's tip one cap)
         const D = L.decal, pr = L.prop;
         // the floor at the sill's height (the loft's own would stay with the body): the cockpit's in sight (the open top's), the engine bay's
         // and the scuttle's inside, the tail's inside and leaving with it
@@ -74,7 +71,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (a >= -0.75 && b <= 0.08) D.side([[a, ya + 0.011], [b, yb + 0.011], [b, yb + 0.026], [a, ya + 0.026]], LEATHER, null, 0.005); }   // (the cockpit's edge trimmed in leather)
         // ---- the bonnet: its hinge along the top, louvres along both sides, two leather straps over it (a buckle on the right) ----
         D.top([[0.41, -0.008], [1.51, -0.008], [1.51, 0.008], [0.41, 0.008]], [0.72, 0.73, 0.75], 0.004);
-        for (let i = 0; i < 12; i++) { const x = 0.58 + i * 0.048; D.side([[x, 0.54], [x + 0.02, 0.54], [x + 0.02, 0.652], [x, 0.652]], K.shade(P, 0.3), null, 0.004); }
+        for (let i = 0; i < 10; i++) { const x = 0.58 + i * 0.0587; D.side([[x, 0.54], [x + 0.022, 0.54], [x + 0.022, 0.652], [x, 0.652]], K.shade(P, 0.3), null, 0.004); }
         for (const xc of [0.74, 1.28]) {
           const w = pr(xc, 'w'), wt = pr(xc, 'wt'), yb = pr(xc, 'ybelt'), yt = pr(xc, 'yt'), cr = pr(xc, 'cr'), d = 0.007;
           const ring = (x) => [[x, yb - 0.06, w + d], [x, yb, w + d], [x, yt + d * 0.7, wt + d * 0.7], [x, yt + cr + d, 0.38 * wt], [x, yt + cr + d, -0.38 * wt], [x, yt + d * 0.7, -wt - d * 0.7], [x, yb, -w - d], [x, yb - 0.06, -w - d]];
@@ -131,25 +128,25 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the running gear between the body and the wheels: the front beam axle, the springs under the frame, the dumb irons under the
         //      cowl, the rear axle ----
         K.part('body', () => {
-          K.bar([1.3, 0.335, -0.53], [1.3, 0.335, 0.53], 0.026, [0.72, 0.73, 0.76], { n: 6 });
-          K.bar([-1.1, 0.345, -0.53], [-1.1, 0.345, 0.53], 0.032, STEEL, { n: 6 });
+          K.bar([1.3, 0.335, -0.53], [1.3, 0.335, 0.53], 0.026, [0.72, 0.73, 0.76], { n: 5 });
+          K.bar([-1.1, 0.345, -0.53], [-1.1, 0.345, 0.53], 0.032, STEEL, { n: 5 });
           for (const sd of [-1, 1]) {
-            K.box(1.3, 0.25, sd * 0.27, 0.78, 0.035, 0.05, 0, STEEL);
+            K.box(1.3, 0.25, sd * 0.27, 0.78, 0.035, 0.05, 0, STEEL, null, true);
             K.bar([1.5, 0.27, sd * 0.25], [1.72, 0.3, sd * 0.23], 0.022, DK, { n: 4 });
           }
         });
         // ---- the exhaust: four pipes out of the bonnet's right side (behind the front wheel's swing), down into the big pipe along the body,
         //      past the rear wheel to a megaphone at the tail ----
         K.part('body', () => {
-          const hex = [0, 1, 2, 3, 4, 5].map(i => [Math.cos((i + 0.5) * Math.PI / 3), Math.sin((i + 0.5) * Math.PI / 3)]), pen = [0, 1, 2, 3, 4].map(i => [Math.cos((i + 0.25) * Math.PI * 0.4), Math.sin((i + 0.25) * Math.PI * 0.4)]);   // (a ridge on top: no flat facet catching the light)
-          for (const x of [0.86, 0.74, 0.62, 0.5]) K.sweep(pen, [[x + 0.03, 0.515, 0.18], [x + 0.01, 0.515, 0.36], [x - 0.09, 0.415, 0.425]], EXH, { scale: () => 0.023 });
-          const path = [[0.83, 0.405, 0.42], [0.45, 0.395, 0.43], [0.0, 0.38, 0.435], [-0.7, 0.37, 0.44], [-1.3, 0.37, 0.44], [-1.5, 0.375, 0.4]], rad = [0.038, 0.044, 0.048, 0.048, 0.048, 0.046];
+          const hex = [0, 1, 2, 3, 4, 5].map(i => [Math.cos((i + 0.5) * Math.PI / 3), Math.sin((i + 0.5) * Math.PI / 3)]), dia = [0, 1, 2, 3].map(i => [Math.cos(i * Math.PI / 2), Math.sin(i * Math.PI / 2)]);   // (a ridge on top: no flat facet catching the light)
+          for (const x of [0.86, 0.74, 0.62, 0.5]) K.sweep(dia, [[x + 0.03, 0.515, 0.18], [x + 0.01, 0.515, 0.36], [x - 0.09, 0.415, 0.425]], EXH, { scale: () => 0.025 });
+          const path = [[0.83, 0.405, 0.42], [0.45, 0.395, 0.43], [-1.5, 0.375, 0.4]], rad = [0.038, 0.046, 0.046];   // (one straight run from the headers to the megaphone)
           K.sweep(hex, path, EXH, { scale: (i) => rad[i], capA: EXH });
           K.cyl([-1.5, 0.375, 0.4], [-1.68, 0.385, 0.35], 0.046, EXH, { n: 6, r2: 0.072, capA: null, capB: [0.05, 0.04, 0.035] });
-          K.bar([-1.25, 0.38, 0.42], [-1.25, 0.41, 0.31], 0.01, DK, { n: 4 });
+          K.bar([-1.25, 0.38, 0.405], [-1.25, 0.41, 0.29], 0.01, DK, { n: 4 });
         });
         // ---- the tail: the fuel filler cap on its deck ----
-        K.cyl([-1.28, 0.8, 0], [-1.28, 0.835, 0], 0.05, CH, { n: 8, capA: null, part: 'tail' });
+        K.cyl([-1.28, 0.8, 0], [-1.28, 0.835, 0], 0.05, CH, { n: 6, capA: null, part: 'tail' });
         // ---- inside (seen once a part is off): the straight eight with its blower and cam cover, the radiator, the gearbox, the shaft, the
         //      rear axle's differential, the fuel tank across the tail, the frame rails, the firewalls (the scuttle's front, the cockpit's back) ----
         K.part('body', () => {
@@ -163,7 +160,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-1.1, 0.29, 0, 0.22, 0.2, 0.26, 0, STEEL);
           K.cyl([-0.98, 0.58, -0.28], [-0.98, 0.58, 0.28], 0.19, [0.58, 0.55, 0.48], { n: 10 });
           for (const sd of [-1, 1]) K.box(0.15, 0.275, sd * 0.25, 2.7, 0.045, 0.05, 0, DK);
-          K.face(ringOf(SEC[10]).reverse(), WALL); K.face(ringOf(SEC[6]).map(p => [p[0] - 0.01, p[1], p[2]]), WALL);
+          const at = (x) => SEC.find(q => q[0] === x); K.face(ringOf(at(0.4)).reverse(), WALL); K.face(ringOf(at(-0.75)).map(p => [p[0] - 0.01, p[1], p[2]]), WALL);
         }, { inner: true });
       },
     },

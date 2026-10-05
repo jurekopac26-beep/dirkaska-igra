@@ -22,7 +22,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         pipeR: { z: 3, th: 0.6, m: 3, r: 0.35, h: 0.1, lx: 0.05, lz: 0.94, f: 0.06 },
       },
       // (where the look has them: the mirrors on the windscreen's posts, the boot lid between the hips)
-      over: { mirrorL: { lx: 0.075, lz: -0.77, y: 0.99 }, mirrorR: { lx: 0.075, lz: 0.77, y: 0.99 }, trunk: { lx: -0.82 } },
+      over: { mirrorL: { lx: 0.075, lz: -0.77, y: 0.99 }, mirrorR: { lx: 0.075, lz: 0.77, y: 0.99 }, trunk: { lx: -0.82 }, fenderL: { h: 0.14 }, fenderR: { h: 0.14 } },   // (the fenders with the humps lie as thick as they are)
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the cockpit an open top (its 'r' segments without a top: the lining,
     // the floor and the bulkheads in the outer shell), the fenders bulging over the wheels (wider there, the humps higher than the bonnet)
@@ -133,6 +133,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.engine(0.85, 0.32, 0, { l: 0.62, w: 0.52, h: 0.36, inner: true, col: [0.3, 0.32, 0.36], cover: CH });
         K.cyl([0.88, 0.68, 0], [0.88, 0.74, 0], 0.16, CH, { n: 10, inner: true, part: 'body' });
         K.box(1.84, 0.28, 0, 0.06, 0.34, 0.8, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });
+        for (const sd of [-1, 1]) K.box(1.2, 0.2, sd * 0.57, 0.74, 0.5, 0.04, 0, D, null, true, { inner: true, part: 'body' });   // (the inner wings: no tyre in the bay)
       },
     },
   });
