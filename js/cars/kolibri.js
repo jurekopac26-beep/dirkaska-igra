@@ -21,8 +21,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         spoiler: { z: 1, th: 0.6, m: 2, r: 0.4, h: 0.05, lx: -0.95, lz: 0, f: 0.97 },
       },
       // (where the look has them, a lost one flies off from there: the tailgate is the near-vertical tail, the bonnet short, the mirrors
-      // at the door glass's front corner; the doors, the fenders and the quarters by their ranges' middles)
-      over: { hood: { lx: 0.77, y: 0.81 }, trunk: { lx: -0.97, y: 0.88 }, doorL: { lx: 0.12, y: 0.8 }, doorR: { lx: 0.12, y: 0.8 }, fenderL: { lx: 0.77, y: 0.64 }, fenderR: { lx: 0.77, y: 0.64 },
+      // at the door glass's front corner; the doors, the fenders and the quarters by their ranges' middles. A fender carries the lamp
+      // face's corner with its head lamp, the bonnet the slim grille's lip and the scoop: on the road they lie as tall as their h says)
+      over: { hood: { lx: 0.77, y: 0.81, h: 0.12 }, trunk: { lx: -0.97, y: 0.88 }, doorL: { lx: 0.12, y: 0.8 }, doorR: { lx: 0.12, y: 0.8 }, fenderL: { lx: 0.77, y: 0.64, h: 0.18 }, fenderR: { lx: 0.77, y: 0.64, h: 0.18 },
         quarterL: { lx: -0.68, y: 0.79 }, quarterR: { lx: -0.68, y: 0.79 }, mirrorL: { lx: 0.41, y: 0.95 }, mirrorR: { lx: 0.41, y: 0.95 } },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the rear bumper's face, the tailgate's lower panel
@@ -51,7 +52,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // crown: its edge panels untwisted, the pane over them never cut by the frame's diagonal)
         eye: { x: -0.36, y: 1.17, style: 'closed' },
       },
-      wheels: { style: 'std', spokes: 4, w: 0.165, rim: [0.8, 0.81, 0.84], cap: [0.26, 0.26, 0.28], gap: 0.055 },
+      wheels: { style: 'std', spokes: 6, w: 0.165, rim: [0.8, 0.81, 0.84], cap: [0.26, 0.26, 0.28], gap: 0.055 },
       regions: (std) => {
         const XD0 = 0.79, XD1 = -0.35, R = [];
         for (const s of 'LR') R.push({ part: 'mirror' + s, x: [0.41, 1.16], y: [0.59, 1.12], side: s, out: true, points: true });
@@ -177,6 +178,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.engine(1.24, 0.3, 0, { l: 0.4, w: 0.62, h: 0.36 });
         K.box(1.24, 0.69, 0, 0.3, 0.05, 0.42, 0, [0.62, 0.63, 0.66], null, false, { inner: true, part: 'body' });
         K.box(1.6, 0.3, 0, 0.05, 0.38, 1.0, 0, D, null, false, { inner: true, part: 'body' });
+        // ---- the dashboard's top (the outer shell, matte): from the windscreen's foot under the cowl's crown back over the dash, so the
+        //      driver never looks under the short bonnet into the nose (the road, the wheel tubs) above the cockpit's own dashboard ----
+        { const A = [0.8, 0.945, 0], E = [0.55, 0.855, 0], o = { part: 'body', noCrush: true };
+          for (const sd of [1, -1]) { const B = [0.8, 0.945, sd * 0.26], C = [0.79, 0.905, sd * 0.68], D = [0.55, 0.855, sd * 0.68], f = (p) => K.face(sd > 0 ? p : p.slice().reverse(), K.lining, o);
+            f([E, D, C]); f([E, C, B]); f([E, B, A]); } }
       },
     },
   });
