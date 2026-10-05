@@ -1,6 +1,6 @@
-// The timing tower and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright, the tower under the place in the left
-// column: the leader (VODI), the first three and the player with the two ahead and behind, the gaps growing down the order, the player's
-// row lit; switched off in the settings: gone. On its side: at the right under the map, the player with one ahead and behind. The results:
+// The timing tower and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright, the tower under the map// right under the map, as wide as it: always eight drivers (the first eight, or the leader and seven holding the player), the leader (VODI),
+// the gaps growing down the order, the player's row lit; switched off in the settings: gone. On its side: the same, at the right under the
+// map. The results:
 // every driver's laps (3 each for those at the line), the race's fastest lap in purple once, the pit stops.
 //   node tests/browser/tower.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -14,15 +14,14 @@ try {
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(22, true); g.resume(); });
   // (the tower is drawn four times a second of the race; a slow software renderer takes a few frames to get there: read it once it shows
   // the order as it is now)
-  const read = () => { const g = window.__game, P = g.race.player, H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
+  const read = () => { const g = window.__game, P = g.race.player, H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), k = document.getElementById('h-map').getBoundingClientRect();
     const rows = [...H.querySelectorAll('.tw-r')].map(e => ({ pos: +e.querySelector('b').textContent, code: e.querySelector('span').textContent, gap: e.querySelector('em').textContent, me: e.classList.contains('me') }));
-    return { rows, sep: H.querySelectorAll('.tw-sep').length, pos: P.pos, n: g.race.cars.length, left: r.left, top: r.top, colBottom: k.bottom, visible: getComputedStyle(H).display !== 'none' }; };
+    return { rows, sep: H.querySelectorAll('.tw-sep').length, pos: P.pos, n: g.race.cars.length, left: r.left, right: r.right, top: r.top, mapBottom: k.bottom, mapLeft: k.left, mapRight: k.right, visible: getComputedStyle(H).display !== 'none' }; };
   const t1 = await page.waitForFunction((src) => { const t = (0, eval)(src)(), me = t.rows.find(x => x.me); return me && me.pos === t.pos && t.rows.some(x => /^\+\d/.test(x.gap)) && t; }, read.toString(), { timeout: 20000 })
     .then(h => h.jsonValue()).catch(() => page.evaluate((src) => (0, eval)(src)(), read.toString()));
   const r = t1.rows, me = r.find(x => x.me), gaps = r.filter(x => /^\+\d/.test(x.gap)).map(x => parseFloat(x.gap.slice(1)));
-  const want = t1.pos <= 6 ? 8 : 8;   // (3 first + the player with two ahead and two behind: 8 rows whether the blocks meet or not)
-  T.check('upright: the tower in the left column, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left < 60 && r.length >= 7 && r.length <= want && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
-    r.some(x => x.pos === Math.min(t1.n, t1.pos + 2)) && (t1.pos - 2 <= 4 || t1.sep === 1), JSON.stringify(t1));
+  T.check('upright: the tower under the map, as wide as it, eight drivers, the leader (VODI) first, the player (TI, lit) among them', t1.visible && Math.abs(t1.left - t1.mapLeft) <= 2 && Math.abs(t1.right - t1.mapRight) <= 2 && t1.top >= t1.mapBottom &&
+    r.length === 8 && r[0].pos === 1 && r[0].gap === 'VODI' && !!me && r.every((x, i) => i === 0 || x.pos > r[i - 1].pos) && (t1.pos <= 8 ? r[7].pos === 8 && !t1.sep : t1.sep === 1 && r[1].pos > 2), JSON.stringify(t1));
   T.check('the gaps to the leader grow down the order (+s.s), other drivers by three letters', gaps.length >= 4 && gaps.every((v, i) => i === 0 || v >= gaps[i - 1] - 0.3) && r.filter(x => !x.me).every(x => /^[A-ZČŠŽ]{3}$/.test(x.code)), JSON.stringify(r));
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="tower"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
   await page.waitForTimeout(300);
@@ -34,9 +33,9 @@ try {
   await page.setViewportSize({ width: 844, height: 390 });
   const read2 = () => { const H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
     return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, mapBottom: m.bottom, mapLeft: m.left, rows: H.querySelectorAll('.tw-r').length, w: innerWidth, h: innerHeight }; };
-  const t2 = await page.waitForFunction((src) => { const t = (0, eval)(src)(); return t.rows <= 7 && t; }, read2.toString(), { timeout: 20000 })   // (drawn again at its next quarter of a second)
+  const t2 = await page.waitForFunction((src) => { const t = (0, eval)(src)(); return t.rows === 8 && t; }, read2.toString(), { timeout: 20000 })   // (drawn again at its next quarter of a second)
     .then(h => h.jsonValue()).catch(() => page.evaluate((src) => (0, eval)(src)(), read2.toString()));
-  T.check('on its side: at the right under the map, clear of the pedals (at most 7 rows)', t2.left >= t2.mapLeft - 2 && t2.top >= t2.mapBottom && t2.bottom < t2.h * 0.66 && t2.rows >= 5 && t2.rows <= 7, JSON.stringify(t2));
+  T.check('on its side: at the right under the map, clear of the pedals (eight rows)', t2.left >= t2.mapLeft - 2 && t2.top >= t2.mapBottom && t2.bottom < t2.h * 0.66 && t2.rows === 8, JSON.stringify(t2));
   await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(300);
 
   // the results: every driver's laps

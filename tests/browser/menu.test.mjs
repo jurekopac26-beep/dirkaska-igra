@@ -1,5 +1,5 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
-// Leaderboard, Credits), the four modes, the tracks of every mode in their groups (each with its picture: the map from above, or the
+// Leaderboard, Credits), the three modes, the tracks of every mode in their groups (each with its picture: the map from above, or the
 // model of the land), the weather and the race options, the car (the game's own screen and back), a race from the menu (the intro
 // off, the short intro with its video and Skip) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
@@ -35,10 +35,10 @@ try {
     // 2. the modes
     await click(page, 'single');
     const m = await ev(page, 'return [...root.querySelectorAll(".t-sub .mode b")].map(e => e.textContent);');
-    T.check('Single race: the four modes', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel"]', JSON.stringify(m));
+    T.check('Single race: the three modes', JSON.stringify(m) === '["Circuit race","Police chase","Time trial"]', JSON.stringify(m));
 
     // 3. the tracks of every mode: the groups and their counts as the game's tracks say, every track with its picture
-    const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']];
+    const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt']];
     for (const [mode, gm] of MODES) {
       await click(page, 'mode:' + mode);
       const exp = await page.evaluate((gm) => {
@@ -221,7 +221,7 @@ try {
     T.check(`${w}x${h}: the main menu fits the screen, every button inside its panel`, title.top >= -0.5 && title.bottom <= title.h + 0.5 && title.over === 0, JSON.stringify(title));
     await click(page, 'single');
     const modes = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const c = [...root.querySelectorAll(".t-sub .mode")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, h: innerHeight, cut: c.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length, n: c.length };');
-    T.check(`${w}x${h}: the four modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 4, JSON.stringify(modes));
+    T.check(`${w}x${h}: the three modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 3, JSON.stringify(modes));
     await click(page, 'mode:race');
     await page.waitForTimeout(500);
     const g = await ev(page, `

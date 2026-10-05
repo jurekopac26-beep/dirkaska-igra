@@ -234,7 +234,7 @@ window.MENU = {
   }
  },
  "intro": {
-  "skip": "Skip",
+  "skip": "Skip intro, let's RACE!",
   "music": "Music",
   "summit": "SUMMIT",
   "top": "HIGHEST POINT",

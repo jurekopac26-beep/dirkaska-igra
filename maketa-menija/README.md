@@ -91,7 +91,7 @@ Ko klikneš *Race!* (ali *Start mission*, *Run …* v karieri), se pred dirko pr
 
 Uvod se odpre na mestu zaslona proge, zato prehod skoraj ni viden:
 
-- **Zgoraj** (kjer je bil naslov *Single race*): zastava države, ime proge in država (npr. *VRŠIČ, SLOVENIA*), gumb za glasbo (zvočnik) in *Skip*.
+- **Zgoraj** (kjer je bil naslov *Single race*): zastava države, ime proge in država (npr. *VRŠIČ, SLOVENIA*), gumb za glasbo (zvočnik). Gumba *Skip* zgoraj ni; je v igri pod kartico (*Skip intro, let's RACE!*), vse je tam malo više.
 - **Slika** je na istem mestu in iste velikosti kot zemljevid na zaslonu proge.
 - **Spodaj** je ista kartica kot pri progi (z rdeče-belim robnikom), v njej:
   - kaj voziš: način, avto in vreme (npr. *TIME TRIAL · BURJA R7 · DRY*, pri dirki v krogih še število krogov),
@@ -127,7 +127,7 @@ Kje so proge na Zemlji:
 ### Let s helikopterjem
 
 - En sam neprekinjen kader (vse proge razen Ljubljane): helikopter v 30 sekundah preleti vso progo od starta do cilja (pri dirkališčih en krog), višje kot prejšnji posnetki iz drona. Začne se s spustom z globusa, ko se zravna (po 4,5 s), leti nad progo.
-- Na tleh je **senca helikopterja** (z vrtečim se rotorjem).
+- Senca helikopterja je v novih posnetkih izklopljena (`heli.json`: `S.shadow: false`), kamera pa gleda naravnost tudi skozi manjše ovinke (`S.headA`, `S.headT`, glej `drone_page.js`). Posnetki v `assets/maps/` so še stari (s senco), dokler se leti ne izrišejo znova.
 - **Kraji ob progi so označeni v 3D** z imeni, ki stojijo na svojem mestu v pokrajini (na Vršiču: Kranjska Gora, Lake Jasna, Mihov dom, Russian Chapel, Koča na Gozdu, Ajdovska deklica, Erjavčeva koča, Vršič Pass). Ko sta dve imeni blizu, ima eno daljši drog, da se ne prekrivata. Seznam krajev za vse proge je v `orodja/landmarks.json`.
 - Igra ima pokrajino samo ob progi. Kar je dlje, je dorisano: prave višine in pokrovnost tal (gozd, travniki, polja, kraji, skale, voda) z drevesi in hišami iz igre, pri obalnih progah morje do obzorja.
 - Na robu sveta igre se dorisana pokrajina zlije z njim: v pasu približno 250 m prevzame barve tal igre, z nepravilnim robom, zato ni vidnih ravnih robov (`heli.json`: `feather`, metri; La Condamine 100 m). Leta za Colorado in La Condamine sta še iz prejšnjega izrisa, brez tega prehoda; nova narišeš z `REDO=1 node heli.mjs pikes,monaco` (v `orodja/`), nato `python3 intro_data.py` in `python3 intro_assets.py`.

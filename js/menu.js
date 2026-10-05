@@ -65,8 +65,8 @@
   });
 
   /* ---------------- the game's tracks as the menu shows them ---------------- */
-  const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' }]);
-  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel' };
+  const MODES = D.modes;   // (the traffic duel is not in the menu: an old saved one starts as a circuit race)
+  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'race' };
   const WEATHER = ['Dry', 'Rain', 'Random'], W_SET = ['dry', 'rain', 'random'];
   const wIcon = (w) => [I.sun, I.rain, I.dice][Math.max(0, WEATHER.indexOf(w))];
   // the first sentences of the game's description of a track (the card has room for about two lines)
@@ -554,25 +554,43 @@
     cancelAnimationFrame(ixRaf); ixStop();
     const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf);
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
-    const off = setting('intro') === 2, rect = stageRect();
+    const off = setting('intro') === 2, rect = stageRect(), calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     wx.detach();
     const el = document.createElement('div'); el.className = 'intro ix2'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
     const finishIntro = (e) => { if (e.isConnected) e.remove(); go(); };   // (the race is loaded: on to its start lights)
+    // the video ran to its end: the race starts under the intro, which dissolves over it (the intro is moved into a veil of its own over the
+    // game's screens: the menu's screen is gone as the race starts). A phone asking for less motion, or no place for the veil: no dissolve
+    const dissolve = (e) => {
+      const css = app.getRootNode().querySelector('style'), anchor = host && host.closest('.screen');
+      if (calm || !css || !anchor || !anchor.parentNode) { finishIntro(e); return; }
+      const veil = document.createElement('div'); veil.style.cssText = 'position:absolute;inset:0;z-index:40;pointer-events:none;opacity:1;transition:opacity 1.3s ease-in-out';
+      const root = veil.attachShadow({ mode: 'open' }), wrap = document.createElement('div'), still = document.createElement('style');
+      wrap.id = 'mn'; still.textContent = '.intro, .intro * { animation: none !important; }';   // (moved, the fades of its parts would start again)
+      const v = $('video', e);   // (the last picture of the video as a picture of its own: a video moved to another place may lose it)
+      if (v && v.videoWidth) try { const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0); c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block'; v.replaceWith(c); } catch (_) { /* the video stays */ }
+      root.append(css.cloneNode(true), still, wrap); anchor.parentNode.appendChild(veil); wrap.appendChild(e);
+      go();
+      requestAnimationFrame(() => requestAnimationFrame(() => { veil.style.opacity = '0'; }));
+      setTimeout(() => veil.remove(), 1500);
+    };
     if (off || !RT[t.id] || !hasFlight(t.id)) { finishIntro(el); return; }   // (Off, or a track without a flight: the lights at once)
     // Full: the globe from the last race (not the same track again: the short one then), with WebGL, for someone who did not ask for less motion
-    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, from = G.S.lastTrack && G.S.lastTrack !== t.id && XI[G.S.lastTrack] && XI[G.S.lastTrack].top && trackById(G.S.lastTrack) ? G.S.lastTrack : null;
+    const from = G.S.lastTrack && G.S.lastTrack !== t.id && XI[G.S.lastTrack] && XI[G.S.lastTrack].top && trackById(G.S.lastTrack) ? G.S.lastTrack : null;
     const globe = setting('intro') === 0 && G.S.lastTrack !== t.id && !calm && window.Journey && window.GEO && GEO.tracks[t.id] && Journey.supported();
     const country = countryOf(t), car = G.car();
     const what = [modeOf(R.mode).name, car && car.name, R.mode === 'race' && !t.def.open ? laps(t.laps) : null, R.wet ? 'Rain' : 'Dry'].filter(Boolean).join(' · ');
     const cr = cardRect(rect), side = cr.x >= rect.x + rect.w - 2;   // (on its side: the title and the buttons over the card, the stage the whole height at the left)
+    // upright: all of it a little higher than on the track screen (the head keeps its 64 px), the room at the foot is the Skip button's
+    const up = side ? 0 : Math.max(0, Math.min(66, Math.round(rect.y - 64))); rect.y -= up; cr.y -= up;
     el.innerHTML = '<div class="ix-head2" style="' + (side ? 'left:' + Math.round(cr.x) + 'px;height:' + Math.round(cr.y) + 'px' : 'height:' + Math.round(rect.y) + 'px') + '"><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div>' +
-      '<div class="ix-ctl"><button class="ix-mus" data-ix="music" aria-pressed="' + (setting('music') === 0) + '" aria-label="' + esc(D.intro.music) + '">' + SPK(setting('music') === 0) + '</button><button class="ix-skip" data-ix="skip">' + esc(D.intro.skip) + I.chev + '</button></div></div>' +
+      '<div class="ix-ctl"><button class="ix-mus" data-ix="music" aria-pressed="' + (setting('music') === 0) + '" aria-label="' + esc(D.intro.music) + '">' + SPK(setting('music') === 0) + '</button></div></div>' +
       '<div class="ix-v ix-stage' + (globe ? ' jon' : '') + '" style="left:' + rect.x + 'px;top:' + rect.y + 'px;width:' + rect.w + 'px;height:' + rect.h + 'px">' +
         '<video muted playsinline preload="auto" poster="assets/maps/heli-' + t.id + '.webp" src="assets/maps/heli-' + t.id + '.webm"></video>' + (globe && from ? introMap(from) : '') +
         '<div class="ix-pins" aria-hidden="true"></div><div class="ix-summit" aria-live="polite"><b></b><small></small></div></div>' +
       '<div class="card ix-card" style="left:' + cr.x + 'px;top:' + cr.y + 'px;width:' + cr.w + 'px"><p class="ix-what">' + esc(what.toUpperCase()) + '</p><div class="ix-specs">' + specsOf(t).map(s => '<div><small>' + esc(s[0]) + '</small><b>' + esc(s[1]) + '</b></div>').join('') + '</div>' +
-        '<div class="ix-lay"></div><div class="ix-pwrap"></div></div>';
+        '<div class="ix-lay"></div><div class="ix-pwrap"></div></div>' +
+      '<button class="go ix-go" data-ix="skip" style="left:' + cr.x + 'px;width:' + cr.w + 'px">' + esc(D.intro.skip) + '</button>';
     const v = $('video', el), box = $('.ix-stage', el), pins = $('.ix-pins', el), sumEl = $('.ix-summit', el), mapEl = $('.ixmap', el);
     // the outline and the profile in what room the card has: the outline as tall as its shape needs, the profile the rest (84 to 140 px);
     // no outline in a small card (the profile takes its room)
@@ -602,7 +620,7 @@
     const end = (skip) => {
       if (done) return; quit();
       ixFade(A, skip ? 0.5 : 2.4); ixFade(Rt, skip ? 0.3 : 0.8);   // (at the end the music's last chord rings into the start)
-      finishIntro(el);
+      if (skip) finishIntro(el); else dissolve(el);
     };
     const startShots = () => {   // the helicopter's video from its first frame (the globe hands over to it), the rain on it on a wet day
       if (done || shots) return; shots = true; box.classList.remove('jon');
@@ -714,7 +732,7 @@
     heliData(t.id).then(begin);
     ixRaf = requestAnimationFrame(step);
     ixLive = { A, Rt, stop: stopAll }; window.__ixDebug = { A: A && A.a, Rt: Rt && Rt.a, v, get J() { return J; }, get Hd() { return Hd; } };   // (for the mockup's own checks)
-    $('.ix-skip', el).focus({ preventScroll: true });
+    $('.ix-go', el).focus({ preventScroll: true });
   }
   // the intro's sounds: each through Web Audio with its own gain (iPhones ignore an element's volume), else the element's volume; faded out
   // over sec seconds (Skip, the end: stopped by a timer too, so also in a hidden tab), stopped at once when another intro or the menu

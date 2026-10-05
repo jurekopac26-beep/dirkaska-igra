@@ -23,7 +23,7 @@ const Input = (function () {
 
   function init(layerEl, pauseCb) {
     layer = layerEl; onPause = pauseCb;
-    ['c-left', 'c-right', 'c-wheel', 'c-gas', 'c-brake', 'c-drift', 'tilt-ind'].forEach(id => { els[id] = $(id); });
+    ['c-left', 'c-right', 'c-wheel', 'c-gas', 'c-brake', 'tilt-ind'].forEach(id => { els[id] = $(id); });
     wheel.el = $('wheel-rot');
     const opt = { passive: false };
     layer.addEventListener('pointerdown', onDown, opt);
@@ -54,7 +54,7 @@ const Input = (function () {
 
   function layout() {
     const r = (id) => { const e = els[id]; if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, cx: b.left + b.width / 2, cy: b.top + b.height / 2 }; };
-    R = { left: r('c-left'), right: r('c-right'), wheel: r('c-wheel'), gas: r('c-gas'), brake: r('c-brake'), drift: r('c-drift') };
+    R = { left: r('c-left'), right: r('c-right'), wheel: r('c-wheel'), gas: r('c-gas'), brake: r('c-brake') };
   }
 
   function setMode(m) {
@@ -244,7 +244,6 @@ const Input = (function () {
     let left = false, right = false, gas = false, brake = false, drift = false;
     for (const [id, p] of ptrs) {
       if (id === wheel.pid) continue;
-      if (inRect(R.drift, p.x, p.y, 12)) { drift = true; continue; }
       if (mode === 'tilt') { if (p.x < W * 0.5) brake = true; else gas = true; continue; }
       if (mode === 'buttons' && p.x < W * 0.5) {
         if (p.y > H * 0.28) {
@@ -283,7 +282,7 @@ const Input = (function () {
     if (els['tilt-ind'] && mode === 'tilt') els['tilt-ind'].style.setProperty('--t', (tilt.value * 38).toFixed(1) + 'deg');
     return S;
   }
-  const map = { left: 'c-left', right: 'c-right', gas: 'c-gas', brake: 'c-brake', drift: 'c-drift' };
+  const map = { left: 'c-left', right: 'c-right', gas: 'c-gas', brake: 'c-brake' };
   function setPressed(k, v) { if (pressed[k] === v) return; pressed[k] = v; const e = els[map[k]]; if (e) e.classList.toggle('on', !!v); }
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
   function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }

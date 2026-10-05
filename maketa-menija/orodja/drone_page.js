@@ -529,9 +529,9 @@ window.DR = (function () {
     const D = new Float64Array(n); for (let k = 1; k < n; k++) { const t = k / hz; D[k] = D[k - 1] + (vel(t - 0.5 / hz) ) / hz; }
     const sc = L / (D[n - 1] || 1); for (let k = 0; k < n; k++) D[k] = Math.min(L, D[k] * sc);   // (exactly to the finish)
     // its heading: along the smoothed road (a chord over +-rs), then smoothed over time; unwrapped so it turns the short way
-    const a = Math.max(60, rs), th = new Float64Array(n); let prev = null;
+    const a = Math.max(S.headA || 0, 60, rs), th = new Float64Array(n); let prev = null;
     for (let k = 0; k < n; k++) { const d = D[k]; let v = Math.atan2(at(ZS, d + a) - at(ZS, d - a), at(XS, d + a) - at(XS, d - a)); if (prev != null) { while (v - prev > Math.PI) v -= 2 * Math.PI; while (v - prev < -Math.PI) v += 2 * Math.PI; } th[k] = prev = v; }
-    const TH = gauss(th, 0.9 * hz);
+    const TH = gauss(th, (S.headT || 0.9) * hz);   // (S.headA: the chord the heading is taken over, S.headT: its smoothing in seconds: larger, the camera looks straight on through the small bends)
     // the descent: from D0 at el0 down onto the rig's distance and angle (a log-scale zoom, already moving at the start, at rest at the end)
     const P = new Float64Array(n * 8), ad = S.adur || 4.5, D0 = S.D0 || Math.max(3000, 3.5 * dh), el0 = (S.el0 || 55) * Math.PI / 180;
     const fl = new Float64Array(n);

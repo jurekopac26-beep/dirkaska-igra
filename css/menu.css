@@ -511,8 +511,6 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .places.six { grid-template-columns: repeat(3, 1fr); }
 /* ---------------- before the race: the journey and the helicopter's flight (the .ix2 rules below), then the start lights ---------------- */
 .intro { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; overflow: hidden; background: var(--ink); animation: fade .25s ease-out; }
-.ix-skip { display: flex; align-items: center; gap: 4px; padding: 9px 9px 9px 14px; border-radius: 999px; background: rgba(8, 12, 20, .72); border: 1.5px solid rgba(255, 255, 255, .4); font: 800 italic 14px/1 var(--f-ui); }
-.ix-skip .chev { width: 14px; height: 14px; opacity: .9; }
 .ix-v { position: relative; z-index: 1; flex: 0 1 auto; width: 100%; aspect-ratio: 6 / 5; max-height: 52%; min-height: 200px; box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
 .ix-v canvas.rainfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .intro.ix-start { align-items: center; justify-content: center; gap: 26px; padding: 24px 16px; background: radial-gradient(120% 60% at 50% 35%, #16304d, var(--navy2) 70%); }
@@ -590,8 +588,10 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* (its words in capitals already; the m stays a metre) */
 .ix-summit small { background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 4px 8px 3px; transform: skewX(-10deg); margin-right: 7px; white-space: nowrap; }
 .ix-summit small:empty { display: none; }
+/* Skip: under the card, as wide as it, at the foot of the screen */
+.ix-go.go { position: absolute; z-index: 3; min-width: 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 0 12px; font-size: clamp(16px, 5.4vw, 24px); white-space: nowrap; animation: fade .35s ease-out both; }
 /* the card under the stage: where the track screen's card was (its frame and kerb), down to the foot of the screen */
-.ix-card.card { position: absolute; z-index: 2; margin: 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 13px 14px 11px 26px; gap: 11px; overflow: hidden; animation: fade .35s ease-out both; }
+.ix-card.card { position: absolute; z-index: 2; margin: 0; bottom: calc(14px + 54px + 12px + env(safe-area-inset-bottom, 0px)); padding: 13px 14px 11px 26px; gap: 11px; overflow: hidden; animation: fade .35s ease-out both; }
 .ix-what { margin: 0; font: 900 italic 12.5px/1.25 var(--f-ui); letter-spacing: .1em; color: var(--gold); flex: 0 0 auto; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* (two lines on a narrow phone: the weather is not cut off) */
 .ix-specs { flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px 10px; }

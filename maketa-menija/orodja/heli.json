@@ -1,6 +1,11 @@
 {
  "default": {
-  "feather": 250
+  "feather": 250,
+  "S": {
+   "shadow": false,
+   "headA": 1200,
+   "headT": 3
+  }
  },
  "pikes": {
   "plantO": {

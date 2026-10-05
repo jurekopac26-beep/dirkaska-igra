@@ -2864,7 +2864,7 @@
     const near = Math.abs(c.dist - P.dist) < 90, rv = c.chr && c.chr.rival;
     if (k === 'duel') { showMsg(tr(rv ? 'DVOBOJ S STALNIM TEKMECEM' : 'DVOBOJ: {0}', String(c.name).toUpperCase()), 'gold', 1.8); Comm.say(rv ? 'duelRival' : 'duel', { name: commName(c) }, 3); }
     else if (k === 'duelEnd') { const won = P.dist > c.dist; if (won) showMsg(tr('DVOBOJ DOBLJEN'), 'fast', 1.6); Comm.say(won ? 'duelWon' : 'duelLost', { name: commName(c) }, 2); }
-    else if (k === 'mistake' && (near || rv)) { if (near) showMsg(tr('NAPAKA: {0}', String(c.name).toUpperCase()), 'gold', 1.2); Comm.say('aiMistake', { name: commName(c) }, 2); }
+    else if (k === 'mistake' && (near || rv)) { if (near) showMsg(tr('napaka: {0}', String(c.name)), 'mist', 1.2); Comm.say('aiMistake', { name: commName(c) }, 2); }
   }
   function pitEvent(e) {
     if (phase !== 'racing') return;
@@ -3354,10 +3354,10 @@
   /* ---------------- the timing tower (Časovna tabela): the order with the gaps to the leader, as on TV ----------------
      A race with rivals (a circuit, a race up an open road, the duel in the traffic, a race online): each car's race time at every 25 m of its
      race (twMark, after each physics step); a car's gap to the leader is its time at the last mark it passed less the leader's time there (a
-     lapped car: +1 KROG). Shown four times a second: the whole order when it is short, else the first three and the player with the cars just
-     ahead and behind (two each upright, one on a phone on its side); the player's row lit, a car in the pits and one past the line marked.
+     lapped car: +1 KROG). Shown four times a second: always eight drivers (fewer only when the race has fewer): the first eight, or the leader and
+     seven that hold the player when he is further back; under the map; the player's row lit, a car in the pits and one past the line marked.
      Its pit stops go to the lap table on the results. */
-  const TW_M = 25;
+  const TW_M = 25, TW_ROWS = 8;
   let tw = null;
   function twStart() {
     tw = !race.timeTrial && !race.quali && !race.pol && race.cars.length > 1 ? { t: new Map(), n: new Map(), pit: new Map(), stops: new Map(), html: '', at: 0 } : null;
@@ -3382,8 +3382,9 @@
   function twHUD(dt) {
     if (!tw || !S.tower || (tw.at -= dt) > 0) return; tw.at = 0.25;
     const O = race.order && race.order.length === race.cars.length ? race.order : race.cars.slice().sort((a, b) => b.dist - a.dist), L = O[0], P = race.player, pi = O.indexOf(P);
-    const nb = window.innerHeight > window.innerWidth ? 2 : 1, rows = new Set();
-    if (O.length <= 3 + 2 * nb + 1) O.forEach((c, i) => rows.add(i)); else { for (let i = 0; i < 3; i++) rows.add(i); for (let i = pi - nb; i <= pi + nb; i++) if (i >= 0 && i < O.length) rows.add(i); }
+    const rows = new Set();
+    if (pi < TW_ROWS) { for (let i = 0; i < Math.min(TW_ROWS, O.length); i++) rows.add(i); }   // (the first eight, as many as there are)
+    else { rows.add(0); const a = Math.max(1, Math.min(pi - 5, O.length - (TW_ROWS - 1))); for (let i = a; i < a + TW_ROWS - 1 && i < O.length; i++) rows.add(i); }   // (the leader and seven that hold the player, one or two cars behind him)
     let h = '', prev = -1;
     for (const i of [...rows].sort((a, b) => a - b)) {
       if (prev >= 0 && i > prev + 1) h += '<div class="tw-sep">⋯</div>';

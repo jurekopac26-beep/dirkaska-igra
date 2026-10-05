@@ -7,7 +7,7 @@
   // A text EN does not know stays as it is (a name, a number). The commentator speaks English in both languages.
   const EN = {
     /* ---- the page (index.html): buttons, labels, the HUD ---- */
-    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'ROČNA': 'HANDBRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
+    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE',  'PLIN': 'GAS', 'NAGIB': 'TILT',
     '↺ Na progo': '↺ Back on track', 'Dirkaj': 'Race', 'Prvenstvo': 'Championship', 'Kariera': 'Career', 'Dirka s prijateljem': 'Race a friend',
     'Lestvica': 'Leaderboard', 'Nastavitve': 'Settings', 'Celoten zaslon': 'Full screen', 'Namesti igro': 'Install the game', 'Nadgradnje': 'Upgrades',
     'Barva': 'Colour', 'Upravljanje': 'Controls', 'Tipke': 'Buttons', 'Volan': 'Wheel', 'Nagib': 'Tilt', 'Nazaj': 'Back', 'Naprej': 'Next',
@@ -89,7 +89,7 @@
     'ZLATO!': 'GOLD!', 'SREBRO!': 'SILVER!', 'BRON!': 'BRONZE!', 'NEUSPEŠNO': 'FAILED', 'BREZ MEDALJE': 'NO MEDAL', 'Zlata medalja!': 'Gold medal!', 'Srebrna medalja!': 'Silver medal!', 'Bronasta medalja!': 'Bronze medal!', 'Neuspešno': 'Failed',
     ' Nov osebni rekord!': ' A new personal best!', 'Medalja': 'Medal', 'Zlato': 'Gold', 'Srebro': 'Silver', 'Bron': 'Bronze', 'Tvoj rezultat': 'Your result', 'Tvoj najboljši': 'Your best', 'Ponovi vajo': 'Repeat the lesson',
     'Učenec': 'Pupil', 'Osvoji zlato medaljo v šoli vožnje.': 'Win a gold medal in the driving school.', 'Diplomant': 'Graduate', 'Osvoji zlato v vseh vajah šole vožnje.': 'Win gold in every lesson of the driving school.',
-    'DVOBOJ: {0}': 'DUEL: {0}', 'DVOBOJ S STALNIM TEKMECEM': 'DUEL WITH YOUR RIVAL', 'DVOBOJ DOBLJEN': 'DUEL WON', 'NAPAKA: {0}': 'MISTAKE: {0}',
+    'DVOBOJ: {0}': 'DUEL: {0}', 'DVOBOJ S STALNIM TEKMECEM': 'DUEL WITH YOUR RIVAL', 'DVOBOJ DOBLJEN': 'DUEL WON', 'napaka: {0}': 'mistake: {0}',
     'Stalni tekmec: {0} ({1}) · ti {2}, tekmec {3}.': 'Your rival: {0} ({1}) · you {2}, rival {3}.', 'Stalni tekmec: izbran bo po prvi dirki v karieri.': 'Your rival: chosen after your first race in the career.',
     ' Stalni tekmec {0}: {1} mesto (skupaj ti {2}, tekmec {3}).': ' Your rival {0}: {1} place (overall you {2}, rival {3}).', ' {0} ({1}) je zdaj tvoj stalni tekmec.': ' {0} ({1}) is your rival from now on.',
     'Jezik · Language': 'Language · Jezik', 'FOTO': 'PHOTO', 'Povleci: kamera okoli avta · dva prsta ali kolešček: bližje, dlje': 'Drag: the camera round the car · two fingers or the wheel: nearer, farther',
