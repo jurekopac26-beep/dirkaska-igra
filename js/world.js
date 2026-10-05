@@ -23627,16 +23627,266 @@ const World = (function () {
     cone(g, tx, hi + H + 11.6, tz, tw * 0.74, 10, 4, [0.24, 0.25, 0.27], [0.3, 0.3, 0.32], b.ang + Math.PI / 4); cyl(g, tx, hi + H + 21.4, tz, 0.05, 1.6, 4, [0.85, 0.7, 0.25]);
     return hi + H + 23;
   }
-  function mvCastle(g, b, R) {   // the old castle's ruins on the hilltop (Stari grad): broken curtain walls of grey limestone round its footprint, a keep's stump, a gate
-    const c = Math.cos(b.ang), s = Math.sin(b.ang), P = (p, q) => [b.x + c * p - s * q, b.z + s * p + c * q], st = [0.5, 0.48, 0.44];
-    const wall = (p0, q0, p1, q1, h0, h1) => { const L = Math.hypot(p1 - p0, q1 - q0), m = Math.max(1, Math.round(L / 3.5));
-      for (let k = 0; k < m; k++) { if (R() < 0.24) continue; const t0 = k / m, t1 = (k + 1) / m, [ax, az] = P(lerp(p0, p1, t0), lerp(q0, q1, t0)), [bx, bz] = P(lerp(p0, p1, t1), lerp(q0, q1, t1)), mx = (ax + bx) / 2, mz = (az + bz) / 2, y = mvGround(mx, mz) - 1.2;
-        box(g, mx, y, mz, L / m + 0.1, lerp(h0, h1, R() * R()) + 1.2, 1.2, Math.atan2(bz - az, bx - ax), vary(st, R, 0.12), vary([0.36, 0.42, 0.26], R, 0.15)); } };
-    const L = b.L / 2, W = b.W / 2;
-    wall(-L, -W, L, -W, 3, 8); wall(L, -W, L, W, 2.5, 7); wall(L, W, -L, W, 3, 9); wall(-L, W, -L, -W, 2, 6);
-    const [kx, kz] = P(L * 0.45, -W * 0.2), ky = mvGround(kx, kz) - 1; box(g, kx, ky, kz, 8, 12, 8, b.ang, vary(st, R, 0.06), [0.36, 0.42, 0.26]);
-    box(g, kx, ky + 13, kz, 9, 1.4, 1.2, b.ang, st); box(g, kx, ky + 13, kz, 1.2, 2.2, 9, b.ang, st);   // (the broken top)
-    const [ix, iz] = P(-L * 0.2, W * 0.3), iy = mvGround(ix, iz) - 1; for (const [dx, dz, sx, sz] of [[0, -3, 14, 1.1], [0, 3, 14, 1.1], [-6.5, 0, 1.1, 7]]) { const [qx, qz] = P(-L * 0.2 + dx, W * 0.3 + dz); box(g, qx, iy, qz, sx, 4 + R() * 4, sz, b.ang, vary(st, R, 0.08), [0.36, 0.42, 0.26]); }   // (the palace's shell: three walls)
+  let mvSTex = null;
+  function mvStoneTex() {   // the castle's masonry on a 4 m tile (512 px, seamless): 14 courses of rough limestone, every stone its own tone (pale limestone, grey, ochre, dark weathered) with a jittered outline,
+    // speckles, lichen and stains, a few patches of old lime plaster and damp; the pale patch in the corner (0..56 px) is the "plain" spot where the parts without a picture (rubble, ivy, bushes, floors) take their colour from
+    if (mvSTex) return mvSTex;
+    const S = 512, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(5521);
+    x.fillStyle = '#4f4a41'; x.fillRect(0, 0, S, S);
+    const nC = 14, hs = []; let tot = 0; for (let k = 0; k < nC; k++) { const h = 0.5 + r() * 1.1; hs.push(h); tot += h; }
+    const TONE = [[0.9, 0.04, 0.35], [0.76, 0.0, 0.3], [0.8, 0.09, 0.2], [0.62, 0.03, 0.15]];   // (lightness, warmth, share: pale limestone, grey, ochre, dark weathered)
+    let y = 0;
+    for (let k = 0; k < nC; k++) {
+      const hh = hs[k] / tot * S, nB = 6 + Math.floor(r() * 4), ws = []; let tw = 0; for (let q = 0; q < nB; q++) { const w = 0.35 + r() * 1.15; ws.push(w); tw += w; }
+      let xx = r() * S;
+      for (let q = 0; q < nB; q++) {
+        const ww = ws[q] / tw * S, gp = 2 + r() * 3.5; let u = r(), tn = TONE[0]; for (const t of TONE) { if (u < t[2]) { tn = t; break; } u -= t[2]; }
+        const L = tn[0] * (0.92 + r() * 0.14), wm = tn[1] + (r() - 0.5) * 0.04, jt = () => (r() - 0.5) * 3.2, dets = [];
+        const jp = [[0, 0], [0.5, 0], [1, 0], [1, 0.5], [1, 1], [0.5, 1], [0, 1], [0, 0.5]].map(([a, b]) => [a, b, jt(), jt()]);
+        for (let d = 0; d < 12; d++) dets.push([r() * ww, r() * hh, 1 + r() * 4, 1 + r() * 3, r() < 0.5 ? 'rgba(0,0,0,' + (0.05 + r() * 0.1) + ')' : 'rgba(255,255,255,' + (0.05 + r() * 0.08) + ')']);
+        if (r() < 0.3) dets.push([r() * ww * 0.6, r() * hh * 0.5, ww * (0.15 + r() * 0.3), hh * (0.2 + r() * 0.35), 'rgba(160,172,100,' + (0.2 + r() * 0.2) + ')']);   // (lichen)
+        if (r() < 0.18) dets.push([ww * 0.2, 0, ww * 0.2, hh, 'rgba(30,28,22,0.16)']);   // (a damp stain running down)
+        for (const ox of [0, -S]) {
+          const bx = xx + ox + gp / 2, by = y + gp / 2, bw = ww - gp, bh = hh - gp; if (bx > S || bx + bw < 0) continue;
+          const rgb = (k2) => 'rgb(' + [L * k2 * (1 + wm), L * k2, L * k2 * (1 - wm * 1.6)].map(v => Math.min(255, Math.round(v * 255))).join(',') + ')', gr = x.createLinearGradient(bx, by, bx + bw * 0.4, by + bh);
+          gr.addColorStop(0, rgb(1.05)); gr.addColorStop(1, rgb(0.88));
+          x.fillStyle = gr; x.beginPath(); jp.forEach(([a, b, jx, jy], i) => { const px = bx + a * bw + jx, py = by + b * bh + jy; i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath(); x.fill();
+          for (const [dx, dy, w, h, f] of dets) { x.fillStyle = f; x.fillRect(bx + dx, by + dy, w, h); }
+          x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(bx + 2, by + 0.5, bw - 4, 1.2); x.fillStyle = 'rgba(0,0,0,0.14)'; x.fillRect(bx + 2, by + bh - 1.5, bw - 4, 1.5);   // (the lit top edge, the shaded foot)
+        }
+        xx += ww;
+      }
+      y += hh;
+    }
+    for (let q = 0; q < 5; q++) {   // (old lime plaster, pale and soft; damp, dark and soft)
+      const pale = q < 3, px = 80 + r() * (S - 160), py = 80 + r() * (S - 160), rad = 40 + r() * 50, gr = x.createRadialGradient(px, py, 0, px, py, rad);
+      gr.addColorStop(0, pale ? 'rgba(238,230,208,0.34)' : 'rgba(40,46,34,0.26)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(px - rad, py - rad, rad * 2, rad * 2);
+    }
+    for (let q = 0; q < 2600; q++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'; x.fillRect(r() * S, r() * S, 1 + r() * 3, 1 + r() * 2); }
+    x.fillStyle = '#dedcd4'; x.fillRect(0, 0, 56, 56);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (mvSTex = t);
+  }
+  // Stari grad above Smlednik as one object (a mesh of its own, 'mvCastle', on the masonry picture), built from the plan below: the castle's layout as the public descriptions give it (the late
+  // Romanesque keep with walls over 3 m thick, the Gothic palace leaning on the western wall with its pointed portal, the curtain wall of an irregular shape up to 1.5 m thick, the Renaissance
+  // outer ring with three smaller towers) on the OSM footprint (b.pts): every part inside it. Open ruins: no roofs, walls broken at different heights, rubble, ivy and scrub.
+  // Plan coordinates: metres from the footprint's centre (x east, z south). Returns the counts of the parts (the browser test reads them) and the vertex count.
+  function mvCastle(grp, b, R, cut, ownTex) {
+    const g = new GB(true); g.dUV = [0.055, 0.055];
+    const SP = 4, WP = (p) => [b.x + p[0], b.z + p[1]], gnd = (x, z) => mvGround(x, z), rr = (a, c) => a + (c - a) * R(), pick = (a) => a[Math.floor(R() * a.length)];
+    const ST = { towers: 0, keeps: 0, palaces: 0, gates: 0, chapels: 0, cisterns: 0, runs: 0, columns: 0, openings: 0, merlons: 0, tufts: 0, slabs: 0, windows: 0, doors: 0, ivy: 0, stones: 0, bushes: 0, trees: 0, maxTop: 0 };
+    const STONE = [[0.83, 0.81, 0.76], [0.79, 0.78, 0.76], [0.86, 0.84, 0.79], [0.78, 0.73, 0.65], [0.72, 0.71, 0.69], [0.81, 0.77, 0.69]], MOSS = [0.38, 0.47, 0.23], IVY = [[0.2, 0.34, 0.14], [0.16, 0.29, 0.12], [0.26, 0.38, 0.16]], LEAF = [[0.27, 0.42, 0.16], [0.22, 0.36, 0.14], [0.33, 0.45, 0.18]];
+    const k3 = (c, k) => [c[0] * k, c[1] * k, c[2] * k], EARTH = [[0.56, 0.5, 0.35], [0.5, 0.53, 0.3], [0.64, 0.6, 0.51], [0.46, 0.48, 0.28]];
+    const dSeg = (px, pz, a, c) => { const dx = c[0] - a[0], dz = c[1] - a[1], t = clamp(((px - a[0]) * dx + (pz - a[1]) * dz) / (dx * dx + dz * dz), 0, 1); return Math.hypot(px - a[0] - t * dx, pz - a[1] - t * dz); };
+    const dLoop = (pts, x, z) => { let d = 99; for (let i = 0; i < pts.length; i++) d = Math.min(d, dSeg(x, z, pts[i], pts[(i + 1) % pts.length])); return d; };
+    const okP = (x, z, m) => inPoly(b.pts, x, z) && dLoop(b.pts, x, z) > m;   // (inside the footprint, m clear of its edge)
+    let oU = 0, oV = 0;
+    const face = (a, c1, c2, d, col, inside, cols) => {   // a quad (a triangle when d is null) with the masonry picture projected on its plane
+      const ux = c1[0] - a[0], uy = c1[1] - a[1], uz = c1[2] - a[2], vx = c2[0] - a[0], vy = c2[1] - a[1], vz = c2[2] - a[2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, nl = Math.hypot(nx, ny, nz) || 1, hz = Math.hypot(nx, nz) || 1, tx = -nz / hz, tz = nx / hz, up = Math.abs(ny / nl) > 0.7;
+      const uv = (p) => up ? [(p[0] + oU) / SP, (p[2] + oV) / SP] : [(p[0] * tx + p[2] * tz + oU) / SP, (p[1] + oV) / SP];
+      if (d) g.quadO(a, c1, c2, d, col, inside, [uv(a), uv(c1), uv(c2), uv(d)], cols); else g.triO(a, c1, c2, col, inside, null, null, uv(a), uv(c1), uv(c2));
+    };
+    const cum = (pts, closed) => { const o = [0]; for (let i = 0; i < pts.length - (closed ? 0 : 1); i++) { const a = pts[i], c = pts[(i + 1) % pts.length]; o.push(o[i] + Math.hypot(c[0] - a[0], c[1] - a[1])); } return o; };
+    const rag = (s0, s1, lo, hi, e) => {   // a broken wall top from s0 to s1: heights between lo and hi (most of them low when e > 1), now and then a step
+      const o = []; let s = s0, h = lerp(lo, hi, Math.pow(R(), e || 1.4)); o.push([s, h]);
+      while (s < s1 - 0.01) { s = Math.min(s1, s + 0.8 + R() * 2.2); const hn = lerp(lo, hi, Math.pow(R(), e || 1.4)); if (R() < 0.4) { o.push([s, h]); h = hn; o.push([s, h]); } else { h = lerp(h, hn, 0.7); o.push([s, h]); } }
+      return o;
+    };
+    const chunk = (x, z, sx, sy, sz, rot, col) => {   // a fallen stone: a squat block, its top corners pulled about, sunk a little (12 triangles)
+      if (!okP(x, z, Math.max(sx, sz) * 0.75)) return;
+      const y0 = gnd(x, z) - 0.12, c = Math.cos(rot), s = Math.sin(rot), cn = [[-1, -1], [1, -1], [1, 1], [-1, 1]], inn = [x, y0 + sy / 2, z];
+      const B = cn.map(([p, q]) => [x + (p * sx / 2) * c - (q * sz / 2) * s, y0, z + (p * sx / 2) * s + (q * sz / 2) * c]);
+      const T = cn.map(([p, q]) => { const k = 0.55 + R() * 0.4, lx = p * sx / 2 * k, lz = q * sz / 2 * k; return [x + lx * c - lz * s + (R() - 0.5) * sx * 0.25, y0 + sy * (0.72 + R() * 0.28), z + lx * s + lz * c + (R() - 0.5) * sz * 0.25]; });
+      for (let k = 0; k < 4; k++) { const j = (k + 1) % 4; g.quadO(B[k], B[j], T[j], T[k], k3(col, 0.78 + 0.1 * k), inn); }
+      g.quadO(T[0], T[1], T[2], T[3], k3(col, 1.04), inn); ST.stones++;
+    };
+    const slab = (x, z, L, Wd, H, rot, tilt) => {   // a fallen piece of wall lying on the ground, one end lifted on the rubble (masonry on its faces: 5 quads)
+      if (!okP(x, z, Math.max(L, Wd) * 0.6)) return;
+      const c = Math.cos(rot), s = Math.sin(rot), y0 = gnd(x, z) - 0.15, P = (u, v, h) => [x + (u * L / 2) * c - (v * Wd / 2) * s, y0 + h + (u + 1) * tilt * L / 2, z + (u * L / 2) * s + (v * Wd / 2) * c], inn = [x, y0 + H / 2, z], cc = vary(pick(STONE), R, 0.12);
+      oU = R() * SP; oV = R() * SP;
+      face(P(-1, -1, 0), P(1, -1, 0), P(1, -1, H), P(-1, -1, H), cc, inn, [k3(cc, 0.75), k3(cc, 0.75), cc, cc]); face(P(1, -1, 0), P(1, 1, 0), P(1, 1, H), P(1, -1, H), k3(cc, 0.9), inn); face(P(1, 1, 0), P(-1, 1, 0), P(-1, 1, H), P(1, 1, H), cc, inn, [k3(cc, 0.75), k3(cc, 0.75), cc, cc]);
+      face(P(-1, 1, 0), P(-1, -1, 0), P(-1, -1, H), P(-1, 1, H), k3(cc, 0.9), inn); face(P(-1, -1, H), P(1, -1, H), P(1, 1, H), P(-1, 1, H), k3(cc, 1.06), inn); ST.slabs++;
+    };
+    const heap = (x, z, rad, n) => { for (let k = 0; k < n; k++) { const a = R() * 6.283, d = rad * Math.sqrt(R()) * 0.95, sz = rr(0.3, 0.55) + (1 - d / rad) * rr(0.1, 0.6); chunk(x + Math.cos(a) * d, z + Math.sin(a) * d, sz * rr(1, 1.5), sz * rr(0.5, 0.9), sz, R() * 3.14, vary(pick(STONE), R, 0.18)); } };
+    const bush = (x, y, z, r) => { ico(g, x, y + r * 0.3, z, r, 0.62, vary(pick(LEAF), R, 0.3), R, 0.5); ST.bushes++; };
+    const tuft = (x, y, z) => { const k = vary(pick(LEAF), R, 0.3); for (let q = 0; q < 3; q++) cone(g, x + rr(-0.18, 0.18), y, z + rr(-0.18, 0.18), rr(0.07, 0.12), rr(0.3, 0.65), 3, k3(k, 0.8), k3(k, 1.2), R() * 3); };   // (a clump of grass: three thin spikes, 9 triangles)
+    const sapling = (x, z, h) => { const y = gnd(x, z); cyl(g, x, y - 0.1, z, 0.1, h, 5, [0.38, 0.31, 0.24], null, 0.05); for (let k = 0; k < 3; k++) ico(g, x + (R() - 0.5) * 0.9, y + h * (0.5 + 0.17 * k), z + (R() - 0.5) * 0.9, rr(0.7, 1.15) * (1 - k * 0.2), 0.8, vary(pick(LEAF), R, 0.3), R, 0.5); ST.trees++; };
+    const patch = (cx, cz, rot, w, d, col, dy, nu, nv, vr) => {   // a flat piece of ground (floor, earth, paving), following the terrain
+      const c = Math.cos(rot), s = Math.sin(rot), P = (i, j) => { const lx = (i / nu - 0.5) * w, lz = (j / nv - 0.5) * d, x = cx + lx * c - lz * s, z = cz + lx * s + lz * c; return [x, gnd(x, z) + dy, z]; };
+      for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const k = vary(Array.isArray(col[0]) ? pick(col) : col, R, vr || 0.1); g.quadUp(P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1), [k, k, k, k]); }
+    };
+    const blob = (cx, cz, r, col, dy) => {   // a ragged flat patch of ground (earth, dry grass, stone dust) following the terrain
+      const n = 9, rim = [], c0 = [cx, gnd(cx, cz) + dy, cz];
+      for (let k = 0; k < n; k++) { const a = k / n * 6.283 + R() * 0.3, d = r * rr(0.6, 1.1), x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; rim.push([x, gnd(x, z) + dy, z]); }
+      for (let k = 0; k < n; k++) g.triO(c0, rim[k], rim[(k + 1) % n], vary(col, R, 0.12), [cx, c0[1] - 3, cz]);
+    };
+    const ivy = (pa, pb, side, y0, y1) => {   // a patch of ivy on a wall face: a ragged fan a few cm off the stone
+      const dx = pb[0] - pa[0], dz = pb[1] - pa[1], l = Math.hypot(dx, dz) || 1, tx = dx / l, tz = dz / l, nx = -tz * side, nz = tx * side, w = Math.min(l * 0.45, rr(0.4, 1.1)), h = Math.min((y1 - y0) * 0.4, rr(0.6, 1.9));
+      if (h < 0.3) return;
+      const cu = rr(-l * 0.25, l * 0.25), yc = rr(y0 + h * 0.7, y1 - h * 0.7), cx = (pa[0] + pb[0]) / 2 + tx * cu + nx * 0.07, cz = (pa[1] + pb[1]) / 2 + tz * cu + nz * 0.07, base = vary(pick(IVY), R, 0.3), inn = [cx - nx, yc, cz - nz], rim = [];
+      for (let k = 0; k < 9; k++) { const a = k / 9 * 6.283, q = rr(0.55, 1.1); rim.push([cx + tx * Math.cos(a) * w * q, yc + Math.sin(a) * h * q, cz + tz * Math.cos(a) * w * q]); }
+      for (let k = 0; k < 9; k++) g.triO([cx, yc, cz], rim[k], rim[(k + 1) % 9], k3(base, 1.1), inn, k3(base, 0.85), k3(base, 0.85));
+      ST.ivy++;
+    };
+    // a masonry wall along the path pts (th thick), as columns 1-2 m long, each with its own stone colour. o: { closed, prof: [[s, height above the ground] ...] piecewise linear along the path (two entries
+    // with one s: a step), ops: [{ s0, s1, yb, ys, rise, kind }] openings (sill yb, springing line ys, a pointed arch of that rise above it; rise 0: a flat lintel; a wall broken lower than the arch is
+    // open to the sky), step (column length), skip(x, z): a column left out, yard (+1 left of the path / -1 right / 0 both: where the rubble lies), rub, ivy, bush: the chance per column }
+    function wall(pts, th, o) {
+      const closed = !!o.closed, n = pts.length, V = pts.map(WP), ns = closed ? n : n - 1, ht = th / 2, st = o.step || 1.8, bury = 0.5, prof = o.prof, ops = o.ops || [];
+      oU = R() * SP; oV = R() * SP; ST.runs++;
+      const sg = []; let tot = 0;
+      for (let i = 0; i < ns; i++) { const a = V[i], c = V[(i + 1) % n], l = Math.hypot(c[0] - a[0], c[1] - a[1]); sg.push({ a, l, s0: tot, dx: (c[0] - a[0]) / l, dz: (c[1] - a[1]) / l }); tot += l; }
+      const bs = [0, tot]; for (const q of sg) bs.push(q.s0); for (const p of prof) bs.push(p[0]);
+      for (const op of ops) { const k = op.rise > 0 ? Math.max(2, Math.ceil((op.s1 - op.s0) / 0.3)) : 1; for (let q = 0; q <= k; q++) bs.push(lerp(op.s0, op.s1, q / k)); }
+      bs.sort((p, q) => p - q);
+      const S = []; for (const s of bs) if (s > -1e-6 && s < tot + 1e-6 && (!S.length || s - S[S.length - 1] > 0.03)) S.push(Math.min(s, tot));
+      const T = [S[0]]; for (let i = 1; i < S.length; i++) { const k = Math.max(1, Math.round((S[i] - S[i - 1]) / st)); for (let q = 1; q <= k; q++) T.push(lerp(S[i - 1], S[i], q / k)); }
+      const sec = (s) => {   // the section across the wall at s: its middle and its left and right edges (mitred at the corners)
+        let i = sg.length - 1; for (let q = 0; q < sg.length; q++) if (s < sg[q].s0 + sg[q].l - 1e-6) { i = q; break; }
+        const q = sg[i], t = s - q.s0, x = q.a[0] + q.dx * t, z = q.a[1] + q.dz * t; let n1 = null, n2 = null, mx = -q.dz, mz = q.dx;
+        if (t < 1e-5) { n1 = closed ? sg[(i + ns - 1) % ns] : i > 0 ? sg[i - 1] : null; n2 = q; } else if (Math.abs(t - q.l) < 1e-5) { n1 = q; n2 = closed ? sg[(i + 1) % ns] : i < ns - 1 ? sg[i + 1] : null; }
+        if (n1 && n2) { const ax = -n1.dz, az = n1.dx, bx = -n2.dz, bz = n2.dx, f = 1 / Math.max(1 + ax * bx + az * bz, 0.3); mx = (ax + bx) * f; mz = (az + bz) * f; }
+        const L = [x + mx * ht, z + mz * ht], Rr = [x - mx * ht, z - mz * ht];
+        return { x, z, L, R: Rr, base: Math.min(gnd(L[0], L[1]), gnd(Rr[0], Rr[1])) - bury, gc: gnd(x, z) };
+      };
+      const secs = T.map(sec);
+      const hAt = (s, sm) => { for (let k = 0; k + 1 < prof.length; k++) { const p0 = prof[k], p1 = prof[k + 1]; if (p1[0] - p0[0] > 1e-6 && sm >= p0[0] - 1e-6 && sm <= p1[0] + 1e-6) return lerp(p0[1], p1[1], clamp((s - p0[0]) / (p1[0] - p0[0]), 0, 1)); } return prof[prof.length - 1][1]; };
+      for (const op of ops) { const m = sec((op.s0 + op.s1) / 2); op.g0 = m.gc; ST.openings++; if (op.kind === 'win') ST.windows++; else if (op.kind === 'door') ST.doors++; }
+      const C = [];
+      for (let k = 0; k + 1 < T.length; k++) {
+        const A = secs[k], B = secs[k + 1], sa = T[k], sb = T[k + 1], sm = (sa + sb) / 2, cx = (A.x + B.x) / 2, cz = (A.z + B.z) / 2, op = ops.find(q => sm > q.s0 && sm < q.s1), col = { A, B, ivA: [], ivB: [], cx, cz, c: null, op: !!op };
+        if (o.skip && o.skip(cx - b.x, cz - b.z)) { C.push(col); continue; }
+        const tA = A.gc + hAt(sa, sm), tB = B.gc + hAt(sb, sm); ST.columns++; ST.maxTop = Math.max(ST.maxTop, tA - A.gc, tB - B.gc);
+        if (op) {
+          const sill = op.g0 + op.yb, spr = op.g0 + op.ys; let yl = spr;
+          if (op.rise > 0) { const hw = (op.s1 - op.s0) / 2, cs = (op.s0 + op.s1) / 2, u = Math.min(1, Math.max(Math.abs(sa - cs), Math.abs(sb - cs)) / hw); yl = spr + op.rise * (1 - Math.pow(u, 1.8)); }
+          if (op.yb > 0.05) { col.ivA.push([A.base, Math.min(sill, tA)]); col.ivB.push([B.base, Math.min(sill, tB)]); }
+          if (tA > yl + 0.12 && tB > yl + 0.12) { col.ivA.push([yl, tA]); col.ivB.push([yl, tB]); }
+        } else { col.ivA.push([A.base, tA]); col.ivB.push([B.base, tB]); }
+        col.c = vary(R() < 0.55 ? STONE[0] : pick(STONE), R, 0.16);
+        const cc = col.c, moss = R() < 0.3 ? rr(0.35, 0.9) : 0;   // (moss on the top: the share of its corners)
+        col.ivA.forEach(([loA, hiA], j) => {
+          const [loB, hiB] = col.ivB[j]; if (hiA - loA < 0.03 && hiB - loB < 0.03) return;
+          const inn = [cx, (loA + loB + hiA + hiB) / 4, cz], foot = loA <= A.base + 0.01, dk = foot ? 0.7 : 1, sc = [k3(cc, dk), k3(cc, dk), k3(cc, 1), k3(cc, 1)];
+          face([A.L[0], loA, A.L[1]], [B.L[0], loB, B.L[1]], [B.L[0], hiB, B.L[1]], [A.L[0], hiA, A.L[1]], cc, inn, sc);
+          face([A.R[0], loA, A.R[1]], [B.R[0], loB, B.R[1]], [B.R[0], hiB, B.R[1]], [A.R[0], hiA, A.R[1]], cc, inn, sc);
+          const tp = k3(cc, 1.06), tm = () => (R() < moss ? vary(MOSS, R, 0.3) : tp);
+          face([A.L[0], hiA, A.L[1]], [B.L[0], hiB, B.L[1]], [B.R[0], hiB, B.R[1]], [A.R[0], hiA, A.R[1]], tp, inn, [tm(), tm(), tm(), tm()]);
+          if (!foot) face([A.L[0], loA, A.L[1]], [B.L[0], loB, B.L[1]], [B.R[0], loB, B.R[1]], [A.R[0], loA, A.R[1]], k3(cc, 0.6), inn);   // (the underside of a lintel or an arch)
+        });
+        if (!op && o.merl && R() < o.merl[0] && tA > A.gc + 2.2 && tB > B.gc + 2.2 && !(o.noMerl && o.noMerl(cx - b.x, cz - b.z))) {   // (a stump of the parapet on the outer half of the wall-walk, 0.9 m long and 0.5 m thick)
+          const sd = o.merl[1], e0 = sd > 0 ? A.L : A.R, e1 = sd > 0 ? B.L : B.R, i0 = sd > 0 ? A.R : A.L, i1 = sd > 0 ? B.R : B.L, cl = Math.hypot(e1[0] - e0[0], e1[1] - e0[1]) || 1, f0 = rr(0.08, 0.4), f1 = Math.min(0.95, f0 + Math.min(0.9 / cl, 0.55)), ph = rr(0.7, 1.15);
+          const O = (f, y) => [lerp(e0[0], e1[0], f), y, lerp(e0[1], e1[1], f)], I = (f, y) => { const ox = lerp(e0[0], e1[0], f), oz = lerp(e0[1], e1[1], f), px = lerp(i0[0], i1[0], f), pz = lerp(i0[1], i1[1], f), k = 0.5 / th; return [ox + (px - ox) * k, y, oz + (pz - oz) * k]; };
+          const y0 = lerp(tA, tB, f0), y1 = lerp(tA, tB, f1), yt = Math.max(y0, y1) + ph, mi = [(O(f0, 0)[0] + I(f1, 0)[0]) / 2, (y0 + yt) / 2, (O(f0, 0)[2] + I(f1, 0)[2]) / 2], mc = k3(cc, 1.02);
+          face(O(f0, y0), O(f1, y1), O(f1, yt), O(f0, yt), mc, mi); face(I(f0, y0), I(f1, y1), I(f1, yt), I(f0, yt), mc, mi); face(O(f0, yt), O(f1, yt), I(f1, yt), I(f0, yt), k3(cc, 1.1), mi);
+          face(O(f0, y0), I(f0, y0), I(f0, yt), O(f0, yt), k3(cc, 0.9), mi); face(O(f1, y1), I(f1, y1), I(f1, yt), O(f1, yt), k3(cc, 0.9), mi); ST.merlons++;
+        }
+        const mt = (tA + tB) / 2, mh = mt - Math.min(A.base, B.base) - bury;
+        if (!op && mh > 1.5) {
+          if (R() < (o.ivy == null ? 0.1 : o.ivy)) { const sd = R() < 0.5 ? 1 : -1; ivy(sd > 0 ? A.L : A.R, sd > 0 ? B.L : B.R, sd, Math.min(A.base, B.base) + bury + 0.3, mt - 0.1); }
+          if (R() < (o.bush == null ? 0.05 : o.bush)) bush(cx + rr(-0.3, 0.3), mt, cz + rr(-0.3, 0.3), rr(0.45, 0.85));
+          if (R() < 0.45) { const f = R(), tf = rr(-0.2, 0.2) * th; tuft(lerp(A.x, B.x, f) + (A.L[0] - A.R[0]) / th * tf, lerp(tA, tB, f), lerp(A.z, B.z, f) + (A.L[1] - A.R[1]) / th * tf); ST.tufts++; }   // (grass on the top)
+        }
+        if (!op && o.yard !== undefined && o.yard !== 0 && R() < 0.5) { const nx = (B.L[0] - B.R[0]) / th, nz = (B.L[1] - B.R[1]) / th, d = ht + rr(0.15, 0.5), f = R(), x = lerp(A.x, B.x, f) + nx * o.yard * d, z = lerp(A.z, B.z, f) + nz * o.yard * d; if (okP(x, z, 0.3)) { tuft(x, gnd(x, z) - 0.05, z); ST.tufts++; } }   // (and at the foot, on the yard side)
+        if (!op && o.yard != null && R() < (o.rub == null ? 0.2 : o.rub)) {
+          const nx = (B.L[0] - B.R[0]) / th, nz = (B.L[1] - B.R[1]) / th, sd = o.yard === 0 ? (R() < 0.5 ? 1 : -1) : o.yard;
+          for (let q = 0, m = 1 + Math.floor(R() * 3); q < m; q++) { const d = ht + rr(0.3, 1.1), z0 = rr(0.25, 0.7); chunk(cx + nx * sd * d + rr(-0.6, 0.6), cz + nz * sd * d + rr(-0.6, 0.6), z0 * rr(1, 1.6), z0 * rr(0.5, 0.9), z0, R() * 3.14, vary(pick(STONE), R, 0.18)); }
+        }
+        C.push(col);
+      }
+      // the faces where neighbouring columns meet at different heights (and the ends of an open wall)
+      const capQ = (Sx, ivs, others, inside, cc, jam) => {
+        for (const [y0, y1] of ivs) {
+          let pcs = [[y0, y1]]; for (const [z0, z1] of others) { const np = []; for (const [p0, p1] of pcs) { if (z1 <= p0 || z0 >= p1) np.push([p0, p1]); else { if (z0 > p0) np.push([p0, z0]); if (z1 < p1) np.push([z1, p1]); } } pcs = np; }
+          for (const [p0, p1] of pcs) if (p1 - p0 > 0.03) face([Sx.L[0], p0, Sx.L[1]], [Sx.R[0], p0, Sx.R[1]], [Sx.R[0], p1, Sx.R[1]], [Sx.L[0], p1, Sx.L[1]], k3(cc, jam ? 1.04 : 0.86), inside);
+        }
+      };
+      const nC = C.length, mid = (K) => (K.ivB[0][0] + K.ivB[K.ivB.length - 1][1]) / 2;
+      for (let k = closed ? 0 : -1; k < nC; k++) {
+        const P = k < 0 ? null : C[k], Q = k + 1 < nC ? C[k + 1] : closed ? C[0] : null, Sx = P ? P.B : Q.A;
+        if (P && P.ivB.length) capQ(Sx, P.ivB, Q ? Q.ivA : [], [P.cx, mid(P), P.cz], P.c, P.op || (Q && Q.op));
+        if (Q && Q.ivA.length) capQ(Sx, Q.ivA, P ? P.ivB : [], [Q.cx, mid(Q), Q.cz], Q.c, Q.op || (P && P.op));
+      }
+    }
+    // ------------------------------------------------------------------ the plan
+    const RING = [[-20.1, 0.4], [-19.1, 3.4], [-14.4, 5.5], [-11.4, 8.5], [10.3, 18.1], [11.6, 20.1], [13.9, 18], [12.5, 15.8], [19.3, 9.8], [24.1, 4.6], [28.5, 3.1], [28.2, 2.3], [26.5, 2], [23.7, 0.7], [19, 0.8], [18.3, -1.1], [1.8, -7.1], [-10, -16.3], [-10.5, -13.3], [-17, -0.9]];
+    const sv = cum(RING, true), A = (i, d) => sv[i] + d;
+    const KC = [-4.3, 7.2], KA = 24 * Math.PI / 180, KH = 4.7, kc = Math.cos(KA), ks = Math.sin(KA), kp = (u, v) => [KC[0] + u * kc - v * ks, KC[1] + u * ks + v * kc];   // (the keep: its own axes, u along its north face, v to the south)
+    const TW = [[11.3, 16.6, 2.3, 4.2, 6.6], [24.3, 2.8, 2.3, 2.6, 5.2], [-8.9, -13.1, 2.3, 5.2, 8.2]];   // (the three round towers of the outer ring: centre, outer radius, lowest and highest top)
+    const inKeep = (x, z) => { const dx = x - KC[0], dz = z - KC[1], u = dx * kc + dz * ks, v = -dx * ks + dz * kc; return Math.abs(u) < KH - 0.2 && Math.abs(v) < KH - 0.2; };
+    const inTower = (x, z) => TW.some(([tx, tz, r]) => Math.hypot(x - tx, z - tz) < r - 0.35);
+    const PV = RING[19], PL = Math.hypot(RING[18][0] - PV[0], RING[18][1] - PV[1]), PUx = (RING[18][0] - PV[0]) / PL, PUz = (RING[18][1] - PV[1]) / PL, PD = 7.8, PQ = (u, v) => [PV[0] + PUx * u - PUz * v, PV[1] + PUz * u + PUx * v];   // (the palace's frame: u along its rear wall to the north, v into the yard)
+    const inPalace = (x, z) => { const u = (x - PV[0]) * PUx + (z - PV[1]) * PUz, v = -(x - PV[0]) * PUz + (z - PV[1]) * PUx; return u > -0.5 && u < 14 && v > -1 && v < PD + 1.8; };
+    const GS = A(15, 14.2);   // the gate in the north-east wall
+    // 1) the curtain wall round the whole hilltop outline
+    {
+      const pr = [], sec = (s0, s1, lo, hi, e) => { pr.push(...rag(s0, s1, lo, hi, e)); };
+      sec(A(0, 0), A(3, 1.3), 1.8, 4.4); sec(A(3, 1.3), A(3, 10.7), 3.5, 4); sec(A(3, 10.7), A(3, 16.8), 2.2, 4.4); sec(A(3, 16.8), A(3, 20.4), 0.25, 0.9); sec(A(3, 20.4), A(5, 0), 2.6, 4.3);   // (the south wall: a breach 3.6 m wide)
+      sec(A(5, 0), A(7, 0), 3, 5); sec(A(7, 0), A(8, 3.5), 1.2, 3.4); sec(A(8, 3.5), A(8, 5.5), 0.3, 0.7); sec(A(8, 5.5), A(10, 0), 1.6, 4.2); sec(A(10, 0), A(15, 0), 2.5, 5);
+      sec(A(15, 0), A(15, 7.6), 1.4, 3.6); sec(A(15, 7.6), A(16, 3), 4.4, 5.8); sec(A(16, 3), A(16, 11.5), 2.6, 5.4); sec(A(16, 11.5), A(17, 0), 4, 6);
+      sec(A(17, 0), A(18, 0), 4.5, 7); sec(A(18, 0), A(19, 0), 6.6, 8.8, 0.9); sec(A(19, 0), A(20, 0), 3.5, 6);
+      const win = (u, yb, ys, rise, w) => ({ s0: A(18, PL - u - w / 2), s1: A(18, PL - u + w / 2), yb, ys, rise, kind: 'win' });   // (the palace's rear wall: windows of both floors; u from its south end)
+      const slit = (i, d, yb) => ({ s0: A(i, d), s1: A(i, d + 0.35), yb, ys: yb + 1, rise: 0, kind: 'slit' });
+      const ops = [{ s0: GS - 1.4, s1: GS + 1.4, yb: 0, ys: 2.1, rise: 1.25, kind: 'door' }, win(2.6, 1.6, 3, 0, 0.7), win(5.7, 1.6, 3, 0, 0.7), win(8.7, 1.6, 3, 0, 0.7), win(11.4, 1.6, 3, 0, 0.7), win(4.2, 4.9, 6.5, 0.6, 1), win(10, 4.9, 6.5, 0.6, 1), slit(16, 6.6, 1.5), slit(16, 10.4, 1.7), slit(7, 4.2, 1)];
+      wall(RING, 1.5, { closed: true, prof: pr, ops, yard: -1, merl: [0.4, 1], noMerl: (x, z) => inPalace(x, z), rub: 0.22, ivy: 0.13, bush: 0.07, skip: (x, z) => inKeep(x, z) || inTower(x, z) });
+    }
+    // the gate: a stump of the gate tower on either side on the yard side, the threshold paved
+    { const a = RING[15], c = RING[16], l = sv[16] - sv[15], dx = (c[0] - a[0]) / l, dz = (c[1] - a[1]) / l, p = [a[0] + dx * 14.2, a[1] + dz * 14.2];
+      let nx = dz, nz = -dx; if (!inPoly(RING, p[0] + nx * 2, p[1] + nz * 2)) { nx = -nx; nz = -nz; }   // (into the yard)
+      for (const e of [-1, 1]) { const q0 = [p[0] + dx * e * 2 + nx * 0.5, p[1] + dz * e * 2 + nz * 0.5]; wall([q0, [q0[0] + nx * 1.8, q0[1] + nz * 1.8]], 1.4, { prof: [[0, 4.6], [1.8, 3]], step: 1, yard: 0, rub: 0.1, ivy: 0.2 }); }
+      patch(b.x + p[0] + nx, b.z + p[1] + nz, Math.atan2(dz, dx), 3.2, 3.4, [[0.5, 0.47, 0.42], [0.56, 0.53, 0.47]], 0.05, 3, 3, 0.1); ST.gates++; }
+    // 2) the three round towers (a decagon of 1.2 m walls; a doorway facing the yard, a loophole)
+    TW.forEach(([tx, tz, ro, lo, hi], ti) => {
+      const nP = 10, rc = ro - 0.6, pts = []; for (let k = 0; k < nP; k++) { const a = k / nP * 6.283 + ti * 0.4; pts.push([tx + Math.cos(a) * rc, tz + Math.sin(a) * rc]); }
+      const sc = cum(pts, true), ya = Math.atan2(-tz, -tx), dk = pts.map((p, k) => { const q = pts[(k + 1) % nP], am = Math.atan2((p[1] + q[1]) / 2 - tz, (p[0] + q[0]) / 2 - tx) - ya; return Math.abs(Math.atan2(Math.sin(am), Math.cos(am))); }), kd = dk.indexOf(Math.min(...dk)), k5 = (kd + 5) % nP;
+      const ops = [{ s0: sc[kd] + 0.04, s1: sc[kd + 1] - 0.04, yb: 0, ys: 1.9, rise: 0.5, kind: 'door' }, { s0: sc[k5] + 0.4, s1: sc[k5] + 0.7, yb: 1.8, ys: 2.8, rise: 0, kind: 'slit' }];
+      wall(pts, 1.2, { closed: true, prof: rag(0, sc[nP], lo, hi, 1.1), ops, merl: [0.4, -1], step: 1.5, yard: 0, rub: 0.3, ivy: 0.2, bush: 0.12 }); ST.towers++;
+    });
+    // 3) the keep: 9.4 m square, walls 3.2 m thick, up to 14.3 m; its south face is the line of the curtain wall; a doorway on the north (the footpath ends there), a high doorway on the west, slits
+    { const c3 = 3.1, s0 = 6.2, pts = [kp(-c3, -c3), kp(c3, -c3), kp(c3, c3), kp(-c3, c3)];
+      const pr = [...rag(0, s0, 11.2, 12.8), ...rag(s0, s0 * 1.65, 13, 14.3, 0.8), ...rag(s0 * 1.65, s0 * 2, 7.6, 9.2), ...rag(s0 * 2, s0 * 3, 10.2, 12.6), ...rag(s0 * 3, s0 * 4, 9.4, 11.6)];
+      const ops = [{ s0: 3.1 - 0.8, s1: 3.1 + 0.8, yb: 0, ys: 2.2, rise: 0.6, kind: 'door' }, { s0: s0 * 3 + 3.1 - 0.8, s1: s0 * 3 + 3.1 + 0.8, yb: 4.7, ys: 6.7, rise: 0.8, kind: 'door' },
+        { s0: s0 * 2 + 3.1 - 0.45, s1: s0 * 2 + 3.1 + 0.45, yb: 6, ys: 7.1, rise: 0.5, kind: 'win' }, { s0: s0 + 3.7 - 0.45, s1: s0 + 3.7 + 0.45, yb: 8.6, ys: 9.7, rise: 0.5, kind: 'win' },
+        ...[[1.2, 6.4], [5, 8.2], [s0 + 2.2, 5.6], [s0 * 2 + 1.8, 7.2], [s0 * 2 + 4.6, 3.6], [s0 * 3 + 0.9, 8.8], [s0 * 3 + 5.2, 2.8]].map(([s, y]) => ({ s0: s - 0.17, s1: s + 0.17, yb: y, ys: y + 1.15, rise: 0, kind: 'slit' }))];
+      wall(pts, 3.2, { closed: true, prof: pr, ops, merl: [0.35, -1], step: 1.55, yard: -1, rub: 0.5, ivy: 0.2, bush: 0.1 }); ST.keeps++;
+      const kf = kp(0, 0); patch(b.x + kf[0], b.z + kf[1], KA, 3, 3, [0.24, 0.22, 0.19], 0.1, 1, 1, 0.05); heap(b.x + kf[0], b.z + kf[1], 1.2, 8);
+    }
+    // 4) the palace (its rear wall is the curtain wall): the front wall with arched windows and the pointed portal, a standing gable on the north, the south end down to a stump, a cross wall
+    { const F0 = PQ(0.5, PD), F1 = PQ(13, PD), pts = [PQ(0.5, 0), F0, F1, PQ(13, 0)], sc = cum(pts, false), s1 = sc[1], g0 = sc[2], gl = sc[3] - sc[2];
+      const prof = [...rag(0, s1, 1.2, 3.2, 1.2), [s1, 6.7], [s1 + 3.2, 7.4], [s1 + 3.2, 4.2], [s1 + 5.8, 3.6], [s1 + 5.8, 5.2], [s1 + 8.2, 6], [s1 + 8.2, 7.2], [s1 + 10.2, 7.6], [s1 + 10.2, 3.2], [g0, 4.8],
+        [g0, 6.9], [g0 + gl * 0.5, 10.6], [g0 + gl * 0.72, 8.9], [g0 + gl * 0.8, 7.2], [g0 + gl * 0.8, 5.4], [g0 + gl, 4.6]];
+      const wi = (f, w) => ({ s0: s1 + f - w / 2, s1: s1 + f + w / 2, yb: 1.1, ys: 3.3, rise: 1.3, kind: 'win' });
+      const ops = [wi(1.9, 1.2), wi(4.4, 1.2), { s0: s1 + 6.9 - 1, s1: s1 + 6.9 + 1, yb: 0, ys: 2.5, rise: 1.6, kind: 'door' }, wi(9.4, 1.2), wi(11.3, 1.1), { s0: g0 + gl * 0.5 - 0.5, s1: g0 + gl * 0.5 + 0.5, yb: 6, ys: 7.3, rise: 0.4, kind: 'win' }];
+      wall(pts, 1.1, { prof, ops, yard: 1, rub: 0.3, ivy: 0.16, bush: 0.05 });
+      wall([PQ(6.8, 0), PQ(6.8, PD)], 0.9, { prof: rag(0, PD, 1.6, 4.4), ops: [{ s0: 3.2, s1: 4.3, yb: 0, ys: 2.1, rise: 0.4, kind: 'door' }], step: 1.4, yard: 0, rub: 0.2, ivy: 0.1 });
+      for (const u of [3.4, 9.6]) wall([PQ(u, PD), PQ(u, PD + 1.15)], 0.8, { prof: [[0, 4.6], [1.15, 2]], step: 1.2, yard: 0, rub: 0.15 });
+      const pc = PQ(6.8, PD / 2); patch(b.x + pc[0], b.z + pc[1], Math.atan2(PUz, PUx), 12, 6.2, EARTH, 0.05, 6, 3, 0.1); ST.palaces++; }
+    // 5) inner walls: the low one linking the palace and the keep, the one east of the keep; the chapel's foundations (the castle chapel of the 12th century); the cistern
+    wall([[-9.9, 2.3], kp(-KH + 0.3, -KH + 0.3)], 1, { prof: rag(0, 3.5, 0.8, 2), ops: [{ s0: 1.1, s1: 2.3, yb: 0, ys: 1.9, rise: 0.5, kind: 'door' }], step: 1.2, yard: 0, rub: 0.2, ivy: 0.1 });
+    wall([kp(KH - 0.4, -KH + 0.4), [9, 5.8], [11.2, 12.6]], 1, { prof: [...rag(0, 7.8, 0.8, 2.4), ...rag(7.8, 14, 0.4, 1.8)], step: 1.6, yard: 0, rub: 0.3, ivy: 0.1, bush: 0.1 });
+    { const cp = [14.7, 4.2], ca = 22 * Math.PI / 180, cc = Math.cos(ca), cs = Math.sin(ca), P = (u, v) => [cp[0] + u * cc - v * cs, cp[1] + u * cs + v * cc], pts = [P(-3.1, -2.1), P(3.1, -2.1), P(4.6, -0.9), P(4.6, 0.9), P(3.1, 2.1), P(-3.1, 2.1)], sc = cum(pts, true);
+      wall(pts, 0.9, { closed: true, prof: [...rag(0, sc[1], 0.5, 1.6), ...rag(sc[1], sc[4], 0.8, 3.8, 0.8), ...rag(sc[4], sc[6], 0.4, 1.5)], ops: [{ s0: sc[2] + 0.5, s1: sc[2] + 1.3, yb: 1.2, ys: 2.6, rise: 0.7, kind: 'win' }], step: 1.5, yard: 0, rub: 0.3, ivy: 0.15 }); ST.chapels++;
+      patch(b.x + cp[0], b.z + cp[1], ca, 5.4, 3.4, EARTH, 0.05, 3, 2, 0.1); }
+    { const cx = 6.4, cz = -1.2, pts = [], dp = []; for (let k = 0; k < 8; k++) { pts.push([cx + Math.cos(k / 8 * 6.283) * 1.2, cz + Math.sin(k / 8 * 6.283) * 1.2]); dp.push([b.x + cx + Math.cos(k / 8 * 6.283) * 0.75, b.z + cz + Math.sin(k / 8 * 6.283) * 0.75]); }
+      wall(pts, 0.6, { closed: true, prof: [[0, 0.7], [9.6, 0.9]], step: 1, yard: -1, rub: 0.15 }); ST.cisterns++;
+      const q = [b.x + cx, gnd(b.x + cx, b.z + cz) + 0.1, b.z + cz]; for (let k = 0; k < 8; k++) { const a = dp[k], c = dp[(k + 1) % 8]; g.triO(q, [a[0], gnd(a[0], a[1]) + 0.1, a[1]], [c[0], gnd(c[0], c[1]) + 0.1, c[1]], [0.07, 0.09, 0.08], [q[0], q[1] - 3, q[2]]); } }
+    // 6) the yard: patches of earth and paving, fallen stones, scrub and a few young trees; a heap at the breach in the south wall
+    const PATH = [[3.74, -6.8], [1.36, -5.19], [-1.29, -4.24], [-3.01, -2.23], [-1.93, -1.44], [-3.7, 3.87]];   // (the game's footpath from the gate to the keep: kept clear)
+    const dPath = (x, z) => { let d = 9; for (let i = 0; i + 1 < PATH.length; i++) d = Math.min(d, dSeg(x, z, PATH[i], PATH[i + 1])); return d; };
+    const yardOK = (x, z, m) => inPoly(RING, x, z) && dLoop(RING, x, z) > 1.5 + m && !inKeep(x, z) && !inPalace(x, z) && !TW.some(([tx, tz, r]) => Math.hypot(x - tx, z - tz) < r + 0.6 + m) && dPath(x, z) > 1.1 + m && Math.hypot(x - 14.7, z - 4.2) > 5.2 && Math.hypot(x - 6.4, z + 1.2) > 2.2 + m;
+    for (let q = 0, n = 0; q < 500 && n < 18; q++) { const x = rr(-19, 29), z = rr(-16, 20), r = rr(1, 2.3); if (!yardOK(x, z, r)) continue; n++; blob(b.x + x, b.z + z, r, pick(EARTH), 0.045); }
+    for (let q = 0, n = 0; q < 600 && n < 46; q++) { const x = rr(-19, 29), z = rr(-16, 20); if (!yardOK(x, z, 0.2)) continue; n++; const sz = rr(0.25, 0.7); chunk(b.x + x, b.z + z, sz * rr(1, 1.7), sz * rr(0.45, 0.9), sz, R() * 3.14, vary(pick(STONE), R, 0.2)); }
+    for (let q = 0, n = 0; q < 300 && n < 5; q++) { const x = rr(-19, 29), z = rr(-16, 20); if (!yardOK(x, z, 1.8)) continue; n++; slab(b.x + x, b.z + z, rr(1.8, 3.2), rr(0.8, 1.3), rr(0.6, 1), R() * 3.14, rr(0.15, 0.4)); }
+    for (let q = 0, n = 0; q < 400 && n < 14; q++) { const x = rr(-19, 29), z = rr(-16, 20); if (!yardOK(x, z, 0.6)) continue; n++; bush(b.x + x, gnd(b.x + x, b.z + z), b.z + z, rr(0.5, 1)); }
+    for (const [x, z, h] of [[-12.2, 5.5, 3.4], [16.5, 6.2, 2.8], [3.4, 11.2, 2.6]]) if (yardOK(x, z, 0.4)) sapling(b.x + x, b.z + z, h);
+    { const a = RING[3], c = RING[4], l = sv[4] - sv[3], hx = lerp(a[0], c[0], 18.6 / l), hz = lerp(a[1], c[1], 18.6 / l), nx = (c[1] - a[1]) / l, nz = -(c[0] - a[0]) / l;   // (into the yard: north)
+      heap(b.x + hx + nx * 1.7, b.z + hz + nz * 1.7, 1.9, 16); }
+    // the mesh: its own object on the masonry picture; the parts between the camera and the car fade as the buildings do
+    const stone = mvStoneTex(); if (ownTex) ownTex(stone);   // (freed with the world; the picture itself stays cached and goes up again with the next build)
+    const m = new THREE.Mesh(g.geometry(), hjCutMat(new THREE.MeshLambertMaterial({ map: stone, vertexColors: true }), cut));
+    m.name = 'mvCastle'; m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
+    ST.verts = g.P.length / 3;
+    return ST;
   }
   function buildMedvode(scene, tex, opts) {
     const R = rng(4411), N = T.N, def = T.def, dens = opts.density || 1, PI = Math.PI, ds = T.ds;
@@ -24021,7 +24271,7 @@ const World = (function () {
         let lo = 1e9, hi = -1e9; for (const [px, pz] of b.pts.concat([[b.x, b.z]])) { const y = mvGround(px, pz); lo = Math.min(lo, y); hi = Math.max(hi, y); }
         const Rb = rng((Math.round(b.x * 7) * 7919) ^ Math.round(b.z * 13));
         if (b.kind === 2) mvChurch(scen.get(b.x, b.z), b, lo, hi);
-        else if (b.kind === 6) mvCastle(scen.get(b.x, b.z), b, Rb);
+        else if (b.kind === 6) out.castle = mvCastle(grpB, b, Rb, cut, ownTex);
         else if (b.kind === 8) { const g = scen.get(b.x, b.z), br = [0.62, 0.36, 0.26]; box(g, b.x, lo - 0.5, b.z, 3.2, hi - lo + 8.5, 3.2, b.ang, br, null, true); cone(g, b.x, hi + 8, b.z, 2.6, 2.2, 4, [0.36, 0.28, 0.24], [0.36, 0.28, 0.24], b.ang + PI / 4); }
         else mvBuilding(fac.get(b.x, b.z), b, lo, hi, Rb);
         exclPush(b.x, b.z, Math.min(Math.hypot(b.L, b.W) / 2 + 1, 9)); CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang);
