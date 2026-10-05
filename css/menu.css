@@ -374,11 +374,9 @@ svg { display: block; }
 .groups button:disabled { opacity: .4; }
 @media (max-width: 380px) { .groups button { font-size: 12px; gap: 4px; } }
 .ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
-.mapv { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 3px; padding: 3px 4px 3px 8px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
-.mapv span { font: 800 italic 10px/1 var(--f-ui); letter-spacing: .1em; color: var(--gold); margin-right: 2px; }
+.mapv { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
 .mapv button { width: 22px; height: 22px; border-radius: 50%; font: 900 12px/22px var(--f-ui); color: var(--lbl); }
 .mapv button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
-.mapv em { font: 700 italic 10.5px/1 var(--f-ui); color: #dfe6f1; padding: 0 6px 0 3px; white-space: nowrap; }
 @media (max-width: 380px) { .mapv em { display: none; } }
 /* version 1: the flyover video and the names over it */
 .dio.fly { background: #0b1626; }
@@ -424,12 +422,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .topmap image.wet { opacity: 0; transition: opacity .7s ease; }
 .stage.rainy .dio image.wet { opacity: 1; }
 .dio.topmap.lock .mapsvg image, .dio.fly.lock video { filter: saturate(.55) brightness(.8); }
-/* a map: the arrows beside the dots at the bottom (not over the names on the map) */
-.stage.route .arrow { top: auto; bottom: 2px; margin-top: 0; width: 34px; height: 34px; border-width: 2px; z-index: 4; }
-.stage.route .arrow.l { left: calc(50% - 76px); }
-.stage.route .arrow.r { right: calc(50% - 76px); }
-.stage.route .arrow svg { width: 14px; height: 14px; }
-.stage.route .dots { bottom: 15px; }
+/* the flyover and the map keep the same big arrows at the sides (and dots at the bottom) as the track models (e.g. Los Caracoles), for one look across all tracks */
 /* the flyover and the intro: the place the video has reached and its height, low in the right corner (above the arrows) */
 .hud { position: absolute; right: 10px; bottom: 46px; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; max-width: calc(100% - 20px); }
 .hud b { background: #fff; color: #10151d; font: 900 italic 14px/1 var(--f-ui); letter-spacing: .02em; padding: 6px 10px 5px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
