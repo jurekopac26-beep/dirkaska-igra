@@ -5943,7 +5943,7 @@ const Render = (function () {
       while (v.fsmAcc >= 1) { v.fsmAcc -= 1;
         const g = 0.05 + rRnd() * 0.06, s1 = Math.min(4.5, (lit ? 4.2 : 5.4) + rRnd() * 2.2) * sc;   // (a puff at most 4.5 m across a car's size)
         particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5, 1.3 + rRnd() * 1.1, c.vz * 0.3 + (rRnd() - 0.5) * 0.5,
-          (lit ? 2.5 : 3.1) + rRnd() * 1.4, 0.8 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? 0.62 : 0.72 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }
+          (lit ? 2.5 : 3.1) + rRnd() * 1.4, 1.1 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? 0.86 : 0.92 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }   // (denser than the other smoke: the soft puffs of the particles' atlas let through what the old discs covered)
     }
     if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames)
       const fl = 0.55 + 0.25 * Math.sin(time * 17.3 + c.id * 1.7) + 0.2 * Math.sin(time * 6.1 + c.id);
