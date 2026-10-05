@@ -21,8 +21,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         grille: { z: 0, th: 0.55, m: 4, r: 0.45, h: 0.1, lx: 0.97, lz: 0, y: 0.34 },
       },
       // (the debris from where the look has the parts: the radiator low in the bumper, the bumper's middle, the boot lid behind the steep rear
-      // glass, the wing high over it, the doors and quarters up to their glass, the mirrors by the A-pillars)
-      over: { bumperF: { lx: 0.93 }, trunk: { lx: -0.79, y: 0.96 }, wing: { lx: -0.89, y: 1.22 }, doorL: { y: 0.73 }, doorR: { y: 0.73 },
+      // glass, the wing high over it (knocked off before the lid it stands on swings open: 0.45 < 0.6 x 0.78; it lies on its plates' depth),
+      // the doors and quarters up to their glass, the mirrors by the A-pillars)
+      over: { bumperF: { lx: 0.93 }, trunk: { lx: -0.79, y: 0.96 }, wing: { lx: -0.89, y: 1.22, th: 0.45, h: 0.13 }, doorL: { y: 0.73 }, doorR: { y: 0.73 },
         quarterL: { y: 0.67 }, quarterR: { y: 0.67 }, mirrorL: { y: 0.94 }, mirrorR: { y: 0.94 } },
     },
     // the look (KIT API v1, render.js; look units = metres): a three-box coupé loft, its sides stepped out over both axles (the box flares:

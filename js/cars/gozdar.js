@@ -19,9 +19,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'truck', ht: 1.75, y0: 0.4,
       extra: {
         hood: { lx: 0.62 },
-        fenderL: { lz: -0.92, f: 0.39 },
-        fenderR: { lz: 0.92, f: 0.39 },
-        wing: { f: 0.84, lx: -0.85 },
+        fenderL: { lz: -0.92, f: 0.39, h: 0.13 },   // (the fenders lie as thick as their tops' curl, the wing as its plates)
+        fenderR: { lz: 0.92, f: 0.39, h: 0.13 },
+        wing: { f: 0.84, lx: -0.85, h: 0.22 },
         tailgate: { z: 1, th: 0.7, m: 10, rW: 0.4, h: 0.08, lx: -0.98, lz: 0, f: 0.45 },
       },
       // (where the look has them: each part's debris flies off from its range's middle)
@@ -59,13 +59,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, D = [0.12, 0.12, 0.13], FR = [0.24, 0.24, 0.26], AL = [0.62, 0.63, 0.66], SP = [0.86, 0.72, 0.1], BT = [0.3, 0.31, 0.33];
         // a flat quad on a flat side (z = sd * w): pts [[x, y] ...] counter-clockwise as seen from the right (x along the bottom first)
         const onSide = (sd, w, pts, col, o) => { const q = pts.map(([x, y]) => [x, y, sd * w]); K.face(sd > 0 ? q : q.reverse(), col, o); };
-        // ---- the shell: the bed open on top (segment 0), the back wall (1), the roof (2), the windscreen (3), the cowl's step (4), the hood
-        //      and the fenders (5), the nose (6). Glass: the windscreen, the door's window (forward of the B-pillar at -0.33) ----
+        // ---- the shell: the bed open on top (segment 0), the back wall (1), the roof (2: black on top, a two-tone trophy-truck roof under the
+        //      start number), the windscreen (3), the cowl's step (4), the hood and the fenders (5), the nose (6). Glass: the windscreen, the
+        //      door's window (forward of the B-pillar at -0.33) ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return B;                                                 // (the black lower edge, the arches' lips)
           if (k === 0 && e >= 3 && e <= 5) return null;                                     // (the bed: no top)
           if (k === 3 && e >= 2 && e <= 6) return G;                                        // (the windscreen, the window's front)
           if (k === 2 && (e === 2 || e === 6)) return at.x > -0.33 ? G : P;                 // (the door's window; the cab's corner behind it)
+          if (k === 2 && e >= 3 && e <= 5) return B;                                        // (the roof's top)
           return P;
         }, { caps: { front: { col: P, colLow: D, cut: 0.7, low: 'bumperF', high: 'body' }, rear: { col: P, colLow: D, cut: 0.68, low: 'bumperR', high: 'tailgate' } } });
         const DL = L.decal;
@@ -74,8 +76,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         DL.band([[-0.38, 0], [-0.33, 0], [-0.33, 1], [-0.38, 1]], B, null, 0.01);
         DL.band([[-0.33, 0.93], [0.34, 0.93], [0.34, 1], [-0.33, 1]], B, null, 0.008);
         for (const [z0, z1] of [[-0.8, -0.304], [-0.304, 0.304], [0.304, 0.8]]) DL.top([[0.34, z0], [0.42, z0], [0.42, z1], [0.34, z1]], S, 0.006);   // the sun strip (the crown's flat middle, its sloping edges)
-        DL.top([[1.25, -0.66], [1.62, -0.66], [1.62, -0.36], [1.25, -0.36]], B, 0.006, { host: 'hood' });   // the hood's vents
-        DL.top([[1.25, 0.36], [1.62, 0.36], [1.62, 0.66], [1.25, 0.66]], B, 0.006, { host: 'hood' });
+        // the hood's scoop in its middle: a wedge rising to its mouth (black) at the front
+        K.skin([[1.3, 0.008, 0.2], [1.62, 0.085, 0.22]].map(([x, h, w]) => { const y = L.topY(x, 0) - 0.008; return [[x, y, -w], [x, y + h, -w * 0.92], [x, y + h, w * 0.92], [x, y, w]]; }), P, null, B, { host: 'hood' });
         K.rect(-0.666, 1.44, 0, 1.1, 0.26, G, { dir: '-x', part: 'body' });                  // the rear window in the cab's back wall
         // the scoop on the roof's front (the cabin's air: its inlet black), a wedge rising to the front
         K.skin([[0.06, 0.01, 0.15], [0.32, 0.075, 0.16]].map(([x, h, w]) => [[x, 1.686, -w], [x, 1.686 + h, -w * 0.94], [x, 1.686 + h, w * 0.94], [x, 1.686, w]]), P, null, B, { part: 'body' });

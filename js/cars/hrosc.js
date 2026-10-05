@@ -20,15 +20,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       extra: {
         hood: { lx: 0.74, f: 0.41 },
         cover: { z: 1, th: 0.72, m: 6, rW: 0.36, h: 0.06, lx: -0.68, lz: 0, f: 0.45 },
-        fenderL: {},
-        fenderR: {},
+        fenderL: { h: 0.13 },   // (the standard entries; the short wings lie as thick as their curl, the doors where they hang)
+        fenderR: { h: 0.13 },
+        quarterL: { lx: -0.52, lz: -0.77, y: 0.82, h: 0.13 },
+        quarterR: { lx: -0.52, lz: 0.77, y: 0.82, h: 0.13 },
+        doorL: { lx: 0.08, lz: -0.73, y: 0.88 },
+        doorR: { lx: 0.08, lz: 0.73, y: 0.88 },
         lightbar: { z: 0, th: 0.45, m: 3, rW: 0.3, h: 0.12, lx: 0.3, lz: 0, f: 1 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): the beetle one loft (the round roof from the upright windscreen back to the
-    // small rear window, the cowl, the front lid falling to a short nose; the rear wheel's arch cut in it, its tub), the cut-down engine lid
-    // a skin of its own behind it (cover), the four short wings round the hubs (skins: the front pair with their lamp pods fenderL /
-    // fenderR, the rear pair with the tail lamps the body's), the exo-cage (a tube each side from the front bumper over the roof to the rear
+    // small rear window, the cowl, the front lid falling to a short nose; the rear wheel's arch cut in it, its tub; its doors doorL / doorR
+    // between the B-pillar and the cowl), the cut-down engine lid a skin of its own behind it (cover), the four short wings round the hubs
+    // (skins: the front pair with their lamp pods fenderL / fenderR, the rear pair with the tail lamps quarterL / quarterR: off, the arch's
+    // tub, the wheel and the shock behind them), the exo-cage (a tube each side from the front bumper over the roof to the rear
     // frame, the front hoop under the light bar, the cross tubes), the light bar (lightbar), the flat four bare under the lid, the shocks
     // in the wheels' gaps, the bumpers and the skid plate
     look: {
@@ -50,7 +55,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         lamps: [[1.75, 0.865, 0.69], [-1.47, 0.86, 0.71]],
         engine: [-1.4, 0.76], engRear: true },
       wheels: { style: 'knob', w: 0.26, wR: 0.3, rim: [0.86, 0.86, 0.84], cap: [0.24, 0.24, 0.26] },
-      regions: [{ part: 'hood', x: [0.98, 1.9], bands: ['edge', 'crown'] }],
+      // the regions (look units): the front lid between the wings; the doors (their side from behind the B-pillar to the cowl, their glass to
+      // the A-pillar: the pillars stay)
+      regions: [{ part: 'hood', x: [0.98, 1.9], bands: ['edge', 'crown'] },
+        { part: 'doorL', x: [-0.28, 0.8], bands: ['side'], side: 'L' }, { part: 'doorL', x: [-0.28, 0.54], bands: ['window'], side: 'L' },
+        { part: 'doorR', x: [-0.28, 0.8], bands: ['side'], side: 'R' }, { part: 'doorR', x: [-0.28, 0.54], bands: ['window'], side: 'R' }],
       build(K) {
         const P = K.paint, S = K.strp, G = K.GLASS, B = K.black, D = [0.16, 0.16, 0.165], CG = [0.1, 0.1, 0.105], AL = [0.62, 0.63, 0.65], RB = [0.1, 0.1, 0.11];
         const SH = K.shade(P, 0.55), SP = [0.95, 0.72, 0.1];
@@ -77,7 +86,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             (k, e) => e === 5 ? D : P, null, P);
           for (const sd of [-1, 1]) { const q = [[-1.22, 1.107, sd * 0.04], [-1.33, 1.06, sd * 0.04], [-1.33, 1.06, sd * 0.15], [-1.22, 1.107, sd * 0.15]]; K.face(sd > 0 ? q : q.reverse(), B); }   // the louvres
         }, { hinge: [[-1.18, 1.1, -0.4], [-1.18, 1.1, 0.4]] });
-        // ---- the wings: short bands round the hubs, cut high over the big tyres; the front pair (fenderL / fenderR) with the lamp pods ----
+        // ---- the wings: short bands round the hubs, cut high over the big tyres; the front pair (fenderL / fenderR) with the lamp pods, the
+        //      rear pair (quarterL / quarterR) with the tail lamps ----
         const wing = (cx, t0, t1, n, prof, sd) => { const R = []; for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; R.push(prof.map(([r, z]) => [cx + r * Math.cos(t), K.rw + r * Math.sin(t), sd * z])); } return R; };
         const wcol = (k, e) => e === 5 ? D : e === 0 ? K.shade(P, 0.7) : e === 4 ? K.shade(P, 0.9) : P;
         for (const sd of [-1, 1]) {
@@ -86,19 +96,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             K.cyl([1.52, 0.865, sd * 0.69], [1.745, 0.865, sd * 0.69], 0.105, P, { n: 6, capA: null, capB: null });   // the lamp's pod on the wing's nose
             K.headLamp(1.75, 0.865, sd * 0.69, 0.092);
           }, { hinge: [[0.95, 0.86, sd * 0.52], [1.7, 0.86, sd * 0.52]] });
-          K.part('body', () => {
+          K.part(sd < 0 ? 'quarterL' : 'quarterR', () => {
             K.skin(wing(K.rx, 0.24, 2.27, 5, [[0.515, 0.5], [0.59, 0.505], [0.64, 0.61], [0.65, 0.73], [0.605, 0.865], [0.52, 0.915]], sd), wcol, P, P);
             K.cyl([-1.33, 0.86, sd * 0.71], [-1.465, 0.86, sd * 0.71], 0.058, B, { n: 5, capA: null, capB: B });   // the tail lamp's pod on the wing's tail
-          });
-          K.tailLamp(-1.47, 0.86, sd * 0.71, 0.1, 0.1, { round: true });
+          }, { hinge: [[-1.45, 0.9, sd * 0.52], [-0.6, 0.9, sd * 0.52]] });
+          K.tailLamp(-1.47, 0.86, sd * 0.71, 0.1, 0.1, { round: true, host: sd < 0 ? 'quarterL' : 'quarterR' });
         }
-        // ---- the running boards, the doors' handles and the livery's stripe along them, the shocks in the wheels' gaps ----
+        // ---- the running boards, the livery's stripe along the sides (the doors' on them), the doors' handles, the shocks in the wheels' gaps;
+        //      the doors hinge at the cowl ----
+        for (const sd of [-1, 1]) { const f = sd < 0 ? '-z' : 'z', door = sd < 0 ? 'doorL' : 'doorR';
+          K.rect(0.14, 0.62, sd * 0.706, 0.84, 0.06, S, { dir: f, host: door });
+          K.rect(-0.21, 0.88, sd * 0.707, 0.14, 0.026, K.chrome, { dir: f, host: door });
+          K.hinge(door, [0.78, 0.55, sd * 0.69], [0.78, 0.95, sd * 0.69]); }
         K.part('body', () => {
           for (const sd of [-1, 1]) {
             const f = sd < 0 ? '-z' : 'z';
             K.box(0.14, 0.42, sd * 0.73, 1.28, 0.04, 0.22, 0, RB);
-            K.rect(0.05, 0.62, sd * 0.706, 1.02, 0.06, S, { dir: f });
-            K.rect(-0.3, 0.88, sd * 0.707, 0.14, 0.026, K.chrome, { dir: f });
+            K.rect(-0.37, 0.62, sd * 0.706, 0.18, 0.06, S, { dir: f });
             K.bar([1.28, 0.46, sd * 0.57], [1.16, 0.92, sd * 0.56], 0.035, SP, { n: 5 });
             K.bar([-1.0, 0.46, sd * 0.53], [-0.84, 0.98, sd * 0.5], 0.035, SP, { n: 5 });
           }
@@ -124,7 +138,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the light bar on the front hoop: four round lamps in a black housing ----
         K.part('lightbar', () => {
           K.box(0.545, yH + 0.1, 0, 0.09, 0.09, 1.0, 0, CG);
-          for (const sd of [-1, 1]) { K.bar([0.5, yH, sd * 0.3], [0.54, yH + 0.1, sd * 0.3], 0.018, CG, { n: 4 }); for (const z of [0.125, 0.375]) K.headLamp(0.592, yH + 0.145, sd * z, 0.042, { ring: null }); }
+          for (const sd of [-1, 1]) { K.bar([0.5, yH, sd * 0.3], [0.54, yH + 0.1, sd * 0.3], 0.018, CG, { n: 4 }); for (const z of [0.125, 0.375]) K.headLamp(0.592, yH + 0.145, sd * z, 0.042, { ring: null, n: 6 }); }
         }, { noCrush: true, noDent: true, hinge: [[0.5, yH, -0.4], [0.5, yH, 0.4]] });
         // ---- the flat four, bare behind the rear axle (the body's outer shell: in sight): the crankcase, the finned cylinders and the heads
         //      each side, twin air cleaners, the fan shroud over them with its round fan housing and the generator's pulley, the belt down to
@@ -134,7 +148,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) {
             K.box(-1.42, 0.34, sd * 0.28, 0.34, 0.2, 0.2, 0, CG);
             K.box(-1.42, 0.36, sd * 0.42, 0.3, 0.16, 0.08, 0, AL);
-            K.cyl([-1.32, 0.72, sd * 0.3], [-1.32, 0.81, sd * 0.3], 0.08, K.chrome, { n: 6, capA: null });
+            K.cyl([-1.32, 0.72, sd * 0.3], [-1.32, 0.81, sd * 0.3], 0.08, K.chrome, { n: 5, capA: null });
           }
           K.box(-1.4, 0.54, 0, 0.34, 0.18, 0.66, 0, CG);                                           // the fan shroud over both banks
           K.cyl([-1.46, 0.69, 0], [-1.6, 0.69, 0], 0.12, CG, { n: 8, capA: null, capB: AL });      // its round fan housing, the generator's pulley

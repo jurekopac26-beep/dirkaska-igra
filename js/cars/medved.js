@@ -15,22 +15,22 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 50000, pk: 'open', field: ['medved'],
     snd: { kind: 'v8', hz: 0.8, loud: 1.1 },
     expect: { t100: [3.18, 3.73], vmax: [184, 195], latG: [1.99, 2.09], d100: [25.8, 28.5] },
-    partNames: { tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack' },
+    partNames: { tailgate: 'tailgate', roofRack: 'roof rack' },
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
-        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.07, lx: -0.9, lz: 0, y: 1.3 },
-        spare: { z: 1, th: 0.6, m: 10, r: 0.42, h: 0.3, lx: -0.955, lz: 0, y: 1.04 },
+        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with its spare wheel on it)
         roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.24, lz: 0, y: 1.88 },
       },
       // (where the look has them: the mirrors on the doors' front corners, the bonnet's middle, the bumpers' and the tailgate's faces; a
-      // lost one flies off from there)
-      over: { mirrorL: { lx: 0.395, y: 1.31 }, mirrorR: { lx: 0.395, y: 1.31 }, hood: { lx: 0.655, y: 1.17 }, bumperF: { lx: 0.94 }, bumperR: { lx: -0.89 } },
+      // lost one flies off from there. The fenders lie as thick as their pods over the lamps)
+      over: { mirrorL: { lx: 0.395, y: 1.31 }, mirrorR: { lx: 0.395, y: 1.31 }, hood: { lx: 0.655, y: 1.17 }, bumperF: { lx: 0.94 }, bumperR: { lx: -0.89 },
+        fenderL: { h: 0.17 }, fenderR: { h: 0.17 } },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the box: slab sides, flat glass leaning in a little, a flat roof (the
     // stripe colour: a two-tone roof), an upright windscreen, a flat bonnet; its end caps the grille's panel (front) and the tailgate (rear,
     // over the bumper). Each side: the fender, both doors (one part, their glass with them; the sill under them stays), the quarter under
-    // the belt (its long window and the pillars stay with the roof). The bumpers, the spare on the tailgate, the roof rack, the black
-    // flares over the tyres in their parts
+    // the belt (its long window and the pillars stay with the roof). The bumpers, the tailgate with the spare on it, the roof rack, the
+    // black flares over the tyres (with the fenders and the quarters) in their parts
     look: {
       body: { len: 4.8, wid: 1.98,
         //       x      w      yb    ybelt  wt     yt     cr    kind  tuck
@@ -115,14 +115,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.rect(-2.162, 1.2, sd * 0.705, 0.014, 1.1, DK, { dir: '-x' });   // (its shut lines)
           K.bar([-2.17, 1.5, -0.1], [-2.17, 1.56, 0.45], 0.01, B, { n: 4 });                 // the wiper
         }, { hinge: [[-2.17, 0.66, 0.84], [-2.17, 1.74, 0.84]] });
-        // ---- the spare wheel on the tailgate (its carrier into the frame): the tyre, a cover over the rim in the paint ----
-        K.part('spare', () => {
+        // ---- the spare wheel on the tailgate (its carrier on the gate's frame): the tyre, a cover over the rim in the paint; it swings open and
+        //      leaves with the gate ----
+        K.part('tailgate', () => {
           const TY = [0.045, 0.045, 0.05], ring = (x) => { const R = []; for (let i = 0; i < 20; i++) { const a = i * Math.PI / 10, r = i % 2 ? 0.35 : 0.38; R.push([x, 1.06 + Math.sin(a) * r, Math.cos(a) * r]); } return R; };
           K.skin([ring(-2.18), ring(-2.41)], TY, TY, TY);                                     // the tyre: its tread in blocks
           K.discX(-2.412, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
           K.discX(-2.417, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
           K.box(-2.17, 0.95, 0, 0.02, 0.22, 0.22, 0, B);                                     // the carrier, its arm down to the frame
-          K.bar([-2.2, 0.98, 0], [-2.17, 0.58, 0], 0.03, B, { n: 4 });
+          K.bar([-2.2, 0.98, 0], [-2.17, 0.66, 0], 0.03, B, { n: 4 });
         });
         // ---- the roof rack the length of the roof: the frame on its feet, the slats, a wind deflector at its front (never crushed) ----
         K.part('roofRack', () => {
