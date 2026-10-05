@@ -397,7 +397,6 @@ const World = (function () {
     lake:      { post: [64, 80], postEdge: [1.0, 1.6], exits: 3, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 7], rows2: 0.4 },
     city:      { post: [80, 100], postEdge: [0.9, 1.4], exits: 2, apexes: 0, wallEdge: [2.3, 2.8], stacks: [5, 7], rows2: 0.3 },
     mountain:  { post: [52, 66], postEdge: [0.9, 1.4], exits: 4, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 7], rows2: 0.4 },
-    ljubljana: { post: [52, 66], postEdge: [0.9, 1.4], exits: 4, apexes: 1, wallEdge: [2.3, 2.8], stacks: [5, 8], rows2: 0.4 },
     monaco:    { post: [46, 60], postEdge: [0.8, 1.2], exits: 6, apexes: 1, wallEdge: [2.2, 2.7], stacks: [5, 8], rows2: 0.3 },
     forest:    { post: [190, 240], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
     italia:    { post: [150, 190], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
@@ -427,7 +426,7 @@ const World = (function () {
       const a1 = a + 1 < N ? a + 1 : open ? a : 0, b = (a * 2 + sd) * NE + k, c = (a1 * 2 + sd) * NE + k, y0 = tab[b] + (tab[b + 1] - tab[b]) * u;
       return y0 + (tab[c] + (tab[c + 1] - tab[c]) * u - y0) * q.t; };
   }
-  function trackPropsGeneric(out, excluded, island, decks, slabs) {
+  function trackPropsGeneric(out, excluded, island) {
     const o = RP_THEME[THEME]; if (!o) return null;
     const tu = T.def.tunnel, L = T.len, roadY = (i) => (T.hasElev ? T.hy[i] : 0);
     // the visible ground: the GROUND mesh (its vertices exactly as built above, triangles a,c,b and b,c,d), on the mountain the dirt shoulder
@@ -444,7 +443,7 @@ const World = (function () {
     // (+ the red/white kerbs: drawn 0.045..0.085 m above the road from w to w + curbW; a sharp band over the table, not in it, so the
     // 0.5 m interpolation doesn't ramp the verge up to them and the placement test (it stays clear of the kerbs) sees the same floor)
     const kerbs = (f) => (q, near) => { const v = f(q, near), e = Math.abs(q.d) - T.w, a = q.a >= 0 && q.a < T.N ? q.a : q.i >= 0 && q.i < T.N ? q.i : 0;   // (a: the segment a..a+1 its kerb quad is drawn on)
-      return e > 0 && e <= T.curbW && T.curb[a] && T.curb[(a + 1) % T.N] ? Math.max(v, 0.045 + 0.04 * e / T.curbW) : v; };   // (drop / Ljubljana: never the forest, whose outside kerbs differ)
+      return e > 0 && e <= T.curbW && T.curb[a] && T.curb[(a + 1) % T.N] ? Math.max(v, 0.045 + 0.04 * e / T.curbW) : v; };   // (drop: never the forest, whose outside kerbs differ)
     // ex(f, near, far): the exact floor f(x, z, ry) on the segments where some lateral point of either end row satisfies near(x, z) (all of
     // them without near; far(i): no point of row i can) (propFloorTable opt.ex)
     const ex = (f, near, far) => { const N = T.N, on = new Uint8Array(N * 2), hit = new Uint8Array(N * 2);
@@ -452,10 +451,6 @@ const World = (function () {
         for (let k = 0; k < 25; k++) { const o = side * (T.w + k * 0.5); if (!near || near(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o)) { hit[i * 2 + sd] = 1; break; } } }
       for (let i = 0; i < N; i++) for (let sd = 0; sd < 2; sd++) { const j = i + 1 < N ? i + 1 : T.open ? i : 0; on[i * 2 + sd] = hit[i * 2 + sd] | hit[j * 2 + sd]; }
       return { f, on }; };
-    const boxes = (L) => { const A = new Float64Array((L || []).length * 7); (L || []).forEach(([cx, cz, hl, hw, r, top], k) => A.set([cx, cz, hl, hw, Math.cos(r), Math.sin(r), top], k * 7));
-      return (x, z, m) => { let y = -1e9; for (let k = 0; k < A.length; k += 7) { const dx = x - A[k], dz = z - A[k + 1], hl = A[k + 2] + m, hw = A[k + 3] + m;   // top of the highest box [x, z, half length,
-        if (dx * dx + dz * dz <= hl * hl + hw * hw && Math.abs(dx * A[k + 4] + dz * A[k + 5]) < hl && Math.abs(dz * A[k + 4] - dx * A[k + 5]) < hw) y = Math.max(y, A[k + 6]); }   //  half width, rot, top] under (x, z), m: grown by m
-        return y; }; };
     let exM = null;
     if (THEME === 'monaco') {   // Monaco: the ground mesh itself (steep where it drops to the harbour and into the terrace cut into the verge of the
       // Fairmont's high road in, MC_TER), and the planter on the hairpin's island (24-sided, top yr + 0.6, in a kerb ring 0.9 m wide)
@@ -466,18 +461,6 @@ const World = (function () {
       exM = ex((x, z, ry) => Math.max(Math.min(meshY(x, z), ry + 0.3), planter(x, z)));
     }
     const fl = drop ? (out.propFloor = kerbs(propFloorTable(vis, null, { ex: exM }))) : null;
-    if (THEME === 'ljubljana' && RIVER) {   // only for the knocked props (they are still placed on level verge only): the banks of the Ljubljanica
-      // slope down inside the barrier, with the water (y -1.25) where its surface is drawn; the circuit's bridges: the deck, barrier to barrier.
-      // Near the river, the decks and the footbridges the floor is exact: the water out to RW / 2 - 0.4 from the river's centre line, the
-      // terrain mesh in the strip between it and the bank, the deck slabs and footbridges to their ends
-      const N = T.N, onW = new Uint8Array(N); for (let i = 0; i < N; i++) onW[i] = distRiver(T.px[i], T.pz[i]) < RW / 2 + 2.5 ? 1 : 0;
-      const onDeck = (i) => onW[(i + N - 1) % N] || onW[i] || onW[(i + 1) % N];
-      const inDeck = boxes(decks), inSlab = boxes(slabs), deck = (x, z) => inDeck(x, z, 0);   // (+ the footbridges)
-      const reach = T.w + 12.5, exL = ex((x, z, ry) => { let y = Math.min(meshY(x, z), ry + 0.3); if (distRiver(x, z) < RW / 2 - 0.4) y = Math.max(y, -1.25); return Math.max(y, deck(x, z), inSlab(x, z, 0)); },
-        (x, z) => distRiver(x, z) < RW / 2 + 3 || inDeck(x, z, 1.5) > -1e9 || inSlab(x, z, 1.5) > -1e9,
-        (i) => distRiver(T.px[i], T.pz[i]) > RW / 2 + 3 + reach && inDeck(T.px[i], T.pz[i], 1.5 + reach) === -1e9 && inSlab(T.px[i], T.pz[i], 1.5 + reach) === -1e9);
-      out.propFloor = kerbs(propFloorTable((x, z, i) => onDeck(i) ? 0 : Math.max(deck(x, z), distRiver(x, z) < RW / 2 - 0.4 ? Math.max(meshY(x, z), -1.25) : meshY(x, z)), null, { ex: exL }));
-    }
     return out.propStats = roadsideProps(out.props, Object.assign({}, o, { floor: fl, skip: (i, side, x, z, rh) => {
       const s = i * T.ds, d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]);
       if (excluded(x, z)) return true;
@@ -749,12 +732,6 @@ const World = (function () {
   const shoreFO = (x, z) => { const fd = T && T.def; return fd && fd.lake ? polyDist(fd.lake, x, z) * (inPoly(fd.lake, x, z) ? -1 : 1) : 1e4; };   // signed distance to the lake shore (negative in the water)
   function groundH(x, z) {
     if (THEME === 'city') return SEA && z > SEA.z + 8 ? -2.4 * sstep(SEA.z + 8, SEA.z + 26, z) : 0;
-    if (THEME === 'ljubljana') {
-      const dr = RIVER ? distRiver(x, z) : 1e9; let h = dr < RW / 2 + 1 ? -3.2 * sstep(RW / 2 + 1, RW / 2 - 1.5, dr) : 0;
-      if (CASTLE) { const ex = (x - 200) / 165, ez = (z - 250) / 160, f = 1 - (ex * ex + ez * ez);
-        if (f > 0) h += 62 * Math.pow(f, 1.5) * sstep(12, 48, clearance(x, z)) * sstep(RW / 2 + 5, RW / 2 + 28, dr); }
-      return h;
-    }
     if (THEME === 'mountain') return mountainH(x, z);
     if (THEME === 'monaco') return monacoH(x, z);
     if (CSX) return forestH(x, z);
@@ -979,8 +956,6 @@ const World = (function () {
     const exclRect = []; // oriented rects {x,z,hx,hz,rot}
     const inRect = (x, z, r) => { const dx = x - r.x, dz = z - r.z; const c = Math.cos(-r.rot), s = Math.sin(-r.rot); const lx = dx * c - dz * s, lz = dx * s + dz * c; return Math.abs(lx) < r.hx && Math.abs(lz) < r.hz; };
     const exclF = [];   // extra exclusion tests (functions of x, z)
-    const decks = [];   // Ljubljana's footbridges [x, z, half length, half width, rot, top]: the knocked props land on them (trackPropsGeneric)
-    const slabs = [];   // the deck slabs of the circuit's own bridges over the Ljubljanica (the same form): the knocked props' exact floor at their ends
     const excluded = (x, z) => { for (const e of excl) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; for (const r of exclRect) if (inRect(x, z, r)) return true; for (const f of exclF) if (f(x, z)) return true; return false; };
 
     /* ================= GROUND ================= */
@@ -995,7 +970,7 @@ const World = (function () {
         let h = groundH(x, z);
         if (THEME === 'mountain' || THEME === 'monaco') { const nn = nearest(x, z); if (nn.i >= 0) h -= (THEME === 'monaco' ? 1.0 : 0.8) * (1 - sstep(T.w + 0.3, T.w + 3.5, Math.abs(nn.lat))); }
         pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z;
-        const us = THEME === 'city' || THEME === 'ljubljana' || THEME === 'monaco' ? 7 : 14; uv[k * 2] = x / us; uv[k * 2 + 1] = -z / us;
+        const us = THEME === 'city' || THEME === 'monaco' ? 7 : 14; uv[k * 2] = x / us; uv[k * 2 + 1] = -z / us;
         let m = 0.86 + macro(x, z) * 0.28;
         let r = m, g = m, b = m;
         const c = clearance(x, z);
@@ -1018,7 +993,6 @@ const World = (function () {
           if (sh < 7) { const t = sstep(7, 1.5, sh); r = lerp(r, 1.45, t); g = lerp(g, 1.2, t); b = lerp(b, 1.25, t); }   // pale stony bank along the lake
           if (sh < 0) { const t = sstep(0, -6, sh); r = lerp(r, 0.28, t); g = lerp(g, 0.45, t); b = lerp(b, 0.7, t); } }   // lake bed
         if (THEME === 'monaco') { r *= 0.86; g *= 0.8; b *= 0.72; if (h < -0.3) { r *= 0.6; g *= 0.7; b *= 0.8; } }
-        if (THEME === 'ljubljana') { r *= 0.8; g *= 0.77; b *= 0.72; if (h > 1.5) { const t = sstep(1.5, 6, h); r = lerp(r, 0.36, t); g = lerp(g, 0.5, t); b = lerp(b, 0.26, t); } }
         if (THEME === 'mountain') {
           const nb = macro(x, z);
           r = 0.34 + nb * 0.12; g = 0.44 + nb * 0.12; b = 0.24 + nb * 0.08;   // alpine green
@@ -1040,7 +1014,7 @@ const World = (function () {
       g.setAttribute('color', new THREE.BufferAttribute(col, 3));
       g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
       g.setIndex(idx); g.computeVertexNormals();
-      const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'ljubljana' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
+      const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
       out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ }; out.gGrid = GM;
     }
@@ -1107,7 +1081,7 @@ const World = (function () {
       }
       const m = new THREE.Mesh(g.geometry(), new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
     }
-    if (THEME === 'ljubljana' || THEME === 'monaco') {   // city street: dashed centre line
+    if (THEME === 'monaco') {   // city street: dashed centre line
       const g = new GB(), wc = [0.93, 0.93, 0.9];
       for (let s0 = 0; s0 < T.len - 3.2; s0 += 9) {
         let dS = Math.abs(s0 - T.startS); dS = Math.min(dS, T.len - dS); if (dS < 8) continue;
@@ -1248,7 +1222,6 @@ const World = (function () {
           const ds = dStart(i);
           if (ds > -200 && ds < 215) type[i] = 1;
           else { let gv = 0; for (let d = -4; d <= 4; d++) gv |= grav[(i + d + N) % N]; type[i] = gv ? 2 : 0; }
-          if (THEME === 'ljubljana') type[i] = 1;
           if (THEME === 'monaco') type[i] = 0;
           if (CSX) type[i] = FO_TYRES && FO_TYRES[side > 0 ? 1 : 0][i] ? 2 : 0;   // armco + catch fence, tyre walls only round the outside of the real corners (as in the reference)
         }
@@ -1299,11 +1272,6 @@ const World = (function () {
             g.quadO(Q(i, 0, hgt * 0.72), Q(j, 0, hgt * 0.72), Q(j, 0, hgt), Q(i, 0, hgt), top, inward(i));
             g.quadO(Q(i, 0, hgt), Q(j, 0, hgt), Q(j, 0.4, hgt), Q(i, 0.4, hgt), [0.86, 0.86, 0.84], [Q(i, 0.2, -3)[0], -3, Q(i, 0.2, -3)[2]]);
             g.quadO(Q(i, 0.4, 0), Q(j, 0.4, 0), Q(j, 0.4, hgt), Q(i, 0.4, hgt), [0.6, 0.6, 0.58], outward(i));
-            if (THEME === 'ljubljana') {   // catch fence above the blocks
-              const fu0 = lenAcc / 2.5, fu1 = (lenAcc + segL) / 2.5;
-              texFence.quadO(Q(i, 0.25, hgt), Q(j, 0.25, hgt), Q(j, 0.25, 3.7), Q(i, 0.25, 3.7), [1, 1, 1], inward(i), [[fu0, 0], [fu1, 0], [fu1, 1.05], [fu0, 1.05]]);
-              if (i % 3 === 0) { const pp = Q(i, 0.3, 0); box(g, pp[0], 0, pp[2], 0.12, 3.8, 0.12, T.hd[i], [0.35, 0.36, 0.38]); }
-            }
           } else if (CSX) { // tyre wall as in the reference: columns of three painted tyres (red and white in pairs), armco and mesh fence behind
             const TYR = THEME === 'italia' ? [0.68, 1.23, 1.39, 0.45, 1.65, 2.55] : THEME === 'kamp' ? [0.56, 1.02, 1.14, 0.3, 1.3, 2.05] : [0.43, 0.78, 0.88, 0.2, 0.95, 1.5];   // radius, height (three tyres), spacing, the two rows' offsets, the rail behind (Toskana: the fat stacks of the reference, four high; Gromski rt: big black tyres)
             const SP = TYR[2], gt = tyreCh.get(T.px[i] + T.nx[i] * side * bar[i], T.pz[i] + T.nz[i] * side * bar[i]);
@@ -1384,7 +1352,7 @@ const World = (function () {
 
     /* ================= GRANDSTANDS (outside of main straight = left side) ================= */
     const sNear = (px, pz) => { let bi = 0, bd = 1e9; for (let i = 0; i < N; i++) { const d = Math.hypot(T.px[i] - px, T.pz[i] - pz); if (d < bd) { bd = d; bi = i; } } return bi * T.ds; };
-    const standSpecs = CSX ? [] : THEME === 'mountain' || THEME === 'monaco' ? [] : THEME === 'ljubljana' ? [[sStart - 20, sStart + 85]] : [[sStart - 150, sStart - 40], [sStart - 25, sStart + 95]];
+    const standSpecs = CSX ? [] : THEME === 'mountain' || THEME === 'monaco' ? [] : [[sStart - 150, sStart - 40], [sStart - 25, sStart + 95]];
     for (const [sa, sb] of standSpecs) {
       const sm = (sa + sb) / 2, L = sb - sa;
       const im = T.idx(sm);
@@ -1581,7 +1549,7 @@ const World = (function () {
         box(g, x - nx * L1, 0, z - nz * L1, 2.4, 9.4, 2.4, h, [0.9, 0.9, 0.92]);
         box(g, x + nx * L2, 0, z + nz * L2, 2.4, 9.4, 2.4, h, [0.9, 0.9, 0.92]);
         const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2;
-        box(g, cx, 6.6, cz, 2.6, 2.0, L1 + L2 + 2.4, h, [0.12, 0.13, 0.16], THEME === 'ljubljana' ? [0.8, 0.12, 0.15] : [0.95, 0.8, 0.12]);
+        box(g, cx, 6.6, cz, 2.6, 2.0, L1 + L2 + 2.4, h, [0.12, 0.13, 0.16], [0.95, 0.8, 0.12]);
         const half = (L1 + L2) / 2 - 1.2;
         const tx = T.tx[i], tz = T.tz[i];
         const k = 2, u0 = (k % 2) * 0.5, u1 = u0 + 0.5, vTop = 1 - Math.floor(k / 2) * 0.25, vBot = vTop - 0.25;
@@ -1602,7 +1570,6 @@ const World = (function () {
     exclF.push(CR.exclTest);   // trees and rocks placed later keep clear of the crowds
     const crFirst = (i, side) => {   // front row offset beyond the barrier: clear of the rail, the wall, or the catch fence behind a tyre wall
       if (THEME === 'mountain') return 3.0;
-      if (THEME === 'ljubljana') return 1.05;   // the pavement between the catch fence (bar + 0.5) and the house fronts (bar + 3.5)
       if (THEME === 'monaco') return 1.0;
       if (CSX) return FO_TYRES && FO_TYRES[side > 0 ? 1 : 0][i] ? (THEME === 'italia' ? 3.6 : THEME === 'kamp' ? 3.0 : 2.6) : 1.4;
       let d = i * T.ds - sStart; if (d > T.len / 2) d -= T.len; if (d < -T.len / 2) d += T.len; if (d > -200 && d < 215) return 1.2;   // concrete wall
@@ -2128,230 +2095,6 @@ const World = (function () {
           gable(gg, tx, ty + 1.8, tz, 3.4, 2.8, 0.9, h, tc, tc);
         }
       }
-    }
-
-    /* ================= LJUBLJANA (real layout: origin Triple Bridge, x east, z south) ================= */
-    if (THEME === 'ljubljana') {
-      const RWh = RW / 2, gH = groundH, fac = new GB(true), ban = new GB(true);
-      const stoneC = [0.8, 0.77, 0.7], whiteStone = [0.93, 0.92, 0.88], bronze = [0.3, 0.52, 0.44], copper = [0.4, 0.64, 0.54], tile = [0.68, 0.33, 0.21];
-      const tri2 = (g, a, b, c, col) => {   // double-sided triangle (wings, flags)
-        const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
-        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz) || 1, m = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
-        g.triO(a, b, c, col, [m[0] - nx / l, m[1] - ny / l, m[2] - nz / l]); g.triO(a, c, b, col, [m[0] + nx / l, m[1] + ny / l, m[2] + nz / l]);
-      };
-      const facadeBox = (x, z, W, D, H, rot, col) => {   // walls with the window/shutter texture
-        const cr = Math.cos(rot), sr = Math.sin(rot), P = (u, v, y) => [x + u * cr - v * sr, y, z + u * sr + v * cr];
-        const cs = [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]], floors = Math.max(1, Math.round(H / 3.2)), y0 = gH(x, z) - 0.2;
-        for (let e = 0; e < 4; e++) { const [u0, v0] = cs[e], [u1, v1] = cs[(e + 1) % 4], bays = Math.max(2, Math.round(Math.hypot(u1 - u0, v1 - v0) / 3.3)); fac.quadO(P(u0, v0, y0), P(u1, v1, y0), P(u1, v1, y0 + H), P(u0, v0, y0 + H), col, [x, y0 + H / 2, z], [[0, 0], [bays, 0], [bays, floors], [0, floors]]); }
-        return y0;
-      };
-      const dragon = (g, x, y, z, rot, sc) => {   // Ljubljana dragon in green bronze: haunches, raised neck, open jaws, spread wings, curled tail
-        const cr = Math.cos(rot), sr = Math.sin(rot), P = (u, v, w) => [x + (u * cr - w * sr) * sc, y + v * sc, z + (u * sr + w * cr) * sc];
-        const bx = (u, v, w, lu, lv, lw, col) => { const p = P(u, v, w); box(g, p[0], p[1], p[2], lu * sc, lv * sc, lw * sc, rot, col); };
-        bx(0, 0, 0, 1.6, 0.9, 0.8, bronze); bx(0.55, 0.8, 0, 0.45, 1.1, 0.45, bronze); bx(0.85, 1.75, 0, 0.85, 0.42, 0.4, bronze);
-        bx(1.2, 1.55, 0, 0.4, 0.16, 0.3, [0.2, 0.36, 0.3]); bx(-1.0, 0.1, 0, 0.9, 0.35, 0.35, bronze); bx(-1.35, 0.35, 0.2, 0.35, 0.55, 0.3, bronze);
-        for (const sd of [-1, 1]) { bx(0.45, 0, sd * 0.32, 0.35, 0.5, 0.25, [0.24, 0.42, 0.36]); tri2(g, P(-0.1, 0.85, sd * 0.35), P(-0.95, 2.5, sd * 1.25), P(0.5, 1.95, sd * 1.0), bronze); tri2(g, P(-0.1, 0.85, sd * 0.35), P(-0.6, 1.3, sd * 0.95), P(-0.95, 2.5, sd * 1.25), [0.26, 0.46, 0.38]); }
-      };
-      // ---- landmarks (reserved first so the city fills in around them) ----
-      excl.push({ x: -5, z: -26, r: 20 });                                        // Prešernov trg stays an open square
-      exclRect.push({ x: -150, z: 88, hx: 54, hz: 46, rot: 0 });                  // Zvezda park, Kongresni trg
-      { const x = -20, z = -97, g = scen.get(x, z), pink = [0.87, 0.45, 0.43], y0 = gH(x, z);   // Franciscan Church of the Annunciation
-        box(g, x, y0, z, 17, 17, 34, 0, pink, pink); gable(g, x, y0 + 17, z, 34.4, 17.6, 6.5, Math.PI / 2, [0.55, 0.28, 0.22], pink);
-        const fz = z + 17.05; for (const px of [-7.6, -3, 3, 7.6]) box(g, x + px, y0, fz, 0.9, 16.2, 0.35, 0, [0.97, 0.94, 0.89]);
-        box(g, x, y0 + 16, fz, 17.8, 0.8, 0.55, 0, [0.97, 0.94, 0.89]); box(g, x, y0, fz, 3.4, 5.4, 0.45, 0, [0.34, 0.22, 0.18]);
-        box(g, x + 11.5, y0, z - 8, 5.5, 31, 5.5, 0, pink, pink); cone(g, x + 11.5, y0 + 31, z - 8, 3.7, 7.5, 8, copper, [0.5, 0.72, 0.62], 0.4);
-        excl.push({ x, z, r: 22 }); }
-      { const x = -13, z = -34, g = scen.get(x, z), r = 0.3;                      // Prešeren Monument
-        box(g, x, 0, z, 6, 0.35, 6, r, [0.78, 0.76, 0.72]); box(g, x, 0.35, z, 4, 0.35, 4, r, [0.82, 0.8, 0.76]); box(g, x, 0.7, z, 1.7, 3.4, 1.4, r, [0.88, 0.86, 0.82]);
-        box(g, x, 4.1, z, 0.75, 1.75, 0.55, r, [0.25, 0.34, 0.3]); ico(g, x, 6.1, z, 0.28, 1, [0.25, 0.34, 0.3], R, 0); box(g, x - 0.25, 5.1, z - 0.5, 0.55, 1.9, 0.45, r, [0.28, 0.38, 0.33]);
-        excl.push({ x, z, r: 7 }); }
-      { const x = 36, z = 125, g = scen.get(x, z), c = [0.94, 0.9, 0.8];          // Town Hall on Mestni trg, clock tower
-        const y0 = facadeBox(x, z, 16, 24, 17, 0, c); box(g, x, y0 + 17, z, 16.4, 0.5, 24.4, 0, c.map(v => v * 0.85)); gable(g, x, y0 + 17.5, z, 24.4, 16.4, 5, Math.PI / 2, tile, c);
-        box(g, x - 8.3, y0, z, 0.6, 4.2, 20, 0, [0.6, 0.58, 0.54]); box(g, x - 4, y0 + 22, z, 4, 8, 4, 0, c, c); cone(g, x - 4, y0 + 30, z, 3, 3.5, 4, copper, [0.5, 0.72, 0.62], Math.PI / 4);
-        box(g, x - 6.05, y0 + 25, z, 0.12, 1.6, 1.6, 0, [0.98, 0.97, 0.9]); excl.push({ x, z, r: 15 }); }
-      { const x = 28, z = 101, g = scen.get(x, z);                                // Robba Fountain (the three Carniolan rivers)
-        cyl(g, x, 0, z, 2.6, 0.7, 12, [0.9, 0.88, 0.84]); cyl(g, x, 0.7, z, 2.2, 0.05, 12, [0.4, 0.62, 0.72]); box(g, x, 0.7, z, 1.2, 1.6, 1.2, 0.5, [0.92, 0.9, 0.86]);
-        cone(g, x, 2.3, z, 0.7, 8.5, 4, [0.94, 0.92, 0.88], [0.97, 0.96, 0.92], 0.5); excl.push({ x, z, r: 4 }); }
-      { const x = 168, z = 48, g = scen.get(x, z), c = [0.93, 0.89, 0.78];        // St Nicholas's Cathedral: twin towers + dome
-        const y0 = facadeBox(x, z, 40, 18, 19, 0, c); gable(g, x, y0 + 19.2, z, 40.5, 18.5, 6, 0, [0.6, 0.3, 0.2], c);
-        for (const sd of [-1, 1]) { box(g, x - 22, y0, z + sd * 6.5, 6, 30, 6, 0, c, c); ico(g, x - 22, y0 + 32.5, z + sd * 6.5, 3.4, 1.25, copper, R, 0); cone(g, x - 22, y0 + 34.6, z + sd * 6.5, 0.6, 3, 6, copper, [0.6, 0.8, 0.7], 0); }
-        cyl(g, x + 4, y0 + 19, z, 6, 5, 10, c); ico(g, x + 4, y0 + 24.5, z, 6.4, 0.85, copper, R, 0); cone(g, x + 4, y0 + 29.6, z, 1, 4, 6, copper, [0.6, 0.8, 0.7], 0);
-        excl.push({ x, z, r: 28 }); }
-      { const x = -150, z = 192, g = scen.get(x, z), c = [0.94, 0.85, 0.6];      // University of Ljubljana (green copper roof, corner turrets)
-        const y0 = facadeBox(x, z, 58, 38, 19, 0, c); box(g, x, y0 + 19, z, 58.6, 0.6, 38.6, 0, c.map(v => v * 0.85)); gable(g, x, y0 + 19.6, z, 58.6, 38.6, 7, 0, copper, c);
-        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { cyl(g, x + sx * 28, y0 + 19.6, z + sz * 18, 3, 4, 8, c); cone(g, x + sx * 28, y0 + 23.6, z + sz * 18, 3.4, 5, 8, copper, [0.55, 0.78, 0.68], 0); }
-        excl.push({ x, z, r: 36 }); }
-      { const x = -255, z = 184, g = scen.get(x, z), c = [0.95, 0.91, 0.8];      // Slovenian Philharmonic
-        const y0 = facadeBox(x, z, 32, 22, 16, 0, c); gable(g, x, y0 + 16, z, 32.6, 22.6, 5, 0, [0.4, 0.4, 0.44], c);
-        for (let k = -3; k <= 3; k++) cyl(g, x + k * 3.6, y0, z - 11.3, 0.45, 12, 8, [0.97, 0.95, 0.9]); excl.push({ x, z, r: 20 }); }
-      { const x = -228, z = -177, g = scen.get(x, z), c = [0.9, 0.88, 0.82];     // Nebotičnik (1933 skyscraper)
-        const y0 = facadeBox(x, z, 17, 17, 62, 0.1, c); box(g, x, y0 + 62, z, 17.4, 0.6, 17.4, 0.1, c.map(v => v * 0.85)); box(g, x, y0 + 62.6, z, 11, 5, 11, 0.1, c, [0.3, 0.3, 0.32]);
-        cyl(g, x, y0 + 67.6, z, 3.5, 3, 12, [0.92, 0.9, 0.84], [0.35, 0.36, 0.4]); excl.push({ x, z, r: 14 }); }
-      if (CASTLE) { const [x, z] = CASTLE, y0 = gH(x, z) - 0.6, g = scen.get(x, z), c = [0.84, 0.8, 0.72], rot = 0.35, cr = Math.cos(rot), sr = Math.sin(rot);
-        const P = (u, v) => [x + u * cr - v * sr, z + u * sr + v * cr], W = 70, D = 46;             // Ljubljana Castle on its hill
-        for (const [u, v, isX] of [[0, -D / 2, 1], [0, D / 2, 1], [-W / 2, 0, 0], [W / 2, 0, 0]]) { const p = P(u, v); box(g, p[0], y0, p[1], isX ? W : 2.2, 10, isX ? 2.2 : D, rot, c, [0.7, 0.67, 0.6]); }
-        for (const [u, v, bw, bd, bh] of [[-15, -12, 34, 14, 14], [18, 9, 24, 16, 12], [-20, 12, 18, 12, 11]]) { const p = P(u, v); box(g, p[0], y0, p[1], bw, bh, bd, rot, c, c); gable(g, p[0], y0 + bh, p[1], bw + 0.6, bd + 0.6, 4.5, rot, tile, c); }
-        for (const [u, v] of [[-W / 2, -D / 2], [W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2]]) { const p = P(u, v); cyl(g, p[0], y0, p[1], 4, 13, 10, c); cone(g, p[0], y0 + 13, p[1], 4.6, 5, 10, tile, [0.8, 0.45, 0.3], 0); }
-        const p = P(22, -10); box(g, p[0], y0, p[1], 7, 30, 7, rot, c, c); box(g, p[0], y0 + 30, p[1], 8.2, 1.2, 8.2, rot, [0.7, 0.67, 0.6]); cyl(g, p[0], y0 + 31, p[1], 0.12, 9, 5, [0.3, 0.3, 0.32]);
-        for (const [col, dy] of [[[0.98, 0.98, 0.98], 0], [[0.12, 0.3, 0.72], -1], [[0.85, 0.12, 0.15], -2]]) { const Y = y0 + 39.2 + dy; tri2(g, [p[0], Y, p[1]], [p[0] + 4.2, Y, p[1]], [p[0] + 4.2, Y + 1, p[1]], col); tri2(g, [p[0], Y, p[1]], [p[0] + 4.2, Y + 1, p[1]], [p[0], Y + 1, p[1]], col); }
-        excl.push({ x, z, r: 48 }); }
-      // ---- the Ljubljanica: emerald water, stone embankments with parapets, willows, café terraces ----
-      let rs = [], nrm = null;
-      if (RIVER) {
-        for (let k = 0; k < RIVER.length - 1; k++) { const [x0, z0] = RIVER[k], [x1, z1] = RIVER[k + 1], n = Math.max(1, Math.round(Math.hypot(x1 - x0, z1 - z0) / 4)); for (let q = 0; q < n; q++) rs.push([x0 + (x1 - x0) * q / n, z0 + (z1 - z0) * q / n]); }
-        rs.push(RIVER[RIVER.length - 1]);
-        nrm = (k) => { const a = rs[Math.max(0, k - 1)], b = rs[Math.min(rs.length - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; };
-        const wg = new GB(true), W = RWh - 0.4, wc = [1, 1, 1], uv = (q) => [q[0] / 16, -q[2] / 16];
-        for (let k = 0; k < rs.length - 1; k++) {
-          const [x0, z0] = rs[k], [x1, z1] = rs[k + 1], n0 = nrm(k), n1 = nrm(k + 1);
-          const a = [x0 + n0[0] * W, -1.25, z0 + n0[1] * W], b = [x1 + n1[0] * W, -1.25, z1 + n1[1] * W], c = [x1 - n1[0] * W, -1.25, z1 - n1[1] * W], d = [x0 - n0[0] * W, -1.25, z0 - n0[1] * W];
-          wg.quadUp(a, b, c, d, [wc, wc, wc, wc], [uv(a), uv(b), uv(c), uv(d)]);
-          for (const sd of [-1, 1]) {
-            const p0 = [x0 + n0[0] * RWh * sd, z0 + n0[1] * RWh * sd], p1 = [x1 + n1[0] * RWh * sd, z1 + n1[1] * RWh * sd], mx = (p0[0] + p1[0]) / 2, mz = (p0[1] + p1[1]) / 2;
-            if (clearance(mx, mz) < 1.2) continue;                                   // under a track bridge the deck covers it
-            const g = scen.get(mx, mz), st = ((k >> 1) % 2) ? stoneC : [0.76, 0.73, 0.66];
-            g.quadO([p0[0], -3.2, p0[1]], [p1[0], -3.2, p1[1]], [p1[0], 0.12, p1[1]], [p0[0], 0.12, p0[1]], st, [mx + n0[0] * sd * 3, -1, mz + n0[1] * sd * 3]);
-            if (clearance(mx + n0[0] * sd * 0.8, mz + n0[1] * sd * 0.8) > 1.5) box(g, mx + n0[0] * sd * 0.35, 0, mz + n0[1] * sd * 0.35, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + 0.05, 0.95, 0.45, Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), [0.88, 0.86, 0.8], [0.93, 0.92, 0.88]);
-          }
-        }
-        const WO = { len: 0.8, amp: 0.7, refl: 0.45, land: 0.7, shal: 0, lap: 0.5, surf: 0 }, water = new THREE.Mesh(wg.geometry(), waterMat(tex, Object.assign({ color: 0x43a07f, vc: true }, WO)));
-        water.receiveShadow = true; root.add(water); out.dyn.water = tex.water;
-        { let bx0 = 1e9, bz0 = 1e9, bx1 = -1e9, bz1 = -1e9; for (const [x, z] of RIVER) { bx0 = Math.min(bx0, x); bz0 = Math.min(bz0, z); bx1 = Math.max(bx1, x); bz1 = Math.max(bz1, z); }   // the ripples lapping at the embankments
-          addShore(root, shoreBand(bx0 - RWh - 4, bz0 - RWh - 4, bx1 + RWh + 4, bz1 + RWh + 4, -1.235, (x, z) => RWh - distRiver(x, z), 16), water.material, WO); }
-        // Plečnik's colonnade along the Central Market bank (south bank between the Triple and Dragon bridges)
-        for (let k = 0; k < rs.length - 1; k++) {
-          const [x0, z0] = rs[k]; if (x0 < 28 || x0 > 232) continue;
-          const n0 = nrm(k), sd = n0[1] > 0 ? 1 : -1, ox = n0[0] * sd, oz = n0[1] * sd, bx0 = x0 + ox * (RWh + 1.8), bz0 = z0 + oz * (RWh + 1.8);
-          if (clearance(bx0 + ox * 6.5, bz0 + oz * 6.5) < 1) continue;
-          const [x1, z1] = rs[k + 1], ang = Math.atan2(z1 - z0, x1 - x0), Lk = Math.hypot(x1 - x0, z1 - z0), g = scen.get(bx0, bz0), c = [0.9, 0.87, 0.8];
-          cyl(g, bx0, 0, bz0, 0.32, 5, 8, [0.94, 0.92, 0.87]); box(g, bx0 + ox * 3, 5, bz0 + oz * 3, Lk + 0.05, 1.3, 7.2, ang, c, [0.64, 0.33, 0.22]); box(g, bx0 + ox * 6.3, 0, bz0 + oz * 6.3, Lk + 0.05, 5, 0.6, ang, c);
-          excl.push({ x: bx0 + ox * 3, z: bz0 + oz * 3, r: 4 });
-        }
-        // willows and plane trees on the embankments; café terraces on Cankarjevo nabrežje (west bank)
-        for (let k = 2; k < rs.length - 2; k += 3) {
-          const [x0, z0] = rs[k], n0 = nrm(k);
-          for (const sd of [-1, 1]) {
-            const px = x0 + n0[0] * sd * (RWh + 3.2), pz = z0 + n0[1] * sd * (RWh + 3.2);
-            if (clearance(px, pz) < 2.5 || excluded(px, pz) || gH(px, pz) > 1) continue;
-            const g = scen.get(px, pz);
-            if (R() < 0.5) { cyl(g, px, 0, pz, 0.35, 3.2, 6, [0.42, 0.34, 0.24]); const lc = vary([0.52, 0.7, 0.3], R, 0.12);
-              ico(g, px - n0[0] * sd * 1.2, 5.2, pz - n0[1] * sd * 1.2, 4.2, 1.15, lc, R, 0.3); ico(g, px - n0[0] * sd * 2.6, 3.4, pz - n0[1] * sd * 2.6, 2.8, 1.4, vary(lc, R, 0.1), R, 0.3); }
-            else if (R() < 0.6) { cyl(g, px, 0, pz, 0.3, 4, 6, [0.5, 0.45, 0.36]); ico(g, px, 7, pz, 3.6 + R() * 1.2, 0.9, vary([0.3, 0.5, 0.22], R, 0.12), R, 0.3); }
-            excl.push({ x: px, z: pz, r: 3 });
-          }
-        }
-        for (let k = 0; k < rs.length; k++) {
-          const [x0, z0] = rs[k]; if (z0 < 40 || z0 > 280 || x0 > 10) continue;
-          const n0 = nrm(k), sd = n0[0] > 0 ? -1 : 1;
-          for (const off of [5.5, 9.5]) {
-            const px = x0 + n0[0] * sd * (RWh + off), pz = z0 + n0[1] * sd * (RWh + off);
-            if (clearance(px, pz) < 2.5 || excluded(px, pz) || R() < 0.25) continue;
-            const g = scen.get(px, pz); cyl(g, px, 0, pz, 0.05, 2.3, 4, [0.3, 0.3, 0.32]); cone(g, px, 2.05, pz, 1.55, 0.55, 8, [0.97, 0.96, 0.93], [1, 1, 0.98], 0); cyl(g, px + 0.9, 0, pz, 0.4, 0.75, 6, [0.25, 0.24, 0.22]);
-          }
-        }
-        // ---- bridges ----
-        { const along = [14 / 42.4, 40 / 42.4], across = [-along[1], along[0]];              // Triple Bridge: centre bridge + two footbridges splaying towards Prešernov trg
-          for (const [o0, o1, wd] of [[0, 0, 10], [-9, -15, 5], [9, 15, 5]]) {
-            const pA = [-along[0] * 20 + across[0] * o1, -along[1] * 20 + across[1] * o1], pB = [along[0] * 20 + across[0] * o0, along[1] * 20 + across[1] * o0];
-            const mx = (pA[0] + pB[0]) / 2, mz = (pA[1] + pB[1]) / 2, a2 = Math.atan2(pB[1] - pA[1], pB[0] - pA[0]), Ld = Math.hypot(pB[0] - pA[0], pB[1] - pA[1]), g = scen.get(mx, mz);
-            box(g, mx, -0.6, mz, Ld, 0.66, wd, a2, [0.9, 0.89, 0.85], [0.8, 0.79, 0.76]); box(g, mx, -3.2, mz, Ld * 0.3, 2.6, wd * 0.9, a2, [0.86, 0.85, 0.8]); decks.push([mx, mz, Ld / 2, wd / 2, a2, 0.06]);
-            for (const sd of [-1, 1]) {
-              const ex = -Math.sin(a2) * sd * (wd / 2 - 0.2), ez = Math.cos(a2) * sd * (wd / 2 - 0.2);
-              box(g, mx + ex, 0, mz + ez, Ld, 0.15, 0.3, a2, whiteStone); box(g, mx + ex, 0.85, mz + ez, Ld, 0.14, 0.34, a2, whiteStone);
-              for (let t = -Ld / 2 + 0.6; t < Ld / 2; t += 0.75) box(g, mx + ex + Math.cos(a2) * t, 0.15, mz + ez + Math.sin(a2) * t, 0.16, 0.7, 0.16, a2, [0.96, 0.95, 0.9]);
-              for (let t = -Ld / 2 + 4; t < Ld / 2; t += 9) { const lx = mx + ex + Math.cos(a2) * t, lz = mz + ez + Math.sin(a2) * t; cyl(g, lx, 0.99, lz, 0.1, 2.8, 6, [0.2, 0.2, 0.22]); ico(g, lx, 4.05, lz, 0.34, 1, [0.99, 0.98, 0.92], R, 0); }
-            }
-            excl.push({ x: mx, z: mz, r: 18 });
-          } }
-        { const cx = 185, cz = -52, a2 = Math.atan2(0.958, 0.287), Ld = 36, g = scen.get(cx, cz);       // Butchers' Bridge (modern footbridge, glass sides)
-          box(g, cx, -0.5, cz, Ld, 0.5, 7, a2, [0.3, 0.31, 0.33], [0.72, 0.7, 0.66]); decks.push([cx, cz, Ld / 2, 3.5, a2, 0]);
-          for (const sd of [-1, 1]) box(g, cx - Math.sin(a2) * sd * 3.3, 0, cz + Math.cos(a2) * sd * 3.3, Ld, 1.1, 0.12, a2, [0.62, 0.78, 0.82]);
-          excl.push({ x: cx, z: cz, r: 16 }); }
-        // where the circuit itself crosses the river: deck + stone faces; dragons on the Dragon Bridge, columns on the Cobblers' Bridge
-        const spans = []; let cur = null;
-        for (let i = 0; i < N; i++) { const onW = distRiver(T.px[i], T.pz[i]) < RWh + 2.5; if (onW) { if (!cur) { cur = { a: i, b: i }; spans.push(cur); } else cur.b = i; } else cur = null; }
-        for (const br of spans) {
-          const mid = (br.a + br.b) >> 1, isDragon = Math.hypot(T.px[mid] - 324, T.pz[mid] + 97) < 60;
-          for (let i = br.a - 1; i <= br.b + 1; i++) {
-            const k = (i + N) % N, g = scen.get(T.px[k], T.pz[k]), w0 = Math.max(T.bl[k], T.br[k]) + 1.2;
-            const P = (j, o) => [T.px[j] + T.nx[j] * o, T.pz[j] + T.nz[j] * o], len = (o) => { const e = P(k, o), a = P((k + N - 1) % N, o), b = P((k + 1) % N, o);   // (one slab per sample, long enough to meet
-              return Math.max(T.ds, Math.hypot(e[0] - a[0], e[1] - a[1]), Math.hypot(e[0] - b[0], e[1] - b[1])) + 0.15; };                           //  its neighbours on the outside of the bend too)
-            const Ld = Math.max(len(-w0), len(w0)); box(g, T.px[k], -1.35, T.pz[k], Ld, 1.33, w0 * 2, T.hd[k], [0.72, 0.7, 0.66]); slabs.push([T.px[k], T.pz[k], Ld / 2, w0, T.hd[k], -0.02]);
-            for (const sd of [-1, 1]) { const o = sd * ((sd > 0 ? T.br[k] : T.bl[k]) + 0.9); box(g, T.px[k] + T.nx[k] * o, -3.2, T.pz[k] + T.nz[k] * o, len(o), 4.3, 0.8, T.hd[k], isDragon ? [0.86, 0.85, 0.82] : whiteStone); }
-          }
-          const ends = [br.a - 2, br.b + 2];
-          for (const e of ends) for (const sd of [-1, 1]) {
-            const k = (e + N) % N, o = sd * ((sd > 0 ? T.br[k] : T.bl[k]) + 2.6), x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o, g = scen.get(x, z);
-            if (isDragon) { box(g, x, 0, z, 2.6, 3.4, 2.6, T.hd[k], [0.82, 0.8, 0.74], [0.88, 0.86, 0.8]); dragon(g, x, 3.4, z, T.hd[k] + (e === ends[0] ? Math.PI : 0) + sd * 0.4, 1.3); }
-            else { cyl(g, x, 0, z, 0.38, 3.8, 8, whiteStone); ico(g, x, 4.15, z, 0.48, 1, whiteStone, R, 0); }
-            excl.push({ x, z, r: 3 });
-          }
-          for (let i = br.a; i <= br.b; i += isDragon ? 3 : 2) for (const sd of [-1, 1]) {
-            const k = (i + N) % N, o = sd * ((sd > 0 ? T.br[k] : T.bl[k]) + 0.9), x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o, g = scen.get(x, z);
-            if (isDragon) { cyl(g, x, 1.1, z, 0.1, 4.2, 6, [0.22, 0.4, 0.34]); ico(g, x, 5.5, z, 0.32, 1, [0.97, 0.95, 0.86], R, 0); }
-            else { cyl(g, x, 1.1, z, 0.22, 2.6, 8, whiteStone); ico(g, x, 3.95, z, 0.3, 1, whiteStone, R, 0); }
-          }
-        }
-      }
-      // ---- Zvezda park on Kongresni trg: star-shaped lawns, big trees, fountain ----
-      { const cx = -150, cz = 88, hx = 52, hz = 44, pg = scen.get(cx, cz), gr = [0.42, 0.6, 0.28];
-        const C = [[cx - hx, cz - hz], [cx + hx, cz - hz], [cx + hx, cz + hz], [cx - hx, cz + hz]];
-        for (let e = 0; e < 4; e++) { const a = C[e], b = C[(e + 1) % 4], L2 = (p, q, t) => [p[0] + (q[0] - p[0]) * t, 0.05, p[1] + (q[1] - p[1]) * t], ctr = [cx, cz], mab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-          pg.triO(L2(a, ctr, 0.09), L2(b, ctr, 0.09), L2(ctr, mab, 0.2), gr, [cx, -5, cz]); }
-        cyl(pg, cx, 0, cz, 4.5, 0.6, 14, [0.86, 0.84, 0.8]); cyl(pg, cx, 0.6, cz, 3.9, 0.05, 14, [0.4, 0.62, 0.72]);
-        for (let k = 0; k < 80; k++) {
-          const u = (R() * 2 - 1) * 0.95, v = (R() * 2 - 1) * 0.95; if (Math.abs(Math.abs(u) - Math.abs(v)) < 0.14 || Math.hypot(u, v) < 0.22) continue;
-          const px = cx + u * hx, pz = cz + v * hz, g = scen.get(px, pz); cyl(g, px, 0, pz, 0.35, 4.5, 6, [0.46, 0.4, 0.3]); ico(g, px, 7.6, pz, 3.8 + R() * 1.4, 0.9, vary([0.28, 0.48, 0.2], R, 0.12), R, 0.3);
-        } }
-      // ---- the city: continuous frontage along the circuit, then the blocks behind ----
-      const pal = [[0.95, 0.85, 0.58], [0.96, 0.91, 0.8], [0.8, 0.87, 0.74], [0.94, 0.72, 0.62], [0.87, 0.87, 0.85], [0.97, 0.96, 0.92], [0.8, 0.86, 0.92], [0.93, 0.8, 0.66]];
-      const placed = [];
-      const tryBuilding = (x, z, W, D, rot, H) => {
-        const rad = Math.hypot(W, D) / 2;
-        if (excluded(x, z) || (RIVER && distRiver(x, z) < RWh + 3 + rad * 0.6) || gH(x, z) > 1.5) return false;
-        const cl = clearance(x, z);
-        if (cl < rad * 0.55 + 2.5 || cl > LOD.cap(230) || placed.some(q => Math.hypot(q[0] - x, q[1] - z) < (q[2] + rad) * 0.78)) return false;   // (LOD: cut the far city blocks on the lower tiers; the street fronts by the road stay)
-        const col = pal[Math.floor(R() * pal.length)], y0 = facadeBox(x, z, W, D, H, rot, col), g = scen.get(x, z), rk = R();
-        gable(g, x, y0 + H, z, W + 0.6, D + 0.6, Math.min(W, D) * 0.32, rot, rk < 0.78 ? vary(tile, R, 0.08) : rk < 0.93 ? [0.36, 0.37, 0.41] : copper, col);
-        box(g, x, y0 + H - 0.35, z, W + 0.3, 0.35, D + 0.3, rot, col.map(v => v * 0.82));
-        placed.push([x, z, rad]); excl.push({ x, z, r: rad * 0.8 }); CR.block(x, z, W, D, rot); return true;
-      };
-      for (const side of [-1, 1]) for (let s0 = 0; s0 < T.len;) {
-        const W = 11 + R() * 9, D = 13 + R() * 7, H = 3.2 * (3 + Math.floor(R() * 3)) + 1, i = T.idx(s0), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 3.5 + D / 2);
-        tryBuilding(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, W, D, T.hd[i], H); s0 += W + 1;
-      }
-      for (let k = 0; k < 7000 && placed.length < 430; k++) {
-        const x = lerp(B.minX, B.maxX, R()), z = lerp(B.minZ, B.maxZ, R()), W = 12 + R() * 12, D = 12 + R() * 10, ni = nearest(x, z).i;
-        tryBuilding(x, z, W, D, ni >= 0 ? T.hd[ni] : (R() < 0.5 ? 0.12 : 0.12 + Math.PI / 2), 3.2 * (3 + Math.floor(R() * 3)) + 1);
-      }
-      // ---- castle hill forest ----
-      for (let x = 30; x < 370; x += 6) for (let z = 85; z < 415; z += 6) {
-        const px = x + (R() - 0.5) * 5, pz = z + (R() - 0.5) * 5, h0 = gH(px, pz);
-        if (clearance(px, pz) > LOD.cap(170) || h0 < 3 || R() < 0.22 || (CASTLE && Math.hypot(px - CASTLE[0], pz - CASTLE[1]) < 46) || excluded(px, pz)) continue;   // (LOD: cut the far castle-hill forest on the lower tiers)
-        const g = scen.get(px, pz), hgt = 8 + R() * 6;
-        cyl(g, px, h0 - 0.3, pz, 0.32, hgt * 0.45, 5, [0.42, 0.34, 0.24]);
-        if (R() < 0.18) cone(g, px, h0 + hgt * 0.3, pz, hgt * 0.24, hgt * 0.75, 7, vary([0.18, 0.34, 0.2], R, 0.1), [0.24, 0.42, 0.26], R() * TAU);
-        else ico(g, px, h0 + hgt * 0.72, pz, hgt * 0.34, 0.9, vary([0.3, 0.5, 0.22], R, 0.14), R, 0.32);
-      }
-      // ---- street dressing: lamp posts with red/black dragon banners (billboards face the camera) ----
-      { let n = 0, side = 1;
-        for (let s0 = 6; s0 < T.len; s0 += 26) {
-          const i = T.idx(s0), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 1.3), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; side = -side;
-          if (excluded(x, z) || (RIVER && distRiver(x, z) < RWh + 1)) continue;
-          const g = scen.get(x, z); cyl(g, x, 0, z, 0.09, 7.2, 6, [0.16, 0.17, 0.18]); box(g, x, 7.2, z, 0.32, 0.32, 0.32, 0, [0.92, 0.9, 0.82]); CR.avoid(x, z, 0.7);
-          const u0 = (n++ % 2) * 0.5, u1 = u0 + 0.5, a = [x - 0.55, 2.6, z + 0.2], b = [x + 0.55, 2.6, z + 0.2], c = [x + 0.55, 6.4, z + 0.2], d = [x - 0.55, 6.4, z + 0.2];
-          ban.quadO(a, b, c, d, [1, 1, 1], [x, 4.5, z - 3], [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]); ban.quadO(b, a, d, c, [0.8, 0.8, 0.8], [x, 4.5, z + 3], [[u1, 0], [u0, 0], [u0, 1], [u1, 1]]);
-        } }
-      // spectators on the pavements (two rows between the catch fence and the house fronts): the open squares and the corners, a few everywhere else
-      { const M = { rows: 2, gap: 1.0, clump: 0.6 };
-        for (const [a, b2, sd, dn] of [[210, 444, 1, 0.72], [630, 822, 1, 0.72], [1100, 1146, -1, 0.8], [1200, 1246, 1, 0.8], [1676, 1738, 1, 0.8], [1712, 1750, -1, 0.8], [1826, 1868, -1, 0.8],
-          [100, 138, 1, 0.7], [244, 290, 1, 0.7], [520, 566, 1, 0.7], [506, 580, -1, 0.6], [780, 840, -1, 0.6], [950, 1010, 1, 0.6], [950, 1010, -1, 0.6], [1076, 1130, 1, 0.65], [1170, 1230, -1, 0.65], [1416, 1500, -1, 0.7], [1416, 1500, 1, 0.55]])
-          crRun(a, b2, sd, Object.assign({ dens: dn, label: 'LJ ' + a + (sd > 0 ? 'R' : 'L') }, M));
-        for (const sd of [-1, 1]) crRun(0, T.len, sd, Object.assign({ dens: 0.2, label: 'LJ pavement ' + (sd > 0 ? 'R' : 'L') }, M));
-        const sq = excl.find(e => e.x === -5 && e.z === -26), exSq = (x, z) => excl.some(e => e !== sq && (x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) || exclRect.some(r => inRect(x, z, r)) || exclF.some(f => f(x, z));
-        crRun(1686, 1732, 1, { rows: 7, gap: 1.0, first: 2.1, dens: 0.72, clump: 0.5, excluded: exSq, label: 'LJ Presernov trg' }); }   // the crowd spills onto the open square (kept free of houses)
-      { const fm = new THREE.Mesh(fac.geometry(), new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true })); fm.castShadow = true; fm.receiveShadow = true; root.add(fm); }
-      { const bm = new THREE.Mesh(ban.geometry(), new THREE.MeshLambertMaterial({ map: tex.bannerLJ, vertexColors: true })); bm.castShadow = true; root.add(bm); }
     }
 
     /* ================= CS STYLE: the circuits from the stylised top-down racer =================
@@ -2921,7 +2664,7 @@ const World = (function () {
         if (barOut > w + cw + 3) for (let k = 0; k < 4; k++) { const [x, z, hd] = atSf(sm + 10 + k * 1.0, -inner * (barOut - 0.6)); prop('tstack', x, z, hd + k * 0.6, (k >> 1) % 2); }   // spare tyres in front of the outer barrier
       }
     }
-    trackPropsGeneric(out, excluded, MC_ISLAND, decks, slabs);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
+    trackPropsGeneric(out, excluded, MC_ISLAND);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
     // solid scenery built inside a barrier line (box footprint lx by lz at x, z, rot): the knocked props stop at its face, not in it
     // (out.propFloor.inset[i * 2 + side (0 left, 1 right)]: how far in from the barrier, per sample; Core propStep)
     const propSolid = (x, z, lx, lz, rot) => { const F = out.propFloor; if (!F) return;
@@ -3252,7 +2995,7 @@ const World = (function () {
     const addTex = (g, mat, cast) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = !!cast; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m; };
     addTex(texTires, new THREE.MeshLambertMaterial({ map: THEME === 'forest' ? tex.tiresRW : tex.tires, vertexColors: true }), true);
     tyreCh.addTo(root, new THREE.MeshLambertMaterial({ map: tex.tyreTex, vertexColors: true }), true, true);
-    addTex(texSpons, new THREE.MeshLambertMaterial({ map: THEME === 'ljubljana' ? tex.sponsorsLJ : THEME === 'monaco' ? tex.sponsorsMC : THEME === 'forest' ? tex.sponsorsFO : THEME === 'italia' ? tex.sponsorsIT : THEME === 'kamp' ? tex.sponsorsKP : tex.sponsors, vertexColors: true }), false);
+    addTex(texSpons, new THREE.MeshLambertMaterial({ map: THEME === 'monaco' ? tex.sponsorsMC : THEME === 'forest' ? tex.sponsorsFO : THEME === 'italia' ? tex.sponsorsIT : THEME === 'kamp' ? tex.sponsorsKP : tex.sponsors, vertexColors: true }), false);
     addTex(texFence, THEME === 'italia' ? new THREE.MeshBasicMaterial({ map: tex.fenceFO, color: 0xb4ab96, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })   // (Toskana: the light warm-grey chain-link of the reference)
       : CSX ? new THREE.MeshLambertMaterial({ map: tex.fenceFO, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
@@ -4357,7 +4100,7 @@ const World = (function () {
      the mountain road, fewer in the streets, a few on a modern circuit), and on a circuit the rubber
      laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
-  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, ljubljana: 0.85, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
+  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
   function roadWear(o, tex) {
     if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
@@ -4495,7 +4238,7 @@ const World = (function () {
     x.putImageData(img, 0, 0); wornTexC = new THREE.CanvasTexture(c); wornTexC.anisotropy = 4; return wornTexC;
   }
   function wornGrass(o) {
-    if (T.open || !T.corners || !T.rl || ['city', 'ljubljana', 'monaco', 'forest', 'kamp', 'italia'].includes(THEME) || T.def.offSurface) return;   // (the stylised circuits: their orange strips past the kerbs are not grass)
+    if (T.open || !T.corners || !T.rl || ['city', 'monaco', 'forest', 'kamp', 'italia'].includes(THEME) || T.def.offSurface) return;   // (the stylised circuits: their orange strips past the kerbs are not grass)
     const N = T.N, ds = T.ds, R = rng(7720), q = {}, gh = o.groundH, P = [], C = [], U = [], I = [];
     const at = (k) => ((k % N) + N) % N;
     const patch = (i0, len, side, d, hw, cell) => {   // from sample i0 along the road for len m, centred d m out on that side, hw m half wide
@@ -4581,7 +4324,7 @@ const World = (function () {
     return mat;
   }
   function verge(o) {
-    if (T.open || ['city', 'ljubljana', 'monaco'].includes(THEME)) return;
+    if (T.open || ['city', 'monaco'].includes(THEME)) return;
     const mat = tuftWindMat(o.dyn.wind || (o.dyn.wind = { value: 0 }));
     const tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160), q = {}, gH = o.groundH;
     // the lawn's colour under a clump: the ground mesh's vertex colour there (the default builder's grid) or the corridor builder's, times the grass picture's
