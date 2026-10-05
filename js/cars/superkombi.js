@@ -41,7 +41,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: 0.12, y: 1.22, near: 0.25, tilt: 0.06, style: 'closed' },   // (high and upright, as in a van; the roll cage round it)
         door: [1.12, -0.06], bumpF: 0.15, bumpR: 0.14, bumpY: [0.5, 0.56],
         engine: [-0.85, 0.68], engRear: true, cage: true,                    // (the race engine behind the seats, between the axles: its top)
-        crush: { x0: -2.29, x1: -0.55, z: 0.84 } },                          // (the roof over the engine sinks; the cage holds the cabin's)
+        crush: { x0: -2.34, x1: -0.55, z: 0.84 } },                          // (the roof over the engine sinks, the wing on it to its trailing edge; the cage holds the cabin's)
       wheels: { style: 'slick', w: 0.27, wR: 0.31, rim: [0.17, 0.17, 0.19], gap: 0.04 },
       // (the tailgate is its glass and the panel under it: the D-pillars beside the glass stay on the body with the tail lamps)
       regions: (std) => std.map(r => r.part === 'trunk' ? Object.assign({}, r, { bands: ['edge', 'crown'] }) : r),
