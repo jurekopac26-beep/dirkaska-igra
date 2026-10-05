@@ -892,7 +892,8 @@ const Render = (function () {
        Any other colour within 0.065 of a glass colour is nudged off it, scaled lighter or darker (its hue kept); so is each car's shade
        of its paint or stripe (a shade under 1 darker: a black car's K.shade(K.paint, 0.55) sills are near black). K.dark, K.black,
        K.chrome, K.lampHead, K.lampTail, K.lining: stock colours; K.rgb(0xRRGGBB); K.shade(c, k) (also the paint and the stripe);
-       K.mix(a, b, t) (not the paint / the stripe)
+       K.mix(a, b, t) (not the paint / the stripe). Each car's copy is shaded as the 11's bodies are (carAO, kitAO: darker low down, the
+       faces turned to the ground darker still; the glass and the start number's digits as they are; each shaded colour off the glass)
      GLASS AND THE LINING: the loft lines every panel that is not glass (a second loft 3 cm inside, facing in, in the same part as its
        panel; the cockpit looks out through the glass). A panel whose colour is K.GLASS is glass; mark the others that are (a painted panel
        under a GLASS decal) with the loft's glass(k, e, kind, at). The lining and the cabin are a fixed dark colour. A crushed roof takes
@@ -1961,10 +1962,18 @@ const Render = (function () {
   // (num: the car's start number, lit on its K.number panels: two digits, or one in the middle; 0 / none: blank panels)
   const KIT_SEG = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];   // the seven segments (bit 0 a .. bit 6 g) of 0..9
   function kitRecolour(geo, color, stripe, num) {
-    const c = colArr(color), s = stripe ? stripeFor(color) : c, U = geo.userData, a = geo.attributes.color.array;
+    const c = colArr(color), s = stripe ? stripeFor(color) : c, U = geo.userData, a = geo.attributes.color.array, ao = kitAO(geo);
     for (const [L, b] of [[U.paint, c], [U.strp, s]]) { const T = new Map();   // (each shade k of the colour once: k * colour, kept off the glass colours)
       for (let j = 0; j < L.i.length; j++) { const i = L.i[j] * 3, k = L.k[j]; let q = T.get(k); if (!q) { q = kitOffGlass([Math.min(1, b[0] * k), Math.min(1, b[1] * k), Math.min(1, b[2] * k)], k < 1 ? -1 : k > 1 ? 1 : 0); T.set(k, q); }
         a[i] = q[0]; a[i + 1] = q[1]; a[i + 2] = q[2]; } }
+    // the soft shading of the 11's bodies (carAO): every vertex but the glass's darker low down and where it faces the ground (the paint, the
+    // trim, the inside alike; the start number's digits after it, as they are), each shaded colour kept off the glass colours
+    const G = new Map(), g0 = GLASS[0], g1 = GLASS[1], g2 = GLASS[2], h0 = KIT_GL2[0], h1 = KIT_GL2[1], h2 = KIT_GL2[2], d2 = 0.066 * 0.066;
+    for (let i = 0, nv = ao.length; i < nv; i++) { const k = ao[i]; if (k === 1) continue;
+      const o = i * 3, r = a[o] * k, gg = a[o + 1] * k, b = a[o + 2] * k;
+      if ((r - g0) * (r - g0) + (gg - g1) * (gg - g1) + (b - g2) * (b - g2) >= d2 && (r - h0) * (r - h0) + (gg - h1) * (gg - h1) + (b - h2) * (b - h2) >= d2) { a[o] = r; a[o + 1] = gg; a[o + 2] = b; continue; }
+      const key = Math.round(r * 1e4) + ',' + Math.round(gg * 1e4) + ',' + Math.round(b * 1e4); let q = G.get(key); if (!q) { q = kitOffGlass([r, gg, b], 0); G.set(key, q); }
+      a[o] = q[0]; a[o + 1] = q[1]; a[o + 2] = q[2]; }
     // the number: its lit segments in the digits' colour; the unlit ones taken out of this copy (each to a point: the bars overlap, at a
     // digit's corners and middle, and the middle place over the two others: an unlit bar would fight a lit one at the same height)
     const n = Math.round(num || 0), dig = n >= 10 && n <= 99 ? [Math.floor(n / 10), n % 10, -1] : n >= 1 && n <= 9 ? [-1, -1, n] : [-1, -1, -1], pa = geo.attributes.position.array;
@@ -2116,6 +2125,16 @@ const Render = (function () {
       C.setXYZ(i, C.getX(i) * k, C.getY(i) * k, C.getZ(i) * k);
     }
     C.needsUpdate = true; return geo;
+  }
+  // the same shading for a kit body (its copy's recolour, kitRecolour): carAO's factor for each vertex of the model, worked out once from its
+  // colour-neutral geometry (kept on its userData, which every copy shares), 1 for the glass (the panes keep their exact colour)
+  function kitAO(geo) {
+    const U = geo.userData; if (U.ao) return U.ao;
+    const P = geo.attributes.position.array, N = geo.attributes.normal.array, C = geo.attributes.color.array, n = P.length / 3, ao = new Float32Array(n);
+    const is = (o, G) => Math.abs(C[o] - G[0]) < 1e-6 && Math.abs(C[o + 1] - G[1]) < 1e-6 && Math.abs(C[o + 2] - G[2]) < 1e-6;
+    for (let i = 0; i < n; i++) { const o = i * 3; if (is(o, GLASS) || is(o, KIT_GL2)) { ao[i] = 1; continue; }
+      let k = 0.8 + 0.2 * Core.sstep(0.12, 0.62, P[o + 1]); if (N[o + 1] < -0.3) k *= 0.78; ao[i] = k; }
+    return (U.ao = ao);
   }
   function carGeometry(bodyKey, M, color, stripe) {
     const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe;
