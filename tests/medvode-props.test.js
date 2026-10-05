@@ -33,9 +33,9 @@ const orig = Math.random;
     if (b.pts) { let w = false; const P = b.pts; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > pz) !== (P[j][1] > pz) && px < (P[j][0] - P[i][0]) * (pz - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) w = !w; return w; }
     const dx = px - b.x, dz = pz - b.z; return Math.abs(dx * b.c + dz * b.s) < b.L / 2 + 0.1 && Math.abs(-dx * b.s + dz * b.c) < b.W / 2 + 0.1; });
   for (const St of S) {
-    const b = T.stubBollards(St.k); total += b.length;
+    const b = T.stubBollards(St.k, true), bd = T.stubBollards(St.k); total += bd.length;   // (b: the row of this mouth; bd: without the places an earlier side road sharing the mouth has)
     const why = [];
-    if (b.length < 3) why.push(`only ${b.length}`);
+    if (b.length < 3 && !(St.end === 2 && St.L < 30)) why.push(`only ${b.length}`);   // (one that opens into another side road a few metres on: the other one's row closes the way)
     const us = [], ts = [];
     for (const p of b) {
       if (p.kind !== 'bollard') why.push('kind ' + p.kind);
@@ -51,8 +51,8 @@ const orig = Math.random;
       if (T.onAlt(p.x, p.z)) why.push('on an oncoming lane (Track.onAlt)');
       for (const R of def.rings) if (Math.hypot(p.x - R.c[0], p.z - R.c[1]) < R.r + (R.hw || 3) + 0.5) why.push('on a ring\'s road or island');
       if (inBuilding(p.x, p.z)) why.push('inside a building');
-      const key = Math.round(p.x * 5) + ',' + Math.round(p.z * 5); if (seen.has(key)) dup++; seen.add(key);
     }
+    for (const p of bd) { const key = Math.round(p.x * 5) + ',' + Math.round(p.z * 5); if (seen.has(key)) dup++; seen.add(key); }
     // in a row (one place along the side road), spaced ~2.3 m across it where nothing was in the way
     const o = us.map((u, k) => [u, ts[k]]).sort((a, c) => a[0] - c[0]);
     if (o.length && o[o.length - 1][1] - o[0][1] > 1.3 && Math.max(...ts) - Math.min(...ts) > 1.3) why.push(`not in a row (${(Math.max(...ts) - Math.min(...ts)).toFixed(1)} m along it)`);

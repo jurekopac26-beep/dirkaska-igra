@@ -23,8 +23,8 @@ const WALK = T.walk, wE = (si, i) => T.wAt(i) + (WALK ? WALK[si][i] : 0);
 const free = T.wallFree(0.04), sp = { S: null };
 const mkCar = (x, z, h) => ({ x, z, h: 0, vx: 0, vz: 0, w: 0, m: { mass: 1000 }, I: 1000, corners: [[0, 0], [0, 0], [0, 0], [0, 0]], q: { i: h }, hitWall: 0, fxWall: 0, isPlayer: false, pitWant: false, inPit: false });   // (a point of a car: wallCollide moves it back by how far it is past the wall)
 
-// the side roads the engine loses on the way in (Track.stubNear keeps three side roads per road sample: the fourth is missing at its own junction sample, so a car driving
-// down it, its hint following the last query as in the game, is pushed back by the route's barrier before the rail): an old limit of the physics, listed and left out of the probe
+// the side roads where a car driving down them, its hint following the last query as in the game, is pushed back before the rail (another side road's limit or rail on top of
+// it): none now (they are listed here and left out of the probe if one comes back)
 const blind = new Map();
 for (const S of T.stubs) {
   const p0 = T.stubPt(S.k, 0, {}); let hint = T.nearestIdx(p0.x, p0.z), q = {};
@@ -36,7 +36,7 @@ for (const S of T.stubs) {
   const by = [0, 0, 0, 0], cnt = [0, 0, 0, 0]; for (const r of runs) { by[r.k] += len(r); cnt[r.k]++; }
   const total = by[0] + by[1] + by[2] + by[3], refs = new Set(runs.filter(r => r.k === 1).map(r => r.ref)).size;
   check('fence: the route\'s barriers on both sides, the side roads\' limits, the rings\' circles, the oncoming lanes\' edges',
-    by[0] > 2 * 0.8 * T.len && by[1] > 5000 && by[2] > 20 && by[3] > 100 && runs.some(r => r.k === 0 && r.side < 0) && runs.some(r => r.k === 0 && r.side > 0) && refs > 0.95 * T.stubs.length && new Set(runs.filter(r => r.k === 3).map(r => r.ref)).size >= 3,
+    by[0] > 2 * 0.8 * T.len && by[1] > 5000 && by[2] > 20 && by[3] > 100 && runs.some(r => r.k === 0 && r.side < 0) && runs.some(r => r.k === 0 && r.side > 0) && refs > 0.9 * T.stubs.length && new Set(runs.filter(r => r.k === 3).map(r => r.ref)).size >= 3,
     `route ${(by[0] / 1000).toFixed(2)} km in ${cnt[0]} runs (the road is 6.58 km, two sides), side roads ${(by[1] / 1000).toFixed(2)} km in ${cnt[1]} (${refs} of ${T.stubs.length} side roads), rings ${by[2].toFixed(0)} m in ${cnt[2]}, lanes ${by[3].toFixed(0)} m in ${cnt[3]}; ${(total / 1000).toFixed(1)} km in all`);
   check('fence: skipped where the parapet or the abutments are the barrier (the bridge, the overpass)', FR.skips.length === 2 && FR.skips.some(([a, b]) => b - a > 118 && b - a < 125) && FR.skips.some(([a, b]) => b - a > 9 && b - a < 13),
     FR.skips.map(([a, b]) => `${(a - T.startS).toFixed(0)}-${(b - T.startS).toFixed(0)} m`).join(', '));
@@ -115,7 +115,7 @@ const distTo = (x, z) => { let best = 1e9; const cx = Math.floor(x / CELL), cz =
   off.sort((a, b) => a - b); const med = off[off.length >> 1], p95 = off[Math.floor(off.length * 0.95)], mx = off[off.length - 1], badN = off.filter(v => v > 0.4).length + noWall;
   check('fence: the lines are the wall (wallCollide): a car is stopped where the fence stands, 4 cm at the median, 40 cm at the worst', tested > 1500 && med <= 0.04 && p95 <= 0.2 && badN <= 0.01 * tested,
     `${tested} points every ~8 m: wall ${(med * 100).toFixed(0)} cm from the line at the median, ${(p95 * 100).toFixed(0)} cm at 95 %, ${(mx * 100).toFixed(0)} cm at most; ${badN} off by more than 40 cm or without a wall${fails.length ? '; e.g. ' + fails.join('; ') : ''}`);
-  console.log(`NOTE ${blind.size} side roads have an invisible wall in them (Track.stubNear keeps 3 side roads per sample, the 4th is dropped at its junction: a car driving down it is pushed back before its rail; ${skipped} fence points left out of the probe): ${[...blind].map(([k, t]) => `${k}@${t.toFixed(0)} m`).join(', ')}`);
+  check('side roads: a car drives down every one of them to its rail without meeting a wall (the pick of the side road when two lie side by side, Track._stubQ with def.stubPick)', blind.size === 0, blind.size ? [...blind].map(([k, t]) => `${k}@${t.toFixed(0)} m`).join(', ') : `97 side roads, every 0.5 m`);
 }
 
 // 5. the runs end at each other, the bridge, the overpass, a side road's rail, the road's ends

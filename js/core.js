@@ -54,7 +54,7 @@ const Core = (function () {
 
   // side roads (Track._buildStubs): the polyline's step (m), the mouth's flare (m wider at the asphalt's edge, gone over lf m), the region
   // around one beyond its limit that still counts as in it (rm m: what flies over its edge comes back down onto it)
-  const SR = { ds: 2, fl: 3.5, lf: 12, rm: 4 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
+  const SNS = 6, SR = { ds: 2, fl: 3.5, lf: 12, rm: 4 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
 
   class Track {
     constructor(def) {
@@ -233,7 +233,7 @@ const Core = (function () {
        stands in a side road's mouth (no barrier drawn there) ---- */
     _buildStubs(list) {
       const N = this.N, ds = this.ds, w = this.w, px = this.px, pz = this.pz, D = SR.ds;
-      const stubs = this.stubs = [], near = this.stubNear = new Int16Array(N * 3).fill(-1), at = this.stubAt = new Int16Array(N).fill(-1), gap = this.gap = [new Uint8Array(N), new Uint8Array(N)];
+      const stubs = this.stubs = [], near = this.stubNear = new Int16Array(N * SNS).fill(-1), at = this.stubAt = new Int16Array(N).fill(-1), gap = this.gap = [new Uint8Array(N), new Uint8Array(N)];
       const HC = 32, hash = new Map(), hk = (a, b) => a * 65536 + b;   // the road's samples in a 32 m grid (the nearest one to a point, by rings)
       for (let i = 0; i < N; i++) { const k = hk(Math.floor(px[i] / HC), Math.floor(pz[i] / HC)); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
       const nearest = (x, z) => { const cx = Math.floor(x / HC), cz = Math.floor(z / HC); let bi = -1, bd = 1e18;
@@ -259,7 +259,7 @@ const Core = (function () {
         let je = -1, jb = -1; const sj = new Float32Array(n).fill(-1), fj = new Float32Array(n).fill(1);
         for (let j = 0; j < n && j * D < 220; j++) { const q = local(x[j], z[j], i0, _m), bar = side > 0 ? q.br : q.bl, ad = Math.abs(q.d), e = this._stubRamp(bar); sj[j] = q.s; fj[j] = sstep(e, e + 14, ad);
           if (je < 0 && ad >= this.wAt(q.a)) je = j; if (jb < 0 && ad >= bar) jb = j; if (fj[j] >= 1) break; }
-        S.te = Math.max(0, je) * D; S.tb = Math.max(S.te, Math.max(0, jb) * D); S.sb = local(x[Math.min(n - 1, Math.round(S.tb / D))], z[Math.min(n - 1, Math.round(S.tb / D))], i0, _m).s;   // (sb: the road's s beside the mouth)
+        S.te = Math.max(0, je) * D; S.tb = Math.max(S.te, Math.max(0, jb) * D); if (this.def.stubPick) S.tb = Math.min(S.tb, S.te + 14); S.sb = local(x[Math.min(n - 1, Math.round(S.tb / D))], z[Math.min(n - 1, Math.round(S.tb / D))], i0, _m).s;   // (sb: the road's s beside the mouth)
         for (let j = 0; j < n; j++) S.Y[j] = sj[j] >= 0 ? lerp(this._hyAt(sj[j]), yd[j], fj[j]) : yd[j];   // (the road's height until its centre line is past the mouth's blend, its own 14 m on)
         const j0 = Math.max(1, Math.round(S.te / D)); for (let j = j0; j < n; j++) S.Y[j] = clamp(S.Y[j], S.Y[j - 1] - 0.15 * D, S.Y[j - 1] + 0.15 * D);
         for (let j = 0; j < n; j++) { const a = Math.max(0, j - 1), b = Math.min(n - 1, j + 1); S.G[j] = (S.Y[b] - S.Y[a]) / ((b - a) * D); }
@@ -275,7 +275,7 @@ const Core = (function () {
         S.bb = [x0, z0, x1, z1];
         stubs.push(S);
         // the road's samples nearest to its region: they look for it (Track.query)
-        const mark = (i) => { for (let o = -3; o <= 3; o++) { const ii = i + o; if (ii < 0 || ii >= N) continue; let c = 0; while (c < 3 && near[ii * 3 + c] >= 0 && near[ii * 3 + c] !== k) c++; if (c < 3) near[ii * 3 + c] = k; if (at[ii] < 0) at[ii] = k; } };
+        const mark = (i) => { for (let o = -3; o <= 3; o++) { const ii = i + o; if (ii < 0 || ii >= N) continue; let c = 0; while (c < SNS && near[ii * SNS + c] >= 0 && near[ii * SNS + c] !== k) c++; if (c < SNS) near[ii * SNS + c] = k; if (at[ii] < 0) at[ii] = k; } };
         for (let j = 0; j < n; j++) { const hc = this.stubHw(S, j * D) + lim + SR.rm; for (const u of [-hc, -hc / 2, 0, hc / 2, hc]) mark(nearest(x[j] - tz[j] * u, z[j] + tx[j] * u)); }
         // the barrier open across its mouth: where the barrier line lies within its corridor
         const G = gap[side > 0 ? 1 : 0], sp = {};
@@ -484,12 +484,12 @@ const Core = (function () {
     }
     _stubQ(x, z, i, out, main, pk, pj) {
       const SN = this.stubNear, sp = _sp, pick = this.def.stubPick;
-      for (let pass = pick ? 0 : 1; pass < 2; pass++) for (let c = 0; c < 3; c++) {   // (def.stubPick: a first pass for one it lies inside the limit of)
-        const k = SN[i * 3 + c]; if (k < 0) break;
+      for (let pass = pick ? 0 : 1; pass < (pick ? 4 : 2); pass++) for (let c = 0; c < SNS; c++) {   // (def.stubPick: passes 0..3; otherwise 1 (4 m more) and then, as before, the same again)
+        const k = SN[i * SNS + c]; if (k < 0) break;
         const S = this.stubs[k], b = S.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue;
         if (pk === k && pj >= 0) { sp.S = S; sp.j = pj; } else sp.S = null;   // (this result's last answer: a short search around it)
         if (!this._stubProj(S, x, z, sp)) continue;
-        const t = sp.t; if (t < 0 || t > S.Lend || Math.abs(sp.u) > this.stubHw(S, t) + S.lim + (pass ? SR.rm : 0)) continue;
+        const t = sp.t; if (t < 0 || t > S.Lend || Math.abs(sp.u) > this.stubHw(S, t) + S.lim + (pick ? (pass > 1 ? SR.rm : 0) : (pass ? SR.rm : 0)) || (pick && (pass & 1) === 0 && t > S.L - 2) || (pick && !main && pass > 1)) continue;   // (def.stubPick: passes 0 and 2 not past the rail of one, 0 and 1 inside its limit, 2 and 3 within 4 m more (not deep in one, main false))
         const deep = t >= S.tF;
         if (main ? deep && Math.abs(out.d) <= (out.d > 0 ? out.br : out.bl) : !deep) continue;   // (another leg of the road beside it: the road's; near the junction the road's own search decides)
         const j = sp.j, f = sp.f, Y = S.Y[j] + (S.Y[j + 1] - S.Y[j]) * f, Gs = S.G[j] + (S.G[j + 1] - S.G[j]) * f;
@@ -551,7 +551,15 @@ const Core = (function () {
     // road that runs along an oncoming lane, an arm of a ring) the row stands on what is free of them: of the rows (at least 3 places free) the one
     // nearest to the barrier line (at most 14 m from the asphalt's edge along it) that costs least (its distance from there in metres + 5 for each place
     // taken). A side road shorter than its mouth: the row in front of its end
-    stubBollards(k) {
+    // (two side roads that share a mouth get one row: the later one's places within 0.8 m of an earlier one's are left out; raw: the row before that)
+    stubBollards(k, raw) {
+      const r = this._stubBollardsRaw(k); if (raw || k === 0) return r;
+      if (!this._bolMemo) this._bolMemo = [];
+      if (!this._bolMemo[k]) { const prev = []; for (let j = 0; j < k; j++) for (const p of this.stubBollards(j)) prev.push(p);
+        this._bolMemo[k] = r.filter(p => !prev.some(o => (o.x - p.x) * (o.x - p.x) + (o.z - p.z) * (o.z - p.z) < 0.64)); }
+      return this._bolMemo[k];
+    }
+    _stubBollardsRaw(k) {
       const S = this.stubs[k], rings = this.rings, DX = 2.3;
       const clear = (x, z) => {
         if (this.onAlt(x, z) || this.onBuilding(x, z, 0.5)) return false;

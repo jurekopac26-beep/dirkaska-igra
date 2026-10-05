@@ -204,10 +204,10 @@
  },
  "medvode": {
   "calls": 231,
-  "maxCalls": 362,
-  "kverts": 467,
-  "maxKverts": 619,
-  "jsMs": 0.96
+  "maxCalls": 358,
+  "kverts": 484,
+  "maxKverts": 657,
+  "jsMs": 1.24
  },
  "jezero": {
   "calls": 278,
