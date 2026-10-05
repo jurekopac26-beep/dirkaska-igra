@@ -237,7 +237,7 @@ const Core = (function () {
        stubAt: per road sample the (first) side road near it, -1 none; gap: per side ([0] left, [1] right) the samples whose barrier
        stands in a side road's mouth (no barrier drawn there) ---- */
     _buildStubs(list) {
-      const N = this.N, ds = this.ds, w = this.w, px = this.px, pz = this.pz, D = SR.ds;
+      const N = this.N, ds = this.ds, px = this.px, pz = this.pz, D = SR.ds;
       const stubs = this.stubs = [], near = this.stubNear = new Int16Array(N * 3).fill(-1), at = this.stubAt = new Int16Array(N).fill(-1), gap = this.gap = [new Uint8Array(N), new Uint8Array(N)];
       const HC = 32, hash = new Map(), hk = (a, b) => a * 65536 + b;   // the road's samples in a 32 m grid (the nearest one to a point, by rings)
       for (let i = 0; i < N; i++) { const k = hk(Math.floor(px[i] / HC), Math.floor(pz[i] / HC)); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
@@ -261,6 +261,7 @@ const Core = (function () {
         const i0 = this.nearestIdx(x[0], z[0]), S = { k, s, side, ang, kind, grav: !!grav, L: Math.min(L, (n - 1) * D - 0.5), end, hw, lim, name: name || '', n, x, z, tx, tz,
           Y: new Float32Array(n), G: new Float32Array(n), i0, s0: this._qMain(x[0], z[0], i0, _m).s, te: 0, tb: 0, tF: 0, sF: 0, iF: 0, Lend: (n - 1) * D, bb: null };
         // where it leaves the asphalt and crosses the barrier line; the height: the road's at the mouth, blended into its own by 20 m past the barrier, grades within 15 %
+        const w = this.wa ? this.wa[i0] : this.w;   // (the road's half width at the mouth: a road of several widths)
         let je = -1, jb = -1; const sj = new Float32Array(n).fill(-1), fj = new Float32Array(n).fill(1);
         for (let j = 0; j < n && j * D < 220; j++) { const q = local(x[j], z[j], i0, _m), bar = side > 0 ? q.br : q.bl, ad = Math.abs(q.d), e = this._stubRamp(bar); sj[j] = q.s; fj[j] = sstep(e, e + 14, ad);
           if (je < 0 && ad >= w) je = j; if (jb < 0 && ad >= bar) jb = j; if (fj[j] >= 1) break; }
