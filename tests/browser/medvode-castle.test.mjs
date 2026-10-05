@@ -56,7 +56,7 @@ try {
     const g = window.__game, W = Render.world, res = {}; g.pause();
     const m = W.root.getObjectByName('mvCastle'); res.inTree = !!m;
     const count = (cam) => { Render.frame(1 / 60, 1, g.race.player, cam, {}); const c0 = __gl.verts; Render.frame(1 / 60, 1, g.race.player, cam, {}); return __gl.verts - c0; };
-    const P = g.race.player; let n = 0; while (P.q.s - g.race.track.startS < 6200 && n < 700) { g.sim(1, true); n++; }
+    const P = g.race.player; let n = 0; while (P.q.s - g.race.track.startS < 6230 && n < 700) { g.sim(1, true); n++; }
     res.s = Math.round(P.q.s - g.race.track.startS);
     for (const cam of ['iso', 'chase']) { g.S.camera = cam; Render.resetCam(); for (let i = 0; i < 8; i++) Render.frame(1 / 60, 1, P, cam, {}); res[cam] = count(cam); m.visible = false; res[cam + 'Without'] = count(cam); m.visible = true; }
     const y = W.groundH(2562, -2596); Render.setShot({ px: 2562, py: y + 60, pz: -2575, tx: 2562, ty: y, tz: -2596, fov: 40, noCut: true, near: 1 });
