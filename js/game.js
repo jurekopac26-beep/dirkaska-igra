@@ -36,6 +36,8 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
+  // only two cameras remain (isometric for a phone on its side, chase for an upright phone); the kino and cockpit cameras are gone, so an old setting moves to the isometric one
+  if (S.camera !== 'iso' && S.camera !== 'chase') S.camera = 'iso';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
   // player name: printable, single spaces, max 16 characters; always escaped when rendered
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
@@ -328,7 +330,7 @@
     const portrait = window.innerHeight > window.innerWidth;
     const inRace = bg === 'race' && (screen === 'none' || screen === 'pause');
     const mismatch = coarse && inRace && portrait !== wantPortrait();
-    const el = $('rotate'), CN = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', cockpit: 'kokpit' };
+    const el = $('rotate'), CN = { iso: 'izometrična', chase: 'za avtom' };
     $('rotate-txt').textContent = tr(wantPortrait() ? 'Obrni telefon v pokončni položaj' : 'Obrni telefon v ležeči položaj');
     // (or keep it as it is: the camera for that way (Nastavitve, Kamera); the button switches to it)
     $('rotate-why').textContent = tr(wantPortrait() ? 'Kamera »{0}« je za pokončni položaj.' : 'Kamera »{0}« je za ležeči položaj.', tr(CN[S.camera] || S.camera)) + ' ' + tr(portrait ? 'Lahko pa igraš pokončno s kamero za avtom.' : 'Lahko pa igraš ležeče z izometrično kamero.');
@@ -382,7 +384,7 @@
         $('title-sub').textContent = nm + tr(pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + wx; }
       else if (upRace(d)) { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestRace ? tr(' (najboljša dirka {0})', fmt(r.bestRace, true)) : '') + '.'; $('title-sub').textContent = nm + tr(' · dirka na vrh · {0} nasprotnikov', NUM_AI) + wx; }
       else { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestLap ? tr(' (rekord kroga {0})', fmt(r.bestLap, true)) : '') + '.'; $('title-sub').textContent = nm + ' · ' + lapWord(lapsOf(d)).toLowerCase() + tr(' · {0} nasprotnikov', 12) + wx + (S.length === 'endurance' ? tr(' · vzdržljivostna') : '') + (S.fuel && d.pit ? tr(' · gorivo') : ''); } }
-    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
+    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = tr('Prvenstvo') + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
@@ -476,8 +478,8 @@
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
   // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): the next one
-  // that suits the phone as it is held (lying: isometric, kino, cockpit; upright: behind the car; a computer: all four), kept as the setting
-  const CAMS = ['iso', 'chase', 'kino', 'cockpit'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', cockpit: 'kokpit' };
+  // that suits the phone as it is held (lying: isometric; upright: behind the car; a computer: both), kept as the setting
+  const CAMS = ['iso', 'chase'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom' };
   function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse ? CAMS.filter(c => (c === 'chase') === portrait) : CAMS; }
   function cycleCam() {
     const pool = camPool(); if (pool.length < 2 && pool[0] === S.camera) return;
@@ -3407,7 +3409,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', cpalace: 'Crystal Palace', riverside: 'Riverside', longford: 'Longford' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', cpalace: 'Crystal Palace', riverside: 'Riverside', longford: 'Longford', newcastle: 'Newcastle' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -3451,7 +3453,7 @@
     if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; if (!pitHint) Comm.say('damage', null, 2); }   // (on a track with pits the pit advice said it already)
     if (dmgOn() && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : 'propStreet';
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);
