@@ -880,7 +880,11 @@ const Render = (function () {
                (dirtyCarMat's char; the wheels, bare hubs and the 11's panels and under-parts with it; a piece already on the road keeps the
                dirt, scratches and char it came off with) and some 8 s in the panes' cracks and every lamp go. The inside (the lining, the
                cabin, the engine bay: the body's aIn) never gets the dirt or the scratches, and has no gloss
-       (tests) Render.viewOf(car): v.kit.dead / ajar, v.loose (copies waiting for their pieces), v.wheelOff, v.hubs, v.sagQ, v.fire;
+       NIZKA   on the lowest graphics tier (perf.json's phone budget) a car's shadow is cast by its model's hull (kitHullGeo: a few hundred
+               triangles where they cast the shell's shadow; a model they do not fit keeps its own) and the player's wheels' by a rival's
+               wheel each (kitShadows), the pieces on the road cast none, only the 20 nearest the camera are drawn (kitPieceCull: one
+               wreck's, all of them) and a lost wheel's piece is a rival's wheel (the player's too)
+       (tests) Render.viewOf(car): v.kit.dead / ajar, v.loose (copies waiting for their pieces), v.wheelOff, v.hubs, v.sagQ, v.fire, v.hull, v.shadowOnly;
        Render.fxStats().total / .sparks: how many bits and sparks were ever emitted
 
      COLOURS: [r, g, b] in 0..1. K.paint and K.strp are the car's own (its colour; its stripe colour, or the paint when the car has none):
@@ -1980,6 +1984,74 @@ const Render = (function () {
     while (kitShowLRU.length > 2) kitShowLRU.shift().geo.dispose();
     return q.geo;
   }
+  // a kit car's shadow on the lowest tier (NIZKA: its shadow map 1024 texels over 160 m, 15.6 cm each): a low hull of the model's outer shell
+  // cast instead of the shell itself (a few hundred vertices for its thousands; the same shadow at that size). The shell cut across every
+  // ~0.32 m (from tail to nose, 6..16 cuts): a cut in one piece (no gap wider than 6 cm across it) is taken as its outline's eight extreme
+  // points (up, down, the sides and the four corners between: its convex cross-section), the runs of such cuts lofted from end to end and
+  // capped; over a cut with gaps (a bare chassis behind a cab, a racer's open wishbones) the shell's own triangles there instead. Only
+  // where it casts the shell's shadow: seen from above (5 cm cells) it covers all but 7 % of the shell's and no more than 5 % besides, and
+  // only where it saves (a tenth of the shell's triangles at least: a kart's frame is gaps nearly all through, its hull mostly its own). Built
+  // once per model (the colour-neutral body as built), shared by its cars (makeView; sharedCarRes keeps it), drawn only into the shadow
+  // map (init: renderer.shadowMap.render)
+  function kitHullGeo(E) {
+    if (E.hull !== undefined) return E.hull;
+    const p = E.geo.attributes.position.array, n = E.geo.userData.outerN; let x0 = Infinity, x1 = -Infinity;
+    for (let i = 0; i < n; i++) { const x = p[i * 3]; if (x < x0) x0 = x; if (x > x1) x1 = x; }
+    const ns = clamp(Math.ceil((x1 - x0) / 0.32), 6, 16), h = (x1 - x0 - 0.026) / ns, cuts = [], D = [[0, 1], [0.7071, 0.7071], [1, 0], [0.7071, -0.7071], [0, -1], [-0.7071, -0.7071], [-1, 0], [-0.7071, 0.7071]];
+    for (let j = 0; j <= ns; j++) {
+      const x = x0 + 0.013 + h * j, best = D.map(() => [-Infinity, 0, 0]), segs = [];   // (per direction (y, z): the cut's extreme point; each triangle's piece of it: its z span)
+      for (let t = 0; t < n; t += 3) { let za = Infinity, zb = -Infinity;
+        for (let e = 0; e < 3; e++) { const a = (t + e) * 3, b = (t + (e + 1) % 3) * 3, xa = p[a], xb = p[b]; let y, z;   // (the plane x = const through the triangle's edges)
+          if (Math.abs(xa - x) < 1e-4) { y = p[a + 1]; z = p[a + 2]; } else if ((xa - x) * (xb - x) < 0) { const u = (x - xa) / (xb - xa); y = p[a + 1] + (p[b + 1] - p[a + 1]) * u; z = p[a + 2] + (p[b + 2] - p[a + 2]) * u; } else continue;
+          za = Math.min(za, z); zb = Math.max(zb, z);
+          for (let k = 0; k < 8; k++) { const d = D[k][0] * y + D[k][1] * z + 1e-4 * (D[(k + 2) % 8][0] * y + D[(k + 2) % 8][1] * z); if (d > best[k][0]) best[k] = [d, y, z]; } }
+        if (za <= zb) segs.push([za, zb]); }
+      segs.sort((a, b) => a[0] - b[0]); let gap = !segs.length, z1 = segs.length ? segs[0][1] : 0;
+      for (const q of segs) { if (q[0] - z1 > 0.06) gap = true; z1 = Math.max(z1, q[1]); }
+      cuts.push({ x, gap, ring: best.map(q => [x, q[1], q[2]]) });
+    }
+    const P = [], add = (a, b, c) => P.push(...a, ...b, ...c), at = (r, x) => r.map(q => [x, q[1], q[2]]), bands = [];
+    const cap = (R, s) => { for (let k = 1; k < 7; k++) { if (s > 0) add(R[0], R[k], R[k + 1]); else add(R[0], R[k + 1], R[k]); } };
+    const loft = (A, B) => { for (let k = 0; k < 8; k++) { const k2 = (k + 1) % 8; add(A[k], A[k2], B[k2]); add(A[k], B[k2], B[k]); } };
+    for (let j = 0; j < cuts.length; j++) {
+      const C = cuts[j], pv = cuts[j - 1], nx = cuts[j + 1];
+      if (C.gap) { bands.push([pv ? C.x - h / 2 : -Infinity, nx ? C.x + h / 2 : Infinity]); continue; }
+      if (!pv || pv.gap) { const R = at(C.ring, pv ? C.x - h / 2 : x0); loft(R, C.ring); cap(R, -1); }   // (a run of whole cuts begins: from the tail, or half a cut back)
+      if (nx && !nx.gap) loft(C.ring, nx.ring);
+      else { const R = at(C.ring, nx ? C.x + h / 2 : x1); loft(C.ring, R); cap(R, 1); }   // (it ends)
+    }
+    if (bands.length) for (let t = 0; t < n; t += 3) { const a = Math.min(p[t * 3], p[t * 3 + 3], p[t * 3 + 6]), b = Math.max(p[t * 3], p[t * 3 + 3], p[t * 3 + 6]);
+      if (bands.some(([u, v]) => a < v && b > u)) for (let q = 0; q < 9; q++) P.push(p[t * 3 + q]); }   // (the cuts with gaps: the shell's own triangles)
+    const cov = (a, m) => { const S = new Set(); for (let t = 0; t + 2 < m; t += 3) { const o = t * 3, ax = a[o], az = a[o + 2], bx = a[o + 3], bz = a[o + 5], cx = a[o + 6], cz = a[o + 8];
+      const d = (bx - ax) * (cz - az) - (cx - ax) * (bz - az); if (Math.abs(d) < 1e-9) continue;
+      for (let i = Math.floor(Math.min(ax, bx, cx) / 0.05); i <= Math.floor(Math.max(ax, bx, cx) / 0.05); i++) for (let k = Math.floor(Math.min(az, bz, cz) / 0.05); k <= Math.floor(Math.max(az, bz, cz) / 0.05); k++) {
+        const px = (i + 0.5) * 0.05, pz = (k + 0.5) * 0.05, u = ((bx - px) * (cz - pz) - (cx - px) * (bz - pz)) / d, v = ((cx - px) * (az - pz) - (ax - px) * (cz - pz)) / d;
+        if (u >= 0 && v >= 0 && u + v <= 1) S.add(i * 4096 + k); } } return S; };
+    const cs = cov(p, n), ch = cov(P, P.length / 3); let both = 0; for (const q of ch) if (cs.has(q)) both++;
+    if (both < cs.size * 0.93 || ch.size - both > cs.size * 0.05 || P.length / 9 > n / 3 * 0.9) return (E.hull = null);   // (and only where it saves: a tenth of the shell's triangles at least)
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.computeBoundingSphere();
+    return (E.hull = g);
+  }
+  // a kit car's shadow on the lowest tier: its model's hull (kitHullGeo, if it has one) for its body's, and the player's wheels' from a
+  // rival's wheel each (the rivals' cast none); these are drawn only into the shadow map (v.shadowOnly: init's renderer.shadowMap.render)
+  function kitShadows(v, c) {
+    const H = kitHullGeo(v.kit.E), S = [];
+    if (H) { v.body.castShadow = false; v.hull = new THREE.Mesh(H, matHull); v.bodyG.add(v.hull); S.push(v.hull); }
+    if (c.isPlayer) { const W = kitWheels(v.kit.E, false);
+      for (const w of v.wf.concat(v.wr)) { const m = new THREE.Mesh(v.wf.includes(w) ? W.f : W.r, matHull); w.castShadow = false; w.add(m); S.push(m); } }
+    for (const m of S) { m.castShadow = true; m.visible = false; }
+    if (S.length) v.shadowOnly = S;
+  }
+  // the lowest tier: of the kit cars' pieces on the road only the KIT_PIECES nearest the camera drawn (the farther ones of a pile-up a few
+  // pixels each; one wreck's pieces, 20 at most, all of them)
+  const KIT_PIECES = 20;
+  function kitPieceCull() {
+    if (tierNow !== 0) return;
+    let K = null; for (const d of debrisMeshes) if (d.mesh && d.mesh.userData && d.mesh.userData.kit) (K = K || []).push(d);
+    if (!K) return;
+    if (K.length > KIT_PIECES) { const cx = camera.position.x, cz = camera.position.z; K.sort((a, b) => (a.x - cx) * (a.x - cx) + (a.z - cz) * (a.z - cz) - (b.x - cx) * (b.x - cx) - (b.z - cz) * (b.z - cz)); }
+    K.forEach((d, i) => { const u = d.mesh.userData, hide = i >= KIT_PIECES; if (hide !== !!u.capped) { u.capped = hide; d.mesh.visible = !hide; } });   // (only what it hid itself shown again)
+  }
   // the kit's draw range: the outer shell while the car is whole; from its first part hanging loose or lost (a wheel aside) the inner block
   // too (the lining, the cabin, the engine bay behind the gap or the hole; stage B2 turns a loose part, takes a lost one's ranges off). A
   // repaired car is a new view: whole again. The car the cockpit camera sits in (frame sets v.kit.ck) draws its outer shell and of the inner
@@ -2020,7 +2092,7 @@ const Render = (function () {
   // (kitInfo) a burning engine's seat (body.engine, metres) and the top of the shell over it the car whole (null: none: the flames from the seat)
   function kitFireOf(M, E) { const S = [E.body.engine[0] * M.len / E.body.len, E.body.engine[1], 0], t = kitFireTop(E.geo, S, M.wid, null); return { seat: S, top: t > -1e8 ? t : null }; }
   function kitInfo(id) {
-    if (id == null) return { models: kitCache.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies)
+    if (id == null) return { models: kitCache.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size, pieces: tierNow === 0 ? KIT_PIECES : null };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies; pieces: how many the tier draws, null: all)
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
     const E = kitEntry(M), U = E.geo.userData, wh = kitWheels(E, true), wl = kitWheels(E, false), rg = {};
     const pa = E.geo.attributes.position.array;
@@ -2120,7 +2192,7 @@ const Render = (function () {
   }
 
   /* ---------------- materials (shared) ---------------- */
-  let matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matScOn, matScOff, matCrack, crackWarm = null;   // (matCrack: every pane's crack decal, one
+  let matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matScOn, matScOff, matCrack, matHull, crackWarm = null;   // (matCrack: every pane's crack decal, one
   // material for all; crackWarm: one degenerate triangle of it drawn in a race's first frame, so its shader compiles at the start, not at the
   // first broken window: attachRace, frame)
   // scratches: thin bright streaks through the paint, mostly lengthwise, patchy; strongest on the roof/upper body (never inside a kit body:
@@ -2795,7 +2867,7 @@ const Render = (function () {
   function ownRnd(fn) { const r = Math.random; Math.random = () => { uuRng.s = (uuRng.s * 48271) % 2147483647; return uuRng.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
   let particles, skids, views = [];
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
-  let basePR = 1, dynScale = 1, saverK = 1;   // (saverK: the battery saver's lower resolution, setSaver)
+  let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
   let time = 0;
@@ -2807,6 +2879,10 @@ const Render = (function () {
     renderer.setClearColor(0x263f1f, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // what is drawn only into the shadow map (a kit car's hull on the lowest tier, the player's wheels' stand-ins: kitShadows): shown while it is drawn
+    // (three.js draws it after it has picked what the camera draws, so the camera never draws them), hidden again after
+    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on; };
+      sm.render = function (...a) { show(true); try { return r0.apply(this, a); } finally { show(false); } }; }
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(30, 16 / 9, 4, 700);
     hemi = new THREE.HemisphereLight(0xd8ebff, 0x5d6b35, 0.66); scene.add(hemi);
@@ -2836,6 +2912,7 @@ const Render = (function () {
     matMarker = new THREE.MeshBasicMaterial({ color: 0xffd23f });
     matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
     matCrack = new THREE.MeshBasicMaterial({ map: tex.cracks, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
+    matHull = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });   // (a kit car's hull and the player's wheels' stand-ins on the lowest tier: only their shadow is drawn, kitShadows)
     { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(9), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(6), 2));
       crackWarm = new THREE.Mesh(g, matCrack); crackWarm.frustumCulled = false; crackWarm.onAfterRender = () => { crackWarm.userData.drawn = true; }; }
     particles = new Particles(2400); scene.add(particles.points);
@@ -2860,6 +2937,7 @@ const Render = (function () {
       if (skids) skids.clear();
     }
     clearPropMeshes();
+    tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
@@ -3738,10 +3816,10 @@ const Render = (function () {
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
-    for (const E of kitCache.values()) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
+    for (const E of kitCache.values()) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
-    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack]);
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull]);
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -3771,6 +3849,7 @@ const Render = (function () {
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
     const v = makeCarMesh(c);
+    if (v.kit && tierNow === 0) ownRnd(() => kitShadows(v, c));   // (the lowest tier: the shadow from the hull and a rival's wheels; named without Math.random)
     if (v.kit) v.tail.geometry = v.tail.geometry.clone();   // (the kit's body is already this car's own copy; its tail lamps too: their L / R ranges go out one by one)
     else v.body.geometry = v.body.geometry.clone();
     v.ownGeo = true; v.smokeAcc = 0; v.fresh = true;   // own copy: dents stay on this car (fresh: its first frame to come)
@@ -3941,7 +4020,7 @@ const Render = (function () {
       const fm = v.fp.parts.fenderL && v.fp.parts.fenderL.material; if (fm && fm !== matCar && fm !== pm) pkCarMat(fm, u, 0, 'pkCarP');   // (the prototype's louvre panels: the stock paint, patched above)
     }
     const wm = new Map();   // the separate wheels: an own Phong copy of each material (the shared ones stay as they are)
-    for (const w of v.wf.concat(v.wr)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; let m = wm.get(o.material);
+    for (const w of v.wf.concat(v.wr)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material) || o.material === matHull) return; let m = wm.get(o.material);   // (not a shadow's stand-in: kitShadows)
       if (!m) { m = pkCarMat(new THREE.MeshPhongMaterial({ color: o.material.color, vertexColors: o.material.vertexColors, shininess: 45, specular: 0x2c2d30 }), u, 0, 'pkWheel', 1); wm.set(o.material, m); }
       o.material = m; });
     v.pk = u; v.pkS = { mk: [null, null, null, null], x: [0, 0, 0, 0], z: [0, 0, 0, 0], fw: [0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0] };
@@ -5554,11 +5633,13 @@ const Render = (function () {
     const va = d3 * d6 - d5 * d4; if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) { const w = (d4 - d3) / ((d4 - d3) + (d5 - d6) || 1); return q(1 - w, w); }
     const den = 1 / (va + vb + vc || 1); return q(vb * den, vc * den);
   }
-  // wheel k off: hidden (latched), its piece the model's own wheel (v.loose: shared geometry, never freed), bits and sparks once, the body sags
+  // wheel k off: hidden (latched), its piece the model's own wheel (v.loose: shared geometry, never freed; on the lowest tier a rival's detail,
+  // the player's wheel too), bits and sparks once, the body sags
   function kitWheelOff(v, c, k, x, y, z, h) {
     v.wheelOff[k] = 1; v.kit.ver++;
     const M = c.m, sd = k % 2 ? 1 : -1, w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === sd);
-    if (w) { w.visible = false; const old = v.loose[KIT_WHEEL[k]]; if (old && !old.shared) old.geo.dispose(); v.loose[KIT_WHEEL[k]] = { wheel: true, shared: true, geo: w.geometry, mat: w.material, k }; }
+    if (w) { w.visible = false; const old = v.loose[KIT_WHEEL[k]]; if (old && !old.shared) old.geo.dispose();   // (its piece on the lowest tier: a rival's detail, the player's too)
+      v.loose[KIT_WHEEL[k]] = { wheel: true, shared: true, geo: tierNow === 0 ? kitWheels(v.kit.E, false)[k < 2 ? 'f' : 'r'] : w.geometry, mat: w.material, k }; }
     const lx = k < 2 ? M.a : -M.b, lz = sd * v.kit.E.body.hw, ch = Math.cos(h), sh = Math.sin(h);
     if (!v.hubs[k]) { const hb = v.hubs[k] = ownRnd(() => new THREE.Mesh(kitHubGeo(v.kit.E), vMat(v, v.lampsOut ? matLensBroken : matWheel))); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner; burnt: dark)
     v.hubs[k].visible = true;
@@ -5660,7 +5741,7 @@ const Render = (function () {
     for (let i = 0; i < p.length; i += 3) { w.set(p[i] - cen[0], p[i + 1] - cen[1], p[i + 2] - cen[2]).applyQuaternion(q); if (w.y < lo) lo = w.y; if (w.y > hi) hi = w.y; }
     lay.userData.up = -d.h / 2 - lo; lay.userData.down = d.h / 2 - hi;   // (its lowest point on the road: lying the right way up, or upside down)
     const bb = L.geo.boundingBox || (L.geo.computeBoundingBox(), L.geo.boundingBox);
-    inner.castShadow = bb.max.distanceTo(bb.min) >= 0.5; inner.receiveShadow = true;
+    inner.castShadow = tierNow > 0 && bb.max.distanceTo(bb.min) >= 0.5; inner.receiveShadow = true;   // (the lowest tier: no shadow, the piece lies flat on the road)
     lay.add(inner); m.add(lay); m.userData.lay = lay; m.userData.kit = true;
     return m;
   }
@@ -6797,6 +6878,7 @@ const Render = (function () {
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     cullByDistance();   // adaptive detail (LOD): hide the far vegetation on the lower tiers, now the camera is in its final place for this frame
+    kitPieceCull();   // (the lowest tier: the kit's pieces on the road, the nearest)
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;

@@ -31,8 +31,10 @@
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
 //    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
-//    drawn there (its rivals' calls / vertices in that frame over one default rival's whole cost; at most the field's size). Also printed:
-//    every rival of the field drawn in full (the worst case)
+//    drawn there (its rivals' calls / vertices in that frame over one default rival's whole cost; at most the field's size), the vehicle's
+//    own costs (as the player, as a rival, a piece of its wreck) measured on that tier too (a rival's shadow is its hull there, a piece casts
+//    none: Render's kitHullGeo); under a wreck: 40 of its pieces more (of which the tier draws the nearest: Render.kitInfo().pieces). Also
+//    printed: every rival of the field drawn in full (the worst case)
 //  - the retired model at index 5 (in no list: every check above skips it): still drawn when an old ghost or an old friend's car brings
 //    it, as its heir the LEV S (the showroom, a race, a wreck and a repair)
 //   node tests/browser/fleet.test.mjs            (FLEET_ONLY=titan,mravlja: the per-vehicle checks of those only)
@@ -526,8 +528,11 @@ try {
   //         the vehicle as the player and its field of rivals (all of them, as if all were in view), within the phone budget ----
   const fields = R4.filter(r => !r.swapped);
   // (perf.json's budget is measured on the NIZKA tier (perf.test.mjs: detail 'low'), so the field's cost is too: both worlds are built
-  // again at it here (4c left Vršič built); the vehicles themselves cost the same on every tier)
+  // again at it here (4c left Vršič built), and each vehicle's own cost is measured again on it (C5, once, on Jezero: a rival's shadow is
+  // its hull there, a piece of a wreck casts none, see Render's kitHullGeo): as the player, as a rival of its own field, a piece of its
+  // wreck (Core.wreckCar: its pieces drawn alone over their count), as section 4 and 4d measure them)
   await page.evaluate(() => { window.__game.S.detail = 'low'; });
+  let C5 = null, cap5;
   for (const tid of ['jezero', 'nring']) {
     await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'rally'); });
     await startTrack(page, tid);
@@ -550,15 +555,44 @@ try {
       }
       return { s, pl, unit, nAI: R.cars.length - 1 };
     });
+    if (!C5) C5 = await page.evaluate((ids) => ids.map(id => {   // (each vehicle on the NIZKA tier: Jezero's world, its own field)
+      const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
+      let seed = 777; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
+      const R = g.race, P = R.player; Render.frame(0, 1, P, 'chase', { noFx: true });
+      const A = R.cars.find(c => !c.isPlayer && c.m === M), pc = FL.costOf(Render.viewOf(P), P), ac = A ? FL.costOf(Render.viewOf(A), P) : null, hull = !!(A && Render.viewOf(A).hull && !Render.viewOf(A).hull.visible);
+      Core.wreckCar(P); for (let i = 0; i < 6; i++) { g.sim(0.1, true); Render.frame(0.1, 1, P, 'chase', { noFx: true }); }
+      const mine = R.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).map(d => d.mesh), e = FL.frameWith([], P), w = FL.frameWith(mine, P);
+      return { id, pc, ac, hull, np: mine.length, pcs: { calls: w[0] - e[0], verts: w[1] - e[1] } };
+    }), fields.map(r => r.id));
+    if (cap5 === undefined) {   // (the NIZKA tier draws only the nearest of the kit's pieces on the road: three wrecks at once, more pieces than that)
+      const PC = await page.evaluate((id) => {
+        const g = window.__game, M = Core.MODELS.find(q => q.id === id); let seed = 31; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+        g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
+        const R = g.race, P = R.player; for (const c of R.cars.slice(0, 3)) Core.wreckCar(c);
+        for (let i = 0; i < 8; i++) { g.sim(0.1, true); Render.frame(0.1, 1, P, 'chase', { noFx: true }); }
+        const cap = Render.kitInfo().pieces, cp = Render.camera.position, K = R.debris.filter(d => d.mesh && d.mesh.isObject3D && d.mesh.userData.kit), d2 = (d) => (d.x - cp.x) ** 2 + (d.z - cp.z) ** 2;
+        const shown = K.filter(d => d.mesh.visible), hid = K.filter(d => !d.mesh.visible), far = Math.max(0, ...shown.map(d2)), near = Math.min(1e12, ...hid.map(d2));
+        return { cap, pieces: K.length, shown: shown.length, nearest: far <= near };
+      }, 'predsednik');
+      cap5 = PC.cap;
+      T.check(`the NIZKA tier: of the kit's pieces on the road the nearest ${PC.cap} drawn (three wrecks at once, the farther ones hidden)`, PC.cap > 0 && PC.pieces > PC.cap && PC.shown === PC.cap && PC.nearest, JSON.stringify(PC));
+    }
+    if (tid === 'jezero') {   // (the NIZKA tier against the costs of sections 4 / 4d, VISOKA: a rival's shadow its hull, a piece none)
+      const W6 = new Map(R6.map(q => [q.id, q])), cmp = C5.map(q => { const r4 = R4.find(r => r.id === q.id), w6 = W6.get(q.id);
+        return { id: q.id, hull: q.hull, ac: q.ac ? q.ac.verts : null, ac4: r4.ac.verts, pc: q.np ? q.pcs.verts / q.np : null, pc6: w6 && w6.n ? w6.pcs.verts / w6.n : null }; });
+      const okT = (q) => q.ac != null && (q.hull ? q.ac < q.ac4 : q.ac <= q.ac4) && q.pc != null && q.pc6 != null && q.pc < q.pc6;
+      T.check(`the NIZKA tier: a rival's shadow cast by its model's hull (hidden but for the shadow map), the rival cheaper; a piece of a wreck no shadow, a lost wheel a rival's, cheaper (${cmp.filter(q => q.hull).length} of ${cmp.length} with a hull)`,
+        cmp.length === fields.length && cmp.every(okT), cmp.filter(q => !okT(q)).concat(cmp).slice(0, 6).map(q => `${q.id}${q.hull ? '' : ' (no hull)'} rival ${(q.ac4 / 1000).toFixed(1)} -> ${q.ac == null ? '-' : (q.ac / 1000).toFixed(1)}k, piece ${q.pc6 == null ? '-' : (q.pc6 / 1000).toFixed(2)} -> ${q.pc == null ? '-' : (q.pc / 1000).toFixed(2)}k`).join(', '));
+    }
     const G = PERF[tid], maxC = G.maxCalls * 1.1 + 5, maxV = (G.maxKverts * 1.1 + 20) * 1000;
-    const est = await page.evaluate(({ rows, n }) => rows.map(r => Object.assign({ n: Core.fieldSize(Core.MODELS.find(m => m.id === r.id), n) }, r)), { rows: fields.map(r => ({ id: r.id, pc: r.pc, ac: r.ac })), n: B.nAI });
-    const W6 = new Map(R6.map(q => [q.id, q]));   // (a piece's cost, from the wreck of 4d: its pieces drawn alone over their count)
+    const est = await page.evaluate(({ rows, n }) => rows.map(r => Object.assign({ n: Core.fieldSize(Core.MODELS.find(m => m.id === r.id), n) }, r)), { rows: C5.filter(q => q.ac), n: B.nAI });
     const rows = est.map(r => {
-      let calls = 0, verts = 0, allC = 0, allV = 0, wC = 0, wV = 0; const w6 = W6.get(r.id), pc = w6 && w6.n ? [w6.pcs.calls / w6.n, w6.pcs.verts / w6.n] : null;
+      let calls = 0, verts = 0, allC = 0, allV = 0, wC = 0, wV = 0; const pc = r.np ? [r.pcs.calls / r.np, r.pcs.verts / r.np] : null;
       for (const q of B.s) {
         const nC = Math.min(r.n, (q.all[0] - q.base[0]) / B.unit[0]), nV = Math.min(r.n, (q.all[1] - q.base[1]) / B.unit[1]), bc = q.base[0] - B.pl.calls + r.pc.calls, bv = q.base[1] - B.pl.verts + r.pc.verts;
         calls = Math.max(calls, bc + nC * r.ac.calls); verts = Math.max(verts, bv + nV * r.ac.verts); allC = Math.max(allC, bc + r.n * r.ac.calls); allV = Math.max(allV, bv + r.n * r.ac.verts);
-        if (pc) { wC = Math.max(wC, bc + nC * r.ac.calls + 40 * pc[0]); wV = Math.max(wV, bv + nV * r.ac.verts + 40 * pc[1]); }
+        if (pc) { const np = Math.min(40, cap5 || 40); wC = Math.max(wC, bc + nC * r.ac.calls + np * pc[0]); wV = Math.max(wV, bv + nV * r.ac.verts + np * pc[1]); }
       }
       return { id: r.id, n: r.n, calls: Math.round(calls), verts: Math.round(verts), allC, allV, pc, wC: Math.round(wC), wV: Math.round(wV) };
     });
@@ -567,9 +601,10 @@ try {
     T.check(`${tid}: each vehicle's own field (fieldN capped) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k; the default race: ${Math.max(...B.s.map(q => q.all[0]))} calls, rivals drawn per sample ${drawn} of ${B.nAI})`,
       rows.length === fields.length && !bad.length, (bad.length ? bad : worst).slice(0, 4).map(r => `${r.id} x${r.n}: ${r.calls} calls, ${Math.round(r.verts / 1000)}k`).join(', '));
     console.log(`info ${tid}: every rival of the field drawn in full (the worst case): ` + rows.map(r => `${r.id} x${r.n} ${r.allC} / ${Math.round(r.allV / 1000)}k`).join(', '));
-    if (tid === 'jezero') {   // the field under a wreck: the cap's 40 pieces on the road (all in view, each at its vehicle's own piece's cost: 4d)
+    if (tid === 'jezero') {   // the field under a wreck: the cap's 40 pieces on the road (all in view, each at its vehicle's own piece's cost: C5)
+      console.log('info the NIZKA tier: per vehicle (player / rival calls, kverts; a piece of its wreck): ' + C5.map(q => `${q.id} ${q.pc.calls}/${q.ac ? q.ac.calls : '-'} ${(q.pc.verts / 1000).toFixed(1)}/${q.ac ? (q.ac.verts / 1000).toFixed(1) : '-'}; ${q.np ? (q.pcs.calls / q.np).toFixed(2) + ' calls ' + (q.pcs.verts / q.np / 1000).toFixed(2) + 'k' : '-'}`).join(', '));
       const wb = rows.filter(r => !r.pc || r.wC > maxC || r.wV > maxV), ww = rows.filter(r => r.pc).sort((a, b) => b.wV / maxV - a.wV / maxV).slice(0, 4);
-      T.check(`jezero under a wreck: each vehicle's own field and 40 of its pieces on the road (all in view) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k)`,
+      T.check(`jezero under a wreck: each vehicle's own field and 40 of its pieces on the road (all in view; the NIZKA tier draws the nearest ${cap5}) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k)`,
         rows.length === fields.length && !wb.length, (wb.length ? wb : ww).slice(0, 4).map(r => `${r.id} x${r.n} + 40 pieces (${r.pc ? r.pc[0].toFixed(2) + ' calls, ' + (r.pc[1] / 1000).toFixed(2) + 'k a piece' : 'not measured'}): ${r.wC} calls, ${Math.round(r.wV / 1000)}k`).join(', '));
     }
   }
