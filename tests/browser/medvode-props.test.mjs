@@ -39,9 +39,9 @@ try {
       const lim = q.k >= 0 ? Tr.stubHw(Tr.stubs[q.k], q.st) + Tr.stubs[q.k].lim : (q.d > 0 ? q.br : q.bl), d = q.k >= 0 ? Math.abs(q.u) : Math.abs(q.d);
       if (d < lim - b.K.rh) reach[b.kind] = (reach[b.kind] || 0) + 1; }
     const ps = W.propStats || {};
-    return { by, cap, knock: W.knock, propR: W.propR, postSpots: ps.nSpots, postsKnock: ps.posts, nIn, inBld, nBuilt: built.length, off, offBy, worst, want, stubs: Tr.stubs.length, total: race.props.length, reach, all, bollards: W.props.filter(p => p.kind === 'bollard').length };
+    return { by, cap, knock: W.knock, propR: W.propR, postSpots: ps.nSpots, postsKnock: ps.posts, nIn, inBld, nBuilt: built.length, off, offBy, worst, want, stubs: Tr.stubs.length, total: race.props.length, reach, all, bollards: W.props.filter(p => p.kind === 'tbollard').length };
   });
-  const K = r.by, need = { bollard: 600, lamp: 40, sign: 20, bsign: 8, bench: 8, nsign: 8, zaprta: 25, vboard: 3, flagp: 6, cflag: 8, post: 3 };   // (the delineator posts: knockable only where they fit inside the fence at the road's edge, the rest fixed behind it)
+  const K = r.by, need = { tbollard: 600, mlamp: 40, msign: 20, bsign: 8, bench: 8, nsign: 8, zaprta: 25, vboard: 3, flagp: 6, cflag: 8, post: 3 };   // (the delineator posts: knockable only where they fit inside the fence at the road's edge, the rest fixed behind it)
   console.log(`   props by kind: ${JSON.stringify(K)}, ${r.total} in all; delineator posts: ${r.postsKnock} knockable of ${r.postSpots} places (the rest stand fixed beside the guard rails)`);
   console.log(`   within reach of a car (inside the barriers): ${Object.keys(r.all).map(k => `${k} ${r.reach[k] || 0}/${r.all[k]}`).join(', ')}`);
   T.check('props: the world has every kind: bollards in front of the mouths, lamps, signs, plates, boards, flags, benches (and the delineator posts)', Object.keys(need).every(k => (K[k] || 0) >= need[k]), Object.keys(need).map(k => `${k} ${K[k] || 0}/${need[k]}`).join(', '));
@@ -75,7 +75,7 @@ try {
   // across the mouth stops it
   const k = await page.evaluate(() => {
     const g = window.__game, race = g.race, Tr = race.track, P = race.player, S = Tr.stubs.find(s => s.s > Tr.startS + 800 && s.m0 >= 0 && s.ang > 80 && s.ang < 100 && s.hw > 3);
-    const mine = Tr.stubBollards(S.k), row = race.props.filter(b => b.kind === 'bollard' && mine.some(m => Math.hypot(b.x - m.x, b.z - m.z) < 0.3)), x0 = row.map(b => [b.x, b.z]);
+    const mine = Tr.stubBollards(S.k), row = race.props.filter(b => b.kind === 'tbollard' && mine.some(m => Math.hypot(b.x - m.x, b.z - m.z) < 0.3)), x0 = row.map(b => [b.x, b.z]);
     race.state = 'racing'; P.locked = false;
     const P0 = Tr.stubPt(S.k, 0, {}), i0 = Tr.nearestIdx(P0.x, P0.z), bar = S.side > 0 ? Tr.br[i0] : Tr.bl[i0]; P.place(P0.x, P0.z, P0.h); P.q = Tr.query(P.x, P.z, i0, P.q); P.y = P.py = Tr.yAt(P.q); P.roadY = P.y; P.vx = Math.cos(P.h) * 11; P.vz = Math.sin(P.h) * 11;
     let out = -1e9, wall = 0;

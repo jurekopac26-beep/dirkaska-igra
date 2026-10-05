@@ -53,7 +53,7 @@ check("drivers: the race's AI drivers are the championship's (same names, cars a
   check('series: the big championship has every circuit', !!all && all.tracks.length === C.TRACKS.filter(circuit).length, all && all.tracks.join(' '));
 }
 
-// 5. a whole championship ("Domači pokal", four races of the game's length, 12 AI, the player on autopilot from 12th on the grid)
+// 5. a whole championship ("Domači pokal", three races of the game's length, 12 AI, the player on autopilot from 12th on the grid)
 {
   const S = C.CHAMPS.find(s => s.id === 'domaci'), rounds = [], t0 = Date.now();
   let cars = true, nan = false;
@@ -71,7 +71,7 @@ check("drivers: the race's AI drivers are the championship's (same names, cars a
   });
   const t = C.champTable(keys, rounds), sum = t.reduce((a, e) => a + e.pts, 0);
   check('a whole championship: every round has every driver once', rounds.every(r => r.order.length === 13 && new Set(r.order).size === 13 && r.order.every(k => keys.includes(k))), rounds.map(r => r.track).join(', '));
-  check('a whole championship: the points add up (4 x 101), the leader has the most', sum === 4 * 101 && t.every((e, i) => i === 0 || e.pts <= t[i - 1].pts), `total ${sum}, leader ${t[0].key} ${t[0].pts}`);
+  check('a whole championship: the points add up (3 x 101), the leader has the most', sum === 3 * 101 && t.every((e, i) => i === 0 || e.pts <= t[i - 1].pts), `total ${sum}, leader ${t[0].key} ${t[0].pts}`);
   check('a whole championship: each AI driver in the same car every round, no NaN', cars && !nan, `${((Date.now() - t0) / 1000).toFixed(0)} s`);
   console.log('   standings: ' + t.map((e, i) => `${i + 1}. ${e.key} ${e.pts}`).join(', '));
   const me = t.find(e => e.key === C.PLAYER_KEY);

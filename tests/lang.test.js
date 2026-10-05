@@ -52,7 +52,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const tableSrc = (name) => { const m = new RegExp('\\b' + name + ' = (?=[\\[{\'])').exec(src); if (!m) return null; let i = m.index + m[0].length; const open = src[i];
     if (open === "'") return src.slice(i, strAt(src, i)[1]);
     let d = 0, j = i; for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d === 0) break; } return src.slice(i, j + 1); };
-  const T = { DRIVE_TXT: 0, CTRL_HELP: 0, CTRL_HELP_CS: 0, CTRL_NAME: 0, CAR_DESC: 0, MODE_NAME: 0, MEDAL: 0, UPG_TXT: 0, CAM_NAME: 0, RP_CAM: 0, DIFF_NAME: 0, NET_ERR: 0, W: 0, G: 0 };
+  const T = { DRIVE_TXT: 0, CTRL_HELP: 0, CTRL_HELP_CS: 0, CTRL_NAME: 0, CAR_DESC: 0, MODE_NAME: 0, MEDAL: 0, UPG_TXT: 0, CAM_NAME: 0, RP_CAM: 0, DIFF_NAME: 0, NET_ERR: 0, W: 0, G: 0, NEED_TXT: 0, CMP_WORD: 0, PIT_CMP_NAME: 0 };
   for (const k in T) {
     const s = tableSrc(k); if (!s) { miss.push('(no table ' + k + ')'); continue; }
     const v = Function('return ' + s)(), all = typeof v === 'string' ? [v] : Object.values(v);

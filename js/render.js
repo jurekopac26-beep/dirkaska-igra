@@ -1446,7 +1446,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1;   // (saverK: the battery saver's lower resolution, setSaver)
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
-  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
+  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6;
 
@@ -1496,7 +1496,7 @@ const Render = (function () {
     return renderer;
   }
 
-  function buildWorld(track, density) {
+  function buildWorld(track, density, tier) {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
@@ -1505,13 +1505,14 @@ const Render = (function () {
       if (skids) skids.clear();
     }
     clearPropMeshes();
-    world = World.build(scene, track, tex, { density, season: atmos.season });   // (a world may paint itself for the season: Vršič)
+    world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
     curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
+    birds.off = !!(track.def && track.def.noBirds);   // (def.noBirds: a world without birds)
     valleyFog(); rainbow(false); setMarks(null);   // (the morning mist, no rainbow or school marks from the last world)
     return world;
   }
@@ -1520,8 +1521,8 @@ const Render = (function () {
   let propMeshes = {};
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
-  const PROP_NOSHADOW = new Set(['sign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (Medvode's thin signs on poles and the bench)
   let propMat = null, propMatTyre = null;
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1558,18 +1559,18 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
-    else if (kind === 'bollard') {   // Medvode's yellow triangular bollard (1.05 m, 0.4 m a side; the apex points +x, into the side road): a black band, a white reflective strip on each face
+    else if (kind === 'tbollard') {   // Medvode's yellow triangular bollard (1.05 m, 0.4 m a side; the apex points +x, into the side road): a black band, a white reflective strip on each face
       const ye = [1, 0.82, 0.05], bk = [0.07, 0.07, 0.08], rf = [0.95, 0.95, 0.88], R = 0.231, H = 0.2, V = [[R, 0], [-R / 2, H], [-R / 2, -H]], y0 = -0.575, y1 = 0.525;
       const P = (v, y) => [V[v][0], y, V[v][1]], seg = (a, b, ya, yb, col) => g.quadO(P(a, ya), P(b, ya), P(b, yb), P(a, yb), col, [0, (ya + yb) / 2, 0]);
       for (let a = 0; a < 3; a++) { const b = (a + 1) % 3; seg(a, b, y0, -0.105, ye); seg(a, b, -0.105, -0.015, rf); seg(a, b, -0.015, 0.125, ye); seg(a, b, 0.125, 0.29, bk); seg(a, b, 0.29, y1, ye); }
       g.triO(P(0, y1), P(1, y1), P(2, y1), [1, 0.88, 0.14], [0, y0, 0]); }
-    else if (kind === 'lamp') {   // a street lamp: a grey 8.3 m pole (its foot 0.3 m in the ground), the arm over the road (+x), the lamp
+    else if (kind === 'mlamp') {   // Medvode's street lamp: a grey 8.3 m pole (its foot 0.3 m in the ground), the arm over the road (+x), the lamp
       const st = [0.56, 0.58, 0.6]; W.cyl(g, 0, -4.3, 0, 0.09, 8.3, 6, st, null, 0.06); W.box(g, 0.8, 3.9, 0, 1.7, 0.1, 0.1, 0, st); W.box(g, 1.6, 3.75, 0, 0.7, 0.16, 0.32, 0, [0.3, 0.31, 0.33], [0.42, 0.43, 0.45]); }
-    else if (kind === 'sign' || kind === 'bsign') {   // a square blue board on a pole (the faces ±x): the zebra crossing's white triangle, the bus stop's white bus
+    else if (kind === 'msign' || kind === 'bsign') {   // a square blue board on a pole (the faces ±x): the zebra crossing's white triangle, the bus stop's white bus
       const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94];
       W.cyl(g, 0, -1.5, 0, 0.04, 2.75, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.65, 0, 0.05, 0.64, 0.64, 0, blue);
       for (const f of [-1, 1]) { const x = f * 0.032, A = (y, z) => [x, y, z], inn = [0, 0.97, 0];
-        if (kind === 'sign') g.triO(A(1.17, 0), A(0.75, -0.25), A(0.75, 0.25), wh, inn);
+        if (kind === 'msign') g.triO(A(1.17, 0), A(0.75, -0.25), A(0.75, 0.25), wh, inn);
         else { g.quadO(A(0.82, -0.22), A(0.82, 0.22), A(1.1, 0.22), A(1.1, -0.22), wh, inn); g.quadO([f * 0.034, 0.96, -0.19], [f * 0.034, 0.96, 0.19], [f * 0.034, 1.06, 0.19], [f * 0.034, 1.06, -0.19], blue, inn); } } }
     else if (kind === 'nsign') {   // the street's name: a blue plate (1.4 x 0.35, faces ±x) on a pole, white bars for the lettering
       const blue = [0.11, 0.31, 0.6], wh = [0.95, 0.95, 0.93];
@@ -1597,18 +1598,69 @@ const Render = (function () {
       for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) W.box(g, 0.36 + a * 0.55, 1.3 + b * 0.55, 0, 0.55, 0.55, 0.05, 0, (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
     else if (kind === 'bench') {   // a bus stop's bench: a wooden seat (1.8 x 0.45 m) on two legs
       W.box(g, 0, 0.18, 0, 1.8, 0.06, 0.45, 0, [0.46, 0.32, 0.2]); for (const x of [-0.75, 0.75]) W.box(g, x, -0.24, 0, 0.08, 0.42, 0.4, 0, [0.3, 0.3, 0.32]); }
+    else streetPropGeo(g, kind, W);
+    if (propRg === 'au' && (kind === 'signal' || kind === 'signalm')) for (let q = 0; q < g.C.length; q += 3) { const c = g.C[q] === 0.98 && g.C[q + 1] === 0.78 ? [0.95, 0.95, 0.93] : g.C[q] === 0.95 && g.C[q + 1] === 0.5 ? [0.92, 0.1, 0.08] : g.C[q] === 0.92 && g.C[q + 2] === 0.88 ? [0.2, 0.86, 0.42] : null; if (c) { g.C[q] = c[0]; g.C[q + 1] = c[1]; g.C[q + 2] = c[2]; } }   // (Australia: the black target boards' white border, the red and green men)
     return g.geometry();
+  }
+  let propRg = '';   // the street furniture's region (def.propRegion): 'au' the Australian signals' boards
+  // the street furniture (Core's PROPK: signal ... barrel), its origin at the centre as it stands, local +x towards the road for those with an arm
+  function streetPropGeo(g, kind, W) {
+    if (kind === 'signal' || kind === 'signalm') { const g0 = new W.GB(); streetPropGeo2(g0, kind, W); const k = 1.2; for (let q = 0; q < g0.P.length; q += 3) { g.P.push(g0.P[q] * k, g0.P[q + 1], g0.P[q + 2] * k); } g.N.push(...g0.N); g.C.push(...g0.C); if (g.U) for (let q = 0; q < g0.P.length / 3; q++) g.U.push(0, 0); return; }   // (the signals a fifth wider and deeper: they read from above)
+    streetPropGeo2(g, kind, W);
+  }
+  function streetPropGeo2(g, kind, W) {
+    const gy = [0.58, 0.6, 0.62], dk = [0.12, 0.12, 0.13], bk = [0.06, 0.06, 0.07], ye = [0.98, 0.78, 0.1], wh = [0.95, 0.95, 0.93];
+    const head = (x, y, z, ped) => {   // a signal head facing both ways along local z (a yellow-rimmed backplate; red, amber, green), or a pedestrian head
+      if (ped) { W.box(g, x, y, z, 0.3, 0.42, 0.3, 0, dk, dk); for (const f of [-1, 1]) { W.box(g, x, y + 0.24, z + f * 0.155, 0.2, 0.13, 0.01, 0, [0.95, 0.5, 0.15], null, true); W.box(g, x, y + 0.06, z + f * 0.155, 0.2, 0.13, 0.01, 0, [0.92, 0.92, 0.88], null, true); } return; }
+      W.box(g, x, y - 0.12, z, 0.6, 1.24, 0.05, 0, ye, ye); W.box(g, x, y - 0.06, z, 0.5, 1.12, 0.06, 0, bk, bk); W.box(g, x, y, z, 0.34, 1.0, 0.28, 0, dk, dk);
+      [[0.82, 0.86, 0.12, 0.1], [0.5, 0.98, 0.62, 0.1], [0.18, 0.2, 0.9, 0.45]].forEach(([yy, r, gg, b]) => { for (const f of [-1, 1]) W.box(g, x, y + yy - 0.11, z + f * 0.145, 0.22, 0.22, 0.012, 0, [r, gg, b], null, true); });
+    };
+    if (kind === 'signal') {   // a corner pole: two heads back to back on top, a pedestrian head and a push button lower down
+      W.cyl(g, 0, -2.3, 0, 0.11, 4.6, 8, gy, gy, 0.09); W.cyl(g, 0, -2.3, 0, 0.2, 0.18, 8, [0.5, 0.5, 0.5]);
+      head(0.05, 1.32, 0); head(0.3, -0.1, 0, true); W.box(g, 0.1, -1.25, 0, 0.12, 0.18, 0.1, 0, ye, ye);
+    } else if (kind === 'signalm') {   // a mast arm over the road (along +x) with two heads, a pedestrian head on the pole
+      W.cyl(g, 0, -3.2, 0, 0.16, 6.4, 8, gy, gy, 0.13); W.cyl(g, 0, -3.2, 0, 0.28, 0.2, 8, [0.5, 0.5, 0.5]);
+      W.box(g, 3.5, 2.62, 0, 7.0, 0.16, 0.16, 0, gy, gy); W.box(g, 1.1, 2.3, 0, 2.2, 0.08, 0.08, -0.3, gy, gy);
+      head(4.2, 1.85, 0); head(6.6, 1.85, 0); head(0.3, -1.6, 0, true);
+    } else if (kind === 'lamp') {   // a tall grey pole, a davit arm, a cobra head over the road
+      W.cyl(g, 0, -4.5, 0, 0.14, 8.9, 8, gy, gy, 0.08); W.cyl(g, 0, -4.5, 0, 0.24, 0.5, 8, [0.5, 0.5, 0.5]);
+      W.box(g, 0.95, 4.15, 0, 1.9, 0.09, 0.09, 0, gy, gy); W.box(g, 1.95, 3.98, 0, 0.75, 0.2, 0.34, 0, [0.7, 0.71, 0.73], [0.72, 0.73, 0.75]); W.box(g, 1.98, 3.95, 0, 0.55, 0.04, 0.26, 0, [1, 0.96, 0.82]);
+    } else if (kind === 'sign') {   // a regulatory sign on a square post (white face both ways, a red ring)
+      W.box(g, 0, -1.3, 0, 0.06, 2.6, 0.06, 0, gy, gy); W.box(g, 0, 0.62, 0, 0.6, 0.75, 0.03, 0, wh, wh);
+      for (const f of [-1, 1]) { W.box(g, 0, 0.71, f * 0.017, 0.46, 0.06, 0.004, 0, [0.85, 0.12, 0.1], null, true); W.box(g, 0, 0.92, f * 0.017, 0.46, 0.06, 0.004, 0, [0.85, 0.12, 0.1], null, true); W.box(g, 0, 0.98, f * 0.017, 0.3, 0.22, 0.004, 0, bk, null, true); }
+    } else if (kind === 'hydrant') {   // a red hydrant: barrel, a white bonnet, two side nozzles, the flange at its foot
+      const rd = [0.82, 0.13, 0.1]; W.cyl(g, 0, -0.42, 0, 0.21, 0.08, 8, [0.5, 0.48, 0.46]); W.cyl(g, 0, -0.34, 0, 0.16, 0.56, 8, rd, rd);
+      W.cyl(g, 0, 0.22, 0, 0.18, 0.06, 8, rd, rd); W.cone(g, 0, 0.28, 0, 0.16, 0.12, 8, wh, wh, 0); W.cyl(g, 0, 0.38, 0, 0.035, 0.05, 6, wh, wh);
+      W.box(g, 0, 0.0, 0, 0.5, 0.11, 0.11, 0, rd, rd); W.box(g, 0.18, -0.12, 0, 0.12, 0.16, 0.16, 0, [0.9, 0.9, 0.88], [0.9, 0.9, 0.88]);
+    } else if (kind === 'bin') {   // a square black metal litter bin, a silver band and a dark lid
+      W.box(g, 0, -0.5, 0, 0.62, 0.94, 0.62, 0, [0.16, 0.17, 0.18], null); W.box(g, 0, 0.18, 0, 0.64, 0.12, 0.64, 0, [0.7, 0.72, 0.74], [0.7, 0.72, 0.74]); W.box(g, 0, 0.3, 0, 0.6, 0.18, 0.6, 0, [0.1, 0.1, 0.11], [0.2, 0.21, 0.23]);
+      for (const f of [-1, 1]) W.box(g, f * 0.316, -0.1, 0, 0.01, 0.12, 0.32, 0, bk, null, true);
+    } else if (kind === 'cabinet') {   // an electrical cabinet on its plinth, the doors' seams and a vent
+      const cb = [0.66, 0.68, 0.62]; W.box(g, 0, -0.7, 0, 1.06, 0.12, 0.66, 0, [0.55, 0.55, 0.53]); W.box(g, 0, -0.58, 0, 1.0, 1.24, 0.6, 0, cb, [0.72, 0.74, 0.68]);
+      for (const f of [-1, 1]) { W.box(g, 0, -0.5, f * 0.302, 0.02, 1.05, 0.01, 0, [0.4, 0.42, 0.38], null, true); W.box(g, -0.3, 0.32, f * 0.302, 0.25, 0.12, 0.01, 0, [0.35, 0.36, 0.33], null, true); }
+    } else if (kind === 'bollard') {   // a black steel bollard with a reflective band and a domed cap
+      W.cyl(g, 0, -0.5, 0, 0.11, 0.92, 8, [0.12, 0.12, 0.13], null); W.cyl(g, 0, 0.18, 0, 0.113, 0.08, 8, [0.95, 0.92, 0.85]); W.cone(g, 0, 0.42, 0, 0.11, 0.08, 8, [0.15, 0.15, 0.16], [0.25, 0.25, 0.27], 0);
+    } else if (kind === 'shelter') {   // a bus shelter open towards the road (+x): four posts, a flat roof, glass at the back and the ends, an advertising panel
+      const fr = [0.24, 0.25, 0.27], gl = [0.62, 0.72, 0.78];
+      for (const x of [-0.72, 0.72]) for (const z of [-1.74, 1.74]) W.box(g, x, -1.25, z, 0.08, 2.4, 0.08, 0, fr, fr);
+      W.box(g, 0, 1.12, 0, 1.75, 0.13, 3.75, 0, fr, [0.32, 0.33, 0.36]); W.box(g, -0.72, -1.05, 0, 0.03, 2.1, 3.4, 0, gl, gl);
+      W.box(g, 0, -1.05, -1.74, 1.3, 2.1, 0.03, 0, gl, gl); W.box(g, 0.05, -1.05, 1.74, 1.3, 2.1, 0.06, 0, [0.9, 0.9, 0.86], [0.9, 0.9, 0.86]);
+      W.box(g, -0.55, -0.82, 0, 0.3, 0.06, 2.2, 0, [0.4, 0.4, 0.42]);
+    } else if (kind === 'barrel') {   // an orange construction drum with white reflective bands and a black base
+      const or = [0.98, 0.42, 0.08]; W.cyl(g, 0, -0.47, 0, 0.32, 0.1, 10, bk, bk); W.cyl(g, 0, -0.37, 0, 0.28, 0.84, 10, or, or, 0.26);
+      for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);
+    }
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
   function setupProps(race) {
     if (!race || !race.props) { for (const k in propMeshes) propMeshes[k].visible = false; return; }
     if (!propMat) { propMat = new THREE.MeshLambertMaterial({ vertexColors: true }); propMatTyre = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.tyreTex }); }
-    const cap = race.propCap || {};
+    const cap = race.propCap || {}, rg = (race.track && race.track.def && race.track.def.propRegion) || '';
     for (const kind in cap) {
       let m = propMeshes[kind];
-      if (!m || m.userData.cap < cap[kind]) {
+      if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
         if (m) { scene.remove(m); m.geometry.dispose(); }
-        m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind];
+        m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind]; m.userData.rg = rg;
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;   // (the thin signs and the bench cast none: one draw call less each in the shadow pass)
         scene.add(m); propMeshes[kind] = m;
       }
@@ -1678,7 +1730,6 @@ const Render = (function () {
   const THEMES = {
     lake:     { fog: 0xbcd3e4, sun: 0xfff0d6, sunI: 0.98, sky: 0xd3e7ff, gnd: 0x5d6b35, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1 },
     city:     { fog: 0xd8e3ea, sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6, tint: [1.05, 1.0, 0.93], sat: 1.12 },
-    ljubljana: { fog: 0xcadbe9, sun: 0xffe6c2, sunI: 1.04, sky: 0xd8e9ff, gnd: 0x7a6e56, hemiI: 0.6, tint: [1.04, 1.0, 0.95], sat: 1.13 },
     forest:   { fog: 0x9a90c6, sun: 0xff9e5e, sunI: 2.26, sky: 0x6d8cec, gnd: 0x1c357f, hemiI: 0.7, tint: [1.0, 0.95, 1.04], sat: 1.06, sunOff: [-55, 64, -106] },   // low sun in the NNW, in front of the kino camera: back-lit, long shadows falling towards the lower right (measured from the reference)   // warm key light, navy-blue shadows (as in the reference)   // warm evening: peach sun, lavender haze
     italia:   { fog: 0xa4a6d0, sun: 0xffb47c, sunI: 2.2, sky: 0x7090ea, gnd: 0x6e5a78, hemiI: 0.7, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 70, -58] },   // Toskana: the forest's warm key light and navy shadows, a little less orange, the sun in the west-north-west (measured from the reference)
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
@@ -1712,7 +1763,7 @@ const Render = (function () {
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
   const SPLIT = {
-    lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], ljubljana: [[0.98, 0.99, 1.04], [1.04, 1.0, 0.95]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
+    lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
     ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
     spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]],
@@ -1725,6 +1776,8 @@ const Render = (function () {
     medvode: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
+  THEMES.newcastle = { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-58, 86, -66] };   // Newcastle: a clear late-spring afternoon on the coast, the sun from the north-west (the southern hemisphere), a light sea haze
+  SPLIT.newcastle = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
@@ -2086,7 +2139,7 @@ const Render = (function () {
   function sunFx(target) {
     if (themeId === 'pikes' || !world) return;
     const dt = clamp(time - sunT, 0, 0.25), r = Math.max(0, wet); sunT = time; sunHint = target && target.q && target.q.a >= 0 ? target.q.a : -1;
-    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco', 'ljubljana'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
+    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
     if (rays > 0 && world.pkWood === undefined) world.pkWood = sunWood();
     if (!world.pkWood) rays = 0;
     pkRays(rays, dt);
@@ -2128,7 +2181,7 @@ const Render = (function () {
     winU.value = (todK >= 1 ? 1 : todK <= 0.5 ? 0.8 * todK : 0.4 + 1.2 * (todK - 0.5)) * (dawn ? 0.75 : 1);   // (day 0, dusk 0.4, night 1: with the time of day, also as it moves on in an endurance race; in the morning a few)
     if (!winU.value || !world || !world.root || world.winLit) return;
     world.winLit = true;
-    const maps = [tex.facade, tex.facadeBal].filter(Boolean);
+    const maps = [tex.facade, tex.facadeBal].concat(world.winMaps || []).filter(Boolean);   // (world.winMaps: a world's own facades)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
       const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)
@@ -2398,6 +2451,22 @@ const Render = (function () {
   }
   function setDynScale(k) { k = clamp(k, 0.55, 1); if (Math.abs(k - dynScale) > 0.01) { dynScale = k; resize(); } }
   function getDynScale() { return dynScale; }
+  // adaptive graphics detail (LOD): the runtime draw-distance cull. On the lower tiers Render hides the far vegetation/tree chunks (world.cull,
+  // filled by World) each frame, so fewer chunks are drawn — the big lever for the draw-call count on long tracks. VISOKA keeps it off
+  // (detailDist = Infinity → nothing culled → identical to before). game.js sets the distance from the tier and nudges it for the frame rate.
+  let detailDist = Infinity;
+  function setDetailDist(d) {
+    d = d > 0 ? d : Infinity;
+    if (d === detailDist) return;
+    detailDist = d;
+    if (d === Infinity && world && world.cull) for (const c of world.cull) c.m.visible = true;   // back to VISOKA: show everything again
+  }
+  function getDetailDist() { return detailDist; }
+  function cullByDistance() {   // called from frame() once the camera has moved; a cheap horizontal distance test per vegetation chunk
+    if (detailDist === Infinity || !world || !world.cull) return;
+    const cx = camera.position.x, cz = camera.position.z;
+    for (const c of world.cull) { const dx = c.x - cx, dz = c.z - cz, rr = detailDist + c.r; c.m.visible = dx * dx + dz * dz <= rr * rr; }
+  }
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
@@ -2617,7 +2686,7 @@ const Render = (function () {
       const wt = Math.max(wetW > 0.1 ? wetW : 0, fw / 4);   // a wet road: the rain's water or the melt water under the wheels
       if (!c.air && c.speed > 0.5) {
         const sr = c.q && c.q.k >= 0 && curTrack && curTrack.stubs ? curTrack.stubs[c.q.k] : null;   // (a side road: a gravel one, or its verge, is the verge)
-        const off = c.q && (sr ? sr.grav || Math.abs(c.q.u) > curTrack.stubHw(sr, c.q.st) : Math.abs(c.q.d || 0) > ((curTrack && curTrack.def.halfWidth) || 7)), k = Math.abs(c.speed) * dt * (off ? 4 : 1);   // (on the gravel verge: 4x as fast)
+        const off = c.q && (sr ? sr.grav || Math.abs(c.q.u) > curTrack.stubHw(sr, c.q.st, c.q.u) : Math.abs(c.q.d || 0) > ((curTrack && curTrack.def.halfWidth) || 7)), k = Math.abs(c.speed) * dt * (off ? 4 : 1);   // (on the gravel verge: 4x as fast)
         u.d.value = Math.min(1, u.d.value + k / 7000 * (1 - wt) * (1 - sn)); X.x = Math.min(1, X.x + k / 2600 * wt); X.y = Math.min(1, X.y + k / 2400 * sn);
         pkCarDust.set(c, [u.d.value, X.x, X.y]);
       }
@@ -4234,7 +4303,7 @@ const Render = (function () {
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
       const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = portrait ? 0.98 : 0.9;
-      const ahead = (portrait ? 13 : 8.5) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew)
+      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
       const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
@@ -4278,7 +4347,9 @@ const Render = (function () {
       cam.zoom += (pitZ * (1 + 0.1 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
       const zf = cam.zoom * cam.userZoom;
       const D = 57 * zf, pitch = 0.82;
-      tx = x + clamp(cam.lx, -20 * zf, 20 * zf); tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf); ty = baseY;
+      // userBack (Nastavitve · Položaj avta): the car sits this many metres further back along its travel, so it reads lower in the frame
+      const bk = cam.userBack || 0, vmag = Math.hypot(c.vx, c.vz), bfx = vmag > 0.5 ? c.vx / vmag : Math.cos(h), bfz = vmag > 0.5 ? c.vz / vmag : Math.sin(h);
+      tx = x + clamp(cam.lx, -20 * zf, 20 * zf) + bfx * bk; tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf) + bfz * bk; ty = baseY;
       px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
     }
@@ -4911,13 +4982,13 @@ const Render = (function () {
     ck.cam.position.set(ck.sway, 0, 0); ck.cam.rotation.set(-eyeOf(c.m).tilt - (v ? v.pitch : 0), -ck.look, v ? v.roll : 0, 'YXZ');
   }
 
-  // the feel of speed (quality 'high', the post pass): from about 110 km/h the picture streaks out from the point the followed car drives
+  // the feel of speed (quality 'high', the post pass; only behind the car, never in the landscape views, where the cars must stay sharp): from about 110 km/h the picture streaks out from the point the followed car drives
   // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode, a TV shot or the cockpit. And the summer's
   // heat: by day, dry, the air over the far asphalt trembles just under the horizon (seen from a low camera)
   const _mf = new THREE.Vector3();
   function speedLook(target, alpha, U) {
     let mb = 0;
-    if (target && !cam.shot && !cam.ck && (lastMode === 'chase' || lastMode === 'kino')) {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
+    if (false && target && !cam.shot && !cam.ck && lastMode === 'chase') {   // (switched off: the opponents' cars must stay sharp at speed)   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
       const sp = target.speed || 0; mb = clamp((sp - 30) / 45, 0, 1) * 0.75;
       if (mb > 0) { const x = lerp(target.px, target.x, alpha), z = lerp(target.pz, target.z, alpha), y = target.y || 0, v = Math.hypot(target.vx || 0, target.vz || 0) || 1;
         _mf.set(x + (target.vx || 0) / v * 150, y, z + (target.vz || 0) / v * 150).project(camera); U.uMF.value.set(clamp(_mf.x * 0.5 + 0.5, -0.5, 1.5), clamp(_mf.y * 0.5 + 0.5, -0.5, 1.5));
@@ -4945,6 +5016,7 @@ const Render = (function () {
     if (target) updateCamera(dt, target, mode, alpha);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
+    cullByDistance();   // adaptive detail (LOD): hide the far vegetation on the lower tiers, now the camera is in its final place for this frame
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
@@ -4953,7 +5025,7 @@ const Render = (function () {
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
     if (vfog) { vfog.U.uT.value = time; vfog.U.uC.value.copy(scene.fog.color).lerp(_c2.setRGB(1, 0.97, 0.96), 0.55); }
-    if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
+    if (birds.mesh.visible && !birds.off && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
       const U = rain.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];   // (the cockpit: the streaks close round the car)
@@ -4995,7 +5067,7 @@ const Render = (function () {
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
-      if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
+      if (!cam.shot) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look in the race, all the cars stay sharp in every camera; the photo mode's own: a narrow sharp band on the car)
       speedLook(target, alpha, U);
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
@@ -5091,6 +5163,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

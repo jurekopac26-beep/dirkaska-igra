@@ -43,7 +43,7 @@ const orig = Math.random;
     const im = Math.round((St.m0 + St.m1) / 2), Bm = St.side > 0 ? T.br[im] : T.bl[im], xm = T.px[im] + T.nx[im] * St.side * (Bm - 0.4), zm = T.pz[im] + T.nz[im] * St.side * (Bm - 0.4);
     if (b.length < 3 && !cut(xm, zm)) why.push(`only ${b.length}`);
     for (const p of b) {
-      if (p.kind !== 'bollard') why.push('kind ' + p.kind);
+      if (p.kind !== 'tbollard') why.push('kind ' + p.kind);
       const qm = T._qMain(p.x, p.z, T.nearestIdx(p.x, p.z), {}), sd = qm.d > 0 ? 1 : -1, f = Math.min(T.N - 1.001, Math.max(0, qm.s / T.ds)), i = Math.floor(f), u = f - i, Bs = sd > 0 ? T.br : T.bl, Wk = WALK ? WALK[sd > 0 ? 1 : 0] : null;
       const bar = Bs[i] + (Bs[i + 1] - Bs[i]) * u, e = Math.abs(qm.d) - (T.wAt(i) + (Wk ? Wk[i] : 0)) * (1 - u) - (T.wAt(i + 1) + (Wk ? Wk[i + 1] : 0)) * u;   // (both interpolated at the bollard)
       ss.push(p.i * T.ds);
@@ -71,7 +71,7 @@ const orig = Math.random;
 
 // 2. everything small beside the road is knockable: a car at ~15 m/s into one of each kind
 {
-  const KINDS = ['bollard', 'lamp', 'sign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag', 'bench'], d0 = 3000, V0 = 15;
+  const KINDS = ['tbollard', 'mlamp', 'msign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag', 'bench'], d0 = 3000, V0 = 15;
   let lat0 = 0;   // (where the car's middle passes the prop's place, from the run without a prop: the road bends a little there)
   const run = (kind, off) => {
     Math.random = seeded(5);
@@ -96,12 +96,12 @@ const orig = Math.random;
   check('knock: a car at 15 m/s into a bollard, a lamp, a sign, a flag pole ... knocks each over: it wakes, flies or tips, and moves',
     KINDS.every(k => res[k].woke > 0 && res[k].woke < 2.5 && res[k].far > 1 && res[k].minUp < 0.6), KINDS.map(k => `${k} woke at ${res[k].woke.toFixed(2)} s, moved ${res[k].far.toFixed(1)} m, tipped to ${res[k].minUp.toFixed(2)}`).join('; '));
   check('knock: the car is slowed only slightly (a bollard as much as a cone, every other kind under 10 % in the 0.15 s after the blow, as against a roadside post\'s 5 %)',
-    loss(res.bollard) < loss(cone) + 1.5 && KINDS.every(k => loss(res[k]) < 10), KINDS.map(fmt).join(', ') + ` (a cone ${loss(cone).toFixed(1)} %, a post ${loss(post).toFixed(1)} %)`);
+    loss(res.tbollard) < loss(cone) + 1.5 && KINDS.every(k => loss(res[k]) < 10), KINDS.map(fmt).join(', ') + ` (a cone ${loss(cone).toFixed(1)} %, a post ${loss(post).toFixed(1)} %)`);
   check('knock: each comes to rest on its own within a few seconds (asleep again), nothing flies off to infinity, no NaN',
     KINDS.every(k => res[k].slept > 0 && res[k].slept < 9 && res[k].finite && res[k].rest < 45 && res[k].maxY < T.hy[T.idx(T.startS + d0)] + 8), KINDS.map(k => `${k} asleep at ${res[k].slept.toFixed(1)} s ${res[k].rest.toFixed(0)} m away`).join(', '));
-  check('knock: a street lamp (8 m) ends up lying on the ground, not standing or hanging', Math.abs(res.lamp.hitUp) < 0.35 && res.lamp.b.y < T.hy[T.idx(T.startS + d0 + 28)] + 1.2, `its up-axis ${res.lamp.hitUp.toFixed(2)} (1 = standing), height ${res.lamp.b.y.toFixed(2)} m over the road`);
+  check('knock: a street lamp (8 m) ends up lying on the ground, not standing or hanging', Math.abs(res.mlamp.hitUp) < 0.35 && res.mlamp.b.y < T.hy[T.idx(T.startS + d0 + 28)] + 1.2, `its up-axis ${res.mlamp.hitUp.toFixed(2)} (1 = standing), height ${res.mlamp.b.y.toFixed(2)} m over the road`);
   // not dead centre: a glancing blow 0.6 m to the side still knocks a lamp and a bollard
-  const gl = ['lamp', 'bollard', 'bench'].flatMap(k => [[k, run(k, 0.6)], [k, run(k, -0.6)]]);
+  const gl = ['mlamp', 'tbollard', 'bench'].flatMap(k => [[k, run(k, 0.6)], [k, run(k, -0.6)]]);
   check('knock: a glancing blow (0.6 m off the middle of the car, either side) knocks them over too', gl.every(([k, r]) => r.woke > 0 && r.minUp < 0.7), gl.map(([k, r]) => `${k}: woke ${r.woke.toFixed(2)} s, tipped to ${r.minUp.toFixed(2)}`).join(', '));
   // every kind the scenery builder uses exists: set into a race, each gets its own slot (a kind Core does not know is left out)
   const r = new C.Race(T, opts({})); r.setProps(KINDS.map(k => ({ kind: k, x: T.px[100], z: T.pz[100], yaw: 0, col: 0, i: 100 })), null);
