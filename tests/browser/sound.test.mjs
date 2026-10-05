@@ -5,7 +5,8 @@
 // The police radio (Vršič, the run from the police): static under its lines only.
 // The fleet's sounds: every vehicle's engine preset (Core.SND_KINDS, Sfx.probe rendered offline: plausible and every two apart), what
 // breaks (a rival wrecked: clang, glass, a wheel, the crunch, the fire; a pile-up), a turbo's blow-off and anti-lag (only when the throttle
-// shuts), and what is made ahead in slices (prep).
+// shuts), the gear changes (the clack, a blip on the way down) and the rivals' Doppler shift as the old voices', and what is made ahead in
+// slices (prep).
 //   node tests/browser/sound.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -134,7 +135,8 @@ try {
 
     // 7. (paused, the sound's own frames on the audio clock) ZMAJ's turbo (1: anti-lag): easing off to hold a speed (1 -> 0.45, as the AI
     //    does) blows nothing off and bangs nothing; the throttle shut: one blow-off and the anti-lag's bangs, which stop when it opens
-    //    again; a gear change: its chuff and its bang, a lift right after it no second blow-off. A pile-up (six rivals wrecked in one
+    //    again; a gear change: its chuff and its bang, a lift right after it no second blow-off; the gear changes as the old voices' (the
+    //    clack, down a blip), none for the electric car and the kart; a rival's voice with the Doppler shift. A pile-up (six rivals wrecked in one
     //    frame): a sound at most twice in that frame, every kind heard (not eight crunches), at most 8 playing. What is made ahead (prep):
     //    all of it made, in slices
     const R3 = await page.evaluate(async () => {
@@ -144,6 +146,18 @@ try {
       const hold = async (thr, secs) => { const t0 = performance.now(); do { Object.assign(P, { inThr: thr, rpm: M.redline * 0.8, shiftT: 0, locked: false }); Sfx.update(g.race, P, null, thr); await new Promise(r => setTimeout(r, 16)); } while (performance.now() - t0 < secs * 1000); return sh(); };
       const r = { a: await hold(1, 1.5) }; r.half = await hold(0.45, 0.6); r.b = await hold(1, 1.2); r.shut = await hold(0, 0.6); r.open0 = await hold(1, 0.06); r.open = await hold(1, 0.5);
       r.c = await hold(1, 1.5); Sfx.shiftPop(); r.shift = sh(); r.after = await hold(0, 0.15);
+      // the gear changes as the old voices' (Sfx.shift, game.js on every change): up, the gearbox's clack; down, the clack and the blip (a
+      // pop: i5 pops); the electric JEZEK E and the kart MRAVLJA (one gear, no gearbox) none of it
+      r.g0 = await hold(1, 0.3); Sfx.shift(false); r.down = sh(); Sfx.shift(true); r.up = sh();
+      const noBox = [];
+      for (const id of ['jezek', 'mravlja']) { P.m = Core.MODELS.find(m => m.id === id); await hold(1, 0.2); const a = sh(); Sfx.shift(true); Sfx.shift(false); const b = sh(); noBox.push([id, Sfx.levels().engine.preset, b.gear - a.gear, b.blip - a.blip]); }
+      P.m = M; r.noBox = noBox; await hold(1, 0.2);
+      // the rivals' Doppler shift (a preset's voice, as the old ones'): the nearest rival driving at the camera at 25 m/s, then away from it
+      // (the race paused: only the sound's frames), its voice's pitch times its Doppler factor
+      const cam = Render.camera.position, slot = (c) => Sfx.engines().ai.findIndex(a => a.car === c.name), riv = g.race.cars.filter(c => c !== P && !(c.dmg >= 0.98)).sort((a, b) => Math.hypot(a.x - cam.x, a.z - cam.z) - Math.hypot(b.x - cam.x, b.z - cam.z))[0];
+      const v0 = [riv.vx, riv.vz, P.vx, P.vz], dl = Math.hypot(riv.x - cam.x, riv.z - cam.z), ux = (riv.x - cam.x) / dl, uz = (riv.z - cam.z) / dl, dop = {};
+      for (const [key, sp] of [['rest', 0], ['at', -25], ['away', 25]]) { riv.vx = P.vx + ux * sp; riv.vz = P.vz + uz * sp; await hold(1, 0.5); const k = slot(riv), L = k >= 0 ? Sfx.levels().ai[k] : null; dop[key] = L ? [L.preset, L.dop, L.f] : null; }
+      riv.vx = v0[0]; riv.vz = v0[1]; r.dop = dop;
       Object.assign(P, keep);
       // the pile-up: once what was playing has ended
       for (let i = 0; i < 80 && Sfx.levels().dest.live > 0; i++) await new Promise(res => setTimeout(res, 50));
@@ -158,6 +172,13 @@ try {
     T.check('ZMAJ\'s turbo: easing off to 0.45 no blow-off, no bang; shut: one blow-off and bangs, which stop once it opens; a gear change: chuff and bang, then no second blow-off',
       dz('a', 'half', 'bov') === 0 && dz('a', 'half', 'pop') === 0 && dz('b', 'shut', 'bov') === 1 && dz('b', 'shut', 'pop') >= 1 && dz('open0', 'open', 'pop') === 0 && dz('open0', 'open', 'bov') === 0 &&
       dz('c', 'shift', 'bov') === 1 && dz('c', 'shift', 'pop') === 1 && dz('shift', 'after', 'bov') === 0, JSON.stringify(z));
+    const D = z.dop, okD = D.rest && D.at && D.away && D.rest[0] === 'i5' && Math.abs(D.rest[1] - 1) < 0.01 && D.at[1] > 1.05 && D.away[1] < 0.95 &&
+      Math.abs(D.at[2] / D.rest[2] / D.at[1] - 1) < 0.01 && Math.abs(D.away[2] / D.rest[2] / D.away[1] - 1) < 0.01;
+    T.check('a rival\'s preset voice (ZMAJ\'s i5) with the Doppler shift, as the old voices\': its pitch up driving at the camera, down driving away', okD, JSON.stringify(D));
+    const okG = dz('g0', 'down', 'gear') === 1 && dz('g0', 'down', 'blip') === 1 && dz('g0', 'down', 'pop') === 1 && dz('down', 'up', 'gear') === 1 && dz('down', 'up', 'blip') === 0 &&
+      z.noBox.every(([id, pre, gear, blip]) => pre === (id === 'jezek' ? 'ev' : 'kart2t') && gear === 0 && blip === 0);
+    T.check('ZMAJ\'s gear changes as the old voices\': down, the clack and a blip with a pop; up, the clack; the electric JEZEK E and the kart none (no gearbox)', okG,
+      JSON.stringify({ down: z.down, up: z.up, noBox: z.noBox }));
     const F = R3.d1.frame || { plays: {} }, most = Math.max(0, ...Object.values(F.plays)), heard = (k) => R3.d1[k] > R3.d0[k];
     T.check('a pile-up (six rivals wrecked at once): a sound at most twice in that frame, panels, glass, wheels and crunch all heard, at most 8 playing',
       most <= 2 && ['clang', 'glass', 'wheel', 'crunch'].every(heard) && R3.d1.live <= 8, `at ${R3.dist.join(', ')} m: ` + JSON.stringify(F) + ` live ${R3.d1.live}, merged +${R3.d1.merged - R3.d0.merged}, dropped +${R3.d1.dropped - R3.d0.dropped}`);
