@@ -378,6 +378,45 @@ const Core = (function () {
       for (let c = 0; c < n; c++) { const u = -hw + c * 2 * hw / (n - 1); out.push({ kind: 'cone', x: p.x - p.tz * u, z: p.z + p.tx * u, yaw: p.h + c * 0.7, col: 0, i: this.stubHint(k, t) }); }
       return out;
     }
+    // is (x, z) inside, or within m metres of, a building of the track's data (def.bld: [x, z, L, W, ang, height, kind, name, outline]; the scenery leaves out
+    // those under 2.2 m across)
+    onBuilding(x, z, m) {
+      const bl = this.def.bld; if (!bl) return false;
+      let H = this._bldHash;
+      if (!H) { H = this._bldHash = new Map();
+        for (let k = 0; k < bl.length; k++) { const b = bl[k]; if (b[2] < 2.2 || b[3] < 2.2) continue; const r = Math.hypot(b[2], b[3]) / 2 + 1;
+          for (let a = Math.floor((b[0] - r) / 16); a <= Math.floor((b[0] + r) / 16); a++) for (let c = Math.floor((b[1] - r) / 16); c <= Math.floor((b[1] + r) / 16); c++) { const key = a * 65536 + c; let L = H.get(key); if (!L) H.set(key, L = []); L.push(k); } } }
+      const L = H.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16)); if (!L) return false;
+      for (const k of L) { const b = bl[k], P = b[8];
+        if (P) { let w = false; for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) if ((P[i + 1] > z) !== (P[j + 1] > z) && x < (P[j] - P[i]) * (z - P[i + 1]) / (P[j + 1] - P[i + 1]) + P[i]) w = !w; if (w) return true; }
+        else { const dx = x - b[0], dz = z - b[1], c = Math.cos(b[4]), s = Math.sin(b[4]); if (Math.abs(dx * c + dz * s) < b[2] / 2 + m && Math.abs(-dx * s + dz * c) < b[3] / 2 + m) return true; } }
+      return false;
+    }
+    // the row of yellow triangular bollards across side road k's mouth, just past its barrier line ("this is not the way"; Medvode): [{ kind: 'bollard',
+    // x, z, yaw, col, i, t (along the side road) }] a bollard at most ~2.3 m from the next across the road's whole width (stubHw there), the apex pointing into the side road. Never
+    // on the route's asphalt (0.6 m to spare), on an oncoming lane (def.altDn), on a ring's road and island or in a building (the flared corner of a
+    // mouth can reach one): where the mouth lies on those (a side
+    // road that runs along an oncoming lane, an arm of a ring) the row stands on what is free of them: of the rows (at least 3 places free) the one
+    // nearest to the barrier line (at most 14 m from the asphalt's edge along it) that costs least (its distance from there in metres + 5 for each place
+    // taken). A side road shorter than its mouth: the row in front of its end
+    stubBollards(k) {
+      const S = this.stubs[k], rings = this.rings, DX = 2.3;
+      const clear = (x, z) => {
+        if (this.onAlt(x, z) || this.onBuilding(x, z, 0.5)) return false;
+        for (const R of rings) { const dx = x - R.x, dz = z - R.z, rr = R.r + R.hw + 1; if (dx * dx + dz * dz < rr * rr) return false; }   // (the ring road's outer edge and 1 m more)
+        const i = this.nearestIdx(x, z); return Math.abs((x - this.px[i]) * this.nx[i] + (z - this.pz[i]) * this.nz[i]) >= this.wAt(i) + 0.6; };
+      const row = (t) => {
+        const p = this.stubPt(k, t, {}), E = Math.max(0.9, this.stubHw(S, t) - 0.4), n = Math.max(3, Math.ceil(2 * E / DX) + 1), pts = [];
+        for (let j = 0; j < n; j++) { const u = -E + j * 2 * E / (n - 1), x = p.x - p.tz * u, z = p.z + p.tx * u; if (clear(x, z)) pts.push({ kind: 'bollard', x, z, yaw: p.h, col: 0, i: this.stubHint(k, t), t }); }
+        return { pts, n }; };
+      const tgt = Math.min(S.tb + 1, S.te + 14, S.L - 2), lo = 0.5, hi = Math.max(lo, S.L - 1.2);
+      let best = null, bc = 1e9;
+      for (let j = 0; j * 0.5 < bc && j * 0.5 <= Math.max(tgt - lo, hi - tgt); j++) {   // (outwards from the barrier line: +0.5, -0.5, +1 ...)
+        for (const t of j ? [tgt + j * 0.5, tgt - j * 0.5] : [tgt]) {
+          if (t < lo || t > hi) continue;
+          const r = row(t), c = j * 0.5 + 5 * (r.n - r.pts.length); if (r.pts.length >= 3 && c < bc) { bc = c; best = r.pts; } } }
+      return best || row(Math.min(Math.max(tgt, lo), hi)).pts;
+    }
     // a good hint for Track.query at t along side road k: the road's sample beside it (deep in it: the junction's, iF)
     stubHint(k, t) { const S = this.stubs[k]; return S.ij[clamp(Math.round(t / SR.ds), 0, S.n - 1)]; }
     // a point on side road k at t along it (clamped to the part drawn): { x, z, y, tx, tz, h (heading along it) }
@@ -643,7 +682,7 @@ const Core = (function () {
       this.altC = (this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + 0.4, pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
         for (let k = 0; k + 2 < P.length; k += 3) { pts.push(P[k], P[k + 1]); x0 = Math.min(x0, P[k]); x1 = Math.max(x1, P[k]); z0 = Math.min(z0, P[k + 1]); z1 = Math.max(z1, P[k + 1]); }
         return { pts, hw, bb: [x0 - hw, z0 - hw, x1 + hw, z1 + hw] }; });
-      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.r + (r.hw || 3) + 14 }));
+      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.r + (r.hw || 3) + 14 }));
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
       if (this.def.roadSurface !== 'makadam' && !this.def.noCurbs) for (let i = 0; i < N; i++) if (Math.abs(k[i]) > 1 / 190) cb[i] = 1;
@@ -1575,7 +1614,7 @@ const Core = (function () {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
     const boxPts = (x, y, z) => { const p = []; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) p.push([sx * x, sy * y, sz * z]); return p; };
     const conePts = cylPts(0.3, -0.17, -0.17, 6).slice(0, 6); conePts.push([0, 0.59, 0]);
-    return {   // m mass (kg), rh horizontal radius, rb bounding radius, h0 centre height when standing, e bounce, mu friction, lift pop-up when hit, I inertia
+    const KK = {   // m mass (kg), rh horizontal radius, rb bounding radius, h0 centre height when standing, e bounce, mu friction, lift pop-up when hit, I inertia
       cone:   { m: 3,  rh: 0.28, rb: 0.42, h0: 0.17,  e: 0.3,  mu: 0.75, lift: 0.6,  I: 0.22, pts: conePts },
       pylon:  { m: 7,  rh: 0.36, rb: 0.7,  h0: 0.68,  e: 0.25, mu: 0.55, lift: 0.4,  I: 1.3,  pts: cylPts(0.36, -0.68, 0.68, 6) },
       tyre:   { m: 9,  rh: 0.43, rb: 0.45, h0: 0.13,  e: 0.45, mu: 0.7,  lift: 0.45, I: 0.7,  pts: cylPts(0.43, -0.13, 0.13, 8) },
@@ -1586,7 +1625,21 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // Medvode's small roadside things (the scenery builder puts them in out.props; the models: Render.propGeometry): a yellow triangular bollard across the
+      // mouth of every side road, the street lamps, the signs on their poles, the flag poles, a bench. Light enough to be knocked over, heavy enough to
+      // cost the car next to nothing (propFeel: the speed lost grows with the mass up to 4.5 %); the tall ones tip over and lie where they fall
+      bollard: { m: 3, rh: 0.22, rb: 0.55, h0: 0.525, e: 0.2,  mu: 0.7,  lift: 0.45, I: 0.35, pts: (() => { const p = []; for (const y of [-0.525, 0.525]) { p.push([0.231, y, 0], [-0.115, y, 0.2], [-0.115, y, -0.2]); } return p; })() },   // a triangular prism 1.05 m tall, 0.4 m a side
+      lamp:   { m: 5, rh: 0.17, rb: 4.1,  h0: 4.0,   e: 0.2,  mu: 0.6,  lift: 0.12, I: 29,  pts: cylPts(0.09, -4.0, 4.0, 4).concat([[1.75, 3.85, 0]]) },   // a street lamp: an 8 m pole with the arm over the road
+      sign:   { m: 4,  rh: 0.15, rb: 1.35, h0: 1.3,   e: 0.25, mu: 0.6,  lift: 0.6,  I: 2.6,  pts: cylPts(0.04, -1.3, 1.25, 4).concat([[0, 1.29, 0.32], [0, 1.29, -0.32], [0, 0.65, 0.32], [0, 0.65, -0.32]]) },   // a square board on a pole (the zebra crossing's, the bus stop's)
+      nsign:  { m: 4, rh: 0.15, rb: 1.45, h0: 1.4,   e: 0.25, mu: 0.6,  lift: 0.6,  I: 3.3,    pts: cylPts(0.04, -1.4, 1.3, 4).concat([[0, 1.1, 0.7], [0, 1.1, -0.7], [0, 0.75, 0.7], [0, 0.75, -0.7]]) },    // the street's name on a plate on a pole
+      zaprta: { m: 4,  rh: 0.2,  rb: 1.25, h0: 1.1,   e: 0.25, mu: 0.6,  lift: 0.6,  I: 2.1,  pts: cylPts(0.04, -1.1, 1.15, 4).concat([[0, 0.22, 0.8], [0, 0.22, -0.8], [0, -0.18, 0.8], [0, -0.18, -0.8]]) },   // the closure board and the no-entry sign on a pole in front of a side road's rail
+      vboard: { m: 4, rh: 1,  rb: 1.35, h0: 1.2,   e: 0.1,  mu: 0.8,  lift: 0.2,  I: 2.7,    pts: [[0.9, -1.2, 0], [-0.9, -1.2, 0], [0.9, 1.2, 0], [-0.9, 1.2, 0], [1.2, 0.8, 0], [-1.2, 0.8, 0], [1.2, 0.5, 0], [-1.2, 0.5, 0]] },   // a village's board on two poles
+      flagp:  { m: 5, rh: 0.13, rb: 3.1,  h0: 3.0,   e: 0.2,  mu: 0.6,  lift: 0.1,  I: 18,   pts: cylPts(0.06, -3.0, 3.0, 4).concat([[1.9, 2.85, 0], [1.9, 1.95, 0]]) },   // a flag pole with the flag
+      cflag:  { m: 4,  rh: 0.13, rb: 2.6,  h0: 2.5,   e: 0.2,  mu: 0.6,  lift: 0.1,  I: 8,   pts: cylPts(0.06, -2.5, 2.5, 4).concat([[1.7, 2.4, 0], [1.7, 1.3, 0]]) },    // a chequered flag on a pole at the finish
+      bench:  { m: 6, rh: 0.7,  rb: 0.5,  h0: 0.24,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 1.7,    pts: boxPts(0.9, 0.24, 0.22) },   // a bus stop's bench
     };
+    KK.bsign = KK.sign;   // (the bus stop sign: the same pole and board, another picture)
+    return KK;
   })();
   const _pq = {};
   const qRot = (b, px, py, pz, out) => {   // rotate a local point by the body's quaternion

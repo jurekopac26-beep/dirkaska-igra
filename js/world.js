@@ -23878,6 +23878,7 @@ const World = (function () {
         for (const tz of (def.sideRoads[k] || [])[12] || []) { const p = T.stubPt(k, tz, F), nx = -p.tz, nz = p.tx, hw = ownW(tz) - 0.3;   // the zebra crossings across it (OSM), where the sidewalk crosses its mouth
           for (let u = -hw; u + 0.5 <= hw; u += 1) { const at = (uu, dt) => { const x = p.x + nx * uu + p.tx * dt, z = p.z + nz * uu + p.tz * dt; return [x, yAt(x, z, S, tz + dt) + 0.07, z]; };
             SL.get(p.x, p.z).quadUp(at(u, -1.5), at(u + 0.5, -1.5), at(u + 0.5, 1.5), at(u, 1.5), [white, white, white, white]); } }
+        const bol = T.stubBollards(k); for (const b of bol) out.props.push(b);   // the yellow triangular bollards across its mouth: this is not the way (knockable)
         if (S.end !== 2) { const p = T.stubPt(k, S.L, {}), nx = -p.tz, nz = p.tx, hc = S.hw + S.lim, g = scen.get(p.x, p.z), rot = p.h + PI / 2;   // the closure
           const at = (u, dt, dy) => { const x = p.x + nx * u + p.tx * dt, z = p.z + nz * u + p.tz * dt; return [x, yAt(x, z, S, S.L) + dy, z]; };
           if (S.end === 0) {
@@ -23885,9 +23886,7 @@ const World = (function () {
               g.quadO(a, b, cc, d, steel, at((u0 + u1) / 2, 2.5, 0.6)); g.quadO(a, b, cc, d, steelB, at((u0 + u1) / 2, -3, 0.6)); }
             for (let u = -hc; u <= hc + 0.01; u += hc / Math.max(1, Math.round(hc / 1.6))) { const q = at(u, 0.05, -0.35); box(g, q[0], q[1], q[2], 0.13, 1.13, 0.13, p.h, postC, null, true); }
             for (const u of [-hc * 0.55, hc * 0.55]) { const q = at(u, -0.32, 0.47); bannerQ(q[0], q[1], q[2], p.tx, p.tz, 1.5, 0.3, 7 / 8, 1, 0.625, 1, ban3); }
-            const q = at(0, 0.5, -0.2); cyl(g, q[0], q[1], q[2], 0.04, 2.45, 5, [0.62, 0.63, 0.66]);
-            bannerQ(q[0] - p.tx * 0.06, q[1] + 1.12, q[2] - p.tz * 0.06, p.tx, p.tz, 1.6, 0.4, 7 / 8, 1, 0, 0.5, ban3);
-            bannerQ(q[0] - p.tx * 0.06, q[1] + 1.6, q[2] - p.tz * 0.06, p.tx, p.tz, 0.62, 0.62, 7 / 8, 1, 0.5, 0.625, ban3);
+            if (!bol.length || bol[0].t < S.L - 2.8) out.props.push({ kind: 'zaprta', x: p.x - p.tx * 1.3, z: p.z - p.tz * 1.3, yaw: p.h, col: 0, i: T.stubHint(k, S.L - 1.3) });   // the closure board and the no-entry sign: a knockable pole in front of the rail (it stood behind it, out of reach); not where the bollards stand
           } else {
             for (const u of [-(S.hw + 0.25), S.hw + 0.25]) { const q = at(u, 0, -0.2); box(g, q[0], q[1], q[2], 0.16, 1.25, 0.16, rot, yel, blk); }
             const m = Math.max(4, Math.round(S.hw * 2 / 0.6)); for (let c = 0; c < m; c++) { const u = -S.hw + (c + 0.5) * 2 * S.hw / m, q = at(u, 0, 0.88); box(g, q[0], q[1], q[2], 2 * S.hw / m + 0.005, 0.1, 0.1, rot, c % 2 ? white : red); }
@@ -23896,8 +23895,8 @@ const World = (function () {
           exclPush(p.x, p.z, hc + 1.5);
         }
         const ni = S.name ? stubNames.indexOf(S.name) : -1;   // its name at its mouth: a blue plate on a pole at the right-hand corner going in
-        if (ni >= 0) { const t = S.tb + 1.5, p = T.stubPt(k, t, F), u = T.stubHw(S, t) + Math.min(S.lim, 0.9) + 0.4, x = p.x - p.tz * u, z = p.z + p.tx * u, y = mvGround(x, z), g = scen.get(x, z), cell = ni + 3;
-          cyl(g, x, y - 0.2, z, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); bannerQ(x, y + 2.15, z, p.tx, p.tz, 1.4, 0.35, 1 - (Math.floor(cell / 2) + 1) / 8, 1 - Math.floor(cell / 2) / 8, (cell % 2) * 0.5, (cell % 2) * 0.5 + 0.5, ban3); exclPush(x, z, 1); }
+        if (ni >= 0) { const t = S.tb + 1.5, p = T.stubPt(k, t, F), u = T.stubHw(S, t) + Math.min(0.5, S.lim - 0.2), x = p.x - p.tz * u, z = p.z + p.tx * u;   // (a knockable plate on a pole, now inside the side road's limit so that a car can reach it: the blue plate with white bars for its name; the atlas's name cells are unused)
+          out.props.push({ kind: 'nsign', x, z, yaw: p.h, col: 0, i: T.stubHint(k, t) }); exclPush(x, z, 1); }
         for (let t = 0, e = S.end === 2 ? S.L : S.Lend + 3; t <= e; t += 3) { const p = T.stubPt(k, t, {}); exclPush(p.x, p.z, T.stubHw(S, t) + 1.2); }   // (nothing grows on the side roads)
       }
       SA.addTo(root, aMat, false, true); SG.addTo(root, sMat, false, true); SL.addTo(root, lMat, false, true);
@@ -24150,17 +24149,13 @@ const World = (function () {
     }
 
     /* ---- the signs of the zebra crossings (a blue board with a white triangle, both sides of the road) and the bus stops (a pole with the blue
-       board and its white bus, a bench; a glass shelter where OSM has one); street lamps along the sidewalks ---- */
+       board and its white bus, a bench; a glass shelter where OSM has one); street lamps along the sidewalks. All but the shelter are knockable props
+       (out.props: 'sign', 'bsign', 'bench', 'lamp'; Core PROPK, Render.propGeometry) ---- */
     {
-      const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94], poleC = [0.62, 0.63, 0.66];
       const board = (s0, side, fig) => {   // a square board on a pole behind the road's edge (its sidewalk), its faces along the road
-        const i = T.idx(s0), o = side * (wE(side > 0 ? 1 : 0, i) + 0.6), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = mvGround(x, z), g = scen.get(x, z), hd = T.hd[i];
+        const i = T.idx(s0), o = side * (wE(side > 0 ? 1 : 0, i) + 0.6), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = mvGround(x, z), hd = T.hd[i];
         if (excluded(x, z) || vrStubAt(x, z, 0.3)) return null;
-        cyl(g, x, y - 0.2, z, 0.04, 2.75, 5, poleC); box(g, x, y + 1.95, z, 0.05, 0.64, 0.64, hd, blue);
-        const c = Math.cos(hd), sn = Math.sin(hd), L = (lx, ly, lz) => [x + lx * c - lz * sn, y + ly, z + lx * sn + lz * c], inn = [x, y + 2.27, z];
-        for (const f of [-1, 1]) { const fx = f * 0.032;
-          if (fig === 'zebra') g.triO(L(fx, 2.47, 0), L(fx, 2.05, -0.25), L(fx, 2.05, 0.25), wh, inn);
-          else { g.quadO(L(fx, 2.12, -0.22), L(fx, 2.12, 0.22), L(fx, 2.4, 0.22), L(fx, 2.4, -0.22), wh, inn); g.quadO(L(f * 0.034, 2.26, -0.19), L(f * 0.034, 2.26, 0.19), L(f * 0.034, 2.36, 0.19), L(f * 0.034, 2.36, -0.19), blue, inn); } }
+        out.props.push({ kind: fig === 'zebra' ? 'sign' : 'bsign', x, z, yaw: hd, col: 0, i });   // (knockable: the pole with the blue board, its white triangle / bus: Render.propGeometry)
         exclPush(x, z, 1.2); CR.avoid(x, z, 0.6); return [x, y, z, i];
       };
       for (const z0 of def.zebras || []) for (const side of [-1, 1]) board(sStart + z0 - side * 4, side, 'zebra');
@@ -24172,15 +24167,13 @@ const World = (function () {
           box(g, bx + ox, by + 0.1, bz + oz, 3.6, 2.2, 0.05, hd, [0.6, 0.72, 0.78]); box(g, bx, by + 2.3, bz, 3.9, 0.12, 1.9, hd, frame, [0.36, 0.38, 0.42]);
           for (const u of [-1.8, 1.8]) { box(g, bx + ox + T.tx[i] * u, by, bz + oz + T.tz[i] * u, 0.08, 2.3, 0.08, hd, frame); box(g, bx + T.tx[i] * u - ox, by, bz + T.tz[i] * u - oz, 0.08, 2.3, 0.08, hd, frame); box(g, bx + T.tx[i] * u, by + 0.1, bz + T.tz[i] * u, 0.05, 2.1, 1.3, hd, [0.6, 0.72, 0.78]); }
           exclPush(bx, bz, 2.8); CR.block(bx, bz, 4, 2, hd); }
-        box(g, bx + T.nx[i] * side * 0.4, by + 0.42, bz + T.nz[i] * side * 0.4, 1.8, 0.06, 0.45, hd, [0.46, 0.32, 0.2]);
-        for (const u of [-0.75, 0.75]) box(g, bx + T.nx[i] * side * 0.4 + T.tx[i] * u, by, bz + T.nz[i] * side * 0.4 + T.tz[i] * u, 0.08, 0.42, 0.4, hd, [0.3, 0.3, 0.32]);
+        out.props.push({ kind: 'bench', x: bx + T.nx[i] * side * 0.4, z: bz + T.nz[i] * side * 0.4, yaw: hd, col: 0, i });   // (the bench: knockable)
         exclPush(bx, bz, 2); }
       // the street lamps: along the sidewalks, every ~34 m on the side with the wider one (a tall grey pole, an arm over the road, the lamp)
       for (let i = 0; i < N; i += 17) { if (!WK) break; const si = WK[1][i] >= WK[0][i] ? 1 : 0, side = si ? 1 : -1; if (WK[si][i] < 0.5) continue;
         const o = side * (wE(si, i) + 0.35), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (excluded(x, z) || vrStubAt(x, z, 0.5) || mvW(x, z).e > -1) continue;
-        const y = mvGround(x, z), g = scen.get(x, z), ax = -T.nx[i] * side, az = -T.nz[i] * side;
-        cyl(g, x, y - 0.3, z, 0.08, 8.3, 6, [0.56, 0.58, 0.6], null, 0.06); box(g, x + ax * 0.8, y + 7.9, z + az * 0.8, 1.7, 0.1, 0.1, Math.atan2(az, ax), [0.56, 0.58, 0.6]);
-        box(g, x + ax * 1.6, y + 7.75, z + az * 1.6, 0.7, 0.16, 0.32, Math.atan2(az, ax), [0.3, 0.31, 0.33], [0.42, 0.43, 0.45]); exclPush(x, z, 1); CR.avoid(x, z, 0.5); }
+        out.props.push({ kind: 'lamp', x, z, yaw: Math.atan2(-T.nz[i] * side, -T.nx[i] * side), col: 0, i });   // (knockable: the pole with its arm over the road, Render.propGeometry; yaw: the arm's way)
+        exclPush(x, z, 1); CR.avoid(x, z, 0.5); }
     }
 
     /* ---- the delineator posts in the country (white with a black band, every 50 m both sides: knockable where they fit, as Vršič's), the guard
@@ -24213,18 +24206,13 @@ const World = (function () {
       const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], Math.min(12.8, (L1 + L2) * 0.95), 1.5, v0, v1, 0, 1, B);
       const e = exclPush(x, z, Math.max(L1, L2) + 3); crSoft.add(e); return [x, y, z, i];
     };
-    const flag = (g, x, y, z, rot, h) => { cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);   // a flag pole with the Slovenian flag (white, blue, red)
-      const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 0.9, fx = x + c * (fw / 2 + 0.06), fz = z + s * (fw / 2 + 0.06), y0 = y + h - fh - 0.15;
-      box(g, fx, y0 + fh * 2 / 3, fz, fw, fh / 3, 0.04, rot, [0.96, 0.96, 0.95]); box(g, fx, y0 + fh / 3, fz, fw, fh / 3, 0.04, rot, [0.1, 0.24, 0.62]); box(g, fx, y0, fz, fw, fh / 3, 0.04, rot, [0.84, 0.12, 0.1]);
-      const ax = x + c * (fw * 0.27 + 0.06), az = z + s * (fw * 0.27 + 0.06), ay = y0 + fh * 0.5;   // (the coat of arms on the hoist side, across the white and the blue)
-      box(g, ax, ay, az, 0.3, 0.36, 0.06, rot, [0.84, 0.12, 0.1]); box(g, ax, ay + 0.03, az, 0.24, 0.3, 0.075, rot, [0.1, 0.24, 0.62]); box(g, ax, ay + 0.1, az, 0.14, 0.07, 0.085, rot, [0.96, 0.96, 0.95]); };
     {
       const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i], g = scen.get(x, z);
       box(g, x, y + 6.5, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
       for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.05, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
       out.dyn.lights = lights;
-      for (let s = sStart - 40; s < sStart + 40; s += 12) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 0.7); if (excluded(px, pz) || vrStubAt(px, pz, 1)) continue; flag(scen.get(px, pz), px, mvGround(px, pz), pz, T.hd[ii], 6); exclPush(px, pz, 1); }
+      for (let s = sStart - 40; s < sStart + 40; s += 12) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 0.7); if (excluded(px, pz) || vrStubAt(px, pz, 1)) continue; out.props.push({ kind: 'flagp', x: px, z: pz, yaw: T.hd[ii], col: 0, i: ii }); exclPush(px, pz, 1); }   // (a flag pole with the Slovenian flag: knockable, Render.propGeometry)
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the road closed behind the grid: concrete blocks across it
       for (let o = -wE(0, 0); o < wE(1, 0); o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       const [bx, bz, bi] = onSide(sStart + 18, 1, 1.4), by = mvGround(bx, bz), [v0, v1] = row(6);   // the race's banner beside the road after the line
@@ -24233,9 +24221,8 @@ const World = (function () {
     T.cpS.forEach((s, k) => arch(s, 2 + k, [0.86, 0.86, 0.88], [0.1, 0.3, 0.72]));
     {
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12], finS, finB);
-      for (const side of [-1, 1]) for (let s = sFin - 24; s < sFin + 10; s += 7) { const [px, pz, ii] = onSide(s, side, 0.9), py = mvGround(px, pz);
-        cyl(finS, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(finS, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+      for (const side of [-1, 1]) for (let s = sFin - 24; s < sFin + 10; s += 7) { const [px, pz, ii] = onSide(s, side, 0.9);
+        out.props.push({ kind: 'cflag', x: px, z: pz, yaw: T.hd[ii], col: 0, i: ii }); }   // (the chequered flags on their poles: knockable, Render.propGeometry)
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road at the castle: concrete blocks across it
       for (let o = -wE(0, iE) - 0.5; o <= wE(1, iE) + 0.5; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
     }
@@ -24245,9 +24232,8 @@ const World = (function () {
       const bu = (s) => { const i = T.idx(s); let n = 0; for (const sd of [-1, 1]) { const o = sd * (wE(sd > 0 ? 1 : 0, i) + 12); n += vrLCf(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, 3); } return n / 2; };
       [['Zbilje', 1], ['Valburga', 2], ['Smlednik', 3]].forEach(([nm, k]) => { const q = T.names.find(v => v.n === nm); if (!q) return;
         let s = sStart + q.d; for (let t = s; t > s - 600; t -= 4) { if (bu(t) < 0.25 && bu(t - 12) < 0.25) { s = t; break; } }
-        const [x, z, i] = onSide(s, 1, 0.8); if (vrStubAt(x, z, 1)) return; const y = mvGround(x, z), g = scen.get(x, z);
-        for (const u of [-0.9, 0.9]) cyl(g, x + T.tx[i] * u, y - 0.2, z + T.tz[i] * u, 0.04, 2.6, 5, [0.62, 0.63, 0.66]);
-        bannerQ(x, y + 1.7, z, T.nx[i], T.nz[i], 2.4, 0.3, k > 1 ? 0 : 1 / 16, k > 1 ? 1 / 16 : 2 / 16, (k % 2) * 0.5, (k % 2) * 0.5 + 0.5, ban); exclPush(x, z, 1.5); });
+        const [x, z, i] = onSide(s, 1, 0.8); if (vrStubAt(x, z, 1)) return;
+        out.props.push({ kind: 'vboard', x, z, yaw: T.hd[i], col: 0, i }); exclPush(x, z, 1.5); });   // (the board on its two poles: knockable, Render.propGeometry; the name's lettering is lost on it)
     }
 
     /* ---- the trees: where the canopy map has them (its height class), the kind by the land under them (the woods: spruce, Scots pine, beech, a few
@@ -24307,6 +24293,7 @@ const World = (function () {
     crowdFinish(CR, root, out);
     out.crowdN += crowdLayer(CRF, finG);
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, sideRoads: (T.stubs || []).length };
+    out.knock = {}; for (const p of out.props) out.knock[p.kind] = (out.knock[p.kind] || 0) + 1;   // (the knockable things by kind, read by the tests)
     return out;
   }
 
