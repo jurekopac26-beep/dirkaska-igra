@@ -126,7 +126,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.rect(-3.051, 0.71, 0, 0.84, 0.04, CH, { dir: '-x' });
         K.rect(-3.052, 0.58, 0, 0.5, 0.11, WH, { dir: '-x' });
         K.rect(-3.051, 0.83, 0, 1.6, 0.02, CH, { dir: '-x', part: 'body' });
-        // ---- the flags on the front wings: a chrome staff on its foot, the flag (the stripe's colour, a red band) flying back, both faces ----
+        // ---- the flags on the front wings: a chrome staff on its foot, the flag (the stripe's colour, a red band, a gold canton at the top
+        //      by the staff: a state ensign of its own) flying back, both faces ----
+        const GOLD = K.rgb(0xf2c21a);
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'flagL' : 'flagR', () => {
           // (rippling: its three panels turned 30 degrees each way, so it shows from behind (the chase camera) as well as from the side)
           const z = sd * 0.86, x = 2.74, y0 = 0.94, xs = [x - 0.008, x - 0.11, x - 0.215, x - 0.31], zs = [0, 0.06 * sd, 0, 0.055 * sd], ys = [[1.13, 1.365], [1.122, 1.357], [1.114, 1.349], [1.106, 1.341]];
@@ -136,7 +138,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (let i = 0; i < 3; i++) for (let b = 0; b < 3; b++) {
             const at = (j, t) => ys[j][0] + (ys[j][1] - ys[j][0]) * (b + t) / 3;
             const q = [[xs[i], at(i, 0), z + zs[i]], [xs[i + 1], at(i + 1, 0), z + zs[i + 1]], [xs[i + 1], at(i + 1, 1), z + zs[i + 1]], [xs[i], at(i, 1), z + zs[i]]];
-            K.face(q, b === 1 ? RED : S); K.face(q.slice().reverse(), b === 1 ? RED : S);
+            const fc = i === 0 && b === 2 ? GOLD : b === 1 ? RED : S;   // (b 0 the bottom band, 2 the top; i 0 the panel at the staff)
+            K.face(q, fc); K.face(q.slice().reverse(), fc);
           }
         }, { noCrush: true, noDent: true, hinge: [[2.7, 0.94, sd * 0.86], [2.78, 0.94, sd * 0.86]] });   // (loose: the staff leans out on its foot)
         K.hinge('hood', [1.26, 0.99, -0.8], [1.26, 0.99, 0.8]);
