@@ -251,8 +251,8 @@
     const v = mapV === 1 && R.fly ? 1 : 2;
     let h = '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>';
     h += v === 1 ? flyView(t, lockd) : topView(t, R, M, lockd);
-    const V = D.mapVersions.find(x => x.n === mapV) || D.mapVersions[0];
-    h += '<div class="mapv" role="group" aria-label="Map version"><span>MAP</span>' + D.mapVersions.map(x => '<button aria-pressed="' + (mapV === x.n) + '" data-act="mapv:' + x.n + '" title="' + esc(x.name) + '">' + x.n + '</button>').join('') + '<em>' + esc(V.name) + '</em></div>';
+    // the two views to switch between: just the numbers 1 (flyover) and 2 (map), no words
+    h += '<div class="mapv" role="group" aria-label="Map version">' + D.mapVersions.map(x => '<button aria-pressed="' + (mapV === x.n) + '" data-act="mapv:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + x.n + '</button>').join('') + '</div>';
     return h;
   }
   const stageView = (t, lockd) => isRoute(t) ? routeView(t, lockd) : dio(t, lockd);
@@ -322,7 +322,7 @@
     trackIdx = Math.min(trackIdx, list.length - 1);
     const t = list[trackIdx], rec = t.rec, my = rec[1] !== '—' ? rec[1] : '';
     const badge = my ? '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOUR ' + esc(rec[0].toUpperCase()) + ' · ' + esc(my) + '</span></div>' : '';
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) + '<div class="ribbon rmode r-' + mode + (isRoute(t) ? ' side' : '') + '">' + esc(M.name.toUpperCase()) + '</div>' +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) +
       '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + dots(list.length, trackIdx) + '</div>';
     h += '<div class="card">' + badge + '<h1>' + esc(t.name) + '<span class="tag ghost">' + esc(t.tag) + '</span></h1><p class="desc">' + esc(t.desc) + '</p>';
     const len = [I.flag, 'Length', t.km.toFixed(2) + ' km'], alt = t.def.alt, climb = alt ? [I.corners, alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m'] : [I.corners, 'Corners', String(t.corners)];
@@ -851,7 +851,7 @@
       screen = 'track'; sheet = null;
       if (cur && inMode(cur) && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else if (!TRACKS().length || !(cur && inMode(cur))) enterTrack(); else { group = cur.group; trackIdx = TRACKS().indexOf(cur); }
     }
-    mapV = G.S.mapV === 1 ? 1 : 2;
+    mapV = G.S.mapV === 2 ? 2 : 1;   // (1 the flyover by default, 2 the map)
     render();
   }
   function hide() {   // another screen of the game is up: the menu's moving things rest

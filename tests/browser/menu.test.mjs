@@ -57,7 +57,8 @@ try {
           // the picture on the stage: the map from above (an svg image), or the model of the land (an img): loaded
           const r = await page.waitForFunction(() => {
             const root = document.getElementById('menu-host').shadowRoot, st = root.querySelector('#track-stage'), name = root.querySelector('.card h1').firstChild.textContent;
-            const imgs = [...st.querySelectorAll('.dio img')], map = st.querySelector('.dio.topmap'), files = [...st.querySelectorAll('.dio img, .dio image')].map(e => e.getAttribute('src') || e.getAttribute('href'));
+            const imgs = [...st.querySelectorAll('.dio img')], map = st.querySelector('.dio.topmap'), fly = st.querySelector('.dio.fly video'), files = [...st.querySelectorAll('.dio img, .dio image')].map(e => e.getAttribute('src') || e.getAttribute('href'));
+            if (fly) return { name, kind: 'flyover', files: [fly.getAttribute('poster'), fly.getAttribute('src')].filter(Boolean) };   // (a route track's default: the flyover video, with its poster)
             if (map) return { name, kind: 'map', files };
             if (imgs.length && imgs.every(i => i.complete && i.naturalWidth > 0)) return { name, kind: 'model', files };
             return null;
@@ -79,6 +80,9 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
+    // the map switch over a route track (Riviera): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
+    const stageUI = await ev(page, 'const m = root.querySelector(".mapv"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.textContent) : null, text: m ? m.textContent.replace(/\\s+/g, "") : "", pressed: pr ? pr.textContent : "", ribbon: !!root.querySelector("#track-stage .ribbon") };');
+    T.check('the track stage: the map switch is only "1" and "2" (no MAP/Flyover words), the flyover (1) is lit by default, no mode ribbon', JSON.stringify(stageUI.btns) === '["1","2"]' && stageUI.text === '12' && stageUI.pressed === '1' && !stageUI.ribbon, JSON.stringify(stageUI));
     await click(page, 'pick-weather');
     await click(page, 'weather:1');
     let s = await page.evaluate(() => ({ w: window.__game.S.weather, rainy: document.getElementById('menu-host').shadowRoot.querySelector('#track-stage').classList.contains('rainy') }));
@@ -139,8 +143,8 @@ try {
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:trial'); await click(page, 'group:rally');
     for (let k = 0; k < 5; k++) { const n = await ev(page, 'return root.querySelector(".card h1").firstChild.textContent;'); if (n === 'Harju') break; await click(page, 'track:1'); }
-    const info = await ev(page, 'return { name: root.querySelector(".card h1").firstChild.textContent, ribbon: root.querySelector(".ribbon").textContent, gold: /Gold time/.test(root.querySelector(".info").textContent) };');
-    T.check('Time trial, Rally: Harju with its Gold time', info.name === 'Harju' && /TIME TRIAL/i.test(info.ribbon) && info.gold, JSON.stringify(info));
+    const info = await ev(page, 'return { name: root.querySelector(".card h1").firstChild.textContent, sub: root.querySelector(".topbar h2 small").textContent, gold: /Gold time/.test(root.querySelector(".info").textContent) };');
+    T.check('Time trial, Rally: Harju with its Gold time', info.name === 'Harju' && /Time trial/i.test(info.sub) && info.gold, JSON.stringify(info));
     await click(page, 'race-single');
     await raceOn(page, 'harju').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, tt: __game.race && !!__game.race.timeTrial }));
@@ -240,12 +244,12 @@ try {
     await ready(page);
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.reload(); await ready(page);   // (the service worker in charge of the page: the pictures it asks for are kept)
-    await click(page, 'single'); await click(page, 'mode:race');
+    await click(page, 'single'); await click(page, 'mode:race'); await click(page, 'mapv:2'); await page.waitForTimeout(400);   // (the map from above: its webp images are kept by sw.js; the flyover is a video, not kept)
     const files = await ev(page, 'return [...root.querySelectorAll("#track-stage image, #track-stage img")].map(e => e.getAttribute("href") || e.getAttribute("src"));');
     await page.waitForFunction(async (n) => { const k = (await caches.keys()).find(x => /pictures/.test(x)); return !!k && (await (await caches.open(k)).keys()).length >= n; }, files.length, { timeout: 30000 }).catch(() => null);
     srv.setOffline(true);
     await page.reload().catch(() => null); await ready(page).catch(() => null);
-    await click(page, 'single'); await click(page, 'mode:race');
+    await click(page, 'single'); await click(page, 'mode:race'); await click(page, 'mapv:2').catch(() => null); await page.waitForTimeout(400);   // (MAP 2 was kept in the settings, so the map shows; its images come from the cache)
     const off = await page.waitForFunction(() => { const root = document.getElementById('menu-host').shadowRoot, i = root.querySelector('#track-stage'); return !!i && root.querySelector('.card h1') ? true : false; }, null, { timeout: 20000 }).then(() => true).catch(() => false);
     const loaded = await page.evaluate(async (files) => { const out = []; for (const f of files) { try { const r = await fetch(f); out.push(r.ok); } catch (_) { out.push(false); } } return out; }, files);
     const fonts = await page.evaluate(() => Promise.all([document.fonts.load('italic 900 20px ApexMenu', 'Vršič'), document.fonts.load('400 16px ApexMenu', 'Vršič')]).then(r => r.map(x => x.length)).catch(() => [0, 0]));
