@@ -473,7 +473,7 @@ const Core = (function () {
           for (let j = 0; j < n; j++) {
             const x = P[2 * j], z = P[2 * j + 1], a = Math.max(0, j - 1), b = Math.min(n - 1, j + 1); let tx = P[2 * b] - P[2 * a], tz = P[2 * b + 1] - P[2 * a + 1]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
             const ox = -tz * r.sg, oz = tx * r.sg; let isl = rings.some(R => Math.hypot(x - R.x, z - R.z) < R.r - R.hw + 0.5);
-            for (let u = 1; u <= W && !isl; u += 1.5) if (F.any(x + ox * u, z + oz * u)) isl = true;
+            for (let u = 1; u <= W && !isl; u += 1.5) { const xx = x + ox * u, zz = z + oz * u; if (r.k !== 0 ? F.any(xx, zz) : this.onAlt(xx, zz) || rings.some(R => R.zr > 0 && Math.hypot(xx - R.x, zz - R.z) < R.zr)) isl = true; }   // (the route's: an oncoming lane or a ring's zone beyond, not the road's own other leg at a hairpin; a lane's or a ring's: any road beyond)
             keep[j] = isl ? 0 : 1;
           }
           for (let j = 0; j < n;) { if (!keep[j]) { j++; continue; } let e = j; while (e + 1 < n && keep[e + 1]) e++;
@@ -586,11 +586,18 @@ const Core = (function () {
       const S = this.stubs[k], rings = this.rings, DX = 2.3;
       if (this.def.sideClosed) {   // (closed at the road's edge: the row along the road in front of the barrier across the mouth, 0.4 m inside it, a little wider than the mouth)
         if (S.m0 < 0) return [];
-        const ds = this.ds, sd = S.side, a = (S.m0 - 0.6) * ds, b = (S.m1 + 0.6) * ds, n = Math.max(3, Math.round((b - a) / DX) + 1), out = [], Q = {};
-        for (let j = 0; j < n; j++) { const s = a + (b - a) * j / (n - 1), f = s / ds, i = clamp(Math.floor(f), 0, this.N - 2), u = f - i, bar = (sd > 0 ? lerp(this.br[i], this.br[i + 1], u) : lerp(this.bl[i], this.bl[i + 1], u)) - 0.4;
+        const ds = this.ds, sd = S.side, a = (S.m0 - 0.6) * ds, b = (S.m1 + 0.6) * ds, L = [], out = [];
+        for (let s = a, c = 0; s <= b + 1e-6; s += ds / 4) {   // (the line 0.4 m inside the barrier, every half metre; spaced along that line, not the centre line: on the outside of a bend it is longer)
+          const f = s / ds, i = clamp(Math.floor(f), 0, this.N - 2), u = f - i, B = sd > 0 ? lerp(this.br[i], this.br[i + 1], u) : lerp(this.bl[i], this.bl[i + 1], u);
+          const W = this.walk ? this.walk[sd > 0 ? 1 : 0] : null, edge = lerp(this.wAt(i) + (W ? W[i] : 0), this.wAt(i + 1) + (W ? W[i + 1] : 0), u), bar = Math.max(B - 0.4, edge + 0.3);   // (off the asphalt and the sidewalk)
           const x = lerp(this.px[i], this.px[i + 1], u) + lerp(this.nx[i], this.nx[i + 1], u) * sd * bar, z = lerp(this.pz[i], this.pz[i + 1], u) + lerp(this.nz[i], this.nz[i + 1], u) * sd * bar;
-          if (this.onAlt(x, z) || this.inRingZone(x, z) && rings.some(R => R.zr > 0 && Math.hypot(x - R.x, z - R.z) < R.zr)) continue;
-          out.push({ kind: 'bollard', x, z, yaw: this.hd ? this.hd[i] + Math.PI / 2 * sd : 0, col: 0, i, t: 0 }); }
+          if (L.length) c += Math.hypot(x - L[L.length - 1].x, z - L[L.length - 1].z);
+          L.push({ x, z, i, c, room: bar <= B - 0.15 }); }   // (no room: a house pulls the barrier right in)
+        const len = L[L.length - 1].c, n = Math.max(3, Math.ceil(len / DX) + 1);
+        for (let j = 0, q = 0; j < n; j++) { const c = len * j / (n - 1); while (q + 1 < L.length - 1 && L[q + 1].c < c) q++;
+          const A = L[q], B2 = L[Math.min(q + 1, L.length - 1)], t = B2.c > A.c ? clamp((c - A.c) / (B2.c - A.c), 0, 1) : 0, x = lerp(A.x, B2.x, t), z = lerp(A.z, B2.z, t), P = t < 0.5 ? A : B2;
+          if (!P.room || this.onAlt(x, z) || this.inRingZone(x, z) && rings.some(R => R.zr > 0 && Math.hypot(x - R.x, z - R.z) < R.zr)) continue;
+          out.push({ kind: 'bollard', x, z, yaw: this.hd ? this.hd[P.i] + Math.PI / 2 * sd : 0, col: 0, i: P.i, t: 0 }); }
         return out;
       }
       const clear = (x, z) => {

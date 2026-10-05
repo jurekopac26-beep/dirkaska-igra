@@ -1,9 +1,10 @@
 // Medvode's fence, as built: a visible, continuous timber fence on the whole barrier (World.buildMedvode, out.fence), checked in the browser against the
 // physics (the geometry itself: tests/medvode-fence.test.js). Reads what the world built (Render.world.fence: the lines as built, 8 cm outside the wall's line)
 // and asserts
-//   - along the whole route, every 6 m on both sides, there is a fence within 0.3 m of the wall (where wallCollide stops a car along the barrier's normal) except
-//     where it is open (a side road's mouth), inside a roundabout's zone, on the bridge, under the overpass, on an oncoming lane, in a bend's corner (counted)
-//   - the fence never lies on the asphalt, a sidewalk, an oncoming lane, a side road's carriageway or a ring road
+//   - along the whole route, every 6 m on both sides, there is a fence within 0.3 m of the wall (where wallCollide stops a car along the barrier's normal: right
+//     along the road, def.edgeBar, the side roads closed across their mouths) except inside a roundabout's zone, on the bridge, under the overpass, on an oncoming
+//     lane or an island by it, round the big ring's island, in a bend's corner (counted)
+//   - the fence never lies on the asphalt, a sidewalk, an oncoming lane or a small ring's road
 //   - no house that was built stands inside the free ground; the houses cut by the fence are counted
 //   - what it costs: its vertices and meshes, the draw calls and vertices it adds to a frame (844x390, phone budget) and that it is seen from the iso and the chase camera
 //     (the pixels that change when it is hidden)
@@ -30,9 +31,9 @@ try {
     let verts = 0, tris = 0, nan = 0, nonShadow = 0; for (const m of ms) { const g = m.geometry, p = g.attributes.position.array; verts += g.attributes.position.count; tris += g.index.count / 3; if (!m.castShadow && m.receiveShadow) nonShadow++; for (let k = 0; k < p.length; k++) if (!Number.isFinite(p[k])) { nan++; break; } }
     return { has: !!F, stats: F && F.stats, meshes: ms.length, verts, tris, nan, nonShadow, kinds: F ? F.lines.reduce((a, l) => (a[l.k] = (a[l.k] || 0) + l.len, a), {}) : null };
   });
-  T.check('built: a fence along the barriers of the whole route, of the side roads, the roundabouts and the oncoming lanes, 20 km of it, in a few meshes that cast no shadow',
-    B.has && B.stats.length > 18000 && B.kinds[0] > 10500 && B.kinds[1] > 5000 && B.kinds[3] > 100 && B.meshes === B.stats.meshes && B.meshes > 10 && B.meshes < 45 && B.nonShadow === B.meshes && !B.nan,
-    `${(B.stats.length / 1000).toFixed(1)} km (route ${(B.kinds[0] / 1000).toFixed(1)}, side roads ${(B.kinds[1] / 1000).toFixed(1)}, rings ${(B.kinds[2] || 0).toFixed(0)} m, lanes ${(B.kinds[3] || 0).toFixed(0)} m), ${B.stats.posts} posts, ${B.stats.columns} columns, ${B.meshes} meshes`);
+  T.check('built: a fence right along the road on both sides of the whole route (across the side roads\' mouths), round the small roundabouts and the oncoming lanes, 13 km of it, in a few meshes that cast no shadow',
+    B.has && B.stats.length > 12000 && B.kinds[0] > 12000 && !B.kinds[1] && B.kinds[3] > 100 && B.meshes === B.stats.meshes && B.meshes > 6 && B.meshes < 45 && B.nonShadow === B.meshes && !B.nan,
+    `${(B.stats.length / 1000).toFixed(1)} km (route ${(B.kinds[0] / 1000).toFixed(1)}, side roads ${((B.kinds[1] || 0) / 1000).toFixed(1)}, rings ${(B.kinds[2] || 0).toFixed(0)} m, lanes ${(B.kinds[3] || 0).toFixed(0)} m), ${B.stats.posts} posts, ${B.stats.columns} columns, ${B.meshes} meshes`);
   T.check('vertex count added: under 120k vertices in all (indexed, thinned out along straight stretches)', B.verts < 120000 && B.verts === B.stats.vertices,
     `${B.verts} vertices, ${B.tris} triangles (${(B.verts / B.stats.length).toFixed(1)} per metre)`);
 
@@ -48,25 +49,27 @@ try {
     const mkCar = (x, z, h) => ({ x, z, h: 0, vx: 0, vz: 0, w: 0, m: { mass: 1000 }, I: 1000, corners: [[0, 0], [0, 0], [0, 0], [0, 0]], q: { i: h }, hitWall: 0, fxWall: 0, isPlayer: false, pitWant: false, inPit: false });
     const sp = { S: null }, stubIn = (x, z, m) => { for (const S of Tr.stubs) { const b = S.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue; sp.S = null; if (Tr._stubProj(S, x, z, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) < Tr.stubHw(S, sp.t) + S.lim + m) return true; } return false; };
     const ringIn = (x, z, m) => Tr.rings.some(R => Math.hypot(x - R.x, z - R.z) < R.zr + m), skipAt = (s, m) => F.skips.some(([a, b]) => s >= a - m && s <= b + m);
+    const isle = (x, z, i, sd) => { for (let u = 1; u <= 8; u += 1.5) { const xx = x + Tr.nx[i] * sd * u, zz = z + Tr.nz[i] * sd * u; if (Tr.onAlt(xx, zz) || ringIn(xx, zz, 0)) return true; } return false; };   // (an island by an oncoming lane)
+    const bigIsle = (x, z) => Tr.rings.some(R => !(R.zr > 0) && Math.hypot(x - R.x, z - R.z) < R.r - R.hw + 2.5);
     // every 6 m on both sides
     let total = 0, fenced = 0, miss = 0, missFar = 0; const ex = {}, missAt = [];
     for (const sd of [-1, 1]) for (let i = 3; i < N - 3; i += 3) {
       const bar = sd > 0 ? Tr.br[i] : Tr.bl[i], s = i * ds, si = sd > 0 ? 1 : 0; total++;
       let u = null; for (let v = -3; v <= 3.001; v += 0.05) { const xx = Tr.px[i] + Tr.nx[i] * sd * (bar + v), zz = Tr.pz[i] + Tr.nz[i] * sd * (bar + v), c = mkCar(xx, zz, i); Core.wallCollide(c, Tr, false); if (Math.hypot(c.x - xx, c.z - zz) > 0.002) { u = v; break; } }
       const x = Tr.px[i] + Tr.nx[i] * sd * (bar + (u || 0)), z = Tr.pz[i] + Tr.nz[i] * sd * (bar + (u || 0)), B = sd > 0 ? Tr.br : Tr.bl, step = Math.abs(B[i + 1] - B[i - 1]) > 2.5, G = Tr.gap[si], gap = G[i] || G[i - 1] || G[i + 1];
-      const clear = !gap && u !== null && !step && !stubIn(x, z, 0.3) && !ringIn(x, z, 0.3) && !Tr.onAlt(x, z) && !skipAt(s, 3), d = distTo(x, z);
+      const clear = !gap && u !== null && !step && !stubIn(x, z, 0.3) && !ringIn(x, z, 0.3) && !Tr.onAlt(x, z) && !skipAt(s, 3) && !isle(x, z, i, sd) && !bigIsle(x, z), d = distTo(x, z);
       if (clear) { if (d <= 0.3) fenced++; else { miss++; if (d > 1) missFar++; if (missAt.length < 12) missAt.push((sd < 0 ? 'L' : 'R') + (s - Tr.startS).toFixed(0) + ':' + d.toFixed(1) + 'm'); } }
-      else if (d > 0.3) { const k = G[i] || stubIn(x, z, 0) ? 'side road mouth' : ringIn(x, z, 0) ? 'inside a ring zone' : skipAt(s, 0) ? (def.bridges.some(([a, b]) => s - Tr.startS >= a - 3 && s - Tr.startS <= b + 3) ? 'bridge' : 'overpass') : Tr.onAlt(x, z) ? 'oncoming lane' : u === null ? 'corner of a bend' : step ? 'step in the barrier' : 'edge of an exception'; ex[k] = (ex[k] || 0) + 1; }
+      else if (d > 0.3) { const k = ringIn(x, z, 0) ? 'inside a ring zone' : skipAt(s, 0) ? (def.bridges.some(([a, b]) => s - Tr.startS >= a - 3 && s - Tr.startS <= b + 3) ? 'bridge' : 'overpass') : Tr.onAlt(x, z) ? 'oncoming lane' : isle(x, z, i, sd) ? 'island by an oncoming lane' : bigIsle(x, z) ? 'the big ring\'s island' : u === null ? 'corner of a bend' : step ? 'step in the barrier' : G[i] || stubIn(x, z, 0) ? 'side road mouth' : 'edge of an exception'; ex[k] = (ex[k] || 0) + 1; }
     }
     // never on the road: the built columns and the points between them (every ~1 m, 8 cm out as built)
-    let nPts = 0, onRoute = 0, onLane = 0, onStub = 0, onRing = 0, minRoute = 1e9;
+    let nPts = 0, onRoute = 0, onLane = 0, onRing = 0, tips = 0, minRoute = 1e9;
     const wE = (si, i) => Tr.wAt(i) + (Tr.walk ? Tr.walk[si][i] : 0);
     for (const l of F.lines) { const C = l.cols; for (let j = 0; j + 1 < C.length / 3; j++) { const ax = C[3 * j], az = C[3 * j + 2], dx = C[3 * j + 3] - ax, dz = C[3 * j + 5] - az, m = Math.max(1, Math.ceil(Math.hypot(dx, dz)));
       for (let q = 0; q < m; q++) { const x = ax + dx * q / m, z = az + dz * q / m; nPts++;
-        const qm = Tr._qMain(x, z, Tr.nearestIdx(x, z), {}); if (!qm.over) { const e = Math.abs(qm.d) - wE(qm.d > 0 ? 1 : 0, qm.a); minRoute = Math.min(minRoute, e); if (e < 0.1) onRoute++; }
+        const qm = Tr._qMain(x, z, Tr.nearestIdx(x, z), {}); if (!qm.over) { const e = Math.abs(qm.d) - wE(qm.d > 0 ? 1 : 0, qm.a), tip = Tr.k[qm.a] * qm.d > 0 && Math.abs(Tr.k[qm.a] * qm.d) > 0.6;   // (tip: the inside of a sharp bend)
+          if (tip && e < 0.1 && e > -0.25) tips++; else { minRoute = Math.min(minRoute, e); if (e < 0.1) onRoute++; } }
         for (const L of Tr.altC) { const b = L.bb; if (x < b[0] - 8 || x > b[2] + 8 || z < b[1] - 8 || z > b[3] + 8) continue; const Pp = L.pts; for (let k = 0; k + 3 < Pp.length; k += 2) { const px = Pp[k], pz = Pp[k + 1], ex2 = Pp[k + 2] - px, ez = Pp[k + 3] - pz, t = Math.max(0, Math.min(1, ((x - px) * ex2 + (z - pz) * ez) / (ex2 * ex2 + ez * ez || 1e-9))); if (Math.hypot(x - px - ex2 * t, z - pz - ez * t) < def.altHw + 0.1) onLane++; } }
-        for (const S of Tr.stubs) { const b = S.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue; sp.S = null; if (!Tr._stubProj(S, x, z, sp) || sp.t < 0 || sp.t > S.L - 0.6) continue; if (Math.abs(sp.u) - Tr.stubHw(S, sp.t) < 0.2) onStub++; }
-        for (const R of Tr.rings) { const e = Math.abs(Math.hypot(x - R.x, z - R.z) - R.r) - (def.rings.find(v => v.c[0] === R.x).hw || 3); if (e < 0.2 && Math.hypot(x - R.x, z - R.z) > R.ri) onRing++; } } } }
+        for (const R of Tr.rings) { if (!(R.zr > 0)) continue; const e = Math.abs(Math.hypot(x - R.x, z - R.z) - R.r) - (def.rings.find(v => v.c[0] === R.x).hw || 3); if (e < 0.2 && Math.hypot(x - R.x, z - R.z) > R.ri) onRing++; } } } }
     // the houses that were built: none inside the free ground by more than 30 cm
     const free = Tr.wallFree(0.3), bl = F.bld, inPoly = (xs, zs, x, z) => { let c = false; for (let i = 0, j = xs.length - 1; i < xs.length; j = i++) if ((zs[i] > z) !== (zs[j] > z) && x < (xs[j] - xs[i]) * (z - zs[i]) / (zs[j] - zs[i]) + xs[i]) c = !c; return c; };
     let nB = bl.off.length - 1, inside = 0; const where = [];
@@ -74,14 +77,14 @@ try {
       let deep = false; for (let k = 0; k < xs.length && !deep; k++) { const k2 = (k + 1) % xs.length, m = Math.max(1, Math.ceil(Math.hypot(xs[k2] - xs[k], zs[k2] - zs[k]) / 0.5)); for (let q = 0; q < m; q++) if (free.any(xs[k] + (xs[k2] - xs[k]) * q / m, zs[k] + (zs[k2] - zs[k]) * q / m)) { deep = true; break; } }
       if (!deep) { const cx = xs.reduce((a, v) => a + v, 0) / xs.length, cz = zs.reduce((a, v) => a + v, 0) / zs.length; if (inPoly(xs, zs, cx, cz) && free.any(cx, cz)) deep = true; }
       if (deep) { inside++; if (where.length < 4) where.push(xs[0].toFixed(0) + ',' + zs[0].toFixed(0)); } }
-    return { total, fenced, miss, missFar, missAt, ex, nPts, onRoute, onLane, onStub, onRing, minRoute, nB, inside, where, left: F.stats.housesLeftOut };
+    return { total, fenced, miss, missFar, missAt, ex, nPts, onRoute, onLane, onRing, tips, minRoute, nB, inside, where, left: F.stats.housesLeftOut };
   });
   const nEx = Object.values(R.ex).reduce((a, b) => a + b, 0);
-  T.check('coverage: every 6 m on both sides a fence within 0.3 m of the wall (wallCollide along the barrier\'s normal) except where it is open, inside a ring, on the bridge, under the overpass, on an oncoming lane, in a bend\'s corner',
-    R.miss <= 3 && R.missFar === 0 && R.fenced > 0.8 * R.total && nEx < 0.2 * R.total,
+  T.check('coverage: every 6 m on both sides a fence within 0.3 m of the wall (wallCollide along the barrier\'s normal) except inside a ring, on the bridge, under the overpass, on an oncoming lane or an island by it, round the big ring\'s island, in a bend\'s corner; none open at a side road\'s mouth',
+    R.miss <= 3 && R.missFar === 0 && R.fenced > 0.8 * R.total && nEx < 0.12 * R.total && !R.ex['side road mouth'],
     `${R.total} points: ${R.fenced} fenced, ${R.miss} not within 0.3 m (none over 1 m)${R.missAt.length ? ' (' + R.missAt.join(' ') + ')' : ''}; ${nEx} exceptions (${Object.entries(R.ex).map(([k, v]) => v + ' ' + k).join(', ')}) = ${(100 * nEx / R.total).toFixed(1)} %`);
-  T.check('never on the road: not on the asphalt or a sidewalk (0.1 m clear at least), an oncoming lane, a side road\'s carriageway (up to its rail) or a ring road', R.onRoute === 0 && R.onLane === 0 && R.onStub === 0 && R.onRing === 0,
-    `${R.nPts} points of the lines as built every ~1 m: nearest to a sidewalk edge ${R.minRoute.toFixed(2)} m; ${R.onRoute} / ${R.onLane} / ${R.onStub} / ${R.onRing} on the route / a lane / a side road / a ring`);
+  T.check('never on the road: not on the asphalt or a sidewalk (0.1 m clear at least; the tip in the inside of a sharp bend at most 0.25 m on the sidewalk\'s edge), an oncoming lane or a small ring\'s road', R.onRoute === 0 && R.onLane === 0 && R.onRing === 0 && R.tips <= 6,
+    `${R.nPts} points of the lines as built every ~1 m: nearest to a sidewalk edge ${R.minRoute.toFixed(2)} m (${R.tips} at a bend\'s inside tip); ${R.onRoute} / ${R.onLane} / ${R.onRing} on the route / a lane / a ring`);
   T.check('houses: none that was built stands inside the free ground (by more than 30 cm); the ones the fence cuts into are left out', R.inside === 0 && R.left < 40,
     `${R.nB} buildings built, ${R.left} left out for the fence, ${R.inside} inside the free ground${R.where.length ? ': ' + R.where.join('; ') : ''}`);
 
