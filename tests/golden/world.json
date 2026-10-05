@@ -161,21 +161,21 @@
  },
  "vrsic": {
   "meshes": 4297,
-  "verts": 1978936,
-  "instances": 67045,
-  "props": 1211,
-  "crowd": 1418,
-  "world": "59997ce6",
-  "propsHash": "37bc59c9",
-  "floor": "e3f9a0e6/25760",
+  "verts": 1985215,
+  "instances": 67337,
+  "props": 1108,
+  "crowd": 1427,
+  "world": "bbc7b127",
+  "propsHash": "a94d74cd",
+  "floor": "4c163412/25760",
   "groups": {
-   "-:MeshLambertMaterial": "690b6f85",
-   "-:MeshPhongMaterial": "2dffde88",
-   "crowd:MeshLambertMaterial": "a10d5435",
-   "-:MeshBasicMaterial": "53ebce8c",
-   "ao:MeshBasicMaterial": "9e146cea",
-   "tyremarks:MeshBasicMaterial": "f8f32119",
-   "roadwear:MeshLambertMaterial": "779685b7"
+   "-:MeshLambertMaterial": "c062fbcc",
+   "-:MeshPhongMaterial": "a4b5d28",
+   "crowd:MeshLambertMaterial": "358b44f2",
+   "-:MeshBasicMaterial": "277b3cd2",
+   "ao:MeshBasicMaterial": "cdbfbbc7",
+   "tyremarks:MeshBasicMaterial": "d1a6c27d",
+   "roadwear:MeshLambertMaterial": "2557bd04"
   }
  },
  "nring": {
