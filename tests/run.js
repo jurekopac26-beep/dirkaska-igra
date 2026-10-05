@@ -17,7 +17,7 @@ const list = which ? SUITES[which] : [...SUITES.node, ...SUITES.browser];
 if (!list) { console.error('unknown suite: ' + which + ' (node | browser)'); process.exit(2); }
 const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
 // (the memory test goes three times through every track, the smoke and the phone budget tests drive on each: they grow with each new track, so they get twice the time)
-const LIMIT_OF = (f) => (/memory\.test|smoke\.test|perf\.test/.test(f) ? 2 : 1) * LIMIT;
+const LIMIT_OF = (f) => (/memory\.test/.test(f) ? 3 : /smoke\.test|perf\.test/.test(f) ? 2 : 1) * LIMIT;   // (the memory test: three times)
 
 const results = [];
 for (const f of list) {
