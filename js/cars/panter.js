@@ -18,8 +18,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'race', ht: 1.3, y0: 0.18,
       over: {
         wing: { f: 0.78, lx: -0.88, m: 4 },
-        // (where the look has them: the front lid low between the wings, the high front wings forward of the axle)
-        hood: { lx: 0.66, y: 0.69 }, fenderL: { lx: 0.69, lz: -0.79, y: 0.63 }, fenderR: { lx: 0.69, lz: 0.79, y: 0.63 },
+        // (where the look has them: the front lid low between the wings, the high front wings forward of the axle). The front wings and
+        // the hips are whole panels, the flank with the crest over it (a wing's round lamp, a hip's flare): on the road they lie 0.56 /
+        // 0.40 m tall, h their real thickness
+        hood: { lx: 0.66, y: 0.69 }, fenderL: { lx: 0.69, lz: -0.79, y: 0.63, h: 0.2 }, fenderR: { lx: 0.69, lz: 0.79, y: 0.63, h: 0.2 },
+        quarterL: { h: 0.15 }, quarterR: { h: 0.15 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft from the tail panel to the front lid's edge (the lid low between the

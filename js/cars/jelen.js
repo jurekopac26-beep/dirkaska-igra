@@ -45,8 +45,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         crush: { x0: -1.35, x1: -0.3, z: 0.7 },                             // (the roof between the fastback's middle and the windscreen)
       },
       wheels: { style: 'std', spokes: 5, w: 0.25, wR: 0.29, rimK: 0.7, rim: [0.7, 0.71, 0.74], cap: [0.16, 0.16, 0.17], gap: 0.045 },
-      // the fastback's glass and the deck are the tailgate (the trunk out to the roof's rear edge; its top only: the sails stay with the quarters)
-      regions: (std) => std.map(r => r.part === 'trunk' ? Object.assign({}, r, { x: [r.x[0], -1.08], bands: ['edge', 'crown'] }) : r),
+      // the fastback's glass and the deck are the tailgate (the trunk out to the roof's rear edge; its top only: the sails stay with the
+      // quarters); the bonnet ends where the bumper starts: the nose's top in front of it is the body's (a fixed header with the lamps and
+      // their covers: the bonnet's piece lies flat, without the nose's downturned tip)
+      regions: (std) => { const xb = std.find(r => r.part === 'bumperF').x[0];
+        return std.map(r => r.part === 'trunk' ? Object.assign({}, r, { x: [r.x[0], -1.08], bands: ['edge', 'crown'] })
+          : r.part === 'hood' ? Object.assign({}, r, { x: [r.x[0], xb] }) : r); },
       build(K) {
         const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], CH = K.chrome, SILL = K.shade(P, 0.6), AMB = K.rgb(0xff9a1e), LC = [0.74, 0.77, 0.82];
         // ---- the shell: the paint; the windscreen and the side glass (forward to the A-pillar, back into the sail: the quarter window), the
@@ -96,10 +100,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { K.rect(2.273, 0.27, sd * 0.61, 0.1, 0.08, B); K.rect(2.273, 0.355, sd * 0.61, 0.1, 0.025, AMB); }   // (the brake ducts, the indicators)
           K.rect(2.273, 0.4, 0, 1.36, 0.008, K.shade(P, 0.45));                // (its shut line under the lamps)
         }, { hinge: [[2.2, 0.2, -0.7], [2.2, 0.2, 0.7]] });
-        for (const sd of [-1, 1]) {
-          const f = sd < 0 ? 'fenderL' : 'fenderR';
-          D2.top([[2.268, sd * 0.37], [2.268, sd * 0.575], [2.1, sd * 0.745], [2.13, sd * 0.52]], LC, 0.006, { host: f });
-          for (const z of [0.425, 0.525]) K.headLamp(2.276, 0.462, sd * z, 0.035, { ring: D, n: 8, host: f });
+        for (const sd of [-1, 1]) {   // (the body's: the covers lie on the nose's top, ahead of the bonnet's edge; the lenses in its face)
+          D2.top([[2.268, sd * 0.37], [2.268, sd * 0.575], [2.13, sd * 0.745], [2.13, sd * 0.52]], LC, 0.006, { host: 'body' });
+          for (const z of [0.425, 0.525]) K.headLamp(2.276, 0.462, sd * z, 0.035, { ring: D, n: 8, host: 'body' });
         }
         const onTop = (x, z) => [x, L.topY(x, z) + 0.012, z];
         for (const z of [-0.33, 0.27]) K.bar(onTop(0.11, z - 0.27), onTop(0.07, z + 0.27), 0.008, B, { n: 4, part: 'body' });   // (the wipers on the glass's foot)
