@@ -69,14 +69,14 @@ try {
     JSON.stringify({ res, prize, got, c4 }));
 
   // 5. a car bought (the money given for the test), raced
-  await page.evaluate(() => { const c = window.__game.career; c.money = 25000; });
+  await page.evaluate(() => { const c = window.__game.career; c.money = 35000; });
   await act('to-title'); await page.waitForTimeout(200); await act('to-car'); await page.waitForTimeout(200);
-  await page.evaluate(async () => { const g = window.__game; while (Core.MODELS[g.S.car].id !== 'p206') { g.onAction('car-next'); await new Promise(r => setTimeout(r, 30)); } });
+  await page.evaluate(async () => { const g = window.__game; while (Core.MODELS[g.S.car].id !== 'kaze') { g.onAction('car-next'); await new Promise(r => setTimeout(r, 30)); } });
   await act('car-buy'); await page.waitForTimeout(150);
   const c5 = await cr(), k5 = await car();
-  T.check('a car bought: 20.000 € taken, in the garage, "Naprej"', c5.money === 5000 && c5.cars.includes('p206') && k5.act === 'to-track' && /V tvoji garaži/.test(k5.price), JSON.stringify({ c5, k5 }));
+  T.check('a car bought: 30.000 € taken, in the garage, "Naprej"', c5.money === 5000 && c5.cars.includes('kaze') && k5.act === 'to-track' && /V tvoji garaži/.test(k5.price), JSON.stringify({ c5, k5 }));
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-career')));
-  T.check('the career kept in the browser', stored && stored.v === 1 && stored.money === 5000 && stored.cars.includes('p206') && stored.upg.pico.motor === 1, JSON.stringify(stored));
+  T.check('the career kept in the browser', stored && stored.v === 1 && stored.money === 5000 && stored.cars.includes('kaze') && stored.upg.pico.motor === 1, JSON.stringify(stored));
 
   // 6. the career off: the free game (every car, free upgrades of its own); on again: all kept
   await act('to-title'); await page.waitForTimeout(150); await act('to-career'); await page.waitForTimeout(150); await act('career-toggle'); await page.waitForTimeout(150);
@@ -90,7 +90,7 @@ try {
   T.check('career off: every car raced freely (no price), the free game\'s own upgrades (stock)', b6 === 'Kariera' && k6.act === 'to-track' && k6.cls.includes('off') && /Serijski\*/.test(u6) && !/€/.test(u6), JSON.stringify({ b6, k6, u6 }));
   await act('upg-done'); await act('to-title'); await page.waitForTimeout(150); await act('to-career'); await page.waitForTimeout(150); await act('career-toggle'); await page.waitForTimeout(150);
   const c7 = await cr();
-  T.check('career on again: the money, the garage and the upgrades kept', c7.on && c7.money === 5000 && c7.cars.join() === 'pico,p206' && c7.upg.pico.motor === 1, JSON.stringify(c7));
+  T.check('career on again: the money, the garage and the upgrades kept', c7.on && c7.money === 5000 && c7.cars.join() === 'pico,kaze' && c7.upg.pico.motor === 1, JSON.stringify(c7));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

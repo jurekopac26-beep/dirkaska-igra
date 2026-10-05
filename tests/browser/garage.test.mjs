@@ -127,9 +127,9 @@ try {
   // 8. the pictures of the cars in the car panel
   {
     await page.evaluate(() => { __garage.panel = 'car'; });
-    for (let i = 0; i < 30; i++) { await page.evaluate(() => __garage.advance(0.05)); await page.waitForTimeout(250); if (await page.evaluate(() => document.querySelectorAll('.g-car .th img').length) >= 11) break; }
+    for (let i = 0; i < 30; i++) { await page.evaluate(() => __garage.advance(0.05)); await page.waitForTimeout(250); if (await page.evaluate(() => document.querySelectorAll('.g-car .th img').length) >= 10) break; }
     const n = await page.evaluate(() => [...document.querySelectorAll('.g-car .th img')].filter(i => /^data:image\/png/.test(i.src)).length);
-    T.check('the car panel: a picture of each of the 11 cars', n === 11, n + ' pictures');
+    T.check('the car panel: a picture of each of the 10 cars', n === 10, n + ' pictures');
   }
 
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));

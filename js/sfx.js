@@ -52,7 +52,7 @@ const Sfx = (function () {
      clack at every gear change and a blip on the way down. The electric car (ev) has no engine: only its motors' whine, rising with the
      speed. The other cars' engines (the three nearest) with the Doppler shift of their speed towards or away from the camera. */
   const ENG = {
-    i4: { cyl: 4, odd: 0.16, rasp: 0.55, lp: 1, turbo: 0, pops: 0.3 },                    // a four-cylinder (PEUGEOT 206): buzzy, rasping at the top
+    i4: { cyl: 4, odd: 0.16, rasp: 0.55, lp: 1, turbo: 0, pops: 0.3 },                    // a four-cylinder: buzzy, rasping at the top
     i4t: { cyl: 4, odd: 0.14, rasp: 0.4, lp: 0.9, turbo: 0.9, pops: 0.35 },               // a small turbo four (PICO TURBO): the whistle, the blow-off
     b4t: { cyl: 4, odd: 0.4, rasp: 0.3, lp: 0.8, turbo: 1, pops: 0.35, burble: 0.75 },    // a turbo boxer (VORTEX 4WD): the flat-four's uneven burble
     i6t: { cyl: 6, odd: 0.08, rasp: 0.3, lp: 1.1, turbo: 0.7, pops: 0.25 },               // a straight six with a turbo (KAZE RS): smooth, silky
@@ -64,7 +64,7 @@ const Sfx = (function () {
     v8r: { cyl: 8, odd: 0.08, rasp: 0.8, lp: 1.4, turbo: 0, pops: 0.2 },                  // a flat-plane racing V8 (TAIFUN LM): even firing, a hard scream
     ev: { cyl: 1, ev: 1, odd: 0, rasp: 0, lp: 1, turbo: 0, pops: 0 },                     // the electric motors (STRELA EV): no engine, their whine
   };
-  const CAR_ENG = { p206: 'i4', pico: 'i4t', vortex: 'b4t', kaze: 'i6t', strega: 'v6', rally: 'al4', formula: 'v10', muscle: 'v8', truck: 'v8t', lm: 'v8r', ev: 'ev' };
+  const CAR_ENG = { pico: 'i4t', vortex: 'b4t', kaze: 'i6t', strega: 'v6', rally: 'al4', formula: 'v10', muscle: 'v8', truck: 'v8t', lm: 'v8r', ev: 'ev' };
   const engKind = (c) => c.police ? 'v8' : CAR_ENG[c.m.id] || (c.m.ev ? 'ev' : c.m.snd === 'v8' ? 'v8' : 'i4');
   const waves = {};
   function engWave(k) {   // the wave of one engine cycle (cached per type)

@@ -2838,7 +2838,7 @@ const Garage3D = (function () {
     };
   }
   // the wheels: where they are, their size, the face of their outer side (the race draws the front ones (and all four of a formula,
-  // a prototype or the Peugeot) as meshes of their own; the other rear ones are in the body)
+  // a prototype) as meshes of their own; the other rear ones are in the body)
   function wheelsOf(v, M) {
     const out = [], box = new THREE.Box3(), sz = new V3(), ctr = new V3();
     for (const [list, front] of [[v.wf, true], [v.wr, false]]) for (const w of list) {
@@ -2958,8 +2958,8 @@ const Garage3D = (function () {
   }
 
   /* ---------------- the parts of the upgrades on a car ---------------- */
-  // the kit's places on this car: measured on its own body (so every car, the Peugeot's model too, gets them where they fit)
-  const WINGED = { rally: 1, formula: 1, lm: 1, p206: 1 };   // (a big wing of their own already: no second one on top)
+  // the kit's places on this car: measured on its own body (so every car gets them where they fit)
+  const WINGED = { rally: 1, formula: 1, lm: 1 };   // (a big wing of their own already: no second one on top)
   function kitOf(cv) {
     const M = cv.M, P = cv.probe, bb = cv.bb, front = bb.max.x, rear = bb.min.x, top = bb.max.y, hw = Math.max(bb.max.z, -bb.min.z);
     const open = M.body === 'formula' || M.body === 'lm';
@@ -3046,7 +3046,7 @@ const Garage3D = (function () {
       const sp = K.hw * 2;
       if (lv >= 1 && !K.open) {   // a lip on the deck's edge, a lip under the front bumper
         const lip = new THREE.Mesh(foil(0.14, sp * (K.winged ? 0.7 : 0.82), 0.05), PM.carbon); lip.position.set(K.deckX - 0.05, K.deckY + 0.015, 0); lip.rotation.z = 0.18; lip.castShadow = true;
-        if (!K.winged || M.body === 'p206') grp.add(item(lip, 'up'));
+        if (!K.winged) grp.add(item(lip, 'up'));
         const fl = new THREE.Mesh(bx(0.24 + (lv >= 2 ? 0.08 : 0), 0.018, sp * 0.84), PM.carbon); fl.position.set(K.frontX - 0.08 + (lv >= 2 ? 0.04 : 0), K.frontLow - 0.006, 0); fl.castShadow = true; grp.add(item(fl, 'front'));
       }
       if (lv >= 2 && !K.winged) {   // the rear wing: on two posts; the GT package's is bigger, higher, with end plates and a gurney

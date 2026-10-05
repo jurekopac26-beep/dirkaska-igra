@@ -116,10 +116,9 @@
       'Left thumb: left and right, right thumb: throttle and brake. Hold the turn – the car slides its nose into the corner by itself and straightens at the exit; braking in the corner spins it.',
     'Rad obrne rep, rojen za drift.': 'Loves to swing its tail, born to drift.', 'Veliko oprijema, stabilen tudi na robu.': 'Lots of grip, stable even at the limit.',
     'Lahek in okreten, rad podvija.': 'Light and nimble, tends to understeer.', 'Oster in živahen, hitro zavrti.': 'Sharp and lively, quick to spin.',
-    'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.': 'An 80s rally car, huge power, born to drift.', 'Pravi 3D model, lahek in natančen v ovinkih.': 'A real 3D model, light and precise in corners.',
+    'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.': 'An 80s rally car, huge power, born to drift.',
     'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.':
       'Open wheels and wings that press it onto the road at speed. It brakes brilliantly but slides on grass and gravel. In it you race against formula cars only.',
-    'Model: „Peugeot 206“, avtor Alvier (Sketchfab), licenca CC BY 4.0': 'Model: “Peugeot 206” by Alvier (Sketchfab), licence CC BY 4.0',
     'Dirka': 'Race', 'Kronometer': 'Time trial', 'Promet': 'Traffic',
     'Srebrna medalja': 'Silver medal', 'Bronasta medalja': 'Bronze medal', 'Brez medalje': 'No medal',
     ' · do brona {0} ({1})': ' · bronze at {0} ({1})', ' · do srebra {0} ({1})': ' · silver at {0} ({1})', ' · do zlata {0} ({1})': ' · gold at {0} ({1})',

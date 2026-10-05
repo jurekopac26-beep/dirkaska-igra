@@ -17,8 +17,8 @@
   const ORDER = MODELS.map(m => m.id).sort((a, b) => (PRICE[a] || 0) - (PRICE[b] || 0));
   const model = (id) => MODELS.find(m => m.id === id);
   const BODY = { coupe: 'Kupe', sedan: 'Limuzina', hatch: 'Hatchback', wedge: 'Športni avto', rally: 'Reli', formula: 'Formula', lm: 'Prototip', muscle: 'Muscle car', ev: 'Električni', truck: 'Terenec' };
-  const COLOR0 = { pico: 2, p206: 1, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 };
-  const FREE = ['pico', 'p206', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
+  const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 };
+  const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
   // service prices (CR): a wash, the body (scratches, dents), the engine and its oil; a full service 15 % off
   const SRV = [
     { id: 'clean', name: 'Pranje', desc: 'Pena, voda, vosek', base: 150, k: 450 },
@@ -38,7 +38,7 @@
       S.money = 248500; S.car = 'kaze';
       const set = (id, u, c) => { const k = S.cars[id]; k.own = true; Object.assign(k.upg, u); Object.assign(k.max, u); if (c) k.cond = c; };
       set('pico', { motor: 2, gume: 1, zavore: 1, aero: 1 }, { clean: 0.9, body: 0.85, engine: 0.8 });
-      set('p206', { motor: 1, gume: 1 }); set('kaze', { motor: 3, gume: 2, zavore: 2, aero: 3 }, { clean: 0.55, body: 0.72, engine: 0.66 });
+      set('kaze', { motor: 3, gume: 2, zavore: 2, aero: 3 }, { clean: 0.55, body: 0.72, engine: 0.66 });
       set('muscle', { motor: 3, gume: 1 }); set('strega', { aero: 2, gume: 2 }); set('vortex', {}); set('rally', { motor: 2, gume: 3, zavore: 2 }, { clean: 0.2, body: 0.5, engine: 0.7 }); set('ev', { motor: 1 });
     }
     return S;
@@ -154,7 +154,7 @@
   const DONE_NAME = { gume: 'Gume', zavore: 'Zavore', aero: 'Aerodinamika', motor: 'Motor', clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' };
   const UPG_FX = { motor: ['', 'Športni izpuh', 'Dvojni izpuh, zračniki', 'Štirje izpuhi, zajemalnik'], gume: ['', 'Bel napis', 'Rumen pas', 'Rdeč pas'], zavore: ['', 'Rdeče čeljusti', 'Rumene čeljusti', 'Zlate, karbonski diski'], aero: ['', 'Spojler, spodnja ustnica', 'Zadnje krilo', 'Krilo GT, krilca, pragovi'] };
   // the cars' words (game.js CAR_DESC)
-  const CARDESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
+  const CARDESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
     lm: 'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
     muscle: 'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.',
     ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',

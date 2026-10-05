@@ -85,7 +85,7 @@ const ttRun = (m, rain) => {
   Math.random = orig; return { t: P.finished ? P.finishTime : null, resc };
 };
 {
-  const names = ['BURJA R7', 'SAMUM 4x4', 'PICO TURBO', 'PEUGEOT 206', 'FORMULA ORKAN', 'VIHAR V8'], R = names.map(nm => ttRun(model(nm)));
+  const names = ['BURJA R7', 'SAMUM 4x4', 'PICO TURBO', 'FORMULA ORKAN', 'VIHAR V8'], R = names.map(nm => ttRun(model(nm)));
   check('time trial: every car reaches the top on autopilot without a rescue, SAMUM 4x4 the quickest', R.every(r => r.t && !r.resc) && R[1].t < Math.min(...R.filter((_, k) => k !== 1).map(r => r.t)),
     names.map((nm, k) => `${nm} ${R[k].t ? R[k].t.toFixed(1) : '-'} s`).join(', '));
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2], wet = ttRun(model('BURJA R7'), 1);

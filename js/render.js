@@ -846,7 +846,7 @@ const Render = (function () {
   /* the sun on the paint and the glass (every car on every track, the garage too): a clear coat that mirrors more of the sky at a glancing
      angle (fresnel), its sky in the colour of the race's sky (a warm dusk, a dark night, a grey rain: the fog's colour), and a sharp glint of
      the sun with a broad sheen round it and a rim on the sun side, sharper and brighter on the glass (the body's panes by their colour, the
-     Peugeot's glass by its material). One patch after what a material already does (the dirt, which dulls it, and the scratches); the sun
+     its glass by its material). One patch after what a material already does (the dirt, which dulls it, and the scratches); the sun
      and the sky are shared uniforms set every frame (cgSet) */
   const CGU = { sun: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Color(0, 0, 0) }, env: { value: new THREE.Color(1, 1, 1) } }, cgOb = new WeakMap();
   const CG_COMMON = '#include <common>\nuniform vec3 uCgSun;\nuniform vec3 uCgSunC;\nuniform vec3 uCgEnv;\nuniform float uCgG;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif';
@@ -971,53 +971,6 @@ const Render = (function () {
   const numTexCache = new Map();
   function numTex(n) { if (!numTexCache.has(n)) numTexCache.set(n, Tex.number(n)); return numTexCache.get(n); }
 
-  /* ---------------- Peugeot 206: real 3D model ---------------- */
-  // "Peugeot 206" by Alvier (sketchfab.com), CC BY 4.0; the packed model (and its layout) is in js/data/p206.js
-  const P206_HDR = P206_MODEL.hdr, P206_BIN = P206_MODEL.bin;
-  let p206Geo = null, p206Mats = null;
-  function p206Parts() {
-    if (!p206Geo) {
-      const raw = atob(P206_BIN), buf = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
-      let off = 0;
-      p206Geo = P206_HDR.nodes.map(n => ({ name: n.n, t: n.t, g: n.g, prims: n.p.map(([mat, nv, ni]) => {
-        const q = new Int16Array(buf.buffer, off, nv * 3); off += nv * 6;
-        const nq = new Int8Array(buf.buffer, off, nv * 3); off += nv * 3 + (nv * 3 & 1);
-        const idx = new Uint16Array(buf.buffer, off, ni); off += ni * 2;
-        const pos = new Float32Array(nv * 3), nrm = new Float32Array(nv * 3);
-        for (let i = 0; i < pos.length; i++) { pos[i] = q[i] * P206_HDR.q; nrm[i] = nq[i] / 127; }
-        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-        g.setIndex(new THREE.BufferAttribute(new Uint16Array(idx), 1)); g.computeBoundingSphere();
-        return { mat, g };
-      }) }));
-      for (const n of p206Geo) if (n.g) { const src = p206Geo.find(o => o.name === n.g); n.prims = src.prims; n.mirror = Math.sign(n.t[2]) !== Math.sign(src.t[2]); }
-    }
-    if (!p206Mats) {
-      const chrome = cgMat(new THREE.MeshPhongMaterial({ color: 0x2c2e33, shininess: 90, specular: 0x777777, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.45 }), true, 'carCg');   // (the glass: its sharper glint)
-      p206Mats = { black: new THREE.MeshLambertMaterial({ color: 0x1b1c20 }), chrome, grey: new THREE.MeshLambertMaterial({ color: 0x55575c }),
-        light: new THREE.MeshLambertMaterial({ color: 0xd9d9d6 }), darkred: new THREE.MeshLambertMaterial({ color: 0x7a1510 }),
-        lamp: new THREE.MeshBasicMaterial({ color: 0xfff4dc }) };
-    }
-    return p206Geo;
-  }
-  // builds the model into a car view: body into bodyG (rolls/pitches), wheels into grp (steer/spin like the stock wheels)
-  function addP206(car, bodyG, grp, wf, wr) {
-    let bodyH = null;
-    const paint = cgMat(new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg');
-    const tail = new THREE.MeshLambertMaterial({ color: 0x8a0d08, emissive: 0x3a0000 });
-    for (const n of p206Parts()) {
-      const holder = new THREE.Group(); holder.position.set(n.t[0], n.t[1], n.t[2]);
-      const inner = new THREE.Group(); holder.add(inner); if (n.mirror) inner.scale.z = -1;   // spin/steer stay on the holder
-      for (const p of n.prims) {
-        const m = new THREE.Mesh(p.g, p.mat === 'paint' ? paint : p.mat === 'red' ? tail : p206Mats[p.mat]);
-        m.castShadow = true; inner.add(m);
-      }
-      if (n.name === 'body') { bodyG.add(holder); bodyH = holder; }
-      else { grp.add(holder); (n.t[0] > 0 ? wf : wr).push(holder); }
-    }
-    return { paint, tail, bodyH };
-  }
-
   function makeCarMesh(car, opts) {
     const M = car.m;
     const grp = new THREE.Group();
@@ -1045,10 +998,7 @@ const Render = (function () {
     const wf = [], wr = [];
     const fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
     let glb = null, fp = null;
-    if (M.glb === 'p206') {   // real model: the stock body stays as an invisible stand-in (dents, glass) and the model is drawn instead
-      body.visible = false; tail.visible = false; dec.visible = false;
-      glb = addP206(car, bodyG, grp, wf, wr);
-    } else if (M.body === 'formula') {
+    if (M.body === 'formula') {
       fp = fPartMeshes(car, bodyG);
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
         const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
@@ -2354,12 +2304,10 @@ const Render = (function () {
   function precompile() { try { renderer.compile(scene, camera); } catch (_) { } }
 
   /* ---------------- race attach ---------------- */
-  // the pieces every car shares (cached body / tail / wheel / Peugeot geometry, the common materials): never freed with a car
+  // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
-    if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff]);
-    if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -2463,7 +2411,7 @@ const Render = (function () {
 
   /* ---------------- Pikes Peak: the car gathers dust on the climb, the low morning sun glints on the paint ----------------
      Only the cars of a Pikes race (makeView dresses them; the ghost and every other track are untouched). The paint materials of the car
-     (the body, its panels, the Peugeot's paint and glass) get one shader patch with a stable program key: a dusty tan layer that settles
+     (the body, its panels, the paint and glass) get one shader patch with a stable program key: a dusty tan layer that settles
      low (sills, arches, the tail) by a per-car amount that grows with the distance driven (4x on the gravel verge), and a warm specular +
      fresnel glint towards the theme's sun. The amount lives with the car (a pit repair keeps it; a new race starts clean).
      Round 6: the same layer also takes mud (a wet road: splashes low, in the arches) and snow / slush (the snow zone, winter: clumps on
@@ -2534,7 +2482,7 @@ const Render = (function () {
     const c = v.car, M = c.m, sc = M.len / 4.4, A = pkCarDust.get(c) || [0, 0, 0];
     const u = { inv: { value: new THREE.Matrix4() }, d: { value: A[0] }, w: { value: new THREE.Vector4(M.a * sc * 0.98 + 0.05, -M.b * sc * 0.98, M.rw, M.len / 2) },
       x: { value: new THREE.Vector4(A[1], A[2], 0, v.fp ? 199 : v.wr.length ? 99 : M.wid * 0.5 - 0.24) } };   // (mud, snow, the tyres' wetness, the inner face of the stock rear wheels drawn with the body; 199: the formula)
-    if (v.wf.length && v.wr.length) u.w.value.set(v.wf[0].position.x, v.wr[0].position.x, v.wf[0].position.y, M.len / 2);   // (the Peugeot, the formula: real wheels of their own)
+    if (v.wf.length && v.wr.length) u.w.value.set(v.wf[0].position.x, v.wr[0].position.x, v.wf[0].position.y, M.len / 2);   // (the formula: real wheels of their own)
     pkCarMat(v.body.material, u, 0, 'pkCarB'); v.dirtU = null;   // the stock dirt stays off: this layer replaces it here
     if (v.partMats) { pkCarMat(v.partMats[0], u, 0, 'pkCarP');
       const t0 = v.partMats[1], tm = v.partMats[1] = pkCarMat(new THREE.MeshPhongMaterial({ color: t0.color, shininess: 12, specular: 0x141518 }), u, 0, 'pkCarT', 0);   // the bumpers (dark trim): an own Phong copy, so the snow and the dirt settle on them too
@@ -2547,11 +2495,6 @@ const Render = (function () {
     for (const w of v.wf.concat(v.wr)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; let m = wm.get(o.material);
       if (!m) { m = pkCarMat(new THREE.MeshPhongMaterial({ color: o.material.color, vertexColors: o.material.vertexColors, shininess: 45, specular: 0x2c2d30 }), u, 0, 'pkWheel', 1); wm.set(o.material, m); }
       o.material = m; });
-    if (v.glb) {
-      pkCarMat(v.glb.paint, u, 0, 'pkCarP');
-      let gm = null;   // the Peugeot's glass: its own glinting copy (the shared one stays as it is)
-      v.bodyG.traverse(o => { if (o.isMesh && o.material === p206Mats.chrome) o.material = gm = gm || pkCarMat(o.material.clone(), u, 1, 'pkCarP'); });
-    }
     v.pk = u; v.pkS = { mk: [null, null, null, null], x: [0, 0, 0, 0], z: [0, 0, 0, 0], fw: [0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0] };
   }
   function pkCarTick(v, c, dt, opt) {
@@ -4924,7 +4867,7 @@ const Render = (function () {
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
     asStep();
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
-    { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
+    { const cv = ckOn ? viewOf(ck.car) : null;   // (a car with its own model shows its inside: from the seat, the plain body round the driver)
       if (ck.glbV && ck.glbV !== cv) { ck.glbV.glb.bodyH.visible = true; ck.glbV.body.visible = false; ck.glbV = null; }
       if (cv && cv.glb && cv.glb.bodyH && !ck.glbV) { cv.glb.bodyH.visible = false; cv.body.visible = true; ck.glbV = cv; }
       if (ck.litV && ck.litV !== cv) { carGlow(ck.litV); ck.litV = null; }   // (and it does not glow in the night round the driver: carGlow is for the others to see it)
