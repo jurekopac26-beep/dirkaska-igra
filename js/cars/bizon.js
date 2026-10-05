@@ -18,11 +18,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     partNames: { nose: 'nose section', cover: 'engine cover' },
     parts: { set: 'none', ht: 1, y0: 0.12,
       extra: {
-        nose: { z: 0, th: 0.55, m: 9, rW: 0.45, h: 0.1, lx: 0.7, lz: 0, f: 0.455, df: 0.3 },
-        cover: { z: 1, th: 0.7, m: 10, rW: 0.45, h: 0.08, lx: -0.66, lz: 0, f: 0.59 },
-        wing: { y: 1.08, lx: -0.85 },
-        fenderL: { lx: 0.53, lz: -0.88, f: 0.56 },
-        fenderR: { lx: 0.53, lz: 0.88, f: 0.56 },
+        // (h: each piece's real thickness lying on the road: the nose with its deck and the radiator's mouth, the clamshell with the rear
+        // wings' bulges, the wing on its tall struts, a fender's flank with its bulge)
+        nose: { z: 0, th: 0.55, m: 9, rW: 0.45, h: 0.14, lx: 0.7, lz: 0, f: 0.455, df: 0.3 },
+        cover: { z: 1, th: 0.7, m: 10, rW: 0.45, h: 0.24, lx: -0.66, lz: 0, f: 0.59 },
+        wing: { y: 1.08, lx: -0.85, h: 0.22 },
+        fenderL: { lx: 0.53, lz: -0.88, f: 0.56, h: 0.16 },
+        fenderR: { lx: 0.53, lz: 0.88, f: 0.56, h: 0.16 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): low and wide, two lofts: the main one from the cockpit's rear bulkhead to the
