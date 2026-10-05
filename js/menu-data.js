@@ -217,9 +217,6 @@ window.MENU = {
   "riviera": {
    "base": 4
   },
-  "ljubljana": {
-   "base": 295
-  },
   "monaco": {
    "base": 8
   },

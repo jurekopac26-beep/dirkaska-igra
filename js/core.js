@@ -4408,8 +4408,8 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const CHAMP_PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], PLAYER_KEY = 'TI';
   const CHAMPS = [
-    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'],
-      en: { name: 'Home Cup', desc: 'Four short tracks to begin with: a lake, a town and gravel.' } },
+    { id: 'domaci', name: 'Domači pokal', desc: 'Tri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'gora', 'riviera'],
+      en: { name: 'Home Cup', desc: 'Three short tracks to begin with: a lake, a town and gravel.' } },
     { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
       en: { desc: 'Tracks in the style of Circuit Superstars with pits, and Monaco.' } },
     { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'],

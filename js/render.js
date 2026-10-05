@@ -1691,7 +1691,6 @@ const Render = (function () {
   const THEMES = {
     lake:     { fog: 0xbcd3e4, sun: 0xfff0d6, sunI: 0.98, sky: 0xd3e7ff, gnd: 0x5d6b35, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1 },
     city:     { fog: 0xd8e3ea, sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6, tint: [1.05, 1.0, 0.93], sat: 1.12 },
-    ljubljana: { fog: 0xcadbe9, sun: 0xffe6c2, sunI: 1.04, sky: 0xd8e9ff, gnd: 0x7a6e56, hemiI: 0.6, tint: [1.04, 1.0, 0.95], sat: 1.13 },
     forest:   { fog: 0x9a90c6, sun: 0xff9e5e, sunI: 2.26, sky: 0x6d8cec, gnd: 0x1c357f, hemiI: 0.7, tint: [1.0, 0.95, 1.04], sat: 1.06, sunOff: [-55, 64, -106] },   // low sun in the NNW, in front of the kino camera: back-lit, long shadows falling towards the lower right (measured from the reference)   // warm key light, navy-blue shadows (as in the reference)   // warm evening: peach sun, lavender haze
     italia:   { fog: 0xa4a6d0, sun: 0xffb47c, sunI: 2.2, sky: 0x7090ea, gnd: 0x6e5a78, hemiI: 0.7, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 70, -58] },   // Toskana: the forest's warm key light and navy shadows, a little less orange, the sun in the west-north-west (measured from the reference)
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
@@ -1724,7 +1723,7 @@ const Render = (function () {
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
   const SPLIT = {
-    lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], ljubljana: [[0.98, 0.99, 1.04], [1.04, 1.0, 0.95]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
+    lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
     ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
     spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]],
@@ -2099,7 +2098,7 @@ const Render = (function () {
   function sunFx(target) {
     if (themeId === 'pikes' || !world) return;
     const dt = clamp(time - sunT, 0, 0.25), r = Math.max(0, wet); sunT = time; sunHint = target && target.q && target.q.a >= 0 ? target.q.a : -1;
-    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco', 'ljubljana'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
+    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
     if (rays > 0 && world.pkWood === undefined) world.pkWood = sunWood();
     if (!world.pkWood) rays = 0;
     pkRays(rays, dt);
