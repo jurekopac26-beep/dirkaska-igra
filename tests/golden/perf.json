@@ -6,13 +6,6 @@
   "maxKverts": 590,
   "jsMs": 1.01
  },
- "ljubljana": {
-  "calls": 263,
-  "maxCalls": 357,
-  "kverts": 548,
-  "maxKverts": 615,
-  "jsMs": 0.94
- },
  "monaco": {
   "calls": 232,
   "maxCalls": 337,

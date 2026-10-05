@@ -277,7 +277,7 @@ try {
     // round 2 with qualifying: sized and driven by the championship's TITAN field, the race too
     await page.evaluate(() => { window.__game.S.quali = 1; });
     await act('champ-go');
-    await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'ljubljana' && g.race.quali); }, null, { timeout: 90000 });
+    await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'gora' && g.race.quali); }, null, { timeout: 90000 });
     const q0 = await page.evaluate(() => window.__game.qual.n);
     // a destroyed car on the qualifying lap: the banner offers the lap again ("Ponovi krog"), which drives it again (the rivals' laps kept)
     const qb = await page.evaluate(async () => { const g = window.__game, raf = () => new Promise(q => requestAnimationFrame(q)); g.pause(); g.sim(3, true); g.race.player.dmg = 0.99; g.resume(); for (let i = 0; i < 6; i++) await raf();
@@ -299,7 +299,7 @@ try {
     await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); }); await act('to-champ'); await wait(250);
     const s3 = await st();
     await act('champ-go');
-    await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'ljubljana'); }, null, { timeout: 90000 });
+    await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'gora'); }, null, { timeout: 90000 });
     const r3 = await rivals();
     T.check('a championship started in the FORMULA ORKAN, round 2 in the PICO TURBO: its rivals still formulas (the standings: twelve, "tekmeci: 12× FORMULA ORKAN"; the race: twelve)',
       s3.mycar === 'PICO TURBO' && /tekmeci: 12× FORMULA ORKAN/.test(s3.diff) && s3.rows.filter(c => c === 'FORMULA ORKAN').length === 12 && r3.n === 13 && r3.cars === 'formula' && r3.me === 'pico',
