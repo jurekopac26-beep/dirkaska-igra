@@ -157,38 +157,6 @@
    "auto": "centre"
   }
  ],
- "ljubljana": [
-  {
-   "n": "Ljubljana Castle",
-   "ll": [
-    46.049,
-    14.5086
-   ],
-   "snap": "peak",
-   "r": 300
-  },
-  {
-   "n": "Triple Bridge",
-   "ll": [
-    46.05112,
-    14.50631
-   ]
-  },
-  {
-   "n": "Dragon Bridge",
-   "ll": [
-    46.0522,
-    14.5101
-   ]
-  },
-  {
-   "n": "Central Market",
-   "ll": [
-    46.0514,
-    14.5091
-   ]
-  }
- ],
  "monaco": [
   {
    "n": "Port Hercule",

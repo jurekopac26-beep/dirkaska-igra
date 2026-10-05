@@ -29,7 +29,7 @@ window.MENU = {
      world ranking of the day is fair. The free version gets one run a day. It is in the list of its own mode:
      a circuit race, or a time trial on a hill climb or rally stage. */
   daily: {
-    tracks: ['rbring', 'jezero', 'monaco', 'gora', 'suzuka', 'riviera', 'spa', 'ljubljana', 'ouninpohja', 'nring', 'pikes'],
+    tracks: ['rbring', 'jezero', 'monaco', 'gora', 'suzuka', 'riviera', 'spa', 'ouninpohja', 'nring', 'pikes'],
     cars: ['kaze', 'rally', 'strega', 'pico', 'vortex', 'formula'],
     weather: ['Dry', 'Rain', 'Dry', 'Dry', 'Rain', 'Dry', 'Random'],
     playersBase: 9000, playersRange: 8000,   // example: how many played it today (grows during the day)
@@ -76,8 +76,6 @@ window.MENU = {
       km: 1.26, corners: 9, laps: 4, rec: ['J. Novak', '0:39.20'], bars: { speed: 8, tech: 13, drift: 12, grip: 11 }, free: true },
     { id: 'gora', group: 'rally', name: 'Mountain Rally', tag: 'GRAVEL', desc: 'Gravel climbs and descents with jumps over the crests, between forest and rocks.',
       km: 1.64, corners: 6, laps: 2, rec: ['R. Horvat', '0:58.30'], bars: { speed: 10, tech: 10, drift: 15, grip: 6 }, free: true },
-    { id: 'ljubljana', group: 'circuit', country: 'Slovenia', name: 'Ljubljana', tag: 'SLOVENIA', desc: 'A city circuit along the river: bridges, the market and the old town, with the castle above.',
-      km: 1.87, corners: 7, laps: 3, rec: ['N. Petek', '0:55.12'], bars: { speed: 9, tech: 12, drift: 11, grip: 12 } },
     { id: 'monaco', group: 'circuit', country: 'Monaco', name: 'La Condamine', tag: 'MONACO', desc: 'A harbour street circuit: up the hill, round a tight hairpin, through the tunnel and along the water.',
       km: 3.34, corners: 9, laps: 2, rec: ['D. Zupan', '1:34.60'], bars: { speed: 9, tech: 15, drift: 8, grip: 13 } },
     { id: 'rbring', group: 'circuit', country: 'Austria', name: 'Styria', tag: 'AUSTRIA', desc: 'Short and fast in the green hills: a steep climb to the top hairpin and long runs back down.',
@@ -109,7 +107,7 @@ window.MENU = {
       hud: [[0, 'Hämepohja'], [800, 'Lake Naarajärvi'], [1640, 'Ouni'], [2170, 'Keltainen talo'], [2980, 'Farm Bend'], [4400, 'Forest crests'], [6040, 'Village'], [7980, 'Fast Crest'], [8700, 'Kakaristo'], [9550, 'Flying finish']] },
     gora: { start: 'Start', finish: 'Finish', stage: 'SS 1', surface: 'Gravel', base: 1485,
       hud: [[0, 'Stage start'], [545, 'Split 1'], [1090, 'Split 2'], [1590, 'Stage finish']] },
-    jezero: { base: 532 }, riviera: { base: 4 }, ljubljana: { base: 295 }, monaco: { base: 8 },
+    jezero: { base: 532 }, riviera: { base: 4 }, monaco: { base: 8 },
     rbring: { base: 677 }, suzuka: { base: 45 }, spa: { base: 400 }, nring: { base: 616 },
   },
   // the two ways to show them, to choose from (the switch over the map)
@@ -133,9 +131,9 @@ window.MENU = {
       name: 'World Cup', sub: 'Rounds of circuits. The points add up.', chip: 'TOP 3 GO THROUGH', img: 'assets/menu/mode-race.webp',
       points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], through: 3,   // points for 1st..10th; the top 3 of a round's standings go through
       rounds: [
-        { name: 'Round 1', races: ['jezero', 'riviera', 'ljubljana', 'monaco'], reward: '10,000 CR' },
-        { name: 'Round 2', races: ['rbring', 'suzuka', 'spa', 'nring', 'monaco', 'ljubljana'], reward: '25,000 CR' },
-        { name: 'Final', races: ['jezero', 'riviera', 'ljubljana', 'monaco', 'rbring', 'suzuka', 'spa', 'nring'], reward: 'World Cup trophy + 60,000 CR' },
+        { name: 'Round 1', races: ['jezero', 'riviera', 'monaco'], reward: '10,000 CR' },
+        { name: 'Round 2', races: ['rbring', 'suzuka', 'spa', 'nring', 'monaco'], reward: '25,000 CR' },
+        { name: 'Final', races: ['jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring'], reward: 'World Cup trophy + 60,000 CR' },
       ],
       rivals: ['M. Kovač', 'T. Hayashi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'N. Petek', 'E. Lindqvist', 'D. Zupan', 'H. Kimura', 'O. Nieminen'],
     },
@@ -149,13 +147,13 @@ window.MENU = {
         { role: 'run', foe: 'police', title: 'Run for the pass', track: 'vrsic', brief: 'Roadblocks at Kranjska Gora. Get over the pass through the traffic.' },
         { role: 'catch', foe: 'smugglers', title: 'Catch the smugglers', track: 'ouninpohja', brief: 'A smugglers\' car on the forest roads. Cut it off before the border.' },
         { role: 'run', foe: 'army', title: 'Escape the army', track: 'pikes', brief: 'You drove into a military test area. Get out before the gates close.' },
-        { role: 'catch', foe: 'thief', title: 'Catch the car thief', track: 'ljubljana', brief: 'A stolen sports car is loose in the old town. Bring it back in one piece.' },
+        { role: 'catch', foe: 'thief', title: 'Catch the car thief', track: 'riviera', brief: 'A stolen sports car is loose in the town. Bring it back in one piece.' },
         { role: 'run', foe: 'all', title: 'Everyone after you', track: 'nring', brief: 'The police, the mafia and the army, all at once. The last run.' },
       ],
     },
     trial: {
       name: 'Time trial', sub: 'Take your time, then make it count.', chip: 'GOLD · SILVER · BRONZE', img: 'assets/menu/mode-trial.webp',
-      tracks: ['jezero', 'riviera', 'gora', 'ljubljana', 'monaco', 'rbring', 'ouninpohja', 'suzuka', 'spa', 'pikes', 'vrsic', 'nring'],   // bronze opens the next one
+      tracks: ['jezero', 'riviera', 'gora', 'monaco', 'rbring', 'ouninpohja', 'suzuka', 'spa', 'pikes', 'vrsic', 'nring'],   // bronze opens the next one
     },
     rally: {
       name: 'Rally & hill climb', sub: 'Stage after stage. The times add up.', chip: '4 STAGES', img: 'assets/cars/img/rally-2.webp',
@@ -185,9 +183,9 @@ window.MENU = {
       car: 2, color: 0, track: 1,
       lastTrack: 'pikes',   // the last race raced (the journey on the globe before the next one starts there: Colorado)
       // the career so far: World Cup round 1 done (through to round 2, two races of it raced), four chase missions, nine medals, two rally stages
-      career: { cup: { round: 1, res: [2, 4], rounds: [2] }, chase: { stars: [3, 2, 3, 1] }, trial: { medals: { jezero: 'gold', riviera: 'gold', gora: 'silver', ljubljana: 'silver', monaco: 'bronze', rbring: 'gold', ouninpohja: 'silver', suzuka: 'bronze', spa: 'bronze' } }, rally: { res: [2, 1] } },
+      career: { cup: { round: 1, res: [2, 4], rounds: [2] }, chase: { stars: [3, 2, 3, 1] }, trial: { medals: { jezero: 'gold', riviera: 'gold', gora: 'silver', monaco: 'bronze', rbring: 'gold', ouninpohja: 'silver', suzuka: 'bronze', spa: 'bronze' } }, rally: { res: [2, 1] } },
       upgrades: { rally: [2, 3, 2, 1], kaze: [1, 1, 1, 0] },
-      myRecords: { jezero: '0:50.97', riviera: '0:38.84', gora: '0:57.02', ljubljana: '0:54.40', monaco: '1:33.95', rbring: '1:31.42', pikes: '5:09.88', ouninpohja: '4:51.30' },
+      myRecords: { jezero: '0:50.97', riviera: '0:38.84', gora: '0:57.02', monaco: '1:33.95', rbring: '1:31.42', pikes: '5:09.88', ouninpohja: '4:51.30' },
     },
   },
 

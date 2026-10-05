@@ -5,7 +5,6 @@
   ["gora", "top", "top-gora", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["jezero", "top", "top-jezero", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["riviera", "top", "top-riviera", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["ljubljana", "top", "top-ljubljana", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["monaco", "top", "top-monaco", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["rbring", "top", "top-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["suzuka", "top", "top-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
