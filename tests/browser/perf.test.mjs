@@ -1,6 +1,8 @@
-// Phone budget: on a phone-size screen (844x390, quality 'normal', shadows on, chase camera) every track is driven on
-// autopilot and the WebGL work per frame is counted (draw calls and vertices of all passes: shadows and scene) at six
-// places around the lap. Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
+// Phone budget: on a phone-size screen (844x390, quality 'normal', graphics detail 'low' = NIZKA, shadows on, chase
+// camera) every track is driven on autopilot and the WebGL work per frame is counted (draw calls and vertices of all
+// passes: shadows and scene) at six places around the lap. The NIZKA tier is the one the weakest phones run, so this is
+// the budget from CLAUDE.md (up to ~300 draw calls and ~900k vertices per track); the higher tiers may exceed it.
+// Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
 // calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
 //   node tests/browser/perf.test.mjs            check
@@ -12,12 +14,12 @@ import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 const update = process.argv.includes('--update');
 const golden = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
-const T = checker('phone budget (844x390, normal quality, shadows)');
+const T = checker('phone budget (844x390, normal quality, NIZKA detail, shadows)');
 const srv = await serve();
 const browser = await launch();
 const out = {};
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345 });
   await page.evaluate(() => {   // count every WebGL draw (all render passes)
     window.__gl = { calls: 0, verts: 0 };
     const gl = Render.info && document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');

@@ -1,0 +1,367 @@
+{
+ "_": "The places marked in 3D over the helicopter's flight before each race (intro_data.py). Only geographic names (towns, villages, lakes, peaks, passes, huts, public buildings) or plain words for what the track does there: no brands, no sponsors, no people. d: metres along the race from its start (a point on the road); ll: latitude, longitude (snap: town / peak / water: moved to the built-up area, the highest point or the water the far land shows there, within r m); xz: the world's own metres (a made-up world); face: on a mountain face (the peak's ll, the height in m, seen from d).",
+ "vrsic": [
+  {
+   "n": "Kranjska Gora",
+   "ll": [
+    46.4852,
+    13.7856
+   ],
+   "snap": "town",
+   "r": 900
+  },
+  {
+   "n": "Lake Jasna",
+   "ll": [
+    46.4734,
+    13.7838
+   ],
+   "snap": "water",
+   "r": 700
+  },
+  {
+   "n": "Mihov dom",
+   "d": 6533,
+   "sub": "mountain hut"
+  },
+  {
+   "n": "Russian Chapel",
+   "d": 7039
+  },
+  {
+   "n": "Koča na Gozdu",
+   "d": 8281,
+   "sub": "mountain hut"
+  },
+  {
+   "n": "Ajdovska deklica",
+   "face": {
+    "ll": [
+     46.4268,
+     13.7707
+    ],
+    "r": 1500,
+    "h": 1756,
+    "d": 9864
+   },
+   "sub": "the Heathen Maiden"
+  },
+  {
+   "n": "Erjavčeva koča",
+   "d": 11200,
+   "sub": "mountain hut"
+  },
+  {
+   "n": "Vršič Pass",
+   "d": 12150,
+   "sub": "1,611 m"
+  }
+ ],
+ "pikes": [
+  {
+   "n": "Crystal Reservoir",
+   "d": 150
+  },
+  {
+   "n": "Halfway Picnic Grounds",
+   "d": 1000
+  },
+  {
+   "n": "Glen Cove",
+   "d": 2688
+  },
+  {
+   "n": "The W's",
+   "d": 2918,
+   "sub": "hairpins"
+  },
+  {
+   "n": "Devil's Playground",
+   "d": 4050
+  },
+  {
+   "n": "Summit",
+   "d": 5985,
+   "sub": "4,301 m"
+  }
+ ],
+ "ouninpohja": [
+  {
+   "n": "Hämepohja",
+   "d": 80
+  },
+  {
+   "n": "Lake Naarajärvi",
+   "d": 820
+  },
+  {
+   "n": "Ouni",
+   "d": 1656
+  },
+  {
+   "n": "Farm Bend",
+   "d": 3000
+  },
+  {
+   "n": "Kakaristo",
+   "d": 8729
+  },
+  {
+   "n": "Flying finish",
+   "d": 9640
+  }
+ ],
+ "gora": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Split 1",
+   "d": 545
+  },
+  {
+   "n": "Split 2",
+   "d": 1090
+  }
+ ],
+ "jezero": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Island church",
+   "xz": [
+    -87,
+    92
+   ]
+  },
+  {
+   "n": "Hairpin",
+   "auto": "hairpin"
+  }
+ ],
+ "riviera": [
+  {
+   "n": "Start · finish",
+   "d": 0,
+   "sub": "on the seafront"
+  },
+  {
+   "n": "Hairpin",
+   "auto": "hairpin"
+  },
+  {
+   "n": "Old town",
+   "auto": "centre"
+  }
+ ],
+ "ljubljana": [
+  {
+   "n": "Ljubljana Castle",
+   "ll": [
+    46.049,
+    14.5086
+   ],
+   "snap": "peak",
+   "r": 300
+  },
+  {
+   "n": "Triple Bridge",
+   "ll": [
+    46.05112,
+    14.50631
+   ]
+  },
+  {
+   "n": "Dragon Bridge",
+   "ll": [
+    46.0522,
+    14.5101
+   ]
+  },
+  {
+   "n": "Central Market",
+   "ll": [
+    46.0514,
+    14.5091
+   ]
+  }
+ ],
+ "monaco": [
+  {
+   "n": "Port Hercule",
+   "ll": [
+    43.7345,
+    7.4228
+   ],
+   "snap": "water",
+   "r": 400
+  },
+  {
+   "n": "Monaco-Ville",
+   "ll": [
+    43.7311,
+    7.4203
+   ],
+   "sub": "the Rock"
+  },
+  {
+   "n": "Sainte-Dévote Church",
+   "ll": [
+    43.7377,
+    7.4214
+   ]
+  },
+  {
+   "n": "Monte Carlo",
+   "ll": [
+    43.74,
+    7.4275
+   ]
+  },
+  {
+   "n": "Fontvieille",
+   "ll": [
+    43.7285,
+    7.416
+   ]
+  }
+ ],
+ "rbring": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Top hairpin",
+   "auto": "hairpin"
+  },
+  {
+   "n": "Spielberg",
+   "ll": [
+    47.2232,
+    14.7883
+   ],
+   "snap": "town",
+   "r": 1500
+  },
+  {
+   "n": "Knittelfeld",
+   "ll": [
+    47.2147,
+    14.8293
+   ],
+   "snap": "town",
+   "r": 1500
+  }
+ ],
+ "suzuka": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Esses",
+   "d": 866
+  },
+  {
+   "n": "Crossover bridge",
+   "d": 2286
+  },
+  {
+   "n": "Hairpin",
+   "d": 2666
+  },
+  {
+   "n": "Back straight",
+   "d": 4016
+  }
+ ],
+ "spa": [
+  {
+   "n": "Francorchamps",
+   "ll": [
+    50.452,
+    5.957
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Steep climb",
+   "d": 960
+  },
+  {
+   "n": "Long straight",
+   "d": 1750
+  },
+  {
+   "n": "Stavelot",
+   "ll": [
+    50.3943,
+    5.9311
+   ],
+   "snap": "town",
+   "r": 1500
+  }
+ ],
+ "nring": [
+  {
+   "n": "Nürburg Castle",
+   "ll": [
+    50.3434,
+    6.9521
+   ],
+   "snap": "peak",
+   "r": 500
+  },
+  {
+   "n": "Quiddelbach",
+   "ll": [
+    50.3477,
+    6.9254
+   ],
+   "snap": "town",
+   "r": 900
+  },
+  {
+   "n": "Breidscheid",
+   "ll": [
+    50.3664,
+    6.9381
+   ],
+   "snap": "town",
+   "r": 900
+  },
+  {
+   "n": "Adenau",
+   "ll": [
+    50.3811,
+    6.9335
+   ],
+   "snap": "town",
+   "r": 1500
+  },
+  {
+   "n": "Hohe Acht",
+   "ll": [
+    50.3868,
+    7.01
+   ],
+   "snap": "peak",
+   "r": 1500,
+   "sub": "747 m"
+  },
+  {
+   "n": "Döttinger Höhe",
+   "d": 17912,
+   "sub": "the long straight"
+  }
+ ]
+}
