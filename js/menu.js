@@ -237,7 +237,7 @@
   }
   const hudBox = () => '<div class="hud" aria-hidden="true"><b></b><small></small></div>';
   function flyView(t, lockd) {
-    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div>' + hudBox() + '</div>';
+    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div>' + hudBox() + '</div>';
   }
   function topView(t, R, M, lockd) {   // the whole map to the stage's edges (fitMaps: the route as big as fits)
     const T = R.top, pts = T.route, rally = t.group === 'rally';
@@ -284,6 +284,14 @@
     const box = $('#track-stage .dio.fly', app); if (!box) return;
     const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
     const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud);
+    // the flyover starts at its first frame (the point at the start), not wherever autoplay's clock reached while the video loaded: it is
+    // played only once its first frame is ready (the poster, with the point at the start, shows until then), so the glowing point is at the
+    // start the moment the flyover shows
+    if (v && !v.__fly) {
+      v.__fly = 1;
+      const go = () => { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+      if (v.readyState >= 2) go(); else v.addEventListener('loadeddata', go, { once: true });
+    }
     const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
     const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
     const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
