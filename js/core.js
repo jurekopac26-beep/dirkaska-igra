@@ -322,6 +322,14 @@ const Core = (function () {
     // the end drawn)? main: out holds the road's own answer (near the junction that stays, with the height blended from the road's into the
     // side road's across the verge); without it only a point deep in a side road counts. Fills out.k (the side road, -1 none), st (along it),
     // u (across it, + right), kx / kz (its direction), y / g (the height, the grade along out.tx / out.tz), deep
+    // is (x, z) on an oncoming lane (def.altDn), its half width and 0.4 m more
+    onAlt(x, z) {
+      for (const L of this.altC) { const b = L.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue; const P = L.pts, h2 = L.hw * L.hw;
+        for (let k = 0; k + 3 < P.length; k += 2) { const ax = P[k], az = P[k + 1], dx = P[k + 2] - ax, dz = P[k + 3] - az, l2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)), ex = x - ax - dx * t, ez = z - az - dz * t; if (ex * ex + ez * ez < h2) return true; } }
+      return false;
+    }
+    // is (x, z) within a roundabout's zone (def.rings, wz: its road and the approaches 14 m out): no wrong way there, either way round is fine
+    inRingZone(x, z) { for (const R of this.rings) { const dx = x - R.x, dz = z - R.z; if (dx * dx + dz * dz < R.wz * R.wz) return true; } return false; }
     _stubQ(x, z, i, out, main, pk, pj) {
       const SN = this.stubNear, sp = _sp, pick = this.def.stubPick;
       for (let pass = pick ? 0 : 1; pass < 2; pass++) for (let c = 0; c < 3; c++) {   // (def.stubPick: a first pass for one it lies inside the limit of)
@@ -628,6 +636,14 @@ const Core = (function () {
           for (let d = a - e; d <= b + e; d += ds) { const i = open ? clamp(i0 + Math.round(d / ds), 0, N - 1) : ((i0 + Math.round(d / ds)) % N + N) % N, f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); arr[i] = lerp(arr[i], (wa ? wa[i] : w) + off, f); } }
       }
       this.bl = BL; this.br = BR;
+      // the roundabouts (def.rings: c, r the ring's centre-line radius, hw its road's half width; zr: the zone round it where the route's barrier
+      // does not hold, ri: the island's solid radius): inside the zone a car goes where it likes, both ways round the island, which is the only
+      // thing in the way (wallCollide); the wrong-way count is off within wz of its centre (the cars' wrong-way test)
+      // the oncoming lanes (def.altDn: Medvode's roundabouts and split approaches) are road too, def.altHw half wide: no barrier on them (onAlt)
+      this.altC = (this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + 0.4, pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+        for (let k = 0; k + 2 < P.length; k += 3) { pts.push(P[k], P[k + 1]); x0 = Math.min(x0, P[k]); x1 = Math.max(x1, P[k]); z0 = Math.min(z0, P[k + 1]); z1 = Math.max(z1, P[k + 1]); }
+        return { pts, hw, bb: [x0 - hw, z0 - hw, x1 + hw, z1 + hw] }; });
+      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.r + (r.hw || 3) + 14 }));
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
       if (this.def.roadSurface !== 'makadam' && !this.def.noCurbs) for (let i = 0; i < N; i++) if (Math.abs(k[i]) > 1 / 190) cb[i] = 1;
@@ -1703,12 +1719,18 @@ const Core = (function () {
       if (q.d > br) { pen = q.d - br; nx = -q.nx; nz = -q.nz; }
       else if (q.d < inner) { pen = inner - q.d; nx = q.nx; nz = q.nz; }
       else if (q.d < -q.bl) { pen = -q.bl - q.d; nx = q.nx; nz = q.nz; }
+      let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
+      if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2; if (d2 > (R.zr + 8) * (R.zr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
+        if (dd < R.ri) { pen = R.ri - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }
+        if (dd < R.zr) { pen = 0; zone = true; break; }
+        if (pen > 0 && q.k < 0 && dd - R.zr < pen) { pen = dd - R.zr; nx = -rx2 / dd; nz = -rz2 / dd; } }
       if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
         const sl = q.s + (q.over || 0), N = trk.N;
         if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
         else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
       }
-      if (q.k >= 0) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
+      if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
+      if (q.k >= 0 && !zone) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
       if (pen <= 0) continue;
       if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
         const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
@@ -3929,7 +3951,7 @@ const Core = (function () {
         }
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
-        if (fwd < -0.2 && c.speed > 3 && !(q.k >= 0)) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);   // (in a side road no wrong way: it is a road of its own)
+        if (fwd < -0.2 && c.speed > 3 && !(q.k >= 0) && !T.inRingZone(c.x, c.z)) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);   // (in a side road no wrong way: it is a road of its own)
         // a crowded pit lane (the lap the field comes in for fuel): a car knocked across it in the queue (its nose in a wall or a car, too slow
         // to steer out: the AI and the autopilot have no reverse gear) is pushed straight by the marshals where it stands, its stop still to come
         // (a rescue would cost it the stop; the player's car too, spared backing out of the jam)

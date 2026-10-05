@@ -1,10 +1,10 @@
 // Medvode to Smlednik: the real road widened to the usual width of the race tracks (an open road with four ways to drive it on one card, as
 // Mulholland Highway: def.modes, the race, the time trial, the duel in the traffic and the run from the police). The road: from the football
-// ground on Medvoška cesta in Medvode to the old castle above Smlednik (~6.2 km, ~320 -> ~500 m), ~11.4 m wide on average with the real
-// widths' order kept (14 m on Gorenjska cesta, 12.5 m on Medvoška cesta, 8.5 m up the castle road: def.widths), gravel (makadam) where OSM
+// ground on Medvoška cesta in Medvode to the old castle above Smlednik (~6.2 km, ~320 -> ~500 m), ~14.8 m wide on average (the usual width +30 %) with the real
+// widths' order kept (18.2 m on Gorenjska cesta, 16.3 m on Medvoška cesta, 11.1 m up the castle road: def.widths), gravel (makadam) where OSM
 // has it unpaved (the castle road: def.surf), the sidewalks, the bridge over the Sava (118 m) with its parapets close to the road, Gorenjska
-// cesta's overpass over the road (def.overpass); every junction (the side roads), the four roundabouts (three of them driven round, their
-// islands solid, the oncoming traffic on its own way round them and the split approaches: def.altDn), the bus stops and the zebra crossings;
+// cesta's overpass over the road (def.overpass); every junction (the side roads), the four roundabouts (three of them driven round, both
+// ways round the islands free, the islands solid, the oncoming traffic on its own way round them and the split approaches, those lanes road too: def.altDn), the bus stops and the zebra crossings;
 // the houses, garden walls and fences beside the road are the barrier there (def.walls); the places for the HUD and the commentator in order
 // along the road; only geographic names. The traffic: both ways, the oncoming vehicles round the rings on their own lines, none up the castle
 // road (def.trafficEnd), pulling onto the shoulder for the police (def.pullOff). A whole race on autopilot (every car finishes and pulls up in its own slot past the line), a whole duel in the traffic, the run
@@ -38,8 +38,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 {
   const w = (d) => 2 * T.wAt(at(d)), wk = T.walk ? T.walk[0].filter(v => v > 0.5).length + T.walk[1].filter(v => v > 0.5).length : 0;
   let ws = 0, wn = 0; for (let d = 0; d < T.raceLen; d += 2) { ws += w(d); wn++; }
-  check('widths: ~11.4 m on average (the race tracks\' usual), the real order kept: 14 m on Gorenjska cesta > 12.5 m on Medvoška cesta, the regional road and the bridge > 9.8 m in Smlednik > 8.5 m up the castle road',
-    Math.abs(ws / wn - 11.4) < 0.4 && Math.abs(w(800) - 14) < 0.3 && Math.abs(w(100) - 12.5) < 0.3 && Math.abs(w(1500) - 12.4) < 0.4 && Math.abs(w(3700) - 12.6) < 0.4 && Math.abs(w(4900) - 9.8) < 0.3 && Math.abs(w(5800) - 8.5) < 0.3,
+  check('widths: ~14.8 m on average (the race tracks\' usual 11.4 m and 30 % more), the real order kept: 18.2 m on Gorenjska cesta > 16.3 m on Medvoška cesta, the regional road and the bridge > 12.7 m in Smlednik > 11.1 m up the castle road',
+    Math.abs(ws / wn - 14.8) < 0.5 && Math.abs(w(800) - 18.2) < 0.4 && Math.abs(w(100) - 16.3) < 0.4 && Math.abs(w(1500) - 16.1) < 0.5 && Math.abs(w(3700) - 16.4) < 0.5 && Math.abs(w(4900) - 12.7) < 0.4 && Math.abs(w(5800) - 11.1) < 0.4,
     `average ${(ws / wn).toFixed(2)} m; ` + [100, 800, 1500, 3700, 4900, 5800].map(d => `${d}: ${w(d).toFixed(2)} m`).join(', '));
   const sf = (d) => T.sf ? T.sf[at(d)] : 0, sfs = [3000, 5000, 5200, 5800, 6200].map(sf);
   check('surface: gravel (makadam) where OSM has the road unpaved, the castle road from its foot (d ~5148) to the end; asphalt before', sfs.join() === '0,0,5,5,5' && def.surf.length === 1 && Math.abs(def.surf[0][0] - 5148) < 5,
@@ -64,8 +64,19 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   const R = def.rings || [];
   check('junctions: every street, lane and track that meets the road (side roads), the four roundabouts (three driven round, the big one at Na klancu passed on its slip road)',
     T.stubs.length >= 80 && R.length === 4 && R.filter(r => r.drive).length === 3 && R.every(r => r.r > 11 && r.r < 22), `${T.stubs.length} side roads, rings ${R.map(r => `r ${r.r} @${Math.round(r.d)}${r.drive ? '' : ' (passed)'}`).join(', ')}`);
-  const isl = R.filter(r => r.drive).map(r => { const i = at(r.d), q = T._qMain(r.c[0], r.c[1], i, {}), side = q.d > 0 ? 1 : -1, bar = side > 0 ? T.br[i] : T.bl[i]; return bar - T.wAt(i); });
-  check('rings: the islands of the three driven round are solid (the barrier at the island\'s kerb, past its apron)', isl.every(v => v < 2.5), isl.map(v => v.toFixed(2) + ' m').join(', '));
+  // both ways round every island, the oncoming lanes are road (Track.rings, altC; the game's own wallCollide on a car that stands where it is told)
+  const rc = new C.Race(T, opts({ numAI: 0, playerGrid: 1, tt: true, damage: 0 })), P = rc.player; Math.random = seeded(3); rc.start(); Math.random = orig;
+  const push = (x, z, h) => { P.x = x; P.z = z; P.h = h; P.vx = P.vz = P.w = 0; P.q.i = T.nearestIdx(x, z); C.wallCollide(P, T, true); return Math.hypot(P.x - x, P.z - z); };
+  const ringBad = [], isl = [];
+  for (const r of R) { let worst = 0; for (let k = 0; k < 36; k++) { const a = k / 36 * 2 * Math.PI; for (const dir of [1, -1]) worst = Math.max(worst, push(r.c[0] + Math.cos(a) * r.r, r.c[1] + Math.sin(a) * r.r, a + dir * Math.PI / 2)); }
+    if (worst > 0.12 || !T.inRingZone(r.c[0] + r.r, r.c[1])) ringBad.push(`${Math.round(r.d)}: ${worst.toFixed(2)}`);
+    isl.push(push(r.c[0], r.c[1], 0)); }
+  check('rings: the road round every island free both ways (no barrier in the ring\'s zone, no wrong way), the island itself solid', !ringBad.length && isl.every(v => v > 1), ringBad.length ? 'blocked ' + ringBad.join(', ') : `islands push a car out by ${isl.map(v => v.toFixed(1)).join(', ')} m`);
+  const laneBad = [];
+  def.altDn.forEach((A, n) => { for (const dir of [1, -1]) { let worst = 0; const N = A.P.length / 3;
+      for (let k = 1; k < N - 1; k++) { let tx = A.P[k * 3 + 3] - A.P[k * 3 - 3], tz = A.P[k * 3 + 4] - A.P[k * 3 - 2]; if (dir < 0) { tx = -tx; tz = -tz; } worst = Math.max(worst, push(A.P[k * 3], A.P[k * 3 + 1], Math.atan2(tz, tx))); }
+      if (worst > 0.12) laneBad.push(`lane ${n} ${dir > 0 ? 'along' : 'against'}: ${worst.toFixed(2)} m`); } });
+  check('lanes: a car drives every oncoming lane (altDn) both ways without meeting a wall — they are road as the route is', !laneBad.length, laneBad.length ? laneBad.join(', ') : `${def.altDn.length} lanes, both ways`);
   check('one-way: the oncoming traffic\'s own lines round the rings and the split approaches (altDn), each a stretch of the road with a line of points',
     def.altDn.length === 5 && def.altDn.every(a => a.b > a.a && a.P.length >= 30 && a.P.length % 3 === 0), def.altDn.map(a => `${Math.round(a.a)}-${Math.round(a.b)}`).join(', '));
   check('stops and crossings: the bus stops (OSM, with their names) and the zebra crossings on the road', def.stops.length >= 12 && def.stops.every(s => s[2]) && def.zebras.length >= 12, `${def.stops.length} stops, ${def.zebras.length} zebra crossings`);

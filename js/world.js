@@ -23663,8 +23663,9 @@ const World = (function () {
     const occPoly = (pts, v) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
       for (let a = Math.floor((x0 - ocx0) / OC); a <= Math.floor((x1 - ocx0) / OC); a++) for (let b = Math.floor((z0 - ocz0) / OC); b <= Math.floor((z1 - ocz0) / OC); b++) if (a >= 0 && b >= 0 && a < onx && b < onz && inPoly(pts, ocx0 + (a + 0.5) * OC, ocz0 + (b + 0.5) * OC)) occ[b * onx + a] = Math.max(occ[b * onx + a], v); };
     const Q = {}, QS = {};
-    const onRoadB = (x, z, m) => { const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0) { const S = T.stubs[q.k]; if (q.st <= S.Lend && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + m) return true; } return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (the buildings: a side road's own width past its mouth; walls.js the same)
-    const onRoad = (x, z, m) => { const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0 && Math.abs(q.u) <= T.stubHw(T.stubs[q.k], q.st) + m) return true; return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (on the asphalt or a sidewalk, or a side road's, m metres more)
+    const onAlt = (x, z, m) => { const r = lfNear(M.altH, x, z); return !!r.e && r.d < (T.def.altHw || 2.4) + m; };   // (on an oncoming lane, m metres more)
+    const onRoadB = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0) { const S = T.stubs[q.k]; if (q.st <= S.Lend && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + m) return true; } return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (the buildings: a side road's own width past its mouth; walls.js the same)
+    const onRoad = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0 && Math.abs(q.u) <= T.stubHw(T.stubs[q.k], q.st) + m) return true; return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (on the asphalt or a sidewalk, or a side road's, m metres more)
 
     /* ---- the buildings (def.bld): clear of the road, its sidewalks and the side roads; their footprints marked (no trees in them) ---- */
     const blds = [];
