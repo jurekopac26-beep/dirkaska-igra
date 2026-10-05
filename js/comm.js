@@ -93,6 +93,25 @@ const Comm = (() => {
     // fuel (a race with fuel on) and an endurance race's evening and night
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
+    puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    // a friend's challenge (the challenge link): the run, beaten or not
+    chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
+    chalWon: ["You beat {name}'s time! Challenge done!", "Faster than {name}, by {delta}! Send that one back!"],
+    chalLost: ["Not quite, {name} is still faster, by {delta}.", "{name}'s time stands, {delta} quicker. Try again!"],
+    // the team's engineer on the radio (radio(): the co-driver's voice)
+    radioBox: ['Box, box, box this lap!', 'Box this lap, box this lap.', 'Box this lap, we are ready for you.'],
+    radioBoxWet: ['It is wet out there, box this lap for wets!', 'Box this lap for rain tyres!'],
+    radioBoxDry: ['The line is dry, box this lap for slicks.', 'Box this lap, slicks are ready.'],
+    radioBoxFix: ['Box this lap, we will fix the car.', 'Box this lap, box this lap, we have new parts ready.'],
+    radioBoxTyre: ['Puncture! Box this lap, we have a new tyre ready.', 'Box this lap for a new tyre!'],
+    radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
+    radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
+    radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
+    radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
+    radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
+    radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],
+    brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
+    engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
     fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
     // the rivals' characters: a duel with the player, the standing rival, a mistake under pressure
     duel: ['A proper duel with {name} now! Nose to tail, lap after lap.', 'You and {name}, this is a real fight!', 'This battle with {name} is getting intense!'],
@@ -121,6 +140,8 @@ const Comm = (() => {
     propPylon: ['Took the marker post with him!', 'That marker post is history!'],
     propPost: ["He's clipped a marker post!", 'Roadside post down!', 'That post never stood a chance!', 'Flattened a post there!'],
     propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
+    propSignal: ['The traffic light is down!', "He's flattened the traffic signal!", 'That light will be red for a while now!'],
+    propStreet: ['Into the street furniture!', 'He has wiped out a bit of the city there!', 'That will need a repair crew!'],
     // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
     introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],
@@ -293,6 +314,22 @@ const Comm = (() => {
     return item;
   }
 
+  // the team's engineer on the radio (game.js radioHUD): a line of LINES in the co-driver's voice, said at once (the commentator's line is
+  // cut off), else next in line for a few seconds
+  function teamRadio(key, vars) {
+    if (!on || !speech || !synth) return null;
+    const pool = LINES[key]; if (!pool) return null;
+    let k = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
+    lastPick[key] = k;
+    const text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
+    const item = { key, text, prio: 3, t: now(), note: true, ttl: 4000 };
+    log.push(item); if (log.length > 200) log.shift();
+    if (!busy()) { speakNow(item); return item; }
+    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    queue = item;
+    return item;
+  }
   // a line of the police radio, said at once (game.js's radio director keeps the lines in turn): o.who 'okc' (the dispatcher), 'u' (a unit;
   // o.u its number: each a little different), 'heli', 'bov' (the station across the pass), in person 'cop' (the officer) and 'drv' (the
   // player's driver); text in Slovenian, o.en the same in English with the places spelt for an English voice (said when no voice reads
@@ -356,7 +393,7 @@ const Comm = (() => {
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
 
-  return { say, note, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
+  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 
