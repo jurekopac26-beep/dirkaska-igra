@@ -45,20 +45,6 @@
   },
   "edgeTint": true
  },
- "ljubljana": {
-  "plantO": {
-   "borrow": "raw/geo/kinds-nring.json",
-   "borrowKinds": [
-    66,
-    60
-   ],
-   "borrowShare": {
-    "60": 2
-   },
-   "inWorld": false
-  },
-  "flight": false
- },
  "riviera": {
   "sea": true,
   "plantO": {

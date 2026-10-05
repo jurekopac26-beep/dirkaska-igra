@@ -1624,6 +1624,19 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture (the junctions of the street circuits; Render draws each kind, local +x towards the road for those with an arm): a
+      // traffic signal on its pole, one on a mast arm over the road, a street light on its davit, a sign on a post, a hydrant, a litter bin, an
+      // electrical cabinet, a bollard, a bus shelter, a construction drum. dmg: a heavy one dents the car a little (applyDamage, as in propCarHit)
+      signal:  { m: 90,  rh: 0.2,  rb: 2.6, h0: 2.3,  e: 0.15, mu: 0.6, lift: 0.45, I: 160, dmg: 1, pts: boxPts(0.12, 2.3, 0.12).concat([[0.35, 2.1, 0], [0.35, 1.2, 0]]) },
+      signalm: { m: 160, rh: 0.24, rb: 4.6, h0: 3.2,  e: 0.12, mu: 0.6, lift: 0.3,  I: 520, dmg: 1.5, pts: boxPts(0.15, 3.2, 0.15).concat([[3.5, 2.9, 0], [6.6, 2.7, 0]]) },
+      lamp:    { m: 110, rh: 0.17, rb: 4.6, h0: 4.5,  e: 0.12, mu: 0.6, lift: 0.3,  I: 700, dmg: 1.2, pts: boxPts(0.12, 4.5, 0.12).concat([[1.9, 4.3, 0]]) },
+      sign:    { m: 12,  rh: 0.1,  rb: 1.4, h0: 1.3,  e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.3, 0.05).concat([[0, 1.1, 0.32], [0, 1.1, -0.32]]) },
+      hydrant: { m: 45,  rh: 0.24, rb: 0.5, h0: 0.42, e: 0.25, mu: 0.7, lift: 0.45, I: 2.5, dmg: 0.6, pts: cylPts(0.17, -0.42, 0.42, 6) },
+      bin:     { m: 28,  rh: 0.36, rb: 0.62, h0: 0.5, e: 0.2,  mu: 0.65, lift: 0.5, I: 3,   dmg: 0, pts: boxPts(0.32, 0.5, 0.32) },
+      cabinet: { m: 80,  rh: 0.55, rb: 0.9, h0: 0.7,  e: 0.12, mu: 0.7, lift: 0.3,  I: 15,  dmg: 0.8, pts: boxPts(0.5, 0.7, 0.3) },
+      bollard: { m: 25,  rh: 0.13, rb: 0.56, h0: 0.5, e: 0.25, mu: 0.6, lift: 0.6,  I: 2,   dmg: 0, pts: cylPts(0.11, -0.5, 0.5, 6) },
+      shelter: { m: 220, rh: 1.1,  rb: 2.3, h0: 1.25, e: 0.1,  mu: 0.75, lift: 0.25, I: 200, dmg: 1.2, pts: boxPts(1.8, 1.25, 0.75) },
+      barrel:  { m: 12,  rh: 0.3,  rb: 0.55, h0: 0.47, e: 0.35, mu: 0.6, lift: 0.7, I: 1.2, dmg: 0, pts: cylPts(0.29, -0.47, 0.47, 8) },
     };
   })();
   const _pq = {};
@@ -1650,7 +1663,7 @@ const Core = (function () {
   }
   function propCarHit(race, c, b) {
     const K = b.K, dx = b.x - c.x, dz = b.z - c.z;
-    if (dx * dx + dz * dz > 20) return;
+    if (dx * dx + dz * dz > 20 || (K.dmg != null && b.hit1 && b.age < 0.6)) return;   // (street furniture: one knock, then it is on its way for a moment)
     const cy = c.y || 0; if (b.y - K.rb > cy + 1.3 || b.y + K.rb < cy + 0.05) return;
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     for (let i = 0; i < 3; i++) {
@@ -1670,6 +1683,7 @@ const Core = (function () {
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
       race.propFx(b, vrel);
+      if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) applyDamage(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
       return;
@@ -4395,8 +4409,8 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const CHAMP_PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], PLAYER_KEY = 'TI';
   const CHAMPS = [
-    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'],
-      en: { name: 'Home Cup', desc: 'Four short tracks to begin with: a lake, a town and gravel.' } },
+    { id: 'domaci', name: 'Domači pokal', desc: 'Tri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'gora', 'riviera'],
+      en: { name: 'Home Cup', desc: 'Three short tracks to begin with: a lake, a town and gravel.' } },
     { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
       en: { desc: 'Tracks in the style of Circuit Superstars with pits, and Monaco.' } },
     { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'],

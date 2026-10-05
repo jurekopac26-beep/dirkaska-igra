@@ -18,6 +18,8 @@
     'Ime voznika': 'Driver name', 'Občutljivost nagiba': 'Tilt sensitivity', 'Nastavi sredino': 'Set centre', 'Obrni smer': 'Invert', 'Kamera': 'Camera',
     'Izometrična · ležeče': 'Isometric · sideways', 'Za avtom · pokončno': 'Chase · upright',
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
+    'Položaj avta': 'Car position', 'Običajno': 'Normal', 'Nižje (2 m)': 'Lower (2 m)', 'Najnižje (5 m)': 'Lowest (5 m)',
+    'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase and isometric cameras)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
     '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik na reliju (angleščina)': 'Rally co-driver (English)', 'Poškodbe avtov': 'Car damage', 'Samo videz': 'Looks only',
@@ -305,6 +307,7 @@
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
+    'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */

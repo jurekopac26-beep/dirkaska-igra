@@ -12,7 +12,7 @@ except ImportError: FF0 = 'ffmpeg'
 FF = os.environ.get('FFMPEG', FF0)
 OUT = os.path.join(SITE, 'assets', 'maps')
 os.makedirs(OUT, exist_ok=True)
-TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'ljubljana', 'monaco', 'rbring', 'suzuka', 'spa', 'nring']
+TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring']
 ROADS = ('vrsic', 'pikes')   # the open roads (the others' corners, by number, name the places of a track that has no names of its own)
 # the game's own names of the places along a track, in English where they are Slovenian words (proper names stay)
 EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight',
