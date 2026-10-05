@@ -39,11 +39,11 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   const w = (d) => 2 * T.wAt(at(d)), wk = T.walk ? T.walk[0].filter(v => v > 0.5).length + T.walk[1].filter(v => v > 0.5).length : 0;
   let ws = 0, wn = 0; for (let d = 0; d < T.raceLen; d += 2) { ws += w(d); wn++; }
   check('widths: ~14.8 m on average (the race tracks\' usual 11.4 m and 30 % more), the real order kept: 18.2 m on Gorenjska cesta > 16.3 m on Medvoška cesta, the regional road and the bridge > 12.7 m in Smlednik > 11.1 m up the castle road',
-    Math.abs(ws / wn - 14.8) < 0.5 && Math.abs(w(800) - 18.2) < 0.4 && Math.abs(w(100) - 16.3) < 0.4 && Math.abs(w(1500) - 16.1) < 0.5 && Math.abs(w(3700) - 16.4) < 0.5 && Math.abs(w(4900) - 12.7) < 0.4 && Math.abs(w(5800) - 11.1) < 0.4,
-    `average ${(ws / wn).toFixed(2)} m; ` + [100, 800, 1500, 3700, 4900, 5800].map(d => `${d}: ${w(d).toFixed(2)} m`).join(', '));
-  const sf = (d) => T.sf ? T.sf[at(d)] : 0, sfs = [3000, 5000, 5200, 5800, 6200].map(sf);
-  check('surface: gravel (makadam) where OSM has the road unpaved, the castle road from its foot (d ~5148) to the end; asphalt before', sfs.join() === '0,0,5,5,5' && def.surf.length === 1 && Math.abs(def.surf[0][0] - 5148) < 5,
-    `surface at 3000/5000/5200/5800/6200: ${sfs.join(' ')}, def.surf ${JSON.stringify(def.surf)}`);
+    Math.abs(ws / wn - 14.8) < 0.5 && Math.abs(w(800) - 18.2) < 0.4 && Math.abs(w(100) - 16.3) < 0.4 && Math.abs(w(1593) - 16.1) < 0.5 && Math.abs(w(3793) - 16.4) < 0.5 && Math.abs(w(4993) - 12.7) < 0.4 && Math.abs(w(5893) - 11.1) < 0.4,
+    `average ${(ws / wn).toFixed(2)} m; ` + [100, 800, 1593, 3793, 4993, 5893].map(d => `${d}: ${w(d).toFixed(2)} m`).join(', '));
+  const sf = (d) => T.sf ? T.sf[at(d)] : 0, sfs = [3093, 5093, 5293, 5893, 6293].map(sf);
+  check('surface: gravel (makadam) where OSM has the road unpaved, the castle road from its foot (d ~5241) to the end; asphalt before', sfs.join() === '0,0,5,5,5' && def.surf.length === 1 && Math.abs(def.surf[0][0] - 5241) < 5,
+    `surface at 3093/5093/5293/5893/6293: ${sfs.join(' ')}, def.surf ${JSON.stringify(def.surf)}`);
   check('sidewalks: along the villages, part of the road (T.walk)', wk * T.ds > 2500, `${(wk * T.ds / 1000).toFixed(1)} km of sidewalk (both sides)`);
   const [b0, b1] = def.bridges[0], i = at((b0 + b1) / 2);
   check('bridge: 118 m over the Sava (OSM), the barriers 1.6 m past the asphalt there (def.narrow)', Math.abs(b1 - b0 - 118) < 3 && T.bl[i] - T.wAt(i) < 1.7 && T.br[i] - T.wAt(i) < 1.7,
@@ -52,7 +52,9 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     const Q = [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]].map(([u, v]) => { const px = x + c * u - s * v, pz = z + s * u + c * v; return T.query(px, pz, T.nearestIdx(px, pz), {}); });
     if (Q.some(q => (q.k < 0 && !q.over && Math.abs(q.d) < T.wAt(q.a)) || (q.k >= 0 && q.st <= T.stubs[q.k].Lend && Math.abs(q.u) <= (q.st < T.stubs[q.k].te ? T.stubHw(T.stubs[q.k], q.st) : T.stubs[q.k].hw) + 0.3))) continue;   // (one the data puts on the road itself or on a side road: the scenery leaves it out)
     nB++; if (Q.some(q => q.k < 0 && !q.over && !T.gap[q.d > 0 ? 1 : 0][q.a] && Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - 0.6)) nIn++; }   // (beside a side road's mouth the barrier is open)
-  check('walls: the houses, garden walls and fences beside the road are its barrier there (def.walls): no house inside it', def.walls.length > 100 && nIn === 0, `${def.walls.length} walls, ${nIn} of ${nB} houses inside the barriers`);
+  let far = 0, nS = 0; for (let i = 0; i < T.N; i += 3) for (const sd of [0, 1]) { const b = (sd ? T.br[i] : T.bl[i]) - T.wAt(i) - (T.walk ? T.walk[sd][i] : 0); nS++; if (b > 1.7) far++; }
+  check('barrier: right along the road all the way (def.edgeBar: 0.8 m past the asphalt or the sidewalk, the bridge\'s parapets 1.6 m), the side roads closed across their mouths (def.sideClosed: no gap); the few houses nearer pull it in (def.walls), none inside it',
+    def.edgeBar === 0.8 && def.sideClosed && !T.gap[0].some(v => v) && !T.gap[1].some(v => v) && far === 0 && nIn === 0, `${far} of ${nS} places with the barrier over 1.7 m out, ${def.walls.length} walls, ${nIn} of ${nB} houses inside the barriers`);
   const O = (def.overpass || [])[0], oy = O ? Math.max(...O.P.filter((v, k) => k % 3 === 2)) : 0, io = O ? at((O.d[0] + O.d[1]) / 2) : 0;
   check('overpass: Gorenjska cesta crosses over the road on its bridge at d ~193 (OSM), its deck over 5 m above the road, the abutments the barrier under it',
     !!O && O.d[0] < 193 && O.d[1] > 193 && oy - T.hy[io] > 5 && T.bl[io] - T.wAt(io) < 3 && T.br[io] - T.wAt(io) < 3, O ? `deck ${(oy - T.hy[io]).toFixed(1)} m over the road, d ${O.d.join('-')}` : 'none');
@@ -62,21 +64,32 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 // the zebra crossings
 {
   const R = def.rings || [];
-  check('junctions: every street, lane and track that meets the road (side roads), the four roundabouts (three driven round, the big one at Na klancu passed on its slip road)',
-    T.stubs.length >= 80 && R.length === 4 && R.filter(r => r.drive).length === 3 && R.every(r => r.r > 11 && r.r < 22), `${T.stubs.length} side roads, rings ${R.map(r => `r ${r.r} @${Math.round(r.d)}${r.drive ? '' : ' (passed)'}`).join(', ')}`);
+  check('junctions: every street, lane and track that meets the road (side roads, closed at the road), the four roundabouts, all four driven round (the big one at Na klancu the long way, west and north round its island: its slip lane closed)',
+    T.stubs.length >= 80 && R.length === 4 && R.filter(r => r.drive).length === 4 && R.every(r => r.r > 11 && r.r < 22), `${T.stubs.length} side roads, rings ${R.map(r => `r ${r.r} @${Math.round(r.d)}${r.drive ? '' : ' (passed)'}`).join(', ')}`);
   // both ways round every island, the oncoming lanes are road (Track.rings, altC; the game's own wallCollide on a car that stands where it is told)
   const rc = new C.Race(T, opts({ numAI: 0, playerGrid: 1, tt: true, damage: 0 })), P = rc.player; Math.random = seeded(3); rc.start(); Math.random = orig;
   const push = (x, z, h) => { P.x = x; P.z = z; P.h = h; P.vx = P.vz = P.w = 0; P.q.i = T.nearestIdx(x, z); C.wallCollide(P, T, true); return Math.hypot(P.x - x, P.z - z); };
   const ringBad = [], isl = [];
-  for (const r of R) { let worst = 0; for (let k = 0; k < 36; k++) { const a = k / 36 * 2 * Math.PI; for (const dir of [1, -1]) worst = Math.max(worst, push(r.c[0] + Math.cos(a) * r.r, r.c[1] + Math.sin(a) * r.r, a + dir * Math.PI / 2)); }
+  for (const r of R) { if (r.zone === false) continue; let worst = 0; for (let k = 0; k < 36; k++) { const a = k / 36 * 2 * Math.PI; for (const dir of [1, -1]) worst = Math.max(worst, push(r.c[0] + Math.cos(a) * r.r, r.c[1] + Math.sin(a) * r.r, a + dir * Math.PI / 2)); }
     if (worst > 0.12 || !T.inRingZone(r.c[0] + r.r, r.c[1])) ringBad.push(`${Math.round(r.d)}: ${worst.toFixed(2)}`);
     isl.push(push(r.c[0], r.c[1], 0)); }
-  check('rings: the road round every island free both ways (no barrier in the ring\'s zone, no wrong way), the island itself solid', !ringBad.length && isl.every(v => v > 1), ringBad.length ? 'blocked ' + ringBad.join(', ') : `islands push a car out by ${isl.map(v => v.toFixed(1)).join(', ')} m`);
+  check('rings: the three small ones free both ways round the island (no barrier in the ring\'s zone, no wrong way), the island itself solid', !ringBad.length && isl.length === 3 && isl.every(v => v > 1), ringBad.length ? 'blocked ' + ringBad.join(', ') : `islands push a car out by ${isl.map(v => v.toFixed(1)).join(', ')} m`);
+  // the big ring at Na klancu: the route up the left carriageway, round the island west and north to the exit to Zbiljska cesta (the user's way); the slip lane (OSM w... f5d2b0)
+  // closed, the other half of the ring closed, the wrong way counted there
+  { const B = R.find(r => r.zone === false), ang = (s) => { const i = at(s); return Math.atan2(T.pz[i] - B.c[1], T.px[i] - B.c[0]); };
+    let onRing = 0, a0 = null, turn = 0; for (let d = B.d - 140; d < B.d + 140; d += 2) { const i = at(d); if (Math.abs(Math.hypot(T.px[i] - B.c[0], T.pz[i] - B.c[1]) - B.r) < 1) { const a = ang(d); if (a0 !== null) { let da = a - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI; turn += da; } a0 = a; onRing += 2; } }
+    const slip = def.sideRoads.find(r => r[9] === 'Gorenjska cesta' && r[1] > 0 && Math.abs(r[0] - (B.d - 170)) < 40), sp = slip ? T.stubPt(def.sideRoads.indexOf(slip), 30, {}) : null, blocked = sp ? push(sp.x, sp.z, sp.h) : 0;
+    check('big ring: the route round it the long way (clockwise on the map: west, north, out east to Zbiljska cesta), on the ring for ~250 deg; its slip lane closed (a car on it is pushed back), no zone (the route\'s own barriers round it)',
+      B && !T.inRingZone(B.c[0] + B.r, B.c[1]) && turn > 3.8 && onRing > 80 && blocked > 1, `on the ring ${onRing} m, turning ${(turn * 180 / Math.PI).toFixed(0)} deg, the slip lane: a car on it pushed ${blocked.toFixed(1)} m`); }
   const laneBad = [];
-  def.altDn.forEach((A, n) => { for (const dir of [1, -1]) { let worst = 0; const N = A.P.length / 3;
-      for (let k = 1; k < N - 1; k++) { let tx = A.P[k * 3 + 3] - A.P[k * 3 - 3], tz = A.P[k * 3 + 4] - A.P[k * 3 - 2]; if (dir < 0) { tx = -tx; tz = -tz; } worst = Math.max(worst, push(A.P[k * 3], A.P[k * 3 + 1], Math.atan2(tz, tx))); }
+  def.altDn.forEach((A, n) => { for (const dir of [1, -1]) { let worst = 0; const N = A.P.length / 3, cum = [0], o = A.open || [0, 1];
+      for (let k = 1; k < N; k++) cum.push(cum[k - 1] + Math.hypot(A.P[k * 3] - A.P[k * 3 - 3], A.P[k * 3 + 1] - A.P[k * 3 - 2]));
+      for (let k = 1; k < N - 1; k++) { if (cum[k] < o[0] * cum[N - 1] + 3 || cum[k] > o[1] * cum[N - 1] - 3) continue; let tx = A.P[k * 3 + 3] - A.P[k * 3 - 3], tz = A.P[k * 3 + 4] - A.P[k * 3 - 2]; if (dir < 0) { tx = -tx; tz = -tz; } worst = Math.max(worst, push(A.P[k * 3], A.P[k * 3 + 1], Math.atan2(tz, tx))); }
       if (worst > 0.12) laneBad.push(`lane ${n} ${dir > 0 ? 'along' : 'against'}: ${worst.toFixed(2)} m`); } });
-  check('lanes: a car drives every oncoming lane (altDn) both ways without meeting a wall — they are road as the route is', !laneBad.length, laneBad.length ? laneBad.join(', ') : `${def.altDn.length} lanes, both ways`);
+  check('lanes: a car drives every oncoming lane (altDn) both ways without meeting a wall — they are road as the route is (their open part: the ring\'s northern leg in from the ring\'s edge, none of Gorenjska cesta\'s own carriageway behind the fence)', !laneBad.length, laneBad.length ? laneBad.join(', ') : `${def.altDn.length} lanes, both ways`);
+  { const g = def.altDn.find(A => A.open && A.open[1] <= A.open[0]), leg = def.altDn.find(A => A.open && A.open[0] > 0.2), Pt = (A, f) => { let k = Math.round(f * (A.P.length / 3 - 1)); return [A.P[k * 3], A.P[k * 3 + 1], Math.atan2(A.P[k * 3 + 4] - A.P[k * 3 + 1], A.P[k * 3 + 3] - A.P[k * 3])]; };
+    const pg = g ? push(...Pt(g, 0.6)) : 0, pl = leg ? push(...Pt(leg, leg.open[0] * 0.4)) : 0;
+    check('lanes: behind the fence past their open part — a car on Gorenjska cesta\'s southbound carriageway beside the ramp, or up the first ring\'s northern leg, is pushed back (no dead end off the route)', g && leg && pg > 1 && pl > 1, `pushed ${pg.toFixed(1)} m on Gorenjska cesta, ${pl.toFixed(1)} m up the northern leg`); }
   check('one-way: the oncoming traffic\'s own lines round the rings and the split approaches (altDn), each a stretch of the road with a line of points',
     def.altDn.length === 5 && def.altDn.every(a => a.b > a.a && a.P.length >= 30 && a.P.length % 3 === 0), def.altDn.map(a => `${Math.round(a.a)}-${Math.round(a.b)}`).join(', '));
   check('stops and crossings: the bus stops (OSM, with their names) and the zebra crossings on the road', def.stops.length >= 12 && def.stops.every(s => s[2]) && def.zebras.length >= 12, `${def.stops.length} stops, ${def.zebras.length} zebra crossings`);
@@ -106,8 +119,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   Math.random = orig;
   check('traffic: both ways; round the rings and on the split approaches the oncoming vehicles drive their own lines, off the route; none up the castle road',
     tf.veh.some(v => v.dir > 0) && tf.veh.some(v => v.dir < 0) && alt > 20 && off > alt * 0.5 && !beyond, `${tf.veh.length} vehicles, ${alt} seen on their own line (${off} off the route), ${beyond} past the castle road's foot`);
-  const v = { dir: 1, s: T.startS + 4900, kind: 0, wid: 1.8 }, e = tf._edge(v);
-  check('traffic: on the village street through Smlednik a car pulling over for the police goes onto the shoulder (def.pullOff)', Math.abs(e) > T.wAt(at(4900)) - 0.9 + 0.5, `its middle ${e.toFixed(2)} m from the centre line, the asphalt's edge ${T.wAt(at(4900)).toFixed(2)} m`);
+  const v = { dir: 1, s: T.startS + 4993, kind: 0, wid: 1.8 }, e = tf._edge(v), ib = at(4993);
+  check('traffic: on the village street through Smlednik a car pulling over for the police goes onto the shoulder as far as the barrier lets it (def.pullOff)', Math.abs(e) + 0.9 > T.wAt(ib) + 0.2 && Math.abs(e) + 0.9 < Math.min(T.bl[ib], T.br[ib]), `its middle ${e.toFixed(2)} m from the centre line, the asphalt's edge ${T.wAt(ib).toFixed(2)} m, the barrier ${Math.min(T.bl[ib], T.br[ib]).toFixed(2)} m`);
 }
 
 // 6. the ways to drive it (and an online race: always the race)

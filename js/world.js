@@ -24159,7 +24159,7 @@ const World = (function () {
 
     /* ---- the oncoming lanes round the rings and the split approaches (def.altDn), the raised islands between them and the route near the rings ---- */
     {
-      const ga = new RB(true), HW = def.altHw || 2.4, isl = [0.72, 0.71, 0.68], lawn = [0.3, 0.48, 0.18], kerb = [0.8, 0.79, 0.76];
+      const ga = new RB(true), HW = def.altHw || 2.4, isl = [0.66, 0.65, 0.62], kerb = [0.8, 0.79, 0.76];
       for (const L of M.alts) { const n = L.length; if (n < 2) continue; let pr = -1, cum = 0;
         const nrm = L.map((p, k) => { const a = L[Math.max(0, k - 1)], b = L[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
         const QA = {}, onSR = L.map(([x, z]) => { const q = T.query(x, z, T.nearestIdx(x, z), QA); return q.k >= 0 && q.st > T.stubs[q.k].te + 2 && Math.abs(q.u) <= T.stubs[q.k].hw; });   // (on a side road's own carriageway: that road is its asphalt)
@@ -24167,14 +24167,15 @@ const World = (function () {
           const os = [-HW, 0, HW], sh = 0.84 * (0.97 + 0.06 * rpHash(Math.round(cum / 30), 7));
           const r = ga.row(os.map(o => [x + nx * o, y + 0.03, z + nz * o]), os.map(() => [sh, sh, sh * 1.01]), os.map(o => [(o + HW) / 8, cum / 8]));
           if (pr >= 0 && !(onSR[k] && onSR[k - 1])) ga.link(pr, r, 0, 2); pr = r; }
-        // the islands: where the lane runs within 10 m of the route near a ring, raised 13 cm between the two edges behind kerbs (grass when wide)
+        // the islands: where the lane runs within 10 m of the route near a ring, raised 13 cm between the two edges behind kerbs, paved (no grass in the road)
         const rows = L.map(([x, z, y], k) => { if (!M.rings.some(r => Math.hypot(x - r.x, z - r.z) < r.r + 45 && Math.hypot(x - r.x, z - r.z) > r.r + r.hw + 0.7)) return null;
           const i = T.nearestIdx(x, z), q = T._qMain(x, z, i, QS); if (q.over) return null; const sd = q.d > 0 ? 1 : -1, gap = Math.abs(q.d) - WA[q.a] - HW; if (gap < 0.4 || gap > 10) return null;
           const [nx, nz] = nrm[k], toR = (q.nx * nx + q.nz * nz) * sd > 0 ? -1 : 1;   // (which way across the lane faces the route)
           const ax = x + nx * toR * (HW + 0.05), az = z + nz * toR * (HW + 0.05), bx = q.x - q.nx * sd * (Math.abs(q.d) - WA[q.a] - 0.05), bz = q.z - q.nz * sd * (Math.abs(q.d) - WA[q.a] - 0.05);
-          return { a: [ax, y + 0.16, az], b: [bx, T._hyAt(q.s) + 0.16, bz], ya: y + 0.03, yb: T._hyAt(q.s) + 0.02, gap }; });
-        for (let k = 0; k + 1 < n; k++) { const A = rows[k], B = rows[k + 1]; if (!A || !B) continue; const c = A.gap > 2.6 && B.gap > 2.6 ? lawn : isl;
-          const gi = scen.get(A.a[0], A.a[2]); gi.quadUp(A.a, A.b, B.b, B.a, [c, c, c, c]);
+          return { a: [ax, y + 0.16, az], b: [bx, T._hyAt(q.s) + 0.16, bz], ya: y + 0.03, yb: T._hyAt(q.s) + 0.02, gap, i: q.a }; });
+        for (let k = 0; k + 1 < n; k++) { const A = rows[k], B = rows[k + 1]; if (!A || !B || Math.abs(A.i - B.i) > 4) continue;   // (not across to another leg of the road: a ring's other side)
+          if (((B.a[0] - A.a[0]) * (A.b[2] - A.a[2]) - (B.a[2] - A.a[2]) * (A.b[0] - A.a[0])) * ((B.b[0] - A.b[0]) * (A.b[2] - A.a[2]) - (B.b[2] - A.b[2]) * (A.b[0] - A.a[0])) < 0) continue;   // (a twisted quad)
+          const gi = scen.get(A.a[0], A.a[2]); gi.quadUp(A.a, A.b, B.b, B.a, [isl, isl, isl, isl]);
           gi.quadO([A.a[0], A.ya, A.a[2]], [B.a[0], B.ya, B.a[2]], B.a, A.a, kerb, [(A.b[0] + B.b[0]) / 2, A.a[1] - 3, (A.b[2] + B.b[2]) / 2]);
           gi.quadO([A.b[0], A.yb, A.b[2]], [B.b[0], B.yb, B.b[2]], B.b, A.b, kerb, [(A.a[0] + B.a[0]) / 2, A.b[1] - 3, (A.a[2] + B.a[2]) / 2]); }
       }
@@ -24599,7 +24600,8 @@ const World = (function () {
     const CRF = crowdSub(CR);
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
-      const Mo = { first: 1.2, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: (x, z) => hard(x, z) || occAt(x, z) === 3 || mvW(x, z).e > -2, sit: 0.2, flag: 0.12, keepBar: 1.2 };
+      const onRd = (x, z) => T.onAlt(x, z) || T.rings.some(R => R.zr > 0 && Math.hypot(x - R.x, z - R.z) < R.zr + 1);   // (not on a road a car may take: an oncoming lane, a ring's road round the island)
+      const Mo = { first: 1.2, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: (x, z) => hard(x, z) || occAt(x, z) === 3 || mvW(x, z).e > -2 || onRd(x, z), sit: 0.2, flag: 0.12, keepBar: 1.2 };
       const run = (sa, sb, side, o, C) => crowdRun(C || CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, Mo, o));
       for (const sd of [-1, 1]) { run(sStart - 50, sStart + 60, sd, { rows: 2, dens: 0.55, label: 'MV start' }); run(sFin - 60, sFin + 12, sd, { rows: 2, dens: 0.55, label: 'MV finish' }, CRF); }
       T.cpS.forEach((s0) => { for (const sd of [-1, 1]) run(s0 - 20, s0 + 16, sd, { rows: 2, dens: 0.4, label: 'MV cp' }); });

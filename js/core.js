@@ -200,7 +200,8 @@ const Core = (function () {
       // pillars, or the parapet, 1.6 m past the road's edges, eased in and out over 25 m at its ends
       if ((def.galleries || def.narrow) && open) for (const [a, b] of (def.galleries || []).concat(def.narrow || [])) for (let d = a - 25; d <= b + 25; d += ds / 2) {
         const i = Math.floor((this.startS + d) / ds); if (i < 0 || i >= N) continue;
-        const f = Math.min(sstep(a - 25, a, d), sstep(b + 25, b, d)), t = this.w + 1.6;
+        const f = Math.min(sstep(a - 25, a, d), sstep(b + 25, b, d)), t = (def.edgeBar != null ? this.wAt(i) : this.w) + 1.6;
+        if (def.edgeBar != null) { if (f > 0) { this.bl[i] = lerp(this.bl[i], t, f); this.br[i] = lerp(this.br[i], t, f); } continue; }   // (def.edgeBar: out to the parapets)
         if (this.bl[i] > t) this.bl[i] = lerp(this.bl[i], t, f); if (this.br[i] > t) this.br[i] = lerp(this.br[i], t, f);
       }
       // drops (def.drops = [[from, to, side], ...], metres after the start line; open roads: the cliffs of the Uncompahgre Gorge): no barrier, the
@@ -278,9 +279,10 @@ const Core = (function () {
         const mark = (i) => { for (let o = -3; o <= 3; o++) { const ii = i + o; if (ii < 0 || ii >= N) continue; let c = 0; while (c < SNS && near[ii * SNS + c] >= 0 && near[ii * SNS + c] !== k) c++; if (c < SNS) near[ii * SNS + c] = k; if (at[ii] < 0) at[ii] = k; } };
         for (let j = 0; j < n; j++) { const hc = this.stubHw(S, j * D) + lim + SR.rm; for (const u of [-hc, -hc / 2, 0, hc / 2, hc]) mark(nearest(x[j] - tz[j] * u, z[j] + tx[j] * u)); }
         // the barrier open across its mouth: where the barrier line lies within its corridor
-        const G = gap[side > 0 ? 1 : 0], sp = {};
+        // (def.sideClosed: the side roads drawn but closed at the road's edge, the barrier straight across their mouths: S.m0..S.m1 the road's samples there)
+        const G = gap[side > 0 ? 1 : 0], sp = {}; S.m0 = -1; S.m1 = -1;
         for (let i = Math.max(0, i0 - 80); i <= Math.min(N - 1, i0 + 80); i++) { const b = side > 0 ? this.br[i] : this.bl[i], bx = px[i] + this.nx[i] * side * b, bz = pz[i] + this.nz[i] * side * b;
-          if (this._stubProj(S, bx, bz, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) <= this.stubHw(S, sp.t) + lim) G[i] = 1; }
+          if (this._stubProj(S, bx, bz, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) <= this.stubHw(S, sp.t) + lim) { if (!this.def.sideClosed) G[i] = 1; if (S.m0 < 0) S.m0 = i; S.m1 = i; } }
       }
     }
     _hyAt(s) { const N = this.N, f = clamp(s / this.ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return this.hy[i] + (this.hy[i + 1] - this.hy[i]) * (f - i); }   // (the road's height at s, open roads)
@@ -335,7 +337,7 @@ const Core = (function () {
     // lane), any: inside one of them (a car goes there freely: Track.fenceRuns, tests/medvode-fence.test.js)
     wallFree(tol) {
       tol = tol != null ? tol : 0.04;
-      const N = this.N, px = this.px, pz = this.pz, stubs = this.stubs || [], rings = this.rings || [], alts = this.altC || [];
+      const N = this.N, px = this.px, pz = this.pz, stubs = this.def.sideClosed ? [] : this.stubs || [], rings = this.rings || [], alts = this.altC || [];
       const HC = 32, hash = new Map(), hk = (a, b) => a * 65536 + b;   // the route's samples in a 32 m grid: the nearest one to a point
       for (let i = 0; i < N; i++) { const k = hk(Math.floor(px[i] / HC), Math.floor(pz[i] / HC)); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
       const nearest = (x, z) => { const cx = Math.floor(x / HC), cz = Math.floor(z / HC); let bi = -1, bd = 1e18;
@@ -373,7 +375,7 @@ const Core = (function () {
        itself, ix: the route's sample each point belongs to (-1 on the others) } ], skips: [[from, to] (s), ...] } ---- */
     fenceRuns(o) {
       o = o || {};
-      const N = this.N, ds = this.ds, px = this.px, pz = this.pz, nx = this.nx, nz = this.nz, def = this.def, stubs = this.stubs || [], rings = this.rings || [], alts = this.altC || [];
+      const N = this.N, ds = this.ds, px = this.px, pz = this.pz, nx = this.nx, nz = this.nz, def = this.def, stubs = this.def.sideClosed ? [] : this.stubs || [], rings = this.rings || [], alts = this.altC || [];
       const step = o.step || 2, tol = o.tol != null ? o.tol : 0.04, minLen = o.minLen != null ? o.minLen : 1.2, runs = [], skips = [];
       if (o.skip !== false) { for (const [a, b] of def.bridges || []) skips.push([this.startS + a - 1, this.startS + b + 1]); for (const O of def.overpass || []) if (O.d) skips.push([this.startS + O.d[0], this.startS + O.d[1]]); }
       const F = this.wallFree(tol), inRoute = F.route, inRing = F.ring, inStub = F.stub, inAlt = F.alt;
@@ -445,6 +447,7 @@ const Core = (function () {
       });
       // the roundabouts' circles (just past the zone: wallCollide)
       rings.forEach((R, r) => {
+        if (!(R.zr > 0)) return;   // (a ring without a zone: the route's own barriers round it)
         const n = Math.max(24, Math.ceil(Math.PI * 2 * R.zr / step)), P = [];
         for (let j = 0; j < n; j++) { const a = j / n * Math.PI * 2; P.push(R.x + Math.cos(a) * R.zr, R.z + Math.sin(a) * R.zr); }
         const mid = (ax, az, bx, bz, t) => { const x = ax + (bx - ax) * t - R.x, z = az + (bz - az) * t - R.z, l = Math.hypot(x, z) || 1; return [R.x + x / l * R.zr, R.z + z / l * R.zr]; };
@@ -461,6 +464,26 @@ const Core = (function () {
         const A = ends[a], B = ends[b], [e, f] = runs[A.ri].k === 0 && runs[B.ri].k !== 0 ? [B, A] : [A, B];   // (the side road's, lane's, ring's end goes to the route's; else the first to the second)
         if (!add2.has(e.ri)) add2.set(e.ri, { pre: null, post: null }); add2.get(e.ri)[e.first ? 'pre' : 'post'] = [f.x, f.z]; }
       for (const [ri, w] of add2) { const r = runs[ri], P = Array.from(r.pts), ix = Array.from(r.ix); if (w.pre) { P.unshift(w.pre[0], w.pre[1]); ix.unshift(-1); } if (w.post) { P.push(w.post[0], w.post[1]); ix.push(-1); } r.pts = Float64Array.from(P); r.ix = Int32Array.from(ix); }
+      // o.islands (def.edgeBar: the fence right along the road): none on an island between two drivable roads narrower than o.islands m (a splitter island, the inner
+      // wedge of a hairpin: the island's own kerb and grass show it) nor on a roundabout's apron round its island (the wall is there all the same)
+      if (o.islands || def.edgeBar != null) {
+        const W = o.islands || 8, out = [];
+        for (const r of runs) {
+          const P = r.pts, n = P.length / 2, keep = new Uint8Array(n);
+          for (let j = 0; j < n; j++) {
+            const x = P[2 * j], z = P[2 * j + 1], a = Math.max(0, j - 1), b = Math.min(n - 1, j + 1); let tx = P[2 * b] - P[2 * a], tz = P[2 * b + 1] - P[2 * a + 1]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+            const ox = -tz * r.sg, oz = tx * r.sg; let isl = rings.some(R => Math.hypot(x - R.x, z - R.z) < R.r - R.hw + 0.5);
+            for (let u = 1; u <= W && !isl; u += 1.5) if (F.any(x + ox * u, z + oz * u)) isl = true;
+            keep[j] = isl ? 0 : 1;
+          }
+          for (let j = 0; j < n;) { if (!keep[j]) { j++; continue; } let e = j; while (e + 1 < n && keep[e + 1]) e++;
+            if (e === j && n > 1) { j++; continue; }
+            const pts = Array.from(P.slice(2 * j, 2 * e + 2)), L = (() => { let q = 0; for (let k = 2; k < pts.length; k += 2) q += Math.hypot(pts[k] - pts[k - 2], pts[k + 1] - pts[k - 1]); return q; })();
+            if (L >= minLen) out.push(Object.assign({}, r, { closed: r.closed && j === 0 && e === n - 1, pts: Float64Array.from(pts), ix: Int32Array.from(Array.from(r.ix.slice(j, e + 1))) }));
+            j = e + 1; }
+        }
+        return { runs: out, skips };
+      }
       return { runs, skips };
     }
     // for the scenery the fence would have to cut through: hit(pts, cx, cz) is true for a footprint (pts: [[x, z], ...], its centre cx, cz) whose centre stands in the
@@ -561,6 +584,15 @@ const Core = (function () {
     }
     _stubBollardsRaw(k) {
       const S = this.stubs[k], rings = this.rings, DX = 2.3;
+      if (this.def.sideClosed) {   // (closed at the road's edge: the row along the road in front of the barrier across the mouth, 0.4 m inside it, a little wider than the mouth)
+        if (S.m0 < 0) return [];
+        const ds = this.ds, sd = S.side, a = (S.m0 - 0.6) * ds, b = (S.m1 + 0.6) * ds, n = Math.max(3, Math.round((b - a) / DX) + 1), out = [], Q = {};
+        for (let j = 0; j < n; j++) { const s = a + (b - a) * j / (n - 1), f = s / ds, i = clamp(Math.floor(f), 0, this.N - 2), u = f - i, bar = (sd > 0 ? lerp(this.br[i], this.br[i + 1], u) : lerp(this.bl[i], this.bl[i + 1], u)) - 0.4;
+          const x = lerp(this.px[i], this.px[i + 1], u) + lerp(this.nx[i], this.nx[i + 1], u) * sd * bar, z = lerp(this.pz[i], this.pz[i + 1], u) + lerp(this.nz[i], this.nz[i + 1], u) * sd * bar;
+          if (this.onAlt(x, z) || this.inRingZone(x, z) && rings.some(R => R.zr > 0 && Math.hypot(x - R.x, z - R.z) < R.zr)) continue;
+          out.push({ kind: 'bollard', x, z, yaw: this.hd ? this.hd[i] + Math.PI / 2 * sd : 0, col: 0, i, t: 0 }); }
+        return out;
+      }
       const clear = (x, z) => {
         if (this.onAlt(x, z) || this.onBuilding(x, z, 0.5)) return false;
         for (const R of rings) { const dx = x - R.x, dz = z - R.z, rr = R.r + R.hw + 1; if (dx * dx + dz * dz < rr * rr) return false; }   // (the ring road's outer edge and 1 m more)
@@ -821,6 +853,9 @@ const Core = (function () {
       limitInside(); limitNear();
       const minB = Math.min(3.5, this.def.side || 3.5), minA = this.w + 0.8;   // (minA: never closer than 0.8 m to the asphalt's edge)
       for (let i = 0; i < N; i++) { const wi = wa ? wa[i] : w; BL[i] = Math.max(BL[i], wi + minB, minA); BR[i] = Math.max(BR[i], wi + minB, minA); }
+      // def.edgeBar: the barrier right along the road, this far past the asphalt's edge all the way (Medvode: a fence along the whole course, nothing to drive off onto;
+      // the sidewalks push it out behind them, the houses and walls pull it in, def.walls)
+      if (this.def.edgeBar != null) for (let i = 0; i < N; i++) { const wi = wa ? wa[i] : w; BL[i] = BR[i] = wi + this.def.edgeBar; }
       // ... and there the upper leg runs between the parapets of its bridge (3 m from the road), the lower one between the walls of the
       // underpass (3.4 m), each narrowing in over the next 30 / 24 m
       for (const c of X) for (let i = 0; i < N; i++) {
@@ -838,11 +873,14 @@ const Core = (function () {
       // the roundabouts (def.rings: c, r the ring's centre-line radius, hw its road's half width; zr: the zone round it where the route's barrier
       // does not hold, ri: the island's solid radius): inside the zone a car goes where it likes, both ways round the island, which is the only
       // thing in the way (wallCollide); the wrong-way count is off within wz of its centre (the cars' wrong-way test)
-      // the oncoming lanes (def.altDn: Medvode's roundabouts and split approaches) are road too, def.altHw half wide: no barrier on them (onAlt)
-      this.altC = (this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + 0.4, pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
-        for (let k = 0; k + 2 < P.length; k += 3) { pts.push(P[k], P[k + 1]); x0 = Math.min(x0, P[k]); x1 = Math.max(x1, P[k]); z0 = Math.min(z0, P[k + 1]); z1 = Math.max(z1, P[k + 1]); }
-        return { pts, hw, bb: [x0 - hw, z0 - hw, x1 + hw, z1 + hw] }; });
-      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.r + (r.hw || 3) + 14 }));
+      // the oncoming lanes (def.altDn: Medvode's roundabouts and split approaches) are road too, def.altHw half wide: no barrier on them (onAlt);
+      // a lane's open [f0, f1] (shares of its length from its start): only that much of it is road, the rest runs on behind the fence
+      this.altC = (this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + (this.def.edgeBar != null ? this.def.edgeBar : 0.4), pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+        const n = P.length / 3, cum = [0]; for (let k = 1; k < n; k++) cum.push(cum[k - 1] + Math.hypot(P[k * 3] - P[k * 3 - 3], P[k * 3 + 1] - P[k * 3 - 2]));
+        const L = cum[n - 1] || 1, o = A.open || [0, 1];
+        for (let k = 0; k < n; k++) { if (cum[k] < o[0] * L - 1e-6 || cum[k] > o[1] * L + 1e-6) continue; const x = P[k * 3], z = P[k * 3 + 1]; pts.push(x, z); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+        return { pts, hw, bb: [x0 - hw, z0 - hw, x1 + hw, z1 + hw] }; }).filter(L => L.pts.length >= 4);
+      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zone === false ? 0 : r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.zone === false ? 0 : r.r + (r.hw || 3) + 14 }));   // (zone false: one way round, on the route's own road)
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
       if (this.def.roadSurface !== 'makadam' && !this.def.noCurbs) for (let i = 0; i < N; i++) if (Math.abs(k[i]) > 1 / 190) cb[i] = 1;
@@ -1943,7 +1981,7 @@ const Core = (function () {
         else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
       }
       if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
-      if (q.k >= 0 && !zone) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
+      if (q.k >= 0 && !zone && !trk.def.sideClosed) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
       if (pen <= 0) continue;
       if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
         const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
@@ -2334,10 +2372,11 @@ const Core = (function () {
       this._obs = []; this._obsT = [];   // (the logs on the road, see Police.obstacles: for the AI's corridor, for the traffic's standing things)
       // where the road is one-way (def.altDn: Medvode's roundabouts, its slip road): the vehicles going the other way (dir -1) between a and b
       // (s along the road) drive their own line round, P [x, z, y, ...] from b to a, at the road's pace along it (their s moves on by the
-      // stretch's share of the line's length); fade 1 / -1: out of sight at its end / from its start (hid)
+      // stretch's share of the line's length); fade 1 / -1: out of sight at its end / from its start (hid), and past its open part (behind the fence)
       this.alts = (T.def.altDn || []).map(A => { const P = A.P, n = P.length / 3, cum = new Float32Array(n);
         for (let k = 1; k < n; k++) cum[k] = cum[k - 1] + Math.hypot(P[k * 3] - P[k * 3 - 3], P[k * 3 + 1] - P[k * 3 - 2]);
-        return { a: T.startS + A.a, b: T.startS + A.b, P, n, cum, L: cum[n - 1], fade: A.fade || 0 }; });
+        const o = A.open || [0, 1], e = ((T.def.altHw || 2.4) + (T.def.edgeBar != null ? T.def.edgeBar : 0.4)) / Math.max(1, cum[n - 1]);   // (in sight on the lane's open part and out to the fence round its end)
+        return { a: T.startS + A.a, b: T.startS + A.b, P, n, cum, L: cum[n - 1], fade: A.fade || 0, f0: o[0] > 0 ? o[0] - e : -1, f1: o[1] < 1 ? o[1] + e : 2 }; });
       this._prof(); this._populate(dens || 1);
     }
 
@@ -2441,7 +2480,7 @@ const Core = (function () {
         const e = -(v.d - this._lane(v));   // (to the right of its own way)
         v.x = x0 + (x1 - x0) * u - tz * e; v.z = z0 + (z1 - z0) * u + tx * e; v.y = P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * u;
         v.vx = tx * v.v; v.vz = tz * v.v; v.i = T.idx(v.s); v.h = Math.atan2(tz, tx); v.alt = 1;
-        v.hid = (A.fade > 0 && f > 0.93) || (A.fade < 0 && f < 0.07) ? 1 : 0;
+        v.hid = (A.fade > 0 && f > 0.93) || (A.fade < 0 && f < 0.07) || f < A.f0 || f > A.f1 ? 1 : 0;   // (out of sight at a fading end, and behind the fence past the lane's open part)
         return;
       }
       v.alt = 0; v.hid = 0;
@@ -3161,13 +3200,13 @@ const Core = (function () {
     // a side road (Track.stubs) whose junction lies 100-330 m ahead of the player, out of their sight, long enough to hide a car and with no
     // patrol car in it yet: the nearest one of them now and then a farther one; -1: none
     _stubAhead(P) {
-      const T = this.T, L = T.stubs || []; let best = -1, bs = 1e9;
+      const T = this.T, L = T.def.sideClosed ? [] : T.stubs || []; let best = -1, bs = 1e9;   // (def.sideClosed: none, their mouths are closed)
       for (const S of L) { const g = S.s0 - P.q.s; if (g < 100 || g > 330 || S.L < S.tb + 14 || this.cars.some(c => c.pol.mode !== 'gone' && ((c.pol.stub && c.pol.stub.k === S.k) || c.q.k === S.k))) continue;   // (one patrol car to a side road)
         const sc = g + this.R() * 120; if (sc < bs) { bs = sc; best = S.k; } }
       return best;
     }
     // the side road nearest to s within r m (long enough to hide a car), -1 none
-    _stubNear(s, r) { const L = this.T.stubs || []; let best = -1, bd = r; for (const S of L) { const d = Math.abs(S.s0 - s); if (d < bd && S.L >= S.tb + 14) { bd = d; best = S.k; } } return best; }
+    _stubNear(s, r) { const L = this.T.def.sideClosed ? [] : this.T.stubs || []; let best = -1, bd = r; for (const S of L) { const d = Math.abs(S.s0 - s); if (d < bd && S.L >= S.tb + 14) { bd = d; best = S.k; } } return best; }
     // a patrol car down side road k facing out towards the road (pol.stub: it waits there until the player is near, then drives out, see polControl)
     _stubCar(k, mode) {
       const T = this.T, S = T.stubs[k], c = this._car(S.s0, 0, 0, mode, 0, 'car');
