@@ -1,5 +1,5 @@
 // Mockup only: records the game's title-screen demo race (no menu on top) frame by frame in virtual time and encodes it as WebM.
-// Usage: node bgvideo.mjs '[["jezero",7],["ljubljana",7]]' [dpr]
+// Usage: node bgvideo.mjs '[["jezero",7],["gora",7]]' [dpr]
 import { createRequire } from 'node:module';
 import http from 'node:http';
 import fs from 'node:fs';

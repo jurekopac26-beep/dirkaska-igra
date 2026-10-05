@@ -15,7 +15,7 @@ Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2L
   - **Career**: pokal, odstotek kariere in vrstica napredka.
 - Pod njimi sta manjša gumba **Settings** in **Leaderboard**.
 - Čisto spodaj je gumb za nakup **Full Game · €3.99**. Po nakupu ga zamenja oznaka *Full game*.
-- V ozadju se vrtijo trije kratki posnetki dirke (Jezero Ring, Ljubljana, gorski reli).
+- V ozadju se vrtijo dva kratka posnetka dirke (Jezero Ring, gorski reli).
 - **Single race** in **Career** se odpreta v istem okvirju, na istem mestu: v ozadju se še vedno vidi, kako avti dirkajo. Zgoraj v okvirju je gumb nazaj na glavni meni. Šele ko izbereš način dirke ali način kariere, se odpre zaslon čez cel ekran.
 
 ## Single race in današnja dirka
@@ -30,7 +30,7 @@ Single race ima dva koraka.
 
 **2. korak: proga.** Proge so razdeljene v tri skupine. Skupine so zavihki nad maketo, pri vsakem piše število prog:
 
-- **Circuits** (privzeto): dirkališča (Jezero Ring, Riviera, Ljubljana, La Condamine, Styria, Mie, Ardennes, Eifel).
+- **Circuits** (privzeto): dirkališča (Jezero Ring, Riviera, La Condamine, Styria, Mie, Ardennes, Eifel).
 - **Open roads**: dirke po cestah skozi kraje: Vršič (od Kranjske Gore mimo Jasne do prelaza) in Colorado.
 - **Rally**: reli etape: Mountain Rally in Ouninpohja.
 
@@ -112,7 +112,6 @@ Uvod se odpre na mestu zaslona proge, zato prehod skoraj ni viden:
 6. Zadnja slika globusa je prva slika leta s helikopterjem. Video prevzame skozi tanek oblak, brez reza.
 
 - Prva dirka (prejšnje še ni): pot se začne v vesolju.
-- **Ljubljana nima uvoda**: proga bo pred izidom igre odstranjena, zato zanjo ni leta s helikopterjem in po *Race!* se takoj prižgejo luči. Kot prejšnja dirka je lahko začetek poti po Zemlji (njen zemljevid). Seznam takih prog je v `orodja/intro_data.py` (`NO_FLIGHT`) in v `orodja/heli.json` (`"flight": false`).
 - Ista proga kot prejšnjič (tudi *Race again*): globusa ni, samo let s helikopterjem.
 - Stanje *Veteran* ima za prejšnjo dirko Colorado, da se vidi pot Colorado → Vršič. V stanjih *Free* in *Full game* je prva dirka iz vesolja, vsaka naslednja pa se začne tam, kjer si nazadnje dirkal.
 - Brez WebGL ali z nastavitvijo telefona za manj gibanja (*reduce motion*) globusa ni.
@@ -120,13 +119,13 @@ Uvod se odpre na mestu zaslona proge, zato prehod skoraj ni viden:
 
 Kje so proge na Zemlji:
 
-- Prave proge so postavljene na pravo mesto tako, da se višine ceste v igri ujemajo s pravimi višinami: Vršič, Ljubljana, Styria, Mie, Ardennes, Eifel. La Condamine je postavljena po pristanišču in znanih točkah, ker so v mestu višine stavb.
+- Prave proge so postavljene na pravo mesto tako, da se višine ceste v igri ujemajo s pravimi višinami: Vršič, Styria, Mie, Ardennes, Eifel. La Condamine je postavljena po pristanišču in znanih točkah, ker so v mestu višine stavb.
 - Colorado in Ouninpohja sta v igri krajša od prave ceste. Start je na pravem startu, cesta je obrnjena proti pravemu cilju.
 - Jezero Ring, Riviera in Mountain Rally so izmišljene. Postavljene so na kraje, ki se ujemajo z njihovo pokrajino: Jezero Ring na ravnino pri Lescah (na suho: proga ima svoje jezerce, okoli ni pravega jezera), Riviera na ravno obalo pri Piranu (morje na isti strani kot v igri), Mountain Rally na Pokljuko. Spremeniš jih v `orodja/geo_places.py` (primerno mesto za obalo in za suho ravnino poišče `orodja/geo_fit.py`).
 
 ### Let s helikopterjem
 
-- En sam neprekinjen kader (vse proge razen Ljubljane): helikopter v 30 sekundah preleti vso progo od starta do cilja (pri dirkališčih en krog), višje kot prejšnji posnetki iz drona. Začne se s spustom z globusa, ko se zravna (po 4,5 s), leti nad progo.
+- En sam neprekinjen kader: helikopter v 30 sekundah preleti vso progo od starta do cilja (pri dirkališčih en krog), višje kot prejšnji posnetki iz drona. Začne se s spustom z globusa, ko se zravna (po 4,5 s), leti nad progo.
 - Na tleh je **senca helikopterja** (z vrtečim se rotorjem).
 - **Kraji ob progi so označeni v 3D** z imeni, ki stojijo na svojem mestu v pokrajini (na Vršiču: Kranjska Gora, Lake Jasna, Mihov dom, Russian Chapel, Koča na Gozdu, Ajdovska deklica, Erjavčeva koča, Vršič Pass). Ko sta dve imeni blizu, ima eno daljši drog, da se ne prekrivata. Seznam krajev za vse proge je v `orodja/landmarks.json`.
 - Igra ima pokrajino samo ob progi. Kar je dlje, je dorisano: prave višine in pokrovnost tal (gozd, travniki, polja, kraji, skale, voda) z drevesi in hišami iz igre, pri obalnih progah morje do obzorja.
@@ -248,7 +247,7 @@ git archive origin/main | tar -x -C maketa-menija/game_main
 cd maketa-menija/orodja
 node cars3d.mjs                                  # avti -> ../assets/cars/*.json
 node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah, slike gumbov in načinov (policijski avto: policebar.js) -> ../assets/cars/img/, ../assets/menu/
-node bgvideo.mjs '[["jezero",7],["ljubljana",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
+node bgvideo.mjs '[["jezero",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
 node dio2.mjs proge_igra.json                    # makete 20 prog, ki so v igri od vključitve menija (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
