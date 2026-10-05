@@ -1,7 +1,8 @@
 // The English page (js/lang.js, no browser): every Slovenian text the game shows has its English, with the same {0} {1} ... slots.
 // Checked: the first argument of every tr(...) in the scripts (each string in it: tr(a ? 'x' : 'y')), the tables the game reads through
 // tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the upgrades and the car credit (Core), the English of every track,
-// championship and famous jump (def.en), the place names on the HUD, and the helpers for numbers, money and places.
+// championship and famous jump (def.en), the place names on the HUD, the helpers for numbers, money and places, and the fleet: the
+// categories (Core.CATS) and the description of every vehicle (def.desc), both shown through tr().
 //   node tests/lang.test.js
 'use strict';
 const fs = require('fs');
@@ -119,6 +120,22 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   check('English places: 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords === '1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords);
   check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Fairmont Hairpin', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Fairmont Hairpin', pl);
   check('Vršič: "Vršič, Slovenija" in Slovenian, "Vršič, Slovenia" in English; its description is English', Lang.of(v, 'name') === 'Vršič, Slovenija' && v.en.name === 'Vršič, Slovenia' && /^The road over the Vršič pass/.test(v.en.desc));
+}
+
+// 7. the fleet (js/cars): the car screen, the garage and the strip show the category's name (Core.CATS) and the vehicle's description
+// (def.desc) through tr(): each has its English, a short one (at most 100 characters); the names of the vehicles stay as they are (none of
+// them a text of the dictionary, which would turn it on the page)
+{
+  const miss = [], long = [], kit = C.MODELS.filter(M => M.kit && !M.retired);
+  for (const c of C.CATS) if (!has(c.name)) miss.push('category ' + c.id + ': ' + c.name);
+  for (const M of kit) { const d = M.def && M.def.desc; if (!d || !has(d)) miss.push('description ' + M.id); else if (EN[d].length > 100) long.push(M.id + ' ' + EN[d].length); }
+  const names = C.MODELS.filter(M => has(M.name)).map(M => M.id);
+  check(`the fleet: the ${C.CATS.length} categories and the descriptions of the ${kit.length} vehicles in English (at most 100 characters), the names of the vehicles as they are`,
+    C.CATS.length === 10 && kit.length >= 33 && !miss.length && !long.length && !names.length, miss.concat(long, names.map(id => 'name ' + id)).slice(0, 10).join(' | '));
+  Lang.set('en');
+  const k = C.MODELS.find(M => M.id === 'miska'), line = [Lang.tr(C.CATS.find(c => c.id === k.cat).name), Lang.tr(k.def.desc)].join(' | ');
+  Lang.set('sl');
+  check('the fleet in English: Small cars | A tiny Italian city car ... (the MIŠKA)', /^Small cars \| A tiny Italian city car/.test(line), line);
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

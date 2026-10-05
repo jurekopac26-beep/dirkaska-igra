@@ -3,6 +3,7 @@
 // every page shows the standings under the results (25, 18, 15 by the finishing order); back in the room the standings, the next track
 // (chosen for the host, the track list locked) and "Začni dirko 2/2". Cvet leaves the room: the points stay, marked odšel. After the
 // second race (Ana and Bor) the final standings with the champion; the host can start a new championship (the points back to nothing).
+// Ana drives a vehicle of the fleet (the KOZOROG TC): every page has it so, drawn with its kit body, in both races.
 //   node tests/browser/onchamp.test.mjs
 import net from 'node:net';
 import { createRequire } from 'node:module';
@@ -18,11 +19,11 @@ const srv = await serve();
 const browser = await launch(['--disable-features=WebRtcHideLocalIpsWithMdns']);
 const init = { content: `window.__peerOpts = ${JSON.stringify({ host: '127.0.0.1', port, path: '/', secure: false, config: { iceServers: [] } })};` };
 const settings = { quality: 'retro', shadows: 0, camera: 'chase', zoom: 1.2, carV: 2 };
-const open = (name, car, color) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings), { width: 320, height: 240 }, { init });
+const open = (name, car, color, carId) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings, carId ? { carV: 3, carId } : null), { width: 320, height: 240 }, { init });   // (carId: a vehicle saved by its id)
 const until = (p, fn, arg, ms = 60000) => p.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).then(h => h.jsonValue());
 let P = [];
 try {
-  P = [await open('Ana', 0, 0), await open('Bor', 1, 1), await open('Cvet', 2, 2)];
+  P = [await open('Ana', 4, 0, 'kozorog'), await open('Bor', 1, 1), await open('Cvet', 2, 2)];   // (Ana's KOZOROG TC saved as the game saves it: its id, the rally car's index for older builds)
   const [A, B, Cv] = P, pages = P.map(x => x.page);
 
   // 1. the room: the host and two friends
@@ -35,7 +36,8 @@ try {
   // 2. the championship: on, Jezero Ring and Riviera, one lap; the friends see its list
   await A.page.evaluate(() => { const g = window.__game, t = document.getElementById('on-track'), l = document.getElementById('on-laps');
     t.value = 'jezero'; t.dispatchEvent(new Event('change')); l.value = '1'; l.dispatchEvent(new Event('change'));
-    g.onAction('net-ch-on'); t.value = 'riviera'; t.dispatchEvent(new Event('change')); g.onAction('net-ch-add'); });
+    g.onAction('net-ch-on'); t.value = 'riviera'; t.dispatchEvent(new Event('change')); g.onAction('net-ch-add');
+    l.value = '1'; l.dispatchEvent(new Event('change')); });   // (choosing Riviera for the list set its own 4 laps: one lap again, for both races)
   const lists = await Promise.all(pages.map(p => until(p, () => { const li = [...document.querySelectorAll('#on-ch .on-ch-tracks li')].map(e => e.firstChild.textContent.trim()); return li.length === 2 ? { li, go: document.getElementById('on-go').textContent, row: !document.getElementById('on-chrow').classList.contains('off') } : null; }, null, 20000)));
   T.check('the championship on: Jezero Ring, then Riviera, on every page; the host\'s button "Začni dirko 1/2"', lists.every(x => x.li.join() === 'Jezero Ring,Riviera, Francija' && x.row) && lists[0].go === 'Začni dirko 1/2', JSON.stringify(lists));
 
@@ -44,11 +46,13 @@ try {
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await Promise.all(pages.map(p => until(p, () => { const g = window.__game; return !!(g.race && g.net && g.net.race); }, null, 90000)));
   const tr1 = await A.page.evaluate(() => window.__game.race.track.def.id);
+  const anaCar = (ps) => Promise.all(ps.map(p => p.evaluate(() => { const r = window.__game.race, c = [r.player].concat(r.remotes).find(x => x.isPlayer ? window.__game.S.name === 'Ana' : x.name === 'Ana'), v = c && Render.viewOf(c); return c ? c.m.id + (v && v.kit ? ':kit' : ':old') : 'none'; })));
+  const kit1 = await anaCar(pages);
   const res1 = await Promise.all(pages.map(p => until(p, () => { const el = document.getElementById('res-ch'); return document.getElementById('s-results').classList.contains('show') && !el.classList.contains('off') && /po 1\. dirki od 2/.test(el.textContent)
     ? { head: el.querySelector('.ltab-h').textContent, rows: [...el.querySelectorAll('tbody tr')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), race: [...document.querySelectorAll('#res-table tbody tr')].map(r => r.children[1].textContent.replace(' (ti)', '')) } : null; }, null, 240000)));
   const pts = (r) => r.rows.map(t => +t.split(' ').filter(w => /^\d+$/.test(w))[1]);
-  T.check('after the first race (Jezero Ring): the standings under the results on every page, 25, 18, 15 by the finishing order', tr1 === 'jezero' && res1.every(r => r.rows.length === 3 && pts(r).join() === '25,18,15') && res1.every(r => r.race.join() === res1[0].race.join()),
-    JSON.stringify(res1));
+  T.check('after the first race (Jezero Ring): the standings under the results on every page, 25, 18, 15 by the finishing order; Ana\'s KOZOROG TC on every page as itself (its kit body)', tr1 === 'jezero' && res1.every(r => r.rows.length === 3 && pts(r).join() === '25,18,15') && res1.every(r => r.race.join() === res1[0].race.join()) &&
+    kit1.every(k => k === 'kozorog:kit'), JSON.stringify({ res1, kit1 }));
 
   // 4. back in the room: the standings, the next track (Riviera, chosen, locked), "Začni dirko 2/2"
   for (const p of pages) await p.evaluate(() => window.__game.onAction('net-room'));
@@ -68,13 +72,13 @@ try {
   await until(A.page, () => !document.getElementById('on-go').disabled, null, 30000);
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await Promise.all([A, B].map(x => until(x.page, () => { const g = window.__game; return !!(g.race && g.net && g.net.race); }, null, 90000)));
-  const tr2 = await A.page.evaluate(() => window.__game.race.track.def.id);
+  const tr2 = await A.page.evaluate(() => window.__game.race.track.def.id), kit2 = await anaCar([A.page, B.page]);
   const res2 = await Promise.all([A, B].map(x => until(x.page, () => { const el = document.getElementById('res-ch'); return document.getElementById('s-results').classList.contains('show') && /končno stanje/.test(el.textContent)
     ? { head: el.querySelector('.ltab-h').textContent, rows: [...el.querySelectorAll('tbody tr')].map(r => r.innerText.replace(/\s+/g, ' ').trim()) } : null; }, null, 300000)));
   const tot = (r) => pts(r).reduce((a, b) => a + b, 0);
   T.check('after the second race (Riviera): the final standings with the champion; Cvet\'s 1st race points kept (odšel); 25 + 18 more given',
-    tr2 === 'riviera' && res2.every(r => r.rows.length === 3 && tot(r) === 58 + 43 && r.rows.some(t => /Cvet.*odšel/.test(t))) && ((ch) => (ch[0] === 'Ti' && ch[1] === 'Ana') || (ch[0] === 'Bor' && ch[1] === 'Ti'))(res2.map(r => r.head.split('prvak: ')[1])),
-    JSON.stringify(res2));
+    tr2 === 'riviera' && kit2.every(k => k === 'kozorog:kit') && res2.every(r => r.rows.length === 3 && tot(r) === 58 + 43 && r.rows.some(t => /Cvet.*odšel/.test(t))) && ((ch) => (ch[0] === 'Ti' && ch[1] === 'Ana') || (ch[0] === 'Bor' && ch[1] === 'Ti'))(res2.map(r => r.head.split('prvak: ')[1])),
+    JSON.stringify({ res2, kit2 }));
 
   // 7. a new championship (the host): the points back to nothing, the first track again
   for (const x of [A, B]) await x.page.evaluate(() => window.__game.onAction('net-room'));

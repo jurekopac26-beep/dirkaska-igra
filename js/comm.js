@@ -79,6 +79,16 @@ const Comm = (() => {
     damage: ["That car's taking a real beating!", 'The bodywork is looking battered now!', "There's some serious damage there!"],
     partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
+    // destruction (game.js commWreck): the player's car losing a wheel ({wheel}), still going on three, destroyed, on fire, retired; the
+    // rivals near the player ({a}: the driver) losing a wheel, out of the race with the car destroyed, on fire
+    wheelLost: ['There goes a wheel! The {wheel} is bouncing away down the road!', 'The {wheel} has come clean off!', 'Oh no, you have lost the {wheel}!'],
+    threeWheels: ['Still going on three wheels! What a sight!', 'Three wheels and a shower of sparks, but you are still moving!', 'Limping on three wheels, the hub scraping along the tarmac!'],
+    wreck: ['That car is destroyed! There is hardly anything left of it!', 'The car is a wreck! It is held together by hope alone.', 'Totally destroyed! Can it even make it to the flag?'],
+    fireMe: ['Your car is on fire! Flames from the engine bay!', 'Fire! The engine is burning!', 'Flames pouring out of your car!'],
+    retired: ['And that is the end of your race. The car is retired.', 'You pull off and retire. A painful end to the race.', 'Out of the race! That car could not go on.'],
+    rivalWheel: ['{a} has lost a wheel!', "A wheel comes off {a}'s car!", 'Look at that, {a} is down to three wheels!'],
+    rivalWreck: ['{a} is out, that car is destroyed!', '{a} pulls off, that car is finished!', 'That is the end of the race for {a}, the car is wrecked!'],
+    fire: ["{a}'s car is on fire!", "Flames from {a}'s car!", 'Smoke and flames, {a} is in big trouble!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
     pitAdvice: ['That car is damaged! Box, box: the pit lane is on the right, just after the last corner, and the mechanics will fix it.', 'Heavy damage there! Bring it into the pits after the final corner, the crew are ready.', 'Time to pit! The entry is on the right after the last corner, the mechanics will put it right.'],
     // flags: a yellow flag, the safety car, overtaking under them
@@ -93,6 +103,8 @@ const Comm = (() => {
     // fuel (a race with fuel on) and an endurance race's evening and night
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
+    batteryLow: ['The battery is running low! Box this lap for a charge.', 'Not much charge left in that battery, pit now!'],   // (an electric car)
+    batteryOut: ['The battery is flat! Crawling along on the last of the charge!', 'Flat battery! That car is creeping back to the pits now.'],
     puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
     // a friend's challenge (the challenge link): the run, beaten or not
     chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
@@ -113,6 +125,7 @@ const Comm = (() => {
     brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
     engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
     fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
+    batteryIn: ['Battery charged, and back out onto the track!', 'Fully charged again, off it goes!'],
     // the rivals' characters: a duel with the player, the standing rival, a mistake under pressure
     duel: ['A proper duel with {name} now! Nose to tail, lap after lap.', 'You and {name}, this is a real fight!', 'This battle with {name} is getting intense!'],
     duelRival: ['Here we go again: you and your old rival {name}, wheel to wheel!', 'The rivalry continues! {name} will not give you an inch.', '{name} again! These two just cannot stay away from each other.'],
