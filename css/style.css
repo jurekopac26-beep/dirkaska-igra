@@ -30,6 +30,7 @@
 }
 :root[data-theme="dark"] { --panel: rgba(14, 18, 25, 0.88); --asphalt: #12161d; }
 *, *::before, *::after { box-sizing: border-box; }
+:root, html, body { color-scheme: dark; forced-color-adjust: none; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 html, body { height: 100%; margin: 0; overflow: hidden; background: var(--asphalt); color: var(--chalk); }
 body {
