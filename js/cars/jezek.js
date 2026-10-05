@@ -26,20 +26,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     look: {
       body: { len: 3.95, wid: 1.78, roofY: 1.5,
         //       x       w      yb    ybelt  wt    yt    cr    kind  tuck
-        secs: [[-1.97, 0.8, 0.3, 0.86, 0.72, 0.93, 0.03, 'b', 0.12],     // the tail: the tailgate's lower panel (the bumper under it)
-          [-1.94, 0.855, 0.27, 0.92, 0.74, 0.99, 0.04, 'gr', 0.11],      // the tailgate's glass, raked a little,
-          [-1.8, 0.875, 0.24, 0.96, 0.69, 1.27, 0.065, 'gr', 0.1],       // rounding over into the roof
-          [-1.72, 0.885, 0.22, 0.98, 0.66, 1.36, 0.07, 'r', 0.1],        // the roof's back edge (the spoiler over it)
-          [-1.56, 0.89, 0.21, 0.977, 0.69, 1.4, 0.08, 'r', 0.1],
-          [-1.465, 0.89, 0.21, 0.975, 0.7, 1.41, 0.085, 'r', 0.1],       // the glass roof's back end (the rear arch's cut there too)
+        secs: [[-1.97, 0.74, 0.3, 0.86, 0.68, 0.93, 0.03, 'b', 0.12],    // the tail: the tailgate's lower panel (the bumper under it), round in plan
+          [-1.94, 0.82, 0.27, 0.92, 0.7, 0.99, 0.04, 'gr', 0.11],        // the tailgate's glass, raked,
+          [-1.8, 0.875, 0.24, 0.96, 0.62, 1.16, 0.07, 'gr', 0.1],        // rounding over into the roof
+          [-1.72, 0.885, 0.22, 0.98, 0.62, 1.27, 0.09, 'r', 0.1],        // the roof's back edge (the spoiler over it): the roof falls into it
+          [-1.56, 0.89, 0.21, 0.977, 0.65, 1.35, 0.11, 'r', 0.1],
+          [-1.465, 0.89, 0.21, 0.975, 0.7, 1.385, 0.1, 'r', 0.1],        // the glass roof's back end (the rear arch's cut there too)
           [-0.34, 0.89, 0.21, 0.965, 0.71, 1.415, 0.085, 'r', 0.1],      // the doors' rear edge, the B-pillar
           [0.2, 0.885, 0.21, 0.958, 0.71, 1.408, 0.083, 'r', 0.1],       // the glass roof's front end
           [0.4, 0.885, 0.21, 0.955, 0.7, 1.395, 0.08, 'gf', 0.1],        // the windscreen's top
           [1.075, 0.89, 0.21, 0.94, 0.8, 0.97, 0.045, 'b', 0.1],         // its base (the cowl, over the front wheel), the bonnet's back edge
           [1.7, 0.885, 0.22, 0.865, 0.79, 0.915, 0.04, 'b', 0.1],        // the short bonnet, falling to the nose; the bumper's corners from here
-          [1.86, 0.86, 0.25, 0.81, 0.765, 0.855, 0.035, 'b', 0.11],      // its rounded front edge
-          [1.94, 0.815, 0.28, 0.765, 0.715, 0.8, 0.025, 'b', 0.115],
-          [1.98, 0.75, 0.3, 0.725, 0.65, 0.745, 0.015, 'b', 0.12]],      // the nose: the fascia's face
+          [1.86, 0.845, 0.25, 0.81, 0.765, 0.855, 0.035, 'b', 0.11],     // its rounded front edge (round in plan too)
+          [1.94, 0.78, 0.28, 0.765, 0.69, 0.8, 0.025, 'b', 0.115],
+          [1.98, 0.69, 0.3, 0.725, 0.6, 0.745, 0.015, 'b', 0.12]],       // the nose: the fascia's face
         eye: { x: -0.12, y: 1.27 },
         door: [0.89, -0.34], bumpF: 0.28, bumpR: 0.25, bumpY: [0.745, 0.55],
       },
@@ -82,19 +82,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.headLamp(1.987, 0.7, sd * 0.31, 0.03, { shape: 'rect', w: 0.62, h: 0.05, ring: null, host: 'bumperF' });
         // ---- the tail: the tailgate's black band with the red light bar across it (the tail mesh), the spoiler over its glass, its wiper;
         //      the bumper with the plate, the reflectors, a dark diffuser ----
-        const yR = L.topY(-1.64, 0);   // (the roof's top by its back edge)
         K.part('trunk', () => {
           K.face([[-1.983, 0.685, -0.56], [-1.983, 0.685, 0.56], [-1.983, 0.74, 0.66], [-1.983, 0.835, 0.66], [-1.983, 0.835, -0.66], [-1.983, 0.74, -0.66]], B);   // (the nose's visor, mirrored)
-          K.plate([[-1.64, yR + 0.004, -0.62], [-1.64, yR + 0.004, 0.62], [-1.79, yR - 0.035, 0.6], [-1.79, yR - 0.035, -0.6]], 0.025, S);
+          // the spoiler: a lip off the roof's back edge over the glass, following the roof's crown across (its foot just under the roof)
+          const sp = (z) => [[-1.66, L.topY(-1.66, z) - 0.002, z], [-1.8, L.topY(-1.72, z) - 0.02, z], [-1.8, L.topY(-1.72, z) - 0.04, z], [-1.735, L.topY(-1.735, z) - 0.003, z]];
+          K.skin([-0.58, -0.24, 0.24, 0.58].map(sp), (k, e) => e === 0 ? S : K.shade(S, e === 1 ? 0.7 : 0.5), S, S);
           K.bar([-1.915, 1.07, -0.02], [-1.85, 1.22, -0.4], 0.01, B, { n: 4 });
-        }, { hinge: [[-1.72, 1.43, -0.6], [-1.72, 1.43, 0.6]] });
+        }, { hinge: [[-1.72, 1.36, -0.6], [-1.72, 1.36, 0.6]] });
         for (const sd of [-1, 1]) K.tailLamp(-1.985, 0.77, sd * 0.31, 0.62, 0.055, { host: 'trunk' });
         K.part('bumperR', () => {
           K.rect(-1.983, 0.44, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x' });
           K.rect(-1.982, 0.335, 0, 1.2, 0.06, DK, { dir: '-x' });
           for (const sd of [-1, 1]) K.rect(-1.982, 0.46, sd * 0.62, 0.14, 0.035, K.rgb(0xb01010), { dir: '-x' });
         });
-        K.endplate([[-1.72, yR - 0.01], [-1.56, yR - 0.01], [-1.68, yR + 0.065]], 0, 0.045, B, { part: 'body' });   // (the aerial's fin on the roof)
+        K.endplate([[-1.6, L.topY(-1.6, 0) - 0.01], [-1.47, L.topY(-1.47, 0) - 0.01], [-1.575, L.topY(-1.575, 0) + 0.06]], 0, 0.045, B, { part: 'body' });   // (the aerial's fin on the roof, behind the glass, its foot on the roof's slope)
         // ---- the mirrors (the stripe colour), the wipers ----
         for (const sd of [-1, 1]) K.mirror(0.95, 1.02, sd * 0.955, { col: S, w: 0.08, h: 0.085, d: 0.15, arm: B });
         for (const z of [-0.5, 0.06]) K.bar([1.035, 1.055, z - 0.06], [0.965, 1.1, z + 0.44], 0.01, B, { n: 4, part: 'body' });
@@ -115,6 +116,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const z of [-0.12, 0.12]) { K.bar([1.6, 0.73, z], [1.26, 0.73, z], 0.02, OR, Object.assign({ n: 4 }, IN)); K.bar([1.26, 0.73, z], [0.98, 0.34, z], 0.022, OR, Object.assign({ n: 4 }, IN)); }
         K.box(1.62, 0.36, 0.44, 0.22, 0.2, 0.17, 0, K.black, null, false, IN); K.box(1.66, 0.46, -0.44, 0.15, 0.15, 0.13, 0, [0.86, 0.86, 0.8], null, false, IN);
         K.box(1.86, 0.3, 0, 0.05, 0.36, 1.2, 0, DK, null, false, IN);
+        // ---- the dashboard's top (the outer shell, matte): from the windscreen's foot under the cowl's crown back over the dash, so the
+        //      driver never looks under the bonnet into the nose (the road, the back of the light bar) above the cockpit's own dashboard ----
+        { const A = [1.05, 1.02, 0], E = [0.8, 0.965, 0], o = { part: 'body', noCrush: true };
+          for (const sd of [1, -1]) { const B = [1.05, 1.02, sd * 0.3], C = [1.04, 0.97, sd * 0.8], D = [0.8, 0.965, sd * 0.8], f = (p) => K.face(sd > 0 ? p : p.slice().reverse(), K.lining, o);
+            f([E, D, C]); f([E, C, B]); f([E, B, A]); } }
       },
     },
   });
