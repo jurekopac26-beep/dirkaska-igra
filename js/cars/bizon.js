@@ -136,7 +136,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { const sh = [-0.23, 0.72, sd * 0.19], el = [-0.03, 0.57, sd * 0.24], wr = [0.12, 0.6, sd * 0.17], hd = [0.18, 0.61, sd * 0.15];
             K.bar(sh, el, 0.045, SUIT, { n: 3 }); K.bar(el, wr, 0.04, SUIT, { n: 3 }); K.bar(wr, hd, 0.042, B, { n: 3 }); }
           K.box(0.16, 0.2, 0, 0.36, 0.11, 0.3, 0, SUIT, null, true);
-        }, { noCrush: true, noDent: true });
+        }, { noCrush: true, noDent: true, sub: 'driver' });   // (sub 'driver': the char never blackens him, as K.driver's)
         K.part('body', () => K.plate([[-0.27, 0.22, -0.23], [-0.27, 0.22, 0.23], [-0.38, 0.72, 0.21], [-0.38, 0.72, -0.21]], 0.06, SEAT));   // (the seat's back: the driver sits on its cushion)
         // ---- the roll hoop behind the driver's head, its headrest ----
         K.part('body', () => {

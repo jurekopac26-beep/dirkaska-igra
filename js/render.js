@@ -1001,7 +1001,8 @@ const Render = (function () {
        K.driver(x, y, z, o)    an open vehicle's driver, (x, y, z) the helmet's centre: helmet, torso, arms (and legs) in 'body', noCrush and
                                noDent; o { r, helmet, band, suit, glove, boot, neck (the collar's colour), lean (the torso's lean back, rad),
                                hands ([x, y, z] the right hand), feet ([x, y, z] the right foot: the legs drawn too), knee }. About 240
-                               triangles, 356 with the legs
+                               triangles, 356 with the legs. Its sub-range 'driver' (aIn 255) never chars in a fire; a driver of your
+                               own (helmet and torso of skins and bars) gets the same with K.part('body', fn, { sub: 'driver', ... })
        K.lookOf(id)            another vehicle's look (draw it and add to it: look.build(K), then the differences)
        K.rgb, K.shade, K.mix, the colours: see COLOURS
 
@@ -1632,7 +1633,7 @@ const Render = (function () {
     K.mix = (a, b, t) => { if ((a && a.kt) || (b && b.kt)) kitFail('mix: not with the paint or the stripe (use shade)'); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)]; };
     // scopes
     K.part = (name, fn, o) => { kx.partOk(name); o = o || {}; if (o.hinge) K.hinge(name, o.hinge[0], o.hinge[1]);
-      kx.scope('pr', null, () => kx.scope('ex', { part: name, sub: '', inner: !!o.inner || !!(kx.ex && kx.ex.inner), nc: !!o.noCrush, nd: !!o.noDent }, fn)); };
+      kx.scope('pr', null, () => kx.scope('ex', { part: name, sub: o.sub || '', inner: !!o.inner || !!(kx.ex && kx.ex.inner), nc: !!o.noCrush, nd: !!o.noDent }, fn)); };
     K.inner = (fn) => { kx.inner++; try { fn(); } finally { kx.inner--; } };
     K.at = (x, y, z, fn, o) => kx.prim(x, y, z, fn, o);
     K.hinge = (part, a, b) => { kx.partOk(part); if (![a, b].every(p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite))) kitFail('hinge: two points [x, y, z]'); kx.hinges[part] = [[a[0] * sx, a[1], a[2] * sz], [b[0] * sx, b[1], b[2] * sz]]; };
@@ -1792,7 +1793,7 @@ const Render = (function () {
             kitTube(g, hp, kn, 0.07, 10, suit, null, null); kitTube(g, kn, ft, 0.055, 10, suit, null, null); World.box(g, ft[0], ft[1] - 0.045, ft[2], 0.13, 0.09, 0.09, 0, boot);
           }
         }
-      }, Object.assign({}, o, { part: kx.ex ? null : 'body', noCrush: true, noDent: true }));
+      }, Object.assign({}, o, { part: kx.ex ? null : 'body', noCrush: true, noDent: true, sub: 'driver' }));   // (sub 'driver': the char never blackens him, see aIn)
     };
     K.lookOf = (id) => { const m = Core.MODELS.find(q => q.id === id), d = m && m.def || (Core.DEFS || []).find(q => q && q.id === id); if (!d || !d.look) kitFail('lookOf: no look for ' + id); return d.look; };
     return K;
@@ -1851,6 +1852,7 @@ const Render = (function () {
     // the inside (dirtyCarMat's aIn: no dirt, no scratches there): the inner block and, in the outer shell, what is in the lining's colour
     // (an open top's lining, floor and bulkheads, the wheel tubs)
     const ain = new Uint8Array(total); ain.fill(128, outerN);
+    for (const n in ranges) for (const q of ranges[n].subs) if (q.name === 'driver' && q.o) ain.fill(255, q.o[0], q.o[1]);   // (a driver (K.driver, or a K.part with sub 'driver'): 255, the char never blackens him; dirt and scratches as outside)
     for (let i = 0; i < outerN; i++) if (Cl[i * 3] === KIT_LINE[0] && Cl[i * 3 + 1] === KIT_LINE[1] && Cl[i * 3 + 2] === KIT_LINE[2]) ain[i] = 128;
     geo.setAttribute('aIn', new THREE.BufferAttribute(ain, 1, true));
     geo.computeBoundingSphere(); geo.computeBoundingBox(); geo.setDrawRange(0, outerN);
@@ -2239,7 +2241,7 @@ const Render = (function () {
     '  return mix(mix(mix(chH(i), chH(i + o.xyy), f.x), mix(chH(i + o.yxy), chH(i + o.xxy), f.x), f.y), mix(mix(chH(i + o.yyx), chH(i + o.xyx), f.x), mix(chH(i + o.yxx), chH(i + o.xxx), f.x), f.y), f.z); }'].join('\n');
   const CHAR_GLSL = ['if (uChar.w > 0.0) { vec3 p = vLp, q = vec3(p.x + 0.61 * p.z, p.y + 0.43 * p.x, p.z - 0.52 * p.y);',   // (q: skewed, so the noise's grid does not show)
     '  float n1 = chN(q * 2.3), n2 = chN(q * 7.1 + 3.7), n3 = chN(q * 17.0 + 1.3);',
-    '  float ch = clamp((uChar.w * 7.0 - distance(p, uChar.xyz)) / 0.9 + (n1 - 0.5) * 1.3 + (n2 - 0.5) * 0.5, 0.0, 1.0);',
+    '  float ch = clamp((uChar.w * 7.0 - distance(p, uChar.xyz)) / 0.9 + (n1 - 0.5) * 1.3 + (n2 - 0.5) * 0.5, 0.0, 1.0) * (1.0 - vNoCh);',   // (a kit car's driver (aIn 255): never charred)
     '  vec3 soot = mix(vec3(0.028, 0.026, 0.024), vec3(0.1, 0.095, 0.088), n2 * n2);',
     '  soot = mix(soot, vec3(0.2, 0.12, 0.075), smoothstep(0.58, 0.82, n3 * 0.5 + n1 * 0.5) * 0.5);',   // the paint burnt off: bare metal, rusty brown
     '  soot = mix(soot, vec3(0.34, 0.33, 0.31), smoothstep(0.7, 0.92, n2 * 0.6 + n3 * 0.4) * 0.45);',   // grey ash
@@ -2428,8 +2430,8 @@ const Render = (function () {
     m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nuniform float uDirt;\nuniform float uScr;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;\nvarying float vNoCh;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));\nvNoCh = step(0.9, aIn);');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nuniform float uDirt;\nuniform float uScr;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
         '#include <color_fragment>\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8) * (1.0 - vIn);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = max(d, vIn); }\n' + CHAR_GLSL)   // (cgD: the dirt dulls the sun's glint; the inside has none, no sky in it either)
         .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength *= 1.0 - 0.9 * max(cgCh, vIn * 0.85);');   // (a charred panel, the inside: no highlight)
       sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + SCRATCH_GLSL);
