@@ -380,6 +380,8 @@
     'Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa.': 'A monster truck: a pickup body on a tube chassis and huge wheels.',
     'Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih.': 'A light three-door hatchback with big almond-shaped headlamps, lively in the corners.',
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
+    /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
+    'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);
