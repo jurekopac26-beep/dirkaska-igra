@@ -1446,7 +1446,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1;   // (saverK: the battery saver's lower resolution, setSaver)
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
-  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
+  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6;
 
@@ -4208,7 +4208,7 @@ const Render = (function () {
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
       const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = portrait ? 0.98 : 0.9;
-      const ahead = (portrait ? 13 : 8.5) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew)
+      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
       const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
@@ -4252,7 +4252,9 @@ const Render = (function () {
       cam.zoom += (pitZ * (1 + 0.1 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
       const zf = cam.zoom * cam.userZoom;
       const D = 57 * zf, pitch = 0.82;
-      tx = x + clamp(cam.lx, -20 * zf, 20 * zf); tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf); ty = baseY;
+      // userBack (Nastavitve · Položaj avta): the car sits this many metres further back along its travel, so it reads lower in the frame
+      const bk = cam.userBack || 0, vmag = Math.hypot(c.vx, c.vz), bfx = vmag > 0.5 ? c.vx / vmag : Math.cos(h), bfz = vmag > 0.5 ? c.vz / vmag : Math.sin(h);
+      tx = x + clamp(cam.lx, -20 * zf, 20 * zf) + bfx * bk; tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf) + bfz * bk; ty = baseY;
       px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
     }
