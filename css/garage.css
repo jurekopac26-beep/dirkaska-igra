@@ -71,15 +71,6 @@ svg { display: block; }
 .g-stage { position: relative; flex: 0 0 auto; height: clamp(210px, 38vh, 470px); overflow: hidden; background: #0d1420; touch-action: none; }
 .g-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .g-vig { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(13, 22, 38, .35), rgba(13, 22, 38, 0) 18%, rgba(13, 22, 38, 0) 80%, rgba(13, 22, 38, .7)); }
-.g-pill { position: absolute; left: 10px; top: 10px; display: flex; align-items: center; gap: 1px; padding: 3px 6px 3px 11px; border-radius: 999px;
-  background: rgba(12, 14, 19, .78); border: 2px dashed var(--gold2); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-.g-pill span { font: italic 900 12px/1 var(--f); letter-spacing: .14em; color: var(--gold); margin-right: 4px; }
-.g-pill button svg { width: 18px; height: 18px; }
-.g-pill button { min-width: 27px; height: 27px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; font: 800 14px/1 var(--f); color: #e9eef7; }
-.g-pill button.sel { background: var(--gold); color: #151006; }
-.g-pill button[data-view="spin"] { font: italic 800 13px/1 var(--f); }
-.g-tag { position: absolute; right: 12px; top: 12px; transform: skewX(-12deg); padding: 7px 12px; background: #0f1d33; border: 2px solid #d8e0ea; box-shadow: 4px 4px 0 rgba(0, 0, 0, .35); }
-.g-tag span { display: block; transform: skewX(12deg); font: italic 900 12px/1 var(--f); letter-spacing: .12em; color: #fff; white-space: nowrap; }
 .g-snd { position: absolute; right: 12px; top: 52px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #e9eef7; background: rgba(12, 14, 19, .62); border: 1.5px solid rgba(255, 255, 255, .35); }
 .g-snd svg { width: 20px; height: 20px; }
 .g-snd .g-snd-off { display: none; }
@@ -88,11 +79,7 @@ svg { display: block; }
 .g-nav { position: absolute; left: 0; right: 0; bottom: 12px; display: flex; justify-content: center; align-items: center; gap: clamp(36px, 22vw, 120px); pointer-events: none; }
 .g-arrow { pointer-events: auto; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: rgba(10, 14, 20, .55); border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
 .g-arrow svg { width: 22px; height: 22px; }
-.g-dots { display: flex; gap: 5px; align-items: center; }
-.g-dots i { width: 7px; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .45); transition: width .25s, background .25s; }
-.g-dots i.sel { width: 26px; background: #fff; }
-.g-dots i.own { background: rgba(108, 200, 247, .8); }
-.g-dots i.own.sel { background: #fff; }
+.g-dots { min-width: 56px; padding: 4px 12px; border-radius: 999px; background: rgba(12, 14, 19, .72); border: 2px solid var(--gold2); font: italic 900 16px/1 var(--f); letter-spacing: .06em; color: #fff; text-align: center; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .g-chip { position: absolute; left: 50%; top: 92px; transform: translate(-50%, -50%) scale(.9); opacity: 0; pointer-events: none; padding: 10px 18px; border-radius: 14px; text-align: center;
   background: rgba(10, 16, 26, .82); border: 2px solid var(--cyan); box-shadow: 0 0 26px rgba(108, 200, 247, .35); transition: opacity .3s, transform .3s; white-space: nowrap; }
 .g-chip.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }

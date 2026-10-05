@@ -90,13 +90,12 @@
     $('g-money').textContent = num(S.money);
     $('g-name').textContent = Mm.name;
     $('g-drive').textContent = Mm.drive;
-    $('g-tag').textContent = (Mm.drive + ' · ' + tr(BODY[Mm.body] || '')).toUpperCase();
     const nOwn = ORDER.filter(id => S.cars[id].own).length;
     $('g-sub').textContent = tr('V GARAŽI {0}/{1}', nOwn, ORDER.length);
     const q = Math.round(condAvg(c) * 100);
     $('g-stats').innerHTML = stat(I.power, tr('Moč'), Math.round(st.kw) + ' kW') + stat(I.weight, tr('Masa'), num(Mm.mass) + ' kg') +
       stat(I.cond, tr('Stanje'), own ? q + ' %' : '–', q < 50 ? 'bad' : q < 75 ? 'warn' : '');
-    $('g-dots').innerHTML = ORDER.map(id => '<i class="' + (id === S.car ? 'sel ' : '') + (S.cars[id].own ? 'own' : '') + '"></i>').join('');
+    $('g-dots').textContent = (ORDER.indexOf(S.car) + 1) + '/' + ORDER.length;   // (which car of how many, e.g. 7/10)
     // the go button: choose this car, buy it, or it comes with the full game
     const go = $('g-go'); go.className = 'g-btn g-btn-go';
     if (own) { go.textContent = tr('Izberi'); go.dataset.act = 'go'; }
@@ -256,13 +255,12 @@
       if (t.dataset.col) { G.sound(S.sound); return doPaint(+t.dataset.col, C().stripe); }
       if (t.dataset.stripe) { G.sound(S.sound); return doPaint(C().color, t.dataset.stripe === '1'); }
       if (t.dataset.mode) { S = profile(t.dataset.mode); S.demo = true; save(); thumbs = {}; panel = 'home'; markMode(); render(); G.swap(spec(S.car)); return; }
-      if (t.dataset.view) { G.view(t.dataset.view === 'spin' ? 'spin' : +t.dataset.view); document.querySelectorAll('#g-views button').forEach(x => x.classList.toggle('sel', x === t)); }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
     window.addEventListener('resize', resize);
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); });
     G.onHud = (k, d) => {
-      if (k === 'busy') { if (d) document.querySelectorAll('#g-views button').forEach(x => x.classList.toggle('sel', x.dataset.view === '0')); $('g-stage').classList.toggle('busy', !!d); return; }
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); return; }
       if (k === 'power') { const Mm = M(), a = Core.upgStats(Mm, Object.assign({}, C().upg, { motor: d.from })).kw, b = Core.upgStats(Mm, Object.assign({}, C().upg, { motor: d.lv })).kw;
         chip(tr('MOČ'), Math.round(a) + ' → <em>' + Math.round(b) + ' kW</em>'); }
       else if (k === 'done') { const n = DONE_NAME[d.kind];

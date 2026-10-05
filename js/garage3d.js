@@ -3319,23 +3319,21 @@ const Garage3D = (function () {
       const old = cur, nw = makeCar(spec);
       // (the new car's shaders are made now, while the old one still stands: no stutter when it rolls in)
       nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);
-      yield* par(home(0.8), turnTo(0, 0.8), lift > 0.01 ? liftTo(0, 0.8) : null);
+      // away at once: the car pulls out the instant the arrow is tapped; the camera eases home and the table drops to level at the same time
       if (old) {
-        engStart(old.M); lamps(old, 0, 0);
-        yield* tween(0.35, (k) => { lamps(old, k, k * 0.6); old.shake = k * 2; eng.rev = 0.25 * Math.sin(k * Math.PI); });
-        puffSmoke(old, 4, old.spec.cond.engine < 0.5);
-        yield* wait(0.25); old.shake = 1;
-        yield* revs(old, 1, false);
-        // away: the throttle open, the tail squats, the wheels turn; the camera turns a little after it
-        eng.locked = false; eng.thr = 1; old.shake = 0.6; const acc = 6 + (old.M.kw || 250) / 120, T0 = 1.55;
-        const ty0 = rig.tx;
-        yield* tween(T0, (k, u) => {
-          const t = u * T0, vel = acc * t, x = 0.5 * acc * t * t; old.spin += (x - old.root.position.x) / old.M.rw; old.root.position.x = x;
-          old.pitch = 0.035 * Math.exp(-u * 3) * (1 - Math.exp(-u * 20)); eng.speed = vel; eng.rpm = old.M.idle + (old.M.redline - old.M.idle) * clamp(0.35 + vel / 30, 0, 0.95);
-          if (Math.random() < 0.35 && u < 0.5) puffSmoke(old, 1, false);
-          rig.tx = ty0 + 0.6 * EZ.sine(Math.min(1, u * 1.4));
-        });
+        engStart(old.M); lamps(old, 1, 0.3); old.shake = 0.6; eng.locked = false; eng.thr = 1;
+        puffSmoke(old, 3, old.spec.cond.engine < 0.5);
+        const acc = 7 + (old.M.kw || 250) / 110, T0 = 1.25;
+        yield* par(home(0.6), turnTo(0, 0.4), lift > 0.01 ? liftTo(0, 0.4) : null, (function* () {
+          yield* tween(T0, (k, u) => {
+            const t = u * T0, vel = acc * t, x = 0.5 * acc * t * t; old.spin += (x - old.root.position.x) / old.M.rw; old.root.position.x = x;
+            old.pitch = 0.035 * Math.exp(-u * 3) * (1 - Math.exp(-u * 20)); eng.speed = vel; eng.rpm = old.M.idle + (old.M.redline - old.M.idle) * clamp(0.35 + vel / 30, 0, 0.95);
+            if (Math.random() < 0.35 && u < 0.5) puffSmoke(old, 1, false);
+          });
+        })());
         lamps(old, 0, 0); old.root.visible = false;
+      } else {
+        yield* par(home(0.6), turnTo(0, 0.4), lift > 0.01 ? liftTo(0, 0.4) : null);
       }
       engStop();
       // in: from the left door, braking hard onto the table, the nose diving, the brake lamps on
