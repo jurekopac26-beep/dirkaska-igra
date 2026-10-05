@@ -15,7 +15,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 150000, pk: 'unl', field: ['skorpijon'],
     snd: { kind: 'hybrid', hz: 1, loud: 1.1 },
     expect: { t100: [2.07, 2.43], vmax: [302, 321], latG: [2.48, 2.58], d100: [20.2, 22.3] },
-    parts: { set: 'race', ht: 1.12, y0: 0.14, over: { hood: { lx: 0.72 }, trunk: { y: 0.9 } } },   // (where the look has them: the front lid from the cowl to the nose's step, the engine cover on top)
+    parts: { set: 'race', ht: 1.12, y0: 0.14, over: { hood: { lx: 0.72 }, trunk: { y: 0.9 }, quarterL: { h: 0.14 }, quarterR: { h: 0.14 }, doorL: { h: 0.15 }, doorR: { h: 0.15 } } },   // (where the look has them: the front lid from the cowl to the nose's step, the engine cover on top; the quarters with the haunches' shoulders and the doors with the canopy's side glass lie as thick as they are)
     // the look (KIT API v1, render.js; look units = metres): one loft, the body and the canopy in one: the fenders' crests over the front
     // wheels with the bonnet's valley between them, the canopy (windscreen, side glass, the carbon roof, the rear glass) narrowing back to
     // the engine cover's spine between the haunches, the body pinched behind the doors (the side intakes' black mouths face forward); the
@@ -44,7 +44,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: -0.36, y: 0.92, near: 0.2, tilt: 0.06, style: 'closed' },   // (low in the canopy)
         door: [0.95, -0.42], bumpF: 0.15, bumpR: 0.3, bumpY: [0.58, 0.62],    // (the lower nose ahead of the bonnet's edge the front clip; the tail's lower half the rear one)
         engRear: true, crush: { x0: -0.7, x1: 0.3, z: 0.56 } },               // (the V8 behind the seats; only the canopy's roof crushes)
-      wheels: { style: 'std', spokes: 10, w: 0.25, wR: 0.31, rim: [0.45, 0.46, 0.5], cap: [0.8, 0.81, 0.84], gap: 0.05 },
+      wheels: { style: 'std', spokes: 10, w: 0.25, wR: 0.31, rim: [0.12, 0.12, 0.13], cap: [0.8, 0.81, 0.84], gap: 0.05 },   // (black rims, the silver centre lock)
       // the standard regions, the front clip also taking the lower nose's top (ahead of the bonnet's leading edge), the doors the canopy's
       // side glass (its edge band, behind the windscreen's top)
       regions: (std) => { const i = std.findIndex(r => r.part === 'hood');
@@ -73,7 +73,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      skirt between the arches with a pin line over it (the stripe's colour); the vents behind the rear wheels ----
         for (const sd of [-1, 1]) D.top([[0.95, sd * 0.72], [0.1, sd * 0.23], [0.1, sd * 0.28], [0.95, sd * 0.78]], B, 0.008);   // the A-pillars
         D.side([[-0.85, 0.2], [-0.55, 0.2], [-0.55, 0.46], [-0.85, 0.34]], P, null, 0.006);   // (the intakes' mouths: their lower edge rising to the door)
-        D.side([[0.9, 0.32], [-0.55, 0.46], [-0.55, 0.66], [0.9, 0.37]], K.shade(P, 0.78), null, 0.005);   // the doors' scoop sweeping back into the intakes
+        D.side([[0.9, 0.32], [-0.55, 0.46], [-0.55, 0.66], [0.9, 0.37]], CF, null, 0.005);   // the doors' carbon scoop sweeping back into the intakes
         D.side([[-0.43, 0.2], [-0.415, 0.2], [-0.415, 0.76], [-0.43, 0.76]], B, null, 0.008);
         D.side([[0.945, 0.2], [0.96, 0.2], [0.96, 0.76], [0.945, 0.76]], B, null, 0.008);
         D.side([[XA, 0.2], [XB, 0.2], [XB, 0.3], [XA, 0.3]], CF, null, 0.006);
@@ -90,10 +90,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the engine cover's louvres (on the spine, behind the exhausts) ----
         D.top([[-1.22, -0.17], [-1.22, 0.17], [-1.82, 0.17], [-1.82, -0.17]], B, 0.006);
         for (const x of [-1.32, -1.44, -1.56, -1.68]) D.top([[x, -0.17], [x, 0.17], [x - 0.04, 0.17], [x - 0.04, -0.17]], P, 0.01);
-        // ---- the top-exit exhausts through the engine cover behind the cabin, their carbon collars (the engine's: they stay when the cover goes) ----
+        // ---- the top-exit exhausts through the engine cover behind the cabin: two big titanium pipes standing proud of it (over the roof's
+        //      line seen from the front and the rear), their carbon collars (the engine's: they stay when the cover goes) ----
         for (const sd of [-1, 1]) K.part('body', () => {
-          K.cyl([-0.95, 0.9, sd * 0.16], [-1.08, 1.075, sd * 0.16], 0.068, TI, { n: 8, capA: null, capB: B });
-          K.cyl([-0.98, 0.94, sd * 0.16], [-1.03, 1.012, sd * 0.16], 0.092, CF, { n: 8, capA: null, capB: CF });
+          K.cyl([-0.95, 0.9, sd * 0.2], [-1.05, 1.09, sd * 0.2], 0.09, TI, { n: 8, capA: null, capB: B });   // (their mouths' top edge at 1.13)
+          K.cyl([-0.985, 0.966, sd * 0.2], [-1.012, 1.018, sd * 0.2], 0.12, CF, { n: 8, capA: null, capB: CF });
         });
         // ---- the active wing raised on its struts over the tail (never crushed, never dented) ----
         K.part('wing', () => {
@@ -107,9 +108,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.rect(-2.352, 0.82, 0, 1.56, 0.1, B, { dir: '-x', part: 'body' });
         for (const sd of [-1, 1]) K.tailLamp(-2.354, 0.82, sd * 0.4, 0.76, 0.05);
         K.grille(-2.352, 0.52, 0, 1.36, 0.18, { dir: -1, slats: 4, col: B, slatCol: CF, slatH: 0.018, part: 'bumperR' });
-        K.part('bumperR', () => {
-          K.box(-2.12, 0.12, 0, 0.46, 0.03, 1.5, 0, B);
-          for (const z of [-0.5, -0.17, 0.17, 0.5]) K.box(-2.15, 0.12, z, 0.36, 0.2, 0.04, 0, B);
+        K.part('bumperR', () => {   // (the diffuser a ramp under the tail, rising with it to its face; the strakes fins under the ramp)
+          K.plate([[-1.9, 0.15, -0.75], [-1.9, 0.15, 0.75], [-2.34, 0.36, 0.75], [-2.34, 0.36, -0.75]], 0.02, B);
+          for (const z of [-0.5, -0.17, 0.17, 0.5]) K.plate([[-1.95, 0.17, z], [-2.34, 0.36, z], [-2.34, 0.22, z]], 0.03, B);
         });
         // ---- the door mirrors on their stalks ----
         for (const sd of [-1, 1]) K.mirror(0.62, 0.8, sd * 0.96, { col: P, arm: B, w: 0.09, h: 0.065, d: 0.15, z0: sd * 0.8 });
@@ -120,8 +121,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- inside (seen once a part is off): the bucket seats low, the dashboard, the wheel, the tunnel, the bulkhead behind the seats; the V8
         //      behind it with the hybrid's orange cables, the front axle's electric motor and the radiators in the nose ----
         for (const sd of [-1, 1]) K.seat(-0.3, 0.33, sd * 0.34, { w: 0.46, l: 0.46, back: 0.6, tilt: 0.42, col: [0.46, 0.09, 0.07] });
-        fc([[0.1, 0.7, -0.72], [0.1, 0.7, 0.72], [0.93, 0.765, 0.72], [0.93, 0.765, -0.72]], CF, [-0.1, 1, 0], { part: 'body' });   // the dashboard's top under the windscreen (the outer shell, one-sided:
-        //   from the seat it closes the view under the low cowl; from outside the glass hides it)
+        fc([[0.3, 0.56, -0.72], [0.3, 0.56, 0.72], [0.93, 0.765, 0.72], [0.93, 0.765, -0.72]], K.lining, [-0.3, 1, 0], { part: 'body' });   // the dashboard's top under the windscreen
+        //   (the outer shell, one-sided, sloping to the driver; the lining's colour: matte, no clear coat's sky on it, which a dark painted
+        //   face turned up this far still shows as a white glare): from the seat it closes the view under the low cowl; the glass hides it
         K.box(0.42, 0.4, 0, 0.36, 0.3, 1.36, 0, DK, null, false, { inner: true, part: 'body' });
         K.box(1.43, 0.46, 0, 0.2, 0.06, 0.3, 0, [0.95, 0.45, 0.08], null, false, { inner: true, part: 'body' });   // (the front motor's orange junction box)
         K.cyl([0.14, 0.6, -0.34], [0.17, 0.64, -0.34], 0.16, [0.06, 0.06, 0.065], { n: 6, inner: true, part: 'body' });
@@ -131,6 +133,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.bar([-0.7, 0.3, sd * 0.3], [-1.02, 0.38, sd * 0.32], 0.02, [0.95, 0.45, 0.08], { n: 4, inner: true, part: 'body' });
         K.box(1.95, 0.18, 0, 0.18, 0.3, 1.2, 0, DK, null, false, { inner: true, part: 'body' });
         K.cyl([1.43, 0.34, -0.22], [1.43, 0.34, 0.22], 0.12, [0.4, 0.41, 0.44], { n: 6, inner: true, part: 'body' });
+        for (const sd of [-1, 1]) K.box(1.43, 0.2, sd * 0.6, 0.74, 0.5, 0.04, 0, DK, null, true, { inner: true, part: 'body' });   // (the front wheels' housings: the tub's walls)
       },
     },
   });
