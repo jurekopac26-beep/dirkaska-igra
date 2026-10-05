@@ -282,9 +282,9 @@ try {
     // a destroyed car on the qualifying lap: the banner offers the lap again ("Ponovi krog"), which drives it again (the rivals' laps kept)
     const qb = await page.evaluate(async () => { const g = window.__game, raf = () => new Promise(q => requestAnimationFrame(q)); g.pause(); g.sim(3, true); g.race.player.dmg = 0.99; g.resume(); for (let i = 0; i < 6; i++) await raf();
       const el = document.getElementById('h-wreck'), b = document.getElementById('btn-retire'), o = { show: el.classList.contains('show'), title: document.getElementById('h-wreck-t').textContent, btn: !b.classList.contains('off') && b.textContent };
-      b.click(); await raf(); return Object.assign(o, { quali: g.race.quali, dmg: g.race.player.dmg, back: Math.round(-g.race.player.dist), banner: el.classList.contains('show') }); });
+      b.click(); await raf(); return Object.assign(o, { quali: g.race.quali, dmg: g.race.player.dmg, back: Math.round(-g.race.player.dist), run: g.race.opts.qualiBack, banner: el.classList.contains('show') }); });
     T.check('qualifying: a destroyed car gets "VOZILO UNIČENO" with "Ponovi krog", which drives the lap again (a new car on the run-up)',
-      qb.show && qb.title === 'VOZILO UNIČENO' && qb.btn === 'Ponovi krog' && qb.quali && qb.dmg === 0 && qb.back > 300 && !qb.banner, JSON.stringify(qb));
+      qb.show && qb.title === 'VOZILO UNIČENO' && qb.btn === 'Ponovi krog' && qb.quali && qb.dmg === 0 && qb.back > 0.8 * qb.run && !qb.banner, JSON.stringify(qb));
     await page.evaluate(() => { const g = window.__game; g.pause(); for (let i = 0; i < 300 && g.phase !== 'done'; i++) g.sim(1, true); g.resume(); });
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
     const qr = await page.evaluate(() => [...document.querySelectorAll('#res-table tbody tr')].map(r => r.children[2].textContent));

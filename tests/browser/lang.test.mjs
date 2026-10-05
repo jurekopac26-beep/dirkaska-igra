@@ -116,6 +116,7 @@ try {
   await startTrack(page, 'jezero');
   const w6 = await page.evaluate(async () => { const g = window.__game, P = g.race.player, raf = () => new Promise(q => requestAnimationFrame(q));
     g.pause(); g.sim(5, true); Core.wreckCar(P); g.sim(1, true); g.resume(); for (let i = 0; i < 6; i++) await raf();
+    for (let i = 0; i < 150 && !document.getElementById('h-wreck').classList.contains('show'); i++) await raf();   // (a slow machine: the banner comes with the first HUD frame after the wreck, not always within six)
     return { car: P.m.id, title: document.getElementById('h-wreck-t').textContent, btn: document.getElementById('btn-retire').textContent, show: document.getElementById('h-wreck').classList.contains('show') }; });
   const sW = await slovene(['hud']);
   await page.evaluate(() => window.__game.pause()); await page.waitForTimeout(200);
