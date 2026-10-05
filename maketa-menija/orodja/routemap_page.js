@@ -329,7 +329,7 @@ window.RM = (function () {
     // the glowing point
     const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
     gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.15, 'rgba(255,246,190,.95)'); gr.addColorStop(0.4, 'rgba(255,214,60,.35)'); gr.addColorStop(1, 'rgba(255,214,60,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
-    const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, transparent: true, fog: false })); dot.renderOrder = 10; dot.visible = false; Bw.sc.add(dot);   // (the glowing point is off: the route line alone is drawn in the flyover)
+    const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, transparent: true, fog: false })); dot.renderOrder = 10; Bw.sc.add(dot);
     // the camera's path: the road smoothed (the further back the camera, the more), and how far round it looks for the road's heading
     const rs = Math.max(8, Math.round(opt.back * 0.7 / 6)), rh = Math.max(6, Math.round(opt.back * 0.3 / 6));
     const sx = smooth(pts.map(p => p.x), rs), sz = smooth(pts.map(p => p.z), rs), sy = smooth(pts.map(p => p.y), Math.round(rs * 2 / 3));
