@@ -29,6 +29,7 @@ export function serve(root = ROOT) {
       if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
       // (a video is asked for by ranges: without them the browser cannot seek in it, nor know its length)
       const size = fs.statSync(file).size, type = TYPES[path.extname(file)] || 'application/octet-stream', m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+      if (req.method === 'HEAD') { res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size }); res.end(); return; }   // (a HEAD only needs the headers: a cheap existence check, no body)
       if (m && (m[1] || m[2])) {
         const a = m[1] ? +m[1] : Math.max(0, size - +m[2]), b = m[1] && m[2] ? Math.min(size - 1, +m[2]) : size - 1;
         if (a > b || a >= size) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); res.end(); return; }
