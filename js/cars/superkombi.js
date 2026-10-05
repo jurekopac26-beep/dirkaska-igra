@@ -119,11 +119,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.2, 0.09, 0, 0.28, 0.07, 1.5, 0, B);                                            // the diffuser
           for (const sd of [-1, 1]) K.exhaust(-2.37, 0.32, sd * 0.22, 0.05, 0.2, { n: 6 });       // (the V10's twin tailpipes)
         });
-        // ---- the wing across the roof's back edge: its plane in the stripe colour, the endplates in the paint, black struts (never crushed,
-        //      never dented) ----
+        // ---- the wing across the roof's back edge: its plane black (apart from the roof's stripes in any livery), overhanging the tail;
+        //      the endplates in the paint, black struts (never crushed, never dented) ----
         K.part('wing', () => {
-          K.wingPlank(-1.95, 1.7, -2.38, 1.73, 0.04, -0.9, 0.9, S);                               // (its top 1.77: 14 cm over the roof)
-          for (const sd of [-1, 1]) { K.endplate([[-1.93, 1.675], [-2.4, 1.675], [-2.4, 1.78], [-1.95, 1.755]], sd * 0.915, 0.014, P);
+          K.wingPlank(-1.95, 1.7, -2.46, 1.73, 0.04, -0.9, 0.9, B);                               // (its top 1.77: 14 cm over the roof)
+          for (const sd of [-1, 1]) { K.endplate([[-1.93, 1.675], [-2.48, 1.675], [-2.48, 1.78], [-1.95, 1.755]], sd * 0.915, 0.014, P);
             K.box(-2.16, 1.58, sd * 0.45, 0.14, 0.13, 0.025, 0, B); }
         }, { noCrush: true, noDent: true });
         // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard and the wheel; the race engine behind them (the
