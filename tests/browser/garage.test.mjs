@@ -2,8 +2,10 @@
 // between it and the car steps aside), the demo profiles, buying a car and the credits, a new car
 // driving in, every upgrade with its parts on the car, the service (dirt and scratches gone, the engine), a new colour, the English page,
 // every car of the game on the turntable with all its parts, the pictures of the cars, the profile kept after a reload; the single-post
-// lift behind the car (the tyres and the service's engine up on it, the turntable never rising nor turning). The animations run on a
-// clock the test steps itself (software WebGL is slow). Zero page errors allowed.
+// lift behind the car (the tyres and the service's engine up on it, the turntable never rising nor turning); the permanent fixtures
+// (the ceiling gantry with its two arms, the tool stand ORODJA with its seven tools, the curtains, the IR lamps) parked at rest, out of
+// the cars' lane, their moves through the shows' queue, the stand's plate in English. The animations run on a clock the test steps
+// itself (software WebGL is slow). Zero page errors allowed.
 //   node tests/browser/garage.test.mjs
 import { serve, launch, checker } from './lib.mjs';
 
@@ -43,6 +45,52 @@ try {
     const L = await page.evaluate(() => Garage3D._dbg.lift);
     // (raw: the column's piece's nearest vertex to the car: nothing of it in front of the car)
     T.check('one lift column, behind the car (far side), its arms stowed out of the cars\' lane (|z| >= 1.38), the turntable flush', L.posts === 1 && L.z < -1.3 && L.raw < -1.3 && L.box[1][2] < -1.3 && L.arms === 0 && L.lane >= 1.38 && L.table === 0 && !L.on, JSON.stringify(L));
+    // the permanent fixtures at rest: the gantry's beam at x 2.4, both arms folded under it above 3.3 m (out of the home view, no shadow),
+    // the stand ORODJA with its 7 tools in their nests (all lit green), the curtains bunched in the rear corners (0), the IR lamps in
+    // their row (0) and dark; nothing of them in the cars' lane (|z| < 1.3, under 2 m), none of them stepped aside in the home view
+    const F = await page.evaluate(() => Garage3D._dbg.fx);
+    T.check('the fixtures at rest: the beam at x 2.4, both arms folded above 3.3 m, 7 tools in their nests (all green), the curtains bunched, the IR lamps parked and dark; none in the cars\' lane, none stepped aside in the home view',
+      F.beam === 2.4 && F.arms.length === 2 && F.arms.every(a => a.parked && a.tool === 'none' && a.low >= 3.3 && !a.cast && !a.refl) && Object.keys(F.rack.nests).length === 7 && Object.values(F.rack.nests).every(s => s === 'in')
+      && Object.values(F.rack.leds).every(c => c === 'green') && F.rack.plate === 'ORODJA' && F.curtains === 0 && F.lamps === 0 && F.glow === 0 && F.lane >= 1.3 && F.gone === 0 && F.parked, JSON.stringify(F));
+  }
+
+  // 1c. the fixtures' moves through the shows' queue: arm 0 takes the camera from its nest (the nest amber) and puts it back (green
+  // again), the arms parked, stepped finely meanwhile: the arms' own parts never in the curtains' track (its channel round the loop at
+  // 3.72 m) nor in the lift's column, the carriages never closer than their gap, the held tool never in the stand's plate (out of its
+  // fork's slot), never out of reach; the curtains drawn round the car and bunched again; the lamps rolled in to dry, lit, dark and
+  // back in their row, and on their way (every 2 %) no leg, castor, pole or panel edge of theirs through anything in the garage
+  {
+    const fine = () => page.evaluate(async () => { const D = Garage3D._dbg, { ARM, loop, RK, FX } = D, r = { t: 0, track: 0, col: 0, gap: 9, plate: 0 }, v = new THREE.Vector3();
+      const ld = (x, z) => { const qx = Math.abs(x) - (loop.LX - loop.LR), qz = Math.abs(z) - (loop.LZ - loop.LR); return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - loop.LR; };
+      const inPlate = (x, y, z) => { if (y < RK.S - 0.045 || y > RK.S + 0.002) return false; const rr = Math.hypot(x - RK.cx, z - RK.cz) - RK.r, a = Math.atan2(z - RK.cz, x - RK.cx);
+        if (rr < -0.18 || rr > 0.18 || a > RK.e0 || a < RK.e1) return false; if (rr < 0.08) for (const aj of RK.a) if (Math.abs(a - aj) < RK.SW) return false; return true; };
+      do { __garage.advance(0.1); r.t += 0.1;
+        for (const A of ARM) { const a = A.R.mesh.geometry.attributes.position.array; for (const [v0, v1, k] of A.R.runs) if (k < 10) for (let i = v0; i < v1; i++) { const x = a[i * 3], y = a[i * 3 + 1], z = a[i * 3 + 2];
+            if (Math.abs(y - loop.LY) < 0.06 && Math.abs(ld(x, z)) < 0.065) r.track++; if (Math.abs(x) < 0.21 && z > -1.89 && z < -1.55 && y < 3.09) r.col++; }
+          if (A.tool !== 'none') { const m = FX.tools[A.tool].mesh, p = m.geometry.attributes.position.array; for (let i = 0; i < p.length; i += 3) { v.set(p[i], p[i + 1], p[i + 2]).applyMatrix4(m.matrix); if (inPlate(v.x, v.y, v.z)) r.plate++; } } }
+        r.gap = Math.min(r.gap, ARM[0].J.cz - ARM[1].J.cz); await new Promise(res => setTimeout(res, 0)); } while (Garage3D.busy && r.t < 60);
+      r.gap = +r.gap.toFixed(3); return r; });
+    const res = {};
+    for (const k of ['tool', 'curtains', 'lamps']) { await page.evaluate((k) => { Garage3D._dbg.fxDemo(k); }, k); const r = k === 'tool' ? await fine() : await run(); res[k] = await page.evaluate(() => ({ log: Garage3D._dbg.fxLog, fx: Garage3D._dbg.fx })); res[k].r = r; }
+    const { tool: t, curtains: c, lamps: l } = res;
+    T.check('the fixtures through the queue: arm 0 takes the camera (its nest amber) and puts it back (green), the curtains drawn and bunched, the lamps in, lit, back in their row; all parked after, the table still',
+      t.log.length === 2 && t.log[0].held === 'camera' && t.log[0].nest === 'out' && t.log[1].miss === 0 && t.log[1].held === 'none' && t.log[1].nest === 'in' && t.fx.rack.leds.camera === 'green'
+      && c.log[0].k === 1 && c.fx.curtains === 0 && l.log[0].t === 1 && l.log[0].glow === 1 && l.fx.lamps === 0 && l.fx.glow === 0 && [c, l].every(x => x.r.table === 0 && x.r.ang === 0) && [t, c, l].every(x => x.fx.parked),
+      JSON.stringify({ t: t.log, c: c.log, l: l.log, parked: [t, c, l].map(x => x.fx.parked) }));
+    T.check('the arms on their way to the stand and back: never in the curtains\' track nor in the lift\'s column, the carriages apart, the tool out through its fork (not through the plate)',
+      t.r.track === 0 && t.r.col === 0 && t.r.gap >= 0.45 && t.r.plate === 0, JSON.stringify(t.r));
+    const hits = await page.evaluate(() => { const D = Garage3D._dbg, { LMP } = D, sc = Garage3D.scene, own = new Set(), rc = new THREE.Raycaster(), hit = [], V = (a) => new THREE.Vector3(...a);
+      LMP.L.forEach(L => L.piece.root.traverse(o => own.add(o))); const objs = []; sc.updateMatrixWorld(true);
+      const lane = new THREE.Box3(new THREE.Vector3(-5.4, 0, -3.6), new THREE.Vector3(2.9, 2.7, -1.0)), bb = new THREE.Box3();   // (where the lamps go)
+      sc.traverse(o => { if (o.isMesh && !own.has(o) && o.geometry.attributes.position && bb.setFromObject(o).intersectsBox(lane)) objs.push(o); });
+      for (let t = 0; t <= 1.0001; t += 0.02) { D.fxPose({ lamps: t }); sc.updateMatrixWorld(true);
+        LMP.L.forEach((L, i) => { const e = L.R.M[0].elements, x = e[12], z = e[14], segs = [[[x, 0.005, z], [x, 1.3, z]]], P = L.R.M[10];
+          for (const [lx, lz] of [[0.5, 0.866], [-0.5, 0.866], [0.5, -0.866], [-0.5, -0.866]]) { const wx = x + (lx * e[0] + lz * e[8]) * 0.33, wz = z + (lx * e[2] + lz * e[10]) * 0.33; for (const y of [0.05, 0.12]) segs.push([[x, y, z], [wx, y, wz]]); }
+          for (const [a, b] of [[[-0.4, -0.55, 0], [0.4, -0.55, 0]], [[-0.4, 0, 0], [0.4, 0, 0]], [[-0.4, -0.55, 0], [-0.4, 0, 0]], [[0.4, -0.55, 0], [0.4, 0, 0]], [[-0.4, -0.55, -0.13], [0.4, -0.55, -0.13]]]) segs.push([V(a).applyMatrix4(P).toArray(), V(b).applyMatrix4(P).toArray()]);
+          for (const [a, b] of segs) { const o = V(a), d = V(b).sub(o), len = d.length(); rc.set(o, d.normalize()); rc.far = len;
+            for (const m of objs) if (m.visible && rc.intersectObject(m, false).length && hit.length < 6) hit.push({ lamp: i, t: +t.toFixed(2), at: [x, z].map(q => +q.toFixed(2)) }); } }); }
+      D.fxPose({ lamps: 0 }); return hit; });
+    T.check('the IR lamps\' way from their row to the car and back: clear of everything (the drivetrain\'s things by the back wall, the curtains\' stack, the lift, the car)', hits.length === 0, JSON.stringify(hits));
   }
 
   // 1b. the camera: dragged left or right it goes round the car; up and down, the wheel, a pinch: nothing (no zoom, the height stays)
@@ -71,9 +119,14 @@ try {
 
   // 2. a car not bought: it drives in, the go button buys it; too few credits: refused, nothing taken
   {
-    await page.evaluate(() => __garage.pickCar('kaze')); await run();
-    const u = await ui();
+    // (the lamps drying and the curtains half drawn when the car is asked for: watched till the old car moves)
+    const first = await page.evaluate(async () => { const D = Garage3D._dbg, old = Garage3D.cur; D.fxPose({ lamps: 1, glow: 1, curtains: 0.6 }); __garage.pickCar('kaze'); let t = 0;
+      while (old.root.position.x <= 0.01 && t < 30) { __garage.advance(0.1); t += 0.1; await new Promise(r => setTimeout(r, 0)); } const f = D.fx; return { t: +t.toFixed(1), lamps: f.lamps, curtains: f.curtains, glow: f.glow, parked: f.parked, lane: f.lane }; });
+    await run();
+    const u = await ui(), fx = await page.evaluate(() => Garage3D._dbg.fx);
     T.check('another car: the PICO drives out, the KAZE RS drives in and stops on the table', u.info.car === 'kaze' && u.name === 'KAZE RS' && Math.abs(u.info.ang) < 0.01 && /Kupi · 30\.000 CR/.test(u.go), JSON.stringify({ car: u.info.car, go: u.go }));
+    T.check('a car asked for while the lamps dry and the curtains are half drawn: they go back first (when the old car starts off: the lamps in their row and dark, the curtains bunched, out of the lane), then the swap',
+      first.parked && first.lamps === 0 && first.curtains === 0 && first.glow === 0 && first.lane >= 1.3 && fx.parked && fx.lane >= 1.3, JSON.stringify({ first, parked: fx.parked, lane: fx.lane }));
     await page.evaluate(() => __garage.buy());
     const u2 = await ui(), toast = await page.evaluate(() => document.getElementById('g-toast').textContent);
     T.check('too few credits for it: refused, the credits unchanged', u2.money === '11.500' && !u2.S.cars.kaze.own && /Premalo kreditov/.test(toast), toast);
@@ -128,9 +181,11 @@ try {
   // 6. English
   {
     await page.evaluate(() => __garage.onAct('lang'));
-    const t = await page.evaluate(() => ({ h: document.querySelector('.g-title h1').textContent, go: document.getElementById('g-go').textContent, tile: document.querySelector('.g-tile small').textContent, html: document.documentElement.lang }));
-    T.check('English: GARAGE, Select, the tiles in English', t.h === 'GARAGE' && t.go === 'Select' && t.tile === 'Car' && t.html === 'en', JSON.stringify(t));
+    const t = await page.evaluate(() => ({ h: document.querySelector('.g-title h1').textContent, go: document.getElementById('g-go').textContent, tile: document.querySelector('.g-tile small').textContent, html: document.documentElement.lang, plate: (__garage.advance(0.1), Garage3D._dbg.fx.rack.plate) }));
+    T.check('English: GARAGE, Select, the tiles in English, the tool stand\'s plate TOOLS', t.h === 'GARAGE' && t.go === 'Select' && t.tile === 'Car' && t.html === 'en' && t.plate === 'TOOLS', JSON.stringify(t));
     await page.evaluate(() => __garage.onAct('lang'));
+    const pl = await page.evaluate(() => (__garage.advance(0.1), Garage3D._dbg.fx.rack.plate));
+    T.check('back in Slovenian: the plate ORODJA again', pl === 'ORODJA', pl);
   }
 
   // 7. every car of the game on the turntable, all its upgrades at the top level: built, the parts measured onto it

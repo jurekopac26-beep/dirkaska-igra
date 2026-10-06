@@ -108,12 +108,12 @@ const Garage3D = (function () {
         gr.addColorStop(0, 'rgba(70,95,0,' + (0.32 * k).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(70,95,0,0)'); g.fillStyle = gr; g.fillRect(n > 0 ? x : x - 0.6, z, 0.6, 0.1); }
       for (const x of [x0, x1]) for (const z of [z0, z1]) rad(x, z, 0, 1, '60,80,0', 0.22);
       // b: the wet (0 dry; over 0.26 standing water): a puddle round the gully back right of the table where a car was washed down, a
-      // few drops round it (all within x 3.0..4.6, z -3.4..-2.3: clear of the cart and the hose by it)
+      // few drops round it (all within x 3.4..4.9, z -3.7..-2.7: clear of the cart, the tool stand's mat and the hose by it)
       { const Rw = Core.rng(4249); g.save(); g.globalCompositeOperation = 'lighter';
         const blob = (x, z, rx, rz, a, b) => { g.save(); g.translate(x, z); g.scale(1, rz / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx);
           gr.addColorStop(0, 'rgba(0,0,255,' + a.toFixed(3) + ')'); gr.addColorStop(b, 'rgba(0,0,255,' + (a * 0.85).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(0,0,255,0)'); g.fillStyle = gr; g.fillRect(-rx, -rx, rx * 2, rx * 2); g.restore(); };
-        for (const [x, z, rx, rz, a] of [[4.0, -2.65, 0.75, 0.5, 0.55], [3.55, -2.85, 0.55, 0.4, 0.45], [4.3, -2.95, 0.45, 0.35, 0.4], [3.3, -2.7, 0.35, 0.3, 0.35]]) blob(x, z, rx, rz, a, 0.55);
-        for (let i = 0; i < 9; i++) { const a = Rw() * TAU, x = clamp(3.85 + Math.cos(a) * (0.55 + Rw() * 0.3), 3.1, 4.5), z = clamp(-2.8 + Math.sin(a) * (0.42 + Rw() * 0.15), -3.3, -2.38), r = 0.04 + Rw() * 0.06;
+        for (const [x, z, rx, rz, a] of [[4.35, -3.05, 0.75, 0.5, 0.55], [3.9, -3.25, 0.55, 0.4, 0.45], [4.65, -3.35, 0.45, 0.35, 0.4], [3.65, -3.1, 0.35, 0.3, 0.35]]) blob(x, z, rx, rz, a, 0.55);
+        for (let i = 0; i < 9; i++) { const a = Rw() * TAU, x = clamp(4.2 + Math.cos(a) * (0.55 + Rw() * 0.3), 3.45, 4.85), z = clamp(-3.2 + Math.sin(a) * (0.42 + Rw() * 0.15), -3.7, -2.78), r = 0.04 + Rw() * 0.06;
           blob(x, z, r, r * (0.7 + Rw() * 0.3), 0.3 + Rw() * 0.25, 0.4); }
         g.restore(); }
       // the saw-cut joints (the table's hole hides them under it): a dark cut and its chipped edge (in pixels: crisp)
@@ -529,11 +529,14 @@ const Garage3D = (function () {
       else if (bx.distanceToPoint(c) < p.near + 0.15 * h) want = true;
       else for (const q of _cp) if (hides(bx, c, q)) { want = true; break; }
       p.want = want; p.k = want ? Math.min(1, p.k + dt * 5) : Math.max(0, p.k - dt * 5);
-      p.u.value = p.k; if ((p.k < 0.999) !== p.root.visible) { p.root.visible = !p.root.visible; shadowDirty = 2; }   // (gone or back: its shadow too)
+      // (gone or back: its shadow too. A curtain stack's box is where it parks: while the cloth is drawn (its own shader fades what of
+      // it is in the way) the stack's fade is kept for when it bunches there again, the drawn cloth stays)
+      p.u.value = p.k; if ((p.k < 0.999 || (!!p.cloth && FX.ck > 0.02)) !== p.root.visible) { p.root.visible = !p.root.visible; shadowDirty = 2; }
       for (const m of p.fades) m.opacity = m.userData.op * (1 - p.k);
     }
     // (the lift's carriage and arms: stowed they go with the column; out under the car they stay, they carry it)
     const lk = LIFT.s > 1e-3 || LIFT.on ? 0 : LIFT.piece.k; LIFT.u.value = lk; if ((lk < 0.999) !== LIFT.mesh.visible) { LIFT.mesh.visible = !LIFT.mesh.visible; shadowDirty = 2; }
+    if (FX.ck > 0.02) clothFade();   // (the drawn cloth's fade: the car's box on the screen)
   }
 
   function buildRoom() {
@@ -926,7 +929,7 @@ const Garage3D = (function () {
       line(xa, za, xb, za, 0.08); line(xa, zb, xb, zb, 0.08); line(xb, za - 0.04, xb, zb + 0.04, 0.08); line(xa, za - 0.04, xa, zb + 0.04, 0.08);
       for (let c = za - xb + 0.15; c < zb - xa; c += 0.3) { const P = []; for (const [x, z] of [[xa, xa + c], [xb, xb + c], [za - c, za], [zb - c, zb]]) if (x >= xa - 1e-6 && x <= xb + 1e-6 && z >= za - 1e-6 && z <= zb + 1e-6) P.push([x, z]);
         if (P.length >= 2) { P.sort((p, r) => p[0] - r[0]); line(P[0][0], P[0][1], P[P.length - 1][0], P[P.length - 1][1], 0.1); } } }
-    { const gx = 4.0, gz = -2.6, a = 0.17, e = 0.025, ST = [0.55, 0.57, 0.6];
+    { const gx = 4.35, gz = -3.0, a = 0.17, e = 0.025, ST = [0.55, 0.57, 0.6];
       q([gx - a, gz - a], [gx + a, gz - a], [gx + a, gz + a], [gx - a, gz + a], 0.004, [0.04, 0.04, 0.05]);
       for (const s of [-1, 1]) { q([gx - a, gz + s * a - (s > 0 ? e : 0)], [gx + a, gz + s * a - (s > 0 ? e : 0)], [gx + a, gz + s * a + (s < 0 ? e : 0)], [gx - a, gz + s * a + (s < 0 ? e : 0)], 0.006, ST);
         q([gx + s * a - (s > 0 ? e : 0), gz - a], [gx + s * a + (s < 0 ? e : 0), gz - a], [gx + s * a + (s < 0 ? e : 0), gz + a], [gx + s * a - (s > 0 ? e : 0), gz + a], 0.006, ST); }
@@ -1203,9 +1206,9 @@ const Garage3D = (function () {
       BLOBS.push([-3.3, -3.6, 1.1, 0.7, 0.7, 0.5, P], [SX, SZ, 0.7, 0.7, 0.6, 0, P]); }
     // a set of wheels in their warmers on a tyre trolley behind the table (its controller on the handle, the mains lead along the floor to
     // a socket on the wall); a set of bare slicks on a second trolley by the back right corner
-    { const P = use(piece()); P.near = 4.4; trolley(P, 1.95, -3.45, 0, true);
-      gl(MATTE); tube(g, [[2.74, 0.67, -3.36], [2.8, 0.3, -3.24], [2.86, 0.012, -3.2], [2.98, 0.012, -3.9], [2.4, 0.012, -4.3], [1.4, 0.012, -4.4], [0.95, 0.012, -4.72], [0.87, 0.14, -4.9], [0.85, 0.37, -4.95]], 0.008, DK, 48, 4);
-      BLOBS.push([1.95, -3.45, 1.8, 1.1, 0.9, 0, P]); }
+    { const P = use(piece()); P.near = 4.4; trolley(P, 1.75, -3.6, 0, true);   // (left of the tool stand's far end, back from the lamps' way along the back)
+      gl(MATTE); tube(g, [[2.54, 0.67, -3.51], [2.6, 0.3, -3.64], [2.64, 0.012, -3.78], [2.42, 0.012, -4.25], [1.4, 0.012, -4.4], [0.95, 0.012, -4.72], [0.87, 0.14, -4.9], [0.85, 0.37, -4.95]], 0.008, DK, 48, 4);
+      BLOBS.push([1.75, -3.6, 1.8, 1.1, 0.9, 0, P]); }
     { use(WALLS.back); box(0.85, 0.37, z0 + 0.03, 0.12, 0.16, 0.06, [0.5, 0.52, 0.55]); box(0.85, 0.42, z0 + 0.061, 0.07, 0.07, 0.004, [0.2, 0.21, 0.23]); }   // (the socket)
     const TB = FREE.tyresB = use(piece()), TBm = M4(6.25, 0, -2.8, 0, Math.PI + 0.12, 0); TB.near = 4.4; trolley(TB, 6.25, -2.8, Math.PI + 0.12, false); BLOBS.push([6.25, -2.8, 1.8, 1.1, 0.9, 0.12, TB]);
     // stacks of slicks, a little out of line (a set of wheels on the second, its rim on top; one leaning on the first), by the way in;
@@ -2835,6 +2838,697 @@ const Garage3D = (function () {
   }
   function* liftDown(cv, follow) { yield* lowerCar(cv, follow); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); }
 
+  /* ---------------- the permanent fixtures: always in the garage, parked at rest; the service and the paint shows drive them ----------------
+     THE GANTRY: two I-rails along x just under the ceiling (z +-1.95, hung from it), a white beam across them that runs along them (x -2.5
+     .. 2.5), under the beam two carriages (arm 0 the +z one, arm 1 the -z one: they never pass), each with a telescopic mast and a slim
+     white six-axis arm (navy rings, cyan lights at its joints, a quick tool changer at its wrist; its forearm beside its upper arm, as a
+     cobot's), an energy chain on the beam to each carriage and one along the far rail to the beam. An arm's pose: { cz: its carriage on
+     the beam, mast: how far its mast is run out (0 .. 1.3), tip: where its tool's working end is (the changer's face when it holds none;
+     world, or rel: from its carriage), dir: which way the tool points, hint: the elbow's side, ac: the tool's across (the scanner's bar),
+     side: which way the turret turns to put the forearm beside the upper arm (+-1) }: two-bone IK (the elbow in the upright plane through the shoulder, the forearm in
+     the plane beside it) on the mast and the turret; on a move the turret's turn and the elbow's side eased from the start's to the end's
+     (no flip, no whip). The carriages keep CGAP apart, a mast stays up over the car and over the lift's column. Each arm one mesh, the gantry one: rigid parts in one buffer, posed by a matrix each
+     (rigPose). Parked: the beam at x 2.4, the arms folded under it, all above 3.3 m (out of the home view); parked they cast no shadow
+     (from up there its patch on the floor would be a shadow of nothing in the picture).
+     THE TOOL STAND 'ORODJA': a curved, waist-high open stand outside the curtains' loop round its far-front corner, its seven nests on an
+     arc about (2.35, -1.7): camera, wrench (a nutrunner), scanner, polisher, brush, nozzle, spray gun. Each nest a fork open to the loop,
+     its tool hung in it by a collar (an arm lifts it off, slides it out toward the loop, then up; its way in and out by a gate inside the
+     loop, the mast run out: under the curtains' track); the tools in their nests one mesh with the stand, the one an arm holds a mesh of
+     its own; an arc of light behind each nest and a tab either side of its fork (green: in, amber: out, a bright green blink when one
+     comes back); the paint station (the canister on the stand's tray, its band the paint's colour; a hose mast behind the stand up to a
+     reel at 4 m, its hose down to the gun); a plate with its name (Lang.tr). Nothing of it nearer the cars' lane than |z| 1.45. Arm 1
+     reaches every nest, arm 0 the four nearest; with the car up high (a truck at 1 m) arm 0 cannot (its carriage over the car keeps its
+     mast up) and the way to the stand passes close over the car's nose: tools are swapped with the car down.
+     THE CURTAINS: a rounded-rectangle track round the lift under the ceiling (half sizes 3.0 x 2.35, its corners 0.65, at 3.72 m, on rods),
+     pleated light curtains on it with a darker weighted hem: parked bunched in two stacks at the rear corners, drawn (setCurtains 1) round
+     the rear, the far side and the front (the near side, the home view's, stays open). The cloth is written again only while it moves;
+     drawn it is see-through and fades where it comes between the camera and the car (its shader: the car's box on the screen, nearer
+     than the car), parked the stacks are pieces like any other.
+     THE IR LAMPS: four stands on castors (a narrow X base, a telescopic pole, a tilting panel of glowing bars): parked in a row outside the
+     loop behind its far-rear corner (the panels edge on to the home view, the poles down), drying round the car's far side and ends (none
+     on the home view's line to the car); they roll along the row, past the far-rear stack, along the back and in through the far side (the
+     curtains parked meanwhile), their castors swivelling, the wheels turning. Each a piece of its own (its box follows it), lit by its
+     bars' colours (no lights: a light more would rebuild every shader) and a glow. The first one dries by the stand's gate: tools are
+     not swapped while the lamps dry ---------------- */
+  // (CGAP: the carriages' least gap on the beam; BXM: the beam's travel (its sleeves 5 cm off the curtains' track at the front end))
+  const GZ = 1.95, BY = 4.0, GX = 3.15, BXM = 2.8, CZM = 1.72, CGAP = 0.46, SLV = 0.3, YS = BY - 0.1 - SLV, ASH0 = YS - 0.17, AL1 = 0.95, AL2 = 0.9, OFF = 0.15, MASTM = 1.3, WRL = 0.1;
+  const TOOLS = ['camera', 'wrench', 'scanner', 'polisher', 'brush', 'nozzle', 'gun'], TL = { none: 0, camera: 0.26, wrench: 0.5, scanner: 0.3, polisher: 0.29, brush: 0.455, nozzle: 0.64, gun: 0.32 };
+  // (the stand: its nests on an arc (angles: 0 +x, -pi/2 -z), each a fork open to the loop (SW: its slot's half angle at the mouth, the
+  // slot's end 8 cm out past the nest); a tool's collar sits on the fork's pads, its coupling's face at yc; slid out (SLIDE) it clears the
+  // plate's front edge (the plate 0.18 m either side of the arc), with a lift (LIFT_D) off the pads first)
+  const RK = { cx: 2.35, cz: -1.7, r: 1.4, e0: 0.112, e1: -1.33, S: 1.02, SW: 0.08 / 1.22 }; RK.a = [0, 0.22, 0.44, 0.74, 1.2, 1.54, 1.76].map(s => 0.022 - s / RK.r); RK.yc = RK.S + 0.05;
+  const SLIDE = { camera: 0.285, wrench: 0.27, scanner: 0.455, polisher: 0.385, brush: 0.47, nozzle: 0.26, gun: 0.335 }, LIFT_D = 0.022;
+  const FXC = { W: [0.9, 0.91, 0.93], NV: [0.1, 0.13, 0.26], DK: [0.13, 0.14, 0.16], ST: [0.6, 0.62, 0.66], CY: [0.62, 1.72, 2.25], YL: [0.92, 0.7, 0.1], CHN: [0.15, 0.16, 0.18], RL: [0.42, 0.45, 0.5] };
+  const FX = { bx: 2.4, gant: null, tools: {}, nests: {}, live: null, liveR: {}, plateC: null, plateT: null, plateLang: null, plateTxt: '', paint: 0xff7a18, hose: null, hoseDirty: true, ck: 0, cloth: [], hide: [],
+    dirty: { beam: true, cloth: true, lamps: true, glow: false, live: true }, ZERO: { value: 0 }, mats: {}, rect: { value: new THREE.Vector4(9, 9, 9, 9) }, carD: { value: 0 } };
+  const ARM = [0, 1].map(i => ({ i, side: i ? -1 : 1, cz0: i ? 0.7 : 1.55, p: null, tool: 'none', R: null, J: { sh: new V3(), el0: new V3(), el1: new V3(), wr: new V3(), wre: new V3(), tip: new V3(), u: new V3(), n: new V3(), x: new V3() }, cast: false, dirty: true }));
+  // (an arm's parked pose, from its carriage: the wrist 0.24 m over the shoulder and beside it by the forearm's offset, the changer down:
+  // the upper arm out along -x, the forearm back beside it; cz: its carriage elsewhere on the beam, folded the same)
+  const parkPose = (i, cz) => ({ rel: true, cz: cz == null ? ARM[i].cz0 : cz, mast: 0, tip: new V3(-0.02, ASH0 + 0.24 - WRL, -ARM[i].side * OFF), dir: new V3(0, -1, 0), hint: new V3(-1, 0.25, 0), ac: null, side: ARM[i].side });
+  ARM.forEach(A => { A.p = parkPose(A.i); });
+  const v3 = (a) => a == null ? null : a.isVector3 ? a.clone() : new V3(a[0], a[1], a[2]);
+
+  /* the rigs: rigid parts in one buffer, each built in its own frame into R.g (rigPart: the vertices from here on are part k's), posed by
+     a matrix each (R.M[k], R.dirty[k]); rigPose writes only the dirty parts' vertices (moved, their normals turned, their colours darker
+     low down as the pieces'): the built vertices moved, nothing made */
+  function rigB(n) { return { g: new World.GB(), runs: [], gl: [], n, M: Array.from({ length: n }, () => new THREE.Matrix4()), dirty: new Uint8Array(n).fill(1) }; }
+  const rigPart = (R, k) => R.runs.push([R.g.P.length / 3, k]), rigGl = (R, k) => R.gl.push([R.g.P.length / 3, k]);
+  function rigMesh(R, mat) {
+    const N = R.g.P.length / 3, geo = new THREE.BufferGeometry(), gl = new Float32Array(N).fill(1);
+    R.gl.forEach(([i, k], j) => gl.fill(k, i, j + 1 < R.gl.length ? R.gl[j + 1][0] : N));
+    R.P = new Float32Array(R.g.P); R.N = new Float32Array(R.g.N); R.C = new Float32Array(R.g.C);
+    R.runs = R.runs.map(([i, k], j) => [i, j + 1 < R.runs.length ? R.runs[j + 1][0] : N, k]).filter(q => q[1] > q[0]);
+    for (const [nm, a] of [['position', R.P], ['normal', R.N], ['color', R.C]]) geo.setAttribute(nm, new THREE.BufferAttribute(a.slice(), 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('gloss', new THREE.BufferAttribute(gl, 1)); geo.boundingSphere = new THREE.Sphere(new V3(0, 2, 0), 12); R.g = null;
+    const m = new THREE.Mesh(geo, mat); m.frustumCulled = false; m.receiveShadow = true; R.mesh = m; return m;
+  }
+  function rigPose(R) {
+    const G = R.mesh.geometry.attributes, pa = G.position.array, na = G.normal.array, ca = G.color.array, P = R.P, N = R.N, C = R.C; let any = false;
+    for (const [v0, v1, k] of R.runs) { if (!R.dirty[k]) continue; any = true; const e = R.M[k].elements;
+      for (let v = v0 * 3, ve = v1 * 3; v < ve; v += 3) { const x = P[v], y = P[v + 1], z = P[v + 2], nx = N[v], ny = N[v + 1], nz = N[v + 2], wy = e[1] * x + e[5] * y + e[9] * z + e[13];
+        pa[v] = e[0] * x + e[4] * y + e[8] * z + e[12]; pa[v + 1] = wy; pa[v + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+        const mx = e[0] * nx + e[4] * ny + e[8] * nz, my = e[1] * nx + e[5] * ny + e[9] * nz, mz = e[2] * nx + e[6] * ny + e[10] * nz, l = 1 / (Math.hypot(mx, my, mz) || 1);
+        na[v] = mx * l; na[v + 1] = my * l; na[v + 2] = mz * l;
+        const s = wy < 0.4 ? 0.5 + 0.5 * smooth(0, 0.4, wy) : 1; ca[v] = C[v] * s; ca[v + 1] = C[v + 1] * s; ca[v + 2] = C[v + 2] * s; } }
+    R.dirty.fill(0); if (any) { G.position.needsUpdate = G.normal.needsUpdate = G.color.needsUpdate = true; shadowDirty = Math.max(shadowDirty, 1); }
+    return any;
+  }
+  // (a frustum from a to b, its radius ra to rb, in a part's frame; a ring of an annulus facing up; a curved slab about (cx, cz): radii
+  // r0..r1, angles a0..a1, from y0 up h)
+  const cone2 = (g, a, b, ra, rb, n, col, open) => { const d = new V3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length();
+    gAdd(g, new THREE.CylinderGeometry(rb, ra, L, n || 16, 1, !!open), new THREE.Matrix4().compose(new V3((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2), new THREE.Quaternion().setFromUnitVectors(new V3(0, 1, 0), d.divideScalar(L)), new V3(1, 1, 1)), col); };
+  const annulus = (g, x, y, z, r0, r1, n, col, t0, t1) => { const a0 = t0 == null ? 0 : t0, da = (t1 == null ? TAU : t1 - a0) / n;
+    for (let i = 0; i < n; i++) { const a = a0 + i * da, b = a + da, P = (t, rr) => [x + rr * Math.cos(t), y, z + rr * Math.sin(t)]; g.quadO(P(a, r0), P(b, r0), P(b, r1), P(a, r1), col, [x, y - 1, z]); } };
+  function arcSlab(g, cx, cz, r0, r1, a0, a1, y0, h, col, top) {
+    const n = Math.max(2, Math.ceil(Math.abs(a1 - a0) * 16)), y1 = y0 + h, P = (a, rr, y) => [cx + rr * Math.cos(a), y, cz + rr * Math.sin(a)], ins = (a) => P(a, (r0 + r1) / 2, (y0 + y1) / 2);
+    for (let i = 0; i < n; i++) { const a = a0 + (a1 - a0) * i / n, b = a0 + (a1 - a0) * (i + 1) / n, m = ins((a + b) / 2);
+      g.quadO(P(a, r0, y1), P(b, r0, y1), P(b, r1, y1), P(a, r1, y1), top || col, m); if (y0 > 0.005) g.quadO(P(a, r0, y0), P(b, r0, y0), P(b, r1, y0), P(a, r1, y0), col, m);
+      g.quadO(P(a, r0, y0), P(b, r0, y0), P(b, r0, y1), P(a, r0, y1), col, m); g.quadO(P(a, r1, y0), P(b, r1, y0), P(b, r1, y1), P(a, r1, y1), col, m); }
+    for (const [a, s] of [[a0, 1], [a1, -1]]) g.quadO(P(a, r0, y0), P(a, r1, y0), P(a, r1, y1), P(a, r0, y1), col, ins(a + s * Math.sign(a1 - a0) * 0.01));
+  }
+  // the fixtures' materials: the room light, the grime, the gloss marks; the gantry's and the arms' never dissolve (ZERO), the tools'
+  // in their nests go with the stand, the arms' white a little self-lit (from under the lamps a folded arm still reads white)
+  function fxMat(u, emissive) { const m = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50, emissive: emissive || 0 }); hideMat(m, u || FX.ZERO, true); return m; }
+
+  /* an energy chain's links (parts k0 .. k0 + nl - 1 of rig R): from its fixed end F along the run D (level) on the upper run, its loop
+     (radius r) down and back on the lower run to the moving end; L1: the upper run's length (the loop moves at half the moving end's speed) */
+  function chainPose(R, k0, nl, F, D, L1, r, tot) {
+    const step = tot / nl, Y = [0, 1, 0];
+    for (let j = 0; j < nl; j++) { const s = (j + 0.5) * step, M = R.M[k0 + j]; let p, t, o;
+      if (s < L1) { p = [F[0] + D[0] * s, F[1], F[2] + D[2] * s]; t = D; o = Y; }
+      else if (s < L1 + Math.PI * r) { const f = (s - L1) / r, sf = Math.sin(f), cf = Math.cos(f); p = [F[0] + D[0] * (L1 + r * sf), F[1] - r + r * cf, F[2] + D[2] * (L1 + r * sf)]; t = [D[0] * cf, -sf, D[2] * cf]; o = [D[0] * sf, cf, D[2] * sf]; }
+      else { const q = L1 - (s - L1 - Math.PI * r); p = [F[0] + D[0] * q, F[1] - 2 * r, F[2] + D[2] * q]; t = [-D[0], 0, -D[2]]; o = [0, -1, 0]; }
+      const x = [o[1] * t[2] - o[2] * t[1], o[2] * t[0] - o[0] * t[2], o[0] * t[1] - o[1] * t[0]];
+      M.set(x[0], o[0], t[0], p[0], x[1], o[1], t[1], p[1], x[2], o[2], t[2], p[2], 0, 0, 0, 1); R.dirty[k0 + j] = 1; }
+  }
+  const linkB = (R, k0, nl, w) => { for (let j = 0; j < nl; j++) { rigPart(R, k0 + j); World.box(R.g, 0, -0.0225, 0, w, 0.045, 0.043, 0, FXC.CHN, [0.24, 0.25, 0.28]); } };
+
+  // the gantry: the rails, their hangers and end stops, the far rail's chain tray (part 0, still), the beam with its end trucks, its light
+  // line and stripes, the shelves of its chains (part 1, at the beam's x), the far rail's chain (60 links: from the middle of its travel
+  // to the beam's far end truck)
+  const GNL = 60;
+  function buildGantry() {
+    const R = FX.gant = rigB(2 + GNL), g = R.g, { W, NV, DK, CY, YL, RL } = FXC, GOLD = PAL.gold;
+    rigPart(R, 0); rigGl(R, METAL);
+    for (const s of [-1, 1]) { const z = s * GZ;
+      for (const [y, h, d] of [[4.22, 0.022, 0.16], [4.242, 0.13, 0.026], [4.372, 0.022, 0.16]]) World.box(g, 0, y, z, 2 * GX, h, d, 0, RL, [0.5, 0.53, 0.58]);   // (an I-rail)
+      for (const x of [-GX + 0.45, 0.05, GX - 0.45]) { World.box(g, x, 4.394, z, 0.22, 0.02, 0.2, 0, RL); cylA(g, [x, 4.6, z], 'y', 0.016, 0.4, 6, RL); }   // (its hangers)
+      rigGl(R, PAINT); for (const e of [-1, 1]) World.box(g, e * (GX + 0.025), 4.23, z, 0.05, 0.15, 0.17, 0, YL); rigGl(R, METAL); }
+    World.box(g, 0, 4.326, -GZ + 0.2, 2 * GX - 0.3, 0.008, 0.12, 0, [0.62, 0.64, 0.68]); for (let x = -GX + 0.5; x < GX - 0.3; x += 0.9) World.box(g, x, 4.31, -GZ + 0.14, 0.02, 0.016, 0.25, 0, RL);
+    rigPart(R, 1); rigGl(R, PAINT);
+    World.box(g, 0, BY, 0, 0.26, 0.22, 2 * GZ + 0.1, 0, [0.93, 0.94, 0.95]);   // the beam, white, its LED line under it, a gold and a cyan line down its faces, hazard bands at its ends
+    World.box(g, 0, BY - 0.006, 0, 0.07, 0.012, 2 * GZ - 0.5, 0, CY);
+    for (const s of [-1, 1]) { World.box(g, s * 0.131, BY + 0.068, 0, 0.004, 0.014, 2 * GZ - 0.3, 0, GOLD); World.box(g, s * 0.132, BY + 0.011, 0, 0.006, 0.014, 2 * GZ - 0.3, 0, CY);
+      for (let i = 0; i < 4; i++) World.box(g, 0, BY - 0.002, s * (GZ - 0.1 - i * 0.08), 0.264, 0.224, 0.05, 0, i % 2 ? DK : YL); }
+    for (const s of [-1, 1]) { const z = s * GZ; World.box(g, 0, BY + 0.05, z, 0.66, 0.17, 0.3, 0, NV); World.box(g, 0, BY + 0.13, z, 0.5, 0.012, 0.302, 0, CY);   // the end trucks under the rails
+      rigGl(R, MATTE); for (const e of [-0.24, 0.24]) cylA(g, [e, 4.292, z - s * 0.045], 'z', 0.05, 0.05, 12, DK); rigGl(R, PAINT); }
+    rigGl(R, SATIN); for (const f of [-1, 1]) { World.box(g, f * 0.19, BY + 0.158, 0, 0.12, 0.008, 2 * GZ - 0.4, 0, [0.7, 0.72, 0.76]); for (let z = -GZ + 0.3; z <= GZ - 0.29; z += 0.6) World.box(g, f * 0.17, BY + 0.11, z, 0.08, 0.05, 0.012, 0, [0.7, 0.72, 0.76]); }   // (the arms' chains' shelves)
+    World.box(g, 0.25, 4.2, -GZ + 0.2, 0.06, 0.06, 0.08, 0, DK);   // (the rail chain's bracket on the truck)
+    rigGl(R, MATTE); linkB(R, 2, GNL, 0.07);
+    const m = rigMesh(R, fxMat()); m.castShadow = false; scene.add(mainOnly(m)); FX.hide.push(m);
+  }
+  function poseBeam() {
+    const R = FX.gant, bx = FX.bx, xc = bx + 0.25, L1 = (2.9 + xc - 0.25) / 2; R.M[1].makeTranslation(bx, 0, 0); R.dirty[1] = 1;   // (its fixed end at x 0.25: the middle of the bracket's travel)
+    chainPose(R, 2, GNL, [0.25, 4.3585, -GZ + 0.2], [1, 0, 0], L1, 0.07, 2.9 + Math.PI * 0.07); rigPose(R);
+  }
+
+  // an arm: its carriage, the mast (a white tube stretched as it runs out, its navy rings sliding out of the sleeve), the turret and the
+  // shoulder, the upper arm, the forearm with the elbow, the wrist and its tool changer (parts 0 .. 9), its chain on the beam (41 links)
+  const ANL = 41, A_RING = [0.16, 0.42, 0.68, 0.94];
+  function buildArm(i) {
+    const A = ARM[i], R = A.R = rigB(10 + ANL), g = R.g, { W, NV, DK, CY, ST } = FXC, f = i ? -1 : 1;
+    const band = (a, b, r, col) => cone2(g, a, b, r, r, 20, col, true);
+    rigPart(R, 0); rigGl(R, PAINT);
+    for (const s of [-1, 1]) World.box(g, s * 0.15, -0.105, 0, 0.03, 0.16, 0.42, 0, NV);   // the carriage (its plates round the beam's flange, a light band), the sleeve
+    World.box(g, 0, -0.1, 0, 0.33, 0.1, 0.42, 0, NV, [0.14, 0.17, 0.3]); World.box(g, 0, -0.066, 0, 0.332, 0.012, 0.3, 0, CY);
+    World.box(g, 0, -0.4, 0, 0.2, 0.3, 0.2, 0, W); World.box(g, 0, -0.4, 0, 0.206, 0.04, 0.206, 0, NV);
+    for (const [dx, dz, w, d] of [[0.101, 0, 0.006, 0.026], [0, 0.101, 0.026, 0.006], [-0.101, 0, 0.006, 0.026], [0, -0.101, 0.026, 0.006]]) World.box(g, dx, -0.34, dz, w, 0.18, d, 0, CY);
+    World.box(g, f * 0.205, -0.03, 0, 0.04, 0.1, 0.05, 0, DK);   // (the chain's bracket up beside the beam)
+    rigPart(R, 1); World.box(g, 0, -1, 0, 0.13, 1.04, 0.13, 0, W);   // the mast (1 m: its matrix stretches it)
+    for (const [dx, dz, w, d] of [[0.066, 0, 0.004, 0.022], [0, 0.066, 0.022, 0.004], [-0.066, 0, 0.004, 0.022], [0, -0.066, 0.022, 0.004]]) World.box(g, dx, -0.92, dz, w, 0.8, d, 0, CY);
+    for (let k = 0; k < 4; k++) { rigPart(R, 2 + k); World.box(g, 0, -0.017, 0, 0.138, 0.034, 0.138, 0, NV); }
+    // the turret (its axis up; the shoulder's along local z = the joints' axis n)
+    rigPart(R, 6); cone2(g, [0, -0.08, 0], [0, 0, 0], 0.13, 0.13, 24, NV); band([0, -0.086, 0], [0, -0.072, 0], 0.133, CY); cone2(g, [0, -0.17, 0], [0, -0.07, 0], 0.082, 0.082, 16, W);
+    cone2(g, [0, -0.17, -0.11], [0, -0.17, 0.11], 0.1, 0.1, 24, W); cone2(g, [0, -0.17, -0.117], [0, -0.17, 0.117], 0.072, 0.072, 20, NV); band([0, -0.17, -0.112], [0, -0.17, -0.1], 0.102, CY);
+    // the upper arm (local y along it, z the joints' axis): white, a navy ring, its cable on the side away from the forearm
+    rigPart(R, 7); cone2(g, [0, 0, 0], [0, AL1, 0], 0.074, 0.064, 16, W); cone2(g, [0, 0.18, 0], [0, 0.24, 0], 0.079, 0.079, 16, NV);
+    rigGl(R, MATTE); cone2(g, [0, 0.12, -0.085], [0, AL1 - 0.12, -0.085], 0.016, 0.016, 6, [0.08, 0.08, 0.09]); rigGl(R, PAINT);
+    // the forearm, the elbow round its root (from the upper arm's plane to the forearm's), lights at both ends
+    rigPart(R, 8); cone2(g, [0, 0, 0], [0, AL2, 0], 0.056, 0.047, 14, W); cone2(g, [0, AL2 - 0.2, 0], [0, AL2 - 0.15, 0], 0.06, 0.06, 14, NV);
+    cone2(g, [0, 0, -OFF - 0.08], [0, 0, 0.075], 0.084, 0.084, 22, W); cone2(g, [0, 0, -OFF - 0.087], [0, 0, 0.082], 0.06, 0.06, 18, NV);
+    band([0, 0, -OFF - 0.07], [0, 0, -OFF - 0.058], 0.086, CY); band([0, 0, 0.055], [0, 0, 0.067], 0.086, CY);
+    rigGl(R, MATTE); cone2(g, [0, 0.12, 0.07], [0, AL2 - 0.12, 0.07], 0.014, 0.014, 6, [0.08, 0.08, 0.09]); rigGl(R, PAINT);
+    // the wrist (local y: the tool's way): a white ball, a navy ring, the dark changer with its light, its steel face
+    rigPart(R, 9); gAdd(g, new THREE.SphereGeometry(0.064, 14, 10), null, W); cone2(g, [0, 0.015, 0], [0, 0.055, 0], 0.056, 0.056, 16, NV);
+    cone2(g, [0, 0.055, 0], [0, 0.095, 0], 0.062, 0.062, 18, DK); band([0, 0.069, 0], [0, 0.081, 0], 0.064, CY); rigGl(R, METAL); cone2(g, [0, 0.095, 0], [0, WRL, 0], 0.05, 0.05, 16, ST);
+    rigGl(R, MATTE); linkB(R, 10, ANL, 0.055);
+    const m = rigMesh(R, FX.mats.arm); scene.add(mainOnly(m)); FX.hide.push(m);
+  }
+  // the pose to its joints (FX.bx: the beam): the carriage kept CGAP from the other's (they never pass), the mast run out no lower
+  // than mastMax lets it, the turret turned to the joints' axis n (level: the wrist OFF from the upper arm's plane), the elbow in that
+  // plane to the hint's side of the line from the shoulder to the wrist; out of reach the arm stretches toward it (J.miss: by how much).
+  // Right under its turret (closer than OFF) the plane keeps the way it had just outside it, and the turret its turn (no flip)
+  function solveArm(i) {
+    const A = ARM[i], p = A.p, J = A.J, bx = FX.bx, o = ARM[1 - i].p, c0 = clamp(i ? o.cz : p.cz, -CZM + CGAP, CZM), c1 = clamp(i ? p.cz : o.cz, -CZM, CZM - CGAP);
+    const cz = i ? Math.min(c1, c0 - CGAP) : Math.max(c0, c1 + CGAP), mast = Math.min(clamp(p.mast, 0, MASTM), mastMax(bx, cz)), yt = YS - mast;
+    J.cz = cz; J.mast = mast; J.yt = yt; J.sh.set(bx, yt - 0.17, cz);
+    J.u.copy(p.dir).normalize(); J.tip.copy(p.tip); if (p.rel) { J.tip.x += bx; J.tip.z += cz; }   // (a parked arm's from its carriage: it rides with the beam)
+    J.wr.copy(J.tip).addScaledVector(J.u, -(TL[A.tool] + WRL));
+    const dx = J.wr.x - J.sh.x, dz = J.wr.z - J.sh.z, r = Math.hypot(dx, dz), s = p.side || A.side, h0 = p.hint || _up;
+    let nx, nz, hx, hz, hl, off;
+    if (p.nAng != null) { nx = Math.cos(p.nAng); nz = Math.sin(p.nAng); }   // (on its way: the turret's turn given, eased from the start's to the end's)
+    else if (r > OFF + 1e-4) { const a = Math.atan2(dz, dx) + s * Math.acos(OFF / r); nx = Math.cos(a); nz = Math.sin(a); }
+    else if (r > 0.03) { nx = dx / r; nz = dz / r; }
+    else if (J.nOk) { nx = J.n.x; nz = J.n.z; }
+    else { const l = Math.hypot(h0.x, h0.z); if (l > 1e-3) { nx = -s * h0.z / l; nz = s * h0.x / l; } else { nx = 0; nz = s; } }   // (the plane along the hint)
+    if (p.nAng == null && r > OFF + 1e-4) { hx = dx - nx * OFF; hz = dz - nz * OFF; hl = Math.hypot(hx, hz); hx /= hl; hz /= hl; off = OFF; }
+    else { hx = s * nz; hz = -s * nx; hl = dx * hx + dz * hz; off = dx * nx + dz * nz; }   // (the forearm a little aslant when the wrist is off its plane's offset)
+    const qy = J.wr.y - J.sh.y, D0 = Math.hypot(hl, qy), D = clamp(D0, Math.abs(AL1 - AL2) + 0.02, AL1 + AL2 - 1e-3); J.miss = Math.max(0, D0 - (AL1 + AL2)); J.missMax = Math.max(J.missMax || 0, J.miss);
+    const ex = D0 > 1e-5 ? hl / D0 : 0, ey = D0 > 1e-5 ? qy / D0 : -1, a1 = (AL1 * AL1 - AL2 * AL2 + D * D) / (2 * D), h = Math.sqrt(Math.max(0, AL1 * AL1 - a1 * a1));
+    // (the elbow on the circle round the line from the shoulder to the wrist: at phi 0 or pi in the upright plane, to the hint's side
+    // (the hint square to the line: where it was); a move from one side to the other swings it round (armTo: phi given), the links'
+    // lengths kept)
+    let phi = p.phi; if (phi == null) { const sd = -ey * (h0.x * hx + h0.z * hz) + ex * h0.y, sg = Math.abs(sd) < 0.04 && J.sg ? J.sg : sd >= 0 ? 1 : -1; J.sg = sg; phi = sg > 0 ? 0 : Math.PI; }
+    const cph = Math.cos(phi), sph = Math.sin(phi), elx = ex * a1 - ey * h * cph, ely = ey * a1 + ex * h * cph; J.phi = phi;
+    J.nOk = true; J.n.set(nx, 0, nz); J.el0.set(J.sh.x + hx * elx + nx * h * sph, J.sh.y + ely, J.sh.z + hz * elx + nz * h * sph); J.el1.copy(J.el0).addScaledVector(J.n, OFF);
+    J.wre.set(J.sh.x + hx * ex * D + nx * off, J.sh.y + ey * D, J.sh.z + hz * ex * D + nz * off);
+    // (the tool's across: asked for, else the joints' axis, square to the tool; along the tool: the world's axis least along it)
+    const ac = p.ac || J.n, k = ac.x * J.u.x + ac.y * J.u.y + ac.z * J.u.z; J.x.set(ac.x - k * J.u.x, ac.y - k * J.u.y, ac.z - k * J.u.z);
+    if (J.x.lengthSq() < 1e-6) { const w = Math.abs(J.u.x) < 0.9; J.x.set(w ? 1 : 0, 0, w ? 0 : 1); J.x.addScaledVector(J.u, -J.x.dot(J.u)); } J.x.normalize();
+  }
+  // (how far a mast may run out with its carriage at (bx, cz): its turret (with the shoulder 0.17 m round its axis) kept 5 cm over the
+  // car on the table (its box, up on the lift with it) and over the lift's column; eased off over 12 cm round them. carBox: the car's
+  // box in the world, null with none)
+  function carBox() { const cv = cur; if (!cv) return null; const K = cv.kit, x = cv.root.position.x; return { x0: x + K.rear, x1: x + K.front, hw: K.hw, top: cv.v.grp.position.y + K.top }; }
+  function mastMax(bx, cz) {
+    let m = MASTM; const keep = (x0, x1, z0, z1, top) => { const d = Math.hypot(Math.max(0, x0 - 0.17 - bx, bx - x1 - 0.17), Math.max(0, z0 - 0.17 - cz, cz - z1 - 0.17));
+      if (d < 0.12) m = Math.min(m, lerp(clamp(YS - top - 0.34, 0, MASTM), MASTM, smooth(0, 0.12, d))); };
+    keep(LIFT.x - 0.21, LIFT.x + 0.21, LIFT.z - 0.17, LIFT.z + 0.17, 3.09);
+    for (const cv of liveCars()) { const K = cv.kit, x = cv.root.position.x; keep(x + K.rear, x + K.front, -K.hw, K.hw, cv.v.grp.position.y + K.top); }   // (its whole box: a tall nose (the off-roader's) is as high as its roof)
+    return m;
+  }
+  const _up = new V3(0, 1, 0), _ya = new V3(), _za = new V3(), _xa = new V3(), _m4 = new THREE.Matrix4();
+  const basisAt = (M, o, y, z) => { _xa.crossVectors(y, z).normalize(); _za.crossVectors(_xa, y); M.makeBasis(_xa, y, _za).setPosition(o); };
+  function poseArm(i) {
+    const A = ARM[i], R = A.R, J = A.J, bx = FX.bx; solveArm(i);
+    R.M[0].makeTranslation(bx, BY, J.cz); R.M[1].makeScale(1, Math.max(J.mast, 1e-3), 1).setPosition(bx, YS, J.cz);
+    A_RING.forEach((o, k) => { const y = J.yt + o; R.M[2 + k].makeTranslation(bx, y > YS - 0.03 ? YS + 0.03 : y, J.cz); });
+    R.M[6].makeRotationY(Math.atan2(J.n.x, J.n.z)).setPosition(bx, J.yt, J.cz);
+    basisAt(R.M[7], J.sh, _ya.subVectors(J.el0, J.sh).normalize(), J.n);
+    basisAt(R.M[8], J.el1, _ya.subVectors(J.wre, J.el1).normalize(), J.n);
+    _za.crossVectors(J.x, J.u); R.M[9].makeBasis(J.x, J.u, _za).setPosition(J.wre);
+    const sg = i ? -1 : 1, L1 = (CZM + 0.1 + sg * J.cz) / 2;   // (its chain: fixed in the beam's middle on its own face, the loop beyond the carriage)
+    chainPose(R, 10, ANL, [bx + (i ? -0.205 : 0.205), BY + 0.1885, 0], [0, 0, sg], L1, 0.07, CZM + 0.1 + Math.PI * 0.07);
+    R.dirty.fill(1); rigPose(R);
+    if (A.tool !== 'none') { const T = FX.tools[A.tool]; T.mesh.matrix.copy(R.M[9]).multiply(_m4.makeTranslation(0, WRL, 0)); T.mesh.matrixWorldNeedsUpdate = true; if (A.tool === 'gun') FX.hoseDirty = true; }
+    const park = !!A.p.rel; if (park === A.cast) { A.cast = !park; R.mesh.castShadow = !park; R.mesh.layers.set(park ? NOREFL : 0); shadowDirty = 2; }   // (parked up there: no shadow, nor an image in the floor)
+  }
+
+  // the tools: each built along +y (its working way) from its coupling plate at the origin, a collar under it; a scanner's bar along x
+  // (in its nest: out from the stand; under the collar no wider than the fork's mouth, 8 cm, but the heads that hang under the plate)
+  function toolGeo(k) {
+    const g = new World.GB(), gl = [], mark = (q) => gl.push([g.P.length / 3, q]), { W, NV, DK, ST, CY } = FXC, CH = [0.72, 0.74, 0.78], RD = [0.72, 0.1, 0.08], BK = [0.07, 0.07, 0.08];
+    const c = (y0, y1, r0, r1, col, n, open) => cone2(g, [0, y0, 0], [0, y1, 0], r0, r1, n || 16, col, open);
+    mark(METAL); c(0, 0.03, 0.058, 0.058, ST, 18); mark(PAINT); c(0.03, 0.042, 0.11, 0.11, NV, 24);   // (the coupling; the collar it sits on in its nest)
+    if (k === 'nozzle') { c(0.03, 0.12, 0.046, 0.046, W, 14); c(0.068, 0.093, 0.049, 0.049, NV, 14); c(0.12, 0.16, 0.034, 0.034, RD, 12); mark(METAL); c(0.15, 0.56, 0.022, 0.022, CH, 8); mark(PAINT); c(0.34, 0.375, 0.03, 0.03, W, 12); c(0.55, 0.61, 0.042, 0.042, RD, 14); c(0.61, 0.64, 0.036, 0.022, RD, 10); }
+    else if (k === 'brush') { c(0.03, 0.15, 0.065, 0.065, W, 16); c(0.085, 0.115, 0.068, 0.068, NV, 16); c(0.15, 0.19, 0.035, 0.035, DK, 10); c(0.19, 0.215, 0.16, 0.16, NV, 28);
+      mark(MATTE); gAdd(g, new THREE.CylinderGeometry(0.26, 0.235, 0.24, 40, 2), M4(0, 0.335, 0), (q, nr) => { if (nr[1] > 0.5) return [0.55, 0.78, 0.98]; if (nr[1] < -0.5) return [0.1, 0.22, 0.46];
+        const t = ((Math.atan2(q[2], q[0]) / TAU + 1) * 20) % 1, lo = q[1] > 0.04 ? 1.18 : 1; return t < 0.5 ? [0.05 * lo, 0.19 * lo, 0.45 * lo] : t < 0.72 ? [0.18 * lo, 0.52 * lo, 0.9 * lo] : [0.38 * lo, 0.7 * lo, 1.0]; }); }
+    else if (k === 'polisher') { c(0.025, 0.155, 0.072, 0.072, W, 18); c(0.085, 0.115, 0.075, 0.075, NV, 18); c(0.172, 0.197, 0.15, 0.15, DK, 24); mark(MATTE); c(0.195, 0.29, 0.175, 0.175, [1.0, 0.76, 0.1], 28); }
+    else if (k === 'scanner') { c(0.03, 0.13, 0.05, 0.05, W, 14); c(0.075, 0.1, 0.053, 0.053, NV, 14); c(0.13, 0.205, 0.028, 0.028, DK, 10);
+      World.box(g, 0, 0.205, 0, 0.48, 0.09, 0.12, 0, BK); World.box(g, 0, 0.203, 0, 0.485, 0.022, 0.125, 0, NV); World.box(g, 0, 0.295, 0, 0.44, 0.012, 0.04, 0, CY);
+      for (const s of [-1, 1]) World.box(g, 0, 0.25, s * 0.061, 0.44, 0.022, 0.006, 0, CY); }
+    else if (k === 'wrench') { c(0.03, 0.07, 0.056, 0.056, PAL.gold, 16); c(0.07, 0.24, 0.058, 0.058, NV, 16); c(0.23, 0.27, 0.046, 0.046, DK, 14); mark(METAL); c(0.27, 0.42, 0.02, 0.02, CH, 8); c(0.41, 0.5, 0.052, 0.056, CH, 14); }
+    else if (k === 'camera') { c(0.04, 0.195, 0.072, 0.072, DK, 14); c(0.06, 0.09, 0.075, 0.075, NV, 14); c(0.195, 0.24, 0.05, 0.05, DK, 16);
+      c(0.228, 0.242, 0.062, 0.062, [1.3, 1.9, 2.3], 20, true); c(0.24, 0.26, 0.03, 0.03, [1.5, 2.1, 2.5], 12); }
+    else if (k === 'gun') { c(0.025, 0.17, 0.064, 0.064, W, 18); c(0.065, 0.1, 0.068, 0.068, NV, 18); c(0.135, 0.147, 0.066, 0.066, CY, 18); c(0.17, 0.21, 0.046, 0.036, DK, 14);
+      mark(METAL); c(0.21, 0.32, 0.032, 0.07, [0.78, 0.8, 0.84], 20); cone2(g, [0.06, 0.16, 0], [0.1, 0.16, 0], 0.02, 0.02, 10, ST); gAdd(g, new THREE.SphereGeometry(0.024, 8, 6), M4(0.1, 0.16, 0), DK); }   // (its paint port low: under the plate when it is lifted off the fork)
+    const geo = g.geometry(), n = geo.attributes.position.count, ga = new Float32Array(n).fill(1); gl.forEach(([j, q], m) => ga.fill(q, j, m + 1 < gl.length ? gl[m + 1][0] : n));
+    geo.setAttribute('gloss', new THREE.BufferAttribute(ga, 1)); return geo;
+  }
+  const GUN_PORT = new V3(0.1, 0.16, 0);
+
+  // the stand ORODJA (a piece: it steps aside when it is in the way; the tools in its nests with it), its lights and the paint's band (a
+  // mesh of their own: their colours rewritten when a nest's state or the paint changes), its plate; the hose mast (a piece of its own)
+  const rkAt = (dr, a, y) => [RK.cx + (RK.r + dr) * Math.cos(a), y, RK.cz + (RK.r + dr) * Math.sin(a)];
+  function buildRack() {
+    const P = FREE.rack = piece(), g = P.g, { r, e0, e1, S } = RK, { W, NV, DK, CY, YL } = FXC, gl = (k) => gloss(P, k), BK = [0.05, 0.05, 0.06];
+    const slab = (q0, q1, y0, h, col, a0, a1) => arcSlab(g, RK.cx, RK.cz, r + q0, r + q1, a0 == null ? e0 : a0, a1 == null ? e1 : a1, y0, h, col);
+    P.near = 2.4;
+    gl(MATTE); slab(-0.38, 0.38, 0, 0.007, [0.16, 0.17, 0.19], e0 + 0.02, e1 - 0.02); gl(PAINT); slab(-0.42, -0.38, 0, 0.007, YL, e0 + 0.02, e1 - 0.02); slab(0.38, 0.42, 0, 0.007, YL, e0 + 0.02, e1 - 0.02);
+    for (const a of [e0, e1, (e0 + e1) / 2]) { const mid = a !== e0 && a !== e1;   // (the end frames: a navy foot, a white post at the back, a brace; a post in the middle)
+      if (!mid) { obox(g, rkAt(-0.29, a, 0.02), rkAt(0.33, a, 0.02), 0.1, 0.04, NV); obox(g, rkAt(-0.22, a, 0.05), rkAt(0.2, a, S - 0.32), 0.035, 0.035, W); }
+      obox(g, rkAt(0.27, a, 0.01), rkAt(0.27, a, S - 0.02), 0.055, 0.055, W); }
+    slab(0.285, 0.298, 0.17, S - 0.24, NV); slab(0.298, 0.308, 0.15, S - 0.2, W); slab(0.307, 0.311, 0.62, 0.05, NV); slab(0.307, 0.311, 0.7, 0.012, CY); slab(0.28, 0.286, S - 0.11, 0.012, CY);   // the back panel (navy; outside a white skin, a navy band, a light line)
+    gl(SATIN); slab(-0.27, 0.32, 0.12, 0.025, DK); gl(PAINT); slab(-0.29, -0.265, 0.12, 0.05, YL);   // the drip tray and its lip
+    // the nests' plate: whole behind the forks, before them cut by their slots (open to the loop), its light strip along its front edge
+    // between them; the low lip behind the nests
+    const cuts = [e0, ...RK.a.flatMap(a => [a + RK.SW, a - RK.SW]), e1];
+    slab(0.08, 0.18, S - 0.045, 0.045, NV); for (let j = 0; j < cuts.length; j += 2) { slab(-0.18, 0.08, S - 0.045, 0.045, NV, cuts[j], cuts[j + 1]); slab(-0.186, -0.18, S - 0.03, 0.016, CY, cuts[j], cuts[j + 1]); }
+    slab(0.15, 0.18, S, 0.06, W); slab(0.14, 0.19, S + 0.06, 0.022, NV);
+    // (the plate's board on the near end frame: a navy board, the plate on it facing out of the stand's end)
+    { const t0 = [-Math.sin(e0), 0, Math.cos(e0)], a = rkAt(-0.21, e0, 0.575), b = rkAt(0.27, e0, 0.575); obox(g, [a[0] + t0[0] * 0.025, 0.575, a[2] + t0[2] * 0.025], [b[0] + t0[0] * 0.025, 0.575, b[2] + t0[2] * 0.025], 0.012, 0.75, NV); }
+    // the nests: a fork's rubber pads along its slot's sides and across its end (the tool's collar sits on them); the paint canister on
+    // the tray under the gun's nest (white, navy bands, its lid, a fitting)
+    gl(MATTE); TOOLS.forEach((k, j) => { const a = RK.a[j], [x, , z] = rkAt(0, a, 0), w = RK.SW + 0.012;
+      for (const e of [-1, 1]) obox(g, rkAt(-0.17, a + e * w, S + 0.004), rkAt(0.083, a + e * w, S + 0.004), 0.024, 0.008, BK);
+      obox(g, rkAt(0.095, a - w - 0.008, S + 0.004), rkAt(0.095, a + w + 0.008, S + 0.004), 0.025, 0.008, BK);
+      FX.nests[k] = { j, a, x, z, st: 'in', blink: 0, v: null }; });
+    const ga = RK.a[6], [gx, , gz] = rkAt(0, ga, 0), y0 = 0.145; gl(PAINT); cylA(g, [gx, y0 + 0.2, gz], 'y', 0.13, 0.4, 24, W); for (const y of [y0 + 0.03, y0 + 0.37]) cylA(g, [gx, y, gz], 'y', 0.133, 0.03, 24, NV);
+    cylA(g, [gx, y0 + 0.42, gz], 'y', 0.11, 0.04, 20, DK); gl(METAL); { const f = rkAt(0.06, ga, 0); cylA(g, [f[0], y0 + 0.45, f[2]], 'y', 0.025, 0.06, 8, FXC.ST); }
+    BLOBS.push([...(([x, , z]) => [x, z])(rkAt(0, (e0 + e1) / 2, 0)), 1.9, 1.4, 0.45, -(e0 + e1) / 2 + Math.PI / 2, P]);
+    // (the lights: each nest's ring and its tab on the plate's front edge; the paint's band)
+    const L = new World.GB(); FX.liveR = {};
+    TOOLS.forEach((k) => { const N = FX.nests[k], v0 = L.P.length / 3; annulus(L, N.x, S + 0.009, N.z, 0.12, 0.135, 12, [1, 1, 1], N.a - 0.7, N.a + 0.7);   // (an arc behind the collar, a tab either side of the fork's mouth)
+      for (const e of [-1, 1]) obox(L, rkAt(-0.192, N.a + e * (RK.SW + 0.005), S - 0.022), rkAt(-0.192, N.a + e * (RK.SW + 0.021), S - 0.022), 0.012, 0.03, [1, 1, 1]); N.v = [v0, L.P.length / 3]; });
+    { const v0 = L.P.length / 3; cylA(L, [gx, y0 + 0.19, gz], 'y', 0.134, 0.13, 24, [1, 1, 1]); FX.liveR.band = [v0, L.P.length / 3]; }
+    const lg = L.geometry(); lg.attributes.color.setUsage(THREE.DynamicDrawUsage); lg.setAttribute('gloss', new THREE.BufferAttribute(new Float32Array(lg.attributes.position.count).fill(PAINT), 1));
+    const lm = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 }); lm.userData.gl = true; FX.live = new THREE.Mesh(lg, lm); P.root.add(mainOnly(FX.live));
+    // the plate: its name in the page's language (drawPlate: again when the language changes)
+    FX.plateC = document.createElement('canvas'); FX.plateC.width = 256; FX.plateC.height = 64; FX.plateT = new THREE.CanvasTexture(FX.plateC); FX.plateT.anisotropy = 4; drawPlate();
+    { const pm = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1), new THREE.MeshBasicMaterial({ map: FX.plateT, color: new THREE.Color(0.92, 0.92, 0.92) })), p = rkAt(0.03, e0, 0.66);
+      pm.position.set(p[0] - Math.sin(e0) * 0.0335, 0.66, p[2] + Math.cos(e0) * 0.0335); pm.rotation.y = -e0; pm.material.userData.noCube = true; P.root.add(mainOnly(pm)); }
+    // the hose mast behind the stand: a foot, a slim navy pole, a reel on top (its drum navy, cyan rims; its axis along the stand), the
+    // paint's line from the canister up to it, its hose down to the gun (FX.hose: drawn again when the gun moves)
+    const M = FREE.hose = piece(), h = M.g, m = rkAt(0.36, ga, 0), ax = [-Math.sin(ga), 0, Math.cos(ga)], RY = 4.0, rc = rkAt(0.34, ga, RY); M.near = 2.4;
+    gloss(M, PAINT); World.box(h, m[0], 0, m[2], 0.26, 0.03, 0.26, ga, DK); cylA(h, [m[0], 0.09, m[2]], 'y', 0.045, 0.12, 12, NV); cylA(h, [m[0], (RY + 0.12) / 2, m[2]], 'y', 0.032, RY + 0.12, 10, NV); World.box(h, m[0], 2.2, m[2], 0.07, 0.012, 0.07, ga, YL);
+    const rp = (o) => [rc[0] + ax[0] * o, RY, rc[2] + ax[2] * o]; cone2(h, rp(-0.06), rp(0.06), 0.17, 0.17, 24, NV); cone2(h, rp(-0.065), rp(0.065), 0.12, 0.12, 20, DK);
+    for (const o of [-0.062, 0.062]) cone2(h, rp(o - 0.005), rp(o + 0.005), 0.172, 0.172, 24, CY, true);
+    gloss(M, METAL); cone2(h, rp(-0.1), rp(0.1), 0.02, 0.02, 8, FXC.ST); cone2(h, [m[0], RY + 0.12, m[2]], rp(0), 0.02, 0.02, 8, NV);
+    gloss(M, SATIN); const fit = rkAt(0.06, ga, y0 + 0.48), sd = [ax[0] * 0.04, 0, ax[2] * 0.04], tw = (() => { const q = rkAt(-0.045, ga, 0); return [q[0] - rkAt(0, ga, 0)[0], 0, q[2] - rkAt(0, ga, 0)[2]]; })();
+    tube(h, [fit, rkAt(0.16, ga, y0 + 0.62), [rkAt(0.31, ga, 0.75)[0] + sd[0], 0.75, rkAt(0.31, ga, 0)[2] + sd[2]], [m[0] + sd[0] + tw[0], 1.4, m[2] + sd[2] + tw[2]], [m[0] + sd[0] + tw[0], RY - 0.6, m[2] + sd[2] + tw[2]], rp(0.08).map((v, q) => v + (q === 1 ? -0.02 : 0))], 0.014, [0.95, 0.42, 0.1], 48, 6);
+    FX.reelExit = new V3(...rkAt(0.15, ga, RY - 0.06));
+    FX.hose = hoseGeo(40, 6); const hm = new THREE.Mesh(FX.hose.geo, new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 })); hm.material.userData.gl = true; hm.frustumCulled = false; M.root.add(mainOnly(hm)); FX.hoseM = hm;   // (thin: no shadow, no image in the floor)
+    BLOBS.push([m[0], m[2], 0.5, 0.5, 0.6, 0, M]);
+  }
+  function drawPlate() {
+    const c = FX.plateC, g = c.getContext('2d'), w = c.width, h = c.height, tr = (s) => typeof Lang !== 'undefined' ? Lang.tr(s) : s;
+    g.fillStyle = '#1b2b5c'; g.fillRect(0, 0, w, h); g.fillStyle = '#47c6ff'; g.fillRect(10, h - 9, w - 20, 3);
+    g.fillStyle = '#f4f6fa'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; FX.plateTxt = tr('ORODJA'); g.fillText(FX.plateTxt, w / 2, h / 2 - 3, w - 30);
+    FX.plateT.needsUpdate = true; FX.plateLang = typeof Lang !== 'undefined' ? Lang.cur : 'sl';
+  }
+  // a hose: a tube through a few points, its rings written again when they move (n segments, m sides; its frames carried along it)
+  function hoseGeo(n, m) {
+    const geo = new THREE.BufferGeometry(), V = (n + 1) * m, idx = [];
+    for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) { const a = i * m + j, b = i * m + (j + 1) % m; idx.push(a, a + m, b, b, a + m, b + m); }
+    geo.setIndex(idx); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    const col = new Float32Array(V * 3); for (let i = 0; i < V; i++) col.set([0.95, 0.42, 0.1], i * 3); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setAttribute('gloss', new THREE.BufferAttribute(new Float32Array(V).fill(PAINT), 1));
+    geo.boundingSphere = new THREE.Sphere(new V3(2, 2, -2), 6); return { geo, n, m, r: 0.017 };
+  }
+  const _hc = new THREE.CatmullRomCurve3([new V3(), new V3()], false, 'centripetal'), _ht = new V3(), _hn = new V3(), _hb = new V3(), _hp = new V3();
+  function hoseSet(H, pts) {
+    _hc.points = pts; _hc.updateArcLengths(); const P = H.geo.attributes.position.array, N = H.geo.attributes.normal.array; _hn.set(0, 0, 1);
+    for (let i = 0; i <= H.n; i++) { const t = i / H.n; _hc.getPointAt(t, _hp); _hc.getTangentAt(t, _ht);
+      _hb.crossVectors(_ht, _hn); if (_hb.lengthSq() < 1e-6) _hb.crossVectors(_ht, _up); _hb.normalize(); _hn.crossVectors(_hb, _ht).normalize();   // (the frame carried on: no twist)
+      for (let j = 0; j < H.m; j++) { const a = j / H.m * TAU, c = Math.cos(a), s = Math.sin(a), o = (i * H.m + j) * 3, nx = _hn.x * c + _hb.x * s, ny = _hn.y * c + _hb.y * s, nz = _hn.z * c + _hb.z * s;
+        P[o] = _hp.x + nx * H.r; P[o + 1] = _hp.y + ny * H.r; P[o + 2] = _hp.z + nz * H.r; N[o] = nx; N[o + 1] = ny; N[o + 2] = nz; } }
+    H.geo.attributes.position.needsUpdate = H.geo.attributes.normal.needsUpdate = true; shadowDirty = Math.max(shadowDirty, 1);
+  }
+  // the hose to the gun's port: from the reel down beside the stand to the gun in its nest; held by an arm, from the reel up over the
+  // curtains' track (its far-front corner) and along the arm to the wrist
+  function poseHose() {
+    const T = FX.tools.gun, port = GUN_PORT.clone().applyMatrix4(T.mesh.matrix), E = FX.reelExit, ga = RK.a[6], held = ARM.find(A => A.tool === 'gun'); let pts;
+    if (!held) pts = [E.clone(), E.clone().add(new V3(0, -0.5, 0)), new V3(...rkAt(0.24, ga, 2.2)), new V3(...rkAt(0.24, ga, 1.2)), new V3(...rkAt(0.235, ga, 0.92)), port.clone().add(new V3(Math.cos(ga) * 0.06, -0.01, Math.sin(ga) * 0.06)), port];
+    else { const J = held.J, c4 = new V3(LX - LR, 0, -(LZ - LR)), out = _hb.subVectors(J.el0, J.sh.clone().lerp(J.wre, 0.5)).normalize().clone();
+      pts = [E.clone(), new V3(lerp(c4.x, E.x, 0.5), 3.97, lerp(c4.z, E.z, 0.5)), new V3(c4.x + (J.sh.x - c4.x) * 0.3, 3.92, c4.z + (J.sh.z - c4.z) * 0.3), J.sh.clone().addScaledVector(out, 0.18).add(new V3(0, 0.1, 0)), J.el0.clone().addScaledVector(out, 0.15), J.wre.clone().lerp(J.el1, 0.3).addScaledVector(out, 0.1), port.clone().addScaledVector(J.u, -0.05), port]; }
+    hoseSet(FX.hose, pts);
+  }
+  const NEST_C = { in: [0.3, 1.75, 0.55], out: [2.3, 0.82, 0.12], blink: [1.0, 3.4, 1.4] };
+  function stepNests(dt) {
+    let ch = FX.dirty.live; FX.dirty.live = false; const C = FX.live.geometry.attributes.color, a = C.array;
+    for (const k of TOOLS) { const N = FX.nests[k]; if (N.blink > 0) { N.blink = Math.max(0, N.blink - dt); ch = true; } }
+    if (!ch) return;
+    for (const k of TOOLS) { const N = FX.nests[k], b = N.blink > 0 ? 0.5 + 0.5 * Math.cos((1.2 - N.blink) * 15) : 0, c0 = NEST_C[N.st], c = N.st === 'in' && N.blink > 0 ? NEST_C.blink.map((v, q) => lerp(c0[q], v, b)) : c0;
+      for (let v = N.v[0]; v < N.v[1]; v++) a.set(c, v * 3); }
+    const pc = hexRgb(FX.paint); for (let v = FX.liveR.band[0]; v < FX.liveR.band[1]; v++) a.set(pc, v * 3);
+    const v0 = FX.nests[TOOLS[0]].v[0]; C.updateRange.offset = v0 * 3; C.updateRange.count = (FX.liveR.band[1] - v0) * 3; C.needsUpdate = true;
+  }
+
+  /* ---------------- the curtains ---------------- */
+  const LX = 3.0, LZ = 2.35, LR = 0.65, LY = 3.72, CT = LY - 0.1, HEM = 0.1, HT = HEM + 0.13;
+  const LSA = 2 * (LZ - LR), LSB = 2 * (LX - LR), LQ = Math.PI * LR / 2, PER = 2 * LSA + 2 * LSB + 4 * LQ;
+  const LM = { A1: LSA, c1: LSA + LQ / 2, c2: LSA + 1.5 * LQ + LSB, Cm: 1.5 * LSA + 2 * LQ + LSB, c3: 2 * LSA + 2.5 * LQ + LSB };   // (marks along it)
+  // (the loop from the front side's far end round: the front (+x), the near-front corner, the near side (+z), the rear (-x), the far side)
+  const LSEG = [['L', LX, -(LZ - LR), 0, 1, 1, 0, LSA], ['C', LX - LR, LZ - LR, 0], ['L', LX - LR, LZ, -1, 0, 0, 1, LSB], ['C', -(LX - LR), LZ - LR, Math.PI / 2],
+    ['L', -LX, LZ - LR, 0, -1, -1, 0, LSA], ['C', -(LX - LR), -(LZ - LR), Math.PI], ['L', -(LX - LR), -LZ, 1, 0, 0, -1, LSB], ['C', LX - LR, -(LZ - LR), 1.5 * Math.PI]];
+  function loopAt(s, o) { s = ((s % PER) + PER) % PER;
+    for (const g of LSEG) { const len = g[0] === 'L' ? g[7] : LQ;
+      if (s <= len + 1e-9) { if (g[0] === 'L') { o.x = g[1] + g[3] * s; o.z = g[2] + g[4] * s; o.nx = g[5]; o.nz = g[6]; } else { const th = g[3] + s / LR; o.nx = Math.cos(th); o.nz = Math.sin(th); o.x = g[1] + LR * o.nx; o.z = g[2] + LR * o.nz; } return o; }
+      s -= len; }
+    o.x = LX; o.z = -(LZ - LR); o.nx = 1; o.nz = 0; return o;
+  }
+  // the track (it never steps aside, nor casts): an aluminium channel round the loop, its slot, a gold and a navy line, rods up to the
+  // ceiling on mounting plates (beyond the beam's travel and the rails), the drive at the far-rear corner
+  function buildTrack() {
+    const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]), AL = [0.62, 0.64, 0.68], o = { x: 0, z: 0, nx: 0, nz: 0 }, q = { x: 0, z: 0, nx: 0, nz: 0 };
+    const st = []; let s0 = 0; for (const sg of LSEG) { const len = sg[0] === 'L' ? sg[7] : LQ, n = sg[0] === 'L' ? 1 : 10; for (let k = 0; k < n; k++) st.push(s0 + len * k / n); s0 += len; } st.push(PER);
+    gl(METAL);
+    for (let i = 0; i + 1 < st.length; i++) { loopAt(st[i], o); loopAt(st[i + 1], q); const P = (p, d, y) => [p.x + p.nx * d, y, p.z + p.nz * d], ins = [(o.x + q.x) / 2, LY, (o.z + q.z) / 2];
+      for (const [d0, d1, y0, y1, col] of [[-0.05, 0.05, LY + 0.045, LY + 0.045, AL], [-0.05, -0.05, LY - 0.045, LY + 0.045, AL], [0.05, 0.05, LY - 0.045, LY + 0.045, AL], [-0.05, -0.012, LY - 0.045, LY - 0.045, AL], [0.012, 0.05, LY - 0.045, LY - 0.045, AL],
+        [-0.012, 0.012, LY - 0.03, LY - 0.03, [0.05, 0.05, 0.06]], [0.0505, 0.0505, LY + 0.018, LY + 0.03, PAL.gold], [0.0505, 0.0505, LY - 0.012, LY + 0.004, FXC.NV]])
+        g.quadO(P(o, d0, y0), P(q, d0, y0), P(q, d1, y1), P(o, d1, y1), col, d0 === d1 ? [ins[0] - (o.nx + q.nx) * Math.sign(d0) * 0.5, LY, ins[2] - (o.nz + q.nz) * Math.sign(d0) * 0.5] : [ins[0], y0 + (y0 > LY ? -1 : 1), ins[2]]); }
+    for (const s of [LSA / 2, LM.c1, LSA + LQ + 1.2, LSA + LQ + LSB / 2, LSA + LQ + LSB - 1.2, LM.c2, LM.Cm, LM.c3, 2 * LSA + 3 * LQ + LSB + 1.2, 2 * LSA + 3 * LQ + 1.5 * LSB, 2 * LSA + 3 * LQ + 2 * LSB - 1.2, PER - LQ / 2]) { loopAt(s, o);
+      World.box(g, o.x, LY + 0.045, o.z, 0.12, 0.02, 0.12, Math.atan2(o.nz, o.nx), AL); cylA(g, [o.x, (LY + ROOM.h) / 2 + 0.03, o.z], 'y', 0.012, ROOM.h - LY - 0.06, 6, [0.5, 0.52, 0.56]); }
+    gl(PAINT); loopAt(LM.c3 + 0.05, o); World.box(g, o.x, LY + 0.05, o.z, 0.24, 0.15, 0.2, -Math.atan2(o.nx, o.nz), FXC.NV); World.box(g, o.x, LY + 0.115, o.z, 0.242, 0.012, 0.15, -Math.atan2(o.nx, o.nz), FXC.CY);
+    const geo = g.geometry(), n = geo.attributes.position.count, ga = new Float32Array(n).fill(1); gls.forEach(([j, k], m) => ga.fill(k, j, m + 1 < gls.length ? gls[m + 1][0] : n)); geo.setAttribute('gloss', new THREE.BufferAttribute(ga, 1));
+    const m = new THREE.Mesh(geo, fxMat()); m.receiveShadow = true; scene.add(mainOnly(m));
+  }
+  // the cloth: each stack's two panels in a buffer of its own, written again only while it moves (the rows, the colours with the
+  // fabric's density in their alpha, the normals over what is drawn; the faces only when a panel's columns change), drawn by one of two
+  // meshes on it: the parked stack opaque (a piece: it dissolves), the drawn cloth see-through (bunched almost opaque, open sheer; it
+  // fades where it is between the camera and the car). Both the same warm white: the change from one to the other unseen
+  const CROWS = [CT, CT - 0.08, 'b', CT - 0.08, ...Array.from({ length: 10 }, (_, j) => lerp(CT - 0.08, HT, (j + 1) / 10)), 'b', HT, (HT + HEM) / 2, HEM], CMAX = 640, CNR = CROWS.filter(y => y !== 'b').length, CNS = CNR - 3;
+  const CSTRIP = [2, 11, 3], CLC = [0.93, 0.92, 0.89], CLH = [0.96, 0.96, 0.95], CLM = [0.36, 0.38, 0.41];   // (the rows in each strip: the head band, the cloth, the hem; their colours)
+  function clothMat(transp, u) {
+    const m = new THREE.MeshPhongMaterial({ vertexColors: true, side: THREE.DoubleSide, shininess: 6, specular: 0x0b0b0b, color: 0xffffff, emissive: 0x1e1f21, transparent: transp, depthWrite: !transp });
+    m.onBeforeCompile = (sh) => { sh.uniforms.uHide = u; sh.uniforms.uRect = FX.rect; sh.uniforms.uCarD = FX.carD; roomPatch(sh);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec4 vClp;').replace('#include <project_vertex>', '#include <project_vertex>\nvClp = gl_Position;');
+      sh.fragmentShader = 'uniform float uHide; uniform vec4 uRect; uniform float uCarD; varying vec4 vClp;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n\tif (uHide > 0.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < uHide) discard;')
+        .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', transp ? ['float frC = 1.0 - abs(dot(normal, normalize(vViewPosition)));',
+          'vec2 qC = vClp.xy / vClp.w; float inC = smoothstep(uRect.x - 0.12, uRect.x + 0.04, qC.x) * (1.0 - smoothstep(uRect.z - 0.04, uRect.z + 0.12, qC.x)) * smoothstep(uRect.y - 0.12, uRect.y + 0.04, qC.y) * (1.0 - smoothstep(uRect.w - 0.04, uRect.w + 0.12, qC.y));',
+          'inC *= 1.0 - smoothstep(uCarD - 1.2, uCarD - 0.4, vViewPosition.z);',   // (only what is nearer than the car)
+          'gl_FragColor = vec4( outgoingLight, min(0.97, diffuseColor.a * (1.0 + 0.9 * frC * frC)) * (1.0 - 0.86 * inC) );'].join('\n') : 'gl_FragColor = vec4( outgoingLight, 1.0 );'); };
+    m.customProgramCacheKey = () => transp ? 'clothT' : 'clothO'; return m;
+  }
+  function buildCloth() {
+    for (let k = 0; k < 2; k++) {
+      const P = piece(), V = 2 * CMAX * CNR, geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage));
+      geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(V * 4), 4).setUsage(THREE.DynamicDrawUsage)); geo.setIndex(new THREE.BufferAttribute(new Uint16Array(2 * CMAX * CNS * 6), 1).setUsage(THREE.DynamicDrawUsage));
+      geo.boundingSphere = new THREE.Sphere(new V3(0, 1.9, 0), 5);
+      const mo = new THREE.Mesh(geo, clothMat(false, P.u)), mt = new THREE.Mesh(geo, clothMat(true, FX.ZERO)); mo.castShadow = true; mo.receiveShadow = true; mt.visible = false; mt.renderOrder = 3;
+      P.cloth = true; P.near = 2.0; FX.cloth.push({ P, geo, mo, mt, nc: [-1, -1], ix: 0 }); FX.hide.push(mo, mt);
+    }
+  }
+  // a panel's columns along the track from sa to sb, its fabric gathered at its end 'a' or 'b' (sl metres of track bunched up there):
+  // [s, pleat phase, depth, how gathered, where]. Open, fine soft pleats (a 0.26 m pitch, 7 cm deep); bunched, close and deeper; both
+  // a little uneven along it
+  const _cc = [];
+  function clothCols(out, sa, sb, o) {
+    out.length = 0; if (sb - sa < 0.03) return out;
+    const sl = o.sl, dens = (s) => { const d = o.stack === 'a' ? s - sa : sb - s, t = clamp((d - sl) / 0.5, 0, 1); return 1 - t * t * (3 - 2 * t); };
+    let s = sa, ph = o.ph;
+    for (;;) { const d = dens(s), irr = 1 + 0.22 * Math.sin(s * 2.3 + 1.1) * Math.cos(s * 0.83) + 0.12 * Math.sin(s * 5.7 + 0.4), lam = lerp(0.26, 0.1, d) * irr, A = lerp(0.07, 0.11, d) * (0.8 + 0.25 * Math.sin(s * 1.37 + 0.6) + 0.15 * Math.sin(s * 4.1));
+      const c = _cc[out.length] || (_cc[out.length] = { s: 0, ph: 0, A: 0, d: 0, x: 0, z: 0, nx: 0, nz: 0, lw: 0 }); c.s = s; c.ph = ph; c.A = A; c.d = d; c.lw = 0; loopAt(s, c); out.push(c);
+      if (s >= sb - 1e-6 || out.length >= CMAX) break; const ds = Math.min(0.03, lam / 10, sb - s); s += ds; ph += TAU * ds / lam; }
+    if (o.lag) for (const c of out) { const d = o.stack === 'b' ? c.s - sa : sb - c.s, w = Math.pow(Math.max(0, 1 - d / 1.4), 1.3); c.lw = (o.stack === 'b' ? 1 : -1) * w; }
+    return out;
+  }
+  // (the pleats shallower low down, the weighted hem as deep as the cloth's last row: its edge a soft wave)
+  const fyC = (y, d) => { const u = clamp((y - HT) / 1.4, 0, 1), lo = lerp(0.72, 0.9, d); return lo + (1.05 - lo) * u * (2 - u); };
+  const _lp = { x: 0, z: 0, nx: 0, nz: 0 };
+  // a panel's grid into a stack's buffer at vertex v (rows: the head band, the cloth, the hem; each its own colour and density; the
+  // folds' hollows (seen from outside the loop, where the camera always is) darker when bunched)
+  function clothWrite(B, cols, v, lag) {
+    const P = B.geo.attributes.position.array, C = B.geo.attributes.color.array, nc = cols.length; if (nc < 2) return v;
+    let strip = 0;
+    for (let ri = 0; ri < CROWS.length; ri++) { const y = CROWS[ri]; if (y === 'b') { strip++; continue; }
+      const hem = strip === 2, head = strip === 0, cl = head ? CLH : hem ? CLM : CLC;
+      for (const c of cols) { const sv = Math.sin(c.ph), d = c.d, o = c.A * (hem ? fyC(HT, d) : fyC(y, d)) * sv, p = c.lw && lag ? loopAt(c.s + c.lw * lag * Math.pow((CT - y) / (CT - HEM), 1.6), _lp) : c;
+        P[v * 3] = p.x + p.nx * o; P[v * 3 + 1] = y; P[v * 3 + 2] = p.z + p.nz * o;
+        const q = (1 - sv) / 2, b = (head ? 0.97 + 0.03 * Math.cos(c.ph) : hem ? 0.95 + 0.05 * Math.cos(c.ph) : 0.96 + 0.05 * Math.cos(c.ph)) * (1 - 0.16 * d * q * q), a = head ? lerp(0.85, 0.97, d) : hem ? lerp(0.78, 0.97, d) : lerp(0.5, 0.95, d);
+        C[v * 4] = cl[0] * b; C[v * 4 + 1] = cl[1] * b; C[v * 4 + 2] = cl[2] * b; C[v * 4 + 3] = a; v++; }
+    }
+    return v;
+  }
+  // (a panel's faces: its rows joined strip by strip, from vertex v0, nc columns)
+  function clothIndex(I, ix, v0, nc) {
+    if (nc < 2) return ix; let r0 = 0;
+    for (const rc of CSTRIP) { for (let r = 0; r + 1 < rc; r++) { const a0 = v0 + (r0 + r) * nc; for (let i = 0; i < nc - 1; i++) { const k = a0 + i; I[ix++] = k; I[ix++] = k + 1; I[ix++] = k + nc; I[ix++] = k + 1; I[ix++] = k + nc + 1; I[ix++] = k + nc; } } r0 += rc; }
+    return ix;
+  }
+  // (the normals over the faces drawn: no garbage, nothing past them)
+  function clothNormals(g, nv, ix) {
+    const P = g.attributes.position.array, N = g.attributes.normal.array, I = g.index.array; N.fill(0, 0, nv * 3);
+    for (let i = 0; i < ix; i += 3) { const a = I[i] * 3, b = I[i + 1] * 3, c = I[i + 2] * 3, ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], vx = P[c] - P[a], vy = P[c + 1] - P[a + 1], vz = P[c + 2] - P[a + 2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; N[a] += nx; N[a + 1] += ny; N[a + 2] += nz; N[b] += nx; N[b + 1] += ny; N[b + 2] += nz; N[c] += nx; N[c + 1] += ny; N[c + 2] += nz; }
+    for (let j = 0; j < nv * 3; j += 3) { const l = 1 / (Math.hypot(N[j], N[j + 1], N[j + 2]) || 1); N[j] *= l; N[j + 1] *= l; N[j + 2] *= l; }
+  }
+  const _ca = [], _cb = [];
+  function poseCloth() {
+    const t = clamp(FX.ck, 0, 1), mv = t > 0.02 && t < 0.98, lag = mv ? 0.45 * Math.sin(Math.PI * t) : 0, pk = t <= 0.02, m = lerp(LM.c3 - 0.3, LM.c3, smooth(0, 0.3, t));
+    // the far-rear stack (parked a little round its corner onto the rear side: narrower from the home view): P1 along the far side,
+    // round its front corner and along the front to the near-front corner; P2 along the rear to its middle. The near-rear stack: P3
+    // along the rear to its middle; P4 (the near side) stays bunched: that side is open. [from, to, the end gathered, the pleats' phase,
+    // its length parked: all of it bunched then]
+    const spans = [[[m, lerp(m + 0.5, LM.A1 + PER, t), 'a', 0.6, 0.5], [lerp(m - 0.49, LM.Cm, t), m, 'b', 2.1, 0.49]], [[LM.c2, lerp(LM.c2 + 0.55, LM.Cm, t), 'a', 1.3, 0.55], [LM.c2 - 0.55, LM.c2, 'b', 0.2, 0.55]]];
+    FX.cloth.forEach((B, k) => { let v = 0; const nc = [];
+      spans[k].forEach(([sa, sb, st, ph, l0], j) => { const pl = k === 1 && j === 1, cols = clothCols(j ? _cb : _ca, sa, sb, { stack: st, sl: pl ? l0 : lerp(l0, 0.06, t), ph, lag: pl ? 0 : lag }); nc.push(cols.length >= 2 ? cols.length : 0); v = clothWrite(B, cols, v, pl ? 0 : lag); });
+      const g = B.geo, I = g.index;
+      if (nc[0] !== B.nc[0] || nc[1] !== B.nc[1]) { B.nc = nc; B.ix = clothIndex(I.array, clothIndex(I.array, 0, 0, nc[0]), nc[0] * CNR, nc[1]); g.setDrawRange(0, B.ix); I.updateRange.offset = 0; I.updateRange.count = B.ix; I.needsUpdate = true; }
+      clothNormals(g, v, B.ix);
+      for (const [nm, w] of [['position', 3], ['normal', 3], ['color', 4]]) { const at = g.attributes[nm]; at.updateRange.offset = 0; at.updateRange.count = v * w; at.needsUpdate = true; }
+      B.mo.visible = pk; B.mt.visible = !pk;
+      if (pk) { B.P.box.makeEmpty(); const a = g.attributes.position.array; for (let i = 0; i < v; i++) B.P.box.expandByPoint(_hp.set(a[i * 3], a[i * 3 + 1], a[i * 3 + 2])); B.P.box.expandByScalar(0.05); B.P.boxH = B.P.box.clone().expandByScalar(0.06); } });
+    shadowDirty = 2;
+  }
+  // (each frame while drawn: the car's box on the screen and its depth, for the cloth's fade)
+  const _cr = new V3();
+  function clothFade() {
+    const cv = cur; if (!cv) { FX.rect.value.set(9, 9, 9, 9); return; } const K = cv.kit; camera.updateMatrixWorld(); let x0 = 9, y0 = 9, x1 = -9, y1 = -9;
+    for (const x of [K.rear, K.front]) for (const y of [K.bottom, K.top]) for (const z of [-K.hw, K.hw]) { _cr.set(x, y + lift, z).project(camera); x0 = Math.min(x0, _cr.x); x1 = Math.max(x1, _cr.x); y0 = Math.min(y0, _cr.y); y1 = Math.max(y1, _cr.y); }
+    FX.rect.value.set(x0, y0, x1, y1); FX.carD.value = -_cr.set(rig.tx, rig.ty, rig.tz).applyMatrix4(camera.matrixWorldInverse).z;
+  }
+
+  /* ---------------- the IR lamps ---------------- */
+  const LW = 0.8, LPH = 0.55, LRHO = 0.33, LFACE0 = Math.atan2(0.85, -0.52);
+  // (each: its way from its place in the row to where it dries (the row's +x end leaves first): along the row to its end, back past the
+  // curtains' far-rear stack between it and the drivetrain's things (the dolly, the crane, the engine stand), along the back, in through
+  // the far side; what it looks at there, its pole (H0 parked and on its way: low, the panel's top under the crane's boom and the
+  // pegboard's line; the last one's over the engine on its stand beside it), its tilt, its base's turn)
+  const LMP = { t: 0, glow: 0, L: [
+    { path: [[-3.55, -1.78], [-3.42, -1.78], [-3.42, -2.85], [2.0, -2.85], [2.15, -2.2], [2.3, -1.55]], aim: [1.2, -0.25], H0: 1.45, H: 2.4, tilt: 0.5, by: 0 },
+    { path: [[-3.95, -1.78], [-3.42, -1.78], [-3.42, -2.85], [1.05, -2.85], [1.05, -2.0]], aim: [0.95, 0], H0: 1.5, H: 2.5, tilt: 0.55, by: Math.PI / 2 },
+    { path: [[-4.35, -1.78], [-3.42, -1.78], [-3.42, -2.85], [-1.15, -2.85], [-1.15, -2.0]], aim: [-1.05, 0], H0: 1.45, H: 2.45, tilt: 0.52, by: Math.PI / 2 },
+    { path: [[-4.75, -1.78], [-3.42, -1.78], [-3.42, -2.85], [-1.85, -2.85], [-1.85, -2.05], [-2.2, -1.5]], aim: [-1.3, -0.25], H0: 1.74, H: 2.35, tilt: 0.48, by: 0 }] };
+  // a lamp: its base (a narrow X: the legs 30 degrees off its z, a hub, the lower pole), four castors (each a fork and a wheel), the upper
+  // pole with the yoke, the panel (a white housing, a navy band, cooling fins, dark glass), its bars (they glow); a glow over them
+  function buildLamps() {
+    const { W, NV, DK, ST } = FXC;
+    LMP.L.forEach((L, i) => {
+      const P = L.piece = piece(), R = L.R = rigB(12), g = R.g; P.near = 2.6; let s = 0; L.seg = [0]; for (let j = 1; j < L.path.length; j++) L.seg.push(s += Math.hypot(L.path[j][0] - L.path[j - 1][0], L.path[j][1] - L.path[j - 1][1])); L.len = s;
+      const lw = (L.aim[0] - L.path[L.path.length - 1][0]), lz = (L.aim[1] - L.path[L.path.length - 1][1]); L.face = Math.atan2(lw, lz);
+      rigPart(R, 0); rigGl(R, PAINT);
+      for (const [lx, lz2] of [[0.5, 0.866], [-0.5, 0.866], [0.5, -0.866], [-0.5, -0.866]]) obox(g, [lx * 0.06, 0.12, lz2 * 0.06], [lx * LRHO, 0.12, lz2 * LRHO], 0.05, 0.05, DK);
+      cone2(g, [0, 0.1, 0], [0, 0.22, 0], 0.07, 0.06, 14, NV); cone2(g, [0, 0.2, 0], [0, 1.3, 0], 0.036, 0.036, 10, NV); cone2(g, [0, 1.25, 0], [0, 1.33, 0], 0.05, 0.05, 12, DK); obox(g, [0.04, 1.29, 0], [0.1, 1.29, 0], 0.02, 0.02, DK);
+      for (let c = 0; c < 4; c++) { rigPart(R, 1 + c); rigGl(R, METAL); World.box(g, 0, 0.055, -0.012, 0.035, 0.065, 0.045, 0, ST); rigPart(R, 5 + c); rigGl(R, MATTE); cone2(g, [-0.016, 0, 0], [0.016, 0, 0], 0.045, 0.045, 12, [0.1, 0.1, 0.11]); cone2(g, [-0.017, 0, 0], [0.017, 0, 0], 0.02, 0.02, 8, [0.5, 0.52, 0.55]); }
+      rigPart(R, 9); rigGl(R, METAL); cone2(g, [0, 1.3, 0], [0, 2.6, 0], 0.025, 0.025, 8, ST);   // (the upper pole: down in the lower one) rigGl(R, PAINT); World.box(g, 0, 2.56, -0.08, LW + 0.16, 0.04, 0.05, 0, DK); for (const sx of [-1, 1]) World.box(g, sx * (LW / 2 + 0.06), 2.575, -0.02, 0.035, 0.05, 0.16, 0, DK);
+      rigPart(R, 10); World.box(g, 0, -LPH / 2, -0.07, LW, LPH, 0.1, 0, W); World.box(g, 0, LPH / 2 - 0.08, -0.07, LW + 0.012, 0.06, 0.102, 0, NV); World.box(g, 0, LPH / 2 - 0.1, -0.07, LW + 0.012, 0.012, 0.102, 0, PAL.gold);
+      for (let k = 0; k < 5; k++) World.box(g, 0, -LPH / 2 + 0.07 + k * 0.09, -0.135, LW - 0.1, 0.02, 0.03, 0, DK);
+      rigGl(R, METAL); World.box(g, 0, -LPH / 2 + 0.07, -0.014, LW - 0.08, LPH - 0.14, 0.012, 0, [0.12, 0.13, 0.15]);
+      rigPart(R, 11); rigGl(R, SATIN); L.bars = R.g.P.length / 3; for (let k = 0; k < 5; k++) cone2(g, [-(LW - 0.16) / 2, -LPH / 2 + 0.1 + k * (LPH - 0.24) / 4, 0.0], [(LW - 0.16) / 2, -LPH / 2 + 0.1 + k * (LPH - 0.24) / 4, 0.0], 0.021, 0.021, 10, [1, 1, 1]); L.bars1 = R.g.P.length / 3;
+      const m = rigMesh(R, new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 })); m.material.userData.gl = true; m.castShadow = true; P.root.add(m);
+      const sp = L.glowS = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff7a28, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); sp.scale.set(1.5, 1.1, 1); sp.renderOrder = 10; sp.visible = false; P.root.add(mainOnly(sp));
+      FX.hide.push(P.root);
+    });
+    poseLamps();
+  }
+  // where lamp L is at t (0 parked .. 1 drying; each starts a little after the one before it): along its way, its base turning to its
+  // drying turn, the head to what it lights, the pole up and the panel tilted at the end; its castors trail its way, its wheels roll
+  const _lq = new V3();
+  function lampAt(L, i, t) {
+    const d = 0.12, u = EZ.sine(clamp((t - i * d) / (1 - 3 * d), 0, 1)), s = u * L.len, n = L.path.length; let j = 1; while (j < n - 1 && L.seg[j] < s) j++;
+    const a = L.path[j - 1], b = L.path[j], f = clamp((s - L.seg[j - 1]) / Math.max(1e-6, L.seg[j] - L.seg[j - 1]), 0, 1), up = smooth(0.8, 1, u);
+    let dy = L.face - LFACE0; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+    return { x: lerp(a[0], b[0], f), z: lerp(a[1], b[1], f), mov: Math.atan2(b[0] - a[0], b[1] - a[1]), roll: s / 0.045, by: lerp(0, L.by, smooth(0.15, 0.85, u)), hy: LFACE0 + dy * smooth(0.55, 1, u), H: lerp(L.H0, L.H, up), tilt: lerp(0.04, L.tilt, up) };
+  }
+  function poseLamps() {
+    LMP.L.forEach((L, i) => { const q = lampAt(L, i, LMP.t), R = L.R, cb = Math.cos(q.by), sb = Math.sin(q.by);
+      R.M[0].makeRotationY(q.by).setPosition(q.x, 0, q.z);
+      [[0.5, 0.866], [-0.5, 0.866], [0.5, -0.866], [-0.5, -0.866]].forEach(([lx, lz], c) => { const r = LRHO - 0.03, wx = q.x + (lx * cb + lz * sb) * r, wz = q.z + (-lx * sb + lz * cb) * r;
+        R.M[1 + c].makeRotationY(q.mov).setPosition(wx, 0, wz); R.M[5 + c].makeRotationY(q.mov).multiply(_m4.makeRotationX(q.roll)).setPosition(wx + Math.sin(q.mov) * -0.03, 0.045, wz + Math.cos(q.mov) * -0.03); });
+      R.M[9].makeRotationY(q.hy).setPosition(q.x, q.H - 2.6, q.z);
+      R.M[10].makeRotationY(q.hy).multiply(_m4.makeRotationX(q.tilt)).setPosition(q.x, q.H, q.z); R.M[11].copy(R.M[10]); R.dirty.fill(1); rigPose(R);
+      lampBars(L); L.glowS.position.set(0, -0.03, 0.14).applyMatrix4(R.M[10]);
+      // (its box: the base, the pole, the panel where it is now)
+      const P = L.piece; P.box.makeEmpty(); P.box.expandByPoint(_lq.set(q.x - LRHO, 0, q.z - LRHO)).expandByPoint(_lq.set(q.x + LRHO, 0, q.z + LRHO));
+      for (const [px, py] of [[-LW / 2, -LPH], [LW / 2, -LPH], [-LW / 2, 0.05], [LW / 2, 0.05]]) P.box.expandByPoint(_lq.set(px, py, 0.05).applyMatrix4(R.M[10]));
+      P.box.expandByScalar(0.05); P.boxH = P.box.clone().expandByScalar(0.06); });
+  }
+  // (a lamp's bars: dark grey off, orange-white lit; its glow. Lit alone: only the bars' colours sent again)
+  const _lc = [0, 0, 0];
+  function lampBars(L, only) {
+    const k = LMP.glow, C = L.R.mesh.geometry.attributes.color, ca = C.array; _lc[0] = lerp(0.2, 3.4, k); _lc[1] = lerp(0.2, 1.25, k); _lc[2] = lerp(0.21, 0.35, k);
+    for (let v = L.bars; v < L.bars1; v++) ca.set(_lc, v * 3);
+    if (only) { C.updateRange.offset = L.bars * 3; C.updateRange.count = (L.bars1 - L.bars) * 3; C.needsUpdate = true; }
+    L.glowS.material.userData.op = 0.55 * k; L.glowS.visible = k > 0.01;
+  }
+  function* lampsTo(t, s) { const t0 = LMP.t; if (Math.abs(t - t0) < 1e-3) return; SFX.whoosh(0.3); yield* tween(s == null ? 3.2 : s, (e) => { LMP.t = lerp(t0, t, e); FX.dirty.lamps = true; }); LMP.t = t; FX.dirty.lamps = true; }
+  function lampGlow(k) { LMP.glow = clamp(k, 0, 1); FX.dirty.glow = true; }
+  function* glowTo(k, s) { const k0 = LMP.glow; if (Math.abs(k - k0) < 1e-3) return; yield* tween(s == null ? 0.6 : s, (e) => lampGlow(lerp(k0, k, e))); }
+
+  /* ---------------- the fixtures' moves (generators, as the shows' others): the beam, an arm to a pose (through a point on its way), a
+     tool from its nest and back, the curtains, the lamps ---------------- */
+  function setBeam(x) { FX.bx = clamp(x, -BXM, BXM); FX.dirty.beam = true; }
+  function* beamTo(x, s) { const x0 = FX.bx; x = clamp(x, -BXM, BXM); if (Math.abs(x - x0) < 1e-3) return; SFX.servo(s); yield* tween(s, (e) => setBeam(lerp(x0, x, e)), EZ.io); }
+  // (a pose's missing fields: its carriage 0.4 m out from the wrist, or beside the car (its side, 0.32 m off the body) when the wrist is
+  // down by the car or under it; never right over the wrist (the beam where it is now: 0.3 m off it at least, the turret's turn
+  // undefined there); its mast so the shoulder stands about 0.55 m over the wrist; the elbow up and out from the car's middle; its
+  // across as it was)
+  function poseFull(i, q, from) {
+    const A = ARM[i], f = from || A.p, p = Object.assign({}, f, q); p.rel = !!q.rel; p.tip = v3(q.tip); p.dir = v3(q.dir || f.dir).normalize(); p.hint = v3(q.hint) || new V3(0, 1, A.side * 0.6); p.ac = v3(q.ac); p.side = q.side || A.side;
+    if (!p.rel) { const wr = p.tip.clone().addScaledVector(p.dir, -(TL[A.tool] + WRL)), cb = carBox();
+      if (q.cz == null) { let cz = clamp(cb && wr.y < cb.top + 0.25 && wr.x > cb.x0 - 0.3 && wr.x < cb.x1 + 0.3 ? A.side * (cb.hw + 0.32) : wr.z + A.side * 0.4, -CZM, CZM); const dx = FX.bx - wr.x;
+        if (Math.hypot(dx, cz - wr.z) < 0.3) { const e = Math.sqrt(Math.max(0, 0.09 - dx * dx)); cz = Math.abs(wr.z + A.side * e) <= CZM ? wr.z + A.side * e : wr.z - A.side * e; }
+        p.cz = cz; }
+      if (q.mast == null) p.mast = clamp(ASH0 - wr.y - 0.55, 0, MASTM); }
+    p.cz = clamp(p.cz, -CZM, CZM); p.mast = clamp(p.mast, 0, MASTM); return p;
+  }
+  // (the elbow's side pose P would have: solved aside, the arm left as it was)
+  function phiOf(i, P) { const A = ARM[i], J = A.J, p0 = A.p, sg = J.sg, n = J.n.clone(), ok = J.nOk, mm = J.missMax; A.p = P; solveArm(i); const r = [J.phi, Math.atan2(J.n.z, J.n.x)]; A.p = p0; J.sg = sg; J.n.copy(n); J.nOk = ok; solveArm(i); J.missMax = mm; return r; }
+  const worldTip = (p, out) => { out.copy(p.tip); if (p.rel) { out.x += FX.bx; out.z += p.cz; } return out; };
+  // the arm to pose q in s seconds: the tip along a curve through via (a point; 'up': over the way, at least 2.9 m up and 0.3 m over
+  // the car's roof), the carriage, the mast, the tool's way, the elbow's side all eased together; a parked pose rides with the beam
+  // meanwhile. A carriage over the car or the column has its mast held up there (solveArm); when its way crosses them with the mast run
+  // out at both ends, the arm goes up first (the whole of it, as it is), across, then down
+  function* armTo(i, q, s, via) {
+    const A = ARM[i], P1 = poseFull(i, q, A.p), eff = (P) => Math.min(P.mast, mastMax(FX.bx, P.cz)); let mMid = MASTM;
+    if (!q.hop && !A.p.rel) { for (let j = 1; j < 16; j++) mMid = Math.min(mMid, mastMax(FX.bx, lerp(A.p.cz, P1.cz, j / 16)));
+      if (mMid < Math.min(eff(A.p), eff(P1)) - 0.05) { const up = (P) => { const t = worldTip(P, new V3()); t.y += eff(P) - mMid; return Object.assign({}, P, { rel: false, tip: t, mast: mMid, hop: true }); };
+        yield* armTo(i, up(A.p), s * 0.3); yield* armTo(i, up(P1), s * 0.4, via); yield* armTo(i, Object.assign({}, P1, { hop: true }), s * 0.3); return; } }
+    const P0 = Object.assign({}, A.p, { tip: A.p.tip.clone(), dir: A.p.dir.clone(), hint: (A.p.hint || _up).clone() }), a = new V3(), b = new V3(), c = new V3();
+    // (the elbow's swing: from where it is to the side the end pose has it on, the short way; half round, out to the arm's own side.
+    // The turret's turn eased the short way from the start's to the end's: no whip where the wrist passes close by its axis)
+    const ph0 = A.J.phi || 0, th0 = Math.atan2(A.J.n.z, A.J.n.x), [ph1, th1] = phiOf(i, P1), dth = Math.atan2(Math.sin(th1 - th0), Math.cos(th1 - th0));
+    let dph = Math.atan2(Math.sin(ph1 - ph0), Math.cos(ph1 - ph0)); if (Math.abs(dph) > Math.PI - 1e-3) dph = (Math.cos(ph0) * A.J.n.z * A.side >= 0 ? 1 : -1) * Math.PI;
+    let vp = null;
+    if (!via && Math.abs(P1.cz - P0.cz) < 0.05) { worldTip(P0, a); worldTip(P1, b); const sx = FX.bx, sz = P1.cz, ux = b.x - a.x, uz = b.z - a.z, l2 = ux * ux + uz * uz;   // (a way right under its turret (it would whip round): bent out round it)
+      if (l2 > 0.09) { const t = clamp(((sx - a.x) * ux + (sz - a.z) * uz) / l2, 0, 1), qx = a.x + ux * t - sx, qz = a.z + uz * t - sz, d = Math.hypot(qx, qz);
+        if (d < 0.4 && t > 0.05 && t < 0.95) { let px = qx, pz = qz; if (d < 0.05) { const l = Math.sqrt(l2); px = -uz / l; pz = ux / l; if (pz * A.side < 0) { px = -px; pz = -pz; } } const pl = Math.hypot(px, pz);
+          vp = new V3(sx + px / pl * 0.45, lerp(a.y, b.y, t), sz + pz / pl * 0.45); } } }
+    if (via === 'up') { worldTip(P0, a); worldTip(P1, b); if (a.distanceTo(b) > 0.6) { const cb = carBox(); vp = a.clone().lerp(b, 0.5); vp.y = Math.max(vp.y, a.y, b.y, 2.9, cb ? cb.top + 0.3 : 0); } } else if (via) vp = v3(via);   // ('up' for a short way: straight)
+    SFX.servo(s); const bx0 = FX.bx, vx = vp ? vp.x : 0, vw = (P0.rel ? 0.5 : 0) + (P1.rel ? 0.5 : 0);   // (the way's point rides with the beam as its ends do: a parked pose's)
+    yield* tween(s, (e) => { worldTip(P0, a); worldTip(P1, b); if (vp) vp.x = vx + (FX.bx - bx0) * vw;
+      if (vp) { c.copy(vp).multiplyScalar(2).addScaledVector(a, -0.5).addScaledVector(b, -0.5); const k = 1 - e; a.multiplyScalar(k * k).addScaledVector(c, 2 * k * e).addScaledVector(b, e * e); } else a.lerp(b, e);
+      const d = P0.dir.clone().lerp(P1.dir, e); if (d.lengthSq() < 1e-4) d.set(0.01, -1, 0); const h = P0.hint.clone().lerp(P1.hint, e);
+      A.p = { rel: false, cz: lerp(P0.cz, P1.cz, e), mast: lerp(P0.mast, P1.mast, e), tip: a.clone(), dir: d.normalize(), hint: h, ac: P1.ac || P0.ac, side: P1.side, phi: ph0 + dph * e, nAng: th0 + dth * e }; A.dirty = true; }, EZ.io);
+    A.p = P1; A.dirty = true;
+  }
+  // (folded under the beam: its tool first back in its nest)
+  function* armPark(i, s) { if (ARM[i].tool !== 'none') yield* toolPut(i, s); yield* armTo(i, parkPose(i), s == null ? 1.6 : s, 'up'); }
+  // the stand's ways (u: out from the stand's middle; the forks open the other way, to the loop). nestPose: the changer over nest k (dy
+  // over the coupling's seat; tool: what the arm holds then; out: slid that far out of the fork toward the loop), the elbow up (as at
+  // the gate: no swing between), the mast run out (a hand over the stand: the arm low under the curtains' track, its elbow under 3.1 m);
+  // its carriage where it reaches it: arm 1
+  // at the beam's far end, arm 0 as far that way as arm 1 lets it. gatePose: the tool's way in and out, inside the loop by the stand
+  // (0.4 m in from the beam: never right under its turret; clear of a lifted car's front corner), the arm hung from its mast run out
+  // (from there it crosses under the track)
+  const nestCz = (i) => i ? -CZM : Math.max(-CZM + CGAP, (ARM[1].p.rel ? -CZM : ARM[1].p.cz) + CGAP);
+  function nestPose(i, k, dy, tool, out) {
+    const N = FX.nests[k], ux = Math.cos(N.a), uz = Math.sin(N.a), o = out || 0;
+    return { tip: [N.x - ux * o, RK.yc + dy - TL[tool || 'none'], N.z - uz * o], dir: [0, -1, 0], cz: nestCz(i), mast: MASTM, hint: [0, 1, 0], ac: [ux, 0, uz] };
+  }
+  function gatePose(i, k, tool) { const N = FX.nests[k], ux = Math.cos(N.a), uz = Math.sin(N.a); return { tip: [BXM - 0.4, 2.15 - TL[tool || 'none'], clamp(N.z, -2.0, -1.6)], dir: [0, -1, 0], cz: nestCz(i), mast: MASTM, hint: [-0.35, 1, 0], ac: [ux, 0, uz] }; }
+  // (a tool to the arm: its material that never fades, its shadow and its image in the floor; the gun's hose out of the hose mast's
+  // piece with it; back in its nest: as the stand's)
+  function nestShow(k, on) { const a = FX.nestMesh.geometry.attributes.position, [v0, v1] = FX.tools[k].v;
+    if (on) a.array.set(FX.nestP.subarray(v0 * 3, v1 * 3), v0 * 3); else for (let v = v0 + 1; v < v1; v++) a.array.copyWithin(v * 3, v0 * 3, v0 * 3 + 3);
+    a.updateRange.offset = v0 * 3; a.updateRange.count = (v1 - v0) * 3; a.needsUpdate = true; }
+  function grab(i, k) { const T = FX.tools[k]; ARM[i].tool = k; FX.nests[k].st = 'out'; FX.dirty.live = true; T.mesh.castShadow = true; T.mesh.layers.set(0); T.mesh.visible = true; nestShow(k, false);
+    if (k === 'gun') { scene.add(FX.hoseM); FX.hoseM.material = FX.hoseMats[1]; FX.hoseDirty = true; } shadowDirty = 2; }
+  function drop(k) { const T = FX.tools[k]; T.mesh.matrix.copy(T.M0); T.mesh.matrixWorldNeedsUpdate = true; T.mesh.castShadow = false; T.mesh.layers.set(NOREFL); T.mesh.visible = false; nestShow(k, true); FX.nests[k].st = 'in'; FX.dirty.live = true;
+    if (k === 'gun') { FREE.hose.root.add(FX.hoseM); FX.hoseM.material = FX.hoseMats[0]; FX.hoseDirty = true; } shadowDirty = 2; }
+  function attach(i, k) { const A = ARM[i]; grab(i, k); A.p.tip = new V3().copy(A.p.tip).addScaledVector(A.p.dir, TL[k]); A.dirty = true; }
+  function detach(i) { const A = ARM[i], k = A.tool; A.tool = 'none'; A.p.tip = new V3().copy(A.p.tip).addScaledVector(A.p.dir, -TL[k]); drop(k); FX.nests[k].blink = 1.2; A.dirty = true; }
+  // arm i takes tool k from its nest: the beam to the stand, the arm down inside the loop by it (the gate), out over the nest, down onto
+  // the tool's coupling (a clunk: it is the arm's, the nest amber), the tool lifted off the fork's pads, slid out of the fork, up and back
+  // to the gate (s: how long it all takes, x 5 s); toolPut: back into its nest the same way (the nest green, a blink), the changer up
+  // off it and back to the gate. clearFor: arm 1 parked in arm 0's way along the beam to its far end, as fast (their gap kept)
+  function* clearFor(i, s) { if (i === 0 && ARM[1].p.rel && ARM[1].p.cz > -CZM + 0.01) yield* armTo(1, parkPose(1, -CZM), 1.2 * (s || 1)); }
+  function* toolPick(i, k, s) {
+    s = s || 1; if (ARM[i].tool !== 'none') yield* toolPut(i, s);
+    yield* par(beamTo(BXM, 1.0 * s), clearFor(i, s), armTo(i, gatePose(i, k), 1.5 * s, 'up'));
+    yield* armTo(i, nestPose(i, k, 0.3), 0.9 * s); yield* armTo(i, nestPose(i, k, 0), 0.45 * s); SFX.clunk(0.35); attach(i, k); yield* wait(0.15 * s);
+    yield* armTo(i, nestPose(i, k, LIFT_D, k), 0.25 * s); yield* armTo(i, nestPose(i, k, LIFT_D, k, SLIDE[k]), 0.55 * s);
+    yield* armTo(i, nestPose(i, k, 0.3, k, SLIDE[k]), 0.4 * s); yield* armTo(i, gatePose(i, k, k), 0.8 * s);
+  }
+  function* toolPut(i, s) {
+    const A = ARM[i], k = A.tool; if (k === 'none') return; s = s || 1;
+    yield* par(beamTo(BXM, 1.0 * s), clearFor(i, s), armTo(i, gatePose(i, k, k), 1.5 * s, 'up'));
+    yield* armTo(i, nestPose(i, k, 0.3, k, SLIDE[k]), 0.8 * s); yield* armTo(i, nestPose(i, k, LIFT_D, k, SLIDE[k]), 0.4 * s);
+    yield* armTo(i, nestPose(i, k, LIFT_D, k), 0.55 * s); yield* armTo(i, nestPose(i, k, 0, k), 0.25 * s); SFX.clunk(0.25); detach(i); SFX.ping(1568); yield* wait(0.15 * s);
+    yield* armTo(i, nestPose(i, k, 0.3), 0.45 * s); yield* armTo(i, gatePose(i, k), 0.8 * s);
+  }
+  function setPaint(hex) { FX.paint = hex; FX.dirty.live = true; }
+  function nestBlink(k, s) { FX.nests[k].blink = s || 1.2; FX.dirty.live = true; }   // (a nest's light blinks green: where a tool goes back)
+  function setCurtains(k) { FX.ck = clamp(k, 0, 1); FX.dirty.cloth = true; }
+  function* curtainsTo(k, s) { const k0 = FX.ck; if (Math.abs(k - k0) < 1e-3) return; SFX.servo(s == null ? 2.6 : s); sLoop('curt', 'bandpass', 900, 0.7, 0.05); yield* tween(s == null ? 2.6 : s, (e) => setCurtains(lerp(k0, k, e)), EZ.io); sLoop('curt', 'bandpass', 900, 0.7, 0); }
+  const fxParked = () => ARM.every(A => A.p.rel && A.tool === 'none' && Math.abs(A.p.cz - A.cz0) < 1e-3) && Math.abs(FX.bx - 2.4) < 1e-3 && FX.ck < 1e-3 && LMP.t < 1e-3 && LMP.glow < 1e-3;
+  // everything back to its place (a show cut short, a car to drive in), one thing after another: the lamps dark and the curtains
+  // bunched (the far side open for the lamps, the stand's corner for the arms), the lamps back in their row (their way along the back
+  // clear), the tools into their nests (arm 1's first: then arm 0 reaches its nests past it), the arms folded and the beam home
+  function* fxPark(s) {
+    s = s || 1; yield* par(glowTo(0, 0.3), curtainsTo(0, 1.6 * s)); yield* lampsTo(0, 2.0 * s);
+    for (const A of [ARM[1], ARM[0]]) if (A.tool !== 'none') yield* toolPut(A.i, s * 0.7);
+    yield* par(beamTo(2.4, 1.0 * s), armTo(1, parkPose(1), 1.4 * s, 'up'), armTo(0, parkPose(0), 1.4 * s, 'up'));
+  }
+  // at once (show(): a car set down; the pictures: _dbg.fxPose): o.bx, o.arms [pose | 'park' | 'keep', ...] (a pose's tool: in its hand), o.curtains,
+  // o.lamps, o.glow, o.paint
+  function fxSet(o) {
+    o = o || {};
+    if (o.arms) o.arms.forEach((q, i) => { const A = ARM[i]; if (q === 'keep') return; if (A.tool !== 'none') detach(i); if (!q || q === 'park') { A.p = parkPose(i); A.dirty = true; return; }
+      if (q.tool && q.tool !== 'none') { for (const B of ARM) if (B.tool === q.tool) detach(B.i); grab(i, q.tool); }
+      A.p = poseFull(i, q, A.p); A.dirty = true; });
+    if (o.bx != null) setBeam(o.bx); if (o.curtains != null) setCurtains(o.curtains); if (o.lamps != null) { LMP.t = clamp(o.lamps, 0, 1); FX.dirty.lamps = true; } if (o.glow != null) lampGlow(o.glow); if (o.paint != null) setPaint(o.paint);
+    for (const k of TOOLS) FX.nests[k].blink = 0; FX.dirty.live = true; stepFixtures(0);
+  }
+  const fxRest = () => fxSet({ arms: ['park', 'park'], bx: 2.4, curtains: 0, lamps: 0, glow: 0 });
+  // the fixtures each frame: what moved posed again (the beam first: the arms hang from it), the nests' lights, the plate's language
+  function stepFixtures(dt) {
+    if (FX.dirty.beam) { FX.dirty.beam = false; poseBeam(); for (const A of ARM) A.dirty = true; }
+    for (const A of ARM) if (A.dirty) { A.dirty = false; poseArm(A.i); }
+    if (FX.hoseDirty) { FX.hoseDirty = false; poseHose(); }   // (the gun moved: its hose after it)
+    if (FX.dirty.cloth) { FX.dirty.cloth = false; poseCloth(); }
+    if (FX.dirty.lamps) { FX.dirty.lamps = FX.dirty.glow = false; poseLamps(); } else if (FX.dirty.glow) { FX.dirty.glow = false; for (const L of LMP.L) lampBars(L, true); }
+    stepNests(dt);
+    if (typeof Lang !== 'undefined' && Lang.cur !== FX.plateLang) drawPlate();
+  }
+  function buildFixtures() {
+    FX.mats.arm = fxMat(FX.ZERO, 0x2c3138);
+    buildGantry(); buildArm(0); buildArm(1); buildRack(); buildTrack(); buildCloth(); buildLamps();
+  }
+  // (after the pieces are finished: the tools (their nests' with the stand's dissolve, the held ones' never), the first poses)
+  function finishFixtures() {
+    FX.mats.toolR = fxMat(FREE.rack.u); FX.mats.toolA = fxMat(FX.ZERO);
+    // (each tool a mesh of its own, drawn while an arm holds it (it casts then, and shows in the floor); the seven in their nests one
+    // mesh with the stand (they dissolve with it; too small to tell in the floor's mirror, under the plate's shadow), a held one's
+    // vertices folded to a point there)
+    let n = 0; const parts = [];
+    TOOLS.forEach((k) => { const N = FX.nests[k], geo = toolGeo(k), m = new THREE.Mesh(geo, FX.mats.toolA), X = new V3(Math.cos(N.a), 0, Math.sin(N.a)), Y = new V3(0, -1, 0), Z = new V3().crossVectors(X, Y);
+      m.matrixAutoUpdate = false; m.matrix.makeBasis(X, Y, Z).setPosition(N.x, RK.yc, N.z); m.matrixWorldNeedsUpdate = true; m.receiveShadow = true; m.visible = false; m.frustumCulled = false; scene.add(mainOnly(m));
+      FX.tools[k] = { mesh: m, M0: m.matrix.clone(), v: [n, n += geo.attributes.position.count] }; FX.hide.push(m); parts.push(geo.clone().applyMatrix4(m.matrix)); });
+    // (the nests' lights in it too, after the tools: their colours written again when a nest's state or the paint changes)
+    const at = [...TOOLS.map(k => FX.tools[k].v[0]), n], n0 = n; parts.push(FX.live.geometry); n += FX.live.geometry.attributes.position.count;
+    for (const k of TOOLS) FX.nests[k].v = FX.nests[k].v.map(v => v + n0); FX.liveR.band = FX.liveR.band.map(v => v + n0);
+    const ng = new THREE.BufferGeometry(); for (const [nm, w] of [['position', 3], ['normal', 3], ['color', 3], ['gloss', 1]]) { const a = new Float32Array(n * w); parts.forEach((g, j) => { a.set(g.attributes[nm].array, at[j] * w); }); ng.setAttribute(nm, new THREE.BufferAttribute(a, w)); }
+    parts.forEach(g => g.dispose()); ng.attributes.position.setUsage(THREE.DynamicDrawUsage); ng.attributes.color.setUsage(THREE.DynamicDrawUsage); ng.computeBoundingSphere(); FX.nestP = ng.attributes.position.array.slice();
+    FX.live.parent.remove(FX.live); FX.nestMesh = FX.live = new THREE.Mesh(ng, FX.mats.toolR); FX.nestMesh.receiveShadow = true; FREE.rack.root.add(mainOnly(FX.nestMesh)); FX.dirty.live = true;
+    FX.hoseMats = [FX.hoseM.material, fxMat()];   // (the hose: as the hose mast's piece; held, never fading)
+    for (const B of FX.cloth) { B.P.root.add(B.mo, B.mt); B.P.box.makeEmpty(); B.P.boxH = new THREE.Box3(); }
+    stepFixtures(0);
+    { const H = FREE.hose; FX.hose.geo.computeBoundingBox(); H.box.setFromObject(H.root).expandByScalar(0.05); H.boxH = H.box.clone().expandByScalar(0.06); }   // (its hose posed now: the box it takes up)
+  }
+
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
   // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): a pass (REF.gm) then writes the image again into REF.gt
   // with each texel's gap in its alpha (how far over the floor the reflected point is), so the floor's taps read both, filtered
@@ -3563,6 +4257,7 @@ const Garage3D = (function () {
       // away at once: the car pulls out the instant the arrow is tapped, the camera easing home (the lift is down and its arms stowed:
       // every show ends so; after one cut short they go down first)
       if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(old, false);
+      if (!fxParked()) yield* fxPark(0.8);   // (the fixtures out of the lane: the lamps in their row, the curtains bunched)
       if (old) {
         engStart(old.M); lamps(old, 1, 0.3); old.shake = 0.6; eng.locked = false; eng.thr = 1;
         puffSmoke(old, 3, old.spec.cond.engine < 0.5);
@@ -3953,7 +4648,7 @@ const Garage3D = (function () {
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1420);
     camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.25, 700); camera.layers.enable(NOREFL);
     makeTextures(); makeLightTextures();
-    buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor(); buildOutside(); buildPost();
+    buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildFixtures(); buildDecor(); finishFixtures(); buildOutside(); buildPost();
     // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is (HDR: half-float, the lamps
     // just over 1 in it while it is made: brighter, the paint's highlights would glow and the glass go white; the cube's depth is 16-bit:
     // near 0.5)
@@ -3967,7 +4662,7 @@ const Garage3D = (function () {
       if (o.visible && (txt.includes(m.map) || (m.userData && m.userData.noCube))) { o.visible = false; hid.push(o); }
       else if (m.map === TX.deck) { dim.push([m, m.color.clone()]); m.color.multiplyScalar(0.5); } });
     if (signGlow && signGlow.visible) { signGlow.visible = false; hid.push(signGlow); }
-    for (const o of [LIFT.piece.root, LIFT.mesh]) if (o.visible) { o.visible = false; hid.push(o); }   // (nor the lift, 1.7 m off: gone from the far side's view, its ghost would stay in the glass)
+    for (const o of [LIFT.piece.root, LIFT.mesh, ...FX.hide]) if (o.visible) { o.visible = false; hid.push(o); }   // (nor the lift, 1.7 m off: gone from the far side's view, its ghost would stay in the glass; nor the fixtures that move)
     cc.update(renderer, scene); REF.k.value = rk; lampMat.color.copy(lc); scene.remove(cc);
     for (const o of hid) o.visible = true; for (const [m, c] of dim) m.color.copy(c);
     env = cubeRT.texture; ENVU.value = env;
@@ -3991,6 +4686,7 @@ const Garage3D = (function () {
   function show(spec) {
     if (cur) freeCar(cur);
     if (lift || LIFT.on || LIFT.s || LIFT.c !== LIFT.c0) { lift = 0; Object.assign(LIFT, { s: 0, on: false, plan: null, c: LIFT.c0 }); poseLift(); }   // (the lift down, its arms stowed)
+    if (!fxParked()) fxRest();   // (the fixtures parked: the tools in their nests, the arms folded, the curtains bunched, the lamps in their row)
     cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2;
     renderer.compile(scene, camera);   // (the shaders of what is hidden for now too: the lamps' glows, the sparks; no stutter when they show)
     planAhead(cur);
@@ -4001,6 +4697,7 @@ const Garage3D = (function () {
     runTasks(dt * Math.max(speed, busy > 1 ? 1.8 : 1) * fast);   // (more shows waiting: this one hurries)
     if (cur) idleSmoke(cur, dt);
     for (const cv of liveCars()) poseCar(cv, dt);
+    stepFixtures(dt);
     engFrame(dt);
     puffs.update(dt); sparks.update(dt); stepFlames(dt); stepGlints(dt);
     motes.material.uniforms.uT.value = time;
@@ -4064,7 +4761,32 @@ const Garage3D = (function () {
         return { posts: pieces.filter(p => p.lift).length, x: LIFT.x, z: LIFT.z, box: [b.min.toArray(), b.max.toArray()], raw: +zr.toFixed(3), arms: +LIFT.s.toFixed(3), carriage: +LIFT.c.toFixed(3), on: LIFT.on, table: +tt.position.y.toFixed(3),
           lane: +(-Math.max(zm(LIFT.cmesh), zm(LIFT.mesh))).toFixed(3), gone: +LIFT.piece.k.toFixed(3), plan: LIFT.plan }; },
       raise(h) { if (!cur) return; Object.assign(LIFT, { plan: liftPlan(cur), s: 1, on: true }); setLift(h); },
-      LIFT, PAD: { h: PADH, min: PMIN, cmin: CMIN }, armPose, liftPlan, planG, poseLift },
+      LIFT, PAD: { h: PADH, min: PMIN, cmin: CMIN }, armPose, liftPlan, planG, poseLift,
+      // (the fixtures: the beam's x, each arm (its carriage, mast, tool, parked, its lowest point, where its tip is, how far out of reach),
+      // the nests (in / out) and their lights' colour, the plate's text, the curtains (0 parked .. 1 drawn), the lamps (0 parked .. 1
+      // drying) and their glow, the paint; lane: the nearest any of the standing fixtures comes to the cars' lane (|z|, under 2 m up);
+      // gone: the fixtures' pieces stepped aside now)
+      get fx() { const low = (m) => { const a = m.geometry.attributes.position.array; let y = 9; for (let i = 1; i < a.length; i += 3) y = Math.min(y, a[i]); return +y.toFixed(3); };
+        const near = (m, M) => { M = M || m.matrixWorld; const a = m.geometry.attributes.position.array, v = new V3(), ix = m.geometry.index, n = m.geometry.drawRange.count < Infinity ? m.geometry.drawRange.count : ix ? ix.count : a.length / 3; let z = 9;
+          for (let i = 0; i < n; i++) { const j = ix ? ix.array[i] : i; v.set(a[j * 3], a[j * 3 + 1], a[j * 3 + 2]).applyMatrix4(M); if (v.y < 2) z = Math.min(z, Math.abs(v.z)); } return z; };
+        let lane = 9; for (const p of [FREE.rack, FREE.hose, ...FX.cloth.map(B => B.P), ...LMP.L.map(L => L.piece)]) p.root.traverse(o => { if (o.isMesh && o.visible) lane = Math.min(lane, near(o)); });
+        for (const k of TOOLS) if (FX.nests[k].st === 'in') lane = Math.min(lane, near(FX.tools[k].mesh, FX.tools[k].mesh.matrix));
+        const col = (k) => { const N = FX.nests[k], c = FX.live.geometry.attributes.color.array, i = N.v[0] * 3; return c[i + 1] > c[i] * 1.5 ? 'green' : c[i] > c[i + 1] * 1.5 ? 'amber' : '?'; };
+        return { beam: +FX.bx.toFixed(3), arms: ARM.map(A => ({ cz: +A.J.cz.toFixed(3), mast: +A.J.mast.toFixed(3), tool: A.tool, parked: !!A.p.rel, low: low(A.R.mesh), tip: A.J.tip.toArray().map(v => +v.toFixed(3)), miss: +A.J.miss.toFixed(3), cast: A.R.mesh.castShadow, refl: !!(A.R.mesh.layers.mask & 1) })),
+          rack: { nests: TOOLS.reduce((o, k) => (o[k] = FX.nests[k].st, o), {}), leds: TOOLS.reduce((o, k) => (o[k] = col(k), o), {}), plate: FX.plateTxt }, curtains: +FX.ck.toFixed(3), lamps: +LMP.t.toFixed(3), glow: +LMP.glow.toFixed(3),
+          paint: FX.paint, lane: +lane.toFixed(3), parked: fxParked(), gone: pieces.filter(p => (p === FREE.rack || p === FREE.hose || p.cloth || LMP.L.some(L => L.piece === p)) && p.k > 0.5).length }; },
+      // (any pose at once, for the pictures: { bx, arms: [pose | 'park', ...] (a pose's tool: in its hand), curtains, lamps, glow, paint })
+      fxPose(o) { fxSet(o); },
+      // (a short play of the fixtures through the shows' queue, for the tests: 'tool' arm i (0) takes tool k (the camera) and puts it
+      // back, the arms parked; 'curtains' drawn and bunched again, 'lamps' rolled in, lit, dark, rolled back; fxLog: what was seen half-way
+      // (the most an arm was out of reach on its way))
+      fxDemo(kind, o) { const L = this.fxLog = []; o = o || {}; return play(function* () {
+        if (kind === 'tool') { const i = o.arm || 0, k = o.tool || 'camera'; ARM[i].J.missMax = 0;
+          yield* toolPick(i, k); L.push({ held: ARM[i].tool, nest: FX.nests[k].st, miss: ARM[i].J.missMax });
+          yield* toolPut(i); L.push({ held: ARM[i].tool, nest: FX.nests[k].st, miss: ARM[i].J.missMax }); yield* par(beamTo(2.4, 1), armPark(0), armPark(1)); }
+        else if (kind === 'curtains') { yield* curtainsTo(1); L.push({ k: FX.ck }); yield* curtainsTo(0); }
+        else if (kind === 'lamps') { yield* lampsTo(1); yield* glowTo(1); L.push({ t: LMP.t, glow: LMP.glow }); yield* glowTo(0); yield* lampsTo(0); } }); },
+      fxLog: [], FX, ARM, LMP, RK, TOOLS, SLIDE, nestPose, gatePose, mastMax, carBox, loop: { LX, LZ, LR, LY } },
     get renderer() { return renderer; }, get camera() { return camera; }, get scene() { return scene; },
   };
 })();
