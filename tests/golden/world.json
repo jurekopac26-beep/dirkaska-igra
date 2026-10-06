@@ -639,15 +639,15 @@
  },
  "toronto": {
   "meshes": 247,
-  "verts": 355665,
+  "verts": 358275,
   "instances": 3578,
   "props": 633,
   "crowd": 785,
-  "world": "c51b483f",
+  "world": "91e49797",
   "propsHash": "35e949d6",
   "floor": "55644925/5852",
   "groups": {
-   "-:MeshLambertMaterial": "12530750",
+   "-:MeshLambertMaterial": "f6dbee73",
    "-:MeshBasicMaterial": "d7139b92",
    "-:MeshPhongMaterial": "917393b4",
    "toSky:MeshLambertMaterial": "b1a79441",
