@@ -17,6 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     farm: [405, 60], river: [[262, 322], [287, 299], [306, 270], [321, 238], [333, 206], [340, 182]],
     stand2: [[222, 148], [192, 92]],
     pit: [15.5, -238, 80, -57],   // pit lane beside the straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pitRow: [-152, 44],           // the first and the last of the crews' boxes (the 13 crews in the first 13 of them)
     hill: [[250, 226, 20, 2.2]],   // a low grassy rise between the tongue and the terrace: [x, z, radius, height]
     plateau: { s0: 66, s1: 292, off: 5.5, h: 2.3 },   // raised lawn filling the bottom of the V behind a curved concrete wall (metres from the start line, beyond the inner barrier)
     lake: [[-420,-420],[640,-420],[640,-96],[470,-92],[410,-84],[385,-80],[355,-83],[325,-80],[296,-72],[262,-74],[225,-88],[190,-94],[160,-96],[122,-100],[84,-90],[48,-80],[18,-68],[-6,-46],[-22,-18],[-28,12],[-40,42],[-70,70],[-150,96],[-420,110]],

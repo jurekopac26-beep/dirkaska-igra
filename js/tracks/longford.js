@@ -34,7 +34,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     bumps: [{ at: 0.30421, h: 0.45, w: 5 }],   // the level crossing on the Tannery Straight: the rails a little up on the road, the cars go light
     // the pits as from 1959: on the right of the Pit Straight past Mountford, behind a white line ([centre offset to the right, from, to, the
     // player's box, a long way in] metres from the start line), the crews' boxes from the first to the last
-    pit: [12, -170, 210, -35, 70], pitRow: [-95, 25],
+    pit: [12, -170, 210, -30, 70], pitRow: [-95, 25],
     // walls close to the road (metres after the start line, side, metres past the edge): the S-bend's abutments under the viaduct, the parapets
     // of the two wooden bridges, the houses and fences of the town round the street corner
     walls: [[1152, 1194, -1, 1.4], [1152, 1194, 1, 1.4], [1429, 1527, -1, 0.9], [1429, 1527, 1, 0.9],

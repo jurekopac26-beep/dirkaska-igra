@@ -832,11 +832,11 @@ const World = (function () {
       if (box0++ >= 13) continue;                                                                   // a crew for each of the 13 cars
       const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5;
       const mine = fdp[3] != null && Math.abs(q + 5 - fdp[3]) < 1;                                 // the player's box: its crew is animated by the renderer
-      if (mine) { const sb = T.startS + q + 5, yc = [0.98, 0.82, 0.12];
-        out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, p.o) }; if (Y) out.pitBox.y = Y(sb);
-        for (const [d0, d1, l0, l1] of [[-3.2, 3.2, p.o - 2.6, p.o - 2.35], [-3.2, 3.2, p.o + 2.35, p.o + 2.6], [-3.2, -2.95, p.o - 2.6, p.o + 2.6], [2.95, 3.2, p.o - 2.6, p.o + 2.6]]) {   // yellow stop box on the lane
-          const A = atSf(sb + d0, l0), Bq = atSf(sb + d1, l0), Cq = atSf(sb + d1, l1), D = atSf(sb + d0, l1);
-          gp.quadUp([A[0], yS(0.036, sb + d0), A[1]], [Bq[0], yS(0.036, sb + d1), Bq[1]], [Cq[0], yS(0.036, sb + d1), Cq[1]], [D[0], yS(0.036, sb + d0), D[1]], [yc, yc, yc, yc]); } }
+      if (mine) { const sb = T.startS + q + 5, yc = [0.98, 0.82, 0.12], bp = T.bayPose(fdp[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a);
+        out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; if (Y) out.pitBox.y = Y(sb);
+        const bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, bp.o + u * sa + v * ca); return [x, yS(0.036, s), z]; };   // (u along the stopped car, v to its right)
+        for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])   // yellow stop box on the apron, turned in like the car
+          gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
       for (let r = 0; r < 2; r++) for (let m = 0; m < 4; m++) { if (R() < 0.12 || mine) continue; R(); R(); }   // (the draws of the old static crews stay, so the scenery after them is unchanged; the crews are the renderer's now)
       forestPitKit(scen.get(cx, cz), T.startS + q, k, base, p.wall, mine);
       const oc = atSf(T.startS + q + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame
@@ -21826,9 +21826,10 @@ const World = (function () {
         const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5;
         const mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, yb = hyS(s0 + 5);
         if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12];
-          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, p.o) };
-          for (const [d0, d1, l0, l1] of [[-3.2, 3.2, p.o - 2.6, p.o - 2.35], [-3.2, 3.2, p.o + 2.35, p.o + 2.6], [-3.2, -2.95, p.o - 2.6, p.o + 2.6], [2.95, 3.2, p.o - 2.6, p.o + 2.6]])   // yellow stop box on the lane
-            gp.quadUp(at(sb + d0, l0, 0.036), at(sb + d1, l0, 0.036), at(sb + d1, l1, 0.036), at(sb + d0, l1, 0.036), [yc, yc, yc, yc]); }
+          const bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a), bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, bp.o + u * sa + v * ca); return [x, hyS(s) + 0.036, z]; };
+          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a };
+          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])   // yellow stop box on the apron, turned in like the car
+            gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
         if (!PER) pitKit(scen.get(cx, cz), s0, k, base, p.wall, mine);
         else {   // the 1930s: a timber pit stall at the back of the apron (a counter, a roof on four posts, the number board), fuel churns and spare wheels
           const g = scen.get(cx, cz), wd = [0.5, 0.39, 0.27], wdL = [0.62, 0.5, 0.35], f0 = base + 9;
@@ -24039,9 +24040,10 @@ const World = (function () {
         const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5, g = scen.get(cx, cz);
         const mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, yb = hyS(s0 + 5);
         if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12];
-          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, p.o) };
-          for (const [d0, d1, l0, l1] of [[-3.2, 3.2, p.o - 2.6, p.o - 2.35], [-3.2, 3.2, p.o + 2.35, p.o + 2.6], [-3.2, -2.95, p.o - 2.6, p.o + 2.6], [2.95, 3.2, p.o - 2.6, p.o + 2.6]])
-            gp.quadUp(at(sb + d0, l0, 0.036), at(sb + d1, l0, 0.036), at(sb + d1, l1, 0.036), at(sb + d0, l1, 0.036), [yc, yc, yc, yc]); }
+          const bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a), bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, bp.o + u * sa + v * ca); return [x, hyS(s) + 0.036, z]; };
+          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a };
+          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])
+            gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
         // the crew's place: a timber bench with the tools, fuel drums, spare wheels, the team's number board on a post
         kbox(g, s0, 5, base + 8.4, 0, 3.2, 0.9, 0.9, TIM, [0.62, 0.58, 0.5]);
         for (const a of [2.0, 2.8]) kcyl(g, s0, a, base + 8.8, 0, 0.3, 0.9, 7, mine ? [0.82, 0.14, 0.12] : tc, [0.3, 0.3, 0.32]);
