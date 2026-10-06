@@ -317,20 +317,20 @@
   }
  },
  "chapman": {
-  "meshes": 2190,
-  "verts": 1500733,
-  "instances": 74068,
-  "props": 206,
-  "crowd": 345,
-  "world": "892f08d2",
-  "propsHash": "b63561c0",
-  "floor": "46d6dbcd/10808",
+  "meshes": 2266,
+  "verts": 1172229,
+  "instances": 80072,
+  "props": 181,
+  "crowd": 214,
+  "world": "662818d3",
+  "propsHash": "2e6e75ee",
+  "floor": "a8cb9e01/10808",
   "groups": {
-   "-:MeshLambertMaterial": "6f04e69b",
-   "-:MeshPhongMaterial": "770dd0a",
-   "-:MeshBasicMaterial": "714ab278",
-   "crowd:MeshLambertMaterial": "45956986",
-   "ao:MeshBasicMaterial": "4c98618f",
+   "-:MeshLambertMaterial": "f325c3f0",
+   "-:MeshPhongMaterial": "2f0e190d",
+   "-:MeshBasicMaterial": "3d93d251",
+   "crowd:MeshLambertMaterial": "d1cdcbda",
+   "ao:MeshBasicMaterial": "ac075ed2",
    "tyremarks:MeshBasicMaterial": "bc39543",
    "roadwear:MeshLambertMaterial": "33826799"
   }
