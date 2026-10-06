@@ -1991,7 +1991,7 @@ const Core = (function () {
       const px = c.x + wx, pz = c.z + wz;
       const q = trk.query(px, pz, c.q.i, _q);
       let pen = 0, nx = 0, nz = 0, br = q.br, inner = -1e9;
-      if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null && pz2.t > 0.999 ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom)
+      if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom)
       if (q.d > br) { pen = q.d - br; nx = -q.nx; nz = -q.nz; }
       else if (q.d < inner) { pen = inner - q.d; nx = q.nx; nz = q.nz; }
       else if (q.d < -q.bl) { pen = -q.bl - q.d; nx = q.nx; nz = q.nz; }
@@ -4237,7 +4237,11 @@ const Core = (function () {
       if (SC) { for (const c of cars) if (!c.net && !c.pitG && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T); }
       if (this.pol) this.pol.collide();
       if (T.def.pit) for (const c of cars) {   // which side of the pit wall the car is on, on the pit road or not (before the walls push it; AI: on the way in for tyres)
-        if (c.net) { const q = c.q, pz = q && q.i >= 0 ? T.pitAt(q.s) : null, g = !!pz && q.d > (pz.gap ? (T.wa ? T.wa[q.i] : T.w) : pz.wall); if (g !== !!c.pitG) c.pitG = g; }   // (a friend's car online: on the pit road by where its phone puts it, so both phones skip the same contacts)
+        if (c.net) {   // (a friend's car online: a ghost as its own phone says (netPG, sent with its state), so both phones skip the same contacts; an older
+          // build sends none: by where it is, from the pit wall's line in and on through the way out)
+          let g; if (c.netPG != null) g = !!c.netPG; else { const q = c.q, pz = q && q.i >= 0 ? T.pitAt(q.s) : null; g = !!pz && q.d > (pz.gap && c.pitG ? (T.wa ? T.wa[q.i] : T.w) : pz.wall); }
+          if (g !== !!c.pitG) c.pitG = g;
+        }
         else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) this.pitStep(c, dt, true);
       }
       for (const c of cars) if (!c.net && !c.fall) wallCollide(c, T, true);
@@ -4367,11 +4371,11 @@ const Core = (function () {
         if (!pz) { if (c.inPit) { c.inPit = false; c.pitEv = 'exit'; if (!c.isPlayer) c.pitWant = false; } c.pitDone = false; c.pitState = null; if (c.pitG) this._pitGhostOff(c, dt); return; }
         if (pz.gap) { const was = c.inPit; c.inPit = q.d > pz.wall; if (c.inPit && !was) c.pitEv = 'enter'; else if (!c.inPit && was) { c.pitEv = 'exit'; c.pitDone = false; c.pitState = null; if (!c.isPlayer) c.pitWant = false; } }   // (an AI car out of the lane: on with the race)
         else if (!c.isPlayer && !c.inPit && pz.d < 0) c.pitWant = false;   // (an AI car that missed the way in: the next lap)
-        // the pit road (c.pitG): from where the car leaves the circuit's asphalt into the way in (an AI car coming in, the player on the way-in
-        // half of the lane: not one that only runs wide onto the way out) until it is back on the asphalt past the way out: a ghost to every
-        // other car (the narrow lane, the queue at the boxes, the merge) and no damage (applyDamage, puncture). Written only when it changes:
-        // a race without a stop carries no such field
-        const g = c.inPit || (pz.gap && q.d > (T.wa ? T.wa[q.i] : T.w) && !!(c.pitG || pw || (c.isPlayer && pz.d < (P[1] + P[2]) / 2)));
+        // the pit road (c.pitG): from where the car leaves the circuit's asphalt into the way in (a car coming in: pitWant; the player's own
+        // driving from the pit wall's line, where the autopilot takes it: not one that only runs wide at the way in or out) until it is back on
+        // the asphalt past the way out: a ghost to every other car (the narrow lane, the queue at the boxes, the merge) and no damage
+        // (applyDamage, puncture). Written only when it changes: a race without a stop carries no such field
+        const g = c.inPit || (pz.gap && q.d > (T.wa ? T.wa[q.i] : T.w) && !!(c.pitG || pw));
         if (g) { if (!c.pitG) { c.pitG = true; c.pitGT = 0; const b = this._boxD(c); if (b != null) c.boxD = b; } } else if (c.pitG) this._pitGhostOff(c, dt);   // (boxD: its box, for the walls by it: Track.bayRoom)
         return;
       }

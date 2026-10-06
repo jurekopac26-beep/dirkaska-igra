@@ -269,7 +269,7 @@ const Comm = (() => {
 
   function speakNow(item) {
     const maxT = 2000 + item.text.length * 95;          // safety net if the engine never reports the end
-    const me = cur = { prio: item.prio, t: now(), maxT, item };
+    const me = cur = { prio: item.prio, t: now(), maxT, item }; lastIt = item;
     if (!synth || !speech) { speaking = false; return; }
     try {
       const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note ? voice2 || voice : voice;
@@ -407,7 +407,8 @@ const Comm = (() => {
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
   // the commentator (the co-driver, the team radio) speaking or in the pause after a line: the game lowers its other sounds under the voice
   // (Sfx.setDuck; the browser's speech cannot be louder than full volume). Not the police radio: its static and its voices go together
-  function talking() { return !radioMode && busy() && !!(cur && cur.item && !cur.item.radio); }
+  let lastIt = null;   // (the line spoken last: its pause after it counts too, so the duck holds between two lines)
+  function talking() { const it = cur ? cur.item : lastIt; return !radioMode && busy() && !!(it && !it.radio); }
 
   return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
