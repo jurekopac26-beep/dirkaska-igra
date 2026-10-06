@@ -2152,6 +2152,7 @@
       return { s: q.s, n: q.n, sev: q.sev, dir: q.dir, hp, g: hp ? 1 : q.sev === 3 ? 2 : q.sev === 2 ? (a > 1.2 ? 3 : 4) : a < 0.5 ? 6 : 5 }; });
     pk.nk = -2; pk.nd = ''; pk.non = -1; $('pk-note').className = '';
   }
+  const pkRot = { a: 0 };   // (the pill's arrow: its angle as set, see noteAng)
   function pkNoteFrame(P) {   // every HUD frame: the pill (the DOM touched only when the corner or its 10 m step changes)
     const on = +S.pkNotes ? 1 : 0, el = $('pk-note');
     if (on !== pk.non) { pk.non = on; $('hud').classList.toggle('pkn', !!on); }
@@ -2165,6 +2166,7 @@
       el.className = 's' + c.sev + (c.hp ? ' hp' : '') + ' show';
     }
     if (k < 0) return;
+    noteRot($('pk-note-path').parentNode, pkRot, noteAng(track.idx(L[k].s)));   // (the isometric camera: the arrow along the road into the corner, see noteAng)
     const d = Math.max(0, Math.round((L[k].s - sp) / 10) * 10), t = d ? d + ' m' : '';
     if (t !== pk.nd) { pk.nd = t; el.children[2].textContent = t; }
   }
@@ -2367,8 +2369,17 @@
     recStep();
     const P = race.player;
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
+    const pitAP = phase === 'racing' && P.inPit && !hold && !autoDrive;   // the pit lane (over the pit wall's line): the autopilot drives
+    if (P.pitAP && !pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (out of the lane, or the race over: the player's own car again)
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
+    else if (pitAP) {   // the pit lane: no steering (the lane is narrow); the autopilot keeps to the middle of the lane at the limiter's speed, turns in to
+      // the box in front of the garage and out again (Core.aiControl, Race.pitStep). It drives only while the gas is held (Samodejni plin: by
+      // itself); the brake slows it, never into reverse
+      P.pitAP = true; P.pitWant = true; Core.aiControl(P, race, dt);
+      if (!(inp.thr > 0.05)) P.inThr = 0;
+      P.inBrk = Math.max(P.inBrk, inp.brk); P.inHand = 0; P.digitalSteer = false; P.noReverse = true;
+    }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     twMark(); stDrive(P, dt);
@@ -3058,7 +3069,7 @@
   }
   function pitEvent(e) {
     if (phase !== 'racing') return;
-    if (e === 'enter') { showMsg(tr('BOKSI · 80 km/h'), 'gold', 1.8); Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2); }
+    if (e === 'enter') { showMsg(tr('BOKSI · DRŽI PLIN'), 'gold', 2.2); Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2); }
     else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
     else if (e === 'done') { const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate, ev = race.player.m.ev;   // (an electric car: its battery charged)
       showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); dmgKey = ''; }
@@ -3214,6 +3225,23 @@
     r3: 'M20 54 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34',
     l3: 'M44 54 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34'
   };
+  // The corner arrows (#h-note; Pikes Peak's pill #pk-note) on the isometric camera (phone lying): that view always looks north and the car
+  // goes any way across the screen, so an upright arrow (stem up: the way in) would point the wrong way. The glyph (not its box, not the
+  // words) turns to the road's way into the corner as it lies on the screen: the road's tangent at the corner's start along the camera's own
+  // right and up axes (its matrix, columns 0 and 1: the last frame's, the same in the iso view, which never turns). Clockwise from up, as CSS
+  // rotate; the view is not mirrored, so a right bend stays clockwise. Behind the car (chase: the camera turns with the car) it stays
+  // upright. The DOM is touched only when the angle moves by more than ~2 deg (in the iso view: once per corner)
+  function noteAng(i) {
+    const C = S.camera === 'iso' ? Render.camera : null; if (!C) return 0;
+    const dx = track.tx[i], dz = track.tz[i], e = C.matrixWorld.elements;
+    const r = dx * e[0] + dz * e[2], u = dx * e[4] + dz * e[6];
+    return r * r + u * u > 1e-6 ? Math.atan2(r, u) : 0;
+  }
+  function noteRot(svg, o, a) {
+    if (Math.abs(Core.wrapPi(a - o.a)) < 0.035) return;
+    o.a = a; svg.style.transform = a ? 'rotate(' + (a * 180 / Math.PI).toFixed(1) + 'deg)' : '';
+  }
+  const hnRot = { a: 0 };
   let lastNote = '';
   function updateNote(P) {
     const el = $('h-note');
@@ -3229,6 +3257,7 @@
     if (best) {
       const hair = best.sev === 3 && best.angle > 2.0;
       key = (best.dir > 0 ? 'r' : 'l') + (hair ? '3' : '1') + '|' + best.sev;
+      noteRot($('h-note-path').parentNode, hnRot, noteAng(best.i0));   // (every frame it shows: the isometric camera turns the arrow to the road, see noteAng)
     }
     if (key === lastNote) return;
     lastNote = key;
@@ -4451,12 +4480,13 @@
       while (acc >= STEP && n < lim) { stepRace(STEP, inp); acc -= STEP; n++; }
       if (n >= lim) acc = 0;
       if (on) { if (race.player.finished && on.mine == null) netMyFinish(); netFrame(false); }
-      updateHUD(dt); Comm.update();
+      updateHUD(dt); Comm.update(); Sfx.setDuck(Comm.talking());   // (the commentator over the engines: the rest lowered under the voice)
       Sfx.update(race, race.player, null, inp.thr);
       ghShow(acc / STEP); Render.frame(dt, acc / STEP, race.player, S.camera, { marker: phase === 'intro' || phase === 'lights' || (phase === 'racing' && race.time < 2.5) });
       adaptive(dt);
     } else {
       if (mp && mp.race) netFrame(true);
+      Sfx.setDuck(Comm.talking());
       ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true });
       if (screen === 'settings') updateTiltLive();
     }

@@ -405,8 +405,11 @@ const Comm = (() => {
   }
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
+  // the commentator (the co-driver, the team radio) speaking or in the pause after a line: the game lowers its other sounds under the voice
+  // (Sfx.setDuck; the browser's speech cannot be louder than full volume). Not the police radio: its static and its voices go together
+  function talking() { return !radioMode && busy() && !!(cur && cur.item && !cur.item.radio); }
 
-  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
+  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 

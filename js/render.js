@@ -3735,15 +3735,15 @@ const Render = (function () {
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
     scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp };
   }
-  // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, each widening and fading with the
-  // distance (a soft edge all round, the brightest a few metres ahead), merging into one warm fan further out
+  // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, narrow and the brightest at the lamps,
+  // each widening and fading with the distance (a soft edge all round), merging into one warm, faint fan further out
   function beamTexture() {
     const W = 64, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), img = g.createImageData(W, H), d = img.data;
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
       const x = ((i + 0.5) / W - 0.5) * 9, y = (j + 0.5) / H * 22, dy = y - 0.3, o = (j * W + i) * 4;   // (metres: x across, y ahead from the plane's near edge, the lamps 0.3 m in)
       let a = 0;
       if (dy > 0) {
-        const along = (1 - Math.exp(-dy / 1.4)) / (1 + (dy / 10) ** 2) * Math.min(1, (22 - y) / 5), sx = 0.22 + 0.16 * dy;
+        const along = (1 - Math.exp(-dy / 0.35)) / (1 + (dy / 7) ** 2) * Math.min(1, (22 - y) / 6), sx = 0.22 + 0.16 * dy;
         for (const xl of [-0.62, 0.62]) a += Math.exp(-((x - xl) ** 2) / (2 * sx * sx)) * along;
         a += 0.22 * Math.exp(-(x * x) / (2 * (0.8 + 0.3 * dy) ** 2)) * along;   // (the spill round the cones)
         a = (1 - Math.exp(-1.5 * a)) * Math.min(1, (4.5 - Math.abs(x)) / 1.2);
@@ -3758,7 +3758,7 @@ const Render = (function () {
     if (!on) { if (v.beam) v.beam.visible = false; return; }
     if (!v.beam) {
       if (!beamTex) beamTex = beamTexture();
-      const M = v.car.m, g = new THREE.PlaneGeometry(9, 22); g.rotateX(-Math.PI / 2); g.rotateY(-Math.PI / 2); g.translate(M.len * 0.5 + 10.5, 0.08, 0);
+      const M = v.car.m, g = new THREE.PlaneGeometry(9, 22); g.rotateX(-Math.PI / 2); g.rotateY(Math.PI / 2); g.translate(M.len * 0.5 + 10.5, 0.08, 0);   // (the texture's top row, the lamps (uv v 1: flipY), at the car's nose, its far end 22 m ahead)
       v.beam = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: beamTex, color: 0xffe9c6, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
       v.beam.renderOrder = 1; v.grp.add(v.beam);
     }
@@ -4185,7 +4185,7 @@ const Render = (function () {
   /* ---------------- Pikes Peak: driving effects (only the cars of a Pikes race; read from the car's state, nothing simulated changes) ----------------
      Into the shared pools (no draw calls of their own): pink granite gravel sprayed off the rear wheels on the verge, extra tyre smoke
      (the fronts locking, lighter wisps in a slide) and powder snow thrown up in the snow zone (above ~330 m of road height), in winter and
-     while it snows. (The sparks along the rail, the exhaust's flames and the glowing brake discs: carFx, every car's.) */
+     while it snows. (The sparks along the rail, the exhaust's flames and the glowing front brake discs: carFx, every car's.) */
   const _pkE = new THREE.Vector3();
   function pkFx(v, c, dt, live) {   // live: emit particles (not in a paused frame, the replay or the photo)
     const f = v.pkFx || (v.pkFx = { acc: [0, 0, 0, 0] });
@@ -4220,26 +4220,24 @@ const Render = (function () {
       }
     }
   }
-  /* ---------------- every car (read from its state, nothing simulated changes; into the shared pools, no draw calls of their own): the brake
-     discs glowing orange after a hard stop (cooling over a few seconds; brightest at night), flames popping from the exhaust on a lift at high
+  /* ---------------- every car (read from its state, nothing simulated changes; into the shared pools, no draw calls of their own): the front
+     brake discs glowing orange after a hard stop (cooling over a few seconds; brightest at night; the rear ones never glow), flames popping from the exhaust on a lift at high
      revs and on a gear change, a stream of sparks while the car scrapes along the barrier (the stock burst covers the hits) and, a formula
      at speed, sparks from its plank touching the road (in bursts, more over a kerb, a shower on landing). The particles only for the cars
      round the view ---------------- */
   function carFx(v, c, dt, live) {
-    const f = v.cfx || (v.cfx = { heat: [0, 0], thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0 }), M = c.m, R = Math.random;
+    const f = v.cfx || (v.cfx = { heat: 0, thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0 }), M = c.m, R = Math.random;
     if (!v.axW) { const sc = M.len / 4.4; v.axW = v.pk ? v.pk.w.value : v.wf.length && v.wr.length ? { x: v.wf[0].position.x, y: v.wr[0].position.x, z: v.wf[0].position.y } : { x: M.a * sc * 0.98 + 0.05, y: -M.b * sc * 0.98, z: M.rw }; }
     const W = v.axW, me = v.grp.matrixWorld.elements, spd = c.speed, gy = c.roadY != null ? c.roadY : c.y || 0;
     const fx = me[0], fz = me[2], lx = me[8], lz = me[10], X = me[12], Z = me[14];   // forward, right (local z) and the car's origin
     const at = (ax, ay, az) => _pkE.set(ax, ay, az).applyMatrix4(v.grp.matrixWorld);
     const wz = v.wf.length ? Math.abs(v.wf[0].position.z) : M.wid * 0.5 - 0.1, night = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.85 : 0.65;
-    // brake discs: heat from hard braking at speed (front 60 %), cooling off over ~4 s; drawn as glows on the wheels' outer faces
+    // the front brake discs: heat from hard braking at speed, cooling off over ~4 s; drawn as glows on the front wheels' outer faces (the rear
+    // wheels never glow: from behind the car and from above they read as yellow, burning wheels)
     const bk = c.inBrk > 0.3 && c.vl > 6 && !c.air ? c.inBrk * (c.vl - 6) * dt * 0.04 : 0;
-    for (let a = 0; a < 2; a++) {
-      if (dt > 0) f.heat[a] = Math.min(1.25, f.heat[a] * Math.exp(-dt / 2.6) + bk * (a ? 0.7 : 1));
-      const g = Core.sstep(0.25, 0.95, f.heat[a]); if (g <= 0.01) continue;
-      const ax = a ? W.y : W.x;
-      for (const sd of [-1, 1]) { at(ax, W.z, sd * (wz + 0.2)); glows.add(_pkE.x, _pkE.y, _pkE.z, 1.1 + 0.6 * g, 1.0, 0.28 + 0.14 * g, 0.04, g * night); glows.add(_pkE.x, _pkE.y, _pkE.z, 0.5, 1.0, 0.55 + 0.25 * g, 0.2, g * g * night); }
-    }
+    if (dt > 0) f.heat = Math.min(1.25, f.heat * Math.exp(-dt / 2.6) + bk);
+    { const g = Core.sstep(0.25, 0.95, f.heat);
+      if (g > 0.01) for (const sd of [-1, 1]) { at(W.x, W.z, sd * (wz + 0.2)); glows.add(_pkE.x, _pkE.y, _pkE.z, 1.1 + 0.6 * g, 1.0, 0.28 + 0.14 * g, 0.04, g * night); glows.add(_pkE.x, _pkE.y, _pkE.z, 0.5, 1.0, 0.55 + 0.25 * g, 0.2, g * g * night); } }
     if (!live) return;
     const near = c.isPlayer || (X - (cam.vcx || 0)) ** 2 + (Z - (cam.vcz || 0)) ** 2 < 150 * 150;
     // exhaust: a string of pops after lifting off at high revs, a flame on every gear change
