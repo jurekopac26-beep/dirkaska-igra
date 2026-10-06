@@ -23,8 +23,9 @@ const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracol
 const NAMED = { mulholland: ['Cornell School Road', 'Simes Lane', 'Seminole Drive', 'Lower Brewster Road'], bigsur: ['Coast Road'], uncompahgre: ['Engineer Pass Road'], chapman: ['Military Road'], vrsic: ['Borovška cesta', 'Koroška ulica'] };
 
 // every track with side roads is on the list (an open road), the others have none
-check('tracks: the open roads with side roads are these seven', C.TRACKS.filter(d => d.sideRoads && d.sideRoads.length).map(d => d.id).sort().join() === IDS.slice().sort().join() && C.TRACKS.filter(d => d.sideRoads).every(d => d.open),
-  C.TRACKS.filter(d => d.sideRoads).map(d => d.id + ' ' + d.sideRoads.length).join(', '));
+// (Medvode's side roads are closed at the road's edge, def.sideClosed: the barrier straight across their mouths, the fence and the bollards in front of them; their tests: medvode-fence, medvode-props)
+check('tracks: the open roads with side roads that can be driven into are these seven', C.TRACKS.filter(d => d.sideRoads && d.sideRoads.length && !d.sideClosed).map(d => d.id).sort().join() === IDS.slice().sort().join() && C.TRACKS.filter(d => d.sideRoads).every(d => d.open),
+  C.TRACKS.filter(d => d.sideRoads && !d.sideClosed).map(d => d.id + ' ' + d.sideRoads.length).join(', ') + '; closed at the road: ' + C.TRACKS.filter(d => d.sideRoads && d.sideClosed).map(d => d.id + ' ' + d.sideRoads.length).join(', '));
 
 for (const id of IDS) {
   const def = C.TRACKS.find(d => d.id === id), T = new C.Track(def), S = T.stubs, SR = def.sideRoads, T0 = new C.Track(Object.assign({}, def, { sideRoads: null }));

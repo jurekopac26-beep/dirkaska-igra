@@ -2976,7 +2976,7 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel']);   // (the small street furniture: no shadow pass of its own, the phone's budget)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -3013,6 +3013,45 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else if (kind === 'tbollard') {   // Medvode's yellow triangular bollard (1.05 m, 0.4 m a side; the apex points +x, into the side road): a black band, a white reflective strip on each face
+      const ye = [1, 0.82, 0.05], bk = [0.07, 0.07, 0.08], rf = [0.95, 0.95, 0.88], R = 0.231, H = 0.2, V = [[R, 0], [-R / 2, H], [-R / 2, -H]], y0 = -0.575, y1 = 0.525;
+      const P = (v, y) => [V[v][0], y, V[v][1]], seg = (a, b, ya, yb, col) => g.quadO(P(a, ya), P(b, ya), P(b, yb), P(a, yb), col, [0, (ya + yb) / 2, 0]);
+      for (let a = 0; a < 3; a++) { const b = (a + 1) % 3; seg(a, b, y0, -0.105, ye); seg(a, b, -0.105, -0.015, rf); seg(a, b, -0.015, 0.125, ye); seg(a, b, 0.125, 0.29, bk); seg(a, b, 0.29, y1, ye); }
+      g.triO(P(0, y1), P(1, y1), P(2, y1), [1, 0.88, 0.14], [0, y0, 0]); }
+    else if (kind === 'mlamp') {   // Medvode's street lamp: a grey 8.3 m pole (its foot 0.3 m in the ground), the arm over the road (+x), the lamp
+      const st = [0.56, 0.58, 0.6]; W.cyl(g, 0, -4.3, 0, 0.09, 8.3, 6, st, null, 0.06); W.box(g, 0.8, 3.9, 0, 1.7, 0.1, 0.1, 0, st); W.box(g, 1.6, 3.75, 0, 0.7, 0.16, 0.32, 0, [0.3, 0.31, 0.33], [0.42, 0.43, 0.45]); }
+    else if (kind === 'msign' || kind === 'bsign') {   // a square blue board on a pole (the faces ±x): the zebra crossing's white triangle, the bus stop's white bus
+      const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94];
+      W.cyl(g, 0, -1.5, 0, 0.04, 2.75, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.65, 0, 0.05, 0.64, 0.64, 0, blue);
+      for (const f of [-1, 1]) { const x = f * 0.032, A = (y, z) => [x, y, z], inn = [0, 0.97, 0];
+        if (kind === 'msign') g.triO(A(1.17, 0), A(0.75, -0.25), A(0.75, 0.25), wh, inn);
+        else { g.quadO(A(0.82, -0.22), A(0.82, 0.22), A(1.1, 0.22), A(1.1, -0.22), wh, inn); g.quadO([f * 0.034, 0.96, -0.19], [f * 0.034, 0.96, 0.19], [f * 0.034, 1.06, 0.19], [f * 0.034, 1.06, -0.19], blue, inn); } } }
+    else if (kind === 'nsign') {   // the street's name: a blue plate (1.4 x 0.35, faces ±x) on a pole, white bars for the lettering
+      const blue = [0.11, 0.31, 0.6], wh = [0.95, 0.95, 0.93];
+      W.cyl(g, 0, -1.6, 0, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.75, 0, 0.05, 0.35, 1.4, 0, blue);
+      W.box(g, 0, 0.9, 0, 0.062, 0.07, 1.0, 0, wh, wh); W.box(g, 0, 0.8, 0, 0.062, 0.05, 0.6, 0, wh, wh); }
+    else if (kind === 'zaprta') {   // the closure board (white, a red rim, dark lettering) and the round no-entry sign (red, a white bar) on a pole in front of a rail
+      const wh = [0.95, 0.95, 0.92], rd = [0.8, 0.1, 0.08], dk = [0.12, 0.12, 0.13];
+      W.cyl(g, 0, -1.3, 0, 0.04, 2.45, 5, [0.62, 0.63, 0.66]); W.box(g, -0.06, -0.18, 0, 0.05, 0.4, 1.6, 0, wh);
+      for (const y of [-0.18, 0.18]) W.box(g, -0.06, y, 0, 0.062, 0.04, 1.6, 0, rd, rd); W.box(g, -0.06, -0.12, 0, 0.062, 0.05, 1.3, 0, dk, dk); W.box(g, -0.06, 0.02, 0, 0.062, 0.07, 1.3, 0, dk, dk);
+      for (const f of [-1, 1]) { const x = -0.06 + f * 0.032, n = 10, C = [x, 0.61, 0], inn = [x - f, 0.61, 0];
+        for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2; g.triO(C, [x, 0.61 + Math.sin(a0) * 0.31, Math.cos(a0) * 0.31], [x, 0.61 + Math.sin(a1) * 0.31, Math.cos(a1) * 0.31], rd, inn); }
+        g.quadO([x + f * 0.003, 0.56, -0.25], [x + f * 0.003, 0.56, 0.25], [x + f * 0.003, 0.66, 0.25], [x + f * 0.003, 0.66, -0.25], wh, inn); } }
+    else if (kind === 'vboard') {   // a village's board (white, a black rim and bars for the name) on two poles, 2.4 m along x
+      const wh = [0.96, 0.96, 0.94], dk = [0.1, 0.1, 0.11];
+      for (const x of [-0.9, 0.9]) W.cyl(g, x, -1.4, 0, 0.04, 2.6, 5, [0.62, 0.63, 0.66]);
+      W.box(g, 0, 0.5, 0, 2.4, 0.3, 0.05, 0, wh); for (const y of [0.5, 0.77]) W.box(g, 0, y, 0, 2.4, 0.03, 0.058, 0, dk, dk);
+      for (const x of [-0.8, -0.3, 0.25, 0.75]) W.box(g, x, 0.58, 0, 0.36, 0.14, 0.058, 0, dk, dk); }
+    else if (kind === 'flagp') {   // a flag pole (6 m) with the Slovenian flag (white, blue, red) and a small coat of arms, flying along +x
+      const wh = [0.96, 0.96, 0.95], bl = [0.1, 0.24, 0.62], rd = [0.84, 0.12, 0.1];
+      W.cyl(g, 0, -3.2, 0, 0.06, 6.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
+      W.box(g, 0.96, 2.55, 0, 1.8, 0.3, 0.04, 0, wh); W.box(g, 0.96, 2.25, 0, 1.8, 0.3, 0.04, 0, bl); W.box(g, 0.96, 1.95, 0, 1.8, 0.3, 0.04, 0, rd);
+      W.box(g, 0.546, 2.4, 0, 0.3, 0.36, 0.06, 0, rd); W.box(g, 0.546, 2.43, 0, 0.24, 0.3, 0.075, 0, bl); W.box(g, 0.546, 2.5, 0, 0.14, 0.07, 0.085, 0, wh); }
+    else if (kind === 'cflag') {   // a chequered flag (3 x 2 squares of 0.55 m) on a 5 m pole, flying along +x
+      W.cyl(g, 0, -2.6, 0, 0.06, 5.1, 5, [0.9, 0.9, 0.92]);
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) W.box(g, 0.36 + a * 0.55, 1.3 + b * 0.55, 0, 0.55, 0.55, 0.05, 0, (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+    else if (kind === 'bench') {   // a bus stop's bench: a wooden seat (1.8 x 0.45 m) on two legs
+      W.box(g, 0, 0.18, 0, 1.8, 0.06, 0.45, 0, [0.46, 0.32, 0.2]); for (const x of [-0.75, 0.75]) W.box(g, x, -0.24, 0, 0.08, 0.42, 0.4, 0, [0.3, 0.3, 0.32]); }
     else streetPropGeo(g, kind, W);
     if (propRg === 'au' && (kind === 'signal' || kind === 'signalm')) for (let q = 0; q < g.C.length; q += 3) { const c = g.C[q] === 0.98 && g.C[q + 1] === 0.78 ? [0.95, 0.95, 0.93] : g.C[q] === 0.95 && g.C[q + 1] === 0.5 ? [0.92, 0.1, 0.08] : g.C[q] === 0.92 && g.C[q + 2] === 0.88 ? [0.2, 0.86, 0.42] : null; if (c) { g.C[q] = c[0]; g.C[q + 1] = c[1]; g.C[q + 2] = c[2]; } }   // (Australia: the black target boards' white border, the red and green men)
     return g.geometry();
@@ -3076,7 +3115,7 @@ const Render = (function () {
       if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
         if (m) { scene.remove(m); m.geometry.dispose(); }
         m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind]; m.userData.rg = rg;
-        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;
+        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;   // (the thin signs and the bench cast none: one draw call less each in the shadow pass)
         scene.add(m); propMeshes[kind] = m;
       }
       m.visible = true;
@@ -3174,6 +3213,7 @@ const Render = (function () {
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
     longford: { fog: 0xcbd8e2, sun: 0xfff0d4, sunI: 1.16, sky: 0xc2d8f0, gnd: 0x5c6838, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-70, 80, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
+    medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 84, 58] },   // Medvode: a clear summer afternoon in Gorenjska, the sun from the south-west over the Sava plain, a light haze towards the Alps
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -3187,7 +3227,8 @@ const Render = (function () {
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
     riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]],
-    longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]] };
+    longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]],
+    medvode: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
   THEMES.toronto = { fog: 0xc9d8e6, sun: 0xfff0d8, sunI: 1.14, sky: 0xc8ddf4, gnd: 0x5d6448, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-60, 88, 70] };   // Toronto: a clear July afternoon by Lake Ontario, the sun from the south-west over the lake
   SPLIT.toronto = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
@@ -5071,7 +5112,7 @@ const Render = (function () {
       const pitch = v.st === 0 ? Math.atan((T.grade ? T.grade[v.i] || 0 : 0) * v.dir) : 0, y = (world && world.groundH && v.st > 0 ? Math.max(v.y, world.groundH(v.x, v.z)) : v.y) + (lift || 0);
       _re.set(roll || 0, -v.h, pitch, 'YZX'); _rq.setFromEuler(_re); _rv.set(v.x, y, v.z); _rm.compose(_rv, _rq, _rs); im.setMatrixAt(i, _rm); im.setColorAt(i, _pc.setHex(col)); return true; };
     for (const v of tf.veh) {
-      if (v.off) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
+      if (v.off || v.hid) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
       const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3;
       const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? (v.p === 5 ? put(V.truck, v, rdPick(RD_TRUCK, u)) : put(V.bus, v, rdPick(RD_BUS, u))) :
         put(K === 3 ? V.moto : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
@@ -5119,7 +5160,7 @@ const Render = (function () {
     let ngp = 0, ncg = 0; for (const n of pg.values()) if (n > 1) ngp++; for (const n of cg.values()) if (n > 1) ncg++;
     Q.n.grp = ngp; Q.n.cgrp = ncg; Q.n.yld = nyl; Q.n.ind = nind; Q.n.dead = ndead;
     for (const v of tf.veh) {
-      if (np >= NP) break; if (v.off || v.kind < 3 || v.st > 0 || v.rider) continue; const dx = v.x - cx, dz = v.z - cz; if (dx * dx + dz * dz > near2) continue;
+      if (np >= NP) break; if (v.off || v.hid || v.kind < 3 || v.st > 0 || v.rider) continue; const dx = v.x - cx, dz = v.z - cz; if (dx * dx + dz * dz > near2) continue;
       const m = rdMan('r' + v.id, v.col, 0); m.helm = m.helm || new THREE.Color(rdPick(v.kind === 3 ? RD_MOTO : RD_BIKE, (v.col * 7.1) % 1));
       rdPose(m, v.x, v.y, v.z, v.h, v.kind === 3 ? 'moto' : 'ride', v.v, dt, 0, 0, v.lean); rdPut(m, np++, 1);
     }
