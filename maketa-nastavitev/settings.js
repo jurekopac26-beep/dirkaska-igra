@@ -41,12 +41,16 @@
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
   // the three looks of the chosen layout (D.versions: A, B, C): the tabs, their sections, where the pause's buttons go; ?v=B or #b picks one
   const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
-  const hm = /^([a-z])?([0-3])?$/i.exec(location.hash.slice(1)) || [];
+  const hm = /^([a-z])?([0-3])?(?:-([1-3]))?$/i.exec(location.hash.slice(1)) || [];
   let ver = String(q.get('v') || hm[1] || 'A').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
   // the pictures over the settings: the drawn animations, or real frames from the game in three ways (settings-real.js); ?media= or #a1..#a3
   const MEDIA = ['anim', 'video', 'compare', 'live'], MEDIA_NAME = { anim: 'Animacija', video: 'Posnetek', compare: 'Primerjava', live: 'V živo' };
   let media = MEDIA.includes(q.get('media')) ? q.get('media') : hm[2] ? MEDIA[+hm[2]] : (window.SetReal ? 'video' : 'anim');
   const real = () => media !== 'anim' && !!window.SetReal;
+  // lying, the pause's buttons at the foot as when upright, bigger: 1 the full names beside the icons, 2 big keys, 3 the keys and a big
+  // Nadaljuj on the right; ?lb= or #a1-2
+  const LB_NAME = { 1: 'Polna imena', 2: 'Velike tipke', 3: 'Nadaljuj spodaj' };
+  let lb = LB_NAME[q.get('lb')] ? q.get('lb') : hm[3] || '1';
   if (window.SetReal) SetReal.control = () => S.control;   // (the race in the pictures with the player's controls)
   const orientNow = () => document.documentElement.classList.contains('land') ? 'land' : 'port';
   let cats = [];
@@ -70,18 +74,18 @@
     else toast('V maketi: »' + (b.getAttribute('aria-label') || b.textContent.trim()) + '« dela kot zdaj v igri.');
   }
   let builtLand = null;
-  const keys = (arr) => arr.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('');
+  const keys = (arr, full) => arr.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + (full ? a.l : a.s) + '</span></button>').join('');
   function goOn() { if (mode === 'pause') resumeRace(); else { setMode('pause'); toast('Nazaj na pavzo med dirko.'); } }
   function buildTop() {
     buildCats();
     const V = D.versions[ver], land = root.classList.contains('land'), P = V.pause, pz = mode === 'pause';
-    const abar = pz && (P === 'bar' || (P === 'bottom' && land)), bbar = pz && P === 'bottom' && !land, dock = P === 'dock' && !land, rail = P === 'dock' && land;
+    const abar = pz && P === 'bar', bbar = pz && P === 'bottom', dock = P === 'dock' && !land, rail = P === 'dock' && land, goBar = bbar && land && lb === '3';
     for (const v of Object.values(D.versions)) root.classList.toggle('skin-' + v.skin, v === V);
     for (const el of document.querySelectorAll('.sx-botbar, .sx-rail')) el.remove();
     // (look B: Nadaljuj is a big round button, in the middle of the bar at the foot or at the foot of the rail on the right)
     const play = '<button class="sx-play" data-act="go" aria-label="' + (pz ? 'Nadaljuj' : 'Končano') + '"><i>' + (pz ? I.play : I.check) + '</i><span>' + (pz ? 'Nadaljuj' : 'Končano') + '</span></button>';
     let bb = null;
-    if (bbar) bb = h('div', 'sx-botbar', keys(D.pause));
+    if (bbar) bb = h('div', 'sx-botbar' + (land ? ' lb' + lb : ''), keys(D.pause, land && lb === '1') + (goBar ? '<button class="sx-go" data-act="go"><span>Nadaljuj</span>' + I.play + '</button>' : ''));
     if (dock) bb = h('div', 'sx-botbar sx-dock' + (pz ? '' : ' solo'), pz ? keys(D.pause.slice(0, 3)) + play + keys(D.pause.slice(3)) : '<button class="sx-done" data-act="go"><span>Končano</span>' + I.check + '</button>');
     if (bb) { bb.addEventListener('click', actHandler); $('#set').appendChild(bb); }
     if (rail) { const r = h('div', 'sx-rail', (pz ? keys(D.pause) : '') + play); r.addEventListener('click', actHandler); body.appendChild(r); }
@@ -91,10 +95,10 @@
     top.innerHTML = '<div class="sx-title"><i>' + (pz ? I.pause : I.cog) + '</i><div class="sx-tt"><h1>' + (pz ? 'Pavza' : 'Nastavitve') + '</h1><small>' + (pz ? 'Krog 1/3 · 12. mesto' : 'Iz glavnega menija') + '</small></div></div>' +
       (abar ? '<div class="sx-actbar">' + keys(D.pause) + '</div>' : '') +
       '<nav class="sx-tabs n' + cats.length + ' look-' + (V.look || 'line') + '" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span><em></em></button>').join('') + '<i class="sx-ink"></i></nav>' +
-      (P === 'dock' ? '' : '<button class="sx-go">' + (pz ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>');
+      (P === 'dock' || goBar ? '' : '<button class="sx-go">' + (pz ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>');
     tabsEl = $('.sx-tabs'); ink = $('.sx-ink');
     tabsEl.addEventListener('click', (e) => { const b = e.target.closest('.sx-tab'); if (b) show(b.dataset.tab); });
-    if ($('.sx-go')) $('.sx-go').addEventListener('click', goOn);
+    if ($('.sx-top .sx-go')) $('.sx-top .sx-go').addEventListener('click', goOn);
     if (abar) $('.sx-actbar').addEventListener('click', actHandler);
   }
   // (look C: each tab and each part says how many settings it shows; Nagib's two come and go)
@@ -106,7 +110,8 @@
       const p = list.querySelector('[data-part="' + C.id + '"].sx-big em'); if (p) p.textContent = n + (n === 1 ? ' nastavitev' : n === 2 ? ' nastavitvi' : n < 5 ? ' nastavitve' : ' nastavitev');
     }
   }
-  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media));
+  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media)) + '-' + lb;
+  function setLb(v) { lb = v; buildTop(); show(tab, true); updateBar(); markChip(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setMedia(m) { media = m; root.classList.toggle('media-live', real() && media === 'live'); show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   const listMode = () => D.versions[ver].mode === 'list';
@@ -139,7 +144,8 @@
   function updateBar() {
     bar.innerHTML = '<b>Nove nastavitve</b><span class="mb-seg">' + Object.keys(D.versions).map(v => '<button data-v="' + v + '" class="' + (v === ver ? 'on' : '') + '" title="' + D.versions[v].name + '">' + v + ' · ' + D.versions[v].name + '</button>').join('') + '</span><span class="mb-seg"><button data-o="0" class="' + (devLand ? '' : 'on') + '">Telefon pokonci</button><button data-o="1" class="' + (devLand ? 'on' : '') + '">Telefon ležeče</button></span>' +
       '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>' +
-      (window.SetReal ? '<span class="mb-seg">' + MEDIA.map((m, i) => '<button data-media="' + m + '" class="' + (m === media ? 'on' : '') + '">' + (i ? i + ' · ' : '') + MEDIA_NAME[m] + '</button>').join('') + '</span>' : '');
+      (window.SetReal ? '<span class="mb-seg">' + MEDIA.map((m, i) => '<button data-media="' + m + '" class="' + (m === media ? 'on' : '') + '">' + (i ? i + ' · ' : '') + MEDIA_NAME[m] + '</button>').join('') + '</span>' : '') +
+      '<span class="mb-seg" title="Ležeče: gumbi pavze spodaj">' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" class="' + (k === lb ? 'on' : '') + '">' + (k === '1' ? 'Ležeče spodaj: ' : '') + k + ' · ' + LB_NAME[k] + '</button>').join('') + '</span>';
   }
   bar.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -147,11 +153,13 @@
     if (b.dataset.m) setMode(b.dataset.m);
     if (b.dataset.v) setVer(b.dataset.v);
     if (b.dataset.media) setMedia(b.dataset.media);
+    if (b.dataset.lb) setLb(b.dataset.lb);
   });
   // (a phone has no switches over the screen: a small one in the corner picks the version)
-  const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('') + (window.SetReal ? '<i></i>' + [1, 2, 3].map(i => '<button data-media="' + MEDIA[i] + '">' + i + '</button>').join('') : '')); document.body.appendChild(chip);
-  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.media === media); };
-  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
+  const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('') + (window.SetReal ? '<i></i>' + [1, 2, 3].map(i => '<button data-media="' + MEDIA[i] + '">' + i + '</button>').join('') : '') +
+    '<span class="lbg"><i></i>' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" title="Ležeče spodaj: ' + LB_NAME[k] + '">S' + k + '</button>').join('') + '</span>'); document.body.appendChild(chip);   // (S1-S3: lying only)
+  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.lb ? b.dataset.lb === lb : b.dataset.media === media); };
+  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else if (b.dataset.lb) { setLb(b.dataset.lb); toast('Ležeče spodaj ' + lb + ': ' + LB_NAME[lb]); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
   markChip();
   addEventListener('resize', layout);
 

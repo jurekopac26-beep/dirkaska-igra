@@ -2,9 +2,19 @@
 
 Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezana z igro**: igra je ne naloži in nič v igri se ne spremeni. Ko bo predlog potrjen, bo zaslon prenesen v igro (`index.html`, `js/game.js`, `css/style.css`, `js/lang.js`).
 
-Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče*, *Med dirko / Iz glavnega menija* in sliko *Animacija · 1 Posnetek · 2 Primerjava · 3 V živo*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
+Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče*, *Med dirko / Iz glavnega menija* sliko *Animacija · 1 Posnetek · 2 Primerjava · 3 V živo* in *Ležeče spodaj: 1 · 2 · 3*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
 
-**Zadnji predlog: prave slike iz igre namesto animacij, v treh različicah.** Slike nad nastavitvami niso več risane: so iz prave igre (pravi avto, prava proga, pravi HUD; tu Riviera, Francija). Vse tri so v videzu A (Ploščice), slike so v `slike/posnetki/` (vsaka: pokonci kar odpre pavza, del Grafika, Kakovost slike; ležeče oba dela):
+**Zadnji predlog: ležeče so gumbi pavze spodaj, kot pokonci, in večji, v treh različicah.** Ponovi dirko, Foto, Ogled vozila, Celoten zaslon, Odstopi in Glavni meni niso več majhne ikone ob naslovu, ampak v vrstici spodaj. Slike so v `slike/lezece-spodaj/` (vsaka: pokonci za primerjavo, ležeče kar odpre pavza in del Grafika):
+
+| Slika | Različica |
+| --- | --- |
+| `1-polna-imena.png` | **1 · Polna imena**: vrstica čez celo širino, vsak gumb z ikono in celim imenom; vrstica je nizka, za nastavitve ostane največ prostora. Nadaljuj zgoraj desno. |
+| `2-velike-tipke.png` | **2 · Velike tipke**: kot pokonci (ikona nad imenom), a širše in višje, z večjo ikono; najlažje jih zadeneš. Nadaljuj zgoraj desno. |
+| `3-nadaljuj-spodaj.png` | **3 · Nadaljuj spodaj**: tipke spodaj, desno ob njih velik zlat Nadaljuj, pod desnim palcem; zgoraj samo naslov in zavihki (širši). |
+
+V maketi različico izbereš s stikalom *Ležeče spodaj: 1 · 2 · 3* nad telefonom (računalnik), z gumbi S1, S2, S3 v kotu na ležečem telefonu, z `?lb=1|2|3` ali s `#a1-2` na koncu povezave (videz, slika, ležeče spodaj). Iz glavnega menija gumbov pavze ni, zato tudi vrstice spodaj ni.
+
+**Predlog pred tem: prave slike iz igre namesto animacij, v treh različicah.** Slike nad nastavitvami niso več risane: so iz prave igre (pravi avto, prava proga, pravi HUD; tu Riviera, Francija). Vse tri so v videzu A (Ploščice), slike so v `slike/posnetki/` (vsaka: pokonci kar odpre pavza, del Grafika, Kakovost slike; ležeče oba dela):
 
 | Slika | Različica |
 | --- | --- |
@@ -86,4 +96,4 @@ Datoteke:
 - `primerjava.html`: primerjava treh načinov (kaj je v katerem zavihku);
 - `board.html`: sestavljanje slik (`kind=mix`: telefoni pokonci v vrsti, ležeči drug pod drugim ob njih).
 
-Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `media=anim|video|compare|live` (slika), `at=<nastavitev>` (seznam do te nastavitve), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).
+Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `media=anim|video|compare|live` (slika), `at=<nastavitev>` (seznam do te nastavitve), `lb=1|2|3` (ležeče: gumbi pavze spodaj), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).
