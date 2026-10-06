@@ -316,6 +316,24 @@ body[data-shot] .rprog b { animation: none; transform: scaleX(.46); }
 .rt .rsign { left: 50%; right: auto; top: 7px; transform: translateX(-50%); padding: 4px; }
 .rt .rsign svg { width: 15px; height: 15px; }
 .rc.n5 .rt .rl { font-size: 10px; padding: 3px 4px 2px; }
+/* 1 · the pictures in a phone: the phone's body as the drawn ones' (dark, a light edge, the camera hole on its short side), the real
+   screen in it; m1 the whole phone on the race blurred, m2 a big phone close up, m3 the phone in two hands (the thumbs as the drawn ones) */
+.rphm { background: #0d1520; }
+.rfb { inset: -14px !important; background-size: cover; background-position: center; filter: blur(9px) brightness(.42) saturate(.8); }
+.rph { position: absolute; z-index: 1; box-sizing: border-box; background: linear-gradient(180deg, #3a4351, #1b212b); box-shadow: inset 0 0 0 1.2px rgba(255,255,255,.28), 0 10px 26px rgba(0,0,0,.55); transition: transform .45s cubic-bezier(.3, 1.2, .5, 1); }
+.rph::after { content: ''; position: absolute; z-index: 2; left: 50%; top: calc(var(--cam) * .41); width: var(--cam); height: var(--cam); margin-left: calc(var(--cam) / -2); border-radius: 50%; background: #0b0e13; }
+.rph.lying::after { left: calc(var(--cam) * .41); top: 50%; margin: calc(var(--cam) / -2) 0 0 0; }
+.rpsc { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+.rfs { background-size: 100% 100% !important; background-position: 0 0 !important; }
+.rthumb { position: absolute; z-index: 2; transform-origin: 50% 0; overflow: visible; filter: drop-shadow(0 5px 7px rgba(0,0,0,.5)); transition: left .4s ease, top .4s ease, transform .45s cubic-bezier(.3, 1.2, .5, 1); }
+html.phm-1 .rphm { height: 300px; } html.phm-2 .rphm { height: 220px; } html.phm-3 .rphm { height: 290px; }
+html.land.phm-1 .rphm, html.land.phm-3 .rphm { height: 170px; } html.land.phm-2 .rphm { height: 150px; }
+.vchip .phg { display: contents; } .vchip .phg button { width: auto; padding: 0 7px; border-radius: 15px; }
+/* (in a phone: the clip's bar a small one at the top right, the sign at the top left: the hands and the phone's foot free) */
+.rphm .rbar { top: 8px; right: 8px; bottom: auto; left: auto; width: 44%; padding: 5px 8px; border-radius: 10px; background: rgba(8,13,22,.8); }
+.rphm .rplay { width: 18px; height: 18px; } .rphm .rplay svg { width: 10px; height: 10px; }
+.rphm .rsign { left: 10px; right: auto; }
+
 /* 3 · live: the window over the list (upright) or beside it (lying); the cards without pictures, the one shown framed */
 .sx-live { position: absolute; z-index: 2; left: 2px; right: 12px; top: 8px; height: calc(38% - 8px); border-radius: 14px; overflow: hidden; background: #10161f; border: 1px solid var(--edge); box-shadow: 0 10px 26px rgba(0,0,0,.45); }
 .rlw { position: absolute; inset: 0; }

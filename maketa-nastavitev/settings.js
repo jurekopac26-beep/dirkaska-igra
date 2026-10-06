@@ -41,7 +41,7 @@
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
   // the three looks of the chosen layout (D.versions: A, B, C): the tabs, their sections, where the pause's buttons go; ?v=B or #b picks one
   const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
-  const hm = /^([a-z])?([0-3])?(?:-([1-3]))?$/i.exec(location.hash.slice(1)) || [];
+  const hm = /^([a-z])?([0-3])?(?:-([1-3]))?(?:-([0-3]))?$/i.exec(location.hash.slice(1)) || [];
   let ver = String(q.get('v') || hm[1] || 'A').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
   // the pictures over the settings: the drawn animations, or real frames from the game in three ways (settings-real.js); ?media= or #a1..#a3
   const MEDIA = ['anim', 'video', 'compare', 'live'], MEDIA_NAME = { anim: 'Animacija', video: 'Posnetek', compare: 'Primerjava', live: 'V živo' };
@@ -51,6 +51,11 @@
   // Nadaljuj on the right; ?lb= or #a1-2
   const LB_NAME = { 1: 'Polna imena', 2: 'Velike tipke', 3: 'Nadaljuj spodaj' };
   let lb = LB_NAME[q.get('lb')] ? q.get('lb') : hm[3] || '1';
+  // the pictures in a phone (1 · Posnetek): 0 none, 1 the whole phone, 2 a phone close up, 3 the phone in two hands; ?ph= or #a1-1-3
+  const PH_NAME = { 0: 'Brez', 1: 'Cel telefon', 2: 'Od blizu', 3: 'V roki' };
+  let ph = PH_NAME[q.get('ph')] ? q.get('ph') : hm[4] || '0';
+  if (window.SetReal) SetReal.phone = ph;
+  document.documentElement.classList.add('phm-' + ph);
   if (window.SetReal) SetReal.control = () => S.control;   // (the race in the pictures with the player's controls)
   const orientNow = () => document.documentElement.classList.contains('land') ? 'land' : 'port';
   let cats = [];
@@ -110,7 +115,8 @@
       const p = list.querySelector('[data-part="' + C.id + '"].sx-big em'); if (p) p.textContent = n + (n === 1 ? ' nastavitev' : n === 2 ? ' nastavitvi' : n < 5 ? ' nastavitve' : ' nastavitev');
     }
   }
-  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media)) + '-' + lb;
+  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media)) + '-' + lb + '-' + ph;
+  function setPh(v) { ph = v; SetReal.phone = v; for (const k in PH_NAME) root.classList.toggle('phm-' + k, k === v); show(tab, true); updateBar(); markChip(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setLb(v) { lb = v; buildTop(); show(tab, true); updateBar(); markChip(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setMedia(m) { media = m; root.classList.toggle('media-live', real() && media === 'live'); show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
@@ -145,6 +151,7 @@
     bar.innerHTML = '<b>Nove nastavitve</b><span class="mb-seg">' + Object.keys(D.versions).map(v => '<button data-v="' + v + '" class="' + (v === ver ? 'on' : '') + '" title="' + D.versions[v].name + '">' + v + ' · ' + D.versions[v].name + '</button>').join('') + '</span><span class="mb-seg"><button data-o="0" class="' + (devLand ? '' : 'on') + '">Telefon pokonci</button><button data-o="1" class="' + (devLand ? 'on' : '') + '">Telefon ležeče</button></span>' +
       '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>' +
       (window.SetReal ? '<span class="mb-seg">' + MEDIA.map((m, i) => '<button data-media="' + m + '" class="' + (m === media ? 'on' : '') + '">' + (i ? i + ' · ' : '') + MEDIA_NAME[m] + '</button>').join('') + '</span>' : '') +
+      (window.SetReal ? '<span class="mb-seg" title="1 · Posnetek: slike v telefonu">' + Object.keys(PH_NAME).map(k => '<button data-ph="' + k + '" class="' + (k === ph ? 'on' : '') + '">' + (k === '0' ? 'Telefon: ' : '') + (k === '0' ? '' : k + ' · ') + PH_NAME[k] + '</button>').join('') + '</span>' : '') +
       '<span class="mb-seg" title="Ležeče: gumbi pavze spodaj">' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" class="' + (k === lb ? 'on' : '') + '">' + (k === '1' ? 'Ležeče spodaj: ' : '') + k + ' · ' + LB_NAME[k] + '</button>').join('') + '</span>';
   }
   bar.addEventListener('click', (e) => {
@@ -154,12 +161,14 @@
     if (b.dataset.v) setVer(b.dataset.v);
     if (b.dataset.media) setMedia(b.dataset.media);
     if (b.dataset.lb) setLb(b.dataset.lb);
+    if (b.dataset.ph) { if (media !== 'video') setMedia('video'); setPh(b.dataset.ph); }
   });
   // (a phone has no switches over the screen: a small one in the corner picks the version)
   const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('') + (window.SetReal ? '<i></i>' + [1, 2, 3].map(i => '<button data-media="' + MEDIA[i] + '">' + i + '</button>').join('') : '') +
-    '<span class="lbg"><i></i>' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" title="Ležeče spodaj: ' + LB_NAME[k] + '">S' + k + '</button>').join('') + '</span>'); document.body.appendChild(chip);   // (S1-S3: lying only)
-  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.lb ? b.dataset.lb === lb : b.dataset.media === media); };
-  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else if (b.dataset.lb) { setLb(b.dataset.lb); toast('Ležeče spodaj ' + lb + ': ' + LB_NAME[lb]); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
+    '<span class="lbg"><i></i>' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" title="Ležeče spodaj: ' + LB_NAME[k] + '">S' + k + '</button>').join('') + '</span>' +
+    (window.SetReal ? '<span class="phg"><i></i>' + ['1', '2', '3'].map(k => '<button data-ph="' + k + '" title="Telefon: ' + PH_NAME[k] + '">T' + k + '</button>').join('') + '</span>' : '')); document.body.appendChild(chip);   // (S1-S3: lying only; T1-T3: the pictures in a phone)
+  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.lb ? b.dataset.lb === lb : b.dataset.ph ? b.dataset.ph === ph && media === 'video' : b.dataset.media === media); };
+  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else if (b.dataset.lb) { setLb(b.dataset.lb); toast('Ležeče spodaj ' + lb + ': ' + LB_NAME[lb]); } else if (b.dataset.ph) { const v = b.dataset.ph === ph && media === 'video' ? '0' : b.dataset.ph; if (media !== 'video') setMedia('video'); setPh(v); toast('Telefon: ' + PH_NAME[v]); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
   markChip();
   addEventListener('resize', layout);
 

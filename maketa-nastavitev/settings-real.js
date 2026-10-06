@@ -68,6 +68,7 @@ window.SetReal = (function () {
     return f;
   }
   function placeOne(f) {
+    if (f.classList.contains('rfs') || f.classList.contains('rfb')) return;   // (a phone's whole screen; the race blurred behind it)
     const bw = f.offsetWidth, bh = f.offsetHeight; if (!bw || !bh) return;
     const tile = f.closest('.rc'), ref = tile ? tile.offsetWidth : bw;   // (a tile: the scale of the whole card)
     const o = f.dataset.o, R = RF[o], g = regOf(o, f.dataset.reg || f.dataset.key, !!tile || !!f.closest('.sx-live')), p = R.pos[f.dataset.frame] || R.pos.base;
@@ -76,18 +77,89 @@ window.SetReal = (function () {
     const L = Math.max(0, Math.min(dw - bw, cx * dw - bw / 2)), T = Math.max(0, Math.min(dh - bh, cy * dh - bh / 2));
     f.style.backgroundSize = dw.toFixed(1) + 'px ' + dh.toFixed(1) + 'px'; f.style.backgroundPosition = (-L).toFixed(1) + 'px ' + (-T).toFixed(1) + 'px';
   }
-  function place(root) { for (const f of (root || document).querySelectorAll('.rf')) placeOne(f); }
+  function place(root) { for (const f of (root || document).querySelectorAll('.rf')) placeOne(f); for (const p of (root || document).querySelectorAll('.rv[data-ph]')) placePhone(p); }
   const sign = (it, v) => SIGN[it.key] ? '<span class="rsign">' + svg(SIGN[it.key]) + '<b>' + (optLabel(it, v) || it.name) + '</b></span>' : '';
+
+  /* ---- the pictures in a phone (1 · Posnetek): 1 the whole phone on the race blurred, 2 a big phone close up (the part of the screen
+     that matters, its edge and corners at the side), 3 the phone in two hands: the thumbs on the real controls of the option shown,
+     the phone tilted for the tilt ---- */
+  let phoneMode = '0';
+  const BZ = 0.05;   // (the phone's edge: 5 % of the screen's short side)
+  // where the thumbs press on the screen (0..1 of it), for each control: Tipke the left arrow, Volan the wheel, Nagib the brake; gas right
+  const TIPS = {
+    port: { buttons: [[.12, .93], [.86, .885]], wheel: [[.2, .885], [.86, .885]], tilt: [[.13, .9], [.86, .885]], hold: [[.04, .985], [.96, .985]] },
+    land: { buttons: [[.07, .86], [.95, .74]], wheel: [[.12, .78], [.95, .74]], tilt: [[.08, .8], [.95, .74]], hold: [[.02, .9], [.98, .9]] }
+  };
+  const TILT = { tiltSens: 1, tiltInvert: 1 };
+  const thumbSvg = (side) => '<svg class="rthumb ' + side + '" viewBox="0 0 40 100" aria-hidden="true"><defs><linearGradient id="rtg-' + side + '" x1="0" x2="1"><stop offset="0" stop-color="#c9d1dc"/><stop offset=".5" stop-color="#eef2f6"/><stop offset="1" stop-color="#b7c0cc"/></linearGradient></defs>' +
+    '<rect x="4" y="2" width="32" height="140" rx="16" fill="url(#rtg-' + side + ')" stroke="rgba(40,50,64,.35)"/><rect x="10" y="6" width="20" height="19" rx="9" fill="rgba(255,255,255,.75)"/></svg>';
+  function phonePic(o, it, v) {
+    const n = frameOf(o, it.key, v), pic = h('sx-pic real rv rphm m' + phoneMode);
+    pic.dataset.ph = phoneMode; pic.dataset.o = o; pic.dataset.key = it.key; pic.dataset.v = v;
+    if (phoneMode !== '2') { const b = frameEl(o, it.key, n, v); b.classList.add('rfb'); pic.appendChild(b); }
+    const ph = h('rph'), scr = h('rpsc'), f = frameEl(o, it.key, n, v); f.classList.add('rfs'); scr.appendChild(f); ph.appendChild(scr); pic.appendChild(ph);
+    if (phoneMode === '3') pic.insertAdjacentHTML('beforeend', thumbSvg('l') + thumbSvg('r'));
+    return pic;
+  }
+  function placePhone(pic) {
+    const bw = pic.offsetWidth, bh = pic.offsetHeight; if (!bw || !bh) return;
+    const o = pic.dataset.o, R = RF[o], mode = pic.dataset.ph, key = pic.dataset.key, v = pic.dataset.v, lying = R.w > R.h;
+    const b = BZ * Math.min(R.w, R.h), ph = pic.querySelector('.rph');
+    let s, L, T, rot = 0;
+    if (mode === '2') {   // (close up: the screen 84 % of the picture's width, its edge showing; the part of it the setting is about in the middle)
+      const g = regOf(o, key, false), p = R.pos[pic.querySelector('.rfs').dataset.frame] || R.pos.base;
+      const cy = g.car ? p[1] / R.h + (g.dy || 0) : g.cy;
+      s = bw * 0.84 / R.w; L = (bw - (R.w + 2 * b) * s) / 2;
+      T = bh / 2 - (b + cy * R.h) * s; T = Math.min(10, Math.max(bh - (R.h + 2 * b) * s - 10, T));
+    } else {   // (the whole phone; with the hands a little smaller, to leave them room)
+      const mx = mode === '3' ? (lying ? 120 : 30) : 24, my = mode === '3' ? (lying ? 18 : 44) : 18;
+      s = Math.min((bw - mx) / (R.w + 2 * b), (bh - my) / (R.h + 2 * b));
+      L = (bw - (R.w + 2 * b) * s) / 2; T = (bh - (R.h + 2 * b) * s) / 2 - (mode === '3' && !lying ? 12 : 0);
+      if (mode === '3') rot = TILT[key] || (key === 'control' && v === 'tilt') || (key !== 'control' && ctl() === 'tilt' && TILT[key]) ? (lying ? -9 : -13) : (lying ? 0 : -3);
+    }
+    const OW = (R.w + 2 * b) * s, OH = (R.h + 2 * b) * s;
+    ph.style.width = OW.toFixed(1) + 'px'; ph.style.height = OH.toFixed(1) + 'px'; ph.style.left = L.toFixed(1) + 'px'; ph.style.top = T.toFixed(1) + 'px';
+    ph.style.padding = (b * s).toFixed(1) + 'px'; ph.style.borderRadius = (Math.min(OW, OH) * 0.13).toFixed(1) + 'px'; ph.style.transform = 'rotate(' + rot + 'deg)';
+    pic.querySelector('.rpsc').style.borderRadius = (Math.min(OW, OH) * 0.09).toFixed(1) + 'px';
+    ph.style.setProperty('--cam', (b * s * 0.55).toFixed(1) + 'px'); ph.classList.toggle('lying', lying);
+    if (mode !== '3') return;
+    // the thumbs: on the controls of the option shown (Upravljanje), else holding the phone at its lower corners
+    const c = key === 'control' ? v : key === 'autoGas' ? ctl() : null, tips = TIPS[o][c] || TIPS[o].hold;
+    const cx = L + OW / 2, cyc = T + OH / 2, a = rot * Math.PI / 180, tw = lying ? Math.max(26, Math.min(40, bh * 0.19)) : Math.max(22, Math.min(44, bw * 0.105));   // (lying: from the sides, shorter and wider)
+    for (const [i, side] of [[0, 'l'], [1, 'r']]) {
+      const el = pic.querySelector('.rthumb.' + side), [fx, fy] = tips[i];
+      const x0 = L + (b + fx * R.w) * s - cx, y0 = T + (b + fy * R.h) * s - cyc;
+      const x = cx + x0 * Math.cos(a) - y0 * Math.sin(a), y = cyc + x0 * Math.sin(a) + y0 * Math.cos(a);
+      const ang = (side === 'l' ? 1 : -1) * (lying ? 74 : 26) + rot;
+      el.style.width = tw.toFixed(1) + 'px'; el.style.height = (tw * 2.5).toFixed(1) + 'px';
+      el.style.left = (x - tw / 2).toFixed(1) + 'px'; el.style.top = (y - tw * 0.12).toFixed(1) + 'px'; el.style.transform = 'rotate(' + ang.toFixed(1) + 'deg)';
+    }
+  }
 
   /* ---- 1. video: the clip of the chosen option ---- */
   function video(o, it, v) {
-    const pic = h('sx-pic real rv');
+    const pic = phoneMode !== '0' ? phonePic(o, it, v) : h('sx-pic real rv');
+    if (phoneMode !== '0') {
+      pic.insertAdjacentHTML('beforeend', (SIGN[it.key] ? '' : '<i class="rtag">' + (optLabel(it, v) || it.name) + '</i>') + sign(it, v) +
+        '<div class="rbar"><i class="rplay"><svg viewBox="0 0 24 24"><path d="M7 4.5 L20 12 L7 19.5 Z" fill="currentColor"/></svg></i><span class="rprog"><b></b></span><em>0:02</em></div>');
+      return pic;
+    }
     pic.appendChild(frameEl(o, it.key, frameOf(o, it.key, v), v));
     pic.insertAdjacentHTML('beforeend', (SIGN[it.key] ? '' : '<i class="rtag">' + (optLabel(it, v) || it.name) + '</i>') + sign(it, v) +
       '<div class="rbar"><i class="rplay"><svg viewBox="0 0 24 24"><path d="M7 4.5 L20 12 L7 19.5 Z" fill="currentColor"/></svg></i><span class="rprog"><b></b></span><em>0:02</em></div>');
     return pic;
   }
   function videoTo(pic, o, it, v, dir) {   // (the new clip comes in from the side of the button tapped)
+    if (pic.dataset.ph) {   // (in a phone: the new clip on its screen, the race behind it, the thumbs and the tilt move to it)
+      const n = frameOf(o, it.key, v); pic.dataset.v = v;
+      const scr = pic.querySelector('.rpsc'), old = scr.querySelector('.rfs'), nf = frameEl(o, it.key, n, v); nf.classList.add('rfs', 'fade'); scr.appendChild(nf);
+      requestAnimationFrame(() => nf.classList.remove('fade')); setTimeout(() => old.remove(), 360);
+      const bg = pic.querySelector('.rfb'); if (bg) { bg.dataset.frame = n; bg.style.backgroundImage = 'url("' + url(o, n) + '")'; }
+      placePhone(pic);
+      const tg = pic.querySelector('.rtag'); if (tg) tg.textContent = optLabel(it, v) || it.name;
+      const sg = pic.querySelector('.rsign'); if (sg) sg.outerHTML = sign(it, v);
+      return;
+    }
     const old = pic.querySelector('.rf'), nf = frameEl(o, it.key, frameOf(o, it.key, v), v);
     nf.classList.add('in', dir < 0 ? 'l' : 'r'); pic.insertBefore(nf, old.nextSibling); placeOne(nf);
     requestAnimationFrame(() => { nf.classList.remove('in'); old.classList.add('out', dir < 0 ? 'r' : 'l'); setTimeout(() => old.remove(), 420); });
@@ -136,6 +208,7 @@ window.SetReal = (function () {
       const n = key === 'autoGas' ? frameOf(f.dataset.o, key, f.dataset.v) : baseOf(f.dataset.o);
       if (n !== f.dataset.frame) { f.dataset.frame = n; f.style.backgroundImage = 'url("' + url(f.dataset.o, n) + '")'; placeOne(f); }
     }
+    for (const p of (root || document).querySelectorAll('.rv[data-ph]')) placePhone(p);   // (the thumbs on the new controls)
   }
-  return { video, videoTo, compare, compareTo, live, liveShow, place, frameOf, rebase, set control(f) { ctl = f; } };
+  return { video, videoTo, compare, compareTo, live, liveShow, place, frameOf, rebase, set control(f) { ctl = f; }, set phone(m) { phoneMode = m || '0'; }, get phone() { return phoneMode; } };
 })();
