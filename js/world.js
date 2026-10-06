@@ -22170,6 +22170,7 @@ const World = (function () {
   // edge, shrunk towards the camera by the same factor (the same size and place in the picture: nearer things still hide it), without the
   // fog but faded into its colour with the distance (a tall landmark in the haze)
   function cpMastStep(M, cam, fog) {
+    if (!cam) { M.m.position.set(M.x, M.y, M.z); M.m.scale.setScalar(1); M.mat.color.copy(M.base); return; }   // (no camera: on its own place, as built: the world test's pose)
     const p = cam.position, vx = M.x - p.x, vy = M.y - p.y, vz = M.z - p.z, D = Math.hypot(vx, vy, vz), L = cam.far * 0.95, k = D > L ? L / D : 1;
     M.m.position.set(p.x + vx * k, p.y + vy * k, p.z + vz * k); M.m.scale.setScalar(k);
     M.mat.color.copy(M.base); if (fog) M.mat.color.lerp(fog.color, clamp((D - 150) / 900, 0, 0.62));
@@ -27186,7 +27187,8 @@ const World = (function () {
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.air) rbAirStep(d.air, t, car);   // Red Bull Ring: the TV helicopter's pass, the jets and their smoke
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
-    if (d.cpMast && cam) cpMastStep(d.cpMast, cam, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar
+    if (d.cpMast && (cam || !car)) cpMastStep(d.cpMast, car ? cam : null, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar (no car: on its own place, the world test's pose)
+    if (d.far && !car) { d.far.position.set(0, 0, 0); d.far.scale.setScalar(1); d.far.updateMatrix(); }   // Riverside: the far ring follows the camera as it is drawn (rsFar); no car: as built, the world test's pose
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
