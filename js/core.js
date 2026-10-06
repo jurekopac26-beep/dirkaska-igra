@@ -296,9 +296,14 @@ const Core = (function () {
         for (let j = 0; j < n; j++) { const hl = this.stubHw(S, j * D, -1) + lim + SR.rm, hr = this.stubHw(S, j * D, 1) + lim + SR.rm; for (const u of [-hl, -hl / 2, 0, hr / 2, hr]) mark(nearest(x[j] - tz[j] * u, z[j] + tx[j] * u)); }
         // the barrier open across its mouth: where the barrier line lies within its corridor, and SR.gc more
         // (def.sideClosed: the side roads drawn but closed at the road's edge, the barrier straight across their mouths: no gap, S.m0..S.m1 the road's samples there)
-        const G = gap[side > 0 ? 1 : 0], sp = {}; S.m0 = -1; S.m1 = -1;
+        const G = gap[side > 0 ? 1 : 0], sp = {}, mo = [], sb0 = S.sb; S.m0 = -1; S.m1 = -1;
         for (let i = Math.max(0, i0 - 80); i <= Math.min(N - 1, i0 + 80); i++) { const b = side > 0 ? this.br[i] : this.bl[i], bx = px[i] + this.nx[i] * side * b, bz = pz[i] + this.nz[i] * side * b;
-          if (this._stubProj(S, bx, bz, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) <= this.stubHw(S, sp.t, sp.u) + lim + (this.def.sideClosed ? 0 : SR.gc)) { if (!this.def.sideClosed) G[i] = 1; if (S.m0 < 0) S.m0 = i; S.m1 = i; } }
+          if (this._stubProj(S, bx, bz, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) <= this.stubHw(S, sp.t, sp.u) + lim + (this.def.sideClosed ? 0 : SR.gc)) { if (!this.def.sideClosed) G[i] = 1; else mo.push(i, sp.t); if (S.m0 < 0) S.m0 = i; S.m1 = i; } }
+        if (mo.length) {   // (closed: the mouth is where it crosses the barrier, as wide as it is there over the angle it leaves at; a side road that runs on beside the road
+          // behind its barrier (a parallel carriageway, a yard along it) is no mouth all that way: only the first stretch from where it crosses)
+          let tm = 1e9; for (let q = 1; q < mo.length; q += 2) tm = Math.min(tm, mo[q]);
+          const jt = Math.min(n - 1, Math.round(tm / D)), ii = clamp(Math.round(sb0 / ds), 0, N - 1), sinA = Math.max(0.35, Math.abs(tx[jt] * this.nx[ii] + tz[jt] * this.nz[ii])), W = 2 * (this.stubHw(S, tm) + lim) / sinA + 2;
+          S.m0 = -1; S.m1 = -1; for (let q = 0; q < mo.length; q += 2) if (mo[q + 1] <= tm + W) { if (S.m0 < 0 || mo[q] < S.m0) S.m0 = mo[q]; if (mo[q] > S.m1) S.m1 = mo[q]; } }
       }
     }
     _hyAt(s) { const N = this.N, f = clamp(s / this.ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return this.hy[i] + (this.hy[i + 1] - this.hy[i]) * (f - i); }   // (the road's height at s, open roads)

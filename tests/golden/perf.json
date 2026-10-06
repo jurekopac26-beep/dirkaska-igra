@@ -203,11 +203,11 @@
   "jsMs": 1.11
  },
  "medvode": {
-  "calls": 194,
-  "maxCalls": 348,
-  "kverts": 463,
-  "maxKverts": 628,
-  "jsMs": 1.26
+  "calls": 190,
+  "maxCalls": 347,
+  "kverts": 455,
+  "maxKverts": 631,
+  "jsMs": 1.41
  },
  "jezero": {
   "calls": 278,

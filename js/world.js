@@ -24159,10 +24159,26 @@ const World = (function () {
         h = d < 3.4 ? y : h < y ? Math.max(h, y - (d - 3.4) / 1.5) : Math.min(h, y + (d - 3.4) / 1.3); } }
     { const r = lfNear(M.altH, x, z), ah = T.def.altHw || 2.4; if (r.e && r.d < ah + 6.6) h = lerp(h, lerp(r.e.a[2], r.e.b[2], r.t) - 0.15, sstep(ah + 6.6, ah + 1, r.d)); }   // (the oncoming lanes)
     for (const p of M.pads) { const d = Math.hypot(x - p.x, z - p.z); if (d < p.r + p.b) { const R0 = p.ring, ph = R0 ? lerp(R0.y, R0.yAt(Math.atan2(z - p.z, x - p.x)), clamp(d / R0.ri, 0, 1)) - 0.05 : p.h; h = lerp(ph, h, sstep(p.r, p.r + p.b, d)); } }   // (the rings' islands: at the ring's own height round them)
-    if (VR.sg) h = vrStubH(x, z, h, i >= 0 ? dd : 999);
+    if (VR.sg) h = mvStubH(x, z, h, i >= 0 ? dd : 999);
+    for (const p of M.pads) { const R0 = p.ring; if (!R0) continue; const d = Math.hypot(x - p.x, z - p.z); if (d > R0.ri - 1.6 && d < R0.r + R0.hw + 8) h = Math.min(h, R0.yAt(Math.atan2(z - p.z, x - p.x)) - 0.35 + Math.max(0, d - R0.r - R0.hw - 0.5) * 0.08); }   // (r5, after the side roads' levelling: well under the ring's own asphalt round the island, its depth offset (under the route's) no longer losing to the ground; under the apron too)
     if (i >= 0) h = Math.min(h, n.env);
     MVN.dd = i >= 0 ? dd : 999;
     return h;
+  }
+  function mvStubH(x, z, h, dd) {   // vrStubH, and then the ground never above a side road's surface across its width: a little under it, rising 0.08 m a
+    // metre to 8 m out (two side roads close together, each levelling the ground to its own height; a driveway alongside the route's higher bank)
+    const L = STG && STG.get(Math.floor(x / 64) * 65536 + Math.floor(z / 64)); if (!L || dd < 0.5) return h;
+    let cap = 1e9;
+    for (const S of L) { const b = S.bb; if (x < b[0] - 8 || x > b[2] + 8 || z < b[1] - 8 || z > b[3] + 8) continue;
+      VRSP.S = null; if (!T._stubProj(S, x, z, VRSP)) continue;
+      const t = VRSP.t, au = Math.abs(VRSP.u), hw = T.stubHw(S, t, VRSP.u), end = S.end === 2 ? S.L + 1 : S.Lend;
+      if (t < 0 || t > end + 10 || au > hw + 13) continue;
+      const f = sstep(hw + 13, hw + 4, au) * sstep(end + 10, end, t) * sstep(0.5, 3, dd), on = t >= S.te && t <= end && au < hw + 8; if (f <= 0 && !on) continue;
+      const q = au < hw + S.lim + 3 ? T.query(x, z, T.stubHint(S.k, t), VRSQ) : null, ys = q && q.k === S.k ? q.y : T.stubPt(S.k, t, VRSQ).y;
+      if (f > 0) h = lerp(h, ys - 0.15, f);
+      if (on) cap = Math.min(cap, ys - 0.15 + Math.max(0, au - hw - 0.6) * 0.08);
+    }
+    return Math.min(h, cap);
   }
   function mvGH(i, j) {   // terrain height at grid vertex (i, j), computed once (VR.G: Vršič's grid)
     const G = VR.G; i = clamp(i, 0, G.nx - 1); j = clamp(j, 0, G.nz - 1); const k = j * G.nx + i; let h = G.h[k];
@@ -24629,25 +24645,40 @@ const World = (function () {
       for (let a = Math.floor((x0 - ocx0) / OC); a <= Math.floor((x1 - ocx0) / OC); a++) for (let b = Math.floor((z0 - ocz0) / OC); b <= Math.floor((z1 - ocz0) / OC); b++) if (a >= 0 && b >= 0 && a < onx && b < onz && inPoly(pts, ocx0 + (a + 0.5) * OC, ocz0 + (b + 0.5) * OC)) occ[b * onx + a] = Math.max(occ[b * onx + a], v); };
     const Q = {}, QS = {};
     const onAlt = (x, z, m) => { const r = lfNear(M.altH, x, z); return !!r.e && r.d < (T.def.altHw || 2.4) + m; };   // (on an oncoming lane, m metres more)
-    const onRoadB = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0) { const S = T.stubs[q.k]; if (q.st <= S.Lend && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + m) return true; } return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (the buildings: a side road's own width past its mouth; walls.js the same)
-    const onRoad = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0 && Math.abs(q.u) <= T.stubHw(T.stubs[q.k], q.st) + m) return true; return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (on the asphalt or a sidewalk, or a side road's, m metres more)
+    // (r5: the side roads' drawn half widths, narrowed past their mouths where a house beside the street would stand in them: the house stays, the street fits
+    // between the houses as a village street does; never under 1.2 m. Closed side roads only (def.sideClosed: no car drives in them))
+    const SNW = (T.stubs || []).map(() => null), stubHwD = (S, t) => { const h = t < S.te ? T.stubHw(S, t) : S.hw, A = SNW[S.k]; if (!A) return h; const i = Math.round(t); return i >= 0 && i < A.length ? Math.min(h, A[i]) : h; };
+    const onRoadB = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0) { const S = T.stubs[q.k]; if (q.st <= S.Lend && Math.abs(q.u) <= stubHwD(S, q.st) + m) return true; } return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (the buildings: a side road's own width past its mouth; walls.js the same)
+    const onRoad = (x, z, m) => { if (onAlt(x, z, m)) return true; const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0 && Math.abs(q.u) <= Math.min(T.stubHw(T.stubs[q.k], q.st), stubHwD(T.stubs[q.k], q.st)) + m) return true; return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (on the asphalt or a sidewalk, or a side road's, m metres more)
 
     /* ---- the fence (built further down, FENCE): the lines where the cars' free ground ends (Track.fenceRuns). What stands inside that ground by more than 30 cm
        could be driven through, so it is left out: a house the lines cut into or that stands inside it, a hedge, garden wall or fence (def.fences) inside it ---- */
     const tF0 = performance.now(), FR = T.fenceRuns(), wFree = T.wallFree(0.3), wallHit = T.wallHitter(FR.runs, wFree), msRuns = performance.now() - tF0;
 
     /* ---- the buildings (def.bld): clear of the road, its sidewalks and the side roads; their footprints marked (no trees in them) ---- */
-    const blds = []; let nWallDrop = 0;
+    const blds = []; let nWallDrop = 0, nNarrow = 0;
     for (const b of def.bld || []) {
       const [x, z, L, W, ang, hgt, kind, name] = b, poly = b[8] ? b[8].reduce((a, v, k) => (k % 2 ? a[a.length - 1].push(v) : a.push([v]), a), []) : null;
       if (L < 2.2 || W < 2.2) continue;
       const c = Math.cos(ang), s = Math.sin(ang), pts = poly || [[-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]].map(([p, q]) => [x + c * p - s * q, z + s * p + c * q]);
       let ok = true; for (const [px, pz] of pts.concat([[x, z]])) if (onRoadB(px, pz, 0.3) || mvW(px, pz).e > 1) { ok = false; break; }
+      if (!ok && def.sideClosed && kind !== 6) {   // (r5: in a side road's band only, past its mouth: the street narrowed beside it, the house kept)
+        const need = [], E = []; for (let e = 0; e < pts.length; e++) { const p0 = pts[e], p1 = pts[(e + 1) % pts.length], m = Math.max(1, Math.ceil(Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 0.5)); for (let j = 0; j < m; j++) E.push([lerp(p0[0], p1[0], j / m), lerp(p0[1], p1[1], j / m)]); }
+        let fine = !(mvW(x, z).e > 1);
+        for (const [px, pz] of E.concat([[x, z]])) { if (!fine) break; if (mvW(px, pz).e > 1 || onAlt(px, pz, 0.3)) { fine = false; break; }
+          const q = T.query(px, pz, T.nearestIdx(px, pz), Q);
+          if (q.k < 0) { if (!q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + 0.3) fine = false; continue; }
+          const S = T.stubs[q.k]; if (q.st > S.Lend || Math.abs(q.u) > stubHwD(S, q.st) + 0.3) continue;
+          const w = Math.abs(q.u) - 0.3; if (q.st < S.te + 3 || w < 1.2) { fine = false; break; } need.push([S.k, q.st, w]); }
+        if (fine && need.length) { for (const [k, st, w] of need) { const S = T.stubs[k]; if (!SNW[k]) SNW[k] = new Float32Array(Math.ceil(S.Lend) + 2).fill(1e9);
+            for (let t = Math.floor(st) - 1; t <= Math.ceil(st) + 1; t++) if (t >= 0 && t < SNW[k].length) SNW[k][t] = Math.min(SNW[k][t], w); }
+          ok = true; nNarrow++; }
+      }
       if (!ok) continue;
       if (kind !== 2 && kind !== 6 && wallHit(pts, x, z)) { nWallDrop++; continue; }   // (the fence: nothing to drive into; not the churches, not the castle)
       blds.push({ x, z, L, W, ang, hgt, kind, name: name || '', poly, pts }); occPoly(pts, 3);
     }
-    out.marks = {}; for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
+    out.marks = {}; out.housesNarrowed = nNarrow; for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
     // the town's streets, paths and tracks (def.roads, def.paths) and the railway: marked on the raster
     const lines = (def.roads || []).map(r => ({ w: r[0], grav: !!r[1], br: r[2], pts: r[4], path: false })).concat((def.paths || []).map(r => ({ w: r[0], grav: !!r[1], br: r[2], pts: r[4], path: true })));
     for (const l of lines) for (let k = 0; k + 3 < l.pts.length; k += 2) occSeg(l.pts[k], l.pts[k + 1], l.pts[k + 2], l.pts[k + 3], l.w / 2 + 0.6, 1);
@@ -24829,7 +24860,7 @@ const World = (function () {
         const P0 = T.stubPt(k, S.tb, {}), m0 = T.query(P0.x, P0.z, S.i0, {}), sinA = Math.max(0.3, Math.abs(P0.tx * m0.nx + P0.tz * m0.nz));
         const t0 = Math.max(0, S.te - 2 - (T.stubHw(S, 0) + 0.7) * Math.sqrt(1 - sinA * sinA) / sinA);
         const secs = [];
-        for (let t = t0; ; t += 2) { const tt = Math.min(t, tEnd), p = T.stubPt(k, tt, F), nx = -p.tz, nz = p.tx, hw = T.stubHw(S, tt), us = [-hw - 0.5, -hw, -hw / 2, 0, hw / 2, hw, hw + 0.5];
+        for (let t = t0; ; t += 2) { const tt = Math.min(t, tEnd), p = T.stubPt(k, tt, F), nx = -p.tz, nz = p.tx, hw = tt < S.te ? T.stubHw(S, tt) : Math.min(T.stubHw(S, tt), stubHwD(S, tt)), us = [-hw - 0.5, -hw, -hw / 2, 0, hw / 2, hw, hw + 0.5];
           const hi = T.nearestIdx(p.x, p.z);   // (the road's sample beside this section: a side road at a shallow angle spans more of the road than its junction's)
           secs.push({ t: tt, pts: us.map((u, j) => { let x = p.x + nx * u, z = p.z + nz * u;
             for (let it = 0; it < 5; it++) { const q = T.query(x, z, hi, Q); if (q.deep) break; const e = WA[q.a] + 0.02 - S.side * q.d; if (e <= 0) break;   // (out at its own side's edge)
@@ -24867,7 +24898,7 @@ const World = (function () {
         const ni = S.name ? stubNames.indexOf(S.name) : -1;   // its name at its mouth: a blue plate on a pole at the right-hand corner going in
         if (ni >= 0) { const t = S.tb + 1.5, p = T.stubPt(k, t, F), u = T.stubHw(S, t) + Math.min(0.5, S.lim - 0.2), x = p.x - p.tz * u, z = p.z + p.tx * u;   // (a knockable plate on a pole, now inside the side road's limit so that a car can reach it: the blue plate with white bars for its name; the atlas's name cells are unused)
           out.props.push({ kind: 'nsign', x, z, yaw: p.h, col: 0, i: T.stubHint(k, t) }); exclPush(x, z, 1); }
-        for (let t = 0, e = S.end === 2 ? S.L : S.Lend + 3; t <= e; t += 3) { const p = T.stubPt(k, t, {}); exclPush(p.x, p.z, T.stubHw(S, t) + 1.2); }   // (nothing grows on the side roads)
+        for (let t = 0, e = S.end === 2 ? S.L : S.Lend + 3; t <= e; t += 3) { const p = T.stubPt(k, t, {}); exclPush(p.x, p.z, Math.min(T.stubHw(S, t), stubHwD(S, t)) + 1.2); }   // (nothing grows on the side roads)
       }
       SA.addTo(root, aMat, false, true); SG.addTo(root, sMat, false, true); SL.addTo(root, lMat, false, true);
     }
@@ -25008,8 +25039,21 @@ const World = (function () {
       const sS = new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       const dense = (p, st) => { const o = []; for (let k = 0; k + 3 < p.length; k += 2) { const ax = p[k], az = p[k + 1], bx = p[k + 2], bz = p[k + 3], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / st)); for (let t = 0; t < m; t++) o.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); } o.push([p[p.length - 2], p[p.length - 1]]); return o; };
       for (const l of lines) { if (l.br === 2) continue;
-        const hw = l.w / 2, D = dense(l.pts, 3), n = D.length; if (n < 2 || vrDist(D[0][0], D[0][1]) > 460 && vrDist(D[n - 1][0], D[n - 1][1]) > 460) continue;
+        const hw = l.w / 2, D = dense(l.pts, 3); let n = D.length; if (n < 2 || vrDist(D[0][0], D[0][1]) > 460 && vrDist(D[n - 1][0], D[n - 1][1]) > 460) continue;
         const keep = D.map(([x, z]) => !onRoad(x, z, Math.min(hw, 1.5)));
+        if (!l.br) {   // (r5: a street that meets a side road ends right at its edge, not at its last 3 m step short of it: the edge found along its own line, up to 6 m on; never on to the route, behind its fence)
+          const onStubE = (x, z) => { const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k < 0) return false; const S = T.stubs[q.k]; return q.st <= (S.end === 2 ? S.L + 0.5 : S.Lend) && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + 0.05; };
+          const edge = (k, j, back) => { const ax = D[k][0], az = D[k][1], dx = (D[j][0] - ax) * (back ? -1 : 1), dz = (D[j][1] - az) * (back ? -1 : 1), L = Math.hypot(dx, dz) || 1; let lo = 0, hi = -1;   // (back: beyond k, away from j: the street's own ends)
+            for (let t = 0.5; t <= 6; t += 0.5) if (onStubE(ax + dx / L * t, az + dz / L * t)) { hi = t; break; }
+            if (hi < 0) return null; for (let it = 0; it < 6; it++) { const m = (lo + hi) / 2; if (onStubE(ax + dx / L * m, az + dz / L * m)) hi = m; else lo = m; } return [ax + dx / L * lo, az + dz / L * lo]; };
+          const D2 = [], K2 = [];
+          for (let k = 0; k < n; k++) { if (keep[k] && k > 0 && !keep[k - 1]) { const e = edge(k, k - 1); if (e) { D2.push(e); K2.push(true); } }
+            if (k === 0 && keep[0]) { const e = edge(0, 1, true); if (e) { D2.push(e); K2.push(true); } }
+            D2.push(D[k]); K2.push(keep[k]);
+            if (keep[k] && k + 1 < n && !keep[k + 1]) { const e = edge(k, k + 1); if (e) { D2.push(e); K2.push(true); } }
+            if (k === n - 1 && keep[k]) { const e = edge(k, k - 1, true); if (e) { D2.push(e); K2.push(true); } } }
+          D.length = 0; D.push(...D2); keep.length = 0; keep.push(...K2); n = D.length;
+        }
         const yb = l.br === 1 ? [mvGround(D[0][0], D[0][1]) + 0.2, mvGround(D[n - 1][0], D[n - 1][1]) + 0.2] : null;
         const nrm = D.map((p, k) => { const a = D[Math.max(0, k - 1)], b = D[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], ll = Math.hypot(dx, dz) || 1; return [-dz / ll, dx / ll]; });
         let cum = 0; const vv = D.map((p, k) => (k ? (cum += Math.hypot(p[0] - D[k - 1][0], p[1] - D[k - 1][1])) : 0));
