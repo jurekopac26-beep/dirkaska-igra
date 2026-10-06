@@ -1667,7 +1667,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "b4af9a8ece0cc69e690057d7"
+  "digest": "5bc2eb49b7dfdceda8e60c24"
  },
  "rio/cs/formula": {
   "finished": 13,
@@ -1697,6 +1697,6 @@
   "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "ad3d186490eda53705f27bf3"
+  "digest": "8e2ed0fe9ffddaac143d8e5c"
  }
 }
