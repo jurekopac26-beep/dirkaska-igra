@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upravljanje: video</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<style>
+  /* a clip shown in a picture: the phone with the whole screen at one moment, beside it the card at four moments of the clip, one row for
+     each control; the phone lying under them */
+  :root { --navy1: #0b192b; --navy2: #08121f; --gold: #ffc629; --lbl: #9fb3d6; --curb: #e63b2e; --chalk: #f6f6f1; --f-ui: 'ApexMenu', Roboto, system-ui, sans-serif; color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --navy1: #0b192b; } }
+  :root[data-theme="dark"] { --navy1: #0b192b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 26px 30px 30px; background: radial-gradient(90% 70% at 50% 20%, #16304d, var(--navy1) 55%, var(--navy2)); color: #fff; font-family: var(--f-ui); display: inline-block; min-width: 100%; }
+  header { display: flex; gap: 18px; margin-bottom: 18px; }
+  header .kerb { width: 10px; border-radius: 3px; background: repeating-linear-gradient(180deg, var(--curb) 0 12px, var(--chalk) 12px 24px); }
+  h1 { margin: 0; font: 900 italic 34px/1 var(--f-ui); text-transform: uppercase; letter-spacing: -.5px; }
+  h1 small { display: block; margin-top: 8px; font: 600 italic 16px/1.35 var(--f-ui); color: var(--lbl); text-transform: none; letter-spacing: 0; max-width: 1250px; }
+  .main { display: flex; gap: 34px; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { margin: 0 0 10px 4px; font: 900 italic 17px/1.2 var(--f-ui); color: var(--gold); text-transform: uppercase; }
+  figcaption span { display: block; margin-top: 4px; font: 600 italic 13.5px/1.35 var(--f-ui); color: #c9d3e2; text-transform: none; max-width: 400px; }
+  .dev { display: inline-block; padding: 10px; border-radius: 46px; background: #020409; box-shadow: 0 0 0 2px #2a313c, 0 30px 70px rgba(0,0,0,.55); }
+  .dev img { display: block; border-radius: 36px; }
+  .land .dev { border-radius: 40px; } .land .dev img { border-radius: 30px; }
+  .land figcaption span { max-width: 900px; }
+  .rows { display: flex; flex-direction: column; gap: 18px; }
+  .row h2 { margin: 0 0 8px 2px; font: 900 italic 18px/1 var(--f-ui); color: var(--gold); text-transform: uppercase; }
+  .row h2 small { margin-left: 10px; font: 600 italic 13px/1 var(--f-ui); color: #c9d3e2; text-transform: none; }
+  .strip { display: flex; gap: 12px; }
+  .strip figure { position: relative; }
+  .strip img { display: block; border-radius: 16px; box-shadow: 0 10px 24px rgba(0,0,0,.45); }
+  .strip figcaption { margin: 7px 0 0 2px; font: 800 italic 13px/1 var(--f-ui); color: #dfe6f1; text-transform: none; }
+  .strip figcaption b { color: var(--gold); }
+  .land { margin-top: 26px; }
+</style>
+</head>
+<body>
+<header><i class="kerb"></i><h1 id="t"></h1></header>
+<div class="main"><figure id="ph"></figure><div class="rows" id="rows"></div></div>
+<figure class="land" id="land"></figure>
+<script>
+  // ?title=&sub=&phone=src~caption~text&land=src~caption~text&times=a|b|c|d&rows=label~text~src,src,src,src|label~text~src,...&sk=2 (the strips' pictures: pixels per point)
+  const q = new URLSearchParams(location.search), imgs = [];
+  document.getElementById('t').innerHTML = (q.get('title') || '') + (q.get('sub') ? '<small>' + q.get('sub') + '</small>' : '');
+  const dev = (el, s, half) => { if (!s) return; const [src, cap, txt] = s.split('~'); el.innerHTML = '<figcaption>' + (cap || '') + (txt ? '<span>' + txt + '</span>' : '') + '</figcaption><div class="dev"><img alt=""></div>'; const im = el.querySelector('img'); imgs.push([im, src, half]); };
+  dev(document.getElementById('ph'), q.get('phone'), 2); dev(document.getElementById('land'), q.get('land'), 2);
+  const times = (q.get('times') || '').split('|');
+  for (const r of (q.get('rows') || '').split('|').filter(Boolean)) {
+    const [label, txt, list] = r.split('~'), row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = '<h2>' + label + (txt ? '<small>' + txt + '</small>' : '') + '</h2><div class="strip"></div>';
+    list.split(',').forEach((src, i) => { const f = document.createElement('figure'); f.innerHTML = '<img alt=""><figcaption>' + (times[i] || '') + '</figcaption>'; row.querySelector('.strip').appendChild(f); imgs.push([f.querySelector('img'), src, +(q.get('sk') || 2)]); });
+    document.getElementById('rows').appendChild(row);
+  }
+  let left = imgs.length;
+  for (const [im, src, k] of imgs) { im.onload = () => { im.style.width = (im.naturalWidth / k) + 'px'; if (--left === 0) document.fonts.ready.then(() => { document.body.dataset.ready = '1'; }); }; im.src = src; }
+</script>
+</body>
+</html>

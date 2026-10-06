@@ -41,7 +41,7 @@
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
   // the three looks of the chosen layout (D.versions: A, B, C): the tabs, their sections, where the pause's buttons go; ?v=B or #b picks one
   const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
-  const hm = /^([a-z])?([0-3])?(?:-([1-3]))?(?:-([0-3]))?$/i.exec(location.hash.slice(1)) || [];
+  const hm = /^([a-z])?([0-3])?(?:-([1-3]))?(?:-([0-3]))?(?:-([0-3]))?$/i.exec(location.hash.slice(1)) || [];
   let ver = String(q.get('v') || hm[1] || 'A').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
   // the pictures over the settings: the drawn animations, or real frames from the game in three ways (settings-real.js); ?media= or #a1..#a3
   const MEDIA = ['anim', 'video', 'compare', 'live'], MEDIA_NAME = { anim: 'Animacija', video: 'Posnetek', compare: 'Primerjava', live: 'V živo' };
@@ -57,6 +57,11 @@
   if (window.SetReal) SetReal.phone = ph;
   document.documentElement.classList.add('phm-' + ph);
   if (window.SetReal) SetReal.control = () => S.control;   // (the race in the pictures with the player's controls)
+  // Upravljanje as a real clip from the game: 0 the picture, 1 the clip in a phone, 2 the phone in two hands (the thumbs move), 3 the three
+  // controls in three phones side by side; ?uv= or #a1-1-1-2
+  const UV_NAME = { 0: 'Slika', 1: 'Video v telefonu', 2: 'Video v roki', 3: 'Tri telefoni' };
+  let uv = UV_NAME[q.get('uv')] ? q.get('uv') : hm[5] || '0';
+  if (window.SetReal) { SetReal.clip = uv; if (q.get('shot')) SetReal.still = true; }
   const orientNow = () => document.documentElement.classList.contains('land') ? 'land' : 'port';
   let cats = [];
   function buildCats() {
@@ -115,7 +120,8 @@
       const p = list.querySelector('[data-part="' + C.id + '"].sx-big em'); if (p) p.textContent = n + (n === 1 ? ' nastavitev' : n === 2 ? ' nastavitvi' : n < 5 ? ' nastavitve' : ' nastavitev');
     }
   }
-  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media)) + '-' + lb + '-' + ph;
+  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media)) + '-' + lb + '-' + ph + '-' + uv;
+  function setUv(v) { uv = v; SetReal.clip = v; if (media !== 'video') { media = 'video'; root.classList.remove('media-live'); } show(tab, true); updateBar(); markChip(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setPh(v) { ph = v; SetReal.phone = v; for (const k in PH_NAME) root.classList.toggle('phm-' + k, k === v); show(tab, true); updateBar(); markChip(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setLb(v) { lb = v; buildTop(); show(tab, true); updateBar(); markChip(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
@@ -152,6 +158,7 @@
       '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>' +
       (window.SetReal ? '<span class="mb-seg">' + MEDIA.map((m, i) => '<button data-media="' + m + '" class="' + (m === media ? 'on' : '') + '">' + (i ? i + ' · ' : '') + MEDIA_NAME[m] + '</button>').join('') + '</span>' : '') +
       (window.SetReal ? '<span class="mb-seg" title="1 · Posnetek: slike v telefonu">' + Object.keys(PH_NAME).map(k => '<button data-ph="' + k + '" class="' + (k === ph ? 'on' : '') + '">' + (k === '0' ? 'Telefon: ' : '') + (k === '0' ? '' : k + ' · ') + PH_NAME[k] + '</button>').join('') + '</span>' : '') +
+      (window.SetReal && SetReal.hasVideo ? '<span class="mb-seg" title="Upravljanje: video iz igre">' + Object.keys(UV_NAME).map(k => '<button data-uv="' + k + '" class="' + (k === uv ? 'on' : '') + '">' + (k === '0' ? 'Upravljanje: ' : k + ' · ') + UV_NAME[k] + '</button>').join('') + '</span>' : '') +
       '<span class="mb-seg" title="Ležeče: gumbi pavze spodaj">' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" class="' + (k === lb ? 'on' : '') + '">' + (k === '1' ? 'Ležeče spodaj: ' : '') + k + ' · ' + LB_NAME[k] + '</button>').join('') + '</span>';
   }
   bar.addEventListener('click', (e) => {
@@ -162,13 +169,15 @@
     if (b.dataset.media) setMedia(b.dataset.media);
     if (b.dataset.lb) setLb(b.dataset.lb);
     if (b.dataset.ph) { if (media !== 'video') setMedia('video'); setPh(b.dataset.ph); }
+    if (b.dataset.uv) setUv(b.dataset.uv);
   });
   // (a phone has no switches over the screen: a small one in the corner picks the version)
   const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('') + (window.SetReal ? '<i></i>' + [1, 2, 3].map(i => '<button data-media="' + MEDIA[i] + '">' + i + '</button>').join('') : '') +
     '<span class="lbg"><i></i>' + Object.keys(LB_NAME).map(k => '<button data-lb="' + k + '" title="Ležeče spodaj: ' + LB_NAME[k] + '">S' + k + '</button>').join('') + '</span>' +
-    (window.SetReal ? '<span class="phg"><i></i>' + ['1', '2', '3'].map(k => '<button data-ph="' + k + '" title="Telefon: ' + PH_NAME[k] + '">T' + k + '</button>').join('') + '</span>' : '')); document.body.appendChild(chip);   // (S1-S3: lying only; T1-T3: the pictures in a phone)
-  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.lb ? b.dataset.lb === lb : b.dataset.ph ? b.dataset.ph === ph && media === 'video' : b.dataset.media === media); };
-  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else if (b.dataset.lb) { setLb(b.dataset.lb); toast('Ležeče spodaj ' + lb + ': ' + LB_NAME[lb]); } else if (b.dataset.ph) { const v = b.dataset.ph === ph && media === 'video' ? '0' : b.dataset.ph; if (media !== 'video') setMedia('video'); setPh(v); toast('Telefon: ' + PH_NAME[v]); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
+    (window.SetReal ? '<span class="phg"><i></i>' + ['1', '2', '3'].map(k => '<button data-ph="' + k + '" title="Telefon: ' + PH_NAME[k] + '">T' + k + '</button>').join('') + '</span>' : '') +
+    (window.SetReal && SetReal.hasVideo ? '<span class="phg"><i></i>' + ['1', '2', '3'].map(k => '<button data-uv="' + k + '" title="Upravljanje: ' + UV_NAME[k] + '">U' + k + '</button>').join('') + '</span>' : '')); document.body.appendChild(chip);   // (S1-S3: lying only; T1-T3: the pictures in a phone; U1-U3: Upravljanje as a clip)
+  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.lb ? b.dataset.lb === lb : b.dataset.ph ? b.dataset.ph === ph && media === 'video' : b.dataset.uv ? b.dataset.uv === uv && media === 'video' : b.dataset.media === media); };
+  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else if (b.dataset.lb) { setLb(b.dataset.lb); toast('Ležeče spodaj ' + lb + ': ' + LB_NAME[lb]); } else if (b.dataset.uv) { const v = b.dataset.uv === uv && media === 'video' ? '0' : b.dataset.uv; setUv(v); toast('Upravljanje: ' + UV_NAME[v]); } else if (b.dataset.ph) { const v = b.dataset.ph === ph && media === 'video' ? '0' : b.dataset.ph; if (media !== 'video') setMedia('video'); setPh(v); toast('Telefon: ' + PH_NAME[v]); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
   markChip();
   addEventListener('resize', layout);
 
@@ -190,7 +199,7 @@
     const c = h('section', 'sx-card'); c.dataset.key = it.key;
     let cv = null;
     if (!real()) { const pic = h('div', 'sx-pic'); cv = h('canvas'); pic.appendChild(cv); c.appendChild(pic); }
-    else if (media === 'video') c.appendChild(c._real = SetReal.video(orientNow(), it, S[it.key]));
+    else if (media === 'video') c.appendChild(c._real = SetReal.video(orientNow(), it, S[it.key], (v) => set(it, v, c)));
     else if (media === 'compare') c.appendChild(c._real = SetReal.compare(orientNow(), it, S[it.key], (v) => set(it, v, c)));
     else c.addEventListener('click', () => focusLive(c));   // (live: the card shows itself in the window at the top)
     const row = h('div', 'sx-row'); c.appendChild(row);
@@ -304,8 +313,9 @@
   if (still != null) document.body.dataset.shot = '1';
   async function stillAll() {
     A.still = true;
-    if (real()) {   // (the real frames loaded and placed before the picture is taken)
+    if (real()) {   // (the real frames loaded and placed before the picture is taken; the clips at the moment vt, still)
       await new Promise(r => requestAnimationFrame(r)); SetReal.place();
+      if (SetReal.hasVideo) await SetReal.stillAt(+(q.get('vt') || 1));
       const urls = new Set([...document.querySelectorAll('.rf')].map(f => (/url\("?([^")]+)"?\)/.exec(f.style.backgroundImage) || [])[1]).filter(Boolean));
       await Promise.all([...urls].map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = u; })));
       for (const f of document.querySelectorAll('.rv .rf.in, .rv .rf.out')) f.classList.remove('in', 'out');

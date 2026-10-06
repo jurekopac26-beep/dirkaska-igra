@@ -2,9 +2,29 @@
 
 Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezana z igro**: igra je ne naloži in nič v igri se ne spremeni. Ko bo predlog potrjen, bo zaslon prenesen v igro (`index.html`, `js/game.js`, `css/style.css`, `js/lang.js`).
 
-Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče*, *Med dirko / Iz glavnega menija* sliko *Animacija · 1 Posnetek · 2 Primerjava · 3 V živo*, *Telefon: Brez · 1 · 2 · 3* in *Ležeče spodaj: 1 · 2 · 3*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
+Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče*, *Med dirko / Iz glavnega menija* sliko *Animacija · 1 Posnetek · 2 Primerjava · 3 V živo*, *Telefon: Brez · 1 · 2 · 3*, *Upravljanje: Slika · 1 · 2 · 3* in *Ležeče spodaj: 1 · 2 · 3*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
 
-**Zadnji predlog: A1 (videz A, slika 1 Posnetek), slike nad nastavitvami v telefonu, v treh različicah.** Prava slika iz igre ni več samo izrez, ampak je v telefonu (maketa telefona v slogu risb: temno ohišje, svetel rob, luknja za kamero na krajši strani). Slike so v `slike/telefon/` (vsaka: pokonci kar odpre pavza, del Grafika, Kakovost slike; ležeče Upravljanje in Kamera):
+**Zadnji predlog: Upravljanje kot pravi video iz igre, v treh različicah.** Nad Upravljanjem ni več slika, ampak video iz prave dirke (Riviera, Francija: 4 s skozi esko, v zanki; avtopilot vozi), posnet z vsakim upravljanjem posebej: pri Tipkah se prižigata puščici, pri Volanu se obrača volan, pri Nagibu se nagiba kazalec, pritiskata se plin in zavora. Slike so v `slike/upravljanje-video/`: levo telefon pri 0,4 s videa, desno za Tipke, Volan in Nagib slika ob štirih trenutkih videa (0,4 s desno in plin, 1,4 s zavora, 3,0 s levo in zavora, 3,6 s levo in plin), spodaj ležeče.
+
+| Slika | Različica |
+| --- | --- |
+| `1-video-v-telefonu.png` | **1 · Video v telefonu**: video v telefonu; pri Nagibu se telefon sam nagiba v smer zavoja. |
+| `2-video-v-roki.png` | **2 · Video v roki**: telefon v dveh rokah; palca se premikata z videom (levi pritiska puščici ali vrti volan, desni plin in zavoro), pri Nagibu roki nagibata telefon. |
+| `3-tri-telefoni.png` | **3 · Tri telefoni hkrati**: Tipke, Volan in Nagib v treh telefonih na istem trenutku dirke; izbrani je večji in zlato obrobljen, tapneš telefon in ga izbereš. |
+
+Ko izbereš drugo upravljanje, pride njegov video na istem trenutku dirke. V maketi različico izbereš s stikalom *Upravljanje: Slika · 1 · 2 · 3* nad telefonom (računalnik), z gumbi U1, U2, U3 v kotu (telefon; ponovni tap izklopi), z `?uv=0|1|2|3` ali s `#a1-1-1-2` na koncu povezave (videz, slika, ležeče spodaj, telefon, upravljanje).
+
+Kako je video narejen (`orodja/`): `video.mjs` začne isto dirko kot `posnetki.mjs` (naključna števila s semenom), jo brez risanja zavrti do 56,2 s, nato poganja igrino zanko sam, točno 30 sličic na sekundo (avtopilot vozi). Pri vsaki sličici vzame 3D, kot ga igra nariše, in HUD trikrat, z vsakim upravljanjem, ki se uporablja tako, kot avtopilot vozi. `video.py` sličice sestavi v videe (H.264 MP4 za telefone, Safari in Chrome; VP9 WebM za ostale; 432 točk na krajši strani), sliko za začetek in `posnetki/video.js` (kako se volan, plin, zavora in puščice premikajo po sličicah, kje so kontrole na zaslonu), s katerim maketa premika telefon in palca.
+
+```
+node maketa-nastavitev/orodja/video.mjs port 56.2 4 30
+node maketa-nastavitev/orodja/video.mjs land 56.2 4 30
+python3 maketa-nastavitev/orodja/video.py riviera
+```
+
+Objavljena maketa je zdaj stran z datotekami ob njej (slike iz igre in videi v `posnetki/`); videe naloži v celoti in jih predvaja iz pomnilnika.
+
+**Predlog pred tem: A1 (videz A, slika 1 Posnetek), slike nad nastavitvami v telefonu, v treh različicah.** Prava slika iz igre ni več samo izrez, ampak je v telefonu (maketa telefona v slogu risb: temno ohišje, svetel rob, luknja za kamero na krajši strani). Slike so v `slike/telefon/` (vsaka: pokonci kar odpre pavza, del Grafika, Kakovost slike; ležeče Upravljanje in Kamera):
 
 | Slika | Različica |
 | --- | --- |
@@ -101,9 +121,10 @@ Datoteke:
 - `scenes-*.js`: prizori po kategorijah;
 - `settings-data.js`: kategorije, nastavitve, možnosti in opisi animacij;
 - `settings.js`, `settings.css`, `index.html`: zaslon;
-- `settings-real.js`: slike iz igre nad nastavitvami (1 posnetek, 2 vse možnosti hkrati, 3 v živo); `posnetki/`: slike iz igre in njihov seznam (`real.js`); `orodja/`: kako so narejene;
+- `settings-real.js`: slike iz igre nad nastavitvami (1 posnetek, 2 vse možnosti hkrati, 3 v živo); `posnetki/`: slike iz igre in njihov seznam (`real.js`), videi za Upravljanje (`video/`, `video.js`); `orodja/`: kako so narejeni;
 - `storyboard.html`: vse možnosti vseh animacij naenkrat (iz njega so slike 3–5 v `slike/pokonci/` in `slike/lezece/`);
 - `primerjava.html`: primerjava treh načinov (kaj je v katerem zavihku);
 - `board.html`: sestavljanje slik (`kind=mix`: telefoni pokonci v vrsti, ležeči drug pod drugim ob njih).
+- `board-video.html`: slike za video (telefon ob enem trenutku in vrstice slik ob več trenutkih).
 
-Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `media=anim|video|compare|live` (slika), `at=<nastavitev>` (seznam do te nastavitve), `lb=1|2|3` (ležeče: gumbi pavze spodaj), `ph=0|1|2|3` (slike v telefonu), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).
+Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `media=anim|video|compare|live` (slika), `at=<nastavitev>` (seznam do te nastavitve), `lb=1|2|3` (ležeče: gumbi pavze spodaj), `ph=0|1|2|3` (slike v telefonu), `uv=0|1|2|3` (Upravljanje kot video), `vt=<s>` (videi na tem trenutku, za mirujoče slike), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).

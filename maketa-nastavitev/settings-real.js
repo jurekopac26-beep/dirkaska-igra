@@ -77,7 +77,7 @@ window.SetReal = (function () {
     const L = Math.max(0, Math.min(dw - bw, cx * dw - bw / 2)), T = Math.max(0, Math.min(dh - bh, cy * dh - bh / 2));
     f.style.backgroundSize = dw.toFixed(1) + 'px ' + dh.toFixed(1) + 'px'; f.style.backgroundPosition = (-L).toFixed(1) + 'px ' + (-T).toFixed(1) + 'px';
   }
-  function place(root) { for (const f of (root || document).querySelectorAll('.rf')) placeOne(f); for (const p of (root || document).querySelectorAll('.rv[data-ph]')) placePhone(p); }
+  function place(root) { for (const f of (root || document).querySelectorAll('.rf')) placeOne(f); for (const p of (root || document).querySelectorAll('.rv[data-ph]')) placePhone(p); for (const p of (root || document).querySelectorAll('.rv3')) placeTrio(p); }
   const sign = (it, v) => SIGN[it.key] ? '<span class="rsign">' + svg(SIGN[it.key]) + '<b>' + (optLabel(it, v) || it.name) + '</b></span>' : '';
 
   /* ---- the pictures in a phone (1 · Posnetek): 1 the whole phone on the race blurred, 2 a big phone close up (the part of the screen
@@ -119,16 +119,25 @@ window.SetReal = (function () {
     }
     const OW = (R.w + 2 * b) * s, OH = (R.h + 2 * b) * s;
     ph.style.width = OW.toFixed(1) + 'px'; ph.style.height = OH.toFixed(1) + 'px'; ph.style.left = L.toFixed(1) + 'px'; ph.style.top = T.toFixed(1) + 'px';
-    ph.style.padding = (b * s).toFixed(1) + 'px'; ph.style.borderRadius = (Math.min(OW, OH) * 0.13).toFixed(1) + 'px'; ph.style.transform = 'rotate(' + rot + 'deg)';
+    ph.style.padding = (b * s).toFixed(1) + 'px'; ph.style.borderRadius = (Math.min(OW, OH) * 0.13).toFixed(1) + 'px';
     pic.querySelector('.rpsc').style.borderRadius = (Math.min(OW, OH) * 0.09).toFixed(1) + 'px';
     ph.style.setProperty('--cam', (b * s * 0.55).toFixed(1) + 'px'); ph.classList.toggle('lying', lying);
-    if (mode !== '3') return;
+    pic._g = { L, T, OW, OH, s, b, R, lying, bw, bh };
+    if (pic.dataset.clip) { pic._th = null; syncPic(pic, 0); return; }   // (a clip: its moment poses the phone and the thumbs)
     // the thumbs: on the controls of the option shown (Upravljanje), else holding the phone at its lower corners
-    const c = key === 'control' ? v : key === 'autoGas' ? ctl() : null, tips = TIPS[o][c] || TIPS[o].hold;
+    const c = key === 'control' ? v : key === 'autoGas' ? ctl() : null;
+    pose(pic, rot, mode === '3' ? TIPS[o][c] || TIPS[o].hold : null);
+  }
+  // the phone turned by rot (degrees) about its middle; the thumbs' tips at tips ([[x, y], [x, y]]: fractions of the screen), turned with it
+  function pose(pic, rot, tips) {
+    const g = pic._g; if (!g) return;
+    const { L, T, OW, OH, s, b, R, lying, bw, bh } = g;
+    pic.querySelector('.rph').style.transform = 'rotate(' + rot.toFixed(2) + 'deg)';
+    if (!tips) return;
     const cx = L + OW / 2, cyc = T + OH / 2, a = rot * Math.PI / 180, tw = lying ? Math.max(26, Math.min(40, bh * 0.19)) : Math.max(22, Math.min(44, bw * 0.105));   // (lying: from the sides, shorter and wider)
     for (const [i, side] of [[0, 'l'], [1, 'r']]) {
-      const el = pic.querySelector('.rthumb.' + side), [fx, fy] = tips[i];
-      const x0 = L + (b + fx * R.w) * s - cx, y0 = T + (b + fy * R.h) * s - cyc;
+      const el = pic.querySelector('.rthumb.' + side); if (!el) continue;
+      const [fx, fy] = tips[i], x0 = L + (b + fx * R.w) * s - cx, y0 = T + (b + fy * R.h) * s - cyc;
       const x = cx + x0 * Math.cos(a) - y0 * Math.sin(a), y = cyc + x0 * Math.sin(a) + y0 * Math.cos(a);
       const ang = (side === 'l' ? 1 : -1) * (lying ? 74 : 26) + rot;
       el.style.width = tw.toFixed(1) + 'px'; el.style.height = (tw * 2.5).toFixed(1) + 'px';
@@ -136,8 +145,145 @@ window.SetReal = (function () {
     }
   }
 
+  /* ---- Upravljanje as a real clip from the game (REAL_VIDEO: Riviera, 4 s of an S-bend, the autopilot driving, each control shown in
+     use: the arrows pressed, the wheel turned, the tilt bar, the gas and the brake). 1 the clip in a phone (Nagib: the phone tilts with
+     the steering); 2 the phone in two hands, the thumbs pressing the arrows, turning the wheel, on the gas and the brake (Nagib: the
+     hands tilt the phone); 3 the three controls at once: three phones side by side on the same moment, the chosen one bigger ---- */
+  const RV = window.REAL_VIDEO || null, VDATA = window.REAL_VDATA || null;
+  let clipMode = '0', still = false;
+  const CTRL = ['buttons', 'wheel', 'tilt'], CTRL_L = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
+  const vsrc = (o, c, ext) => (VDATA && VDATA[o + '/' + c + '.' + ext]) || 'posnetki/video/control-' + c + '-' + o + '.' + ext;
+  const BAR = '<div class="rbar"><i class="rplay"><svg viewBox="0 0 24 24"><path d="M7 4.5 L20 12 L7 19.5 Z" fill="currentColor"/></svg></i><span class="rprog"><b></b></span><em>0:00</em></div>';
+  // (the published mockup, REAL_VBLOB: each clip fetched whole and played from memory, as a page's files may come without byte ranges,
+  // which Safari wants for a video; the MP4 where the browser plays it, else the WebM)
+  const BLOB = !!window.REAL_VBLOB, blobs = {};
+  let ext = null;
+  function blobUrl(o, c) {
+    ext = ext || (document.createElement('video').canPlayType('video/mp4; codecs="avc1.4D401F"') ? 'mp4' : 'webm');
+    const k = o + '/' + c + '.' + ext;
+    return blobs[k] || (blobs[k] = fetch(vsrc(o, c, ext)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }).then(b => URL.createObjectURL(b)));
+  }
+  function clipVideo(o, c) {
+    const v = document.createElement('video'); v.className = 'rvid';
+    v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.autoplay = !still;
+    for (const a of ['muted', 'loop', 'playsinline'].concat(still ? [] : ['autoplay'])) v.setAttribute(a, '');
+    v.poster = vsrc(o, c, 'jpg');
+    const sources = () => { v.innerHTML = '<source src="' + vsrc(o, c, 'mp4') + '" type=\'video/mp4; codecs="avc1.4D401F"\'><source src="' + vsrc(o, c, 'webm') + '" type=\'video/webm; codecs="vp9"\'>'; v.load(); };
+    if (BLOB) blobUrl(o, c).then(u => { v.src = u; if (!still && !(v.closest('.rvc') || {})._off) { const p = v.play(); if (p) p.catch(() => { }); } }).catch(sources);
+    else sources();
+    v.dataset.o = o; v.dataset.c = c;
+    return v;
+  }
+  const hasClip = (o, it) => it.key === 'control' && clipMode !== '0' && RV && RV[o];
+  function clipPic(o, it, v, pick) {
+    const three = clipMode === '3', pic = h('sx-pic real rv rvc ' + (three ? 'rv3' : 'rphm m' + (clipMode === '2' ? '3' : '1')));
+    pic.dataset.o = o; pic.dataset.key = it.key; pic.dataset.v = v; pic.dataset.clip = clipMode;
+    const bg = frameEl(o, it.key, frameOf(o, it.key, v), v); bg.classList.add('rfb'); pic.appendChild(bg);
+    if (three) for (const c of CTRL) {
+      const w = h('r3' + (c === String(v) ? ' sel' : '')); w.dataset.c = c;
+      const ph = h('rph'), scr = h('rpsc'); scr.appendChild(clipVideo(o, c)); ph.appendChild(scr); w.appendChild(ph);
+      w.insertAdjacentHTML('beforeend', '<span class="rl">' + CTRL_L[c] + '</span>');
+      if (pick) w.addEventListener('click', () => pick(c));
+      pic.appendChild(w);
+    } else {
+      pic.dataset.ph = clipMode === '2' ? '3' : '1';
+      const ph = h('rph'), scr = h('rpsc'); scr.appendChild(clipVideo(o, v)); ph.appendChild(scr); pic.appendChild(ph);
+      if (clipMode === '2') pic.insertAdjacentHTML('beforeend', thumbSvg('l') + thumbSvg('r'));
+      pic.insertAdjacentHTML('beforeend', '<i class="rtag">' + optLabel(it, v) + '</i>');
+    }
+    if (!three) pic.insertAdjacentHTML('beforeend', BAR);   // (three phones fill the picture: no bar over them)
+    watch(pic);
+    return pic;
+  }
+  // three phones: the chosen one as big as the picture allows, the other two at 74 %, in a row, each with its name under it
+  function placeTrio(pic) {
+    const bw = pic.offsetWidth, bh = pic.offsetHeight; if (!bw || !bh) return;
+    const o = pic.dataset.o, R = RF[o], lying = R.w > R.h, b = BZ * Math.min(R.w, R.h), sel = String(pic.dataset.v), k = 0.74, gap = lying ? 12 : 9, lab = 22;
+    const fw = R.w + 2 * b, fh = R.h + 2 * b, tilt = (bh - lab - 16) * 0.11;   // (room at the ends for the Nagib phone's tilt)
+    const s = Math.min((bh - lab - 16) / fh, (bw - 2 * gap - 16 - 2 * tilt) / (fw * (1 + 2 * k)));
+    let x = (bw - fw * s * (1 + 2 * k) - 2 * gap) / 2;
+    for (const w of pic.querySelectorAll('.r3')) {
+      const kk = w.dataset.c === sel ? 1 : k, OW = fw * s * kk, OH = fh * s * kk, ph = w.querySelector('.rph');
+      w.style.left = x.toFixed(1) + 'px'; w.style.top = ((bh - lab - fh * s) / 2 + (fh * s - OH) / 2 + 2).toFixed(1) + 'px'; w.style.width = OW.toFixed(1) + 'px'; w.style.height = (OH + lab).toFixed(1) + 'px';
+      ph.style.width = OW.toFixed(1) + 'px'; ph.style.height = OH.toFixed(1) + 'px'; ph.style.padding = (b * s * kk).toFixed(1) + 'px'; ph.style.borderRadius = (Math.min(OW, OH) * 0.13).toFixed(1) + 'px';
+      w.querySelector('.rpsc').style.borderRadius = (Math.min(OW, OH) * 0.09).toFixed(1) + 'px';
+      ph.style.setProperty('--cam', (b * s * kk * 0.55).toFixed(1) + 'px'); ph.classList.toggle('lying', lying);
+      x += OW + gap;
+    }
+    syncPic(pic, 0);
+  }
+  // where the thumbs are at frame i (fractions of the screen): on the controls in use, else resting by them, a little off the glass
+  function clipTips(o, c, i) {
+    const V = RV[o], Rc = V.rects[c], st = V.steer[i], gas = V.gas[i] === '1', brk = V.brake[i] === '1', hov = o === 'land' ? 0.05 : 0.025;
+    const ctr = (r, dy) => [r[0] + r[2] / 2, r[1] + r[3] / 2 + (dy || 0)];
+    let l, r;
+    if (c === 'buttons') { const a = ctr(Rc.left), z = ctr(Rc.right); l = V.left[i] === '1' ? a : V.right[i] === '1' ? z : [(a[0] + z[0]) / 2, a[1] + hov]; }
+    else if (c === 'wheel') {   // (on the wheel's rim at ten o'clock, turning with it)
+      const w = Rc.wheel, rad = w[2] * V.w * 0.44, th = (-58 + st * 112) * Math.PI / 180;
+      l = [w[0] + w[2] / 2 + rad * Math.sin(th) / V.w, w[1] + w[3] / 2 - rad * Math.cos(th) / V.h];
+    } else l = ctr(Rc.brake, brk ? 0 : hov);
+    if (c === 'tilt') r = ctr(Rc.gas, gas ? 0 : hov);
+    else r = brk ? ctr(Rc.brake) : ctr(Rc.gas, gas ? 0 : hov);
+    return [l, r];
+  }
+  // a clip's moment: its bar, the three phones kept together, the tilt of the phone and the thumbs (dt: the time since the last
+  // frame, for the thumbs to glide; 0: at once)
+  function syncPic(pic, dt) {
+    const o = pic.dataset.o, V = RV && RV[o], vids = [...pic.querySelectorAll('video.rvid')]; if (!V || !vids.length) return;
+    const three = pic.dataset.clip === '3', main = three ? (pic.querySelector('.r3.sel video') || vids[0]) : vids[vids.length - 1];
+    const t = main.currentTime || 0, dur = main.duration || V.n / V.fps, i = Math.min(V.n - 1, Math.max(0, Math.floor(t * V.fps))), st = V.steer[i], lying = o === 'land';
+    const pb = pic.querySelector('.rprog b'); if (pb) { pb.style.animation = 'none'; pb.style.transform = 'scaleX(' + Math.min(1, t / dur).toFixed(3) + ')'; }
+    const em = pic.querySelector('.rbar em'); if (em) em.textContent = '0:0' + Math.floor(t);
+    if (three) {
+      for (const v of vids) if (v !== main && !v.seeking && Math.abs(v.currentTime - t) > 0.12) v.currentTime = t;
+      const w = pic.querySelector('.r3[data-c="tilt"] .rph'); if (w) w.style.transform = 'rotate(' + (st * (lying ? 5 : 7)).toFixed(2) + 'deg)';
+      return;
+    }
+    if (!pic._g) return;
+    const c = String(pic.dataset.v), hands = pic.dataset.clip === '2';
+    const rot = c === 'tilt' ? st * (lying ? 8 : 13) : hands && !lying ? -3 : 0;
+    if (!hands) { pose(pic, rot, null); return; }
+    const tg = clipTips(o, c, i);
+    if (!pic._th || !dt) pic._th = tg.map(p => p.slice());
+    else { const k = 1 - Math.exp(-dt / 0.05); for (let j = 0; j < 2; j++) for (let q = 0; q < 2; q++) pic._th[j][q] += (tg[j][q] - pic._th[j][q]) * k; }
+    pose(pic, rot, pic._th);
+  }
+  // the clips on the screen play, the others wait; one loop moves what goes with them
+  const seen = new Set(); let io = null, looping = false, lastT = 0;
+  function watch(pic) {
+    if (!io && 'IntersectionObserver' in window) io = new IntersectionObserver((es) => {
+      for (const e of es) { e.target._off = !e.isIntersecting; for (const v of e.target.querySelectorAll('video')) { if (e.isIntersecting && !still) { const p = v.play(); if (p) p.catch(() => { }); } else v.pause(); } }
+    }, { rootMargin: '60px' });
+    if (io) io.observe(pic);
+    seen.add(pic);
+    if (!looping && !still) { looping = true; lastT = 0; requestAnimationFrame(loop); }
+  }
+  function loop(now) {
+    const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0; lastT = now;
+    for (const pic of [...seen]) { if (!pic.isConnected) { seen.delete(pic); if (io) io.unobserve(pic); continue; } if (!pic._off) syncPic(pic, dt); }
+    if (seen.size) requestAnimationFrame(loop); else looping = false;
+  }
+  // another control chosen: its clip comes in on the same moment of the race (the thumbs glide to it, the phone tilts or not)
+  function clipTo(pic, o, it, v) {
+    pic.dataset.v = v;
+    const bg = pic.querySelector('.rfb'); if (bg) { const n = frameOf(o, it.key, v); bg.dataset.frame = n; bg.style.backgroundImage = 'url("' + url(o, n) + '")'; }
+    if (pic.dataset.clip === '3') {
+      const was = pic.querySelector('.r3.sel video'), t = was ? was.currentTime : 0;
+      for (const w of pic.querySelectorAll('.r3')) w.classList.toggle('sel', w.dataset.c === String(v));
+      const now = pic.querySelector('.r3.sel video'); if (now && Math.abs(now.currentTime - t) > 0.05) now.currentTime = t;
+      placeTrio(pic); return;
+    }
+    const scr = pic.querySelector('.rpsc'), old = scr.querySelector('video.rvid:last-of-type'), nv = clipVideo(o, v), t = old ? old.currentTime : 0;
+    nv.classList.add('fade'); scr.appendChild(nv);
+    const show = () => { nv.classList.remove('fade'); setTimeout(() => { for (const x of scr.querySelectorAll('video.rvid')) if (x !== nv) x.remove(); }, 380); };
+    nv.addEventListener('loadedmetadata', () => { try { nv.currentTime = Math.min(t + 0.04, (nv.duration || 4) - 0.05); } catch (_) { } }, { once: true });
+    nv.addEventListener('seeked', show, { once: true }); setTimeout(show, 1500);
+    const tg = pic.querySelector('.rtag'); if (tg) tg.textContent = optLabel(it, v);
+  }
+
   /* ---- 1. video: the clip of the chosen option ---- */
-  function video(o, it, v) {
+  function video(o, it, v, pick) {
+    if (hasClip(o, it)) return clipPic(o, it, v, pick);
     const pic = phoneMode !== '0' ? phonePic(o, it, v) : h('sx-pic real rv');
     if (phoneMode !== '0') {
       pic.insertAdjacentHTML('beforeend', (SIGN[it.key] ? '' : '<i class="rtag">' + (optLabel(it, v) || it.name) + '</i>') + sign(it, v) +
@@ -150,6 +296,7 @@ window.SetReal = (function () {
     return pic;
   }
   function videoTo(pic, o, it, v, dir) {   // (the new clip comes in from the side of the button tapped)
+    if (pic.dataset.clip) { clipTo(pic, o, it, v); return; }
     if (pic.dataset.ph) {   // (in a phone: the new clip on its screen, the race behind it, the thumbs and the tilt move to it)
       const n = frameOf(o, it.key, v); pic.dataset.v = v;
       const scr = pic.querySelector('.rpsc'), old = scr.querySelector('.rfs'), nf = frameEl(o, it.key, n, v); nf.classList.add('rfs', 'fade'); scr.appendChild(nf);
@@ -210,5 +357,15 @@ window.SetReal = (function () {
     }
     for (const p of (root || document).querySelectorAll('.rv[data-ph]')) placePhone(p);   // (the thumbs on the new controls)
   }
-  return { video, videoTo, compare, compareTo, live, liveShow, place, frameOf, rebase, set control(f) { ctl = f; }, set phone(m) { phoneMode = m || '0'; }, get phone() { return phoneMode; } };
+  // (the pictures for the mockup's images: every clip at the moment t, still; the phones and the thumbs posed for it)
+  function stillAt(t) {
+    still = true;
+    const vids = [...document.querySelectorAll('video.rvid')];
+    return Promise.all(vids.map(v => new Promise(res => {
+      const go = () => { v.pause(); v.addEventListener('seeked', () => requestAnimationFrame(() => res()), { once: true }); v.currentTime = Math.min(t, (v.duration || 4) - 0.02); };
+      setTimeout(res, 8000); if (v.readyState >= 1) go(); else v.addEventListener('loadedmetadata', go, { once: true });
+    }))).then(() => place());
+  }
+  return { video, videoTo, compare, compareTo, live, liveShow, place, frameOf, rebase, stillAt, set control(f) { ctl = f; }, set phone(m) { phoneMode = m || '0'; }, get phone() { return phoneMode; },
+    set clip(m) { clipMode = RV ? m || '0' : '0'; }, get clip() { return clipMode; }, set still(v) { still = !!v; }, get hasVideo() { return !!RV; } };
 })();
