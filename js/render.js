@@ -2978,7 +2978,7 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel']);   // (the small street furniture: no shadow pass of its own, the phone's budget)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -3015,6 +3015,45 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else if (kind === 'tbollard') {   // Medvode's yellow triangular bollard (1.05 m, 0.4 m a side; the apex points +x, into the side road): a black band, a white reflective strip on each face
+      const ye = [1, 0.82, 0.05], bk = [0.07, 0.07, 0.08], rf = [0.95, 0.95, 0.88], R = 0.231, H = 0.2, V = [[R, 0], [-R / 2, H], [-R / 2, -H]], y0 = -0.575, y1 = 0.525;
+      const P = (v, y) => [V[v][0], y, V[v][1]], seg = (a, b, ya, yb, col) => g.quadO(P(a, ya), P(b, ya), P(b, yb), P(a, yb), col, [0, (ya + yb) / 2, 0]);
+      for (let a = 0; a < 3; a++) { const b = (a + 1) % 3; seg(a, b, y0, -0.105, ye); seg(a, b, -0.105, -0.015, rf); seg(a, b, -0.015, 0.125, ye); seg(a, b, 0.125, 0.29, bk); seg(a, b, 0.29, y1, ye); }
+      g.triO(P(0, y1), P(1, y1), P(2, y1), [1, 0.88, 0.14], [0, y0, 0]); }
+    else if (kind === 'mlamp') {   // Medvode's street lamp: a grey 8.3 m pole (its foot 0.3 m in the ground), the arm over the road (+x), the lamp
+      const st = [0.56, 0.58, 0.6]; W.cyl(g, 0, -4.3, 0, 0.09, 8.3, 6, st, null, 0.06); W.box(g, 0.8, 3.9, 0, 1.7, 0.1, 0.1, 0, st); W.box(g, 1.6, 3.75, 0, 0.7, 0.16, 0.32, 0, [0.3, 0.31, 0.33], [0.42, 0.43, 0.45]); }
+    else if (kind === 'msign' || kind === 'bsign') {   // a square blue board on a pole (the faces ±x): the zebra crossing's white triangle, the bus stop's white bus
+      const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94];
+      W.cyl(g, 0, -1.5, 0, 0.04, 2.75, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.65, 0, 0.05, 0.64, 0.64, 0, blue);
+      for (const f of [-1, 1]) { const x = f * 0.032, A = (y, z) => [x, y, z], inn = [0, 0.97, 0];
+        if (kind === 'msign') g.triO(A(1.17, 0), A(0.75, -0.25), A(0.75, 0.25), wh, inn);
+        else { g.quadO(A(0.82, -0.22), A(0.82, 0.22), A(1.1, 0.22), A(1.1, -0.22), wh, inn); g.quadO([f * 0.034, 0.96, -0.19], [f * 0.034, 0.96, 0.19], [f * 0.034, 1.06, 0.19], [f * 0.034, 1.06, -0.19], blue, inn); } } }
+    else if (kind === 'nsign') {   // the street's name: a blue plate (1.4 x 0.35, faces ±x) on a pole, white bars for the lettering
+      const blue = [0.11, 0.31, 0.6], wh = [0.95, 0.95, 0.93];
+      W.cyl(g, 0, -1.6, 0, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.75, 0, 0.05, 0.35, 1.4, 0, blue);
+      W.box(g, 0, 0.9, 0, 0.062, 0.07, 1.0, 0, wh, wh); W.box(g, 0, 0.8, 0, 0.062, 0.05, 0.6, 0, wh, wh); }
+    else if (kind === 'zaprta') {   // the closure board (white, a red rim, dark lettering) and the round no-entry sign (red, a white bar) on a pole in front of a rail
+      const wh = [0.95, 0.95, 0.92], rd = [0.8, 0.1, 0.08], dk = [0.12, 0.12, 0.13];
+      W.cyl(g, 0, -1.3, 0, 0.04, 2.45, 5, [0.62, 0.63, 0.66]); W.box(g, -0.06, -0.18, 0, 0.05, 0.4, 1.6, 0, wh);
+      for (const y of [-0.18, 0.18]) W.box(g, -0.06, y, 0, 0.062, 0.04, 1.6, 0, rd, rd); W.box(g, -0.06, -0.12, 0, 0.062, 0.05, 1.3, 0, dk, dk); W.box(g, -0.06, 0.02, 0, 0.062, 0.07, 1.3, 0, dk, dk);
+      for (const f of [-1, 1]) { const x = -0.06 + f * 0.032, n = 10, C = [x, 0.61, 0], inn = [x - f, 0.61, 0];
+        for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2; g.triO(C, [x, 0.61 + Math.sin(a0) * 0.31, Math.cos(a0) * 0.31], [x, 0.61 + Math.sin(a1) * 0.31, Math.cos(a1) * 0.31], rd, inn); }
+        g.quadO([x + f * 0.003, 0.56, -0.25], [x + f * 0.003, 0.56, 0.25], [x + f * 0.003, 0.66, 0.25], [x + f * 0.003, 0.66, -0.25], wh, inn); } }
+    else if (kind === 'vboard') {   // a village's board (white, a black rim and bars for the name) on two poles, 2.4 m along x
+      const wh = [0.96, 0.96, 0.94], dk = [0.1, 0.1, 0.11];
+      for (const x of [-0.9, 0.9]) W.cyl(g, x, -1.4, 0, 0.04, 2.6, 5, [0.62, 0.63, 0.66]);
+      W.box(g, 0, 0.5, 0, 2.4, 0.3, 0.05, 0, wh); for (const y of [0.5, 0.77]) W.box(g, 0, y, 0, 2.4, 0.03, 0.058, 0, dk, dk);
+      for (const x of [-0.8, -0.3, 0.25, 0.75]) W.box(g, x, 0.58, 0, 0.36, 0.14, 0.058, 0, dk, dk); }
+    else if (kind === 'flagp') {   // a flag pole (6 m) with the Slovenian flag (white, blue, red) and a small coat of arms, flying along +x
+      const wh = [0.96, 0.96, 0.95], bl = [0.1, 0.24, 0.62], rd = [0.84, 0.12, 0.1];
+      W.cyl(g, 0, -3.2, 0, 0.06, 6.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
+      W.box(g, 0.96, 2.55, 0, 1.8, 0.3, 0.04, 0, wh); W.box(g, 0.96, 2.25, 0, 1.8, 0.3, 0.04, 0, bl); W.box(g, 0.96, 1.95, 0, 1.8, 0.3, 0.04, 0, rd);
+      W.box(g, 0.546, 2.4, 0, 0.3, 0.36, 0.06, 0, rd); W.box(g, 0.546, 2.43, 0, 0.24, 0.3, 0.075, 0, bl); W.box(g, 0.546, 2.5, 0, 0.14, 0.07, 0.085, 0, wh); }
+    else if (kind === 'cflag') {   // a chequered flag (3 x 2 squares of 0.55 m) on a 5 m pole, flying along +x
+      W.cyl(g, 0, -2.6, 0, 0.06, 5.1, 5, [0.9, 0.9, 0.92]);
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) W.box(g, 0.36 + a * 0.55, 1.3 + b * 0.55, 0, 0.55, 0.55, 0.05, 0, (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+    else if (kind === 'bench') {   // a bus stop's bench: a wooden seat (1.8 x 0.45 m) on two legs
+      W.box(g, 0, 0.18, 0, 1.8, 0.06, 0.45, 0, [0.46, 0.32, 0.2]); for (const x of [-0.75, 0.75]) W.box(g, x, -0.24, 0, 0.08, 0.42, 0.4, 0, [0.3, 0.3, 0.32]); }
     else streetPropGeo(g, kind, W);
     if (propRg === 'au' && (kind === 'signal' || kind === 'signalm')) for (let q = 0; q < g.C.length; q += 3) { const c = g.C[q] === 0.98 && g.C[q + 1] === 0.78 ? [0.95, 0.95, 0.93] : g.C[q] === 0.95 && g.C[q + 1] === 0.5 ? [0.92, 0.1, 0.08] : g.C[q] === 0.92 && g.C[q + 2] === 0.88 ? [0.2, 0.86, 0.42] : null; if (c) { g.C[q] = c[0]; g.C[q + 1] = c[1]; g.C[q + 2] = c[2]; } }   // (Australia: the black target boards' white border, the red and green men)
     return g.geometry();
@@ -3078,7 +3117,7 @@ const Render = (function () {
       if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
         if (m) { scene.remove(m); m.geometry.dispose(); }
         m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind]; m.userData.rg = rg;
-        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;
+        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;   // (the thin signs and the bench cast none: one draw call less each in the shadow pass)
         scene.add(m); propMeshes[kind] = m;
       }
       m.visible = true;
@@ -3176,6 +3215,7 @@ const Render = (function () {
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
     longford: { fog: 0xcbd8e2, sun: 0xfff0d4, sunI: 1.16, sky: 0xc2d8f0, gnd: 0x5c6838, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-70, 80, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
+    medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 84, 58] },   // Medvode: a clear summer afternoon in Gorenjska, the sun from the south-west over the Sava plain, a light haze towards the Alps
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -3189,7 +3229,10 @@ const Render = (function () {
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
     riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]],
-    longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]] };
+    longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]],
+    medvode: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
+  THEMES.toronto = { fog: 0xc9d8e6, sun: 0xfff0d8, sunI: 1.14, sky: 0xc8ddf4, gnd: 0x5d6448, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-60, 88, 70] };   // Toronto: a clear July afternoon by Lake Ontario, the sun from the south-west over the lake
+  SPLIT.toronto = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   THEMES.newcastle = { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-58, 86, -66] };   // Newcastle: a clear late-spring afternoon on the coast, the sun from the north-west (the southern hemisphere), a light sea haze
@@ -3252,8 +3295,8 @@ const Render = (function () {
   }
   // the weather of the race on screen (race.rain 0..1): the sky and the streaks
   function applyWeather(r) {
-    wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
-    snow.mesh.visible = r > 0 && atmos.season === 'winter';
+    wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && !snowy(); rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
+    snow.mesh.visible = r > 0 && snowy();
     birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
@@ -3272,7 +3315,7 @@ const Render = (function () {
     }
     for (const m of world.wetMats) m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * w);
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
-    if (W) { W.puddles.visible = w > 0; W.road.color.setScalar((1 - 0.36 * w) * (atmos.season === 'winter' ? 0.86 : 1)); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); }
+    if (W) { W.puddles.visible = w > 0; W.road.color.setScalar((1 - 0.36 * w) * (snowy() ? 0.86 : 1)); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); }
   }
   // the dry line (a changing weather, Race opts weather: after the rain the racing line dries first): a band of dry road along it, as light as
   // the line is drier than the rest of the road. One mesh along the whole lap, built the first time it shows
@@ -3568,6 +3611,7 @@ const Render = (function () {
      light on the road, lamps on poles) and the cars' headlights on the road ahead. The world's colours are changed from the ones it was
      built with (kept, so every change starts from them) ---------------- */
   let atmos = { season: 'summer', tod: 'day' }, snowTex = null, lampTex = null, beamTex = null, flood = null, snow = null;
+  const snowy = () => atmos.season === 'winter' && !(world && world.noSnow);   // (winter's snow: on the ground, falling, off the wheels; a world by a mild sea, world.noSnow: rain)
   function setAtmos(a, force) {   // (force: also when the setting is the same, e.g. after an endurance race moved the time of day)
     const n = { season: ['autumn', 'winter'].includes(a && a.season) ? a.season : 'summer', tod: ['dusk', 'night', 'dawn'].includes(a && a.tod) ? a.tod : 'day' };
     if (n.season === atmos.season && n.tod === atmos.tod && (!force || todK === (n.tod === 'night' ? 1 : n.tod === 'day' ? 0 : 0.5))) return;
@@ -3670,7 +3714,7 @@ const Render = (function () {
     const t = snowTex.clone(); t.needsUpdate = true; if (src) { t.repeat.copy(src.repeat); t.offset.copy(src.offset); t.anisotropy = src.anisotropy; } return t;
   }
   function seasonWorld() {
-    const sea = world && (world.ownSeason || (world.season === 'autumn' && atmos.season !== 'winter')) ? 'summer' : atmos.season;   // (a world painted for every season itself (world.ownSeason: Sani Pass) is as built; a world painted for a season of its own (world.season: Vršič's autumn look) is as built in autumn; the winter snows it over)
+    const sea = world && (world.ownSeason || (world.season === 'autumn' && atmos.season !== 'winter')) ? 'summer' : atmos.season === 'winter' && !snowy() ? 'summer' : atmos.season;   // (a world painted for every season itself (world.ownSeason: Sani Pass) is as built; a world painted for a season of its own (world.season: Vršič's autumn look) is as built in autumn; the winter snows it over)   // (a world without snow, world.noSnow: its winter green and rainy, as built)
     if (!world || !world.root || world.seasonKey === sea) return;
     if (!world.seasonKey && sea === 'summer') { world.seasonKey = 'summer'; return; }   // (a new world in summer: as built)
     world.seasonKey = seaW = sea;
@@ -4114,7 +4158,7 @@ const Render = (function () {
       let fw = 0;
       for (let k = 0; k < 4; k++) { const lx = k < 2 ? W.x : W.y, lz = (k % 2 ? 1 : -1) * wz; S.x[k] = me[12] + me[0] * lx + me[8] * lz; S.z[k] = me[14] + me[2] * lx + me[10] * lz;
         S.fw[k] = G && G.has(pkCell(S.x[k], S.z[k])) ? 1 : 0; fw += S.fw[k]; }
-      const gy = c.roadY != null ? c.roadY : c.y || 0, sn = atmos.season === 'winter' || (!!snow && snow.mesh.visible) ? 1 : Core.sstep(322, 350, gy) * 0.5;   // (snow: winter, falling, the snow zone's slush off the banks)
+      const gy = c.roadY != null ? c.roadY : c.y || 0, sn = snowy() || (!!snow && snow.mesh.visible) ? 1 : Core.sstep(322, 350, gy) * 0.5;   // (snow: winter, falling, the snow zone's slush off the banks)
       const wt = Math.max(wetW > 0.1 ? wetW : 0, fw / 4);   // a wet road: the rain's water or the melt water under the wheels
       if (!c.air && c.speed > 0.5) {
         const sr = c.q && c.q.k >= 0 && curTrack && curTrack.stubs ? curTrack.stubs[c.q.k] : null;   // (a side road: a gravel one, or its verge, is the verge)
@@ -4151,7 +4195,7 @@ const Render = (function () {
     const S = v.pkS; if (!live) return;
     if (c.air || c.speed < 2.5) { S.mk.fill(null); S.la = 0; return; }
     const spd = c.speed, R = Math.random, me = v.grp.matrixWorld.elements, fx = me[0], fz = me[2], y = c.y || 0, gy = c.roadY != null ? c.roadY : y;
-    const winter = atmos.season === 'winter', zone = Core.sstep(322, 350, gy), rainy = wetW > 0.1;
+    const winter = snowy(), zone = Core.sstep(322, 350, gy), rainy = wetW > 0.1;
     const slide = (c.arcade ? Core.sstep(0.26, 0.62, Math.abs(c.beta || 0)) * 1.2 : Math.max(0, c.latR - 1.0) / 3.5) + c.spin * 0.9 + (c.lock ? 0.55 : 0);
     const hb = c.inBrk > 0.7 && c.vl > 14 && !c.lock ? Core.sstep(0.7, 1, c.inBrk) : 0;   // hard braking without a lock: faint marks (the ABS at work)
     const am = world && world.dyn.pkAmb, wv = am ? am.pU.uW.value : null, ws = 1.1 + 1.4 * Core.sstep(190, 420, gy), dc = (world && world.dust) || [0.86, 0.76, 0.62];   // (the wind of pkAmbient)
@@ -4197,7 +4241,7 @@ const Render = (function () {
     const fx = me[0], fz = me[2], lx = me[8], lz = me[10];   // forward, right (local z)
     const at = (ax, ay, az) => _pkE.set(ax, ay, az).applyMatrix4(v.grp.matrixWorld);
     const wz = v.wf.length ? Math.abs(v.wf[0].position.z) : M.wid * 0.5 - 0.1;
-    const winter = atmos.season === 'winter', snowing = !!snow && snow.mesh.visible, zone = Core.sstep(322, 350, gy), sn = winter || snowing ? 1 : zone * 0.6;
+    const winter = snowy(), snowing = !!snow && snow.mesh.visible, zone = Core.sstep(322, 350, gy), sn = winter || snowing ? 1 : zone * 0.6;
     const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0);
     if (!live) return;
     if (c.air || spd < 2) { f.acc.fill(0); return; }
@@ -4551,7 +4595,7 @@ const Render = (function () {
     if (mode === 'clear') c.clearT += dt;
     const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
-    const pb = c.pb, so = pb.stopO != null ? pb.stopO : pb.lane, lat = (x, z) => so + (x - pb.stop[0]) * pb.nx + (z - pb.stop[1]) * pb.nz;
+    const pb = c.pb, so = pb.stopO != null ? pb.stopO : pb.lane, lat = (x, z) => so + (x - pb.stop[0]) * pb.nx + (z - pb.stop[1]) * pb.nz, gs = pb.tx * pb.nz - pb.tz * pb.nx < 0 ? -1 : 1;   // (gs: the garages' side of the car, +1 its right; -1 a lane on the left: Toronto)
     const wMin = F && lat(F.x, F.z) > pb.apron0 + 1.5 ? pb.apron0 + 0.25 : pb.wallO + 0.35;   // (the car in its box on the apron: nobody on the lane; else nobody across the pit-wall rail)
     const go = (m, p, yaw, style, act) => { const wo = lat(p[0], p[1]); if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
       m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
@@ -4568,7 +4612,7 @@ const Render = (function () {
     } else {
       for (let k = 0; k < 4; k++) { const front = k < 2, sd = k % 2 ? 1 : -1, fk = front ? D.fx : D.rx, dO = front ? 1 : -1, G = R.G[k], O = R.O[k], N = R.N[k], tO = O.tyre, tN = N.tyre, hb = hub(k);
         // gun man: kneels outboard of the hub; nut off, (the wheel changes), nut on, then stands and raises a hand
-        const wt = mode === 'out' ? (sd < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
+        const wt = mode === 'out' ? (sd * gs < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd * gs < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
         const gSpot = Wp(fk, sd * (D.hw + 0.72 + wt)), gYaw = yawC(0, -sd);
         if (mode === 'out') go(G, gSpot, gYaw, 'jog', 'ready');
         else if (mode === 'work') { const nut = (u > 0.04 && u < 0.2) || (u > 0.47 && u < 0.64);
@@ -4591,19 +4635,19 @@ const Render = (function () {
       // jack men: front one in front of the nose (the car stops before him), rear one steps in behind the tail once it has stopped
       const JF = R.JF, JR = R.JR, dj = 0.52 + 1.3 * Math.cos(CR_B0);
       const fSpot = Wp(D.nose + 0.22 + dj, 0), rSpot = Wp(D.tail - 0.22 - dj, 0);
-      if (mode === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, D.wid * 0.5 + 0.4), yawC(1, 0), 'jog', 'jackR'); }
+      if (mode === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'jog', 'jackR'); }
       else if (mode === 'work') {
         go(JF, u < 0.93 ? fSpot : Wp(D.nose + 0.22 + dj + 0.5 * crSS(0.93, 1, u), 0), yawC(-1, 0), 'snap', u < 0.89 ? 'jackP' : 'jackR');
         go(JR, u < 0.9 ? rSpot : Wp(D.tail - 0.22 - dj - 0.4 * crSS(0.9, 1, u), 0), yawC(1, 0), 'dash', u < 0.86 ? 'jackP' : 'jackR'); }
-      else { go(JF, Wp(D.nose + 0.72 + dj, D.wid * 0.5 + 1.6), yawC(-1, 0), 'run', 'jackR'); go(JR, Wp(D.tail - 0.62 - dj, D.wid * 0.5 + 1.2), yawC(1, 0), 'walk', 'jackR'); }
+      else { go(JF, Wp(D.nose + 0.72 + dj, gs * (D.wid * 0.5 + 1.6)), yawC(-1, 0), 'run', 'jackR'); go(JR, Wp(D.tail - 0.62 - dj, gs * (D.wid * 0.5 + 1.2)), yawC(1, 0), 'walk', 'jackR'); }
       JF.carry = JR.carry = true;
       const atF = mode === 'work' && Math.hypot(JF.x - fSpot[0], JF.z - fSpot[1]) < 0.15, atR = mode === 'work' && Math.hypot(JR.x - rSpot[0], JR.z - rSpot[1]) < 0.15;
       const bF = atF && u < 0.89 ? CR_B1 : CR_B0, bR = atR && u < 0.86 ? CR_B1 : CR_B0, js = Math.min(1, dt * 9);   // pushing the handle down lifts that end of the car
       JF.jack.beta += (bF - JF.jack.beta) * js; JR.jack.beta += (bR - JR.jack.beta) * js;
       c.liftF = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JF.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0; c.liftR = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JR.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0;
       // lollipop: held across in front of the driver, lifted when the car is released
-      const LP = R.LP, lpSpot = Wp(D.nose + 0.95, D.wid * 0.5 + 0.65), lpThere = Math.hypot(LP.x - lpSpot[0], LP.z - lpSpot[1]) < 0.6;   // (he carries it upright until he is at his spot)
-      go(LP, lpSpot, yawC(0, -1), mode === 'out' ? 'jog' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
+      const LP = R.LP, lpSpot = Wp(D.nose + 0.95, gs * (D.wid * 0.5 + 0.65)), lpThere = Math.hypot(LP.x - lpSpot[0], LP.z - lpSpot[1]) < 0.6;   // (he carries it upright until he is at his spot)
+      go(LP, lpSpot, yawC(0, -gs), mode === 'out' ? 'jog' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
     }
     if (mode !== 'work') { c.liftF = 0; c.liftR = 0; }
     c.lift = (c.liftF + c.liftR) / 2; c.liftP = Math.atan2(c.liftF - c.liftR, D.wb);
@@ -5076,7 +5120,7 @@ const Render = (function () {
       const pitch = v.st === 0 ? Math.atan((T.grade ? T.grade[v.i] || 0 : 0) * v.dir) : 0, y = (world && world.groundH && v.st > 0 ? Math.max(v.y, world.groundH(v.x, v.z)) : v.y) + (lift || 0);
       _re.set(roll || 0, -v.h, pitch, 'YZX'); _rq.setFromEuler(_re); _rv.set(v.x, y, v.z); _rm.compose(_rv, _rq, _rs); im.setMatrixAt(i, _rm); im.setColorAt(i, _pc.setHex(col)); return true; };
     for (const v of tf.veh) {
-      if (v.off) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
+      if (v.off || v.hid) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
       const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3;
       const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? (v.p === 5 ? put(V.truck, v, rdPick(RD_TRUCK, u)) : put(V.bus, v, rdPick(RD_BUS, u))) :
         put(K === 3 ? V.moto : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
@@ -5124,7 +5168,7 @@ const Render = (function () {
     let ngp = 0, ncg = 0; for (const n of pg.values()) if (n > 1) ngp++; for (const n of cg.values()) if (n > 1) ncg++;
     Q.n.grp = ngp; Q.n.cgrp = ncg; Q.n.yld = nyl; Q.n.ind = nind; Q.n.dead = ndead;
     for (const v of tf.veh) {
-      if (np >= NP) break; if (v.off || v.kind < 3 || v.st > 0 || v.rider) continue; const dx = v.x - cx, dz = v.z - cz; if (dx * dx + dz * dz > near2) continue;
+      if (np >= NP) break; if (v.off || v.hid || v.kind < 3 || v.st > 0 || v.rider) continue; const dx = v.x - cx, dz = v.z - cz; if (dx * dx + dz * dz > near2) continue;
       const m = rdMan('r' + v.id, v.col, 0); m.helm = m.helm || new THREE.Color(rdPick(v.kind === 3 ? RD_MOTO : RD_BIKE, (v.col * 7.1) % 1));
       rdPose(m, v.x, v.y, v.z, v.h, v.kind === 3 ? 'moto' : 'ride', v.v, dt, 0, 0, v.lean); rdPut(m, np++, 1);
     }
@@ -6250,8 +6294,8 @@ const Render = (function () {
           const vxs = c.vx * 0.25 + (Math.random() - 0.5) * 2.4, vzs = c.vz * 0.25 + (Math.random() - 0.5) * 2.4;
           if (surf === 3 || surf === 5) {
             // big, lingering dust cloud on dirt/gravel (the classic rally rooster tail)
-            const sh = 0.92 + Math.random() * 0.12, dc = atmos.season === 'winter' ? SNOW_DUST : world && world.dust;   // (a track may raise its own cloud, def.dust: Ouninpohja's; a world may give its own dust colour: Pikes Peak's pale granite; winter: powder snow)
-            if (dust && atmos.season === 'winter') particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.5 * D.alpha, -0.04, 1.3 * D.drag, yb);
+            const sh = 0.92 + Math.random() * 0.12, dc = snowy() ? SNOW_DUST : world && world.dust;   // (a track may raise its own cloud, def.dust: Ouninpohja's; a world may give its own dust colour: Pikes Peak's pale granite; winter: powder snow)
+            if (dust && snowy()) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.5 * D.alpha, -0.04, 1.3 * D.drag, yb);
             else if (dust) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, D.col[0] * sh, D.col[1] * sh, D.col[2] * sh, 0.42 * D.alpha, -0.04, 1.3 * D.drag, yb);
             else if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, 1.8 + Math.random() * 1.0, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55, -0.05, 1.2, yb);
             else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, 1.5 + Math.random() * 0.9, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42, -0.04, 1.3, yb);

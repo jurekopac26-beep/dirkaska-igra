@@ -2,10 +2,11 @@
 // must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
 // In the pit lane the player cannot steer (held at full left lock, the gas held: the autopilot keeps to the lane and turns in to the box);
 // the box is on the apron in front of the garage (the car stops there nose in), the crew works there and never stands on the lane.
+// Then Toronto, its lane on the left: one stop, the car turns in to the left, the crew on the garages' side, nobody on the lane.
 //   node tests/browser/pits.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('pits (gozd)');
+const T = checker('pits (gozd, toronto)');
 const srv = await serve();
 const browser = await launch();
 try {
@@ -27,11 +28,11 @@ try {
         const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;   // (in the lane on the way to the box: the wheel held at full left lock, the gas held)
         if (lock) g.sim(0.05, false, -1); else g.sim(0.05, true);
         Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]);
-        if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -25) o.dev = Math.max(o.dev, Math.abs(P.q.d - p.o)); }   // (before the turn in: in the middle of the lane)
+        if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -25) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }   // (before the turn in: in the middle of the lane)
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
-        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d - p.lout;
+        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
           if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }   // (each man where he was sent: beyond the lane's outer edge)
-        if (P.pitState === 'repair') { const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d - p.lout).toFixed(2), yaw: +(a * 57.3).toFixed(1) }; }
+        if (P.pitState === 'repair') { const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d * p.sd - p.lout).toFixed(2), yaw: +(a * p.sd * 57.3).toFixed(1) }; }
       }
       if (P.lap === 2 && !P.repairN && !P.inPit) P.pitWant = true;
       if (P.repairN && !P.inPit) P.pitWant = false;
@@ -54,6 +55,40 @@ try {
   T.check('repaired once', r.repairN === 1, `repairs ${r.repairN}`);
   T.check('player finishes, all cars finish', r.fin && r.finished === r.n, `${r.finished}/${r.n} after ${r.t.toFixed(1)} s`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+
+  // Toronto: the pit lane on the LEFT of the straight (def.pit's offset negative, every offset measured to that side, sd -1). One stop on
+  // the autopilot (the wheel held at full right lock, towards the track): the car turns in to the left, into its box on the apron, the crew
+  // round it on the garages' side of the lane, nobody on the lane
+  await startTrack(page, 'toronto');
+  await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
+  let t2 = { work: 99, max: -99, lane: 0, lock: 0, dev: 0, pose: null, ghost: 0, dmg: 0, modes: [] }, r2;
+  for (let k = 0; k < 400; k++) {
+    r2 = await page.evaluate(() => {
+      const g = window.__game, P = g.race.player, Tk = g.race.track, o = { work: 99, max: -99, lane: 0, lock: 0, dev: 0, pose: null, ghost: 0, dmg: 0, modes: [] }; Render.scene.visible = false;
+      for (let i = 0; i < 20; i++) {
+        const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;
+        if (lock) g.sim(0.05, false, 1); else g.sim(0.05, true);
+        Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
+        if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -25) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }
+        if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
+        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+          if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }
+        if (P.pitState === 'repair') { const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d * p.sd - p.lout).toFixed(2), yaw: +(a * p.sd * 57.3).toFixed(1), sd: p.sd }; }
+      }
+      if (P.lap >= 1 && !P.repairN && !P.inPit && !Tk.pitAt(P.q.s)) { P.pitWant = true; if (P.dmg < 0.3) P.dmg = 0.4; }
+      if (P.repairN && !P.inPit) P.pitWant = false;
+      Render.scene.visible = true;
+      return { o, rep: P.repairN || 0, inPit: P.inPit };
+    });
+    const o = r2.o; t2.work = Math.min(t2.work, o.work); t2.max = Math.max(t2.max, o.max); t2.lane += o.lane; t2.lock += o.lock; t2.dev = Math.max(t2.dev, o.dev); if (o.pose) t2.pose = o.pose; t2.ghost += o.ghost; t2.dmg += o.dmg;
+    for (const m of o.modes) if (!t2.modes.includes(m)) t2.modes.push(m);
+    if (r2.rep && !r2.inPit) break;
+  }
+  T.check('Toronto (the lane on the left): repaired once, the crew went out, worked and cleared', r2.rep === 1 && ['out', 'work', 'clear'].every(m => t2.modes.includes(m)), `repairs ${r2.rep}, crew ${t2.modes.join(',')}`);
+  T.check('Toronto: at full right lock the car keeps to the middle of the lane, a ghost, no damage', t2.lock > 40 && t2.dev < 0.8 && t2.ghost > 40 && t2.dmg === 0, `${t2.lock} steps at full lock, at most ${t2.dev.toFixed(2)} m off the lane's centre, ${t2.ghost} steps a ghost, damage ${t2.dmg.toFixed(3)}`);
+  T.check('Toronto: the car stops in its box on the apron to the left, nose in towards the garage', t2.pose && t2.pose.sd === -1 && t2.pose.dLout > 2.5 && t2.pose.yaw > 12, JSON.stringify(t2.pose));
+  T.check('Toronto: the crew stands off the lane, on the garages\' side', t2.lane === 0 && t2.work > 0 && t2.max < 9.2, `at least ${t2.work.toFixed(2)} m beyond the lane's edge at work, at most ${t2.max.toFixed(2)} m, ${t2.lane} samples on the lane`);
+  T.check('no page errors (Toronto)', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {
   await browser.close(); await srv.close();
 }

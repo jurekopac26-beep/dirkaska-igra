@@ -152,7 +152,7 @@
     'Dirkalne': 'Racing', 'Keramične': 'Ceramic', 'Serijska': 'Stock', 'Spojler': 'Spoiler', 'Paket GT': 'GT pack',
     'V karieri kupljenih delov ne moreš prodati.': 'In the career you cannot sell the parts you bought.', 'Premalo denarja: {0} {1} stane {2}, imaš {3}.': 'Not enough money: {0} {1} costs {2}, you have {3}.',
     'Kupljeno: {0} – {1} za {2}. Ostane {3}.': 'Bought: {0} – {1} for {2}. {3} left.',
-    'Posnetka ni.': 'There is no replay.', 'Za avtom': 'Chase', 'Od zgoraj': 'From above', 'Kokpit': 'Cockpit',
+    'Posnetka ni.': 'There is no replay.', 'Za avtom': 'Chase', 'Od zgoraj': 'From above', 'Kokpit': 'Cockpit', 'Kino': 'Cinema',
     'Objektiv {0} mm': 'Lens {0} mm', 'Filter: {0}': 'Filter: {0}', 'brez': 'none', 'živo': 'vivid', 'črno-belo': 'black and white', 'sepija': 'sepia', 'film': 'film',
     'Ostrina: {0}': 'Focus: {0}', 'avto': 'the car', 'vse': 'everything', 'Slike ni bilo mogoče narediti.': 'The picture could not be made.',
     'Slika je pripravljena za deljenje.': 'The picture is ready to share.', 'Slika shranjena: {0}': 'Picture saved: {0}', 'Slike ni bilo mogoče shraniti.': 'The picture could not be saved.', 'Dirka · {0}': 'Race · {0}',
@@ -310,6 +310,7 @@
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
+    'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
     'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',

@@ -1547,10 +1547,11 @@ const Sfx = (function () {
   }
   // a knocked-over trackside prop: hollow plastic 'tock' for a cone, rubbery thump for tyres, soft thud for straw, woody knock for a crate
   let lastKnock = 0;
+  const POLES = new Set(['bollard', 'lamp', 'sign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag']);   // (Medvode's bollards, lamps, signs and flag poles: the same hollow 'tock' as a post)
   function knock(kind, v) {
     if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(v)) return;
     const now = ctx.currentTime; if (now - lastKnock < 0.05) return; lastKnock = now;
-    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post', straw = kind === 'bale' || kind === 'bstack' || kind === 'rbale' || kind === 'rbstack', wood = kind === 'crate';
+    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post' || POLES.has(kind), straw = kind === 'bale' || kind === 'bstack' || kind === 'rbale' || kind === 'rbstack', wood = kind === 'crate' || kind === 'bench';
     const o = ctx.createOscillator(); o.type = cone ? 'square' : 'triangle';
     const f0 = cone ? 520 + Math.random() * 120 : straw ? 90 : wood ? 260 : 150;
     o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f0 * (cone ? 0.55 : 0.4), now + (cone ? 0.06 : 0.14));

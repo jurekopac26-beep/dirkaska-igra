@@ -38,8 +38,8 @@ const deg = (a) => a * 180 / Math.PI;
         C.aiControl(pl, r, DT); r.step(DT); t += DT;
         if (pl.inPit) { if (lane0 == null) lane0 = t; laneT = t - lane0; if (pl.pitG) ghost++; if (pl.hitWall > 0.5) wall++; }
         pl.hitWall = 0; pl.hitCar = 0;
-        const p = T.pitAt(pl.q.s); if (pl.inPit && p && !p.gap && T.boxX(pl.q.s, P[3]) < -25 && !pl.pitDone) dev = Math.max(dev, Math.abs(pl.q.d - p.o));   // (before the turn in)
-        if (pl.pitState === 'repair' && !pose) { let a = pl.h - Math.atan2(pl.q.tz, pl.q.tx); a = Math.atan2(Math.sin(a), Math.cos(a)); pose = { x: T.boxX(pl.q.s, P[3]), out: pl.q.d - p.lout, yaw: deg(a) }; }
+        const p = T.pitAt(pl.q.s); if (pl.inPit && p && !p.gap && T.boxX(pl.q.s, P[3]) < -25 && !pl.pitDone) dev = Math.max(dev, Math.abs(pl.q.d * p.sd - p.o));   // (before the turn in; across measured to the lane's side, p.sd: Toronto's on the left)
+        if (pl.pitState === 'repair' && !pose) { let a = pl.h - Math.atan2(pl.q.tz, pl.q.tx); a = Math.atan2(Math.sin(a), Math.cos(a)); pose = { x: T.boxX(pl.q.s, P[3]), out: pl.q.d * p.sd - p.lout, yaw: deg(a) * p.sd }; }
         if (pl.pitDone) rep = true;
         if (rep && !pl.inPit && outT == null) outT = t;
       }
@@ -56,11 +56,11 @@ const deg = (a) => a * 180 / Math.PI;
   check('a ghost all the way through the lane, solid again within 6 s of leaving it', out.every(x => x.ghost > 0 && x.solid && x.back), out.map(x => `${x.id} ${x.solid && x.back ? 'ok' : 'STILL A GHOST'}`).join(', '));
 }
 
-// 3. a long race with fuel and tyres (Toskana and Rio, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
+// 3. a long race with fuel and tyres (Toskana, Rio and Toronto with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
 // own box on the apron nose in; on the pit road nobody touches anybody and nobody is damaged, the ghosts keep out of each other; everybody to
 // the line, no ghost left
 const ov = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, ch = Math.cos(a.h), sh = Math.sin(a.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch; return Math.abs(lx) < (a.m.len + b.m.len) * 0.5 - 0.3 && Math.abs(lz) < (a.m.wid + b.m.wid) * 0.5 - 0.2; };   // (two cars in each other)
-for (const [tid, laps] of [['toskana', 6], ['rio', 5]]) {
+for (const [tid, laps] of [['toskana', 6], ['rio', 5], ['toronto', 11]]) {
   const T = new C.Track(C.TRACKS.find(d => d.id === tid)), orig = Math.random; Math.random = seeded(7);
   try {
     const r = new C.Race(T, { numAI: 12, playerGrid: 13, laps, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 5, difficulty: 1, damage: 2, tyres: true, fuel: true }); r.start();
@@ -74,7 +74,7 @@ for (const [tid, laps] of [['toskana', 6], ['rio', 5]]) {
         if (c.pitG) { ghost++; if (c.hitCar > 0) hits++; if (dm.has(c) && c.dmg > dm.get(c) + 1e-9) dmg += c.dmg - dm.get(c); }
         if (c.hitCar > 0 && c.inPit) wasHit++;
         dm.set(c, c.dmg);
-        if (c.pitState === 'repair' && was.get(c) !== 'repair') { stops++; const p = T.pitAt(c.q.s); let a = c.h - Math.atan2(c.q.tz, c.q.tx); a = Math.atan2(Math.sin(a), Math.cos(a)); if (p && c.q.d - p.lout > 2 && a > 0.2 && Math.abs(T.boxX(c.q.s, r._boxD(c))) < 4) inBay++; }   // (on the apron: 2 m and more past the lane's edge (the first box, where the lane has only just come to its full width: a little less far in), nose in)
+        if (c.pitState === 'repair' && was.get(c) !== 'repair') { stops++; const p = T.pitAt(c.q.s); let a = c.h - Math.atan2(c.q.tz, c.q.tx); a = Math.atan2(Math.sin(a), Math.cos(a)); if (p && c.q.d * p.sd - p.lout > 2 && a * p.sd > 0.2 && Math.abs(T.boxX(c.q.s, r._boxD(c))) < 4) inBay++; }   // (on the apron: 2 m and more past the lane's edge (the first box, where the lane has only just come to its full width: a little less far in), nose in)
         was.set(c, c.pitState); c.hitCar = 0; c.hitWall = 0;
       }
       const cs = r.cars;
