@@ -657,6 +657,27 @@
    "roadwear:MeshLambertMaterial": "af03a0b0"
   }
  },
+ "medvode": {
+  "meshes": 1035,
+  "verts": 1847950,
+  "instances": 7988,
+  "props": 805,
+  "crowd": 649,
+  "world": "94f496a4",
+  "propsHash": "5ac7c254",
+  "floor": "17dd3a61/13356",
+  "groups": {
+   "-:MeshLambertMaterial": "95faa777",
+   "-:MeshPhongMaterial": "c71e2a1e",
+   "crowd:MeshLambertMaterial": "48313664",
+   "-:MeshBasicMaterial": "b8fa4dc2",
+   "mvCastle:MeshLambertMaterial": "d0fb684f",
+   "mvFence:MeshLambertMaterial": "9f02da6b",
+   "ao:MeshBasicMaterial": "1c11be80",
+   "tyremarks:MeshBasicMaterial": "ba87396f",
+   "roadwear:MeshLambertMaterial": "cb786fa0"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
