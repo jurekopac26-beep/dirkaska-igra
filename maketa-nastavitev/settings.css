@@ -43,9 +43,14 @@ svg { display: block; }
 .sx-tab.on { color: var(--gold); }
 .sx-tab.on svg { transform: translateY(-1px) scale(1.12); }
 .sx-tab:active svg { transform: scale(.92); }
-.sx-tabs.n3 { margin-top: 6px; }
+.sx-tabs.n3 { margin-top: 6px; overflow: visible; }   /* (three tabs always fit: the gold line may hang over the edge) */
 .sx-tabs.n3 .sx-tab { flex-direction: row; gap: 8px; min-height: 48px; font-size: 14.5px; }
 .sx-tabs.n3 .sx-tab svg { width: 21px; height: 21px; }
+/* the one long list (way 3): every tab's part under a big heading */
+.sx-big { display: flex; align-items: center; gap: 10px; margin: 10px 2px 0; padding: 10px 4px 8px; border-bottom: 2px solid rgba(255,198,41,.5); font: 900 italic 22px/1 var(--f-ui); color: #fff; text-transform: uppercase; letter-spacing: -.2px; }
+.sx-big svg { width: 26px; height: 26px; color: var(--gold); }
+/* the pause's buttons at the foot of an upright screen (way 3), under the thumb */
+.sx-botbar { flex: 0 0 auto; display: flex; gap: 6px; padding: 8px 12px calc(8px + var(--sb)) 8px; background: rgba(6,11,19,.96); border-top: 1px solid var(--line); box-shadow: 0 -8px 20px rgba(0,0,0,.35); }
 /* the tabs' three looks (one per version): line (A, a gold line under the chosen one), pill (B, one bar with a gold pill sliding to the
    chosen one), tile (C, three tiles, the chosen one framed gold) */
 .sx-tabs.look-pill { margin: 8px 0 2px; padding: 4px; border-radius: 14px; background: rgba(3,8,15,.62); border: 1.5px solid var(--edge); }
@@ -183,10 +188,10 @@ html.dev #race, html.dev #set, html.dev #resume { position: absolute; }
 #resume.on { display: flex; }
 #resume svg { width: 22px; height: 22px; }
 /* the mockup's version switch on a phone (A, B, C), in the corner */
-.vchip { position: fixed; z-index: 8; right: calc(10px + var(--sr)); bottom: calc(10px + var(--sb)); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8,13,22,.85); border: 1px solid var(--edge); }
+.vchip { position: fixed; z-index: 8; right: calc(10px + var(--sr)); bottom: calc(10px + max(var(--bbh, 0px), var(--sb))); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8,13,22,.85); border: 1px solid var(--edge); }
 .vchip button { width: 30px; height: 30px; border-radius: 50%; font: 900 italic 13px/1 var(--f-ui); color: var(--lbl); }
 .vchip button.on { background: var(--gold); color: var(--gold-ink); }
 html.dev .vchip, body[data-shot] .vchip { display: none; }
-#toast { position: fixed; left: 50%; bottom: calc(18px + var(--sb)); transform: translate(-50%, 20px); max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(8,13,22,.94); border: 1px solid var(--edge); font: 700 italic 13px/1.35 var(--f-ui); color: #fff; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 9; text-align: center; }
+#toast { position: fixed; left: 50%; bottom: calc(18px + max(var(--bbh, 0px), var(--sb))); transform: translate(-50%, 20px); max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(8,13,22,.94); border: 1px solid var(--edge); font: 700 italic 13px/1.35 var(--f-ui); color: #fff; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 9; text-align: center; }
 #toast.on { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .sx-list.in, .sx-card.grow { animation: none; } .sx-thumb, .sx-ink { transition: none; } }

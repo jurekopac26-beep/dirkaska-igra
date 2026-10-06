@@ -41,7 +41,7 @@
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
   // the three ways to group the settings (D.versions: A, B, C): the tabs, their sections; ?v=B or #b picks one
   const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
-  let ver = String(q.get('v') || location.hash.slice(1) || 'A').toUpperCase(); if (!D.versions[ver]) ver = 'A';
+  let ver = String(q.get('v') || location.hash.slice(1) || '1').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
   let cats = [];
   function buildCats() {
     cats = D.versions[ver].tabs.map(t => ({ id: t.id, name: t.name, icon: t.icon,
@@ -61,9 +61,14 @@
     if (b.dataset.act === 'to-title') { setMode('menu'); toast('Nastavitve iz glavnega menija: brez gumbov pavze, zgoraj Končano.'); }
     else toast('V maketi: »' + (b.getAttribute('aria-label') || b.textContent.trim()) + '« dela kot zdaj v igri.');
   }
+  let builtLand = null;
   function buildTop() {
     buildCats();
-    const V = D.versions[ver], abar = mode === 'pause' && V.pause === 'bar';
+    const V = D.versions[ver], land = root.classList.contains('land'), abar = mode === 'pause' && (V.pause === 'bar' || (V.pause === 'bottom' && land)), bbar = mode === 'pause' && V.pause === 'bottom' && !land;
+    const old = $('.sx-botbar'); if (old) old.remove();
+    if (bbar) { const bb = h('div', 'sx-botbar', D.pause.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('')); bb.addEventListener('click', actHandler); $('#set').appendChild(bb); }
+    root.style.setProperty('--bbh', '0px'); if (bbar) requestAnimationFrame(() => { const bb = $('.sx-botbar'); if (bb) root.style.setProperty('--bbh', bb.offsetHeight + 'px'); });   // (the switch 1 2 3 and the notes go above the bar)
+    builtLand = land;
     top.innerHTML = '<div class="sx-title"><i>' + (mode === 'pause' ? I.pause : I.cog) + '</i><h1>' + (mode === 'pause' ? 'Pavza' : 'Nastavitve') + '</h1></div>' +
       (abar ? '<div class="sx-actbar">' + D.pause.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('') + '</div>' : '') +
       '<nav class="sx-tabs n' + cats.length + ' look-' + (V.look || 'line') + '" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span></button>').join('') + '<i class="sx-ink"></i></nav>' +
@@ -74,6 +79,7 @@
     if (abar) $('.sx-actbar').addEventListener('click', actHandler);
   }
   function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', '#' + v.toLowerCase()); } catch (_) { } }
+  const listMode = () => D.versions[ver].mode === 'list';
   function placeInk() { const b = tabsEl && tabsEl.querySelector('.sx-tab.on'); if (!b) return; const full = tabsEl.classList.contains('look-pill'); ink.style.left = (b.offsetLeft + (full ? 0 : b.offsetWidth * 0.18)) + 'px'; ink.style.width = (b.offsetWidth * (full ? 1 : 0.64)) + 'px'; }
   function setMode(m) { mode = m; buildTop(); if (!cats.find(c => c.id === tab)) tab = cats[0].id; show(tab, true); updateBar(); }
   // Nadaljuj: the screen goes, the race shows with the pause button over it, which brings the screen back
@@ -95,6 +101,7 @@
     root.classList.toggle('narrow', land && (dev ? 844 : innerWidth) < 760);
     if (dev) { const w = land ? 864 : 410, hh = land ? 410 : 864, k = Math.min(1, (innerHeight - 90) / hh, (innerWidth - 40) / w); root.style.setProperty('--k', k.toFixed(3)); }
     $('#race').style.backgroundImage = 'url(' + bgOf() + ')';
+    if (builtLand !== null && builtLand !== land && D.versions[ver].pause === 'bottom') { buildTop(); show(tab, true); }
     placeInk(); for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true); A.kick();
   }
   const bar = $('#mockbar');
@@ -169,26 +176,47 @@
 
   /* ---------------- a tab's page ---------------- */
   let list = null, idx = 0;
-  function show(id, instant) {
-    const i = cats.findIndex(c => c.id === id); if (i < 0) return;
-    const dir = i >= idx ? '' : ' left'; idx = i; tab = id;
-    for (const b of tabsEl.querySelectorAll('.sx-tab')) { const on = b.dataset.tab === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }
-    placeInk();
-    if (list) { for (const c of list.querySelectorAll('canvas')) A.detach(c); list.remove(); }
-    list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list);
-    const C = cats[i], V = D.versions[ver];
-    if (i === 0 && mode === 'pause' && V.pause === 'tab') {
-      const acts = h('div', 'sx-acts', D.pause.map(a => '<button class="sx-act' + (a.ghost ? ' ghost' : '') + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '">' + I[a.icon] + '<span>' + a.l + '</span></button>').join(''));
-      acts.addEventListener('click', actHandler);
-      list.appendChild(acts);
-    }
-    if (i === 0 && mode === 'pause') list.appendChild(h('p', 'sx-strat', '<b>Strategija:</b> en postanek okoli 6. kroga, mehke → srednje.'));
+  function markTab(id) { tab = id; for (const b of tabsEl.querySelectorAll('.sx-tab')) { const on = b.dataset.tab === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); } placeInk(); }
+  function addCards(C) {
     for (const sec of C.sections) {
       if (C.sections.length > 1) list.appendChild(h('div', 'sx-cat', sec.t));
       for (const it of sec.items) {
         const c = card(it); if (!visible(it)) c.classList.add('hide'); list.appendChild(c);
         A.attach(c._cv, it.anim, S[it.key]);
       }
+    }
+  }
+  function pauseTop() {
+    const V = D.versions[ver];
+    if (mode === 'pause' && V.pause === 'tab') {
+      const acts = h('div', 'sx-acts', D.pause.map(a => '<button class="sx-act' + (a.ghost ? ' ghost' : '') + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '">' + I[a.icon] + '<span>' + a.l + '</span></button>').join(''));
+      acts.addEventListener('click', actHandler);
+      list.appendChild(acts);
+    }
+    if (mode === 'pause') list.appendChild(h('p', 'sx-strat', '<b>Strategija:</b> en postanek okoli 6. kroga, mehke → srednje.'));
+  }
+  function show(id, instant) {
+    const i = cats.findIndex(c => c.id === id); if (i < 0) return;
+    if (listMode() && list && list._all && !instant) {   // (the one list: a tab only scrolls to its part)
+      const hd = list.querySelector('[data-part="' + id + '"]'); markTab(id); list._jump = Date.now();
+      if (hd) list.scrollTo({ top: hd.offsetTop - 6, behavior: 'smooth' }); return;
+    }
+    const dir = i >= idx ? '' : ' left'; idx = i;
+    markTab(id);
+    if (list) { for (const c of list.querySelectorAll('canvas')) A.detach(c); list.remove(); }
+    list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list);
+    if (listMode()) {
+      list._all = true; pauseTop();
+      for (const C of cats) { list.appendChild(h('div', 'sx-big', I[C.icon] + '<span>' + C.name + '</span>')).dataset.part = C.id; addCards(C); }
+      list.addEventListener('scroll', () => {   // (the tab of the part at the top lights up)
+        if (list._jump && Date.now() - list._jump < 700) return;
+        let cur = cats[0].id; for (const hd of list.querySelectorAll('[data-part]')) if (hd.offsetTop - list.scrollTop <= 60) cur = hd.dataset.part;
+        if (cur !== tab) markTab(cur);
+      }, { passive: true });
+      if (i > 0) { const hd = list.querySelector('[data-part="' + id + '"]'); if (hd) requestAnimationFrame(() => { list.scrollTop = hd.offsetTop - 6; }); }
+    } else {
+      if (i === 0) pauseTop();
+      addCards(cats[i]);
     }
     if (still != null) requestAnimationFrame(() => stillAll());
   }
@@ -201,7 +229,14 @@
     for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true);
     for (const L of A.live) { const it = allItems().find(x => x.anim === L.key); const port = !document.documentElement.classList.contains('land'), tt = it && port && it.storyTp != null ? it.storyTp : it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
     if (q.get('scroll')) list.scrollTop = +q.get('scroll');
-    document.body.dataset.h = Math.ceil($('.sx-top').getBoundingClientRect().bottom + list.scrollHeight);   // (the whole page: the long pictures)
+    if (listMode() && tab !== cats[0].id) { const hd = list.querySelector('[data-part="' + tab + '"]'); if (hd) list.scrollTop = hd.offsetTop - 6; }
+    const bb = $('.sx-botbar'), topH = $('.sx-top').getBoundingClientRect().bottom, bbH = bb ? bb.offsetHeight : 0;
+    document.body.dataset.h = Math.ceil(topH + list.scrollHeight + bbH);   // (the whole page: the long pictures)
+    if (listMode()) {   // (one part of the one list, from its heading to the next one)
+      const parts = [...list.querySelectorAll('[data-part]')], k = parts.findIndex(p => p.dataset.part === tab);
+      const a = k > 0 ? parts[k].offsetTop - 6 : 0, b = k + 1 < parts.length ? parts[k + 1].offsetTop - 6 : list.scrollHeight;
+      document.body.dataset.hp = Math.ceil(topH + b - a + bbH);
+    }
     document.body.dataset.ready = '1';
   }
   buildTop(); updateBar(); layout();

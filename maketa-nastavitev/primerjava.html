@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tri razporeditve nastavitev</title>
+<title>Igra, Grafika, Zvok</title>
 <link rel="stylesheet" href="../css/fonts.css">
 <style>
   /* the three ways to put the settings in three tabs, side by side: each version a column, its tabs one under the other with their sections */
@@ -33,7 +33,7 @@
 </style>
 </head>
 <body>
-<header><i class="kerb"></i><h1>Tri razporeditve nastavitev<small>Zgoraj so samo trije zavihki, brez zavihka Splošno. Vseh 34 nastavitev je v teh treh, vsaka natanko enkrat. Različice se ločijo po razporeditvi, po tem, kje so gumbi pavze (Ponovi dirko, Foto, Ogled vozila, Celoten zaslon, Odstopi, Glavni meni), in po obliki zavihkov.</small></h1></header>
+<header><i class="kerb"></i><h1>Igra · Grafika · Zvok: trije načini<small>Zgoraj so trije zavihki Igra, Grafika in Zvok. Vseh 34 nastavitev je v njih, vsaka natanko enkrat. Načini se ločijo po tem, kaj je v Igri in kaj v Grafiki, kako zaslon deluje (ločeni zavihki ali en dolg seznam), kje so gumbi pavze (Ponovi dirko, Foto, Ogled vozila, Celoten zaslon, Odstopi, Glavni meni) in po obliki zavihkov.</small></h1></header>
 <div class="cols" id="cols"></div>
 <script src="settings-data.js"></script>
 <script>
@@ -50,6 +50,7 @@
     sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 6.5 H20 M4 12 H20 M4 17.5 H20"/><circle cx="9" cy="6.5" r="2.2" fill="currentColor"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor"/><circle cx="7" cy="17.5" r="2.2" fill="currentColor"/></svg>'
   };
   const LOOK = { line: 'zavihki s črto pod izbranim', pill: 'zavihki kot gumbi v enem okvirju', tile: 'zavihki kot tri ploščice' };
+  I.image = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3.5 17 L9 11.5 L13 15.5 L15.5 13 L20.5 18"/><circle cx="16" cy="9" r="1.8"/></svg>';
   const cols = document.getElementById('cols');
   for (const V of Object.values(D.versions)) {
     const el = document.createElement('section'); el.className = 'ver';
@@ -59,6 +60,7 @@
       html += '<div class="tab"><h3>' + I[t.icon] + t.name + '<small>' + n + ' nastavitev</small></h3>';
       if (i === 0 && V.pause === 'tab') html += '<div class="pz">Na vrhu: gumbi pavze in strategija</div>';
       if (i === 0 && V.pause === 'bar') html += '<div class="pz">Gumbi pavze so v vrstici nad zavihki (na vseh treh)</div>';
+      if (i === 0 && V.pause === 'bottom') html += '<div class="pz">Gumbi pavze so v vrstici spodaj (ležeče zgoraj); vse je en seznam</div>';
       for (const s of t.sections) html += (t.sections.length > 1 ? '<div class="sec">' + s.t + '</div>' : '') + '<ul>' + s.keys.map(k => '<li>' + ITEM[k].name + (k === 'pkNotes' ? ' <i>(Pikes Peak)</i>' : '') + (ITEM[k].only ? ' <i>(pri Nagibu)</i>' : '') + (k === 'pitCmp' ? ' <i>(samo med dirko z boksi)</i>' : '') + '</li>').join('') + '</ul>';
       html += '</div>';
     });
