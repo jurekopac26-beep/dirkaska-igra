@@ -319,6 +319,40 @@ const Sfx = (function () {
     if (now >= C.tHorn) { horn(0.03 + 0.05 * L, clamp(C.pan + (Math.random() - 0.5) * 0.6, -0.9, 0.9)); C.tHorn = now + (0.6 + Math.random() * 3.5) / (0.4 + L); }
     if (now >= C.tDrum) { const n = 3 + Math.floor(Math.random() * 4), st = 0.24 + Math.random() * 0.08; for (let k = 0; k < n; k++) drum(0.1 + 0.16 * L, now + 0.05 + k * st * (k === n - 1 ? 1.5 : 1)); C.tDrum = now + n * st + (3 + Math.random() * 6) / (0.4 + L); }
   }
+  // a samba group by the main stand (Rio: World's samba, [x, z]): the batucada at ~104 beats a minute, scheduled a little ahead in sixteenths:
+  // the two surdos (the low one on the second beat), the snare's sixteenths with their accents, the tamborim's figure, the agogô's two bells;
+  // louder as the camera comes near (none past 170 m), from its side of the screen
+  let samba = null;
+  const SB_T = [1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0], SB_A = [2, 0, 0, 2, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 0, 0];   // tamborim hits; agogô (1 low, 2 high)
+  function sambaHit(f0, f1, dur, vol, t, type) {   // a pitched hit falling from f0 to f1 (the surdos; the agogô's bells: square, short)
+    const o = ctx.createOscillator(); o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(samba.out); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function sambaNoise(f, q, dur, vol, t) {   // a snare's or a tamborim's crack: band-passed noise
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp); bp.connect(g); g.connect(samba.out); src.start(t, Math.random()); src.stop(t + dur + 0.02);
+  }
+  function sambaStep(race, player, W, cam) {
+    const S = W && W.samba;
+    if (!S || !race || !running) { if (samba) { set(samba.out.gain, 0, 0.2); samba.next = 0; } return; }
+    if (!samba) { const out = ctx.createGain(); out.gain.value = 0; let pn = null; if (ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); pn.connect(bus); } else out.connect(bus); samba = { out, pn, next: 0, k: 0, lev: 0 }; }
+    const B = samba, lx = cam ? cam.position.x : player.x, lz = cam ? cam.position.z : player.z, dx = S[0] - lx, dz = S[1] - lz, d = Math.hypot(dx, dz), lev = clamp(1 - d / 170, 0, 1) ** 1.5;
+    B.lev = lev; set(B.out.gain, lev * 0.55, 0.25);
+    if (cam && B.pn) { const e = cam.matrixWorld.elements; set(B.pn.pan, clamp((dx * e[0] + dz * e[2]) / Math.max(d, 1), -0.75, 0.75), 0.3); }
+    if (lev < 0.01) { B.next = 0; return; }
+    const now = ctx.currentTime, st = 60 / 104 / 4;
+    if (B.next < now) B.next = now + 0.05;
+    while (B.next < now + 0.25) {
+      const k = B.k++ % 16, t = B.next;
+      if (k === 0) sambaHit(95, 62, 0.45, 0.5, t); if (k === 8) sambaHit(72, 48, 0.6, 0.6, t); if (k === 14 || k === 15) sambaHit(72, 52, 0.18, 0.18, t);   // the surdos (the answer on 2, the low one's pickups)
+      sambaNoise(2600, 0.9, 0.05, k % 4 === 2 ? 0.16 : 0.06, t);   // the snare
+      if (SB_T[k]) sambaNoise(5200, 2.5, 0.035, 0.1, t);   // the tamborim
+      if (SB_A[k]) sambaHit(SB_A[k] === 2 ? 920 : 690, SB_A[k] === 2 ? 920 : 690, 0.12, 0.05, t, 'square');   // the agogô
+      B.next += st * (k % 2 ? 0.94 : 1.06);   // (the swing)
+    }
+  }
   // the fans along a rally stage: a roar of many voices (noise in two broad bands, swelling and ebbing slowly)
   function crowdVoice() {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.9;
@@ -1389,6 +1423,7 @@ const Sfx = (function () {
     set(heli.out.gain, hv, 0.35);
     if (heli.pn) set(heli.pn.pan, hp, 0.1);
     standsStep(race, player, W, cam);
+    sambaStep(race, player, W, cam);   // (Rio: the samba group by the main stand)
     // the Red Bull Ring's jets before the start: a roar by the distance to the nearest one
     let jv = 0; const A = W && W.dyn && W.dyn.air;
     if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
@@ -1536,12 +1571,13 @@ const Sfx = (function () {
     for (const v of [eng, ...ai]) { set(v.out.gain, 0, 0.02); set(v.tg.gain, 0, 0.02); v.car = null; }
     for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV, radioV]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
+    if (samba) { set(samba.out.gain, 0, 0.02); samba.next = 0; }
     if (atmo) atmoOff(0.02);
     for (const V of [kitPl, ...kitAI]) if (V) kitOff(V, 0.02);   // (the fleet's: the engines with a preset, the fires and the hubs)
     for (const v of [...dFireV, ...dScrV]) if (v) { set(v.g.gain, 0, 0.02); if (v.amg) set(v.amg.gain, 0, 0.02); v.car = null; }
   }
 
-  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
+  const levels = () => ctx ? { samba: samba ? +samba.lev.toFixed(3) : 0, stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
     engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
       : eng ? { kind: eng.kind, preset: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value, fs: [eng.o, eng.pm, eng.tw].map(o => o.frequency.value).concat(eng.lp.frequency.value, eng.nb.frequency.value) } : null,   // Pikes Peak's sounds, the player's engine note: preset its
     ai: aiSeen.map(a => a && { id: a[0], preset: a[1], dop: +a[2].toFixed(3), f: a[3] == null ? null : +a[3].toFixed(2) }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
