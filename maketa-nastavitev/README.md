@@ -2,6 +2,8 @@
 
 Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezana z igro**: igra je ne naloži in nič v igri se ne spremeni. Ko bo predlog potrjen, bo zaslon prenesen v igro (`index.html`, `js/game.js`, `css/style.css`, `js/lang.js`).
 
+Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj stikali *Telefon pokonci / ležeče* in *Med dirko / Iz glavnega menija*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
+
 Slike predloga so v `slike/`:
 
 | Slika | Kaj pokaže |
@@ -38,4 +40,4 @@ Datoteke:
 - `storyboard.html`: vse možnosti vseh animacij naenkrat (iz njega so slike 4–6);
 - `board.html`: sestavljanje slik telefonov.
 
-Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=voznja`. Parametri: `mode=pause|menu`, `tab=<id zavihka>`, `bg=bg-port.jpg|bg-land.jpg` (zamrznjena dirka v ozadju), `s={"camera":"iso"}` (začetne nastavitve).
+Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=voznja`. Parametri: `mode=pause|menu`, `tab=<id zavihka>`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).

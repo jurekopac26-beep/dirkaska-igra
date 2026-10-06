@@ -32,19 +32,58 @@
     damage: 2, faults: 1, radio: 1, hlv: 1, quality: 'high', detail: 'auto', shadows: 1, saver: 'off', intro: 0, music: 1, sound: 1, vibrate: 1, lang: 'sl', name: 'Igralec', tiltSens: 22, tiltInvert: 0, pitCmp: 'auto' },
     (() => { try { return JSON.parse(q.get('s') || '{}'); } catch (_) { return {}; } })());
   A.env = { get: (k) => S[k], tilt: () => null };
-  const mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
-  const cats = D.cats.filter(c => mode === 'pause' || !c.pauseOnly);
+  let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
+  let cats = D.cats.filter(c => mode === 'pause' || !c.pauseOnly);
   let tab = cats.find(c => c.id === q.get('tab')) ? q.get('tab') : cats[0].id;
-  if (q.get('bg')) $('#race').style.backgroundImage = 'url(' + q.get('bg') + ')';
+  const BG = window.MOCK_BG || {};   // (the single-file build: the race pictures inside the page)
+  const bgOf = () => q.get('bg') || (document.documentElement.classList.contains('land') ? BG.land || 'bg-land.jpg' : BG.port || 'bg-port.jpg');
 
   /* ---------------- the top ---------------- */
   const top = $('.sx-top');
-  top.innerHTML = '<div class="sx-title"><i>' + (mode === 'pause' ? I.pause : I.cog) + '</i><h1>' + (mode === 'pause' ? 'Pavza' : 'Nastavitve') + '</h1></div>' +
-    '<nav class="sx-tabs" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span></button>').join('') + '<i class="sx-ink"></i></nav>' +
-    '<button class="sx-go">' + (mode === 'pause' ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>';
-  const tabsEl = $('.sx-tabs'), ink = $('.sx-ink');
-  function placeInk() { const b = tabsEl.querySelector('.sx-tab.on'); if (!b) return; ink.style.left = (b.offsetLeft + b.offsetWidth * 0.18) + 'px'; ink.style.width = (b.offsetWidth * 0.64) + 'px'; }
-  tabsEl.addEventListener('click', (e) => { const b = e.target.closest('.sx-tab'); if (b) show(b.dataset.tab); });
+  let tabsEl = null, ink = null;
+  function buildTop() {
+    cats = D.cats.filter(c => mode === 'pause' || !c.pauseOnly);
+    top.innerHTML = '<div class="sx-title"><i>' + (mode === 'pause' ? I.pause : I.cog) + '</i><h1>' + (mode === 'pause' ? 'Pavza' : 'Nastavitve') + '</h1></div>' +
+      '<nav class="sx-tabs" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span></button>').join('') + '<i class="sx-ink"></i></nav>' +
+      '<button class="sx-go">' + (mode === 'pause' ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>';
+    tabsEl = $('.sx-tabs'); ink = $('.sx-ink');
+    tabsEl.addEventListener('click', (e) => { const b = e.target.closest('.sx-tab'); if (b) show(b.dataset.tab); });
+    $('.sx-go').addEventListener('click', () => { if (mode === 'pause') resumeRace(); else { setMode('pause'); toast('Nazaj na pavzo med dirko.'); } });
+  }
+  function placeInk() { const b = tabsEl && tabsEl.querySelector('.sx-tab.on'); if (!b) return; ink.style.left = (b.offsetLeft + b.offsetWidth * 0.18) + 'px'; ink.style.width = (b.offsetWidth * 0.64) + 'px'; b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  function setMode(m) { mode = m; buildTop(); if (!cats.find(c => c.id === tab)) tab = cats[0].id; show(tab, true); updateBar(); }
+  // Nadaljuj: the screen goes, the race shows with the pause button over it, which brings the screen back
+  const resumeBtn = $('#resume'); resumeBtn.innerHTML = I.pause;
+  function resumeRace() { $('#set').classList.add('gone'); resumeBtn.classList.add('on'); toast('Dirka teče naprej. Tapni pavzo zgoraj desno.'); }
+  resumeBtn.addEventListener('click', () => { $('#set').classList.remove('gone'); resumeBtn.classList.remove('on'); A.kick(); });
+  let toastT = 0;
+  function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
+
+  /* ---------------- the orientation: a phone on its side (up to 560 px high) lays the screen out in one row; a big screen shows a phone in a frame ---------------- */
+  const root = document.documentElement;
+  let devLand = q.get('land') === '1';
+  const wantDev = () => q.get('dev') !== '0' && !q.get('shot') && innerWidth >= 900 && innerHeight >= 560;
+  function layout() {
+    const dev = wantDev();
+    root.classList.toggle('dev', dev);
+    const land = dev ? devLand : innerWidth > innerHeight && innerHeight <= 560;
+    root.classList.toggle('land', land);
+    root.classList.toggle('narrow', land && (dev ? 844 : innerWidth) < 760);
+    if (dev) { const w = land ? 864 : 410, hh = land ? 410 : 864, k = Math.min(1, (innerHeight - 90) / hh, (innerWidth - 40) / w); root.style.setProperty('--k', k.toFixed(3)); }
+    $('#race').style.backgroundImage = 'url(' + bgOf() + ')';
+    placeInk(); for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true); A.kick();
+  }
+  const bar = $('#mockbar');
+  function updateBar() {
+    bar.innerHTML = '<b>Nove nastavitve</b><span class="mb-seg"><button data-o="0" class="' + (devLand ? '' : 'on') + '">Telefon pokonci</button><button data-o="1" class="' + (devLand ? 'on' : '') + '">Telefon ležeče</button></span>' +
+      '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>';
+  }
+  bar.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.o != null) { devLand = b.dataset.o === '1'; const cam = devLand ? 'iso' : 'chase'; if (S.camera !== cam) { S.camera = cam; const c = document.querySelector('.sx-card[data-key="camera"]'); if (c) { mark(c.querySelector('.sx-seg'), cam); A.change(c._cv, cam); } } updateBar(); layout(); }
+    if (b.dataset.m) setMode(b.dataset.m);
+  });
+  addEventListener('resize', layout);
 
   /* ---------------- a card: the picture, the name, the choice ---------------- */
   const body = $('.sx-body');
@@ -109,7 +148,11 @@
     list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list);
     const C = cats[i];
     if (C.id === 'pavza') {
-      list.appendChild(h('div', 'sx-acts', D.pause.map(a => '<button class="sx-act' + (a.ghost ? ' ghost' : '') + (a.act === 'retire' ? ' red' : '') + '">' + I[a.icon] + '<span>' + a.l + '</span></button>').join('')));
+      const acts = h('div', 'sx-acts', D.pause.map(a => '<button class="sx-act' + (a.ghost ? ' ghost' : '') + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '">' + I[a.icon] + '<span>' + a.l + '</span></button>').join(''));
+      acts.addEventListener('click', (e) => { const b = e.target.closest('.sx-act'); if (!b) return;
+        if (b.dataset.act === 'to-title') { setMode('menu'); toast('Nastavitve iz glavnega menija: brez zavihka Pavza, zgoraj Končano.'); }
+        else toast('V maketi: »' + b.textContent.trim() + '« dela kot zdaj v igri.'); });
+      list.appendChild(acts);
       list.appendChild(h('p', 'sx-strat', '<b>Strategija:</b> en postanek okoli 6. kroga, mehke → srednje.'));
     }
     for (const it of C.items) {
@@ -118,7 +161,6 @@
     }
     if (still != null) requestAnimationFrame(() => stillAll());
   }
-  window.addEventListener('resize', () => { placeInk(); for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true); });
 
   /* ---------------- stills for the mockup's pictures ---------------- */
   const still = q.get('shot') ? +(q.get('t') || 2.4) : null;
@@ -129,6 +171,7 @@
     if (q.get('scroll')) list.scrollTop = +q.get('scroll');
     document.body.dataset.ready = '1';
   }
-  document.fonts.ready.then(() => { show(tab, true); placeInk(); });
+  buildTop(); updateBar(); layout();
+  document.fonts.ready.then(() => { show(tab, true); layout(); });
   window.SX = { S, show, set: (key, v) => { const c = document.querySelector('.sx-card[data-key="' + key + '"]'); if (c) set(c._it, v, c); } };
 })();

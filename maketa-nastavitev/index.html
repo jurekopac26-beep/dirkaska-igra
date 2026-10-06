@@ -9,11 +9,18 @@
 <link rel="stylesheet" href="settings.css">
 </head>
 <body>
-<div id="race"></div>
-<div id="set" role="dialog" aria-label="Pavza in nastavitve">
-  <header class="sx-top"></header>
-  <div class="sx-body"></div>
+<div id="stage">
+  <div id="mockbar"></div>
+  <div id="devbox"><div id="screen">
+    <div id="race"></div>
+    <div id="set" role="dialog" aria-label="Pavza in nastavitve">
+      <header class="sx-top"></header>
+      <div class="sx-body"></div>
+    </div>
+    <button id="resume" aria-label="Pavza"></button>
+  </div></div>
 </div>
+<div id="toast" role="status"></div>
 <script src="anim-core.js"></script>
 <script src="scenes-drive.js"></script>
 <script src="scenes-cam.js"></script>

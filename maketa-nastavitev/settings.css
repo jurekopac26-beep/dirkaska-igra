@@ -105,28 +105,52 @@ svg { display: block; }
 .sx-strat { margin: 0; padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(255,198,41,.35); background: rgba(255,198,41,.06); font: 700 italic 13px/1.35 var(--f-ui); color: #f5e3a8; }
 .sx-strat b { color: var(--gold); }
 
-/* ---------------- lying phone: the title, the tabs and Nadaljuj in one row; the name beside its choice ---------------- */
-@media (orientation: landscape) and (max-height: 560px) {
-  :root { --pic: clamp(118px, 34vh, 150px); }
-  .sx-top { flex-wrap: nowrap; gap: 10px; padding-top: calc(6px + var(--st)); padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-  .sx-title { flex: 0 0 auto; }
-  .sx-title h1 { font-size: 20px; }
-  .sx-title i { width: 30px; height: 30px; }
-  .sx-tabs { order: 0; flex: 1 1 auto; margin: 0; border-bottom: 0; grid-auto-columns: minmax(56px, 1fr); }
-  .sx-tab { flex-direction: row; gap: 6px; min-height: 42px; padding: 4px 6px; font-size: 12px; }
-  .sx-tab svg { width: 19px; height: 19px; }
-  .sx-ink { bottom: -7px; }
-  .sx-go { min-height: 38px; font-size: 14px; padding: 0 14px 0 12px; }
-  .sx-list { padding-top: 10px; align-items: center; }
-  .sx-list > * { width: min(100%, 640px); }
-  .sx-row { flex-direction: row; align-items: center; gap: 12px; }
-  .sx-row > .sx-name { flex: 0 0 34%; flex-direction: column; align-items: flex-start; gap: 3px; }
-  .sx-row > .sx-name b { margin-left: 0; }
-  .sx-row > .sx-seg, .sx-row > .sx-range, .sx-row > .sx-input, .sx-row > .sx-more { flex: 1 1 auto; }
-  .sx-acts { grid-template-columns: repeat(3, 1fr); }
-}
-@media (orientation: landscape) and (max-height: 560px) and (max-width: 760px) { .sx-tab span { display: none; } .sx-tabs { grid-auto-columns: minmax(40px, 1fr); } .sx-title h1 { font-size: 17px; } }
-@media (orientation: landscape) and (max-height: 400px) { .sx-tab span { font-size: 11px; } }
-/* a wide screen (a tablet, a computer): the phone's layout in the middle */
-@media (min-width: 700px) and (min-height: 561px) { #set { left: 50%; right: auto; width: 520px; transform: translateX(-50%); box-shadow: 0 0 0 1px var(--edge), 0 30px 80px rgba(0,0,0,.6); } }
+/* ---------------- lying phone (html.land: a phone on its side up to 560 px high, or the preview's switch): the title, the tabs and
+   Nadaljuj in one row; the name beside its choice ---------------- */
+html.land { --pic: clamp(118px, 34vh, 150px); }
+html.land .sx-top { flex-wrap: nowrap; gap: 10px; padding-top: calc(6px + var(--st)); padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+html.land .sx-title { flex: 0 0 auto; }
+html.land .sx-title h1 { font-size: 20px; }
+html.land .sx-title i { width: 30px; height: 30px; }
+html.land .sx-tabs { order: 0; flex: 1 1 auto; margin: 0; border-bottom: 0; grid-auto-columns: minmax(56px, 1fr); }
+html.land .sx-tab { flex-direction: row; gap: 6px; min-height: 42px; padding: 4px 6px; font-size: 12px; }
+html.land .sx-tab svg { width: 19px; height: 19px; }
+html.land .sx-ink { bottom: -7px; }
+html.land .sx-go { min-height: 38px; font-size: 14px; padding: 0 14px 0 12px; }
+html.land .sx-list { padding-top: 10px; align-items: center; }
+html.land .sx-list > * { width: min(100%, 640px); }
+html.land .sx-row { flex-direction: row; align-items: center; gap: 12px; }
+html.land .sx-row > .sx-name { flex: 0 0 34%; flex-direction: column; align-items: flex-start; gap: 3px; }
+html.land .sx-row > .sx-name b { margin-left: 0; }
+html.land .sx-row > .sx-seg, html.land .sx-row > .sx-range, html.land .sx-row > .sx-input, html.land .sx-row > .sx-more { flex: 1 1 auto; }
+html.land .sx-acts { grid-template-columns: repeat(3, 1fr); }
+html.land.narrow .sx-tab span { display: none; }
+html.land.narrow .sx-tabs { grid-auto-columns: minmax(40px, 1fr); }
+html.land.narrow .sx-title h1 { font-size: 17px; }
+html.land.dev { --pic: 132px; }
+
+/* ---------------- the preview on a big screen (html.dev): the phone in a frame, the switches over it ---------------- */
+#stage, #devbox, #screen { display: contents; }
+#mockbar { display: none; }
+html.dev body { background: radial-gradient(90% 70% at 50% 30%, #122235, #05080d 70%); }
+html.dev #stage { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+html.dev #mockbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; padding: 6px 8px 6px 16px; border: 1px solid var(--line); border-radius: 999px; background: rgba(8,13,22,.7); font: 800 italic 13px/1 var(--f-ui); color: var(--lbl); }
+html.dev #mockbar b { color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: .02em; }
+.mb-seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(3,8,15,.7); border: 1px solid var(--edge); }
+.mb-seg button { padding: 7px 12px; border-radius: 999px; color: var(--lbl); font: 800 italic 12.5px/1 var(--f-ui); }
+.mb-seg button.on { background: var(--chalk); color: #14181f; }
+html.dev #devbox { display: block; position: relative; flex: none; width: 410px; height: 864px; padding: 10px; border-radius: 46px; background: #020409; box-shadow: 0 0 0 2px #2a313c, 0 30px 80px rgba(0,0,0,.6); transform: scale(var(--k, 1)); transform-origin: top center; margin-bottom: calc((var(--k, 1) - 1) * 864px); }
+html.dev.land #devbox { width: 864px; height: 410px; margin-bottom: calc((var(--k, 1) - 1) * 410px); }
+html.dev #screen { display: block; position: absolute; inset: 10px; border-radius: 36px; overflow: hidden; }
+html.dev.land #screen { border-radius: 30px; }
+html.dev #race, html.dev #set, html.dev #resume { position: absolute; }
+
+/* ---------------- the mockup's own: Nadaljuj shows the race and a pause button, a toast ---------------- */
+#set { transition: opacity .3s ease, transform .3s ease; }
+#set.gone { opacity: 0; transform: translateY(14px) scale(.98); pointer-events: none; }
+#resume { position: fixed; top: calc(12px + var(--st)); right: calc(12px + var(--sr)); width: 48px; height: 48px; border-radius: 12px; display: none; align-items: center; justify-content: center; background: rgba(16,20,27,.6); border: 2px solid rgba(255,255,255,.55); color: #fff; }
+#resume.on { display: flex; }
+#resume svg { width: 22px; height: 22px; }
+#toast { position: fixed; left: 50%; bottom: calc(18px + var(--sb)); transform: translate(-50%, 20px); max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(8,13,22,.94); border: 1px solid var(--edge); font: 700 italic 13px/1.35 var(--f-ui); color: #fff; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 9; text-align: center; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .sx-list.in, .sx-card.grow { animation: none; } .sx-thumb, .sx-ink { transition: none; } }
