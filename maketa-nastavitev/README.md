@@ -2,9 +2,29 @@
 
 Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezana z igro**: igra je ne naloži in nič v igri se ne spremeni. Ko bo predlog potrjen, bo zaslon prenesen v igro (`index.html`, `js/game.js`, `css/style.css`, `js/lang.js`).
 
-Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče* in *Med dirko / Iz glavnega menija*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
+Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče*, *Med dirko / Iz glavnega menija* in sliko *Animacija · 1 Posnetek · 2 Primerjava · 3 V živo*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
 
-**Zadnji predlog: izbrani način 3 (en dolg seznam) v treh videzih.** Vsi trije imajo enak zaslon: zgoraj tri ploščice Igra, Grafika in Zvok, pod njimi vse nastavitve v enem seznamu (zavihek skoči na svoj del, med drsenjem zasveti sam), gumbi pavze spodaj. Nastavitve in njihov vrstni red so v vseh treh enaki. Videzi so v `settings-data.js` (`versions`), slike v `slike/videz/` (vsaka: pokonci in ležeče, prvi zaslon po pavzi in del Grafika):
+**Zadnji predlog: prave slike iz igre namesto animacij, v treh različicah.** Slike nad nastavitvami niso več risane: so iz prave igre (pravi avto, prava proga, pravi HUD; tu Riviera, Francija). Vse tri so v videzu A (Ploščice), slike so v `slike/posnetki/` (vsaka: pokonci kar odpre pavza, del Grafika, Kakovost slike; ležeče oba dela):
+
+| Slika | Različica |
+| --- | --- |
+| `1-posnetek.png` | **1 · Posnetek iz igre**: nad vsako nastavitvijo teče kratek posnetek iz dirke z izbrano možnostjo; ko izbereš drugo, njen posnetek pripelje s strani gumba, ki si ga tapnil. Spodaj sličice, kako posnetek teče. |
+| `2-primerjava.png` | **2 · Vse možnosti hkrati**: ista sekunda dirke, narisana z vsako možnostjo, druga ob drugi (Tipke, Volan, Nagib; Blizu, Srednje, Daleč; Retro, Normalno, Visoko …); izbrana je širša in svetla, tapneš sliko ali gumb. |
+| `3-v-zivo.png` | **3 · Tvoja dirka v živo**: eno okno zgoraj (ležeče levo) s tvojo dirko, kjer si jo ustavil; kar spremeniš ali tapneš, se pokaže v oknu (kamera, Retro …). Kartice so brez slik, zato je na zaslonu več nastavitev. |
+
+- Nastavitve, ki se jih na sliki ne vidi (zvok, občutljivost nagiba, jezik, ime …), pokažejo dirko z majhnim znakom: ikona in izbrana možnost.
+- Slike kažejo tvoje upravljanje: ko izbereš Tipke, Volan ali Nagib, so na vseh slikah te kontrole.
+- V maketi sliko izbereš s stikalom *Animacija · 1 Posnetek · 2 Primerjava · 3 V živo* nad telefonom (računalnik), z gumbi 1, 2, 3 v kotu (telefon), z `?media=video|compare|live|anim` ali s `#a1` … `#a3` na koncu povezave (črka je videz, številka slika).
+
+Kako so slike narejene (`orodja/`): `posnetki.mjs` odpre igro v brskalniku (Playwright, kot brskalniški testi), začne dirko na Rivieri (vedno isto: naključna števila s semenom), avtopilot vozi 18 s, igra se ustavi. Nato vsako možnost vsake nastavitve, ki jo igra nariše drugače (Upravljanje, Kamera, Oddaljenost, Položaj avta, Grafika, Sence, Idealna linija, Časovna tabela, Samodejni plin), nariše v isti sekundi: 3D s fotografijo igre same (`Render.snapshot`, kot gumb Foto; Retro in Normalno v ločljivosti, v kateri ju igra res riše), HUD pa posebej, prozoren. Za konec še nekaj sličic dirke, ki teče. `sestavi.py` 3D in HUD sestavi v `posnetki/<port|land>/` in `posnetki/real.js` (kje je naš avto na vsaki sliki, za izreze).
+
+```
+node maketa-nastavitev/orodja/posnetki.mjs port riviera 18
+node maketa-nastavitev/orodja/posnetki.mjs land riviera 18
+python3 maketa-nastavitev/orodja/sestavi.py riviera
+```
+
+**Predlog pred tem: izbrani način 3 (en dolg seznam) v treh videzih.** Vsi trije imajo enak zaslon: zgoraj tri ploščice Igra, Grafika in Zvok, pod njimi vse nastavitve v enem seznamu (zavihek skoči na svoj del, med drsenjem zasveti sam), gumbi pavze spodaj. Nastavitve in njihov vrstni red so v vseh treh enaki. Videzi so v `settings-data.js` (`versions`), slike v `slike/videz/` (vsaka: pokonci in ležeče, prvi zaslon po pavzi in del Grafika):
 
 | Slika | Videz |
 | --- | --- |
@@ -61,8 +81,9 @@ Datoteke:
 - `scenes-*.js`: prizori po kategorijah;
 - `settings-data.js`: kategorije, nastavitve, možnosti in opisi animacij;
 - `settings.js`, `settings.css`, `index.html`: zaslon;
+- `settings-real.js`: slike iz igre nad nastavitvami (1 posnetek, 2 vse možnosti hkrati, 3 v živo); `posnetki/`: slike iz igre in njihov seznam (`real.js`); `orodja/`: kako so narejene;
 - `storyboard.html`: vse možnosti vseh animacij naenkrat (iz njega so slike 3–5 v `slike/pokonci/` in `slike/lezece/`);
 - `primerjava.html`: primerjava treh načinov (kaj je v katerem zavihku);
 - `board.html`: sestavljanje slik (`kind=mix`: telefoni pokonci v vrsti, ležeči drug pod drugim ob njih).
 
-Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).
+Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `media=anim|video|compare|live` (slika), `at=<nastavitev>` (seznam do te nastavitve), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).

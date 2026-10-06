@@ -263,6 +263,55 @@ html.skin-c.land .sx-big { font-size: 24px; padding-top: 11px; padding-bottom: 1
 @media (max-width: 380px) { html.skin-c:not(.land) .sx-title h1 { font-size: 22px; } html.skin-c:not(.land) .sx-title small { letter-spacing: .05em; } html.skin-c:not(.land) .sx-go { font-size: 18px; padding: 0 14px 0 16px; }
   html.skin-b:not(.land) .sx-title h1 { font-size: 19px; } }
 
+/* ---------------- real frames from the game over the settings (settings-real.js): 1 a clip, 2 every option side by side, 3 the race live
+   in one window ---------------- */
+.sx-pic.real { background: #10161f; }
+.rf { position: absolute; inset: 0; background-repeat: no-repeat; transition: transform .38s cubic-bezier(.3, .9, .4, 1), opacity .32s ease; }
+.rf.in.r { transform: translateX(100%); } .rf.in.l { transform: translateX(-100%); }
+.rf.out.l { transform: translateX(-30%); opacity: 0; } .rf.out.r { transform: translateX(30%); opacity: 0; }
+.rf.fade { opacity: 0; }
+.rtag { position: absolute; z-index: 2; left: 10px; top: 9px; padding: 5px 9px 4px; background: #fff; color: #10151d; font: 900 italic 12px/1 var(--f-ui); letter-spacing: .03em; text-transform: uppercase; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(0,0,0,.4); font-style: italic; }
+.rsign { position: absolute; z-index: 2; right: 10px; top: 9px; display: flex; align-items: center; gap: 6px; padding: 5px 9px 5px 7px; border-radius: 9px; background: rgba(8,13,22,.82); border: 1px solid rgba(255,255,255,.18); color: var(--gold); font: 900 italic 12px/1 var(--f-ui); }
+.rsign svg { width: 18px; height: 18px; }
+.rsign b { color: #fff; }
+.rbar { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 18px 10px 7px; background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.6)); }
+.rplay { flex: none; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); color: #10151d; }
+.rplay svg { width: 12px; height: 12px; margin-left: 2px; }
+.rprog { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.28); overflow: hidden; }
+.rprog b { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; animation: rprog 4s linear infinite; }
+@keyframes rprog { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+body[data-shot] .rprog b { animation: none; transform: scaleX(.46); }
+.rbar em { font: 800 italic 11px/1 var(--f-ui); color: #fff; font-style: italic; }
+.rc { display: flex; gap: 3px; padding: 0; background: #0a0f17; }
+.rt { position: relative; flex: 1 1 0; min-width: 0; overflow: hidden; border-radius: 9px; cursor: pointer; transition: flex-grow .35s cubic-bezier(.3, .9, .4, 1); }
+.rt.sel { flex-grow: 1.9; }
+.rc.n2 .rt.sel { flex-grow: 1.5; }
+.rt .rf { transition: filter .3s ease; }
+.rt:not(.sel) .rf { filter: brightness(.48) saturate(.6); }
+.rt.sel::after { content: ''; position: absolute; inset: 0; border-radius: 9px; box-shadow: inset 0 0 0 2.5px var(--gold); pointer-events: none; }
+.rt .rl { position: absolute; z-index: 2; left: 50%; bottom: 7px; transform: translateX(-50%) skewX(-10deg); max-width: calc(100% - 8px); padding: 4px 7px 3px; background: rgba(8,13,22,.85); color: #dfe6f1; font: 900 italic 11px/1 var(--f-ui); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rt.sel .rl { background: #fff; color: #10151d; }
+.rt .rsign { left: 50%; right: auto; top: 7px; transform: translateX(-50%); padding: 4px; }
+.rt .rsign svg { width: 15px; height: 15px; }
+.rc.n5 .rt .rl { font-size: 10px; padding: 3px 4px 2px; }
+/* 3 · live: the window over the list (upright) or beside it (lying); the cards without pictures, the one shown framed */
+.sx-live { position: absolute; z-index: 2; left: 2px; right: 12px; top: 8px; height: calc(38% - 8px); border-radius: 14px; overflow: hidden; background: #10161f; border: 1px solid var(--edge); box-shadow: 0 10px 26px rgba(0,0,0,.45); }
+.rlw { position: absolute; inset: 0; }
+.rlive { position: absolute; z-index: 2; left: 10px; top: 9px; display: flex; align-items: center; gap: 7px; padding: 5px 9px 4px; border-radius: 7px; background: rgba(8,13,22,.85); color: #fff; font: 900 italic 11.5px/1 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; font-style: italic; }
+.rlive b { width: 8px; height: 8px; border-radius: 50%; background: #ff3b30; box-shadow: 0 0 8px #ff3b30; animation: rblink 1.4s ease-in-out infinite; }
+@keyframes rblink { 50% { opacity: .35; } }
+body[data-shot] .rlive b { animation: none; }
+.rcap { position: absolute; z-index: 2; left: 10px; bottom: 9px; max-width: calc(100% - 20px); padding: 6px 10px 5px; background: #fff; color: #10151d; font: 700 italic 12.5px/1 var(--f-ui); transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(0,0,0,.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rcap:empty { display: none; }
+.rcap b { font-weight: 900; text-transform: uppercase; }
+html.media-live .sx-list { top: 38%; }
+html.media-live .sx-card { padding-top: 4px; cursor: pointer; }
+html.media-live .sx-card .sx-row { margin-top: 6px; }
+html.media-live .sx-card.focus { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), 0 8px 22px rgba(0,0,0,.28); }
+html.media-live.land .sx-live { left: 2px; right: auto; top: 8px; bottom: 8px; width: calc(44% - 8px); height: auto; }
+html.media-live.land .sx-list { top: 0; left: 44%; }
+html.media-live.skin-b.land .sx-list { right: 70px; }
+
 /* ---------------- the preview on a big screen (html.dev): the phone in a frame, the switches over it ---------------- */
 #stage, #devbox, #screen { display: contents; }
 #mockbar { display: none; }
@@ -289,6 +338,7 @@ html.dev #race, html.dev #set, html.dev #resume { position: absolute; }
 .vchip { position: fixed; z-index: 8; right: calc(10px + var(--sr) + var(--brw, 0px)); bottom: calc(10px + max(var(--bbh, 0px), var(--sb))); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8,13,22,.85); border: 1px solid var(--edge); }
 .vchip button { width: 30px; height: 30px; border-radius: 50%; font: 900 italic 13px/1 var(--f-ui); color: var(--lbl); }
 .vchip button.on { background: var(--gold); color: var(--gold-ink); }
+.vchip i { width: 1px; margin: 4px 3px; background: var(--edge); }
 html.dev .vchip, body[data-shot] .vchip { display: none; }
 #toast { position: fixed; left: 50%; bottom: calc(18px + max(var(--bbh, 0px), var(--sb))); transform: translate(-50%, 20px); max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(8,13,22,.94); border: 1px solid var(--edge); font: 700 italic 13px/1.35 var(--f-ui); color: #fff; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 9; text-align: center; }
 #toast.on { opacity: 1; transform: translate(-50%, 0); }

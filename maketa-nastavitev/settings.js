@@ -41,7 +41,14 @@
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
   // the three looks of the chosen layout (D.versions: A, B, C): the tabs, their sections, where the pause's buttons go; ?v=B or #b picks one
   const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
-  let ver = String(q.get('v') || location.hash.slice(1) || 'A').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
+  const hm = /^([a-z])?([0-3])?$/i.exec(location.hash.slice(1)) || [];
+  let ver = String(q.get('v') || hm[1] || 'A').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
+  // the pictures over the settings: the drawn animations, or real frames from the game in three ways (settings-real.js); ?media= or #a1..#a3
+  const MEDIA = ['anim', 'video', 'compare', 'live'], MEDIA_NAME = { anim: 'Animacija', video: 'Posnetek', compare: 'Primerjava', live: 'V živo' };
+  let media = MEDIA.includes(q.get('media')) ? q.get('media') : hm[2] ? MEDIA[+hm[2]] : (window.SetReal ? 'video' : 'anim');
+  const real = () => media !== 'anim' && !!window.SetReal;
+  if (window.SetReal) SetReal.control = () => S.control;   // (the race in the pictures with the player's controls)
+  const orientNow = () => document.documentElement.classList.contains('land') ? 'land' : 'port';
   let cats = [];
   function buildCats() {
     cats = D.versions[ver].tabs.map(t => ({ id: t.id, name: t.name, icon: t.icon,
@@ -99,7 +106,9 @@
       const p = list.querySelector('[data-part="' + C.id + '"].sx-big em'); if (p) p.textContent = n + (n === 1 ? ' nastavitev' : n === 2 ? ' nastavitvi' : n < 5 ? ' nastavitve' : ' nastavitev');
     }
   }
-  function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', '#' + v.toLowerCase()); } catch (_) { } }
+  const hashNow = () => '#' + ver.toLowerCase() + (media === 'anim' ? '0' : MEDIA.indexOf(media));
+  function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
+  function setMedia(m) { media = m; root.classList.toggle('media-live', real() && media === 'live'); show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', hashNow()); } catch (_) { } }
   const listMode = () => D.versions[ver].mode === 'list';
   function placeInk() { const b = tabsEl && tabsEl.querySelector('.sx-tab.on'); if (!b) return; const full = tabsEl.classList.contains('look-pill'); ink.style.left = (b.offsetLeft + (full ? 0 : b.offsetWidth * 0.18)) + 'px'; ink.style.width = (b.offsetWidth * (full ? 1 : 0.64)) + 'px'; }
   function setMode(m) { mode = m; buildTop(); if (!cats.find(c => c.id === tab)) tab = cats[0].id; show(tab, true); updateBar(); }
@@ -123,23 +132,26 @@
     if (dev) { const w = land ? 864 : 410, hh = land ? 410 : 864, k = Math.min(1, (innerHeight - 90) / hh, (innerWidth - 40) / w); root.style.setProperty('--k', k.toFixed(3)); }
     $('#race').style.backgroundImage = 'url(' + bgOf() + ')';
     if (builtLand !== null && builtLand !== land && /bottom|dock/.test(D.versions[ver].pause)) { buildTop(); show(tab, true); }
-    placeInk(); for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true); A.kick();
+    else if (real() && list && list._o && list._o !== orientNow()) show(tab, true);   // (the real frames: the phone's other side has its own)
+    placeInk(); if (real()) SetReal.place(); for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true); A.kick();
   }
   const bar = $('#mockbar');
   function updateBar() {
     bar.innerHTML = '<b>Nove nastavitve</b><span class="mb-seg">' + Object.keys(D.versions).map(v => '<button data-v="' + v + '" class="' + (v === ver ? 'on' : '') + '" title="' + D.versions[v].name + '">' + v + ' · ' + D.versions[v].name + '</button>').join('') + '</span><span class="mb-seg"><button data-o="0" class="' + (devLand ? '' : 'on') + '">Telefon pokonci</button><button data-o="1" class="' + (devLand ? 'on' : '') + '">Telefon ležeče</button></span>' +
-      '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>';
+      '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>' +
+      (window.SetReal ? '<span class="mb-seg">' + MEDIA.map((m, i) => '<button data-media="' + m + '" class="' + (m === media ? 'on' : '') + '">' + (i ? i + ' · ' : '') + MEDIA_NAME[m] + '</button>').join('') + '</span>' : '');
   }
   bar.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.o != null) { devLand = b.dataset.o === '1'; const cam = devLand ? 'iso' : 'chase'; if (S.camera !== cam) { S.camera = cam; const c = document.querySelector('.sx-card[data-key="camera"]'); if (c) { mark(c.querySelector('.sx-seg'), cam); A.change(c._cv, cam); } } updateBar(); layout(); }
     if (b.dataset.m) setMode(b.dataset.m);
     if (b.dataset.v) setVer(b.dataset.v);
+    if (b.dataset.media) setMedia(b.dataset.media);
   });
   // (a phone has no switches over the screen: a small one in the corner picks the version)
-  const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('')); document.body.appendChild(chip);
-  const markChip = () => { for (const b of chip.children) b.classList.toggle('on', b.dataset.v === ver); };
-  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { setVer(b.dataset.v); markChip(); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } });
+  const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('') + (window.SetReal ? '<i></i>' + [1, 2, 3].map(i => '<button data-media="' + MEDIA[i] + '">' + i + '</button>').join('') : '')); document.body.appendChild(chip);
+  const markChip = () => { for (const b of chip.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v ? b.dataset.v === ver : b.dataset.media === media); };
+  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) { setVer(b.dataset.v); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } else { setMedia(b.dataset.media); toast('Slika ' + MEDIA.indexOf(media) + ': ' + MEDIA_NAME[media]); } markChip(); });
   markChip();
   addEventListener('resize', layout);
 
@@ -159,7 +171,11 @@
   function mark(el, v) { for (const b of el.querySelectorAll('button')) { const on = String(b.dataset.v) === String(v); b.classList.toggle('sel', on); b.setAttribute('aria-checked', on); } }
   function card(it) {
     const c = h('section', 'sx-card'); c.dataset.key = it.key;
-    const pic = h('div', 'sx-pic'), cv = h('canvas'); pic.appendChild(cv); c.appendChild(pic);
+    let cv = null;
+    if (!real()) { const pic = h('div', 'sx-pic'); cv = h('canvas'); pic.appendChild(cv); c.appendChild(pic); }
+    else if (media === 'video') c.appendChild(c._real = SetReal.video(orientNow(), it, S[it.key]));
+    else if (media === 'compare') c.appendChild(c._real = SetReal.compare(orientNow(), it, S[it.key], (v) => set(it, v, c)));
+    else c.addEventListener('click', () => focusLive(c));   // (live: the card shows itself in the window at the top)
     const row = h('div', 'sx-row'); c.appendChild(row);
     const nm = h('div', 'sx-name', it.name + (it.hint ? ' <small>' + it.hint + '</small>' : '')); row.appendChild(nm);
     if (it.opts) {
@@ -169,7 +185,7 @@
     } else if (it.range) {
       const R = it.range, el = h('div', 'sx-range', '<i>' + R.min + R.unit + '</i><input type="range" min="' + R.min + '" max="' + R.max + '" step="' + R.step + '" value="' + S[it.key] + '" aria-label="' + it.name + '"><i>' + R.max + R.unit + '</i><output>' + S[it.key] + R.unit + '</output>');
       const inp = el.querySelector('input'), out = el.querySelector('output'), fill = () => inp.style.setProperty('--f', ((inp.value - R.min) / (R.max - R.min) * 100) + '%'); fill();
-      inp.addEventListener('input', () => { S[it.key] = +inp.value; out.textContent = inp.value + R.unit; fill(); A.change(cv, S[it.key]); });
+      inp.addEventListener('input', () => { S[it.key] = +inp.value; out.textContent = inp.value + R.unit; fill(); if (cv) A.change(cv, S[it.key]); else realSet(it, S[it.key], c, 0); });
       row.appendChild(el);
     } else if (it.input) {
       const inp = h('input', 'sx-input'); inp.type = 'text'; inp.maxLength = 16; inp.value = S.name; inp.setAttribute('aria-label', it.name); inp.spellcheck = false;
@@ -187,13 +203,27 @@
   }
   function visible(it) { if (!it.only) return true; for (const k in it.only) if (String(S[k]) !== String(it.only[k])) return false; return true; }
   function set(it, v, c) {
-    const num = typeof it.opts[0].v === 'number';
+    const num = typeof it.opts[0].v === 'number', was = it.opts.findIndex(o => String(o.v) === String(S[it.key]));
     S[it.key] = num ? +v : v;
     mark(c.querySelector('.sx-seg'), S[it.key]); placeThumb(c.querySelector('.sx-seg'));
-    A.change(c._cv, S[it.key]);
+    if (c._cv) A.change(c._cv, S[it.key]); else realSet(it, S[it.key], c, it.opts.findIndex(o => String(o.v) === String(S[it.key])) - was);
     // the cards that only show with this choice (Nagib: its sensitivity and direction) come and go
     for (const o of document.querySelectorAll('.sx-card')) { const vis = visible(o._it); if (vis === !o.classList.contains('hide')) continue; o.classList.toggle('hide', !vis); if (vis) { o.classList.remove('grow'); void o.offsetWidth; o.classList.add('grow'); A.kick(); for (const s of o.querySelectorAll('.sx-seg')) placeThumb(s, true); } }
     counts();
+  }
+
+  // the real frames: the option changed (video: the clip of the new one comes in; compare: it is lit; live: the window shows it)
+  function realSet(it, v, c, dir) {
+    if (it.key === 'control') SetReal.rebase();
+    if (media === 'video' && c._real) SetReal.videoTo(c._real, orientNow(), it, v, dir);
+    else if (media === 'compare' && c._real) SetReal.compareTo(c._real, v, it);
+    else if (media === 'live') focusLive(c);
+  }
+  let liveEl = null;
+  function focusLive(c) {
+    if (!liveEl || !c) return;
+    for (const o of document.querySelectorAll('.sx-card.focus')) o.classList.remove('focus');
+    c.classList.add('focus'); SetReal.liveShow(liveEl, c._it, S[c._it.key]);
   }
 
   /* ---------------- a tab's page ---------------- */
@@ -204,7 +234,7 @@
       if (C.sections.length > 1) list.appendChild(h('div', 'sx-cat', sec.t));
       for (const it of sec.items) {
         const c = card(it); c.dataset.part = C.id; if (!visible(it)) c.classList.add('hide'); list.appendChild(c);
-        A.attach(c._cv, it.anim, S[it.key]);
+        if (c._cv) A.attach(c._cv, it.anim, S[it.key]);
       }
     }
   }
@@ -226,7 +256,10 @@
     const dir = i >= idx ? '' : ' left'; idx = i;
     markTab(id);
     if (list) { for (const c of list.querySelectorAll('canvas')) A.detach(c); list.remove(); }
-    list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list);
+    if (liveEl) { liveEl.remove(); liveEl = null; }
+    root.classList.toggle('media-live', real() && media === 'live');
+    if (real() && media === 'live') body.appendChild(liveEl = SetReal.live(orientNow()));
+    list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list); list._o = orientNow();
     if (listMode()) {
       list._all = true; pauseTop();
       for (const C of cats) { list.appendChild(h('div', 'sx-big', I[C.icon] + '<span>' + C.name + '</span><em></em><small>' + C.sections.map(x => x.t).join(' · ') + '</small>')).dataset.part = C.id; addCards(C); }
@@ -241,18 +274,31 @@
       addCards(cats[i]);
     }
     counts();
+    if (liveEl) {   // (the window starts on the part's first setting the game draws differently: Upravljanje, Kamera ...)
+      const C = cats[i], first = C.sections.flatMap(x => x.items).find(it => SetReal.frameOf(orientNow(), it.key, S[it.key]) !== 'base' && visible(it)) || C.sections[0].items[0];
+      requestAnimationFrame(() => focusLive(list.querySelector('.sx-card[data-key="' + first.key + '"]')));
+    }
+    if (real()) requestAnimationFrame(() => SetReal.place());
     if (still != null) requestAnimationFrame(() => stillAll());
   }
 
   /* ---------------- stills for the mockup's pictures ---------------- */
   const still = q.get('shot') ? +(q.get('t') || 2.4) : null;
   if (still != null) document.body.dataset.shot = '1';
-  function stillAll() {
+  async function stillAll() {
     A.still = true;
+    if (real()) {   // (the real frames loaded and placed before the picture is taken)
+      await new Promise(r => requestAnimationFrame(r)); SetReal.place();
+      const urls = new Set([...document.querySelectorAll('.rf')].map(f => (/url\("?([^")]+)"?\)/.exec(f.style.backgroundImage) || [])[1]).filter(Boolean));
+      await Promise.all([...urls].map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = u; })));
+      for (const f of document.querySelectorAll('.rv .rf.in, .rv .rf.out')) f.classList.remove('in', 'out');
+    }
     for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true);
     for (const L of A.live) { const it = allItems().find(x => x.anim === L.key); const port = !document.documentElement.classList.contains('land'), tt = it && port && it.storyTp != null ? it.storyTp : it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
     if (q.get('scroll')) list.scrollTop = +q.get('scroll');
-    if (listMode() && tab !== cats[0].id) { const hd = list.querySelector('.sx-big[data-part="' + tab + '"]'); if (hd) list.scrollTop = hd.offsetTop - 6; }
+    const atC = q.get('at') && list.querySelector('.sx-card[data-key="' + q.get('at') + '"]');   // (?at=<key>: the list down at that setting; live: shown in the window)
+    if (atC) { list.scrollTop = atC.offsetTop - 58; if (media === 'live' && real()) { focusLive(atC); await new Promise(r => setTimeout(r, 450)); SetReal.place(); } }
+    if (listMode() && tab !== cats[0].id && !atC) { const hd = list.querySelector('.sx-big[data-part="' + tab + '"]'); if (hd) list.scrollTop = hd.offsetTop - 6; }
     const bb = $('.sx-botbar'), topH = $('.sx-top').getBoundingClientRect().bottom, bbH = bb ? bb.offsetHeight : 0;
     document.body.dataset.h = Math.ceil(topH + list.scrollHeight + bbH);   // (the whole page: the long pictures)
     if (listMode()) {   // (one part of the one list, from its heading to the next one)
