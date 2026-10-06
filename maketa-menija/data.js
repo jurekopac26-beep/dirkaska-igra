@@ -5,7 +5,7 @@
    (app.js). All times, money and progress are examples.
    ========================================================================= */
 window.MENU = {
-  game: { l1: 'APEX', l2: 'RACING', price: '€3.99', currency: 'CR' },
+  game: { l1: 'REAL ROADS ATLAS', l2: 'RACING GAME', price: '€3.99', currency: 'CR' },
 
   /* ---------- main menu: three big buttons with a picture, two small ones, the purchase ---------- */
   menu: {

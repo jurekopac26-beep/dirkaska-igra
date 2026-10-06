@@ -13,7 +13,7 @@
 // activated deletes its caches (caches.keys() starting with 'apex-racing') and calls self.registration.unregister();
 // and remove the navigator.serviceWorker.register() call from js/game.js.
 'use strict';
-const CACHE = 'apex-racing ' + self.registration.scope;
+const CACHE = 'apex-racing ' + self.registration.scope;   // (the game's first name, kept: a new name would leave the saved copies behind)
 const EXTRA = ['manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 const abs = (u) => new URL(u, self.registration.scope).href;
 const PAGE = () => abs('./');   // (the key of the saved index.html, whichever address opened it)

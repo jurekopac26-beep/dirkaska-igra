@@ -1,5 +1,8 @@
-# dirkaska-igra
-Dirkanje z avti 
+# Real Roads Atlas · Racing Game
+
+Dirkanje z avti po resničnih cestah. Ime igre je **Real Roads Atlas** s podnaslovom **Racing Game**: oboje piše na naslovnici menija (`js/menu-data.js`, `game.l1` in `game.l2`) in v naslovu strani, v manifestu je samo ime. Pod ikono na začetnem zaslonu telefona je krajše ime **Roads Atlas**.
+
+Notranje oznake so ostale od prejšnjega imena (APEX Racing): `app: 'apex-racing'` v datotekah profila in duhov ter v povezavah z izzivi, imena predpomnilnikov v `sw.js` in predpona pri igri s prijateljem (`js/net.js`). Tako se stare datoteke in povezave še naložijo, shranjena igra ostane in igralci s starejšo različico se še najdejo.
 
 ## Pikes Peak, ZDA (kronometer)
 
@@ -682,7 +685,7 @@ Po cilju gumb **Posnetek** na zaslonu z rezultati predvaja celo dirko od štarta
 
 **Najboljši trenutki:** gumb na zaslonu z rezultati (ali **★ Trenutki** v posnetku) predvaja povzetek dirke: štart, do štiri najboljše trenutke v vrstnem redu, kot so se zgodili, in zmagovalca v cilju. Igra med dirko zapisuje prehitevanja (ne v boksih in ne za varnostnim avtom) in hude nesreče; prednost imajo tvoja prehitevanja, boji za vodstvo, prehitevanja v ovinkih in izmenjave mest. Vsak trenutek kažejo TV kamere z avtom, ki prehiteva (ali se je zaletel), nad gumbi piše, kaj se dogaja (npr. **PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto), komentator ga opiše. Po zadnjem se vrneš na rezultate; drug gumb (kamera, avto, na začetek) povzetek konča in posnetek teče naprej.
 
-**Video najboljšega trenutka:** ko končaš dirko, se pred rezultati sam predvaja tvoj najboljši trenutek, okoli 12 sekund s TV kamer, in se med predvajanjem posname kot video. Igra izbere tvoje prehitevanje ali zmago, sicer boj za vodstvo ali hudo nesrečo; če dirka nima posebnega trenutka, je to tvoj prihod v cilj (npr. **NAJBOLJŠI TRENUTEK · PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto). V videu sta tudi napis APEX RACING z imenom proge in opis trenutka. Video ima obliko zaslona (na pokončnem telefonu je pokončen, največ 1280 točk) in je brez zvoka. Shrani se kot MP4, kjer brskalnik to zna, sicer kot WebM. Med predvajanjem je spodaj samo gumb **Preskoči**: rezultati se pokažejo takoj, video pa ostane, če je bil posnet vsaj 3 sekunde. Pod rezultati se video vrti v zanki; dotik ga poveča čez cel zaslon. Gumb **Deli** na telefonu odpre meni za deljenje z video datoteko (WhatsApp, Instagram, galerija …), na računalniku pa video shrani kot datoteko. Video je samo pri dirkah s tekmeci, ne pri kronometru, kvalifikacijah ali dirki prek interneta. Izklopiš ga v Nastavitvah (**Video najboljšega trenutka po dirki**).
+**Video najboljšega trenutka:** ko končaš dirko, se pred rezultati sam predvaja tvoj najboljši trenutek, okoli 12 sekund s TV kamer, in se med predvajanjem posname kot video. Igra izbere tvoje prehitevanje ali zmago, sicer boj za vodstvo ali hudo nesrečo; če dirka nima posebnega trenutka, je to tvoj prihod v cilj (npr. **NAJBOLJŠI TRENUTEK · PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto). V videu sta tudi napis REAL ROADS ATLAS z imenom proge in opis trenutka. Video ima obliko zaslona (na pokončnem telefonu je pokončen, največ 1280 točk) in je brez zvoka. Shrani se kot MP4, kjer brskalnik to zna, sicer kot WebM. Med predvajanjem je spodaj samo gumb **Preskoči**: rezultati se pokažejo takoj, video pa ostane, če je bil posnet vsaj 3 sekunde. Pod rezultati se video vrti v zanki; dotik ga poveča čez cel zaslon. Gumb **Deli** na telefonu odpre meni za deljenje z video datoteko (WhatsApp, Instagram, galerija …), na računalniku pa video shrani kot datoteko. Video je samo pri dirkah s tekmeci, ne pri kronometru, kvalifikacijah ali dirki prek interneta. Izklopiš ga v Nastavitvah (**Video najboljšega trenutka po dirki**).
 
 ## Pogled iz kokpita in foto način
 
@@ -700,7 +703,7 @@ Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vož
 
 Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh; z **Izbriši prijateljevega** ga odstraniš.
 
-V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `apex-racing-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
 
 ## Izziv s povezavo
 

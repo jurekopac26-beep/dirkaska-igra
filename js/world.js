@@ -3711,7 +3711,7 @@ const World = (function () {
     const poly = (x, y, pts, col) => { cx.fillStyle = col; cx.beginPath(); pts.forEach(([a, b], k) => k ? cx.lineTo(x + a, y + b) : cx.moveTo(x + a, y + b)); cx.fill(); };
     const ring = (x, y, r, lw, col) => { cx.strokeStyle = col; cx.lineWidth = lw; cx.beginPath(); cx.arc(x, y, r, 0, TAU); cx.stroke(); };
     const logos = [   // fictional brands: background, a small emblem on the left, the name
-      (x, y) => { rect(x, y, 512, 128, '#121316'); for (let k = 0; k < 3; k++) poly(x + k * 26, y, [[18, 104], [40, 24], [54, 24], [32, 104]], '#e02a1f'); rect(x + 110, y + 104, 380, 8, '#e02a1f'); txt('APEX RACING', x + 300, y + 62, 70, '#fff', 390, 1); },
+      (x, y) => { rect(x, y, 512, 128, '#121316'); for (let k = 0; k < 3; k++) poly(x + k * 26, y, [[18, 104], [40, 24], [54, 24], [32, 104]], '#e02a1f'); rect(x + 110, y + 104, 380, 8, '#e02a1f'); txt('REAL ROADS ATLAS', x + 300, y + 62, 46, '#fff', 390, 1); },
       (x, y) => { rect(x, y, 512, 128, '#f2c230'); poly(x, y, [[12, 106], [62, 20], [112, 106]], '#13306b'); poly(x, y, [[47, 46], [62, 20], [77, 46], [62, 38]], '#fff'); txt('SUMMIT OIL', x + 316, y + 68, 74, '#13306b', 370); },
       (x, y) => { rect(x, y, 512, 128, '#1b2f6e'); rect(x, y + 6, 512, 10, '#f2c230'); rect(x, y + 112, 512, 10, '#f2c230'); ring(x + 62, y + 64, 29, 20, '#0c0c0e'); ring(x + 62, y + 64, 12, 6, '#9aa0a8'); txt('ROCKY TYRES', x + 306, y + 66, 68, '#fff', 380); },
       (x, y) => { rect(x, y, 512, 128, '#1f8f3a'); poly(x, y, [[74, 10], [30, 72], [58, 72], [42, 120], [94, 50], [66, 50], [88, 10]], '#f5e23a'); txt('HIGH ALT', x + 300, y + 44, 54, '#fff', 380); txt('ENERGY', x + 300, y + 96, 48, '#f5e23a', 380); },
@@ -5582,7 +5582,7 @@ const World = (function () {
     { const [x0, y0] = AT.back, gr = c2.createLinearGradient(0, y0, 0, y0 + 256); gr.addColorStop(0, '#2a67b8'); gr.addColorStop(1, '#0f2b5e'); c2.fillStyle = gr; c2.fillRect(x0, y0, 512, 256);   // the podium's backdrop
       poly([[x0, y0 + 196], [x0, y0 + 176], [x0 + 110, y0 + 118], [x0 + 172, y0 + 146], [x0 + 256, y0 + 84], [x0 + 332, y0 + 138], [x0 + 402, y0 + 110], [x0 + 512, y0 + 170], [x0 + 512, y0 + 196]], 'rgba(255,255,255,0.2)');   // the peak
       txt('RACE TO THE', x0 + 256, y0 + 50, 46, '#fff', 430, 'italic 900 46px Arial, sans-serif'); txt('CLOUDS', x0 + 256, y0 + 118, 88, '#fff', 470, 'italic 900 88px Arial, sans-serif');
-      rect(x0, y0 + 196, 512, 60, '#f2f2f0'); [['APEX RACING', '#e02a1f'], ['SUMMIT OIL', '#13306b'], ['ROCKY TYRES', '#1b2f6e'], ['14ER COFFEE', '#4a2c1a']].forEach(([n, col], k) => txt(n, x0 + 64 + k * 128, y0 + 226, 22, col, 116)); }   // (fictional sponsors, as the banners)
+      rect(x0, y0 + 196, 512, 60, '#f2f2f0'); [['REAL ROADS ATLAS', '#e02a1f'], ['SUMMIT OIL', '#13306b'], ['ROCKY TYRES', '#1b2f6e'], ['14ER COFFEE', '#4a2c1a']].forEach(([n, col], k) => txt(n, x0 + 64 + k * 128, y0 + 226, n.length > 12 ? 19 : 22, col, 116)); }   // (fictional sponsors, as the banners)
     const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; K.out.ownTex.push(tx);
     tb.addTo(new THREE.MeshLambertMaterial({ map: tx }));
   }
@@ -6921,7 +6921,7 @@ const World = (function () {
       { const [a, b] = AT.led; rect(a, b, 512, 128, '#050607'); txt('LIVE TIMING', a + 256, b + 40, 40, '#ffb61e', 480); txt('SPLIT 2   2:06.94', a + 256, b + 92, 40, '#39e07a', 480); }
     }
     { const [a, b] = AT.arch; rect(a, b, 1024, 128, '#e8231c'); rect(a, b + 8, 1024, 6, '#fff'); rect(a, b + 114, 1024, 6, '#fff'); txt('CLOUDLINE ENERGY', a + 512, b + 66, 92, '#fff', 980, 1); }
-    const LIV = [['#0e1a2b', '#38e0c8', 'VOLTWERK RACING', '#fff'], ['#f2f2ee', '#d8261e', 'NORDIC GRAVITY', '#141416'], ['#121316', '#e02a1f', 'APEX RACING', '#fff'], ['#f2c230', '#13306b', 'HIGHLINE MOTORSPORT', '#13306b']];
+    const LIV = [['#0e1a2b', '#38e0c8', 'VOLTWERK RACING', '#fff'], ['#f2f2ee', '#d8261e', 'NORDIC GRAVITY', '#141416'], ['#121316', '#e02a1f', 'REAL ROADS ATLAS', '#fff'], ['#f2c230', '#13306b', 'HIGHLINE MOTORSPORT', '#13306b']];
     LIV.forEach(([bg, ac, nm, ink], k) => { const [a, b] = AT.liv[k]; rect(a, b, 512, 128, bg); poly([[a, b + 128], [a + 150, b], [a + 210, b], [a + 60, b + 128]], ac); poly([[a + 452, b + 128], [a + 512, b + 40], [a + 512, b + 128]], ac); txt(nm, a + 300, b + 64, 50, ink, 380, 1); });
     { const [a, b] = AT.hpad; rect(a, b, 256, 256, '#3c3f44'); cx.strokeStyle = '#f2c230'; cx.lineWidth = 8; cx.strokeRect(a + 8, b + 8, 240, 240);
       cx.strokeStyle = '#f4f4f2'; cx.lineWidth = 12; cx.beginPath(); cx.arc(a + 128, b + 128, 92, 0, TAU); cx.stroke(); rect(a + 86, b + 74, 20, 108, '#f4f4f2'); rect(a + 150, b + 74, 20, 108, '#f4f4f2'); rect(a + 106, b + 118, 44, 20, '#f4f4f2'); }

@@ -13,7 +13,7 @@
 // 'error' (no connection: a PeerJS error type or 'timeout'). The ids: the host is 'h' for its friends, they are 'g1'..'g3' for it.
 const Net = (function () {
   'use strict';
-  const PREFIX = 'apex-racing-dirkaska-';   // (the public server is shared by everyone who uses PeerJS)
+  const PREFIX = 'apex-racing-dirkaska-';   // (the public server is shared by everyone who uses PeerJS; the game's first name, kept)
   const ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // room codes: 4 of these (no 0/O or 1/I to mix up)
   const SILENT = 10000;   // ms without a word from a friend (pings and answers every 2 s, also in the background; race states 20 times a second): gone
   const SERVER_ERR = ['network', 'socket-closed', 'socket-error', 'server-error'];   // the connection to the PeerJS server (not to a friend) broke

@@ -907,7 +907,7 @@
     x.drawImage(gl, 0, 0, W, H);
     const font = (w, px) => w + ' ' + Math.round(px * u) + "px 'Chakra Petch', 'Segoe UI', Roboto, sans-serif";
     x.textBaseline = 'alphabetic'; x.shadowColor = 'rgba(0,0,0,.8)'; x.shadowBlur = 6 * u;
-    x.textAlign = 'left'; x.fillStyle = '#ffc629'; x.font = font('italic 700', 26); x.fillText('APEX RACING', 26 * u, 46 * u);
+    x.textAlign = 'left'; x.fillStyle = '#ffc629'; x.font = font('italic 700', 26); x.fillText('REAL ROADS ATLAS', 26 * u, 46 * u);
     x.fillStyle = '#f6f6f1'; x.font = font('italic 600', 22); x.fillText(R.track, 26 * u, 76 * u);
     x.shadowBlur = 0; x.textAlign = 'center';
     const f1 = font('italic 700', 19), f2 = font('italic 700', 34); x.font = f1; const w1 = x.measureText(C.lbl).width; x.font = f2; const w2 = x.measureText(C.cap).width;
@@ -942,7 +942,7 @@
     const file = typeof File === 'function' ? new File([V.blob], V.name, { type: V.type }) : null, title = tr('Moj najboljši trenutek · {0}', V.track);
     const down = () => { const a = document.createElement('a'); a.href = V.url; a.download = V.name; document.body.appendChild(a); a.click(); a.remove(); toast(tr('Video shranjen: {0}', V.name), 2600); return 'file'; };
     let how = null;
-    if (file && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) how = navigator.share({ files: [file], title, text: title + ' (APEX RACING)' }).then(() => 'share', (e) => (e && e.name === 'AbortError' ? 'abort' : down()));
+    if (file && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) how = navigator.share({ files: [file], title, text: title + ' (Real Roads Atlas)' }).then(() => 'share', (e) => (e && e.name === 'AbortError' ? 'abort' : down()));
     else how = Promise.resolve(down());
     how.then((h) => { window.__game.lastVideo = { how: h, name: V.name, type: V.type, bytes: V.blob.size }; });   // (the tests)
   }
@@ -1348,14 +1348,15 @@
   async function packStr(s) { if (typeof CompressionStream !== 'function') return null; return b64u(new Uint8Array(await new Response(new Blob([s]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer())); }
   async function unpackStr(p) { const b = atob(p.replace(/-/g, '+').replace(/_/g, '/')), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }
   const profKeys = () => { const a = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^tdgp-/.test(k) && k !== 'tdgp-noadapt') a.push(k); } return a; };
+  // (app: 'apex-racing' in the profile, ghost and challenge files and links is the game's first name: kept, so the ones saved or sent before still load)
   function profExport() {
     const data = {}; for (const k of profKeys()) data[k] = localStorage.getItem(k);
-    const d = new Date(), p2 = (x) => String(x).padStart(2, '0'), name = 'apex-racing-profil-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.json';
-    return saveFile(name, JSON.stringify({ app: 'apex-racing', kind: 'profile', v: 1, date: Date.now(), name: S.name, data }), 'APEX Racing').then((how) => { if (how !== 'abort') toast(how === 'share' ? tr('Profil je pripravljen za deljenje.') : tr('Profil je shranjen v datoteko {0}.', name), 3400); return how; });
+    const d = new Date(), p2 = (x) => String(x).padStart(2, '0'), name = 'real-roads-atlas-profil-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.json';
+    return saveFile(name, JSON.stringify({ app: 'apex-racing', kind: 'profile', v: 1, date: Date.now(), name: S.name, data }), 'Real Roads Atlas').then((how) => { if (how !== 'abort') toast(how === 'share' ? tr('Profil je pripravljen za deljenje.') : tr('Profil je shranjen v datoteko {0}.', name), 3400); return how; });
   }
   function profImport(text) {   // a profile file: checked, asked, the saved game replaced by it, the game started again
     let o = null; try { o = JSON.parse(text); } catch (_) { }
-    if (!isObj(o) || o.app !== 'apex-racing' || o.kind !== 'profile' || o.v !== 1 || !isObj(o.data) || !Object.keys(o.data).every(k => /^tdgp-[\w@.-]{1,80}$/.test(k) && typeof o.data[k] === 'string')) { toast(tr('To ni profil igre APEX Racing.'), 3200); return false; }
+    if (!isObj(o) || o.app !== 'apex-racing' || o.kind !== 'profile' || o.v !== 1 || !isObj(o.data) || !Object.keys(o.data).every(k => /^tdgp-[\w@.-]{1,80}$/.test(k) && typeof o.data[k] === 'string')) { toast(tr('To ni profil igre Real Roads Atlas.'), 3200); return false; }
     if (!confirm(tr('Uvozim profil {0} z dne {1}? Tvoj trenutni profil (nastavitve, rekordi, kariera, dosežki in duhovi) se zamenja.', cleanName(o.name) || '?', new Date(posNum(o.date) ? o.date : Date.now()).toLocaleDateString(Lang.locale)))) return false;
     const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
     try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
@@ -1385,7 +1386,7 @@
   function ghImport(text) {   // a friend's ghost (a file or a link): kept for its track, the track chosen
     let o = null; try { o = JSON.parse(text); } catch (_) { }
     const d = isObj(o) && o.app === 'apex-racing' && o.kind === 'ghost' && o.v === 1 ? Core.TRACKS.find(x => x.id === o.track) : null, g = d ? ghParse(o.ghost) : null;
-    if (!g) { toast(tr('To ni duh igre APEX Racing.'), 3200); return false; }
+    if (!g) { toast(tr('To ni duh igre Real Roads Atlas.'), 3200); return false; }
     const name = cleanName(o.name) || tr('Prijatelj');
     try { localStorage.setItem('tdgp-fghost-' + d.id, JSON.stringify({ name, time: g.t, ghost: o.ghost })); } catch (_) { toast(tr('Duha ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
     S.track = d.id; if (d.modes) S.mode = g.lap ? 'race' : 'tt'; save(); refreshSegs();
@@ -4643,7 +4644,7 @@
     try { const p = e.prompt(); if (p && p.catch) p.catch(() => { }); } catch (_) { }
   }
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; updateAppButtons(); });
-  window.addEventListener('appinstalled', () => { installEvt = null; updateAppButtons(); toast(tr('Igra je nameščena: odpreš jo z ikono APEX Racing na začetnem zaslonu.'), 4200); });
+  window.addEventListener('appinstalled', () => { installEvt = null; updateAppButtons(); toast(tr('Igra je nameščena: odpreš jo z ikono Roads Atlas na začetnem zaslonu.'), 4200); });
   // an app (or tab) left open in the background does not start again, so it would keep the old version: when it comes back on
   // the title screen, it asks the network for index.html and reloads if a file of the game changed (never mid-race or in a menu)
   let updAsked = -1e9;

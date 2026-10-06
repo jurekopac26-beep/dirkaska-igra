@@ -41,11 +41,11 @@
     'Kralj drsenja': 'Drift king', 'Drsi tri sekunde brez prekinitve.': 'Drift for three seconds in one go.', 'Letalec': 'Flyer', 'Skoči 40 m daleč.': 'Jump 40 m.', 'Pelji 300 km/h.': 'Reach 300 km/h.',
     'Bogataš': 'Tycoon', 'V karieri zasluži 100.000 €.': 'Earn €100,000 in the career.', 'S prijateljem': 'With a friend', 'Pripelji do cilja dirke s prijateljem.': 'Finish a race against a friend.',
     'Profil': 'Profile', 'Izvozi v datoteko': 'Export to a file', 'Uvozi iz datoteke': 'Import from a file', 'Datoteka je prevelika.': 'The file is too big.', 'Datoteke ni bilo mogoče prebrati.': 'The file could not be read.',
-    'Profil je pripravljen za deljenje.': 'The profile is ready to share.', 'Profil je shranjen v datoteko {0}.': 'The profile is saved to the file {0}.', 'To ni profil igre APEX Racing.': 'This is not an APEX Racing profile.',
+    'Profil je pripravljen za deljenje.': 'The profile is ready to share.', 'Profil je shranjen v datoteko {0}.': 'The profile is saved to the file {0}.', 'To ni profil igre Real Roads Atlas.': 'This is not a Real Roads Atlas profile.',
     'Uvozim profil {0} z dne {1}? Tvoj trenutni profil (nastavitve, rekordi, kariera, dosežki in duhovi) se zamenja.': 'Import the profile of {0} from {1}? Your current profile (settings, records, career, achievements and ghosts) will be replaced.',
     'Profila ni bilo mogoče shraniti (premalo prostora).': 'The profile could not be saved (not enough space).', 'Duh · {0} · {1}': 'Ghost · {0} · {1}', 'Povezava do duha je kopirana: pošlji jo prijatelju.': 'The ghost\u2019s link is copied: send it to your friend.',
     'Povezave ni bilo mogoče kopirati: duh je shranjen v datoteko.': 'The link could not be copied: the ghost is saved to a file.',
-    'Duh je za povezavo predolg: shranjen je v datoteko.': 'The ghost is too long for a link: it is saved to a file.', 'Duh je shranjen v datoteko {0}.': 'The ghost is saved to the file {0}.', 'To ni duh igre APEX Racing.': 'This is not an APEX Racing ghost.',
+    'Duh je za povezavo predolg: shranjen je v datoteko.': 'The ghost is too long for a link: it is saved to a file.', 'Duh je shranjen v datoteko {0}.': 'The ghost is saved to the file {0}.', 'To ni duh igre Real Roads Atlas.': 'This is not a Real Roads Atlas ghost.',
     'Duha ni bilo mogoče shraniti (premalo prostora).': 'The ghost could not be saved (not enough space).', 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu na letečem krogu.': 'The ghost of {0} on {1} ({2}): race it on a flying lap.',
     'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu v kronometru.': 'The ghost of {0} on {1} ({2}): race it in the time trial.', 'Povezava do duha ni veljavna.': 'The ghost\u2019s link is not valid.', 'Duh': 'Ghost',
     'Tvoj duh: {0} ({1}).': 'Your ghost: {0} ({1}).', 'leteči krog': 'flying lap', 'kronometer': 'time trial', 'Na tej progi še nimaš duha (odpelji kronometer ali leteči krog).': 'You have no ghost on this track yet (drive the time trial or a flying lap).',
@@ -290,7 +290,7 @@
     'Sredina nagiba je nastavljena.': 'The tilt centre is set.', 'Izhod iz celotnega zaslona': 'Exit full screen',
     'Na iPhonu: Deli → Dodaj na začetni zaslon. Igra se nato z ikone odpre čez cel zaslon.': 'On the iPhone: Share → Add to Home Screen. The game then opens full screen from the icon.',
     'Celoten zaslon tukaj ni na voljo. Odpri igro v Chromu ali jo dodaj na začetni zaslon.': 'Full screen is not available here. Open the game in Chrome or add it to the home screen.',
-    'Igra je nameščena: odpreš jo z ikono APEX Racing na začetnem zaslonu.': 'The game is installed: open it with the APEX Racing icon on your home screen.', 'Nova različica igre: nalagam …': 'A new version of the game: loading …',
+    'Igra je nameščena: odpreš jo z ikono Roads Atlas na začetnem zaslonu.': 'The game is installed: open it with the Roads Atlas icon on your home screen.', 'Nova različica igre: nalagam …': 'A new version of the game: loading …',
     'Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.': 'The 3D graphics library could not be loaded. Check the connection and reload the page.',
     'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.': 'Gamepad connected: the left stick steers, RT throttle, LT brake, B drift, Start pause. In the menus choose with the stick and A, B goes back.',
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
@@ -387,7 +387,7 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);
+  const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)

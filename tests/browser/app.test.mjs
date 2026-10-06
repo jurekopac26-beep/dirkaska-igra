@@ -38,7 +38,7 @@ try {
       return { man, icons, apple: await size(document.querySelector('link[rel="apple-touch-icon"]').href), tab: await size(document.querySelector('link[rel="icon"]').href) };
     });
     const { man, icons } = m;
-    T.check('manifest: name, start address and scope, full screen, colours', man.name === 'APEX RACING' && man.short_name.length <= 12 && man.start_url === './' && man.scope === './' && man.display === 'fullscreen' && !!man.theme_color && !!man.background_color,
+    T.check('manifest: name, start address and scope, full screen, colours', man.name === 'Real Roads Atlas' && man.short_name.length <= 12 && man.start_url === './' && man.scope === './' && man.display === 'fullscreen' && !!man.theme_color && !!man.background_color,
       `${man.name} / ${man.short_name}, start ${man.start_url}, display ${man.display}`);
     T.check('icons: 192 and 512 px and a maskable one for Android, each file the stated size', icons.every(i => i.real === i.sizes) && ['192x192', '512x512'].every(s => icons.some(i => i.sizes === s && i.purpose === 'any')) && icons.some(i => i.purpose === 'maskable'),
       icons.map(i => `${i.sizes} ${i.purpose}: ${i.real}`).join(', '));
@@ -133,7 +133,7 @@ try {
     // publish version n: a changed script and title, stamped like a real change; returns the script's new address
     const publish = (n) => {
       fs.appendFileSync(path.join(dir, 'js', 'sfx.js'), `\n// version ${n}\n`);
-      fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace(/<title>[^<]*<\/title>/, `<title>APEX RACING ${n}</title>`));
+      fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace(/<title>[^<]*<\/title>/, `<title>Real Roads Atlas ${n}</title>`));
       const ok = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp.js')], { env: { ...process.env, GAME_ROOT: dir } }).status === 0;
       return ok && fs.readFileSync(path.join(dir, 'index.html'), 'utf8').match(/js\/sfx\.js\?v=[0-9a-f]{8}/)[0];
     };
@@ -155,10 +155,10 @@ try {
 
       await page.evaluate(() => navigator.serviceWorker.ready);
       let st = await until(x => x.page && x.complete);
-      T.check('first visit (in a folder, as on GitHub Pages): the page and every file it needs are saved', st.page === 'APEX RACING' && st.complete, `saved "${st.page}", ${st.keys.length} files, complete ${st.complete}`);
+      T.check('first visit (in a folder, as on GitHub Pages): the page and every file it needs are saved', st.page === 'Real Roads Atlas · Racing Game' && st.complete, `saved "${st.page}", ${st.keys.length} files, complete ${st.complete}`);
       s2.setOffline(true);
       let g = await reload();
-      T.check('offline: the game starts from the saved copy', g.title === 'APEX RACING' && g.screen === 'title', JSON.stringify(g));
+      T.check('offline: the game starts from the saved copy', g.title === 'Real Roads Atlas · Racing Game' && g.screen === 'title', JSON.stringify(g));
 
       // version 2, but the connection breaks while it is being saved (only the service worker's own download of the new
       // script fails; the page itself gets it): the saved game stays version 1, complete
@@ -166,25 +166,25 @@ try {
       const sfx1 = g.sfx, sfx2 = publish(2);
       s2.setFail((req) => !!sfx2 && req.url.endsWith(sfx2) && req.headers['sec-fetch-mode'] === 'cors');
       g = await reload();
-      T.check('online: version 2 is used at once', !!sfx2 && g.title === 'APEX RACING 2' && g.sfx.endsWith(sfx2), `${g.title}, ${g.sfx.split('/').pop()} (was ${sfx1.split('/').pop()})`);
+      T.check('online: version 2 is used at once', !!sfx2 && g.title === 'Real Roads Atlas 2' && g.sfx.endsWith(sfx2), `${g.title}, ${g.sfx.split('/').pop()} (was ${sfx1.split('/').pop()})`);
       await wait(1500); st = await saved();
-      T.check('a save that breaks off leaves the saved game as it was (version 1, complete)', st.page === 'APEX RACING' && st.complete, `saved "${st.page}", complete ${st.complete}`);
+      T.check('a save that breaks off leaves the saved game as it was (version 1, complete)', st.page === 'Real Roads Atlas · Racing Game' && st.complete, `saved "${st.page}", complete ${st.complete}`);
       s2.setOffline(true); g = await reload();
-      T.check('offline: version 1 starts, not a mix of both', g.title === 'APEX RACING' && g.sfx === sfx1, JSON.stringify(g));
+      T.check('offline: version 1 starts, not a mix of both', g.title === 'Real Roads Atlas · Racing Game' && g.sfx === sfx1, JSON.stringify(g));
 
       // back online: version 2 saved complete, the old file removed
       s2.setOffline(false); s2.setFail(null); g = await reload();
-      st = await until(x => x.page === 'APEX RACING 2' && x.complete && !x.keys.includes(sfx1));
-      T.check('online again: version 2 saved complete, the old file removed', g.title === 'APEX RACING 2' && st.page === 'APEX RACING 2' && st.complete && !st.keys.includes(sfx1), `saved "${st.page}", complete ${st.complete}, old file kept ${st.keys.includes(sfx1)}`);
+      st = await until(x => x.page === 'Real Roads Atlas 2' && x.complete && !x.keys.includes(sfx1));
+      T.check('online again: version 2 saved complete, the old file removed', g.title === 'Real Roads Atlas 2' && st.page === 'Real Roads Atlas 2' && st.complete && !st.keys.includes(sfx1), `saved "${st.page}", complete ${st.complete}, old file kept ${st.keys.includes(sfx1)}`);
       s2.setOffline(true); g = await reload();
-      T.check('offline: version 2 starts', g.title === 'APEX RACING 2' && g.screen === 'title', JSON.stringify(g));
+      T.check('offline: version 2 starts', g.title === 'Real Roads Atlas 2' && g.screen === 'title', JSON.stringify(g));
 
       // a server problem, and a network that does not answer (one bar of signal): the saved game, within seconds
       s2.setOffline(false); s2.setFail((req) => isPage(req) && 503); g = await reload();
-      T.check('server error (503): the saved game starts', g.title === 'APEX RACING 2' && g.screen === 'title', JSON.stringify(g));
+      T.check('server error (503): the saved game starts', g.title === 'Real Roads Atlas 2' && g.screen === 'title', JSON.stringify(g));
       s2.setFail((req) => isPage(req) && 'hang');
       const t0 = Date.now(); g = await reload(); const secs = (Date.now() - t0) / 1000;
-      T.check('no answer from the network: the saved game starts within seconds', g.title === 'APEX RACING 2' && secs < 20, `${g.title} after ${secs.toFixed(1)} s`);
+      T.check('no answer from the network: the saved game starts within seconds', g.title === 'Real Roads Atlas 2' && secs < 20, `${g.title} after ${secs.toFixed(1)} s`);
       s2.setFail(null); g = await reload(); await wait(1500);   // (online again, a clean start; whatever the step above left has settled)
 
       // the game left open (an installed app in the background): version 3 comes when it is back on the title screen
@@ -193,9 +193,9 @@ try {
       const steady = await page.evaluate(() => window.__before === 1).catch(() => false);   // (nothing reloaded it before it was back)
       const back = () => page.evaluate(() => { window.__before = 1; document.dispatchEvent(new Event('visibilitychange')); }).catch(() => { });
       await back();
-      let t3 = null; for (let i = 0; i < 100 && t3 !== 'APEX RACING 3'; i++) { await wait(300); try { t3 = await page.evaluate(() => (window.__game ? document.title : null)); } catch (_) { } }
+      let t3 = null; for (let i = 0; i < 100 && t3 !== 'Real Roads Atlas 3'; i++) { await wait(300); try { t3 = await page.evaluate(() => (window.__game ? document.title : null)); } catch (_) { } }
       const fresh = await page.waitForFunction(() => window.__game, null, { timeout: 30000 }).then(() => page.evaluate(() => !window.__before)).catch(() => false);
-      T.check('back in the open game: a new version loads by itself', !!sfx3 && steady && t3 === 'APEX RACING 3' && fresh, `title ${t3}, reloaded ${fresh}, untouched before ${steady}`);
+      T.check('back in the open game: a new version loads by itself', !!sfx3 && steady && t3 === 'Real Roads Atlas 3' && fresh, `title ${t3}, reloaded ${fresh}, untouched before ${steady}`);
       await back(); await wait(2500);
       const stayed = await page.evaluate(() => window.__before === 1).catch(() => false);
       T.check('back in the open game, nothing new: no reload', stayed, `stayed ${stayed}`);

@@ -1,4 +1,4 @@
-/* APEX RACING menu (shadow root styles). Made from maketa-menija/style.css by the port; edit here. */
+/* Real Roads Atlas menu (shadow root styles). Made from maketa-menija/style.css by the port; edit here. */
 
 /* ---- the menu inside the game (a shadow root: nothing here reaches the game's page, nothing of the game's CSS reaches in) ---- */
 :host { display: block; position: absolute; inset: 0; color: var(--text); font-family: var(--f-ui); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -234,8 +234,8 @@ svg { display: block; }
 .toast { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 30; max-width: calc(100% - 32px); padding: 11px 16px; border-radius: 12px; background: rgba(8, 12, 20, .94); border: 1.5px solid rgba(255, 255, 255, .25); font: 700 italic 14px/1.3 var(--f-ui); text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); animation: up .2s ease-out; }
 /* ---------------- main menu: logo, three picture buttons, two small ones, the purchase ---------------- */
 .t-top { position: absolute; left: 16px; right: 16px; top: 14px; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.logo.small .l1 { font-size: clamp(40px, 12vw, 54px); }
-.logo.small .l2 { font-size: clamp(26px, 8.4vw, 36px); margin-top: 4px; box-shadow: 4px 4px 0 var(--chalk); }
+.logo.small .l1 { font-size: clamp(30px, 8.8vw, 44px); }   /* (the name on one line where it fits, else REAL ROADS / ATLAS) */
+.logo.small .l2 { font-size: clamp(20px, 6vw, 28px); margin-top: 4px; box-shadow: 4px 4px 0 var(--chalk); }
 .t-me { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .t-me small { font: 700 italic 12.5px/1 var(--f-ui); color: #fff; background: rgba(8, 12, 20, .72); padding: 5px 8px; border-radius: 8px; white-space: nowrap; }
 .t-menu { position: absolute; left: 14px; right: 14px; bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 10px; }
@@ -656,6 +656,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* ---------------- on its side (a phone held wide, a computer's window): the stage on the left, the numbers and the buttons on the right ---------------- */
 @media (orientation: landscape) {
   /* the main menu: the panel at the right, the logo and the game's own scene at the left */
+  .t-top .logo.small { max-width: calc(100% - min(470px, 56vw) - 12px); }
+  .t-top .logo.small .l1 { font-size: clamp(30px, calc((100vw - min(470px, 56vw)) / 10), 44px); }   /* (on one line beside a wide panel, else REAL ROADS / ATLAS) */
   .t-menu.title-panel { left: auto; right: max(14px, env(safe-area-inset-right, 0px)); top: auto; bottom: 10px; max-height: calc(100% - 20px); width: min(470px, 56vw); justify-content: center; gap: 8px; padding: 10px 12px 10px 22px; overflow-y: auto; scrollbar-width: none; }
   .t-menu.title-panel::-webkit-scrollbar { display: none; }
   .t-menu .tile { height: clamp(52px, calc((100vh - 196px) / 3), 96px); flex: 0 0 auto; }

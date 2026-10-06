@@ -29,7 +29,7 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     const t = await ev(page, 'return { tiles: [...root.querySelectorAll(".tile b")].map(e => e.textContent), small: [...root.querySelectorAll(".tsmall span")].map(e => e.textContent), sub: root.querySelector(".t-single small").textContent, logo: root.querySelector(".logo").textContent };');
-    T.check('the title: Single race, Multiplayer, Career; Settings and Leaderboard; the logo', JSON.stringify(t.tiles) === '["SINGLE RACE","MULTIPLAYER","CAREER"]' && t.small.includes('Settings') && t.small.includes('Leaderboard') && /APEX\s*RACING/i.test(t.logo), JSON.stringify(t));
+    T.check('the title: Single race, Multiplayer, Career; Settings and Leaderboard; the logo', JSON.stringify(t.tiles) === '["SINGLE RACE","MULTIPLAYER","CAREER"]' && t.small.includes('Settings') && t.small.includes('Leaderboard') && /REAL ROADS ATLAS\s*RACING GAME/i.test(t.logo), JSON.stringify(t));
     T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && /Circuit race/.test(t.sub), t.sub);
 
     // 2. the modes
