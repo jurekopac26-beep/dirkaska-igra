@@ -1649,6 +1649,56 @@
   "nan": false,
   "digest": "46a00200eb746bd18282792d"
  },
+ "rio/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 237.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "77f1d53969f3edac1d3f7aaa"
+ },
+ "rio/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 254.05,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5bc2eb49b7dfdceda8e60c24"
+ },
+ "rio/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 200.61,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a8962299be5ee0875f41b619"
+ },
+ "rio/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 202.92,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bf8b3ba2089beafb1a8a91c3"
+ },
+ "rio/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 237.71,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8e2ed0fe9ffddaac143d8e5c"
+ },
  "toronto/cs": {
   "finished": 13,
   "cars": 13,
@@ -1692,11 +1742,11 @@
  "toronto/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 174.14,
+  "winner": 167.08,
   "spins": 0,
-  "walls": 1,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9ff5557da2ac44f5821c531e"
+  "digest": "1c202db7b9acc7d976e2e800"
  }
 }
