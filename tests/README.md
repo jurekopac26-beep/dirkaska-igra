@@ -13,7 +13,7 @@ npm run test:fleet   # samo vozni park: izrisovalni komplet, register vozil, vo�
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
 (`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
-(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški posel teče z 30 minutami na test in 150 minutami skupaj, ker se smoke, memory in perf z vsako progo podaljšajo); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima dvakrat toliko časa.
+(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški posel teče z 30 minutami na test in 180 minutami skupaj, ker se smoke, memory in perf z vsako progo podaljšajo in ker je isti nabor na nekaterih strojih skoraj dvakrat počasnejši); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima dvakrat toliko časa.
 
 ## Kaj preverjajo
 
