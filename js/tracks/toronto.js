@@ -24,7 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // and round the escape roads straight on at Turns 1, 3, 6 and 8
     walls: [[0,24,1,10,6],[300,330,-1,10,8],[500,536,-1,11,6],[500,536,1,11,6],[898,930,-1,10,6],[898,930,1,10,6],[1170,1290,-1,16,14],[1292,1306,-1,8,5],[1422,1446,-1,8,5],[1422,1446,1,10,6],[1494,1520,1,6,6],[1648,1666,-1,8,5],[1705,1745,-1,14,10],[1836,1856,1,8,5],[1926,1942,-1,7,5],[1926,1942,1,7,5],[1972,1988,-1,7,5],[2160,2186,1,10,6],[2330,2385,-1,15,12],[2514,2530,1,7,5],[2567,2583,-1,7,5],[2567,2583,1,7,5],[2603,2617,1,7,5],[2655,2690,1,11,6],[160,215,-1,13,12]],
     pit: [-15.5, -232, 22, -105, 70],   // the pit lane on the LEFT of the straight (north side, since 2016): [centre offset (negative: left), from, to, the player's box, way in] (in the real circuit the lane leaves at Turn 9; here just past Turn 11)
-    pitRow: [-160, -40],   // the 13 garages (every 10 m from the first), where the lane runs full width: a crew's box for every car (Track.crewBoxes)
+    pitRow: [-150, -30],   // the 13 garages (every 10 m from the first), where the lane runs full width (the turn in to the first box too): a crew's box for every car (Track.crewBoxes)
     // named places ([HUD label, x, z, the commentator's lines], or { hud: false }: only the commentator)
     names: [
       ["Zavoj 1",184.2,-66.5,["Turn one, a ninety degree right by the old stone gates!","Hard on the brakes for Turn One!","Right at Turn One, then down to the lake!"]],

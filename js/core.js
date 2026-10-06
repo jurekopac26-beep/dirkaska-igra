@@ -2558,8 +2558,10 @@ const Core = (function () {
         const bo = T.bayOff(T.boxX(sT, bd), 3.5 + BAY.o, c.pitDone); let u = pz.o + bo;
         // (round a car standing in the lane, on the side away from it: not waiting behind it)
         let D = c.pitDodge; if (D && (c.dist - D.o.dist > (D.o.m.len + M.len) * 0.5 + 1 || D.o.dist - c.dist > 35 || !D.o.inPit)) D = c.pitDodge = null;
-        if (!D) for (const o of race.cars) { const g = o.dist - c.dist; if (o === c || !o.inPit || o.speed > 2 || g < 0 || g > 30) continue; const e = o.q.d * pz.sd - pz.o; if (Math.abs(e) < 2.4) { D = c.pitDodge = { o, side: e < 0 ? 1 : -1 }; break; } }
-        if (D) { const dg = pz.o + D.side * Math.max(0, 2.4 - Math.abs(D.o.q.d * pz.sd - pz.o)); if (!bo) u = dg; else if (c.pitDone && D.side > 0) u = Math.max(u, dg); }   // (pulling out of the box: kept out on the garages' side until past it)
+        // (which side: by the lane's centre where that car stands, which in the way in still moves out)
+        const ofs = (o) => o.q.d * pz.sd - (T.pitAt(o.q.s) || pz).o;
+        if (!D) for (const o of race.cars) { const g = o.dist - c.dist; if (o === c || !o.inPit || o.speed > 2 || g < 0 || g > 30) continue; const e = ofs(o); if (Math.abs(e) < 2.4) { D = c.pitDodge = { o, side: e < 0 ? 1 : -1 }; break; } }
+        if (D) { const e = ofs(D.o), dg = Math.abs(e) < 2.4 ? D.o.q.d * pz.sd + D.side * 2.4 : pz.o; if (!bo) u = dg; else if (c.pitDone && D.side > 0) u = Math.max(u, dg); }   // (2.4 m clear of it; pulling out of the box: kept out on the garages' side until past it)
         off = u * pz.sd;
       } else if (!c.isPlayer && !pz) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = P[0] < 0 ? -lim : lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
     }
