@@ -958,7 +958,7 @@ const Sfx = (function () {
      off (a clang as it tears away and lands, then its scrape along the road: metal, plastic or carbon by the part, bigger by its mass), a
      window shattering, a wheel knocked off (the hub letting go, then the wheel bouncing away), a hub scraping the road while that car
      moves on (louder on asphalt, beating with the hub's turn), a fire's crackle while it burns (render's rule: dmg >= 0.9, or the bonnet /
-     engine cover off and dmg >= 0.75; 20 s from when it starts), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
+     engine cover off and dmg >= 0.75; 20 s from when it starts; put out in the box with the bodywork), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
      car's state with what it was last frame (c.lost, winOut, wreck.wl, dmg); a repair (repairN) or the marshals' refit (wreck.fix) resets
      what it remembers. The one-shots and the loops are buffers made ahead (prep, below), each with its own random numbers (never
      Math.random). At most DS_MAX one-shots play at a time; in one frame a buffer plays at most twice (a pile-up's: the loudest, then the
@@ -1246,7 +1246,8 @@ const Sfx = (function () {
     if (!enabled) return;
     // the loops: fire (fading in, and out at the end of its 20 s), the hubs (louder with the speed, on a hard surface, two wheels gone)
     const F = [];
-    for (const [c, S] of dFireC) { const w = dWhere(c, P, cam, D_RL); if (!w) continue; const u = t - S.fire; F.push([c, w[0] * 0.22 * Core.sstep(0, 1.2, u) * (1 - Core.sstep(D_FIRE - 3, D_FIRE, u)), w[1]]); }
+    for (const [c, S] of dFireC) { const w = dWhere(c, P, cam, D_RL); if (!w) continue; const rk = Core.sstep(Core.REPAIR.body[0], Core.REPAIR.body[1], Core.repairU(c)); if (rk >= 1) continue;   // (in the box the crew puts the fire out with the bodywork, as the renderer shows it: Core.REPAIR)
+      const u = t - S.fire; F.push([c, w[0] * 0.22 * Core.sstep(0, 1.2, u) * (1 - Core.sstep(D_FIRE - 3, D_FIRE, u)) * (1 - rk), w[1]]); }
     if (F.length || dFireV.some(v => v && v.car)) dPool(dFireV, F, 'fire', () => {});
     const G = [];
     for (const [c] of dScrC) {

@@ -5948,7 +5948,7 @@ const Render = (function () {
     if (Rg && R.P) for (const [a, b] of [Rg.o, Rg.i]) if (b > a) {
       for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !R.P[pk]) continue; const s = R.P[pk].subarray(a * 3, b * 3); A[key].array.set(s, a * 3); R.D[pk].set(s, a * 3); A[key].needsUpdate = true; }
       if (K.deadV) K.deadV.fill(0, a, b); }
-    if (v.dec && v.dec0 && K.E.body.decalPart === name) { v.dec.position.copy(v.dec0[0]); v.dec.quaternion.copy(v.dec0[1]); if (v.dec.userData.dmgHid) { v.dec.visible = true; v.dec.userData.dmgHid = 0; } }
+    if (v.dec && v.dec0 && K.E.body.decalPart === name) { R.dec = null; v.dec.position.copy(v.dec0[0]); v.dec.quaternion.copy(v.dec0[1]); if (v.dec.userData.dmgHid) { v.dec.visible = true; v.dec.userData.dmgHid = 0; } }   // (its panel back as new: repBody leaves the number where it is now)
     if (R.lamps) kitLampsBack(v);   // (the lamps on it)
   }
   function repLamps(v) {
@@ -6093,7 +6093,7 @@ const Render = (function () {
     // heavy black smoke
     if (dt > 0) F.r = (F.r || 0) + dt;   // (how long it has been drawn burning: it flares up over its first 1.5 s of frames)
     const lit = e < FIRE_T && rk < 1, k = lit ? Core.sstep(0, 1.5, F.r || 0) * (1 - 0.75 * Core.sstep(FIRE_T - 5, FIRE_T, e)) * (1 - rk) : 0, sc = clamp(M.wid / 1.8, 0.6, 1.4), inCk = !!cam.ck && ck.car === c;
-    if (cw >= 0.6) { for (const q of v.crack) if (q) q.visible = false; if (!v.lampsOut) lampsBurnt(v); }   // (burnt a while: no glass, no lamps)
+    if (cw >= 0.6) { for (const q of v.crack) if (q) q.visible = false; if (!v.lampsOut && !v.rep) lampsBurnt(v); }   // (burnt a while: no glass, no lamps; not while the crew works on it: lamps lit at the stop's start stay lit, the car is new at its end)
     if (live && dt > 0 && v.fireEmit) {
       if (lit) {
         const fw = 0.7 * sc, fz = 0.55 * M.wid; v.flameAcc = (v.flameAcc || 0) + dt * 38 * k;
