@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maketa nastavitev</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<style>
+  :root { --navy1: #0b192b; --navy2: #08121f; --gold: #ffc629; --lbl: #9fb3d6; --curb: #e63b2e; --chalk: #f6f6f1; --f-ui: 'ApexMenu', Roboto, system-ui, sans-serif; color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --navy1: #0b192b; } }
+  :root[data-theme="dark"] { --navy1: #0b192b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 26px 30px 30px; background: radial-gradient(90% 70% at 50% 20%, #16304d, var(--navy1) 55%, var(--navy2)); color: #fff; font-family: var(--f-ui); display: inline-block; min-width: 100%; }
+  header { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 18px; }
+  header .kerb { width: 10px; align-self: stretch; border-radius: 3px; background: repeating-linear-gradient(180deg, var(--curb) 0 12px, var(--chalk) 12px 24px); }
+  h1 { margin: 0; font: 900 italic 34px/1 var(--f-ui); text-transform: uppercase; letter-spacing: -.5px; }
+  h1 small { display: block; margin-top: 8px; font: 600 italic 16px/1.35 var(--f-ui); color: var(--lbl); text-transform: none; letter-spacing: 0; max-width: 1100px; }
+  .row { display: flex; gap: 34px; align-items: flex-start; }
+  .row.col { flex-direction: column; gap: 26px; }
+  figure { margin: 0; }
+  figcaption { margin: 0 0 10px 4px; font: 900 italic 17px/1.2 var(--f-ui); color: var(--gold); text-transform: uppercase; }
+  figcaption span { display: block; margin-top: 4px; font: 600 italic 13.5px/1.35 var(--f-ui); color: #c9d3e2; text-transform: none; max-width: 400px; }
+  .land figcaption span { max-width: 860px; }
+  .dev { padding: 10px; border-radius: 46px; background: #020409; box-shadow: 0 0 0 2px #2a313c, 0 30px 70px rgba(0,0,0,.55); }
+  .dev img { display: block; border-radius: 36px; }
+  .land .dev { border-radius: 40px; }
+  .land .dev img { border-radius: 30px; }
+</style>
+</head>
+<body>
+<header><i class="kerb"></i><h1 id="t"></h1></header>
+<div class="row" id="r"></div>
+<script>
+  // ?title=&sub=&kind=port|land&imgs=path~caption~text|path~caption~text
+  const q = new URLSearchParams(location.search), land = q.get('kind') === 'land';
+  document.getElementById('t').innerHTML = (q.get('title') || '') + (q.get('sub') ? '<small>' + q.get('sub') + '</small>' : '');
+  const r = document.getElementById('r'); if (land) r.className = 'row col land';
+  const items = (q.get('imgs') || '').split('|').filter(Boolean).map(s => s.split('~'));
+  let left = items.length;
+  for (const [src, cap, txt] of items) {
+    const f = document.createElement('figure'); f.innerHTML = '<figcaption>' + (cap || '') + (txt ? '<span>' + txt + '</span>' : '') + '</figcaption><div class="dev"><img alt=""></div>';
+    const img = f.querySelector('img'); img.onload = () => { img.style.width = (img.naturalWidth / 2) + 'px'; if (--left === 0) document.fonts.ready.then(() => { document.body.dataset.ready = '1'; }); }; img.src = src;
+    r.appendChild(f);
+  }
+</script>
+</body>
+</html>

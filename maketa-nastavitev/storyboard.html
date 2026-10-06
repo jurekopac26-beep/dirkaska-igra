@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animacije nastavitev</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<style>
+  :root { --navy1: #0b192b; --navy2: #08121f; --gold: #ffc629; --lbl: #9fb3d6; --edge: rgba(120,150,205,.22); --f-ui: 'ApexMenu', Roboto, system-ui, sans-serif; color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --navy1: #0b192b; } }
+  :root[data-theme="dark"] { --navy1: #0b192b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 16px 24px; background: radial-gradient(120% 60% at 50% 0%, #16304d, var(--navy1) 50%, var(--navy2)); color: #fff; font-family: var(--f-ui); }
+  h1 { margin: 0 0 4px; font: 900 italic 26px/1.1 var(--f-ui); text-transform: uppercase; letter-spacing: -.3px; }
+  h1 small { display: block; margin-top: 4px; font: 600 italic 13px/1.3 var(--f-ui); color: var(--lbl); text-transform: none; letter-spacing: 0; }
+  .cat { margin: 18px 0 6px; font: 900 italic 15px/1 var(--f-ui); color: var(--gold); text-transform: uppercase; letter-spacing: .5px; }
+  .set { margin: 10px 0 14px; padding: 10px 12px 12px; border: 1px solid var(--edge); border-radius: 14px; background: linear-gradient(180deg, rgba(16,27,45,.97), rgba(10,18,31,.98)); }
+  .set h2 { margin: 0 0 4px; font: 900 italic 15px/1.2 var(--f-ui); text-transform: uppercase; }
+  .set p { margin: 0 0 8px; font: 500 13px/1.35 var(--f-ui); color: #c9d3e2; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cell { flex: 0 0 auto; }
+  .cell canvas { display: block; border-radius: 10px; background: #0d1a2c; }
+  .cell b { display: block; margin: 6px 2px 0; font: 800 italic 12.5px/1.2 var(--f-ui); color: #fff; }
+  .cell b i { font-style: italic; color: var(--gold); margin-right: 4px; }
+  .cell b span { display: block; font: 500 11.5px/1.3 var(--f-ui); color: var(--lbl); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script src="anim-core.js"></script>
+<script src="scenes-drive.js"></script>
+<script src="scenes-cam.js"></script>
+<script src="scenes-hud.js"></script>
+<script src="scenes-race.js"></script>
+<script src="scenes-gfx.js"></script>
+<script src="scenes-sound.js"></script>
+<script src="settings-data.js"></script>
+<script>
+  // ?keys=a,b&w=346&h=168&t=2.5 : every option of each setting at time t (its state run up to it); ?cat=voznja: a category's
+  const q = new URLSearchParams(location.search), W = +(q.get('w') || 300), H = +(q.get('h') || 150), T = +(q.get('t') || 2.4);
+  const env = { camera: q.get('camera') || 'chase', tilt: null };
+  SetAnim.env = { get: (k) => env[k], tilt: () => null }; SetAnim.still = true;
+  const out = document.getElementById('out');
+  const cats = SETTINGS_DATA.cats.filter(c => !q.get('cat') || q.get('cat').split(',').includes(c.id));
+  const keys = q.get('keys') ? q.get('keys').split(',') : null;
+  if (q.get('title')) { const h = document.createElement('h1'); h.innerHTML = q.get('title') + (q.get('sub') ? '<small>' + q.get('sub') + '</small>' : ''); out.appendChild(h); }
+  const jobs = [];
+  for (const c of cats) {
+    const items = c.items.filter(it => it.anim && (!keys || keys.includes(it.anim)));
+    if (!items.length) continue;
+    const ch = document.createElement('div'); ch.className = 'cat'; ch.textContent = c.name; out.appendChild(ch);
+    for (const it of items) {
+      const box = document.createElement('div'); box.className = 'set';
+      box.innerHTML = '<h2>' + it.name + '</h2>' + (it.story ? '<p>' + it.story + '</p>' : '');
+      const row = document.createElement('div'); row.className = 'row'; box.appendChild(row); out.appendChild(box);
+      const opts = it.opts ? it.opts : it.range ? it.range.story.map(v => ({ v, l: v + '°' })) : [{ v: null, l: '' }];
+      for (const o of opts) {
+        const cell = document.createElement('div'); cell.className = 'cell';
+        const cv = document.createElement('canvas'); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+        cell.appendChild(cv);
+        if (o.l) { const b = document.createElement('b'); b.innerHTML = o.l + (o.story ? '<span>' + o.story + '</span>' : ''); b.style.width = W + 'px'; cell.appendChild(b); }
+        row.appendChild(cell);
+        jobs.push({ cv, key: it.anim, v: o.v, t: it.storyT != null ? it.storyT : T });
+      }
+    }
+  }
+  document.fonts.ready.then(() => {
+    for (const j of jobs) { const L = SetAnim.attach(j.cv, j.key, j.v); if (L) SetAnim.drawAt(L, j.t, Math.max(4, j.t)); }
+    document.body.dataset.ready = '1';
+  });
+</script>
+</body>
+</html>
