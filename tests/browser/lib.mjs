@@ -9,7 +9,7 @@ import url from 'node:url';
 export const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..');
 export const ROOT = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : REPO;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+  '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webp': 'image/webp', '.webm': 'video/webm', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2' };
 
 // a tiny static web server for the repo folder (like GitHub Pages: a folder address serves its index.html). setOffline(true)
 // makes every request fail, as if the phone had no internet. setFail(fn) spoils only the requests fn(req) picks: fn returns
@@ -27,7 +27,17 @@ export function serve(root = ROOT) {
       const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
       const file = path.join(root, p.endsWith('/') ? p + 'index.html' : p);
       if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
-      res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
+      // (a video is asked for by ranges: without them the browser cannot seek in it, nor know its length)
+      const size = fs.statSync(file).size, type = TYPES[path.extname(file)] || 'application/octet-stream', m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+      if (req.method === 'HEAD') { res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size }); res.end(); return; }   // (a HEAD only needs the headers: a cheap existence check, no body)
+      if (m && (m[1] || m[2])) {
+        const a = m[1] ? +m[1] : Math.max(0, size - +m[2]), b = m[1] && m[2] ? Math.min(size - 1, +m[2]) : size - 1;
+        if (a > b || a >= size) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); res.end(); return; }
+        res.writeHead(206, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${a}-${b}/${size}`, 'Content-Length': b - a + 1 });
+        fs.createReadStream(file, { start: a, end: b }).pipe(res);
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size });
       fs.createReadStream(file).pipe(res);
     });
     server.listen(0, '127.0.0.1', () => resolve({ base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise(r => { server.close(r); server.closeAllConnections(); }), setOffline: (v) => { settle(); offline = !!v; }, setFail: (fn) => { settle(); fail = fn || null; } }));
@@ -47,12 +57,16 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
-  const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0 }, settings));
+  // (the failures off unless a test asks for them: a cut tyre after a knock would change what the other tests see; the best moment's video
+  // after a race too: it would play before the results)
+  const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0 }, settings));
   // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
   await page.addInitScript(([raw, adapt]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
+  // (the old title and track screens, which most tests click through: the new menu, js/menu.js, has its own test, menu.test.mjs: opts.menu)
+  if (!opts.menu) await page.addInitScript(() => { try { localStorage.setItem('tdgp-menu', 'old'); } catch (_) { /* no storage */ } });
   if (opts.init) await page.addInitScript(opts.init);   // (a test's own set-up, run before the game's scripts)
   await page.goto(address);
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
