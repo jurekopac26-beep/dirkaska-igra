@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tri razporeditve nastavitev</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<style>
+  /* the three ways to put the settings in three tabs, side by side: each version a column, its tabs one under the other with their sections */
+  :root { --navy1: #0b192b; --navy2: #08121f; --card1: rgba(20,33,54,.97); --card2: rgba(11,20,34,.98); --gold: #ffc629; --gold-ink: #1b1b1b; --lbl: #9fb3d6; --text: #fff; --edge: rgba(120,150,205,.22); --curb: #e63b2e; --chalk: #f6f6f1; --f-ui: 'ApexMenu', Roboto, system-ui, sans-serif; color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --navy1: #0b192b; } }
+  :root[data-theme="dark"] { --navy1: #0b192b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 26px 30px 34px; background: radial-gradient(90% 60% at 50% 0%, #16304d, var(--navy1) 55%, var(--navy2)); color: var(--text); font-family: var(--f-ui); display: inline-block; min-width: 100%; }
+  header { display: flex; gap: 18px; margin-bottom: 20px; }
+  header .kerb { width: 10px; border-radius: 3px; background: repeating-linear-gradient(180deg, var(--curb) 0 12px, var(--chalk) 12px 24px); }
+  h1 { margin: 0; font: 900 italic 34px/1 var(--f-ui); text-transform: uppercase; letter-spacing: -.5px; }
+  h1 small { display: block; margin-top: 8px; font: 600 italic 16px/1.35 var(--f-ui); color: var(--lbl); text-transform: none; letter-spacing: 0; max-width: 1150px; }
+  .cols { display: grid; grid-template-columns: repeat(3, 440px); gap: 22px; align-items: start; }
+  .ver { border-radius: 18px; padding: 16px 16px 18px; background: linear-gradient(180deg, var(--card1), var(--card2)); border: 1px solid var(--edge); }
+  .ver h2 { margin: 0; display: flex; align-items: center; gap: 12px; font: 900 italic 22px/1.1 var(--f-ui); text-transform: uppercase; }
+  .ver h2 b { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gold); color: var(--gold-ink); font: 900 italic 22px/1 var(--f-ui); }
+  .ver p { margin: 10px 0 14px; font: 600 italic 13.5px/1.4 var(--f-ui); color: #c9d3e2; }
+  .tab { margin-top: 12px; border-radius: 14px; padding: 12px 14px 12px; background: rgba(3,8,15,.45); border: 1px solid var(--edge); }
+  .tab h3 { margin: 0 0 6px; display: flex; align-items: center; gap: 9px; font: 900 italic 17px/1 var(--f-ui); color: var(--gold); text-transform: uppercase; }
+  .tab h3 svg { width: 22px; height: 22px; }
+  .tab h3 small { margin-left: auto; font: 700 italic 12px/1 var(--f-ui); color: var(--lbl); text-transform: none; }
+  .pz { margin: 6px 0 2px; padding: 6px 10px; border-radius: 9px; border: 1px dashed rgba(255,198,41,.4); font: 700 italic 12.5px/1.3 var(--f-ui); color: #f5e3a8; }
+  .sec { margin: 9px 0 3px; font: 900 italic 11px/1 var(--f-ui); color: var(--lbl); letter-spacing: .08em; text-transform: uppercase; }
+  ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 5px; }
+  li { padding: 5px 9px; border-radius: 8px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08); font: 700 italic 13px/1.1 var(--f-ui); color: #eef2f8; }
+  li i { font-style: italic; color: var(--lbl); font-weight: 600; font-size: 11.5px; }
+</style>
+</head>
+<body>
+<header><i class="kerb"></i><h1>Tri razporeditve nastavitev<small>Zgoraj so samo trije zavihki, brez zavihka Splošno. Vseh 34 nastavitev je v teh treh, vsaka natanko enkrat. Različice se ločijo po razporeditvi, po tem, kje so gumbi pavze (Ponovi dirko, Foto, Ogled vozila, Celoten zaslon, Odstopi, Glavni meni), in po obliki zavihkov.</small></h1></header>
+<div class="cols" id="cols"></div>
+<script src="settings-data.js"></script>
+<script>
+  const D = window.SETTINGS_DATA, ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
+  const I = {
+    flag: '<svg viewBox="0 0 24 24"><path d="M5 21 V4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4 H19 V13 H6 Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 4 H9.3 V7 H6Z M12.6 4 H15.9 V7 H12.6Z M9.3 7 H12.6 V10 H9.3Z M15.9 7 H19 V10 H15.9Z M6 10 H9.3 V13 H6Z M12.6 10 H15.9 V13 H12.6Z" fill="currentColor"/></svg>',
+    wheel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M3.5 11 L9.8 12 M14.2 12 L20.5 11 M12 14.2 V21"/></svg>',
+    media: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="12.5" height="10" rx="2"/><path d="M4.5 13 L7.5 10 L9.5 12 L11 10.5 L13 12.5"/><path d="M16.5 15.5 H18 L20.5 18 V9 L18 11.5 H16.5 Z" fill="currentColor"/><path d="M8.5 15 V19 M5.5 19 H11.5" stroke-linecap="round"/></svg>',
+    pad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 7.5 H17 C19.5 7.5 21 10 21.3 13.5 C21.6 17 20.4 18.6 18.8 18.6 C17.4 18.6 16.6 17.2 15.8 15.8 H8.2 C7.4 17.2 6.6 18.6 5.2 18.6 C3.6 18.6 2.4 17 2.7 13.5 C3 10 4.5 7.5 7 7.5 Z"/><path d="M7.5 10.6 V14.2 M5.7 12.4 H9.3" stroke-linecap="round"/><circle cx="15.6" cy="11.4" r="1.1" fill="currentColor"/><circle cx="17.6" cy="13.4" r="1.1" fill="currentColor"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M2 12 C4.8 7.2 8.2 5 12 5 C15.8 5 19.2 7.2 22 12 C19.2 16.8 15.8 19 12 19 C8.2 19 4.8 16.8 2 12 Z"/><circle cx="12" cy="12" r="3.4"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
+    sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5 H7.5 L12 5.5 V18.5 L7.5 14.5 H4 Z" fill="currentColor"/><path d="M15.5 9 A4 4 0 0 1 15.5 15 M18 6.5 A7.5 7.5 0 0 1 18 17.5"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 L14.7 8.6 L20.8 9.4 L16.3 13.6 L17.5 19.7 L12 16.7 L6.5 19.7 L7.7 13.6 L3.2 9.4 L9.3 8.6 Z"/></svg>',
+    help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6 L9.2 9.2 M14.8 14.8 L18.4 18.4 M18.4 5.6 L14.8 9.2 M9.2 14.8 L5.6 18.4" stroke-width="2.6"/></svg>',
+    sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 6.5 H20 M4 12 H20 M4 17.5 H20"/><circle cx="9" cy="6.5" r="2.2" fill="currentColor"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor"/><circle cx="7" cy="17.5" r="2.2" fill="currentColor"/></svg>'
+  };
+  const LOOK = { line: 'zavihki s črto pod izbranim', pill: 'zavihki kot gumbi v enem okvirju', tile: 'zavihki kot tri ploščice' };
+  const cols = document.getElementById('cols');
+  for (const V of Object.values(D.versions)) {
+    const el = document.createElement('section'); el.className = 'ver';
+    let html = '<h2><b>' + V.id + '</b>' + V.name + '</h2><p>' + V.idea + ' Videz: ' + LOOK[V.look] + '.</p>';
+    V.tabs.forEach((t, i) => {
+      const n = t.sections.reduce((a, s) => a + s.keys.length, 0);
+      html += '<div class="tab"><h3>' + I[t.icon] + t.name + '<small>' + n + ' nastavitev</small></h3>';
+      if (i === 0 && V.pause === 'tab') html += '<div class="pz">Na vrhu: gumbi pavze in strategija</div>';
+      if (i === 0 && V.pause === 'bar') html += '<div class="pz">Gumbi pavze so v vrstici nad zavihki (na vseh treh)</div>';
+      for (const s of t.sections) html += (t.sections.length > 1 ? '<div class="sec">' + s.t + '</div>' : '') + '<ul>' + s.keys.map(k => '<li>' + ITEM[k].name + (k === 'pkNotes' ? ' <i>(Pikes Peak)</i>' : '') + (ITEM[k].only ? ' <i>(pri Nagibu)</i>' : '') + (k === 'pitCmp' ? ' <i>(samo med dirko z boksi)</i>' : '') + '</li>').join('') + '</ul>';
+      html += '</div>';
+    });
+    el.innerHTML = html; cols.appendChild(el);
+  }
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+</script>
+</body>
+</html>

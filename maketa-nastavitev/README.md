@@ -4,7 +4,23 @@ Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezan
 
 Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj stikali *Telefon pokonci / ležeče* in *Med dirko / Iz glavnega menija*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
 
-Predlog ima **dve različici**, eno za telefon pokonci in eno za telefon ležeče. Razlikujeta se v razporeditvi zaslona in v animacijah. Slike so v `slike/pokonci/` in `slike/lezece/`:
+**Izbira (zadnji predlog): samo trije zavihki, brez zavihka Splošno.** Vseh 34 nastavitev je razporejenih v tri zavihke, vsaka natanko enkrat. Za izbiro so tri različice (`settings-data.js`, `versions`), slike so v `slike/izbira/`:
+
+| Slika | Kaj pokaže |
+| --- | --- |
+| `0-primerjava.png` | vse tri različice drug ob drugem: zavihki, njihovi razdelki in nastavitve v njih |
+| `A-pokonci.png`, `B-pokonci.png`, `C-pokonci.png` | vsi trije zavihki različice, vsak posnet v celoti od vrha do dna (telefon pokonci) |
+| `A-lezece.png`, `B-lezece.png`, `C-lezece.png` | trije zavihki različice na telefonu ležeče |
+
+- **A · Dirka · Vožnja · Slika in zvok**: po delih igre. Pavza odpre zavihek Dirka z gumbi pavze na vrhu. Zavihki s črto pod izbranim.
+- **B · Igra · Pogled · Zvok**: po tem, kaj počneš, vidiš in slišiš. Gumbi pavze so v svoji vrstici nad zavihki, na vseh treh. Zavihki kot gumbi v enem okvirju.
+- **C · Osnovno · Pomoči · Napredno**: po tem, kako pogosto jih spreminjaš, najpogostejše najprej. Pavza odpre zavihek Osnovno z gumbi pavze na vrhu. Zavihki kot tri ploščice.
+
+Gumbi pavze so v vseh treh: Ponovi dirko, Foto, Ogled vozila, Celoten zaslon, Odstopi, Glavni meni. Gumba »Kamera« ni več, ker je Kamera zdaj nastavitev v zavihku.
+
+V maketi različico izbereš s stikalom nad telefonom (računalnik), z gumbi A, B, C v kotu (telefon), z `?v=B` ali s `#b` na koncu povezave.
+
+Predlog pred tem (osem zavihkov) ima **dve različici**, eno za telefon pokonci in eno za telefon ležeče. Razlikujeta se v razporeditvi zaslona in v animacijah; te veljajo tudi za nove tri zavihke. Slike so v `slike/pokonci/` in `slike/lezece/`:
 
 | Slika | Kaj pokaže |
 | --- | --- |
@@ -40,6 +56,7 @@ Datoteke:
 - `settings-data.js`: kategorije, nastavitve, možnosti in opisi animacij;
 - `settings.js`, `settings.css`, `index.html`: zaslon;
 - `storyboard.html`: vse možnosti vseh animacij naenkrat (iz njega so slike 4–6);
-- `board.html`: sestavljanje slik telefonov.
+- `board.html`: sestavljanje slik telefonov;
+- `primerjava.html`: primerjava treh različic s tremi zavihki.
 
 Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=voznja`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `mode=pause|menu`, `tab=<id zavihka>`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).

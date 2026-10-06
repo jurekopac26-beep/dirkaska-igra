@@ -22,6 +22,12 @@
     full: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15"/></svg>',
     retire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4 H19 V20 H14"/><path d="M4 12 H14 M10 8 L14 12 L10 16"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3.5 11 L12 4 L20.5 11 M6 9.5 V20 H18 V9.5"/><path d="M10 20 V14.5 H14 V20"/></svg>',
+    media: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="12.5" height="10" rx="2"/><path d="M4.5 13 L7.5 10 L9.5 12 L11 10.5 L13 12.5"/><path d="M16.5 15.5 H18 L20.5 18 V9 L18 11.5 H16.5 Z" fill="currentColor"/><path d="M8.5 15 V19 M5.5 19 H11.5" stroke-linecap="round"/></svg>',
+    pad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 7.5 H17 C19.5 7.5 21 10 21.3 13.5 C21.6 17 20.4 18.6 18.8 18.6 C17.4 18.6 16.6 17.2 15.8 15.8 H8.2 C7.4 17.2 6.6 18.6 5.2 18.6 C3.6 18.6 2.4 17 2.7 13.5 C3 10 4.5 7.5 7 7.5 Z"/><path d="M7.5 10.6 V14.2 M5.7 12.4 H9.3" stroke-linecap="round"/><circle cx="15.6" cy="11.4" r="1.1" fill="currentColor"/><circle cx="17.6" cy="13.4" r="1.1" fill="currentColor"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><path d="M2 12 C4.8 7.2 8.2 5 12 5 C15.8 5 19.2 7.2 22 12 C19.2 16.8 15.8 19 12 19 C8.2 19 4.8 16.8 2 12 Z"/><circle cx="12" cy="12" r="3.4"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 L14.7 8.6 L20.8 9.4 L16.3 13.6 L17.5 19.7 L12 16.7 L6.5 19.7 L7.7 13.6 L3.2 9.4 L9.3 8.6 Z"/></svg>',
+    help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6 L9.2 9.2 M14.8 14.8 L18.4 18.4 M18.4 5.6 L14.8 9.2 M9.2 14.8 L5.6 18.4" stroke-width="2.6"/></svg>',
+    sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 6.5 H20 M4 12 H20 M4 17.5 H20"/><circle cx="9" cy="6.5" r="2.2" fill="currentColor"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor"/><circle cx="7" cy="17.5" r="2.2" fill="currentColor"/></svg>',
     chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19"/></svg>',
     target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2.5 V6 M12 18 V21.5 M2.5 12 H6 M18 12 H21.5" stroke-linecap="round"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15 V3.5 M7.5 8 L12 3.5 L16.5 8"/><path d="M4.5 13.5 V20 H19.5 V13.5"/></svg>',
@@ -33,24 +39,42 @@
     (() => { try { return JSON.parse(q.get('s') || '{}'); } catch (_) { return {}; } })());
   A.env = { get: (k) => k === 'orient' ? (document.documentElement.classList.contains('land') ? 'land' : 'port') : S[k], tilt: () => null };
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
-  let cats = D.cats.filter(c => mode === 'pause' || !c.pauseOnly);
+  // the three ways to group the settings (D.versions: A, B, C): the tabs, their sections; ?v=B or #b picks one
+  const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
+  let ver = String(q.get('v') || location.hash.slice(1) || 'A').toUpperCase(); if (!D.versions[ver]) ver = 'A';
+  let cats = [];
+  function buildCats() {
+    cats = D.versions[ver].tabs.map(t => ({ id: t.id, name: t.name, icon: t.icon,
+      sections: t.sections.map(x => ({ t: x.t, items: x.keys.map(k => ITEM[k]).filter(it => it && (mode === 'pause' || it.key !== 'pitCmp')) })).filter(x => x.items.length) }));
+  }
+  buildCats();
   let tab = cats.find(c => c.id === q.get('tab')) ? q.get('tab') : cats[0].id;
+  const allItems = () => cats.flatMap(c => c.sections.flatMap(x => x.items));
   const BG = window.MOCK_BG || {};   // (the single-file build: the race pictures inside the page)
   const bgOf = () => q.get('bg') || (document.documentElement.classList.contains('land') ? BG.land || 'bg-land.jpg' : BG.port || 'bg-port.jpg');
 
   /* ---------------- the top ---------------- */
   const top = $('.sx-top');
   let tabsEl = null, ink = null;
+  function actHandler(e) {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    if (b.dataset.act === 'to-title') { setMode('menu'); toast('Nastavitve iz glavnega menija: brez gumbov pavze, zgoraj Končano.'); }
+    else toast('V maketi: »' + (b.getAttribute('aria-label') || b.textContent.trim()) + '« dela kot zdaj v igri.');
+  }
   function buildTop() {
-    cats = D.cats.filter(c => mode === 'pause' || !c.pauseOnly);
+    buildCats();
+    const V = D.versions[ver], abar = mode === 'pause' && V.pause === 'bar';
     top.innerHTML = '<div class="sx-title"><i>' + (mode === 'pause' ? I.pause : I.cog) + '</i><h1>' + (mode === 'pause' ? 'Pavza' : 'Nastavitve') + '</h1></div>' +
-      '<nav class="sx-tabs" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span></button>').join('') + '<i class="sx-ink"></i></nav>' +
+      (abar ? '<div class="sx-actbar">' + D.pause.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('') + '</div>' : '') +
+      '<nav class="sx-tabs n' + cats.length + ' look-' + (V.look || 'line') + '" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span></button>').join('') + '<i class="sx-ink"></i></nav>' +
       '<button class="sx-go">' + (mode === 'pause' ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>';
     tabsEl = $('.sx-tabs'); ink = $('.sx-ink');
     tabsEl.addEventListener('click', (e) => { const b = e.target.closest('.sx-tab'); if (b) show(b.dataset.tab); });
     $('.sx-go').addEventListener('click', () => { if (mode === 'pause') resumeRace(); else { setMode('pause'); toast('Nazaj na pavzo med dirko.'); } });
+    if (abar) $('.sx-actbar').addEventListener('click', actHandler);
   }
-  function placeInk() { const b = tabsEl && tabsEl.querySelector('.sx-tab.on'); if (!b) return; ink.style.left = (b.offsetLeft + b.offsetWidth * 0.18) + 'px'; ink.style.width = (b.offsetWidth * 0.64) + 'px'; b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', '#' + v.toLowerCase()); } catch (_) { } }
+  function placeInk() { const b = tabsEl && tabsEl.querySelector('.sx-tab.on'); if (!b) return; const full = tabsEl.classList.contains('look-pill'); ink.style.left = (b.offsetLeft + (full ? 0 : b.offsetWidth * 0.18)) + 'px'; ink.style.width = (b.offsetWidth * (full ? 1 : 0.64)) + 'px'; }
   function setMode(m) { mode = m; buildTop(); if (!cats.find(c => c.id === tab)) tab = cats[0].id; show(tab, true); updateBar(); }
   // Nadaljuj: the screen goes, the race shows with the pause button over it, which brings the screen back
   const resumeBtn = $('#resume'); resumeBtn.innerHTML = I.pause;
@@ -75,14 +99,20 @@
   }
   const bar = $('#mockbar');
   function updateBar() {
-    bar.innerHTML = '<b>Nove nastavitve</b><span class="mb-seg"><button data-o="0" class="' + (devLand ? '' : 'on') + '">Telefon pokonci</button><button data-o="1" class="' + (devLand ? 'on' : '') + '">Telefon ležeče</button></span>' +
+    bar.innerHTML = '<b>Nove nastavitve</b><span class="mb-seg">' + Object.keys(D.versions).map(v => '<button data-v="' + v + '" class="' + (v === ver ? 'on' : '') + '" title="' + D.versions[v].name + '">' + v + ' · ' + D.versions[v].name + '</button>').join('') + '</span><span class="mb-seg"><button data-o="0" class="' + (devLand ? '' : 'on') + '">Telefon pokonci</button><button data-o="1" class="' + (devLand ? 'on' : '') + '">Telefon ležeče</button></span>' +
       '<span class="mb-seg"><button data-m="pause" class="' + (mode === 'pause' ? 'on' : '') + '">Med dirko</button><button data-m="menu" class="' + (mode === 'menu' ? 'on' : '') + '">Iz glavnega menija</button></span>';
   }
   bar.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.o != null) { devLand = b.dataset.o === '1'; const cam = devLand ? 'iso' : 'chase'; if (S.camera !== cam) { S.camera = cam; const c = document.querySelector('.sx-card[data-key="camera"]'); if (c) { mark(c.querySelector('.sx-seg'), cam); A.change(c._cv, cam); } } updateBar(); layout(); }
     if (b.dataset.m) setMode(b.dataset.m);
+    if (b.dataset.v) setVer(b.dataset.v);
   });
+  // (a phone has no switches over the screen: a small one in the corner picks the version)
+  const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('')); document.body.appendChild(chip);
+  const markChip = () => { for (const b of chip.children) b.classList.toggle('on', b.dataset.v === ver); };
+  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { setVer(b.dataset.v); markChip(); toast('Različica ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } });
+  markChip();
   addEventListener('resize', layout);
 
   /* ---------------- a card: the picture, the name, the choice ---------------- */
@@ -146,32 +176,35 @@
     placeInk();
     if (list) { for (const c of list.querySelectorAll('canvas')) A.detach(c); list.remove(); }
     list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list);
-    const C = cats[i];
-    if (C.id === 'pavza') {
+    const C = cats[i], V = D.versions[ver];
+    if (i === 0 && mode === 'pause' && V.pause === 'tab') {
       const acts = h('div', 'sx-acts', D.pause.map(a => '<button class="sx-act' + (a.ghost ? ' ghost' : '') + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '">' + I[a.icon] + '<span>' + a.l + '</span></button>').join(''));
-      acts.addEventListener('click', (e) => { const b = e.target.closest('.sx-act'); if (!b) return;
-        if (b.dataset.act === 'to-title') { setMode('menu'); toast('Nastavitve iz glavnega menija: brez zavihka Pavza, zgoraj Končano.'); }
-        else toast('V maketi: »' + b.textContent.trim() + '« dela kot zdaj v igri.'); });
+      acts.addEventListener('click', actHandler);
       list.appendChild(acts);
-      list.appendChild(h('p', 'sx-strat', '<b>Strategija:</b> en postanek okoli 6. kroga, mehke → srednje.'));
     }
-    for (const it of C.items) {
-      const c = card(it); if (!visible(it)) c.classList.add('hide'); list.appendChild(c);
-      A.attach(c._cv, it.anim, it.range ? S[it.key] : S[it.key]);
+    if (i === 0 && mode === 'pause') list.appendChild(h('p', 'sx-strat', '<b>Strategija:</b> en postanek okoli 6. kroga, mehke → srednje.'));
+    for (const sec of C.sections) {
+      if (C.sections.length > 1) list.appendChild(h('div', 'sx-cat', sec.t));
+      for (const it of sec.items) {
+        const c = card(it); if (!visible(it)) c.classList.add('hide'); list.appendChild(c);
+        A.attach(c._cv, it.anim, S[it.key]);
+      }
     }
     if (still != null) requestAnimationFrame(() => stillAll());
   }
 
   /* ---------------- stills for the mockup's pictures ---------------- */
   const still = q.get('shot') ? +(q.get('t') || 2.4) : null;
+  if (still != null) document.body.dataset.shot = '1';
   function stillAll() {
     A.still = true;
     for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true);
-    for (const L of A.live) { const it = cats.flatMap(c => c.items).find(x => x.anim === L.key); const port = !document.documentElement.classList.contains('land'), tt = it && port && it.storyTp != null ? it.storyTp : it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
+    for (const L of A.live) { const it = allItems().find(x => x.anim === L.key); const port = !document.documentElement.classList.contains('land'), tt = it && port && it.storyTp != null ? it.storyTp : it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
     if (q.get('scroll')) list.scrollTop = +q.get('scroll');
+    document.body.dataset.h = Math.ceil($('.sx-top').getBoundingClientRect().bottom + list.scrollHeight);   // (the whole page: the long pictures)
     document.body.dataset.ready = '1';
   }
   buildTop(); updateBar(); layout();
   document.fonts.ready.then(() => { show(tab, true); layout(); });
-  window.SX = { S, show, set: (key, v) => { const c = document.querySelector('.sx-card[data-key="' + key + '"]'); if (c) set(c._it, v, c); } };
+  window.SX = { S, show, setVer, set: (key, v) => { const c = document.querySelector('.sx-card[data-key="' + key + '"]'); if (c) set(c._it, v, c); } };
 })();

@@ -43,6 +43,27 @@ svg { display: block; }
 .sx-tab.on { color: var(--gold); }
 .sx-tab.on svg { transform: translateY(-1px) scale(1.12); }
 .sx-tab:active svg { transform: scale(.92); }
+.sx-tabs.n3 { margin-top: 6px; }
+.sx-tabs.n3 .sx-tab { flex-direction: row; gap: 8px; min-height: 48px; font-size: 14.5px; }
+.sx-tabs.n3 .sx-tab svg { width: 21px; height: 21px; }
+/* the tabs' three looks (one per version): line (A, a gold line under the chosen one), pill (B, one bar with a gold pill sliding to the
+   chosen one), tile (C, three tiles, the chosen one framed gold) */
+.sx-tabs.look-pill { margin: 8px 0 2px; padding: 4px; border-radius: 14px; background: rgba(3,8,15,.62); border: 1.5px solid var(--edge); }
+.sx-tabs.look-pill .sx-tab { z-index: 1; min-height: 42px; padding: 4px; color: var(--lbl); }
+.sx-tabs.look-pill .sx-tab.on { color: var(--gold-ink); }
+.sx-tabs.look-pill .sx-tab.on svg { transform: none; }
+.sx-tabs.look-pill .sx-ink { top: 4px; bottom: 4px; height: auto; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); box-shadow: 0 2px 0 var(--gold-sh); }
+.sx-tabs.look-tile { margin: 8px 0 2px; gap: 8px; border-bottom: 0; overflow: visible; }
+.sx-tabs.look-tile .sx-tab { flex-direction: column; gap: 6px; min-height: 66px; border-radius: 14px; background: linear-gradient(180deg, rgba(40,58,88,.9), rgba(22,34,54,.95)); border: 1px solid rgba(160,185,230,.26); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.sx-tabs.look-tile .sx-tab svg { width: 24px; height: 24px; }
+.sx-tabs.look-tile .sx-tab.on { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), 0 0 18px rgba(255,198,41,.22), 0 3px 0 rgba(0,0,0,.35); background: linear-gradient(180deg, rgba(74,62,20,.75), rgba(32,30,22,.92)); }
+.sx-tabs.look-tile .sx-ink { display: none; }
+/* the pause's buttons in a bar of their own over the tabs (version B): small, an icon over a word */
+.sx-actbar { flex: 1 0 100%; order: 2; display: flex; gap: 6px; }
+.sx-ab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 2px 6px; border-radius: 11px; background: linear-gradient(180deg, rgba(40,58,88,.9), rgba(22,34,54,.95)); border: 1px solid rgba(160,185,230,.26); box-shadow: 0 2px 0 rgba(0,0,0,.35); font: 800 italic 10.5px/1 var(--f-ui); color: #e8eef6; }
+.sx-ab svg { width: 18px; height: 18px; color: var(--gold); }
+.sx-ab.red svg { color: #ff6a5a; }
+.sx-ab:active { transform: translateY(1px); }
 .sx-ink { position: absolute; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--gold); box-shadow: 0 0 10px rgba(255,198,41,.6); transition: left .32s cubic-bezier(.3, 1.25, .5, 1), width .32s cubic-bezier(.3, 1.25, .5, 1); pointer-events: none; }
 
 /* ---------------- the list ---------------- */
@@ -52,7 +73,8 @@ svg { display: block; }
 .sx-list.in.left { animation-name: sx-in-l; }
 @keyframes sx-in { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
 @keyframes sx-in-l { from { opacity: 0; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
-.sx-cat { margin: 2px 2px -4px; font: 900 italic 12px/1 var(--f-ui); color: var(--lbl); letter-spacing: .08em; text-transform: uppercase; }
+.sx-cat { display: flex; align-items: center; gap: 10px; margin: 8px 2px -2px; font: 900 italic 12.5px/1 var(--f-ui); color: var(--gold); letter-spacing: .08em; text-transform: uppercase; }
+.sx-cat::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,198,41,.35), rgba(255,198,41,0)); }
 
 .sx-card { position: relative; flex: none; border-radius: 16px; padding: 8px 8px 10px; background: linear-gradient(180deg, var(--card1), var(--card2)); border: 1px solid var(--edge); box-shadow: 0 8px 22px rgba(0,0,0,.28); }
 .sx-card.hide { display: none; }
@@ -124,6 +146,15 @@ html.land .sx-row > .sx-name { flex: 0 0 34%; flex-direction: column; align-item
 html.land .sx-row > .sx-name b { margin-left: 0; }
 html.land .sx-row > .sx-seg, html.land .sx-row > .sx-range, html.land .sx-row > .sx-input, html.land .sx-row > .sx-more { flex: 1 1 auto; }
 html.land .sx-acts { grid-template-columns: repeat(3, 1fr); }
+html.land .sx-actbar { order: 0; flex: 0 0 auto; gap: 4px; }
+html.land .sx-ab { flex: 0 0 auto; width: 38px; padding: 9px 0; }
+html.land .sx-ab span { display: none; }
+html.land .sx-tabs.n3 { margin-top: 0; }
+html.land .sx-tabs.n3 .sx-tab { min-height: 42px; font-size: 13.5px; }
+html.land .sx-tabs.look-pill, html.land .sx-tabs.look-tile { margin: 0; }
+html.land .sx-tabs.look-pill .sx-tab { min-height: 34px; }
+html.land .sx-tabs.look-tile .sx-tab { flex-direction: row; min-height: 40px; gap: 7px; }
+html.land .sx-tabs.look-tile .sx-tab svg { width: 19px; height: 19px; }
 html.land.narrow .sx-tab span { display: none; }
 html.land.narrow .sx-tabs { grid-auto-columns: minmax(40px, 1fr); }
 html.land.narrow .sx-title h1 { font-size: 17px; }
@@ -151,6 +182,11 @@ html.dev #race, html.dev #set, html.dev #resume { position: absolute; }
 #resume { position: fixed; top: calc(12px + var(--st)); right: calc(12px + var(--sr)); width: 48px; height: 48px; border-radius: 12px; display: none; align-items: center; justify-content: center; background: rgba(16,20,27,.6); border: 2px solid rgba(255,255,255,.55); color: #fff; }
 #resume.on { display: flex; }
 #resume svg { width: 22px; height: 22px; }
+/* the mockup's version switch on a phone (A, B, C), in the corner */
+.vchip { position: fixed; z-index: 8; right: calc(10px + var(--sr)); bottom: calc(10px + var(--sb)); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8,13,22,.85); border: 1px solid var(--edge); }
+.vchip button { width: 30px; height: 30px; border-radius: 50%; font: 900 italic 13px/1 var(--f-ui); color: var(--lbl); }
+.vchip button.on { background: var(--gold); color: var(--gold-ink); }
+html.dev .vchip, body[data-shot] .vchip { display: none; }
 #toast { position: fixed; left: 50%; bottom: calc(18px + var(--sb)); transform: translate(-50%, 20px); max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(8,13,22,.94); border: 1px solid var(--edge); font: 700 italic 13px/1.35 var(--f-ui); color: #fff; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 9; text-align: center; }
 #toast.on { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .sx-list.in, .sx-card.grow { animation: none; } .sx-thumb, .sx-ink { transition: none; } }

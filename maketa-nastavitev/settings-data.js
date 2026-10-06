@@ -120,12 +120,54 @@ window.SETTINGS_DATA = (function () {
         { key: 'profile', anim: 'profile', name: 'Profil', buttons: ['Izvozi v datoteko', 'Uvozi iz datoteke'], story: 'Datoteka s tvojimi rekordi gre iz telefona v mapo in nazaj.' }
       ] }
     ],
-    // the pause's own buttons (the first tab, only during a race)
+    // the pause's own buttons (only during a race; Kamera has its own setting now, so no camera button)
     pause: [
-      { act: 'restart', l: 'Ponovi dirko', icon: 'restart' }, { act: 'photo', l: 'Foto', icon: 'photo' },
-      { act: 'car-view', l: 'Ogled vozila', icon: 'car' }, { act: 'cam-next', l: 'Kamera: za avtom', icon: 'camera' },
-      { act: 'fullscreen', l: 'Celoten zaslon', icon: 'full' }, { act: 'retire', l: 'Odstopi', icon: 'retire' },
-      { act: 'to-title', l: 'Glavni meni', icon: 'home', ghost: true }
-    ]
+      { act: 'restart', l: 'Ponovi dirko', s: 'Ponovi', icon: 'restart' }, { act: 'photo', l: 'Foto', s: 'Foto', icon: 'photo' },
+      { act: 'car-view', l: 'Ogled vozila', s: 'Ogled', icon: 'car' }, { act: 'fullscreen', l: 'Celoten zaslon', s: 'Zaslon', icon: 'full' },
+      { act: 'retire', l: 'Odstopi', s: 'Odstopi', icon: 'retire' }, { act: 'to-title', l: 'Glavni meni', s: 'Meni', icon: 'home', ghost: true }
+    ],
+    // three ways to put every setting in three tabs (each setting once): the tabs, their sections, where the pause's buttons go
+    // ('tab': at the top of the first tab; 'bar': a bar of their own over the tabs, on every tab)
+    versions: {
+      A: { id: 'A', look: 'line', name: 'Dirka · Vožnja · Slika in zvok', idea: 'Po delih igre: dirka, vožnja avta, slika in zvok. Pavza odpre zavihek Dirka z gumbi pavze na vrhu.', pause: 'tab', tabs: [
+        { id: 'dirka', name: 'Dirka', icon: 'flag', sections: [
+          { t: 'Pravila dirke', keys: ['pitCmp', 'difficulty', 'damage', 'faults'] },
+          { t: 'Med dirko', keys: ['ghost', 'tower', 'radio'] },
+          { t: 'Pred dirko in po njej', keys: ['intro', 'pkFly', 'hlv'] },
+          { t: 'Igralec', keys: ['name', 'profile'] }] },
+        { id: 'voznja', name: 'Vožnja', icon: 'wheel', sections: [
+          { t: 'Upravljanje', keys: ['control', 'tiltSens', 'tiltInvert', 'autoGas', 'assist', 'kontrole'] },
+          { t: 'Kamera', keys: ['camera', 'zoom', 'carLow'] },
+          { t: 'Pomoč na cesti', keys: ['line', 'notes', 'pkNotes'] }] },
+        { id: 'slika', name: 'Slika in zvok', icon: 'media', sections: [
+          { t: 'Slika', keys: ['quality', 'detail', 'shadows', 'saver'] },
+          { t: 'Zvok', keys: ['sound', 'music', 'comm', 'codrv', 'vibrate'] },
+          { t: 'Jezik', keys: ['lang'] }] }] },
+      B: { id: 'B', look: 'pill', name: 'Igra · Pogled · Zvok', idea: 'Po tem, kaj počneš, vidiš in slišiš. Gumbi pavze so v svoji vrstici nad zavihki, zato so vsi trije zavihki samo nastavitve.', pause: 'bar', tabs: [
+        { id: 'igra', name: 'Igra', icon: 'pad', sections: [
+          { t: 'Upravljanje', keys: ['control', 'tiltSens', 'tiltInvert', 'autoGas', 'assist', 'kontrole'] },
+          { t: 'Dirka', keys: ['difficulty', 'damage', 'faults', 'pitCmp'] },
+          { t: 'Pred dirko in po njej', keys: ['intro', 'pkFly', 'hlv'] },
+          { t: 'Igralec', keys: ['lang', 'name', 'profile'] }] },
+        { id: 'pogled', name: 'Pogled', icon: 'eye', sections: [
+          { t: 'Kamera', keys: ['camera', 'zoom', 'carLow'] },
+          { t: 'Na zaslonu med vožnjo', keys: ['line', 'notes', 'pkNotes', 'ghost', 'tower'] },
+          { t: 'Grafika', keys: ['quality', 'detail', 'shadows', 'saver'] }] },
+        { id: 'zvok', name: 'Zvok', icon: 'sound', sections: [
+          { t: 'Zvok', keys: ['sound', 'music'] },
+          { t: 'Glasovi', keys: ['comm', 'codrv', 'radio'] },
+          { t: 'Telefon', keys: ['vibrate'] }] }] },
+      C: { id: 'C', look: 'tile', name: 'Osnovno · Pomoči · Napredno', idea: 'Po tem, kako pogosto jih spreminjaš: najpogostejše najprej. Pavza odpre zavihek Osnovno z gumbi pavze na vrhu.', pause: 'tab', tabs: [
+        { id: 'osnovno', name: 'Osnovno', icon: 'star', sections: [
+          { t: 'Najpogosteje', keys: ['pitCmp', 'control', 'tiltSens', 'tiltInvert', 'camera', 'zoom', 'difficulty', 'assist', 'sound', 'quality', 'lang'] }] },
+        { id: 'pomoci', name: 'Pomoči', icon: 'help', sections: [
+          { t: 'Pri vožnji', keys: ['autoGas', 'line', 'notes', 'pkNotes', 'ghost'] },
+          { t: 'Podatki in glasovi', keys: ['tower', 'radio', 'codrv', 'comm'] }] },
+        { id: 'napredno', name: 'Napredno', icon: 'sliders', sections: [
+          { t: 'Dirka', keys: ['damage', 'faults', 'carLow'] },
+          { t: 'Pred dirko in po njej', keys: ['intro', 'pkFly', 'hlv', 'music'] },
+          { t: 'Telefon', keys: ['detail', 'shadows', 'saver', 'vibrate'] },
+          { t: 'Igralec', keys: ['kontrole', 'name', 'profile'] }] }] }
+    }
   };
 })();
