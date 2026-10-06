@@ -18,6 +18,7 @@
   .row { display: flex; gap: 34px; align-items: flex-start; }
   .row.col { flex-direction: column; gap: 26px; }
   .row.grid2 { display: grid; grid-template-columns: repeat(2, auto); gap: 26px 34px; }
+  .lcol { display: flex; flex-direction: column; gap: 26px; }   /* (kind=mix: the upright phones in a row, the lying ones stacked beside them) */
   figure { margin: 0; }
   figcaption { margin: 0 0 10px 4px; font: 900 italic 17px/1.2 var(--f-ui); color: var(--gold); text-transform: uppercase; }
   figcaption span { display: block; margin-top: 4px; font: 600 italic 13.5px/1.35 var(--f-ui); color: #c9d3e2; text-transform: none; max-width: 400px; }
@@ -33,17 +34,19 @@
 <header><i class="kerb"></i><h1 id="t"></h1></header>
 <div class="row" id="r"></div>
 <script>
-  // ?title=&sub=&kind=port|land&imgs=path~caption~text|path~caption~text
+  // ?title=&sub=&kind=port|land|land2|mix&imgs=path~caption~text|path~caption~text (mix: path~caption~text~l marks a lying phone)
   const q = new URLSearchParams(location.search), land = q.get('kind') === 'land' || q.get('kind') === 'land2';
   document.getElementById('t').innerHTML = (q.get('title') || '') + (q.get('sub') ? '<small>' + q.get('sub') + '</small>' : '');
   const r = document.getElementById('r'); if (land) r.className = q.get('kind') === 'land2' ? 'row grid2 land' : 'row col land';
   const items = (q.get('imgs') || '').split('|').filter(Boolean).map(s => s.split('~'));
   let left = items.length;
-  for (const [src, cap, txt] of items) {
+  const lcol = q.get('kind') === 'mix' ? document.createElement('div') : null; if (lcol) lcol.className = 'lcol land';
+  for (const [src, cap, txt, o] of items) {
     const f = document.createElement('figure'); f.innerHTML = '<figcaption>' + (cap || '') + (txt ? '<span>' + txt + '</span>' : '') + '</figcaption><div class="dev"><img alt=""></div>';
     const img = f.querySelector('img'); img.onload = () => { img.style.width = (img.naturalWidth / 2) + 'px'; if (--left === 0) document.fonts.ready.then(() => { document.body.dataset.ready = '1'; }); }; img.src = src;
-    r.appendChild(f);
+    (lcol && o === 'l' ? lcol : r).appendChild(f);
   }
+  if (lcol) r.appendChild(lcol);
 </script>
 </body>
 </html>

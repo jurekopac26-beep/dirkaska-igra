@@ -39,9 +39,9 @@
     (() => { try { return JSON.parse(q.get('s') || '{}'); } catch (_) { return {}; } })());
   A.env = { get: (k) => k === 'orient' ? (document.documentElement.classList.contains('land') ? 'land' : 'port') : S[k], tilt: () => null };
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
-  // the three ways to group the settings (D.versions: A, B, C): the tabs, their sections; ?v=B or #b picks one
+  // the three looks of the chosen layout (D.versions: A, B, C): the tabs, their sections, where the pause's buttons go; ?v=B or #b picks one
   const ITEM = {}; for (const c of D.cats) for (const it of c.items) ITEM[it.key] = it;
-  let ver = String(q.get('v') || location.hash.slice(1) || '1').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
+  let ver = String(q.get('v') || location.hash.slice(1) || 'A').toUpperCase(); if (!D.versions[ver]) ver = Object.keys(D.versions)[0];
   let cats = [];
   function buildCats() {
     cats = D.versions[ver].tabs.map(t => ({ id: t.id, name: t.name, icon: t.icon,
@@ -58,25 +58,46 @@
   let tabsEl = null, ink = null;
   function actHandler(e) {
     const b = e.target.closest('[data-act]'); if (!b) return;
-    if (b.dataset.act === 'to-title') { setMode('menu'); toast('Nastavitve iz glavnega menija: brez gumbov pavze, zgoraj Končano.'); }
+    if (b.dataset.act === 'go') { goOn(); return; }
+    if (b.dataset.act === 'to-title') { setMode('menu'); toast('Nastavitve iz glavnega menija: brez gumbov pavze, namesto Nadaljuj je Končano.'); }
     else toast('V maketi: »' + (b.getAttribute('aria-label') || b.textContent.trim()) + '« dela kot zdaj v igri.');
   }
   let builtLand = null;
+  const keys = (arr) => arr.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('');
+  function goOn() { if (mode === 'pause') resumeRace(); else { setMode('pause'); toast('Nazaj na pavzo med dirko.'); } }
   function buildTop() {
     buildCats();
-    const V = D.versions[ver], land = root.classList.contains('land'), abar = mode === 'pause' && (V.pause === 'bar' || (V.pause === 'bottom' && land)), bbar = mode === 'pause' && V.pause === 'bottom' && !land;
-    const old = $('.sx-botbar'); if (old) old.remove();
-    if (bbar) { const bb = h('div', 'sx-botbar', D.pause.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('')); bb.addEventListener('click', actHandler); $('#set').appendChild(bb); }
-    root.style.setProperty('--bbh', '0px'); if (bbar) requestAnimationFrame(() => { const bb = $('.sx-botbar'); if (bb) root.style.setProperty('--bbh', bb.offsetHeight + 'px'); });   // (the switch 1 2 3 and the notes go above the bar)
+    const V = D.versions[ver], land = root.classList.contains('land'), P = V.pause, pz = mode === 'pause';
+    const abar = pz && (P === 'bar' || (P === 'bottom' && land)), bbar = pz && P === 'bottom' && !land, dock = P === 'dock' && !land, rail = P === 'dock' && land;
+    for (const v of Object.values(D.versions)) root.classList.toggle('skin-' + v.skin, v === V);
+    for (const el of document.querySelectorAll('.sx-botbar, .sx-rail')) el.remove();
+    // (look B: Nadaljuj is a big round button, in the middle of the bar at the foot or at the foot of the rail on the right)
+    const play = '<button class="sx-play" data-act="go" aria-label="' + (pz ? 'Nadaljuj' : 'Končano') + '"><i>' + (pz ? I.play : I.check) + '</i><span>' + (pz ? 'Nadaljuj' : 'Končano') + '</span></button>';
+    let bb = null;
+    if (bbar) bb = h('div', 'sx-botbar', keys(D.pause));
+    if (dock) bb = h('div', 'sx-botbar sx-dock' + (pz ? '' : ' solo'), pz ? keys(D.pause.slice(0, 3)) + play + keys(D.pause.slice(3)) : '<button class="sx-done" data-act="go"><span>Končano</span>' + I.check + '</button>');
+    if (bb) { bb.addEventListener('click', actHandler); $('#set').appendChild(bb); }
+    if (rail) { const r = h('div', 'sx-rail', (pz ? keys(D.pause) : '') + play); r.addEventListener('click', actHandler); body.appendChild(r); }
+    root.style.setProperty('--brw', rail ? '70px' : '0px');   // (and to the left of the rail)
+    root.style.setProperty('--bbh', '0px'); if (bb) requestAnimationFrame(() => { if (bb.isConnected) root.style.setProperty('--bbh', (bb.offsetHeight + (dock && pz ? 30 : 0)) + 'px'); });   // (the switch A B C and the notes go above the bar)
     builtLand = land;
-    top.innerHTML = '<div class="sx-title"><i>' + (mode === 'pause' ? I.pause : I.cog) + '</i><h1>' + (mode === 'pause' ? 'Pavza' : 'Nastavitve') + '</h1></div>' +
-      (abar ? '<div class="sx-actbar">' + D.pause.map(a => '<button class="sx-ab' + (a.act === 'retire' ? ' red' : '') + '" data-act="' + a.act + '" aria-label="' + a.l + '">' + I[a.icon] + '<span>' + a.s + '</span></button>').join('') + '</div>' : '') +
-      '<nav class="sx-tabs n' + cats.length + ' look-' + (V.look || 'line') + '" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span></button>').join('') + '<i class="sx-ink"></i></nav>' +
-      '<button class="sx-go">' + (mode === 'pause' ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>';
+    top.innerHTML = '<div class="sx-title"><i>' + (pz ? I.pause : I.cog) + '</i><div class="sx-tt"><h1>' + (pz ? 'Pavza' : 'Nastavitve') + '</h1><small>' + (pz ? 'Krog 1/3 · 12. mesto' : 'Iz glavnega menija') + '</small></div></div>' +
+      (abar ? '<div class="sx-actbar">' + keys(D.pause) + '</div>' : '') +
+      '<nav class="sx-tabs n' + cats.length + ' look-' + (V.look || 'line') + '" role="tablist" aria-label="Kategorije nastavitev">' + cats.map(c => '<button class="sx-tab" role="tab" data-tab="' + c.id + '" aria-selected="false">' + I[c.icon] + '<span>' + c.name + '</span><em></em></button>').join('') + '<i class="sx-ink"></i></nav>' +
+      (P === 'dock' ? '' : '<button class="sx-go">' + (pz ? '<span>Nadaljuj</span>' + I.play : '<span>Končano</span>' + I.check) + '</button>');
     tabsEl = $('.sx-tabs'); ink = $('.sx-ink');
     tabsEl.addEventListener('click', (e) => { const b = e.target.closest('.sx-tab'); if (b) show(b.dataset.tab); });
-    $('.sx-go').addEventListener('click', () => { if (mode === 'pause') resumeRace(); else { setMode('pause'); toast('Nazaj na pavzo med dirko.'); } });
+    if ($('.sx-go')) $('.sx-go').addEventListener('click', goOn);
     if (abar) $('.sx-actbar').addEventListener('click', actHandler);
+  }
+  // (look C: each tab and each part says how many settings it shows; Nagib's two come and go)
+  function counts() {
+    if (!list) return;
+    for (const C of cats) {
+      const n = [...list.querySelectorAll('.sx-card[data-part="' + C.id + '"]')].filter(c => !c.classList.contains('hide')).length;
+      const t = tabsEl && tabsEl.querySelector('[data-tab="' + C.id + '"] em'); if (t) t.textContent = n;
+      const p = list.querySelector('[data-part="' + C.id + '"].sx-big em'); if (p) p.textContent = n + (n === 1 ? ' nastavitev' : n === 2 ? ' nastavitvi' : n < 5 ? ' nastavitve' : ' nastavitev');
+    }
   }
   function setVer(v) { ver = v; buildTop(); tab = cats[0].id; show(tab, true); updateBar(); try { if (!q.get('shot')) history.replaceState(null, '', '#' + v.toLowerCase()); } catch (_) { } }
   const listMode = () => D.versions[ver].mode === 'list';
@@ -101,7 +122,7 @@
     root.classList.toggle('narrow', land && (dev ? 844 : innerWidth) < 760);
     if (dev) { const w = land ? 864 : 410, hh = land ? 410 : 864, k = Math.min(1, (innerHeight - 90) / hh, (innerWidth - 40) / w); root.style.setProperty('--k', k.toFixed(3)); }
     $('#race').style.backgroundImage = 'url(' + bgOf() + ')';
-    if (builtLand !== null && builtLand !== land && D.versions[ver].pause === 'bottom') { buildTop(); show(tab, true); }
+    if (builtLand !== null && builtLand !== land && /bottom|dock/.test(D.versions[ver].pause)) { buildTop(); show(tab, true); }
     placeInk(); for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true); A.kick();
   }
   const bar = $('#mockbar');
@@ -118,7 +139,7 @@
   // (a phone has no switches over the screen: a small one in the corner picks the version)
   const chip = h('div', 'vchip', Object.keys(D.versions).map(v => '<button data-v="' + v + '">' + v + '</button>').join('')); document.body.appendChild(chip);
   const markChip = () => { for (const b of chip.children) b.classList.toggle('on', b.dataset.v === ver); };
-  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { setVer(b.dataset.v); markChip(); toast('Različica ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } });
+  chip.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { setVer(b.dataset.v); markChip(); toast('Videz ' + b.dataset.v + ': ' + D.versions[b.dataset.v].name); } });
   markChip();
   addEventListener('resize', layout);
 
@@ -172,6 +193,7 @@
     A.change(c._cv, S[it.key]);
     // the cards that only show with this choice (Nagib: its sensitivity and direction) come and go
     for (const o of document.querySelectorAll('.sx-card')) { const vis = visible(o._it); if (vis === !o.classList.contains('hide')) continue; o.classList.toggle('hide', !vis); if (vis) { o.classList.remove('grow'); void o.offsetWidth; o.classList.add('grow'); A.kick(); for (const s of o.querySelectorAll('.sx-seg')) placeThumb(s, true); } }
+    counts();
   }
 
   /* ---------------- a tab's page ---------------- */
@@ -181,7 +203,7 @@
     for (const sec of C.sections) {
       if (C.sections.length > 1) list.appendChild(h('div', 'sx-cat', sec.t));
       for (const it of sec.items) {
-        const c = card(it); if (!visible(it)) c.classList.add('hide'); list.appendChild(c);
+        const c = card(it); c.dataset.part = C.id; if (!visible(it)) c.classList.add('hide'); list.appendChild(c);
         A.attach(c._cv, it.anim, S[it.key]);
       }
     }
@@ -198,7 +220,7 @@
   function show(id, instant) {
     const i = cats.findIndex(c => c.id === id); if (i < 0) return;
     if (listMode() && list && list._all && !instant) {   // (the one list: a tab only scrolls to its part)
-      const hd = list.querySelector('[data-part="' + id + '"]'); markTab(id); list._jump = Date.now();
+      const hd = list.querySelector('.sx-big[data-part="' + id + '"]'); markTab(id); list._jump = Date.now();
       if (hd) list.scrollTo({ top: hd.offsetTop - 6, behavior: 'smooth' }); return;
     }
     const dir = i >= idx ? '' : ' left'; idx = i;
@@ -207,17 +229,18 @@
     list = h('div', 'sx-list' + (instant ? '' : ' in' + dir)); body.appendChild(list);
     if (listMode()) {
       list._all = true; pauseTop();
-      for (const C of cats) { list.appendChild(h('div', 'sx-big', I[C.icon] + '<span>' + C.name + '</span>')).dataset.part = C.id; addCards(C); }
+      for (const C of cats) { list.appendChild(h('div', 'sx-big', I[C.icon] + '<span>' + C.name + '</span><em></em><small>' + C.sections.map(x => x.t).join(' · ') + '</small>')).dataset.part = C.id; addCards(C); }
       list.addEventListener('scroll', () => {   // (the tab of the part at the top lights up)
         if (list._jump && Date.now() - list._jump < 700) return;
-        let cur = cats[0].id; for (const hd of list.querySelectorAll('[data-part]')) if (hd.offsetTop - list.scrollTop <= 60) cur = hd.dataset.part;
+        let cur = cats[0].id; for (const hd of list.querySelectorAll('.sx-big[data-part]')) if (hd.offsetTop - list.scrollTop <= 60) cur = hd.dataset.part;
         if (cur !== tab) markTab(cur);
       }, { passive: true });
-      if (i > 0) { const hd = list.querySelector('[data-part="' + id + '"]'); if (hd) requestAnimationFrame(() => { list.scrollTop = hd.offsetTop - 6; }); }
+      if (i > 0) { const hd = list.querySelector('.sx-big[data-part="' + id + '"]'); if (hd) requestAnimationFrame(() => { list.scrollTop = hd.offsetTop - 6; }); }
     } else {
       if (i === 0) pauseTop();
       addCards(cats[i]);
     }
+    counts();
     if (still != null) requestAnimationFrame(() => stillAll());
   }
 
@@ -229,11 +252,11 @@
     for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true);
     for (const L of A.live) { const it = allItems().find(x => x.anim === L.key); const port = !document.documentElement.classList.contains('land'), tt = it && port && it.storyTp != null ? it.storyTp : it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
     if (q.get('scroll')) list.scrollTop = +q.get('scroll');
-    if (listMode() && tab !== cats[0].id) { const hd = list.querySelector('[data-part="' + tab + '"]'); if (hd) list.scrollTop = hd.offsetTop - 6; }
+    if (listMode() && tab !== cats[0].id) { const hd = list.querySelector('.sx-big[data-part="' + tab + '"]'); if (hd) list.scrollTop = hd.offsetTop - 6; }
     const bb = $('.sx-botbar'), topH = $('.sx-top').getBoundingClientRect().bottom, bbH = bb ? bb.offsetHeight : 0;
     document.body.dataset.h = Math.ceil(topH + list.scrollHeight + bbH);   // (the whole page: the long pictures)
     if (listMode()) {   // (one part of the one list, from its heading to the next one)
-      const parts = [...list.querySelectorAll('[data-part]')], k = parts.findIndex(p => p.dataset.part === tab);
+      const parts = [...list.querySelectorAll('.sx-big[data-part]')], k = parts.findIndex(p => p.dataset.part === tab);
       const a = k > 0 ? parts[k].offsetTop - 6 : 0, b = k + 1 < parts.length ? parts[k + 1].offsetTop - 6 : list.scrollHeight;
       document.body.dataset.hp = Math.ceil(topH + b - a + bbH);
     }

@@ -2,9 +2,19 @@
 
 Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezana z igro**: igra je ne naloži in nič v igri se ne spremeni. Ko bo predlog potrjen, bo zaslon prenesen v igro (`index.html`, `js/game.js`, `css/style.css`, `js/lang.js`).
 
-Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za način *1, 2, 3*, *Telefon pokonci / ležeče* in *Med dirko / Iz glavnega menija*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
+Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj so stikala za videz *A, B, C*, *Telefon pokonci / ležeče* in *Med dirko / Iz glavnega menija*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
 
-**Zadnji predlog: trije zavihki Igra · Grafika · Zvok, v treh načinih.** Vseh 34 nastavitev je v treh zavihkih, vsaka natanko enkrat; zavihka Splošno ni več. Načini so v `settings-data.js` (`versions`), slike v `slike/igra-grafika-zvok/`:
+**Zadnji predlog: izbrani način 3 (en dolg seznam) v treh videzih.** Vsi trije imajo enak zaslon: zgoraj tri ploščice Igra, Grafika in Zvok, pod njimi vse nastavitve v enem seznamu (zavihek skoči na svoj del, med drsenjem zasveti sam), gumbi pavze spodaj. Nastavitve in njihov vrstni red so v vseh treh enaki. Videzi so v `settings-data.js` (`versions`), slike v `slike/videz/` (vsaka: pokonci in ležeče, prvi zaslon po pavzi in del Grafika):
+
+| Slika | Videz |
+| --- | --- |
+| `A-ploscice.png` | **A · Ploščice**: tako kot na izbrani sliki. Nadaljuj zgoraj desno, gumbi pavze v vrstici spodaj (ležeče ob naslovu), vsak del z velikim naslovom in zlato črto. |
+| `B-pod-palcem.png` | **B · Pod palcem**: Nadaljuj je velik okrogel gumb na sredini spodnje vrstice, gumbi pavze levo in desno od njega; zgoraj je samo ena vrstica (naslov in zavihki), zato je za nastavitve več prostora. Ležeče so gumbi v stolpcu desno, Nadaljuj na dnu, pod desnim palcem. Iz glavnega menija je spodaj širok gumb Končano. |
+| `C-kot-glavni-meni.png` | **C · Kot glavni meni**: v slogu novega glavnega menija: jeklene tipke, rdeč gumb Nadaljuj (kot gumb za start dirke), pod naslovom stanje dirke, zavihki s številom nastavitev in modrim robom izbranega, vsak del kot kartica menija z robnikom, vsaka nastavitev z barvnim robom svojega dela (Igra robnik, Grafika modra, Zvok zlata). |
+
+V maketi videz izbereš s stikalom nad telefonom (računalnik), z gumbi A, B, C v kotu (telefon), z `?v=B` ali s `#b` na koncu povezave.
+
+**Predlog pred tem: trije zavihki Igra · Grafika · Zvok, v treh načinih** (izbran je način 3). Vseh 34 nastavitev je v treh zavihkih, vsaka natanko enkrat; zavihka Splošno ni več. Načini so v `settings-data.js` (`ways`), slike v `slike/igra-grafika-zvok/`:
 
 | Slika | Kaj pokaže |
 | --- | --- |
@@ -19,8 +29,6 @@ Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/Pp
 - Zvok je v vseh treh enak: Zvok, Glasba v uvodu; Komentator, Sovoznik na reliju, Radio ekipe; Vibracija.
 
 Gumbi pavze so v vseh treh: Ponovi dirko, Foto, Ogled vozila, Celoten zaslon, Odstopi, Glavni meni. Gumba »Kamera« ni več, ker je Kamera zdaj nastavitev v zavihku.
-
-V maketi način izbereš s stikalom nad telefonom (računalnik), z gumbi 1, 2, 3 v kotu (telefon), z `?v=2` ali s `#2` na koncu povezave.
 
 Predloga pred tem (samo slike, v maketi ju ni več):
 
@@ -38,7 +46,7 @@ Predloga pred tem (samo slike, v maketi ju ni več):
 ## Zaslon
 
 - Pavza odpre nastavitve. Zgoraj so trije **zavihki** Igra, Grafika in Zvok, pod njimi so nastavitve **ena pod drugo**, razdeljene na razdelke; seznam se drsi navzdol.
-- Zgoraj desno je vedno **Nadaljuj** (iz glavnega menija **Končano**, brez gumbov pavze, strategije in Gum v boksih).
+- **Nadaljuj** (iz glavnega menija **Končano**, brez gumbov pavze, strategije in Gum v boksih) je zgoraj desno, pri videzu B spodaj na sredini (ležeče desno spodaj).
 - Občutljivost nagiba in Smer nagiba se pojavita samo, ko izbereš Nagib; Opozorila na ovinke (Pikes Peak) so samo na tej progi.
 - **Pokonci**: naslov in Nadaljuj v prvi vrstici, zavihki v drugi; ime nastavitve nad izbiro; animacije so višje (200 px).
 - **Ležeče**: naslov, zavihki in Nadaljuj v eni vrstici, da ostane čim več prostora; ime nastavitve levo, izbira desno, animacija nad njima. Kartice so na sredini, široke največ 640 px.
@@ -54,7 +62,7 @@ Datoteke:
 - `settings-data.js`: kategorije, nastavitve, možnosti in opisi animacij;
 - `settings.js`, `settings.css`, `index.html`: zaslon;
 - `storyboard.html`: vse možnosti vseh animacij naenkrat (iz njega so slike 3–5 v `slike/pokonci/` in `slike/lezece/`);
-- `board.html`: sestavljanje slik telefonov;
-- `primerjava.html`: primerjava treh načinov (kaj je v katerem zavihku).
+- `primerjava.html`: primerjava treh načinov (kaj je v katerem zavihku);
+- `board.html`: sestavljanje slik (`kind=mix`: telefoni pokonci v vrsti, ležeči drug pod drugim ob njih).
 
-Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=1|2|3` (način), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).
+Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=igra`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `v=A|B|C` (videz), `mode=pause|menu`, `tab=igra|grafika|zvok`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).

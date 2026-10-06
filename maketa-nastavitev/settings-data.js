@@ -2,7 +2,7 @@
    the picture over it (anim: its SetAnim scene). story: what the picture shows for that option (the storyboard's captions). */
 window.SETTINGS_DATA = (function () {
   const OFFON = (a, b) => [{ v: 0, l: 'Izklop', story: a }, { v: 1, l: 'Vklop', story: b }];
-  return {
+  const D = {
     cats: [
       { id: 'pavza', name: 'Pavza', icon: 'pause', pauseOnly: true, items: [
         { key: 'pitCmp', anim: 'pitCmp', name: 'Gume v boksih', when: 'dirka z boksi', opts: [
@@ -129,7 +129,7 @@ window.SETTINGS_DATA = (function () {
     // three ways to lay out the three tabs Igra · Grafika · Zvok (each setting once): which settings each tab holds, its sections, the
     // screen's way of working (mode 'tabs': a page per tab; 'list': one long list, the tabs jump to its parts and follow the scroll), where the
     // pause's buttons go ('bar': a bar over the tabs; 'tab': at the top of the first tab; 'bottom': a bar at the foot, upright) and the tabs' look
-    versions: {
+    ways: {
       1: { id: '1', mode: 'tabs', pause: 'bar', look: 'line', name: 'Ločeni zavihki', short: 'Grafika je vse, kar vidiš',
         idea: 'Vsak zavihek je svoja stran. Grafika ima vse, kar vidiš: kamero, kar je na zaslonu med vožnjo, kakovost slike, uvod in video. Gumbi pavze so v vrstici nad zavihki.', tabs: [
         { id: 'igra', name: 'Igra', icon: 'pad', sections: [
@@ -177,4 +177,17 @@ window.SETTINGS_DATA = (function () {
           { t: 'Telefon', keys: ['vibrate'] }] }] }
     }
   };
+  // the chosen way (3: one long list, the tiles at the top, the pause's buttons at the foot) in three looks, each with the same settings in
+  // the same order: A as in the picture the player chose; B with Nadaljuj under the thumb (in the middle of the bar at the foot, or at the
+  // foot of a rail on the right when lying); C in the look of the new main menu (steel keys, the red button, cyan for the chosen tab)
+  D.versions = {};
+  for (const [id, pause, name, short, idea] of [
+    ['A', 'bottom', 'Ploščice', 'Tako kot na izbrani sliki',
+      'Zavihki so tri ploščice, izbrana je zlato obrobljena. Vsak del seznama ima velik naslov z zlato črto. Nadaljuj je zgoraj desno, gumbi pavze so v vrstici spodaj (ležeče zgoraj, ob naslovu).'],
+    ['B', 'dock', 'Pod palcem', 'Nadaljuj spodaj na sredini',
+      'Vse, kar tapneš najpogosteje, je pod palcem: Nadaljuj je velik okrogel gumb na sredini spodnje vrstice, gumbi pavze so levo in desno od njega. Zgoraj je samo ena vrstica (naslov in zavihki), zato je za nastavitve več prostora. Ležeče so gumbi v stolpcu desno, Nadaljuj na dnu, pod desnim palcem.'],
+    ['C', 'bottom', 'Kot glavni meni', 'V slogu novega glavnega menija',
+      'Isti zaslon v slogu glavnega menija: jeklene tipke, rdeč gumb Nadaljuj kot gumb za start dirke, zavihki s številom nastavitev in modrim robom izbranega, deli kot kartice menija z robnikom, vsaka nastavitev z barvnim robom svojega dela. Pod naslovom je stanje dirke.']
+  ]) D.versions[id] = Object.assign({}, D.ways[3], { id, pause, look: 'tile', skin: id.toLowerCase(), name, short, idea });
+  return D;
 })();

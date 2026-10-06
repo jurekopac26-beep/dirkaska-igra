@@ -165,6 +165,104 @@ html.land.narrow .sx-tabs { grid-auto-columns: minmax(40px, 1fr); }
 html.land.narrow .sx-title h1 { font-size: 17px; }
 html.land.dev { --pic: 132px; }
 
+/* ---------------- the three looks of the one list (html.skin-a, -b, -c). A: as above. Only C shows the line under the title, the
+   tabs' counts and the parts' cards ---------------- */
+.sx-tt { min-width: 0; display: flex; flex-direction: column; }
+.sx-title small, .sx-tab em, .sx-big em, .sx-big small { display: none; }
+[data-part="igra"] { --pc: var(--curb); --pc-stripe: repeating-linear-gradient(180deg, var(--curb) 0 13px, var(--chalk) 13px 26px); }
+[data-part="grafika"] { --pc: #3fd0ff; --pc-stripe: linear-gradient(180deg, #3fd0ff, #1c7fd6); }
+[data-part="zvok"] { --pc: var(--gold); --pc-stripe: linear-gradient(180deg, var(--gold-hi), var(--gold-lo)); }
+
+/* B · Pod palcem: upright, one row at the top (the title and the tiles) and Nadaljuj, big and round, in the middle of the bar at the foot;
+   lying, the pause's buttons in a rail on the right with Nadaljuj at its foot, under the right thumb */
+html.skin-b:not(.land) .sx-top { flex-wrap: nowrap; gap: 10px; }
+html.skin-b:not(.land) .sx-title { flex: 0 0 auto; }
+html.skin-b:not(.land) .sx-tabs.look-tile { order: 0; flex: 1 1 auto; margin: 0; gap: 6px; }
+html.skin-b:not(.land) .sx-tabs.look-tile .sx-tab { min-height: 56px; gap: 5px; border-radius: 12px; font-size: 12.5px; }
+html.skin-b:not(.land) .sx-tabs.look-tile .sx-tab svg { width: 21px; height: 21px; }
+html.skin-b:not(.land) .sx-list { padding-bottom: calc(48px + var(--sb)); }
+.sx-dock { align-items: flex-end; gap: 4px; padding-top: 7px; }
+.sx-dock .sx-ab { padding: 8px 1px 7px; }
+.sx-play { flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: -34px; font: 900 italic 11px/1 var(--f-ui); color: var(--gold); text-transform: uppercase; letter-spacing: .03em; }
+.sx-play i { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--gold-ink);
+  background: radial-gradient(circle at 50% 30%, var(--gold-hi), var(--gold) 58%, var(--gold-lo)); border: 2.5px solid #fff0b0;
+  box-shadow: 0 4px 0 var(--gold-sh), 0 0 0 6px rgba(6,11,19,.96), 0 12px 26px rgba(0,0,0,.5); }
+.sx-play svg { width: 28px; height: 28px; }
+.sx-play[aria-label="Nadaljuj"] svg { margin-left: 4px; }
+.sx-play:active i { transform: translateY(3px); box-shadow: 0 1px 0 var(--gold-sh), 0 0 0 6px rgba(6,11,19,.96); }
+.sx-dock.solo { padding: 10px 12px calc(10px + var(--sb)) 8px; }
+.sx-done { flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 14px; transform: skewX(-8deg);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 50%, var(--gold-lo)); border: 2px solid #fff0b0; color: var(--gold-ink); box-shadow: 0 4px 0 var(--gold-sh); font: 900 italic 18px/1 var(--f-ui); letter-spacing: .02em; text-transform: uppercase; }
+.sx-done > * { transform: skewX(8deg); }
+.sx-done svg { width: 18px; height: 18px; }
+.sx-rail { position: absolute; z-index: 2; top: 0; right: 0; bottom: 0; width: 70px; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0 calc(8px + var(--sb));
+  background: rgba(6,11,19,.92); border-left: 1px solid var(--line); box-shadow: -8px 0 20px rgba(0,0,0,.3); }
+.sx-rail .sx-ab { flex: 0 0 auto; width: 48px; padding: 7px 0; }
+.sx-rail .sx-ab span { display: none; }
+.sx-rail .sx-play { flex: 0 0 auto; margin: auto 0 0; gap: 4px; font-size: 9.5px; }
+.sx-rail .sx-play i { width: 54px; height: 54px; box-shadow: 0 4px 0 var(--gold-sh), 0 10px 20px rgba(0,0,0,.45); }
+.sx-rail .sx-play svg { width: 24px; height: 24px; }
+html.skin-b.land .sx-list { right: 70px; }
+
+/* C · Kot glavni meni: the main menu's language. A steel key and a line under the title (as the menu's top bar), the red button (as
+   Race!), the tabs as the menu's groups (a count, cyan when chosen), each part a menu card with its stripe, each setting with the same
+   stripe, steel keys at the foot */
+html.skin-c { --cyan: #3fd0ff; }
+html.skin-c .sx-top { padding-top: calc(12px + var(--st)); }
+html.skin-c .sx-title { gap: 12px; }
+html.skin-c .sx-title i { width: 44px; height: 44px; border-radius: 11px; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 0 var(--steel-sh); }
+html.skin-c .sx-title i svg { width: 20px; height: 20px; }
+html.skin-c .sx-title h1 { font-size: 26px; }
+html.skin-c .sx-title small { display: block; margin-top: 5px; font: 800 italic 11px/1 var(--f-ui); color: var(--lbl); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.skin-c .sx-go { transform: none; min-height: 50px; padding: 0 18px 0 20px; border-radius: 13px; color: #fff; text-transform: none; font-size: 21px; letter-spacing: -.2px;
+  background: linear-gradient(180deg, #ff5145, #e0231f 55%, #c9191a); border: 1px solid rgba(255,140,120,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 5px 0 #8c1212, 0 12px 26px rgba(224,35,31,.35); }
+html.skin-c .sx-go > * { transform: none; }
+html.skin-c .sx-go svg { width: 16px; height: 16px; }
+html.skin-c .sx-go:active { transform: translateY(4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 0 #8c1212; }
+html.skin-c .sx-tabs.look-tile { gap: 6px; margin-top: 12px; }
+html.skin-c .sx-tabs.look-tile .sx-tab { flex-direction: row; gap: 7px; min-height: 46px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.12); box-shadow: none; color: var(--lbl); font-size: 14px; }
+html.skin-c .sx-tabs.look-tile .sx-tab svg { width: 19px; height: 19px; }
+html.skin-c .sx-tabs.look-tile .sx-tab.on { background: rgba(63,208,255,.16); border-color: var(--cyan); color: #fff; box-shadow: none; }
+html.skin-c .sx-tabs.look-tile .sx-tab.on svg { transform: none; color: var(--cyan); }
+html.skin-c .sx-tab em { display: inline-block; padding: 2px 5px; border-radius: 6px; background: rgba(255,255,255,.1); color: #dfe6f1; font: 800 10.5px/1 var(--f-ui); font-style: normal; }
+html.skin-c .sx-tab.on em { background: var(--cyan); color: #0b1626; }
+html.skin-c .sx-strat { border: 1px solid var(--edge); background: rgba(255,255,255,.04); color: #dfe6f1; }
+html.skin-c .sx-strat b { display: inline-block; margin-right: 6px; padding: 3px 7px 2px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); font: 800 italic 11px/1 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; vertical-align: 1px; }
+html.skin-c .sx-big { flex: none; position: relative; overflow: hidden; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0 2px; padding: 14px 14px 13px 27px; border: 1px solid var(--edge); border-radius: 16px;
+  background: linear-gradient(180deg, var(--card1), var(--card2)); box-shadow: 0 14px 34px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06); font-size: 30px; letter-spacing: -.4px; text-transform: none; }
+html.skin-c .sx-big::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 12px; background: var(--pc-stripe); box-shadow: inset -2px 0 3px rgba(0,0,0,.25); }
+html.skin-c .sx-big svg { display: none; }
+html.skin-c .sx-big em { display: inline-block; padding: 5px 8px; border-radius: 6px; border: 1.5px solid var(--edge); color: var(--lbl); font: 800 italic 12px/1 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; }
+html.skin-c .sx-big small { display: block; flex: 1 0 100%; font: 600 italic 13px/1.35 var(--f-ui); color: var(--lbl); letter-spacing: 0; text-transform: none; }
+html.skin-c .sx-cat { color: var(--lbl); font-size: 11.5px; letter-spacing: .12em; }
+html.skin-c .sx-cat::after { background: var(--line); }
+html.skin-c .sx-card { overflow: hidden; padding: 8px 8px 12px 18px; border: 1.5px solid rgba(255,255,255,.14); background: linear-gradient(100deg, rgba(10,18,31,.97), rgba(18,34,56,.93)); box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+html.skin-c .sx-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 9px; background: var(--pc-stripe); }
+html.skin-c .sx-name { font-size: 20px; letter-spacing: -.3px; text-transform: none; }
+html.skin-c .sx-name small { font-size: 12px; }
+html.skin-c .sx-thumb { background: rgba(63,208,255,.18); border: 1.5px solid var(--cyan); box-shadow: 0 0 12px rgba(63,208,255,.25); }
+html.skin-c .sx-seg button.sel { color: #fff; }
+html.skin-c .sx-botbar { gap: 4px; padding-top: 10px; background: rgba(5,8,13,.96); }
+html.skin-c .sx-ab { background: none; border: 0; box-shadow: none; padding: 0; gap: 6px; color: var(--lbl); font-size: 10.5px; }
+html.skin-c .sx-ab svg { box-sizing: content-box; width: 20px; height: 20px; padding: 11px; border-radius: 11px; color: #fff; background: linear-gradient(180deg, var(--steel1), var(--steel2)); border: 1.5px solid rgba(255,255,255,.4); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 0 var(--steel-sh); }
+html.skin-c .sx-ab.red svg { color: #ff8a7d; }
+html.skin-c .sx-ab:active svg { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 1px 0 var(--steel-sh); }
+html.skin-c.land .sx-top { padding-top: calc(7px + var(--st)); padding-bottom: 7px; }
+html.skin-c.land .sx-title i { width: 36px; height: 36px; }
+html.skin-c.land .sx-title i svg { width: 17px; height: 17px; }
+html.skin-c.land .sx-title h1 { font-size: 20px; }
+html.skin-c.land .sx-title small { margin-top: 3px; font-size: 9.5px; }
+html.skin-c.land .sx-ab svg { width: 16px; height: 16px; padding: 8px; }
+html.skin-c.land .sx-actbar { gap: 6px; }
+html.skin-c.land .sx-tabs.look-tile { margin: 0; }
+html.skin-c.land .sx-tabs.look-tile .sx-tab { min-height: 38px; font-size: 13px; }
+html.skin-c.land .sx-tabs.look-tile .sx-tab svg { display: none; }
+html.skin-c.land.narrow .sx-tabs.look-tile .sx-tab svg { display: block; }
+html.skin-c.land .sx-go { min-height: 40px; font-size: 16px; padding: 0 14px 0 16px; }
+html.skin-c.land .sx-big { font-size: 24px; padding-top: 11px; padding-bottom: 10px; }
+@media (max-width: 380px) { html.skin-c:not(.land) .sx-title h1 { font-size: 22px; } html.skin-c:not(.land) .sx-title small { letter-spacing: .05em; } html.skin-c:not(.land) .sx-go { font-size: 18px; padding: 0 14px 0 16px; }
+  html.skin-b:not(.land) .sx-title h1 { font-size: 19px; } }
+
 /* ---------------- the preview on a big screen (html.dev): the phone in a frame, the switches over it ---------------- */
 #stage, #devbox, #screen { display: contents; }
 #mockbar { display: none; }
@@ -188,7 +286,7 @@ html.dev #race, html.dev #set, html.dev #resume { position: absolute; }
 #resume.on { display: flex; }
 #resume svg { width: 22px; height: 22px; }
 /* the mockup's version switch on a phone (A, B, C), in the corner */
-.vchip { position: fixed; z-index: 8; right: calc(10px + var(--sr)); bottom: calc(10px + max(var(--bbh, 0px), var(--sb))); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8,13,22,.85); border: 1px solid var(--edge); }
+.vchip { position: fixed; z-index: 8; right: calc(10px + var(--sr) + var(--brw, 0px)); bottom: calc(10px + max(var(--bbh, 0px), var(--sb))); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8,13,22,.85); border: 1px solid var(--edge); }
 .vchip button { width: 30px; height: 30px; border-radius: 50%; font: 900 italic 13px/1 var(--f-ui); color: var(--lbl); }
 .vchip button.on { background: var(--gold); color: var(--gold-ink); }
 html.dev .vchip, body[data-shot] .vchip { display: none; }
