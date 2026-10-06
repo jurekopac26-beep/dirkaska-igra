@@ -1103,6 +1103,11 @@ const Core = (function () {
     if (c.wreck) d += c.wreck.nL;   // (a kit vehicle: a second more for every wheel knocked off)
     return d;
   }
+  // the stop's repair as the renderer and the HUD show it, bit by bit (render only: the damage itself is undone at once by repairCar at the
+  // end of the stop): its progress u (0 outside a repair) and the phases over it: the glass, the bodywork (from .. to), the wheels back on
+  // (wheel: the pit crew's tyre men push the new ones home then, render.js crewLogic reads it), the lost panels one by one, the lamps, the trim
+  const REPAIR = { glass: 0.06, body: [0.08, 0.6], wheel: 0.46, parts: [0.4, 0.85], lamps: 0.62, trim: 0.88 };
+  const repairU = (c) => c.pitState === 'repair' && c.pitDur > 0 ? clamp(c.pitT / c.pitDur, 0, 1) : 0;
   // every car's grip and turn (first measured from SWGP2 gameplay video for the old slide model; stepCS builds on amax, kv and rmin):
   //   amax  : lateral grip (g) - the video's cars corner at ~1.6-2.2 g
   //   kv    : how fast momentum swings toward the nose, per radian of slide (1/s)
@@ -4638,7 +4643,7 @@ const Core = (function () {
       if (st < this.secBest[k]) this.secBest[k] = st;
       if (c.isPlayer) c.secEv = [k, st, col];
     }
-    repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes
+    repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes (shown bit by bit over the stop before it: REPAIR)
       c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
@@ -5046,7 +5051,7 @@ const Core = (function () {
 
   return { crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU };
 })();
 
 

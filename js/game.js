@@ -3275,11 +3275,12 @@
     const on = dmgOn();
     if (on !== dmgShown) { el.style.display = on ? '' : 'none'; dmgShown = on; }
     if (!on) return;
-    const W = P.wreck, key = P.dz.map(v => Math.round(v * 25)).join(',') + (W ? '|' + W.wl : '');
+    const W = P.wreck, RP = Core.REPAIR, u = Core.repairU(P), kz = 1 - Core.sstep(RP.body[0], RP.body[1], u), wl = W && !(u >= RP.wheel) ? W.wl : 0;   // (in the box: going down as the crew works, as the car is drawn: Render's repairStep)
+    const key = P.dz.map(v => Math.round(v * kz * 25)).join(',') + (W ? '|' + wl : '');
     if (key === dmgKey) return; dmgKey = key;
-    for (let k = 0; k < 4; k++) $('dz' + k).setAttribute('fill', dmgCol(P.dz[k]));
+    for (let k = 0; k < 4; k++) $('dz' + k).setAttribute('fill', dmgCol(P.dz[k] * kz));
     el.classList.toggle('whl', !!W);   // (a car whose wheels come off: its four wheels drawn, a lost one red and dashed; c.wreck.wl bit k: wheel k, FL FR RL RR)
-    for (let k = 0; k < 4; k++) $('wh' + k).classList.toggle('lost', !!(W && W.wl & (1 << k)));
+    for (let k = 0; k < 4; k++) $('wh' + k).classList.toggle('lost', !!(wl & (1 << k)));
   }
   /* ---------------- a destroyed car: VOZILO UNIČENO, Odstopi ---------------- */
   // A car at 98 % damage (damage on) is destroyed: the words under the minimap, with Odstopi in a race (the player retires, Race.retire:
