@@ -874,6 +874,14 @@ const World = (function () {
     const mpit = new THREE.Mesh(gp.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); mpit.receiveShadow = true; mpit.matrixAutoUpdate = false; root.add(mpit);
   }
 
+  /* ---- worlds built in files of their own (js/world-<theme>.js, loaded after this file): World.ext[theme](scene, tex, opts, api) returns the
+     world as the builders here do (out: root, groundH, props, ...); api: the shared helpers and the track being built ---- */
+  const EXT = {};
+  function extAPI() {
+    return { T, THEME, GB, RB, Chunks, IChunks, box, cyl, cone, ico, puff, gable, roofKit, hex, vary, rng, clamp, lerp, sstep, TAU, atS, atSf, wrapS, crAt, inPoly, polyDist,
+      valueNoise2, waterMat, shoreBand, waterline, mergeBands, addShore, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, swayMat, treeMark, treesTo, nrLump };
+  }
+
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
     LOD = makeLOD(opts.tier);   // the graphics detail tier for this build (every builder below consults the shared LOD)
@@ -912,6 +920,7 @@ const World = (function () {
     if (THEME === 'cpalace') return finish(buildRbring(scene, tex, opts), tex);   // Crystal Palace 1937: the same builder in its period look and the park (RB_LOOK, cpPark)
     if (THEME === 'longford') return finish(buildLongford(scene, tex, opts), tex);   // Longford: the 1960s road circuit by the town in Tasmania (below)
     if (THEME === 'suzuka') return finish(buildSuzuka(scene, tex, opts), tex); // Suzuka, the figure of eight on its real ground (below)
+    if (EXT[THEME]) return finish(EXT[THEME](scene, tex, opts, extAPI()), tex);   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI)
     if (THEME === 'newcastle') return finish(buildNewcastle(scene, tex, opts), tex);   // Newcastle, the street circuit in the East End (below)
     if (THEME === 'riverside') return finish(buildRiverside(scene, tex, opts), tex);   // Riverside, the circuit of 1960 in the dry hills (below)
     const R = rng(4242);
@@ -25119,6 +25128,7 @@ const World = (function () {
     if (d.rio) rioStep(d.rio, t, car, cam);   // Rio: the karts, the boats, the cormorants, the mist, the heat
     if (d.condors) caCondors(d.condors, t, car);   // Los Caracoles: the condors circle over the road
     if (d.irFar) irFarUpdate(d.irFar, car ? cam : null);   // Irohazaka: the view beyond the corridor follows the camera
+    if (d.ext) d.ext(t, car, cam);   // a world of its own file (World.ext): its moving things
     if (d.rrMist) rrMist(d.rrMist, t);   // Serra do Rio do Rastro: the mist rises out of the valley
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
@@ -25150,6 +25160,6 @@ const World = (function () {
   }
   const _hjV = new THREE.Vector3();
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli };   // (heli: the TV helicopter's model, also the police's on Vršič)
+  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT };   // (heli: the TV helicopter's model, also the police's on Vršič)
 })();
 

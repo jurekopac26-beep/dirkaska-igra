@@ -636,6 +636,26 @@
    "worn:MeshLambertMaterial": "418a694"
   }
  },
+ "toronto": {
+  "meshes": 247,
+  "verts": 355665,
+  "instances": 3578,
+  "props": 633,
+  "crowd": 785,
+  "world": "c51b483f",
+  "propsHash": "35e949d6",
+  "floor": "55644925/5852",
+  "groups": {
+   "-:MeshLambertMaterial": "12530750",
+   "-:MeshBasicMaterial": "d7139b92",
+   "-:MeshPhongMaterial": "917393b4",
+   "toSky:MeshLambertMaterial": "b1a79441",
+   "crowd:MeshLambertMaterial": "98bc4bc1",
+   "ao:MeshBasicMaterial": "5b00ccab",
+   "tyremarks:MeshBasicMaterial": "a0d078ce",
+   "roadwear:MeshLambertMaterial": "af03a0b0"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
