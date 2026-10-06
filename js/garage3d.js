@@ -2193,13 +2193,13 @@ const Garage3D = (function () {
     'varying vec3 vD;',
     'float rdg(float n){ return 1.0 - abs(2.0 * n - 1.0); }',
     'float bump(float u, float u0, float h, float w){ return h * (1.0 - smoothstep(0.0, w, abs(fract(u - u0 + 0.5) - 0.5))); }',
-    'float H1(float u){ float env = 0.022 + bump(u, 0.015, 0.05, 0.07) + bump(u, 0.5, 0.045, 0.06) + bump(u, -0.22, 0.075, 0.16) + bump(u, 0.27, 0.035, 0.12);',
+    'float H1(float u){ float env = 0.024 + bump(u, 0.015, 0.1, 0.075) + bump(u, 0.5, 0.09, 0.065) + bump(u, -0.22, 0.085, 0.16) + bump(u, 0.27, 0.04, 0.12);',
     '  float r = rdg(vp(vec2(u * 13.0, 2.1), 13.0)) * 0.5 + rdg(vp(vec2(u * 31.0, 3.7), 31.0)) * 0.27 + rdg(vp(vec2(u * 71.0, 5.3), 71.0)) * 0.14 + vp(vec2(u * 167.0, 7.9), 167.0) * 0.09;',
-    '  return 0.02 + env * pow(r, 1.7) * 1.15 + rdg(vp(vec2(u * 389.0, 9.1), 389.0)) * 0.0018; }',
+    '  return 0.02 + env * pow(r, 1.5) * 1.15 + rdg(vp(vec2(u * 389.0, 9.1), 389.0)) * 0.0024; }',
     'float H2(float u, float fl){ float n = vp(vec2(u * 7.0, 11.1), 7.0) * 0.55 + vp(vec2(u * 19.0, 12.7), 19.0) * 0.3 + vp(vec2(u * 47.0, 14.3), 47.0) * 0.15;',
-    '  return (0.009 + 0.034 * n * n) * mix(0.6, 1.5, fl) + 0.0012 * vp(vec2(u * 500.0, 15.0), 500.0); }',
+    '  return (0.011 + 0.05 * n * n) * mix(0.75, 2.0, fl) + 0.0012 * vp(vec2(u * 500.0, 15.0), 500.0) + 0.0022 * pow(rdg(vp(vec2(u * 1400.0, 16.0), 1400.0)), 2.0); }',
     'float H3(float u, float fl){ float n = vp(vec2(u * 13.0, 21.1), 13.0) * 0.6 + vp(vec2(u * 37.0, 23.9), 37.0) * 0.4;',
-    '  return (0.003 + 0.01 * n) * (0.55 + 0.45 * fl) + 0.001 * vp(vec2(u * 1300.0, 25.0), 1300.0); }',
+    '  return (0.008 + 0.02 * n) * (0.75 + 0.5 * fl) + 0.001 * vp(vec2(u * 1300.0, 25.0), 1300.0) + 0.003 * pow(rdg(vp(vec2(u * 900.0, 26.0), 900.0)), 2.0); }',
     // (a face's light: its normal toward the eye, turned along the skyline by its slope and the facets (s), tilted up (up))
     'float faceLit(vec2 dh, float s, float up){ vec2 tg = vec2(-dh.y, dh.x); vec3 n = normalize(vec3(-dh.x, 0.0, -dh.y) - vec3(tg.x, 0.0, tg.y) * clamp(s, -3.0, 3.0) + vec3(0.0, up, 0.0)); return clamp(dot(n, oSun), 0.0, 1.0); }',
     'void main(){ vec3 d = normalize(vD); float lh = max(length(d.xz), 1e-4), t = d.y / lh, u = atan(d.z, d.x) / 6.2831853;',
@@ -2231,16 +2231,18 @@ const Garage3D = (function () {
     '    float r1 = rdg(vp(q1, 260.0)), r2 = rdg(vp(q2 + vec2(r1 * 2.0, 0.0), 780.0));',
     '    float fac = (rdg(vp(q1 + vec2(0.2, 0.0), 260.0)) - r1) * 5.0 + (rdg(vp(q2 + vec2(r1 * 2.0 + 0.2, 0.0), 780.0)) - r2) * 2.5;',
     '    float gl = 1.0 - r1 * 0.65 - r2 * 0.35, ledge = smoothstep(0.86, 0.97, fract(t * 60.0 + r1 * 2.0)) * smoothstep(0.55, 0.75, r2) * 0.6;',
-    '    float lit = faceLit(dh, sl * (1.0 - smoothstep(0.0, 0.3, hn)) + fac, 0.32 + 0.5 * (g - 0.5) + ledge);',
+    '    float lit = faceLit(dh, sl * (1.0 - smoothstep(0.0, 0.3, hn)) + fac, 0.2 + 0.5 * (g - 0.5) + ledge);',
     '    vec3 col = mix(vec3(0.27, 0.29, 0.32), vec3(0.47, 0.46, 0.43), smoothstep(0.3, 0.7, g));',
     '    float tl = 0.6 + 0.12 * vp(vec2(u * 160.0, 6.0), 160.0) + 0.05 * vp(vec2(u * 800.0, 8.0), 800.0) - 0.16 * (r1 - 0.5);',   // (the tree line: higher up the ribs, lower in the gullies)
     '    float sc = smoothstep(tl - 0.24, tl - 0.1, hn) * smoothstep(0.5, 0.62, vp(vec2(u * 240.0, 4.0), 240.0) + 0.35 * (hn - tl + 0.24));',
     '    col = mix(col, vec3(0.5, 0.49, 0.46), sc * 0.7); col = mix(col, vec3(0.14, 0.19, 0.12), smoothstep(tl - 0.08, tl - 0.03, hn) * 0.7);',
     '    col = mix(col, vec3(0.09, 0.14, 0.1) * (0.85 + 0.3 * g), smoothstep(tl, tl + 0.03, hn));',
-    '    float sn = smoothstep(0.0, 0.004, t - (0.052 + 0.012 * vp(vec2(u * 40.0, 3.0), 40.0))) * smoothstep(0.56, 0.66, gl + (0.5 - g) * 0.25);',
+    '    float sn = smoothstep(0.0, 0.004, t - (0.047 + 0.012 * vp(vec2(u * 40.0, 3.0), 40.0))) * smoothstep(0.56, 0.66, gl + (0.5 - g) * 0.25);',
     '    sn = clamp(sn + (1.0 - smoothstep(0.0, 0.07, hn)) * smoothstep(0.07, 0.09, h1) * smoothstep(0.4, 0.52, gl), 0.0, 1.0) * (1.0 - smoothstep(0.24, 0.38, hn));',
-    '    col = mix(col, vec3(0.92, 0.94, 0.97), sn) * (vec3(0.2, 0.23, 0.29) + vec3(0.78, 0.74, 0.68) * lit);',
-    '    c = mix(c, mix(col, hz, 0.1 + 0.22 * hn), 1.0 - smoothstep(h1 - px, h1 + px, t)); }',
+    // (in the shade the sky's light still finds the ribs, not the gullies; against the sun a bright rim along the crest)
+    '    col = mix(col, vec3(0.92, 0.94, 0.97), sn) * (vec3(0.2, 0.23, 0.29) * (0.6 + 0.8 * gl) + vec3(0.78, 0.74, 0.68) * lit);',
+    '    col += vec3(1.0, 0.95, 0.85) * (1.0 - smoothstep(0.0, 0.05, hn)) * max(dot(dh, oSunH), 0.0) * 0.35;',
+    '    c = mix(c, mix(col, hz, 0.07 + 0.2 * hn), 1.0 - smoothstep(h1 - px, h1 + px, t)); }',
     // (the forested ridges: their slopes lit by their lie, clearings of meadow on them; the near wooded hills)
     '  float h2 = H2(u, fl);',
     '  if (t < h2 + px) { float ee = 0.002, sl = (H2(u + ee, fl) - H2(u - ee, fl)) / (2.0 * ee), hn = clamp((h2 - t) / h2, 0.0, 1.0);',
@@ -2281,14 +2283,19 @@ const Garage3D = (function () {
       for (let t = 0; t < nt; t++) { const f = t / nt, y0 = h * (0.1 + 0.8 * f), j = (0.9 + Rj() * 0.18) * (t ? 1 : 0.9), tb = cb.map(v => v * j), tt = ct.map(v => v * j);   // (each tier a shade apart, the lowest darker)
         tier(x, z, y0, t === nt - 1 ? h : y0 + h * (near ? 0.3 : 0.42), r * (1.04 - f), near ? 6 : 5, rot + t * 0.6, tb, tt, near); }
       TS.push([x, z, h, r, 1]); };
-    const ico = new THREE.IcosahedronGeometry(1, 0), IP = ico.attributes.position;   // (non-indexed: three vertices a face)
-    const clump = (cx, cy, cz, r, b0, lo) => { const j = (0.9 + Rj() * 0.18) * (lo ? 0.85 : 1), base = b0.map(v => v * j);   // (each clump a shade apart; the low ones in the crown's shade)
-      for (let i = 0; i < IP.count; i += 3) { const v = (j) => [cx + IP.getX(j) * r, cy + IP.getY(j) * r * 0.85, cz + IP.getZ(j) * r], e = (0.9 + Rt() * 0.2) * (0.82 + 0.18 * (IP.getY(i) + IP.getY(i + 1) + IP.getY(i + 2) + 3) / 6);
-      og.triO(v(i), v(i + 1), v(i + 2), [base[0] * e, base[1] * e, base[2] * e], [cx, cy, cz]); } };
-    const broad = (x, z, h, n) => { const dk = 0.88 + Rt() * 0.24, base = [0.3 * dk, 0.46 * dk, 0.18 * dk], r = h * 0.26;
+    // (a clump of leaves: a lumpy ball, an icosahedron (once subdivided near: rounder), each corner pushed in or out by a hash of where it
+    // is (shared corners alike: no cracks); shaded round (its normals from the centre), darker underneath and in its hollows, a shade
+    // apart corner to corner: leaves, not facets)
+    const ICO = [new THREE.IcosahedronGeometry(1, 0), new THREE.IcosahedronGeometry(1, 1)].map(g => g.attributes.position);   // (non-indexed: three vertices a face)
+    const clump = (cx, cy, cz, r, b0, lo, near) => { const IP = ICO[near ? 1 : 0], j = (0.9 + Rj() * 0.18) * (lo ? 0.85 : 1), base = b0.map(v => v * j), sd = Rt() * 9;
+      const hsh = (x, y, z, k) => { const h = Math.sin(x * 12.99 + y * 78.23 + z * 37.72 + sd + k) * 43758.55; return h - Math.floor(h); };
+      const V = (i) => { const x = IP.getX(i), y = IP.getY(i), z = IP.getZ(i), w = 1 + 0.2 * (hsh(x, y, z, 0) - 0.5), e = (0.86 + 0.28 * hsh(x, y, z, 5)) * (0.62 + 0.38 * (y + 1) / 2) * (0.8 + 0.25 * w);
+        const L = Math.hypot(x, y / 0.85, z) || 1; return { p: [cx + x * r * w, cy + y * r * 0.85 * w, cz + z * r * w], n: [x / L, y / 0.85 / L, z / L], c: [base[0] * e, base[1] * e, base[2] * e] }; };
+      for (let i = 0; i < IP.count; i += 3) { const a = V(i), b = V(i + 1), c = V(i + 2); og.triON(a.p, b.p, c.p, a.n, b.n, c.n, [cx, cy, cz], a.c, b.c, c.c); } };
+    const broad = (x, z, h, n, near) => { const dk = 0.88 + Rt() * 0.24, base = [0.23 * dk, 0.37 * dk, 0.14 * dk], r = h * 0.26;
       trunk(x, z, h * 0.04, h * 0.55, [0.36, 0.3, 0.24]);
-      clump(x, h * 0.74, z, r * 1.1, base);
-      for (let b = 0; b < (n || 3); b++) { const a = b / (n || 3) * TAU + Rt(); clump(x + Math.cos(a) * r * 0.75, h * (0.56 + Rt() * 0.12), z + Math.sin(a) * r * 0.75, r * (0.8 + Rt() * 0.15), base, true); }
+      clump(x, h * 0.74, z, r * 1.1, base, false, near);
+      for (let b = 0; b < (n || 3); b++) { const a = b / (n || 3) * TAU + Rt(); clump(x + Math.cos(a) * r * 0.75, h * (0.56 + Rt() * 0.12), z + Math.sin(a) * r * 0.75, r * (0.8 + Rt() * 0.15), base, true, near); }
       TS.push([x, z, h, r * 1.5, 0]); };
     // (kept clear: the doors' views down the valley, the windows' sky, round the paddock's units)
     const LM = [[-29, 15.7, 13], [29, -14, 13]];
@@ -2296,9 +2303,9 @@ const Garage3D = (function () {
     for (let i = 0, nT = 0; i < 3000 && nT < 520; i++) {
       const a = R() * TAU, r = 16 + Math.pow(R(), 0.85) * 76, x = Math.cos(a) * r, z = Math.sin(a) * r; if (clear(x, z)) continue;
       const wood = Math.sin(x * 0.045 + 1.3) * Math.sin(z * 0.055 + 0.4) + 0.7 * Math.sin(x * 0.012 - z * 0.016 + 2); if (wood < -0.2 && R() < 0.85) continue;   // (meadows between the woods)
-      const h = (7 + R() * 9) * (r > 90 ? 1.25 : 1); if (wood > 0.3 || R() < 0.5) spruce(x, z, h, r < 45, Rt() < 0.15); else broad(x, z, h, r < 45 ? 3 : 2); nT++;
+      const h = (7 + R() * 9) * (r > 90 ? 1.25 : 1); if (wood > 0.3 || R() < 0.5) spruce(x, z, h, r < 45, Rt() < 0.15); else broad(x, z, h, r < 45 ? 3 : 2, r < 45); nT++;
     }
-    for (const sd of [-1, 1]) for (const sz of [-1, 1]) { const x = sd * (30 + R() * 8), z = sz * (12 + R() * 4); if (!LM.some(([lx, lz, r]) => Math.hypot(x - lx, z - lz) < r)) broad(x, z, 6 + R() * 4, 3); }   // (by the road)
+    for (const sd of [-1, 1]) for (const sz of [-1, 1]) { const x = sd * (30 + R() * 8), z = sz * (12 + R() * 4); if (!LM.some(([lx, lz, r]) => Math.hypot(x - lx, z - lz) < r)) broad(x, z, 6 + R() * 4, 3, true); }   // (by the road)
     // by the road: a lamp post each side of each apron, a fence of weathered wood along the meadows (not where the paddock is), white
     // marker posts along the bend; the team's flagpoles
     const FW = [0.46, 0.4, 0.33];
@@ -2383,6 +2390,44 @@ const Garage3D = (function () {
       World.box(og, x + 9.23, cy + 9.3, z, 0.06, 1.6, 1.2, 0, DK, DK); World.box(og, x + 7.4, cy + 9.3, z - 1.83, 1.2, 1.6, 0.06, 0, DK, DK);   // (the belfry's openings)
       for (const [hx, hz, r, rf] of [[-292, 58, 0.3, TILE], [-326, 4, -0.2, DKR], [-282, 14, 0.1, DKR], [-338, 52, 0.5, TILE]]) { World.box(og, hx, 0, hz, 9, 5, 7, r, WHT, WHT); roof(hx, 5, hz, 10, 8.4, 3.4, r, rf.map(v => v * 0.8), WHT);
         const Ph = rp(hx, hz, r); for (const i of [-1, 1]) for (const yy of [1.0, 3.0]) { const [wx, wz] = Ph(i * 2.4, 3.53); World.box(og, wx, yy, wz, 1.0, 1.0, 0.08, r, DW, DW); } } }
+    // the valley's floor where the doors look out (round 3), so the meadows are no green plain: lone lime trees, a hedge along a field's
+    // edge (hazel and hawthorn, a few trees in it), trees along the road past the bend, wrapped bales in a mown field, a hamlet under the
+    // farm and before the church (white walls, some with a timber storey, a barn of dark boards); clear of the road (its centre zr(x))
+    { const Rm = Core.rng(4242), zr = (x) => { const b = Math.max(Math.abs(x) - 36, 0); return 0.011 * b * b; };
+      const PLC = [[112, -13, 15], [172, 21, 24], [-310, 30, 60], [-292, 58, 8], [-326, 4, 8], [-282, 14, 8], [-338, 52, 8]];   // (what stands there: kept apart)
+      const put = (x, z, m) => { if (Math.abs(z - zr(x)) < 9 + m || PLC.some(([px, pz, pm]) => Math.hypot(x - px, z - pz) < m + pm)) return false; PLC.push([x, z, m]); return true; };
+      const TB = [0.46, 0.31, 0.2], BRN = [0.3, 0.22, 0.16];
+      const house = (x, z, rot, L, D, H, rf, kind) => { const P = rp(x, z, rot), wall = kind === 2 ? BRN : WHT, hm = kind === 1 ? H * 0.55 : H, rh = D * 0.42;
+        World.box(og, x, 0, z, L, hm, D, rot, wall, wall, true); if (kind === 1) World.box(og, x, hm, z, L, H - hm, D, rot, TB, TB, true);
+        roof(x, H, z, L + 1.4, D + 1.8, rh, rot, rf, kind ? (kind === 2 ? BRN : TB) : WHT);
+        for (const sd of [-1, 1]) for (let i = -1; i <= 1; i++) { if (kind === 2 && i) continue; const [wx, wz] = P(i * L * 0.3, sd * (D / 2 + 0.03));
+          World.box(og, wx, kind === 2 ? 0 : 1.0, wz, kind === 2 ? 2.6 : 0.9, kind === 2 ? 2.8 : 1.0, 0.08, rot, DW, DW); if (H > 5 && kind !== 2) World.box(og, wx, 3.4, wz, 0.9, 0.9, 0.08, rot, DW, DW); }
+        hull(x, z, L, D, rot, H + rh); PLC.push([x, z, Math.max(L, D) * 0.75]); };
+      for (const [x, z, rot, L, D, H, rf, kind] of [[196, -4, 0.25, 10, 8, 6, TILE, 1], [214, 17, -0.15, 9, 7.5, 5.5, DKR, 0], [156, -36, 0.1, 13, 8, 5.5, DKR, 2], [232, -24, 0.4, 8, 7, 5, TILE, 0],
+        [-262, -8, -0.2, 10, 8, 6, TILE, 1], [-248, 23, 0.15, 9, 7, 5.5, DKR, 0], [-228, -36, 0.3, 12, 8, 5.5, DKR, 2], [-276, -30, -0.1, 8.5, 7, 5, TILE, 0]]) house(x, z, rot, L, D, H, rf, kind);
+      // (a wrapped bale lying on its round side: smooth, the plastic white, a few pale green or black)
+      const bale = (x, z, rot, col) => { const n = 10, r = 0.62, hl = 0.6, ax = [Math.cos(rot), 0, Math.sin(rot)], pz = [-Math.sin(rot), 0, Math.cos(rot)], C = [x, r, z];
+        const at = (a, e) => { const ca = Math.cos(a), sa = Math.sin(a), nn = [pz[0] * ca, sa, pz[2] * ca]; return { p: [C[0] + ax[0] * e * hl + nn[0] * r, C[1] + nn[1] * r, C[2] + ax[2] * e * hl + nn[2] * r], n: nn }; };
+        for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, A = at(a0, -1), B = at(a1, -1), Cc = at(a1, 1), D = at(a0, 1);
+          og.triON(A.p, B.p, Cc.p, A.n, B.n, Cc.n, C, col); og.triON(A.p, Cc.p, D.p, A.n, Cc.n, D.n, C, col);
+          for (const e of [-1, 1]) { const E = [C[0] + ax[0] * e * hl, C[1], C[2] + ax[2] * e * hl], ce = col.map(v => v * 0.93); og.triO(E, at(a0, e).p, at(a1, e).p, ce, C); } }
+        TS.push([x, z, 1.25, 0.75, 0]); };
+      const BW = [0.86, 0.87, 0.85], BG = [0.6, 0.7, 0.5];
+      for (const sd of [-1, 1]) { const x0b = sd > 0 ? 50 : -56, z0b = sd > 0 ? -14 : -7, nb = sd > 0 ? 11 : 7;
+        for (let i = 0; i < nb; i++) { const x = x0b + sd * ((i % 4) * 3.4 + Rm() * 1.2 + (i / 4 | 0) * 1.5), z = z0b - (i / 4 | 0) * 4.2 - Rm() * 1.0; bale(x, z, Rm() * TAU, Rm() < 0.75 ? BW : BG); } }
+      // (lone lime trees in the meadows: a short trunk, a broad crown low down (a big clump on top, five round it), to the sides of the
+      // view down the valley: its middle kept open to the mountains)
+      const lime = (x, z, h) => { const dk = 0.85 + Rm() * 0.25, base = [0.21 * dk, 0.34 * dk, 0.13 * dk], r = h * 0.3;
+        trunk(x, z, h * 0.045, h * 0.42, [0.34, 0.29, 0.23]); clump(x, h * 0.66, z, r, base, false, true);
+        for (let b = 0; b < 5; b++) { const a = b / 5 * TAU + Rm(); clump(x + Math.cos(a) * r * 0.8, h * (0.42 + Rm() * 0.14), z + Math.sin(a) * r * 0.8, r * (0.72 + Rm() * 0.15), base, true, true); }
+        TS.push([x, z, h, r * 1.7, 0]); };
+      for (const sd of [-1, 1]) for (let i = 0, n = 0; i < 600 && n < 7; i++) { const x = sd * (48 + Rm() * 190), az = 8 + 0.16 * Math.abs(x) + Rm() * 0.24 * Math.abs(x), z = (Rm() < 0.5 ? -1 : 1) * az;
+        if (put(x, z, 10)) { lime(x, z, 11 + Rm() * 5); n++; } }
+      // (a hedge across a field: bushes in a row, their tops uneven, a tree or two growing out of it)
+      for (const sd of [-1, 1]) { const ha = sd > 0 ? [68, -9] : [-92, -7], hb = sd > 0 ? [76, -44] : [-98, -30], L = Math.hypot(hb[0] - ha[0], hb[1] - ha[1]);
+        for (let t = 0; t <= L; t += 1.7) { const f = t / L, x = ha[0] + (hb[0] - ha[0]) * f + (Rm() - 0.5) * 0.8, z = ha[1] + (hb[1] - ha[1]) * f, r = 1.0 + Rm() * 0.7, k = 0.85 + Rm() * 0.3;
+          clump(x, r * 0.7, z, r, [0.17 * k, 0.29 * k, 0.11 * k], Rm() < 0.3, false); if (Rm() < 0.3) TS.push([x, z, r * 1.6, r, 0]); }
+        for (const f of [0.3, 0.75]) broad(ha[0] + (hb[0] - ha[0]) * f, ha[1] + (hb[1] - ha[1]) * f, 8 + Rm() * 3, 2, false); } }
     // the paddock by the doors (round 2), clear of the way in and out: the team's gazebo on the sunny apron (its canopy's shadow: the
     // ground's), a delivery on a pallet with its pallet truck by the right door; two pit scooters and a cage of slicks by the left one.
     // Each door's in a mesh of its own, baked as the rest (q: the one being built; ql: its glass): out of view, not drawn
@@ -2457,7 +2502,7 @@ const Garage3D = (function () {
           for (let t = 0.1; t < L - 0.05; t += 0.1) bar(D(t, y0 + 0.06), D(t, H - 0.06), Math.cos(th), -Math.sin(th)); }
         slicks(-11.55, -3.02, 5, 0.27, 0.22, [0.95, 0.78, 0.15], y0); slicks(-10.93, -3.03, 4, 0.27, 0.22, null, y0); slicks(-11.24, -2.59, 4, 0.27, 0.22, [0.86, 0.16, 0.12], y0); }
       bakeOut(q, ql); }
-    ico.dispose(); bakeOut(og, unlit); og = null;   // (its arrays let go: the flags' closures below keep this scope)
+    bakeOut(og, unlit); og = null;   // (its arrays let go: the flags' closures below keep this scope)
     // the ground: meadows near the workshop, fields further out (strips of a grid turned 30 deg, their edges wandering: meadow, cut hay in
     // mowing stripes, lush grass, ripe hay, pasture; darker headlands), a gravel strip round the walls; the concrete apron by each door (its
     // joints, a drain, the bay's yellow lines carried out), the road narrowing and away round a bend (worn tracks, white edge lines, the
@@ -2496,9 +2541,10 @@ const Garage3D = (function () {
         '  vec4 A = texture2D(uN, p * 0.09), B = texture2D(uN, p * 0.012 + 0.3), C = texture2D(uN, p * 0.55), D = texture2D(uN, p * 0.0042 + 0.53); float n1 = A.r, n2 = B.g, n3 = C.b;',   // (the noise's blobs: A ~0.6 m, B ~5 m, C ~0.1 m, D ~14 m)
         '  vec2 fp = vec2(p.x * 0.866 + p.y * 0.5, p.y * 0.866 - p.x * 0.5) + (vec2(vn(p * 0.011), vn(p * 0.011 + 7.3)) - 0.5) * 40.0, fq = fp / vec2(24.0, 75.0), fr = fract(fq);',
         '  float hc = hs(floor(fq) + 3.0);',
-        '  vec3 fc = hc < 0.35 ? vec3(0.27, 0.4, 0.16) : hc < 0.6 ? vec3(0.38, 0.46, 0.2) : hc < 0.78 ? vec3(0.3, 0.44, 0.16) : hc < 0.9 ? vec3(0.5, 0.48, 0.26) : vec3(0.25, 0.36, 0.15);',
-        '  fc *= (1.0 + 0.07 * sin(fp.x * 2.2 + hc * 9.0) * step(0.35, hc) * step(hc, 0.6) * (1.0 - smoothstep(0.4, 1.2, px))) * (0.93 + 0.14 * n2);',
-        '  float ed = min(min(fr.x, 1.0 - fr.x) * 24.0, min(fr.y, 1.0 - fr.y) * 75.0); fc = mix(fc * mix(0.8, 1.0, smoothstep(0.4, 2.0, ed)), vec3(0.31, 0.42, 0.18), smoothstep(5.0, 25.0, px));',
+        // (meadow, cut hay in mowing stripes, lush grass, ripe wheat, maize in dark rows, a ploughed field, pasture)
+        '  vec3 fc = hc < 0.3 ? vec3(0.26, 0.39, 0.15) : hc < 0.52 ? vec3(0.46, 0.5, 0.23) : hc < 0.66 ? vec3(0.21, 0.35, 0.12) : hc < 0.75 ? vec3(0.62, 0.54, 0.27) : hc < 0.83 ? vec3(0.16, 0.27, 0.1) : hc < 0.88 ? vec3(0.36, 0.27, 0.19) : vec3(0.3, 0.42, 0.17);',
+        '  fc *= (1.0 + 0.07 * sin(fp.x * 2.2 + hc * 9.0) * step(0.3, hc) * step(hc, 0.52) * (1.0 - smoothstep(0.4, 1.2, px)) + 0.12 * sin(fp.y * 8.0) * step(0.75, hc) * step(hc, 0.83) * (1.0 - smoothstep(0.1, 0.3, px))) * (0.93 + 0.14 * n2);',
+        '  float ed = min(min(fr.x, 1.0 - fr.x) * 24.0, min(fr.y, 1.0 - fr.y) * 75.0); fc = mix(fc * mix(0.8, 1.0, smoothstep(0.4, 2.0, ed)), vec3(0.31, 0.42, 0.18), smoothstep(16.0, 60.0, px));',
         '  float dw = rect(p, ' + v4([x0, z0, x1, z1]) + ');',
         '  vec3 c = mix(mix(vec3(0.24, 0.38, 0.15), vec3(0.36, 0.48, 0.21), n2), fc, smoothstep(20.0, 35.0, dw)) * (0.74 + 0.46 * n1) * (0.86 + 0.26 * n3) * vec3(1.0 + 0.12 * (A.b - 0.5), 1.0, 1.0 - 0.2 * (A.b - 0.5));',
         // (the grass a little uneven over a few metres and over tens (lighter, darker, toward hay), greyer far off)
