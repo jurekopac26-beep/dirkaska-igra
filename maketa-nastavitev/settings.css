@@ -6,7 +6,7 @@
   --curb: #e63b2e; --chalk: #f6f6f1; --gold: #ffc629; --gold-hi: #ffe07a; --gold-lo: #f0ad0c; --gold-sh: #9a7300; --gold-ink: #1b1b1b; --lime: #8cf046;
   --steel1: #666d7b; --steel2: #3b414d; --steel-sh: #1f232b;
   --f-ui: 'ApexMenu', Roboto, system-ui, 'Segoe UI', Arial, sans-serif;
-  --pic: 168px;
+  --pic: 200px;
   --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px);
   color-scheme: dark;
 }

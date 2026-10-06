@@ -10,12 +10,12 @@
     if (mode === 'retro') {   // a few big pixels: the picture drawn small and blown up without smoothing
       const k = 4.2, w = Math.max(8, Math.round(W / k)), h = Math.max(6, Math.round(H / k)), c = off(S, 'lo', w, h), x = c.getContext('2d');
       x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, w, h);
-      const V = S.V2.set(A.gameCam('iso', car, { Di: 34, ahi: 5 }), 0, 0, w, h);
+      const V = S.V2.set(A.driveCam(car, { Di: 34, ahi: 5, hv: car.hv, Dc: 23, ahc: 4.5 }), 0, 0, w, h);
       A.scene(x, V, { t, roads: [{ P: LOOP, w: 10 }], things: LOOP_THINGS, cars: [rival, car], shadows: 0.8 });
       g.save(); g.imageSmoothingEnabled = false; g.drawImage(c, 0, 0, W, H); g.restore();
       return;
     }
-    const V = S.V.set(A.gameCam('iso', car, { Di: 34, ahi: 5 }), 0, 0, W, H);
+    const V = S.V.set(A.driveCam(car, { Di: 34, ahi: 5, hv: car.hv, Dc: 23, ahc: 4.5 }), 0, 0, W, H);
     const hi = mode === 'high';
     A.scene(g, V, { t, roads: [{ P: LOOP, w: 10 }], things: LOOP_THINGS, cars: [rival, car], softShadow: hi });
     if (!hi) return;
@@ -37,7 +37,7 @@
     P: () => ({}),
     init(S) { S.V = new A.View(); S.V2 = new A.View(); },
     draw(g, W, H, t, p, st, S) {
-      const s = 30 + t * 7, car = A.loopCar(s, PAL.player, { marker: true }), rival = A.loopCar(s + 16, PAL.rivals[2], { d: 2 });
+      const s = 30 + t * 7, car = Object.assign(A.loopCar(s, PAL.player, { marker: true }), { hv: LOOP.at(s - 4).h }), rival = A.loopCar(s + 16, PAL.rivals[2], { d: 2 });
       if (p.k < 1 && st.prev !== st.v) {   // the sweep: the old look to the right of the line, the new to the left
         drawQ(g, W, H, st.prev, t, S, car, rival);
         const x = W * ease(p.k);
@@ -90,7 +90,7 @@
         o.grow = A.back(S.gr[o.id]); if (o.crowdT) o.crowd = lvl >= 2 ? 1 : lvl >= 1 ? 0.5 : 0;
       }
       const asp = W / H, D = Math.max(40 * Math.sin(0.82) / (2 * Math.tan(15 * A.D2R)), 52 / (2 * Math.tan(15 * A.D2R) * asp));
-      const V = S.V.set(A.camAt(x + 6, 0, 2, D, 0, 0.82, 30), 0, 0, W, H);
+      const V = S.V.set(A.orient() === 'land' ? A.camAt(x + 6, 0, 2, D, 0, 0.82, 30) : A.driveCam(car, { hv: Math.PI / 2, Dc: 30, ahc: 9, pc: 0.7, fc: 46 }), 0, 0, W, H);
       A.scene(g, V, { t, things: things.filter(o => o.grow > 0.02), cars: [car], under: (g2, V2) => A.straight(g2, V2, x - 80, x + 90, { w: 11, kerbs: true }) });
       if (p.au > 0.01) {   // the phone's meter: an "A", the frame rate's line (green, red when it stutters)
         g.save(); g.globalAlpha = p.au; const bw = Math.max(70, W * 0.22), bh = Math.max(30, H * 0.22), bx = W - bw - 8, by = 8;
@@ -111,7 +111,7 @@
     init(S) { S.V = new A.View(); },
     draw(g, W, H, t, p, st, S) {
       const s = 12 + t * 12, car = A.loopCar(s, PAL.player, { marker: true }), rival = A.loopCar(s - 13, PAL.rivals[1], { d: 2 });
-      const V = S.V.set(A.gameCam('iso', car, { Di: 30, ahi: 4 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(car, { Di: 30, ahi: 4, hv: LOOP.at(s - 4).h, Dc: 22, ahc: 4.5 }), 0, 0, W, H);
       A.scene(g, V, { t, roads: [{ P: LOOP, w: 10 }], things: LOOP_THINGS, cars: [rival, car], shadows: ease(p.on) });
       // the sun in the corner, its rays to the ground
       const r = Math.max(8, H * 0.07), x = r * 2, y = r * 2;
@@ -145,13 +145,13 @@
       if (S.sv == null) S.sv = saving ? 1 : 0; S.sv += ((saving ? 1 : 0) - S.sv) * (1 - Math.exp(-dt * 6));
       // the phone: the picture at 30 frames (in steps) and a lower resolution while saving
       const tq = saving ? Math.floor(t * 10) / 10 : t;
-      const pw = Math.min(W * (wide ? 0.4 : 0.56), H * 1.6), ph = pw * 0.47, px = wide ? W * 0.36 : W * 0.36;
+      const F = A.heldPhone(W, H, { full: true, wl: 0.4, hl: 1.6, hf: 0.8, x: 0.36, y: 0.46 }), pw = F.w, ph = F.h, px = F.cx;
       A.phone(g, px, H * 0.47, pw, ph, 0, (g2, w, h) => {
         if (saving) { const c = S.lo || (S.lo = document.createElement('canvas')), k = 3; c.width = Math.max(4, Math.round(w / k)); c.height = Math.max(4, Math.round(h / k)); const x = c.getContext('2d'); x.setTransform(1 / k, 0, 0, 1 / k, 0, 0); A.roadScreen(x, w, h, tq, A.steerWave(tq), { rw: 0.4 }); g2.save(); g2.imageSmoothingEnabled = false; g2.drawImage(c, 0, 0, w, h); g2.restore(); }
         else A.roadScreen(g2, w, h, tq, A.steerWave(tq), { rw: 0.4 });
       });
-      A.text(g, saving ? '30 FPS' : '60 FPS', px, H * 0.47 + ph / 2 + H * 0.1, { size: Math.max(10, H * 0.08), col: saving ? '#9fd88a' : '#dfe6f1', w: 900 });
-      const bw = Math.min(W * 0.16, H * 0.6), bh = bw * 0.45, bx = wide ? W * 0.66 : W * 0.72, by = H * 0.32;
+      A.text(g, saving ? '30 FPS' : '60 FPS', F.land ? px : px + pw / 2 + W * 0.1, F.land ? H * 0.47 + ph / 2 + H * 0.1 : H * 0.8, { size: Math.max(10, H * 0.08), col: saving ? '#9fd88a' : '#dfe6f1', w: 900 });
+      const bw = Math.min(W * 0.16, H * 0.6), bh = bw * 0.45, bx = wide ? W * 0.66 : W * 0.62, by = H * 0.32;
       battery(g, bx, by, bw, bh, S.b, S.chg, S.sv);
       if (v === 'auto' && S.chg) { g.strokeStyle = '#dfe6f1'; g.lineWidth = 2; g.beginPath(); g.moveTo(bx + bw + 4, by + bh / 2); g.bezierCurveTo(bx + bw + 30, by + bh / 2, bx + bw + 10, by + bh * 2.2, bx + bw + 34, by + bh * 2.4); g.stroke(); g.fillStyle = '#dfe6f1'; A.rr(g, bx + bw + 28, by + bh * 2.3, 14, 9, 2); g.fill(); }
     }

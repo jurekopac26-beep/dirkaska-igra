@@ -31,7 +31,7 @@
   const S = Object.assign({ control: 'buttons', camera: 'chase', zoom: 1.4, carLow: 0, assist: 2, difficulty: 1, autoGas: 0, notes: 1, tower: 1, line: 0, pkNotes: 1, ghost: 1, pkFly: 1, comm: 1, codrv: 1,
     damage: 2, faults: 1, radio: 1, hlv: 1, quality: 'high', detail: 'auto', shadows: 1, saver: 'off', intro: 0, music: 1, sound: 1, vibrate: 1, lang: 'sl', name: 'Igralec', tiltSens: 22, tiltInvert: 0, pitCmp: 'auto' },
     (() => { try { return JSON.parse(q.get('s') || '{}'); } catch (_) { return {}; } })());
-  A.env = { get: (k) => S[k], tilt: () => null };
+  A.env = { get: (k) => k === 'orient' ? (document.documentElement.classList.contains('land') ? 'land' : 'port') : S[k], tilt: () => null };
   let mode = q.get('mode') === 'menu' ? 'menu' : 'pause';
   let cats = D.cats.filter(c => mode === 'pause' || !c.pauseOnly);
   let tab = cats.find(c => c.id === q.get('tab')) ? q.get('tab') : cats[0].id;
@@ -167,7 +167,7 @@
   function stillAll() {
     A.still = true;
     for (const s of document.querySelectorAll('.sx-seg')) placeThumb(s, true);
-    for (const L of A.live) { const it = cats.flatMap(c => c.items).find(x => x.anim === L.key); const tt = it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
+    for (const L of A.live) { const it = cats.flatMap(c => c.items).find(x => x.anim === L.key); const port = !document.documentElement.classList.contains('land'), tt = it && port && it.storyTp != null ? it.storyTp : it && it.storyT != null ? it.storyT : still; A.drawAt(L, tt, Math.max(4, tt)); }
     if (q.get('scroll')) list.scrollTop = +q.get('scroll');
     document.body.dataset.ready = '1';
   }

@@ -79,7 +79,7 @@
       if (p.on > 0.01) {
         for (let k = 1; k <= 3; k++) { const a = p.on * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 10 - k))) * (f < 0.55 ? 1 : 0.3); g.strokeStyle = 'rgba(255,198,41,' + a + ')'; g.lineWidth = 2; g.beginPath(); g.arc(mx, my - s * 0.4, s * 0.45 + k * s * 0.18, -0.8, 0.8); g.stroke(); }
         g.save(); g.globalAlpha = ease(p.on) * (f > 0.93 ? (1 - f) / 0.07 : 1);
-        const bx = mx + s * 1.25, bw = W - bx - 12, bh = Math.min(H * 0.34, 54);
+        const bx = mx + s * 1.25, bw = Math.min(W - bx - 12, 330), bh = Math.min(H * 0.34, 54);
         bubble(g, bx, H * 0.2, bw, bh, [mx + s * 0.6, my - s * 0.75], { full, now }, Math.max(11, H * 0.1));
         g.restore();
       }
@@ -99,7 +99,7 @@
       const q = RALLY.at(S.s), k = RALLY.at(S.s + 3).k, car = { x: q.x, z: q.z, h: q.h + k * 9, col: '#f2f2f2', stripeCol: '#1c5fd6', marker: true, steer: k * 6 };
       if (Math.random() < dt * 30) { const ch = Math.cos(car.h), sh = Math.sin(car.h); S.fx.add({ kind: 'smoke', x: car.x - sh * 2, z: car.z - ch * 2, y: 0.3, vx: (Math.random() - 0.5) * 3, vz: (Math.random() - 0.5) * 3, vy: 0.5, age: 0, life: 1.1, r0: 0.6, r1: 2.8, c: '196,170,120' }); }
       S.fx.step(dt);
-      const V = S.V.set(A.gameCam('iso', car, { Di: 38, ahi: 6 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(car, { Di: 38, ahi: 6, hv: RALLY.at(S.s - 4).h, Dc: 25, ahc: 5 }), 0, 0, W, H);
       A.scene(g, V, { t, ground: { col: '#5f8f3d', col2: '#679843' }, roads: [{ P: RALLY, w: 7, col: '#b09468', kerbs: false, lines: false }], things: RALLY_THINGS, cars: [car], over: (g2, V2) => S.fx.draw(g2, V2) });
       if (p.on > 0.01) {   // the co-driver: a helmet, the note being read
         const i = Math.floor(t / 2.2) % NOTES.length, f = fract(t / 2.2), full = NOTES[i], now = full.slice(0, Math.ceil(full.length * clamp(f / 0.4, 0, 1)));
@@ -108,7 +108,7 @@
         g.fillStyle = '#f6f6f1'; g.beginPath(); g.arc(hx, hy, hs, Math.PI * 0.9, Math.PI * 2.1); g.lineTo(hx + hs, hy + hs * 0.7); g.lineTo(hx - hs * 0.9, hy + hs * 0.7); g.closePath(); g.fill();
         g.fillStyle = '#1f2a37'; A.rr(g, hx - hs * 0.2, hy - hs * 0.3, hs * 1.15, hs * 0.55, hs * 0.2); g.fill();
         g.fillStyle = PAL.curb; g.fillRect(hx - hs * 0.9, hy + hs * 0.3, hs * 1.85, hs * 0.14);
-        const bx = hx + hs * 1.5, bw = Math.min(W - bx - 10, Math.max(150, W * 0.55)), bh = Math.min(H * 0.3, 46);
+        const bx = hx + hs * 1.5, bw = Math.min(W - bx - 10, Math.max(150, W * 0.55), 290), bh = Math.min(H * 0.3, 46);
         bubble(g, bx, hy - bh * 0.8, bw, bh, [hx + hs * 0.9, hy - bh * 0.05], { full, now }, Math.max(11, H * 0.1));
         g.restore();
       }
@@ -123,13 +123,15 @@
       A.studio(g, W, H);
       const PER = 2.6, T = fract(t / PER) * PER, hitT = 1.0, after = T - hitT;
       const shake = after > 0 ? Math.exp(-after * 5) * p.on : 0, jx = shake * Math.sin(T * 90) * H * 0.04, jr = shake * Math.sin(T * 70) * 0.03;
-      const pw = Math.min(W * 0.62, H * 1.62), ph = pw * 0.47, cx = W / 2 + jx, cy = H * 0.5;
+      const F = A.heldPhone(W, H, { full: true, wl: 0.62, hl: 1.62, hf: 0.86 }), pw = F.w, ph = F.h, cx = W / 2 + jx, cy = H * 0.5;
       A.phone(g, cx, cy, pw, ph, jr, (g2, w, h) => {
+        if (!F.land) { g2.save(); g2.translate(0, h); g2.rotate(-Math.PI / 2); const t2 = w; w = h; h = t2; }   // (upright: the same road, along the phone)
         g2.fillStyle = PAL.grass; g2.fillRect(0, 0, w, h); g2.fillStyle = PAL.asphalt; g2.fillRect(0, h * 0.22, w, h * 0.56);
         for (let i = 0; i < 10; i++) { g2.fillStyle = i & 1 ? PAL.kerbR : PAL.kerbW; g2.fillRect(i * w / 10, h * 0.16, w / 10, h * 0.06); }
         const x = after < 0 ? w * (0.15 + 0.55 * T / hitT) : w * 0.7 - Math.min(after, 0.4) * w * 0.15, y = after < 0 ? h * (0.55 - 0.3 * sstep(0.5, 1, T / hitT)) : h * 0.28 + Math.min(after, 0.4) * h * 0.4;
         A.car2d(g2, x, y, Math.PI / 2 - (after < 0 ? 0.4 * sstep(0.5, 1, T / hitT) : 0.4 * Math.exp(-after * 4)), h * 0.34, PAL.player, {});
         if (after > 0 && after < 0.35) { g2.fillStyle = 'rgba(255,240,180,' + (1 - after / 0.35) + ')'; for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; g2.fillRect(w * 0.76 + Math.cos(a) * after * 60, h * 0.2 + Math.sin(a) * after * 40, 3, 3); } }
+        if (!F.land) g2.restore();
       });
       if (shake > 0.02) for (const s of [-1, 1]) for (let i = 1; i <= 3; i++) { g.strokeStyle = 'rgba(255,198,41,' + shake * (1 - i * 0.22) + ')'; g.lineWidth = 2.5; g.beginPath(); g.arc(cx + s * (pw / 2 + 4), cy, i * H * 0.07, s > 0 ? -0.6 : Math.PI - 0.6, s > 0 ? 0.6 : Math.PI + 0.6); g.stroke(); }
     }
@@ -189,7 +191,7 @@
       A.studio(g, W, H);
       const wide = W / H > 2.6, px = wide ? W * 0.3 : W * 0.24, fx = wide ? W * 0.7 : W * 0.76, cy = H * 0.5;
       // the phone (upright) and the folder
-      const ph = H * 0.72, pw = ph * 0.5; A.phone(g, px, cy, pw, ph, 0, (g2, w, h) => { g2.fillStyle = '#12233a'; g2.fillRect(0, 0, w, h); A.car2d(g2, w / 2, h * 0.4, 0, h * 0.3, PAL.player, {}); g2.fillStyle = PAL.gold; g2.fillRect(w * 0.2, h * 0.72, w * 0.6, h * 0.05); g2.fillRect(w * 0.3, h * 0.8, w * 0.4, h * 0.04); });
+      const F = A.heldPhone(W, H, { full: true, wl: 0.3, hl: 1.2, hf: 0.72 }), ph = F.h, pw = F.w; A.phone(g, px, cy, pw, ph, 0, (g2, w, h) => { g2.fillStyle = '#12233a'; g2.fillRect(0, 0, w, h); A.car2d(g2, w / 2, h * 0.4, 0, h * 0.3, PAL.player, {}); g2.fillStyle = PAL.gold; g2.fillRect(w * 0.2, h * 0.72, w * 0.6, h * 0.05); g2.fillRect(w * 0.3, h * 0.8, w * 0.4, h * 0.04); });
       const fw = H * 0.62, fh = fw * 0.72; g.fillStyle = '#c99a3a'; A.rr(g, fx - fw / 2, cy - fh / 2 - fh * 0.12, fw * 0.42, fh * 0.2, 4); g.fill(); g.fillStyle = '#f0b84a'; A.rr(g, fx - fw / 2, cy - fh / 2, fw, fh, 6); g.fill();
       // the file going over: out (export), then back (import)
       const PER = 3.4, k = fract(t / PER) * 2, out = k < 1, u = ease(clamp((out ? k : k - 1) * 1.25, 0, 1));

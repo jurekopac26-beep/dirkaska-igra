@@ -4,13 +4,15 @@ Samostojna, klikljiva maketa novega zaslona **Pavza / Nastavitve**. **Ni povezan
 
 Klikljiva maketa je objavljena kot zasebna stran: <https://claude.ai/artifact/PpQAwpzzwCapqsws9EiRTi> (na računalniku je telefon v okvirju, zgoraj stikali *Telefon pokonci / ležeče* in *Med dirko / Iz glavnega menija*; na telefonu je zaslon čez cel ekran in sledi legi telefona).
 
-Slike predloga so v `slike/`:
+Predlog ima **dve različici**, eno za telefon pokonci in eno za telefon ležeče. Razlikujeta se v razporeditvi zaslona in v animacijah. Slike so v `slike/pokonci/` in `slike/lezece/`:
 
 | Slika | Kaj pokaže |
 | --- | --- |
-| `1-pokonci.png`, `2-pokonci.png` | zaslon na telefonu pokonci, vseh 8 zavihkov |
-| `3-lezece.png` | zaslon na telefonu ležeče |
-| `4-…`, `5-…`, `6-animacije-….png` | vse animacije: za vsako nastavitev vsaka možnost posebej in pod njo opis, kaj animacija pokaže |
+| `1-zasloni.png`, `2-zasloni.png` | vseh 8 zavihkov v tej različici |
+| `3-…`, `4-…`, `5-animacije-….png` | vse animacije v tej različici: za vsako nastavitev vsaka možnost posebej in pod njo opis, kaj animacija pokaže |
+
+- **Pokonci** (igra teče s kamero *za avtom*): animacije kažejo igro izza avta (avto kaže navzgor, svet se vrti okoli njega), telefon je v animacijah pokonci, tipke so na dnu pokončnega zaslona; drift ima v kotu zemljevid s potjo avta.
+- **Ležeče** (igra teče z *izometrično* kamero): animacije kažejo igro od zgoraj (sever vedno gor), telefon v animacijah leži; časovna tabela je desno pod zemljevidom kot v igri ležeče.
 
 ## Zaslon
 
@@ -24,12 +26,12 @@ Slike predloga so v `slike/`:
 - **Zvok**: Zvok, Glasba v uvodu, Komentator, Sovoznik na reliju, Vibracija.
 - **Splošno**: Jezik, Ime voznika, Profil (izvoz, uvoz).
 - Zgoraj desno je vedno **Nadaljuj** (iz glavnega menija **Končano**, brez zavihka Pavza).
-- **Pokonci**: naslov in Nadaljuj v prvi vrstici, zavihki (ikona nad imenom) v drugi; ime nastavitve nad izbiro.
+- **Pokonci**: naslov in Nadaljuj v prvi vrstici, zavihki (ikona nad imenom) v drugi; ime nastavitve nad izbiro; animacije so višje (200 px).
 - **Ležeče**: naslov, zavihki (ikona ob imenu) in Nadaljuj v eni vrstici, da ostane čim več prostora; ime nastavitve levo, izbira desno, animacija nad njima. Kartice so na sredini, široke največ 640 px.
 
 ## Animacije
 
-Nad vsako nastavitvijo je animacija, ki pokaže, kaj izbrana možnost naredi, brez branja. Ko možnost spremeniš, se animacija preobrazi v novo (kamera odleti, telefon se obrne, trak se nariše, črke se obrnejo …). Rišejo se na platno (canvas 2D): majhen 3D-svet v slogu igre (cesta, robniki, drevesa, avti iz kock, sence) in 2D-risbe (telefon, palec, pedala, slušalke …). Premikajo se samo animacije, ki so na zaslonu.
+Nad vsako nastavitvijo je animacija, ki pokaže, kaj izbrana možnost naredi, brez branja. Vsaka animacija ima obe različici: `SetAnim.orient()` (pokonci ali ležeče) izbere kamero (`driveCam`: za avtom ali izometrično) in telefon (`heldPhone`: pokonci ali ležeče). Ko možnost spremeniš, se animacija preobrazi v novo (kamera odleti, telefon se obrne, trak se nariše, črke se obrnejo …). Rišejo se na platno (canvas 2D): majhen 3D-svet v slogu igre (cesta, robniki, drevesa, avti iz kock, sence) in 2D-risbe (telefon, palec, pedala, slušalke …). Premikajo se samo animacije, ki so na zaslonu.
 
 Datoteke:
 
@@ -40,4 +42,4 @@ Datoteke:
 - `storyboard.html`: vse možnosti vseh animacij naenkrat (iz njega so slike 4–6);
 - `board.html`: sestavljanje slik telefonov.
 
-Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=voznja`. Parametri: `mode=pause|menu`, `tab=<id zavihka>`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).
+Odpri v brskalniku prek strežnika iz korena repozitorija (pisave so v `../fonts`), npr. `maketa-nastavitev/index.html?mode=pause&tab=voznja`. `storyboard.html?o=port|land` izriše animacije ene različice. Parametri zaslona: `mode=pause|menu`, `tab=<id zavihka>`, `land=1` (okvir ležeče), `dev=0` (brez okvirja), `bg=…` (slika dirke v ozadju), `s={"camera":"iso"}` (začetne nastavitve), `shot=1&t=2.4` (mirujoča slika za posnetke).

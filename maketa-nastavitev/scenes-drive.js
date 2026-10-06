@@ -20,101 +20,99 @@
     A.car2d(g, cxp, h * (o.cy || 0.56), s * 0.42, L, PAL.player, { steer: s * 0.5 });
     return { cx: cxp };
   }
-  // the touch controls as the game draws them: the arrows, the wheel, the pedals
-  function arrowsUI(g, sw, sh, s, a) {
-    const r = sh * 0.135, y = sh * 0.76;
-    for (const [x, dir] of [[sw * 0.1, -1], [sw * 0.25, 1]]) {
-      const on = dir * s > 0.25;
+  // the touch controls as the game lays them out (css #touch, the same upright and on its side): sized from the screen's short side, the
+  // arrows bottom left, the pedals bottom right with the handbrake over the brake; the wheel bottom left; with Nagib the brake goes left
+  function touchLayout(sw, sh) {
+    const u = Math.min(sw, sh), m = u * 0.045, r = u * 0.105;
+    const gas = { w: u * 0.2, h: u * 0.34 }; gas.x = sw - m - gas.w; gas.y = sh - m - gas.h;
+    const brk = { w: u * 0.18, h: u * 0.27 }; brk.x = gas.x - u * 0.045 - brk.w; brk.y = sh - m - brk.h;
+    const hb = { w: brk.w, h: u * 0.11 }; hb.x = brk.x; hb.y = brk.y - u * 0.035 - hb.h;
+    return { u, m, r, L: [m + r, sh - m - r], R: [m + r * 3 + u * 0.045, sh - m - r], gas, brk, hb,
+      wheel: { x: m + u * 0.24, y: sh - m - u * 0.24, r: u * 0.21 }, brkT: { x: m, y: brk.y, w: brk.w, h: brk.h } };
+  }
+  function arrowsUI(g, T, s, a) {
+    for (const [P, dir] of [[T.L, -1], [T.R, 1]]) {
+      const on = dir * s > 0.25, r = T.r, x = P[0], y = P[1];
       g.globalAlpha = a; g.fillStyle = on ? 'rgba(255,255,255,.42)' : 'rgba(16,20,27,.45)'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
       g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = Math.max(1, r * 0.1); g.stroke();
       g.strokeStyle = '#fff'; g.lineWidth = Math.max(1.2, r * 0.16); g.lineCap = 'round'; g.lineJoin = 'round';
-      g.beginPath(); g.moveTo(x - dir * r * 0.15 + dir * -r * 0.12, y - r * 0.38); g.lineTo(x + dir * r * 0.25, y); g.lineTo(x - dir * r * 0.15 + dir * -r * 0.12, y + r * 0.38); g.stroke();
+      g.beginPath(); g.moveTo(x - dir * r * 0.27, y - r * 0.38); g.lineTo(x + dir * r * 0.25, y); g.lineTo(x - dir * r * 0.27, y + r * 0.38); g.stroke();
     }
     g.globalAlpha = 1;
   }
-  function pedalsUI(g, sw, sh, gas, brake, a, o) {
+  function pad(g, R, col, on, lbl, a) {
+    g.globalAlpha = a; g.fillStyle = A.rgba(col, 0.28 + 0.47 * on); A.rr(g, R.x, R.y, R.w, R.h, R.w * 0.22); g.fill();
+    g.strokeStyle = A.rgba(col, 0.7 + 0.3 * on); g.lineWidth = Math.max(1, R.w * 0.05); g.stroke();
+    if (on > 0.05) { g.fillStyle = A.rgba(col, 0.25 * on); A.rr(g, R.x - R.w * 0.12, R.y - R.w * 0.12, R.w * 1.24, R.h + R.w * 0.24, R.w * 0.3); g.fill(); }
+    A.text(g, lbl, R.x + R.w / 2, R.y + R.h / 2, { size: Math.max(5, Math.min(R.w * 0.2, R.h * 0.3)), col: '#fff', w: 900 });
+    g.globalAlpha = 1;
+  }
+  function pedalsUI(g, T, gas, brake, a, o) {
     o = o || {};
-    const ph = sh * 0.42, pw = sw * 0.115, y = sh * 0.94 - ph;
-    const draw = (x, col, on, lbl) => {
-      g.globalAlpha = a; g.fillStyle = A.rgba(col, on ? 0.75 : 0.28); A.rr(g, x, y, pw, ph, pw * 0.22); g.fill();
-      g.strokeStyle = A.rgba(col, on ? 1 : 0.7); g.lineWidth = Math.max(1, pw * 0.05); g.stroke();
-      if (on) { g.fillStyle = A.rgba(col, 0.25 * on); A.rr(g, x - pw * 0.12, y - pw * 0.12, pw * 1.24, ph + pw * 0.24, pw * 0.3); g.fill(); }
-      A.text(g, lbl, x + pw / 2, y + ph / 2, { size: Math.max(5, pw * 0.2), col: '#fff', w: 900 });
-    };
-    draw(sw * 0.66, '#e4402f', brake, 'ZAVORA'); draw(sw * 0.83, '#3fae3a', gas, 'PLIN');
+    const B = o.tilt ? T.brkT : T.brk;
+    pad(g, B, '#e4402f', brake, 'ZAVORA', a); pad(g, T.gas, '#3fae3a', gas, 'PLIN', a);
+    if (!o.tilt) pad(g, T.hb, '#f0a020', 0, 'ROČNA', a * 0.9);
     if (o.auto > 0.01) {   // the "A" of the throttle that presses itself
-      const x = sw * 0.83 + pw, yy = y; g.globalAlpha = a * o.auto; g.fillStyle = PAL.gold; g.beginPath(); g.arc(x, yy, pw * 0.3 * A.back(o.auto), 0, TAU); g.fill();
-      A.text(g, 'A', x, yy + 0.5, { size: pw * 0.36, col: '#1b1b1b', w: 900 });
+      const x = T.gas.x + T.gas.w, y = T.gas.y; g.globalAlpha = a * o.auto; g.fillStyle = PAL.gold; g.beginPath(); g.arc(x, y, T.gas.w * 0.3 * A.back(o.auto), 0, TAU); g.fill();
+      A.text(g, 'A', x, y + 0.5, { size: T.gas.w * 0.36, col: '#1b1b1b', w: 900 }); g.globalAlpha = 1;
     }
-    g.globalAlpha = 1;
-    return { gas: [sw * 0.83 + pw / 2, y + ph * 0.55], brake: [sw * 0.66 + pw / 2, y + ph * 0.55] };
   }
-  function wheelUI(g, sw, sh, s, a) {
-    const r = sh * 0.3, x = sw * 0.17, y = sh * 0.66, ang = s * 1.5;
-    g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(ang);
+  function wheelUI(g, T, s, a) {
+    const W0 = T.wheel, r = W0.r, ang = s * 1.5;
+    g.save(); g.globalAlpha = a; g.translate(W0.x, W0.y); g.rotate(ang);
     g.strokeStyle = 'rgba(20,24,30,.8)'; g.lineWidth = r * 0.24; g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke();
     g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = Math.max(1, r * 0.04); g.setLineDash([r * 0.08, r * 0.12]); g.stroke(); g.setLineDash([]);
     g.strokeStyle = 'rgba(20,24,30,.8)'; g.lineWidth = r * 0.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(-r * 0.86, r * 0.1); g.moveTo(0, 0); g.lineTo(r * 0.86, r * 0.1); g.moveTo(0, 0); g.lineTo(0, r * 0.86); g.stroke();
     g.fillStyle = 'rgba(20,24,30,.9)'; g.beginPath(); g.arc(0, 0, r * 0.26, 0, TAU); g.fill();
     g.fillStyle = '#e63b2e'; g.fillRect(-r * 0.07, -r * 1.12, r * 0.14, r * 0.24);
     g.restore();
-    return { tip: [x + Math.sin(ang) * r, y - Math.cos(ang) * r] };
+    return [W0.x + Math.sin(ang) * r, W0.y - Math.cos(ang) * r];
   }
-  function tiltUI(g, sw, sh, s, a) {
-    g.globalAlpha = a * 0.9;
-    g.fillStyle = 'rgba(228,64,47,.2)'; g.fillRect(0, sh * 0.3, sw * 0.5, sh * 0.7);
-    g.fillStyle = 'rgba(63,174,58,.24)'; g.fillRect(sw * 0.5, sh * 0.3, sw * 0.5, sh * 0.7);
-    g.globalAlpha = a;
-    A.text(g, 'ZAVORA', sw * 0.12, sh * 0.9, { size: Math.max(5, sh * 0.075), col: 'rgba(255,255,255,.85)', w: 900 });
-    A.text(g, 'PLIN', sw * 0.88, sh * 0.9, { size: Math.max(5, sh * 0.075), col: 'rgba(255,255,255,.85)', w: 900 });
-    // the tilt meter at the top (#tilt-ind)
-    const bw = sw * 0.26, bx = sw / 2 - bw / 2, by = sh * 0.07;
-    g.fillStyle = 'rgba(10,14,20,.6)'; A.rr(g, bx, by, bw, sh * 0.06, sh * 0.03); g.fill();
-    g.fillStyle = PAL.gold; const f = s * bw / 2; g.fillRect(Math.min(sw / 2, sw / 2 + f), by + sh * 0.012, Math.abs(f), sh * 0.036);
-    g.fillStyle = '#fff'; g.fillRect(sw / 2 - 0.5, by - sh * 0.01, 1, sh * 0.08);
+  function tiltUI(g, T, sw, sh, s, a) {   // Nagib: the meter over the throttle (#tilt-ind), the brake on the left
+    const bw = T.gas.w * 1.2, bx = T.gas.x + T.gas.w / 2, by = T.gas.y - T.u * 0.09;
+    g.globalAlpha = a; g.save(); g.translate(bx, by); g.rotate(s * 0.66); g.fillStyle = PAL.chalk; A.rr(g, -bw / 2, -2, bw, 4, 2); g.fill(); g.restore();
+    A.text(g, 'NAGIB', bx, by + T.u * 0.05, { size: Math.max(5, T.u * 0.05), col: 'rgba(255,255,255,.85)', w: 800 });
     g.globalAlpha = 1;
   }
   const local = (cx, cy, rot, x, y) => [cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)];
+  // a phone of this version turned by rot about the pivot (px, py): its centre and the screen's own size
+  function heldTurned(f, rot, px, py) { const c = local(px, py, rot, f.cx - px, f.cy - py), bz = Math.min(f.w, f.h) * 0.06; return { cx: c[0], cy: c[1], sw: f.w - bz * 2, sh: f.h - bz * 2 }; }
 
-  /* ---------------- Upravljanje: Tipke / Volan / Nagib ---------------- */
+  /* ---------------- Upravljanje: Tipke / Volan / Nagib (the phone as this version holds it: upright, its lower part close up; on its side) ---------------- */
   A.def('control', {
     opts: ['buttons', 'wheel', 'tilt'], dur: 0.75,
     P: (v) => ({ b: v === 'buttons' ? 1 : 0, w: v === 'wheel' ? 1 : 0, ti: v === 'tilt' ? 1 : 0 }),
     draw(g, W, H, t, p) {
       A.studio(g, W, H);
-      const s = steerWave(t), pw = Math.min(W * 0.7, H * 1.62), ph = pw * 0.47, cx = W / 2, cy = H * 0.45;
-      const rot = p.ti * s * 0.26;
-      if (p.ti > 0.02) {   // tilting: the turn arrows at both ends of the phone
+      const s = steerWave(t), f = A.heldPhone(W, H, { wl: 0.6, hl: 1.95, wp: 0.56, yp: 1.0, y: 0.47 }), land = f.land;
+      const px = W / 2, py = land ? f.cy : H * 0.62, rot = p.ti * s * (land ? 0.26 : 0.2);
+      const P = heldTurned(f, rot, px, py);
+      if (p.ti > 0.02) {   // tilting: the turn arrows at both sides
         g.save(); g.globalAlpha = p.ti * (0.45 + 0.55 * Math.abs(s));
-        const r = pw * 0.56, dir = s >= 0 ? 1 : -1, lw = Math.max(2, H * 0.024);
-        A.arrowArc(g, cx, cy, r, Math.PI - dir * 0.05 + rot, Math.PI - dir * 0.42 + rot, PAL.gold, lw);
-        A.arrowArc(g, cx, cy, r, -dir * 0.05 + rot, -dir * 0.42 + rot, PAL.gold, lw);
+        const r = land ? f.w * 0.56 : Math.min(W * 0.4, f.w * 0.78), dir = s >= 0 ? 1 : -1, lw = Math.max(2, H * 0.022);
+        A.arrowArc(g, px, py, r, Math.PI - dir * 0.05 + rot, Math.PI - dir * 0.42 + rot, PAL.gold, lw);
+        A.arrowArc(g, px, py, r, -dir * 0.05 + rot, -dir * 0.42 + rot, PAL.gold, lw);
         g.restore();
       }
-      const sw = pw - Math.min(pw, ph) * 0.12, sh = ph - Math.min(pw, ph) * 0.12;
-      let wtip = null, pd = null;
-      A.phone(g, cx, cy, pw, ph, rot, (g2, w2, h2) => {
-        roadScreen(g2, w2, h2, t, s * (p.b > 0.5 ? 1 : 1));
-        if (p.b > 0.01) arrowsUI(g2, w2, h2, s, p.b);
-        if (p.w > 0.01) wheelUI(g2, w2, h2, s, p.w);
-        if (p.ti > 0.01) tiltUI(g2, w2, h2, s, p.ti);
-        if (p.ti < 0.99) pd = pedalsUI(g2, w2, h2, true, false, 1 - p.ti);
-        const wt = wheelUI; void wt;
+      let T = null, tip = null;
+      A.phone(g, P.cx, P.cy, f.w, f.h, rot, (g2, sw, sh) => {
+        T = touchLayout(sw, sh);
+        roadScreen(g2, sw, sh, t, s, land ? {} : { rw: 0.42, cy: 0.66 });
+        if (p.b > 0.01) arrowsUI(g2, T, s, p.b);
+        if (p.w > 0.01) tip = wheelUI(g2, T, s, p.w);
+        if (p.ti > 0.01) tiltUI(g2, T, sw, sh, s, p.ti);
+        pedalsUI(g2, T, 1, 0, 1, { tilt: p.ti > 0.5 });
       });
-      // the thumbs: where each way of steering puts them (the screen's own coordinates, then turned with the phone)
-      const S = (x, y) => [x * sw - sw / 2, y * sh - sh / 2];
-      const lb = s < -0.25 ? S(0.1, 0.76) : s > 0.25 ? S(0.25, 0.76) : S(0.175, 0.86);
-      const ang = s * 1.5, wr = sh * 0.3;
-      const lw = [0.17 * sw - sw / 2 + Math.sin(ang) * wr, 0.66 * sh - sh / 2 - Math.cos(ang) * wr];
-      const lt = [-sw * 0.47, sh * 0.25];
+      // the thumbs: where each way of steering puts them (the screen's coordinates, then turned with the phone)
+      const SC = (x, y) => local(P.cx, P.cy, rot, x - P.sw / 2, y - P.sh / 2);
+      const lb = s < -0.25 ? T.L : s > 0.25 ? T.R : [(T.L[0] + T.R[0]) / 2, T.L[1] + T.r * 0.6];
+      const lw = tip || [T.wheel.x, T.wheel.y - T.wheel.r], lt = land ? [-P.sw * 0.02, P.sh * 0.55] : [-P.sw * 0.03, P.sh * 0.86];
       const L = [lb[0] * p.b + lw[0] * p.w + lt[0] * p.ti, lb[1] * p.b + lw[1] * p.w + lt[1] * p.ti];
-      const R = [lerp(0.83 * sw + sw * 0.0575 - sw / 2, sw * 0.34, p.ti), lerp(sh * 0.94 - sh * 0.42 * 0.45 - sh / 2, sh * 0.25, p.ti)];
-      const lp = p.b * (Math.abs(s) > 0.25 ? 1 : 0) + p.w + p.ti * 0.2;
-      const ts = ph * 0.29;
-      const Lc = local(cx, cy, rot, L[0], L[1]), Rc = local(cx, cy, rot, R[0], R[1]);
+      const R = [T.gas.x + T.gas.w / 2, T.gas.y + T.gas.h * 0.62];
+      const ts = T.u * 0.3, lp = p.b * (Math.abs(s) > 0.25 ? 1 : 0) + p.w;
+      const Lc = SC(L[0], L[1]), Rc = SC(R[0], R[1]);
       A.thumb(g, Lc[0], Lc[1], 0.42 + rot, ts, lp);
       A.thumb(g, Rc[0], Rc[1], -0.42 + rot, ts, 1);
-      void wtip; void pd;
     }
   });
 
@@ -129,10 +127,10 @@
       const wave = (x) => { const s = Math.sin(x * TAU); return Math.sign(s) * Math.min(1, Math.abs(s) * 1.35); };
       const tilt = wave(ph0) * deg * 1.08;
       const steer = clamp(tilt / deg, -1, 1), full = Math.abs(steer) > 0.995;
-      const wide = W / H > 2.6, pcx = wide ? W * 0.38 : W * 0.36, pcy = H * 0.56;
-      const pw = Math.min(H * 0.86, W * 0.4), ph = pw * 0.47;
+      const wide = W / H > 2.6, pcx = wide ? W * 0.38 : W * 0.34, pcy = H * 0.56;
+      const F = A.heldPhone(W, H, { full: true, wl: 0.4, hl: 0.86, hf: 0.7 }), pw = F.w, ph = F.h;
       // the fan of the angle
-      const R = Math.min(pw * 0.62, H * 0.44), a0 = -Math.PI / 2;
+      const R = Math.min(Math.max(pw, ph) * 0.62, H * 0.44), a0 = -Math.PI / 2;
       g.fillStyle = 'rgba(255,198,41,.13)'; g.beginPath(); g.moveTo(pcx, pcy); g.arc(pcx, pcy, R, a0 - deg * A.D2R, a0 + deg * A.D2R); g.closePath(); g.fill();
       g.strokeStyle = 'rgba(255,198,41,.75)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(pcx + Math.cos(a0 - deg * A.D2R) * R, pcy + Math.sin(a0 - deg * A.D2R) * R); g.lineTo(pcx, pcy); g.lineTo(pcx + Math.cos(a0 + deg * A.D2R) * R, pcy + Math.sin(a0 + deg * A.D2R) * R); g.stroke();
       g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; g.setLineDash([2, 3]); g.beginPath(); g.moveTo(pcx, pcy); g.lineTo(pcx, pcy - R * 1.05); g.stroke(); g.setLineDash([]);
@@ -162,11 +160,11 @@
       const live = A.env && A.env.tilt ? A.env.tilt() : null;   // (the phone's real tilt, when the sensor sends it)
       const tl = live != null ? clamp(live, -1, 1) : steerWave(t * 0.9);
       const steer = tl * p.d, wide = W / H > 2.6;
-      const pcx = wide ? W * 0.4 : W * 0.38, pcy = H * 0.5, pw = Math.min(H * 0.9, W * 0.44), ph = pw * 0.47;
+      const pcx = wide ? W * 0.4 : W * 0.34, pcy = H * 0.5, F = A.heldPhone(W, H, { full: true, wl: 0.44, hl: 0.9, hf: 0.86 }), pw = F.w, ph = F.h;
       // the phone's tilt: the white arrows at both ends of it
       const dir = tl >= 0 ? 1 : -1, ta = Math.abs(tl), rot = tl * 0.3;
       g.save(); g.globalAlpha = 0.3 + 0.7 * ta;
-      { const r = pw * 0.56, lw = Math.max(2, H * 0.026); A.arrowArc(g, pcx, pcy, r, Math.PI - dir * 0.05 + rot, Math.PI - dir * 0.45 + rot, '#fff', lw); A.arrowArc(g, pcx, pcy, r, -dir * 0.05 + rot, -dir * 0.45 + rot, '#fff', lw); }
+      { const r = Math.max(pw, ph) * 0.58, lw = Math.max(2, H * 0.026); A.arrowArc(g, pcx, pcy, r, Math.PI - dir * 0.05 + rot, Math.PI - dir * 0.45 + rot, '#fff', lw); A.arrowArc(g, pcx, pcy, r, -dir * 0.05 + rot, -dir * 0.45 + rot, '#fff', lw); }
       g.restore();
       A.phone(g, pcx, pcy, pw, ph, tl * 0.3, (g2, w2, h2) => { roadScreen(g2, w2, h2, t, steer, { rw: 0.4 }); });
       // the car's turn: the gold arrow (with the phone's way: the same; turned round: the other)
@@ -179,7 +177,7 @@
       A.arrow(g, ax + sd * al * 0.4, ay - al * 0.8, ax + sd * al * 0.68, ay - al * 0.8, PAL.gold, Math.max(2.5, H * 0.035));
       g.restore();
       // same way / the other way: a tick or a swap sign between the two arrows
-      const same = p.d > 0, mx = (pcx + pw * 0.62 + ax - al * 0.6) / 2;
+      const same = p.d > 0, mx = (pcx + Math.max(pw, ph) * 0.62 + ax - al * 0.6) / 2;
       g.save(); g.globalAlpha = Math.abs(p.d);
       if (same) { g.strokeStyle = PAL.lime; g.lineWidth = Math.max(2, H * 0.03); g.lineCap = 'round'; g.beginPath(); g.moveTo(mx - H * 0.05, H * 0.5); g.lineTo(mx - H * 0.01, H * 0.55); g.lineTo(mx + H * 0.06, H * 0.43); g.stroke(); }
       else { g.strokeStyle = PAL.gold; g.lineWidth = Math.max(2, H * 0.028); A.arrow(g, mx - H * 0.07, H * 0.44, mx + H * 0.07, H * 0.44, PAL.gold, Math.max(2, H * 0.025)); A.arrow(g, mx + H * 0.07, H * 0.56, mx - H * 0.07, H * 0.56, PAL.gold, Math.max(2, H * 0.025)); }
@@ -250,6 +248,18 @@
     { B: 1.0, D: 3.4, Wb: 0.46, Wn: 2.5, Wl: 26, lag: 9 },
     { B: 0.7, D: 1.9, Wb: 0.2, Wn: 1.5, Wl: 15, lag: 4 },
     { B: 0.45, D: 0.7, Wb: 0.04, Wn: 1, Wl: 7, lag: 0 }];
+  // the game's map in the corner (#h-map): the road white with a dark edge, the car's path in gold, the car a red dot
+  function miniMap(g, W, H, P, trail, car) {
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < P.n; i++) { x0 = Math.min(x0, P.x[i]); x1 = Math.max(x1, P.x[i]); z0 = Math.min(z0, P.z[i]); z1 = Math.max(z1, P.z[i]); }
+    const mh = H * 0.42, mw = mh * 0.95, mx = W - mw - 8, my = 8, pd = 9, k = Math.min((mw - pd * 2) / (x1 - x0), (mh - pd * 2) / (z1 - z0));
+    const X = (x) => mx + mw / 2 + (x - (x0 + x1) / 2) * k, Y = (z) => my + mh / 2 - (z - (z0 + z1) / 2) * k;
+    g.fillStyle = 'rgba(14,18,25,.55)'; A.rr(g, mx, my, mw, mh, 8); g.fill();
+    g.lineJoin = 'round'; g.lineCap = 'round'; g.beginPath(); for (let i = 0; i < P.n; i++) { if (i) g.lineTo(X(P.x[i]), Y(P.z[i])); else g.moveTo(X(P.x[i]), Y(P.z[i])); }
+    g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 7; g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 3.4; g.stroke();
+    if (trail && trail.length > 1) { g.beginPath(); trail.forEach((q, i) => { if (i) g.lineTo(X(q.x), Y(q.z)); else g.moveTo(X(q.x), Y(q.z)); }); g.strokeStyle = PAL.gold; g.lineWidth = 2; g.stroke(); }
+    g.fillStyle = PAL.player; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.arc(X(car.x), Y(car.z), 3.6, 0, TAU); g.fill(); g.stroke();
+  }
+  A.miniMap = miniMap;
   A.def('assist', {
     opts: [0, 1, 2], dur: 0.6,
     P: (v) => Object.assign({}, AS[+v]),
@@ -269,25 +279,29 @@
       if (Math.abs(beta) > 0.16 && S.s < HP.len) S.marks.add(car, clamp((Math.abs(beta) - 0.12) * 2.2, 0, 1)); else S.marks.cut();
       if (Math.abs(beta) > 0.42 && S.s < HP.len && Math.random() < dt * 16) { const ch = Math.cos(car.h), sh = Math.sin(car.h); for (const b of [-0.9, 0.9]) S.fx.add({ kind: 'smoke', x: car.x - sh * 1.8 + ch * b, z: car.z - ch * 1.8 - sh * b, y: 0.4, vx: (Math.random() - 0.5) * 2, vz: (Math.random() - 0.5) * 2, vy: 0.6, age: 0, life: 0.7, r0: 0.4, r1: 1.4 + Math.abs(beta) * 1.1 }); }
       S.fx.step(dt);
-      const asp = W / H, pitch = 0.82, fov = 30;
-      const D = Math.max(33 * Math.sin(pitch) / (2 * Math.tan(fov * A.D2R / 2)), 46 / (2 * Math.tan(fov * A.D2R / 2) * asp));
-      const V = S.V.set(A.camAt(0, 0, -5, D, 0, pitch, fov), 0, 0, W, H);
+      // on its side: the whole hairpin from above (the isometric view); upright: behind the car, the way the race looks upright, with the map
+      const land = A.orient() === 'land', ph = HP.at(Math.min(S.s, HP.len) - 2).h;
+      if (S.hv == null || S.s < 1) S.hv = ph; S.hv = A.lerpAng(S.hv, ph, 1 - Math.exp(-dt * 4));
+      let V;
+      if (land) { const asp = W / H, pitch = 0.82, fov = 30, D = Math.max(33 * Math.sin(pitch) / (2 * Math.tan(fov * A.D2R / 2)), 46 / (2 * Math.tan(fov * A.D2R / 2) * asp)); V = S.V.set(A.camAt(0, 0, -5, D, 0, pitch, fov), 0, 0, W, H); }
+      else V = S.V.set(A.driveCam(car, { hv: S.hv, Dc: 23, ahc: 5 }), 0, 0, W, H);
       // the car's path: a white line that fades behind it (wide and wavy with little help, a clean arc with a lot); a still shows all of it
       if (!S.trail || S.s < 1) S.trail = [];
       if (S.s < HP.len) S.trail.push({ x: car.x, z: car.z, h: car.h, t });
-      while (S.trail.length && !A.still && t - S.trail[0].t > 2.2) S.trail.shift();
+      while (S.trail.length && !A.still && t - S.trail[0].t > 6) S.trail.shift();
       const ghosts = A.still ? S.trail.filter((q, i) => i % 9 === 0 && i < S.trail.length - 6).map(q => ({ x: q.x, z: q.z, h: q.h, col: PAL.player, ghost: 1 })) : [];
       A.scene(g, V, { t, roads: [{ P: HP, w: 9 }], things: HP_THINGS, cars: [car],
         under: (g2, V2) => {
           S.marks.draw(g2, V2);
           const T = [0, 0, 0, 0]; g2.lineCap = 'round'; g2.lineJoin = 'round';
           for (let i = 1; i < S.trail.length; i++) {
-            const a = S.trail[i - 1], b = S.trail[i], al = A.still ? 0.75 : clamp(1 - (t - b.t) / 2.2, 0, 1) * 0.85;
-            V2.p(a.x, 0.05, a.z, T); const x0 = T[0], y0 = T[1]; V2.p(b.x, 0.05, b.z, T);
+            const a = S.trail[i - 1], b = S.trail[i], al = A.still ? 0.75 : clamp(1 - (t - b.t) / 2.2, 0, 1) * 0.85; if (al < 0.02) continue;
+            V2.p(a.x, 0.05, a.z, T); if (!T[3]) continue; const x0 = T[0], y0 = T[1]; V2.p(b.x, 0.05, b.z, T); if (!T[3]) continue;
             g2.strokeStyle = 'rgba(255,255,255,' + al.toFixed(3) + ')'; g2.lineWidth = Math.max(1.5, H * 0.012); g2.beginPath(); g2.moveTo(x0, y0); g2.lineTo(T[0], T[1]); g2.stroke();
           }
           if (ghosts.length) { g2.save(); g2.globalAlpha = 0.28; for (const c of ghosts) for (const pt of A.carParts(c).parts) pt.draw(g2, V2); g2.restore(); }
         }, over: (g2, V2) => S.fx.draw(g2, V2) });
+      if (!land) miniMap(g, W, H, HP, S.trail, car);
       const fade = S.s > HP.len + 12 ? sstep(HP.len + 12, HP.len + 22, S.s) : S.s < 3 ? 1 - S.s / 3 : 0;
       if (fade > 0) { g.fillStyle = 'rgba(8,18,31,' + (fade * 0.8) + ')'; g.fillRect(0, 0, W, H); }
     }

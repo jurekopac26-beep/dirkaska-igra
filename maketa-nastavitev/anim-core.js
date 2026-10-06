@@ -572,6 +572,19 @@ window.SetAnim = (function () {
     return w;
   }
 
+  // the version the pictures are drawn for: 'port' (the phone upright: the camera behind the car, the phone drawn upright) or 'land'
+  // (the phone on its side: the isometric camera, the phone drawn lying)
+  const orient = () => SetAnim.env && SetAnim.env.get && SetAnim.env.get('orient') === 'land' ? 'land' : 'port';
+  // the phone the player holds in this version: lying (all of it) or upright (taller than the picture: its lower part, close up, unless
+  // o.full); { land, cx, cy, w, h } for phone()
+  function heldPhone(W, H, o) {
+    o = o || {};
+    if (orient() === 'land') { const w = Math.min(W * (o.wl || 0.62), H * (o.hl || 1.85)); return { land: true, cx: W * (o.x || 0.5), cy: H * (o.y || 0.5), w, h: w * 0.47 }; }
+    if (o.full) { const h = Math.min(H * (o.hf || 0.92), W * 0.9 / 0.47), w = h * 0.47; return { land: false, cx: W * (o.x || 0.5), cy: H * (o.y || 0.5), w, h }; }
+    const w = Math.min(W * (o.wp || 0.5), H * 0.98), h = w / 0.47;
+    return { land: false, cx: W * (o.x || 0.5), cy: H * (o.yp || 0.97) - h / 2, w, h };
+  }
+
   /* ---------------- the loop: the pictures on the page ---------------- */
   const defs = {};
   function def(key, d) { defs[key] = d; }
@@ -612,7 +625,8 @@ window.SetAnim = (function () {
     try { L.d.draw(g, cw, ch, now, p, st, L.S); } catch (e) { console.error(L.key, e); }
   }
   function frame() {
-    raf = 0; const now = clock(); let any = false;
+    raf = 0; if (frozen != null) return;   // (a still: drawAt drew each picture at its own time)
+    const now = clock(); let any = false;
     for (const L of live) if (L.vis && L.el.isConnected) { drawOne(L, now); any = true; }
     if (any && frozen == null && !reduced()) raf = requestAnimationFrame(frame);
   }
@@ -629,6 +643,6 @@ window.SetAnim = (function () {
     TAU, D2R, clamp, lerp, sstep, ease, easeOut, back, wrapPi, lerpAng, fract, hash, tri, PAL, shade, mix, rgba,
     View, camAt, camMix, kinds: KINDS, poly, quad, disc, prism, outline, box, ccw, Path, drawRoad, band, ground, sky, carParts, carShadow, marker, thing, thingShadow,
     Particles, Marks, scene, rr, studio, phone, thumb, text, noteSign, speedo, car2d, arrowArc, arrow, slash, pill, NOTE_PATHS, P2D, SHX, SHZ,
-    def, defs, attach, detach, change, clock, freeze, drawAt, live, kick, set dprCap(v) { dprCap = v; }
+    orient, heldPhone, def, defs, attach, detach, change, clock, freeze, drawAt, live, kick, set dprCap(v) { dprCap = v; }
   };
 })();

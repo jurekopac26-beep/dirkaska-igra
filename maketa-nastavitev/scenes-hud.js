@@ -41,7 +41,7 @@
       S.v += (want - S.v) * (1 - Math.exp(-dt * (want > S.v ? 1.4 : 3.2))); S.s += S.v * dt;
       const d = lineD(S.s), q = LOOP.at(S.s, d), q2 = LOOP.at(S.s + 1.5, lineD(S.s + 1.5));
       const car = { x: q.x, z: q.z, h: Math.atan2(q2.x - q.x, q2.z - q.z), col: PAL.player, marker: true, brakeLights: z === 'brake' };
-      const V = S.V.set(A.gameCam('iso', car, { Di: 40, ahi: 9 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(car, { Di: 40, ahi: 9, hv: LOOP.at(S.s - 4).h, Dc: 26, ahc: 5 }), 0, 0, W, H);
       const len = 46 * ease(p.on);
       A.scene(g, V, { t, roads: [{ P: LOOP, w: 10 }], things: LOOP_THINGS, cars: [car], under: (g2, V2) => {
         if (len < 0.5) return;
@@ -79,14 +79,14 @@
       S.v += (want - S.v) * (1 - Math.exp(-dt * 2.6)); S.s += S.v * dt;
       if (S.s > WIND.len - 4) { S.s = 0; S.shown = -1; }
       const q = WIND.at(S.s), car = { x: q.x, z: q.z, h: q.h + (inB ? inB.dir * 0.2 : 0), col: PAL.player, marker: true, steer: q.k * 6 };
-      const V = S.V.set(A.gameCam('iso', car, { Di: 40, ahi: 10 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(car, { Di: 40, ahi: 10, hv: WIND.at(S.s - 4).h, Dc: 26, ahc: 5 }), 0, 0, W, H);
       A.scene(g, V, { t, roads: [{ P: WIND, w: 9 }], things: WIND_THINGS, cars: [car] });
       // the sign: from ~40 m before the bend until the car is in it
       const i = next ? WIND_B.indexOf(next) : -1, show = next && next.s0 - S.s < 44 && next.s0 - S.s > -1 ? i : -1;
       if (show !== S.shown) { S.shown = show; S.at = t; }
       if (show >= 0 && p.on > 0.01) {
         const b = WIND_B[show], k = clamp((t - S.at) / 0.25, 0, 1), out = 1 - sstep(-1, 4, -(b.s0 - S.s) + 4);
-        A.noteSign(g, W / 2, H * 0.24, Math.min(H * 0.3, 56), b.kind, b.sev, p.on * Math.min(k, out), 0.8 + 0.2 * A.back(k));
+        A.noteSign(g, W / 2, H * (A.orient() === 'land' ? 0.24 : 0.3), Math.min(H * 0.28, 56), b.kind, b.sev, p.on * Math.min(k, out), 0.8 + 0.2 * A.back(k));
       }
     }
   });
@@ -130,7 +130,7 @@
       S.v += (want - S.v) * (1 - Math.exp(-dt * 2.6)); S.s += S.v * dt;
       if (S.s > MTN.len - 4) { S.s = 0; S.shown = -1; }
       const q = MTN.at(S.s), car = { x: q.x, z: q.z, h: q.h + (inB ? inB.dir * 0.25 : 0), col: PAL.player, marker: true, steer: q.k * 4 };
-      const V = S.V.set(A.gameCam('iso', car, { Di: 40, ahi: 8 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(car, { Di: 40, ahi: 8, hv: MTN.at(S.s - 4).h, Dc: 25, ahc: 4.5 }), 0, 0, W, H);
       A.scene(g, V, { t, groundFn: mtnGround, roads: [{ P: MTN, w: 7.5, kerbs: false, centre: '#f2c230', shoulder: 1.2, shoulderCol: '#a69a86' }], things: MTN_THINGS, cars: [car] });
       const i = next ? MTN_B.indexOf(next) : -1, dist = next ? next.s0 - S.s : 1e9, show = next && dist < Math.max(40, S.v * 2.6) && dist > -6 ? i : -1;
       if (show !== S.shown) { S.shown = show; S.at = t; }
@@ -150,7 +150,7 @@
       const s = t * 16, gap = 8 + 2.5 * Math.sin(t * 0.7);
       const car = A.loopCar(s, PAL.player, { marker: true, d: -0.6 }), gh = A.loopCar(s + gap, '#cfe4ff', { d: 0.4 });
       gh.ghost = 1; gh.stripe = false; gh.roof = '#cfe4ff';
-      const V = S.V.set(A.gameCam('iso', car, { Di: 38, ahi: 3 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(car, { Di: 38, ahi: 3, hv: LOOP.at(s - 4).h, Dc: 26, ahc: 6 }), 0, 0, W, H);
       const cars = p.on > 0.02 ? [Object.assign(gh, { ghostA: p.on }), car] : [car];
       A.scene(g, V, { t, roads: [{ P: LOOP, w: 10 }], things: LOOP_THINGS, cars: cars.filter(c => !c.ghost), over: (g2, V2) => {
         if (p.on <= 0.02) return;
@@ -185,10 +185,10 @@
     draw(g, W, H, t, p, st, S) {
       const pos = FIELD.map((f, i) => ({ f, s: f.s0 + f.v * t + f.a * Math.sin(t * f.w + i * 1.7) }));
       const me = pos.find(x => x.f.me), cars = pos.map((x, i) => Object.assign(A.loopCar(x.s, x.f.c, { marker: !!x.f.me, d: ((i % 3) - 1) * 2.2, stripe: x.f.me ? undefined : false }), {}));
-      const V = S.V.set(A.gameCam('iso', A.loopCar(me.s, PAL.player), { Di: 40, ahi: 6 }), 0, 0, W, H);
+      const V = S.V.set(A.driveCam(A.loopCar(me.s, PAL.player), { Di: 40, ahi: 6, hv: LOOP.at(me.s - 4).h, Dc: 27, ahc: 4 }), 0, 0, W, H);
       A.scene(g, V, { t, roads: [{ P: LOOP, w: 11 }], things: LOOP_THINGS, cars });
       // the tower
-      const order = pos.slice().sort((a, b) => b.s - a.s), rh = Math.min(H * 0.135, 22), rw = Math.max(rh * 5.4, 92), x0 = 8 - (rw + 14) * (1 - ease(p.on)), y0 = Math.max(6, (H - rh * 6 - 5) / 2);
+      const order = pos.slice().sort((a, b) => b.s - a.s), rh = Math.min(H * 0.135, 22), rw = Math.max(rh * 5.4, 92), right = A.orient() === 'land', x0 = right ? W - rw - 8 + (rw + 14) * (1 - ease(p.on)) : 8 - (rw + 14) * (1 - ease(p.on)), y0 = Math.max(6, (H - rh * 6 - 5) / 2);
       if (p.on > 0.01) order.forEach((x, i) => {
         const key = x.f.n, target = y0 + i * (rh + 1); if (S.y[key] == null) S.y[key] = target;
         S.y[key] += (target - S.y[key]) * (1 - Math.exp(-(st.dt || 0) * 8)); const y = S.y[key];

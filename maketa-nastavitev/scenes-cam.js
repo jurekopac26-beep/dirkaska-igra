@@ -40,6 +40,15 @@
     return A.camAt(car.x + fx * ahead, 0, car.z + fz * ahead, D, 0, 0.82, 30);
   }
   A.gameCam = gameCam;
+  // the camera of the version: on its side the isometric one; upright behind the car (the car points up the picture and the world
+  // turns round it). hv: the heading it looks along (the travel, lagging behind a drifting car's nose)
+  function driveCam(car, o) {
+    o = o || {};
+    if (A.orient() === 'land') return gameCam('iso', car, o);
+    const hv = o.hv != null ? o.hv : car.h, zoom = o.zoom || 1, D = (o.Dc || 26) * zoom, ahead = (o.ahc != null ? o.ahc : 7) + (o.back || 0);
+    return A.camAt(car.x + Math.sin(hv) * ahead, 0, car.z + Math.cos(hv) * ahead, D, hv, o.pc || 0.86, o.fc || 40);
+  }
+  A.driveCam = driveCam;
   // the camera mode the other settings' pictures follow (Kamera's value), eased: 0 iso .. 1 chase
   function camMode(S, dt) {
     const want = A.env && A.env.get && A.env.get('camera') === 'chase' ? 1 : 0;

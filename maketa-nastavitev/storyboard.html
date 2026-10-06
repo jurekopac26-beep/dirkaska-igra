@@ -38,7 +38,7 @@
 <script>
   // ?keys=a,b&w=346&h=168&t=2.5 : every option of each setting at time t (its state run up to it); ?cat=voznja: a category's
   const q = new URLSearchParams(location.search), W = +(q.get('w') || 300), H = +(q.get('h') || 150), T = +(q.get('t') || 2.4);
-  const env = { camera: q.get('camera') || 'chase', tilt: null };
+  const env = { camera: q.get('camera') || (q.get('o') === 'land' ? 'iso' : 'chase'), orient: q.get('o') === 'land' ? 'land' : 'port', tilt: null };
   SetAnim.env = { get: (k) => env[k], tilt: () => null }; SetAnim.still = true;
   const out = document.getElementById('out');
   const cats = SETTINGS_DATA.cats.filter(c => !q.get('cat') || q.get('cat').split(',').includes(c.id));
@@ -60,7 +60,7 @@
         cell.appendChild(cv);
         if (o.l) { const b = document.createElement('b'); b.innerHTML = o.l + (o.story ? '<span>' + o.story + '</span>' : ''); b.style.width = W + 'px'; cell.appendChild(b); }
         row.appendChild(cell);
-        jobs.push({ cv, key: it.anim, v: o.v, t: it.storyT != null ? it.storyT : T });
+        jobs.push({ cv, key: it.anim, v: o.v, t: env.orient === 'port' && it.storyTp != null ? it.storyTp : it.storyT != null ? it.storyT : T });
       }
     }
   }

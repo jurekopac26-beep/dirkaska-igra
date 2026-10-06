@@ -41,10 +41,10 @@
         const rel = b + p.rate * T * (0.85 + i * 0.15) + p.fight * 3 * Math.sin(T * 1.6 + i * 2.1);
         return { x: px + rel, z: z + (rel > -5 && rel < 5 && Math.abs(z) < 1 ? 4.2 : 0), h: Math.PI / 2, col: c, stripe: false };
       });
-      if (p.pol > 0.01) for (const [k, z] of [[0, -4], [1, 4]]) { const rel = -18 + 3.4 * T + k * 1.5; cars.push({ x: px + rel - (1 - p.pol) * 30, z, h: Math.PI / 2, col: '#f4f6f9', roof: '#1b2a4a', police: true, t, stripe: false }); }
+      if (p.pol > 0.01) for (const [k, z] of [[0, -4], [1, 4]]) { const rel = (A.orient() === 'land' ? -18 + 3.4 * T : -9 + 2.6 * T) + k * 1.5; cars.push({ x: px + rel - (1 - p.pol) * 30, z, h: Math.PI / 2, col: '#f4f6f9', roof: '#1b2a4a', police: true, t, stripe: false }); }
       cars.push(player);
       const asp = W / H, D = Math.max(20 * Math.sin(0.82) / (2 * Math.tan(15 * A.D2R)), 48 / (2 * Math.tan(15 * A.D2R) * asp));
-      const V = S.V.set(A.camAt(px + 5, 0, 0, D, 0, 0.82, 30), 0, 0, W, H);
+      const V = S.V.set(A.orient() === 'land' ? A.camAt(px + 5, 0, 0, D, 0, 0.82, 30) : A.driveCam(player, { hv: Math.PI / 2, Dc: 30, ahc: 8, pc: 0.74, fc: 44 }), 0, 0, W, H);
       A.scene(g, V, { t, things: roadside(px - 60, px + 80, { w: 14, p: 0.45 }), cars, under: (g2, V2) => straight(g2, V2, px - 80, px + 90, { w: 14, kerbs: true, lanes: [-2.1, 2.1] }) });
       // the meter: 1..4 bars
       const n = 4, bw = Math.max(5, H * 0.05), bx = W - 12 - n * (bw + 3), by = 12, bh = H * 0.2;
@@ -93,7 +93,7 @@
       if (hit && p.real > 0.5 && Math.random() < dt * 22) { const ch = Math.cos(car.h), sh = Math.sin(car.h); S.fx.add({ kind: 'smoke', x: car.x + sh * 1.8, z: car.z + ch * 1.8, y: 1, vx: -S.v * 0.6 + (Math.random() - 0.5) * 2, vz: (Math.random() - 0.5) * 2, vy: 1.4, age: 0, life: 1.2, r0: 0.6, r1: 2.6, c: '90,92,96' }); }
       S.fx.step(dt); S.last = T;
       const asp = W / H, D = Math.max(15 * Math.sin(0.82) / (2 * Math.tan(15 * A.D2R)), 26 / (2 * Math.tan(15 * A.D2R) * asp));
-      const V = S.V.set(A.camAt(S.x + 3, 0, 2.2, D, 0, 0.82, 30), 0, 0, W, H);
+      const V = S.V.set(A.orient() === 'land' ? A.camAt(S.x + 3, 0, 2.2, D, 0, 0.82, 30) : A.driveCam({ x: S.x, z: 1.6, h: Math.PI / 2 }, { hv: Math.PI / 2, Dc: 21, ahc: 4, pc: 0.8, fc: 50 }), 0, 0, W, H);
       const things = roadside(S.x - 50, S.x + 70, { w: 10, p: 0.5, noNorth: true }); wallPieces(S.x - 60, S.x + 80, 5.6, things);
       A.scene(g, V, { t, things, cars: [car], under: (g2, V2) => straight(g2, V2, S.x - 70, S.x + 90, { w: 10, lanes: [0] }), over: (g2, V2) => S.fx.draw(g2, V2) });
       // the HUD: the car's damage (not there with damage off) and the speed
@@ -126,7 +126,7 @@
       if (engine > 0.5 && Math.random() < dt * 26) S.fx.add({ kind: 'smoke', x: car.x + sh * 1.6, z: car.z + ch * 1.6, y: 1.1, vx: -v * 0.5 + (Math.random() - 0.5) * 2, vz: (Math.random() - 0.5) * 2, vy: 1.6, age: 0, life: 1.1, r0: 0.5, r1: 2.2, c: '240,240,240' });
       S.fx.step(dt);
       const asp = W / H, D = Math.max(12 * Math.sin(0.82) / (2 * Math.tan(15 * A.D2R)), 24 / (2 * Math.tan(15 * A.D2R) * asp));
-      const V = S.V.set(A.camAt(S.x + 1.5, 0, 0.4, D, 0, 0.82, 30), 0, 0, W, H);
+      const V = S.V.set(A.orient() === 'land' ? A.camAt(S.x + 1.5, 0, 0.4, D, 0, 0.82, 30) : A.driveCam({ x: S.x, z: 0, h: Math.PI / 2 }, { hv: Math.PI / 2, Dc: 13, ahc: 1.5, pc: 0.86, fc: 42 }), 0, 0, W, H);
       A.scene(g, V, { t, things: roadside(S.x - 30, S.x + 40, { w: 9, p: 0.5 }), cars: [car], under: (g2, V2) => straight(g2, V2, S.x - 40, S.x + 50, { w: 9, lanes: [0], kerbs: true }), over: (g2, V2) => {
         S.fx.draw(g2, V2);
         if (brakes > 0.3) for (let i = 0; i < 3; i++) {   // the heat over the brakes: wavy lines
@@ -266,7 +266,7 @@
       } else {
         const T2 = T - fly; lightsK = clamp(T2 / 1.8, 0, 1);
         const go = T2 > 1.5 ? (T2 - 1.5) : 0, q = M.at(4 + go * go * 6); car = { x: q.x, z: q.z, h: q.h, col: PAL.player, marker: true };
-        cam = A.gameCam('iso', car0, { Di: 36, ahi: 4 });
+        cam = A.driveCam(car0, { Di: 36, ahi: 4, Dc: 24, ahc: 7 });
       }
       const V = S.V.set(cam, 0, 0, W, H);
       A.scene(g, V, { t, groundFn: A.mtnGround, roads: [{ P: M, w: 7.5, kerbs: false, centre: '#f2c230', shoulder: 1.2, shoulderCol: '#a69a86' }], things: A.MTN_THINGS, cars: [car] });

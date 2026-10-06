@@ -24,7 +24,7 @@ window.SETTINGS_DATA = (function () {
         { key: 'autoGas', anim: 'autoGas', name: 'Samodejni plin', opts: OFFON(
           'Palec mora držati PLIN; ko ga spusti, avto upočasni (merilnik pade).',
           'PLIN z zlatim »A« sveti sam, avto vozi naprej; palec le pritisne ZAVORO.') },
-        { key: 'assist', anim: 'assist', name: 'Pomoč pri driftu', storyT: 5.6, opts: [
+        { key: 'assist', anim: 'assist', name: 'Pomoč pri driftu', storyT: 5.6, storyTp: 3.3, opts: [
           { v: 0, l: 'Nizka', story: 'Avto zanese daleč ven do roba, se po ovinku še ziba, veliko dima: drift loviš sam.' },
           { v: 1, l: 'Srednja', story: 'Zmeren drift, nekoliko širša linija, en zamah repa na izhodu.' },
           { v: 2, l: 'Visoka', story: 'Avto sam drži lep, tesen drift skozi lasnico in se takoj poravna.' }] },
