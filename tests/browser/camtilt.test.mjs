@@ -1,5 +1,5 @@
-// Nagib kamere (Nastavitve): the chase camera (za avtom) looks further ahead along the road. Its tilt below the horizon is 10 % (Običajno,
-// the default), 20 % (Več) or 30 % (Največ) smaller than the camera's own; its distance from the point it looks at stays the same, and the
+// Nagib kamere (Nastavitve): the chase camera (za avtom) looks further ahead along the road. Its tilt below the horizon is 10 % (the
+// default), 20 % or 30 % smaller than the camera's own; its distance from the point it looks at stays the same, and the
 // isometric camera does not change.
 //   node tests/browser/camtilt.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -20,7 +20,7 @@ try {
 
   await startTrack(page, 'jezero');
   const w = await wiring();
-  T.check('the default: Običajno (10 %)', w.set === 0 && w.tilt === 0.1, JSON.stringify(w));
+  T.check('the default: 10 %', w.set === 0 && w.tilt === 0.1, JSON.stringify(w));
 
   // the setting is wired through (saved, and mapped to 10 / 20 / 30 %)
   await pick('0'); const c0 = await view('chase'); const w0 = await wiring();
