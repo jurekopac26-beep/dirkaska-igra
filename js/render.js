@@ -3745,10 +3745,10 @@ const Render = (function () {
       const x = ((i + 0.5) / W - 0.5) * 9, y = (j + 0.5) / H * 22, dy = y - 0.3, o = (j * W + i) * 4;   // (metres: x across, y ahead from the plane's near edge, the lamps 0.3 m in)
       let a = 0;
       if (dy > 0) {
-        const along = (1 - Math.exp(-dy / 0.35)) / (1 + (dy / 7) ** 2) * Math.min(1, (22 - y) / 6), sx = 0.22 + 0.16 * dy;
+        const sx = 0.26 + 0.17 * dy, along = (1 - Math.exp(-dy / 0.3)) * Math.min(1, (22 - y) / 7) * 0.51 / (0.51 + 0.35 * dy);   // (each cone as much dimmer as it is wider: the brightest at the lamps)
         for (const xl of [-0.62, 0.62]) a += Math.exp(-((x - xl) ** 2) / (2 * sx * sx)) * along;
         a += 0.22 * Math.exp(-(x * x) / (2 * (0.8 + 0.3 * dy) ** 2)) * along;   // (the spill round the cones)
-        a = (1 - Math.exp(-1.5 * a)) * Math.min(1, (4.5 - Math.abs(x)) / 1.2);
+        a = (1 - Math.exp(-2.4 * a)) * Math.min(1, (4.5 - Math.abs(x)) / 1.2);
       }
       d[o] = d[o + 1] = d[o + 2] = 255; d[o + 3] = Math.round(255 * clamp(a, 0, 1));
     }
