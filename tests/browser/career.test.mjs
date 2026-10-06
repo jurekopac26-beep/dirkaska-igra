@@ -27,6 +27,18 @@ try {
   T.check('career: started from its screen with 10.000 € and the PICO TURBO (the car chosen), the title button shows the money',
     b0 === 'Kariera' && scr0.screen === 'career' && scr0.toggle === 'Začni kariero' && scr0.reset && scr0.cars >= 6 && c1.on && c1.money === 10000 && c1.cars.join() === 'pico' && scr1.own.join() === 'PICO TURBO' && scr1.money === '10.000 €' && scr1.toggle === 'Izklopi kariero' && scr1.car === await carIdx('pico'),
     JSON.stringify({ b0, scr0, c1, scr1 }));
+  // the career screen's next step: "Naprej" to the car screen; a tap on a car of the garage opens that car there
+  const go1 = await page.evaluate(() => ({ go: !document.getElementById('career-go').classList.contains('off'), prim: document.getElementById('career-toggle').classList.contains('primary') }));
+  await act('career-go'); await page.waitForTimeout(300);
+  const g1 = await page.evaluate(() => ({ screen: window.__game.screen, name: document.getElementById('car-name').textContent }));
+  await act('to-title'); await page.waitForTimeout(200); await act('to-career'); await page.waitForTimeout(200);
+  await page.evaluate(() => { const c = [...document.querySelectorAll('#career-garage .gcar')].find(e => !e.classList.contains('own')); c.click(); });
+  await page.waitForTimeout(300);
+  const g2 = await page.evaluate(() => ({ screen: window.__game.screen, name: document.getElementById('car-name').textContent, act: document.getElementById('car-next').dataset.act }));
+  await act('to-title'); await page.waitForTimeout(200); await act('to-career'); await page.waitForTimeout(200);
+  await page.evaluate(() => document.querySelector('#career-garage .gcar.own').click()); await page.waitForTimeout(300);   // (back to the own car)
+  T.check('career screen: "Naprej" opens the car screen, a tap on a car for sale opens it there with "Kupi"',
+    go1.go && !go1.prim && g1.screen === 'car' && g1.name === 'PICO TURBO' && g2.screen === 'car' && g2.name !== 'PICO TURBO' && g2.act === 'car-buy', JSON.stringify({ go1, g1, g2 }));
   await act('to-title'); await page.waitForTimeout(200);
   const b1 = await txt('btn-career');
   T.check('the title button: "Kariera · 10.000 €"', b1 === 'Kariera · 10.000 €', b1);

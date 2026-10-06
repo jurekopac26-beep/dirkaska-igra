@@ -1105,8 +1105,9 @@
       tr('Z denarjem kupuješ avte in nadgradnje. Začneš z {0} in avtom {1}.', eur(C.start), Core.MODELS.find(m => m.id === C.car0).name) + (on ? '' : career ? tr(' Kariera je zdaj izklopljena: voziš prosto, z vsemi avti.') : '');
     // the garage: every car by category (the display order: in each the cheapest first), the ones bought marked
     $('career-garage').innerHTML = catList().map(c => '<h4 class="gcat">' + esc(tr(c.name)) + '</h4>' + catCars(c.id).map(i => { const m = Core.MODELS[i], own = career && career.cars.includes(m.id);
-      return '<div class="gcar' + (own ? ' own' : '') + '" data-g="' + c.id + '"><b>' + esc(m.name) + '</b>' + (own ? tr('v garaži') : '<span class="pr">' + eur(priceOf(m.id)) + '</span>') + '</div>'; }).join('')).join('');
+      return '<div class="gcar' + (own ? ' own' : '') + (on && S.car === i ? ' sel' : '') + '" data-g="' + c.id + '" data-car="' + i + '"><b>' + esc(m.name) + '</b>' + (own ? tr('v garaži') : '<span class="pr">' + eur(priceOf(m.id)) + '</span>') + '</div>'; }).join('')).join('');
     $('career-toggle').textContent = tr(!career ? 'Začni kariero' : on ? 'Izklopi kariero' : 'Nadaljuj kariero');
+    $('career-go').classList.toggle('off', !on); $('career-toggle').classList.toggle('primary', !on);
     $('career-reset').classList.toggle('off', !career); $('career-reset').textContent = tr('Nova kariera');
   }
   let careerResetT = 0;
@@ -4567,6 +4568,7 @@
       case 'to-champ': openChamp(); break;
       case 'to-career': buildCareerScreen(); showScreen('career'); break;
       case 'career-toggle': careerToggle(); break;
+      case 'career-go': if (!inCareer()) break; carFrom = 'title'; bg = 'show'; buildCarScreen(); showScreen('car'); break;   // (the career's next step: the car screen, there Kupi / Nadgradnje / Naprej)
       case 'career-reset':   // a second tap within 4 s starts a new career
         if (Date.now() - careerResetT < 4000) { career = careerNew(); careerSave(); careerResetT = 0; S.car = Core.MODELS.findIndex(m => m.id === career.cars[0]); save(); buildCareerScreen(); refreshSegs(); toast(tr('Nova kariera: {0}.', eur(career.money))); }
         else { careerResetT = Date.now(); if (el) el.textContent = tr('Res začnem znova?'); toast(tr('Tapni še enkrat, če res želiš začeti novo kariero (denar, avti in nadgradnje se izgubijo).'), 3400); }
@@ -4733,6 +4735,8 @@
       if (cb) { Sfx.click(); S.color = +cb.dataset.col; save(); buildCarScreen(); return; }
       const cc = e.target.closest('#car-cats [data-cat]');   // the car screen: a category (its car), a car of the strip
       if (cc) { Sfx.resume(); Sfx.click(); pickCar(catFirst(cc.dataset.cat)); return; }
+      const gc = e.target.closest('#career-garage [data-car]');   // the career's garage: a car (his own or for sale) opens on the car screen
+      if (gc) { Sfx.resume(); Sfx.click(); S.car = +gc.dataset.car; save(); carFrom = 'title'; bg = 'show'; buildCarScreen(); showScreen('car'); return; }
       const ck = e.target.closest('#car-strip [data-car]');
       if (ck) { Sfx.resume(); Sfx.click(); pickCar(+ck.dataset.car); return; }
     });

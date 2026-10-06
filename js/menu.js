@@ -226,11 +226,18 @@
     const a = pts[0], b = pts[pts.length - 1], A = M.alt;
     return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
   }
-  function routeLines(id, pts, rally) {   // the route drawn on, then a glowing point running along it at an even pace (its glow a gradient: cheap to move)
+  // the glowing point shows from 1.6 s; where the road runs through a tunnel (def.tunnel, fractions of the lap) it goes dark at the mouth
+  // and lights up again at the exit, as if it had driven in (the point moves at an even pace along the route: the same fractions)
+  function dotShow(rally, tun) {
+    if (!tun || !(tun[1] > tun[0])) return '<set attributeName="opacity" to="1" begin="1.6s"/>';
+    const e = 0.006, a = tun[0], b = tun[1], f = (x) => x.toFixed(4);
+    return '<animate attributeName="opacity" begin="1.6s" dur="' + (rally ? 11 : 15) + 's" repeatCount="indefinite" calcMode="linear" keyTimes="0;' + f(a) + ';' + f(a + e) + ';' + f(b) + ';' + f(b + e) + ';1" values="1;1;0;0;1;1"/>';
+  }
+  function routeLines(id, pts, rally, tun) {   // the route drawn on, then a glowing point running along it at an even pace (its glow a gradient: cheap to move)
     const d = pathD(pts), c = rally ? ['#fff0dc', '#ffffff'] : ['#ffe07a', '#ffd23a'];
     return '<defs><radialGradient id="rg-' + id + '"><stop offset="0" stop-color="#fff8d0"/><stop offset=".35" stop-color="' + c[0] + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c[1] + '" stop-opacity="0"/></radialGradient></defs>' +
       '<path class="rt-o" d="' + d + '"/><path class="rt" id="rt-' + id + '" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
-      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g><set attributeName="opacity" to="1" begin="1.6s"/>' +
+      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g>' + dotShow(rally, tun) +
       '<animateMotion dur="' + (rally ? 11 : 15) + 's" begin="1.6s" repeatCount="indefinite"><mpath href="#rt-' + id + '"/></animateMotion></g>';
   }
   function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
@@ -265,7 +272,7 @@
     // a soft, blurred copy of the map fills the stage behind the fitted map (beyond even the wide map), so nothing is ever left empty;
     // everything on the map is in g.rot, which fitMaps turns (an open road) about the middle of the map
     return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
-      L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div>';
+      L.html + routeLines(t.id, pts, rally, t.def && t.def.tunnel) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div>';
   }
   function routeView(t, lockd) {
     const R = RT[t.id], M = D.routeMaps[t.id] || {};

@@ -414,6 +414,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .garage { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; overflow-y: auto; min-height: 0; padding: 2px; }
 .garage .gcar { padding: 6px 9px; border-radius: 9px; border: 2px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04); font: 600 clamp(11px, 3vh, 13px)/1.3 var(--f-ui); }
 .garage .gcar b { display: block; font: 700 italic clamp(12px, 3.3vh, 15px)/1.2 var(--f-ui); }
+.garage .gcar { cursor: pointer; }
+.garage .gcar.sel { background: rgba(255,255,255,.14); }
 .garage .gcar.own { border-color: var(--meter); }
 .garage .gcar .pr { color: var(--lcd); }
 #career-rival:empty { display: none; }
@@ -840,3 +842,11 @@ body.pkfly #touch { visibility: hidden; }
 .res-panel > .btns.horiz .btn { padding-left: 15px; padding-right: 15px; white-space: nowrap; }
 @media (orientation: landscape) and (max-height: 500px) { .res-panel > .btns.horiz .btn { font-size: clamp(13px, 3.9vh, 17px); padding-left: 12px; padding-right: 12px; } }
 .champ-panel > .btns.horiz { flex-wrap: wrap; row-gap: 8px; }   /* (a long "Naslednja dirka: …" on a narrow phone: the other buttons in a row above it, none off the panel) */
+
+/* the career screen: the garage list above the buttons (it scrolls, the buttons stay in view), the buttons bigger, Nazaj biggest */
+.career-panel > .garage { flex: 1 1 auto; margin-bottom: 4px; }
+.career-panel > .btns { flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.12); }
+.career-panel > .btns .btn { min-height: 52px; padding: 10px 18px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+.career-panel > .btns .btn.primary { background: var(--curb); border-color: var(--curb); }
+.career-panel > .btns .btn.ghost { min-height: 56px; min-width: 110px; padding: 10px 26px; margin-right: auto; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.12); color: #fff; font-size: clamp(17px, 4.8vh, 22px); text-align: center; }
+@media (max-height: 360px) { .career-panel > .btns .btn { min-height: 44px; } .career-panel > .btns .btn.ghost { min-height: 48px; } }
