@@ -54,7 +54,7 @@ try {
   await startTrack(page, 'spa');
   await page.evaluate(() => { const g = window.__game, P = g.race.player; g.pause(); for (let i = 0; i < 600 && P.speed < 50; i++) g.sim(0.1, true); });
   const s1 = await draw(3, 'chase');
-  T.check('at speed: the picture streaks out towards its edges', s1.speedBlur > 0.2, JSON.stringify(s1));
+  T.check('at speed: no streaks, the other cars stay sharp', s1.speedBlur === 0, JSON.stringify(s1));
   const s2 = await draw(3, 'cockpit');
   T.check('the summer\'s heat over the far asphalt, from the cockpit (and no streaks there: the car\'s inside goes with the driver)', s2.heat === 1 && s2.speedBlur === 0, JSON.stringify(s2));
 
