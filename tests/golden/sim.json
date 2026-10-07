@@ -2841,6 +2841,104 @@
    "repairs": 0
   }
  },
+ "baldy/race/cs": {
+  "digest": "2814d6a5371b6467bcda1776",
+  "lead": 2089,
+  "car0": [
+   1475.57,
+   -971.69
+  ],
+  "cover": {
+   "dmg": 0.23,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "baldy/demo/cs": {
+  "digest": "9d27a921e2df88820e3571e2",
+  "lead": 2263.8,
+  "car0": [
+   1622.05,
+   -1220.12
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "baldy/upg/cs": {
+  "digest": "4fef8d8e5bfaf4ddca29dbfd",
+  "lead": 2254.9,
+  "car0": [
+   1589.6,
+   -1146.78
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "baldy/crash/cs": {
+  "digest": "c84c311b856bb0ed988271aa",
+  "lead": 2090.9,
+  "car0": [
+   1444.46,
+   -939.54
+  ],
+  "cover": {
+   "dmg": 0.9,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "baldy/formula/cs": {
+  "digest": "8edd4d5b109e0dc825ee8205",
+  "lead": 2436,
+  "car0": [
+   1630.79,
+   -1236.17
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 15,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "baldy/lm/cs": {
+  "digest": "e08383aae712d62903f34b5f",
+  "lead": 2406.2,
+  "car0": [
+   1600.44,
+   -1180.42
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "baldy/car/cs": {
+  "digest": "a02b8e9a85f7e6d9e6f79fdb",
+  "lead": 2083.3,
+  "car0": [
+   1412.54,
+   -899.96
+  ],
+  "cover": {
+   "dmg": 0.81,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "cpalace/race/cs": {
   "digest": "6c6bd7fc7cb40e3f52fda09c",
   "lead": 2222.4,
@@ -2926,15 +3024,15 @@
   }
  },
  "cpalace/car/cs": {
-  "digest": "e1fd2e075491cb57bac3d2e2",
-  "lead": 5099,
+  "digest": "7ba8398436d8e9eb051b3ae7",
+  "lead": 5098.7,
   "car0": [
-   -504.33,
-   110.23
+   -391.87,
+   255.23
   ],
   "cover": {
-   "dmg": 0.55,
-   "loose": 5,
+   "dmg": 1,
+   "loose": 11,
    "rescues": 0,
    "repairs": 1
   }
@@ -3024,15 +3122,15 @@
   }
  },
  "riverside/car/cs": {
-  "digest": "616a41982d5d10692400149f",
-  "lead": 2601.2,
+  "digest": "d77673291551adda2305a71c",
+  "lead": 2620.9,
   "car0": [
-   407.13,
-   -760.22
+   478.6,
+   -898.1
   ],
   "cover": {
    "dmg": 1,
-   "loose": 12,
+   "loose": 22,
    "rescues": 0,
    "repairs": 0
   }
@@ -3122,15 +3220,15 @@
   }
  },
  "longford/car/cs": {
-  "digest": "b68dbb8f32e92ee980c1a3da",
-  "lead": 12511.8,
+  "digest": "afd3bb94d4ba80814e75ef0b",
+  "lead": 12507.7,
   "car0": [
-   -1991.66,
-   -786.95
+   -2316.54,
+   -240.48
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 17,
+   "dmg": 0.8,
+   "loose": 15,
    "rescues": 0,
    "repairs": 1
   }
@@ -3220,15 +3318,15 @@
   }
  },
  "newcastle/car/cs": {
-  "digest": "d2e1498e46bdd2bcf337f42d",
-  "lead": 3884.8,
+  "digest": "f29cf2ae181ddddd30e167c8",
+  "lead": 3886.7,
   "car0": [
-   -224.82,
-   126.64
+   -156.49,
+   72.82
   ],
   "cover": {
-   "dmg": 0.88,
-   "loose": 9,
+   "dmg": 1,
+   "loose": 24,
    "rescues": 0,
    "repairs": 1
   }
@@ -3318,15 +3416,15 @@
   }
  },
  "rio/car/cs": {
-  "digest": "b51e4b9c11d104312f212d6c",
-  "lead": 7998.9,
+  "digest": "9675b5d26dffd9237c23d477",
+  "lead": 8002.6,
   "car0": [
-   460.6,
-   85.75
+   537.02,
+   -36.54
   ],
   "cover": {
    "dmg": 1,
-   "loose": 5,
+   "loose": 9,
    "rescues": 0,
    "repairs": 1
   }
@@ -3416,15 +3514,15 @@
   }
  },
  "toronto/car/cs": {
-  "digest": "c957cd1b3c787953279b0a63",
-  "lead": 4367.8,
+  "digest": "4676c38d8923d2d350b044c0",
+  "lead": 4353.5,
   "car0": [
-   -53.6,
-   235.36
+   140.58,
+   150.87
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 9,
+   "dmg": 0.77,
+   "loose": 10,
    "rescues": 0,
    "repairs": 1
   }
@@ -3514,15 +3612,15 @@
   }
  },
  "medvode/car/cs": {
-  "digest": "8f6c4cab1a2db34751f81b90",
-  "lead": 2177.2,
+  "digest": "bb22d033e11568a5ba31de55",
+  "lead": 2176.3,
   "car0": [
-   153.43,
-   -1082.04
+   147.96,
+   -1170.31
   ],
   "cover": {
    "dmg": 1,
-   "loose": 17,
+   "loose": 18,
    "rescues": 0,
    "repairs": 0
   }
@@ -3612,16 +3710,16 @@
   }
  },
  "bangsaen/car/cs": {
-  "digest": "86b1c5bb269d6105c626e83a",
-  "lead": 6944.8,
+  "digest": "caea590bb0d68e6541672c8c",
+  "lead": 6950.9,
   "car0": [
-   1,
-   -421.11
+   -534.4,
+   -1070.6
   ],
   "cover": {
-   "dmg": 0.89,
-   "loose": 7,
-   "rescues": 2,
+   "dmg": 1,
+   "loose": 20,
+   "rescues": 0,
    "repairs": 1
   }
  }

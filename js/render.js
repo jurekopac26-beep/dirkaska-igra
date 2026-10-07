@@ -3250,6 +3250,8 @@ const Render = (function () {
   THEMES.newcastle = { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-58, 86, -66] };   // Newcastle: a clear late-spring afternoon on the coast, the sun from the north-west (the southern hemisphere), a light sea haze
   SPLIT.newcastle = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
+  THEMES.baldy = { fog: 0xcbd6df, sun: 0xfff0d4, sunI: 1.24, sky: 0xb4cff0, gnd: 0x5c5a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.08, sunOff: [-78, 96, 50] };   // Mount Baldy: a clear, warm summer afternoon in the San Gabriels, a strong sun from the south-west (the pines' shadows across the hairpins), a light blue haze over the canyon
+  SPLIT.baldy = [[0.96, 0.99, 1.05], [1.05, 1.0, 0.94]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
