@@ -1,4 +1,4 @@
-// Položaj avta (Nastavitve): the car can sit further back / lower in the frame. Option 1 as now, option 2 is 2 m, option 3 is 5 m.
+// Položaj avta (Nastavitve): the car can sit further back / lower in the frame. Option 1 as now, then 2, 5, 7, 10, 15 and 20 m.
 // It applies to the two final cameras — za avtom (chase) and izometrična (iso); the default (option 1) changes nothing.
 //   node tests/browser/carlow.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -23,10 +23,12 @@ try {
   await pick('carLow', '2'); const c2 = await carY('chase'); const w2 = await wiring();
   await pick('carLow', '3'); const c3 = await carY('chase'); const w3 = await wiring();
   await pick('carLow', '4'); const c4 = await carY('chase'); const w4 = await wiring();
-  T.check('the choice is saved and maps to metres (0, 2, 5, 7, 10)', w0.set === 0 && w0.back === 0 && w1.set === 1 && w1.back === 2 && w2.set === 2 && w2.back === 5 && w3.set === 3 && w3.back === 7 && w4.set === 4 && w4.back === 10, JSON.stringify([w0, w1, w2, w3, w4]));
+  await pick('carLow', '5'); const c5 = await carY('chase'); const w5 = await wiring();
+  await pick('carLow', '6'); const c6 = await carY('chase'); const w6 = await wiring();
+  T.check('the choice is saved and maps to metres (0, 2, 5, 7, 10, 15, 20)', [w0, w1, w2, w3, w4, w5, w6].every((w, i) => w.set === i && w.back === [0, 2, 5, 7, 10, 15, 20][i]), JSON.stringify([w0, w1, w2, w3, w4, w5, w6]));
 
   // chase (phone upright): the more it is set back, the lower the car sits (NDC y decreases)
-  T.check('chase: the car sits lower the more it is set back', c4.y < c3.y && c3.y < c2.y && c2.y < c1.y && c1.y < c0.y, JSON.stringify([c0, c1, c2, c3, c4]));
+  T.check('chase: the car sits lower the more it is set back', c6.y < c5.y && c5.y < c4.y && c4.y < c3.y && c3.y < c2.y && c2.y < c1.y && c1.y < c0.y, JSON.stringify([c0, c1, c2, c3, c4, c5, c6]));
 
   // iso (phone lying): the car shifts further from its default spot the more it is set; the default moves nothing
   await pick('camera', 'iso');
@@ -34,8 +36,9 @@ try {
   await pick('carLow', '1'); const i1 = await carY('iso');
   await pick('carLow', '2'); const i2 = await carY('iso');
   await pick('carLow', '4'); const i4 = await carY('iso');
-  const d1 = Math.hypot(i1.x - i0.x, i1.y - i0.y), d2 = Math.hypot(i2.x - i0.x, i2.y - i0.y), d4 = Math.hypot(i4.x - i0.x, i4.y - i0.y);
-  T.check('iso: the car moves further back the more it is set', d4 > d2 && d2 > d1 && d1 > 0.001, JSON.stringify([i0, i1, i2, i4, +d1.toFixed(4), +d2.toFixed(4), +d4.toFixed(4)]));
+  await pick('carLow', '6'); const i6 = await carY('iso');
+  const d1 = Math.hypot(i1.x - i0.x, i1.y - i0.y), d2 = Math.hypot(i2.x - i0.x, i2.y - i0.y), d4 = Math.hypot(i4.x - i0.x, i4.y - i0.y), d6 = Math.hypot(i6.x - i0.x, i6.y - i0.y);
+  T.check('iso: the car moves further back the more it is set', d6 > d4 && d4 > d2 && d2 > d1 && d1 > 0.001, JSON.stringify([i0, i1, i2, i4, i6, +d1.toFixed(4), +d2.toFixed(4), +d4.toFixed(4), +d6.toFixed(4)]));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {

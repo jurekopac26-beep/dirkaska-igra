@@ -3612,16 +3612,16 @@
   }
  },
  "bangsaen/car/cs": {
-  "digest": "cab0a4ca18082c5359b4ee81",
-  "lead": 6948.3,
+  "digest": "86b1c5bb269d6105c626e83a",
+  "lead": 6944.8,
   "car0": [
-   -318.57,
-   -810.99
+   1,
+   -421.11
   ],
   "cover": {
-   "dmg": 0.53,
-   "loose": 22,
-   "rescues": 0,
+   "dmg": 0.89,
+   "loose": 7,
+   "rescues": 2,
    "repairs": 1
   }
  }
