@@ -1,6 +1,6 @@
 // Bathurst, Australia: the circuit on the public roads round the hill above the town (6.2 km, anticlockwise, 172 m of height
 // difference, up to 16 % on the climb), the walls close to the road on the climb and over the top of the hill, the asphalt run-offs, and
-// the pit lane on the LEFT of the main straight (def.pitSide -1: Core.Track.pitAt measures its offsets towards that side). The player
+// the pit lane on the LEFT of the main straight (def.pit[0] < 0: Core.Track.pitAt gives sd -1 and measures its offsets towards that side). The player
 // crashes, is sent in for repairs on the autopilot and stops in the box on the left; an AI car in for tyres keeps to the lane on the left;
 // a whole race with pits and fuel: every car finishes.
 //   node tests/bathurst.test.js
@@ -25,8 +25,8 @@ check('track: the walls 1.5 m past the road over the top of the hill', Math.abs(
 
 // 2. the pit lane on the left of the main straight
 const p0 = T.pitAt(T.startS + 0), pIn = T.pitAt(T.startS - 214), pOut = T.pitAt(T.startS + 229);
-check('pit lane: on the left (pitSide -1), behind the left wall along the straight, open to the road where it leaves and joins',
-  T.pitSide === -1 && p0 && !p0.gap && Math.abs(p0.o - 15) < 0.01 && Math.abs(p0.br - T.bl[T.idx(T.startS)]) < 0.01 && pIn && pIn.gap && pOut && pOut.gap && !T.pitAt(T.startS + 300) && !T.pitAt(T.startS - 300),
+check('pit lane: on the left (sd -1), behind the left wall along the straight, open to the road where it leaves and joins',
+  p0 && p0.sd === -1 && !p0.gap && Math.abs(p0.o - 15) < 0.01 && Math.abs(p0.br - T.bl[T.idx(T.startS)]) < 0.01 && pIn && pIn.gap && pOut && pOut.gap && !T.pitAt(T.startS + 300) && !T.pitAt(T.startS - 300),
   `centre ${p0 && p0.o.toFixed(1)} m, wall ${p0 && p0.wall.toFixed(1)} m`);
 
 // 3. the player crashes and is sent in for repairs on the autopilot (golden's crash set-up): in the lane on the left, stopped in the

@@ -1,10 +1,11 @@
-// The cockpit camera and the photo mode (the Jezero Ring and the Red Bull Ring, the player on autopilot): the settings' fourth camera
-// (Kokpit); a race from the driver's seat: the camera at the driver's eyes (in the car, about a metre over the road, looking along it),
+// The cockpit view and the photo mode (the Jezero Ring and the Red Bull Ring, the player on autopilot): the settings now offer only the
+// two cameras (isometric, chase), but the cockpit render path stays (the replay's Kokpit camera and the photo mode); the view from the
+// driver's seat (set in code): the camera at the driver's eyes (in the car, about a metre over the road, looking along it),
 // the cockpit drawn (the steering wheel turning with the front wheels), the sky over the world; the camera changed in the race (C, the
 // button on the HUD, kept as the setting); the formula's own cockpit (the camera in the helmet); the pause's Foto: the race stands, the
 // HUD and the controls hidden, the camera round the car (a drag turns it round, the car stays in the middle), the lens and the filter
 // on the picture, the picture saved (a PNG sharper than the screen, with the filter), Nazaj: the pause and the race's camera again;
-// the prototype's cockpit (the formula's wheel under a roof), the electric car's D; the replay's cockpit camera and its Foto.
+// the prototype's cockpit (the formula's wheel under a roof), the electric car's D; the replay of a race driven from the cockpit: from the cockpit, and its Foto.
 //   node tests/browser/cockpit.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -25,16 +26,15 @@ try {
   const onPic = () => page.evaluate(() => { const g = window.__game, P = g.race.player, C = Render.camera, p = new THREE.Vector3(P.x, (P.y || 0) + 0.7, P.z).project(C);
     return { x: +p.x.toFixed(3), y: +p.y.toFixed(3), camD: +Math.hypot(C.position.x - P.x, C.position.y - (P.y || 0), C.position.z - P.z).toFixed(2), cx: C.position.x, cz: C.position.z, fov: C.fov }; });
 
-  // 1. the settings: the fourth camera
+  // 1. the settings: only the two cameras remain (no Kokpit, no Kino)
   await act('to-settings'); await page.waitForTimeout(200);
   const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="camera"] button')].map(b => b.textContent).join(','));
-  await page.evaluate(() => document.querySelector('[data-set="camera"] button[data-v="cockpit"]').click());
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings')).camera);
-  T.check('Nastavitve: Kokpit, the fourth camera, chosen and kept', /Kokpit · ležeče/.test(row) && row.split(',').length === 4 && saved === 'cockpit', row + ' / ' + saved);
+  T.check('Nastavitve: only the two cameras (isometric landscape, chase upright); no cockpit, no cinema', row.split(',').length === 2 && /Izometrična · ležeče/.test(row) && /Za avtom · pokončno/.test(row) && !/Kokpit|Kino/.test(row), row);
   await act('settings-done');
 
-  // 2. a race from the driver's seat
+  // 2. the view from the driver's seat (the cockpit render, set in code: it is the replay's and the photo mode's view)
   await startTrack(page, 'jezero');
+  await page.evaluate(() => { window.__game.S.camera = 'cockpit'; });
   await step(8);
   const v1 = await view();
   T.check('the cockpit: the camera at the driver\'s eyes (in the car, about a metre over the road), looking along the car; the cockpit drawn, the sky over the world',
@@ -43,24 +43,25 @@ try {
   for (let k = 0; k < 16 && !turned; k++) { await step(0.6); const v = await view(); if (Math.abs(v.delta) > 0.03) turned = v; }
   T.check('the steering wheel turns with the front wheels (clockwise for a right turn, as the driver sees it)', !!turned && Math.sign(turned.ck.wheel) === -Math.sign(turned.delta) && Math.abs(turned.ck.wheel) > 0.2, JSON.stringify(turned));
 
-  // 3. the camera changed in the race: C, the HUD's button; kept (a computer: all four in turn)
+  // 3. the camera changed in the race: C, the HUD's button; kept (a computer: the two cameras in turn)
   await page.evaluate(() => window.__game.resume()); await frames(2);
   await page.keyboard.press('KeyC'); await page.waitForTimeout(250);
   const c1 = await page.evaluate(() => ({ cam: window.__game.S.camera, saved: JSON.parse(localStorage.getItem('tdgp-settings')).camera, toast: document.getElementById('toast').textContent }));
-  T.check('C in the race: the next camera (after the cockpit the isometric one), kept, a note', c1.cam === 'iso' && c1.saved === 'iso' && /Kamera: izometrična/.test(c1.toast), JSON.stringify(c1));
+  T.check('C in the race from the (off-cycle) cockpit: the isometric camera, kept, a note', c1.cam === 'iso' && c1.saved === 'iso' && /Kamera: izometrična/.test(c1.toast), JSON.stringify(c1));
   const btn = await page.evaluate(() => { const b = document.getElementById('btn-cam'); return !b.classList.contains('off') && getComputedStyle(b).display !== 'none'; });
   await page.evaluate(() => document.getElementById('btn-cam').click()); await frames(2);
   const c2 = await page.evaluate(() => ({ cam: window.__game.S.camera, fov: Render.camera.fov }));
   T.check('the camera button on the HUD: the next one (behind the car)', btn && c2.cam === 'chase', JSON.stringify({ btn, c2 }));
   await page.evaluate(() => window.__game.pause());
   const pc = await page.evaluate(() => document.getElementById('pause-cam').textContent);
-  await act('cam-next'); await act('cam-next');
+  await act('cam-next');
   const pc2 = await page.evaluate(() => ({ label: document.getElementById('pause-cam').textContent, cam: window.__game.S.camera }));
-  T.check('in the pause: "Kamera: …" shows it and changes it', pc === 'Kamera: za avtom' && pc2.label === 'Kamera: kokpit' && pc2.cam === 'cockpit', JSON.stringify({ pc, pc2 }));
+  T.check('in the pause: "Kamera: …" shows it and changes it (back to the isometric one)', pc === 'Kamera: za avtom' && pc2.label === 'Kamera: izometrična' && pc2.cam === 'iso', JSON.stringify({ pc, pc2 }));
 
   // 4. the formula: the camera in the helmet, its own cockpit
   await page.evaluate(() => { window.__game.S.car = 6; });
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { window.__game.S.camera = 'cockpit'; });
   for (let k = 0; k < 12; k++) { const t = await page.evaluate(() => { const R = window.__game.race; return R.state === 'racing' ? R.time : -1; }); if (t > 4) break; await step(3); }
   const v3 = await view();
   T.check('the formula: the camera inside the helmet (lower, the halo right in front: a nearer near plane), its own cockpit', !!v3.ck && v3.ck.formula && v3.d < 1 && v3.up > 0.5 && v3.up < 1.1 && v3.ck.near <= 0.12 && v3.ang < 0.35, JSON.stringify(v3));
@@ -104,31 +105,33 @@ try {
   // D on its gear display and on the HUD (one gear)
   await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = Core.MODELS.findIndex(m => m.id === 'lm'); });
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { window.__game.S.camera = 'cockpit'; });
   for (let k = 0; k < 12; k++) { const t = await page.evaluate(() => { const R = window.__game.race; return R.state === 'racing' ? R.time : -1; }); if (t > 4) break; await step(3); }
   const v5 = await view();
   T.check('the prototype: the formula\'s wheel (a display with the gear) in its closed canopy, the camera low in the car',
     !!v5.ck && v5.ck.formula && !v5.ck.open && /^[1-7]$/.test(v5.ck.gear) && v5.d < 1 && v5.up > 0.6 && v5.up < 1.1 && v5.ck.near <= 0.16 && v5.ang < 0.35, JSON.stringify(v5));
   await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = Core.MODELS.findIndex(m => m.id === 'ev'); });
   await startTrack(page, 'jezero');
+  await page.evaluate(() => { window.__game.S.camera = 'cockpit'; });
   await step(8);
   const v6 = await view(), hg = await page.evaluate(() => document.getElementById('h-gear').textContent);
   T.check('the electric car: D on its gear display and on the HUD (one gear)', !!v6.ck && !v6.ck.formula && v6.ck.gear === 'D' && hg === 'D', JSON.stringify({ v6, hg }));
 
-  // 6. the replay: the cockpit among its cameras, its own Foto
+  // 6. the replay of a race driven from the cockpit: from the cockpit (the camera the player drove with), the others in turn, its own Foto
   await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = 0; });
   await startTrack(page, 'jezero');
   await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); });
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
   await act('replay'); await frames(3);
+  const rv = await page.evaluate(() => { const R = Render.cockpit; return { cam: document.getElementById('rp-cam').textContent, ck: R && { formula: R.formula, car: R.car && R.car.isPlayer } }; });
   const cams = [];
-  for (let k = 0; k < 3; k++) { await act('rp-cam'); await frames(2); cams.push(await page.evaluate(() => document.getElementById('rp-cam').textContent)); }
-  const rv = await page.evaluate(() => { const R = Render.cockpit; return R && { formula: R.formula, car: R.car && R.car.isPlayer }; });
+  for (let k = 0; k < 4; k++) { await act('rp-cam'); await frames(2); cams.push(await page.evaluate(() => document.getElementById('rp-cam').textContent)); }
   await act('rp-photo'); await frames(2);
   const rp = await page.evaluate(() => ({ screen: window.__game.screen, ui: document.getElementById('replay-ui').classList.contains('off'), shot: !!Render.cam.shot }));
   await act('ph-exit'); await frames(2);
   const rp2 = await page.evaluate(() => ({ ui: !document.getElementById('replay-ui').classList.contains('off'), shot: !!Render.cam.shot }));
-  T.check('the replay: TV → behind the car → from above → the cockpit (the followed car\'s); Foto there, and back to the replay', cams.join(',') === 'Za avtom,Od zgoraj,Kokpit' && !!rv && rv.car && rp.screen === 'photo' && rp.ui && rp.shot && rp2.ui && !rp2.shot,
-    JSON.stringify({ cams, rv, rp, rp2 }));
+  T.check('the replay: from the cockpit (the followed car\'s) → TV → behind the car → from above → the cockpit; Foto there, and back to the replay', rv.cam === 'Kokpit' && !!rv.ck && rv.ck.car && cams.join(',') === 'TV,Za avtom,Od zgoraj,Kokpit' && rp.screen === 'photo' && rp.ui && rp.shot && rp2.ui && !rp2.shot,
+    JSON.stringify({ rv, cams, rp, rp2 }));
   await act('rp-exit');
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
