@@ -82,7 +82,7 @@ check('race in the rain: all 13 cars finish, slower than in the dry', wet.fin ==
 
 // 6. the street furniture of the junctions: the car knocks each over and drives on
 {
-  const kinds = ['tlight', 'sign', 'bollard', 'bin', 'hydrant', 'cabinet', 'lamp'];
+  const kinds = ['signal', 'signalm', 'sign', 'bollard', 'bin', 'hydrant', 'cabinet', 'lamp'];   // (the shared street furniture of the street circuits)
   for (const kind of kinds) {
     const orig = Math.random; Math.random = seeded(21);
     const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 3, difficulty: 1, tt: true });
