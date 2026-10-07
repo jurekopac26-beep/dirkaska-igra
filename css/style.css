@@ -30,6 +30,7 @@
 }
 :root[data-theme="dark"] { --panel: rgba(14, 18, 25, 0.88); --asphalt: #12161d; }
 *, *::before, *::after { box-sizing: border-box; }
+:root, html, body { color-scheme: dark; forced-color-adjust: none; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 html, body { height: 100%; margin: 0; overflow: hidden; background: var(--asphalt); color: var(--chalk); }
 body {
@@ -248,6 +249,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* ================= SCREENS ================= */
 .screen { position: absolute; inset: 0; z-index: 10; display: none; align-items: center; padding: calc(10px + var(--st)) calc(16px + var(--sr)) calc(10px + var(--sb)) calc(16px + var(--sl)); }
 .screen.show { display: flex; }
+#s-menu { padding: 0; align-items: stretch; }   /* (the menu: its own frame in a shadow root fills it) */
+#menu-host { position: absolute; inset: 0; }
 .panel { position: relative; background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 14px; padding: clamp(14px, 4.5vh, 26px) clamp(16px, 4vw, 30px); max-height: 100%; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .panel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; border-radius: 14px 0 0 14px; background: repeating-linear-gradient(180deg, var(--curb) 0 14px, var(--chalk) 14px 28px); }
 .panel h2 { margin: 0 0 8px; font: 400 italic clamp(22px, 7vh, 34px)/1 var(--f-display); letter-spacing: .01em; }
@@ -781,3 +784,59 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 #pk-fly span { display: block; font: 700 clamp(13px, 3.2vh, 17px)/1.2 var(--f-ui); color: var(--lcd); }
 #pk-fly em { display: block; margin-top: 4px; font: 400 clamp(9px, 1.8vh, 11px)/1.2 var(--f-ui); font-style: normal; color: rgba(246, 246, 241, .6); }
 body.pkfly #touch { visibility: hidden; }
+
+/* ================= THE FLEET (42 vehicles in 10 categories) ================= */
+/* the car screen: the categories (chips) across the top of the showroom and the cars of the chosen one (a strip) along its bottom, both
+   between the screen's left edge and the panel (a phone held upright: full width, both above the car); each row scrolls sideways */
+.car-cats, .car-strip { position: absolute; z-index: 1; left: calc(12px + var(--sl)); right: calc(min(430px, 54vw) + 28px + var(--sr)); display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.car-cats::-webkit-scrollbar, .car-strip::-webkit-scrollbar { display: none; }
+.car-cats { top: calc(8px + var(--st)); height: 34px; }
+.car-strip { bottom: calc(8px + var(--sb)); height: 44px; }
+.cat-chip { flex: 0 0 auto; height: 100%; padding: 0 13px; border-radius: 17px; border: 2px solid rgba(255,255,255,.24); background: rgba(14,18,25,.66); font: 700 italic 13px/1 var(--f-ui); color: var(--chalk); white-space: nowrap; cursor: pointer; }
+.cat-chip.sel { background: var(--chalk); border-color: var(--chalk); color: #14181f; }
+.car-chip { flex: 0 0 auto; height: 100%; min-width: 84px; padding: 3px 10px 3px 9px; border-radius: 10px; border: 2px solid rgba(255,255,255,.2); background: rgba(14,18,25,.7); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; text-align: left; cursor: pointer; }
+.car-chip b { font: 700 italic 13px/1.05 var(--f-ui); white-space: nowrap; color: var(--chalk); }
+.car-chip span { display: flex; align-items: center; gap: 6px; font: 700 italic 11px/1 var(--f-ui); white-space: nowrap; }
+.car-chip i { font-style: italic; padding: 1px 4px; border-radius: 3px; background: rgba(255,198,41,.9); color: #1b1b1b; font-size: 10px; }
+.car-chip em { font-style: normal; } .car-chip em.pr { color: var(--lcd); } .car-chip em.ok { color: var(--meter); font-weight: 800; }
+.car-chip.sel { border-color: var(--curb); background: rgba(160,36,28,.78); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
+.car-chip.sel em.pr { color: #ffe08a; }
+.car-cat { margin: 3px 0 2px; font: 700 italic 11.5px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+@media (orientation: portrait) {
+  .car-cats, .car-strip { left: calc(10px + var(--sl)); right: calc(10px + var(--sr)); }
+  .car-cats { top: calc(8px + var(--st)); }
+  .car-strip { top: calc(48px + var(--st)); bottom: auto; }
+  #s-car .car-nav { top: max(16%, calc(126px + var(--st))); }   /* (the arrows below the strip on a short phone too) */
+}
+/* the career's garage by category */
+.garage .gcat { grid-column: 1 / -1; margin: 6px 2px 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--lcd); }
+.garage .gcat:first-child { margin-top: 0; }
+/* the damage picture's wheels (a car whose wheels come off): dark, a lost one red and dashed */
+#h-dmg .dmg-wh { display: none; fill: #20252d; stroke: rgba(255,255,255,.85); stroke-width: 1; }
+#h-dmg.whl .dmg-wh { display: inline; }
+#h-dmg .dmg-wh.lost { fill: rgba(255,59,43,.18); stroke: #ff3b2b; stroke-width: 1.2; stroke-dasharray: 1.6 1.1; }
+/* a destroyed car: the words under the minimap, Odstopi (a time trial, qualifying: the run again) */
+#h-wreck { display: none; position: absolute; right: calc(62px + var(--sr)); top: calc(16px + var(--st) + clamp(72px, 22vh, 112px)); flex-direction: column; align-items: flex-end; gap: 5px; pointer-events: none; }
+#h-wreck.show { display: flex; }
+#hud.tt.ttp #h-wreck { top: calc(22px + var(--st) + clamp(72px, 22vh, 112px) + clamp(34px, 11vh, 52px)); }   /* (below the height profile) */
+#h-wreck b { padding: 3px 9px 2px; border-radius: 5px; background: rgba(200,28,22,.88); color: #fff; font: 800 italic clamp(11px, 3.1vh, 14px)/1.2 var(--f-ui); letter-spacing: .06em; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.5); box-shadow: 0 2px 6px rgba(0,0,0,.45); animation: wreckPulse 1s ease-in-out infinite alternate; }
+#btn-retire { pointer-events: auto; min-height: 36px; padding: 6px 14px; border-radius: 18px; border: 2px solid #ff8a7a; background: rgba(14,18,25,.82); color: #ffd3cc; font: 700 italic 14px/1 var(--f-ui); cursor: pointer; }
+#btn-retire:active { background: rgba(200,28,22,.5); }
+@keyframes wreckPulse { from { opacity: 1; } to { opacity: .72; } }
+@media (orientation: portrait) {
+  #h-wreck { right: calc(8px + var(--sr)); top: calc(68px + var(--st) + clamp(64px, 20vw, 100px)); }
+  #hud.tt.ttp #h-wreck { top: calc(74px + var(--st) + clamp(64px, 20vw, 100px) + clamp(34px, 11vw, 50px)); }
+}
+@media (prefers-reduced-motion: reduce) { #h-wreck b { animation: none; } }
+/* the results: a retired car (Odstop) greyed; the buttons in two rows when they do not fit in one */
+#res-table tr.dnf td { color: var(--muted); }
+#res-table tr.me.dnf td { color: #111; }
+.res-panel > .btns.horiz { flex-wrap: wrap; row-gap: 8px; }
+/* the championship: Izberi avto (the car screen, then back) */
+.ch-car #ch-pick { margin-left: 4px; }
+.car-cats.fr, .car-strip.fr { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 30px), transparent); }
+.car-cats.fl, .car-strip.fl { -webkit-mask-image: linear-gradient(90deg, transparent, #000 30px); mask-image: linear-gradient(90deg, transparent, #000 30px); }
+.car-cats.fl.fr, .car-strip.fl.fr { -webkit-mask-image: linear-gradient(90deg, transparent, #000 30px, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, transparent, #000 30px, #000 calc(100% - 30px), transparent); }
+.res-panel > .btns.horiz .btn { padding-left: 15px; padding-right: 15px; white-space: nowrap; }
+@media (orientation: landscape) and (max-height: 500px) { .res-panel > .btns.horiz .btn { font-size: clamp(13px, 3.9vh, 17px); padding-left: 12px; padding-right: 12px; } }
+.champ-panel > .btns.horiz { flex-wrap: wrap; row-gap: 8px; }   /* (a long "Naslednja dirka: …" on a narrow phone: the other buttons in a row above it, none off the panel) */

@@ -68,8 +68,8 @@ const race = (rain) => {
   const orig = Math.random; Math.random = seeded(7);
   try {
     const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 1, rain: 0 });
-    r.setProps([{ kind: 'signal', x: sx, z: sz, yaw: 0, i: si }, { kind: 'bollard', x: bx, z: bz, yaw: 0, i: bi }, { kind: 'hydrant', x: at(4, wi + 6)[0], z: at(4, wi + 6)[1], yaw: 0 }]);
-    const sig = r.props.find(b => b.kind === 'signal'), y0 = sig.y, x0 = sig.x, z0 = sig.z;
+    r.setProps([{ kind: 'signalm', x: sx, z: sz, yaw: 0, i: si }, { kind: 'bollard', x: bx, z: bz, yaw: 0, i: bi }, { kind: 'hydrant', x: at(4, wi + 6)[0], z: at(4, wi + 6)[1], yaw: 0 }]);
+    const sig = r.props.find(b => b.kind === 'signalm'), y0 = sig.y, x0 = sig.x, z0 = sig.z;
     r.start(); const P = r.player; let t = 0, k = 0, resc = 0, hit = false, vBefore = 0, vAfter = 0, dmg0 = 0, mode = 'drive', t1 = 0;
     while (t < 300 && P.lap < 2) {
       Math.random = seeded(9000 + (++k));
