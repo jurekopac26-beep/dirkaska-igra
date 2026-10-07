@@ -3228,6 +3228,7 @@ const Render = (function () {
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
     longford: { fog: 0xcbd8e2, sun: 0xfff0d4, sunI: 1.16, sky: 0xc2d8f0, gnd: 0x5c6838, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-70, 80, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
     medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 84, 58] },   // Medvode: a clear summer afternoon in Gorenjska, the sun from the south-west over the Sava plain, a light haze towards the Alps
+    palomar:  { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, tint: [1.03, 1.0, 0.95], sat: 1.07, sunOff: [-74, 98, 52] },   // Palomar Mountain: a hot, clear afternoon over the south face, the sun from the south-west across the hairpins, a light warm haze over Pauma Valley
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air

@@ -230,6 +230,13 @@
   "maxKverts": 657,
   "jsMs": 3.03
  },
+ "palomar": {
+  "calls": 266,
+  "maxCalls": 331,
+  "kverts": 674,
+  "maxKverts": 789,
+  "jsMs": 3.51
+ },
  "bangsaen": {
   "calls": 315,
   "maxCalls": 371,

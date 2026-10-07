@@ -3625,6 +3625,104 @@
    "repairs": 0
   }
  },
+ "palomar/race/cs": {
+  "digest": "bf21d53f38a6fbcad665d093",
+  "lead": 1831.7,
+  "car0": [
+   628.61,
+   -357.84
+  ],
+  "cover": {
+   "dmg": 0.48,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "palomar/demo/cs": {
+  "digest": "2ddc8a602c19dcba5706647f",
+  "lead": 1987.6,
+  "car0": [
+   407.48,
+   -433.72
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "palomar/upg/cs": {
+  "digest": "7294d9222a261e3d14f2ae30",
+  "lead": 1980.8,
+  "car0": [
+   454.01,
+   -431.55
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "palomar/crash/cs": {
+  "digest": "362d1a664a7f640d9af2df92",
+  "lead": 1795.7,
+  "car0": [
+   677.73,
+   -298.57
+  ],
+  "cover": {
+   "dmg": 0.97,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "palomar/formula/cs": {
+  "digest": "9fb88c202041d9927a8b6b49",
+  "lead": 2026.2,
+  "car0": [
+   571.01,
+   -419.21
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "palomar/lm/cs": {
+  "digest": "0e9e4a2c6ae8b23ac3a01fde",
+  "lead": 2006.6,
+  "car0": [
+   554.67,
+   -431.18
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 9,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "palomar/car/cs": {
+  "digest": "2932b004bbfcbddef6589f1a",
+  "lead": 1797.4,
+  "car0": [
+   664.02,
+   -287.55
+  ],
+  "cover": {
+   "dmg": 0.84,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "bangsaen/race/cs": {
   "digest": "9fdef86565ed93c631fea250",
   "lead": 2527.2,
@@ -3710,15 +3808,15 @@
   }
  },
  "bangsaen/car/cs": {
-  "digest": "caea590bb0d68e6541672c8c",
-  "lead": 6950.9,
+  "digest": "cab0a4ca18082c5359b4ee81",
+  "lead": 6948.3,
   "car0": [
-   -534.4,
-   -1070.6
+   -318.57,
+   -810.99
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 20,
+   "dmg": 0.53,
+   "loose": 22,
    "rescues": 0,
    "repairs": 1
   }
