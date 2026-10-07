@@ -744,11 +744,11 @@
   "instances": 6154,
   "props": 145,
   "crowd": 659,
-  "world": "174b3a98",
+  "world": "9492b4d8",
   "propsHash": "9944dcfe",
   "floor": "9e1c2dc5/7168",
   "groups": {
-   "-:MeshLambertMaterial": "f469c765",
+   "-:MeshLambertMaterial": "989e24a5",
    "-:LineBasicMaterial": "5dfcbbb2",
    "-:MeshPhongMaterial": "736c8329",
    "crowd:MeshLambertMaterial": "b5edd5c1",
