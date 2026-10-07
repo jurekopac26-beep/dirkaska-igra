@@ -3612,16 +3612,16 @@
   }
  },
  "montreal/car/cs": {
-  "digest": "3cf642f4991fedfb8457c7ca",
-  "lead": 7074.5,
+  "digest": "3baa01e8850645962ccb23c9",
+  "lead": 7073.7,
   "car0": [
-   96.52,
-   503.19
+   46.02,
+   449.18
   ],
   "cover": {
    "dmg": 1,
-   "loose": 9,
-   "rescues": 4,
+   "loose": 12,
+   "rescues": 5,
    "repairs": 1
   }
  }

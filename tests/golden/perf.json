@@ -104,13 +104,6 @@
   "maxKverts": 434,
   "jsMs": 1.45
  },
- "montreal": {
-  "calls": 264,
-  "maxCalls": 345,
-  "kverts": 576,
-  "maxKverts": 823,
-  "jsMs": 0.92
- },
  "chapman": {
   "calls": 217,
   "maxCalls": 292,
@@ -257,5 +250,12 @@
   "kverts": 983,
   "maxKverts": 1106,
   "jsMs": 1.42
+ },
+ "montreal": {
+  "calls": 286,
+  "maxCalls": 354,
+  "kverts": 516,
+  "maxKverts": 698,
+  "jsMs": 1.17
  }
 }
