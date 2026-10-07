@@ -7,7 +7,7 @@
 import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
-const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto'];   // (with a shore band; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
+const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen'];   // (with a shore band; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
 const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass and the Moki Dugway: gravel roads)
 const srv = await serve();
 const browser = await launch();
@@ -56,11 +56,18 @@ try {
     const a = B.geometry.attributes.shore, p = B.geometry.attributes.position, P = window.__game.race.player; let best = null;
     for (let i = 0; i < a.count; i++) if (Math.abs(a.getX(i)) < 2.5) { const d = Math.hypot(p.getX(i) - P.x, p.getZ(i) - P.z); if (!best || d < best.d) best = { d, x: p.getX(i), y: p.getY(i), z: p.getZ(i) }; }
     B.visible = band;
+    // (the foam comes and goes with the waves, and the water's clock runs on through every track loaded before: the mean of four phases of a wave cycle)
+    const dy = Render.world.dyn, wt = dy.water; if (wt) dy.water = null;
     Render.setShot({ px: best.x, py: best.y + 16, pz: best.z - 5, tx: best.x, ty: best.y, tz: best.z + 4, fov: 50, fogD: 60, near: 0.5 });
-    const cv = Render.snapshot(P, 'chase', 640), g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data;
-    let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 205 && d[i + 1] > 205 && d[i + 2] > 205) n++;
-    Render.setShot(null); B.visible = true;
-    return +(n / (d.length / 4)).toFixed(4);
+    let n = 0, px = 0;
+    for (let k = 0; k < (wt ? 4 : 1); k++) {
+      if (wt) wt.offset.set(k / 4, k * 7 / 48);   // (x and y as World.update moves them: 0.012 and 0.007 a second)
+      const cv = Render.snapshot(P, 'chase', 640), g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data;
+      for (let i = 0; i < d.length; i += 4) if (d[i] > 205 && d[i + 1] > 205 && d[i + 2] > 205) n++;
+      px += d.length / 4;
+    }
+    Render.setShot(null); B.visible = true; if (wt) dy.water = wt;
+    return +(n / px).toFixed(4);
   }, band);
   const w1 = await white(true), w0 = await white(false);
   T.check('the Riviera: the foam and the surf white at the beach (the shore band drawn vs hidden)', w1 > w0 + 0.01, JSON.stringify({ with: w1, without: w0 }));
