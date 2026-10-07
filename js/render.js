@@ -2949,12 +2949,26 @@ const Render = (function () {
     return renderer;
   }
 
+  // the canvas and image textures a material draws with (its maps and its shader's uniforms; not render targets, not the sky's cube)
+  const isPic = (t) => !!(t && t.isTexture && !t.isCubeTexture && t.image && (t.image instanceof HTMLCanvasElement || t.image instanceof HTMLImageElement || (typeof ImageBitmap !== 'undefined' && t.image instanceof ImageBitmap)));
+  function picsOf(m, out) {
+    for (const k in m) { const v = m[k]; if (isPic(v)) out.add(v); }
+    if (m.uniforms) for (const k in m.uniforms) { const u = m.uniforms[k]; if (u && isPic(u.value)) out.add(u.value); }
+  }
+  let shTex = null;   // the shared textures (Tex.all): they stay on the GPU from track to track
+  function sharedTex() {
+    if (!shTex) { shTex = new Set(); const walk = (v, d) => { if (!v || d > 3) return; if (v.isTexture) shTex.add(v); else if (typeof v === 'object') for (const k in v) walk(v[k], d + 1); }; walk(tex, 0); }
+    return shTex;
+  }
+
   function buildWorld(track, density, tier) {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
-      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      const pics = new Set();
+      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { picsOf(m, pics); m.dispose(); }); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
+      const sh = sharedTex(); pics.forEach(t => { if (!sh.has(t)) t.dispose(); });   // the track's pictures off the GPU too (a board atlas a builder keeps for its next build goes up again then)
       if (skids) skids.clear();
     }
     clearPropMeshes();
