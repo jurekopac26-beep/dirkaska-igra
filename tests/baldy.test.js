@@ -77,7 +77,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 // the progress pinned at the junction deep in it, no wrong way; out onto the road again
 {
   const SR = def.sideRoads, S = T.stubs, named = new Set(S.map(s => s.name).filter(Boolean));
-  check('side roads: some 28 of them, in order along the road, both sides, streets, service roads and forest roads (Glendora Ridge Road on the left behind the start, Ice House Canyon Road, Iron Gate Road, Falls Road)',
+  check('side roads: some 25 of them, in order along the road, both sides, streets, service roads and forest roads (Glendora Ridge Road on the left behind the start, Ice House Canyon Road, Iron Gate Road, Falls Road)',
     S.length >= 25 && SR.every((r, k) => !k || r[0] >= SR[k - 1][0]) && S.every(s => Math.abs(s.side) === 1 && s.Lend >= s.L && s.end >= 0 && s.end <= 2) && S.some(s => s.side < 0) && S.some(s => s.side > 0) &&
     [0, 1, 2].every(k => S.some(s => s.kind === k)) && ['Glendora Ridge Road', 'Ice House Canyon Road', 'Iron Gate Road', 'Falls Road'].every(nm => named.has(nm)) && S.find(s => s.name === 'Glendora Ridge Road').side < 0 && S.find(s => s.name === 'Glendora Ridge Road').s < 0,
     `${S.length} side roads (${S.filter(s => s.side < 0).length} left, ${S.filter(s => s.side > 0).length} right; ${['streets', 'service roads', 'forest roads'].map((w, k) => S.filter(s => s.kind === k).length + ' ' + w).join(', ')}), ${S.filter(s => s.grav).length} gravel`);

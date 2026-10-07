@@ -3,7 +3,8 @@
 // line), a long race: no tick at first (a stop needed), the warning on the lap it would not last another, the player driven into the pits
 // (on autopilot): filled up (POLNO), the gauge full again. The endurance race (three times the laps): the afternoon turns to evening and to
 // night with the leader's progress (VEČER, PADA NOČ, the floodlights on), the race to the line; the track's best race time kept only for
-// a race of the usual length.
+// a race of the usual length. An electric vehicle of the fleet (the JEŽEK E): its battery on the HUD (BATERIJA), as heavy full as
+// empty, charged at a stop in the pits (BATERIJA POLNA, the gauge full again).
 //   node tests/browser/fuel.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -73,6 +74,22 @@ try {
   await page.evaluate(() => window.__game.onAction('to-title')); await frames(3);
   const k5 = await page.evaluate(() => Render.show.todK);
   T.check('back on the title: the chosen time of day again (day)', k5 === 0, String(k5));
+
+  // 6. the JEŽEK E (electric, js/cars/jezek.js) in a race with fuel: BATERIJA on the HUD, its battery 0 kg; in the pits it is charged
+  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'jezek'); window.__msgs.length = 0; });
+  await click('fuel', '1'); await click('length', 'normal');
+  await startTrack(page, 'toskana');
+  await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(12, true); g.resume(); }); await frames(3);
+  const e1 = await page.evaluate(() => { const P = window.__game.race.player; return { car: P.m.id, text: document.getElementById('h-fuel').textContent, fuel: +P.fuel.toFixed(3), tank: P.tankKg, kg: P.fuelKg }; });
+  const e2 = await page.evaluate(async () => { const g = window.__game, P = g.race.player; let done = false, low = 1; g.pause();
+    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; g.sim(0.25, true); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.97; }
+    P.pitWant = false; g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))); g.pause();
+    const out = { done, fuel: +P.fuel.toFixed(3), low: +low.toFixed(3), gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /BATERIJA POLNA|POLNO/.test(m)), kg: P.fuelKg };
+    g.resume(); return out; });
+  T.check('an electric vehicle of the fleet (JEŽEK E): BATERIJA 9x % on the HUD, its battery 0 kg; in the pits charged: the gauge at 100 % again, "… GUME · BATERIJA POLNA" (never POLNO, the tank\'s word)',
+    e1.car === 'jezek' && /^BATERIJA (9\d|100)%$/.test(e1.text) && e1.tank === 0 && e1.kg === 0 && e2.done && e2.fuel > 0.99 && /^BATERIJA 100%/.test(e2.gauge) && e2.kg === 0 &&
+    e2.msg.some(m => /GUME( · POPRAVLJENO)? · BATERIJA POLNA$/.test(m)) && !e2.msg.some(m => /POLNO/.test(m)), JSON.stringify({ e1, e2 }));
+  await page.evaluate(() => window.__game.onAction('to-title'));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
