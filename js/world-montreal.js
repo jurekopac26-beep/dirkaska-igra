@@ -1,6 +1,6 @@
 /* =========================================================================
-   WORLD — Montréal (theme 'montreal'): the circuit on Île Notre-Dame in the St. Lawrence. Its own builder (World.theme), in a file of its
-   own: it uses World's shared helpers (World.kit) and the scenery data of js/data/montreal.js (OpenStreetMap, Copernicus DEM, ESA WorldCover).
+   WORLD — Montréal (theme 'montreal'): the circuit on Île Notre-Dame in the St. Lawrence. Its own builder (World.ext.montreal), in a file of
+   its own: it uses World's shared helpers (extAPI) and the scenery data of js/data/montreal.js (OpenStreetMap, Copernicus DEM, ESA WorldCover).
    What it builds: the island on its real outline (the banks dropping into the river, the rowing basin, the lake with its beach, the canals),
    the island's roads, paths and car parks, the circuit (asphalt, red and white kerbs, concrete walls with catch fences, tyre walls at the
    slow corners), the pit lane on the left of the straight with the paddock building, the grandstands and the fans, the buildings of the
@@ -13,9 +13,10 @@
    ========================================================================= */
 (function () {
   'use strict';
-  if (typeof World === 'undefined' || !World.theme) return;
+  if (typeof World === 'undefined' || !World.ext) return;
   const { clamp, lerp, sstep, rng } = Core, TAU = Math.PI * 2;
-  const { GB, box, cyl, cone, ico } = World, K = World.kit;
+  const { GB, box, cyl, cone, ico } = World;
+  let K = null;   // (World's shared helpers, handed to World.ext.montreal on each build)
   const WL = -2.3;   // the water's level below the road (the island ~10 m a.s.l., the river and the basins ~5-8 m)
 
   // ---- decode helpers ----
@@ -115,7 +116,7 @@
   const mtKind = (x, z) => { const G = MG, i = Math.round((x - G.x0) / G.c), j = Math.round((z - G.z0) / G.c); return i < 0 || j < 0 || i >= G.nx || j >= G.nz ? 3 : G.wet[j * G.nx + i] ? 3 : G.kind[j * G.nx + i]; };
 
   function buildMontreal(scene, tex, opts) {
-    const T = K.track(), D = MTL_DATA, def = T.def, N = T.N, w = T.w, ds = T.ds, L = T.len, sStart = T.startS, R = rng(4361);
+    const T = K.T, D = MTL_DATA, def = T.def, N = T.N, w = T.w, ds = T.ds, L = T.len, sStart = T.startS, R = rng(4361);
     const root = new THREE.Group(); scene.add(root);
     mtPrep(T, D);
     const out = { root, dyn: {}, groundH: mtGround, camFloor: (x, z) => Math.max(mtGround(x, z), WL), props: [], farClip: true, ownTex: [] };
@@ -148,7 +149,7 @@
     let fade = null; tag(() => { fade = mtBridges(ctx); }, 'mtBridges');
     tag(() => mtBasin(ctx), 'mtBasin');
     const ships = mtShips(ctx), far = mtFar(ctx);
-    out.dyn.step = (t, car, cam) => { ships(t); far(cam); fade(t, car); };
+    out.dyn.ext = (t, car, cam) => { ships(t); far(cam); fade(t, car); };
     tag(() => scen.addTo(root, matV, true, true), 'mtScen');
     K.crowdFinish(ctx.CR, root, out);
     out.junctionProps = ctx.nJ || 0; out.mg = MG;
@@ -336,7 +337,7 @@
     m.position.set(x, y + H / 2, z); m.rotation.y = Math.PI / 2 - yaw; m.castShadow = true; m.receiveShadow = true; m.updateMatrix(); m.matrixAutoUpdate = false; C.root.add(m); return m;
   }
 
-  /* ---- the pit lane on the left of the straight (Core.Track.pitAt, def.pit[0] < 0: offsets negative): the lane and its lines, the apron, the
+  /* ---- the pit lane on the left of the straight (Core.Track.pitAt, def.pit[0] < 0: sd -1, its offsets measured to the left): the lane and its lines, the apron, the
      teams' stands on the strip behind the pit wall, the crews' boxes (out.pitBoxes: their frames mirrored, so the renderer's crews work to the
      left), the paddock building on its OSM outline (garages open to the lane, two glazed floors over them, a roof terrace), the start gantry ---- */
   const TEAM = [[0.86, 0.1, 0.12], [0.12, 0.16, 0.36], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.1, 0.62, 0.72], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.4, 0.42, 0.46], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];
@@ -348,7 +349,7 @@
     const quad = (g, s0, s1, o0, o1, o2, o3, y, c, uv) => { const A = at(s0, o0, y), B = at(s0, o1, y), Cq = at(s1, o2, y), Dq = at(s1, o3, y); g.quadUp(A, B, Cq, Dq, [c, c, c, c], uv ? [A, B, Cq, Dq].map(p => [p[0] / 8, -p[2] / 8]) : undefined); };
     for (let q = PD[1]; q < PD[2]; q += 2) {
       const s0 = sStart + q, s1 = s0 + 2, pi = T.pitAt(s0), pj = T.pitAt(s1); if (!pi || !pj) continue;
-      const oi = pi.o * sg, oj = pj.o * sg;
+      const oi = pi.o, oj = pj.o;
       quad(gl, s0, s1, oi - 3.5, oi + 3.5, oj + 3.5, oj - 3.5, 0.024, one, true);
       quad(gp, s0, s1, oi + 3.18, oi + 3.36, oj + 3.36, oj + 3.18, 0.033, wl);
       if (((q / 2) | 0) % 2 === 0) quad(gp, s0, s1, oi - 3.36, oi - 3.18, oj - 3.18, oj - 3.36, 0.033, wl);
@@ -358,18 +359,18 @@
       if (q % 6 === 0) { const p = atSf(s0, sg * (oi + 2)); exclPush(p[0], p[1], 9.5); }   // (no trees in the lane, on its strip or apron)
     }
     // the 80 km/h line across the lane at its two ends
-    for (const q of [PD[1] + 45, PD[2] - 34]) { const p = T.pitAt(sStart + q); if (p) quad(gp, sStart + q, sStart + q + 0.4, p.o * sg - 3.4, p.o * sg + 3.4, p.o * sg + 3.4, p.o * sg - 3.4, 0.036, wl); }
+    for (const q of [PD[1] + 45, PD[2] - 34]) { const p = T.pitAt(sStart + q); if (p) quad(gp, sStart + q, sStart + q + 0.4, p.o - 3.4, p.o + 3.4, p.o + 3.4, p.o - 3.4, 0.036, wl); }
     // the crews' boxes (13, 10 m apart), the dividers, the player's yellow stop box
     const kb = (g, s, o, y, sx, sy, sz, col, top) => { const [x, z, hd] = atSf(s, sg * o); box(g, x, y, z, sx, sy, sz, hd, col, top); };
     let nb = 0;
     for (let q = pq0, k = 0; q <= pq1; q += 10, k++) {
       const s0 = sStart + q, i = T.idx(s0 + 5), p = T.pitAt(s0); if (!p || p.t < 0.999) continue;
-      const base = p.o * sg + 3.5, tx = T.tx[i], tz = T.tz[i], nx = T.nx[i] * sg, nz = T.nz[i] * sg, mine = Math.abs(q + 5 - PD[3]) < 1, tc = TEAM[k % TEAM.length];
+      const base = p.o + 3.5, tx = T.tx[i], tz = T.tz[i], nx = T.nx[i] * sg, nz = T.nz[i] * sg, mine = Math.abs(q + 5 - PD[3]) < 1, tc = TEAM[k % TEAM.length];
       quad(gp, s0 - 0.09, s0 + 0.09, base, PB[2], PB[2], base, 0.034, wl);
       const oc = atSf(s0 + 5, 0);
-      if (mine) { const sb = s0 + 5, lo = p.o * sg; out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, p.o) };
+      if (mine) { const sb = s0 + 5, lo = p.o; out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, p.o * sg) };
         for (const [d0, d1, l0, l1] of [[-3.2, 3.2, lo - 2.6, lo - 2.35], [-3.2, 3.2, lo + 2.35, lo + 2.6], [-3.2, -2.95, lo - 2.6, lo + 2.6], [2.95, 3.2, lo - 2.6, lo + 2.6]]) quad(gp, sb + d0, sb + d1, l0, l1, l1, l0, 0.036, yel); }
-      (out.pitBoxes = out.pitBoxes || []).push({ k: nb++, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o * sg, wall: p.wall, team: tc, mine, y: 0 });
+      (out.pitBoxes = out.pitBoxes || []).push({ k: nb++, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: 0 });
       // the team's stand on the pit wall strip: a desk with screens under a roof in the team's colour, stools
       const g = scen.get(oc[0], oc[1]), wv = p.wall;
       kb(g, s0 + 5, wv + 0.8, 0.96, 2.5, 0.06, 1.0, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]);
@@ -792,7 +793,7 @@
   }
 
   /* ---- ships: a laker (a long bulk carrier) in the seaway east of the island, a tour boat on the river west of it, going up and down
-     their channels (out.dyn.step moves them) ---- */
+     their channels (out.dyn.ext moves them) ---- */
   function mtShipGeo(kind) {
     const g = new GB(), hull = kind ? [0.92, 0.92, 0.9] : [0.55, 0.12, 0.1], dk = [0.15, 0.15, 0.17];
     if (!kind) {   // the laker: 190 m, the bridge at the stern, hatch covers along the deck
@@ -887,5 +888,5 @@
   }
 
   const _fd = new THREE.Vector3();
-  World.theme('montreal', buildMontreal);
+  World.ext.montreal = (scene, tex, opts, api) => { K = api; return buildMontreal(scene, tex, opts); };
 })();

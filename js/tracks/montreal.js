@@ -40,13 +40,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
   JUNCTIONS.forEach(([d, sd, ang, hw, kind, , what], j) => {
     const M = mouth(ang, hw), put = (k, l, side, dq, face, col) => FURN.push([Math.round((d + l * M.ct + side * (M.e + dq)) * 10) / 10, sd, k, l, face, col || 0, j]);
     if (kind === 'sig') {
-      put('signal', HW + 1.4, 1, 1.3, 'N');        // after the mouth: its mast arm over the circuit, the heads both ways
-      put('signal', HW + 1.4, -1, 1.3, 'F');       // before it: the arm over the side road's mouth
+      put('signalm', HW + 1.4, 1, 1.3, 'N');        // after the mouth: its mast arm over the circuit, the heads both ways
+      put('signalm', HW + 1.4, -1, 1.3, 'F');       // before it: the arm over the side road's mouth
       put('cabinet', HW + 3.4, 1, 3.0, 'U');       // the controller cabinet
       put('sign', HW + 3.6, -1, 1.6, 'B', 1);      // a pedestrian crossing sign (yellow)
     } else if (kind === 'stop') {
-      put('stop', HW + 2.6, -1, 1.0, 'U');         // for the side road's traffic
-      put('stop', HW + 1.2, -1, 2.4, 'B');         // and the circuit's (the island's roads stop there out of race week)
+      put('sign', HW + 2.6, -1, 1.0, 'U');         // for the side road's traffic
+      put('sign', HW + 1.2, -1, 2.4, 'B');         // and the circuit's (the island's roads stop there out of race week)
       put('sign', HW + 4.5, 1, 2.5, 'U');          // a speed limit
     } else put('sign', HW + 2.6, -1, 1.2, 'U');
     put('hydrant', HW + 5.5, 1, 1.6, 'U'); put('bin', HW + 5.0, -1, 1.8, 'U'); put('lamp', HW + 7.5, 1, 1.2, 'B');

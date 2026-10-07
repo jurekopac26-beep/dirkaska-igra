@@ -37,7 +37,7 @@ check('track: the lap 4.361 km within 0.3 % (the centre line from OSM, placed on
 {
   const p0 = T.pitAt(sOf(0)), pE = T.pitAt(sOf(-190)), pX = T.pitAt(sOf(285));
   check('pits: the lane on the LEFT of the straight (def.pit[0] < 0), 15 m from the centre line, the way in after the last chicane and the way out before Turn 1',
-    def.pit[0] < 0 && p0 && p0.o === -15 && p0.sg === -1 && !p0.gap && pE && pE.gap && pX && pX.gap && !T.pitAt(sOf(400)), `o ${p0 && p0.o}, wall ${p0 && p0.wall.toFixed(1)} m`);
+    def.pit[0] < 0 && p0 && p0.o === 15 && p0.sd === -1 && !p0.gap && pE && pE.gap && pX && pX.gap && !T.pitAt(sOf(400)), `o ${p0 && p0.o}, wall ${p0 && p0.wall.toFixed(1)} m`);
   const orig = Math.random; Math.random = seeded(3);
   const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2 });
   r.start(); const P = r.player; P.dmg = 0.5; let t = 0, k = 0; const ev = []; let minD = 0, maxD = 0;
@@ -71,9 +71,9 @@ const furniture = () => def.furniture.map(([d, sd, kind, l, face, col, j]) => { 
   const s = sOf(d), i = T.idx(s); return { kind, x: T.px[i] + T.nx[i] * sd * l, z: T.pz[i] + T.nz[i] * sd * l, yaw: 0, col, d: J[j][0] }; });
 {
   const F = furniture(), q = {}, inside = F.filter(b => { T.query(b.x, b.z, -1, q); return Math.abs(q.d) > T.w + 0.7 && Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - 0.7; });
-  const per = J.map(j => inside.filter(b => b.d === j[0]).length), sig = J.filter(j => j[4] === 'sig').map(j => inside.filter(b => b.d === j[0] && b.kind === 'signal').length);
-  check('junctions: their furniture inside the barriers, off the asphalt (8 kinds; the world leaves out what would not fit), 7 pieces or more at each, two signals at each signal junction',
-    inside.length === F.length && per.every(k => k >= 7) && sig.every(k => k === 2) && new Set(inside.map(b => b.kind)).size === 8, `${inside.length} of ${F.length}; per junction ${per.join(', ')}; signals ${sig.join(', ')}`);
+  const per = J.map(j => inside.filter(b => b.d === j[0]).length), sig = J.filter(j => j[4] === 'sig').map(j => inside.filter(b => b.d === j[0] && b.kind === 'signalm').length);
+  check('junctions: their furniture inside the barriers, off the asphalt (7 kinds of the shared street furniture; the world leaves out what would not fit), 7 pieces or more at each, two signals at each signal junction',
+    inside.length === F.length && per.every(k => k >= 7) && sig.every(k => k === 2) && new Set(inside.map(b => b.kind)).size === 7, `${inside.length} of ${F.length}; per junction ${per.join(', ')}; signals ${sig.join(', ')}`);
 }
 // a car driven straight at each piece of furniture of a kind (alone on the track, full throttle, steering at it from 70 m back)
 const ram = (kind) => {
@@ -98,7 +98,7 @@ const ram = (kind) => {
     return { knocked, hitV, v: P.speed, moved, tilt: Math.acos(Math.max(-1, Math.min(1, up))) * 180 / Math.PI, dmg: P.dmg, fell: b.y < y0 - 0.2 };
   } finally { Math.random = orig; }
 };
-for (const kind of ['signal', 'stop', 'sign', 'lamp', 'hydrant', 'bin', 'cabinet', 'bollard']) {
+for (const kind of ['signalm', 'sign', 'lamp', 'hydrant', 'bin', 'cabinet', 'bollard']) {
   const o = ram(kind);
   check(`junctions: a car knocks the ${kind} over (it flies or falls) and drives on`, o.knocked && (o.moved > 1.5 || o.tilt > 40) && o.hitV > 8 && o.v > 5 && o.dmg < 0.25,
     `hit at ${(o.hitV * 3.6).toFixed(0)} km/h, ${(o.v * 3.6).toFixed(0)} km/h 3 s later; it moved ${o.moved.toFixed(1)} m, tilted ${o.tilt.toFixed(0)}°, damage ${o.dmg.toFixed(2)}`);
