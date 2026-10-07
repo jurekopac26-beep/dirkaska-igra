@@ -512,11 +512,11 @@
   "instances": 6876,
   "props": 29,
   "crowd": 2457,
-  "world": "e0e31673",
+  "world": "e3cb3187",
   "propsHash": "3744002c",
   "floor": "5a965253/6440",
   "groups": {
-   "-:MeshLambertMaterial": "e2922c1d",
+   "-:MeshLambertMaterial": "70d1330b",
    "-:MeshPhongMaterial": "ac8feb3b",
    "crowd:MeshLambertMaterial": "4a2d10fc",
    "-:MeshBasicMaterial": "b41923f5",
@@ -532,7 +532,7 @@
   "instances": 5358,
   "props": 47,
   "crowd": 3125,
-  "world": "efb2b77f",
+  "world": "f5d96785",
   "propsHash": "ee4f06a0",
   "floor": "35af8a01/10528",
   "groups": {
@@ -540,7 +540,7 @@
    "crowd:MeshLambertMaterial": "6034ae43",
    "-:MeshBasicMaterial": "87f4168d",
    "flags:MeshLambertMaterial": "d8eee42",
-   "rsFar:MeshBasicMaterial": "257c3615",
+   "rsFar:MeshBasicMaterial": "a1504747",
    "ao:MeshBasicMaterial": "f4db3fe6",
    "roadwear:MeshLambertMaterial": "fc990f68"
   }

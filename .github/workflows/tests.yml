@@ -31,7 +31,7 @@ jobs:
   browser:
     name: Igra v brskalniku
     runs-on: ubuntu-24.04
-    timeout-minutes: 150   # (smoke, memory, perf in vsi, ki gredo čez vse proge, se z vsako novo progo podaljšajo za ~1,5-2 min)
+    timeout-minutes: 180   # (smoke, memory, perf in vsi, ki gredo čez vse proge, se z vsako novo progo podaljšajo za ~1,5-2 min; isti nabor traja na GitHubu od ~80 do ~150 min, odvisno od stroja)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
