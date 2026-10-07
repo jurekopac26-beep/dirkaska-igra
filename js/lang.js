@@ -18,7 +18,7 @@
     'Ime voznika': 'Driver name', 'Občutljivost nagiba': 'Tilt sensitivity', 'Nastavi sredino': 'Set centre', 'Obrni smer': 'Invert', 'Kamera': 'Camera',
     'Izometrična · ležeče': 'Isometric · sideways', 'Za avtom · pokončno': 'Chase · upright',
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
-    'Položaj avta': 'Car position', 'Običajno': 'Normal', 'Nižje (2 m)': 'Lower (2 m)', 'Nižje (5 m)': 'Lower (5 m)', 'Nižje (7 m)': 'Lower (7 m)', 'Nižje (10 m)': 'Lower (10 m)',
+    'Nagib kamere': 'Camera tilt', 'Kamera za avtom gleda bolj naprej po cesti (razdalja kamere ostane enaka)': 'The chase camera looks further ahead along the road (camera distance stays the same)', 'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
     'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase and isometric cameras)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
@@ -388,7 +388,7 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);
+  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
