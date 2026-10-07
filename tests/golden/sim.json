@@ -3135,6 +3135,104 @@
    "repairs": 0
   }
  },
+ "monterey/race/cs": {
+  "digest": "45a405daa5effab95172037b",
+  "lead": 2281.2,
+  "car0": [
+   648.16,
+   566.72
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/demo/cs": {
+  "digest": "08aed16899702b6dfdbcf5f5",
+  "lead": 2420.5,
+  "car0": [
+   675.45,
+   212.2
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/upg/cs": {
+  "digest": "3f0df18370c79d57cfbc1899",
+  "lead": 2420,
+  "car0": [
+   652.55,
+   554.91
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/crash/cs": {
+  "digest": "4ec18dd7e9674febc369cadf",
+  "lead": 2280.9,
+  "car0": [
+   649.94,
+   558.98
+  ],
+  "cover": {
+   "dmg": 0.84,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/formula/cs": {
+  "digest": "b380ddbfeabecc66afd6e2c7",
+  "lead": 2584.4,
+  "car0": [
+   673.11,
+   174.81
+  ],
+  "cover": {
+   "dmg": 0.74,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/lm/cs": {
+  "digest": "3fe2bf3c510cdd7e63e796cd",
+  "lead": 2560.5,
+  "car0": [
+   659.14,
+   461.34
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 15,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/car/cs": {
+  "digest": "812d460c6262540e2bcea8ce",
+  "lead": 2265.7,
+  "car0": [
+   603.21,
+   662.8
+  ],
+  "cover": {
+   "dmg": 0.71,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "longford/race/cs": {
   "digest": "616944242c142c4d79b332b7",
   "lead": 2712.6,
@@ -3220,15 +3318,15 @@
   }
  },
  "longford/car/cs": {
-  "digest": "afd3bb94d4ba80814e75ef0b",
-  "lead": 12507.7,
+  "digest": "4377191aa7402f30ad6c7a24",
+  "lead": 12510.1,
   "car0": [
-   -2316.54,
-   -240.48
+   -2069.81,
+   -462.78
   ],
   "cover": {
-   "dmg": 0.8,
-   "loose": 15,
+   "dmg": 1,
+   "loose": 16,
    "rescues": 0,
    "repairs": 1
   }
@@ -3318,15 +3416,15 @@
   }
  },
  "newcastle/car/cs": {
-  "digest": "f29cf2ae181ddddd30e167c8",
-  "lead": 3886.7,
+  "digest": "ecabf65fe1a2840d03796d1d",
+  "lead": 3890.3,
   "car0": [
-   -156.49,
-   72.82
+   -249.94,
+   209.39
   ],
   "cover": {
    "dmg": 1,
-   "loose": 24,
+   "loose": 7,
    "rescues": 0,
    "repairs": 1
   }
@@ -3416,15 +3514,15 @@
   }
  },
  "rio/car/cs": {
-  "digest": "9675b5d26dffd9237c23d477",
-  "lead": 8002.6,
+  "digest": "733253cc5dcd679a4d4a91c3",
+  "lead": 7999.6,
   "car0": [
-   537.02,
-   -36.54
+   473.82,
+   79.46
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 9,
+   "dmg": 0.95,
+   "loose": 2,
    "rescues": 0,
    "repairs": 1
   }
@@ -3514,15 +3612,15 @@
   }
  },
  "toronto/car/cs": {
-  "digest": "4676c38d8923d2d350b044c0",
-  "lead": 4353.5,
+  "digest": "1ff3e8e6990d09c2602f12fc",
+  "lead": 4359.3,
   "car0": [
-   140.58,
-   150.87
+   144.84,
+   148.01
   ],
   "cover": {
-   "dmg": 0.77,
-   "loose": 10,
+   "dmg": 0.86,
+   "loose": 5,
    "rescues": 0,
    "repairs": 1
   }
@@ -3612,11 +3710,11 @@
   }
  },
  "medvode/car/cs": {
-  "digest": "bb22d033e11568a5ba31de55",
-  "lead": 2176.3,
+  "digest": "cb88f4c4fb255da1c96363e9",
+  "lead": 2184.5,
   "car0": [
-   147.96,
-   -1170.31
+   147.58,
+   -1230.47
   ],
   "cover": {
    "dmg": 1,
@@ -3710,16 +3808,16 @@
   }
  },
  "palomar/car/cs": {
-  "digest": "2932b004bbfcbddef6589f1a",
-  "lead": 1797.4,
+  "digest": "641acf57b44c460b3d61d05d",
+  "lead": 1795.9,
   "car0": [
-   664.02,
-   -287.55
+   616.47,
+   -293.58
   ],
   "cover": {
-   "dmg": 0.84,
-   "loose": 4,
-   "rescues": 0,
+   "dmg": 0.9,
+   "loose": 5,
+   "rescues": 1,
    "repairs": 0
   }
  },
@@ -3808,16 +3906,16 @@
   }
  },
  "bangsaen/car/cs": {
-  "digest": "cab0a4ca18082c5359b4ee81",
-  "lead": 6948.3,
+  "digest": "86b1c5bb269d6105c626e83a",
+  "lead": 6944.8,
   "car0": [
-   -318.57,
-   -810.99
+   1,
+   -421.11
   ],
   "cover": {
-   "dmg": 0.53,
-   "loose": 22,
-   "rescues": 0,
+   "dmg": 0.89,
+   "loose": 7,
+   "rescues": 2,
    "repairs": 1
   }
  }

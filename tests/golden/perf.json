@@ -195,6 +195,13 @@
   "maxKverts": 437,
   "jsMs": 2.33
  },
+ "monterey": {
+  "calls": 290,
+  "maxCalls": 355,
+  "kverts": 744,
+  "maxKverts": 823,
+  "jsMs": 2.14
+ },
  "longford": {
   "calls": 216,
   "maxCalls": 330,

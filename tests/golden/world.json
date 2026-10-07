@@ -565,6 +565,27 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "monterey": {
+  "meshes": 451,
+  "verts": 367248,
+  "instances": 13039,
+  "props": 147,
+  "crowd": 3587,
+  "world": "b5d12ea0",
+  "propsHash": "e3fd8eb7",
+  "floor": "22497fba/7196",
+  "groups": {
+   "-:MeshLambertMaterial": "90115a4a",
+   "-:MeshBasicMaterial": "d4686bf1",
+   "-:MeshPhongMaterial": "620177c4",
+   "crowd:MeshLambertMaterial": "3cd48fb5",
+   "flags:MeshLambertMaterial": "b1481173",
+   "rsFar:MeshBasicMaterial": "9a56ee42",
+   "ao:MeshBasicMaterial": "b17601da",
+   "roadwear:MeshLambertMaterial": "49e46f84",
+   "worn:MeshLambertMaterial": "ebfa5202"
+  }
+ },
  "longford": {
   "meshes": 1206,
   "verts": 516758,

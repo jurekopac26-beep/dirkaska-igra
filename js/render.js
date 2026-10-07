@@ -3114,6 +3114,15 @@ const Render = (function () {
       W.box(g, 0, 1.12, 0, 1.75, 0.13, 3.75, 0, fr, [0.32, 0.33, 0.36]); W.box(g, -0.72, -1.05, 0, 0.03, 2.1, 3.4, 0, gl, gl);
       W.box(g, 0, -1.05, -1.74, 1.3, 2.1, 0.03, 0, gl, gl); W.box(g, 0.05, -1.05, 1.74, 1.3, 2.1, 0.06, 0, [0.9, 0.9, 0.86], [0.9, 0.9, 0.86]);
       W.box(g, -0.55, -0.82, 0, 0.3, 0.06, 2.2, 0, [0.4, 0.4, 0.42]);
+    } else if (kind === 'stop') {   // a stop sign: the red octagon (white rim, the white bar of its word), two crossed green street-name blades on top
+      W.box(g, 0, -1.4, 0, 0.06, 2.6, 0.06, 0, gy, gy); const y0 = 0.62, oct = (r, z, col) => { for (let k = 0; k < 8; k++) { const a0 = (k + 0.5) / 8 * Math.PI * 2, a1 = (k + 1.5) / 8 * Math.PI * 2;
+        g.triO([0, y0, z], [Math.cos(a0) * r, y0 + Math.sin(a0) * r, z], [Math.cos(a1) * r, y0 + Math.sin(a1) * r, z], col, [0, y0, z - 1]); } };
+      oct(0.4, 0.012, [0.46, 0.48, 0.48]); oct(0.38, 0.03, wh); oct(0.34, 0.034, [0.76, 0.08, 0.08]); W.box(g, 0, y0 - 0.06, 0.038, 0.44, 0.12, 0.01, 0, wh);
+      W.box(g, 0, 1.18, 0, 0.92, 0.2, 0.03, 0, [0.06, 0.34, 0.2]); W.box(g, 0, 1.4, 0, 0.03, 0.2, 0.92, 0, [0.06, 0.34, 0.2]);
+    } else if (kind === 'warn') {   // a yellow diamond on a square post (a crossroads ahead)
+      W.box(g, 0, -1.3, 0, 0.06, 2.2, 0.06, 0, gy, gy); const c = 0.38, y0 = 0.5;
+      for (const [r, z, col] of [[c + 0.02, 0.012, [0.46, 0.48, 0.48]], [c, 0.03, ye], [c - 0.04, 0.034, bk], [c - 0.07, 0.038, ye]]) g.quadO([0, y0 + r, z], [r, y0, z], [0, y0 - r, z], [-r, y0, z], col, [0, y0, z - 1]);
+      W.box(g, 0, y0 - 0.18, 0.042, 0.07, 0.36, 0.01, 0, bk); W.box(g, 0, y0 + 0.08, 0.042, 0.3, 0.07, 0.01, 0, bk);
     } else if (kind === 'barrel') {   // an orange construction drum with white reflective bands and a black base
       const or = [0.98, 0.42, 0.08]; W.cyl(g, 0, -0.47, 0, 0.32, 0.1, 10, bk, bk); W.cyl(g, 0, -0.37, 0, 0.28, 0.84, 10, or, or, 0.26);
       for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);
@@ -3226,6 +3235,7 @@ const Render = (function () {
     moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
+    monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.14, hazeCol: [0.94, 0.9, 0.84], sunOff: [-66, 74, 70] },   // Monterey: a clear afternoon in the coastal hills, the sun from the south-west, a little sea haze in the light
     longford: { fog: 0xcbd8e2, sun: 0xfff0d4, sunI: 1.16, sky: 0xc2d8f0, gnd: 0x5c6838, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-70, 80, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
     medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 84, 58] },   // Medvode: a clear summer afternoon in Gorenjska, the sun from the south-west over the Sava plain, a light haze towards the Alps
     palomar:  { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, tint: [1.03, 1.0, 0.95], sat: 1.07, sunOff: [-74, 98, 52] },   // Palomar Mountain: a hot, clear afternoon over the south face, the sun from the south-west across the hairpins, a light warm haze over Pauma Valley
@@ -3241,7 +3251,7 @@ const Render = (function () {
     tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
-    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]],
+    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]], monterey: [[0.96, 0.99, 1.05], [1.05, 1.01, 0.93]],
     longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]],
     medvode: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
   THEMES.toronto = { fog: 0xc9d8e6, sun: 0xfff0d8, sunI: 1.14, sky: 0xc8ddf4, gnd: 0x5d6448, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-60, 88, 70] };   // Toronto: a clear July afternoon by Lake Ontario, the sun from the south-west over the lake
