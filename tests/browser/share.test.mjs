@@ -36,7 +36,7 @@ try {
   const b1 = await pa.evaluate(() => ({ box: document.querySelector('.gh-box').innerText.replace(/\s+/g, ' '), acts: [...document.querySelectorAll('.gh-box [data-act]')].map(b => b.dataset.act) }));
   await pa.evaluate(() => window.__game.onAction('gh-link')); await pa.waitForTimeout(800);
   const link = await pa.evaluate(() => window.__game.ghostLink), clip = await pa.evaluate(() => navigator.clipboard.readText().catch(() => ''));
-  T.check('the leaderboard: the player\'s ghost (a flying lap) to share; the link (#duh=..., under 16 000 characters) copied', /Tvoj duh: \d\d:\d\d\.\d{3} \(leteči krog\)/.test(b1.box) && b1.acts.join() === 'gh-link,gh-file,gh-import' && /#duh=[\w-]{200,}$/.test(link || '') && link.length < 16000 && clip === link,
+  T.check('the leaderboard: the player\'s ghost (a flying lap) to share (a link, a file, a challenge); the link (#duh=..., under 16 000 characters) copied', /Tvoj duh: \d\d:\d\d\.\d{3} \(leteči krog\)/.test(b1.box) && b1.acts.join() === 'gh-link,gh-file,gh-chal,gh-import' && /#duh=[\w-]{200,}$/.test(link || '') && link.length < 16000 && clip === link,
     JSON.stringify({ b1, len: link && link.length }));
   const [dl] = await Promise.all([pa.waitForEvent('download'), pa.evaluate(() => window.__game.onAction('gh-file'))]);
   const gpath = await dl.path(), gfile = JSON.parse(fs.readFileSync(gpath, 'utf8'));

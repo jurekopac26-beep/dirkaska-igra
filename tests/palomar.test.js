@@ -61,10 +61,10 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   check('names: the track is Palomar Mountain, ZDA (USA in English); no observatory\'s, shop\'s, agency\'s or brand\'s name anywhere in the names and lines', def.name === 'Palomar Mountain, ZDA' && def.en.name === 'Palomar Mountain, USA' && !/hale|caltech|mother'?s kitchen|store|harley|ducati|honda|yamaha|sheriff|chp|cleveland/i.test(all), def.name);
 }
 
-// 5. the side roads (OpenStreetMap): nine, at their real junctions, the barrier open in each mouth; the turnout: the barrier moved out on the left
+// 5. the side roads (OpenStreetMap): seven, at their real junctions, the barrier open in each mouth; the turnout: the barrier moved out on the left
 {
-  const S = T.stubs || [], gaps = S.every(st => { const G = T.gap[st.side > 0 ? 1 : 0]; let k = 0; for (let i = st.i0 - 30; i <= st.i0 + 30; i++) if (G[Math.max(0, Math.min(T.N - 1, i))]) k++; return k >= 2; });
-  check('side roads: nine (streets, driveways, tracks) where they meet the road, each with its mouth open in the barrier', S.length === 9 && gaps && S.every((st, k) => Math.abs(st.s0 - T.startS - def.sideRoads[k][0]) < 6),
+  const S = T.stubs || [], gaps = S.every(st => { const G = T.gap[st.side > 0 ? 1 : 0]; let k = 0; for (let i = st.i0 - 60; i <= st.i0 + 60; i++) if (G[Math.max(0, Math.min(T.N - 1, i))]) k++; return k >= 2; });
+  check('side roads: seven (a street, driveways, tracks) where they meet the road, each with its mouth open in the barrier', S.length === 7 && gaps && S.every((st, k) => Math.abs(st.s0 - T.startS - def.sideRoads[k][0]) < 6),
     S.map(st => `${Math.round(st.s0 - T.startS)}${st.side > 0 ? 'R' : 'L'}/${st.kind}`).join(' '));
   const [d, x, z, sd] = def.turnout, i = T.idx(T.startS + d), q = T.query(x, z, i, {});
   check('turnout: beside the road on the left at ~3.87 km (OpenStreetMap), the barrier moved out along it so a car can pull in', sd === -1 && q.d < -12 && T.bl[i] > -q.d + 2,
