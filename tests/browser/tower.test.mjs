@@ -20,9 +20,11 @@ try {
   const t1 = await page.waitForFunction((src) => { const t = (0, eval)(src)(), me = t.rows.find(x => x.me); return me && me.pos === t.pos && t.rows.some(x => /^\+\d/.test(x.gap)) && t; }, read.toString(), { timeout: 20000 })
     .then(h => h.jsonValue()).catch(() => page.evaluate((src) => (0, eval)(src)(), read.toString()));
   const r = t1.rows, me = r.find(x => x.me), gaps = r.filter(x => /^\+\d/.test(x.gap)).map(x => parseFloat(x.gap.slice(1)));
-  const want = t1.pos <= 6 ? 8 : 8;   // (3 first + the player with two ahead and two behind: 8 rows whether the blocks meet or not)
-  T.check('upright: the tower in the left column, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left < 60 && r.length >= 7 && r.length <= want && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
-    r.some(x => x.pos === Math.min(t1.n, t1.pos + 2)) && (t1.pos - 2 <= 4 || t1.sep === 1), JSON.stringify(t1));
+  // (the rows it should show: the first three, the player with two ahead and two behind as far as the field goes (the player last on a
+  // slow machine: none behind), all of a small field)
+  const exp = new Set(t1.n <= 8 ? Array.from({ length: t1.n }, (_, i) => i + 1) : [1, 2, 3]); for (let p = t1.pos - 2; p <= t1.pos + 2; p++) if (p >= 1 && p <= t1.n) exp.add(p);
+  T.check('upright: the tower in the left column, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left < 60 && r.length === exp.size && r.every(x => exp.has(x.pos)) && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
+    (t1.pos - 2 <= 4 || t1.sep === 1), JSON.stringify(t1));
   T.check('the gaps to the leader grow down the order (+s.s), other drivers by three letters', gaps.length >= 4 && gaps.every((v, i) => i === 0 || v >= gaps[i - 1] - 0.3) && r.filter(x => !x.me).every(x => /^[A-ZČŠŽ]{3}$/.test(x.code)), JSON.stringify(r));
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="tower"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
   await page.waitForTimeout(300);

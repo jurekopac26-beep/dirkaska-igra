@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=4e40b807">
-<link rel="stylesheet" href="css/style.css?v=aab65784">
+<link rel="stylesheet" href="css/style.css?v=4a3481b7">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=7543ae19" media="not all">
 </head>
 <body>
@@ -227,7 +227,8 @@
         <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button></div></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="1.1">Blizu</button><button data-v="1.4">Srednje</button><button data-v="1.7">Daleč</button></div></div>
-        <div class="row" title="Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)"><span class="rlbl">Položaj avta</span><div class="seg" data-set="carLow"><button data-v="0">Običajno</button><button data-v="1">Nižje (2 m)</button><button data-v="2">Nižje (5 m)</button><button data-v="3">Nižje (7 m)</button><button data-v="4">Nižje (10 m)</button></div></div>
+        <div class="row" title="Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)"><span class="rlbl">Položaj avta (nižje)</span><div class="seg nw" data-set="carLow"><button data-v="0">Običajno</button><button data-v="1">2 m</button><button data-v="2">5 m</button><button data-v="3">7 m</button><button data-v="4">10 m</button><button data-v="5">15 m</button><button data-v="6">20 m</button></div></div>
+        <div class="row" title="Kamera za avtom gleda bolj naprej po cesti (razdalja kamere ostane enaka)"><span class="rlbl">Nagib kamere</span><div class="seg nw" data-set="camTilt"><button data-v="0">10 %</button><button data-v="1">20 %</button><button data-v="2">30 %</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -449,6 +450,7 @@
 <script src="js/tracks/beartooth.js?v=45b7b832"></script>
 <script src="js/tracks/rastro.js?v=ff315e74"></script>
 <script src="js/tracks/moki.js?v=6f877ff1"></script>
+<script src="js/tracks/baldy.js?v=314c6b94"></script>
 <script src="js/tracks/cpalace.js?v=1ff113aa"></script>
 <script src="js/tracks/riverside.js?v=e2cec4ed"></script>
 <script src="js/tracks/monterey.js?v=baccc23b"></script>
@@ -457,7 +459,9 @@
 <script src="js/tracks/rio.js?v=23f2cbd5"></script>
 <script src="js/tracks/toronto.js?v=98767737"></script>
 <script src="js/tracks/medvode.js?v=f03626cc"></script>
-<script src="js/lang.js?v=8c6a9da9"></script>
+<script src="js/tracks/palomar.js?v=87436f77"></script>
+<script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
+<script src="js/lang.js?v=d5c69c78"></script>
 <script src="js/cars/miska.js?v=d36e3286"></script>
 <script src="js/cars/kolibri.js?v=dbef3df8"></script>
 <script src="js/cars/raketa.js?v=da270e21"></script>
@@ -491,11 +495,11 @@
 <script src="js/cars/goljat.js?v=4d334b8c"></script>
 <script src="js/cars/levs.js?v=9b87c0ea"></script>
 <script src="js/cars/levk.js?v=8a1e8fea"></script>
-<script src="js/core.js?v=ab3e0186"></script>
+<script src="js/core.js?v=982c9eeb"></script>
 <script src="js/tex.js?v=ead43b0a"></script>
-<script src="js/world.js?v=f0a4969c"></script>
+<script src="js/world.js?v=dbb4c769"></script>
 <script src="js/world-toronto.js?v=99260192"></script>
-<script src="js/render.js?v=a961a699"></script>
+<script src="js/render.js?v=8e177edf"></script>
 <script src="js/sfx.js?v=32ae026f"></script>
 <script src="js/input.js?v=6983328c"></script>
 <script src="js/comm.js?v=d97de672"></script>
@@ -507,6 +511,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=82d12818"></script>
-<script src="js/game.js?v=07995902"></script>
+<script src="js/game.js?v=c4eaf8eb"></script>
 </body>
 </html>
