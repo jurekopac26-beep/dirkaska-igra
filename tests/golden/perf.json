@@ -98,10 +98,10 @@
   "jsMs": 0.59
  },
  "bathurst": {
-  "calls": 208,
-  "maxCalls": 382,
-  "kverts": 371,
-  "maxKverts": 434,
+  "calls": 241,
+  "maxCalls": 387,
+  "kverts": 441,
+  "maxKverts": 515,
   "jsMs": 1.45
  },
  "chapman": {
