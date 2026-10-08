@@ -4407,13 +4407,59 @@ const Render = (function () {
       g.quadO(p(x0, a0), p(x1, a0), p(x1, a1), p(x0, a1), col, inn);
       if (capCol) { g.triO(p(x0, a0), p(x0, a1), [x0, cy, cz], capCol, inn); g.triO(p(x1, a0), p(x1, a1), [x1, cy, cz], capCol, inn); } }
   }
+  // a rounded part lofted along y (the crew's trunk, limbs, helmet): rings R = [{ y, rx, rz, x, z, p, hard }] of n points each (point k at (k + o) / n
+  // of a turn from +z toward +x; p > 2 squares the section off, a superellipse), each face k of segment s in the colour col(s, k) (null: left out;
+  // four colours: per corner, ring s first), smooth normals (the faces round each point averaged, the caps' too, but not across a 'hard' ring; or
+  // opt.nrm(point), the shape's own); opt.cap0 / cap1: the first / last ring closed in that colour (or f(k)), dome0 / dome1: its middle that far
+  // out (a dome). Returns the rings' points
+  function crLoft(g, R, n, o, col, opt) {
+    opt = opt || {};
+    const nr = R.length, P = [], C = [];
+    for (const r of R) { const e = 2 / (r.p || 2), q = []; C.push([r.x || 0, r.y, r.z || 0]);
+      for (let k = 0; k < n; k++) { const a = (k + o) / n * CR_TAU, s = Math.sin(a), c = Math.cos(a);
+        q.push([(r.x || 0) + r.rx * Math.sign(s) * Math.pow(Math.abs(s), e), r.y, (r.z || 0) + r.rz * Math.sign(c) * Math.pow(Math.abs(c), e)]); }
+      P.push(q); }
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], unit = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    const crs = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const outw = (v, at, inn) => { const d = sub(at, inn); return v[0] * d[0] + v[1] * d[1] + v[2] * d[2] < 0 ? [-v[0], -v[1], -v[2]] : v; };
+    const mid = (s) => [(C[s][0] + C[s + 1][0]) / 2, (C[s][1] + C[s + 1][1]) / 2, (C[s][2] + C[s + 1][2]) / 2];
+    // F[s + 1][k]: the outward normal of face k of segment s (s = -1: the first cap, nr - 1: the last one)
+    const F = [], caps = [[opt.cap0, 0, 1, opt.dome0 || 0], [opt.cap1, nr - 1, nr - 2, opt.dome1 || 0]], cp = caps.map(([cc, r, r2, d]) => cc ? [C[r][0], C[r][1] + (Math.sign(R[r].y - R[r2].y) || 1) * d, C[r][2]] : null);
+    const capN = (ci) => { const [cc, r, r2] = caps[ci]; if (!cc) return null; const a = cp[ci], out = [];
+      for (let k = 0; k < n; k++) { const b = P[r][k], c = P[r][(k + 1) % n]; out.push(outw(unit(crs(sub(b, a), sub(c, a))), [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3], C[r2])); }
+      return out; };
+    F.push(capN(0));
+    for (let s = 0; s < nr - 1; s++) { const fs = [], inn = mid(s);
+      for (let k = 0; k < n; k++) { const k1 = (k + 1) % n, a = P[s][k], b = P[s][k1], c = P[s + 1][k1], d = P[s + 1][k];
+        fs.push(outw(unit(crs(sub(c, a), sub(d, b))), [(a[0] + b[0] + c[0] + d[0]) / 4, (a[1] + b[1] + c[1] + d[1]) / 4, (a[2] + b[2] + c[2] + d[2]) / 4], inn)); }
+      F.push(fs); }
+    F.push(capN(1));
+    const vN = (r, k, s) => { if (opt.nrm) return opt.nrm(P[r][k]);   // the normal at point k of ring r, for a face of segment s
+      let x = 0, y = 0, z = 0; for (const q of R[r].hard ? [s] : [r - 1, r]) { const f = F[q + 1]; if (!f) continue; const A = f[(k + n - 1) % n], B = f[k]; x += A[0] + B[0]; y += A[1] + B[1]; z += A[2] + B[2]; }
+      return unit([x, y, z]); };
+    for (let s = 0; s < nr - 1; s++) { const inn = mid(s);
+      for (let k = 0; k < n; k++) { const c = col(s, k); if (!c) continue; const k1 = (k + 1) % n, cs = Array.isArray(c[0]) ? c : [c, c, c, c];
+        g.quadON(P[s][k], P[s][k1], P[s + 1][k1], P[s + 1][k], vN(s, k, s), vN(s, k1, s), vN(s + 1, k1, s), vN(s + 1, k, s), inn, cs[0], cs[1], cs[2], cs[3]); } }
+    caps.forEach(([cc, r, r2], ci) => { if (!cc) return; const a = cp[ci], s = ci ? nr - 1 : -1, f = F[ci ? nr : 0];
+      let m = [0, 0, 0]; for (const v of f) { m[0] += v[0]; m[1] += v[1]; m[2] += v[2]; } m = opt.nrm ? opt.nrm(a) : unit(m);   // (the middle: the mean of the cap's faces)
+      for (let k = 0; k < n; k++) { const k1 = (k + 1) % n, c = typeof cc === 'function' ? cc(k) : cc; g.triON(a, P[r][k], P[r][k1], m, vN(r, k, s), vN(r, k1, s), C[r2], c, c, c); } });
+    return P;
+  }
+  function crPrism(g, B, T, col, colT, colB) {   // a closed prism, flat shaded: the outline B (bottom) to T (top), point for point; the sides from colB (bottom edge) to col
+    const n = B.length, inn = [0, 0, 0]; for (const p of B.concat(T)) { inn[0] += p[0] / n / 2; inn[1] += p[1] / n / 2; inn[2] += p[2] / n / 2; }
+    for (let k = 0; k < n; k++) { const k1 = (k + 1) % n; g.quadO(B[k], B[k1], T[k1], T[k], col, inn, null, [colB, colB, col, col]); }
+    for (let k = 1; k < n - 1; k++) { g.triO(T[0], T[k], T[k + 1], colT, inn); g.triO(B[0], B[k], B[k + 1], colB, inn); }
+  }
   function crewGeos() {   // the parts, each in its joint's space: +y up, +z forward, +x the man's left; limbs hang from their joint along -y
     const G = () => new World.GB(), out = {}, TM = CR_TM, TD = CR_TD, W = CR_W, K = CR_K, BO = [0.09, 0.09, 0.1];
-    let g = G();   // trunk (from the hip joint): overall trousers with dark side panels, black belt, chest, shoulder yoke, a white stripe and badge, the name panel on the back
-    crTBox(g, -0.13, 0.05, 0.33, 0.21, 0.335, 0.215, [TD, TM, TM, null, TM]); crTBox(g, 0.04, 0.11, 0.345, 0.222, 0.35, 0.228, [K]);
-    crTBox(g, 0.1, 0.34, 0.33, 0.215, 0.38, 0.235, [TD, TM, TM]); crTBox(g, 0.34, 0.55, 0.38, 0.235, 0.42, 0.225, [TD, TM, TM]); crTBox(g, 0.55, 0.63, 0.42, 0.225, 0.2, 0.14, [TM, TM, TM, TM]);
+    let g = G();   // trunk (from the hip joint), rounded (8 round, a little squared off; smooth shading): the overall's trousers, a black belt, the chest
+    // broadening to the shoulders, dark side panels all the way up, the shoulders white (from above, as the cameras see the crew: the men
+    // stand out from the car and the apron), a badge on the chest, the name panel on the back
+    crLoft(g, [{ y: -0.13, rx: 0.165, rz: 0.104, p: 3 }, { y: 0.045, rx: 0.17, rz: 0.11, p: 3, hard: true }, { y: 0.11, rx: 0.177, rz: 0.116, p: 3, hard: true },
+      { y: 0.34, rx: 0.19, rz: 0.118, p: 3 }, { y: 0.5, rx: 0.212, rz: 0.115, p: 3, hard: true }, { y: 0.61, rx: 0.165, rz: 0.098, p: 2.6 }], 8, 0.5,
+      (s, k) => s === 1 ? K : s === 4 ? W : k === 1 || k === 5 ? TD : TM, { cap0: TM, cap1: W, dome1: 0.035 });   // (faces 1 and 5: the man's sides)
     const patch = (x0, x1, y0, y1, z) => g.quadO([x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], W, [0, (y0 + y1) / 2, 0]);   // flat white patches on the overall
-    patch(-0.18, 0.18, 0.36, 0.4, 0.121); patch(0.03, 0.13, 0.44, 0.5, 0.119); patch(-0.11, 0.11, 0.32, 0.49, -0.121);
+    patch(0.02, 0.09, 0.4, 0.46, 0.116); patch(-0.085, 0.085, 0.3, 0.46, -0.116);
     out.trunk = g.geometry();
     g = G();   // head (from the neck): neck, head, a cap in the team colour with its peak (inside the helmet when he wears one)
     World.cyl(g, 0, -0.04, 0.005, 0.056, 0.12, 6, CR_SK); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 6, 4, CR_SK);
@@ -4423,9 +4469,9 @@ const Render = (function () {
     crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 8, 4, (ux, uy) => uy < -0.45 ? TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? W : TM));
     crTBox(g, 0.1, 0.215, 0.17, 0.03, 0.17, 0.03, [[0.05, 0.07, 0.1], null, null, [0.05, 0.07, 0.1], [0.05, 0.07, 0.1]], 0.142, 0.146);
     out.helmet = g.geometry();
-    g = G(); crTBox(g, 0.035, -0.3, 0.118, 0.12, 0.09, 0.095, [TD, TM, TM, TM]); out.uarm = g.geometry();   // upper arm (from the shoulder)
+    g = G(); crLoft(g, [{ y: 0.035, rx: 0.059, rz: 0.06 }, { y: -0.3, rx: 0.045, rz: 0.0475 }], 6, 0, (s, k) => k === 1 || k === 4 ? TD : TM, { cap0: TM, dome0: 0.035 }); out.uarm = g.geometry();   // upper arm (from the shoulder), round, the shoulder domed
     g = G(); crTBox(g, 0.01, -0.24, 0.094, 0.097, 0.078, 0.08, [TD, TM, TM, TM]); crTBox(g, -0.235, -0.35, 0.082, 0.085, 0.07, 0.1, [K, K, K, K, K], 0, 0.01); out.farm = g.geometry();   // forearm and glove
-    g = G(); crTBox(g, 0.06, -0.46, 0.155, 0.18, 0.125, 0.135, [TD, TM, TM, TM]); out.thigh = g.geometry();
+    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.2, rx: 0.074, rz: 0.08, p: 2.5 }, { y: -0.46, rx: 0.063, rz: 0.068, p: 2.5 }], 6, 0, (s, k) => k === 1 || k === 4 ? TD : TM, { cap1: TM }); out.thigh = g.geometry();   // thigh, round
     g = G(); crTBox(g, 0.02, -0.38, 0.122, 0.132, 0.1, 0.105, [TD, TM, TM, TM]); crTBox(g, -0.47, -0.36, 0.11, 0.27, 0.105, 0.2, [BO, BO, BO, BO, [0.24, 0.24, 0.25]], 0.045, 0.02); out.shin = g.geometry();   // shin and boot
     g = G();   // wheel gun, in the hand: the socket points on along the forearm (-y), the air hose plugs in at the back (+y)
     { const B = [0.2, 0.21, 0.23], S = [0.7, 0.71, 0.74]; World.cyl(g, 0, -0.2, 0.05, 0.048, 0.26, 8, B, B); World.cyl(g, 0, -0.12, 0.05, 0.053, 0.05, 8, TM, TM); World.cyl(g, 0, -0.29, 0.05, 0.036, 0.09, 8, S, S); World.box(g, 0, -0.06, -0.01, 0.035, 0.1, 0.07, 0, K, K); }
