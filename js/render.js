@@ -861,7 +861,8 @@ const Render = (function () {
                lining together (enough to see from the chase camera): a bonnet (hood) pops 18 degrees, a boot lid or a tailgate (trunk,
                tailgate) opens 30, a cover 20, a hardtop and a deflector 14, a door hangs 28 ajar, a fender or a quarter stands 12 out (a
                side extra 12), a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, an extra at an end of the car tips 10
-               off it (one on top tilts as a wing); what lies on it (its lamps, its start number) turns with it. The hinge:
+               off it (one on top tilts as a wing); what lies on it (its lamps, its start number) and the parts mounted on it (their
+               entry's on, js/core.js: a number plate, a wiper on a tailgate) turn with it. The hinge:
                K.part opts.hinge / K.hinge [a, b] (look units); else from the range's box (a lid across at its edge by the cabin, at its top
                there; a deflector across at its front foot; a door upright at its front edge, on its face; a side panel upright at its edge
                by the car's middle; a mirror along the car at its arm's root; a bumper or a wing along the car at its end on the less
@@ -874,7 +875,8 @@ const Render = (function () {
                shadow only from 0.5 m across; then the ranges collapse (nothing drawn, never dented or crushed again) and the inner block
                shows. With it go: its o.host sub-ranges (lamps, grilles, numbers), the start number (body.decalPart), its glass (out of the
                panes: a pane with nothing left breaks no more), a head lamp hosted on it (its glow, the night beam), a tail lamp on it
-               (K.tailLamp's o.host, else the part of the shell's surface nearest the lamp's middle: its side of the tail mesh)
+               (K.tailLamp's o.host, else the part of the shell's surface nearest the lamp's middle: its side of the tail mesh); the parts
+               mounted on it (their entry's on) come off with it, each its own piece (the core loses them with it: detachPart)
        lamps   c.lightOut: a head lamp's lens dark (while its host is on), a tail lamp's side of the tail mesh gone; the night beam with the
                head lamps left (one: half, on its side)
        wheels  a wheel off (c.wreck.wl): hidden and latched (the pit crew never puts it back), a bare hub and brake disc in its place, its
@@ -956,7 +958,9 @@ const Render = (function () {
                                ledge at its rim, a dark tub over the tyre), tubs: false, tubCol, caps: false | { front, rear: false | { col,
                                colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes), glassBend: [down,
                                up] (degrees: the side glass (glass panels e 2 / 6) shaded as if curved: its normals turned down at its foot,
-                               up at its top: it mirrors the ground below, the sky above; no triangle more) }. Returns
+                               up at its top: it mirrors the ground below, the sky above; no triangle more), glassBendTop: { kind: [down,
+                               up] } (the same for a glass panel of the top, e 3..5, of a segment of that kind: a windscreen ('gf') or a rear
+                               window ('gr') that is the loft's own glass; its lower end turned down, its upper end up) }. Returns
                                { secs (as cut), prop(x, key), topY(x, z), decal }
        L.decal / K.decal(secs) decals laid on a loft (cut at its sections: a side stripe leaves in pieces with the fender, the door, the
                                quarter): side(poly [[x, y] ...], col, sides?, lift?, o) on the flat side (clipped to it: never over a wheel
@@ -1321,6 +1325,12 @@ const Render = (function () {
     }
     const open = CL.map(r => r.some((c, e) => e >= 1 && e <= 7 && c == null)), glazed = CL.map((r, j) => !open[j] && [3, 4, 5].some(e => r[e] != null && GL[j][e]));
     const vol = new Array(NS).fill(false);
+    // (glassBendTop: a run of segments of one kind whose top is glass (a windscreen cut by a region's end): the bend spread over the whole
+    // run, its lower end turned down, its upper end up)
+    const bendRun = new Array(NS).fill(null), topGl = (j) => [3, 4, 5].some(e => CL[j][e] != null && GL[j][e]);
+    if (o.glassBendTop) for (let j = 0; j < NS;) { const bt = o.glassBendTop[S[j].k]; if (!bt || !topGl(j)) { j++; continue; }
+      let k = j; while (k < NS && S[k].k === S[j].k && topGl(k)) k++;
+      const r = { x0: S[j].x, x1: S[k].x, up0: S[j].yt > S[k].yt, bt }; for (let i = j; i < k; i++) bendRun[i] = r; j = k; }
     if (lining) for (let j = 0; j < NS;) { if (!open[j] && !glazed[j]) { j++; continue; } let k = j, any = false; while (k < NS && (open[k] || glazed[k])) any = open[k++] || any; if (any) for (let i = j; i < k; i++) vol[i] = true; j = k; }
     const anyVol = vol.some(Boolean), PP = [];   // (PP[j][e]: panel e's parts at its lower / upper edge: { lo, hi } (two for a side panel cut at a bumper's top))
     const yF = (x) => kitProp(secs, x, 'yb') + 0.03;   // (the floor's height at x: the sill's)
@@ -1347,6 +1357,16 @@ const Render = (function () {
           continue;
         }
         const emit = () => {
+          const bendTop = glass && e >= 3 && e <= 5 && bendRun[j];   // (a windscreen or a rear window of the loft's own glass: the same, along the car)
+          if (bendTop) {
+            const p = A[e], q = Bv[e], r = Bv[e + 1], s = A[e + 1], u = [r[0] - p[0], r[1] - p[1], r[2] - p[2]], v = [s[0] - q[0], s[1] - q[1], s[2] - q[2]];
+            let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(n[0], n[1], n[2]) || 1, m = [(p[0] + r[0]) / 2 - inside[0], (p[1] + r[1]) / 2 - inside[1], (p[2] + r[2]) / 2 - inside[2]];
+            n = n.map(k => k / l * (n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0 ? -1 : 1));
+            const tilt = (deg) => { const t = [n[0], n[1] + Math.tan(deg * Math.PI / 180), n[2]], k = Math.hypot(t[0], t[1], t[2]); return [t[0] / k, t[1] / k, t[2] / k]; };
+            const R = bendTop, deg = (pt) => { let f = Math.min(1, Math.max(0, (pt[0] - R.x0) / ((R.x1 - R.x0) || 1))); if (R.up0) f = 1 - f; return -R.bt[0] + (R.bt[0] + R.bt[1]) * f; };   // (f: 0 at its lower end, 1 at its upper)
+            g.quadON(p, q, r, s, tilt(deg(p)), tilt(deg(q)), tilt(deg(r)), tilt(deg(s)), inside, c, c, c, c);
+            return;
+          }
           if (glass && o.glassBend && (e === 2 || e === 6)) {   // (side glass as if curved: its normals turned up at its top, down at its foot)
             const p = A[e], q = Bv[e], r = Bv[e + 1], s = A[e + 1], u = [r[0] - p[0], r[1] - p[1], r[2] - p[2]], v = [s[0] - q[0], s[1] - q[1], s[2] - q[2]];
             let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(n[0], n[1], n[2]) || 1, m = [(p[0] + r[0]) / 2 - inside[0], (p[1] + r[1]) / 2 - inside[1], (p[2] + r[2]) / 2 - inside[2]];
@@ -5756,6 +5776,8 @@ const Render = (function () {
       const qx = a[i] - b[0], qy = a[i + 1] - b[1], qz = a[i + 2] - b[2], d = (qx * u[0] + qy * u[1] + qz * u[2]) * (1 - cs);
       a[i] = b[0] + qx * cs + (u[1] * qz - u[2] * qy) * sn + u[0] * d; a[i + 1] = b[1] + qy * cs + (u[2] * qx - u[0] * qz) * sn + u[1] * d; a[i + 2] = b[2] + qz * cs + (u[0] * qy - u[1] * qx) * sn + u[2] * d; };
     for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { turn(pa, i * 3, A); turn(na, i * 3, O); }
+    const PT = Core.partsOf(M);   // (the parts mounted on it (their entry's on: a plate, a wiper on a tailgate) turn with it)
+    for (const n in geo.userData.ranges) if (PT[n] && PT[n].on === name && !K.dead[n]) { const Q = geo.userData.ranges[n]; for (const [a, b] of [Q.o, Q.i]) for (let i = a; i < b; i++) { turn(pa, i * 3, A); turn(na, i * 3, O); } }
     geo.attributes.position.needsUpdate = true; geo.attributes.normal.needsUpdate = true;
     if (v.dec && K.E.body.decalPart === name) { const p = v.dec.position, q = [p.x, p.y, p.z]; turn(q, 0, A); p.set(q[0], q[1], q[2]); v.dec.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(u[0], u[1], u[2]), th)); }
     // the lamps on it turn with it: a tail lamp's side of the tail mesh (its host: kitTailHost), the glow points of the lamps it carries

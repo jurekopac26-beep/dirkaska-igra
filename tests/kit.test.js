@@ -11,6 +11,8 @@
 //  - every registered vehicle (its look, or a place-holder's generic hatch): each part's range centroid within 0.35 m of where the core
 //    throws its piece from (a lost part's copy lies where the part was: stage B2); its burning engine's seat (body.engine) inside the
 //    body, the shell's top over it (where the flames come out) within its height
+//  - KOLIBRI's tail lamps on parts of their own (tailL / tailR: their side of the tail mesh goes with them), its number plate and rear
+//    wiper mounted on the tailgate (on: 'trunk'), each part's range on its own (non-empty in the Normalni build; the Visoki one builds)
 //   node tests/kit.test.js
 'use strict';
 const fs = require('fs');
@@ -230,6 +232,13 @@ function raysThrough(res) {
   }
   console.warn = w0; all.sort((a, b) => b[0] - a[0]);
   check(`every registered vehicle's lost parts lie flat: each piece at most max(0.3 m, 3 x its h) tall (${n7} parts)`, !rows.length && n7 > 0, rows.slice(0, 6).join(' | ') || 'the tallest for their h: ' + all.slice(0, 4).map(q => q[1]).join(', '));
+}
+
+{ // KOLIBRI: the tail lamps parts of their own, the plate and the rear wiper on the tailgate, every part with geometry of its own
+  const I = R.kitInfo('kolibri'), PT = Core.partsOf(Core.MODELS.find(m => m.id === 'kolibri')), empty = Object.keys(PT).filter(k => PT[k].wh == null && !(I.ranges[k] && I.ranges[k].o[1] > I.ranges[k].o[0]));
+  check('KOLIBRI: its tail lamps on parts of their own (tailL / tailR), the number plate and the rear wiper mounted on the tailgate (on), every part with geometry of its own; Visoki builds too',
+    I.status === 'ok' && I.tailHost.L === 'tailL' && I.tailHost.R === 'tailR' && PT.plate.on === 'trunk' && PT.wiperRear.on === 'trunk' && !PT.tailL.on && !empty.length && I.hi && I.hi.status === 'ok',
+    `tail lamps on ${I.tailHost.L} / ${I.tailHost.R}, plate on ${PT.plate.on}, rear wiper on ${PT.wiperRear.on}${empty.length ? ', no geometry: ' + empty.join(' ') : ''}, Visoki ${I.hi && I.hi.status}`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} kit checks (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
