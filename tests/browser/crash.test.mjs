@@ -9,7 +9,7 @@
 // 5. repeated side blows: the roof sinks on that side (its edge lower than the other side's); the rear door swung open, its window broken
 // 6. one of the 11 (the rally car) dense too; switched off during a race the cars are built again as before
 // 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Izravnana within 6 % more vertices than off, Polna within 30 %
-// 8. xParts, xDust, xDrag: a rear bumper knocked loose drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
+// 8. xParts, xDust, xDrag: a rear bumper knocked loose (the car 70 % gone: the tail hangs loose only from then) drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
 //    knocked off lies on the road and, pushed out of the core's 40 pieces, stays drawn there; off: none of it (the piece freed as before);
 //    rolling over: the car's black underside (floor, subframes, tunnel, exhaust, tank) drawn while it rolls, not before nor after
 //   node tests/browser/crash.test.mjs
@@ -106,6 +106,7 @@ try {
   for (const [k, s] of [['on', { xBody: 1, xParts: 1, xDust: 1, xDrag: 1 }], ['off', { xBody: 1 }]]) pd[k] = await run(s, (hs) => {
     const hit = eval(hs), g = window.__game, R = g.race, P = R.player, v = Render.viewOf(P), out = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+    P.dmg = Math.max(P.dmg, 0.7);   // (the tail hangs loose only once the car is 70 % gone: Core.maskHeld)
     for (let k = 0; k < 14 && !v.kit.ajar.bumperR && !P.lost.bumperR; k++) hit(P, [0.06, -1, 0.1]);
     out.ajar = !!v.kit.ajar.bumperR && !P.lost.bumperR;
     // driving on at 15 m/s with it hanging: sparks off its low end
