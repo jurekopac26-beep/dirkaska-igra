@@ -52,7 +52,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // crown: its edge panels untwisted, the pane over them never cut by the frame's diagonal)
         eye: { x: -0.36, y: 1.17, style: 'closed' },
       },
-      wheels: { style: 'std', spokes: 6, w: 0.165, rim: [0.8, 0.81, 0.84], cap: [0.26, 0.26, 0.28], gap: 0.055 },
+      wheels: { style: 'std', spokes: 6, w: 0.165, seg: 32, rim: [0.8, 0.81, 0.84], cap: [0.26, 0.26, 0.28], gap: 0.055 },
       regions: (std) => {
         const XD0 = 0.79, XD1 = -0.35, R = [];
         for (const s of 'LR') R.push({ part: 'mirror' + s, x: [0.41, 1.16], y: [0.59, 1.12], side: s, out: true, points: true });
