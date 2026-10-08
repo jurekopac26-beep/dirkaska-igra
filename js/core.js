@@ -1485,9 +1485,9 @@ const Core = (function () {
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (snappy, a bit above real g)
   // Razbijanje · nov način: prevračanje (Nastavitve xRoll; off by default: nothing here runs, no car ever has rl). A hard knock on a car's
   // side (another car's, 9 m/s and more across; a wall's, 10 m/s and more) rolls it over away from the knock: for 1.2-1.6 s it slides on
-  // without grip or drive, the road's drag slowing it, up in an arc and down again, turning one full turn (two after a harder knock)
+  // without grip or drive, the road's drag slowing it a little, up in an arc and down again, turning one full turn (two after a harder knock)
   // about its long axis (the renderer turns it by rl.t / rl.T), its roof on the road half way round each turn (a dent on top, the roof
-  // crushed further); then on its wheels again with 62 % of its speed: a second or so lost. Its numbers: none random
+  // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Its numbers: none random
   const XR = { roll: 0 };
   function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; }
   function xRollStart(c, dir, imp) {
@@ -1598,12 +1598,12 @@ const Core = (function () {
     // rolling over (xRollStart): it slides on, the road's drag slowing it, up in an arc and down; the roof on the road once a turn
     xRollStep(dt) {
       const r = this.rl; r.t += dt;
-      const sp = Math.hypot(this.vx, this.vz), dec = Math.min(sp, 6 * dt); if (sp > 1e-6) { this.vx -= this.vx / sp * dec; this.vz -= this.vz / sp * dec; }
+      const sp = Math.hypot(this.vx, this.vz), dec = Math.min(sp, 3 * dt); if (sp > 1e-6) { this.vx -= this.vx / sp * dec; this.vz -= this.vz / sp * dec; }
       this.x += this.vx * dt; this.z += this.vz * dt; this.h = wrapPi(this.h + this.w * dt); this.w *= Math.exp(-dt * 3);
       const s = Math.min(1, r.t / r.T); this.y = this.roadY + r.H * 4 * s * (1 - s); this.vy = 0;
       const k = Math.floor(s * r.turns + 0.5);
       if (k > r.k) { r.k = k; if (this.dmgMode) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); this.dmg = Math.min(0.97, this.dmg + 0.04); } }
-      if (r.t >= r.T) { delete this.rl; this.y = this.roadY; this.vx *= 0.62; this.vz *= 0.62; this.w = 0; }
+      if (r.t >= r.T) { delete this.rl; this.y = this.roadY; this.vx *= 0.8; this.vz *= 0.8; this.w = 0; }
     }
     stepCS(dt, trk) {
       const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, K = CSK;
