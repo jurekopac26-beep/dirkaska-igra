@@ -39,6 +39,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // top under the windscreen (the driver looks over the cowl onto it). The livery: the paint with a bold swoosh in the stripe colour
     // along each side, a sun strip, the number panels on the doors (generic: no marks)
     look: {
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver, the tyres in 64)
       body: {
         //       x       w      yb     ybelt  wt     yt     cr     kind  tuck
         secs: [[-2.0, 0.76, 0.25, 0.48, 0.72, 0.53, 0.02, 'b', 0.09],       // the rally bumper's rear face (the end cap)
@@ -66,7 +67,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         decalX: -0.82, decalY: 1.425, decalRz: 0.05, decalS: 0.55,               // (the start number on the roof, behind the scoop)
         lamps: [[1.976, 0.665, 0.565], [-1.86, 0.8, 0.715]],                 // (the glow: the head lamps' projectors, not the fog lamps; the tail's lit lenses)
       },
-      wheels: { style: 'std', spokes: 6, w: 0.235, rim: [0.9, 0.9, 0.88], cap: [0.3, 0.3, 0.32], gap: 0.05 },
+      wheels: { style: 'std', spokes: 6, w: 0.235, rim: [0.9, 0.9, 0.88], cap: [0.3, 0.3, 0.32], gap: 0.05, seg: 32, segHi: 64 },
       // the standard regions, but the bumpers' tops (behind the tailgate's foot, under the lamps' face) go with the bumpers, the tailgate is
       // the panel between the lamps up to the roof (the top's edge and crown: its glass, the panel under it), the bonnet is the cowl (the
       // windscreen's base) to its front edge between the wings (edge and crown: the wings' tops and the lamps' face are the body's; the
@@ -90,7 +91,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (kind === 'r') return (e === 2 || e === 6) && at.x > -1.07 ? G : P;
           if (kind === 'gr') return e >= 3 && e <= 5 ? G : P;
           return P;
-        }, { caps: { front: { col: P }, rear: { col: P, colLow: D, cut: 0.4, low: 'bumperR', high: 'bumperR' } } });
+        }, { caps: { front: { col: P }, rear: { col: P, colLow: D, cut: 0.4, low: 'bumperR', high: 'bumperR' } }, glassBend: [20, 38] });
+        // ---- the roof's edges rounded: a bead in paint along each crease of the roof, from its back to the windscreen's top (a chamfer
+        //      the light catches round; Visoki: down the A-pillar to the cowl too, its ends closed) ----
+        for (const sd of [-1, 1]) {
+          const path = (K.hi ? [-1.38, 0.255, 1.035] : [-1.38, 0.255]).map(x => [x, L.prop(x, 'yt') - 0.004, sd * (L.prop(x, 'wt') - 0.004)]);
+          K.sweep([[0.018, -0.02], [0.02, 0.014], [-0.018, 0.022]].map(([u, v]) => [u * sd, v]), path, P, K.hi ? { capA: P, capB: P, part: 'body' } : { capA: null, capB: null, part: 'body' });
+        }
         const pr = (x, k) => L.prop(x, k), DC = L.decal, XN = 2.0;
         // a flat polygon facing out (its points' order turned to face dir), one primitive
         const F = (pts, col, dir, o) => { const a = pts[0], b = pts[1], c = pts[2], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
@@ -180,6 +187,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) {
           const out = [-1, 0.1, sd * 0.3];
           K.tailLamp(-1.852, 0.8, sd * 0.715, 0.2, 0.16, { d: 0.02 });
+          if (K.hi) for (const y of [0.77, 0.83]) K.rect(-1.857, y, sd * 0.715, 0.19, 0.007, [0.3, 0.03, 0.03], { dir: '-x', host: sd < 0 ? 'quarterL' : 'quarterR' });   // (Visoki: the lens' ribs)
           const QH = { host: sd < 0 ? 'quarterL' : 'quarterR' };   // (on the quarters' corners: they go with them)
           lens([on(-1.878, 0, sd, 0), on(-1.84, 0, sd, 0), on(-1.84, 1, sd, 0), on(-1.878, 1, sd, 0)], RED, out, QH);
           onBand([[-1.84, 0.0], [-1.84, 1.0], [-1.72, 0.97], [-1.66, 0.62], [-1.635, 0.2], [-1.7, 0.0]], RED, sd, [-0.5, 0.6, sd * 0.6], false, QH, 0.05);   // (over the shoulder: climbing to the glass's foot)
@@ -220,6 +228,37 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- hinges: the tailgate at the roof, the doors at their front edges ----
         K.hinge('trunk', [-1.38, 1.3, -0.5], [-1.38, 1.3, 0.5]);
         K.hinge('doorL', [0.78, 0.4, -0.84], [0.78, 0.85, -0.84]); K.hinge('doorR', [0.78, 0.4, 0.84], [0.78, 0.85, 0.84]);
+        // ---- the underbody (the inner block: drawn once a part is loose or off, a door open): a black floor pan under the car, narrowed
+        //      between the wheels over the axles ----
+        { const A = K.arches, xs = [-1.85, A[1].x - A[1].half, A[1].x + A[1].half, A[0].x - A[0].half, A[0].x + A[0].half, 1.9], wn = K.hw - 0.16;
+          K.part('body', () => { for (let i = 0; i < 5; i++) { const x0 = xs[i], x1 = xs[i + 1], y = Math.max(pr(x0, 'yb'), pr(x1, 'yb')) + 0.012, w = i % 2 ? wn : Math.min(pr(x0, 'w'), pr(x1, 'w')) - 0.05;
+            F([[x0, y, -w], [x1, y, -w], [x1, y, w], [x0, y, w]], B, [0, -1, 0]); } }, { noCrush: true, inner: true }); }
+        // ---- the front's structure behind the bumper (seen once it hangs or is off): the radiator support's panel across the nose, the
+        //      radiator before it (fins across), the frame rails' ends, the steel crash bar's face; the tail's panel and its bar; round the
+        //      engine the battery (Visoki: the air filter's drum, the strut tops, the brake fluid's reservoir) ----
+        { const o = { inner: true, part: 'body' }, ST = [0.15, 0.15, 0.16], od = (d) => Object.assign({ dir: d }, o);
+          K.rect(1.78, 0.36, 0, 1.3, 0.34, K.shade(P, 0.62), od('x'));
+          for (const y of [0.26, 0.33, 0.4]) K.rect(1.86, y, 0, 1.0, 0.014, [0.42, 0.44, 0.47], od('x'));
+          for (const sd of [-1, 1]) K.rect(1.84, 0.3, sd * 0.45, 0.14, 0.08, ST, od('y'));
+          K.rect(1.94, 0.27, 0, 1.4, 0.1, ST, od('x'));
+          K.rect(-1.72, 0.42, 0, 1.4, 0.3, K.shade(P, 0.62), od('-x')); K.rect(-1.9, 0.3, 0, 1.4, 0.1, ST, od('-x'));
+          K.box(1.05, 0.4, 0.5, 0.2, 0.17, 0.14, 0, [0.08, 0.08, 0.09], [0.16, 0.16, 0.18], true, o);
+          if (K.hi) { K.cyl([1.15, 0.62, -0.48], [1.15, 0.76, -0.48], 0.085, [0.1, 0.1, 0.11], Object.assign({ n: 6, capA: null, capB: [0.62, 0.63, 0.66] }, o));
+            for (const sd of [-1, 1]) K.box(1.22, 0.5, sd * 0.6, 0.1, 0.28, 0.1, 0, [0.2, 0.2, 0.22], [0.5, 0.5, 0.53], true, o);
+            K.box(0.95, 0.64, -0.24, 0.06, 0.1, 0.06, 0, [0.9, 0.82, 0.4], [0.12, 0.12, 0.13], true, o); } }
+        // ---- Visoki (Nastavitve · Detajli avtov; the player's and the showroom's car on a computer): the small details. The handles'
+        //      grips out of their recesses; the bonnet's shut lines and its pins; the tailgate's over the bumper; the plate framed, dark
+        //      bars for its characters; an aerial on the roof's back; the driver at the wheel ----
+        if (K.hi) {
+          for (const sd of [-1, 1]) K.box(-0.36, 0.812, sd * (pr(-0.36, 'w') + 0.012), 0.11, 0.016, 0.012, 0, [0.12, 0.12, 0.13], null, false, { host: sd < 0 ? 'doorL' : 'doorR' });
+          for (const sd of [-1, 1]) { DC.top([1.05, 1.92, 1.92, 1.05].map((x, i) => [x, sd * (pr(x, 'wt') - (i < 2 ? 0.012 : 0.02))]), D, 0.004);
+            K.rect(1.86, L.topY(1.86, sd * 0.5) + 0.004, sd * 0.5, 0.045, 0.045, B, { dir: 'y', part: 'hood' }); }
+          K.rect(-1.89, 0.6, 0, 1.2, 0.006, D, { dir: '-x', part: 'trunk' });
+          K.rect(-1.8715, 0.74, 0, 0.44, 0.12, D, { dir: '-x', part: 'trunk' }); for (let i = 0; i < 4; i++) K.rect(-1.8745, 0.74, (i - 1.5) * 0.09, 0.05, 0.05, [0.16, 0.17, 0.2], { dir: '-x', part: 'trunk' });
+          { const y0 = L.topY(-1.1, 0.32); K.box(-1.1, y0 - 0.004, 0.32, 0.04, 0.02, 0.02, 0, B, null, false, { part: 'body' }); K.bar([-1.1, y0 + 0.012, 0.32], [-1.36, y0 + 0.26, 0.32], 0.0035, B, { n: 4, part: 'body' }); }
+          K.cyl([0.28, 0.86, -0.36], [0.24, 0.88, -0.36], 0.17, B, { n: 8, inner: true, part: 'body' });   // (the steering wheel)
+          K.driver(-0.42, 1.06, -0.36, { inner: true, r: 0.12, lean: 0.3, hands: [0.22, 0.88, 0.15], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
+        }
         // ---- inside: two buckets, the dashboard, the roll cage, the transverse four in the bay ----
         for (const sd of [-1, 1]) K.seat(-0.38, 0.48, sd * 0.36, { w: 0.48, back: 0.74, col: [0.1, 0.1, 0.11] });
         K.box(0.6, 0.6, 0, 0.3, 0.26, 1.42, 0, D, null, false, { inner: true, part: 'body' });
