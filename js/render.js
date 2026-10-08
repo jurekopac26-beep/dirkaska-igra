@@ -5997,7 +5997,9 @@ const Render = (function () {
        flat-shaded; the folds darker. Each cluster's push is a function of its few numbers and the intact body, so a deeper one replaces
        its own old push (xApply): blow by blow the car goes in further, the same every time it is drawn
      - a deep front crush tears the bonnet open there (its triangles collapsed, as a lost part's) and the grey engine shows under it, as
-       under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them
+       under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them. Till the car is
+       70 % gone (X_SOFT_DMG, the core's MASK_DMG) an end's crush goes no deeper than X_SOFT (0.3 m) and nothing tears: the face and the
+       tail keep their shape till then
      xPaint on: scraped to bare metal and rust in patches where the metal folded. xGlass on: a broken pane breaks in one of five ways (a
      star from the blow, crazed all over, a hole, long cracks, fallen out) instead of frosting. Their random numbers: none (position noise) */
   const XC = { body: 0, glass: 0, paint: 0, detail: 'lite', parts: 0, drag: 0, dust: 0 };
@@ -6234,8 +6236,12 @@ const Render = (function () {
     const old = K ? Object.assign({}, K) : null;
     if (!K) { K = { u, w, A: 0, top }; xc.cl.push(K); } else { const s = K.A + d.amt; K.u = (K.u * K.A + u * d.amt) / s; K.w = (K.w * K.A + w * d.amt) / s; }
     K.A += d.amt; xParams(xc, K);
+    // (the car's face and tail keep their shape till it is 70 % gone, as the core keeps their parts on, MASK_DMG: a blow on an end goes
+    // no deeper than X_SOFT till then, short of tearing the bonnet open; from 70 % its full depth, the next blow there)
+    if (!K.top && K.end && !((v.car.dmg || 0) >= X_SOFT_DMG) && K.d > X_SOFT) { K.d = X_SOFT; K.R = Math.min(2.8, 0.45 + 1.7 * K.d); }
     xApply(v, xc, old, K);
   }
+  const X_SOFT = 0.3, X_SOFT_DMG = 0.7;
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint)
   function xPaint(v, xc, tris) {
     const geo = v.body.geometry, ca = geo.attributes.color ? geo.attributes.color.array : null, nm = geo.attributes.normal.array; if (!ca || !xc.col0) return;
@@ -6253,7 +6259,7 @@ const Render = (function () {
   // a deep front crush tears the bonnet open over it: its triangles (and its lining's) within reach of the crushed nose collapsed, as a
   // lost part's are (deadV: no dent moves them again); the lining drawn from then on (kitLod: K.xTorn), the engine under it shown
   function xTear(v, xc) {
-    const K = v.kit, U = K && v.body.geometry.userData, R = U && U.ranges && U.ranges.hood; if (!R || K.dead.hood) return;
+    const K = v.kit, U = K && v.body.geometry.userData, R = U && U.ranges && U.ranges.hood; if (!R || K.dead.hood || !((v.car.dmg || 0) >= X_SOFT_DMG)) return;   // (not before 70 %)
     const a = v.body.geometry.attributes.position.array, rest = xc.rest, dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let torn = 0;
     for (const C of xc.cl) {
       if (!(C.dx < -0.5 && C.d > 0.42)) continue;

@@ -1,7 +1,8 @@
 // Razbijanje · nov način (Nastavitve: xBody, xGlass, xPaint, xDetail; render only, off by default):
 // 1. off (the default): no car is built dense, the dents go the old way (applyDent), nothing new on the road
 // 2. on, Izravnana: the player's car dense (its outer shell split, its ranges, paint list and drawn block consistent), the rivals as built;
-//    blow after blow on the nose the crush goes deeper (each hit deepens the same cluster) and stops short of the windscreen (its cap);
+//    blow after blow on the nose the crush goes deeper (each hit deepens the same cluster), no deeper than 0.3 m till the car is 70 % gone
+//    (nothing torn: the face keeps its shape), then on, and stops short of the windscreen (its cap);
 //    a deep front crush tears the bonnet open and the grey engine shows; nothing NaN
 // 3. the glass: each blow breaks the unbroken pane nearest to it, never one on the other side of the car; glass on the road after
 // 4. the mirrors: the first side blow knocks that side's mirror off, it lies on the road and stays there while the car drives on
@@ -48,14 +49,14 @@ try {
     let okR = true; for (const n in U.ranges) { const R = U.ranges[n]; if (R.o[0] > R.o[1] || R.o[1] > U.outerN || R.o[0] % 3 || R.o[1] % 3) okR = false; if (R.i && (R.i[0] < U.outerN || R.i[1] > U.N)) okR = false; }
     out.ranges = okR && U.paint.i.length > 0 && Math.max(...U.paint.i) < U.N && geo.drawRange.count === U.outerN;
     // the nose, blow after blow
-    out.depth = []; for (let k = 0; k < 6; k++) { hit(P, [0.12, 1, [-0.2, 0.1, -0.1, 0.2, 0, -0.15][k]]); const c = info().cl.find(q => q.u > 0.8); out.depth.push(c ? c.d : 0); }
+    out.depth = []; out.dmgs = []; for (let k = 0; k < 6; k++) { hit(P, [0.12, 1, [-0.2, 0.1, -0.1, 0.2, 0, -0.15][k]]); const c = info().cl.find(q => q.u > 0.8); out.depth.push(c ? c.d : 0); out.dmgs.push(P.dmg); }
     const me2 = info(); out.cap = me2.caps.F; out.torn = me2.torn; out.engine = me2.engine;
     const a = geo.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
     return out; }, hitFn);
   const D = on.r;
   T.check('on: the player\'s car dense, its outer shell split, the rivals as built (Izravnana)', D.dense.xd > 0 && D.dense.outerN > D.dense.kit * 1.5 && D.dense.rivals === 0, JSON.stringify(D.dense));
   T.check('on: the dense body\'s ranges, paint list and drawn block consistent', D.ranges, '');
-  T.check('on: blow after blow on the nose the crush goes deeper', D.depth.every((d, k) => k === 0 || d > D.depth[k - 1]) && D.depth[0] > 0.1, D.depth.map(d => d.toFixed(2)).join(' '));
+  T.check('on: blow after blow on the nose the crush goes deeper: no deeper than 0.3 m till the car is 70 % gone (the face keeps its shape), then on', D.depth.every((d, k) => (k === 0 || d >= D.depth[k - 1] - 1e-9) && (D.dmgs[k] >= 0.7 || d <= 0.3 + 1e-9)) && D.depth[0] > 0.1 && D.depth[1] > D.depth[0] && D.depth[5] > 0.42 && D.dmgs[5] >= 0.7, D.depth.map((d, k) => d.toFixed(2) + ' (' + Math.round(D.dmgs[k] * 100) + ' %)').join(' '));
   T.check('on: the crush stops short of the windscreen (its cap)', D.depth[5] <= D.cap + 1e-6 && D.depth[5] > 0.6 * D.cap, 'depth ' + D.depth[5].toFixed(2) + ' cap ' + D.cap.toFixed(2));
   T.check('on: a deep front crush tears the bonnet open, the grey engine shows', D.torn && D.engine, JSON.stringify({ torn: D.torn, engine: D.engine }));
   T.check('on: no NaN in the body', D.nan === 0, 'NaN ' + D.nan);
