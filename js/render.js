@@ -5481,6 +5481,7 @@ const Render = (function () {
         const off = !settings.shadows; if (v.blobOff !== off) { v.blobOff = off; v.blob.material = off ? matBlobS : matBlob; }
         let bx = 0, bz = 0; if (off && atmos.tod !== 'night') { const f = 0.55 / Math.max(0.25, _sunN.y), sx = -_sunN.x * f, sz = -_sunN.z * f, l = Math.hypot(sx, sz), q = l > 1.3 ? 1.3 / l : 1; bx = (sx * e[0] + sz * e[2]) * q; bz = (sx * e[8] + sz * e[10]) * q; }
         v.blob.position.x = bx; v.blob.position.z = bz;
+        if (M.bike && v.lean) { const cl = Math.cos(v.lean), sl = Math.sin(v.lean), yb = v.blob.position.y; v.blob.position.y = yb * cl + bz * sl; v.blob.position.z = bz * cl - yb * sl; }   // (a motorcycle: its lean undone, the shadow on the road under it)
       }
       // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; never washes off during a race)
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
@@ -6838,7 +6839,7 @@ const Render = (function () {
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
-    const vz = c.m && c.m.bike ? 0.8 : 1;   // (a motorcycle, half a car's length: the chase and the isometric camera a fifth closer, the look ahead as for a car)
+    const vz = c.m && c.m.bike ? 0.8 : 1;   // (a motorcycle, half a car's length: the chase and the isometric camera a fifth closer; the chase camera's look ahead as for a car)
     if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
