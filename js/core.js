@@ -2554,7 +2554,7 @@ const Core = (function () {
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if (race.tf && c.tfLo != null) { const E = Math.max(lim + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
-      const pz = T.pitAt(sT); if (pz) off = pz.o * pz.sd;
+      const pz = T.pitAt(sT), pn = T.pitAt(q.s); if (pz && (c.inPit || pz.gap || (pn && pn.gap))) off = pz.o * pz.sd;   // (over to the lane only where it can be reached: the way in or out, or in it; beside the pit wall on with the lap, in next time)
       const bd = pz && c.inPit && !pz.gap ? race._boxD(c) : null;
       if (bd != null) {   // (in the lane: in its middle, into the car's own box on the apron in front of its garage nose first, then out to the middle again; across measured to the lane's side, pz.sd)
         const bo = T.bayOff(T.boxX(sT, bd), 3.5 + BAY.o, c.pitDone); let u = pz.o + bo;
