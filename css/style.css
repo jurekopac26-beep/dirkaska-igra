@@ -339,8 +339,9 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #rotate #rotate-cam { margin-top: 6px; }
 #rotate.to-portrait .phone { animation-name: rotp; }
 @keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
-#toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+#toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; width: max-content; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
 #toast.show { opacity: 1; }
+@media (orientation: landscape) { #toast { max-width: min(80vw, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); } }   /* (on its side: between the steering arrows and the pedals, as #h-radio) */
 #loading { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--asphalt); }
 .ld-logo { font: 400 italic clamp(28px, 9vh, 48px)/1 var(--f-display); }
 .ld-bar { width: 200px; height: 8px; border-radius: 4px; overflow: hidden; background: repeating-linear-gradient(90deg, var(--curb) 0 12px, var(--chalk) 12px 24px); opacity: .9; }

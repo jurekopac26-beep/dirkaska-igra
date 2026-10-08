@@ -1607,7 +1607,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
@@ -2384,16 +2384,15 @@
     recStep();
     const P = race.player;
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
-    const pitAP = phase === 'racing' && P.inPit && !hold && !autoDrive;   // the pit lane (over the pit wall's line): the autopilot drives
-    if (P.pitAP && !pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (out of the lane, or the race over: the player's own car again)
+    const pit = pitCtl(P, hold);   // the pit autopilot: 'lane', 'merge' or null (the player's own car)
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
-    else if (pitAP) {   // the pit lane: no steering (the lane is narrow); the autopilot keeps to the middle of the lane at the limiter's speed, turns in to
-      // the box in front of the garage and out again (Core.aiControl, Race.pitStep). It drives only while the gas is held (Samodejni plin: by
-      // itself); the brake slows it, never into reverse
-      P.pitAP = true; P.pitWant = true; Core.aiControl(P, race, dt);
-      if (!(inp.thr > 0.05)) P.inThr = 0;
-      P.inBrk = Math.max(P.inBrk, inp.brk); P.inHand = 0; P.digitalSteer = false; P.noReverse = true;
+    else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
+      // Race.pitStep); the player's gas, steering and handbrake are not used; the brake slows it (the autopilot's throttle off), never into reverse
+      P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
+      if (inp.brk > 0.05) { P.inThr = 0; P.inBrk = Math.max(P.inBrk, inp.brk); }
+      P.inHand = 0; P.digitalSteer = false; P.noReverse = true;
+      if (pit === 'merge') pitCount(dt);
     }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
@@ -2864,6 +2863,10 @@
 
   /* ---------------- pit stops ---------------- */
   let pitWrenchT = 0, pitHint = false, drsN = 0, secN = 0, pitFix = false, towOn = false;
+  // the player's pit stop on the autopilot (game.js only: Core never sees it, so the Node references stay as they are). pa.st: null = the
+  // player drives; 'lane' = over the pit wall's line: in, the box, the stop, out, the gas and the brake by the autopilot; 'merge' = past the
+  // way out after a stop: PIT_OUT s of race time more onto the racing line (pitWant off, as an AI car rejoins), counted down; then the player's
+  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false };
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
@@ -3084,10 +3087,33 @@
   }
   function pitEvent(e) {
     if (phase !== 'racing') return;
-    if (e === 'enter') { showMsg(tr('BOKSI · DRŽI PLIN'), 'gold', 2.2); Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2); }
+    if (e === 'enter') {
+      if (pa.st === 'merge') return;   // (back over the line during the countdown: nothing new)
+      const P = race.player, b = race._boxD(P), stop = b != null && race.track.boxX(P.q.s, b) < 0;   // (its box ahead: a stop; running wide over the line at the way out: only the lane's limiter until back over it)
+      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200); }
+      else showMsg(tr('BOKSI'), 'gold', 1.4);
+      Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2);
+    }
     else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
-    else if (e === 'done') { const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate, ev = race.player.m.ev;   // (an electric car: its battery charged)
+    else if (e === 'done') { if (pa.st === 'lane') pa.stop = true; const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate, ev = race.player.m.ev;   // (an electric car: its battery charged)
       showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); dmgKey = ''; }
+    else if (e === 'exit') { if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; showMsg(tr('PREVZAMEŠ ČEZ {0}', PIT_OUT), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); } }
+  }
+  function pitCtl(P, hold) {   // each step before the inputs: which part of the pit stop the autopilot drives (null: none)
+    if (!(phase === 'racing' && !hold && !autoDrive)) { if (pa.st || P.pitAP) pitFree(P, false); return null; }   // (the race over, the police, autoDrive: silently)
+    if (pa.st === 'merge') { if (pa.t > 1e-6) return 'merge'; pitFree(P, true); return null; }   // (the countdown run out: the player's inputs from this step)
+    if (P.inPit) { if (!pa.st) { pa.st = 'lane'; pa.stop = false; } return 'lane'; }
+    if (pa.st) pitFree(P, false);   // (out of the lane without a stop, or rescued in it: at once, as before)
+    return null;
+  }
+  function pitFree(P, told) {   // the player's own car again (told: the countdown ran out)
+    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); }
+    pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false;
+    if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
+  }
+  function pitCount(dt) {   // the countdown on race time: a number at each whole second
+    pa.t -= dt; const n = Math.ceil(pa.t - 1e-6);
+    if (n > 0 && n !== pa.n) { pa.n = n; showMsg(tr('PREVZAMEŠ ČEZ {0}', n), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); }
   }
 
   /* ---------------- HUD ---------------- */
@@ -4814,7 +4840,7 @@
       pd.addEventListener('wheel', (e) => { e.preventDefault(); if (photo) { photo.dist = Core.clamp(photo.dist * Math.exp(e.deltaY * 0.0012), 2.5, 60); photoPose(); } }, o);
       pd.addEventListener('touchstart', (e) => e.preventDefault(), o); pd.addEventListener('touchmove', (e) => e.preventDefault(), o);
       window.addEventListener('keydown', photoKey); }
-    $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
+    $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); pitFree(race.player, false); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
     document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); stSave(); } else checkUpdate(); });
     window.addEventListener('pagehide', () => { if (mp) Net.close(true); });   // (closing the game: the friend hears it at once, not only when the connection times out)
     window.addEventListener('pageshow', (e) => { if (e.persisted && mp) netLeave(); });   // (back from the browser's page cache: that room is closed)
@@ -4870,7 +4896,7 @@
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop }; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
@@ -4880,7 +4906,7 @@
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
-        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, gas: 1, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
+        sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, hand: 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
