@@ -1624,7 +1624,7 @@ const Core = (function () {
       this.x += this.vx * dt; this.z += this.vz * dt; this.h = wrapPi(this.h + this.w * dt); this.w *= Math.exp(-dt * 3);
       const s = Math.min(1, r.t / r.T); this.y = this.roadY + r.H * 4 * s * (1 - s); this.vy = 0;
       const k = Math.floor(s * r.turns + 0.5);
-      if (k > r.k) { r.k = k; if (this.dmgMode) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04)); } }   // (never lowers a wreck's)
+      if (k > r.k) { r.k = k; if (this.dmgMode) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); const d0 = this.dmg; this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04)); if (this.wreck) wheelRule(this, d0, 0); } }   // (the wheel rule: its 80 % mark only, the knock that rolled it was a hit already)   // (never lowers a wreck's)
       if (r.t >= r.T) { delete this.rl; this.y = this.roadY; this.vx *= 0.8; this.vz *= 0.8; this.w = 0; }
     }
     stepCS(dt, trk) {
@@ -1889,16 +1889,20 @@ const Core = (function () {
     // hit grows with its length, so the wheels of a long one, far in from its corners, still feel it)
     const kx = [hl, hl, -hl, -hl], kz = [-hw, hw, -hw, hw], fo = kitParts(M) ? 1.6 * clamp(M.len / 4.4, 1, 1.5) : 1.6;
     for (let k = 0; k < 4; k++) { const wg = Math.max(0, 1 - Math.hypot(lx - kx[k], lz - kz[k]) / fo); c.cd[k] = Math.min(1, c.cd[k] + amt * wg * 1.8); if (c.cd[k] >= 0.16) c.lightOut[k] = 1; }
+    if (zone < 2) { const k0 = zone * 2; if (!c.lightOut[k0] && !c.lightOut[k0 + 1]) c.lightOut[k0 + (lz < 0 ? 0 : 1)] = 1; }   // (a knock on the front or the rear: at least one of that end's lamps, the nearer one, broken at the first)
     // windows shatter when their side of the car is badly hit (all of them in a total wreck); the roof sags as the car gets battered
     const WIN = [0.55, 0.55, 0.42, 0.42];
     for (let k = 0; k < 4; k++) if (!c.winOut[k] && (c.dz[k] >= WIN[k] || c.dmg >= 0.92)) c.winOut[k] = 1;
     c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1));
     // body parts come off once their area is damaged enough (a corner part also from its corner); a wheel (a part table with wheels,
-    // kitParts) only in a heavy crash with damage on (dmgMode 2): its corner crushed (cd >= 0.7) and the car three quarters destroyed
+    // kitParts) only in a heavy crash with damage on (dmgMode 2): its corner crushed (cd >= 0.7) and the car three quarters destroyed.
+    // The car's face and tail (MASK: the nose with its bumper, the bonnet, the front wings, the rear bumper, the boot) only once the whole
+    // car is 70 % gone as well (MASK_DMG): it keeps its looks till then (a part that carries downforce, an aero car's wing or splitter: as before)
     const PT = partsOf(M);
     for (const name in PT) {
       if (c.lost[name]) continue;
       const P = PT[name];
+      if (MASK[name] && c.dmg < MASK_DMG && !(c.aeroK0 != null && (P.df != null ? P.df : M.parts ? 0 : WING[name]) > 0)) continue;
       if (P.wh != null ? c.dmgMode === 2 && !(c.wreck && c.wreck.rule) && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
     }
     if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); }
@@ -1951,7 +1955,8 @@ const Core = (function () {
     W.seq = L.map((n, i) => [n, i]).sort((a, b) => dzOf(b[0]) - dzOf(a[0]) || a[1] - b[1]).map(e => e[0]);
     W.st = 0;
   }
-  const WING = { bumperF: 0.5, bumperR: 0.4 };   // (the formula's front and rear wings are its bumper parts: their share of the downforce)
+  const WING = { bumperF: 0.5, bumperR: 0.4 };
+  const MASK = { bumperF: 1, hood: 1, cover: 1, fenderL: 1, fenderR: 1, bumperR: 1, trunk: 1, tailgate: 1 }, MASK_DMG = 0.7;   // (applyDamage: the face and the tail stay on till 70 %)   // (the formula's front and rear wings are its bumper parts: their share of the downforce)
   // detachable parts: damage zone + threshold, mass (kg), collision radius, thickness, local position (fraction of half length/width), height
   const PARTS = {
     mirrorL: { z: 2, th: 0.35, m: 1, r: 0.2, h: 0.1, lx: 0.15, lz: -1.12, y: 0.95 },
@@ -5068,7 +5073,7 @@ const Core = (function () {
         const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
         c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       }
-      const v = fix || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      const v = fix || (W && W.rule && W.nL >= 2) || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
     }
     // a car out of the race (Odstop): an AI car that can not race on (see _wreckStep), or the player pressing Odstopi (game.js; any car).
@@ -5124,7 +5129,7 @@ const Core = (function () {
       // of its speed lost, as well as the brakes and the hubs on the road), there it retires and the game is over
       if (Q && !W.dnf && !c.finished) {
         if (Q.due > 0 && (Q.due -= dt) <= 0) { Q.due = -1; if (W.nL < 2) ruleDrop(c, 1); }
-        if (W.nL >= 2 && !c.rl) {   // (rolling over, Razbijanje: once it lands)
+        if (W.nL >= 2 && !c.rl && !c.fall) {   // (rolling over, Razbijanje, or falling off a drop: once it is back on the road)
           parkBrake(c); const k = Math.max(0, 1 - 2.5 * dt); c.vx *= k; c.vz *= k; c.w *= k;
           if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; }
         }

@@ -1584,7 +1584,7 @@
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
       traffic: duel, police: chase, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      wheelRule: WHEEL_RULE
+      wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }));
     if (race.player) race.player.pitCmp = S.pitCmp;
     if (track.def.mist) race.opts.mist = !race.rain && !W.wx && !quali && (S.tod === 'dawn' || ((S.weather === 'random' || S.weather === 'change') && Math.random() < track.def.mist));   // Big Sur: the marine layer (Render: dyn.bsMist), every morning and on some dry runs
@@ -3259,14 +3259,15 @@
   const dmgCol = (z) => 'hsl(' + Math.round(120 * (1 - Math.min(1, z))) + ',78%,' + (z < 0.02 ? 52 : 50) + '%)';
   // the damage picture (index.html #h-dmg): each part in its colour and its % beside the car (▲ front, ▼ rear, ◀ left, ▶ right: dz 0-3), the
   // wheels in the colour of their corner (cd, red at 0.7: crushed), a lost one crossed out (c.wreck.wl), the glass cracked, the whole damage
-  // in % over a bar with marks at 70 and 80 % (the wheel rule's: wheelRule in core.js). The DOM is touched only when a shown value changes
+  // in % over a bar with marks at 70 and 80 % (the wheel rule's: wheelRule in core.js; the whole % rounded down, so 80 % shows once it is
+  // reached). The DOM is touched only when a shown value changes
   const DMG_ARR = ['▲', '▼', '◀', '▶'];
   function updateDamageHUD(P) {
     const el = $('h-dmg'); if (!el) return;
     const on = dmgOn();
     if (on !== dmgShown) { el.style.display = on ? '' : 'none'; dmgShown = on; }
     if (!on) return;
-    const W = P.wreck, wl = W ? W.wl : 0, pc = (z) => Math.min(100, Math.round(z * 100)), tot = pc(P.dmg), zs = P.dz.map(pc), cs = (P.cd || [0, 0, 0, 0]).map(v => Math.round(v * 20));
+    const W = P.wreck, wl = W ? W.wl : 0, pc = (z) => Math.min(100, Math.round(z * 100)), tot = Math.min(100, Math.floor(P.dmg * 100 + 1e-6)), zs = P.dz.map(pc), cs = (P.cd || [0, 0, 0, 0]).map(v => Math.round(v * 20));
     const glass = P.winOut && P.winOut.some(v => v) ? 1 : 0;
     const key = zs.join(',') + '|' + cs.join(',') + '|' + tot + '|' + glass + (W ? '|' + wl : '');
     if (key === dmgKey) return; dmgKey = key;
@@ -3274,7 +3275,7 @@
       $('dz' + k).setAttribute('fill', dmgCol(P.dz[k]));
       const n = $('dzn' + k); n.textContent = DMG_ARR[k] + ' ' + zs[k]; n.className = zs[k] ? '' : 'z0'; n.style.color = zs[k] ? dmgCol(P.dz[k]) : '';
       const lost = !!(wl & (1 << k)), w = $('wh' + k);   // (c.wreck.wl bit k: wheel k, FL FR RL RR)
-      w.classList.toggle('lost', lost); $('whx' + k).classList.toggle('on', lost); w.style.fill = cs[k] ? dmgCol(cs[k] / 14) : '';
+      w.classList.toggle('lost', lost); $('whx' + k).classList.toggle('on', lost); w.style.fill = dmgCol(cs[k] / 14);
     }
     const tc = dmgCol(tot / 100), t = $('dmg-tot'), f = $('dmg-fill');
     t.textContent = tot + ' %'; t.style.color = tc; f.style.width = tot + '%'; f.style.background = tc;
@@ -3314,11 +3315,14 @@
   /* ---------------- the wheel rule: KONEC IGRE, PONOVI IGRO ---------------- */
   // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on; a test with one car
   // first): at 80 % damage a wheel comes off, then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO
-  // (the race again), the results (the player retired, Odstop) and the main menu
+  // (the race again), the results (the player retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge
+  // and the run from the police the rule is off (an ended run there would count as a time, a lap or an escape)
   const WHEEL_RULE = ['sokol'];
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
-    paused = false; Input.reset();
+    paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
+    const n = race.player.wreck ? race.player.wreck.nL : 2;
+    $('over-sub').textContent = tr(n >= 4 ? 'Odpadla so vsa štiri kolesa: avto ne more naprej.' : n === 3 ? 'Odpadla so tri kolesa: avto ne more naprej.' : 'Odpadli sta dve kolesi: avto ne more naprej.');
     showScreen('over');
   }
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits

@@ -365,7 +365,7 @@
     '\u21ba Namesti kolo': '\u21ba Fit a wheel', 'KOLO JE ODPADLO!': 'WHEEL OFF!', 'Izgubil si kolo: v boksih ti namestijo novo.': 'You lost a wheel: the crew fits a new one in the pits.',
     'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.': 'You lost a wheel: tap Fit a wheel (6 s) or drive on, on three.', 'NOVO KOLO \u00b7 {0} s': 'NEW WHEEL \u00b7 {0} s',
     'ODSTOP': 'OUT', 'TEKMEC JE ODSTOPIL': 'RIVAL RETIRED', ' Stalni tekmec {0}: odstop (skupaj ti {1}, tekmec {2}).': ' Your rival {0}: retired (overall you {1}, rival {2}).',
-    'KONEC IGRE': 'GAME OVER', 'PONOVI IGRO': 'PLAY AGAIN', 'Rezultati': 'Results', 'Odpadli sta dve kolesi: avto ne more naprej.': 'Two wheels came off: the car can go no further.',
+    'KONEC IGRE': 'GAME OVER', 'PONOVI IGRO': 'PLAY AGAIN', 'Rezultati': 'Results', 'Odpadli sta dve kolesi: avto ne more naprej.': 'Two wheels came off: the car can go no further.', 'Odpadla so tri kolesa: avto ne more naprej.': 'Three wheels came off: the car can go no further.', 'Odpadla so vsa štiri kolesa: avto ne more naprej.': 'All four wheels came off: the car can go no further.',
     'Kolo je odpadlo: ko odpade še drugo, je igre konec.': 'A wheel came off: when a second one goes, the game is over.',
     'KOLO JE ODPADLO': 'WHEEL OFF', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
     // the categories (Core.CATS; Dirkalni is above: Racing)

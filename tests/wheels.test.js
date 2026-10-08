@@ -3,6 +3,9 @@
 // car stops at once: it retires there and the game is over (wreck.rule.over: KONEC IGRE, PONOVI IGRO). A hit from 70 % takes a wheel
 // at once, the second one later the less damaged the car was (70 %: 3 s, 90 %: 0.4 s). A hard hit at 80 % or over: two at once,
 // sometimes three or all four (the harder, the likelier). The other cars, the other vehicles and damage off: as before (the corner rule).
+// A rollover's roof contacts count for the rule (80 %), the car stops once it lands. And the lamps: the first knock on the front or the
+// rear breaks at least one lamp of that end (the nearer one), on any car. A car's face and tail (bumpers, bonnet, front wings, boot) stay
+// on till 70 % (an aero car's wing: as before).
 //   node tests/wheels.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -123,6 +126,43 @@ function until(r, fn, s) {
   });
   check('a race driven into the walls: the first wheel from 70 %, then over (two off, stopped, out of the race); the AI never under the rule', res.over != null && res.n1 && res.n1.d >= 0.7 && res.n >= 2 && res.out && res.ai,
     res.over != null ? `first wheel at ${res.n1.t.toFixed(1)} s (${Math.round(res.n1.d * 100)} %), over at ${res.over.toFixed(1)} s` : 'not over in 240 s');
+}
+
+// 9. a rollover (Razbijanje) that takes the damage past 80 % with its roof on the road: the wheel rule sees it (a wheel off), and the car
+//    stops only once it lands
+{
+  const r = withRnd(31, () => { C.setCrash({ roll: 1 }); try {
+    const { r, P, W } = setUp(0.78); P.rl = { t: 0, T: 1.58, turns: 2, dir: 1, H: 1.4, k: 0 };
+    let t = 0, rolling2 = false; for (; t < 2 && P.rl; t += DT) { P.step(DT, T); if (P.rl && W.nL >= 2 && W.rule.over) rolling2 = true; }
+    const n1 = W.nL, d = P.dmg, tOver = until(r, () => W.rule.over, 4);
+    return { n1, d, rolling2, tOver };
+  } finally { C.setCrash({ roll: 0 }); } });
+  check('a rollover past 80 % (its roof on the road): a wheel off, and over only once it has landed and stopped', r.n1 >= 1 && r.d >= 0.8 && !r.rolling2 && r.tOver < 4, `${Math.round(r.d * 100)} %, ${r.n1} off after the roll, over ${r.tOver.toFixed(2)} s after landing`);
+}
+
+// 10. the lamps: the first knock on the front breaks one front lamp (the nearer one), on the rear one rear lamp; any car, any knock
+{
+  const out = [];
+  for (const [lx, lz, want] of [[1, -0.3, 0], [1, 0.3, 1], [-1, -0.2, 2], [-1, 0.4, 3]]) {
+    const r = race({ wheelRule: undefined, playerModel: C.MODELS[0] }), P = r.player;
+    C.applyDamage(P, 0.012, lx * P.m.len * 0.5, lz * P.m.wid * 0.5);
+    out.push({ want, got: P.lightOut.map((v, k) => v ? k : -1).filter(k => k >= 0) });
+  }
+  const side = (() => { const r = race({ wheelRule: undefined }), P = r.player; C.applyDamage(P, 0.012, 0, P.m.wid * 0.5); return P.lightOut.some(v => v); })();
+  check('a lamp at the first knock: front left / right, rear left / right, the nearer one of that end (a light 0.012 knock); a knock on the side breaks none', out.every(o => o.got.length === 1 && o.got[0] === o.want) && !side, out.map(o => `${o.want}: ${o.got.join(',')}`).join(' · ') + ` · side ${side}`);
+}
+
+// 11. the face and the tail (bumpers, bonnet, front wings, boot) stay on till the car is 70 % gone, however the knocks fall (front only
+//     or all round); then they may go. An aero car's wing (the formula's front wing): as before, at its zone's mark
+{
+  const run = (id, front) => { const r = race({ wheelRule: undefined, playerModel: C.MODELS.find(m => m.id === id) }), P = r.player, hl = P.m.len / 2, hw = P.m.wid / 2;
+    const seq = front ? [[1, 0], [1, -0.4], [1, 0.4]] : [[1, 0], [0.95, -0.9], [0.95, 0.9], [1, -0.3], [0.2, 1], [1, 0.3], [-1, 0], [-1, 0.5]]; let k = 0, at69 = null;
+    for (const t of [0.69, 0.75]) { while (P.dmg < t - 1e-6) { const [a, b] = seq[k++ % seq.length]; C.applyDamage(P, Math.min(0.05, t - P.dmg), a * hl, b * hw); } if (t === 0.69) at69 = ['bumperF', 'hood', 'fenderL', 'fenderR', 'bumperR', 'trunk'].filter(n => P.lost[n]); }
+    return { at69, at75: ['bumperF', 'hood'].filter(n => P.lost[n]), dz0: +P.dz[0].toFixed(2) }; };
+  const a = run('sokol', true), b = run('sokol', false), k = run('kaze', true), f = run('formula', true);
+  check('the face and the tail stay on till 70 % (front knocks only, or all round; SOKOL, KAZE), then the nose and the bonnet go; the formula\'s front wing (downforce) breaks before, as before',
+    !a.at69.length && !b.at69.length && !k.at69.length && a.at75.length === 2 && k.at75.length === 2 && f.at69.includes('bumperF'),
+    `at 69 %: sokol front ${a.at69.join('+') || '-'}, sokol round ${b.at69.join('+') || '-'}, kaze ${k.at69.join('+') || '-'}, formula ${f.at69.join('+') || '-'}; at 75 %: ${a.at75.join('+')}`);
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

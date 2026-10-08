@@ -588,7 +588,7 @@ select.txt:disabled { opacity: .75; }
 /* the damage picture: the car from above (the front up), each part in its colour (green whole, red wrecked), the wheels by their corner,
    a lost one crossed out; beside it the whole damage in % over a bar (marks at 70 and 80 %) and each part's % (▲ front, ▼ rear, ◀ left,
    ▶ right), in the part's colour */
-#h-dmg { display: flex; align-items: center; gap: 6px; margin-top: 3px; pointer-events: none; }
+#h-dmg { display: flex; align-items: center; gap: 6px; margin-top: 3px; pointer-events: none; contain: inline-size; }   /* (contain: its numbers never widen the left column under it) */
 #h-dmg svg { width: clamp(26px, 7.6vh, 36px); height: auto; overflow: visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 #h-dmg .dmg-nums { display: flex; flex-direction: column; gap: 3px; min-width: clamp(58px, 15vh, 74px); padding: 3px 6px 4px; border-radius: 6px; background: rgba(10,14,20,.5); }
 #h-dmg #dmg-tot { font: 800 italic clamp(13px, 3.6vh, 17px)/1 var(--f-ui); text-shadow: 0 1px 2px rgba(0,0,0,.85); }
@@ -598,6 +598,8 @@ select.txt:disabled { opacity: .75; }
 #h-dmg .dmg-zs { display: grid; grid-template-columns: auto auto; column-gap: 8px; row-gap: 1px; font: 700 clamp(9px, 2.5vh, 12px)/1.15 var(--f-ui); text-shadow: 0 1px 2px rgba(0,0,0,.9); white-space: nowrap; }
 #h-dmg .dmg-zs .z0 { color: rgba(255,255,255,.55); }
 #h-dmg #dmg-glass.cracked { fill: rgba(255,120,110,.55); stroke: #ff3b2b; stroke-width: .8; }
+/* (a phone on its side, 420 px tall or less: the car smaller and the parts' % in one row, so the column under it stays where it was) */
+@media (orientation: landscape) and (max-height: 420px) { #h-dmg svg { width: clamp(20px, 6.2vh, 28px); } #h-dmg .dmg-zs { grid-template-columns: repeat(4, auto); column-gap: 6px; } }
 #h-dmg .dmg-body { fill: rgba(10,14,20,.6); stroke: rgba(255,255,255,.8); stroke-width: 1.6; }
 #h-dmg .dmg-cab { fill: rgba(255,255,255,.28); }
 #h-dmg rect[id^="dz"] { transition: fill .25s; }
@@ -836,7 +838,7 @@ body.pkfly #touch { visibility: hidden; }
 .garage .gcat { grid-column: 1 / -1; margin: 6px 2px 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--lcd); }
 .garage .gcat:first-child { margin-top: 0; }
 /* the damage picture's wheels: in the colour of their corner's damage; a lost one (a car whose wheels come off) red, dashed and crossed out */
-#h-dmg .dmg-wh { fill: #20252d; stroke: rgba(255,255,255,.85); stroke-width: 1; transition: fill .25s; }
+#h-dmg .dmg-wh { fill: hsl(120,78%,52%); stroke: rgba(255,255,255,.85); stroke-width: 1; transition: fill .25s; }
 #h-dmg .dmg-wh.lost { fill: rgba(255,59,43,.18) !important; stroke: #ff3b2b; stroke-width: 1.2; stroke-dasharray: 1.6 1.1; }
 #h-dmg .dmg-x { display: none; fill: none; stroke: #ff3b2b; stroke-width: 1.8; stroke-linecap: round; }
 #h-dmg .dmg-x.on { display: inline; }
