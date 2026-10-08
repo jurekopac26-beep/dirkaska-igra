@@ -7,8 +7,10 @@
 //   both result screens show the same two times
 // - the host's weather: the second race in the rain on both phones
 // - the friend leaves in the middle of a race: the host is told, the race goes on alone, the friend is shown as gone
-// - quick match (no code): the first waits, the next connects at once; a third waits for the next; two tapping at the same
-//   moment meet; a leftover of a dead waiter is skipped
+// - quick match (no code): the first waits, the next connects at once; a third comes into the same room (up to 22); the host
+//   starts before the room is full: the race is for the three in it (a big grid's states here from three cars on: 10 a second, passed
+//   on by the host in batches; each sees the others move), the room takes nobody more and the next one waits in a new room; two
+//   tapping at the same moment meet; a leftover of a dead waiter is skipped; a full room (here of three) starts its race by itself
 //   node tests/browser/online.test.mjs
 import net from 'node:net';
 import { createRequire } from 'node:module';
@@ -26,7 +28,7 @@ const browser = await launch(['--disable-features=WebRtcHideLocalIpsWithMdns']);
 // no STUN/TURN servers: both pages are on this machine, the test needs nothing from the internet
 const init = { content: `window.__peerOpts = ${JSON.stringify({ host: '127.0.0.1', port, path: '/', secure: false, config: { iceServers: [] } })};` };
 const settings = { quality: 'normal', shadows: 0, camera: 'chase', zoom: 1.2, carV: 2 };   // (carV: the car as set here, not the new players' default)
-const open = (name, car, color) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings), { width: 360, height: 300 }, { init });
+const open = (name, car, color, more) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings), { width: 360, height: 300 }, { init: more ? { content: init.content + more } : init });
 const netOf = (p) => p.evaluate(() => window.__game.net);
 const until = (p, fn, arg, ms = 60000) => p.waitForFunction(fn, arg, { timeout: ms, polling: 200 }).then(h => h.jsonValue());
 let A, B, C, D, E, F, dead;
@@ -121,7 +123,8 @@ try {
   const gone = await until(A.page, () => { const n = window.__game.net; return n && n.race && n.race.left ? { toast: document.getElementById('toast').textContent, dist: window.__game.race.remote.dist, state: window.__game.race.state } : null; }, null, 40000);
   T.check('the friend leaves mid-race: the host is told, the race goes on, the friend is out of the way', /Prijatelj|prekinjena/.test(gone.toast) && gone.dist < -1e8 && gone.state === 'racing', JSON.stringify(gone));
   // 7. quick match: no code, one button
-  C = await open('Cene', 0, 0); D = await open('Dana', 1, 1); E = await open('Eva', 2, 2); F = await open('Fani', 3, 3);
+  const big = 'window.__netBig = 2;';   // (a grid of three is big here: the batches of a big grid)
+  C = await open('Cene', 0, 0, big); D = await open('Dana', 1, 1, big); E = await open('Eva', 2, 2, big); F = await open('Fani', 3, 3, big);
   const tap = (x) => x.page.evaluate(() => { window.__game.onAction('to-online'); window.__game.onAction('net-wait'); });
   const leave = (x) => x.page.evaluate(() => window.__game.onAction('to-title'));
   const paired = (x, name) => until(x.page, (n) => { const g = window.__game.net; return g && g.open && g.peer && g.peer.name === n ? g.role : null; }, name, 40000);
@@ -133,11 +136,27 @@ try {
   const [rC, rD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];
   T.check('quick match: the second one taps and they are connected (the first is the host), no code needed', rC === 'host' && rD === 'guest', `${rC} / ${rD}`);
   await until(D.page, () => window.__game.net.synced, null, 20000);
-  await tap(E); await wait(2500);
-  T.check('quick match: a third player waits (the pair is not disturbed)', await still(E) && (await netOf(C.page)).open, '');
+  await tap(E);
+  const rE = await until(E.page, () => { const g = window.__game.net; return g && g.open && g.synced && g.players.length === 3 ? { role: g.role, host: g.peer && g.peer.name } : null; }, null, 40000);
+  const room3 = await until(C.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { status: document.getElementById('on-status').textContent, players: document.getElementById('on-players').textContent, go: !document.getElementById('on-go').disabled, locked: g.locked } : null; }, null, 20000);
+  const d3 = await until(D.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? document.getElementById('on-status').textContent : null; }, null, 20000);
+  T.check('quick match: a third one taps and comes into the same room (up to 22); everyone sees the three, the host can start now', rE.role === 'guest' && rE.host === 'Cene' && /V sobi vas je 3 od 22/.test(room3.status) && /V sobi vas je 3 od 22/.test(d3) &&
+    ['Cene', 'Dana', 'Eva'].every(n => room3.players.includes(n)) && room3.go && !room3.locked, `${JSON.stringify(rE)} | host: ${JSON.stringify(room3)} | Dana: ${d3}`);
+  // the host starts before the room is full: the race is for the three; the next one to tap waits in a new room
+  for (const x of [C, D, E]) await x.page.evaluate(() => { window.__game.autoDrive = true; const t = document.getElementById('on-track'); if (t.value !== 'jezero' && window.__game.net.role === 'host') { t.value = 'jezero'; t.dispatchEvent(new Event('change')); } });
+  await C.page.evaluate(() => window.__game.onAction('net-go'));
+  const lockC = await C.page.evaluate(() => { const g = window.__game.net; return { locked: g.locked, grid: g.setup ? g.setup.grid : g.race ? g.race.grid : null }; });
   await tap(F);
-  const [rE, rF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
-  T.check('quick match: the next one taps and meets the one who waits', rE === 'host' && rF === 'guest', `${rE} / ${rF}`);
+  await until(F.page, () => /Čakam, da se kdo pridruži/.test(document.getElementById('on-status').textContent) || null, null, 30000); await wait(2000);
+  const fAlone = await still(F), fRole = await F.page.evaluate(() => window.__game.net.role);
+  T.check('quick match: the host starts early: the race is for the three in the room, which takes nobody more; the next one waits in a new room', lockC.locked && lockC.grid && lockC.grid.length === 3 && fAlone && fRole === 'host',
+    `host ${JSON.stringify(lockC)}, Fani alone ${fAlone} (${fRole})`);
+  await Promise.all([C, D, E].map(x => until(x.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing' && g.net && g.net.race); }, null, 90000)));
+  await wait(7000);
+  const views = await Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
+  const own = Object.fromEntries(views.map(v => [v.me, v.own]));
+  T.check('quick match, the race of three (a big grid: 10 states a second, the host passes them on in batches): three cars on every page, each sees the other two move where they are',
+    views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && Math.abs(d - own[id]) < 40)), JSON.stringify(views));   // (off the grid; the pages are read one after another)
   await leave(E); await leave(F); await leave(C); await leave(D); await wait(1500);
   await Promise.all([tap(C), tap(D)]);
   const [sC, sD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];
@@ -151,6 +170,18 @@ try {
   const [tE, tF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
   T.check('quick match: a dead waiting place is skipped, the two still meet', tE === 'host' && tF === 'guest', `${tE} / ${tF}`);
   await leave(E); await leave(F);
+  try { dead.terminate(); } catch (_) { } await wait(1500);
+  // a full room starts its race by itself (here a room of three: Počakaj prijatelja takes up to 22)
+  const [G, H, I] = [C, D, E];
+  for (const x of [G, H, I]) await x.page.evaluate(() => { window.__quickRoom = 3; });
+  await tap(G); await until(G.page, () => /Čakam, da se kdo pridruži/.test(document.getElementById('on-status').textContent) || null, null, 30000);
+  await tap(H); await until(H.page, () => { const g = window.__game.net; return !!(g && g.open && g.synced); }, null, 40000);
+  for (const x of [G, H, I]) await x.page.evaluate(() => { window.__game.autoDrive = true; });
+  await tap(I);
+  const fullG = await until(G.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000);
+  const auto = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game; return g.race && g.net && g.net.race ? { cars: g.race.cars.length, grid: g.net.race.grid.length } : null; }, null, 90000)));
+  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
+  for (const x of [G, H, I]) await leave(x);
   T.check('no page errors (quick match)', ![C, D, E, F].some(x => x.errors.length), [C, D, E, F].flatMap(x => x.errors).slice(0, 5).join(' | '));
   T.check('no page errors', !A.errors.length && !B.errors.length, A.errors.concat(B.errors).slice(0, 5).join(' | '));
 } catch (e) {
