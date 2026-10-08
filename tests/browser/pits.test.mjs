@@ -3,10 +3,12 @@
 // In the pit lane the player cannot steer (held at full left lock, the gas held: the autopilot keeps to the lane and turns in to the box);
 // the box is on the apron in front of the garage (the car stops there nose in), the crew works there and never stands on the lane.
 // Then Toronto, its lane on the left: one stop, the car turns in to the left, the crew on the garages' side, nobody on the lane.
+// Then Bathurst (the lane on the left, the pit building on the iso camera's side): one stop in the iso camera, which looks down steeper
+// during it, so the building's roof does not hide the car.
 //   node tests/browser/pits.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('pits (gozd, toronto)');
+const T = checker('pits (gozd, toronto, bathurst)');
 const srv = await serve();
 const browser = await launch();
 try {
@@ -89,6 +91,39 @@ try {
   T.check('Toronto: the car stops in its box on the apron to the left, nose in towards the garage', t2.pose && t2.pose.sd === -1 && t2.pose.dLout > 2.5 && t2.pose.yaw > 12, JSON.stringify(t2.pose));
   T.check('Toronto: the crew stands off the lane, on the garages\' side', t2.lane === 0 && t2.work > 0 && t2.max < 9.2, `at least ${t2.work.toFixed(2)} m beyond the lane's edge at work, at most ${t2.max.toFixed(2)} m, ${t2.lane} samples on the lane`);
   T.check('no page errors (Toronto)', !errors.length, errors.slice(0, 5).join(' | '));
+
+  // Bathurst in the iso camera (the phone on its side): the pit building (two floors, the roof over the apron) is on the camera's side of
+  // the lane (south), so in the usual view (47°) its roof would hide the car in its box; during the stop the camera looks down steeper and
+  // nothing of the world stands between it and the car
+  await startTrack(page, 'bathurst');
+  await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
+  let r3 = null;
+  for (let k = 0; k < 500 && !(r3 && r3.rep && !r3.inPit); k++) {
+    r3 = await page.evaluate((prev) => {
+      const g = window.__game, P = g.race.player, Tk = g.race.track; let v = prev; Render.scene.visible = false;
+      for (let i = 0; i < 20; i++) {
+        const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair';
+        if (lock) g.sim(0.05, false, 1); else g.sim(0.05, true);
+        Render.frame(0.05, 1, P, 'iso', {});
+        if (P.pitState === 'repair') {   // rays from the camera to the car (its middle and both ends, at the roof's height), against the world's meshes
+          const C = Render.camera, rc = new THREE.Raycaster(), y = (P.y || 0) + 1, f = [Math.cos(P.h), Math.sin(P.h)], meshes = [];
+          Render.world.root.traverseVisible(o => { if (o.isMesh) meshes.push(o); });
+          const seen = (from) => [0, 1.9, -1.9].filter(a => { const pt = new THREE.Vector3(P.x + f[0] * a, y, P.z + f[1] * a), d = pt.clone().sub(from), L = d.length();
+            rc.set(from, d.normalize()); rc.far = L - 0.3; return !rc.intersectObjects(meshes, false).length; }).length;
+          const p = Tk.pitAt(P.q.s), D = C.position.distanceTo(new THREE.Vector3(P.x, y, P.z)), flat = new THREE.Vector3(P.x, y + D * Math.sin(0.82), P.z + D * Math.cos(0.82));
+          v = { pt: +Render.cam.pt.toFixed(3), pitch: +(Math.atan2(C.position.y - y, Math.hypot(C.position.x - P.x, C.position.z - P.z)) * 57.3).toFixed(1), seen: seen(C.position.clone()), flat: seen(flat), out: +(P.q.d * p.sd - p.lout).toFixed(2), sd: p.sd };
+        }
+      }
+      if (P.lap >= 1 && !P.repairN && !P.inPit && !Tk.pitAt(P.q.s)) { P.pitWant = true; if (P.dmg < 0.3) P.dmg = 0.4; }
+      if (P.repairN && !P.inPit) P.pitWant = false;
+      Render.scene.visible = true;
+      return { v, rep: P.repairN || 0, inPit: P.inPit };
+    }, r3 && r3.v);
+  }
+  const v3 = r3 && r3.v;
+  T.check('Bathurst (the lane on the left): repaired, the car stopped in its box on the apron to the left', r3 && r3.rep === 1 && v3 && v3.sd === -1 && v3.out > 2.5, JSON.stringify(v3));
+  T.check('Bathurst in the iso camera: during the stop it looks down steeper (the garages on its side) and sees the whole car past the pit building\'s roof, which the usual 47° view would hide it behind', v3 && v3.pitch > 70 && v3.seen === 3 && v3.flat < 3, v3 ? `${v3.pitch}° (the usual 47°), ${v3.seen}/3 points of the car seen; at 47° ${v3.flat}/3` : 'no stop');
+  T.check('no page errors (Bathurst)', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {
   await browser.close(); await srv.close();
 }

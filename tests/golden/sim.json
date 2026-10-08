@@ -1806,59 +1806,59 @@
   }
  },
  "bathurst/crash/cs": {
-  "digest": "b021f54d0ec3d33d36b7c68e",
-  "lead": 2473.2,
+  "digest": "476c039e358a6f9b769ace52",
+  "lead": 9650,
   "car0": [
-   -861.49,
-   1277.3
+   -1028.37,
+   1411.91
+  ],
+  "cover": {
+   "dmg": 0.71,
+   "loose": 13,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "bathurst/formula/cs": {
+  "digest": "138587a5a1e8027f0deafb99",
+  "lead": 12210,
+  "car0": [
+   26.72,
+   1504.35
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 28,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "bathurst/lm/cs": {
+  "digest": "475e3798ad1c6d4e259d73e9",
+  "lead": 12129.9,
+  "car0": [
+   -18.43,
+   1785.06
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 27,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "bathurst/car/cs": {
+  "digest": "418c107ec1cb0e19f475770e",
+  "lead": 9992.3,
+  "car0": [
+   -986.56,
+   1737.49
   ],
   "cover": {
    "dmg": 0.69,
    "loose": 11,
    "rescues": 0,
-   "repairs": 0
-  }
- },
- "bathurst/formula/cs": {
-  "digest": "c1c148af7f84cde43327249b",
-  "lead": 3005,
-  "car0": [
-   -1015.54,
-   1697.5
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 21,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "bathurst/lm/cs": {
-  "digest": "4257a5b696a96c8542aa9ac9",
-  "lead": 2966.9,
-  "car0": [
-   -1043.28,
-   1650.18
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 19,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "bathurst/car/cs": {
-  "digest": "52c510d866db5a2cf7a4bfda",
-  "lead": 2472.2,
-  "car0": [
-   -862.71,
-   1277.42
-  ],
-  "cover": {
-   "dmg": 0.89,
-   "loose": 13,
-   "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "chapman/race/cs": {

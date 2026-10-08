@@ -2892,7 +2892,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
-  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
+  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, pt: 0, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
@@ -4606,7 +4606,8 @@ const Render = (function () {
     boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    const gp = pb && curTrack.pitAt(pb.s), gz = gp ? gp.sd * curTrack.nz[curTrack.idx(pb.s)] : 0;   // gz: how far the garages face the iso camera (south, +z: their roofs hide the apron in its view)
+    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, gz, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
@@ -6380,7 +6381,7 @@ const Render = (function () {
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
-    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
+    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.pt = 0; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
@@ -6454,8 +6455,9 @@ const Render = (function () {
       const Lx = c.vx / sp * mag, Lz = c.vz / sp * mag;
       cam.lx += (Lx - cam.lx) * k1; cam.lz += (Lz - cam.lz) * k1;
       cam.zoom += (pitZ * (1 + 0.1 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
+      cam.pt += ((pitZ < 1 && crew.gz > 0 ? 0.62 * crew.gz : 0) - cam.pt) * k2;   // the car in its box in front of garages on the camera's side: look down steeper, over their roof
       const zf = cam.zoom * cam.userZoom;
-      const D = 57 * zf, pitch = 0.82;
+      const D = 57 * zf, pitch = 0.82 + cam.pt;
       // userBack (Nastavitve · Položaj avta): the car sits this many metres further back along its travel, so it reads lower in the frame
       const bk = cam.userBack || 0, vmag = Math.hypot(c.vx, c.vz), bfx = vmag > 0.5 ? c.vx / vmag : Math.cos(h), bfz = vmag > 0.5 ? c.vz / vmag : Math.sin(h);
       tx = x + clamp(cam.lx, -20 * zf, 20 * zf) + bfx * bk; tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf) + bfz * bk; ty = baseY;
