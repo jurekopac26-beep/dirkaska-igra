@@ -6694,7 +6694,7 @@ const Render = (function () {
 
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
-    const tw = M.wid * 0.43, yb = c.y || 0;
+    const tw = M.bike ? 0 : M.wid * 0.43, yb = c.y || 0;   // (a motorcycle: its tyres on its middle line)
     // landing after a jump: a ring of dust (and stones on loose ground) bursting out from under the car
     if (v.landed) {
       const hard = -(c.impactVY || 0), gy = c.roadY || 0;
@@ -6714,11 +6714,11 @@ const Render = (function () {
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
-      if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
+      if (c.air || (M.bike && !(k & 1))) { v.sk[k] = null; v.acc[k] = 0; continue; }   // (a motorcycle: one mark and one cloud a wheel, from its right half)
       const surf = c.ws[wi];
       const front = k >= 2;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
-      let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
+      let intens = (front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide) * (M.bike ? 0.6 : 1);   // (a motorcycle's slides: less rubber and smoke)
       if (spd < 2.5) intens = 0;
       // skid marks
       const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
