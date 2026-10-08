@@ -1,7 +1,8 @@
 // The wheel rule in the game (core.js wheelRule; game.js WHEEL_RULE: the player's SOKOL, offline, a test with one car first): a hit at
 // 79 % takes a wheel off (KOLO JE ODPADLO!, no Namesti kolo), the second follows, the car stops and the game is over: KONEC IGRE with a
 // big PONOVI IGRO (no results first; the HUD and the controls off). PONOVI IGRO: the same race again, the car whole; Rezultati: the
-// results, the player retired. Another car (KAZE RS): no rule. Upright (360 x 640) and on its side (640 x 360), in English too.
+// results, the player retired. Another car (KAZE RS): no rule. The damage picture on the HUD (the car, its parts' %, the whole %) on
+// screen, clear of the team radio and the map. Upright (360 x 640) and on its side (640 x 360), in English too.
 //   node tests/browser/wheels.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -16,7 +17,13 @@ try {
     await startTrack(page, 'jezero');
     const a = await page.evaluate(async () => {
       const g = window.__game, P = g.race.player, W = P.wreck, wait = (ms) => new Promise(r => setTimeout(r, ms)), frames = async (n) => { for (let i = 0; i < n; i++) await new Promise(r => requestAnimationFrame(r)); };
-      g.sim(9, true); const rule = !!W.rule, others = g.race.cars.filter(c => !c.isPlayer).every(c => !(c.wreck && c.wreck.rule));
+      // (the damage picture, with damage, and a team radio message: clear of each other and of the screen's edges)
+      g.sim(9, true); Core.applyDamage(P, 0.2, P.m.len * 0.45, -P.m.wid * 0.4); g.resume(); await frames(4); g.pause();
+      const tr0 = document.getElementById('h-teamradio'); tr0.lastElementChild.textContent = 'Avto je močno poškodovan. Pazi na kolesa, boksi v tem krogu!'; tr0.classList.add('on'); await frames(2);
+      const rr = (id) => document.getElementById(id).getBoundingClientRect(), hit = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
+      const dR = rr('h-dmg'), lay = { clear: !hit(dR, rr('h-teamradio')) && !hit(dR, rr('h-map')), inView: dR.left >= 0 && dR.right <= innerWidth && dR.bottom <= innerHeight, w: Math.round(dR.width), tot: document.getElementById('dmg-tot').textContent };
+      tr0.classList.remove('on'); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0];
+      const rule = !!W.rule, others = g.race.cars.filter(c => !c.isPlayer).every(c => !(c.wreck && c.wreck.rule));
       P.dmg = 0.79; Core.applyDamage(P, 0.03, P.m.len * 0.5, 0); const n1 = W.nL;
       g.resume(); await frames(4); g.pause();
       const msg = document.getElementById('h-msg').textContent, fix = !document.getElementById('btn-rescue').classList.contains('off');
@@ -33,11 +40,12 @@ try {
       const big = { n: P2.wreck.nL, shown: sc.classList.contains('show') };
       document.getElementById('over-res').click(); await frames(3);
       const res = { shown: document.getElementById('s-results').classList.contains('show'), gone: !sc.classList.contains('show') };
-      return { rule, others, n1, msg, fix, over, again, big, res };
+      return { rule, others, lay, n1, msg, fix, over, again, big, res };
     });
     console.log(tag, JSON.stringify(a));
     const O = a.over;
     T.check(`${tag}: the rule on the player's SOKOL only (not the AI)`, a.rule && a.others);
+    T.check(`${tag}: the damage picture (the car, its parts' %, the whole %) on screen, clear of the team radio and the map`, a.lay.clear && a.lay.inView && /^\d+ %$/.test(a.lay.tot) && a.lay.tot !== '0 %', JSON.stringify(a.lay));
     T.check(`${tag}: a hit at 79 %: a wheel off, the word on the HUD, no Namesti kolo`, a.n1 === 1 && /KOLO JE ODPADLO|WHEEL OFF/.test(a.msg) && !a.fix, `${a.n1} off, "${a.msg}", fix ${a.fix}`);
     T.check(`${tag}: the second one off, the car stopped, out: KONEC IGRE (no results first), the HUD and the controls off`, O.shown && O.screen === 'over' && O.n >= 2 && O.out && O.v < 0.6 && O.phase === 'done' && !O.res && O.hud && O.touch, JSON.stringify(O));
     T.check(`${tag}: ${en ? 'GAME OVER, PLAY AGAIN' : 'KONEC IGRE, PONOVI IGRO'}: big (>= 64 px high, most of the panel's width, one line), the panel all on screen`,
