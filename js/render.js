@@ -5496,7 +5496,7 @@ const Render = (function () {
         const mute = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = false; } }
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
-        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
+        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
       if (v.sagQ) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
     }
@@ -6269,7 +6269,7 @@ const Render = (function () {
   }
   // a rear door (the new mode): the quarter's panel from the front door's rear edge to the rear wheel's arch, above the sill, turned out
   // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it
-  function xRearDoor(v, c, sd) {
+  function xRearDoor(v, c, sd, x, y, z, h) {
     const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return; (K.xRD || (K.xRD = [0, 0]))[si] = 1;
     const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
     if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
@@ -6281,6 +6281,7 @@ const Render = (function () {
       const cx = (rest[o] + rest[o + 3] + rest[o + 6]) / 3, cy = (rest[o + 1] + rest[o + 4] + rest[o + 7]) / 3, cz = (rest[o + 2] + rest[o + 5] + rest[o + 8]) / 3;
       if (cx > hx || cx < x1 || cy < ySill || cz * sd <= 0) continue; sel.push(t); hz = Math.max(hz, Math.abs(cz)); } }
     if (!sel.length) return;
+    if (XC.glass && v.glassTris) for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null);   // (its window breaks as it opens: turned with it after, it could not be broken any more)
     const phi = sd * 40 * Math.PI / 180, cs = Math.cos(phi), sn = Math.sin(phi), Z = hz * sd;
     for (const t of sel) for (let q = 0; q < 3; q++) { const i = t * 3 + q, dx = pa[i * 3] - hx, dz = pa[i * 3 + 2] - Z, nx = na[i * 3], nz = na[i * 3 + 2];
       pa[i * 3] = hx + dx * cs + dz * sn; pa[i * 3 + 2] = Z - dx * sn + dz * cs; na[i * 3] = nx * cs + nz * sn; na[i * 3 + 2] = -nx * sn + nz * cs; dv[i] = 1; }
