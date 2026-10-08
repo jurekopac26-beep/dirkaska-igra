@@ -4,7 +4,7 @@
 const Sfx = (function () {
   'use strict';
   const { clamp } = Core;
-  let ctx = null, master = null, bus = null, enabled = true, volume = 0.8;
+  let ctx = null, master = null, bus = null, duck = null, duckOn = false, enabled = true, volume = 0.8;
   let noiseBuf = null;
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
@@ -19,7 +19,8 @@ const Sfx = (function () {
     master = ctx.createGain(); master.gain.value = enabled ? volume : 0;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.knee.value = 10; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
-    master.connect(comp); comp.connect(ctx.destination);
+    duck = ctx.createGain(); duck.gain.value = 1;   // under the commentator (setDuck): after the compressor, which would otherwise win most of the cut back
+    master.connect(comp); comp.connect(duck); duck.connect(ctx.destination);
     bus = ctx.createGain(); bus.gain.value = 0; bus.connect(master); // race sounds (muted when paused)
     // noise buffer
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
@@ -957,7 +958,7 @@ const Sfx = (function () {
      off (a clang as it tears away and lands, then its scrape along the road: metal, plastic or carbon by the part, bigger by its mass), a
      window shattering, a wheel knocked off (the hub letting go, then the wheel bouncing away), a hub scraping the road while that car
      moves on (louder on asphalt, beating with the hub's turn), a fire's crackle while it burns (render's rule: dmg >= 0.9, or the bonnet /
-     engine cover off and dmg >= 0.75; 20 s from when it starts), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
+     engine cover off and dmg >= 0.75; 20 s from when it starts; put out in the box with the bodywork), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
      car's state with what it was last frame (c.lost, winOut, wreck.wl, dmg); a repair (repairN) or the marshals' refit (wreck.fix) resets
      what it remembers. The one-shots and the loops are buffers made ahead (prep, below), each with its own random numbers (never
      Math.random). At most DS_MAX one-shots play at a time; in one frame a buffer plays at most twice (a pile-up's: the loudest, then the
@@ -1245,7 +1246,8 @@ const Sfx = (function () {
     if (!enabled) return;
     // the loops: fire (fading in, and out at the end of its 20 s), the hubs (louder with the speed, on a hard surface, two wheels gone)
     const F = [];
-    for (const [c, S] of dFireC) { const w = dWhere(c, P, cam, D_RL); if (!w) continue; const u = t - S.fire; F.push([c, w[0] * 0.22 * Core.sstep(0, 1.2, u) * (1 - Core.sstep(D_FIRE - 3, D_FIRE, u)), w[1]]); }
+    for (const [c, S] of dFireC) { const w = dWhere(c, P, cam, D_RL); if (!w) continue; const rk = Core.sstep(Core.REPAIR.body[0], Core.REPAIR.body[1], Core.repairU(c)); if (rk >= 1) continue;   // (in the box the crew puts the fire out with the bodywork, as the renderer shows it: Core.REPAIR)
+      const u = t - S.fire; F.push([c, w[0] * 0.22 * Core.sstep(0, 1.2, u) * (1 - Core.sstep(D_FIRE - 3, D_FIRE, u)) * (1 - rk), w[1]]); }
     if (F.length || dFireV.some(v => v && v.car)) dPool(dFireV, F, 'fire', () => {});
     const G = [];
     for (const [c] of dScrC) {
@@ -1310,6 +1312,10 @@ const Sfx = (function () {
     idleKick();
   }
   function suspend() { if (ctx && ctx.state === 'running') { try { ctx.suspend(); } catch (_) { } } }
+  // the commentator speaking (Comm.talking): everything else ~9 dB down under the voice, quickly in, slowly back (no pumping in the short
+  // pause between two lines), so the speech (the browser's own, at full volume) is heard over the engines and the crowd
+  const DUCK = 0.35;
+  function setDuck(v) { v = !!v; if (!duck || v === duckOn) return; duckOn = v; duck.gain.setTargetAtTime(v ? DUCK : 1, ctx.currentTime, v ? 0.08 : 0.45); }
 
   // (a value that is not a number never reaches a param: setTargetAtTime throws on one, and update would stop halfway every frame)
   const set = (p, v, tc) => { if (Number.isFinite(v)) p.setTargetAtTime(v, ctx.currentTime, tc || 0.03); };
@@ -1575,9 +1581,10 @@ const Sfx = (function () {
     if (atmo) atmoOff(0.02);
     for (const V of [kitPl, ...kitAI]) if (V) kitOff(V, 0.02);   // (the fleet's: the engines with a preset, the fires and the hubs)
     for (const v of [...dFireV, ...dScrV]) if (v) { set(v.g.gain, 0, 0.02); if (v.amg) set(v.amg.gain, 0, 0.02); v.car = null; }
+    if (duck) { duckOn = false; set(duck.gain, 1, 0.05); }
   }
 
-  const levels = () => ctx ? { samba: samba ? +samba.lev.toFixed(3) : 0, stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
+  const levels = () => ctx ? { duck: +duck.gain.value.toFixed(3), samba: samba ? +samba.lev.toFixed(3) : 0, stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
     engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
       : eng ? { kind: eng.kind, preset: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value, fs: [eng.o, eng.pm, eng.tw].map(o => o.frequency.value).concat(eng.lp.frequency.value, eng.nb.frequency.value) } : null,   // Pikes Peak's sounds, the player's engine note: preset its
     ai: aiSeen.map(a => a && { id: a[0], preset: a[1], dop: +a[2].toFixed(3), f: a[3] == null ? null : +a[3].toFixed(2) }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
@@ -1585,7 +1592,7 @@ const Sfx = (function () {
   // (tests: the engines as they sound now; a rival in a registered vehicle: its preset)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.car && v.car.m.sndP ? v.car.m.sndP.kind : v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, setDuck, suspend, update, crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

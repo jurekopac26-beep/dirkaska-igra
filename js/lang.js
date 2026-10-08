@@ -210,7 +210,7 @@
     'MESTO VRNJENO': 'PLACE GIVEN BACK', 'KAZEN +5 s': 'PENALTY +5 s', 'VRNI MESTO · {0}': 'GIVE IT BACK · {0}', 'SC GRE S PROGE': 'SC LEAVING', 'NE PREHITEVAJ': 'NO OVERTAKING',
     'DEŽ': 'RAIN', 'Začelo je deževati: proga bo kmalu mokra. Zapelji v bokse po dežne gume (desno takoj za zadnjim ovinkom pred ciljno ravnino).': 'It has started to rain: the track will soon be wet. Pit for wet tyres (on the right just after the last corner before the finish straight).',
     'DEŽ JE PONEHAL': 'THE RAIN HAS STOPPED', 'Dež je ponehal: proga se suši, najprej na idealni liniji.': 'The rain has stopped: the track is drying, the racing line first.',
-    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · 80 km/h': 'PITS · 80 km/h', 'ZAVETRJE': 'SLIPSTREAM',
+    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · DRŽI PLIN': 'PITS · HOLD THE GAS', 'ZAVETRJE': 'SLIPSTREAM',
     'PREDRTA GUMA': 'PUNCTURE', 'VROČE ZAVORE': 'HOT BRAKES', 'VROČ MOTOR': 'HOT ENGINE', 'PREDRTA GUMA!': 'PUNCTURE!', 'ZAVORE SE PREGREVAJO': 'BRAKES OVERHEATING', 'MOTOR SE PREGREVA': 'ENGINE OVERHEATING',
     'Predrta guma: avto vleče na stran in slabše prime. Zapelji v bokse, mehaniki jo zamenjajo.': 'A puncture: the car pulls to one side and grips less. Come into the pits, the mechanics change the tyre.',
     'Predrta guma: avto vleče na stran in slabše prime. Previdno do cilja.': 'A puncture: the car pulls to one side and grips less. Take it carefully to the line.',
