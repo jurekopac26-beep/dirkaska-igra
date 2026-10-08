@@ -101,7 +101,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const z of [-0.42, 0.28]) { const a = [1.09, 1.215, z - 0.3], b = [1.075, 1.24, z + 0.3], o = [0.0101, -0.0044, 0];
           faceTo([[a[0] + o[0], a[1] + o[1], a[2]], [b[0] + o[0], b[1] + o[1], b[2]], [b[0] - o[0], b[1] - o[1], b[2]], [a[0] - o[0], a[1] - o[1], a[2]]], [0.4, 0.92, 0], B, { part: 'body' }); }
         // the mirrors: big, on the doors' front corners
-        for (const sd of [-1, 1]) K.mirror(0.95, 1.33, sd * 0.97, { w: 0.08, h: 0.17, d: 0.12, z0: sd * 0.925, col: P, arm: B });
+        for (const sd of [-1, 1]) K.mirror(0.95, 1.33, sd * 0.97, { w: 0.08, h: 0.17, d: 0.12, z0: sd * 0.925, col: P, arm: B, crack: 1 });   // (crack: its glass breaks, it folds in: Razbijanje · nov način)
         // ---- the bonnet (seen from above): a low bulge down its middle rising to the cowl, a vent grille each side of it, louvres across ----
         K.skin([[2.02, 0.004, 0.2], [1.16, 0.032, 0.26]].map(([x, h, w]) => { const y = L.topY(x, 0) - 0.004; return [[x, y, -w], [x, y + h, -w * 0.82], [x, y + h, w * 0.82], [x, y, w]]; }), P, null, P, { part: 'hood' });
         const onTop = (x0, x1, z0, z1, lift) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => [x, L.topY(x, z) + lift, z]);

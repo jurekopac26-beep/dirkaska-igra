@@ -92,11 +92,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (kind === 'gr') return e >= 3 && e <= 5 ? G : P;
           return P;
         }, { caps: { front: { col: P }, rear: { col: P, colLow: D, cut: 0.4, low: 'bumperR', high: 'bumperR' } }, glassBend: [20, 38] });
-        // ---- the roof's edges rounded: a bead in paint along each crease of the roof, from its back to the windscreen's top (a chamfer
-        //      the light catches round; Visoki: down the A-pillar to the cowl too, its ends closed) ----
-        for (const sd of [-1, 1]) {
-          const path = (K.hi ? [-1.38, 0.255, 1.035] : [-1.38, 0.255]).map(x => [x, L.prop(x, 'yt') - 0.004, sd * (L.prop(x, 'wt') - 0.004)]);
-          K.sweep([[0.018, -0.02], [0.02, 0.014], [-0.018, 0.022]].map(([u, v]) => [u * sd, v]), path, P, K.hi ? { capA: P, capB: P, part: 'body' } : { capA: null, capB: null, part: 'body' });
+        // ---- Visoki: the roof's edges rounded: a bead in paint along each crease of the roof (through every section: the roof arches) and
+        //      down the A-pillar to the cowl (a chamfer the light catches round). Not in the Normalni build: its budget is spent ----
+        if (K.hi) for (const sd of [-1, 1]) {
+          const path = [-1.38, -1.25, -1.065, -0.88, -0.4, 0.255, 0.785, 0.85, 1.035].map(x => [x, L.prop(x, 'yt') - 0.004, sd * (L.prop(x, 'wt') - 0.004)]);
+          K.sweep([[0.018, -0.02], [0.02, 0.014], [-0.018, 0.022]].map(([u, v]) => [u * sd, v]), path, P, { capA: P, capB: P, part: 'body' });
         }
         const pr = (x, k) => L.prop(x, k), DC = L.decal, XN = 2.0;
         // a flat polygon facing out (its points' order turned to face dir), one primitive
@@ -218,7 +218,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.part(sd < 0 ? 'flapL' : 'flapR', () => flap(-1.645, 0.19, sd * 0.77, 0.22, 0.3), { noDent: true, hinge: [[-1.645, 0.33, sd * 0.66], [-1.645, 0.33, sd * 0.88]] });
         }
         // ---- the mirrors, the wipers ----
-        for (const sd of [-1, 1]) K.mirror(0.56, 0.95, sd * 0.925, { col: P, w: 0.09, h: 0.08, d: 0.14, z0: sd * 0.8 });
+        for (const sd of [-1, 1]) K.mirror(0.56, 0.95, sd * 0.925, { col: P, w: 0.09, h: 0.08, d: 0.14, z0: sd * 0.8, crack: 1 });   // (crack: its glass breaks, it folds in: Razbijanje · nov način)
         for (const z of [-0.38, 0.18]) K.bar([1.02, 0.99, z - 0.26], [0.96, 1.03, z + 0.26], 0.01, B, { n: 3, part: 'body' });
         // ---- the dashboard's top under the windscreen (matte, the lining's colour: no sky in it): the driver looks over the cowl onto it, never
         //      under the bonnet (it falls away steeper than the view over the cowl) ----

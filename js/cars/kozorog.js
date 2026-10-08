@@ -166,7 +166,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('body', () => K.endplate([[-0.56, 1.347], [-0.985, 1.333], [-0.975, 1.44]], 0, 0.06, S), { noCrush: true, noDent: true });
         K.rect(-0.99, 1.36, 0, 0.14, 0.07, B, { dir: '-x', part: 'body' }); K.tailLamp(-0.992, 1.36, 0, 0.12, 0.05);
         // ---- the mirrors, the wiper ----
-        for (const sd of [-1, 1]) K.mirror(0.6, 1.0, sd * 0.965, { w: 0.1, h: 0.07, d: 0.11, col: S });
+        for (const sd of [-1, 1]) K.mirror(0.6, 1.0, sd * 0.965, { w: 0.1, h: 0.07, d: 0.11, col: S, crack: 1 });   // (crack: its glass breaks, it folds in: Razbijanje · nov način)
         K.bar([0.8, 0.915, -0.5], [0.74, 0.94, 0.3], 0.01, B, { n: 4, part: 'body' });
         // the dashboard's top up to the windscreen's base as the driver sees it (the outer shell: the cockpit draws no cabin): no seeing
         // under the bonnet through the car

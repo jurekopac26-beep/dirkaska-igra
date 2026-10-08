@@ -149,6 +149,12 @@ try {
       if (D) for (let y = 0; y < Q.H; y++) for (let x = 0; x < Q.W; x++) if (D[(y * Q.W + x) * 4 + 3] < 128) { if (y < Q.H / 2) top++; else bot++; }
       out.hole = { top, bot }; }
     out.bl = scene([[0.05, -1, 0]]); out.slm = scene([[0.3, 0, -1]]); out.srf = scene([[0.3, 0.4, 1]]); out.slf = scene([[0.15, 0.45, -1]]);
+    // the mirror (the user's): its glass cracks on a light hit by it, breaks on a medium one (the mirror half folded back), a hard one presses
+    // it flat in against the body; struck as hard there again it comes off
+    out.ml = scene([[0.05, 0.45, -1]]); out.mf = scene([[0.3, 0.45, -1], [0.3, 0.45, -1]]);
+    { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); const v = Render.viewOf(P), U = v.body.geometry.userData, Rm = U.ranges.mirrorL, a = v.body.geometry.attributes.position.array, M = U.ranges.mirrorL.mir;
+      const ext = () => { let zo = 1e9; for (let i = Rm.o[0]; i < Rm.o[1]; i++) zo = Math.min(zo, a[i * 3 + 2]); return zo; };   // (its outermost point: the left's most negative z)
+      const z0 = ext(); hit(P, [0.3, 0.45, -1]); settle(); out.press = { before: +z0.toFixed(3), after: +ext().toFixed(3), mir: !!M, nan: Array.from(a.subarray(Rm.o[0] * 3, Rm.o[1] * 3)).some(q => !Number.isFinite(q)) }; }
     // again and again from behind (light, apart): the rear window a stage on each time; 2. the rear lamp, 3. the spoiler hangs, 4. off
     R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); out.rear = [];
     for (let k = 0; k < 4; k++) { hit(P, [0.05, -1, 0.1]); settle(); const x = me().xt; out.rear.push({ R: x.panes.R, lamp3: x.lamps[3], hang: x.ajar.includes('spoiler'), off: x.dead.includes('spoiler') }); }
@@ -174,8 +180,10 @@ try {
   T.check('Kolibri: rear, light: only the rear window, 50 %; the bumper in a V (~10 cm in the middle), the spoiler bent down in the middle',
     eq(KT.bl.panes, { R: 0.5 }) && KT.bl.bent.bumper[0] > 0.07 && KT.bl.bent.bumper[0] > KT.bl.bent.bumper[1] + 0.05 && KT.bl.bent.spoiler[0] > 0.06 && KT.bl.bent.spoiler[0] > KT.bl.bent.spoiler[1] + 0.04, JSON.stringify(KT.bl));
   T.check('Kolibri: a side hit never breaks the rear window; the right side the left\'s mirrored (front side, strong: its door window 100 %, windscreen 75 %, its mirror off, its head lamp)',
-    !KT.slm.panes.R && !KT.srf.panes.R && !KT.slf.panes.R && eq(KT.srf.panes, { W: 0.75, DR: 1, QR: 0.5 }) && KT.srf.dead.includes('mirrorR') && KT.srf.lamps[1] && eq(KT.slm.panes, { W: 0.5, DL: 1, QL: 0.75 }) && ['doorL', 'mirrorL'].every(n => KT.slm.dead.includes(n)), JSON.stringify({ srf: KT.srf, slm: KT.slm }));
-  T.check('Kolibri: left side by the mirror, medium: windscreen 50 %, door window 70 %, the mirror hangs (the door stays shut)', eq(KT.slf.panes, { W: 0.5, DL: 0.7 }) && KT.slf.ajar.includes('mirrorL') && !KT.slf.ajar.includes('doorL'), JSON.stringify(KT.slf));
+    !KT.slm.panes.R && !KT.srf.panes.R && !KT.slf.panes.R && eq(KT.srf.panes, { W: 0.75, DR: 1, QR: 0.5 }) && KT.srf.mir.fold.mirrorR === 90 && KT.srf.mir.glass.R === 1 && KT.srf.lamps[1] && eq(KT.slm.panes, { W: 0.5, DL: 1, QL: 0.75 }) && ['doorL', 'mirrorL'].every(n => KT.slm.dead.includes(n)), JSON.stringify({ srf: KT.srf, slm: KT.slm }));
+  T.check('Kolibri: left side by the mirror, medium: windscreen 50 %, door window 70 %, the mirror\'s glass broken, the mirror half folded back (the door stays shut)', eq(KT.slf.panes, { W: 0.5, DL: 0.7 }) && KT.slf.mir.glass.L === 1 && KT.slf.mir.fold.mirrorL === 45 && !KT.slf.ajar.includes('doorL'), JSON.stringify(KT.slf));
+  T.check('Kolibri: the mirrors: a light hit by one cracks its glass (the mirror stays out); a hard one presses it flat in against the body (its outer end 6 cm or more nearer the car); struck as hard there again it comes off',
+    KT.ml.mir.glass.L === 0.5 && !KT.ml.mir.fold.mirrorL && KT.press.mir && KT.press.after > KT.press.before + 0.06 && !KT.press.nan && KT.mf.dead.includes('mirrorL'), JSON.stringify({ light: KT.ml.mir, press: KT.press, twice: KT.mf.dead }));
   T.check('Kolibri: from behind again and again: the rear window a stage on each time; 2. the right rear lamp, 3. the spoiler hangs, 4. it is off and on the road',
     KT.rear.map(q => q.R).join() === '0.5,0.7,0.75,1' && !KT.rear[0].lamp3 && KT.rear[1].lamp3 && !KT.rear[1].hang && KT.rear[2].hang && !KT.rear[2].off && KT.rear[3].off && KT.rearGround >= 1, JSON.stringify(KT.rear) + ' ground ' + KT.rearGround);
   T.check('Kolibri: the windscreen only ever more broken (again on the nose: a stage on)', KT.ws.join() === '0.5,0.7,0.75,1,1', KT.ws.join());

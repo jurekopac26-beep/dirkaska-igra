@@ -160,7 +160,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the windscreen's wipers ----
         for (const z of [-0.3, 0.22]) K.bar([0.86, L.topY(0.86, z - 0.22) + 0.012, z - 0.22], [0.815, L.topY(0.815, z + 0.22) + 0.012, z + 0.22], 0.01, B, { n: 4, part: 'body' });
         // ---- the mirrors (black) ----
-        for (const sd of [-1, 1]) K.mirror(0.7, 0.96, sd * 0.8, { col: B, w: 0.1, h: 0.085, d: 0.13 });
+        for (const sd of [-1, 1]) K.mirror(0.7, 0.96, sd * 0.8, { col: B, w: 0.1, h: 0.085, d: 0.13, crack: 1 });   // (crack: its glass breaks, it folds in: Razbijanje · nov način)
         // ---- the roof spoiler: a wedge on the roof's rear end rising to a kicked-up trailing edge over the tailgate's window, following
         //      the roof's crown across; its underside and trailing face dark, a high brake lamp in the middle of it ----
         K.part('spoiler', () => {
