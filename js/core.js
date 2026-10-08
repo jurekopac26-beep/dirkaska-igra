@@ -1855,8 +1855,8 @@ const Core = (function () {
     step(dt, trk) { return this.stepCS(dt, trk); }
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
-  const wreck0 = (W) => Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
-    stop: !!W.stop, cr: W.cr || 0, fin: W.fin || null });
+  const wreck0 = (W) => { if (W.rule) W.rule.due = -1; return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
+    stop: !!W.stop, cr: W.cr || 0, fin: W.fin || null }); };
   const dnf = (c) => !!(c.wreck && c.wreck.dnf);   // out of the race (Odstop, see Race.retire)
   // a model whose part table has wheels (model.parts: every registered vehicle's; one of the 11 only once a patch def gives it a table):
   // its wheels come off and it drives on the hub, a wreck sheds what still hangs on, an AI one retires (the 11 without one: as always)
@@ -1872,8 +1872,9 @@ const Core = (function () {
     if (!c.dmgMode || !(amt > 0)) return;
     if (c.dmgK) amt *= c.dmgK;   // (the run from the police: the patrol cars' reinforced bumpers, the player's car a little tougher)
     if (c.m.dmgK) amt *= c.m.dmgK;   // (a vehicle's own toughness, model.dmgK: a truck's frame, a kart's tubes)
+    const d0 = c.dmg;
     c.dmg = Math.min(1, c.dmg + amt);
-    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); if (c.wreck) wreckCheck(c); return; }
+    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); } return; }
     const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
@@ -1892,9 +1893,34 @@ const Core = (function () {
     for (const name in PT) {
       if (c.lost[name]) continue;
       const P = PT[name];
-      if (P.wh != null ? c.dmgMode === 2 && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
+      if (P.wh != null ? c.dmgMode === 2 && !(c.wreck && c.wreck.rule) && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
     }
-    if (c.wreck) wreckCheck(c);
+    if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); }
+  }
+  // the wheel rule (Race opts.wheelRule: the vehicles it is for; wreck.rule on the player's car, damage on): its wheels come off by the
+  // damage alone, not by a corner (the old rule above and the wreck's last wheel are off for it). At 80 % one wheel, a random one of those
+  // still on; a hit from 70 % (amt >= WRULE.hit) one too. The second follows after wrT2 of the damage (3 s at 70 %, 0.8 s at 80 %, 0.4 s
+  // from 90 %; a hit meanwhile can bring it sooner). A hard hit (amt >= WRULE.hard) at 80 % or over: two at once, sometimes three or all
+  // four (the harder, the likelier). Two gone: the car stops (Race._wreckStep) and the game is over (wreck.rule.over)
+  const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08 };
+  const wrT2 = (d) => d >= 0.9 ? 0.4 : d >= 0.8 ? 0.8 - 4 * (d - 0.8) : 3 - 22 * (Math.max(0.7, d) - 0.7);
+  function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on
+    const W = c.wreck;
+    for (let j = 0; j < n; j++) {
+      const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partsOf(c.m)[WHEELS[k]]); if (!on.length) return;
+      detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(Math.random() * on.length))]]);
+    }
+  }
+  function wheelRule(c, d0, amt) {
+    const W = c.wreck, Q = W.rule, d1 = c.dmg;
+    if (!Q || W.dnf || c.finished || c.dmgMode !== 2) return;
+    if (d1 >= WRULE.d2 && amt >= WRULE.hard) {   // a hard hit at 80 % or over: two at once, sometimes three or four
+      let n = 2; if (Math.random() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (Math.random() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
+      ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; return;
+    }
+    const hit = d0 >= WRULE.d1 && amt >= WRULE.hit;   // (a hit from 70 %: its damage before it sets when the second goes)
+    if (!W.nL && (hit || d1 >= WRULE.d2)) { ruleDrop(c, 1); Q.due = wrT2(hit ? d0 : d1); return; }
+    if (W.nL === 1 && Q.due > 0 && (hit || d1 >= WRULE.d2)) Q.due = Math.min(Q.due, wrT2(d1));
   }
   // a part comes off: lost, onto the race's debris list (Race.step), its share of the downforce with it (P.df; a model with the 8 old
   // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road)
@@ -1914,7 +1940,7 @@ const Core = (function () {
     if (W.seq || c.dmg < 0.96 || !kitParts(c.m)) return;
     const PT = partsOf(c.m), L = [];
     for (const alt of WRECK_SEQ) { const n = alt.find(a => PT[a]); if (n && !c.lost[n]) L.push(n); }
-    if (c.dmgMode === 2) { let k = 0; for (let j = 1; j < 4; j++) if (c.cd[j] > c.cd[k]) k = j; const n = WHEELS[k]; if (c.cd[k] >= 0.4 && PT[n] && !c.lost[n]) L.push(n); }
+    if (c.dmgMode === 2 && !W.rule) { let k = 0; for (let j = 1; j < 4; j++) if (c.cd[j] > c.cd[k]) k = j; const n = WHEELS[k]; if (c.cd[k] >= 0.4 && PT[n] && !c.lost[n]) L.push(n); }
     const dzOf = (n) => c.dz[PT[n].z];
     W.seq = L.map((n, i) => [n, i]).sort((a, b) => dzOf(b[0]) - dzOf(a[0]) || a[1] - b[1]).map(e => e[0]);
     W.st = 0;
@@ -4313,6 +4339,9 @@ const Core = (function () {
         this._placeOnGrid(c, g);
       }
       if (this.player) this.player.num = opts.playerNum || 1;
+      // the wheel rule (applyDamage: wheelRule) on the player's car, when it is one of opts.wheelRule's vehicles and damage is on. due: s to
+      // its second wheel (-1: none coming), over: two wheels gone and the car stopped, the game is over (the game shows PONOVI IGRO)
+      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && P.dmgMode === 2 && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -5026,7 +5055,7 @@ const Core = (function () {
       // a breakable vehicle on a track without pits: the marshals put its lost wheels back on, beside the road (off its side's edge, clear of
       // the barrier); it stands for the 6 s that takes (Race._wreckStep), then drives back on. W.fix counts the refits (a partial repair:
       // repairN stays, the renderer's and the commentator's lost-wheel latches follow W.fix)
-      const W = c.wreck, fix = !!(W && W.wl && !W.dnf && (!T.def.pit || this.opts.noPlayer));   // (the demo: with pits too)
+      const W = c.wreck, fix = !!(W && W.wl && !W.dnf && !W.rule && (!T.def.pit || this.opts.noPlayer));   // (the demo: with pits too; the wheel rule's car: never)
       if (fix) {
         if (c.flt && c.flt.pw >= 0 && W.wl & (1 << c.flt.pw)) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a cut tyre that came off with its wheel: a new one)
         for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.hold = 6; W.fix++;
@@ -5085,6 +5114,15 @@ const Core = (function () {
         if ((W.st -= dt) <= 0 && W.seq.length) { const n = W.seq.shift(); detachPart(c, n); W.st = 0.4; }
       }
       if (W.nL) W.lt += dt;
+      const Q = W.rule;   // the wheel rule (wheelRule): the second wheel when its time is up; two gone: the car stops at once (2.5 a second
+      // of its speed lost, as well as the brakes and the hubs on the road), there it retires and the game is over
+      if (Q && !W.dnf && !c.finished) {
+        if (Q.due > 0 && (Q.due -= dt) <= 0) { Q.due = -1; if (W.nL < 2) ruleDrop(c, 1); }
+        if (W.nL >= 2 && !c.rl) {   // (rolling over, Razbijanje: once it lands)
+          parkBrake(c); const k = Math.max(0, 1 - 2.5 * dt); c.vx *= k; c.vz *= k; c.w *= k;
+          if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; }
+        }
+      }
       const racing = this.state === 'racing';
       if (!W.dnf && !c.isPlayer && kitParts(c.m) && !c.finished && racing && W.nL >= 2 && !c.pitWant && !c.inPit && !this.opts.noPlayer) this.retire(c);
       if (W.dnf) {
@@ -5220,9 +5258,10 @@ const Core = (function () {
   // with damage off (dmgMode 0) stays whole
   function wreckCar(c) {
     const hl = c.m.len * 0.5, hw = c.m.wid * 0.5, pts = [[hl, -hw], [hl, hw], [-hl, -hw], [-hl, hw], [hl, 0], [-hl, 0], [0, -hw], [0, hw]];
+    const W = c.wreck, PT = partsOf(c.m), Q = W && W.rule; if (Q) W.rule = null;   // (the wheel rule's random wheels: not here, the same every time)
     for (let n = 0; n < 16 && c.dmgMode && (c.dmg < 1 || Math.min(...c.dz, ...c.cd) < 1); n++) for (const [x, z] of pts) applyDamage(c, 0.25, x, z);
-    const W = c.wreck, PT = partsOf(c.m);
     if (W && W.seq) while (W.seq.length) { const n = W.seq.shift(); if (!c.lost[n] && PT[n]) detachPart(c, n, PT[n]); }
+    if (Q) W.rule = Q;
     return c;
   }
 

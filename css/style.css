@@ -319,6 +319,19 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .ctl-row input[type="range"] { flex: 1; min-width: 110px; max-width: 220px; }
 .small-panel { width: min(360px, 80vw); }
 #s-results { justify-content: center; }
+/* KONEC IGRE (the wheel rule): PONOVI IGRO as big as the screen allows; the stopped car without its wheels in view (upright: the panel
+   at the top, the car below it; on its side: the panel on the right, the car in the middle) */
+#s-over { justify-content: center; align-items: flex-start; padding-top: calc(8vh + var(--st)); background: linear-gradient(rgba(8,10,14,.72), rgba(8,10,14,.3) 55%, rgba(8,10,14,.12)); }
+.over-panel { width: min(540px, 92vw); text-align: center; }
+.over-panel h2 { font-size: clamp(30px, 10vh, 52px); color: var(--chalk); }
+.over-panel .desc { margin: 0 auto 4px; }
+.over-panel .over-go { display: block; width: 100%; margin-top: clamp(8px, 3vh, 18px); min-height: clamp(64px, 20vh, 120px); text-align: center; font: 400 italic clamp(28px, min(12vh, 9.5vw), 68px)/1 var(--f-display); letter-spacing: .03em; white-space: nowrap; }
+.over-panel .btns.horiz { justify-content: space-between; }
+@media (orientation: landscape) {
+  #s-over { align-items: center; justify-content: flex-end; padding-top: calc(10px + var(--st)); background: linear-gradient(90deg, rgba(8,10,14,.12), rgba(8,10,14,.3) 45%, rgba(8,10,14,.72)); }
+  #s-over .over-panel { width: min(440px, 50vw); }
+  #s-over .over-go { font-size: clamp(28px, min(12vh, 5vw), 60px); }
+}
 .res-panel { width: min(700px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
 .res-head { display: flex; align-items: center; gap: 16px; }
 .res-head h2 { margin: 0; }
