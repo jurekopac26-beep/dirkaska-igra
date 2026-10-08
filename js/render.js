@@ -6931,7 +6931,7 @@ const Render = (function () {
   }
   // a door mirror (part mirrorL / mirrorR, K.mirror's place: R.mir) pressed in by a hard hit: turned back about an upright axis through its
   // housing's inner rear corner by deg (45: half folded; 90: flat along the door, squashed to 60 % of its depth against it), then moved
-  // across to lie on the body's skin there (never into it; a half fold only out of it), the arm's root kept where it is (the stalk bends
+  // across to lie on the body's skin there (never into it; a half fold as far off it as its arm held it), the arm's root kept where it is (the stalk bends
   // between the body and the housing). Render only, the core's part on the car as before; once is enough (K.fold: no hanging after)
   function kitFold(v, c, name, deg) {
     const K = v.kit, geo = v.body.geometry, U = geo.userData, R = U.ranges[name], Mi = R && R.mir; if (!Mi || K.dead[name] || ((K.fold && K.fold[name]) || 0) >= deg) return;
@@ -6953,12 +6953,15 @@ const Render = (function () {
       const l = Math.hypot(lx, ly, lz), k = l > 0.05 ? 0.05 / l : 1; lx *= k; ly *= k; lz *= k; el[j * 3] = lx; el[j * 3 + 1] = ly; el[j * 3 + 2] = lz;
       P[j * 3] += lx * cs - sd * lz * sn; P[j * 3 + 1] += ly; P[j * 3 + 2] += lz * cs + sd * lx * sn; }
     // the skin beside it: the body's outermost point there (its outer shell; the mirror's own ranges, what is gone and what hangs open left
-    // out), the turned mirror moved across onto it (a half fold only out of it), flat: squashed to 60 % of its depth against it
-    let skin = -1e9; const y0 = Mi.y - Mi.h, y1 = Mi.y + Mi.h * 0.5, xa = xh - Mi.d - 0.03, xb = xh + 0.03, open = [];
+    // out), the turned mirror moved across onto it, flat: squashed to 60 % of its depth against it
+    // (a half fold keeps the gap its arm had to the skin as built: the housing follows the door dented in under it, its arm never stretched)
+    let skin = -1e9, skinR = -1e9, loR = 1e9; const y0 = Mi.y - Mi.h, y1 = Mi.y + Mi.h * 0.5, xa = xh - Mi.d - 0.03, xb = xh + 0.03, open = [];
     for (const nm in K.ajar) if (U.ranges[nm] && nm !== name) open.push(U.ranges[nm].o);
-    for (let i = 0; i < U.outerN; i++) { if ((i >= R.o[0] && i < R.o[1]) || (dv && dv[i]) || open.some(Q => i >= Q[0] && i < Q[1])) continue; const px = pa[i * 3], py = pa[i * 3 + 1]; if (px < xa || px > xb || py < y0 || py > y1) continue; const sz = sd * pa[i * 3 + 2]; if (sz > skin) skin = sz; }
-    let lo = 1e9; for (let j = 0; j < ids.length; j++) lo = Math.min(lo, sd * P[j * 3 + 2]);
-    if (skin > -1e8 && lo < 1e8) { let dl = clamp(skin + 0.004 - lo, -0.3, 0.3); if (deg < 90) dl = Math.max(0, dl); const zt = lo + dl;
+    for (let i = 0; i < U.outerN; i++) { if ((i >= R.o[0] && i < R.o[1]) || (dv && dv[i]) || open.some(Q => i >= Q[0] && i < Q[1])) continue;
+      const px = pa[i * 3], py = pa[i * 3 + 1]; if (px >= xa && px <= xb && py >= y0 && py <= y1) { const sz = sd * pa[i * 3 + 2]; if (sz > skin) skin = sz; }
+      const rx = rest[i * 3], ry = rest[i * 3 + 1]; if (rx >= xa && rx <= xb && ry >= y0 && ry <= y1) { const sz = sd * rest[i * 3 + 2]; if (sz > skinR) skinR = sz; } }
+    let lo = 1e9; for (let j = 0; j < ids.length; j++) { lo = Math.min(lo, sd * P[j * 3 + 2]); loR = Math.min(loR, sd * rest[ids[j] * 3 + 2]); }
+    if (skin > -1e8 && lo < 1e8) { const g0 = deg >= 90 || skinR < -1e8 ? 0.004 : Math.max(0.004, loR - skinR), dl = clamp(skin + g0 - lo, -0.3, 0.3), zt = lo + dl;
       for (let j = 0; j < ids.length; j++) { let w = sd * P[j * 3 + 2] + dl; if (deg >= 90) w = zt + (w - zt) * 0.6; P[j * 3 + 2] = sd * w; } }
     const at = new Map(); ids.forEach((i, j) => { at.set(i, j); pa[i * 3] = P[j * 3]; pa[i * 3 + 1] = P[j * 3 + 1]; pa[i * 3 + 2] = P[j * 3 + 2]; });
     FB[name] = { at, b: Float32Array.from(P), e: el, deg };
