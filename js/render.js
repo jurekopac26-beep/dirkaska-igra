@@ -4093,7 +4093,7 @@ const Render = (function () {
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
     const xd = xDensity(c), xt = xTab(c), v = makeCarMesh(c, xd || xt ? { xd, xcut: xt && !!XC.glass } : undefined);
-    v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit) xBayGrey(v);   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey)
+    v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit && !XT_CARS.has(c.m.id)) xBayGrey(v);   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey, but a reworked car's: its own bay's colours)
     v.xt = xt && !!v.kit;   // (the Kolibri: its glass, lamps and parts by the damage table, xTabHit)
     if (v.kit && (tierNow === 0 || v.xOn)) ownRnd(() => kitShadows(v, c));   // (Razbijanje · nov način: every kit car's shadow from its hull, the dense body never drawn twice)
     else if (v.xOn && xd && v.body.geometry.userData.xBase) ownRnd(() => { const m = new THREE.Mesh(v.body.geometry.userData.xBase, matHull); m.castShadow = true; m.visible = false; v.body.castShadow = false; v.bodyG.add(m); v.shadowOnly = [m]; });   // (one of the 11, dense: its shadow from the body as built)   // (the lowest tier: the shadow from the hull and a rival's wheels; named without Math.random)
@@ -5988,7 +5988,7 @@ const Render = (function () {
   function kitDebrisMesh(v, d) { return ownRnd(() => kitDebrisMesh0(v, d)); }   // (its objects named without Math.random)
   function kitDebrisMesh0(v, d) {
     const L = v.loose[d.part];
-    if (!L) { const PT = Core.partsOf(v.car.m), P = PT[d.part]; return P && v.car.lost[d.part] && (P.wh != null ? !v.wheelOff[P.wh] : !v.kit.dead[d.part] && !(v.kit.fold && v.kit.fold[d.part])) ? null : false; }   // (a mirror pressed in, kitFold: it stays on the car, its piece nothing to draw)
+    if (!L) { const PT = Core.partsOf(v.car.m), P = PT[d.part]; return P && v.car.lost[d.part] && (P.wh != null ? !v.wheelOff[P.wh] : !v.kit.dead[d.part]) ? null : false; }   // (a mirror pressed in, kitFold: on the car, not dead: its piece waits (a view built afresh mid-race drops it, and draws it))
     delete v.loose[d.part];
     const inner = new THREE.Mesh(L.geo, pieceMat(v, L.wheel ? L.mat : v.body.material)), lay = new THREE.Group(), m = new THREE.Group(); m.rotation.order = 'YXZ';
     const cen = L.wheel ? [0, 0, 0] : L.c, q = L.wheel ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2) : kitLayQ(L.geo, cen, L.outerN);
@@ -6341,7 +6341,7 @@ const Render = (function () {
   // a cluster changed (old: its numbers before, null: new): its old push taken back, its new one put on, on every point it reaches
   function xApply(v, xc, old, K) {
     const geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, n = R.length / 3, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
-    const xt = xc.tab ? 0.6 : 0, kx = K.px, kr = K.end ? Infinity : (K.top ? K.R : K.R * 1.15) + xt, ox = old ? old.px : 0, orr = old ? (old.end ? Infinity : (old.top ? old.R : old.R * 1.15) + xt) : -1;   // (along the car beyond these, xPush reaches nothing: skipped at once; the Kolibri's ridge and V a little farther)
+    const xt = xc.tab ? 0.6 : 0, kx = K.px, kr = K.end && K.A >= 0.04 ? Infinity : (K.top ? K.R : K.R * 1.15) + xt, ox = old ? old.px : 0, orr = old ? (old.end && old.A >= 0.04 ? Infinity : (old.top ? old.R : old.R * 1.15) + xt) : -1;   // (an end's knocks as much as the table's light one: the roof's sink reaches the whole car)   // (along the car beyond these, xPush reaches nothing: skipped at once; the Kolibri's ridge and V a little farther)
     for (let i = 0; i < n; i++) {
       if ((dv && dv[i]) || (nd && nd[i])) continue;
       const x = R[i * 3]; if (Math.abs(x - kx) >= kr && Math.abs(x - ox) >= orr) continue;
@@ -6414,7 +6414,8 @@ const Render = (function () {
       const cx = (rest[o] + rest[o + 3] + rest[o + 6]) / 3, cy = (rest[o + 1] + rest[o + 4] + rest[o + 7]) / 3, cz = (rest[o + 2] + rest[o + 5] + rest[o + 8]) / 3;
       if (cx > hx || cx < x1 || cy < ySill || cz * sd <= 0) continue; sel.push(t); hz = Math.max(hz, Math.abs(cz)); } }
     if (!sel.length) return;
-    if (XC.glass && v.glassTris) for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null);   // (its window breaks as it opens: turned with it after, it could not be broken any more)
+    if (XC.glass && v.glassTris) { if (v.xt) { xtGlass(v, c, sd < 0 ? 'QL' : 'QR', 1, x, y, z, h, null); xtFlush(v); }   // (a table car's: its rear window 100 %, drawn now, before it turns)
+      else for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null); }   // (its window breaks as it opens: turned with it after, it could not be broken any more)
     const phi = sd * 40 * Math.PI / 180, cs = Math.cos(phi), sn = Math.sin(phi), Z = hz * sd;
     for (const t of sel) for (let q = 0; q < 3; q++) { const i = t * 3 + q, dx = pa[i * 3] - hx, dz = pa[i * 3 + 2] - Z, nx = na[i * 3], nz = na[i * 3 + 2];
       pa[i * 3] = hx + dx * cs + dz * sn; pa[i * 3 + 2] = Z - dx * sn + dz * cs; na[i * 3] = nx * cs + nz * sn; na[i * 3 + 2] = -nx * sn + nz * cs; dv[i] = 1; }
@@ -6490,7 +6491,7 @@ const Render = (function () {
   let matXEng = null;
   function xEngine(v, c) { return ownRnd(() => xEngine0(v, c)); }
   function xEngine0(v, c) {
-    const K = v.kit; if (!K) return;
+    const K = v.kit; if (!K || XT_CARS.has(c.m.id)) return;   // (a reworked car (the table's): its own engine and bay under the bonnet, no second one)
     const want = !!(c.lost.hood || K.xTorn);
     if (!v.xEng) { if (!want) return;
       const U = v.body.geometry.userData, R = U.ranges.hood, p = (v.xc && v.xc.rest) || v.body.geometry.attributes.position.array; if (!R) return;
@@ -6738,18 +6739,19 @@ const Render = (function () {
         const d1 = (pu - bx) * (ay - by) - (ax - bx) * (pv - by), d2 = (pu - cx2) * (by - cy2) - (bx - cx2) * (pv - cy2), d3 = (pu - ax) * (cy2 - ay) - (cx2 - ax) * (pv - ay);
         if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) return true; } return false; };
       // its frame panels (the windscreen's, the rear window's): paint under it, in its box and 9 cm round it
-      let fc = [0, 0, 0], nf = 0, under = 0;
+      let fc = [0, 0, 0], nf = 0, under = 0, paneA = 0;
       const Rg = (key === 'W' || key === 'R') && U.ranges ? Object.values(U.ranges).find(R => P.tris[0] * 3 >= R.o[0] && P.tris[0] * 3 < R.o[1]) : null;   // (its own part's: the body's, a boot lid's, a tailgate's)
-      if (Rg) for (let t = Rg.o[0] / 3; t < Rg.o[1] / 3 && under < 4; t++) { if (glass.has(t)) continue; let ok = true;   // (a pane over its frame: paint a few mm under it)
+      const areaUV = (a, b, c) => Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) / 2;
+      for (let j = 0; j < tu.length; j += 6) paneA += areaUV([tu[j], tu[j + 1]], [tu[j + 2], tu[j + 3]], [tu[j + 4], tu[j + 5]]);
+      if (Rg) for (let t = Rg.o[0] / 3; t < Rg.o[1] / 3; t++) { if (glass.has(t)) continue; let ok = true;   // (a pane over its frame: paint a few mm under it, under 40 % of it at least (not a dashboard's edge))
         for (let q = 0; q < 3 && ok; q++) { const i = t * 3 + q, d = (p[i * 3] - cx) * nx + (p[i * 3 + 1] - cy) * ny + (p[i * 3 + 2] - cz) * nz, w = uv(i); ok = d < -0.001 && d > -0.03 && w[0] > u0 && w[0] < u1 && w[1] > v0 && w[1] < v1; }
-        if (ok) under++; }
-      if (under >= 4) for (let t = Rg.o[0] / 3; t < Rg.o[1] / 3; t++) { if (glass.has(t)) continue; const o = t * 9; let ok = true;   // (then its frame, round it too)
+        if (ok) under += areaUV(uv(t * 3), uv(t * 3 + 1), uv(t * 3 + 2)); }
+      if (under >= 0.4 * paneA) for (let t = Rg.o[0] / 3; t < Rg.o[1] / 3; t++) { if (glass.has(t)) continue; const o = t * 9; let ok = true;   // (then its frame, round it too)
           for (let q = 0; q < 3 && ok; q++) { const i = t * 3 + q, dx = p[i * 3] - cx, dy = p[i * 3 + 1] - cy, dz = p[i * 3 + 2] - cz, w = uv(i);
             ok = Math.abs(dx * nx + dy * ny + dz * nz) < 0.08 && w[0] > u0 - 0.09 && w[0] < u1 + 0.09 && w[1] > v0 - 0.09 && w[1] < v1 + 0.09; }
           if (!ok) continue; const ax = p[o + 3] - p[o], ay = p[o + 4] - p[o + 1], az = p[o + 5] - p[o + 2], bx = p[o + 6] - p[o], by = p[o + 7] - p[o + 1], bz = p[o + 8] - p[o + 2];
           const fx = ay * bz - az * by, fy = az * bx - ax * bz, fz = ax * by - ay * bx, fl = Math.hypot(fx, fy, fz); if (!(fl > 1e-9) || (fx * nx + fy * ny + fz * nz) / fl < 0.8) continue;
-          const cu = (uv(t * 3)[0] + uv(t * 3 + 1)[0] + uv(t * 3 + 2)[0]) / 3, cv = (uv(t * 3)[1] + uv(t * 3 + 1)[1] + uv(t * 3 + 2)[1]) / 3;
-          if (!inPane(cu, cv)) continue;   // (only what lies under the glass: the frame round it stays the body's, its dirt, scratches and char)
+          if (![0, 1, 2].some(q => { const w = uv(t * 3 + q); return inPane(w[0], w[1]); }) && !inPane(...[0, 1].map(k => (uv(t * 3)[k] + uv(t * 3 + 1)[k] + uv(t * 3 + 2)[k]) / 3))) continue;   // (only what lies under the glass, a corner of it or its middle: no paint under a hole; the frame round it stays the body's, its dirt, scratches and char)
           P.fr.push(t); fc[0] += col[o]; fc[1] += col[o + 1]; fc[2] += col[o + 2]; nf++; }
       P.fill = nf ? fc.map(q => q / nf) : GLASS.slice();   // (round the pane in the picture: the frame's paint, the side windows' glass)
       const k = Math.min(cw / (u1 - u0 + 0.2), chh / (v1 - v0 + 0.2)), mg = 0.1 * k;
@@ -6933,21 +6935,37 @@ const Render = (function () {
   // between the body and the housing). Render only, the core's part on the car as before; once is enough (K.fold: no hanging after)
   function kitFold(v, c, name, deg) {
     const K = v.kit, geo = v.body.geometry, U = geo.userData, R = U.ranges[name], Mi = R && R.mir; if (!Mi || K.dead[name] || ((K.fold && K.fold[name]) || 0) >= deg) return;
-    const pa = geo.attributes.position.array, sd = Mi.sd, xh = Mi.x - Mi.w / 2, zh = Mi.z - sd * Mi.d / 2, phi = deg * Math.PI / 180 - ((K.fold && K.fold[name]) || 0) * Math.PI / 180;
-    const cs = Math.cos(phi), sn = Math.sin(phi), r2 = (Mi.r * 1.3) * (Mi.r * 1.3), moved = [], dv = K.deadV;
-    for (const Q of [R.o, R.i]) for (let i = Q[0]; i < Q[1]; i++) { if (dv && dv[i]) continue; const dx0 = pa[i * 3] - Mi.root[0], dy0 = pa[i * 3 + 1] - Mi.root[1], dz0 = pa[i * 3 + 2] - Mi.root[2];
+    // each point's place: its pose as built (xc.rest) turned by the fold about the housing's inner rear corner, laid flat on the body's skin
+    // beside it; of what the blows did to it since its last pose only its own dent kept (their mean, the push of the whole mirror, is the
+    // fold itself: kept, it would bury the mirror in the door), turned with it, 5 cm at most
+    const pa = geo.attributes.position.array, rest = (v.xc && v.xc.rest) || pa, sd = Mi.sd, xh = Mi.x - Mi.w / 2, zh = Mi.z - sd * Mi.d / 2, phi = deg * Math.PI / 180;
+    const cs = Math.cos(phi), sn = Math.sin(phi), r2 = (Mi.r * 1.3) * (Mi.r * 1.3), dv = K.deadV, FB = K.foldB || (K.foldB = {}), prev = FB[name] || null, ph0 = prev ? prev.deg * Math.PI / 180 : 0, c0 = Math.cos(ph0), s0 = Math.sin(ph0);
+    const ids = [], P = [], E = []; let mx = 0, my = 0, mz = 0;
+    for (const Q of [R.o, R.i]) for (let i = Q[0]; i < Q[1]; i++) { if (dv && dv[i]) continue; const dx0 = rest[i * 3] - Mi.root[0], dy0 = rest[i * 3 + 1] - Mi.root[1], dz0 = rest[i * 3 + 2] - Mi.root[2];
       if (dx0 * dx0 + dy0 * dy0 + dz0 * dz0 < r2) continue;   // (the arm's root stays on the body)
-      const qx = pa[i * 3] - xh, qz = pa[i * 3 + 2] - zh; pa[i * 3] = xh + qx * cs - sd * qz * sn; pa[i * 3 + 2] = zh + qz * cs + sd * qx * sn; moved.push(i); }
-    // the skin beside it: the body's outermost point there (its outer shell, the mirror's own ranges and what is gone left out)
-    let skin = -1e9; const y0 = Mi.y - Mi.h, y1 = Mi.y + Mi.h * 0.5, xa = xh - Mi.d - 0.03, xb = xh + 0.03;
-    for (let i = 0; i < U.outerN; i++) { if ((i >= R.o[0] && i < R.o[1]) || (dv && dv[i])) continue; const px = pa[i * 3], py = pa[i * 3 + 1]; if (px < xa || px > xb || py < y0 || py > y1) continue; const sz = sd * pa[i * 3 + 2]; if (sz > skin) skin = sz; }
-    let lo = 1e9; for (const i of moved) lo = Math.min(lo, sd * pa[i * 3 + 2]);
-    if (skin > -1e8 && lo < 1e8) { let dl = skin + 0.004 - lo; if (deg < 90) dl = Math.max(0, dl);
-      const zt = lo + dl; for (const i of moved) { let w = sd * pa[i * 3 + 2] + dl; if (deg >= 90) w = zt + (w - zt) * 0.6; pa[i * 3 + 2] = sd * w; } }
+      const pb = prev && prev.at.get(i), bx = pb != null ? prev.b[pb * 3] : rest[i * 3], by = pb != null ? prev.b[pb * 3 + 1] : rest[i * 3 + 1], bz = pb != null ? prev.b[pb * 3 + 2] : rest[i * 3 + 2];
+      const ex = pa[i * 3] - bx, ey = pa[i * 3 + 1] - by, ez = pa[i * 3 + 2] - bz; E.push(ex, ey, ez); mx += ex; my += ey; mz += ez;
+      const qx = rest[i * 3] - xh, qz = rest[i * 3 + 2] - zh; P.push(xh + qx * cs - sd * qz * sn, rest[i * 3 + 1], zh + qz * cs + sd * qx * sn); ids.push(i); }
+    const n = ids.length || 1, el = new Float32Array(ids.length * 3); mx /= n; my /= n; mz /= n;
+    for (let j = 0; j < ids.length; j++) {   // (its dent: in the mirror's own frame as built, added to the one it had)
+      const ex = E[j * 3] - mx, ey = E[j * 3 + 1] - my, ez = E[j * 3 + 2] - mz, pj = prev && prev.at.get(ids[j]);
+      let lx = ex * c0 + sd * ez * s0, ly = ey, lz = ez * c0 - sd * ex * s0; if (pj != null) { lx += prev.e[pj * 3]; ly += prev.e[pj * 3 + 1]; lz += prev.e[pj * 3 + 2]; }
+      const l = Math.hypot(lx, ly, lz), k = l > 0.05 ? 0.05 / l : 1; lx *= k; ly *= k; lz *= k; el[j * 3] = lx; el[j * 3 + 1] = ly; el[j * 3 + 2] = lz;
+      P[j * 3] += lx * cs - sd * lz * sn; P[j * 3 + 1] += ly; P[j * 3 + 2] += lz * cs + sd * lx * sn; }
+    // the skin beside it: the body's outermost point there (its outer shell; the mirror's own ranges, what is gone and what hangs open left
+    // out), the turned mirror moved across onto it (a half fold only out of it), flat: squashed to 60 % of its depth against it
+    let skin = -1e9; const y0 = Mi.y - Mi.h, y1 = Mi.y + Mi.h * 0.5, xa = xh - Mi.d - 0.03, xb = xh + 0.03, open = [];
+    for (const nm in K.ajar) if (U.ranges[nm] && nm !== name) open.push(U.ranges[nm].o);
+    for (let i = 0; i < U.outerN; i++) { if ((i >= R.o[0] && i < R.o[1]) || (dv && dv[i]) || open.some(Q => i >= Q[0] && i < Q[1])) continue; const px = pa[i * 3], py = pa[i * 3 + 1]; if (px < xa || px > xb || py < y0 || py > y1) continue; const sz = sd * pa[i * 3 + 2]; if (sz > skin) skin = sz; }
+    let lo = 1e9; for (let j = 0; j < ids.length; j++) lo = Math.min(lo, sd * P[j * 3 + 2]);
+    if (skin > -1e8 && lo < 1e8) { let dl = clamp(skin + 0.004 - lo, -0.3, 0.3); if (deg < 90) dl = Math.max(0, dl); const zt = lo + dl;
+      for (let j = 0; j < ids.length; j++) { let w = sd * P[j * 3 + 2] + dl; if (deg >= 90) w = zt + (w - zt) * 0.6; P[j * 3 + 2] = sd * w; } }
+    const at = new Map(); ids.forEach((i, j) => { at.set(i, j); pa[i * 3] = P[j * 3]; pa[i * 3 + 1] = P[j * 3 + 1]; pa[i * 3 + 2] = P[j * 3 + 2]; });
+    FB[name] = { at, b: Float32Array.from(P), e: el, deg };
     const tris = new Set(); for (const Q of [R.o, R.i]) for (let t = Q[0] / 3; t < Q[1] / 3; t++) tris.add(t);
     refacet(geo, tris); geo.attributes.position.needsUpdate = true; geo.attributes.normal.needsUpdate = true;
-    (K.fold || (K.fold = {}))[name] = deg; K.ajar[name] = 1; K.ver++;
-    if (v.xc) for (const i of moved) v.xc.am[i] = Math.max(v.xc.am[i], 0.05);   // (pushed: the paint pass scrapes it)
+    (K.fold || (K.fold = {}))[name] = deg; K.ver++;   // (not ajar: no gap opens, the inside stays undrawn)
+    if (v.xc) for (const i of ids) v.xc.am[i] = Math.max(v.xc.am[i], 0.05);   // (pushed: the paint pass scrapes it)
   }
   // a blow on the Kolibri (the core's dent): its row of the table, as above
   function xTabHit(v, d, c, x, y, z, h) {
@@ -6967,12 +6985,12 @@ const Render = (function () {
     if (rear && !rAgain) { const n = ++S.rear, R1 = XT_TAB.T[zone][1];   // (the user's order from behind)
       if (n === 2) fx.lamp.push(...R1.lamp); if (n === 3) fx.hang.push('spoiler'); if (n >= 4) fx.off.push('spoiler'); }
     for (const key in fx.g) G(key, fx.g[key], key === hit ? d : null);
-    if (!again && Z.n >= 2) bump(hit, d);   // (again here: its pane a stage on)
+    if (!(rear ? rAgain : again) && Z.n >= 2) bump(hit, d);   // (again here: its pane a stage on; from behind once a crash, whichever of its zones)
     if (!v.xOn) return;
     const K = v.kit, U = v.body.geometry.userData, nm = (n) => n === 'spoiler' && !U.ranges.spoiler && U.ranges.wing ? 'wing' : n;   // (the spoiler: a wing where the car has one)
     fx.hang = fx.hang.map(nm); fx.off = fx.off.map(nm);
     for (const k of fx.lamp) (v.xLamp || (v.xLamp = [0, 0, 0, 0]))[k] = 1;
-    for (const name of fx.hang) if (U.ranges[name] && !K.ajar[name] && !K.dead[name] && !fx.off.includes(name)) kitLoosen(v, c, name, name === 'spoiler' || name === 'wing' ? 26 : null);
+    for (const name of fx.hang) if (U.ranges[name] && !K.ajar[name] && !K.dead[name] && !(K.fold && K.fold[name]) && !fx.off.includes(name)) kitLoosen(v, c, name, name === 'spoiler' || name === 'wing' ? 26 : null);
     for (const [name, deg] of fx.fold) { if (!U.ranges[name] || K.dead[name] || fx.off.includes(name)) continue;   // (folded flat already and struck as hard again there: it comes off)
       if (deg >= 90 && (K.fold && K.fold[name]) >= 90 && !again) fx.off.push(name); else kitFold(v, c, name, deg); }
     for (const name of fx.off) { xtOff(v, c, name, x, y, z, h); if (/^head/.test(name)) (v.xLamp || (v.xLamp = [0, 0, 0, 0]))[name === 'headL' ? 0 : 1] = 1; }
