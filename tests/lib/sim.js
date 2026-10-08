@@ -37,7 +37,9 @@ const SETUPS = {
 // with pits it then drives into the pits and stays in the lane until the crew has repaired the car. CRASH_AT: a track where the crash
 // starts earlier: Katu-Jaryk runs downhill from the start, by 6 s the car is in the plateau's fast left-hander at 140 km/h and the left
 // lock only grazes the inside barrier there; 1.5 s earlier every car of the crash set-ups goes off across the outside of the right-hander before it
-const CRASH_AT = { katu: 4.5 };
+// Sani Pass: a second earlier, into the hairpin's wall nose first and on into the next: by 6 s only the nose was hit, which takes no panel
+// off below 70 % (a car keeps its face and tail till then: MASK in core.js)
+const CRASH_AT = { katu: 4.5, sani: 5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, t0 = CRASH_AT[race.track.def.id] || 6;
   if (stuck) race.rescue(P);
