@@ -726,12 +726,14 @@
   const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 the safety car there, 4 its lamps on; 20 min at most)
   let recd = null, replay = null;
   function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map() }; }
+  // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
+  const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
     const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX) return;
     R.next = race.time + REC_DT;
     const n = R.n, f = new Float32Array(1 + (n + 1) * REC_W); f[0] = race.time;
     const put = (c, o, bits) => { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
-    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0); }
+    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (c.rl ? rlBits(c.rl) : 0)); }
     const S = race.fl && race.fl.sc; if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0));
     R.frames.push(f);
     if (!race.timeTrial && !(mp && mp.race)) recPasses(R);
@@ -809,6 +811,7 @@
   function replayEnd() {
     if (!replay) return;
     hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
+    if (recd) for (const c of recd.cars) if (c.rl) delete c.rl;   // (a roll the replay posed: over with it)
     hlvStop();   // (the best moment's video: done)
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
@@ -837,6 +840,8 @@
     const L = (j) => A[o + j] + (B[o + j] - A[o + j]) * u;
     c.x = c.px = L(0); c.y = c.py = L(1); c.z = c.pz = L(2); c.h = c.ph = A[o + 3] + Core.wrapPi(B[o + 3] - A[o + 3]) * u;
     c.vl = L(4); c.delta = L(5); c.inBrk = A[o + 6] & 1 ? 1 : 0; c.vx = Math.cos(c.h) * c.vl; c.vz = Math.sin(c.h) * c.vl;
+    if (A[o + 6] >= 8) { const qa = Math.floor(A[o + 6] / 8) - 1, qb = B[o + 6] >= 8 ? Math.floor(B[o + 6] / 8) - 1 : -1, sa = (qa & 1023) / 1023, sb = qb >= 0 && (qb >> 10) === (qa >> 10) ? (qb & 1023) / 1023 : sa;   // (rolling over: posed as it was, Razbijanje · nov način)
+      c.rl = { t: sa + (sb - sa) * u, T: 1, turns: qa & 1024 ? 2 : 1, dir: qa & 2048 ? 1 : -1, H: 0, k: 0 }; } else if (c.rl) delete c.rl;
     const gv = Math.abs(c.vl) / 14;   // (the gear and the revs as they might have been: a gear every 14 m/s; the cockpit's instruments)
     c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0);   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});

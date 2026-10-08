@@ -35,8 +35,8 @@ try {
   const off = await run({}, () => { const P = window.__game.race.player, I = Render.crashInfo(), me = I.cars.find(q => q.player);
     Core.applyDamage(P, 0.12, P.m.len / 2, 0); Render.frame(0.016, 1, P, 'iso', {});
     const I2 = Render.crashInfo(), me2 = I2.cars.find(q => q.player);
-    return { XC: I.XC, xOn: me.xOn, xd: me.xd, dense: I.cars.filter(q => q.xd).length, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, cl: me2.cl.length, shards: I2.shards, ground: I2.ground }; });
-  T.check('off by default: no switch on, no car dense, the body as the kit built it', !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
+    return { XC: I.XC, XR: Object.assign({}, Core.XR), xOn: me.xOn, xd: me.xd, dense: I.cars.filter(q => q.xd).length, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, cl: me2.cl.length, shards: I2.shards, ground: I2.ground }; });
+  T.check('off by default: no switch on (Core: roll, bump, ai, handle; Render: body, glass, paint, parts, drag, dust), no car dense, the body as the kit built it', JSON.stringify(off.r.XR) === '{"roll":0,"bump":0,"ai":0,"handle":0}' && !off.r.XC.parts && !off.r.XC.drag && !off.r.XC.dust && !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
   T.check('off: a dent the old way (no clusters), nothing on the road', off.r.cl === 0 && off.r.shards === 0 && off.r.ground === 0, JSON.stringify(off.r));
   T.check('off: no page errors', !off.errors.length, off.errors.slice(0, 3).join(' | '));
 

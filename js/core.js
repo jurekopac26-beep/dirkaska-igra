@@ -1498,9 +1498,9 @@ const Core = (function () {
   // Razbijanje · nov način: agresivni AI (xAi; off: aiControl as before). A third of the rivals (by id) are on the attack four seconds in
   // twelve: they aim at the rear quarter of the car 3-22 m ahead of them (within 5 m across) instead of their line
   function xRamTarget(c, race) {
-    if ((c.id * 7) % 3 !== 0 || ((race.time || 0) + c.id * 3.7) % 12 > 4) return null;
-    const ch = Math.cos(c.h), sh = Math.sin(c.h); let best = null, bd = 22;
-    for (const o of race.cars) { if (o === c || o.rl || o.inPit) continue; const dx = o.x - c.x, dz = o.z - c.z, f = dx * ch + dz * sh, l = -dx * sh + dz * ch; if (f < 3 || f > bd || Math.abs(l) > 5) continue; bd = f; best = o; }
+    if ((c.id * 7) % 3 !== 0 || ((race.time || 0) + c.id * 3.7) % 12 > 4 || c.finished || race.cars.indexOf(c) < 0 || race.isOut(c)) return null;   // (a race's own rival: not the safety car, the police or traffic)
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), T = race.track; let best = null, bd = 22;
+    for (const o of race.cars) { if (o === c || o.rl || o.inPit || o.finished || o.air || o.fall || o.speed < 6 || race.isOut(o) || (o.q && Math.abs(o.q.d) > (T.w || 6))) continue; const dx = o.x - c.x, dz = o.z - c.z, f = dx * ch + dz * sh, l = -dx * sh + dz * ch; if (f < 3 || f > bd || Math.abs(l) > 5) continue; bd = f; best = o; }
     if (!best) return null;
     const oh = Math.cos(best.h), os = Math.sin(best.h), rq = -best.m.len * 0.35, sq = ((c.id + best.id) % 2 ? 1 : -1) * best.m.wid * 0.35;
     return [best.x + oh * rq - os * sq, best.z + os * rq + oh * sq];
@@ -1613,11 +1613,12 @@ const Core = (function () {
     // rolling over (xRollStart): it slides on, the road's drag slowing it, up in an arc and down; the roof on the road once a turn
     xRollStep(dt) {
       const r = this.rl; r.t += dt;
+      this.latR = this.slipR = this.slipF = this.spin = this.drift = this.lock = 0;   // (no grip, no wheel on the road: no skid marks, smoke or squeal while it rolls)
       const sp = Math.hypot(this.vx, this.vz), dec = Math.min(sp, 3 * dt); if (sp > 1e-6) { this.vx -= this.vx / sp * dec; this.vz -= this.vz / sp * dec; }
       this.x += this.vx * dt; this.z += this.vz * dt; this.h = wrapPi(this.h + this.w * dt); this.w *= Math.exp(-dt * 3);
       const s = Math.min(1, r.t / r.T); this.y = this.roadY + r.H * 4 * s * (1 - s); this.vy = 0;
       const k = Math.floor(s * r.turns + 0.5);
-      if (k > r.k) { r.k = k; if (this.dmgMode) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); this.dmg = Math.min(0.97, this.dmg + 0.04); } }
+      if (k > r.k) { r.k = k; if (this.dmgMode) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04)); } }   // (never lowers a wreck's)
       if (r.t >= r.T) { delete this.rl; this.y = this.roadY; this.vx *= 0.8; this.vz *= 0.8; this.w = 0; }
     }
     stepCS(dt, trk) {
@@ -5012,6 +5013,7 @@ const Core = (function () {
       const T = this.track;
       if (c.ty && !c.isPlayer) c.pitWant = false;   // (an AI car in for tyres: it tries again from the next lap)
       if (c.fall) { c.fall = null; c.air = 0; c.vy = 0; }   // (put back while falling off a drop)
+      if (c.rl) delete c.rl;   // (Razbijanje · nov način: put back while rolling over: on its wheels)
       const s = c.q.s, s0d = c.q.d || 0;
       let i = T.idx(s);
       if (T.open) i = clamp(i, 3, T.N - 4);   // not into the wall at an end of the road

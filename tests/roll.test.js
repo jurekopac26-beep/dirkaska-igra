@@ -2,7 +2,8 @@
 // - off: a hard knock on a car's side never rolls it (no rl), the cars as before
 // - on: a car T-boned at 16 m/s rolls over away from the knock (one or two full turns), the car that hit it nose first does not; it slides
 //   on without grip, up in an arc and down, the roof on the road once a turn (a dent on top, the roof crushed further), and after 1.2-1.6 s
-//   it is on its wheels again (no rl), slower than it was (about 80 % of its speed less the road's drag), nothing NaN; a soft knock (5 m/s) rolls nothing
+//   it is on its wheels again (no rl), slower than it was (about 80 % of its speed less the road's drag), nothing NaN; a soft knock (5 m/s) rolls nothing,
+//   nor does a friend's car online (net)
 //   node tests/roll.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -38,6 +39,7 @@ C.setCrash({ roll: 1 });
   ok('on: nothing NaN', !nan, '');
 }
 { const { A, B, imp } = tbone(5); ok('on: a soft knock rolls nothing', !A.rl && !B.rl, 'impact ' + imp.toFixed(1)); }
+{ const A = mkCar('tornado', { v: 29 }), B = mkCar('tornado', { v: 0 }); A.net = true; B.place(0.3, 3.45, -Math.PI / 2); B.vx = 0; B.vz = -16; const imp = C.carCollide(A, B); ok('on: a friend\'s car in an online race (net) never rolls', !A.rl && !B.rl && imp > 9, 'impact ' + imp.toFixed(1)); }
 C.setCrash({ roll: 0 });
 
 let bad = 0;

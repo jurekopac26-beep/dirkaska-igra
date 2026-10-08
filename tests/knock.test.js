@@ -1,7 +1,8 @@
 // Razbijanje · nov način: odboji, agresivni vozniki, poškodbe vplivajo na vožnjo (Core.setCrash({ bump, ai, handle }), Nastavitve xBump,
 // xAi, xHandle; all off by default, never online)
 // - odboji: a car knocked on its rear quarter at speed: off, it hardly turns (the old damped tap) and no new field on the car; on, it
-//   turns as hard as the knock says (a harder one spins it round) and its grip goes for under a second (xgl, gone again after)
+//   turns as hard as the knock says (a harder one spins it round) and its grip goes for under a second (xgl, gone again after); a friend's
+//   car online (net) never
 // - agresivni vozniki: a 90 s race on Jezero (13 cars): on, more hard knocks between the cars and more damage than off, every car still
 //   on its laps, nothing NaN
 // - poškodbe vplivajo na vožnjo: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at
@@ -18,15 +19,15 @@ const checks = [];
 const ok = (name, cond, detail) => checks.push({ name, ok: !!cond, detail });
 
 // a knock on the rear quarter: A at 100 km/h along x, B from behind on its left, nose angled into A's left rear quarter at vb
-function tap(bump, vb) {
+function tap(bump, vb, net) {
   C.setCrash({ bump });
-  const A = H.mkCar('tornado', { v: 100 }), B = H.mkCar('tornado', { v: 0 }), L = A.m.len, W = A.m.wid;
+  const A = H.mkCar('tornado', { v: 100 }), B = H.mkCar('tornado', { v: 0 }), L = A.m.len, W = A.m.wid; if (net) A.net = true;
   B.place(-L * 0.35 - L * 0.5 * Math.cos(0.5) + 0.05, -W * 0.5 - L * 0.5 * Math.sin(0.5) + 0.25, 0.5); B.vx = vb * Math.cos(0.5); B.vz = vb * Math.sin(0.5);
-  const imp = C.carCollide(A, B), gl = A.xgl || 0, h0 = A.h;
+  const w0 = A.w, imp = C.carCollide(A, B), gl = A.xgl || 0, h0 = A.h, w1 = A.w;
   let t = 0, turn = 0, glGone = null, field = 'xgl' in A || 'xgl' in B, nan = false;
   while (t < 2.5) { H.step(A, { thr: 'hold', st: 0 }); t += DT; turn = Math.max(turn, Math.abs(A.h - h0) * D); if (glGone == null && !('xgl' in A)) glGone = t; if (![A.x, A.z, A.vx, A.vz, A.h].every(Number.isFinite)) nan = true; }
   C.setCrash({});
-  return { imp, gl, turn, glGone, field, nan };
+  return { imp, gl, turn, glGone, field, nan, wSame: w1 === w0 };
 }
 {
   const off = tap(0, 38), on = tap(1, 38), hard = tap(1, 45), soft = tap(1, 33);
@@ -35,6 +36,7 @@ function tap(bump, vb) {
   ok('odboji on: a harder knock spins it round, a softer one less', hard.turn > 90 && soft.turn < on.turn && soft.turn > off.turn, [soft, on, hard].map(r => r.turn.toFixed(0) + '°').join(' < '));
   ok('odboji on: the grip gone for a moment (xgl), back within a second', on.gl > 0.3 && on.glGone != null && on.glGone < 1, 'xgl ' + on.gl.toFixed(2) + ', gone after ' + (on.glGone || 0).toFixed(2) + ' s');
   ok('odboji on: nothing NaN', !on.nan && !hard.nan && !soft.nan, '');
+  const net = tap(1, 38, true); ok('odboji on: a friend\'s car in an online race (net) is never turned nor loses grip', net.imp > 10 && !('xgl' in net) && net.gl === 0 && net.wSame, JSON.stringify({ imp: +net.imp.toFixed(1), gl: net.gl, w: net.wSame }));
 }
 
 // a 90 s race on Jezero, the player on autopilot
