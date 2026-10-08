@@ -2552,7 +2552,7 @@ const Render = (function () {
     const M = g.M;
     v.grp.visible = g.op > 0.01; mat.opacity = 0.42 * clamp(g.op, 0, 1); if (v.tag) v.tag.material.opacity = clamp(g.op, 0, 1);
     v.grp.position.set(g.x, g.y, g.z);
-    const gl = M.bike ? clamp(Math.atan(-(g.r || 0) / 0.0042 / 9.81), -0.95, 0.95) : 0;   // (a motorcycle's lean from the roll its run recorded: the corner's pull)
+    const gl = M.bike ? clamp(Math.atan(-(g.r || 0) / 0.0042 / 9.81), -1.05, 1.05) : 0;   // (a motorcycle's lean from the roll its run recorded: the corner's pull)
     v.grp.rotation.set(gl, -g.h, g.p || 0, 'YZX');
     v.bodyG.rotation.set(M.bike ? 0 : g.r || 0, 0, 0); v.bodyG.position.y = M.bike ? 0 : Math.abs(g.r || 0) * 0.4;
     const mv = Math.hypot(g.x - v.lx, g.z - v.lz); v.lx = g.x; v.lz = g.z;
@@ -5424,7 +5424,7 @@ const Render = (function () {
       const y = lerp(c.py, c.y, alpha), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
       v.grp.position.set(x, y + (jk ? crew.lift : 0), z);
       const lat = clamp(c.w * c.speed, -16, 16), sw = M.sway || 1;   // (sway: the truck's soft, tall body rolls and pitches more)
-      if (M.bike) v.lean = (v.lean || 0) + ((c.air ? 0 : clamp(Math.atan(lat / 9.81), -0.95, 0.95)) - (v.lean || 0)) * Math.min(1, dt * 8);   // a motorcycle leans into the corner (the rider with it: the whole of it, about its tyres' line), up to ~54 degrees; its body never rolls out
+      if (M.bike) v.lean = (v.lean || 0) + ((c.air ? 0 : clamp(Math.atan(lat / 9.81), -1.05, 1.05)) - (v.lean || 0)) * Math.min(1, dt * 8);   // a motorcycle leans into the corner (the rider with it: the whole of it, about its tyres' line), up to ~58 degrees (the pull's clamp); its body never rolls out
       else v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035 * sw, -0.045 * sw, 0.04 * sw) - v.pitch) * Math.min(1, dt * 7);
       // pitch with the road slope (nose up on climbs), or follow the arc while airborne

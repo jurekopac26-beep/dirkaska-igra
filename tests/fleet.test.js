@@ -54,7 +54,7 @@ const ENVELOPE = {
   tovornjaki: { t100: [5.5, 9], vmax: [125, 165], latG: [1.7, 1.95], d100: [29, 40] },        // (new: the racing truck, the rally-raid truck)
   elektricni: { t100: [2.3, 3.9], vmax: [185, 265], latG: [2.2, 2.5], d100: [22.5, 26] },     // ev 2.50 / 252 / 2.43 / 24.0
   posebni: { t100: [2.8, 6.5], vmax: [150, 285], latG: [1.85, 2.5], d100: [21, 33] },         // (new: the racing van, the limousine, the monster truck)
-  moto: { t100: [2.2, 4.5], vmax: [140, 305], latG: [1.8, 2.25], d100: [24, 31] },            // (new: the motorcycles: quick off the line, less grip than a car, longer stops)
+  moto: { t100: [2.2, 4.5], vmax: [140, 345], latG: [1.8, 2.35], d100: [22.5, 31] },          // (new: the motorcycles: quick off the line, the racing one the fastest on a straight, less grip than a car)
 };
 const STD = ['bumperF', 'bumperR', 'hood', 'trunk', 'fenderL', 'fenderR', 'quarterL', 'quarterR', 'doorL', 'doorR', 'mirrorL', 'mirrorR', 'wing', 'wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
 const WHEELS = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];

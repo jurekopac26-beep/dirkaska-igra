@@ -965,7 +965,7 @@ Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik L
 
 ## Vozni park
 
-V igri je **44 vozil** v enajstih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM, med njimi prvi motor, KANJA 1000 (glej **Motor KANJA 1000**). Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
+V igri je **44 vozil** v enajstih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM, med njimi prvi motor, dirkalni KANJA GP (glej **Dirkalni motor KANJA GP**). Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
 
 - **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju zaslon za izbiro avta odpre vrstica *Your car* na koraku s progo; **Nazaj** ali **Naprej** te vrne na isto progo.
 - **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK z 9 tekmeci, GOLJAT s 7, KAMEN PUŠČAVA s 5. S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
@@ -1069,7 +1069,7 @@ V igri je **44 vozil** v enajstih kategorijah, od karta s 30 KM do pošastnega t
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **KANJA 1000** | zadnje kolo | 210 KM | 275 kg z voznikom | 45.000 € | Superšportni motor s polnim oklepom: voznik sključen za šipo, v ovinkih se nagne v zavoj (glej spodaj). |
+| **KANJA GP** | zadnje kolo | 290 KM | 230 kg z voznikom | 95.000 € | Dirkalni motor za dirkališča: krilca na nosu, gladke gume, v ovinkih se nagne v zavoj (glej spodaj). |
 
 ### Dirkalni tovornjak TITAN
 
@@ -1147,15 +1147,15 @@ V izbiri avta je **TAIFUN LM**, prototip za vzdržljivostne dirke, kot jih vozij
 - Na makadamu, travi in produ ima več oprijema kot kateri koli cestni avto, podlaga pa ga zavira manj: na makadamu pospeši od 0 do 100 km/h v 3,0 s (relijski avto v 4,1 s), po travi pelje ~170 km/h (relijski avto ~143 km/h). Najbolj pride do izraza na Ouninpohji in Gorskem reliju.
 - Po skokih mehko pristane: poškoduje ga šele trši pristanek kot druge avte in pri tem izgubi manj hitrosti. Karoserija se v ovinkih in pri zaviranju bolj nagne. V kokpitu ima varnostno kletko kot relijski avto.
 
-## Motor KANJA 1000
+## Dirkalni motor KANJA GP
 
-**KANJA 1000** je izmišljen superšportni motor, prvi motor v igri (kategorija **Motorji**): polni oklep s koničastim nosom, dvema ozkima žarometoma in zatemnjeno šipo, stranska oklepa do trebuha pod motorjem, zlate vilice z dvema zavornima diskoma, dvostranska nihajka, rep, ki se dviga v ostro konico z lučjo, in kratek izpuh na desni. Voznik v kombinezonu barve motorja in beli čeladi je sključen za šipo, s koleni ob rezervoarju in škornji na stopalkah. Številka je na obeh stranskih oklepih in na repu.
+**KANJA GP** je izmišljen dirkalni motor za dirkališča, kakršne vozijo v svetovnem prvenstvu, in prvi motor v igri (kategorija **Motorji**). Nima luči ne ogledal: okrogel nos z veliko odprtino za zrak, nizka zatemnjena šipa, škatli s krilci ob straneh nosu, stranska oklepa do trebuha pod motorjem, zlate vilice in velika ogljikova zavorna diska v hladilnih pokrovih, gladke gume na črnih platiščih, ogljikova nihajka z lopatico spodaj, kratek visok rep z lučjo za dež in kratek titanov izpuh na desni. Voznik v usnjenem kombinezonu barve motorja in beli čeladi je sključen za šipo, na hrbtu ima aerodinamično grbo, na kolenih bele drsnike. Številka je na obeh stranskih oklepih in na vrhu repa.
 
-- Štirivaljnik 1000 ccm, 210 KM, 275 kg z voznikom, šest prestav, rdeče polje pri 14.000 vrt/min (zvok visokega štirivaljnika). Od 0 do 100 km/h pospeši v ~2,9 s, doseže ~286 km/h.
-- V ovinkih se nagne v zavoj, toliko, kolikor ga ovinek vleče vstran (do ~54°), z voznikom vred; senca ostane na cesti. Sprednje kolo zavija le malo, ker motor zavija z nagibom.
-- Ima manj oprijema kot avto (pri 100 km/h ~2,2 g, cestni avti ~2,3 g) in zavira dlje (s 100 km/h na ~27 m, avti na ~24 m). Na makadamu, travi in produ drsi (cestne gume).
-- Kamera za avtom in izometrična kamera sta pri motorju za petino bližje, ker je pol krajši od avta; sij žarometa in zadnje luči je manjši.
-- Ob trkih odletijo nosni oklep s šipo in žarometoma, levi in desni stranski oklep (pod njima se vidita motor in okvir), rep z lučjo in številko, izpuh in ogledali. Kolo je iz dveh polovic in vedno odpade celo. Trki ga poškodujejo bolj kot avto.
+- Štirivaljnik, 290 KM, 230 kg z voznikom, šest prestav, rdeče polje pri 18.000 vrt/min (zvok visokega štirivaljnika). Od 0 do 100 km/h pospeši v ~2,6 s, doseže ~336 km/h: na ravninah je najhitrejše vozilo v igri.
+- V ovinkih se nagne v zavoj, toliko, kolikor ga ovinek vleče vstran (do ~58°), z voznikom vred; senca ostane na cesti. Sprednje kolo zavija le malo, ker motor zavija z nagibom.
+- Ima malo manj oprijema kot dirkalni avti (pri 100 km/h ~2,25 g) in zavira kot cestni avto (s 100 km/h na ~24 m). Gume so gladke (slik): na makadamu, travi in produ drsi kot formula.
+- Kamera za avtom in izometrična kamera sta pri motorju za petino bližje, ker je pol krajši od avta; sij zadnje luči je manjši.
+- Ob trkih odletijo nosni oklep s šipo, škatli s krilci, levi in desni stranski oklep (pod njima se vidita motor in okvir), rep z lučjo in številko ter izpuh. Kolo je iz dveh polovic in vedno odpade celo. Trki ga poškodujejo bolj kot avto.
 - Z njim dirkajo tekmeci na enakih motorjih, vsak v svoji barvi in s svojo številko.
 - Slike v dirki s kamero za avtom in z izometrično kamero (na ravnini in v nagibu) izriše `node tools/bikeshots.mjs [id] [proga]`.
 
@@ -1221,7 +1221,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/cars/<id>.js` | ena datoteka na vozilo (34 novih vozil: 33 avtov in motor KANJA 1000): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
+| `js/cars/<id>.js` | ena datoteka na vozilo (34 novih vozil: 33 avtov in motor KANJA GP): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
 | `js/lang.js` | besedila v angleščini (slovar: slovensko besedilo → angleško), številke, denar in mesta po jeziku, prevod strani (`index.html`) ob zamenjavi jezika |
 | `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet (tudi tovornjaki in enosmerne ceste; po levi na progah z `leftHand`) in pešci na odprti cesti, galerije proti plazovom, prepadi brez ograj (avto zgrmi čez rob), policija, vozni park (vozila in kategorije, deli, ki odpadejo, izgubljena kolesa, odstop) (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
