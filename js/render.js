@@ -6155,7 +6155,7 @@ const Render = (function () {
     if (col) for (let i = 0; i < n; i++) { const o = i * 3; if ((Math.abs(col[o] - GLASS[0]) < 0.03 && Math.abs(col[o + 1] - GLASS[1]) < 0.03 && Math.abs(col[o + 2] - GLASS[2]) < 0.03) || (Math.abs(col[o] - KIT_GL2[0]) < 0.03 && Math.abs(col[o + 1] - KIT_GL2[1]) < 0.03 && Math.abs(col[o + 2] - KIT_GL2[2]) < 0.03)) keep[i] = 1; }
     if (kit) { keep.fill(1, outerN); for (const nm in U.ranges) for (const q of U.ranges[nm].subs) if (q.o) keep.fill(1, q.o[0], q.o[1]); if (U.nums) for (const Q of U.nums) for (const sl of Q.slots) for (const q of sl) if (q) keep.fill(1, q[0], q[1]); }
     v.xc = { cl: [], B, rest: p.slice(), nor0: geo.attributes.normal.array.slice(), col0: col ? col.slice() : null, keep, r1, r2, pn, rn, am: new Float32Array(n), cr: new Float32Array(n),
-      nd: null, flat: (() => { const f = new Uint8Array(n); if (kit) for (const nm of ['wing', 'bumperF', 'bumperR', 'spoiler', 'deflector']) { const R = U.ranges[nm]; if (!R) continue; for (const Q of [R.o, R.i]) if (Q && Q[1] > Q[0]) f.fill(1, Q[0], Q[1]); } return f; })(), outerN };
+      on: outerN, nd: null, flat: (() => { const f = new Uint8Array(n); if (kit) for (const nm of ['wing', 'bumperF', 'bumperR', 'spoiler', 'deflector']) { const R = U.ranges[nm]; if (!R) continue; for (const Q of [R.o, R.i]) if (Q && Q[1] > Q[0]) f.fill(1, Q[0], Q[1]); } return f; })(), outerN };
     return v.xc;
   }
   // a cluster's numbers from its blow's place (u, w: the car's half length / half width) and the sum of its blows (A)
@@ -6179,7 +6179,7 @@ const Render = (function () {
       out[0] = (r2 - 0.5) * amt * 0.3; out[1] = -amt + cr; out[2] = Math.sign(K.pz || 1) * amt * 0.15; out[3] = amt; out[4] = Math.abs(cr); return true;
     }
     const ex = x - K.px, ey = i >= 0 && xc.flat && xc.flat[i] ? 0 : (y - K.py) * 0.6, ez = z - K.pz, r = Math.sqrt(ex * ex + ey * ey + ez * ez);
-    const fold = K.end && (K.dx < 0 ? xc.B.x1 - x : x - xc.B.x0) < K.d * 1.3 + 0.25 && y < xc.B.y0 + xc.B.H * 0.45;   // (the crushed end's underside: folds up across its width, below)
+    const fold = K.end && (K.dx < 0 ? xc.B.x1 - x : x - xc.B.x0) < K.d * 1.3 + 0.25 && (y < xc.B.y0 + xc.B.H * 0.45 || i >= xc.on);   // (the crushed end's underside folds up across its width, its inside goes back behind its face: below)
     if (r >= K.R && !fold && (K.end || K.d <= 0.12 || Math.abs(ex) >= K.R * 1.15 || y < xc.B.y0 + xc.B.H * 0.6)) return false;
     const B = xc.B, f = r < K.R ? Math.pow(1 - r / K.R, 1.6) : 0, amt = K.d * f, up = clamp((y - B.y0) / B.H, 0, 1), topW = Core.sstep(B.y0 + B.H * 0.4, B.y0 + B.H * 0.55, y);
     let ox = K.dx * amt, oy = -0.1 * amt * up, oz = K.dz * amt;
@@ -6192,9 +6192,13 @@ const Render = (function () {
       if (sink > 0) { oy -= sink * (0.85 + 0.5 * (r1 - 0.5)); oz -= sd * sink * 0.35; oy += ((r1 - 0.5) * 0.6 + (r2 - 0.5) * 0.3) * sink * 0.8; ox += (r2 - 0.5) * sink * 0.3; }
     }
     if (K.end) {   // the crushed end's underside folds up with it, the deeper the crush the more: the chassis rails, the bay's floor and the bumper's lower edge bend upward (no wall down to the road)
-      const sE = K.dx < 0 ? B.x1 - x : x - B.x0, reach = K.d * 1.3 + 0.25;
-      if (sE < reach) { const low = 1 - clamp((y - B.y0) / (B.H * 0.45), 0, 1), lat = Math.max(0.4, 1 - Math.abs(z - K.pz) / (B.hw * 2.2)), k = 1 - Math.max(0, sE) / reach;
-        const lift = Math.min(0.5, K.d * 0.9) * k * low * lat; oy += lift; ox += (K.dx < 0 ? -0.6 : 0.6) * lift; }   // (up, and back with the crush)
+      const sE = K.dx < 0 ? B.x1 - x : x - B.x0, reach = K.d * 1.3 + 0.25, low = 1 - clamp((y - B.y0) / (B.H * 0.45), 0, 1);
+      if (sE < reach) { const lat = Math.max(0.55, 1 - Math.abs(z - K.pz) / (B.hw * 3)), k = 1 - Math.max(0, sE) / reach;
+        const lift = Math.min(0.6, K.d * 1.1) * k * low * lat; oy += lift; ox += (K.dx < 0 ? -0.6 : 0.6) * lift; }   // (up, and back with the crush)
+      if (i >= xc.on) {   // the inside (the bay, its floor, the engine's underlay): never ahead of the crushed end's face, where the outside was pushed to at its height
+        const rz = Math.abs(z - K.pz), dref = rz < K.R ? K.d * Math.pow(1 - rz / K.R, 1.6) : 0, front = K.dx < 0, lim = front ? B.x1 - dref - 0.04 : B.x0 + dref + 0.04;
+        if (front ? x + ox > lim : x + ox < lim) { const over = lim - (x + ox); ox += over; if (low > 0) oy += Math.abs(over) * 0.5 * low; }   // (what it pushes back of the floor folds up a little more)
+      }
     }
     if (K.end && K.d > 0.25) {   // the ridge across the bonnet / the boot lid behind the crushed end
       const s = ex * K.dx + ez * K.dz, lat = Math.abs(ex * K.dz - ez * K.dx) / B.hw, rid = Math.max(0, 1 - Math.abs(s - 0.42 * K.R) / (0.22 + 0.2 * K.d));
