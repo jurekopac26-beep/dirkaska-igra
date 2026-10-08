@@ -321,6 +321,13 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .ctl-row input[type="range"] { flex: 1; min-width: 110px; max-width: 220px; }
 .small-panel { width: min(360px, 80vw); }
 #s-results { justify-content: center; }
+/* KONEC IGRE (the wheel rule): the stopped car dimmed behind it, PONOVI IGRO as big as the screen allows */
+#s-over { justify-content: center; background: radial-gradient(ellipse at center, rgba(8,10,14,.35), rgba(8,10,14,.78)); }
+.over-panel { width: min(540px, 92vw); text-align: center; }
+.over-panel h2 { font-size: clamp(30px, 10vh, 52px); color: var(--chalk); }
+.over-panel .desc { margin: 0 auto 4px; }
+.over-go { display: block; width: 100%; margin-top: clamp(8px, 3vh, 18px); min-height: clamp(64px, 20vh, 120px); text-align: center; font: 400 italic clamp(32px, 12vh, 68px)/1 var(--f-display); letter-spacing: .03em; }
+.over-panel .btns.horiz { justify-content: space-between; }
 .res-panel { width: min(700px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
 .res-head { display: flex; align-items: center; gap: 16px; }
 .res-head h2 { margin: 0; }
