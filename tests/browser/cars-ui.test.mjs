@@ -182,8 +182,8 @@ try {
       for (const c of Core.CATS) { const L = want.filter(id => Core.MODELS.find(m => m.id === id).cat === c.id); if (!L.length) continue; out.push('#' + c.name); for (const id of L) out.push(c.id + ':' + Core.MODELS.find(m => m.id === id).name); }
       return out; }, expectOrder.toString());
     const heads = car.kids.filter(k => k[0] === '#'), Core_n = await page.evaluate(() => Core.MODELS.filter(m => !m.retired).length);
-    T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni), in the display order; the retired model not in it (the LEV S once)',
-      car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 10 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni' && car.kids.filter(k => k === 'mali:LEV S').length === 1,
+    T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni, Motorji), in the display order; the retired model not in it (the LEV S once)',
+      car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 11 && heads.length === 11 && heads[0] === '#Mali avti' && heads[9] === '#Posebni' && heads[10] === '#Motorji' && car.kids.filter(k => k === 'mali:LEV S').length === 1,
       JSON.stringify(car.kids.slice(0, 8)));
     T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 €), a tick on the one in the garage',
       car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /€|✓/.test(t)), JSON.stringify(car.chips));
