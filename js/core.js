@@ -1046,6 +1046,70 @@ const Core = (function () {
       return clamp(best * this.ds, 120, 400);
     }
 
+    // the HUD's corner signs (game.js updateNote, #h-note), built once (game.js asks at the race start): T.corners as they are (the arrows),
+    // the bends they miss (runs of curvature over 1/250 m^-1 one way that turn over 0.35 rad and touch no corner: 'fast', the gentle glyph,
+    // coloured by the tightest radius), the track's own bends (def.hudSigns 'bend') and the blue signs: the roundabouts (def.rings: where
+    // the route runs within r + hw + 8 m of the centre) and the chicanes (def.notes 'chicane', def.hudSigns 'chicane' | 'ring'). A corner
+    // within 15 m of a blue sign (or inside a 'bend') is left out: one steady sign instead of 2-3 arrows. T.corners itself never changes
+    // (the scenery, the sounds, qualiBack, the menu's corner count read it).
+    // [{ kind: 'corner'|'fast'|'bend'|'ring'|'chic', s0, s1, e, i0, dir (1 right, -1 left, 0 a roundabout), sev 0-3, hair }], by s0
+    // (m along the road from sample 0, as P.q.s); e: where it goes (4 m before a sign's start; a blue one 4 m before its end)
+    hudSigns() {
+      if (this._hs) return this._hs;
+      const N = this.N, ds = this.ds, L = this.len, k = this.k, open = this.open, def = this.def;
+      const at = (d) => open ? this.startS + d : (((this.startS + d) % L) + L) % L;   // metres after the start line -> s
+      const off = (a, b) => open ? b - a : ((((b - a) % L) + L * 1.5) % L) - L / 2;    // b - a along the loop
+      const near = (a, b, m) => { const x = off(a.s0, b.s0); return x <= a.s1 - a.s0 + m && x + b.s1 - b.s0 >= -m; };
+      const sevR = (r) => r < 28 ? 3 : r < 55 ? 2 : r < 110 ? 1 : 0;
+      const turn = (s0, s1) => { let t = 0, mk = 0; for (let s = s0; s <= s1; s += ds) { const q = k[this.idx(s)]; t += q * ds; mk = Math.max(mk, Math.abs(q)); } return { t, mk }; };
+      // a chicane's first way: the first run of one sign (from 15 m before it) that turns 0.2 rad
+      const first = (s0, s1) => { let g = 0, t = 0; for (let s = s0 - 15; s <= s1; s += ds) { const q = k[this.idx(s)], h = Math.sign(q); if (h !== g) { g = h; t = 0; } t += q * ds; if (Math.abs(t) >= 0.2) return g; } return Math.sign(turn(s0, s1).t) || 1; };
+      const blue = [], bends = [], out = [];
+      for (const r of def.rings || []) {
+        const R = r.r + (r.hw || 3) + 8, inside = (i) => Math.hypot(this.px[i] - r.c[0], this.pz[i] - r.c[1]) < R, W = (i) => open ? clamp(i, 0, N - 1) : (i + N) % N;
+        const ic = r.d != null ? this.idx(at(r.d)) : this.nearestIdx(r.c[0], r.c[1]); if (!inside(ic)) continue;
+        let a = ic, b = ic, n = 0;
+        while (n++ < N && W(a - 1) !== a && inside(W(a - 1))) a = W(a - 1);
+        n = 0; while (n++ < N && W(b + 1) !== b && inside(W(b + 1))) b = W(b + 1);
+        const s0 = a * ds; blue.push({ kind: 'ring', s0, s1: s0 + (open ? b - a : (b - a + N) % N) * ds, i0: a, dir: 0, sev: 0, hair: false });
+      }
+      const span = (a, b, t) => { const s0 = at(a), s1 = s0 + (b - a), i0 = this.idx(s0);
+        if (t === 'bend') { const q = turn(s0, s1), sev = sevR(1 / Math.max(q.mk, 1e-6)); bends.push({ kind: 'bend', s0, s1, i0, dir: Math.sign(q.t) || 1, sev, hair: sev === 3 && Math.abs(q.t) > 2.0 }); }
+        else blue.push({ kind: t === 'ring' ? 'ring' : 'chic', s0, s1, i0, dir: t === 'ring' ? 0 : first(s0, s1), sev: 0, hair: false }); };
+      for (const [a, b, t] of def.notes || []) if (t === 'chicane') span(a, b, 'chicane');
+      for (const [a, b, t] of def.hudSigns || []) span(a, b, t);
+      out.push(...blue, ...bends);
+      const inC = new Uint8Array(N);
+      for (const c of this.corners) {
+        const len = (open ? c.i1 - c.i0 : (c.i1 - c.i0 + N) % N) * ds, g = { kind: 'corner', s0: c.s0, s1: c.s0 + len, i0: c.i0, dir: c.dir, sev: c.sev, hair: c.sev === 3 && c.angle > 2.0 };
+        for (let n = 0, i = c.i0; n <= len / ds; n++, i = (i + 1) % N) inC[i] = 1;
+        if (!blue.some(x => near(x, g, 15)) && !bends.some(x => near(x, g, 0))) out.push(g);
+      }
+      let start = 0; if (!open) for (let i = 0; i < N; i++) if (Math.abs(k[i]) < 1 / 400) { start = i; break; }   // (as _buildCorners)
+      let cur = null;
+      for (let n = 0; n <= N; n++) {
+        const i = (start + n) % N, on = n < N && Math.abs(k[i]) > 1 / 250, g = Math.sign(k[i]);
+        if (cur && (!on || g !== cur.dir)) {
+          const s0 = cur.i0 * ds, f = { kind: 'fast', s0, s1: s0 + cur.n * ds, i0: cur.i0, dir: cur.dir, sev: sevR(1 / cur.mk), hair: false };
+          if (Math.abs(cur.t) > 0.35 && !cur.hit && !blue.some(x => near(x, f, 15)) && !bends.some(x => near(x, f, 15))) out.push(f);
+          cur = null;
+        }
+        if (on) { if (!cur) cur = { i0: i, n: 0, dir: g, t: 0, mk: 0, hit: 0 }; cur.n++; cur.t += k[i] * ds; cur.mk = Math.max(cur.mk, Math.abs(k[i])); cur.hit |= inC[i]; }
+      }
+      for (const g of out) g.e = (g.kind === 'ring' || g.kind === 'chic' ? g.s1 : g.s0) - 4;
+      return (this._hs = out.sort((a, b) => a.s0 - b.s0));
+    }
+    // the sign the HUD shows at s (m along the road, P.q.s) at v m/s: the nearest one ahead from 35 + 2.3 v m before it until its e; a blue
+    // one stays up while the car is in it. A lap wraps only on a circuit (an open road's start is never 'ahead' of its finish)
+    signAt(s, v) {
+      const H = this.hudSigns(), L = this.len, look = 35 + 2.3 * v; let best = null, bd = 1e9;
+      for (const g of H) {
+        let d = g.s0 - s; if (!this.open) { if (d < -L / 2) d += L; else if (d > L / 2) d -= L; }
+        if (d + g.e - g.s0 > 0 && d < look && d < bd) { bd = d; best = g; }
+      }
+      return best;
+    }
+
     // pace notes of a rally stage (open roads), as a co-driver reads them (game.js speaks each call ahead of the car): the bends graded by
     // their tightest radius from one (the slowest) to six, 'flat' for a gentle one, hairpins and square junctions; long, tightens, opens;
     // the jumps and crests (def.bumps by height; one inside a bend is read with it: 'over crest'). Calls: what follows within 30 m is
