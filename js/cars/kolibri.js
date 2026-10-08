@@ -139,6 +139,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the nose: the big square head lamps on the lamp face (parts of their own), the slim grille between them (with the body) ----
         for (const sd of [-1, 1]) { const hz = sd < 0 ? 'headL' : 'headR';   // (each lamp a part of its own: its ring, lens, reflectors and bulbs leave together)
           K.headLamp(1.687, 0.675, sd * 0.468, 0.1, { shape: 'rect', w: 0.27, h: 0.21, ring: B, host: hz });
+          K.rect(1.6835, 0.675, sd * 0.468, 0.25, 0.19, [0.05, 0.05, 0.055], { part: 'body' });   // (its socket, dark: seen once the lamp is knocked out)
           for (const dz of [-0.066, 0.066]) {   // (behind the lens two reflector bowls, the main and the dipped beam, a bulb in each)
             K.discX(1.6925, 0.675, sd * 0.468 + dz, 0.06, 8, [0.7, 0.72, 0.76], 1, { host: hz });
             K.discX(1.6935, 0.675, sd * 0.468 + dz, 0.02, 6, [1, 0.99, 0.94], 1, { host: hz }); } }
@@ -232,12 +233,27 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.cyl([0.3, 0.93, -0.31], [0.27, 0.97, -0.31], 0.17, [0.06, 0.06, 0.07], { n: 8, inner: true, part: 'body' });
         K.engine(1.24, 0.3, 0, { l: 0.4, w: 0.62, h: 0.36 });
         K.box(1.24, 0.69, 0, 0.3, 0.05, 0.42, 0, [0.62, 0.63, 0.66], null, false, { inner: true, part: 'body' });
-        K.box(1.6, 0.3, 0, 0.05, 0.38, 1.0, 0, D, null, false, { inner: true, part: 'body' });
         { const o = { inner: true, part: 'body' };   // (round the engine: the battery, the air filter's drum, the strut tops, the brake fluid's reservoir)
           K.box(0.98, 0.42, 0.44, 0.2, 0.17, 0.14, 0, [0.08, 0.08, 0.09], [0.16, 0.16, 0.18], true, o);
-          K.cyl([1.0, 0.56, -0.43], [1.0, 0.7, -0.43], 0.085, [0.1, 0.1, 0.11], Object.assign({ n: 8, capB: [0.62, 0.63, 0.66] }, o));
-          for (const sd of [-1, 1]) K.cyl([1.15, 0.5, sd * 0.56], [1.15, 0.8, sd * 0.56], 0.06, [0.2, 0.2, 0.22], Object.assign({ n: 6, capB: [0.5, 0.5, 0.53] }, o));
-          K.cyl([0.92, 0.6, -0.2], [0.92, 0.7, -0.2], 0.035, [0.9, 0.82, 0.4], Object.assign({ n: 6, capB: [0.12, 0.12, 0.13] }, o)); }
+          K.cyl([1.0, 0.56, -0.43], [1.0, 0.7, -0.43], 0.085, [0.1, 0.1, 0.11], Object.assign({ n: 6, capA: null, capB: [0.62, 0.63, 0.66] }, o));
+          for (const sd of [-1, 1]) K.box(1.15, 0.5, sd * 0.56, 0.1, 0.3, 0.1, 0, [0.2, 0.2, 0.22], [0.5, 0.5, 0.53], true, o);
+          K.box(0.92, 0.6, -0.2, 0.06, 0.1, 0.06, 0, [0.9, 0.82, 0.4], [0.12, 0.12, 0.13], true, o); }
+        // ---- the front's structure behind the bumper (seen once the bumper hangs or is off, as in a real car with its bumper torn away):
+        //      the radiator support's panel across the nose, its posts by the fenders, the radiator in front of it (fins across), the
+        //      frame rails' ends with the steel crash bar on them, the cross member under it, the inner aprons closing the arches' fronts:
+        //      no hollow nose. The tail likewise: the rear panel behind the bumper, its crash bar ----
+        { const o = { inner: true, part: 'body' }, ST = [0.15, 0.15, 0.16], od = (d) => Object.assign({ dir: d }, o);
+          K.rect(1.56, 0.37, 0, 1.3, 0.3, K.shade(P, 0.62), od('x'));   // (the support panel, the posts and the aprons in the body's paint, darker: steel)
+          K.box(1.6, 0.27, 0, 0.05, 0.41, 0.86, 0, [0.42, 0.44, 0.47], null, true, o);   // (the radiator's core, aluminium; dark fins across it)
+          for (const y of [0.34, 0.42, 0.5, 0.58]) K.rect(1.6265, y, 0, 0.82, 0.016, [0.12, 0.12, 0.13], od('x'));
+          for (const sd of [-1, 1]) {
+            K.rect(1.586, 0.375, sd * 0.645, 0.07, 0.33, K.shade(P, 0.8), od('x'));
+            K.rect(1.54, 0.365, sd * 0.675, 0.13, 0.33, K.shade(P, 0.55), od(fz(sd)));
+            K.rect(1.57, 0.37, sd * 0.4, 0.14, 0.09, ST, od('y')); }
+          K.rect(1.585, 0.225, 0, 1.3, 0.05, ST, od('x'));
+          K.box(1.665, 0.27, 0, 0.05, 0.1, 1.24, 0, ST, null, true, o);
+          K.rect(-1.6, 0.37, 0, 1.3, 0.28, K.shade(P, 0.62), od('-x'));
+          K.box(-1.665, 0.27, 0, 0.05, 0.1, 1.24, 0, ST, null, true, o); }
         // ---- the dashboard's top (the outer shell, matte): from the windscreen's foot under the cowl's crown back over the dash, so the
         //      driver never looks under the short bonnet into the nose (the road, the wheel tubs) above the cockpit's own dashboard ----
         { const A = [0.8, 0.945, 0], E = [0.55, 0.855, 0], o = { part: 'body', noCrush: true };
