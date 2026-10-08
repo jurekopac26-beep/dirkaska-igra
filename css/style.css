@@ -650,7 +650,7 @@ select.txt:disabled { opacity: .75; }
 /* the timing tower: the order with the gaps, as on TV, at the right under the map (upright and on its side; the team radio has the left
    column, under the tyres); out of the way of the destroyed car's banner (also under the map) */
 #h-tower { display: none; flex-direction: column; gap: 1px; position: fixed; margin: 0; right: calc(62px + var(--sr)); top: calc(14px + var(--st) + clamp(72px, 22vh, 112px)); width: clamp(96px, 30vh, 150px); font: 700 italic clamp(8px, 2.4vh, 11px)/1 var(--f-ui); color: #fff; }
-@media (orientation: portrait) { #h-tower { right: calc(8px + var(--sr)); top: calc(66px + var(--st) + clamp(64px, 20vw, 100px)); width: clamp(96px, 30vw, 136px); font-size: clamp(9px, 2.6vw, 11.5px); } }
+@media (orientation: portrait) { #h-tower { right: calc(8px + var(--sr)); top: calc(66px + var(--st) + clamp(64px, 20vw, 100px)); width: clamp(84px, 27vw, 130px); font-size: clamp(9px, 2.6vw, 11.5px); } }   /* (as wide as the map above it) */
 #hud:has(#h-wreck.show) #h-tower { visibility: hidden; }
 #hud.tw #h-tower { display: flex; }
 #hud.tt #h-tower, #hud.pol #h-tower { display: none; }
