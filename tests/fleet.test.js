@@ -89,7 +89,7 @@ const t0 = Date.now(), orig = Math.random;
     iCars[0] > iTrack && iCars[iCars.length - 1] < iCore && iCars.every((v, i) => !i || v === iCars[i - 1] + 1), cars.length + ' tags');   // (js/lang.js may sit between the tracks and the vehicles)
   // the real car the retired model at index 5 once was: gone from the game, its packed model (js/data/p206.js) and its source (a .glb file),
   // its maker's name nowhere in the page, the scripts, the styles, the tools, the tests or the READMEs, nor in a file's name (the name is
-  // split here, so this file does not carry it either)
+  // split here, so this file does not carry it either). js/data/ also holds tracks' data (Montréal's): only that packed model is barred from the page
   const BRAND = new RegExp(['peu', 'geot'].join(''), 'i'), hits = [], glbs = [];
   const scan = (rel) => { const f = path.join(ROOT, rel); if (BRAND.test(rel)) hits.push(rel);
     if (fs.statSync(f).isDirectory()) { for (const e of fs.readdirSync(f)) if (e !== 'node_modules' && e !== 'test-results' && e !== '.git') scan(path.join(rel, e)); return; }
@@ -97,7 +97,7 @@ const t0 = Date.now(), orig = Math.random;
     else if (/\.(js|mjs|cjs|html|css|md|json|webmanifest|txt|svg|yml|yaml)$/i.test(rel) && BRAND.test(fs.readFileSync(f, 'utf8'))) hits.push(rel); };
   for (const e of fs.readdirSync(ROOT)) if (e !== 'node_modules' && e !== 'test-results' && e !== '.git' && e !== '.claude') scan(e);
   check('the real car is gone: no word of its maker in the page, the scripts (js/**), the styles, the tools, the tests or the READMEs (nor in a file\'s name); its packed model (js/data/p206.js) and its 3D model file (.glb) not in the game, not linked',
-    !hits.length && !glbs.length && !fs.existsSync(path.join(ROOT, 'js', 'data', 'p206.js')) && !S.some(s => /^js\/data\//.test(s)), JSON.stringify({ hits: hits.slice(0, 8), glbs }));
+    !hits.length && !glbs.length && !fs.existsSync(path.join(ROOT, 'js', 'data', 'p206.js')) && !S.some(s => /^js\/data\/p206\b/i.test(s)), JSON.stringify({ hits: hits.slice(0, 8), glbs }));
 }
 let C;
 try { C = loadCore(); } catch (e) { check('Core loads with every vehicle file (loadCore names a file that breaks it)', false, e.message); console.log(`FAIL: ${bad} of ${n} checks`); process.exit(1); }
