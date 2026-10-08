@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xDetail: 'lite', xRoll: 0 };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xDetail: 'lite', xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -480,11 +480,13 @@
   const saverOn = () => S.saver === 'on' || (S.saver === 'auto' && batLow);
   try { if (navigator.getBattery) navigator.getBattery().then((b) => { const up = () => { const was = saverOn(); batLow = !b.charging && b.level <= 0.2; if (saverOn() !== was) { renderSettings(); perf.sum = perf.n = 0; if (saverOn()) toast(tr('Baterija je skoraj prazna: varčni način (30 sličic na sekundo, nižja ločljivost).'), 3600); } };
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
+  // Razbijanje · nov način: the switches of its physics (Core), all off online
+  const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle };
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;
-    Render.setCrash({ body: +S.xBody, glass: +S.xGlass, paint: +S.xPaint, detail: S.xDetail });   // (Razbijanje · nov način: off by default; switched during a race the cars are built again)
-    Core.setCrash({ roll: +S.xRoll && !(race && race.player && race.cars.some(c => c.net)) });   // (the rollover: never online (a friend's car: net), where both phones must drive the same)
+    Render.setCrash({ body: +S.xBody, glass: +S.xGlass, paint: +S.xPaint, detail: S.xDetail, parts: +S.xParts, drag: +S.xDrag, dust: +S.xDust });   // (Razbijanje · nov način: off by default; switched during a race the cars are built again)
+    Core.setCrash(xPhys(race && race.player && race.cars.some(c => c.net)));   // (the rollover, the knocks, the attack, the handling: never online (a friend's car: net), where both phones must drive the same)
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; samo kameri za avtom in izometrična)
     Render.cam.userTilt = [0.1, 0.2, 0.3][+S.camTilt] ?? 0.1;   // (Nagib kamere: kamera za avtom gleda toliko bolj naprej po cesti; razdalja ostane ista)
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
@@ -529,7 +531,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'camTilt', 'xBody', 'xGlass', 'xPaint', 'xRoll'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'camTilt', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -1563,7 +1565,7 @@
     const W = ch ? { rain: ch.cond.rain, wx: null, storm: false } : quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     const solo = tt || quali || !!ch, lapRun = !!ch && !tt;   // (alone: a time trial, qualifying, a challenge: its time trial or a circuit's flying lap)
     const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist };
-    Core.setCrash({ roll: +S.xRoll && !on });   // (Razbijanje · nov način: the rollover off in an online race)
+    Core.setCrash(xPhys(on));   // (Razbijanje · nov način: its physics off in an online race)
     if (on) {   // online: the players on the grid in the host's order (in turn from race to race), no AI; the host's physics and damage for all
       const nums = netNums(on), rs = on.roster;
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: on.grid.indexOf(mp.me) + 1, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: nums[mp.me], slip: true, faults: !!on.faults,
@@ -2393,7 +2395,7 @@
     if (imp > 1.5 && fbT <= 0) {
       fbT = 0.16;
       Sfx.crash(imp);
-      if (imp > 3) { vibrate(Math.min(90, 20 + imp * 6)); Render.shake(Math.min(1.2, imp * 0.08)); }
+      if (imp > 3) { vibrate(Math.min(90, 20 + imp * 6)); Render.shake(Math.min(1.2, imp * (+S.xShake ? 0.14 : 0.08))); }
     }
     // landing after a jump: thump + small shake/vibration scaled by how hard the car came down
     if (prevAir && !P.air && P.impactVY < -2.5) {

@@ -1488,8 +1488,23 @@ const Core = (function () {
   // without grip or drive, the road's drag slowing it a little, up in an arc and down again, turning one full turn (two after a harder knock)
   // about its long axis (the renderer turns it by rl.t / rl.T), its roof on the road half way round each turn (a dent on top, the roof
   // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Its numbers: none random
-  const XR = { roll: 0 };
-  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; }
+  const XR = { roll: 0, bump: 0, ai: 0, handle: 0 };
+  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; }
+  // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
+  // track rod: up to 0.05 of the lock, as a tyre going down pulls 0.03)
+  // Razbijanje · nov način: odboji (xBump; off: carCollide as before). A knock turns the car it hits as hard as its impulse says (no damping
+  // of the turn) and its grip goes for a moment (xgl, fading over 0.9 s: the travel no longer follows the nose), more when hit behind its
+  // middle: a tap on a rear quarter spins it
+  // Razbijanje · nov način: agresivni AI (xAi; off: aiControl as before). A third of the rivals (by id) are on the attack four seconds in
+  // twelve: they aim at the rear quarter of the car 3-22 m ahead of them (within 5 m across) instead of their line
+  function xRamTarget(c, race) {
+    if ((c.id * 7) % 3 !== 0 || ((race.time || 0) + c.id * 3.7) % 12 > 4) return null;
+    const ch = Math.cos(c.h), sh = Math.sin(c.h); let best = null, bd = 22;
+    for (const o of race.cars) { if (o === c || o.rl || o.inPit) continue; const dx = o.x - c.x, dz = o.z - c.z, f = dx * ch + dz * sh, l = -dx * sh + dz * ch; if (f < 3 || f > bd || Math.abs(l) > 5) continue; bd = f; best = o; }
+    if (!best) return null;
+    const oh = Math.cos(best.h), os = Math.sin(best.h), rq = -best.m.len * 0.35, sq = ((c.id + best.id) % 2 ? 1 : -1) * best.m.wid * 0.35;
+    return [best.x + oh * rq - os * sq, best.z + os * rq + oh * sq];
+  }
   function xRollStart(c, dir, imp) {
     if (!XR.roll || c.rl || c.net || c.air || !(imp > 9)) return;
     const turns = imp > 15 ? 2 : 1;
@@ -1651,7 +1666,7 @@ const Core = (function () {
       const wp = spd > 2 && this.vAngP != null ? wrapPi(vAng - this.vAngP) / dt : 0;
       this.vAngP = vAng;
       this.wPath += (wp - this.wPath) * Math.min(1, dt * 18);
-      const ft = this.flt, stIn = this.locked ? 0 : this.steer + (ft && ft.pw >= 0 ? (ft.pw & 1 ? 1 : -1) * (ft.pw < 2 ? 0.03 : 0.015) * ft.pk * Math.min(1, spd / 10) : 0);   // (failures: a tyre going down pulls the car to its side)
+      const ft = this.flt, stIn = this.locked ? 0 : this.steer + (ft && ft.pw >= 0 ? (ft.pw & 1 ? 1 : -1) * (ft.pw < 2 ? 0.03 : 0.015) * ft.pk * Math.min(1, spd / 10) : 0) + (XR.handle && this.dmgMode === 2 ? clamp((this.cd[1] - this.cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) : 0);   // (failures: a tyre going down pulls the car to its side)
       let thr = this.locked ? 0 : this.inThr, brk = this.inBrk;
       const hb = this.locked ? 0 : this.inHand;
       // ---- steering shaping: keys / buttons ramp to full in CA.stOn s and back in 0.14 s; analogue (tilt, wheel, AI) a light lag ----
@@ -1761,7 +1776,7 @@ const Core = (function () {
       const aX = Math.max(Math.abs(F), fb) / m;                                                  // (brakes first: the cornering gets what they leave)
       const aN = Math.min(aL, Math.sqrt(Math.max(0, aC * aC - aX * aX)));
       wN = clamp(wN, -aN / v, aN / v);
-      const gl = this.ck ? this.ck.gl : 0;   // (a crash in the run from the police: the grip lost for a moment, see CRASH)
+      const gl = this.ck ? this.ck.gl : (this.xgl || 0);   // (a crash in the run from the police: the grip lost for a moment, see CRASH; Razbijanje · nov način's knock: xgl)
       if (gl > 0) wN *= 1 - gl;
       this.csAn = wN * spd;
       // ---- forces (body frame): drive along the body (its sideways part is inside the path law), brakes along the travel, slide scrub ----
@@ -1820,7 +1835,7 @@ const Core = (function () {
       const rt = this.rpmTarget + (this.spin > 0.05 ? Math.min(2500, this.spin * 5000) : 0) + (this.drift > 0.3 && thr > 0.5 ? 500 * this.drift : 0);
       this.rpm += (Math.min(M.redline * 1.02, rt) - this.rpm) * Math.min(1, dt * 14);
       if (this.flt) this._heat(dt, fb, spd, thr, m);   // (failures: the brakes and the engine warm up, a cut tyre goes down)
-      if (gl > 0) this.ck.gl = Math.max(0, gl - dt / this.ck.glT);
+      if (gl > 0) { if (this.ck) this.ck.gl = Math.max(0, gl - dt / this.ck.glT); else { this.xgl = Math.max(0, gl - dt / 0.9); if (!this.xgl) delete this.xgl; } }
     }
 
     // failures (Car.flt, Race opts.faults): the brakes warm up with the work they do (their force by the speed: 0.094 °C a joule a kilogram)
@@ -2369,11 +2384,15 @@ const Core = (function () {
     const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx;
     const e = CSK.carE;
     // angular terms damped to keep contact spins moderate; the push goes to the travel, the turn to the tap below (not the yaw rate)
-    const J = -(1 + e) * vrel / (ia + ib + rna * rna / a.I * 0.6 + rnb * rnb / b.I * 0.6);
+    const aK = XR.bump ? 1 : 0.6, J = -(1 + e) * vrel / (ia + ib + rna * rna / a.I * aK + rnb * rnb / b.I * aK);   // (xBump: the turn undamped)
     if (!a.net) { a.vx += J * bnx * ia; a.vz += J * bnz * ia; }
     if (!b.net) { b.vx -= J * bnx * ib; b.vz -= J * bnz * ib; }
     { if (!a.air && !a.net) a.csKc = clamp(a.csKc + rna * J / a.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); if (!b.air && !b.net) b.csKc = clamp(b.csKc - rnb * J / b.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); }   // cs: a tap swings the tail, the car catches itself
     const imp = -vrel;
+    if (XR.bump && imp > 4) for (const [c, rn, sg] of [[a, rna, 1], [b, rnb, -1]]) { if (c.net || c.rl) continue;   // (Razbijanje · nov način: the knock turns it, its grip goes for a moment)
+      c.w += sg * rn * J / c.I * 0.9;
+      const dx = bpx - c.x, dz = bpz - c.z, lx = dx * Math.cos(c.h) + dz * Math.sin(c.h), behind = lx < 0 ? Math.min(1, -lx / (c.m.len * 0.5)) : 0;
+      c.xgl = Math.min(0.9, Math.max(c.xgl || 0, clamp((imp - 4) / 10, 0, 0.55) + 0.35 * behind)); }
     a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
     if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); puncture(c, dx * ch + dz * sh, -dx * sh + dz * ch, imp); }
     a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
@@ -2565,7 +2584,8 @@ const Core = (function () {
     const tz = lerp(T.pz[i0], T.pz[i1], ft) + lerp(T.nz[i0], T.nz[i1], ft) * off;
     const hA = c.speed > 3 ? Math.atan2(c.vz, c.vx) : c.h;   // the arc starts along the travel, not the nose
     const ch = Math.cos(hA), sh = Math.sin(hA);
-    const dx = tx - c.x, dz = tz - c.z;
+    const tg = XR.ai && !c.isPlayer && race.state === 'racing' && !c.pitWant && c.parkS == null ? xRamTarget(c, race) : null;   // (Razbijanje · nov način: on the attack, xRamTarget)
+    const dx = (tg ? tg[0] : tx) - c.x, dz = (tg ? tg[1] : tz) - c.z;
     const lx = dx * ch + dz * sh, ly = -dx * sh + dz * ch;
     const dist = Math.max(3, Math.hypot(lx, ly));
     const ang = Math.atan2(ly, lx);
