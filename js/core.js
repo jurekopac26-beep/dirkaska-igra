@@ -1902,7 +1902,7 @@ const Core = (function () {
     for (const name in PT) {
       if (c.lost[name]) continue;
       const P = PT[name];
-      if (MASK[name] && c.dmg < MASK_DMG && !(c.aeroK0 != null && (P.df != null ? P.df : M.parts ? 0 : WING[name]) > 0)) continue;
+      if (maskHeld(c, name, P)) continue;
       if (P.wh != null ? c.dmgMode === 2 && !(c.wreck && c.wreck.rule) && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
     }
     if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); }
@@ -1955,8 +1955,11 @@ const Core = (function () {
     W.seq = L.map((n, i) => [n, i]).sort((a, b) => dzOf(b[0]) - dzOf(a[0]) || a[1] - b[1]).map(e => e[0]);
     W.st = 0;
   }
-  const WING = { bumperF: 0.5, bumperR: 0.4 };
-  const MASK = { bumperF: 1, hood: 1, cover: 1, fenderL: 1, fenderR: 1, bumperR: 1, trunk: 1, tailgate: 1 }, MASK_DMG = 0.7;   // (applyDamage: the face and the tail stay on till 70 %)   // (the formula's front and rear wings are its bumper parts: their share of the downforce)
+  const WING = { bumperF: 0.5, bumperR: 0.4 };   // (the formula's front and rear wings are its bumper parts: their share of the downforce)
+  const MASK = { bumperF: 1, hood: 1, cover: 1, fenderL: 1, fenderR: 1, bumperR: 1, trunk: 1, tailgate: 1 }, MASK_DMG = 0.7;   // (applyDamage: the face and the tail stay on till 70 %)
+  // part `name` (its entry P) of the face or the tail held on (not lost, not hanging loose: the renderer asks too) till the car is 70 % gone;
+  // a part that carries downforce on a car that has it (an aero car's wing or splitter): never held
+  const maskHeld = (c, name, P) => !!MASK[name] && !(c.dmg >= MASK_DMG) && !(c.aeroK0 != null && ((P && P.df != null) ? P.df : c.m.parts ? 0 : WING[name]) > 0);
   // detachable parts: damage zone + threshold, mass (kg), collision radius, thickness, local position (fraction of half length/width), height
   const PARTS = {
     mirrorL: { z: 2, th: 0.35, m: 1, r: 0.2, h: 0.1, lx: 0.15, lz: -1.12, y: 0.95 },
@@ -5413,7 +5416,7 @@ const Core = (function () {
 
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
 })();
 
 

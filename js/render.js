@@ -5659,7 +5659,7 @@ const Render = (function () {
     for (const name in U.ranges) {
       if (name === 'body' || K.dead[name]) continue;
       const P = PT[name]; if (!P) continue;
-      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner)
+      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th && !Core.maskHeld(c, name, P)) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the face and the tail not before 70 %: Core.maskHeld)
       if (c.lost[name]) { kitDetach(v, c, name, x, y, z, h, nOff); nOff = -Math.abs(nOff); }   // (negative: the frame's flash is out)
     }
     if (K.sagV !== K.ver && v.wheelOff.some(Boolean)) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
@@ -5998,8 +5998,8 @@ const Render = (function () {
        its own old push (xApply): blow by blow the car goes in further, the same every time it is drawn
      - a deep front crush tears the bonnet open there (its triangles collapsed, as a lost part's) and the grey engine shows under it, as
        under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them. Till the car is
-       70 % gone (X_SOFT_DMG, the core's MASK_DMG) an end's crush goes no deeper than X_SOFT (0.3 m) and nothing tears: the face and the
-       tail keep their shape till then
+       70 % gone (X_SOFT_DMG, the core's MASK_DMG) an end's crush goes no deeper than X_SOFT (0.3 m), no point of the body moves further
+       than that (overlapping blows too) and nothing tears: the face and the tail keep their shape till then
      xPaint on: scraped to bare metal and rust in patches where the metal folded. xGlass on: a broken pane breaks in one of five ways (a
      star from the blow, crazed all over, a hole, long cracks, fallen out) instead of frosting. Their random numbers: none (position noise) */
   const XC = { body: 0, glass: 0, paint: 0, detail: 'lite', parts: 0, drag: 0, dust: 0 };
@@ -6213,6 +6213,7 @@ const Render = (function () {
   function xApply(v, xc, old, K) {
     const geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, n = R.length / 3, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
     const kx = K.px, kr = K.top ? K.R : K.R * 1.15, ox = old ? old.px : 0, orr = old ? (old.top ? old.R : old.R * 1.15) : -1;   // (along the car beyond these, xPush reaches nothing: skipped at once)
+    const soft = !((v.car.dmg || 0) >= X_SOFT_DMG);   // (till 70 %: no point of the body further than X_SOFT from where it was, however many blows overlap)
     for (let i = 0; i < n; i++) {
       if ((dv && dv[i]) || (nd && nd[i])) continue;
       const x = R[i * 3]; if (Math.abs(x - kx) >= kr && Math.abs(x - ox) >= orr) continue;
@@ -6221,6 +6222,7 @@ const Render = (function () {
       if (xPush(K, xc, x, y, z, i, _xo1)) { dx += _xo1[0]; dy += _xo1[1]; dz += _xo1[2]; da += _xo1[3]; dc += _xo1[4]; hit = true; }
       if (!hit) continue;
       a[i * 3] += dx; a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
+      if (soft) { const ex = a[i * 3] - x, ey = a[i * 3 + 1] - y, ez = a[i * 3 + 2] - z, el = Math.hypot(ex, ey, ez); if (el > X_SOFT) { const f = X_SOFT / el; a[i * 3] = x + ex * f; a[i * 3 + 1] = y + ey * f; a[i * 3 + 2] = z + ez * f; } }
     }
     geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1;
     refacet(geo, tris); if (v.kit) v.kit.ver++;
