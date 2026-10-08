@@ -34,6 +34,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // there in paint: the pillars show from the front and from behind). The roof spoiler, the bonnet's scoop, the bumpers' details in
     // their parts; the start number on the roof
     look: {
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, and the tyres in 64)
       body: { len: 3.39, wid: 1.47, door: [0.79, -0.35], bumpY: [0.535, 0.535],
         //       x      w      yb     ybelt   wt     yt     cr     kind  tuck
         secs: [[-1.69, 0.695, 0.24, 0.515, 0.6, 0.53, 0.004, 'b', 0.1],       // the rear bumper's face (the cap)
@@ -52,7 +53,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // crown: its edge panels untwisted, the pane over them never cut by the frame's diagonal)
         eye: { x: -0.36, y: 1.17, style: 'closed' },
       },
-      wheels: { style: 'std', spokes: 6, w: 0.165, seg: 32, rim: [0.8, 0.81, 0.84], cap: [0.26, 0.26, 0.28], gap: 0.055 },
+      wheels: { style: 'std', spokes: 6, w: 0.165, seg: 32, segHi: 64, rim: [0.8, 0.81, 0.84], cap: [0.26, 0.26, 0.28], gap: 0.055 },
       regions: (std) => {
         const XD0 = 0.79, XD1 = -0.35, R = [];
         for (const s of 'LR') R.push({ part: 'mirror' + s, x: [0.41, 1.16], y: [0.59, 1.12], side: s, out: true, points: true });
@@ -187,6 +188,29 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('hood', [0.85, 0.91, -0.6], [0.85, 0.91, 0.6]);
         K.hinge('trunk', [-1.59, 1.33, -0.5], [-1.59, 1.33, 0.5]);
         for (const sd of [-1, 1]) K.hinge(sd < 0 ? 'doorL' : 'doorR', [0.78, 0.4, sd * 0.73], [0.78, 0.85, sd * 0.73]);
+        // ---- Visoki (Nastavitve · Detajli avtov; the player's and the showroom's car on a computer): the small details. A generic badge
+        //      (a chrome hexagon, a dark field, a chevron) on the grille and on the tailgate; the handles raised out of their recesses; the
+        //      shut lines (the bonnet's along the fenders, the doors' at the sill, the tailgate's over the bumper); a chrome trim along the
+        //      belt; the plates framed, dark bars for their characters; an aerial on the roof's rear end ----
+        if (K.hi) {
+          const CH = K.chrome, badge = (x, y, dir, host) => { const o = { host }, sg = dir;
+            K.discX(x, y, 0, 0.034, 6, CH, sg, o); K.discX(x + sg * 0.001, y, 0, 0.026, 6, D, sg, o);
+            face([[x + sg * 0.002, y + 0.017, 0], [x + sg * 0.002, y - 0.012, -0.016], [x + sg * 0.002, y - 0.012, 0.016]], CH, [sg, 0, 0], o); };
+          badge(1.6905, 0.705, 1, 'hood'); badge(-1.664, 0.775, -1, 'trunk');
+          for (const sd of [-1, 1]) K.box(-0.24, 0.781, sd * 0.746, 0.11, 0.016, 0.012, 0, [0.12, 0.12, 0.13], null, false, { host: sd < 0 ? 'doorL' : 'doorR' });   // (the handles' grips)
+          for (const sd of [-1, 1]) LD.top([[0.86, sd * 0.655], [1.63, sd * 0.645], [1.63, sd * 0.652], [0.86, sd * 0.662]].map(([x, z]) => [x, z]), D, 0.004);   // (the bonnet's shut lines)
+          LD.side([[-0.35, 0.33], [0.79, 0.33], [0.79, 0.337], [-0.35, 0.337]], D, null, 0.005);   // (the doors' at the sill)
+          K.rect(-1.664, 0.548, 0, 1.12, 0.006, D, { dir: '-x', host: 'trunk' });   // (the tailgate's over the bumper)
+          LD.band([[-1.3425, 0.06], [0.79, 0.06], [0.79, 0.085], [-1.3425, 0.085]], CH, null, 0.01);   // (the chrome trim on the belt)
+          for (const [x, y, dir, host, w, h] of [[1.7035, 0.44, 1, 'bumperF', 0.34, 0.1], [-1.6625, 0.68, -1, 'trunk', 0.32, 0.11]]) {   // (the plates: a dark frame, four bars)
+            K.rect(x - dir * 0.0008, y, 0, w + 0.024, h + 0.02, D, { dir: dir > 0 ? 'x' : '-x', host });
+            for (let i = 0; i < 4; i++) K.rect(x + dir * 0.0012, y, (i - 1.5) * w * 0.21, w * 0.12, h * 0.48, [0.16, 0.17, 0.2], { dir: dir > 0 ? 'x' : '-x', host });
+          }
+          { const y0 = L.topY(-1.22, 0.36);   // (the aerial: a foot on the roof by the spoiler, the whip raked far back, no higher than the spoiler's fins:
+            //    the showroom frames the car by its height)
+            K.box(-1.22, y0 - 0.004, 0.36, 0.05, 0.02, 0.024, 0, B, null, false, { part: 'body' });
+            K.bar([-1.22, y0 + 0.012, 0.36], [-1.56, 1.452, 0.36], 0.0035, B, { n: 4, part: 'body' }); }
+        }
         // ---- inside (seen once a part is off): the red bucket seats, the rear bench, the dashboard and the wheel; the turbo three across
         //      the bay with its intercooler under the scoop, the radiator behind the grille ----
         for (const sd of [-1, 1]) K.seat(-0.22, 0.47, sd * 0.31, { w: 0.44, l: 0.46, back: 0.66, tilt: 0.2, col: [0.34, 0.07, 0.07] });

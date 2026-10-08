@@ -3,7 +3,8 @@
 //  - the kit: Render.kitStatus 'ok' for every vehicle with a look (a look that throws or breaks a rule falls back: a FAIL here), the
 //    place-holders (look null) drawn as the generic kit hatch; the body's outer shell and inner block within their triangle budgets (a car
 //    1400 / 800, a truck, the limousine, the monster truck 2400 / 1200), every part of the vehicle's table with geometry of its own (a
-//    non-empty range), the wheels' detail (the player's / the showroom's <= 400 triangles, a rival's <= 160)
+//    non-empty range), the wheels' detail (the player's / the showroom's <= 400 triangles, a rival's <= 160); a look with Visoki details
+//    (look.hi, Nastavitve · Detajli avtov) builds them ok within 2400 / 1200, its player's wheels <= 700 (the rest of the test: Normalni, a phone's)
 //  - the showroom: the vehicle over a whole turn stays on the screen and off the car panel, in landscape (844x390) and portrait (390x844)
 //  - the caches: after the car menu has been through every car, one colour-neutral body per model and at most two showroom copies
 //  - no seeing through the car (each vehicle with a look, on a flat background): each wheel arch from low at its side shows its tub over the
@@ -79,7 +80,7 @@ try {
   const K1 = await page.evaluate((ids) => ids.map(id => {
     const M = Core.MODELS.find(m => m.id === id), I = Render.kitInfo(id), PT = Core.partsOf(M), noRange = [];
     for (const n in PT) if (PT[n].wh == null && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);
-    return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo };
+    return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi };
   }), kits.map(m => m.id));
   const badStatus = K1.filter(k => k.look ? k.status !== 'ok' : !/^fallback:look null/.test(k.status)), held = K1.filter(k => !k.look).length;
   T.check(`Render.kitStatus: 'ok' for every vehicle with a look (${K1.length - held}), the place-holders (${held}, look null) drawn as the generic kit hatch`, !badStatus.length && K1.length === kits.length,
@@ -91,6 +92,9 @@ try {
   T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
   const wBad = K1.filter(k => k.hi.some(t => t > 400) || k.lo.some(t => t > 160));
   T.check('the wheels\' detail: the player\'s and the showroom\'s <= 400 triangles, a rival\'s <= 160', !wBad.length, (wBad.length ? wBad : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.hi.join('/')} | ${k.lo.join('/')}`).join(', '));
+  // (Nastavitve · Detajli avtov: Visoki, a computer's: a look with small details (look.hi) built again for the player and the showroom)
+  const V = K1.filter(k => k.vis), vBad = V.filter(k => k.vis.status !== 'ok' || k.vis.tris.outer > 2400 || k.vis.tris.inner > 1200 || k.vis.wheels.some(t => t > 700));
+  T.check('Visoki (look.hi): its body built ok within 2400 / 1200, its player\'s wheels <= 700 triangles', !vBad.length, (vBad.length ? vBad : V).slice(0, 6).map(k => `${k.id} ${k.vis.status} ${k.vis.tris.outer}/${k.vis.tris.inner} w${k.vis.wheels.join('/')}`).join(', ') || 'none');
 
   // ---- 2. the showroom: over a whole turn on the screen and off the car panel (landscape and portrait) ----
   for (const [w, h] of [[844, 390], [390, 844]]) {

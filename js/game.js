@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, lastTrack: '' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '' };   // (carDet: the cars' small details, Visoki on a computer, Normalni on a phone)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -56,7 +56,8 @@
   // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
   let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
-  if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';   // adaptive graphics detail (LOD) level, see detailTier()
+  if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';
+  if (!['normal', 'high'].includes(S.carDet)) S.carDet = DEF.carDet;   // (Detajli avtov: Normalni / Visoki)   // adaptive graphics detail (LOD) level, see detailTier()
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
   Lang.set(S.lang); if (S.lang !== 'sl') Lang.apply(document.body);   // (the page in the chosen language before anything is drawn)
   S.name = cleanName(S.name) || tr(DEF.name);
@@ -473,7 +474,7 @@
   function initAutoTier() { try { const t = gpuTier(); autoTier = t != null ? t : (lowEnd ? 1 : 2); } catch (_) { autoTier = lowEnd ? 1 : 2; } }
   // the picture's settings to the renderer only when they change (it builds every shader again: a language or a sound switch must not)
   let rsKey = '';
-  function renderSettings() { const rs = { quality: S.quality, shadows: shadowsOn(), camera: S.camera }, k = JSON.stringify(rs); if (k !== rsKey) { rsKey = k; Render.applySettings(rs); } Render.setSaver(saverOn()); applyDetailDist(); }
+  function renderSettings() { const rs = { quality: S.quality, shadows: shadowsOn(), camera: S.camera, carDetail: S.carDet }, k = JSON.stringify(rs); if (k !== rsKey) { rsKey = k; Render.applySettings(rs); } Render.setSaver(saverOn()); applyDetailDist(); }
   // the battery saver (Varčevanje z baterijo): 30 frames a second and a lower resolution; 'auto' while the battery is at 20 % or less and not
   // charging (where the browser tells: Chrome; elsewhere 'auto' stays off)
   let batLow = false;

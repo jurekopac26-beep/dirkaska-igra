@@ -815,6 +815,11 @@ const Render = (function () {
                       16, as before; not with dual), smooth-shaded, the rim's lip round with them; the rim's inside stays in 16 (seg 32: about
                       370 triangles a wheel). A rival's wheel is never changed by it
        Budgets: a rival's wheel <= 160 triangles (no shadow), the player's / the showroom's <= 400 (with shadow): the fixtures keep to them
+     look.hi (optional): true when build(K) draws small details for Nastavitve · Detajli avtov: Visoki (a computer's default; a phone's is
+       Normalni): the player's and the showroom's car are then built a second time with K.hi true (a cache of its own; the rivals and every
+       phone keep the Normalni build). The Visoki build draws the same parts, regions and lamps, and adds its details only inside if (K.hi)
+       (the badges, the handles, the shut lines, the trims, an aerial): its budget is the big vehicles' (2400 / 1200); look.wheels.segHi:
+       its round tyre's segments (else seg)
      look.regions (optional): a preset ('car' | 'race' | 'open' | 'truck' | 'std': the standard list; 'none': no regions, everything the
        body unless K.part says), a list (it replaces the standard one) or fn(std) returning a list (std: the standard list in look units)
 
@@ -924,6 +929,7 @@ const Render = (function () {
 
      K (inside build(K)):
        K.M, K.def, K.look, K.body (look.body completed), K.wheels (look.wheels completed), K.parts (the table's part ids, wheels left out)
+       K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
        K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
                                units), the circle's radius and middle height (metres): place flares and decals round them
@@ -1119,7 +1125,7 @@ const Render = (function () {
     const W = Object.assign({ style: 'std', w: Math.max(0.12, Math.min(0.42, M.rw * 0.68)), gap: 0.06, arch: true, spokes: 5 }, look && look.wheels || {});
     if (KIT_STYLES.indexOf(W.style) < 0) kitFail('wheels.style not one of ' + KIT_STYLES.join(' '));
     if (W.wR == null) W.wR = W.w;
-    if (W.seg != null && !(W.seg === 16 || W.seg === 32 || W.seg === 48 || W.seg === 64) || (W.seg > 16 && W.dual)) kitFail('wheels.seg not 16, 32, 48 or 64 (and not with dual)');
+    for (const k of ['seg', 'segHi']) if (W[k] != null && !(W[k] === 16 || W[k] === 32 || W[k] === 48 || W[k] === 64) || (W[k] > 16 && W.dual)) kitFail('wheels.' + k + ' not 16, 32, 48 or 64 (and not with dual)');
     for (const k of ['w', 'wR', 'gap']) if (!(W[k] >= 0 && W[k] < 2)) kitFail('wheels.' + k + ' not a size in metres');
     for (const k of ['rim', 'tyre', 'cap']) if (W[k] != null) W[k] = kitColour(typeof W[k] === 'number' ? colArr(W[k]) : W[k]);
     if (W.wz == null) W.wz = W.w / 2 + 0.01;   // (the wheels' centres this far in from the half width: the tyre's face just inside the body)
@@ -1892,7 +1898,7 @@ const Render = (function () {
     for (let i = 0; i < outerN; i++) if (Cl[i * 3] === KIT_LINE[0] && Cl[i * 3 + 1] === KIT_LINE[1] && Cl[i * 3 + 2] === KIT_LINE[2]) ain[i] = 128;
     geo.setAttribute('aIn', new THREE.BufferAttribute(ain, 1, true));
     geo.computeBoundingSphere(); geo.computeBoundingBox(); geo.setDrawRange(0, outerN);
-    const B = kitBudget(kx.M), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };
+    const B = kx.hi ? { outer: 2400, inner: 1200 } : kitBudget(kx.M), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };   // (Visoki: the big vehicles' budget)
     // the lining's twins: each inner vertex's outer vertex (the shell's point it is inset from; -1: none: the cabin, the floor, the engine)
     const twin = new Int32Array(total - outerN).fill(-1), kM = (x, y, z) => Math.round(x * 1e5) + ',' + Math.round(y * 1e5) + ',' + Math.round(z * 1e5);
     if (kx.twins.size && total > outerN) { const idx = new Map(); for (let i = 0; i < outerN; i++) { const k = kM(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!idx.has(k)) idx.set(k, i); }
@@ -1924,9 +1930,11 @@ const Render = (function () {
   }
 
   // ---- the cache: one colour-neutral geometry (and tail, wheels) per kit model, built on first use; Render.kitStatus(id) ----
-  const kitCache = new Map(), kitWheelCache = new Map(), kitShowLRU = [];
-  function kitBuild(M, look, fb) {
-    const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb), K = kitMakeK(kx);
+  const kitCache = new Map(), kitCacheHi = new Map(), kitWheelCache = new Map(), kitShowLRU = [];   // (kitCacheHi: the Visoki bodies, Nastavitve · Detajli avtov)
+  function kitBuild(M, look, fb, hi) {
+    const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb);
+    if (hi && kx.wheels.segHi) kx.wheels.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
+    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
     if (typeof look.build !== 'function') kitFail('look.build(K) missing');
@@ -1980,7 +1988,16 @@ const Render = (function () {
     const b = best || low; if (!b) { if (holed) kitFail('give body.decalX / decalY: no roof to lay the start number on (an open top)'); return; }
     body.decalX = b.x; body.decalY = b.y; body.decalRz = b.rz; body.decalS = b.k;
   }
-  function kitEntry(M) {
+  function kitEntry(M, hi) {
+    if (hi && M.def && M.def.look && M.def.look.hi) {   // (Nastavitve · Detajli avtov: Visoki: a look with small details (look.hi) built again with K.hi, a cache of its own)
+      let H = kitCacheHi.get(M.id); if (H) return H;
+      const E0 = kitEntry(M); if (E0.status !== 'ok') return E0;
+      let res = null;
+      try { res = kitBuild(M, M.def.look, false, true); }
+      catch (e) { if (typeof console !== 'undefined') console.warn('vehicle ' + M.id + ': its Visoki detail failed, drawn as Normalni: ' + (e && e.message ? e.message : String(e))); kitCacheHi.set(M.id, E0); return E0; }
+      H = { M, status: 'ok', hi: true, geo: res.geo, tail: res.tail, W: res.wheels, body: res.body, tris: res.tris, regions: res.regions, std: res.std, tubs: res.tubs, openings: res.openings, wheels: {} };
+      kitCacheHi.set(M.id, H); return H;
+    }
     let E = kitCache.get(M.id); if (E) return E;
     let res = null, status = 'ok';
     try { if (!M.def || !M.def.look) kitFail('look null (a place-holder)'); res = kitBuild(M, M.def.look, false); }
@@ -1991,7 +2008,7 @@ const Render = (function () {
   }
   // the four wheels' geometry (hi: the player's / the showroom's detail, else a rival's), front and rear (the rear may be twins)
   function kitWheels(E, hi) {
-    const key = E.M.id + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
+    const key = E.M.id + (E.hi ? '|H' : '') + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
     const W = E.W, r = E.M.rw;
     w = { f: kitWheelGeo(W, r, W.w, hi, false), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual) };
     kitWheelCache.set(key, w); return w;
@@ -2025,7 +2042,7 @@ const Render = (function () {
   function kitBodyGeo(E, car, show) {
     const stripe = car.stripe !== false;
     if (!show) return kitRecolour(E.geo.clone(), car.color, stripe, car.num);
-    const key = E.M.id + '|' + car.color + '|' + stripe + '|' + (car.num || 0), k = kitShowLRU.findIndex(q => q.key === key);   // the showroom: the last two kept (flipping colours back and forth builds nothing)
+    const key = E.M.id + (E.hi ? '|H' : '') + '|' + car.color + '|' + stripe + '|' + (car.num || 0), k = kitShowLRU.findIndex(q => q.key === key);   // the showroom: the last two kept (flipping colours back and forth builds nothing)
     if (k >= 0) { const q = kitShowLRU.splice(k, 1)[0]; kitShowLRU.push(q); return q.geo; }
     const q = { key, geo: kitRecolour(E.geo.clone(), car.color, stripe, car.num) }; kitShowLRU.push(q);
     while (kitShowLRU.length > 2) kitShowLRU.shift().geo.dispose();
@@ -2147,6 +2164,7 @@ const Render = (function () {
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, engN: U.engN, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
       wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
+      hi: M.def && M.def.look && M.def.look.hi ? (() => { const H = kitEntry(M, true), hw = kitWheels(H, true); return { status: H.hi ? 'ok' : 'normal', tris: Object.assign({}, H.geo.userData.tris), wheels: [hw.f.userData.tris, hw.r.userData.tris] }; })() : null,
       bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, fire: kitFireOf(M, E), tailHost: Object.assign({}, kitTailHost(E)), lay: Object.assign({}, kitLayH(E)) };   // (tailHost: the part each tail lamp sits on; lay: how tall each part's piece lies, metres)
   }
 
@@ -2482,7 +2500,7 @@ const Render = (function () {
     const grp = new THREE.Group();
     const bodyG = new THREE.Group(); grp.add(bodyG);
     const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat();
-    const KE = M.kit ? kitEntry(M) : null;   // a registered vehicle: its kit body (a copy of its own, in this car's colours; the showroom's from its two kept ones)
+    const KE = M.kit ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show))) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
     const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show)) : carGeometry(M.body, M, car.color, car.stripe !== false), bodyMat);
     body.castShadow = true; body.receiveShadow = false; bodyG.add(body);
     const tail = new THREE.Mesh(KE ? KE.tail : tailGeo(M.body, M), matTailOff); bodyG.add(tail);
@@ -2925,10 +2943,10 @@ const Render = (function () {
   let particles, skids, views = [];
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
-  let settings = { quality: 'high', shadows: true, camera: 'iso' };
+  let settings = { quality: 'high', shadows: true, camera: 'iso', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
   let time = 0;
-  let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null;
+  let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
 
   function init(canvas) {
@@ -3216,6 +3234,7 @@ const Render = (function () {
 
   function applySettings(s) {
     settings = Object.assign(settings, s);
+    { const h = settings.carDetail === 'high'; if (h !== carHi) { carHi = h; if (showCar && showArgs) setShowCar(showArgs[0], showArgs[1], showArgs[2]); } }   // (the showroom's car again in the other detail; a race's cars: from the next race)
     const dpr = window.devicePixelRatio || 1;
     basePR = settings.quality === 'retro' ? 0.5 : settings.quality === 'normal' ? 1 : Math.min(dpr, 2);
     renderer.domElement.style.imageRendering = settings.quality === 'retro' ? 'pixelated' : 'auto';
@@ -3999,7 +4018,7 @@ const Render = (function () {
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
-    for (const E of kitCache.values()) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
+    for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull]);
@@ -7164,6 +7183,7 @@ const Render = (function () {
   }
   function setShowCar(model, color, num) {
     if (!showScene) initShowroom();
+    showArgs = [model, color, num];
     const prev = showCar;
     const fake = { m: model, color, num, stripe: true, isPlayer: false };
     showCar = makeCarMesh(fake, { noMarker: true, show: true });
