@@ -1487,8 +1487,11 @@ const Core = (function () {
   // side (another car's, 9 m/s and more across; a wall's, 10 m/s and more) rolls it over away from the knock: for 1.2-1.6 s it slides on
   // without grip or drive, the road's drag slowing it a little, up in an arc and down again, turning one full turn (two after a harder knock)
   // about its long axis (the renderer turns it by rl.t / rl.T), its roof on the road half way round each turn (a dent on top, the roof
-  // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Its numbers: none random
+  // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Only one such knock in ten (XROLL.p: every one
+  // was too many): each knock counts once (another within 4 m of the last one counted is the same crash), and which ones roll is a hash
+  // of the car and its count of knocks (xrK). Its numbers: none random (the race's own draws untouched)
   const XR = { roll: 0, bump: 0, ai: 0, handle: 0 };
+  const XROLL = { p: 0.1 };
   function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; }
   // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
   // track rod: up to 0.05 of the lock, as a tyre going down pulls 0.03)
@@ -1507,6 +1510,9 @@ const Core = (function () {
   }
   function xRollStart(c, dir, imp) {
     if (!XR.roll || c.rl || c.net || c.air || !(imp > 9)) return;
+    const K = c.xrK; if (K && Math.hypot(c.x - K.x, c.z - K.z) < 4) return;   // (the same crash: one chance)
+    const n = K ? K.n + 1 : 1; c.xrK = { x: c.x, z: c.z, n };   // (in an object: the golden references digest only the plain fields)
+    if (((Math.imul((n * 2246822519 + (c.id | 0) * 3266489917) | 0, 668265263) >>> 0) % 1000) >= XROLL.p * 1000) return;
     const turns = imp > 15 ? 2 : 1;
     c.rl = { t: 0, T: 0.78 + 0.4 * turns, turns, dir: dir < 0 ? -1 : 1, H: 0.5 + 0.35 * turns + Math.min(0.6, (imp - 9) * 0.05), k: 0 };
   }
@@ -5400,7 +5406,7 @@ const Core = (function () {
   }
   registerVehicles();
 
-  return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
 })();
