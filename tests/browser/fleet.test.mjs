@@ -124,10 +124,12 @@ try {
     g.onAction('to-car'); await wait(300);
     for (let k = 0; k < Core.MODELS.length; k++) { g.onAction('car-next'); await raf(); }
     g.onAction('to-title'); await wait(200);
-    return { info: Render.kitInfo(), kits: Core.MODELS.filter(m => m.kit).length };
+    return { info: Render.kitInfo(), kits: Core.MODELS.filter(m => m.kit).length, hiKits: Core.MODELS.filter(m => m.kit && m.def && m.def.look && m.def.look.hi).length };
   });
-  T.check('the caches after the car menu: one colour-neutral body per model (no copies per colour), its wheels, at most two showroom copies', C3.info.models <= C3.kits && C3.info.wheels <= 2 * C3.kits && C3.info.show <= 2,
-    `${C3.info.models} bodies for ${C3.kits} models, ${C3.info.wheels} wheel sets, ${C3.info.show} showroom copies (the 11's per-colour bodies: ${C3.info.legacy})`);
+  // (a model with a Visoki build (Nastavitve · Detajli avtov: the player's and the showroom's) has a body and wheels of its own for it)
+  T.check('the caches after the car menu: one colour-neutral body per model (no copies per colour; a Visoki one besides where the model has it), its wheels, at most two showroom copies',
+    C3.info.models <= C3.kits && (C3.info.hi || 0) <= C3.hiKits && C3.info.wheels <= 2 * (C3.kits + (C3.info.hi || 0)) && C3.info.show <= 2,
+    `${C3.info.models} bodies for ${C3.kits} models, ${C3.info.hi || 0} Visoki for ${C3.hiKits}, ${C3.info.wheels} wheel sets, ${C3.info.show} showroom copies (the 11's per-colour bodies: ${C3.info.legacy})`);
 
   // ---- 3b. no seeing through the car: the showroom car alone on a flat magenta background (no shadow blob, no turntable). Each wheel arch
   //          of a vehicle with a look from low at its side, looking up into it: points in the arch over the tyre (between the tread and the

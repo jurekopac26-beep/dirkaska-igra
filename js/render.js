@@ -2183,7 +2183,7 @@ const Render = (function () {
   // (kitInfo) a burning engine's seat (body.engine, metres) and the top of the shell over it the car whole (null: none: the flames from the seat)
   function kitFireOf(M, E) { const S = [E.body.engine[0] * M.len / E.body.len, E.body.engine[1], 0], t = kitFireTop(E.geo, S, M.wid, null); return { seat: S, top: t > -1e8 ? t : null }; }
   function kitInfo(id) {
-    if (id == null) return { models: kitCache.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size, pieces: tierNow === 0 ? KIT_PIECES : null };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies; pieces: how many the tier draws, null: all)
+    if (id == null) return { models: kitCache.size, hi: kitCacheHi.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size, pieces: tierNow === 0 ? KIT_PIECES : null };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies; pieces: how many the tier draws, null: all)
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
     const E = kitEntry(M), U = E.geo.userData, wh = kitWheels(E, true), wl = kitWheels(E, false), rg = {};
     const pa = E.geo.attributes.position.array;
