@@ -297,23 +297,25 @@
   }
  },
  "bathurst": {
-  "meshes": 973,
-  "verts": 592185,
-  "instances": 16406,
+  "meshes": 988,
+  "verts": 652387,
+  "instances": 14720,
   "props": 94,
-  "crowd": 4220,
-  "world": "6cae4cb5",
+  "crowd": 4198,
+  "world": "c5f40fe6",
   "propsHash": "9e34cc63",
-  "floor": "88b8b5f7/12404",
+  "floor": "8a20442b/12404",
   "groups": {
-   "-:MeshLambertMaterial": "d56448cf",
-   "-:MeshBasicMaterial": "8d213485",
-   "crowd:MeshLambertMaterial": "5b9dbb6e",
-   "flags:MeshLambertMaterial": "8a648a11",
+   "-:MeshLambertMaterial": "80819ad1",
+   "-:MeshBasicMaterial": "62b945ac",
+   "kangaroos:MeshLambertMaterial": "c1cb820e",
+   "crowd:MeshLambertMaterial": "da9a57dd",
+   "smoke:ShaderMaterial": "19e50f77",
+   "flags:MeshLambertMaterial": "88cd2272",
    "jet smoke:MeshBasicMaterial": "684b759b",
-   "ao:MeshBasicMaterial": "b7cbc948",
+   "ao:MeshBasicMaterial": "b4f912c0",
    "roadwear:MeshLambertMaterial": "74d19b29",
-   "worn:MeshLambertMaterial": "b38c2a31"
+   "worn:MeshLambertMaterial": "1a992b4a"
   }
  },
  "chapman": {
@@ -504,6 +506,25 @@
    "-:MeshBasicMaterial": "7ed161db",
    "crowd:MeshLambertMaterial": "c3e8c025",
    "ao:MeshBasicMaterial": "bf4eccf9"
+  }
+ },
+ "maunakea": {
+  "meshes": 2174,
+  "verts": 779481,
+  "instances": 27335,
+  "props": 209,
+  "crowd": 437,
+  "world": "5f4fb873",
+  "propsHash": "337efad7",
+  "floor": "303a93f5/12376",
+  "groups": {
+   "-:MeshLambertMaterial": "b5bcb4a4",
+   "-:MeshPhongMaterial": "943a9532",
+   "-:MeshBasicMaterial": "95e76a8d",
+   "maFar:MeshLambertMaterial": "60ab73b",
+   "crowd:MeshLambertMaterial": "3ca35ce9",
+   "ao:MeshBasicMaterial": "560d2d05",
+   "roadwear:MeshLambertMaterial": "f2293323"
   }
  },
  "baldy": {
@@ -717,6 +738,91 @@
    "ao:MeshBasicMaterial": "1c11be80",
    "tyremarks:MeshBasicMaterial": "ba87396f",
    "roadwear:MeshLambertMaterial": "cb786fa0"
+  }
+ },
+ "montreal": {
+  "meshes": 1280,
+  "verts": 1329735,
+  "instances": 9398,
+  "props": 74,
+  "crowd": 1765,
+  "world": "5748136c",
+  "propsHash": "c78eb4bf",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "80c4d243",
+   "mtWater:MeshPhongMaterial": "be26a81f",
+   "mtRoad:MeshLambertMaterial": "899851eb",
+   "mtWalls:MeshLambertMaterial": "291a7356",
+   "mtPits:MeshLambertMaterial": "ea26ec6a",
+   "mtPits:MeshBasicMaterial": "bf541e5b",
+   "mtStands:MeshLambertMaterial": "7bb23f35",
+   "mtBuildings:MeshLambertMaterial": "e53d669a",
+   "mtRoads:MeshLambertMaterial": "e16dea47",
+   "mtJunctions:MeshLambertMaterial": "d3e092e5",
+   "mtTrees:MeshLambertMaterial": "984e502c",
+   "mtBridges:MeshLambertMaterial": "9ae6c6c0",
+   "mtBasin:MeshLambertMaterial": "73a5961e",
+   "mtFar:MeshLambertMaterial": "aac2c796",
+   "mtScen:MeshLambertMaterial": "65420dd0",
+   "crowd:MeshLambertMaterial": "b387c775",
+   "-:MeshBasicMaterial": "30f65383",
+   "ao:MeshBasicMaterial": "dca29b03",
+   "tyremarks:MeshBasicMaterial": "866794",
+   "roadwear:MeshLambertMaterial": "d2d39fb",
+   "worn:MeshLambertMaterial": "3cccb8e6"
+  }
+ },
+ "greatalpine": {
+  "meshes": 2091,
+  "verts": 1200091,
+  "instances": 59273,
+  "props": 344,
+  "crowd": 957,
+  "world": "a08f9f2f",
+  "propsHash": "a62b93bb",
+  "floor": "76e38992/17136",
+  "groups": {
+   "-:MeshLambertMaterial": "493b3db8",
+   "-:MeshPhongMaterial": "f0876f1e",
+   "-:MeshBasicMaterial": "3fa74cd8",
+   "gaFar:MeshLambertMaterial": "91d3d5f3",
+   "crowd:MeshLambertMaterial": "18100baf",
+   "ao:MeshBasicMaterial": "419469a1",
+   "tyremarks:MeshBasicMaterial": "e895b12b",
+   "roadwear:MeshLambertMaterial": "3aaae60d"
+  }
+ },
+ "detroit": {
+  "meshes": 365,
+  "verts": 848445,
+  "instances": 3903,
+  "props": 180,
+  "crowd": 1438,
+  "world": "5c7d6b4d",
+  "propsHash": "c314c56d",
+  "floor": null,
+  "groups": {
+   "ground:MeshLambertMaterial": "6dc09e79",
+   "-:MeshPhongMaterial": "50edf711",
+   "dt-scen:MeshLambertMaterial": "3ae2e7ed",
+   "dt-streets:MeshLambertMaterial": "6aa6ccea",
+   "dt-track:MeshLambertMaterial": "e2feefb7",
+   "dt-kerbs:MeshLambertMaterial": "778e8ad5",
+   "-:MeshLambertMaterial": "ee76b54",
+   "dt-marks:MeshLambertMaterial": "c1a706aa",
+   "dt-walls:MeshLambertMaterial": "ff19c424",
+   "dt-fences:MeshLambertMaterial": "967e0d34",
+   "-:MeshBasicMaterial": "aee7fbf0",
+   "dt-bld:MeshLambertMaterial": "6b9b3b0d",
+   "dt-roofs:MeshLambertMaterial": "76d3b5fe",
+   "dt-trees:MeshLambertMaterial": "911787a8",
+   "dt-cut:MeshLambertMaterial": "3c8df7e",
+   "dtFar:MeshLambertMaterial": "79d04d8f",
+   "crowd:MeshLambertMaterial": "24395762",
+   "ao:MeshBasicMaterial": "ad7ebb1b",
+   "tyremarks:MeshBasicMaterial": "7d802a1b",
+   "roadwear:MeshLambertMaterial": "ac63a49d"
   }
  },
  "palomar": {
