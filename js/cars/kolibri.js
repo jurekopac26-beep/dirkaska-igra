@@ -16,23 +16,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'i3', hz: 1.25, turbo: 0.6, loud: 0.8 },
     expect: { t100: [4.91, 5.76], vmax: [149, 158], latG: [2.1, 2.2], d100: [22.7, 25.1] },
     partNames: { spoiler: 'roof spoiler', headL: 'left head lamp', headR: 'right head lamp' },
-    parts: { set: 'car', ht: 1.4, y0: 0.18,
+    parts: { set: 'car', ht: 1.4, y0: 0.18, drop: ['fenderL', 'fenderR', 'quarterL', 'quarterR'],   // (the four fenders the body's: they dent, they never come off)
       extra: {
         spoiler: { z: 1, th: 0.6, m: 2, r: 0.4, h: 0.05, lx: -0.95, lz: 0, f: 0.97 },
-        // (the head lamps parts of their own: a hit on their corner knocks one out of the lamp face before the fender goes)
+        // (the head lamps parts of their own: a hit on their corner knocks one out of the lamp face)
         headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.16, h: 0.08, lx: 0.99, lz: -0.64, f: 0.41 },
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.16, h: 0.08, lx: 0.99, lz: 0.64, f: 0.41 },
       },
       // (where the look has them, a lost one flies off from there: the tailgate is the near-vertical tail, the bonnet short, the mirrors
-      // at the door glass's front corner; the doors, the fenders and the quarters by their ranges' middles. A fender carries the lamp
-      // face's corner (its head lamp is a part of its own), the bonnet the scoop: on the road they lie as tall as their h says)
-      over: { hood: { lx: 0.77, y: 0.81, h: 0.12 }, trunk: { lx: -0.97, y: 0.88 }, doorL: { lx: 0.12, y: 0.8 }, doorR: { lx: 0.12, y: 0.8 }, fenderL: { lx: 0.77, y: 0.64, h: 0.18 }, fenderR: { lx: 0.77, y: 0.64, h: 0.18 },
-        quarterL: { lx: -0.68, y: 0.79 }, quarterR: { lx: -0.68, y: 0.79 }, mirrorL: { lx: 0.41, y: 0.95 }, mirrorR: { lx: 0.41, y: 0.95 } },
+      // at the door glass's front corner; the doors by their ranges' middles, the bonnet with its scoop: on the road they lie as tall as
+      // their h says)
+      over: { hood: { lx: 0.77, y: 0.81, h: 0.12 }, trunk: { lx: -0.97, y: 0.88 }, doorL: { lx: 0.12, y: 0.8 }, doorR: { lx: 0.12, y: 0.8 },
+        mirrorL: { lx: 0.41, y: 0.95 }, mirrorR: { lx: 0.41, y: 0.95 } },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the rear bumper's face, the tailgate's lower panel
     // between the tail lamps' strips, its glass nearly upright, the long flat roof, the windscreen, the short bonnet, the lamp face leaning
     // back over the front bumper. Its own regions: the bumpers wrap the corners up to their tops (0.535), the tailgate is the panel and the
-    // glass between the lamp strips (they stay with the quarters), the lamp face's corners go with the fenders (the head lamps parts of their own),
+    // glass between the lamp strips (they stay with the body's quarters), the lamp face's corners with the body's fenders (the head lamps parts of their own),
     // its middle (the slim grille) with the body (the nose panel: the bonnet ends at its top). The windscreen and the tailgate's window are panes over their frames (the loft's top
     // there in paint: the pillars show from the front and from behind). The roof spoiler, the bonnet's scoop, the bumpers' details in
     // their parts; the start number on the roof
@@ -63,9 +63,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const s of 'LR') R.push({ part: 'door' + s, x: [XD1, XD0], bands: ['side', 'window'], y: [0.29, 1.4], side: s });
         R.push({ part: 'bumperF', x: [1.475, 2.4], bands: ['tuck', 'side'], y: [-1, 0.535] }, { part: 'bumperF', x: [1.688, 2.4], bands: ['window', 'edge', 'crown'] });
         R.push({ part: 'bumperR', x: [-2.4, -1.505], bands: ['tuck', 'side'], y: [-1, 0.535] }, { part: 'bumperR', x: [-2.4, -1.66], bands: ['window', 'edge', 'crown'] });
-        for (const s of 'LR') R.push({ part: 'fender' + s, x: [XD0, 1.688], bands: ['tuck', 'side', 'window'], y: [-1, 0.95], side: s });
-        for (const s of 'LR') R.push({ part: 'fender' + s, x: [1.672, 1.688], bands: ['edge'], side: s });   // (the lamp face's corners)
-        for (const s of 'LR') R.push({ part: 'quarter' + s, x: [-1.7, XD1], bands: ['tuck', 'side', 'window'], y: [-1, 1.4], side: s });   // (the lamp strips, the D-pillars)
+        for (const s of 'LR') R.push({ part: 'body', x: [XD0, 1.688], bands: ['tuck', 'side', 'window'], y: [-1, 0.95], side: s });   // (the front fenders: the body's, never off)
+        for (const s of 'LR') R.push({ part: 'body', x: [1.672, 1.688], bands: ['edge'], side: s });   // (the lamp face's corners)
+        for (const s of 'LR') R.push({ part: 'body', x: [-1.7, XD1], bands: ['tuck', 'side', 'window'], y: [-1, 1.4], side: s });   // (the rear quarters: the body's, never off)   // (the lamp strips, the D-pillars)
         R.push({ part: 'hood', x: [0.825, 1.672], bands: ['window', 'edge', 'crown'], top: true });   // (the bonnet ends at the lamp face's top: the face between the lamps stays with the body)
         R.push({ part: 'trunk', x: [-2.4, -1.585], bands: ['window', 'edge', 'crown'], top: true });
         return R;
@@ -125,16 +125,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const [xa, xb] of [[1.475, 1.7], [-1.69, -1.505]]) LD.side([[xa, 0.529], [xb, 0.529], [xb, 0.541], [xa, 0.541]], D, null, 0.005);   // (the bumpers' joints)
         for (const sd of [-1, 1]) {
           K.rect(-0.24, 0.79, sd * 0.739, 0.13, 0.026, B, { dir: fz(sd), host: sd < 0 ? 'doorL' : 'doorR' });
-          K.rect(1.3, 0.7, sd * 0.733, 0.06, 0.024, AMB, { dir: fz(sd), host: sd < 0 ? 'fenderL' : 'fenderR' });
+          K.rect(1.3, 0.7, sd * 0.733, 0.06, 0.024, AMB, { dir: fz(sd), host: 'body' });
         }
-        K.face([0, 1, 2, 3, 4, 5].map(i => [-1.25 + Math.cos(i * Math.PI / 3) * 0.045, 0.74 + Math.sin(i * Math.PI / 3) * 0.045, 0.734]), D, { host: 'quarterR' });
+        K.face([0, 1, 2, 3, 4, 5].map(i => [-1.25 + Math.cos(i * Math.PI / 3) * 0.045, 0.74 + Math.sin(i * Math.PI / 3) * 0.045, 0.734]), D, { host: 'body' });
         // ---- the wheel arches' lips: a band round each arch's rim just off the side, round with the round tyres (the loft cuts the arch in
-        //      six), a shade under the paint; one primitive each, the fender's or the quarter's ----
+        //      six), a shade under the paint; one primitive each, the body's (the fenders never come off) ----
         for (const A of K.arches) for (const sd of [-1, 1]) {
           const a0 = Math.acos(Math.min(1, A.half * K.sx / A.r)), n = 10, z = sd * (L.prop(A.x, 'w') + 0.008), r0 = A.r - 0.012, r1 = A.r + 0.042;
           const Q = (b, r) => [A.x + Math.cos(b) * r / K.sx, A.y + Math.sin(b) * r, z];
           K.at(A.x, A.y + A.r, z, () => { for (let i = 0; i < n; i++) { const b0 = a0 + (Math.PI - 2 * a0) * i / n, b1 = a0 + (Math.PI - 2 * a0) * (i + 1) / n;
-            face([Q(b0, r0), Q(b1, r0), Q(b1, r1), Q(b0, r1)], K.shade(P, 0.8), [0, 0, sd]); } }, { part: (A.x > 0 ? 'fender' : 'quarter') + (sd < 0 ? 'L' : 'R') });   // (by name: by its point the front one would be the mirror's)
+            face([Q(b0, r0), Q(b1, r0), Q(b1, r1), Q(b0, r1)], K.shade(P, 0.8), [0, 0, sd]); } }, { part: 'body' });   // (by name: by its point the front one would be the mirror's)
         }
         // ---- the nose: the big square head lamps on the lamp face (parts of their own), the slim grille between them (with the body) ----
         for (const sd of [-1, 1]) { const hz = sd < 0 ? 'headL' : 'headR';   // (each lamp a part of its own: its ring, lens, reflectors and bulbs leave together)
@@ -170,12 +170,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { const lift = L.topY(-1.4, sd * 0.575) - L.topY(-1.4, 0);   // (its endplates: fins a little over its ends)
             K.endplate([[-1.4, 1.38], [-1.62, 1.352], [-1.742, 1.388], [-1.737, 1.447]].map(([x, y]) => [x, y + lift]), sd * 0.573, 0.01, P); }
         }, { noCrush: true, noDent: true, hinge: [[-1.41, 1.39, -0.5], [-1.41, 1.39, 0.5]] });
-        // ---- the tail: the lamps in their strips (with the quarters), amber tops; the garnish between them, the plate and the wiper on
+        // ---- the tail: the lamps in their strips (on the body's rear quarters), amber tops; the garnish between them, the plate and the wiper on
         //      the tailgate ----
         for (const sd of [-1, 1]) {
           K.tailLamp(-1.642, 0.68, sd * 0.64, 0.13, 0.24);
-          K.rect(-1.661, 0.832, sd * 0.64, 0.125, 0.05, AMB, { dir: '-x', host: sd < 0 ? 'quarterL' : 'quarterR' });
-          for (const y of [0.62, 0.74]) K.rect(-1.667, y, sd * 0.64, 0.13, 0.008, [0.26, 0.03, 0.03], { dir: '-x', host: sd < 0 ? 'quarterL' : 'quarterR' });   // (the lens' ribs)
+          K.rect(-1.661, 0.832, sd * 0.64, 0.125, 0.05, AMB, { dir: '-x', host: 'body' });
+          for (const y of [0.62, 0.74]) K.rect(-1.667, y, sd * 0.64, 0.13, 0.008, [0.26, 0.03, 0.03], { dir: '-x', host: 'body' });   // (the lens' ribs)
         }
         K.part('trunk', () => {
           K.rect(-1.661, 0.81, 0, 1.1, 0.07, D, { dir: '-x' });
