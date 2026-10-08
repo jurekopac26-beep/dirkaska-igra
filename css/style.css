@@ -747,7 +747,7 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .on-ch-tracks .btn.mini { padding: 0 7px; min-height: 0; line-height: 1.5; margin-left: 6px; }
 .ch-tab td small { opacity: .8; }
 .pause-strat { margin: 12px 2px 0; font: 600 13px/1.4 var(--f-ui); color: var(--chalk); opacity: .9; }   /* the strategy as it stands (fuel, tyres, a stop now) */
-.wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
+.wx-row .seg button, .pit-row .seg button, .seg.nw button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
 /* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
