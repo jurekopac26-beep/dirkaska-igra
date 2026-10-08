@@ -723,7 +723,7 @@ Ob vsaki okvari se prikaže sporočilo (**PREDRTA GUMA!**, **ZAVORE SE PREGREVAJ
 
 ## Radio ekipe in strategija
 
-Na dirki s tekmeci (ne v kronometru, kvalifikacijah, šoli vožnje in dirki s prijatelji) se oglaša inženir ekipe. Njegova sporočila se za nekaj sekund prikažejo v okvirčku **RADIO** na vrhu zaslona, z zvokom radijske zveze; ko je vklopljen komentator, jih tudi izgovori (v angleščini). Radio izklopiš v **Nastavitvah** (**Radio ekipe**).
+Na dirki s tekmeci (ne v kronometru, kvalifikacijah, šoli vožnje in dirki s prijatelji) se oglaša inženir ekipe. Njegova sporočila se za nekaj sekund prikažejo v okvirčku **RADIO** levo pod okvirčkom z gumami, z zvokom radijske zveze; ko je vklopljen komentator, jih tudi izgovori (v angleščini). Radio izklopiš v **Nastavitvah** (**Radio ekipe**).
 
 - **Razlike:** vsak krog na ciljni črti pove, koliko sekund je pred tabo avto spredaj in koliko za tabo avto zadaj. V zadnjem krogu doda **Zadnji krog!**
 - **Okno za postanek:** ko gorivo ali gume ne bodo zdržale do cilja, pove, v katerih krogih lahko zapelješ v bokse, da en postanek zadostuje.
@@ -794,7 +794,7 @@ Krog na krožni progi je razdeljen na tri enake dele (S1, S2, S3). Pod uro kroga
 
 ## Časovna tabela in rezultati
 
-Med dirko je na levi pod mestom **časovna tabela** kot na televiziji: vodilni (VODI), prva tri mesta in ti (TI, poudarjeno) z dvema avtoma pred sabo in dvema za sabo, pri vsakem pa zaostanek za vodilnim v sekundah (izmerjen na zadnji točki, ki jo je avto prevozil; točke so vsakih 25 m), zaostanek za krog ali več (+1 KROG) oziroma BOKSI za avto v boksih in ODSTOP za avto, ki je odstopil (na dnu tabele). Na ležečem telefonu je desno pod zemljevidom, z enim avtom pred tabo in enim za tabo. Izklopiš jo v Nastavitvah (**Časovna tabela**). V rezultatih dirke na krožni progi je še tabela **Krogi vseh voznikov**: časi vseh krogov vsakega voznika (najboljši krog vsakega zeleno, najhitrejši krog dirke vijolično) in število postankov v boksih.
+Med dirko je desno pod zemljevidom **časovna tabela** kot na televiziji: vodilni (VODI), prva tri mesta in ti (TI, poudarjeno) z dvema avtoma pred sabo in dvema za sabo, pri vsakem pa zaostanek za vodilnim v sekundah (izmerjen na zadnji točki, ki jo je avto prevozil; točke so vsakih 25 m), zaostanek za krog ali več (+1 KROG) oziroma BOKSI za avto v boksih in ODSTOP za avto, ki je odstopil (na dnu tabele). Na ležečem telefonu je desno pod zemljevidom, z enim avtom pred tabo in enim za tabo. Izklopiš jo v Nastavitvah (**Časovna tabela**). V rezultatih dirke na krožni progi je še tabela **Krogi vseh voznikov**: časi vseh krogov vsakega voznika (najboljši krog vsakega zeleno, najhitrejši krog dirke vijolično) in število postankov v boksih.
 
 ## Nastavitev avta za progo
 
@@ -809,6 +809,7 @@ Nastavitev se shrani za izbrano progo in velja za vse dirke na njej (tudi v prve
 
 Na progah z boksi (Gozd, Toskana, Gromski rt, Spa, Red Bull Ring, Longford) imajo avti **suhe gume** (slick) ali **dežne gume**. Suhe na suhem najbolje primejo, na mokrem pa izgubijo skoraj dve petini oprijema. Dežne primejo na mokrem kot doslej, na suhem pa manj in se tam hitro obrabijo. Gume se med vožnjo obrabljajo (v drsenju hitreje), obrabljene primejo do desetino slabše.
 
+- **Prikaz poškodb** (levo pod hitrostjo, ko so poškodbe vklopljene): avto od zgoraj, vsak del v barvi svoje poškodbe (zelena cel, rdeča uničen): spredaj, zadaj, levi in desni bok ter kolesa po svojem vogalu; odpadlo kolo je prečrtano z rdečim ✕, razbito steklo rdeče. Ob avtu je skupna poškodba v odstotkih nad vrstico z oznakama pri 70 in 80 % ter odstotek vsakega dela: ▲ spredaj, ▼ zadaj, ◀ levo, ▶ desno. Med postankom v boksih se vse zmanjšuje skupaj s popravilom.
 - Na zaslonu je pod prikazom poškodb okvirček z gumami: **SUHE** (rumen rob) ali **DEŽNE** (moder rob) in koliko gume je še ostalo. Rdeče ozadje pomeni, da so gume napačne za to, kako mokra je proga.
 - V boksih mehaniki poleg popravila vedno zamenjajo gume za tiste, ki so prave za to, kako mokra je idealna linija (postanek traja vsaj 2,6 s).
 - **Vožnja skozi bokse:** ko prečkaš črto zidu boksov, avtopilot vodi avto po sredini pasu z omejeno hitrostjo (zavijati ne moreš, sporočilo **BOKSI · DRŽI PLIN**). Pelje, dokler držiš plin (s Samodejnim plinom sam), zavora ga upočasni. Pred svojim boksom avto zavije na ploščad pred garažo in obstane z nosom proti garaži, kjer ga čakajo mehaniki (nobeden ne stoji na pasu). Po postanku se sam vrne na sredino pasu, na izvozu pa ga, ko prečka črto zidu, spet vodiš sam. Kjer so garaže na strani izometrične kamere (proti jugu, npr. Bathurst, Toskana, Rio), kamera med postankom pogleda bolj od zgoraj, da streha stavbe boksov ne zakrije avta in mehanikov.

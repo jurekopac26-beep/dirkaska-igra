@@ -144,12 +144,14 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
 #h-msg { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); color: var(--chalk); text-shadow: 3px 4px 0 rgba(0,0,0,.55); opacity: 0; transform: scale(.9); transition: opacity .2s, transform .2s; }
 #h-msg.show { opacity: 1; transform: scale(1); }
-/* the team radio: the engineer's message at the top, left of the corner arrow (upright: on the right under the map and the buttons, the
-   arrow moved down below it while it shows) */
-#h-teamradio { position: absolute; right: calc(50% + 36px); top: calc(84px + var(--st)); transform: translateY(-6px); max-width: min(28vw, 320px); display: flex; gap: 8px; align-items: flex-start; padding: 6px 10px 7px 8px; border-radius: 8px; background: rgba(10, 14, 20, .82); border-left: 4px solid var(--lcd); color: #fff; font: 600 clamp(11px, 3.2vh, 14px)/1.3 var(--f-ui); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
+/* the team radio: the engineer's message in the left column, under the tyres (the timing tower has the place under the map) */
+#h-teamradio { position: relative; margin-top: 6px; transform: translateY(-6px); max-width: min(30vw, 300px); display: flex; gap: 8px; align-items: flex-start; padding: 6px 10px 7px 8px; border-radius: 8px; background: rgba(10, 14, 20, .82); border-left: 4px solid var(--lcd); color: #fff; font: 600 clamp(11px, 3.2vh, 14px)/1.3 var(--f-ui); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
 #h-teamradio.on { opacity: 1; transform: none; }
 #h-teamradio b { flex: none; margin-top: 1px; padding: 1px 5px; border-radius: 4px; background: var(--lcd); color: #111; font: 800 italic 10px/1.4 var(--f-ui); letter-spacing: .04em; }
-@media (orientation: portrait) { #h-teamradio { right: calc(10px + var(--sr)); top: calc(var(--st) + clamp(150px, 18vh, 170px)); max-width: 62vw; } #hud:has(#h-teamradio.on) #h-note { top: calc(24% + 64px); } }
+@media (orientation: portrait) {   /* (the left column, under the tyres; while it shows, the corner arrow in the middle moves a little right, between it and the timing tower) */
+  #h-teamradio { max-width: min(48vw, 210px); }
+  #hud:has(#h-teamradio.on) #h-note { margin-left: calc(clamp(44px, 13vw, 60px) / -2 + 36px); }
+}
 #hud.shot > *:not(#podium-cap):not(#h-radio) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium; busted: the arrest, the radio on): no HUD */
 #podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
 #podium-cap.show { opacity: 1; }
@@ -572,8 +574,19 @@ select.txt:disabled { opacity: .75; }
 
 
 /* damage indicator (top-down car, front up): zones green → yellow → red */
-#h-dmg { display: flex; align-items: center; gap: 5px; margin-top: 3px; pointer-events: none; }
-#h-dmg svg { width: clamp(20px, 6.2vh, 28px); height: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+/* the damage picture: the car from above (the front up), each part in its colour (green whole, red wrecked), the wheels by their corner,
+   a lost one crossed out; beside it the whole damage in % over a bar (marks at 70 and 80 %) and each part's % (▲ front, ▼ rear, ◀ left,
+   ▶ right), in the part's colour */
+#h-dmg { display: flex; align-items: center; gap: 6px; margin-top: 3px; pointer-events: none; }
+#h-dmg svg { width: clamp(26px, 7.6vh, 36px); height: auto; overflow: visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+#h-dmg .dmg-nums { display: flex; flex-direction: column; gap: 3px; min-width: clamp(58px, 15vh, 74px); padding: 3px 6px 4px; border-radius: 6px; background: rgba(10,14,20,.5); }
+#h-dmg #dmg-tot { font: 800 italic clamp(13px, 3.6vh, 17px)/1 var(--f-ui); text-shadow: 0 1px 2px rgba(0,0,0,.85); }
+#h-dmg .dmg-bar { position: relative; height: clamp(4px, 1.1vh, 6px); border-radius: 3px; background: rgba(255,255,255,.2); }
+#h-dmg .dmg-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 3px; }
+#h-dmg .dmg-bar s { position: absolute; top: -2px; bottom: -2px; width: 1.5px; margin-left: -.75px; background: rgba(255,255,255,.92); }
+#h-dmg .dmg-zs { display: grid; grid-template-columns: auto auto; column-gap: 8px; row-gap: 1px; font: 700 clamp(9px, 2.5vh, 12px)/1.15 var(--f-ui); text-shadow: 0 1px 2px rgba(0,0,0,.9); white-space: nowrap; }
+#h-dmg .dmg-zs .z0 { color: rgba(255,255,255,.55); }
+#h-dmg #dmg-glass.cracked { fill: rgba(255,120,110,.55); stroke: #ff3b2b; stroke-width: .8; }
 #h-dmg .dmg-body { fill: rgba(10,14,20,.6); stroke: rgba(255,255,255,.8); stroke-width: 1.6; }
 #h-dmg .dmg-cab { fill: rgba(255,255,255,.28); }
 #h-dmg rect[id^="dz"] { transition: fill .25s; }
@@ -634,8 +647,11 @@ select.txt:disabled { opacity: .75; }
 @keyframes pkcPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
 @media (orientation: landscape) { #pk-cer { top: 12%; padding: 8px 14px; } .pkc-flag { transform: scale(.8); margin: -6px auto -2px; } .pkc-time { font-size: clamp(30px, 11vh, 44px); } }
 @media (prefers-reduced-motion: reduce) { #pk-cer.show, .pkc-flag i, .pkc-rec { animation: none; } }
-/* the timing tower (#h-tower in the left column; on a phone on its side at the right, under the map): the order with the gaps, as on TV */
-#h-tower { display: none; flex-direction: column; gap: 1px; margin-top: 6px; font: 700 italic clamp(9px, 2.6vw, 12px)/1 var(--f-ui); color: #fff; }
+/* the timing tower: the order with the gaps, as on TV, at the right under the map (upright and on its side; the team radio has the left
+   column, under the tyres); out of the way of the destroyed car's banner (also under the map) */
+#h-tower { display: none; flex-direction: column; gap: 1px; position: fixed; margin: 0; right: calc(62px + var(--sr)); top: calc(14px + var(--st) + clamp(72px, 22vh, 112px)); width: clamp(96px, 30vh, 150px); font: 700 italic clamp(8px, 2.4vh, 11px)/1 var(--f-ui); color: #fff; }
+@media (orientation: portrait) { #h-tower { right: calc(8px + var(--sr)); top: calc(66px + var(--st) + clamp(64px, 20vw, 100px)); width: clamp(96px, 30vw, 136px); font-size: clamp(9px, 2.6vw, 11.5px); } }
+#hud:has(#h-wreck.show) #h-tower { visibility: hidden; }
 #hud.tw #h-tower { display: flex; }
 #hud.tt #h-tower, #hud.pol #h-tower { display: none; }
 .tw-r { display: flex; align-items: center; gap: 4px; min-width: 7.6em; padding: 2px 6px 2px 3px; border-radius: 3px; background: rgba(10, 14, 20, .62); text-shadow: 0 1px 1px rgba(0, 0, 0, .6); }
@@ -649,10 +665,7 @@ select.txt:disabled { opacity: .75; }
 .tw-r.me em { color: #16181c; }
 .tw-r.fin em::after { content: ' \2691'; }
 .tw-sep { height: .5em; line-height: .2; text-align: center; color: rgba(255, 255, 255, .7); }
-@media (orientation: landscape) {
-  #h-tower { position: fixed; margin: 0; right: calc(62px + var(--sr)); top: calc(14px + var(--st) + clamp(72px, 22vh, 112px)); width: clamp(96px, 30vh, 150px); font-size: clamp(8px, 2.4vh, 11px); }
-  .tw-r { min-width: 0; }
-}
+.tw-r { min-width: 0; }
 /* the lap table on the results: every driver's laps (the race's fastest purple, each driver's best green), scrolled sideways when long */
 #res-laps { margin-top: 10px; }
 .laps-wrap { overflow-x: auto; }
@@ -811,10 +824,11 @@ body.pkfly #touch { visibility: hidden; }
 /* the career's garage by category */
 .garage .gcat { grid-column: 1 / -1; margin: 6px 2px 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--lcd); }
 .garage .gcat:first-child { margin-top: 0; }
-/* the damage picture's wheels (a car whose wheels come off): dark, a lost one red and dashed */
-#h-dmg .dmg-wh { display: none; fill: #20252d; stroke: rgba(255,255,255,.85); stroke-width: 1; }
-#h-dmg.whl .dmg-wh { display: inline; }
-#h-dmg .dmg-wh.lost { fill: rgba(255,59,43,.18); stroke: #ff3b2b; stroke-width: 1.2; stroke-dasharray: 1.6 1.1; }
+/* the damage picture's wheels: in the colour of their corner's damage; a lost one (a car whose wheels come off) red, dashed and crossed out */
+#h-dmg .dmg-wh { fill: #20252d; stroke: rgba(255,255,255,.85); stroke-width: 1; transition: fill .25s; }
+#h-dmg .dmg-wh.lost { fill: rgba(255,59,43,.18) !important; stroke: #ff3b2b; stroke-width: 1.2; stroke-dasharray: 1.6 1.1; }
+#h-dmg .dmg-x { display: none; fill: none; stroke: #ff3b2b; stroke-width: 1.8; stroke-linecap: round; }
+#h-dmg .dmg-x.on { display: inline; }
 /* a destroyed car: the words under the minimap, Odstopi (a time trial, qualifying: the run again) */
 #h-wreck { display: none; position: absolute; right: calc(62px + var(--sr)); top: calc(16px + var(--st) + clamp(72px, 22vh, 112px)); flex-direction: column; align-items: flex-end; gap: 5px; pointer-events: none; }
 #h-wreck.show { display: flex; }

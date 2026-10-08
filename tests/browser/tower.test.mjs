@@ -1,6 +1,7 @@
-// The timing tower and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright, the tower under the place in the left
-// column: the leader (VODI), the first three and the player with the two ahead and behind, the gaps growing down the order, the player's
-// row lit; switched off in the settings: gone. On its side: at the right under the map, the player with one ahead and behind. The results:
+// The timing tower and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright, the tower at the right under the map (the
+// team radio has the left column): the leader (VODI), the first three and the player with the two ahead and behind, the gaps growing down
+// the order, the player's row lit; switched off in the settings: gone. On its side: at the right under the map too, the player with one
+// ahead and behind. The results:
 // every driver's laps (3 each for those at the line), the race's fastest lap in purple once, the pit stops.
 //   node tests/browser/tower.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -14,16 +15,16 @@ try {
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(22, true); g.resume(); });
   // (the tower is drawn four times a second of the race; a slow software renderer takes a few frames to get there: read it once it shows
   // the order as it is now)
-  const read = () => { const g = window.__game, P = g.race.player, H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
+  const read = () => { const g = window.__game, P = g.race.player, H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
     const rows = [...H.querySelectorAll('.tw-r')].map(e => ({ pos: +e.querySelector('b').textContent, code: e.querySelector('span').textContent, gap: e.querySelector('em').textContent, me: e.classList.contains('me') }));
-    return { rows, sep: H.querySelectorAll('.tw-sep').length, pos: P.pos, n: g.race.cars.length, left: r.left, top: r.top, colBottom: k.bottom, visible: getComputedStyle(H).display !== 'none' }; };
+    return { rows, sep: H.querySelectorAll('.tw-sep').length, pos: P.pos, n: g.race.cars.length, left: r.left, top: r.top, right: r.right, mapLeft: m.left, mapRight: m.right, mapBottom: m.bottom, w: innerWidth, visible: getComputedStyle(H).display !== 'none' }; };
   const t1 = await page.waitForFunction((src) => { const t = (0, eval)(src)(), me = t.rows.find(x => x.me); return me && me.pos === t.pos && t.rows.some(x => /^\+\d/.test(x.gap)) && t; }, read.toString(), { timeout: 20000 })
     .then(h => h.jsonValue()).catch(() => page.evaluate((src) => (0, eval)(src)(), read.toString()));
   const r = t1.rows, me = r.find(x => x.me), gaps = r.filter(x => /^\+\d/.test(x.gap)).map(x => parseFloat(x.gap.slice(1)));
   // (the rows it should show: the first three, the player with two ahead and two behind as far as the field goes (the player last on a
   // slow machine: none behind), all of a small field)
   const exp = new Set(t1.n <= 8 ? Array.from({ length: t1.n }, (_, i) => i + 1) : [1, 2, 3]); for (let p = t1.pos - 2; p <= t1.pos + 2; p++) if (p >= 1 && p <= t1.n) exp.add(p);
-  T.check('upright: the tower in the left column, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left < 60 && r.length === exp.size && r.every(x => exp.has(x.pos)) && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
+  T.check('upright: the tower at the right under the map, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left >= t1.mapLeft - 2 && t1.right <= t1.w && t1.top >= t1.mapBottom && r.length === exp.size && r.every(x => exp.has(x.pos)) && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
     (t1.pos - 2 <= 4 || t1.sep === 1), JSON.stringify(t1));
   T.check('the gaps to the leader grow down the order (+s.s), other drivers by three letters', gaps.length >= 4 && gaps.every((v, i) => i === 0 || v >= gaps[i - 1] - 0.3) && r.filter(x => !x.me).every(x => /^[A-ZČŠŽ]{3}$/.test(x.code)), JSON.stringify(r));
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="tower"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
