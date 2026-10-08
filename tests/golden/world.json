@@ -738,6 +738,39 @@
    "roadwear:MeshLambertMaterial": "cb786fa0"
   }
  },
+ "montreal": {
+  "meshes": 1280,
+  "verts": 1329735,
+  "instances": 9398,
+  "props": 74,
+  "crowd": 1765,
+  "world": "5748136c",
+  "propsHash": "c78eb4bf",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "80c4d243",
+   "mtWater:MeshPhongMaterial": "be26a81f",
+   "mtRoad:MeshLambertMaterial": "899851eb",
+   "mtWalls:MeshLambertMaterial": "291a7356",
+   "mtPits:MeshLambertMaterial": "ea26ec6a",
+   "mtPits:MeshBasicMaterial": "bf541e5b",
+   "mtStands:MeshLambertMaterial": "7bb23f35",
+   "mtBuildings:MeshLambertMaterial": "e53d669a",
+   "mtRoads:MeshLambertMaterial": "e16dea47",
+   "mtJunctions:MeshLambertMaterial": "d3e092e5",
+   "mtTrees:MeshLambertMaterial": "984e502c",
+   "mtBridges:MeshLambertMaterial": "9ae6c6c0",
+   "mtBasin:MeshLambertMaterial": "73a5961e",
+   "mtFar:MeshLambertMaterial": "aac2c796",
+   "mtScen:MeshLambertMaterial": "65420dd0",
+   "crowd:MeshLambertMaterial": "b387c775",
+   "-:MeshBasicMaterial": "30f65383",
+   "ao:MeshBasicMaterial": "dca29b03",
+   "tyremarks:MeshBasicMaterial": "866794",
+   "roadwear:MeshLambertMaterial": "d2d39fb",
+   "worn:MeshLambertMaterial": "3cccb8e6"
+  }
+ },
  "greatalpine": {
   "meshes": 2091,
   "verts": 1200091,

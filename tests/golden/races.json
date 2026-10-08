@@ -1949,6 +1949,56 @@
   "nan": false,
   "digest": "8a3db237487e0bddd6a19040"
  },
+ "montreal/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 212.81,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bec861c86ec934447514a061"
+ },
+ "montreal/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 220.82,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "90c38bbd9c6c0e95088c8cd7"
+ },
+ "montreal/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 179.49,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "232715881afb49a78cfe128d"
+ },
+ "montreal/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 182.69,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ebb2e3565832195eb86542ca"
+ },
+ "montreal/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 212.91,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "406d59fc3434eb1e767e6ada"
+ },
  "greatalpine/cs": {
   "finished": 13,
   "cars": 13,
@@ -1992,12 +2042,12 @@
  "greatalpine/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 220.27,
+  "winner": 219.18,
   "spins": 0,
-  "walls": 2,
+  "walls": 9,
   "rescues": 0,
   "nan": false,
-  "digest": "e0bd618d58f1fdab5d1611ba"
+  "digest": "335753f0ff3701051220bc81"
  },
  "detroit/cs": {
   "finished": 13,
@@ -2042,12 +2092,12 @@
  "detroit/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 156.78,
-  "spins": 1,
+  "winner": 160.51,
+  "spins": 2,
   "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "73aadce07c214d6e646f2f3a"
+  "digest": "e3cf1c19c8b59f7a62274df3"
  },
  "palomar/cs": {
   "finished": 13,
@@ -2092,12 +2142,12 @@
  "palomar/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 256.6,
+  "winner": 256.66,
   "spins": 0,
-  "walls": 9,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "eb1ef3e2e3bb580524bdc74f"
+  "digest": "eb6b6d21db6fce8a637384eb"
  },
  "bangsaen/cs": {
   "finished": 13,
@@ -2142,11 +2192,11 @@
  "bangsaen/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 153.33,
+  "winner": 150.1,
   "spins": 0,
-  "walls": 1,
+  "walls": 11,
   "rescues": 0,
   "nan": false,
-  "digest": "0a98ae301fdac9834b56e216"
+  "digest": "1273a8fe5ef57b8198578cdb"
  }
 }
