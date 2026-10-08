@@ -3753,7 +3753,8 @@
     if (fx !== me.fix) { me.fix = fx; me.wl = W ? W.wl : 0; me.three = -1; }   // (the marshals put the wheels back on)
     const keys = Object.keys(P.lost), n = keys.length;
     if (n < cs.lostN) cs.lostN = n;   // (fewer: a repair, a refit)
-    if (n > cs.lostN) { const part = keys.slice(cs.lostN).filter(k => WHEEL_IDS.indexOf(k) < 0).pop(); cs.lostN = n; if (part && cool('part', 6)) Comm.say('partLost', { part: partEn(P.m, part) }, 2); }
+    if (n > cs.lostN) { const PT = Core.partsOf(P.m), nk = keys.slice(cs.lostN).filter(k => WHEEL_IDS.indexOf(k) < 0), part = nk.filter(k => !(PT[k] && PT[k].on)).pop() || nk.pop();   // (a part and what was mounted on it: the part named, not its plate)
+      cs.lostN = n; if (part && cool('part', 6)) Comm.say('partLost', { part: partEn(P.m, part) }, 2); }
     if (W) {
       const nw = W.wl & ~me.wl; me.wl = W.wl;
       if (nw) { const k = [0, 1, 2, 3].find(j => nw & (1 << j)); me.three = race.time; if (cool('wheel', 6)) Comm.say('wheelLost', { wheel: partEn(P.m, WHEEL_IDS[k]) }, 3); }

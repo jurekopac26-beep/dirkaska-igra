@@ -15,13 +15,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 8000, pk: 'ta1', field: ['kolibri'],
     snd: { kind: 'i3', hz: 1.25, turbo: 0.6, loud: 0.8 },
     expect: { t100: [4.91, 5.76], vmax: [149, 158], latG: [2.1, 2.2], d100: [22.7, 25.1] },
-    partNames: { spoiler: 'roof spoiler', headL: 'left head lamp', headR: 'right head lamp' },
+    partNames: { spoiler: 'roof spoiler', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
+      plate: 'number plate', wiperFront: 'windscreen wiper', wiperRear: 'rear wiper', aerial: 'aerial' },
     parts: { set: 'car', ht: 1.4, y0: 0.18, drop: ['fenderL', 'fenderR', 'quarterL', 'quarterR'],   // (the four fenders the body's: they dent, they never come off)
       extra: {
         spoiler: { z: 1, th: 0.6, m: 2, r: 0.4, h: 0.05, lx: -0.95, lz: 0, f: 0.97 },
         // (the head lamps parts of their own: a hit on their corner knocks one out of the lamp face)
         headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.16, h: 0.08, lx: 0.99, lz: -0.64, f: 0.41 },
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.16, h: 0.08, lx: 0.99, lz: 0.64, f: 0.41 },
+        // (the tail lamps likewise, out of their strips on the rear quarters; the number plate and the rear wiper mounted on the tailgate
+        // (on: they turn with it when it hangs open, go with it when it goes), off before it opens (0.6 x 0.78); the front wipers on the
+        // cowl after the bumper; the aerial on the roof's right rear: a side swipe or a rear right corner snaps it)
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: -0.98, lz: -0.87, f: 0.44 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: -0.98, lz: 0.87, f: 0.44 },
+        plate: { z: 1, th: 0.4, m: 1, r: 0.17, h: 0.02, lx: -0.98, lz: 0, f: 0.41, on: 'trunk' },
+        wiperRear: { z: 1, th: 0.45, m: 0.5, r: 0.2, h: 0.03, lx: -0.97, lz: 0.23, f: 0.66, on: 'trunk' },
+        wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.45, h: 0.03, lx: 0.49, lz: -0.05, f: 0.62 },
+        aerial: { z: 3, th: 0.5, corner: 3, cth: 0.6, m: 0.3, r: 0.18, h: 0.03, lx: -0.76, lz: 0.49, f: 1.0 },
       },
       // (where the look has them, a lost one flies off from there: the tailgate is the near-vertical tail, the bonnet short, the mirrors
       // at the door glass's front corner; the doors by their ranges' middles, the bonnet with its scoop: on the road they lie as tall as
@@ -33,9 +43,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // between the tail lamps' strips, its glass nearly upright, the long flat roof, the windscreen, the short bonnet, the lamp face leaning
     // back over the front bumper. Its own regions: the bumpers wrap the corners up to their tops (0.535), the tailgate is the panel and the
     // glass between the lamp strips (they stay with the body's quarters), the lamp face's corners with the body's fenders (the head lamps parts of their own),
-    // its middle (the slim grille) with the body (the nose panel: the bonnet ends at its top). The windscreen and the tailgate's window are panes over their frames (the loft's top
-    // there in paint: the pillars show from the front and from behind). The roof spoiler, the bonnet's scoop, the bumpers' details in
-    // their parts; the start number on the roof
+    // its middle (the slim grille) with the body (the nose panel: the bonnet ends at its top). The windscreen and the tailgate's window are the loft's own glass (its top
+    // there, out to the roof's creases; the A-pillars the bead down the crease and the side's band, the D-pillars the tail's): nothing painted under or over the glass (broken,
+    // it shows the cabin; its crack decal lies on glass only). The roof spoiler, the bonnet's scoop, the bumpers' details in
+    // their parts; the tail lamps, the number plate, the wipers and the aerial parts of their own; the start number on the roof
     look: {
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, and the tyres in 64)
       body: { len: 3.39, wid: 1.47, door: [0.79, -0.35], bumpY: [0.535, 0.535],
@@ -77,7 +88,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const face = (pts, col, out, o) => { const [a, b, c] = pts, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
           const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; K.face(n[0] * out[0] + n[1] * out[1] + n[2] * out[2] < 0 ? pts.slice().reverse() : pts, col, o); };
         // ---- the shell: paint; the side glass (from the D-pillar to the A-pillar), the tail lamps' strips black, the sills a shade darker
-        //      between the arches; the windscreen's and the tailgate window's frames in paint (their panes over them, below: no lining) ----
+        //      between the arches; the windscreen and the tailgate's window the loft's top there, in glass (no lining) ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch ? B : at.x > XA && at.x < XB ? K.shade(P, 0.62) : DK;
           if (e === 1 || e === 7) return P;
@@ -87,23 +98,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             if (kind === 'r') return k === 4 ? G : P;                    // (the quarter window and the door's; the D-pillar)
             return P;
           }
-          return P;
-        }, { glass: (k, e, kind) => (kind === 'gf' || kind === 'gr') && e >= 3 && e <= 5,
-          caps: { front: { col: P, low: 'bumperF', high: 'bumperF' }, rear: { col: P, low: 'bumperR', high: 'bumperR' } }, glassBend: [20, 38] });
+          return kind === 'gf' || kind === 'gr' ? G : P;                 // (the top: the windscreen, the tailgate's window; else the roof, the bonnet)
+        }, { caps: { front: { col: P, low: 'bumperF', high: 'bumperF' }, rear: { col: P, low: 'bumperR', high: 'bumperR' } }, glassBend: [20, 38],
+          glassBendTop: { gf: [20, 38], gr: [0, 40] } });   // (the windscreen shaded as if curved; the tailgate's window not down: seen from above it would mirror the ground)
         const LD = L.decal;
-        // a pane on the loft's top between x0 and x1 (look units), half(x) wide, its corners cut ch (metres), off the frame by 5 mm along
-        // nrm ([x, y]: out): three faces (the crown's flat middle, the two edges falling away to the sides)
-        const pane = (x0, x1, half, nrm, ch, o, bend) => {
-          const len = Math.hypot(x1 - x0, L.topY(x1, 0) - L.topY(x0, 0)), tc = ch / len, X = (t) => x0 + (x1 - x0) * t;
-          const P3 = (t, z) => [X(t) + nrm[0] * 0.005, L.topY(X(t), z) + nrm[1] * 0.005, z], c = (t) => 0.38 * L.prop(X(t), 'wt'), e = (t) => half(X(t));
-          const out = [nrm[0], nrm[1], 0], nl = Math.hypot(nrm[0], nrm[1]), tilt = (deg) => { const y = nrm[1] / nl + Math.tan(deg * Math.PI / 180), k = Math.hypot(nrm[0] / nl, y); return [nrm[0] / nl / k, y / k, 0]; };
-          // (its middle shaded as if curved, like the side glass: the foot turned down bend[0] degrees, the top up bend[1]: the ground below, the sky above)
-          const lo = tilt(-bend[0]), hi = tilt(bend[1]), M4 = [P3(0, -c(0)), P3(0, c(0)), P3(1, c(1)), P3(1, -c(1))];
-          K.part(o.part, () => K.g.quadON(M4[0], M4[1], M4[2], M4[3], lo, lo, hi, hi, [M4[0][0] - out[0], M4[0][1] - out[1], 0], G, G, G, G));
-          for (const sd of [-1, 1]) face([[0, c(0)], [0, e(0) - ch], [tc, e(tc)], [1 - tc, e(1 - tc)], [1, e(1) - ch], [1, c(1)]].map(([t, z]) => P3(t, sd * z)), G, out, o);
-        };
-        pane(0.8, 0.185, (x) => L.prop(x, 'wt') - 0.075, [0.59, 0.81], 0.05, { part: 'body' }, [20, 38]);          // the windscreen
-        pane(-1.651, -1.592, (x) => L.prop(x, 'wt') - 0.085, [-0.99, 0.14], 0.04, { part: 'trunk' }, [0, 40]);    // the tailgate's window (not down: seen from above it would mirror the ground)
         // ---- the glasshouse: black frames round the side glass, the B-pillar black, the A-pillar's foot in paint ----
         LD.band([[-1.3425, 0], [0.79, 0], [0.79, 0.06], [-1.3425, 0.06]], B, null, 0.008);      // along the belt
         LD.band([[-1.3425, 0.93], [0.16, 0.93], [0.16, 1], [-1.3425, 1]], B, null, 0.008);      // under the roof's edge
@@ -157,8 +155,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.skin([ring(1.47, 0.075, 0.27), ring(1.43, 0.079, 0.268), ring(1.3, 0.068, 0.258), ring(1.0, 0.006, 0.235)], P, B, P);
           K.grille(1.472, L.topY(1.47, 0) + 0.034, 0, 0.44, 0.05, { slats: 3, col: B, slatCol: D });
         });
-        // ---- the windscreen's wipers ----
-        for (const z of [-0.3, 0.22]) K.bar([0.86, L.topY(0.86, z - 0.22) + 0.012, z - 0.22], [0.815, L.topY(0.815, z + 0.22) + 0.012, z + 0.22], 0.01, B, { n: 4, part: 'body' });
+        // ---- the windscreen's wipers (a part: both blades come off together) ----
+        for (const z of [-0.3, 0.22]) K.bar([0.86, L.topY(0.86, z - 0.22) + 0.012, z - 0.22], [0.815, L.topY(0.815, z + 0.22) + 0.012, z + 0.22], 0.01, B, { n: 4, part: 'wiperFront' });
         // ---- the mirrors (black) ----
         for (const sd of [-1, 1]) K.mirror(0.7, 0.96, sd * 0.8, { col: B, w: 0.1, h: 0.085, d: 0.13, crack: 1 });   // (crack: its glass breaks, it folds in: Razbijanje · nov način)
         // ---- the roof spoiler: a wedge on the roof's rear end rising to a kicked-up trailing edge over the tailgate's window, following
@@ -171,24 +169,29 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { const lift = L.topY(-1.4, sd * 0.575) - L.topY(-1.4, 0);   // (its endplates: fins a little over its ends)
             K.endplate([[-1.4, 1.38], [-1.62, 1.352], [-1.742, 1.388], [-1.737, 1.447]].map(([x, y]) => [x, y + lift]), sd * 0.573, 0.01, P); }
         }, { noCrush: true, noDent: true, hinge: [[-1.41, 1.39, -0.5], [-1.41, 1.39, 0.5]] });
-        // ---- the tail: the lamps in their strips (on the body's rear quarters), amber tops; the garnish between them, the plate and the wiper on
-        //      the tailgate ----
-        for (const sd of [-1, 1]) {
-          K.tailLamp(-1.642, 0.68, sd * 0.64, 0.13, 0.24);
-          K.rect(-1.661, 0.832, sd * 0.64, 0.125, 0.05, AMB, { dir: '-x', host: 'body' });
-          for (const y of [0.62, 0.74]) K.rect(-1.667, y, sd * 0.64, 0.13, 0.008, [0.26, 0.03, 0.03], { dir: '-x', host: 'body' });   // (the lens' ribs)
+        // ---- the tail: the lamps in their strips on the rear quarters (parts of their own: the lit lens, its dark copy in the body behind
+        //      it (a smashed lamp's, the piece's face), the amber top and the ribs leave together; the strip stays, black), the garnish
+        //      on the tailgate between them; the number plate (a thin plate) and the wiper mounted on the tailgate (parts of their own) ----
+        for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR';
+          K.tailLamp(-1.642, 0.68, sd * 0.64, 0.13, 0.24, { host: tp });
+          K.rect(-1.662, 0.68, sd * 0.64, 0.126, 0.236, [0.26, 0.03, 0.03], { dir: '-x', host: tp });   // (3 mm behind the lit face: unseen while it is there)
+          K.rect(-1.661, 0.832, sd * 0.64, 0.125, 0.05, AMB, { dir: '-x', host: tp });
+          for (const y of [0.62, 0.74]) K.rect(-1.667, y, sd * 0.64, 0.13, 0.008, [0.26, 0.03, 0.03], { dir: '-x', host: tp });   // (the lens' ribs)
         }
-        K.part('trunk', () => {
-          K.rect(-1.661, 0.81, 0, 1.1, 0.07, D, { dir: '-x' });
-          K.rect(-1.663, 0.68, 0, 0.32, 0.11, WH, { dir: '-x' });
-          K.bar([-1.652, 0.93, 0], [-1.626, 1.12, 0.34], 0.01, B, { n: 4 });
-        });
+        K.part('trunk', () => K.rect(-1.661, 0.81, 0, 1.1, 0.07, D, { dir: '-x' }));
+        K.box(-1.663, 0.625, 0, 0.006, 0.11, 0.32, 0, WH, null, true, { part: 'plate' });
+        K.bar([-1.668, 0.862, 0], [-1.638, 1.12, 0.34], 0.01, B, { n: 4, part: 'wiperRear' });   // (its pivot on the panel under the glass; 2 cm off the glass: over a broken window's crack decal)
         // ---- the rear bumper: the black valance, the reflectors; the exhaust under it ----
         K.part('bumperR', () => {
           K.box(-1.63, 0.2, 0, 0.13, 0.045, 1.24, 0, B);
           for (const sd of [-1, 1]) K.rect(-1.694, 0.44, sd * 0.53, 0.14, 0.04, RED, { dir: '-x' });
         });
         K.exhaust(-1.72, 0.25, -0.42, 0.03, 0.2, { part: 'body' });
+        // ---- the aerial (a part of its own): a foot on the roof by the spoiler, the whip raked far back, under the spoiler's top (the
+        //      showroom frames the car by its height); it sinks with a crushed roof ----
+        K.part('aerial', () => { const y0 = L.topY(-1.22, 0.36);
+          K.box(-1.22, y0 - 0.004, 0.36, 0.05, 0.02, 0.024, 0, B, null, true);
+          K.bar([-1.22, y0 + 0.012, 0.36], [-1.56, 1.425, 0.36], 0.0035, B, { n: K.hi ? 4 : 3 }); }, { noDent: true });
         // ---- the underbody: a black floor pan under the whole car, narrowed between the wheels over the axles (no seeing the road
         //      through the car from a low angle or through an open door) ----
         K.part('body', () => { for (const [x0, x1, w, y] of [[-1.655, -1.505, 0.655, 0.226], [-1.505, -0.855, 0.52, 0.2], [-0.855, 0.825, 0.672, 0.186], [0.825, 1.475, 0.52, 0.19], [1.475, 1.686, 0.645, 0.226]])
@@ -199,7 +202,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- Visoki (Nastavitve · Detajli avtov; the player's and the showroom's car on a computer): the small details. A generic badge
         //      (a chrome hexagon, a dark field, a chevron) on the grille and on the tailgate; the handles raised out of their recesses; the
         //      shut lines (the bonnet's along the fenders, the doors' at the sill, the tailgate's over the bumper); a chrome trim along the
-        //      belt; the plates framed, dark bars for their characters; an aerial on the roof's rear end ----
+        //      belt; the plates framed, dark bars for their characters ----
         if (K.hi) {
           const CH = K.chrome, badge = (x, y, dir, host) => { const o = { host }, sg = dir;
             K.discX(x, y, 0, 0.034, 6, CH, sg, o); K.discX(x + sg * 0.001, y, 0, 0.026, 6, D, sg, o);
@@ -210,14 +213,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           LD.side([[-0.35, 0.33], [0.79, 0.33], [0.79, 0.337], [-0.35, 0.337]], D, null, 0.005);   // (the doors' at the sill)
           K.rect(-1.664, 0.548, 0, 1.12, 0.006, D, { dir: '-x', host: 'trunk' });   // (the tailgate's over the bumper)
           LD.band([[-1.3425, 0.06], [0.79, 0.06], [0.79, 0.085], [-1.3425, 0.085]], CH, null, 0.01);   // (the chrome trim on the belt)
-          for (const [x, y, dir, host, w, h] of [[1.7035, 0.44, 1, 'bumperF', 0.34, 0.1], [-1.6625, 0.68, -1, 'trunk', 0.32, 0.11]]) {   // (the plates: a dark frame, four bars)
+          for (const [x, y, dir, host, w, h] of [[1.7035, 0.44, 1, 'bumperF', 0.34, 0.1], [-1.666, 0.68, -1, 'plate', 0.32, 0.11]]) {   // (the plates: a dark frame, four bars)
             K.rect(x - dir * 0.0008, y, 0, w + 0.024, h + 0.02, D, { dir: dir > 0 ? 'x' : '-x', host });
             for (let i = 0; i < 4; i++) K.rect(x + dir * 0.0012, y, (i - 1.5) * w * 0.21, w * 0.12, h * 0.48, [0.16, 0.17, 0.2], { dir: dir > 0 ? 'x' : '-x', host });
           }
-          { const y0 = L.topY(-1.22, 0.36);   // (the aerial: a foot on the roof by the spoiler, the whip raked far back, no higher than the spoiler's fins:
-            //    the showroom frames the car by its height)
-            K.box(-1.22, y0 - 0.004, 0.36, 0.05, 0.02, 0.024, 0, B, null, false, { part: 'body' });
-            K.bar([-1.22, y0 + 0.012, 0.36], [-1.56, 1.452, 0.36], 0.0035, B, { n: 4, part: 'body' }); }
         }
         if (K.hi) K.driver(-0.27, 1.1, -0.31, { inner: true, r: 0.12, lean: 0.25, hands: [0.24, 0.95, 0.15], feet: [0.6, 0.3, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });   // (Visoki: the driver at the wheel, left; his hands' and feet's z: out from his middle)
         // ---- inside (seen once a part is off): the red bucket seats, the rear bench, the dashboard and the wheel; the turbo three across
