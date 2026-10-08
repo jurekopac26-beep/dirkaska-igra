@@ -101,7 +101,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const z of [-0.42, 0.28]) { const a = [1.09, 1.215, z - 0.3], b = [1.075, 1.24, z + 0.3], o = [0.0101, -0.0044, 0];
           faceTo([[a[0] + o[0], a[1] + o[1], a[2]], [b[0] + o[0], b[1] + o[1], b[2]], [b[0] - o[0], b[1] - o[1], b[2]], [a[0] - o[0], a[1] - o[1], a[2]]], [0.4, 0.92, 0], B, { part: 'body' }); }
         // the mirrors: big, on the doors' front corners
-        for (const sd of [-1, 1]) K.mirror(0.95, 1.33, sd * 0.97, { w: 0.08, h: 0.17, d: 0.12, z0: sd * 0.925, col: P, arm: B });
+        for (const sd of [-1, 1]) K.mirror(0.95, 1.33, sd * 0.97, { w: 0.08, h: 0.17, d: 0.12, z0: sd * 0.925, col: P, arm: B, crack: 1 });   // (crack: its glass breaks, it folds in: Razbijanje · nov način)
         // ---- the bonnet (seen from above): a low bulge down its middle rising to the cowl, a vent grille each side of it, louvres across ----
         K.skin([[2.02, 0.004, 0.2], [1.16, 0.032, 0.26]].map(([x, h, w]) => { const y = L.topY(x, 0) - 0.004; return [[x, y, -w], [x, y + h, -w * 0.82], [x, y + h, w * 0.82], [x, y, w]]; }), P, null, P, { part: 'hood' });
         const onTop = (x0, x1, z0, z1, lift) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => [x, L.topY(x, z) + lift, z]);
@@ -146,14 +146,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const y of [0.86, 1.13, 1.4, 1.67]) K.rect(-2.205 + (y - 0.7) * 0.024, y, -0.57, 0.22, 0.026, T, { dir: '-x' });
         }, { hinge: [[-2.17, 0.66, 0.84], [-2.17, 1.74, 0.84]] });
         // ---- the spare wheel on the tailgate (its carrier on the gate's frame): the tyre, a cover over the rim in the paint; it swings open and
-        //      leaves with the gate ----
+        //      leaves with the gate (or by itself: its sub-range 'spare') ----
         K.part('tailgate', () => {
           const TY = [0.045, 0.045, 0.05], ring = (x) => { const R = []; for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, r = i % 2 ? 0.35 : 0.38; R.push([x, 1.06 + Math.sin(a) * r, Math.cos(a) * r]); } return R; };
           K.skin([ring(-2.18), ring(-2.41)], TY, null, TY);                                  // the tyre: its tread in blocks (its face to the gate unseen)
           K.discX(-2.412, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
           K.discX(-2.417, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
           K.bar([-2.2, 0.98, 0], [-2.17, 0.66, 0], 0.03, B, { n: 4 });                       // the carrier's arm down to the frame
-        });
+        }, { sub: 'spare' });   // (its own sub-range: Razbijanje · nov način knocks it off the gate in a hard crash from behind)
         // ---- the roof rack the length of the roof (never crushed): the frame on its feet, a slat either side of the start number; the light bar
         //      as its front member (four round lamps); the load on it, seen from above: two orange sand boards along its sides, two jerrycans
         //      lying at its back, a bag under a tarp strapped down at its front ----

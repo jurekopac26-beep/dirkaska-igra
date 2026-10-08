@@ -1897,13 +1897,15 @@ const Core = (function () {
     if (c.wreck) wreckCheck(c);
   }
   // a part comes off: lost, onto the race's debris list (Race.step), its share of the downforce with it (P.df; a model with the 8 old
-  // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road)
+  // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road); the
+  // parts mounted on it (their entry's on) come off with it, each its own piece
   function detachPart(c, name, P) {
     P = P || partsOf(c.m)[name];
     c.lost[name] = 1; c.detach.push(name);
     const df = P.df != null ? P.df : c.m.parts ? 0 : WING[name];
     if (c.aeroK0 != null && df) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
     if (P.wh != null && c.wreck) { c.wreck.wl |= 1 << P.wh; c.wreck.nL++; c.wreck.lt = 0; }
+    const PT = partsOf(c.m); for (const k in PT) if (PT[k].on === name && !c.lost[k]) detachPart(c, k, PT[k]);   // (the parts mounted on it go with it)
   }
   // the wreck (breakable vehicles, kitParts; from both of applyDamage's paths): from dmg 0.96 the car sheds what still hangs on, one part every 0.4 s
   // (Race._wreckStep): the bonnet (or its cover), the boot (tailgate), both bumpers and the wing, whatever their zone, the most battered
@@ -1945,6 +1947,8 @@ const Core = (function () {
   //   lx / lz where it sits (a fraction of the half length / half width; 'a' / 'b': over the front / rear axle): the debris starts
   //      there, y = y0 + f (ht - y0) up (y0 the sill or ride height, ht the body's height; or y in metres)
   //   df the share of model.aero it takes with it (0 unless set; an aero vehicle's wing .55 and front bumper / splitter .3 by default)
+  //   on the id of another part it is mounted on (not a wheel, not mounted itself): it goes with that part (lost with it, its own piece)
+  //      and the render turns it with that part when that one hangs loose (a number plate or a wiper on a tailgate)
   // The standard entries:
   //   id          z    th    corner cth   m    r         h     lx       lz      f
   //   bumperF     0    .50   -      -     7    .42 wid   .16   1.0      0       .12
@@ -1979,11 +1983,11 @@ const Core = (function () {
   const PART_SETS = { car: ['bumperF', 'bumperR', 'hood', 'trunk', 'fenderL', 'fenderR', 'quarterL', 'quarterR', 'doorL', 'doorR', 'mirrorL', 'mirrorR'], truck: ['bumperF', 'bumperR', 'doorL', 'doorR', 'mirrorL', 'mirrorR'], none: [] };
   PART_SETS.race = PART_SETS.car.concat(['wing']); PART_SETS.open = PART_SETS.car.slice();
   for (const k in PART_SETS) PART_SETS[k] = PART_SETS[k].concat(WHEELS);
-  const PART_KEYS = ['z', 'th', 'corner', 'cth', 'm', 'r', 'rW', 'h', 'lx', 'lz', 'f', 'y', 'df'];
+  const PART_KEYS = ['z', 'th', 'corner', 'cth', 'm', 'r', 'rW', 'h', 'lx', 'lz', 'f', 'y', 'df', 'on'];
   // an entry's problems ('' when fine); full: every key a part needs is there (an extra that is not a standard id)
   function partBad(e, full) {
     if (!e || typeof e !== 'object') return 'not an object';
-    for (const k in e) if (PART_KEYS.indexOf(k) < 0) return 'unknown key ' + k; else if (!(Number.isFinite(e[k]) || ((k === 'lx') && (e[k] === 'a' || e[k] === 'b')))) return k + ' not a number';
+    for (const k in e) if (PART_KEYS.indexOf(k) < 0) return 'unknown key ' + k; else if (!(Number.isFinite(e[k]) || ((k === 'lx') && (e[k] === 'a' || e[k] === 'b')) || (k === 'on' && typeof e[k] === 'string'))) return k + ' not a number';
     const has = (k) => e[k] != null;
     if (full) for (const k of ['z', 'th', 'm', 'h', 'lx', 'lz']) if (!has(k)) return 'missing ' + k;
     if (full && !has('r') && !has('rW')) return 'missing r';
@@ -2009,7 +2013,7 @@ const Core = (function () {
     const hl = ph.len / 2, out = {}, res = (e) => {
       const o = { z: e.z, th: e.th }; if (e.corner != null) { o.corner = e.corner; o.cth = e.cth || 0.55; }
       o.m = e.m; o.r = e.r != null ? e.r : e.rW * ph.wid; o.h = e.h; o.lx = e.lx === 'a' ? ph.a / hl : e.lx === 'b' ? -ph.b / hl : e.lx; o.lz = e.lz;
-      o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; return o;
+      o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; if (e.on != null) o.on = e.on; return o;
     };
     const wheel = (k) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / hl, lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
     const raw = mergeParts(sp);
@@ -2043,6 +2047,7 @@ const Core = (function () {
     // every entry as it will be used: complete and sound (nothing the expansion would drop or guess)
     const raw = mergeParts(sp);
     for (const id in raw) if (raw[id].wh == null) { const why = partBad(raw[id], true); if (why) return 'parts.' + id + ': ' + why; }
+    for (const id in raw) { const o = raw[id].on; if (o != null && (o === id || !raw[o] || raw[o].wh != null || raw[o].on != null)) return 'parts.' + id + '.on: ' + o + ' not another part (not a wheel, not mounted itself)'; }
     return '';
   }
 
