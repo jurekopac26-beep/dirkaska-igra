@@ -367,7 +367,7 @@
     'ODSTOP': 'OUT', 'TEKMEC JE ODSTOPIL': 'RIVAL RETIRED', ' Stalni tekmec {0}: odstop (skupaj ti {1}, tekmec {2}).': ' Your rival {0}: retired (overall you {1}, rival {2}).',
     'KOLO JE ODPADLO': 'WHEEL OFF', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
     // the categories (Core.CATS; Dirkalni is above: Racing)
-    'Mali avti': 'Small cars', 'Športni': 'Sports cars', 'Superšportni': 'Supercars', 'Klasika': 'Classics', 'Reli': 'Rally', 'Terenski': 'Off-road', 'Tovornjaki': 'Trucks', 'Električni': 'Electric', 'Posebni': 'Specials',
+    'Mali avti': 'Small cars', 'Športni': 'Sports cars', 'Superšportni': 'Supercars', 'Klasika': 'Classics', 'Reli': 'Rally', 'Terenski': 'Off-road', 'Tovornjaki': 'Trucks', 'Električni': 'Electric', 'Posebni': 'Specials', 'Motorji': 'Motorcycles',
     // the descriptions of the vehicles (def.desc in js/cars; their names stay as they are)
     'Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt.': 'A tiny Italian city car from the 60s, tuned for racing: its engine lid always propped open.',
     'Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem.': 'A Japanese pocket hot hatch from the 90s: boxy, light and lively, with a roof spoiler.',
@@ -402,6 +402,7 @@
     'Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa.': 'A monster truck: a pickup body on a tube chassis and huge wheels.',
     'Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih.': 'A light three-door hatchback with big almond-shaped headlamps, lively in the corners.',
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
+    'Superšportni motor s polnim oklepom: voznik sključen za šipo, v ovinkih se nagne v zavoj.': 'A superbike with a full fairing: the rider tucked in behind the screen, leaning into every corner.',
     /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };

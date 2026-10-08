@@ -37,7 +37,7 @@ const { DT, seeded } = require('./lib/sim.js');
 
 // the registration order (= the script tags' order, append-only: a shipped vehicle is retired, never removed or moved)
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
-  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk'];
+  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'kanja'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
@@ -54,6 +54,7 @@ const ENVELOPE = {
   tovornjaki: { t100: [5.5, 9], vmax: [125, 165], latG: [1.7, 1.95], d100: [29, 40] },        // (new: the racing truck, the rally-raid truck)
   elektricni: { t100: [2.3, 3.9], vmax: [185, 265], latG: [2.2, 2.5], d100: [22.5, 26] },     // ev 2.50 / 252 / 2.43 / 24.0
   posebni: { t100: [2.8, 6.5], vmax: [150, 285], latG: [1.85, 2.5], d100: [21, 33] },         // (new: the racing van, the limousine, the monster truck)
+  moto: { t100: [2.2, 4.5], vmax: [140, 305], latG: [1.8, 2.25], d100: [24, 31] },            // (new: the motorcycles: quick off the line, less grip than a car, longer stops)
 };
 const STD = ['bumperF', 'bumperR', 'hood', 'trunk', 'fenderL', 'fenderR', 'quarterL', 'quarterR', 'doorL', 'doorR', 'mirrorL', 'mirrorR', 'wing', 'wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
 const WHEELS = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];

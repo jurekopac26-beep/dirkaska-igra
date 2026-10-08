@@ -1290,7 +1290,7 @@ const Core = (function () {
   const CATS = [
     { id: 'mali', name: 'Mali avti' }, { id: 'sportni', name: 'Športni' }, { id: 'super', name: 'Superšportni' }, { id: 'klasika', name: 'Klasika' },
     { id: 'reli', name: 'Reli' }, { id: 'teren', name: 'Terenski' }, { id: 'dirkalni', name: 'Dirkalni' }, { id: 'tovornjaki', name: 'Tovornjaki' },
-    { id: 'elektricni', name: 'Električni' }, { id: 'posebni', name: 'Posebni' },
+    { id: 'elektricni', name: 'Električni' }, { id: 'posebni', name: 'Posebni' }, { id: 'moto', name: 'Motorji' },
   ];
   { const C0 = { pico: 'mali', p206: 'mali', kaze: 'sportni', vortex: 'sportni', strega: 'super', rally: 'reli', formula: 'dirkalni', lm: 'dirkalni', muscle: 'klasika', ev: 'elektricni', truck: 'teren' };
     for (const M of MODELS) M.cat = C0[M.id]; }   // (not a Car field: the golden digests never see a model's own keys)
@@ -1904,6 +1904,7 @@ const Core = (function () {
     const df = P.df != null ? P.df : c.m.parts ? 0 : WING[name];
     if (c.aeroK0 != null && df) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
     if (P.wh != null && c.wreck) { c.wreck.wl |= 1 << P.wh; c.wreck.nL++; c.wreck.lt = 0; }
+    if (P.wh != null && c.m.bike) { const o = WHEELS[P.wh ^ 1]; if (!c.lost[o]) detachPart(c, o); }   // (a motorcycle: the wheel's other half with it, model.bike)
   }
   // the wreck (breakable vehicles, kitParts; from both of applyDamage's paths): from dmg 0.96 the car sheds what still hangs on, one part every 0.4 s
   // (Race._wreckStep): the bonnet (or its cover), the boot (tailgate), both bumpers and the wing, whatever their zone, the most battered
@@ -5241,7 +5242,9 @@ const Core = (function () {
   const DRIVES = ['FR', 'FF', 'MR', 'AWD', 'RR'], PK_IDS = ['ta1', 'ppo', 'open', 'unl'];
   const BODY_KEYS = ['coupe', 'sedan', 'hatch', 'wedge', 'rally', 'formula', 'lm', 'muscle', 'ev', 'truck'];   // (the renderer's body names: no vehicle's id)
   const PHYS_REQ = ['mass', 'a', 'b', 'kI', 'kw', 'redline', 'idle', 'gears', 'final', 'rw', 'cDrag', 'len', 'wid', 'steerMax'];
-  const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
+  // (bike: a motorcycle: its two wheels are the kit's four, each one a left and a right half on the hub (they come off together: detachPart),
+  // and the renderer leans it into the corner instead of rolling its body out)
+  const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, bike: null, sway: [0, 4],
     dmgK: [0.3, 2], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
   const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
   const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];

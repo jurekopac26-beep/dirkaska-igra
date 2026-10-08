@@ -131,7 +131,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   for (const M of kit) { const d = M.def && M.def.desc; if (!d || !has(d)) miss.push('description ' + M.id); else if (EN[d].length > 100) long.push(M.id + ' ' + EN[d].length); }
   const names = C.MODELS.filter(M => has(M.name)).map(M => M.id);
   check(`the fleet: the ${C.CATS.length} categories and the descriptions of the ${kit.length} vehicles in English (at most 100 characters), the names of the vehicles as they are`,
-    C.CATS.length === 10 && kit.length >= 33 && !miss.length && !long.length && !names.length, miss.concat(long, names.map(id => 'name ' + id)).slice(0, 10).join(' | '));
+    C.CATS.length === 11 && kit.length >= 34 && !miss.length && !long.length && !names.length, miss.concat(long, names.map(id => 'name ' + id)).slice(0, 10).join(' | '));
   Lang.set('en');
   const k = C.MODELS.find(M => M.id === 'miska'), line = [Lang.tr(C.CATS.find(c => c.id === k.cat).name), Lang.tr(k.def.desc)].join(' | ');
   Lang.set('sl');
