@@ -1133,10 +1133,13 @@ const Core = (function () {
       if (!done && x <= 6) return x < -BAY.inL ? 0 : Math.min(W * (x + BAY.inL) / BAY.inL, W + 3);
       return x < 0 ? W : W * (1 - sstep(0, BAY.outL, x));
     }
+    // the box's depth on this track (def.pitApron: the apron from the lane's outer edge to the garages' front, default 9 m): o, the car's centre
+    // past the lane's edge (BAY.o, less where the apron is shallow: the car turns in less and stops at its edge, Montréal); room, the wall
+    bayDim() { if (!this._bay) { const A = this.def.pitApron || 9; this._bay = { o: clamp(A - 2.5, 0.8, BAY.o), room: A - 0.6 }; } return this._bay; }
     // how far past the lane's outer edge a car may go at s near its box (Core's wall there: the garages' front less 0.6 m); 0 elsewhere
-    bayRoom(s, boxD) { const x = this.boxX(s, boxD); return x > -BAY.inL - 12 && x < BAY.outL + 12 ? BAY.room : 0; }
+    bayRoom(s, boxD) { const x = this.boxX(s, boxD); return x > -BAY.inL - 12 && x < BAY.outL + 12 ? this.bayDim().room : 0; }
     // where the car stops in the box at boxD: s, its lateral offset o, its yaw a from the lane's direction (+: towards the garages)
-    bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; return { s, o: p.lout + BAY.o, a: Math.atan2(3.5 + BAY.o, BAY.inL) }; }
+    bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; const o = this.bayDim().o; return { s, o: p.lout + o, a: Math.atan2(3.5 + o, BAY.inL) }; }
 
     // nearest point search around hint index; returns object (reused)
     query(x, z, hint, out) {
@@ -2116,6 +2119,7 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      gpost:  { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // an Australian guide post (the Great Alpine Road): as the roadside post
       // Medvode's small roadside things (the scenery builder puts them in out.props; the models: Render.propGeometry; tbollard, mlamp, msign: its own kinds,
       // the street circuits' bollard, lamp and sign below are others): a yellow triangular bollard in front of the
       // mouth of every side road, the street lamps, the signs on their poles, the flag poles, a bench. Light enough to be knocked over, heavy enough to
@@ -2144,6 +2148,7 @@ const Core = (function () {
       barrel:  { m: 12,  rh: 0.3,  rb: 0.55, h0: 0.47, e: 0.35, mu: 0.6, lift: 0.7, I: 1.2, dmg: 0, pts: cylPts(0.29, -0.47, 0.47, 8) },
       stop:    { m: 12,  rh: 0.1,  rb: 1.6, h0: 1.35, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.35, 0.05).concat([[0, 1.0, 0.4], [0, 1.0, -0.4]]) },   // a stop sign, the street names on top (the US)
       warn:    { m: 12,  rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.0, 0.45], [0, 1.0, -0.45]]) },   // a yellow diamond warning sign (the Americas, Australia)
+      meter:   { m: 14,  rh: 0.12, rb: 0.75, h0: 0.7,  e: 0.25, mu: 0.6, lift: 0.8, I: 1.6, dmg: 0, pts: boxPts(0.12, 0.7, 0.1) },   // a parking meter
     };
     KK.bsign = KK.msign;   // (Medvode's bus stop sign: the same pole and board, another picture)
     return KK;
@@ -2557,7 +2562,7 @@ const Core = (function () {
       const pz = T.pitAt(sT), pn = T.pitAt(q.s); if (pz && (c.inPit || pz.gap || (pn && pn.gap))) off = pz.o * pz.sd;   // (over to the lane only where it can be reached: the way in or out, or in it; beside the pit wall on with the lap, in next time)
       const bd = pz && c.inPit && !pz.gap ? race._boxD(c) : null;
       if (bd != null) {   // (in the lane: in its middle, into the car's own box on the apron in front of its garage nose first, then out to the middle again; across measured to the lane's side, pz.sd)
-        const bo = T.bayOff(T.boxX(sT, bd), 3.5 + BAY.o, c.pitDone); let u = pz.o + bo;
+        const bo = T.bayOff(T.boxX(sT, bd), 3.5 + T.bayDim().o, c.pitDone); let u = pz.o + bo;
         // (round a car standing in the lane, on the side away from it: not waiting behind it)
         let D = c.pitDodge; if (D && (c.dist - D.o.dist > (D.o.m.len + M.len) * 0.5 + 1 || D.o.dist - c.dist > 35 || !D.o.inPit)) D = c.pitDodge = null;
         // (which side: by the lane's centre where that car stands, which in the way in still moves out)
@@ -3614,7 +3619,7 @@ const Core = (function () {
           }
         }
         // the helicopter: from the heat D.heli on, flying in from ~650 m down the road
-        if (!this.heli && (this.heliCool -= dt) <= 0 && this.heat >= D.heli) {
+        if (!this.heli && !T.def.noHeli && (this.heliCool -= dt) <= 0 && this.heat >= D.heli) {   // (none on a road that has none: def.noHeli)
           const i = T.idx(P.q.s - 650); this.heli = { x: T.px[i], y: T.hy[i] + 150, z: T.pz[i], vx: 0, vy: 0, vz: 0, ax: 0, az: 0, h: T.hd[i], st: 'in', t: 0, fuel: D.heliT, side: this.R() < 0.5 ? -1 : 1 };
           this._event('heli', this.heli.x, this.heli.z, null, P.q.s);
         }
@@ -4720,7 +4725,7 @@ const Core = (function () {
         if (ds < 40 && ds > -5) {
           vmax = Math.min(vmax, Math.sqrt(2 * 6.5 * Math.max(0, ds - 0.2)));
           if (!c.pitState) { c.pitState = 'stop'; c.pitEv = 'box'; }
-          if (sp < 1.5 && Math.abs(ds) < 4 && (q.d * pz.sd > pz.lout + 1 || sp < 0.3)) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle; in the box on the apron, or stopped short of it)
+          if (sp < 1.5 && Math.abs(ds) < 4 && (q.d * pz.sd > pz.lout + Math.min(1, T.bayDim().o * 0.5) || sp < 0.3)) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle; in the box on the apron, or stopped short of it)
             c.pitState = 'repair'; c.pitT = 0; c.pitDur = stopDur(c, this); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';
           }
         }

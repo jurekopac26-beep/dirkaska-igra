@@ -43,14 +43,14 @@ const deg = (a) => a * 180 / Math.PI;
         if (pl.pitDone) rep = true;
         if (rep && !pl.inPit && outT == null) outT = t;
       }
-      out.push({ id: d.id, pose, dev, wall, rep, dmg: pl.dmg, laneT, ghost, solid: !pl.pitG, back: outT != null && t - outT <= 6.05 });
+      out.push({ id: d.id, pose, dev, wall, rep, dmg: pl.dmg, laneT, ghost, solid: !pl.pitG, back: outT != null && t - outT <= 6.05, bo: T.bayDim().o, ba: deg(T.bayPose(P[3]).a) });
     } finally { Math.random = orig; }
   }
   const f1 = (x) => x.toFixed(1);
   check('a stop on every circuit with pits: in the middle of the lane on the autopilot, into the box, repaired, out again', out.every(x => x.rep && x.dmg < 0.05 && x.dev < 0.8),
     out.map(x => `${x.id} ${x.rep ? 'repaired' : 'NO STOP'} (${f1(x.dev)} m off the middle, ${f1(x.laneT)} s in the lane)`).join(', '));
-  check('the box on the apron in front of the garage: the car stops 2.5-5.5 m past the lane\'s outer edge, within 4 m of the box, nose in 12-35° towards the garage',
-    out.every(x => x.pose && x.pose.out > 2.5 && x.pose.out < 5.5 && Math.abs(x.pose.x) < 4 && x.pose.yaw > 12 && x.pose.yaw < 35),
+  check('the box on the apron in front of the garage: the car stops ~4 m past the lane\'s outer edge (on a shallow apron, def.pitApron, at its edge: Track.bayDim), within 4 m of the box, nose in towards the garage (~23°, less on a shallow one)',
+    out.every(x => x.pose && Math.abs(x.pose.out - x.bo) < 1.5 && x.pose.out > 0.5 && Math.abs(x.pose.x) < 4 && x.pose.yaw > x.ba * 0.5 && x.pose.yaw < x.ba + 12),
     out.map(x => x.pose ? `${x.id} ${f1(x.pose.out)} m out, ${f1(x.pose.x)} m along, ${f1(x.pose.yaw)}°` : `${x.id} -`).join(', '));
   check('in and out of the box without touching a wall', out.every(x => x.wall === 0), out.filter(x => x.wall).map(x => `${x.id} ${x.wall} steps`).join(', ') || 'none');
   check('a ghost all the way through the lane, solid again within 6 s of leaving it', out.every(x => x.ghost > 0 && x.solid && x.back), out.map(x => `${x.id} ${x.solid && x.back ? 'ok' : 'STILL A GHOST'}`).join(', '));
@@ -74,7 +74,7 @@ for (const [tid, laps] of [['toskana', 6], ['rio', 5], ['toronto', 11]]) {
         if (c.pitG) { ghost++; if (c.hitCar > 0) hits++; if (dm.has(c) && c.dmg > dm.get(c) + 1e-9) dmg += c.dmg - dm.get(c); }
         if (c.hitCar > 0 && c.inPit) wasHit++;
         dm.set(c, c.dmg);
-        if (c.pitState === 'repair' && was.get(c) !== 'repair') { stops++; const p = T.pitAt(c.q.s); let a = c.h - Math.atan2(c.q.tz, c.q.tx); a = Math.atan2(Math.sin(a), Math.cos(a)); if (p && c.q.d * p.sd - p.lout > 2 && a * p.sd > 0.2 && Math.abs(T.boxX(c.q.s, r._boxD(c))) < 4) inBay++; }   // (on the apron: 2 m and more past the lane's edge (the first box, where the lane has only just come to its full width: a little less far in), nose in)
+        if (c.pitState === 'repair' && was.get(c) !== 'repair') { stops++; const p = T.pitAt(c.q.s); let a = c.h - Math.atan2(c.q.tz, c.q.tx); a = Math.atan2(Math.sin(a), Math.cos(a)); if (p && c.q.d * p.sd - p.lout > T.bayDim().o * 0.5 && a * p.sd > 0.1 && Math.abs(T.boxX(c.q.s, r._boxD(c))) < 4) inBay++; }   // (on the apron: 2 m and more past the lane's edge (the first box, where the lane has only just come to its full width: a little less far in), nose in)
         was.set(c, c.pitState); c.hitCar = 0; c.hitWall = 0;
       }
       const cs = r.cars;
