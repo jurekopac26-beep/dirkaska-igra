@@ -5422,6 +5422,7 @@ const Render = (function () {
       v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
       v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
+      if (c.rl) xRollPose(v, c, h, dt); else if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; }   // (Razbijanje · nov način: rolling over, the core's c.rl)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
@@ -6145,6 +6146,9 @@ const Render = (function () {
   // a cluster's numbers from its blow's place (u, w: the car's half length / half width) and the sum of its blows (A)
   function xParams(xc, K) {
     const B = xc.B, l = Math.hypot(K.u, K.w) || 1;
+    if (K.top) {   // (the roof on the road: down from the top, at its place along the roof)
+      K.dx = 0; K.dz = 0; K.px = K.u * B.hx * 0.5; K.pz = K.w * B.hw * 0.6; K.py = B.y0 + B.H; K.end = false;
+      const cap = B.H * 0.3; K.d = cap * Math.tanh(2.4 * K.A / cap); K.R = Math.min(2.4, 0.7 + 1.5 * K.d); return; }
     K.dx = -K.u / l; K.dz = -K.w / l;
     K.px = K.u * (K.u >= 0 ? B.x1 : -B.x0); K.pz = K.w * B.hw; K.py = B.y0 + B.H * 0.42;
     const cap = 1 / Math.hypot(K.dx / (K.dx < 0 ? B.capF : B.capR), K.dz / B.capS);
@@ -6152,6 +6156,13 @@ const Render = (function () {
   }
   // one cluster's push of the intact point i (out: dx, dy, dz, its depth there, its crumple); false: out of its reach
   function xPush(K, xc, x, y, z, i, out) {
+    if (K.top) {   // (a rollover's roof dent: the roof pushed down, crumpled, the glass and the pillars with it; nothing under the belt)
+      const B = xc.B; if (y < B.y0 + B.H * 0.55) return false;
+      const ex = x - K.px, ey = (y - K.py) * 0.8, ez = z - K.pz, r = Math.sqrt(ex * ex + ey * ey + ez * ez); if (r >= K.R) return false;
+      const f = Math.pow(1 - r / K.R, 1.4), up2 = Core.sstep(B.y0 + B.H * 0.55, B.y0 + B.H, y), amt = K.d * f * up2;
+      const r1 = i >= 0 ? xc.r1[i] : 0.5, r2 = i >= 0 ? xc.r2[i] : 0.5, cr = ((r1 - 0.5) * 0.75 + (r2 - 0.5) * 0.35) * (0.04 + 0.25 * amt) * Math.min(1, amt / 0.04);
+      out[0] = (r2 - 0.5) * amt * 0.3; out[1] = -amt + cr; out[2] = Math.sign(K.pz || 1) * amt * 0.15; out[3] = amt; out[4] = Math.abs(cr); return true;
+    }
     const ex = x - K.px, ey = i >= 0 && xc.flat && xc.flat[i] ? 0 : (y - K.py) * 0.6, ez = z - K.pz, r = Math.sqrt(ex * ex + ey * ey + ez * ez);
     if (r >= K.R && (K.end || K.d <= 0.12 || Math.abs(ex) >= K.R * 1.15 || y < xc.B.y0 + xc.B.H * 0.6)) return false;
     const B = xc.B, f = r < K.R ? Math.pow(1 - r / K.R, 1.6) : 0, amt = K.d * f, up = clamp((y - B.y0) / B.H, 0, 1), topW = Core.sstep(B.y0 + B.H * 0.4, B.y0 + B.H * 0.55, y);
@@ -6190,11 +6201,11 @@ const Render = (function () {
   }
   // a blow (the core's dent: lx, lz in the car's frame, its amount): into the nearest cluster within reach, or a cluster of its own
   function xDent(v, d) {
-    const xc = xInit(v), M = v.car.m, u = clamp(d.lx / (M.len * 0.5), -1.2, 1.2), w = clamp(d.lz / (M.wid * 0.5), -1.2, 1.2);
-    let K = null, best = 0.5; for (const q of xc.cl) { const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } }
-    if (!K && xc.cl.length >= 14) { best = Infinity; for (const q of xc.cl) { const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } } }
+    const xc = xInit(v), M = v.car.m, u = clamp(d.lx / (M.len * 0.5), -1.2, 1.2), w = clamp(d.lz / (M.wid * 0.5), -1.2, 1.2), top = !!d.top;
+    let K = null, best = 0.5; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } }
+    if (!K && xc.cl.length >= 14) { best = Infinity; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } } }
     const old = K ? Object.assign({}, K) : null;
-    if (!K) { K = { u, w, A: 0 }; xc.cl.push(K); } else { const s = K.A + d.amt; K.u = (K.u * K.A + u * d.amt) / s; K.w = (K.w * K.A + w * d.amt) / s; }
+    if (!K) { K = { u, w, A: 0, top }; xc.cl.push(K); } else { const s = K.A + d.amt; K.u = (K.u * K.A + u * d.amt) / s; K.w = (K.w * K.A + w * d.amt) / s; }
     K.A += d.amt; xParams(xc, K);
     xApply(v, xc, old, K);
   }
@@ -6247,6 +6258,21 @@ const Render = (function () {
     for (const t of sel) for (let q = 0; q < 3; q++) { const i = t * 3 + q, dx = pa[i * 3] - hx, dz = pa[i * 3 + 2] - Z, nx = na[i * 3], nz = na[i * 3 + 2];
       pa[i * 3] = hx + dx * cs + dz * sn; pa[i * 3 + 2] = Z - dx * sn + dz * cs; na[i * 3] = nx * cs + nz * sn; na[i * 3 + 2] = -nx * sn + nz * cs; dv[i] = 1; }
     g.attributes.position.needsUpdate = true; g.attributes.normal.needsUpdate = true; K.xOpen = true; K.ver++;
+  }
+  // a car rolling over (the core's c.rl: Core.xRollStart): turned about its long axis round its middle, its full turns eased in and out (the
+  // core lifts it in its arc); its contact shadow hidden; where its roof meets the road, dust and sparks
+  function xRollPose(v, c, h, dt) {
+    const r = c.rl, s = clamp(r.t / r.T, 0, 1), e = 0.65 * s + 0.35 * s * s * (3 - 2 * s), phi = r.dir * Math.PI * 2 * r.turns * e, cy = Math.max(0.45, c.m.rw + 0.25);
+    v.grp.rotation.x += phi;
+    const dy = cy - cy * Math.cos(phi), dz = -cy * Math.sin(phi);
+    v.grp.position.x += -Math.sin(h) * dz; v.grp.position.y += dy; v.grp.position.z += Math.cos(h) * dz;
+    if (v.blob && v.blob.visible) { v.blob.visible = false; v.xRB = true; }
+    if (Math.cos(phi) < -0.6 && dt > 0) {   // (upside down, low: the roof scrapes the road)
+      const gy = c.roadY || 0, x = v.grp.position.x, z = v.grp.position.z;
+      for (let k = 0; k < 3; k++) { const a = rRnd() * Math.PI * 2, sp = 1.5 + rRnd() * 3;
+        particles.emit(x + Math.cos(a) * 1.2, gy + 0.25, z + Math.sin(a) * 1.2, Math.cos(a) * sp + c.vx * 0.3, 0.5 + rRnd() * 0.8, Math.sin(a) * sp + c.vz * 0.3, 0.9 + rRnd() * 0.6, 1.1, 4.5 + rRnd() * 2, 0.78, 0.74, 0.68, 0.5, -0.08, 2.2, gy); }
+      for (let k = 0; k < 4; k++) sparkP.emit(x + (rRnd() - 0.5) * 2, gy + 0.1, z + (rRnd() - 0.5) * 2, (rRnd() - 0.5) * 6 + c.vx * 0.4, 0.5 + rRnd() * 2, (rRnd() - 0.5) * 6 + c.vz * 0.4, 0.2 + rRnd() * 0.2, 2.2, 3.2, 1, 0.8, 0.4, 0.9, 0, 0, gy);
+    }
   }
   // the wheels go back (and toe out a little) with the metal crushed over them
   function xWheels(v, xc) {

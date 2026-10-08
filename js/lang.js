@@ -23,7 +23,7 @@
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
     '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik na reliju (angleščina)': 'Rally co-driver (English)', 'Poškodbe avtov': 'Car damage', 'Samo videz': 'Looks only',
-    'Razbijanje: nove poškodbe karoserije': 'Crashes: new body damage', 'Razbijanje: šipe': 'Crashes: glass', 'Razbijanje: odrgnjena barva in rja': 'Crashes: scraped paint and rust',
+    'Razbijanje: nove poškodbe karoserije': 'Crashes: new body damage', 'Razbijanje: šipe': 'Crashes: glass', 'Razbijanje: prevračanje': 'Crashes: rollovers', 'Močan bočni trk avto prevrne: zavrti se enkrat ali dvakrat in pristane na kolesih, izgubiš okoli sekundo': 'A hard knock on the side rolls the car over: it turns once or twice and lands on its wheels, about a second lost', 'Razbijanje: odrgnjena barva in rja': 'Crashes: scraped paint and rust',
     'Razbijanje: podrobnost avtov': 'Crashes: car detail', 'Izravnana': 'Balanced', 'Polna': 'Full',
     'Vsak trk avto vdre globlje: spredaj do šipe, vogali in ob ogledalih poševno, pločevina zmečkana v gube; pod strgano haubo se vidi motor': 'Every crash pushes the car in deeper: the front up to the windscreen, the corners and next to the mirrors diagonally, the metal crumpled into folds; the engine shows under a torn bonnet',
     'Razbite šipe na več načinov: zvezda, mreža, luknja, razpoke, izpadla šipa': 'Glass breaks in several ways: a star, crazed, a hole, cracks, fallen out',
