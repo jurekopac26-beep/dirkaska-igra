@@ -3578,7 +3578,7 @@ const Core = (function () {
           }
         }
         // the helicopter: from the heat D.heli on, flying in from ~650 m down the road
-        if (!this.heli && (this.heliCool -= dt) <= 0 && this.heat >= D.heli) {
+        if (!this.heli && !T.def.noHeli && (this.heliCool -= dt) <= 0 && this.heat >= D.heli) {   // (none on a road that has none: def.noHeli)
           const i = T.idx(P.q.s - 650); this.heli = { x: T.px[i], y: T.hy[i] + 150, z: T.pz[i], vx: 0, vy: 0, vz: 0, ax: 0, az: 0, h: T.hd[i], st: 'in', t: 0, fuel: D.heliT, side: this.R() < 0.5 ? -1 : 1 };
           this._event('heli', this.heli.x, this.heli.z, null, P.q.s);
         }

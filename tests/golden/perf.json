@@ -174,6 +174,13 @@
   "maxKverts": 369,
   "jsMs": 0.47
  },
+ "maunakea": {
+  "calls": 207,
+  "maxCalls": 305,
+  "kverts": 269,
+  "maxKverts": 317,
+  "jsMs": 2.45
+ },
  "baldy": {
   "calls": 303,
   "maxCalls": 345,

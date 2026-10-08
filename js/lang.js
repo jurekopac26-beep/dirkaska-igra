@@ -309,6 +309,7 @@
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
+    'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)

@@ -506,6 +506,25 @@
    "ao:MeshBasicMaterial": "bf4eccf9"
   }
  },
+ "maunakea": {
+  "meshes": 2174,
+  "verts": 779481,
+  "instances": 27335,
+  "props": 209,
+  "crowd": 437,
+  "world": "5f4fb873",
+  "propsHash": "337efad7",
+  "floor": "303a93f5/12376",
+  "groups": {
+   "-:MeshLambertMaterial": "b5bcb4a4",
+   "-:MeshPhongMaterial": "943a9532",
+   "-:MeshBasicMaterial": "95e76a8d",
+   "maFar:MeshLambertMaterial": "60ab73b",
+   "crowd:MeshLambertMaterial": "3ca35ce9",
+   "ao:MeshBasicMaterial": "560d2d05",
+   "roadwear:MeshLambertMaterial": "f2293323"
+  }
+ },
  "baldy": {
   "meshes": 2990,
   "verts": 1366370,
