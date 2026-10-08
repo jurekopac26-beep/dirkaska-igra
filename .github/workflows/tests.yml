@@ -28,10 +28,17 @@ jobs:
       - run: npm ci
       - run: npm run test:node
 
+  # Brskalniški testi na štirih strojih hkrati: tests/run.js --shard k/4 razdeli teste po tem, koliko časa traja vsak (SECS v
+  # tests/run.js; na hitrem stroju ~26 min na del, na počasnem do dvakrat dlje). Celoten nabor na enem stroju je trajal od ~105 do
+  # več kot 180 min, odvisno od stroja, in se z vsako novo progo podaljša.
   browser:
-    name: Igra v brskalniku
+    name: Igra v brskalniku (${{ matrix.shard }}/4)
     runs-on: ubuntu-24.04
-    timeout-minutes: 180   # (smoke, memory, perf in vsi, ki gredo čez vse proge, se z vsako novo progo podaljšajo za ~1,5-2 min; isti nabor traja na GitHubu od ~80 do ~150 min, odvisno od stroja)
+    timeout-minutes: 120   # (en del: ~26 min na hitrem stroju, do ~55 min na počasnem; več kot omejitev testa memory (3 × 30 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom)
+    strategy:
+      fail-fast: false   # (vsak del do konca: napaka v enem ne ustavi drugih)
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -40,9 +47,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
+      - run: npm run test:browser -- --shard ${{ matrix.shard }}/4
         env:
           TEST_TIMEOUT_MIN: 30   # (omejitev enega testa; privzeto 15 min, smoke in memory gresta čez vse proge)
+
+  # en rezultat za vse štiri dele, pod istim imenom kot prej (zelen samo, ko so zeleni vsi deli)
+  browser-all:
+    name: Igra v brskalniku
+    needs: browser
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: |
+          echo "deli brskalniških testov: ${{ needs.browser.result }}"
+          test "${{ needs.browser.result }}" = success
 
   fleet:
     name: Vozila
