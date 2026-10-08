@@ -9,17 +9,27 @@ npm test             # vse (~90 min)
 npm run test:node    # samo fizika, AI, dirke in prvenstvo (~4 min)
 npm run test:browser # samo testi v brskalniku (~75 min s programskim WebGL)
 npm run test:fleet   # samo vozni park: izrisovalni komplet, register vozil, vožnja, uničenje, AI in izris vseh vozil (~8 min)
+node tests/run.js browser --shard 2/4         # en del brskalniških testov (kot na GitHubu)
+node tests/run.js browser --shard 2/4 --list  # samo izpiše, kateri testi so v tem delu
 ```
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
 (`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
-(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški posel teče z 30 minutami na test in 180 minutami skupaj, ker se smoke, memory in perf z vsako progo podaljšajo in ker je isti nabor na nekaterih strojih skoraj dvakrat počasnejši); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima dvakrat toliko časa.
+(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški testi tečejo s 30 minutami na test); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima trikrat toliko časa, smoke in perf pa dvakrat (na GitHubu 90 in 60 minut).
+
+Brskalniški testi na GitHubu tečejo na štirih strojih hkrati (posli »Igra v brskalniku (1/4)« do »(4/4)«, vsak do 120 minut, več kot omejitev testa pomnilnika),
+posel »Igra v brskalniku« pa je zelen, ko so zeleni vsi štirje deli. `tests/run.js --shard k/4` razdeli teste po tem, koliko časa traja
+vsak na GitHubu (tabela `SECS` v `tests/run.js`; test, ki ga ni v tabeli, šteje 60 s): najdaljši najprej, vsak v del, ki ima do tedaj
+najmanj časa. Na hitrem stroju traja vsak del ~26 min, na počasnem do dvakrat dlje (prej je celoten nabor na enem stroju trajal
+od ~105 do več kot 180 min). Ko se kak test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo), popravi njegov čas v
+`SECS` po povzetku zadnjega zagona, da ostanejo deli enako dolgi.
 
 ## Kaj preverjajo
 
 | Test | Kaj preveri |
 |---|---|
 | `stamp.test.js` | Vse povezave na skripte in sloge v `index.html` imajo trenutno oznako vsebine (`?v=…`) in kažejo na obstoječe datoteke (glej `tools/stamp.js`). |
+| `shards.test.js` | Razdelitev testov na dele (`tests/run.js --shard k/n`, na GitHubu brskalniški testi v 4 delih): vsak nabor (node, fleet, browser) v 1–6 delih ima vsak test v natanko enem delu, nobenega ne izpusti; 4 deli brskalniških testov so približno enako dolgi (najdaljši največ 15 % nad povprečjem, po časih `SECS`); `SECS` ima samo teste s seznama in čase dolgih testov (memory, perf, smoke, gfx, world); napačen `--shard` (0/4, 5/4, 2, x/y, brez) ustavi z napako in ne požene ničesar. |
 | `golden.test.js` | Vse proge × 7 postavitev (fizika Circuit Superstars, edina v igri): dirka, demo na naslovnem zaslonu, izboljšan avto brez poškodb, trčenje (igralec pri polni hitrosti zavije v ogrado: poškodbe, odpadli deli na cesti, reševanje, na progah z boksi (Bakreni gozd, Toskana, Gromski rt, Spa, Red Bull Ring, Bathurst, Crystal Palace, Longford) še postanek v boksih s popravilom), enako trčenje v dirki formul (igralec in vsi tekmeci v formulah; odpadejo krila, nos, pokrov motorja; po popravilu ima spet ves pritisk na cesto) in v dirki prototipov (TAIFUN LM: odpadejo spojler, zadnje krilo, nos, pokrov motorja) ter trčenje v enem od novejših cestnih avtov (VIHAR V8, STRELA EV in SAMUM 4x4 po vrsti, glede na mesto proge na seznamu). Po 60 s (trčenje na progi z boksi 80 s, na dolgem krogu toliko dlje, da avto pride okoli do boksov: Crystal Palace 128 s, Red Bull Ring 164 s, Spa 254 s, Longford 255 s). Celotno stanje dirke, vseh avtov in odpadlih delov se vsakih 10 s zapiše v prstni odtis in primerja z `golden/sim.json`, zato se pokaže vsaka sprememba fizike, AI, poškodb, boksov ali pravil v teh vožnjah. Test preveri tudi, da trčenje res pripelje do poškodb (in popravila v boksih). |
 | `roll.test.js` | Razbijanje · nov način, prevračanje (brez brskalnika): izklopljeno močan bočni trk avta nikoli ne prevrne; vklopljeno se avto, zadet v bok s 16 m/s, prevrne stran od udarca (en ali dva obrata, 1,2–1,6 s), v loku in brez oprijema, streha enkrat na obrat udari ob cesto (udrtina zgoraj), nato je spet na kolesih, počasnejši, a vozi naprej; nič NaN; lahek udarec in avto prijatelja v spletni dirki se ne prevrneta |
 | `knock.test.js` | Razbijanje · nov način, odboji, agresivni vozniki in vpliv na vožnjo (brez brskalnika): izklopljeno udarec v zadnji vogal avta skoraj ne zavrti; vklopljeno ga zavrti, močnejši bolj, oprijem za manj kot sekundo izgine; avto prijatelja (spletna dirka) nikoli; z agresivnimi vozniki v 90 s na Jezeru več močnih trkov in več škode, vsi avti še vozijo; zmečkan sprednji vogal vleče avto na svojo stran |
