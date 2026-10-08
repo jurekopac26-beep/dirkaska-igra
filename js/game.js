@@ -3256,16 +3256,29 @@
   function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
   let dmgKey = '', dmgShown = null;
   const dmgCol = (z) => 'hsl(' + Math.round(120 * (1 - Math.min(1, z))) + ',78%,' + (z < 0.02 ? 52 : 50) + '%)';
+  // the damage picture (index.html #h-dmg): each part in its colour and its % beside the car (▲ front, ▼ rear, ◀ left, ▶ right: dz 0-3), the
+  // wheels in the colour of their corner (cd, red at 0.7: crushed), a lost one crossed out (c.wreck.wl), the glass cracked, the whole damage
+  // in % over a bar with marks at 70 and 80 % (the wheel rule's: wheelRule in core.js). The DOM is touched only when a shown value changes
+  const DMG_ARR = ['▲', '▼', '◀', '▶'];
   function updateDamageHUD(P) {
     const el = $('h-dmg'); if (!el) return;
     const on = dmgOn();
     if (on !== dmgShown) { el.style.display = on ? '' : 'none'; dmgShown = on; }
     if (!on) return;
-    const W = P.wreck, key = P.dz.map(v => Math.round(v * 25)).join(',') + (W ? '|' + W.wl : '');
+    const W = P.wreck, wl = W ? W.wl : 0, pc = (z) => Math.min(100, Math.round(z * 100)), tot = pc(P.dmg), zs = P.dz.map(pc), cs = (P.cd || [0, 0, 0, 0]).map(v => Math.round(v * 20));
+    const glass = P.winOut && P.winOut.some(v => v) ? 1 : 0;
+    const key = zs.join(',') + '|' + cs.join(',') + '|' + tot + '|' + glass + (W ? '|' + wl : '');
     if (key === dmgKey) return; dmgKey = key;
-    for (let k = 0; k < 4; k++) $('dz' + k).setAttribute('fill', dmgCol(P.dz[k]));
-    el.classList.toggle('whl', !!W);   // (a car whose wheels come off: its four wheels drawn, a lost one red and dashed; c.wreck.wl bit k: wheel k, FL FR RL RR)
-    for (let k = 0; k < 4; k++) $('wh' + k).classList.toggle('lost', !!(W && W.wl & (1 << k)));
+    for (let k = 0; k < 4; k++) {
+      $('dz' + k).setAttribute('fill', dmgCol(P.dz[k]));
+      const n = $('dzn' + k); n.textContent = DMG_ARR[k] + ' ' + zs[k]; n.className = zs[k] ? '' : 'z0'; n.style.color = zs[k] ? dmgCol(P.dz[k]) : '';
+      const lost = !!(wl & (1 << k)), w = $('wh' + k);   // (c.wreck.wl bit k: wheel k, FL FR RL RR)
+      w.classList.toggle('lost', lost); $('whx' + k).classList.toggle('on', lost); w.style.fill = cs[k] ? dmgCol(cs[k] / 14) : '';
+    }
+    const tc = dmgCol(tot / 100), t = $('dmg-tot'), f = $('dmg-fill');
+    t.textContent = tot + ' %'; t.style.color = tc; f.style.width = tot + '%'; f.style.background = tc;
+    $('dmg-glass').classList.toggle('cracked', !!glass);
+    el.classList.toggle('whl', !!W);   // (a car whose wheels come off)
   }
   /* ---------------- a destroyed car: VOZILO UNIČENO, Odstopi ---------------- */
   // A car at 98 % damage (damage on) is destroyed: the words under the minimap, with Odstopi in a race (the player retires, Race.retire:
