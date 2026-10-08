@@ -245,7 +245,6 @@
         <div class="row" title="Močan bočni trk avto prevrne: zavrti se enkrat ali dvakrat in pristane na kolesih, izgubiš okoli sekundo"><span class="rlbl">Razbijanje: prevračanje</span><div class="seg" data-set="xRoll"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Razbite šipe na več načinov: zvezda, mreža, luknja, razpoke, izpadla šipa"><span class="rlbl">Razbijanje: šipe</span><div class="seg" data-set="xGlass"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Na pregibih odrgnjena barva, gola pločevina in rja (le z vklopljenimi novimi poškodbami karoserije)"><span class="rlbl">Razbijanje: odrgnjena barva in rja</span><div class="seg" data-set="xPaint"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row" title="Izravnana: gosta karoserija samo za tvoj avto (telefon obremenjen kot doslej). Polna: goste karoserije za vse avte"><span class="rlbl">Razbijanje: podrobnost avtov</span><div class="seg" data-set="xDetail"><button data-v="lite">Izravnana</button><button data-v="full">Polna</button></div></div>
         <div class="row" title="Udarec avto zavrti, kolikor je bil močan; za trenutek izgubi oprijem. Udarec v zadnji vogal ga lahko zavrti naokoli"><span class="rlbl">Razbijanje: odboji in vrtenje ob trku</span><div class="seg" data-set="xBump"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Tretjina tekmecev občasno napade: nekaj sekund ciljajo zadnji vogal avta pred sabo"><span class="rlbl">Razbijanje: agresivni vozniki</span><div class="seg" data-set="xAi"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Odpadli deli (odbijači, vrata, hauba) ostanejo na cesti do konca dirke"><span class="rlbl">Razbijanje: deli ostanejo na progi</span><div class="seg" data-set="xParts"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -258,6 +257,7 @@
         <div class="row"><span class="rlbl">Video najboljšega trenutka po dirki</span><div class="seg" data-set="hlv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row" title="Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone."><span class="rlbl">Podrobnosti</span><div class="seg" data-set="detail"><button data-v="low">Nizka</button><button data-v="med">Srednja</button><button data-v="high">Visoka</button><button data-v="auto">Samodejno</button></div></div>
+        <div class="row" title="Drobni detajli tvojega avta in avta v garaži (znaki, kljuke, letvice, reže med paneli, okrogle gume); pri razbijanju gosta karoserija samo za tvoj avto (Normalni) ali za vse avte (Visoki). Visoki je za računalnik, Normalni za telefon."><span class="rlbl">Detajli avtov</span><div class="seg" data-set="carDet"><button data-v="normal">Normalni</button><button data-v="high">Visoki</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Varčevanje z baterijo</span><div class="seg" data-set="saver"><button data-v="off">Izklop</button><button data-v="auto">Samodejno</button><button data-v="on">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Uvod pred dirko (globus in helikopter)</span><div class="seg" data-set="intro"><button data-v="0">Polni</button><button data-v="1">Kratki</button><button data-v="2">Brez</button></div></div>
@@ -477,9 +477,9 @@
 <script src="js/tracks/detroit.js?v=9a780eb0"></script>
 <script src="js/tracks/palomar.js?v=87436f77"></script>
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
-<script src="js/lang.js?v=ab98d56f"></script>
+<script src="js/lang.js?v=e46210d6"></script>
 <script src="js/cars/miska.js?v=d36e3286"></script>
-<script src="js/cars/kolibri.js?v=dbef3df8"></script>
+<script src="js/cars/kolibri.js?v=aa55abfe"></script>
 <script src="js/cars/raketa.js?v=da270e21"></script>
 <script src="js/cars/jezek.js?v=fbc5e086"></script>
 <script src="js/cars/sokol.js?v=b78d0c0b"></script>
@@ -517,7 +517,7 @@
 <script src="js/world-toronto.js?v=99260192"></script>
 <script src="js/data/montreal.js?v=05653492"></script>
 <script src="js/world-montreal.js?v=6696233f"></script>
-<script src="js/render.js?v=e93dc111"></script>
+<script src="js/render.js?v=46c92634"></script>
 <script src="js/sfx.js?v=32ae026f"></script>
 <script src="js/input.js?v=6983328c"></script>
 <script src="js/comm.js?v=d97de672"></script>
@@ -529,6 +529,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=82d12818"></script>
-<script src="js/game.js?v=e1ad9319"></script>
+<script src="js/game.js?v=227cd717"></script>
 </body>
 </html>

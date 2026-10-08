@@ -802,7 +802,7 @@ const Render = (function () {
                       cockpit)
        Derived by the build (do not set): nose, tail (the outer shell's ends, metres), hw (the hubs' z, metres), height; the decal's four
                       when neither decalX nor decalY is given
-     look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch }
+     look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch, seg }
        style          'std' (alloy spokes; spokes: 0 = a steel wheel with holes), 'deep' (a deep polished dish), 'wire' (wire spokes, a
                       knock-off), 'retro' (a domed chrome cap, white walls), 'knob' (off-road blocks, a beadlock), 'truck' (a steel disc deep
                       in its rim, the studs; dual: twin rear tyres), 'monster' (huge blocks, a small rim), 'slick' (a race slick, centre lock),
@@ -811,7 +811,15 @@ const Render = (function () {
                       meshes of their own, centred on the hub, exactly at (M.a, rw, +-hw) and (-M.b, rw, +-hw): they steer, spin, come off
        rim, tyre, cap colours (hex numbers or [r, g, b]); spokes (std 5, deep 6); dual (twin rear tyres); rimK (the rim's share of the radius)
        gap            the arch's clearance over the tyre (default 0.06); arch: false (no arch cut-outs in the loft)
+       seg            the player's / the showroom's tyre round: its tread, shoulder and outer wall in seg segments (16, 32, 48 or 64; default
+                      16, as before; not with dual), smooth-shaded, the rim's lip round with them; the rim's inside stays in 16 (seg 32: about
+                      370 triangles a wheel). A rival's wheel is never changed by it
        Budgets: a rival's wheel <= 160 triangles (no shadow), the player's / the showroom's <= 400 (with shadow): the fixtures keep to them
+     look.hi (optional): true when build(K) draws small details for Nastavitve · Detajli avtov: Visoki (a computer's default; a phone's is
+       Normalni): the player's and the showroom's car are then built a second time with K.hi true (a cache of its own; the rivals and every
+       phone keep the Normalni build). The Visoki build draws the same parts, regions and lamps, and adds its details only inside if (K.hi)
+       (the badges, the handles, the shut lines, the trims, an aerial): its budget is the big vehicles' (2400 / 1200); look.wheels.segHi:
+       its round tyre's segments (else seg)
      look.regions (optional): a preset ('car' | 'race' | 'open' | 'truck' | 'std': the standard list; 'none': no regions, everything the
        body unless K.part says), a list (it replaces the standard one) or fn(std) returning a list (std: the standard list in look units)
 
@@ -921,6 +929,7 @@ const Render = (function () {
 
      K (inside build(K)):
        K.M, K.def, K.look, K.body (look.body completed), K.wheels (look.wheels completed), K.parts (the table's part ids, wheels left out)
+       K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
        K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
                                units), the circle's radius and middle height (metres): place flares and decals round them
@@ -945,7 +954,9 @@ const Render = (function () {
                                a wheel arch: e 0 / 8 are then the arch's ledge) }. o: { glass(k, e, kind, at): a glass panel (no lining), lining:
                                false, floor: false, arches: false | [{ x, r?, y? }] (default: both axles: the lower edge follows the arch, a
                                ledge at its rim, a dark tub over the tyre), tubs: false, tubCol, caps: false | { front, rear: false | { col,
-                               colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes) }. Returns
+                               colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes), glassBend: [down,
+                               up] (degrees: the side glass (glass panels e 2 / 6) shaded as if curved: its normals turned down at its foot,
+                               up at its top: it mirrors the ground below, the sky above; no triangle more) }. Returns
                                { secs (as cut), prop(x, key), topY(x, z), decal }
        L.decal / K.decal(secs) decals laid on a loft (cut at its sections: a side stripe leaves in pieces with the fender, the door, the
                                quarter): side(poly [[x, y] ...], col, sides?, lift?, o) on the flat side (clipped to it: never over a wheel
@@ -1114,6 +1125,7 @@ const Render = (function () {
     const W = Object.assign({ style: 'std', w: Math.max(0.12, Math.min(0.42, M.rw * 0.68)), gap: 0.06, arch: true, spokes: 5 }, look && look.wheels || {});
     if (KIT_STYLES.indexOf(W.style) < 0) kitFail('wheels.style not one of ' + KIT_STYLES.join(' '));
     if (W.wR == null) W.wR = W.w;
+    for (const k of ['seg', 'segHi']) if (W[k] != null && !(W[k] === 16 || W[k] === 32 || W[k] === 48 || W[k] === 64) || (W[k] > 16 && W.dual)) kitFail('wheels.' + k + ' not 16, 32, 48 or 64 (and not with dual)');
     for (const k of ['w', 'wR', 'gap']) if (!(W[k] >= 0 && W[k] < 2)) kitFail('wheels.' + k + ' not a size in metres');
     for (const k of ['rim', 'tyre', 'cap']) if (W[k] != null) W[k] = kitColour(typeof W[k] === 'number' ? colArr(W[k]) : W[k]);
     if (W.wz == null) W.wz = W.w / 2 + 0.01;   // (the wheels' centres this far in from the half width: the tyre's face just inside the body)
@@ -1335,6 +1347,15 @@ const Render = (function () {
           continue;
         }
         const emit = () => {
+          if (glass && o.glassBend && (e === 2 || e === 6)) {   // (side glass as if curved: its normals turned up at its top, down at its foot)
+            const p = A[e], q = Bv[e], r = Bv[e + 1], s = A[e + 1], u = [r[0] - p[0], r[1] - p[1], r[2] - p[2]], v = [s[0] - q[0], s[1] - q[1], s[2] - q[2]];
+            let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(n[0], n[1], n[2]) || 1, m = [(p[0] + r[0]) / 2 - inside[0], (p[1] + r[1]) / 2 - inside[1], (p[2] + r[2]) / 2 - inside[2]];
+            n = n.map(k => k / l * (n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0 ? -1 : 1));
+            const tilt = (deg) => { const t = [n[0], n[1] + Math.tan(deg * Math.PI / 180), n[2]], k = Math.hypot(t[0], t[1], t[2]); return [t[0] / k, t[1] / k, t[2] / k]; };
+            const lo = tilt(-o.glassBend[0]), hi = tilt(o.glassBend[1]), top = e === 2 ? [false, false, true, true] : [true, true, false, false];
+            g.quadON(p, q, r, s, top[0] ? hi : lo, top[1] ? hi : lo, top[2] ? hi : lo, top[3] ? hi : lo, inside, c, c, c, c);
+            return;
+          }
           g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], c, inside);
           if (lining && !glass) kx.scope('pr', Object.assign({}, kx.pr || { part: part || 'body', sub: '' }, { inner: inn }), () => flip(Ai[e], Bi[e], Bi[e + 1], Ai[e + 1], KIT_LINE, inside));
         };
@@ -1554,7 +1575,7 @@ const Render = (function () {
     const g = new GB(), st = W.style, TY = W.tyre || [0.065, 0.065, 0.07], TY2 = [Math.min(1, TY[0] * 1.9 + 0.03), Math.min(1, TY[1] * 1.9 + 0.03), Math.min(1, TY[2] * 1.9 + 0.03)];
     const RIM = W.rim || ({ std: [0.62, 0.63, 0.66], deep: [0.74, 0.75, 0.78], wire: [0.8, 0.81, 0.84], retro: [0.84, 0.85, 0.88], knob: [0.56, 0.57, 0.6], truck: [0.86, 0.86, 0.84], monster: [0.7, 0.71, 0.74], slick: [0.22, 0.22, 0.24], kart: [0.78, 0.66, 0.3] })[st];
     const DK = [RIM[0] * 0.3 + 0.02, RIM[1] * 0.3 + 0.02, RIM[2] * 0.3 + 0.025], CAP = W.cap || [Math.min(1, RIM[0] * 1.15), Math.min(1, RIM[1] * 1.15), Math.min(1, RIM[2] * 1.15)];
-    const S = hi ? (dual ? 12 : 16) : (dual ? 8 : 10), WALL = [0.9, 0.9, 0.88];
+    const S = hi ? (dual ? 12 : 16) : (dual ? 8 : 10), WALL = [0.9, 0.9, 0.88], N = hi && W.seg ? W.seg : S, kq = N / S, TAU = Math.PI * 2;   // (N: the round tyre's segments, look.wheels.seg)
     const rimK = W.rimK || { std: 0.64, deep: 0.68, wire: 0.72, retro: 0.6, knob: 0.5, truck: 0.62, monster: 0.46, slick: 0.68, kart: 0.56 }[st];
     const p = (a, z, rr) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
     // the dish behind the spokes: dark wherever spokes must show against it (light spokes on a dark dish: alloys, deep dishes, wire wheels);
@@ -1564,22 +1585,43 @@ const Render = (function () {
       const h = wd / 2, zo = zc + h, zi = zc - h, rr = r * rimK, knob = st === 'knob' || st === 'monster', full = hi && outer, out = [0, 0, zc - 5], inn = [0, 0, zc + 5];
       const sh = full && !knob ? r * 0.045 : 0, dish = st === 'deep' ? 0.07 : st === 'truck' ? 0.06 : st === 'slick' || st === 'kart' ? 0.035 : 0.024, zd = zo - dish;
       const zf = (q) => full ? zd : zd + (zo - zd) * Math.min(1, q / (rr * 1.06));   // (the face at radius q: the flat dish (hi), a rival's shallow cone (lo))
+      const round = full && !knob && N > S, LIP = st === 'deep' ? [0.88, 0.89, 0.92] : RIM;   // round: the tyre's outside and the rim's lip in N segments (below)
       for (let i = 0; i < S; i++) {
         const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2, hiK = knob && i % 2 === 1, rk = knob ? (hiK ? r : r * 0.93) : r;
-        g.quadO(p(a0, zi + sh, rk), p(a0, zo - sh, rk), p(a1, zo - sh, rk), p(a1, zi + sh, rk), knob && !hiK ? TY2 : TY, [0, 0, zc]);   // the tread (knobbly: the blocks stand proud in turn)
-        if (sh) { g.quadO(p(a0, zo - sh, rk), p(a0, zo, r * 0.955), p(a1, zo, r * 0.955), p(a1, zo - sh, rk), TY, [0, 0, zc]); g.quadO(p(a0, zi + sh, rk), p(a0, zi, r * 0.955), p(a1, zi, r * 0.955), p(a1, zi + sh, rk), TY, [0, 0, zc]); }
-        if (knob && full) g.quadO(p(a1, zi, r * 0.93), p(a1, zo, r * 0.93), p(a1, zo, r), p(a1, zi, r), TY, p(hiK ? a1 - 0.1 : a1 + 0.1, zc, r * 0.97));   // (a block's end)
-        const ro = sh ? r * 0.955 : rk;
-        if (outer && st === 'retro') { const rw = r * 0.82; g.quadO(p(a0, zo, ro), p(a0, zo, rw), p(a1, zo, rw), p(a1, zo, ro), TY, out); g.quadO(p(a0, zo + 0.002, rw), p(a0, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rw), WALL, out); }   // (a white wall: a band inside the black rim of the tyre)
-        else g.quadO(p(a0, zo, ro), p(a0, zo, rr * 1.06), p(a1, zo, rr * 1.06), p(a1, zo, ro), TY, out);   // the outer sidewall
-        g.quadO(p(a0, zi, ro), p(a0, zi, rr), p(a1, zi, rr), p(a1, zi, ro), TY, inn);   // the inner sidewall
+        if (!round) {
+          g.quadO(p(a0, zi + sh, rk), p(a0, zo - sh, rk), p(a1, zo - sh, rk), p(a1, zi + sh, rk), knob && !hiK ? TY2 : TY, [0, 0, zc]);   // the tread (knobbly: the blocks stand proud in turn)
+          if (sh) { g.quadO(p(a0, zo - sh, rk), p(a0, zo, r * 0.955), p(a1, zo, r * 0.955), p(a1, zo - sh, rk), TY, [0, 0, zc]); g.quadO(p(a0, zi + sh, rk), p(a0, zi, r * 0.955), p(a1, zi, r * 0.955), p(a1, zi + sh, rk), TY, [0, 0, zc]); }
+          if (knob && full) g.quadO(p(a1, zi, r * 0.93), p(a1, zo, r * 0.93), p(a1, zo, r), p(a1, zi, r), TY, p(hiK ? a1 - 0.1 : a1 + 0.1, zc, r * 0.97));   // (a block's end)
+          const ro = sh ? r * 0.955 : rk;
+          if (outer && st === 'retro') { const rw = r * 0.82; g.quadO(p(a0, zo, ro), p(a0, zo, rw), p(a1, zo, rw), p(a1, zo, ro), TY, out); g.quadO(p(a0, zo + 0.002, rw), p(a0, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rw), WALL, out); }   // (a white wall: a band inside the black rim of the tyre)
+          else g.quadO(p(a0, zo, ro), p(a0, zo, rr * 1.06), p(a1, zo, rr * 1.06), p(a1, zo, ro), TY, out);   // the outer sidewall
+          g.quadO(p(a0, zi, ro), p(a0, zi, rr), p(a1, zi, rr), p(a1, zi, ro), TY, inn);   // the inner sidewall
+        }
         if (full) {   // the rim: its lip proud of the tyre, the barrel down to the dish (its inside facing the axle: seen across the dish), the dish (flat, recessed)
           const am = (a0 + a1) / 2;
-          g.quadO(p(a0, zo + 0.004, rr * 1.06), p(a0, zo + 0.004, rr * 0.92), p(a1, zo + 0.004, rr * 0.92), p(a1, zo + 0.004, rr * 1.06), st === 'deep' ? [0.88, 0.89, 0.92] : RIM, out);
+          if (!round) g.quadO(p(a0, zo + 0.004, rr * 1.06), p(a0, zo + 0.004, rr * 0.92), p(a1, zo + 0.004, rr * 0.92), p(a1, zo + 0.004, rr * 1.06), LIP, out);
           g.quadO(p(a0, zo + 0.004, rr * 0.92), p(a0, zd, rr * 0.92), p(a1, zd, rr * 0.92), p(a1, zo + 0.004, rr * 0.92), DK, [Math.cos(am) * rr * 2, Math.sin(am) * rr * 2, zc]);
           g.triO([0, 0, zd], p(a0, zd, rr * 0.92), p(a1, zd, rr * 0.92), DISH, out);
         } else g.triO([0, 0, zd], p(a0, zo, rr * 1.06), p(a1, zo, rr * 1.06), outer ? DISH : DK, out);   // (a rival's / a twin's: one shallow cone)
         g.triO([0, 0, zi + 0.01], p(a0, zi, rr), p(a1, zi, rr), DK, inn);   // (the inner face)
+      }
+      if (round) {   // the round tyre: the tread and the outer shoulder smooth (their normals turn with the tyre), they and the outer wall in N
+        // segments; the rim's lip from its round edge (N) to the barrel (S), the inner wall from the tread (N) to the rim (S): kq + 1
+        // triangles a segment. No inner shoulder (it faces the car)
+        const nr = (a, k) => { const l = Math.hypot(1, k); return [Math.cos(a) / l, Math.sin(a) / l, k / l]; }, ro = r * 0.955;   // (k: the normal's lean out of the face)
+        const fan = (zA, rA, zB, rB, col, ins) => { for (let j = 0; j < S; j++) {
+          const I0 = p(j / S * TAU, zB, rB), I1 = p((j + 1) / S * TAU, zB, rB), O = (m) => p((j * kq + m) / N * TAU, zA, rA), h = kq >> 1;
+          for (let m = 0; m < kq; m++) g.triO(m < h ? I0 : I1, O(m), O(m + 1), col, ins);
+          g.triO(I0, O(h), I1, col, ins); } };
+        for (let i = 0; i < N; i++) {
+          const a0 = i / N * TAU, a1 = (i + 1) / N * TAU;
+          g.quadON(p(a0, zi, r), p(a0, zo - sh, r), p(a1, zo - sh, r), p(a1, zi, r), nr(a0, 0), nr(a0, 0), nr(a1, 0), nr(a1, 0), [0, 0, zc], TY, TY, TY, TY);   // the tread
+          g.quadON(p(a0, zo - sh, r), p(a0, zo, ro), p(a1, zo, ro), p(a1, zo - sh, r), nr(a0, 0), nr(a0, 2.5), nr(a1, 2.5), nr(a1, 0), [0, 0, zc], TY, TY, TY, TY);   // the shoulder
+          if (st === 'retro') { const rw = r * 0.82; g.quadO(p(a0, zo, ro), p(a0, zo, rw), p(a1, zo, rw), p(a1, zo, ro), TY, out); g.quadO(p(a0, zo + 0.002, rw), p(a0, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rw), WALL, out); }
+          else g.quadO(p(a0, zo, ro), p(a0, zo, rr * 1.06), p(a1, zo, rr * 1.06), p(a1, zo, ro), TY, out);   // the outer wall
+        }
+        fan(zo + 0.004, rr * 1.06, zo + 0.004, rr * 0.92, LIP, out);   // the rim's lip
+        fan(zi, r, zi, rr, TY, inn);   // the inner wall
       }
       if (!outer) return;
       // (a detail at radius q, height z: a rival's lies just over its cone, never under it)
@@ -1856,7 +1898,7 @@ const Render = (function () {
     for (let i = 0; i < outerN; i++) if (Cl[i * 3] === KIT_LINE[0] && Cl[i * 3 + 1] === KIT_LINE[1] && Cl[i * 3 + 2] === KIT_LINE[2]) ain[i] = 128;
     geo.setAttribute('aIn', new THREE.BufferAttribute(ain, 1, true));
     geo.computeBoundingSphere(); geo.computeBoundingBox(); geo.setDrawRange(0, outerN);
-    const B = kitBudget(kx.M), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };
+    const B = kx.hi ? { outer: 2400, inner: 1200 } : kitBudget(kx.M), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };   // (Visoki: the big vehicles' budget)
     // the lining's twins: each inner vertex's outer vertex (the shell's point it is inset from; -1: none: the cabin, the floor, the engine)
     const twin = new Int32Array(total - outerN).fill(-1), kM = (x, y, z) => Math.round(x * 1e5) + ',' + Math.round(y * 1e5) + ',' + Math.round(z * 1e5);
     if (kx.twins.size && total > outerN) { const idx = new Map(); for (let i = 0; i < outerN; i++) { const k = kM(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!idx.has(k)) idx.set(k, i); }
@@ -1888,9 +1930,11 @@ const Render = (function () {
   }
 
   // ---- the cache: one colour-neutral geometry (and tail, wheels) per kit model, built on first use; Render.kitStatus(id) ----
-  const kitCache = new Map(), kitWheelCache = new Map(), kitShowLRU = [];
-  function kitBuild(M, look, fb) {
-    const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb), K = kitMakeK(kx);
+  const kitCache = new Map(), kitCacheHi = new Map(), kitWheelCache = new Map(), kitShowLRU = [];   // (kitCacheHi: the Visoki bodies, Nastavitve · Detajli avtov)
+  function kitBuild(M, look, fb, hi) {
+    const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb);
+    if (hi && kx.wheels.segHi) kx.wheels.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
+    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
     if (typeof look.build !== 'function') kitFail('look.build(K) missing');
@@ -1944,7 +1988,16 @@ const Render = (function () {
     const b = best || low; if (!b) { if (holed) kitFail('give body.decalX / decalY: no roof to lay the start number on (an open top)'); return; }
     body.decalX = b.x; body.decalY = b.y; body.decalRz = b.rz; body.decalS = b.k;
   }
-  function kitEntry(M) {
+  function kitEntry(M, hi) {
+    if (hi && M.def && M.def.look && M.def.look.hi) {   // (Nastavitve · Detajli avtov: Visoki: a look with small details (look.hi) built again with K.hi, a cache of its own)
+      let H = kitCacheHi.get(M.id); if (H) return H;
+      const E0 = kitEntry(M); if (E0.status !== 'ok') return E0;
+      let res = null;
+      try { res = kitBuild(M, M.def.look, false, true); }
+      catch (e) { if (typeof console !== 'undefined') console.warn('vehicle ' + M.id + ': its Visoki detail failed, drawn as Normalni: ' + (e && e.message ? e.message : String(e))); kitCacheHi.set(M.id, E0); return E0; }
+      H = { M, status: 'ok', hi: true, geo: res.geo, tail: res.tail, W: res.wheels, body: res.body, tris: res.tris, regions: res.regions, std: res.std, tubs: res.tubs, openings: res.openings, wheels: {} };
+      kitCacheHi.set(M.id, H); return H;
+    }
     let E = kitCache.get(M.id); if (E) return E;
     let res = null, status = 'ok';
     try { if (!M.def || !M.def.look) kitFail('look null (a place-holder)'); res = kitBuild(M, M.def.look, false); }
@@ -1955,7 +2008,7 @@ const Render = (function () {
   }
   // the four wheels' geometry (hi: the player's / the showroom's detail, else a rival's), front and rear (the rear may be twins)
   function kitWheels(E, hi) {
-    const key = E.M.id + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
+    const key = E.M.id + (E.hi ? '|H' : '') + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
     const W = E.W, r = E.M.rw;
     w = { f: kitWheelGeo(W, r, W.w, hi, false), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual) };
     kitWheelCache.set(key, w); return w;
@@ -1989,7 +2042,7 @@ const Render = (function () {
   function kitBodyGeo(E, car, show, xd) {
     const stripe = car.stripe !== false;
     if (!show) return kitRecolour((xd ? xDense(E.geo, xd) : E.geo).clone(), car.color, stripe, car.num);   // (xd: Razbijanje · nov način's dense body, xDense)
-    const key = E.M.id + '|' + car.color + '|' + stripe + '|' + (car.num || 0), k = kitShowLRU.findIndex(q => q.key === key);   // the showroom: the last two kept (flipping colours back and forth builds nothing)
+    const key = E.M.id + (E.hi ? '|H' : '') + '|' + car.color + '|' + stripe + '|' + (car.num || 0), k = kitShowLRU.findIndex(q => q.key === key);   // the showroom: the last two kept (flipping colours back and forth builds nothing)
     if (k >= 0) { const q = kitShowLRU.splice(k, 1)[0]; kitShowLRU.push(q); return q.geo; }
     const q = { key, geo: kitRecolour(E.geo.clone(), car.color, stripe, car.num) }; kitShowLRU.push(q);
     while (kitShowLRU.length > 2) kitShowLRU.shift().geo.dispose();
@@ -2112,6 +2165,7 @@ const Render = (function () {
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, engN: U.engN, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
       wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
+      hi: M.def && M.def.look && M.def.look.hi ? (() => { const H = kitEntry(M, true), hw = kitWheels(H, true); return { status: H.hi ? 'ok' : 'normal', tris: Object.assign({}, H.geo.userData.tris), wheels: [hw.f.userData.tris, hw.r.userData.tris] }; })() : null,
       bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, fire: kitFireOf(M, E), tailHost: Object.assign({}, kitTailHost(E)), lay: Object.assign({}, kitLayH(E)) };   // (tailHost: the part each tail lamp sits on; lay: how tall each part's piece lies, metres)
   }
 
@@ -2448,7 +2502,7 @@ const Render = (function () {
     const grp = new THREE.Group();
     const bodyG = new THREE.Group(); grp.add(bodyG);
     const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat();
-    const KE = M.kit ? kitEntry(M) : null;   // a registered vehicle: its kit body (a copy of its own, in this car's colours; the showroom's from its two kept ones)
+    const KE = M.kit ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show))) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
     const xd = opts && opts.xd || 0;   // (Razbijanje · nov način: the body dense, xDense)
     const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false), xd) : carGeometry(M.body, M, car.color, car.stripe !== false), bodyMat);
     body.castShadow = true; body.receiveShadow = false; bodyG.add(body);
@@ -2892,10 +2946,10 @@ const Render = (function () {
   let particles, skids, views = [];
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
-  let settings = { quality: 'high', shadows: true, camera: 'iso' };
+  let settings = { quality: 'high', shadows: true, camera: 'iso', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
   let time = 0;
-  let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null;
+  let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
 
   function init(canvas) {
@@ -3188,6 +3242,7 @@ const Render = (function () {
 
   function applySettings(s) {
     settings = Object.assign(settings, s);
+    { const h = settings.carDetail === 'high'; if (h !== carHi) { carHi = h; if (showCar && showArgs) setShowCar(showArgs[0], showArgs[1], showArgs[2]); } }   // (the showroom's car again in the other detail; a race's cars: from the next race)
     const dpr = window.devicePixelRatio || 1;
     basePR = settings.quality === 'retro' ? 0.5 : settings.quality === 'normal' ? 1 : Math.min(dpr, 2);
     renderer.domElement.style.imageRendering = settings.quality === 'retro' ? 'pixelated' : 'auto';
@@ -3976,7 +4031,7 @@ const Render = (function () {
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
-    for (const E of kitCache.values()) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
+    for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd]);
@@ -5988,7 +6043,7 @@ const Render = (function () {
      xBody on:
      - a dense body (xDense): the outer shell's edges above 45 % of its height split to about h metres (an edge's count depends on the edge
        alone, so the shell stays closed where its triangles meet); a kit body's ranges, paint and stripe lists, number slots, lamps and
-       twins carried over. The player's car the finest; the rivals by Podrobnost razbitih avtov (Polna: dense too; Izravnana: as built)
+       twins carried over. The player's car the finest; the rivals by Detajli avtov (Visoki: dense too; Normalni: as built)
      - the dents (the core's c.dents, consumed as they come) gather into clusters: a blow within half the car's half-size of an earlier
        one deepens it. A cluster pushes the metal in along its blow (from the point of it toward the car's middle: a corner diagonally),
        deepest at the point, fading over R (> 1.6 times its depth: nothing folds through itself), its depth growing with every blow and
@@ -7700,6 +7755,7 @@ const Render = (function () {
   }
   function setShowCar(model, color, num) {
     if (!showScene) initShowroom();
+    showArgs = [model, color, num];
     const prev = showCar;
     const fake = { m: model, color, num, stripe: true, isPlayer: false };
     showCar = makeCarMesh(fake, { noMarker: true, show: true });

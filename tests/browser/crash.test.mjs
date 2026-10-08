@@ -1,13 +1,13 @@
-// Razbijanje · nov način (Nastavitve: xBody, xGlass, xPaint, xDetail; render only, off by default):
+// Razbijanje · nov način (Nastavitve: xBody, xGlass, xPaint; Detajli avtov carDet: Normalni the player's body dense, Visoki every car's; render only, off by default):
 // 1. off (the default): no car is built dense, the dents go the old way (applyDent), nothing new on the road
-// 2. on, Izravnana: the player's car dense (its outer shell split, its ranges, paint list and drawn block consistent), the rivals as built;
+// 2. on, Normalni: the player's car dense (its outer shell split, its ranges, paint list and drawn block consistent), the rivals as built;
 //    blow after blow on the nose the crush goes deeper (each hit deepens the same cluster) and stops short of the windscreen (its cap);
 //    a deep front crush tears the bonnet open and the grey engine shows; nothing NaN
 // 3. the glass: each blow breaks the unbroken pane nearest to it, never one on the other side of the car; glass on the road after
 // 4. the mirrors: the first side blow knocks that side's mirror off, it lies on the road and stays there while the car drives on
 // 5. repeated side blows: the roof sinks on that side (its edge lower than the other side's); the rear door swung open, its window broken
 // 6. one of the 11 (the rally car) dense too; switched off during a race the cars are built again as before
-// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Izravnana within 6 % more vertices than off, Polna within 30 %
+// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Normalni within 6 % more vertices than off, Visoki within 30 %
 // 8. xParts, xDust, xDrag: a rear bumper knocked loose drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
 //    knocked off lies on the road and, pushed out of the core's 40 pieces, stays drawn there; off: none of it (the piece freed as before);
 //    rolling over: the car's black underside (floor, subframes, tunnel, exhaust, tank) drawn while it rolls, not before nor after
@@ -40,8 +40,8 @@ try {
   T.check('off: a dent the old way (no clusters), nothing on the road', off.r.cl === 0 && off.r.shards === 0 && off.r.ground === 0, JSON.stringify(off.r));
   T.check('off: no page errors', !off.errors.length, off.errors.slice(0, 3).join(' | '));
 
-  // 2.-5. on (Izravnana)
-  const on = await run({ xBody: 1, xGlass: 1, xPaint: 1, xDetail: 'lite' }, (hs) => {
+  // 2.-5. on (Normalni)
+  const on = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal' }, (hs) => {
     const hit = eval(hs), g = window.__game, P = g.race.player, info = () => Render.crashInfo().cars.find(q => q.player), out = {};
     const me = info(), v = Render.viewOf(P), geo = v.body.geometry, U = geo.userData;
     out.dense = { xd: me.xd, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, rivals: Render.crashInfo().cars.filter(q => !q.player && q.xd).length };
@@ -53,7 +53,7 @@ try {
     const a = geo.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
     return out; }, hitFn);
   const D = on.r;
-  T.check('on: the player\'s car dense, its outer shell split, the rivals as built (Izravnana)', D.dense.xd > 0 && D.dense.outerN > D.dense.kit * 1.5 && D.dense.rivals === 0, JSON.stringify(D.dense));
+  T.check('on: the player\'s car dense, its outer shell split, the rivals as built (Normalni)', D.dense.xd > 0 && D.dense.outerN > D.dense.kit * 1.5 && D.dense.rivals === 0, JSON.stringify(D.dense));
   T.check('on: the dense body\'s ranges, paint list and drawn block consistent', D.ranges, '');
   T.check('on: blow after blow on the nose the crush goes deeper', D.depth.every((d, k) => k === 0 || d > D.depth[k - 1]) && D.depth[0] > 0.1, D.depth.map(d => d.toFixed(2)).join(' '));
   T.check('on: the crush stops short of the windscreen (its cap)', D.depth[5] <= D.cap + 1e-6 && D.depth[5] > 0.6 * D.cap, 'depth ' + D.depth[5].toFixed(2) + ' cap ' + D.cap.toFixed(2));
@@ -61,7 +61,7 @@ try {
   T.check('on: no NaN in the body', D.nan === 0, 'NaN ' + D.nan);
   T.check('on: no page errors', !on.errors.length, on.errors.slice(0, 3).join(' | '));
 
-  const gl = await run({ xBody: 1, xGlass: 1, xPaint: 1, xDetail: 'lite' }, (hs) => {
+  const gl = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal' }, (hs) => {
     const hit = eval(hs), P = window.__game.race.player, me = () => Render.crashInfo().cars.find(q => q.player), out = { steps: [] };
     const v = Render.viewOf(P), g0 = Render.crashInfo().ground, s0 = Render.crashInfo().shards;   // (what the race's first seconds left on the road)
     const panes = () => me().panes || [0, 0, 0, 0, 0, 0];
@@ -90,7 +90,7 @@ try {
   T.check('glass / mirrors / roof: no page errors', !gl.errors.length, gl.errors.slice(0, 3).join(' | '));
 
   // 6. one of the 11, and switching off during a race
-  const lg = await run({ xBody: 1, xGlass: 1, xPaint: 0, xDetail: 'lite', carId: 'rally' }, (hs) => {
+  const lg = await run({ xBody: 1, xGlass: 1, xPaint: 0, carDet: 'normal', carId: 'rally' }, (hs) => {
     const hit = eval(hs), P = window.__game.race.player, me = () => Render.crashInfo().cars.find(q => q.player), out = {};
     out.kit = !!P.m.kit; out.xd = me().xd; for (const h of [[0.12, 1, -0.9], [0.12, 1, -0.8], [0.1, 0.2, 1]]) hit(P, h);
     const a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad; out.cl = me().cl.length;
@@ -135,7 +135,7 @@ try {
   T.check('rolling over: the black underside drawn only while the car rolls', !PO.und0 && PO.und1 && PO.undTris > 30 && !PO.und2, JSON.stringify({ before: PO.und0, rolling: PO.und1, tris: PO.undTris, after: PO.und2 }));
   T.check('parts / dust / drag: no page errors', !pd.on.errors.length && !pd.off.errors.length, pd.on.errors.concat(pd.off.errors).slice(0, 3).join(' | '));
 
-  // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Izravnana and Polna drawn in turn at
+  // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Normalni and Visoki drawn in turn at
   // each place, the same frame (switched as in Nastavitve: the cars built again), so only the cars' own geometry differs
   const { page: lp, ctx: lc } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, { camera: 'chase', zoom: 1.2 }), { width: 844, height: 390 }, { seed: 12345 });
   await lp.evaluate(() => { window.__gl = { calls: 0, verts: 0 }; const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -147,12 +147,12 @@ try {
     const set = (k, v) => document.querySelector(`[data-set="${k}"] button[data-v="${v}"]`).click();
     const meas = () => { Render.frame(1 / 60, 1, P, 'chase', {}); const v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {}); return __gl.verts - v0; };
     for (let k = 0; k < 6; k++) { for (let i = 0; i < 10; i++) g.sim(1, true);
-      set('xBody', 0); set('xGlass', 0); out.off += meas(); set('xBody', 1); set('xGlass', 1); set('xDetail', 'lite'); out.lite += meas(); set('xDetail', 'full'); out.full += meas(); }
-    set('xBody', 0); set('xGlass', 0); set('xDetail', 'lite');
+      set('xBody', 0); set('xGlass', 0); out.off += meas(); set('xBody', 1); set('xGlass', 1); set('carDet', 'normal'); out.lite += meas(); set('carDet', 'high'); out.full += meas(); }
+    set('xBody', 0); set('xGlass', 0); set('carDet', 'normal');
     for (const k in out) out[k] = Math.round(out[k] / 6); return out; });
   await lc.close();
-  T.check('the load: Izravnana within 6 % more vertices than off', load.lite <= load.off * 1.06, JSON.stringify(load));
-  T.check('the load: Polna within 30 % more vertices than off', load.full <= load.off * 1.3, JSON.stringify(load));
+  T.check('the load: Normalni within 6 % more vertices than off', load.lite <= load.off * 1.06, JSON.stringify(load));
+  T.check('the load: Visoki within 30 % more vertices than off', load.full <= load.off * 1.3, JSON.stringify(load));
 } finally {
   await browser.close(); await srv.close();
 }
