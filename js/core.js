@@ -148,9 +148,9 @@ const Core = (function () {
       }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
       // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
-      if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
-        const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
-      }
+      if (def.wide) for (const [a, b, sd, m, e0] of def.wide) { const e = e0 || 30; for (let d = a - e; d <= b + e; d += ds) {   // (e: the ease, default 30 m; a junction's mouth on a street circuit: a few metres)
+        const i = this.idx(this.startS + d), f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
+      } }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
       // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
       // 10 in 2024 against running wide (see surface: gravel there even where the run-off beyond it is asphalt)
@@ -2114,6 +2114,8 @@ const Core = (function () {
       bollard: { m: 25,  rh: 0.13, rb: 0.56, h0: 0.5, e: 0.25, mu: 0.6, lift: 0.6,  I: 2,   dmg: 0, pts: cylPts(0.11, -0.5, 0.5, 6) },
       shelter: { m: 220, rh: 1.1,  rb: 2.3, h0: 1.25, e: 0.1,  mu: 0.75, lift: 0.25, I: 200, dmg: 1.2, pts: boxPts(1.8, 1.25, 0.75) },
       barrel:  { m: 12,  rh: 0.3,  rb: 0.55, h0: 0.47, e: 0.35, mu: 0.6, lift: 0.7, I: 1.2, dmg: 0, pts: cylPts(0.29, -0.47, 0.47, 8) },
+      stop:    { m: 12,  rh: 0.1,  rb: 1.6, h0: 1.35, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.35, 0.05).concat([[0, 1.0, 0.4], [0, 1.0, -0.4]]) },   // a stop sign, the street names on top (the US)
+      warn:    { m: 12,  rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.0, 0.45], [0, 1.0, -0.45]]) },   // a yellow diamond warning sign (the Americas, Australia)
       meter:   { m: 14,  rh: 0.12, rb: 0.75, h0: 0.7,  e: 0.25, mu: 0.6, lift: 0.8, I: 1.6, dmg: 0, pts: boxPts(0.12, 0.7, 0.1) },   // a parking meter
     };
     KK.bsign = KK.msign;   // (Medvode's bus stop sign: the same pole and board, another picture)
