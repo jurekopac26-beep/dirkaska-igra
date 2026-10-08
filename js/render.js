@@ -3123,6 +3123,8 @@ const Render = (function () {
       W.box(g, 0, -1.3, 0, 0.06, 2.2, 0.06, 0, gy, gy); const c = 0.38, y0 = 0.5;
       for (const [r, z, col] of [[c + 0.02, 0.012, [0.46, 0.48, 0.48]], [c, 0.03, ye], [c - 0.04, 0.034, bk], [c - 0.07, 0.038, ye]]) g.quadO([0, y0 + r, z], [r, y0, z], [0, y0 - r, z], [-r, y0, z], col, [0, y0, z - 1]);
       W.box(g, 0, y0 - 0.18, 0.042, 0.07, 0.36, 0.01, 0, bk); W.box(g, 0, y0 + 0.08, 0.042, 0.3, 0.07, 0.01, 0, bk);
+    } else if (kind === 'meter') {   // a parking meter: a post, the grey head with its dark window
+      W.box(g, 0, -0.7, 0, 0.08, 1.1, 0.08, 0, dk, dk); W.box(g, 0, 0.4, 0, 0.26, 0.3, 0.2, 0, gy, [0.66, 0.68, 0.7]); W.box(g, 0, 0.5, -0.105, 0.16, 0.1, 0.01, 0, [0.12, 0.18, 0.2]);
     } else if (kind === 'barrel') {   // an orange construction drum with white reflective bands and a black base
       const or = [0.98, 0.42, 0.08]; W.cyl(g, 0, -0.47, 0, 0.32, 0.1, 10, bk, bk); W.cyl(g, 0, -0.37, 0, 0.28, 0.84, 10, or, or, 0.26);
       for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);

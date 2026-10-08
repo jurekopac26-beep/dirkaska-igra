@@ -2116,6 +2116,7 @@ const Core = (function () {
       barrel:  { m: 12,  rh: 0.3,  rb: 0.55, h0: 0.47, e: 0.35, mu: 0.6, lift: 0.7, I: 1.2, dmg: 0, pts: cylPts(0.29, -0.47, 0.47, 8) },
       stop:    { m: 12,  rh: 0.1,  rb: 1.6, h0: 1.35, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.35, 0.05).concat([[0, 1.0, 0.4], [0, 1.0, -0.4]]) },   // a stop sign, the street names on top (the US)
       warn:    { m: 12,  rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.0, 0.45], [0, 1.0, -0.45]]) },   // a yellow diamond warning sign (the Americas, Australia)
+      meter:   { m: 14,  rh: 0.12, rb: 0.75, h0: 0.7,  e: 0.25, mu: 0.6, lift: 0.8, I: 1.6, dmg: 0, pts: boxPts(0.12, 0.7, 0.1) },   // a parking meter
     };
     KK.bsign = KK.msign;   // (Medvode's bus stop sign: the same pole and board, another picture)
     return KK;

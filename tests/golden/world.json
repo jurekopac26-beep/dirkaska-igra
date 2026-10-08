@@ -719,6 +719,38 @@
    "roadwear:MeshLambertMaterial": "cb786fa0"
   }
  },
+ "detroit": {
+  "meshes": 365,
+  "verts": 848445,
+  "instances": 3903,
+  "props": 180,
+  "crowd": 1438,
+  "world": "5c7d6b4d",
+  "propsHash": "c314c56d",
+  "floor": null,
+  "groups": {
+   "ground:MeshLambertMaterial": "6dc09e79",
+   "-:MeshPhongMaterial": "50edf711",
+   "dt-scen:MeshLambertMaterial": "3ae2e7ed",
+   "dt-streets:MeshLambertMaterial": "6aa6ccea",
+   "dt-track:MeshLambertMaterial": "e2feefb7",
+   "dt-kerbs:MeshLambertMaterial": "778e8ad5",
+   "-:MeshLambertMaterial": "ee76b54",
+   "dt-marks:MeshLambertMaterial": "c1a706aa",
+   "dt-walls:MeshLambertMaterial": "ff19c424",
+   "dt-fences:MeshLambertMaterial": "967e0d34",
+   "-:MeshBasicMaterial": "aee7fbf0",
+   "dt-bld:MeshLambertMaterial": "6b9b3b0d",
+   "dt-roofs:MeshLambertMaterial": "76d3b5fe",
+   "dt-trees:MeshLambertMaterial": "911787a8",
+   "dt-cut:MeshLambertMaterial": "3c8df7e",
+   "dtFar:MeshLambertMaterial": "79d04d8f",
+   "crowd:MeshLambertMaterial": "24395762",
+   "ao:MeshBasicMaterial": "ad7ebb1b",
+   "tyremarks:MeshBasicMaterial": "7d802a1b",
+   "roadwear:MeshLambertMaterial": "ac63a49d"
+  }
+ },
  "palomar": {
   "meshes": 2116,
   "verts": 1114699,
