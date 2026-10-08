@@ -1315,6 +1315,9 @@ const Render = (function () {
     const vol = new Array(NS).fill(false);
     if (lining) for (let j = 0; j < NS;) { if (!open[j] && !glazed[j]) { j++; continue; } let k = j, any = false; while (k < NS && (open[k] || glazed[k])) any = open[k++] || any; if (any) for (let i = j; i < k; i++) vol[i] = true; j = k; }
     const anyVol = vol.some(Boolean), PP = [];   // (PP[j][e]: panel e's parts at its lower / upper edge: { lo, hi } (two for a side panel cut at a bumper's top))
+    const yF = (x) => kitProp(secs, x, 'yb') + 0.03;   // (the floor's height at x: the sill's)
+    for (const A of arches) if (A.half > 0.02) { const s0 = at(A.c); A.zo = s0.w * 0.93 - 0.004; A.zi = Math.max(0.12, Math.min(A.zo - 0.08, (M.wid / 2 - kx.body.wz - Math.max(W.w, W.wR) / 2 - 0.05) / kx.sz));
+      A.vol = anyVol && vol.some((v, j) => v && S[j + 1].x > A.c - A.half + 1e-6 && S[j].x < A.c + A.half - 1e-6); }   // (the wheel tub's outer and inner walls (look units); A.vol: an open run over this wheel)
     for (let j = 0; j < NS; j++) {
       const a = S[j], b = S[j + 1], A = ring(a), Bv = ring(b), Ai = ringIn(a), Bi = ringIn(b), xm = (a.x + b.x) / 2, inn = !vol[j], pp = []; PP.push(pp);
       const inside = [xm, (Math.min(a.yb, b.yb) + Math.min(a.yt, b.yt)) * 0.5, 0];
