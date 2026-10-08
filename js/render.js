@@ -948,7 +948,9 @@ const Render = (function () {
                                a wheel arch: e 0 / 8 are then the arch's ledge) }. o: { glass(k, e, kind, at): a glass panel (no lining), lining:
                                false, floor: false, arches: false | [{ x, r?, y? }] (default: both axles: the lower edge follows the arch, a
                                ledge at its rim, a dark tub over the tyre), tubs: false, tubCol, caps: false | { front, rear: false | { col,
-                               colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes) }. Returns
+                               colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes), glassBend: [down,
+                               up] (degrees: the side glass (glass panels e 2 / 6) shaded as if curved: its normals turned down at its foot,
+                               up at its top: it mirrors the ground below, the sky above; no triangle more) }. Returns
                                { secs (as cut), prop(x, key), topY(x, z), decal }
        L.decal / K.decal(secs) decals laid on a loft (cut at its sections: a side stripe leaves in pieces with the fender, the door, the
                                quarter): side(poly [[x, y] ...], col, sides?, lift?, o) on the flat side (clipped to it: never over a wheel
@@ -1339,6 +1341,15 @@ const Render = (function () {
           continue;
         }
         const emit = () => {
+          if (glass && o.glassBend && (e === 2 || e === 6)) {   // (side glass as if curved: its normals turned up at its top, down at its foot)
+            const p = A[e], q = Bv[e], r = Bv[e + 1], s = A[e + 1], u = [r[0] - p[0], r[1] - p[1], r[2] - p[2]], v = [s[0] - q[0], s[1] - q[1], s[2] - q[2]];
+            let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(n[0], n[1], n[2]) || 1, m = [(p[0] + r[0]) / 2 - inside[0], (p[1] + r[1]) / 2 - inside[1], (p[2] + r[2]) / 2 - inside[2]];
+            n = n.map(k => k / l * (n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0 ? -1 : 1));
+            const tilt = (deg) => { const t = [n[0], n[1] + Math.tan(deg * Math.PI / 180), n[2]], k = Math.hypot(t[0], t[1], t[2]); return [t[0] / k, t[1] / k, t[2] / k]; };
+            const lo = tilt(-o.glassBend[0]), hi = tilt(o.glassBend[1]), top = e === 2 ? [false, false, true, true] : [true, true, false, false];
+            g.quadON(p, q, r, s, top[0] ? hi : lo, top[1] ? hi : lo, top[2] ? hi : lo, top[3] ? hi : lo, inside, c, c, c, c);
+            return;
+          }
           g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], c, inside);
           if (lining && !glass) kx.scope('pr', Object.assign({}, kx.pr || { part: part || 'body', sub: '' }, { inner: inn }), () => flip(Ai[e], Bi[e], Bi[e + 1], Ai[e + 1], KIT_LINE, inside));
         };

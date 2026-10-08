@@ -85,19 +85,21 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           }
           return P;
         }, { glass: (k, e, kind) => (kind === 'gf' || kind === 'gr') && e >= 3 && e <= 5,
-          caps: { front: { col: P, low: 'bumperF', high: 'bumperF' }, rear: { col: P, low: 'bumperR', high: 'bumperR' } } });
+          caps: { front: { col: P, low: 'bumperF', high: 'bumperF' }, rear: { col: P, low: 'bumperR', high: 'bumperR' } }, glassBend: [20, 38] });
         const LD = L.decal;
         // a pane on the loft's top between x0 and x1 (look units), half(x) wide, its corners cut ch (metres), off the frame by 5 mm along
         // nrm ([x, y]: out): three faces (the crown's flat middle, the two edges falling away to the sides)
-        const pane = (x0, x1, half, nrm, ch, o) => {
+        const pane = (x0, x1, half, nrm, ch, o, bend) => {
           const len = Math.hypot(x1 - x0, L.topY(x1, 0) - L.topY(x0, 0)), tc = ch / len, X = (t) => x0 + (x1 - x0) * t;
           const P3 = (t, z) => [X(t) + nrm[0] * 0.005, L.topY(X(t), z) + nrm[1] * 0.005, z], c = (t) => 0.38 * L.prop(X(t), 'wt'), e = (t) => half(X(t));
-          const out = [nrm[0], nrm[1], 0];
-          face([P3(0, -c(0)), P3(0, c(0)), P3(1, c(1)), P3(1, -c(1))], G, out, o);
+          const out = [nrm[0], nrm[1], 0], nl = Math.hypot(nrm[0], nrm[1]), tilt = (deg) => { const y = nrm[1] / nl + Math.tan(deg * Math.PI / 180), k = Math.hypot(nrm[0] / nl, y); return [nrm[0] / nl / k, y / k, 0]; };
+          // (its middle shaded as if curved, like the side glass: the foot turned down bend[0] degrees, the top up bend[1]: the ground below, the sky above)
+          const lo = tilt(-bend[0]), hi = tilt(bend[1]), M4 = [P3(0, -c(0)), P3(0, c(0)), P3(1, c(1)), P3(1, -c(1))];
+          K.part(o.part, () => K.g.quadON(M4[0], M4[1], M4[2], M4[3], lo, lo, hi, hi, [M4[0][0] - out[0], M4[0][1] - out[1], 0], G, G, G, G));
           for (const sd of [-1, 1]) face([[0, c(0)], [0, e(0) - ch], [tc, e(tc)], [1 - tc, e(1 - tc)], [1, e(1) - ch], [1, c(1)]].map(([t, z]) => P3(t, sd * z)), G, out, o);
         };
-        pane(0.8, 0.185, (x) => L.prop(x, 'wt') - 0.075, [0.59, 0.81], 0.05, { part: 'body' });          // the windscreen
-        pane(-1.651, -1.592, (x) => L.prop(x, 'wt') - 0.085, [-0.99, 0.14], 0.04, { part: 'trunk' });    // the tailgate's window
+        pane(0.8, 0.185, (x) => L.prop(x, 'wt') - 0.075, [0.59, 0.81], 0.05, { part: 'body' }, [20, 38]);          // the windscreen
+        pane(-1.651, -1.592, (x) => L.prop(x, 'wt') - 0.085, [-0.99, 0.14], 0.04, { part: 'trunk' }, [0, 40]);    // the tailgate's window (not down: seen from above it would mirror the ground)
         // ---- the glasshouse: black frames round the side glass, the B-pillar black, the A-pillar's foot in paint ----
         LD.band([[-1.3425, 0], [0.79, 0], [0.79, 0.06], [-1.3425, 0.06]], B, null, 0.008);      // along the belt
         LD.band([[-1.3425, 0.93], [0.16, 0.93], [0.16, 1], [-1.3425, 1]], B, null, 0.008);      // under the roof's edge
@@ -131,8 +133,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             face([Q(b0, r0), Q(b1, r0), Q(b1, r1), Q(b0, r1)], K.shade(P, 0.8), [0, 0, sd]); } });
         }
         // ---- the nose: the big square head lamps on the lamp face (with the fenders), the slim grille between them (with the bonnet) ----
-        for (const sd of [-1, 1]) { K.headLamp(1.687, 0.675, sd * 0.468, 0.1, { shape: 'rect', w: 0.27, h: 0.21, ring: B, host: sd < 0 ? 'fenderL' : 'fenderR' });
-          K.rect(1.6925, 0.7, sd * 0.468, 0.27, 0.009, [0.36, 0.37, 0.4], { host: sd < 0 ? 'fenderL' : 'fenderR' }); }   // (the lens' divide: the main and the dipped beam)
+        for (const sd of [-1, 1]) { const hz = sd < 0 ? 'fenderL' : 'fenderR';
+          K.headLamp(1.687, 0.675, sd * 0.468, 0.1, { shape: 'rect', w: 0.27, h: 0.21, ring: B, host: hz });
+          for (const dz of [-0.066, 0.066]) {   // (behind the lens two reflector bowls, the main and the dipped beam, a bulb in each)
+            K.discX(1.6925, 0.675, sd * 0.468 + dz, 0.06, 8, [0.7, 0.72, 0.76], 1, { host: hz });
+            K.discX(1.6935, 0.675, sd * 0.468 + dz, 0.02, 6, [1, 0.99, 0.94], 1, { host: hz }); } }
         K.grille(1.684, 0.705, 0, 0.6, 0.065, { slats: 2, host: 'hood' });
         // ---- the front bumper: its intake, the plate, the indicators, the black lip under it ----
         K.part('bumperF', () => {
@@ -166,6 +171,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) {
           K.tailLamp(-1.642, 0.68, sd * 0.64, 0.13, 0.24);
           K.rect(-1.661, 0.832, sd * 0.64, 0.125, 0.05, AMB, { dir: '-x', host: sd < 0 ? 'quarterL' : 'quarterR' });
+          for (const y of [0.62, 0.74]) K.rect(-1.667, y, sd * 0.64, 0.13, 0.008, [0.26, 0.03, 0.03], { dir: '-x', host: sd < 0 ? 'quarterL' : 'quarterR' });   // (the lens' ribs)
         }
         K.part('trunk', () => {
           K.rect(-1.661, 0.81, 0, 1.1, 0.07, D, { dir: '-x' });
