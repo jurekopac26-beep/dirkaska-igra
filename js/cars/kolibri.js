@@ -104,6 +104,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         LD.band([[-0.44, 0], [-0.33, 0], [-0.33, 1], [-0.44, 1]], B, null, 0.01);               // the B-pillar (split at the door's edge)
         LD.band([[-1.3425, 0], [-1.3, 0], [-1.3, 1], [-1.3425, 1]], B, null, 0.01);             // the quarter window's rear frame
         LD.band([[0.2, 0.86], [0.79, 0.04], [0.79, 1], [0.16, 1]], P, null, 0.01);              // the A-pillar (paint, over the glass's edge)
+        // ---- the roof's edges rounded: a bead in paint along each crease of the roof and down the A-pillar to the cowl (the drip rail's
+        //      moulding: the slab's sharp edge catches the light round); the cowl's black scuttle panel at the windscreen's foot ----
+        for (const sd of [-1, 1]) {
+          const path = [-1.56, 0.16, 0.8].map(x => [x, L.prop(x, 'yt') - 0.004, sd * (L.prop(x, 'wt') - 0.004)]);
+          K.sweep([[0.006, -0.022], [0.022, -0.004], [0.016, 0.016], [-0.004, 0.024], [-0.02, 0.004]].map(([u, v]) => [u * sd, v]), path, P, { capA: P, capB: P, part: 'body' });
+        }
+        LD.top([[0.815, -0.62], [0.855, -0.66], [0.855, 0.66], [0.815, 0.62]], B, 0.006);
         // ---- the side: the stripe along the doors between the arches, the shut lines, the handles, the repeaters, the fuel cap ----
         const X0 = XA + 0.04, X1 = XB - 0.04;
         LD.side([[X0, 0.425], [X1, 0.425], [X1, 0.5], [X0, 0.5]], S, null, 0.006);
@@ -115,6 +122,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(1.3, 0.7, sd * 0.733, 0.06, 0.024, AMB, { dir: fz(sd), host: sd < 0 ? 'fenderL' : 'fenderR' });
         }
         K.face([0, 1, 2, 3, 4, 5].map(i => [-1.25 + Math.cos(i * Math.PI / 3) * 0.045, 0.74 + Math.sin(i * Math.PI / 3) * 0.045, 0.734]), D, { host: 'quarterR' });
+        // ---- the wheel arches' lips: a band round each arch's rim just off the side, round with the round tyres (the loft cuts the arch in
+        //      six), a shade under the paint; one primitive each (the fender's, the quarter's) ----
+        for (const A of K.arches) for (const sd of [-1, 1]) {
+          const a0 = Math.acos(Math.min(1, A.half * K.sx / A.r)), n = 10, z = sd * (L.prop(A.x, 'w') + 0.008), r0 = A.r - 0.012, r1 = A.r + 0.042;
+          const Q = (b, r) => [A.x + Math.cos(b) * r / K.sx, A.y + Math.sin(b) * r, z];
+          K.at(A.x, A.y + A.r, z, () => { for (let i = 0; i < n; i++) { const b0 = a0 + (Math.PI - 2 * a0) * i / n, b1 = a0 + (Math.PI - 2 * a0) * (i + 1) / n;
+            face([Q(b0, r0), Q(b1, r0), Q(b1, r1), Q(b0, r1)], K.shade(P, 0.8), [0, 0, sd]); } });
+        }
         // ---- the nose: the big square head lamps on the lamp face (with the fenders), the slim grille between them (with the bonnet) ----
         for (const sd of [-1, 1]) { K.headLamp(1.687, 0.675, sd * 0.468, 0.1, { shape: 'rect', w: 0.27, h: 0.21, ring: B, host: sd < 0 ? 'fenderL' : 'fenderR' });
           K.rect(1.6925, 0.7, sd * 0.468, 0.27, 0.009, [0.36, 0.37, 0.4], { host: sd < 0 ? 'fenderL' : 'fenderR' }); }   // (the lens' divide: the main and the dipped beam)
@@ -127,10 +142,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(1.64, 0.19, 0, 0.13, 0.05, 1.28, 0, B);
         });
         // ---- the bonnet's scoop (the intercooler under it): a box rising from the bonnet, its black mouth facing forward ----
-        K.part('hood', () => {
-          const ring = (x, h) => { const y = L.topY(x, 0); return [[x, y - 0.012, -0.26], [x, y + h, -0.225], [x, y + h, 0.225], [x, y - 0.012, 0.26]]; };
-          K.skin([ring(1.46, 0.07), ring(1.33, 0.064), ring(1.0, 0.006)], P, B, P);
-          K.rect(1.457, L.topY(1.46, 0) + 0.03, 0, 0.42, 0.05, D);
+        K.part('hood', () => {   // (rounded shoulders, its top falling into the bonnet; a mesh in its black mouth)
+          const ring = (x, h, w) => { const y = L.topY(x, 0); return [[x, y - 0.012, -w], [x, y + h * 0.72, -w + 0.012], [x, y + h, -w + 0.055], [x, y + h, w - 0.055], [x, y + h * 0.72, w - 0.012], [x, y - 0.012, w]]; };
+          K.skin([ring(1.47, 0.075, 0.27), ring(1.43, 0.079, 0.268), ring(1.3, 0.068, 0.258), ring(1.0, 0.006, 0.235)], P, B, P);
+          K.grille(1.472, L.topY(1.47, 0) + 0.034, 0, 0.44, 0.05, { slats: 3, col: B, slatCol: D });
         });
         // ---- the windscreen's wipers ----
         for (const z of [-0.3, 0.22]) K.bar([0.86, L.topY(0.86, z - 0.22) + 0.012, z - 0.22], [0.815, L.topY(0.815, z + 0.22) + 0.012, z + 0.22], 0.01, B, { n: 4, part: 'body' });
@@ -143,6 +158,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             return [[-1.4, 1.387], [-1.42, 1.405], [-1.64, 1.425], [-1.725, 1.432], [-1.73, 1.395], [-1.6, 1.36]].map(([x, y]) => [x, y + lift, z]); };
           K.skin([-0.565, -0.22, 0.22, 0.565].map(prof), (k, e) => e === 3 ? K.shade(P, 0.45) : e >= 4 ? D : P, P, P);
           K.rect(-1.731, 1.414, 0, 0.3, 0.018, RED, { dir: '-x' });
+          for (const sd of [-1, 1]) { const lift = L.topY(-1.4, sd * 0.575) - L.topY(-1.4, 0);   // (its endplates: fins a little over its ends)
+            K.endplate([[-1.4, 1.38], [-1.62, 1.352], [-1.742, 1.388], [-1.737, 1.447]].map(([x, y]) => [x, y + lift]), sd * 0.573, 0.01, P); }
         }, { noCrush: true, noDent: true, hinge: [[-1.41, 1.39, -0.5], [-1.41, 1.39, 0.5]] });
         // ---- the tail: the lamps in their strips (with the quarters), amber tops; the garnish between them, the plate and the wiper on
         //      the tailgate ----
