@@ -9,17 +9,27 @@ npm test             # vse (~90 min)
 npm run test:node    # samo fizika, AI, dirke in prvenstvo (~4 min)
 npm run test:browser # samo testi v brskalniku (~75 min s programskim WebGL)
 npm run test:fleet   # samo vozni park: izrisovalni komplet, register vozil, vožnja, uničenje, AI in izris vseh vozil (~8 min)
+node tests/run.js browser --shard 2/4         # en del brskalniških testov (kot na GitHubu)
+node tests/run.js browser --shard 2/4 --list  # samo izpiše, kateri testi so v tem delu
 ```
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
 (`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
-(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški posel teče z 30 minutami na test in 180 minutami skupaj, ker se smoke, memory in perf z vsako progo podaljšajo in ker je isti nabor na nekaterih strojih skoraj dvakrat počasnejši); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima dvakrat toliko časa.
+(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški testi tečejo s 30 minutami na test); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima trikrat toliko časa, smoke in perf pa dvakrat (na GitHubu 90 in 60 minut).
+
+Brskalniški testi na GitHubu tečejo na štirih strojih hkrati (posli »Igra v brskalniku (1/4)« do »(4/4)«, vsak do 120 minut, več kot omejitev testa pomnilnika),
+posel »Igra v brskalniku« pa je zelen, ko so zeleni vsi štirje deli. `tests/run.js --shard k/4` razdeli teste po tem, koliko časa traja
+vsak na GitHubu (tabela `SECS` v `tests/run.js`; test, ki ga ni v tabeli, šteje 60 s): najdaljši najprej, vsak v del, ki ima do tedaj
+najmanj časa. Na hitrem stroju traja vsak del ~26 min, na počasnem do dvakrat dlje (prej je celoten nabor na enem stroju trajal
+od ~105 do več kot 180 min). Ko se kak test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo), popravi njegov čas v
+`SECS` po povzetku zadnjega zagona, da ostanejo deli enako dolgi.
 
 ## Kaj preverjajo
 
 | Test | Kaj preveri |
 |---|---|
 | `stamp.test.js` | Vse povezave na skripte in sloge v `index.html` imajo trenutno oznako vsebine (`?v=…`) in kažejo na obstoječe datoteke (glej `tools/stamp.js`). |
+| `shards.test.js` | Razdelitev testov na dele (`tests/run.js --shard k/n`, na GitHubu brskalniški testi v 4 delih): vsak nabor (node, fleet, browser) v 1–6 delih ima vsak test v natanko enem delu, nobenega ne izpusti; 4 deli brskalniških testov so približno enako dolgi (najdaljši največ 15 % nad povprečjem, po časih `SECS`); `SECS` ima samo teste s seznama in čase dolgih testov (memory, perf, smoke, gfx, world); napačen `--shard` (0/4, 5/4, 2, x/y, brez) ustavi z napako in ne požene ničesar. |
 | `golden.test.js` | Vse proge × 7 postavitev (fizika Circuit Superstars, edina v igri): dirka, demo na naslovnem zaslonu, izboljšan avto brez poškodb, trčenje (igralec pri polni hitrosti zavije v ogrado: poškodbe, odpadli deli na cesti, reševanje, na progah z boksi (Bakreni gozd, Toskana, Gromski rt, Spa, Red Bull Ring, Bathurst, Crystal Palace, Longford) še postanek v boksih s popravilom), enako trčenje v dirki formul (igralec in vsi tekmeci v formulah; odpadejo krila, nos, pokrov motorja; po popravilu ima spet ves pritisk na cesto) in v dirki prototipov (TAIFUN LM: odpadejo spojler, zadnje krilo, nos, pokrov motorja) ter trčenje v enem od novejših cestnih avtov (VIHAR V8, STRELA EV in SAMUM 4x4 po vrsti, glede na mesto proge na seznamu). Po 60 s (trčenje na progi z boksi 80 s, na dolgem krogu toliko dlje, da avto pride okoli do boksov: Crystal Palace 128 s, Red Bull Ring 164 s, Spa 254 s, Longford 255 s). Celotno stanje dirke, vseh avtov in odpadlih delov se vsakih 10 s zapiše v prstni odtis in primerja z `golden/sim.json`, zato se pokaže vsaka sprememba fizike, AI, poškodb, boksov ali pravil v teh vožnjah. Test preveri tudi, da trčenje res pripelje do poškodb (in popravila v boksih). |
 | `races.test.js` | Cele dirke z AI do cilja na vseh progah, na suhem in v dežju (`/rain`), na vsaki progi pa še dirka formul (`/formula`: igralec in vsi tekmeci v formulah), dirka prototipov (`/lm`: vsi v prototipih TAIFUN LM) in dirka z igralcem v novejšem cestnem avtu (`/car`: VIHAR V8, STRELA EV in SAMUM 4x4 po vrsti). Vsi avti morajo priti do cilja, rezultat (vrstni red, časi v cilju in končno stanje vseh avtov) pa mora biti natanko enak referenci v `golden/races.json`. Ob spremembi izpiše še, koliko se je spremenilo: vrtenja (največ 2 več kot v referenci), stiki z ograjo, reševanja in čas zmagovalca (največ ±3 %). Dirka v dežju mora biti počasnejša od enake dirke na suhem (za 0,5–30 %; na večini prog 6–9 %). |
 | `cs-handling.test.js` | Značilnosti fizike Circuit Superstars (iz analize posnetka): oprijem v zavojih, kot drsenja, odziv, samodejna poravnava na izhodu, zaviranje v zavoju, pospešek 0–100, zavorna pot. Še formula: pospešek, končna hitrost, zavorna pot, pri večji hitrosti več oprijema (krila), manj drsenja, brez vrtenja, na makadamu počasnejša od reli avta; po čelnem trku izgubi sprednje krilo in z njim pol pritiska na cesto, popravilo ga vrne. Novejši avti: prototip (hitrejši od formule na ravnini, v hitrem ovinku malo manj oprijema, po čelnem trku brez spojlerja pol pritiska na cesto), V8 (najmanj oprijema, večji zdrs in daljše vrtenje koles kot KAZE RS, hitrejši do 200 km/h), električni avto (najhitrejši pospešek cestnih avtov, ena prestava, na štartu ne »turira«), tovornjak (na asfaltu manj, na makadamu več oprijema kot reli avto, na travi hitrejši, trd pristanek po skoku brez poškodb). |
