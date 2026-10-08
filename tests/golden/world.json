@@ -738,6 +738,26 @@
    "roadwear:MeshLambertMaterial": "cb786fa0"
   }
  },
+ "greatalpine": {
+  "meshes": 2091,
+  "verts": 1200091,
+  "instances": 59273,
+  "props": 344,
+  "crowd": 957,
+  "world": "a08f9f2f",
+  "propsHash": "a62b93bb",
+  "floor": "76e38992/17136",
+  "groups": {
+   "-:MeshLambertMaterial": "493b3db8",
+   "-:MeshPhongMaterial": "f0876f1e",
+   "-:MeshBasicMaterial": "3fa74cd8",
+   "gaFar:MeshLambertMaterial": "91d3d5f3",
+   "crowd:MeshLambertMaterial": "18100baf",
+   "ao:MeshBasicMaterial": "419469a1",
+   "tyremarks:MeshBasicMaterial": "e895b12b",
+   "roadwear:MeshLambertMaterial": "3aaae60d"
+  }
+ },
  "detroit": {
   "meshes": 365,
   "verts": 848445,

@@ -3023,6 +3023,9 @@ const Render = (function () {
     else if (kind === 'rbstack') { rbale(-0.66, -0.425, 0); rbale(0.66, -0.425, 0); rbale(0, 0.425, 0); }
     else if (kind === 'crate') { const wd = [0.56, 0.38, 0.22], dk = [0.4, 0.26, 0.15]; W.box(g, 0, -0.4, 0, 1.0, 0.8, 0.8, 0, wd, [0.62, 0.43, 0.26]);
       for (const y of [-0.12, 0.14]) W.box(g, 0, y, 0, 1.02, 0.05, 0.82, 0, dk, dk); for (const x of [-0.46, 0.46]) W.box(g, x, -0.41, 0, 0.08, 0.82, 0.82, 0, dk, dk); }
+    else if (kind === 'gpost') {   // an Australian guide post: white, a red reflector on the face to the traffic on its own side (local -x), a white one on the other
+      const wh = [0.95, 0.95, 0.93], rd = [0.9, 0.08, 0.06], rw = [1, 1, 1];
+      W.box(g, 0, -0.65, 0, 0.12, 1.2, 0.1, 0, wh, wh); W.box(g, -0.064, 0.3, 0, 0.012, 0.16, 0.07, 0, rd, rd); W.box(g, 0.064, 0.3, 0, 0.012, 0.1, 0.07, 0, rw, rw); }
     else if (kind === 'post') {   // roadside post (stebriček): white, a black band with orange reflectors both ways; its foot sits 10 cm in the ground
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
@@ -3236,6 +3239,7 @@ const Render = (function () {
     rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
     moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     maunakea: { fog: 0xcad9ec, sun: 0xfff6e8, sunI: 1.42, sky: 0x7aa6e8, gnd: 0x5a4a40, hemiI: 0.58, tint: [1.0, 1.0, 1.01], sat: 1.07, sunOff: [-62, 118, 44], skyTop: 0x1d4da6, skyK: 0.82 },   // Mauna Kea: a clear afternoon above the clouds at 4,000 m, the thin, dry air: a deep blue sky, a strong high sun from the west-south-west, hardly any haze
+    greatalpine: { fog: 0xc4d2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0xaecbec, gnd: 0x5a5638, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-74, 92, -56] },   // the Great Alpine Road: a warm, clear afternoon in the Gippsland bush, the sun from the north-west (the southern hemisphere), a blue-grey eucalypt haze
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
     monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.14, hazeCol: [0.94, 0.9, 0.84], sunOff: [-66, 74, 70] },   // Monterey: a clear afternoon in the coastal hills, the sun from the south-west, a little sea haze in the light
@@ -3266,6 +3270,7 @@ const Render = (function () {
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
   THEMES.baldy = { fog: 0xcbd6df, sun: 0xfff0d4, sunI: 1.24, sky: 0xb4cff0, gnd: 0x5c5a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.08, sunOff: [-78, 96, 50] };   // Mount Baldy: a clear, warm summer afternoon in the San Gabriels, a strong sun from the south-west (the pines' shadows across the hairpins), a light blue haze over the canyon
   SPLIT.baldy = [[0.96, 0.99, 1.05], [1.05, 1.0, 0.94]];
+  SPLIT.greatalpine = [[0.95, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (the Great Alpine Road: blue shade under the gums, a warm sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the

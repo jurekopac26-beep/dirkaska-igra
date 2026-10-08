@@ -244,6 +244,13 @@
   "maxKverts": 657,
   "jsMs": 2.04
  },
+ "greatalpine": {
+  "calls": 239,
+  "maxCalls": 339,
+  "kverts": 841,
+  "maxKverts": 1095,
+  "jsMs": 2.13
+ },
  "detroit": {
   "calls": 303,
   "maxCalls": 364,

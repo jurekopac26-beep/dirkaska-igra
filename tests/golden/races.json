@@ -1949,6 +1949,56 @@
   "nan": false,
   "digest": "8a3db237487e0bddd6a19040"
  },
+ "greatalpine/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 219.92,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bb44d6882f25d919ce5a40b1"
+ },
+ "greatalpine/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 239.24,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c99420d25e25d41d0997ce10"
+ },
+ "greatalpine/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 191.45,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4760f97e12ee9d98ca515d26"
+ },
+ "greatalpine/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 192.78,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "932094a65e0d21a15da79630"
+ },
+ "greatalpine/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 220.27,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e0bd618d58f1fdab5d1611ba"
+ },
  "detroit/cs": {
   "finished": 13,
   "cars": 13,
@@ -1992,12 +2042,12 @@
  "detroit/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 160.48,
+  "winner": 156.78,
   "spins": 1,
   "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "ad9a6e3b6a734c1be943dd7b"
+  "digest": "73aadce07c214d6e646f2f3a"
  },
  "palomar/cs": {
   "finished": 13,
@@ -2042,12 +2092,12 @@
  "palomar/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 252.61,
+  "winner": 256.6,
   "spins": 0,
-  "walls": 3,
+  "walls": 9,
   "rescues": 0,
   "nan": false,
-  "digest": "a9659064c08bfa391116dae1"
+  "digest": "eb1ef3e2e3bb580524bdc74f"
  },
  "bangsaen/cs": {
   "finished": 13,
@@ -2092,11 +2142,11 @@
  "bangsaen/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 153.28,
+  "winner": 153.33,
   "spins": 0,
-  "walls": 9,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "25cb7a4cf50697cd5f78ae7b"
+  "digest": "0a98ae301fdac9834b56e216"
  }
 }
