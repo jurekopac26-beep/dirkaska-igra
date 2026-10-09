@@ -486,6 +486,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .on-players { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 6px; }
 .on-players div { font: 700 italic clamp(13px, 3.4vh, 15px)/1.25 var(--f-ui); color: var(--chalk); }
 .on-players .wait { color: var(--muted); }
+.on-players.many { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 3px 12px; }   /* (a quick match of up to 22: in columns) */
+.on-players.many div { font-size: clamp(12px, 3vh, 14px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .on-players .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.4); }
 .on-mycar { font: 700 italic clamp(13px, 3.4vh, 15px)/1 var(--f-ui); color: var(--chalk); min-width: 7.5em; text-align: center; }
 select.txt { width: min(15em, 100%); font-style: normal; }

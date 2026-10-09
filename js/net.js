@@ -1,16 +1,17 @@
 /* =========================================================================
-   NET — a race with friends over the internet: up to four phones, directly connected
+   NET — a race with friends over the internet: up to four phones in a private room, up to 22 in a quick match
    ========================================================================= */
 // The phones connect peer to peer (WebRTC, through the PeerJS library in js/vendor/). They find each other through the free
 // public PeerJS server with a short room code; PeerJS also brings a relay (TURN) for networks where a direct connection is
 // not possible. One reliable, ordered channel per friend carries small JSON messages. The phone that made the room (host)
-// keeps the clock and is the hub: every friend is connected to it (a private room takes up to three, a quick match is a pair);
+// keeps the clock and is the hub: every friend is connected to it (a private room takes up to three, a quick match up to 21);
 // the others measure the difference to its clock with pings, so that all can start the race at the same moment. The host
 // passes on what the friends send each other (see game.js).
 // Events for the game (onEvent(type, data, id)): 'code' (the host's room is ready; again when a lost server connection is back),
-// 'wait' (quick match: a place is taken and someone is waited for),
+// 'wait' (quick match: a place is taken and others are waited for),
 // 'open' (a friend is connected: its id), 'msg' (a message from a friend, its id), 'lost' (a friend's connection is gone: why, id),
-// 'error' (no connection: a PeerJS error type or 'timeout'). The ids: the host is 'h' for its friends, they are 'g1'..'g3' for it.
+// 'error' (no connection: a PeerJS error type or 'timeout'). The ids: the host is 'h' for its friends, they are 'g1'..'g3' for it
+// ('g1'..'g21' in a quick match).
 const Net = (function () {
   'use strict';
   const PREFIX = 'apex-racing-dirkaska-';   // (the public server is shared by everyone who uses PeerJS)
@@ -18,6 +19,8 @@ const Net = (function () {
   const SILENT = 10000;   // ms without a word from a friend (pings and answers every 2 s, also in the background; race states 20 times a second): gone
   const SERVER_ERR = ['network', 'socket-closed', 'socket-error', 'server-error'];   // the connection to the PeerJS server (not to a friend) broke
   const ROOM = 4;   // a private room: the host and up to three friends
+  const QROOM = 22;   // a quick match: the one who waits and up to 21 who come
+  const qroom = () => Math.min(QROOM, Math.max(2, (window.__quickRoom | 0) || QROOM));   // (the tests: fewer)
   let peer = null, role = null, handler = null, code = '';
   const links = new Map();   // the connections: a friend's one to the host ('h'); the host's to its friends ('g1', 'g2', 'g3')
   let offset = 0, bestRtt = Infinity, synced = false, fixed = false, quietTill = 0, pongs = [], timers = [];
@@ -32,7 +35,7 @@ const Net = (function () {
   const now = () => performance.now() + offset;   // the host's clock, in ms
   const newCode = () => { let s = ''; for (let i = 0; i < 4; i++) s += ABC[(Math.random() * ABC.length) | 0]; return s; };
   const normCode = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-  const cap = () => (quick ? 1 : ROOM - 1);   // the friends a host takes
+  const cap = () => (quick ? qroom() - 1 : ROOM - 1);   // the friends a host takes
   const openIds = () => [...links.values()].filter(L => L.opened && L.c.open).map(L => L.id);
 
   function sendTo(id, m) { const L = links.get(id); if (L && L.c.open) { try { L.c.send(m); } catch (_) { } } }
@@ -45,7 +48,7 @@ const Net = (function () {
     c.on('open', () => {
       if (!mine()) return;   // (an older connection that was replaced)
       L.opened = true; L.lastRx = performance.now();
-      if (quick && !paired) { paired = true; if (role === 'host' && peer) { try { peer.disconnect(); } catch (_) { } } }   // (quick match: a pair; the place is free for the next pair, the line to the friend stays)
+      if (quick && !paired && (role !== 'host' || openIds().length >= cap())) shut();   // (quick match: a full room gives its place up; the lines to the friends stay)
       emit('open', null, id);
       if (role === 'guest') {   // measure the host's clock: a burst now, then one ping every 2 s (it keeps the line alive too)
         for (let i = 0; i < 6; i++) lat(() => sendTo(id, { t: 'ping', a: performance.now() }), i * 120);
@@ -140,10 +143,11 @@ const Net = (function () {
     p.on('connection', (c) => {
       if (peer !== p) return;
       for (const [k, L] of links) if (L.c.peer === c.peer) unlink(k);   // (a newer try of the same phone wins over one still connecting)
-      if (quick) for (const [k, L] of links) if (!L.opened) unlink(k);   // (quick match: a newer try wins over one still connecting)
-      if (links.size >= cap()) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (_) { } setTimeout(() => c.close(), 4000); }); return; }   // (the room is full: told, then let go; it closes itself on the word, a slow phone has seconds to get it)
+      if (quick && links.size >= cap()) for (const [k, L] of links) if (!L.opened) unlink(k);   // (quick match, the room full: a newer try wins over one still connecting)
+      if (links.size >= cap() || (quick && paired)) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (_) { } setTimeout(() => c.close(), 4000); }); return; }   // (the room is full: told, then let go; it closes itself on the word, a slow phone has seconds to get it)
       let n = 1; while (links.has('g' + n)) n++;
       attach(c, 'g' + n);
+      const L = links.get('g' + n); L.timers.push(setTimeout(() => { if (links.get(L.id) === L && !L.opened) unlink(L.id); }, 15000));   // (one that never opens does not keep a place)
     });
     p.on('disconnected', () => { if (peer === p) serverLost(p, 'network'); });
     p.on('error', (e) => {
@@ -155,10 +159,11 @@ const Net = (function () {
     });
   }
 
-  // Quick match: no code, a pair. A few waiting places have fixed names on the public server (with the game's version in them,
-  // so that different versions never meet). Whoever comes first takes the first free place and waits; whoever comes next finds
-  // it taken (the server allows one peer per name) and connects to whoever is there. Once two are together the place is free
-  // again. A place whose owner is gone without a word does not answer: after a few seconds the next place is tried.
+  // Quick match: no code, a room of up to 22. A few waiting places have fixed names on the public server (with the game's version
+  // in them, so that different versions never meet). Whoever comes first takes the first free place and waits; whoever comes next
+  // finds it taken (the server allows one peer per name) and connects to whoever is there. The place stays taken until the room is
+  // full or its race starts (lock); then it is free again for the next room. A place whose owner is gone without a word does not
+  // answer: after a few seconds the next place is tried.
   function quickMatch(ver, onEvent) {
     close(); handler = onEvent; quick = true; paired = false; offset = 0; synced = true; fixed = false; fails = 0; lastTry = -1e9; attempts = 0;
     qver = String(ver).replace(/[^A-Za-z0-9]/g, '');
@@ -172,7 +177,7 @@ const Net = (function () {
     if (!quick) return;
     if (n >= QPLACES) { if (round < 1) scan(0, round + 1); else emit('error', 'busy'); return; }
     forget(); role = 'host'; slot = n; synced = true; offset = 0;
-    openHost(placeId(n), () => { waiting = true; emit('wait'); }, () => meet(n, round));
+    openHost(placeId(n), () => { if (!waiting) { waiting = true; emit('wait'); } }, () => meet(n, round));   // (once: the server says open again after a reconnect, with the room as it is)
   }
   function meet(n, round) {   // the place is taken: connect to the one who waits there
     if (!quick || ++attempts > 16) { if (quick) emit('error', 'busy'); return; }
@@ -203,6 +208,18 @@ const Net = (function () {
     links.clear(); peer = null; role = null; handler = null; code = ''; quick = false; paired = false; waiting = false; clearTimers(); retryT = null;
     setTimeout(() => { for (const x of L) { try { x.c.close(); } catch (_) { } } try { if (p) p.destroy(); } catch (_) { } }, bye ? 300 : 0);
   }
+  // quick match: the room takes nobody more (full, or its race starts); the place on the server is free for the next room
+  function shut() {
+    paired = true;
+    if (role === 'host' && peer) { if (retryT) { clearTimeout(retryT); retryT = null; } try { peer.disconnect(); } catch (_) { } }
+  }
+  function lock() { if (quick && role === 'host' && !paired) shut(); }
+  // a state that is soon old (a car's, 10-20 times a second): not sent to a friend whose line is behind (the next one is newer)
+  function sendFresh(id, m) {
+    const L = links.get(id); if (!L || !L.c.open) return false;
+    const dc = L.c.dataChannel; if (L.c.bufferSize > 0 || (dc && dc.bufferedAmount > 96 * 1024)) return false;
+    try { L.c.send(m); return true; } catch (_) { return false; }
+  }
   // the host: let this friend go (they said goodbye), keep the room
   function drop(id) { if (id && links.has(id)) lost(id, 'bye', true); }
   // a long job ahead (loading a track: a phone may not answer for seconds): nobody counts as gone before ms have passed (0: as usual again)
@@ -211,8 +228,8 @@ const Net = (function () {
   function fixClock(on) { fixed = !!on; }
 
   return {
-    available, host, quickMatch, join, close, drop, hold, fixClock, send, sendTo, now, normCode,
+    available, host, quickMatch, join, close, drop, hold, fixClock, lock, send, sendTo, sendFresh, now, normCode,
     get role() { return role; }, get code() { return code; }, get open() { return openIds().length > 0; }, get ids() { return openIds(); },
-    get synced() { return synced; }, get rtt() { return bestRtt; }, get room() { return ROOM; },
+    get synced() { return synced; }, get rtt() { return bestRtt; }, get room() { return quick ? qroom() : ROOM; }, get locked() { return quick && paired; },
   };
 })();
