@@ -75,13 +75,16 @@ const NVMenu = (function () {
   };
 
   let host = null, el = null, list = [], carName = () => '', at = null, shut = null, live = true, view = null, wipT = 0;
-  const best = { c: [], m: [], k: [] };   // (each task's best, %: none driven yet; kept here for when the tasks are built)
-  const LV = 3, OPEN = 50;   // (three tasks a level; the next level opens at 50 % of the one before)
+  // each task's best, %: none driven yet (when the tasks are built: how good the time is against the task's target, any value 0-100);
+  // three tasks a level, the next level opens at 50 % of the one before; the licence: its exam (the twelfth task) passed, 50 % or more
+  const best = { c: [], m: [], k: [] };
+  const LV = 3, OPEN = 50;
   const bestOf = (l, i) => best[l][i] || 0, nLv = (l) => Math.ceil(LIC[l].tasks.length / LV);
   const lvP = (l, v) => { let t = 0; for (let i = v * LV; i < (v + 1) * LV; i++) t += bestOf(l, i); return Math.round(t / LV); };
   const lvOpen = (l) => { let v = 0; while (v + 1 < nLv(l) && lvP(l, v) >= OPEN) v++; return v; };   // (the highest level open)
   const allP = (l) => Math.round(LIC[l].tasks.reduce((t, _, i) => t + bestOf(l, i), 0) / LIC[l].tasks.length);
   const nDone = (l) => LIC[l].tasks.filter((_, i) => bestOf(l, i) >= OPEN).length;
+  const lic = (l) => bestOf(l, LIC[l].tasks.length - 1) >= OPEN;   // (the licence won: its exam passed)
 
   function css() {
     if (document.getElementById('nvm-css')) return;
@@ -171,18 +174,18 @@ const NVMenu = (function () {
     if (view.lvl === 0) {
       const T = shades(M.col);
       if (M.note) h = `<div class="note">${esc(tr(M.note))}</div>`;
-      else if (M.lic) h = M.lic.map((l, i) => { const L = LIC[l]; return row({ a: 'lic', i, t: L.col, name: L.name, sub: `${L.sub} · level ${lvOpen(l) + 1} · ${nDone(l)} / ${L.tasks.length} tasks`, p: allP(l) }); }).join('');
+      else if (M.lic) h = M.lic.map((l, i) => { const L = LIC[l]; return row({ a: 'lic', i, t: L.col, name: L.name + (lic(l) ? ' ✓' : ''), sub: `${L.sub} · level ${lvOpen(l) + 1} · ${nDone(l)} / ${L.tasks.length} tasks`, p: allP(l) }); }).join('');
       else h = M.items.map((it, i) => row({ a: 'wip', i, t: T[i], name: it[0], sub: it[1], p: 0 })).join('');
       h += `<div class="ft">${esc(M.note ? 'tap anywhere else to close' : 'tap anywhere else to close · shown while you stand on the coloured spot')}</div>`;
     } else if (view.lvl === 1) {
       const l = view.lic, L = LIC[l], v = view.lv, n = nLv(l), op = lvOpen(l), p = lvP(l, v); col = L.col; title = L.name; line = `${M.title} · level ${v + 1} of ${n}`;
       for (let i = v * LV; i < Math.min((v + 1) * LV, L.tasks.length); i++) h += row({ a: 'task', i, tk: true, t: L.col, name: L.tasks[i][0], sub: L.tasks[i][1], p: bestOf(l, i) });
-      const nt = v + 1 >= n ? `the last level · then the ${L.name.toLowerCase()}` : v + 1 <= op ? `level ${v + 2} is open` : `at ${OPEN} % level ${v + 2} opens`;
+      const nt = v + 1 >= n ? `the last level · pass the exam: the ${L.name.toLowerCase()}` : v + 1 <= op ? `level ${v + 2} is open` : `at ${OPEN} % level ${v + 2} opens`;
       h += `<div class="lv"><div class="lt"><button class="ar" data-a="lvp" aria-label="Level before"${v > 0 ? '' : ' disabled'}>‹</button><b>LEVEL ${v + 1}</b><span style="color:${p >= OPEN ? '#5fe08a' : '#ffd34d'}">${p} %</span><button class="ar" data-a="lvn" aria-label="Next level"${v < op ? '' : ' disabled'}>›</button></div>` +
         `<div class="bar"><u style="width:${p}%"></u><i style="left:${OPEN}%"></i></div><div class="nt">${esc(nt)}</div></div>`;
     } else {
       const l = view.lic, L = LIC[l], t = L.tasks[view.task], b = bestOf(l, view.task); col = L.col; title = L.name; line = `level ${view.lv + 1} · task ${view.task + 1} / ${L.tasks.length}`;
-      h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>${b ? b + ' %' : '—'}</dd><dt>Done</dt><dd>${b >= OPEN ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc('all ' + L.tasks.length + ' tasks of the ' + L.name.toLowerCase())}</dd></dl></div>` +
+      h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>${b ? b + ' %' : '—'}</dd><dt>Done</dt><dd>${b >= OPEN ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc(view.task === L.tasks.length - 1 ? 'pass this exam: the ' + L.name.toLowerCase() : 'pass the exam (task ' + L.tasks.length + ')')}</dd></dl></div>` +
         `<button class="go" data-a="start">${esc('Start')}</button>`;
     }
     el.style.setProperty('--c', col); el.style.setProperty('--ck', ink(col));
