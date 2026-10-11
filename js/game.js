@@ -1182,7 +1182,9 @@
   // at(i) -> [x, y] on the canvas, sc: pixels per metre, wOut / wIn: the widths of the dark edge and the white road
   function overpass(g, T, at, sc, wOut, wIn, dark) {
     for (const c of T.cross) {
-      const m = Math.ceil(wOut * 1.1 / sc / T.ds), u = Math.round(c.up), line = () => { g.beginPath(); for (let k = -m; k <= m; k++) { const p = at((u + k + T.N) % T.N); if (k > -m) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } };
+      const m = Math.ceil(wOut * 1.1 / sc / T.ds), u = Math.round(c.up);
+      if (!(m >= 0 && m < T.N)) continue;   // (a canvas with no room for the track, sc 0: m Infinity, the loop below would never end)
+      const line = () => { g.beginPath(); for (let k = -m; k <= m; k++) { const p = at((u + k + T.N) % T.N); if (k > -m) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } };
       g.lineCap = 'butt'; line(); g.strokeStyle = dark; g.lineWidth = wOut; g.stroke(); line(); g.strokeStyle = '#fff'; g.lineWidth = wIn; g.stroke(); g.lineCap = 'round';
     }
   }
