@@ -22,6 +22,7 @@
   const cupPath = (f, s) => '<path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="' + s + '" stroke-width="2.2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="' + s + '"/><path d="M10.5 23.5h11v3.8h-11z" fill="' + f + '" stroke="' + s + '" stroke-width="1.2"/>';
   const I = {
     left: '<svg viewBox="0 0 20 20"><path d="M14 3.5v13L4 10z" fill="#fff"/></svg>',
+    wheel: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#ffc629" stroke-width="2.6"/><circle cx="12" cy="12" r="2.4" fill="#ffc629"/><path d="M3.5 11h6M14.5 11h6M12 14.5v6" stroke="#ffc629" stroke-width="2.6"/></svg>',
     right: '<svg viewBox="0 0 20 20"><path d="M6 3.5v13L16 10z" fill="#fff"/></svg>',
     back: '<svg viewBox="0 0 22 22"><path d="M14 4 7 11l7 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 18 18"><path d="m7 3 6 6-6 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -173,7 +174,7 @@
     const t = gameTrack(), md = modeOf(MENU_MODE[G.modeOf(t.def)] || 'race');
     const best = t.rec[1] !== '—' ? t.rec[1] : '';
     let h = '<section class="scr" id="s-title" aria-label="Main menu"><div class="scrim"></div>';
-    h += '<div class="t-top"><h1 class="logo small"><span class="l1">' + esc(D.game.l1) + '</span><span class="l2">' + esc(D.game.l2) + '</span></h1><div class="t-me">' + moneyPill() + '</div></div>';
+    h += '<div class="t-top"><h1 class="logo small"><span class="l1">' + esc(D.game.l1) + '</span><span class="l2">' + esc(D.game.l2) + '</span></h1><div class="t-me">' + moneyPill() + '<button class="nv" data-act="newver" aria-label="New version, test 1: drive the new map now"><i class="nv-st" aria-hidden="true"></i><em>NEW</em><b>NEW VERSION</b><strong>TEST 1</strong><small>' + I.wheel + 'DRIVE NOW</small></button></div></div>';
     h += '<div class="t-menu title-panel' + (titleSub ? ' sub' : '') + '">';
     const subHead = (title, sub) => '<div class="t-subhead"><button class="sq" data-act="tsub:" aria-label="Back to the main menu">' + I.back + '</button><div><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div></div>';
     const card = (cls, act, cur, name, sub, chip, im) => '<button class="mode ' + cls + '" aria-current="' + cur + '" data-act="' + act + '"><span class="tx"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small>' + (chip ? '<em class="chip">' + esc(chip) + '</em>' : '') + '</span><span class="im">' + im + '</span><i class="tick" aria-hidden="true">' + I.check + '</i></button>';
@@ -838,6 +839,7 @@
       case 'pick-car': carFrom = true; G.act('to-car'); break;   // (the garage of the game itself; Back and Next both come back to the track step)
       case 'pick-weather': sheet = weatherSheet; render(true); break;
       case 'credits': sheet = creditsSheet; render(true); break;
+      case 'newver': G.newVer(); break;   // NEW VERSION · TEST 1: straight to driving the new map (js/game.js nvStart), no menu after it
       case 'close-sheet': sheet = null; render(true); break;
       case 'game': G.act(v, el); break;   // (a screen of the game itself: Settings, Leaderboard, Multiplayer, the career's)
       case 'race-single': {
