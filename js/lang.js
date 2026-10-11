@@ -19,7 +19,7 @@
     'Izometrična · ležeče': 'Isometric · sideways', 'Za avtom · pokončno': 'Chase · upright',
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
     'Avtomatska kamera': 'Auto camera', 'Avtomatski zoom': 'Auto zoom', 'Avtomatski zoom in nagib': 'Auto zoom & tilt',
-    'Kamera se med vožnjo sama približa in oddalji: blizu, ko avto stoji, daleč pri polni hitrosti; z nagibom kamera za avtom pri hitrosti gleda bolj naprej po cesti': 'The camera moves in and out by itself while you drive: close when the car stands still, far at full speed; with the tilt the chase camera also looks further ahead along the road at speed',
+    'Kamera se med vožnjo sama približa in oddalji: blizu, ko avto stoji, daleč pri polni hitrosti; z nagibom se kamera za avtom še nagne: 50 %, ko avto stoji, 30 % pri polni hitrosti': 'The camera moves in and out by itself while you drive: close when the car stands still, far at full speed; with the tilt the chase camera also tilts: 50 % when the car stands still, 30 % at full speed',
     'Nagib kamere': 'Camera tilt', 'Kamera za avtom gleda bolj naprej po cesti (razdalja kamere ostane enaka)': 'The chase camera looks further ahead along the road (camera distance stays the same)', 'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
     'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase and isometric cameras)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',

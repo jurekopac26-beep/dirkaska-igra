@@ -7322,10 +7322,10 @@ const Render = (function () {
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
     // Avtomatska kamera (Nastavitve; cam.auto 1 or 2): the chase and iso cameras further out the faster the car goes against its own top
     // speed: stopped 0.75 of the distance, at half its top speed 1, flat out 1.3 (the car stays where it is in the picture, the view widens);
-    // 2 also tilts the chase camera instead of Nagib kamere, 0 % stopped to 30 % flat out (the iso camera looks north whatever the travel,
+    // 2 also tilts the chase camera instead of Nagib kamere, 50 % stopped to 30 % flat out (the iso camera looks north whatever the travel,
     // a tilt there would not look ahead). Eased over about a second, so braking for a bend does not jolt the view; in the pit box as close
     // as without it
-    const tA = cam.auto ? clamp(spd / topSpeedOf(c.m), 0, 1) : 0, aZ = cam.auto && pitZ === 1 ? 0.75 + 0.45 * tA + 0.1 * tA * tA : 1, aT = cam.auto === 2 ? 0.3 * tA : 0;
+    const tA = cam.auto ? clamp(spd / topSpeedOf(c.m), 0, 1) : 0, aZ = cam.auto && pitZ === 1 ? 0.75 + 0.45 * tA + 0.1 * tA * tA : 1, aT = cam.auto === 2 ? 0.5 - 0.2 * tA : 0;
     if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.sz = aZ; cam.st = aT; cam.init = true; }
     { const kA = 1 - Math.exp(-dt * 0.8); cam.sz += (aZ - cam.sz) * kA; cam.st += (aT - cam.st) * kA; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)

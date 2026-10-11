@@ -1,6 +1,6 @@
 // Avtomatska kamera (Nastavitve): Izklop (the default: the camera as before), Avtomatski zoom (the chase and iso cameras further out the
 // faster the car goes against its own top speed: stopped 0.75 of the distance, half its top speed 1, flat out 1.3; the car stays where it
-// is in the picture) and Avtomatski zoom in nagib (the same, and the chase camera tilts from 0 % stopped to 30 % flat out instead of
+// is in the picture) and Avtomatski zoom in nagib (the same, and the chase camera tilts from 50 % stopped to 30 % flat out instead of
 // Nagib kamere; the iso camera does not tilt). The change is eased, so a sudden change of speed does not jolt the view.
 //   node tests/browser/autocam.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -68,7 +68,7 @@ try {
   T.check('auto zoom, iso: close stopped, medium at half the top speed, far flat out', near(j0.dist, 59.85) && near(jH.dist, 79.8) && near(jF.dist, 103.74), JSON.stringify([j0.dist, jH.dist, jF.dist]));
   T.check('auto zoom, iso: the car stays where it is in the picture at speed', Math.hypot(jF.x - jH.x, jF.y - jH.y) < 0.02, JSON.stringify([jH, jF]));
 
-  // Avtomatski zoom in nagib: the same distances; the chase camera tilts 0 % stopped, 15 % at half, 30 % flat out (Nagib kamere does
+  // Avtomatski zoom in nagib: the same distances; the chase camera tilts 50 % stopped, 40 % at half, 30 % flat out (Nagib kamere does
   // not count); the iso camera does not tilt
   await pick('autoCam', '2');
   const n0 = await view('iso', 0), nF = await view('iso', 1);
@@ -76,8 +76,8 @@ try {
   await pick('camera', 'chase'); await pick('camTilt', '2');
   const t0 = await view('chase', 0), tH = await view('chase', 0.5), tF = await view('chase', 1), deg = (k) => 0.98 * (1 - k) * 180 / Math.PI;
   T.check('zoom and tilt, chase: the distances of the auto zoom', near(t0.dist, 48.3) && near(tH.dist, 64.4) && near(tF.dist, 83.72), JSON.stringify([t0.dist, tH.dist, tF.dist]));
-  T.check('zoom and tilt, chase: tilt 0 % stopped, 15 % at half, 30 % flat out (Nagib kamere 30 % does not count)', near(t0.tilt, deg(0), 0.01) && near(tH.tilt, deg(0.15), 0.01) && near(tF.tilt, deg(0.3), 0.01),
-    JSON.stringify({ tilt: [t0.tilt, tH.tilt, tF.tilt], want: [deg(0), deg(0.15), deg(0.3)].map(v => +v.toFixed(3)) }));
+  T.check('zoom and tilt, chase: tilt 50 % stopped, 40 % at half, 30 % flat out (Nagib kamere 30 % does not count)', near(t0.tilt, deg(0.5), 0.01) && near(tH.tilt, deg(0.4), 0.01) && near(tF.tilt, deg(0.3), 0.01),
+    JSON.stringify({ tilt: [t0.tilt, tH.tilt, tF.tilt], want: [deg(0.5), deg(0.4), deg(0.3)].map(v => +v.toFixed(3)) }));
 
   // off again: the camera exactly as before
   await pick('camTilt', '0'); await pick('autoCam', '0');
