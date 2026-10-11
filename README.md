@@ -740,7 +740,7 @@ Na dirki s tekmeci (ne v kronometru, kvalifikacijah, šoli vožnje in dirki s pr
 
 V premoru je pod gumbi **strategija**: za koliko krogov imaš še goriva, koliko gum je še ostalo, koliko časa bi zdaj stal postanek in na katero mesto bi te postavil.
 
-**Gume za postanek med vožnjo:** na progah z boksi je pod gumbom za kamero okrogel gumb z gumo. Ko ga tapneš (ali pritisneš tipko **T**), izbereš gume za naslednji postanek: **A** (samodejno), **S** (mehke), **M** (srednje) ali **H** (trde). Rob gumba je v barvi zmesi. Izbira je ista kot **Gume v boksih** v premoru.
+**Gume za postanek med vožnjo:** na progah z boksi je na levi, desno ob prikazu poškodb (pod merilnikom hitrosti), okrogel gumb z gumo; ležeče pri upravljanju z volanom je desno ob merilniku hitrosti, ker je pod njim volan. Desno pod zemljevidom je tako prostor za napise. Ko ga tapneš (ali pritisneš tipko **T**), izbereš gume za naslednji postanek: **A** (samodejno), **S** (mehke), **M** (srednje) ali **H** (trde). Rob gumba je v barvi zmesi. Izbira je ista kot **Gume v boksih** v premoru.
 
 ## Prvenstvo
 

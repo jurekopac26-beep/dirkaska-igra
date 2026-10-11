@@ -3057,7 +3057,7 @@
     const last = P.lap === race.laps, g = gapsText(P);
     if (last) teamRadioSay(tr('Zadnji krog!') + (g ? ' ' + g : ''), 2, 'radioLast'); else teamRadioSay(g, 1);
   }
-  // the tyres for the next stop, chosen while driving (the tyre button under the camera's, or the T key): Samodejno, Mehke, Srednje, Trde
+  // the tyres for the next stop, chosen while driving (the tyre button at the left beside the damage, or the T key): Samodejno, Mehke, Srednje, Trde
   // in turn (the same as the pause menu's Gume v boksih)
   const PIT_CMPS = ['auto', 'S', 'M', 'H'], PIT_CMP_NAME = { auto: 'Samodejno', S: 'Mehke', M: 'Srednje', H: 'Trde' };
   const tyreBtnOn = () => !!(race && race.player && race.player.ty && race.player.ty.c && track && track.def.pit && !race.player.net);

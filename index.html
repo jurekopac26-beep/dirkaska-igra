@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=4e40b807">
-<link rel="stylesheet" href="css/style.css?v=6a43e6b0">
+<link rel="stylesheet" href="css/style.css?v=f394f750">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=4f03653c" media="not all">
 </head>
 <body>
@@ -56,7 +56,7 @@
         <canvas id="speedo-c"></canvas>
         <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div><div id="h-tow">ZAVETRJE</div>
       </div>
-      <div id="h-dmg" aria-label="Poškodbe avta"><svg viewBox="0 0 30 50"><rect x="5" y="3" width="20" height="44" rx="6" class="dmg-body"/><rect id="dz0" x="7.5" y="5.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz1" x="7.5" y="35.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz2" x="7.5" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect id="dz3" x="18" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect x="13" y="17" width="4" height="16" rx="1.5" class="dmg-cab"/><rect id="wh0" x="1" y="8" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh1" x="25" y="8" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh2" x="1" y="33" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh3" x="25" y="33" width="4" height="9" rx="1.3" class="dmg-wh"/></svg></div>
+      <div id="h-dmgrow"><div id="h-dmg" aria-label="Poškodbe avta"><svg viewBox="0 0 30 50"><rect x="5" y="3" width="20" height="44" rx="6" class="dmg-body"/><rect id="dz0" x="7.5" y="5.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz1" x="7.5" y="35.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz2" x="7.5" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect id="dz3" x="18" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect x="13" y="17" width="4" height="16" rx="1.5" class="dmg-cab"/><rect id="wh0" x="1" y="8" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh1" x="25" y="8" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh2" x="1" y="33" width="4" height="9" rx="1.3" class="dmg-wh"/><rect id="wh3" x="25" y="33" width="4" height="9" rx="1.3" class="dmg-wh"/></svg></div><button id="btn-tyre" class="off" aria-label="Gume za postanek"><i></i><span></span></button></div><!-- the damage and beside it the tyres for the next stop (a race with compounds and pits) -->
       <div id="h-tyre" aria-label="Gume"></div>
       <div id="h-fuel" aria-label="Gorivo"></div>
       <div id="h-flt" aria-label="Okvare"></div>
@@ -109,7 +109,6 @@
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
   <button id="btn-cam" class="off" aria-label="Kamera"><svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.2h6.8L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.4" r="3.4" class="lens"/></svg></button>
-  <button id="btn-tyre" class="off" aria-label="Gume za postanek"><i></i><span></span></button>
   <button id="btn-pause" class="off" aria-label="Pavza"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
   <button id="btn-rescue" class="off">&#8634; Na progo</button>
 
@@ -530,6 +529,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=d42d64a4"></script>
-<script src="js/game.js?v=6e70014f"></script>
+<script src="js/game.js?v=885315de"></script>
 </body>
 </html>

@@ -13,6 +13,9 @@
 // A small icon at the left of each: the big message's by its kind (a chequered flag ZADNJI KROG!, a wrench POPRAVILO, a green light START!,
 // a warning triangle PREDRTA GUMA! and the overheating, crossed swords DVOBOJ, a star NOV REKORD!, a pit board BOKSI), the wrench on the pit
 // stop's panel, an "i" on the toast; the text right of it, never under it; in both languages, either way the phone is held.
+// The tyre button (A, the tyres for the next stop) at the left beside the damage (on its side with the steering wheel: right of the
+// speedometer, the wheel's rim under it), over nothing of the HUD or the controls, in every steering mode either way the phone is held; a
+// tap at its middle reaches it (A, S, M, H, A).
 //   node tests/browser/hudcol.test.mjs            (SHOTS=<folder>: a picture of each)
 import net from 'node:net';
 import path from 'node:path';
@@ -73,6 +76,29 @@ function wrongIcons(x, kind) {
   if (!x.toast || x.toast.ic !== 'info' || x.toast.w < 0.9 * x.toast.fs || x.toast.gap < 1) bad.push('the toast\'s i ' + JSON.stringify(x.toast));
   return bad;
 }
+// in the page: the tyre button (shown in a race with compounds and pits), the damage and the speedometer beside it, every other HUD element
+// and control shown, and whether a tap at its middle reaches the button (nothing over it)
+const TYRE = () => {
+  const shown = (e) => { if (!e || getComputedStyle(e).visibility !== 'visible') return false; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || +c.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
+  const R = (e) => { const r = e.getBoundingClientRect(); return { id: e.id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
+  const B = document.getElementById('btn-tyre'); if (!shown(B)) return null;
+  const ids = ['h-pos', 'h-tot', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls', 'speedo', 'h-dmg', 'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-tower', 'h-time', 'h-best', 'h-sec', 'h-split', 'h-map', 'h-pit', 'h-msg', 'h-teamradio', 'toast',
+    'btn-pause', 'btn-cam', 'btn-rescue', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'];
+  const b = R(B), at = document.elementFromPoint((b.l + b.r) / 2, (b.t + b.b) / 2);
+  return { b, d: R(document.getElementById('h-dmg')), s: R(document.getElementById('speedo')), others: ids.map(id => document.getElementById(id)).filter(shown).map(R), top: !!at && (at === B || B.contains(at)), c: B.dataset.c };
+};
+// what is wrong with the tyre button: not 44 px, not beside the damage (on its side with the wheel: not right of the speedometer above the
+// damage), over another element, under something
+function wrongTyre(x, wheelLand) {
+  if (!x) return ['not shown'];
+  const bad = [], { b, d, s } = x, hit = (a, c) => Math.min(a.r, c.r) - Math.max(a.l, c.l) > 1 && Math.min(a.b, c.b) - Math.max(a.t, c.t) > 1;
+  if (Math.abs(b.r - b.l - 44) > 0.5 || Math.abs(b.b - b.t - 44) > 0.5) bad.push('not 44 px');
+  if (wheelLand) { if (b.l < s.r || b.l - s.r > 12 || b.b > d.t || b.t > s.b) bad.push('not right of the speedometer above the damage'); }
+  else if (b.l < d.r || b.l - d.r > 12 || b.t >= d.b || b.b <= d.t) bad.push('not beside the damage');
+  for (const o of x.others) if (hit(b, o)) bad.push('over ' + o.id);
+  if (!x.top) bad.push('under something');
+  return bad;
+}
 // what is wrong with a layout: the column not the map's width, a gap or an overlap in it, one of it over another HUD element, the rotate notice
 function wrong(o) {
   const bad = [], near = (a, b) => Math.abs(a - b) <= 1, hit = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
@@ -128,7 +154,7 @@ try {
     long.length === LONG.length * 2 && long.every(o => !o.bad.length && o.lines >= 1 && o.lines <= 3), JSON.stringify(long.filter(o => o.bad.length || o.lines > 3).concat(long.filter(o => o.k === 'port').map(o => o.msg.slice(0, 12) + ' ' + o.lines + '@' + o.fs + ' ' + o.icm))));
   // no handbrake button on the screen (ROČNA, HANDBRAKE) in any steering mode, either way the phone is held: the brake and the gas side by side,
   // as tall as each other, apart; a touch where ROČNA was (above the brake) brakes, no handbrake
-  const pedals = [];
+  const pedals = [], tyres = [];
   for (const k of ['land', 'port']) {
     await turn(page, OR[k]);
     for (const m of ['buttons', 'wheel', 'tilt']) {
@@ -141,12 +167,17 @@ try {
           T.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); Input.update(0.016); }
         return o; }, m));
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `pedals-${m}-${k}.png`) });
+      const ty = await page.evaluate(TYRE), o = { k, m, bad: wrongTyre(ty, k === 'land' && m === 'wheel'), b: ty && ty.b };
+      if (ty && m === 'buttons') { o.taps = [ty.c]; for (let n = 0; n < 4; n++) { await page.touchscreen.tap((ty.b.l + ty.b.r) / 2, (ty.b.t + ty.b.b) / 2); o.taps.push(await page.evaluate(() => document.getElementById('btn-tyre').dataset.c)); } }
+      tyres.push(o);
     }
-    await page.evaluate(() => Input.setMode('buttons'));
+    await page.evaluate(() => Input.setMode('buttons')); await clear(page);
   }
   const PED = { buttons: 'c-left,c-right,c-brake,c-gas', wheel: 'c-wheel,c-brake,c-gas', tilt: 'c-brake,c-gas,tilt-ind' };
   T.check('no ROČNA (handbrake) button on the screen in any steering mode, on its side and upright: ZAVORA and PLIN side by side, as tall as each other (tilting: apart, the brake on the left); a touch where ROČNA was brakes',
     pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === false), JSON.stringify(pedals));
+  T.check('the tyre button (A) at the left beside the damage (on its side with the wheel: right of the speedometer, above the damage), 44 px, over nothing of the HUD or the controls (the speedometer, the tyres, the tower, the steering, the pedals ...), with buttons, the wheel and tilting, on its side and upright; tapped: A, S, M, H, A',
+    tyres.length === 6 && tyres.every(o => !o.bad.length) && tyres.filter(o => o.taps).length === 2 && tyres.filter(o => o.taps).every(o => o.taps.join() === 'auto,S,M,H,auto'), JSON.stringify(tyres));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
     for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)
