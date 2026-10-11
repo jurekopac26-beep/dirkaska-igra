@@ -799,7 +799,8 @@ const Render = (function () {
                       crushed roof sinks in (default: the rear glass to the windscreen's top + 0.25, the roof's widest half width; it fades
                       out over 15 cm in x, 10 cm in z; { x0: 0, x1: 0, z: 0 } (x0 = x1, or z 0): nothing crushes, a kart; no loft: none). An
                       open top must give it (a hoop's or a windscreen frame's footprint, or nothing); cage: true (a roll cage in the closed
-                      cockpit)
+                      cockpit). Razbijanje · nov način: a closed body's roof field over it (xRoofBuild: each roof point's limit from what
+                      is under it, the seats, the driver, a cage); an open top (eye.style not 'closed') and a kart get none
        Derived by the build (do not set): nose, tail (the outer shell's ends, metres), hw (the hubs' z, metres), height; the decal's four
                       when neither decalX nor decalY is given
      look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch, seg }
@@ -4093,7 +4094,7 @@ const Render = (function () {
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
     const xd = xDensity(c), xt = xTab(c), v = makeCarMesh(c, xd || xt ? { xd, xcut: xt && !!XC.glass } : undefined);
-    v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit && !XT_CARS.has(c.m.id)) xBayGrey(v);   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey, but a reworked car's: its own bay's colours)
+    v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit && !XT_CARS.has(c.m.id)) xBayGrey(v); if (v.xOn) v.rd0 = c.roofDmg || 0;   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey, but a reworked car's: its own bay's colours)
     v.xt = xt && !!v.kit;   // (the Kolibri: its glass, lamps and parts by the damage table, xTabHit)
     if (v.kit && (tierNow === 0 || v.xOn)) ownRnd(() => kitShadows(v, c));   // (Razbijanje · nov način: every kit car's shadow from its hull, the dense body never drawn twice)
     else if (v.xOn && xd && v.body.geometry.userData.xBase) ownRnd(() => { const m = new THREE.Mesh(v.body.geometry.userData.xBase, matHull); m.castShadow = true; m.visible = false; v.body.castShadow = false; v.bodyG.add(m); v.shadowOnly = [m]; });   // (one of the 11, dense: its shadow from the body as built)   // (the lowest tier: the shadow from the hull and a rival's wheels; named without Math.random)
@@ -5575,7 +5576,7 @@ const Render = (function () {
       // --- effects ---
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
       v.wasAir = !!c.air;
-      if (c.dents && c.dents.length) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else applyDent(v, d); if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); } c.dents.length = 0; }   // (Razbijanje · nov način: xDent, xGlassHit; the Kolibri's table, xTabHit)
+      if (c.dents && c.dents.length) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else applyDent(v, d); if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); c.dents.length = 0; }   // (Razbijanje · nov način: xDent, xGlassHit; the Kolibri's table, xTabHit)
       if (v.parts) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
@@ -5688,7 +5689,8 @@ const Render = (function () {
     if (v.kit) { kitParts(v, c, x, y, z, h); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { if (!XC.glass) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); } else if (c.dmg >= 0.92) { v.winBroken[k] = 1; if (v.xt) { (v.xGl || (v.xGl = [0, 0, 0, 0]))[k] = 1; for (const key of [['W'], ['R'], ['DL', 'QL'], ['DR', 'QR']][k]) xtGlass(v, c, key, 1, x, y, z, h, null); } else xBreakWindow(v, k, c, x, y, z, h); } }   // (Razbijanje · nov način: one pane a blow, xGlassHit; a wreck all of them)
     if (v.xt && XC.glass) { for (const sd of 'LR') if (v.kit.dead['mirror' + sd]) xtGlass(v, c, 'D' + sd, 0.75, x, y, z, h, null); xtFlush(v); }   // (the Kolibri: a mirror off, its door window 75 % at least; the panes' pictures due)
-    const r0 = v.roofStep; while (v.roofStep < 4 && c.roofDmg >= (v.roofStep + 1) * 0.25) { v.roofStep++; crumpleRoof(v, 0.25); }
+    const r0 = v.roofStep; if (v.xOn) { const xc = v.xc || (c.roofDmg > (v.rd0 || 0) + 1e-4 ? xInit(v) : null); if (xc && xc.rf && c.roofDmg > xc.rd + 1e-4) { xRoofAdd(xc.rf, 0, 0, c.roofDmg - xc.rd, 2); xc.rd = c.roofDmg; xRoofApply(v, xc); } }   // (Razbijanje · nov način: a landing's rise into the roof field)
+    else while (v.roofStep < 4 && c.roofDmg >= (v.roofStep + 1) * 0.25) { v.roofStep++; crumpleRoof(v, 0.25); }
     if (v.roofStep !== r0 || v.crackDirty) { for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].length && (v.roofStep !== r0 || v.crackDirty[k])) ownRnd(() => crackDecal(v, k)); v.crackDirty = null; }   // (a broken pane's glass moved since its crack decal was laid (the roof sank, a dent): laid again on it, never hanging in the air)
     if (v.roofStep >= 2 || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c);
     if (v.kit) return;
@@ -6086,6 +6088,10 @@ const Render = (function () {
        sharp folds (ridged noise over the intact body, along the surface), a ridge across the bonnet / boot lid behind a deep end crush;
        flat-shaded; the folds darker. Each cluster's push is a function of its few numbers and the intact body, so a deeper one replaces
        its own old push (xApply): blow by blow the car goes in further, the same every time it is drawn
+     - the roof: one field over its footprint (xRoofBuild / xRoofAdd / xRoofApply), fed by every blow from any side, a rollover's roof
+       contacts and a hard landing; seen from above it is more caved in after each of them, every point down to its own limit (measured
+       once per body from the seats, the driver, a cage, the dash under it: never through them), the lining, the posts and what lies on
+       the roof with it; the clusters never move the roof up or down (xPush's masks). Open cars, karts: none (their hoops, drivers stay)
      - a deep front crush tears the bonnet open there (its triangles collapsed, as a lost part's) and the grey engine shows under it, as
        under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them
      xPaint on: scraped to bare metal and rust in patches where the metal folded. xGlass on: a broken pane breaks in one of five ways (a
@@ -6104,8 +6110,8 @@ const Render = (function () {
   function crashInfo() {
     return { XC: Object.assign({}, XC), cars: views.map(v => { const g = v.body.geometry, U = g.userData || {}, xc = v.xc;
       return { id: v.car.id, model: v.car.m.id, player: !!v.car.isPlayer, xOn: !!v.xOn, xd: U.xd || 0, verts: g.attributes.position.count, xst: U.xst || null, outerN: U.outerN || g.attributes.position.count, drawn: g.drawRange.count,
-        cl: xc ? xc.cl.map(K => ({ u: +K.u.toFixed(3), w: +K.w.toFixed(3), A: +K.A.toFixed(3), d: +K.d.toFixed(3), R: +K.R.toFixed(3) })) : [], roof: xc ? (() => { const a = g.attributes.position.array, R = xc.rest, B = xc.B, dv = v.kit ? v.kit.deadV : null; let sd = 0, n = 0, mx = 0;   // (the roof's own top caved in: its mean and its deepest drop, what lies on it left out)
-          for (let i = 0; i < xc.on; i++) { if ((xc.rig && xc.rig[i]) || (dv && dv[i]) || R[i * 3 + 1] < B.rt - 0.04 || Math.abs(R[i * 3 + 2]) > B.hw * 0.6) continue; const d = R[i * 3 + 1] - a[i * 3 + 1]; sd += d; n++; if (d > mx) mx = d; }
+        cl: xc ? xc.cl.map(K => ({ u: +K.u.toFixed(3), w: +K.w.toFixed(3), A: +K.A.toFixed(3), d: +K.d.toFixed(3), R: +K.R.toFixed(3), end: !!K.end })) : [], rf: xc && xc.rf ? xRoofInfo(v, xc) : null, roofed: !!(xc && xc.rf), roof: xc ? (() => { const a = g.attributes.position.array, R = xc.rest; let sd = 0, n = 0, mx = 0;   // (the roof's own top caved in: its mean and its deepest drop, what lies on it left out)
+          const top = xRoofTop(v, xc); for (let i = 0; i < xc.on; i++) { if (!top[i]) continue; const d = R[i * 3 + 1] - a[i * 3 + 1]; sd += d; n++; if (d > mx) mx = d; }
           return { mean: n ? +(sd / n).toFixed(3) : 0, max: +mx.toFixed(3) }; })() : null, caps: xc ? { F: xc.B.capF, R: xc.B.capR, S: xc.B.capS } : null,
         torn: !!(v.kit && v.kit.xTorn), engine: !!(v.xEng && v.xEng.visible), glass: v.xGl ? v.xGl.slice() : null, panes: v.xP ? v.xP.map(P => P.broken) : null, paneK: v.xP ? v.xP.map(P => P.k) : null, rearDoors: v.kit && v.kit.xRD ? v.kit.xRD.slice() : null, xt: v.xt ? { panes: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.st])) : {}, drawn: v.xtP ? Object.keys(v.xtP).filter(k => v.xtP[k].on && !v.xtP[k].dirty) : [], frame: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.fr.length])) : {}, lamps: v.lightBroken ? v.lightBroken.slice() : null, ajar: Object.keys(v.kit.ajar), dead: Object.keys(v.kit.dead), rear: v.xtS ? v.xtS.rear : 0, rg: xc ? Math.max(0, ...xc.cl.map(K => K.rg || 0)) : 0, mir: { glass: v.xtMG ? { L: v.xtMG.L, R: v.xtMG.R } : { L: 0, R: 0 }, fold: Object.assign({}, v.kit.fold || {}) }, bent: xc && xc.tab ? xtBent(v) : null, idx: v.xtO ? v.xtO.g.drawRange.count : 0, cut: !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) } : null, mirrors: [!!(v.kit ? v.kit.dead.mirrorL : v.parts && v.parts.mirrorL && !v.parts.mirrorL.visible), !!(v.kit ? v.kit.dead.mirrorR : v.parts && v.parts.mirrorR && !v.parts.mirrorR.visible)] }; }), shards: xSh ? xSh.count : 0, ground: xGround.length, kept: xGround.filter(m => m.userData.xDeb).length, shardAt: xSh && xSh.count ? (() => { const m = new THREE.Matrix4(), p = new THREE.Vector3(), k = (xSh.k + XSH_N - 1) % XSH_N; xSh.getMatrixAt(k, m); p.setFromMatrixPosition(m); return [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)]; })() : null, shardMat: xSh ? [xSh.material.type, !!xSh.instanceColor, xSh.parent === scene] : null };
   }
@@ -6239,13 +6245,12 @@ const Render = (function () {
     const H = y1 - y0, rangeX = (name, f) => { const R = kit && U.ranges && U.ranges[name]; if (!R || R.o[1] <= R.o[0]) return null; let m = f === Math.min ? Infinity : -Infinity; for (let i = R.o[0]; i < R.o[1]; i++) m = f(m, p[i * 3]); return m; };
     const C = crushOf(v), hood = rangeX('hood', Math.min), boot = rangeX('trunk', Math.max) ?? rangeX('tailgate', Math.max);
     const capF = Math.max(0.3, hood != null ? x1 - hood - 0.05 : C ? (x1 - C.x1) * 0.85 : 0.3 * (x1 - x0)), capR = Math.max(0.25, boot != null ? boot - x0 - 0.05 : C ? (C.x0 - x0) * 0.85 : 0.25 * (x1 - x0));
-    const B = { x0, x1, y0, H, hw, hx: Math.max(-x0, x1), capF: Math.min(capF, 0.42 * (x1 - x0)), capR: Math.min(capR, 0.38 * (x1 - x0)), capS: Math.min(0.42, hw * 0.42), rx0: Infinity, rx1: -Infinity };
+    const B = { x0, x1, y0, H, hw, hx: Math.max(-x0, x1), capF: Math.min(capF, 0.42 * (x1 - x0)), capR: Math.min(capR, 0.38 * (x1 - x0)), capS: Math.min(0.42, hw * 0.42) };
     { // the roof's own top (B.rt: what lies on it, never crumpling (a rack, a light bar, a fin: noCrush), left out; a few points over it
-      // too, a snorkel's, an aerial's) and its length (its top's)
+      // too, a snorkel's, an aerial's; only over the roof's footprint: never a wing or a spoiler behind it, one of the 11's)
       const rig = kit && U.noCrush ? new Uint8Array(n) : null; if (rig) for (const [a, b] of U.noCrush) rig.fill(1, a, Math.min(b, n));
-      const ys = []; for (let i = 0; i < outerN; i++) if (!(rig && rig[i]) && Math.abs(p[i * 3 + 2]) < hw * 0.6) ys.push(p[i * 3 + 1]);
-      ys.sort((a, b) => a - b); B.rt = ys.length ? ys[Math.floor(ys.length * 0.985)] : y0 + H; B.rig = rig;
-      for (let i = 0; i < outerN; i++) if (!(rig && rig[i]) && p[i * 3 + 1] > y0 + (B.rt - y0) * 0.9 && Math.abs(p[i * 3 + 2]) < hw * 0.6) { B.rx0 = Math.min(B.rx0, p[i * 3]); B.rx1 = Math.max(B.rx1, p[i * 3]); } }
+      const ys = []; for (let i = 0; i < outerN; i++) if (!(rig && rig[i]) && Math.abs(p[i * 3 + 2]) < hw * 0.6 && (!C || (p[i * 3] >= C.x0 - 0.15 && p[i * 3] <= C.x1 + 0.15))) ys.push(p[i * 3 + 1]);
+      ys.sort((a, b) => a - b); B.rt = ys.length ? ys[Math.floor(ys.length * 0.985)] : y0 + H; B.rig = rig; }
     const r1 = new Float32Array(n), r2 = new Float32Array(n), pn = new Float32Array(n), rn = new Float32Array(n);
     for (let i = 0; i < n; i++) { const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
       r1[i] = 1 - Math.abs(2 * jitN(x * 1.6, y * 1.6, z * 1.6, 11) - 1); r2[i] = 1 - Math.abs(2 * jitN(x * 3.6, y * 3.6, z * 3.6, 12) - 1);
@@ -6265,52 +6270,326 @@ const Render = (function () {
         const lim = 0.25 * (b - a); for (const Q of [R.o, R.i]) for (let i = Q[0]; i < Q[1]; i++) { const k = 1 - (p[i * 3 + 1] - a) / lim; if (k > 0) { vr[i] = 3; vw[i] = Math.min(1, k); } } }
       Object.assign(v.xc, { tab: true, vr, vw });
     }
+    v.xc.rd = v.rd0 != null ? v.rd0 : v.car.roofDmg || 0; v.xc.rf = xRoofInit(v, v.xc);   // (the roof field: xRoofBuild; rd: the core's roofDmg it has taken in, from the view's making)
     return v.xc;
+  }
+  /* the roof field (xBody): one per closed car over its roof's footprint (crushOf), a grid c in [0, 1] fed by every knock (xDent: any
+     direction, a rollover's roof contacts too) and by a hard landing (the core's roofDmg rising, updateParts); it never goes down. Each
+     roof point (an entry) has its limit L, measured once per body geometry from what is under it (the seats, the driver, a cage, the
+     dash: never nearer than the lining's inset + 1.5 cm, the roof's own band: 40 % of crown - belt), and drops by L Φ W (W its weight:
+     the footprint, up from the belt; Φ rises with c): every knock lowers it until it nears its limit, never past it. The lining with its
+     twin (never under its own limit), the posts at the roof with it, what lies on it (a rack, a fin, a deflector) down whole. Open cars,
+     karts: none */
+  // the body's roof as built (cached on its geometry's user data: the clones of a model, a density, a colour share it): its entries, limits,
+  // lining, followers, riders and the masks xPush reads; null: none
+  function xRoofBuild(v, xc) {
+    const C = crushOf(v), K = v.kit, M = v.car.m; if (!C) return null;
+    if (K && K.E.body.eye && K.E.body.eye.style !== 'closed') return null;   // (an open top: none)
+    const U = v.body.geometry.userData || {}, p = xc.rest, n = p.length / 3, on = xc.on, rig = xc.rig, nT = (n / 3) | 0, nTo = (on / 3) | 0, Lcap = K ? 0.32 : 0.30;
+    // 1. the driver (always in the way); left out: the start numbers' digits (collapsed per car), the mirrors (moved on their own)
+    const drv = new Uint8Array(n), skip = new Uint8Array(n);
+    if (U.ranges) for (const nm in U.ranges) { const R = U.ranges[nm];
+      for (const q of R.subs) if (q.name === 'driver') for (const Q of [q.o, q.i]) if (Q) drv.fill(1, Q[0], Math.min(Q[1], n));
+      if (nm === 'mirrorL' || nm === 'mirrorR') for (const Q of [R.o, R.i]) if (Q && Q[1] > Q[0]) skip.fill(1, Q[0], Math.min(Q[1], n)); }
+    if (U.nums) for (const Q of U.nums) for (const sl of Q.slots) for (const q of sl) if (q) skip.fill(1, q[0], Math.min(q[1], n));
+    const TW = U.twin, tw = (i) => i >= on && TW ? TW[i - on] : -1, out = (i) => (rig && rig[i]) || drv[i] || skip[i];
+    // 2. the belt line along the car (its loft's rows)
+    const D = K ? K.E.body : (BODIES[M.body] || BODIES.coupe), sxD = M.len / D.len, rows = D.secs.map(q => ({ x: q[0] * sxD, yb: q[3] })), beltAt = (x) => kitProp(rows, x, 'yb');
+    // 3. a 5 cm grid over the footprint and half a metre round it
+    const gs = 0.05, gx0 = C.x0 - 0.5, gz0 = -(C.z + 0.4), NX = Math.ceil((C.x1 - C.x0 + 1) / gs), NZ = Math.ceil((2 * C.z + 0.8) / gs), NC = NX * NZ;
+    const cix = (x) => Math.floor((x - gx0) / gs), ciz = (z) => Math.floor((z - gz0) / gs);
+    const cell = (x, z) => { const i = cix(x), k = ciz(z); return i < 0 || k < 0 || i >= NX || k >= NZ ? -1 : k * NX + i; };
+    const box = (x0, x1, z0, z1, f) => { const i0 = Math.max(0, cix(x0)), i1 = Math.min(NX - 1, cix(x1)), k0 = Math.max(0, ciz(z0)), k1 = Math.min(NZ - 1, ciz(z1));
+      for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) f(k * NX + i, i, k); };
+    const tbox = (t, g, f) => { const o = t * 9; box(Math.min(p[o], p[o + 3], p[o + 6]) - g, Math.max(p[o], p[o + 3], p[o + 6]) + g, Math.min(p[o + 2], p[o + 5], p[o + 8]) - g, Math.max(p[o + 2], p[o + 5], p[o + 8]) + g, f); };
+    const nrm = [0, 0, 0], tN = (t) => { const o = t * 9, ax = p[o + 3] - p[o], ay = p[o + 4] - p[o + 1], az = p[o + 5] - p[o + 2], bx = p[o + 6] - p[o], by = p[o + 7] - p[o + 1], bz = p[o + 8] - p[o + 2];
+      const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx, l = Math.hypot(nx, ny, nz) || 1; nrm[0] = nx / l; nrm[1] = ny / l; nrm[2] = nz / l; return nrm; };
+    // 4. the roof's top per cell (Rc: the top layer's lowest, so a bead a centimetre proud never counts) and the triangle that gives it (top)
+    const up = []; for (let t = 0; t < nTo; t++) if (!out(t * 3) && !out(t * 3 + 1) && !out(t * 3 + 2) && tN(t)[1] > 0.45) up.push(t);
+    const Rmax = new Float32Array(NC).fill(-Infinity), Rc = new Float32Array(NC).fill(Infinity), top = new Int32Array(NC).fill(-1);
+    for (let pass = 0; pass < 2; pass++) for (const t of up) {
+      const o = t * 9, N = tN(t), nx = N[0], ny = N[1], nz = N[2], ylo = Math.min(p[o + 1], p[o + 4], p[o + 7]), yhi = Math.max(p[o + 1], p[o + 4], p[o + 7]);
+      tbox(t, 0, (c, i, k) => { const h = clamp(p[o + 1] - (nx * (gx0 + (i + 0.5) * gs - p[o]) + nz * (gz0 + (k + 0.5) * gs - p[o + 2])) / ny, ylo, yhi);
+        if (!pass) { if (h > Rmax[c]) Rmax[c] = h; } else if (h >= Rmax[c] - 0.05 && h < Rc[c]) { Rc[c] = h; top[c] = t; } }); }
+    const orig = new Uint8Array(NC); for (let c = 0; c < NC; c++) orig[c] = top[c] >= 0 ? 1 : 0;
+    for (let pass = 0; pass < 6; pass++) {   // (the empty cells: the highest filled neighbour's, six cells out at most)
+      const R0 = Rc.slice(), T0 = top.slice(); let any = false;
+      for (let k = 0; k < NZ; k++) for (let i = 0; i < NX; i++) { const c = k * NX + i; if (T0[c] >= 0) continue; let b = -1;
+        if (i > 0 && T0[c - 1] >= 0) b = c - 1; if (i < NX - 1 && T0[c + 1] >= 0 && (b < 0 || R0[c + 1] > R0[b])) b = c + 1;
+        if (k > 0 && T0[c - NX] >= 0 && (b < 0 || R0[c - NX] > R0[b])) b = c - NX; if (k < NZ - 1 && T0[c + NX] >= 0 && (b < 0 || R0[c + NX] > R0[b])) b = c + NX;
+        if (b >= 0) { Rc[c] = R0[b]; top[c] = T0[b]; any = true; } }
+      if (!any) break; }
+    // 5. per column: the crown (90th percentile of the top over the middle 60 %: an aerial's few cells never count), the band's foot (the
+    // belt, at least 15 cm under the crown), the structural limit (40 % of the band)
+    const crown0 = new Float64Array(NX).fill(NaN), hs = [];
+    for (let i = 0; i < NX; i++) { hs.length = 0; for (let k = 0; k < NZ; k++) { const c = k * NX + i; if (orig[c] && Math.abs(gz0 + (k + 0.5) * gs) <= 0.6 * C.z) hs.push(Rc[c]); }
+      if (hs.length) { hs.sort((a, b) => a - b); crown0[i] = hs[Math.floor(0.9 * (hs.length - 1))]; } }
+    const crown = new Float64Array(NX), bc = new Float64Array(NX), Ls = new Float64Array(NX);
+    for (let i = 0; i < NX; i++) { let b = -1; for (let d = 0; d < NX && b < 0; d++) { if (i - d >= 0 && crown0[i - d] === crown0[i - d]) b = i - d; else if (i + d < NX && crown0[i + d] === crown0[i + d]) b = i + d; }
+      if (b < 0) return null; crown[i] = crown0[b]; }
+    for (let i = 0; i < NX; i++) { bc[i] = Math.min(beltAt(gx0 + (i + 0.5) * gs), crown[i] - 0.15); Ls[i] = clamp(0.4 * (crown[i] - bc[i]), 0, Lcap); }
+    const colAt = (A, x) => { const f = (x - gx0) / gs - 0.5; if (f <= 0) return A[0]; if (f >= NX - 1) return A[NX - 1]; const i = Math.floor(f); return A[i] + (A[i + 1] - A[i]) * (f - i); };
+    let Lmax = 0; for (let i = 0; i < NX; i++) { const x = gx0 + (i + 0.5) * gs; if (x >= C.x0 && x <= C.x1) Lmax = Math.max(Lmax, Ls[i]); }
+    // 6. a point's weight: the footprint's fade along it (over fl), at its sides (only what sticks out), up from the band's foot
+    const fl = Math.max(0.15, 0.6 * Lmax), xf = (x) => Math.max(0, 1 - Math.max(C.x0 - x, x - C.x1, 0) / fl), zf = (z) => clamp(1 - (Math.abs(z) - C.z - 0.25) / 0.1, 0, 1);
+    const Wf = (x, y, z) => { const a = xf(x) * zf(z); if (!(a > 0)) return 0; const b = colAt(bc, x); return a * Math.pow(clamp((y - b) / (colAt(crown, x) - b), 0, 1), 1.25); };
+    // 7. what each point is: 1 the shell's (an entry), 2 its lining, 3 a follower (a post's top, a bar along the roof), 4 in the way, 5 a rider
+    const cls = new Uint8Array(n), W = new Float32Array(n);
+    for (let i = 0; i < on; i++) if (!out(i)) { const w = Wf(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]); if (w > 0) { cls[i] = 1; W[i] = w; } }
+    for (let i = on; i < n; i++) if (!out(i)) { const t = tw(i); if (t >= 0 && cls[t] === 1) cls[i] = 2; }
+    const rid = [];
+    if (U.noCrush && U.ranges) {   // (noCrush: grouped by part, outer and inner apart; the body's each on its own)
+      const Gs = new Map();
+      for (const pr of U.noCrush) { const s0 = pr[0], s1 = Math.min(pr[1], n); if (!(s1 > s0)) continue; const inner = s0 >= on; let key = null, name = 'body';
+        if (drv[s0]) key = 'd' + s0;
+        else for (const nm in U.ranges) { const Q = inner ? U.ranges[nm].i : U.ranges[nm].o; if (Q && s0 >= Q[0] && s0 < Q[1]) { name = nm; key = nm === 'body' ? 'b' + s0 : (inner ? 'i:' : 'o:') + nm; break; } }
+        if (key == null) key = 'b' + s0;
+        let g = Gs.get(key); if (!g) Gs.set(key, g = { name, inner, drv: !!drv[s0], ranges: [] }); g.ranges.push([s0, s1]); }
+      for (const g of Gs.values()) {
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (const [a, b] of g.ranges) for (let i = a; i < b; i++) { const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+        let c = 0;
+        if (g.inner || g.drv) c = 4;   // (an inner cage, a driver)
+        else { const xm = (x0 + x1) / 2, zm = (z0 + z1) / 2, cen = xf(xm) * zf(zm) > 0, xq = cen ? xm : clamp(xm, C.x0, C.x1);
+          if (cen || (x1 > C.x0 - fl && x0 < C.x1 + fl && z1 > -C.z - 0.35 && z0 < C.z + 0.35)) { const b = colAt(bc, xq), cr = colAt(crown, xq);   // (a long cage's middle may lie off the roof)
+            if (y0 < b - 0.05 && y1 >= cr - 0.12) c = 4;   // (a cage outside, up to the roof)
+            else if (cen && y0 >= b + 0.55 * (cr - b)) c = 5; } }   // (on the roof: a rack, a fin, a spoiler, a deflector, a lamp bar)
+        if (!c) continue;   // (a floor pan, a wiper: left alone)
+        for (const [a, b] of g.ranges) for (let i = a; i < b; i++) if (!skip[i]) cls[i] = c;
+        if (c === 5) rid.push({ name: g.name, ranges: g.ranges, x0, x1, y0 }); } }
+    for (let i = 0; i < n; i++) if (drv[i]) cls[i] = 4;
+    for (let t = nTo; t < nT; t++) {   // the cabin (inner, no twin): a post's top or a tube along the roof follows it; a seat, a cage under it, the dash are in the way
+      let yx = -Infinity, yn = Infinity, RT = Infinity, m = 0; const loc = [NaN, NaN, NaN];
+      for (let q = 0; q < 3; q++) { const i = t * 3 + q; if (out(i) || tw(i) >= 0) continue; const c = cell(p[i * 3], p[i * 3 + 2]), R = c >= 0 && top[c] >= 0 ? Rc[c] : Infinity, y = p[i * 3 + 1];
+        loc[q] = R; m++; if (y > yx) yx = y; if (y < yn) yn = y; if (R < RT) RT = R; }
+      if (!m) continue; const along = yx >= RT - 0.07 && yn >= RT - 0.2;
+      for (let q = 0; q < 3; q++) { if (!(loc[q] === loc[q])) continue; const i = t * 3 + q, x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
+        cls[i] = (along || y >= loc[q] - 0.07) && Wf(x, y, z) > 0 ? 3 : 4; } }
+    // 8. how high what is in the way stands per cell (3 cm round each triangle of it), draped in a cone (slope 0.5); only what is under the
+    // roof's top (a cage over the roof, a Baja's, never holds the roof up: Oa, what a rider on it rests on)
+    const O = new Float32Array(NC).fill(-Infinity), Oa = new Float32Array(NC).fill(-Infinity), und = (i) => {   // (under the roof's top: its triangle there, at the point)
+      const x = p[i * 3], z = p[i * 3 + 2], c = cell(x, z); if (c < 0 || top[c] < 0) return true;
+      const t = top[c], o = t * 9, N = tN(t); return p[i * 3 + 1] < clamp(p[o + 1] - (N[0] * (x - p[o]) + N[2] * (z - p[o + 2])) / N[1], Math.min(p[o + 1], p[o + 4], p[o + 7]), Math.max(p[o + 1], p[o + 4], p[o + 7])); };
+    for (let t = 0; t < nT; t++) { let tp = -Infinity, ta = -Infinity; for (let q = 0; q < 3; q++) { const i = t * 3 + q, y = p[i * 3 + 1]; if (cls[i] !== 4) continue; if (und(i)) { if (y > tp) tp = y; } else if (y > ta) ta = y; }
+      if (tp > -Infinity) tbox(t, 0.03, (c) => { if (tp > O[c]) O[c] = tp; }); if (ta > -Infinity) tbox(t, 0.03, (c) => { if (ta > Oa[c]) Oa[c] = ta; }); }
+    { const s1 = 0.5 * gs, s2 = s1 * Math.SQRT2;
+      for (let k = 0; k < NZ; k++) for (let i = 0; i < NX; i++) { const c = k * NX + i; let o = O[c];
+        if (i > 0) o = Math.max(o, O[c - 1] - s1); if (k > 0) { o = Math.max(o, O[c - NX] - s1); if (i > 0) o = Math.max(o, O[c - NX - 1] - s2); if (i < NX - 1) o = Math.max(o, O[c - NX + 1] - s2); } O[c] = o; }
+      for (let k = NZ - 1; k >= 0; k--) for (let i = NX - 1; i >= 0; i--) { const c = k * NX + i; let o = O[c];
+        if (i < NX - 1) o = Math.max(o, O[c + 1] - s1); if (k < NZ - 1) { o = Math.max(o, O[c + NX] - s1); if (i < NX - 1) o = Math.max(o, O[c + NX + 1] - s2); if (i > 0) o = Math.max(o, O[c + NX - 1] - s2); } O[c] = o; } }
+    const Obox = (x0, x1, z0, z1) => { let m = -Infinity; box(x0, x1, z0, z1, (c) => { if (O[c] > m) m = O[c]; }); return m; };
+    // 9. the margin: the lining's inset (its median under the roof) and 1.5 cm
+    const ins = []; for (let i = on; i < n; i++) if (cls[i] === 2) { const t = tw(i); if (W[t] >= 0.9) ins.push(p[t * 3 + 1] - p[i * 3 + 1]); }
+    ins.sort((a, b) => a - b); const inset = ins.length ? Math.max(0, ins[ins.length >> 1]) : 0.03, mg = inset + 0.015;
+    // 10. each entry's limit: per triangle (its box grown by what moves it sideways), the least over every triangle at its place (a coarse
+    // panel's too: no crack, L a function of the place)
+    const sig = (z) => Math.sign(z) * clamp((Math.abs(z) / C.z - 0.45) / 0.5, 0, 1);
+    const key = (i) => ((Math.round(p[i * 3] * 1e4) + 65536) * 131072 + Math.round(p[i * 3 + 1] * 1e4) + 65536) * 131072 + Math.round(p[i * 3 + 2] * 1e4) + 65536;
+    const posMin = new Map();
+    for (let t = 0; t < nTo; t++) { const a = t * 3; if (cls[a] !== 1 && cls[a + 1] !== 1 && cls[a + 2] !== 1) continue;
+      let low = false, sm = 0, xm = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (let q = 0; q < 3; q++) { const i = a + q, x = p[i * 3], z = p[i * 3 + 2]; if (W[i] < 0.5) low = true; sm = Math.max(sm, Math.abs(sig(z))); xm += x / 3; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+      const dl = 0.03 + 0.5 * colAt(Ls, xm) * sm + (low ? 0.1 : 0) + 0.01, OT = Obox(x0 - dl, x1 + dl, z0 - dl, z1 + dl); if (OT === -Infinity) continue;
+      for (let q = 0; q < 3; q++) { const i = a + q; if (cls[i] !== 1) continue; const lim = (p[i * 3 + 1] - OT - mg) / Math.max(W[i], 0.05), k = key(i), o = posMin.get(k); if (o === undefined || lim < o) posMin.set(k, lim); } }
+    const sIa = []; for (let i = 0; i < on; i++) if (cls[i] === 1) sIa.push(i);
+    const nS = sIa.length; if (!nS) return null;
+    const sI = Int32Array.from(sIa), ss = new Float32Array(nS), st = new Float32Array(nS), We = new Float32Array(nS), L = new Float32Array(nS), g1 = new Float32Array(nS), kc = new Float32Array(nS), sg = new Float32Array(nS), entOf = new Int32Array(n).fill(-1);
+    for (let e = 0; e < nS; e++) { const i = sI[e], x = p[i * 3], z = p[i * 3 + 2], pm = posMin.get(key(i)); entOf[i] = e;
+      ss[e] = clamp((x - C.x0) / (C.x1 - C.x0), 0, 1); st[e] = clamp(z / C.z, -1.2, 1.2); We[e] = W[i]; L[e] = clamp(Math.min(colAt(Ls, x), pm === undefined ? Infinity : pm), 0, Lcap);
+      g1[e] = jitN(1.3 * x, 0, 1.3 * z, 31); kc[e] = 1 - Math.abs(2 * jitN(1.6 * x, 0, 1.6 * z, 13) - 1); sg[e] = sig(z); }
+    // the pull-in's own limit (lp): a smooth lower envelope of L over the plan (the least L round each grid node, its slope at most 0.3,
+    // bilinear between them): the rails drawn in alike along a bead, a gutter, a lip (L may jump between points a few millimetres apart
+    // over a cage's tube: half of it sideways would fold such a strip over), never more than the point's own L lets it
+    const cmin = new Float32Array(NC).fill(Infinity), NN = (NX + 1) * (NZ + 1), Ln = new Float32Array(NN).fill(Infinity);
+    for (let e = 0; e < nS; e++) { const i = sI[e], c = cell(p[i * 3], p[i * 3 + 2]); if (c >= 0 && L[e] < cmin[c]) cmin[c] = L[e]; }
+    for (let k = 0; k < NZ; k++) for (let i = 0; i < NX; i++) { const q = cmin[k * NX + i]; if (q === Infinity) continue; for (const o of [k * (NX + 1) + i, k * (NX + 1) + i + 1, (k + 1) * (NX + 1) + i, (k + 1) * (NX + 1) + i + 1]) if (q < Ln[o]) Ln[o] = q; }
+    { const W1 = NX + 1, s1 = 0.3 * gs, s2 = s1 * Math.SQRT2;
+      for (let k = 0; k <= NZ; k++) for (let i = 0; i <= NX; i++) { const o = k * W1 + i; let q = Ln[o];
+        if (i > 0) q = Math.min(q, Ln[o - 1] + s1); if (k > 0) { q = Math.min(q, Ln[o - W1] + s1); if (i > 0) q = Math.min(q, Ln[o - W1 - 1] + s2); if (i < NX) q = Math.min(q, Ln[o - W1 + 1] + s2); } Ln[o] = q; }
+      for (let k = NZ; k >= 0; k--) for (let i = NX; i >= 0; i--) { const o = k * W1 + i; let q = Ln[o];
+        if (i < NX) q = Math.min(q, Ln[o + 1] + s1); if (k < NZ) { q = Math.min(q, Ln[o + W1] + s1); if (i < NX) q = Math.min(q, Ln[o + W1 + 1] + s2); if (i > 0) q = Math.min(q, Ln[o + W1 - 1] + s2); } Ln[o] = q; } }
+    const lp = new Float32Array(nS);
+    for (let e = 0; e < nS; e++) { const i = sI[e], fx = (p[i * 3] - gx0) / gs, fz = (p[i * 3 + 2] - gz0) / gs, i0 = clamp(Math.floor(fx), 0, NX - 1), k0 = clamp(Math.floor(fz), 0, NZ - 1), a = clamp(fx - i0, 0, 1), b = clamp(fz - k0, 0, 1), W1 = NX + 1;
+      const q = (Ln[k0 * W1 + i0] * (1 - a) + Ln[k0 * W1 + i0 + 1] * a) * (1 - b) + (Ln[(k0 + 1) * W1 + i0] * (1 - a) + Ln[(k0 + 1) * W1 + i0 + 1] * a) * b;
+      lp[e] = clamp(Math.min(q, L[e]), 0, L[e]); }
+    // 11. the lining's own limit (its triangles span whole loft segments: its twin's drop alone could carry it into a seat)
+    const posL = new Map(), lIa = [];
+    for (let t = nTo; t < nT; t++) { const a = t * 3; if (cls[a] !== 2 && cls[a + 1] !== 2 && cls[a + 2] !== 2) continue;
+      let g = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (let q = 0; q < 3; q++) { const i = a + q, x = p[i * 3], z = p[i * 3 + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z;
+        if (cls[i] === 2) { const j = tw(i); g = Math.max(g, colAt(Ls, p[j * 3]) * Math.abs(sig(p[j * 3 + 2]))); } }
+      const dl = 0.04 + 0.5 * g, OT = Obox(x0 - dl, x1 + dl, z0 - dl, z1 + dl); if (OT === -Infinity) continue;
+      for (let q = 0; q < 3; q++) { const i = a + q; if (cls[i] !== 2) continue; const lim = p[i * 3 + 1] - OT - 0.015, k = key(i), o = posL.get(k); if (o === undefined || lim < o) posL.set(k, lim); } }
+    for (let i = on; i < n; i++) if (cls[i] === 2) lIa.push(i);
+    const nL = lIa.length, lI = Int32Array.from(lIa), lE = new Int32Array(nL), lL = new Float32Array(nL);
+    for (let l = 0; l < nL; l++) { const i = lI[l], q = posL.get(key(i)); lE[l] = entOf[tw(i)]; lL[l] = q === undefined ? 1e9 : Math.max(0, q); }
+    // 12. followers: by the most a corner of the roof's triangle over them drops, as much less as they stand under it
+    const fIa = [], fCa = [], fka = [];
+    for (let i = on; i < n; i++) { if (cls[i] !== 3) continue; const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2], c = cell(x, z); if (c < 0 || top[c] < 0) continue;
+      const t = top[c], e0 = entOf[t * 3], e1 = entOf[t * 3 + 1], e2 = entOf[t * 3 + 2]; if (e0 < 0 && e1 < 0 && e2 < 0) continue;
+      fIa.push(i); fCa.push(e0, e1, e2); fka.push(clamp(Wf(x, y, z) / Math.max(Wf(x, Rc[c], z), 1e-3), 0, 1)); }
+    const nF = fIa.length, fI = Int32Array.from(fIa), fC = Int32Array.from(fCa), fk = Float32Array.from(fka);
+    // 13. riders: their feet (one a cell, 48 at most) on the roof's triangles under them; one resting on a cage over the roof stays with it
+    for (let r = rid.length - 1; r >= 0; r--) { const R = rid[r], fx = [], fc = [], seen = new Set(); let onCage = false;
+      for (const [a, b] of R.ranges) for (let i = a; i < b && fx.length < 48; i++) { if (p[i * 3 + 1] > R.y0 + 0.03) continue; const c = cell(p[i * 3], p[i * 3 + 2]); if (c < 0 || seen.has(c)) continue;
+        if (Oa[c] >= p[i * 3 + 1] - 0.06) onCage = true; if (top[c] < 0) continue; seen.add(c); const t = top[c]; fx.push(p[i * 3]); fc.push(entOf[t * 3], entOf[t * 3 + 1], entOf[t * 3 + 2]); }
+      if (onCage) { rid.splice(r, 1); for (const [a, b] of R.ranges) for (let i = a; i < b; i++) if (cls[i] === 5) cls[i] = 0; continue; }
+      R.fx = Float32Array.from(fx); R.fc = Int32Array.from(fc); delete R.y0; }
+    // 15. the masks xPush reads (static: its take-back stays exact): the roof's weight, what is in the way (never lifted into the roof)
+    const rw = new Float32Array(n), obs = new Uint8Array(n), obsIa = [];
+    for (let i = 0; i < n; i++) { const c = cls[i], x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
+      if (c === 1) rw[i] = W[i]; else if (c === 2) rw[i] = W[tw(i)]; else if (c === 3) rw[i] = Wf(x, y, z);
+      else if (c === 4 && xf(x) * zf(z) > 0 && y >= colAt(bc, x) - 0.1) { obs[i] = 1; if (und(i)) obsIa.push(i); } }
+    // 16. for crashInfo: the limit's spread over the roof's middle, the probes' triangles (the roof's top, the headliner)
+    let Lq = []; for (let e = 0; e < nS; e++) if (We[e] >= 0.9 && Math.abs(st[e]) <= 0.6) Lq.push(L[e]); if (!Lq.length) Lq = Array.from(L); Lq.sort((a, b) => a - b);
+    const upT = [], linT = [];
+    for (let t = 0; t < nTo; t++) { const a = t * 3; if (entOf[a] >= 0 && entOf[a + 1] >= 0 && entOf[a + 2] >= 0 && W[a] >= 0.5 && W[a + 1] >= 0.5 && W[a + 2] >= 0.5 && tN(t)[1] > 0.45) upT.push(t); }
+    for (let t = nTo; t < nT; t++) { const a = t * 3; if (cls[a] === 2 && cls[a + 1] === 2 && cls[a + 2] === 2 && tN(t)[1] < -0.45) linT.push(t); }
+    return { C, Lcap, fl, m: mg, inset, Lref: Lq[Math.floor(0.75 * (Lq.length - 1))], Lmed: Lq[Math.floor(0.5 * (Lq.length - 1))], Lmin: Lq[0], nS, sI, ss, st, W: We, L, lp, g1, kc, sg,
+      nL, lI, lE, lL, nF, fI, fC, fk, rid, rw, obs, upT: Int32Array.from(upT), linT: Int32Array.from(linT), obsI: Int32Array.from(obsIa), grid: { gx0, gz0, gs, NX, NZ, Opr: O } };
+  }
+  // a view's roof field (its build cached while the body is as built: a view made again mid-race, its parts already off or ajar, builds
+  // its own); xc.rw, xc.obs: xPush's masks; null: no roof
+  function xRoofInit(v, xc) {
+    const U = v.body.geometry.userData || {}, K = v.kit, intact = !K || (!K.deadV && !Object.keys(K.ajar).length && !Object.keys(K.dead).length);
+    let G = intact ? U._xRoof : undefined; if (G === undefined) { G = xRoofBuild(v, xc); if (intact) U._xRoof = G; }
+    xc.rw = G ? G.rw : null; xc.obs = G ? G.obs : null; if (!G) return null;
+    const C = G.C, NS = Math.max(8, Math.round((C.x1 - C.x0) / 0.1)) + 1, NT = Math.max(7, Math.round(2.4 * C.z / 0.12)) + 1;
+    const rf = { G, C, NS, NT, c: new Float64Array(NS * NT), d: new Float32Array(G.nS), p: new Float32Array(G.nS), ay: new Float32Array(G.nS), az: new Float32Array(G.nS),
+      ly: new Float32Array(G.nL), lz: new Float32Array(G.nL), fy: new Float32Array(G.nF), ra: new Float64Array(G.rid.length), rb: new Float64Array(G.rid.length),
+      Lref: G.Lref, hx: xc.B.hx, hw: xc.B.hw, bx0: xc.B.x0, bx1: xc.B.x1, due: 0, dec: null };
+    // the start number: on a rider part (the Titan's deflector) with that rider; on the roof by the highest roof point under it
+    const dp = K && K.E.body.decalPart, ri = dp ? G.rid.findIndex(q => q.name === dp) : -1, D = v.dec && v.dec.position;
+    if (D && ri >= 0) rf.dec = { r: ri, x: D.x, lo: 0 };
+    else if (D && !dp && Math.max(C.x0 - D.x, D.x - C.x1, 0) < G.fl && Math.abs(D.z) <= C.z) { const h = 0.43 * v.dec.scale.x, sup = [];
+      for (let e = 0; e < G.nS; e++) { const i = G.sI[e]; if (G.W[e] >= 0.9 && Math.abs(xc.rest[i * 3] - D.x) <= h && Math.abs(xc.rest[i * 3 + 2] - D.z) <= h) sup.push(e); }
+      if (sup.length) rf.dec = { r: -1, sup: Int32Array.from(sup), lo: 0 }; }
+    return rf;
+  }
+  // a knock into the field (kind 0 a knock, 1 a rollover's roof contact, 2 a landing: amt the rise of roofDmg; u, w as xDent's): each node
+  // by f of what it has left, at least the step that shows (m, at the kernel's peak), times its kernel (an end: a buckle a third of the way
+  // in and the hit end's header; a side: the whole rail line, the near side most), plus a base over the whole roof
+  function xRoofAdd(rf, u, w, amt, kind) {
+    const C = rf.C, S = (x) => (x - C.x0) / (C.x1 - C.x0), q = kind === 1 ? 1.4 : 1;
+    const f = kind === 2 ? 1 - Math.exp(-0.8 * amt) : 1 - Math.exp(-1.6 * amt * q);
+    const m = kind === 2 || rf.Lref < 0.02 ? 0 : Math.min(0.3, Math.min(0.05, 0.012 + 0.14 * amt) * q / Math.max(rf.Lref, 0.12));   // (a caged roof's small limit: its steps a centimetre while it is far from it)
+    const fb = kind === 2 || rf.Lref < 0.02 ? 0 : (0.006 + 0.03 * amt) * q / Math.max(rf.Lref, 0.12);   // (and every knock's step over the whole roof, the far end's too: about a centimetre on a medium one)
+    let ker;
+    if (kind === 2) ker = (s, t) => 0.25 + 0.5 * Math.sin(Math.PI * s) * (1 - 0.4 * t * t);
+    else if (kind === 1) { const sh = clamp(S(u * rf.hx * 0.5), 0.1, 0.9), th = clamp(w * rf.hw * 0.6 / C.z, -0.8, 0.8);
+      ker = (s, t) => Math.exp(-(((s - sh) / 0.3) ** 2) - (((t - th) / 0.6) ** 2)); }
+    else { const e = Math.abs(u) / (Math.hypot(u, w) || 1), e2 = e * e, sE = u > 0 ? 0.72 : 0.28, se = u > 0 ? 1 : 0, tE = 0.26 * clamp(w, -1, 1),
+        sd = w < 0 ? -1 : 1, sS = clamp(S(u * (u >= 0 ? rf.bx1 : -rf.bx0)), 0.1, 0.9);
+      ker = (s, t) => e2 * (Math.exp(-(((s - sE) / 0.22) ** 2) - (((t - tE) / 1.15) ** 2)) + 0.3 * Math.max(0, 1 - Math.abs(s - se) / 0.3) * (1 - 0.3 * t * t))
+        + (1 - e2) * (0.35 + 0.65 * Math.exp(-(((s - sS) / 0.45) ** 2))) * (0.15 + 0.85 * clamp(0.5 + 0.6 * t * sd, 0, 1)); }
+    for (let j = 0; j < rf.NT; j++) for (let k = 0; k < rf.NS; k++) {
+      const s = k / (rf.NS - 1), t = -1.2 + 2.4 * j / (rf.NT - 1), o = j * rf.NS + k, left = 1 - rf.c[o];
+      const wk = Math.min(1, ker(s, t) + (kind === 2 ? 0 : 0.25 * (0.35 + 0.65 * Math.sin(Math.PI * s)) * (1 - 0.4 * t * t)));   // (the base: the whole roof a step down, its ends too)
+      rf.c[o] += Math.min(left, Math.max(wk * Math.min(left, Math.max(f * left, m)), fb * (0.6 + 0.4 * Math.sin(Math.PI * s)) * (1 - 0.3 * t * t))); }
+    rf.due = 1;
+  }
+  // the field at (s along the footprint 0..1, t across it -1.2..1.2), bilinear
+  function xRoofP(rf, s, t) {
+    const N = rf.NS, c = rf.c, fs = clamp(s, 0, 1) * (N - 1), ft = (clamp(t, -1.2, 1.2) + 1.2) / 2.4 * (rf.NT - 1), k0 = Math.min(N - 2, Math.floor(fs)), j0 = Math.min(rf.NT - 2, Math.floor(ft)), a = fs - k0, b = ft - j0;
+    return (c[j0 * N + k0] * (1 - a) + c[j0 * N + k0 + 1] * a) * (1 - b) + (c[(j0 + 1) * N + k0] * (1 - a) + c[(j0 + 1) * N + k0 + 1] * a) * b;
+  }
+  // the field onto the body: each point's move now less what it last put on (its own take-back, apart from the clusters')
+  function xRoofApply(v, xc) {
+    const rf = xc.rf, G = rf.G, geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
+    const dead = (i) => (dv && dv[i]) || (nd && nd[i]);   // (as xApply: torn, lost, a gone pane never moved again)
+    for (let e = 0; e < G.nS; e++) {   // the shell: down by L Φ W (Φ rises with the field: dΦ/dP >= 0.6), pulled in at the rails by half of it (of lp Φ W: smooth)
+      const P = xRoofP(rf, G.ss[e], G.st[e]), ph = clamp(P * (0.85 + 0.3 * G.g1[e]) + 0.25 * P * P * (G.kc[e] - 0.5), 0, 1), d = G.L[e] * ph * G.W[e]; rf.d[e] = d;
+      const nz = -G.sg[e] * 0.5 * G.lp[e] * ph * G.W[e]; rf.p[e] = nz;
+      const i = G.sI[e]; if (dead(i)) continue;
+      const ny = -d, dy = ny - rf.ay[e], dz = nz - rf.az[e]; if (Math.abs(dy) + Math.abs(dz) < 1e-6) continue;
+      a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; rf.ay[e] = ny; rf.az[e] = nz; tris.add((i / 3) | 0); }
+    for (let l = 0; l < G.nL; l++) { const k = G.lI[l], e = G.lE[l]; if (dead(k)) continue;   // the lining: its twin's move, never under its own limit
+      const ny = -Math.min(rf.d[e], G.lL[l]), nz = rf.d[e] > G.lL[l] ? rf.p[e] * G.lL[l] / rf.d[e] : rf.p[e], dy = ny - rf.ly[l], dz = nz - rf.lz[l]; if (Math.abs(dy) + Math.abs(dz) < 1e-6) continue;   // (held at its limit: drawn in as much less)
+      a[k * 3 + 1] += dy; a[k * 3 + 2] += dz; rf.ly[l] = ny; rf.lz[l] = nz; tris.add((k / 3) | 0); }
+    for (let f = 0; f < G.nF; f++) { const i = G.fI[f]; if (dead(i)) continue; let mx = 0;   // the followers (posts, bars at the roof)
+      for (let q = 0; q < 3; q++) { const e = G.fC[f * 3 + q]; if (e >= 0 && rf.d[e] > mx) mx = rf.d[e]; }
+      const ny = -mx * G.fk[f], dy = ny - rf.fy[f]; if (Math.abs(dy) < 1e-6) continue; a[i * 3 + 1] += dy; rf.fy[f] = ny; tris.add((i / 3) | 0); }
+    for (let r = 0; r < G.rid.length; r++) { const Q = G.rid[r]; if (dv && dv[Q.ranges[0][0]]) continue;   // riders: down whole (A + B x), never deeper than the roof under a foot
+      const X = [], Dd = []; for (let f = 0; f < Q.fx.length; f++) { let mn = Infinity; for (let q = 0; q < 3; q++) { const e = Q.fc[f * 3 + q]; if (e >= 0) mn = Math.min(mn, rf.d[e]); } if (mn < Infinity) { X.push(Q.fx[f]); Dd.push(mn); } }
+      let A = 0, Bt = 0; if (X.length) { let mx = 0, md = 0; for (let k = 0; k < X.length; k++) { mx += X[k] / X.length; md += Dd[k] / X.length; } let sxx = 0, sxd = 0;
+        for (let k = 0; k < X.length; k++) { sxx += (X[k] - mx) ** 2; sxd += (X[k] - mx) * (Dd[k] - md); }
+        const span = Math.max(0.2, Q.x1 - Q.x0); Bt = sxx > 1e-6 ? clamp(sxd / sxx, -0.1 / span, 0.1 / span) : 0; A = Infinity; for (let k = 0; k < X.length; k++) A = Math.min(A, Dd[k] - Bt * X[k]); }
+      const da = A - rf.ra[r], db = Bt - rf.rb[r]; if (Math.abs(da) + Math.abs(db) < 1e-7) continue;
+      for (const [s0, s1] of Q.ranges) for (let i = s0; i < s1; i++) if (!dead(i)) a[i * 3 + 1] -= da + db * R[i * 3];   // (rigid: no refacet)
+      rf.ra[r] = A; rf.rb[r] = Bt; }
+    xRoofDec(v, rf);
+    xTouched(v, xc, geo, tris); rf.due = 0;
+  }
+  // the start number and the light bars down by the least drop under them (a delta: it composes with kitLoosen's turn); hidden on a buckled panel
+  function xRoofDec(v, rf) {
+    const Q = rf.dec; if (!Q) return; let lo, hi;
+    if (Q.r >= 0) lo = hi = rf.ra[Q.r] + rf.rb[Q.r] * Q.x; else { lo = Infinity; hi = -Infinity; for (const e of Q.sup) { const d = rf.d[e]; if (d < lo) lo = d; if (d > hi) hi = d; } }
+    const dd = lo - Q.lo; Q.lo = lo; for (const o of [v.dec, v.polBar, v.scBar]) if (o) { if (dd) o.position.y -= dd; if (hi - lo > 0.08) o.visible = false; }
+  }
+  // the body moved (xApply, the roof field): drawn again, its touched facets flat and painted, a broken pane's crack decal laid again on it
+  function xTouched(v, xc, geo, tris) {
+    geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1; refacet(geo, tris); if (v.kit) v.kit.ver++; xPaint(v, xc, tris);
+    if (v.winBroken) for (let k = 0; k < 4; k++) if (v.winBroken[k] && !(v.xGl && v.xGl[k]) && v.glassTris[k].some(t => tris.has(t))) (v.crackDirty || (v.crackDirty = [0, 0, 0, 0]))[k] = 1;   // (a frosted pane's crack decal laid again on it)
+  }
+  // for the tests (crashInfo): the points of the roof's own top as built (within 4 cm of it, its middle 60 %, over its footprint; what lies
+  // on it, a lost part's, a loose one's (a tailgate swung open) left out)
+  function xRoofTop(v, xc) {
+    const R = xc.rest, B = xc.B, C = crushOf(v), K = v.kit, dv = K ? K.deadV : null, on = new Uint8Array(xc.on);
+    for (let i = 0; i < xc.on; i++) on[i] = (xc.rig && xc.rig[i]) || (dv && dv[i]) || R[i * 3 + 1] < B.rt - 0.04 || Math.abs(R[i * 3 + 2]) > B.hw * 0.6 || (C && (R[i * 3] < C.x0 - 0.15 || R[i * 3] > C.x1 + 0.15)) ? 0 : 1;
+    if (K) for (const nm in K.ajar) { const Q = K.R.ranges[nm]; if (Q && Q.o) on.fill(0, Q.o[0], Math.min(Q.o[1], xc.on)); }
+    return on;
+  }
+  // for the tests (crashInfo): the field's limits, how far it went, and its checks: no point past its limit (over), no roof facet turned
+  // over (flip), the clearance over what is in the way (clear: the shell's, clearL: the headliner's), nothing in the way lifted (obsUp)
+  function xRoofInfo(v, xc) {
+    const rf = xc.rf, G = rf.G, a = v.body.geometry.attributes.position.array, R = xc.rest, K = v.kit, dv = K ? K.deadV : null, nd = xc.nd, dead = (i) => (dv && dv[i]) || (nd && nd[i]);
+    let over = 0, flip = 0, cs = 0, cm = 0; for (let e = 0; e < G.nS; e++) if (-rf.ay[e] > G.L[e] * G.W[e] + 1e-5) over++; for (let l = 0; l < G.nL; l++) if (-rf.ly[l] > G.lL[l] + 1e-5) over++;
+    for (let o = 0; o < rf.c.length; o++) { cs += rf.c[o]; cm = Math.max(cm, rf.c[o]); }
+    const nY = (P, t) => { const o = t * 9, ax = P[o + 3] - P[o], ay = P[o + 4] - P[o + 1], az = P[o + 5] - P[o + 2], bx = P[o + 6] - P[o], by = P[o + 7] - P[o + 1], bz = P[o + 8] - P[o + 2];
+      return [ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx]; };
+    for (const t of G.upT) if (!dead(t * 3) && !dead(t * 3 + 1) && !dead(t * 3 + 2) && nY(a, t)[1] < 0) flip++;
+    const off = new Uint8Array(R.length / 3); if (K) for (const nm of Object.keys(K.ajar).concat(Object.keys(K.dead))) { const Q = K.R.ranges[nm]; if (Q) for (const q of [Q.o, Q.i]) if (q) off.fill(1, q[0], q[1]); }
+    const obsL = []; let obsUp = -Infinity; for (const i of G.obsI) { if (dead(i) || off[i]) continue; obsL.push(i); obsUp = Math.max(obsUp, a[i * 3 + 1] - R[i * 3 + 1]); }
+    const probe = (T) => {   // the least height of the probe's triangles over each point in the way under them (as built: above it)
+      if (!T.length || !obsL.length) return null; const cells = new Map(), ck = (x, z) => Math.floor(x / 0.1) * 4096 + Math.floor(z / 0.1);
+      for (const t of T) { if (dead(t * 3) || dead(t * 3 + 1) || dead(t * 3 + 2)) continue; const o = t * 9, x0 = Math.min(a[o], a[o + 3], a[o + 6]), x1 = Math.max(a[o], a[o + 3], a[o + 6]), z0 = Math.min(a[o + 2], a[o + 5], a[o + 8]), z1 = Math.max(a[o + 2], a[o + 5], a[o + 8]);
+        for (let i = Math.floor(x0 / 0.1); i <= Math.floor(x1 / 0.1); i++) for (let k = Math.floor(z0 / 0.1); k <= Math.floor(z1 / 0.1); k++) { const q = i * 4096 + k; let L = cells.get(q); if (!L) cells.set(q, L = []); L.push(t); } }
+      const hAt = (P, t, x, z) => { const o = t * 9, N = nY(P, t); if (Math.abs(N[1]) < 1e-12) return null; return P[o + 1] - (N[0] * (x - P[o]) + N[2] * (z - P[o + 2])) / N[1]; };
+      const inside = (P, t, x, z) => { const o = t * 9, x1 = P[o], z1 = P[o + 2], x2 = P[o + 3], z2 = P[o + 5], x3 = P[o + 6], z3 = P[o + 8], d = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3); if (Math.abs(d) < 1e-14) return false;
+        const l1 = ((z2 - z3) * (x - x3) + (x3 - x2) * (z - z3)) / d, l2 = ((z3 - z1) * (x - x3) + (x1 - x3) * (z - z3)) / d; return l1 >= -1e-6 && l2 >= -1e-6 && 1 - l1 - l2 >= -1e-6; };
+      let m = Infinity; for (const i of obsL) { const x = a[i * 3], y = a[i * 3 + 1], z = a[i * 3 + 2], L = cells.get(ck(x, z)); if (!L) continue;
+        for (const t of L) { if (!inside(a, t, x, z)) continue; const h0 = hAt(R, t, R[i * 3], R[i * 3 + 2]); if (h0 === null || h0 < R[i * 3 + 1]) continue; const h = hAt(a, t, x, z); if (h !== null && h - y < m) m = h - y; } }
+      return m < Infinity ? +m.toFixed(4) : null; };
+    const rail = [0, 0], pull = [0, 0], nr = [0, 0];
+    for (let e = 0; e < G.nS; e++) { const i = G.sI[e], z = R[i * 3 + 2]; if (Math.abs(z) < 0.7 * G.C.z || G.W[e] < 0.5 || dead(i) || off[i]) continue; const s = z < 0 ? 0 : 1; rail[s] += R[i * 3 + 1] - a[i * 3 + 1]; pull[s] += Math.abs(z) - Math.abs(a[i * 3 + 2]); nr[s]++; }
+    let h = 0x811c9dc5; for (const A of [rf.c, rf.d]) { const b = new Uint8Array(A.buffer, A.byteOffset, A.byteLength); for (let k = 0; k < b.length; k++) { h ^= b[k]; h = Math.imul(h, 0x01000193) >>> 0; } }
+    const Ld = Array.from(G.L).sort((x, y) => x - y); let ls = 0, ln = 0, s0 = 1, s1 = 0;   // (rlim: the deepest crashInfo's roof mean can go, its points' L W; rs: where they lie along the footprint)
+    const eo = new Map(); for (let e = 0; e < G.nS; e++) eo.set(G.sI[e], e);
+    const top = xRoofTop(v, xc); for (let i = 0; i < xc.on; i++) { if (!top[i]) continue; const e = eo.get(i); ln++;
+      if (e !== undefined) { ls += G.L[e] * G.W[e]; s0 = Math.min(s0, G.ss[e]); s1 = Math.max(s1, G.ss[e]); } }
+    return { lref: +G.Lref.toFixed(4), lmed: +G.Lmed.toFixed(4), lmin: +G.Lmin.toFixed(4), lmax: +Ld[Ld.length - 1].toFixed(4), m: +G.m.toFixed(4), rlim: ln ? +(ls / ln).toFixed(4) : 0, rs: [+s0.toFixed(2), +s1.toFixed(2)], cMean: +(cs / rf.c.length).toFixed(4), cMax: +cm.toFixed(4), n: G.nS, nL: G.nL, nF: G.nF, nR: G.rid.length, nO: G.obsI.length,
+      over, flip, clear: probe(G.upT), clearL: probe(G.linT), obsUp: obsUp > -Infinity ? +obsUp.toFixed(6) : 0,
+      rail: rail.map((q, s) => nr[s] ? +(q / nr[s]).toFixed(4) : 0), pull: pull.map((q, s) => nr[s] ? +(q / nr[s]).toFixed(4) : 0), hash: h.toString(16), dec: rf.dec ? { lo: +rf.dec.lo.toFixed(4), hidden: !!(v.dec && !v.dec.visible) } : null };
   }
   // a cluster's numbers from its blow's place (u, w: the car's half length / half width) and the sum of its blows (A)
   function xParams(xc, K) {
     const B = xc.B, l = Math.hypot(K.u, K.w) || 1;
-    if (K.top) {   // (the roof on the road: down from the top, at its place along the roof)
-      K.dx = 0; K.dz = 0; K.px = K.u * B.hx * 0.5; K.pz = K.w * B.hw * 0.6; K.py = B.y0 + B.H; K.end = false;
-      const cap = B.H * 0.3; K.d = cap * Math.tanh(2.4 * K.A / cap); K.R = Math.min(2.4, 0.7 + 1.5 * K.d); return; }
     K.dx = -K.u / l; K.dz = -K.w / l;
     K.px = K.u * (K.u >= 0 ? B.x1 : -B.x0); K.pz = K.w * B.hw; K.py = B.y0 + B.H * 0.42;
     const cap = 1 / Math.hypot(K.dx / (K.dx < 0 ? B.capF : B.capR), K.dz / B.capS);
     K.d = cap * Math.tanh(2.1 * K.A / cap); K.R = Math.min(2.8, 0.45 + 1.7 * K.d); K.end = Math.abs(K.dx) > 0.6;
   }
-  // an end cluster's sink of the roof at a point (metres): the roof bowed down along its length, a buckle across it a third of the way in
-  // from the crushed end, most in its middle; 40 % of the end's crush or 60 % of its knocks' sum, the more, at most 22 cm (the light knock a
-  // few cm, the strong one some 18: a tall car with a short crumple zone, the Medved, as much as a saloon)
-  function xRoofSink(K, B, x, y, z) {
-    if (!K.end || K.top || !(K.A >= 0.04) || !(B.rx1 - B.rx0 > 0.3)) return 0;   // (a nudge under the table's light knock: the roof as it was)
-    const rh = B.rt - B.y0, up = Core.sstep(B.y0 + rh * 0.68, B.y0 + rh * 0.9, y); if (!(up > 0)) return 0;
-    const s = clamp((x - B.rx0) / (B.rx1 - B.rx0), 0, 1), sb = K.dx > 0 ? 0.3 : 0.7, q = (s - sb) / 0.16, lat = Math.max(0, 1 - 0.55 * (z / B.hw) * (z / B.hw));
-    return Math.min(0.22, Math.max(0.4 * K.d, 0.6 * K.A)) * (0.55 * Math.sin(Math.PI * s) + 0.65 * Math.exp(-q * q)) * lat * up;
-  }
   // one cluster's push of the intact point i (out: dx, dy, dz, its depth there, its crumple); false: out of its reach
   function xPush(K, xc, x, y, z, i, out) {
-    if (K.top) {   // (a rollover's roof dent: the roof pushed down, crumpled, the glass and the pillars with it; nothing under the belt)
-      const B = xc.B; if (y < B.y0 + B.H * 0.55) return false;
-      const ex = x - K.px, ey = (y - K.py) * 0.8, ez = z - K.pz, r = Math.sqrt(ex * ex + ey * ey + ez * ez); if (r >= K.R) return false;
-      const f = Math.pow(1 - r / K.R, 1.4), up2 = Core.sstep(B.y0 + B.H * 0.55, B.y0 + B.H, y), amt = K.d * f * up2;
-      const r1 = i >= 0 ? xc.r1[i] : 0.5, r2 = i >= 0 ? xc.r2[i] : 0.5, cr = ((r1 - 0.5) * 0.75 + (r2 - 0.5) * 0.35) * (0.04 + 0.25 * amt) * Math.min(1, amt / 0.04);
-      out[0] = (r2 - 0.5) * amt * 0.3; out[1] = -amt + cr; out[2] = Math.sign(K.pz || 1) * amt * 0.15; out[3] = amt; out[4] = Math.abs(cr); return true;
-    }
     const ex = x - K.px, ey = i >= 0 && xc.flat && xc.flat[i] ? 0 : (y - K.py) * 0.6, ez = z - K.pz, r = Math.sqrt(ex * ex + ey * ey + ez * ez);
     const fold = K.end && (K.dx < 0 ? xc.B.x1 - x : x - xc.B.x0) < K.d * 1.3 + 0.25 && (y < xc.B.y0 + xc.B.H * 0.45 || i >= xc.on);   // (the crushed end's underside folds up across its width, its inside goes back behind its face: below)
     const vq = xc.tab && i >= 0 ? (K.dx > 0.6 ? (xc.vr[i] === 4 ? 0 : xc.vr[i]) : K.rg > 0 && K.dx < -0.6 && xc.vr[i] === 4 ? 4 : 0) : 0;   // (the Kolibri: its V from behind, its bonnet's ridge)
-    const rs = xRoofSink(K, xc.B, x, y, z);   // (an end crushed: the roof caves in)
-    if (r >= K.R && !fold && !vq && !(rs > 0) && (K.end || K.d <= 0.12 || Math.abs(ex) >= K.R * 1.15 || y < xc.B.y0 + xc.B.H * 0.6)) return false;
+    if (r >= K.R && !fold && !vq) return false;
     const B = xc.B, f = r < K.R ? Math.pow(1 - r / K.R, 1.6) : 0, amt = K.d * f, up = clamp((y - B.y0) / B.H, 0, 1), topW = Core.sstep(B.y0 + B.H * 0.4, B.y0 + B.H * 0.55, y);
     let ox = K.dx * amt, oy = -0.1 * amt * up, oz = K.dz * amt;
     const r1 = i >= 0 ? xc.r1[i] : 0.5, r2 = i >= 0 ? xc.r2[i] : 0.5, cr = ((r1 - 0.5) * 0.75 + (r2 - 0.5) * 0.35) * (0.04 + 0.22 * amt) * Math.min(1, amt / 0.05);
     let nx = x / (B.hx * B.hx), nz = z / (B.hw * B.hw); const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
     oy += cr * topW; ox += nx * cr * (1 - topW); oz += nz * cr * (1 - topW);
-    if (!K.end && K.d > 0.12 && y > B.y0 + B.H * 0.6) {   // a side hit again and again: the roof caves in on that side, its edge pulled down and in, crumpled
-      const sd = Math.sign(K.pz) || 1, wx = Math.max(0, 1 - Math.abs(x - K.px) / (K.R * 1.15)), wz = clamp((z * sd) / B.hw + 0.25, 0, 1), up2 = Core.sstep(B.y0 + B.H * 0.6, B.y0 + B.H, y);
-      const sink = (K.d - 0.12) * 0.75 * wx * wx * wz * up2;
-      if (sink > 0) { oy -= sink * (0.85 + 0.5 * (r1 - 0.5)); oz -= sd * sink * 0.35; oy += ((r1 - 0.5) * 0.6 + (r2 - 0.5) * 0.3) * sink * 0.8; ox += (r2 - 0.5) * sink * 0.3; }
-    }
     if (K.end) {   // the crushed end's underside folds up with it, the deeper the crush the more: the chassis rails, the bay's floor and the bumper's lower edge bend upward (no wall down to the road)
       const sE = K.dx < 0 ? B.x1 - x : x - B.x0, reach = K.d * 1.3 + 0.25, low = 1 - clamp((y - B.y0) / (B.H * 0.45), 0, 1);
       if (sE < reach) { const lat = Math.max(0.55, 1 - Math.abs(z - K.pz) / (B.hw * 3)), k = 1 - Math.max(0, sE) / reach;
@@ -6319,9 +6598,6 @@ const Render = (function () {
         const rz = Math.abs(z - K.pz), dref = rz < K.R ? K.d * Math.pow(1 - rz / K.R, 1.6) : 0, front = K.dx < 0, lim = front ? B.x1 - dref - 0.04 : B.x0 + dref + 0.04;
         if (front ? x + ox > lim : x + ox < lim) { const over = lim - (x + ox); ox += over; if (low > 0) oy += Math.abs(over) * 0.5 * low; }   // (what it pushes back of the floor folds up a little more)
       }
-    }
-    if (rs > 0) {   // the roof caving in with the crushed end: down, more the deeper the crush (every knock there more), creased; its lining and what is under it a little more (never through it)
-      if (i >= xc.on) oy -= rs * 1.12; else if (xc.rig && xc.rig[i]) oy -= rs * 0.7; else { oy -= rs * (0.75 + 0.25 * r1); ox += (r2 - 0.5) * rs * 0.3; oz += (r1 - 0.5) * rs * 0.12; }
     }
     if (vq === 4) {   // the Kolibri's bonnet: up in a ridge across it (the table's share of 26 cm), its crest in the middle behind the crushed front
       const sR = Math.min(B.capF * 0.85, 0.3 * B.capF + 0.55 * K.d), band = Math.max(0, 1 - Math.abs(B.x1 - x - sR) / (0.16 + 0.12 * K.rg)), lat = clamp(Math.abs(z) / B.hw, 0, 1);
@@ -6335,13 +6611,17 @@ const Render = (function () {
       const s = ex * K.dx + ez * K.dz, lat = Math.abs(ex * K.dz - ez * K.dx) / B.hw, rid = Math.max(0, 1 - Math.abs(s - 0.42 * K.R) / (0.22 + 0.2 * K.d));
       oy += rid * topW * Math.min(1, K.d / 0.45) * (0.13 + 0.08 * r1) * Math.max(0, 1 - 0.55 * lat * lat);
     }
+    if (i >= 0 && xc.rw) { const rw = xc.rw[i];   // (the roof field's points: only it moves them up and down; at most 3 cm sideways there)
+      if (rw > 0) { oy *= 1 - sstep(0.05, 0.5, rw); const kL = sstep(0.25, 0.5, rw);
+        if (kL > 0) { ox -= kL * (ox - clamp(ox, -0.03, 0.03)); oz -= kL * (oz - clamp(oz, -0.03, 0.03)); } }
+      else if (oy > 0 && xc.obs[i]) oy = 0; }   // (a seat, a driver, a cage never lifted into the roof)
     out[0] = ox; out[1] = oy; out[2] = oz; out[3] = amt; out[4] = Math.abs(cr); return true;
   }
   const _xo0 = [0, 0, 0, 0, 0], _xo1 = [0, 0, 0, 0, 0];
   // a cluster changed (old: its numbers before, null: new): its old push taken back, its new one put on, on every point it reaches
   function xApply(v, xc, old, K) {
     const geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, n = R.length / 3, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
-    const xt = xc.tab ? 0.6 : 0, kx = K.px, kr = K.end && K.A >= 0.04 ? Infinity : (K.top ? K.R : K.R * 1.15) + xt, ox = old ? old.px : 0, orr = old ? (old.end && old.A >= 0.04 ? Infinity : (old.top ? old.R : old.R * 1.15) + xt) : -1;   // (an end's knocks as much as the table's light one: the roof's sink reaches the whole car)   // (along the car beyond these, xPush reaches nothing: skipped at once; the Kolibri's ridge and V a little farther)
+    const xt = xc.tab ? 0.6 : 0, kx = K.px, kr = K.end ? Infinity : K.R * 1.15 + xt, ox = old ? old.px : 0, orr = old ? (old.end ? Infinity : old.R * 1.15 + xt) : -1;   // (an end's: its fold's full reach)   // (along the car beyond these, xPush reaches nothing: skipped at once; the Kolibri's ridge and V a little farther)
     for (let i = 0; i < n; i++) {
       if ((dv && dv[i]) || (nd && nd[i])) continue;
       const x = R[i * 3]; if (Math.abs(x - kx) >= kr && Math.abs(x - ox) >= orr) continue;
@@ -6351,16 +6631,14 @@ const Render = (function () {
       if (!hit) continue;
       a[i * 3] += dx; a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
     }
-    geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1;
-    refacet(geo, tris); if (v.kit) v.kit.ver++;
-    xPaint(v, xc, tris);
-    if (v.winBroken) for (let k = 0; k < 4; k++) if (v.winBroken[k] && !(v.xGl && v.xGl[k]) && v.glassTris[k].some(t => tris.has(t))) (v.crackDirty || (v.crackDirty = [0, 0, 0, 0]))[k] = 1;   // (a frosted pane's crack decal laid again on it)
-    if (K.end && v.dec) { const p = v.dec.position; if (xc.decY == null) xc.decY = p.y; let sk = 0; for (const q of xc.cl) sk += xRoofSink(q, xc.B, p.x, xc.B.y0 + xc.B.H, p.z); p.y = xc.decY - sk * 0.85; }   // (the start number down with the roof under it)
+    xTouched(v, xc, geo, tris);
     xTear(v, xc); xWheels(v, xc);
   }
   // a blow (the core's dent: lx, lz in the car's frame, its amount): into the nearest cluster within reach, or a cluster of its own
   function xDent(v, d) {
     const xc = xInit(v), M = v.car.m, u = clamp(d.lx / (M.len * 0.5), -1.2, 1.2), w = clamp(d.lz / (M.wid * 0.5), -1.2, 1.2), top = !!d.top;
+    if (xc.rf) { if (d.amt >= 0.03) xRoofAdd(xc.rf, u, w, d.amt, top ? 1 : 0); xc.rd = Math.max(xc.rd, v.car.roofDmg || 0); }   // (every knock into the roof field; xRoofApply after the frame's knocks)
+    if (top) return;   // (a rollover's roof contact: the field's alone, no cluster)
     let K = null, best = 0.5; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } }
     if (!K && xc.cl.length >= 14) { best = Infinity; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } } }
     const old = K ? Object.assign({}, K) : null;

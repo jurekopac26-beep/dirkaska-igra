@@ -14,6 +14,8 @@
 // 9. the Kolibri's damage table (12 directions x 3 strengths): its glass in stages, lamps, parts hanging and off; the bonnet's ridge, the
 //    V from behind; from behind again and again the user's order; a mirror off, its door window 75 %; only the Kolibri, only switched on
 // 10. the Medved, the Kozorog, the Lev R: the table theirs too; a crushed end caves the roof in, the harder the knock the deeper
+// 11. the roof field: every knock (any side, a rollover's roof contact, a landing) caves the roof in more, never past its limit, never
+//    through the seats, the driver, a cage; open cars none
 //   node tests/browser/crash.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -77,7 +79,7 @@ try {
     // the left side again and again: the roof sinks on the left
     for (let k = 0; k < 5; k++) hit(P, [0.12, [0.1, -0.05, 0.15, 0, 0.05][k], -1]);
     const xc = v.xc, R = xc.rest, a = v.body.geometry.attributes.position.array, B = xc.B; let sL = 0, nL = 0, sR = 0, nR = 0;
-    for (let i = 0; i < R.length / 3; i++) { const y = R[i * 3 + 1], z = R[i * 3 + 2], x = R[i * 3]; if (y < B.y0 + B.H * 0.85 || Math.abs(x) > 1 || (v.kit.deadV && v.kit.deadV[i])) continue; const d = a[i * 3 + 1] - y; if (z < -0.2) { sL += d; nL++; } else if (z > 0.2) { sR += d; nR++; } }
+    for (let i = 0; i < xc.on; i++) { const y = R[i * 3 + 1], z = R[i * 3 + 2], x = R[i * 3]; if (y < B.y0 + B.H * 0.85 || Math.abs(x) > 1 || (v.kit.deadV && v.kit.deadV[i])) continue; const d = a[i * 3 + 1] - y; if (z < -0.2) { sL += d; nL++; } else if (z > 0.2) { sR += d; nR++; } }
     out.roofL = nL ? sL / nL : 0; out.roofR = nR ? sR / nR : 0;
     out.rd = v.kit.xRD ? v.kit.xRD.slice() : [0, 0]; out.leftPanes = (v.xP || []).filter(q => q.side === -1).map(q => q.broken);
     return out; }, hitFn);
@@ -88,7 +90,7 @@ try {
   T.check('glass: pieces lie on the road after', Gs.shards > 10, 'shards ' + Gs.shards);
   T.check('mirrors: the first right blow knocks the right one off, the left one stays', !Gs.mir[0] && Gs.mir[1] && Gs.ground === 1, JSON.stringify({ mir: Gs.mir, ground: Gs.ground }));
   T.check('mirrors: it stays on the road while the car drives on', Gs.ground2 === 1, 'ground ' + Gs.ground2);
-  T.check('roof: after blows on the left again and again it sinks on the left', Gs.roofL < -0.03 && Gs.roofL < Gs.roofR - 0.02, 'left ' + Gs.roofL.toFixed(3) + ' right ' + Gs.roofR.toFixed(3));
+  T.check('roof: after blows on the left again and again it sinks on the left (the shell; more than the right, hit three times first: the Tornado\'s cage holds both sides\' rails within some 4 cm)', Gs.roofL < -0.03 && Gs.roofL < Gs.roofR - 0.005, 'left ' + Gs.roofL.toFixed(3) + ' right ' + Gs.roofR.toFixed(3));
   T.check('glass: a rear door swung open has its window broken (both panes on that side)', Gs.rd[0] && Gs.leftPanes.length === 2 && Gs.leftPanes.every(Boolean), JSON.stringify({ rearDoors: Gs.rd, leftPanes: Gs.leftPanes }));
   T.check('glass / mirrors / roof: no page errors', !gl.errors.length, gl.errors.slice(0, 3).join(' | '));
 
@@ -202,7 +204,7 @@ try {
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
-      const scene = (h) => { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); hit(P, h); for (let k = 0; k < 12; k++) Render.frame(0.05, 1, P, 'iso', {}); const x = me(); return { panes: x.xt && x.xt.panes, ajar: x.xt && x.xt.ajar, dead: x.xt && x.xt.dead, roof: x.roof }; };
+      const scene = (h) => { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); hit(P, h); for (let k = 0; k < 12; k++) Render.frame(0.05, 1, P, 'iso', {}); const x = me(); return { panes: x.xt && x.xt.panes, ajar: x.xt && x.xt.ajar, dead: x.xt && x.xt.dead, roof: x.roof, rf: x.rf && { lref: x.rf.lref, rlim: x.rf.rlim } }; };
       out.fs = scene([0.3, 1, 0]); out.bl = scene([0.05, -1, 0]); out.bm = scene([0.15, -1, 0]); out.bs = scene([0.3, -1, 0]);
       out.wing = !!Render.viewOf(P).body.geometry.userData.ranges.wing;
       const a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
@@ -210,8 +212,56 @@ try {
     const C = ct.r, rf = [C.bl, C.bm, C.bs].map(q => q.roof.mean);
     T.check(`${id}: the table (front strong: windscreen 100 %, door windows 75 %; rear light: only the rear window 50 %)` + (C.wing ? '; rear medium: its wing hangs' : ''),
       eq(C.fs.panes, { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && eq(C.bl.panes, { R: 0.5 }) && (!C.wing || C.bm.ajar.includes('wing')), JSON.stringify({ fs: C.fs.panes, bl: C.bl.panes, bm: C.bm.ajar }));
-    T.check(`${id}: from behind the roof caves in, the harder the knock the deeper (mean drop light < medium < strong, the strong one 3 cm or more)`, rf[0] > 0 && rf[0] < rf[1] && rf[1] < rf[2] && rf[2] >= 0.03 && C.bs.roof.max < 0.3, JSON.stringify([C.bl.roof, C.bm.roof, C.bs.roof]));
+    T.check(`${id}: from behind the roof caves in, the harder the knock the deeper (mean drop light < medium < strong, the strong one 3 cm or more; a caged roof 15 % of the deepest it can go)`, rf[0] > 0 && rf[0] < rf[1] && rf[1] < rf[2] && rf[2] >= Math.min(0.03, 0.15 * C.bs.rf.rlim) && C.bs.roof.max < 0.3, JSON.stringify([C.bl.roof, C.bm.roof, C.bs.roof, C.bs.rf]));
     T.check(`${id}: no NaN, no page errors`, C.nan === 0 && !ct.errors.length, ct.errors.slice(0, 3).join(' | '));
+  }
+
+  // 11. the roof field (the user's: seen from above, the roof more caved in after every crash, on every closed car, never through the
+  // seats or the driver): 8 knocks from all sides (the 8th a rollover's roof contact, as core.js does it), each a visible step down while
+  // the roof is far from its limit, no point past its own limit, no roof facet turned over, the clearance over what is in the way kept,
+  // nothing in the way lifted; the same field every time (hash); a hard landing too. Two of the 11 (the player's dense body) as well
+  const RSEQ = [[0.15, -1, 0], [0.15, 1, -0.6], [0.15, 0.1, -1], [0.15, -1, 0.6], [0.3, 1, 0], [0.3, 0, 1], [0.05, -1, -0.6], 'top'];
+  for (const [id, det] of [['kolibri', 'normal'], ['kolibri', 'high'], ['medved', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
+    const rr = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: det, carId: id }, (A) => {
+      const hit = eval(A[0]), SEQ = A[1], g = window.__game, R = g.race, P = R.player, me = () => Render.crashInfo().cars.find(q => q.player);
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      const seq = () => { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); const out = [];
+        for (const h of SEQ) {
+          if (h === 'top') { P.dents.push({ lx: 0.25 * P.m.len / 2, lz: -0.4 * P.m.wid / 2, amt: 0.1, top: 1 }); P.roofDmg = Math.min(1, P.roofDmg + 0.3); Render.frame(0.016, 1, P, 'iso', {}); } else hit(P, h);
+          for (let k = 0; k < 4; k++) Render.frame(0.05, 1, P, 'iso', {});
+          const x = me(), a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++;
+          out.push({ roof: x.roof, rf: x.rf, nan: bad }); }
+        return out; };
+      const o = { s1: seq(), s2: seq() };
+      R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); Core.applyDamage(P, 0.5); Render.frame(0.016, 1, P, 'iso', {}); Render.frame(0.016, 1, P, 'iso', {});
+      const x = me(); o.land = { roof: x.roof, over: x.rf ? x.rf.over : -1, roofDmg: +P.roofDmg.toFixed(3) };
+      return o; }, [hitFn, RSEQ]);
+    const S = rr.r.s1, F = S[0].rf, name = `${id}${det === 'high' ? ' (Visoki)' : ''}`, mean = S.map(q => q.roof.mean), inc = mean.map((m, k) => +(m - (k ? mean[k - 1] : 0)).toFixed(3));
+    const need = RSEQ.map(h => h === 'top' || h[0] >= 0.1 ? 0.003 : 0.0015), side = id === 'kolibri' || id === 'medved' || id === 'rally' || id === 'truck';
+    T.check(`roof field, ${name}: a field with a limit (lref ${F && F.lref})`, !!F && F.lref >= 0.02, JSON.stringify(F));
+    const fill = S.map(q => q.rf.rlim ? q.roof.mean / q.rf.rlim : 0);   // (how near the deepest the roof's top can go: past 85 % a knock only never lifts it, a millimetre's rounding)
+    T.check(`roof field, ${name}: after every knock the roof more caved in (its mean drop up 3 mm or more, 1.5 on the light one, while under 85 % of its limit; its deepest never less)`,
+      inc.every((d, k) => d >= ((k ? fill[k - 1] : 0) < 0.85 ? need[k] : -0.001) - 1e-9) && S.every((q, k) => !k || q.roof.max >= S[k - 1].roof.max - 1e-4), 'mean ' + mean.join(' ') + ' | max ' + S.map(q => q.roof.max).join(' ') + ' | fill ' + fill.map(f => f.toFixed(2)).join(' '));
+    T.check(`roof field, ${name}: never past a limit, no facet over, the roof clear of what is in the way (5 mm), the headliner too, nothing in the way lifted, no NaN`,
+      S.every(q => q.rf && q.rf.over === 0 && q.rf.flip === 0 && (q.rf.clear === null || q.rf.clear >= 0.005) && (q.rf.clearL === null || q.rf.clearL >= 0) && q.rf.obsUp <= 1e-5 && q.nan === 0),
+      JSON.stringify(S.map(q => q.rf && [q.rf.over, q.rf.flip, q.rf.clear, q.rf.clearL, q.rf.obsUp, q.nan])));
+    if (side) T.check(`roof field, ${name}: a side knock lowers that side's rail and pulls it in (1 cm, 4 mm)`,
+      [[2, 0], [5, 1]].every(([k, sd]) => S[k].rf.rail[sd] - S[k - 1].rf.rail[sd] >= 0.01 && S[k].rf.pull[sd] - S[k - 1].rf.pull[sd] >= 0.004), JSON.stringify(S.map(q => [q.rf.rail, q.rf.pull])));
+    T.check(`roof field, ${name}: after the 8 knocks well in (a quarter of its limit or more on average), never past the deepest limit`,
+      mean[7] >= 0.25 * F.lref && S[7].roof.max <= F.lmax + 0.005, JSON.stringify({ mean: mean[7], max: S[7].roof.max, lref: F.lref, lmax: F.lmax }));
+    T.check(`roof field, ${name}: the same field every time (the knocks again on the repaired car)`, rr.r.s2.every((q, k) => q.rf && q.rf.hash === S[k].rf.hash), S.map(q => q.rf.hash).join(' ') + ' / ' + rr.r.s2.map(q => q.rf && q.rf.hash).join(' '));
+    T.check(`roof field, ${name}: a hard landing caves it in too`, rr.r.land.roof.mean >= 0.005 && rr.r.land.over === 0, JSON.stringify(rr.r.land));
+    T.check(`roof field, ${name}: no page errors`, !rr.errors.length, rr.errors.slice(0, 3).join(' | '));
+  }
+  // open cars: no roof field; a rollover's roof contact moves nothing (their hoops, their drivers stay)
+  for (const id of ['lisica', 'blisk']) {
+    const oc = await run({ xBody: 1, carId: id }, () => { const g = window.__game, R = g.race, P = R.player; for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      R.repairCar(P); for (let k = 0; k < 3; k++) Render.frame(0.016, 1, P, 'iso', {});
+      const a0 = Render.viewOf(P).body.geometry.attributes.position.array.slice();
+      P.dents.push({ lx: 0.25 * P.m.len / 2, lz: -0.4 * P.m.wid / 2, amt: 0.1, top: 1 }); P.roofDmg = Math.min(1, P.roofDmg + 0.3); for (let k = 0; k < 3; k++) Render.frame(0.016, 1, P, 'iso', {});
+      const v = Render.viewOf(P), a = v.body.geometry.attributes.position.array; let mx = a.length === a0.length ? 0 : 1; if (!mx) for (let i = 0; i < a.length; i++) mx = Math.max(mx, Math.abs(a[i] - a0[i]));
+      const me = Render.crashInfo().cars.find(q => q.player); return { rf: me.rf, roofed: me.roofed, xc: !!v.xc, mx }; });
+    T.check(`roof field, ${id} (open): none; a rollover's roof contact moves nothing`, oc.r.rf === null && !oc.r.roofed && oc.r.xc && oc.r.mx === 0 && !oc.errors.length, JSON.stringify(oc.r) + ' ' + oc.errors.slice(0, 2).join(' | '));
   }
 
   // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Normalni and Visoki drawn in turn at
