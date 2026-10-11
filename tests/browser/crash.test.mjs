@@ -1,16 +1,19 @@
-// Razbijanje · nov način (Nastavitve: xBody, xGlass, xPaint, xDetail; render only, off by default):
+// Razbijanje · nov način (Nastavitve: xBody, xGlass, xPaint; Detajli avtov carDet: Normalni the player's body dense, Visoki every car's; render only, off by default):
 // 1. off (the default): no car is built dense, the dents go the old way (applyDent), nothing new on the road
-// 2. on, Izravnana: the player's car dense (its outer shell split, its ranges, paint list and drawn block consistent), the rivals as built;
+// 2. on, Normalni: the player's car dense (its outer shell split, its ranges, paint list and drawn block consistent), the rivals as built;
 //    blow after blow on the nose the crush goes deeper (each hit deepens the same cluster) and stops short of the windscreen (its cap);
 //    a deep front crush tears the bonnet open and the grey engine shows; nothing NaN
 // 3. the glass: each blow breaks the unbroken pane nearest to it, never one on the other side of the car; glass on the road after
 // 4. the mirrors: the first side blow knocks that side's mirror off, it lies on the road and stays there while the car drives on
 // 5. repeated side blows: the roof sinks on that side (its edge lower than the other side's); the rear door swung open, its window broken
 // 6. one of the 11 (the rally car) dense too; switched off during a race the cars are built again as before
-// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Izravnana within 6 % more vertices than off, Polna within 30 %
+// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Normalni within 6 % more vertices than off, Visoki within 30 %
 // 8. xParts, xDust, xDrag: a rear bumper knocked loose drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
 //    knocked off lies on the road and, pushed out of the core's 40 pieces, stays drawn there; off: none of it (the piece freed as before);
 //    rolling over: the car's black underside (floor, subframes, tunnel, exhaust, tank) drawn while it rolls, not before nor after
+// 9. the Kolibri's damage table (12 directions x 3 strengths): its glass in stages, lamps, parts hanging and off; the bonnet's ridge, the
+//    V from behind; from behind again and again the user's order; a mirror off, its door window 75 %; only the Kolibri, only switched on
+// 10. the Medved, the Kozorog, the Lev R: the table theirs too; a crushed end caves the roof in, the harder the knock the deeper
 //   node tests/browser/crash.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -40,8 +43,8 @@ try {
   T.check('off: a dent the old way (no clusters), nothing on the road', off.r.cl === 0 && off.r.shards === 0 && off.r.ground === 0, JSON.stringify(off.r));
   T.check('off: no page errors', !off.errors.length, off.errors.slice(0, 3).join(' | '));
 
-  // 2.-5. on (Izravnana)
-  const on = await run({ xBody: 1, xGlass: 1, xPaint: 1, xDetail: 'lite' }, (hs) => {
+  // 2.-5. on (Normalni)
+  const on = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal' }, (hs) => {
     const hit = eval(hs), g = window.__game, P = g.race.player, info = () => Render.crashInfo().cars.find(q => q.player), out = {};
     const me = info(), v = Render.viewOf(P), geo = v.body.geometry, U = geo.userData;
     out.dense = { xd: me.xd, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, rivals: Render.crashInfo().cars.filter(q => !q.player && q.xd).length };
@@ -53,7 +56,7 @@ try {
     const a = geo.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
     return out; }, hitFn);
   const D = on.r;
-  T.check('on: the player\'s car dense, its outer shell split, the rivals as built (Izravnana)', D.dense.xd > 0 && D.dense.outerN > D.dense.kit * 1.5 && D.dense.rivals === 0, JSON.stringify(D.dense));
+  T.check('on: the player\'s car dense, its outer shell split, the rivals as built (Normalni)', D.dense.xd > 0 && D.dense.outerN > D.dense.kit * 1.5 && D.dense.rivals === 0, JSON.stringify(D.dense));
   T.check('on: the dense body\'s ranges, paint list and drawn block consistent', D.ranges, '');
   T.check('on: blow after blow on the nose the crush goes deeper', D.depth.every((d, k) => k === 0 || d > D.depth[k - 1]) && D.depth[0] > 0.1, D.depth.map(d => d.toFixed(2)).join(' '));
   T.check('on: the crush stops short of the windscreen (its cap)', D.depth[5] <= D.cap + 1e-6 && D.depth[5] > 0.6 * D.cap, 'depth ' + D.depth[5].toFixed(2) + ' cap ' + D.cap.toFixed(2));
@@ -61,7 +64,7 @@ try {
   T.check('on: no NaN in the body', D.nan === 0, 'NaN ' + D.nan);
   T.check('on: no page errors', !on.errors.length, on.errors.slice(0, 3).join(' | '));
 
-  const gl = await run({ xBody: 1, xGlass: 1, xPaint: 1, xDetail: 'lite' }, (hs) => {
+  const gl = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal' }, (hs) => {
     const hit = eval(hs), P = window.__game.race.player, me = () => Render.crashInfo().cars.find(q => q.player), out = { steps: [] };
     const v = Render.viewOf(P), g0 = Render.crashInfo().ground, s0 = Render.crashInfo().shards;   // (what the race's first seconds left on the road)
     const panes = () => me().panes || [0, 0, 0, 0, 0, 0];
@@ -90,7 +93,7 @@ try {
   T.check('glass / mirrors / roof: no page errors', !gl.errors.length, gl.errors.slice(0, 3).join(' | '));
 
   // 6. one of the 11, and switching off during a race
-  const lg = await run({ xBody: 1, xGlass: 1, xPaint: 0, xDetail: 'lite', carId: 'rally' }, (hs) => {
+  const lg = await run({ xBody: 1, xGlass: 1, xPaint: 0, carDet: 'normal', carId: 'rally' }, (hs) => {
     const hit = eval(hs), P = window.__game.race.player, me = () => Render.crashInfo().cars.find(q => q.player), out = {};
     out.kit = !!P.m.kit; out.xd = me().xd; for (const h of [[0.12, 1, -0.9], [0.12, 1, -0.8], [0.1, 0.2, 1]]) hit(P, h);
     const a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad; out.cl = me().cl.length;
@@ -135,7 +138,83 @@ try {
   T.check('rolling over: the black underside drawn only while the car rolls', !PO.und0 && PO.und1 && PO.undTris > 30 && !PO.und2, JSON.stringify({ before: PO.und0, rolling: PO.und1, tris: PO.undTris, after: PO.und2 }));
   T.check('parts / dust / drag: no page errors', !pd.on.errors.length && !pd.off.errors.length, pd.on.errors.concat(pd.off.errors).slice(0, 3).join(' | '));
 
-  // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Izravnana and Polna drawn in turn at
+  // 9. the Kolibri's damage table (the user's: 12 directions x 3 strengths; Render xTabHit), each scene on the car built afresh
+  const kt = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: 'kolibri' }, (hs) => {
+    const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
+    for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+    const settle = (n) => { for (let k = 0; k < (n || 12); k++) Render.frame(0.05, 1, P, 'iso', {}); };
+    const scene = (hits) => { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); const g0 = Render.crashInfo().ground; for (const h of hits) { hit(P, h); settle(); } const x = me().xt; return Object.assign({}, x, { ground: Render.crashInfo().ground - g0, lost: Object.keys(P.lost) }); };
+    out.fs = scene([[0.3, 1, 0]]); out.fm = scene([[0.15, 1, 0]]); out.fl = scene([[0.05, 1, 0]]);
+    { const v = Render.viewOf(P), Q = v.xtP && v.xtP.W, D = Q && v.xtO ? v.xtO.cx.getImageData(Q.ox, Q.oy, Q.W, Q.H).data : null; let top = 0, bot = 0;   // (its hole: in the picture the top half's, not the bottom's)
+      if (D) for (let y = 0; y < Q.H; y++) for (let x = 0; x < Q.W; x++) if (D[(y * Q.W + x) * 4 + 3] < 128) { if (y < Q.H / 2) top++; else bot++; }
+      out.hole = { top, bot }; }
+    out.bl = scene([[0.05, -1, 0]]); out.slm = scene([[0.3, 0, -1]]); out.srf = scene([[0.3, 0.4, 1]]); out.slf = scene([[0.15, 0.45, -1]]);
+    // the mirror (the user's): its glass cracks on a light hit by it, breaks on a medium one (the mirror half folded back), a hard one presses
+    // it flat in against the body; struck as hard there again it comes off
+    out.ml = scene([[0.05, 0.45, -1]]); out.mf = scene([[0.3, 0.45, -1], [0.3, 0.45, -1]]);
+    { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); const v = Render.viewOf(P), U = v.body.geometry.userData, Rm = U.ranges.mirrorL, a = v.body.geometry.attributes.position.array, M = U.ranges.mirrorL.mir;
+      const ext = () => { let zo = 1e9; for (let i = Rm.o[0]; i < Rm.o[1]; i++) zo = Math.min(zo, a[i * 3 + 2]); return zo; };   // (its outermost point: the left's most negative z)
+      const z0 = ext(); hit(P, [0.3, 0.45, -1]); settle(); out.press = { before: +z0.toFixed(3), after: +ext().toFixed(3), mir: !!M, nan: Array.from(a.subarray(Rm.o[0] * 3, Rm.o[1] * 3)).some(q => !Number.isFinite(q)) }; }
+    // again and again from behind (light, apart): the rear window a stage on each time; 2. the rear lamp, 3. the spoiler hangs, 4. off
+    R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); out.rear = [];
+    for (let k = 0; k < 4; k++) { hit(P, [0.05, -1, 0.1]); settle(); const x = me().xt; out.rear.push({ R: x.panes.R, lamp3: x.lamps[3], hang: x.ajar.includes('spoiler'), off: x.dead.includes('spoiler') }); }
+    out.rearGround = Render.crashInfo().ground;
+    // the windscreen only ever more broken; again on the nose, a stage on
+    R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); out.ws = [];
+    for (const a of [0.05, 0.05, 0.05]) { hit(P, [a, 1, 0]); settle(); out.ws.push(me().xt.panes.W); }
+    hit(P, [0.3, 1, 0]); settle(); out.ws.push(me().xt.panes.W); hit(P, [0.05, 1, 0]); settle(); out.ws.push(me().xt.panes.W);
+    // a mirror the core knocks off: its door window 75 % at least
+    R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); P.lost.mirrorL = 1; settle(); out.mir = me().xt;
+    // its broken glass: one mesh of its own, the body's triangles of those panes left out of the body (their colour's red -1)
+    R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); hit(P, [0.15, 1, 0]); settle(); const v = Render.viewOf(P), col = v.body.geometry.attributes.color.array, W = v.xtP && v.xtP.W;
+    out.mesh = { idx: me().xt.idx, cut: me().xt.cut, out: W ? W.tris.every(t => col[t * 9] === -1) : false, meshes: v.xtO ? v.bodyG.children.filter(m => m === v.xtO.mesh).length : 0, full: v.body.geometry.drawRange.count === v.body.geometry.userData.N };
+    let bad = 0; const a = v.body.geometry.attributes.position.array; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
+    return out; }, hitFn);
+  const KT = kt.r, eq = (o, w) => Object.keys(w).every(k => Math.abs((o[k] || 0) - w[k]) < 1e-6) && Object.keys(o).every(k => (w[k] || 0) === (o[k] || 0));
+  T.check('Kolibri: front, strong: windscreen 100 %, door windows 75 %, rear side windows 50 %, rear window whole; both head lamps; bonnet hangs; bumper and head lamps off',
+    eq(KT.fs.panes, { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && KT.fs.lamps[0] && KT.fs.lamps[1] && KT.fs.ajar.includes('hood') && ['bumperF', 'headL', 'headR'].every(n => KT.fs.dead.includes(n)), JSON.stringify(KT.fs));
+  T.check('Kolibri: front, medium: windscreen 70 %, door windows 50 %; the bumper hangs; both head lamps', eq(KT.fm.panes, { W: 0.7, DL: 0.5, DR: 0.5 }) && KT.fm.ajar.includes('bumperF') && KT.fm.lamps[0] && KT.fm.lamps[1] && !KT.fm.dead.length, JSON.stringify(KT.fm));
+  T.check('Kolibri: front, light: only the windscreen, 50 %; nothing hangs, no lamp', eq(KT.fl.panes, { W: 0.5 }) && !KT.fl.ajar.length && !KT.fl.lamps.some(Boolean), JSON.stringify(KT.fl));
+  T.check('Kolibri: a broken pane\'s glass gone from its top, its lower part still in the frame', KT.hole.top > 500 && KT.hole.top > KT.hole.bot * 3, JSON.stringify(KT.hole));
+  T.check('Kolibri: the bonnet\'s ridge: a strong front hit higher than a medium one, none on a light one', KT.fs.rg === 1 && KT.fm.rg === 0.5 && KT.fl.rg === 0 && KT.fm.bent.hoodUp > 0.04 && KT.fs.bent.hoodUp > KT.fm.bent.hoodUp + 0.03 && KT.fl.bent.hoodUp < 0.02, JSON.stringify({ strong: KT.fs.bent.hoodUp, medium: KT.fm.bent.hoodUp, light: KT.fl.bent.hoodUp }));
+  T.check('Kolibri: rear, light: only the rear window, 50 %; the bumper in a V (~10 cm in the middle), the spoiler bent down in the middle',
+    eq(KT.bl.panes, { R: 0.5 }) && KT.bl.bent.bumper[0] > 0.07 && KT.bl.bent.bumper[0] > KT.bl.bent.bumper[1] + 0.05 && KT.bl.bent.spoiler[0] > 0.06 && KT.bl.bent.spoiler[0] > KT.bl.bent.spoiler[1] + 0.04, JSON.stringify(KT.bl));
+  T.check('Kolibri: a side hit never breaks the rear window; the right side the left\'s mirrored (front side, strong: its door window 100 %, windscreen 75 %, its mirror off, its head lamp)',
+    !KT.slm.panes.R && !KT.srf.panes.R && !KT.slf.panes.R && eq(KT.srf.panes, { W: 0.75, DR: 1, QR: 0.5 }) && KT.srf.mir.fold.mirrorR === 90 && KT.srf.mir.glass.R === 1 && KT.srf.lamps[1] && eq(KT.slm.panes, { W: 0.5, DL: 1, QL: 0.75 }) && ['doorL', 'mirrorL'].every(n => KT.slm.dead.includes(n)), JSON.stringify({ srf: KT.srf, slm: KT.slm }));
+  T.check('Kolibri: left side by the mirror, medium: windscreen 50 %, door window 70 %, the mirror\'s glass broken, the mirror half folded back (the door stays shut)', eq(KT.slf.panes, { W: 0.5, DL: 0.7 }) && KT.slf.mir.glass.L === 1 && KT.slf.mir.fold.mirrorL === 45 && !KT.slf.ajar.includes('doorL'), JSON.stringify(KT.slf));
+  T.check('Kolibri: the mirrors: a light hit by one cracks its glass (the mirror stays out); a hard one presses it flat in against the body (its outer end 6 cm or more nearer the car); struck as hard there again it comes off',
+    KT.ml.mir.glass.L === 0.5 && !KT.ml.mir.fold.mirrorL && KT.press.mir && KT.press.after > KT.press.before + 0.06 && !KT.press.nan && KT.mf.dead.includes('mirrorL'), JSON.stringify({ light: KT.ml.mir, press: KT.press, twice: KT.mf.dead }));
+  T.check('Kolibri: from behind again and again: the rear window a stage on each time; 2. the right rear lamp, 3. the spoiler hangs, 4. it is off and on the road',
+    KT.rear.map(q => q.R).join() === '0.5,0.7,0.75,1' && !KT.rear[0].lamp3 && KT.rear[1].lamp3 && !KT.rear[1].hang && KT.rear[2].hang && !KT.rear[2].off && KT.rear[3].off && KT.rearGround >= 1, JSON.stringify(KT.rear) + ' ground ' + KT.rearGround);
+  T.check('Kolibri: the windscreen only ever more broken (again on the nose: a stage on)', KT.ws.join() === '0.5,0.7,0.75,1,1', KT.ws.join());
+  T.check('Kolibri: a mirror the core knocks off: its door window 75 %', KT.mir.panes.DL === 0.75 && KT.mir.dead.includes('mirrorL'), JSON.stringify(KT.mir));
+  T.check('Kolibri: its broken glass one mesh of its own (the panes out of the body, the inside drawn), no NaN', KT.mesh.idx > 0 && KT.mesh.cut && KT.mesh.out && KT.mesh.meshes === 1 && KT.mesh.full && KT.nan === 0, JSON.stringify(KT.mesh) + ' NaN ' + KT.nan);
+  T.check('Kolibri: no page errors', !kt.errors.length, kt.errors.slice(0, 3).join(' | '));
+  // the table only the Kolibri's, only with its switches on
+  const ko = await run({ carId: 'kolibri' }, () => { const P = window.__game.race.player, v = Render.viewOf(P); Core.applyDamage(P, 0.3, P.m.len / 2, 0); for (let k = 0; k < 6; k++) Render.frame(0.05, 1, P, 'iso', {});
+    return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: v.body.material.customProgramCacheKey(), mesh: !!v.xtO }; });
+  const tt = await run({ xBody: 1, xGlass: 1 }, () => { const P = window.__game.race.player; return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: Render.viewOf(P).body.material.customProgramCacheKey() }; });
+  T.check('Kolibri off (the default): no table, the body\'s material as ever; another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCg' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, tornado: tt.r }));
+
+  // 10. the cars being reworked (the Medved, the Kozorog, the Lev R): the table theirs too (the spoiler: a wing where the car has one);
+  // a crushed end caves the roof in, the harder the knock the deeper (the roof's own top, what lies on it left out)
+  for (const id of ['kozorog', 'lev', 'medved']) {
+    const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
+      const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      const scene = (h) => { R.repairCar(P); Render.frame(0.016, 1, P, 'iso', {}); hit(P, h); for (let k = 0; k < 12; k++) Render.frame(0.05, 1, P, 'iso', {}); const x = me(); return { panes: x.xt && x.xt.panes, ajar: x.xt && x.xt.ajar, dead: x.xt && x.xt.dead, roof: x.roof }; };
+      out.fs = scene([0.3, 1, 0]); out.bl = scene([0.05, -1, 0]); out.bm = scene([0.15, -1, 0]); out.bs = scene([0.3, -1, 0]);
+      out.wing = !!Render.viewOf(P).body.geometry.userData.ranges.wing;
+      const a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
+      return out; }, hitFn);
+    const C = ct.r, rf = [C.bl, C.bm, C.bs].map(q => q.roof.mean);
+    T.check(`${id}: the table (front strong: windscreen 100 %, door windows 75 %; rear light: only the rear window 50 %)` + (C.wing ? '; rear medium: its wing hangs' : ''),
+      eq(C.fs.panes, { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && eq(C.bl.panes, { R: 0.5 }) && (!C.wing || C.bm.ajar.includes('wing')), JSON.stringify({ fs: C.fs.panes, bl: C.bl.panes, bm: C.bm.ajar }));
+    T.check(`${id}: from behind the roof caves in, the harder the knock the deeper (mean drop light < medium < strong, the strong one 3 cm or more)`, rf[0] > 0 && rf[0] < rf[1] && rf[1] < rf[2] && rf[2] >= 0.03 && C.bs.roof.max < 0.3, JSON.stringify([C.bl.roof, C.bm.roof, C.bs.roof]));
+    T.check(`${id}: no NaN, no page errors`, C.nan === 0 && !ct.errors.length, ct.errors.slice(0, 3).join(' | '));
+  }
+
+  // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Normalni and Visoki drawn in turn at
   // each place, the same frame (switched as in Nastavitve: the cars built again), so only the cars' own geometry differs
   const { page: lp, ctx: lc } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, { camera: 'chase', zoom: 1.2 }), { width: 844, height: 390 }, { seed: 12345 });
   await lp.evaluate(() => { window.__gl = { calls: 0, verts: 0 }; const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -147,12 +226,12 @@ try {
     const set = (k, v) => document.querySelector(`[data-set="${k}"] button[data-v="${v}"]`).click();
     const meas = () => { Render.frame(1 / 60, 1, P, 'chase', {}); const v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {}); return __gl.verts - v0; };
     for (let k = 0; k < 6; k++) { for (let i = 0; i < 10; i++) g.sim(1, true);
-      set('xBody', 0); set('xGlass', 0); out.off += meas(); set('xBody', 1); set('xGlass', 1); set('xDetail', 'lite'); out.lite += meas(); set('xDetail', 'full'); out.full += meas(); }
-    set('xBody', 0); set('xGlass', 0); set('xDetail', 'lite');
+      set('xBody', 0); set('xGlass', 0); out.off += meas(); set('xBody', 1); set('xGlass', 1); set('carDet', 'normal'); out.lite += meas(); set('carDet', 'high'); out.full += meas(); }
+    set('xBody', 0); set('xGlass', 0); set('carDet', 'normal');
     for (const k in out) out[k] = Math.round(out[k] / 6); return out; });
   await lc.close();
-  T.check('the load: Izravnana within 6 % more vertices than off', load.lite <= load.off * 1.06, JSON.stringify(load));
-  T.check('the load: Polna within 30 % more vertices than off', load.full <= load.off * 1.3, JSON.stringify(load));
+  T.check('the load: Normalni within 6 % more vertices than off', load.lite <= load.off * 1.06, JSON.stringify(load));
+  T.check('the load: Visoki within 30 % more vertices than off', load.full <= load.off * 1.3, JSON.stringify(load));
 } finally {
   await browser.close(); await srv.close();
 }
