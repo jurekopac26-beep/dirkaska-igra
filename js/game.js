@@ -1656,19 +1656,20 @@
   // motocross track ...), the car at HOME; the car then drives on the new map's ground (track.ground2, Car.stepCS). A wait screen meanwhile.
   function nvStart() {
     const box = document.createElement('div'); box.id = 'nv-load'; box.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(5,8,12,.78);font-family:Roboto,sans-serif;color:#fff';
-    box.innerHTML = '<div style="width:min(320px,86vw);padding:18px 20px;border-radius:16px;background:rgba(9,13,20,.95);border-top:4px solid #ffd34d;text-align:center"><div style="font:800 11px Roboto,sans-serif;letter-spacing:1.6px;color:#ffd34d">NEW VERSION · TEST 1</div><div style="font:900 italic 22px Roboto,sans-serif;margin:6px 0 8px">' + esc(tr('Nalagam novo mapo …')) + '</div><div style="font:600 12px/1.4 Roboto,sans-serif;color:#b9c2cf">' + esc(tr('Začneš pri HOME. Menija ni: vozi se prosto po mapi.')) + '</div></div>';
+    box.innerHTML = '<div style="width:min(320px,86vw);padding:18px 20px;border-radius:16px;background:rgba(9,13,20,.95);border-top:4px solid #ffd34d;text-align:center"><div style="font:800 11px Roboto,sans-serif;letter-spacing:1.6px;color:#ffd34d">NEW VERSION · TEST 1</div><div style="font:900 italic 22px Roboto,sans-serif;margin:6px 0 8px">' + esc(tr('Nalagam novo mapo …')) + '</div><div style="font:600 12px/1.4 Roboto,sans-serif;color:#b9c2cf">' + esc(tr('Začneš pri HOME. Zapelji v garažo in odpre se njen meni.')) + '</div></div>';
     document.body.appendChild(box); paused = true;
     const done = () => { box.remove(); paused = false; Input.reset(); };
     const build = () => {
-      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
+      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
       catch (e) { nv.err = String(e && e.message || e); console.error('the new map failed', e); toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); }
       done();
     };
     const later = () => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(build, 30)));   // (the wait screen on show before the long build)
-    if (window.MK && window.MK.hub4) { later(); return; }
-    const tag = document.querySelector('link[data-lazy="newmap"]'), sc = document.createElement('script');
-    sc.src = tag ? tag.getAttribute('href') : 'js/newmap.js'; sc.onload = later; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
-    document.head.appendChild(sc);
+    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined') { later(); return; }
+    const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
+      sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = next; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
+      document.head.appendChild(sc); };
+    load('newmap', () => load('nvmenu', later));   // (the map, then its garages' menus)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -3540,9 +3541,9 @@
     // wrong way
     if (phase === 'racing') {
       if (P.wrongT > 1.1 && !race.nv) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
-      // stuck or the wrong way: back onto the road (stopped at the police checkpoint on purpose: no rescue); a lost wheel on a track without
+      // stuck or the wrong way: back onto the road (stopped at the police checkpoint on purpose, or in a garage of the new map: no rescue); a lost wheel on a track without
       // pits (not a time trial): the marshals put it back on (6 s)
-      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0)) && !track.def.pit && !race.timeTrial && !P.finished;
+      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !(race.nv && typeof NVMenu !== 'undefined' && NVMenu.on()), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0)) && !track.def.pit && !race.timeTrial && !P.finished;
       const rb = $('btn-rescue'), rt = !stuck && wheel ? tr('\u21ba Namesti kolo') : tr('\u21ba Na progo');
       rb.classList.toggle('off', !(stuck || wheel)); if (rb.textContent !== rt) rb.textContent = rt;
     }
@@ -4554,6 +4555,7 @@
     }
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
+    if (race.nv && nv && nv.built && typeof NVMenu !== 'undefined') NVMenu.tick(race.player, !paused && screen === 'none' && phase === 'racing' && !orientBlock && !replay);   // (NEW VERSION · TEST 1: a garage's menu while the car stands on its coloured floor, js/nvmenu.js)
     if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
     if (replay) { replayFrame(hlRec ? hlvDt(dtRaw) : dt); return; }   // (the best moment being recorded: on the real clock, as the video's, also when the frames are slow)
     const inp = Input.update(dt);
