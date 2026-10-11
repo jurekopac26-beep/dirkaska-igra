@@ -2391,7 +2391,7 @@
     else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
       // Race.pitStep); the player's gas, steering and handbrake are not used; the brake slows it (the autopilot's throttle off), never into reverse
       P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
-      if (inp.brk > 0.05) { P.inThr = 0; P.inBrk = Math.max(P.inBrk, inp.brk); }
+      if (inp.brk > 0.05 && P.gear !== -1) { P.inThr = 0; P.inBrk = Math.max(P.inBrk, inp.brk); }   // (backed over the line in reverse: the autopilot's throttle brakes it to a stop and into first gear, never the player's brake as reverse gas)
       P.inHand = 0; P.digitalSteer = false; P.noReverse = true;
       if (pit === 'merge') pitCount(dt);
     }
