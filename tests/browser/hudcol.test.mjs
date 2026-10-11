@@ -10,6 +10,9 @@
 // steering (buttons, wheel, tilt: no tilt meter while the autopilot steers), in Slovenian and in English; the toast of the way in gone with
 // the autopilot. A time trial's finish: its splits in the column under the message. The longest big messages on the narrowest phone in at
 // most three lines, no word sticking out. No handbrake button (ROČNA) on the screen in any steering mode (and no handbrake in the input).
+// A small icon at the left of each: the big message's by its kind (a chequered flag ZADNJI KROG!, a wrench POPRAVILO, a green light START!,
+// a warning triangle PREDRTA GUMA! and the overheating, crossed swords DVOBOJ, a star NOV REKORD!, a pit board BOKSI), the wrench on the pit
+// stop's panel, an "i" on the toast; the text right of it, never under it; in both languages, either way the phone is held.
 //   node tests/browser/hudcol.test.mjs            (SHOTS=<folder>: a picture of each)
 import net from 'node:net';
 import path from 'node:path';
@@ -27,6 +30,9 @@ const TOAST = 'Sedaj lahko spustiš plin, vse bo naredil sam.', RADIO = 'Dober p
 // the pit stop's longest message (the tyres, the repair, the fuel), its toast and a radio message, in both languages
 const PIT = { sl: { msg: 'MEHKE GUME · POPRAVLJENO · POLNO', toast: TOAST, radio: RADIO, title: 'AVTOPILOT · spusti plin' },
   en: { msg: 'SOFT TYRES · REPAIRED · TANK FULL', toast: 'You can let go of the gas now, the car does everything by itself.', radio: 'Good stop. You are 5th, G. Moretti is 12.3 s ahead.', title: 'AUTOPILOT · let go of the gas' } };
+// a big message of each kind (in Slovenian, as the game has it; tr() for English) and its icon
+const KINDS = [[['ZADNJI KROG!'], 'flag'], [['POPRAVILO {0} %', 45], 'wrench'], [['START!'], 'go'], [['PREDRTA GUMA!'], 'warn'], [['ZAVORE SE PREGREVAJO'], 'warn'], [['MOTOR SE PREGREVA'], 'warn'],
+  [['DVOBOJ V PROMETU!'], 'vs'], [['NOV REKORD!'], 'star'], [['BOKSI · AVTOPILOT'], 'pit']];
 // the longest big messages of the game (the safety car's restart, the walkers run over, the police's mission), in both languages
 const LONG = ['NE PREHITEVAJ DO CILJNE ČRTE', 'NO OVERTAKING UNTIL THE LINE', 'POVOZIL SI PEŠCA! +5 s', 'YOU RAN OVER SOMEONE ON FOOT! +5 s', 'TEKMEC JE POVOZIL KOLESARJA +5 s', 'YOUR RIVAL RAN OVER SOMEONE ON FOOT +5 s',
   'MISIJA OPRAVLJENA!', 'MISSION ACCOMPLISHED!', 'CHAMPIONSHIP · RACE 3/8', PIT.sl.msg, PIT.en.msg];
@@ -44,6 +50,29 @@ const MEASURE = () => {
     wait: ['toast', 'h-teamradio'].filter(id => document.getElementById(id).classList.contains('wait')), msg: M.textContent, lines: shown(M) ? Math.round((M.clientHeight - 7) / parseFloat(cs.lineHeight)) : 0, fs: parseFloat(cs.fontSize), out: shown(M) ? M.scrollWidth - M.clientWidth : 0,
     rows: document.getElementById('h-tower').querySelectorAll('.tw-r').length };
 };
+// in the page: the icons of the column (css ::before, inline SVG as --ic-*): which one each shows (the same picture as var(--ic-<kind>)), its size,
+// and where the text starts (the message's and the pit title's right of the icon, the toast's first line after its "i")
+const ICONS = () => {
+  const img = (k) => { const d = document.createElement('i'); d.style.backgroundImage = `var(--ic-${k})`; document.body.appendChild(d); const v = getComputedStyle(d).backgroundImage; d.remove(); return v; };
+  const KS = ['flag', 'wrench', 'go', 'warn', 'vs', 'star', 'pit', 'info'], pics = KS.map(img);
+  const one = (e, t) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
+    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(getComputedStyle(e).fontSize),
+      gap: +(t0.left - r.left - parseFloat(getComputedStyle(e).paddingLeft) - parseFloat(getComputedStyle(e).borderLeftWidth) - parseFloat(c.width)).toFixed(1) }; };
+  const M = document.getElementById('h-msg'), P = document.getElementById('h-pit'), T = document.getElementById('toast');
+  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P, P.firstElementChild) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
+};
+// what is wrong with the icons: the message's not the one of its kind or not as tall as its letters, the pit panel without its wrench, the
+// toast without its "i", or a text over its icon
+function wrongIcons(x, kind) {
+  const bad = [];
+  if (x.dataIc !== kind || x.msg.ic !== kind) bad.push(`the message's icon ${x.dataIc}/${x.msg.ic}, not ${kind}`);
+  if (x.icm) bad.push('the message\'s icon not at its left: ' + x.icm);
+  if (Math.abs(x.msg.w - 1.05 * x.msg.fs) > 1 || Math.abs(x.msg.h - x.msg.w) > 0.5) bad.push(`the message's icon ${x.msg.w}x${x.msg.h} at ${x.msg.fs} px`);
+  if (x.msg.gap < 0) bad.push('the message over its icon');
+  if (!x.pit || x.pit.ic !== 'wrench' || x.pit.w < 12 || x.pit.gap < 2) bad.push('the pit panel\'s wrench ' + JSON.stringify(x.pit));
+  if (!x.toast || x.toast.ic !== 'info' || x.toast.w < 0.9 * x.toast.fs || x.toast.gap < 1) bad.push('the toast\'s i ' + JSON.stringify(x.toast));
+  return bad;
+}
 // what is wrong with a layout: the column not the map's width, a gap or an overlap in it, one of it over another HUD element, the rotate notice
 function wrong(o) {
   const bad = [], near = (a, b) => Math.abs(a - b) <= 1, hit = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
@@ -94,9 +123,9 @@ try {
   await both(page, 'race-start', 'START!', ['h-msg']);
   // the longest big messages on the narrowest phone upright (360 px: the column 97 px wide) and on its side: at most three lines, no word out of its box
   const long = [];
-  for (const k of ['port', 'land']) { await turn(page, OR[k]); for (const msg of LONG) { const o = await texts(page, msg, { toast: null, radio: null }); long.push({ k, msg, bad: wrong(o), lines: o.lines, out: o.out, fs: o.fs }); await clear(page); } }
+  for (const k of ['port', 'land']) { await turn(page, OR[k]); for (const msg of LONG) { const o = await texts(page, msg, { toast: null, radio: null }); long.push({ k, msg, bad: wrong(o), lines: o.lines, out: o.out, fs: o.fs, icm: await page.evaluate(() => document.getElementById('h-msg').dataset.icm || 'left') }); await clear(page); } }
   T.check('the longest big messages (NE PREHITEVAJ DO CILJNE ČRTE, YOUR RIVAL RAN OVER SOMEONE ON FOOT, MISSION ACCOMPLISHED! ...) at 360x640 and 640x360: at most three lines, no word out of the box',
-    long.length === LONG.length * 2 && long.every(o => !o.bad.length && o.lines >= 1 && o.lines <= 3), JSON.stringify(long.filter(o => o.bad.length || o.lines > 3).concat(long.filter(o => o.k === 'port').map(o => o.msg.slice(0, 12) + ' ' + o.lines + '@' + o.fs))));
+    long.length === LONG.length * 2 && long.every(o => !o.bad.length && o.lines >= 1 && o.lines <= 3), JSON.stringify(long.filter(o => o.bad.length || o.lines > 3).concat(long.filter(o => o.k === 'port').map(o => o.msg.slice(0, 12) + ' ' + o.lines + '@' + o.fs + ' ' + o.icm))));
   // no handbrake button on the screen (ROČNA, HANDBRAKE) in any steering mode, either way the phone is held: the brake and the gas side by side,
   // as tall as each other, apart; a touch where ROČNA was (above the brake) brakes, no handbrake
   const pedals = [];
@@ -128,7 +157,7 @@ try {
   // the pit stop in every way of steering, in Slovenian and in English, the stop's longest message with the toast and the radio: the bar and
   // the message right under the map, nothing over the HUD (tilting: no tilt meter while the autopilot steers, the phone's tilt not used); the
   // bar's title in its box (on one line down to 8 px, else two); upright nothing waits
-  const steer = [];
+  const steer = [], icons = [];
   for (const lang of ['sl', 'en']) {
     await setLang(page, lang); const L = PIT[lang];
     for (const k of ['land', 'port']) {
@@ -142,10 +171,21 @@ try {
         if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `pits-${lang}-${m}-${k}.png`) });
         await clear(page);
       }
+      // each kind of big message with its icon, under the pit stop's panel (its wrench), with the toast (its "i") and the radio
+      await page.evaluate(() => Input.setMode('buttons')); await frames(page, 2);
+      for (const [tx, kind] of KINDS) {
+        const msg = await page.evaluate((tx) => Lang.tr(...tx), tx), o = await texts(page, msg, { toast: L.toast, radio: L.radio }), x = await page.evaluate(ICONS), bad = wrong(o).concat(wrongIcons(x, kind));
+        if (o.msg !== msg) bad.push('the message ' + o.msg + ', not ' + msg);
+        icons.push({ lang, k, msg, kind, ok: !bad.length, bad, x });
+        if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `icon-${lang}-${kind}-${k}-${tx[0].slice(0, 6).replace(/[^A-Z]/g, '')}.png`) });
+        await clear(page);
+      }
     }
   }
   T.check('the pit stop with buttons, the wheel and tilting, in Slovenian and in English, on its side and upright: the bar and the stop\'s longest message under the map, the toast and the radio under them (or waiting, on its side), nothing over the HUD; tilting: no tilt meter',
     steer.length === 12 && steer.every(s => s.ok), JSON.stringify(steer.filter(s => !s.ok).concat(steer.slice(0, 1))));
+  T.check('the icons in Slovenian and in English, on its side and upright: each kind of big message its own at the left (ZADNJI KROG! a chequered flag, POPRAVILO a wrench, START! a green light, PREDRTA GUMA! and the overheating a warning triangle, DVOBOJ crossed swords, NOV REKORD! a star, BOKSI a pit board), as tall as its letters; the wrench on the pit stop\'s panel, the "i" on the toast; no text over its icon, the column as ever',
+    icons.length === KINDS.length * 4 && icons.every(s => s.ok), JSON.stringify(icons.filter(s => !s.ok).slice(0, 4).concat(icons.slice(0, 1))));
   // a toast that finds no room (on its side, tilting, under the bar and a long message) waits 6 s at most, then is not shown any more
   await turn(page, OR.land); await page.evaluate(() => Input.setMode('tilt'));
   const capped = await page.evaluate(async ([msg, toast]) => { const g = window.__game, Tt = document.getElementById('toast'), o = { seen: 0, wait: 0 }; g.msg(msg, 'gold', 60); g.toast(toast, 1500);
