@@ -306,5 +306,12 @@
   "kverts": 1011,
   "maxKverts": 1161,
   "jsMs": 1.25
+ },
+ "newmap": {
+  "calls": 234,
+  "maxCalls": 286,
+  "kverts": 1023,
+  "maxKverts": 1343,
+  "jsMs": 0
  }
 }

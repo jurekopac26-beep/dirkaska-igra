@@ -1660,16 +1660,16 @@
     document.body.appendChild(box); paused = true;
     const done = () => { box.remove(); paused = false; Input.reset(); };
     const build = () => {
-      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
+      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVWalls !== 'undefined') NVWalls.init(H3); if (typeof NVBake !== 'undefined') nv.bake = NVBake.bake(Render.scene, { world: Render.world }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
       catch (e) { nv.err = String(e && e.message || e); console.error('the new map failed', e); toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); }
       done();
     };
     const later = () => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(build, 30)));   // (the wait screen on show before the long build)
-    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined') { later(); return; }
+    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined' && typeof NVBake !== 'undefined' && typeof NVWalls !== 'undefined') { later(); return; }
     const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
       sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = next; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
       document.head.appendChild(sc); };
-    load('newmap', () => load('nvmenu', later));   // (the map, then its garages' menus)
+    load('newmap', () => load('nvmenu', () => load('nvbake', () => load('nvwalls', later))));   // (the map, its garages' menus, the merging of its still meshes for the phones, its walls of fence the car pushes)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -2414,6 +2414,7 @@
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
+    if (race.nv && typeof NVWalls !== 'undefined') NVWalls.step(dt, P);   // (NEW VERSION · TEST 1: the walls of fence pushed by the car, js/nvwalls.js)
     twMark(); stDrive(P, dt);
     if (school) schoolStep(P, dt, inp);
     recHits();

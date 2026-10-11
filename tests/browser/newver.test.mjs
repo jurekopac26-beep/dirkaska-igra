@@ -1,6 +1,6 @@
 // NEW VERSION · TEST 1 (the title's button, js/game.js nvStart, js/newmap.js): the button top right on the title (upright and on its side),
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
-// the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the garages' menus on their coloured floors
+// the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
 // (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START, the others' choices and START say V IZDELAVI, HOME's box Garaža v izdelavi);
 // back to the title the page loads again.
 //   node tests/browser/newver.test.mjs
@@ -45,6 +45,24 @@ try {
     T.check('on the snow hill the car stands on the new map\'s ground (its top 25 m and more above the track)', h.g > 20 && Math.abs(h.ry - h.g) < 0.5 && h.y > 20, JSON.stringify(h));
     const e = await page.evaluate(() => { const g = window.__game, P = g.race.player; P.place(405, 0, 0); P.vx = 30; P.vz = 0; g.sim(1, false); return { x: P.x, edge: g.race.track.free[1] }; });
     T.check('the map\'s edge (the buoys at sea) stops the car', e.x <= e.edge + 0.01, JSON.stringify(e));
+    // the walls (js/newmap.js wallFlush, js/nvwalls.js): pieces of fence where the mock-up had tyres, red and white plastic, wooden by the
+    // countryside's garages; the car pushes them: a plastic barrier slides away and turns, a wooden fence hit hard falls over
+    // the still meshes merged for the phones (js/nvbake.js): thousands into some hundred, a few kept as they are
+    const bk = await page.evaluate(() => NVBake.stats());
+    T.check('the new map\'s still meshes merged (by material and cell): thousands into some hundred', bk && bk.merged > 3000 && bk.meshes < 2500 && bk.kept < 50, JSON.stringify(bk && { merged: bk.merged, instances: bk.instances, kept: bk.kept, meshes: bk.meshes, kverts: bk.kverts }));
+    const wl = await page.evaluate(() => NVWalls.state());
+    T.check('the walls: pieces of fence instead of the tyres, plastic and wooden', wl.plastic > 300 && wl.wood > 20 && !wl.moving, JSON.stringify(wl));
+    const cr = await page.evaluate(() => {
+      const g = __game, P = g.race.player, out = {};
+      for (const [kind, v] of [['plastic', 12], ['wood', 8]]) {
+        const ps = NVWalls.pieces().filter(p => p.kind === kind), p = ps[Math.floor(ps.length / 3)], x0 = p.x, z0 = p.z, a0 = p.ang;
+        const nx = -Math.sin(p.ang), nz = Math.cos(p.ang), h = Math.atan2(-nz, -nx);   // (from the piece's side, heading at it)
+        P.place(p.x + nx * 6, p.z + nz * 6, h); P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; g.sim(1.5, false, 0);
+        out[kind] = { moved: +Math.hypot(p.x - x0, p.z - z0).toFixed(2), turned: +Math.abs((p.ang - a0) * 57.3).toFixed(1), tilt: Math.round(p.tilt * 57.3) };
+      }
+      return out;
+    });
+    T.check('a car into a plastic barrier at 12 m/s: the barrier slides away (metres) and turns; into a wooden fence at 8 m/s: it falls over', cr.plastic.moved > 2 && cr.plastic.tilt === 0 && cr.wood.tilt === 90 && cr.wood.moved > 0.5, JSON.stringify(cr));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });

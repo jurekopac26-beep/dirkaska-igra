@@ -4047,6 +4047,10 @@ const Render = (function () {
   }
   function getDetailDist() { return detailDist; }
   function cullByDistance() {   // called from frame() once the camera has moved; a cheap horizontal distance test per vegetation chunk
+    if (world && world.cullFog) {   // (NEW VERSION · TEST 1, js/nvbake.js: the new map's merged cells, past the fog's end not drawn, on every tier: the haze hides them anyway; on the lower tiers not past the detail distance either)
+      const p = camera.position, f = Math.min(scene.fog ? scene.fog.far + 20 : Infinity, detailDist);
+      for (const c of world.cullFog) { const s = c.geometry.boundingSphere; c.visible = s.center.distanceTo(p) - s.radius < f; }
+    }
     if (detailDist === Infinity || !world || !world.cull) return;
     const cx = camera.position.x, cz = camera.position.z;
     for (const c of world.cull) { const dx = c.x - cx, dz = c.z - cz, rr = detailDist + c.r; c.m.visible = dx * dx + dz * dz <= rr * rr; }
