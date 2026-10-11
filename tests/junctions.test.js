@@ -1,5 +1,5 @@
 // The junctions of the open roads (def.sideRoads, Track.stubs): the streets, service roads, driveways and tracks that meet the road, from
-// OpenStreetMap, on every track that has them (Vršič, Mulholland Highway, Big Sur, Chapman's Peak, Uncompahgre, Los Caracoles, Katu-Jaryk).
+// OpenStreetMap, on every track that has them (Vršič, Mulholland Highway, Big Sur, Chapman's Peak, Uncompahgre, Los Caracoles, Katu-Jaryk, Palomar Mountain).
 // 1. the data: in order along the road, both sides, a sensible width and length, within the race, inside the terrain's map; a few of the real
 //    ones by name (Cornell School Road at the start of Mulholland, the Old Coast Road at Bixby Creek, Engineer Pass Road ...)
 // 2. the mouths as on the real roads: each corner rounded by the kerb return (an arc of radius S.cr tangent to the road's edge and to the
@@ -19,12 +19,12 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu'];
+const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine'];
 const NAMED = { mulholland: ['Cornell School Road', 'Simes Lane', 'Seminole Drive', 'Lower Brewster Road'], bigsur: ['Coast Road'], uncompahgre: ['Engineer Pass Road'], chapman: ['Military Road'], vrsic: ['Borovška cesta', 'Koroška ulica'] };
 
 // every track with side roads is on the list (an open road), the others have none
 // (Medvode's side roads are closed at the road's edge, def.sideClosed: the barrier straight across their mouths, the fence and the bollards in front of them; their tests: medvode-fence, medvode-props)
-check('tracks: the open roads with side roads that can be driven into are these seven', C.TRACKS.filter(d => d.sideRoads && d.sideRoads.length && !d.sideClosed).map(d => d.id).sort().join() === IDS.slice().sort().join() && C.TRACKS.filter(d => d.sideRoads).every(d => d.open),
+check('tracks: the open roads with side roads that can be driven into are these eight', C.TRACKS.filter(d => d.sideRoads && d.sideRoads.length && !d.sideClosed).map(d => d.id).sort().join() === IDS.slice().sort().join() && C.TRACKS.filter(d => d.sideRoads).every(d => d.open),
   C.TRACKS.filter(d => d.sideRoads && !d.sideClosed).map(d => d.id + ' ' + d.sideRoads.length).join(', ') + '; closed at the road: ' + C.TRACKS.filter(d => d.sideRoads && d.sideClosed).map(d => d.id + ' ' + d.sideRoads.length).join(', '));
 
 for (const id of IDS) {

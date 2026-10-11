@@ -89,7 +89,7 @@ const t0 = Date.now(), orig = Math.random;
     iCars[0] > iTrack && iCars[iCars.length - 1] < iCore && iCars.every((v, i) => !i || v === iCars[i - 1] + 1), cars.length + ' tags');   // (js/lang.js may sit between the tracks and the vehicles)
   // the real car the retired model at index 5 once was: gone from the game, its packed model (js/data/p206.js) and its source (a .glb file),
   // its maker's name nowhere in the page, the scripts, the styles, the tools, the tests or the READMEs, nor in a file's name (the name is
-  // split here, so this file does not carry it either)
+  // split here, so this file does not carry it either). js/data/ also holds tracks' data (Montréal's): only that packed model is barred from the page
   const BRAND = new RegExp(['peu', 'geot'].join(''), 'i'), hits = [], glbs = [];
   const scan = (rel) => { const f = path.join(ROOT, rel); if (BRAND.test(rel)) hits.push(rel);
     if (fs.statSync(f).isDirectory()) { for (const e of fs.readdirSync(f)) if (e !== 'node_modules' && e !== 'test-results' && e !== '.git') scan(path.join(rel, e)); return; }
@@ -97,7 +97,7 @@ const t0 = Date.now(), orig = Math.random;
     else if (/\.(js|mjs|cjs|html|css|md|json|webmanifest|txt|svg|yml|yaml)$/i.test(rel) && BRAND.test(fs.readFileSync(f, 'utf8'))) hits.push(rel); };
   for (const e of fs.readdirSync(ROOT)) if (e !== 'node_modules' && e !== 'test-results' && e !== '.git' && e !== '.claude') scan(e);
   check('the real car is gone: no word of its maker in the page, the scripts (js/**), the styles, the tools, the tests or the READMEs (nor in a file\'s name); its packed model (js/data/p206.js) and its 3D model file (.glb) not in the game, not linked',
-    !hits.length && !glbs.length && !fs.existsSync(path.join(ROOT, 'js', 'data', 'p206.js')) && !S.some(s => /^js\/data\//.test(s)), JSON.stringify({ hits: hits.slice(0, 8), glbs }));
+    !hits.length && !glbs.length && !fs.existsSync(path.join(ROOT, 'js', 'data', 'p206.js')) && !S.some(s => /^js\/data\/p206\b/i.test(s)), JSON.stringify({ hits: hits.slice(0, 8), glbs }));
 }
 let C;
 try { C = loadCore(); } catch (e) { check('Core loads with every vehicle file (loadCore names a file that breaks it)', false, e.message); console.log(`FAIL: ${bad} of ${n} checks`); process.exit(1); }
@@ -225,6 +225,13 @@ const MEAS = {};
     check(`${id}: wreckCar takes all ${names.length} parts off (the 4 wheels only with damage on), the same every time; the repair puts it all back`, all && vis && wreckState(b) === wreckState(c3) && back,
       `lost ${Object.keys(b.lost).length}/${names.length}, wheels ${b.wreck.wl}, visual-only wheels ${v.wreck.wl}, repaired ${back}`);
     if (M.aero && PT.wing) { const c = new C.Car(M, { phys: 'cs' }), k0 = c.aeroK; C.detachPart(c, 'wing'); check(`${id}: losing the wing takes its share of the downforce (df ${PT.wing.df})`, Math.abs(k0 - c.aeroK - M.aero * PT.wing.df) < 1e-12 && c.aeroK < k0, `${k0} -> ${c.aeroK}`); }
+  }
+  { // a part mounted on another (its entry's on: KOLIBRI's number plate and rear wiper on the tailgate) comes off with it, each once
+    const K = model('kolibri'), c = new C.Car(K, { phys: 'cs' }); c.dmgMode = 2; C.detachPart(c, 'trunk');
+    const d = new C.Car(K, { phys: 'cs' }); d.dmgMode = 2; C.detachPart(d, 'plate');
+    check('KOLIBRI: the number plate and the rear wiper go with the tailgate they are mounted on (each its own piece, once); the plate alone leaves the tailgate on',
+      c.lost.trunk && c.lost.plate && c.lost.wiperRear && c.detach.join() === 'trunk,plate,wiperRear' && d.lost.plate && !d.lost.trunk && d.detach.join() === 'plate',
+      'tailgate off: ' + c.detach.join(' ') + '; plate off: ' + d.detach.join(' '));
   }
   { // toughness (model.dmgK) multiplies; the police factor on top
     const T = model('titan'), K = model('mravlja'), a = new C.Car(T, { phys: 'cs' }), b = new C.Car(K, { phys: 'cs' }), c = new C.Car(model('rally'), { phys: 'cs' });
@@ -653,7 +660,7 @@ if (!only.length) {
         ${clone({ id: 'zzglb', name: 'ZZ GLB', glb: 'zz', field: ['zzglb'], look: null })}, ${clone({ id: 'zzskin', name: 'ZZ SKIN', glb: 'zz', field: ['zzskin'] })},
         ${clone({ id: 'zzbare', name: 'ZZ BARE', glb: 'zz', field: ['zzbare'], look: null })}, ${clone({ id: 'zzx1', parts: pc({ extra: { spoilerx: true } }) })}, ${clone({ id: 'zzx2', parts: pc({ over: { wheelFL: { r: 0.9 } } }) })},
         ${clone({ id: 'zzx3', parts: pc({ extra: { skirt: { z: 2, th: 0.6, cth: 0.5, m: 2, r: 0.5, h: 0.05, lx: 0, lz: -1, f: 0.2 } } }) })}, ${clone({ id: 'zzx4', arc: { amax: 1.7, kv: 2, rmin: 4.2, bscale: 9 } })},
-        ${clone({ id: 'zzbs', name: 'ZZ BS', arc: { amax: 1.7, kv: 2, rmin: 4.2, bscale: 1.3 }, parts: pc({ over: { doorL: { rW: 0.3 } } }) })});`);
+        ${clone({ id: 'zzx5', parts: pc({ extra: { badge: { z: 1, th: 0.4, m: 1, r: 0.1, h: 0.02, lx: -1, lz: 0, f: 0.4, on: 'nosuch' } } }) })}, ${clone({ id: 'zzbs', name: 'ZZ BS', arc: { amax: 1.7, kv: 2, rmin: 4.2, bscale: 1.3 }, parts: pc({ over: { doorL: { rW: 0.3 } } }) })});`);
   } finally { console.warn = warn; }
   const m = (id) => X.MODELS.find(o => o.id === id), ev = m('ev'), skipped = X.DEFS_SKIPPED.map(s => s.id).sort();
   check('patch defs: one attaches its fields to a vehicle (the STRELA EV: category, part table with its extra, price, sound preset, look, names; the Core without the patch untouched)', ev.cat === 'reli' && X.partsOf(ev) === ev.parts && ev.parts.spoiler && ev.parts.wheelRR.wh === 3 &&
@@ -666,10 +673,10 @@ if (!only.length) {
     m('titan').fieldN === 5 && m('titan').def.desc === 'Drugo besedilo.' && X.DEFS.find(d => d.id === 'titan' && !d.patch).desc !== 'Drugo besedilo.' &&
     X.fuelTank(m('titan')) === 150 && X.fuelTank(m('zzok')) === 33 && C.fuelTank(model('titan')) === 210 && C.fuelTank(model('raketa')) === 30);   // (the fuel: a def's own tank, a patch's)
   const why = (id) => (X.DEFS_SKIPPED.find(s => s.id === id) || {}).why || '';
-  check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, a tank below 0, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range); good ones register as given (bscale kept, rW over a standard r)',
-    skipped.join() === ['hatch', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zztank', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].join() && /downforce/.test(why('muscle')) && /tank/.test(why('zztank')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) &&
+  check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, a tank below 0, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range, a part mounted on no part); good ones register as given (bscale kept, rW over a standard r)',
+    skipped.join() === ['hatch', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zztank', 'zzx1', 'zzx2', 'zzx3', 'zzx4', 'zzx5'].join() && /downforce/.test(why('muscle')) && /tank/.test(why('zztank')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) && /on: nosuch/.test(why('zzx5')) &&
     X.MODELS.length === C.MODELS.length + 5 && X.MODELS.slice(0, C.MODELS.length).every((o, i) => o.id === C.MODELS[i].id) && X.ARC.zzbs.bscale === 1.3 && Math.abs(m('zzbs').parts.doorL.r - 0.3 * m('zzbs').wid) < 1e-12 && X.ARC.zzok.bscale === 1,
-    'skipped ' + skipped.join(', ') + '; ' + ['muscle', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].map(id => id + ': ' + why(id)).join(' / '));
+    'skipped ' + skipped.join(', ') + '; ' + ['muscle', 'zzx1', 'zzx2', 'zzx3', 'zzx4', 'zzx5'].map(id => id + ': ' + why(id)).join(' / '));
   { // a patched one of the 11 with a part table of its own breaks apart as a registered vehicle does (the pico, the STRELA EV)
     const pico = m('pico'), HX = require('./lib/handling.js')(X);
     const w = new X.Car(pico, { phys: 'cs' }); w.dmgMode = 2; X.wreckCar(w);
