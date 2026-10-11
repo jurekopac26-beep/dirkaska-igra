@@ -353,12 +353,16 @@
     const ss = s.toFixed(3).padStart(6, '0');
     return (pad ? String(m).padStart(2, '0') : m) + ':' + ss;
   }
-  function toast(txt, ms) {   // (its end on the clock: in a race hudCol moves it on while the toast waits for room in the column)
-    const el = $('toast'); el.textContent = txt; el.classList.add('show'); toastEnd = performance.now() + (ms || 2600);
-    clearTimeout(toast._t); const tick = () => { const left = toastEnd - performance.now(); if (left > 1) toast._t = setTimeout(tick, left); else el.classList.remove('show'); };
+  // (its end on the clock: in a race hudCol moves it on while the toast waits for room in the column, by TOAST_WAIT s at most: what waits
+  // longer is not shown any more; tag: what it is about, e.g. 'pit': gone with the pit stop's autopilot, pitFree)
+  function toast(txt, ms, tag) {
+    const el = $('toast'); el.textContent = txt; el.classList.add('show'); toastEnd = performance.now() + (ms || 2600); toastCap = toastEnd + TOAST_WAIT * 1000; toastTag = tag || '';
+    clearTimeout(toast._t); const tick = () => { const left = toastEnd - performance.now(); if (left > 1) toast._t = setTimeout(tick, left); else { el.classList.remove('show'); toastTag = ''; } };
     toast._t = setTimeout(tick, ms || 2600); hudCol(0);
   }
-  let toastEnd = 0;
+  function toastOff(tag) { if (tag && toastTag !== tag) return; clearTimeout(toast._t); $('toast').classList.remove('show', 'wait'); toastTag = ''; }   // (tag: only a toast about that)
+  const TOAST_WAIT = 6;
+  let toastEnd = 0, toastCap = 0, toastTag = '';
   function showMsg(txt, cls, dur) {
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
@@ -1714,6 +1718,12 @@
     const T = track, pts = T.cpS.map((s, k) => ['CP' + (k + 1), s]).concat([[tr('CILJ'), T.finishS]]);
     return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
       return '<tr><td>' + p[0] + '</td>' + (alt ? '<td>' + ttWhere(T, p[1]) + '</td>' : '') + '<td>' + fmt(t, true) + '</td><td>' + (isFinite(pb) ? fmt(pb, true) : '\u2013') + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
+  }
+  // the same splits for the column under the map at the finish (the map's width): each point and the difference to the record (none yet: the time)
+  function splitMini(r) {
+    const pts = track.cpS.map((_, k) => 'CP' + (k + 1)).concat([tr('CILJ')]);
+    return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
+      return '<tr><td>' + p + '</td>' + (isFinite(dd) ? '<td class="' + dCls(dd) + '">' + sgn(dd) + '</td>' : '<td>' + fmt(t) + '</td>') + '</tr>'; }).join('');
   }
   // leaderboard rows (top 10); the given run highlighted, and appended below when it did not make the top 10
   function boardRows(board, me) {
@@ -3095,7 +3105,7 @@
     if (e === 'enter') {
       if (pa.st === 'merge') return;   // (back over the line during the countdown: nothing new)
       const P = race.player, b = race._boxD(P), stop = b != null && race.track.boxX(P.q.s, b) < 0;   // (its box ahead: a stop; running wide over the line at the way out: only the lane's limiter until back over it)
-      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200); }
+      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); }   // (only while the autopilot drives: pitFree)
       else showMsg(tr('BOKSI'), 'gold', 1.4);
       Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2);
     }
@@ -3113,7 +3123,7 @@
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
-    $('h-pit').classList.remove('on');
+    $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
     pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false;
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
   }
@@ -3138,13 +3148,13 @@
       else if (P.pitState === 'stop') { k = PB[0] + (PB[1] - PB[0]) * clamp(1 + x / 40, 0, 1); lbl = tr('Boks'); }
       else { k = PB[0] * clamp((pa.d0 + x) / Math.max(1, pa.d0 - 40), 0, 1); lbl = tr('Vstop'); }
     } else if (pa.st === 'merge') { k = PB[3] + (1 - PB[3]) * clamp(1 - pa.t / PIT_OUT, 0, 1); lbl = tr('Prevzameš čez {0}', pa.n || 1); }
-    if (k < 0) { if (el.classList.contains('on')) el.classList.remove('on'); return; }
+    if (k < 0) { if (el.classList.contains('on')) { el.classList.remove('on'); $('touch').classList.remove('ap'); } return; }
     pa.k = Math.max(pa.k, k);
     const w = (pa.k * 100).toFixed(1) + '%', bar = el.lastElementChild.firstElementChild, ttl = tr('AVTOPILOT · spusti plin');
     if (el.firstElementChild.textContent !== ttl) el.firstElementChild.textContent = ttl;
     if (el.children[1].textContent !== lbl) el.children[1].textContent = lbl;
     if (bar.style.width !== w) bar.style.width = w;
-    if (!el.classList.contains('on')) el.classList.add('on');
+    if (!el.classList.contains('on')) { el.classList.add('on'); $('touch').classList.add('ap'); }   // (#touch.ap: no tilt meter while the autopilot steers, css)
   }
 
   /* ---------------- HUD ---------------- */
@@ -3616,20 +3626,21 @@
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('h-msg').className = ''; }
   }
   // the column under the minimap (css --map-*: its right edge and width): the height profile (a time trial), the destroyed car's words, the pit
-  // stop's progress, the big message, the team radio, the toast, and on a phone on its side the timing tower last. Each right under the one
-  // above, nothing over the middle of the track, never over the pedals (nor the steering, the police's radio and arrows, the start lights) below: when it does
-  // not all fit, the tower shows fewer rows (or none), the letters get smaller, then the toast and then the radio wait for room (their time
-  // stopped meanwhile). The big message as large as the width allows, in at most three lines. Laid out again only when what shows changes
-  const COL_GAP = 4, COL_K = [1, 0.9, 0.82];
+  // stop's progress, the big message, a time trial's splits at the finish, the team radio, the toast, and on a phone on its side the timing
+  // tower last. Each right under the one above, nothing over the middle of the track, never over the pedals (nor the steering, the police's
+  // radio and arrows, the start lights) below: when it does not all fit, the tower shows fewer rows (or none), the letters get smaller, then
+  // the toast and then the radio wait for room (their time stopped meanwhile, the toast's by TOAST_WAIT s at most). The big message as large
+  // as the width allows, in at most three lines. Laid out again only when what shows changes
+  const COL_GAP = 4, COL_K = [1, 0.9, 0.82], MSG_MIN = 10;
   function hudCol(dt) {
     const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
     const on = bg === 'race' && screen === 'none' && !replay && !orientBlock && !hud.classList.contains('off') && !hud.classList.contains('shot');
     if (T.classList.contains('col') !== on) T.classList.toggle('col', on);
     if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
-    if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd += (dt || 0) * 1000;   // (waiting for room: its time stopped)
-    const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), tch = $('touch');
+    if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
+    const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), tch = $('touch');
     const tower = W > H && tw && S.tower && hud.classList.contains('tw') ? TW : null;   // (upright: in the left column under the place)
-    const sh = [hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, M.classList.contains('show') && M, R.classList.contains('on') && R, T.classList.contains('show') && T];
+    const sh = [hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
     const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
@@ -3639,15 +3650,19 @@
     if (hud.classList.contains('pol')) obs.push('h-radio', 'h-tail');
     if (lights) obs.push('h-lights');
     for (const id of obs) { const e = $(id); if (!e || !e.offsetParent) continue; const r = e.getBoundingClientRect(); if (r.height > 0 && r.left < m.right && r.right > m.left && r.top > m.bottom) lim = Math.min(lim, r.top - COL_GAP); }
-    if (M.classList.contains('show') && hcol.fit !== M.textContent + '@' + m.width) { hcol.fit = M.textContent + '@' + m.width; hcol.f = fitMsg(M, 22, 12); }
-    if (P.classList.contains('on')) {   // (the progress bar's label: one size for all of them, the longest on one line)
+    if (M.classList.contains('show') && hcol.fit !== M.textContent + '@' + m.width) { hcol.fit = M.textContent + '@' + m.width; hcol.f = fitMsg(M, 22, MSG_MIN); }
+    if (P.classList.contains('on')) {   // (the progress bar's label: one size for all of them, the longest on one line; the title on one line down to 8 px, else in two)
       const S2 = P.children[1], c = hcol.cx || (hcol.cx = document.createElement('canvas').getContext('2d')); c.font = '700 12px ' + getComputedStyle(S2).fontFamily;
       const lw = Math.max(...[tr('Prevzameš čez {0}', 3), tr('Popravilo {0} %', 99), tr('Izvoz'), tr('Vstop'), tr('Boks')].map(t => c.measureText(t).width));
-      S2.style.fontSize = clamp(12 * (S2.clientWidth - 2) / lw, 9, 12).toFixed(1) + 'px'; }
+      S2.style.fontSize = clamp(12 * (S2.clientWidth - 2) / lw, 9, 12).toFixed(1) + 'px';
+      const B = P.firstElementChild; B.classList.remove('wrap'); B.style.fontSize = '';
+      if (B.scrollWidth > B.clientWidth) { const f = Math.floor(parseFloat(getComputedStyle(B).fontSize) * (B.clientWidth - 1) / B.scrollWidth * 10) / 10; if (f >= 8) B.style.fontSize = f + 'px'; else B.classList.add('wrap'); } }
+    if (X.classList.contains('show')) {   // (the splits: as large as the width allows, 8 to 11 px)
+      X.style.fontSize = ''; const f0 = parseFloat(getComputedStyle(X).fontSize), t = X.querySelector('table'); if (t && t.offsetWidth > X.clientWidth - 8) X.style.fontSize = Math.max(8, Math.floor(f0 * (X.clientWidth - 8) / t.offsetWidth * 10) / 10) + 'px'; }
     // the sizes, then what waits: the first that fits
     let y = 0, skip = [];
     out: for (const sk of [[], [T], [T, R]]) for (const k of COL_K) {
-      M.style.fontSize = Math.max(12, Math.round(hcol.f * k)) + 'px'; R.style.fontSize = T.style.fontSize = (11.5 * k).toFixed(1) + 'px';
+      M.style.fontSize = Math.max(MSG_MIN, Math.round(hcol.f * k)) + 'px'; R.style.fontSize = T.style.fontSize = (11.5 * k).toFixed(1) + 'px';
       const hs = L.map(e => (sk.includes(e) ? -1 : e.offsetHeight)); y = m.bottom; for (const h of hs) if (h >= 0) y += COL_GAP + h;
       skip = sk; if (y <= lim) break out;
     }
@@ -3966,7 +3981,7 @@
         } else if (race.timeTrial) {   // time trial: store the run, finish popup with the difference to the previous record
           const r = ttFinish(), d = r.prev ? r.time - r.prev : NaN, el = $('h-split');
           el.textContent = tr('CILJ  {0}', fmt(r.time, true)) + (r.prev ? '  ' + sgn(d) : ''); el.className = 'show ' + (r.prev ? dCls(d) : 'even'); splitT = 5;
-          const sp = $('h-ttsp'); sp.innerHTML = '<table><thead><tr><th></th><th>' + tr('Čas') + '</th><th>' + tr('Rekord') + '</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, false) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results
+          const sp = $('h-ttsp'); sp.innerHTML = '<b>' + tr('Vmesni časi') + '</b><table><tbody>' + splitMini(r) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results (in the column under the map, hudCol)
           showMsg(r.newPB ? tr('NOV REKORD!') : tr('CILJ! {0}', sgn(d)), r.newPB ? 'fast' : 'gold', 4);
           Comm.say(ownLine(track.def, ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end')), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
           { const k = medalOf(track.def, r.time); if (k >= 0) Comm.say('medal', { medal: MEDAL_EN[k] }, 3, { ttl: 9000 }); }   // (waits for the finish call)
@@ -4979,7 +4994,7 @@
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms), get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
