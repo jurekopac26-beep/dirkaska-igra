@@ -1515,7 +1515,7 @@
   // (pause menu) goes straight to the race: the usual grid, the player 12th.
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
   const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
-  function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
+  function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
   function qsimStep(Q, ms) {   // the rivals' laps, for about ms milliseconds; true when all are done
     if (Q.phys !== physOf()) { Q.phys = physOf(); Q.sims = null; }   // (the physics changed in the pause menu: their laps again with it)
     const G = Q.sims || (Q.sims = { k: 0, r: null, t: 0, times: [] }), cap = track.len / 8 + 120, t0 = performance.now();
@@ -1581,6 +1581,9 @@
       school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 } };
       race = new Core.Race(track, schoolOpts(school.L));
       if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0);
+    } else if (nv) {   // NEW VERSION · TEST 1: alone, no laps to count (free driving), dry
+      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: 1, laps: 999, fuel: false, damage: +S.damage, phys: physOf(), rain: 0, weather: null, tyres: false, compounds: false, flags: false, chars: false, slip: false, faults: false, radio: false }));
+      race.nv = true;
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
@@ -1645,6 +1648,28 @@
     if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
     if (on && mp.ch && mp.ch.on && !mp.ch.done) showMsg(tr('PRVENSTVO · DIRKA {0}/{1}', mp.ch.round + 1, mp.ch.tracks.length) + wetTxt, 'gold', 2.2);   // (a championship over the internet: which race)
     if (race.chal) { showMsg(tr('IZZIV: {0} · {1}', race.chal.name.toUpperCase(), fmt(race.chal.time, true)) + wetTxt, 'gold', 2.2); Comm.say('chalIntro', { name: race.chal.name, time: spkTime(race.chal.time) }, 3); }
+    $('hud').classList.toggle('nv', !!race.nv);   // NEW VERSION · TEST 1: the new map over the track (once), then free driving from HOME (again after a restart)
+    if (race.nv) { if (nv.built && nv.home) race.player.place(nv.home.x, nv.home.z, nv.home.h); else if (!nv.built) nvStart(); }
+  }
+  // NEW VERSION · TEST 1: js/newmap.js (loaded only now: its stamped address is a <link> of a kind the browser does not fetch), then the
+  // new map built over the track (window.MK.hub4: the infield's construction site and driving school, the garages, the islands, the
+  // motocross track ...), the car at HOME; the car then drives on the new map's ground (track.ground2, Car.stepCS). A wait screen meanwhile.
+  function nvStart() {
+    const box = document.createElement('div'); box.id = 'nv-load'; box.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(5,8,12,.78);font-family:Roboto,sans-serif;color:#fff';
+    box.innerHTML = '<div style="width:min(320px,86vw);padding:18px 20px;border-radius:16px;background:rgba(9,13,20,.95);border-top:4px solid #ffd34d;text-align:center"><div style="font:800 11px Roboto,sans-serif;letter-spacing:1.6px;color:#ffd34d">NEW VERSION · TEST 1</div><div style="font:900 italic 22px Roboto,sans-serif;margin:6px 0 8px">' + esc(tr('Nalagam novo mapo …')) + '</div><div style="font:600 12px/1.4 Roboto,sans-serif;color:#b9c2cf">' + esc(tr('Začneš pri HOME. Zapelji v garažo in odpre se njen meni.')) + '</div></div>';
+    document.body.appendChild(box); paused = true;
+    const done = () => { box.remove(); paused = false; Input.reset(); };
+    const build = () => {
+      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
+      catch (e) { nv.err = String(e && e.message || e); console.error('the new map failed', e); toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); }
+      done();
+    };
+    const later = () => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(build, 30)));   // (the wait screen on show before the long build)
+    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined') { later(); return; }
+    const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
+      sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = next; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
+      document.head.appendChild(sc); };
+    load('newmap', () => load('nvmenu', later));   // (the map, then its garages' menus)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -1680,6 +1705,7 @@
   }
   function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and the course flyover, left for the title)
   function toTitle() {
+    if (nv) { if (nv.built || nv.err) { location.reload(); return; } nv = null; }   // (NEW VERSION · TEST 1: the new map changed the track's world, the page again)
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
@@ -1808,6 +1834,7 @@
     { id: 'drift', track: 'jezero', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: bočno, hitro in brez udarcev (udarec izbriše verigo).' },
   ];
   let school = null;   // the lesson under way: { L, s0, v100, on, all, D, done }
+  let nv = null;   // NEW VERSION · TEST 1 (the title's button): { built, err }; the new map (js/newmap.js) over Toskana, driven freely from HOME
   let schoolData = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-school') || 'null'); if (isObj(j)) for (const k in j) { const e = j[k]; if (isObj(e) && Number.isFinite(e.best) && [0, 1, 2, -1].includes(e.medal)) schoolData[k] = { best: e.best, medal: e.medal }; } } catch (_) { schoolData = {}; }
   const schoolKey = (L) => L.id + '@' + physOf();
@@ -3513,10 +3540,10 @@
     updateCodrv(P);
     // wrong way
     if (phase === 'racing') {
-      if (P.wrongT > 1.1) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
-      // stuck or the wrong way: back onto the road (stopped at the police checkpoint on purpose: no rescue); a lost wheel on a track without
+      if (P.wrongT > 1.1 && !race.nv) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
+      // stuck or the wrong way: back onto the road (stopped at the police checkpoint on purpose, or in a garage of the new map: no rescue); a lost wheel on a track without
       // pits (not a time trial): the marshals put it back on (6 s)
-      const W = P.wreck, stuck = (P.stuckT > 2.5 || P.wrongT > 4) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0)) && !track.def.pit && !race.timeTrial && !P.finished;
+      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !(race.nv && typeof NVMenu !== 'undefined' && NVMenu.on()), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0)) && !track.def.pit && !race.timeTrial && !P.finished;
       const rb = $('btn-rescue'), rt = !stuck && wheel ? tr('\u21ba Namesti kolo') : tr('\u21ba Na progo');
       rb.classList.toggle('off', !(stuck || wheel)); if (rb.textContent !== rt) rb.textContent = rt;
     }
@@ -3721,7 +3748,7 @@
     let off = 0; for (let k = 0; k < 4; k++) { const sf = P.ws[k]; if (sf === 2 || sf === 3 || sf === 4) off++; }
     if (off >= 3 && P.speed > 8 && !P.air) cs.offT += dt; else cs.offT = 0;
     if (cs.offT > 0.8 && cool('off', 22)) { Comm.say('offtrack', null, 1); cs.offT = 0; }
-    if (P.wrongT > 1.1 && cool('wrong', 10)) Comm.say('wrong', null, 3);
+    if (P.wrongT > 1.1 && !race.nv && cool('wrong', 10)) Comm.say('wrong', null, 3);   // (NEW VERSION · TEST 1: free driving, no wrong way)
     // a car glued to the rear bumper
     const behind = ord[pos], gapB = behind ? P.dist - behind.dist : 99;
     if (gapB > 0 && gapB < 12) cs.pressT += dt; else cs.pressT = 0;
@@ -3787,6 +3814,9 @@
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
     if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
       phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('ČAS SE ZAČNE NA ČRTI'), 'gold', 1.6); Comm.say('qualiGo', null, 3);
+    } else if (phase === 'intro' && race.nv && nv && nv.built) {   // NEW VERSION · TEST 1: no lights (nothing to race), the player drives off as soon as the map is built
+      phase = 'racing'; phaseT = 0; race.start(); showMsg('NEW VERSION · TEST 1', 'gold', 1.6);
+      if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && phaseT > 1.3 && race.pol && race.pol.chk) {   // the run from the police up to its checkpoint: no lights, the player just drives off (nobody after them yet)
       phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('VOZI PROTI VRŠIČU'), 'gold', 1.6);
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
@@ -4525,6 +4555,7 @@
     }
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
+    if (race.nv && nv && nv.built && typeof NVMenu !== 'undefined') NVMenu.tick(race.player, !paused && screen === 'none' && phase === 'racing' && !orientBlock && !replay);   // (NEW VERSION · TEST 1: a garage's menu while the car stands on its coloured floor, js/nvmenu.js)
     if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
     if (replay) { replayFrame(hlRec ? hlvDt(dtRaw) : dt); return; }   // (the best moment being recorded: on the real clock, as the video's, also when the frames are slow)
     const inp = Input.update(dt);
@@ -4794,6 +4825,8 @@
       ensureTrack(S.track, () => fn(startRace));
     },
     setLast(id) { S.lastTrack = id; save(); },
+    // NEW VERSION · TEST 1 (the title's button): Toskana, alone and free, the new map over it (nvStart)
+    newVer() { const d = Core.TRACKS.find(x => x.id === 'toskana'); if (!d) return; S.track = d.id; save(); refreshSegs(); nv = { built: false }; this.launch((start) => start()); },
     act: (a, el) => onAction(a, el),
     click: () => { Sfx.resume(); Sfx.click(); },
     visible: () => screen === 'title' || screen === 'track',
