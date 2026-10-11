@@ -2976,7 +2976,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'iso', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
-  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
+  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1, auto: 0, sz: 1, st: 0 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only); auto: Avtomatska kamera (0 off, 1 zoom, 2 zoom and tilt), sz and st its distance factor and tilt now
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
@@ -7302,12 +7302,32 @@ const Render = (function () {
   }
 
   /* ---------------- camera ---------------- */
+  // a car's top speed (m/s) for the Avtomatska kamera: the one the fleet test measures (its def's expect.vmax), else what its top gear gives at the
+  // redline, a little under it (the drag holds the car back); kept per model
+  const topSpd = new WeakMap();
+  function topSpeedOf(M) {
+    if (!M || typeof M !== 'object') return 64;
+    let v = topSpd.get(M);
+    if (v == null) {
+      const X = M.expect || (M.def && M.def.expect), E = X && X.vmax, G = M.gears;
+      v = E ? (E[0] + E[1]) / 7.2 : G && G.length && M.final && M.rw && M.redline ? 0.95 * M.redline * 2 * Math.PI * M.rw / (60 * G[G.length - 1] * M.final) : 64;
+      v = clamp(Number.isFinite(v) ? v : 64, 20, 110); topSpd.set(M, v);
+    }
+    return v;
+  }
   function updateCamera(dt, target, mode, alpha) {
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
-    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
+    // Avtomatska kamera (Nastavitve; cam.auto 1 or 2): the chase and iso cameras further out the faster the car goes against its own top
+    // speed: stopped 0.75 of the distance, at half its top speed 1, flat out 1.3 (the car stays where it is in the picture, the view widens);
+    // 2 also tilts the chase camera instead of Nagib kamere, 0 % stopped to 30 % flat out (the iso camera looks north whatever the travel,
+    // a tilt there would not look ahead). Eased over about a second, so braking for a bend does not jolt the view; in the pit box as close
+    // as without it
+    const tA = cam.auto ? clamp(spd / topSpeedOf(c.m), 0, 1) : 0, aZ = cam.auto && pitZ === 1 ? 0.75 + 0.45 * tA + 0.1 * tA * tA : 1, aT = cam.auto === 2 ? 0.3 * tA : 0;
+    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.sz = aZ; cam.st = aT; cam.init = true; }
+    { const kA = 1 - Math.exp(-dt * 0.8); cam.sz += (aZ - cam.sz) * kA; cam.st += (aT - cam.st) * kA; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
@@ -7335,11 +7355,11 @@ const Render = (function () {
       // travel, so a sliding car shows its angle)
       const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
       cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
-      cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
+      cam.zoom += (pitZ * (cam.auto ? 1 : 1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;   // (the Avtomatska kamera: its own distance, cam.sz)
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
-      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: 10/20/30 % flatter, the camera looks further ahead along the road; the distance D stays)
-      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
+      const D = (portrait ? 46 : 30) * cam.zoom * cam.sz * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - (cam.auto === 2 ? cam.st : cam.userTilt));   // (userTilt: 10/20/30 % flatter, the camera looks further ahead along the road; the distance D stays)
+      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * cam.sz * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
       const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
@@ -7377,14 +7397,14 @@ const Render = (function () {
       // SWGP2-style (measured from gameplay): north-up view tilted ~47 deg, ~66 m wide on a phone,
       // look-ahead of ~19 m along the direction of travel that saturates already at low speed,
       // so the car sits well off-centre and most of the screen shows the road ahead.
-      const sp = Math.max(spd, 1e-3), mag = 19 * Core.sstep(1.5, 16, spd);
+      const sp = Math.max(spd, 1e-3), mag = 19 * cam.sz * Core.sstep(1.5, 16, spd);
       const Lx = c.vx / sp * mag, Lz = c.vz / sp * mag;
       cam.lx += (Lx - cam.lx) * k1; cam.lz += (Lz - cam.lz) * k1;
-      cam.zoom += (pitZ * (1 + 0.1 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
-      const zf = cam.zoom * cam.userZoom;
+      cam.zoom += (pitZ * (cam.auto ? 1 : 1 + 0.1 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
+      const zf = cam.zoom * cam.sz * cam.userZoom;
       const D = 57 * zf, pitch = 0.82;
       // userBack (Nastavitve · Položaj avta): the car sits this many metres further back along its travel, so it reads lower in the frame
-      const bk = cam.userBack || 0, vmag = Math.hypot(c.vx, c.vz), bfx = vmag > 0.5 ? c.vx / vmag : Math.cos(h), bfz = vmag > 0.5 ? c.vz / vmag : Math.sin(h);
+      const bk = (cam.userBack || 0) * cam.sz, vmag = Math.hypot(c.vx, c.vz), bfx = vmag > 0.5 ? c.vx / vmag : Math.cos(h), bfz = vmag > 0.5 ? c.vz / vmag : Math.sin(h);
       tx = x + clamp(cam.lx, -20 * zf, 20 * zf) + bfx * bk; tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf) + bfz * bk; ty = baseY;
       px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
@@ -8307,6 +8327,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, topSpeedOf, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

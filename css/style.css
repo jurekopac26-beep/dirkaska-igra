@@ -302,6 +302,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .set-panel { width: min(640px, 94vw); height: 100%; display: flex; flex-direction: column; }
 .set-list { overflow-y: auto; flex: 1; padding-right: 6px; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 .set-list .row { border-bottom: 1px solid rgba(255,255,255,.06); padding-bottom: 7px; }
+.set-list .row.dim { opacity: .45; }   /* (a setting another one overrides for now: Nagib kamere under Avtomatski zoom in nagib) */
 .set-panel .btns { margin-top: 8px; }
 input[type=range] { width: 160px; accent-color: var(--curb); }
 .val { font: 700 italic 13px/1 var(--f-ui); color: var(--lcd); min-width: 3em; }
