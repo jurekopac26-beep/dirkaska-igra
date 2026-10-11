@@ -1054,7 +1054,8 @@ const Render = (function () {
        Render.carShot(o) a picture of the showroom car (a canvas): o { id, color, num, view (side front rear top: near-orthographic, with
        the grid, o.box [L, W, H] and the hubs; 34f 34r), w, h, span, at, cut (part ids off: the inside), grid, floor (false: no turntable),
        bg (a flat background colour), blob (false: no shadow blob), cam ({ p, t, fov }: a camera of its own, car frame), mark (points, car
-       frame: the canvas's .marks are their pixels) }; Render.kitGlassNear(id, color, stripe) (a car's copy: how many vertices are near a
+       frame: the canvas's .marks are their pixels), garage (true: the vehicle's detailed garage model, js/garage.js, where it has one;
+       else always its kit look) }; Render.kitGlassNear(id, color, stripe) (a car's copy: how many vertices are near a
        glass colour without being glass). node tests/browser/fleet.test.mjs (FLEET_ONLY=<id>): the budgets, the showroom's framing, the
        wheels, no seeing through the arches, the rims or an open top, the colours, the cockpit (and the driver seeing out of it), a lost
        part's and a crushed roof's ranges, the wreck (its pieces, the wheels off, the sag; as the player sees it: the fire and the smoke
@@ -4158,7 +4159,7 @@ const Render = (function () {
   }
   const _fp = new THREE.Vector3(), _flq = new THREE.Quaternion(), _fe = new THREE.Euler(), _fm = new THREE.Matrix4(), _fs = new THREE.Vector3(1, 1, 1);
   function attachRace(race) {
-    scDrop();
+    scDrop(); if (typeof Garage !== 'undefined') Garage.release();   // (the car screen's detailed model out of the graphics memory for the race)
     const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris(); xShardsReset(); xGroundReset(); rRng.s = 90217; dust = race.track.def.dust ? Object.assign({}, DUST0, race.track.def.dust) : null;
     if (race.debris) for (const d of race.debris) if (d.mesh) { d.mesh = null; remesh.add(d); }   // (a race under way drawn afresh: its pieces on the road made again from the new views: syncDebris)
@@ -8171,12 +8172,14 @@ const Render = (function () {
     }
     showFloor = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); showScene.add(showFloor);
   }
-  function setShowCar(model, color, num) {
+  // o.kit: the vehicle's own kit look even where it has a detailed garage model (the check sheets, tools/carshots.mjs, and the fleet
+  // test's looks); else a vehicle (or a retired one's heir) with a garage model (js/garage.js) is shown by that one
+  function setShowCar(model, color, num, o) {
     if (!showScene) initShowroom();
     showArgs = [model, color, num];
-    const prev = showCar;
+    const prev = showCar, G = typeof Garage !== 'undefined' && !(o && o.kit) && Garage.has(Core.heirOf(model).id);
     const fake = { m: model, color, num, stripe: true, isPlayer: false };
-    showCar = makeCarMesh(fake, { noMarker: true, show: true });
+    showCar = G ? Garage.view(Core.heirOf(model).id, { renderer, hi: carHi, color }) : makeCarMesh(fake, { noMarker: true, show: true });
     showCar.grp.position.set(0, 0, 0);
     showScene.add(showCar.grp);
     // framed by its size (a kart close, a truck from further off): the distance x clamp(max(len / 4.4, h / 1.45, wid / 1.9), .75, 1.55), the view
@@ -8185,7 +8188,7 @@ const Render = (function () {
     const h = Math.max(0.5, bg.boundingBox.max.y), k = clamp(Math.max(model.len / 4.4, h / 1.45, model.wid / 1.9), 0.75, 1.55);
     showFr.k = k; showFr.dy = h / 2 - 0.7 * k; showCar.h = h;
     const ring = Math.max(4.2, model.len / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
-    if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
+    if (prev && prev !== showCar) { showScene.remove(prev.grp); if (prev.garage) Garage.drop(prev); else disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again; a garage model: the garage keeps its own)
   }
   function showCamSet() {   // the showroom's camera for the screen's shape (landscape: the car left of the panel; portrait: above it), framed by the car's size
     const aspect = Math.max(1, window.innerWidth) / Math.max(1, window.innerHeight), portraitS = aspect < 1;
@@ -8230,7 +8233,7 @@ const Render = (function () {
   function carShot(o) {
     const M = Core.MODELS.find(m => m.id === o.id); if (!M || !renderer) return null;
     if (!showScene) initShowroom();
-    setShowCar(M, o.color != null ? o.color : 0xc0392b, o.num || 7);
+    setShowCar(M, o.color != null ? o.color : 0xc0392b, o.num || 7, { kit: !o.garage });   // (o.garage: the detailed garage model, where the vehicle has one)
     const W = o.w || 800, H = o.h || 450, v = o.view || 'side', ortho = ['side', 'front', 'rear', 'top'].indexOf(v) >= 0, car = showCar, hh = car.h;
     renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H;
     const fov0 = showCam.fov, up0 = showCam.up.clone(); showFloor.visible = o.floor !== false;
