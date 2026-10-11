@@ -6088,9 +6088,12 @@ const Render = (function () {
     const K = v.kit, R = { q: -1, kb: 0, ku: 0, P: null, D: null, idx: null, T: null, L: v.lights.map(L => L.clone()), dec: v.dec ? [v.dec.position.clone(), v.dec.quaternion.clone()] : null,
       parts: K ? Object.keys(K.dead) : Object.keys(v.parts).filter(n => !v.parts[n].visible), pi: 0, glass: false, lamps: false, trim: false, dirt0: v.dirtU ? v.dirtU.value : 0 };
     if (!(c.dmg > 0 || R.parts.length || v.roofStep > 0)) return R;
-    const A = v.body.geometry.attributes, g = K ? ownRnd(() => kitRecolour(K.E.geo.clone(), c.color, c.stripe !== false, c.num)) : null, B = g ? g.attributes : v.src.attributes;
-    R.P = { p: B.position.array, n: B.normal.array, c: B.color ? B.color.array : null }; if (g) g.dispose();   // (its arrays kept: nothing on the GPU)
-    R.D = { p: A.position.array.slice(), n: A.normal.array.slice(), c: A.color ? A.color.array.slice() : null }; R.idx = repDiff(R.D, R.P, A.position.count);
+    // the body as new to repair towards: the crash mode's own (its denser body: xc.rest, as built at xInit), else the model's (its arrays kept:
+    // nothing on the GPU); a layout that does not match (another density): the bodywork left as it is, the rebuild at the end puts it right
+    const A = v.body.geometry.attributes, xc = v.xc, g = K && !xc ? ownRnd(() => kitRecolour(K.E.geo.clone(), c.color, c.stripe !== false, c.num)) : null, B = g ? g.attributes : v.src ? v.src.attributes : null;
+    R.P = xc ? { p: xc.rest, n: xc.nor0, c: xc.col0 } : B ? { p: B.position.array, n: B.normal.array, c: B.color ? B.color.array : null } : null; if (g) g.dispose();
+    if (R.P && (R.P.p.length !== A.position.array.length || !R.P.n || (A.color && !R.P.c))) R.P = null;
+    R.D = { p: A.position.array.slice(), n: A.normal.array.slice(), c: A.color ? A.color.array.slice() : null }; R.idx = R.P ? repDiff(R.D, R.P, A.position.count) : null;
     if (K) { const t = v.tail.geometry, e = K.E.tail.attributes, TR = t.userData.tail || {}, out = new Uint8Array(t.attributes.position.count);   // (the tail lamps on a part hanging loose: turned back with it; one out: lit again with the lamps)
       for (const s of ['L', 'R']) if (K.tailOut[s] && TR[s]) out.fill(1, TR[s][0], TR[s][1]);
       const D = { p: t.attributes.position.array.slice(), n: t.attributes.normal.array.slice(), c: null }, P = { p: e.position.array, n: e.normal.array, c: null };
@@ -6122,6 +6125,8 @@ const Render = (function () {
     for (let k = 0; k < 4; k++) { const q = v.crack[k]; if (q) { v.bodyG.remove(q); q.geometry.dispose(); v.crack[k] = null; }   // (its material: the shared matCrack)
       if (!v.winBroken[k]) continue; v.winBroken[k] = 0;
       if (C && P) for (const t of v.glassTris[k]) { const o = t * 9, s = P.subarray(o, o + 9); C.array.set(s, o); R.D.c.set(s, o); } }   // (clear at once, not through the frost)
+    if (v.xtO) v.xtO.mesh.visible = false;   // (the damage table's broken glass (Razbijanje · nov način): the panes back in the body at once)
+    if (v.xtCut && C && P) { for (let i = 0; i < v.xtCut.length; i++) if (v.xtCut[i]) for (let q = 0; q < 3; q++) { C.array[i * 3 + q] = P[i * 3 + q]; R.D.c[i * 3 + q] = P[i * 3 + q]; } v.xtCut = null; }
     if (C && P) C.needsUpdate = true; v.crackDirty = null;
   }
   function repPart(v, R, name) {

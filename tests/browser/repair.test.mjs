@@ -72,6 +72,35 @@ try {
   });
   T.check('the HUD: the damage goes down as the crew works (red at the start, green once the bodywork is done)', /hsl\(0,/.test(hud.out[0]) && !/hsl\((0|120),/.test(hud.out[1]) && /hsl\(120,/.test(hud.out[2]) && /hsl\(120,/.test(hud.after), hud.out.join(' > ') + ' > ' + hud.after);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+
+  // Razbijanje · nov način (xBody, xGlass on): the player's denser body and the damage table's broken glass (KOLIBRI) repaired the same
+  // way: towards its own body as built (never the model's coarser one: no NaN at any step), the table's glass back in the body with the
+  // panes (its overlay hidden, the cut triangles drawn again)
+  {
+    const { page: pg, errors: er, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal' }, undefined, { seed: 777 });
+    await pg.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'kolibri'); });
+    await startTrack(pg, 'gozd');
+    const x = await pg.evaluate((US) => {
+      const g = window.__game, P = g.race.player; g.pause();
+      const fr = () => Render.frame(1 / 60, 1, P, g.S.camera, {});
+      g.sim(1, true); for (const h of [[0.3, 1, 0], [0.15, 0.45, -1], [0.3, -1, 0], [0.15, 0, 1]]) { Core.applyDamage(P, h[0], h[1] * P.m.len / 2, h[2] * P.m.wid / 2); fr(); }
+      for (let i = 0; i < 3; i++) fr();
+      const v0 = Render.viewOf(P), I = Render.crashInfo().cars.find(q => q.player);
+      const nan = () => { const a = Render.viewOf(P).body.geometry.attributes; let n = 0; for (const k of ['position', 'normal']) for (const q of a[k].array) if (!Number.isFinite(q)) n++; return n; };
+      const pre = { id: P.m.id, xOn: !!I.xOn, xd: I.xd, xt: !!I.xt, cut: !!v0.xtCut, overlay: !!(v0.xtO && v0.xtO.mesh.visible), nan: nan() };
+      P.pitState = 'repair'; P.pitDur = 4; const steps = [];
+      for (const u of US) { P.pitT = u * P.pitDur; fr(); const v = Render.viewOf(P); steps.push({ u, same: v === v0, rep: !!v.rep, P: !!(v.rep && v.rep.P), nan: nan(), cut: !!v.xtCut, overlay: !!(v.xtO && v.xtO.mesh.visible) }); }
+      g.race.repairCar(P); P.pitState = 'done'; fr(); P.pitState = null; fr();
+      g.resume();
+      return { pre, steps, after: nan() };
+    }, US);
+    await ctx.close();
+    console.log(`KOLIBRI (nov način): ${JSON.stringify(x.pre)}`); for (const q of x.steps) console.log(`  u ${q.u}: ${JSON.stringify(q)}`);
+    T.check('KOLIBRI in the new crash mode: its dense body and broken table glass before the repair', x.pre.id === 'kolibri' && x.pre.xOn && x.pre.xd > 0 && x.pre.xt && x.pre.cut && x.pre.overlay && x.pre.nan === 0, JSON.stringify(x.pre));
+    T.check('KOLIBRI in the new crash mode: repaired towards its own body (the same view, a target), no NaN at any step, none after', x.steps.every(q => q.same && q.rep && q.P && q.nan === 0) && x.after === 0, x.steps.map(q => `${q.u}:${q.P ? 'P' : '-'}${q.nan}`).join(' '));
+    T.check('KOLIBRI in the new crash mode: the table\'s broken glass back with the panes (its overlay hidden, the cut triangles drawn again from u 0.1)', x.steps.filter(q => q.u >= 0.1).every(q => !q.cut && !q.overlay), x.steps.map(q => `${q.u}:${+q.cut}${+q.overlay}`).join(' '));
+    T.check('KOLIBRI in the new crash mode: no page errors', !er.length, er.slice(0, 5).join(' | '));
+  }
 } finally {
   await browser.close(); await srv.close();
 }
