@@ -9,7 +9,7 @@
 // then the radio: hidden, its time stopped, the toast's for 6 s at most); upright everything fits at once. The pit stop in every way of
 // steering (buttons, wheel, tilt: no tilt meter while the autopilot steers), in Slovenian and in English; the toast of the way in gone with
 // the autopilot. A time trial's finish: its splits in the column under the message. The longest big messages on the narrowest phone in at
-// most three lines, no word sticking out. No handbrake button (ROČNA) on the screen in any steering mode.
+// most three lines, no word sticking out. No handbrake button (ROČNA) on the screen in any steering mode (and no handbrake in the input).
 //   node tests/browser/hudcol.test.mjs            (SHOTS=<folder>: a picture of each)
 import net from 'node:net';
 import path from 'node:path';
@@ -108,7 +108,7 @@ try {
         const g = document.getElementById('c-gas').getBoundingClientRect(), b = document.getElementById('c-brake').getBoundingClientRect();
         const o = { m, w: innerWidth, ids: vis.map(e => e.id).join(), words: T.innerText.replace(/\s+/g, ' ').trim(), drift: !!document.getElementById('c-drift'), apart: b.right <= g.left || g.right <= b.left, tall: m === 'tilt' || (Math.abs(b.height - g.height) < 1 && Math.abs(b.bottom - g.bottom) < 1) };
         if (m === 'buttons') { const x = b.left + b.width / 2, y = b.top - 20;
-          T.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); const s = Input.update(0.016); o.above = { brk: s.brk, hand: s.hand };
+          T.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); const s = Input.update(0.016); o.above = { brk: s.brk, hand: 'hand' in s };
           T.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); Input.update(0.016); }
         return o; }, m));
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `pedals-${m}-${k}.png`) });
@@ -117,7 +117,7 @@ try {
   }
   const PED = { buttons: 'c-left,c-right,c-brake,c-gas', wheel: 'c-wheel,c-brake,c-gas', tilt: 'c-brake,c-gas,tilt-ind' };
   T.check('no ROČNA (handbrake) button on the screen in any steering mode, on its side and upright: ZAVORA and PLIN side by side, as tall as each other (tilting: apart, the brake on the left); a touch where ROČNA was brakes',
-    pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === 0), JSON.stringify(pedals));
+    pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === false), JSON.stringify(pedals));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
     for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)

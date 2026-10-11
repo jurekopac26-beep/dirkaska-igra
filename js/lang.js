@@ -89,7 +89,7 @@
     'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.': 'When the lights go out, cover 100 m as quickly as you can. Press the throttle only once they are out: earlier is a jump start.',
     'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.': 'Speed down the straight and stop as close to the STOP line as you can, but not over it. Pass the 100 m board at 120 km/h at least.',
     'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.': 'Drive a lap on the racing line the helper draws (green: throttle, yellow: corner, red: brake, white: the braking point). As much of the lap on it as you can, within the time limit.',
-    'V 40 sekundah zberi čim več točk drsenja: bočno, hitro in brez udarcev (udarec izbriše verigo).': 'Collect as many drift points as you can in 40 seconds: sideways, fast and without knocks (a knock wipes out the chain).',
+    'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.': 'Collect as many drift points as you can in 40 seconds: turn hard into a corner and brake in it to make the car slide sideways. Points for the angle and the speed; a knock wipes out the chain.',
     'Štiri vaje z medaljami, vse z avtom KAZE RS (serijski, na suhem). Medalje za štart in drift ter časovna omejitev idealne linije so merjene ob vožnji avtopilota z istim avtom in fiziko.': 'Four lessons with medals, all in the KAZE RS (stock, in the dry). The medals of the start and the drift and the racing line\u2019s time limit are measured against the autopilot driving the same car with the same physics.',
     'Idealna linija na cesti pred avtom: zeleno plin, rumeno ovinek, rdeče zaviranje': 'The racing line on the road ahead: green throttle, yellow corner, red braking',
     'Tvoj najboljši: {0}': 'Your best: {0}', ' točk': ' points',
@@ -310,7 +310,7 @@
     'Celoten zaslon tukaj ni na voljo. Odpri igro v Chromu ali jo dodaj na začetni zaslon.': 'Full screen is not available here. Open the game in Chrome or add it to the home screen.',
     'Igra je nameščena: odpreš jo z ikono APEX Racing na začetnem zaslonu.': 'The game is installed: open it with the APEX Racing icon on your home screen.', 'Nova različica igre: nalagam …': 'A new version of the game: loading …',
     'Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.': 'The 3D graphics library could not be loaded. Check the connection and reload the page.',
-    'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.': 'Gamepad connected: the left stick steers, RT throttle, LT brake, B drift, Start pause. In the menus choose with the stick and A, B goes back.',
+    'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.': 'Gamepad connected: the left stick steers, RT throttle, LT brake, Start pause. In the menus choose with the stick and A, B goes back.',
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */

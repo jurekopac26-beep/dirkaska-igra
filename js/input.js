@@ -5,7 +5,7 @@ const Input = (function () {
   'use strict';
   const { clamp, sstep, wrapPi } = Core;
   const DEG = Math.PI / 180;
-  const S = { steer: 0, thr: 0, brk: 0, hand: 0, gas: 0, digital: true };
+  const S = { steer: 0, thr: 0, brk: 0, gas: 0, digital: true };   // (no handbrake: none on the screen, no key, no pad button)
   let mode = 'buttons';
   let layer = null;
   const ptrs = new Map();
@@ -157,25 +157,26 @@ const Input = (function () {
 
   /* ---------------- the controls (Nastavitve · Kontrole): the keys for each action, and for each pad or wheel its own buttons and axes
      (stored by game.js, given here with setKeys / setPads). A pad in the standard layout by default: the left stick steers, RT / R2 or
-     A / Cross the throttle, LT / L2 or X / Square the brake, B / Circle or RB / R1 drift, Start the pause, View / Select the camera, Y /
-     Triangle the rescue. A wheel (another layout): the wheel's axis steers in proportion (no curve, a small dead zone), its pedals are
-     axes found and measured in Kontrole (where each rests and where it is pressed down). */
-  const KEY_DEF = { left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], gas: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'], drift: ['Space', ''], pause: ['Escape', 'KeyP'], cam: ['KeyC', ''], tyre: ['KeyT', ''] };
+     A / Cross the throttle, LT / L2 or X / Square the brake, Start the pause, View / Select the camera, Y / Triangle the rescue (no
+     handbrake: no action for it, on the keys or the pad; an old binding of one, 'drift', is not read). A wheel (another layout): the
+     wheel's axis steers in proportion (no curve, a small dead zone), its pedals are axes found and measured in Kontrole (where each
+     rests and where it is pressed down). */
+  const KEY_DEF = { left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], gas: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'], pause: ['Escape', 'KeyP'], cam: ['KeyC', ''], tyre: ['KeyT', ''] };
   const WHEEL_RE = /wheel|volant|lenkrad|racing|driving force|g2[79]|g9[02]\d|g923|g29|t\d{3}|t-gt|tmx|thrustmaster|fanatec|moza|simagic/i;
   let keyMap = {}, driveKeys = new Set(), capture = null;
   const keyDown = (act) => { const m = keyMap[act]; return !!(m && ((m[0] && keys[m[0]]) || (m[1] && keys[m[1]]))); };
   const keyIs = (act, code) => { const m = keyMap[act]; return !!(m && code && (m[0] === code || m[1] === code)); };
   function setKeys(m) {   // { act: [code, code] } (missing actions: the default keys)
     keyMap = {}; for (const a in KEY_DEF) keyMap[a] = (m && Array.isArray(m[a]) ? m[a] : KEY_DEF[a]).slice(0, 2).map(c => (typeof c === 'string' ? c : ''));
-    driveKeys = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space']); for (const a of ['left', 'right', 'gas', 'brake', 'drift']) for (const c of keyMap[a]) if (c) driveKeys.add(c);   // (no scrolling of the page with them)
+    driveKeys = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space']); for (const a of ['left', 'right', 'gas', 'brake']) for (const c of keyMap[a]) if (c) driveKeys.add(c);   // (no scrolling of the page with them; Space does nothing, but neither scrolls nor presses a button)
   }
   setKeys(null);
   function captureKey(cb) { capture = cb; for (const k in keys) keys[k] = false; }   // (the next key pressed goes to cb: its code, '' for none, null when Esc)
   const isWheel = (gp) => !!gp && gp.mapping !== 'standard' && WHEEL_RE.test(gp.id || '');
   function padDefault(gp) {   // a device's binding before the player sets it
     const B = (i) => ({ t: 'b', i });
-    if (isWheel(gp)) return { steer: { i: 0, inv: 0, dz: 0.02, rng: 1, cur: 1 }, gas: [], brake: [], drift: [], pause: [B(9)], cam: [B(8)], rescue: [B(3)] };
-    return { steer: { i: 0, inv: 0, dz: 0.15, rng: 1, cur: 1.5 }, gas: [B(7), B(0)], brake: [B(6), B(2)], drift: [B(1), B(5)], pause: [B(9)], cam: [B(8)], rescue: [B(3)] };
+    if (isWheel(gp)) return { steer: { i: 0, inv: 0, dz: 0.02, rng: 1, cur: 1 }, gas: [], brake: [], pause: [B(9)], cam: [B(8)], rescue: [B(3)] };
+    return { steer: { i: 0, inv: 0, dz: 0.15, rng: 1, cur: 1.5 }, gas: [B(7), B(0)], brake: [B(6), B(2)], pause: [B(9)], cam: [B(8)], rescue: [B(3)] };
   }
   let padBinds = {}, padPick = '';
   function setPads(m, pick) { padBinds = m && typeof m === 'object' ? m : {}; padPick = pick || ''; }
@@ -187,7 +188,7 @@ const Input = (function () {
      for the race (pause, cam, rescue: the bound buttons). From its first press the pad is the controller (the on-screen controls hide)
      until the screen is touched again. The device: the one picked in Kontrole while connected, else the first. */
   const PAD_DZ = 0.15, PAD_B = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, back: 8, start: 9 };
-  const pad = { on: false, name: '', wheel: false, steer: 0, dsteer: 0, thr: 0, brk: 0, hand: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [], moved: {} };
+  const pad = { on: false, name: '', wheel: false, steer: 0, dsteer: 0, thr: 0, brk: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [], moved: {} };
   let onPad = null, onCam = null, onTyre = null;
   function padAxis(v) { const a = Math.abs(v || 0); if (!(a > PAD_DZ)) return 0; return Math.sign(v) * Math.pow(Math.min(1, (a - PAD_DZ) / (1 - PAD_DZ)), 1.5); }   // (a dead zone, finer near the middle)
   function steerOf(v, s) {   // the steering axis through its calibration: turned the other way, full lock at rng of the axis, the dead zone in the middle, the curve
@@ -213,14 +214,14 @@ const Input = (function () {
   function padRead(dt) {
     pad.pressed.length = 0;
     const gp = padDev();
-    if (!gp) { pad.steer = pad.dsteer = pad.thr = pad.brk = pad.hand = pad.rx = pad.ry = pad.rt = pad.lt = 0; pad.name = ''; pad.wheel = false; return pad; }
+    if (!gp) { pad.steer = pad.dsteer = pad.thr = pad.brk = pad.rx = pad.ry = pad.rt = pad.lt = 0; pad.name = ''; pad.wheel = false; return pad; }
     if (gp.id !== pad.name) { pad.name = gp.id; pad.prev = {}; pad.hold = {}; pad.wheel = isWheel(gp); if (pad.on) { pad.on = false; padShow(); } }   // (another device: announced at its first press)
     const bv = (i) => { const b = gp.buttons[i]; if (!b) return 0; if (typeof b === 'number') return b; return b.value > 0 ? b.value : b.pressed ? 1 : 0; };
     const Bd = padBind(gp), std = gp.mapping === 'standard', val = (q) => (q.t === 'a' ? pedalOf(gp, q) : bv(q.i)), most = (L) => { let m = 0; for (const q of L || []) m = Math.max(m, val(q)); return m; };
     const lx = std ? padAxis(gp.axes && gp.axes[0]) : 0, ly = std ? padAxis(gp.axes && gp.axes[1]) : 0;
     pad.steer = steerOf(gp.axes && gp.axes[Bd.steer.i], Bd.steer); pad.dsteer = std ? (bv(15) > 0.5 ? 1 : 0) - (bv(14) > 0.5 ? 1 : 0) : 0;   // (the d-pad: a pad's)
     pad.rx = std ? padAxis(gp.axes && gp.axes[2]) : 0; pad.ry = std ? padAxis(gp.axes && gp.axes[3]) : 0; pad.rt = std ? bv(7) : 0; pad.lt = std ? bv(6) : 0;   // (the right stick and the triggers alone: the photo mode's camera)
-    pad.thr = most(Bd.gas); pad.brk = most(Bd.brake); pad.hand = most(Bd.drift) > 0.5 ? 1 : 0;
+    pad.thr = most(Bd.gas); pad.brk = most(Bd.brake);
     const sx = std ? lx : pad.steer;   // (the menus: a pad's stick, a wheel turned)
     const down = { up: std && (bv(12) > 0.5 || ly < -0.55), down: std && (bv(13) > 0.5 || ly > 0.55), left: (std && bv(14) > 0.5) || sx < -0.55, right: (std && bv(15) > 0.5) || sx > 0.55 };
     for (const k in PAD_B) down[k] = bv(PAD_B[k]) > 0.5;
@@ -240,7 +241,7 @@ const Input = (function () {
   /* ---------------- per-frame ---------------- */
   function update(dt) {
     const W = window.innerWidth, H = window.innerHeight;
-    let left = false, right = false, gas = false, brake = false;   // (the handbrake: no button on the screen, only a key or the pad's)
+    let left = false, right = false, gas = false, brake = false;
     for (const [id, p] of ptrs) {
       if (id === wheel.pid) continue;
       if (mode === 'tilt') { if (p.x < W * 0.5) brake = true; else gas = true; continue; }
@@ -257,7 +258,7 @@ const Input = (function () {
       }
     }
     // keyboard (the keys bound to each action: Nastavitve · Kontrole)
-    const kL = keyDown('left'), kR = keyDown('right'), kU = keyDown('gas'), kD = keyDown('brake'), kH = keyDown('drift');
+    const kL = keyDown('left'), kR = keyDown('right'), kU = keyDown('gas'), kD = keyDown('brake');
     let steer = 0, digital = true;
     if (kL || kR) { steer = (kR ? 1 : 0) - (kL ? 1 : 0); }
     else if (mode === 'buttons') steer = (right ? 1 : 0) - (left ? 1 : 0);
@@ -274,7 +275,6 @@ const Input = (function () {
     S.brk = Math.max(brake ? 1 : 0, pad.on ? pad.brk : 0);
     S.thr = Math.max(gas ? 1 : (autoGas && !brake ? 1 : 0), pad.on ? pad.thr : 0);
     S.gas = gas || (pad.on && pad.thr > 0.05) ? 1 : 0;   // (the gas itself pressed: not the automatic one)
-    S.hand = kH || (pad.on && pad.hand) ? 1 : 0;
     // visuals
     setPressed('left', left || kL); setPressed('right', right || kR); setPressed('gas', gas || (autoGas && !brake)); setPressed('brake', brake);
     if (wheel.el && mode === 'wheel') wheel.el.style.transform = 'rotate(' + (wheel.ang / DEG).toFixed(1) + 'deg)';

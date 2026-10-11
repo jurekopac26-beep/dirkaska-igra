@@ -1811,14 +1811,15 @@
      braking: from a standing start down the Red Bull Ring's straight, stop as near the STOP line as you can, not over it (past the 100 m
      board at 120 km/h at least); the racing line: a lap of the Jezero Ring on the line the helper draws (the share of the lap within
      1.5 m of it, in a time limit); drift: 40 s at the Jezero Ring (points for the angle times the speed, a chain banked when the slide
-     ends, lost at a knock). The medals of the start and of the drift and the line's time limit: against the autopilot's own run of the
-     lesson in the same car and physics (a quick simulation) ---------------- */
+     ends, lost at a knock; no handbrake: the car slides with the steering and the brake in a corner, as the autopilot's does). The
+     medals of the start and of the drift and the line's time limit: against the autopilot's own run of the lesson in the same car and
+     physics (a quick simulation) ---------------- */
   const SCHOOL_CAR = 'kaze', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 4000, BRAKE_RUN = 400;
   const SCHOOL = [
     { id: 'start', track: 'rbring', name: 'Štart', goal: 'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.' },
     { id: 'brake', track: 'rbring', name: 'Zaviranje do oznake', goal: 'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.' },
     { id: 'line', track: 'jezero', name: 'Idealna linija', goal: 'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.' },
-    { id: 'drift', track: 'jezero', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: bočno, hitro in brez udarcev (udarec izbriše verigo).' },
+    { id: 'drift', track: 'jezero', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.' },
   ];
   let school = null;   // the lesson under way: { L, s0, v100, on, all, D, done }
   let schoolData = {};
@@ -2402,13 +2403,13 @@
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
-      // Race.pitStep); the player's gas, steering and handbrake are not used; the brake slows it (the autopilot's throttle off), never into reverse
+      // Race.pitStep); the player's gas and steering are not used; the brake slows it (the autopilot's throttle off), never into reverse
       P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
       if (inp.brk > 0.05 && P.gear !== -1) { P.inThr = 0; P.inBrk = Math.max(P.inBrk, inp.brk); }   // (backed over the line in reverse: the autopilot's throttle brakes it to a stop and into first gear, never the player's brake as reverse gas)
       P.inHand = 0; P.digitalSteer = false; P.noReverse = true;
       if (pit === 'merge') pitCount(dt);
     }
-    else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
+    else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     twMark(); stDrive(P, dt);
     if (school) schoolStep(P, dt, inp);
@@ -4551,8 +4552,8 @@
      the browser (tdgp-ctrl: { keys: { act: [code, code] }, lbl: { code: the key's name }, pads: { device: binding }, dev }); Ponastavi:
      the defaults of the page shown. ---------------- */
   const CTL_KEY = 'tdgp-ctrl';
-  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['drift', 'Drift'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['tyre', 'Gume za postanek']];
-  const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['drift', 'Drift'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['rescue', 'Nazaj na progo']];
+  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['tyre', 'Gume za postanek']];
+  const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['rescue', 'Nazaj na progo']];
   let ctl = { keys: null, lbl: {}, pads: {}, dev: '' }, ctlTab = 'keys', ctlWait = null;
   const ctlInOk = (q) => isObj(q) && Number.isInteger(q.i) && q.i >= 0 && q.i < 64 && (q.t === 'b' || (q.t === 'a' && isFinite(q.lo) && isFinite(q.hi) && q.lo !== q.hi));
   const ctlPadOk = (b) => isObj(b) && isObj(b.steer) && Number.isInteger(b.steer.i) && b.steer.i >= 0 && b.steer.i < 64 && ['dz', 'rng', 'cur'].every(k => isFinite(b.steer[k])) &&
@@ -4560,7 +4561,7 @@
   function ctlLoad() {
     try { const o = JSON.parse(localStorage.getItem(CTL_KEY) || 'null');
       if (isObj(o)) { const K = {}; if (isObj(o.keys)) for (const [a] of CTL_KEYS) if (Array.isArray(o.keys[a])) K[a] = o.keys[a].slice(0, 2).map(c => (typeof c === 'string' && /^[\w]{0,24}$/.test(c) ? c : ''));
-        const P = {}; if (isObj(o.pads)) for (const id of Object.keys(o.pads).slice(0, 16)) if (ctlPadOk(o.pads[id])) P[id] = o.pads[id];
+        const P = {}; if (isObj(o.pads)) for (const id of Object.keys(o.pads).slice(0, 16)) if (ctlPadOk(o.pads[id])) { P[id] = o.pads[id]; delete P[id].drift; }   // (the handbrake's old binding: gone)
         const L = {}; if (isObj(o.lbl)) for (const c of Object.keys(o.lbl).slice(0, 64)) if (typeof o.lbl[c] === 'string' && o.lbl[c].length <= 4) L[c] = o.lbl[c];
         ctl = { keys: Object.keys(K).length ? K : null, lbl: L, pads: P, dev: typeof o.dev === 'string' ? o.dev : '' }; } } catch (_) { }
     Input.setKeys(ctl.keys); Input.setPads(ctl.pads, ctl.dev);
@@ -4990,7 +4991,7 @@
       if (t.id === 'ctl-dz') { B.steer.dz = v / 100; $('ctl-dz-v').textContent = v + ' %'; } else { B.steer.rng = v / 100; $('ctl-rng-v').textContent = tr('{0} % osi', v); }
       ctlPadSet(r, B);
     });
-    // player name: typing must not reach the game keys (Space = handbrake/preventDefault, P / Escape = pause)
+    // player name: typing must not reach the game keys (Space and the arrows: preventDefault, P / Escape = pause)
     for (const nm of [$('set-name'), $('on-name')]) {
       let nmOld = S.name;
       nm.addEventListener('focus', () => { nmOld = S.name; });
@@ -5048,7 +5049,7 @@
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
       Render.setStorm(S.weather === 'storm');
-      Input.onPad = (id, wheel) => toast(tr(!wheel ? 'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.' : ctl.pads[id] ? 'Volan je povezan.' : 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.'), 5200);
+      Input.onPad = (id, wheel) => toast(tr(!wheel ? 'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.' : ctl.pads[id] ? 'Volan je povezan.' : 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.'), 5200);
       applySettings();
       demoMake(6); demoAt = demo;
       Render.attachRace(demo);
@@ -5075,8 +5076,8 @@
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
-        sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, hand: 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
-        drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
+        sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
+        drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);

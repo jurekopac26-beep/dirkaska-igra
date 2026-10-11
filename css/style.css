@@ -217,7 +217,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .pedal.gas { width: clamp(70px, 23vh, 104px); height: clamp(96px, 35vh, 160px); background: rgba(40, 120, 40, .42); border-color: rgba(160, 255, 120, .6); }
 .pedal.gas.on { background: rgba(120, 230, 90, .5); }
 #c-gas { right: calc(14px + var(--sr)); }
-/* the brake as tall as the gas, beside it (no handbrake button on the screen: a key, the pad's B or RB) */
+/* the brake as tall as the gas, beside it (no handbrake: not on the screen, the keys or the pad) */
 #c-brake { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); height: clamp(96px, 35vh, 160px); background: rgba(140, 30, 25, .4); border-color: rgba(255, 140, 120, .6); }
 #c-brake.on { background: rgba(240, 70, 50, .5); }
 #c-wheel { position: absolute; left: calc(10px + var(--sl)); bottom: calc(8px + var(--sb)); width: clamp(130px, 44vh, 200px); height: clamp(130px, 44vh, 200px); display: none; }
