@@ -75,10 +75,10 @@ const NVMenu = (function () {
   };
 
   let host = null, el = null, list = [], carName = () => '', at = null, shut = null, live = true, view = null, wipT = 0;
-  // each task's best, %: none driven yet (when the tasks are built: how good the time is against the task's target, any value 0-100);
-  // three tasks a level, the next level opens at 50 % of the one before; the licence: its exam (the twelfth task) passed, 50 % or more
+  // each task's best, by the place it was driven to: 1st 100 %, 2nd 75 %, 3rd 50 %, 4th 0 % (none driven yet); three tasks a level, the
+  // next level opens at 50 % of the one before (the three tasks' average); the licence: its exam (the twelfth task) passed, 3rd or better
   const best = { c: [], m: [], k: [] };
-  const LV = 3, OPEN = 50;
+  const LV = 3, OPEN = 50, PLACE = [100, 75, 50, 0], ORD = ['1st', '2nd', '3rd', '4th'];
   const bestOf = (l, i) => best[l][i] || 0, nLv = (l) => Math.ceil(LIC[l].tasks.length / LV);
   const lvP = (l, v) => { let t = 0; for (let i = v * LV; i < (v + 1) * LV; i++) t += bestOf(l, i); return Math.round(t / LV); };
   const lvOpen = (l) => { let v = 0; while (v + 1 < nLv(l) && lvP(l, v) >= OPEN) v++; return v; };   // (the highest level open)
@@ -185,7 +185,7 @@ const NVMenu = (function () {
         `<div class="bar"><u style="width:${p}%"></u><i style="left:${OPEN}%"></i></div><div class="nt">${esc(nt)}</div></div>`;
     } else {
       const l = view.lic, L = LIC[l], t = L.tasks[view.task], b = bestOf(l, view.task); col = L.col; title = L.name; line = `level ${view.lv + 1} · task ${view.task + 1} / ${L.tasks.length}`;
-      h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>${b ? b + ' %' : '—'}</dd><dt>Done</dt><dd>${b >= OPEN ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc(view.task === L.tasks.length - 1 ? 'pass this exam: the ' + L.name.toLowerCase() : 'pass the exam (task ' + L.tasks.length + ')')}</dd></dl></div>` +
+      h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>${best[l][view.task] != null ? ORD[PLACE.indexOf(b)] + ' place · ' + b + ' %' : '—'}</dd><dt>Done</dt><dd>${b >= OPEN ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc(view.task === L.tasks.length - 1 ? 'pass this exam: the ' + L.name.toLowerCase() : 'pass the exam (task ' + L.tasks.length + ')')}</dd></dl></div>` +
         `<button class="go" data-a="start">${esc('Start')}</button>`;
     }
     el.style.setProperty('--c', col); el.style.setProperty('--ck', ink(col));
@@ -206,8 +206,8 @@ const NVMenu = (function () {
   }
   // (the tests: the garages' floors, the menu now)
   const on = () => at;   // (the garage the car stands in: js/game.js hides Na progo there)
-  const setBest = (l, i, p) => { best[l][i] = p; if (el && view) draw(); };   // (the tests, until the tasks are built: a task driven)
+  const setPlace = (l, i, place) => { best[l][i] = PLACE[place - 1]; if (el && view) draw(); };   // (the tests, until the tasks are built: a task driven to 1st-4th)
   const state = () => ({ at, open: !!el && el.style.display !== 'none', view: view && Object.assign({}, view), n: list.length });
   const floors = () => list.map(g => ({ key: g.key, x: g.x, z: g.z, h: Math.atan2(g.s, g.c) }));
-  return { init, tick, close, on, setBest, state, floors, floorOf, MENUS, LIC };
+  return { init, tick, close, on, setPlace, state, floors, floorOf, MENUS, LIC };
 })();
