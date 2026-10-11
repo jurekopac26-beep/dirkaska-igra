@@ -1125,7 +1125,7 @@ const Sfx = (function () {
     return m ? dClang(R, m[1], +m[2]) : D_MAKE[name](R);
   }
   const dBuf = (name) => made('d:' + name, () => dMake(name));   // a one-shot's or a loop's buffer (made now if prep has not made it yet)
-  const dBurning = (c) => c.dmg >= 0.9 || (!!c.lost && (c.lost.hood || c.lost.cover) && c.dmg >= 0.75);
+  const dBurning = (c) => typeof Render !== 'undefined' && Render.burning ? Render.burning(c) : c.dmgMode > 0 && c.dmg >= 0.99;   // (on fire: the renderer decides, as for the commentator; without it a total wreck)
   function dSnap(c, t) {   // what a car is like now (its first frame, or after a repair: nothing to tell)
     const L = {}, W = c.wreck; let n = 0; if (c.lost) for (const k in c.lost) { L[k] = 1; n++; }
     return { rep: c.repairN || 0, fix: W ? W.fix : 0, wl: W ? W.wl : 0, n, L, win: [0, 1, 2, 3].map(k => (c.winOut && c.winOut[k] ? 1 : 0)), crunch: c.dmg >= 0.98, fire: dBurning(c) ? t : null, fired: false };
