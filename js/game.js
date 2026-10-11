@@ -201,7 +201,7 @@
   let acc = 0, last = 0;
   let demoTarget = null, demoSwitch = 0;
   let msgT = 0, splitT = 0, lastLapCount = 0, lastBeepLight = 0;
-  const hcol = { key: '', fit: '', f: 20, cx: null };   // the column under the minimap (hudCol): what it was laid out for, the big message's size for its text
+  const hcol = { key: '', fit: '', f: 20, cx: null, ic: '' };   // the column under the minimap (hudCol): what it was laid out for, the big message's size for its text, the text its icon is for
   let cpSeen = 0, ttRes = null, boardId = null;   // time trial: checkpoint events shown, the finished run's result, Lestvica tab
   let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
   let fbT = 0, prevGear = 1, prevAir = 0;
@@ -1182,7 +1182,9 @@
   // at(i) -> [x, y] on the canvas, sc: pixels per metre, wOut / wIn: the widths of the dark edge and the white road
   function overpass(g, T, at, sc, wOut, wIn, dark) {
     for (const c of T.cross) {
-      const m = Math.ceil(wOut * 1.1 / sc / T.ds), u = Math.round(c.up), line = () => { g.beginPath(); for (let k = -m; k <= m; k++) { const p = at((u + k + T.N) % T.N); if (k > -m) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } };
+      const m = Math.ceil(wOut * 1.1 / sc / T.ds), u = Math.round(c.up);
+      if (!(m >= 0 && m < T.N)) continue;   // (a canvas with no room for the track, sc 0: m Infinity, the loop below would never end)
+      const line = () => { g.beginPath(); for (let k = -m; k <= m; k++) { const p = at((u + k + T.N) % T.N); if (k > -m) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); } };
       g.lineCap = 'butt'; line(); g.strokeStyle = dark; g.lineWidth = wOut; g.stroke(); line(); g.strokeStyle = '#fff'; g.lineWidth = wIn; g.stroke(); g.lineCap = 'round';
     }
   }
@@ -3056,7 +3058,7 @@
     const last = P.lap === race.laps, g = gapsText(P);
     if (last) teamRadioSay(tr('Zadnji krog!') + (g ? ' ' + g : ''), 2, 'radioLast'); else teamRadioSay(g, 1);
   }
-  // the tyres for the next stop, chosen while driving (the tyre button under the camera's, or the T key): Samodejno, Mehke, Srednje, Trde
+  // the tyres for the next stop, chosen while driving (the tyre button at the left beside the damage, or the T key): Samodejno, Mehke, Srednje, Trde
   // in turn (the same as the pause menu's Gume v boksih)
   const PIT_CMPS = ['auto', 'S', 'M', 'H'], PIT_CMP_NAME = { auto: 'Samodejno', S: 'Mehke', M: 'Srednje', H: 'Trde' };
   const tyreBtnOn = () => !!(race && race.player && race.player.ty && race.player.ty.c && track && track.def.pit && !race.player.net);
@@ -3660,8 +3662,19 @@
   // the toast and then the radio wait for room (their time stopped meanwhile, the toast's by TOAST_WAIT s at most). The big message as large
   // as the width allows, in at most three lines. Laid out again only when what shows changes
   const COL_GAP = 4, COL_K = [1, 0.9, 0.82], MSG_MIN = 10;
+  // the big message's icon by its kind, in either language (css #h-msg[data-ic]): a star (a record, a win, a medal), crossed swords (a duel),
+  // a warning triangle (a fault, a danger, a penalty), a green light (the start, the green flag, back at the wheel), a wrench (the repair, the
+  // stop's tyres and fuel, a new wheel), a pit board P (the pits); else a chequered flag (the laps, the finish, the race, the weather)
+  const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
+    ['vs', /DVOBOJ|DUEL/],
+    ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
+    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
+    ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL/],
+    ['pit', /BOKS|PIT|BOX/]];
+  const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
   function hudCol(dt) {
     const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
+    if (M.textContent !== hcol.ic) { hcol.ic = M.textContent; M.dataset.ic = msgIcon(hcol.ic); }   // (its icon: when its text changes)
     const on = bg === 'race' && screen === 'none' && !replay && !orientBlock && !hud.classList.contains('off') && !hud.classList.contains('shot');
     if (T.classList.contains('col') !== on) T.classList.toggle('col', on);
     if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
@@ -3702,11 +3715,17 @@
       const max = n >= 9 ? Infinity : Math.max(0, n); if (max !== tw.max) { tw.max = max; tw.at = 0; }
     } else { if (TW.style.top) TW.style.top = ''; TW.classList.remove('nofit'); if (tw && tw.max !== Infinity) { tw.max = Infinity; tw.at = 0; } }
   }
-  function fitMsg(el, hi, lo) {   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three
+  // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three. Its
+  // icon at the left (css #h-msg::before); a long message on a narrow phone with no room for it so in three lines: the icon at the start of
+  // its first line (data-icm in, the lines under it the whole width), else none (no)
+  function fitMsg(el, hi, lo) {
     const fits = (f, n) => { el.style.fontSize = f + 'px'; return el.scrollWidth <= el.clientWidth + 2 && el.clientHeight <= f * 1.05 * n + 9; };
-    for (let f = hi; f >= 16; f--) if (fits(f, 2)) return f;
-    let f = hi; while (f > lo && !fits(f, 3)) f--;
-    return f;
+    for (const icm of ['', 'in', 'no']) {
+      if (icm) el.dataset.icm = icm; else delete el.dataset.icm;
+      for (let f = hi; f >= 16; f--) if (fits(f, 2)) return f;
+      let f = hi; while (f > lo && !fits(f, 3)) f--;
+      if (icm === 'no' || fits(f, 3)) return f;
+    }
   }
   function updateHUDUp(P) {   // a race up an open road (Vršič): the place, km done of the whole road, the altitude, the race clock, the best race so far
     const L = polLen(), al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done && !race.pol ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped; the run from the police: the building at the top)
