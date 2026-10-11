@@ -62,6 +62,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-sec i.pb { border-color: var(--meter); color: #d6ffb8; }   /* the player's best */
 #h-sec i.sl { border-color: var(--lcd); }   /* slower */
 #hud.tt #h-sec, #hud.up #h-sec { display: none; }   /* (a time trial, a race up an open road: no sectors) */
+#hud.nv #h-rank, #hud.nv #h-tower, #hud.nv #h-times, #hud.nv #h-sec, #hud.nv #h-lap, #hud.nv #h-note { display: none; }   /* (NEW VERSION · TEST 1: free driving, nothing to count, no corner signs) */
 /* the open road (Vršič): the run from the police (the heat in stars, the busted meter, flat tyres), the duel's gap to the rival */
 #h-pol, #h-gap { display: none; }
 #hud.pol #h-pol { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 3px; }

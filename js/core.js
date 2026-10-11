@@ -1197,6 +1197,7 @@ const Core = (function () {
     // sample. A side road (q.k >= 0, past the road's own asphalt): asphalt, or makadam on a forest road, the gravel of the verge past its edge
     surface(q) {
       const wa = this.wa, d = q.d, ad = Math.abs(d), w = wa ? lerp(wa[q.a], wa[this.open ? Math.min(this.N - 1, q.a + 1) : (q.a + 1) % this.N], q.t) : this.w;
+      if (this.free && ad > w + 0.3) return 5;   // (NEW VERSION · TEST 1: off the road the new map's packed gravel and sand, driven as makadam, not a run-off's gravel trap)
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
         if (this.sf) { const sf = this.sf[q.a]; if (sf !== 5) return sf; }
@@ -1657,11 +1658,12 @@ const Core = (function () {
         if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
+      if (trk.ground2) { const c2 = Math.cos(this.h), s2 = Math.sin(this.h), g0 = trk.ground2(this.x, this.z), g1 = trk.ground2(this.x + c2, this.z + s2), g2 = trk.ground2(this.x - c2, this.z - s2); this.roadY += g0; this.gradeNow += (g1 - g2) / 2; this.curvNow += g1 - 2 * g0 + g2; }   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest)
       if (this.rl) { this.xRollStep(dt); return; }   // (Razbijanje · nov način: rolling over, xRollStart)
       const ch = Math.cos(this.h), sh = Math.sin(this.h);
       const vl = this.vx * ch + this.vz * sh, vt = -this.vx * sh + this.vz * ch;
       const spd = Math.hypot(vl, vt), m = M.mass + (this.fuelKg || 0), a = M.a, b = M.b;
-      if (trk.hasElev && !this.air) {
+      if ((trk.hasElev || trk.ground2) && !this.air) {
         const accSurf = vl * vl * this.curvNow;
         if (spd > 6 && accSurf < -JUMP_G * 0.85) { this.air = 1; this.vy = this.gradeNow * vl; this.airT = 0; }
       }
@@ -1845,7 +1847,7 @@ const Core = (function () {
       this.vx += ax * dt; this.vz += az * dt;
       if (wN !== 0) { const cr = Math.cos(wN * dt), sr = Math.sin(wN * dt), vx0 = this.vx; this.vx = vx0 * cr - this.vz * sr; this.vz = vx0 * sr + this.vz * cr; }
       this.x += this.vx * dt; this.z += this.vz * dt; this.h += this.w * dt;
-      if (trk.hasElev) {
+      if (trk.hasElev || trk.ground2) {   // (NEW VERSION · TEST 1: the new map's hills on a flat track)
         if (this.air) {
           this.airT += dt; this.vy -= JUMP_G * dt; this.y += this.vy * dt;
           if (this.y <= this.roadY) { const lv = M.landV || 11, lk = M.landK || 1;   // (the truck: a harder landing before it breaks, less speed lost)
@@ -2317,6 +2319,9 @@ const Core = (function () {
   }
 
   function wallCollide(c, trk, canFall) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall)
+    if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
+      const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); } return;
+    }
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     let hit = 0, hitK = 0, hnx = 0, hnz = 0;
     for (let k = 0; k < 4; k++) {
