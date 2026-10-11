@@ -1,5 +1,5 @@
-// Nagib kamere (Nastavitve): the chase camera (za avtom) looks further ahead along the road. Its tilt below the horizon is 10 % (the
-// default), 20 % or 30 % smaller than the camera's own; its distance from the point it looks at stays the same, and the
+// Nagib kamere (Nastavitve): the chase camera (za avtom) looks further ahead along the road. Its tilt below the horizon is 10 %, 20 % or 30 % (the
+// default) smaller than the camera's own; its distance from the point it looks at stays the same, and the
 // isometric camera does not change.
 //   node tests/browser/camtilt.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -20,7 +20,7 @@ try {
 
   await startTrack(page, 'jezero');
   const w = await wiring();
-  T.check('the default: 10 %', w.set === 0 && w.tilt === 0.1, JSON.stringify(w));
+  T.check('the default: 30 %', w.set === 2 && w.tilt === 0.3, JSON.stringify(w));
 
   // the setting is wired through (saved, and mapped to 10 / 20 / 30 %)
   await pick('0'); const c0 = await view('chase'); const w0 = await wiring();
@@ -39,6 +39,15 @@ try {
   await pick('0'); const i0 = await view('iso');
   await pick('2'); const i2 = await view('iso');
   T.check('iso: the camera does not move', JSON.stringify(i0) === JSON.stringify(i2), JSON.stringify([i0, i2]));
+
+  // an existing player (settings saved with 10 %, before the new default): moved to 30 % once; his own choice after that is kept
+  const old = await openGame(browser, srv.base + '/index.html', { camera: 'chase', camTilt: 0 }, { width: 390, height: 844 }, { init: () => { try { localStorage.removeItem('tdgp-defaults-v4'); } catch (_) { } } });
+  const m1 = await old.page.evaluate(() => ({ set: window.__game.S.camTilt, tilt: Render.cam.userTilt }));
+  await old.page.evaluate(() => document.querySelector('[data-set="camTilt"] button[data-v="0"]').click());
+  await old.page.addInitScript(() => { try { localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { } });
+  await old.page.reload(); await old.page.waitForFunction(() => window.__game, null, { timeout: 120000 });
+  const m2 = await old.page.evaluate(() => ({ set: window.__game.S.camTilt, tilt: Render.cam.userTilt }));
+  T.check('an existing player: moved to 30 % once; the 10 % he chooses afterwards stays', m1.set === 2 && m1.tilt === 0.3 && m2.set === 0 && m2.tilt === 0.1, JSON.stringify([m1, m2]));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {
