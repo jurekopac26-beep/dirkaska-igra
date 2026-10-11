@@ -59,6 +59,10 @@ const Core = (function () {
   // end does; the traffic does not pull up there either)
   const SNS = 6, SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4, gc: 2 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
 
+  // the braking boards' plate (Track.brakeBoards, World's brakeBoards): width, height (m), its lower edge above the road on the verge (y0) and over
+  // a barrier (y1: above the cars by the wall and the spectators behind it)
+  const BB = { w: 2.0, h: 1.5, y0: 0.5, y1: 1.9 };
+
   class Track {
     constructor(def) {
       this.def = def;
@@ -1044,6 +1048,74 @@ const Core = (function () {
       const N = this.N; let best = N;
       for (const c of this.corners) { const d = (this.startIdx - c.i1 + N) % N; if (d > 0 && d < best) best = d; }
       return clamp(best * this.ds, 120, 400);
+    }
+
+    // the braking boards of a circuit (World draws them: js/world.js brakeBoards; tests/boards.test.js): on a closed circuit (not an open
+    // road, a rally stage or a test track), before each heavy braking zone of the AI's dry profile (Race._prof's default grip and brakes):
+    // from 60 m/s or more down by 25 m/s or more, to under 60 % of it, after a straight of at least 290 m: a board 300, 200 and 100 m before
+    // the corner's entry (where the braking ends and the corner's own grip limit takes over). A circuit with no such straight: 150, 100
+    // and 50 m before the zones after one of at least 160 m; def.brakeBoards = { d: [...], at: [...] }: the distances and the entries
+    // (metres after the start line) the track sets itself (Monaco's). The heaviest braking first, at most 8 zones. On the outside of the
+    // approach (away from the apex, where the car comes from); where that side has a pit lane's mouth, a side road's mouth, a bridge, a
+    // bend or the start line, moved up to 8 m along the road, else on the other side. The plate (BB.w x BB.h, its face to the cars coming)
+    // on two legs on the verge, BB.y0 above the road, its inner edge 0.9 m or more past the asphalt and the kerb, 0.25 m clear of the
+    // barrier; where that does not fit (a street circuit's walls), over the barrier (kind 1: its legs in the barrier line, the plate BB.y1
+    // above the road, never over the asphalt). -> [{ s (the entry, m from sample 0), d0 (m after the start line), dir (1: a right-hander), v0, v1
+    // (m/s: the approach, the corner), boards: [{ d (its number), s, i, side, lat (the plate's centre), kind, x, z, y (the road's height), hd,
+    // pw, ph, py (the plate's width, height, its lower edge above the road) }] }]
+    brakeBoards() {
+      if (this._bb) return this._bb;
+      const def = this.def, N = this.N, ds = this.ds, L = this.len, k = this.k, W = (i) => ((i % N) + N) % N, out = this._bb = [];
+      if (this.open || def.test || def.rally || def.descent || def.brakeBoards === false) return out;
+      const v = this.speedProfile(CSK.aiLatA, CSK.aiBrakeA, 85, CSK.aiWmax, 0, 0.9), vl = this.speedProfile(CSK.aiLatA, 1e9, 85, CSK.aiWmax, 0, 0.9);   // (vl: the corners' own limit, no braking)
+      const dS = (s) => ((s - this.startS) % L + L) % L;
+      const conflict = (s, side) => {
+        const i = this.idx(s), d = dS(s);
+        if (d < 14 || d > L - 14 || Math.abs(k[i]) > 1 / 160) return true;   // (the start line's gantry; a bend)
+        if (def.pit) { const p = this.pitAt(s); if (p && p.sd === side && p.gap) return true; }   // (where the pit lane leaves or joins the circuit)
+        if (this.gap && this.gap[side > 0 ? 1 : 0][i]) return true;   // (a side road's mouth)
+        for (const c of this.cross || []) for (const f of [c.lo, c.up]) { const dd = Math.abs(i - f); if (Math.min(dd, N - dd) * ds < 30) return true; }   // (a bridge)
+        return false;
+      };
+      const board = (d, s, side) => {
+        const i = this.idx(s), bar = side > 0 ? this.br[i] : this.bl[i], e = this.wAt(i) + (this.curb[i] ? this.curbW : 0), kind = bar - e >= BB.w + 1.15 ? 0 : 1;   // (e: the asphalt's and the kerb's edge)
+        const lat = side * (kind ? Math.max(bar + 0.35, e + 0.3 + BB.w / 2) : Math.min(e + 0.9 + BB.w / 2 + 1, bar - 0.25 - BB.w / 2));
+        return { d, s, i, side, lat, kind, x: this.px[i] + this.nx[i] * lat, z: this.pz[i] + this.nz[i] * lat, y: this.hasElev ? this.hy[i] : 0, hd: this.hd[i], pw: BB.w, ph: BB.h, py: kind ? BB.y1 : BB.y0 };
+      };
+      const zone = (e, D, own) => {   // the boards before the entry at sample e (null: one of them fits nowhere)
+        let cs = 0; for (let m = 0; m <= 30; m++) cs += k[W(e + m)];
+        const dir = cs > 0 ? 1 : -1, sE = e * ds, B = [];
+        for (const d of D) {
+          let b = null;
+          for (const side of [-dir, dir]) { for (const sh of [0, 4, -4, 8, -8]) { const s = ((sE - d + sh) % L + L) % L; if (!conflict(s, side)) { b = board(d, s, side); break; } } if (b) break; }
+          if (!b) { if (!own) return null; b = board(d, ((sE - d) % L + L) % L, -dir); }   // (the track's own: where it says)
+          B.push(b);
+        }
+        return { s: sE, d0: dS(sE), dir, boards: B };
+      };
+      if (def.brakeBoards) {   // the track's own
+        const D = def.brakeBoards.d || [300, 200, 100];
+        for (const a of def.brakeBoards.at) { const e = this.idx(this.startS + a), z = zone(e, D, true); if (z) out.push(Object.assign(z, { v0: v[W(e - Math.round(D[0] / ds))], v1: v[e] })); }
+        return out;
+      }
+      const found = (D, need) => {   // the zones whose straight before the entry is at least need m long
+        const Z = [];
+        for (let i = 0; i < N; i++) {
+          if (!(v[i] < v[W(i - 1)] && v[i] <= v[W(i + 1)])) continue;   // the slowest point of a corner
+          let e = i, n = 0; while (n < N && v[W(e - 1)] > v[e] && v[W(e - 1)] >= vl[W(e - 1)] - 0.05) { e = W(e - 1); n++; }   // back to its entry (the corner's own limit)
+          let b = e; n = 0; while (n < N && v[W(b - 1)] > v[b] + 1e-6) { b = W(b - 1); n++; }   // and to where the braking starts
+          if (v[b] < 60 || v[b] - v[i] < 25 || v[i] > 0.6 * v[b]) continue;
+          let j = e, st = 0; while (Math.abs(k[j]) > 1 / 250 && st < 80) { j = W(j - 1); st += ds; }   // (out of the corner's own way in)
+          while (Math.abs(k[j]) < 1 / 160 && st < 1000) { j = W(j - 1); st += ds; }
+          if (st < need) continue;
+          const z = zone(e, D); if (z) Z.push(Object.assign(z, { v0: v[b], v1: v[i] }));
+        }
+        return Z;
+      };
+      let Z = found([300, 200, 100], 290); if (!Z.length) Z = found([150, 100, 50], 160);
+      Z.sort((a, b) => (b.v0 - b.v1) - (a.v0 - a.v1) || a.s - b.s);
+      out.push(...Z.slice(0, 8).sort((a, b) => a.d0 - b.d0));
+      return out;
     }
 
     // pace notes of a rally stage (open roads), as a co-driver reads them (game.js speaks each call ahead of the car): the bends graded by
@@ -5366,7 +5438,7 @@ const Core = (function () {
   }
   registerVehicles();
 
-  return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
 })();

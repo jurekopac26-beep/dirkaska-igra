@@ -1,7 +1,8 @@
 // World fingerprint: for every track the built 3D world is hashed and compared with tests/golden/world.json: every mesh's
 // vertex data (positions, colours, UVs, normals and any other attribute), indices, placement, instances and material
 // (type, colours, texture size and tiling, transparency), the knockable props and the prop floor. Textures' pixels are not
-// included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was.
+// included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was. Also the
+// braking boards: on every circuit all of them (Track.brakeBoards) in one mesh without a shadow, each standing on the ground; none elsewhere.
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
 import fs from 'node:fs';
@@ -34,10 +35,11 @@ try {
       const tex = (t) => t ? [t.image && t.image.width, t.image && t.image.height, t.wrapS, t.wrapT, t.repeat.x, t.repeat.y, t.offset.x, t.offset.y].join('/') : '';
       const mdesc = (mt) => [mt.type, mt.color && mt.color.getHexString(), mt.emissive && mt.emissive.getHexString(), mt.vertexColors, mt.transparent, mt.opacity, mt.side,
         mt.depthWrite, mt.alphaTest, tex(mt.map), tex(mt.emissiveMap), tex(mt.alphaMap)].join('|');
-      const groups = {}; let h = 2166136261, meshes = 0, verts = 0, inst = 0;
+      const groups = {}; let h = 2166136261, meshes = 0, verts = 0, inst = 0, bbM = 0, bbCast = false;
       W.root.updateMatrixWorld(true);
       W.root.traverse(o => {
         if (!o.isMesh && !o.isLine && !o.isPoints) return;
+        if (o.name === 'brakeBoards') { bbM++; bbCast = bbCast || o.castShadow; }
         const g = o.geometry, pos = g && g.attributes && g.attributes.position; if (!pos) return;
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         const key = (o.name || '-') + ':' + mats.map(m => m ? m.type : '-').join('+');
@@ -53,8 +55,17 @@ try {
       const ph = fnv(2166136261, str(props.join(';')));
       const F = race.propFloor; let fh = 2166136261, fn = 0;
       if (F) { const q = { i: 0, d: 0, s: 0 }; for (let i = 0; i < Tr.N; i += 7) for (const sd of [-1, 1]) for (let e = 0.1; e < 12; e += 0.9) { q.i = i; q.s = i * Tr.ds; q.d = sd * (Tr.w + e); fh = fnv(fh, u32([F(q)])); fn++; } }
-      return { meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
+      // the braking boards (Track.brakeBoards, World's brakeBoards): on a circuit all in one mesh without a shadow; each plate above the road and
+      // the ground under it, each leg's foot in the ground (not floating)
+      const want = Tr.brakeBoards().reduce((a, z) => a + z.boards.length, 0), got = W.brakeBoards || [];
+      const off = got.filter(b => b.feet.some((y, q) => y > Math.min(b.ground[q], b.road) - 0.1) || b.y0 < Math.max(b.road, ...b.ground) + 0.4);
+      const bb = { circuit: !Tr.open && !Tr.def.test && !Tr.def.rally && !Tr.def.descent, meshes: bbM, cast: bbCast, want, got: got.length, off: off.map(b => `${b.d} at ${b.x}, ${b.z}`) };
+      return { bb, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
     });
+    const bb = fp.bb; delete fp.bb;
+    T.check(`${id}: braking boards ${bb.circuit ? 'before its braking zones, in one mesh without a shadow, standing on the ground' : 'none (not a circuit)'}`,
+      bb.circuit ? bb.want >= 3 && bb.got === bb.want && bb.meshes === 1 && !bb.cast && !bb.off.length : bb.want === 0 && bb.got === 0 && bb.meshes === 0,
+      `${bb.got} boards (Track.brakeBoards ${bb.want}), ${bb.meshes} mesh${bb.cast ? ', casts a shadow' : ''}${bb.off.length ? '; off the ground: ' + bb.off.slice(0, 4).join('; ') : ''}`);
     out[id] = fp;
     const g = golden[id];
     if (update) { console.log(`${id.padEnd(10)} meshes ${fp.meshes} verts ${fp.verts} instances ${fp.instances} props ${fp.props} crowd ${fp.crowd} world ${fp.world}`); continue; }
