@@ -1,7 +1,9 @@
 // A gamepad (the browser's Gamepad API, a pad in the standard layout stood in for by a script): the note on its first press; the menus
 // (Start presses a screen's main button, the stick or the d-pad moves the highlight to the nearest button that way, A presses it, B goes
 // back); a race started from the pad on the track picked with it; driving (RT the throttle, the stick steering in proportion, the
-// on-screen controls hidden); Start pauses, B carries on; a touch on the screen brings the on-screen controls back.
+// on-screen controls hidden); Start pauses, B carries on; a touch on the screen brings the on-screen controls back. No handbrake button on
+// the screen (ROČNA) in any steering mode, upright or on its side: the brake and the gas side by side, as tall as each other, apart; a touch
+// where ROČNA was brakes; the handbrake on the keyboard (Space) and the pad (B) still.
 //   node tests/browser/pad.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -63,11 +65,27 @@ try {
   const back = await page.evaluate(() => { const t = document.getElementById('touch'); t.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 5, clientX: 60, clientY: 300, bubbles: true })); t.dispatchEvent(new PointerEvent('pointerup', { pointerId: 5, clientX: 60, clientY: 300, bubbles: true })); return !t.classList.contains('pad'); });
   T.check('a touch on the screen: the on-screen controls again', back, '');
 
-  // 6. the on-screen handbrake ("ROČNA"): held with a finger it sets the handbrake input, released it clears it
-  const hb = await page.evaluate(() => { const t = document.getElementById('touch'), e = document.getElementById('c-drift'); Input.layout(); const b = e.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;
-    t.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 6, clientX: x, clientY: y, bubbles: true })); const down = Input.update(0.016).hand, lit = e.classList.contains('on');
-    t.dispatchEvent(new PointerEvent('pointerup', { pointerId: 6, clientX: x, clientY: y, bubbles: true })); return { shown: e.offsetParent !== null, down, lit, up: Input.update(0.016).hand }; });
-  T.check('the on-screen handbrake button: shown, held = handbrake on (lit), released = off', hb.shown && hb.down === 1 && hb.lit && hb.up === 0, JSON.stringify(hb));
+  // 6. no handbrake button on the screen (ROČNA, HANDBRAKE): the touch controls in each steering mode, on its side and upright; a touch where it
+  // was (above the brake) brakes, no handbrake; the handbrake on the keyboard and the pad
+  const modes = [];
+  for (const vp of [{ width: 844, height: 390 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(vp);
+    for (const m of ['buttons', 'wheel', 'tilt']) modes.push(await page.evaluate(async (m) => { Input.setMode(m); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); Input.layout();
+      const T = document.getElementById('touch'), vis = [...T.querySelectorAll('.tb, #c-wheel, #tilt-ind')].filter(e => e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden');
+      const rc = (id) => document.getElementById(id).getBoundingClientRect(), g = rc('c-gas'), b = rc('c-brake');
+      const out = { m, w: innerWidth, ids: vis.map(e => e.id).join(), words: T.innerText.replace(/\s+/g, ' ').trim(), drift: !!document.getElementById('c-drift'), apart: b.right <= g.left || g.right <= b.left || b.bottom <= g.top, tall: m === 'tilt' || Math.abs(b.height - g.height) < 1 };
+      if (m === 'buttons') { const x = b.left + b.width / 2, y = b.top - 20;   // (where ROČNA was: above the brake)
+        T.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); const s = Input.update(0.016); out.above = { brk: s.brk, hand: s.hand };
+        T.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); Input.update(0.016); }
+      return out; }, m));
+  }
+  await page.evaluate(() => Input.setMode(window.__game.S.control || 'buttons'));
+  const exp = { buttons: 'c-left,c-right,c-brake,c-gas', wheel: 'c-wheel,c-brake,c-gas', tilt: 'c-brake,c-gas,tilt-ind' };
+  T.check('no handbrake button on the screen (no ROČNA, no HANDBRAKE) in any steering mode, on its side and upright: the brake and the gas apart, as tall as each other (tilting: the brake on the left); a touch where ROČNA was brakes',
+    modes.length === 6 && modes.every(o => !o.drift && o.ids === exp[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && modes.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === 0), JSON.stringify(modes));
+  const hk = await page.evaluate(async () => { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' })); const k = Input.update(0.016).hand; window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
+    const b = window.__pad.buttons[1]; b.pressed = true; b.value = 1; Input.padRead(0.016); Input.pad.on = true; const p = Input.update(0.016).hand; b.pressed = false; b.value = 0; Input.padRead(0.016); return { k, p, after: Input.update(0.016).hand }; });
+  T.check('the handbrake: Space on the keyboard, B on the pad', hk.k === 1 && hk.p === 1 && hk.after === 0, JSON.stringify(hk));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

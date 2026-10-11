@@ -2,7 +2,8 @@
 // engineer's message in the box at the top of the HUD with the radio's click: the gaps to the cars ahead and behind, on the last lap
 // "Zadnji krog!"; in a race with fuel (6 laps) the window for the stop, on the lap it must be made BOKSI V TEM KROGU with the place the stop
 // gives, after the stop the place; the pause menu's strategy (fuel, what a stop costs, the place after it); the tyres for the next stop
-// chosen while driving (the button, the T key: Samodejno, Mehke, Srednje, Trde in turn); in English; switched off: no radio.
+// chosen while driving (the button, the T key: Samodejno, Mehke, Srednje, Trde in turn); in English; switched off: no radio. The box: right
+// under the map (or under what shows above it in that column), the map's width (its text wrapped), upright and on its side.
 //   node tests/browser/radio.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -28,6 +29,15 @@ try {
   const r1 = await radio(), gapRe = /^(.+ je \d+,\d s pred tabo(, .+ \d+,\d s za tabo)?\.|Vodiš(, .+ je \d+,\d s za tabo)?\.)$/;
   T.check('at the line: the engineer on the radio (the box at the top, its click), the gaps to the cars ahead and behind ("... je 1,2 s pred tabo, ... 0,8 s za tabo.")',
     r1.laps === 3 && r1.on && r1.log.length === 1 && gapRe.test(r1.log[0]) && r1.text === r1.log[0] && r1.clicks === 1, JSON.stringify(r1));
+  // the box under the map, its width (two drawn frames: the column laid out; its 0.2 s fade-in, 3 px from above, over), upright, then on its
+  // side, then upright again
+  const rbox = () => page.evaluate(() => new Promise(res => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+    const e = document.getElementById('h-teamradio'), cs = getComputedStyle(e), r = e.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
+    const above = ['h-pit', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(x => getComputedStyle(x).visibility === 'visible' && getComputedStyle(x).display !== 'none').map(x => x.getBoundingClientRect().bottom);
+    res({ on: e.classList.contains('on'), vis: cs.visibility, dl: +(r.left - m.left).toFixed(1), dr: +(r.right - m.right).toFixed(1), gap: +(r.top - Math.max(m.bottom, ...above)).toFixed(1), fs: parseFloat(cs.fontSize), lines: Math.round((r.height - 9) / parseFloat(cs.lineHeight)), w: innerWidth, h: innerHeight }); })), 300)));
+  const b1 = await rbox(); await page.setViewportSize({ width: 844, height: 390 }); const b2 = await rbox(); await page.setViewportSize({ width: 390, height: 844 }); await rbox();
+  T.check('the radio\'s box right under the map with the map\'s width (±1 px), its text wrapped and readable (at least 9 px), upright and on its side',
+    [b1, b2].every(b => b.on && b.vis === 'visible' && Math.abs(b.dl) <= 1 && Math.abs(b.dr) <= 1 && b.gap >= 2 && b.gap <= 6 && b.fs >= 9 && b.lines >= 2) && b1.h > b1.w && b2.w > b2.h, JSON.stringify({ b1, b2 }));
 
   // 2. the pause menu: the strategy as it stands (no fuel: the tyres, what a stop now costs, the place after it)
   const ps = await page.evaluate(() => { const g = window.__game; g.pause(); const el = document.getElementById('pause-strat'), t = el.textContent, on = !el.classList.contains('off'); g.resume(); return { t, on }; });

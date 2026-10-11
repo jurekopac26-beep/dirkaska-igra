@@ -201,6 +201,7 @@
   let acc = 0, last = 0;
   let demoTarget = null, demoSwitch = 0;
   let msgT = 0, splitT = 0, lastLapCount = 0, lastBeepLight = 0;
+  const hcol = { key: '', fit: '', f: 20, cx: null };   // the column under the minimap (hudCol): what it was laid out for, the big message's size for its text
   let cpSeen = 0, ttRes = null, boardId = null;   // time trial: checkpoint events shown, the finished run's result, Lestvica tab
   let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
   let fbT = 0, prevGear = 1, prevAir = 0;
@@ -352,10 +353,16 @@
     const ss = s.toFixed(3).padStart(6, '0');
     return (pad ? String(m).padStart(2, '0') : m) + ':' + ss;
   }
-  function toast(txt, ms) {
-    const el = $('toast'); el.textContent = txt; el.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), ms || 2600);
+  // (its end on the clock: in a race hudCol moves it on while the toast waits for room in the column, by TOAST_WAIT s at most: what waits
+  // longer is not shown any more; tag: what it is about, e.g. 'pit': gone with the pit stop's autopilot, pitFree)
+  function toast(txt, ms, tag) {
+    const el = $('toast'); el.textContent = txt; el.classList.add('show'); toastEnd = performance.now() + (ms || 2600); toastCap = toastEnd + TOAST_WAIT * 1000; toastTag = tag || '';
+    clearTimeout(toast._t); const tick = () => { const left = toastEnd - performance.now(); if (left > 1) toast._t = setTimeout(tick, left); else { el.classList.remove('show'); toastTag = ''; } };
+    toast._t = setTimeout(tick, ms || 2600); hudCol(0);
   }
+  function toastOff(tag) { if (tag && toastTag !== tag) return; clearTimeout(toast._t); $('toast').classList.remove('show', 'wait'); toastTag = ''; }   // (tag: only a toast about that)
+  const TOAST_WAIT = 6;
+  let toastEnd = 0, toastCap = 0, toastTag = '';
   function showMsg(txt, cls, dur) {
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
@@ -417,7 +424,7 @@
     // where the menu's own buttons take the tap; the first HUD frame after it puts the banner back)
     if (!inRace) { $('btn-rescue').classList.add('off'); $('h-wreck').classList.remove('show'); wreckKey = ''; }
     if (inRace) requestAnimationFrame(() => Input.layout());
-    updateOrientation();
+    updateOrientation(); hudCol(0);
   }
   function refreshSegs() {
     for (const seg of document.querySelectorAll('.seg')) {
@@ -1712,6 +1719,12 @@
     return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
       return '<tr><td>' + p[0] + '</td>' + (alt ? '<td>' + ttWhere(T, p[1]) + '</td>' : '') + '<td>' + fmt(t, true) + '</td><td>' + (isFinite(pb) ? fmt(pb, true) : '\u2013') + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
   }
+  // the same splits for the column under the map at the finish (the map's width): each point and the difference to the record (none yet: the time)
+  function splitMini(r) {
+    const pts = track.cpS.map((_, k) => 'CP' + (k + 1)).concat([tr('CILJ')]);
+    return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
+      return '<tr><td>' + p + '</td>' + (isFinite(dd) ? '<td class="' + dCls(dd) + '">' + sgn(dd) + '</td>' : '<td>' + fmt(t) + '</td>') + '</tr>'; }).join('');
+  }
   // leaderboard rows (top 10); the given run highlighted, and appended below when it did not make the top 10
   function boardRows(board, me) {
     const medal = (i) => i < 3 ? ['\u{1F947}', '\u{1F948}', '\u{1F949}'][i] : (i + 1) + '.';
@@ -2424,6 +2437,7 @@
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
+    pitBar(P);
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
@@ -2867,7 +2881,7 @@
   // the player's pit stop on the autopilot (game.js only: Core never sees it, so the Node references stay as they are). pa.st: null = the
   // player drives; 'lane' = over the pit wall's line: in, the box, the stop, out, the gas and the brake by the autopilot; 'merge' = past the
   // way out after a stop: PIT_OUT s of race time more onto the racing line (pitWant off, as an AI car rejoins), counted down; then the player's
-  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false };
+  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false, go: false, b: null, d0: 0, e0: 0, k: 0 };   // (go: a stop ahead at the way in: the progress bar, b its box, d0 the way to it, e0 from it to the way out, k the bar)
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
@@ -2954,7 +2968,7 @@
   const NEED_TXT = { fuel: 'Gorivo ne bo zdržalo do cilja.', tyres: 'Gume ne bodo zdržale do cilja.', wet: 'Proga je mokra, potrebuješ dežne gume.', dry: 'Idealna linija je suha, potrebuješ suhe gume.', tyre: 'Imaš predrto gumo.', damage: 'Avto je močno poškodovan.' };
   const CMP_WORD = { S: 'mehke', M: 'srednje', H: 'trde' };
   const needTxt = (why, P) => tr(why === 'fuel' && P && P.m.ev ? 'Baterija ne bo zdržala do cilja.' : NEED_TXT[why]);   // (why a stop: an electric car's battery)
-  function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [] }; $('h-teamradio').classList.remove('on'); }
+  function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [] }; $('h-teamradio').classList.remove('on', 'wait'); }
   function teamRadioSay(text, prio, voice, vars) {
     if (!trd || !text) return;
     const m = { text, prio, voice, vars };
@@ -2964,8 +2978,8 @@
   }
   function teamRadioShow(dt) {
     const el = $('h-teamradio');
-    if (trd.cur && (trd.t -= dt) > 0) return;
-    if (trd.cur) { trd.cur = null; el.classList.remove('on'); }
+    if (trd.cur && (el.classList.contains('wait') || (trd.t -= dt) > 0)) return;   // (no room under the map yet: its time waits too)
+    if (trd.cur) { trd.cur = null; el.classList.remove('on', 'wait'); }
     const m = trd.q.shift(); if (!m) return;
     trd.cur = m; trd.t = Math.max(4, 1.5 + m.text.length * 0.055);
     el.lastElementChild.textContent = m.text; el.classList.add('on');
@@ -3091,30 +3105,56 @@
     if (e === 'enter') {
       if (pa.st === 'merge') return;   // (back over the line during the countdown: nothing new)
       const P = race.player, b = race._boxD(P), stop = b != null && race.track.boxX(P.q.s, b) < 0;   // (its box ahead: a stop; running wide over the line at the way out: only the lane's limiter until back over it)
-      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200); }
+      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); }   // (only while the autopilot drives: pitFree)
       else showMsg(tr('BOKSI'), 'gold', 1.4);
       Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2);
     }
     else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
     else if (e === 'done') { if (pa.st === 'lane') pa.stop = true; const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate, ev = race.player.m.ev;   // (an electric car: its battery charged)
       showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); dmgKey = ''; }
-    else if (e === 'exit') { if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; showMsg(tr('PREVZAMEŠ ČEZ {0}', PIT_OUT), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); } }
+    else if (e === 'exit') { if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; Sfx.beep(520, 0.16, 0.14); } }   // (the countdown in the progress bar's label: pitBar)
   }
   function pitCtl(P, hold) {   // each step before the inputs: which part of the pit stop the autopilot drives (null: none)
     if (!(phase === 'racing' && !hold && !autoDrive)) { if (pa.st || P.pitAP) pitFree(P, false); return null; }   // (the race over, the police, autoDrive: silently)
     if (pa.st === 'merge') { if (pa.t > 1e-6) return 'merge'; pitFree(P, true); return null; }   // (the countdown run out: the player's inputs from this step)
-    if (P.inPit) { if (!pa.st) { pa.st = 'lane'; pa.stop = false; } return 'lane'; }
+    if (P.inPit) { if (!pa.st) { const b = race._boxD(P), x = b != null ? race.track.boxX(P.q.s, b) : 0; pa.st = 'lane'; pa.stop = false; pa.b = b; pa.go = b != null && x < 0; pa.d0 = -x; pa.e0 = 0; pa.k = 0; } return 'lane'; }
     if (pa.st) pitFree(P, false);   // (out of the lane without a stop, or rescued in it: at once, as before)
     return null;
   }
-  function pitFree(P, told) {   // the player's own car again (told: the countdown ran out)
-    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); }
-    pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false;
+  function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
+    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
+    $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
+    pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false;
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
   }
-  function pitCount(dt) {   // the countdown on race time: a number at each whole second
+  function pitCount(dt) {   // the countdown on race time: a number at each whole second (in the progress bar's label)
     pa.t -= dt; const n = Math.ceil(pa.t - 1e-6);
-    if (n > 0 && n !== pa.n) { pa.n = n; showMsg(tr('PREVZAMEŠ ČEZ {0}', n), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); }
+    if (n > 0 && n !== pa.n) { pa.n = n; Sfx.beep(520, 0.16, 0.14); }
+  }
+  // the pit stop's progress under the map while the autopilot drives (each step): AVTOPILOT · spusti plin, what it does now and one bar from
+  // the way in (0) to the hand-back (1), never back: Vstop to 25 % by the way to the box, Boks to 30 % (braking into it), Popravilo n % to 85 %
+  // (the crew's time), Izvoz to 95 % (the lane out to the way out), Prevzameš čez 3, 2, 1 to 100 % (the countdown). Only a stop: not over the
+  // line at the way out alone
+  const PB = [0.25, 0.30, 0.85, 0.95];
+  function pitBar(P) {
+    const el = $('h-pit'), T = race.track; let k = -1, lbl = '';
+    if (pa.st === 'lane' && pa.go && pa.b != null) {
+      const x = T.boxX(P.q.s, pa.b);
+      if (P.pitState === 'repair') { const u = P.pitDur > 0 ? clamp(P.pitT / P.pitDur, 0, 1) : 0; k = PB[1] + (PB[2] - PB[1]) * u; lbl = tr('Popravilo {0} %', Math.min(99, Math.floor(u * 100))); }
+      else if (P.pitState === 'done' || P.pitDone) {
+        if (!pa.e0) { let e = 4; for (; e < 600; e += 4) { const z = T.pitAt(T.startS + pa.b + e); if (!z || z.gap) break; } pa.e0 = e + 15; }   // (from the box to where the lane meets the track again, and a bit)
+        k = PB[2] + (PB[3] - PB[2]) * clamp(x / pa.e0, 0, 1); lbl = tr('Izvoz');
+      }
+      else if (P.pitState === 'stop') { k = PB[0] + (PB[1] - PB[0]) * clamp(1 + x / 40, 0, 1); lbl = tr('Boks'); }
+      else { k = PB[0] * clamp((pa.d0 + x) / Math.max(1, pa.d0 - 40), 0, 1); lbl = tr('Vstop'); }
+    } else if (pa.st === 'merge') { k = PB[3] + (1 - PB[3]) * clamp(1 - pa.t / PIT_OUT, 0, 1); lbl = tr('Prevzameš čez {0}', pa.n || 1); }
+    if (k < 0) { if (el.classList.contains('on')) { el.classList.remove('on'); $('touch').classList.remove('ap'); } return; }
+    pa.k = Math.max(pa.k, k);
+    const w = (pa.k * 100).toFixed(1) + '%', bar = el.lastElementChild.firstElementChild, ttl = tr('AVTOPILOT · spusti plin');
+    if (el.firstElementChild.textContent !== ttl) el.firstElementChild.textContent = ttl;
+    if (el.children[1].textContent !== lbl) el.children[1].textContent = lbl;
+    if (bar.style.width !== w) bar.style.width = w;
+    if (!el.classList.contains('on')) { el.classList.add('on'); $('touch').classList.add('ap'); }   // (#touch.ap: no tilt meter while the autopilot steers, css)
   }
 
   /* ---------------- HUD ---------------- */
@@ -3582,8 +3622,63 @@
         if (!hudWheelTold && !race.timeTrial) { hudWheelTold = true; toast(tr(track.def.pit ? 'Izgubil si kolo: v boksih ti namestijo novo.' : 'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.'), 4200); } }
       hudWl = W ? W.wl : 0;
       if (W && W.hold > 0 && !W.dnf && phase === 'racing') { const txt = tr('NOVO KOLO \u00b7 {0} s', Math.ceil(W.hold)); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; } }
-    if (P.pitState === 'repair' && P.pitDur > 0) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
+    if (P.pitState === 'repair' && P.pitDur > 0 && !pa.go) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('h-msg').className = ''; }
+  }
+  // the column under the minimap (css --map-*: its right edge and width): the height profile (a time trial), the destroyed car's words, the pit
+  // stop's progress, the big message, a time trial's splits at the finish, the team radio, the toast, and on a phone on its side the timing
+  // tower last. Each right under the one above, nothing over the middle of the track, never over the pedals (nor the steering, the police's
+  // radio and arrows, the start lights) below: when it does not all fit, the tower shows fewer rows (or none), the letters get smaller, then
+  // the toast and then the radio wait for room (their time stopped meanwhile, the toast's by TOAST_WAIT s at most). The big message as large
+  // as the width allows, in at most three lines. Laid out again only when what shows changes
+  const COL_GAP = 4, COL_K = [1, 0.9, 0.82], MSG_MIN = 10;
+  function hudCol(dt) {
+    const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
+    const on = bg === 'race' && screen === 'none' && !replay && !orientBlock && !hud.classList.contains('off') && !hud.classList.contains('shot');
+    if (T.classList.contains('col') !== on) T.classList.toggle('col', on);
+    if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
+    if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
+    const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), tch = $('touch');
+    const tower = W > H && tw && S.tower && hud.classList.contains('tw') ? TW : null;   // (upright: in the left column under the place)
+    const sh = [hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
+    const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
+    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
+    if (key === hcol.key) return; hcol.key = key;
+    const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
+    let lim = H - COL_GAP;   // the column's foot: above whatever is below it
+    const obs = tch.classList.contains('off') || tch.classList.contains('pad') ? [] : ['c-gas', 'c-brake', 'c-left', 'c-right', 'c-wheel', 'tilt-ind'];
+    if (hud.classList.contains('pol')) obs.push('h-radio', 'h-tail');
+    if (lights) obs.push('h-lights');
+    for (const id of obs) { const e = $(id); if (!e || !e.offsetParent) continue; const r = e.getBoundingClientRect(); if (r.height > 0 && r.left < m.right && r.right > m.left && r.top > m.bottom) lim = Math.min(lim, r.top - COL_GAP); }
+    if (M.classList.contains('show') && hcol.fit !== M.textContent + '@' + m.width) { hcol.fit = M.textContent + '@' + m.width; hcol.f = fitMsg(M, 22, MSG_MIN); }
+    if (P.classList.contains('on')) {   // (the progress bar's label: one size for all of them, the longest on one line; the title on one line down to 8 px, else in two)
+      const S2 = P.children[1], c = hcol.cx || (hcol.cx = document.createElement('canvas').getContext('2d')); c.font = '700 12px ' + getComputedStyle(S2).fontFamily;
+      const lw = Math.max(...[tr('Prevzameš čez {0}', 3), tr('Popravilo {0} %', 99), tr('Izvoz'), tr('Vstop'), tr('Boks')].map(t => c.measureText(t).width));
+      S2.style.fontSize = clamp(12 * (S2.clientWidth - 2) / lw, 9, 12).toFixed(1) + 'px';
+      const B = P.firstElementChild; B.classList.remove('wrap'); B.style.fontSize = '';
+      if (B.scrollWidth > B.clientWidth) { const f = Math.floor(parseFloat(getComputedStyle(B).fontSize) * (B.clientWidth - 1) / B.scrollWidth * 10) / 10; if (f >= 8) B.style.fontSize = f + 'px'; else B.classList.add('wrap'); } }
+    if (X.classList.contains('show')) {   // (the splits: as large as the width allows, 8 to 11 px)
+      X.style.fontSize = ''; const f0 = parseFloat(getComputedStyle(X).fontSize), t = X.querySelector('table'); if (t && t.offsetWidth > X.clientWidth - 8) X.style.fontSize = Math.max(8, Math.floor(f0 * (X.clientWidth - 8) / t.offsetWidth * 10) / 10) + 'px'; }
+    // the sizes, then what waits: the first that fits
+    let y = 0, skip = [];
+    out: for (const sk of [[], [T], [T, R]]) for (const k of COL_K) {
+      M.style.fontSize = Math.max(MSG_MIN, Math.round(hcol.f * k)) + 'px'; R.style.fontSize = T.style.fontSize = (11.5 * k).toFixed(1) + 'px';
+      const hs = L.map(e => (sk.includes(e) ? -1 : e.offsetHeight)); y = m.bottom; for (const h of hs) if (h >= 0) y += COL_GAP + h;
+      skip = sk; if (y <= lim) break out;
+    }
+    y = m.bottom; for (const e of L) { if (skip.includes(e)) continue; y += COL_GAP; e.style.top = y.toFixed(1) + 'px'; y += e.offsetHeight; }
+    T.classList.toggle('wait', skip.includes(T) && L.includes(T)); R.classList.toggle('wait', skip.includes(R) && L.includes(R));
+    if (tower) {   // the tower: as many rows as the room left (the player and the cars beside first), none in too little
+      const top = y + COL_GAP + 2, row = TW.querySelector('.tw-r'), rh = row ? row.offsetHeight + 1 : 14, n = Math.floor((lim - top - rh * 0.6) / rh);
+      TW.style.top = top.toFixed(1) + 'px'; TW.classList.toggle('nofit', n < 1);
+      const max = n >= 9 ? Infinity : Math.max(0, n); if (max !== tw.max) { tw.max = max; tw.at = 0; }
+    } else { if (TW.style.top) TW.style.top = ''; TW.classList.remove('nofit'); if (tw && tw.max !== Infinity) { tw.max = Infinity; tw.at = 0; } }
+  }
+  function fitMsg(el, hi, lo) {   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three
+    const fits = (f, n) => { el.style.fontSize = f + 'px'; return el.scrollWidth <= el.clientWidth + 2 && el.clientHeight <= f * 1.05 * n + 9; };
+    for (let f = hi; f >= 16; f--) if (fits(f, 2)) return f;
+    let f = hi; while (f > lo && !fits(f, 3)) f--;
+    return f;
   }
   function updateHUDUp(P) {   // a race up an open road (Vršič): the place, km done of the whole road, the altitude, the race clock, the best race so far
     const L = polLen(), al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done && !race.pol ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped; the run from the police: the building at the top)
@@ -3664,7 +3759,7 @@
   const TW_M = 25;
   let tw = null;
   function twStart() {
-    tw = !race.timeTrial && !race.quali && !race.pol && race.cars.length > 1 ? { t: new Map(), n: new Map(), pit: new Map(), stops: new Map(), html: '', at: 0 } : null;
+    tw = !race.timeTrial && !race.quali && !race.pol && race.cars.length > 1 ? { t: new Map(), n: new Map(), pit: new Map(), stops: new Map(), html: '', at: 0, max: Infinity } : null;
     $('hud').classList.toggle('tw', !!tw && !!S.tower); $('h-tower').innerHTML = '';
   }
   function twMark() {
@@ -3686,8 +3781,9 @@
   function twHUD(dt) {
     if (!tw || !S.tower || (tw.at -= dt) > 0) return; tw.at = 0.25;
     const O = race.order && race.order.length === race.cars.length ? race.order : race.cars.slice().sort((a, b) => b.dist - a.dist), L = O[0], P = race.player, pi = O.indexOf(P);
-    const nb = window.innerHeight > window.innerWidth ? 2 : 1, rows = new Set();
+    const nb = window.innerHeight > window.innerWidth ? 2 : 1; let rows = new Set();
     if (O.length <= 3 + 2 * nb + 1) O.forEach((c, i) => rows.add(i)); else { for (let i = 0; i < 3; i++) rows.add(i); for (let i = pi - nb; i <= pi + nb; i++) if (i >= 0 && i < O.length) rows.add(i); }
+    if (rows.size > tw.max) rows = new Set([pi, pi - 1, pi + 1, 0, 1, 2, pi - 2, pi + 2].filter(i => rows.has(i)).slice(0, Math.max(0, tw.max)));   // (little room: the player and the cars beside first)
     let h = '', prev = -1;
     for (const i of [...rows].sort((a, b) => a - b)) {
       if (prev >= 0 && i > prev + 1) h += '<div class="tw-sep">⋯</div>';
@@ -3885,7 +3981,7 @@
         } else if (race.timeTrial) {   // time trial: store the run, finish popup with the difference to the previous record
           const r = ttFinish(), d = r.prev ? r.time - r.prev : NaN, el = $('h-split');
           el.textContent = tr('CILJ  {0}', fmt(r.time, true)) + (r.prev ? '  ' + sgn(d) : ''); el.className = 'show ' + (r.prev ? dCls(d) : 'even'); splitT = 5;
-          const sp = $('h-ttsp'); sp.innerHTML = '<table><thead><tr><th></th><th>' + tr('Čas') + '</th><th>' + tr('Rekord') + '</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, false) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results
+          const sp = $('h-ttsp'); sp.innerHTML = '<b>' + tr('Vmesni časi') + '</b><table><tbody>' + splitMini(r) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results (in the column under the map, hudCol)
           showMsg(r.newPB ? tr('NOV REKORD!') : tr('CILJ! {0}', sgn(d)), r.newPB ? 'fast' : 'gold', 4);
           Comm.say(ownLine(track.def, ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end')), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
           { const k = medalOf(track.def, r.time); if (k >= 0) Comm.say('medal', { medal: MEDAL_EN[k] }, 3, { ttl: 9000 }); }   // (waits for the finish call)
@@ -4525,13 +4621,13 @@
       while (acc >= STEP && n < lim) { stepRace(STEP, inp); acc -= STEP; n++; }
       if (n >= lim) acc = 0;
       if (on) { if (race.player.finished && on.mine == null) netMyFinish(); netFrame(false); }
-      updateHUD(dt); Comm.update(); Sfx.setDuck(Comm.talking());   // (the commentator over the engines: the rest lowered under the voice)
+      updateHUD(dt); hudCol(dt); Comm.update(); Sfx.setDuck(Comm.talking());   // (the commentator over the engines: the rest lowered under the voice)
       Sfx.update(race, race.player, null, inp.thr);
       ghShow(acc / STEP); Render.frame(dt, acc / STEP, race.player, S.camera, { marker: phase === 'intro' || phase === 'lights' || (phase === 'racing' && race.time < 2.5) });
       adaptive(dt);
     } else {
       if (mp && mp.race) netFrame(true);
-      Sfx.setDuck(Comm.talking());
+      hudCol(0); Sfx.setDuck(Comm.talking());
       ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true });
       if (screen === 'settings') updateTiltLive();
     }
@@ -4898,7 +4994,7 @@
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop }; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)

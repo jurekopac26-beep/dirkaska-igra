@@ -2,6 +2,8 @@
 // must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
 // In the pit lane the player cannot steer (held at full left lock, no gas: the autopilot drives, gas and all, keeps to the lane and turns in to the box);
 // the box is on the apron in front of the garage (the car stops there nose in), the crew works there and never stands on the lane.
+// While the autopilot drives, the progress bar under the map (its width): Vstop, Boks, Popravilo n %, Izvoz, Prevzameš čez 3, 2, 1, one bar
+// from ~0 % at the way in to 100 % at the hand-back, never back; then gone.
 // Then Bathurst, its lane on the left and the pit building on the iso camera's side: one stop in the iso camera, the car turns in to the
 // left, the crew on the garages' side, nobody on the lane; the camera looks down steeper during the stop, so the roof does not hide the car.
 //   node tests/browser/pits.test.mjs
@@ -30,7 +32,14 @@ try {
       const o = { work: 99, max: -99, lane: 0, dev: 0, lock: 0, ghost: 0, dmg: 0, pose: null, ln: 0, lthr: 0, vmax: 0, mN: 0, mSteer: 0, mThr: 0, mBad: 0, mDmg: 0, back: null };
       // one call of the game's steps with no gas (the wheel at s, the brake b): in the lane the autopilot's own throttle and the limiter; the
       // countdown after the exit (the steps that start and end in 'merge'): the autopilot drives, the wheel ignored; the step that hands back
-      const one = (dt, s, b) => { const s0 = g.pitAuto.st, d1 = P.dmg; g.sim(dt, false, s, 0, b || 0); const s1 = g.pitAuto.st;
+      // the progress bar (#h-pit) after each call: on, its fill, its label (the labels in order, a fill smaller than the one before, the hand-back)
+      const pb = document.getElementById('h-pit'), B = window.__pb || (window.__pb = { n: 0, back: 0, first: null, prev: -1, seq: [], hand: null, after: 0, rect: null, pct: [] });
+      const bar = (s0, s1) => { const on = pb.classList.contains('on'), f = parseFloat(pb.querySelector('em').style.width) || 0, l = pb.children[1].textContent;
+        if (on) { B.n++; if (B.first == null) B.first = f; if (f < B.prev - 1e-9) B.back++; B.prev = f; const k = l.replace(/^Popravilo \d+ %$/, 'Popravilo %'); if (B.seq[B.seq.length - 1] !== k) B.seq.push(k);
+          const m = /^Popravilo (\d+) %$/.exec(l); if (m && +m[1] !== B.pct[B.pct.length - 1]) B.pct.push(+m[1]);
+          if (!B.rect && P.pitState === 'repair') { const r = pb.getBoundingClientRect(), M = document.getElementById('h-map').getBoundingClientRect(); B.rect = { l: r.left - M.left, r: r.right - M.right, gap: r.top - M.bottom, title: pb.firstElementChild.textContent }; } }
+        if (s0 === 'merge' && !s1) B.hand = { on, f }; else if (B.hand && on) B.after++; };
+      const one = (dt, s, b) => { const s0 = g.pitAuto.st, d1 = P.dmg; g.sim(dt, false, s, 0, b || 0); const s1 = g.pitAuto.st; bar(s0, s1);
         if (P.inPit && P.speed > 1 && P.pitState !== 'repair') { o.ln++; if (P.inThr > 0.05) o.lthr++; o.vmax = Math.max(o.vmax, P.speed * 3.6); }
         if (s0 === 'merge' && s1 === 'merge') { o.mN++; if (P.inSteer !== -1) o.mSteer++; if (P.inThr > 0.05) o.mThr++; if (P.pitWant || !P.noReverse || !P.pitAP) o.mBad++; o.mDmg += Math.max(0, P.dmg - d1); }
         if (s0 === 'merge' && !s1) o.back = { steer: P.inSteer, thr: P.inThr, nr: P.noReverse, pw: P.pitWant, ap: P.pitAP, d: Math.abs(P.q.d), w: Tk.wa ? Tk.wa[P.q.i] : Tk.w }; };
@@ -38,7 +47,7 @@ try {
         const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;   // (in the lane on the way to the box: the wheel held at full left lock, no gas: the autopilot drives, gas and all)
         // the brake once in the lane, >70 m before the box: 1.2 s of full brake (the autopilot's throttle off, never into reverse)
         if (!window.__brk && g.pitAuto.st === 'lane' && !P.pitState && Tk.boxX(P.q.s, Tk.def.pit[3]) < -70) { const B = window.__brk = { min: 99, vl: 9, rev: false, thr: false }; for (let j = 0; j < 144; j++) { g.sim(1 / 120, false, -1, 0, 1); B.min = Math.min(B.min, P.speed); B.vl = Math.min(B.vl, P.vl); if (P.gear === -1) B.rev = true; if (P.inThr > 0) B.thr = true; } }
-        if (lock) one(0.05, -1); else if (P.inPit || g.pitAuto.st) for (let j = 0; j < 6; j++) one(1 / 120, -1); else g.sim(0.05, true);
+        if (lock) one(0.05, -1); else if (P.inPit || g.pitAuto.st) for (let j = 0; j < 6; j++) one(1 / 120, -1); else { g.sim(0.05, true); bar(null, null); }
         Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -25) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }   // (before the turn in: in the middle of the lane)
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
@@ -74,9 +83,15 @@ try {
   T.check('during the countdown: the autopilot steers and gives the gas (the wheel held at full left lock ignored), pitWant off, never into reverse, no damage', mBad === 0 && mSteer > mN / 2 && mThr > 0 && mDmg === 0, JSON.stringify({ mN, mSteer, mThr, mBad, mDmg }));
   T.check('then the player\'s wheel and gas, on the asphalt', !!back && back.steer === -1 && back.thr === 0 && !back.nr && !back.pw && !back.ap && back.d < back.w, JSON.stringify(back));
   const ml = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice() }));
-  { const seq = ['BOKSI · AVTOPILOT', 'PREVZAMEŠ ČEZ 3', 'PREVZAMEŠ ČEZ 2', 'PREVZAMEŠ ČEZ 1', 'VOZIŠ TI!']; let at = -1; const inOrder = seq.every(m => (at = ml.hm.indexOf(m, at + 1)) >= 0), once = [1, 2, 3].every(n => ml.hm.filter(m => m === 'PREVZAMEŠ ČEZ ' + n).length === 1);
-    T.check('the messages: BOKSI · AVTOPILOT, then PREVZAMEŠ ČEZ 3, 2, 1 (each once) and VOZIŠ TI!; the toast "Sedaj lahko spustiš plin, vse bo naredil sam."; never DRŽI PLIN',
-      inOrder && once && ml.ts.includes('Sedaj lahko spustiš plin, vse bo naredil sam.') && !ml.hm.concat(ml.ts).some(m => /DRŽI PLIN/.test(m)), JSON.stringify({ hm: ml.hm.filter(m => /BOKSI|PREVZAMEŠ|VOZIŠ|PLIN/.test(m)), ts: ml.ts })); }
+  { const seq = ['BOKSI · AVTOPILOT', 'VOZIŠ TI!']; let at = -1; const inOrder = seq.every(m => (at = ml.hm.indexOf(m, at + 1)) >= 0);
+    T.check('the messages: BOKSI · AVTOPILOT, then VOZIŠ TI! at the hand-back (the countdown in the progress bar, no big PREVZAMEŠ ČEZ, no POPRAVILO); the toast "Sedaj lahko spustiš plin, vse bo naredil sam."; never DRŽI PLIN',
+      inOrder && !ml.hm.some(m => /PREVZAMEŠ|POPRAVILO/.test(m)) && ml.ts.includes('Sedaj lahko spustiš plin, vse bo naredil sam.') && !ml.hm.concat(ml.ts).some(m => /DRŽI PLIN/.test(m)), JSON.stringify({ hm: ml.hm.filter(m => /BOKSI|PREVZAMEŠ|POPRAVILO|VOZIŠ|PLIN/.test(m)), ts: ml.ts })); }
+  const pbr = await page.evaluate(() => window.__pb);
+  T.check('the progress bar under the map (its width), "AVTOPILOT · spusti plin": Vstop, Boks, Popravilo n % (up to 99), Izvoz, Prevzameš čez 3, 2, 1, in that order',
+    pbr.seq.join('>') === 'Vstop>Boks>Popravilo %>Izvoz>Prevzameš čez 3>Prevzameš čez 2>Prevzameš čez 1' && pbr.pct.every((v, i) => !i || v > pbr.pct[i - 1]) && pbr.pct[pbr.pct.length - 1] >= 90 &&
+      !!pbr.rect && Math.abs(pbr.rect.l) <= 1 && Math.abs(pbr.rect.r) <= 1 && pbr.rect.gap >= 0 && pbr.rect.gap <= 6 && pbr.rect.title === 'AVTOPILOT · spusti plin', JSON.stringify({ seq: pbr.seq, pct: pbr.pct.slice(0, 3).concat(['…'], pbr.pct.slice(-2)), rect: pbr.rect }));
+  T.check('the bar fills from ~0 % at the way in, never back, to 100 % at the hand-back; then gone', pbr.n > 200 && pbr.first < 3 && pbr.back === 0 && !!pbr.hand && pbr.hand.f === 100 && !pbr.hand.on && pbr.after === 0,
+    JSON.stringify({ n: pbr.n, first: pbr.first, back: pbr.back, hand: pbr.hand, after: pbr.after }));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
   // Bathurst: the pit lane on the LEFT of the straight (def.pit's offset negative, every offset measured to that side, sd -1), the pit
@@ -95,9 +110,10 @@ try {
       const g = window.__game, P = g.race.player, Tk = g.race.track, o = { work: 99, max: -99, lane: 0, lock: 0, dev: 0, pose: null, ghost: 0, dmg: 0, modes: [], v: null }; Render.scene.visible = false;
       for (let i = 0; i < 20; i++) {
         // the button Na progo during the countdown, once: it cancels it, the player's wheel and gas from the next step
-        if (!window.__resc && g.pitAuto.st === 'merge' && g.pitAuto.t < 1.5) { document.getElementById('btn-rescue').click(); const R = window.__resc = { st: g.pitAuto.st, ap: P.pitAP, nr: P.noReverse }; g.sim(1 / 120, false, 1, 0); R.steer = P.inSteer; R.thr = P.inThr; }
+        if (!window.__resc && g.pitAuto.st === 'merge' && g.pitAuto.t < 1.5) { document.getElementById('btn-rescue').click(); const R = window.__resc = { st: g.pitAuto.st, ap: P.pitAP, nr: P.noReverse, bar: document.getElementById('h-pit').classList.contains('on') }; g.sim(1 / 120, false, 1, 0); R.steer = P.inSteer; R.thr = P.inThr; }
         const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;   // (no gas)
         if (lock) g.sim(0.05, false, 1, 0); else g.sim(0.05, true);
+        { const pb = document.getElementById('h-pit'), L = window.__pbEn || (window.__pbEn = []), l = pb.classList.contains('on') ? pb.children[1].textContent.replace(/^Repair \d+ %$/, 'Repair %') : ''; if (L[L.length - 1] !== l) L.push(l); }   // (the bar's labels in English, '' when gone)
         Render.frame(0.05, 1, P, 'iso', {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -25) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
@@ -128,11 +144,11 @@ try {
   T.check('Bathurst: the car stops in its box on the apron to the left, nose in towards the garage', t2.pose && t2.pose.sd === -1 && t2.pose.dLout > 2.5 && t2.pose.yaw > 12, JSON.stringify(t2.pose));
   T.check('Bathurst: the crew stands off the lane, on the garages\' side', t2.lane === 0 && t2.work > 0 && t2.max < 9.2, `at least ${t2.work.toFixed(2)} m beyond the lane's edge at work, at most ${t2.max.toFixed(2)} m, ${t2.lane} samples on the lane`);
   T.check('Bathurst in the iso camera: during the stop it looks down steeper (the garages on its side) and sees the whole car past the pit building\'s roof, which the usual 47° view would hide it behind', v2 && v2.pitch > 70 && v2.seen === 3 && v2.flat < 3, v2 ? `${v2.pitch}° (the usual 47°), ${v2.seen}/3 points of the car seen; at 47° ${v2.flat}/3` : 'no stop');
-  const en = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice(), resc: window.__resc || null }));
-  T.check('Bathurst: the button Na progo during the countdown cancels it, the player\'s wheel and gas at once', !!en.resc && en.resc.st === null && !en.resc.ap && !en.resc.nr && en.resc.steer === 1 && en.resc.thr === 0, JSON.stringify(en.resc));
-  { let at = -1; const inOrder = ['PITS · AUTOPILOT', 'YOU TAKE OVER IN 3', 'YOU TAKE OVER IN 2'].every(m => (at = en.hm.indexOf(m, at + 1)) >= 0);
-    T.check('Bathurst in English: PITS · AUTOPILOT, YOU TAKE OVER IN 3, 2 (rescued before 1, no YOU DRIVE!); the toast in English', inOrder && !en.hm.includes('YOU TAKE OVER IN 1') && !en.hm.includes('YOU DRIVE!') && en.ts.includes('You can let go of the gas now, the car does everything by itself.'),
-      JSON.stringify({ hm: en.hm.filter(m => /PIT|TAKE OVER|DRIVE/.test(m)), ts: en.ts })); }
+  const en = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice(), resc: window.__resc || null, bar: (window.__pbEn || []).filter(Boolean), last: (window.__pbEn || []).slice(-1)[0] }));
+  T.check('Bathurst: the button Na progo during the countdown cancels it, the player\'s wheel and gas at once, the progress bar gone', !!en.resc && en.resc.st === null && !en.resc.ap && !en.resc.nr && !en.resc.bar && en.resc.steer === 1 && en.resc.thr === 0, JSON.stringify(en.resc));
+  T.check('Bathurst in English: PITS · AUTOPILOT (no YOU DRIVE!: rescued); the bar: Pit entry, Box, Repair n %, Pit exit, Take over in 3, 2, then gone; the toast in English',
+    en.hm.includes('PITS · AUTOPILOT') && !en.hm.includes('YOU DRIVE!') && !en.hm.some(m => /TAKE OVER/.test(m)) && en.bar.join('>') === 'Pit entry>Box>Repair %>Pit exit>Take over in 3>Take over in 2' && en.last === '' && en.ts.includes('You can let go of the gas now, the car does everything by itself.'),
+    JSON.stringify({ hm: en.hm.filter(m => /PIT|TAKE OVER|DRIVE/.test(m)), bar: en.bar, last: en.last, ts: en.ts }));
   T.check('no page errors (Bathurst)', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {
   await browser.close(); await srv.close();
