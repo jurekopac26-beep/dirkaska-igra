@@ -17,13 +17,13 @@ const Input = (function () {
   let onPause = null;
   let vib = true;
   const els = {};
-  const pressed = { left: false, right: false, gas: false, brake: false, drift: false };
+  const pressed = { left: false, right: false, gas: false, brake: false };
 
   function $(id) { return document.getElementById(id); }
 
   function init(layerEl, pauseCb) {
     layer = layerEl; onPause = pauseCb;
-    ['c-left', 'c-right', 'c-wheel', 'c-gas', 'c-brake', 'c-drift', 'tilt-ind'].forEach(id => { els[id] = $(id); });
+    ['c-left', 'c-right', 'c-wheel', 'c-gas', 'c-brake', 'tilt-ind'].forEach(id => { els[id] = $(id); });
     wheel.el = $('wheel-rot');
     const opt = { passive: false };
     layer.addEventListener('pointerdown', onDown, opt);
@@ -54,7 +54,7 @@ const Input = (function () {
 
   function layout() {
     const r = (id) => { const e = els[id]; if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, cx: b.left + b.width / 2, cy: b.top + b.height / 2 }; };
-    R = { left: r('c-left'), right: r('c-right'), wheel: r('c-wheel'), gas: r('c-gas'), brake: r('c-brake'), drift: r('c-drift') };
+    R = { left: r('c-left'), right: r('c-right'), wheel: r('c-wheel'), gas: r('c-gas'), brake: r('c-brake') };
   }
 
   function setMode(m) {
@@ -72,7 +72,6 @@ const Input = (function () {
     if (o.vibrate != null) vib = !!o.vibrate;
   }
 
-  function inRect(r, x, y, pad) { return r && x >= r.x - pad && x <= r.x + r.w + pad && y >= r.y - pad && y <= r.y + r.h + pad; }
   function wheelAngle(x, y) { return Math.atan2(y - R.wheel.cy, x - R.wheel.cx); }
 
   function onDown(e) {
@@ -241,10 +240,9 @@ const Input = (function () {
   /* ---------------- per-frame ---------------- */
   function update(dt) {
     const W = window.innerWidth, H = window.innerHeight;
-    let left = false, right = false, gas = false, brake = false, drift = false;
+    let left = false, right = false, gas = false, brake = false;   // (the handbrake: no button on the screen, only a key or the pad's)
     for (const [id, p] of ptrs) {
       if (id === wheel.pid) continue;
-      if (inRect(R.drift, p.x, p.y, 12)) { drift = true; continue; }
       if (mode === 'tilt') { if (p.x < W * 0.5) brake = true; else gas = true; continue; }
       if (mode === 'buttons' && p.x < W * 0.5) {
         if (p.y > H * 0.28) {
@@ -267,7 +265,7 @@ const Input = (function () {
       if (wheel.pid === null) { const d = Math.min(Math.abs(wheel.ang), dt * 7.5); wheel.ang -= Math.sign(wheel.ang) * d; }
       steer = clamp(wheel.ang / (wheel.max * 0.86), -1, 1); digital = false;
     } else if (mode === 'tilt') { tilt.value = tiltSteer(); steer = tilt.value; digital = false; }
-    gas = gas || kU; brake = brake || kD; drift = drift || kH;
+    gas = gas || kU; brake = brake || kD;
     if (pad.on) {   // the gamepad (padRead: this frame's values): the stick over the other steering, the triggers in proportion
       if (pad.steer) { steer = pad.steer; digital = false; } else if (pad.dsteer && !steer) steer = pad.dsteer;
       if (pad.brk > 0.05) brake = true;
@@ -276,14 +274,14 @@ const Input = (function () {
     S.brk = Math.max(brake ? 1 : 0, pad.on ? pad.brk : 0);
     S.thr = Math.max(gas ? 1 : (autoGas && !brake ? 1 : 0), pad.on ? pad.thr : 0);
     S.gas = gas || (pad.on && pad.thr > 0.05) ? 1 : 0;   // (the gas itself pressed: not the automatic one)
-    S.hand = drift || (pad.on && pad.hand) ? 1 : 0;
+    S.hand = kH || (pad.on && pad.hand) ? 1 : 0;
     // visuals
-    setPressed('left', left || kL); setPressed('right', right || kR); setPressed('gas', gas || (autoGas && !brake)); setPressed('brake', brake); setPressed('drift', drift);
+    setPressed('left', left || kL); setPressed('right', right || kR); setPressed('gas', gas || (autoGas && !brake)); setPressed('brake', brake);
     if (wheel.el && mode === 'wheel') wheel.el.style.transform = 'rotate(' + (wheel.ang / DEG).toFixed(1) + 'deg)';
     if (els['tilt-ind'] && mode === 'tilt') els['tilt-ind'].style.setProperty('--t', (tilt.value * 38).toFixed(1) + 'deg');
     return S;
   }
-  const map = { left: 'c-left', right: 'c-right', gas: 'c-gas', brake: 'c-brake', drift: 'c-drift' };
+  const map = { left: 'c-left', right: 'c-right', gas: 'c-gas', brake: 'c-brake' };
   function setPressed(k, v) { if (pressed[k] === v) return; pressed[k] = v; const e = els[map[k]]; if (e) e.classList.toggle('on', !!v); }
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
   function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }

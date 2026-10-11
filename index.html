@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=4e40b807">
-<link rel="stylesheet" href="css/style.css?v=760c31f5">
+<link rel="stylesheet" href="css/style.css?v=3e0eba68">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=7543ae19" media="not all">
 </head>
 <body>
@@ -77,6 +77,7 @@
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
+    <div id="h-pit" aria-hidden="true"><b></b><span></span><i><em></em></i></div><!-- the pit stop on the autopilot: what it does now, one bar from the way in to the hand-back (game.js pitBar) -->
     <div id="h-msg"></div>
     <div id="h-teamradio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer (#47) -->
     <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio -->
@@ -104,7 +105,6 @@
       </div>
     </div>
     <div id="c-brake" class="tb pedal"><span>ZAVORA</span></div>
-    <div id="c-drift" class="tb"><span>ROČNA</span></div>
     <div id="c-gas" class="tb pedal gas"><span>PLIN</span></div>
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
@@ -477,7 +477,7 @@
 <script src="js/tracks/detroit.js?v=71ad12dd"></script>
 <script src="js/tracks/palomar.js?v=87436f77"></script>
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
-<script src="js/lang.js?v=1d14d9e1"></script>
+<script src="js/lang.js?v=b24fc17a"></script>
 <script src="js/cars/miska.js?v=d36e3286"></script>
 <script src="js/cars/kolibri.js?v=f40b1284"></script>
 <script src="js/cars/raketa.js?v=da270e21"></script>
@@ -519,7 +519,7 @@
 <script src="js/world-montreal.js?v=06603a86"></script>
 <script src="js/render.js?v=9509585a"></script>
 <script src="js/sfx.js?v=59cd9214"></script>
-<script src="js/input.js?v=6983328c"></script>
+<script src="js/input.js?v=d23b805a"></script>
 <script src="js/comm.js?v=28729d7f"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
@@ -529,6 +529,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=82d12818"></script>
-<script src="js/game.js?v=e579459c"></script>
+<script src="js/game.js?v=3652d227"></script>
 </body>
 </html>
