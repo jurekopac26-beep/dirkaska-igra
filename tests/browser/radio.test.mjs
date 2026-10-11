@@ -20,12 +20,16 @@ try {
     for (let k = 0; k < max; k++) { if (f(g)) return true; g.pause(); g.sim(2, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
     return !!f(g); }, [fn.toString(), max || 200]);
   const radio = () => page.evaluate(() => { const g = window.__game, el = document.getElementById('h-teamradio'); return { log: g.teamRadio.log, on: el.classList.contains('on'), text: el.lastElementChild.textContent, clicks: window.__clicks, lap: g.race.player.lap, laps: g.race.laps }; });
+  // a message said in a HUD frame shows in the next one: wait for the box (a few drawn frames; on a slow machine the say can fall on the
+  // last frame until() draws)
+  const shown = () => page.waitForFunction(() => document.getElementById('h-teamradio').classList.contains('on'), null, { timeout: 10000, polling: 'raf' }).catch(() => {});
   const lang = (l) => page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); }, l);
 
   // 1. three laps: at the second lap's line the gaps (the box at the top, its click)
   await startTrack(page, 'toskana');
   await setUp();
   await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 60);
+  await shown();
   const r1 = await radio(), gapRe = /^(.+ je \d+,\d s pred tabo(, .+ \d+,\d s za tabo)?\.|Vodiš(, .+ je \d+,\d s za tabo)?\.)$/;
   T.check('at the line: the engineer on the radio (the box at the top, its click), the gaps to the cars ahead and behind ("... je 1,2 s pred tabo, ... 0,8 s za tabo.")',
     r1.laps === 3 && r1.on && r1.log.length === 1 && gapRe.test(r1.log[0]) && r1.text === r1.log[0] && r1.clicks === 1, JSON.stringify(r1));
@@ -66,6 +70,7 @@ try {
   await startTrack(page, 'toskana');
   await setUp();
   await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 80);
+  await shown();
   const w = await radio();
   T.check('a race with fuel (6 laps): at the line the window for the stop the fuel needs', w.laps === 6 && /^Gorivo ne bo zdržalo do cilja\. (Okno za postanek: od \d\. do \d\. kroga\.|Postanek bo v \d\. krogu\.)$/.test(w.log[0]), JSON.stringify(w));
   await until((g) => { const P = g.race.player; if (g.teamRadio.log.some(t => /Boksi v tem krogu!/.test(t)) && !P.repairN && !P.inPit) P.pitWant = true; if (P.repairN && !P.inPit) P.pitWant = false;
