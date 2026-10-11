@@ -1649,7 +1649,7 @@
     document.body.appendChild(box); paused = true;
     const done = () => { box.remove(); paused = false; Input.reset(); };
     const build = () => {
-      try { const H = window.MK.hub4({ pl: { at: 'pitm:0:-1:0:0' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
+      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
       catch (e) { nv.err = String(e && e.message || e); console.error('the new map failed', e); toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); }
       done();
     };
