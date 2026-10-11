@@ -1,8 +1,9 @@
 // NEW VERSION · TEST 1: the garages' menus on the new map (js/newmap.js). Drive onto a garage's coloured floor and its menu opens at
 // the top with three choices; it shows while the car stands on the floor, a tap anywhere else closes it (until the car leaves the floor
-// and comes back). Every choice says V IZDELAVI for now, except the driving school's: its three licences, each licence's ten tasks, a
-// task's card with START (START says V IZDELAVI until the tasks are built). HOME's box in the pit lane says Garaža v izdelavi (the new
-// garage is made apart). Loaded with the new map (js/game.js nvStart).
+// and comes back). Every choice says V IZDELAVI for now, except the driving school's: its three licences, each licence's twelve tasks
+// in four levels of three (a level's three tasks shown, under them the level's progress; at 50 % the next level opens), a task's card
+// with START (START says V IZDELAVI until the tasks are built). HOME's box in the pit lane says Garaža v izdelavi (the new garage is
+// made apart). Loaded with the new map (js/game.js nvStart).
 const NVMenu = (function () {
   'use strict';
   const tr = (s) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s) : s);
@@ -13,7 +14,8 @@ const NVMenu = (function () {
   const ink = (h) => { const [r, g, b] = rgb(h); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#111' : '#fff'; };
   const shades = (c) => [mix(c, '#ffffff', 0.38), c, mix(c, '#000000', 0.32)];
 
-  // the driving school's licences and their ten tasks (the order they are driven in; the tenth is the licence's exam)
+  // the driving school's licences and their twelve tasks (the order they are driven in, four levels of three; the twelfth is the
+  // licence's exam)
   const LIC = {
     c: { name: 'ROAD LICENCE', sub: 'asphalt · parking', col: '#8fe0ff', tasks: [
       ['Lap of the track', 'One lap of the asphalt circuit through 4 checkpoints, under 2:10. Start and finish at the gate of the practice lot.'],
@@ -25,6 +27,8 @@ const NVMenu = (function () {
       ['Parallel parking', 'Along the kerb, between two cars.'],
       ['Crossroads', 'Left and right at the practice crossroads, in your own lane.'],
       ['Emergency stop', 'At 80 km/h, stop before the obstacle when the sign lights up.'],
+      ['Roundabout', 'Into the roundabout and out at the third exit, in your own lane.'],
+      ['Lane change', 'At 60 km/h, change lanes between the cones and back, touch none.'],
       ['Exam: road', 'Slalom, braking and parking in one run, under 1:30.']] },
     m: { name: 'GRAVEL LICENCE', sub: 'dirt roads', col: '#23c8ff', tasks: [
       ['Gravel lap', 'The whole gravel course in the field under 1:45, never on the asphalt.'],
@@ -36,6 +40,8 @@ const NVMenu = (function () {
       ['Small jump', 'Over the ramp, land straight on the road.'],
       ['Wiggles', 'The winding road, under the time.'],
       ['Turn on a narrow road', 'Turn the car round on the gravel road without leaving it.'],
+      ['Handbrake turn', 'Round the post with the handbrake, in one go.'],
+      ['Forest road', 'The whole forest road under the time, without leaving it.'],
       ['Exam: gravel', 'The whole course under the time, at most 2 poles knocked down.']] },
     k: { name: 'HILL LICENCE', sub: 'up and down', col: '#1580b0', tasks: [
       ['Hill lap', 'Up the switchbacks, round the top and down the other side, under 2:30.'],
@@ -47,6 +53,8 @@ const NVMenu = (function () {
       ['To the top', 'All the switchbacks up without sliding off the road.'],
       ['Reverse uphill', '20 m in reverse up the straight part.'],
       ['Switchbacks down', 'All the bends down, under the time.'],
+      ['Snow climb', 'Up the snowy road to the top without sliding off.'],
+      ['Snow descent', 'Down the snowy road, under 40 km/h.'],
       ['Exam: hill', 'Up and down under the time without sliding off the road.']] },
   };
   // every garage's menu: its three choices [name, the line under it] (the school's: its licences)
@@ -67,7 +75,13 @@ const NVMenu = (function () {
   };
 
   let host = null, el = null, list = [], carName = () => '', at = null, shut = null, live = true, view = null, wipT = 0;
-  const done = { c: [], m: [], k: [] };   // (tasks driven: none yet; kept here for when the tasks are built)
+  const best = { c: [], m: [], k: [] };   // (each task's best, %: none driven yet; kept here for when the tasks are built)
+  const LV = 3, OPEN = 50;   // (three tasks a level; the next level opens at 50 % of the one before)
+  const bestOf = (l, i) => best[l][i] || 0, nLv = (l) => Math.ceil(LIC[l].tasks.length / LV);
+  const lvP = (l, v) => { let t = 0; for (let i = v * LV; i < (v + 1) * LV; i++) t += bestOf(l, i); return Math.round(t / LV); };
+  const lvOpen = (l) => { let v = 0; while (v + 1 < nLv(l) && lvP(l, v) >= OPEN) v++; return v; };   // (the highest level open)
+  const allP = (l) => Math.round(LIC[l].tasks.reduce((t, _, i) => t + bestOf(l, i), 0) / LIC[l].tasks.length);
+  const nDone = (l) => LIC[l].tasks.filter((_, i) => bestOf(l, i) >= OPEN).length;
 
   function css() {
     if (document.getElementById('nvm-css')) return;
@@ -88,7 +102,16 @@ const NVMenu = (function () {
 #nvm .row.tk { display: flex; align-items: center; gap: 10px; text-align: left; padding: 7px 10px 10px; margin-top: 5px; font-size: 14px; }
 #nvm .row.tk .n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--bt); display: flex; align-items: center; justify-content: center; font: 900 13px var(--f-ui, Roboto, sans-serif); font-style: normal; }
 #nvm .row.tk .tx { flex: 1; min-width: 0; }
-#nvm .row.tk small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nvm .lv { margin-top: 9px; padding: 8px 10px 9px; border-radius: 10px; background: rgba(255,255,255,.07); }
+#nvm .lt { display: flex; align-items: center; gap: 8px; }
+#nvm .lt b { flex: 1; font: 900 italic 16px var(--f-ui, Roboto, sans-serif); letter-spacing: .5px; }
+#nvm .lt span { font: 900 italic 15px var(--f-ui, Roboto, sans-serif); }
+#nvm .ar { flex: none; width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; font: 900 18px/1 var(--f-ui, Roboto, sans-serif); padding: 0 0 2px; cursor: pointer; }
+#nvm .ar:disabled { opacity: .25; cursor: default; }
+#nvm .bar { position: relative; height: 9px; margin-top: 7px; border-radius: 5px; background: rgba(255,255,255,.15); }
+#nvm .bar u { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--c); }
+#nvm .bar i { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: #ffd34d; }
+#nvm .nt { margin-top: 6px; font: 600 11px var(--f-ui, Roboto, sans-serif); color: #9aa3ad; }
 #nvm .row.tk em { position: static; flex: none; }
 #nvm .card { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.06); }
 #nvm .card h3 { margin: 0; font: 900 italic 22px/1.15 var(--f-ui, Roboto, sans-serif); text-transform: uppercase; }
@@ -134,7 +157,6 @@ const NVMenu = (function () {
 
   const PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
   const BACK = '<svg viewBox="0 0 24 24"><path d="M15.4 4.6 8 12l7.4 7.4 1.8-1.8L11.6 12l5.6-5.6z"/></svg>';
-  const pct = (n, of) => Math.round(100 * n / of);
   function row(o) {   // a coloured choice, its progress inside it (the menu of circuit race and race the rival)
     const k = ink(o.t), bt = k === '#111' ? 'rgba(0,0,0,.22)' : 'rgba(255,255,255,.28)';
     return `<button class="row${o.tk ? ' tk' : ''}" data-a="${o.a}" data-i="${o.i}" style="--t:${o.t};--k:${k};--bt:${bt}">` +
@@ -149,20 +171,22 @@ const NVMenu = (function () {
     if (view.lvl === 0) {
       const T = shades(M.col);
       if (M.note) h = `<div class="note">${esc(tr(M.note))}</div>`;
-      else if (M.lic) h = M.lic.map((l, i) => { const L = LIC[l], n = done[l].length; return row({ a: 'lic', i, t: L.col, name: L.name, sub: `${L.sub} · ${n} / ${L.tasks.length} tasks`, p: pct(n, L.tasks.length) }); }).join('');
+      else if (M.lic) h = M.lic.map((l, i) => { const L = LIC[l]; return row({ a: 'lic', i, t: L.col, name: L.name, sub: `${L.sub} · level ${lvOpen(l) + 1} · ${nDone(l)} / ${L.tasks.length} tasks`, p: allP(l) }); }).join('');
       else h = M.items.map((it, i) => row({ a: 'wip', i, t: T[i], name: it[0], sub: it[1], p: 0 })).join('');
       h += `<div class="ft">${esc(M.note ? 'tap anywhere else to close' : 'tap anywhere else to close · shown while you stand on the coloured spot')}</div>`;
     } else if (view.lvl === 1) {
-      const L = LIC[view.lic]; col = L.col; title = L.name; line = `${M.title} · ${done[view.lic].length} / ${L.tasks.length} tasks`;
-      h = L.tasks.map((t, i) => row({ a: 'task', i, tk: true, t: L.col, name: t[0], sub: t[1], p: done[view.lic].includes(i) ? 100 : 0 })).join('');
-      h += `<div class="ft">${esc('all ten tasks: the ' + L.name.toLowerCase())}</div>`;
+      const l = view.lic, L = LIC[l], v = view.lv, n = nLv(l), op = lvOpen(l), p = lvP(l, v); col = L.col; title = L.name; line = `${M.title} · level ${v + 1} of ${n}`;
+      for (let i = v * LV; i < Math.min((v + 1) * LV, L.tasks.length); i++) h += row({ a: 'task', i, tk: true, t: L.col, name: L.tasks[i][0], sub: L.tasks[i][1], p: bestOf(l, i) });
+      const nt = v + 1 >= n ? `the last level · then the ${L.name.toLowerCase()}` : v + 1 <= op ? `level ${v + 2} is open` : `at ${OPEN} % level ${v + 2} opens`;
+      h += `<div class="lv"><div class="lt"><button class="ar" data-a="lvp" aria-label="Level before"${v > 0 ? '' : ' disabled'}>‹</button><b>LEVEL ${v + 1}</b><span style="color:${p >= OPEN ? '#5fe08a' : '#ffd34d'}">${p} %</span><button class="ar" data-a="lvn" aria-label="Next level"${v < op ? '' : ' disabled'}>›</button></div>` +
+        `<div class="bar"><u style="width:${p}%"></u><i style="left:${OPEN}%"></i></div><div class="nt">${esc(nt)}</div></div>`;
     } else {
-      const L = LIC[view.lic], t = L.tasks[view.task]; col = L.col; title = L.name; line = `task ${view.task + 1} / ${L.tasks.length}`;
-      h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>—</dd><dt>Done</dt><dd>${done[view.lic].includes(view.task) ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc('all ' + L.tasks.length + ' tasks of the ' + L.name.toLowerCase())}</dd></dl></div>` +
+      const l = view.lic, L = LIC[l], t = L.tasks[view.task], b = bestOf(l, view.task); col = L.col; title = L.name; line = `level ${view.lv + 1} · task ${view.task + 1} / ${L.tasks.length}`;
+      h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>${b ? b + ' %' : '—'}</dd><dt>Done</dt><dd>${b >= OPEN ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc('all ' + L.tasks.length + ' tasks of the ' + L.name.toLowerCase())}</dd></dl></div>` +
         `<button class="go" data-a="start">${esc('Start')}</button>`;
     }
     el.style.setProperty('--c', col); el.style.setProperty('--ck', ink(col));
-    el.dataset.key = at; el.dataset.lvl = view.lvl;
+    el.dataset.key = at; el.dataset.lvl = view.lvl; el.dataset.lv = view.lv != null ? view.lv + 1 : '';
     el.innerHTML = `<div class="hd">${view.lvl ? `<button class="ib" data-a="back" aria-label="Back">${BACK}</button>` : ''}<b>${esc(title)}</b><i>${esc(line)}</i><button class="ib" data-a="pause" aria-label="Pause">${PAUSE}</button></div>${h}<div class="wip">${esc(tr('V izdelavi'))}</div>`;
     el.style.display = live ? '' : 'none';
   }
@@ -171,14 +195,16 @@ const NVMenu = (function () {
     const b = e.target.closest('[data-a]'); if (!b || !view) return;
     const a = b.dataset.a, i = +b.dataset.i;
     if (a === 'pause') { const p = document.getElementById('btn-pause'); if (p) p.click(); return; }
-    if (a === 'back') { view = view.lvl === 2 ? { lvl: 1, lic: view.lic } : { lvl: 0 }; draw(); return; }
-    if (a === 'lic') { view = { lvl: 1, lic: MENUS[at].lic[i] }; draw(); return; }
-    if (a === 'task') { view = { lvl: 2, lic: view.lic, task: i }; draw(); return; }
+    if (a === 'back') { view = view.lvl === 2 ? { lvl: 1, lic: view.lic, lv: view.lv } : { lvl: 0 }; draw(); return; }
+    if (a === 'lic') { const l = MENUS[at].lic[i]; view = { lvl: 1, lic: l, lv: lvOpen(l) }; draw(); return; }   // (the highest level open)
+    if (a === 'lvp' || a === 'lvn') { const v = view.lv + (a === 'lvn' ? 1 : -1); if (v >= 0 && v <= lvOpen(view.lic)) { view.lv = v; draw(); } return; }
+    if (a === 'task') { view = { lvl: 2, lic: view.lic, lv: view.lv, task: i }; draw(); return; }
     if (a === 'wip' || a === 'start') wip();
   }
   // (the tests: the garages' floors, the menu now)
   const on = () => at;   // (the garage the car stands in: js/game.js hides Na progo there)
+  const setBest = (l, i, p) => { best[l][i] = p; if (el && view) draw(); };   // (the tests, until the tasks are built: a task driven)
   const state = () => ({ at, open: !!el && el.style.display !== 'none', view: view && Object.assign({}, view), n: list.length });
   const floors = () => list.map(g => ({ key: g.key, x: g.x, z: g.z, h: Math.atan2(g.s, g.c) }));
-  return { init, tick, close, on, state, floors, floorOf, MENUS, LIC };
+  return { init, tick, close, on, setBest, state, floors, floorOf, MENUS, LIC };
 })();
