@@ -56,10 +56,12 @@ try {
     T.check('standing in the garage: no Na progo (the car is not stuck)', await page.evaluate(() => document.getElementById('btn-rescue').classList.contains('off')));
     await page.click('#nvm [data-a="lic"][data-i="1"]'); const m1 = await menu();
     T.check('a tap on GRAVEL LICENCE: level 1, its three tasks (1-3 of 12), under them LEVEL 1 at 0 %, level 2 shut until 50 %', m1 && m1.lvl === 1 && m1.lv === 1 && /GRAVEL LICENCE/i.test(m1.title) && m1.rows.length === 3 && /Gravel lap/.test(m1.rows[0]) && /Gravel corner/.test(m1.rows[2]) && /LEVEL 1/.test(m1.bar) && /0 %/.test(m1.bar) && /at 50 % level 2 opens/.test(m1.bar) && !m1.next, JSON.stringify(m1 && { rows: m1.rows, bar: m1.bar, next: m1.next }));
-    // (the tasks are not built yet: a level driven to 60 % set from here) level 1 at 60 %: level 2 open, its three new tasks
-    await page.evaluate(() => { for (let i = 0; i < 3; i++) NVMenu.setBest('m', i, 60); }); const m1b = await menu();
+    // (the tasks are not built yet: the places set from here) 1st 100 %, 2nd 75 %, 3rd 50 %, 4th 0 %: 2nd, 4th and one not driven: level 1 at 25 %, shut;
+    // then 1st, 3rd and 4th: 50 %, level 2 open, its three new tasks
+    await page.evaluate(() => { NVMenu.setPlace('m', 0, 2); NVMenu.setPlace('m', 1, 4); }); const m1a = await menu();
+    await page.evaluate(() => { NVMenu.setPlace('m', 0, 1); NVMenu.setPlace('m', 1, 3); NVMenu.setPlace('m', 2, 4); }); const m1b = await menu();
     await page.click('#nvm [data-a="lvn"]'); const m1c = await menu();
-    T.check('level 1 at 60 %: level 2 opens; › shows its three tasks (4-6), the last level is the twelfth task, the exam', m1b && /60 %/.test(m1b.bar) && m1b.next && m1c && m1c.lv === 2 && m1c.rows.length === 3 && /Pole slalom/.test(m1c.rows[0]) && /LEVEL 2/.test(m1c.bar) && await page.evaluate(() => NVMenu.LIC.m.tasks.length === 12 && /Exam: gravel/.test(NVMenu.LIC.m.tasks[11][0])), JSON.stringify(m1c && { rows: m1c.rows, bar: m1c.bar }));
+    T.check('the places: 2nd + 4th + one not driven = 25 %, level 2 still shut; 1st + 3rd + 4th = 50 %: level 2 opens; › shows its three tasks (4-6), the last level is the twelfth task, the exam', m1a && /25 %/.test(m1a.bar) && !m1a.next && /75 %/.test(m1a.rows[0]) && m1b && /50 %/.test(m1b.bar) && m1b.next && m1c && m1c.lv === 2 && m1c.rows.length === 3 && /Pole slalom/.test(m1c.rows[0]) && /LEVEL 2/.test(m1c.bar) && await page.evaluate(() => NVMenu.LIC.m.tasks.length === 12 && /Exam: gravel/.test(NVMenu.LIC.m.tasks[11][0])), JSON.stringify(m1c && { rows: m1c.rows, bar: m1c.bar }));
     await page.click('#nvm [data-a="task"][data-i="4"]'); const m2 = await menu();
     T.check('a tap on a task: its card with START', m2 && m2.lvl === 2 && m2.go && m2.rows.length === 0, JSON.stringify(m2));
     // (the note shows 1.4 s: read at the tap itself, a frame of the new map in a browser without a GPU takes seconds)
@@ -67,7 +69,7 @@ try {
     const m3 = await tapWip('#nvm .go');
     T.check('START: V IZDELAVI (the tasks are not built yet)', m3.wip && /izdelavi/i.test(m3.t), JSON.stringify(m3));
     await page.click('#nvm [data-a="back"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
-    T.check('back: the level\'s tasks (level 2), then the licences (GRAVEL LICENCE at level 2 now)', m4 && m4.lvl === 1 && m4.lv === 2 && m5 && m5.lvl === 0 && /level 2 · 3 \/ 12 tasks/.test(m5.rows[1]), JSON.stringify([m4 && m4.lv, m5 && m5.rows[1]]));
+    T.check('back: the level\'s tasks (level 2), then the licences (GRAVEL LICENCE at level 2 now)', m4 && m4.lvl === 1 && m4.lv === 2 && m5 && m5.lvl === 0 && /level 2 · 2 \/ 12 tasks/.test(m5.rows[1]), JSON.stringify([m4 && m4.lv, m5 && m5.rows[1]]));
     const s6 = await go('circuit'), m6 = await menu(), w6 = await tapWip('#nvm [data-a="wip"][data-i="2"]');
     T.check('another garage (circuit race): its three choices; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.rows.length === 3 && w6.wip, JSON.stringify({ rows: m6 && m6.rows, w6 }));
     const s7 = await go('home'), m7 = await menu();
