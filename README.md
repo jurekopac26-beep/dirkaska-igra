@@ -696,6 +696,15 @@ Stranske ceste po progah (le v dolžini dirke; parkirišča razgledišč so v ig
 
 Sani Pass, Tianmen, Irohazaka in Beartooth v dolžini dirke nimajo cestnih odcepov (le pešpoti in parkirišča razgledišč, ki so že v igri).
 
+## Table pred zaviranjem (dirkališča)
+
+Na vseh dirkališčih (krožne proge, ki niso testne; ne na odprtih cestah in relijskih preizkušnjah) stojijo ob progi table, ki povedo, koliko je še do ovinka: 300, 200 in 100 m pred vhodom v ovinek, pred vsakim mestom, kjer se močno zavira (`Track.brakeBoards` v `js/core.js`).
+
+- **Kje**: ovinki, kjer AI po ravnini (vsaj ~290 m) zavira z vsaj 60 m/s za 25 m/s ali več in pod 60 % hitrosti; največ 8 na progo, najprej tisti z največjim zaviranjem. Monako ima svoje table 150, 100 in 50 m pred Sainte Dévote, Mirabeaujem, novo šikano in Rascasse (`brakeBoards` v datoteki proge), Toskana brez tako dolge ravnine 150, 100 in 50 m pred prvim ovinkom.
+- **Postavitev**: na zunanji strani prihoda v ovinek (stran od notranjega roba, kot na pravih dirkališčih), ob cesti za robnikom in pred ograjo; kjer med cesto in ograjo ni prostora (ulične proge), nad ograjo, dovolj visoko nad avti ob zidu in gledalci za njim, nikoli nad asfaltom. Nikoli na uvozu ali izvozu boksov, v ustju stranske ceste, ob štartni črti ali na mostu (tabla se premakne do 8 m vzdolž ceste ali na drugo stran).
+- **Videz**: generične table brez napisov razen številke: modre z belo številko, na zgodovinskih progah (Crystal Palace, Longford, Riverside) in v Monaku bele s črno. Plošči 2 × 1,5 m v obliki strehe (vsaka nagnjena 30°) s številko na obeh, da sta berljivi s kamere za avtom in z izometrične kamere, na dveh nogah, ki segata v tla.
+- **Izris**: vse table proge so en model z eno majhno teksturo (en klic risanja, brez sence), zato telefon skoraj ni bolj obremenjen.
+
 ## Kje na progi si (proge po resničnih krajih)
 
 Na progah Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Katu-Jaryk, Chapman's Peak, Tianmen, Uncompahgre, Sani Pass, Irohazaka, Mulholland Highway, Moki Dugway, Nordschleife, Spa, Red Bull Ring, Suzuka, Bathurst, Crystal Palace, Riverside, Longford, Newcastle, Rio de Janeiro, Medvode, Bang Saen in Monterey se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Prelaz Katu-Jaryk · 1.206 m, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.

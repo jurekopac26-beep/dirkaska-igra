@@ -27,5 +27,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     elev: [[0.0767,3],[0.1167,4.5],[0.1447,6],[0.2067,15],[0.2647,26],[0.3097,33],[0.3647,40],[0.3787,41],[0.4177,38],[0.4387,35],[0.4547,32],[0.4657,27.5],[0.4777,23.5],[0.4917,20],[0.5167,13],[0.5367,10.5],[0.5867,8],[0.6327,5],[0.7177,3],[0.8357,2],[0.8537,1.8],[0.9107,1.5],[0.9607,2],[0.9857,2.5]],
     tunnel: [0.5337, 0.6347],
+    // the braking boards (Track.brakeBoards; the straights are short: 150, 100 and 50 m) before Sainte Dévote, Mirabeau, the Nouvelle
+    // Chicane and La Rascasse: their entries in metres after the start line
+    brakeBoards: { d: [150, 100, 50], at: [215, 1196, 2126, 2937] },
   });
 })();
