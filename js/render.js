@@ -883,9 +883,12 @@ const Render = (function () {
                place, its piece the model's own wheel; the body sags onto that corner by 0.6 rw, turning about the diagonal through the two
                corners next to it, no point of the shell left on it lower than 1 cm over the road (a low splitter, a skirt, a long
                overhang's corner keeps it up: the sag is scaled back) (the lamps' glow and the cockpit's eye stay with the car); its hub
-               sparks while the car moves; the marshals' refit (c.wreck.fix) puts them back; a pit repair undoes it all bit by bit
-               (repairStep), then builds the car afresh
-       fire    (every vehicle: engineFx) dmg >= 0.9, or the hood / cover off and dmg >= 0.75 (game.js's fireOn, sfx's crackle): 20 s of
+               sparks while the car moves (and can set it on fire: fire); the marshals' refit (c.wreck.fix) puts them back; a pit repair
+               undoes it all bit by bit (repairStep), then builds the car afresh
+       fire    (every vehicle: engineFx; the renderer decides, fireScan, and tells game.js's commentator and sfx's crackle: Render.burning)
+               only once the car is wrecked and barely drives: a wheel off, its hub dragging on the road in sparks (faster than 2 m/s, on the
+               ground) for 1.5 s (sooner the faster it drags) with dmg >= 0.6, which lights it on that corner's side of the engine; or a
+               total wreck, dmg >= 0.99 (Core.wreckCar). Damage off: never. 20 s of
                race time of flames out of the shell over body.engine (the bonnet, the cover, a cab's top; the bared engine), black smoke
                over them, a glow, then heavy black smoke thinning out over the next 40 s; soot spreads from the engine over the whole body
                (dirtyCarMat's char; the wheels, bare hubs and the 11's panels and under-parts with it; a piece already on the road keeps the
@@ -896,6 +899,7 @@ const Render = (function () {
                wheel each (kitShadows), the pieces on the road cast none, only the 20 nearest the camera are drawn (kitPieceCull: one
                wreck's, all of them) and a lost wheel's piece is a rival's wheel (the player's too)
        (tests) Render.viewOf(car): v.kit.dead / ajar, v.loose (copies waiting for their pieces), v.wheelOff, v.hubs, v.sagQ, v.fire, v.hull, v.shadowOnly;
+       Render.burning(car): on fire (from the moment it caught fire until a repair builds it afresh);
        Render.fxStats().total / .sparks: how many bits and sparks were ever emitted
 
      COLOURS: [r, g, b] in 0..1. K.paint and K.strp are the car's own (its colour; its stripe colour, or the paint when the car has none):
@@ -7115,9 +7119,17 @@ const Render = (function () {
   /* ---------------- the engine: its smoke, its fire, the char (stage B2: every vehicle, render only, from the core's state) ----------------
      - smoke: a damaged engine (dmg > 0.45) smokes from over its seat (fireSeat: the body's engine, at the vehicle's own height; fireSpot:
        where it comes out of the body), grey turning black, black once wrecked (dmg 0.96)
-     - fire: on when dmg >= 0.9, or the bonnet / the engine cover is off and dmg >= 0.75, damage on: the rule of game.js's fireOn (the
-       commentator) and sfx's dBurning (the crackle). It burns FIRE_T (20) s of race time from when it starts, once (a pit repair puts it out
-       with the bodywork, its smoke and soot with it: repairStep, then builds the car afresh), then heavy black smoke. Flames: sparkP (additive) <= 40 a second out of the body over the engine (a kit body's: on its
+     - fire: only a car wrecked and barely driving catches fire (damage on; the renderer decides, fireScan, every frame for every view,
+       drawn or not, and tells the others: Render.burning, game.js's commentator and sfx's crackle):
+         (a) its hub's sparks: a kit car with a wheel off (v.wheelOff), on the ground (not c.air), moving faster than FIRE_HUB_V (2) m/s,
+             gathers ignition, dt x clamp(speed / 12, 0.3, 1.5) a second (dt: the race's time since the last frame, at most 0.25 s; a
+             replay's and a paused frame's none): at FIRE_IGN (1.5) with dmg >= FIRE_HUB_DMG (0.6) it catches fire, its seat FIRE_SIDE
+             (15 %) of the car's width over to the dragging corner's side (F.side);
+         (b) a total wreck: dmg >= FIRE_WRECK (0.99) (Core.wreckCar), at once.
+       Its record (fireMem, the car's: a view built afresh takes it over): the ignition gathered, t0 the race's time it caught fire; a
+       repair (repairN) or a new race: afresh. It burns FIRE_T (20) s of race time from when it starts, once (a pit repair puts it out
+       with the bodywork, its smoke and soot with it: repairStep, then builds the car afresh), then heavy black smoke. Flames: sparkP
+       (additive) <= 40 a second out of the body over the engine (a kit body's: on its
        bonnet, its engine cover, a cab-over's cab, else from the bared engine: fireSpot); its smoke <= 12 a second, black; one flickering
        glow. At most FIRE_EMIT (6) cars on fire emit (the nearest to the camera: fireScan), the others glow and char only. With opt.noFx
        nothing is emitted (and in a replay, dt > 0, no glow either); a hidden car (a test's, a tool's picture) no glow. The car the cockpit
@@ -7129,7 +7141,7 @@ const Render = (function () {
      The renderer's own random numbers (rRnd), but the 11's damage smoke: Math.random, as it always drew it (the same draws, emitted or not:
      the browser tests' races run as before) */
   const FIRE_T = 20, FIRE_EMIT = 6, FIRE_SMOKE = 60, SOOT = new THREE.Color(0.06, 0.055, 0.05), _fsv = new THREE.Vector3();   // (FIRE_SMOKE: how long the black smoke goes on after it, thinning out)
-  const fireOn = (c) => c.dmgMode > 0 && (c.dmg >= 0.9 || (!!(c.lost.hood || c.lost.cover) && c.dmg >= 0.75));
+  const FIRE_IGN = 1.5, FIRE_HUB_V = 2, FIRE_HUB_DMG = 0.6, FIRE_WRECK = 0.99, FIRE_SIDE = 0.15;   // (when a car catches fire: see above)
   // where the fire and the smoke come from (the car's frame, metres): BODIES[body].engine (x as the sections, y metres: the kit's look's
   // body.engine, the 11's entries); else at the front or the rear (engRear), 12 cm under the top there
   function fireSeat(v) {
@@ -7140,27 +7152,27 @@ const Render = (function () {
     return [x * sx, y - 0.12, 0];
   }
   // where a kit body's fire and smoke come out (the car's frame, metres): 2 cm over the highest face of its shell straight over the seat
-  // (along the car's middle and 20 % of its width to either side: the bonnet, the engine cover, a cab-over truck's cab: the flames seen,
-  // not burning inside it; never a noCrush range: a wing, a deflector, a light bar, a cage, the driver over a kart's engine), or the seat
-  // itself when nothing of the shell is left over it (the bonnet gone, an open engine). Found again whenever the body's shape changes
-  // (v.kit.ver: a part loose or lost, a wheel off or back, the roof sinking, a dent). One of the 11: its seat (a little under its bonnet:
-  // the flames rise through it)
+  // (along the seat's line, the car's middle or a hub's fire's side, and 20 % of its width to either side of it: the bonnet, the engine
+  // cover, a cab-over truck's cab: the flames seen, not burning inside it; never a noCrush range: a wing, a deflector, a light bar, a cage,
+  // the driver over a kart's engine), or the seat itself when nothing of the shell is left over it (the bonnet gone, an open engine).
+  // Found again whenever the body's shape changes (v.kit.ver: a part loose or lost, a wheel off or back, the roof sinking, a dent) or the
+  // seat moves (a hub's fire). One of the 11: its seat (a little under its bonnet: the flames rise through it)
   function fireSpot(v, S) {
     const K = v.kit; if (!K) return S;
-    const key = K.ver; if (v.spot && v.spot.key === key) return v.spot.p;
+    const key = K.ver; if (v.spot && v.spot.key === key && v.spot.z === S[2]) return v.spot.p;
     const top = kitFireTop(v.body.geometry, S, v.car.m.wid, K.deadV);
-    v.spot = { key, p: top > -1e8 ? [S[0], top + 0.02, S[2]] : S }; return v.spot.p;
+    v.spot = { key, z: S[2], p: top > -1e8 ? [S[0], top + 0.02, S[2]] : S }; return v.spot.p;
   }
   // (fireSpot) the highest face of a kit body's outer shell straight over the seat S (dv: its lost parts' vertices; noCrush ranges left out);
   // -1e9: none
   function kitFireTop(geo, S, wid, dv) {
-    const a = geo.attributes.position.array, n = geo.userData.outerN, nc = kitMask(geo.userData, 'noCrush'), X = S[0], W = wid * 0.2; let top = -1e9;
+    const a = geo.attributes.position.array, n = geo.userData.outerN, nc = kitMask(geo.userData, 'noCrush'), X = S[0], Z = S[2] || 0, W = wid * 0.2; let top = -1e9;
     for (let t = 0; t < n; t += 3) {
       if ((dv && dv[t]) || nc[t]) continue;
       const o = t * 3, ax = a[o], az = a[o + 2], bx = a[o + 3], bz = a[o + 5], cx = a[o + 6], cz = a[o + 8];
       if ((ax < X && bx < X && cx < X) || (ax > X && bx > X && cx > X)) continue;
       const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(d) < 1e-9) continue;   // (a face on edge from above)
-      for (const z of [0, -W, W]) {
+      for (const z of [Z, Z - W, Z + W]) {
         const l1 = ((bz - cz) * (X - cx) + (cx - bx) * (z - cz)) / d, l2 = ((cz - az) * (X - cx) + (ax - cx) * (z - cz)) / d, l3 = 1 - l1 - l2;
         if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
         const y = l1 * a[o + 1] + l2 * a[o + 4] + l3 * a[o + 7]; if (y > S[1] - 0.1 && y > top) top = y;
@@ -7168,13 +7180,44 @@ const Render = (function () {
     }
     return top;
   }
-  // the fires this frame (before the cars are drawn): a fire starts once (v.fire.t0: the race's time then); the ones that emit (fireEmit):
-  // the FIRE_EMIT nearest to the camera of all that burn or smoke after burning
-  const fireMem = new WeakMap();   // (a car's fire, whichever of its views draws it: a view built afresh mid-race takes it over, burnt out or not)
+  // a car's fire record (fireMem: the car's, whichever of its views draws it: a view built afresh mid-race takes it over, burnt out or
+  // not), of this race and this build of the car (a repair: afresh), made when mk: ign the hub's ignition gathered, t0 the race's time it
+  // caught fire (null: not yet), side the dragging corner's side (-1 left, 1 right; 0: a total wreck's, the engine's middle)
+  const fireMem = new WeakMap();
+  function fireRec(c, mk) {
+    let F = fireMem.get(c);
+    if (F && (F.race !== curRace || F.rn !== (c.repairN || 0))) F = null;
+    if (!F && mk) fireMem.set(c, F = { race: curRace, rn: c.repairN || 0, ign: 0, t0: null, side: 0 });
+    return F;
+  }
+  // on fire (Render.burning: game.js's commentator, sfx's crackle): from the moment it caught fire until a repair builds it afresh; a total
+  // wreck at once (before a frame of it is drawn); damage off never
+  function burning(c) {
+    if (!c || !(c.dmgMode > 0)) return false;
+    if (c.dmg >= FIRE_WRECK) return true;
+    const F = fireRec(c, false); return !!(F && F.t0 != null);
+  }
+  // (fireScan) a car catching fire: its record once it is on fire, else null. d: the race's time since the last scan
+  function fireCatch(v, c, now, d) {
+    let F = fireRec(c, false); if (F && F.t0 != null) return F;
+    const off = v.kit ? v.wheelOff : null; let k = -1;
+    if (off && d > 0 && !c.air && c.speed > FIRE_HUB_V) for (let j = 0; j < 4 && k < 0; j++) if (off[j]) k = j;
+    if (k >= 0) {   // (a hub dragging in sparks, emitFx's)
+      F = F || fireRec(c, true);
+      if (F.at !== now) { F.at = now; F.ign += d * clamp(c.speed / 12, 0.3, 1.5); }   // (once a scan, however many views)
+      if (F.ign >= FIRE_IGN && c.dmg >= FIRE_HUB_DMG) { F.t0 = now; F.side = k % 2 ? 1 : -1; return F; }
+    }
+    if (c.dmg >= FIRE_WRECK) { F = F || fireRec(c, true); F.t0 = now; return F; }
+    return null;
+  }
+  // the fires this frame (before the cars are drawn), every view's, drawn or not: a fire starts once (v.fire.t0: the race's time then);
+  // the ones that emit (fireEmit): the FIRE_EMIT nearest to the camera of all that burn or smoke after burning
+  let fireT = 0, fireR = null;   // (the race's time at the last scan: what passed since, at most 0.25 s, is how long the hubs dragged)
   function fireScan(now) {
+    const d = fireR === curRace ? clamp(now - fireT, 0, 0.25) : 0; fireT = now; fireR = curRace;
     let n = 0;
     for (const v of views) { v.fireEmit = false; const c = v.car;
-      if (!v.fire && c && c.lost && fireOn(c)) { let F = fireMem.get(c); if (!F || F.race !== curRace || F.rn !== (c.repairN || 0)) { F = { t0: now, race: curRace, rn: c.repairN || 0 }; fireMem.set(c, F); } v.fire = F; }   // (a repair: afresh)
+      if (!v.fire && c && c.lost && c.dmgMode > 0) { const F = fireCatch(v, c, now, d); if (F) v.fire = F; }
       if (v.fire) n++; }
     if (!n) return;
     const B = views.filter(v => v.fire && now - v.fire.t0 < FIRE_T + FIRE_SMOKE), cp = camera.position;   // (one whose smoke is over: no more)
@@ -7182,11 +7225,12 @@ const Render = (function () {
     for (let i = 0; i < Math.min(FIRE_EMIT, B.length); i++) B[i].fireEmit = true;
   }
   function engineFx(v, c, dt, x, y, z, h, opt, now) {
-    const M = c.m, F = v.fire, live = !(opt && opt.noFx) && !dbg.noSmoke, S = v.seat || (v.seat = fireSeat(v)), ch = Math.cos(h), sh = Math.sin(h);
+    const M = c.m, F = v.fire, live = !(opt && opt.noFx) && !dbg.noSmoke, S0 = v.seat || (v.seat = fireSeat(v)), ch = Math.cos(h), sh = Math.sin(h);
+    const S = F && F.side ? v.seatF || (v.seatF = [S0[0], S0[1], F.side * FIRE_SIDE * M.wid]) : S0;   // (a hub's fire: on its side of the engine)
     // the char: from dmg 0.8 (0.3 at 1) round the seat; a fire spreads it over the car in 18 s. In the box (rk: the repair's bodywork, in
     // its steps: charParts not every frame) the soot cleaned off, the smoke thinning out, a fire put out
     const rk = v.rep ? v.rep.kb : 0, e = F ? Math.max(0, now - F.t0) : 0, cw = Math.max(0.3 * Core.sstep(0.8, 1, c.dmg || 0), F ? 0.3 + 0.7 * Math.min(1, e / 18) : 0) * (1 - rk);
-    if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
+    if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0] || v.charU.value.z !== S[2])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
     if (!F && !(c.dmg > 0.45)) return;
     // where the smoke and the flames come out, in the world (with the body's roll, pitch and sag: after updateParts)
     const Q = fireSpot(v, S); v.bodyG.updateMatrixWorld(); _fsv.set(Q[0], Q[1], Q[2]).applyMatrix4(v.bodyG.matrixWorld);
@@ -7391,7 +7435,8 @@ const Render = (function () {
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
     c.fxWall = 0; c.fxCar = 0;
-    // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers)
+    // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
+    // dragged long enough, they set the car on fire: fireScan)
     if (v.kit && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {
       v.hubAcc[k] += dt * (6 + spd * 1.3); if (v.hubAcc[k] < 1) continue;
       const p = wheelWorld(c, k < 2 ? M.a : -M.b, (k % 2 ? 1 : -1) * v.kit.E.body.hw, x, z, h), px = p.x, pz = p.z;
@@ -8422,6 +8467,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

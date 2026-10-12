@@ -3940,7 +3940,7 @@
   // fire; the rivals near the player (within 60 m, or on the screen) losing a wheel, retiring (their car destroyed: Race.retire) or catching
   // fire; each kind at most once in 6 s. A repair (repairN) or the marshals' refit of the wheels (wreck.fix) starts the counts afresh
   const _scr = typeof THREE !== 'undefined' ? new THREE.Vector3() : null;
-  const fireOn = (c) => c.dmgMode > 0 && (c.dmg >= 0.9 || (!!(c.lost.hood || c.lost.cover) && c.dmg >= 0.75));   // (as the renderer lights a car's fire)
+  const fireOn = (c) => typeof Render !== 'undefined' && Render.burning ? Render.burning(c) : c.dmgMode > 0 && c.dmg >= 0.99;   // (the renderer decides: a hub dragging in sparks, a total wreck; without it a total wreck)
   function nearMe(c, P) {
     if (Math.hypot(c.x - P.x, c.z - P.z) < 60) return true;
     const cam = Render.camera; if (!cam || !_scr) return false;
