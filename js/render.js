@@ -6401,8 +6401,9 @@ const Render = (function () {
      the footprint, up from the belt; Φ rises with c): every knock lowers it until it nears its limit, never past it. The lining with its
      twin (never under its own limit), the posts at the roof with it, what lies on it (a rack, a fin, a deflector) down whole. Its paint
      darker as it sinks (xPaint: by d / dMax, the deepest any of its points can go: 60 % darker there; on the colour the paint has, its
-     folds and scrapes, kept off the glass colours: xOffGlass; the lining, the posts, what lies on it, the glass as they are): the cave-in
-     reads from above and from behind, and a pit repair's colours back to col0 bring it back. Open cars, karts: none */
+     folds and scrapes, never into or through a glass colour, xOffGlass, a facet the shader takes for glass in part already as it is: a
+     black car's roof only a little darker; the lining, the posts, what lies on it, the glass as they are): the cave-in reads from above
+     and from behind, and a pit repair's colours back to col0 bring it back. Open cars, karts: none */
   // the body's roof as built (cached on its geometry's user data: the clones of a model, a density, a colour share it): its entries (sI; a
   // point's own: vE, -1 none), limits (the deepest of them: dMax), lining, followers, riders and the masks xPush reads; null: none
   function xRoofBuild(v, xc) {
@@ -6813,31 +6814,46 @@ const Render = (function () {
   }
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint); the roof's shell (a
   // roof field's entries) darker as far as it has sunk there (always with the field, xPaint or not: by its drop d over the deepest any of
-  // its points can go, dMax, XROOF_DARK darker there; on the colour this makes, never lighter, never into a glass colour: xOffGlass). Only
-  // at a knock: the points it moved
-  const XROOF_DARK = 0.6;
+  // its points can go, dMax, XROOF_DARK darker there; on the colour this makes, never lighter, never into or through a glass colour:
+  // xOffGlass; a facet with a corner the body's shader takes for glass already, a black car's deep fold, as the paint gives it: its
+  // colours, interpolated across it, never make more of it glass). Only at a knock: the points it moved
+  const XROOF_DARK = 0.6, _xpc = new Float64Array(9);
   function xPaint(v, xc, tris) {
     const geo = v.body.geometry, ca = geo.attributes.color ? geo.attributes.color.array : null, nm = geo.attributes.normal.array; if (!ca || !xc.col0) return;
-    const C0 = xc.col0, N0 = xc.nor0, rf = xc.rf, vE = rf ? rf.G.vE : null, kD = rf && rf.G.dMax > 1e-6 ? XROOF_DARK / rf.G.dMax : 0;
-    for (const t of tris) for (let q = 0; q < 3; q++) {
-      const i = t * 3 + q; if (xc.keep[i] || (v.xtCut && v.xtCut[i])) continue;
-      const o = i * 3, crease = clamp((1 - (nm[o] * N0[o] + nm[o + 1] * N0[o + 1] + nm[o + 2] * N0[o + 2])) * 3.5, 0, 1), k = 1 - 0.42 * crease;
-      let r = C0[o] * k, g = C0[o + 1] * k, b = C0[o + 2] * k;
-      if (XC.paint) { const w = clamp(xc.am[i] / 0.18, 0, 1) * (0.25 + 0.75 * crease), s = clamp((xc.pn[i] - (1 - w * 0.7)) * 3, 0, 1) * 0.9;
-        if (s > 0) { const m = xc.rn[i] > 0.45 ? [0.4, 0.21, 0.1] : [0.38, 0.38, 0.4]; r += (m[0] - r) * s; g += (m[1] - g) * s; b += (m[2] - b) * s; } }
-      if (vE) { const e = vE[i]; if (e >= 0) { let kd = 1 - clamp(rf.d[e] * kD, 0, XROOF_DARK); if (kd < 1) { kd = xOffGlass(r, g, b, kd); r *= kd; g *= kd; b *= kd; } } }   // (the roof sunk here: darker)
-      ca[o] = r; ca[o + 1] = g; ca[o + 2] = b;
+    const C0 = xc.col0, N0 = xc.nor0, rf = xc.rf, vE = rf ? rf.G.vE : null, kD = rf && rf.G.dMax > 1e-6 ? XROOF_DARK / rf.G.dMax : 0, Pc = _xpc;
+    for (const t of tris) {
+      let dk = false;   // (a corner of the roof's shell sunk: the facet's paint darker there)
+      for (let q = 0; q < 3; q++) {
+        const i = t * 3 + q; Pc[q * 3] = -1; if (xc.keep[i] || (v.xtCut && v.xtCut[i])) continue;   // (-1: a corner the paint leaves as it is)
+        const o = i * 3, crease = clamp((1 - (nm[o] * N0[o] + nm[o + 1] * N0[o + 1] + nm[o + 2] * N0[o + 2])) * 3.5, 0, 1), k = 1 - 0.42 * crease;
+        let r = C0[o] * k, g = C0[o + 1] * k, b = C0[o + 2] * k;
+        if (XC.paint) { const w = clamp(xc.am[i] / 0.18, 0, 1) * (0.25 + 0.75 * crease), s = clamp((xc.pn[i] - (1 - w * 0.7)) * 3, 0, 1) * 0.9;
+          if (s > 0) { const m = xc.rn[i] > 0.45 ? [0.4, 0.21, 0.1] : [0.38, 0.38, 0.4]; r += (m[0] - r) * s; g += (m[1] - g) * s; b += (m[2] - b) * s; } }
+        Pc[q * 3] = r; Pc[q * 3 + 1] = g; Pc[q * 3 + 2] = b; if (vE && vE[i] >= 0 && rf.d[vE[i]] * kD > 0) dk = true;
+      }
+      if (dk) for (let q = 0; q < 3; q++) if (Pc[q * 3] >= 0 && xGlassy(Pc[q * 3], Pc[q * 3 + 1], Pc[q * 3 + 2])) { dk = false; break; }   // (a corner glass to the shader already: the facet as the paint gives it)
+      for (let q = 0; q < 3; q++) {
+        if (Pc[q * 3] < 0) continue; const i = t * 3 + q, o = i * 3; let r = Pc[q * 3], g = Pc[q * 3 + 1], b = Pc[q * 3 + 2];
+        if (dk) { const e = vE[i]; if (e >= 0) { let kd = 1 - clamp(rf.d[e] * kD, 0, XROOF_DARK); if (kd < 1) { kd = xOffGlass(r, g, b, kd); r *= kd; g *= kd; b *= kd; } } }   // (the roof sunk here: darker)
+        ca[o] = r; ca[o + 1] = g; ca[o + 2] = b;
+      }
     }
     geo.attributes.color.needsUpdate = true;
   }
-  // a darkening k of the colour (r, g, b) kept off the glass colours, as kitOffGlass keeps the paint's own shades: the body's shader takes a
-  // colour within 0.05 of one for glass (its sky, its glint: a black car's dark cave-in would turn a light patch), so the darkening stops
-  // where it would come within 0.066 of one (never lighter than the colour); k as it is where the colour was that near already
-  const XGLC = [GLASS, KIT_GL2], XGLC_R2 = 0.066 * 0.066;
+  // the body's shader takes a colour within 0.05 of a glass colour for glass (its sky, its sharper glint: CG_ENV, PK_DUST): xGlassy, that
+  // test. xOffGlass: a darkening k of the colour (r, g, b) (one not glassy) kept off the glass colours (a black car's dark cave-in would turn
+  // a light, bluish patch): the darkening stops at the near edge of a sphere round each, never into it, never through it to its far side
+  // (a jump there: the colours between it and its lighter neighbours, interpolated, across the glass). Its radius 0.066, as kitOffGlass
+  // keeps the paint's own shades, for a colour that far off; 0.0505 (just off the shader's 0.05) for one 0.05..0.066 off already (a black
+  // car's fold): k 1 where it is nearer than that. Never lighter than the colour
+  const XGLC = [GLASS, KIT_GL2], XGL_SH2 = 0.05 * 0.05, XGL_NEAR2 = 0.0505 * 0.0505, XGL_FAR2 = 0.066 * 0.066;
+  const xGlassy = (r, g, b) => { for (let j = 0; j < 2; j++) { const G = XGLC[j], x = r - G[0], y = g - G[1], z = b - G[2]; if (x * x + y * y + z * z < XGL_SH2) return true; } return false; };
   function xOffGlass(r, g, b, k) {
     const pp = r * r + g * g + b * b;
-    for (let j = 0; j < 2; j++) { const G = XGLC[j], pg = r * G[0] + g * G[1] + b * G[2], D = pg * pg - pp * (G[0] * G[0] + G[1] * G[1] + G[2] * G[2] - XGLC_R2);   // (t: |t (r, g, b) - G| = 0.066)
-      if (D > 0) { const s = Math.sqrt(D), t1 = (pg + s) / pp; if (k > (pg - s) / pp && k < t1 && t1 <= 1) k = t1; } }
+    for (let j = 0; j < 2; j++) { const G = XGLC[j], gg = G[0] * G[0] + G[1] * G[1] + G[2] * G[2], pg = r * G[0] + g * G[1] + b * G[2], d2 = pp - 2 * pg + gg;
+      if (d2 < XGL_SH2) continue;   // (glass to the shader already: no edge to keep it off; xPaint leaves its facet as it is)
+      const R2 = d2 >= XGL_FAR2 ? XGL_FAR2 : XGL_NEAR2, D = pg * pg - pp * (gg - R2);   // (t0 < t1: |t (r, g, b) - G| = R)
+      if (D > 0) { const s = Math.sqrt(D), t1 = (pg + s) / pp; if (k < t1 && (pg - s) / pp < 1) k = Math.min(1, t1); } }   // (the sphere between the colour and its darkening: at its near edge)
     return k;
   }
   // a deep front crush tears the bonnet open over it: its triangles (and its lining's) within reach of the crushed nose collapsed, as a
