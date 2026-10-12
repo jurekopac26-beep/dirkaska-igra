@@ -2776,8 +2776,9 @@ const Render = (function () {
 
   /* ---------------- skid marks ---------------- */
   class Skids {
-    constructor(max) {
-      this.max = max; this.cur = 0;
+    constructor(max, fade = 0) {   // (fade: seconds over which a mark fades away, 0: kept until overwritten)
+      this.max = max; this.cur = 0; this.fade = fade;
+      if (fade) { this.born = new Float32Array(max); this.al = new Float32Array(max * 2); this.used = 0; this.now = performance.now() / 1000; this.lastFade = this.now; }
       this.pos = new Float32Array(max * 12); this.col = new Float32Array(max * 16);
       const idx = [];
       for (let i = 0; i < max; i++) { const b = i * 4; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); }
@@ -2788,6 +2789,7 @@ const Render = (function () {
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
       this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
+      if (fade) g.setDrawRange(0, 0);   // (only as many quads drawn as were laid)
       this.dirty = false; this.lo = 1e9; this.hi = -1;
     }
     add(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1) {
@@ -2801,7 +2803,13 @@ const Render = (function () {
       p[o + 6] = x1 - nx; p[o + 7] = yc; p[o + 8] = z1 - nz; p[o + 9] = x1 + nx; p[o + 10] = yc; p[o + 11] = z1 + nz;
       const c = this.col, q = i * 16;
       for (let k = 0; k < 4; k++) { c[q + k * 4] = r; c[q + k * 4 + 1] = g; c[q + k * 4 + 2] = b; c[q + k * 4 + 3] = k < 2 ? a0 : a1; }
+      if (this.fade) { this.born[i] = this.now; this.al[i * 2] = a0; this.al[i * 2 + 1] = a1; if (i + 1 > this.used) { this.used = i + 1; this.mesh.geometry.setDrawRange(0, this.used * 6); } }
       this.dirty = true;
+    }
+    tick(now) {   // (a fading set: every 2 s its marks a little fainter, gone after this.fade seconds)
+      this.now = now; if (!this.fade || now - this.lastFade < 2) return; this.lastFade = now; const B = this.born, A = this.al, c = this.col; let any = false;
+      for (let i = 0; i < this.used; i++) { if (!B[i]) continue; const f = 1 - (now - B[i]) / this.fade, q = i * 16; if (f <= 0) B[i] = 0; const a0 = f > 0 ? A[i * 2] * f : 0, a1 = f > 0 ? A[i * 2 + 1] * f : 0; c[q + 3] = c[q + 7] = a0; c[q + 11] = c[q + 15] = a1; any = true; }
+      if (any) { this.lo = 0; this.hi = this.used - 1; this.dirty = true; }
     }
     flush() {
       if (!this.dirty) return;
@@ -2811,7 +2819,8 @@ const Render = (function () {
       }
       this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; this.lo = 1e9; this.hi = -1;
     }
-    clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; }
+    clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false;
+      if (this.fade) { this.born.fill(0); this.used = 0; this.cur = 0; this.mesh.geometry.setDrawRange(0, 0); } }
   }
 
   /* ---------------- rain: streaks falling in a box around the view centre. The shader wraps each drop into the box (its place
@@ -2979,7 +2988,7 @@ const Render = (function () {
   // made with Math.random swapped for a generator of its own (never reset: the names stay unique), so the race runs as it would without them
   const uuRng = { s: 4021 };
   function ownRnd(fn) { const r = Math.random; Math.random = () => { uuRng.s = (uuRng.s * 48271) % 2147483647; return uuRng.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
-  let particles, skids, views = [];
+  let particles, skids, ruts = null, views = [];   // (ruts: the player's tracks in the new map's run-offs, fading over 10 minutes; made when first needed)
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'iso', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
@@ -3062,7 +3071,7 @@ const Render = (function () {
       world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { picsOf(m, pics); m.dispose(); }); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       const sh = sharedTex(); pics.forEach(t => { if (!sh.has(t)) t.dispose(); });   // the track's pictures off the GPU too (a board atlas a builder keeps for its next build goes up again then)
-      if (skids) skids.clear();
+      if (skids) skids.clear(); if (ruts) ruts.clear();
     }
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
@@ -4188,7 +4197,7 @@ const Render = (function () {
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
     { const D = world && world.dyn; if (D && D.vrFin) D.vrFin.visible = !race.pol; if (D && D.vrHide) { D.vrHide.grp.visible = !!race.pol; hideDoor(D.vrHide, 0); D.vrHide.t = 0; } }   // (Vršič: the race's finish, or the building the run from the police ends in, its door up)
-    particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
+    particles.clear(); sparkP.clear(); skids.clear(); if (ruts) ruts.clear(); cam.init = false;
     if (crackWarm) { crackWarm.userData.drawn = false; scene.add(crackWarm); }   // (drawn once, then taken out: frame)
   }
   // the run from the police over: the player has driven into the building at the top (pol.goal, the event 'hideout'): a TV camera outside, down
@@ -5616,7 +5625,7 @@ const Render = (function () {
       for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, 0.38 * wk, 1.8, 12, k * 0.13); }
     }
     streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); }
-    skids.flush();
+    skids.flush(); if (ruts) { ruts.tick(performance.now() / 1000); ruts.flush(); }
   }
 
   /* ---------------- detachable parts, broken lamps, debris ---------------- */
@@ -7676,11 +7685,19 @@ const Render = (function () {
       const front = k >= 2;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
-      if (surf === 3 && curTrack && curTrack.free) intens = Math.max(intens, 0.26);   // (the new map's run-offs give way: every car leaves its tracks in them)
       if (spd < lv) intens = 0;
+      // the new map's run-offs: the sand gives way, the player's car leaves its tracks there whenever it rolls (darker in a slide); they fade over 10 minutes
+      // (ruts); no other marks in it, none from the other cars
+      if (surf === 3 && curTrack && curTrack.free) { v.sk[k] = null; const rk = v.rk || (v.rk = [null, null, null, null]);
+        if (c.isPlayer && spd > 0.8) { const y1 = yb + 0.075, last = rk[k];
+          if (!ruts) { ruts = new Skids(12000, 600); scene.add(ruts.mesh); }
+          if (last) { const d = Math.hypot(px - last[0], pz - last[1]); if (d > 0.5 && d < 4) { const a = clamp(0.62 + Math.min(1, intens) * 0.3, 0.62, 0.9); ruts.add(last[0], last[1], px, pz, 0.26, 0.26, 0.19, 0.12, a * 0.92, a, last[2], y1); rk[k] = [px, pz, y1]; } else if (d >= 4) rk[k] = [px, pz, y1]; }
+          else rk[k] = [px, pz, y1]; }
+        else rk[k] = null; }
+      else if (v.rk) v.rk[k] = null;
       // skid marks
       const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
-      const skidOn = intens > 0.14 && spd > lv && !(rainy && onHard);   // (no rubber laid on a wet road)
+      const skidOn = intens > 0.14 && spd > lv && !(rainy && onHard) && !(surf === 3 && curTrack && curTrack.free);   // (no rubber laid on a wet road; the new map's run-offs: ruts above)
       if (skidOn) {
         const last = v.sk[k];
         if (last) {
@@ -8800,6 +8817,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!ruts) return null; if (adv) { ruts.lastFade = -1e9; ruts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < ruts.used; i++) if (ruts.born[i]) alive++; return { used: ruts.used, alive, fade: ruts.fade }; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
