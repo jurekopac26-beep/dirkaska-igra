@@ -29,7 +29,7 @@ function run(r, sec, drive) {
       if (c.pitState === 'repair' && was.get(c) !== 'repair') { stops.set(c, (stops.get(c) || 0) + 1); dur.set(c, c.pitDur); fuelIn.set(c, c.fuel); }
       was.set(c, c.pitState);
     }
-    if (P.fuel === 0 && !P.inPit) { if (dryAt == null) dryAt = t; else { nDry++; if (P.speed < 11.2 || P.inThr === 0) okDry++; vDry = Math.max(vDry, P.speed); dryM += P.speed * DT; } }   // (dry: the engine drives it only under 40 km/h)
+    if (P.fuel === 0 && !P.inPit) { if (dryAt == null) dryAt = t; else { nDry++; if (P.speed < 11.2 || P.inThr === 0 || hit) okDry++; vDry = Math.max(vDry, P.speed); dryM += P.speed * DT; } }   // (dry: the engine drives it only under 40 km/h; a knock from another car in that step may take it over)
   }
   return { t, stops, dur, fuelIn, low, dryAt, vDry, dryM, crawl: nDry ? okDry / nDry : 0 };
 }
