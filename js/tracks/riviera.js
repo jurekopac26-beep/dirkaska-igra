@@ -4,6 +4,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Short technical coastal street circuit (SWGP2-style: ~1.25 km, 6 corners incl. 2 hairpins, seafront straight)
   TRACK_DEFS.push({
     id: 'riviera', name: 'Riviera, Francija', theme: 'city', laps: 4, halfWidth: 6.5,
+    hudSigns: [[630, 780, 'chicane']],   // the chicane's blue sign on the HUD (Core hudSigns; m after the start line)
     desc: 'Obalna mestna proga: palme, morje, promenada, stavbe. Kratka in tehnična z lasnicami.',
     en: { name: 'Riviera, France', desc: 'A seaside street circuit: palm trees, the sea, a promenade, buildings. Short and technical, with hairpins.' },   // (the English page: Jezik · Language)
     points: [[-195, 195], [0, 195], [150, 195], [208, 172], [224, 120], [221, 46], [198, -6], [150, -23], [114, 6], [94, 55], [39, 73], [-13, 57], [-58, 81], [-124, 75], [-188, 47], [-234, 81], [-244, 146], [-224, 188]],

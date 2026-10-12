@@ -20,6 +20,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     bumps: [{ at: 0.12405, h: 0.7, w: 9 }, { at: 0.73068, h: 0.9, w: 8 }, { at: 0.77099, h: 0.5, w: 8 }],   // the Flugplatz crest, the jump at Pflanzgarten and the smaller one over the Sprunghügel after it
     bank: [[11962, 12108, 0.28], [16868, 16954, 0.2]],   // the Karussell and the Kleines Karussell: the road banked into the bend (metres after the start line, slope), the inside a concrete bowl
     wide: [[16060, 16220, -1, 2.6]],   // more room on the outside of the fast right before the Bellof-S (the cars arrive quicker there since the Sprunghügel)
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[5164, 5330, 'chicane'], [20468, 20596, 'chicane'], [760, 850, 'bend'], [3492, 3558, 'bend'], [15956, 16000, 'bend']],   // Adenauer Forst, Hohenrain; Hatzenbach, Schwedenkreuz, Stefan-Bellof-S
     // corner names ([HUD label, x, z, the commentator's lines]; the German names stay on the HUD, the voice gets English where it would
     // stumble: the Foxhole, the old mill, the Swedish Cross)
     names: [
