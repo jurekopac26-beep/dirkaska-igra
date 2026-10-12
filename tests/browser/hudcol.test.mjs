@@ -235,7 +235,7 @@ try {
   await turn(page, OR.land); await page.evaluate(() => Input.setMode('tilt'));
   const capped = await page.evaluate(async ([msg, toast]) => { const g = window.__game, Tt = document.getElementById('toast'), o = { seen: 0, wait: 0 }; g.msg(msg, 'gold', 60); g.toast(toast, 1500);
     const t0 = performance.now(); await new Promise(res => { const f = () => { if (Tt.classList.contains('show') && getComputedStyle(Tt).visibility === 'visible') o.seen++; if (Tt.classList.contains('wait')) o.wait++; if (performance.now() - t0 > 8500) res(); else requestAnimationFrame(f); }; requestAnimationFrame(f); });
-    o.show = Tt.classList.contains('show'); return o; }, [PIT.en.msg, PIT.en.toast]);
+    o.show = Tt.classList.contains('show'); o.phase = g.phase; o.screen = g.screen; o.pit = g.race.player.pitState || ''; o.col = Tt.classList.contains('col'); return o; }, [PIT.en.msg, PIT.en.toast]);
   await clear(page);
   T.check('a toast with no room waits, at most 6 s, then is not shown any more (never late)', capped.wait > 0 && capped.seen === 0 && !capped.show, JSON.stringify(capped));
   // the toast of the way in, still up (waiting, or showing) at the hand-back: gone with the autopilot, never after VOZIŠ TI!; the tilt meter back
