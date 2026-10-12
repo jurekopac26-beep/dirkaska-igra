@@ -270,8 +270,10 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* the tyres for the next stop (a race with compounds and pits): a tyre with its band in the compound's colour, A for Samodejno; at the left,
    beside the damage (#h-dmgrow), the right under the map free for the column of texts */
 #btn-tyre { position: relative; flex: none; margin-top: 3px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; pointer-events: auto; }
-#btn-tyre i { position: absolute; inset: 5px; border-radius: 50%; border: 4px solid #8a8f98; }
-#btn-tyre[data-c="S"] i { border-color: #e03027; } #btn-tyre[data-c="M"] i { border-color: #f2c616; } #btn-tyre[data-c="H"] i { border-color: #eeeeee; }
+#btn-tyre { --tc: #a3a8b1; --tl: 1; }
+#btn-tyre i { position: absolute; inset: 5px; border-radius: 50%; background: conic-gradient(var(--tc) calc(var(--tl) * 360deg), rgba(255,255,255,.14) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); }   /* the ring: as much of it coloured as the tyres on the car have left (game.js tyreHUD: --tl), from the top clockwise; the rest dark */
+#btn-tyre[data-c="S"] { --tc: #e03027; } #btn-tyre[data-c="M"] { --tc: #f2c616; } #btn-tyre[data-c="H"] { --tc: #eeeeee; }
 #btn-tyre span { position: relative; font: 800 italic 14px/1 var(--f-ui); color: var(--chalk); }
 /* (on its side with the steering wheel: under the speedometer the wheel's rim; the button right of the speedometer, just above the damage's row) */
 @media (orientation: landscape) { body:has(#touch.m-wheel) #h-dmgrow { position: relative; } body:has(#touch.m-wheel) #btn-tyre { position: absolute; left: clamp(120px, 36vh, 168px); bottom: 100%; margin: 0 0 2px; } }

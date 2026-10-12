@@ -2959,6 +2959,7 @@
     if (key === tyreKey) return; tyreKey = key;
     const el = $('h-tyre'); el.className = on ? 'on ' + P.ty.k + (P.ty.k === 'dry' && P.ty.c ? ' c' + P.ty.c : '') + (left < 35 ? ' worn' : '') + (bad ? ' bad' : '') : '';
     el.textContent = on ? tr(tyreName(P.ty)) + ' ' + left + '%' : '';
+    $('btn-tyre').style.setProperty('--tl', on ? Math.max(0, Math.min(1, left / 100)) : 1);   // (the tyre button's ring: what they have left, at a glance)
   }
   // the fuel (a race with fuel on): the gauge under the tyres, a tick on it at what it takes to the line (the car's own burn); a warning on
   // the lap it would not last another when it will not reach the line, the last drops (a crawl to the pits) when it is empty

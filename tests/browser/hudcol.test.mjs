@@ -178,6 +178,12 @@ try {
     pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === false), JSON.stringify(pedals));
   T.check('the tyre button (A) at the left beside the damage (on its side with the wheel: right of the speedometer, above the damage), 44 px, over nothing of the HUD or the controls (the speedometer, the tyres, the tower, the steering, the pedals ...), with buttons, the wheel and tilting, on its side and upright; tapped: A, S, M, H, A',
     tyres.length === 6 && tyres.every(o => !o.bad.length) && tyres.filter(o => o.taps).length === 2 && tyres.filter(o => o.taps).every(o => o.taps.join() === 'auto,S,M,H,auto'), JSON.stringify(tyres));
+  // the ring round the tyre button: as much of it coloured as the tyres on the car have left (92 % left: 92 % of the ring), the rest dark
+  const ring = await page.evaluate(async () => { const P = window.__game.race.player, B = document.getElementById('btn-tyre'), w0 = P.ty.wear, out = [];
+    for (const w of [0.08, 0.6]) { P.ty.wear = w; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      out.push({ left: Math.round((1 - w) * 100), tl: +getComputedStyle(B).getPropertyValue('--tl'), pill: document.getElementById('h-tyre').textContent, bg: getComputedStyle(B.firstElementChild).backgroundImage.slice(0, 40) }); }
+    P.ty.wear = w0; return out; });
+  T.check('the tyre button\'s ring: coloured as far round as the tyres have left (92 % and 40 %, as the tyre pill says), the rest dark', ring.length === 2 && ring.every(o => Math.abs(o.tl - o.left / 100) < 0.011 && o.pill.endsWith(' ' + o.left + '%') && /conic-gradient/.test(o.bg)), JSON.stringify(ring));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
     for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)
