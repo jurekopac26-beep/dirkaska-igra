@@ -37,7 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     widths: [[0,7.0],[280,7.0],[320,6.2],[560,6.2],[600,7.0],[680,7.0],[720,5.6],[940,5.6],[985,6.0],[2520,6.0],[2560,7.0],[2842.8935905074272,7.0]],   // the half width [metres after the start line, m]: Boundary Street (two carriageways) wider, Charters Towers Road (one carriageway) narrower
     walls: [[-120,-96,-1,8,5],[14,28,-1,7,4],[82,96,1,7,4],[157,171,1,7,4],[527,547,-1,10,5],[574,662,-1,22,10],[612,668,1,8,5],[810,822,1,6,4],[836,846,-1,6,4],[870,882,1,6,4],[940,988,-1,16,8],[1012,1032,-1,8,4],[1012,1032,1,8,4],[1045,1057,-1,6,4],[1820,1836,1,7,4],[1880,1946,-1,14,6],[1880,1946,1,14,6],[2195,2260,-1,12,14],[2540,2590,1,12,6]],
     pit: [18, -282, 46, -140, 50],   // the pit lane on the right of the start straight: [centre offset, from, to, the player's box, way in] (metres after the start line)
-    pitRow: [-232, -48],             // the garages (the pit building of the park: OpenStreetMap's outline)
+    pitRow: [-205, -85],             // the first and the last of the 13 crews' boxes (10 m apart, the player's at -140 among them: Track.crewBoxes), in front of the park's pit garages
     // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only; Ross Creek (the bridge)
     names: [["Zavoj 1",-337.3,66.3,["Turn one, flat out through the kink!","Through Turn One at full speed, over the creek!","The fast kink of Turn One, then hard on the brakes!"]],
       ["Zavoj 2",-625.2,20.6,["Turn two! Hard on the brakes at the big junction!","Into Turn Two, a tight right through the junction!","Turn two, where the drama always happens!"]],

@@ -48,25 +48,25 @@ try {
   // 3. the standings: every driver, the player's points, round 2 next; kept in the browser
   await page.evaluate(() => document.getElementById('res-restart').click()); await page.waitForTimeout(300);
   const s1 = await standings();
-  T.check('standings after round 1: 13 drivers, the player with the points of the place, round 2 (Ljubljana) next, saved', s1.screen === 'champ' && s1.rows === 13 && s1.me === 'Ana:' + p1 && s1.tag === 'dirka 2/4' &&
-    s1.go === 'Naslednja dirka: Ljubljana, Slovenija' && s1.chips.startsWith('done,next') && s1.saved && s1.saved.rounds.length === 1 && s1.saved.rounds[0].order.length === 13, JSON.stringify(s1));
+  T.check('standings after round 1: 13 drivers, the player with the points of the place, round 2 (Gorski reli) next, saved', s1.screen === 'champ' && s1.rows === 13 && s1.me === 'Ana:' + p1 && s1.tag === 'dirka 2/3' &&
+    s1.go === 'Naslednja dirka: Gorski reli' && s1.chips.startsWith('done,next') && s1.saved && s1.saved.rounds.length === 1 && s1.saved.rounds[0].order.length === 13, JSON.stringify(s1));
 
   // 4. a reload of the page: the championship is still there, the title button shows the round
   await page.reload(); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 30000 }); await page.waitForTimeout(500);
   const title = await page.evaluate(() => document.getElementById('btn-champ').textContent);
   await act('to-champ'); await page.waitForTimeout(300);
   const s2 = await standings();
-  T.check('after a reload: "Prvenstvo · 2/4" on the title screen, the same standings', title === 'Prvenstvo · 2/4' && s2.me === 'Ana:' + p1 && s2.go === 'Naslednja dirka: Ljubljana, Slovenija', `title "${title}", ${JSON.stringify(s2)}`);
+  T.check('after a reload: "Prvenstvo · 2/3" on the title screen, the same standings', title === 'Prvenstvo · 2/3' && s2.me === 'Ana:' + p1 && s2.go === 'Naslednja dirka: Gorski reli', `title "${title}", ${JSON.stringify(s2)}`);
 
   // 5. round 2: a restart drives the same round again; left before the finish, it does not count
-  await act('champ-go'); await raceOn('ljubljana', 1);
+  await act('champ-go'); await raceOn('gora', 1);
   await page.evaluate(() => { window.__game.sim(12, true); });
   await act('restart'); await page.waitForTimeout(300);
   const again = await page.evaluate(() => { const g = window.__game; return { id: g.race.track.def.id, round: g.race.champ && g.race.champ.round, t: g.race.time }; });
   await page.evaluate(() => { window.__game.sim(12, true); });
   await act('to-title'); await act('to-champ'); await page.waitForTimeout(300);
   const s3 = await standings();
-  T.check('round 2: a restart drives it again (Ljubljana, round 2); left before the finish, not counted', again.id === 'ljubljana' && again.round === 1 && again.t < 1 && s3.saved.rounds.length === 1 && s3.tag === 'dirka 2/4',
+  T.check('round 2: a restart drives it again (Gorski reli, round 2); left before the finish, not counted', again.id === 'gora' && again.round === 1 && again.t < 1 && s3.saved.rounds.length === 1 && s3.tag === 'dirka 2/3',
     `${JSON.stringify(again)}, rounds saved ${s3.saved.rounds.length}`);
 
   // 6. giving it up: the first tap asks, the second one does it
@@ -76,20 +76,20 @@ try {
   const gone = await page.evaluate(() => ({ saved: localStorage.getItem('tdgp-champ'), go: document.getElementById('ch-go').textContent, cards: document.querySelectorAll('[data-champ]').length }));
   T.check('"Opusti": asks first ("Res opustim?"), a second tap gives it up (the choice again)', ask.btn === 'Res opustim?' && ask.saved && gone.saved === null && gone.go === 'Začni prvenstvo' && gone.cards >= 3, JSON.stringify({ ask, gone }));
 
-  // 7. the last round of a series: three rounds already driven (the player 2nd, 1st, 3rd), the fourth one (Riviera) to the finish
+  // 7. the last round of a series: two rounds already driven (the player 2nd, 1st), the third one (Riviera) to the finish
   await page.evaluate(() => {
     const K = Core.champKeys(12), ord = (p) => { const o = K.slice(1); o.splice(p - 1, 0, Core.PLAYER_KEY); return o; };
-    localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, rounds: [{ track: 'jezero', order: ord(2) }, { track: 'ljubljana', order: ord(1) }, { track: 'gora', order: ord(3) }] }));
+    localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, rounds: [{ track: 'jezero', order: ord(2) }, { track: 'gora', order: ord(1) }] }));
   });
   await page.reload(); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 30000 }); await page.waitForTimeout(500);
   await act('to-champ'); await page.waitForTimeout(300);
   const s4 = await standings();
-  await act('champ-go'); await raceOn('riviera', 3);
+  await act('champ-go'); await raceOn('riviera', 2);
   const r4 = await finish();
   await page.evaluate(() => document.getElementById('res-restart').click()); await page.waitForTimeout(300);
   const s5 = await standings(), rec = await page.evaluate(() => (JSON.parse(localStorage.getItem('tdgp-records') || '{}').champ || {}).domaci || null);
-  T.check('last round: the standings before it (58 points), the results lead to the final standings', s4.me === 'Ana:58' && s4.tag === 'dirka 4/4' && r4.screen === 'results' && r4.btn === 'to-champ:Končna razvrstitev', `${s4.me}, ${s4.tag}, ${r4.btn}`);
-  T.check('final standings: the championship over, the place shown, "Novo prvenstvo"; the best final place kept for the series', s5.final && s5.tag === 'končano' && s5.go === 'Novo prvenstvo' && s5.chips === 'done,done,done,done' && rec && rec.best >= 1,
+  T.check('last round: the standings before it (43 points), the results lead to the final standings', s4.me === 'Ana:43' && s4.tag === 'dirka 3/3' && r4.screen === 'results' && r4.btn === 'to-champ:Končna razvrstitev', `${s4.me}, ${s4.tag}, ${r4.btn}`);
+  T.check('final standings: the championship over, the place shown, "Novo prvenstvo"; the best final place kept for the series', s5.final && s5.tag === 'končano' && s5.go === 'Novo prvenstvo' && s5.chips === 'done,done,done' && rec && rec.best >= 1,
     JSON.stringify({ tag: s5.tag, go: s5.go, me: s5.me, rec }));
   await act('champ-go'); await page.waitForTimeout(200);
   const fresh = await page.evaluate(() => ({ saved: localStorage.getItem('tdgp-champ'), go: document.getElementById('ch-go').textContent }));

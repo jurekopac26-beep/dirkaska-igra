@@ -610,7 +610,7 @@
     const F = {}; for (const k in D.furn) { const a = i16(D.furn[k]), o = []; for (let m = 0; m < a.length; m += 2) o.push([a[m] / 10, a[m + 1] / 10]); F[k] = o; }
     const nearPt = (arr, x, z, r) => (arr || []).some(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 < r * r);
     // OpenStreetMap's own signals, cabinets and signs inside the barriers
-    for (const [x, z] of F.sig || []) put('tlight', x, z, R() * TAU);
+    for (const [x, z] of F.sig || []) put('signal', x, z, R() * TAU);
     for (const [x, z] of F.cab || []) put('cabinet', x, z, R() * TAU);
     for (const [x, z] of (F.give || []).concat(F.stop || [])) put('sign', x, z, R() * TAU);
     let nJ = 0;
@@ -626,8 +626,8 @@
       const room = (d) => barO(T.idx(sAt(d)), sd) - WA[T.idx(sAt(d))];
       if (sig) {
         const c1 = corner(sa - 1.6, 0.8), c2 = corner(sb + 1.6, 0.8);
-        put('tlight', c1[0], c1[1], along + Math.PI / 2); put('tlight', c2[0], c2[1], along - Math.PI / 2);
-        if (off >= 14) { const m1 = corner(sa + (sb - sa) * 0.3, Math.min(room(sm) - 2.5, 9)); put('signal', m1[0], m1[1], along); const m2 = corner(sa + (sb - sa) * 0.7, Math.min(room(sm) - 2.5, 9)); put('tlight', m2[0], m2[1], across); }   // (a mast arm over the far legs; a post on the island between them)
+        put('signal', c1[0], c1[1], along + Math.PI / 2); put('signal', c2[0], c2[1], along - Math.PI / 2);
+        if (off >= 14) { const m1 = corner(sa + (sb - sa) * 0.3, Math.min(room(sm) - 2.5, 9)); put('signalm', m1[0], m1[1], along); const m2 = corner(sa + (sb - sa) * 0.7, Math.min(room(sm) - 2.5, 9)); put('signal', m2[0], m2[1], across); }   // (a mast arm over the far legs; a post on the island between them)
         const k1 = corner(sa - 4.2, 2.2); put('cabinet', k1[0], k1[1], along);
         const s2 = corner(sb + 5.5, 0.9); put('sign', s2[0], s2[1], along);
       } else { for (const [d, dl] of [[sa - 1.4, 1.0], [sb + 1.4, 1.0]]) { const p = corner(d, dl); put('sign', p[0], p[1], across + Math.PI / 2); } }

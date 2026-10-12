@@ -2,7 +2,9 @@
 // title button); the car screen (a car in the garage, a car with its price and "Kupi", too little money); upgrades bought (their
 // prices, the money taken, bought parts cannot be sold); a race on autopilot pays the prize (the place, the distance, the difficulty,
 // the fastest lap) on the results screen; a car bought with the money; a car not bought cannot race; the career off: the free game
-// again (every car, its own free upgrades), on again: the money and the garage kept.
+// again (every car, its own free upgrades), on again: the money and the garage kept; a career saved with the retired model at index 5
+// in its garage loads with the LEV S in its place (once, with its upgrades; both owned: the better level of each part), the garage
+// listing the LEV S once and never the retired model.
 //   node tests/browser/career.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -71,12 +73,12 @@ try {
   // 5. a car bought (the money given for the test), raced
   await page.evaluate(() => { const c = window.__game.career; c.money = 25000; });
   await act('to-title'); await page.waitForTimeout(200); await act('to-car'); await page.waitForTimeout(200);
-  await page.evaluate(async () => { const g = window.__game; while (Core.MODELS[g.S.car].id !== 'p206') { g.onAction('car-next'); await new Promise(r => setTimeout(r, 30)); } });
+  await page.evaluate(async () => { const g = window.__game; while (Core.MODELS[g.S.car].id !== 'levs') { g.onAction('car-next'); await new Promise(r => setTimeout(r, 30)); } });
   await act('car-buy'); await page.waitForTimeout(150);
   const c5 = await cr(), k5 = await car();
-  T.check('a car bought: 20.000 € taken, in the garage, "Naprej"', c5.money === 5000 && c5.cars.includes('p206') && k5.act === 'to-track' && /V tvoji garaži/.test(k5.price), JSON.stringify({ c5, k5 }));
+  T.check('a car bought (the LEV S): 20.000 € taken, in the garage, "Naprej"', c5.money === 5000 && c5.cars.includes('levs') && k5.act === 'to-track' && /V tvoji garaži/.test(k5.price), JSON.stringify({ c5, k5 }));
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-career')));
-  T.check('the career kept in the browser', stored && stored.v === 1 && stored.money === 5000 && stored.cars.includes('p206') && stored.upg.pico.motor === 1, JSON.stringify(stored));
+  T.check('the career kept in the browser', stored && stored.v === 1 && stored.money === 5000 && stored.cars.includes('levs') && stored.upg.pico.motor === 1, JSON.stringify(stored));
 
   // 6. the career off: the free game (every car, free upgrades of its own); on again: all kept
   await act('to-title'); await page.waitForTimeout(150); await act('to-career'); await page.waitForTimeout(150); await act('career-toggle'); await page.waitForTimeout(150);
@@ -90,7 +92,24 @@ try {
   T.check('career off: every car raced freely (no price), the free game\'s own upgrades (stock)', b6 === 'Kariera' && k6.act === 'to-track' && k6.cls.includes('off') && /Serijski\*/.test(u6) && !/€/.test(u6), JSON.stringify({ b6, k6, u6 }));
   await act('upg-done'); await act('to-title'); await page.waitForTimeout(150); await act('to-career'); await page.waitForTimeout(150); await act('career-toggle'); await page.waitForTimeout(150);
   const c7 = await cr();
-  T.check('career on again: the money, the garage and the upgrades kept', c7.on && c7.money === 5000 && c7.cars.join() === 'pico,p206' && c7.upg.pico.motor === 1, JSON.stringify(c7));
+  T.check('career on again: the money, the garage and the upgrades kept', c7.on && c7.money === 5000 && c7.cars.join() === 'pico,levs' && c7.upg.pico.motor === 1, JSON.stringify(c7));
+
+  // 7. a career saved by an older build with the retired model at index 5 in the garage (bought, upgraded): it loads with the LEV S in
+  //    its place, its upgrades kept; one with both: the LEV S once, the better level of each part; the garage lists the LEV S once
+  const reload = async (saved) => {
+    await page.evaluate((j) => localStorage.setItem('tdgp-career', JSON.stringify(j)), saved); await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 120000 });
+    await act('to-career'); await page.waitForTimeout(200);
+    return page.evaluate(() => { const c = window.__game.career, cars = [...document.querySelectorAll('#career-garage .gcar')];
+      return { cars: c.cars.slice(), upg: JSON.parse(JSON.stringify(c.upg)), money: c.money, lev: cars.filter(e => e.querySelector('b').textContent === 'LEV S').map(e => e.classList.contains('own')), n: cars.length,
+        all: Core.MODELS.filter(m => !m.retired).length }; });
+  };
+  const U = (motor, gume, zavore, aero) => ({ motor, gume, zavore, aero });
+  const m1 = await reload({ v: 1, on: true, money: 1234, earned: 0, races: 0, wins: 0, cars: ['pico', 'p206'], upg: { pico: U(1, 0, 0, 0), p206: U(2, 1, 0, 3) } });
+  T.check('a saved career owning the retired model: the LEV S in its place, its upgrades kept (Motor 2, Gume 1, Aero 3), no trace of the old id; the garage lists the LEV S once (in it) and every car in use once',
+    m1.cars.join() === 'pico,levs' && JSON.stringify(m1.upg.levs) === JSON.stringify(U(2, 1, 0, 3)) && !('p206' in m1.upg) && m1.upg.pico.motor === 1 && m1.money === 1234 && m1.lev.join() === 'true' && m1.n === m1.all, JSON.stringify(m1));
+  const m2 = await reload({ v: 1, on: true, money: 50, earned: 0, races: 0, wins: 0, cars: ['pico', 'levs', 'p206'], upg: { pico: U(0, 0, 0, 0), levs: U(1, 3, 0, 0), p206: U(2, 1, 2, 0) } });
+  T.check('a saved career owning both the LEV S and the retired model: the LEV S once, the better level of each part (Motor 2, Gume 3, Zavore 2)',
+    m2.cars.join() === 'pico,levs' && JSON.stringify(m2.upg.levs) === JSON.stringify(U(2, 3, 2, 0)) && !('p206' in m2.upg) && m2.lev.join() === 'true', JSON.stringify(m2));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

@@ -116,7 +116,7 @@ const race = (rain) => {
 {
   const [a0, b0, sd] = def.walls.find(w => w[0] === 527), dm = (a0 + b0) / 2, i0 = at(dm), wi = T.wa[i0];
   const pt = (al, lat) => { const i = at(dm + al); return [T.px[i] + T.nx[i] * sd * lat, T.pz[i] + T.nz[i] * sd * lat, i]; };
-  const KINDS = [['tlight', -6, 2.6], ['sign', -3.5, 3.4], ['bollard', -1.5, 2.4], ['signal', 0.5, 3.2], ['bin', 2.5, 2.8], ['cabinet', 4.5, 3.6], ['lamp', 6.5, 2.6]];
+  const KINDS = [['signal', -6, 2.6], ['sign', -3.5, 3.4], ['bollard', -1.5, 2.4], ['signalm', 0.5, 3.2], ['bin', 2.5, 2.8], ['cabinet', 4.5, 3.6], ['lamp', 6.5, 2.6]];
   const orig = Math.random; Math.random = seeded(7);
   try {
     const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 1, rain: 0 });
