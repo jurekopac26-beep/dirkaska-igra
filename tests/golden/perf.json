@@ -313,5 +313,12 @@
   "kverts": 798,
   "maxKverts": 984,
   "jsMs": 1.24
+ },
+ "marrakesh": {
+  "calls": 262,
+  "maxCalls": 308,
+  "kverts": 751,
+  "maxKverts": 843,
+  "jsMs": 0.83
  }
 }
