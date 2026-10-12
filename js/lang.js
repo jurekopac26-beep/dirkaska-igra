@@ -271,7 +271,7 @@
     ' · POPRAVLJENO': ' · REPAIRED', 'POPRAVLJENO!': 'REPAIRED!', 'še {0} km': '{0} km to go', 'OVINEK {0}/{1}': 'TURN {0}/{1}', 'LETEČI KROG': 'FLYING LAP', 'LETEČI KROG!': 'FLYING LAP!',
     'KROG {0}/{1}': 'LAP {0}/{1}', 'KROG {0}: {1}': 'LAP {0}: {1}', '  NAJHITREJŠI': '  FASTEST', 'ZADNJI KROG!': 'FINAL LAP!', 'NAPAČNA SMER!': 'WRONG WAY!', 'POPRAVILO {0} %': 'REPAIR {0} %',
     'PREBITE GUME: {0}': 'FLAT TYRES: {0}', 'TEKMEC {0} s PRED TABO': 'RIVAL {0} s AHEAD', 'TEKMEC {0} s ZA TABO': 'RIVAL {0} s BEHIND',
-    'ČAS SE ZAČNE NA ČRTI': 'THE CLOCK STARTS AT THE LINE', 'START!': 'GO!', 'CILJ!': 'FINISH!', 'Cilj!': 'Finish!', 'ZMAGA!': 'VICTORY!', 'CILJ! {0} MESTO': 'FINISH! {0} PLACE', 'KROG {0}': 'LAP {0}',
+    'ČAS SE ZAČNE NA ČRTI': 'THE CLOCK STARTS AT THE LINE', 'START!': 'GO!', 'REAKCIJA': 'REACTION', 'PREZGODAJ NA PLINU': 'GAS TOO EARLY', 'CILJ!': 'FINISH!', 'Cilj!': 'Finish!', 'ZMAGA!': 'VICTORY!', 'CILJ! {0} MESTO': 'FINISH! {0} PLACE', 'KROG {0}': 'LAP {0}',
     'REKORD {0}  {1}': 'RECORD {0}  {1}', 'CILJ  {0}': 'FINISH  {0}', 'NOV REKORD!': 'NEW RECORD!', 'CILJ! {0}': 'FINISH! {0}', 'ULOVLJEN!': 'BUSTED!', 'POBEGNIL SI!': 'YOU ESCAPED!',
     'Sobe s to kodo ni. Preveri kodo (prijatelj mora imeti sobo odprto).': 'There is no room with this code. Check the code (your friend must keep the room open).',
     'Ta brskalnik ne podpira dirke s prijateljem. Odpri igro v Chromu ali Safariju.': 'This browser cannot race a friend. Open the game in Chrome or Safari.',

@@ -45,7 +45,7 @@ const MEASURE = () => {
   const shown = (e) => { if (!e || getComputedStyle(e).visibility !== 'visible') return false; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || +c.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
   const R = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
   const land = innerWidth > innerHeight, M = document.getElementById('h-msg'), cs = getComputedStyle(M);
-  const colIds = ['h-prof', 'h-wreck', 'h-pit', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast'].concat(land ? ['h-tower'] : []);
+  const colIds = ['h-prof', 'h-wreck', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast'].concat(land ? ['h-tower'] : []);
   const otherIds = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-pol', 'h-gap', 'h-chk', 'h-school', 'pk-note', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls',
     'h-dmg', 'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'].concat(land ? [] : ['h-tower']);
   return { w: innerWidth, h: innerHeight, block: document.getElementById('rotate').classList.contains('show'), screen: window.__game.screen, m: R('h-map'),
@@ -322,7 +322,7 @@ try {
     await A.page.evaluate(() => window.__game.onAction('net-go'));
     for (const x of [A, B]) await until(x.page, () => { const n = window.__game.net; return !!(n && n.race && n.race.startT != null); }, 90000);
     for (const [x, k] of [[A, 'port'], [B, 'land']]) {
-      await x.page.waitForFunction(() => !document.getElementById('h-lights').classList.contains('show'), null, { timeout: 60000 }).catch(() => { });   // (the start lights gone: the column stops above them while they show)
+      await x.page.waitForFunction(() => { const e = document.getElementById('h-lights'); return !e.classList.contains('show') && +getComputedStyle(e).opacity < 0.01; }, null, { timeout: 60000 }).catch(() => { });   // (the start lights gone, faded out too (.25 s): the column stops above them while they show)
       const o = await texts(x.page, 'START!', { radio: null }), bad = wrong(o), ids = o.col.map(c => c.id);
       if (SHOTS) await x.page.screenshot({ path: path.join(SHOTS, `online-${k}.png`) });
       T.check(`a race with a friend, ${k === 'land' ? 'on its side' : 'upright'}: the message and the toast under the map, its width, stacked; nothing over the middle or over the HUD`, !bad.length && ids.includes('h-msg') && (k === 'land' || ids.includes('toast')), JSON.stringify({ bad, col: ids, wait: o.wait }));

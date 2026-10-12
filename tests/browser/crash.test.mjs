@@ -111,6 +111,7 @@ try {
   for (const [k, s] of [['on', { xBody: 1, xParts: 1, xDust: 1, xDrag: 1 }], ['off', { xBody: 1 }]]) pd[k] = await run(s, (hs) => {
     const hit = eval(hs), g = window.__game, R = g.race, P = R.player, v = Render.viewOf(P), out = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+    { const T = R.track, i = T.idx(P.q.s); P.place(T.px[i], T.pz[i], T.hd[i]); P.q = T.query(P.x, P.z, i, P.q); if (T.hasElev) P.y = P.py = T.hy[i]; P.roadY = P.y; }   // (the middle of the road: where the start left it, it may rub the barrier, its own sparks)
     for (let k = 0; k < 14 && !v.kit.ajar.bumperR && !P.lost.bumperR; k++) hit(P, [0.06, -1, 0.1]);
     out.ajar = !!v.kit.ajar.bumperR && !P.lost.bumperR;
     // driving on at 15 m/s with it hanging: sparks off its low end

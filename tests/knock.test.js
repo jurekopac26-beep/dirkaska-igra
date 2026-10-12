@@ -39,12 +39,13 @@ function tap(bump, vb, net) {
   const net = tap(1, 38, true); ok('odboji on: a friend\'s car in an online race (net) is never turned nor loses grip', net.imp > 10 && !('xgl' in net) && net.gl === 0 && net.wSame, JSON.stringify({ imp: +net.imp.toFixed(1), gl: net.gl, w: net.wSame }));
 }
 
-// a 90 s race on Jezero, the player on autopilot
+// a 90 s race on Jezero, the player on autopilot (every car off the line at once, as before the start's reaction, Core LAUNCH: the
+// reactions spread the pack over the first metres and the knocks of one race with them; this measures the aggressive drivers alone)
 function race(ai) {
   C.setCrash({ ai });
   const orig = Math.random; Math.random = seeded(11);
   try {
-    const r = new C.Race(new C.Track(C.TRACKS.find(d => d.id === 'jezero')), { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' });
+    const r = new C.Race(new C.Track(C.TRACKS.find(d => d.id === 'jezero')), { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs', launch: false });
     r.start();
     let t = 0, hard = 0, nan = false;
     while (t < 90) { C.aiControl(r.player, r, DT); r.step(DT); t += DT;

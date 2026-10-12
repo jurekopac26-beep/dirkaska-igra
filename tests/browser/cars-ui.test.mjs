@@ -323,7 +323,7 @@ try {
       Core.detachPart(P, 'wheelRL'); g.sim(8, true);
       const near = r.cars.filter(c => c !== P).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
       Core.detachPart(near[0], 'wheelFR'); g.sim(0.5, true);
-      near[1].dmg = 0.95; g.sim(0.5, true);
+      near[1].dmg = 0.99; g.sim(0.5, true);   // (a total wreck: on fire at once, Render.burning; a hub's sparks need frames drawn, fire.test.mjs)
       r.retire(near[2]); g.sim(0.5, true);
       return { names: near.slice(0, 3).map(c => c.name), d: near.slice(0, 3).map(c => Math.round(Math.hypot(c.x - P.x, c.z - P.z))) };
     });

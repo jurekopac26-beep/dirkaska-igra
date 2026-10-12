@@ -38,8 +38,9 @@ check('track: the lap 4.361 km within 0.3 % (the centre line from OSM, placed on
   const p0 = T.pitAt(sOf(0)), pE = T.pitAt(sOf(-190)), pX = T.pitAt(sOf(285));
   check('pits: the lane on the LEFT of the straight (def.pit[0] < 0), 15 m from the centre line, the way in after the last chicane and the way out before Turn 1',
     def.pit[0] < 0 && p0 && p0.o === 15 && p0.sd === -1 && !p0.gap && pE && pE.gap && pX && pX.gap && !T.pitAt(sOf(400)), `o ${p0 && p0.o}, wall ${p0 && p0.wall.toFixed(1)} m`);
-  const orig = Math.random; Math.random = seeded(3);
-  const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2 });
+  const orig = Math.random; Math.random = seeded(3);   // (every car off the line at once, as before the start's reaction (Core LAUNCH): with it this player is wrecked in the first
+  // corner, and the autopilot pins a wrecked car against the wall at the way in instead of the lane; this is about the lane)
+  const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2, launch: false });
   r.start(); const P = r.player; P.dmg = 0.5; let t = 0, k = 0; const ev = []; let minD = 0, maxD = 0;
   while (t < 260) { Math.random = seeded(5000 + (++k)); P.pitWant = P.dist > 1500 && !ev.includes('exit') && (!P.pitDone || P.inPit); C.aiControl(P, r, DT); r.step(DT); t += DT;
     if (P.pitEv) { ev.push(P.pitEv); P.pitEv = null; } if (P.inPit) { minD = Math.min(minD, P.q.d); maxD = Math.max(maxD, P.q.d); } if (P.pitDone && !P.inPit) break; }
