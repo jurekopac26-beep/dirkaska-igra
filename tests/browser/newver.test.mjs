@@ -35,6 +35,8 @@ try {
     const o = await page.evaluate(() => { const g = window.__game, R = g.race, P = R.player, T = R.track; return { id: T.def.id, cars: R.cars.length, ground: typeof T.ground2 === 'function', free: !!T.free, mk: !!(window.MK && window.MK.hub4), x: P.x, z: P.z, hud: document.getElementById('hud').classList.contains('nv') }; });
     T.check('the tap starts Toskana alone (no rivals), the new map built (window.MK, the ground, no barriers), driving straight away (no lights)', o.id === 'toskana' && o.cars === 1 && o.ground && o.free && o.mk && o.hud, JSON.stringify(o) + ' in ' + (Date.now() - t0) + ' ms');
     const hm = await page.evaluate(() => { const H = window.__H3.home, P = window.__game.race.player; return { x: H.x, z: H.z, h: P.h }; });
+    const car = await page.evaluate(() => { const m = window.__game.race.player.m; return { id: m.id, name: m.name }; });
+    T.check('the new map starts in the MEDVED 4x4', car.id === 'medved', JSON.stringify(car));
     T.check('the car starts at HOME (on the dirt road south of the start straight, where a mission ends), facing the track', Math.hypot(o.x - hm.x, o.z - hm.z) < 1 && Math.abs(hm.x + 8) < 6 && hm.z > 185 && hm.z < 215 && Math.sin(hm.h) < -0.8, JSON.stringify({ ...o, home: hm }));
     // free driving: a few seconds of throttle move the car; off the road it is not stopped by the barriers
     const d = await page.evaluate(() => { const g = window.__game, P = g.race.player, x0 = P.x, z0 = P.z; g.sim(3, false); return Math.hypot(P.x - x0, P.z - z0); });
