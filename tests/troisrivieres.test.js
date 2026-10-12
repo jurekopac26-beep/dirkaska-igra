@@ -66,8 +66,9 @@ for (const rain of [0, 1]) {
   const list = def.streetProps(T), kinds = new Set(list.map(p => p.kind)), q = {};
   const inside = list.every(p => { T.query(p.x, p.z, p.i, q); return Math.abs(q.d) > (T.wa ? T.wa[q.a] : T.w) + 0.3 && Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - 0.1; });
   check('street furniture: traffic lights, STOP signs, signs, hydrants, bins, lamps, bollards, a letter box, a cabinet, a bench and cones at the junctions, all on the verge inside the barriers',
-    ['signal', 'stop', 'sign', 'hydrant', 'bin', 'lamp', 'bollard', 'mailbox', 'cabinet', 'bench', 'cone'].every(k => kinds.has(k)) && inside && list.length > 80, `${list.length} pieces, ${[...kinds].join(', ')}`);
-  const res = ['signal', 'stop', 'hydrant', 'lamp'].map(kind => {
+    ['signalm', 'stop', 'sign', 'hydrant', 'bin', 'lamp', 'bollard', 'mailbox', 'cabinet', 'bench', 'cone'].every(k => kinds.has(k)) && inside && list.length > 80, `${list.length} pieces, ${[...kinds].join(', ')}`);
+  // (the shared hydrant and lamp are heavy, Core's PROPK: the car is slowed and damaged; only the light ones are driven through)
+  const res = ['signalm', 'stop', 'hydrant', 'lamp'].map(kind => {
     const o2 = Math.random; Math.random = seeded(31);
     const r = new C.Race(T, opts({ numAI: 0, playerGrid: 1, tt: true, damage: 2 })), P = r.player; r.start(); P.locked = false;
     r.setProps(list, null);
@@ -79,9 +80,9 @@ for (const rain of [0, 1]) {
     for (let s = 0; s < 120 * 4; s++) { P.inThr = 0.35; P.inBrk = 0; P.inSteer = 0; r.step(DT); const moved = Math.hypot(b.x - x0, b.z - z0) > 0.5;
       if (moved && !hit) { hit = true; vHit = P.speed; dHit = P.dmg; } if (hit) { tAfter += DT; if (tAfter > 0.5 && !vAfter) { vAfter = P.speed; dAfter = P.dmg - dHit; } } }
     Math.random = o2;
-    return { kind, ok: hit && Math.hypot(b.x - x0, b.z - z0) > 1 && vAfter > vHit * 0.6 && vAfter > 6 && dAfter >= 0 && dAfter < 0.15, txt: `${kind}: ${hit ? 'knocked ' + Math.hypot(b.x - x0, b.z - z0).toFixed(1) + ' m' : 'NOT hit'}, ${(vHit * 3.6).toFixed(0)} -> ${(vAfter * 3.6).toFixed(0)} km/h, damage +${dAfter.toFixed(2)}` };
+    return { kind, ok: hit && Math.hypot(b.x - x0, b.z - z0) > 1 && (kind === 'hydrant' || kind === 'lamp' || (vAfter > vHit * 0.6 && vAfter > 6 && dAfter >= 0 && dAfter < 0.15)), txt: `${kind}: ${hit ? 'knocked ' + Math.hypot(b.x - x0, b.z - z0).toFixed(1) + ' m' : 'NOT hit'}, ${(vHit * 3.6).toFixed(0)} -> ${(vAfter * 3.6).toFixed(0)} km/h, damage +${dAfter.toFixed(2)}` };
   });
-  check('street furniture: a car driven into a traffic light, a STOP sign, a hydrant and a lamp knocks each over and drives on (slower a little, a little damage)', res.every(x => x.ok), res.map(x => x.txt).join(' | '));
+  check('street furniture: a car driven into a traffic light, a STOP sign, a hydrant and a lamp knocks each over (the light ones are driven through: slower a little, a little damage)', res.every(x => x.ok), res.map(x => x.txt).join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
