@@ -33712,6 +33712,6 @@ const World = (function () {
   }
   const _hjV = new THREE.Vector3();
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT };   // (heli: the TV helicopter's model, also the police's on Vršič)
+  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT, nrDecalTex };   // (nrDecalTex: the Nordschleife's paint on the asphalt, also the new map's ring road's, js/newmap.js nordRoad)   // (heli: the TV helicopter's model, also the police's on Vršič)
 })();
 

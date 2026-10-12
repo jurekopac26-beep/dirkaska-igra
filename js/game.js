@@ -1568,7 +1568,7 @@
   // qualifying gave on this track (also when it is driven again), or on the usual one
   function newRace(mode) {
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
-    const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (!!track.def.timeTrial || md === 'tt'), M = ch ? modelById(ch.car) : Core.MODELS[S.car];   // (online: always the race)
+    const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (!!track.def.timeTrial || md === 'tt'), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     if (cr < 0) champRun = false;
@@ -1665,22 +1665,38 @@
   // new map built over the track (window.MK.hub4: the infield's construction site and driving school, the garages, the islands, the
   // motocross track ...), the car at HOME; the car then drives on the new map's ground (track.ground2, Car.stepCS). A wait screen meanwhile.
   function nvStart() {
-    const box = document.createElement('div'); box.id = 'nv-load'; box.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(5,8,12,.78);font-family:Roboto,sans-serif;color:#fff';
-    box.innerHTML = '<div style="width:min(320px,86vw);padding:18px 20px;border-radius:16px;background:rgba(9,13,20,.95);border-top:4px solid #ffd34d;text-align:center"><div style="font:800 11px Roboto,sans-serif;letter-spacing:1.6px;color:#ffd34d">NEW VERSION · TEST 1</div><div style="font:900 italic 22px Roboto,sans-serif;margin:6px 0 8px">' + esc(tr('Nalagam novo mapo …')) + '</div><div style="font:600 12px/1.4 Roboto,sans-serif;color:#b9c2cf">' + esc(tr('Začneš pri HOME. Zapelji v garažo in odpre se njen meni.')) + '</div></div>';
-    document.body.appendChild(box); paused = true;
-    const done = () => { box.remove(); paused = false; Input.reset(); };
+    // the wait screen: a picture of the new map behind (not the track it is built on), a bar at the bottom how far the build is
+    const box = document.createElement('div'); box.id = 'nv-load'; box.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:#05080c url(assets/maps/newmap-load.webp) center/cover no-repeat;font-family:Roboto,sans-serif;color:#fff';
+    box.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(rgba(5,8,12,.25),rgba(5,8,12,.5) 60%,rgba(5,8,12,.85))"></div><div style="position:relative;width:min(320px,86vw);padding:18px 20px;border-radius:16px;background:rgba(9,13,20,.9);border-top:4px solid #ffd34d;text-align:center"><div style="font:800 11px Roboto,sans-serif;letter-spacing:1.6px;color:#ffd34d">NEW VERSION · TEST 1</div><div style="font:900 italic 22px Roboto,sans-serif;margin:6px 0 8px">' + esc(tr('Nalagam novo mapo …')) + '</div><div style="font:600 12px/1.4 Roboto,sans-serif;color:#b9c2cf">' + esc(tr('Začneš pri HOME. Zapelji v garažo in odpre se njen meni.')) + '</div></div>' +
+      '<div style="position:absolute;left:50%;bottom:max(26px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(520px,84vw)"><div id="nv-pct" style="font:800 12px Roboto,sans-serif;letter-spacing:1px;text-align:right;margin-bottom:6px;color:#ffd34d">0 %</div><div style="height:8px;border-radius:4px;background:rgba(255,255,255,.16);overflow:hidden"><i id="nv-bar" style="display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#ffb020,#ffd34d)"></i></div></div>';
+    document.body.appendChild(box); paused = true; nv.loading = true;
+    const bar = box.querySelector('#nv-bar'), pct = box.querySelector('#nv-pct'); let f = 0;
+    const setP = (v) => { f = Math.max(f, Math.min(1, v)); bar.style.width = (f * 100).toFixed(1) + '%'; pct.textContent = Math.round(f * 100) + ' %'; };
+    const paint = (fn) => requestAnimationFrame(() => setTimeout(fn, 0));   // (the bar drawn before the next step of the build)
+    const done = () => { box.remove(); paused = false; nv.loading = false; Input.reset(); };
+    const fail = (e) => { nv.err = String(e && e.message || e); console.error('the new map failed', e); toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
+    // the build in steps (window.MK.hub4G: a step each yield), the bar by each step's share of the whole (NV_STEPS: measured), then the rest after it
     const build = () => {
-      try { const H = window.MK.hub4({ pl: { at: 'home' } }), H3 = H.H3; track.ground2 = (x, z) => H3.ground(x, z); track.free = [-350, 411, -400, 314]; if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); }
-      catch (e) { nv.err = String(e && e.message || e); console.error('the new map failed', e); toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); }
-      done();
+      let g = null, H = null, k = 0; nv.times = window.__nvT = []; let t0 = performance.now();
+      const tick = (name) => { const t = performance.now(); nv.times.push([name, Math.round(t - t0)]); t0 = t; };
+      const hooks = () => { const H3 = H.H3; track.ground2 = H3.tun ? (x, z, y) => H3.tun.groundL(x, z, y) : (x, z) => H3.ground(x, z); if (H3.tun) track.wall2 = (x, z, y, out) => H3.tun.wall(x, z, y, out); if (H3.bankR) track.bank2 = (x, z, out) => H3.bankR.tilt(x, z, out); track.free = [-350, 411, -400, 314]; if (window.MK.surfGrid) track.surf2 = window.MK.surfGrid();
+        if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVWalls !== 'undefined') NVWalls.init(H3); };
+      const bake = () => { if (typeof NVBake !== 'undefined') nv.bake = NVBake.bake(Render.scene, { world: Render.world }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); };
+      const tail = () => { try { hooks(); tick('hooks'); } catch (e) { fail(e); return; } setP(NV_STEPS.hooks); paint(() => { try { bake(); tick('bake'); } catch (e) { fail(e); return; } setP(1); paint(done); }); };
+      const step = () => { let r; try { r = g.next(); } catch (e) { fail(e); return; } tick(r.done ? 'end' : r.value); k++;
+        if (r.done) { H = r.value; setP(NV_STEPS.end); paint(tail); return; } setP(NV_STEPS[r.value] != null ? NV_STEPS[r.value] : f + 0.02); paint(step); };
+      try { if (window.MK.hub4G) g = window.MK.hub4G({ pl: { at: 'home' } }); else H = window.MK.hub4({ pl: { at: 'home' } }); } catch (e) { fail(e); return; }
+      if (g) step(); else { setP(NV_STEPS.end); paint(tail); }
     };
-    const later = () => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(build, 30)));   // (the wait screen on show before the long build)
-    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined') { later(); return; }
+    const later = () => { setP(NV_STEPS.load); paint(build); };   // (the wait screen on show before the long build)
+    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined' && typeof NVBake !== 'undefined' && typeof NVWalls !== 'undefined') { requestAnimationFrame(later); return; }
     const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
-      sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = next; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
+      sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = () => { setP(f + NV_STEPS.load / 4); next(); }; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
       document.head.appendChild(sc); };
-    load('newmap', () => load('nvmenu', later));   // (the map, then its garages' menus)
+    load('newmap', () => load('nvmenu', () => load('nvbake', () => load('nvwalls', later))));   // (the map, its garages' menus, the merging of its still meshes for the phones, its walls of fence the car pushes)
   }
+  // the wait bar: where it stands after loading the scripts, after each step of the build (hub4G's yields), after the map's hooks; from the build's times (nv.times)
+  const NV_STEPS = { load: 0.06, y0: 0.086, y1: 0.087, y2: 0.095, y3: 0.096, y4: 0.104, y5: 0.156, y5a: 0.157, y5b: 0.171, y5c: 0.173, y5d: 0.177, y5e: 0.18, y5f: 0.182, y5g: 0.183, h0: 0.185, h1: 0.188, h2: 0.191, h3: 0.219, y6: 0.219, y7: 0.226, y8: 0.244, y9: 0.489, y10: 0.516, y11: 0.523, y12: 0.68, y13: 0.68, y14: 0.705, y15: 0.735, y16: 0.738, y17: 0.742, y18: 0.746, y19: 0.747, y20: 0.747, y21: 0.825, y22: 0.878, end: 0.88, hooks: 0.899 };
   function setLights(n, go) {
     const ls = $('h-lights').children;
     for (let i = 0; i < ls.length; i++) ls[i].classList.toggle('on', !go && i < n);
@@ -2441,6 +2457,7 @@
     }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
+    if (race.nv && typeof NVWalls !== 'undefined') NVWalls.step(dt, P);   // (NEW VERSION · TEST 1: the walls of fence pushed by the car, js/nvwalls.js)
     twMark(); stDrive(P, dt);
     if (school) schoolStep(P, dt, inp);
     recHits();
@@ -2476,7 +2493,7 @@
     if (race.chr && race.chr.q.length) for (const e of race.chr.q.splice(0)) chrEvent(e.k, e.c, P);
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
-    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
+    if (track.def.pit && !race.nv && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P || Render.crew.gunOn)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (with the crew: while the wheel guns rattle)
     if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     if (P.fall && !fallSeen && phase === 'racing') { fallSeen = true; showMsg(tr('ZGRMEL SI V PREPAD!'), 'slow', 2); Sfx.thud(1); vibrate(150); } else if (!P.fall) fallSeen = false;   // (Uncompahgre: over the edge of a drop, Race._fall)
@@ -4780,7 +4797,7 @@
     } else {
       if (mp && mp.race) netFrame(true);
       hudCol(0); Sfx.setDuck(Comm.talking());
-      ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true });
+      ghShow(1); if (!(nv && nv.loading)) Render.frame(0, 1, race.player, S.camera, { noFx: true });   // (not under the new map's wait screen: its build goes on between the frames)
       if (screen === 'settings') updateTiltLive();
     }
   }
