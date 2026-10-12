@@ -705,6 +705,15 @@ Na progah Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Katu-Ja
 Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj; na telefonu je to gumb **ROČNA** (ročna zavora) nad gumbom za zavoro, na igralnem plošku B / ○ ali RB / R1. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
 
 
+## Reakcija na štartu
+
+Na dirki s štartne vrste (tudi v prvenstvu, karieri, dvoboju v prometu in dirki s prijatelji; ne v kronometru, kvalifikacijah, izzivu z letečim krogom, begu pred policijo, prosti vožnji in v šoli vožnje razen vaje **Štart**) avto spelje ob prvem pritisku na plin, ko ugasnejo luči. Čas od ugasnitve luči do pritiska je **reakcija**: pod zemljevidom se za nekaj sekund izpiše, npr. **REAKCIJA 0,23 s** (zeleno do 0,25 s, rumeno do 0,45 s, rdeče počasneje); ležeče se časovna tabela, ki je na istem mestu, medtem umakne.
+
+- **Kolesa kopljejo:** pozneje ko pritisneš, bolj pogonska kolesa zdrsavajo: 1 do 1,5 s po pritisku imajo manj oprijema (pri reakciji 0,1 s ali hitrejši nič manj, pri 0,5 s ali počasnejši do 55 % manj), za avtom je več dima in črne sledi gum. Reakcija 0,15 s do 100 m stane skoraj samo čas reakcije, reakcija 0,5 s pa še dobrih pol sekunde zraven. Najhitrejši štart ima, kdor pritisne plin takoj, ko luči ugasnejo.
+- **Prezgodaj na plinu:** če plin držiš že med lučmi in ga ob ugasnitvi ne spustiš, se izpiše **PREZGODAJ NA PLINU** in **0,60 s** (rdeče): šteje kot reakcija 0,6 s, kolesa kopljejo kot pri pozni reakciji (počasneje od dobrega pritiska, a ne katastrofa). Če ga v prvih 0,6 s po lučeh spustiš in spet pritisneš, šteje novi pritisk. S **samodejnim plinom** je plin pritisnjen ves čas: med lučmi drži zavoro in jo spusti, ko ugasnejo.
+- **Tekmeci** imajo vsak svojo reakcijo (0,15 do 0,45 s, boljši vozniki praviloma hitrejšo; vsaka dirka jih izžreba po svoje) in enako kopljejo, zato je vsak štart drugačen.
+- **Dirka s prijatelji:** vsak telefon meri reakcijo svojega avta od skupnega trenutka, ko ugasnejo luči; drugi vidijo le, kako avto spelje, zato ostanejo dirke usklajene.
+
 ## Zavetrje
 
 Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu za avtom pred sabo manj zračnega upora: do 40 m za njim in največ 2,4 m vstran od njegove linije, oba v hitrosti in ne v boksarski stezi. Bližje in bolj natanko za njim je, manj je upora (največ za četrtino). Na ravnini zato hitreje pridobiva hitrost in doseže večjo končno hitrost, v polnem zavetrju približno 10 % večjo. Na merilniku hitrosti se takrat prižge modra oznaka **ZAVETRJE**.
@@ -758,7 +767,7 @@ Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z
 
 Gumb **Šola vožnje** na naslovnem zaslonu odpre štiri vaje z medaljami (zlato, srebro, bron). Vse vaje se vozijo z avtom KAZE RS (serijski, na suhem), igra pa za vsako fiziko hrani najboljši rezultat in medaljo.
 
-- **Štart** (Red Bull Ring): ko ugasnejo luči, čim hitreje prevozi 100 m. Plin moraš pritisniti šele, ko luči ugasnejo; če ga pritisneš prej, je to prehiter štart (samodejni plin je v tej vaji izklopljen). Medalje so merjene ob vožnji avtopilota: zlato do 0,3 s počasneje od njega, srebro do 0,5 s, bron do 0,9 s.
+- **Štart** (Red Bull Ring): ko ugasnejo luči, čim hitreje prevozi 100 m. Plin moraš pritisniti šele, ko luči ugasnejo; če ga pritisneš prej, je to prehiter štart (samodejni plin je v tej vaji izklopljen). Pozna reakcija stane tudi zdrs koles (glej **Reakcija na štartu**). Medalje so merjene ob vožnji avtopilota: zlato do 0,55 s počasneje od njega, srebro do 1,1 s, bron do 1,5 s (približno reakcija 0,3, 0,5 in 0,9 s).
 - **Zaviranje do oznake** (ravnina Red Bull Ringa): pospeši z mesta in se ustavi čim bližje črti STOP (rdeče-bela črta čez cesto s tablo STOP), a ne čeznjo. Ob cesti stojijo table 150, 100 in 50 m do črte; mimo table 100 m moraš peljati vsaj 120 km/h. Zlato do 1 m pred črto, srebro do 3 m, bron do 8 m.
 - **Idealna linija** (Jezero Ring): en krog, na cesti pred avtom pa je narisana idealna linija. Šteje delež kroga, ko je avto manj kot 1,5 m od nje (zlato 75 %, srebro 55 %, bron 35 %), krog pa mora biti hitrejši od 1,25-kratnega časa avtopilota.
 - **Drift** (Jezero Ring): v 40 sekundah zberi čim več točk drsenja. Točke se nabirajo, dokler avto drsi bočno (več za večji kot in večjo hitrost), in se ob koncu drsenja prištejejo; ob udarcu v ograjo ali avto se veriga izgubi. Medalje so glede na točke avtopilota v isti vaji (zlato 115 %, srebro 85 %, bron 50 %).

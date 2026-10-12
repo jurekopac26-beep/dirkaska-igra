@@ -1715,7 +1715,8 @@ const Core = (function () {
       if (this.locked) this.rpmTarget = M.ev ? 0 : M.idle + (M.redline * 0.88 - M.idle) * this.inThr;   // (on the grid: revving, but not an electric motor)
       if (!grounded) F = 0;
       const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : M.drive === 'RR' ? 0.62 : 0.55;   // (RR: the engine over the driven wheels)
-      const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1);   // (the formula's wings press the driven wheels down too)
+      const lchK = this.lch && !this.lch.done ? this.lch.k : 1;   // (the start: a late reaction, the driven wheels spinning away, see LAUNCH)
+      const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK;   // (the formula's wings press the driven wheels down too)
       let spin = 0;
       if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
       this.spin = thr > 0.2 && grounded ? spin * (M.spinK || 1) : 0;
@@ -4256,6 +4257,18 @@ const Core = (function () {
     [0.88, 0.97, 0.04, 90, 0.05, 40],    // srednja
     [1.02, 1.12, 0.01, 200, 0.06, 30],   // težka: the front runners drive at the limit and hardly wait for anyone
   ];
+  // the start's reaction (Race opts.launch; on by default in a race from the grid, see Race): a car sets off at its first press of the
+  // throttle after the lights go out (c.lch.re: that moment on the race clock, s); the later the press, the more its driven wheels spin
+  // in the first metres: for win + winK x sev s after the press their grip is down by up to depth x sev (sev 0 at r0 or quicker, 1 at
+  // r1 or slower), back to full over the last part of that time. The player's throttle held through the lights going out counts as held
+  // s (c.lch.held: on the gas too early). The AI: each one's reaction drawn from the race's seed, ai[0]..ai[1] s (the fastest drivers
+  // nearer ai[0]); its car waits on the grid until then
+  const LAUNCH = { r0: 0.1, r1: 0.5, depth: 0.55, win: 1.0, winK: 0.5, held: 0.6, ai: [0.15, 0.45], thr: 0.25 };
+  const launchSev = (r) => clamp((r - LAUNCH.r0) / (LAUNCH.r1 - LAUNCH.r0), 0, 1);
+  function launchK(L) {   // the driven wheels' grip share t s after the press (1: none lost)
+    const W = LAUNCH.win + LAUNCH.winK * L.sev;
+    return L.t >= W ? 1 : 1 - LAUNCH.depth * L.sev * (1 - sstep(0.35 * W, W, L.t));
+  }
 
   class Race {
     constructor(track, opts) {
@@ -4295,13 +4308,19 @@ const Core = (function () {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
         aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
       }
+      // the start's reaction (LAUNCH, opts.launch): by default in a race from the grid, not in a time trial, on a flying lap (qualifying, a
+      // challenge's lap), in the run from the police or the title demo. The AI's reactions from the race's seed (their own numbers: the
+      // grid's draws stay as they were); the friends' cars online set off on their own phones
+      const launch = opts.launch != null ? !!opts.launch : !this.timeTrial && !(opts.qualiBack > 0) && !opts.noPlayer && !opts.police;
+      const RL = launch ? rng(((opts.seed || 7) * 6151 + 41) >>> 0) : null, lch = (re) => ({ re, held: false, sev: 0, t: -1, k: 1, n: 0, done: false });
+      if (launch) this.lch = { n: 0 };   // (in an object: the golden references digest only the plain fields)
       // grid: fastest first
       let ai = 0;
       for (let g = 1; g <= total; g++) {
         let c;
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup });
-          this.player = c;
+          this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
@@ -4310,6 +4329,7 @@ const Core = (function () {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: CSK.aiAssist, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : CSK.aiSkCap;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
+          if (launch) c.lch = lch(LAUNCH.ai[0] + (LAUNCH.ai[1] - LAUNCH.ai[0]) * clamp(0.6 * RL() + 0.4 * s.rk / Math.max(1, nAI - 1), 0, 1));   // (the quicker drivers react quicker, on the whole)
           if (opts.chars) {   // a character (in an object: the golden references digest only the plain fields); the player's standing rival (opts.rival: its roster index) a touch quicker
             const d = driverChar(s.rk), rv = opts.rival === s.rk;
             c.chr = { k: s.rk, agg: d.agg, err: d.err, rival: rv, press: 0, mist: 0, mk: 1, brk: false, defT: 0, defCool: 0, duel: 0, duelOn: false };
@@ -4475,8 +4495,28 @@ const Core = (function () {
     }
     start() {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
+      if (this.lch) for (const c of this.cars) if (c.lch && !c.isPlayer) { c.relT = c.lch.re; c.locked = true; }   // the AI: on the grid until its reaction (as the demo's staggered start)
       // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
+    }
+
+    // the start's reaction (LAUNCH): the moment each car first presses the throttle after the lights go out (the player: as measured here,
+    // its foot on the gas through the lights counts as LAUNCH.held, until it is let go: then the next press counts; the AI: its drawn
+    // reaction, as its car is let go), then its wheelspin while it gets away (c.lch.k: its driven wheels' grip share, Car.step).
+    // this.lch.n: the presses counted so far (c.lch.n: the number of the car's own, a new one when a held start is pressed again)
+    _launch(dt) {
+      const go = this.state === 'racing';
+      for (const c of this.cars) {
+        const L = c.lch; if (!L || L.done) continue;
+        if (L.held && L.t >= 0 && !(c.inThr > LAUNCH.thr) && this.time < LAUNCH.held) { L.held = false; L.t = -1; L.k = 1; L.re = -1; }   // held through the lights, then let go (before a press would count as late as that): the next press counts
+        if (L.t < 0) {
+          if (!go) { L.held = !!c.isPlayer && c.inThr > LAUNCH.thr; continue; }   // on the grid: the player's foot on the gas, or not, as the lights go out
+          if (!(c.inThr > LAUNCH.thr) || c.locked) { L.held = false; continue; }   // (not on the gas yet)
+          if (c.isPlayer) L.re = L.held ? LAUNCH.held : this.time;
+          L.sev = launchSev(L.re); L.t = 0; L.n = ++this.lch.n;
+        }
+        L.t += dt; L.k = launchK(L); if (L.k >= 1) L.done = true;
+      }
     }
 
     // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst.
@@ -4547,6 +4587,7 @@ const Core = (function () {
           if (c.finished) { c.inThr *= 0.5; }
         } else { c.inThr = 0; c.inBrk = c.parkQ ? 1 : 0; c.inSteer = 0; }
       }
+      if (this.lch) this._launch(dt);
       for (const c of cars) if (c.wreck && !c.net) this._wreckStep(c, dt);   // kit vehicles: a wreck sheds its parts, a destroyed one retires (see _wreckStep)
       if (this.slip) this._tow();
       for (const c of cars) {
@@ -5371,7 +5412,7 @@ const Core = (function () {
   }
   registerVehicles();
 
-  return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
 })();

@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=4e40b807">
-<link rel="stylesheet" href="css/style.css?v=7ea01b9d">
+<link rel="stylesheet" href="css/style.css?v=a19a7278">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=4f03653c" media="not all">
 </head>
 <body>
@@ -73,6 +73,7 @@
     </div>
     <div id="h-map"><canvas id="minimap"></canvas></div>
     <div id="h-prof" aria-hidden="true"><canvas id="h-prof-c"></canvas></div>
+    <div id="h-react" aria-live="polite"><span></span> <b></b></div><!-- the start's reaction, under the map (reactHUD) -->
     <div id="h-wreck" aria-live="polite"><b id="h-wreck-t">VOZILO UNIČENO</b><button id="btn-retire" class="off">Odstopi</button></div><!-- a destroyed car (a time trial: a lost wheel too): retire, or drive the run again -->
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
@@ -477,7 +478,7 @@
 <script src="js/tracks/detroit.js?v=9a780eb0"></script>
 <script src="js/tracks/palomar.js?v=87436f77"></script>
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
-<script src="js/lang.js?v=3c8cf697"></script>
+<script src="js/lang.js?v=56641652"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=c00bced3">
 <link rel="x-lazy-script" data-lazy="nvmenu" href="js/nvmenu.js?v=a75528cd">
 <script src="js/cars/miska.js?v=d36e3286"></script>
@@ -513,13 +514,13 @@
 <script src="js/cars/goljat.js?v=4d334b8c"></script>
 <script src="js/cars/levs.js?v=9b87c0ea"></script>
 <script src="js/cars/levk.js?v=8a1e8fea"></script>
-<script src="js/core.js?v=0f6650d4"></script>
+<script src="js/core.js?v=c9e757a2"></script>
 <script src="js/tex.js?v=ead43b0a"></script>
 <script src="js/world.js?v=0df1ec0d"></script>
 <script src="js/world-toronto.js?v=99260192"></script>
 <script src="js/data/montreal.js?v=05653492"></script>
 <script src="js/world-montreal.js?v=6696233f"></script>
-<script src="js/render.js?v=13cc2ee5"></script>
+<script src="js/render.js?v=38063029"></script>
 <script src="js/sfx.js?v=32ae026f"></script>
 <script src="js/input.js?v=6983328c"></script>
 <script src="js/comm.js?v=d97de672"></script>
@@ -531,6 +532,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=d42d64a4"></script>
-<script src="js/game.js?v=e8311ee4"></script>
+<script src="js/game.js?v=d15e68e9"></script>
 </body>
 </html>
