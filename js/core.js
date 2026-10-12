@@ -202,7 +202,7 @@ const Core = (function () {
       // avalanche galleries over the road (def.galleries = [[from, to, side], ...], metres after the start line; open roads: Los Caracoles) and
       // narrow bridges (def.narrow = [[from, to], ...]: Big Sur's, a sidewalk and the parapet): the barriers close in to the gallery's wall and
       // pillars, or the parapet, 1.6 m past the road's edges, eased in and out over 25 m at its ends
-      if ((def.galleries || def.narrow) && open) for (const [a, b] of (def.galleries || []).concat(def.narrow || [])) for (let d = a - 25; d <= b + 25; d += ds / 2) {
+      if ((def.galleries || def.narrow) && open && !def.barrier) for (const [a, b] of (def.galleries || []).concat(def.narrow || [])) for (let d = a - 25; d <= b + 25; d += ds / 2) {
         const i = Math.floor((this.startS + d) / ds); if (i < 0 || i >= N) continue;
         const f = Math.min(sstep(a - 25, a, d), sstep(b + 25, b, d)), t = (def.edgeBar != null ? this.wAt(i) : this.w) + 1.6;
         if (def.edgeBar != null) { if (f > 0) { this.bl[i] = lerp(this.bl[i], t, f); this.br[i] = lerp(this.br[i], t, f); } continue; }   // (def.edgeBar: out to the parapets)
@@ -307,6 +307,31 @@ const Core = (function () {
       }
     }
     _hyAt(s) { const N = this.N, f = clamp(s / this.ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return this.hy[i] + (this.hy[i + 1] - this.hy[i]) * (f - i); }   // (the road's height at s, open roads)
+    // def.ringH (Medvode): the ground of a roundabout's zone and of its legs' run-off round it one smooth surface, not the road's height at the
+    // nearest sample (which jumps from one leg to the other: the legs' run-offs meet round a ring): per ring a 2 m grid out to 24 m past its
+    // circle, the heights of the road's samples near it blended by distance (inverse cube); Track.ringY holds to it 12 m past the circle and
+    // eases out to the road's own height by 22 m past it
+    _buildRingH() {
+      if (!this.hasElev) return;
+      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, CS = 2;
+      for (const R of this.rings) { if (!(R.zr > 0)) continue;
+        const ext = R.zr + 24, n = Math.ceil(2 * ext / CS) + 1, x0 = R.x - ext, z0 = R.z - ext, H = new Float32Array(n * n), ids = [];
+        for (let i = 0; i < N; i++) if (Math.hypot(px[i] - R.x, pz[i] - R.z) < ext + 30) ids.push(i);
+        if (!ids.length) continue;
+        for (let b = 0; b < n; b++) for (let a = 0; a < n; a++) { const x = x0 + a * CS, z = z0 + b * CS; let sw = 0, sh = 0;
+          for (const i of ids) { const dx = px[i] - x, dz = pz[i] - z, d2 = dx * dx + dz * dz; if (d2 > 1600) continue; const d = Math.sqrt(d2), w = 1 / (d2 * d + 0.5); sw += w; sh += w * hy[i]; }
+          if (!(sw > 0)) { let bd = 1e18, bh = 0; for (const i of ids) { const d2 = (px[i] - x) ** 2 + (pz[i] - z) ** 2; if (d2 < bd) { bd = d2; bh = hy[i]; } } H[b * n + a] = bh; }
+          else H[b * n + a] = sh / sw; }
+        R.hg = { x0, z0, n, H, cs: CS, r0: R.zr + 12, r1: R.zr + 22 }; }
+    }
+    // the ground's height at (x, z) given the road's there (y): within a ring's zone its own surface (def.ringH), blended
+    ringY(x, z, y) {
+      for (const R of this.rings) { const G = R.hg; if (!G) continue; const dd = Math.hypot(x - R.x, z - R.z); if (dd >= G.r1) continue;
+        const fa = clamp((x - G.x0) / G.cs, 0, G.n - 1.001), fb = clamp((z - G.z0) / G.cs, 0, G.n - 1.001), a = Math.floor(fa), b = Math.floor(fb), u = fa - a, v = fb - b, H = G.H, n = G.n;
+        const h = (H[b * n + a] * (1 - u) + H[b * n + a + 1] * u) * (1 - v) + (H[(b + 1) * n + a] * (1 - u) + H[(b + 1) * n + a + 1] * u) * v;
+        return lerp(y, h, sstep(G.r1, G.r0, dd)); }
+      return y;
+    }
     // the asphalt's half width at sample i / at s along the road: a road of several widths (def.widths: wa) its own there, else def.halfWidth
     wAt(i) { return this.wa ? this.wa[clamp(i, 0, this.N - 1)] : this.w; }
     wS(s) { return this.wa ? this.wa[this.idx(s)] : this.w; }
@@ -498,7 +523,11 @@ const Core = (function () {
       for (const [ri, w] of add2) { const r = runs[ri], P = Array.from(r.pts), ix = Array.from(r.ix); if (w.pre) { P.unshift(w.pre[0], w.pre[1]); ix.unshift(-1); } if (w.post) { P.push(w.post[0], w.post[1]); ix.push(-1); } r.pts = Float64Array.from(P); r.ix = Int32Array.from(ix); }
       // o.islands (def.edgeBar: the fence right along the road): none on an island between two drivable roads narrower than o.islands m (a splitter island, the inner
       // wedge of a hairpin: the island's own kerb and grass show it) nor on a roundabout's apron round its island (the wall is there all the same)
-      if (o.islands || def.edgeBar != null) {
+      // the walls across the rings' roads (R.shut): from the island's edge (where wallCollide's wall starts) out to the zone's circle, the outside on both of its sides
+      const shutRuns = []; rings.forEach((R, r) => { for (const S of R.shut || []) { const P = [], a = R.ri, b = R.zr, m = Math.max(2, Math.ceil((b - a) / step) + 1);
+        for (let j = 0; j < m; j++) { const t = a + (b - a) * j / (m - 1); P.push(R.x + S.ux * t, R.z + S.uz * t); }
+        shutRuns.push({ k: 2, side: 0, ref: r, sg: 1, shut: true, closed: false, pts: Float64Array.from(P), ix: new Int32Array(m).fill(-1) }); } });
+      if (o.islands || (def.edgeBar != null && !def.barrier)) {
         const W = o.islands || 8, out = [];
         for (const r of runs) {
           const P = r.pts, n = P.length / 2, keep = new Uint8Array(n);
@@ -514,9 +543,9 @@ const Core = (function () {
             if (L >= minLen) out.push(Object.assign({}, r, { closed: r.closed && j === 0 && e === n - 1, pts: Float64Array.from(pts), ix: Int32Array.from(Array.from(r.ix.slice(j, e + 1))) }));
             j = e + 1; }
         }
-        return { runs: out, skips };
+        return { runs: out.concat(shutRuns), skips };
       }
-      return { runs, skips };
+      return { runs: runs.concat(shutRuns), skips };
     }
     // for the scenery the fence would have to cut through: hit(pts, cx, cz) is true for a footprint (pts: [[x, z], ...], its centre cx, cz) whose centre stands in the
     // free ground (free: Track.wallFree) or that one of the runs' lines cuts into by more than `depth` m (Medvode: such a house is left out, nothing to drive into)
@@ -554,7 +583,7 @@ const Core = (function () {
           out.tx = sp.kx; out.tz = sp.kz; out.nx = -sp.kz; out.nz = sp.kx; out.bl = this.bl[S.iF]; out.br = this.br[S.iF];
           out.y = Y; out.g = Gs; out.fb = 1;
         } else {   // (fb: how far into its own height across the verge; 0 on the road's asphalt, where y and g are the road's exactly)
-          const fb = out.fb = sstep(this.wAt(out.a), this._stubRamp(out.d > 0 ? out.br : out.bl), Math.abs(out.d)), e = this.elevAt(out.s);
+          const bar = out.d > 0 ? out.br : out.bl, fb = out.fb = this.def.barrier ? sstep(bar, bar + 6, Math.abs(out.d)) : sstep(this.wAt(out.a), this._stubRamp(bar), Math.abs(out.d)), e = this.elevAt(out.s);   // (def.barrier: inside it the run-off's own height, the road's: blended into the side road's past it)
           out.y = fb > 0 ? e.y + (Y - e.y) * fb : e.y; out.g = fb > 0 ? e.grade + (Gs * (sp.kx * out.tx + sp.kz * out.tz) - e.grade) * fb : e.grade;
         }
         return true;
@@ -573,11 +602,30 @@ const Core = (function () {
     wall(q, r, n) {
       let pen = -1e9;
       if (!q.deep) { const sg = q.d > 0 ? 1 : -1; pen = Math.abs(q.d) - ((sg > 0 ? q.br : q.bl) - r); n[0] = -q.nx * sg; n[1] = -q.nz * sg; }
-      if (q.k >= 0) { const ps = this.stubPen(q, r, _n2); if (ps <= 0) return Math.min(pen, ps); if (q.deep || ps < pen) { n[0] = _n2[0]; n[1] = _n2[1]; return ps; } }
+      if (q.k >= 0 && (q.deep || !this.def.barrier)) { const ps = this.stubPen(q, r, _n2); if (ps <= 0) return Math.min(pen, ps); if (q.deep || ps < pen) { n[0] = _n2[0]; n[1] = _n2[1]; return ps; } }   // (def.barrier: the barrier runs across its mouth; deep in it, beyond, its own limits)
       return pen;
     }
     // the height of the ground the cars drive on at a query result: the road's (its height at s), in a side road its own
-    yAt(q) { return q.k >= 0 && q.fb > 0 ? q.y : this.hasElev ? this.elevAt(q.s).y : 0; }
+    yAt(q) { const y = q.k >= 0 && q.fb > 0 ? q.y : this.hasElev ? this.elevAt(this.def.barrier ? this.hs(q) : q.s).y : 0; return this.def.ringH ? this.ringY(q.x, q.z, y) : y; }   // (def.ringH: round a ring its own surface, a side road's too)
+    // def.barrier: the s the ground's height is read at, continuous all over the run-off. The projection onto the line (q.s) jumps where the nearest
+    // segment changes, on a bend's inside by up to a metre 10 m in (a step of ~0.15 m on the castle road's 17 %); the run-off is drawn in rows along the
+    // samples' normals at their heights, so the s that matches it is u, how far between the normals of samples a and a + 1 the point lies
+    hs(q) {
+      if (!this.def.barrier || q.deep || (q.k >= 0 && q.fb > 0)) return q.s;
+      const N = this.N, px = this.px, pz = this.pz, nx = this.nx, nz = this.nz; let a = q.a;
+      for (let it = 0; it < 3; it++) {
+        if (a < 0 || a + 1 >= N) return q.s;
+        const b = a + 1, ex = px[b] - px[a], ez = pz[b] - pz[a], fx = nx[b] - nx[a], fz = nz[b] - nz[a], gx = q.x - px[a], gz = q.z - pz[a];
+        const A = -(ex * fz - ez * fx), B = (gx * fz - gz * fx) - (ex * nz[a] - ez * nx[a]), Cq = gx * nz[a] - gz * nx[a];   // (cross(g - u e, n_a + u f) = 0: the point on the line between the two normals)
+        let u;
+        if (Math.abs(A) < 1e-9) u = -Cq / B;
+        else { const D = B * B - 4 * A * Cq; if (D < 0) return q.s; const h = -0.5 * (B + (B >= 0 ? 1 : -1) * Math.sqrt(D)), u1 = h / A, u2 = h !== 0 ? Cq / h : u1; u = Math.abs(u1 - 0.5) < Math.abs(u2 - 0.5) ? u1 : u2; }
+        if (!(u === u)) return q.s;
+        if (u < -1e-6) { a--; continue; } if (u > 1 + 1e-6) { a++; continue; }
+        return (a + u) * this.ds;
+      }
+      return q.s;
+    }
     // the row of cones across side road k just past the barrier line and where all of it has left the road (the course goes straight on), across its whole width there (its corners'
     // kerb returns too; none on the road's own asphalt, where a sharp corner's runs along its edge): [{ kind: 'cone', x, z, yaw, col, i }] for
     // Race.setProps (World puts them in its props; i: a sample near the junction, the lookup's hint)
@@ -897,6 +945,13 @@ const Core = (function () {
       // def.edgeBar: the barrier right along the road, this far past the asphalt's edge all the way (Medvode: a fence along the whole course, nothing to drive off onto;
       // the sidewalks push it out behind them, the houses and walls pull it in, def.walls)
       if (this.def.edgeBar != null) for (let i = 0; i < N; i++) { const wi = wa ? wa[i] : w; BL[i] = BR[i] = wi + this.def.edgeBar; }
+      // def.barrier (Medvode: a race circuit's barrier along the whole road, the asphalt run-off out to it): its line as the track file has it, metres
+      // from the centre line on either side at every sample ({ d0, step, L, R }, decimetres; d: metres after the start line); the houses, walls,
+      // sidewalks, the bridge's parapets and the rings are in it already (def.walls, def.narrow do not apply)
+      const BB = this.def.barrier;
+      if (BB) { const i0 = this.def.start ? this.nearestIdx(this.def.start[0], this.def.start[1]) : 0, nB = BB.L.length;
+        for (let i = 0; i < N; i++) { const f = clamp(((i - i0) * ds - BB.d0) / BB.step, 0, nB - 1), j = Math.min(nB - 2, Math.floor(f)), u = f - j;
+          BL[i] = lerp(BB.L[j], BB.L[j + 1], u) / 10; BR[i] = lerp(BB.R[j], BB.R[j + 1], u) / 10; } }
       // ... and there the upper leg runs between the parapets of its bridge (3 m from the road), the lower one between the walls of the
       // underpass (3.4 m), each narrowing in over the next 30 / 24 m
       for (const c of X) for (let i = 0; i < N; i++) {
@@ -905,7 +960,7 @@ const Core = (function () {
       }
       // walls the track sets itself (def.walls = [[from, to, side (-1 left, 1 right), metres past the road edge, ease (m, default 20)], ...],
       // metres after the start line): a pit wall right by the road; on an open road the houses, fences and barriers of a street stage, eased in and out
-      if (this.def.walls) {
+      if (this.def.walls && !BB) {
         const i0 = this.def.start ? this.nearestIdx(this.def.start[0], this.def.start[1]) : 0;
         for (const [a, b, side, off, e0] of this.def.walls) { const arr = side > 0 ? BR : BL, e = e0 || 20;
           for (let d = a - e; d <= b + e; d += ds) { const i = open ? clamp(i0 + Math.round(d / ds), 0, N - 1) : ((i0 + Math.round(d / ds)) % N + N) % N, f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); arr[i] = lerp(arr[i], (wa ? wa[i] : w) + off, f); } }
@@ -916,12 +971,18 @@ const Core = (function () {
       // thing in the way (wallCollide); the wrong-way count is off within wz of its centre (the cars' wrong-way test)
       // the oncoming lanes (def.altDn: Medvode's roundabouts and split approaches) are road too, def.altHw half wide: no barrier on them (onAlt);
       // a lane's open [f0, f1] (shares of its length from its start): only that much of it is road, the rest runs on behind the fence
-      this.altC = (this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + (this.def.edgeBar != null ? this.def.edgeBar : 0.4), pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      // (def.altFree false: the lanes are no free ground of their own: the run-off out to def.barrier holds them where they are near the road; past it they run on behind it)
+      this.altC = (this.def.altFree === false ? [] : this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + (this.def.edgeBar != null ? this.def.edgeBar : 0.4), pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
         const n = P.length / 3, cum = [0]; for (let k = 1; k < n; k++) cum.push(cum[k - 1] + Math.hypot(P[k * 3] - P[k * 3 - 3], P[k * 3 + 1] - P[k * 3 - 2]));
         const L = cum[n - 1] || 1, o = A.open || [0, 1];
         for (let k = 0; k < n; k++) { if (cum[k] < o[0] * L - 1e-6 || cum[k] > o[1] * L + 1e-6) continue; const x = P[k * 3], z = P[k * 3 + 1]; pts.push(x, z); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
         return { pts, hw, bb: [x0 - hw, z0 - hw, x1 + hw, z1 + hw] }; }).filter(L => L.pts.length >= 4);
-      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zone === false ? 0 : r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.zone === false ? 0 : r.r + (r.hw || 3) + 14 }));   // (zone false: one way round, on the route's own road)
+      this.rings = (this.def.rings || []).map(r => { const R = { x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zone === false ? 0 : r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: 0 };   // (zone false: one way round, on the route's own road)
+        R.wz = r.zone === false ? 0 : Math.max(R.r + R.hw + 14, R.zr + 5);
+        // shut: walls across the ring's road (angles, rad, atan2(z, x) from its centre): the side the route does not use closed, from the island out past the zone's circle
+        R.shut = (r.shut || []).map(t => ({ ux: Math.cos(t), uz: Math.sin(t), h: 0.25, r0: R.ri - 0.5, r1: R.zr + 12 }));
+        return R; });
+      if (this.def.ringH) this._buildRingH();
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
       if (this.def.roadSurface !== 'makadam' && !this.def.noCurbs) for (let i = 0; i < N; i++) if (Math.abs(k[i]) > 1 / 190) cb[i] = 1;
@@ -1133,13 +1194,25 @@ const Core = (function () {
         }
       }
       const pk = out.k, pj = out.kj; out.k = -1; out.deep = false;   // (a side road: out.k its index, -1 none; pk / pj: this result's last one, a hint)
-      if (this.stubs && hint >= 0 && bd > 400 && this._stubQ(x, z, hint, out, false, pk, pj)) return out;   // deep in a side road (the hint its junction): the road not searched
+      const zq = this.def.barrier && this.inZone(x, z);   // (def.barrier: in a roundabout's zone the ring's own ground, never a side road's: its legs are closed at the zone's edge)
+      if (this.stubs && hint >= 0 && bd > 400 && !zq && this._stubQ(x, z, hint, out, false, pk, pj)) return out;   // deep in a side road (the hint its junction): the road not searched
       if (bi < 0 || bd > 60 * 60) {
         for (let i = 0; i < N; i++) { const dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
       }
       this._qMain(x, z, bi, out);
-      if (this.stubs && Math.abs(out.d) > this.wAt(out.a) - 1) this._stubQ(x, z, out.a, out, true, pk, pj);   // off the asphalt: perhaps in a side road
+      if (this.stubs && Math.abs(out.d) > this.wAt(out.a) - 1 && !zq) this._stubQ(x, z, out.a, out, true, pk, pj);   // off the asphalt: perhaps in a side road
       return out;
+    }
+    // is (x, z) inside a roundabout's zone (its free ground round the island, out to zr)
+    inZone(x, z) { for (const R of this.rings || []) { const dx = x - R.x, dz = z - R.z; if (R.zr > 0 && dx * dx + dz * dz < R.zr * R.zr) return true; } return false; }
+    // Track.query without the side roads: the road's own projection from the nearest of the 21 samples round hint (the whole road when that is
+    // over 60 m away), as wallFree sees it. def.barrier: no car gets into a side road (the barrier runs across every mouth), and a point deep in
+    // one is pinned at its junction (Track.query: its d there is not the barrier's): wallCollide asks this instead
+    queryRoute(x, z, hint, out) {
+      const N = this.N, px = this.px, pz = this.pz, open = this.open; let bi = -1, bd = 1e18;
+      if (hint >= 0) for (let o = -10; o <= 10; o++) { const i = open ? hint + o : (hint + o + N) % N; if (open && (i < 0 || i >= N)) continue; const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+      if (bi < 0 || bd > 3600) for (let i = 0; i < N; i++) { const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+      out.k = -1; out.deep = false; return this._qMain(x, z, bi, out);
     }
     // the projection onto the road's centre line from its sample bi (Track.query without the side roads)
     _qMain(x, z, bi, out) {
@@ -1182,6 +1255,8 @@ const Core = (function () {
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
       }
+      if (this.def.barrier && !q.deep) {   // (def.barrier: asphalt out to the barrier, a race circuit's run-off; beside a gravel road gravel; the splitter islands grass)
+        if (this.islOn && this.islOn(q.x, q.z)) return 2; return this.sf && this.sf[q.a] === 5 ? 5 : 0; }
       if (q.k >= 0) { const S = this.stubs[q.k]; return Math.abs(q.u) <= this.stubHw(S, q.st, q.u) ? (S.grav ? 5 : 0) : 3; }
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
@@ -1587,8 +1662,9 @@ const Core = (function () {
       const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, K = CSK;
       const CA = CSASSIST[ASSISTS.indexOf(A)] || CSASSIST[2], CP = CSP[M.id] || CSP.kaze, ai = this.isPlayer ? 1 : K.aiBx;
       this.px = this.x; this.pz = this.z; this.ph = this.h; this.py = this.y;
-      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s); this.roadY = e.y; this.gradeNow = e.grade; this.curvNow = e.curv;
-        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
+      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s); this.roadY = trk.def.barrier ? trk.elevAt(trk.hs(this.q)).y : e.y; this.gradeNow = e.grade; this.curvNow = e.curv;   // (def.barrier: the height continuous over the run-off, Track.hs)
+        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
+        if (trk.def.ringH) this.roadY = trk.ringY(this.x, this.z, this.roadY); }   // (round a roundabout: its zone's own surface)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
       const ch = Math.cos(this.h), sh = Math.sin(this.h);
@@ -2191,7 +2267,7 @@ const Core = (function () {
     b.qx = qx + h * (wx * qw + wy * qz - wz * qy); b.qy = qy + h * (wy * qw + wz * qx - wx * qz);
     b.qz = qz + h * (wz * qw + wx * qy - wy * qx); b.qw = qw - h * (wx * qx + wy * qy + wz * qz);
     const ql = Math.hypot(b.qx, b.qy, b.qz, b.qw) || 1; b.qx /= ql; b.qy /= ql; b.qz /= ql; b.qw /= ql;
-    const F = race.propFloor, fl = (q) => (q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (F ? F(q) : 0));   // (the verge may lie below the road; a side road: its own height)
+    const F = race.propFloor, fl = (q) => { const y = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(T.def.barrier ? T.hs(q) : q.s).y : 0) + (F ? F(q) : 0); return T.def.ringH ? T.ringY(q.x, q.z, y) : y; };   // (the verge may lie below the road; a side road: its own height; def.ringH: round a ring its zone's)
     let q = T.query(b.x, b.z, b.qi, _pq), gy = fl(q);
     if (gy - b.fy > 0.45) {   // the floor rose by more than 0.45 m since the last step and the prop is that far below it: a face (a deck's end, a planter, the
       let lo = 1e9; for (const p of K.pts) { const r = qRot(b, p[0], p[1], p[2], _r3)[1]; if (r < lo) lo = r; }   // side of a pit), not a slope: it bounces off
@@ -2200,7 +2276,7 @@ const Core = (function () {
     b.fy = gy; b.qi = q.i; race._bkMove(b);
     const lim = (q.d > 0 ? q.br : q.bl) - K.rh - (F && F.inset && !q.deep ? F.inset[q.i * 2 + (q.d > 0 ? 1 : 0)] : 0);   // barriers (with the catch fences above them; F.inset: solid scenery in front of them)
     let pen = q.deep ? -1e9 : Math.abs(q.d) - lim, nx = q.nx * Math.sign(q.d), nz = q.nz * Math.sign(q.d);
-    if (q.k >= 0) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits)
+    if (q.k >= 0 && (q.deep || !T.def.barrier)) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits; def.barrier: the barrier across its mouth)
     if (pen > 0 && b.y - gy < 3.2) {
       b.x -= nx * pen; b.z -= nz * pen;
       const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (Math.random() - 0.5) * vn; }
@@ -2244,15 +2320,21 @@ const Core = (function () {
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
       const px = c.x + wx, pz = c.z + wz;
-      const q = trk.query(px, pz, c.q.i, _q);
+      const q = trk.def.barrier ? trk.queryRoute(px, pz, c.q.i, _q) : trk.query(px, pz, c.q.i, _q);   // (def.barrier: the road's own barrier, every side road closed)
       let pen = 0, nx = 0, nz = 0, br = q.br, inner = -1e9;
       if ((c.isPlayer || c.pitWant || c.inPit) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout; } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge
       if (q.d > br) { pen = q.d - br; nx = -q.nx; nz = -q.nz; }
       else if (q.d < inner) { pen = inner - q.d; nx = q.nx; nz = q.nz; }
       else if (q.d < -q.bl) { pen = -q.bl - q.d; nx = q.nx; nz = q.nz; }
       let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
-      if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2; if (d2 > (R.zr + 8) * (R.zr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
+      if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2, rr = Math.max(R.zr, R.shut.length ? R.zr + 12 : 0); if (d2 > (rr + 8) * (rr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
         if (dd < R.ri) { pen = R.ri - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }
+        let shut = false;
+        for (const S of R.shut) {   // (a wall across the ring's road: the car's corner is kept on the side its car was on before this step)
+          const u = rx2 * S.ux + rz2 * S.uz; if (u < S.r0 || u > S.r1) continue;
+          const v = -rx2 * S.uz + rz2 * S.ux, vc = -(c.px - R.x) * S.uz + (c.pz - R.z) * S.ux, sg = vc >= 0 ? 1 : -1, p = S.h - sg * v;
+          if (p > 0 && p < 2.5) { pen = p; nx = -S.uz * sg; nz = S.ux * sg; zone = true; shut = true; break; } }
+        if (shut) break;
         if (dd < R.zr) { pen = 0; zone = true; break; }
         if (pen > 0 && q.k < 0 && dd - R.zr < pen) { pen = dd - R.zr; nx = -rx2 / dd; nz = -rz2 / dd; } }
       if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
@@ -2518,9 +2600,11 @@ const Core = (function () {
     if (T.open) { const f = clamp(fi, 0, N - 1); i0 = Math.min(N - 2, Math.floor(f)); i1 = i0 + 1; ft = f - i0; }   // open road: the look-ahead stops at the end
     else { i0 = ((Math.floor(fi) % N) + N) % N; i1 = (i0 + 1) % N; ft = fi - Math.floor(fi); }
     const rlv = lerp(T.rl[i0], T.rl[i1], ft);
-    const lim = (T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
-    let off = clamp(rlv + c.aiOff, -lim, lim);
-    if (race.tf && c.tfLo != null) { const E = Math.max(lim + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
+    const wl = T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w, lim = wl - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
+    let limL = lim, limR = lim;
+    if (T.def.barrier && !c.police) { limL = Math.max(lim, Math.min(wl + 2.2, lerp(T.bl[i0], T.bl[i1], ft) - 1.6)); limR = Math.max(lim, Math.min(wl + 2.2, lerp(T.br[i0], T.br[i1], ft) - 1.6)); }   // (def.barrier: to pass or to get away, onto the run-off's asphalt, up to 2.2 m past the road's edge; not the patrol cars)
+    let off = clamp(rlv + c.aiOff, -limL, limR);
+    if (race.tf && c.tfLo != null) { const E = Math.max(Math.max(limL, limR) + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
       const pz = T.pitAt(sT); if (pz) off = pz.o;
       if (pz && (c.ty || c.fuel != null) && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres or fuel: the fast lane beside the boxes, over to its own box to stop; past a car at the box before its own first)
@@ -3285,7 +3369,8 @@ const Core = (function () {
     aiPlan(c, v, out) {
       const T = this.T, s = c.q.s, hw = c.m.wid / 2, cl2 = c.m.len / 2, sd = this.sd;
       c.tfStk = v < 1.5 && c.tfFol ? (c.tfStk || 0) + 0.15 : 0;   // (held up for a while: it squeezes by with less room)
-      const edge = T.wS(s) - 0.3 + (T.def.pullOff && c.tfStk > 2.5 ? T.def.pullOff : 0);   // (a narrow road's shoulder too, def.pullOff, once held up)
+      let edge = T.wS(s) - 0.3 + (T.def.pullOff && c.tfStk > 2.5 ? T.def.pullOff : 0);   // (a narrow road's shoulder too, def.pullOff, once held up)
+      if (T.def.barrier) { const ib = T.idx(s); edge = Math.max(edge, Math.min(T.wS(s) + 2.5, Math.min(T.bl[ib], T.br[ib]) - 1.0)); }   // (def.barrier: round the traffic over the run-off's asphalt)
       const sq = c.tfStk > 2.5 ? 0.3 : 1, mg = (os, ol) => { const k = Math.abs(T.k[T.idx(os)]); return (0.9 + Math.max(0.9 * Math.min(1, k * 18), ol * ol * k / 8) + 0.022 * v * 0.7) * sq; };   // (ol * ol * k / 8: a long body's ends off the curve, a truck's in a hairpin)
       let lo = -1e9, hi = 1e9, fg = 1e9, clearL = 1e9, ng = 1e9, nO = null, nLen = 0, nVs = 0;
       out.fol = null;
@@ -4422,7 +4507,7 @@ const Core = (function () {
       this.propFloor = floor || null;
       for (const it of list) {
         const K = PROPK[it.kind]; if (!K) continue;
-        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (floor ? floor(q, true) : 0);   // (it.i: the builder's sample index, a hint that saves a full scan; the floor row of the nearest sample, as the builder's placement test saw it; in a side road its own height)
+        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy0 = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(T.def.barrier ? T.hs(q) : q.s).y : 0) + (floor ? floor(q, true) : 0), gy = T.def.ringH ? T.ringY(it.x, it.z, gy0) : gy0;   // (it.i: the builder's sample index, a hint that saves a full scan; the floor row of the nearest sample, as the builder's placement test saw it; in a side road its own height)
         const b = mkProp(it.kind, it.x, gy + K.h0, it.z, it.yaw); b.col = it.col || 0; b.qi = q.i;
         b.slot = slots[it.kind] = (slots[it.kind] || 0); slots[it.kind]++; cap[it.kind] = (cap[it.kind] || 0) + 1; props.push(b);
         if (K.breaks) b.parts = K.parts.map(() => { const pb = mkProp(K.breaks, it.x, gy, it.z, 0); pb.hidden = true; pb.dead = true; pb.col = b.col; cap[K.breaks] = (cap[K.breaks] || 0) + 1; props.push(pb); return pb; });
@@ -4454,8 +4539,12 @@ const Core = (function () {
     stepProps(dt) {
       if (!this.props) return;
       const T = this.track, bk = this.propBk, nb = bk.length;
+      const RB = this._ringBk || (this._ringBk = T.def.barrier ? T.rings.filter(R => R.zr > 0).map(R => { const ks = new Set(); for (let i = 0; i < T.N; i++) if (Math.hypot(T.px[i] - R.x, T.pz[i] - R.z) < R.zr + 14) ks.add(Math.floor(i / 6) % nb); return { R, ks: [...ks] }; }) : []);   // (def.barrier: the buckets of each ring's samples)
+      const hitBk = (c, k) => { const L = bk[k]; for (let n = L.length - 1; n >= 0; n--) { const b = L[n]; if (b && !b.dead) propCarHit(this, c, b); } };
       const hit = (c) => { if (!(c.q.i >= 0)) return; const k0 = Math.floor(c.q.i / 6);
-        for (let o = -1; o <= 1; o++) { const L = bk[(k0 + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const b = L[n]; if (b && !b.dead) propCarHit(this, c, b); } } };
+        for (let o = -1; o <= 1; o++) hitBk(c, (k0 + o + nb) % nb);
+        for (const G of RB) { const dx = c.x - G.R.x, dz = c.z - G.R.z; if (dx * dx + dz * dz > (G.R.zr + 8) ** 2) continue;   // (round a ring: the route passes its walls twice, its two legs' samples far apart: the props of all its samples)
+          for (const k of G.ks) { const o = k - (k0 % nb); if (o >= -1 && o <= 1) continue; hitBk(c, k); } } };
       for (const c of this.cars) hit(c);
       if (this.pol) for (const c of this.pol.cars) if (c.pol.mode !== 'gone') hit(c);   // (the patrol cars too: the cones across a side road they come out of)
       for (const b of this.props) if (!b.sleep && !b.dead) propStep(this, b, T, dt);
@@ -4926,7 +5015,7 @@ const Core = (function () {
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
         // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
         // in turn, 9 m apart), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD)
-        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + 70 + 9 * k)); c.parkD = sd * (this.tf ? Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
+        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + 70 + 9 * k)); c.parkD = sd * (this.tf || T.def.barrier ? Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.wAt(pi) - 1.5); }   // (def.barrier: on the run-off, off the narrow road)   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }
