@@ -31,7 +31,11 @@ try {
     await ready(page);
     await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
     const t0 = Date.now();
+    // the wait screen: the new map's picture behind it (not the track's view), a bar at the bottom that fills as the map is built
+    const ws = await page.waitForFunction(() => { const b = document.getElementById('nv-load'), i = b && b.querySelector('#nv-bar'); if (!i) return null; const r = i.parentNode.getBoundingClientRect(); return { bg: b.style.backgroundImage, bottom: innerHeight - r.bottom, w: r.width, W: innerWidth, pct: (b.querySelector('#nv-pct') || {}).textContent }; }, null, { timeout: 300000, polling: 50 }).then(h => h.jsonValue());
     await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
+    const st = await page.evaluate(() => (window.__nvT || []).map(t => t[0]));
+    T.check('the wait screen: the new map\'s picture behind it, a bar at the bottom, filled step by step as the map is built (30 steps and more)', /newmap-load\.webp/.test(ws.bg) && ws.bottom >= 0 && ws.bottom < 80 && ws.w > ws.W * 0.5 && /%/.test(ws.pct) && st.length > 30 && st[st.length - 1] === 'bake', JSON.stringify({ ...ws, steps: st.length }));
     const o = await page.evaluate(() => { const g = window.__game, R = g.race, P = R.player, T = R.track; return { id: T.def.id, cars: R.cars.length, ground: typeof T.ground2 === 'function', free: !!T.free, mk: !!(window.MK && window.MK.hub4), x: P.x, z: P.z, hud: document.getElementById('hud').classList.contains('nv') }; });
     T.check('the tap starts Toskana alone (no rivals), the new map built (window.MK, the ground, no barriers), driving straight away (no lights)', o.id === 'toskana' && o.cars === 1 && o.ground && o.free && o.mk && o.hud, JSON.stringify(o) + ' in ' + (Date.now() - t0) + ' ms');
     const hm = await page.evaluate(() => { const H = window.__H3.home, P = window.__game.race.player; return { x: H.x, z: H.z, h: P.h }; });
@@ -81,6 +85,20 @@ try {
     const gw = await page.evaluate(() => { const H = window.__H3, ws = H.net.filter(e => (e.kind === 'dirt' || e.kind === 'forest') && e.id !== 'mx').map(e => 2 * e.hw), pw = H.paths.map(p => p.wd).concat([H.roads.forest.wd, H.roads.over.wd, H.forest.wd]);
       return { n: ws.length, min: Math.min(...ws, ...pw), max: Math.max(...ws, ...pw), forest: H.roads.forest.wd }; });
     T.check('the gravel ways 10-14 m wide, as the Mountain Rally\'s road (the forest roads 13 m and more)', gw.n > 30 && gw.min >= 10 && gw.max <= 14 && gw.forest >= 13, JSON.stringify(gw));
+    // the west's gravel as the user redrew it: the forest loop, the way to the track's south-west corner and the way down the hill's south-west side gone; a new way
+    // from the ring road past its south-west hairpin up to the track's south-west corner, driven as gravel
+    const nw = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track, H = window.__H3, ids = H.net.filter(e => e.P[0][0] > -5000).map(e => e.id), e = H.net.find(q => q.id === 'loopB'), N = H.net.find(q => q.id === 'nord');
+      if (!e || !N) return { ids }; const dTo = (p, L) => Math.min(...L.map(q => Math.hypot(q[0] - p[0], q[1] - p[1]))), a = e.P[0], b = e.P[e.P.length - 1], m = e.P[Math.floor(e.P.length / 2)], tq = T.query(b[0], b[1]);
+      P.place(m[0], m[1], 0); P.vx = P.vz = 0; P.y = P.py = P.roadY = T.ground2(m[0], m[1]); g.sim(0.3, false, 0, 0);
+      return { loop: ids.includes('loop'), hill2: ids.includes('hill2'), ring: +dTo(a, N.P).toFixed(1), track: +Math.abs(tq.d).toFixed(1), w: T.w, mid: P.ws.join(''), a, b }; });
+    T.check('the west\'s gravel: the forest loop and the way down the hill\'s south-west side gone; a new way from the ring road (south-west hairpin) to the track\'s south-west corner, driven as gravel', !nw.loop && !nw.hill2 && nw.ring < 3 && nw.track < nw.w + 1 && /^5+$/.test(nw.mid || ''), JSON.stringify(nw));
+    // the track's own pit road under the new map does nothing: driving over its (endless) entry and exit on the ring road, the kart track and the field, no pit stop
+    // and no autopilot (it took the car over there before, its old boxes were there)
+    const pt = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track, out = [];
+      for (const [x, z, h] of [[-128, 294, 0], [-125.2, 229.1, 0], [80, 287, Math.PI], [-140, 170, 0]]) { P.place(x, z, h); P.vx = 12 * Math.cos(h); P.vz = 12 * Math.sin(h); P.y = P.py = P.roadY = T.ground2(x, z); P.inPit = false; P.pitAP = false; P.pitG = false;
+        let pit = 0; for (let k = 0; k < 120; k++) { g.sim(1 / 60, false, 0, 0.5); if (P.inPit || P.pitAP || P.pitG) pit++; } out.push(pit); }
+      return { pit: !!T.def.pit, hits: out }; });
+    T.check('the old pit road under the new map: no pit stop, no autopilot on the ring road, the kart track, the field', pt.pit && pt.hits.every(n => n === 0), JSON.stringify(pt));
     const h = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track; P.place(-205, -105, 0); P.vx = P.vz = 0; g.sim(0.5, false); return { y: P.y, ry: P.roadY, g: T.ground2(P.x, P.z) }; });
     T.check('on the snow hill the car stands on the new map\'s ground (its top 25 m and more above the track)', h.g > 20 && Math.abs(h.ry - h.g) < 0.5 && h.y > 20, JSON.stringify(h));
     const e = await page.evaluate(() => { const g = window.__game, P = g.race.player; P.place(405, 0, 0); P.vx = 30; P.vz = 0; g.sim(1, false); return { x: P.x, edge: g.race.track.free[1] }; });

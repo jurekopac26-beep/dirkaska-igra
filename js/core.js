@@ -4627,7 +4627,7 @@ const Core = (function () {
       }
       if (SC) { for (const c of cars) if (!c.net && !c.pitG && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T); }
       if (this.pol) this.pol.collide();
-      if (T.def.pit) for (const c of cars) {   // which side of the pit wall the car is on, on the pit road or not (before the walls push it; AI: on the way in for tyres)
+      if (T.def.pit && !T.free) for (const c of cars) {   // (free driving, the new map: no pit road, the track's own lies under it) which side of the pit wall the car is on, on the pit road or not (before the walls push it; AI: on the way in for tyres)
         if (c.net) {   // (a friend's car online: a ghost as its own phone says (netPG, sent with its state), so both phones skip the same contacts; an older
           // build sends none: by where it is, from the pit wall's line in and on through the way out)
           let g; if (c.netPG != null) g = !!c.netPG; else { const q = c.q, pz = q && q.i >= 0 ? T.pitAt(q.s) : null; g = !!pz && q.d * pz.sd > (pz.gap && c.pitG ? (T.wa ? T.wa[q.i] : T.w) : pz.wall); }
@@ -4636,7 +4636,7 @@ const Core = (function () {
         else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) this.pitStep(c, dt, true);
       }
       for (const c of cars) if (!c.net && !c.fall) wallCollide(c, T, true);
-      if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
+      if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       if (this.pol) for (const c of this.pol.cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name, this.pol.RD); c.detach.length = 0; }   // (the run from the police: a battered patrol car's panels on the road too, thrown with the police's own random numbers: the race's draws stay as they were)
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
