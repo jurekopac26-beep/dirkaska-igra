@@ -3079,7 +3079,7 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -3217,6 +3217,9 @@ const Render = (function () {
       W.box(g, 0, y0 - 0.18, 0.042, 0.07, 0.36, 0.01, 0, bk); W.box(g, 0, y0 + 0.08, 0.042, 0.3, 0.07, 0.01, 0, bk);
     } else if (kind === 'meter') {   // a parking meter: a post, the grey head with its dark window
       W.box(g, 0, -0.7, 0, 0.08, 1.1, 0.08, 0, dk, dk); W.box(g, 0, 0.4, 0, 0.26, 0.3, 0.2, 0, gy, [0.66, 0.68, 0.7]); W.box(g, 0, 0.5, -0.105, 0.16, 0.1, 0.01, 0, [0.12, 0.18, 0.2]);
+    } else if (kind === 'mailbox') {   // a street mail box (red, a domed top, a dark base; no lettering)
+      const rd = [0.8, 0.09, 0.08]; W.box(g, 0, -0.62, 0, 0.5, 0.12, 0.42, 0, dk, dk); W.box(g, 0, -0.5, 0, 0.56, 0.95, 0.46, 0, rd, rd); W.cyl(g, 0, 0.42, 0, 0.29, 0.12, 8, rd, rd);
+      W.box(g, 0.24, 0.15, 0, 0.02, 0.06, 0.3, 0, dk, dk);
     } else if (kind === 'barrel') {   // an orange construction drum with white reflective bands and a black base
       const or = [0.98, 0.42, 0.08]; W.cyl(g, 0, -0.47, 0, 0.32, 0.1, 10, bk, bk); W.cyl(g, 0, -0.37, 0, 0.28, 0.84, 10, or, or, 0.26);
       for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);
@@ -3333,7 +3336,7 @@ const Render = (function () {
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
     monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.14, hazeCol: [0.94, 0.9, 0.84], sunOff: [-66, 74, 70] },   // Monterey: a clear afternoon in the coastal hills, the sun from the south-west, a little sea haze in the light
-    longford: { fog: 0xcbd8e2, sun: 0xfff0d4, sunI: 1.16, sky: 0xc2d8f0, gnd: 0x5c6838, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-70, 80, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
+    longford: { fog: 0xcbd8e2, sun: 0xffe9c6, sunI: 1.24, sky: 0xc2d8f0, gnd: 0x56603a, hemiI: 0.56, tint: [1.03, 1.0, 0.95], sat: 1.06, sunOff: [-70, 76, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
     medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 84, 58] },   // Medvode: a clear summer afternoon in Gorenjska, the sun from the south-west over the Sava plain, a light haze towards the Alps
     palomar:  { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, tint: [1.03, 1.0, 0.95], sat: 1.07, sunOff: [-74, 98, 52] },   // Palomar Mountain: a hot, clear afternoon over the south face, the sun from the south-west across the hairpins, a light warm haze over Pauma Valley
   };
@@ -3362,6 +3365,8 @@ const Render = (function () {
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
   THEMES.baldy = { fog: 0xcbd6df, sun: 0xfff0d4, sunI: 1.24, sky: 0xb4cff0, gnd: 0x5c5a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.08, sunOff: [-78, 96, 50] };   // Mount Baldy: a clear, warm summer afternoon in the San Gabriels, a strong sun from the south-west (the pines' shadows across the hairpins), a light blue haze over the canyon
   SPLIT.baldy = [[0.96, 0.99, 1.05], [1.05, 1.0, 0.94]];
+  THEMES.townsville = { fog: 0xcfdde8, sun: 0xfff2da, sunI: 1.34, sky: 0xb4d2f4, gnd: 0x6f6a48, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.1, sunOff: [-62, 96, -66] };   // Townsville: a clear dry-season afternoon in the tropics, a strong high sun from the north-west
+  SPLIT.townsville = [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]];
   SPLIT.greatalpine = [[0.95, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (the Great Alpine Road: blue shade under the gums, a warm sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its

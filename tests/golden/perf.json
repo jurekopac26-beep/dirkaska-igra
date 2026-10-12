@@ -210,11 +210,11 @@
   "jsMs": 0.93
  },
  "longford": {
-  "calls": 182,
-  "maxCalls": 265,
-  "kverts": 365,
-  "maxKverts": 664,
-  "jsMs": 1.19
+  "calls": 210,
+  "maxCalls": 293,
+  "kverts": 543,
+  "maxKverts": 866,
+  "jsMs": 1.37
  },
  "newcastle": {
   "calls": 341,
@@ -306,5 +306,26 @@
   "kverts": 1012,
   "maxKverts": 1159,
   "jsMs": 1.19
+ },
+ "marrakesh": {
+  "calls": 262,
+  "maxCalls": 308,
+  "kverts": 751,
+  "maxKverts": 843,
+  "jsMs": 0.9
+ },
+ "townsville": {
+  "calls": 315,
+  "maxCalls": 390,
+  "kverts": 798,
+  "maxKverts": 984,
+  "jsMs": 1.78
+ },
+ "troisrivieres": {
+  "calls": 281,
+  "maxCalls": 343,
+  "kverts": 777,
+  "maxKverts": 977,
+  "jsMs": 1.11
  }
 }

@@ -2198,5 +2198,155 @@
   "rescues": 0,
   "nan": false,
   "digest": "bea05ed43040ec449276a010"
+ },
+ "townsville/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 162.3,
+  "spins": 2,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "824afc4afb8d73acd92fd18f"
+ },
+ "townsville/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 172.05,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7c170ebd3e9a840331d580b0"
+ },
+ "townsville/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 141.92,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4deda1adfe2195d0919c51a1"
+ },
+ "townsville/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 144.03,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ff819bc4ee063c9547bef1c8"
+ },
+ "townsville/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 162.25,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c4809ffe12311e6d94885f6f"
+ },
+ "marrakesh/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 173.47,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d60e9d752d359ae3495398d7"
+ },
+ "marrakesh/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 186.6,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fe8cdf5daa7ec73c621ea3f1"
+ },
+ "marrakesh/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 154.64,
+  "spins": 0,
+  "walls": 9,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d353039acfe4074fa5f88655"
+ },
+ "marrakesh/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.96,
+  "spins": 1,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9f508c5cabae1569f0e27dfe"
+ },
+ "marrakesh/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 175.64,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "08a68b69b7c501e65a15064e"
+ },
+ "troisrivieres/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 151.95,
+  "spins": 2,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a205e19fd2faaca72fd52a36"
+ },
+ "troisrivieres/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 161.23,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "08c0342683540515b032d5d1"
+ },
+ "troisrivieres/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 134.53,
+  "spins": 2,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2f9ba2925943d4f7fde98557"
+ },
+ "troisrivieres/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 136.43,
+  "spins": 9,
+  "walls": 12,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d35a458e31190f301454d6d2"
+ },
+ "troisrivieres/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 150.1,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6a7144ac2c32cde35b41bd02"
  }
 }
