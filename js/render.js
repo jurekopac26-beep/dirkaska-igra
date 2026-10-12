@@ -7337,6 +7337,7 @@ const Render = (function () {
     }
     const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
+    const ls = c.lch && !c.lch.done && c.lch.t >= 0 ? (1 - c.lch.k) / Core.LAUNCH.depth : 0, lv = ls > 0.1 ? 0.8 : 2.5;   // the start: a late reaction's wheelspin (0..1, Core LAUNCH): rubber and smoke from the first metres
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
@@ -7345,10 +7346,10 @@ const Render = (function () {
       const front = k >= 2;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
-      if (spd < 2.5) intens = 0;
+      if (spd < lv) intens = 0;
       // skid marks
       const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
-      const skidOn = intens > 0.14 && spd > 2.5 && !(rainy && onHard);   // (no rubber laid on a wet road)
+      const skidOn = intens > 0.14 && spd > lv && !(rainy && onHard);   // (no rubber laid on a wet road)
       if (skidOn) {
         const last = v.sk[k];
         if (last) {
@@ -7392,13 +7393,14 @@ const Render = (function () {
           particles.emit(px, 0.3 + yb, pz, vxs, 1.2 + Math.random() * 1.6, vzs, 0.5 + Math.random() * 0.3, 0.35, 0.6, 0.34 * sh, 0.29 * sh, 0.2 * sh, 0.8, 9, 0.6, yb);
           if (Math.random() < 0.4) particles.emit(px, 0.3 + yb, pz, vxs * 0.6, 0.5 + Math.random() * 0.5, vzs * 0.6, 0.5 + Math.random() * 0.3, 0.8, 2.4, 0.62, 0.62, 0.58, 0.2, -0.05, 1.8, yb);
         }
-      } else if (onHard && intens > 0.22 && spd > 3) {
-        v.acc[k] += Math.min(1.3, intens) * 42 * dt * (c.latR < 1.5 && spd < 18 ? 0.4 : 1);   // (wheelspin getting away, the car straight: a light haze, not the drift's cloud)
+      } else if (onHard && intens > 0.22 && spd > Math.max(lv, 0.8 + 2.2 * (1 - ls))) {
+        const hz = c.latR < 1.5 && spd < 18 ? 0.4 : 1;   // (wheelspin getting away, the car straight: a light haze, not the drift's cloud; a late start: a thick cloud)
+        v.acc[k] += Math.min(1.3, intens) * 42 * dt * (ls > 0.05 ? Math.max(hz, 0.3 + ls) : hz);
         while (v.acc[k] >= 1) {
           v.acc[k] -= 1;
           const vxs = c.vx * 0.12 + (Math.random() - 0.5) * 1.6, vzs = c.vz * 0.12 + (Math.random() - 0.5) * 1.6;
           const g = 0.88 + Math.random() * 0.1;
-          particles.emit(px, 0.35 + yb, pz, vxs, 0.5 + Math.random() * 0.6, vzs, 1.6 + Math.random() * 1.0, 0.9, 4.4 + Math.random() * 1.8, g, g, g + 0.02, 0.4, -0.05, 1.2, yb);
+          particles.emit(px, 0.35 + yb, pz, vxs, 0.5 + Math.random() * 0.6, vzs, 1.6 + Math.random() * 1.0, 0.9, (4.4 + Math.random() * 1.8) * (1 + 0.5 * ls), g, g, g + 0.02, 0.4 + 0.15 * ls, -0.05, 1.2, yb);
         }
       } else if (!onHard && spd > 4) {
         const amt = (surf === 3 || surf === 5 ? 1.0 : 0.45) * clamp(spd / 20, 0.2, 1.4) + intens * 0.5, D = dust || DUST0;

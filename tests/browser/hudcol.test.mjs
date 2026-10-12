@@ -45,7 +45,7 @@ const MEASURE = () => {
   const shown = (e) => { if (!e || getComputedStyle(e).visibility !== 'visible') return false; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || +c.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
   const R = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
   const land = innerWidth > innerHeight, M = document.getElementById('h-msg'), cs = getComputedStyle(M);
-  const colIds = ['h-prof', 'h-wreck', 'h-pit', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast'].concat(land ? ['h-tower'] : []);
+  const colIds = ['h-prof', 'h-wreck', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast'].concat(land ? ['h-tower'] : []);
   const otherIds = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-pol', 'h-gap', 'h-chk', 'h-school', 'pk-note', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls',
     'h-dmg', 'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'].concat(land ? [] : ['h-tower']);
   return { w: innerWidth, h: innerHeight, block: document.getElementById('rotate').classList.contains('show'), screen: window.__game.screen, m: R('h-map'),
