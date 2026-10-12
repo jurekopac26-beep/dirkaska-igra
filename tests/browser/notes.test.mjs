@@ -1,8 +1,11 @@
 // The corner sign (#h-note) on the HUD: (a) where it sits, on a phone lying (the isometric camera) and upright (behind the car), in nine
 // HUD states (a race, with the team radio, with the wreck panel, a duel, the police, the police's checkpoint, a time trial, Pikes Peak
-// with its pill off, the driving school): high in the top row, over nothing; (b) in a race: Medvode's roundabout and Harju's and Monaco's
-// chicanes blue with their own glyphs (a roundabout upright; a chicane, like an arrow, along the road on the isometric camera), a red
-// arrow before a slow corner; on Pikes Peak in a time trial the pill (#pk-note) instead, where it was.
+// with its pill off, the driving school): high in the top row, over nothing (also the column under the map: the pit stop's bar, the start's
+// reaction, the big message, the splits, the toast; the pause, camera, tyre and rescue buttons; the controls); (b) in a race: Medvode's
+// roundabout and Harju's and Monaco's chicanes blue with their own glyphs (a roundabout upright; a chicane, like an arrow, along the road
+// on the isometric camera), a red arrow before a slow corner; with the column under the map full (laid out by game.js hudCol: the
+// reaction, START!, the team radio, the toast) the sign over none of it, nor over the buttons and the controls; on Pikes Peak in a time
+// trial the pill (#pk-note) instead, where it was.
 //   node tests/browser/notes.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -28,7 +31,7 @@ try {
       $('h-note').style.transition = 'none'; $('h-note').className = 'show sev3';
       const box = (e) => { const b = e.getBoundingClientRect(), cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity <= 0.05 || b.width === 0 || b.height === 0) return null; return b; };
       const ov = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
-      const others = () => { const L = []; for (const id of ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-pol', 'h-chk', 'h-map', 'h-prof', 'h-wreck', 'h-tower', 'h-teamradio', 'btn-pause', 'btn-cam', 'btn-tyre', 'h-school', 'h-pos', 'h-tot', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls', 'speedo', 'h-dmg', 'h-tyre', 'h-fuel', 'h-flag']) { const e = $(id), b = e && box(e); if (b) L.push([id, b]); } for (const e of document.querySelectorAll('#h-rank > .h-lbl')) { const b = box(e); if (b) L.push(['rank-lbl', b]); } return L; };
+      const others = () => { const L = []; for (const id of ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-pol', 'h-chk', 'h-map', 'h-prof', 'h-wreck', 'h-tower', 'h-teamradio', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'toast', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'h-school', 'h-pos', 'h-tot', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls', 'speedo', 'h-dmg', 'h-tyre', 'h-fuel', 'h-flag', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind']) { const e = $(id), b = e && box(e); if (b) L.push([id, b]); } for (const e of document.querySelectorAll('#h-rank > .h-lbl')) { const b = box(e); if (b) L.push(['rank-lbl', b]); } return L; };
       const res = [], check = (mode) => { const n = box($('h-note')); res.push({ mode, box: n ? [n.left, n.top, n.right, n.bottom].map(Math.round) : null, hits: n ? others().filter(([, b]) => ov(n, b)).map(([id, b]) => id + '[' + [b.left, b.top, b.right, b.bottom].map(Math.round) + ']') : [] }); };
       $('h-time').textContent = '10:23.456'; $('h-bestv').textContent = '10:22.000';
       const secs = $('h-sec').children; for (const i of secs) i.textContent = '128.412';
@@ -39,6 +42,10 @@ try {
       check('race');
       $('h-teamradio').style.transition = 'none'; $('h-teamradio').classList.add('on'); $('h-teamradio').lastElementChild.textContent = 'Box this lap. The rain is coming, inters are ready in the box.'; check('race+radio'); $('h-teamradio').classList.remove('on');
       $('h-wreck').classList.add('show'); check('race+wreck'); $('h-wreck').classList.remove('show');
+      // (the column under the map, each at its place under it as the CSS has it: hudCol stacks them in a race, part b)
+      for (const [id, c, t] of [['h-pit', 'on', ''], ['h-react', 'show good', ''], ['h-msg', 'show', 'START!'], ['toast', 'show col', 'Sedaj lahko spustiš plin, vse bo naredil sam.']]) { $(id).style.transition = $(id).style.animation = 'none'; if (t) $(id).textContent = t; $(id).className = c; }
+      $('h-react').firstElementChild.textContent = 'REAKCIJA'; $('h-react').lastElementChild.textContent = '0,23 s'; $('btn-rescue').classList.remove('off');
+      check('race+column'); for (const id of ['h-pit', 'h-react', 'h-msg', 'toast']) $(id).className = ''; $('btn-rescue').classList.add('off');
       $('hud').classList.remove('tw');
       $('h-lap').textContent = '2,4/12,3 KM'; $('hud').classList.add('up', 'duel'); $('h-gap').textContent = 'TEKMEC SPREDAJ +12.4 s'; check('duel');
       $('hud').classList.remove('duel');
@@ -57,8 +64,8 @@ try {
     });
     const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 200 : m === 'pikes' || m === 'school' ? 106 : 95);
     const badOnes = out.filter(o => !o.box || o.hits.length || o.box[1] > lim(o.mode));
-    T.check(`${w}×${h} (${land ? 'lying, isometric' : 'upright, behind the car'}): the sign high in the top row in all 9 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 200, Pikes and the school ≤ 106'}), over nothing`,
-      out.length === 9 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
+    T.check(`${w}×${h} (${land ? 'lying, isometric' : 'upright, behind the car'}): the sign high in the top row in all 10 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 200, Pikes and the school ≤ 106'}), over nothing`,
+      out.length === 10 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
 
@@ -86,6 +93,28 @@ try {
     let a = await at(300, 20), b = await at(420, 15);
     T.check(`${tag} medvode: 26 m before the first roundabout the blue sign, the roundabout's glyph, upright, in the top row; past it no blue`,
       a.cls === 'show blue' && a.kind === 'ring' && a.d === P_RING && (cam === 'iso' ? Math.abs(rotDeg(a.rot)) <= 2.1 : a.rot === '') && top(a) && !/blue/.test(b.cls), txt(a) + ' | 420 m: ' + txt(b));
+
+    // the column under the map full in a race (hudCol lays it out: the reaction, START!, the team radio, the toast) and the sign shown: over
+    // none of it, nor over the buttons (pause, camera, tyres, rescue), the speedometer or the controls
+    const full = await page.evaluate(async () => {
+      const g = window.__game, $ = (id) => document.getElementById(id), raf = () => new Promise(r => requestAnimationFrame(r));
+      const R = $('h-react'); R.firstElementChild.textContent = 'REAKCIJA'; R.lastElementChild.textContent = '0,23 s'; R.className = 'show good';
+      g.msg('START!', 'gold', 60); g.toast('Sedaj lahko spustiš plin, vse bo naredil sam.', 60000);
+      const r = $('h-teamradio'); r.lastElementChild.textContent = 'Dober postanek. Si 5., G. Moretti je 12,3 s pred tabo.'; r.classList.add('on');
+      const T = g.race.track; g.noteAt((((T.startS + 300) % T.len) + T.len) % T.len, 20);
+      for (const id of ['h-note', 'h-react', 'h-msg', 'h-teamradio', 'toast']) $(id).style.transition = $(id).style.animation = 'none';
+      for (let k = 0; k < 4; k++) await raf();
+      const box = (e) => { if (!e) return null; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity <= 0.05) return null; } const b = e.getBoundingClientRect(); return b.width && b.height ? b : null; };
+      const ov = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+      const n = box($('h-note')), ids = ['h-map', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast', 'h-tower', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'speedo', 'h-times', 'h-rank', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'];
+      const shown = ids.filter(id => box($(id))), hits = n ? shown.filter(id => ov(n, box($(id)))) : [];
+      const out = { note: n ? [n.left, n.top, n.right, n.bottom].map(Math.round) : null, shown, hits, col: ['h-react', 'h-msg', 'h-teamradio', 'toast'].map(id => { const b = box($(id)); return b ? id + '@' + Math.round(b.top) : id + ' -'; }) };
+      R.className = ''; $('h-msg').className = ''; $('toast').classList.remove('show'); r.classList.remove('on', 'wait');
+      for (const id of ['h-note', 'h-react', 'h-msg', 'h-teamradio', 'toast']) $(id).style.transition = $(id).style.animation = '';
+      g.noteAt(null); return out;
+    });
+    T.check(`${tag} medvode: the column under the map full (the reaction, START!, the radio, the toast): the sign over none of it, nor over the buttons and the controls`,
+      !!full.note && !full.hits.length && full.shown.includes('h-react') && full.shown.includes('h-msg') && full.shown.includes('btn-pause') && full.shown.includes('c-gas'), JSON.stringify(full));
 
     T.check(`${tag} harju: racing`, await go('harju') === 'racing');
     a = await at(540, 15);
