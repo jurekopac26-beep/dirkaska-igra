@@ -59,13 +59,13 @@ const MEASURE = () => {
 const ICONS = () => {
   const img = (k) => { const d = document.createElement('i'); d.style.backgroundImage = `var(--ic-${k})`; document.body.appendChild(d); const v = getComputedStyle(d).backgroundImage; d.remove(); return v; };
   const KS = ['flag', 'wrench', 'go', 'warn', 'vs', 'star', 'pit', 'info'], pics = KS.map(img);
-  const one = (e, t) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
-    const s = getComputedStyle(e), bx = t === e ? s : getComputedStyle(e.parentElement), a = (v) => { const m = /rgba?\(([^)]+)\)/.exec(v); return m ? +(m[1].split(',')[3] || 1) : 1; };
+  const one = (e, t, box) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
+    const s = getComputedStyle(e), bx = getComputedStyle(box || e), a = (v) => { const m = /rgba?\(([^)]+)\)/.exec(v); return m ? +(m[1].split(',')[3] || 1) : 1; };
     return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(s.fontSize), fw: +s.fontWeight,
       edge: parseFloat(bx.borderLeftWidth) + ' ' + bx.borderLeftColor, bga: a(bx.backgroundColor),
       gap: +(t0.left - r.left - parseFloat(getComputedStyle(e).paddingLeft) - parseFloat(getComputedStyle(e).borderLeftWidth) - parseFloat(c.width)).toFixed(1) }; };
   const M = document.getElementById('h-msg'), P = document.getElementById('h-pit'), T = document.getElementById('toast');
-  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P.firstElementChild, P.firstElementChild) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
+  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P.firstElementChild, P.firstElementChild, P) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
 };
 // what is wrong with the icons: the message's not the one of its kind or not as tall as its letters, the pit panel without its wrench, the
 // toast without its "i", or a text over its icon
@@ -249,7 +249,8 @@ try {
   const last = await both(page, 'race-lastlap', 'ZADNJI KROG!', ['h-msg']);
   await page.evaluate(() => { window.__game.autoDrive = true; });   // (the race goes on in real time meanwhile: the car on the autopilot, not into a wall at full speed with no one at the wheel)
   await turn(page, OR.land);
-  await page.waitForFunction(() => document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (drawn again four times a second of the race)
+  await page.waitForFunction(() => !document.getElementById('h-msg').classList.contains('show') && !document.getElementById('h-teamradio').classList.contains('on') && !document.getElementById('toast').classList.contains('show')
+    && document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (the texts gone; the tower drawn again four times a second of the race)
   const alone = await page.evaluate(MEASURE), atw = alone.col.find(c => c.id === 'h-tower');
   await page.evaluate(() => { window.__game.autoDrive = false; });
   T.check('on its side, a race: the timing tower the column\'s last, fewer rows (or none) under the texts; alone under the map with all its rows',
