@@ -54,22 +54,30 @@ const MEASURE = () => {
     rows: document.getElementById('h-tower').querySelectorAll('.tw-r').length };
 };
 // in the page: the icons of the column (css ::before, inline SVG as --ic-*): which one each shows (the same picture as var(--ic-<kind>)), its size,
-// and where the text starts (the message's and the pit title's right of the icon, the toast's first line after its "i")
+// and where the text starts (each at the start of its first line: the message's, the pit title's, the toast's "i"); the coloured edge at the
+// left and the background (see-through, as the map's)
 const ICONS = () => {
   const img = (k) => { const d = document.createElement('i'); d.style.backgroundImage = `var(--ic-${k})`; document.body.appendChild(d); const v = getComputedStyle(d).backgroundImage; d.remove(); return v; };
   const KS = ['flag', 'wrench', 'go', 'warn', 'vs', 'star', 'pit', 'info'], pics = KS.map(img);
   const one = (e, t) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
-    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(getComputedStyle(e).fontSize),
+    const s = getComputedStyle(e), bx = t === e ? s : getComputedStyle(e.parentElement), a = (v) => { const m = /rgba?\(([^)]+)\)/.exec(v); return m ? +(m[1].split(',')[3] || 1) : 1; };
+    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(s.fontSize), fw: +s.fontWeight,
+      edge: parseFloat(bx.borderLeftWidth) + ' ' + bx.borderLeftColor, bga: a(bx.backgroundColor),
       gap: +(t0.left - r.left - parseFloat(getComputedStyle(e).paddingLeft) - parseFloat(getComputedStyle(e).borderLeftWidth) - parseFloat(c.width)).toFixed(1) }; };
   const M = document.getElementById('h-msg'), P = document.getElementById('h-pit'), T = document.getElementById('toast');
-  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P, P.firstElementChild) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
+  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P.firstElementChild, P.firstElementChild) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
 };
 // what is wrong with the icons: the message's not the one of its kind or not as tall as its letters, the pit panel without its wrench, the
 // toast without its "i", or a text over its icon
 function wrongIcons(x, kind) {
   const bad = [];
   if (x.dataIc !== kind || x.msg.ic !== kind) bad.push(`the message's icon ${x.dataIc}/${x.msg.ic}, not ${kind}`);
-  if (x.icm) bad.push('the message\'s icon not at its left: ' + x.icm);
+  if (x.icm) bad.push('the message without its icon: ' + x.icm);
+  const EDGE = { warn: 'rgb(230, 59, 46)', go: 'rgb(53, 212, 95)', star: 'rgb(53, 212, 95)' }, mapA = 0.45;
+  if (!x.msg.edge.startsWith('4 ') || (EDGE[kind] && !x.msg.edge.endsWith(EDGE[kind])) || x.msg.bga > mapA + 0.01) bad.push(`the message's edge ${x.msg.edge}, background ${x.msg.bga}`);
+  if (kind === 'pit' && (x.msg.fs > 15 || x.msg.fw < 800)) bad.push(`the pits' message not small and heavy: ${x.msg.fs} px, ${x.msg.fw}`);
+  if (x.pit && (!x.pit.edge.startsWith('4 ') || x.pit.bga > mapA + 0.01)) bad.push(`the pit panel's edge ${x.pit.edge}, background ${x.pit.bga}`);
+  if (x.toast && (!x.toast.edge.startsWith('4 ') || x.toast.bga > mapA + 0.01)) bad.push(`the toast's edge ${x.toast.edge}, background ${x.toast.bga}`);
   if (Math.abs(x.msg.w - 1.05 * x.msg.fs) > 1 || Math.abs(x.msg.h - x.msg.w) > 0.5) bad.push(`the message's icon ${x.msg.w}x${x.msg.h} at ${x.msg.fs} px`);
   if (x.msg.gap < 0) bad.push('the message over its icon');
   if (!x.pit || x.pit.ic !== 'wrench' || x.pit.w < 12 || x.pit.gap < 2) bad.push('the pit panel\'s wrench ' + JSON.stringify(x.pit));

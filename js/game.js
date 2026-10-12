@@ -3692,7 +3692,7 @@
     if (hud.classList.contains('pol')) obs.push('h-radio', 'h-tail');
     if (lights) obs.push('h-lights');
     for (const id of obs) { const e = $(id); if (!e || !e.offsetParent) continue; const r = e.getBoundingClientRect(); if (r.height > 0 && r.left < m.right && r.right > m.left && r.top > m.bottom) lim = Math.min(lim, r.top - COL_GAP); }
-    if (M.classList.contains('show') && hcol.fit !== M.textContent + '@' + m.width) { hcol.fit = M.textContent + '@' + m.width; hcol.f = fitMsg(M, 22, MSG_MIN); }
+    if (M.classList.contains('show') && hcol.fit !== M.textContent + '@' + m.width) { hcol.fit = M.textContent + '@' + m.width; hcol.f = fitMsg(M, M.dataset.ic === 'pit' ? 15 : 22, MSG_MIN); }   // (the pits: smaller, heavier letters)
     if (P.classList.contains('on')) {   // (the progress bar's label: one size for all of them, the longest on one line; the title on one line down to 8 px, else in two)
       const S2 = P.children[1], c = hcol.cx || (hcol.cx = document.createElement('canvas').getContext('2d')); c.font = '700 12px ' + getComputedStyle(S2).fontFamily;
       const lw = Math.max(...[tr('Prevzameš čez {0}', 3), tr('Popravilo {0} %', 99), tr('Izvoz'), tr('Vstop'), tr('Boks')].map(t => c.measureText(t).width));
@@ -3717,11 +3717,10 @@
     } else { if (TW.style.top) TW.style.top = ''; TW.classList.remove('nofit'); if (tw && tw.max !== Infinity) { tw.max = Infinity; tw.at = 0; } }
   }
   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three. Its
-  // icon at the left (css #h-msg::before); a long message on a narrow phone with no room for it so in three lines: the icon at the start of
-  // its first line (data-icm in, the lines under it the whole width), else none (no)
+  // icon at the start of its first line (css #h-msg::before); a long message on a narrow phone with no room for it in three lines: none (data-icm no)
   function fitMsg(el, hi, lo) {
     const fits = (f, n) => { el.style.fontSize = f + 'px'; return el.scrollWidth <= el.clientWidth + 2 && el.clientHeight <= f * 1.05 * n + 9; };
-    for (const icm of ['', 'in', 'no']) {
+    for (const icm of ['', 'no']) {
       if (icm) el.dataset.icm = icm; else delete el.dataset.icm;
       for (let f = hi; f >= 16; f--) if (fits(f, 2)) return f;
       let f = hi; while (f > lo && !fits(f, 3)) f--;
