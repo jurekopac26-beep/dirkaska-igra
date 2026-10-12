@@ -2192,7 +2192,7 @@ body.mk-clean #h-msg { display: none !important; }
     for (const [x, z, r, sf] of H3.nordSurf || []) put(x, z, r, sf + 1);
     const BK = H3.bankR; if (BK) for (const [sx, sz, ex, ez, f] of BK.S) { if (f < 0.3) continue; for (let u = BK.w; u <= BK.w + 6.2; u += 0.4) put(sx + ex * u * BK.side, sz + ez * u * BK.side, 0.45, 1); }   // (the banked bend's concrete bowl: paved)
     const TN = H3.tun; if (TN) for (let k = TN.t0; k <= TN.t1; k++) { const q = TN.S[k]; for (let l = -(TN.HW + 1); l <= TN.HW + 1.01; l += 0.4) put(q.x + q.nx * l, q.z + q.nz * l, 0.75, 9); }
-    return (x, z, y) => { const i = Math.round((x - B[0]) / C), j = Math.round((z - B[2]) / C), v = i >= 0 && j >= 0 && i < nx && j < nz ? A[j * nx + i] : 0; return !v ? 5 : v === 9 ? (TN.lower(x, z, y) ? 0 : 5) : v - 1; }; }
+    return (x, z, y) => { const i = Math.round((x - B[0]) / C), j = Math.round((z - B[2]) / C), v = i >= 0 && j >= 0 && i < nx && j < nz ? A[j * nx + i] : 0; return !v ? 5 : v === 9 ? (y != null && y > TN.floor(x, z) + 4.5 && TN.roofAt(x, z) ? 5 : 0) : v - 1; }; }
   // how far (x, z) lies outside the nearest paved way of the net (negative: on it; the track itself apart: H3.TL), on a 0.5 m grid (a chamfer distance, in
   // decimetres): where a gravel way runs onto asphalt it lies over it and thins out (gravelSurface). Made anew when a paved way joins the net; let go once the map is built
   function paveDist(x, z) { let P = H3.paveD; if (!P) { const B = [-352, 413, -402, 316], C = 0.5, nx = Math.ceil((B[1] - B[0]) / C) + 1, nz = Math.ceil((B[3] - B[2]) / C) + 1, N = nx * nz, In = new Uint8Array(N);
@@ -2606,9 +2606,9 @@ body.mk-clean #h-msg { display: none !important; }
     // under the hill: on the roofed stretch, between its walls, less than 4.5 m over its floor
     const lower = (x, z, y) => { if (y == null) return false; const r = near(x, z); return !!r && roofed(r) && Math.abs(r.d) <= HW + 0.6 && y < floor(x, z) + 4.5; };
     const roofAt = (x, z) => { const r = near(x, z); return !!r && roofed(r) && Math.abs(r.d) <= HW + 1; };
-    const groundL = (x, z, y) => lower(x, z, y) ? floor(x, z) : H3.ground(x, z);
+    const groundL = (x, z, y) => { if (lower(x, z, y)) return floor(x, z); const g = H3.ground(x, z); if (y == null || y > g - 1) return g; const r = near(x, z); return r && roofed(r) && Math.abs(r.d) > HW ? Math.min(g, floor(x, z) + SL * Math.max(0, Math.abs(r.d) - FL)) : g; };   // (a car down in the cutting by the portal's face, beside the opening: the bank's own height, no step up the face)
     // a wall (its sides; for a car on the cutting's bank the portal's face beside the opening): the way out of it and how deep in [nx, nz, depth] (js/core.js wallCollide)
-    const wall = (x, z, y, out) => { const r = near(x, z); if (!r || !roofed(r) || y >= floor(x, z) + 4.5) return false; const ad = Math.abs(r.d), pS = ad - HW; if (pS <= 0 || ad > HW + 8) return false; const pP = Math.min(r.s - s0, s1 - r.s), q = r.q; if (y > H3.ground(x, z) - 1) return false;   // (on the hill beside it, not in the rock: no wall)
+    const wall = (x, z, y, out) => { const r = near(x, z); if (!r || !roofed(r)) return false; const ad = Math.abs(r.d), pS = ad - HW; if (pS <= 0 || ad > HW + 30) return false; const pP = Math.min(r.s - s0, s1 - r.s), q = r.q; if (y > H3.ground(x, z) - 1 || (pS > 8 && pP > 3)) return false;   // (on the hill beside it, not in the rock: no wall; deep in the rock only the portal's face)
       if (pP < pS) { const f = r.s - s0 < s1 - r.s ? -1 : 1; out[0] = q.tx * f; out[1] = q.tz * f; out[2] = pP + 0.01; } else { const sg = Math.sign(r.d); out[0] = -q.nx * sg; out[1] = -q.nz * sg; out[2] = pS; } return true; };
     // the car in it or about to be (m metres before either portal), under the hill
     const inside = (car, m = 16) => { const r = near(car.x, car.z); return !!r && r.s > s0 - m && r.s < s1 + m && Math.abs(r.d) < HW + 2 && (car.y || 0) < floor(car.x, car.z) + 4.5; };
@@ -2627,7 +2627,10 @@ body.mk-clean #h-msg { display: none !important; }
     const S = T.S, HW = T.HW, gr = H3.ground, LW = HW + 13;
     // the rows of the new ground: over the roofed stretch the hill (LW each side); in the cuttings as far as the cut goes and 16 m more (the World's ground goes 8 m past it)
     const cutTo = (q, sg) => { let L = 0; for (let l = 0; l <= 45; l += 1) { const x = q.x + q.nx * l * sg, z = q.z + q.nz * l * sg, h = T.raw(x, z); if (h - T.cut(x, z, h) > 0.02) L = l; } return L; };
-    const rows = []; for (let k = 0; k < S.length; k += (k >= T.t0 - 2 && k <= T.t1 + 2 ? 1 : 2)) { const q = S[k], roof = k >= T.t0 && k <= T.t1; if (roof) { rows.push({ k, q, roof, L: [LW, LW], C: [HW + 1, HW + 1] }); continue; } const a = cutTo(q, -1), b = cutTo(q, 1); if (a + b <= 0) continue; rows.push({ k, q, roof, L: [Math.max(a + 14, 16), Math.max(b + 14, 16)], C: [a + 2, b + 2] }); }
+    const CX = S.map((q, k) => k >= T.t0 && k <= T.t1 ? null : [cutTo(q, -1), cutTo(q, 1)]), cutK = CX.map((c, k) => !!c && c[0] + c[1] > 0), nearCut = (k) => { for (let j = Math.max(0, k - 14); j <= Math.min(S.length - 1, k + 14); j++) if (cutK[j]) return true; return false; };
+    const rows = []; for (let k = 0; k < S.length; k += (k >= T.t0 - 2 && k <= T.t1 + 2 ? 1 : 2)) { const q = S[k], roof = k >= T.t0 && k <= T.t1; if (roof) { rows.push({ k, q, roof, L: [LW, LW], C: [HW + 1, HW + 1] }); continue; } const [a, b] = CX[k];
+      if (a + b <= 0) { if (nearCut(k)) rows.push({ k, q, roof, L: [16, 16], C: [-99, -99], K: [0, 0] }); continue; }   // (14 m past the cut's end: the new ground still, over the World's squares taken away at its last rows)
+      rows.push({ k, q, roof, L: [Math.max(a + 14, 16), Math.max(b + 14, 16)], C: [a + 2, b + 2], K: [a, b] }); }
     if (!rows.length) return null; const byK = new Map(rows.map(r => [r.k, r])), rowAt = (k) => byK.get(k) || byK.get(k - 1) || byK.get(k + 1);
     const inPatch = (x, z, m, key) => { const r = T.near(x, z); if (!r || Math.abs(r.s - r.q.s) > 2) return false; const w = rowAt(r.k); return !!w && Math.abs(r.d) < w[key][r.d < 0 ? 0 : 1] + m; };
     // the World's ground away where any corner of a square of it is in (its squares reach 11 m past: the new ground goes 12 m past)
@@ -2635,15 +2638,17 @@ body.mk-clean #h-msg { display: none !important; }
     treesOut((x, z) => inPatch(x, z, 0, 'L'));
     // a ground patch (rows across the road): its heights from the map's ground, the World's colours (the cutting's banks bare earth where steep), its texture's scale
     const patch = (list, mt, cols) => { const pos = [], col = [], uv = [], idx = [];
-      for (const w of list) { const q = w.q, O = cols(w); for (const l of O) { const x = q.x + q.nx * l, z = q.z + q.nz * l, y = gr(x, z) + (w.roof ? 0.06 : -0.01 + 0.07 * sst(8, 12, Math.abs(l))), c = colAt(x, z), st = Math.min(1, Math.abs(gr(x + q.nx * 0.8, z + q.nz * 0.8) - gr(x - q.nx * 0.8, z - q.nz * 0.8)) / 1.6), e = sst(0.35, 0.75, st); pos.push(x, y, z); col.push(c[0] * (1 + 0.3 * e), c[1] * (1 - 0.08 * e), c[2] * (1 - 0.42 * e)); uv.push(x / 14, -z / 14); } }
+      for (const w of list) { const q = w.q, O = cols(w); for (const l of O) { const x = q.x + q.nx * l, z = q.z + q.nz * l, y = gr(x + q.tx * (w.nudge || 0), z + q.tz * (w.nudge || 0)) + (w.roof ? 0.06 : -0.01 + 0.07 * sst(8, 12, Math.abs(l))), c = colAt(x, z), st = Math.min(1, Math.abs(gr(x + q.nx * 0.8, z + q.nz * 0.8) - gr(x - q.nx * 0.8, z - q.nz * 0.8)) / 1.6), e = sst(0.35, 0.75, st); pos.push(x, y, z); col.push(c[0] * (1 + 0.3 * e), c[1] * (1 - 0.08 * e), c[2] * (1 - 0.42 * e)); uv.push(x / 14, -z / 14); } }
       const M = cols(list[0]).length; for (let r = 0; r < list.length - 1; r++) { if (list[r + 1].k - list[r].k > 3) continue; for (let cI = 0; cI < M - 1; cI++) { const k = r * M + cI; idx.push(k, k + 1, k + M, k + 1, k + M + 1, k + M); } }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
       const NA = g.attributes.normal; for (let k = 0; k < NA.count; k++) { const x = pos[k * 3], z = pos[k * 3 + 2], h = T.raw(x, z); if (h - T.cut(x, z, h) < 0.05) { const nn = nAt(x, z); NA.setXYZ(k, nn[0], nn[1], nn[2]); } }
       const me = new THREE.Mesh(g, mt); me.receiveShadow = true; return me; };
-    const lidM = G.material.clone(), colM = G.material;   // (the hill over the road's own, to fade; the rest as the World's ground)
+    const lidM = G.material.clone(), colM = G.material; lidM.onBeforeCompile = G.material.onBeforeCompile; lidM.customProgramCacheKey = G.material.customProgramCacheKey; lidM.userData = Object.assign({}, G.material.userData);   // (the hill over the road's own, to fade, with the ground's own look; the rest as the World's ground)
     const span = (l0, l1, m) => () => { const O = []; for (let i = 0; i <= m; i++) O.push(l0 + (l1 - l0) * i / m); return O; };
     const lidRows = rows.filter(r => r.roof), cutN = rows.filter(r => !r.roof && r.k < T.t0), cutS = rows.filter(r => !r.roof && r.k > T.t1);
-    const cutCols = (w) => { const O = [], [a, b] = w.L; for (const l of [-a, -a * 0.8, -a * 0.62, -a * 0.48, -T.FL - 8, -T.FL - 4.5, -T.FL - 2, -T.FL, -HW, -5, 5, HW, T.FL, T.FL + 2, T.FL + 4.5, T.FL + 8, b * 0.48, b * 0.62, b * 0.8, b]) O.push(l); return O.sort((u, v) => u - v); };
+    // the cuttings' ground carried right up to the portals' faces (their last row on the face's line, the cutting's height there): no gap to the hill's
+    if (cutN.length) { const e = cutN[cutN.length - 1]; cutN.push({ ...e, k: T.t0, q: S[T.t0], nudge: -0.06 }); } if (cutS.length) { const e = cutS[0]; cutS.unshift({ ...e, k: T.t1, q: S[T.t1], nudge: 0.06 }); }
+    const cutCols = (w) => { const O = [], [a, b] = w.L, [ka, kb] = w.K; for (const l of [-a, -a * 0.8, -Math.max(ka + 1.5, T.FL + 9), -Math.max(ka, T.FL + 8.5), -Math.max(ka - 1.5, T.FL + 6.5), -T.FL - 4.5, -T.FL - 2, -T.FL, -HW, -5, 5, HW, T.FL, T.FL + 2, T.FL + 4.5, Math.max(kb - 1.5, T.FL + 6.5), Math.max(kb, T.FL + 8.5), Math.max(kb + 1.5, T.FL + 9), b * 0.8, b]) O.push(l); return O.sort((u, v) => u - v); };   // (columns at the bank's top, where it meets the hill)
     // over the tunnel: the strip over its road fades, the hill either side stays (the walls go up to it)
     const out = { lid: null, cut: [] }; if (lidRows.length > 1) { const L = patch(lidRows, lidM, span(-HW, HW, 6)); L.userData.dyn = 1; out.lid = add(L); out.cut.push(add(patch(lidRows, colM, span(-LW, -HW, 6))), add(patch(lidRows, colM, span(HW, LW, 6)))); }
     for (const list of [cutN, cutS]) if (list.length > 1) out.cut.push(add(patch(list, colM, cutCols)));
