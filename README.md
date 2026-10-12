@@ -1270,6 +1270,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 3. Okolica: vsaka tema (`theme`) v `js/world.js` gradi okolico svoje proge (jezero, stavbe, gozd …), zato nova proga potrebuje svojo temo ali prilagojeno obstoječo. Proge v slogu Circuit Superstars (teme `forest`, `italia`, `kamp`) si delijo tribune, boks z mehaniki, gume, bale in robove; Toskana in Gromski rt svojo okolico (tribune, table, hiše, ciprese, kamp, zastavice, gledalce, jezero) naštejeta kar v datoteki proge. Pravi progi Nordschleife in Spa (temi `nring`, `spa`) si delita teren pasu ob progi (višinski model in raba tal iz datoteke proge), okolico pa gradi vsaka svoj graditelj (`buildNring`, `buildSpa`): Nordschleife gozd z mešanimi drevesi, kampe navijačev in grafite na asfaltu, Spa smreke v vrstah, pašnike, tribune in zaletišča formule 1.
 4. Testi progo zajamejo sami; referenčne vrednosti zanjo ustvari `npm run golden:update`.
 5. Slika za meni: `assets/tracks/<id>.webp` in `<id>-rain.webp` (makete terena, izriše jih `maketa-menija/orodja/dio2.mjs` in `mkwebp.py`, glej `maketa-menija/README.md`). Brez slik meni pokaže prazen oder. Zemljevid od zgoraj in prelet (`js/routes.js`, `assets/maps/`) sta po želji pozneje.
+6. Table ovinkov na zaslonu nastanejo same (Core `hudSigns`: ovinki in hitri ovinki iz krivine ceste, krožišča iz `rings`, šikane iz `notes`); šikane in krožišča brez teh podatkov ter hitre ovinke z imenom dodaj v `hudSigns: [[d0, d1, 'chicane' | 'ring' | 'bend']]` (metri od starta; šikana in krožišče dobita modro tablo).
 
 ## Zasluge
 

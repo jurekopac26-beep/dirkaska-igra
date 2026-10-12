@@ -141,7 +141,15 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-note.show { opacity: .92; transform: scale(1); }
 #h-note.sev2 { background: #f1b416; }
 #h-note.sev3 { background: #e4402f; }
+#h-note.blue { background: #2f7de0; }   /* a roundabout, a chicane (the palette's blue, .pk-open) */
 #h-note svg { width: 100%; height: 100%; display: block; transform-origin: 50% 50%; }   /* (the isometric camera turns the arrow along the road: game.js noteAng) */
+/* the corner sign in the top row: lying, beside the clock on its left (the police's taller block: further left; the driving school's board
+   takes that place: under the clock, centred) */
+@media (orientation: landscape) {
+  #h-note { top: calc(var(--st) + 8px); left: auto; right: calc(50% + clamp(98px, 27vh, 114px)); margin-left: 0; }
+  #hud.pol #h-note { right: calc(50% + clamp(114px, 31vh, 130px)); }
+  #hud.school #h-note { top: calc(var(--st) + clamp(82px, 23vh, 96px)); right: auto; left: 50%; margin-left: calc(clamp(46px, 14vh, 66px) / -2); }
+}
 #h-lights { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); display: flex; gap: 8px; padding: 8px 12px; background: rgba(8, 10, 14, .78); border-radius: 12px; opacity: 0; transition: opacity .25s; }
 #h-lights.show { opacity: 1; }
 #h-lights i { width: clamp(20px, 7vh, 34px); height: clamp(20px, 7vh, 34px); border-radius: 50%; background: #3a0b0b; box-shadow: inset 0 -3px 0 rgba(0,0,0,.4); }
@@ -430,7 +438,10 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   #h-speed { font-size: clamp(20px, 7vw, 32px); }
   #h-gear { font-size: clamp(12px, 3.8vw, 18px); }
   #h-kmh { font-size: clamp(8px, 2.2vw, 10px); }
-  #h-note { top: 30%; width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
+  #h-note { top: calc(var(--st) + clamp(82px, 21.5vw, 92px)); width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
+  #hud.pkc #h-note { top: calc(var(--st) + clamp(94px, 24.5vw, 104px)); }
+  #hud.school #h-note { top: calc(var(--st) + clamp(88px, 24vw, 96px)); }
+  #hud.pol #h-note { top: calc(var(--st) + clamp(178px, 47.5vw, 196px)); }
   #h-lights { top: 36%; }
   #h-lights i { width: clamp(18px, 6vw, 30px); height: clamp(18px, 6vw, 30px); }
   .steer { width: clamp(60px, 19vw, 92px); height: clamp(60px, 19vw, 92px); bottom: calc(18px + var(--sb)); }
