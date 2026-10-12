@@ -4059,6 +4059,10 @@ const Render = (function () {
   }
   function getDetailDist() { return detailDist; }
   function cullByDistance() {   // called from frame() once the camera has moved; a cheap horizontal distance test per vegetation chunk
+    if (world && world.cullFog) {   // (NEW VERSION · TEST 1, js/nvbake.js: the new map's merged cells, past the fog's end not drawn, on every tier: the haze hides them anyway; on the lower tiers not past the detail distance either)
+      const p = camera.position, f = Math.min(scene.fog ? scene.fog.far + 20 : Infinity, detailDist);
+      for (const c of world.cullFog) { const s = c.geometry.boundingSphere; c.visible = s.center.distanceTo(p) - s.radius < f; }
+    }
     if (detailDist === Infinity || !world || !world.cull) return;
     const cx = camera.position.x, cz = camera.position.z;
     for (const c of world.cull) { const dx = c.x - cx, dz = c.z - cz, rr = detailDist + c.r; c.m.visible = dx * dx + dz * dz <= rr * rr; }
@@ -4444,7 +4448,7 @@ const Render = (function () {
     if (c.air || spd < 2 || !near) { f.sc = f.pl = 0; return; }
     // the barrier: a stream of sparks from the corner that rubs along it (and a burst for a light knock the stock sparks leave out)
     const q = c.q, T = curRace && curRace.track;
-    if (q && q.br != null && spd > 3 && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a]))) {   // (in a side road, or in its mouth: no rail beside the car)
+    if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a]))) {   // (in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
       if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
@@ -5533,7 +5537,7 @@ const Render = (function () {
       // pitch with the road slope (nose up on climbs), or follow the arc while airborne
       const pitchTarget = c.air ? Math.atan2(c.vy, Math.max(Math.abs(c.vl), 6)) * 0.8 : Math.atan(c.gradeNow || 0);
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
-      const bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * c.q.nx + Math.cos(h) * c.q.nz)) : 0;   // a banked corner: tilt with the surface
+      const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
@@ -7672,6 +7676,7 @@ const Render = (function () {
       const front = k >= 2;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
+      if (surf === 3 && curTrack && curTrack.free) intens = Math.max(intens, 0.26);   // (the new map's run-offs give way: every car leaves its tracks in them)
       if (spd < lv) intens = 0;
       // skid marks
       const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
@@ -8581,7 +8586,7 @@ const Render = (function () {
     rainFx(Math.min(dt, 0.1), target);
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
     if (world && world.dyn.tunnel && target && target.q) {   // (not from the cockpit: from inside the car the tunnel is a tunnel)
-      const tn = world.dyn.tunnel, sq = target.q.s, inside = !cam.ck && (tn.ranges ? tn.ranges.some(r => sq > r[0] - 30 && sq < r[1] + 12) : sq > tn.s0 - 30 && sq < tn.s1 + 12), goal = inside ? 0.14 : 1;   // (ranges: more than one, Los Caracoles' galleries)
+      const tn = world.dyn.tunnel, sq = target.q.s, inside = !cam.ck && (tn.test ? tn.test(target) : tn.ranges ? tn.ranges.some(r => sq > r[0] - 30 && sq < r[1] + 12) : sq > tn.s0 - 30 && sq < tn.s1 + 12), goal = inside ? 0.14 : 1;   // (ranges: more than one, Los Caracoles' galleries)
       tn.mat.opacity += (goal - tn.mat.opacity) * Math.min(1, dt * 5 + 0.02);
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
