@@ -62,6 +62,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // pit lane on the left of the straight: [centre offset (negative: on the left), from, to, the player's box, a long way in]; the real way in
     // leaves before the last chicane and the way out joins at Turn 2, here the lane runs beside the straight from the chicane's exit (an approximation)
     pit: [-15, -195, 290, 45, 45],
+    pitApron: 3.7,                 // the apron in front of the paddock building (metres past the lane's outer edge): a shallow box, the car turns in less (Core Track.bayDim)
     pitRow: [-60, 60],             // the first and the last of the 13 crews' boxes (in front of the paddock building, -106 .. 220 m)
     pitBld: [-106, 220, 22.2, 47.5],   // the paddock building (OSM): from, to (metres after the start line), front and back (metres left of the centre line)
     // grandstands [from, to, side, rows, roof]: temporary stands at the usual places (approximate)

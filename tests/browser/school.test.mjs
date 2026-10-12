@@ -2,7 +2,8 @@
 // the start: the throttle before the lights go out is a jump start, after them the time to 100 m against its medals; braking to a mark
 // on the Red Bull Ring's straight (the STOP line and its boards): over the line, too slow past the 100 m board, and a stop half a metre
 // short of it (gold); the racing line: a lap on the autopilot on the line the helper draws (gold, the achievement), the result kept on the
-// school's screen; drift: 40 s on the autopilot, as many points as its reference run (silver). The helper in a race (the setting): the
+// school's screen; drift: no handbrake (its goal tells how: steering and braking in a corner; Space does nothing), 40 s on the autopilot,
+// as many points as its reference run (silver). The helper in a race (the setting): the
 // ribbon ahead of the car, green, yellow, red with the braking points; off again: none.
 //   node tests/browser/school.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -84,12 +85,17 @@ try {
   const s4 = await page.evaluate(() => [...document.querySelectorAll('.sch')].map(e => ({ gold: e.classList.contains('gold'), b: e.querySelector('.sch-b').textContent, m: e.querySelector('.sch-m').textContent })));
   T.check('back on the school\'s screen: the bests and the medals kept (the braking and the line gold)', s4[1].gold && s4[2].gold && /Tvoj najboljši: 0,\d\d m/.test(s4[1].b) && /Tvoj najboljši: (9\d|100) %/.test(s4[2].b) && s4[2].m === '🥇', JSON.stringify(s4));
 
-  // 5. drift: 40 s on the autopilot
+  // 5. drift: no handbrake (the goal: steer hard into a corner and brake in it; Space held in the lesson: nothing), then 40 s on the autopilot
   await go('drift'); await toRacing();
-  await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 30 && g.phase !== 'done'; k++) g.sim(2, true); });
+  const dh = await page.evaluate(async () => { const g = window.__game, P = g.race.player, card = document.querySelector('[data-act="school-go"][data-lesson="drift"]').closest('.sch');
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' })); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const o = { goal: card.querySelector('p').textContent, hand: 'hand' in Input.state, inHand: P.inHand, phase: g.phase }; window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' })); return o; });
+  T.check('drift without the handbrake: the goal says how (steer hard into a corner and brake in it), Space held in the lesson: no "hand" in the input, P.inHand 0',
+    /ostro zavij v ovinek in v njem zaviraj/.test(dh.goal) && !/ročn|preslednic/i.test(dh.goal) && !dh.hand && dh.inHand === 0 && dh.phase === 'racing', JSON.stringify(dh));
+  const dmax = await page.evaluate(() => { const g = window.__game, P = g.race.player; let m = 0; g.pause(); for (let k = 0; k < 30 && g.phase !== 'done'; k++) { g.sim(2, true); if (g.phase !== 'done') m = Math.max(m, P.inHand); } return m; });   // (after the lesson the autopilot drives on: its own)
   const dr = await res(), dm = await page.evaluate(() => window.__game.schoolMedals('drift'));
   const pts = num(/^Drift: ([\d.]+) točk/, dr.sub);
-  T.check('drift: 40 s on the autopilot, about as many points as its reference run: silver', Math.abs(pts / dm.ref - 1) < 0.15 && dr.title === 'Srebrna medalja!' && pts >= dm.m[1] && pts < dm.m[0], JSON.stringify({ pts, ref: dm.ref, m: dm.m, title: dr.title }));
+  T.check('drift: 40 s on the autopilot (no handbrake), about as many points as its reference run: silver', Math.abs(pts / dm.ref - 1) < 0.15 && dr.title === 'Srebrna medalja!' && pts >= dm.m[1] && pts < dm.m[0] && dmax === 0, JSON.stringify({ pts, ref: dm.ref, m: dm.m, title: dr.title, dmax }));
 
   // 6. the helper in a race: on with the setting, off without
   await act('to-title');

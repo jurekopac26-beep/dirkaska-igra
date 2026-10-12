@@ -107,6 +107,16 @@ function until(r, fn, s) {
   check('no refit by the marshals (the wheel stays off); a full repair puts it back and nothing more is coming', kept && W.nL === 0 && W.rule.due === -1 && !W.rule.over, `kept ${kept}`);
 }
 
+// 7b. on the pit road (c.pitG: no damage there) the second wheel waits; back on the circuit it comes off when its time is up
+{
+  const res = withRnd(9, () => {
+    const { r, P, W } = setUp(0.7); C.applyDamage(P, 0.03, P.m.len * 0.5, 0); const n0 = W.nL;
+    P.pitG = true; const held = until(r, () => W.nL >= 2, 4); P.pitG = false;
+    return { n0, held, after: until(r, () => W.nL >= 2, 4) };
+  });
+  check('on the pit road the second wheel waits (4 s at 70 %, no damage there); back on the circuit it comes off', res.n0 === 1 && res.held === Infinity && res.after < 3.2, JSON.stringify(res));
+}
+
 // 8. a whole race: the player crashes into everything from the start; the AI never under the rule; the player over (two wheels, stopped)
 {
   const res = withRnd(21, () => {
@@ -150,6 +160,12 @@ function until(r, fn, s) {
   }
   const side = (() => { const r = race({ wheelRule: undefined }), P = r.player; C.applyDamage(P, 0.012, 0, P.m.wid * 0.5); return P.lightOut.some(v => v); })();
   check('a lamp at the first knock: front left / right, rear left / right, the nearer one of that end (a light 0.012 knock); a knock on the side breaks none', out.every(o => o.got.length === 1 && o.got[0] === o.want) && !side, out.map(o => `${o.want}: ${o.got.join(',')}`).join(' · ') + ` · side ${side}`);
+  // a car with its own damage table (the Kolibri): the renderer breaks the first knock's nearer lamp, lamp1, whatever a side knock broke before
+  const kb = (() => { const r = race({ wheelRule: undefined, playerModel: C.MODELS.find(m => m.id === 'kolibri') }), P = r.player, hl = P.m.len * 0.5, hw = P.m.wid * 0.5;
+    C.applyDamage(P, 0.12, 0.55 * hl, -hw); C.applyDamage(P, 0.12, 0.55 * hl, -hw); const before = P.lightOut.slice(); C.applyDamage(P, 0.03, hl, 0.3 * hw); const first = P.lamp1;
+    C.applyDamage(P, 0.03, -hl, -0.3 * hw); const rear = P.lamp1; r.repairCar(P); return { before, first, rear, after: P.lamp1 }; })();
+  check('the first knock on an end: lamp1 its nearer lamp only (front right after the left front corner was hit from the side: not the front left), the rear left at the first rear knock; cleared by a repair',
+    kb.before[0] === 1 && kb.first === 2 && kb.rear === (2 | 4) && kb.after === 0, JSON.stringify(kb));
 }
 
 // 11. the face and the tail (bumpers, bonnet, front wings, boot) stay on till the car is 70 % gone, however the knocks fall (front only

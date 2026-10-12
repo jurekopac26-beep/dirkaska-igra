@@ -51,7 +51,7 @@ export function launch(extraArgs = []) {
 // open the game; settings: an object (merged over sound/commentary off and no qualifying: Start goes straight to the race), a raw JSON
 // string, or null (a fresh profile)
 export async function openGame(browser, address, settings = {}, viewport = { width: 480, height: 270 }, opts = {}) {
-  const ctx = await browser.newContext({ viewport });
+  const ctx = await browser.newContext(Object.assign({ viewport, hasTouch: !!opts.touch }, opts.context));   // (opts.touch: a phone's touch screen, the pointer coarse as on a phone; opts.context: more of the context's options)
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
@@ -59,7 +59,8 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
   // (the failures off unless a test asks for them: a cut tyre after a knock would change what the other tests see; the best moment's video
   // after a race too: it would play before the results)
-  const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0 }, settings));
+  // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer)
+  const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal' }, settings));
   // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
   await page.addInitScript(([raw, adapt]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a

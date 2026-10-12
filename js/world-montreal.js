@@ -368,8 +368,10 @@
       const base = p.o + 3.5, tx = T.tx[i], tz = T.tz[i], nx = T.nx[i] * sg, nz = T.nz[i] * sg, mine = Math.abs(q + 5 - PD[3]) < 1, tc = TEAM[k % TEAM.length];
       quad(gp, s0 - 0.09, s0 + 0.09, base, PB[2], PB[2], base, 0.034, wl);
       const oc = atSf(s0 + 5, 0);
-      if (mine) { const sb = s0 + 5, lo = p.o; out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, p.o * sg) };
-        for (const [d0, d1, l0, l1] of [[-3.2, 3.2, lo - 2.6, lo - 2.35], [-3.2, 3.2, lo + 2.35, lo + 2.6], [-3.2, -2.95, lo - 2.6, lo + 2.6], [2.95, 3.2, lo - 2.6, lo + 2.6]]) quad(gp, sb + d0, sb + d1, l0, l1, l1, l0, 0.036, yel); }
+      if (mine) { const sb = s0 + 5, lo = p.o, bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a);   // (the car stops at the edge of the shallow apron, turned in a little: Core Track.bayDim, def.pitApron; mirrored to the left, sg)
+        out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, bp.o * sg), stopO: bp.o, stopA: sg * bp.a };
+        const bq = (u, v) => at(sb + u * ca - v * sa, bp.o + u * sa + v * ca, 0.036);   // (u along the stopped car, v across it to the garages' side)
+        for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]]) gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yel, yel, yel, yel]); }   // (yellow stop box, turned in like the car)
       (out.pitBoxes = out.pitBoxes || []).push({ k: nb++, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: 0 });
       // the team's stand on the pit wall strip: a desk with screens under a roof in the team's colour, stools
       const g = scen.get(oc[0], oc[1]), wv = p.wall;
