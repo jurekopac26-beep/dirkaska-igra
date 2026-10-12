@@ -3719,7 +3719,8 @@
   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three. Its
   // icon at the start of its first line (css #h-msg::before); a long message on a narrow phone with no room for it in three lines: none (data-icm no)
   function fitMsg(el, hi, lo) {
-    const fits = (f, n) => { el.style.fontSize = f + 'px'; return el.scrollWidth <= el.clientWidth + 2 && el.clientHeight <= f * 1.05 * n + 9; };
+    const g = document.createRange(), first = () => { g.selectNodeContents(el); const r = g.getClientRects()[0]; return !r || r.top - el.getBoundingClientRect().top < f0 * 0.75; };   // (the first word on the icon's line, not the icon alone on it)
+    let f0 = hi; const fits = (f, n) => { el.style.fontSize = f + 'px'; f0 = f; return el.scrollWidth <= el.clientWidth + 2 && el.clientHeight <= f * 1.05 * n + 9 && (el.dataset.icm === 'no' || first()); };
     for (const icm of ['', 'no']) {
       if (icm) el.dataset.icm = icm; else delete el.dataset.icm;
       for (let f = hi; f >= 16; f--) if (fits(f, 2)) return f;
