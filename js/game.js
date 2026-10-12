@@ -3373,12 +3373,26 @@
       key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev);
       noteRot($('h-note-path').parentNode, hnRot, g.kind === 'ring' ? 0 : noteAng(g.i0));   // (iso: arrows and chicanes along the road; a roundabout stays upright)
     }
-    if (key === lastNote) return;
-    lastNote = key;
+    if (key === lastNote) { if (key) placeNote(el); return; }
+    lastNote = key; noteAt0 = '';
     if (!key) { el.className = ''; return; }
     const [pk, cls] = key.split('|');
     $('h-note-path').setAttribute('d', NOTE_PATHS[pk]);
-    el.className = 'show ' + cls;
+    el.className = 'show ' + cls; placeNote(el);
+  }
+  // the sign clear of the block at the top in the middle (the clock, the splits, the police's), however wide the phone's fonts make it: css
+  // puts it where it fits on the usual ones; on its side further left of it, upright lower under it (the driving school's: as css has it)
+  let noteAt0 = '';
+  function placeNote(el) {
+    const B = $('h-times'), hc = $('hud').className, k = innerWidth + 'x' + innerHeight + '|' + hc + '|' + B.offsetWidth + 'x' + B.offsetHeight;   // (again only when the block or the screen changes)
+    if (k === noteAt0) return; noteAt0 = k;
+    el.style.right = el.style.top = '';
+    if (/\bschool\b/.test(hc)) return; let l = Infinity, t = Infinity, b = -Infinity;
+    for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { l = Math.min(l, r.left); t = Math.min(t, r.top); b = Math.max(b, r.bottom); } }
+    if (!(l < Infinity)) return;
+    const O = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth }, x0 = O.left + el.offsetLeft, y0 = O.top + el.offsetTop, w = el.offsetWidth, h = el.offsetHeight;   // (its box without the show's scale)
+    if (innerWidth > innerHeight) { if (x0 + w > l - 4 && y0 < b && y0 + h > t) el.style.right = Math.ceil(O.right - l + 6) + 'px'; }
+    else if (y0 < b + 4 && y0 + h > t) el.style.top = Math.ceil(b + 6 - O.top) + 'px';
   }
   const hudCache = {};
   function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
