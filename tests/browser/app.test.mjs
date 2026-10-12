@@ -2,7 +2,7 @@
 // - manifest.webmanifest: name, start address, full screen, icons of the stated size (the files exist)
 // - "Namesti igro" shows only when the browser offers to install the game, and asks for it; an offer during full screen
 //   does not take the full-screen buttons away
-// - the screen turns the camera's way (portrait for the chase camera, landscape for iso and kino): in full screen and in
+// - the screen turns the camera's way (portrait for the chase camera, landscape for iso): in full screen and in
 //   the installed app, not in a plain browser tab; a phone held the other way in a race: the notice to turn it says why, and
 //   its button plays on the way it is held (upright: the camera behind the car)
 // - offline, on a copy of the game in a folder as on GitHub Pages: once opened, the game starts without internet; a new
@@ -70,7 +70,7 @@ try {
     let ev = fsEvent(); await page.click('#btn-fs'); await ev;
     const full = await page.evaluate(() => !!document.fullscreenElement), inFs = await locks(page);
     await page.evaluate(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = () => Promise.resolve(); window.dispatchEvent(e); });   // (Chrome's offer, during full screen)
-    await camera(page, 'iso'); await camera(page, 'kino'); await camera(page, 'chase'); await wait(100);
+    await camera(page, 'iso'); await camera(page, 'chase'); await wait(100);
     const turned = await locks(page);
     ev = fsEvent(); await page.evaluate(() => document.exitFullscreen()); await ev;
     await camera(page, 'iso'); await wait(100);
@@ -78,7 +78,7 @@ try {
     const btns = await page.evaluate(() => ({ fullscreen: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => !b.classList.contains('off')), install: !document.getElementById('btn-install').classList.contains('off') }));
     T.check('browser tab: no orientation lock while not in full screen', tab.length === 0, JSON.stringify(tab));
     T.check('full screen: portrait for the chase camera', full && inPortrait(inFs), `full screen ${full}, locks ${JSON.stringify(inFs)}`);
-    T.check('full screen: the camera setting turns it (iso and kino landscape, chase portrait)', turned.slice(1).join() === 'landscape,landscape,portrait', JSON.stringify(turned));
+    T.check('full screen: the camera setting turns it (iso landscape, chase portrait)', turned.slice(1).join() === 'landscape,portrait', JSON.stringify(turned));
     T.check('full screen over: no more locks', after.length === turned.length, JSON.stringify(after));
     T.check('an install offer during full screen: afterwards the full-screen buttons and "Namesti igro" are there', btns.fullscreen.length >= 2 && btns.fullscreen.every(Boolean) && btns.install, JSON.stringify(btns));
     T.check('no page errors (browser tab)', !errors.length, errors.slice(0, 5).join(' | '));
@@ -108,7 +108,7 @@ try {
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     await startTrack(page, 'jezero'); await wait(800);
     const st = () => page.evaluate(() => ({ show: document.getElementById('rotate').classList.contains('show'), txt: document.getElementById('rotate-txt').textContent, why: document.getElementById('rotate-why').textContent, btn: document.getElementById('rotate-cam').textContent, cam: window.__game.S.camera }));
@@ -127,7 +127,7 @@ try {
     const dir = path.join(tmp, 'dirkaska-igra');
     fs.mkdirSync(dir);
     for (const f of ['index.html', 'manifest.webmanifest', 'sw.js']) fs.copyFileSync(path.join(ROOT, f), path.join(dir, f));
-    for (const d of ['css', 'js', 'icons']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
+    for (const d of ['css', 'js', 'icons', 'fonts']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
     const s2 = await serve(tmp), home = s2.base + '/dirkaska-igra/';
     const isPage = (req) => req.url === '/dirkaska-igra/' || req.url === '/dirkaska-igra/index.html';
     // publish version n: a changed script and title, stamped like a real change; returns the script's new address
