@@ -3,7 +3,7 @@
 // lap to the line; the rivals' laps and the grid on the results screen (every driver by time, the player's row, "Na štart"); the race on
 // that grid; the flying lap kept as the ghost and replayed on the next qualifying lap on the lap clock (from the line on, not on the
 // run-up); "Ponovi krog" drives the lap again and keeps the rivals' laps; "Preskoči" goes to the usual grid (12th); qualifying off:
-// Start goes straight to the race; a time trial never qualifies.
+// Start goes straight to the race; a time trial never qualifies; a car with a field of its own (TITAN) qualifies against that field.
 //   node tests/browser/quali.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -93,6 +93,18 @@ try {
   await startTrack(page, 'pikes');
   const tt = await page.evaluate(() => { const r = window.__game.race; return { tt: r.timeTrial, quali: r.quali, n: r.cars.length }; });
   T.check('qualifying off: Start goes straight to the race; the Pikes Peak time trial has no qualifying', !off.quali && off.cars === 13 && off.grid === 12 && tt.tt && !tt.quali && tt.n === 1, JSON.stringify({ off: { quali: off.quali, cars: off.cars, grid: off.grid }, tt }));
+
+  // 7. a car whose rivals race in its own field (TITAN: nine of them, all TITANs): qualifying sizes itself to the race and drives the race's
+  //    cars; the race after it has the same nine
+  await act('to-title'); await page.waitForTimeout(200);
+  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'titan'); });
+  await startTrack(page, 'rbring');
+  const f0 = await state();
+  const rf = await qualiLap();
+  await act('quali-go'); await page.waitForTimeout(400);
+  const rr = await page.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, cars: [...new Set(r.cars.filter(c => !c.isPlayer).map(c => c.m.name))] }; });
+  T.check('a car with a field of its own (TITAN): qualifying with its nine rivals, every row a TITAN; the race after it the same nine TITANs', !!f0.q && f0.q.n === 9 && rf.rows.length === 10 && rf.rows.every(r => r[2] === 'TITAN') && rr.n === 10 && rr.cars.join() === 'TITAN',
+    JSON.stringify({ n: f0.q && f0.q.n, rows: rf.rows.map(r => r[1] + ' ' + r[2]), race: rr }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

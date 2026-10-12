@@ -1,0 +1,13 @@
+[
+  ["vrsic", "top", "top-vrsic", {"W": 824, "H": 620, "wet": true}],
+  ["pikes", "top", "top-pikes", {"W": 824, "H": 620, "wet": true}],
+  ["ouninpohja", "top", "top-ouninpohja", {"W": 824, "H": 620, "wet": true}],
+  ["gora", "top", "top-gora", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["jezero", "top", "top-jezero", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["riviera", "top", "top-riviera", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["monaco", "top", "top-monaco", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["rbring", "top", "top-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["suzuka", "top", "top-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["spa", "top", "top-spa", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["nring", "top", "top-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}]
+]

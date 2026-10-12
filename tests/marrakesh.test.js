@@ -75,7 +75,7 @@ const at = (d) => T.idx(T.startS + d);
 // 5. the junctions' street furniture: each kind in the car's path along the start straight and on to Turn 2; every one knocked aside, the car
 // drives on (a little slower than without them, lightly dented: no more than 0.06 a knock)
 {
-  const KINDS = ['signal', 'lamp', 'sign', 'bollard', 'bin', 'hydrant', 'cabinet', 'shelter'];
+  const KINDS = ['signalm', 'lamp', 'sign', 'bollard', 'bin', 'hydrant', 'cabinet', 'shelter'];
   const drive = (list) => {
     const orig = Math.random; Math.random = seeded(3);
     try {

@@ -15,7 +15,7 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 const def = C.TRACKS.find(d => d.id === 'sani'), T = new C.Track(def);
 const opts = (o) => Object.assign({ numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
 const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
-const model = (name) => C.MODELS.find(m => m.name === name);
+const model = (name) => C.MODELS.find(m => m.name === name) || C.MODELS.find(m => m.id === name);   // (by its name, or by its id: the retired hatch at index 5, p206)
 
 // 1. the track: an open road, the time trial and the duel, at most 5 km, from ~2230 m to the top at ~2870 m; the traffic on the left
 check('track: an open road, two ways to drive it (def.modes: time trial, traffic), 4 checkpoints, 9 m wide, traffic on the left',
@@ -85,7 +85,7 @@ const ttRun = (m, rain) => {
   Math.random = orig; return { t: P.finished ? P.finishTime : null, resc };
 };
 {
-  const names = ['BURJA R7', 'SAMUM 4x4', 'PICO TURBO', 'PEUGEOT 206', 'FORMULA ORKAN', 'VIHAR V8'], R = names.map(nm => ttRun(model(nm)));
+  const names = ['BURJA R7', 'SAMUM 4x4', 'PICO TURBO', 'p206', 'FORMULA ORKAN', 'VIHAR V8'], R = names.map(nm => ttRun(model(nm)));
   check('time trial: every car reaches the top on autopilot without a rescue, SAMUM 4x4 the quickest', R.every(r => r.t && !r.resc) && R[1].t < Math.min(...R.filter((_, k) => k !== 1).map(r => r.t)),
     names.map((nm, k) => `${nm} ${R[k].t ? R[k].t.toFixed(1) : '-'} s`).join(', '));
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2], wet = ttRun(model('BURJA R7'), 1);
