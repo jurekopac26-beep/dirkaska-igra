@@ -202,6 +202,7 @@
   let demoTarget = null, demoSwitch = 0;
   let msgT = 0, splitT = 0, lastLapCount = 0, lastBeepLight = 0;
   const hcol = { key: '', fit: '', f: 20, cx: null, ic: '' };   // the column under the minimap (hudCol): what it was laid out for, the big message's size for its text, the text its icon is for
+  let reactT = 0, reactOn = 0;   // the start's reaction under the map (reactHUD): its time left, the press shown (Core: c.lch.n)
   let cpSeen = 0, ttRes = null, boardId = null;   // time trial: checkpoint events shown, the finished run's result, Lestvica tab
   let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
   let fbT = 0, prevGear = 1, prevAir = 0;
@@ -1591,7 +1592,7 @@
       race = new Core.Race(track, schoolOpts(school.L));
       if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0);
     } else if (nv) {   // NEW VERSION · TEST 1: alone, no laps to count (free driving), dry
-      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: 1, laps: 999, fuel: false, damage: +S.damage, phys: physOf(), rain: 0, weather: null, tyres: false, compounds: false, flags: false, chars: false, slip: false, faults: false, radio: false }));
+      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: 1, laps: 999, fuel: false, damage: +S.damage, phys: physOf(), rain: 0, weather: null, tyres: false, compounds: false, flags: false, chars: false, slip: false, faults: false, radio: false, launch: false }));   // (no lights: no start reaction)
       race.nv = true;
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
@@ -1622,7 +1623,7 @@
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
-    $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
+    $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = quali || race.pol ? '' : '/' + race.cars.length; $('h-rank').firstElementChild.textContent = tr(race.pol ? 'POLICIJA' : 'MESTO');   // (the run from the police: how many patrol cars are after the player)
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
@@ -1881,7 +1882,7 @@
     else if (D.chain > 0 && (D.calm += dt) > 0.6) { D.pts += D.chain; D.best = Math.max(D.best, D.chain); D.chain = 0; D.calm = 0; }
   }
   const schoolOpts = (L) => ({ numAI: 0, playerGrid: 1, laps: L.id === 'line' ? 1 : 99, playerModel: modelById(SCHOOL_CAR), playerUpg: upgNorm(null), playerSetup: { wing: 1, gear: 1 }, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(),
-    seed: 1, difficulty: 1, assist: S.assist, damage: 0, phys: physOf(), rain: 0 });
+    seed: 1, difficulty: 1, assist: S.assist, damage: 0, phys: physOf(), rain: 0, launch: L.id === 'start' });   // (the start's reaction and its wheelspin: in the start lesson only)
   function placeAt(c, T, s) {   // (the braking lesson: the car standing at s on the ideal line)
     const i = T.idx(s), off = T.rl[i];
     c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
@@ -1901,9 +1902,9 @@
     }
     return (schoolRefs[key] = v);
   }
-  function schoolMedals(L) {   // [gold, silver, bronze]
+  function schoolMedals(L) {   // [gold, silver, bronze] (the start: a reaction of about 0.3, 0.5, 0.9 s, its wheelspin included: Core LAUNCH)
     const r = schoolRef(L), r10 = (x) => Math.max(10, Math.round(x / 10) * 10);
-    return L.id === 'start' ? [r + 0.3, r + 0.5, r + 0.9] : L.id === 'brake' ? [1, 3, 8] : L.id === 'line' ? [75, 55, 35] : [r10(r * 1.15), r10(r * 0.85), r10(r * 0.5)];
+    return L.id === 'start' ? [r + 0.55, r + 1.1, r + 1.5] : L.id === 'brake' ? [1, 3, 8] : L.id === 'line' ? [75, 55, 35] : [r10(r * 1.15), r10(r * 0.85), r10(r * 0.5)];
   }
   function schoolMedal(L, v) { if (v == null || !Number.isFinite(v)) return -1; const m = schoolMedals(L), lo = schoolLower(L); for (let k = 0; k < 3; k++) if (lo ? v <= m[k] : v >= m[k]) return k; return -1; }
   const schoolVal = (L, v) => !Number.isFinite(v) ? '–' : L.id === 'start' ? Lang.dec(v.toFixed(2)) + ' s' : L.id === 'brake' ? Lang.dec(v.toFixed(2)) + ' m' : L.id === 'line' ? Math.round(v) + ' %' : numDot(Math.round(v)) + tr(' točk');
@@ -2446,7 +2447,7 @@
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
     const pit = pitCtl(P, hold);   // the pit autopilot: 'lane', 'merge' or null (the player's own car)
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
-    else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
+    else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; if (phase === 'intro' || phase === 'lights') P.inThr = 0; }   // (autoDrive: automated tests of online races drive in real time; on the grid off the gas: it sets off as the lights go out)
     else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
       // Race.pitStep); the player's gas and steering are not used; the brake slows it (the autopilot's throttle off), never into reverse
       P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
@@ -3353,7 +3354,11 @@
     r1: 'M22 54 V36 Q22 20 38 20 H46 M38 11 L47 20 L38 29',
     l1: 'M42 54 V36 Q42 20 26 20 H18 M26 11 L17 20 L26 29',
     r3: 'M20 54 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34',
-    l3: 'M44 54 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34'
+    l3: 'M44 54 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34',
+    r0: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l0: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25',   // (a fast bend: Pikes' PK_NP r1/l1)
+    ring: 'M46.9 33.3 A15 15 0 0 0 32.8 17 M38.3 22.8 L32.8 17 L38.9 11.9 M25.7 18.4 A15 15 0 0 0 18.6 38.8 M20.8 31.1 L18.6 38.8 L11.1 36.1 M23.4 44.3 A15 15 0 0 0 44.6 40.2 M36.8 42.1 L44.6 40.2 L46 48',   // anticlockwise (traffic on the right)
+    ringcw: 'M17.1 33.3 A15 15 0 0 1 31.2 17 M25.7 22.8 L31.2 17 L25.1 11.9 M38.3 18.4 A15 15 0 0 1 45.4 38.8 M43.2 31.1 L45.4 38.8 L52.9 36.1 M40.6 44.3 A15 15 0 0 1 19.4 40.2 M27.2 42.1 L19.4 40.2 L18 48',   // (def.leftHand)
+    cr: 'M22 56 V44 Q22 34 32 30 Q42 26 42 16 V12 M33 19 L42 10 L51 19', cl: 'M42 56 V44 Q42 34 32 30 Q22 26 22 16 V12 M13 19 L22 10 L31 19'   // a chicane, first right / first left
   };
   // The corner arrows (#h-note; Pikes Peak's pill #pk-note) on the isometric camera (phone lying): that view always looks north and the car
   // goes any way across the screen, so an upright arrow (stem up: the way in) would point the wrong way. The glyph (not its box, not the
@@ -3372,29 +3377,39 @@
     o.a = a; svg.style.transform = a ? 'rotate(' + (a * 180 / Math.PI).toFixed(1) + 'deg)' : '';
   }
   const hnRot = { a: 0 };
-  let lastNote = '';
+  // the sign (Core Track.signAt: the corners, the fast bends, the track's own bends; blue: a roundabout, a chicane, up while the car is in it)
+  let lastNote = '', noteForce = null;   // (noteForce: the tests, window.__game.noteAt)
   function updateNote(P) {
     const el = $('h-note');
     if (!S.notes || phase !== 'racing') { if (lastNote) { el.className = ''; lastNote = ''; } return; }
-    const L = track.len, s = P.q.s, v = P.speed;
-    const look = 35 + v * 2.3;
-    let best = null, bd = 1e9;
-    for (const c of track.corners) {
-      let d = c.s0 - s; if (d < -L / 2) d += L; if (d > L / 2) d -= L;
-      if (d > 4 && d < look && d < bd) { bd = d; best = c; }
-    }
+    const g = noteForce ? track.signAt(noteForce.s, noteForce.v) : track.signAt(P.q.s, P.speed);
     let key = '';
-    if (best) {
-      const hair = best.sev === 3 && best.angle > 2.0;
-      key = (best.dir > 0 ? 'r' : 'l') + (hair ? '3' : '1') + '|' + best.sev;
-      noteRot($('h-note-path').parentNode, hnRot, noteAng(best.i0));   // (every frame it shows: the isometric camera turns the arrow to the road, see noteAng)
+    if (g) {
+      const blue = g.kind === 'ring' || g.kind === 'chic', lr = g.dir > 0 ? 'r' : 'l';
+      const pk = g.kind === 'ring' ? (track.def.leftHand ? 'ringcw' : 'ring') : g.kind === 'chic' ? 'c' + lr : lr + (g.hair ? '3' : g.kind === 'fast' || !g.sev ? '0' : '1');
+      key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev);
+      noteRot($('h-note-path').parentNode, hnRot, g.kind === 'ring' ? 0 : noteAng(g.i0));   // (iso: arrows and chicanes along the road; a roundabout stays upright)
     }
-    if (key === lastNote) return;
-    lastNote = key;
+    if (key === lastNote) { if (key) placeNote(el); return; }
+    lastNote = key; noteAt0 = '';
     if (!key) { el.className = ''; return; }
-    const [pk, sev] = key.split('|');
+    const [pk, cls] = key.split('|');
     $('h-note-path').setAttribute('d', NOTE_PATHS[pk]);
-    el.className = 'show sev' + sev;
+    el.className = 'show ' + cls; placeNote(el);
+  }
+  // the sign clear of the block at the top in the middle (the clock, the splits, the police's), however wide the phone's fonts make it: css
+  // puts it where it fits on the usual ones; on its side further left of it, upright lower under it (the driving school's: as css has it)
+  let noteAt0 = '';
+  function placeNote(el) {
+    const B = $('h-times'), hc = $('hud').className, k = innerWidth + 'x' + innerHeight + '|' + hc + '|' + B.offsetWidth + 'x' + B.offsetHeight;   // (again only when the block or the screen changes)
+    if (k === noteAt0) return; noteAt0 = k;
+    el.style.right = el.style.top = '';
+    if (/\bschool\b/.test(hc)) return; let l = Infinity, t = Infinity, b = -Infinity;
+    for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { l = Math.min(l, r.left); t = Math.min(t, r.top); b = Math.max(b, r.bottom); } }
+    if (!(l < Infinity)) return;
+    const O = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth }, x0 = O.left + el.offsetLeft, y0 = O.top + el.offsetTop, w = el.offsetWidth, h = el.offsetHeight;   // (its box without the show's scale)
+    if (innerWidth > innerHeight) { if (x0 + w > l - 4 && y0 < b && y0 + h > t) el.style.right = Math.ceil(O.right - l + 6) + 'px'; }
+    else if (y0 < b + 4 && y0 + h > t) el.style.top = Math.ceil(b + 6 - O.top) + 'px';
   }
   const hudCache = {};
   function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
@@ -3614,6 +3629,21 @@
   }
   const spkDelta = (d) => { const a = Math.abs(d); return a < 1 ? a.toFixed(2) : a.toFixed(1); };   // never "0.0 seconds"
   const spkTime = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m ? m + (m === 1 ? ' minute ' : ' minutes ') + s.toFixed(1) : t.toFixed(1) + ' seconds'; };
+  /* the start's reaction (Core LAUNCH): once the player is off the line, for a few seconds in the column under the map (hudCol: right under
+     it, above the big message), how long after the lights went out the throttle went down: green up to 0,25 s, gold up to 0,45 s, red later;
+     the foot on the gas through the lights: red, on the gas too early (counted as LAUNCH.held s). The later, the more the wheels spun away
+     (Core). On a phone on its side the timing tower, the column's last, shows fewer rows meanwhile */
+  function reactHUD(dt, P) {
+    const L = P.lch, el = $('h-react');
+    if (L && L.t >= 0 && L.n !== reactOn && phase === 'racing') {   // (held through the lights, let go and pressed again: the new press)
+      reactOn = L.n; if (race.time - (L.held ? 0 : L.re) > 2) return;   // (not seen at the time: the race stepped on without frames, e.g. the tests' simulation)
+      reactT = 3.5;
+      el.firstElementChild.textContent = tr(L.held ? 'PREZGODAJ NA PLINU' : 'REAKCIJA');
+      el.lastElementChild.textContent = Lang.dec(L.re.toFixed(2)) + ' s';
+      el.className = 'show ' + (L.held ? 'bad held' : L.re <= 0.25 ? 'good' : L.re <= 0.45 ? 'ok' : 'bad');
+    }
+    if (reactT > 0) { reactT -= dt; if (reactT <= 0) el.classList.remove('show'); }
+  }
   function updateHUD(dt) {
     const P = race.player;
     if (race.timeTrial) updateHUDTT(dt, P);
@@ -3634,7 +3664,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); if (school) schoolHUD();
+    updateDamageHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
@@ -3674,7 +3704,7 @@
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('h-msg').className = ''; }
   }
   // the column under the minimap (css --map-*: its right edge and width): the height profile (a time trial), the destroyed car's words, the pit
-  // stop's progress, the big message, a time trial's splits at the finish, the team radio, the toast, and on a phone on its side the timing
+  // stop's progress, the start's reaction (reactHUD), the big message, a time trial's splits at the finish, the team radio, the toast, and on a phone on its side the timing
   // tower last. Each right under the one above, nothing over the middle of the track, never over the pedals (nor the steering, the police's
   // radio and arrows, the start lights) below: when it does not all fit, the tower shows fewer rows (or none), the letters get smaller, then
   // the toast and then the radio wait for room (their time stopped meanwhile, the toast's by TOAST_WAIT s at most). The big message as large
@@ -3697,9 +3727,9 @@
     if (T.classList.contains('col') !== on) T.classList.toggle('col', on);
     if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
     if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
-    const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), tch = $('touch');
+    const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), RX = $('h-react'), tch = $('touch');
     const tower = W > H && tw && S.tower && hud.classList.contains('tw') ? TW : null;   // (upright: in the left column under the place)
-    const sh = [hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
+    const sh = [hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
     const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
@@ -3958,7 +3988,7 @@
   // fire; the rivals near the player (within 60 m, or on the screen) losing a wheel, retiring (their car destroyed: Race.retire) or catching
   // fire; each kind at most once in 6 s. A repair (repairN) or the marshals' refit of the wheels (wreck.fix) starts the counts afresh
   const _scr = typeof THREE !== 'undefined' ? new THREE.Vector3() : null;
-  const fireOn = (c) => c.dmgMode > 0 && (c.dmg >= 0.9 || (!!(c.lost.hood || c.lost.cover) && c.dmg >= 0.75));   // (as the renderer lights a car's fire)
+  const fireOn = (c) => typeof Render !== 'undefined' && Render.burning ? Render.burning(c) : c.dmgMode > 0 && c.dmg >= 0.99;   // (the renderer decides: a hub dragging in sparks, a total wreck; without it a total wreck)
   function nearMe(c, P) {
     if (Math.hypot(c.x - P.x, c.z - P.z) < 60) return true;
     const cam = Render.camera; if (!cam || !_scr) return false;
@@ -5146,8 +5176,10 @@
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
-        sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
+        sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); if (auto && (phase === 'intro' || phase === 'lights')) inp.thr = inp.gas = 0; stepRace(STEP, inp); } },   // (the autopilot: off the gas on the grid, on it as the lights go out)
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
+        noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v), svg = $('h-note-path').parentNode;   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)
+          return { key: lastNote, cls: $('h-note').className, d: $('h-note-path').getAttribute('d'), rot: svg.style.transform, ang: g && g.kind !== 'ring' ? noteAng(g.i0) : 0, kind: g ? g.kind : null }; },
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);

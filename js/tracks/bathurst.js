@@ -28,6 +28,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     walls: [[330, 1300, -1, 2.5], [330, 1300, 1, 2.5], [1700, 3820, -1, 1.5], [1700, 3820, 1, 1.5], [3880, 5050, -1, 4], [3880, 5050, 1, 4]],
     // run-off on the outside of Turn 1, the chicane and the last corner (asphalt: runoffTarmac)
     wide: [[230, 300, 1, 9], [5330, 5520, 1, 12], [5890, 5990, 1, 9]],
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[5348, 5510, 'chicane']],   // the Chase
     // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only
     names: [
       ["Zavoj 1", -255.5, -21.4, ["Turn one, hard on the brakes at the bottom of the hill!", "Into Turn One, and the climb begins!", "Turn one, a tight left, then up the mountain!"]],

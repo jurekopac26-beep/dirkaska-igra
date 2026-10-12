@@ -33,6 +33,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // straight (detection at Eau Rouge, 250 m before Turn 4; open from 200 m after it up to Les Combes) and the start / finish straight
     // (detection 160 m before Turn 19, before the Bus Stop; open from 80 m after the chicane down to La Source)
     drs: [[4, -250, 200, 5], [19, -160, 80, 1]],
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[6595, 6712, 'chicane'], [918, 958, 'bend']],   // the Bus Stop; Eau Rouge
     // corner names ([HUD label, x, z, the commentator's lines]; the OSM names, but Pouhon for the 'Double Gauche' and the Bus Stop for the final chicane)
     names: [
       ['La Source', -119.8, -210.3, ['Into La Source, the tight hairpin!', 'Hard on the brakes for La Source!', 'Round La Source, and down the hill!']],
