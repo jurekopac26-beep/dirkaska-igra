@@ -16,8 +16,8 @@
  "toskana": {
   "calls": 326,
   "maxCalls": 393,
-  "kverts": 1050,
-  "maxKverts": 1115,
+  "kverts": 1020,
+  "maxKverts": 1085,
   "jsMs": 1.47
  },
  "pikes": {

@@ -424,10 +424,10 @@ const Tex = (function () {
   }
 
   // kerbs of the two newer circuits in the same style (a kerb quad runs u 0 at the asphalt .. 1 at its outer edge, v along the road, 3 m per repeat):
-  // Toskana: the Italian tricolour in long stripes (green by the asphalt, white, red on the outside, as in the reference); Gromski rt: red and yellow blocks
+  // Toskana: long stripes, cream by the asphalt and red on the outside (the green stripe next to the asphalt is gone); Gromski rt: red and yellow blocks
   function curbIT() {
     const c = cv(32, 64), x = c.getContext('2d');
-    x.fillStyle = '#9daf94'; x.fillRect(0, 0, 13, 64); x.fillStyle = '#97524a'; x.fillRect(13, 0, 19, 64);   // (toned for Toskana's strong light: coral, cream and sage on screen, as in the reference)
+    x.fillStyle = '#9daf94'; x.fillRect(0, 0, 13, 64); x.fillStyle = '#97524a'; x.fillRect(13, 0, 19, 64);   // (toned for Toskana's strong light: coral and cream on screen)
     const g = x.createLinearGradient(0, 0, 32, 0);
     g.addColorStop(0, 'rgba(0,0,0,0.0)'); g.addColorStop(0.75, 'rgba(0,0,0,0.0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
     x.fillStyle = g; x.fillRect(0, 0, 32, 64);

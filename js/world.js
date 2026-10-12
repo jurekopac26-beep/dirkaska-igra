@@ -1143,25 +1143,32 @@ const World = (function () {
       const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
     }
     // curbs
+    // (kerbOn: is there a kerb on this side of the 2 m step i -> i + 1; CS style: kerbs on the inside, outside only in hairpins)
+    const kerbOn = (i, side) => { const j = (i + 1) % N; return !!(T.curb[i] && T.curb[j]) && !(CSX && side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035); };
+    const kerbRun = (i, side) => { let n = 1; for (let k = 1; k <= 5 && kerbOn((i + N - k) % N, side); k++) n++; for (let k = 1; k <= 5 && kerbOn((i + k) % N, side); k++) n++; return n; };   // (how many 2 m steps long the run of kerb is that step i belongs to: up to 11)
+    // Toskana: the kerb's outer edge is worn, never a ruler-straight line: it has crumbled back by KW[0]..KW[1] m, in a gentle wave (three octaves of seeded value
+    // noise at the world position, 5, 3 and 1.7 m, summed and not squeezed through a step: no stretch of the edge runs parallel to the road, the seeds are
+    // picked so that no 6 m of it stays within 4 cm; the same on every build) and fades softly (vertex alpha over KFD m) into the lawn or the gravel; all in
+    // the one kerb mesh, no extra draw call. The gravel shoulder (the dirt shoulders, further down) knows that the kerb is opaque at least out to w + curbW - KW[1].
+    const KW = [0.02, 0.45], KFD = 0.45, kN = THEME === 'italia' ? [valueNoise2(9797, 5), valueNoise2(9767, 3), valueNoise2(9737, 1.7)] : null;
+    const kWear = (x, z) => clamp(0.235 + (0.11 * (kN[0](x, z) - 0.5) + 0.07 * (kN[1](x, z) - 0.5) + 0.05 * (kN[2](x, z) - 0.5)) / 0.2, KW[0], KW[1]);
     {
-      const KI = THEME === 'italia', g = new GB(true, KI);   // (Toskana: the kerb's outer edge is worn: gently wavy, fading softly into the lawn (vertex alpha), no extra draw call)
+      const KI = THEME === 'italia', g = new GB(true, KI);
       const cw = T.curbW;
       const wc = [1, 1, 1];
-      const kN1 = KI ? valueNoise2(9721, 5) : null, kN2 = KI ? valueNoise2(9722, 3) : null;
-      const kWear = (x, z) => 0.02 + 0.26 * sstep(0.32, 0.68, 0.7 * kN1(x, z) + 0.3 * kN2(x, z));   // how far the edge has crumbled back: 2..28 cm, a wave every ~5 m (seeded value noise at the world position: the same every build)
       for (const side of [-1, 1]) {
         for (let i = 0; i < N; i++) {
           const j = (i + 1) % N;
-          if (!T.curb[i] || !T.curb[j]) continue;
-          if (CSX && side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035) continue;   // CS style: kerbs on the inside, outside only in hairpins
+          if (!kerbOn(i, side)) continue;
           const o0 = side * w, o1 = side * (w + cw);
           if (KI) {
-            const v0 = i * T.ds / 3, v1 = (i + 1) * T.ds / 3, FD = 0.18;
-            const sec = (h) => { const t = h / 2, s = (i + t) * T.ds, hy = lerp(HYi(i), HYi(j), t), q = atSf(s, side * (w + cw)), e = w + cw - kWear(q[0], q[1]), sh = 0.94 + 0.12 * kN2(q[0] * 1.7, q[1] * 1.7), u1 = (e - w) / cw;
+            const v0 = i * T.ds / 3, v1 = (i + 1) * T.ds / 3, first = !kerbOn((i + N - 1) % N, side), last = !kerbOn(j, side), rs = kerbRun(i, side) > 4 ? 1 : 2;   // (the first and the last 2 m of a run thin out into the lawn instead of ending in a straight cut; a short piece (up to 8 m) only 1 m: no mere smudge)
+            const sec = (h) => { const t = h / 2, s = (i + t) * T.ds, hy = lerp(HYi(i), HYi(j), t), q = atSf(s, side * (w + cw)), e = w + cw - kWear(q[0], q[1]), sh = 0.94 + 0.12 * kN[1](q[0] * 1.7, q[1] * 1.7), u1 = (e - w) / cw,
+                a = Math.min(first ? Math.min(1, t * rs) : 1, last ? Math.min(1, (1 - t) * rs) : 1);
               const pt = (o, y) => { const r = atSf(s, side * o); return [r[0], hy + y, r[1]]; };
-              return { v: v0 + (v1 - v0) * t, k: [[pt(w, 0.045), wc.concat(1), 0], [pt(e, 0.085), [sh, sh, sh, 1], u1], [pt(e + FD * 0.45, 0.062), [sh * 0.9, sh * 0.88, sh * 0.88, 0.6], Math.min(1, u1 + 0.08)], [pt(e + FD, 0.03), [sh * 0.8, sh * 0.78, sh * 0.78, 0], 1]] }; };
+              return { v: v0 + (v1 - v0) * t, k: [[pt(w, 0.045), [1, 1, 1, a], 0], [pt(e, 0.085), [sh, sh, sh, a], u1], [pt(e + KFD, 0.035), [sh, sh, sh, 0], u1]] }; };   // (cream by the asphalt, red out to the edge, then the same red fading to nothing)
             const S = [sec(0), sec(1), sec(2)];
-            for (let h = 0; h < 2; h++) for (let c = 0; c < 3; c++) { const A = S[h], B = S[h + 1];
+            for (let h = 0; h < 2; h++) for (let c = 0; c < 2; c++) { const A = S[h], B = S[h + 1];
               g.quadUp(A.k[c][0], A.k[c + 1][0], B.k[c + 1][0], B.k[c][0], [A.k[c][1], A.k[c + 1][1], B.k[c + 1][1], B.k[c][1]], [[A.k[c][2], A.v], [A.k[c + 1][2], A.v], [B.k[c + 1][2], B.v], [B.k[c][2], B.v]]); }
             continue; }
           const v0 = i * T.ds / 3, v1 = (i + 1) * T.ds / 3;
@@ -1173,7 +1180,7 @@ const World = (function () {
         }
       }
       const mat = new THREE.MeshLambertMaterial({ map: THEME === 'italia' ? tex.curbIT : THEME === 'kamp' ? tex.curbRY : tex.curb, vertexColors: true, transparent: KI });
-      const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
+      const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; if (KI) m.name = 'kerb'; root.add(m);   // (Toskana: drawn after its gravel shoulder, renderOrder 0 over -1: the soft edge blends over the gravel, never under it)
     }
     // gravel traps
     {
@@ -1184,7 +1191,7 @@ const World = (function () {
           const j = (i + 1) % N;
           if (!flag[i] && !flag[j]) continue;
           const fi = flag[i] ? 1 : 0, fj = flag[j] ? 1 : 0;
-          const kr = THEME === 'italia' ? 0.3 : 0, inI = w + (T.curb[i] ? T.curbW - kr : 0.35), inJ = w + (T.curb[j] ? T.curbW - kr : 0.35);   // (Toskana: under the worn kerb edge)
+          const inI = w + (T.curb[i] ? T.curbW : 0.35), inJ = w + (T.curb[j] ? T.curbW : 0.35);
           const outI = lerp(inI + 0.1, bar[i] - 0.7, fi), outJ = lerp(inJ + 0.1, bar[j] - 0.7, fj);
           const a = P(i, side * inI, 0.016), b = P(i, side * outI, 0.016), c = P(j, side * outJ, 0.016), d = P(j, side * inJ, 0.016);
           const uvp = (p) => [p[0] / 10, -p[2] / 10];
@@ -2465,19 +2472,27 @@ const World = (function () {
           //  light grey-brown gravel on the gravel map, its outer edge ragged every metre and fading out into the lawn (vertex alpha))
           const gT = new GB(true, true), eN1 = valueNoise2(9711, 7), eN2 = valueNoise2(9712, 2.3), eN3 = valueNoise2(9713, 0.9), MA = [0.6, 0.5, 0.39], uvq = (p) => [p[0] / 4, -p[2] / 4];
           const GR = [0.525, 0.55, 0.5], DI = [0.6, 0.38, 0.25];   // (the rendered colours: gravel, the run-off's dirt)
+          const kOp = w + T.curbW - KW[1] - 0.05;   // (every kerb is opaque at least out to here, whatever its wear: where it covers the shoulder the strip starts here, and is not built at all where it ends under the kerb)
           for (const side of [-1, 1]) for (let q = 0; q < T.len; q += 2) {
             const i = T.idx(q), j = T.idx(q + 2), bar = side > 0 ? T.br : T.bl, o1 = w + 0.02, wd = WD[side > 0 ? 1 : 0][i], o2i = Math.min(w + wd, bar[i] - back);
             if (o2i <= o1 + 0.3) continue;
             vary(dirtC, R, 0.04);   // (the random stream as before)
-            const pts = (s) => { const f = s / T.ds, k0 = Math.floor(f) % N, k1 = (k0 + 1) % N, t = f - Math.floor(f), WDs = WD[side > 0 ? 1 : 0], wdS = lerp(WDs[k0], WDs[k1], t), barS = lerp(bar[k0], bar[k1], t);
+            // the rows across a station s: from oS (the road's edge, or under the kerb) to the gravel's solid edge, and to where it has faded out (alpha 1, 1, 0: 2 quads)
+            const pts = (s, oS) => { const f = s / T.ds, k0 = Math.floor(f) % N, k1 = (k0 + 1) % N, t = f - Math.floor(f), WDs = WD[side > 0 ? 1 : 0], wdS = lerp(WDs[k0], WDs[k1], t), barS = lerp(bar[k0], bar[k1], t);
               const ex = atSf(s, side * w), sw = 0.3 + 0.9 * sstep(0.28, 0.72, 0.6 * eN1(ex[0], ex[1]) + 0.4 * eN2(ex[0], ex[1]) + 0.25 * (eN3(ex[0], ex[1]) - 0.5));
-              const ro = sstep(wIn + 0.2, wIn + 3, wdS), o2 = Math.max(o1 + 0.12, Math.min(w + (wdS - wIn) + sw, barS - back)), rc = [0, 1, 2].map(n => lerp(GR[n], DI[n], ro));
-              return [o1, Math.max(o1 + 0.06, o2 - 0.3), o2, o2 + 0.4].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = (0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6)) * (n === 0 ? 0.9 : 1);
-                return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [1, 1, 0.55, 0][n]]]; }); };
-            for (let h = 0; h < 2; h++) { const A = pts(q + h), Bc = pts(q + h + 1);
-              for (let n = 0; n < 3; n++) gT.quadUp(A[n][0], Bc[n][0], Bc[n + 1][0], A[n + 1][0], [A[n][1], Bc[n][1], Bc[n + 1][1], A[n + 1][1]], [uvq(A[n][0]), uvq(Bc[n][0]), uvq(Bc[n + 1][0]), uvq(A[n + 1][0])]); }
+              const ro = sstep(wIn + 0.2, wIn + 3, wdS), o2 = Math.max(o1 + 0.12, Math.min(w + (wdS - wIn) + sw, barS - back)), rc = [0, 1, 2].map(n => lerp(GR[n], DI[n], ro)), mid = Math.max(oS + 0.06, o2 - 0.3);
+              const r = [oS, mid, Math.max(mid + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = (0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6)) * (n === 0 ? 0.9 : 1);
+                return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [1, 1, 0][n]]]; });
+              r.reach = o2 + 0.4; return r; };
+            const under = (s0, s1) => { for (let k = Math.floor(s0 / T.ds) - 1; k <= Math.floor(s1 / T.ds) + 1; k++) if (!kerbOn(((k % N) + N) % N, side)) return false; return true; };   // (a kerb of full opacity (not its first or last 2 m) all along this metre)
+            for (let h = 0; h < 2; h++) {
+              const oS = under(q + h, q + h + 1) ? kOp : o1, A = pts(q + h, oS), Bc = pts(q + h + 1, oS);
+              if (oS > o1 && Math.max(A.reach, Bc.reach) <= oS + 0.06) continue;   // (it all lies under the kerb: never seen)
+              for (let n = 0; n < 2; n++) gT.quadUp(A[n][0], Bc[n][0], Bc[n + 1][0], A[n + 1][0], [A[n][1], Bc[n][1], Bc[n + 1][1], A[n + 1][1]], [uvq(A[n][0]), uvq(Bc[n][0]), uvq(Bc[n + 1][0]), uvq(A[n + 1][0])]); }
           }
-          const m = new THREE.Mesh(gT.geometry(), new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true, transparent: true, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: -4 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
+          // (not written to the depth buffer and drawn before the kerb, which blends over it: at any depth precision (the post target's 16-bit depth) the kerb's cream and red are never overpainted, and its soft edge fades into the gravel, not the lawn;
+          //  the polygon offset only has to win against the lawn under it)
+          const m = new THREE.Mesh(gT.geometry(), new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: -4 })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.renderOrder = -1; m.name = 'shoulder'; root.add(m);
         } else {
           for (const side of [-1, 1]) for (let q = 0; q < T.len; q += 2) {
             const i = T.idx(q), j = T.idx(q + 2), bar = side > 0 ? T.br : T.bl, o1 = w + 0.02, wd = WD ? WD[side > 0 ? 1 : 0][i] : (T.k[i] * side < 0 && Math.abs(T.k[i]) > 0.015) ? wOut : wIn, wdj = WD ? WD[side > 0 ? 1 : 0][j] : wd, o2i = Math.min(w + wd, bar[i] - back), o2j = Math.min(w + wdj, bar[j] - back);
