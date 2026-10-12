@@ -146,7 +146,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* the corner sign in the top row: lying, beside the clock on its left (the police's taller block: further left; the driving school's board
    takes that place: under the clock, centred) */
 @media (orientation: landscape) {
-  #h-note { top: calc(var(--st) + 8px); left: auto; right: calc(50% + clamp(112px, 30vh, 134px)); margin-left: 0; }
+  #h-note { top: calc(var(--st) + 8px); left: auto; right: calc(50% + clamp(106px, 29.5vh, 134px)); width: clamp(40px, 12.2vh, 66px); height: clamp(40px, 12.2vh, 66px); margin-left: 0; }   /* (between the rank's label and the clock: 44 px on a phone 360 px high) */
   #hud.pol #h-note { right: calc(50% + clamp(134px, 37vh, 156px)); }
   #hud.school #h-note { top: calc(var(--st) + clamp(82px, 23vh, 96px)); right: auto; left: 50%; margin-left: calc(clamp(46px, 14vh, 66px) / -2); }
 }
