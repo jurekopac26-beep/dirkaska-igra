@@ -30,6 +30,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Monterey, USA', desc: 'A circuit in the dry hills above Monterey in California, at full scale (3.6 km, 11 turns, anticlockwise): the blind crest of Turn 1, the long hairpin, the flat infield by the little lake, the climb to the top of the hill and the steep plunge through the left-right spiral of Turn 8. Golden grass, oaks, grandstands on the banks and campers. Data: © OpenStreetMap (ODbL), USGS 3DEP, ESA WorldCover.' },
     start: [0, 0], runoff: 1.1, inner: 4.5, side: 4.5, gradeForce: true, elevSmooth: 10, realKm: 3.602,
     elev: MT_H.map((h, i) => [i / MT_H.length, h / 10]),
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[192, 268, 'bend'], [2344, 2400, 'bend']],   // Turns 1 and 7
     names: [
       ["Zavoj 1",-93.9,192.6,["Over the crest into Turn One, flat out and blind!","Turn one, the kink over the brow of the hill!","Up and over Turn One, you cannot see the exit!"]],
       ["Zavoj 2",-42.4,436.0,["Hard on the brakes, downhill into the hairpin at Turn Two!","Turn two, the long double-apex hairpin!","Into Turn Two, a big stop at the bottom of the hill!"]],

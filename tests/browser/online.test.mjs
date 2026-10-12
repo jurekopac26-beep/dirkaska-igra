@@ -153,10 +153,13 @@ try {
     `host ${JSON.stringify(lockC)}, Fani alone ${fAlone} (${fRole})`);
   await Promise.all([C, D, E].map(x => until(x.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing' && g.net && g.net.race); }, null, 90000)));
   await wait(7000);
-  const views = await Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
-  const own = Object.fromEntries(views.map(v => [v.me, v.own]));
+  const views = await Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, v: +r.player.speed.toFixed(1), t: Date.now(), cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
+  const own = Object.fromEntries(views.map(v => [v.me, v]));
+  // (the pages are read one after another: where each car is when the other page is read, from its own speed; then off by at most 40 m and
+  // the network's delay at that speed, 0.4 s: 10 states a second passed on by the host in batches, and drawn a little behind)
+  const near = (vw, id, d) => { const o = own[id], at = o.own + o.v * (vw.t - o.t) / 1000; return Math.abs(d - at) < 40 + 0.4 * o.v; };
   T.check('quick match, the race of three (a big grid: 10 states a second, the host passes them on in batches): three cars on every page, each sees the other two move where they are',
-    views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && Math.abs(d - own[id]) < 40)), JSON.stringify(views));   // (off the grid; the pages are read one after another)
+    views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && near(v, id, d))), JSON.stringify(views));   // (off the grid)
   await leave(E); await leave(F); await leave(C); await leave(D); await wait(1500);
   await Promise.all([tap(C), tap(D)]);
   const [sC, sD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];

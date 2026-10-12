@@ -53,6 +53,7 @@ try {
   await startTrack(page, 'spa');
   const sp = await page.evaluate(() => {
     const g = window.__game, P = g.race.player; g.pause();
+    g.race.lch = null; for (const c of g.race.cars) c.lch = null;   // (the start's reaction off: this is about the plank at speed, not the start)
     for (let i = 0; i < 600 && P.speed < 60; i++) g.sim(0.1, true);
     let n = 0; for (let i = 0; i < 30; i++) { g.sim(1 / 60, true); Render.frame(1 / 60, 1, P, g.S.camera, {}); n = Math.max(n, Render.fxStats().sparks); }
     return { car: P.m.body, speed: +P.speed.toFixed(1), sparks: n };

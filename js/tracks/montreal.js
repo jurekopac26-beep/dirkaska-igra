@@ -71,6 +71,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ga: [[600, 700, 1, 0], [1000, 1110, 1, 0], [1180, 1300, -1, 0], [1560, 1660, 1, 0], [1880, 2060, 1, 0], [2180, 2240, -1, 0], [2380, 2600, 1, 0], [2960, 3060, 1, 0], [-1240, -1060, -1, 0], [-820, -720, -1, 0]],
     sectors: [1600, 3060],
     drs: [[7, -40, 110, 8], [10, 160, 520, 13], [14, 90, 240, 1]],   // three DRS zones (approximate)
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[900, 1006, 'chicane'], [1422, 1594, 'chicane'], [2192, 2296, 'chicane'], [4080, 4156, 'chicane']],   // T3-4, T6-7, T8-9, T13-14
     // named places: [HUD label, x, z, the commentator's lines]; the turns by their numbers only
     names: [
       ['Zavoj 1', 38.5, 444, ['Turn one, a quick left!', 'Into Turn One, left and then right!', 'Turn one, the field squeezes in!']],

@@ -2983,12 +2983,7 @@ const World = (function () {
       { const [x, z] = [921.5, -266.6], g = scen.get(x, z), y = gH(x, z), rot = 0.2, cr = Math.cos(rot), sr = Math.sin(rot), hw = 9;
         for (const o of [-hw + 1, hw - 1]) box(g, x + cr * o, y, z + sr * o, 0.5, 4.2, 0.5, rot, [0.2, 0.2, 0.22]);
         texSpons.quadO([x - cr * hw, y + 4, z - sr * hw], [x + cr * hw, y + 4, z + sr * hw], [x + cr * hw, y + 7, z + sr * hw], [x - cr * hw, y + 7, z - sr * hw], [1, 1, 1], [x + sr * 3, y + 5, z - cr * 3], [[0, 0.75], [0.5, 0.75], [0.5, 1], [0, 1]]); }
-      // distance boards before the braking zones (150 / 100 / 50 m)
-      { const boardTex = {}; const bt = (n) => boardTex[n] || (boardTex[n] = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x2 = c.getContext('2d'); x2.fillStyle = '#fff'; x2.fillRect(0, 0, 64, 64); x2.strokeStyle = '#111'; x2.lineWidth = 5; x2.strokeRect(3, 3, 58, 58); x2.fillStyle = '#111'; x2.font = '900 30px Arial, sans-serif'; x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText(String(n), 32, 34); return ownTex(new THREE.CanvasTexture(c)); })());
-        for (const fc of [0.068, 0.362, 0.641, 0.884]) { const sC = sF(fc);
-          for (const d of [150, 100, 50]) { const sq = sC - d - 12; const i = T.idx(sq), side = T.br[i] < T.bl[i] ? 1 : -1, o = side * ((side > 0 ? T.br[i] : T.bl[i]) - 0.2);
-            const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.MeshBasicMaterial({ map: bt(d) })); m.position.set(T.px[i] + T.nx[i] * o, HYi(i) + 2.0, T.pz[i] + T.nz[i] * o); m.rotation.y = Math.atan2(-T.tx[i], -T.tz[i]); root.add(m);
-            const g = scen.get(m.position.x, m.position.z); box(g, m.position.x, HYi(i), m.position.z, 0.12, 1.4, 0.12, 0, [0.3, 0.3, 0.32]); } } }
+      // (the distance boards before the braking zones, 150 / 100 / 50 m: the track's own, def.brakeBoards, drawn with every circuit's: brakeBoards)
       // marshals in orange behind the barriers at the big corners
       for (const c of T.corners) { if (c.sev < 2) continue; for (let k = 0; k < 3; k++) { const i = T.idx(c.s0 + k * 6 - 4), side = -c.dir, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 1.4 + k * 0.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z), y = gH(x, z);
         box(g, x, y, z, 0.5, 1.25, 0.35, T.hd[i], orange); box(g, x, y + 1.25, z, 0.32, 0.32, 0.32, T.hd[i], [0.96, 0.96, 0.96]); } }
@@ -4476,7 +4471,53 @@ const World = (function () {
       const mm = new THREE.Mesh(g, mat); mm.name = 'ao'; mm.renderOrder = 1; mm.matrixAutoUpdate = false; o.root.add(mm);
     }
   }
-  function finish(o, tex) { o.cull = CULLM; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- the braking boards of a circuit (Track.brakeBoards: 300, 200 and 100 m before its heavy braking zones; Monaco's own 150, 100, 50):
+     all of them in one mesh (one draw call, no shadow) on one small atlas drawn once (BB_ATL: kept from build to build, uploaded again after
+     a track change frees it). An A-frame of two plates, each 30 deg off the upright (as Pikes Peak's turn boards lean back), the number
+     large on both: the chase camera sees the face to the cars coming nearly square on, the iso camera one face or the other beside the
+     roads that run up or down the screen, both at an angle beside those across it. Two legs from under the ground (the world's groundH,
+     never above the road there) up to its ridge, over a barrier (kind 1) longer ones in the barrier's line. The period circuits' (and
+     Monaco's) boards white with black numbers, the others' blue with white; nothing but the number on them. A knockable post or tyre
+     stack in a board's way goes. ---- */
+  let BB_ATL = null;
+  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { cpalace: 1, longford: 1, riverside: 1, monaco: 1 };
+  function bbAtlas() {   // 512 x 256: the plates 96 x 72 (row 0 blue with white numbers, row 1 white with black: 300, 200, 100, 150, 50); a white patch
+    if (BB_ATL) return BB_ATL;
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#9a9ca0'; g.fillRect(0, 0, 512, 256); g.fillStyle = '#ffffff'; g.fillRect(480, 224, 32, 32);
+    for (let r = 0; r < 2; r++) BB_NUM.forEach((n, k) => {
+      const x = k * 96, y = r * 72, bg = r ? '#f4f4f0' : '#1b3f8e', fg = r ? '#111111' : '#ffffff';
+      g.fillStyle = bg; g.fillRect(x, y, 96, 72); g.strokeStyle = fg; g.lineWidth = r ? 5 : 3; g.strokeRect(x + 4.5, y + 4.5, 87, 63);
+      const t = String(n); g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = 'bold 54px Arial, Helvetica, sans-serif';
+      const m = g.measureText(t).width, sx = Math.min(1, 76 / Math.max(1, m)); g.save(); g.translate(x + 48, y + 38); g.scale(sx, 1); g.fillText(t, 0, 0); g.restore(); });
+    const t = BB_ATL = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
+  function brakeBoards(o) {
+    const Z = T.brakeBoards ? T.brakeBoards() : []; if (!Z.length) return;
+    const row = BB_CLASSIC[THEME] ? 1 : 0, g = new GB(true), tilt = 30 * Math.PI / 180, ct = Math.cos(tilt), st = Math.sin(tilt);
+    g.dUV = [488 / 512, 1 - 240 / 256];   // (the legs and the plate's rim: the white patch, in their vertex colours)
+    const leg = [0.42, 0.43, 0.46], rim = row ? [0.86, 0.86, 0.84] : [0.16, 0.24, 0.42], W1 = [1, 1, 1], gh = o.groundH, foot = [];
+    for (const z of Z) for (const b of z.boards) {
+      const k = BB_NUM.indexOf(b.d); if (k < 0) continue;
+      const hw = b.pw / 2, H = b.ph, tx = Math.cos(b.hd), tz = Math.sin(b.hd), nx = -tz, nz = tx, la = b.kind ? 0.2 : hw - 0.18;   // (la: the legs' distance from the middle; over a barrier in its line)
+      const G = (a) => { const y = gh ? gh(b.x + nx * a, b.z + nz * a) : b.y; return Number.isFinite(y) ? y : b.y; }, gl = [G(-la), G(la)];   // (the ground under each leg)
+      const y0 = Math.max(b.y, gl[0], gl[1]) + b.py, yF = gl.map(y => Math.max(Math.min(y, b.y) - 0.3, y0 - 5));   // (the plate's lower edge, over the road or the ground if that is higher; the legs' feet, in the ground)
+      const Q = (a, f, y) => [b.x + nx * a + tx * f, y, b.z + nz * a + tz * f], e = H * st, yR = y0 + H * ct, inn = Q(0, 0, y0 + 0.1);   // a across (+: right of the cars coming), f along the road; the ridge yR
+      const u0 = k * 96 / 512, u1 = (k + 1) * 96 / 512, v1 = 1 - row * 72 / 256, v0 = 1 - (row + 1) * 72 / 256, uv = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
+      g.quadO(Q(-hw, -e, y0), Q(hw, -e, y0), Q(hw, 0, yR), Q(-hw, 0, yR), W1, inn, uv);   // the face to the cars coming
+      g.quadO(Q(hw, e, y0), Q(-hw, e, y0), Q(-hw, 0, yR), Q(hw, 0, yR), W1, inn, uv);   // the other face (seen from above beside the roads that run down the screen)
+      for (const s of [-1, 1]) g.triO(Q(s * hw, -e, y0), Q(s * hw, e, y0), Q(s * hw, 0, yR), rim, inn);   // its ends
+      [-1, 1].forEach((s, q) => { const [lx, , lz] = Q(s * la, 0, 0); box(g, lx, yF[q], lz, 0.05, yR - 0.02 - yF[q], 0.05, b.hd, leg, leg, true); });   // the legs
+      foot.push([b.x, b.z, tx, tz, hw, { d: b.d, kind: b.kind, x: +b.x.toFixed(2), z: +b.z.toFixed(2), y0: +y0.toFixed(2), feet: yF.map(y => +y.toFixed(2)), ground: gl.map(y => +y.toFixed(2)), road: +b.y.toFixed(2) }]);
+    }
+    if (g.empty) return;
+    const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: bbAtlas(), vertexColors: true }));
+    m.name = 'brakeBoards'; m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; o.root.add(m);
+    o.brakeBoards = foot.map(f => f[5]);   // (for the tests: each board's number, kind, place, its plate's lower edge, its legs' feet, the ground under them, the road there)
+    const P = o.props; if (P) for (let j = P.length - 1; j >= 0; j--) { const p = P[j];   // (a knockable post or tyre stack where a board stands goes)
+      for (const [x, z, tx, tz, hw] of foot) { const dx = p.x - x, dz = p.z - z, a = dx * tx + dz * tz; if (Math.abs(a) < 1.2 && Math.abs(-dx * tz + dz * tx) < hw + 0.45) { P.splice(j, 1); break; } } }
+  }
+  function finish(o, tex) { o.cull = CULLM; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
