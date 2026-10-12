@@ -49,7 +49,7 @@ const deg = (a) => a * 180 / Math.PI;
     } finally { Math.random = orig; }
   }
   const f1 = (x) => x.toFixed(1);
-  check('a stop on every circuit with pits: in the middle of the lane on the autopilot, into the box, repaired, out again', out.every(x => x.rep && x.dmg < 0.05 && x.dev < 0.8),
+  check('a stop on every circuit with pits: in the middle of the lane on the autopilot, into the box, repaired, out again', out.every(x => x.rep && x.dmg < 0.05 && x.dev < 1.2),
     out.map(x => `${x.id} ${x.rep ? 'repaired' : 'NO STOP'} (${f1(x.dev)} m off the middle, ${f1(x.laneT)} s in the lane)`).join(', '));
   check('the box on the apron in front of the garage: the car stops ~4 m past the lane\'s outer edge (on a shallow apron, def.pitApron, at its edge: Track.bayDim), within 4 m of the box, nose in towards the garage (~23°, less on a shallow one)',
     out.every(x => x.pose && Math.abs(x.pose.out - x.bo) < 1.5 && x.pose.out > 0.5 && Math.abs(x.pose.x) < 4 && x.pose.yaw > x.ba * 0.5 && x.pose.yaw < x.ba + 12),

@@ -4310,5 +4310,299 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "townsville/race/cs": {
+  "digest": "bf7cbd014dc844b620e54d7e",
+  "lead": 2069.5,
+  "car0": [
+   305.58,
+   -141.9
+  ],
+  "cover": {
+   "dmg": 0.56,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "townsville/demo/cs": {
+  "digest": "9ef0c61181c28e3154b84028",
+  "lead": 2216,
+  "car0": [
+   215.42,
+   207.29
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "townsville/upg/cs": {
+  "digest": "4726de7d7c741eb75b5e6396",
+  "lead": 2216.6,
+  "car0": [
+   227.39,
+   185.16
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "townsville/crash/cs": {
+  "digest": "8ecd6396f37b85857b1155aa",
+  "lead": 4103.2,
+  "car0": [
+   -423.94,
+   53.43
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "townsville/formula/cs": {
+  "digest": "7a90539817b16af5d64bd7b7",
+  "lead": 5047.1,
+  "car0": [
+   -181.66,
+   -191.85
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "townsville/lm/cs": {
+  "digest": "11a1f5a460d58227c4f46c55",
+  "lead": 4976.8,
+  "car0": [
+   -336.12,
+   -242.19
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 21,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "townsville/car/cs": {
+  "digest": "de946ba15dc2e56895398355",
+  "lead": 4435.3,
+  "car0": [
+   -619.36,
+   19.73
+  ],
+  "cover": {
+   "dmg": 0.5,
+   "loose": 1,
+   "rescues": 1,
+   "repairs": 1
+  }
+ },
+ "marrakesh/race/cs": {
+  "digest": "f79efdbe9aee832cbd33fa85",
+  "lead": 1943.6,
+  "car0": [
+   -197.35,
+   -683.14
+  ],
+  "cover": {
+   "dmg": 0.6,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/demo/cs": {
+  "digest": "10772ea627c333caec994a7e",
+  "lead": 2074.2,
+  "car0": [
+   -421.43,
+   -613.96
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/upg/cs": {
+  "digest": "38442ce810043ffb22e9936a",
+  "lead": 2075.7,
+  "car0": [
+   -340.97,
+   -615.17
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/crash/cs": {
+  "digest": "a8a6169f70a100a9c186ff1b",
+  "lead": 1939.5,
+  "car0": [
+   -138.72,
+   -673.63
+  ],
+  "cover": {
+   "dmg": 0.99,
+   "loose": 9,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/formula/cs": {
+  "digest": "46404947dfbe67dd86d59d25",
+  "lead": 2158.7,
+  "car0": [
+   -394.63,
+   -610.39
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 28,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/lm/cs": {
+  "digest": "95c53eee4b8dfa175a1c8766",
+  "lead": 2145.9,
+  "car0": [
+   -426.51,
+   -613.32
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 11,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/car/cs": {
+  "digest": "091941c646db6a06416801a9",
+  "lead": 1937.9,
+  "car0": [
+   -138.4,
+   -665.62
+  ],
+  "cover": {
+   "dmg": 0.63,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/race/cs": {
+  "digest": "428f0436afe0d96242928814",
+  "lead": 1939.8,
+  "car0": [
+   -327.33,
+   -153.59
+  ],
+  "cover": {
+   "dmg": 0.48,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/demo/cs": {
+  "digest": "e8fc8d2c1bc60e4108617bc7",
+  "lead": 2013.1,
+  "car0": [
+   -366.05,
+   28.29
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/upg/cs": {
+  "digest": "976cf4be85e01618ce83143c",
+  "lead": 2015.9,
+  "car0": [
+   -363.71,
+   14.86
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/crash/cs": {
+  "digest": "735a556160bc021535b72bc9",
+  "lead": 3141.4,
+  "car0": [
+   -62.61,
+   -24.25
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 20,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "troisrivieres/formula/cs": {
+  "digest": "ae21dd30e3f42ec490135b9c",
+  "lead": 4203,
+  "car0": [
+   341.45,
+   271.22
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 24,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "troisrivieres/lm/cs": {
+  "digest": "298f2259243f161fb1e0ebdc",
+  "lead": 4101.3,
+  "car0": [
+   325.01,
+   275.1
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 16,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "troisrivieres/car/cs": {
+  "digest": "2952910f6f24af164b99ed0d",
+  "lead": 3662.4,
+  "car0": [
+   194.82,
+   253.91
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }
