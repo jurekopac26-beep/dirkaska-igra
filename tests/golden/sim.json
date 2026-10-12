@@ -4310,5 +4310,103 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "townsville/race/cs": {
+  "digest": "bf7cbd014dc844b620e54d7e",
+  "lead": 2069.5,
+  "car0": [
+   305.58,
+   -141.9
+  ],
+  "cover": {
+   "dmg": 0.56,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "townsville/demo/cs": {
+  "digest": "9ef0c61181c28e3154b84028",
+  "lead": 2216,
+  "car0": [
+   215.42,
+   207.29
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "townsville/upg/cs": {
+  "digest": "4726de7d7c741eb75b5e6396",
+  "lead": 2216.6,
+  "car0": [
+   227.39,
+   185.16
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "townsville/crash/cs": {
+  "digest": "8ecd6396f37b85857b1155aa",
+  "lead": 4103.2,
+  "car0": [
+   -423.94,
+   53.43
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "townsville/formula/cs": {
+  "digest": "7a90539817b16af5d64bd7b7",
+  "lead": 5047.1,
+  "car0": [
+   -181.66,
+   -191.85
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "townsville/lm/cs": {
+  "digest": "11a1f5a460d58227c4f46c55",
+  "lead": 4976.8,
+  "car0": [
+   -336.12,
+   -242.19
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 21,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "townsville/car/cs": {
+  "digest": "de946ba15dc2e56895398355",
+  "lead": 4435.3,
+  "car0": [
+   -619.36,
+   19.73
+  ],
+  "cover": {
+   "dmg": 0.5,
+   "loose": 1,
+   "rescues": 1,
+   "repairs": 1
+  }
  }
 }

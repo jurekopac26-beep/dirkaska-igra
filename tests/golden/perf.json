@@ -306,5 +306,12 @@
   "kverts": 1012,
   "maxKverts": 1159,
   "jsMs": 1.19
+ },
+ "townsville": {
+  "calls": 315,
+  "maxCalls": 390,
+  "kverts": 798,
+  "maxKverts": 984,
+  "jsMs": 1.24
  }
 }
