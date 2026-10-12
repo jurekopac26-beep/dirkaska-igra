@@ -18,7 +18,7 @@
   --st: env(safe-area-inset-top, 0px);
   --sb: env(safe-area-inset-bottom, 0px);
   /* the minimap's place and size; the column under it (the texts of the race, game.js hudCol) takes its right edge and width */
-  --map-r: calc(62px + var(--sr)); --map-t: calc(8px + var(--st)); --map-w: clamp(96px, 30vh, 150px); --map-h: clamp(72px, 22vh, 112px);
+  --map-r: calc(8px + var(--sr)); --map-t: calc(8px + var(--st)); --map-w: clamp(96px, 30vh, 150px); --map-h: clamp(72px, 22vh, 112px);
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -265,6 +265,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #btn-pause svg { width: 22px; height: 22px; fill: var(--chalk); }
 /* the camera during a race (under the pause button; a phone held upright has only the one behind the car) */
 #btn-cam { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(60px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
+@media (orientation: landscape) { #btn-pause, #btn-cam { right: calc(var(--map-r) + var(--map-w) + 8px); } }   /* (on its side: the pause left of the map, so the map and the texts under it stand right at the edge; upright it stays above the map) */
 #btn-cam svg { width: 24px; height: 24px; fill: var(--chalk); }
 /* the tyres for the next stop (a race with compounds and pits): a tyre with its band in the compound's colour, A for Samodejno; at the left,
    beside the damage (#h-dmgrow), the right under the map free for the column of texts */
