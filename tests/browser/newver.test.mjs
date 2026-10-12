@@ -41,6 +41,19 @@ try {
     T.check('throttle: the car drives off', d > 5, d.toFixed(1) + ' m');
     const f = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track; P.place(40, 20, 0); P.vx = P.vz = 0; g.sim(1.5, false); return { x: P.x, z: P.z, q: P.q.d, w: T.w }; });
     T.check('in the infield, far from the road, the car drives on (no barrier pulls it back)', Math.abs(f.q) > f.w + 20 && Math.hypot(f.x - 40, f.z - 20) > 2, JSON.stringify(f));
+    // no sparks off the road: the renderer's rail sparks (js/render.js carFx) measured the gap to the track's barrier lines, and past them on
+    // the new map (no barriers) the car showed a stream of sparks, as if it scraped along something unseen
+    const sp = await page.evaluate(() => { const g = window.__game, P = g.race.player; P.place(40, 20, 0); P.vx = 15; P.vz = 0; const s0 = Render.fxStats().sparks; for (let k = 0; k < 20; k++) { g.sim(1 / 60, false); Render.frame(1 / 60, 1, P, 'iso', {}); } return { sparks: Render.fxStats().sparks - s0, d: Math.abs(P.q.d), br: P.q.br }; });
+    T.check('driving past the track\'s (gone) barrier lines: no sparks, nothing scrapes', sp.sparks === 0 && sp.d > sp.br, JSON.stringify(sp));
+    // the ring road (js/newmap.js nordRoad, the user's green line): paved as the Nordschleife, 11 m, the fans' paint on it; driven as asphalt
+    // (track.surf2, js/core.js Car.stepCS), quicker off the line than the gravel beside it
+    const rr = await page.evaluate(() => { const g = window.__game, P = g.race.player, H = window.__H3, R = H.roads.nord, run = (x, z, h) => { P.place(x, z, h); P.vx = P.vz = 0; g.sim(5, false, 0); return { v: Math.round(Math.hypot(P.vx, P.vz) * 3.6), ws: P.ws.join('') }; };
+      return { style: R && R.style, wd: R && R.wd, L: R && Math.round(R.Lc), decals: H.nordDecals, on: run(-95, 301, 0.04), off: run(-95, 276, 0.04) }; });
+    T.check('the ring road: paved as at Nürburg (11 m, about 2 km, paint on it), driven as asphalt and quicker than the gravel beside it', rr.style === 'nord' && rr.wd === 11 && rr.L > 1800 && rr.decals > 10 && /^0+$/.test(rr.on.ws) && /^5+$/.test(rr.off.ws) && rr.on.v > rr.off.v + 3, JSON.stringify(rr));
+    // the gravel ways as wide as the Mountain Rally's road (10-14 m; the mock-up's width only on the snowy hill top)
+    const gw = await page.evaluate(() => { const H = window.__H3, ws = H.net.filter(e => (e.kind === 'dirt' || e.kind === 'forest') && e.id !== 'mx').map(e => 2 * e.hw), pw = H.paths.map(p => p.wd).concat([H.roads.forest.wd, H.roads.over.wd, H.forest.wd]);
+      return { n: ws.length, min: Math.min(...ws, ...pw), max: Math.max(...ws, ...pw), forest: H.roads.forest.wd }; });
+    T.check('the gravel ways 10-14 m wide, as the Mountain Rally\'s road (the forest roads 13 m and more)', gw.n > 30 && gw.min >= 10 && gw.max <= 14 && gw.forest >= 13, JSON.stringify(gw));
     const h = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track; P.place(-205, -105, 0); P.vx = P.vz = 0; g.sim(0.5, false); return { y: P.y, ry: P.roadY, g: T.ground2(P.x, P.z) }; });
     T.check('on the snow hill the car stands on the new map\'s ground (its top 25 m and more above the track)', h.g > 20 && Math.abs(h.ry - h.g) < 0.5 && h.y > 20, JSON.stringify(h));
     const e = await page.evaluate(() => { const g = window.__game, P = g.race.player; P.place(405, 0, 0); P.vx = 30; P.vz = 0; g.sim(1, false); return { x: P.x, edge: g.race.track.free[1] }; });

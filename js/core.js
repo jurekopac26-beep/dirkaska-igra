@@ -1174,7 +1174,7 @@ const Core = (function () {
     // sample. A side road (q.k >= 0, past the road's own asphalt): asphalt, or makadam on a forest road, the gravel of the verge past its edge
     surface(q) {
       const wa = this.wa, d = q.d, ad = Math.abs(d), w = wa ? lerp(wa[q.a], wa[this.open ? Math.min(this.N - 1, q.a + 1) : (q.a + 1) % this.N], q.t) : this.w;
-      if (this.free && ad > w + 0.3) return 5;   // (NEW VERSION · TEST 1: off the road the new map's packed gravel and sand, driven as makadam, not a run-off's gravel trap)
+      if (this.free && ad > w + 0.3) return 5;   // (NEW VERSION · TEST 1: off the road the new map's packed gravel and sand, driven as makadam, not a run-off's gravel trap; its paved ways: track.surf2, Car.stepCS)
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
         if (this.sf) { const sf = this.sf[q.a]; if (sf !== 5) return sf; }
@@ -1647,7 +1647,7 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
+        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
         const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
