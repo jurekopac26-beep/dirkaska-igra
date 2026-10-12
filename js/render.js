@@ -3079,7 +3079,7 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -3217,6 +3217,9 @@ const Render = (function () {
       W.box(g, 0, y0 - 0.18, 0.042, 0.07, 0.36, 0.01, 0, bk); W.box(g, 0, y0 + 0.08, 0.042, 0.3, 0.07, 0.01, 0, bk);
     } else if (kind === 'meter') {   // a parking meter: a post, the grey head with its dark window
       W.box(g, 0, -0.7, 0, 0.08, 1.1, 0.08, 0, dk, dk); W.box(g, 0, 0.4, 0, 0.26, 0.3, 0.2, 0, gy, [0.66, 0.68, 0.7]); W.box(g, 0, 0.5, -0.105, 0.16, 0.1, 0.01, 0, [0.12, 0.18, 0.2]);
+    } else if (kind === 'mailbox') {   // a street mail box (red, a domed top, a dark base; no lettering)
+      const rd = [0.8, 0.09, 0.08]; W.box(g, 0, -0.62, 0, 0.5, 0.12, 0.42, 0, dk, dk); W.box(g, 0, -0.5, 0, 0.56, 0.95, 0.46, 0, rd, rd); W.cyl(g, 0, 0.42, 0, 0.29, 0.12, 8, rd, rd);
+      W.box(g, 0.24, 0.15, 0, 0.02, 0.06, 0.3, 0, dk, dk);
     } else if (kind === 'barrel') {   // an orange construction drum with white reflective bands and a black base
       const or = [0.98, 0.42, 0.08]; W.cyl(g, 0, -0.47, 0, 0.32, 0.1, 10, bk, bk); W.cyl(g, 0, -0.37, 0, 0.28, 0.84, 10, or, or, 0.26);
       for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);

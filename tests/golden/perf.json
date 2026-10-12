@@ -320,5 +320,12 @@
   "kverts": 751,
   "maxKverts": 843,
   "jsMs": 0.83
+ },
+ "troisrivieres": {
+  "calls": 281,
+  "maxCalls": 343,
+  "kverts": 777,
+  "maxKverts": 977,
+  "jsMs": 1.43
  }
 }

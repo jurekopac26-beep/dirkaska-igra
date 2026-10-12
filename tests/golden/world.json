@@ -992,5 +992,37 @@
    "tyremarks:MeshBasicMaterial": "619f7c92",
    "roadwear:MeshLambertMaterial": "1d7af542"
   }
+ },
+ "troisrivieres": {
+  "meshes": 220,
+  "verts": 490635,
+  "instances": 2713,
+  "props": 168,
+  "crowd": 813,
+  "world": "10ef8f8c",
+  "propsHash": "f274e7a5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "bb585933",
+   "trRoad:MeshLambertMaterial": "774c6d20",
+   "trVerge:MeshLambertMaterial": "b140fe16",
+   "trWall:MeshLambertMaterial": "ae20bbc",
+   "trTyres:MeshLambertMaterial": "24301171",
+   "-:MeshBasicMaterial": "b691a7e6",
+   "trWalk:MeshLambertMaterial": "b0579f5a",
+   "trFacade:MeshLambertMaterial": "e29173b",
+   "trRoofs:MeshLambertMaterial": "8366b904",
+   "trTree0:MeshLambertMaterial": "1fa834f3",
+   "trTree3:MeshLambertMaterial": "1aed3960",
+   "-:LineBasicMaterial": "42419014",
+   "trCars:MeshLambertMaterial": "aa130aea",
+   "trFar:MeshLambertMaterial": "aac21f54",
+   "trAsph:MeshLambertMaterial": "7abc1bcc",
+   "trMarks:MeshLambertMaterial": "9b471bcb",
+   "crowd:MeshLambertMaterial": "da94e33b",
+   "ao:MeshBasicMaterial": "c46ede68",
+   "tyremarks:MeshBasicMaterial": "83b82464",
+   "roadwear:MeshLambertMaterial": "26f6308b"
+  }
  }
 }
