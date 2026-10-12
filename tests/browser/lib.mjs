@@ -51,7 +51,7 @@ export function launch(extraArgs = []) {
 // open the game; settings: an object (merged over sound/commentary off and no qualifying: Start goes straight to the race), a raw JSON
 // string, or null (a fresh profile)
 export async function openGame(browser, address, settings = {}, viewport = { width: 480, height: 270 }, opts = {}) {
-  const ctx = await browser.newContext({ viewport });
+  const ctx = await browser.newContext(Object.assign({ viewport, hasTouch: !!opts.touch }, opts.context));   // (opts.touch: a phone's touch screen, the pointer coarse as on a phone; opts.context: more of the context's options)
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
