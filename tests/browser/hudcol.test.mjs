@@ -54,22 +54,30 @@ const MEASURE = () => {
     rows: document.getElementById('h-tower').querySelectorAll('.tw-r').length };
 };
 // in the page: the icons of the column (css ::before, inline SVG as --ic-*): which one each shows (the same picture as var(--ic-<kind>)), its size,
-// and where the text starts (the message's and the pit title's right of the icon, the toast's first line after its "i")
+// and where the text starts (each at the start of its first line: the message's, the pit title's, the toast's "i"); the coloured edge at the
+// left and the background (see-through, as the map's)
 const ICONS = () => {
   const img = (k) => { const d = document.createElement('i'); d.style.backgroundImage = `var(--ic-${k})`; document.body.appendChild(d); const v = getComputedStyle(d).backgroundImage; d.remove(); return v; };
   const KS = ['flag', 'wrench', 'go', 'warn', 'vs', 'star', 'pit', 'info'], pics = KS.map(img);
-  const one = (e, t) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
-    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(getComputedStyle(e).fontSize),
+  const one = (e, t, box) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
+    const s = getComputedStyle(e), bx = getComputedStyle(box || e), a = (v) => { const m = /rgba?\(([^)]+)\)/.exec(v); return m ? +(m[1].split(',')[3] || 1) : 1; };
+    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(s.fontSize), fw: +s.fontWeight,
+      edge: parseFloat(bx.borderLeftWidth) + ' ' + bx.borderLeftColor, bga: a(bx.backgroundColor),
       gap: +(t0.left - r.left - parseFloat(getComputedStyle(e).paddingLeft) - parseFloat(getComputedStyle(e).borderLeftWidth) - parseFloat(c.width)).toFixed(1) }; };
   const M = document.getElementById('h-msg'), P = document.getElementById('h-pit'), T = document.getElementById('toast');
-  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P, P.firstElementChild) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
+  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P.firstElementChild, P.firstElementChild, P) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
 };
 // what is wrong with the icons: the message's not the one of its kind or not as tall as its letters, the pit panel without its wrench, the
 // toast without its "i", or a text over its icon
 function wrongIcons(x, kind) {
   const bad = [];
   if (x.dataIc !== kind || x.msg.ic !== kind) bad.push(`the message's icon ${x.dataIc}/${x.msg.ic}, not ${kind}`);
-  if (x.icm) bad.push('the message\'s icon not at its left: ' + x.icm);
+  if (x.icm) bad.push('the message without its icon: ' + x.icm);
+  const EDGE = { warn: 'rgb(230, 59, 46)', go: 'rgb(53, 212, 95)', star: 'rgb(53, 212, 95)' }, mapA = 0.45;
+  if (!x.msg.edge.startsWith('4 ') || (EDGE[kind] && !x.msg.edge.endsWith(EDGE[kind])) || x.msg.bga > mapA + 0.01) bad.push(`the message's edge ${x.msg.edge}, background ${x.msg.bga}`);
+  if (kind === 'pit' && (x.msg.fs > 15 || x.msg.fw < 800)) bad.push(`the pits' message not small and heavy: ${x.msg.fs} px, ${x.msg.fw}`);
+  if (x.pit && (!x.pit.edge.startsWith('4 ') || x.pit.bga > mapA + 0.01)) bad.push(`the pit panel's edge ${x.pit.edge}, background ${x.pit.bga}`);
+  if (x.toast && (!x.toast.edge.startsWith('4 ') || x.toast.bga > mapA + 0.01)) bad.push(`the toast's edge ${x.toast.edge}, background ${x.toast.bga}`);
   if (Math.abs(x.msg.w - 1.05 * x.msg.fs) > 1 || Math.abs(x.msg.h - x.msg.w) > 0.5) bad.push(`the message's icon ${x.msg.w}x${x.msg.h} at ${x.msg.fs} px`);
   if (x.msg.gap < 0) bad.push('the message over its icon');
   if (!x.pit || x.pit.ic !== 'wrench' || x.pit.w < 12 || x.pit.gap < 2) bad.push('the pit panel\'s wrench ' + JSON.stringify(x.pit));
@@ -178,6 +186,12 @@ try {
     pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === false), JSON.stringify(pedals));
   T.check('the tyre button (A) at the left beside the damage (on its side with the wheel: right of the speedometer, above the damage), 44 px, over nothing of the HUD or the controls (the speedometer, the tyres, the tower, the steering, the pedals ...), with buttons, the wheel and tilting, on its side and upright; tapped: A, S, M, H, A',
     tyres.length === 6 && tyres.every(o => !o.bad.length) && tyres.filter(o => o.taps).length === 2 && tyres.filter(o => o.taps).every(o => o.taps.join() === 'auto,S,M,H,auto'), JSON.stringify(tyres));
+  // the ring round the tyre button: as much of it coloured as the tyres on the car have left (92 % left: 92 % of the ring), the rest dark
+  const ring = await page.evaluate(async () => { const P = window.__game.race.player, B = document.getElementById('btn-tyre'), w0 = P.ty.wear, out = [];
+    for (const w of [0.08, 0.6]) { P.ty.wear = w; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      out.push({ left: Math.round((1 - w) * 100), tl: +getComputedStyle(B).getPropertyValue('--tl'), pill: document.getElementById('h-tyre').textContent, bg: getComputedStyle(B.firstElementChild).backgroundImage.slice(0, 40) }); }
+    P.ty.wear = w0; return out; });
+  T.check('the tyre button\'s ring: coloured as far round as the tyres have left (92 % and 40 %, as the tyre pill says), the rest dark', ring.length === 2 && ring.every(o => Math.abs(o.tl - o.left / 100) < 0.011 && o.pill.endsWith(' ' + o.left + '%') && /conic-gradient/.test(o.bg)), JSON.stringify(ring));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
     for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)
@@ -221,7 +235,7 @@ try {
   await turn(page, OR.land); await page.evaluate(() => Input.setMode('tilt'));
   const capped = await page.evaluate(async ([msg, toast]) => { const g = window.__game, Tt = document.getElementById('toast'), o = { seen: 0, wait: 0 }; g.msg(msg, 'gold', 60); g.toast(toast, 1500);
     const t0 = performance.now(); await new Promise(res => { const f = () => { if (Tt.classList.contains('show') && getComputedStyle(Tt).visibility === 'visible') o.seen++; if (Tt.classList.contains('wait')) o.wait++; if (performance.now() - t0 > 8500) res(); else requestAnimationFrame(f); }; requestAnimationFrame(f); });
-    o.show = Tt.classList.contains('show'); return o; }, [PIT.en.msg, PIT.en.toast]);
+    o.show = Tt.classList.contains('show'); o.phase = g.phase; o.screen = g.screen; o.pit = g.race.player.pitState || ''; o.col = Tt.classList.contains('col'); return o; }, [PIT.en.msg, PIT.en.toast]);
   await clear(page);
   T.check('a toast with no room waits, at most 6 s, then is not shown any more (never late)', capped.wait > 0 && capped.seen === 0 && !capped.show, JSON.stringify(capped));
   // the toast of the way in, still up (waiting, or showing) at the hand-back: gone with the autopilot, never after VOZIŠ TI!; the tilt meter back
@@ -235,7 +249,8 @@ try {
   const last = await both(page, 'race-lastlap', 'ZADNJI KROG!', ['h-msg']);
   await page.evaluate(() => { window.__game.autoDrive = true; });   // (the race goes on in real time meanwhile: the car on the autopilot, not into a wall at full speed with no one at the wheel)
   await turn(page, OR.land);
-  await page.waitForFunction(() => document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (drawn again four times a second of the race)
+  await page.waitForFunction(() => !document.getElementById('h-msg').classList.contains('show') && !document.getElementById('h-teamradio').classList.contains('on') && !document.getElementById('toast').classList.contains('show')
+    && document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (the texts gone; the tower drawn again four times a second of the race)
   const alone = await page.evaluate(MEASURE), atw = alone.col.find(c => c.id === 'h-tower');
   await page.evaluate(() => { window.__game.autoDrive = false; });
   T.check('on its side, a race: the timing tower the column\'s last, fewer rows (or none) under the texts; alone under the map with all its rows',
