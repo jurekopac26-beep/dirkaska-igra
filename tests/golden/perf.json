@@ -16,8 +16,8 @@
  "toskana": {
   "calls": 326,
   "maxCalls": 393,
-  "kverts": 983,
-  "maxKverts": 1048,
+  "kverts": 1050,
+  "maxKverts": 1115,
   "jsMs": 1.47
  },
  "pikes": {
@@ -42,10 +42,10 @@
   "jsMs": 1.09
  },
  "vrsic": {
-  "calls": 259,
-  "maxCalls": 303,
-  "kverts": 414,
-  "maxKverts": 558,
+  "calls": 220,
+  "maxCalls": 295,
+  "kverts": 396,
+  "maxKverts": 566,
   "jsMs": 1.67
  },
  "nring": {
