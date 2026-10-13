@@ -882,6 +882,26 @@
    "brakeBoards:MeshLambertMaterial": "cf676496"
   }
  },
+ "hotham": {
+  "meshes": 3167,
+  "verts": 2078177,
+  "instances": 74511,
+  "props": 354,
+  "crowd": 1078,
+  "world": "85e8abfa",
+  "propsHash": "3b135c37",
+  "floor": "2dca58ac/17276",
+  "groups": {
+   "-:MeshLambertMaterial": "19c8c84a",
+   "-:MeshPhongMaterial": "1981b361",
+   "-:MeshBasicMaterial": "137646c4",
+   "irFar:MeshLambertMaterial": "2ea2ee05",
+   "crowd:MeshLambertMaterial": "89add167",
+   "ao:MeshBasicMaterial": "c338cf9f",
+   "tyremarks:MeshBasicMaterial": "f3bb1eb4",
+   "roadwear:MeshLambertMaterial": "c7874105"
+  }
+ },
  "townsville": {
   "meshes": 447,
   "verts": 554148,

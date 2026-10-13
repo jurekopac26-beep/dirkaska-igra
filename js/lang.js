@@ -322,6 +322,7 @@
     'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
+    'Razgledišče Renes': 'Renes Lookout', 'Razgledišče Danny\'s': 'Danny\'s Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
