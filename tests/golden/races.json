@@ -2199,6 +2199,56 @@
   "nan": false,
   "digest": "073d4d949846bfa70898600d"
  },
+ "hotham/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 196.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "20550df1cbb89b1348de9263"
+ },
+ "hotham/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 209.27,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bf7f907b8795d4370f44dca9"
+ },
+ "hotham/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 165.89,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e75b2c570db5e1ac21434186"
+ },
+ "hotham/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 169.2,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "aecbeda47d78f26321a8d281"
+ },
+ "hotham/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 197.97,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "15767f1817fe78cf38df0c3c"
+ },
  "townsville/cs": {
   "finished": 13,
   "cars": 13,
@@ -2242,12 +2292,12 @@
  "townsville/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 162.55,
+  "winner": 162.36,
   "spins": 0,
-  "walls": 7,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "254289ab0ae457bbdfa818b7"
+  "digest": "0ef1d880e877f32cb5b11e85"
  },
  "marrakesh/cs": {
   "finished": 13,
@@ -2292,12 +2342,12 @@
  "marrakesh/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 175.58,
+  "winner": 173.67,
   "spins": 0,
-  "walls": 2,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "d4c1b060d0097c9a20b5ee3b"
+  "digest": "7e75c031f5a665ecab5c0279"
  },
  "troisrivieres/cs": {
   "finished": 13,
@@ -2342,11 +2392,11 @@
  "troisrivieres/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 151.71,
+  "winner": 152.47,
   "spins": 1,
-  "walls": 1,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "640da57467cac871bc9150df"
+  "digest": "d2c0be9ed08654525e28e138"
  }
 }
