@@ -1,6 +1,6 @@
 // The friends' cars in an online race (Core only, no browser): the race leaves them to the network, a collision moves only the
 // local car (the friend's phone moves the friend's car), and the finish order follows the times from the phones. A room of four:
-// three friends' cars on their slots, two rows of two.
+// three friends' cars on their slots, two rows of two. A quick match of 22: on every track, all of them behind the line.
 //   node tests/net-core.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -80,6 +80,21 @@ check('finish: my time on the shared clock replaces the local one, the order fol
   check('four: none of the friends\' cars is driven here', R.every((c, i) => c.x + ',' + c.z === xs[i]), '');
   q.netFinish(R[2], 61.5); q.netFinish(R[0], 60.2); q.netFinish(q.player, 60.9); q.netFinish(R[1], 62.0); q.step(DT);
   check('four: the finish order from the four times', q.finishOrder.map(c => c.name).join() === 'Ana,TI,Dan,Bor' && q.order[0] === R[0] && q.player.finishPos === 2, q.finishOrder.map(c => c.name + ' ' + c.finishTime).join(', '));
+}
+
+// 4. a quick match of 22 (Počakaj prijatelja): on every track that races, the player and 21 friends, two abreast behind the line,
+// none on top of another; on an open road all of them on the road below the line
+{
+  const bad22 = [];
+  for (const d of C.TRACKS.filter(t => !t.timeTrial)) {
+    const Tq = new C.Track(d), rem = [];
+    for (let g = 1; g <= 21; g++) rem.push({ id: g === 1 ? 'h' : 'g' + (g - 1), model: C.MODELS[g % 4], num: g + 1, name: 'P' + g, grid: g });
+    const q = new C.Race(Tq, { numAI: 0, playerGrid: 22, laps: 1, phys: 'cs', playerModel: C.MODELS[0], seed: 3, remote: rem });
+    let near = Infinity; for (let i = 0; i < q.cars.length; i++) for (let j = i + 1; j < q.cars.length; j++) near = Math.min(near, Math.hypot(q.cars[i].x - q.cars[j].x, q.cars[i].z - q.cars[j].z));
+    const back = Math.max(...q.cars.map(c => -c.dist));
+    if (q.cars.length !== 22 || q.remotes.length !== 21 || !q.cars.every(c => c.dist < 0) || near < 2.5 || (Tq.open && back > Tq.startS - 4)) bad22.push(`${d.id}: ${q.cars.length} cars, nearest two ${near.toFixed(1)} m apart, last ${back.toFixed(1)} m back`);
+  }
+  check('22: on every track the player and 21 friends behind the line, none on top of another (an open road: all below the line)', !bad22.length, bad22.slice(0, 4).join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

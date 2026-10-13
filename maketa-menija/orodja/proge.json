@@ -1,0 +1,12 @@
+[
+  ["jezero", "w_jezero", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "wet": true}],
+  ["riviera", "w_riviera", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "wet": true}],
+  ["gora", "w_gora", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "wet": true}],
+  ["monaco", "w_monaco", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": 1.2, "wet": true}],
+  ["rbring", "w_rbring", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": 0.45, "wet": true}],
+  ["suzuka", "w_suzuka", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": 0.45, "wet": true}],
+  ["spa", "w_spa", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": -1.1, "wet": true}],
+  ["pikes", "w_pikes", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "floor": [0.33, 0.36, 0.22], "rot": 2.0, "wet": true}],
+  ["ouninpohja", "w_ouninpohja", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "floor": [0.22, 0.33, 0.15], "rot": 2.0, "wet": true}],
+  ["nring", "w_nring", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "floor": [0.2, 0.3, 0.13], "rot": 0.45, "wet": true}]
+]

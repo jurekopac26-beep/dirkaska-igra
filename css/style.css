@@ -17,6 +17,8 @@
   --sr: env(safe-area-inset-right, 0px);
   --st: env(safe-area-inset-top, 0px);
   --sb: env(safe-area-inset-bottom, 0px);
+  /* the minimap's place and size; the column under it (the texts of the race, game.js hudCol) takes its right edge and width */
+  --map-r: calc(8px + var(--sr)); --map-t: calc(8px + var(--st)); --map-w: clamp(96px, 30vh, 150px); --map-h: clamp(72px, 22vh, 112px);
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -30,6 +32,7 @@
 }
 :root[data-theme="dark"] { --panel: rgba(14, 18, 25, 0.88); --asphalt: #12161d; }
 *, *::before, *::after { box-sizing: border-box; }
+:root, html, body { color-scheme: dark; forced-color-adjust: none; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 html, body { height: 100%; margin: 0; overflow: hidden; background: var(--asphalt); color: var(--chalk); }
 body {
@@ -59,6 +62,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-sec i.pb { border-color: var(--meter); color: #d6ffb8; }   /* the player's best */
 #h-sec i.sl { border-color: var(--lcd); }   /* slower */
 #hud.tt #h-sec, #hud.up #h-sec { display: none; }   /* (a time trial, a race up an open road: no sectors) */
+#hud.nv #h-rank, #hud.nv #h-tower, #hud.nv #h-times, #hud.nv #h-sec, #hud.nv #h-lap, #hud.nv #h-note { display: none; }   /* (NEW VERSION · TEST 1: free driving, nothing to count, no corner signs) */
 /* the open road (Vršič): the run from the police (the heat in stars, the busted meter, flat tyres), the duel's gap to the rival */
 #h-pol, #h-gap { display: none; }
 #hud.pol #h-pol { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 3px; }
@@ -117,11 +121,13 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-split.slow { color: var(--curb); }
 #h-split.even { color: var(--chalk); }
 #h-split.sp { color: #c77dff; } #h-split.sg { color: #5ee36a; } #h-split.sy { color: #ffd23a; }   /* a TV sector: purple, green, yellow */
-/* time trial finish: compact splits table under the finish time (this run, the previous record, the difference) */
-#h-ttsp { display: none; position: absolute; left: 50%; top: calc(40% + clamp(28px, 10vh, 56px) + 10px); transform: translateX(-50%); padding: 4px 8px; background: rgba(10, 14, 20, .6); border-radius: 6px; font: 700 clamp(10px, 2.9vh, 13px)/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
-#h-ttsp.show { display: table; }
-#h-ttsp th { color: var(--muted); font-weight: 700; padding: 0 5px; text-align: right; }
-#h-ttsp td { padding: 1px 5px; text-align: right; white-space: nowrap; }
+/* time trial finish: the splits in the column under the map, under the big message (game.js hudCol), until the results: each point and the
+   difference to the record (no record yet: its time); the whole table on the results */
+#h-ttsp { display: none; position: absolute; right: var(--map-r); width: var(--map-w); top: calc(var(--map-t) + var(--map-h) + 4px); padding: 3px 4px 4px; background: rgba(10, 14, 20, .45); border-radius: 8px; pointer-events: none; font: 700 11px/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
+#h-ttsp.show { display: block; animation: colIn .2s ease-out; }
+#h-ttsp b { display: block; padding: 0 2px; font: 800 italic 9px/1.2 var(--f-ui); letter-spacing: .03em; color: var(--lcd); white-space: nowrap; overflow: hidden; }
+#h-ttsp table { width: 100%; border-collapse: collapse; }
+#h-ttsp td { padding: 0 2px; text-align: right; white-space: nowrap; }
 #h-ttsp td:first-child { text-align: left; color: var(--lcd); }
 #h-ttsp td.fast { color: var(--meter); } #h-ttsp td.slow { color: var(--curb); }
 /* time trial (kronometer): no position, CP counter + altitude instead of laps */
@@ -129,20 +135,75 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #hud.tt #h-rank > .h-lbl:first-child, #hud.tt .h-rankrow { display: none; }
 #hud.tt #h-alt, #hud.up #h-alt { display: block; }   /* (a race up an open road: the altitude under the km) */
 #hud.tt #h-lap { margin-top: 0; font-size: clamp(13px, 3.8vh, 19px); }
-#h-map { position: absolute; right: calc(62px + var(--sr)); top: calc(8px + var(--st)); width: clamp(96px, 30vh, 150px); height: clamp(72px, 22vh, 112px); background: rgba(10, 14, 20, .45); border-radius: 8px; }
+#h-map { position: absolute; right: var(--map-r); top: var(--map-t); width: var(--map-w); height: var(--map-h); background: rgba(10, 14, 20, .45); border-radius: 8px; }
 #minimap { width: 100%; height: 100%; display: block; }
 #h-note { position: absolute; left: 50%; top: 24%; width: clamp(46px, 14vh, 66px); height: clamp(46px, 14vh, 66px); margin-left: calc(clamp(46px, 14vh, 66px) / -2); border-radius: 12px; border: 3px solid rgba(0,0,0,.55); background: #3fae3a; box-shadow: 0 3px 0 rgba(0,0,0,.35); opacity: 0; transform: scale(.8); transition: opacity .18s, transform .18s; }
 #h-note.show { opacity: .92; transform: scale(1); }
 #h-note.sev2 { background: #f1b416; }
 #h-note.sev3 { background: #e4402f; }
-#h-note svg { width: 100%; height: 100%; display: block; }
+#h-note.blue { background: #2f7de0; }   /* a roundabout, a chicane (the palette's blue, .pk-open) */
+#h-note svg { width: 100%; height: 100%; display: block; transform-origin: 50% 50%; }   /* (the isometric camera turns the arrow along the road: game.js noteAng) */
+/* the corner sign in the top row: lying, beside the clock on its left (the police's taller block: further left; the driving school's board
+   takes that place: under the clock, centred) */
+@media (orientation: landscape) {
+  #h-note { top: calc(var(--st) + 8px); left: auto; right: calc(50% + clamp(106px, 29.5vh, 134px)); width: clamp(40px, 12.2vh, 66px); height: clamp(40px, 12.2vh, 66px); margin-left: 0; }   /* (between the rank's label and the clock: 44 px on a phone 360 px high) */
+  #hud.pol #h-note { right: calc(50% + clamp(134px, 37vh, 156px)); }
+  #hud.school #h-note { top: calc(var(--st) + clamp(82px, 23vh, 96px)); right: auto; left: 50%; margin-left: calc(clamp(46px, 14vh, 66px) / -2); }
+}
 #h-lights { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); display: flex; gap: 8px; padding: 8px 12px; background: rgba(8, 10, 14, .78); border-radius: 12px; opacity: 0; transition: opacity .25s; }
 #h-lights.show { opacity: 1; }
 #h-lights i { width: clamp(20px, 7vh, 34px); height: clamp(20px, 7vh, 34px); border-radius: 50%; background: #3a0b0b; box-shadow: inset 0 -3px 0 rgba(0,0,0,.4); }
 #h-lights i.on { background: #ff2a1c; box-shadow: 0 0 14px #ff3a20, inset 0 -3px 0 rgba(0,0,0,.25); }
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
-#h-msg { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); color: var(--chalk); text-shadow: 3px 4px 0 rgba(0,0,0,.55); opacity: 0; transform: scale(.9); transition: opacity .2s, transform .2s; }
-#h-msg.show { opacity: 1; transform: scale(1); }
+/* the column under the minimap, its width, nothing over the middle of the track (game.js hudCol stacks them, each right under the one above,
+   and sizes their letters; never over the pedals): the pit stop's progress (the autopilot), the big message, the team radio, the toast. Shown
+   at once (a short fade in), gone at once (the ones below move up) */
+/* a small icon at the left of each, sized to its letters (inline SVG, no image files): the big message's by its kind (game.js msgIcon: data-ic),
+   a wrench on the pit stop's panel, the radio's RADIO tag, an "i" on the toast. No url() inside the SVGs (no masks, no gradients by id):
+   sw.js saves every url() of the stylesheets as a file of the game, and one it cannot fetch leaves the game unsaved for offline play */
+:root {
+  --ic-flag: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='1.2' y='1' width='1.7' height='14.5' rx='.85' fill='%23e8edf2'/><path d='M2.9 1.6h12v8.4h-12z' fill='%23fff' stroke='%23fff' stroke-width='.6'/><path d='M2.9 1.6h3v2.8h-3zM8.9 1.6h3v2.8h-3zM5.9 4.4h3v2.8h-3zM11.9 4.4h3v2.8h-3zM2.9 7.2h3V10h-3zM8.9 7.2h3V10h-3z' fill='%23111'/></svg>");
+  --ic-wrench: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M14.93 3.33A4.4 4.4 0 1 1 12.67 1.07L9.77 3.97A1.6 1.6 0 0 0 12.03 6.23Z' fill='%23dfe6ee'/><path d='M2.5 13.5L8.64 7.36' stroke='%23dfe6ee' stroke-width='3.2' stroke-linecap='round'/></svg>");
+  --ic-go: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='.7' y='.7' width='14.6' height='14.6' rx='4' fill='%23161b23' stroke='%2366707e' stroke-width='.9'/><circle cx='8' cy='8' r='5.2' fill='%2329e05a' opacity='.45'/><circle cx='8' cy='8' r='4.2' fill='%232cff66'/><circle cx='6.6' cy='6.5' r='1.3' fill='%23dcffe7' opacity='.9'/></svg>");
+  --ic-warn: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 1.3L15.3 14.4H.7z' fill='%23ffc629' stroke='%23111' stroke-width='.9' stroke-linejoin='round'/><path d='M8 5.7v4.1' stroke='%23111' stroke-width='1.9' stroke-linecap='round'/><circle cx='8' cy='12.2' r='1.05' fill='%23111'/></svg>");
+  --ic-vs: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><g stroke-linecap='round'><path d='M1.5 1.5L11 11M14.5 1.5L5 11' stroke='%23eef3f8' stroke-width='1.8'/><path d='M9.1 12.9L12.9 9.1M3.1 9.1L6.9 12.9' stroke='%23ffc629' stroke-width='1.6'/><path d='M12.1 12.1L14.5 14.5M3.9 12.1L1.5 14.5' stroke='%23e63b2e' stroke-width='2.1'/></g></svg>");
+  --ic-star: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 1L9.82 6.09L15.23 6.25L10.95 9.56L12.47 14.75L8 11.7L3.53 14.75L5.05 9.56L.77 6.25L6.18 6.09Z' fill='%23ffc629' stroke='%237a4d00' stroke-width='.7' stroke-linejoin='round'/></svg>");
+  --ic-pit: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='7.1' y='10' width='1.8' height='5.8' rx='.6' fill='%23aab4c0'/><rect x='1.6' y='.8' width='12.8' height='10.4' rx='2.2' fill='%232f6fe0' stroke='%23fff' stroke-width='1'/><path d='M6.2 9V3.2h2.3a1.75 1.75 0 0 1 0 3.5H6.2' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/></svg>");
+  --ic-info: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7.3' fill='%233aa0ff'/><circle cx='8' cy='4.6' r='1.25' fill='%23fff'/><path d='M8 7.2v5' stroke='%23fff' stroke-width='2.1' stroke-linecap='round'/></svg>");
+}
+#h-pit, #h-msg, #h-teamradio { position: absolute; right: var(--map-r); width: var(--map-w); top: calc(var(--map-t) + var(--map-h) + 4px); border-radius: 8px; pointer-events: none; visibility: hidden; opacity: 0; }
+#h-pit.on, #h-msg.show, #h-teamradio.on { visibility: visible; opacity: 1; animation: colIn .2s ease-out; }
+#h-teamradio.wait { visibility: hidden; opacity: 0; }   /* (no room under the others now: it waits, its time stopped) */
+@keyframes colIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+/* the pit stop on the autopilot: AVTOPILOT · spusti plin, what it does now (Vstop, Boks, Popravilo 45 %, Izvoz, Prevzameš čez 3), one bar
+   from the way in to the hand-back */
+#h-pit { padding: 3px 5px 4px 4px; background: rgba(10, 14, 20, .45); border-left: 4px solid var(--lcd); color: #fff; }   /* (a gold edge at the left, as the big message of the pits; the wrench at the start of the title, the label and the bar the whole width) */
+#h-pit b { display: block; font: 800 italic 9.5px/1.15 var(--f-ui); color: var(--lcd); white-space: nowrap; overflow: hidden; }   /* (on one line, smaller to fit, down to 8 px: else in two, .wrap; hudCol) */
+#h-pit b.wrap { white-space: normal; }
+#h-pit span { display: block; margin-top: 1px; font: 700 12px/1.15 var(--f-ui); white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums; }
+#h-pit i { display: block; height: 5px; margin-top: 3px; border-radius: 3px; background: rgba(255, 255, 255, .16); overflow: hidden; }
+#h-pit em { display: block; width: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--lcd), var(--meter)); }
+#h-pit b::before { content: ''; display: inline-block; width: 1.3em; height: 1.3em; margin-right: .3em; vertical-align: -.3em; background: center / contain no-repeat var(--ic-wrench); }   /* (the wrench at the start of the title) */
+/* the big message (START!, ZADNJI KROG!, BOKSI · AVTOPILOT ...): at most three lines, as large as the column's width allows (hudCol) */
+#h-msg { --edge: var(--lcd); display: block; padding: 3px 4px 4px 2px; border-left: 4px solid var(--edge); background: rgba(10, 14, 20, .45); text-align: center; text-wrap: balance; font: 400 italic 20px/1.05 var(--f-display); color: var(--chalk); text-shadow: 1px 2px 0 rgba(0,0,0,.6); }   /* (a coloured edge at the left by its kind; a word too wide sticks out on the right, where hudCol's fitMsg sees it) */
+/* its icon by its kind (data-ic, game.js msgIcon): a chequered flag (the laps, the finish), a wrench (the repair, the tyres, the fuel), a green
+   light (the start, the green flag), a warning triangle (a fault, a danger, a penalty), crossed swords (a duel), a star (a record, a win, a
+   medal), a pit board P (the pits); at the start of its first line, the lines under it the whole width; the edge: gold (the laps, the pits, the
+   repair), red (a warning), green (the start, a record) */
+#h-msg::before { content: ''; display: inline-block; margin-right: .2em; vertical-align: -.2em; width: 1.05em; height: 1.05em; background: center / contain no-repeat var(--ic-flag); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .55)); }
+#h-msg[data-ic="wrench"]::before { background-image: var(--ic-wrench); }
+#h-msg[data-ic="go"]::before { background-image: var(--ic-go); }
+#h-msg[data-ic="warn"]::before { background-image: var(--ic-warn); }
+#h-msg[data-ic="vs"]::before { background-image: var(--ic-vs); }
+#h-msg[data-ic="star"]::before { background-image: var(--ic-star); }
+#h-msg[data-ic="pit"]::before { background-image: var(--ic-pit); }
+#h-msg[data-ic="warn"] { --edge: var(--curb); }
+#h-msg[data-ic="go"], #h-msg[data-ic="star"] { --edge: #35d45f; }
+#h-msg[data-ic="pit"] { font-family: 'ApexMenu', var(--f-ui); font-weight: 900; letter-spacing: .02em; }   /* (BOKSI · AVTOPILOT ...: smaller and heavier letters, game.js hudCol: at most 15 px) */
+#h-msg[data-icm="no"]::before { display: none; }   /* (a long message on a narrow phone, no room for it in three lines: none, fitMsg) */
+/* the team radio: the engineer's message, the RADIO tag at the start of its first line */
+#h-teamradio { padding: 4px 6px 5px 5px; background: rgba(10, 14, 20, .45); border-left: 4px solid var(--lcd); color: #fff; font: 600 11.5px/1.3 var(--f-ui); overflow-wrap: break-word; }
+#h-teamradio b { display: inline-block; margin: 0 4px 0 0; padding: 0 4px; border-radius: 3px; background: var(--lcd); color: #111; font: 800 italic 9px/1.45 var(--f-ui); letter-spacing: .04em; vertical-align: 1px; }
 #hud.shot > *:not(#podium-cap):not(#h-radio) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium; busted: the arrest, the radio on): no HUD */
 #podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
 #podium-cap.show { opacity: 1; }
@@ -160,6 +221,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #hud.drs #h-drs { display: block; }
 #h-drs.arm { color: var(--chalk); border-color: var(--chalk); }
 #h-drs.open { color: #0c1a08; background: #62e04c; border-color: #62e04c; text-shadow: none; }
+#h-tow { display: none; position: absolute; left: 8%; bottom: 25%; font: 700 italic clamp(8px, 2.2vh, 11px)/1 var(--f-ui); letter-spacing: .05em; color: #7fdcff; text-shadow: 0 1px 2px #000; }   /* the slipstream: in the wake of a car ahead */
+#h-tow.on { display: block; }
 /* time trial (js/game.js hx*): the turn counter under the altitude (def.turnNos), the live difference to the best run on the NAJ
    line under the clock (with a stored best run; the negative margins keep the line as high as before, so nothing below moves), the
    height profile under the minimap (def.alt) */
@@ -169,14 +232,29 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #hud.tt.ttd #h-delta { display: inline-block; }
 #h-delta.fast { color: var(--meter); }
 #h-delta.slow { color: #ff5a47; }
-#h-prof { display: none; position: absolute; right: calc(62px + var(--sr)); top: calc(14px + var(--st) + clamp(72px, 22vh, 112px)); width: clamp(96px, 30vh, 150px); height: clamp(34px, 11vh, 52px); background: rgba(10, 14, 20, .45); border-radius: 8px; overflow: hidden; }
+#h-prof { display: none; position: absolute; right: var(--map-r); top: calc(var(--map-t) + var(--map-h) + 4px); width: var(--map-w); height: clamp(34px, 11vh, 52px); background: rgba(10, 14, 20, .45); border-radius: 8px; overflow: hidden; }
 #hud.tt.ttp #h-prof { display: block; }
 #h-prof-c { width: 100%; height: 100%; display: block; }
 /* portrait (390 px): the turn counter under the speedometer (the popups under the clock are wider than the gap beside the altitude) */
 @media (orientation: portrait) {
   #hud.tt #h-turn { order: 1; margin-top: 5px; }
-  #hud.tt #h-dmg { order: 2; }
-  #h-prof { right: calc(8px + var(--sr)); top: calc(66px + var(--st) + clamp(64px, 20vw, 100px)); width: clamp(84px, 27vw, 130px); height: clamp(34px, 11vw, 50px); }
+  #hud.tt #h-dmgrow { order: 2; }
+  #h-prof { height: clamp(34px, 11vw, 50px); }
+}
+/* the start's reaction (js/game.js reactHUD): in the column under the map (hudCol: right under it, above the big message), its width, for a
+   few seconds after the player sets off: the label, then the seconds from the lights going out to the throttle; its left edge and the
+   seconds green (quick), gold (fair) or red (late, or on the gas too early). On a phone on its side the timing tower under it shows fewer rows meanwhile */
+#h-react { position: absolute; right: var(--map-r); width: var(--map-w); top: calc(var(--map-t) + var(--map-h) + 4px); box-sizing: border-box; padding: 3px 6px 4px 4px; border-radius: 8px; border-left: 4px solid var(--rx-c, var(--muted)); background: rgba(10, 14, 20, .45); text-align: center; color: var(--chalk); text-shadow: 0 1px 2px #000; pointer-events: none; visibility: hidden; opacity: 0; }
+#h-react.show { visibility: visible; opacity: 1; animation: colIn .2s ease-out; }
+#h-react span { display: block; font: 700 clamp(9px, 2.6vh, 12px)/1.2 var(--f-ui); letter-spacing: .05em; color: var(--muted); overflow-wrap: break-word; }
+#h-react b { display: block; font: 400 italic clamp(18px, 6.4vh, 28px)/1.05 var(--f-display); font-variant-numeric: tabular-nums; color: var(--rx-c, var(--chalk)); }
+#h-react.good { --rx-c: var(--meter); }
+#h-react.ok { --rx-c: var(--lcd); }
+#h-react.bad { --rx-c: #ff5a47; }
+#h-react.held span { color: #ff5a47; }
+@media (orientation: portrait) {
+  #h-react span { font-size: clamp(9px, 2.8vw, 12px); }
+  #h-react b { font-size: clamp(18px, 6.4vw, 28px); }
 }
 
 /* ================= TOUCH ================= */
@@ -192,11 +270,9 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .pedal.gas { width: clamp(70px, 23vh, 104px); height: clamp(96px, 35vh, 160px); background: rgba(40, 120, 40, .42); border-color: rgba(160, 255, 120, .6); }
 .pedal.gas.on { background: rgba(120, 230, 90, .5); }
 #c-gas { right: calc(14px + var(--sr)); }
-#c-brake { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); background: rgba(140, 30, 25, .4); border-color: rgba(255, 140, 120, .6); }
+/* the brake as tall as the gas, beside it (no handbrake: not on the screen, the keys or the pad) */
+#c-brake { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); height: clamp(96px, 35vh, 160px); background: rgba(140, 30, 25, .4); border-color: rgba(255, 140, 120, .6); }
 #c-brake.on { background: rgba(240, 70, 50, .5); }
-/* the handbrake: over the brake pedal (same side in every steering mode) */
-#c-drift { right: calc(28px + var(--sr) + clamp(70px, 23vh, 104px)); bottom: calc(24px + var(--sb) + clamp(80px, 29vh, 132px)); width: clamp(62px, 20vh, 92px); height: clamp(40px, 13vh, 56px); border-radius: 14px; background: rgba(150, 100, 20, .4); border-color: rgba(255, 200, 110, .6); }
-#c-drift.on { background: rgba(240, 170, 40, .5); }
 #c-wheel { position: absolute; left: calc(10px + var(--sl)); bottom: calc(8px + var(--sb)); width: clamp(130px, 44vh, 200px); height: clamp(130px, 44vh, 200px); display: none; }
 #wheel-rot { width: 100%; height: 100%; }
 #wheel-rot svg { width: 100%; height: 100%; display: block; }
@@ -207,12 +283,25 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #touch.m-wheel .steer, #touch.m-tilt .steer { display: none; }
 #touch.m-wheel #c-wheel { display: block; }
 #touch.m-tilt #tilt-ind { display: flex; }
-#touch.m-tilt #c-brake, #touch.m-tilt #c-drift { right: auto; left: calc(14px + var(--sl)); }
+#touch.ap #tilt-ind { display: none; }   /* (the pit stop on the autopilot, game.js pitBar: it steers, the phone's tilt is not used; the column under the map has the room) */
+#touch.m-tilt #c-brake { right: auto; left: calc(14px + var(--sl)); }
+@media (orientation: landscape) { #touch.m-tilt #c-brake { height: clamp(80px, 29vh, 132px); } }   /* (tilting, on its side: the brake on the left under the speedometer and the tyres, as low as before; the whole left half brakes anyway) */
 #btn-pause { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(8px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
 #btn-pause svg { width: 22px; height: 22px; fill: var(--chalk); }
 /* the camera during a race (under the pause button; a phone held upright has only the one behind the car) */
 #btn-cam { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(60px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
+@media (orientation: landscape) { #btn-pause, #btn-cam { right: calc(var(--map-r) + var(--map-w) + 8px); } }   /* (on its side: the pause left of the map, so the map and the texts under it stand right at the edge; upright it stays above the map) */
 #btn-cam svg { width: 24px; height: 24px; fill: var(--chalk); }
+/* the tyres for the next stop (a race with compounds and pits): a tyre with its band in the compound's colour, A for Samodejno; at the left,
+   beside the damage (#h-dmgrow), the right under the map free for the column of texts */
+#btn-tyre { position: relative; flex: none; margin-top: 3px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; pointer-events: auto; }
+#btn-tyre { --tc: #a3a8b1; --tl: 1; }
+#btn-tyre i { position: absolute; inset: 5px; border-radius: 50%; background: conic-gradient(var(--tc) calc(var(--tl) * 360deg), rgba(255,255,255,.14) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); }   /* the ring: as much of it coloured as the tyres on the car have left (game.js tyreHUD: --tl), from the top clockwise; the rest dark */
+#btn-tyre[data-c="S"] { --tc: #e03027; } #btn-tyre[data-c="M"] { --tc: #f2c616; } #btn-tyre[data-c="H"] { --tc: #eeeeee; }
+#btn-tyre span { position: relative; font: 800 italic 14px/1 var(--f-ui); color: var(--chalk); }
+/* (on its side with the steering wheel: under the speedometer the wheel's rim; the button right of the speedometer, just above the damage's row) */
+@media (orientation: landscape) { body:has(#touch.m-wheel) #h-dmgrow { position: relative; } body:has(#touch.m-wheel) #btn-tyre { position: absolute; left: clamp(120px, 36vh, 168px); bottom: 100%; margin: 0 0 2px; } }
 #btn-cam svg .lens { fill: rgba(14,18,25,.85); stroke: var(--chalk); stroke-width: 1.4; }
 #btn-cam.dis { display: none; }
 @media (orientation: portrait) and (pointer: coarse) { #btn-cam { display: none; } }
@@ -234,6 +323,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* ================= SCREENS ================= */
 .screen { position: absolute; inset: 0; z-index: 10; display: none; align-items: center; padding: calc(10px + var(--st)) calc(16px + var(--sr)) calc(10px + var(--sb)) calc(16px + var(--sl)); }
 .screen.show { display: flex; }
+#s-menu { padding: 0; align-items: stretch; }   /* (the menu: its own frame in a shadow root fills it) */
+#menu-host { position: absolute; inset: 0; }
 .panel { position: relative; background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 14px; padding: clamp(14px, 4.5vh, 26px) clamp(16px, 4vw, 30px); max-height: 100%; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .panel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; border-radius: 14px 0 0 14px; background: repeating-linear-gradient(180deg, var(--curb) 0 14px, var(--chalk) 14px 28px); }
 .panel h2 { margin: 0 0 8px; font: 400 italic clamp(22px, 7vh, 34px)/1 var(--f-display); letter-spacing: .01em; }
@@ -290,6 +381,16 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .val { font: 700 italic 13px/1 var(--f-ui); color: var(--lcd); min-width: 3em; }
 .tilt-live { position: relative; width: 120px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; }
 #tilt-live-bar { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; margin-left: -2px; background: var(--lcd); }
+/* Kontrole: two inputs for each action (the one waiting for a key, a button or an axis lit), the live bars of the steering and the pedals */
+.ctrl-tabs { margin: 0 0 6px; }
+.ctl-row .ctl-in { min-width: 7.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.ctl-row .ctl-in.wait { border-color: var(--lcd); color: var(--lcd); animation: rpBlink 1.2s steps(2) infinite; }
+.ctl-dev { font: 600 clamp(12px, 3.2vh, 14px)/1.2 var(--f-ui); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.ctl-bar { position: relative; width: 110px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; }
+.ctl-bar i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--meter); }
+.ctl-bar.st::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: rgba(255,255,255,.35); }
+.ctl-bar.st i { background: var(--lcd); }
+.ctl-row input[type="range"] { flex: 1; min-width: 110px; max-width: 220px; }
 .small-panel { width: min(360px, 80vw); }
 #s-results { justify-content: center; }
 .res-panel { width: min(700px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
@@ -312,41 +413,48 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #rotate #rotate-cam { margin-top: 6px; }
 #rotate.to-portrait .phone { animation-name: rotp; }
 @keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
-#toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+#toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; width: max-content; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
 #toast.show { opacity: 1; }
+@media (orientation: landscape) { #toast { max-width: min(80vw, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); } }   /* (on its side: between the steering arrows and the pedals, as #h-radio) */
+/* in a race: the last in the column under the map (game.js hudCol), its width; gone at once; no room yet: it waits */
+#toast.col { background: rgba(10, 14, 20, .45); border-left: 4px solid #3aa0ff; left: auto; right: var(--map-r); bottom: auto; top: calc(var(--map-t) + var(--map-h) + 4px); transform: none; width: var(--map-w); max-width: none; padding: 5px 6px 6px 4px; border-radius: 8px; font-size: 11.5px; line-height: 1.3; overflow-wrap: break-word; text-align: left; transition: none; }
+#toast.col.show { animation: colIn .2s ease-out; }
+#toast.col:not(.show), #toast.col.wait { visibility: hidden; }
+#toast.col::before { content: ''; display: inline-block; width: 1.15em; height: 1.15em; margin-right: .3em; vertical-align: -.22em; background: center / contain no-repeat var(--ic-info); }   /* (the "i" at the start of its first line, as the radio's RADIO tag, the lines under it the whole width) */
 #loading { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--asphalt); }
 .ld-logo { font: 400 italic clamp(28px, 9vh, 48px)/1 var(--f-display); }
 .ld-bar { width: 200px; height: 8px; border-radius: 4px; overflow: hidden; background: repeating-linear-gradient(90deg, var(--curb) 0 12px, var(--chalk) 12px 24px); opacity: .9; }
 .ld-bar i { display: block; height: 100%; width: 100%; background: var(--asphalt); transform-origin: right; animation: ld 1.4s ease-in-out infinite alternate; }
 @keyframes ld { from { transform: scaleX(1); } to { transform: scaleX(.1); } }
 #ld-msg { margin: 0; font: 600 14px/1.3 var(--f-ui); color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { #rotate .phone, .ld-bar i { animation: none; } #h-msg, #h-note, .tb { transition: none; } }
+@media (prefers-reduced-motion: reduce) { #rotate .phone, .ld-bar i { animation: none; } #h-msg, #h-note, .tb { transition: none; } #h-pit.on, #h-react.show, #h-msg.show, #h-ttsp.show, #h-teamradio.on, #toast.col.show { animation: none; } }
 @media (max-height: 360px) { .panel { padding: 12px 16px 12px 22px; } .btns { gap: 6px; margin-top: 8px; } .btn { min-height: 38px; padding: 8px 16px; } .row { margin: 4px 0; } }
 
 /* ================= PORTRAIT (chase camera) ================= */
 @media (orientation: portrait) {
+  :root { --map-r: calc(8px + var(--sr)); --map-t: calc(60px + var(--st)); --map-w: clamp(84px, 27vw, 130px); --map-h: clamp(64px, 20vw, 100px); }
   .h-lbl { font-size: clamp(10px, 3vw, 13px); }
   #h-pos { font-size: clamp(34px, 11vw, 54px); }
   #h-tot { font-size: clamp(12px, 3.6vw, 17px); }
   #h-time { font-size: clamp(15px, 4.8vw, 22px); }
   #h-best { font-size: clamp(10px, 2.8vw, 13px); }
   #h-split { font-size: clamp(10px, 3vw, 13px); }
-  #h-ttsp { top: calc(44% + clamp(24px, 9vw, 44px) + 10px); font-size: clamp(11px, 3.4vw, 14px); }
-  #h-map { right: calc(8px + var(--sr)); top: calc(60px + var(--st)); width: clamp(84px, 27vw, 130px); height: clamp(64px, 20vw, 100px); }
   #speedo { width: clamp(100px, 32vw, 150px); height: clamp(62px, 20vw, 94px); }
   #h-speed { font-size: clamp(20px, 7vw, 32px); }
   #h-gear { font-size: clamp(12px, 3.8vw, 18px); }
   #h-kmh { font-size: clamp(8px, 2.2vw, 10px); }
-  #h-note { top: 30%; width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
+  #h-note { top: calc(var(--st) + clamp(82px, 21.5vw, 92px)); width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
+  #hud.pkc #h-note { top: calc(var(--st) + clamp(94px, 24.5vw, 104px)); }
+  #hud.school #h-note { top: calc(var(--st) + clamp(88px, 24vw, 96px)); }
+  #hud.pol #h-note { top: calc(var(--st) + clamp(190px, 46vw, 196px)); }
   #h-lights { top: 36%; }
   #h-lights i { width: clamp(18px, 6vw, 30px); height: clamp(18px, 6vw, 30px); }
-  #h-msg { font-size: clamp(24px, 9vw, 44px); top: 44%; }
   .steer { width: clamp(60px, 19vw, 92px); height: clamp(60px, 19vw, 92px); bottom: calc(18px + var(--sb)); }
   #c-right { left: calc(24px + var(--sl) + clamp(60px, 19vw, 92px)); }
   .pedal { width: clamp(56px, 17vw, 84px); height: clamp(84px, 26vw, 128px); bottom: calc(18px + var(--sb)); }
+  .tb span { font-size: clamp(10px, 3.3vw, 15px); }   /* (ZAVORA within the narrow pedal) */
   .pedal.gas { width: clamp(62px, 19vw, 92px); height: clamp(100px, 32vw, 150px); }
-  #c-brake { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); }
-  #c-drift { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); bottom: calc(28px + var(--sb) + clamp(84px, 26vw, 128px)); width: clamp(56px, 17vw, 84px); height: clamp(38px, 12vw, 52px); }
+  #c-brake { right: calc(24px + var(--sr) + clamp(62px, 19vw, 92px)); height: clamp(100px, 32vw, 150px); }
   #c-wheel { width: clamp(120px, 44vw, 190px); height: clamp(120px, 44vw, 190px); bottom: calc(14px + var(--sb)); }
   #tilt-ind { bottom: calc(30px + var(--sb) + clamp(100px, 32vw, 150px)); width: clamp(62px, 19vw, 92px); }
   .screen { padding: calc(12px + var(--st)) calc(10px + var(--sr)) calc(12px + var(--sb)) calc(10px + var(--sl)); }
@@ -459,6 +567,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .on-players { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 6px; }
 .on-players div { font: 700 italic clamp(13px, 3.4vh, 15px)/1.25 var(--f-ui); color: var(--chalk); }
 .on-players .wait { color: var(--muted); }
+.on-players.many { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 3px 12px; }   /* (a quick match of up to 22: in columns) */
+.on-players.many div { font-size: clamp(12px, 3vh, 14px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .on-players .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.4); }
 .on-mycar { font: 700 italic clamp(13px, 3.4vh, 15px)/1 var(--f-ui); color: var(--chalk); min-width: 7.5em; text-align: center; }
 select.txt { width: min(15em, 100%); font-style: normal; }
@@ -545,6 +655,7 @@ select.txt:disabled { opacity: .75; }
 
 
 /* damage indicator (top-down car, front up): zones green → yellow → red */
+#h-dmgrow { display: flex; align-items: center; gap: 8px; }   /* (the damage and beside it the tyre button) */
 #h-dmg { display: flex; align-items: center; gap: 5px; margin-top: 3px; pointer-events: none; }
 #h-dmg svg { width: clamp(20px, 6.2vh, 28px); height: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 #h-dmg .dmg-body { fill: rgba(10,14,20,.6); stroke: rgba(255,255,255,.8); stroke-width: 1.6; }
@@ -557,6 +668,10 @@ select.txt:disabled { opacity: .75; }
 #h-tyre.cS { border-color: #e8352b; } #h-tyre.cM { border-color: #f2c616; } #h-tyre.cH { border-color: #f4f4f0; }   /* (the slicks' compound, as the band on a formula's tyres) */
 #h-tyre.worn { color: #ffb347; }
 #h-tyre.bad { background: rgba(190, 30, 30, .78); }
+#h-flt { display: none; margin-top: 3px; gap: 4px; flex-wrap: wrap; pointer-events: none; }   /* failures: a cut tyre, hot brakes, a hot engine */
+#h-flt.on { display: flex; }
+#h-flt span { padding: 1px 6px; border-radius: 9px; color: #fff; font: 700 italic clamp(9px, 2.5vh, 12px)/1.25 var(--f-ui); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+#h-flt .pk { background: rgba(190, 30, 30, .82); } #h-flt .br { background: rgba(214, 104, 18, .85); } #h-flt .en { background: rgba(196, 58, 28, .85); }
 /* flags: a yellow flag, the safety car board, the countdown to give a place back */
 #h-flag { display: none; margin-top: 3px; padding: 2px 7px; border-radius: 4px; font: 800 italic clamp(9px, 2.6vh, 12px)/1.2 var(--f-ui); white-space: nowrap; pointer-events: none; }
 #h-flag.on { display: inline-block; }
@@ -619,7 +734,8 @@ select.txt:disabled { opacity: .75; }
 .tw-r.fin em::after { content: ' \2691'; }
 .tw-sep { height: .5em; line-height: .2; text-align: center; color: rgba(255, 255, 255, .7); }
 @media (orientation: landscape) {
-  #h-tower { position: fixed; margin: 0; right: calc(62px + var(--sr)); top: calc(14px + var(--st) + clamp(72px, 22vh, 112px)); width: clamp(96px, 30vh, 150px); font-size: clamp(8px, 2.4vh, 11px); }
+  #h-tower { position: fixed; margin: 0; right: var(--map-r); top: calc(var(--map-t) + var(--map-h) + 6px); width: var(--map-w); font-size: clamp(8px, 2.4vh, 11px); }   /* (the last in the column under the map, game.js hudCol: fewer rows, or none, when the texts above take the room) */
+  #h-tower.nofit { visibility: hidden; }
   .tw-r { min-width: 0; }
 }
 /* the lap table on the results: every driver's laps (the race's fastest purple, each driver's best green), scrolled sideways when long */
@@ -673,7 +789,7 @@ select.txt:disabled { opacity: .75; }
 #hud.pkn #h-note { display: none; }
 #pk-note.show { opacity: 1; transform: translateX(-50%) scale(1); }
 #pk-note i { display: block; width: 1.9em; height: 1.9em; border-radius: 50%; background: rgba(255, 255, 255, .16); }
-#pk-note svg { display: block; width: 100%; height: 100%; }
+#pk-note svg { display: block; width: 100%; height: 100%; transform-origin: 50% 50%; }
 #pk-note small { min-width: 3.2em; font-size: .78em; font-weight: 700; opacity: .85; text-align: right; font-variant-numeric: tabular-nums; }
 #pk-note.s1 { opacity: 0; }
 #pk-note.s1.show { opacity: .78; }
@@ -703,13 +819,43 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 
 /* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
 .pit-row { margin-top: 12px; }
-.wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
+/* a friend's challenge: the time to beat, the track, the way, the car and the conditions; its button on the title */
+.chal-card { margin: 10px 0 14px; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.06); border: 1px solid var(--panel-edge); }
+.chal-card .chal-time { font: 400 italic clamp(30px, 8vh, 46px)/1 var(--f-display); color: var(--lcd); text-align: center; margin-bottom: 10px; }
+.chal-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font: 600 14px/1.35 var(--f-ui); }
+.chal-card dt { opacity: .7; } .chal-card dd { margin: 0; } .chal-card .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.btn.chalbtn { border-color: var(--lcd); color: var(--lcd); }
+/* the championship over the internet (the room): its tracks (done dimmed, the next one marked), the standings */
+.on-ch { margin: 4px 0 6px; }
+.on-ch-tracks { margin: 4px 0 6px; padding-left: 22px; font: 600 14px/1.5 var(--f-ui); }
+.on-ch-tracks li.done { opacity: .55; } .on-ch-tracks li.next { color: var(--lcd); }
+.on-ch-tracks .btn.mini { padding: 0 7px; min-height: 0; line-height: 1.5; margin-left: 6px; }
+.ch-tab td small { opacity: .8; }
+.pause-strat { margin: 12px 2px 0; font: 600 13px/1.4 var(--f-ui); color: var(--chalk); opacity: .9; }   /* the strategy as it stands (fuel, tyres, a stop now) */
+.wx-row .seg button, .pit-row .seg button, .seg.nw button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
 /* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
 #rp-hl-cap { position: absolute; left: 50%; bottom: calc(80px + var(--sb)); transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
 #rp-hl-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }
 #replay-ui .rp-bar #rp-hl.on { background: rgba(255,207,46,.85); color: #14181f; border-color: #fff; }
+/* the best moment after a race (Video po dirki): while it plays and is recorded only Preskoči on the replay's bar; then the video under the
+   results (a tap: big, a tap again: back) with Deli */
+#replay-ui .rp-bar .rp-skip { display: none; }
+#replay-ui.auto .rp-bar button { display: none; }
+#replay-ui.auto .rp-bar .rp-skip { display: block; padding: 0 16px; }
+#replay-ui .rp-bar .rp-skip::after { content: ' \25b6\25b6'; font-size: .8em; }
+.res-vid { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 6px 8px 6px 6px; border-radius: 10px; border: 2px solid rgba(255,198,41,.4); background: rgba(255,198,41,.08); }
+.res-vid.off { display: none; }
+.res-vid { cursor: zoom-in; }
+.res-vid video { flex: none; height: clamp(60px, 16vh, 112px); max-width: 46%; border-radius: 6px; background: #000; }
+.res-vid.big { position: fixed; inset: 0; z-index: 60; margin: 0; border: 0; border-radius: 0; flex-direction: column; justify-content: center; gap: 12px; padding: calc(16px + var(--st)) calc(16px + var(--sr)) calc(16px + var(--sb)) calc(16px + var(--sl)); background: rgba(4,6,10,.9); cursor: zoom-out; }
+.res-vid.big video { height: auto; width: auto; max-width: 100%; max-height: calc(100% - 110px); }
+.res-vid.big .rv-txt { flex: none; align-items: center; text-align: center; max-width: 100%; }
+.res-vid .rv-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font: 600 clamp(11px, 3vh, 14px)/1.3 var(--f-ui); }
+.res-vid .rv-txt b { font: 700 italic clamp(12px, 3.4vh, 16px)/1.2 var(--f-ui); color: var(--lcd); }
+.res-vid .rv-txt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.res-vid .rv-share { flex: none; min-height: 40px; padding: 8px 16px; }
 @media (max-width: 600px) {   /* a phone upright: the replay's buttons in two rows, the progress and the caption above them */
   #replay-ui .rp-bar { flex-wrap: wrap; justify-content: center; width: calc(100% - 24px); }
   #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
@@ -723,3 +869,54 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 #pk-fly span { display: block; font: 700 clamp(13px, 3.2vh, 17px)/1.2 var(--f-ui); color: var(--lcd); }
 #pk-fly em { display: block; margin-top: 4px; font: 400 clamp(9px, 1.8vh, 11px)/1.2 var(--f-ui); font-style: normal; color: rgba(246, 246, 241, .6); }
 body.pkfly #touch { visibility: hidden; }
+
+/* ================= THE FLEET (42 vehicles in 10 categories) ================= */
+/* the car screen: the categories (chips) across the top of the showroom and the cars of the chosen one (a strip) along its bottom, both
+   between the screen's left edge and the panel (a phone held upright: full width, both above the car); each row scrolls sideways */
+.car-cats, .car-strip { position: absolute; z-index: 1; left: calc(12px + var(--sl)); right: calc(min(430px, 54vw) + 28px + var(--sr)); display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.car-cats::-webkit-scrollbar, .car-strip::-webkit-scrollbar { display: none; }
+.car-cats { top: calc(8px + var(--st)); height: 34px; }
+.car-strip { bottom: calc(8px + var(--sb)); height: 44px; }
+.cat-chip { flex: 0 0 auto; height: 100%; padding: 0 13px; border-radius: 17px; border: 2px solid rgba(255,255,255,.24); background: rgba(14,18,25,.66); font: 700 italic 13px/1 var(--f-ui); color: var(--chalk); white-space: nowrap; cursor: pointer; }
+.cat-chip.sel { background: var(--chalk); border-color: var(--chalk); color: #14181f; }
+.car-chip { flex: 0 0 auto; height: 100%; min-width: 84px; padding: 3px 10px 3px 9px; border-radius: 10px; border: 2px solid rgba(255,255,255,.2); background: rgba(14,18,25,.7); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; text-align: left; cursor: pointer; }
+.car-chip b { font: 700 italic 13px/1.05 var(--f-ui); white-space: nowrap; color: var(--chalk); }
+.car-chip span { display: flex; align-items: center; gap: 6px; font: 700 italic 11px/1 var(--f-ui); white-space: nowrap; }
+.car-chip i { font-style: italic; padding: 1px 4px; border-radius: 3px; background: rgba(255,198,41,.9); color: #1b1b1b; font-size: 10px; }
+.car-chip em { font-style: normal; } .car-chip em.pr { color: var(--lcd); } .car-chip em.ok { color: var(--meter); font-weight: 800; }
+.car-chip.sel { border-color: var(--curb); background: rgba(160,36,28,.78); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
+.car-chip.sel em.pr { color: #ffe08a; }
+.car-cat { margin: 3px 0 2px; font: 700 italic 11.5px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+@media (orientation: portrait) {
+  .car-cats, .car-strip { left: calc(10px + var(--sl)); right: calc(10px + var(--sr)); }
+  .car-cats { top: calc(8px + var(--st)); }
+  .car-strip { top: calc(48px + var(--st)); bottom: auto; }
+  #s-car .car-nav { top: max(16%, calc(126px + var(--st))); }   /* (the arrows below the strip on a short phone too) */
+}
+/* the career's garage by category */
+.garage .gcat { grid-column: 1 / -1; margin: 6px 2px 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--lcd); }
+.garage .gcat:first-child { margin-top: 0; }
+/* the damage picture's wheels (a car whose wheels come off): dark, a lost one red and dashed */
+#h-dmg .dmg-wh { display: none; fill: #20252d; stroke: rgba(255,255,255,.85); stroke-width: 1; }
+#h-dmg.whl .dmg-wh { display: inline; }
+#h-dmg .dmg-wh.lost { fill: rgba(255,59,43,.18); stroke: #ff3b2b; stroke-width: 1.2; stroke-dasharray: 1.6 1.1; }
+/* a destroyed car: the words under the minimap, Odstopi (a time trial, qualifying: the run again) */
+#h-wreck { display: none; position: absolute; right: var(--map-r); top: calc(var(--map-t) + var(--map-h) + 4px); width: var(--map-w); flex-direction: column; align-items: center; gap: 5px; pointer-events: none; }   /* (the first in the column under the map, below the height profile: game.js hudCol) */
+#h-wreck.show { display: flex; }
+#h-wreck b { align-self: stretch; padding: 3px 6px 2px; border-radius: 5px; background: rgba(200,28,22,.88); color: #fff; font: 800 italic clamp(11px, 3.1vh, 14px)/1.2 var(--f-ui); letter-spacing: .06em; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.5); box-shadow: 0 2px 6px rgba(0,0,0,.45); animation: wreckPulse 1s ease-in-out infinite alternate; }
+#btn-retire { pointer-events: auto; min-height: 36px; padding: 6px 14px; border-radius: 18px; border: 2px solid #ff8a7a; background: rgba(14,18,25,.82); color: #ffd3cc; font: 700 italic 14px/1 var(--f-ui); cursor: pointer; }
+#btn-retire:active { background: rgba(200,28,22,.5); }
+@keyframes wreckPulse { from { opacity: 1; } to { opacity: .72; } }
+@media (prefers-reduced-motion: reduce) { #h-wreck b { animation: none; } }
+/* the results: a retired car (Odstop) greyed; the buttons in two rows when they do not fit in one */
+#res-table tr.dnf td { color: var(--muted); }
+#res-table tr.me.dnf td { color: #111; }
+.res-panel > .btns.horiz { flex-wrap: wrap; row-gap: 8px; }
+/* the championship: Izberi avto (the car screen, then back) */
+.ch-car #ch-pick { margin-left: 4px; }
+.car-cats.fr, .car-strip.fr { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 30px), transparent); }
+.car-cats.fl, .car-strip.fl { -webkit-mask-image: linear-gradient(90deg, transparent, #000 30px); mask-image: linear-gradient(90deg, transparent, #000 30px); }
+.car-cats.fl.fr, .car-strip.fl.fr { -webkit-mask-image: linear-gradient(90deg, transparent, #000 30px, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, transparent, #000 30px, #000 calc(100% - 30px), transparent); }
+.res-panel > .btns.horiz .btn { padding-left: 15px; padding-right: 15px; white-space: nowrap; }
+@media (orientation: landscape) and (max-height: 500px) { .res-panel > .btns.horiz .btn { font-size: clamp(13px, 3.9vh, 17px); padding-left: 12px; padding-right: 12px; } }
+.champ-panel > .btns.horiz { flex-wrap: wrap; row-gap: 8px; }   /* (a long "Naslednja dirka: …" on a narrow phone: the other buttons in a row above it, none off the panel) */

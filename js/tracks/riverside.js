@@ -30,6 +30,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: [0, 0], runoff: 1.1, inner: 5, side: 7.5, gradeForce: true, elevSmooth: 12, realKm: 5.271, noCurbs: true, offSurface: 'gravel',
     dust: { rate: 1.1, life: 1.6, size: 1.2, s0: 1.8, rise: 1.3, alpha: 0.9, drag: 0.7, col: [0.8, 0.68, 0.5] },   // (sand and dust past the edges of the road: the cars raise it)
     elev: RSD_H.map((h, i) => [i / RSD_H.length, h / 10]),
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[938, 1010, 'bend']],   // Turn 2
     // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only
     names: [
       ["Zavoj 1",-22.9,-594.9,["Turn one, a fast right, and up the hill!","Through Turn One, the climb begins!","Turn one, uphill into the esses!"]],
