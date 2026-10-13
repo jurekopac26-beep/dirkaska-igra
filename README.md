@@ -1061,6 +1061,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 - **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK z 9 tekmeci, GOLJAT s 7, KAMEN PUŠČAVA s 5. S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
 - V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
 - Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
+- **Podroben model v garaži:** LEV S je na zaslonu za izbiro avta prikazan s podrobnim modelom (`js/garage/levs.js`): gladka karoserija z zaobljenimi robovi, kovinski lak s prozornim lakom v odsevih garaže (v vsaki barvi iz menija), temna prosojna stekla z vidnimi sedeži, reže med paneli, žarometa s projektorjema, LED obročema in LED dnevno lučjo, zadnji luči z LED svetlobnim vodnikom, maska s satjem, platišča s petimi dvojnimi kraki, zavorni diski in rdeče čeljusti ter **strešni prtljažnik** z rezervnim kolesom in dvema kanistroma za bencin (brez napisov); na dnu prtljažnika so aluminijasta vodila z režami za elemente, ki jih dodamo pozneje. Model je samo v garaži: na dirki ostane navadni model (brez prtljažnika), ob začetku dirke pa se podrobni model sprosti iz grafičnega pomnilnika, zato telefon med dirko ni nič bolj obremenjen. Na telefonu (Nastavitve · Detajli avtov: Normalni) ima okoli 160.000 trikotnikov in 34 klicev risanja, na računalniku (Visoki) je bolj podroben.
 
 ### Mali avti
 
@@ -1324,6 +1325,8 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 3. V `index.html` dodaj `<script src="js/cars/<id>.js"></script>` za zadnjim vozilom, pred `js/core.js` (vozila se dodajajo le na konec: nobeno se ne briše ali premakne, staro se le upokoji z `retired: true`), id dodaj na konec seznama `ROSTER` v `tests/fleet.test.js` in zaženi `node tools/stamp.js`.
 4. Videz preveri s `node tools/carshots.mjs <id>` in `node tools/carshots.mjs --cat <kategorija>`.
 5. `node tests/fleet.test.js` (vozne lastnosti po `expect`, deli in kolesa, ki odpadejo, rezervoar), `node tests/kit.test.js`, `node tests/lang.test.js` (angleški opis) in `node tests/browser/fleet.test.mjs` (proračun trikotnikov). Vozilo z napako v opisu igra preskoči (test pove, kaj je narobe), druga vozila in referenčne vrednosti testov (golden) ostanejo enaki.
+
+6. Po želji podroben model za garažo (samo zaslon za izbiro avta): nova datoteka `js/garage/<id>.js` po vzoru `js/garage/levs.js` (`Garage.add(id, build)`, opis ogrodja na vrhu `js/garage.js`), v `index.html` za `js/garage.js`, nato `node tools/stamp.js` in `node tests/browser/garage.test.mjs`.
 
 ### Nova proga
 

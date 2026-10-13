@@ -39,11 +39,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-1.685, 0.815, 0.25, 0.74, 0.56, 1.06, 0.045, 'gr', 0.1],           // (the rear arch's end)
           [-1.636, 0.83, 0.25, 0.78, 0.6, 1.1, 0.05, 'gr', 0.1],
           [-1.57, 0.843, 0.26, 0.79, 0.59, 1.175, 0.07, 'gr', 0.1],           // (halfway: the C-pillar's window band twists less)
-          [-1.5026, 0.855, 0.27, 0.8, 0.58, 1.25, 0.09, 'gr', 0.1],            // the quarters' rear ends (the rear glass curving up to the roof)
-          [-1.32, 0.86, 0.28, 0.74, 0.55, 1.3, 0.1, 'r', 0.1],                 // the rear axle: the glass's top under the roof's lip, the spoiler
-          [-1.2, 0.85, 0.27, 0.8, 0.5, 1.37, 0.055, 'r', 0.1],                 // the roof's rear edge (the C-pillar's solid paint)
-          [-1.137, 0.845, 0.265, 0.86, 0.52, 1.39, 0.045, 'r', 0.1],           // the side glass's end (its foot rising to it: a band of paint)
-          [-1.004, 0.835, 0.255, 0.9, 0.52, 1.4, 0.046, 'r', 0.1],
+          [-1.5026, 0.855, 0.27, 0.84, 0.58, 1.25, 0.09, 'gr', 0.1],           // the quarters' rear ends (the rear glass curving up to the roof)
+          [-1.32, 0.86, 0.28, 0.87, 0.55, 1.3, 0.1, 'r', 0.1],                 // the rear axle: the glass's top under the roof's lip, the spoiler
+          [-1.2, 0.85, 0.27, 0.89, 0.535, 1.37, 0.055, 'r', 0.1],              // the roof's rear edge (the C-pillar's solid paint)
+          [-1.137, 0.845, 0.265, 0.9, 0.52, 1.39, 0.045, 'r', 0.1],           // the side glass's end (its foot rising to it: a band of paint)
+          [-1.004, 0.835, 0.255, 0.925, 0.52, 1.4, 0.046, 'r', 0.1],
           [-0.955, 0.83, 0.25, 0.94, 0.52, 1.405, 0.046, 'r', 0.1],            // the rear arch's front end
           [-0.59, 0.825, 0.24, 0.95, 0.53, 1.42, 0.045, 'r', 0.1],             // the B-pillar (the door's rear edge), the roof's top
           [0.18, 0.83, 0.22, 0.9, 0.55, 1.34, 0.048, 'gf', 0.1],               // the windscreen's top

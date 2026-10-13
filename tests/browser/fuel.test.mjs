@@ -82,7 +82,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(12, true); g.resume(); }); await frames(3);
   const e1 = await page.evaluate(() => { const P = window.__game.race.player; return { car: P.m.id, text: document.getElementById('h-fuel').textContent, fuel: +P.fuel.toFixed(3), tank: P.tankKg, kg: P.fuelKg }; });
   const e2 = await page.evaluate(async () => { const g = window.__game, P = g.race.player; let done = false, low = 1; g.pause();
-    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; g.sim(0.25, true); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.97; }
+    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; g.sim(0.25, true); if (P.stuckT > 3 || P.wrongT > 3) g.race.rescue(P); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.97; }   // (stuck in a first-corner pile-up after the frames drawn on a slow machine: back on the road, as the game's autopilot does)
     P.pitWant = false; g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))); g.pause();
     const out = { done, fuel: +P.fuel.toFixed(3), low: +low.toFixed(3), gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /BATERIJA POLNA|POLNO/.test(m)), kg: P.fuelKg };
     g.resume(); return out; });
