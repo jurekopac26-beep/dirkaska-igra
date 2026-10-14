@@ -54,7 +54,7 @@ try {
         inView: br.left >= 0 && br.top >= 0 && br.right <= innerWidth && br.bottom <= innerHeight, barIn: tk.left >= br.left && tk.right <= br.right && tk.top > br.top + br.height / 2 && br.bottom - tk.bottom <= 14 && tk.width >= 0.8 * br.width,
         clear: ctl.length > 0 && ctl.every(c => c.right <= br.left || c.left >= br.right || c.bottom <= br.top || c.top >= br.bottom), txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx() };
       g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
-      while (P2.wreck.rule.due > 0.45) g.sim(0.05, true);   // (the bar under 20 %: the hub's fire)
+      P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
       const ox = br.left > 40 ? br.left / 2 : (br.right + innerWidth) / 2, oy = br.top + br.height / 2, beside = document.elementFromPoint(ox, oy);   // (a tap beside the button, at its height)
       if (beside) beside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: ox, clientY: oy }));
