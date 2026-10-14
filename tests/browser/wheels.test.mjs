@@ -1,5 +1,6 @@
 // The wheel rule in the game (core.js wheelRule; game.js WHEEL_RULE: the player's SOKOL, offline, a test with one car first): a hit at
-// 79 % takes a wheel off (KOLO JE ODPADLO!, no Namesti kolo), the second follows, the car stops and the game is over: KONEC IGRE with a
+// 79 % takes a wheel off (no words, no Namesti kolo; no fire yet: in the last 20 % of the 3 s a small one where the wheel was, with the
+// second wheel the whole car), the second follows 3 s on, the car stops and the game is over: KONEC IGRE with a
 // big PONOVI IGRO (no results first; the HUD and the controls off). PONOVI IGRO: the same race again, the car whole; Rezultati: the
 // results, the player retired. Another car (KAZE RS): no rule. The damage picture on the HUD (the car, its parts' %, the whole %) on
 // screen, clear of the team radio and the map. Upright (360 x 640) and on its side (640 x 360), in English too.
@@ -24,10 +25,15 @@ try {
       const dR = rr('h-dmg'), lay = { clear: !hit(dR, rr('h-teamradio')) && !hit(dR, rr('h-map')), inView: dR.left >= 0 && dR.right <= innerWidth && dR.bottom <= innerHeight, w: Math.round(dR.width), tot: document.getElementById('dmg-tot').textContent };
       tr0.classList.remove('on'); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0];
       const rule = !!W.rule, others = g.race.cars.filter(c => !c.isPlayer).every(c => !(c.wreck && c.wreck.rule));
+      const fire0 = Render.burning(P);   // (79 %, no wheel off yet: no fire)
       P.dmg = 0.79; Core.applyDamage(P, 0.03, P.m.len * 0.5, 0); const n1 = W.nL;
+      P.dmg = Math.min(P.dmg, 0.6); P.dz = P.dz.map(d => Math.min(d, 0.6));   // (the first wheel off: a knock on the autopilot's way meanwhile takes no more; its 3 s run on)
       g.resume(); await frames(4); g.pause();
-      const msg = document.getElementById('h-msg').textContent, fix = !document.getElementById('btn-rescue').classList.contains('off');
+      const msg = document.getElementById('h-msg').classList.contains('show') ? document.getElementById('h-msg').textContent : '', fix = !document.getElementById('btn-rescue').classList.contains('off'), fire = Render.burning(P);
+      W.rule.due = Math.min(W.rule.due, 0.5); g.sim(0.05, true);   // (the last 20 % of the 3 s: the hub where the wheel was on fire; its time set, not driven out: wheels.test.js times it)
+      await frames(2); const F1 = Render.viewOf(P).fire, hub = { on: Render.burning(P), lvl: F1 && F1.lvl, k: F1 && F1.hk, wk: [0, 1, 2, 3].find(j => W.wl & (1 << j)), n: W.nL };
       g.sim(5, true); await frames(6);   // (KONEC IGRE came up in the step: no resume, that would close it)
+      hub.whole = Render.viewOf(P).fire && Render.viewOf(P).fire.lvl;
       const sc = document.getElementById('s-over'), b = document.getElementById('over-again').getBoundingClientRect(), p = sc.querySelector('.panel').getBoundingClientRect();
       const over = { screen: g.screen, shown: sc.classList.contains('show'), n: W.nL, out: g.race.isOut(P), v: P.speed, phase: g.phase, title: sc.querySelector('h2').textContent, btn: document.getElementById('over-again').textContent,
         bh: Math.round(b.height), bw: Math.round(b.width), pw: Math.round(p.width), oneLine: document.getElementById('over-again').scrollWidth <= document.getElementById('over-again').clientWidth + 1, inView: p.top >= 0 && p.left >= 0 && p.bottom <= innerHeight + 0.5 && p.right <= innerWidth + 0.5, hud: document.getElementById('hud').classList.contains('off'), touch: document.getElementById('touch').classList.contains('off'),
@@ -36,22 +42,23 @@ try {
       for (let k = 0; k < 50 && !(g.race && g.race.player !== P); k++) await wait(100);
       const P2 = g.race.player, again = { fresh: P2 !== P, rule: !!(P2.wreck && P2.wreck.rule), nL: P2.wreck.nL, dmg: P2.dmg, gone: !sc.classList.contains('show'), phase: g.phase, track: g.race.track.def.id };
       // once more to KONEC IGRE, then Rezultati: the results, the player out (Odstop)
-      g.pause(); g.sim(9, true); P2.dmg = 0.85; Core.applyDamage(P2, 0.2, P2.m.len * 0.5, 0); g.sim(4, true); await frames(4);
-      const big = { n: P2.wreck.nL, shown: sc.classList.contains('show') };
+      g.pause(); g.sim(9, true); P2.dmg = 0.85; Core.applyDamage(P2, 0.2, P2.m.len * 0.5, 0); await frames(2); const big = { lvl: Render.viewOf(P2).fire && Render.viewOf(P2).fire.lvl };
+      g.sim(4, true); await frames(4); Object.assign(big, { n: P2.wreck.nL, shown: sc.classList.contains('show') });
       document.getElementById('over-res').click(); await frames(3);
       const res = { shown: document.getElementById('s-results').classList.contains('show'), gone: !sc.classList.contains('show') };
-      return { rule, others, lay, n1, msg, fix, over, again, big, res };
+      return { rule, others, lay, n1, msg, fix, fire, fire0, hub, over, again, big, res };
     });
     console.log(tag, JSON.stringify(a));
     const O = a.over;
     T.check(`${tag}: the rule on the player's SOKOL only (not the AI)`, a.rule && a.others);
     T.check(`${tag}: the damage picture (the car, its parts' %, the whole %) on screen, clear of the team radio and the map`, a.lay.clear && a.lay.inView && /^\d+ %$/.test(a.lay.tot) && a.lay.tot !== '0 %', JSON.stringify(a.lay));
-    T.check(`${tag}: a hit at 79 %: a wheel off, the word on the HUD, no Namesti kolo`, a.n1 === 1 && /KOLO JE ODPADLO|WHEEL OFF/.test(a.msg) && !a.fix, `${a.n1} off, "${a.msg}", fix ${a.fix}`);
+    T.check(`${tag}: a hit at 79 %: a wheel off, no words (KOLO JE ODPADLO no more), no Namesti kolo, no fire (none before either)`, a.n1 === 1 && !/KOLO JE ODPADLO|WHEEL OFF/.test(a.msg) && !a.fix && !a.fire && !a.fire0, `${a.n1} off, "${a.msg}", fix ${a.fix}, fire ${a.fire0} -> ${a.fire}`);
+    T.check(`${tag}: the last 20 % of the 3 s: a small fire where the wheel was (the hub's); the second wheel: the whole car`, a.hub.on && a.hub.lvl === 1 && a.hub.k === a.hub.wk && a.hub.n === 1 && a.hub.whole === 2, JSON.stringify(a.hub));
     T.check(`${tag}: the second one off, the car stopped, out: KONEC IGRE (no results first), the HUD and the controls off`, O.shown && O.screen === 'over' && O.n >= 2 && O.out && O.v < 0.6 && O.phase === 'done' && !O.res && O.hud && O.touch, JSON.stringify(O));
     T.check(`${tag}: ${en ? 'GAME OVER, PLAY AGAIN' : 'KONEC IGRE, PONOVI IGRO'}: big (>= 64 px high, most of the panel's width, one line), the panel all on screen`,
       O.title === (en ? 'GAME OVER' : 'KONEC IGRE') && O.btn === (en ? 'PLAY AGAIN' : 'PONOVI IGRO') && O.bh >= 64 && O.bw >= 0.8 * O.pw && O.inView && O.oneLine, `"${O.title}", "${O.btn}" ${O.bw} x ${O.bh}`);
     T.check(`${tag}: PONOVI IGRO: the same race again, the car whole, under the rule`, a.again.fresh && a.again.gone && a.again.rule && a.again.nL === 0 && a.again.dmg === 0 && a.again.track === 'jezero' && a.again.phase !== 'done', JSON.stringify(a.again));
-    T.check(`${tag}: a hard hit at 85 %: two off at once, KONEC IGRE; Rezultati: the results`, a.big.n >= 2 && a.big.shown && a.res.shown && a.res.gone, JSON.stringify(a.big) + ' ' + JSON.stringify(a.res));
+    T.check(`${tag}: a hard hit at 85 %: two off at once, the whole car on fire at once, KONEC IGRE; Rezultati: the results`, a.big.n >= 2 && a.big.lvl === 2 && a.big.shown && a.res.shown && a.res.gone, JSON.stringify(a.big) + ' ' + JSON.stringify(a.res));
     T.check(`${tag}: no errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
