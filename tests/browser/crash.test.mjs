@@ -46,7 +46,7 @@ try {
     Core.applyDamage(P, 0.12, P.m.len / 2, 0); Render.frame(0.016, 1, P, 'iso', {});
     const I2 = Render.crashInfo(), me2 = I2.cars.find(q => q.player);
     return { XC: I.XC, XR: Object.assign({}, Core.XR), xOn: me.xOn, xd: me.xd, dense: I.cars.filter(q => q.xd).length, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, cl: me2.cl.length, shards: I2.shards, ground: I2.ground }; });
-  T.check('off by default: no switch on (Core: roll, bump, ai, handle; Render: body, glass, paint, parts, drag, dust), no car dense, the body as the kit built it', JSON.stringify(off.r.XR) === '{"roll":0,"bump":0,"ai":0,"handle":0}' && !off.r.XC.parts && !off.r.XC.drag && !off.r.XC.dust && !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
+  T.check('off by default: no switch on (Core: roll, bump, ai, handle, glass; Render: body, glass, paint, parts, drag, dust), no car dense, the body as the kit built it', JSON.stringify(off.r.XR) === '{"roll":0,"bump":0,"ai":0,"handle":0,"glass":0}' && !off.r.XC.parts && !off.r.XC.drag && !off.r.XC.dust && !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
   T.check('off: a dent the old way (no clusters), nothing on the road', off.r.cl === 0 && off.r.shards === 0 && off.r.ground === 0, JSON.stringify(off.r));
   T.check('off: no page errors', !off.errors.length, off.errors.slice(0, 3).join(' | '));
 
@@ -81,6 +81,13 @@ try {
     // the car drives on: the mirror stays where it fell
     for (let k = 0; k < 30; k++) { P.x += Math.cos(P.h) * 0.5; P.z += Math.sin(P.h) * 0.5; P.px = P.x; P.pz = P.z; Render.frame(1 / 30, 1, P, 'iso', {}); }
     out.ground2 = Render.crashInfo().ground - g0;
+    // driven over (the user's): the car back over the glass three times at 54 km/h (the race's clock on a second each time): each pass
+    // scatters it, some pieces off, the others aside, smaller and faded; the car put back where it stood
+    { const g = window.__game, g0 = Render.xShOn(P.x - Math.cos(P.h) * 15, P.z - Math.sin(P.h) * 15, 3), gx = g0.cx, gz = g0.cz, x1 = P.x, z1 = P.z; out.run = [Render.xShOn(gx, gz, 3)];   // (through the middle of the glass)
+      for (let pass = 0; pass < 3; pass++) { g.race.time += 1; P.x = gx - Math.cos(P.h) * 6; P.z = gz - Math.sin(P.h) * 6; P.vx = Math.cos(P.h) * 15; P.vz = Math.sin(P.h) * 15; P.speed = 15;
+        for (let k = 0; k < 24; k++) { P.x += Math.cos(P.h) * 0.5; P.z += Math.sin(P.h) * 0.5; P.px = P.x; P.pz = P.z; Render.frame(1 / 30, 1, P, 'iso', {}); }
+        out.run.push(Render.xShOn(gx, gz, 3)); }
+      P.vx = P.vz = 0; P.speed = 0; P.x = P.px = x1; P.z = P.pz = z1; Render.frame(1 / 30, 1, P, 'iso', {}); }
     // the left side again and again: the roof sinks on the left
     for (let k = 0; k < 5; k++) hit(P, [0.12, [0.1, -0.05, 0.15, 0, 0.05][k], -1]);
     const xc = v.xc, R = xc.rest, a = v.body.geometry.attributes.position.array, B = xc.B; let sL = 0, nL = 0, sR = 0, nR = 0;
@@ -93,6 +100,8 @@ try {
   T.check('glass: each blow on the right breaks one more pane, on the right or the windscreen / rear window, never on the left',
     Gs.steps.every((s, j) => s.filter(Boolean).length === j + 1) && newIdx.every(k => k >= 0 && side(k) !== -1), JSON.stringify({ steps: Gs.steps, sides: Gs.sides }));
   T.check('glass: pieces lie on the road after', Gs.shards > 10, 'shards ' + Gs.shards);
+  T.check('glass driven over three times through its middle: each pass less of it (some off, the rest aside and smaller), after three passes at most 85 % of the pieces and 80 % of their size left',
+    Gs.run[0].n > 10 && Gs.run[1].n < Gs.run[0].n && Gs.run.every((q, k) => !k || (q.n <= Gs.run[k - 1].n && q.sc <= Gs.run[k - 1].sc + 1e-6)) && Gs.run[3].n <= 0.85 * Gs.run[0].n && Gs.run[3].sc <= 0.8 * Gs.run[0].sc, JSON.stringify(Gs.run.map(q => ({ n: q.n, sc: q.sc })))); 
   T.check('mirrors: the first right blow knocks the right one off, the left one stays', !Gs.mir[0] && Gs.mir[1] && Gs.ground === 1, JSON.stringify({ mir: Gs.mir, ground: Gs.ground }));
   T.check('mirrors: it stays on the road while the car drives on', Gs.ground2 === 1, 'ground ' + Gs.ground2);
   T.check('roof: after blows on the left again and again it sinks on the left (the shell; more than the right, hit three times first: the Tornado\'s cage holds both sides\' rails within some 4 cm)', Gs.roofL < -0.03 && Gs.roofL < Gs.roofR - 0.005, 'left ' + Gs.roofL.toFixed(3) + ' right ' + Gs.roofR.toFixed(3));
