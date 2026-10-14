@@ -5582,7 +5582,7 @@ const Core = (function () {
     const W = c.wreck, PT = partsOf(c.m), Q = W && W.rule; if (Q) W.rule = null;   // (the wheel rule's random wheels: not here, the same every time)
     for (let n = 0; n < 16 && c.dmgMode && (c.dmg < 1 || Math.min(...c.dz, ...c.cd) < 1); n++) for (const [x, z] of pts) applyDamage(c, 0.25, x, z);
     if (W && W.seq) while (W.seq.length) { const n = W.seq.shift(); if (!c.lost[n] && PT[n]) detachPart(c, n, PT[n]); }
-    if (Q) W.rule = Q;
+    if (Q) { W.rule = Q; if (W.nL >= 2) { Q.due = -1; Q.ask = 0; ruleFire(Q, 2); } }   // (the wheel rule's car wrecked, two wheels or more gone: the whole car on fire at once, as a hard hit's)
     return c;
   }
 
