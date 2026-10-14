@@ -30,7 +30,7 @@ try {
       P.dmg = Math.min(P.dmg, 0.6); P.dz = P.dz.map(d => Math.min(d, 0.6));   // (the first wheel off: a knock on the autopilot's way meanwhile takes no more; its 3 s run on)
       g.resume(); await frames(4); g.pause();
       const msg = document.getElementById('h-msg').classList.contains('show') ? document.getElementById('h-msg').textContent : '', fix = !document.getElementById('btn-rescue').classList.contains('off'), fire = Render.burning(P);
-      while (W.rule.due > 0.45) g.sim(0.05, true);   // (the last 20 % of the 3 s: the hub where the wheel was on fire)
+      W.rule.due = Math.min(W.rule.due, 0.5); g.sim(0.05, true);   // (the last 20 % of the 3 s: the hub where the wheel was on fire; its time set, not driven out: wheels.test.js times it)
       await frames(2); const F1 = Render.viewOf(P).fire, hub = { on: Render.burning(P), lvl: F1 && F1.lvl, k: F1 && F1.hk, wk: [0, 1, 2, 3].find(j => W.wl & (1 << j)), n: W.nL };
       g.sim(5, true); await frames(6);   // (KONEC IGRE came up in the step: no resume, that would close it)
       hub.whole = Render.viewOf(P).fire && Render.viewOf(P).fire.lvl;
@@ -55,7 +55,7 @@ try {
         inView: br.left >= 0 && br.top >= 0 && br.right <= innerWidth && br.bottom <= innerHeight, barIn: tk.left >= br.left && tk.right <= br.right && tk.top > br.top + br.height / 2 && br.bottom - tk.bottom <= 14 && tk.width >= 0.8 * br.width,
         clear: ctl.length > 0 && ctl.every(c => c.right <= br.left || c.left >= br.right || c.bottom <= br.top || c.top >= br.bottom), txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx(), roof: roof() };
       g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
-      while (P2.wreck.rule.due > 0.45) g.sim(0.05, true);   // (the bar under 20 %: the hub's fire)
+      P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
       const ox = br.left > 40 ? br.left / 2 : (br.right + innerWidth) / 2, oy = br.top + br.height / 2, beside = document.elementFromPoint(ox, oy);   // (a tap beside the button, at its height)
       if (beside) beside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: ox, clientY: oy }));
