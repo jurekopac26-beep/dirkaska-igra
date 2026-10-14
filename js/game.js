@@ -3785,7 +3785,7 @@
     // the sizes, then what waits: the first that fits
     let y = 0, skip = [];
     out: for (const sk of [[], [T], [T, R]]) for (const k of COL_K) {
-      M.style.fontSize = Math.max(MSG_MIN, Math.round(hcol.f * k)) + 'px'; R.style.fontSize = T.style.fontSize = (11.5 * k).toFixed(1) + 'px';
+      msgAt(M, Math.max(MSG_MIN, Math.round(hcol.f * k))); R.style.fontSize = T.style.fontSize = (11.5 * k).toFixed(1) + 'px';
       const hs = L.map(e => (sk.includes(e) || e === tU ? -1 : e.offsetHeight)); y = m.bottom; for (const h of hs) if (h >= 0) y += COL_GAP + h;
       skip = sk; if (y <= lim) break out;
     }
@@ -3803,7 +3803,16 @@
   }
   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three. Its
   // icon at the start of its first line (css #h-msg::before); a long message on a narrow phone with no room for it in three lines: none (data-icm no)
+  // the big message at f px, a size hudCol's column picks under fitMsg's (fitMsg made sure of the icon only at its own): text-wrap: balance
+  // breaks the lines afresh at each size and can leave the icon alone on the first line (seen on CI's wider fonts, upright, with the damage
+  // picture over the column); then greedy lines (the icon and the first word fit on one, fitMsg's sizes), else a px less, down to MSG_MIN
+  function msgAt(el, f) {
+    const first = () => { const g = document.createRange(); g.selectNodeContents(el); const r = g.getClientRects()[0]; return !r || r.top - el.getBoundingClientRect().top < f * 0.75; };
+    el.style.fontSize = f + 'px'; el.style.removeProperty('text-wrap'); if (el.dataset.icm === 'no' || first()) return;
+    el.style.setProperty('text-wrap', 'wrap'); while (!first() && f > MSG_MIN) el.style.fontSize = --f + 'px';
+  }
   function fitMsg(el, hi, lo) {
+    el.style.removeProperty('text-wrap');   // (balanced lines, as the css has them: msgAt's greedy ones only for a size of the column's)
     const g = document.createRange(), first = () => { g.selectNodeContents(el); const r = g.getClientRects()[0]; return !r || r.top - el.getBoundingClientRect().top < f0 * 0.75; };   // (the first word on the icon's line, not the icon alone on it)
     let f0 = hi; const fits = (f, n) => { el.style.fontSize = f + 'px'; f0 = f; return el.scrollWidth <= el.clientWidth + 2 && el.clientHeight <= f * 1.05 * n + 9 && (el.dataset.icm === 'no' || first()); };
     for (const icm of ['', 'no']) {
