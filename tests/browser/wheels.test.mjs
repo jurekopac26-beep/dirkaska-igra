@@ -19,7 +19,7 @@ try {
       const g = window.__game, P = g.race.player, W = P.wreck, wait = (ms) => new Promise(r => setTimeout(r, ms)), frames = async (n) => { for (let i = 0; i < n; i++) await new Promise(r => requestAnimationFrame(r)); };
       // (the damage picture, with damage, and a team radio message: clear of each other and of the screen's edges)
       g.sim(9, true); Core.applyDamage(P, 0.2, P.m.len * 0.45, -P.m.wid * 0.4); g.resume(); await frames(4); g.pause();
-      const tr0 = document.getElementById('h-teamradio'); tr0.lastElementChild.textContent = 'Avto je močno poškodovan. Pazi na kolesa, boksi v tem krogu!'; tr0.classList.add('on'); await frames(2);
+      const tr0 = document.getElementById('h-teamradio'); tr0.lastElementChild.textContent = 'Avto je močno poškodovan. Pazi na kolesa, boksi v tem krogu!'; tr0.classList.add('on'); g.resume(); await frames(3); g.pause();   // (the column under the map laid out while it runs: upright the damage picture first, the radio under it)
       const rr = (id) => document.getElementById(id).getBoundingClientRect(), hit = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
       const dR = rr('h-dmg'), lay = { clear: !hit(dR, rr('h-teamradio')) && !hit(dR, rr('h-map')), inView: dR.left >= 0 && dR.right <= innerWidth && dR.bottom <= innerHeight, w: Math.round(dR.width), tot: document.getElementById('dmg-tot').textContent };
       tr0.classList.remove('on'); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0];
