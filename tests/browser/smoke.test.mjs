@@ -236,14 +236,17 @@ try {
           out.pre = pre;
           pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: the autopilot is not to be caught before the mission at the top)
         }
-        let peds = 0, tail = [], rot = [], caps = [];
+        // (in the chase the patrol cars may lose the player for a while, searching with their lights off: the HUD's count of them after the
+        // player and their lights read through the chase, not only at its end)
+        let peds = 0, tail = [], rot = [], caps = [], chased = 0, lamp = false;
         for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0);   // (people drawn on the way: between the villages there may be nobody about)
-          if (md === 'police') { for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
+          if (md === 'police') { chased = Math.max(chased, +txt('h-pos') || 0); if ((Render.roadInfo() || {}).lampOn) lamp = true;
+            for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
             if (g.radio.cap) caps.push(g.radio.cap); } }
-        let lamp = false; for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
+        for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
         const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: txt('h-gap'),
-          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
           let heli = false;
           g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
@@ -284,8 +287,8 @@ try {
       Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^KG-1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
       `${Q.stage} (${Q.why}), radio: ${JSON.stringify(P.log.slice(0, 7))}`);
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
-      P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
-      `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
+      P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
+      `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
     T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, pointing back',
       P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
       `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);
