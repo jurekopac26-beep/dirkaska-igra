@@ -3725,9 +3725,8 @@
     }
     { const W = P.wreck;   // a wheel off: the word on the HUD (once a race what to do about it); the marshals at work: the seconds left
       if (W && W.fix !== hudFix) { hudFix = W.fix; hudWl = W.wl; }
-      if (W && (W.wl & ~hudWl) && phase === 'racing' && !P.finished) { showMsg(tr('KOLO JE ODPADLO!'), 'slow', 1.8); vibrate(80);
-        if (W.rule) { if (W.nL < 2) toast(tr('Kolo je odpadlo: ko odpade še drugo, je igre konec.'), 2600); }
-        else if (!hudWheelTold && !race.timeTrial) { hudWheelTold = true; toast(tr(track.def.pit ? 'Izgubil si kolo: v boksih ti namestijo novo.' : 'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.'), 4200); } }
+      if (W && (W.wl & ~hudWl) && phase === 'racing' && !P.finished) { vibrate(80); if (!W.rule) showMsg(tr('KOLO JE ODPADLO!'), 'slow', 1.8);   // (the wheel rule's car: no words, the user's; no fire yet: its hub's in the last 20 % of the 3 s to the second, the whole car with it, Core wheelRule)
+        if (!W.rule && !hudWheelTold && !race.timeTrial) { hudWheelTold = true; toast(tr(track.def.pit ? 'Izgubil si kolo: v boksih ti namestijo novo.' : 'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.'), 4200); } }
       hudWl = W ? W.wl : 0;
       if (W && W.hold > 0 && !W.dnf && phase === 'racing') { const txt = tr('NOVO KOLO \u00b7 {0} s', Math.ceil(W.hold)); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; } }
     if (P.pitState === 'repair' && P.pitDur > 0 && !pa.go) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
