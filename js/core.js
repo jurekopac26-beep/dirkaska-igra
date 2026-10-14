@@ -3108,7 +3108,7 @@ const Core = (function () {
       let gap = 1e9, lv = 0, lead = null, still = false, pace = false, onc = false;
       const cand = (g, vs, o, st, oc) => { if (g < gap) { gap = g; lv = vs; lead = o; still = st; pace = false; onc = !!oc; } };
       const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25;
-      for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (over(b.d, b.wid)) { cand(g, b.v, b, false); pace = !!a.grp && b.grp === a.grp; break; } }
+      for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (g < 0 && a.grp && b.grp === a.grp && a.grp.m.indexOf(b) > a.grp.m.indexOf(a)) continue; if (over(b.d, b.wid)) { cand(g, b.v, b, false); pace = !!a.grp && b.grp === a.grp; break; } }   // (one of its own group on top of it, behind it in the line (a group bunched up to a stop): not in its way, else each waits for the other for good)
       for (const b of this.hz) { const g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > -1 && g < 160 && over(b.d, b.wid)) cand(g, 0, b, true); }
       if (this.race.pol) { const hs = this.race.pol.holdAt(a, dt); if (hs > -1e8) { const g = (hs - a.s) * dir - a.len / 2; if (g > -2 && g < 160) cand(Math.max(0, g), 0, null, false); } }   // (the traffic checkpoint: stopped at the officer, waved on in turn)
       if (this.race.pol) for (const pc of this.race.pol.cars) if (pc.pol.block && pc.pol.mode === 'park') { const g = (pc.q.s - a.s) * dir - a.len / 2 - 80; if (g > -6 && g < 160) cand(Math.max(0, g), 0, pc, false); }   // (a roadblock ahead: the police hold the traffic ~80 m before it, both ways: room to drive round it)

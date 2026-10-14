@@ -120,7 +120,7 @@ try {
     for (let k = 0; k < 14 && !v.kit.ajar.bumperR && !P.lost.bumperR; k++) hit(P, [0.06, -1, 0.1]);
     out.ajar = !!v.kit.ajar.bumperR && !P.lost.bumperR;
     // driving on at 15 m/s with it hanging: sparks off its low end
-    P.vx = Math.cos(P.h) * 15; P.vz = Math.sin(P.h) * 15; P.rpm = 0; P.shiftT = 0; Render.frame(1 / 30, 1, P, 'iso', {}); P.fxWall = P.fxCar = 0;   // (low revs: no exhaust pops, its random sparks; the knocks' sparks had)
+    P.vx = Math.cos(P.h) * 15; P.vz = Math.sin(P.h) * 15; P.rpm = 0; P.shiftT = 0; if (v.cfx) { v.cfx.pop = 0; v.cfx.thr = 0; } Render.frame(1 / 30, 1, P, 'iso', {}); P.fxWall = P.fxCar = 0;   // (low revs: no exhaust pops, its random sparks, nor a string of them left from a lift before the test (render carFx: v.cfx.pop); the knocks' sparks had)
     const s0 = Render.fxStats().sparksN;
     for (let k = 0; k < 20; k++) Render.frame(1 / 30, 1, P, 'iso', {});
     out.drag = Render.fxStats().sparksN - s0; out.hubs = v.wheelOff.filter(Boolean).length; P.vx = 0; P.vz = 0;   // (a wheel off: its hub scrapes too, on and off)
