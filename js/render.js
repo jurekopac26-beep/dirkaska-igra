@@ -5937,7 +5937,8 @@ const Render = (function () {
   }
   // the wheel rule's spare (Core rule.spare): the kit's own rear wheel lying on its side on the roof, over the roof's highest point along the
   // car's middle (kitFireTop: not a wing, a deflector, a light bar), in the body's group (its roll, pitch and sag with it); one mesh of the
-  // shared wheel geometry and material (the player's car only: one draw call more), built the first time it is drawn, hidden once used
+  // shared wheel geometry and material (the player's car only: one draw call more, none in the shadow pass), built the first time it is
+  // drawn, hidden once used
   function spareRoof(v, Q) {
     if (!v.kit || !v.wr.length) return;
     if (!v.spareM) {
@@ -5946,7 +5947,7 @@ const Render = (function () {
       const hw = (wg.boundingBox.max.z - wg.boundingBox.min.z) / 2; let bx = 0, top = -1e9;
       for (let x = -0.3 * M.len; x <= 0.3 * M.len + 1e-6; x += 0.1) { const t = kitFireTop(v.body.geometry, [x, 0.4, 0], M.wid, null); if (t > top) { top = t; bx = x; } }
       if (top < -1e8) return;
-      const m = new THREE.Mesh(wg, matWheel); m.rotation.x = Math.PI / 2; m.position.set(bx, top + hw + 0.015, 0); m.castShadow = true; v.bodyG.add(m); v.spareM = m;
+      const m = new THREE.Mesh(wg, matWheel); m.rotation.x = Math.PI / 2; m.position.set(bx, top + hw + 0.015, 0); m.castShadow = false; v.bodyG.add(m); v.spareM = m;   // (no shadow of its own: it would fall on the roof and into the car's)
     }
     v.spareM.visible = !!Q.spare;
   }
