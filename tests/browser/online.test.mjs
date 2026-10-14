@@ -181,9 +181,13 @@ try {
   await tap(H); await until(H.page, () => { const g = window.__game.net; return !!(g && g.open && g.synced); }, null, 40000);
   for (const x of [G, H, I]) await x.page.evaluate(() => { window.__game.autoDrive = true; });
   await tap(I);
-  const fullG = await until(G.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000);
+  // (the room's status as its host shows it: the one who waits first is the host as a rule, but on a busy machine the server can drop the
+  // waiting one for a moment, its place found taken when it comes back, and then another of the three is the host. Read on whichever page
+  // is the host, the room's three there; exactly one host)
+  const rooms = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { role: g.role, status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000)));
+  const roles = rooms.map(r => r.role), fullG = Object.assign({ roles }, rooms[roles.indexOf('host')] || rooms[0]);
   const auto = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game; return g.race && g.net && g.net.race ? { cars: g.race.cars.length, grid: g.net.race.grid.length } : null; }, null, 90000)));
-  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
+  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', roles.filter(r => r === 'host').length === 1 && /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
   for (const x of [G, H, I]) await leave(x);
   T.check('no page errors (quick match)', ![C, D, E, F].some(x => x.errors.length), [C, D, E, F].flatMap(x => x.errors).slice(0, 5).join(' | '));
   T.check('no page errors', !A.errors.length && !B.errors.length, A.errors.concat(B.errors).slice(0, 5).join(' | '));

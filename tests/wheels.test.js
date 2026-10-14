@@ -1,7 +1,9 @@
 // The wheel rule (Race opts.wheelRule; the game: the player's SOKOL, offline, a test with one car first): on the player's car of a listed
 // vehicle, damage on, its wheels come off by the damage. At 80 % one, a random one of the four; then a second, another random one, and the
 // car stops at once: it retires there and the game is over (wreck.rule.over: KONEC IGRE, PONOVI IGRO). A hit from 70 % takes a wheel
-// at once, the second one later the less damaged the car was (70 %: 3 s, 90 %: 0.4 s). A hard hit at 80 % or over: two at once,
+// at once, the second one 3 s later whatever the damage (a hit meanwhile no sooner). The fire (rule.fn, rule.burn: the renderer draws it):
+// none with the first wheel, the hub's (burn 1) in the last 20 % of those 3 s, the whole car (burn 2) with the second; a repair puts it
+// out. A hard hit at 80 % or over: two at once (the whole car on fire at once),
 // sometimes three or all four (the harder, the likelier). The other cars, the other vehicles and damage off: as before (the corner rule).
 // A rollover's roof contacts count for the rule (80 %), the car stops once it lands. And the lamps: the first knock on the front or the
 // rear breaks at least one lamp of that end (the nearer one), on any car. A car's face and tail (bumpers, bonnet, front wings, boot) stay
@@ -37,45 +39,50 @@ function until(r, fn, s) {
   check('the rule only on the player\'s car of a listed vehicle (SOKOL), with damage on; not on the AI, another car, damage only for show, or without the option', ok);
 }
 
-// 2. 80 % by small knocks: one random wheel at 80 % (none before), the second one 0.8 s later, then the car stops and the game is over
+// 2. 80 % by small knocks: one random wheel at 80 % (none before), the second one 3 s later, then the car stops and the game is over
 {
   const out = [];
   for (const seed of [1, 2, 3, 4, 5]) withRnd(seed, () => {
-    const { r, P, W } = setUp(0, seed); let before = 0, at = null;
-    while (P.dmg < 0.8) { C.applyDamage(P, 0.015, P.m.len * 0.5, 0); if (P.dmg < 0.8 && W.nL) before++; }   // (0.015: lighter than a hit, under 70 % or not)
-    at = W.nL;
-    const t2 = until(r, () => W.nL >= 2, 3), tStop = until(r, () => W.rule.over, 6);
-    out.push({ seed, before, at, t2, tStop, dnf: W.dnf, v: P.speed, n: W.nL });
+    const { r, P, W } = setUp(0, seed); let before = 0, at = null, fire0 = 0;
+    while (P.dmg < 0.8) { C.applyDamage(P, 0.015, P.m.len * 0.5, 0); if (P.dmg < 0.8 && W.nL) before++; if (!W.nL && W.rule.fn) fire0++; }   // (0.015: lighter than a hit, under 70 % or not)
+    at = W.nL; const fire = { fn: W.rule.fn, burn: W.rule.burn };   // (none yet with the first wheel)
+    const tHub = until(r, () => W.rule.burn >= 1, 4), hub = { n: W.nL, burn: W.rule.burn }, t2 = tHub + until(r, () => W.nL >= 2, 4), whole = { fn: W.rule.fn, burn: W.rule.burn }, tStop = until(r, () => W.rule.over, 6);
+    out.push({ seed, before, at, t2, tStop, dnf: W.dnf, v: P.speed, n: W.nL, fire0, fire, tHub, hub, whole });
   });
-  check('80 % by small knocks: no wheel before, one at 80 %, the second ~0.8 s later (0.7-0.95 s)', out.every(o => !o.before && o.at === 1 && o.t2 > 0.7 && o.t2 < 0.95), out.map(o => `${o.seed}: ${o.at} at 80 %, 2nd ${o.t2.toFixed(2)} s`).join(', '));
+  check('80 % by small knocks: no wheel before, one at 80 %, the second 3 s later (2.95-3.1 s)', out.every(o => !o.before && o.at === 1 && o.t2 > 2.95 && o.t2 < 3.1), out.map(o => `${o.seed}: ${o.at} at 80 %, 2nd ${o.t2.toFixed(2)} s`).join(', '));
+  check('the fire: none before a wheel is off nor with the first one; the hub\'s (rule.burn 1) in the last 20 % of the 3 s (2.4 s on, the first wheel still the only one off); the whole car (burn 2) with the second; one fire (rule.fn 1)',
+    out.every(o => !o.fire0 && !o.fire.fn && !o.fire.burn && o.tHub > 2.35 && o.tHub < 2.5 && o.hub.n === 1 && o.hub.burn === 1 && o.whole.burn === 2 && o.whole.fn === 1), out.map(o => `hub ${o.tHub.toFixed(2)} s, ${JSON.stringify(o.whole)}`).join(', '));
   check('two off: the car stops at once (within 3 s from 108 km/h at full throttle), retires there, the game is over (rule.over)', out.every(o => o.tStop < 3 && o.dnf && o.v < 0.6 && o.n === 2), out.map(o => `${o.tStop.toFixed(2)} s`).join(', '));
 }
 
-// 3. a hit from 70 %: one wheel at once, the second later the less damaged the car was (70 % later than 90 %)
+// 3. a hit from 70 %: one wheel at once, the second 3 s later whatever the damage (the time the player has); a hit meanwhile no sooner
 {
   const t2 = {};
   for (const d of [0.7, 0.8, 0.9]) t2[d] = withRnd(11, () => {
     const { r, P, W } = setUp(d); C.applyDamage(P, 0.03, P.m.len * 0.5, 0);
     const now = W.nL; return { now, t: until(r, () => W.nL >= 2, 5) };
   });
-  const ok = [0.7, 0.8, 0.9].every(d => t2[d].now === 1) && t2[0.7].t > 2.6 && t2[0.7].t < 3.2 && t2[0.9].t < 0.5 && t2[0.7].t > t2[0.8].t && t2[0.8].t > t2[0.9].t;
-  check('a hit from 70 %: a wheel at once; the second after ~3 s from 70 %, sooner from 80 %, 0.4 s from 90 %', ok, [0.7, 0.8, 0.9].map(d => `${d * 100} %: ${t2[d].now} now, 2nd ${t2[d].t.toFixed(2)} s`).join(', '));
+  const ok = [0.7, 0.8, 0.9].every(d => t2[d].now === 1 && t2[d].t > 2.95 && t2[d].t < 3.1);
+  check('a hit from 70 %: a wheel at once; the second 3 s later from 70, 80 and 90 % alike', ok, [0.7, 0.8, 0.9].map(d => `${d * 100} %: ${t2[d].now} now, 2nd ${t2[d].t.toFixed(2)} s`).join(', '));
+  const mid = withRnd(13, () => { const { r, P, W } = setUp(0.75); C.applyDamage(P, 0.03, P.m.len * 0.5, 0); until(r, () => false, 1); C.applyDamage(P, 0.03, P.m.len * 0.5, 0); return { n: W.nL, t: 1 + until(r, () => W.nL >= 2, 4) }; });
+  check('a hit (not a hard one) while the second is due: no sooner, still 3 s after the first', mid.n === 1 && mid.t > 2.95 && mid.t < 3.1, JSON.stringify(mid));
   const lt = withRnd(12, () => { const { P, W } = setUp(0.69); C.applyDamage(P, 0.008, P.m.len * 0.5, 0); return W.nL; });
   check('a scrape (under a hit) at 70 %: no wheel', lt === 0);
 }
 
 // 4. a hard hit at 80 % or over: two at once, sometimes three or four, the harder the likelier; the wheels random
 {
-  const N = 300, stat = {}, first = new Set();
+  const N = 300, stat = {}, first = new Set(); let notWhole = 0;
   for (const amt of [0.1, 0.3, 0.6, 1]) {
     const h = [0, 0, 0, 0, 0];
-    for (let s = 1; s <= N; s++) withRnd(1000 * amt + s, () => { const { P, W } = setUp(0.82); C.applyDamage(P, amt, P.m.len * 0.5, 0); h[W.nL]++; if (amt === 0.1) for (const k of bits(W.wl)) first.add(k); });
+    for (let s = 1; s <= N; s++) withRnd(1000 * amt + s, () => { const { P, W } = setUp(0.82); C.applyDamage(P, amt, P.m.len * 0.5, 0); h[W.nL]++; if (W.rule.burn !== 2) notWhole++; if (amt === 0.1) for (const k of bits(W.wl)) first.add(k); });
     stat[amt] = h;
   }
   const f = (h) => h.slice(2).join('/');
   check('a hard hit at 80 %+: always two or more at once, never fewer', Object.values(stat).every(h => !h[0] && !h[1]), Object.entries(stat).map(([a, h]) => `${a}: ${f(h)}`).join(', '));
   check('three or four: never in a mild hard hit (0.1), sometimes in a harsh one, all four only in the hardest, more often the harder', stat[0.1][3] + stat[0.1][4] === 0 && stat[0.3][3] > 0 && stat[0.3][4] === 0 && stat[0.6][4] > 0 && stat[1][4] > stat[0.6][4] && stat[1][3] + stat[1][4] === N, `3 / 4 wheels of ${N}: ${[0.3, 0.6, 1].map(a => `${a}: ${stat[a][3]} / ${stat[a][4]}`).join(', ')}`);
   check('the wheels that come off: any of the four (random)', first.size === 4, [...first].sort().join(','));
+  check('a hard hit: the whole car on fire at once (rule.burn 2)', notWhole === 0, `${notWhole} not`);
 }
 
 // 5. the first wheel at 80 %: each of the four in turn (random), the second always another one
@@ -83,7 +90,7 @@ function until(r, fn, s) {
   const seen = [0, 0, 0, 0]; let same = 0;
   for (let s = 1; s <= 200; s++) withRnd(s, () => {
     const { r, P, W } = setUp(0.79); C.applyDamage(P, 0.015, P.m.len * 0.5, 0); const w1 = W.wl; seen[bits(w1)[0]]++;
-    until(r, () => W.nL >= 2, 2); if (bits(W.wl).length !== 2 || !(W.wl & w1)) same++;
+    until(r, () => W.nL >= 2, 4); if (bits(W.wl).length !== 2 || !(W.wl & w1)) same++;
   });
   check('the first wheel at 80 %: each of the four (random, 200 runs), the second always another', seen.every(k => k > 25) && !same, `FL ${seen[0]}, FR ${seen[1]}, RL ${seen[2]}, RR ${seen[3]}`);
 }
@@ -102,9 +109,9 @@ function until(r, fn, s) {
 {
   const { r, P, W } = withRnd(3, () => setUp(0.79)); withRnd(3, () => C.applyDamage(P, 0.015, P.m.len * 0.5, 0));
   const wl = W.wl; r.rescue(P);
-  const kept = W.wl === wl && W.nL === 1 && !(W.hold > 0);
+  const kept = W.wl === wl && W.nL === 1 && !(W.hold > 0), lit = until(r, () => W.rule.burn === 1, 3) < 3;   // (the hub's fire, its last 20 %)
   r.repairCar(P);
-  check('no refit by the marshals (the wheel stays off); a full repair puts it back and nothing more is coming', kept && W.nL === 0 && W.rule.due === -1 && !W.rule.over, `kept ${kept}`);
+  check('no refit by the marshals (the wheel stays off); a full repair puts it back, puts the hub\'s fire out and nothing more is coming', kept && lit && W.nL === 0 && W.rule.due === -1 && !W.rule.over && W.rule.burn === 0 && W.rule.fn === 1, `kept ${kept}, lit ${lit}, fire ${W.rule.fn}/${W.rule.burn}`);
 }
 
 // 7b. on the pit road (c.pitG: no damage there) the second wheel waits; back on the circuit it comes off when its time is up
@@ -144,10 +151,10 @@ function until(r, fn, s) {
   const r = withRnd(31, () => { C.setCrash({ roll: 1 }); try {
     const { r, P, W } = setUp(0.78); P.rl = { t: 0, T: 1.58, turns: 2, dir: 1, H: 1.4, k: 0 };
     let t = 0, rolling2 = false; for (; t < 2 && P.rl; t += DT) { P.step(DT, T); if (P.rl && W.nL >= 2 && W.rule.over) rolling2 = true; }
-    const n1 = W.nL, d = P.dmg, tOver = until(r, () => W.rule.over, 4);
+    const n1 = W.nL, d = P.dmg, tOver = until(r, () => W.rule.over, 6);   // (the second wheel 3 s after the first, then the stop)
     return { n1, d, rolling2, tOver };
   } finally { C.setCrash({ roll: 0 }); } });
-  check('a rollover past 80 % (its roof on the road): a wheel off, and over only once it has landed and stopped', r.n1 >= 1 && r.d >= 0.8 && !r.rolling2 && r.tOver < 4, `${Math.round(r.d * 100)} %, ${r.n1} off after the roll, over ${r.tOver.toFixed(2)} s after landing`);
+  check('a rollover past 80 % (its roof on the road): a wheel off, and over only once it has landed and stopped', r.n1 >= 1 && r.d >= 0.8 && !r.rolling2 && r.tOver < 6, `${Math.round(r.d * 100)} %, ${r.n1} off after the roll, over ${r.tOver.toFixed(2)} s after landing`);
 }
 
 // 10. the lamps: the first knock on the front breaks one front lamp (the nearer one), on the rear one rear lamp; any car, any knock
