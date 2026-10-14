@@ -77,11 +77,11 @@
   "jsMs": 1.26
  },
  "caracoles": {
-  "calls": 236,
-  "maxCalls": 308,
-  "kverts": 314,
-  "maxKverts": 430,
-  "jsMs": 1.69
+  "calls": 262,
+  "maxCalls": 317,
+  "kverts": 382,
+  "maxKverts": 531,
+  "jsMs": 7.63
  },
  "katu": {
   "calls": 180,
@@ -147,11 +147,11 @@
   "jsMs": 1.86
  },
  "mulholland": {
-  "calls": 265,
-  "maxCalls": 332,
-  "kverts": 852,
-  "maxKverts": 973,
-  "jsMs": 1.91
+  "calls": 282,
+  "maxCalls": 333,
+  "kverts": 871,
+  "maxKverts": 1105,
+  "jsMs": 2.16
  },
  "beartooth": {
   "calls": 296,
@@ -210,11 +210,11 @@
   "jsMs": 1.25
  },
  "longford": {
-  "calls": 211,
-  "maxCalls": 294,
-  "kverts": 545,
-  "maxKverts": 868,
-  "jsMs": 1.52
+  "calls": 226,
+  "maxCalls": 338,
+  "kverts": 555,
+  "maxKverts": 822,
+  "jsMs": 1.86
  },
  "newcastle": {
   "calls": 341,
