@@ -3659,7 +3659,7 @@
   const spkDelta = (d) => { const a = Math.abs(d); return a < 1 ? a.toFixed(2) : a.toFixed(1); };   // never "0.0 seconds"
   const spkTime = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m ? m + (m === 1 ? ' minute ' : ' minutes ') + s.toFixed(1) : t.toFixed(1) + ' seconds'; };
   /* the start's reaction (Core LAUNCH): once the player is off the line, for a few seconds in the column under the map (hudCol: right under
-     it, above the big message), how long after the lights went out the throttle went down: green up to 0,25 s, gold up to 0,45 s, red later;
+     it, upright under the damage picture and the tower; above the big message), how long after the lights went out the throttle went down: green up to 0,25 s, gold up to 0,45 s, red later;
      the foot on the gas through the lights: red, on the gas too early (counted as LAUNCH.held s). The later, the more the wheels spun away
      (Core). On a phone on its side the timing tower, the column's last, shows fewer rows meanwhile */
   function reactHUD(dt, P) {
@@ -3733,7 +3733,8 @@
     if (P.pitState === 'repair' && P.pitDur > 0 && !pa.go) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('h-msg').className = ''; }
   }
-  // the column under the minimap (css --map-*: its right edge and width): the height profile (a time trial), the destroyed car's words, the pit
+  // the column under the minimap (css --map-*: its right edge and width): upright first the damage picture and the timing tower (the tower's rows
+  // from the room the texts leave), then the height profile (a time trial), the destroyed car's words, the pit
   // stop's progress, the start's reaction (reactHUD), the big message, a time trial's splits at the finish, the team radio, the toast, and on a phone on its side the timing
   // tower last. Each right under the one above, nothing over the middle of the track, never over the pedals (nor the steering, the police's
   // radio and arrows, the start lights) below: when it does not all fit, the tower shows fewer rows (or none), the letters get smaller, then
@@ -3758,11 +3759,14 @@
     if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
     if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
     const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), RX = $('h-react'), tch = $('touch');
-    const tower = W > H && tw && S.tower && hud.classList.contains('tw') ? TW : null;   // (upright: in the left column under the place)
-    const sh = [hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
+    const twOn = !!(tw && S.tower && hud.classList.contains('tw') && !hud.classList.contains('tt') && !hud.classList.contains('pol')), tower = W > H && twOn ? TW : null;   // (on its side: the last in the column)
+    const D = $('h-dmg'), dU = W < H && dmgShown && D.getClientRects().length ? D : null, tU = W < H && twOn && TW.getClientRects().length ? TW : null;   // (upright: the damage picture first, right under the map, the tower under it, then the texts; on its side the damage picture in the left column)
+    if (!dU && D.style.top) D.style.top = '';
+    const sh = [dU, tU, hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
-    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
+    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === dU ? 'd' : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
+    { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column; css #pk-note goes down with it)
     const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
     let lim = H - COL_GAP;   // the column's foot: above whatever is below it
     const obs = tch.classList.contains('off') || tch.classList.contains('pad') ? [] : ['c-gas', 'c-brake', 'c-left', 'c-right', 'c-wheel', 'tilt-ind'];
@@ -3782,16 +3786,20 @@
     let y = 0, skip = [];
     out: for (const sk of [[], [T], [T, R]]) for (const k of COL_K) {
       M.style.fontSize = Math.max(MSG_MIN, Math.round(hcol.f * k)) + 'px'; R.style.fontSize = T.style.fontSize = (11.5 * k).toFixed(1) + 'px';
-      const hs = L.map(e => (sk.includes(e) ? -1 : e.offsetHeight)); y = m.bottom; for (const h of hs) if (h >= 0) y += COL_GAP + h;
+      const hs = L.map(e => (sk.includes(e) || e === tU ? -1 : e.offsetHeight)); y = m.bottom; for (const h of hs) if (h >= 0) y += COL_GAP + h;
       skip = sk; if (y <= lim) break out;
     }
-    y = m.bottom; for (const e of L) { if (skip.includes(e)) continue; y += COL_GAP; e.style.top = y.toFixed(1) + 'px'; y += e.offsetHeight; }
+    let tH = -1;   // upright: the tower under the damage picture with as many rows as the room the texts leave (as on its side), none in too little
+    if (tU) { const row = TW.querySelector('.tw-r'); if (row) hcol.trh = row.offsetHeight + 1; const rh = hcol.trh || 14, room = lim - y - COL_GAP - 2, n = Math.floor((room - rh * 0.6) / rh);
+      TW.classList.toggle('nofit', n < 1); const max = n >= 9 ? Infinity : Math.max(0, n); if (max !== tw.max) { tw.max = max; tw.at = 0; }
+      if (n >= 1) tH = Math.min(TW.offsetHeight, room); }
+    y = m.bottom; for (const e of L) { if (skip.includes(e) || (e === tU && tH < 0)) continue; y += COL_GAP; e.style.top = y.toFixed(1) + 'px'; y += e === tU ? tH : e.offsetHeight; }
     T.classList.toggle('wait', skip.includes(T) && L.includes(T)); R.classList.toggle('wait', skip.includes(R) && L.includes(R));
     if (tower) {   // the tower: as many rows as the room left (the player and the cars beside first), none in too little
       const top = y + COL_GAP + 2, row = TW.querySelector('.tw-r'), rh = row ? row.offsetHeight + 1 : 14, n = Math.floor((lim - top - rh * 0.6) / rh);
       TW.style.top = top.toFixed(1) + 'px'; TW.classList.toggle('nofit', n < 1);
       const max = n >= 9 ? Infinity : Math.max(0, n); if (max !== tw.max) { tw.max = max; tw.at = 0; }
-    } else { if (TW.style.top) TW.style.top = ''; TW.classList.remove('nofit'); if (tw && tw.max !== Infinity) { tw.max = Infinity; tw.at = 0; } }
+    } else if (!tU) { if (TW.style.top) TW.style.top = ''; TW.classList.remove('nofit'); if (tw && tw.max !== Infinity) { tw.max = Infinity; tw.at = 0; } }
   }
   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three. Its
   // icon at the start of its first line (css #h-msg::before); a long message on a narrow phone with no room for it in three lines: none (data-icm no)
