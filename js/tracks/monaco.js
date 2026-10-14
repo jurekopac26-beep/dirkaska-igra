@@ -9,6 +9,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Monte Carlo, Monaco', desc: 'The real circuit through Monaco at full scale: Sainte Dévote, the climb to the Casino, the Fairmont hairpin, the tunnel, the harbour chicane, the swimming pool and Rascasse.' },   // (the English page: Jezik · Language)
     points: [[-72,449],[-85,384],[-93,292],[-93,194],[-85,120],[-65,64],[-36,26],[0,3],[36,-6],[105,-6],[203,-6],[301,-2],[399,1],[483,-6],[546,-27],[603,-59],[652,-104],[684,-146],[712,-182],[750,-205],[791,-217],[831,-231],[869,-242],[897,-235],[913,-211],[925,-190],[934,-172],[951,-167],[964,-179],[967,-200],[974,-223],[990,-237],[1013,-244],[1043,-237],[1062,-217],[1055,-191],[1027,-162],[987,-125],[938,-84],[880,-43],[824,-6],[766,21],[693,39],[619,49],[546,54],[505,55],[487,65],[465,66],[444,59],[383,60],[301,64],[219,65],[145,65],[98,70],[72,87],[56,110],[42,132],[33,162],[19,208],[12,256],[3,292],[8,325],[16,361],[28,400],[39,431],[40,454],[23,472],[-5,477],[-35,474],[-59,463]],
     start: [-93,194], runoff: 0.4, inner: 3, side: 3, offSurface: 'paving',
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[2100, 2210, 'chicane'], [786, 888, 'bend']],   // the Nouvelle Chicane; Massenet
     // named places: [HUD label, x, z, what the commentator may say there] (English lines: Sainte Devote, Noghes without accents for the voice)
     names: [
       ['Sainte Dévote', -1.8, 3.8, ['Into Sainte Devote, turn one!', 'Round Sainte Devote, past the little church!', 'Sainte Devote, and up the hill we go!']],
@@ -27,5 +29,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     elev: [[0.0767,3],[0.1167,4.5],[0.1447,6],[0.2067,15],[0.2647,26],[0.3097,33],[0.3647,40],[0.3787,41],[0.4177,38],[0.4387,35],[0.4547,32],[0.4657,27.5],[0.4777,23.5],[0.4917,20],[0.5167,13],[0.5367,10.5],[0.5867,8],[0.6327,5],[0.7177,3],[0.8357,2],[0.8537,1.8],[0.9107,1.5],[0.9607,2],[0.9857,2.5]],
     tunnel: [0.5337, 0.6347],
+    // the braking boards (Track.brakeBoards; the straights are short: 150, 100 and 50 m) before Sainte Dévote, Mirabeau, the Nouvelle
+    // Chicane and La Rascasse: their entries in metres after the start line
+    brakeBoards: { d: [150, 100, 50], at: [215, 1196, 2126, 2937] },
   });
 })();
