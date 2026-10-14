@@ -3426,8 +3426,8 @@
   let swapOn = false, swapD0 = 3;
   function swapHUD(P) {
     const Q = P && P.wreck && P.wreck.rule, on = !!(Q && Q.ask && Q.spare && Q.due > 0 && phase === 'racing' && screen === 'none' && !replay);
-    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); setText('ws-s', tr('Tapni: rezervno kolo s strehe')); } }
-    if (on) $('ws-bar').style.transform = 'scaleX(' + Math.max(0, Math.min(1, Q.due / swapD0)).toFixed(3) + ')';
+    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); setText('ws-s', tr('Rezervno kolo s strehe')); } }
+    if (on) { const k = Math.max(0, Math.min(1, Q.due / swapD0)); $('ws-bar').style.transform = 'scaleX(' + k.toFixed(3) + ')'; $('ws-btn').classList.toggle('hot', k <= 0.2); }   // (hot: its last 20 %, the hub on fire)
   }
   function swapWheel() { if (swapOn && race && race.changeWheel(race.player)) { vibrate(40); Sfx.beep(660, 0.12, 0.12); swapHUD(race.player); } }
   function updateDamageHUD(P) {
@@ -5161,7 +5161,7 @@
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
     $('btn-cam').addEventListener('click', (e) => { e.preventDefault(); Sfx.click(); cycleCam(); });
     $('btn-tyre').addEventListener('click', (e) => { e.preventDefault(); pitCmpNext(); });
-    $('wheel-swap').addEventListener('pointerdown', (e) => { e.preventDefault(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap anywhere)
+    $('ws-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap on the big button; the rest of the screen drives on)
     document.addEventListener('keydown', (e) => { if (swapOn && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });
     { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
       for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) pd.addEventListener(t, (e) => { e.preventDefault(); photoPtr(e); }, o);
