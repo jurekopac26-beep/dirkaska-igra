@@ -34,7 +34,7 @@ try {
     // until it stands
     const hold = (sec, still) => { let vmax = 0, t = 0; P.noReverse = true;
       for (; t < sec - 1e-9 && !(still && P.speed < 0.2); t += 0.1) { for (let k = 0; k < 12; k++) { P.inThr = 0; P.inBrk = 1; P.inHand = 1; P.inSteer = 0; race.step(1 / 120); } Render.frame(0.1, 1, P, 'chase', {}); vmax = Math.max(vmax, P.speed); }
-      delete P.noReverse; return { vmax: +vmax.toFixed(1), t: +t.toFixed(1), v: +P.speed.toFixed(2) }; };
+      delete P.noReverse; return { vmax: +vmax.toFixed(1), t: +t.toFixed(1), v: +P.speed.toFixed(3), stood: P.speed < 0.2 }; };   // (stood: below the stop's own 0.2 m/s, not its rounded figure: 0.195 reads 0.2)
     // 1. dmg 0.95, the bonnet off, the wheels on
     const lid = PT.hood ? 'hood' : 'cover'; Core.detachPart(P, lid); P.dmg = 0.95;
     out.d1 = drive(5); out.s1 = Object.assign(st(), { lid, lost: !!P.lost[lid] });
@@ -54,7 +54,7 @@ try {
   T.check('1. dmg 0.95, the bonnet off, the wheels on, driven 5 s: no fire (Render.burning false, no flames)',
     R.s1.lost && R.s1.wl === 0 && R.s1.dmg >= 0.94 && R.d1.vmax > 10 && !R.s1.burning && !R.s1.fire, JSON.stringify({ d1: R.d1, s1: R.s1 }));
   T.check('2. dmg 0.7, a wheel off, at a standstill 5 s: no fire',
-    R.stop.v < 0.2 && R.d2.vmax < 2 && R.s2.wl === 4 && R.s2.off[2] === 1 && Math.abs(R.s2.dmg - 0.7) < 0.01 && !R.s2.burning && !R.s2.fire, JSON.stringify({ stop: R.stop, d2: R.d2, s2: R.s2 }));
+    R.stop.stood && R.d2.vmax < 2 && R.s2.wl === 4 && R.s2.off[2] === 1 && Math.abs(R.s2.dmg - 0.7) < 0.01 && !R.s2.burning && !R.s2.fire, JSON.stringify({ stop: R.stop, d2: R.d2, s2: R.s2 }));
   T.check('3. the same car driven on its hub 3 s: on fire (lit by the hub\'s sparks after ~1.5 s), on the dragging corner\'s side (left), its flames',
     R.d3.vmin < 2 && R.d3.vmax > 8 && R.s3.burning && R.s3.fire && R.d3.lit != null && R.d3.lit > 1 && R.d3.lit <= 3 && R.ign >= 1.5 && R.side === -1 && R.seatZ < 0 && R.flames > 0 && R.emit,
     JSON.stringify({ d3: R.d3, s3: R.s3, side: R.side, ign: R.ign, seatZ: R.seatZ, flames: R.flames }));

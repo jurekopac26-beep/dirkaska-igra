@@ -3422,6 +3422,19 @@
   // in % over a bar with marks at 70 and 80 % (the wheel rule's: wheelRule in core.js; the whole % rounded down, so 80 % shows once it is
   // reached). The DOM is touched only when a shown value changes
   const DMG_ARR = ['▲', '▼', '◀', '▶'];
+  // ZAMENJAJ KOLO (the wheel rule, Core rule.ask: a wheel off with the spare on the roof): a big button for the 3 s to the second wheel,
+  // its bar at its very foot running out with them; a tap on it (or Enter) puts the spare on at once, the car driving on (Race.changeWheel)
+  let swapOn = false, swapD0 = 3;
+  function swapFit() {   // the title on one line inside the button: from the css's size down until it fits (a narrow button, a long word)
+    const t = $('ws-t'); t.style.removeProperty('font-size');
+    for (let f = parseFloat(getComputedStyle(t).fontSize); f > 14 && t.scrollWidth > t.clientWidth + 1;) t.style.fontSize = --f + 'px';
+  }
+  function swapHUD(P) {
+    const Q = P && P.wreck && P.wreck.rule, on = !!(Q && Q.ask && Q.spare && Q.due > 0 && phase === 'racing' && screen === 'none' && !replay);
+    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); swapFit(); } }
+    if (on) { const k = Math.max(0, Math.min(1, Q.due / swapD0)); $('ws-bar').style.transform = 'scaleX(' + k.toFixed(3) + ')'; $('ws-btn').classList.toggle('hot', k <= 0.2); }   // (hot: its last 20 %, the hub on fire)
+  }
+  function swapWheel() { if (swapOn && race && race.changeWheel(race.player)) { vibrate(40); Sfx.beep(660, 0.12, 0.12); swapHUD(race.player); } }
   function updateDamageHUD(P) {
     const el = $('h-dmg'); if (!el) return;
     const on = dmgOn();
@@ -3694,7 +3707,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    updateDamageHUD(P); swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
@@ -5153,6 +5166,8 @@
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
     $('btn-cam').addEventListener('click', (e) => { e.preventDefault(); Sfx.click(); cycleCam(); });
     $('btn-tyre').addEventListener('click', (e) => { e.preventDefault(); pitCmpNext(); });
+    $('ws-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap on the big button; the rest of the screen drives on)
+    document.addEventListener('keydown', (e) => { if (swapOn && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });
     { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
       for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) pd.addEventListener(t, (e) => { e.preventDefault(); photoPtr(e); }, o);
       pd.addEventListener('wheel', (e) => { e.preventDefault(); if (photo) { photo.dist = Core.clamp(photo.dist * Math.exp(e.deltaY * 0.0012), 2.5, 60); photoPose(); } }, o);
