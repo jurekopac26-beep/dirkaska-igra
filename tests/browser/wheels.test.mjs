@@ -46,13 +46,14 @@ try {
       g.pause(); g.sim(9, true); P2.dmg = 0.79; Core.applyDamage(P2, 0.03, P2.m.len * 0.5, 0);
       g.resume(); await frames(4); g.pause();
       const ws = document.getElementById('wheel-swap'), wsr = ws.getBoundingClientRect(), sx = () => parseFloat((document.getElementById('ws-bar').style.transform.match(/[\d.]+/) || ['1'])[0]);
-      const sw0 = { on: ws.classList.contains('on'), full: wsr.width >= innerWidth - 1 && wsr.height >= innerHeight - 1, txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx() };
+      const roof = () => { const v = Render.viewOf(P2), m = v.spareM; if (!m) return null; v.body.geometry.computeBoundingBox(); return { vis: m.visible, y: +m.position.y.toFixed(2), top: +v.body.geometry.boundingBox.max.y.toFixed(2), x: +m.position.x.toFixed(2) }; };   // (the spare on the roof: Render spareRoof)
+      const sw0 = { on: ws.classList.contains('on'), full: wsr.width >= innerWidth - 1 && wsr.height >= innerHeight - 1, txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx(), roof: roof() };
       g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
       while (P2.wreck.rule.due > 0.45) g.sim(0.05, true);   // (the bar under 20 %: the hub's fire)
       await frames(2); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; const v0 = P2.speed;
       ws.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
       const sw1 = { nL: P2.wreck.nL, spare: P2.wreck.rule.spare, ask: P2.wreck.rule.ask, dv: +(P2.speed - v0).toFixed(2) };
-      g.resume(); await frames(3); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length;
+      g.resume(); await frames(3); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length; sw1.roof = roof();
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6));   // (a knock on the autopilot's way meanwhile takes no wheel: under 70 %)
       for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
       const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
@@ -75,6 +76,8 @@ try {
     T.check(`${tag}: PONOVI IGRO: the same race again, the car whole, under the rule`, a.again.fresh && a.again.gone && a.again.rule && a.again.nL === 0 && a.again.dmg === 0 && a.again.track === 'jezero' && a.again.phase !== 'done', JSON.stringify(a.again));
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel off with the spare on the roof: over the whole screen, "${en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO'}", the bar running out, no fire yet; at 20 % of the bar the hub where the wheel was on fire`,
       a.sw0.on && a.sw0.full && a.sw0.txt === (en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO') && a.sw0.nL === 1 && !a.sw0.fire && a.sw0.bar <= 1 && a.sw0.bar2 < a.sw0.bar && a.sw0.hub === 1, JSON.stringify(a.sw0));
+    T.check(`${tag}: the spare drawn lying on the roof (over the body's top, within the car's length) until it is put on, then gone`,
+      !!a.sw0.roof && a.sw0.roof.vis && a.sw0.roof.y > 0.9 && a.sw0.roof.y < a.sw0.roof.top + 0.4 && Math.abs(a.sw0.roof.x) < 1.5 && !!a.sw1.roof && !a.sw1.roof.vis, JSON.stringify([a.sw0.roof, a.sw1.roof]));
     T.check(`${tag}: a tap: the spare on at once (four wheels, drawn), the car not slowed, the screen gone, no spare left; the hub's fire out within 5 s, the car driving on`,
       a.sw1.nL === 0 && a.sw1.spare === 0 && !a.sw1.ask && a.sw1.dv === 0 && !a.sw1.on && a.sw1.shown === 4 && !a.sw2.fire && a.sw2.nL === 0, JSON.stringify([a.sw1, a.sw2]));
     T.check(`${tag}: a hard hit at 85 %: two off at once, the whole car on fire at once, KONEC IGRE; Rezultati: the results`, a.big.n >= 2 && a.big.lvl === 2 && a.big.shown && a.res.shown && a.res.gone, JSON.stringify(a.big) + ' ' + JSON.stringify(a.res));
