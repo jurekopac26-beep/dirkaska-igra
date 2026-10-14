@@ -22,9 +22,13 @@ try {
   await sim(30);
 
   // 1. the safety car out (brought out here for the leader), the field behind it, in again, green at the line. (Out when the player has
-  // room: no rival alongside or less than 30 m ahead of them, so the autopilot is not in the middle of a pass that it would finish under the
-  // safety car: the warning to give the place back would take the HUD's message and board)
-  for (let k = 0; k < 40 && await page.evaluate(() => { const r = window.__game.race, P = r.player; return r.cars.some(c => c !== P && !c.finished && c.dist > P.dist - 8 && c.dist < P.dist + 30) || /^DVOBOJ/.test(document.getElementById('h-msg').textContent); }); k++) await sim(1);   // (nor a duel's message still on the HUD)
+  // room: no rival alongside, none less than 8 m ahead and none up to 30 m ahead that the player would catch within 2 s, so the autopilot is
+  // not in the middle of a pass that it would finish under the safety car: the warning to give the place back would take the HUD's message
+  // and board. Not just none within 30 m ahead: in the train of the first laps that takes over a minute, longer than the wait, and the
+  // safety car came out in the middle of a pass. Nor a duel's message on the HUD, nor one about to start: 15 s near the car ahead or behind)
+  for (let k = 0; k < 80 && await page.evaluate(() => { const r = window.__game.race, P = r.player;
+    return r.cars.some(c => { const d = c.dist - P.dist; return c !== P && !c.finished && d > -8 && d < 30 && (d < 8 || d - 1 < 2 * (P.speed - c.speed) + 3); }) ||
+      r.cars.some(c => c.chr && !c.chr.duelOn && c.chr.duel > 12) || /^DVOBOJ/.test(document.getElementById('h-msg').textContent); }); k++) await sim(0.5);
   await page.evaluate(() => { const r = window.__game.race; r._scOut(r.order.find(c => !c.finished)); });
   await sim(0.5);
   const s1 = await hud();

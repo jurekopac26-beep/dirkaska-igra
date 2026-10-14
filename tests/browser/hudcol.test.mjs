@@ -322,7 +322,7 @@ try {
     await A.page.evaluate(() => window.__game.onAction('net-go'));
     for (const x of [A, B]) await until(x.page, () => { const n = window.__game.net; return !!(n && n.race && n.race.startT != null); }, 90000);
     for (const [x, k] of [[A, 'port'], [B, 'land']]) {
-      await x.page.waitForFunction(() => { const e = document.getElementById('h-lights'); return !e.classList.contains('show') && +getComputedStyle(e).opacity < 0.01; }, null, { timeout: 60000 }).catch(() => { });   // (the start lights gone, faded out too (.25 s): the column stops above them while they show)
+      await x.page.waitForFunction(() => { const e = document.getElementById('h-lights'); return window.__game.phase === 'racing' && !e.classList.contains('show') && +getComputedStyle(e).opacity < 0.01; }, null, { timeout: 60000 }).catch(() => { });   // (the start lights gone, faded out too (.25 s): the column stops above them while they show. Racing: before the intro is over the lights are not up yet)
       const o = await texts(x.page, 'START!', { radio: null }), bad = wrong(o), ids = o.col.map(c => c.id);
       if (SHOTS) await x.page.screenshot({ path: path.join(SHOTS, `online-${k}.png`) });
       T.check(`a race with a friend, ${k === 'land' ? 'on its side' : 'upright'}: the message and the toast under the map, its width, stacked; nothing over the middle or over the HUD`, !bad.length && ids.includes('h-msg') && (k === 'land' || ids.includes('toast')), JSON.stringify({ bad, col: ids, wait: o.wait }));
