@@ -5701,7 +5701,7 @@ const Render = (function () {
   function updateParts(v, c, x, y, z, h) {
     const rnd = v.kit ? rRnd : Math.random;   // (the kit's effects: the renderer's own random numbers; the 11's as they always were)
     // lamps
-    for (let k = 0; k < 4; k++) if ((v.xt && v.xOn ? (v.xLamp && v.xLamp[k]) || (c.dmg >= 0.92 && c.lightOut[k]) : c.lightOut[k]) && !v.lightBroken[k]) {   // (the Kolibri's: by its table, xTabHit; all a wreck's)
+    for (let k = 0; k < 4; k++) if ((v.xt && v.xOn ? (v.xLamp && v.xLamp[k]) || (c.dmg >= 0.92 && c.lightOut[k]) || (c.lamp1 >> k & 1) : c.lightOut[k]) && !v.lightBroken[k]) {   // (the Kolibri's: by its table, xTabHit, and the one of the first knock on that end, the core's lamp1; all a wreck's)
       v.lightBroken[k] = 1;
       const L = v.lights[k];
       if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = vMat(v, matLensBroken); if (v.beam) beams(v); }   // (the night beam: the head lamps left)
@@ -5774,7 +5774,7 @@ const Render = (function () {
     for (const name in U.ranges) {
       if (name === 'body' || K.dead[name]) continue;
       const P = PT[name]; if (!P) continue;
-      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit)
+      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && !Core.maskHeld(c, name, P) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit; the face and the tail not before 70 %: Core.maskHeld)
       if (c.lost[name] && !kept(name)) { kitDetach(v, c, name, x, y, z, h, nOff); nOff = -Math.abs(nOff); }   // (negative: the frame's flash is out)
     }
     if (K.sagV !== K.ver && v.wheelOff.some(Boolean)) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
@@ -6223,7 +6223,9 @@ const Render = (function () {
        the roof with it; the clusters never move the roof up or down (xPush's masks). Open cars, karts: none (their hoops, drivers stay:
        never lifted by a blow, xStand). The start number and a light bar go when the core's roofDmg passes half (roofGear)
      - a deep front crush tears the bonnet open there (its triangles collapsed, as a lost part's) and the grey engine shows under it, as
-       under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them
+       under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them. Till the car is
+       70 % gone (X_SOFT_DMG, the core's MASK_DMG) an end's crush goes no deeper than X_SOFT (0.3 m), no point of the body moves further
+       than that (overlapping blows too) and nothing tears: the face and the tail keep their shape till then
      xPaint on: scraped to bare metal and rust in patches where the metal folded. xGlass on: a broken pane breaks in one of five ways (a
      star from the blow, crazed all over, a hole, long cracks, fallen out) instead of frosting. Their random numbers: none (position noise) */
   const XC = { body: 0, glass: 0, paint: 0, detail: 'lite', parts: 0, drag: 0, dust: 0 };
@@ -6793,6 +6795,9 @@ const Render = (function () {
   function xApply(v, xc, old, K) {
     const geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, n = R.length / 3, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
     const xt = xc.tab ? 0.6 : 0, kx = K.px, kr = K.end ? Infinity : K.R * 1.15 + xt, ox = old ? old.px : 0, orr = old ? (old.end ? Infinity : old.R * 1.15 + xt) : -1;   // (an end's: its fold's full reach)   // (along the car beyond these, xPush reaches nothing: skipped at once; the Kolibri's ridge and V a little farther)
+    // (till 70 %: no point of the body moved further than X_SOFT by the blows, however many overlap; xs: each point's offset by them, the
+    // roof field's moves apart (xRoofApply), xf: held at X_SOFT as drawn. From 70 % the next blow there its full depth)
+    const soft = !((v.car.dmg || 0) >= X_SOFT_DMG), S = xc.xs || (xc.xs = new Float32Array(n * 3)), F = xc.xf || (xc.xf = new Uint8Array(n));
     for (let i = 0; i < n; i++) {
       if ((dv && dv[i]) || (nd && nd[i])) continue;
       const x = R[i * 3]; if (Math.abs(x - kx) >= kr && Math.abs(x - ox) >= orr) continue;
@@ -6800,7 +6805,10 @@ const Render = (function () {
       if (old && xPush(old, xc, x, y, z, i, _xo0)) { dx -= _xo0[0]; dy -= _xo0[1]; dz -= _xo0[2]; da -= _xo0[3]; dc -= _xo0[4]; hit = true; }
       if (xPush(K, xc, x, y, z, i, _xo1)) { dx += _xo1[0]; dy += _xo1[1]; dz += _xo1[2]; da += _xo1[3]; dc += _xo1[4]; hit = true; }
       if (!hit) continue;
-      a[i * 3] += dx; a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
+      const j = i * 3, s0 = S[j], s1 = S[j + 1], s2 = S[j + 2], q = F[i] ? X_SOFT / Math.hypot(s0, s1, s2) : 1;   // (its offset by the blows as drawn now)
+      let tx = s0 + dx, ty = s1 + dy, tz = s2 + dz; S[j] = tx; S[j + 1] = ty; S[j + 2] = tz; F[i] = 0;
+      if (soft) { const el = Math.hypot(tx, ty, tz); if (el > X_SOFT) { const f = X_SOFT / el; tx *= f; ty *= f; tz *= f; F[i] = 1; } }
+      a[j] += tx - s0 * q; a[j + 1] += ty - s1 * q; a[j + 2] += tz - s2 * q; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
     }
     xTouched(v, xc, geo, tris);
     xTear(v, xc); xWheels(v, xc);
@@ -6816,8 +6824,12 @@ const Render = (function () {
     if (!K) { K = { u, w, A: 0, top }; xc.cl.push(K); } else { const s = K.A + d.amt; K.u = (K.u * K.A + u * d.amt) / s; K.w = (K.w * K.A + w * d.amt) / s; }
     K.A += d.amt; if (xc.tab && !top) K.rg = Math.max(K.rg || 0, xtPick(v.car.m, d).row.rg || 0);   // (the Kolibri: its bonnet's ridge, the table's)
     xParams(xc, K);
+    // (the car's face and tail keep their shape till it is 70 % gone, as the core keeps their parts on, MASK_DMG: a blow on an end goes
+    // no deeper than X_SOFT till then, short of tearing the bonnet open; from 70 % its full depth, the next blow there)
+    if (!K.top && K.end && !((v.car.dmg || 0) >= X_SOFT_DMG) && K.d > X_SOFT) { K.d = X_SOFT; K.R = Math.min(2.8, 0.45 + 1.7 * K.d); }
     xApply(v, xc, old, K);
   }
+  const X_SOFT = 0.3, X_SOFT_DMG = 0.7;
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint)
   function xPaint(v, xc, tris) {
     const geo = v.body.geometry, ca = geo.attributes.color ? geo.attributes.color.array : null, nm = geo.attributes.normal.array; if (!ca || !xc.col0) return;
@@ -6835,7 +6847,7 @@ const Render = (function () {
   // a deep front crush tears the bonnet open over it: its triangles (and its lining's) within reach of the crushed nose collapsed, as a
   // lost part's are (deadV: no dent moves them again); the lining drawn from then on (kitLod: K.xTorn), the engine under it shown
   function xTear(v, xc) {
-    const K = v.kit, U = K && v.body.geometry.userData, R = U && U.ranges && U.ranges.hood; if (!R || K.dead.hood) return;
+    const K = v.kit, U = K && v.body.geometry.userData, R = U && U.ranges && U.ranges.hood; if (!R || K.dead.hood || !((v.car.dmg || 0) >= X_SOFT_DMG)) return;   // (not before 70 %)
     const a = v.body.geometry.attributes.position.array, rest = xc.rest, dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let torn = 0;
     for (const C of xc.cl) {
       if (!(C.dx < -0.5 && C.d > 0.42)) continue;
@@ -7440,6 +7452,7 @@ const Render = (function () {
     if (!(rear ? rAgain : again) && Z.n >= 2) bump(hit, d);   // (again here: its pane a stage on; from behind once a crash, whichever of its zones)
     if (!v.xOn) return;
     const K = v.kit, U = v.body.geometry.userData, nm = (n) => n === 'spoiler' && !U.ranges.spoiler && U.ranges.wing ? 'wing' : n;   // (the spoiler: a wing where the car has one)
+    { const held = (n) => Core.maskHeld(c, n, { df: 0 }); fx.hang = fx.hang.filter(n => !held(n)); fx.off = fx.off.filter(n => !held(n)); }   // (the table's face and tail, its spoiler (a wing) too, stay on till 70 %: Core.maskHeld, a wing for downforce as well)
     fx.hang = fx.hang.map(nm); fx.off = fx.off.map(nm);
     for (const k of fx.lamp) (v.xLamp || (v.xLamp = [0, 0, 0, 0]))[k] = 1;
     for (const name of fx.hang) if (U.ranges[name] && !K.ajar[name] && !K.dead[name] && !(K.fold && K.fold[name]) && !fx.off.includes(name)) kitLoosen(v, c, name, name === 'spoiler' || name === 'wing' ? 26 : null);

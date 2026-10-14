@@ -37,14 +37,15 @@ try {
   // what shows above it in the column, the message's, too. On a busy machine 300 ms are not always enough: their animations waited for
   // until they are finished, then two frames more), upright, then on its side, then upright again
   const rbox = () => page.evaluate(() => new Promise(res => setTimeout(async () => {
-    const col = ['h-teamradio', 'h-pit', 'h-msg', 'h-wreck'].map(id => document.getElementById(id));
+    const col = ['h-teamradio', 'h-dmg', 'h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(Boolean);
     for (let k = 0; k < 5; k++) { const a = col.flatMap(x => x.getAnimations()).filter(a => a.playState === 'running'); if (!a.length) break; await Promise.race([Promise.all(a.map(x => x.finished.catch(() => { }))), new Promise(r => setTimeout(r, 2000))]); }
     requestAnimationFrame(() => requestAnimationFrame(() => {
     const e = document.getElementById('h-teamradio'), cs = getComputedStyle(e), r = e.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
-    const above = ['h-pit', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(x => getComputedStyle(x).visibility === 'visible' && getComputedStyle(x).display !== 'none').map(x => x.getBoundingClientRect().bottom);
+    const above = ['h-dmg', 'h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(x => x && getComputedStyle(x).visibility === 'visible' && getComputedStyle(x).display !== 'none' && x.getClientRects().length)
+      .map(x => x.getBoundingClientRect()).filter(q => q.height > 0 && q.left < m.right - 1 && q.right > m.left + 1 && q.bottom <= r.top + 1).map(q => q.bottom);   // (what is over it in the column under the map: upright the damage picture and the tower first, when shown)
     res({ on: e.classList.contains('on'), vis: cs.visibility, dl: +(r.left - m.left).toFixed(1), dr: +(r.right - m.right).toFixed(1), gap: +(r.top - Math.max(m.bottom, ...above)).toFixed(1), fs: parseFloat(cs.fontSize), lines: Math.round((r.height - 9) / parseFloat(cs.lineHeight)), w: innerWidth, h: innerHeight }); })); }, 300)));
   const b1 = await rbox(); await page.setViewportSize({ width: 844, height: 390 }); const b2 = await rbox(); await page.setViewportSize({ width: 390, height: 844 }); await rbox();
-  T.check('the radio\'s box right under the map with the map\'s width (±1 px), its text wrapped and readable (at least 9 px), upright and on its side',
+  T.check('the radio\'s box right under the map with the map\'s width (±1 px; upright under the damage picture and the tower when they are shown), its text wrapped and readable (at least 9 px), upright and on its side',
     [b1, b2].every(b => b.on && b.vis === 'visible' && Math.abs(b.dl) <= 1 && Math.abs(b.dr) <= 1 && b.gap >= 2 && b.gap <= 6 && b.fs >= 9 && b.lines >= 2) && b1.h > b1.w && b2.w > b2.h, JSON.stringify({ b1, b2 }));
 
   // 2. the pause menu: the strategy as it stands (no fuel: the tyres, what a stop now costs, the place after it)
