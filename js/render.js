@@ -7539,7 +7539,8 @@ const Render = (function () {
              replay's and a paused frame's none): at FIRE_IGN (1.5) with dmg >= FIRE_HUB_DMG (0.6) it catches fire, its seat FIRE_SIDE
              (15 %) of the car's width over to the dragging corner's side (F.side);
          (b) a total wreck: dmg >= FIRE_WRECK (0.99) (Core.wreckCar), at once;
-         (c) the wheel rule's car (c.wreck.rule) neither way: only when its rule lights it (Core wheelRule: rule.fn, rule.burn; the user's):
+         (c) the wheel rule's car (c.wreck.rule) neither way: only when its rule lights it (Core wheelRule: rule.fn, rule.burn; the user's;
+             a total wreck, Core.wreckCar, with two wheels or more gone: the whole car at once):
              in the last 20 % of the time to its second wheel a small fire where the first one was (F.lvl 1: a few small flames out of the
              wheel arch, up the car's side, its soot round there only), with the second wheel the whole car (F.lvl 2: flames out of three
              spots along it, ruleSpots, from the hub's size to all of them over FIRE_SPREAD s, its soot from that corner over the car in
