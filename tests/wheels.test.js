@@ -124,6 +124,36 @@ function until(r, fn, s) {
   check('on the pit road the second wheel waits (4 s at 70 %, no damage there); back on the circuit it comes off', res.n0 === 1 && res.held === Infinity && res.after < 3.2, JSON.stringify(res));
 }
 
+// 7c. the spare on the roof (rule.spare): the first wheel off asks for the change (rule.ask) for the 3 s; Race.changeWheel puts it on at
+//     once while the car drives on: four wheels again, nothing more coming, the hub's fire (lit in the last 20 %) put out (rule.xn), the
+//     spare gone; put on sooner, no fire at all. The next wheel then: no asking, the hub's fire, the second 3 s on with the whole car on
+//     fire, over. A scrape at 80 % after the change takes none (the 80 % mark only when crossed); a hit from 70 % one. A repair: a new
+//     spare. Two at once (a hard hit): no asking
+{
+  const res = withRnd(41, () => {
+    const { r, P, W } = setUp(0.79), Q = W.rule; const s0 = { spare: Q.spare, ask: Q.ask };
+    const hold = (fn, sec) => { for (let t = 0; t < sec; t += DT) { if (fn()) return t; if (!r.isOut(P)) C.aiControl(P, r, DT); r.step(DT); } return fn() ? sec : Infinity; };   // (the autopilot: along the road, no wall to run into meanwhile)
+    C.applyDamage(P, 0.03, P.m.len * 0.5, 0); const a1 = { n: W.nL, ask: Q.ask, due: +Q.due.toFixed(2), burn: Q.burn, fn: Q.fn };
+    a1.hub = hold(() => Q.burn === 1, 3); a1.ask2 = Q.ask; const v0 = P.speed;   // (the hub's fire in the last 20 %, still asking)
+    const ok = r.changeWheel(P), a2 = { ok, n: W.nL, wl: W.wl, lost: Object.keys(P.lost).filter(k => /^wheel/.test(k)).length, spare: Q.spare, ask: Q.ask, due: Q.due, burn: Q.burn, xn: Q.xn, v: +(P.speed - v0).toFixed(3) };
+    const later = hold(() => W.nL > 0 || r.isOut(P), 4); const a3 = { n: W.nL, v: +P.speed.toFixed(1), again: r.changeWheel(P) };
+    C.applyDamage(P, 0.008, P.m.len * 0.5, 0); const scrape = W.nL;
+    C.applyDamage(P, 0.03, P.m.len * 0.5, 0); const a4 = { n: W.nL, ask: Q.ask, burn: Q.burn, fn: Q.fn, swap: r.changeWheel(P) };
+    a4.hub = hold(() => Q.burn === 1, 3); const t2 = a4.hub + hold(() => W.nL >= 2, 4); a4.whole = Q.burn; a4.fn2 = Q.fn; const over = hold(() => Q.over, 4);
+    r.repairCar(P); const a5 = { spare: Q.spare, ask: Q.ask, burn: Q.burn };
+    return { s0, a1, a2, later, a3, scrape, a4, t2, over, a5 };
+  });
+  const R = res;
+  check('the spare: on the roof from the start; the first wheel off asks for the change for the 3 s, no fire yet; the hub\'s in the last 20 % (2.4 s on), still asking', R.s0.spare === 1 && !R.s0.ask && R.a1.n === 1 && R.a1.ask === 1 && R.a1.due === 3 && R.a1.burn === 0 && R.a1.fn === 0 && R.a1.hub > 2.35 && R.a1.hub < 2.5 && R.a1.ask2 === 1, JSON.stringify([R.s0, R.a1]));
+  check('ZAMENJAJ KOLO (Race.changeWheel): at once, the car not slowed (it drives on): four wheels, nothing coming, the hub\'s fire put out, no spare left', R.a2.ok && R.a2.n === 0 && R.a2.wl === 0 && R.a2.lost === 0 && R.a2.spare === 0 && !R.a2.ask && R.a2.due === -1 && R.a2.burn === 0 && R.a2.xn === 1 && R.a2.v === 0 && R.later === Infinity && R.a3.n === 0 && R.a3.v > 20 && !R.a3.again, JSON.stringify([R.a2, R.later, R.a3]));
+  check('after the change: a scrape at 80 % takes no wheel; a hit from 70 % one, without asking (no spare), no fire yet; no change possible; the hub\'s fire 2.4 s on, the second 3 s on with the whole car on fire, over', R.scrape === 0 && R.a4.n === 1 && !R.a4.ask && R.a4.burn === 0 && R.a4.fn === 1 && !R.a4.swap && R.a4.hub > 2.35 && R.a4.hub < 2.5 && R.a4.whole === 2 && R.a4.fn2 === 2 && R.t2 > 2.95 && R.t2 < 3.1 && R.over < 3, JSON.stringify([R.scrape, R.a4, R.t2, R.over]));
+  const quick = withRnd(43, () => { const { r, P, W } = setUp(0.79); C.applyDamage(P, 0.03, P.m.len * 0.5, 0); until(r, () => false, 1); const ok = r.changeWheel(P); until(r, () => false, 3); return { ok, n: W.nL, fn: W.rule.fn, burn: W.rule.burn, xn: W.rule.xn }; });
+  check('the spare put on before the last 20 %: no fire at all', quick.ok && quick.n === 0 && quick.fn === 0 && quick.burn === 0 && quick.xn === 0, JSON.stringify(quick));
+  check('a repair: a new spare on the roof, the fire out, nothing asked', R.a5.spare === 1 && !R.a5.ask && R.a5.burn === 0, JSON.stringify(R.a5));
+  const hard = withRnd(42, () => { const { P, W } = setUp(0.82); C.applyDamage(P, 0.3, P.m.len * 0.5, 0); return { n: W.nL, ask: W.rule.ask }; });
+  check('two or more at once (a hard hit at 80 %+): no asking (the game is over)', hard.n >= 2 && !hard.ask, JSON.stringify(hard));
+}
+
 // 8. a whole race: the player crashes into everything from the start; the AI never under the rule; the player over (two wheels, stopped)
 {
   const res = withRnd(21, () => {

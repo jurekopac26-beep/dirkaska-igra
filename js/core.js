@@ -2029,7 +2029,7 @@ const Core = (function () {
     step(dt, trk) { return this.stepCS(dt, trk); }
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
-  const wreck0 = (W) => { if (W.rule) { W.rule.due = -1; W.rule.burn = 0; } return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
+  const wreck0 = (W) => { if (W.rule) Object.assign(W.rule, { due: -1, burn: 0, ask: 0, spare: 1 }); return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
     stop: !!W.stop, cr: W.cr || 0, fin: W.fin || null }); };
   const dnf = (c) => !!(c.wreck && c.wreck.dnf);   // out of the race (Odstop, see Race.retire)
   // a model whose part table has wheels (model.parts: every registered vehicle's; one of the 11 only once a patch def gives it a table):
@@ -2083,7 +2083,11 @@ const Core = (function () {
   // harder, the likelier). Two gone: the car stops (Race._wreckStep) and the game is over (wreck.rule.over). The fire (the user's): none
   // when the first wheel comes off; in the last WRULE.hub (20 %) of the time to the second a small one where that wheel was (rule.burn 1,
   // the hub's: Race._wreckStep), with the second the whole car (rule.burn 2); a hard hit taking two or more: the whole car at once.
-  // rule.fn counts the fires (the renderer draws each: Render fireCatch); a repair puts it out
+  // rule.fn counts the fires (the renderer draws each: Render fireCatch); a repair puts it out. The spare on the roof (rule.spare, one; a
+  // repair gives a new one): with it the first wheel off asks for the change (rule.ask: ZAMENJAJ KOLO, game.js) for those 3 s;
+  // Race.changeWheel puts it on at once, while the car drives on, and a fire burning by then goes out (rule.xn: the renderer lets the wind
+  // blow it out). With none left: no asking, the hub's fire, the second wheel in 3 s, the whole car on fire. After a change the 80 % mark
+  // takes a wheel again only when crossed (rule.chg), a hit from 70 % at once
   const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08, t2: 3, hub: 0.2 };
   const ruleFire = (Q, lvl) => { if (!Q.burn) Q.fn = (Q.fn || 0) + 1; if ((Q.burn || 0) < lvl) Q.burn = lvl; };
   function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on
@@ -2098,10 +2102,10 @@ const Core = (function () {
     if (!Q || W.dnf || c.finished || c.dmgMode !== 2) return;
     if (d1 >= WRULE.d2 && amt >= WRULE.hard) {   // a hard hit at 80 % or over: two at once, sometimes three or four
       let n = 2; if (Math.random() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (Math.random() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
-      ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; ruleFire(Q, 2); return;
+      ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); return;
     }
     const hit = d0 >= WRULE.d1 && amt >= WRULE.hit;   // (a hit from 70 %: its damage before it sets when the second goes)
-    if (!W.nL && (hit || d1 >= WRULE.d2)) { ruleDrop(c, 1); Q.due = WRULE.t2; }
+    if (!W.nL && (hit || (d1 >= WRULE.d2 && !(Q.chg && d0 >= WRULE.d2)))) { ruleDrop(c, 1); Q.due = WRULE.t2; Q.ask = Q.spare ? 1 : 0; }
   }
   // a part comes off: lost, onto the race's debris list (Race.step), its share of the downforce with it (P.df; a model with the 8 old
   // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road); the
@@ -4571,8 +4575,8 @@ const Core = (function () {
       if (this.player) this.player.num = opts.playerNum || 1;
       // the wheel rule (applyDamage: wheelRule) on the player's car, when it is one of opts.wheelRule's vehicles and damage is on. due: s to
       // its second wheel (-1: none coming), over: two wheels gone and the car stopped, the game is over (the game shows PONOVI IGRO); fn, burn:
-      // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car)
-      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && P.dmgMode === 2 && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0 }; }
+      // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel)
+      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && P.dmgMode === 2 && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0 }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -5344,6 +5348,18 @@ const Core = (function () {
       const v = fix || (W && W.rule && W.nL >= 2) || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
     }
+    // the wheel rule's spare (wheelRule: rule.spare on the roof, rule.ask): ZAMENJAJ KOLO (game.js) puts it on the corner that lost its wheel at
+    // once, the car driving on (no stop, no wait: the user's): four wheels again, the second wheel no more coming, its fire put out (rule.xn).
+    // A cut tyre that came off with the wheel: a new one with it. Once: then there is no spare on the roof any more (a repair gives a new one)
+    changeWheel(c) {
+      const W = c && c.wreck, Q = W && W.rule;
+      if (!Q || !Q.ask || !Q.spare || W.nL !== 1 || W.dnf || c.finished) return false;
+      const k = [0, 1, 2, 3].find(j => W.wl & (1 << j)); if (k == null) return false;
+      if (c.flt && c.flt.pw === k) { c.flt.pw = -1; c.flt.pk = 0; }
+      delete c.lost[WHEELS[k]]; W.wl &= ~(1 << k); W.nL = 0; W.lt = 0; W.fix++;   // (W.fix: the renderer puts the wheel back on, kitRefit)
+      Q.spare = 0; Q.ask = 0; Q.due = -1; Q.chg++; if (Q.burn) { Q.burn = 0; Q.xn++; }
+      return true;
+    }
     // a car out of the race (Odstop): an AI car that can not race on (see _wreckStep), or the player pressing Odstopi (game.js; any car).
     // It pulls off onto a run-off (_retireSide) and stops there (retireControl); it never finishes: behind every running car in the order,
     // a DNF at the end of the results (estimateResults: dnf); the flags see it as a stopped car for 30 s and until it stands where it may
@@ -5398,7 +5414,7 @@ const Core = (function () {
       if (Q && !W.dnf && !c.finished) {
         if (Q.due > 0 && !c.pitG) {   // (on the pit road, no damage there: it waits; the repair in the box clears it)
           Q.due -= dt; if (Q.due <= WRULE.t2 * WRULE.hub && W.nL === 1) ruleFire(Q, 1);   // (its last 20 %: the hub where the wheel was catches fire)
-          if (Q.due <= 0) { Q.due = -1; if (W.nL < 2) ruleDrop(c, 1); ruleFire(Q, 2); }   // (the second wheel: the whole car)
+          if (Q.due <= 0) { Q.due = -1; Q.ask = 0; if (W.nL < 2) ruleDrop(c, 1); ruleFire(Q, 2); }   // (the second wheel: the whole car)
         }
         if (W.nL >= 2 && !c.rl && !c.fall) {   // (rolling over, Razbijanje, or falling off a drop: once it is back on the road)
           parkBrake(c); const k = Math.max(0, 1 - 2.5 * dt); c.vx *= k; c.vz *= k; c.w *= k;

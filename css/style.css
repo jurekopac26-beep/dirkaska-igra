@@ -426,6 +426,17 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #rotate #rotate-cam { margin-top: 6px; }
 #rotate.to-portrait .phone { animation-name: rotp; }
 @keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
+/* ZAMENJAJ KOLO (game.js swapHUD; the wheel rule: a wheel off with the spare on the roof): over the whole screen, over the controls (a tap
+   anywhere puts the spare on), under the screens (pause, KONEC IGRE); the words blinking, the bar under them running out with the 3 s to the
+   second wheel */
+#wheel-swap { position: absolute; inset: 0; z-index: 8; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.4vh; padding: 0 16px; background: radial-gradient(ellipse at center, rgba(150, 24, 12, .46), rgba(12, 6, 4, .2) 72%); cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+#wheel-swap.on { display: flex; }
+#wheel-swap b { font: 400 italic clamp(40px, 12.5vmin, 112px)/1 var(--f-display); color: #fff; letter-spacing: .03em; text-align: center; -webkit-text-stroke: .045em #d8281a; paint-order: stroke fill; text-shadow: 0 4px 18px rgba(0, 0, 0, .65); animation: wsBlink .6s steps(1) infinite; }
+#wheel-swap small { font: 700 clamp(13px, 3.4vmin, 22px)/1.2 var(--f-ui); color: rgba(255, 255, 255, .94); text-align: center; text-shadow: 0 1px 3px #000; }
+#wheel-swap i { display: block; width: min(72vw, 520px); height: clamp(9px, 1.8vmin, 14px); border-radius: 8px; background: rgba(255, 255, 255, .25); overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
+#wheel-swap s { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #ff3b2a, #ffb02a); transform-origin: left center; }
+@keyframes wsBlink { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { #wheel-swap b { animation: none; } }
 #toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; width: max-content; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
 #toast.show { opacity: 1; }
 @media (orientation: landscape) { #toast { max-width: min(80vw, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); } }   /* (on its side: between the steering arrows and the pedals, as #h-radio) */

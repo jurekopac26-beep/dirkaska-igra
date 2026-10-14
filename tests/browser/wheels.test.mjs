@@ -40,12 +40,28 @@ try {
       document.getElementById('over-again').click();
       for (let k = 0; k < 50 && !(g.race && g.race.player !== P); k++) await wait(100);
       const P2 = g.race.player, again = { fresh: P2 !== P, rule: !!(P2.wreck && P2.wreck.rule), nL: P2.wreck.nL, dmg: P2.dmg, gone: !sc.classList.contains('show'), phase: g.phase, track: g.race.track.def.id };
+      // ZAMENJAJ KOLO (the spare on the roof): a hit at 79 % in the new race: over the whole screen, the words, the bar running out, no fire
+      // yet, then (the bar under 20 %) the hub where the wheel was on fire; a tap anywhere: the spare on at once (four wheels, drawn), the car
+      // driving on, the screen gone, no spare left; the hub's fire put out
+      g.pause(); g.sim(9, true); P2.dmg = 0.79; Core.applyDamage(P2, 0.03, P2.m.len * 0.5, 0);
+      g.resume(); await frames(4); g.pause();
+      const ws = document.getElementById('wheel-swap'), wsr = ws.getBoundingClientRect(), sx = () => parseFloat((document.getElementById('ws-bar').style.transform.match(/[\d.]+/) || ['1'])[0]);
+      const sw0 = { on: ws.classList.contains('on'), full: wsr.width >= innerWidth - 1 && wsr.height >= innerHeight - 1, txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx() };
+      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
+      while (P2.wreck.rule.due > 0.45) g.sim(0.05, true);   // (the bar under 20 %: the hub's fire)
+      await frames(2); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; const v0 = P2.speed;
+      ws.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+      const sw1 = { nL: P2.wreck.nL, spare: P2.wreck.rule.spare, ask: P2.wreck.rule.ask, dv: +(P2.speed - v0).toFixed(2) };
+      g.resume(); await frames(3); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length;
+      P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6));   // (a knock on the autopilot's way meanwhile takes no wheel: under 70 %)
+      for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
+      const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
       // once more to KONEC IGRE, then Rezultati: the results, the player out (Odstop)
       g.pause(); g.sim(9, true); P2.dmg = 0.85; Core.applyDamage(P2, 0.2, P2.m.len * 0.5, 0); await frames(2); const big = { lvl: Render.viewOf(P2).fire && Render.viewOf(P2).fire.lvl };
       g.sim(4, true); await frames(4); Object.assign(big, { n: P2.wreck.nL, shown: sc.classList.contains('show') });
       document.getElementById('over-res').click(); await frames(3);
       const res = { shown: document.getElementById('s-results').classList.contains('show'), gone: !sc.classList.contains('show') };
-      return { rule, others, lay, n1, msg, fix, fire, fire0, hub, over, again, big, res };
+      return { rule, others, lay, n1, msg, fix, fire, fire0, hub, over, again, sw0, sw1, sw2, big, res };
     });
     console.log(tag, JSON.stringify(a));
     const O = a.over;
@@ -57,6 +73,10 @@ try {
     T.check(`${tag}: ${en ? 'GAME OVER, PLAY AGAIN' : 'KONEC IGRE, PONOVI IGRO'}: big (>= 64 px high, most of the panel's width, one line), the panel all on screen`,
       O.title === (en ? 'GAME OVER' : 'KONEC IGRE') && O.btn === (en ? 'PLAY AGAIN' : 'PONOVI IGRO') && O.bh >= 64 && O.bw >= 0.8 * O.pw && O.inView && O.oneLine, `"${O.title}", "${O.btn}" ${O.bw} x ${O.bh}`);
     T.check(`${tag}: PONOVI IGRO: the same race again, the car whole, under the rule`, a.again.fresh && a.again.gone && a.again.rule && a.again.nL === 0 && a.again.dmg === 0 && a.again.track === 'jezero' && a.again.phase !== 'done', JSON.stringify(a.again));
+    T.check(`${tag}: ZAMENJAJ KOLO: a wheel off with the spare on the roof: over the whole screen, "${en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO'}", the bar running out, no fire yet; at 20 % of the bar the hub where the wheel was on fire`,
+      a.sw0.on && a.sw0.full && a.sw0.txt === (en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO') && a.sw0.nL === 1 && !a.sw0.fire && a.sw0.bar <= 1 && a.sw0.bar2 < a.sw0.bar && a.sw0.hub === 1, JSON.stringify(a.sw0));
+    T.check(`${tag}: a tap: the spare on at once (four wheels, drawn), the car not slowed, the screen gone, no spare left; the hub's fire out within 5 s, the car driving on`,
+      a.sw1.nL === 0 && a.sw1.spare === 0 && !a.sw1.ask && a.sw1.dv === 0 && !a.sw1.on && a.sw1.shown === 4 && !a.sw2.fire && a.sw2.nL === 0, JSON.stringify([a.sw1, a.sw2]));
     T.check(`${tag}: a hard hit at 85 %: two off at once, the whole car on fire at once, KONEC IGRE; Rezultati: the results`, a.big.n >= 2 && a.big.lvl === 2 && a.big.shown && a.res.shown && a.res.gone, JSON.stringify(a.big) + ' ' + JSON.stringify(a.res));
     T.check(`${tag}: no errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
