@@ -426,17 +426,23 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #rotate #rotate-cam { margin-top: 6px; }
 #rotate.to-portrait .phone { animation-name: rotp; }
 @keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
-/* ZAMENJAJ KOLO (game.js swapHUD; the wheel rule: a wheel off with the spare on the roof): over the whole screen, over the controls (a tap
-   anywhere puts the spare on), under the screens (pause, KONEC IGRE); the words blinking, the bar under them running out with the 3 s to the
-   second wheel */
-#wheel-swap { position: absolute; inset: 0; z-index: 8; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.4vh; padding: 0 16px; background: radial-gradient(ellipse at center, rgba(150, 24, 12, .46), rgba(12, 6, 4, .2) 72%); cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
-#wheel-swap.on { display: flex; }
-#wheel-swap b { font: 400 italic clamp(40px, 12.5vmin, 112px)/1 var(--f-display); color: #fff; letter-spacing: .03em; text-align: center; -webkit-text-stroke: .045em #d8281a; paint-order: stroke fill; text-shadow: 0 4px 18px rgba(0, 0, 0, .65); animation: wsBlink .6s steps(1) infinite; }
-#wheel-swap small { font: 700 clamp(13px, 3.4vmin, 22px)/1.2 var(--f-ui); color: rgba(255, 255, 255, .94); text-align: center; text-shadow: 0 1px 3px #000; }
-#wheel-swap i { display: block; width: min(72vw, 520px); height: clamp(9px, 1.8vmin, 14px); border-radius: 8px; background: rgba(255, 255, 255, .25); overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
-#wheel-swap s { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #ff3b2a, #ffb02a); transform-origin: left center; }
+/* ZAMENJAJ KOLO (game.js swapHUD; the wheel rule: a wheel off with the spare on the roof): a big button, its bar at its foot running out
+   with the 3 s to the second wheel (white and blinking in their last 20 %: the hub on fire); only a tap on it puts the spare on, the rest of
+   the screen stays the driver's (the layer under it lets every touch through). Over the HUD and the controls, under the screens (pause,
+   KONEC IGRE). Upright in the middle over the car, clear of the steering and the pedals; on its side at the foot of the screen between them */
+#wheel-swap { position: absolute; inset: 0; z-index: 8; display: none; pointer-events: none; }
+#wheel-swap.on { display: block; }
+#ws-btn { -webkit-appearance: none; appearance: none; position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); box-sizing: border-box; width: min(82vw, 420px); min-height: clamp(84px, 13vh, 124px); margin: 0; padding: 8px 14px clamp(22px, 3.4vmin, 28px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 3px solid #fff; border-radius: 18px; background: linear-gradient(180deg, #ee4630, #b51b0f); box-shadow: 0 6px 22px rgba(0, 0, 0, .55), inset 0 2px 0 rgba(255, 255, 255, .35); color: #fff; overflow: hidden; pointer-events: auto; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; animation: wsPulse .7s ease-in-out infinite alternate; }
+#ws-btn b { font: 400 italic clamp(26px, 8.6vmin, 54px)/1 var(--f-display); letter-spacing: .03em; white-space: nowrap; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+#ws-btn small { font: 700 clamp(11px, 2.9vmin, 16px)/1.1 var(--f-ui); color: rgba(255, 255, 255, .95); }
+#ws-btn i { position: absolute; left: 12px; right: 12px; bottom: clamp(7px, 1.3vmin, 10px); height: clamp(8px, 1.7vmin, 12px); border-radius: 6px; background: rgba(0, 0, 0, .38); overflow: hidden; }
+#ws-btn s { display: block; width: 100%; height: 100%; background: #ffd23c; transform-origin: left center; }
+#ws-btn.hot s { background: #fff; animation: wsBlink .3s steps(1) infinite; }
+#ws-btn:active { filter: brightness(1.15); }
+@media (orientation: landscape) { #ws-btn { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(36vw, 400px); min-height: clamp(64px, 22vh, 100px); } }
+@keyframes wsPulse { to { scale: 1.04; } }
 @keyframes wsBlink { 50% { opacity: .3; } }
-@media (prefers-reduced-motion: reduce) { #wheel-swap b { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #ws-btn, #ws-btn.hot s { animation: none; } }
 #toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; width: max-content; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
 #toast.show { opacity: 1; }
 @media (orientation: landscape) { #toast { max-width: min(80vw, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); } }   /* (on its side: between the steering arrows and the pedals, as #h-radio) */
