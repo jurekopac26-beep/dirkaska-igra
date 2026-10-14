@@ -65,8 +65,8 @@ try {
     T.check(`${way}: a press 0.12 s after the lights: REAKCIJA 0,12 s in green, shown`, /^REAKCIJA 0,1[23] s$/.test(a.txt) && /\bshow\b/.test(a.cls) && /\bgood\b/.test(a.cls) && a.op > 0.9 && Math.abs(a.re - 0.12) < 0.02,
       JSON.stringify({ txt: a.txt, cls: a.cls, op: a.op, re: a.re, color: a.value }));
     T.check(`${way}: under the map, as wide as it, on the screen, over nothing else`, !pa.length, pa.join('; ') + ' ' + JSON.stringify({ me: a.me, map: a.map }));
-    T.check(`${way}: the timing tower: ` + (w > h ? 'lying, the column\'s last, it stays under the reaction while it shows (fewer rows where the room runs out), no fewer once it is gone' : 'upright, under the damage picture and over the reaction (fewer rows where the room runs out), no fewer once it is gone'),
-      a.towerOn && (w > h ? a.towerShown && a.rows >= 1 && a.tw.t >= a.me.b && a.after.tower && a.after.rows >= a.rows : (!a.towerShown || a.tw.b <= a.me.t + 0.5) && a.after.tower && a.after.rows >= a.rows) && !a.after.shown,
+    T.check(`${way}: the timing tower: ` + (w > h ? 'lying, the column\'s last, it stays under the reaction while it shows (fewer rows where the room runs out), no fewer once it is gone' : 'upright, under the damage picture and over the reaction (fewer rows where the room runs out), shown once it is gone'),
+      a.towerOn && (w > h ? a.towerShown && a.rows >= 1 && a.tw.t >= a.me.b && a.after.tower && a.after.rows >= a.rows : (!a.towerShown || a.tw.b <= a.me.t + 0.5) && a.after.tower && a.after.rows >= 1) && !a.after.shown,   // (upright the rows by the order round the player, room enough: shown again after it)
       JSON.stringify({ tower: a.towerShown, rows: a.rows, top: a.tw.t, me: a.me.b, after: a.after }));
     await page.evaluate(() => window.__game.onAction('restart')); await page.waitForFunction(() => window.__game.phase === 'intro', null, { timeout: 60000 });
     const b = await page.evaluate(START, { held: true }), pb = placed(b);
