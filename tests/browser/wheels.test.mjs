@@ -27,6 +27,7 @@ try {
       const rule = !!W.rule, others = g.race.cars.filter(c => !c.isPlayer).every(c => !(c.wreck && c.wreck.rule));
       const fire0 = Render.burning(P);   // (79 %, no wheel off yet: no fire)
       P.dmg = 0.79; Core.applyDamage(P, 0.03, P.m.len * 0.5, 0); const n1 = W.nL;
+      P.dmg = Math.min(P.dmg, 0.6); P.dz = P.dz.map(d => Math.min(d, 0.6));   // (the first wheel off: a knock on the autopilot's way meanwhile takes no more; its 3 s run on)
       g.resume(); await frames(4); g.pause();
       const msg = document.getElementById('h-msg').classList.contains('show') ? document.getElementById('h-msg').textContent : '', fix = !document.getElementById('btn-rescue').classList.contains('off'), fire = Render.burning(P);
       while (W.rule.due > 0.45) g.sim(0.05, true);   // (the last 20 % of the 3 s: the hub where the wheel was on fire)
