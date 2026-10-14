@@ -3421,12 +3421,16 @@
   // in % over a bar with marks at 70 and 80 % (the wheel rule's: wheelRule in core.js; the whole % rounded down, so 80 % shows once it is
   // reached). The DOM is touched only when a shown value changes
   const DMG_ARR = ['▲', '▼', '◀', '▶'];
-  // ZAMENJAJ KOLO (the wheel rule, Core rule.ask: a wheel off with the spare on the roof): over the whole screen for the 3 s to the second
-  // wheel, the bar running out with them; a tap anywhere (or Enter) puts the spare on at once, the car driving on (Race.changeWheel)
+  // ZAMENJAJ KOLO (the wheel rule, Core rule.ask: a wheel off with the spare on the roof): a big button for the 3 s to the second wheel,
+  // its bar at its very foot running out with them; a tap on it (or Enter) puts the spare on at once, the car driving on (Race.changeWheel)
   let swapOn = false, swapD0 = 3;
+  function swapFit() {   // the title on one line inside the button: from the css's size down until it fits (a narrow button, a long word)
+    const t = $('ws-t'); t.style.removeProperty('font-size');
+    for (let f = parseFloat(getComputedStyle(t).fontSize); f > 14 && t.scrollWidth > t.clientWidth + 1;) t.style.fontSize = --f + 'px';
+  }
   function swapHUD(P) {
     const Q = P && P.wreck && P.wreck.rule, on = !!(Q && Q.ask && Q.spare && Q.due > 0 && phase === 'racing' && screen === 'none' && !replay);
-    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); setText('ws-s', tr('Rezervno kolo s strehe')); } }
+    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); swapFit(); } }
     if (on) { const k = Math.max(0, Math.min(1, Q.due / swapD0)); $('ws-bar').style.transform = 'scaleX(' + k.toFixed(3) + ')'; $('ws-btn').classList.toggle('hot', k <= 0.2); }   // (hot: its last 20 %, the hub on fire)
   }
   function swapWheel() { if (swapOn && race && race.changeWheel(race.player)) { vibrate(40); Sfx.beep(660, 0.12, 0.12); swapHUD(race.player); } }
