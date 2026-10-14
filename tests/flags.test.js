@@ -33,7 +33,7 @@ function run(tid, t0, hold, extra) {
       const ord = r.order.filter(c => !c.isPlayer && !c.finished && !c.inPit && !c.pitWant && c.fl.stopT === 0).map(c => c.name);
       if (prevOrder) { const a = prevOrder.filter(x => ord.includes(x)), b = ord.filter(x => prevOrder.includes(x)); if (a.join() !== b.join()) S.passes++; }
       prevOrder = ord;
-      if (F.sc.state === 'in' && !S.queue) { const X = F.sc.car; S.queue = r.order.filter(c => !c.finished && !c.isPlayer).slice(0, 5).map(c => Math.round(X.dist - c.dist)); }
+      if (F.sc.state === 'in' && !S.queue) { const X = F.sc.car, q = r.order.filter(c => !c.finished && !c.isPlayer).slice(0, 5); S.queue = q.map(c => Math.round(X.dist - c.dist)); S.qDmg = q.map(c => c.dmg); }
       for (const c of r.cars) if (c.drs) S.drsFlag++;
     } else prevOrder = null;
   }
@@ -57,8 +57,9 @@ for (const tid of ['rbring', 'jezero']) {
   const order = seq.every((k, i) => ks.indexOf(k) >= 0 && (i === 0 || ks.indexOf(k) > ks.indexOf(seq[i - 1])));
   check(`${tid}: a long stop brings out the safety car; it goes in (${tid === 'rbring' ? 'the pit lane' : 'away up the road'}), then green at the line`,
     order && (ks.includes('green') || S.r.finishOrder.length) && S.r.fl.sc === null && S.r.fl.scUsed, ks.join(', '));
-  check(`${tid}: the field queued behind the safety car (15-40 m apart) and nobody overtook under it, no DRS`, !!S.queue && S.queue[0] > 8 && S.queue[0] < 30 && S.queue.every((g, i) => i === 0 || g - S.queue[i - 1] < 45) && S.passes === 0 && S.drsFlag === 0,
-    `gaps to the safety car ${S.queue && S.queue.join(', ')}; ${S.passes} overtakes`);
+  // (a car slowed by its damage, 25 % or more: 22 % less power and less grip per unit of it, may still be catching the queue up: up to 60 m)
+  check(`${tid}: the field queued behind the safety car (15-40 m apart; a damaged car up to 60 m) and nobody overtook under it, no DRS`, !!S.queue && S.queue[0] > 8 && S.queue[0] < 30 && S.queue.every((g, i) => i === 0 || g - S.queue[i - 1] < (S.qDmg[i] >= 0.25 ? 60 : 45)) && S.passes === 0 && S.drsFlag === 0,
+    `gaps to the safety car ${S.queue && S.queue.map((g, i) => g + (S.qDmg[i] >= 0.25 ? ` (damaged ${Math.round(S.qDmg[i] * 100)} %)` : '')).join(', ')}; ${S.passes} overtakes`);
   check(`${tid}: every car finishes`, S.r.cars.every(c => c.finished), `${S.r.cars.filter(c => c.finished).length}/13`);
 }
 

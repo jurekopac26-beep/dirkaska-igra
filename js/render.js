@@ -5527,12 +5527,16 @@ const Render = (function () {
     const markerOn = opt && opt.marker, now = curRace && Number.isFinite(curRace.time) ? curRace.time : time, wk = wetW > 0.05 ? Math.min(1, wetW * 1.4) : 0;   // wk: how much the wet road mirrors the lights
     _sunN.set(sunOff[0], sunOff[1], sunOff[2]).normalize();
     const sk = (atmos.tod === 'night' ? 0 : atmos.tod === 'dusk' ? 0.8 : 1) * (1 - Math.min(1, Math.max(0, wet) * 1.6)) * Math.min(1, sun.intensity);   // sk: the sun's glint on the paint
-    glows.begin(); streaks.begin(); fireScan(now);
+    glows.begin(); streaks.begin(); fireScan(now); xShardsRun(now);
     for (const v of views) {
       const c = v.car, M = c.m;
       const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha), h = c.ph + wrapPi(c.h - c.ph) * alpha;
       const y = lerp(c.py, c.y, alpha), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
-      v.grp.position.set(x, y + (jk ? crew.lift : 0), z);
+      // over a piece of debris on the road (Core debrisHit: hopN, hopT, hopH): the body up and down once, as if it jumped ~2 m
+      if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
+      else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
+      let hy = 0; if (v.hop) { const H = v.hop; H.t += dt; if (H.t >= H.T) v.hop = null; else hy = H.h * Math.sin(Math.PI * H.t / H.T); }
+      v.grp.position.set(x, y + hy + (jk ? crew.lift : 0), z);
       const lat = clamp(c.w * c.speed, -16, 16), sw = M.sway || 1;   // (sway: the truck's soft, tall body rolls and pitches more)
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035 * sw, -0.045 * sw, 0.04 * sw) - v.pitch) * Math.min(1, dt * 7);
@@ -5701,7 +5705,7 @@ const Render = (function () {
   function updateParts(v, c, x, y, z, h) {
     const rnd = v.kit ? rRnd : Math.random;   // (the kit's effects: the renderer's own random numbers; the 11's as they always were)
     // lamps
-    for (let k = 0; k < 4; k++) if ((v.xt && v.xOn ? (v.xLamp && v.xLamp[k]) || (c.dmg >= 0.92 && c.lightOut[k]) : c.lightOut[k]) && !v.lightBroken[k]) {   // (the Kolibri's: by its table, xTabHit; all a wreck's)
+    for (let k = 0; k < 4; k++) if ((v.xt && v.xOn ? (v.xLamp && v.xLamp[k]) || (c.dmg >= 0.92 && c.lightOut[k]) || (c.lamp1 >> k & 1) : c.lightOut[k]) && !v.lightBroken[k]) {   // (the Kolibri's: by its table, xTabHit, and the one of the first knock on that end, the core's lamp1; all a wreck's)
       v.lightBroken[k] = 1;
       const L = v.lights[k];
       if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = vMat(v, matLensBroken); if (v.beam) beams(v); }   // (the night beam: the head lamps left)
@@ -5774,7 +5778,7 @@ const Render = (function () {
     for (const name in U.ranges) {
       if (name === 'body' || K.dead[name]) continue;
       const P = PT[name]; if (!P) continue;
-      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit)
+      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && !Core.maskHeld(c, name, P) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit; the face and the tail not before 70 %: Core.maskHeld)
       if (c.lost[name] && !kept(name)) { kitDetach(v, c, name, x, y, z, h, nOff); nOff = -Math.abs(nOff); }   // (negative: the frame's flash is out)
     }
     if (K.sagV !== K.ver && v.wheelOff.some(Boolean)) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
@@ -6223,7 +6227,9 @@ const Render = (function () {
        the roof with it; the clusters never move the roof up or down (xPush's masks). Open cars, karts: none (their hoops, drivers stay:
        never lifted by a blow, xStand). The start number and a light bar go when the core's roofDmg passes half (roofGear)
      - a deep front crush tears the bonnet open there (its triangles collapsed, as a lost part's) and the grey engine shows under it, as
-       under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them
+       under a lost bonnet (xEngine); the engine bay's lining grey; the wheels go back with the metal crushed over them. Till the car is
+       70 % gone (X_SOFT_DMG, the core's MASK_DMG) an end's crush goes no deeper than X_SOFT (0.3 m), no point of the body moves further
+       than that (overlapping blows too) and nothing tears: the face and the tail keep their shape till then
      xPaint on: scraped to bare metal and rust in patches where the metal folded. xGlass on: a broken pane breaks in one of five ways (a
      star from the blow, crazed all over, a hole, long cracks, fallen out) instead of frosting. Their random numbers: none (position noise) */
   const XC = { body: 0, glass: 0, paint: 0, detail: 'lite', parts: 0, drag: 0, dust: 0 };
@@ -6243,7 +6249,7 @@ const Render = (function () {
         cl: xc ? xc.cl.map(K => ({ u: +K.u.toFixed(3), w: +K.w.toFixed(3), A: +K.A.toFixed(3), d: +K.d.toFixed(3), R: +K.R.toFixed(3), end: !!K.end })) : [], rf: xc && xc.rf ? xRoofInfo(v, xc) : null, roofed: !!(xc && xc.rf), roof: xc ? (() => { const a = g.attributes.position.array, R = xc.rest; let sd = 0, n = 0, mx = 0;   // (the roof's own top caved in: its mean and its deepest drop, what lies on it left out)
           const top = xRoofTop(v, xc); for (let i = 0; i < xc.on; i++) { if (!top[i]) continue; const d = R[i * 3 + 1] - a[i * 3 + 1]; sd += d; n++; if (d > mx) mx = d; }
           return { mean: n ? +(sd / n).toFixed(3) : 0, max: +mx.toFixed(3) }; })() : null, caps: xc ? { F: xc.B.capF, R: xc.B.capR, S: xc.B.capS } : null,
-        torn: !!(v.kit && v.kit.xTorn), engine: !!(v.xEng && v.xEng.visible), glass: v.xGl ? v.xGl.slice() : null, panes: v.xP ? v.xP.map(P => P.broken) : null, paneK: v.xP ? v.xP.map(P => P.k) : null, rearDoors: v.kit && v.kit.xRD ? v.kit.xRD.slice() : null, xt: v.xt ? { panes: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.st])) : {}, drawn: v.xtP ? Object.keys(v.xtP).filter(k => v.xtP[k].on && !v.xtP[k].dirty) : [], frame: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.fr.length])) : {}, lamps: v.lightBroken ? v.lightBroken.slice() : null, ajar: Object.keys(v.kit.ajar), dead: Object.keys(v.kit.dead), rear: v.xtS ? v.xtS.rear : 0, rg: xc ? Math.max(0, ...xc.cl.map(K => K.rg || 0)) : 0, mir: { glass: v.xtMG ? { L: v.xtMG.L, R: v.xtMG.R } : { L: 0, R: 0 }, fold: Object.assign({}, v.kit.fold || {}) }, bent: xc && xc.tab ? xtBent(v) : null, idx: v.xtO ? v.xtO.g.drawRange.count : 0, cut: !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) } : null, mirrors: [!!(v.kit ? v.kit.dead.mirrorL : v.parts && v.parts.mirrorL && !v.parts.mirrorL.visible), !!(v.kit ? v.kit.dead.mirrorR : v.parts && v.parts.mirrorR && !v.parts.mirrorR.visible)] }; }), shards: xSh ? xSh.count : 0, ground: xGround.length, kept: xGround.filter(m => m.userData.xDeb).length, shardAt: xSh && xSh.count ? (() => { const m = new THREE.Matrix4(), p = new THREE.Vector3(), k = (xSh.k + XSH_N - 1) % XSH_N; xSh.getMatrixAt(k, m); p.setFromMatrixPosition(m); return [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)]; })() : null, shardMat: xSh ? [xSh.material.type, !!xSh.instanceColor, xSh.parent === scene] : null };
+        torn: !!(v.kit && v.kit.xTorn), engine: !!(v.xEng && v.xEng.visible), glass: v.xGl ? v.xGl.slice() : null, panes: v.xP ? v.xP.map(P => P.broken) : null, paneK: v.xP ? v.xP.map(P => P.k) : null, rearDoors: v.kit && v.kit.xRD ? v.kit.xRD.slice() : null, xt: v.xt ? { panes: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.st])) : {}, drawn: v.xtP ? Object.keys(v.xtP).filter(k => v.xtP[k].on && !v.xtP[k].dirty) : [], frame: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.fr.length])) : {}, lamps: v.lightBroken ? v.lightBroken.slice() : null, ajar: Object.keys(v.kit.ajar), dead: Object.keys(v.kit.dead), rear: v.xtS ? v.xtS.rear : 0, rg: xc ? Math.max(0, ...xc.cl.map(K => K.rg || 0)) : 0, mir: { glass: v.xtMG ? { L: v.xtMG.L, R: v.xtMG.R } : { L: 0, R: 0 }, fold: Object.assign({}, v.kit.fold || {}) }, bent: xc && xc.tab ? xtBent(v) : null, idx: v.xtO ? v.xtO.g.drawRange.count : 0, cut: !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) } : null, mirrors: [!!(v.kit ? v.kit.dead.mirrorL : v.parts && v.parts.mirrorL && !v.parts.mirrorL.visible), !!(v.kit ? v.kit.dead.mirrorR : v.parts && v.parts.mirrorR && !v.parts.mirrorR.visible)] }; }), shards: xSh ? xSh.count : 0, shardsOn: xShOn(), ground: xGround.length, kept: xGround.filter(m => m.userData.xDeb).length, shardAt: xSh && xSh.count ? (() => { const m = new THREE.Matrix4(), p = new THREE.Vector3(), k = (xSh.k + XSH_N - 1) % XSH_N; xSh.getMatrixAt(k, m); p.setFromMatrixPosition(m); return [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)]; })() : null, shardMat: xSh ? [xSh.material.type, !!xSh.instanceColor, xSh.parent === scene] : null };
   }
   // a car's body density (metres; 0: as built): the player's the finest, the rivals' by the detail setting; never the formula's nor the lm's
   const xDensity = (c) => !XC.body || !c || !c.m || c.m.body === 'formula' || c.m.body === 'lm' ? 0 : c.isPlayer ? (XC.detail === 'full' ? 0.11 : 0.13) : XC.detail === 'full' ? 0.17 : 0;
@@ -6793,6 +6799,9 @@ const Render = (function () {
   function xApply(v, xc, old, K) {
     const geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, n = R.length / 3, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
     const xt = xc.tab ? 0.6 : 0, kx = K.px, kr = K.end ? Infinity : K.R * 1.15 + xt, ox = old ? old.px : 0, orr = old ? (old.end ? Infinity : old.R * 1.15 + xt) : -1;   // (an end's: its fold's full reach)   // (along the car beyond these, xPush reaches nothing: skipped at once; the Kolibri's ridge and V a little farther)
+    // (till 70 %: no point of the body moved further than X_SOFT by the blows, however many overlap; xs: each point's offset by them, the
+    // roof field's moves apart (xRoofApply), xf: held at X_SOFT as drawn. From 70 % the next blow there its full depth)
+    const soft = !((v.car.dmg || 0) >= X_SOFT_DMG), S = xc.xs || (xc.xs = new Float32Array(n * 3)), F = xc.xf || (xc.xf = new Uint8Array(n));
     for (let i = 0; i < n; i++) {
       if ((dv && dv[i]) || (nd && nd[i])) continue;
       const x = R[i * 3]; if (Math.abs(x - kx) >= kr && Math.abs(x - ox) >= orr) continue;
@@ -6800,7 +6809,10 @@ const Render = (function () {
       if (old && xPush(old, xc, x, y, z, i, _xo0)) { dx -= _xo0[0]; dy -= _xo0[1]; dz -= _xo0[2]; da -= _xo0[3]; dc -= _xo0[4]; hit = true; }
       if (xPush(K, xc, x, y, z, i, _xo1)) { dx += _xo1[0]; dy += _xo1[1]; dz += _xo1[2]; da += _xo1[3]; dc += _xo1[4]; hit = true; }
       if (!hit) continue;
-      a[i * 3] += dx; a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
+      const j = i * 3, s0 = S[j], s1 = S[j + 1], s2 = S[j + 2], q = F[i] ? X_SOFT / Math.hypot(s0, s1, s2) : 1;   // (its offset by the blows as drawn now)
+      let tx = s0 + dx, ty = s1 + dy, tz = s2 + dz; S[j] = tx; S[j + 1] = ty; S[j + 2] = tz; F[i] = 0;
+      if (soft) { const el = Math.hypot(tx, ty, tz); if (el > X_SOFT) { const f = X_SOFT / el; tx *= f; ty *= f; tz *= f; F[i] = 1; } }
+      a[j] += tx - s0 * q; a[j + 1] += ty - s1 * q; a[j + 2] += tz - s2 * q; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
     }
     xTouched(v, xc, geo, tris);
     xTear(v, xc); xWheels(v, xc);
@@ -6816,8 +6828,12 @@ const Render = (function () {
     if (!K) { K = { u, w, A: 0, top }; xc.cl.push(K); } else { const s = K.A + d.amt; K.u = (K.u * K.A + u * d.amt) / s; K.w = (K.w * K.A + w * d.amt) / s; }
     K.A += d.amt; if (xc.tab && !top) K.rg = Math.max(K.rg || 0, xtPick(v.car.m, d).row.rg || 0);   // (the Kolibri: its bonnet's ridge, the table's)
     xParams(xc, K);
+    // (the car's face and tail keep their shape till it is 70 % gone, as the core keeps their parts on, MASK_DMG: a blow on an end goes
+    // no deeper than X_SOFT till then, short of tearing the bonnet open; from 70 % its full depth, the next blow there)
+    if (!K.top && K.end && !((v.car.dmg || 0) >= X_SOFT_DMG) && K.d > X_SOFT) { K.d = X_SOFT; K.R = Math.min(2.8, 0.45 + 1.7 * K.d); }
     xApply(v, xc, old, K);
   }
+  const X_SOFT = 0.3, X_SOFT_DMG = 0.7;
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint)
   function xPaint(v, xc, tris) {
     const geo = v.body.geometry, ca = geo.attributes.color ? geo.attributes.color.array : null, nm = geo.attributes.normal.array; if (!ca || !xc.col0) return;
@@ -6835,7 +6851,7 @@ const Render = (function () {
   // a deep front crush tears the bonnet open over it: its triangles (and its lining's) within reach of the crushed nose collapsed, as a
   // lost part's are (deadV: no dent moves them again); the lining drawn from then on (kitLod: K.xTorn), the engine under it shown
   function xTear(v, xc) {
-    const K = v.kit, U = K && v.body.geometry.userData, R = U && U.ranges && U.ranges.hood; if (!R || K.dead.hood) return;
+    const K = v.kit, U = K && v.body.geometry.userData, R = U && U.ranges && U.ranges.hood; if (!R || K.dead.hood || !((v.car.dmg || 0) >= X_SOFT_DMG)) return;   // (not before 70 %)
     const a = v.body.geometry.attributes.position.array, rest = xc.rest, dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let torn = 0;
     for (const C of xc.cl) {
       if (!(C.dx < -0.5 && C.d > 0.42)) continue;
@@ -7095,7 +7111,8 @@ const Render = (function () {
       const a = rRnd() * Math.PI * 2, r = 0.15 + Math.pow(rRnd(), 0.7) * 1.4, fw = rRnd() * Math.min(1.5, sp * 0.06);   // (round the pane, out from it, some carried on with the car)
       _xv.set(wx + Math.cos(a) * r * 0.7 + out[0] * r * 0.6 + vx / sp * fw, wy + 0.012 + rRnd() * 0.006, wz + Math.sin(a) * r * 0.7 + out[1] * r * 0.6 + vz / sp * fw);
       _xq.setFromEuler(_xe.set((rRnd() - 0.5) * 0.3, rRnd() * Math.PI * 2, (rRnd() - 0.5) * 0.3)); const k = 0.6 + rRnd() * 1.1; _xs.set(k, 1, k * (0.7 + rRnd() * 0.6));
-      xSh.setMatrixAt(xSh.k, _xm.compose(_xv, _xq, _xs)); xSh.setColorAt(xSh.k, col || XSH_GLASS); xSh.k = (xSh.k + 1) % XSH_N; xSh.count = Math.min(XSH_N, xSh.count + 1);
+      xSh.setMatrixAt(xSh.k, _xm.compose(_xv, _xq, _xs)); xSh.setColorAt(xSh.k, col || XSH_GLASS); xShSpot(xSh.k, _xv.x, _xv.y, _xv.z, k);
+      xSh.k = (xSh.k + 1) % XSH_N; xSh.count = Math.min(XSH_N, xSh.count + 1);
     }
     // (only the slots written since the last frame go up to the GPU: their span, the whole buffer when the ring wrapped)
     if (xSh.dT !== time) { xSh.dT = time; xSh.dLo = Infinity; xSh.dHi = -1; }
@@ -7104,10 +7121,57 @@ const Render = (function () {
   }
   function xShardsMake() {   // (a piece: a flat sliver of 10-25 cm; its colour per piece: the glass's pale blue, the lamps', the paint's)
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.1, 0, -0.07, 0.11, 0, -0.02, -0.02, 0, 0.09], 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
-      xSh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), XSH_N); xSh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(XSH_N * 3), 3); xSh.count = 0; xSh.k = 0; xSh.frustumCulled = false;   // (lit by nothing: bright on the road in the sun and in the shade alike)
+      xSh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), XSH_N); xSh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(XSH_N * 3), 3); xSh.count = 0; xSh.k = 0; xSh.frustumCulled = false;
+      Object.assign(xSh, { px: new Float32Array(XSH_N), py: new Float32Array(XSH_N), pz: new Float32Array(XSH_N), sc: new Float32Array(XSH_N), hit: new Float32Array(XSH_N), cell: new Float64Array(XSH_N).fill(NaN), grid: new Map() });   // (driven over: xShardsRun)   // (lit by nothing: bright on the road in the sun and in the shade alike)
       for (let i = 0; i < XSH_N; i++) xSh.setColorAt(i, XSH_GLASS);
   }
-  function xShardsReset() { if (xSh) { xSh.count = 0; xSh.k = 0; } }
+  function xShardsReset() { if (xSh) { xSh.count = 0; xSh.k = 0; xSh.grid.clear(); xSh.cell.fill(NaN); } }
+  // driven over (the user's): a car's footprint over pieces on the road scatters them, once a pass (XSH_RUN.again s): some fly off (gone, a
+  // glint thrown up), the others pushed aside, smaller and faded towards the road, so the less of it is there the more it is driven over.
+  // Each piece's spot on the CPU side (px, py, pz, its size sc, its cell in a 3 m grid) for the look-up; render only
+  const XSH_RUN = { cell: 3, v: 2, again: 0.6, off: 0.3, shrink: 0.72, fade: 0.3, min: 0.3 }, XSH_ROAD = new THREE.Color(0x5f6268), _xcol = new THREE.Color();
+  const xShKey = (x, z) => Math.floor(x / XSH_RUN.cell) * 100003 + Math.floor(z / XSH_RUN.cell);
+  function xShSpot(k, x, y, z, sc) {
+    const S = xSh, key = xShKey(x, z); S.px[k] = x; S.py[k] = y; S.pz[k] = z; S.sc[k] = sc; S.hit[k] = -1e9;
+    if (S.cell[k] !== key) { S.cell[k] = key; let a = S.grid.get(key); if (!a) S.grid.set(key, a = []); a.push(k); }
+  }
+  function xShDirty(k) {
+    const S = xSh; if (S.dT !== time) { S.dT = time; S.dLo = Infinity; S.dHi = -1; }
+    if (S.dLo >= 0) { S.dLo = Math.min(S.dLo, k); S.dHi = Math.max(S.dHi, k + 1); }
+    for (const [A, w] of [[S.instanceMatrix, 16], [S.instanceColor, 3]]) { if (!A) continue; if (S.dLo < 0) { A.updateRange.offset = 0; A.updateRange.count = -1; } else { A.updateRange.offset = S.dLo * w; A.updateRange.count = (S.dHi - S.dLo) * w; } A.needsUpdate = true; }
+  }
+  // (for the tests: the pieces still on the road and the sum of their sizes, within r m of x, z or all of them)
+  function xShOn(x, z, r) { const S = xSh; if (!S) return { n: 0, sc: 0, cx: 0, cz: 0 }; let n = 0, sc = 0, cx = 0, cz = 0; for (let k = 0; k < S.count; k++) { if (!(S.sc[k] > 0)) continue; if (r != null && Math.hypot(S.px[k] - x, S.pz[k] - z) > r) continue; n++; sc += S.sc[k]; cx += S.px[k]; cz += S.pz[k]; } return { n, sc: +sc.toFixed(3), cx: n ? cx / n : 0, cz: n ? cz / n : 0 }; }   // (cx, cz: their middle)
+  function xShardsRun(now) {
+    const S = xSh; if (!S || !S.count || !S.grid.size) return;
+    for (const v of views) {
+      const c = v.car; if (!(c.speed > XSH_RUN.v) || c.air || c.rl) continue;
+      const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h), rr = hl + 0.3;
+      const i0 = Math.floor((c.x - rr) / XSH_RUN.cell), i1 = Math.floor((c.x + rr) / XSH_RUN.cell), j0 = Math.floor((c.z - rr) / XSH_RUN.cell), j1 = Math.floor((c.z + rr) / XSH_RUN.cell);
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const key = i * 100003 + j, a = S.grid.get(key); if (!a) continue;
+        for (let n = a.length - 1; n >= 0; n--) {
+          const k = a[n]; if (S.cell[k] !== key || !(S.sc[k] > 0)) { a.splice(n, 1); continue; }   // (moved to another cell, or gone)
+          const dx = S.px[k] - c.x, dz = S.pz[k] - c.z, lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch;
+          if (Math.abs(lx) > hl || Math.abs(lz) > hw || now - S.hit[k] < XSH_RUN.again) continue;
+          S.hit[k] = now;
+          if (rRnd() < XSH_RUN.off || S.sc[k] * XSH_RUN.shrink < XSH_RUN.min) {   // off: gone from the road, a glint thrown up and aside
+            S.sc[k] = 0; S.setMatrixAt(k, _xm.makeScale(0, 0, 0)); a.splice(n, 1); S.cell[k] = NaN;
+            const sd = lz >= 0 ? 1 : -1; particles.emit(S.px[k], S.py[k] + 0.05, S.pz[k], c.vx * 0.35 - sh * sd * (1 + rRnd() * 2), 1 + rRnd() * 2.5, c.vz * 0.35 + ch * sd * (1 + rRnd() * 2), 0.5 + rRnd() * 0.4, 0.1, 0.07, 0.84, 0.9, 0.97, 0.9, 9, 0.6, S.py[k]);
+          } else {   // pushed aside (out from under the car, a little on with it), smaller, faded towards the road
+            const sd = lz >= 0 ? 1 : -1, push = 0.15 + rRnd() * 0.35, on = rRnd() * 0.3, sp = c.speed || 1;
+            const x = S.px[k] - sh * sd * push + c.vx / sp * on, z = S.pz[k] + ch * sd * push + c.vz / sp * on, sc = S.sc[k] * XSH_RUN.shrink;
+            _xq.setFromEuler(_xe.set((rRnd() - 0.5) * 0.3, rRnd() * Math.PI * 2, (rRnd() - 0.5) * 0.3)); _xs.set(sc, 1, sc * (0.7 + rRnd() * 0.6));
+            S.setMatrixAt(k, _xm.compose(_xv.set(x, S.py[k], z), _xq, _xs)); S.getColorAt(k, _xcol); S.setColorAt(k, _xcol.lerp(XSH_ROAD, XSH_RUN.fade));
+            const key2 = xShKey(x, z); S.px[k] = x; S.pz[k] = z; S.sc[k] = sc;
+            if (key2 !== key) { a.splice(n, 1); S.cell[k] = key2; let b = S.grid.get(key2); if (!b) S.grid.set(key2, b = []); b.push(k); }
+          }
+          xShDirty(k);
+        }
+        if (!a.length) S.grid.delete(key);
+      }
+    }
+  }
 
   /* ---------------- Razbijanje · nov način, the Kolibri: the user's damage table (12 directions x 3 strengths) ----------------
      Only the Kolibri for now (xTab): its glass with xGlass on, its lamps and parts with xBody on. A blow (the core's dent, 0.04 or more)
@@ -7440,6 +7504,7 @@ const Render = (function () {
     if (!(rear ? rAgain : again) && Z.n >= 2) bump(hit, d);   // (again here: its pane a stage on; from behind once a crash, whichever of its zones)
     if (!v.xOn) return;
     const K = v.kit, U = v.body.geometry.userData, nm = (n) => n === 'spoiler' && !U.ranges.spoiler && U.ranges.wing ? 'wing' : n;   // (the spoiler: a wing where the car has one)
+    { const held = (n) => Core.maskHeld(c, n, { df: 0 }); fx.hang = fx.hang.filter(n => !held(n)); fx.off = fx.off.filter(n => !held(n)); }   // (the table's face and tail, its spoiler (a wing) too, stay on till 70 %: Core.maskHeld, a wing for downforce as well)
     fx.hang = fx.hang.map(nm); fx.off = fx.off.map(nm);
     for (const k of fx.lamp) (v.xLamp || (v.xLamp = [0, 0, 0, 0]))[k] = 1;
     for (const name of fx.hang) if (U.ranges[name] && !K.ajar[name] && !K.dead[name] && !(K.fold && K.fold[name]) && !fx.off.includes(name)) kitLoosen(v, c, name, name === 'spoiler' || name === 'wing' ? 26 : null);
@@ -8802,6 +8867,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
