@@ -4190,8 +4190,24 @@ const World = (function () {
         }
       }
     }
+    // the arrows into the pits (a circuit with pits): three painted on the road before the way in, on its side, each turned 20° towards the
+    // lane and nearer the edge than the one before; old paint, faded and worn in streaks (the atlas' tyre streaks, along the arrow), so they
+    // read as part of the road and not as a sign. (In the wear's own mesh: no draw call more)
+    const AC = o.asphaltMat && o.asphaltMat.color, PIT = T.def.pit;
+    if (PIT && !open) {
+      const RA = rng(911), sd = PIT[0] < 0 ? -1 : 1, paint = [0.9, 0.9, 0.86].map((v, k) => Math.min(2, v / Math.max(0.3, AC ? [AC.r, AC.g, AC.b][k] : 1)));   // (the road's tint undone: the same paint on every road)
+      const SH = [[-2.6, -0.17], [0.9, -0.17], [0.9, 0.17], [-2.6, 0.17]], HD = [[0.9, -0.68], [2.5, 0], [0.9, 0.68]];   // (the arrow along +u: its shaft, its head; m)
+      for (let k = 0; k < 3; k++) {
+        const s0 = T.startS + PIT[1] - 42 + 16 * k, i = at(Math.round(s0 / ds)); if (deck(i) || bare(s0)) continue;
+        const lo = sd * (wAt(i) * 0.2 + (wAt(i) - 1.8 - wAt(i) * 0.2) * k / 2), rot = sd * 0.35, cs = Math.cos(rot), sn = Math.sin(rot);
+        const P3 = (u, v) => pt(s0 + u * cs - v * sn, lo + u * sn + v * cs), UV = (u, v) => [0.55 + (v + 0.7) / 1.4 * 0.4, 0.04 + (u + 2.6) / 5.1 * 0.42];
+        const col = () => paint.concat(0.34 + RA() * 0.14), c = chunk(P3(0, 0));
+        const put = (L) => L.map(([u, v]) => vtx(c, P3(u, v), col(), UV(u, v)));
+        const a = put(SH), b = put(HD); face(c, a[0], a[1], a[2]); face(c, a[0], a[2], a[3]); face(c, b[0], b[1], b[2]);
+      }
+    }
     const mat = new THREE.MeshLambertMaterial({ map: tex.wear, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-    if (o.asphaltMat && o.asphaltMat.color) mat.color.copy(o.asphaltMat.color);   // (the road's own tint)
+    if (AC) mat.color.copy(AC);   // (the road's own tint)
     mat.userData.wear = true;
     for (const c of cells.values()) {
       if (!c.I.length) continue;
