@@ -1262,20 +1262,21 @@ const Core = (function () {
     }
     // a car's box on the apron in front of its garage (BAY): x = metres past the box at boxD (metres from the start line) at s
     boxX(s, boxD) { const L = this.len; let x = s - this.startS - boxD; x = ((x % L) + L) % L; return x > L / 2 ? x - L : x; }
-    // the lateral target beyond the lane's centre x m past the box (W: the box's centre beyond the lane's centre). In: a straight diagonal from
-    // the lane's centre BAY.inL m before the box, on along the same line past it (the autopilot aims along it: the car stops on it, nose in
-    // ~23° towards the garage); out (done, or run past the box): back to the lane's centre over BAY.outL m
+    // the lateral target beyond the lane's centre x m past the box (W: the box's centre beyond the lane's centre). In: an S onto the apron
+    // from the lane's centre BAY.inL m before the box, level with the box from BAY.fl m before it and on past it (the autopilot aims along
+    // it: the car stops on it parked straight, parallel to the lane, in front of its garage); out (done, or run past the box): back to the
+    // lane's centre over BAY.outL m
     bayOff(x, W, done) {
-      if (!done && x <= 6) return x < -BAY.inL ? 0 : Math.min(W * (x + BAY.inL) / BAY.inL, W + 3);
+      if (!done && x <= 6) return W * sstep(-BAY.inL, -BAY.fl, x);
       return x < 0 ? W : W * (1 - sstep(0, BAY.outL, x));
     }
     // the box's depth on this track (def.pitApron: the apron from the lane's outer edge to the garages' front, default 9 m): o, the car's centre
-    // past the lane's edge (BAY.o, less where the apron is shallow: the car turns in less and stops at its edge, Montréal); room, the wall
+    // past the lane's edge (BAY.o, less where the apron is shallow: the car stops at its edge, Montréal); room, the wall
     bayDim() { if (!this._bay) { const A = this.def.pitApron || 9; this._bay = { o: clamp(A - 2.5, 0.8, BAY.o), room: A - 0.6 }; } return this._bay; }
     // how far past the lane's outer edge a car may go at s near its box (Core's wall there: the garages' front less 0.6 m); 0 elsewhere
     bayRoom(s, boxD) { const x = this.boxX(s, boxD); return x > -BAY.inL - 12 && x < BAY.outL + 12 ? this.bayDim().room : 0; }
-    // where the car stops in the box at boxD: s, its lateral offset o, its yaw a from the lane's direction (+: towards the garages)
-    bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; const o = this.bayDim().o; return { s, o: p.lout + o, a: Math.atan2(3.5 + o, BAY.inL) }; }
+    // where the car stops in the box at boxD: s, its lateral offset o, its yaw a from the lane's direction (0: parked straight, parallel to it)
+    bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; const o = this.bayDim().o; return { s, o: p.lout + o, a: 0 }; }
 
     // nearest point search around hint index; returns object (reused)
     query(x, z, hint, out) {
@@ -2284,9 +2285,10 @@ const Core = (function () {
      tumble, bounce off the barriers and settle wherever they land. Tyre and bale stacks burst into single tyres / bales. */
   const PROP_G = 13;
   const PIT_V = 22.2, _pq2 = {};   // pit lane speed limit: 80 km/h
-  // a car's box on the apron (Track.bayOff): the car's centre o m past the lane's outer edge, the turn in over the last inL m, out over
-  // outL m, at v m/s; room: the wall there, m past the lane's edge; k: what the turn in and out costs over a stop in the lane (s, Race.pitLoss)
-  const BAY = { o: 4, inL: 18, outL: 22, v: 9, room: 8.4, k: 1 };
+  // a car's box on the apron (Track.bayOff): the car's centre o m past the lane's outer edge, an S onto the apron over the last inL m (level
+  // with the box, parallel to the lane, from fl m before it: the car stands straight), out over outL m, at v m/s; room: the wall there, m past
+  // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
+  const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
   const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan)
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
@@ -2762,7 +2764,7 @@ const Core = (function () {
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
       const pz = T.pitAt(sT), pn = T.pitAt(q.s); if (pz && (c.inPit || pz.gap || (pn && pn.gap))) off = pz.o * pz.sd;   // (over to the lane only where it can be reached: the way in or out, or in it; beside the pit wall on with the lap, in next time)
       const bd = pz && c.inPit && !pz.gap ? race._boxD(c) : null;
-      if (bd != null) {   // (in the lane: in its middle, into the car's own box on the apron in front of its garage nose first, then out to the middle again; across measured to the lane's side, pz.sd)
+      if (bd != null) {   // (in the lane: in its middle, in an S into the car's own box on the apron in front of its garage, parked straight, then out to the middle again; across measured to the lane's side, pz.sd)
         const bo = T.bayOff(T.boxX(sT, bd), 3.5 + T.bayDim().o, c.pitDone); let u = pz.o + bo;
         // (round a car standing in the lane, on the side away from it: not waiting behind it)
         let D = c.pitDodge; if (D && (c.dist - D.o.dist > (D.o.m.len + M.len) * 0.5 + 1 || D.o.dist - c.dist > 35 || !D.o.inPit)) D = c.pitDodge = null;
@@ -4963,7 +4965,7 @@ const Core = (function () {
       const bd = this._boxD(c);
       if (!c.pitDone && bd != null) {   // pull up at the box: a braking curve that ends right at it (the player's box, or the AI car's own)
         const L = T.len; let ds = (T.startS + bd) - q.s; ds = ((ds % L) + L) % L; if (ds > L / 2) ds -= L;
-        if (ds < 60 && ds > -5) vmax = Math.min(vmax, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, ds - BAY.inL)));   // (the box on the apron: down to BAY.v for the turn in)
+        if (ds < 60 && ds > -5) vmax = Math.min(vmax, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, ds - BAY.inL)));   // (the box on the apron: down to BAY.v for the S onto it)
         if (ds < 40 && ds > -5) {
           vmax = Math.min(vmax, Math.sqrt(2 * 6.5 * Math.max(0, ds - 0.2)));
           if (!c.pitState) { c.pitState = 'stop'; c.pitEv = 'box'; }
@@ -5112,7 +5114,7 @@ const Core = (function () {
     pitLoss(c) {
       const T = this.track, P = T.def.pit, M = this.mk; if (!P || !M) return null;
       if (M.lane == null) { let tr = 0; for (let d = P[1]; d < P[2]; d += T.ds) tr += T.ds / Math.max(PIT_V, this.vprof[T.idx(T.startS + d)]); M.lane = (P[2] - P[1]) / PIT_V - tr + LANE_K; }
-      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this) + BAY.k;   // (the turn into the box on the apron and out)
+      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this) + BAY.k;   // (the S onto the apron to the box and back)
     }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut one; 'damage', badly damaged), the laps it can be made in
@@ -5624,7 +5626,7 @@ const Core = (function () {
 
   return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY };
 })();
 
 
