@@ -2105,7 +2105,7 @@ const Core = (function () {
       ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); return;
     }
     const hit = d0 >= WRULE.d1 && amt >= WRULE.hit;   // (a hit from 70 %: its damage before it sets when the second goes)
-    if (!W.nL && (hit || (d1 >= WRULE.d2 && !(Q.chg && d0 >= WRULE.d2)))) { ruleDrop(c, 1); Q.due = WRULE.t2; Q.ask = Q.spare ? 1 : 0; }
+    if (!W.nL && (hit || (d1 >= WRULE.d2 && !(Q.chg && d0 >= WRULE.d2)))) { ruleDrop(c, 1); Q.due = Q.due0 = WRULE.t2; Q.ask = Q.spare ? 1 : 0; }
   }
   // a part comes off: lost, onto the race's debris list (Race.step), its share of the downforce with it (P.df; a model with the 8 old
   // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road); the
@@ -4575,7 +4575,8 @@ const Core = (function () {
       if (this.player) this.player.num = opts.playerNum || 1;
       // the wheel rule (applyDamage: wheelRule) on the player's car, when it is one of opts.wheelRule's vehicles and damage is on. due: s to
       // its second wheel (-1: none coming), over: two wheels gone and the car stopped, the game is over (the game shows PONOVI IGRO); fn, burn:
-      // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel)
+      // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel); due0:
+      // the time the second wheel was given (ZAMENJAJ KOLO's bar)
       { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && P.dmgMode === 2 && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0 }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
