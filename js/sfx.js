@@ -957,8 +957,8 @@ const Sfx = (function () {
   /* ---- FLEET: destruction, heard (the player's car and the cars near it, by their distance and side, as the rivals' engines): a panel
      off (a clang as it tears away and lands, then its scrape along the road: metal, plastic or carbon by the part, bigger by its mass), a
      window shattering, a wheel knocked off (the hub letting go, then the wheel bouncing away), a hub scraping the road while that car
-     moves on (louder on asphalt, beating with the hub's turn), a fire's crackle while it burns (render's rule: dmg >= 0.9, or the bonnet /
-     engine cover off and dmg >= 0.75; 20 s from when it starts; put out in the box with the bodywork), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
+     moves on (louder on asphalt, beating with the hub's turn), a fire's crackle while it burns (render's rule, Render.burning: a hub
+     dragging in sparks after a lost wheel, or a total wreck at 99 %; 20 s from when it starts; put out in the box with the bodywork), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
      car's state with what it was last frame (c.lost, winOut, wreck.wl, dmg); a repair (repairN) or the marshals' refit (wreck.fix) resets
      what it remembers. The one-shots and the loops are buffers made ahead (prep, below), each with its own random numbers (never
      Math.random). At most DS_MAX one-shots play at a time; in one frame a buffer plays at most twice (a pile-up's: the loudest, then the

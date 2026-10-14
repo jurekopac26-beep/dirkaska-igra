@@ -4,6 +4,8 @@
 //   on without grip, up in an arc and down, the roof on the road once a turn (a dent on top, the roof crushed further), and after 1.2-1.6 s
 //   it is on its wheels again (no rl), slower than it was (about 80 % of its speed less the road's drag), nothing NaN; a soft knock (5 m/s) rolls nothing,
 //   nor does a friend's car online (net)
+// - how often: only one hard knock in ten rolls the car over (Core.XROLL.p; the checks above with every one, p 1): the same car knocked
+//   400 times in different places rolls 7-13 % of them; a second knock in the same crash (within 4 m) gets no new chance
 //   node tests/roll.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -25,7 +27,7 @@ function tbone(v) {
 C.setCrash({ roll: 0 });
 { const { A, B, imp } = tbone(16); ok('off: a hard knock on the side rolls nothing', !A.rl && !B.rl && imp > 9, 'impact ' + imp.toFixed(1)); }
 
-C.setCrash({ roll: 1 });
+C.setCrash({ roll: 1 }); C.XROLL.p = 1;
 {
   const { A, B, imp } = tbone(16);
   ok('on: the car hit on its side rolls over, away from the knock; the one that hit it nose first does not', A.rl && A.rl.dir === -1 && !B.rl, JSON.stringify({ imp: +imp.toFixed(1), rl: A.rl, b: !!B.rl }));
@@ -40,7 +42,16 @@ C.setCrash({ roll: 1 });
 }
 { const { A, B, imp } = tbone(5); ok('on: a soft knock rolls nothing', !A.rl && !B.rl, 'impact ' + imp.toFixed(1)); }
 { const A = mkCar('tornado', { v: 29 }), B = mkCar('tornado', { v: 0 }); A.net = true; B.place(0.3, 3.45, -Math.PI / 2); B.vx = 0; B.vz = -16; const imp = C.carCollide(A, B); ok('on: a friend\'s car in an online race (net) never rolls', !A.rl && !B.rl && imp > 9, 'impact ' + imp.toFixed(1)); }
-C.setCrash({ roll: 0 });
+// how often: the game's one in ten
+C.XROLL.p = 0.1;
+{
+  const A = mkCar('tornado', { v: 29 }), N = 400; let rolls = 0, same = true;
+  const knock = (x) => { A.rl = null; A.place(x, 0, 0); A.vx = 8; A.vz = 0; const B = mkCar('tornado', { v: 0 }); B.place(x + 0.3, 3.45, -Math.PI / 2); B.vx = 0; B.vz = -16; return C.carCollide(A, B); };
+  for (let k = 0; k < N; k++) { knock(k * 10); if (A.rl) rolls++; }
+  { const n0 = A.xrK.n; knock((N - 1) * 10 + 1.5); same = A.xrK.n === n0 && !A.rl; }
+  ok('how often: one hard knock in ten rolls the car over (7-13 % of 400); the same crash (within 4 m) no second chance', rolls >= 0.07 * N && rolls <= 0.13 * N && same, `${rolls} of ${N} rolled, same crash ${same}`);
+}
+C.XROLL.p = 0.1; C.setCrash({ roll: 0 });
 
 let bad = 0;
 console.log('== prevračanje (Razbijanje · nov način)');
