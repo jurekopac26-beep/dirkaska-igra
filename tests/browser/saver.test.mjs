@@ -51,8 +51,8 @@ try {
   await page.evaluate(() => window.__game.onAction('to-title'));
   // (its first frames can be slow on a software renderer, the new track's shaders: waited for until the demo has moved on from its 4 s)
   await page.waitForFunction(() => { const d = window.__game.demo; return d && d.time > 4.2; }, null, { timeout: 20000, polling: 100 }).catch(() => {});
-  const l2 = await page.evaluate(() => { const d = window.__game.demo; return { track: d && d.track.def.id, cars: d && d.cars.length, t: d && d.time, moving: d && d.cars.some(c => c.speed > 5) }; });
-  T.check('a track loads without the title demo (the race on it at once); on the title after it the demo races on the new track', l1.demo === null && l1.ms > 0 && l1.track === 'riviera' && l2.track === 'riviera' && l2.cars === 10 && l2.t > 4 && l2.moving, JSON.stringify({ l1, l2 }));
+  const l2 = await page.evaluate(() => { const d = window.__game.demo; return { track: d && d.track.def.id, cars: d && d.cars.length, want: d && Core.fieldSize(d.opts.fieldModel, 10), t: d && d.time, moving: d && d.cars.some(c => c.speed > 5) }; });   // (want: ten, fewer in the field of a car with a smaller one, fieldN: the demo's car is drawn at random)
+  T.check('a track loads without the title demo (the race on it at once); on the title after it the demo races on the new track', l1.demo === null && l1.ms > 0 && l1.track === 'riviera' && l2.track === 'riviera' && l2.cars === l2.want && l2.want >= 5 && l2.t > 4 && l2.moving, JSON.stringify({ l1, l2 }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
