@@ -1655,9 +1655,9 @@ const Core = (function () {
   // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Only one such knock in ten (XROLL.p: every one
   // was too many): each knock counts once (another within 4 m of the last one counted is the same crash), and which ones roll is a hash
   // of the car and its count of knocks (xrK). Its numbers: none random (the race's own draws untouched)
-  const XR = { roll: 0, bump: 0, ai: 0, handle: 0 };
+  const XR = { roll: 0, bump: 0, ai: 0, handle: 0, glass: 0 };
   const XROLL = { p: 0.1 };
-  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; }
+  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
   // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
   // track rod: up to 0.05 of the lock, as a tyre going down pulls 0.03)
   // Razbijanje · nov način: odboji (xBump; off: carCollide as before). A knock turns the car it hits as hard as its impulse says (no damping
@@ -1830,7 +1830,7 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
-      const wg = this.wet, muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip)
+      const wg = this.wet * (this.glassK || 1), muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip; broken glass on the road, Race._glassStep: less again)
       const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
@@ -2053,6 +2053,8 @@ const Core = (function () {
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
     if (c.dents.length < 24) c.dents.push({ lx, lz, amt });
+    if (XR.glass && amt >= GLASS.amt && (c.glassN || 0) < GLASS.perCar) {   // (Razbijanje: šipe: a pane broken by it, its glass on the road there: Race._glassStep)
+      c.glassN = (c.glassN || 0) + 1; const gh = Math.cos(c.h), gs = Math.sin(c.h); (c.glassReq || (c.glassReq = [])).push(c.x + lx * gh - lz * gs, c.z + lx * gs + lz * gh); }
     // corner damage (FL, FR, RL, RR): a solid hit on a corner breaks that corner's light (a breakable vehicle, kitParts: the reach of a
     // hit grows with its length, so the wheels of a long one, far in from its corners, still feel it)
     const kx = [hl, hl, -hl, -hl], kz = [-hw, hw, -hw, hw], fo = kitParts(M) ? 1.6 * clamp(M.len / 4.4, 1, 1.5) : 1.6;
@@ -2297,14 +2299,34 @@ const Core = (function () {
     } else { d.rx += d.wx * dt; d.rz += d.wz * dt; }
     d.yaw += d.wy * dt;
   }
+  // a car and a piece: one lying on the road (the user's: driven over, not knocked away) stays where it lies; the car loses a little speed,
+  // the phone thumps (hitDebris) and, over a panel (not a mirror's bit), the car hops as if it jumped ~2 m (drawn only: hopN, hopT s, hopH m,
+  // the renderer's bump of the body; the physics stays on the road). Once a pass: d.on, the cars over it now. A piece still flying or
+  // sliding fast is knocked away as before
+  const DEB_RUN = { v: 3, k: 0.002, kMax: 0.025, m: 3, len: 2 };
+  // broken glass on the road (Razbijanje: šipe, XR.glass; never online): where a knock broke a pane (applyDamage: a knock of GLASS.amt or
+  // more, a car's GLASS.perCar panes) a patch of glass r m round; a car on it grips GLASS.mu less (20 %: it slides more, in a corner too),
+  // as much less as is left of it: each car driven over it scatters it, k x GLASS.pass, gone under GLASS.min (as the renderer scatters its
+  // pieces, xShardsRun). At most GLASS.n patches (the oldest go first)
+  const GLASS = { amt: 0.04, perCar: 6, r: 2, mu: 0.2, pass: 0.75, min: 0.15, n: 40, v: 2 };
   function debrisHit(c, d) {
     const dx = d.x - c.x, dz = d.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + d.r * 0.7 + 0.1;   // (beyond the car's reach: nothing to touch)
-    if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) return;
-    const ch = Math.cos(c.h), sh = Math.sin(c.h);
+    const gone = () => { if (d.on) { const j = d.on.indexOf(c); if (j >= 0) d.on.splice(j, 1); } };
+    if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) { gone(); return; }
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), lying = d.ground && Math.hypot(d.vx, d.vz) < DEB_RUN.v;
     for (let i = 0; i < c.circles.length; i++) {
       const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i];
       const ex = d.x - ax, ez = d.z - az, r = c.rad + d.r * 0.7, e2 = ex * ex + ez * ez;
       if (e2 >= r * r) continue;
+      if (lying) {
+        if (d.on && d.on.indexOf(c) >= 0) return;   // (still over it: the same pass)
+        (d.on || (d.on = [])).push(c);
+        const sp = Math.hypot(c.vx, c.vz); if (sp < 1.5) return;
+        const k = Math.min(DEB_RUN.kMax, d.m * DEB_RUN.k); c.vx *= 1 - k; c.vz *= 1 - k;
+        c.hitDebris = Math.max(c.hitDebris || 0, d.m >= DEB_RUN.m ? 6 : 2.5);
+        if (d.m >= DEB_RUN.m) { c.hopN = (c.hopN || 0) + 1; c.hopT = clamp(DEB_RUN.len / sp, 0.12, 0.35); c.hopH = clamp(0.04 + d.m * 0.006, 0.05, 0.14); }   // (the hop: the renderer's, the car's body up and down over the next ~2 m; the physics stays on the road)
+        return;
+      }
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
       d.x += nx * (r - e); d.z += nz * (r - e);
       const vrel = (c.vx - d.vx) * nx + (c.vz - d.vz) * nz;      // closing speed
@@ -2316,8 +2338,9 @@ const Core = (function () {
         c.vx *= 1 - k; c.vz *= 1 - k; c.w += (Math.random() - 0.5) * d.m * 0.05;
         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
       }
-      break;
+      return;
     }
+    gone();   // (in reach, over none of it)
   }
 
   /* ---- loose trackside props: traffic cones, striped marker pylons, spare-tyre stacks, straw bales, crates, roadside posts ----
@@ -4862,6 +4885,7 @@ const Core = (function () {
       if (this.pol) for (const c of this.pol.cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name, this.pol.RD); c.detach.length = 0; }   // (the run from the police: a battered patrol car's panels on the road too, thrown with the police's own random numbers: the race's draws stay as they were)
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
       if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) if (!lv || Math.abs(d.y - (c.y || 0)) < 4) debrisHit(c, d); }
+      if (XR.glass || this.glass) this._glassStep(cars);
       // progress
       for (const c of cars) {
         const q = T.query(c.x, c.z, c.q.i, c.q);
@@ -4968,6 +4992,21 @@ const Core = (function () {
       }
     }
 
+    // broken glass on the road (GLASS): the patches the knocks asked for laid, each car's grip on them (c.glassK, stepCS), a pass scatters them
+    _glassStep(cars) {
+      const G = this.glass || (this.glass = []);
+      for (const c of cars) { const q = c.glassReq; if (!q || !q.length) continue; for (let i = 0; i < q.length; i += 2) { G.push({ x: q[i], z: q[i + 1], k: 1, on: [] }); if (G.length > GLASS.n) G.shift(); } q.length = 0; }
+      for (const c of cars) {
+        if (c.net) continue; let k = 0; const ch = Math.cos(c.h), sh = Math.sin(c.h);
+        for (let i = G.length - 1; i >= 0; i--) {
+          const p = G[i], ex = p.x - c.x, ez = p.z - c.z, ta = clamp(ex * ch + ez * sh, -c.m.b, c.m.a), inn = Math.hypot(ex - ch * ta, ez - sh * ta) < GLASS.r, j = p.on.indexOf(c);   // (its wheels on it: the patch within r of the car's axle line)
+          if (!inn) { if (j >= 0) { p.on.splice(j, 1); if (p.run) { p.k *= GLASS.pass; if (p.k < GLASS.min) G.splice(i, 1); } } continue; }   // (driven over and off it: scattered, less of it)
+          k = Math.max(k, p.k);
+          if (j < 0) { p.on.push(c); p.run = c.speed > GLASS.v; }
+        }
+        if (k || c.glassK) c.glassK = 1 - GLASS.mu * k;
+      }
+    }
     // a ghost from the pit road back on the circuit: solid again once no other car overlaps it (a car rejoining beside another is not thrown
     // into it), at the latest after 6 s
     _pitGhostOff(c, dt) {
@@ -5260,7 +5299,7 @@ const Core = (function () {
       if (c.isPlayer) c.secEv = [k, st, col];
     }
     repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes (shown bit by bit over the stop before it: REPAIR)
-      c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
+      c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
       if (c.flt) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a new tyre for a cut one)
