@@ -833,11 +833,8 @@ const World = (function () {
       if (box0++ >= 13) continue;                                                                   // a crew for each of the 13 cars
       const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5;
       const mine = fdp[3] != null && Math.abs(q + 5 - fdp[3]) < 1;                                 // the player's box: its crew is animated by the renderer
-      if (mine) { const sb = T.startS + q + 5, yc = [0.98, 0.82, 0.12], bp = T.bayPose(fdp[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a);
-        out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; if (Y) out.pitBox.y = Y(sb);
-        const bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, bp.o + u * sa + v * ca); return [x, yS(0.036, s), z]; };   // (u along the stopped car, v to its right)
-        for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])   // yellow stop box on the apron, turned in like the car
-          gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
+      if (mine) { const sb = T.startS + q + 5, bp = T.bayPose(fdp[3]);
+        out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; if (Y) out.pitBox.y = Y(sb); }
       for (let r = 0; r < 2; r++) for (let m = 0; m < 4; m++) { if (R() < 0.12 || mine) continue; R(); R(); }   // (the draws of the old static crews stay, so the scenery after them is unchanged; the crews are the renderer's now)
       forestPitKit(scen.get(cx, cz), T.startS + q, k, base, p.wall, mine);
       const oc = atSf(T.startS + q + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame
@@ -25857,11 +25854,11 @@ const World = (function () {
 
     /* ---- Bathurst: the pit lane and the pit building on its side of the straight (LK.pitBox; the lane Core.Track.pitAt on the left,
        def.pit[0] < 0): asphalt from the pit wall to the garages, the lane's lines, the 13 crews' boxes (the renderer's crews: out.pitBoxes,
-       the player's out.pitBox with its yellow stop box), a garage every 10 m (the crews' open in their team's colours, the others shut), a
+       the player's out.pitBox), a garage every 10 m (the crews' open in their team's colours, the others shut), a
        glazed floor above under a white roof, the race control tower ---- */
     let nBoxes = 0;
     if (LK.pitBox) {
-      const [q0, q1, sd] = LK.pitBox, gq = new GB(true), gl = new GB(), one = [1, 1, 1], wl = [0.95, 0.95, 0.94], yc = [0.98, 0.82, 0.12], F = 18;   // (F: the garages' front past the pit wall)
+      const [q0, q1, sd] = LK.pitBox, gq = new GB(true), gl = new GB(), one = [1, 1, 1], wl = [0.95, 0.95, 0.94], F = 18;   // (F: the garages' front past the pit wall)
       const TC = [[0.86, 0.12, 0.14], [0.12, 0.22, 0.5], [0.05, 0.42, 0.22], [0.98, 0.6, 0.1], [0.14, 0.14, 0.16], [0.95, 0.78, 0.12], [0.16, 0.36, 0.8], [0.94, 0.94, 0.92], [0.55, 0.26, 0.7], [0.1, 0.62, 0.72], [0.7, 0.1, 0.1], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55]];
       const WH = [0.92, 0.92, 0.9], WT = [0.8, 0.81, 0.82], GLS = [0.3, 0.42, 0.55], SH = [0.72, 0.74, 0.77], DK = [0.12, 0.12, 0.13];
       const bw = (s) => { const i = T.idx(s); return sd > 0 ? T.br[i] : T.bl[i]; }, at = (s, o, y) => { const [x, z] = atSf(s, sd * o); return [x, hyS(s) + y, z]; };
@@ -25883,11 +25880,8 @@ const World = (function () {
         const s0 = sAt(q), i = T.idx(s0), p = T.pitAt(s0); if (!p || p.t < 0.999) continue;
         const k = nBoxes++, nx = sd * T.nx[i], nz = sd * T.nz[i], tx = T.tx[i], tz = T.tz[i], base = p.o + 3.5, mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, oc = atSf(s0 + 5, 0), tc = TC[k % TC.length];
         strip(gl, sAt(q - 0.09), sAt(q + 0.09), base, base + 9, base, base + 9, 0.034, wl);   // the box's divider line
-        if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a);   // (the car stops in its box on the apron, nose in towards the garage: Core's BAY; turned to the lane's side, sd)
-          out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a };
-          const bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, sd * (bp.o + u * sa + v * ca)); return [x, hyS(s) + 0.036, z]; };   // (u along the stopped car, v across it to the garage's side)
-          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])   // the yellow stop box on the apron, turned in like the car
-            gl.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
+        if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the lane's side, sd)
+          out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) });
         crew.set(q, tc);
       }
@@ -25953,11 +25947,8 @@ const World = (function () {
         if (nBoxes >= 13) continue; nBoxes++;
         const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5;
         const mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, yb = hyS(s0 + 5);
-        if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12];
-          const bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a), bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, bp.o + u * sa + v * ca); return [x, hyS(s) + 0.036, z]; };
-          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a };
-          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])   // yellow stop box on the apron, turned in like the car
-            gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
+        if (mine) { const sb = s0 + 5, bp = T.bayPose(PD[3]);
+          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; }
         if (!PER) pitKit(scen.get(cx, cz), s0, k, base, p.wall, mine);
         else {   // the 1930s: a timber pit stall at the back of the apron (a counter, a roof on four posts, the number board), fuel churns and spare wheels
           const g = scen.get(cx, cz), wd = [0.5, 0.39, 0.27], wdL = [0.62, 0.5, 0.35], f0 = base + 9;
@@ -28298,11 +28289,8 @@ const World = (function () {
         if (nBoxes >= 13) continue; nBoxes++;
         const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5, g = scen.get(cx, cz);
         const mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, yb = hyS(s0 + 5);
-        if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12];
-          const bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a), bq = (u, v) => { const s = sb + u * ca - v * sa, [x, z] = atSf(s, bp.o + u * sa + v * ca); return [x, hyS(s) + 0.036, z]; };
-          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a };
-          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])
-            gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
+        if (mine) { const sb = s0 + 5, bp = T.bayPose(PD[3]);
+          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; }
         // the crew's place: a timber bench with the tools, fuel drums, spare wheels, the team's number board on a post
         if (!mine) kbox(g, s0, 5, base + 8.4, 0, 3.2, 0.9, 0.9, TIM, [0.62, 0.58, 0.5]);   // (the player's crew waits behind this line and runs out to its car: no bench, no wheels in its way, the drums aside)
         for (const a of (mine ? [0.4, 1.0] : [2.0, 2.8])) kcyl(g, s0, a, base + 8.8, 0, 0.3, 0.9, 7, mine ? [0.82, 0.14, 0.12] : tc, [0.3, 0.3, 0.32]);
@@ -29700,11 +29688,8 @@ const World = (function () {
         if (nBoxes >= 13) continue; nBoxes++;
         const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5;
         const mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, yb = hyS(s0 + 5), g = scen.get(cx, cz);
-        if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12], bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a);   // (the car stops in its box on the apron, nose in towards the garage: Core's BAY)
-          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 8, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a };
-          const bq = (u, v) => at(sb + u * ca - v * sa, bp.o + u * sa + v * ca, 0.036);   // (u along the stopped car, v to its right)
-          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]])   // yellow stop box on the apron, turned in like the car
-            gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }
+        if (mine) { const sb = s0 + 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY)
+          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 8, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; }
         else { kbox(g, s0, 1.6, base + 6.8, 0, 1.1, 0.95, 0.6, [0.2, 0.21, 0.24], [0.1, 0.1, 0.11]); for (const ta of [7.2, 8.0]) kcyl(g, s0, ta, base + 7, 0, 0.34, 1.0, 8, [0.12, 0.12, 0.13], tc); }
         kbox(g, s0, 5, p.wall + 0.75, 0.96, 2.4, 0.06, 0.9, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]); kbox(g, s0, 5, p.wall + 0.8, 2.4, 2.6, 0.07, 1.4, [0.22, 0.23, 0.26], tc);   // the crew's stand on the wall
         for (const la of [-1.1, 1.1]) kbox(g, s0, 5 + la, p.wall + 0.8, 0, 0.07, 2.4, 0.07, [0.22, 0.22, 0.24], null, true);
@@ -32707,10 +32692,8 @@ const World = (function () {
         gp.quadUp(at(s0 - 0.09, base, 0.044), at(s0 + 0.09, base, 0.044), at(s0 + 0.09, base + 9, 0.044), at(s0 - 0.09, base + 9, 0.044), [wl, wl, wl, wl]);
         if (nBoxes >= 13) continue; nBoxes++;
         const tc = TEAM[k % TEAM.length], cx = T.px[i] + T.nx[i] * (base + 4.2) + tx * 5, cz = T.pz[i] + T.nz[i] * (base + 4.2) + tz * 5, mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, yb = hyS(s0 + 5);
-        if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12], bp = T.bayPose(PD[3]), ca = Math.cos(bp.a), sa = Math.sin(bp.a);   // (the car stops in its box on the apron, nose in towards the garage: Core's BAY)
-          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a };
-          const bq = (u, v) => at(sb + u * ca - v * sa, bp.o + u * sa + v * ca, 0.046);   // (u along the stopped car, v to its right)
-          for (const [u0, u1, v0, v1] of [[-3.2, 3.2, -1.75, -1.5], [-3.2, 3.2, 1.5, 1.75], [-3.2, -2.95, -1.75, 1.75], [2.95, 3.2, -1.75, 1.75]]) gp.quadUp(bq(u0, v0), bq(u1, v0), bq(u1, v1), bq(u0, v1), [yc, yc, yc, yc]); }   // (yellow stop box on the apron, turned in like the car)
+        if (mine) { const sb = s0 + 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY)
+          out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; }
         const g = scen.get(cx, cz); pitKit(g, s0, k, base, p.wall, mine); tent(g, s0, k, base); exclPush(cx, cz, 14);
         const oc = atSf(s0 + 5, 0); (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
       { const pbs = out.pitBoxes; T.pitStands = null;
@@ -33953,10 +33936,9 @@ const World = (function () {
           exclPush(c[0], c[2], 7); exclPush(tr[0], tr[2], 7); nTents++; }
         if (k >= 13) continue;
         const mine = PD[3] != null && Math.abs(q + 5 - PD[3]) < 1, sb = sAt(q + 5), oc = atSf(sb, 0), Y = T.hy[i];
-        if (mine) { const yc = [0.98, 0.82, 0.12];
+        if (mine) {
           const st = atSf(sb, sd * p.o), ctr = atSf(sb, sd * (base + 4.2));
-          out.pitBox = { s: sb, x: ctr[0], z: ctr[1], hd, tx: T.tx[i], tz: T.tz[i], nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: st, y: Y };
-          for (const [d0, d1, l0, l1] of [[-3.2, 3.2, p.o - 2.6, p.o - 2.35], [-3.2, 3.2, p.o + 2.35, p.o + 2.6], [-3.2, -2.95, p.o - 2.6, p.o + 2.6], [2.95, 3.2, p.o - 2.6, p.o + 2.6]]) gp.quadUp(at(sb + d0, l0, 0.036), at(sb + d1, l0, 0.036), at(sb + d1, l1, 0.036), at(sb + d0, l1, 0.036), [yc, yc, yc, yc]); }
+          out.pitBox = { s: sb, x: ctr[0], z: ctr[1], hd, tx: T.tx[i], tz: T.tz[i], nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: st, y: Y }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: sb, ox: oc[0], oz: oc[1], tx: T.tx[i], tz: T.tz[i], nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: Y });
       }
       T.pitStands = null;

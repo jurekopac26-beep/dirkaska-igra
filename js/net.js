@@ -144,7 +144,7 @@ const Net = (function () {
       if (peer !== p) return;
       for (const [k, L] of links) if (L.c.peer === c.peer) unlink(k);   // (a newer try of the same phone wins over one still connecting)
       if (quick && links.size >= cap()) for (const [k, L] of links) if (!L.opened) unlink(k);   // (quick match, the room full: a newer try wins over one still connecting)
-      if (links.size >= cap() || (quick && paired)) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (_) { } setTimeout(() => c.close(), 4000); }); return; }   // (the room is full: told, then let go; it closes itself on the word, a slow phone has seconds to get it)
+      if (links.size >= cap() || (quick && paired)) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (_) { } setTimeout(() => c.close(), 15000); }); return; }   // (the room is full: told, then let go; it closes itself on the word. A busy phone may read it only seconds later: closed by the host only after 15 s, else it hears that the line broke)
       let n = 1; while (links.has('g' + n)) n++;
       attach(c, 'g' + n);
       const L = links.get('g' + n); L.timers.push(setTimeout(() => { if (links.get(L.id) === L && !L.opened) unlink(L.id); }, 15000));   // (one that never opens does not keep a place)
