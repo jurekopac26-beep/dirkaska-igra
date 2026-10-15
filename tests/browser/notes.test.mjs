@@ -135,9 +135,9 @@ try {
       await raf(); await raf();
       const pkn = $('hud').classList.contains('pkn'), disp = getComputedStyle($('h-note')).display;
       let k = 0; for (; k < 160 && !$('pk-note').classList.contains('show'); k++) { g.sim(0.25, true); await raf(); }
-      return { pkn, disp, shown: $('pk-note').classList.contains('show'), t: k * 0.25, top: parseFloat(getComputedStyle($('pk-note')).top) / innerHeight };
+      return { pkn, disp, shown: $('pk-note').classList.contains('show'), t: k * 0.25, top: parseFloat(getComputedStyle($('pk-note')).top) / innerHeight, dmg: (parseFloat($('hud').style.getPropertyValue('--dmg-h')) || 0) / innerHeight };
     });
-    const want = land ? 0.244 : 0.306;
+    const want = land ? 0.244 : 0.306 + pk.dmg;   // (upright with the damage picture first in the column: as much lower, the height profile with it)
     T.check(`${tag} pikes (time trial): the corner sign off (#hud.pkn), the pill shown within 40 s at ${want} of the height as before`, pk.pkn && pk.disp === 'none' && pk.shown && Math.abs(pk.top - want) <= 0.01,
       `pkn ${pk.pkn}, #h-note ${pk.disp}, pill ${pk.shown ? 'after ' + pk.t + ' s' : 'never'}, top ${pk.top.toFixed(3)}`);
     await page.evaluate(() => window.__game.noteAt(null));

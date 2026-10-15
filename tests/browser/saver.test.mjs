@@ -49,10 +49,15 @@ try {
   await startTrack(page, 'riviera');
   const l1 = await page.evaluate(() => ({ demo: window.__game.demo, ms: window.__game.loadMs, track: window.__game.race.track.def.id }));
   await page.evaluate(() => window.__game.onAction('to-title'));
-  // (its first frames can be slow on a software renderer, the new track's shaders: waited for until the demo has moved on from its 4 s)
-  await page.waitForFunction(() => { const d = window.__game.demo; return d && d.time > 4.2; }, null, { timeout: 20000, polling: 100 }).catch(() => {});
-  const l2 = await page.evaluate(() => { const d = window.__game.demo; return { track: d && d.track.def.id, cars: d && d.cars.length, want: d && Core.fieldSize(d.opts.fieldModel, 10), t: d && d.time, moving: d && d.cars.some(c => c.speed > 5) }; });   // (want: ten, fewer in the field of a car with a smaller one, fieldN: the demo's car is drawn at random)
-  T.check('a track loads without the title demo (the race on it at once); on the title after it the demo races on the new track', l1.demo === null && l1.ms > 0 && l1.track === 'riviera' && l2.track === 'riviera' && l2.cars === l2.want && l2.want >= 5 && l2.t > 4 && l2.moving, JSON.stringify({ l1, l2 }));
+  // (its first frames are slow on a software renderer: the title's and the demo's shaders compiled, each of the first three frames ~8-10 s
+  // here, on a busy machine more than 20 s in all: waited for until the demo has moved on from its 4 s)
+  const w0 = Date.now();
+  await page.waitForFunction(() => { const d = window.__game.demo; return d && d.time > 4.2; }, null, { timeout: 120000, polling: 100 }).catch(() => {});
+  const waited = Date.now() - w0;
+  // (the demo's category is picked at random once a visit: a big vehicle's field is smaller than ten, Core.fieldSize)
+  const l2 = await page.evaluate(() => { const g = window.__game, d = g.demo, M = Core.MODELS.find(m => m.id === g.demoModel);
+    return { track: d && d.track.def.id, cars: d && d.cars.length, want: M ? Core.fieldSize(M.oneMake ? null : M, 10) : 10, model: g.demoModel, t: d && d.time, moving: d && d.cars.some(c => c.speed > 5) }; });
+  T.check('a track loads without the title demo (the race on it at once); on the title after it the demo races on the new track', l1.demo === null && l1.ms > 0 && l1.track === 'riviera' && l2.track === 'riviera' && l2.cars === l2.want && l2.t > 4 && l2.moving, JSON.stringify({ l1, l2, waited }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
