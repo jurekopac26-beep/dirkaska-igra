@@ -206,6 +206,7 @@ const Net = (function () {
     const L = [...links.values()], p = peer;
     for (const x of L) for (const t of x.timers) { clearTimeout(t); clearInterval(t); }
     links.clear(); peer = null; role = null; handler = null; code = ''; quick = false; paired = false; waiting = false; clearTimers(); retryT = null;
+    try { if (p && !p.disconnected) p.disconnect(); } catch (_) { }   // (the place / room code free on the server at once, even if this page is busy for seconds now; the friends' lines stay open for the 'bye')
     setTimeout(() => { for (const x of L) { try { x.c.close(); } catch (_) { } } try { if (p) p.destroy(); } catch (_) { } }, bye ? 300 : 0);
   }
   // quick match: the room takes nobody more (full, or its race starts); the place on the server is free for the next room
