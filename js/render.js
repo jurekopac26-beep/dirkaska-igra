@@ -5771,6 +5771,7 @@ const Render = (function () {
     const K = v.kit, U = v.body.geometry.userData, PT = Core.partsOf(c.m), W = c.wreck;
     // the wheels: the marshals' refit puts every one back (and the body up); a wheel off is latched once
     if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix; kitRefit(v); }
+    if (W && W.rule) spareRoof(v, W.rule);   // (the wheel rule's spare on the roof: gone once put on, ZAMENJAJ KOLO; a repair builds the car with a new one)
     if (W && W.wl) for (let k = 0; k < 4; k++) if ((W.wl & (1 << k)) && !v.wheelOff[k]) kitWheelOff(v, c, k, x, y, z, h);
     // the parts: loose first (a part loose and lost in one go leaves turned), then lost (many at once, a wreck: their bits and sparks shared out)
     const kept = (name) => !!(v.xt && v.xOn && K.fold && K.fold[name]);   // (Razbijanje · nov način's table: a mirror pressed in stays on, kitFold, whatever the core says)
@@ -5933,6 +5934,22 @@ const Render = (function () {
     v.hubs[k].visible = true;
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
+  }
+  // the wheel rule's spare (Core rule.spare): the kit's own rear wheel lying on its side on the roof, over the roof's highest point along the
+  // car's middle (kitFireTop: not a wing, a deflector, a light bar), in the body's group (its roll, pitch and sag with it); one mesh of the
+  // shared wheel geometry and material (the player's car only: one draw call more, none in the shadow pass), built the first time it is
+  // drawn, hidden once used
+  function spareRoof(v, Q) {
+    if (!v.kit || !v.wr.length) return;
+    if (!v.spareM) {
+      if (!Q.spare) return;
+      const M = v.car.m, wg = v.wr[0].geometry; if (!wg.boundingBox) wg.computeBoundingBox();
+      const hw = (wg.boundingBox.max.z - wg.boundingBox.min.z) / 2; let bx = 0, top = -1e9;
+      for (let x = -0.3 * M.len; x <= 0.3 * M.len + 1e-6; x += 0.1) { const t = kitFireTop(v.body.geometry, [x, 0.4, 0], M.wid, null); if (t > top) { top = t; bx = x; } }
+      if (top < -1e8) return;
+      const m = new THREE.Mesh(wg, matWheel); m.rotation.x = Math.PI / 2; m.position.set(bx, top + hw + 0.015, 0); m.castShadow = false; v.bodyG.add(m); v.spareM = m;   // (no shadow of its own: it would fall on the roof and into the car's)
+    }
+    v.spareM.visible = !!Q.spare;
   }
   function kitRefit(v) {   // every wheel back on (the marshals' refit, a pit stop's new ones: repairStep), their bare hubs hidden, the body up off them
     for (let k = 0; k < 4; k++) if (v.wheelOff[k]) { v.wheelOff[k] = 0; const w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (k % 2 ? 1 : -1)); if (w) w.visible = true; if (v.hubs[k]) v.hubs[k].visible = false; }

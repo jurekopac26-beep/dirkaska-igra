@@ -49,10 +49,11 @@ try {
       g.resume(); await frames(4);
       const ws = document.getElementById('wheel-swap'), btn = document.getElementById('ws-btn'), br = btn.getBoundingClientRect(), tk = document.getElementById('ws-bar').parentElement.getBoundingClientRect(), sx = () => parseFloat((document.getElementById('ws-bar').style.transform.match(/[\d.]+/) || ['1'])[0]);
       const ctl = ['c-left', 'c-right', 'c-brake', 'c-gas', 'c-wheel', 'tilt-ind'].map(id => document.getElementById(id)).filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect()).filter(c => c.width > 0);   // (the controls as they are while it runs: the pause hides them)
+      const roof = () => { const v = Render.viewOf(P2), m = v.spareM; if (!m) return null; v.body.geometry.computeBoundingBox(); return { vis: m.visible, y: +m.position.y.toFixed(2), top: +v.body.geometry.boundingBox.max.y.toFixed(2), x: +m.position.x.toFixed(2) }; };   // (the spare on the roof: Render spareRoof)
       g.pause();
       const sw0 = { on: ws.classList.contains('on'), w: Math.round(br.width), h: Math.round(br.height), big: br.width >= (innerWidth > innerHeight ? 0.3 : 0.6) * innerWidth && br.height >= 60,
         inView: br.left >= 0 && br.top >= 0 && br.right <= innerWidth && br.bottom <= innerHeight, barIn: tk.left >= br.left && tk.right <= br.right && tk.top > br.top + br.height / 2 && br.bottom - tk.bottom <= 4 && tk.width >= br.width - 8,   // (at its very foot, its whole width: only the border round it)
-        clear: ctl.length > 0 && ctl.every(c => c.right <= br.left || c.left >= br.right || c.bottom <= br.top || c.top >= br.bottom), txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx() };
+        clear: ctl.length > 0 && ctl.every(c => c.right <= br.left || c.left >= br.right || c.bottom <= br.top || c.top >= br.bottom), txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx(), roof: roof() };
       { const t = document.getElementById('ws-t'), rg = document.createRange(); rg.selectNodeContents(t); const r = rg.getBoundingClientRect();   // (the title: heavy, on one line inside the button; under it the same English words in both languages)
         Object.assign(sw0, { fit: t.scrollWidth <= t.clientWidth + 1 && r.left >= br.left + 3 && r.right <= br.right - 3 && r.height < 1.6 * parseFloat(getComputedStyle(t).fontSize), heavy: parseFloat(getComputedStyle(t).webkitTextStrokeWidth) > 0, sub: document.getElementById('ws-s').textContent, tf: Math.round(parseFloat(getComputedStyle(t).fontSize)) }); }
       g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
@@ -63,7 +64,7 @@ try {
       sw0.beside = { nL: P2.wreck.nL, ask: P2.wreck.rule.ask, on: ws.classList.contains('on') };
       btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
       const sw1 = { nL: P2.wreck.nL, spare: P2.wreck.rule.spare, ask: P2.wreck.rule.ask, dv: +(P2.speed - v0).toFixed(2) };
-      g.resume(); await frames(3); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length;
+      g.resume(); await frames(3); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length; sw1.roof = roof();
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6)); const k2 = P2.dmgK; P2.dmgK = 1e-6;   // (a knock in the pack on the autopilot's way meanwhile takes nothing: under 70 %, no more damage)
       for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
       P2.dmgK = k2; const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
@@ -87,6 +88,8 @@ try {
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel off with the spare on the roof: a big button ("${en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO'}" heavy and on one line inside it, under it "Press here to change tyre"), all on screen, clear of the steering and the pedals, its bar at its very foot running out, no fire yet; at 20 % of the bar (white) the hub where the wheel was on fire; a tap beside it: nothing`,
       a.sw0.on && a.sw0.big && a.sw0.inView && a.sw0.barIn && a.sw0.clear && a.sw0.txt === (en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO') && a.sw0.fit && a.sw0.heavy && a.sw0.sub === 'Press here to change tyre' && a.sw0.nL === 1 && !a.sw0.fire && a.sw0.bar <= 1 && a.sw0.bar2 < a.sw0.bar && a.sw0.hub === 1 && a.sw0.hot
         && a.sw0.beside.nL === 1 && a.sw0.beside.ask === 1 && a.sw0.beside.on, JSON.stringify(a.sw0));
+    T.check(`${tag}: the spare drawn lying on the roof (over the body's top, within the car's length) until it is put on, then gone`,
+      !!a.sw0.roof && a.sw0.roof.vis && a.sw0.roof.y > 0.9 && a.sw0.roof.y < a.sw0.roof.top + 0.4 && Math.abs(a.sw0.roof.x) < 1.5 && !!a.sw1.roof && !a.sw1.roof.vis, JSON.stringify([a.sw0.roof, a.sw1.roof]));
     T.check(`${tag}: a tap on the button: the spare on at once (four wheels, drawn), the car not slowed, the button gone, no spare left; the hub's fire out within 5 s, the car driving on`,
       a.sw1.nL === 0 && a.sw1.spare === 0 && !a.sw1.ask && a.sw1.dv === 0 && !a.sw1.on && a.sw1.shown === 4 && !a.sw2.fire && a.sw2.nL === 0, JSON.stringify([a.sw1, a.sw2]));
     T.check(`${tag}: a hard hit at 85 %: two off at once, the whole car on fire at once, KONEC IGRE; Rezultati: the results`, a.big.n >= 2 && a.big.lvl === 2 && a.big.shown && a.res.shown && a.res.gone, JSON.stringify(a.big) + ' ' + JSON.stringify(a.res));
