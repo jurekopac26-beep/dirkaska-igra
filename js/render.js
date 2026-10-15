@@ -5771,6 +5771,7 @@ const Render = (function () {
     const K = v.kit, U = v.body.geometry.userData, PT = Core.partsOf(c.m), W = c.wreck;
     // the wheels: the marshals' refit puts every one back (and the body up); a wheel off is latched once
     if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix; kitRefit(v); }
+    if (W && W.rule) spareRoof(v, W.rule);   // (the wheel rule's spare on the roof: gone once put on, ZAMENJAJ KOLO; a repair builds the car with a new one)
     if (W && W.wl) for (let k = 0; k < 4; k++) if ((W.wl & (1 << k)) && !v.wheelOff[k]) kitWheelOff(v, c, k, x, y, z, h);
     // the parts: loose first (a part loose and lost in one go leaves turned), then lost (many at once, a wreck: their bits and sparks shared out)
     const kept = (name) => !!(v.xt && v.xOn && K.fold && K.fold[name]);   // (Razbijanje · nov način's table: a mirror pressed in stays on, kitFold, whatever the core says)
@@ -5933,6 +5934,22 @@ const Render = (function () {
     v.hubs[k].visible = true;
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
+  }
+  // the wheel rule's spare (Core rule.spare): the kit's own rear wheel lying on its side on the roof, over the roof's highest point along the
+  // car's middle (kitFireTop: not a wing, a deflector, a light bar), in the body's group (its roll, pitch and sag with it); one mesh of the
+  // shared wheel geometry and material (the player's car only: one draw call more, none in the shadow pass), built the first time it is
+  // drawn, hidden once used
+  function spareRoof(v, Q) {
+    if (!v.kit || !v.wr.length) return;
+    if (!v.spareM) {
+      if (!Q.spare) return;
+      const M = v.car.m, wg = v.wr[0].geometry; if (!wg.boundingBox) wg.computeBoundingBox();
+      const hw = (wg.boundingBox.max.z - wg.boundingBox.min.z) / 2; let bx = 0, top = -1e9;
+      for (let x = -0.3 * M.len; x <= 0.3 * M.len + 1e-6; x += 0.1) { const t = kitFireTop(v.body.geometry, [x, 0.4, 0], M.wid, null); if (t > top) { top = t; bx = x; } }
+      if (top < -1e8) return;
+      const m = new THREE.Mesh(wg, matWheel); m.rotation.x = Math.PI / 2; m.position.set(bx, top + hw + 0.015, 0); m.castShadow = false; v.bodyG.add(m); v.spareM = m;   // (no shadow of its own: it would fall on the roof and into the car's)
+    }
+    v.spareM.visible = !!Q.spare;
   }
   function kitRefit(v) {   // every wheel back on (the marshals' refit, a pit stop's new ones: repairStep), their bare hubs hidden, the body up off them
     for (let k = 0; k < 4; k++) if (v.wheelOff[k]) { v.wheelOff[k] = 0; const w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (k % 2 ? 1 : -1)); if (w) w.visible = true; if (v.hubs[k]) v.hubs[k].visible = false; }
@@ -7528,7 +7545,8 @@ const Render = (function () {
              in the last 20 % of the time to its second wheel a small fire where the first one was (F.lvl 1: a few small flames out of the
              wheel arch, up the car's side, its soot round there only), with the second wheel the whole car (F.lvl 2: flames out of three
              spots along it, ruleSpots, from the hub's size to all of them over FIRE_SPREAD s, its soot from that corner over the car in
-             6 s; a hard hit's, with no hub's fire first, from the middle in 8 s).
+             6 s; a hard hit's, with no hub's fire first, from the middle in 8 s); the spare put on (ZAMENJAJ KOLO, Core Race.changeWheel:
+             rule.xn) puts the hub's out over FIRE_OUT s, the wind taking its flames and smoke (FIRE_WIND), the char left as it was.
        Its record (fireMem, the car's: a view built afresh takes it over): the ignition gathered, t0 the race's time it caught fire; a
        repair (repairN) or a new race: afresh. It burns FIRE_T (20) s of race time from when it starts, once (a pit repair puts it out
        with the bodywork, its smoke and soot with it: repairStep, then builds the car afresh), then heavy black smoke. Flames: sparkP
@@ -7547,8 +7565,10 @@ const Render = (function () {
   const FIRE_IGN = 1.5, FIRE_HUB_V = 2, FIRE_HUB_DMG = 0.6, FIRE_WRECK = 0.99, FIRE_SIDE = 0.15;   // (when a car catches fire: see above)
   // the wheel rule's car (Core wheelRule: c.wreck.rule): only its rule sets it on fire, each time the rule counts one more (rule.fn) while it
   // says it burns (rule.burn 1: the hub's, F.lvl 1; 2: the whole car's, F.lvl 2, F.d2 s after it caught fire); never from its hub's sparks nor at 99 % (the
-  // user's: it never burns before a wheel is off). FIRE_SPREAD: s for the whole car's flames to grow from the hub's to all of them
-  const FIRE_SPREAD = 3, ruleOf = (c) => c && c.wreck && c.wreck.rule, _fw3 = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  // user's: it never burns before a wheel is off). FIRE_SPREAD: s for the whole car's flames to grow from the hub's to all of them. The
+  // spare put on (Core Race.changeWheel: rule.xn): the fire goes out over FIRE_OUT s, its smoke blown away by the wind (FIRE_WIND, m/s, the
+  // world's x and z), the char as it was then
+  const FIRE_SPREAD = 3, FIRE_OUT = 4, FIRE_WIND = [3.4, 1.3], ruleOf = (c) => c && c.wreck && c.wreck.rule, _fw3 = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
   // the wheel rule's fire's seat (the car's frame, metres): the hub's (F.lvl 1) where its wheel was (F.hk), a little over the hub, just
   // outside the body's side (its flames up beside the wing, seen from above); the whole car's (F.lvl 2) there too (the char spreading from
   // that corner over the car), or its middle when there was no hub's fire first (a hard hit)
@@ -7626,8 +7646,9 @@ const Render = (function () {
   function fireCatch(v, c, now, d) {
     let F = fireRec(c, false); const Q = ruleOf(c);
     if (Q) {   // (the rule's car: a fire of its own each time the rule lights one, the hub's first, then the whole car's)
-      if (Q.burn && (Q.fn || 0) > (F ? F.fn || 0 : 0)) { F = F || fireRec(c, true); Object.assign(F, { fn: Q.fn, t0: now, r: 0, r2: 0, rule: 1, lvl: 0, hk: -1, d2: 0, done: false, burst: 0, side: 0 }); }
+      if (Q.burn && (Q.fn || 0) > (F ? F.fn || 0 : 0)) { F = F || fireRec(c, true); Object.assign(F, { fn: Q.fn, xn: Q.xn || 0, t0: now, r: 0, r2: 0, rule: 1, lvl: 0, hk: -1, d2: 0, out: null, done: false, burst: 0, side: 0 }); }
       if (F && F.rule && F.fn === Q.fn && Q.burn > F.lvl) { F.lvl = Q.burn; if (F.lvl >= 2) F.d2 = now - F.t0; else F.hk = [0, 1, 2, 3].find(j => c.wreck.wl & (1 << j)) ?? 0; }
+      if (F && (Q.xn || 0) > (F.xn || 0)) { F.xn = Q.xn; if (F.t0 != null && F.out == null) F.out = now; }   // (the spare on: put out from now)
       return F && F.t0 != null ? F : null;
     }
     if (F && F.t0 != null) return F;
@@ -7660,8 +7681,8 @@ const Render = (function () {
     const S = F && F.rule ? ruleSeat(v, F, S0) : F && F.side ? v.seatF || (v.seatF = [S0[0], S0[1], F.side * FIRE_SIDE * M.wid]) : S0;   // (a hub's fire: on its side of the engine; the wheel rule's: ruleSeat)
     // the char: from dmg 0.8 (0.3 at 1) round the seat; a fire spreads it over the car in 18 s. In the box (rk: the repair's bodywork, in
     // its steps: charParts not every frame) the soot cleaned off, the smoke thinning out, a fire put out
-    const rk = v.rep ? v.rep.kb : 0, e = F ? Math.max(0, now - F.t0) : 0, e2 = F && F.rule && F.lvl >= 2 ? Math.max(0, e - F.d2) : 0;
-    const fc = !F ? 0 : !F.rule ? 0.3 + 0.7 * Math.min(1, e / 18) : F.lvl < 2 ? 0.08 + 0.06 * Core.sstep(0, 2, e) : F.hk >= 0 ? 0.14 + 0.86 * Core.sstep(0, 6, e2) : 0.3 + 0.7 * Core.sstep(0, 8, e2);   // (the wheel rule's hub: its soot round the wheel arch only, 0.55 to 1 m; then from there over the car in 6 s)
+    const rk = v.rep ? v.rep.kb : 0, e = F ? Math.max(0, now - F.t0) : 0, e2 = F && F.rule && F.lvl >= 2 ? Math.max(0, e - F.d2) : 0, eC = F && F.out != null ? Math.min(e, F.out - F.t0) : e;   // (eC: put out, the char as it was then)
+    const fc = !F ? 0 : !F.rule ? 0.3 + 0.7 * Math.min(1, e / 18) : F.lvl < 2 ? 0.08 + 0.06 * Core.sstep(0, 2, eC) : F.hk >= 0 ? 0.14 + 0.86 * Core.sstep(0, 6, e2) : 0.3 + 0.7 * Core.sstep(0, 8, e2);   // (the wheel rule's hub: its soot round the wheel arch only, 0.55 to 1 m; then from there over the car in 6 s)
     const cw = Math.max(0.3 * Core.sstep(0.8, 1, c.dmg || 0), fc) * (1 - rk);
     if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0] || v.charU.value.z !== S[2])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
     if (!F && !(c.dmg > 0.45)) return;
@@ -7686,20 +7707,23 @@ const Render = (function () {
     // heavy black smoke
     if (dt > 0) { F.r = (F.r || 0) + dt; if (F.rule && F.lvl >= 2) F.r2 = (F.r2 || 0) + dt; }   // (how long it has been drawn burning: it flares up over its first 1.5 s of frames; the wheel rule's whole car spreads over its own)
     const hub = !!F.rule && F.lvl < 2, up = !F.rule ? Core.sstep(0, 1.5, F.r || 0) : hub ? Core.sstep(0, 0.25, F.r || 0) : 0.3 + 0.7 * Core.sstep(0, FIRE_SPREAD, F.r2 || 0);   // (the wheel rule's: the hub's up at once, the whole car's from 30 %, over its frames as the others: on the grid, the race's clock standing, too)
-    const lit = e < FIRE_T && rk < 1, k = lit ? up * (1 - 0.75 * Core.sstep(FIRE_T - 5, FIRE_T, e)) * (1 - rk) : 0, sc = clamp(M.wid / 1.8, 0.6, 1.4), inCk = !!cam.ck && ck.car === c;
+    const ko = F.out != null ? 1 - Core.sstep(F.out, F.out + FIRE_OUT, now) : 1; if (F.out != null && now - F.out >= FIRE_OUT) F.done = true;   // (put out: dying away, then gone, smoke and all)
+    if (F.done) return;
+    const wnd = F.out != null ? 1 : 0;   // (being put out: the wind takes the flames and the smoke)
+    const lit = e < FIRE_T && rk < 1, k = lit ? ko * up * (1 - 0.75 * Core.sstep(FIRE_T - 5, FIRE_T, e)) * (1 - rk) : 0, sc = clamp(M.wid / 1.8, 0.6, 1.4), inCk = !!cam.ck && ck.car === c;
     if (cw >= 0.6) { for (const q of v.crack) if (q) q.visible = false; if (!v.lampsOut && !v.rep) lampsBurnt(v); }   // (burnt a while: no glass, no lamps; not while the crew works on it: lamps lit at the stop's start stay lit, the car is new at its end)
     if (live && dt > 0 && v.fireEmit) {
       if (lit && hub) {   // the wheel rule's hub: flames out of the wheel arch, up beside the wing (a corner of the car, not all of it)
         v.flameAcc = (v.flameAcc || 0) + dt * 34 * k;
         while (v.flameAcc >= 1) { v.flameAcc -= 1;
           const ox = (rRnd() - 0.5) * 0.5, oz = (rRnd() - 0.5) * 0.3, hot = rRnd();
-          sparkP.emit(sx + ox * ch - oz * sh, sy + rRnd() * 0.15, sz + ox * sh + oz * ch, c.vx * 0.55 + (rRnd() - 0.5) * 0.5, 1.2 + rRnd() * 1.4, c.vz * 0.55 + (rRnd() - 0.5) * 0.5,
+          sparkP.emit(sx + ox * ch - oz * sh, sy + rRnd() * 0.15, sz + ox * sh + oz * ch, c.vx * 0.55 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[0] * 0.6, 1.2 + rRnd() * 1.4, c.vz * 0.55 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[1] * 0.6,
             0.34 + rRnd() * 0.34, (0.48 + 0.26 * rRnd()) * sc, 0.09 * sc, 1, 0.4 + hot * 0.4, 0.07 + hot * 0.12, 0.85, -2.2, 1.2, y, 1); }
       } else if (lit) {   // over the engine; the wheel rule's whole car: out of its three spots, half as many again
         const fw = 0.7 * sc, fz = 0.55 * M.wid; v.flameAcc = (v.flameAcc || 0) + dt * 38 * k * (W3 ? 1.5 : 1);
         while (v.flameAcc >= 1) { v.flameAcc -= 1;
           const ox = (rRnd() - 0.5) * fw, oz = (rRnd() - 0.5) * fz, hot = rRnd(), p = W3 ? _fw3[Math.min(2, Math.floor(rRnd() * 3))] : null, bx = p ? p.x : sx, by = p ? p.y : sy, bz = p ? p.z : sz;
-          sparkP.emit(bx + ox * ch - oz * sh, by + 0.04 + rRnd() * 0.12, bz + ox * sh + oz * ch, c.vx * 0.55 + (rRnd() - 0.5) * 0.7, 1.1 + rRnd() * 1.5, c.vz * 0.55 + (rRnd() - 0.5) * 0.7,
+          sparkP.emit(bx + ox * ch - oz * sh, by + 0.04 + rRnd() * 0.12, bz + ox * sh + oz * ch, c.vx * 0.55 + (rRnd() - 0.5) * 0.7 + wnd * FIRE_WIND[0] * 0.6, 1.1 + rRnd() * 1.5, c.vz * 0.55 + (rRnd() - 0.5) * 0.7 + wnd * FIRE_WIND[1] * 0.6,
             0.32 + rRnd() * 0.36, (0.5 + 0.28 * rRnd()) * sc, 0.1 * sc, 1, 0.4 + hot * 0.4, 0.07 + hot * 0.12, 0.85, -2.2, 1.2, y, 1); }
       }
       const u = Math.max(0, e - FIRE_T), thin = lit ? 1 : u < 30 ? 1 - 0.3 * u / 30 : Math.max(0, 0.7 * (1 - (u - 30) / 30));   // (after the fire: 11 puffs a second down to 3 over 30 s, then a wisp, none at 60 s)
@@ -7707,7 +7731,7 @@ const Render = (function () {
       if (!F.burst && lit && (F.r || 0) < 1.5) { F.burst = 1; v.fsmAcc += hub ? 1 : 3; }   // (catching fire: a burst of three puffs at once, so the smoke shows from the first moment; once a fire, F shared by the car's views)
       while (v.fsmAcc >= 1) { v.fsmAcc -= 1;
         const g = 0.05 + rRnd() * 0.06, s1 = Math.min(hub ? 3 : 4.5, (hub ? 2.4 : lit ? 4.2 : 5.4) + rRnd() * (hub ? 1.2 : 2.2)) * sc;   // (a puff at most 4.5 m across a car's size; the hub's at most 3 m)
-        particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5, 1.3 + rRnd() * 1.1, c.vz * 0.3 + (rRnd() - 0.5) * 0.5,
+        particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[0], 1.3 + rRnd() * 1.1 - wnd * 0.5, c.vz * 0.3 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[1],
           (lit ? 2.5 : 3.1) + rRnd() * 1.4, 1.1 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? (hub ? 0.7 : 0.86) : 0.92 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }   // (denser than the other smoke: the soft puffs of the particles' atlas let through what the old discs covered)
     }
     if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames)
