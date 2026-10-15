@@ -167,8 +167,15 @@ try {
   await leave(C); await leave(D); await wait(1500);
   // a waiting place whose owner is gone without a word (a phone that lost its network): skipped after a few seconds
   const ver = (await E.page.evaluate(() => window.__game.ver)).replace(/[^A-Za-z0-9]/g, '');
-  dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
-  await new Promise((res, rej) => { dead.on('open', res); dead.on('error', rej); }); await wait(500);
+  for (let k = 0; ; k++) {   // (the place must really be the dead one's: OPEN, not ID-TAKEN while the last room's host still holds it)
+    dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
+    const first = await new Promise((res) => { dead.once('message', (m) => res(String(m))); dead.once('error', (e) => res('error ' + e.message)); dead.once('close', () => res('closed')); });
+    if (/"OPEN"/.test(first)) break;
+    try { dead.terminate(); } catch (_) { }
+    if (k >= 100) throw new Error('place 0 never free for the dead socket: ' + first);
+    await wait(200);
+  }
+  await wait(500);
   await tap(E); await wait(500); await tap(F);
   const [tE, tF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
   T.check('quick match: a dead waiting place is skipped, the two still meet', tE === 'host' && tF === 'guest', `${tE} / ${tF}`);
