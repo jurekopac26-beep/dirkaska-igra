@@ -4664,7 +4664,7 @@ const Render = (function () {
       men.push(m); return m; };
     const faceN = (bx, s) => Math.atan2(bx.nz * s, bx.nx * s), faceT = (bx, s) => Math.atan2(bx.tz * s, bx.tx * s);
     // the other teams (and every box in the menu demo): four men busy at the garage, an engineer on the pit wall. All of them at the garage's
-    // front: every car turns in to its box on the apron (Core BAY, the car's body out to ~5.7 m past the lane's edge), nobody stands in its way
+    // front: every car pulls over in an S to its box on the apron (Core BAY, the car's body out to ~5.7 m past the lane's edge), nobody stands in its way
     const APR = curTrack.def.pitApron || 0;   // (a shallow apron, Montréal's: the men in front of the building, not in it)
     const SLOTS = [[-3.4, 6.85, 1, 'bench'], [2.6, 6.7, 1, 'kneel'], [-1.05, 7.0, 0, 'talk'], [-0.2, 7.65, 0, 'cross'], [4.0, 7.1, -1, 'gun'], [0.6, 9.5, -1, 'hips'], [-2.1, 7.55, 1, 'cross']];   // (clear of the apron kit: the monitor cart, the 1930s spare wheel, Longford's bench)
     for (const bx of boxes) { if (bx.mine && P) continue;
