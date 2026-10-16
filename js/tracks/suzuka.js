@@ -21,20 +21,20 @@ var TRACK_DEFS = TRACK_DEFS || [];
     drs: [['Zadnji ovinek', -230, 126, 'Prvi ovinek']],
     elev: SUZ_H.map((h, i) => [i / SUZ_H.length, h / 10]),
     // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
-    hudSigns: [[5130, 5240, 'chicane']],   // the Casio Triangle
+    hudSigns: [[5130, 5240, 'chicane']],   // the chicane (Šikana)
     // corner names ([HUD label, x, z, the commentator's lines]; the generic words in Slovenian, the proper names as at the circuit)
     names: [
       ['Prvi ovinek', 287.1, 366.4, ['Down the hill into the First Curve!', 'Turn one, the long right-hander at the bottom of the hill!', 'Through the First Curve and on into Turn Two!']],
       ['S-zavoji', 63.2, 311.8, ['Into the Esses! Left, right, left, right!', 'Climbing through the S Curves, the rhythm section!', 'Snaking up the hill through the Esses!']],
-      ['Dunlop', -265.3, -71.0, ['Dunlop Curve, the long left up the hill!', 'Up through Dunlop!', 'Dunlop, and on towards Degner!']],
-      ['Degner', -690.2, -2.5, ['Degner One, then Degner Two!', 'Careful at Degner, the gravel is waiting!', 'Through Degner, two quick right-handers!']],
+      ['Dolgi levi', -265.3, -71.0, ['The long left up the hill!', 'Up through the long left!', 'The long left, and on towards the double right!']],
+      ['Dvojni desni', -690.2, -2.5, ['The first right, then the second!', 'Careful at the double right, the gravel is waiting!', 'Through the double right, two quick right-handers!']],
       ['Pod mostom', -877.1, -41.9, ['Under the bridge! The only figure of eight in racing!', 'Down under the crossover bridge!', 'Under the bridge, and up to the Hairpin!']],
       ['Lasnica', -878.9, -409.4, ['The Hairpin! Hard on the brakes!', 'Round the Hairpin, the slowest corner of the lap!', 'Hairpin! Full lock!']],
       ['200R', -1030.8, -259.8, ['Flat out through 200R!', 'The long right, 200R!']],
       ['Spoon', -1515.2, -540.1, ['Spoon Curve, the long double left!', 'Round Spoon, a good exit is everything here!', 'Into Spoon Curve, two apexes!']],
       ['Zadnja ravnina', -1506.9, -320.3, ['Down the back straight, flat out!', 'Onto the West Straight, the longest flat-out run of the lap!']],
       ['130R', -848.7, -58.8, ['Over the bridge and into 130R! Flat out, if you dare!', '130R, the most famous corner in Japan!', 'Through 130R at full speed!']],
-      ['Casio Triangle', -503.3, -279.9, ['Hard on the brakes for the Casio Triangle!', 'Into the chicane, right and then left!', 'The Casio Triangle! Mind the kerbs!']],
+      ['Šikana', -503.3, -279.9, ['Hard on the brakes for the chicane!', 'Into the chicane, right and then left!', 'The chicane! Mind the kerbs!']],
       ['Zadnji ovinek', -367.5, -301.7, ['Through the Final Curve, back to the line!', 'Round the last corner, onto the main straight!']],
     ],
     // grandstands: [name, side (-1 left / 1 right), roof, [[metres after the start line, front offset, back offset], ...]] (OpenStreetMap outlines

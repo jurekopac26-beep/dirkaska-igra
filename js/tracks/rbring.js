@@ -38,7 +38,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: Start-Ziel (the whole straight, covered, the wing
     // behind it), Steiermark (Turn 1), Red Bull (from Turn 1 up the hill, 15 sections), T3, Nord (Turn 4, covered), T9 and T10 (covered);
     // orange: full of Dutch fans
-    stands: [[-268, 140, -1, 18, 1, 1, 0, 'START · ZIEL'], [236, 344, -1, 10, 0, 1, 0, 'STEIERMARK'], [372, 880, -1, 9, 0, 15, 1, 'RED BULL'], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
+    stands: [[-268, 140, -1, 18, 1, 1, 0, 'START · ZIEL'], [236, 344, -1, 10, 0, 1, 0, 'STEIERMARK'], [372, 880, -1, 9, 0, 15, 1, 'ÖSTERREICH'], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
       [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3812, 3928, -1, 9, 1, 1, 0, 'T10']],
     wing: [-60, -1],             // the voestalpine wing (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side]
     ga: [[1370, 1900, -1], [900, 1180, 1], [2600, 2860, 1]],   // spectators on the grass: [from, to, side] (the hill between Turns 3 and 4 and the infield)

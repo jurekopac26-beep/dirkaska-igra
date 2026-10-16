@@ -48,7 +48,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Pouhon', 545.7, 1167.8, ['Pouhon! The fast double left, downhill!', 'Through Pouhon, a real test of courage!', 'The double left at Pouhon!']],
       ['Fagnes', 145.9, 1479.9, ['Through Fagnes, right and left!', 'Fagnes, keep it tidy!']],
       ['Campus', -192.5, 1687.7, ['Campus, a quick right!', 'Down through Campus!']],
-      ['Paul Frère', -362.6, 1623.5, ['The Paul Frere curve, the lowest point of the lap!', 'Round the curve named after Paul Frere, a Belgian legend!']],
+      ['Stavelot', -362.6, 1623.5, ['The Stavelot curve, the lowest point of the lap!', 'Round the long right near Stavelot!']],
       ['Blanchimont', 10.9, 1139.5, ['Blanchimont! Flat out through the trees!', 'Through Blanchimont, one of the fastest corners anywhere!', 'Blanchimont, foot to the floor!']],
       ['Bus Stop', 91.4, 297.5, ['Hard on the brakes for the Bus Stop chicane!', 'The Bus Stop! Over the kerbs!', 'Through the Bus Stop, back onto the pit straight!']],
     ],

@@ -113,12 +113,12 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   Lang.set('en');
   const en = [Lang.tr('Proga: {0}', 'X'), Lang.of(d, 'name'), Lang.thou(3048), Lang.dec('1.9'), Lang.eur(12300), Lang.ord(3), Lang.place('Serpentina 4 · 1.060 m'), Lang.tr('neznano')].join('|');
   const ords = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map(Lang.ord).join(' ');
-  const pl = ['Ruski križ', 'Zavoj 3', 'Serpentina 8 · Ruska kapelica', 'Eau Rouge', 'Lasnica Fairmont'].map(Lang.place).join(', ');
+  const pl = ['Ruski križ', 'Zavoj 3', 'Serpentina 8 · Ruska kapelica', 'Eau Rouge', 'Pristanišče'].map(Lang.place).join(', ');
   Lang.set('sl');
   check('Slovenian: the texts as written, 3.048, 1,9, 12.300 €, 3., the place names as they are', sl === 'Proga: X|Gorski reli|3.048|1,9|12.300 €|3.|Serpentina 4 · 1.060 m|neznano', sl);
   check('English: Track: X, Mountain Rally, 3,048, 1.9, €12,300, 3rd, Hairpin 4 · 1,060 m, an unknown text as it is', en === 'Track: X|Mountain Rally|3,048|1.9|€12,300|3rd|Hairpin 4 · 1,060 m|neznano', en);
   check('English places: 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords === '1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords);
-  check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Fairmont Hairpin', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Fairmont Hairpin', pl);
+  check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Harbour', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Harbour', pl);
   check('Vršič: "Vršič, Slovenija" in Slovenian, "Vršič, Slovenia" in English; its description is English', Lang.of(v, 'name') === 'Vršič, Slovenija' && v.en.name === 'Vršič, Slovenia' && /^The road over the Vršič pass/.test(v.en.desc));
 }
 

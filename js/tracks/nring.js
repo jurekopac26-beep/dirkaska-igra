@@ -19,7 +19,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: NRING_H.map((h, i) => [i / NRING_H.length, h / 10]),
     bumps: [{ at: 0.12405, h: 0.7, w: 9 }, { at: 0.73068, h: 0.9, w: 8 }, { at: 0.77099, h: 0.5, w: 8 }],   // the Flugplatz crest, the jump at Pflanzgarten and the smaller one over the Sprunghügel after it
     bank: [[11962, 12108, 0.28], [16868, 16954, 0.2]],   // the Karussell and the Kleines Karussell: the road banked into the bend (metres after the start line, slope), the inside a concrete bowl
-    wide: [[16060, 16220, -1, 2.6]],   // more room on the outside of the fast right before the Bellof-S (the cars arrive quicker there since the Sprunghügel)
+    wide: [[16060, 16220, -1, 2.6]],   // more room on the outside of the fast right before the S bend (the cars arrive quicker there since the Sprunghügel)
     // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
     hudSigns: [[5164, 5330, 'chicane'], [20468, 20596, 'chicane'], [760, 850, 'bend'], [3492, 3558, 'bend'], [15956, 16000, 'bend']],   // Adenauer Forst, Hohenrain; Hatzenbach, Schwedenkreuz, Stefan-Bellof-S
     // corner names ([HUD label, x, z, the commentator's lines]; the German names stay on the HUD, the voice gets English where it would
@@ -38,7 +38,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Wehrseifen', -526, -4252.5, ['Steeply down into Wehrseifen!', 'Wehrseifen, a slow one, brake early!']],
       ['Breidscheid', -63.8, -4300, ['Down to Breidscheid, the lowest point of the lap.', 'Breidscheid, and now the long climb begins.', 'Over the bridge at Breidscheid!']],
       ['Ex-Mühle', -15.3, -4481.1, ['Round the old mill corner, and up the hill!', 'Past the old mill, climbing again!']],
-      ['Bergwerk', 694.8, -4764.4, ['Bergwerk, the old mine, tight right!', 'Near Bergwerk, where Niki Lauda crashed in 1976.']],
+      ['Bergwerk', 694.8, -4764.4, ['Bergwerk, the old mine, tight right!', 'Near Bergwerk, the scene of a famous crash in 1976.']],
       ['Kesselchen', 1421.7, -4044.9, ['Up through Kesselchen, the long climb!', 'Kesselchen, flat out up the valley!']],
       ['Klostertal', 2412.9, -4016.4, ['Klostertal, the monastery valley!', 'Through Klostertal, now up to the Karussell!']],
       ['Karussell', 2502.1, -3739.8, ['Into the Karussell! Dive into the concrete!', 'Round the famous Karussell!']],
@@ -49,7 +49,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Eiskurve', 3628, -3424, ['The Eiskurve, the ice corner!', 'Careful through the Eiskurve!']],
       ['Pflanzgarten', 3471.9, -3043.7, ['Pflanzgarten! Down from the jump and hard on the brakes!', 'Through Pflanzgarten, the Sprunghugel is next!']],
       ['Sprunghügel', 3194.1, -2670.9, ['Over the Sprunghugel, hold on!', 'The Sprunghugel! Airborne again!', 'Up and over the Sprunghugel jump!']],
-      ['Stefan-Bellof-S', 2977.4, -2403.5, ['The Stefan Bellof S, flat out!', 'Through the Bellof S, named after a lap record legend!']],
+      ['S-zavoj', 2977.4, -2403.5, ['The fast S bend, flat out!', 'Through the S bend, keep it pinned!']],
       ['Schwalbenschwanz', 2382.7, -2327.2, ["Schwalbenschwanz, the swallow's tail!", 'Round the Swallow Tail!']],
       ['Kleines Karussell', 2160.4, -2195.5, ['The little Karussell, into the concrete again!', 'Round the little Karussell!']],
       ['Galgenkopf', 2506.2, -1949.3, ['Galgenkopf, get a good exit!', 'Round Galgenkopf, onto the long straight!']],
