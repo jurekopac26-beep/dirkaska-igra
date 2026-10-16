@@ -766,6 +766,7 @@ const World = (function () {
      width breathing +-9 %, waves of 2, 1.2 and 0.7 m), and worn: thinner paint in patches 0.6-1.6 m long (down to ~15 % where it is most
      worn) with a fine speckle in them; RGB white with a faint grey speckle. All the noise is periodic along v and seeded (the same on every
      build): Catmull-Rom curves through seeded values a whole number per tile, each sum scaled so its largest swing is exactly 1 ---- */
+  let edgeLineTile = null;
   function edgeLinePaint(lw, M, PER) {
     const NX = 64, NY = 1024, Wq = lw + 2 * M, D = new Uint8Array(NX * NY * 4), WA = 0.3, WX = 0.85, SP = 0.55;
     const pn = (seed, lam) => { const n = Math.max(2, Math.round(PER / lam)), r = rng(seed), g = new Float32Array(n); for (let k = 0; k < n; k++) g[k] = r() * 2 - 1;
@@ -2583,7 +2584,8 @@ const World = (function () {
       // ---- white edge lines along the asphalt wherever there is no kerb ----
       if (ITA) {   // Toskana: the same quads (one per 2 m step and side) widened by 9 cm either side, the line's worn, slightly wavy paint in a tile (edgeLinePaint): no new draw call, no new vertex
         const lw = 0.22, M = 0.09, PER = T.len / Math.max(1, Math.round(T.len / 32));
-        const tx = ownTex(new THREE.DataTexture(edgeLinePaint(lw, M, PER), 64, 1024, THREE.RGBAFormat));   // (a DataTexture: a canvas premultiplies alpha and leaves dark fringes at the soft edges)
+        const key = lw + ':' + M + ':' + PER; if (!edgeLineTile || edgeLineTile.key !== key) edgeLineTile = { key, data: edgeLinePaint(lw, M, PER) };   // (~80 ms on a desktop: made once, kept for the next build of the track)
+        const tx = ownTex(new THREE.DataTexture(edgeLineTile.data, 64, 1024, THREE.RGBAFormat));   // (a DataTexture: a canvas premultiplies alpha and leaves dark fringes at the soft edges)
         tx.wrapS = THREE.ClampToEdgeWrapping; tx.wrapT = THREE.RepeatWrapping; tx.magFilter = THREE.LinearFilter; tx.minFilter = THREE.LinearMipmapLinearFilter; tx.generateMipmaps = true; tx.anisotropy = 4; tx.needsUpdate = true;
         const o0 = w - 0.12 - lw - M, o1 = Math.min(w - 0.03, w - 0.12 + M), u1 = (o1 - o0) / (lw + 2 * M), gl = new GB(true), wc = [0.93, 0.92, 0.94];
         for (const side of [-1, 1]) for (let q = 0; q < T.len - 1; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i] && T.curb[j] && !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035)) continue;

@@ -7,6 +7,11 @@
 //    by it, whatever the depth precision (the post target of the default quality 'high' has a 16-bit depth buffer: a polygon offset on the shoulder used to
 //    pull it over the kerb 50 m and more from the camera): checked in the pictures themselves, the same frame with the shoulder hidden and shown, in both
 //    cameras that count (iso 640 x 360, chase 360 x 640 with the tilt 30 %); and it is not built where it would lie under the kerb (vertices).
+//  - where no kerb covers it, the shoulder's dirt reaches onto the asphalt softly and unevenly (alpha 0 at 6-36 cm inside the road's edge, solid
+//    10-22 cm outside it), one more quad across (+~10 thousand vertices);
+//  - the white edge line (where there is no kerb) is worn and a little wavy: the same one quad per 2 m step and side as before (no new vertex, no new
+//    draw call), its paint in a 64 x 1024 alpha tile (transparent, no depth write, drawn under the tyre marks), the tile's edges clear (no quad
+//    outline), the same on every build; the other circuits keep their plain opaque line.
 //   node tests/browser/kerb.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -23,6 +28,16 @@ const MEASURE = () => {
   const fnv = (pos) => { let h = 2166136261; for (let i = 0; i < pos.length; i++) { h ^= Math.round(pos[i] * 1e4) | 0; h = Math.imul(h, 16777619) >>> 0; } return h; };
   const out = { meshes, verts, kerbMeshes: kerbs.length, named: !!kerb && kerbs[0] === kerb, strip: !!strip };
   if (strip) Object.assign(out, { stripVerts: strip.geometry.attributes.position.count, stripRO: strip.renderOrder, stripDW: strip.material.depthWrite, stripPO: strip.material.polygonOffset, stripTr: strip.material.transparent, stripHash: fnv(strip.geometry.attributes.position.array) });
+  const el = W.root.getObjectByName('edgeline'), tm = W.root.getObjectByName('tyremarks');
+  if (el) { const im = el.material.map && el.material.map.image, d = im && im.data; let edgeA = 0, mean = 0, wrap = 0;
+    if (d) { for (let r = 0; r < im.height; r++) { edgeA = Math.max(edgeA, d[(r * im.width) * 4 + 3], d[(r * im.width + im.width - 1) * 4 + 3]); for (let x = 0; x < im.width; x++) mean += d[(r * im.width + x) * 4 + 3]; }
+      mean /= im.width * im.height * 255; for (let x = 0; x < im.width; x++) wrap = Math.max(wrap, Math.abs(d[x * 4 + 3] - d[((im.height - 1) * im.width + x) * 4 + 3])); }
+    Object.assign(out, { el: { verts: el.geometry.attributes.position.count, tr: el.material.transparent, dw: el.material.depthWrite, ro: el.renderOrder, tw: im && im.width, th: im && im.height, edgeA, mean, wrap, hash: fnv(el.geometry.attributes.position.array) }, tmRO: tm ? tm.renderOrder : null }); }
+  if (strip) { const sp = strip.geometry.attributes.position.array, sc = strip.geometry.attributes.color.array; let onA = 0, minOff = 9, solidMin = 9;
+    for (let i = 0; i < sp.length / 3; i += 7) { const x = sp[i * 3], z = sp[i * 3 + 2]; let b = 0, bd = 1e18; for (let k = 0; k < N; k += 1) { const dd = (x - Tr.px[k]) ** 2 + (z - Tr.pz[k]) ** 2; if (dd < bd) { bd = dd; b = k; } }
+      if (Math.abs(Tr.k[b]) > 1 / 60) continue; const off = Math.abs((x - Tr.px[b]) * Tr.nx[b] + (z - Tr.pz[b]) * Tr.nz[b]), a = sc[i * 4 + 3];
+      if (off < w - 0.01) { onA = Math.max(onA, a); minOff = Math.min(minOff, off); } else if (a > 0.99) solidMin = Math.min(solidMin, off); }
+    Object.assign(out, { stripOnAsphaltAlpha: onA, stripMinOff: minOff, stripSolidMin: solidMin }); }
   if (!kerb || kerbs.length !== 1) return out;
   const g = kerb.geometry, pos = g.attributes.position.array, col = g.attributes.color, n = col.count;
   Object.assign(out, { itemSize: col.itemSize, transparent: kerb.material.transparent, kerbDW: kerb.material.depthWrite, kerbRO: kerb.renderOrder, verts1: n, hash: fnv(pos) });
@@ -103,7 +118,13 @@ try {
   T.check('nothing beyond the old kerb plus the fade', a.maxOff <= a.w + a.cw + 0.47, `${a.maxOff.toFixed(3)} m`);
   T.check('the gravel shoulder is drawn first and never written to the depth buffer: renderOrder below the kerb, depthWrite off, transparent, still a polygon offset against the lawn',
     a.strip && a.stripRO < a.kerbRO && a.stripDW === false && a.stripTr === true && a.stripPO === true && a.kerbDW === true, `strip renderOrder ${a.stripRO}, depthWrite ${a.stripDW}; kerb renderOrder ${a.kerbRO}, depthWrite ${a.kerbDW}`);
-  T.check('the shoulder is not built under the kerb (it was 52 thousand vertices, 30 thousand now)', a.strip && a.stripVerts > 5000 && a.stripVerts < 34000, `${a.stripVerts} vertices`);
+  T.check('the shoulder is not built under the kerb (it was 52 thousand vertices, 30 thousand, 40 thousand with the soft start on the asphalt)', a.strip && a.stripVerts > 5000 && a.stripVerts < 44000, `${a.stripVerts} vertices`);
+  T.check('where no kerb covers it the dirt starts on the asphalt, transparent there (alpha 0 inside the road\'s edge), 6-36 cm in, and is solid only outside the edge',
+    a.stripMinOff >= a.w - 0.37 && a.stripMinOff <= a.w - 0.05 && a.stripOnAsphaltAlpha < 0.01 && a.stripSolidMin >= a.w + 0.05, `starts ${(a.w - a.stripMinOff).toFixed(3)} m inside the edge, alpha there ${a.stripOnAsphaltAlpha}, solid from ${(a.stripSolidMin - a.w).toFixed(3)} m outside it`);
+  T.check('the white edge line: one mesh named edgeline, transparent, no depth write, drawn under the tyre marks', !!a.el && a.el.tr === true && a.el.dw === false && a.tmRO !== null && a.el.ro < a.tmRO, JSON.stringify(a.el) + ' tyremarks ' + a.tmRO);
+  T.check('the line costs no new vertex: one quad (6 vertices) per 2 m step and side, as before (4926)', !!a.el && a.el.verts === 4926, `${a.el && a.el.verts} vertices`);
+  T.check('its paint tile: 64 x 1024, clear at the quad\'s long edges (no outline), closing on itself along (no seam: the last row and the first differ no more than neighbouring rows do, the speckle aside), worn (on average a part of the quad painted, never empty)',
+    !!a.el && a.el.tw === 64 && a.el.th === 1024 && a.el.edgeA === 0 && a.el.wrap <= 80 && a.el.mean > 0.15 && a.el.mean < 0.5, a.el && `edge alpha ${a.el.edgeA}, wrap ${a.el.wrap}, mean cover ${a.el.mean.toFixed(3)}`);
   // the pictures: the cream band the same with and without the shoulder (before the fix 35 grey levels of 255 off on average, nine tenths of the pixels)
   for (const [d, lat] of [[1097, null], [316, null], [425, 5.2]]) {
     const c = await iso.page.evaluate(CREAM, [d, lat, 'iso', 960]);
@@ -123,11 +144,13 @@ try {
   await startTrack(ch.page, 'toskana');
   const b = await ch.page.evaluate(MEASURE), built = await ch.page.evaluate(() => window.__built);
   T.check('the world is really built a second time (the second start of the track is not skipped)', built.filter(id => id === 'toskana').length === 2, built.join(', '));
-  T.check('the same edge on a second build (positions identical, Math.random not used)', b.hash === a2.hash && b.verts1 === a2.verts1 && b.stripHash === a2.stripHash && b.stripVerts === a2.stripVerts && b.hash === a.hash, `kerb ${a.hash} / ${a2.hash} / ${b.hash}, shoulder ${a2.stripHash} / ${b.stripHash}`);
+  T.check('the same edge on a second build (positions identical, Math.random not used)', b.hash === a2.hash && b.verts1 === a2.verts1 && b.stripHash === a2.stripHash && b.stripVerts === a2.stripVerts && b.hash === a.hash && !!b.el && b.el.hash === a.el.hash && b.el.mean === a.el.mean, `kerb ${a.hash} / ${a2.hash} / ${b.hash}, shoulder ${a2.stripHash} / ${b.stripHash}`);
   // another track with kerbs keeps its plain opaque kerb (no alpha, not transparent)
   await startTrack(ch.page, 'grom');
   const c = await ch.page.evaluate(() => { const W = Render.world; let k = null; W.root.traverse(o => { if (o.isMesh && o.material && o.material.map && o.material.map.image && o.material.vertexColors && o.geometry.attributes.uv && !k) { const t = o.material.map.image; if (t.width === 32 && t.height === 64) k = o; } });
     return k ? { itemSize: k.geometry.attributes.color.itemSize, transparent: k.material.transparent, name: k.name } : null; });
+  const gl = await ch.page.evaluate(() => { const W = Render.world; return { named: !!W.root.getObjectByName('edgeline') }; });
+  T.check('another circuit: no worn edge line (its plain line as before)', gl.named === false, JSON.stringify(gl));
   T.check('another circuit: its kerb is unchanged (opaque, no alpha)', c === null || (c.itemSize === 3 && c.transparent === false && c.name === ''), JSON.stringify(c));
   await startTrack(ch.page, 'toskana');
   for (const [d, lat] of [[455, 5.4], [316, null]]) {
