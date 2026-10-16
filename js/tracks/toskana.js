@@ -8,7 +8,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // onto the straight. Apart from the pit straight every straight became a drawn-out bend, made for drifting. Green/white/red kerbs, green and white tyre walls, wide orange run-offs, cypresses
   // and terracotta-roofed farmhouses.
   TRACK_DEFS.push({
-    id: 'toskana', name: 'Toskana, Italija', theme: 'italia', laps: 3, halfWidth: 6.4,
+    id: 'toskana', test: true, name: 'Toskana, Italija', theme: 'italia', laps: 3, halfWidth: 6.4,
     hudSigns: [[250, 342, 'chicane']],   // the chicane's blue sign on the HUD (Core hudSigns; m after the start line)
     desc: 'Podeželska proga v slogu Faenze, z drugače oblikovanimi ovinki: dolga ciljna ravnina s tribunami in boksi (zapelji vanje in mehaniki ti popravijo avto), dvojni levi ovinek, ostra šikana (kdor jo odreže, razbije gume), dolgi razvlečeni zavoji za drsenje ob jezeru in po sredini, ostra dvojna lasnica, ciprese, kmečke hiše z opečnatimi strehami, zeleno-belo-rdeči robniki in stene iz zelenih in belih gum.',
     en: { name: 'Tuscany, Italy', desc: 'A country track in the style of Faenza, with corners shaped differently: a long finish straight with grandstands and pits (drive in and the mechanics repair your car), a double left, a sharp chicane (cut it and you wreck your tyres), long drawn-out bends to slide through by the lake and in the middle, a tight double hairpin, cypresses, farmhouses with tiled roofs, green-white-red kerbs and walls of green and white tyres.' },   // (the English page: Jezik · Language)
