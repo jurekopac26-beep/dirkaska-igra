@@ -24354,7 +24354,7 @@ const World = (function () {
   const RB_LOOK = {
     rbring: { ban: RB_BAN, at: RB_AT, nums: 10, shirts: RB_SHIRTS, smoke: true, camps: 5, trees: 'nr', seC: [1.14, 1.04, 0.84],
       flags: { stand: [{ nl: 0.5, or: 0.3, at: 0.2 }, { at: 0.5, st: 0.3, nl: 0.2 }], ga: { nl: 0.45, or: 0.25, at: 0.2, rb: 0.1 }, camp: { nl: 0.55, or: 0.2, at: 0.25 }, pole: 'at', podium: 'at' },
-      vid: [['ÖSTERREICH', 1], ['T3', 1], ['NORD', 1], ['T10', 1]], poles: [-300, 160, -1], runoff: ['ÖSTERREICH', 'SPIELBERG', 'STEIERMARK'], straight: [-460, 300, -1],
+      vid: [['ÖSTERREICH', 1], ['T3', 1], ['NORD', 1], ['T10', 1]], poles: [-300, 160, -1], runoff: ['SPIELBERG RING', 'SPIELBERG', 'STEIERMARK'], straight: [-460, 300, -1],
       farm: { wall: [0.95, 0.94, 0.9], roof: [0.26, 0.24, 0.26], end: [0.92, 0.9, 0.86], barn: [0.52, 0.34, 0.2], barnRoof: [0.3, 0.28, 0.3], barnEnd: [0.5, 0.33, 0.2] },
       tvSkip: [1, 4, 7], recov: [0, 2, 3], photo: [0, 2, 3, 9], jets: [[1, 0.18, 0.2], [0.97, 0.97, 0.97], [1, 0.18, 0.2]],
       screen: { name: ['SPIELBERG', 'RING'], km: '4,318 km', sub: '10 zavojev', fans: ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#f4f4f0', '#1c2856', '#e2202c'], glow: '255,128,30' },
@@ -32094,7 +32094,7 @@ const World = (function () {
       const M = { first: 1.4, gap: 1.1, excluded: (x, z) => excluded(x, z) || inRects(x, z), below: 3, above: 7, sit: 0.35, flag: 0.08 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1; nFans += n; return n; };
-      const SPOTS = [['S-zavoji', 1, 3, 0.55], ['S-zavoji', -1, 2, 0.4], ['Dolgi levi', 1, 2, 0.45], ['Dvojni desni', -1, 3, 0.6], ['Lasnica', -1, 3, 0.65], ['Lasnica', 1, 2, 0.45], ['200R', -1, 2, 0.4], ['Spoon', 1, 3, 0.6], ['Spoon', -1, 2, 0.4], ['130R', 1, 3, 0.55], ['Casio Triangle', 1, 2, 0.45], ['Prvi ovinek', 1, 2, 0.4]];
+      const SPOTS = [['S-zavoji', 1, 3, 0.55], ['S-zavoji', -1, 2, 0.4], ['Dolgi levi', 1, 2, 0.45], ['Dvojni desni', -1, 3, 0.6], ['Lasnica', -1, 3, 0.65], ['Lasnica', 1, 2, 0.45], ['200R', -1, 2, 0.4], ['Spoon', 1, 3, 0.6], ['Spoon', -1, 2, 0.4], ['130R', 1, 3, 0.55], ['Šikana', 1, 2, 0.45], ['Prvi ovinek', 1, 2, 0.4]];
       for (const [n, side, rows, dn] of SPOTS) { const d = nameD(n); if (d == null) continue; run(d - 45, d + 55, side, { rows, dens: dn, label: 'SZ ' + n + (side > 0 ? ' R' : ' L') }, true); }
       for (const sd of [-1, 1]) run(260, T.len - 340, sd, { rows: 2, dens: 0.05, clump: 0.95, strip: false, label: 'SZ groups' });
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);
