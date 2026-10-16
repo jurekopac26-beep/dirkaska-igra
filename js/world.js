@@ -760,6 +760,37 @@ const World = (function () {
     };
   }
 
+  /* ---- Toskana's white edge line: its paint in one 64 x 1024 RGBA tile (u across the line's quad: the line's width lw and a margin M either
+     side, 0 by the road's centre; v along it: one tile = PER m, a whole number of tiles round the lap, so it closes on itself). Alpha is the
+     paint's cover: soft edges (a smoothstep over 3 cm, centred on the edge), the edges wandering a little (a shared meander of +-1.5 cm and the
+     width breathing +-9 %, waves of 2, 1.2 and 0.7 m), and worn: thinner paint in patches 0.6-1.6 m long (down to ~15 % where it is most
+     worn) with a fine speckle in them; RGB white with a faint grey speckle. All the noise is periodic along v and seeded (the same on every
+     build): Catmull-Rom curves through seeded values a whole number per tile, each sum scaled so its largest swing is exactly 1 ---- */
+  function edgeLinePaint(lw, M, PER) {
+    const NX = 64, NY = 1024, Wq = lw + 2 * M, D = new Uint8Array(NX * NY * 4), WA = 0.3, WX = 0.85, SP = 0.55;
+    const pn = (seed, lam) => { const n = Math.max(2, Math.round(PER / lam)), r = rng(seed), g = new Float32Array(n); for (let k = 0; k < n; k++) g[k] = r() * 2 - 1;
+      return (t) => { const f = (((t % 1) + 1) % 1) * n, k = Math.floor(f), x = f - k, p0 = g[(k + n - 1) % n], p1 = g[k % n], p2 = g[(k + 1) % n], p3 = g[(k + 2) % n];
+        return 0.5 * (2 * p1 + (p2 - p0) * x + (2 * p0 - 5 * p1 + 4 * p2 - p3) * x * x + (3 * p1 - p0 - 3 * p2 + p3) * x * x * x); }; };
+    const sum = (parts) => { const a = new Float32Array(NY); let m = 1e-6; for (let r = 0; r < NY; r++) { const t = (r + 0.5) / NY; a[r] = parts.reduce((acc, [wt, f]) => acc + wt * f(t), 0); m = Math.max(m, Math.abs(a[r])); }
+      for (let r = 0; r < NY; r++) a[r] /= m; return a; };
+    const vn2 = (seed, lx, ly) => { const nx = Math.ceil(Wq / lx) + 2, ny = Math.max(2, Math.round(PER / ly)), r = rng(seed), g = new Float32Array(nx * ny); for (let k = 0; k < g.length; k++) g[k] = r();   // (2-D value noise: cells lx m across, ly m along, periodic along)
+      return (a, t) => { const fx = (a + M) / lx, fy = (((t % 1) + 1) % 1) * ny, x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, v = fy - y0, uu = u * u * (3 - 2 * u), vv = v * v * (3 - 2 * v);
+        const G = (X, Y) => g[(Y % ny) * nx + clamp(X, 0, nx - 1)];
+        return lerp(lerp(G(x0, y0), G(x0 + 1, y0), uu), lerp(G(x0, y0 + 1), G(x0 + 1, y0 + 1), uu), vv); }; };
+    const mea = sum([[0.4, pn(9811, 2)], [0.35, pn(9812, 1.2)], [0.25, pn(9813, 0.7)]]), br = sum([[0.5, pn(9821, 1.6)], [0.5, pn(9822, 0.9)]]), ji = sum([[1, pn(9831, 0.5)]]), jo = sum([[1, pn(9832, 0.5)]]);
+    const wpat = sum([[0.55, pn(9951, 1.6)], [0.45, pn(9952, 0.6)]]), speck = vn2(9881, 0.012, 0.05), speck2 = vn2(9882, 0.02, 0.09), f = 0.03, lo = -M + 0.004 + f / 2, hi = lw + M - 0.004 - f / 2;
+    for (let r = 0; r < NY; r++) {
+      const t = (r + 0.5) / NY, c = 0.05 * WA * mea[r], hw = lw / 2 * (1 + 0.3 * WA * br[r]), ei = clamp(lw / 2 + c - hw + 0.008 * ji[r], lo, hi), eo = clamp(lw / 2 + c + hw + 0.008 * jo[r], lo, hi), wm = sstep(0.25, 0.8, 0.5 - 0.5 * wpat[r]);
+      for (let x = 0; x < NX; x++) {
+        const a = (x + 0.5) / NX * Wq - M, o = (r * NX + x) * 4, s2 = speck2(a, t);
+        let A = sstep(ei - f / 2, ei + f / 2, a) * (1 - sstep(eo - f / 2, eo + f / 2, a));
+        A = Math.max(0, A * (1 - WX * wm * (0.55 + 0.45 * speck(a, t))) - SP * sstep(0.62, 0.92, s2) * (0.4 + 0.6 * wm));
+        const R = Math.round((0.96 + 0.04 * s2) * 255); D[o] = R; D[o + 1] = R; D[o + 2] = R; D[o + 3] = Math.round(clamp(A, 0, 1) * 255);
+      }
+    }
+    return D;
+  }
+
   /* ---- the pit lane (Bakreni gozd, Toskana, Gromski rt, as in the reference; Spa): an asphalt lane on the outside of the straight behind a bare rail
      on a grass strip, a pale concrete apron with painted boxes where the crews stand in rows, a row of garages behind. opt: the builder's R, scen,
      prop(kind, x, z, yaw), excl(x, z, r), root, out, ownTex; Y(s): the road's height at s (the flat circuits: none, everything at the heights
@@ -2484,6 +2515,11 @@ const World = (function () {
             const pts = (s, oS) => { const f = s / T.ds, k0 = Math.floor(f) % N, k1 = (k0 + 1) % N, t = f - Math.floor(f), WDs = WD[side > 0 ? 1 : 0], wdS = lerp(WDs[k0], WDs[k1], t), barS = lerp(bar[k0], bar[k1], t);
               const ex = atSf(s, side * w), sw = 0.3 + 0.9 * sstep(0.28, 0.72, 0.6 * eN1(ex[0], ex[1]) + 0.4 * eN2(ex[0], ex[1]) + 0.25 * (eN3(ex[0], ex[1]) - 0.5));
               const ro = sstep(wIn + 0.2, wIn + 3, wdS), o2 = Math.max(o1 + 0.12, Math.min(w + (wdS - wIn) + sw, barS - back)), rc = [0, 1, 2].map(n => lerp(GR[n], DI[n], ro)), mid = Math.max(oS + 0.06, o2 - 0.3);
+              if (oS === o1) {   // (where no kerb covers it: the dirt reaches onto the asphalt softly and unevenly, from 6-36 cm inside the road's edge (alpha 0) to 10-22 cm outside it (alpha 1))
+                const in0 = w - 0.06 - 0.3 * eN3(ex[0] * 2.1, ex[1] * 2.1), in1 = w + 0.1 + 0.12 * eN2(ex[0] * 1.3, ex[1] * 1.3), m2 = Math.max(in1 + 0.04, mid);
+                const r = [in0, in1, m2, Math.max(m2 + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = 0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6);
+                  return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [0, 1, 1, 0][n]]]; });
+                r.reach = o2 + 0.4; return r; }
               const r = [oS, mid, Math.max(mid + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = (0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6)) * (n === 0 ? 0.9 : 1);
                 return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [1, 1, 0][n]]]; });
               r.reach = o2 + 0.4; return r; };
@@ -2491,7 +2527,7 @@ const World = (function () {
             for (let h = 0; h < 2; h++) {
               const oS = under(q + h, q + h + 1) ? kOp : o1, A = pts(q + h, oS), Bc = pts(q + h + 1, oS);
               if (oS > o1 && Math.max(A.reach, Bc.reach) <= oS + 0.06) continue;   // (it all lies under the kerb: never seen)
-              for (let n = 0; n < 2; n++) gT.quadUp(A[n][0], Bc[n][0], Bc[n + 1][0], A[n + 1][0], [A[n][1], Bc[n][1], Bc[n + 1][1], A[n + 1][1]], [uvq(A[n][0]), uvq(Bc[n][0]), uvq(Bc[n + 1][0]), uvq(A[n + 1][0])]); }
+              for (let n = 0; n < Math.min(A.length, Bc.length) - 1; n++) gT.quadUp(A[n][0], Bc[n][0], Bc[n + 1][0], A[n + 1][0], [A[n][1], Bc[n][1], Bc[n + 1][1], A[n + 1][1]], [uvq(A[n][0]), uvq(Bc[n][0]), uvq(Bc[n + 1][0]), uvq(A[n + 1][0])]); }
           }
           // (not written to the depth buffer and drawn before the kerb, which blends over it: at any depth precision (the post target's 16-bit depth) the kerb's cream and red are never overpainted, and its soft edge fades into the gravel, not the lawn;
           //  the polygon offset only has to win against the lawn under it)
@@ -2545,6 +2581,17 @@ const World = (function () {
           const v0 = (q - sa) / 9, v1 = (q - sa + 2) / 9; gk.quadUp(P(i, w, 0.045), P(i, w + cw, 0.085), P(j, w + cw, 0.085), P(j, w, 0.045), [wc, wc, wc, wc], [[0, v0], [1, v0], [1, v1], [0, v1]]); }
         const km = new THREE.Mesh(gk.geometry(), new THREE.MeshLambertMaterial({ map: tex.curbRWB, vertexColors: true })); km.receiveShadow = true; km.matrixAutoUpdate = false; root.add(km); }   // red / white / blue
       // ---- white edge lines along the asphalt wherever there is no kerb ----
+      if (ITA) {   // Toskana: the same quads (one per 2 m step and side) widened by 9 cm either side, the line's worn, slightly wavy paint in a tile (edgeLinePaint): no new draw call, no new vertex
+        const lw = 0.22, M = 0.09, PER = T.len / Math.max(1, Math.round(T.len / 32));
+        const tx = ownTex(new THREE.DataTexture(edgeLinePaint(lw, M, PER), 64, 1024, THREE.RGBAFormat));   // (a DataTexture: a canvas premultiplies alpha and leaves dark fringes at the soft edges)
+        tx.wrapS = THREE.ClampToEdgeWrapping; tx.wrapT = THREE.RepeatWrapping; tx.magFilter = THREE.LinearFilter; tx.minFilter = THREE.LinearMipmapLinearFilter; tx.generateMipmaps = true; tx.anisotropy = 4; tx.needsUpdate = true;
+        const o0 = w - 0.12 - lw - M, o1 = Math.min(w - 0.03, w - 0.12 + M), u1 = (o1 - o0) / (lw + 2 * M), gl = new GB(true), wc = [0.93, 0.92, 0.94];
+        for (const side of [-1, 1]) for (let q = 0; q < T.len - 1; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i] && T.curb[j] && !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035)) continue;
+          const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.036, T.pz[k] + T.nz[k] * o * side];
+          const vi = i * T.ds / PER + (side > 0 ? 0 : 0.37), vj = vi + ((j - i + N) % N) * T.ds / PER;   // (v: the arc length, continuous round the lap; the left line 0.37 of a tile on, so the two sides differ)
+          gl.quadUp(P(i, o0), P(j, o0), P(j, o1), P(i, o1), [wc, wc, wc, wc], [[0, vi], [0, vj], [u1, vj], [u1, vi]]); }
+        const m = new THREE.Mesh(gl.geometry(), new THREE.MeshLambertMaterial({ map: tx, vertexColors: true, transparent: true, depthWrite: false })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.renderOrder = 0; m.name = 'edgeline'; root.add(m);   // (renderOrder 0: under the tyre marks (1), the rubber lies over the paint)
+      } else
       { const gl = new GB(), wc = [0.93, 0.92, 0.94];
         for (const side of [-1, 1]) for (let q = 0; q < T.len - 1; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i] && T.curb[j] && (FOR || !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035))) continue;   // (the newer circuits: also round the outside of a corner, where the kerb is left out) a solid line right at the edge of the asphalt, as in the reference
           const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.036, T.pz[k] + T.nz[k] * o * side];
