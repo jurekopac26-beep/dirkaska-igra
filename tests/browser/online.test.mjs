@@ -167,8 +167,15 @@ try {
   await leave(C); await leave(D); await wait(1500);
   // a waiting place whose owner is gone without a word (a phone that lost its network): skipped after a few seconds
   const ver = (await E.page.evaluate(() => window.__game.ver)).replace(/[^A-Za-z0-9]/g, '');
-  dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
-  await new Promise((res, rej) => { dead.on('open', res); dead.on('error', rej); }); await wait(500);
+  for (let k = 0; ; k++) {   // (the place must really be the dead one's: OPEN, not ID-TAKEN while the last room's host still holds it)
+    dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
+    const first = await new Promise((res) => { dead.once('message', (m) => res(String(m))); dead.once('error', (e) => res('error ' + e.message)); dead.once('close', () => res('closed')); });
+    if (/"OPEN"/.test(first)) break;
+    try { dead.terminate(); } catch (_) { }
+    if (k >= 100) throw new Error('place 0 never free for the dead socket: ' + first);
+    await wait(200);
+  }
+  await wait(500);
   await tap(E); await wait(500); await tap(F);
   const [tE, tF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
   T.check('quick match: a dead waiting place is skipped, the two still meet', tE === 'host' && tF === 'guest', `${tE} / ${tF}`);
@@ -181,9 +188,13 @@ try {
   await tap(H); await until(H.page, () => { const g = window.__game.net; return !!(g && g.open && g.synced); }, null, 40000);
   for (const x of [G, H, I]) await x.page.evaluate(() => { window.__game.autoDrive = true; });
   await tap(I);
-  const fullG = await until(G.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000);
+  // (the room's status as its host shows it: the one who waits first is the host as a rule, but on a busy machine the server can drop the
+  // waiting one for a moment, its place found taken when it comes back, and then another of the three is the host. Read on whichever page
+  // is the host, the room's three there; exactly one host)
+  const rooms = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { role: g.role, status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000)));
+  const roles = rooms.map(r => r.role), fullG = Object.assign({ roles }, rooms[roles.indexOf('host')] || rooms[0]);
   const auto = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game; return g.race && g.net && g.net.race ? { cars: g.race.cars.length, grid: g.net.race.grid.length } : null; }, null, 90000)));
-  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
+  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', roles.filter(r => r === 'host').length === 1 && /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
   for (const x of [G, H, I]) await leave(x);
   T.check('no page errors (quick match)', ![C, D, E, F].some(x => x.errors.length), [C, D, E, F].flatMap(x => x.errors).slice(0, 5).join(' | '));
   T.check('no page errors', !A.errors.length && !B.errors.length, A.errors.concat(B.errors).slice(0, 5).join(' | '));
