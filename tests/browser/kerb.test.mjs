@@ -34,9 +34,9 @@ const MEASURE = () => {
       mean /= im.width * im.height * 255; for (let x = 0; x < im.width; x++) wrap = Math.max(wrap, Math.abs(d[x * 4 + 3] - d[((im.height - 1) * im.width + x) * 4 + 3])); }
     Object.assign(out, { el: { verts: el.geometry.attributes.position.count, tr: el.material.transparent, dw: el.material.depthWrite, ro: el.renderOrder, tw: im && im.width, th: im && im.height, edgeA, mean, wrap, hash: fnv(el.geometry.attributes.position.array) }, tmRO: tm ? tm.renderOrder : null }); }
   if (strip) { const sp = strip.geometry.attributes.position.array, sc = strip.geometry.attributes.color.array; let onA = 0, minOff = 9, solidMin = 9, onY = 9;
-    for (let i = 0; i < sp.length / 3; i += 7) { const x = sp[i * 3], z = sp[i * 3 + 2]; let b = 0, bd = 1e18; for (let k = 0; k < N; k += 1) { const dd = (x - Tr.px[k]) ** 2 + (z - Tr.pz[k]) ** 2; if (dd < bd) { bd = dd; b = k; } }
-      if (Math.abs(Tr.k[b]) > 1 / 60) continue; const off = Math.abs((x - Tr.px[b]) * Tr.nx[b] + (z - Tr.pz[b]) * Tr.nz[b]), a = sc[i * 4 + 3];
-      if (off < w - 0.01) { onA = Math.max(onA, a); minOff = Math.min(minOff, off); onY = Math.min(onY, sp[i * 3 + 1]); } else if (a > 0.99) solidMin = Math.min(solidMin, off); }
+    for (let i = 0; i < sp.length / 3; i += 1) { const x = sp[i * 3], z = sp[i * 3 + 2]; let b = 0, bd = 1e18; for (let k = 0; k < N; k += 1) { const dd = (x - Tr.px[k]) ** 2 + (z - Tr.pz[k]) ** 2; if (dd < bd) { bd = dd; b = k; } }
+      if (Math.abs(Tr.k[b]) > 1 / 60 || Math.abs((x - Tr.px[b]) * Tr.tx[b] + (z - Tr.pz[b]) * Tr.tz[b]) > 0.4) continue; const off = Math.abs((x - Tr.px[b]) * Tr.nx[b] + (z - Tr.pz[b]) * Tr.nz[b]), a = sc[i * 4 + 3];   // (only right beside a sample: between two, on a curve, the measure is off by a few cm)
+      if (off < w - 0.03) { onA = Math.max(onA, a); minOff = Math.min(minOff, off); onY = Math.min(onY, sp[i * 3 + 1]); } else if (a > 0.99) solidMin = Math.min(solidMin, off); }
     Object.assign(out, { stripOnAsphaltAlpha: onA, stripMinOff: minOff, stripSolidMin: solidMin, stripOnY: onY }); }
   if (!kerb || kerbs.length !== 1) return out;
   const g = kerb.geometry, pos = g.attributes.position.array, col = g.attributes.color, n = col.count;
