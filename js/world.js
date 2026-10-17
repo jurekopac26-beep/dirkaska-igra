@@ -760,6 +760,38 @@ const World = (function () {
     };
   }
 
+  /* ---- Toskana's white edge line: its paint in one 64 x 1024 RGBA tile (u across the line's quad: the line's width lw and a margin M either
+     side, 0 by the road's centre; v along it: one tile = PER m, a whole number of tiles round the lap, so it closes on itself). Alpha is the
+     paint's cover: soft edges (a smoothstep over 3 cm, centred on the edge), the edges wandering a little (a shared meander of +-1.5 cm and the
+     width breathing +-9 %, waves of 2, 1.2 and 0.7 m), and worn: thinner paint in patches 0.6-1.6 m long (down to ~15 % where it is most
+     worn) with a fine speckle in them; RGB white with a faint grey speckle. All the noise is periodic along v and seeded (the same on every
+     build): Catmull-Rom curves through seeded values a whole number per tile, each sum scaled so its largest swing is exactly 1 ---- */
+  let edgeLineTile = null;
+  function edgeLinePaint(lw, M, PER) {
+    const NX = 64, NY = 1024, Wq = lw + 2 * M, D = new Uint8Array(NX * NY * 4), WA = 0.3, WX = 0.85, SP = 0.55;
+    const pn = (seed, lam) => { const n = Math.max(2, Math.round(PER / lam)), r = rng(seed), g = new Float32Array(n); for (let k = 0; k < n; k++) g[k] = r() * 2 - 1;
+      return (t) => { const f = (((t % 1) + 1) % 1) * n, k = Math.floor(f), x = f - k, p0 = g[(k + n - 1) % n], p1 = g[k % n], p2 = g[(k + 1) % n], p3 = g[(k + 2) % n];
+        return 0.5 * (2 * p1 + (p2 - p0) * x + (2 * p0 - 5 * p1 + 4 * p2 - p3) * x * x + (3 * p1 - p0 - 3 * p2 + p3) * x * x * x); }; };
+    const sum = (parts) => { const a = new Float32Array(NY); let m = 1e-6; for (let r = 0; r < NY; r++) { const t = (r + 0.5) / NY; a[r] = parts.reduce((acc, [wt, f]) => acc + wt * f(t), 0); m = Math.max(m, Math.abs(a[r])); }
+      for (let r = 0; r < NY; r++) a[r] /= m; return a; };
+    const vn2 = (seed, lx, ly) => { const nx = Math.ceil(Wq / lx) + 2, ny = Math.max(2, Math.round(PER / ly)), r = rng(seed), g = new Float32Array(nx * ny); for (let k = 0; k < g.length; k++) g[k] = r();   // (2-D value noise: cells lx m across, ly m along, periodic along)
+      return (a, t) => { const fx = (a + M) / lx, fy = (((t % 1) + 1) % 1) * ny, x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, v = fy - y0, uu = u * u * (3 - 2 * u), vv = v * v * (3 - 2 * v);
+        const G = (X, Y) => g[(Y % ny) * nx + clamp(X, 0, nx - 1)];
+        return lerp(lerp(G(x0, y0), G(x0 + 1, y0), uu), lerp(G(x0, y0 + 1), G(x0 + 1, y0 + 1), uu), vv); }; };
+    const mea = sum([[0.4, pn(9811, 2)], [0.35, pn(9812, 1.2)], [0.25, pn(9813, 0.7)]]), br = sum([[0.5, pn(9821, 1.6)], [0.5, pn(9822, 0.9)]]), ji = sum([[1, pn(9831, 0.5)]]), jo = sum([[1, pn(9832, 0.5)]]);
+    const wpat = sum([[0.55, pn(9951, 1.6)], [0.45, pn(9952, 0.6)]]), speck = vn2(9881, 0.012, 0.05), speck2 = vn2(9882, 0.02, 0.09), f = 0.03, lo = -M + 0.004 + f / 2, hi = lw + M - 0.004 - f / 2;
+    for (let r = 0; r < NY; r++) {
+      const t = (r + 0.5) / NY, c = 0.05 * WA * mea[r], hw = lw / 2 * (1 + 0.3 * WA * br[r]), ei = clamp(lw / 2 + c - hw + 0.008 * ji[r], lo, hi), eo = clamp(lw / 2 + c + hw + 0.008 * jo[r], lo, hi), wm = sstep(0.25, 0.8, 0.5 - 0.5 * wpat[r]);
+      for (let x = 0; x < NX; x++) {
+        const a = (x + 0.5) / NX * Wq - M, o = (r * NX + x) * 4, s2 = speck2(a, t);
+        let A = sstep(ei - f / 2, ei + f / 2, a) * (1 - sstep(eo - f / 2, eo + f / 2, a));
+        A = Math.max(0, A * (1 - WX * wm * (0.55 + 0.45 * speck(a, t))) - SP * sstep(0.62, 0.92, s2) * (0.4 + 0.6 * wm));
+        const R = Math.round((0.96 + 0.04 * s2) * 255); D[o] = R; D[o + 1] = R; D[o + 2] = R; D[o + 3] = Math.round(clamp(A, 0, 1) * 255);
+      }
+    }
+    return D;
+  }
+
   /* ---- the pit lane (Bakreni gozd, Toskana, Gromski rt, as in the reference; Spa): an asphalt lane on the outside of the straight behind a bare rail
      on a grass strip, a pale concrete apron with painted boxes where the crews stand in rows, a row of garages behind. opt: the builder's R, scen,
      prop(kind, x, z, yaw), excl(x, z, r), root, out, ownTex; Y(s): the road's height at s (the flat circuits: none, everything at the heights
@@ -1042,8 +1074,14 @@ const World = (function () {
       g.setIndex(idx); g.computeVertexNormals();
       const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
-      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ }; out.gGrid = GM;
+      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ, col }; out.gGrid = GM;   // (col: the edge strips match the lawn's colour, gmAt)
     }
+
+    const gmAt = (x, z) => {   // the ground mesh's own height and vertex colour at (x, z): interpolated on its triangles, as drawn
+      const W = GM.nx + 1, fx = clamp((x - GM.x0) / GM.cell, 0, GM.nx - 1e-4), fz = clamp((z - GM.z0) / GM.cell, 0, GM.nz - 1e-4), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+      const A = j * W + i, Bv = A + 1, C = A + W, D = C + 1, [wa, wb, wc, wd] = u + v <= 1 ? [1 - u - v, u, v, 0] : [0, 1 - v, 1 - u, u + v - 1];
+      const f = (arr, k) => arr[A * 3 + k] * wa + arr[Bv * 3 + k] * wb + arr[C * 3 + k] * wc + arr[D * 3 + k] * wd;
+      return { y: f(GM.pos, 1), c: [f(GM.col, 0), f(GM.col, 1), f(GM.col, 2)] }; };
     const gmLine = (y) => waterline((i, j) => GM.pos[(clamp(j, 0, GM.nz) * (GM.nx + 1) + clamp(i, 0, GM.nx)) * 3 + 1], GM.x0, GM.z0, GM.cell, 0, GM.nx, 0, GM.nz, y);
     const gmBox = (x0, z0, x1, z1) => [Math.max(x0, GM.x0), Math.max(z0, GM.z0), Math.min(x1, GM.x0 + GM.nx * GM.cell), Math.min(z1, GM.z0 + GM.nz * GM.cell)];   // (a box within the ground mesh)
 
@@ -1059,7 +1097,8 @@ const World = (function () {
     const edgeW = (i, side) => w + (makadam ? 0.26 * Math.sin(i * 0.37 + side * 1.7) * Math.sin(i * 0.113 + side) + 0.13 * Math.sin(i * 1.31 + side * 2.3) : 0);
     {
       const g = new GB(true);
-      const offs = makadam ? Array.from({ length: 15 }, (_, k) => -w + 2 * w * k / 14) : [-w, -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w];
+      const offs = makadam ? Array.from({ length: 15 }, (_, k) => -w + 2 * w * k / 14) : THEME === 'italia' ? [-w, -(w - 0.28), -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w - 0.28, w] : [-w, -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w];
+      const ashE = (i, o, c) => { const side = o > 0 ? 1 : -1; if (THEME !== 'italia' || Math.abs(o) < w - 1e-6 || (T.curb[i] && !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035))) return c; return [c[0] * 1.07, c[1] * 1.04, c[2] * 0.96]; };   // (V2: grey dust off the gravel)
       const shade = (i, o) => {
         const rl = T.rl[i];
         let k = 1 - 0.2 * Math.exp(-((o - rl) * (o - rl)) / 5.5);
@@ -1084,7 +1123,7 @@ const World = (function () {
         for (let c = 0; c < offs.length - 1; c++) {
           const o0 = offs[c], o1 = offs[c + 1];
           const a = P(i, off(i, o0), 0.02), b = P(i, off(i, o1), 0.02), cc = P(j, off(j, o1), 0.02), d = P(j, off(j, o0), 0.02);
-          const sh = makadam ? shadeM : shade;
+          const sh = makadam ? shadeM : (k, o) => ashE(k, o, shade(k, o));
           g.quadUp(a, b, cc, d, [sh(i, o0), sh(i, o1), sh(j, o1), sh(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]);
         }
       }
@@ -1139,16 +1178,34 @@ const World = (function () {
       const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
     }
     // curbs
+    // (kerbOn: is there a kerb on this side of the 2 m step i -> i + 1; CS style: kerbs on the inside, outside only in hairpins)
+    const kerbOn = (i, side) => { const j = (i + 1) % N; return !!(T.curb[i] && T.curb[j]) && !(CSX && side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035); };
+    const kerbRun = (i, side) => { let n = 1; for (let k = 1; k <= 5 && kerbOn((i + N - k) % N, side); k++) n++; for (let k = 1; k <= 5 && kerbOn((i + k) % N, side); k++) n++; return n; };   // (how many 2 m steps long the run of kerb is that step i belongs to: up to 11)
+    // Toskana: the kerb's outer edge is worn, never a ruler-straight line: it has crumbled back by KW[0]..KW[1] m, in a gentle wave (three octaves of seeded value
+    // noise at the world position, 5, 3 and 1.7 m, summed and not squeezed through a step: no stretch of the edge runs parallel to the road, the seeds are
+    // picked so that no 6 m of it stays within 4 cm; the same on every build) and fades softly (vertex alpha over KFD m) into the lawn or the gravel; all in
+    // the one kerb mesh, no extra draw call. The gravel shoulder (the dirt shoulders, further down) knows that the kerb is opaque at least out to w + curbW - KW[1].
+    const KW = [0.02, 0.45], KFD = 0.45, kN = THEME === 'italia' ? [valueNoise2(9797, 5), valueNoise2(9767, 3), valueNoise2(9737, 1.7)] : null;
+    const kWear = (x, z) => clamp(0.235 + (0.11 * (kN[0](x, z) - 0.5) + 0.07 * (kN[1](x, z) - 0.5) + 0.05 * (kN[2](x, z) - 0.5)) / 0.2, KW[0], KW[1]);
     {
-      const g = new GB(true);
+      const KI = THEME === 'italia', g = new GB(true, KI);
       const cw = T.curbW;
       const wc = [1, 1, 1];
       for (const side of [-1, 1]) {
         for (let i = 0; i < N; i++) {
           const j = (i + 1) % N;
-          if (!T.curb[i] || !T.curb[j]) continue;
-          if (CSX && side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035) continue;   // CS style: kerbs on the inside, outside only in hairpins
+          if (!kerbOn(i, side)) continue;
           const o0 = side * w, o1 = side * (w + cw);
+          if (KI) {
+            const v0 = i * T.ds / 3, v1 = (i + 1) * T.ds / 3, first = !kerbOn((i + N - 1) % N, side), last = !kerbOn(j, side), rs = kerbRun(i, side) > 4 ? 1 : 2;   // (the first and the last 2 m of a run thin out into the lawn instead of ending in a straight cut; a short piece (up to 8 m) only 1 m: no mere smudge)
+            const sec = (h) => { const t = h / 2, s = (i + t) * T.ds, hy = lerp(HYi(i), HYi(j), t), q = atSf(s, side * (w + cw)), e = w + cw - kWear(q[0], q[1]), sh = 0.94 + 0.12 * kN[1](q[0] * 1.7, q[1] * 1.7), u1 = (e - w) / cw,
+                a = Math.min(first ? Math.min(1, t * rs) : 1, last ? Math.min(1, (1 - t) * rs) : 1);
+              const pt = (o, y) => { const r = atSf(s, side * o); return [r[0], hy + y, r[1]]; };
+              return { v: v0 + (v1 - v0) * t, k: [[pt(w, 0.045), [1, 1, 1, a], 0], [pt(e, 0.085), [sh, sh, sh, a], u1], [pt(e + KFD, 0.035), [sh, sh, sh, 0], u1]] }; };   // (cream by the asphalt, red out to the edge, then the same red fading to nothing)
+            const S = [sec(0), sec(1), sec(2)];
+            for (let h = 0; h < 2; h++) for (let c = 0; c < 2; c++) { const A = S[h], B = S[h + 1];
+              g.quadUp(A.k[c][0], A.k[c + 1][0], B.k[c + 1][0], B.k[c][0], [A.k[c][1], A.k[c + 1][1], B.k[c + 1][1], B.k[c][1]], [[A.k[c][2], A.v], [A.k[c + 1][2], A.v], [B.k[c + 1][2], B.v], [B.k[c][2], B.v]]); }
+            continue; }
           const v0 = i * T.ds / 3, v1 = (i + 1) * T.ds / 3;
           const a = P(i, o0, 0.045), b = P(i, o1, 0.085), c = P(j, o1, 0.085), d = P(j, o0, 0.045);
           g.quadUp(a, b, c, d, [wc, wc, wc, wc], [[0, v0], [1, v0], [1, v1], [0, v1]]);
@@ -1157,8 +1214,8 @@ const World = (function () {
           g.quadO(b, e, f, c, [0.6, 0.6, 0.6], P(i, side * (w + cw * 0.3), -1), [[1, v0], [1, v0], [1, v1], [1, v1]]);
         }
       }
-      const mat = new THREE.MeshLambertMaterial({ map: THEME === 'italia' ? tex.curbIT : THEME === 'kamp' ? tex.curbRY : tex.curb, vertexColors: true });
-      const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
+      const mat = new THREE.MeshLambertMaterial({ map: THEME === 'italia' ? tex.curbIT : THEME === 'kamp' ? tex.curbRY : tex.curb, vertexColors: true, transparent: KI });
+      const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; if (KI) m.name = 'kerb'; root.add(m);   // (Toskana: drawn after its gravel shoulder, renderOrder 0 over -1: the soft edge blends over the gravel, never under it)
     }
     // gravel traps
     {
@@ -2446,13 +2503,46 @@ const World = (function () {
           let a = new Float32Array(N); for (let i = 0; i < N; i++) a[i] = (T.k[i] * side < 0 && Math.abs(T.k[i]) > 0.015) ? wOut : wIn;
           for (let it = 0; it < 3; it++) { const o = new Float32Array(N); for (let i = 0; i < N; i++) { let m = 0; for (let d = -4; d <= 4; d++) m += a[(i + d + N) % N]; o[i] = Math.max(a[i] * (it ? 0 : 1), m / 9); } a = o; }
           return a; });
-        for (const side of [-1, 1]) for (let q = 0; q < T.len; q += 2) {
-          const i = T.idx(q), j = T.idx(q + 2), bar = side > 0 ? T.br : T.bl, o1 = w + 0.02, wd = WD ? WD[side > 0 ? 1 : 0][i] : (T.k[i] * side < 0 && Math.abs(T.k[i]) > 0.015) ? wOut : wIn, wdj = WD ? WD[side > 0 ? 1 : 0][j] : wd, o2i = Math.min(w + wd, bar[i] - back), o2j = Math.min(w + wdj, bar[j] - back);
-          if (o2i <= o1 + 0.3) continue;
-          const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.012, T.pz[k] + T.nz[k] * o * side], col = vary(dirtC, R, 0.04);
-          gs.quadUp(P(i, o1), P(j, o1), P(j, o2j), P(i, o2i), [col, col, col, col]);
+        if (ITA) {   // (V2 makadamski rob: a gravel shoulder of irregular width (0.3-1.2 m, plus the run-off round the outside of the corners: there the old orange-brown),
+          //  light grey-brown gravel on the gravel map, its outer edge ragged every metre and fading out into the lawn (vertex alpha))
+          const gT = new GB(true, true), eN1 = valueNoise2(9711, 7), eN2 = valueNoise2(9712, 2.3), eN3 = valueNoise2(9713, 0.9), MA = [0.6, 0.5, 0.39], uvq = (p) => [p[0] / 4, -p[2] / 4];
+          const GR = [0.525, 0.55, 0.5], DI = [0.6, 0.38, 0.25];   // (the rendered colours: gravel, the run-off's dirt)
+          const kOp = w + T.curbW - KW[1] - 0.05;   // (every kerb is opaque at least out to here, whatever its wear: where it covers the shoulder the strip starts here, and is not built at all where it ends under the kerb)
+          for (const side of [-1, 1]) for (let q = 0; q < T.len; q += 2) {
+            const i = T.idx(q), j = T.idx(q + 2), bar = side > 0 ? T.br : T.bl, o1 = w + 0.02, wd = WD[side > 0 ? 1 : 0][i], o2i = Math.min(w + wd, bar[i] - back);
+            if (o2i <= o1 + 0.3) continue;
+            vary(dirtC, R, 0.04);   // (the random stream as before)
+            // the rows across a station s: from oS (the road's edge, or under the kerb) to the gravel's solid edge, and to where it has faded out (alpha 1, 1, 0: 2 quads)
+            const pts = (s, oS) => { const f = s / T.ds, k0 = Math.floor(f) % N, k1 = (k0 + 1) % N, t = f - Math.floor(f), WDs = WD[side > 0 ? 1 : 0], wdS = lerp(WDs[k0], WDs[k1], t), barS = lerp(bar[k0], bar[k1], t);
+              const ex = atSf(s, side * w), sw = 0.3 + 0.9 * sstep(0.28, 0.72, 0.6 * eN1(ex[0], ex[1]) + 0.4 * eN2(ex[0], ex[1]) + 0.25 * (eN3(ex[0], ex[1]) - 0.5));
+              const ro = sstep(wIn + 0.2, wIn + 3, wdS), o2 = Math.max(o1 + 0.12, Math.min(w + (wdS - wIn) + sw, barS - back)), rc = [0, 1, 2].map(n => lerp(GR[n], DI[n], ro)), mid = Math.max(oS + 0.06, o2 - 0.3);
+              if (oS === o1) {   // (where no kerb covers it: the dirt reaches onto the asphalt softly and unevenly, from 6-36 cm inside the road's edge (alpha 0) to the edge itself (alpha 1:
+                //  solid over the lawn from there, no green showing through); the rows on and at the asphalt 4 mm above it (0.02): over it at any depth precision, under the white line (0.036))
+                const in0 = w - 0.06 - 0.3 * eN3(ex[0] * 2.1, ex[1] * 2.1), m2 = Math.max(w + 0.04, mid);
+                const r = [in0, w, m2, Math.max(m2 + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = 0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6);
+                  return [[p[0], Math.max(n <= 1 ? 0.024 : 0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [0, 1, 1, 0][n]]]; });
+                r.reach = o2 + 0.4; return r; }
+              const r = [oS, mid, Math.max(mid + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = (0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6)) * (n === 0 ? 0.9 : 1);
+                return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [1, 1, 0][n]]]; });
+              r.reach = o2 + 0.4; return r; };
+            const under = (s0, s1) => { for (let k = Math.floor(s0 / T.ds) - 1; k <= Math.floor(s1 / T.ds) + 1; k++) if (!kerbOn(((k % N) + N) % N, side)) return false; return true; };   // (a kerb of full opacity (not its first or last 2 m) all along this metre)
+            for (let h = 0; h < 2; h++) {
+              const oS = under(q + h, q + h + 1) ? kOp : o1, A = pts(q + h, oS), Bc = pts(q + h + 1, oS);
+              if (oS > o1 && Math.max(A.reach, Bc.reach) <= oS + 0.06) continue;   // (it all lies under the kerb: never seen)
+              for (let n = 0; n < Math.min(A.length, Bc.length) - 1; n++) gT.quadUp(A[n][0], Bc[n][0], Bc[n + 1][0], A[n + 1][0], [A[n][1], Bc[n][1], Bc[n + 1][1], A[n + 1][1]], [uvq(A[n][0]), uvq(Bc[n][0]), uvq(Bc[n + 1][0]), uvq(A[n + 1][0])]); }
+          }
+          // (not written to the depth buffer and drawn before the kerb, which blends over it: at any depth precision (the post target's 16-bit depth) the kerb's cream and red are never overpainted, and its soft edge fades into the gravel, not the lawn;
+          //  the polygon offset only has to win against the lawn under it)
+          const m = new THREE.Mesh(gT.geometry(), new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: -4 })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.renderOrder = -1; m.name = 'shoulder'; root.add(m);
+        } else {
+          for (const side of [-1, 1]) for (let q = 0; q < T.len; q += 2) {
+            const i = T.idx(q), j = T.idx(q + 2), bar = side > 0 ? T.br : T.bl, o1 = w + 0.02, wd = WD ? WD[side > 0 ? 1 : 0][i] : (T.k[i] * side < 0 && Math.abs(T.k[i]) > 0.015) ? wOut : wIn, wdj = WD ? WD[side > 0 ? 1 : 0][j] : wd, o2i = Math.min(w + wd, bar[i] - back), o2j = Math.min(w + wdj, bar[j] - back);
+            if (o2i <= o1 + 0.3) continue;
+            const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.012, T.pz[k] + T.nz[k] * o * side], col = vary(dirtC, R, 0.04);
+            gs.quadUp(P(i, o1), P(j, o1), P(j, o2j), P(i, o2i), [col, col, col, col]);
+          }
+          const m = new THREE.Mesh(gs.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
         }
-        const m = new THREE.Mesh(gs.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
       // ---- knockable straw-bale stacks (two bales with one on top) at the entry and exit of every corner, on the outside just in front of the barrier ----
       for (const c of T.corners) { const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1;
         for (const at of [c.i0 - 6, i1c + 6]) { const i = ((at % N) + N) % N, side = -c.dir, bar = side > 0 ? T.br[i] : T.bl[i], [x, z] = atS(i * T.ds, side * (bar - 1.15));
@@ -2493,6 +2583,18 @@ const World = (function () {
           const v0 = (q - sa) / 9, v1 = (q - sa + 2) / 9; gk.quadUp(P(i, w, 0.045), P(i, w + cw, 0.085), P(j, w + cw, 0.085), P(j, w, 0.045), [wc, wc, wc, wc], [[0, v0], [1, v0], [1, v1], [0, v1]]); }
         const km = new THREE.Mesh(gk.geometry(), new THREE.MeshLambertMaterial({ map: tex.curbRWB, vertexColors: true })); km.receiveShadow = true; km.matrixAutoUpdate = false; root.add(km); }   // red / white / blue
       // ---- white edge lines along the asphalt wherever there is no kerb ----
+      if (ITA) {   // Toskana: the same quads (one per 2 m step and side) widened by 9 cm either side, the line's worn, slightly wavy paint in a tile (edgeLinePaint): no new draw call, no new vertex
+        const lw = 0.22, M = 0.09, PER = T.len / Math.max(1, Math.round(T.len / 32));
+        const key = lw + ':' + M + ':' + PER; if (!edgeLineTile || edgeLineTile.key !== key) edgeLineTile = { key, data: edgeLinePaint(lw, M, PER) };   // (~80 ms on a desktop: made once, kept for the next build of the track)
+        const tx = ownTex(new THREE.DataTexture(edgeLineTile.data, 64, 1024, THREE.RGBAFormat));   // (a DataTexture: a canvas premultiplies alpha and leaves dark fringes at the soft edges)
+        tx.wrapS = THREE.ClampToEdgeWrapping; tx.wrapT = THREE.RepeatWrapping; tx.magFilter = THREE.LinearFilter; tx.minFilter = THREE.LinearMipmapLinearFilter; tx.generateMipmaps = true; tx.anisotropy = 4; tx.needsUpdate = true;
+        const o0 = w - 0.12 - lw - M, o1 = Math.min(w - 0.03, w - 0.12 + M), u1 = (o1 - o0) / (lw + 2 * M), gl = new GB(true), wc = [0.93, 0.92, 0.94];
+        for (const side of [-1, 1]) for (let q = 0; q < T.len - 1; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i] && T.curb[j] && !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035)) continue;
+          const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.036, T.pz[k] + T.nz[k] * o * side];
+          const vi = i * T.ds / PER + (side > 0 ? 0 : 0.37), vj = vi + ((j - i + N) % N) * T.ds / PER;   // (v: the arc length, continuous round the lap; the left line 0.37 of a tile on, so the two sides differ)
+          gl.quadUp(P(i, o0), P(j, o0), P(j, o1), P(i, o1), [wc, wc, wc, wc], [[0, vi], [0, vj], [u1, vj], [u1, vi]]); }
+        const m = new THREE.Mesh(gl.geometry(), new THREE.MeshLambertMaterial({ map: tx, vertexColors: true, transparent: true, depthWrite: false })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.renderOrder = 0; m.name = 'edgeline'; root.add(m);   // (renderOrder 0: under the tyre marks (1), the rubber lies over the paint)
+      } else
       { const gl = new GB(), wc = [0.93, 0.92, 0.94];
         for (const side of [-1, 1]) for (let q = 0; q < T.len - 1; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i] && T.curb[j] && (FOR || !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035))) continue;   // (the newer circuits: also round the outside of a corner, where the kerb is left out) a solid line right at the edge of the asphalt, as in the reference
           const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.036, T.pz[k] + T.nz[k] * o * side];
@@ -11108,24 +11210,45 @@ const World = (function () {
     const WK = T.walk, wE = (si, i) => w + (WK ? WK[si][i] : 0);   // the edge of the road on a side (0 left, 1 right): past its sidewalk (Kranjska Gora, Jasna)
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
     const altAt = (i) => T.hy[i] + base;
+
+    // (V2 makadamski rob: a gravel shoulder of irregular width (0.3-1.2 m, deterministic noise along the road), light grey-brown, thinning out softly into the grass)
+    const eN1 = valueNoise2(9701, 9), eN2 = valueNoise2(9702, 3.1), eN3 = valueNoise2(9703, 1.3);
+    const SWA = [0, 1].map(si => { const side = si ? 1 : -1, A = new Float32Array(N);
+      for (let i = 0; i < N; i++) { const x = T.px[i] + T.nx[i] * side * w, z = T.pz[i] + T.nz[i] * side * w, n = 0.68 * eN1(x, z) + 0.32 * eN2(x, z) + 0.18 * (rpHash(i, 41 + si) - 0.5);
+        A[i] = 0.3 + 0.9 * sstep(0.36, 0.64, n); }
+      return A; });
+    const GRV = (x, z) => { const n = (0.9 + 0.2 * eN2(x * 1.7, z * 1.7)) * (0.93 + 0.14 * eN3(x, z)); return [0.7 * n, 0.64 * n, 0.54 * n]; };   // light grey-brown gravel (times the grit map)
+    const EDGE = {
+      sw: (i, side) => SWA[side > 0 ? 1 : 0][i],
+      prof: (i, side, p) => { const e = wE(side > 0 ? 1 : 0, i), s = SWA[side > 0 ? 1 : 0][i], A = p[0], B = p[1], fo = Math.min(A[0] + 0.4, (A[0] + B[0]) / 2), t = (fo - A[0]) / Math.max(1e-3, B[0] - A[0]);
+        return [[e, 0.012, 'a'], [e + s * 0.55, -0.004, 'b'], A, [fo, lerp(A[1], B[1], t), 'f'], ...p.slice(1)]; },
+      col: (i, side, role, o, x, z, c) => { const G = GRV(x, z);
+        if (role === 'a') return [G[0] * 0.86, G[1] * 0.86, G[2] * 0.87];   // (a little darker against the asphalt's edge)
+        if (role === 'b') return G;
+        if (role === 0) { const t = 0.55 + 0.2 * eN3(x * 1.3, z * 1.3); return [lerp(c[0], G[0], t), lerp(c[1], G[1], t), lerp(c[2], G[2], t)]; }   // the ragged edge: gravel thinning out into the grass
+        if (role === 'f') return [lerp(c[0], 0.47, 0.12) * 0.96, lerp(c[1], 0.44, 0.12) * 0.96, lerp(c[2], 0.3, 0.12) * 0.96];   // a little worn grass beside it
+        return c; },
+    };
     // the verge's cross-section per sample and side (5 points: [offset, height above the road]): the grass out to the ditch past the barrier line, onto the
     // ground; a bridge: its deck out past the parapet, then the deck's edge down
-    const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = wE(side > 0 ? 1 : 0, i);
+    const vProf0 = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = wE(side > 0 ? 1 : 0, i), sw = EDGE.sw(i, side);
       if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // a side road's mouth: no ditch, the verge at its surface
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
+    const vProf = (i, side) => EDGE.prof(i, side, vProf0(i, side).map((q, k) => [q[0], q[1], k]));   // (each point tagged with its role: the old five 0-4, the shoulder's own letters)
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
-      const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
+      const offs = EDGE.offs || [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
+      const shade0 = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
+      const shade = (i, o) => (EDGE.ash ? EDGE.ash(i, o, shade0(i, o)) : shade0(i, o));
       const stone = (i, o) => { const rl = T.rl[i], k = (0.6 + 0.08 * rpHash(i, 77)) * (1 - 0.1 * Math.exp(-((o - rl) * (o - rl)) / 3)) * (Math.abs(o) > w - 0.4 ? 0.84 : 1); return [k, k * 0.99, k * 0.97]; };
       const wht = [0.95, 0.95, 0.92], gc = [0.84, 0.79, 0.72], deck = [0.64, 0.63, 0.6];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
-        a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
-          if (onBr[i]) return k < 3 ? deck : [0.52, 0.51, 0.49];
+        a.push(vp[si][i].map(([o, y, k]) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
+          if (onBr[i]) return typeof k !== 'number' || k < 3 ? deck : [0.52, 0.51, 0.49];
           if (k === 4) return vrGCol(x, z);
-          const sl = k === 2 ? vrSlope(x, z) : 0; return vrCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
+          const sl = k === 2 ? vrSlope(x, z) : 0; return EDGE.col(i, side, k, o, x, z, vrCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice()); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
         const gr = new GB(true), gp = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
@@ -11135,6 +11258,7 @@ const World = (function () {
             gp.quadUp(Pt(i, o0, 0.03), Pt(i, o1, 0.03), Pt(j, o1, 0.03), Pt(j, o0, 0.03), [stone(i, o0), stone(i, o1), stone(j, o1), stone(j, o0)], [[o0 + w, q0], [o1 + w, q0], [o1 + w, q1], [o0 + w, q1]]); }
           else {
             for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
+              if (EDGE.road && EDGE.road(gr, i, j, c, o0, o1, shade, v0, v1, tileL)) continue;
               gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
             const ln = SB.edges(i, j, [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]);   // (broken across a side road's mouth: 2 m dashes)
             if (Math.floor(i / 2) % 3 === 0) ln.push([-0.07, 0.07]);   // (the centre line: 4 m dashes, 8 m gaps)
@@ -11143,14 +11267,15 @@ const World = (function () {
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
             const ei = wE(si, i), ej = wE(si, j);
-            gs.quadUp(Pt(i, side * ei, 0.012), Pt(i, side * (ei + sw), -0.02), Pt(j, side * (ej + sw), -0.02), Pt(j, side * ej, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            void sc;   // (the shoulder is now the head of the verge's profile, in the verge's mesh)
             if (ei > w + 0.02 || ej > w + 0.02) {   // a sidewalk, flush with the road (part of it): a granite kerb line, then small grey pavers
               const ki = Math.min(ei, w + 0.22), kj = Math.min(ej, w + 0.22), kc = [0.8, 0.8, 0.78], pc = (o) => { const k = 0.8 + 0.05 * rpHash(i, 31 + Math.round(o)); return [k, k * 0.98, k * 0.95]; };
               gl.quadUp(Pt(i, side * w, 0.03), Pt(i, side * ki, 0.03), Pt(j, side * kj, 0.03), Pt(j, side * w, 0.03), [kc, kc, kc, kc]);
               if (ei > ki + 0.01 || ej > kj + 0.01) gp.quadUp(Pt(i, side * ki, 0.028), Pt(i, side * ei, 0.028), Pt(j, side * ej, 0.028), Pt(j, side * kj, 0.028), [pc(ki), pc(ei), pc(ej), pc(kj)],
                 [[ki * 0.55, s0 * 3.3], [ei * 0.55, s0 * 3.3], [ej * 0.55, s1 * 3.3], [kj * 0.55, s1 * 3.3]]);
             }
-            for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
+            for (let k = 0; k < qi.length - 1; k++) { if (EDGE.quad && EDGE.quad(gv, i, j, side, si, k, qi, qj, ci, cj, wuv)) continue;
+              const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
