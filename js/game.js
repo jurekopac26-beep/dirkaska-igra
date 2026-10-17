@@ -36,8 +36,10 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  // only two cameras remain (isometric for a phone on its side, chase for an upright phone); the kino and cockpit cameras are gone, so an old setting moves to the isometric one
-  if (S.camera !== 'iso' && S.camera !== 'chase') S.camera = 'iso';
+  // one-time move to the chase camera, now also for a phone on its side (it was isometric there): everybody starts behind the car, the isometric one stays a choice on the side
+  try { if (!localStorage.getItem('tdgp-defaults-v4')) { S.camera = 'chase'; localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
+  // only two cameras remain (chase for a phone either way, isometric for a phone on its side); the kino and cockpit cameras are gone, so an old setting moves to the chase one
+  if (S.camera !== 'iso' && S.camera !== 'chase') S.camera = 'chase';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
   // player name: printable, single spaces, max 16 characters; always escaped when rendered
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
@@ -369,31 +371,30 @@
   }
   function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
 
-  /* ---------------- orientation: iso camera = landscape, chase camera = portrait ---------------- */
-  const wantPortrait = () => S.camera === 'chase';
+  /* ---------------- orientation: iso camera = landscape, chase camera = either way ---------------- */
+  const wantLandscape = () => S.camera === 'iso';
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
   const APP = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
   const installedApp = () => APP;
-  // turn the screen the camera's way and keep it there. Browsers allow it only in full screen or in the installed app
-  // (Chrome on Android); elsewhere (Safari on the iPhone) the "turn your phone" notice of updateOrientation() takes over.
-  // (window.screen, the device's screen: in this file `screen` is the menu screen on show)
+  // turn the screen the camera's way and keep it there (the chase camera: free, the phone turns as it is held). Browsers allow it only
+  // in full screen or in the installed app (Chrome on Android); elsewhere (Safari on the iPhone) the "turn your phone" notice of
+  // updateOrientation() takes over. (window.screen, the device's screen: in this file `screen` is the menu screen on show)
   function lockOrientation() {
     const o = window.screen && window.screen.orientation;
     if (!o || !o.lock || !(isFs() || installedApp())) return;
-    try { o.lock(wantPortrait() ? 'portrait' : 'landscape').catch(() => { }); } catch (_) { }
+    try { if (wantLandscape()) o.lock('landscape').catch(() => { }); else if (o.unlock) o.unlock(); } catch (_) { }
   }
   function updateOrientation() {
     const coarse = matchMedia('(pointer: coarse)').matches;
     const portrait = window.innerHeight > window.innerWidth;
     const inRace = bg === 'race' && (screen === 'none' || screen === 'pause');
-    const mismatch = coarse && inRace && portrait !== wantPortrait();
-    const el = $('rotate'), CN = { iso: 'izometrična', chase: 'za avtom' };
-    $('rotate-txt').textContent = tr(wantPortrait() ? 'Obrni telefon v pokončni položaj' : 'Obrni telefon v ležeči položaj');
-    // (or keep it as it is: the camera for that way (Nastavitve, Kamera); the button switches to it)
-    $('rotate-why').textContent = tr(wantPortrait() ? 'Kamera »{0}« je za pokončni položaj.' : 'Kamera »{0}« je za ležeči položaj.', tr(CN[S.camera] || S.camera)) + ' ' + tr(portrait ? 'Lahko pa igraš pokončno s kamero za avtom.' : 'Lahko pa igraš ležeče z izometrično kamero.');
-    $('rotate-cam').textContent = tr(portrait ? 'Igraj pokončno' : 'Igraj ležeče');
-    el.classList.toggle('to-portrait', wantPortrait());
+    const mismatch = coarse && inRace && portrait && wantLandscape();   // (only the isometric camera upright: the chase camera plays either way)
+    const el = $('rotate');
+    $('rotate-txt').textContent = tr('Obrni telefon v ležeči položaj');
+    // (or keep it as it is: the chase camera (Nastavitve, Kamera); the button switches to it)
+    $('rotate-why').textContent = tr('Kamera »{0}« je za ležeči položaj.', tr('izometrična')) + ' ' + tr('Lahko pa igraš pokončno s kamero za avtom.');
+    $('rotate-cam').textContent = tr('Igraj pokončno');
     el.classList.toggle('show', mismatch);
     orientBlock = mismatch;
     if (mismatch && phase === 'racing' && screen === 'none') pause();
@@ -445,7 +446,7 @@
         $('title-sub').textContent = nm + tr(pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + wx; }
       else if (upRace(d)) { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestRace ? tr(' (najboljša dirka {0})', fmt(r.bestRace, true)) : '') + '.'; $('title-sub').textContent = nm + tr(' · dirka na vrh · {0} nasprotnikov', rivN(d)) + wx; }
       else { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestLap ? tr(' (rekord kroga {0})', fmt(r.bestLap, true)) : '') + '.'; $('title-sub').textContent = nm + ' · ' + lapWord(lapsOf(d)).toLowerCase() + tr(' · {0} nasprotnikov', rivN(d)) + wx + (S.length === 'endurance' ? tr(' · vzdržljivostna') : '') + (S.fuel && d.pit ? tr(' · gorivo') : ''); } }
-    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
+    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno ali ležeče)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = tr('Prvenstvo') + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
@@ -558,9 +559,9 @@
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
   // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): the next one
-  // that suits the phone as it is held (lying: isometric; upright: behind the car; a computer: both), kept as the setting
+  // that suits the phone as it is held (lying: both; upright: behind the car only; a computer: both), kept as the setting
   const CAMS = ['iso', 'chase'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom' };
-  function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse ? CAMS.filter(c => (c === 'chase') === portrait) : CAMS; }
+  function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse && portrait ? ['chase'] : CAMS; }
   function cycleCam() {
     const pool = camPool(); if (pool.length < 2 && pool[0] === S.camera) return;
     const next = pool[(pool.indexOf(S.camera) + 1) % pool.length];
@@ -1386,7 +1387,7 @@
     const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
     try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
     catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return false; }   // (the old one back)
-    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); } catch (_) { }
+    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { }
     stHold = true; location.reload(); return true;
   }
   function ghOwn(id) {   // the player's ghost of this track (the current physics, weather and way to drive) as it is shared
@@ -5000,7 +5001,7 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
-      case 'rot-cam': { const wasP = screen === 'pause'; setOption('camera', window.innerHeight > window.innerWidth ? 'chase' : 'iso'); Render.resetCam(); camLabel(); if (wasP && race && !orientBlock) resume(); break; }   // (the phone held the other way than the camera wants: the camera for the way it is held; "Igraj": on with the race)
+      case 'rot-cam': { const wasP = screen === 'pause'; setOption('camera', 'chase'); Render.resetCam(); camLabel(); if (wasP && race && !orientBlock) resume(); break; }   // (the phone held upright with the isometric camera: the chase camera, which plays either way; "Igraj pokončno": on with the race)
       case 'over-again': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else newRace(); break;   // (KONEC IGRE: the same race again, a championship's round too)
       case 'over-res': finishRace(); break;
       case 'restart': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)
@@ -5182,10 +5183,10 @@
     window.addEventListener('pointerup', unlock, { passive: true });
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); fitSegs();
-      updateOrientation();
+      updateOrientation(); camLabel();   // (the phone turned: on its side the camera button switches between the two cameras, upright there is only the chase one)
       if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); camLabel(); }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();

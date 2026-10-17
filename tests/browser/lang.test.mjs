@@ -33,7 +33,7 @@ try {
     race: document.querySelector('[data-act="to-car"]').textContent }));
   const s1 = await slovene();
   T.check('title in English: Race, Championship, "Jezero Ring · 3 laps · 12 rivals", "Track: Jezero Ring", <html lang="en">', t1.lang === 'en' && t1.race === 'Race' && t1.champ === 'Championship' && t1.sub === 'Jezero Ring · 3 laps · 12 rivals' &&
-    /^Track: Jezero Ring\. Controls: Buttons, camera: behind the car \(phone upright\)\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
+    /^Track: Jezero Ring\. Controls: Buttons, camera: behind the car \(phone upright or sideways\)\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
 
   // 2. the cars and their upgrades
   await act('to-car'); await page.waitForTimeout(250);

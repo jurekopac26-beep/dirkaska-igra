@@ -9,7 +9,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Izmišljene proge, ki jih ne bomo uporabljali, imajo v datoteki proge `test: true`: v menuju so na koncu pod naslovom »Za izbris · samo za testiranje« in ostanejo samo za testiranje.
 
 ## Kamere in grafika (odločitev uporabnika)
-- V končni igri sta samo **dve kameri**: **izometrična** (telefon ležeče, `iso`) in **za avtom** (telefon pokonci, `chase`). Kameri **kino** in **kokpit** bosta izbrisani; zdaj sta v igri samo zaradi testiranj. Zanju ne optimiziraj in ne dodajaj novih funkcij.
+- V končni igri sta samo **dve kameri**: **za avtom** (telefon pokonci in ležeče, `chase`, privzeta) in **izometrična** (telefon ležeče, `iso`). Kameri **kino** in **kokpit** bosta izbrisani; zdaj sta v igri samo zaradi testiranj. Zanju ne optimiziraj in ne dodajaj novih funkcij.
 - Grafiko izboljšuj za ti dve kameri. Izometrična gleda od zgoraj: pomembni so cesta in robovi, teren, strehe in krošnje, barve, senčenje. Kamera za avtom: obzorje, nebo, oddaljeni griči in cesta pred avtom. Detajli, ki jih s teh dveh kamer ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi), so odveč: poenostavi jih, da je telefon manj obremenjen.
 - Obremenitev telefona: proga naj ima do ~300 klicev risanja in ~900 tisoč oglišč (`tests/golden/perf.json`), nova proga ali izboljšava pa ne sme povečati obremenitve drugih prog.
 

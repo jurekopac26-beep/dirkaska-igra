@@ -20,7 +20,7 @@ try {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true });
     const page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); },
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); },
       JSON.stringify({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, camera: cam }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     const out = await page.evaluate(() => {

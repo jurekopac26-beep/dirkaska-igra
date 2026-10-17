@@ -422,10 +422,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #rotate .phone { width: 54px; height: 92px; border: 4px solid var(--chalk); border-radius: 10px; animation: rot 2.2s ease-in-out infinite; }
 @keyframes rot { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
 #rotate.show { display: flex; }
-#rotate #rotate-why { font: 500 14px/1.4 var(--f-ui); font-style: normal; color: #c7d0e0; max-width: 34em; }   /* (why: the camera chosen is for the other way round; the button: the one for the way it is held) */
+#rotate #rotate-why { font: 500 14px/1.4 var(--f-ui); font-style: normal; color: #c7d0e0; max-width: 34em; }   /* (why: the isometric camera is for a phone on its side; the button: the chase camera, which plays upright too) */
 #rotate #rotate-cam { margin-top: 6px; }
-#rotate.to-portrait .phone { animation-name: rotp; }
-@keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
 /* ZAMENJAJ KOLO (game.js swapHUD; the wheel rule: a wheel off with the spare on the roof): a big button, its bar at its foot running out
    with the 3 s to the second wheel (white and blinking in their last 20 %: the hub on fire); only a tap on it puts the spare on, the rest of
    the screen stays the driver's (the layer under it lets every touch through). Over the HUD and the controls, under the screens (pause,

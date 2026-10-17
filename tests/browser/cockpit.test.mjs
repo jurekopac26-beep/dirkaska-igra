@@ -29,7 +29,7 @@ try {
   // 1. the settings: only the two cameras remain (no Kokpit, no Kino)
   await act('to-settings'); await page.waitForTimeout(200);
   const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="camera"] button')].map(b => b.textContent).join(','));
-  T.check('Nastavitve: only the two cameras (isometric landscape, chase upright); no cockpit, no cinema', row.split(',').length === 2 && /Izometrična · ležeče/.test(row) && /Za avtom · pokončno/.test(row) && !/Kokpit|Kino/.test(row), row);
+  T.check('Nastavitve: only the two cameras (isometric landscape, chase both ways); no cockpit, no cinema', row.split(',').length === 2 && /Izometrična · ležeče/.test(row) && /Za avtom · oba položaja/.test(row) && !/Kokpit|Kino/.test(row), row);
   await act('settings-done');
 
   // 2. the view from the driver's seat (the cockpit render, set in code: it is the replay's and the photo mode's view)
