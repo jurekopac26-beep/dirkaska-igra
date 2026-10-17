@@ -2516,10 +2516,11 @@ const World = (function () {
             const pts = (s, oS) => { const f = s / T.ds, k0 = Math.floor(f) % N, k1 = (k0 + 1) % N, t = f - Math.floor(f), WDs = WD[side > 0 ? 1 : 0], wdS = lerp(WDs[k0], WDs[k1], t), barS = lerp(bar[k0], bar[k1], t);
               const ex = atSf(s, side * w), sw = 0.3 + 0.9 * sstep(0.28, 0.72, 0.6 * eN1(ex[0], ex[1]) + 0.4 * eN2(ex[0], ex[1]) + 0.25 * (eN3(ex[0], ex[1]) - 0.5));
               const ro = sstep(wIn + 0.2, wIn + 3, wdS), o2 = Math.max(o1 + 0.12, Math.min(w + (wdS - wIn) + sw, barS - back)), rc = [0, 1, 2].map(n => lerp(GR[n], DI[n], ro)), mid = Math.max(oS + 0.06, o2 - 0.3);
-              if (oS === o1) {   // (where no kerb covers it: the dirt reaches onto the asphalt softly and unevenly, from 6-36 cm inside the road's edge (alpha 0) to 10-22 cm outside it (alpha 1))
-                const in0 = w - 0.06 - 0.3 * eN3(ex[0] * 2.1, ex[1] * 2.1), in1 = w + 0.1 + 0.12 * eN2(ex[0] * 1.3, ex[1] * 1.3), m2 = Math.max(in1 + 0.04, mid);
-                const r = [in0, in1, m2, Math.max(m2 + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = 0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6);
-                  return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [0, 1, 1, 0][n]]]; });
+              if (oS === o1) {   // (where no kerb covers it: the dirt reaches onto the asphalt softly and unevenly, from 6-36 cm inside the road's edge (alpha 0) to the edge itself (alpha 1:
+                //  solid over the lawn from there, no green showing through); the rows on and at the asphalt 4 mm above it (0.02): over it at any depth precision, under the white line (0.036))
+                const in0 = w - 0.06 - 0.3 * eN3(ex[0] * 2.1, ex[1] * 2.1), m2 = Math.max(w + 0.04, mid);
+                const r = [in0, w, m2, Math.max(m2 + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = 0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6);
+                  return [[p[0], Math.max(n <= 1 ? 0.024 : 0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [0, 1, 1, 0][n]]]; });
                 r.reach = o2 + 0.4; return r; }
               const r = [oS, mid, Math.max(mid + 0.04, o2 + 0.4)].map((o, n) => { const p = atSf(s, side * o), g = gmAt(p[0], p[1]), v = (0.92 + 0.16 * eN2(p[0] * 1.6, p[1] * 1.6)) * (n === 0 ? 0.9 : 1);
                 return [[p[0], Math.max(0.012, g.y + 0.01), p[1]], [rc[0] / MA[0] * v, rc[1] / MA[1] * v, rc[2] / MA[2] * v, [1, 1, 0][n]]]; });

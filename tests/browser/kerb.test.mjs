@@ -8,7 +8,7 @@
 //    pull it over the kerb 50 m and more from the camera): checked in the pictures themselves, the same frame with the shoulder hidden and shown, in both
 //    cameras that count (iso 640 x 360, chase 360 x 640 with the tilt 30 %); and it is not built where it would lie under the kerb (vertices).
 //  - where no kerb covers it, the shoulder's dirt reaches onto the asphalt softly and unevenly (alpha 0 at 6-36 cm inside the road's edge, solid
-//    10-22 cm outside it), one more quad across (+~10 thousand vertices);
+//    from the edge on, 4 mm above the asphalt so that it shows at any depth precision), one more quad across (+~10 thousand vertices);
 //  - the white edge line (where there is no kerb) is worn and a little wavy: the same one quad per 2 m step and side as before (no new vertex, no new
 //    draw call), its paint in a 64 x 1024 alpha tile (transparent, no depth write, drawn under the tyre marks), the tile's edges clear (no quad
 //    outline), the same on every build; the other circuits keep their plain opaque line.
@@ -33,11 +33,11 @@ const MEASURE = () => {
     if (d) { for (let r = 0; r < im.height; r++) { edgeA = Math.max(edgeA, d[(r * im.width) * 4 + 3], d[(r * im.width + im.width - 1) * 4 + 3]); for (let x = 0; x < im.width; x++) mean += d[(r * im.width + x) * 4 + 3]; }
       mean /= im.width * im.height * 255; for (let x = 0; x < im.width; x++) wrap = Math.max(wrap, Math.abs(d[x * 4 + 3] - d[((im.height - 1) * im.width + x) * 4 + 3])); }
     Object.assign(out, { el: { verts: el.geometry.attributes.position.count, tr: el.material.transparent, dw: el.material.depthWrite, ro: el.renderOrder, tw: im && im.width, th: im && im.height, edgeA, mean, wrap, hash: fnv(el.geometry.attributes.position.array) }, tmRO: tm ? tm.renderOrder : null }); }
-  if (strip) { const sp = strip.geometry.attributes.position.array, sc = strip.geometry.attributes.color.array; let onA = 0, minOff = 9, solidMin = 9;
+  if (strip) { const sp = strip.geometry.attributes.position.array, sc = strip.geometry.attributes.color.array; let onA = 0, minOff = 9, solidMin = 9, onY = 9;
     for (let i = 0; i < sp.length / 3; i += 7) { const x = sp[i * 3], z = sp[i * 3 + 2]; let b = 0, bd = 1e18; for (let k = 0; k < N; k += 1) { const dd = (x - Tr.px[k]) ** 2 + (z - Tr.pz[k]) ** 2; if (dd < bd) { bd = dd; b = k; } }
       if (Math.abs(Tr.k[b]) > 1 / 60) continue; const off = Math.abs((x - Tr.px[b]) * Tr.nx[b] + (z - Tr.pz[b]) * Tr.nz[b]), a = sc[i * 4 + 3];
-      if (off < w - 0.01) { onA = Math.max(onA, a); minOff = Math.min(minOff, off); } else if (a > 0.99) solidMin = Math.min(solidMin, off); }
-    Object.assign(out, { stripOnAsphaltAlpha: onA, stripMinOff: minOff, stripSolidMin: solidMin }); }
+      if (off < w - 0.01) { onA = Math.max(onA, a); minOff = Math.min(minOff, off); onY = Math.min(onY, sp[i * 3 + 1]); } else if (a > 0.99) solidMin = Math.min(solidMin, off); }
+    Object.assign(out, { stripOnAsphaltAlpha: onA, stripMinOff: minOff, stripSolidMin: solidMin, stripOnY: onY }); }
   if (!kerb || kerbs.length !== 1) return out;
   const g = kerb.geometry, pos = g.attributes.position.array, col = g.attributes.color, n = col.count;
   Object.assign(out, { itemSize: col.itemSize, transparent: kerb.material.transparent, kerbDW: kerb.material.depthWrite, kerbRO: kerb.renderOrder, verts1: n, hash: fnv(pos) });
@@ -119,8 +119,8 @@ try {
   T.check('the gravel shoulder is drawn first and never written to the depth buffer: renderOrder below the kerb, depthWrite off, transparent, still a polygon offset against the lawn',
     a.strip && a.stripRO < a.kerbRO && a.stripDW === false && a.stripTr === true && a.stripPO === true && a.kerbDW === true, `strip renderOrder ${a.stripRO}, depthWrite ${a.stripDW}; kerb renderOrder ${a.kerbRO}, depthWrite ${a.kerbDW}`);
   T.check('the shoulder is not built under the kerb (it was 52 thousand vertices, 30 thousand, 40 thousand with the soft start on the asphalt)', a.strip && a.stripVerts > 5000 && a.stripVerts < 44000, `${a.stripVerts} vertices`);
-  T.check('where no kerb covers it the dirt starts on the asphalt, transparent there (alpha 0 inside the road\'s edge), 6-36 cm in, and is solid only outside the edge',
-    a.stripMinOff >= a.w - 0.37 && a.stripMinOff <= a.w - 0.05 && a.stripOnAsphaltAlpha < 0.01 && a.stripSolidMin >= a.w + 0.05, `starts ${(a.w - a.stripMinOff).toFixed(3)} m inside the edge, alpha there ${a.stripOnAsphaltAlpha}, solid from ${(a.stripSolidMin - a.w).toFixed(3)} m outside it`);
+  T.check('where no kerb covers it the dirt starts on the asphalt, transparent there (alpha 0 inside the road\'s edge), 6-36 cm in, and is solid only from the edge on',
+    a.stripMinOff >= a.w - 0.37 && a.stripMinOff <= a.w - 0.05 && a.stripOnAsphaltAlpha < 0.01 && a.stripSolidMin >= a.w - 0.01 && a.stripOnY >= 0.022, `above the asphalt (0.02) at ${a.stripOnY.toFixed(3)} m; starts ${(a.w - a.stripMinOff).toFixed(3)} m inside the edge, alpha there ${a.stripOnAsphaltAlpha}, solid from ${(a.stripSolidMin - a.w).toFixed(3)} m outside it`);
   T.check('the white edge line: one mesh named edgeline, transparent, no depth write, drawn under the tyre marks', !!a.el && a.el.tr === true && a.el.dw === false && a.tmRO !== null && a.el.ro < a.tmRO, JSON.stringify(a.el) + ' tyremarks ' + a.tmRO);
   T.check('the line costs no new vertex: one quad (6 vertices) per 2 m step and side, as before (4926)', !!a.el && a.el.verts === 4926, `${a.el && a.el.verts} vertices`);
   T.check('its paint tile: 64 x 1024, clear at the quad\'s long edges (no outline), closing on itself along (no seam: the last row and the first differ no more than neighbouring rows do, the speckle aside), worn (on average a part of the quad painted, never empty)',
