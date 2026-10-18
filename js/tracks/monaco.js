@@ -5,8 +5,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Beau Rivage climb → Massenet → Casino → Mirabeau → Fairmont hairpin → Portier → tunnel → Nouvelle Chicane → Tabac → Piscine → Rascasse → Anthony Noghès.
   TRACK_DEFS.push({
     id: 'monaco', name: 'Monte Carlo, Monako', theme: 'monaco', laps: 2, halfWidth: 5.8,
-    desc: 'Prava proga skozi Monako v pravem merilu: Sainte Dévote, vzpon do Casinoja, lasnica pri hotelu Fairmont, predor, šikana ob pristanišču, bazen in Rascasse.',
-    en: { name: 'Monte Carlo, Monaco', desc: 'The real circuit through Monaco at full scale: Sainte Dévote, the climb to the Casino, the Fairmont hairpin, the tunnel, the harbour chicane, the swimming pool and Rascasse.' },   // (the English page: Jezik · Language)
+    desc: 'Prava proga skozi Monako v pravem merilu: Sainte Dévote, vzpon do Casinoja, velika lasnica pod hotelom, predor, šikana ob pristanišču, bazen in Rascasse.',
+    en: { name: 'Monte Carlo, Monaco', desc: 'The real circuit through Monaco at full scale: Sainte Dévote, the climb to the Casino, the Grand Hairpin below the hotel, the tunnel, the harbour chicane, the swimming pool and Rascasse.' },   // (the English page: Jezik · Language)
     points: [[-72,449],[-85,384],[-93,292],[-93,194],[-85,120],[-65,64],[-36,26],[0,3],[36,-6],[105,-6],[203,-6],[301,-2],[399,1],[483,-6],[546,-27],[603,-59],[652,-104],[684,-146],[712,-182],[750,-205],[791,-217],[831,-231],[869,-242],[897,-235],[913,-211],[925,-190],[934,-172],[951,-167],[964,-179],[967,-200],[974,-223],[990,-237],[1013,-244],[1043,-237],[1062,-217],[1055,-191],[1027,-162],[987,-125],[938,-84],[880,-43],[824,-6],[766,21],[693,39],[619,49],[546,54],[505,55],[487,65],[465,66],[444,59],[383,60],[301,64],[219,65],[145,65],[98,70],[72,87],[56,110],[42,132],[33,162],[19,208],[12,256],[3,292],[8,325],[16,361],[28,400],[39,431],[40,454],[23,472],[-5,477],[-35,474],[-59,463]],
     start: [-93,194], runoff: 0.4, inner: 3, side: 3, offSurface: 'paving',
     // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
@@ -18,9 +18,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Massenet', 590.7, -50.7, ['Sweeping left through Massenet!', 'Massenet, the long left towards Casino Square!', 'Over the top of the hill at Massenet!']],
       ['Casino', 728.1, -193.8, ['Up into Casino Square!', 'Through Casino Square, past the famous Casino!', 'Casino Square, the heart of Monte Carlo!']],
       ['Mirabeau', 869.5, -242, ['Down the hill to Mirabeau!', 'Hard on the brakes for Mirabeau!', 'Mirabeau, and down towards the hairpin!']],
-      ['Lasnica Fairmont', 948.4, -166.7, ['The Fairmont hairpin! Full lock!', 'Round the Fairmont hairpin, the slowest corner of the lap!', 'Crawling round the famous hairpin!']],
+      ['Velika lasnica', 948.4, -166.7, ['The Grand Hairpin! Full lock!', 'Round the Grand Hairpin, the slowest corner of the lap!', 'Crawling round the famous hairpin!']],
       ['Portier', 1050.4, -232, ['Down through Mirabeau Bas to Portier!', 'Portier, and down to the sea!', 'Right at Portier, the tunnel is next!']],
-      ['Predor', 995.8, -132.8, ['Into the tunnel! Flat out in the dark!', 'Through the tunnel, under the Fairmont hotel!', 'In the tunnel, the fastest part of the lap!']],
+      ['Predor', 995.8, -132.8, ['Into the tunnel! Flat out in the dark!', 'Through the tunnel, under the hotel!', 'In the tunnel, the fastest part of the lap!']],
       ['Nouvelle Chicane', 511.1, 53.9, ['Out of the tunnel, hard on the brakes for the chicane!', 'The Nouvelle Chicane! Over the kerbs!', 'Down to the harbour chicane!']],
       ['Tabac', 101.7, 68.8, ['Tabac! Along the harbour!', 'Left at Tabac, yachts all around!', 'Through Tabac, right by the water!']],
       ['Piscine', 21.2, 199.4, ['Into the Swimming Pool section!', 'Round the swimming pool, past the yachts!', 'Flicking through the Piscine!']],

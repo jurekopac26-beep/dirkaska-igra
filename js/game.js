@@ -19,7 +19,7 @@
   const CTRL_HELP_CS = 'Levi palec: levo in desno, desni: plin in zavora. Drži smer – avto sam zadrsa z nosom v ovinek in se na izhodu sam poravna; zavora v ovinku ga zavrti.';
   const CTRL_NAME = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
   const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
-    lm: 'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
+    lm: 'Prototip za 24-urne vzdržljivostne dirke: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
     muscle: 'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.',
     ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',
     truck: 'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.' };
@@ -276,7 +276,7 @@
     ['km100', '100 kilometrov', 'Prevozi 100 km.', () => [st.km, 100]],
     ['km1000', '1000 kilometrov', 'Prevozi 1000 km.', () => [st.km, 1000]],
     ['allTracks', 'Popotnik', 'Pripelji do cilja na vsaki progi.', () => [trackCards().filter(droveCard).length, trackCards().length]],
-    ['nring', 'Zeleni pekel', 'Pripelji do cilja na Nordschleife.'],
+    ['nring', 'Kralj Eifla', 'Pripelji do cilja v Nürburgu.'],
     ['champ', 'Prvak', 'Osvoji prvenstvo.'],
     ['legend', 'Legenda', 'Osvoji prvenstvo Legende.'],
     ['gold', 'Zlata medalja', 'Osvoji zlato medaljo v kronometru.'],
@@ -2413,7 +2413,7 @@
     const R = champRivals(), riv = done ? '' : tr(' · tekmeci: {0}', R.txt);   // (what the rivals of the next round drive)
     if (!d) {   // the choice of a series: its tracks, its length, the best final place so far
       if (!Core.CHAMPS.some(c => c.id === champPick)) champPick = Core.CHAMPS[0].id;
-      $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke kot v F1');
+      $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke 25, 18, 15 …');
       $('ch-diff').textContent = (S.difficulty > 2 ? tr('Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()])) : tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()]))) + riv;
       $('ch-body').innerHTML = '<div class="ch-cards">' + Core.CHAMPS.map(c => {
         const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
@@ -3974,7 +3974,7 @@
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
   const partEn = (M, id) => (M.def && M.def.partNames && M.def.partNames[id]) || (M.body === 'formula' ? PART_EN_F : M.body === 'lm' ? PART_EN_LM : PART_EN)[id] || PART_EN[id] || 'panel';
   const WHEEL_IDS = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest', jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', baldy: 'Mount Baldy', maunakea: 'Mauna Kea', cpalace: 'Crystal Palace', riverside: 'Riverside', monterey: 'Monterey', longford: 'Longford', newcastle: 'Newcastle', rio: 'Rio de Janeiro', medvode: 'Medvode', hotham: 'Mount Hotham', townsville: 'Townsville', marrakesh: 'Marrakesh', palomar: 'Palomar Mountain', greatalpine: 'the Great Alpine Road' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest', jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'Nürburg', spa: 'Spa', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'Spielberg', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', baldy: 'Mount Baldy', maunakea: 'Mauna Kea', cpalace: 'Crystal Palace', riverside: 'Riverside', monterey: 'Monterey', longford: 'Longford', newcastle: 'Newcastle', rio: 'Rio de Janeiro', medvode: 'Medvode', hotham: 'Mount Hotham', townsville: 'Townsville', marrakesh: 'Marrakesh', palomar: 'Palomar Mountain', greatalpine: 'the Great Alpine Road' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -5240,6 +5240,7 @@
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
+        hud(dt = 1 / 60) { if (race) { updateHUD(dt); hudCol(dt); Comm.update(); } },   // (tests: the HUD as a frame of the running race draws it, the race itself not stepped: a paused race's HUD after sim)
         sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); if (auto && (phase === 'intro' || phase === 'lights')) inp.thr = inp.gas = 0; stepRace(STEP, inp); } },   // (the autopilot: off the gas on the grid, on it as the lights go out)
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v), svg = $('h-note-path').parentNode;   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)

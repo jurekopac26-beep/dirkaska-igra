@@ -38,7 +38,7 @@ const Comm = (() => {
     // a race up an open road (Vršič, the north side: 24 cobbled hairpins up to the pass)
     introPass: ['Welcome to {track}! Thirteen cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! Thirteen cars heading for the pass, and you start {grid}.'],
     goPass: ['Lights out, and away they go, up the mountain!', "And they're off! Thirteen cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
-    introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
+    introOne: ['Welcome to {track}, deep in the forests of the Eifel! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
     nrFuchs: ['Down into the Foxhole, flat out!', 'The Fuchsröhre, the fastest part of the lap!'],
@@ -157,9 +157,9 @@ const Comm = (() => {
     propStreet: ['Into the street furniture!', 'He has wiped out a bit of the city there!', 'That will need a repair crew!'],
     // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
-    introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],
+    introTT: ['Welcome to Pikes Peak, the climb to the clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', 'Welcome to the mountain! Fourteen thousand one hundred and fifteen feet, here we come!'],
     // the same hill climb on its historic gravel road (Pikes Peak (makadam): the Highway as it was until 2011)
-    introTTg: ['Welcome to Pikes Peak, the old way! Gravel all the way to the summit, as it was before the road was paved!', 'The Race to the Clouds on the historic gravel road! Loose granite, ruts and dust, a hundred and fifty-six turns of it!', "Back to the gravel days on America's Mountain! No tarmac up here, just dirt, stones and the clock!"],
+    introTTg: ['Welcome to Pikes Peak, the old way! Gravel all the way to the summit, as it was before the road was paved!', 'Up to the clouds on the historic gravel road! Loose granite, ruts and dust, a hundred and fifty-six turns of it!', 'Back to the gravel days on Pikes Peak! No tarmac up here, just dirt, stones and the clock!'],
     goTT: ['Green flag at the start line... the car is away!', 'The green flag drops, and the car is away!', 'Green flag! The car is away, next stop, the clouds!'],
     // the time trial up a mountain pass (Vršič: the hairpins, the clock)
     introPassTT: ['Welcome to {track}! Twenty-four hairpins, most of them cobbled, and just you and the clock.', 'Here we are in Kranjska Gora, at the foot of {track}. {cps} checkpoints between you and the top of the pass.', 'Welcome to {track}! No rivals this time, only the clock. Get to the pass as fast as you can.'],
@@ -181,8 +181,8 @@ const Comm = (() => {
     rpCrashMe: ['And here is your big moment. Ouch!', 'Your crash, from the TV cameras. That must have hurt!'],
     rpFinish: ['And {a} takes the chequered flag!', 'The finish, and the win goes to {a}!'],
     rpFinishMe: ['And you take the chequered flag! What a race!', 'Across the line, and the win is yours!'],
-    podiumRb: ['{name} on the top step of the podium, and the champagne is flying!', 'The podium ceremony in Spielberg: {name} lifts the cup!', 'Champagne on the podium! {name} is the winner at the Red Bull Ring!'],
-    podiumMe: ['You are on the top step! Enjoy the champagne!', 'The cup is yours! What a drive at the Red Bull Ring!', 'Champagne for the winner: that is you!'],
+    podiumRb: ['{name} on the top step of the podium, and the champagne is flying!', 'The podium ceremony in Spielberg: {name} lifts the cup!', 'Champagne on the podium! {name} is the winner in Styria!'],
+    podiumMe: ['You are on the top step! Enjoy the champagne!', 'The cup is yours! What a drive in Spielberg!', 'Champagne for the winner: that is you!'],
     heliRb: ['The TV helicopter sweeps across the main straight!', 'There goes the helicopter over the start and finish straight!', 'The chopper cameras catch you coming down the straight!'],
     heliFin: ['And the helicopter is back, escorting you to the summit!', 'The TV chopper picks you up for the final run to the line!', 'Here comes the helicopter again, the cameras follow you home!'],
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],

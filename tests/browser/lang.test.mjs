@@ -72,7 +72,7 @@ try {
   await act('to-champ'); await page.waitForTimeout(250);
   const h5 = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.ch-card h3')].map(h => h.textContent).join('/'), meta: document.querySelector('.ch-card .tmeta').textContent, go: document.getElementById('ch-go').textContent, diff: document.getElementById('ch-diff').textContent }));
   const sh = await slovene();
-  T.check('championship in English: Home Cup / Superstars / Legends / Grand Championship, "3 races", Start the championship', h5.cards === 'Home Cup/Superstars/Legends/Grand Championship' && /^3 races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length, JSON.stringify({ h5, sh }));
+  T.check('championship in English: Home Cup / Short tracks / Legends / Grand Championship, "3 races", Start the championship', h5.cards === 'Home Cup/Short tracks/Legends/Grand Championship' && /^3 races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length, JSON.stringify({ h5, sh }));
   await act('to-career'); await page.waitForTimeout(200);
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)

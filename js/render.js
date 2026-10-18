@@ -7812,8 +7812,8 @@ const Render = (function () {
         particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[0], 1.3 + rRnd() * 1.1 - wnd * 0.5, c.vz * 0.3 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[1],
           (lit ? 2.5 : 3.1) + rRnd() * 1.4, 1.1 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? (hub ? 0.7 : 0.86) : 0.92 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }   // (denser than the other smoke: the soft puffs of the particles' atlas let through what the old discs covered)
     }
-    if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames)
-      const fl = 0.55 + 0.25 * Math.sin(time * 17.3 + c.id * 1.7) + 0.2 * Math.sin(time * 6.1 + c.id);
+    if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames), flickering with the fire's own age (e: on the race's clock, as its flames)
+      const fl = 0.55 + 0.25 * Math.sin(e * 17.3 + c.id * 1.7) + 0.2 * Math.sin(e * 6.1 + c.id);
       glows.add(sx, sy + 0.35, sz, (1.6 + 1.2 * fl) * sc * (0.5 + 0.5 * k) * (hub ? 0.7 : W3 ? 1.25 : 1), 1, 0.52, 0.16, (0.32 + 0.42 * fl) * k);
     }
   }

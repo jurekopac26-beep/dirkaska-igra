@@ -73,7 +73,7 @@ const gap = (T) => {
 
 // 4. the circuits' own chicanes (def.hudSigns): a blue span over each named place, its first way; blue nowhere else
 {
-  for (const [id, re, w] of [['monaco', /Nouvelle/, 'L'], ['spa', /Bus Stop/, 'R'], ['suzuka', /Casio/, 'R'], ['bathurst', /^Zavoj 16$/, 'L'], ['nring', /Hohenrain/, null]]) {
+  for (const [id, re, w] of [['monaco', /Nouvelle/, 'L'], ['spa', /Bus Stop/, 'R'], ['suzuka', /^Šikana$/, 'R'], ['bathurst', /^Zavoj 16$/, 'L'], ['nring', /Hohenrain/, null]]) {
     const T = tr(id), d = place(T, re), g = d != null && blues(T).find(x => { const o = off(T, x.s0, S(T, d)); return o >= 0 && o <= x.s1 - x.s0; });
     check(`${id}: ${re.source.replace(/[\^$]/g, '')} (${d == null ? '?' : Math.round(d)} m) inside a blue chicane${w ? ', first ' + (w === 'L' ? 'left' : 'right') : ''}`, !!g && g.kind === 'chic' && (!w || dir(g) === w), g ? show(T, g) : 'none');
   }
