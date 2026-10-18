@@ -1,8 +1,8 @@
-// The cockpit view and the photo mode (the Jezero Ring and the Red Bull Ring, the player on autopilot): the settings now offer only the
-// two cameras (isometric, chase), but the cockpit render path stays (the replay's Kokpit camera and the photo mode); the view from the
+// The cockpit view and the photo mode (the Jezero Ring and the Red Bull Ring, the player on autopilot): the settings offer no camera (the
+// chase camera is the player's only one), but the cockpit render path stays (the replay's Kokpit camera and the photo mode); the view from the
 // driver's seat (set in code): the camera at the driver's eyes (in the car, about a metre over the road, looking along it),
-// the cockpit drawn (the steering wheel turning with the front wheels), the sky over the world; the camera changed in the race (C, the
-// button on the HUD, kept as the setting); the formula's own cockpit (the camera in the helmet); the pause's Foto: the race stands, the
+// the cockpit drawn (the steering wheel turning with the front wheels), the sky over the world; C in the race (back to the chase camera,
+// kept; no camera buttons); the formula's own cockpit (the camera in the helmet); the pause's Foto: the race stands, the
 // HUD and the controls hidden, the camera round the car (a drag turns it round, the car stays in the middle), the lens and the filter
 // on the picture, the picture saved (a PNG sharper than the screen, with the filter), Nazaj: the pause and the race's camera again;
 // the prototype's cockpit (the formula's wheel under a roof), the electric car's D; the replay of a race driven from the cockpit: from the cockpit, and its Foto.
@@ -26,10 +26,10 @@ try {
   const onPic = () => page.evaluate(() => { const g = window.__game, P = g.race.player, C = Render.camera, p = new THREE.Vector3(P.x, (P.y || 0) + 0.7, P.z).project(C);
     return { x: +p.x.toFixed(3), y: +p.y.toFixed(3), camD: +Math.hypot(C.position.x - P.x, C.position.y - (P.y || 0), C.position.z - P.z).toFixed(2), cx: C.position.x, cz: C.position.z, fov: C.fov }; });
 
-  // 1. the settings: only the two cameras remain (no Kokpit, no Kino)
+  // 1. the settings: no camera row (the chase camera is the only one; no Kokpit, no Kino)
   await act('to-settings'); await page.waitForTimeout(200);
   const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="camera"] button')].map(b => b.textContent).join(','));
-  T.check('Nastavitve: only the two cameras (isometric landscape, chase both ways); no cockpit, no cinema', row.split(',').length === 2 && /Izometrična · ležeče/.test(row) && /Za avtom · oba položaja/.test(row) && !/Kokpit|Kino/.test(row), row);
+  T.check('Nastavitve: no camera choice (the chase camera only)', row === '', row);
   await act('settings-done');
 
   // 2. the view from the driver's seat (the cockpit render, set in code: it is the replay's and the photo mode's view)
@@ -43,20 +43,18 @@ try {
   for (let k = 0; k < 16 && !turned; k++) { await step(0.6); const v = await view(); if (Math.abs(v.delta) > 0.03) turned = v; }
   T.check('the steering wheel turns with the front wheels (clockwise for a right turn, as the driver sees it)', !!turned && Math.sign(turned.ck.wheel) === -Math.sign(turned.delta) && Math.abs(turned.ck.wheel) > 0.2, JSON.stringify(turned));
 
-  // 3. the camera changed in the race: C, the HUD's button; kept (a computer: the two cameras in turn)
+  // 3. the camera in the race: C from a camera set in code (the cockpit) goes back to the chase one, kept, a note; the chase camera is
+  //    the only one, so no camera button on the HUD or in the pause, and C again changes nothing
   await page.evaluate(() => window.__game.resume()); await frames(2);
   await page.keyboard.press('KeyC'); await page.waitForTimeout(250);
   const c1 = await page.evaluate(() => ({ cam: window.__game.S.camera, saved: JSON.parse(localStorage.getItem('tdgp-settings')).camera, toast: document.getElementById('toast').textContent }));
-  T.check('C in the race from the (off-cycle) cockpit: the isometric camera, kept, a note', c1.cam === 'iso' && c1.saved === 'iso' && /Kamera: izometrična/.test(c1.toast), JSON.stringify(c1));
-  const btn = await page.evaluate(() => { const b = document.getElementById('btn-cam'); return !b.classList.contains('off') && getComputedStyle(b).display !== 'none'; });
-  await page.evaluate(() => document.getElementById('btn-cam').click()); await frames(2);
-  const c2 = await page.evaluate(() => ({ cam: window.__game.S.camera, fov: Render.camera.fov }));
-  T.check('the camera button on the HUD: the next one (behind the car)', btn && c2.cam === 'chase', JSON.stringify({ btn, c2 }));
+  T.check('C in the race from the (off-cycle) cockpit: the chase camera, kept, a note', c1.cam === 'chase' && c1.saved === 'chase' && /Kamera: za avtom/.test(c1.toast), JSON.stringify(c1));
+  await page.keyboard.press('KeyC'); await page.waitForTimeout(150);
+  const vis = (id) => page.evaluate((id) => { const b = document.getElementById(id); return !b.classList.contains('off') && getComputedStyle(b).display !== 'none'; }, id);
+  const btn = await vis('btn-cam'), cam2 = await page.evaluate(() => window.__game.S.camera);
   await page.evaluate(() => window.__game.pause());
-  const pc = await page.evaluate(() => document.getElementById('pause-cam').textContent);
-  await act('cam-next');
-  const pc2 = await page.evaluate(() => ({ label: document.getElementById('pause-cam').textContent, cam: window.__game.S.camera }));
-  T.check('in the pause: "Kamera: …" shows it and changes it (back to the isometric one)', pc === 'Kamera: za avtom' && pc2.label === 'Kamera: izometrična' && pc2.cam === 'iso', JSON.stringify({ pc, pc2 }));
+  const pc = await vis('pause-cam');
+  T.check('no camera button on the HUD or in the pause; C again: still the chase camera', !btn && !pc && cam2 === 'chase', JSON.stringify({ btn, pc, cam2 }));
 
   // 4. the formula: the camera in the helmet, its own cockpit
   await page.evaluate(() => { window.__game.S.car = 6; });

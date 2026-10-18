@@ -952,7 +952,7 @@ Po cilju gumb **Posnetek** na zaslonu z rezultati predvaja celo dirko od štarta
 
 V **posnetku dirke** (glej zgoraj) je med kamerami tudi **Kokpit**: pogled z voznikovega sedeža. Pred sabo vidiš pokrov motorja svojega avta, okoli pa armaturno ploščo z merilnikom vrtljajev (rdeče polje pri omejevalniku), merilnikom hitrosti in prestavo, volan, ki se obrača s prednjimi kolesi, okvir vetrobranskega stekla, streho in vzvratno ogledalo; relijski avto ima varnostno kletko. V dirkalniku formule sediš v čeladi: pred tabo so nos, prednja kolesa in zaščitni lok (halo), volan pa ima zaslon s prestavo in hitrostjo ter lučke za prestavljanje (zelene, rdeče, modre). Glava se malo nagne v ovinek in pogleda v smer drsenja. Nad pokrajino je nebo (bolj modro nad obzorjem, sij sonca; ponoči temno), v predoru v Monaku pa strop, ki ga iz drugih kamer ni.
 
-Kamero med dirko zamenjaš z gumbom s kamero pod gumbom za pavzo, s tipko **C**, z gumbom View/Select na igralnem plošku ali v pavzi (**Kamera: …**). V igri sta samo dve kameri: **za avtom** (telefon pokončno ali ležeče, privzeta) in **izometrična** (samo telefon ležeče). Ležeče med njima preklapljaš, pokončno je samo kamera za avtom, na računalniku preklapljaš med obema. Izbira ostane shranjena; kdor je prej ležeče vozil z izometrično kamero, ob prvem zagonu nove različice dobi kamero za avtom. Če telefon med dirko z izometrično kamero držiš pokončno, igra prosi, naj ga obrneš, in pove, zakaj; z gumbom **Igraj pokončno** pa takoj preklopi na kamero za avtom in dirka teče naprej.
+Kamera med vožnjo je vedno **za avtom**, ko telefon držiš pokončno in ko ga držiš ležeče (tudi na računalniku). Kamere ni treba izbirati: v nastavitvah ni vrstice zanjo, med dirko ni gumba za kamero (ne na zaslonu ne v pavzi), tipka C pa kamere ne zamenja. Kdor je prej vozil z izometrično kamero, ob prvem zagonu nove različice dobi kamero za avtom. Izometrična kamera ostane v kodi samo za teste.
 
 V **Nastavitvah** z vrstico **Nagib kamere** izbereš, kako daleč naprej po cesti gleda kamera za avtom: **10 %** (privzeto), **20 %** ali **30 %**. Kamera je za toliko manj nagnjena navzdol, od avta pa je enako daleč. Večji nagib pokaže več ceste pred avtom, a tudi več okolice, zato telefon malo bolj obremeni. Izometrične kamere nastavitev ne spremeni.
 
@@ -1269,7 +1269,7 @@ V **Nastavitvah** je **Varčevanje z baterijo**: **Vklop** riše največ 30 sli�
 
 ## Igra kot aplikacija
 
-- **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kot zahteva izbrana kamera (za avtom: kakor držiš telefon, pokončno ali ležeče; izometrična: ležeče).
+- **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kakor držiš telefon (pokončno ali ležeče; kamera je v obeh položajih za avtom).
 - **iPhone (Safari):** Deli → *Dodaj na začetni zaslon*.
 - Ko je igra enkrat odprta, deluje tudi brez interneta (in pri zelo slabem signalu). Ko je internet na voljo, igra ob zagonu naloži najnovejšo različico; če ostane odprta v ozadju, se posodobi sama, ko se vrneš vanjo na naslovnem zaslonu. Po objavi na GitHubu lahko traja nekaj minut, da je nova različica na voljo.
 - V brskalniku se zaslon zaklene le v celozaslonskem načinu (gumb **Celoten zaslon**); tam, kjer brskalnik tega ne dovoli (Safari na iPhonu), se med dirko pokaže obvestilo, naj telefon obrneš.

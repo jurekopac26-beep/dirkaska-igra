@@ -2,11 +2,9 @@
 // - manifest.webmanifest: name, start address, full screen, icons of the stated size (the files exist)
 // - "Namesti igro" shows only when the browser offers to install the game, and asks for it; an offer during full screen
 //   does not take the full-screen buttons away
-// - the screen turns the camera's way (landscape for iso; the chase camera plays either way, so it frees the screen): in full
-//   screen and in the installed app, not in a plain browser tab; a phone held upright in a race with the isometric camera: the
-//   notice to turn it says why, and its button plays on upright (the camera behind the car); the chase camera on a phone on its
-//   side: no notice, the camera button switches between the two (upright: the chase camera only); an old isometric setting moves
-//   to the chase camera once
+// - the chase camera is the player's only camera, upright and on its side: in full screen and in the installed app the screen is
+//   free (never locked), no camera row or buttons, no notice to turn the phone; an old isometric setting moves to it once; the
+//   isometric camera set in code (the tests'): a phone held upright shows the notice, its button plays on with the chase camera
 // - offline, on a copy of the game in a folder as on GitHub Pages: once opened, the game starts without internet; a new
 //   version is used at once and saved complete; a save that breaks off leaves the previous version complete (never a mix);
 //   a server error or a network that does not answer brings the saved game (within seconds); a game left open loads a
@@ -28,7 +26,6 @@ const recordLocks = () => { window.__locks = []; Object.defineProperty(screen.or
 // (run in the page before the game) the page is the installed app: display-mode full screen
 const installed = () => { const mm = window.matchMedia.bind(window); window.matchMedia = (q) => /display-mode/.test(q) ? { matches: true, media: q, onchange: null, addEventListener() { }, removeEventListener() { }, addListener() { }, removeListener() { }, dispatchEvent() { return false; } } : mm(q); };
 const locks = (page) => page.evaluate(() => window.__locks.slice());
-const camera = (page, v) => page.evaluate((v) => { document.querySelector(`[data-set="camera"] button[data-v="${v}"]`).click(); }, v);
 let tmp = null;
 try {
   // 1. manifest and icons
@@ -63,26 +60,23 @@ try {
     await ctx.close();
   }
 
-  // 3. orientation in a browser tab: locked only in full screen (browsers allow it only there)
+  // 3. orientation in a browser tab: never locked (browsers allow it only in full screen); in full screen the chase camera frees it
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'chase' }, { width: 390, height: 844 }, { init: recordLocks });
-    await camera(page, 'iso'); await camera(page, 'chase');
+    await wait(300);
     const tab = await locks(page);
     // (the browser reports full screen with the next frame: wait for the game's fullscreenchange handler to have run)
     const fsEvent = () => page.evaluate(() => new Promise(r => { document.addEventListener('fullscreenchange', () => setTimeout(r, 50), { once: true }); setTimeout(r, 15000); }));
     let ev = fsEvent(); await page.click('#btn-fs'); await ev;
     const full = await page.evaluate(() => !!document.fullscreenElement), inFs = await locks(page);
     await page.evaluate(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = () => Promise.resolve(); window.dispatchEvent(e); });   // (Chrome's offer, during full screen)
-    await camera(page, 'iso'); await camera(page, 'chase'); await wait(100);
-    const turned = await locks(page);
-    ev = fsEvent(); await page.evaluate(() => document.exitFullscreen()); await ev;
-    await camera(page, 'iso'); await wait(100);
+    ev = fsEvent(); await page.evaluate(() => document.exitFullscreen()); await ev; await wait(100);
     const after = await locks(page);
-    const btns = await page.evaluate(() => ({ fullscreen: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => !b.classList.contains('off')), install: !document.getElementById('btn-install').classList.contains('off') }));
+    const btns = await page.evaluate(() => ({ fullscreen: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => !b.classList.contains('off')), install: !document.getElementById('btn-install').classList.contains('off'), camRow: !!document.querySelector('[data-set="camera"]') }));
     T.check('browser tab: no orientation lock while not in full screen', tab.length === 0, JSON.stringify(tab));
     T.check('full screen: free for the chase camera (it plays upright and on the side)', full && inFs.join() === 'free', `full screen ${full}, locks ${JSON.stringify(inFs)}`);
-    T.check('full screen: the camera setting turns it (iso landscape, chase free)', turned.slice(1).join() === 'landscape,free', JSON.stringify(turned));
-    T.check('full screen over: no more locks', after.length === turned.length, JSON.stringify(after));
+    T.check('full screen over: no lock', !after.includes('portrait') && !after.includes('landscape'), JSON.stringify(after));
+    T.check('Nastavitve: no camera row (the chase camera only)', !btns.camRow, JSON.stringify(btns));
     T.check('an install offer during full screen: afterwards the full-screen buttons and "Namesti igro" are there', btns.fullscreen.length >= 2 && btns.fullscreen.every(Boolean) && btns.install, JSON.stringify(btns));
     T.check('no page errors (browser tab)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
@@ -90,18 +84,15 @@ try {
 
   // 4. the installed app (display-mode full screen): locked from the start, no full-screen or install buttons
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'iso' }, { width: 844, height: 390 }, { init: { content: `(${recordLocks})(); (${installed})();` } });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'chase' }, { width: 844, height: 390 }, { init: { content: `(${recordLocks})(); (${installed})();` } });
     await wait(300);
     const start = await locks(page);
     const ui = await page.evaluate(() => {
       const ev = new Event('beforeinstallprompt', { cancelable: true }); ev.prompt = () => Promise.resolve(); window.dispatchEvent(ev);
       return { fullscreenHidden: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => b.classList.contains('off')), installHidden: document.getElementById('btn-install').classList.contains('off') };
     });
-    await camera(page, 'chase'); await wait(100);
-    const after = await locks(page);
-    T.check('installed app: locked from the start (landscape for iso)', start.join() === 'landscape', JSON.stringify(start));
+    T.check('installed app: free from the start (the chase camera)', start.join() === 'free', JSON.stringify(start));
     T.check('installed app: no full-screen buttons, no install button', ui.fullscreenHidden.length >= 2 && ui.fullscreenHidden.every(Boolean) && ui.installHidden, JSON.stringify(ui));
-    T.check('installed app: the camera setting turns it (chase: free)', after.join() === 'landscape,free', JSON.stringify(after));
     T.check('no page errors (installed app)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -123,9 +114,8 @@ try {
     await ctx.close();
   }
 
-  // 4c. the chase camera on a phone on its side: an old isometric setting (from before tdgp-defaults-v4) moves to it once; in a race no
-  //     notice to turn the phone, the HUD's camera button switches to the isometric camera; turned upright with that one: the notice,
-  //     its button back to the chase camera; upright the camera button is off (the chase camera only), on its side again it is there
+  // 4c. the chase camera, always: an old isometric setting (from before tdgp-defaults-v4) moves to it once; in a race on its side and
+  //     upright no notice to turn the phone, no camera button (HUD, pause), C changes nothing
   {
     const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
@@ -133,18 +123,17 @@ try {
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     const moved = await page.evaluate(() => ({ cam: window.__game.S.camera, saved: JSON.parse(localStorage.getItem('tdgp-settings')).camera, v4: localStorage.getItem('tdgp-defaults-v4') }));
     await startTrack(page, 'jezero'); await wait(800);
-    const st = () => page.evaluate(() => { const b = document.getElementById('btn-cam'); return { show: document.getElementById('rotate').classList.contains('show'), cam: window.__game.S.camera, btn: !b.classList.contains('off') && getComputedStyle(b).display !== 'none' }; });
+    const vis = (id) => { const b = document.getElementById(id); return !!b && !b.classList.contains('off') && getComputedStyle(b).display !== 'none'; };
+    const st = () => page.evaluate((vis) => { const v = eval(vis); return { show: document.getElementById('rotate').classList.contains('show'), cam: window.__game.S.camera, btn: v('btn-cam') }; }, vis.toString());
     const side = await st();
-    await page.tap('#btn-cam'); await wait(300); const sideIso = await st();
-    await page.setViewportSize({ width: 390, height: 844 }); await wait(500); const upIso = await st();
-    await page.tap('#rotate-cam'); await wait(500); const upChase = await st();
-    await page.setViewportSize({ width: 844, height: 390 }); await wait(500); const back = await st();
+    await page.keyboard.press('KeyC'); await wait(300); const sideC = await st();
+    await page.setViewportSize({ width: 390, height: 844 }); await wait(500); const up = await st();
+    await page.evaluate(() => window.__game.pause()); await wait(200);
+    const pauseCam = await page.evaluate((vis) => eval(vis)('pause-cam'), vis.toString());
     T.check('an old isometric setting: moved to the chase camera once (kept)', moved.cam === 'chase' && moved.saved === 'chase' && moved.v4 === '1', JSON.stringify(moved));
-    T.check('a phone on its side in a race with the chase camera: no notice, the camera button there; it switches to the isometric camera',
-      !side.show && side.cam === 'chase' && side.btn && !sideIso.show && sideIso.cam === 'iso', JSON.stringify({ side, sideIso }));
-    T.check('turned upright with the isometric camera: the notice; its button: the chase camera, no notice, no camera button upright; on its side again the button is back',
-      upIso.show && !upChase.show && upChase.cam === 'chase' && !upChase.btn && !back.show && back.cam === 'chase' && back.btn, JSON.stringify({ upIso, upChase, back }));
-    T.check('no page errors (the chase camera on its side)', !errors.length, errors.slice(0, 5).join(' | '));
+    T.check('the chase camera on its side and upright: no notice to turn the phone, no camera button, C changes nothing, none in the pause',
+      !side.show && side.cam === 'chase' && !side.btn && sideC.cam === 'chase' && !up.show && up.cam === 'chase' && !up.btn && !pauseCam, JSON.stringify({ side, sideC, up, pauseCam }));
+    T.check('no page errors (the chase camera always)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
 

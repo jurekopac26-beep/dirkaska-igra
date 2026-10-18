@@ -36,9 +36,9 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  // one-time move to the chase camera, now also for a phone on its side (it was isometric there): everybody starts behind the car, the isometric one stays a choice on the side
+  // one-time move to the chase camera, the only one left for the player (upright and on its side; the isometric one was the camera for a phone on its side)
   try { if (!localStorage.getItem('tdgp-defaults-v4')) { S.camera = 'chase'; localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  // only two cameras remain (chase for a phone either way, isometric for a phone on its side); the kino and cockpit cameras are gone, so an old setting moves to the chase one
+  // the player's camera is always the chase one; the isometric, kino and cockpit render paths stay only for the tests (and the replay), so an old kino or cockpit setting moves to the chase one
   if (S.camera !== 'iso' && S.camera !== 'chase') S.camera = 'chase';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
   // player name: printable, single spaces, max 16 characters; always escaped when rendered
@@ -371,7 +371,7 @@
   }
   function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
 
-  /* ---------------- orientation: iso camera = landscape, chase camera = either way ---------------- */
+  /* ---------------- orientation: the chase camera plays either way (iso, set only in the tests: landscape) ---------------- */
   const wantLandscape = () => S.camera === 'iso';
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
@@ -558,10 +558,11 @@
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
-  // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): the next one
-  // that suits the phone as it is held (lying: both; upright: behind the car only; a computer: both), kept as the setting
-  const CAMS = ['iso', 'chase'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom' };
-  function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse && portrait ? ['chase'] : CAMS; }
+  // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): only the chase
+  // camera is the player's, upright and on its side, so there is nothing to switch to (a camera set in code, the tests': back to it); the
+  // camera buttons are hidden
+  const CAMS = ['chase'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom' };
+  function camPool() { return CAMS; }
   function cycleCam() {
     const pool = camPool(); if (pool.length < 2 && pool[0] === S.camera) return;
     const next = pool[(pool.indexOf(S.camera) + 1) % pool.length];
@@ -583,7 +584,7 @@
   }
   // the pause menu's restart: the climb or the stage again, the qualifying lap, the run from the police, the race
   const restartTxt = () => !race ? tr('Ponovi dirko') : race.chal ? tr('Poskusi znova') : race.timeTrial ? ttAgain(track.def) : race.quali ? tr('Ponovi krog') : race.pol ? tr('Ponovi beg') : tr('Ponovi dirko');
-  function camLabel() { const b = $('pause-cam'); if (b) b.textContent = tr('Kamera: {0}', tr(CAM_NAME[S.camera])); const h = $('btn-cam'); if (h) h.classList.toggle('dis', camPool().length < 2); }
+  function camLabel() { const one = camPool().length < 2, b = $('pause-cam'); if (b) { b.textContent = tr('Kamera: {0}', tr(CAM_NAME[S.camera] || S.camera)); b.classList.toggle('off', one); } const h = $('btn-cam'); if (h) h.classList.toggle('dis', one); }
   function enableTilt(fromStart) {
     Input.requestTilt().then(res => {
       if (res !== 'granted') { toast(tr(res === 'denied' ? 'Dostop do senzorja nagiba je zavrnjen. Uporabi tipke ali volan.' : 'Ta naprava ne podpira nagiba. Uporabi tipke ali volan.'), 3600); return; }
@@ -5183,10 +5184,10 @@
     window.addEventListener('pointerup', unlock, { passive: true });
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); fitSegs();
-      updateOrientation(); camLabel();   // (the phone turned: on its side the camera button switches between the two cameras, upright there is only the chase one)
+      updateOrientation();
       if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); camLabel(); }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();
