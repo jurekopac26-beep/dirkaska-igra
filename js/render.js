@@ -2820,12 +2820,14 @@ const Render = (function () {
      starts where the one before it on that wheel ended), the nearly straight bits of a chain merged into one quad (up to MK_SEG m, off the
      line by MK_TOL m at most), in cm and bytes: [u32 chains] per chain [i32 x, z, y (cm), u8 r, g, b, width (cm), flags (1: off the road),
      u16 n] then n x [i16 dx, dz, dy (cm), u8 a0, a1]. The stored runs (newest first) are drawn under the live marks as one static mesh in one
-     draw call, each older run fainter (mkAge); nothing on another track or in a race. */
+     draw call, each older run fainter and its rubber greyer (mkAge, mkGrey); nothing on another track or in a race. */
   const MK_LOG = 40000, MK_SEG = 3, MK_TOL = 0.04, MK_MAX = 30000;   // segments logged in a run at most, merged quad length (m), off the line (m), quads drawn at most
   const MK_RUT = 0.3;   // the alpha of a rolling rut off the road (a slide's: 0.4 .. 0.86)
-  // a stored run's alpha against the live marks', by its age k (0: the last run .. 9: ten runs ago, barely seen): off the road the last run
-  // as it was laid, on the road fainter from the start; every older run fainter still
-  const mkAge = (k, off) => off ? lerp(1, 0.2, k / 9) : lerp(0.6, 0.1, k / 9);
+  // a stored run's look against the live marks', by its age k (0: the last run .. 9: ten runs ago): its alpha (mkAge: off the road the last
+  // run as it was laid, on the road fainter from the start; every older run fainter, ten runs ago barely seen) and how grey its rubber on the
+  // road has gone (mkGrey: old rubber, towards MK_GREY; the run's own marks stay black). Where the runs cross the same place (the braking
+  // points, the apexes) their marks add up: the rubber builds up
+  const mkAge = (k, off) => off ? lerp(1, 0.2, k / 9) : lerp(0.6, 0.1, k / 9), mkGrey = (k) => lerp(0.3, 0.9, k / 9), MK_GREY = [0.2, 0.2, 0.21];
   function marksPack(L) {
     const n = L.length / 13, chains = [], open = new Map();
     for (let i = 0; i < n; i++) {
@@ -2898,6 +2900,7 @@ const Render = (function () {
       pos[o] = x0 - nx; pos[o + 1] = ya; pos[o + 2] = z0 - nz; pos[o + 3] = x0 + nx; pos[o + 4] = ya; pos[o + 5] = z0 + nz;
       pos[o + 6] = x1 - nx; pos[o + 7] = yc; pos[o + 8] = z1 - nz; pos[o + 9] = x1 + nx; pos[o + 10] = yc; pos[o + 11] = z1 + nz;
       const A = mkAge(k, off), q = i * 16;
+      if (!off && r + g + b < 0.3) { const gr = mkGrey(k); r = lerp(r, MK_GREY[0], gr); g = lerp(g, MK_GREY[1], gr); b = lerp(b, MK_GREY[2], gr); }   // (the rubber, not the ruts of a gravel road)
       for (let c = 0; c < 4; c++) { col[q + c * 4] = r * 255; col[q + c * 4 + 1] = g * 255; col[q + c * 4 + 2] = b * 255; col[q + c * 4 + 3] = (c < 2 ? a0 : a1) * A * 255; }
     };
     let n = 0;
