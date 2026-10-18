@@ -72,11 +72,11 @@ try {
       cam: el('rp-cam').textContent, cap: el('rp-hl-cap').classList.contains('off') ? '' : el('rp-hl-cap').textContent, lit: el('rp-hl').classList.contains('on'), ui: !el('replay-ui').classList.contains('off') }; });
   const hb = await page.evaluate(() => !document.getElementById('res-hl').classList.contains('off'));
   await act('replay-hl'); await frames(3); const h0 = await hl();
-  T.check('"Najboljši trenutki": the start first, on the player\'s camera (from above), the car on pole followed, a caption, the button lit', hb && h0.on && h0.i === 0 && h0.n >= 2 && h0.lbl === 'ŠTART' && h0.cam === 'Od zgoraj' && h0.k === h0.want && /ŠTART/.test(h0.cap) && h0.lit && h0.ui && h0.screen === 'none' && h0.t - h0.t0 < 3,
+  T.check('"Najboljši trenutki": the start first, on the player\'s camera (behind the car), the car on pole followed, a caption, the button lit', hb && h0.on && h0.i === 0 && h0.n >= 2 && h0.lbl === 'ŠTART' && h0.cam === 'Za avtom' && h0.k === h0.want && /ŠTART/.test(h0.cap) && h0.lit && h0.ui && h0.screen === 'none' && h0.t - h0.t0 < 3,
     JSON.stringify(h0));
   await act('rp-speed'); await act('rp-speed');   // (4x: the programme sooner through)
   // each moment on the player's camera; in the second one, the camera button: TV, the programme goes on with it
-  const seen = [h0.lbl]; let last = h0, done = null, want = 'Od zgoraj', sw = null;
+  const seen = [h0.lbl]; let last = h0, done = null, want = 'Za avtom', sw = null;
   for (let k = 0; k < 400 && !done; k++) {
     await frames(4); const h = await hl();
     if (!h.on) { done = h; break; }
@@ -98,9 +98,9 @@ try {
   await B.frames(20); const b1 = await B.st();
   T.check('the camera goes with the car (still behind it, the car on)', b1.t > b0.t + 0.2 && chaseView(b1), JSON.stringify(b1));
   const ring = [];
-  for (let k = 0; k < 4; k++) { await B.act('rp-cam'); await B.frames(1); ring.push((await B.st()).cam); }
+  for (let k = 0; k < 3; k++) { await B.act('rp-cam'); await B.frames(1); ring.push((await B.st()).cam); }
   const b2 = await B.st();
-  T.check('the camera button: behind the car → TV → from above → the cockpit → behind the car again', ring.join(',') === 'TV,Od zgoraj,Kokpit,Za avtom' && chaseView(b2), ring.join(' → ') + ' ' + JSON.stringify(b2));
+  T.check('the camera button: behind the car → TV → the cockpit → behind the car again', ring.join(',') === 'TV,Kokpit,Za avtom' && chaseView(b2), ring.join(' → ') + ' ' + JSON.stringify(b2));
   await B.frames(8); await B.act('rp-next'); await B.frames(1); const b3 = await B.st();
   T.check('▶: the next car, the camera behind it at once', b3.k !== b2.k && !/^Ti · /.test(b3.info) && chaseView(b3), JSON.stringify(b3));
   await B.act('rp-restart'); await B.frames(1); const b4 = await B.st();

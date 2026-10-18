@@ -123,12 +123,12 @@ try {
   await act('replay'); await frames(3);
   const rv = await page.evaluate(() => { const R = Render.cockpit; return { cam: document.getElementById('rp-cam').textContent, ck: R && { formula: R.formula, car: R.car && R.car.isPlayer } }; });
   const cams = [];
-  for (let k = 0; k < 4; k++) { await act('rp-cam'); await frames(2); cams.push(await page.evaluate(() => document.getElementById('rp-cam').textContent)); }
+  for (let k = 0; k < 3; k++) { await act('rp-cam'); await frames(2); cams.push(await page.evaluate(() => document.getElementById('rp-cam').textContent)); }
   await act('rp-photo'); await frames(2);
   const rp = await page.evaluate(() => ({ screen: window.__game.screen, ui: document.getElementById('replay-ui').classList.contains('off'), shot: !!Render.cam.shot }));
   await act('ph-exit'); await frames(2);
   const rp2 = await page.evaluate(() => ({ ui: !document.getElementById('replay-ui').classList.contains('off'), shot: !!Render.cam.shot }));
-  T.check('the replay: from the cockpit (the followed car\'s) → TV → behind the car → from above → the cockpit; Foto there, and back to the replay', rv.cam === 'Kokpit' && !!rv.ck && rv.ck.car && cams.join(',') === 'TV,Za avtom,Od zgoraj,Kokpit' && rp.screen === 'photo' && rp.ui && rp.shot && rp2.ui && !rp2.shot,
+  T.check('the replay: from the cockpit (the followed car\'s) → TV → behind the car → the cockpit; Foto there, and back to the replay', rv.cam === 'Kokpit' && !!rv.ck && rv.ck.car && cams.join(',') === 'TV,Za avtom,Kokpit' && rp.screen === 'photo' && rp.ui && rp.shot && rp2.ui && !rp2.shot,
     JSON.stringify({ rv, cams, rp, rp2 }));
   await act('rp-exit');
 
