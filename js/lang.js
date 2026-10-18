@@ -328,6 +328,7 @@
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
+    'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
