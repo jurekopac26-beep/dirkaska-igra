@@ -995,6 +995,23 @@
    "brakeBoards:MeshLambertMaterial": "c208aeec"
   }
  },
+ "killar": {
+  "meshes": 1500,
+  "verts": 919984,
+  "instances": 45164,
+  "props": 93,
+  "crowd": 594,
+  "world": "19f4d3b9",
+  "propsHash": "1ba5bb22",
+  "floor": "b88dd46b/9520",
+  "groups": {
+   "-:MeshLambertMaterial": "20316017",
+   "-:MeshPhongMaterial": "d86f1c90",
+   "-:MeshBasicMaterial": "5cb9be2e",
+   "crowd:MeshLambertMaterial": "98f83674",
+   "ao:MeshBasicMaterial": "d956ce4a"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
