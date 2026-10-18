@@ -282,7 +282,7 @@ const MEAS = {};
       const d = { id: 1, car: 99, part: 'hood', x: P.x + ux * ad, z: P.z + uz * ad, y: (P.y || 0) + 0.05, vx: 0, vy: 0, vz: 0, yaw: 0, rx: 0, rz: 0, wx: 0, wy: 0, wz: 0, r: dr, m: 6, h: 0.1, rest: true, ground: true, q: null, dead: false };
       r.debris.push(d);
       r.step(DT);
-      const deb = !d.rest && P.hitDebris > 0;
+      const deb = P.hitDebris > 0 && (!d.rest || (!!d.on && d.on.includes(P)));   // (a part lying on the road is driven over, not knocked away: debrisHit's DEB_RUN; touched all the same)
       const r2 = new C.Race(Tj, { numAI: 0, playerGrid: 1, laps: 1, playerModel: M, seed: 1, damage: 0 }); r2.start();
       const P2 = r2.player; P2.place(Tj.px[i0], Tj.pz[i0], h); P2.q = Tj.query(P2.x, P2.z, i0, P2.q); P2.sPrev = P2.q.s; P2.vx = ux * 5; P2.vz = uz * 5;
       const c0 = nose + P2.rad + 0.2; r2.setProps([{ kind: 'cone', x: P2.x + ux * c0, z: P2.z + uz * c0, i: i0 }]);   // (placed near the nose, then just inside its reach)

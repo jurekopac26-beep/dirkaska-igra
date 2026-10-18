@@ -1,5 +1,5 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
+// raced for 20 s on autopilot (its corner sign high on the screen, lying and upright), settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
 // title demo runs, a Pikes Peak run, an Ouninpohja run, a Harju run and a Katu-Jaryk descent finish and their records are
 // saved (Ouninpohja also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the
 // chase, the police radio, the arrows, the mission in the building at the top). Zero page errors allowed.
@@ -71,6 +71,27 @@ try {
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 100 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
+    // police's block: under it); Pikes Peak in a time trial: off, its pill (#pk-note) instead
+    const sign = (s) => page.evaluate(async (s) => {
+      const g = window.__game, T = g.race.track, P = g.race.player, $ = (id) => document.getElementById(id), hud = $('hud').classList;
+      if (s == null) { const H = T.hudSigns(), ahead = (x) => T.open ? x.s0 - P.q.s : ((x.s0 - P.q.s) % T.len + T.len) % T.len, n = H.filter(x => ahead(x) > 25 && (!T.open || x.s0 < T.finishS)).sort((a, b) => ahead(a) - ahead(b))[0] || H[0]; s = n ? n.s0 - 20 : null; }
+      if (s != null) g.noteAt(s, 20);
+      await new Promise(r => setTimeout(r, 250));
+      const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
+      while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
+      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
+    }, s);
+    const n1 = await sign(null);
+    if (id === 'pikes' || id === 'pikesg') T.check(`${id}: in the time trial the corner sign off (the pill instead), lying`, n1.pkn && n1.disp === 'none', JSON.stringify(n1));
+    else {
+      await page.setViewportSize({ width: 270, height: 480 });
+      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : 95;
+      await page.setViewportSize({ width: 480, height: 270 });
+      T.check(`${id}: the corner sign shown high: lying in the top row (top ≤ 10 px), upright under the clock (top ≤ ${lim2} px)`, n1.s != null && /\bshow\b/.test(n1.cls) && n1.top <= 10 && /\bshow\b/.test(n2.cls) && n2.top <= lim2,
+        `'${n1.cls}' top ${n1.top} px / upright '${n2.cls}' top ${n2.top} px`);
+    }
+    await page.evaluate(() => window.__game.noteAt(null));
   }
 
   // 5. the title-screen demo drives behind the menu (two screenshots 1.5 s apart must differ)
@@ -215,14 +236,17 @@ try {
           out.pre = pre;
           pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: the autopilot is not to be caught before the mission at the top)
         }
-        let peds = 0, tail = [], rot = [], caps = [];
+        // (in the chase the patrol cars may lose the player for a while, searching with their lights off: the HUD's count of them after the
+        // player and their lights read through the chase, not only at its end)
+        let peds = 0, tail = [], rot = [], caps = [], chased = 0, lamp = false;
         for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0);   // (people drawn on the way: between the villages there may be nobody about)
-          if (md === 'police') { for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
+          if (md === 'police') { chased = Math.max(chased, +txt('h-pos') || 0); if ((Render.roadInfo() || {}).lampOn) lamp = true;
+            for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
             if (g.radio.cap) caps.push(g.radio.cap); } }
-        let lamp = false; for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
+        for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
         const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: txt('h-gap'),
-          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
           let heli = false;
           g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
@@ -263,8 +287,8 @@ try {
       Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^KG-1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
       `${Q.stage} (${Q.why}), radio: ${JSON.stringify(P.log.slice(0, 7))}`);
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
-      P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
-      `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
+      P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
+      `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
     T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, pointing back',
       P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
       `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);

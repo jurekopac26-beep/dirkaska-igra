@@ -20,6 +20,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // from 126 m after the Final Curve to the braking for the First Curve (the corners of names below, by their labels)
     drs: [['Zadnji ovinek', -230, 126, 'Prvi ovinek']],
     elev: SUZ_H.map((h, i) => [i / SUZ_H.length, h / 10]),
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[5130, 5240, 'chicane']],   // the Casio Triangle
     // corner names ([HUD label, x, z, the commentator's lines]; the generic words in Slovenian, the proper names as at the circuit)
     names: [
       ['Prvi ovinek', 287.1, 366.4, ['Down the hill into the First Curve!', 'Turn one, the long right-hander at the bottom of the hill!', 'Through the First Curve and on into Turn Two!']],

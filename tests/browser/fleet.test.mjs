@@ -311,8 +311,9 @@ try {
       const geo = v.body.geometry, U = geo.userData, pa = geo.attributes.position.array, E = Render.kitInfo(id);
       // the static rule: each part's range centroid near the core's spawn point (lx, lz of the half length / width, y)
       const far = []; for (const n in PT) { const p = PT[n], rc = E.ranges[n] && E.ranges[n].c; if (p.wh != null || !rc) continue; const d = Math.hypot(rc[0] - p.lx * M.len / 2, rc[1] - p.y, rc[2] - p.lz * M.wid / 2); if (d > 0.35) far.push(n + ' ' + d.toFixed(2) + ' m'); }
-      // loose: the part with the biggest outer range, its zone at 65 % of its threshold
-      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n]), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
+      // loose: the part with the biggest outer range, its zone at 65 % of its threshold (not one of the face or the tail, which hang loose
+      // only once the car is 70 % gone: Core.maskHeld)
+      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
       const P0 = Float32Array.from(pa); P.dz[PT[lp].z] = Math.max(P.dz[PT[lp].z], 0.65 * PT[lp].th); F(1);
       let lmx = 0, lrig = 0; const idx = []; for (const [s, e] of [LR.o, LR.i]) for (let i = s; i < e; i++) idx.push(i);
       for (const i of idx) lmx = Math.max(lmx, Math.hypot(pa[i * 3] - P0[i * 3], pa[i * 3 + 1] - P0[i * 3 + 1], pa[i * 3 + 2] - P0[i * 3 + 2]));
@@ -549,6 +550,7 @@ try {
       const g = window.__game, FL = window.__fl; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, s = [], seen = new Map();
+      R.lch = null; for (const c of R.cars) c.lch = null;   // (the start's reaction off: the field where perf.test.mjs measures its budget)
       Render.frame(0, 1, P, g.S.camera, {});
       for (const c of R.cars) if (!c.isPlayer && !seen.has(c.m.id)) seen.set(c.m.id, FL.costOf(Render.viewOf(c), P));   // (one default rival's whole cost, the four averaged)
       const unit = [0, 0]; for (const q of seen.values()) { unit[0] += q.calls / seen.size; unit[1] += q.verts / seen.size; }

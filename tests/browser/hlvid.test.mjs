@@ -48,8 +48,9 @@ try {
       cap: document.getElementById('res-vid-cap').textContent, vid: g.hlv.vid, rec: g.hlv.rec, mean: +mean.toFixed(1), sd: +Math.sqrt(Math.max(0, s2 / n - mean * mean)).toFixed(1), share: document.getElementById('res-vid-share').textContent }; });
   T.check('then the results with the video: looping, muted, playing; its size the recording\'s; its caption', v1.shown && v1.src === 'blob:' && v1.loop && v1.muted && v1.playing && v1.vw === p1.rec.w && v1.vh === p1.rec.h && v1.cap === p1.rec.cap && !v1.rec && v1.share === 'Deli', JSON.stringify(v1));
   // (recorded on the real clock: the video about as long as the moment, not slowed down where the frames are slow, as here; its last picture
-  // held a few frames, longer where they are slow)
-  T.check('... the whole moment in it (about 12 s, the video as long), the race\'s picture in it (not a blank)', v1.vid.dur > 11 && v1.vid.dur < 13.5 && (!isFinite(v1.dur) || (v1.dur > v1.vid.dur * 0.75 && v1.dur < v1.vid.dur * 1.4)) && v1.vid.bytes > 20000 && v1.sd > 8, JSON.stringify({ vid: v1.vid, dur: v1.dur, mean: v1.mean, sd: v1.sd }));
+  // held a few frames, longer where they are slow. On a busy machine drawing in software the frames take seconds: the last picture held
+  // for 8 of them, a frame over 2 s counted as 2 s of the race: the video then as long as the recording on the real clock, vid.wall)
+  T.check('... the whole moment in it (about 12 s, the video as long), the race\'s picture in it (not a blank)', v1.vid.dur > 11 && v1.vid.dur < 13.5 && (!isFinite(v1.dur) || (v1.dur > v1.vid.dur * 0.75 && v1.dur < Math.max(v1.vid.dur * 1.4, v1.vid.wall * 1.25 + 0.5))) && v1.vid.bytes > 20000 && v1.sd > 8, JSON.stringify({ vid: v1.vid, dur: v1.dur, mean: v1.mean, sd: v1.sd }));
 
   // 3. a tap on the video: big; again: back
   await act('vid-big'); const big = await page.evaluate(() => { const c = document.getElementById('res-vid'), v = document.getElementById('res-vid-v').getBoundingClientRect(), r = c.getBoundingClientRect();

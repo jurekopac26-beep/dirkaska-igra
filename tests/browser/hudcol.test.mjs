@@ -14,7 +14,8 @@
 // a warning triangle PREDRTA GUMA! and the overheating, crossed swords DVOBOJ, a star NOV REKORD!, a pit board BOKSI), the wrench on the pit
 // stop's panel, an "i" on the toast; the text right of it, never under it; in both languages, either way the phone is held.
 // The tyre button (A, the tyres for the next stop) at the left beside the damage (on its side with the steering wheel: right of the
-// speedometer, the wheel's rim under it), over nothing of the HUD or the controls, in every steering mode either way the phone is held; a
+// speedometer just above the damage's row, the wheel's rim under it; upright: in its row right under the speedometer, the damage picture
+// being on the right under the map), over nothing of the HUD or the controls, in every steering mode either way the phone is held; a
 // tap at its middle reaches it (A, S, M, H, A).
 //   node tests/browser/hudcol.test.mjs            (SHOTS=<folder>: a picture of each)
 import net from 'node:net';
@@ -40,36 +41,46 @@ const KINDS = [[['ZADNJI KROG!'], 'flag'], [['POPRAVILO {0} %', 45], 'wrench'], 
 const LONG = ['NE PREHITEVAJ DO CILJNE ČRTE', 'NO OVERTAKING UNTIL THE LINE', 'POVOZIL SI PEŠCA! +5 s', 'YOU RAN OVER SOMEONE ON FOOT! +5 s', 'TEKMEC JE POVOZIL KOLESARJA +5 s', 'YOUR RIVAL RAN OVER SOMEONE ON FOOT +5 s',
   'MISIJA OPRAVLJENA!', 'MISSION ACCOMPLISHED!', 'CHAMPIONSHIP · RACE 3/8', PIT.sl.msg, PIT.en.msg];
 
+// the column's texts: without the damage picture and the tower (upright the first two in it, right under the map)
+const rest = (ids) => ids.filter(i => i !== 'h-dmg' && i !== 'h-tower');
 // in the page: the column (its items shown, top to bottom) and every other HUD element shown
 const MEASURE = () => {
   const shown = (e) => { if (!e || getComputedStyle(e).visibility !== 'visible') return false; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || +c.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
   const R = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
   const land = innerWidth > innerHeight, M = document.getElementById('h-msg'), cs = getComputedStyle(M);
-  const colIds = ['h-prof', 'h-wreck', 'h-pit', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast'].concat(land ? ['h-tower'] : []);
+  const colIds = (land ? [] : ['h-dmg', 'h-tower']).concat(['h-prof', 'h-wreck', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast']).concat(land ? ['h-tower'] : []);   // (upright the damage picture first in it, right under the map, the tower under it)
   const otherIds = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-pol', 'h-gap', 'h-chk', 'h-school', 'pk-note', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls',
-    'h-dmg', 'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'].concat(land ? [] : ['h-tower']);
+    'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'].concat(land ? ['h-dmg'] : []);
   return { w: innerWidth, h: innerHeight, block: document.getElementById('rotate').classList.contains('show'), screen: window.__game.screen, m: R('h-map'),
     col: colIds.filter(id => shown(document.getElementById(id))).map(R).sort((a, b) => a.t - b.t), other: otherIds.filter(id => shown(document.getElementById(id))).map(R),
     wait: ['toast', 'h-teamradio'].filter(id => document.getElementById(id).classList.contains('wait')), msg: M.textContent, lines: shown(M) ? Math.round((M.clientHeight - 7) / parseFloat(cs.lineHeight)) : 0, fs: parseFloat(cs.fontSize), out: shown(M) ? M.scrollWidth - M.clientWidth : 0,
     rows: document.getElementById('h-tower').querySelectorAll('.tw-r').length };
 };
 // in the page: the icons of the column (css ::before, inline SVG as --ic-*): which one each shows (the same picture as var(--ic-<kind>)), its size,
-// and where the text starts (the message's and the pit title's right of the icon, the toast's first line after its "i")
+// and where the text starts (each at the start of its first line: the message's, the pit title's, the toast's "i"); the coloured edge at the
+// left and the background (see-through, as the map's)
 const ICONS = () => {
   const img = (k) => { const d = document.createElement('i'); d.style.backgroundImage = `var(--ic-${k})`; document.body.appendChild(d); const v = getComputedStyle(d).backgroundImage; d.remove(); return v; };
   const KS = ['flag', 'wrench', 'go', 'warn', 'vs', 'star', 'pit', 'info'], pics = KS.map(img);
-  const one = (e, t) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
-    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(getComputedStyle(e).fontSize),
+  const one = (e, t, box) => { const c = getComputedStyle(e, '::before'), r = e.getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(t); const t0 = g.getClientRects()[0] || g.getBoundingClientRect();
+    const s = getComputedStyle(e), bx = getComputedStyle(box || e), a = (v) => { const m = /rgba?\(([^)]+)\)/.exec(v); return m ? +(m[1].split(',')[3] || 1) : 1; };
+    return { ic: KS[pics.indexOf(c.backgroundImage)] || c.backgroundImage.slice(0, 30), w: +parseFloat(c.width).toFixed(1), h: +parseFloat(c.height).toFixed(1), fs: parseFloat(s.fontSize), fw: +s.fontWeight,
+      edge: parseFloat(bx.borderLeftWidth) + ' ' + bx.borderLeftColor, bga: a(bx.backgroundColor),
       gap: +(t0.left - r.left - parseFloat(getComputedStyle(e).paddingLeft) - parseFloat(getComputedStyle(e).borderLeftWidth) - parseFloat(c.width)).toFixed(1) }; };
   const M = document.getElementById('h-msg'), P = document.getElementById('h-pit'), T = document.getElementById('toast');
-  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P, P.firstElementChild) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
+  return { dataIc: M.dataset.ic || '', icm: M.dataset.icm || '', msg: one(M, M), pit: P.classList.contains('on') ? one(P.firstElementChild, P.firstElementChild, P) : null, toast: T.classList.contains('show') && T.classList.contains('col') ? one(T, T) : null };
 };
 // what is wrong with the icons: the message's not the one of its kind or not as tall as its letters, the pit panel without its wrench, the
 // toast without its "i", or a text over its icon
 function wrongIcons(x, kind) {
   const bad = [];
   if (x.dataIc !== kind || x.msg.ic !== kind) bad.push(`the message's icon ${x.dataIc}/${x.msg.ic}, not ${kind}`);
-  if (x.icm) bad.push('the message\'s icon not at its left: ' + x.icm);
+  if (x.icm) bad.push('the message without its icon: ' + x.icm);
+  const EDGE = { warn: 'rgb(230, 59, 46)', go: 'rgb(53, 212, 95)', star: 'rgb(53, 212, 95)' }, mapA = 0.45;
+  if (!x.msg.edge.startsWith('4 ') || (EDGE[kind] && !x.msg.edge.endsWith(EDGE[kind])) || x.msg.bga > mapA + 0.01) bad.push(`the message's edge ${x.msg.edge}, background ${x.msg.bga}`);
+  if (kind === 'pit' && (x.msg.fs > 15 || x.msg.fw < 800)) bad.push(`the pits' message not small and heavy: ${x.msg.fs} px, ${x.msg.fw}`);
+  if (x.pit && (!x.pit.edge.startsWith('4 ') || x.pit.bga > mapA + 0.01)) bad.push(`the pit panel's edge ${x.pit.edge}, background ${x.pit.bga}`);
+  if (x.toast && (!x.toast.edge.startsWith('4 ') || x.toast.bga > mapA + 0.01)) bad.push(`the toast's edge ${x.toast.edge}, background ${x.toast.bga}`);
   if (Math.abs(x.msg.w - 1.05 * x.msg.fs) > 1 || Math.abs(x.msg.h - x.msg.w) > 0.5) bad.push(`the message's icon ${x.msg.w}x${x.msg.h} at ${x.msg.fs} px`);
   if (x.msg.gap < 0) bad.push('the message over its icon');
   if (!x.pit || x.pit.ic !== 'wrench' || x.pit.w < 12 || x.pit.gap < 2) bad.push('the pit panel\'s wrench ' + JSON.stringify(x.pit));
@@ -89,11 +100,12 @@ const TYRE = () => {
 };
 // what is wrong with the tyre button: not 44 px, not beside the damage (on its side with the wheel: not right of the speedometer above the
 // damage), over another element, under something
-function wrongTyre(x, wheelLand) {
+function wrongTyre(x, mode) {
   if (!x) return ['not shown'];
   const bad = [], { b, d, s } = x, hit = (a, c) => Math.min(a.r, c.r) - Math.max(a.l, c.l) > 1 && Math.min(a.b, c.b) - Math.max(a.t, c.t) > 1;
   if (Math.abs(b.r - b.l - 44) > 0.5 || Math.abs(b.b - b.t - 44) > 0.5) bad.push('not 44 px');
-  if (wheelLand) { if (b.l < s.r || b.l - s.r > 12 || b.b > d.t || b.t > s.b) bad.push('not right of the speedometer above the damage'); }
+  if (mode === 'wheel') { if (b.l < s.r || b.l - s.r > 12 || b.b > d.t || b.t > s.b) bad.push('not right of the speedometer above the damage'); }
+  else if (mode === 'port') { if (b.t < s.b - 1 || b.t - s.b > 14 || b.l > s.l + 24) bad.push('not right under the speedometer'); }
   else if (b.l < d.r || b.l - d.r > 12 || b.t >= d.b || b.b <= d.t) bad.push('not beside the damage');
   for (const o of x.others) if (hit(b, o)) bad.push('over ' + o.id);
   if (!x.top) bad.push('under something');
@@ -167,7 +179,7 @@ try {
           T.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, clientX: x, clientY: y, bubbles: true })); Input.update(0.016); }
         return o; }, m));
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `pedals-${m}-${k}.png`) });
-      const ty = await page.evaluate(TYRE), o = { k, m, bad: wrongTyre(ty, k === 'land' && m === 'wheel'), b: ty && ty.b };
+      const ty = await page.evaluate(TYRE), o = { k, m, bad: wrongTyre(ty, k === 'land' && m === 'wheel' ? 'wheel' : k === 'port' ? 'port' : ''), b: ty && ty.b };   // (upright: right under the speedometer, the damage picture on the right)
       if (ty && m === 'buttons') { o.taps = [ty.c]; for (let n = 0; n < 4; n++) { await page.touchscreen.tap((ty.b.l + ty.b.r) / 2, (ty.b.t + ty.b.b) / 2); o.taps.push(await page.evaluate(() => document.getElementById('btn-tyre').dataset.c)); } }
       tyres.push(o);
     }
@@ -176,15 +188,21 @@ try {
   const PED = { buttons: 'c-left,c-right,c-brake,c-gas', wheel: 'c-wheel,c-brake,c-gas', tilt: 'c-brake,c-gas,tilt-ind' };
   T.check('no ROČNA (handbrake) button on the screen in any steering mode, on its side and upright: ZAVORA and PLIN side by side, as tall as each other (tilting: apart, the brake on the left); a touch where ROČNA was brakes',
     pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === false), JSON.stringify(pedals));
-  T.check('the tyre button (A) at the left beside the damage (on its side with the wheel: right of the speedometer, above the damage), 44 px, over nothing of the HUD or the controls (the speedometer, the tyres, the tower, the steering, the pedals ...), with buttons, the wheel and tilting, on its side and upright; tapped: A, S, M, H, A',
+  T.check('the tyre button (A) at the left beside the damage (on its side with the wheel: right of the speedometer, above the damage; upright: right under the speedometer), 44 px, over nothing of the HUD or the controls (the speedometer, the tyres, the tower, the steering, the pedals ...), with buttons, the wheel and tilting, on its side and upright; tapped: A, S, M, H, A',
     tyres.length === 6 && tyres.every(o => !o.bad.length) && tyres.filter(o => o.taps).length === 2 && tyres.filter(o => o.taps).every(o => o.taps.join() === 'auto,S,M,H,auto'), JSON.stringify(tyres));
+  // the ring round the tyre button: as much of it coloured as the tyres on the car have left (92 % left: 92 % of the ring), the rest dark
+  const ring = await page.evaluate(async () => { const P = window.__game.race.player, B = document.getElementById('btn-tyre'), w0 = P.ty.wear, out = [];
+    for (const w of [0.08, 0.6]) { P.ty.wear = w; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      out.push({ left: Math.round((1 - w) * 100), tl: +getComputedStyle(B).getPropertyValue('--tl'), pill: document.getElementById('h-tyre').textContent, bg: getComputedStyle(B.firstElementChild).backgroundImage.slice(0, 40) }); }
+    P.ty.wear = w0; return out; });
+  T.check('the tyre button\'s ring: coloured as far round as the tyres have left (92 % and 40 %, as the tyre pill says), the rest dark', ring.length === 2 && ring.every(o => Math.abs(o.tl - o.left / 100) < 0.011 && o.pill.endsWith(' ' + o.left + '%') && /conic-gradient/.test(o.bg)), JSON.stringify(ring));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
     for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)
     P.pitDur = Math.max(P.pitDur, P.pitT + 600); g.resume(); return e; });   // (the crew's work long enough for all the pictures)
   T.check('the way in: the toast "Sedaj lahko spustiš plin, vse bo naredil sam.", about the pit stop (gone with the autopilot)', !!entry && entry.toast === TOAST && entry.tag === 'pit', JSON.stringify(entry));
   const pit = await both(page, 'race-pits', 'BOKSI · AVTOPILOT', ['h-pit', 'h-msg']);
-  T.check('the pit stop: the progress bar right under the map, the big message under it', ['land', 'port'].every(k => pit[k].col[0] && pit[k].col[0].id === 'h-pit' && pit[k].col[1].id === 'h-msg'), JSON.stringify(['land', 'port'].map(k => pit[k].col.map(c => c.id))));
+  T.check('the pit stop: the progress bar right under the map (upright under the damage picture and the tower), the big message under it', ['land', 'port'].every(k => { const c = rest(pit[k].col.map(c => c.id)); return c[0] === 'h-pit' && c[1] === 'h-msg' && (k === 'land' || pit[k].col[0].id === 'h-dmg'); }), JSON.stringify(['land', 'port'].map(k => pit[k].col.map(c => c.id))));
   // the pit stop in every way of steering, in Slovenian and in English, the stop's longest message with the toast and the radio: the bar and
   // the message right under the map, nothing over the HUD (tilting: no tilt meter while the autopilot steers, the phone's tilt not used); the
   // bar's title in its box (on one line down to 8 px, else two); upright nothing waits
@@ -195,7 +213,7 @@ try {
       await turn(page, OR[k]);
       for (const m of ['buttons', 'wheel', 'tilt']) {
         await page.evaluate((m) => Input.setMode(m), m); await frames(page, 2);
-        const o = await texts(page, L.msg, { toast: L.toast, radio: L.radio }), ids = o.col.map(c => c.id), bad = wrong(o);
+        const o = await texts(page, L.msg, { toast: L.toast, radio: L.radio }), ids = rest(o.col.map(c => c.id)), bad = wrong(o);
         const x = await page.evaluate(() => { const b = document.querySelector('#h-pit b'), r = b.getBoundingClientRect(), f = parseFloat(getComputedStyle(b).fontSize);
           return { title: b.textContent, tfs: f, tl: Math.round(r.height / (f * 1.15)), tout: b.scrollWidth - b.clientWidth, tilt: getComputedStyle(document.getElementById('tilt-ind')).display }; });
         steer.push({ lang, k, m, ok: !bad.length && ids[0] === 'h-pit' && ids[1] === 'h-msg' && (k === 'land' || !o.wait.length) && x.title === L.title && x.tfs >= 8 && x.tout <= 1 && (m !== 'tilt' || x.tilt === 'none'), bad, col: ids.join(), wait: o.wait, fs: o.fs, lines: o.lines, tfs: x.tfs, tl: x.tl, tilt: x.tilt });
@@ -221,7 +239,7 @@ try {
   await turn(page, OR.land); await page.evaluate(() => Input.setMode('tilt'));
   const capped = await page.evaluate(async ([msg, toast]) => { const g = window.__game, Tt = document.getElementById('toast'), o = { seen: 0, wait: 0 }; g.msg(msg, 'gold', 60); g.toast(toast, 1500);
     const t0 = performance.now(); await new Promise(res => { const f = () => { if (Tt.classList.contains('show') && getComputedStyle(Tt).visibility === 'visible') o.seen++; if (Tt.classList.contains('wait')) o.wait++; if (performance.now() - t0 > 8500) res(); else requestAnimationFrame(f); }; requestAnimationFrame(f); });
-    o.show = Tt.classList.contains('show'); return o; }, [PIT.en.msg, PIT.en.toast]);
+    o.show = Tt.classList.contains('show'); o.phase = g.phase; o.screen = g.screen; o.pit = g.race.player.pitState || ''; o.col = Tt.classList.contains('col'); return o; }, [PIT.en.msg, PIT.en.toast]);
   await clear(page);
   T.check('a toast with no room waits, at most 6 s, then is not shown any more (never late)', capped.wait > 0 && capped.seen === 0 && !capped.show, JSON.stringify(capped));
   // the toast of the way in, still up (waiting, or showing) at the hand-back: gone with the autopilot, never after VOZIŠ TI!; the tilt meter back
@@ -235,7 +253,8 @@ try {
   const last = await both(page, 'race-lastlap', 'ZADNJI KROG!', ['h-msg']);
   await page.evaluate(() => { window.__game.autoDrive = true; });   // (the race goes on in real time meanwhile: the car on the autopilot, not into a wall at full speed with no one at the wheel)
   await turn(page, OR.land);
-  await page.waitForFunction(() => document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (drawn again four times a second of the race)
+  await page.waitForFunction(() => !document.getElementById('h-msg').classList.contains('show') && !document.getElementById('h-teamradio').classList.contains('on') && !document.getElementById('toast').classList.contains('show')
+    && document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (the texts gone; the tower drawn again four times a second of the race)
   const alone = await page.evaluate(MEASURE), atw = alone.col.find(c => c.id === 'h-tower');
   await page.evaluate(() => { window.__game.autoDrive = false; });
   T.check('on its side, a race: the timing tower the column\'s last, fewer rows (or none) under the texts; alone under the map with all its rows',
@@ -251,7 +270,7 @@ try {
   await mode('vrsic', 'tt');
   await page.evaluate(() => window.__game.sim(4, true));
   const tt = await both(page, 'timetrial', 'CP1 -0.42', ['h-msg'], { radio: null });
-  T.check('a time trial: the height profile right under the map, the message under it', ['land', 'port'].every(k => tt[k].col[0].id === 'h-prof' && tt[k].col[1].id === 'h-msg'), JSON.stringify(['land', 'port'].map(k => tt[k].col.map(c => c.id))));
+  T.check('a time trial: the height profile right under the map (upright under the damage picture), the message under it', ['land', 'port'].every(k => { const c = rest(tt[k].col.map(c => c.id)); return c[0] === 'h-prof' && c[1] === 'h-msg' && (k === 'land' || tt[k].col[0].id === 'h-dmg'); }), JSON.stringify(['land', 'port'].map(k => tt[k].col.map(c => c.id))));
   // its finish: NOV REKORD! (or CILJ! ±) and under it the splits, in the column until the results (each point and its time, the first run
   // here; over 10 minutes the widest), not in the middle of the track; on its side, then upright
   await turn(page, OR.land);
@@ -307,7 +326,7 @@ try {
     await A.page.evaluate(() => window.__game.onAction('net-go'));
     for (const x of [A, B]) await until(x.page, () => { const n = window.__game.net; return !!(n && n.race && n.race.startT != null); }, 90000);
     for (const [x, k] of [[A, 'port'], [B, 'land']]) {
-      await x.page.waitForFunction(() => !document.getElementById('h-lights').classList.contains('show'), null, { timeout: 60000 }).catch(() => { });   // (the start lights gone: the column stops above them while they show)
+      await x.page.waitForFunction(() => { const e = document.getElementById('h-lights'); return window.__game.phase === 'racing' && !e.classList.contains('show') && +getComputedStyle(e).opacity < 0.01; }, null, { timeout: 60000 }).catch(() => { });   // (the start lights gone, faded out too (.25 s): the column stops above them while they show. Racing: before the intro is over the lights are not up yet)
       const o = await texts(x.page, 'START!', { radio: null }), bad = wrong(o), ids = o.col.map(c => c.id);
       if (SHOTS) await x.page.screenshot({ path: path.join(SHOTS, `online-${k}.png`) });
       T.check(`a race with a friend, ${k === 'land' ? 'on its side' : 'upright'}: the message and the toast under the map, its width, stacked; nothing over the middle or over the HUD`, !bad.length && ids.includes('h-msg') && (k === 'land' || ids.includes('toast')), JSON.stringify({ bad, col: ids, wait: o.wait }));
