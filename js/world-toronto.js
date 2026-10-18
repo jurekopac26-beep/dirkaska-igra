@@ -307,9 +307,8 @@
         // the team's stand on the pit wall side (a desk with screens under a small roof)
         { const o = (p.wall + p.lin) / 2; B(5, o, 0.95, 2.4, 0.06, 1.0, [0.3, 0.31, 0.34]); B(5, o, 2.4, 2.6, 0.07, 1.4, [0.22, 0.23, 0.26], [0.3, 0.31, 0.35]); for (const a of [3.9, 6.1]) B(a, o, 0, 0.08, 2.4, 0.08, FR); B(5, o - 0.35, 1.05, 2.0, 0.38, 0.05, [0.16, 0.24, 0.38]); }
         const mine = Math.abs(q + 5 - P0[3]) < 1;
-        if (mine) { const sb = s0 + 5, yc = [0.98, 0.82, 0.12];
-          out.pitBox = { s: sb, x: oc[0] + nx * (base + 4.2), z: oc[1] + nz * (base + 4.2), hd, tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * p.o), y: T.hy[i] };
-          for (const [d0, d1, l0, l1] of [[-3.2, 3.2, p.o - 2.6, p.o - 2.35], [-3.2, 3.2, p.o + 2.35, p.o + 2.6], [-3.2, -2.95, p.o - 2.6, p.o + 2.6], [2.95, 3.2, p.o - 2.6, p.o + 2.6]]) strip(sb + d0, sb + d1, sd * l0, sd * l1, yc, 0.04); }
+        if (mine) { const sb = s0 + 5, bp = T.bayPose(P0[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the left, sd)
+          out.pitBox = { s: sb, x: oc[0] + nx * (base + 4.2), z: oc[1] + nz * (base + 4.2), hd, tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a, y: T.hy[i] }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: T.hy[i] });
       }
       const pbs = out.pitBoxes; T.pitStands = null;

@@ -62,6 +62,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // pit lane on the left of the straight: [centre offset (negative: on the left), from, to, the player's box, a long way in]; the real way in
     // leaves before the last chicane and the way out joins at Turn 2, here the lane runs beside the straight from the chicane's exit (an approximation)
     pit: [-15, -195, 290, 45, 45],
+    pitApron: 3.7,                 // the apron in front of the paddock building (metres past the lane's outer edge): a shallow box, the car turns in less (Core Track.bayDim)
     pitRow: [-60, 60],             // the first and the last of the 13 crews' boxes (in front of the paddock building, -106 .. 220 m)
     pitBld: [-106, 220, 22.2, 47.5],   // the paddock building (OSM): from, to (metres after the start line), front and back (metres left of the centre line)
     // grandstands [from, to, side, rows, roof]: temporary stands at the usual places (approximate)
@@ -70,6 +71,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ga: [[600, 700, 1, 0], [1000, 1110, 1, 0], [1180, 1300, -1, 0], [1560, 1660, 1, 0], [1880, 2060, 1, 0], [2180, 2240, -1, 0], [2380, 2600, 1, 0], [2960, 3060, 1, 0], [-1240, -1060, -1, 0], [-820, -720, -1, 0]],
     sectors: [1600, 3060],
     drs: [[7, -40, 110, 8], [10, 160, 520, 13], [14, 90, 240, 1]],   // three DRS zones (approximate)
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[900, 1006, 'chicane'], [1422, 1594, 'chicane'], [2192, 2296, 'chicane'], [4080, 4156, 'chicane']],   // T3-4, T6-7, T8-9, T13-14
     // named places: [HUD label, x, z, the commentator's lines]; the turns by their numbers only
     names: [
       ['Zavoj 1', 38.5, 444, ['Turn one, a quick left!', 'Into Turn One, left and then right!', 'Turn one, the field squeezes in!']],

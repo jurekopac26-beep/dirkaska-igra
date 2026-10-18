@@ -153,10 +153,13 @@ try {
     `host ${JSON.stringify(lockC)}, Fani alone ${fAlone} (${fRole})`);
   await Promise.all([C, D, E].map(x => until(x.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing' && g.net && g.net.race); }, null, 90000)));
   await wait(7000);
-  const views = await Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
-  const own = Object.fromEntries(views.map(v => [v.me, v.own]));
+  const views = await Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, v: +r.player.speed.toFixed(1), t: Date.now(), cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
+  const own = Object.fromEntries(views.map(v => [v.me, v]));
+  // (the pages are read one after another: where each car is when the other page is read, from its own speed; then off by at most 40 m and
+  // the network's delay at that speed, 0.4 s: 10 states a second passed on by the host in batches, and drawn a little behind)
+  const near = (vw, id, d) => { const o = own[id], at = o.own + o.v * (vw.t - o.t) / 1000; return Math.abs(d - at) < 40 + 0.4 * o.v; };
   T.check('quick match, the race of three (a big grid: 10 states a second, the host passes them on in batches): three cars on every page, each sees the other two move where they are',
-    views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && Math.abs(d - own[id]) < 40)), JSON.stringify(views));   // (off the grid; the pages are read one after another)
+    views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && near(v, id, d))), JSON.stringify(views));   // (off the grid)
   await leave(E); await leave(F); await leave(C); await leave(D); await wait(1500);
   await Promise.all([tap(C), tap(D)]);
   const [sC, sD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];
@@ -164,8 +167,15 @@ try {
   await leave(C); await leave(D); await wait(1500);
   // a waiting place whose owner is gone without a word (a phone that lost its network): skipped after a few seconds
   const ver = (await E.page.evaluate(() => window.__game.ver)).replace(/[^A-Za-z0-9]/g, '');
-  dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
-  await new Promise((res, rej) => { dead.on('open', res); dead.on('error', rej); }); await wait(500);
+  for (let k = 0; ; k++) {   // (the place must really be the dead one's: OPEN, not ID-TAKEN while the last room's host still holds it)
+    dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
+    const first = await new Promise((res) => { dead.once('message', (m) => res(String(m))); dead.once('error', (e) => res('error ' + e.message)); dead.once('close', () => res('closed')); });
+    if (/"OPEN"/.test(first)) break;
+    try { dead.terminate(); } catch (_) { }
+    if (k >= 100) throw new Error('place 0 never free for the dead socket: ' + first);
+    await wait(200);
+  }
+  await wait(500);
   await tap(E); await wait(500); await tap(F);
   const [tE, tF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
   T.check('quick match: a dead waiting place is skipped, the two still meet', tE === 'host' && tF === 'guest', `${tE} / ${tF}`);
@@ -178,9 +188,13 @@ try {
   await tap(H); await until(H.page, () => { const g = window.__game.net; return !!(g && g.open && g.synced); }, null, 40000);
   for (const x of [G, H, I]) await x.page.evaluate(() => { window.__game.autoDrive = true; });
   await tap(I);
-  const fullG = await until(G.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000);
+  // (the room's status as its host shows it: the one who waits first is the host as a rule, but on a busy machine the server can drop the
+  // waiting one for a moment, its place found taken when it comes back, and then another of the three is the host. Read on whichever page
+  // is the host, the room's three there; exactly one host)
+  const rooms = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game.net; return g && g.players.length === 3 ? { role: g.role, status: document.getElementById('on-status').textContent, locked: g.locked } : null; }, null, 40000)));
+  const roles = rooms.map(r => r.role), fullG = Object.assign({ roles }, rooms[roles.indexOf('host')] || rooms[0]);
   const auto = await Promise.all([G, H, I].map(x => until(x.page, () => { const g = window.__game; return g.race && g.net && g.net.race ? { cars: g.race.cars.length, grid: g.net.race.grid.length } : null; }, null, 90000)));
-  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
+  T.check('quick match: a full room starts its race by itself (all three on the grid), and takes nobody more', roles.filter(r => r === 'host').length === 1 && /Soba je polna \(3\)/.test(fullG.status) && fullG.locked && auto.every(a => a.cars === 3 && a.grid === 3), `${JSON.stringify(fullG)} | ${JSON.stringify(auto)}`);
   for (const x of [G, H, I]) await leave(x);
   T.check('no page errors (quick match)', ![C, D, E, F].some(x => x.errors.length), [C, D, E, F].flatMap(x => x.errors).slice(0, 5).join(' | '));
   T.check('no page errors', !A.errors.length && !B.errors.length, A.errors.concat(B.errors).slice(0, 5).join(' | '));

@@ -59,6 +59,10 @@ const Core = (function () {
   // end does; the traffic does not pull up there either)
   const SNS = 6, SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4, gc: 2 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
 
+  // the braking boards' plate (Track.brakeBoards, World's brakeBoards): width, height (m), its lower edge above the road on the verge (y0) and over
+  // a barrier (y1: above the cars by the wall and the spectators behind it)
+  const BB = { w: 2.0, h: 1.5, y0: 0.5, y1: 1.9 };
+
   class Track {
     constructor(def) {
       this.def = def;
@@ -1046,6 +1050,138 @@ const Core = (function () {
       return clamp(best * this.ds, 120, 400);
     }
 
+    // the braking boards of a circuit (World draws them: js/world.js brakeBoards; tests/boards.test.js): on a closed circuit (not an open
+    // road, a rally stage or a test track), before each heavy braking zone of the AI's dry profile (Race._prof's default grip and brakes):
+    // from 60 m/s or more down by 25 m/s or more, to under 60 % of it, after a straight of at least 290 m: a board 300, 200 and 100 m before
+    // the corner's entry (where the braking ends and the corner's own grip limit takes over). A circuit with no such straight: 150, 100
+    // and 50 m before the zones after one of at least 160 m; def.brakeBoards = { d: [...], at: [...] }: the distances and the entries
+    // (metres after the start line) the track sets itself (Monaco's). The heaviest braking first, at most 8 zones. On the outside of the
+    // approach (away from the apex, where the car comes from); where that side has a pit lane's mouth, a side road's mouth, a bridge, a
+    // bend or the start line, moved up to 8 m along the road, else on the other side. The plate (BB.w x BB.h, its face to the cars coming)
+    // on two legs on the verge, BB.y0 above the road, its inner edge 0.9 m or more past the asphalt and the kerb, 0.25 m clear of the
+    // barrier; where that does not fit (a street circuit's walls), over the barrier (kind 1: its legs in the barrier line, the plate BB.y1
+    // above the road, never over the asphalt). -> [{ s (the entry, m from sample 0), d0 (m after the start line), dir (1: a right-hander), v0, v1
+    // (m/s: the approach, the corner), boards: [{ d (its number), s, i, side, lat (the plate's centre), kind, x, z, y (the road's height), hd,
+    // pw, ph, py (the plate's width, height, its lower edge above the road) }] }]
+    brakeBoards() {
+      if (this._bb) return this._bb;
+      const def = this.def, N = this.N, ds = this.ds, L = this.len, k = this.k, W = (i) => ((i % N) + N) % N, out = this._bb = [];
+      if (this.open || def.test || def.rally || def.descent || def.brakeBoards === false) return out;
+      const v = this.speedProfile(CSK.aiLatA, CSK.aiBrakeA, 85, CSK.aiWmax, 0, 0.9), vl = this.speedProfile(CSK.aiLatA, 1e9, 85, CSK.aiWmax, 0, 0.9);   // (vl: the corners' own limit, no braking)
+      const dS = (s) => ((s - this.startS) % L + L) % L;
+      const conflict = (s, side) => {
+        const i = this.idx(s), d = dS(s);
+        if (d < 14 || d > L - 14 || Math.abs(k[i]) > 1 / 160) return true;   // (the start line's gantry; a bend)
+        if (def.pit) { const p = this.pitAt(s); if (p && p.sd === side && p.gap) return true; }   // (where the pit lane leaves or joins the circuit)
+        if (this.gap && this.gap[side > 0 ? 1 : 0][i]) return true;   // (a side road's mouth)
+        for (const c of this.cross || []) for (const f of [c.lo, c.up]) { const dd = Math.abs(i - f); if (Math.min(dd, N - dd) * ds < 30) return true; }   // (a bridge)
+        return false;
+      };
+      const board = (d, s, side) => {
+        const i = this.idx(s), bar = side > 0 ? this.br[i] : this.bl[i], e = this.wAt(i) + (this.curb[i] ? this.curbW : 0), kind = bar - e >= BB.w + 1.15 ? 0 : 1;   // (e: the asphalt's and the kerb's edge)
+        const lat = side * (kind ? Math.max(bar + 0.35, e + 0.3 + BB.w / 2) : Math.min(e + 0.9 + BB.w / 2 + 1, bar - 0.25 - BB.w / 2));
+        return { d, s, i, side, lat, kind, x: this.px[i] + this.nx[i] * lat, z: this.pz[i] + this.nz[i] * lat, y: this.hasElev ? this.hy[i] : 0, hd: this.hd[i], pw: BB.w, ph: BB.h, py: kind ? BB.y1 : BB.y0 };
+      };
+      const zone = (e, D, own) => {   // the boards before the entry at sample e (null: one of them fits nowhere)
+        let cs = 0; for (let m = 0; m <= 30; m++) cs += k[W(e + m)];
+        const dir = cs > 0 ? 1 : -1, sE = e * ds, B = [];
+        for (const d of D) {
+          let b = null;
+          for (const side of [-dir, dir]) { for (const sh of [0, 4, -4, 8, -8]) { const s = ((sE - d + sh) % L + L) % L; if (!conflict(s, side)) { b = board(d, s, side); break; } } if (b) break; }
+          if (!b) { if (!own) return null; b = board(d, ((sE - d) % L + L) % L, -dir); }   // (the track's own: where it says)
+          B.push(b);
+        }
+        return { s: sE, d0: dS(sE), dir, boards: B };
+      };
+      if (def.brakeBoards) {   // the track's own
+        const D = def.brakeBoards.d || [300, 200, 100];
+        for (const a of def.brakeBoards.at) { const e = this.idx(this.startS + a), z = zone(e, D, true); if (z) out.push(Object.assign(z, { v0: v[W(e - Math.round(D[0] / ds))], v1: v[e] })); }
+        return out;
+      }
+      const found = (D, need) => {   // the zones whose straight before the entry is at least need m long
+        const Z = [];
+        for (let i = 0; i < N; i++) {
+          if (!(v[i] < v[W(i - 1)] && v[i] <= v[W(i + 1)])) continue;   // the slowest point of a corner
+          let e = i, n = 0; while (n < N && v[W(e - 1)] > v[e] && v[W(e - 1)] >= vl[W(e - 1)] - 0.05) { e = W(e - 1); n++; }   // back to its entry (the corner's own limit)
+          let b = e; n = 0; while (n < N && v[W(b - 1)] > v[b] + 1e-6) { b = W(b - 1); n++; }   // and to where the braking starts
+          if (v[b] < 60 || v[b] - v[i] < 25 || v[i] > 0.6 * v[b]) continue;
+          let j = e, st = 0; while (Math.abs(k[j]) > 1 / 250 && st < 80) { j = W(j - 1); st += ds; }   // (out of the corner's own way in)
+          while (Math.abs(k[j]) < 1 / 160 && st < 1000) { j = W(j - 1); st += ds; }
+          if (st < need) continue;
+          const z = zone(e, D); if (z) Z.push(Object.assign(z, { v0: v[b], v1: v[i] }));
+        }
+        return Z;
+      };
+      let Z = found([300, 200, 100], 290); if (!Z.length) Z = found([150, 100, 50], 160);
+      Z.sort((a, b) => (b.v0 - b.v1) - (a.v0 - a.v1) || a.s - b.s);
+      out.push(...Z.slice(0, 8).sort((a, b) => a.d0 - b.d0));
+      return out;
+    }
+
+    // the HUD's corner signs (game.js updateNote, #h-note), built once (game.js asks at the race start): T.corners as they are (the arrows),
+    // the bends they miss (runs of curvature over 1/250 m^-1 one way that turn over 0.35 rad and touch no corner: 'fast', the gentle glyph,
+    // coloured by the tightest radius), the track's own bends (def.hudSigns 'bend') and the blue signs: the roundabouts (def.rings: where
+    // the route runs within r + hw + 8 m of the centre) and the chicanes (def.notes 'chicane', def.hudSigns 'chicane' | 'ring'). A corner
+    // within 15 m of a blue sign (or inside a 'bend') is left out: one steady sign instead of 2-3 arrows. T.corners itself never changes
+    // (the scenery, the sounds, qualiBack, the menu's corner count read it).
+    // [{ kind: 'corner'|'fast'|'bend'|'ring'|'chic', s0, s1, e, i0, dir (1 right, -1 left, 0 a roundabout), sev 0-3, hair }], by s0
+    // (m along the road from sample 0, as P.q.s); e: where it goes (4 m before a sign's start; a blue one 4 m before its end)
+    hudSigns() {
+      if (this._hs) return this._hs;
+      const N = this.N, ds = this.ds, L = this.len, k = this.k, open = this.open, def = this.def;
+      const at = (d) => open ? this.startS + d : (((this.startS + d) % L) + L) % L;   // metres after the start line -> s
+      const off = (a, b) => open ? b - a : ((((b - a) % L) + L * 1.5) % L) - L / 2;    // b - a along the loop
+      const near = (a, b, m) => { const x = off(a.s0, b.s0); return x <= a.s1 - a.s0 + m && x + b.s1 - b.s0 >= -m; };
+      const sevR = (r) => r < 28 ? 3 : r < 55 ? 2 : r < 110 ? 1 : 0;
+      const turn = (s0, s1) => { let t = 0, mk = 0; for (let s = s0; s <= s1; s += ds) { const q = k[this.idx(s)]; t += q * ds; mk = Math.max(mk, Math.abs(q)); } return { t, mk }; };
+      // a chicane's first way: the first run of one sign (from 15 m before it) that turns 0.2 rad
+      const first = (s0, s1) => { let g = 0, t = 0; for (let s = s0 - 15; s <= s1; s += ds) { const q = k[this.idx(s)], h = Math.sign(q); if (h !== g) { g = h; t = 0; } t += q * ds; if (Math.abs(t) >= 0.2) return g; } return Math.sign(turn(s0, s1).t) || 1; };
+      const blue = [], bends = [], out = [];
+      for (const r of def.rings || []) {
+        const R = r.r + (r.hw || 3) + 8, inside = (i) => Math.hypot(this.px[i] - r.c[0], this.pz[i] - r.c[1]) < R, W = (i) => open ? clamp(i, 0, N - 1) : (i + N) % N;
+        const ic = r.d != null ? this.idx(at(r.d)) : this.nearestIdx(r.c[0], r.c[1]); if (!inside(ic)) continue;
+        let a = ic, b = ic, n = 0;
+        while (n++ < N && W(a - 1) !== a && inside(W(a - 1))) a = W(a - 1);
+        n = 0; while (n++ < N && W(b + 1) !== b && inside(W(b + 1))) b = W(b + 1);
+        const s0 = a * ds; blue.push({ kind: 'ring', s0, s1: s0 + (open ? b - a : (b - a + N) % N) * ds, i0: a, dir: 0, sev: 0, hair: false });
+      }
+      const span = (a, b, t) => { const s0 = at(a), s1 = s0 + (b - a), i0 = this.idx(s0);
+        if (t === 'bend') { const q = turn(s0, s1), sev = sevR(1 / Math.max(q.mk, 1e-6)); bends.push({ kind: 'bend', s0, s1, i0, dir: Math.sign(q.t) || 1, sev, hair: sev === 3 && Math.abs(q.t) > 2.0 }); }
+        else blue.push({ kind: t === 'ring' ? 'ring' : 'chic', s0, s1, i0, dir: t === 'ring' ? 0 : first(s0, s1), sev: 0, hair: false }); };
+      for (const [a, b, t] of def.notes || []) if (t === 'chicane') span(a, b, 'chicane');
+      for (const [a, b, t] of def.hudSigns || []) span(a, b, t);
+      out.push(...blue, ...bends);
+      const inC = new Uint8Array(N);
+      for (const c of this.corners) {
+        const len = (open ? c.i1 - c.i0 : (c.i1 - c.i0 + N) % N) * ds, g = { kind: 'corner', s0: c.s0, s1: c.s0 + len, i0: c.i0, dir: c.dir, sev: c.sev, hair: c.sev === 3 && c.angle > 2.0 };
+        for (let n = 0, i = c.i0; n <= len / ds; n++, i = (i + 1) % N) inC[i] = 1;
+        if (!blue.some(x => near(x, g, 15)) && !bends.some(x => near(x, g, 0))) out.push(g);
+      }
+      let start = 0; if (!open) for (let i = 0; i < N; i++) if (Math.abs(k[i]) < 1 / 400) { start = i; break; }   // (as _buildCorners)
+      let cur = null;
+      for (let n = 0; n <= N; n++) {
+        const i = (start + n) % N, on = n < N && Math.abs(k[i]) > 1 / 250, g = Math.sign(k[i]);
+        if (cur && (!on || g !== cur.dir)) {
+          const s0 = cur.i0 * ds, f = { kind: 'fast', s0, s1: s0 + cur.n * ds, i0: cur.i0, dir: cur.dir, sev: sevR(1 / cur.mk), hair: false };
+          if (Math.abs(cur.t) > 0.35 && !cur.hit && !blue.some(x => near(x, f, 15)) && !bends.some(x => near(x, f, 15))) out.push(f);
+          cur = null;
+        }
+        if (on) { if (!cur) cur = { i0: i, n: 0, dir: g, t: 0, mk: 0, hit: 0 }; cur.n++; cur.t += k[i] * ds; cur.mk = Math.max(cur.mk, Math.abs(k[i])); cur.hit |= inC[i]; }
+      }
+      for (const g of out) g.e = (g.kind === 'ring' || g.kind === 'chic' ? g.s1 : g.s0) - 4;
+      return (this._hs = out.sort((a, b) => a.s0 - b.s0));
+    }
+    // the sign the HUD shows at s (m along the road, P.q.s) at v m/s: the nearest one ahead from 35 + 2.3 v m before it until its e; a blue
+    // one stays up while the car is in it. A lap wraps only on a circuit (an open road's start is never 'ahead' of its finish)
+    signAt(s, v) {
+      const H = this.hudSigns(), L = this.len, look = 35 + 2.3 * v; let best = null, bd = 1e9;
+      for (const g of H) {
+        let d = g.s0 - s; if (!this.open) { if (d < -L / 2) d += L; else if (d > L / 2) d -= L; }
+        if (d + g.e - g.s0 > 0 && d < look && d < bd) { bd = d; best = g; }
+      }
+      return best;
+    }
+
     // pace notes of a rally stage (open roads), as a co-driver reads them (game.js speaks each call ahead of the car): the bends graded by
     // their tightest radius from one (the slowest) to six, 'flat' for a gentle one, hairpins and square junctions; long, tightens, opens;
     // the jumps and crests (def.bumps by height; one inside a bend is read with it: 'over crest'). Calls: what follows within 30 m is
@@ -1117,6 +1253,30 @@ const Core = (function () {
       const S = this.pitStands, e = S ? Math.min(sstep(S[0] - 26, S[0] - 1, d), sstep(S[1] + 26, S[1] + 1, d)) : 0, wall = br + 0.25, lin = o - 3.5;
       return { d, o, t, br, sd, gap: o - 3.5 < br + 0.8, wall, lin, lout: o + 3.5, inner: wall + 0.12 + Math.max(0, lin - 0.3 - wall - 0.12) * e };
     }
+    // the 13 crews' boxes as the world builds them (def.pitRow: every 10 m from its first, where the lane runs full width; a crew in each of the
+    // first 13): their centres, metres from the start line. The player's is def.pit[3], the AI cars' the others (Race._aiBox)
+    crewBoxes() {
+      if (this._cb) return this._cb; const P = this.def.pit, R = this.def.pitRow || (P ? [P[1] + 60, P[2] - 40] : null), out = [];
+      if (R) for (let q = R[0]; q <= R[1] && out.length < 13; q += 10) { const p = this.pitAt(this.startS + q); if (p && p.t >= 0.999) out.push(q + 5); }
+      return (this._cb = out);
+    }
+    // a car's box on the apron in front of its garage (BAY): x = metres past the box at boxD (metres from the start line) at s
+    boxX(s, boxD) { const L = this.len; let x = s - this.startS - boxD; x = ((x % L) + L) % L; return x > L / 2 ? x - L : x; }
+    // the lateral target beyond the lane's centre x m past the box (W: the box's centre beyond the lane's centre). In: an S onto the apron
+    // from the lane's centre BAY.inL m before the box, level with the box from BAY.fl m before it and on past it (the autopilot aims along
+    // it: the car stops on it parked straight, parallel to the lane, in front of its garage); out (done, or run past the box): back to the
+    // lane's centre over BAY.outL m
+    bayOff(x, W, done) {
+      if (!done && x <= 6) return W * sstep(-BAY.inL, -BAY.fl, x);
+      return x < 0 ? W : W * (1 - sstep(0, BAY.outL, x));
+    }
+    // the box's depth on this track (def.pitApron: the apron from the lane's outer edge to the garages' front, default 9 m): o, the car's centre
+    // past the lane's edge (BAY.o, less where the apron is shallow: the car stops at its edge, Montréal); room, the wall
+    bayDim() { if (!this._bay) { const A = this.def.pitApron || 9; this._bay = { o: clamp(A - 2.5, 0.8, BAY.o), room: A - 0.6 }; } return this._bay; }
+    // how far past the lane's outer edge a car may go at s near its box (Core's wall there: the garages' front less 0.6 m); 0 elsewhere
+    bayRoom(s, boxD) { const x = this.boxX(s, boxD); return x > -BAY.inL - 12 && x < BAY.outL + 12 ? this.bayDim().room : 0; }
+    // where the car stops in the box at boxD: s, its lateral offset o, its yaw a from the lane's direction (0: parked straight, parallel to it)
+    bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; const o = this.bayDim().o; return { s, o: p.lout + o, a: 0 }; }
 
     // nearest point search around hint index; returns object (reused)
     query(x, z, hint, out) {
@@ -1174,7 +1334,7 @@ const Core = (function () {
     // sample. A side road (q.k >= 0, past the road's own asphalt): asphalt, or makadam on a forest road, the gravel of the verge past its edge
     surface(q) {
       const wa = this.wa, d = q.d, ad = Math.abs(d), w = wa ? lerp(wa[q.a], wa[this.open ? Math.min(this.N - 1, q.a + 1) : (q.a + 1) % this.N], q.t) : this.w;
-      if (this.free && ad > w + 0.3) return 5;   // (NEW VERSION · TEST 1: off the road the new map's packed gravel and sand, driven as makadam, not a run-off's gravel trap)
+      if (this.free && ad > w + 0.3) return 5;   // (NEW VERSION · TEST 1: off the road the new map's packed gravel and sand, driven as makadam, not a run-off's gravel trap; its paved ways: track.surf2, Car.stepCS)
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
         if (this.sf) { const sf = this.sf[q.a]; if (sf !== 5) return sf; }
@@ -1352,6 +1512,11 @@ const Core = (function () {
     if (c.wreck) d += c.wreck.nL;   // (a kit vehicle: a second more for every wheel knocked off)
     return d;
   }
+  // the stop's repair as the renderer and the HUD show it, bit by bit (render only: the damage itself is undone at once by repairCar at the
+  // end of the stop): its progress u (0 outside a repair) and the phases over it: the glass, the bodywork (from .. to), the wheels back on
+  // (wheel: the pit crew's tyre men push the new ones home then, render.js crewLogic reads it), the lost panels one by one, the lamps, the trim
+  const REPAIR = { glass: 0.06, body: [0.08, 0.6], wheel: 0.46, parts: [0.4, 0.85], lamps: 0.62, trim: 0.88 };
+  const repairU = (c) => c.pitState === 'repair' && c.pitDur > 0 ? clamp(c.pitT / c.pitDur, 0, 1) : 0;
   // every car's grip and turn (first measured from SWGP2 gameplay video for the old slide model; stepCS builds on amax, kv and rmin):
   //   amax  : lateral grip (g) - the video's cars corner at ~1.6-2.2 g
   //   kv    : how fast momentum swings toward the nose, per radian of slide (1/s)
@@ -1429,7 +1594,7 @@ const Core = (function () {
     bxOn: 0.10, bxOff: 0.18,   // brake excess builds / decays (s) (B5a: +4 deg at 0.2 s, +6.8 at 0.3 s, gone 0.5 s after release)
     coastT: 0.2,       // lift / coast detection (s) (B5b)
     liftT: 0.45, liftOn: 0.12, liftA: 0.5,   // FR/MR lift-off pulse: decay, attack (s), only above liftA x aL lateral (5.4)
-    hbX: 0.17, hbBrk: 0.3,     // the drift button in cs: +10 deg rotation aid and a light 0.3 g brake (C9)
+    hbX: 0.17, hbBrk: 0.3,     // the handbrake (inHand) in cs: +10 deg rotation aid and a light 0.3 g brake (C9); the AI's only (parked, turning round), the player has none
     kFR: 3.5, kLR: 0.8, kLt: 0.5, kickHp: 0.35, kickOn: 0.06, kickMax: 0.35, kickPath: 0.3,   // surface-edge kick (B8c, C11): axle grip step
                        // (outer wheels weighted by the lateral load, kLt), side drag step, high-passed over kickHp s, <= 20 deg
     tapT: 1.5, tapMax: 0.4, tapDecay: 0.25,   // car contacts: the rigid-body yaw impulse x tapT becomes an attitude kick (<= 23 deg) that decays
@@ -1488,9 +1653,12 @@ const Core = (function () {
   // side (another car's, 9 m/s and more across; a wall's, 10 m/s and more) rolls it over away from the knock: for 1.2-1.6 s it slides on
   // without grip or drive, the road's drag slowing it a little, up in an arc and down again, turning one full turn (two after a harder knock)
   // about its long axis (the renderer turns it by rl.t / rl.T), its roof on the road half way round each turn (a dent on top, the roof
-  // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Its numbers: none random
-  const XR = { roll: 0, bump: 0, ai: 0, handle: 0 };
-  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; }
+  // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Only one such knock in ten (XROLL.p: every one
+  // was too many): each knock counts once (another within 4 m of the last one counted is the same crash), and which ones roll is a hash
+  // of the car and its count of knocks (xrK). Its numbers: none random (the race's own draws untouched)
+  const XR = { roll: 0, bump: 0, ai: 0, handle: 0, glass: 0 };
+  const XROLL = { p: 0.1 };
+  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
   // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
   // track rod: up to 0.05 of the lock, as a tyre going down pulls 0.03)
   // Razbijanje · nov način: odboji (xBump; off: carCollide as before). A knock turns the car it hits as hard as its impulse says (no damping
@@ -1508,10 +1676,13 @@ const Core = (function () {
   }
   function xRollStart(c, dir, imp) {
     if (!XR.roll || c.rl || c.net || c.air || !(imp > 9)) return;
+    const K = c.xrK; if (K && Math.hypot(c.x - K.x, c.z - K.z) < 4) return;   // (the same crash: one chance)
+    const n = K ? K.n + 1 : 1; c.xrK = { x: c.x, z: c.z, n };   // (in an object: the golden references digest only the plain fields)
+    if (((Math.imul((n * 2246822519 + (c.id | 0) * 3266489917) | 0, 668265263) >>> 0) % 1000) >= XROLL.p * 1000) return;
     const turns = imp > 15 ? 2 : 1;
     c.rl = { t: 0, T: 0.78 + 0.4 * turns, turns, dir: dir < 0 ? -1 : 1, H: 0.5 + 0.35 * turns + Math.min(0.6, (imp - 9) * 0.05), k: 0 };
   }
-  const _bk = { dy: 0, sl: 0 };   // (Track.bankAt output)
+  const _bk = { dy: 0, sl: 0 }, _bk2 = { sl: 0, nx: 0, nz: 0 };   // (Track.bankAt output; _bk2: the new map's banked bend, track.bank2)
 
   /* ---------------------------------------------------------------------
      CAR
@@ -1619,7 +1790,7 @@ const Core = (function () {
       this.x += this.vx * dt; this.z += this.vz * dt; this.h = wrapPi(this.h + this.w * dt); this.w *= Math.exp(-dt * 3);
       const s = Math.min(1, r.t / r.T); this.y = this.roadY + r.H * 4 * s * (1 - s); this.vy = 0;
       const k = Math.floor(s * r.turns + 0.5);
-      if (k > r.k) { r.k = k; if (this.dmgMode) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04)); } }   // (never lowers a wreck's)
+      if (k > r.k) { r.k = k; if (this.dmgMode && !this.pitG) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); const d0 = this.dmg; this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04)); if (this.wreck) wheelRule(this, d0, 0); } }   // (the wheel rule: its 80 % mark only, the knock that rolled it was a hit already)   // (never lowers a wreck's)
       if (r.t >= r.T) { delete this.rl; this.y = this.roadY; this.vx *= 0.8; this.vz *= 0.8; this.w = 0; }
     }
     stepCS(dt, trk) {
@@ -1630,7 +1801,8 @@ const Core = (function () {
         if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
-      if (trk.ground2) { const c2 = Math.cos(this.h), s2 = Math.sin(this.h), g0 = trk.ground2(this.x, this.z), g1 = trk.ground2(this.x + c2, this.z + s2), g2 = trk.ground2(this.x - c2, this.z - s2); this.roadY += g0; this.gradeNow += (g1 - g2) / 2; this.curvNow += g1 - 2 * g0 + g2; }   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest)
+      if (trk.ground2) { const c2 = Math.cos(this.h), s2 = Math.sin(this.h), yR = this.y, g0 = trk.ground2(this.x, this.z, yR), g1 = trk.ground2(this.x + c2, this.z + s2, yR), g2 = trk.ground2(this.x - c2, this.z - s2, yR); this.roadY += g0; this.gradeNow += (g1 - g2) / 2; this.curvNow += g1 - 2 * g0 + g2; }   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest; by the car's height, under the hill in the tunnel or on it)
+      if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); this.bankSl = _bk2.sl; this.bnx = _bk2.nx; this.bnz = _bk2.nz; }   // (the new map's banked bend, js/newmap.js ringBank: its height is in ground2, here its tilt and the way across it)
       if (this.rl) { this.xRollStep(dt); return; }   // (Razbijanje · nov način: rolling over, xRollStart)
       const ch = Math.cos(this.h), sh = Math.sin(this.h);
       const vl = this.vx * ch + this.vz * sh, vt = -this.vx * sh + this.vz * ch;
@@ -1647,7 +1819,7 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
+        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
         const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
@@ -1659,7 +1831,7 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
-      const wg = this.wet, muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip)
+      const wg = this.wet * (this.glassK || 1), muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip; broken glass on the road, Race._glassStep: less again)
       const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
@@ -1715,7 +1887,8 @@ const Core = (function () {
       if (this.locked) this.rpmTarget = M.ev ? 0 : M.idle + (M.redline * 0.88 - M.idle) * this.inThr;   // (on the grid: revving, but not an electric motor)
       if (!grounded) F = 0;
       const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : M.drive === 'RR' ? 0.62 : 0.55;   // (RR: the engine over the driven wheels)
-      const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1);   // (the formula's wings press the driven wheels down too)
+      const lchK = this.lch && !this.lch.done ? this.lch.k : 1;   // (the start: a late reaction, the driven wheels spinning away, see LAUNCH)
+      const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK;   // (the formula's wings press the driven wheels down too)
       let spin = 0;
       if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
       this.spin = thr > 0.2 && grounded ? spin * (M.spinK || 1) : 0;
@@ -1805,7 +1978,7 @@ const Core = (function () {
         const hold = (brk > 0.05 || hb > 0.5) && thr < 0.05 && spd < 0.4;
         if (!hold) { Fgrav = -m * G * gH / Math.sqrt(1 + gH * gH); Fx += Fgrav; }
       }
-      if (this.bankSl && grounded) { const a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = this.q.nx * a2, wz = this.q.nz * a2, fl = m * (wx * ch + wz * sh);
+      if (this.bankSl && grounded) { const b2 = trk.bank2 && !trk.bank, a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = (b2 ? this.bnx : this.q.nx) * a2, wz = (b2 ? this.bnz : this.q.nz) * a2, fl = m * (wx * ch + wz * sh);
         Fx += fl; Fy += m * (-wx * sh + wz * ch); Fgrav += fl; }
       // ---- yaw: follow (path rate + attitude rate) with a short lag and a yaw-acceleration limit ----
       let rT = clamp(wN + dAtt, -K.rMax, K.rMax);
@@ -1857,8 +2030,8 @@ const Core = (function () {
     step(dt, trk) { return this.stepCS(dt, trk); }
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
-  const wreck0 = (W) => Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
-    stop: !!W.stop, cr: W.cr || 0, fin: W.fin || null });
+  const wreck0 = (W) => { if (W.rule) Object.assign(W.rule, { due: -1, burn: 0, ask: 0, spare: 1 }); return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
+    stop: !!W.stop, cr: W.cr || 0, fin: W.fin || null }); };
   const dnf = (c) => !!(c.wreck && c.wreck.dnf);   // out of the race (Odstop, see Race.retire)
   // a model whose part table has wheels (model.parts: every registered vehicle's; one of the 11 only once a patch def gives it a table):
   // its wheels come off and it drives on the hub, a wreck sheds what still hangs on, an AI one retires (the 11 without one: as always)
@@ -1871,32 +2044,71 @@ const Core = (function () {
   // Damage: overall 0..1 plus zones (0 front, 1 rear, 2 left = -z, 3 right = +z). lx/lz = local impact point
   // (x forward, z to the right); without a point the hit is spread over the whole car (hard landing).
   function applyDamage(c, amt, lx, lz) {
-    if (!c.dmgMode || !(amt > 0)) return;
+    if (!c.dmgMode || !(amt > 0) || c.pitG) return;   // (on the pit road: no damage, see Race.pitStep)
     if (c.dmgK) amt *= c.dmgK;   // (the run from the police: the patrol cars' reinforced bumpers, the player's car a little tougher)
     if (c.m.dmgK) amt *= c.m.dmgK;   // (a vehicle's own toughness, model.dmgK: a truck's frame, a kart's tubes)
+    const d0 = c.dmg;
     c.dmg = Math.min(1, c.dmg + amt);
-    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); if (c.wreck) wreckCheck(c); return; }
+    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); } return; }
     const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
     if (c.dents.length < 24) c.dents.push({ lx, lz, amt });
+    if (XR.glass && amt >= GLASS.amt && (c.glassN || 0) < GLASS.perCar) {   // (Razbijanje: šipe: a pane broken by it, its glass on the road there: Race._glassStep)
+      c.glassN = (c.glassN || 0) + 1; const gh = Math.cos(c.h), gs = Math.sin(c.h); (c.glassReq || (c.glassReq = [])).push(c.x + lx * gh - lz * gs, c.z + lx * gs + lz * gh); }
     // corner damage (FL, FR, RL, RR): a solid hit on a corner breaks that corner's light (a breakable vehicle, kitParts: the reach of a
     // hit grows with its length, so the wheels of a long one, far in from its corners, still feel it)
     const kx = [hl, hl, -hl, -hl], kz = [-hw, hw, -hw, hw], fo = kitParts(M) ? 1.6 * clamp(M.len / 4.4, 1, 1.5) : 1.6;
     for (let k = 0; k < 4; k++) { const wg = Math.max(0, 1 - Math.hypot(lx - kx[k], lz - kz[k]) / fo); c.cd[k] = Math.min(1, c.cd[k] + amt * wg * 1.8); if (c.cd[k] >= 0.16) c.lightOut[k] = 1; }
+    if (zone < 2) { const k0 = zone * 2; if (!c.lightOut[k0] && !c.lightOut[k0 + 1]) c.lightOut[k0 + (lz < 0 ? 0 : 1)] = 1;   // (a knock on the front or the rear: at least one of that end's lamps, the nearer one, broken at the first)
+      if (!(c.lamp1 & (3 << k0))) c.lamp1 = (c.lamp1 | 0) | (1 << (k0 + (lz < 0 ? 0 : 1))); }   // (lamp1: that first knock's nearer lamp, bit k, whatever broke before (a side knock's corner); the renderer of a car with its own damage table breaks it too, xTabHit)
     // windows shatter when their side of the car is badly hit (all of them in a total wreck); the roof sags as the car gets battered
     const WIN = [0.55, 0.55, 0.42, 0.42];
     for (let k = 0; k < 4; k++) if (!c.winOut[k] && (c.dz[k] >= WIN[k] || c.dmg >= 0.92)) c.winOut[k] = 1;
     c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1));
     // body parts come off once their area is damaged enough (a corner part also from its corner); a wheel (a part table with wheels,
-    // kitParts) only in a heavy crash with damage on (dmgMode 2): its corner crushed (cd >= 0.7) and the car three quarters destroyed
+    // kitParts) only in a heavy crash with damage on (dmgMode 2): its corner crushed (cd >= 0.7) and the car three quarters destroyed.
+    // The car's face and tail (MASK: the nose with its bumper, the bonnet, the front wings, the rear bumper, the boot) only once the whole
+    // car is 70 % gone as well (MASK_DMG): it keeps its looks till then (a part that carries downforce, an aero car's wing or splitter: as before)
     const PT = partsOf(M);
     for (const name in PT) {
       if (c.lost[name]) continue;
       const P = PT[name];
-      if (P.wh != null ? c.dmgMode === 2 && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
+      if (maskHeld(c, name, P)) continue;
+      if (P.wh != null ? c.dmgMode === 2 && !(c.wreck && c.wreck.rule) && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
     }
-    if (c.wreck) wreckCheck(c);
+    if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); }
+  }
+  // the wheel rule (Race opts.wheelRule: the vehicles it is for; wreck.rule on the player's car, damage on): its wheels come off by the
+  // damage alone, not by a corner (the old rule above and the wreck's last wheel are off for it). At 80 % one wheel, a random one of those
+  // still on; a hit from 70 % (amt >= WRULE.hit) one too. The second follows WRULE.t2 (3) s later, whatever the damage (the time the
+  // player has; a hit meanwhile no sooner). A hard hit (amt >= WRULE.hard) at 80 % or over: two at once, sometimes three or all four (the
+  // harder, the likelier). Two gone: the car stops (Race._wreckStep) and the game is over (wreck.rule.over). The fire (the user's): none
+  // when the first wheel comes off; in the last WRULE.hub (20 %) of the time to the second a small one where that wheel was (rule.burn 1,
+  // the hub's: Race._wreckStep), with the second the whole car (rule.burn 2); a hard hit taking two or more: the whole car at once.
+  // rule.fn counts the fires (the renderer draws each: Render fireCatch); a repair puts it out. The spare on the roof (rule.spare, one; a
+  // repair gives a new one): with it the first wheel off asks for the change (rule.ask: ZAMENJAJ KOLO, game.js) for those 3 s;
+  // Race.changeWheel puts it on at once, while the car drives on, and a fire burning by then goes out (rule.xn: the renderer lets the wind
+  // blow it out). With none left: no asking, the hub's fire, the second wheel in 3 s, the whole car on fire. After a change the 80 % mark
+  // takes a wheel again only when crossed (rule.chg), a hit from 70 % at once
+  const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08, t2: 3, hub: 0.2 };
+  const ruleFire = (Q, lvl) => { if (!Q.burn) Q.fn = (Q.fn || 0) + 1; if ((Q.burn || 0) < lvl) Q.burn = lvl; };
+  function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on
+    const W = c.wreck;
+    for (let j = 0; j < n; j++) {
+      const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partsOf(c.m)[WHEELS[k]]); if (!on.length) return;
+      detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(Math.random() * on.length))]]);
+    }
+  }
+  function wheelRule(c, d0, amt) {
+    const W = c.wreck, Q = W.rule, d1 = c.dmg;
+    if (!Q || W.dnf || c.finished || c.dmgMode !== 2) return;
+    if (d1 >= WRULE.d2 && amt >= WRULE.hard) {   // a hard hit at 80 % or over: two at once, sometimes three or four
+      let n = 2; if (Math.random() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (Math.random() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
+      ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); return;
+    }
+    const hit = d0 >= WRULE.d1 && amt >= WRULE.hit;   // (a hit from 70 %: its damage before it sets when the second goes)
+    if (!W.nL && (hit || (d1 >= WRULE.d2 && !(Q.chg && d0 >= WRULE.d2)))) { ruleDrop(c, 1); Q.due = Q.due0 = WRULE.t2; Q.ask = Q.spare ? 1 : 0; }
   }
   // a part comes off: lost, onto the race's debris list (Race.step), its share of the downforce with it (P.df; a model with the 8 old
   // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road); the
@@ -1918,12 +2130,16 @@ const Core = (function () {
     if (W.seq || c.dmg < 0.96 || !kitParts(c.m)) return;
     const PT = partsOf(c.m), L = [];
     for (const alt of WRECK_SEQ) { const n = alt.find(a => PT[a]); if (n && !c.lost[n]) L.push(n); }
-    if (c.dmgMode === 2) { let k = 0; for (let j = 1; j < 4; j++) if (c.cd[j] > c.cd[k]) k = j; const n = WHEELS[k]; if (c.cd[k] >= 0.4 && PT[n] && !c.lost[n]) L.push(n); }
+    if (c.dmgMode === 2 && !W.rule) { let k = 0; for (let j = 1; j < 4; j++) if (c.cd[j] > c.cd[k]) k = j; const n = WHEELS[k]; if (c.cd[k] >= 0.4 && PT[n] && !c.lost[n]) L.push(n); }
     const dzOf = (n) => c.dz[PT[n].z];
     W.seq = L.map((n, i) => [n, i]).sort((a, b) => dzOf(b[0]) - dzOf(a[0]) || a[1] - b[1]).map(e => e[0]);
     W.st = 0;
   }
   const WING = { bumperF: 0.5, bumperR: 0.4 };   // (the formula's front and rear wings are its bumper parts: their share of the downforce)
+  const MASK = { bumperF: 1, hood: 1, cover: 1, fenderL: 1, fenderR: 1, bumperR: 1, trunk: 1, tailgate: 1, spoiler: 1, wing: 1 }, MASK_DMG = 0.7;   // (applyDamage: the face and the tail stay on till 70 %; the renderer's damage table too, xTabHit)
+  // part `name` (its entry P) of the face or the tail held on (not lost, not hanging loose: the renderer asks too) till the car is 70 % gone;
+  // a part that carries downforce on a car that has it (an aero car's wing or splitter): never held
+  const maskHeld = (c, name, P) => !!MASK[name] && !(c.dmg >= MASK_DMG) && !(c.aeroK0 != null && ((P && P.df != null) ? P.df : c.m.parts ? 0 : WING[name]) > 0);
   // detachable parts: damage zone + threshold, mass (kg), collision radius, thickness, local position (fraction of half length/width), height
   const PARTS = {
     mirrorL: { z: 2, th: 0.35, m: 1, r: 0.2, h: 0.1, lx: 0.15, lz: -1.12, y: 0.95 },
@@ -2056,7 +2272,7 @@ const Core = (function () {
   // ---- debris lying on the road: flies off, tumbles, slides, rests; cars hitting it knock it away ----
   const relaxAng = (a, dt) => { const t = Math.round(a / Math.PI) * Math.PI; return a + (t - a) * Math.min(1, dt * 8); };
   // open road: how far a point (radius r) is past the wall at an end of the road (0.5 m in from the last sample); _en = inward normal
-  const _en = [0, 0], _wn = [0, 0];   // (_wn: the way back from a barrier or a side road's limit, Track.wall / stubPen)
+  const _en = [0, 0], _wn = [0, 0], _tw = [0, 0, 0];   // (_wn: the way back from a barrier or a side road's limit, Track.wall / stubPen; _tw: a free map's wall, trk.wall2)
   function endPen(T, q, r) {
     const sl = q.s + (q.over || 0);
     if (sl < 0.5 + r) { _en[0] = T.tx[0]; _en[1] = T.tz[0]; return 0.5 + r - sl; }
@@ -2090,14 +2306,34 @@ const Core = (function () {
     } else { d.rx += d.wx * dt; d.rz += d.wz * dt; }
     d.yaw += d.wy * dt;
   }
+  // a car and a piece: one lying on the road (the user's: driven over, not knocked away) stays where it lies; the car loses a little speed,
+  // the phone thumps (hitDebris) and, over a panel (not a mirror's bit), the car hops as if it jumped ~2 m (drawn only: hopN, hopT s, hopH m,
+  // the renderer's bump of the body; the physics stays on the road). Once a pass: d.on, the cars over it now. A piece still flying or
+  // sliding fast is knocked away as before
+  const DEB_RUN = { v: 3, k: 0.002, kMax: 0.025, m: 3, len: 2 };
+  // broken glass on the road (Razbijanje: šipe, XR.glass; never online): where a knock broke a pane (applyDamage: a knock of GLASS.amt or
+  // more, a car's GLASS.perCar panes) a patch of glass r m round; a car on it grips GLASS.mu less (20 %: it slides more, in a corner too),
+  // as much less as is left of it: each car driven over it scatters it, k x GLASS.pass, gone under GLASS.min (as the renderer scatters its
+  // pieces, xShardsRun). At most GLASS.n patches (the oldest go first)
+  const GLASS = { amt: 0.04, perCar: 6, r: 2, mu: 0.2, pass: 0.75, min: 0.15, n: 40, v: 2 };
   function debrisHit(c, d) {
     const dx = d.x - c.x, dz = d.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + d.r * 0.7 + 0.1;   // (beyond the car's reach: nothing to touch)
-    if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) return;
-    const ch = Math.cos(c.h), sh = Math.sin(c.h);
+    const gone = () => { if (d.on) { const j = d.on.indexOf(c); if (j >= 0) d.on.splice(j, 1); } };
+    if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) { gone(); return; }
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), lying = d.ground && Math.hypot(d.vx, d.vz) < DEB_RUN.v;
     for (let i = 0; i < c.circles.length; i++) {
       const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i];
       const ex = d.x - ax, ez = d.z - az, r = c.rad + d.r * 0.7, e2 = ex * ex + ez * ez;
       if (e2 >= r * r) continue;
+      if (lying) {
+        if (d.on && d.on.indexOf(c) >= 0) return;   // (still over it: the same pass)
+        (d.on || (d.on = [])).push(c);
+        const sp = Math.hypot(c.vx, c.vz); if (sp < 1.5) return;
+        const k = Math.min(DEB_RUN.kMax, d.m * DEB_RUN.k); c.vx *= 1 - k; c.vz *= 1 - k;
+        c.hitDebris = Math.max(c.hitDebris || 0, d.m >= DEB_RUN.m ? 6 : 2.5);
+        if (d.m >= DEB_RUN.m) { c.hopN = (c.hopN || 0) + 1; c.hopT = clamp(DEB_RUN.len / sp, 0.12, 0.35); c.hopH = clamp(0.04 + d.m * 0.006, 0.05, 0.14); }   // (the hop: the renderer's, the car's body up and down over the next ~2 m; the physics stays on the road)
+        return;
+      }
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
       d.x += nx * (r - e); d.z += nz * (r - e);
       const vrel = (c.vx - d.vx) * nx + (c.vz - d.vz) * nz;      // closing speed
@@ -2109,8 +2345,9 @@ const Core = (function () {
         c.vx *= 1 - k; c.vz *= 1 - k; c.w += (Math.random() - 0.5) * d.m * 0.05;
         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
       }
-      break;
+      return;
     }
+    gone();   // (in reach, over none of it)
   }
 
   /* ---- loose trackside props: traffic cones, striped marker pylons, spare-tyre stacks, straw bales, crates, roadside posts ----
@@ -2118,6 +2355,10 @@ const Core = (function () {
      tumble, bounce off the barriers and settle wherever they land. Tyre and bale stacks burst into single tyres / bales. */
   const PROP_G = 13;
   const PIT_V = 22.2, _pq2 = {};   // pit lane speed limit: 80 km/h
+  // a car's box on the apron (Track.bayOff): the car's centre o m past the lane's outer edge, an S onto the apron over the last inL m (level
+  // with the box, parallel to the lane, from fl m before it: the car stands straight), out over outL m, at v m/s; room: the wall there, m past
+  // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
+  const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
   const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan)
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
@@ -2163,6 +2404,7 @@ const Core = (function () {
       barrel:  { m: 12,  rh: 0.3,  rb: 0.55, h0: 0.47, e: 0.35, mu: 0.6, lift: 0.7, I: 1.2, dmg: 0, pts: cylPts(0.29, -0.47, 0.47, 8) },
       stop:    { m: 12,  rh: 0.1,  rb: 1.6, h0: 1.35, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.35, 0.05).concat([[0, 1.0, 0.4], [0, 1.0, -0.4]]) },   // a stop sign, the street names on top (the US)
       warn:    { m: 12,  rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.0, 0.45], [0, 1.0, -0.45]]) },   // a yellow diamond warning sign (the Americas, Australia)
+      mailbox: { m: 40, rh: 0.36, rb: 0.75, h0: 0.62, e: 0.2,  mu: 0.6,  lift: 0.3,  I: 4,    dmg: 0, pts: boxPts(0.3, 0.62, 0.25) },   // a street mail box
       meter:   { m: 14,  rh: 0.12, rb: 0.75, h0: 0.7,  e: 0.25, mu: 0.6, lift: 0.8, I: 1.6, dmg: 0, pts: boxPts(0.12, 0.7, 0.1) },   // a parking meter
     };
     KK.bsign = KK.msign;   // (Medvode's bus stop sign: the same pole and board, another picture)
@@ -2289,7 +2531,8 @@ const Core = (function () {
 
   function wallCollide(c, trk, canFall) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall)
     if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
-      const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); } return;
+      const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); }
+      if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
     }
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     let hit = 0, hitK = 0, hnx = 0, hnz = 0;
@@ -2297,31 +2540,35 @@ const Core = (function () {
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
       const px = c.x + wx, pz = c.z + wz;
-      const q = trk.query(px, pz, c.q.i, _q);
-      let pen = 0, nx = 0, nz = 0, br = q.br, bl = q.bl, inner = -1e9, sd = 1;
-      if ((c.isPlayer || c.pitWant || c.inPit) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout; } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (a lane on the left: all measured to that side, sd)
-      const qd = q.d * sd;
-      if (qd > br) { pen = qd - br; nx = -q.nx * sd; nz = -q.nz * sd; }
-      else if (qd < inner) { pen = inner - qd; nx = q.nx * sd; nz = q.nz * sd; }
-      else if (qd < -bl) { pen = -bl - qd; nx = q.nx * sd; nz = q.nz * sd; }
-      if (sd < 0) br = q.br;
-      let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
-      if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2; if (d2 > (R.zr + 8) * (R.zr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
-        if (dd < R.ri) { pen = R.ri - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }
-        if (dd < R.zr) { pen = 0; zone = true; break; }
-        if (pen > 0 && q.k < 0 && dd - R.zr < pen) { pen = dd - R.zr; nx = -rx2 / dd; nz = -rz2 / dd; } }
-      if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
-        const sl = q.s + (q.over || 0), N = trk.N;
-        if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
-        else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
-      }
-      if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
-      if (q.k >= 0 && !zone && !trk.def.sideClosed) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
-      if (pen <= 0) continue;
-      if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
-        const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
-        if (vo > 2.5) { if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }   // (off the edge: out at 4.5 m/s at least, clear of the cliff)
-          c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9); return; }
+      let pen = 0, nx = 0, nz = 0;
+      if (trk.free) { if (!trk.wall2(px, pz, c.y || 0, _tw)) continue; pen = _tw[2]; nx = _tw[0]; nz = _tw[1]; }   // (the new map: only its tunnel's walls)
+      else {
+        const q = trk.query(px, pz, c.q.i, _q);
+        let br = q.br, bl = q.bl, inner = -1e9, sd = 1;
+        if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom; a lane on the left: all measured to that side, sd)
+        const qd = q.d * sd;
+        if (qd > br) { pen = qd - br; nx = -q.nx * sd; nz = -q.nz * sd; }
+        else if (qd < inner) { pen = inner - qd; nx = q.nx * sd; nz = q.nz * sd; }
+        else if (qd < -bl) { pen = -bl - qd; nx = q.nx * sd; nz = q.nz * sd; }
+        if (sd < 0) br = q.br;
+        let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
+        if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2; if (d2 > (R.zr + 8) * (R.zr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
+          if (dd < R.ri) { pen = R.ri - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }
+          if (dd < R.zr) { pen = 0; zone = true; break; }
+          if (pen > 0 && q.k < 0 && dd - R.zr < pen) { pen = dd - R.zr; nx = -rx2 / dd; nz = -rz2 / dd; } }
+        if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
+          const sl = q.s + (q.over || 0), N = trk.N;
+          if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
+          else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
+        }
+        if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
+        if (q.k >= 0 && !zone && !trk.def.sideClosed) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
+        if (pen <= 0) continue;
+        if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
+          const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
+          if (vo > 2.5) { if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }   // (off the edge: out at 4.5 m/s at least, clear of the cliff)
+            c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9); return; }
+        }
       }
       c.wallX = px; c.wallZ = pz;
       // positional correction
@@ -2360,7 +2607,7 @@ const Core = (function () {
   // a puncture (failures, Car.flt): a hard knock (a wall or a car, 40 km/h and more across) may cut the tyre on the corner that took it,
   // the likelier the harder (up to one in four); one at a time (a second waits for the pits). lx, lz: the knock in the car's frame
   function puncture(c, lx, lz, hit) {
-    const F = c.flt; if (!F || F.pw >= 0 || hit < 11 || Math.random() > Math.min(0.25, (hit - 11) / 20)) return;
+    const F = c.flt; if (!F || c.pitG || F.pw >= 0 || hit < 11 || Math.random() > Math.min(0.25, (hit - 11) / 20)) return;
     F.pw = (lx >= 0 ? 0 : 2) + (lz >= 0 ? 1 : 0); F.pk = 0; F.ev = 'puncture';   // (the wheel: 0 front left, 1 front right, 2 rear left, 3 rear right)
   }
 
@@ -2585,12 +2832,18 @@ const Core = (function () {
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if (race.tf && c.tfLo != null) { const E = Math.max(lim + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
-      const pz = T.pitAt(sT); if (pz) off = pz.o * pz.sd;
-      if (pz && (c.ty || c.fuel != null) && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres or fuel: the fast lane beside the boxes, over to its own box to stop; past a car at the box before its own first)
-        const L = T.len; let db = T.startS + race._aiBox(c) - sT; db = ((db % L) + L) % L; if (db > L / 2) db -= L;
-        const o = c.aiThreat, held = o && o.inPit && o.pitState && !o.pitDone && c.aiGap < 12 && c.fuel != null;   // (fuel on: a stop takes long enough to jam the lane)
-        off += (!c.pitDone && db > -8 && db < 16 && !held ? -2 : 1.5) * pz.sd;
-      } else if (!c.isPlayer) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = P[0] < 0 ? -lim : lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
+      const pz = T.pitAt(sT), pn = T.pitAt(q.s); if (pz && (c.inPit || pz.gap || (pn && pn.gap))) off = pz.o * pz.sd;   // (over to the lane only where it can be reached: the way in or out, or in it; beside the pit wall on with the lap, in next time)
+      const bd = pz && c.inPit && !pz.gap ? race._boxD(c) : null;
+      if (bd != null) {   // (in the lane: in its middle, in an S into the car's own box on the apron in front of its garage, parked straight, then out to the middle again; across measured to the lane's side, pz.sd)
+        const bo = T.bayOff(T.boxX(sT, bd), 3.5 + T.bayDim().o, c.pitDone); let u = pz.o + bo;
+        // (round a car standing in the lane, on the side away from it: not waiting behind it)
+        let D = c.pitDodge; if (D && (c.dist - D.o.dist > (D.o.m.len + M.len) * 0.5 + 1 || D.o.dist - c.dist > 35 || !D.o.inPit)) D = c.pitDodge = null;
+        // (which side: by the lane's centre where that car stands, which in the way in still moves out)
+        const ofs = (o) => o.q.d * pz.sd - (T.pitAt(o.q.s) || pz).o;
+        if (!D) for (const o of race.cars) { const g = o.dist - c.dist; if (o === c || !o.inPit || o.speed > 2 || g < 0 || g > 30) continue; const e = ofs(o); if (Math.abs(e) < 2.4) { D = c.pitDodge = { o, side: e < 0 ? 1 : -1 }; break; } }
+        if (D) { const e = ofs(D.o), dg = Math.abs(e) < 2.4 ? D.o.q.d * pz.sd + D.side * 2.4 : pz.o; if (!bo) u = dg; else if (c.pitDone && D.side > 0) u = Math.max(u, dg); }   // (2.4 m clear of it; pulling out of the box: kept out on the garages' side until past it)
+        off = u * pz.sd;
+      } else if (!c.isPlayer && !pz) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = P[0] < 0 ? -lim : lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
     }
     if (c.parkS != null) off = lerp(off, c.parkD, sstep(c.parkS - 90, c.parkS - 30, sT));   // (past the finish of a race up the road: over to its slot, see Race._progressOpen)
     const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
@@ -2623,8 +2876,10 @@ const Core = (function () {
     if (c.passing) vT *= 1.01;
     if (c.flt && c.flt.pw >= 0) vT *= 1 - (c.flt.pw > 1 ? 0.25 : 0.12) * c.flt.pk;   // (failures: easier on a tyre going down, more so on a rear one: the tail would step out)
     if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
-    if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97); }   // (easy through the S of the way in and out)
-    { const o = c.aiThreat, g0 = (M.aiGap || 3) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
+    if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
+      const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x)); } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
+    const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiThreat.vl < 1 && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5);   // (a ghost on the pit road already level with a car standing at its box: on through it, not stopped in it)
+    { const o = c.aiThreat, g0 = (M.aiGap || 3) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart
       const F = race.fl, S = F.sc;
@@ -2642,7 +2897,8 @@ const Core = (function () {
         }
       }
     }
-    if ((c.ty || c.fuel != null) && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < (M.aiFol ? M.aiFol + 0.3 : 2.4)) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+    if (c.pitG && c.aiThreat && !gT) { const o = c.aiThreat, need = (o.m.len + M.len) * 0.5 + 2; if (c.aiGap < need + 8 && Math.abs(o.q.d - q.d) < (o.m.wid + M.wid) * 0.5 + 0.4) vT = Math.min(vT, Math.max(0, Math.max(0, o.vl) + (c.aiGap - need) * 0.8)); }   // (a ghost on the pit road: nothing pushes it off the car ahead, so it drops back to a car's gap behind it, never drives in it)
+    if ((c.ty || c.fuel != null) && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && !gT && Math.abs(o.q.d - q.d) < (M.aiFol ? M.aiFol + 0.3 : 2.4)) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
     let thr = 0, brk = 0;
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
@@ -2883,7 +3139,7 @@ const Core = (function () {
       let gap = 1e9, lv = 0, lead = null, still = false, pace = false, onc = false;
       const cand = (g, vs, o, st, oc) => { if (g < gap) { gap = g; lv = vs; lead = o; still = st; pace = false; onc = !!oc; } };
       const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25;
-      for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (over(b.d, b.wid)) { cand(g, b.v, b, false); pace = !!a.grp && b.grp === a.grp; break; } }
+      for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (g < 0 && a.grp && b.grp === a.grp && a.grp.m.indexOf(b) > a.grp.m.indexOf(a)) continue; if (over(b.d, b.wid)) { cand(g, b.v, b, false); pace = !!a.grp && b.grp === a.grp; break; } }   // (one of its own group on top of it, behind it in the line (a group bunched up to a stop): not in its way, else each waits for the other for good)
       for (const b of this.hz) { const g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > -1 && g < 160 && over(b.d, b.wid)) cand(g, 0, b, true); }
       if (this.race.pol) { const hs = this.race.pol.holdAt(a, dt); if (hs > -1e8) { const g = (hs - a.s) * dir - a.len / 2; if (g > -2 && g < 160) cand(Math.max(0, g), 0, null, false); } }   // (the traffic checkpoint: stopped at the officer, waved on in turn)
       if (this.race.pol) for (const pc of this.race.pol.cars) if (pc.pol.block && pc.pol.mode === 'park') { const g = (pc.q.s - a.s) * dir - a.len / 2 - 80; if (g > -6 && g < 160) cand(Math.max(0, g), 0, pc, false); }   // (a roadblock ahead: the police hold the traffic ~80 m before it, both ways: room to drive round it)
@@ -4256,6 +4512,18 @@ const Core = (function () {
     [0.88, 0.97, 0.04, 90, 0.05, 40],    // srednja
     [1.02, 1.12, 0.01, 200, 0.06, 30],   // težka: the front runners drive at the limit and hardly wait for anyone
   ];
+  // the start's reaction (Race opts.launch; on by default in a race from the grid, see Race): a car sets off at its first press of the
+  // throttle after the lights go out (c.lch.re: that moment on the race clock, s); the later the press, the more its driven wheels spin
+  // in the first metres: for win + winK x sev s after the press their grip is down by up to depth x sev (sev 0 at r0 or quicker, 1 at
+  // r1 or slower), back to full over the last part of that time. The player's throttle held through the lights going out counts as held
+  // s (c.lch.held: on the gas too early). The AI: each one's reaction drawn from the race's seed, ai[0]..ai[1] s (the fastest drivers
+  // nearer ai[0]); its car waits on the grid until then
+  const LAUNCH = { r0: 0.1, r1: 0.5, depth: 0.55, win: 1.0, winK: 0.5, held: 0.6, ai: [0.15, 0.45], thr: 0.25 };
+  const launchSev = (r) => clamp((r - LAUNCH.r0) / (LAUNCH.r1 - LAUNCH.r0), 0, 1);
+  function launchK(L) {   // the driven wheels' grip share t s after the press (1: none lost)
+    const W = LAUNCH.win + LAUNCH.winK * L.sev;
+    return L.t >= W ? 1 : 1 - LAUNCH.depth * L.sev * (1 - sstep(0.35 * W, W, L.t));
+  }
 
   class Race {
     constructor(track, opts) {
@@ -4295,13 +4563,19 @@ const Core = (function () {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
         aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
       }
+      // the start's reaction (LAUNCH, opts.launch): by default in a race from the grid, not in a time trial, on a flying lap (qualifying, a
+      // challenge's lap), in the run from the police or the title demo. The AI's reactions from the race's seed (their own numbers: the
+      // grid's draws stay as they were); the friends' cars online set off on their own phones
+      const launch = opts.launch != null ? !!opts.launch : !this.timeTrial && !(opts.qualiBack > 0) && !opts.noPlayer && !opts.police;
+      const RL = launch ? rng(((opts.seed || 7) * 6151 + 41) >>> 0) : null, lch = (re) => ({ re, held: false, sev: 0, t: -1, k: 1, n: 0, done: false });
+      if (launch) this.lch = { n: 0 };   // (in an object: the golden references digest only the plain fields)
       // grid: fastest first
       let ai = 0;
       for (let g = 1; g <= total; g++) {
         let c;
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup });
-          this.player = c;
+          this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
@@ -4310,6 +4584,7 @@ const Core = (function () {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: CSK.aiAssist, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : CSK.aiSkCap;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
+          if (launch) c.lch = lch(LAUNCH.ai[0] + (LAUNCH.ai[1] - LAUNCH.ai[0]) * clamp(0.6 * RL() + 0.4 * s.rk / Math.max(1, nAI - 1), 0, 1));   // (the quicker drivers react quicker, on the whole)
           if (opts.chars) {   // a character (in an object: the golden references digest only the plain fields); the player's standing rival (opts.rival: its roster index) a touch quicker
             const d = driverChar(s.rk), rv = opts.rival === s.rk;
             c.chr = { k: s.rk, agg: d.agg, err: d.err, rival: rv, press: 0, mist: 0, mk: 1, brk: false, defT: 0, defCool: 0, duel: 0, duelOn: false };
@@ -4323,6 +4598,11 @@ const Core = (function () {
         this._placeOnGrid(c, g);
       }
       if (this.player) this.player.num = opts.playerNum || 1;
+      // the wheel rule (applyDamage: wheelRule) on the player's car, when it is one of opts.wheelRule's vehicles and damage is on. due: s to
+      // its second wheel (-1: none coming), over: two wheels gone and the car stopped, the game is over (the game shows PONOVI IGRO); fn, burn:
+      // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel); due0:
+      // the time the second wheel was given (ZAMENJAJ KOLO's bar)
+      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && P.dmgMode === 2 && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0 }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -4405,12 +4685,16 @@ const Core = (function () {
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
     }
-    // an AI car's box in the pit lane (metres from the start line): along the crews' row (def.pitRow), by its grid slot, clear of the player's
+    // an AI car's box (metres from the start line): one of the crews' boxes on the apron (Track.crewBoxes; not the player's), by its place on the
+    // grid among the AI cars
     _aiBox(c) {
-      const P = this.track.def.pit, R = this.track.def.pitRow || [P[1] + 60, P[2] - 40], k = (c.grid - 1) % 13;
-      let d = R[0] + (R[1] - R[0]) * k / 12; if (Math.abs(d - P[3]) < 9) d += d < P[3] ? -9 : 9;
-      return d;
+      const T = this.track, P = T.def.pit;
+      if (!this._boxes) { const B = T.crewBoxes(), me = this.player && P[3] != null ? P[3] : null; this._boxes = B.filter(b => me == null || Math.abs(b - me) > 1); this._aiOrd = this.cars.filter(o => !o.isPlayer && !o.net).sort((a, b) => a.grid - b.grid); }
+      const B = this._boxes, j = this._aiOrd.indexOf(c);
+      return B.length ? B[(j >= 0 ? j : (c.grid - 1)) % B.length] : P[3];
     }
+    // a car's box: the player's def.pit[3], an AI car's its crew's (_aiBox); none for the safety car or a friend's car online
+    _boxD(c) { const P = this.track.def.pit; return !P || c.sc || c.net ? null : c.isPlayer ? (P[3] != null ? P[3] : null) : this._aiBox(c); }
 
     // speed profile for the AI (on the racing line); an upgraded player's autopilot brakes later with better brakes (its own profile).
     // Rain: the corners as much slower as the grip is lower, the braking as the brakes (see Car). A formula race: the formula's profile (its
@@ -4475,8 +4759,28 @@ const Core = (function () {
     }
     start() {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
+      if (this.lch) for (const c of this.cars) if (c.lch && !c.isPlayer) { c.relT = c.lch.re; c.locked = true; }   // the AI: on the grid until its reaction (as the demo's staggered start)
       // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
+    }
+
+    // the start's reaction (LAUNCH): the moment each car first presses the throttle after the lights go out (the player: as measured here,
+    // its foot on the gas through the lights counts as LAUNCH.held, until it is let go: then the next press counts; the AI: its drawn
+    // reaction, as its car is let go), then its wheelspin while it gets away (c.lch.k: its driven wheels' grip share, Car.step).
+    // this.lch.n: the presses counted so far (c.lch.n: the number of the car's own, a new one when a held start is pressed again)
+    _launch(dt) {
+      const go = this.state === 'racing';
+      for (const c of this.cars) {
+        const L = c.lch; if (!L || L.done) continue;
+        if (L.held && L.t >= 0 && !(c.inThr > LAUNCH.thr) && this.time < LAUNCH.held) { L.held = false; L.t = -1; L.k = 1; L.re = -1; }   // held through the lights, then let go (before a press would count as late as that): the next press counts
+        if (L.t < 0) {
+          if (!go) { L.held = !!c.isPlayer && c.inThr > LAUNCH.thr; continue; }   // on the grid: the player's foot on the gas, or not, as the lights go out
+          if (!(c.inThr > LAUNCH.thr) || c.locked) { L.held = false; continue; }   // (not on the gas yet)
+          if (c.isPlayer) L.re = L.held ? LAUNCH.held : this.time;
+          L.sev = launchSev(L.re); L.t = 0; L.n = ++this.lch.n;
+        }
+        L.t += dt; L.k = launchK(L); if (L.k >= 1) L.done = true;
+      }
     }
 
     // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst.
@@ -4547,6 +4851,7 @@ const Core = (function () {
           if (c.finished) { c.inThr *= 0.5; }
         } else { c.inThr = 0; c.inBrk = c.parkQ ? 1 : 0; c.inSteer = 0; }
       }
+      if (this.lch) this._launch(dt);
       for (const c of cars) if (c.wreck && !c.net) this._wreckStep(c, dt);   // kit vehicles: a wreck sheds its parts, a destroyed one retires (see _wreckStep)
       if (this.slip) this._tow();
       for (const c of cars) {
@@ -4572,17 +4877,25 @@ const Core = (function () {
       const lv = T.cross.length > 0;
       const pk = T.open && !this.timeTrial;   // (a race up an open road: the cars past the finish pull up in their slots and do not push each other about)
       for (let i = 0; i < cars.length; i++) {
-        for (let j = i + 1; j < cars.length; j++) if ((!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) && !(pk && cars[i].finished && cars[j].finished) && !cars[i].fall && !cars[j].fall) carCollide(cars[i], cars[j]);
+        for (let j = i + 1; j < cars.length; j++) if ((!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) && !(pk && cars[i].finished && cars[j].finished) && !cars[i].fall && !cars[j].fall && !cars[i].pitG && !cars[j].pitG) carCollide(cars[i], cars[j]);   // (a car on the pit road: a ghost to every other, Race.pitStep)
       }
-      if (SC) { for (const c of cars) if (!c.net && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T); }
+      if (SC) { for (const c of cars) if (!c.net && !c.pitG && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T); }
       if (this.pol) this.pol.collide();
-      if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it; AI: on the way in for tyres)
+      if (T.def.pit && !T.free) for (const c of cars) {   // (free driving, the new map: no pit road, the track's own lies under it) which side of the pit wall the car is on, on the pit road or not (before the walls push it; AI: on the way in for tyres)
+        if (c.net) {   // (a friend's car online: a ghost as its own phone says (netPG, sent with its state), so both phones skip the same contacts; an older
+          // build sends none: by where it is, from the pit wall's line in and on through the way out)
+          let g; if (c.netPG != null) g = !!c.netPG; else { const q = c.q, pz = q && q.i >= 0 ? T.pitAt(q.s) : null; g = !!pz && q.d * pz.sd > (pz.gap && c.pitG ? (T.wa ? T.wa[q.i] : T.w) : pz.wall); }
+          if (g !== !!c.pitG) c.pitG = g;
+        }
+        else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) this.pitStep(c, dt, true);
+      }
       for (const c of cars) if (!c.net && !c.fall) wallCollide(c, T, true);
-      if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
+      if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       if (this.pol) for (const c of this.pol.cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name, this.pol.RD); c.detach.length = 0; }   // (the run from the police: a battered patrol car's panels on the road too, thrown with the police's own random numbers: the race's draws stay as they were)
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
       if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) if (!lv || Math.abs(d.y - (c.y || 0)) < 4) debrisHit(c, d); }
+      if (XR.glass || this.glass) this._glassStep(cars);
       // progress
       for (const c of cars) {
         const q = T.query(c.x, c.z, c.q.i, c.q);
@@ -4689,13 +5002,42 @@ const Core = (function () {
       }
     }
 
+    // broken glass on the road (GLASS): the patches the knocks asked for laid, each car's grip on them (c.glassK, stepCS), a pass scatters them
+    _glassStep(cars) {
+      const G = this.glass || (this.glass = []);
+      for (const c of cars) { const q = c.glassReq; if (!q || !q.length) continue; for (let i = 0; i < q.length; i += 2) { G.push({ x: q[i], z: q[i + 1], k: 1, on: [] }); if (G.length > GLASS.n) G.shift(); } q.length = 0; }
+      for (const c of cars) {
+        if (c.net) continue; let k = 0; const ch = Math.cos(c.h), sh = Math.sin(c.h);
+        for (let i = G.length - 1; i >= 0; i--) {
+          const p = G[i], ex = p.x - c.x, ez = p.z - c.z, ta = clamp(ex * ch + ez * sh, -c.m.b, c.m.a), inn = Math.hypot(ex - ch * ta, ez - sh * ta) < GLASS.r, j = p.on.indexOf(c);   // (its wheels on it: the patch within r of the car's axle line)
+          if (!inn) { if (j >= 0) { p.on.splice(j, 1); if (p.run) { p.k *= GLASS.pass; if (p.k < GLASS.min) G.splice(i, 1); } } continue; }   // (driven over and off it: scattered, less of it)
+          k = Math.max(k, p.k);
+          if (j < 0) { p.on.push(c); p.run = c.speed > GLASS.v; }
+        }
+        if (k || c.glassK) c.glassK = 1 - GLASS.mu * k;
+      }
+    }
+    // a ghost from the pit road back on the circuit: solid again once no other car overlaps it (a car rejoining beside another is not thrown
+    // into it), at the latest after 6 s
+    _pitGhostOff(c, dt) {
+      const r = c.m.len * 0.5 + 3;
+      if ((c.pitGT = (c.pitGT || 0) + dt) < 6 && this.cars.some(o => o !== c && !o.pitG && !o.fall && Math.hypot(o.x - c.x, o.z - c.z) < r + o.m.len * 0.5)) return;
+      c.pitG = false; c.pitGT = 0;
+    }
     // ---- pit lane: 60 km/h limit, the car pulls up at its box, the crew repairs it (time depends on the damage), then off you go ----
     pitStep(c, dt, pre) {
       const T = this.track, P = T.def.pit, q = T.query(c.x, c.z, c.q.i, _pq2), pz = T.pitAt(q.s);
       if (pre) {
-        if (!pz) { if (c.inPit) { c.inPit = false; c.pitEv = 'exit'; if (!c.isPlayer) c.pitWant = false; } c.pitDone = false; c.pitState = null; return; }
+        const pw = c.pitWant;   // (before an exit below clears an AI car's)
+        if (!pz) { if (c.inPit) { c.inPit = false; c.pitEv = 'exit'; if (!c.isPlayer) c.pitWant = false; } c.pitDone = false; c.pitState = null; if (c.pitG) this._pitGhostOff(c, dt); return; }
         if (pz.gap) { const was = c.inPit; c.inPit = q.d * pz.sd > pz.wall; if (c.inPit && !was) c.pitEv = 'enter'; else if (!c.inPit && was) { c.pitEv = 'exit'; c.pitDone = false; c.pitState = null; if (!c.isPlayer) c.pitWant = false; } }   // (an AI car out of the lane: on with the race)
         else if (!c.isPlayer && !c.inPit && pz.d < 0) c.pitWant = false;   // (an AI car that missed the way in: the next lap)
+        // the pit road (c.pitG): from where the car leaves the circuit's asphalt into the way in (a car coming in: pitWant; the player's own
+        // driving from the pit wall's line, where the autopilot takes it: not one that only runs wide at the way in or out) until it is back on
+        // the asphalt past the way out: a ghost to every other car (the narrow lane, the queue at the boxes, the merge) and no damage
+        // (applyDamage, puncture). Written only when it changes: a race without a stop carries no such field
+        const g = c.inPit || (pz.gap && q.d * pz.sd > (T.wa ? T.wa[q.i] : T.w) && !!(c.pitG || pw));
+        if (g) { if (!c.pitG) { c.pitG = true; c.pitGT = 0; const b = this._boxD(c); if (b != null) c.boxD = b; } } else if (c.pitG) this._pitGhostOff(c, dt);   // (boxD: its box, for the walls by it: Track.bayRoom)
         return;
       }
       if (!c.inPit || !pz) return;
@@ -4711,12 +5053,14 @@ const Core = (function () {
         return;
       }
       let vmax = lim;
-      if (!c.pitDone && P[3] != null) {   // pull up at the box: a braking curve that ends right at it (the player's box, or the AI car's own)
-        const L = T.len; let ds = (T.startS + (c.isPlayer ? P[3] : this._aiBox(c))) - q.s; ds = ((ds % L) + L) % L; if (ds > L / 2) ds -= L;
+      const bd = this._boxD(c);
+      if (!c.pitDone && bd != null) {   // pull up at the box: a braking curve that ends right at it (the player's box, or the AI car's own)
+        const L = T.len; let ds = (T.startS + bd) - q.s; ds = ((ds % L) + L) % L; if (ds > L / 2) ds -= L;
+        if (ds < 60 && ds > -5) vmax = Math.min(vmax, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, ds - BAY.inL)));   // (the box on the apron: down to BAY.v for the S onto it)
         if (ds < 40 && ds > -5) {
           vmax = Math.min(vmax, Math.sqrt(2 * 6.5 * Math.max(0, ds - 0.2)));
           if (!c.pitState) { c.pitState = 'stop'; c.pitEv = 'box'; }
-          if (sp < 1.5 && Math.abs(ds) < 4) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle)
+          if (sp < 1.5 && Math.abs(ds) < 4 && (q.d * pz.sd > pz.lout + Math.min(1, T.bayDim().o * 0.5) || sp < 0.3)) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle; in the box on the apron, or stopped short of it)
             c.pitState = 'repair'; c.pitT = 0; c.pitDur = stopDur(c, this); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';
           }
         }
@@ -4861,7 +5205,7 @@ const Core = (function () {
     pitLoss(c) {
       const T = this.track, P = T.def.pit, M = this.mk; if (!P || !M) return null;
       if (M.lane == null) { let tr = 0; for (let d = P[1]; d < P[2]; d += T.ds) tr += T.ds / Math.max(PIT_V, this.vprof[T.idx(T.startS + d)]); M.lane = (P[2] - P[1]) / PIT_V - tr + LANE_K; }
-      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this);
+      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this) + BAY.k;   // (the S onto the apron to the box and back)
     }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut one; 'damage', badly damaged), the laps it can be made in
@@ -4964,8 +5308,8 @@ const Core = (function () {
       if (st < this.secBest[k]) this.secBest[k] = st;
       if (c.isPlayer) c.secEv = [k, st, col];
     }
-    repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes
-      c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
+    repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes (shown bit by bit over the stop before it: REPAIR)
+      c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
       if (c.flt) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a new tyre for a cut one)
@@ -5032,19 +5376,31 @@ const Core = (function () {
       c.locked = false;
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       if (T.open && Number.isFinite(s) && Number.isFinite(c.dist)) c.dist += c.q.s - s;   // open road: the distance follows the car back to the sample (checkpoints / finish stay exact)
-      c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.inPit = false; c.pitState = null; c.pitDone = false;   // (back on the circuit, not in the pit lane)
+      c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.inPit = false; c.pitState = null; c.pitDone = false; if (c.pitG) { c.pitG = false; c.pitGT = 0; }   // (back on the circuit, not in the pit lane)
       // a breakable vehicle on a track without pits: the marshals put its lost wheels back on, beside the road (off its side's edge, clear of
       // the barrier); it stands for the 6 s that takes (Race._wreckStep), then drives back on. W.fix counts the refits (a partial repair:
       // repairN stays, the renderer's and the commentator's lost-wheel latches follow W.fix)
-      const W = c.wreck, fix = !!(W && W.wl && !W.dnf && (!T.def.pit || this.opts.noPlayer));   // (the demo: with pits too)
+      const W = c.wreck, fix = !!(W && W.wl && !W.dnf && !W.rule && (!T.def.pit || this.opts.noPlayer));   // (the demo: with pits too; the wheel rule's car: never)
       if (fix) {
         if (c.flt && c.flt.pw >= 0 && W.wl & (1 << c.flt.pw)) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a cut tyre that came off with its wheel: a new one)
         for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.hold = 6; W.fix++;
         const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
         c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       }
-      const v = fix || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      const v = fix || (W && W.rule && W.nL >= 2) || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
+    }
+    // the wheel rule's spare (wheelRule: rule.spare on the roof, rule.ask): ZAMENJAJ KOLO (game.js) puts it on the corner that lost its wheel at
+    // once, the car driving on (no stop, no wait: the user's): four wheels again, the second wheel no more coming, its fire put out (rule.xn).
+    // A cut tyre that came off with the wheel: a new one with it. Once: then there is no spare on the roof any more (a repair gives a new one)
+    changeWheel(c) {
+      const W = c && c.wreck, Q = W && W.rule;
+      if (!Q || !Q.ask || !Q.spare || W.nL !== 1 || W.dnf || c.finished) return false;
+      const k = [0, 1, 2, 3].find(j => W.wl & (1 << j)); if (k == null) return false;
+      if (c.flt && c.flt.pw === k) { c.flt.pw = -1; c.flt.pk = 0; }
+      delete c.lost[WHEELS[k]]; W.wl &= ~(1 << k); W.nL = 0; W.lt = 0; W.fix++;   // (W.fix: the renderer puts the wheel back on, kitRefit)
+      Q.spare = 0; Q.ask = 0; Q.due = -1; Q.chg++; if (Q.burn) { Q.burn = 0; Q.xn++; }
+      return true;
     }
     // a car out of the race (Odstop): an AI car that can not race on (see _wreckStep), or the player pressing Odstopi (game.js; any car).
     // It pulls off onto a run-off (_retireSide) and stops there (retireControl); it never finishes: behind every running car in the order,
@@ -5095,6 +5451,18 @@ const Core = (function () {
         if ((W.st -= dt) <= 0 && W.seq.length) { const n = W.seq.shift(); detachPart(c, n); W.st = 0.4; }
       }
       if (W.nL) W.lt += dt;
+      const Q = W.rule;   // the wheel rule (wheelRule): the second wheel when its time is up; two gone: the car stops at once (2.5 a second
+      // of its speed lost, as well as the brakes and the hubs on the road), there it retires and the game is over
+      if (Q && !W.dnf && !c.finished) {
+        if (Q.due > 0 && !c.pitG) {   // (on the pit road, no damage there: it waits; the repair in the box clears it)
+          Q.due -= dt; if (Q.due <= WRULE.t2 * WRULE.hub && W.nL === 1) ruleFire(Q, 1);   // (its last 20 %: the hub where the wheel was catches fire)
+          if (Q.due <= 0) { Q.due = -1; Q.ask = 0; if (W.nL < 2) ruleDrop(c, 1); ruleFire(Q, 2); }   // (the second wheel: the whole car)
+        }
+        if (W.nL >= 2 && !c.rl && !c.fall) {   // (rolling over, Razbijanje, or falling off a drop: once it is back on the road)
+          parkBrake(c); const k = Math.max(0, 1 - 2.5 * dt); c.vx *= k; c.vz *= k; c.w *= k;
+          if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; }
+        }
+      }
       const racing = this.state === 'racing';
       if (!W.dnf && !c.isPlayer && kitParts(c.m) && !c.finished && racing && W.nL >= 2 && !c.pitWant && !c.inPit && !this.opts.noPlayer) this.retire(c);
       if (W.dnf) {
@@ -5230,9 +5598,10 @@ const Core = (function () {
   // with damage off (dmgMode 0) stays whole
   function wreckCar(c) {
     const hl = c.m.len * 0.5, hw = c.m.wid * 0.5, pts = [[hl, -hw], [hl, hw], [-hl, -hw], [-hl, hw], [hl, 0], [-hl, 0], [0, -hw], [0, hw]];
+    const W = c.wreck, PT = partsOf(c.m), Q = W && W.rule; if (Q) W.rule = null;   // (the wheel rule's random wheels: not here, the same every time)
     for (let n = 0; n < 16 && c.dmgMode && (c.dmg < 1 || Math.min(...c.dz, ...c.cd) < 1); n++) for (const [x, z] of pts) applyDamage(c, 0.25, x, z);
-    const W = c.wreck, PT = partsOf(c.m);
     if (W && W.seq) while (W.seq.length) { const n = W.seq.shift(); if (!c.lost[n] && PT[n]) detachPart(c, n, PT[n]); }
+    if (Q) { W.rule = Q; if (W.nL >= 2) { Q.due = -1; Q.ask = 0; ruleFire(Q, 2); } }   // (the wheel rule's car wrecked, two wheels or more gone: the whole car on fire at once, as a hard hit's)
     return c;
   }
 
@@ -5371,9 +5740,9 @@ const Core = (function () {
   }
   registerVehicles();
 
-  return { setCrash, XR, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY };
 })();
 
 

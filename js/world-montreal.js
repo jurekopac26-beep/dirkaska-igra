@@ -345,7 +345,7 @@
     const { T, def, ds, sStart, out, scen, atSf, addM, exclPush } = C, PD = def.pit; if (!PD) return;
     const sg = PD[0] < 0 ? -1 : 1, [pq0, pq1] = def.pitRow, PB = def.pitBld, lMat = C.lMat, aMat = C.aMat;
     const at = (s, o, y) => { const p = atSf(s, sg * o); return [p[0], y, p[1]]; };   // (o: metres out towards the pits)
-    const gl = new GB(true), gp = new GB(), one = [1, 1, 1], wl = [0.95, 0.95, 0.94], apC = [0.8, 0.81, 0.78], yel = [0.98, 0.82, 0.12];
+    const gl = new GB(true), gp = new GB(), one = [1, 1, 1], wl = [0.95, 0.95, 0.94], apC = [0.8, 0.81, 0.78];
     const quad = (g, s0, s1, o0, o1, o2, o3, y, c, uv) => { const A = at(s0, o0, y), B = at(s0, o1, y), Cq = at(s1, o2, y), Dq = at(s1, o3, y); g.quadUp(A, B, Cq, Dq, [c, c, c, c], uv ? [A, B, Cq, Dq].map(p => [p[0] / 8, -p[2] / 8]) : undefined); };
     for (let q = PD[1]; q < PD[2]; q += 2) {
       const s0 = sStart + q, s1 = s0 + 2, pi = T.pitAt(s0), pj = T.pitAt(s1); if (!pi || !pj) continue;
@@ -360,7 +360,7 @@
     }
     // the 80 km/h line across the lane at its two ends
     for (const q of [PD[1] + 45, PD[2] - 34]) { const p = T.pitAt(sStart + q); if (p) quad(gp, sStart + q, sStart + q + 0.4, p.o - 3.4, p.o + 3.4, p.o + 3.4, p.o - 3.4, 0.036, wl); }
-    // the crews' boxes (13, 10 m apart), the dividers, the player's yellow stop box
+    // the crews' boxes (13, 10 m apart), the dividers, the player's box (out.pitBox)
     const kb = (g, s, o, y, sx, sy, sz, col, top) => { const [x, z, hd] = atSf(s, sg * o); box(g, x, y, z, sx, sy, sz, hd, col, top); };
     let nb = 0;
     for (let q = pq0, k = 0; q <= pq1; q += 10, k++) {
@@ -368,8 +368,8 @@
       const base = p.o + 3.5, tx = T.tx[i], tz = T.tz[i], nx = T.nx[i] * sg, nz = T.nz[i] * sg, mine = Math.abs(q + 5 - PD[3]) < 1, tc = TEAM[k % TEAM.length];
       quad(gp, s0 - 0.09, s0 + 0.09, base, PB[2], PB[2], base, 0.034, wl);
       const oc = atSf(s0 + 5, 0);
-      if (mine) { const sb = s0 + 5, lo = p.o; out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, p.o * sg) };
-        for (const [d0, d1, l0, l1] of [[-3.2, 3.2, lo - 2.6, lo - 2.35], [-3.2, 3.2, lo + 2.35, lo + 2.6], [-3.2, -2.95, lo - 2.6, lo + 2.6], [2.95, 3.2, lo - 2.6, lo + 2.6]]) quad(gp, sb + d0, sb + d1, l0, l1, l1, l0, 0.036, yel); }
+      if (mine) { const sb = s0 + 5, lo = p.o, bp = T.bayPose(PD[3]);   // (the car stops at the edge of the shallow apron, parked straight: Core Track.bayDim, def.pitApron; mirrored to the left, sg)
+        out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, bp.o * sg), stopO: bp.o, stopA: sg * bp.a }; }
       (out.pitBoxes = out.pitBoxes || []).push({ k: nb++, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: 0 });
       // the team's stand on the pit wall strip: a desk with screens under a roof in the team's colour, stools
       const g = scen.get(oc[0], oc[1]), wv = p.wall;

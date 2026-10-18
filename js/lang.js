@@ -7,7 +7,7 @@
   // A text EN does not know stays as it is (a name, a number). The commentator speaks English in both languages.
   const EN = {
     /* ---- the page (index.html): buttons, labels, the HUD ---- */
-    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'ROČNA': 'HANDBRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
+    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
     '↺ Na progo': '↺ Back on track', 'Dirkaj': 'Race', 'Prvenstvo': 'Championship', 'Kariera': 'Career', 'Dirka s prijateljem': 'Race a friend',
     'Lestvica': 'Leaderboard', 'Nastavitve': 'Settings', 'Celoten zaslon': 'Full screen', 'Namesti igro': 'Install the game', 'Nadgradnje': 'Upgrades',
     'Barva': 'Colour', 'Upravljanje': 'Controls', 'Tipke': 'Buttons', 'Volan': 'Wheel', 'Nagib': 'Tilt', 'Nazaj': 'Back', 'Naprej': 'Next',
@@ -24,7 +24,7 @@
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
     '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik na reliju (angleščina)': 'Rally co-driver (English)', 'Poškodbe avtov': 'Car damage', 'Samo videz': 'Looks only',
     'Grafika': 'Graphics', 'Normalno': 'Normal', 'Visoko': 'High', 'Podrobnosti': 'Detail', 'Detajli avtov': 'Car detail', 'Normalni': 'Normal', 'Visoki': 'High', 'Drobni detajli tvojega avta in avta v garaži (znaki, kljuke, letvice, reže med paneli, okrogle gume); pri razbijanju gosta karoserija samo za tvoj avto (Normalni) ali za vse avte (Visoki). Visoki je za računalnik, Normalni za telefon.': 'Small details of your car and the car in the garage (badges, handles, trims, panel gaps, round tyres); for crashes, a dense body for your car only (Normal) or for every car (High). High is for a computer, Normal for a phone.', 'Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone.': 'How much trackside detail (spectators, trees, cliffs, props …). Auto picks it from your device and adjusts on the fly to keep the game smooth; Low is for weaker phones.', 'Sence': 'Shadows', 'Zvok': 'Sound', 'Vibracija': 'Vibration', 'Končano': 'Done',
-    'Razbijanje: nove poškodbe karoserije': 'Crashes: new body damage', 'Razbijanje: šipe': 'Crashes: glass', 'Razbijanje: prevračanje': 'Crashes: rollovers', 'Močan bočni trk avto prevrne: zavrti se enkrat ali dvakrat in pristane na kolesih, izgubiš okoli sekundo': 'A hard knock on the side rolls the car over: it turns once or twice and lands on its wheels, about a second lost', 'Razbijanje: odrgnjena barva in rja': 'Crashes: scraped paint and rust',
+    'Razbijanje: nove poškodbe karoserije': 'Crashes: new body damage', 'Razbijanje: šipe': 'Crashes: glass', 'Razbijanje: prevračanje': 'Crashes: rollovers', 'Približno vsak deseti močan bočni trk avto prevrne: zavrti se enkrat ali dvakrat in pristane na kolesih, izgubiš okoli sekundo': 'About one hard knock on the side in ten rolls the car over: it turns once or twice and lands on its wheels, about a second lost', 'Razbijanje: odrgnjena barva in rja': 'Crashes: scraped paint and rust',
     'Razbijanje: odboji in vrtenje ob trku': 'Crashes: knocks and spins', 'Udarec avto zavrti, kolikor je bil močan; za trenutek izgubi oprijem. Udarec v zadnji vogal ga lahko zavrti naokoli': 'A knock turns the car as hard as it was; for a moment it loses grip. A knock on a rear corner can spin it round',
     'Razbijanje: agresivni vozniki': 'Crashes: aggressive drivers', 'Tretjina tekmecev občasno napade: nekaj sekund ciljajo zadnji vogal avta pred sabo': 'A third of the rivals attack now and then: for a few seconds they aim at the rear corner of the car ahead',
     'Razbijanje: deli ostanejo na progi': 'Crashes: parts stay on the track', 'Odpadli deli (odbijači, vrata, hauba) ostanejo na cesti do konca dirke': 'Parts that fall off (bumpers, doors, the bonnet) stay on the road until the end of the race',
@@ -89,7 +89,7 @@
     'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.': 'When the lights go out, cover 100 m as quickly as you can. Press the throttle only once they are out: earlier is a jump start.',
     'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.': 'Speed down the straight and stop as close to the STOP line as you can, but not over it. Pass the 100 m board at 120 km/h at least.',
     'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.': 'Drive a lap on the racing line the helper draws (green: throttle, yellow: corner, red: brake, white: the braking point). As much of the lap on it as you can, within the time limit.',
-    'V 40 sekundah zberi čim več točk drsenja: bočno, hitro in brez udarcev (udarec izbriše verigo).': 'Collect as many drift points as you can in 40 seconds: sideways, fast and without knocks (a knock wipes out the chain).',
+    'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.': 'Collect as many drift points as you can in 40 seconds: turn hard into a corner and brake in it to make the car slide sideways. Points for the angle and the speed; a knock wipes out the chain.',
     'Štiri vaje z medaljami, vse z avtom KAZE RS (serijski, na suhem). Medalje za štart in drift ter časovna omejitev idealne linije so merjene ob vožnji avtopilota z istim avtom in fiziko.': 'Four lessons with medals, all in the KAZE RS (stock, in the dry). The medals of the start and the drift and the racing line\u2019s time limit are measured against the autopilot driving the same car with the same physics.',
     'Idealna linija na cesti pred avtom: zeleno plin, rumeno ovinek, rdeče zaviranje': 'The racing line on the road ahead: green throttle, yellow corner, red braking',
     'Tvoj najboljši: {0}': 'Your best: {0}', ' točk': ' points',
@@ -222,7 +222,7 @@
     'MESTO VRNJENO': 'PLACE GIVEN BACK', 'KAZEN +5 s': 'PENALTY +5 s', 'VRNI MESTO · {0}': 'GIVE IT BACK · {0}', 'SC GRE S PROGE': 'SC LEAVING', 'NE PREHITEVAJ': 'NO OVERTAKING',
     'DEŽ': 'RAIN', 'Začelo je deževati: proga bo kmalu mokra. Zapelji v bokse po dežne gume (desno takoj za zadnjim ovinkom pred ciljno ravnino).': 'It has started to rain: the track will soon be wet. Pit for wet tyres (on the right just after the last corner before the finish straight).',
     'DEŽ JE PONEHAL': 'THE RAIN HAS STOPPED', 'Dež je ponehal: proga se suši, najprej na idealni liniji.': 'The rain has stopped: the track is drying, the racing line first.',
-    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · 80 km/h': 'PITS · 80 km/h', 'ZAVETRJE': 'SLIPSTREAM',
+    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · AVTOPILOT': 'PITS · AUTOPILOT', 'Sedaj lahko spustiš plin, vse bo naredil sam.': 'You can let go of the gas now, the car does everything by itself.', 'AVTOPILOT · spusti plin': 'AUTOPILOT · let go of the gas', 'Vstop': 'Pit entry', 'Boks': 'Box', 'Popravilo {0} %': 'Repair {0} %', 'Izvoz': 'Pit exit', 'Prevzameš čez {0}': 'Take over in {0}', 'VOZIŠ TI!': 'YOU DRIVE!', 'ZAVETRJE': 'SLIPSTREAM',
     'PREDRTA GUMA': 'PUNCTURE', 'VROČE ZAVORE': 'HOT BRAKES', 'VROČ MOTOR': 'HOT ENGINE', 'PREDRTA GUMA!': 'PUNCTURE!', 'ZAVORE SE PREGREVAJO': 'BRAKES OVERHEATING', 'MOTOR SE PREGREVA': 'ENGINE OVERHEATING',
     'Predrta guma: avto vleče na stran in slabše prime. Zapelji v bokse, mehaniki jo zamenjajo.': 'A puncture: the car pulls to one side and grips less. Come into the pits, the mechanics change the tyre.',
     'Predrta guma: avto vleče na stran in slabše prime. Previdno do cilja.': 'A puncture: the car pulls to one side and grips less. Take it carefully to the line.',
@@ -271,7 +271,7 @@
     ' · POPRAVLJENO': ' · REPAIRED', 'POPRAVLJENO!': 'REPAIRED!', 'še {0} km': '{0} km to go', 'OVINEK {0}/{1}': 'TURN {0}/{1}', 'LETEČI KROG': 'FLYING LAP', 'LETEČI KROG!': 'FLYING LAP!',
     'KROG {0}/{1}': 'LAP {0}/{1}', 'KROG {0}: {1}': 'LAP {0}: {1}', '  NAJHITREJŠI': '  FASTEST', 'ZADNJI KROG!': 'FINAL LAP!', 'NAPAČNA SMER!': 'WRONG WAY!', 'POPRAVILO {0} %': 'REPAIR {0} %',
     'PREBITE GUME: {0}': 'FLAT TYRES: {0}', 'TEKMEC {0} s PRED TABO': 'RIVAL {0} s AHEAD', 'TEKMEC {0} s ZA TABO': 'RIVAL {0} s BEHIND',
-    'ČAS SE ZAČNE NA ČRTI': 'THE CLOCK STARTS AT THE LINE', 'START!': 'GO!', 'CILJ!': 'FINISH!', 'Cilj!': 'Finish!', 'ZMAGA!': 'VICTORY!', 'CILJ! {0} MESTO': 'FINISH! {0} PLACE', 'KROG {0}': 'LAP {0}',
+    'ČAS SE ZAČNE NA ČRTI': 'THE CLOCK STARTS AT THE LINE', 'START!': 'GO!', 'REAKCIJA': 'REACTION', 'PREZGODAJ NA PLINU': 'GAS TOO EARLY', 'CILJ!': 'FINISH!', 'Cilj!': 'Finish!', 'ZMAGA!': 'VICTORY!', 'CILJ! {0} MESTO': 'FINISH! {0} PLACE', 'KROG {0}': 'LAP {0}',
     'REKORD {0}  {1}': 'RECORD {0}  {1}', 'CILJ  {0}': 'FINISH  {0}', 'NOV REKORD!': 'NEW RECORD!', 'CILJ! {0}': 'FINISH! {0}', 'ULOVLJEN!': 'BUSTED!', 'POBEGNIL SI!': 'YOU ESCAPED!',
     'Sobe s to kodo ni. Preveri kodo (prijatelj mora imeti sobo odprto).': 'There is no room with this code. Check the code (your friend must keep the room open).',
     'Ta brskalnik ne podpira dirke s prijateljem. Odpri igro v Chromu ali Safariju.': 'This browser cannot race a friend. Open the game in Chrome or Safari.',
@@ -311,7 +311,7 @@
     'Celoten zaslon tukaj ni na voljo. Odpri igro v Chromu ali jo dodaj na začetni zaslon.': 'Full screen is not available here. Open the game in Chrome or add it to the home screen.',
     'Igra je nameščena: odpreš jo z ikono APEX Racing na začetnem zaslonu.': 'The game is installed: open it with the APEX Racing icon on your home screen.', 'Nova različica igre: nalagam …': 'A new version of the game: loading …',
     'Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.': 'The 3D graphics library could not be loaded. Check the connection and reload the page.',
-    'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.': 'Gamepad connected: the left stick steers, RT throttle, LT brake, B drift, Start pause. In the menus choose with the stick and A, B goes back.',
+    'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.': 'Gamepad connected: the left stick steers, RT throttle, LT brake, Start pause. In the menus choose with the stick and A, B goes back.',
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
@@ -322,7 +322,11 @@
     'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
+    'Razgledišče Renes': 'Renes Lookout', 'Razgledišče Danny\'s': 'Danny\'s Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
+    'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
+    'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
+    'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
@@ -332,8 +336,6 @@
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
-    'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
-    'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
@@ -371,7 +373,8 @@
     '\u21ba Namesti kolo': '\u21ba Fit a wheel', 'KOLO JE ODPADLO!': 'WHEEL OFF!', 'Izgubil si kolo: v boksih ti namestijo novo.': 'You lost a wheel: the crew fits a new one in the pits.',
     'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.': 'You lost a wheel: tap Fit a wheel (6 s) or drive on, on three.', 'NOVO KOLO \u00b7 {0} s': 'NEW WHEEL \u00b7 {0} s',
     'ODSTOP': 'OUT', 'TEKMEC JE ODSTOPIL': 'RIVAL RETIRED', ' Stalni tekmec {0}: odstop (skupaj ti {1}, tekmec {2}).': ' Your rival {0}: retired (overall you {1}, rival {2}).',
-    'KOLO JE ODPADLO': 'WHEEL OFF', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
+    'KONEC IGRE': 'GAME OVER', 'PONOVI IGRO': 'PLAY AGAIN', 'Rezultati': 'Results', 'Odpadli sta dve kolesi: avto ne more naprej.': 'Two wheels came off: the car can go no further.', 'Odpadla so tri kolesa: avto ne more naprej.': 'Three wheels came off: the car can go no further.', 'Odpadla so vsa štiri kolesa: avto ne more naprej.': 'All four wheels came off: the car can go no further.',
+    'KOLO JE ODPADLO': 'WHEEL OFF', 'ZAMENJAJ KOLO': 'CHANGE THE WHEEL', 'Zamenjaj kolo': 'Change the wheel', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
     // the categories (Core.CATS; Dirkalni is above: Racing)
     'Mali avti': 'Small cars', 'Športni': 'Sports cars', 'Superšportni': 'Supercars', 'Klasika': 'Classics', 'Reli': 'Rally', 'Terenski': 'Off-road', 'Tovornjaki': 'Trucks', 'Električni': 'Electric', 'Posebni': 'Specials',
     // the descriptions of the vehicles (def.desc in js/cars; their names stay as they are)
@@ -412,7 +415,7 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m']);
+  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', 'Press here to change tyre']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
