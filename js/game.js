@@ -1532,7 +1532,8 @@
   function newRace(mode) {
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
     const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
-    const duel = md === 'traffic', chase = md === 'police';   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
+    const duel = md === 'traffic', chase = md === 'police';
+    const flyGo = !on && !tt && !duel && !chase && !ch && mode !== 'quali' && !!track.def.open;   // a race up an open road: the flying start (FLY_V, the autopilot's first FLY_T s); online the lights as ever   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     if (cr < 0) champRun = false;
     const FM = cr >= 0 ? champField() : null;   // (a championship round: the rivals in the field of the car it was started with)
@@ -1560,7 +1561,7 @@
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
-      traffic: duel, police: chase, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
+      traffic: duel, police: chase, flying: flyGo ? FLY_V : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }));
     if (race.player) race.player.pitCmp = S.pitCmp;
@@ -1585,7 +1586,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); fly.t = 0; fly.n = 0; drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
@@ -2383,6 +2384,7 @@
     const pit = pitCtl(P, hold);   // the pit autopilot: 'lane', 'merge' or null (the player's own car)
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; if (phase === 'intro' || phase === 'lights') P.inThr = 0; }   // (autoDrive: automated tests of online races drive in real time; on the grid off the gas: it sets off as the lights go out)
+    else if (fly.t > 0) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; flyStep(dt); }   // a flying start: the autopilot drives until the player takes over
     else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
       // Race.pitStep); the player's gas and steering are not used; the brake slows it (the autopilot's throttle off), never into reverse
       P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
@@ -3105,6 +3107,14 @@
     if (pa.st) pitFree(P, false);   // (out of the lane without a stop, or rescued in it: at once, as before)
     return null;
   }
+  // the flying start of a race up an open road (Race opts.flying): every car rolling at FLY_V m/s from its slot on the grid, the player's car on the
+  // autopilot for FLY_T s of race time, a number at each whole second (LETEČI START · PREVZAMEŠ ČEZ 3, 2, 1), then VOZIŠ TI! and the player's own car
+  const FLY_V = 15, FLY_T = 3, fly = { t: 0, n: 0 };
+  function flyStep(dt) {
+    fly.t -= dt; const n = Math.ceil(fly.t - 1e-6);
+    if (n > 0 && n !== fly.n) { fly.n = n; showMsg(n === FLY_T ? tr('LETEČI START · PREVZAMEŠ ČEZ {0}', n) : tr('PREVZAMEŠ ČEZ {0}', n), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); }
+    if (fly.t <= 0) { fly.t = 0; fly.n = 0; showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); }
+  }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
     $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
@@ -3674,7 +3684,7 @@
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
     ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
-    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
+    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT|LETEČI START|FLYING START|^PREVZAMEŠ|^TAKE OVER/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL/],
     ['pit', /BOKS|PIT|BOX/]];
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
@@ -4013,6 +4023,9 @@
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && phaseT > 1.3 && race.pol && race.pol.chk) {   // the run from the police up to its checkpoint: no lights, the player just drives off (nobody after them yet)
       phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('VOZI PROTI VRŠIČU'), 'gold', 1.6);
+      if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
+    } else if (phase === 'intro' && race.opts.flying > 0) {   // a race up an open road: a flying start, no lights; the cars are rolling at once, the autopilot
+      phase = 'racing'; phaseT = 0; race.start(); fly.t = FLY_T; fly.n = 0; $('touch').classList.add('ap');   // drives the player's car for its first FLY_T s (flyStep)
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && phaseT > introLen) {
       if (introLen > 1.3) shotOff();   // (the jets' shot is over: the game's camera again)
