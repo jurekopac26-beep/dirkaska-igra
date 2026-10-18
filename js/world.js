@@ -27255,7 +27255,7 @@ const World = (function () {
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
     if (def.far) out.dyn.far = rsFar(root, def.far, sea, hyS(sStart) + 6);
-    if (def.minaret) mrFarTower(root, def.minaret[0], def.minaret[1], def.minaret[2]);   // (the old town's minaret on the horizon to the north)
+    if (def.minaret) out.dyn.mrFar = mrFarTower(root, def.minaret[0], def.minaret[1], def.minaret[2]);   // (the old town's minaret on the horizon to the north)
     out.stats = { tiles: nTiles, trees: nTrees, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
     return out;
   }
@@ -33779,7 +33779,7 @@ const World = (function () {
     mark('scenery'); crowdFinish(CR, root, out); mark('crowds');
     out.crowdPts = Float32Array.from(crowdPts);
     if (def.far) out.dyn.far = rsFar(root, def.far, sea, hyS(sStart) + 6);
-    if (def.minaret) mrFarTower(root, def.minaret[0], def.minaret[1], def.minaret[2]);   // (the old town's minaret on the horizon to the north)
+    if (def.minaret) out.dyn.mrFar = mrFarTower(root, def.minaret[0], def.minaret[1], def.minaret[2]);   // (the old town's minaret on the horizon to the north)
     mark('far');
     out.stats = { tiles: nTiles, buildings: nBld, crenels: nCren, towers: nTow, palms: nPalm, olives: nOlive, trees: nTree, cars: nCars, stands: nStands, tents: nTent, trucks: nTruck, props: nProps, islands: nIsl, zebras: nZebra, marks: nMark, banners: nBan, posts: nPost, streets: nSt, bridges: nBridge, fountains: nFount, stalls: nStall };   // (read by the tests)
     return out;
@@ -34456,6 +34456,7 @@ const World = (function () {
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.cpMast && (cam || !car)) cpMastStep(d.cpMast, car ? cam : null, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar (no car: on its own place, the world test's pose)
     if (d.far && !car) { d.far.position.set(0, 0, 0); d.far.scale.setScalar(1); d.far.updateMatrix(); }   // Riverside: the far ring follows the camera as it is drawn (rsFar); no car: as built, the world test's pose
+    if (d.mrFar && !car) { d.mrFar.position.set(0, 0, 0); d.mrFar.scale.setScalar(1); d.mrFar.updateMatrix(); }   // Marrakesh: the minaret on the horizon follows the camera as it is drawn (mrFarTower); no car: as built, the world test's pose
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
