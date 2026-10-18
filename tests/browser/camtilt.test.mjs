@@ -35,7 +35,7 @@ try {
   T.check('chase: the camera stays as far from the point it looks at', c0.dist > 10 && Math.abs(c1.dist - c0.dist) < 0.01 && Math.abs(c2.dist - c0.dist) < 0.01, JSON.stringify([c0.dist, c1.dist, c2.dist]));
 
   // iso (phone lying): the setting moves nothing
-  await page.evaluate(() => document.querySelector('[data-set="camera"] button[data-v="iso"]').click());
+  await page.evaluate(() => { window.__game.S.camera = 'iso'; });   // (no camera row in Nastavitve any more: the isometric render path, set in code)
   await pick('0'); const i0 = await view('iso');
   await pick('2'); const i2 = await view('iso');
   T.check('iso: the camera does not move', JSON.stringify(i0) === JSON.stringify(i2), JSON.stringify([i0, i2]));
