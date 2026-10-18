@@ -9,7 +9,7 @@ const T = checker('season and time of day');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'rbring', weather: 'dry' }, { width: 844, height: 390 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry' }, { width: 844, height: 390 });
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const pick = (set, v) => page.evaluate(([set, v]) => document.querySelector(`[data-set="${set}"] button[data-v="${v}"]`).click(), [set, v]);
   // the world's colours: how green its plants are on average (vertex colours of the ground and the leaves), the grass pictures, the lights

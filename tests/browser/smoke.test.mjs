@@ -308,19 +308,19 @@ try {
       `${M.title} "${M.sub}", HUD "${M.goal}", messages ${JSON.stringify(M.msgs)}, rows ${JSON.stringify(M.rows.slice(0, 4))}`);
   }
 
-  // 6e. Harju, the city stage in Jyväskylä: first its evening sky from the cockpit (the sky dome drawn: the theme's own zenith and its warm glow
+  // 6e. Harju, the city stage in Jyväskylä: first its evening sky from a TV camera (the sky dome drawn: the theme's own zenith and its warm glow
   //     towards the sun by day, no glow at dusk); then to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the
   //     stage's words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
   {
     await startTrack(page, 'harju');
     const s = await page.evaluate(async () => {
       const g = window.__game, fr = async (n) => { for (let k = 0; k < n; k++) await new Promise(r => requestAnimationFrame(r)); };
-      g.S.camera = 'cockpit'; await fr(4); const day = Render.show;
+      g.S.camera = 'tv'; await fr(4); const day = Render.show;
       Render.setAtmos({ season: 'summer', tod: 'dusk' }); await fr(3); const dusk = Render.show;
       Render.setAtmos({ season: 'summer', tod: 'day' }); g.S.camera = 'chase'; await fr(2);
       return { day: { sky: day.sky, warm: day.warm, todK: day.todK }, dusk: { sky: dusk.sky, warm: dusk.warm, todK: dusk.todK } };
     });
-    T.check('Harju from the cockpit: the evening sky drawn with its warm glow towards the sun by day, none at dusk',
+    T.check('Harju from a TV camera: the evening sky drawn with its warm glow towards the sun by day, none at dusk',
       s.day.sky && s.day.todK === 0 && s.day.warm > 0.5 && s.dusk.sky && s.dusk.todK === 0.5 && s.dusk.warm === 0, JSON.stringify(s));
     const r = await page.evaluate(async () => {
       const g = window.__game;

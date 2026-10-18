@@ -23,7 +23,7 @@ const init = () => {
     requestAnimationFrame(check); });
 };
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'rbring' }, { width: 844, height: 390 }, { init });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring' }, { width: 844, height: 390 }, { init });
   const st = () => page.evaluate(() => { const f = document.querySelector('.pad-focus'); return { screen: window.__game.screen, focus: f ? (f.dataset.track || f.dataset.act || f.dataset.v || f.textContent.trim()) : '' }; });
   const press = async (i) => { const ok = await page.evaluate((i) => window.__press(i), i); const s = await st(); s.seen = ok; return s; };
 
@@ -71,7 +71,7 @@ try {
 }
 // (its own page and race, started without the pad: it runs whatever happened above)
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'rbring' }, { width: 844, height: 390 }, { init });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring' }, { width: 844, height: 390 }, { init });
   await startTrack(page, 'rbring');
   await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 20 && g.phase !== 'racing'; k++) g.sim(2, true); g.sim(2, true); });   // (past the intro and the lights, on the autopilot)
 
@@ -101,8 +101,8 @@ try {
     window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' })); await raf(); look(); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
     for (const i of [1, 5]) { const b = window.__pad.buttons[i]; b.pressed = true; b.value = 1; await raf(); look(); b.pressed = false; b.value = 0; await raf(); }
     o.screen = g.screen; return o; });
-  T.check('no handbrake on the keyboard or the pad: no such action (the keys: left, right, gas, brake, pause, cam, tyre; the pad: steer, gas, brake, pause, cam, rescue); Space, B and RB in the race: no "hand" in the input, the player\'s car never on the handbrake (P.inHand 0), the race goes on',
-    hk.keys === 'left,right,gas,brake,pause,cam,tyre' && hk.padDef === 'steer,gas,brake,pause,cam,rescue' && hk.hand.length === 3 && hk.hand.every(h => h === false) && hk.inHand.every(v => v === 0) && hk.phase.every(p => p === 'racing') && hk.screen === 'none', JSON.stringify(hk));
+  T.check('no handbrake on the keyboard or the pad: no such action (the keys: left, right, gas, brake, pause, tyre; the pad: steer, gas, brake, pause, rescue); Space, B and RB in the race: no "hand" in the input, the player\'s car never on the handbrake (P.inHand 0), the race goes on',
+    hk.keys === 'left,right,gas,brake,pause,tyre' && hk.padDef === 'steer,gas,brake,pause,rescue' && hk.hand.length === 3 && hk.hand.every(h => h === false) && hk.inHand.every(v => v === 0) && hk.phase.every(p => p === 'racing') && hk.screen === 'none', JSON.stringify(hk));
   T.check('no page errors (no handbrake)', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through (no handbrake)', false, e.stack || String(e));

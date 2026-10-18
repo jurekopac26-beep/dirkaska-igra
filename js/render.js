@@ -914,11 +914,8 @@ const Render = (function () {
        panel; the cockpit looks out through the glass). A panel whose colour is K.GLASS is glass; mark the others that are (a painted panel
        under a GLASS decal) with the loft's glass(k, e, kind, at). The lining and the cabin are a fixed dark colour. A crushed roof takes
        the lining with its shell (each lining point follows the shell's point it is inset from); the cabin, the floor and the engine stay.
-       The car the cockpit camera sits in draws its outer shell and, once a part is off or loose, of the inner block only what lies ahead
-       of the windscreen's foot (the engine bay a lost bonnet bares; no lining or cabin round the driver). The glass is
-       an opaque colour, seen from outside only: the loft's panels are one-sided (from inside they are not drawn: the driver sees out). A
-       pane of its own (a roadster's windscreen, a buggy's screen) must be one-sided too: K.face / K.rect facing out (forward); a K.plate
-       or K.box of K.GLASS is a dark wall in the cockpit's view
+       The glass is an opaque colour, seen from outside only: the loft's panels are one-sided (from inside they are not drawn). A
+       pane of its own (a roadster's windscreen, a buggy's screen) must be one-sided too: K.face / K.rect facing out (forward)
      AN OPEN TOP: col null for a panel (e 1..7) opens the loft there (a roadster's or an open racer's cockpit, a pickup's bed, a cut-out in
        a side). Such a segment, with the glazed ones next to it (closed, glass in their top: the windscreen the driver looks out through),
        is lined in the OUTER shell (drawn while the car is whole, counted in the outer budget): the lining of its panels, its floor (at the
@@ -1051,7 +1048,7 @@ const Render = (function () {
        one (the front off, the left side torn off, the right side and the rear hanging loose, the front left wheel off, lamps and panes
        broken: check each part comes off whole, hangs the right way from its hinge, the inside behind it), chase-total / total-34 after
        Core.wreckCar, burning (the flames out of the body, not inside it), chase-burnt / burnt-34l 20 s on (burnt out: soot all over,
-       black smoke), the cockpit, cockpit-wreck (the staged wreck from the seat: the engine bay where the bonnet was)); --cat <category>
+       black smoke)); --cat <category>
        (the category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
        seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
@@ -1062,9 +1059,9 @@ const Render = (function () {
        bg (a flat background colour), blob (false: no shadow blob), cam ({ p, t, fov }: a camera of its own, car frame), mark (points, car
        frame: the canvas's .marks are their pixels) }; Render.kitGlassNear(id, color, stripe) (a car's copy: how many vertices are near a
        glass colour without being glass). node tests/browser/fleet.test.mjs (FLEET_ONLY=<id>): the budgets, the showroom's framing, the
-       wheels, no seeing through the arches, the rims or an open top, the colours, the cockpit (and the driver seeing out of it), a lost
+       wheels, no seeing through the arches, the rims or an open top, the colours, a lost
        part's and a crushed roof's ranges, the wreck (its pieces, the wheels off, the sag; as the player sees it: the fire and the smoke
-       in sight, the cockpit under a crushed roof), the field's cost. node tests/kit.test.js: the kit's own rules on test looks (no browser)
+       in sight), the field's cost. node tests/kit.test.js: the kit's own rules on test looks (no browser)
      ===================================================================================================================================== */
   // ---- the kit's fixed colours and tables ----
   const KIT_LINE = [0.16, 0.15, 0.14], KIT_SEAT = [0.21, 0.2, 0.19], KIT_GL2 = [0.04, 0.05, 0.08], KIT_LENS_OUT = [0.22, 0.23, 0.25];   // lining / cabin, seats, the rally's glass, a smashed lens
@@ -1879,7 +1876,7 @@ const Render = (function () {
     for (const t of kx.order) if (order.indexOf(t.part) < 0) kitFail('part "' + t.part + '" not in the part table');
     // the inner block's front: what lies ahead of the windscreen's foot (the main loft's first section past its 'gf' run, metres) comes first,
     // the parts there (their lining) and the body's triangles there (the bay's floor, the engine, the front's lining), so a prefix of the
-    // inner block (U.engN vertices) is the engine bay: the cockpit draws it once a part is off (kitRange); none without a windscreen
+    // inner block (U.engN vertices) is the engine bay; none without a windscreen
     const SM = kx.mainS, gi = SM ? SM.findIndex(q => q.k === 'gf') : -1; let xBay = null;
     if (gi >= 0) { let j = gi; while (j < SM.length && SM[j].k === 'gf') j++; if (j < SM.length) xBay = SM[j].x * kx.sx; }
     const bodyIn = [], innerOrder = order.slice();
@@ -2152,16 +2149,14 @@ const Render = (function () {
   // the kit's draw range: the outer shell while the car is whole; from its first part hanging loose or lost (a wheel aside) the inner block
   // too (the lining, the cabin, the engine bay behind the gap or the hole; stage B2 turns a loose part, takes a lost one's ranges off). A
   // repaired car is a new view: whole again (while the pit crew works on it, repairStep, the inner block stays drawn behind its parts
-  // coming back). The car the cockpit camera sits in (frame sets v.kit.ck) draws its outer shell and of the inner block only what lies
-  // ahead of the windscreen's foot (U.engN: the engine bay, the front's lining and floor: what the driver sees through a lost bonnet); the
-  // lining, the cabin and the rest round the seat would fill the view
+  // coming back)
   function kitLod(v, c) {
     const K = v.kit, n = Object.keys(c.lost).length;
     if (n !== K.nLost || K.ver !== K.lodV) { K.nLost = n; K.lodV = K.ver; const PT = Core.partsOf(c.m);
       K.full = Object.keys(K.ajar).length > 0 || Object.keys(c.lost).some(k => !(PT[k] && PT[k].wh != null)) || !!K.xTorn || !!K.xOpen || !!K.xDrop || !!K.xGlass; }   // (xTorn: a bonnet torn open, xOpen: a rear door open, xDrop: a part off by the Kolibri's table, xGlass: its glass broken; Razbijanje · nov način)
     kitRange(v);
   }
-  function kitRange(v) { const g = v.body.geometry, U = g.userData, K = v.kit, want = !K.full ? U.outerN : K.ck ? U.outerN + (U.engN || 0) : U.N; if (g.drawRange.count !== want) g.setDrawRange(0, want); }
+  function kitRange(v) { const g = v.body.geometry, U = g.userData, K = v.kit, want = !K.full ? U.outerN : U.N; if (g.drawRange.count !== want) g.setDrawRange(0, want); }
   // a head lamp smashed (k 0 left, 1 right): its lens dark (only while it is on the car: its host part still there)
   function kitLampOut(v, k) {
     const U = v.kit && v.body.geometry.userData, L = U && U.lamps[k ? 'FR' : 'FL']; if (!L) return;
@@ -2982,8 +2977,8 @@ const Render = (function () {
   let particles, skids, views = [];
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
-  let settings = { quality: 'high', shadows: true, camera: 'iso', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
-  const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, pt: 0, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
+  let settings = { quality: 'high', shadows: true, camera: 'chase', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
+  const cam = { x: 0, z: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
@@ -3055,7 +3050,6 @@ const Render = (function () {
   }
 
   function buildWorld(track, density, tier) {
-    camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
       const pics = new Set();
@@ -3488,7 +3482,7 @@ const Render = (function () {
   function rainFx(dt, target) {
     const T = curTrack, on = rain.mesh.visible && !!T && !!target;
     splash.mesh.visible = on; if (!on) return;
-    const U = splash.mat.uniforms, R = lastMode === 'cockpit' ? 12 : lastMode === 'chase' ? 22 : 30, cx = cam.vcx || 0, cz = cam.vcz || 0;
+    const U = splash.mat.uniforms, R = lastMode === 'chase' ? 22 : 30, cx = cam.vcx || 0, cz = cam.vcz || 0;
     U.uT.value = time; U.uScale.value = particles.mat.uniforms.uScale.value; U.uA.value = 0.62 * Math.min(1, wet * 1.5) * (atmos.tod === 'night' ? 0.55 : atmos.tod === 'dusk' ? 0.8 : 1);
     splash.acc = Math.min(40, splash.acc + dt * 300 * Math.min(1, wet * 1.3) * (R / 22) ** 2);
     const hint = target.q && target.q.a >= 0 ? target.q.a : -1;
@@ -3607,7 +3601,7 @@ const Render = (function () {
     }
     W[0] = scene.fog.color.getHex(); W[1] = sun.color.getHex(); W[2] = hemi.color.getHex(); W[3] = hemi.groundColor.getHex(); W[4] = sun.intensity;
     pkRays(settings.quality === 'high' && A.tod === 'day' && r <= 0 ? (1 - Core.sstep(170, 200, gy)) * (1 - mi) : 0, dt);
-    pkFlare(A.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot)) ? 1 - 2 * r : 0, dt);
+    pkFlare(A.tod !== 'night' && r < 0.5 && (lastMode === 'tv' && !cam.shot) ? 1 - 2 * r : 0, dt);
   }
 
   /* ---------------- Pikes Peak's shafts of sun through the forest (the 'high' quality only, by day, below the tree line): a dozen long soft
@@ -3660,7 +3654,7 @@ const Render = (function () {
     M.material.uniforms.uC.value.copy(sun.color).multiplyScalar(0.26 * Math.min(1.4, sun.intensity)); M.visible = true;
   }
 
-  /* ---------------- Pikes Peak's lens flare (the cockpit and the replay's TV cameras, when the low sun is in the picture): a soft bloom disc and
+  /* ---------------- Pikes Peak's lens flare (the replay's TV cameras, when the low sun is in the picture): a soft bloom disc and
      a star of light on the sun, rings and ghosts along the line from the sun through the middle of the picture. Hidden when the sun is behind
      the mountain (the ground's height sampled along the ray to it, as the TV cameras' pkLos does; the forest below the tree line too), fading in
      and out. One mesh drawn straight in the screen's space, last, one draw call (none when hidden) ---------------- */
@@ -3707,7 +3701,7 @@ const Render = (function () {
 
   /* ---------------- the sun on every other world (Pikes Peak has its own, pkLight): its rays slanting down between the trees of a wood
      (quality 'high', by day and stronger in the evening, dry; Pikes Peak's shafts: pkRays, where sunWood finds the trees thick) and its
-     lens flare in the cockpit, the TV cameras and the shots with the sky (pkFlare) ---------------- */
+     lens flare in the TV cameras and the shots with the sky (pkFlare) ---------------- */
   // the woods of a world: a 10 m grid of how many trees stand there, from the world's trees (the swaying ones of the default builder, the
   // instanced trees of the others: an instanced shape at least 4 m tall and no wider than 14 m, of 20 or more), found once per world;
   // as Pikes Peak's pkWood: -1 on and by the road, else how thick the wood is (0..1)
@@ -3738,7 +3732,7 @@ const Render = (function () {
     if (rays > 0 && world.pkWood === undefined) world.pkWood = sunWood();
     if (!world.pkWood) rays = 0;
     pkRays(rays, dt);
-    pkFlare(r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky)) ? (1 - 2 * r) * 0.8 * (1 - sstep(0.55, 0.75, todK)) : 0, dt);
+    pkFlare(r < 0.5 && ((lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky)) ? (1 - 2 * r) * 0.8 * (1 - sstep(0.55, 0.75, todK)) : 0, dt);
   }
 
   /* ---------------- the season and the time of day (setAtmos({ season: 'summer' | 'autumn' | 'winter', tod: 'day' | 'dusk' | 'night' })):
@@ -3987,7 +3981,7 @@ const Render = (function () {
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
         'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
         'void main(){',
-        // the summer's heat over the far asphalt: the picture just under the horizon trembles (a low camera: the cockpit, the TV cameras)
+        // the summer's heat over the far asphalt: the picture just under the horizon trembles (a low camera: the TV cameras)
         '  vec2 uv = vUv; if (uHeat > 0.0) { float hb = uHeat * smoothstep(0.12, 0.0, uHorY - vUv.y) * step(vUv.y, uHorY); uv.x += sin(vUv.y * 310.0 + uTm * 8.0 + sin(vUv.x * 37.0 + uTm * 2.3) * 2.0) * 0.0011 * hb; }',
         '  vec2 px = 1.0 / uRes; vec3 c = texture2D(tD, uv).rgb;',
         '  float b = uBlur * smoothstep(uBand, uBand + 0.4, abs(vUv.y - uFocus));',
@@ -4756,8 +4750,7 @@ const Render = (function () {
     boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    const gp = pb && curTrack.pitAt(pb.s), gz = gp ? gp.sd * curTrack.nz[curTrack.idx(pb.s)] : 0;   // gz: how far the garages face the iso camera (south, +z: their roofs hide the apron in its view)
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, gz, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
@@ -5611,7 +5604,7 @@ const Render = (function () {
       v.grp.updateMatrixWorld(true);
       const nt = todK, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
-      for (let k = 0; k < 4 && c !== ck.car && v.grp.visible; k++) {   // (not the lamps of the car the cockpit camera sits in, nor a hidden car's)
+      for (let k = 0; k < 4 && v.grp.visible; k++) {   // (not a hidden car's lamps)
         if (v.lampsOut || (v.lightBroken && v.lightBroken[k])) continue;   // smashed lamp (burnt out: all of them): no glow
         if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
         _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
@@ -5623,9 +5616,9 @@ const Render = (function () {
           if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl);
           if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, (braking ? 0.75 : 0.36) * wk * (0.5 + 0.5 * nt), 0.55, braking ? 6.5 : 5, c.id * 0.37 + k); }
       }
-      if (wk && c !== ck.car) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
+      if (wk) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
-      if (sk > 0 && c !== ck.car) {   // the sun's glint on the paint: a soft glare where the curved roof mirrors the sun into the camera (the paint's own highlight is small and sharp)
+      if (sk > 0) {   // the sun's glint on the paint: a soft glare where the curved roof mirrors the sun into the camera (the paint's own highlight is small and sharp)
         const ry = (BODIES[M.body] || BODIES.coupe).roofY * (v.noHead ? 0.9 : 0.97), cp = camera.position;
         let vx = cp.x - x, vy = cp.y - y - ry, vz = cp.z - z; const vl = Math.hypot(vx, vy, vz) || 1; vx = vx / vl + _sunN.x; vy = vy / vl + _sunN.y; vz = vz / vl + _sunN.z;
         const hl = Math.hypot(vx, vy, vz) || 1, d = (vx * e[4] + vy * e[5] + vz * e[6]) / hl, ox = (vx / hl - e[4] * d) * 2.6, oz = (vz / hl - e[6] * d) * 2.6;   // (half-way vector; where on a roof curved ~2.6 m its normal is that)
@@ -7788,7 +7781,7 @@ const Render = (function () {
     const ko = F.out != null ? 1 - Core.sstep(F.out, F.out + FIRE_OUT, now) : 1; if (F.out != null && now - F.out >= FIRE_OUT) F.done = true;   // (put out: dying away, then gone, smoke and all)
     if (F.done) return;
     const wnd = F.out != null ? 1 : 0;   // (being put out: the wind takes the flames and the smoke)
-    const lit = e < FIRE_T && rk < 1, k = lit ? ko * up * (1 - 0.75 * Core.sstep(FIRE_T - 5, FIRE_T, e)) * (1 - rk) : 0, sc = clamp(M.wid / 1.8, 0.6, 1.4), inCk = !!cam.ck && ck.car === c;
+    const lit = e < FIRE_T && rk < 1, k = lit ? ko * up * (1 - 0.75 * Core.sstep(FIRE_T - 5, FIRE_T, e)) * (1 - rk) : 0, sc = clamp(M.wid / 1.8, 0.6, 1.4);
     if (cw >= 0.6) { for (const q of v.crack) if (q) q.visible = false; if (!v.lampsOut && !v.rep) lampsBurnt(v); }   // (burnt a while: no glass, no lamps; not while the crew works on it: lamps lit at the stop's start stay lit, the car is new at its end)
     if (live && dt > 0 && v.fireEmit) {
       if (lit && hub) {   // the wheel rule's hub: flames out of the wheel arch, up beside the wing (a corner of the car, not all of it)
@@ -7810,9 +7803,9 @@ const Render = (function () {
       while (v.fsmAcc >= 1) { v.fsmAcc -= 1;
         const g = 0.05 + rRnd() * 0.06, s1 = Math.min(hub ? 3 : 4.5, (hub ? 2.4 : lit ? 4.2 : 5.4) + rRnd() * (hub ? 1.2 : 2.2)) * sc;   // (a puff at most 4.5 m across a car's size; the hub's at most 3 m)
         particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[0], 1.3 + rRnd() * 1.1 - wnd * 0.5, c.vz * 0.3 + (rRnd() - 0.5) * 0.5 + wnd * FIRE_WIND[1],
-          (lit ? 2.5 : 3.1) + rRnd() * 1.4, 1.1 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? (hub ? 0.7 : 0.86) : 0.92 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }   // (denser than the other smoke: the soft puffs of the particles' atlas let through what the old discs covered)
+          (lit ? 2.5 : 3.1) + rRnd() * 1.4, 1.1 * sc, s1, g, g, g * 1.05, lit ? (hub ? 0.7 : 0.86) : 0.92 * (0.45 + 0.55 * thin), -0.35, 0.8, y); }   // (denser than the other smoke: the soft puffs of the particles' atlas let through what the old discs covered)
     }
-    if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames), flickering with the fire's own age (e: on the race's clock, as its flames)
+    if (lit && (live || dt === 0) && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames), flickering with the fire's own age (e: on the race's clock, as its flames)
       const fl = 0.55 + 0.25 * Math.sin(e * 17.3 + c.id * 1.7) + 0.2 * Math.sin(e * 6.1 + c.id);
       glows.add(sx, sy + 0.35, sz, (1.6 + 1.2 * fl) * sc * (0.5 + 0.5 * k) * (hub ? 0.7 : W3 ? 1.25 : 1), 1, 0.52, 0.16, (0.32 + 0.42 * fl) * k);
     }
@@ -8013,43 +8006,17 @@ const Render = (function () {
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
-    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.pt = 0; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
+    if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
-    const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
+    const k2 = 1 - Math.exp(-dt * 1.4);
     let px, py, pz, tx, ty, tz;
     const shot = cam.shot;
-    let qc = null, near = 4;   // qc: the camera's own turn (the cockpit), else it looks at (tx, ty, tz); near: its near plane
+    let near = 4;   // its near plane; it looks at (tx, ty, tz)
     if (shot) {   // a TV shot the world directs (setShot: the Red Bull Ring's fly-over before the start, the podium; the photo mode): a camera of its own
       px = shot.px; py = shot.py; pz = shot.pz; tx = shot.tx; ty = shot.ty; tz = shot.tz; near = shot.near || 4;
       if (camera.fov !== shot.fov) { camera.fov = shot.fov; camera.updateProjectionMatrix(); updatePointScale(); }
       if (shot.floor && world) { const gH = world.groundH ? world.groundH(px, pz) : NaN, gf = Math.max(Number.isFinite(gH) ? gH : -1e9, c.roadY != null ? c.roadY - 3 : -1e9) + 0.35; if (py < gf) py = gf; }   // (the photo mode: never under the ground)
-    } else if (mode === 'cockpit' && viewOf(c)) {
-      // the driver's eyes (eyeOf) in the car as drawn (its slope and bank; the body's roll only in the cockpit round them), the head a
-      // little down, looking into the corner and along a slide, swaying with the corner's pull
-      const v = viewOf(c), E = eyeOf(c.m), kL = 1 - Math.exp(-dt * 4), kS = 1 - Math.exp(-dt * 6);
-      ck.look += (clamp((c.w || 0) * 0.12, -0.2, 0.2) + clamp(c.beta || 0, -1, 1) * 0.3 - ck.look) * kL;
-      ck.sway += (clamp(-(c.w || 0) * spd * 0.0025, -0.04, 0.04) - ck.sway) * kS;
-      _ckE.set(E.x, E.y, ck.sway).applyMatrix4(v.grp.matrixWorld); px = _ckE.x; py = _ckE.y; pz = _ckE.z;
-      qc = _ckQ.setFromRotationMatrix(v.grp.matrixWorld).multiply(_ckQ2.setFromEuler(_ckEu.set(-E.tilt, -Math.PI / 2 - ck.look, 0, 'YXZ')));
-      _ckF.set(0, 0, -1).applyQuaternion(qc); tx = px + _ckF.x * 70; ty = py + _ckF.y * 70; tz = pz + _ckF.z * 70;   // (70 m ahead: the fog, the sun's shadows, the rain round there)
-      near = E.near; ck.car = c;
-      { const fv = 58 + 7 * clamp(((c.speed || 0) - 25) / 45, 0, 1);   // (at speed the view widens a little: the world rushes past at the edges)
-        if (Math.abs(camera.fov - fv) > 0.05) { camera.fov = fv; camera.updateProjectionMatrix(); updatePointScale(); } }
-    } else if (mode === 'chase') {
-      // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
-      // travel, so a sliding car shows its angle)
-      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
-      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
-      cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
-      // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
-      const portrait = camera.aspect < 1;
-      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: 10/20/30 % flatter, the camera looks further ahead along the road; the distance D stays)
-      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
-      const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
-      tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
-      px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
-      if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     } else if (mode === 'tv' && curTrack.def.theme === 'pikes' && world && world.groundH && curTrack.hy) {
       // Pikes Peak's own TV cameras (pkTv): the helicopter over the open road, fixed cameras at the famous places, the summit's view
       const o = pkTv(c, dt, x, z); px = o.px; py = o.py; pz = o.pz; tx = x; ty = (c.y || 0) + 0.7; tz = z;
@@ -8069,43 +8036,30 @@ const Render = (function () {
       const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(6.5 / Math.max(1, d)) * 180 / Math.PI, 4, 55);
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
-    } else if (mode === 'kino') {
-      // 'kino': the fixed, lower and closer view of the reference racer: heading set per circuit, ~42 deg tilt, look-ahead along the travel
-      const fx = Math.sin(camYaw), fz = -Math.cos(camYaw);
-      const sp = Math.max(spd, 1e-3), mag = 11 * Core.sstep(1.5, 16, spd);
-      cam.lx += (c.vx / sp * mag - cam.lx) * k1; cam.lz += (c.vz / sp * mag - cam.lz) * k1;
-      cam.zoom += (pitZ * (1 + 0.08 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
-      const zf = cam.zoom * cam.userZoom, D = 38 * zf, pitch = 0.74, ll = Math.hypot(cam.lx, cam.lz), kL = ll > 11 * zf ? 11 * zf / ll : 1;   // as close as the reference camera: the cars about the same size on screen
-      tx = x + cam.lx * kL; tz = z + cam.lz * kL; ty = baseY;
+    } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
+      // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
+      // travel, so a sliding car shows its angle)
+      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
+      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
+      cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
+      // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
+      const portrait = camera.aspect < 1;
+      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: 10/20/30 % flatter, the camera looks further ahead along the road; the distance D stays)
+      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
+      const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
+      tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
-      if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
-    } else {
-      // SWGP2-style (measured from gameplay): north-up view tilted ~47 deg, ~66 m wide on a phone,
-      // look-ahead of ~19 m along the direction of travel that saturates already at low speed,
-      // so the car sits well off-centre and most of the screen shows the road ahead.
-      const sp = Math.max(spd, 1e-3), mag = 19 * Core.sstep(1.5, 16, spd);
-      const Lx = c.vx / sp * mag, Lz = c.vz / sp * mag;
-      cam.lx += (Lx - cam.lx) * k1; cam.lz += (Lz - cam.lz) * k1;
-      cam.zoom += (pitZ * (1 + 0.1 * clamp(spd / 60, 0, 1)) - cam.zoom) * k2;
-      cam.pt += ((pitZ < 1 && crew.gz > 0 ? 0.62 * crew.gz : 0) - cam.pt) * k2;   // the car in its box in front of garages on the camera's side: look down steeper, over their roof
-      const zf = cam.zoom * cam.userZoom;
-      const D = 57 * zf, pitch = 0.82 + cam.pt;
-      // userBack (Nastavitve · Položaj avta): the car sits this many metres further back along its travel, so it reads lower in the frame
-      const bk = cam.userBack || 0, vmag = Math.hypot(c.vx, c.vz), bfx = vmag > 0.5 ? c.vx / vmag : Math.cos(h), bfz = vmag > 0.5 ? c.vz / vmag : Math.sin(h);
-      tx = x + clamp(cam.lx, -20 * zf, 20 * zf) + bfx * bk; tz = z + clamp(cam.lz, -10.5 * zf, 15.5 * zf) + bfz * bk; ty = baseY;
-      px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
-      if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
+      if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (world && world.camFloor && !shot && !qc) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
-    if (cam.shake > 0) { const k = qc ? 0.15 : 1; px += (Math.random() - 0.5) * cam.shake * k; py += (Math.random() - 0.5) * cam.shake * k; pz += (Math.random() - 0.5) * cam.shake * k; cam.shake = Math.max(0, cam.shake - dt * 3); }   // (in the cockpit: a jolt, not a leap)
+    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
-    camera.position.set(px, py, pz); if (qc) camera.quaternion.copy(qc); else camera.lookAt(tx, ty, tz); cam.vcx = qc ? px + (tx - px) * 0.25 : tx; cam.vcz = qc ? pz + (tz - pz) * 0.25 : tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);   // (the cockpit's view centre, for the rain round it: 18 m ahead)
-    cam.ck = !!qc; if (!qc) ck.car = null;
+    camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
     { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
-    lastMode = qc ? 'cockpit' : mode;
-    const sx = qc ? px + (tx - px) * 0.65 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : mode === 'chase' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
+    lastMode = mode === 'tv' ? 'tv' : 'chase';
+    const sx = tx, sz = lastMode === 'chase' ? tz : tz - 8;
     const texel = 160 / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
@@ -8113,7 +8067,7 @@ const Render = (function () {
     sun.position.set(cx + sunOff[0] * sd, baseY + sunOff[1] * sd, cz + sunOff[2] * sd);
     sun.target.updateMatrixWorld();
   }
-  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
+  let sunOff = [-80, 96, 70], lastMode = 'chase';
   // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating
   // sides), 14 m beyond the road's edge and 9 m above it (over the fences; higher where the ground beside the road is)
   function tvCams(T) {
@@ -8223,7 +8177,7 @@ const Render = (function () {
      track (points every 40 m: over the ground as the TV cameras keep it, world.groundH, with the ground and the trees clear between the
      camera and the road; the heights smoothed), then a Catmull-Rom spline through them. game.js asks for it (pkFly.at(t): the shot for
      Render.setShot, filled in place, and the caption on screen) during the race's intro, before the lights: the race is not touched.
-     The view is kept short (fogD: the far clip ~600 m), so it draws not much more than the kino camera does and streams the world in gently ---------------- */
+     The view is kept short (fogD: the far clip ~600 m), so it draws not much more than the camera behind the car does and streams the world in gently ---------------- */
   const pkFly = (() => {
     const DUR = 11.5, STEP = 40, PL = [[0, 'START'], [578, "Engineer's Corner"], [1000, 'Halfway Picnic Grounds'], [2688, 'Glen Cove'], [2918, "The W's"], [4050, "Devil's Playground"], [4466, 'Bottomless Pit'], [5360, 'Boulder Park'], [-1, 'CILJ']];
     const places = (T) => (T && T.def.fly) || (themeId === 'pikes' ? PL : null);   // ([metres after the start line (-1: the finish), caption]: Pikes Peak's above, a track's own def.fly)
@@ -8298,7 +8252,7 @@ const Render = (function () {
   // updated by its owner every frame; null: back to the game's camera (from scratch)
   function setShot(s) { if (!s && cam.shot) cam.init = false; cam.shot = s || null; }
 
-  /* ---------------- the sky: a dome round the camera for the views that look out to the horizon (the cockpit, the replay's TV cameras,
+  /* ---------------- the sky: a dome round the camera for the views that look out to the horizon (the replay's TV cameras,
      the photo mode): the fog's colour at the horizon (the far world fades into it), a deeper colour overhead, a soft glow round the sun
      (by day and at dusk; the moon's at night) ---------------- */
   let sky = null;
@@ -8403,7 +8357,7 @@ const Render = (function () {
     nsky.halo.position.copy(nsky.moon.position); nsky.halo.quaternion.copy(camera.quaternion); nsky.halo.scale.setScalar(D * 0.36); nsky.halo.material.opacity = 0.55 * a;
   }
   const _v3a = new THREE.Vector3(), _v3b = new THREE.Vector3();
-  // the view looks out over the horizon (the chase and kino cameras at dusk, at night and in the morning: the sky dome with its colours and stars)
+  // the view looks out over the horizon (the camera behind the car at dusk, at night and in the morning: the sky dome with its colours and stars)
   function horizonSeen() { camera.getWorldDirection(_v3a); return Math.asin(clamp(_v3a.y, -1, 1)) + camera.fov * Math.PI / 360 > -0.02; }
 
 
@@ -8557,200 +8511,15 @@ const Render = (function () {
     vfog = { meshes, mat, U, top, lo, hi };
   }
 
-  /* ---------------- the cockpit (the 'cockpit' camera): the view from the driver's seat. The world is seen from the driver's eyes (the
-     car's own bonnet, and the formula's nose, halo and front wheels, are the world's: seen from inside the car, its roof and sides are
-     not drawn); the cockpit round them in a pass of its own after the world (its own camera, the day's light): a closed car's dashboard
-     with a rev counter, a speedometer and the gear, the steering wheel turning with the front wheels, the windscreen's pillars, the roof
-     and the mirror; the formula's wheel with its display and shift lights ---------------- */
-  // the driver's eyes in the car (x forward from the centre, y up): inside the formula driver's helmet; in a closed car behind the
-  // windscreen, a little under the roof. near: the camera's near plane there (the halo is right in front of the helmet)
-  function eyeOf(M) {
-    if (M.body === 'formula') return { x: -0.1, y: 0.8, near: 0.1, tilt: 0.03, formula: true };
-    if (M.body === 'lm') return { x: 0.02, y: 0.9, near: 0.15, tilt: 0.04, formula: false, race: true };   // (the prototype: low in its canopy, the formula's wheel)
-    if (M.kit) { const d = kitEntry(M).body, e = d.eye, st = e.style;   // (the kit: its look's eye; its style picks the cockpit: closed, open (no pillars, no roof), formula (the formula's wheel), kart (a round kart wheel); a truck's big flat wheel)
-      const wh = e.wheel || (M.cat === 'tovornjaki' ? { r: 0.27, tilt: 0.61 } : null);
-      return { x: e.x * (M.len / d.len), y: e.y, near: e.near, tilt: e.tilt, formula: st === 'formula' || st === 'kart', open: st === 'open', kart: st === 'kart', wheel: wh }; }
-    const d = BODIES[M.body] || BODIES.coupe, sx = M.len / d.len, gf = d.secs.find(s => s[7] === 'gf');
-    return { x: (gf ? gf[0] : 0) * sx - 0.5, y: d.roofY - 0.22, near: 0.25, tilt: 0.05, formula: false };
-  }
-  const ck = { scene: null, cam: null, key: '', grp: null, look: 0, sway: 0, car: null, parts: null, hemi: null, dir: null };
-  const _ckE = new THREE.Vector3(), _ckQ = new THREE.Quaternion(), _ckQ2 = new THREE.Quaternion(), _ckEu = new THREE.Euler(), _ckF = new THREE.Vector3();
   const viewOf = (c) => { for (const v of views) if (v.car === c) return v; return null; };
-  // a dial's face on a canvas: ticks and numbers round 270 degrees (the needle's sweep, from the bottom left over the top), a red zone
-  function ckDial(max, step, red, label) {
-    const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d');
-    x.fillStyle = '#0b0c0f'; x.beginPath(); x.arc(128, 128, 127, 0, Math.PI * 2); x.fill(); x.strokeStyle = '#8a8f98'; x.lineWidth = 5; x.stroke();
-    const ang = (u) => Math.PI * 0.75 + u * Math.PI * 1.5;
-    if (red != null) { x.strokeStyle = '#e0261c'; x.lineWidth = 14; x.beginPath(); x.arc(128, 128, 103, ang(red), ang(1)); x.stroke(); }
-    x.strokeStyle = x.fillStyle = '#f4f3ee'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 30px sans-serif';
-    for (let k = 0; k <= Math.round(max / step) * 2; k++) { const v = k * step / 2, a = ang(v / max), big = k % 2 === 0;
-      x.lineWidth = big ? 6 : 3; x.beginPath(); x.moveTo(128 + Math.cos(a) * (big ? 90 : 100), 128 + Math.sin(a) * (big ? 90 : 100)); x.lineTo(128 + Math.cos(a) * 113, 128 + Math.sin(a) * 113); x.stroke();
-      if (big) x.fillText(String(Math.round(v)), 128 + Math.cos(a) * 66, 128 + Math.sin(a) * 66); }
-    x.font = 'bold 20px sans-serif'; x.fillStyle = '#a4aab3'; x.fillText(label, 128, 192);
-    return new THREE.CanvasTexture(cv);
-  }
-  // a small screen on a canvas (the gear; the formula's gear and speed), drawn again when what it shows changes
-  function ckScreen(w, h) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const t = new THREE.CanvasTexture(cv); return { cv, x: cv.getContext('2d'), t, txt: null }; }
-  function ckScreenSet(S, big, small, col) {
-    const k = big + '|' + small; if (S.txt === k) return; S.txt = k;
-    const x = S.x, w = S.cv.width, h = S.cv.height; x.fillStyle = '#05070a'; x.fillRect(0, 0, w, h);
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = col || '#ffd23f'; x.font = 'bold ' + Math.round(h * (small ? 0.62 : 0.8)) + 'px sans-serif'; x.fillText(big, w / 2, small ? h * 0.4 : h * 0.54);
-    if (small) { x.fillStyle = '#e8eef4'; x.font = 'bold ' + Math.round(h * 0.26) + 'px sans-serif'; x.fillText(small, w / 2, h * 0.84); }
-    S.t.needsUpdate = true;
-  }
-  // a bar from a to b (w x d across it)
-  function ckBar(a, b, w, d, mat) {
-    const dir = _ckF.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = dir.length(), m = new THREE.Mesh(new THREE.BoxGeometry(w, L, d), mat);
-    m.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); m.quaternion.setFromUnitVectors(_ckE.set(0, 1, 0), dir.normalize()); return m;
-  }
-  function ckBuild(c) {
-    const M = c.m, E = eyeOf(M), key = M.id + '|' + c.color;   // (the car: its body, its rev counter, its colour)
-    if (ck.key === key) return;
-    if (ck.grp) { ck.grp.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); ck.scene.remove(ck.grp); }
-    if (!ck.scene) {
-      ck.scene = new THREE.Scene(); ck.cam = new THREE.PerspectiveCamera(50, 1, 0.03, 6); ck.scene.add(ck.cam);
-      ck.hemi = new THREE.HemisphereLight(0xffffff, 0x404040, 0.6); ck.dir = new THREE.DirectionalLight(0xffffff, 0.8); ck.scene.add(ck.hemi, ck.dir, ck.dir.target);
-    }
-    ck.key = key; const g = ck.grp = new THREE.Group(); ck.scene.add(g); const P = {}; ck.parts = P;
-    const body = colArr(c.color), paint = new THREE.Color(body[0], body[1], body[2]);
-    const trim = new THREE.MeshLambertMaterial({ color: 0x1d1e21 }), dark = new THREE.MeshLambertMaterial({ color: 0x111214 }), metal = new THREE.MeshLambertMaterial({ color: 0x5a5e66 });
-    const wheel = new THREE.Group(), turn = new THREE.Group(); wheel.add(turn); g.add(wheel); P.turn = turn;
-    if (E.kart) {
-      // a kart's wheel: a round rim on three spokes (left, right, down), a small display in the hub, on its column (where the kart has it)
-      const n = [0, Math.sin(0.96), Math.cos(0.96)], w0 = [0, -0.37, -0.46];   // (its face to the driver: the column 55 degrees down)
-      wheel.position.set(w0[0], w0[1], w0[2]); wheel.lookAt(w0[0] + n[0], w0[1] + n[1], w0[2] + n[2]);
-      turn.add(new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.012, 6, 16), dark));
-      for (const a of [0, Math.PI, -Math.PI / 2]) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.022, 0.01).translate(0.075, 0, 0), metal); sp.rotation.z = a; turn.add(sp); }
-      turn.add(new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.02), dark));
-      const scr = P.scr = ckScreen(96, 56), disp = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.035), new THREE.MeshBasicMaterial({ map: scr.t })); disp.position.set(0, 0, 0.0105); turn.add(disp); P.leds = [];
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.32, 6), metal); col.position.set(w0[0] - n[0] * 0.16, w0[1] - n[1] * 0.16, w0[2] - n[2] * 0.16); col.quaternion.setFromUnitVectors(_ckE.set(0, 1, 0), _ckF.set(-n[0], -n[1], -n[2])); g.add(col);
-    } else if (E.formula || E.race) {
-      // the formula's wheel (the prototype's too): a carbon plate with two grips, the display in the middle, the shift lights along the top, knobs
-      wheel.position.set(0, E.race ? -0.25 : -0.19, E.race ? -0.44 : -0.42); wheel.lookAt(0, 0.02, 0);
-      turn.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.11, 0.028), dark));
-      for (const sd of [-1, 1]) { const gr = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.13, 10), new THREE.MeshLambertMaterial({ color: 0x0a0a0b })); gr.position.set(sd * 0.115, -0.005, 0); gr.rotation.z = sd * 0.12; turn.add(gr); }
-      const scr = P.scr = ckScreen(128, 80), disp = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.044), new THREE.MeshBasicMaterial({ map: scr.t })); disp.position.set(0, 0.004, 0.0145); turn.add(disp);
-      P.leds = []; const LC = [0x19e05a, 0x19e05a, 0x19e05a, 0x19e05a, 0x19e05a, 0xff2a1a, 0xff2a1a, 0xff2a1a, 0xff2a1a, 0xff2a1a, 0x3a6bff, 0x3a6bff, 0x3a6bff, 0x3a6bff, 0x3a6bff];
-      for (let k = 0; k < 15; k++) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.0085, 0.0085, 0.004), new THREE.MeshBasicMaterial({ color: 0x1a1c20 })); l.position.set((k - 7) * 0.0112, 0.045, 0.0145); l.userData.on = new THREE.Color(LC[k]); turn.add(l); P.leds.push(l); }
-      for (const [x, y, col] of [[-0.062, -0.03, 0xffd23f], [0.062, -0.03, 0x19a7ff], [-0.062, 0.018, 0xff5a1f], [0.062, 0.018, 0xe8e8e8]]) { const kb = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.01, 10), new THREE.MeshLambertMaterial({ color: col })); kb.rotation.x = Math.PI / 2; kb.position.set(x, y, 0.017); turn.add(kb); }
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.2, 8), dark); col.rotation.x = Math.PI / 2; col.position.set(0, E.race ? -0.36 : -0.3, -0.62); g.add(col);   // (the column, under the wheel)
-    }
-    if (!E.formula) {
-      // a closed car: the dashboard (its top from the wheel to the windscreen), the instruments, the wheel; the windscreen's pillars, the
-      // roof's edge with the mirror, the doors' tops in the car's colour (the prototype: the formula's wheel and no instruments of its own)
-      const dz = E.wheel ? -0.1 : 0;   // (a truck's dashboard a little further forward: its big wheel clears it)
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.5, 0.62), new THREE.MeshLambertMaterial({ color: E.race ? 0x1c1d20 : 0x34363b })); dash.position.set(0, -0.565, -0.76 + dz); g.add(dash);
-      const lip = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.03, 0.08), dark); lip.position.set(0, -0.31, -1.03 + dz); g.add(lip);
-      if (!E.race) {
-        // the instruments facing the driver: a dark panel, the rev counter and the speedometer, the gear between them, a visor over them
-        // (the electric car: a power meter in kW instead of the rev counter, D for the gear)
-        const clu = new THREE.Group(); clu.position.set(0, -0.258, -0.655); clu.lookAt(0, 0, 0); g.add(clu);
-        clu.add(new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.118), new THREE.MeshLambertMaterial({ color: 0x0b0c0e })));
-        const vis = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.012, 0.085), dark); vis.position.set(0, 0.064, 0.036); vis.rotation.x = 0.22; clu.add(vis);
-        const red = (M.redline || 7000), tMax = Math.ceil(red / 1000 + 0.5), kMax = Math.ceil(M.kw / 100) * 100, vMax = M.vLim ? Math.ceil((M.vLim + 40) / 40) * 40 : 260;   // (a limited truck: its speedometer to 40 over the limit)
-        P.dials = []; P.ev = !!M.ev;
-        for (const [x, max, step, rz, lab] of [M.ev ? [-0.06, kMax, 100, null, 'kW'] : [-0.06, tMax, 1, (red / 1000) / tMax, 'x1000 RPM'], [0.06, vMax, 40, null, 'KM/H']]) {
-          const d = new THREE.Mesh(new THREE.CircleGeometry(0.047, 36), new THREE.MeshBasicMaterial({ map: ckDial(max, step, rz, lab), color: 0xdddddd })); d.position.set(x, 0, 0.002); clu.add(d);
-          const n = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.0028, 0.001).translate(0.016, 0, 0), new THREE.MeshBasicMaterial({ color: 0xff3b1f })); n.position.z = 0.002; d.add(n);
-          const hub = new THREE.Mesh(new THREE.CircleGeometry(0.0055, 12), new THREE.MeshBasicMaterial({ color: 0x2a2c30 })); hub.position.z = 0.003; d.add(hub);
-          P.dials.push({ n, max: x < 0 ? (M.ev ? kMax : tMax * 1000) : vMax });
-        }
-        const scr = P.scr = ckScreen(64, 64), gd = new THREE.Mesh(new THREE.PlaneGeometry(0.022, 0.022), new THREE.MeshBasicMaterial({ map: scr.t })); gd.position.set(0, -0.03, 0.002); clu.add(gd);
-        if (E.wheel) {   // (a truck's: big and laid back (E.wheel { r (m), tilt (from the horizontal, rad) }), its rim's top just under a car's: the
-          // instruments over it, the rest of it low in front of the driver)
-          const r = E.wheel.r, tl = E.wheel.tilt != null ? E.wheel.tilt : 0.61, w0 = [0, -0.27 - r * Math.sin(tl), -0.597 + r * Math.cos(tl)]; wheel.scale.setScalar(r / 0.18);
-          wheel.position.set(w0[0], w0[1], w0[2]); wheel.lookAt(w0[0], w0[1] + Math.cos(tl), w0[2] + Math.sin(tl)); }
-        else { wheel.position.set(0, -0.375, -0.47); wheel.lookAt(0, 0.1, 0); }
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.019, 8, 40), new THREE.MeshLambertMaterial({ color: 0x151517 })); turn.add(rim);
-        const mark = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.042, 0.04), new THREE.MeshLambertMaterial({ color: 0xffc21a })); mark.position.set(0, 0.18, 0); turn.add(mark);   // (the top of the wheel: a racing wheel's marker)
-        for (const a of [0, Math.PI, -Math.PI / 2]) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.034, 0.012).translate(0.085, 0, 0), metal); sp.rotation.z = a; turn.add(sp); }
-        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.035, 18), dark); hub.rotation.x = Math.PI / 2; hub.position.z = 0.01; turn.add(hub);
-        const badge = new THREE.Mesh(new THREE.CircleGeometry(0.022, 18), new THREE.MeshLambertMaterial({ color: paint })); badge.position.z = 0.029; turn.add(badge);
-      }
-      for (const sd of [-1, 1]) {
-        if (!E.open) g.add(ckBar([sd * 0.8, -0.31, -1.0], [sd * 0.64, 0.33, -0.48], 0.075, 0.06, trim));   // the pillars (an open car: none)
-        const door = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 1.3), new THREE.MeshLambertMaterial({ color: paint.clone().multiplyScalar(0.7) })); door.position.set(sd * 0.74, -0.37, -0.4); g.add(door);
-      }
-      if (M.body === 'rally' || (BODIES[M.body] || {}).cage) {   // the rally car's roll cage (the truck's too): tubes up the pillars and over the windscreen
-        const cage = new THREE.MeshLambertMaterial({ color: 0xc9ccd1 }), T2 = 0.034;
-        for (const sd of [-1, 1]) g.add(ckBar([sd * 0.7, -0.33, -0.9], [sd * 0.56, 0.3, -0.42], T2, T2, cage));
-        g.add(ckBar([-0.56, 0.3, -0.42], [0.56, 0.3, -0.42], T2, T2, cage));
-      }
-      if (!E.open) {   // (the roof's edge, the mirror and the rain on the windscreen: a closed car's)
-        const roof = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 0.2), trim); roof.position.set(0, 0.3, -0.5); g.add(roof);
-        const mcv = document.createElement('canvas'); mcv.width = 64; mcv.height = 32; const mx = mcv.getContext('2d'), mg = mx.createLinearGradient(0, 0, 0, 32);
-        mg.addColorStop(0, '#9fb6c8'); mg.addColorStop(0.48, '#c9d6de'); mg.addColorStop(0.52, '#4a4d50'); mg.addColorStop(1, '#2a2c2e'); mx.fillStyle = mg; mx.fillRect(0, 0, 64, 32);
-        const mir = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.055, 0.018), dark); mir.position.set(0, 0.215, -0.52); mir.lookAt(0, 0, 0); g.add(mir);
-        const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.195, 0.042), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(mcv), color: 0xb0b0b0 })); glass.position.z = 0.0095; mir.add(glass);
-        g.add(ckBar([0, 0.265, -0.5], [0, 0.23, -0.515], 0.02, 0.02, dark));
-        { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute([-0.76, -0.3, -0.99, 0.76, -0.3, -0.99, 0.6, 0.3, -0.49, -0.6, 0.3, -0.49], 3));
-          geo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); geo.setIndex([0, 1, 2, 0, 2, 3]);
-          const sm = new THREE.ShaderMaterial({ uniforms: { uT: { value: 0 }, uRain: { value: 0 }, uSpd: { value: 0 }, uSky: { value: new THREE.Color() } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-            vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }', fragmentShader: CK_RAIN_FS });
-          const scr = P.rain = new THREE.Mesh(geo, sm); scr.renderOrder = 5; scr.visible = false; g.add(scr); }
-      }
-    }
-    P.formula = E.formula || E.race; P.open = E.formula || !!E.open;
-  }
-  // the rain on a closed car's windscreen (the cockpit camera): drops gather on the glass and creep up it at speed; two wipers sweep
-  // them off in turn (the time since a blade last passed each point of the glass, from the blades' swing: the drops come back after
-  // it), the blades and their arms dark across the view. The glass between the pillars, 1.5 x 0.85 m, one quad of the cockpit
-  const CK_RAIN_FS = [
-    'uniform float uT; uniform float uRain; uniform float uSpd; uniform vec3 uSky; varying vec2 vUv;',
-    'float cH(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',
-    'const float A0 = 0.08, A1 = 1.86, PW = 1.25, LB = 0.62;',
-    'float wiped(vec2 p, vec2 pv, float ph, out float blade) {',   // seconds since this blade last passed p (99: out of its reach); blade: on the blade now
-    '  vec2 d = p - pv; float r = length(d), th = atan(d.y, d.x), w = A0 + (A1 - A0) * (0.5 - 0.5 * cos(ph));',
-    '  vec2 bd = vec2(cos(w), sin(w)); float along = clamp(dot(d, bd), 0.0, LB); blade = smoothstep(0.012, 0.004, length(d - bd * along)) * step(0.02, along);',
-    '  if (r > LB || th < A0 || th > A1) return 99.0;',
-    '  float pt = acos(clamp(1.0 - 2.0 * (th - A0) / (A1 - A0), -1.0, 1.0)), m = mod(ph, 6.2831853);',
-    '  return min(mod(m - pt, 6.2831853), mod(m - (6.2831853 - pt), 6.2831853)) * PW / 6.2831853; }',
-    'void main() {',
-    '  vec2 p = vec2(vUv.x * 1.5, vUv.y * 0.85); float ph = uT / PW * 6.2831853, b1, b2;',
-    '  float age = min(wiped(p, vec2(0.4, -0.05), ph, b1), wiped(p, vec2(0.98, -0.05), ph - 0.35, b2));',
-    '  vec2 q = p / vec2(0.03, 0.05), c = floor(q), f = fract(q);',   // a drop in each cell now and then: when it landed after the wipe, where, how big
-    '  float h = cH(c), arr = h * 2.6 / max(uRain, 0.15), on = step(arr, age) * step(0.25, cH(c + 5.3));',
-    '  float cr = 0.2 + 0.16 * cH(c + 9.1), up = clamp((age - arr) * uSpd * 0.2, 0.0, 0.45);',   // (at speed the air pushes it up the glass)
-    '  vec2 dc = vec2(0.5 + (cH(c + 2.7) - 0.5) * 0.3, 0.3 + 0.15 * cH(c + 4.4) + up);',
-    '  vec2 e = (f - dc) * vec2(1.0, 0.6 / (1.0 + uSpd * 0.05)); float dd = length(e) / cr;',
-    '  float drop = on * smoothstep(1.0, 0.8, dd) * step(dc.y + cr * 0.6, 1.0);',
-    '  vec3 col = mix(uSky * 1.25, vec3(0.05, 0.06, 0.07), smoothstep(-0.7, 0.7, e.y / cr)) + smoothstep(0.32, 0.1, length(e / cr - vec2(-0.3, 0.35))) * 0.6;',   // (a little lens: the sky low in it, dark on top, a bright fleck)
-    '  float a = drop * 0.72 * uRain + 0.05 * uRain;',
-    '  col = mix(mix(uSky * 0.8, col, drop), vec3(0.02), max(b1, b2)); a = max(a, max(b1, b2) * 0.95);',
-    '  gl_FragColor = vec4(col, a); }'].join('\n');
-  // the cockpit as the car is now: the wheel turned with the front wheels, the needles, the gear, the shift lights; lit as the world is
-  function ckStep(c, v) {
-    ckBuild(c);
-    const P = ck.parts, rpm = c.rpm || 0, red = c.m.redline || 7000;
-    P.turn.rotation.z = -clamp((c.delta || 0) * 9, -2.4, 2.4);
-    const gear = c.gear === -1 ? 'R' : c.gear === 0 ? 'N' : P.ev ? 'D' : String(c.gear || 1);
-    if (P.formula) {
-      ckScreenSet(P.scr, gear, String(Math.round((c.speed || 0) * 3.6)));
-      const n = Math.round(clamp((rpm / red - 0.72) / 0.26, 0, 1) * 15);
-      for (let k = 0; k < P.leds.length; k++) P.leds[k].material.color.set(k < n ? P.leds[k].userData.on : 0x1a1c20);   // (a kart's wheel has none)
-    } else {
-      const kwNow = P.ev ? (c.inThr || 0) * c.m.kw * clamp((c.speed || 0) / 6, 0.25, 1) : 0;   // (the electric car: the power it draws)
-      P.dials[0].n.rotation.z = -(0.75 + 1.5 * clamp((P.ev ? kwNow : rpm) / P.dials[0].max, 0, 1)) * Math.PI;
-      P.dials[1].n.rotation.z = -(0.75 + 1.5 * clamp((c.speed || 0) * 3.6 / P.dials[1].max, 0, 1)) * Math.PI;
-      ckScreenSet(P.scr, gear, null, '#7ff0ff');
-    }
-    // the light: the world's sky and ground light; the sun from its side of the car (a closed car's roof shades the cabin)
-    ck.hemi.color.copy(hemi.color); ck.hemi.groundColor.copy(hemi.groundColor); ck.hemi.intensity = hemi.intensity;
-    ck.dir.color.copy(sun.color); ck.dir.intensity = sun.intensity * (P.open ? 1 : 0.45);
-    _ckF.set(sunOff[0], sunOff[1], sunOff[2]).normalize().applyQuaternion(_ckQ2.copy(camera.quaternion).invert()); ck.dir.position.copy(_ckF).multiplyScalar(3);   // (the sun as the camera sees it)
-    if (P.rain) { const r = Math.max(0, wet), U = P.rain.material.uniforms; P.rain.visible = r > 0.03;   // (the rain on the windscreen)
-      if (P.rain.visible) { U.uT.value = time % 600; U.uRain.value = clamp(r * 1.4, 0, 1); U.uSpd.value = c.speed || 0; U.uSky.value.copy(scene.fog.color).multiplyScalar(1 - 0.5 * sstep(0.5, 1, todK)); } }
-    ck.cam.fov = camera.fov; ck.cam.aspect = camera.aspect; ck.cam.updateProjectionMatrix();
-    ck.cam.position.set(ck.sway, 0, 0); ck.cam.rotation.set(-eyeOf(c.m).tilt - (v ? v.pitch : 0), -ck.look, v ? v.roll : 0, 'YXZ');
-  }
 
   // the feel of speed (quality 'high', the post pass; only behind the car, never in the landscape views, where the cars must stay sharp): from about 110 km/h the picture streaks out from the point the followed car drives
-  // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode, a TV shot or the cockpit. And the summer's
+  // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode or a TV shot. And the summer's
   // heat: by day, dry, the air over the far asphalt trembles just under the horizon (seen from a low camera)
   const _mf = new THREE.Vector3();
   function speedLook(target, alpha, U) {
     let mb = 0;
-    if (false && target && !cam.shot && !cam.ck && lastMode === 'chase') {   // (switched off: the opponents' cars must stay sharp at speed)   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
+    if (false && target && !cam.shot && lastMode === 'chase') {   // (switched off: the opponents' cars must stay sharp at speed)
       const sp = target.speed || 0; mb = clamp((sp - 30) / 45, 0, 1) * 0.75;
       if (mb > 0) { const x = lerp(target.px, target.x, alpha), z = lerp(target.pz, target.z, alpha), y = target.y || 0, v = Math.hypot(target.vx || 0, target.vz || 0) || 1;
         _mf.set(x + (target.vx || 0) / v * 150, y, z + (target.vz || 0) / v * 150).project(camera); U.uMF.value.set(clamp(_mf.x * 0.5 + 0.5, -0.5, 1.5), clamp(_mf.y * 0.5 + 0.5, -0.5, 1.5));
@@ -8790,30 +8559,25 @@ const Render = (function () {
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
     if (vfog) { vfog.U.uT.value = time; vfog.U.uC.value.copy(scene.fog.color).lerp(_c2.setRGB(1, 0.97, 0.96), 0.55); }
     if (birds.mesh.visible && !birds.off && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
-    if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
-    if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
-      const U = rain.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];   // (the cockpit: the streaks close round the car)
+    if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
+    if (rain.mesh.visible) {   // the box of streaks around the view centre (the TV cameras see more ground than the camera behind the car)
+      const U = rain.mat.uniforms, B = lastMode === 'chase' ? [62, 30, 62] : [86, 38, 86];
       U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600;
       const sn = world && world.dyn.pkWx ? world.dyn.pkWx.sU.uD.value : 0;   // (Pikes Peak: it snows near the summit, the rain fades out there)
       U.uA.value = 0.5 * Math.min(1, wet * 1.5) * (1 - clamp(sn * 1.5, 0, 1));
     }
     rainFx(Math.min(dt, 0.1), target);
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
-    if (world && world.dyn.tunnel && target && target.q) {   // (not from the cockpit: from inside the car the tunnel is a tunnel)
-      const tn = world.dyn.tunnel, sq = target.q.s, inside = !cam.ck && (tn.test ? tn.test(target) : tn.ranges ? tn.ranges.some(r => sq > r[0] - 30 && sq < r[1] + 12) : sq > tn.s0 - 30 && sq < tn.s1 + 12), goal = inside ? 0.14 : 1;   // (ranges: more than one, Los Caracoles' galleries)
+    if (world && world.dyn.tunnel && target && target.q) {
+      const tn = world.dyn.tunnel, sq = target.q.s, inside = (tn.test ? tn.test(target) : tn.ranges ? tn.ranges.some(r => sq > r[0] - 30 && sq < r[1] + 12) : sq > tn.s0 - 30 && sq < tn.s1 + 12), goal = inside ? 0.14 : 1;   // (ranges: more than one, Los Caracoles' galleries)
       tn.mat.opacity += (goal - tn.mat.opacity) * Math.min(1, dt * 5 + 0.02);
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
     }
-    { const on = !!(cam.ck || (lastMode === 'tv' && !cam.shot) || (cam.shot && cam.shot.sky) || ((todK >= 0.3 || dawn) && lastMode !== 'iso' && !cam.shot && horizonSeen()));   // (dusk, night, the morning: the sky over the horizon)
+    { const on = !!((lastMode === 'tv' && !cam.shot) || (cam.shot && cam.shot.sky) || ((todK >= 0.3 || dawn) && !cam.shot && horizonSeen()));   // (dusk, night, the morning: the sky over the horizon)
       skyStep(on); nightSky(on); } cgSet(false);
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
     asStep();
-    const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
-    { const cv = ckOn ? viewOf(ck.car) : null;
-      for (const v of views) if (v.kit) { const on = v === cv; if (v.kit.ck !== on) { v.kit.ck = on; kitRange(v); } }   // (the kit: from the seat, the outer shell only)
-      if (ck.litV && ck.litV !== cv) { carGlow(ck.litV); ck.litV = null; }   // (and it does not glow in the night round the driver: carGlow is for the others to see it)
-      if (cv) { const m = cv.body.material; if (m && m.emissive && m.emissive.r) m.emissive.setScalar(0); ck.litV = cv; } }
     if (postOn()) {
       if (target) {   // keep the sharp band of the tilt-shift on the followed car
         _pv.set(lerp(target.px, target.x, alpha), (target.y || 0) + 0.6, lerp(target.pz, target.z, alpha)).project(camera);
@@ -8829,13 +8593,13 @@ const Render = (function () {
           const ex = far ? px / pl * 1.15 : px, ey = far ? py / pl * 1.15 : py;
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
-      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
+      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = 0.8;   // (a soft depth of field only towards the edges)
       if (!cam.shot) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look in the race, all the cars stay sharp in every camera; the photo mode's own: a narrow sharp band on the car)
       speedLook(target, alpha, U);
-      renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
+      renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
-    } else { renderer.render(scene, camera); if (ckOn) ckDraw(); }
+    } else { renderer.render(scene, camera); }
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
   // than on the screen), copied to a 2D canvas at once (a WebGL canvas keeps its picture only until the page shows it)
@@ -8849,7 +8613,6 @@ const Render = (function () {
     return out;
   }
   function clearSparks() { if (sparkP) { sparkP.clear(true); sparkP.update(0); } }   // (the photo mode: no contact's flash frozen in the picture; a fire's flames stay)
-  function ckDraw() { const a = renderer.autoClear; renderer.autoClear = false; renderer.clearDepth(); renderer.render(ck.scene, ck.cam); renderer.autoClear = a; }   // (the cockpit over the world)
 
   function setStartLights(n, go) {
     if (!world || !world.dyn.lights) return;
@@ -9009,11 +8772,11 @@ const Render = (function () {
       const m = o.material; if (m && !Array.isArray(m) && m.userData) { if (m.userData.grassLook && /N$/.test(m.customProgramCacheKey())) nat++; if (m.userData.asLook) asph++; } });
     const sc = asU.uAsC.value, U = post && post.mat.uniforms;
     return { sheen: +Math.max(sc.r, sc.g, sc.b).toFixed(3), asphalt: asph, clouds: sky ? sky.u.uCl.value : 0, overcast: sky ? +sky.u.uOv.value.toFixed(2) : 0, moon: nsky.moon && nsky.moon.visible ? +nsky.moon.material.opacity.toFixed(2) : 0, skyOn: !!(sky && sky.mesh.visible),
-      ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3), wipers: !!(cam.ck && ck.parts && ck.parts.rain && ck.parts.rain.visible),
+      ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3),
       speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

@@ -4,7 +4,7 @@
 // 1. The mesh: one object, every vertex inside the OSM footprint (a margin of 35 cm), within the vertex budget (the old castle was 1440 vertices; up to 60k is the room), the size of the footprint,
 //    not a vertex buried under the ground.
 // 2. The builder's counts of the parts: three towers, one keep, one palace, one gate, the chapel, the cistern, arched windows, doorways, enough columns and rubble.
-// 3. Drawn from both cameras (iso above, chase behind) at the finish and from a shot above the castle: no page errors, the shaders compile, and the castle really is in the picture (the vertices
+// 3. Drawn from the camera behind the car at the finish and from a shot above the castle: no page errors, the shaders compile, and the castle really is in the picture (the vertices
 //    the pipeline gets, all passes, with the mesh and with it hidden).
 //   node tests/browser/medvode-castle.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -45,7 +45,7 @@ try {
   T.check('rubble, ivy and scrub on and between the walls', s.stones >= 100 && s.ivy >= 10 && s.bushes >= 8, `stones ${s.stones}, ivy ${s.ivy}, bushes ${s.bushes}`);
   T.check('nothing buried: no vertex deeper than 1.2 m under the ground', r.under === 0, `${r.under} vertices`);
 
-  // 3. drawn from both cameras: from the finish (iso, chase) and a shot close over the castle; the castle really is in the picture (the vertices drawn, all passes, with and without it)
+  // 3. drawn from the camera behind the car at the finish and from a shot close over the castle; the castle really is in the picture (the vertices drawn, all passes, with and without it)
   await page.evaluate(() => {   // count every WebGL draw (all render passes), as the phone-budget test does
     window.__gl = { calls: 0, verts: 0 };
     const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -58,14 +58,14 @@ try {
     const count = (cam) => { Render.frame(1 / 60, 1, g.race.player, cam, {}); const c0 = __gl.verts; Render.frame(1 / 60, 1, g.race.player, cam, {}); return __gl.verts - c0; };
     const P = g.race.player; let n = 0; while (P.q.s - g.race.track.startS < 6230 && n < 700) { g.sim(1, true); n++; }
     res.s = Math.round(P.q.s - g.race.track.startS);
-    for (const cam of ['iso', 'chase']) { g.S.camera = cam; Render.resetCam(); for (let i = 0; i < 8; i++) Render.frame(1 / 60, 1, P, cam, {}); res[cam] = count(cam); m.visible = false; res[cam + 'Without'] = count(cam); m.visible = true; }
+    for (const cam of ['chase']) { g.S.camera = cam; Render.resetCam(); for (let i = 0; i < 8; i++) Render.frame(1 / 60, 1, P, cam, {}); res[cam] = count(cam); m.visible = false; res[cam + 'Without'] = count(cam); m.visible = true; }
     const y = W.groundH(2562, -2596); Render.setShot({ px: 2562, py: y + 60, pz: -2575, tx: 2562, ty: y, tz: -2596, fov: 40, noCut: true, near: 1 });
-    for (let i = 0; i < 4; i++) Render.frame(1 / 60, 1, P, 'iso', {});
-    res.shot = count('iso'); m.visible = false; res.shotWithout = count('iso'); m.visible = true;
+    for (let i = 0; i < 4; i++) Render.frame(1 / 60, 1, P, 'chase', {});
+    res.shot = count('chase'); m.visible = false; res.shotWithout = count('chase'); m.visible = true;
     return res;
   });
   console.log(JSON.stringify(draws));
-  T.check('drawn from the iso and the chase camera at the finish: the world draws, the castle\'s edge is in the iso picture', draws.inTree && draws.s >= 6150 && draws.iso > 20000 && draws.chase > 20000 && draws.iso > draws.isoWithout, JSON.stringify({ s: draws.s, iso: draws.iso, isoWithout: draws.isoWithout, chase: draws.chase, chaseWithout: draws.chaseWithout }));
+  T.check('drawn from the camera behind the car at the finish: the world draws', draws.inTree && draws.s >= 6150 && draws.chase > 20000, JSON.stringify({ s: draws.s, chase: draws.chase, chaseWithout: draws.chaseWithout }));
   T.check('drawn from above: all of the castle\'s vertices go through the pipeline (the main pass at least)', draws.shot - draws.shotWithout >= r.verts * 0.9, `${draws.shot} with, ${draws.shotWithout} without: ${draws.shot - draws.shotWithout} for ${r.verts}`);
   T.check('no page errors', errors.length === 0, errors.slice(0, 4).join(' | '));
 } finally { await browser.close(); await srv.close(); }
