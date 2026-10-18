@@ -5535,10 +5535,10 @@ const Core = (function () {
   const CHAMPS = [
     { id: 'domaci', name: 'Domači pokal', desc: 'Tri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'gora', 'riviera'],
       en: { name: 'Home Cup', desc: 'Three short tracks to begin with: a lake, a town and gravel.' } },
-    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
-      en: { desc: 'Tracks in the style of Circuit Superstars with pits, and Monaco.' } },
-    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'],
-      en: { name: 'Legends', desc: 'Five famous tracks at full scale: Monaco, Spa, the Red Bull Ring, Suzuka and the Green Hell.' } },
+    { id: 'superstars', name: 'Kratke proge', desc: 'Kratke proge z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
+      en: { name: 'Short tracks', desc: 'Short tracks with pits, and Monaco.' } },
+    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Štajerska, Suzuka in Nürburg.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'],
+      en: { name: 'Legends', desc: 'Five famous tracks at full scale: Monaco, Spa, Styria, Suzuka and Nürburg.' } },
     { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id),
       en: { name: 'Grand Championship', desc: 'All the circuits of the game, one after another.' } },
   ];

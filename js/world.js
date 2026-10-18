@@ -24448,9 +24448,9 @@ const World = (function () {
     LK.ban.forEach(([t, bg, fg, st], k) => cell(AT.ban + k, bg, fg, t, t.length > 10 ? 30 : 38, st));
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
-  const RB_BAN = [['RED BULL RING', '#1c2856', '#fff', '#e2202c'], ['SPIELBERG', '#e2202c', '#fff', '#fff'], ['START · ZIEL', '#16181c', '#fff', '#e2202c'], ['STEIERMARK', '#1f7a3a', '#fff', '#fff'],
-    ['RED BULL', '#1c2856', '#ffcc00', '#e2202c'], ['T3', '#1c2856', '#fff', '#e2202c'], ['NORD', '#1c2856', '#fff', '#e2202c'], ['T9', '#1c2856', '#fff', '#e2202c'], ['T10', '#1c2856', '#fff', '#e2202c'],
-    ['DRS', '#101114', '#fff', '#39c84a'], ['STEIERMARK', '#1c2856', '#fff', '#39c84a'], ['ENERGY STATION', '#1c2856', '#fff', '#e2202c']];   // (the DRS boards; the painted run-offs; the Energy Station)
+  const RB_BAN = [['MURTAL', '#1c2856', '#fff', '#e2202c'], ['SPIELBERG', '#e2202c', '#fff', '#fff'], ['START · ZIEL', '#16181c', '#fff', '#e2202c'], ['STEIERMARK', '#1f7a3a', '#fff', '#fff'],
+    ['BERG', '#1c2856', '#fff', '#e2202c'], ['T3', '#1c2856', '#fff', '#e2202c'], ['NORD', '#1c2856', '#fff', '#e2202c'], ['T9', '#1c2856', '#fff', '#e2202c'], ['T10', '#1c2856', '#fff', '#e2202c'],
+    ['DRS', '#101114', '#fff', '#39c84a'], ['STEIERMARK', '#1c2856', '#fff', '#39c84a'], ['PADDOCK', '#1c2856', '#fff', '#e2202c']];   // (the DRS boards; the painted run-offs; the paddock's glass house)
   const RB_AT = { num: 0, brake: 10, ban: 13, rbr: 13, spielberg: 14 };   // atlas cells: the turn numbers, the braking boards, the banners (RB_BAN, the grandstands' names by their text)
   // Bathurst on the same builder (theme 'bathurst'): its own banners (no names of the circuit, its races or sponsors: the town and the state),
   // 18 turn numbers, the cells after them
@@ -24479,10 +24479,10 @@ const World = (function () {
   const RB_LOOK = {
     rbring: { ban: RB_BAN, at: RB_AT, nums: 10, shirts: RB_SHIRTS, smoke: true, camps: 5, trees: 'nr', seC: [1.14, 1.04, 0.84],
       flags: { stand: [{ nl: 0.5, or: 0.3, at: 0.2 }, { at: 0.5, st: 0.3, nl: 0.2 }], ga: { nl: 0.45, or: 0.25, at: 0.2, rb: 0.1 }, camp: { nl: 0.55, or: 0.2, at: 0.25 }, pole: 'at', podium: 'at' },
-      vid: [['RED BULL', 1], ['T3', 1], ['NORD', 1], ['T10', 1]], poles: [-300, 160, -1], runoff: ['RED BULL RING', 'SPIELBERG', 'STEIERMARK'], straight: [-460, 300, -1],
+      vid: [['BERG', 1], ['T3', 1], ['NORD', 1], ['T10', 1]], poles: [-300, 160, -1], runoff: ['MURTAL', 'SPIELBERG', 'STEIERMARK'], straight: [-460, 300, -1],
       farm: { wall: [0.95, 0.94, 0.9], roof: [0.26, 0.24, 0.26], end: [0.92, 0.9, 0.86], barn: [0.52, 0.34, 0.2], barnRoof: [0.3, 0.28, 0.3], barnEnd: [0.5, 0.33, 0.2] },
       tvSkip: [1, 4, 7], recov: [0, 2, 3], photo: [0, 2, 3, 9], jets: [[1, 0.18, 0.2], [0.97, 0.97, 0.97], [1, 0.18, 0.2]],
-      screen: { name: ['RED BULL', 'RING'], km: '4,318 km', sub: '10 zavojev', fans: ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#f4f4f0', '#1c2856', '#e2202c'], glow: '255,128,30' },
+      screen: { name: ['SPIELBERG', 'STEIERMARK'], km: '4,318 km', sub: '10 zavojev', fans: ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#f4f4f0', '#1c2856', '#e2202c'], glow: '255,128,30' },
       colMod: (P) => (x, z, c) => {   // the land cover's class 2 is farmland here (the scrub colour of the Nordschleife): maize dark green, wheat and barley golden, hay
         const f = nrLCf(x, z, 2), n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.88 + (n - 0.5) * 0.2 + (m - 0.5) * 0.1;   // pale; the meadows in lighter and darker patches, a touch darker than the Eifel's
         c[0] *= k; c[1] *= k; c[2] *= k * 0.96;
@@ -26193,15 +26193,15 @@ const World = (function () {
         kbox(g, s0, 17, o, 4.35, 34, 0.45, 24, WH, WT); kbox(g, s0, 17, o, 4.8, 33.4, 3.9, 23.4, GLS, WH, true);
         kbox(g, s0, 17, o, 8.7, 34, 0.45, 24, WH, WT); kbox(g, s0, 17, o + 3.5, 9.15, 28, 3.6, 16, GLD, WH, true);
         kbox(g, s0, 17, o, 12.75, 38, 0.6, 28, NV, [0.66, 0.68, 0.72]);                                      // the roof, overhanging
-        { const [rx0, rz0] = atSf(s0 + 17, o), nx = T.nx[ik], nz = T.nz[ik], lx = nz, lz = -nx, Wn = 26, Hn = 6.5, yR = hyS(s0 + 17) + 13.37, [u0, v0, u1, v1] = AUV(AT.ban + BAN.findIndex(b => b[0] === 'RED BULL'));
+        { const [rx0, rz0] = atSf(s0 + 17, o), nx = T.nx[ik], nz = T.nz[ik], lx = nz, lz = -nx, Wn = 26, Hn = 6.5, yR = hyS(s0 + 17) + 13.37, [u0, v0, u1, v1] = AUV(AT.ban + BAN.findIndex(b => b[0] === 'BERG'));
           const Q = (a, b) => [rx0 + lx * a + nx * b, yR, rz0 + lz * a + nz * b];   // the name painted on the roof, read from the track (a: to the reader's left, b: away)
           ban.quadO(Q(Wn / 2, -Hn / 2), Q(-Wn / 2, -Hn / 2), Q(-Wn / 2, Hn / 2), Q(Wn / 2, Hn / 2), W1, [rx0, yR - 5, rz0], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
         for (const e of [-14.03, 14.03]) kbox(g, s0, 17, o + e, 13.05, 38.1, 0.2, 0.08, RD, null, true);     // (red lines along its edges)
         for (const a of [0.5, 11.7, 22.3, 33.5]) kbox(g, s0, a, o - 11.2, 9.15, 0.3, 3.6, 0.3, WH, null, true);   // its columns at the terrace's edge
         for (const a of [6, 17, 28]) { kcyl(g, s0, a, o - 7.5, 9.15, 0.05, 2.3, 5, [0.8, 0.8, 0.82]); const [ux, uz] = atSf(s0 + a, o - 7.5); cone(g, ux, hyS(s0 + a) + 10.9, uz, 1.5, 0.6, 8, RD, [0.97, 0.97, 0.95], 0);   // sunshades and tables
           kcyl(g, s0, a, o - 7.5, 9.15, 0.5, 0.75, 8, [0.95, 0.95, 0.93], [0.97, 0.97, 0.95]); }
-        { const [bx, bz] = atSf(s0 + 17, o - 13.4); board(bx, hyS(s0 + 17) + 13.35, bz, T.nx[ik], T.nz[ik], 20, 3.4, AT.ban + BAN.findIndex(b => b[0] === 'RED BULL')); }   // (and on its front edge, for the low cameras)
-        { const [bx, bz] = atSf(s0 + 17, o - 11.85); board(bx, hyS(s0 + 17) + 5.9, bz, T.nx[ik], T.nz[ik], 12, 1.9, AT.ban + BAN.findIndex(b => b[0] === 'ENERGY STATION')); }
+        { const [bx, bz] = atSf(s0 + 17, o - 13.4); board(bx, hyS(s0 + 17) + 13.35, bz, T.nx[ik], T.nz[ik], 20, 3.4, AT.ban + BAN.findIndex(b => b[0] === 'BERG')); }   // (and on its front edge, for the low cameras)
+        { const [bx, bz] = atSf(s0 + 17, o - 11.85); board(bx, hyS(s0 + 17) + 5.9, bz, T.nx[ik], T.nz[ik], 12, 1.9, AT.ban + BAN.findIndex(b => b[0] === 'PADDOCK')); }
         kbox(g, s0, 17, o - 17.5, -0.6, 27, 0.75, 6.4, [0.86, 0.86, 0.84], [0.9, 0.9, 0.88]); kbox(g, s0, 17, o - 17.5, -0.6, 26, 0.79, 5.4, [0.2, 0.48, 0.74], [0.26, 0.58, 0.84]);   // the pool (the water over its rim's middle)
         for (const [a, k] of [[6, 'rb'], [17, 'at'], [28, 'st']]) { const [x, z] = atSf(s0 + a, o - 22); flagAt(x, nrGround(x, z), z, 8, k, 2.2); }
         exclPush(cx, cz, 26); }
@@ -26336,65 +26336,6 @@ const World = (function () {
       }
     }
     addM(crowdG[0], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true }), 1, 0.11, 0.1)); addM(crowdG[1], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }), 1, 0.11, 0.1));
-
-    /* ---- the steel bull (Clemens Neugebauer and Martin Kölldorfer, 2012): 14.6 m of welded Corten plates on its cast aluminium arch
-       (17.2 m in all), charging: head down, the gilded horns (7 m from tip to tip) forward, the hump over the shoulders, the tail up; built
-       in its own frame (+x the way it charges, y up, z to its right), flat shaded so the plates show ---- */
-    if (def.bull) {
-      const [bx, bz, fa] = def.bull, g = new GB(), y0 = nrGround(bx, bz), cs = Math.cos(fa), sn = Math.sin(fa), R2 = rng(1712);
-      const rust = [0.47, 0.24, 0.13], rustD = [0.38, 0.19, 0.1], gold = [0.98, 0.78, 0.3], alu = [0.6, 0.62, 0.66], aluD = [0.56, 0.58, 0.63], aluU = [0.42, 0.44, 0.48], hoof = [0.2, 0.12, 0.08];
-      const pv = (c) => vary(c, R2, 0.16);   // (each plate a little lighter or darker)
-      const AX = 13, AY = 2.6, archY = (x) => AY * Math.sqrt(Math.max(0, 1 - (x / AX) * (x / AX)));   // the arch's top at x
-      // the arch: a flat elliptic bow under the hooves, 20 segments of cast aluminium
-      for (let k = 0; k < 20; k++) {
-        const a0 = Math.PI * k / 20, a1 = Math.PI * (k + 1) / 20, O = (a) => [-Math.cos(a) * AX, Math.sin(a) * AY], I = (a) => [-Math.cos(a) * (AX - 0.9), Math.sin(a) * (AY - 1.1)];
-        const o0 = O(a0), o1 = O(a1), i0 = I(a0), i1 = I(a1), c = k % 2 ? alu : aluD, ctr = [0, -4, 0];
-        g.quadO([o0[0], o0[1], -1.9], [o1[0], o1[1], -1.9], [o1[0], o1[1], 1.9], [o0[0], o0[1], 1.9], c, ctr);   // top
-        g.quadO([i0[0], i0[1], -1.9], [i1[0], i1[1], -1.9], [i1[0], i1[1], 1.9], [i0[0], i0[1], 1.9], aluU, [0, 12, 0]);   // underside
-        for (const zz of [-1.9, 1.9]) g.quadO([o0[0], o0[1], zz], [o1[0], o1[1], zz], [i1[0], i1[1], zz], [i0[0], i0[1], zz], aluD, [(o0[0] + i1[0]) / 2, (o0[1] + i1[1]) / 2, 0]);
-      }
-      // the body: rings round the spine [x, y, half height, half width] from the rump to the nose, each ring square to the spine (so the
-      // head, pointing down, keeps its shape), lofted into plates and closed at both ends
-      const ST = [[-8.4, 13.2, 1.1, 1.0], [-7.6, 12.3, 2.5, 2.1], [-6.0, 12.1, 3.1, 2.7], [-3.6, 11.7, 3.3, 2.8], [-1.0, 11.9, 3.8, 3.0], [1.6, 12.4, 4.4, 3.1],
-        [3.8, 12.9, 4.5, 2.9], [5.8, 12.3, 3.6, 2.5], [7.3, 11.2, 2.8, 2.2], [8.5, 10.1, 2.25, 2.0], [9.3, 8.6, 1.9, 1.65], [9.95, 7.1, 1.6, 1.35], [10.4, 6.0, 1.3, 1.2], [10.7, 5.3, 0.85, 0.95]];
-      const NR = 10, RS = ST.map((q, k) => {
-        const p0 = ST[Math.max(0, k - 1)], p1 = ST[Math.min(ST.length - 1, k + 1)], tx = p1[0] - p0[0], ty = p1[1] - p0[1], tl = Math.hypot(tx, ty), ux = -ty / tl, uy = tx / tl;   // (u: square to the spine, upwards)
-        const r = []; for (let j = 0; j < NR; j++) { const an = j / NR * TAU, sa = Math.sin(an) * q[2]; r.push([q[0] + ux * sa, q[1] + uy * sa, Math.cos(an) * q[3]]); } return r; });
-      for (let k = 0; k + 1 < RS.length; k++) for (let j = 0; j < NR; j++) {
-        const A = RS[k][j], B = RS[k][(j + 1) % NR], C = RS[k + 1][(j + 1) % NR], D = RS[k + 1][j];
-        g.quadO(A, B, C, D, pv(k < 9 ? rust : rustD), [(ST[k][0] + ST[k + 1][0]) / 2, (ST[k][1] + ST[k + 1][1]) / 2, 0]); }
-      for (const k of [0, RS.length - 1]) { const c0 = [ST[k][0], ST[k][1], 0], nb = ST[k ? k - 1 : 1], ins = [c0[0] + (nb[0] - c0[0]) * 0.5, c0[1] + (nb[1] - c0[1]) * 0.5, 0];
-        for (let j = 0; j < NR; j++) g.triO(c0, RS[k][j], RS[k][(j + 1) % NR], pv(rustD), ins); }
-      // limbs: tapered prisms between joints, a knuckle at each joint
-      const limb = (a, b, ra, rb, n, col) => {
-        const t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(...t); t[0] /= l; t[1] /= l; t[2] /= l;
-        const h0 = Math.abs(t[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], u = [t[1] * h0[2] - t[2] * h0[1], t[2] * h0[0] - t[0] * h0[2], t[0] * h0[1] - t[1] * h0[0]], lu = Math.hypot(...u);
-        u[0] /= lu; u[1] /= lu; u[2] /= lu; const v = [t[1] * u[2] - t[2] * u[1], t[2] * u[0] - t[0] * u[2], t[0] * u[1] - t[1] * u[0]];
-        const at = (p, r, k) => { const an = k / n * TAU, c = Math.cos(an) * r, s2 = Math.sin(an) * r; return [p[0] + u[0] * c + v[0] * s2, p[1] + u[1] * c + v[1] * s2, p[2] + u[2] * c + v[2] * s2]; };
-        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-        for (let k = 0; k < n; k++) g.quadO(at(a, ra, k), at(a, ra, k + 1), at(b, rb, k + 1), at(b, rb, k), pv(col), mid);
-      };
-      const leg = (P, col) => { for (let k = 0; k + 1 < P.length; k++) limb(P[k][0], P[k + 1][0], P[k][1], P[k + 1][1], 8, col);
-        for (let k = 1; k + 1 < P.length; k++) ico(g, ...P[k][0], P[k][1] * 1.02, 1, col, R2, 0);
-        const f = P[P.length - 1][0]; box(g, f[0] + 0.15, f[1] - 0.05, f[2], 1.4, 0.8, 1.2, 0, hoof, hoof); };
-      leg([[[4.4, 10.0, -1.3], 1.5], [[6.6, 6.4, -1.4], 0.95], [[8.4, archY(8.4) + 0.05, -1.3], 0.75]], rust);     // front left, reaching forward
-      leg([[[3.4, 10.0, 1.3], 1.5], [[5.0, 6.2, 1.5], 0.95], [[3.2, archY(3.2) + 0.05, 1.3], 0.75]], rustD);         // front right, under it
-      leg([[[-5.6, 10.4, -1.4], 1.65], [[-7.9, 5.8, -1.5], 0.9], [[-8.6, archY(-8.6) + 0.05, -1.3], 0.75]], rust);  // hind left, pushing off
-      leg([[[-5.4, 10.4, 1.4], 1.65], [[-6.7, 6.0, 1.6], 0.9], [[-5.8, archY(-5.8) + 0.05, 1.3], 0.75]], rustD);    // hind right
-      // the tail, up in an S with a tuft; ears; the horns: gilded, out and forward, curling up (7 m from tip to tip)
-      const tl = [[-8.0, 13.6, 0], [-9.5, 14.8, 0], [-10.3, 16.3, 0.1], [-9.9, 17.4, 0.2]];
-      for (let k = 0; k + 1 < tl.length; k++) limb(tl[k], tl[k + 1], 0.5 - k * 0.1, 0.4 - k * 0.1, 6, rustD);
-      ico(g, -9.8, 17.7, 0.2, 0.75, 1.3, rustD, R2, 0.12);
-      for (const sd of [-1, 1]) {
-        limb([8.2, 10.6, sd * 1.5], [7.6, 10.9, sd * 2.7], 0.45, 0.12, 5, rustD);
-        const hn = [[8.9, 10.9, sd * 1.1], [9.5, 11.3, sd * 2.3], [10.3, 12.0, sd * 3.2], [11.0, 13.1, sd * 3.5]];
-        for (let k = 0; k + 1 < hn.length; k++) limb(hn[k], hn[k + 1], [0.66, 0.5, 0.32][k], [0.5, 0.32, 0.1][k], 7, gold);
-      }
-      for (let k = 0; k < g.P.length; k += 3) { const x = g.P[k], z = g.P[k + 2]; g.P[k] = bx + x * cs - z * sn; g.P[k + 1] += y0 - 0.3; g.P[k + 2] = bz + x * sn + z * cs; }
-      for (let k = 0; k < g.N.length; k += 3) { const x = g.N[k], z = g.N[k + 2]; g.N[k] = x * cs - z * sn; g.N[k + 2] = x * sn + z * cs; }
-      addM(g, matV, true); exclPush(bx, bz, 22); CR.exclAdd(bx, bz, 15);
-      const sp = new GB(); cyl(sp, bx, y0 - 0.4, bz, 13.5, 0.45, 24, [0.4, 0.4, 0.38], [0.44, 0.44, 0.41]); addM(sp, matV);   // a paved ring round its foot
-    }
 
     /* ---- marshal posts, turn numbers, braking boards ---- */
     const roomSide = (s) => { let l = 0, r = 0; for (let d = -30; d <= 30; d += 6) { const i = T.idx(s + d); l += T.bl[i]; r += T.br[i]; } return r > l ? 1 : -1; };
@@ -32205,7 +32146,7 @@ const World = (function () {
       exclPush(x, z, 5); CR.avoid(x, z, 2.5);
     }
     T.names.forEach((q, k) => { const s = sAt(q.d - 60), i = T.idx(s); if (nearX(i, 50)) return; signPost(s, roomSide(s), 1.6, k, 3.4, 0.85, 1.2); });
-    for (const n of ['Prvi ovinek', 'Lasnica', 'Casio Triangle', 'Spoon']) {   // 300 / 200 / 100 boards before the heavy braking zones
+    for (const n of ['Prvi ovinek', 'Lasnica', '\u0160ikana', 'Spoon']) {   // 300 / 200 / 100 boards before the heavy braking zones
       const d0 = nameD(n); if (d0 == null) continue;
       let at = d0, bk = 0; for (let dd = -40; dd <= 60; dd += 2) { const kk = Math.abs(T.k[T.idx(sAt(d0 + dd))]); if (kk > bk) { bk = kk; at = d0 + dd; } }   // the corner's apex
       const turn = T.corners.find(c => Math.abs(dS(c.s0) - at) < 120), s0 = turn ? dS(turn.s0) : at - 40, side = turn ? -turn.dir : -1;
@@ -32219,7 +32160,7 @@ const World = (function () {
       const M = { first: 1.4, gap: 1.1, excluded: (x, z) => excluded(x, z) || inRects(x, z), below: 3, above: 7, sit: 0.35, flag: 0.08 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1; nFans += n; return n; };
-      const SPOTS = [['S-zavoji', 1, 3, 0.55], ['S-zavoji', -1, 2, 0.4], ['Dunlop', 1, 2, 0.45], ['Degner', -1, 3, 0.6], ['Lasnica', -1, 3, 0.65], ['Lasnica', 1, 2, 0.45], ['200R', -1, 2, 0.4], ['Spoon', 1, 3, 0.6], ['Spoon', -1, 2, 0.4], ['130R', 1, 3, 0.55], ['Casio Triangle', 1, 2, 0.45], ['Prvi ovinek', 1, 2, 0.4]];
+      const SPOTS = [['S-zavoji', 1, 3, 0.55], ['S-zavoji', -1, 2, 0.4], ['Dolgi levi', 1, 2, 0.45], ['Degner', -1, 3, 0.6], ['Lasnica', -1, 3, 0.65], ['Lasnica', 1, 2, 0.45], ['200R', -1, 2, 0.4], ['Spoon', 1, 3, 0.6], ['Spoon', -1, 2, 0.4], ['130R', 1, 3, 0.55], ['\u0160ikana', 1, 2, 0.45], ['Prvi ovinek', 1, 2, 0.4]];
       for (const [n, side, rows, dn] of SPOTS) { const d = nameD(n); if (d == null) continue; run(d - 45, d + 55, side, { rows, dens: dn, label: 'SZ ' + n + (side > 0 ? ' R' : ' L') }, true); }
       for (const sd of [-1, 1]) run(260, T.len - 340, sd, { rows: 2, dens: 0.05, clump: 0.95, strip: false, label: 'SZ groups' });
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);

@@ -47,7 +47,7 @@
     'Najhitrejši krog': 'Fastest lap', 'Odpelji najhitrejši krog dirke.': 'Set the fastest lap of a race.', 'Hat-trick': 'Hat-trick', 'Prvo štartno mesto, zmaga in najhitrejši krog na isti dirki.': 'Pole position, the win and the fastest lap in the same race.',
     'Napadalec': 'Charger', 'Na eni dirki pridobi osem mest.': 'Gain eight places in one race.', 'Deset stopničk': 'Ten podiums', 'Stopi na stopničke desetkrat.': 'Finish on the podium ten times.', 'Deset zmag': 'Ten wins', 'Zmagaj desetkrat.': 'Win ten times.',
     '100 kilometrov': '100 kilometres', 'Prevozi 100 km.': 'Drive 100 km.', '1000 kilometrov': '1000 kilometres', 'Prevozi 1000 km.': 'Drive 1000 km.', 'Popotnik': 'Globetrotter', 'Pripelji do cilja na vsaki progi.': 'Finish on every track.',
-    'Zeleni pekel': 'Green Hell', 'Pripelji do cilja na Nordschleife.': 'Finish a race on the Nordschleife.', 'Prvak': 'Champion', 'Osvoji prvenstvo.': 'Win a championship.', 'Legenda': 'Legend', 'Osvoji prvenstvo Legende.': 'Win the Legends championship.',
+    'Kralj Eifla': 'King of the Eifel', 'Pripelji do cilja v Nürburgu.': 'Finish a race at Nürburg.', 'Prvak': 'Champion', 'Osvoji prvenstvo.': 'Win a championship.', 'Legenda': 'Legend', 'Osvoji prvenstvo Legende.': 'Win the Legends championship.',
     'Zlata medalja': 'Gold medal', 'Osvoji zlato medaljo v kronometru.': 'Win a gold medal in a time trial.', 'Zlata zbirka': 'Gold collection', 'Osvoji zlato na vseh kronometrih.': 'Win gold in every time trial.',
     'Neulovljiv': 'Untouchable', 'Pobegni policiji čez prelaz.': 'Escape the police over the pass.', 'Mojster dežja': 'Rain master', 'Zmagaj v dežju.': 'Win in the rain.', 'Nočna ptica': 'Night owl', 'Zmagaj ponoči.': 'Win at night.',
     'Kralj drsenja': 'Drift king', 'Drsi tri sekunde brez prekinitve.': 'Drift for three seconds in one go.', 'Letalec': 'Flyer', 'Skoči 40 m daleč.': 'Jump 40 m.', 'Pelji 300 km/h.': 'Reach 300 km/h.',
@@ -69,7 +69,7 @@
     'Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)': 'Dry tyres at the next pit stop (the mechanics fit the rain tyres themselves)', 'MEHKE': 'SOFT', 'SREDNJE': 'MEDIUM', 'TRDE': 'HARD', 'DEŽNE': 'WET', 'SUHE': 'DRY', '{0} GUME': '{0} TYRES',
     'Najboljši trenutki': 'Highlights', '★ Trenutki': '★ Highlights', 'ŠTART': 'START', 'PREHITEVANJE': 'OVERTAKE', 'NESREČA': 'CRASH', '{0} mesto': '{0} place', 'Tvoja zmaga!': 'Your win!', 'Zmaga: {0}': 'Winner: {0}', 'Najboljših trenutkov ni.': 'No highlights in this race.',
     'Poškodbe in vreme: tvoje nastavitve veljajo za vse.': 'Damage and weather: your settings apply to everyone.', 'Poškodbe in vreme: tvoje nastavitve veljajo za oba.': 'Damage and weather: your settings apply to both of you.', 'Poškodbe in vreme: po nastavitvah gostitelja.': 'Damage and weather: as the host has set them.',
-    'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.': 'A Le Mans 24 Hours prototype: a closed cockpit, a big rear wing. The fastest car in the game down the straights, its wings hold it on the road through fast bends. In it you race against prototypes only.',
+    'Prototip za 24-urne vzdržljivostne dirke: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.': 'A prototype for 24-hour endurance races: a closed cockpit, a big rear wing. The fastest car in the game down the straights, its wings hold it on the road through fast bends. In it you race against prototypes only.',
     'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.': 'An American muscle car from the 70s with a big V8. Hard to catch on a straight, happy to swing its tail in the corners: the king of drift.',
     'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.': 'An electric hypercar with four motors: the quickest launch of the road cars and almost silent, but heavy.',
     'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.': 'An off-road racing truck on big wheels. Slow on tarmac, but on gravel and grass it has the most grip and the quickest pull; it lands softly after jumps.',
@@ -208,7 +208,7 @@
     'Izločene patrulje': 'Patrol cars wrecked', 'Prebite gume': 'Flat tyres', 'Zbiti pešci in kolesarji': 'Pedestrians and cyclists hit', 'Pobegi / aretacije': 'Escapes / arrests',
     'Beg pred policijo': 'Police chase', 'Nagrada za pobeg': 'Escape prize', 'SKOK {0} m': 'JUMP {0} m', 'REKORD SKOKA! ': 'JUMP RECORD! ', 'Najdaljši skok {0} m': 'Longest jump {0} m',
     ' · {0} {1} (tvoj rekord {2}, {3} {4} m)': ' · {0} {1} (your record {2}, {3} {4} m)',
-    'lahka': 'easy', 'srednja': 'medium', 'težka': 'hard', 'točke kot v F1': 'points as in F1', 'Težavnost: {0} (spremeniš v Nastavitvah)': 'Difficulty: {0} (change it in the Settings)',
+    'lahka': 'easy', 'srednja': 'medium', 'težka': 'hard', 'točke 25, 18, 15 …': 'points 25, 18, 15 …', 'Težavnost: {0} (spremeniš v Nastavitvah)': 'Difficulty: {0} (change it in the Settings)',
     'Prvak {0}×': 'Champion {0}×', 'Najboljše: {0} mesto': 'Best: {0} place', 'Začni prvenstvo': 'Start the championship', 'končano': 'finished', 'dirka {0}/{1}': 'race {0}/{1}',
     'Težavnost: {0}': 'Difficulty: {0}', ' (dež)': ' (rain)', 'Prvak!': 'Champion!', 'Na stopničkah prvenstva!': 'On the championship podium!', 'Konec prvenstva': 'The championship is over',
     '{0} {1}, {2}. Zmagovalec {3} ({4}).': '{0} {1}, {2}. Winner: {3} ({4}).', 'Zmage': 'Wins', 'Zadnja': 'Last', 'Novo prvenstvo': 'New championship', 'Naslednja dirka: {0}': 'Next race: {0}',
@@ -316,7 +316,7 @@
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
     'Razgledišče Kurokamidaira': 'Kurokamidaira lookout', 'Ovinek は (3)': 'Curve は (3)', 'Ovinek に (4)': 'Curve に (4)', 'Ovinek ほ (5)': 'Curve ほ (5)', 'Ovinek へ (6)': 'Curve へ (6)', 'Ovinek と (7)': 'Curve と (7)', 'Ovinek ち (8)': 'Curve ち (8)', 'Ovinek り (9)': 'Curve り (9)', 'Ovinek ぬ (10)': 'Curve ぬ (10)', 'Ovinek る (11)': 'Curve る (11)', 'Ovinek を (12)': 'Curve を (12)', 'Ovinek わ (13)': 'Curve わ (13)', 'Ovinek か (14)': 'Curve か (14)', 'Ovinek よ (15)': 'Curve よ (15)', 'Ovinek た (16)': 'Curve た (16)', 'Ovinek れ (17)': 'Curve れ (17)', 'Ovinek そ (18)': 'Curve そ (18)', 'Ovinek つ (19)': 'Curve つ (19)', 'Ovinek ね (20)': 'Curve ね (20)',   // (Irohazaka: the lookout, the curves by their signs)
-    'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
+    'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
@@ -415,7 +415,7 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', 'Press here to change tyre']);
+  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', 'Press here to change tyre']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
