@@ -932,7 +932,7 @@
   "instances": 2311,
   "props": 78,
   "crowd": 829,
-  "world": "19419bb6",
+  "world": "cb2e97f8",
   "propsHash": "5e8cebb4",
   "floor": "13ba048b/5936",
   "groups": {
@@ -955,7 +955,7 @@
    "crowd:MeshLambertMaterial": "6ce0090f",
    "mr crowds:MeshBasicMaterial": "dbee8c1f",
    "rsFar:MeshBasicMaterial": "ca0cd57",
-   "mrFar:MeshBasicMaterial": "3c6560ea",
+   "mrFar:MeshBasicMaterial": "ace4a660",
    "ao:MeshBasicMaterial": "f345b62b",
    "tyremarks:MeshBasicMaterial": "619f7c92",
    "roadwear:MeshLambertMaterial": "1d7af542",
