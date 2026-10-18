@@ -35,6 +35,41 @@ const World = (function () {
   // (the mesh and its chunk centre and radius in world space). Filled during build(), handed out as out.cull in finish().
   let CULLM = [];
   const cullAdd = (m, x, z, r) => CULLM.push({ m, x, z, r });
+  // NIZKA: the shadows of the instanced plants and rocks (IChunks) from a coarser copy of each (shadowLo), drawn only into the shadow map;
+  // each entry [the copy, the mesh it stands for] (handed out as out.shadowLo in finish(): Render shows a copy for the shadow pass alone,
+  // when its mesh is shown)
+  let SHLO = [];
+  // a coarser copy of a unit plant or rock for its shadow: its vertices merged on a 3 x 4 x 3 grid over its box (each cell's vertices at
+  // their average), the triangles that are left (no repeats); null where it would not save a third of them (small ones)
+  const SHLO_GEO = new Map();
+  let SHLO_MAT = null;
+  const shloMat = () => SHLO_MAT || (SHLO_MAT = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));   // (a copy's shadow from both its sides: a merged shape may have lost its back)
+  function shadowLo(base) {
+    if (SHLO_GEO.has(base)) return SHLO_GEO.get(base);
+    const P = base.attributes.position, I = base.index, n = I ? I.count : P.count;
+    let out = null;
+    if (n >= 120) {
+      if (!base.boundingBox) base.computeBoundingBox();
+      const b = base.boundingBox, NX = 3, NY = 4, NZ = 3, wx = (b.max.x - b.min.x) / NX || 1, wy = (b.max.y - b.min.y) / NY || 1, wz = (b.max.z - b.min.z) / NZ || 1;
+      const cell = new Map(), acc = [], vid = new Int32Array(P.count);
+      for (let i = 0; i < P.count; i++) {
+        const x = P.getX(i), y = P.getY(i), z = P.getZ(i), k = (Math.min(NY - 1, Math.floor((y - b.min.y) / wy)) * NZ + Math.min(NZ - 1, Math.floor((z - b.min.z) / wz))) * NX + Math.min(NX - 1, Math.floor((x - b.min.x) / wx));
+        let v = cell.get(k); if (v === undefined) { v = acc.length / 4; cell.set(k, v); acc.push(0, 0, 0, 0); }
+        acc[v * 4] += x; acc[v * 4 + 1] += y; acc[v * 4 + 2] += z; acc[v * 4 + 3]++; vid[i] = v;
+      }
+      const idx = [], seen = new Set();
+      for (let t = 0; t + 2 < n; t += 3) {
+        const a = vid[I ? I.getX(t) : t], c = vid[I ? I.getX(t + 1) : t + 1], d = vid[I ? I.getX(t + 2) : t + 2];
+        if (a === c || c === d || a === d) continue;
+        const key = [a, c, d].sort((p, q) => p - q).join(','); if (seen.has(key)) continue; seen.add(key); idx.push(a, c, d);
+      }
+      if (idx.length <= n * 0.66) {
+        const pos = new Float32Array(acc.length / 4 * 3); for (let v = 0; v < acc.length / 4; v++) for (let q = 0; q < 3; q++) pos[v * 3 + q] = acc[v * 4 + q] / acc[v * 4 + 3];
+        out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setIndex(idx);
+      }
+    }
+    SHLO_GEO.set(base, out); return out;
+  }
 
   /* ---------------- geometry builder (non-indexed, flat normals) -------- */
   const GB_UV0 = [0, 0];
@@ -131,8 +166,37 @@ const World = (function () {
       for (let k = 0; k < L.length; k += 4) { const y0 = L[k + 2], h = L[k + 3]; for (let v = L[k]; v < L[k + 1]; v++) { const f = Math.max(0, Math.min(1, (g.P[v * 3 + 1] - y0) / h - 0.15)); A[v] = f * f; } }
       geo.setAttribute('aSway', new THREE.BufferAttribute(A, 1));
       const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m);
+      const lo = LOD.tier === 0 ? treesLo(g) : null;
+      if (lo) {   // NIZKA: the chunk's shadow from its coarser copy, in the shadow pass alone
+        lo.boundingSphere = geo.boundingSphere; const sm = new THREE.Mesh(lo, shloMat()); sm.castShadow = true; sm.receiveShadow = false; sm.visible = false;
+        sm.matrixAutoUpdate = false; sm.updateMatrix(); m.castShadow = false; group.add(sm); SHLO.push([sm, m]);
+      }
       if (!geo.boundingSphere) geo.computeBoundingSphere(); const bs = geo.boundingSphere; cullAdd(m, bs.center.x, bs.center.z, bs.radius);   // swaying woods: distance-cullable on the lower tiers
     }
+  }
+
+  // a chunk of swaying trees, coarser, for its shadow (NIZKA): each tree's vertices merged on a 3 x 4 x 3 grid over its own box (as shadowLo),
+  // the rest of the chunk as it is; null where it would not save a third of the triangles
+  function treesLo(g) {
+    const P = g.P, n = P.length / 3, L = g.sw || [], key = new Int32Array(n).fill(-1), ids = new Map(), acc = [];
+    const id = (k) => { let v = ids.get(k); if (v === undefined) { v = acc.length / 4; ids.set(k, v); acc.push(0, 0, 0, 0); } return v; };
+    for (let k = 0; k < L.length; k += 4) {
+      const a = L[k], b = L[k + 1]; let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (let v = a; v < b; v++) { const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+      const wx = (x1 - x0) / 3 || 1, wy = (y1 - y0) / 4 || 1, wz = (z1 - z0) / 3 || 1;
+      for (let v = a; v < b; v++) key[v] = id(k / 4 * 64 + (Math.min(3, Math.floor((P[v * 3 + 1] - y0) / wy)) * 3 + Math.min(2, Math.floor((P[v * 3 + 2] - z0) / wz))) * 3 + Math.min(2, Math.floor((P[v * 3] - x0) / wx)));
+    }
+    for (let v = 0; v < n; v++) if (key[v] < 0) key[v] = id(-1 - v);   // (not a tree's: its own vertex)
+    for (let v = 0; v < n; v++) { const q = key[v] * 4; acc[q] += P[v * 3]; acc[q + 1] += P[v * 3 + 1]; acc[q + 2] += P[v * 3 + 2]; acc[q + 3]++; }
+    const idx = [], seen = new Set();
+    for (let t = 0; t + 2 < n; t += 3) {
+      const a = key[t], b = key[t + 1], c = key[t + 2]; if (a === b || b === c || a === c) continue;
+      const k = a < b ? (a < c ? (b < c ? a + ',' + b + ',' + c : a + ',' + c + ',' + b) : c + ',' + a + ',' + b) : (b < c ? (a < c ? b + ',' + a + ',' + c : b + ',' + c + ',' + a) : c + ',' + b + ',' + a);
+      if (seen.has(k)) continue; seen.add(k); idx.push(a, b, c);
+    }
+    if (idx.length > n * 0.66) return null;
+    const pos = new Float32Array(acc.length / 4 * 3); for (let v = 0; v < acc.length / 4; v++) for (let q = 0; q < 3; q++) pos[v * 3 + q] = acc[v * 4 + q] / acc[v * 4 + 3];
+    const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setIndex(idx); return out;
   }
 
   /* ---------------- primitives ---------------- */
@@ -916,6 +980,7 @@ const World = (function () {
   function build(scene, track, tex, opts) {
     LOD = makeLOD(opts.tier);   // the graphics detail tier for this build (every builder below consults the shared LOD)
     CULLM = [];                 // fresh list of distance-cullable vegetation for this build
+    SHLO = [];                  // (and of the plants' shadow copies, NIZKA)
     CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     if (THEME !== 'nring' && THEME !== 'spa' && THEME !== 'rbring' && THEME !== 'bathurst' && THEME !== 'cpalace' && THEME !== 'longford' && THEME !== 'rio' && THEME !== 'bangsaen') NR = null;   // free the last corridor build's grids (the Nordschleife's, Spa's, the Red Bull Ring's, Bathurst's, Crystal Palace's, Longford's)
@@ -4633,7 +4698,7 @@ const World = (function () {
     const P = o.props; if (P) for (let j = P.length - 1; j >= 0; j--) { const p = P[j];   // (a knockable post or tyre stack where a board stands goes)
       for (const [x, z, tx, tz, hw] of foot) { const dx = p.x - x, dz = p.z - z, a = dx * tx + dz * tz; if (Math.abs(a) < 1.2 && Math.abs(-dx * tz + dz * tx) < hw + 0.45) { P.splice(j, 1); break; } } }
   }
-  function finish(o, tex) { o.cull = CULLM; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
+  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4645,103 +4710,14 @@ const World = (function () {
     return Float32Array.from(out);
   }   // (every world, at the end of its build; the Nordschleife's and the Red Bull Ring's builders paint their own tyre marks)
 
-  /* ---- moving things: the TV helicopter (Pikes Peak: a fly-over and the finish; Ouninpohja: with the car the whole run) (built at the end of
-     buildPikes and buildOuni; pkUpdate runs every frame from World.update; the cloud shadows are every world's, see clouds above) ---- */
+  /* ---- moving things: the TV helicopter with the car the whole run (Ouninpohja, Harju; Pikes Peak has none) (built at the end of the builder;
+     pkUpdate runs every frame from World.update; the cloud shadows are every world's, see clouds above) ---- */
   function pkSky(K) {
-
-    const { heli, rotor, tail } = tvHeli(K.root);
-    if (K.far) {   // Ouninpohja: the helicopter stays with the car the whole run, standing off far from the camera (pkFollow)
-      const i0 = T.idx(K.sStart);
-      K.out.dyn.pk = { heli, rotor, tail, follow: true, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0], gH: K.gH || pkGround,
-        Ls: [20, 27, 34, 46, 60], maxR: 0.3 };   // (gH: the world's ground; it may stand off farther and higher, and never looks big on the screen)
-      return;
-    }
-    heli.visible = false;   // (only on its two appearances: see pkUpdate)
-    // the fly-over crosses the long straight after Glen Cove (s 2740-2950) at X, down from the higher side of the slope towards the valley (low over the road)
-    const sX = 2870, iX = T.idx(sX), gs = (sd) => pkGround(T.px[iX] + T.nx[iX] * sd * 60, T.pz[iX] + T.nz[iX] * sd * 60), sdX = gs(1) > gs(-1) ? -1 : 1;
-    const X = { x: T.px[iX], z: T.pz[iX], y: T.hy[iX], nx: T.nx[iX] * sdX, nz: T.nz[iX] * sdX, tx: T.tx[iX], tz: T.tz[iX], s: sX, sTrig: 2745 };
-    K.out.dyn.pk = { heli, rotor, tail, X, sEsc: 5790, sFin: K.sFin, t: 0, fly: null, flyDone: false, fin: null, finDone: false, on: false, news: null, nNews: 0, v3: new THREE.Vector3() };
+    const { heli, rotor, tail } = tvHeli(K.root), i0 = T.idx(K.sStart);   // (it stays with the car the whole run, standing off far from the camera: pkFollow)
+    K.out.dyn.pk = { heli, rotor, tail, follow: true, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0], gH: K.gH || pkGround,
+      Ls: [20, 27, 34, 46, 60], maxR: 0.3 };   // (gH: the world's ground; it may stand off farther and higher, and never looks big on the screen)
   }
-
-  function pkUpdate(pk, t, car) {
-    const wrap = (a) => a - TAU * Math.round(a / TAU), raw = t - pk.t, dt = clamp(raw, 0, 0.25); pk.t = t;
-    if (pk.follow) { pkFollow(pk, t, car, raw); return; }   // (Ouninpohja)
-    // the TV helicopter shows up twice a run, by the progress of the player's car: a fly-over across the road after Glen Cove, and the escort over
-    // the last ~350 m, hovering over the finish area while the car stands. Not in the title demo (no player's car); reset when the car is back down the hill
-    const m = pk.heli, p = m.position, e = (k) => 1 - Math.exp(-dt * k);
-    if (!car || !car.isPlayer) { m.visible = pk.on = false; pk.fly = pk.fin = null; pk.flyDone = pk.finDone = false; return; }
-    const s = car.q && car.q.i >= 0 ? car.q.s : T.query(car.x, car.z, -1, {}).s, X = pk.X, ay = car.roadY || 0;
-    if (s < X.sTrig - 100) { pk.fly = null; pk.flyDone = false; }
-    if (s < pk.sEsc - 100) { pk.fin = null; pk.finDone = false; }
-    const news = (key) => { pk.news = { key, n: ++pk.nNews }; };   // (for the commentator: Comm.update picks it up)
-    const cam = typeof Render !== 'undefined' && Render.camera && Render.camera.isCamera ? Render.camera : null;
-    // a world point on the screen of the current camera shifted by (dx,dy,dz): [x, y] in half screen heights and the depth; null behind it
-    const proj = (x, y, z, dx, dy, dz) => { const v = pk.v3.set(x - dx, y - dy, z - dz).applyMatrix4(cam.matrixWorldInverse); if (v.z > -1) return null; const d = -v.z; v.applyMatrix4(cam.projectionMatrix); return [v.x * cam.aspect, v.y, d]; };
-    const kF = cam ? 1 / Math.tan(cam.fov / 2 * Math.PI / 180) : 1;
-    const prevX = p.x, prevZ = p.z, wasOn = pk.on;
-    let on = false;
-    // a) the fly-over: a straight, slightly diagonal pass across the road at X in ~8 s, over the road when the car is A m short of it; A and the height H
-    //    suit the camera in use (seen as it will be then, the camera moved with the car: all of it in the frame, clear of the car)
-    if (!pk.fly && !pk.flyDone && s > X.sTrig && s < X.sTrig + 120) { pk.fly = { x: -1, A: 26, H: 18, gy: -1e9 }; news('heliFly'); }
-    const F = pk.fly;
-    if (F) {
-      if (cam) {
-        let best = null, bs = -1e9;
-        for (const A of [34, 28, 22, 17, 13]) for (const H of [22, 18, 14, 11, 8, 6]) {
-          const j = T.idx(X.s - A), ex = T.px[j] - car.x, ez = T.pz[j] - car.z, ey = T.hy[j] - ay, h = proj(X.x, X.y + H + 1.2, X.z, ex, ey, ez), c = proj(T.px[j], T.hy[j] + 0.7, T.pz[j], ex, ey, ez);
-          if (!h || !c) continue;
-          const rr = 6.5 * kF / h[2], sep = Math.hypot(h[0] - c[0], h[1] - c[1]) - rr - 2 * kF / c[2];
-          if (Math.abs(h[0]) > cam.aspect - rr * 0.6 || Math.abs(h[1]) > 0.86 - rr * 0.6 || sep < 0.12) continue;
-          const sc = Math.min(sep, 0.5) + 0.012 * H + 0.006 * A - 0.8 * Math.max(0, Math.abs(h[1]) - 0.55);
-          if (sc > bs) { bs = sc; best = [A, H]; }
-        }
-        if (best) { const k = F.x < -0.7 ? 1 : e(1.5); F.A += (best[0] - F.A) * k; F.H += (best[1] - F.H) * k; }
-      }
-      // pace: timed (within limits) by the car's speed to be over the road when the car is A m short of it (it speeds up: aimed a bit early), then ~0.26/s
-      F.x += (F.x < 0 ? clamp(-F.x / Math.max(0.1, (X.s - F.A - 8 - s) / Math.max(car.speed || 0, 30)), 0.15, 0.8) : 0.26) * dt;
-      if (F.x >= 1) { pk.fly = null; pk.flyDone = true; }
-      else {
-        const x = F.x, u = 105 * (0.45 * x + 0.55 * x * x * x), a = 16 * x, hx = X.x + X.nx * u + X.tx * a, hz = X.z + X.nz * u + X.tz * a;
-        const du = 105 * (0.45 + 1.65 * x * x), vx = X.nx * du + X.tx * 16, vz = X.nz * du + X.tz * 16, vl = Math.hypot(vx, vz);
-        let g = -1e9; for (const L of [0, 10, 20]) g = Math.max(g, pkGround(hx + vx / vl * L, hz + vz / vl * L));   // (over the ground ahead, not into it)
-        F.gy = F.gy < -1e8 ? g : F.gy + (g - F.gy) * e(g > F.gy ? 4 : 2.5);
-        p.set(hx, Math.max(X.y + F.H * (1 + 0.7 * x * x), F.gy + 8) + 0.3 * Math.sin(t * 0.9), hz); on = true;
-      }
-    }
-    // b) the finish: in from the side ~350 m before the line, then alongside the car, kept in the camera's frame (to one side and up on the
-    //    screen, clear of the car); once the car is through, over the finish area, hovering while it stands
-    if (!pk.fin && !pk.finDone && s > pk.sEsc && s < pk.sEsc + 150) { pk.fin = { ox: 0, oz: 0, tau: 0, sd: 0, y: ay + 40 }; news('heliFin'); }
-    const G = pk.fin;
-    if (G && !on) {
-      const done = s > pk.sFin + 2, H = (cam ? clamp((cam.position.y - ay) * 0.26, 7, 18) : 16) + (done ? 3 : 0);
-      let ox = Math.cos(car.h) * 14 + Math.sin(car.h) * 16, oz = Math.sin(car.h) * 14 - Math.cos(car.h) * 16;   // (no camera: ahead, to one side)
-      if (cam) {
-        if (!G.sd) { const c = proj(car.x, ay, car.z, 0, 0, 0); G.sd = c && c[0] > 0 ? -1 : 1; }   // the side of the screen away from the car; it keeps it
-        // where the ray through a spot on the screen (to that side, in the upper half) meets the height it flies at
-        const v = pk.v3.set(G.sd * (done ? 0.45 : 0.55), done ? 0.5 : 0.4, 0.5).unproject(cam), c = cam.position, dy = v.y - c.y, k = dy < -0.05 ? (ay + H - c.y) / dy : 0;
-        if (k > 0) { ox = c.x + (v.x - c.x) * k - car.x; oz = c.z + (v.z - c.z) * k - car.z; }
-      }
-      if (!G.tau) { G.ox = ox * 4; G.oz = oz * 4; }   // (comes in from far out on that side)
-      G.tau += dt;
-      const bob = done ? 2 : 0, kk = e(G.tau < 3.5 ? 0.8 : 3);
-      G.ox += (ox + Math.cos(t * 0.23) * bob - G.ox) * kk; G.oz += (oz + Math.sin(t * 0.31) * bob - G.oz) * kk;
-      const hx = car.x + G.ox, hz = car.z + G.oz, gy = Math.max(pkGround(hx, hz), pkGround(hx + (car.vx || 0) * 0.6, hz + (car.vz || 0) * 0.6)) + 9;
-      const ty = Math.max(ay + H + 0.4 * Math.sin(t * 0.9) + sstep(3.5, 0, G.tau) * 30, gy);
-      G.y += (ty - G.y) * e(ty > G.y ? 2.5 : 0.9);
-      p.set(hx, G.y, hz); on = true;
-    }
-    m.visible = pk.on = on;
-    if (!on) return;
-    // attitude: nose along its flight (towards the car while it hovers); banks into the turns, dips the nose with speed and when it speeds up
-    if (!wasOn) { pk.yaw = Math.atan2(car.z - p.z, car.x - p.x); pk.vx = pk.vz = pk.ac = pk.al = 0; }
-    else if (dt > 1e-4) { const vx = (p.x - prevX) / dt, vz = (p.z - prevZ) / dt, c = Math.cos(pk.yaw), sn = Math.sin(pk.yaw), dvx = (vx - pk.vx) / dt, dvz = (vz - pk.vz) / dt, k = e(3);
-      pk.ac += (dvx * c + dvz * sn - pk.ac) * e(2); pk.al += (dvz * c - dvx * sn - pk.al) * e(2); pk.vx += (vx - pk.vx) * k; pk.vz += (vz - pk.vz) * k; }
-    const sp = Math.hypot(pk.vx, pk.vz), wv = sstep(2, 9, sp), lx = car.x - p.x, lz = car.z - p.z, ll = Math.hypot(lx, lz) || 1;
-    const yt = Math.atan2(lerp(lz / ll, pk.vz / (sp || 1), wv), lerp(lx / ll, pk.vx / (sp || 1), wv));
-    pk.yaw += wrap(yt - pk.yaw) * e(1.6);
-    m.rotation.set(clamp(pk.al * 0.035, -0.35, 0.35), -pk.yaw, -clamp(0.004 * sp + 0.02 * pk.ac, -0.12, 0.25));
-    pk.rotor.rotation.y = (t * 41) % TAU; pk.tail.rotation.z = (t * 73) % TAU;
-  }
+  function pkUpdate(pk, t, car) { const raw = t - pk.t; pk.t = t; pkFollow(pk, t, car, raw); }
   // Ouninpohja's TV helicopter: with the car the whole run (the start line without one), off to one side and up high, where no camera sees it big
   function pkFollow(pk, t, car, dt) {
     const wrap = (a) => a - TAU * Math.round(a / TAU);
@@ -5991,11 +5967,11 @@ const World = (function () {
   }
 
   /* ---- round 4, the air and the details: haze layered in the valleys, the distant peaks where the view opens (the Bottomless Pit),
-     flags fluttering in the wind, dust and leaves in the air, smoke from the grills at the picnic grounds (built at the end of buildPikes;
+     flags fluttering in the wind, dust in the air, smoke from the grills at the picnic grounds (built at the end of buildPikes;
      pkAmbientUpdate runs every frame when out.dyn.pkAmb is set) ---- */
   function pkAmbient(K) {
     const out = K.out, root = K.root, P = K.P, G = P.G, uT = { value: 0 }, WD = 2.2, wx = Math.cos(WD), wz = Math.sin(WD);   // (the wind: the way the W's camp flags stream)
-    const am = { uT, grove: valueNoise2(9405, 170) };   // (the aspen groves, as pkForest's)
+    const am = { uT };
 
     // flags on poles waving in the wind (the cloth that the start, the finish, the W's camps and the podium left in out.pkFl): [x, y (the cloth's top at the pole), z,
     // the way it flies (rad from +x), its cells in rows top to bottom, width, height]; pushed out of its plane in the vertex shader, more towards the free end and
@@ -6082,8 +6058,7 @@ const World = (function () {
     };
     am.hz = hz;
 
-    // in the air round the car (one Points, recycled in a box that follows it): golden aspen leaves tumbling down where the groves stand, a few sunlit motes in the
-    // forest, dust wisps blowing low across the road on the bare heights; and the grill smoke at the Halfway Picnic Grounds (puffs rising from the two pedestal grills,
+    // in the air round the car (one Points, recycled in a box that follows it): a few sunlit motes in the forest, dust wisps blowing low across the road on the bare heights; and the grill smoke at the Halfway Picnic Grounds (puffs rising from the two pedestal grills,
     // drifting with the wind, growing and thinning)
     const grills = [];
     { const s0 = K.sStart + 1000, fl = (sd) => { const p = K.onSide(s0, sd, 14); return Math.abs(pkGround(p[0], p[1]) - T.hy[p[2]]); }, side = fl(1) <= fl(-1) ? 1 : -1;   // (as pkLandmarks)
@@ -6104,11 +6079,10 @@ const World = (function () {
         '    sz = 0.5 + 2.8 * sqrt(u); a = smoothstep(0.0, 0.1, u) * pow(1.0 - u, 1.4) * 0.55; col = mix(vec3(0.6, 0.64, 0.72), vec3(0.8, 0.82, 0.86), u);\n' +
         '  } else {\n' +
         '    vec3 B = vec3(' + BX.toFixed(1) + ', ' + BY.toFixed(1) + ', ' + BX.toFixed(1) + '), q, lo;\n' +
-        '    if (aK.x < 0.5) { bool leaf = aK.y < uF.x;\n' +   // leaves (share uF.x) and motes (uF.y): slow, swaying
-        '      q = position + vec3(uW.x * t * 1.2 + sin(t * 0.9 + ph) * 1.6, -t * (leaf ? 0.9 + 0.6 * aK.w : 0.12), uW.y * t * 1.2 + cos(t * 0.75 + ph) * 1.6);\n' +
+        '    if (aK.x < 0.5) {\n' +   // motes (share uF.y): slow, swaying
+        '      q = position + vec3(uW.x * t * 1.2 + sin(t * 0.9 + ph) * 1.6, -t * 0.12, uW.y * t * 1.2 + cos(t * 0.75 + ph) * 1.6);\n' +
         '      lo = uC - vec3(B.x * 0.5, 2.0, B.z * 0.5); p = lo + mod(q - lo, B);\n' +
-        '      if (leaf) { sz = 0.3 + 0.16 * aK.w; a = 1.0; col = mix(vec3(0.98, 0.76, 0.16), vec3(0.86, 0.48, 0.1), aK.w); vQ = 0.25 + 0.75 * abs(sin(t * (2.0 + 2.0 * aK.w) + ph)); col *= 0.75 + 0.35 * vQ; }\n' +
-        '      else { sz = 0.12; a = step(aK.y, uF.x + uF.y) * 0.55 * (0.6 + 0.4 * sin(t * 1.7 + ph)); col = vec3(1.0, 0.94, 0.78); vK = 1.0; } }\n' +
+        '      sz = 0.12; a = step(aK.y, uF.y) * 0.55 * (0.6 + 0.4 * sin(t * 1.7 + ph)); col = vec3(1.0, 0.94, 0.78); vK = 1.0; }\n' +
         '    else {\n' +   // dust wisps: fast, low over the road, in gusts
         '      q = position * vec3(1.0, 0.12, 1.0) + vec3(uW.x * t * 7.0, 0.9 + sin(t * 1.3 + ph) * 0.4, uW.y * t * 7.0);\n' +
         '      lo = uC - vec3(B.x * 0.5, 0.0, B.z * 0.5); p = lo + mod(q - lo, B); p.y = uC.y + q.y;\n' +
@@ -6122,9 +6096,8 @@ const World = (function () {
         '  gl_PointSize = a > 0.003 ? clamp(sz * uS / max(1.0, z), 1.5, 128.0) : 0.0; gl_Position = projectionMatrix * mv; vC = vec4(col, a); }',
       fragmentShader: 'uniform vec3 fogColor; uniform float fogNear, fogFar; varying vec4 vC; varying float vK, vQ, vFd; varying vec2 vD;\n' +
         'void main() { vec2 d = gl_PointCoord - 0.5; float a;\n' +
-        '  if (vK < 0.5) { d.x /= vQ; float r = dot(d, d) * 4.0; if (r > 1.0) discard; a = smoothstep(1.0, 0.7, r); }\n' +   // a leaf: a small disc, squashed as it tumbles
-        '  else { if (vK > 2.5) { d = vec2(d.x * vD.x - d.y * vD.y, (d.x * vD.y + d.y * vD.x) * 3.6); }\n' +   // a dust wisp: a streak along the wind (point coords run down the screen)
-        '    float r = dot(d, d) * 4.0; if (r > 1.0) discard; a = (1.0 - r) * (1.0 - r); if (vK > 2.5) a *= 1.0 - r; }\n' +
+        '  if (vK > 2.5) { d = vec2(d.x * vD.x - d.y * vD.y, (d.x * vD.y + d.y * vD.x) * 3.6); }\n' +   // a dust wisp: a streak along the wind (point coords run down the screen)
+        '  float r = dot(d, d) * 4.0; if (r > 1.0) discard; a = (1.0 - r) * (1.0 - r); if (vK > 2.5) a *= 1.0 - r;\n' +
         '  gl_FragColor = vec4(mix(vC.rgb, fogColor, smoothstep(fogNear, fogFar, vFd)), vC.a * a); }' }));
     pts.frustumCulled = false; pts.renderOrder = 7; pts.matrixAutoUpdate = false; pts.name = 'pkAir'; root.add(pts);
     pts.onBeforeRender = (r, sc, cam) => { pU.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2;   // (pixels per metre at 1 m; and where the camera looks from, for the haze grid)
@@ -6136,9 +6109,9 @@ const World = (function () {
   function pkAmbientUpdate(am, t, car) {
     am.uT.value = t % 1000;
     const hz = am.hz, y = car ? car.roadY || 0 : 0, fr = (v) => v - Math.floor(v);
-    if (car) {   // what is in the air here: aspen leaves in the groves, motes in the forest, dust on the bare heights
-      const g = am.grove(car.x, car.z), leaf = 0.4 * sstep(0.52, 0.62, g) * sstep(152, 136, y), mote = 0.35 * sstep(200, 175, y);
-      am.pU.uF.value.set(leaf, mote, sstep(195, 235, y) * (1 - 0.4 * sstep(330, 400, y))); am.pU.uC.value.set(car.x, y, car.z);
+    if (car) {   // what is in the air here: motes in the forest, dust on the bare heights (no falling leaves: taken out at the player's wish)
+      const mote = 0.35 * sstep(200, 175, y);
+      am.pU.uF.value.set(0, mote, sstep(195, 235, y) * (1 - 0.4 * sstep(330, 400, y))); am.pU.uC.value.set(car.x, y, car.z);
     }
     hz.hU.uO.value.set(fr(t * 0.9 / 150), fr(-t * 1.2 / 150), fr(-t * 0.6 / 150), fr(t * 0.8 / 150));   // (the haze drifts slowly with the wind, its layers each their own way)
     if (!car) { if (hz.cx !== 0 || hz.cz !== 0) hz.grid(0, 0); return; }   // (no car: the grid at a fixed place, so the world's fingerprint does not depend on the last view)
@@ -7624,7 +7597,7 @@ const World = (function () {
     if (!tb.empty) { const m = new THREE.Mesh(tb.geometry(), new THREE.MeshLambertMaterial({ map: tx })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'pkHistText'; root.add(m); }
   }
 
-  /* ---- round 9: moving race-day machines: drones over the road and LED split boards (asphalt), the water truck and a grader, dust over the
+  /* ---- round 9: moving race-day machines: LED split boards (asphalt), the water truck and a grader, dust over the
      switchbacks (gravel). pkMovingUpdate runs every frame when out.dyn.pkMov is set ---- */
   function pkMoving(K) {
     const { excl, sStart, sFin, out, root, mk } = K, gy = pkGround, PI = Math.PI;
@@ -7653,35 +7626,7 @@ const World = (function () {
     const ptsMat = (vs, fs, U) => { const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, U]); return new THREE.ShaderMaterial({ uniforms: u, fog: true, transparent: true, depthWrite: false, vertexShader: vs, fragmentShader: fs }); };
 
     if (!mk) {
-      /* ---- the asphalt: two camera drones taking turns over the famous sections, LED split boards past the checkpoints ---- */
-      // the drone (~1.5 m across): a white body, four arms, rotor discs, the camera gimbal under the nose; one instanced mesh, two instances
-      const dg = new GB(), DK = [0.13, 0.13, 0.15], WH = [0.9, 0.9, 0.92], RO = [0.32, 0.33, 0.36];
-      box(dg, 0, -0.12, 0, 0.6, 0.22, 0.42, 0, WH, [0.95, 0.95, 0.97]); box(dg, 0.2, -0.13, 0, 0.22, 0.12, 0.44, 0, [0.85, 0.2, 0.12]);
-      for (const a of [PI / 4, -PI / 4]) box(dg, 0, -0.02, 0, 1.5, 0.06, 0.08, a, DK);
-      for (const [x, z] of [[0.53, 0.53], [0.53, -0.53], [-0.53, 0.53], [-0.53, -0.53]]) { cyl(dg, x, -0.04, z, 0.06, 0.12, 6, DK, DK); cyl(dg, x, 0.08, z, 0.36, 0.02, 10, RO, RO); }
-      box(dg, 0.24, -0.4, 0, 0.2, 0.26, 0.2, 0, DK); box(dg, 0.35, -0.34, 0, 0.04, 0.1, 0.1, 0, [0.05, 0.08, 0.14]);
-      for (const z of [-0.2, 0.2]) { box(dg, 0, -0.5, z, 0.05, 0.4, 0.05, 0, DK); box(dg, 0, -0.52, z, 0.62, 0.04, 0.05, 0, DK); }
-      const dm = new THREE.InstancedMesh(dg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 2);
-      dm.frustumCulled = false; dm.name = 'pkDrones'; root.add(dm);
-      // their lights (a white strobe on top, a red one under the tail): one Points
-      const lp = new Float32Array(12), lg = new THREE.BufferGeometry();
-      lg.setAttribute('position', new THREE.BufferAttribute(lp, 3)); lg.setAttribute('aK', new THREE.BufferAttribute(new Float32Array([1, 0, 0, 0.13, 1, 0.5, 0, 0.63]), 2));
-      const lm = new THREE.Points(lg, ptsMat('uniform float uT, uS; attribute vec2 aK; varying vec4 vC; varying float vFd;\n' +
-        'void main() { float b = aK.x > 0.5 ? step(0.86, fract(uT * 1.1 + aK.y)) : 0.45 + 0.55 * step(0.5, fract(uT * 0.8 + aK.y)); vC = aK.x > 0.5 ? vec4(1.0, 1.0, 0.96, b) : vec4(1.0, 0.12, 0.08, b);\n' +
-        '  vec4 mv = modelViewMatrix * vec4(position, 1.0); vFd = -mv.z; gl_PointSize = b > 0.01 ? clamp((aK.x > 0.5 ? 0.9 : 0.5) * uS / max(1.0, vFd), 2.5, 22.0) : 0.0; gl_Position = projectionMatrix * mv; }',
-        'uniform vec3 fogColor; uniform float fogNear, fogFar; varying vec4 vC; varying float vFd;\n' +
-        'void main() { vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; float a = vC.a * (smoothstep(1.0, 0.0, r) * 0.6 + smoothstep(0.25, 0.0, r) * 0.6);\n' +
-        '  gl_FragColor = vec4(mix(vC.rgb, fogColor, smoothstep(fogNear, fogFar, vFd) * 0.7), min(1.0, a)); }', { uT: { value: 0 }, uS: { value: 400 } }));
-      lg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5); lm.frustumCulled = false; lm.renderOrder = 6; lm.name = 'pkDroneLights'; root.add(lm);
-      lm.onBeforeRender = (r, sc, cam) => { lm.material.uniforms.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2; };
-      // the famous sections (from the start line): Engineer's Corner, Halfway, Brown Bush, Glen Cove, the W's, Cove Creek, Devil's Playground, Bottomless Pit, Boulder Park, Olympic;
-      // a drone follows the car through every other one, the other waits hovering beside the road at the next boundary
-      const B = [0, 578, 1000, 1720, 2688, 2918, 3564, 4050, 4466, 5360, 5854].map(d => sStart + d);
-      const st = (k, j) => { const s = k < B.length ? B[k] : sFin + 40, q = crAt(Math.min(s, sFin + 40)), sd = j ? 1 : -1, o = sd * ((sd > 0 ? q.br : q.bl) - 3), x = q.px + q.nx * o, z = q.pz + q.nz * o;
-        return [x, Math.max(q.hy + 14, gy(x, z) + 10), z, Math.atan2(-q.tz, -q.tx)]; };   // (station k: over the road's edge at boundary k, the nose down the road)
-      mv.dr = [0, 1].map(j => ({ p: st(j + 1, j).slice(0, 3), v: [0, 0, 0], yaw: st(j + 1, j)[3], pit: 0, rol: 0 }));
-      Object.assign(mv, { dm, lm, lp, B, st, m4: new THREE.Matrix4(), q4: new THREE.Quaternion(), eu: new THREE.Euler(0, 0, 0, 'YXZ'), v3: new THREE.Vector3(), s3: new THREE.Vector3(1.3, 1.3, 1.3) });
-
+      /* ---- the asphalt: LED split boards past the checkpoints (no camera drones over the road: taken out at the player's wish) ---- */
       // the LED split boards ~55 m past each checkpoint, just beyond the barrier, turned to the oncoming car: a dark housing on two posts (in the scenery),
       // the screen (one 256 x 512 canvas: a 256 x 128 row per board, redrawn only when its text changes; unlit, so it glows at night)
       const cv = document.createElement('canvas'); cv.width = 256; cv.height = 512; const cx = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; out.ownTex.push(tex);
@@ -7790,35 +7735,6 @@ const World = (function () {
     const dt = mv.t == null ? 0 : clamp(t - mv.t, 0, 0.25), jump = cj || mv.t == null || t < mv.t || t - mv.t > 1.5; mv.t = t;
     const s = car && car.q ? car.q.s : -1e9, gy = pkGround;
     if (!mv.mk) {
-      mv.lm.material.uniforms.uT.value = t % 1000;
-      // the drones: section k of the car -> drone k % 2 follows it (~10 m back, 7 m off to its side, 13 m up), the other one waits at the next boundary
-      const B = mv.B; let k = -1; for (let j = 0; j < B.length; j++) if (s >= B[j]) k = j;
-      const hx = car ? Math.cos(car.h) : 1, hz = car ? Math.sin(car.h) : 0, y = car ? car.roadY || car.y || 0 : 0;
-      for (let j = 0; j < 2; j++) {
-        const D = mv.dr[j], act = car && k >= 0 && k % 2 === j && s < mv.B[B.length - 1] + 700; let tx, ty, tz, yaw;
-        if (act) { const sd = j ? 1 : -1, bx = car.x - hx * 10 - hz * sd * 7 + (car.vx || 0) * 0.35, bz = car.z - hz * 10 + hx * sd * 7 + (car.vz || 0) * 0.35;
-          tx = bx; tz = bz; ty = Math.max(y + 13 + 0.6 * Math.sin(t * 0.7 + j), gy(bx, bz) + 7); yaw = Math.atan2(car.z - D.p[2], car.x - D.p[0]); }
-        else { const n = car && k >= 0 ? k + 1 : j, q = mv.st(n, j), dc = car ? Math.hypot(car.x - D.p[0], car.z - D.p[2]) : 1e9, far = Math.hypot(D.p[0] - q[0], D.p[2] - q[2]) > 30;
-          if (car && dc < 170 && far) { tx = D.p[0]; tz = D.p[2]; ty = Math.max(D.p[1], y + 22); }   // (relieved: it stays and climbs while the car goes on)
-          else { tx = q[0]; ty = q[1] + 0.4 * Math.sin(t * 0.9 + j * 2); tz = q[2]; }
-          yaw = dc < 260 ? Math.atan2(car.z - D.p[2], car.x - D.p[0]) : q[3];
-          if (car && dc > 170 && far && Math.hypot(car.x - q[0], car.z - q[2]) > 170) { D.p[0] = q[0]; D.p[1] = q[1]; D.p[2] = q[2]; D.v[0] = D.v[1] = D.v[2] = 0; } }   // (out of sight: straight to its station)
-        if (act && !jump && Math.hypot(tx - D.p[0], tz - D.p[2]) > 150) { const l = Math.hypot(tx - D.p[0], tz - D.p[2]); D.p[0] = tx + (D.p[0] - tx) / l * 130; D.p[2] = tz + (D.p[2] - tz) / l * 130; D.p[1] = Math.max(ty + 10, gy(D.p[0], D.p[2]) + 10); }   // (far behind: it comes in from the edge of sight)
-        if (jump || !car) { D.p[0] = tx; D.p[1] = ty; D.p[2] = tz; D.v[0] = D.v[1] = D.v[2] = 0; D.yaw = yaw; }
-        else {   // a spring towards the spot (quick when following), its speed capped; the nose turns smoothly
-          const kp = act ? 3.2 : 1.1, kd = act ? 3.4 : 2.0, vm = act ? 75 : 32;
-          for (let a = 0; a < 3; a++) D.v[a] += ((([tx, ty, tz][a]) - D.p[a]) * kp * kp - D.v[a] * kd) * dt;
-          const sp = Math.hypot(D.v[0], D.v[1], D.v[2]); if (sp > vm) for (let a = 0; a < 3; a++) D.v[a] *= vm / sp;
-          for (let a = 0; a < 3; a++) D.p[a] += D.v[a] * dt;
-          D.p[1] = Math.max(D.p[1], gy(D.p[0], D.p[2]) + 5);
-          const dy = yaw - D.yaw; D.yaw += (dy - TAU * Math.round(dy / TAU)) * Math.min(1, dt * 3); }
-        // the tilt: into its speed (nose down as it flies forward, banked as it slides)
-        const c = Math.cos(D.yaw), sn = Math.sin(D.yaw), fw = D.v[0] * c + D.v[2] * sn, sd = -D.v[0] * sn + D.v[2] * c;
-        D.pit += (clamp(-fw * 0.012, -0.4, 0.4) - D.pit) * Math.min(1, dt * 4); D.rol += (clamp(sd * 0.012, -0.4, 0.4) - D.rol) * Math.min(1, dt * 4);
-        mv.eu.set(D.rol, -D.yaw, D.pit); mv.q4.setFromEuler(mv.eu); mv.m4.compose(mv.v3.set(D.p[0], D.p[1], D.p[2]), mv.q4, mv.s3); mv.dm.setMatrixAt(j, mv.m4);
-        const L = mv.lp; L[j * 6] = D.p[0]; L[j * 6 + 1] = D.p[1] + 0.06; L[j * 6 + 2] = D.p[2]; L[j * 6 + 3] = D.p[0] - c * 0.3; L[j * 6 + 4] = D.p[1] - 0.26; L[j * 6 + 5] = D.p[2] - sn * 0.3;
-      }
-      mv.dm.instanceMatrix.needsUpdate = true; mv.lm.geometry.attributes.position.needsUpdate = true;
       // the split boards: for ~8 s after the car passed its checkpoint (and while it is not 450 m on), its time there and the difference to the class best (game.js: mv.best)
       for (let k = 0; k < mv.bd.length; k++) { const b = mv.bd[k]; if (!b) continue;
         const sp = car && car.splits ? car.splits[k] : NaN, on = car && sp >= 0 && s >= T.cpS[k] && s < T.cpS[k] + 450;
@@ -8449,8 +8365,6 @@ const World = (function () {
     }
 
     pkCrowd7(K);   // (round 7: the spectators react to the car, camera flashes, the groups for the cheer's sound)
-
-    pkSky(K);
 
     pkWeather(K);
 
@@ -19693,7 +19607,7 @@ const World = (function () {
         }
       }
     }
-    for (const t of tk) t.addTo(root, true);
+    tk.forEach((t, k) => t.addTo(root, LOD.tier > 0 || (k !== 3 && k !== 5)));   // (NIZKA: the tree ferns and the bamboo, low under the canopy, cast no shadow)
 
     /* ---- the verges and the cliffs: ferns and shrubs right behind the barrier, the red earth and rocks at the foot of the cuts, crags of dark basalt
        (pink sandstone lower down) where the slope rises steep beside the road and out on the escarpment ---- */
@@ -22138,6 +22052,7 @@ const World = (function () {
     addTo(group, cast) {
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3(), c = new THREE.Color(), bs = this.base.boundingSphere || (this.base.computeBoundingSphere(), this.base.boundingSphere);
       let n = 0;
+      const lo = cast && LOD.tier === 0 && !this.mat.alphaTest && !this.mat.transparent ? shadowLo(this.base) : null;
       for (const L of this.map.values()) {
         const cnt = L.length / 9; let cx = 0, cz = 0, y0 = 1e9, y1 = -1e9, smax = 0;
         for (let k = 0; k < L.length; k += 9) { cx += L[k]; cz += L[k + 2]; y0 = Math.min(y0, L[k + 1]); y1 = Math.max(y1, L[k + 1]); smax = Math.max(smax, L[k + 4], L[k + 5]); }
@@ -22152,6 +22067,11 @@ const World = (function () {
         }
         im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
         group.add(im); cullAdd(im, cx, cz, g.boundingSphere.radius); n += cnt;   // vegetation/rocks: distance-cullable on the lower tiers
+        if (lo) {   // NIZKA: its shadow from the coarser copy (the same instances), in the shadow pass alone
+          const sg = new THREE.BufferGeometry(); sg.setAttribute('position', lo.attributes.position); sg.setIndex(lo.index); sg.boundingSphere = g.boundingSphere;
+          const sm = new THREE.InstancedMesh(sg, shloMat(), cnt); sm.instanceMatrix = im.instanceMatrix; sm.position.copy(im.position); sm.updateMatrix(); sm.matrixAutoUpdate = false;
+          sm.frustumCulled = true; sm.castShadow = true; sm.receiveShadow = false; sm.visible = false; im.castShadow = false; group.add(sm); SHLO.push([sm, im]);
+        }
       }
       return n;
     }
@@ -34403,7 +34323,7 @@ const World = (function () {
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
     if (d.brook) d.brook.uT.value = t % 1000;   // Spa: the Eau Rouge brook flows
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
-    if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
+    if (d.pk) pkUpdate(d.pk, t, car);   // Ouninpohja, Harju: the TV helicopter
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
     if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);
     if (d.pkSum) pkSummitUpdate(d.pkSum, t, car);
@@ -34424,7 +34344,7 @@ const World = (function () {
     if (d.ext) d.ext(t, car, cam);   // a world of its own file (World.ext): its moving things
     if (d.rrMist) rrMist(d.rrMist, t);   // Serra do Rio do Rastro: the mist rises out of the valley
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
-    if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
+    if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust, grill smoke
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {

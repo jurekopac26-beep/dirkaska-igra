@@ -3,7 +3,8 @@
 // passes: shadows and scene) at six places around the lap. The NIZKA tier is the one the weakest phones run, so this is
 // the budget from CLAUDE.md (up to ~300 draw calls and ~900k vertices per track); the higher tiers may exceed it.
 // Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
-// calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
+// calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones; and when a real track (not one
+// marked test: true, kept for testing only) averages more than the budget itself, 300 draw calls or 900k vertices. The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
 // Then the new map of NEW VERSION · TEST 1 (js/newmap.js over Toskana, its still meshes merged by js/nvbake.js): the same budget at
 // twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car (the
@@ -101,6 +102,7 @@ try {
     const why = [];
     if (r.maxCalls > g.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(g.maxCalls * 1.1 + 5)}`);
     if (r.maxKverts > g.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(g.maxKverts * 1.1 + 20)}k`);
+    if ((r.calls > 300 || r.kverts > 900) && !(await page.evaluate((id) => !!(Core.TRACKS.find(d => d.id === id) || {}).test, id))) why.push('over the budget of CLAUDE.md (300 draw calls, 900k vertices on average)');
     T.check(`${id}: within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));

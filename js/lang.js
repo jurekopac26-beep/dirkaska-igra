@@ -74,8 +74,8 @@
     'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.': 'An off-road racing truck on big wheels. Slow on tarmac, but on gravel and grass it has the most grip and the quickest pull; it lands softly after jumps.',
     /* ---- Pikes Peak: corner warnings, medals per class, the legend ghost, the course flyover ---- */
     'tvoja najboljša {0}': 'your best {0}', 'še brez medalje': 'no medal yet', ' · tvoja {0}': ' · yours {0}', ' (nova najboljša)': ' (a new best)', 'Brez medalje v razredu {0}': 'No medal in the {0} class',
-    'nova najboljša v razredu': 'a new best in the class', 'Do brona {0} še {1}': 'Bronze at {0}, {1} to go', 'DESNA LASNICA': 'RIGHT HAIRPIN', 'LEVA LASNICA': 'LEFT HAIRPIN', 'DESNI {0}': 'RIGHT {0}', 'LEVI {0}': 'LEFT {0}',
-    'PRELET PROGE': 'COURSE FLYOVER', 'Tapni ali pritisni tipko za preskok': 'Tap or press a key to skip', 'Moj najboljši': 'My best', 'Brez': 'None', 'Opozorila na ovinke': 'Corner warnings', 'Pikes Peak': 'Pikes Peak',
+    'nova najboljša v razredu': 'a new best in the class', 'Do brona {0} še {1}': 'Bronze at {0}, {1} to go',
+    'PRELET PROGE': 'COURSE FLYOVER', 'Tapni ali pritisni tipko za preskok': 'Tap or press a key to skip', 'Moj najboljši': 'My best', 'Brez': 'None', 'Pikes Peak': 'Pikes Peak',
     /* ---- Pikes Peak on its historic gravel road (the road a choice on its card) ---- */
     'Cesta': 'Road', 'Asfalt': 'Tarmac', 'Makadam': 'Gravel', 'Današnja asfaltna cesta': 'Today\u2019s paved road', 'Zgodovinska makadamska cesta (do 2011)': 'The historic gravel road (until 2011)',
     'Cesta: makadam (zgodovinska, do 2011)': 'Road: gravel (historic, until 2011)',
