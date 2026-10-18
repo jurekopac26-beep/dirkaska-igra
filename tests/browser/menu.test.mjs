@@ -94,7 +94,7 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
-    // the map switch over a route track (Riviera): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
+    // the map switch over a route track (Monte Carlo, the first real circuit): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
     const stageUI = await ev(page, 'const m = root.querySelector(".mapv"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.textContent) : null, text: m ? m.textContent.replace(/\\s+/g, "") : "", pressed: pr ? pr.textContent : "", ribbon: !!root.querySelector("#track-stage .ribbon") };');
     T.check('the track stage: the map switch is only "1" and "2" (no MAP/Flyover words), the flyover (1) is lit by default, no mode ribbon', JSON.stringify(stageUI.btns) === '["1","2"]' && stageUI.text === '12' && stageUI.pressed === '1' && !stageUI.ribbon, JSON.stringify(stageUI));
     await click(page, 'pick-weather');
@@ -133,9 +133,9 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     const name = await ev(page, 'return root.querySelector(".card h1").firstChild.textContent;');
     await click(page, 'race-single');
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, laps: __game.race && __game.race.laps, tt: __game.race && !!__game.race.timeTrial, last: __game.S.lastTrack, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id) }));
-    T.check(`Race! (${name}, the intro off): the race runs on that track, 4 laps, the menu gone, the track remembered`, r.id === 'riviera' && r.laps === 4 && !r.tt && r.last === 'riviera' && r.shown.length === 0, JSON.stringify(r));
+    T.check(`Race! (${name}, the intro off): the race runs on that track, 2 laps, the menu gone, the track remembered`, r.id === 'monaco' && r.laps === 2 && !r.tt && r.last === 'monaco' && r.shown.length === 0, JSON.stringify(r));
     await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(500);
     const t = await ev(page, 'return { scr: Menu.debug().screen, sub: Menu.debug().titleSub, shown: [...document.querySelectorAll(".screen.show")].map(e => e.id), race: !!window.__game.race, tile: !!root.querySelector(".t-single") };');
     T.check('after the race: back on the new title', t.scr === 'title' && !t.sub && t.shown.join() === 's-menu' && !t.race && t.tile, JSON.stringify(t));
@@ -177,11 +177,11 @@ try {
     await click(page, 'race-single');
     await page.waitForFunction(() => { const v = document.getElementById('menu-host').shadowRoot.querySelector('.intro video'); return v && v.currentTime > 1.2 && !v.paused; }, null, { timeout: 90000 }).catch(() => null);
     const iv = await ev(page, 'const v = root.querySelector(".intro video"); return v ? { t: v.currentTime, paused: v.paused, dur: v.duration, head: root.querySelector(".ix-name h2") && root.querySelector(".ix-name h2").firstChild.textContent, race: !!window.__game.race } : null;');
-    T.check('the short intro: the helicopter\'s video plays over the track, the race waits', iv && iv.t > 1.2 && !iv.paused && iv.dur > 20 && iv.head === 'Riviera' && !iv.race, JSON.stringify(iv));
+    T.check('the short intro: the helicopter\'s video plays over the track, the race waits', iv && iv.t > 1.2 && !iv.paused && iv.dur > 20 && iv.head === 'Monte Carlo' && !iv.race, JSON.stringify(iv));
     await page.click('.intro [data-ix="skip"]');
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const a = await ev(page, 'return { intro: !!root.querySelector(".intro"), race: __game.race && __game.race.track.def.id };');
-    T.check('Skip: the intro is gone, the race starts', !a.intro && a.race === 'riviera', JSON.stringify(a));
+    T.check('Skip: the intro is gone, the race starts', !a.intro && a.race === 'monaco', JSON.stringify(a));
     T.check('no page errors in the intro', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -212,19 +212,19 @@ try {
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    T.check('pad, A: the highlighted mode is chosen (the track step, the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Riviera', JSON.stringify(g));
+    T.check('pad, A: the highlighted mode is chosen (the track step, the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Monte Carlo', JSON.stringify(g));
     g = await press(5);
     const next = g.name;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== 'Riviera' && next !== '' && g.name === 'Riviera', JSON.stringify({ next, g }));
+    T.check('pad, RB and LB: the next track and back', next !== 'Monte Carlo' && next !== '' && g.name === 'Monte Carlo', JSON.stringify({ next, g }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'riviera', JSON.stringify(r));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'monaco', JSON.stringify(r));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
