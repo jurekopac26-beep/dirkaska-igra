@@ -74,18 +74,21 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   return { ctx, page, errors };
 }
 
-// start a race on a track through the menus (like a player would); resolves once the race runs on that track
-export function startTrack(page, id) {
-  return page.evaluate(async (id) => {
+// start a race on a track through the menus (like a player would); resolves once the race runs on that track. mode: a way to drive
+// it, tapped on the card's switch (a track with def.modes: 'race', 'tt', 'traffic', 'police'), else the one the settings have
+export function startTrack(page, id, mode) {
+  return page.evaluate(async ([id, mode]) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
     const card = document.querySelector(`[data-track="${id}"]`); if (!card) throw new Error('no track card ' + id);
-    card.click(); await wait(150); g.onAction('start');
+    card.click(); await wait(150);
+    if (mode) { const b = document.querySelector(`[data-track="${id}"] [data-set="mode"] [data-v="${mode}"]`); if (!b) throw new Error('no way ' + mode + ' on ' + id); b.click(); await wait(150); }
+    g.onAction('start');
     for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === id); k++) await wait(100);
     if (!(g.race && g.race.track.def.id === id)) throw new Error('race did not start on ' + id);
     await wait(300);
     return true;
-  }, id);
+  }, [id, mode]);
 }
 
 // the list of tracks shown in the track menu

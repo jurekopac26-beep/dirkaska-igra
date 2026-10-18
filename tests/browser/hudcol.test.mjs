@@ -295,7 +295,7 @@ try {
   await both(page, 'duel', 'DVOBOJ V PROMETU!', ['h-msg'], { radio: null });
   // 5. Pikes Peak (a time trial of its own: the class, the splits, the corner warnings)
   await turn(page, OR.land);
-  await startTrack(page, 'pikes');
+  await startTrack(page, 'pikes', 'tt');
   await toRacing(page);   // (past the flyover)
   await page.evaluate(() => window.__game.sim(6, true));
   await both(page, 'pikes', 'VZPON NA VRH!', ['h-msg'], { radio: null });
