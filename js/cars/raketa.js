@@ -8,14 +8,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   VEHICLE_DEFS.push({
     id: 'raketa', name: 'RAKETA 16V', cat: 'mali', ord: 3, drive: 'FF',
     desc: 'Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih.',
-    phys: { mass: 880, a: 1.12, b: 1.28, kI: 1.05, kw: 140, redline: 7600, idle: 950, gears: [3.3, 2.1, 1.48, 1.12, 0.9], final: 4.12, rw: 0.29, cDrag: 0.38, len: 3.8, wid: 1.63, steerMax: 0.64,
-      spinK: 0.4 },
-    arc: { amax: 1.72, kv: 2.1, rmin: 4 },
-    csp: { bx: 0.15, coast: -0.095, thr: -0.03, liftP: 0, pwr: 0, out: 1, turn: 1.04, w: 1.02 },   // (the FF layer: pivots on the brakes, the throttle pulls it straight; its own turn)
-    stats: { power: 4, grip: 7, weight: 10, drift: 5 },
+    // the driving the LEV S's (js/cars/levs.js: its engine, gears, mass, grip, handling layer and sound), on the RAKETA's own body and wheels:
+    // its smaller wheels (rw 0.29, the LEV S's 0.32) turned by a shorter final drive (4.2 x 0.29 / 0.32), so the same speed at the same revs
+    phys: { mass: 1080, a: 1.12, b: 1.28, kI: 1.12, kw: 250, redline: 7600, idle: 950, gears: [3.4, 2.15, 1.55, 1.2, 0.98, 0.83], final: 3.806, rw: 0.29, cDrag: 0.4, len: 3.8, wid: 1.63, steerMax: 0.64 },
+    arc: { amax: 1.8, kv: 2.1, rmin: 4.1 },
+    csp: { bx: 0.15, coast: -0.099, thr: -0.03, liftP: 0, pwr: 0, out: 1, turn: 1, w: 1.02 },   // (the FF layer: pivots on the brakes, the throttle pulls it straight)
+    stats: { power: 7, grip: 8, weight: 8, drift: 4 },
     price: 14000, pk: 'ta1', field: ['raketa'],
-    snd: { kind: 'i4', hz: 1.1, loud: 1 },
-    expect: { t100: [3.09, 3.63], vmax: [205, 217], latG: [2.19, 2.29], d100: [22.8, 25.2] },
+    snd: { kind: 'i4', hz: 1.15, turbo: 0, loud: 1 },
+    expect: { t100: [3.02, 3.55], vmax: [228, 243], latG: [2.3, 2.4], d100: [22.7, 25.1] },   // (the LEV S's)
     parts: { set: 'car', ht: 1.4, y0: 0.2, over: { trunk: { lx: -0.95, y: 0.94 } } },   // (the hatch's tailgate: at the tail, where the look has it)
     // the look: a loft through the sections below (look units = metres: body.len / wid are the vehicle's), the standard regions split it into
     // the parts (bumpers, bonnet, tailgate with its glass, fenders, quarters, doors with their glass), the details on top (KIT API v1, render.js)

@@ -1069,7 +1069,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
 | **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 € | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
 | **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 € | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
-| **RAKETA 16V** | prednji | 190 KM | 880 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. |
+| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
 | **LEV S** | prednji | 340 KM | 1080 kg | 20.000 € | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 € | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
 
