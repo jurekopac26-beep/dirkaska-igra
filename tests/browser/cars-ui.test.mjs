@@ -55,7 +55,7 @@ const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
 try {
   // 1. the car screen at 844×390 (a phone on its side): the rows over the showroom, left of the panel
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', carV: 3, carId: 'kaze' }, { width: 844, height: 390 }, { init: padInit });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'kaze' }, { width: 844, height: 390 }, { init: padInit });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
     await act('to-car'); await wait(400);
     const L = await page.evaluate(layout);
@@ -311,7 +311,7 @@ try {
   // 9. a destroyed car: VOZILO UNIČENO with Odstopi (the second tap retires), the wheels on the damage picture, the results with Odstop,
   //    no record; Ogled vozila there; the commentator's destruction lines (the game's calls recorded)
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', carV: 3, carId: 'kozorog', damage: 2, track: 'jezero' }, { width: 844, height: 390 });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'kozorog', damage: 2, track: 'jezero' }, { width: 844, height: 390 });
     await page.evaluate(() => { window.__said = []; const o = Comm.say; Comm.say = (k, v, p, q) => { window.__said.push({ k, v: v ? JSON.parse(JSON.stringify(v)) : null, t: window.__game.race ? +window.__game.race.time.toFixed(2) : 0 }); return o(k, v, p, q); }; });
     await startTrack(page, 'jezero');
     const said = () => page.evaluate(() => window.__said.map(s => s.k + (s.v && (s.v.part || s.v.wheel || s.v.a) ? ':' + (s.v.part || s.v.wheel || s.v.a) : '')));

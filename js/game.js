@@ -36,10 +36,9 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  // one-time move to the chase camera, the only one left for the player (upright and on its side; the isometric one was the camera for a phone on its side)
-  try { if (!localStorage.getItem('tdgp-defaults-v4')) { S.camera = 'chase'; localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  // the player's camera is always the chase one; the isometric, kino and cockpit render paths stay only for the tests (and the replay), so an old kino or cockpit setting moves to the chase one
-  if (S.camera !== 'iso' && S.camera !== 'chase') S.camera = 'chase';
+  // the camera is always the chase one, upright and on its side (the isometric camera is gone; kino and cockpit stay only for the tests
+  // and the replay, set in code): an old setting moves to it
+  S.camera = 'chase';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
   // player name: printable, single spaces, max 16 characters; always escaped when rendered
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
@@ -209,7 +208,6 @@
   let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
   let fbT = 0, prevGear = 1, prevAir = 0;
   let tiltWarned = false;
-  let orientBlock = false;
   // adaptive quality (see adaptive()): pending = shadows go off at the next pause or race start; slowAvg = frame time that decided it;
   // check = windows until the effect is measured; restore = no faster without shadows, so they come back; keep = never switch them off again
   const perf = { sum: 0, n: 0, good: 0, slow: 0, pending: false, slowAvg: 0, check: 0, restore: false, keep: false };
@@ -371,33 +369,18 @@
   }
   function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
 
-  /* ---------------- orientation: the chase camera plays either way (iso, set only in the tests: landscape) ---------------- */
-  const wantLandscape = () => S.camera === 'iso';
+  /* ---------------- orientation: free (the chase camera plays upright and on its side) ---------------- */
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
   const APP = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
   const installedApp = () => APP;
-  // turn the screen the camera's way and keep it there (the chase camera: free, the phone turns as it is held). Browsers allow it only
-  // in full screen or in the installed app (Chrome on Android); elsewhere (Safari on the iPhone) the "turn your phone" notice of
-  // updateOrientation() takes over. (window.screen, the device's screen: in this file `screen` is the menu screen on show)
+  // the screen is never locked: the phone turns as it is held. In full screen or in the installed app (Chrome on Android) a lock left over
+  // (an older version of the game locked it to the camera's way) is lifted. (window.screen, the device's screen: in this file `screen` is
+  // the menu screen on show)
   function lockOrientation() {
     const o = window.screen && window.screen.orientation;
-    if (!o || !o.lock || !(isFs() || installedApp())) return;
-    try { if (wantLandscape()) o.lock('landscape').catch(() => { }); else if (o.unlock) o.unlock(); } catch (_) { }
-  }
-  function updateOrientation() {
-    const coarse = matchMedia('(pointer: coarse)').matches;
-    const portrait = window.innerHeight > window.innerWidth;
-    const inRace = bg === 'race' && (screen === 'none' || screen === 'pause');
-    const mismatch = coarse && inRace && portrait && wantLandscape();   // (only the isometric camera upright: the chase camera plays either way)
-    const el = $('rotate');
-    $('rotate-txt').textContent = tr('Obrni telefon v ležeči položaj');
-    // (or keep it as it is: the chase camera (Nastavitve, Kamera); the button switches to it)
-    $('rotate-why').textContent = tr('Kamera »{0}« je za ležeči položaj.', tr('izometrična')) + ' ' + tr('Lahko pa igraš pokončno s kamero za avtom.');
-    $('rotate-cam').textContent = tr('Igraj pokončno');
-    el.classList.toggle('show', mismatch);
-    orientBlock = mismatch;
-    if (mismatch && phase === 'racing' && screen === 'none') pause();
+    if (!o || !o.unlock || !(isFs() || installedApp())) return;
+    try { o.unlock(); } catch (_) { }
   }
 
   /* ---------------- screens ---------------- */
@@ -426,7 +409,7 @@
     // where the menu's own buttons take the tap; the first HUD frame after it puts the banner back)
     if (!inRace) { $('btn-rescue').classList.add('off'); $('h-wreck').classList.remove('show'); wreckKey = ''; }
     if (inRace) requestAnimationFrame(() => Input.layout());
-    updateOrientation(); hudCol(0);
+    hudCol(0);
   }
   function refreshSegs() {
     for (const seg of document.querySelectorAll('.seg')) {
@@ -446,7 +429,7 @@
         $('title-sub').textContent = nm + tr(pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + wx; }
       else if (upRace(d)) { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestRace ? tr(' (najboljša dirka {0})', fmt(r.bestRace, true)) : '') + '.'; $('title-sub').textContent = nm + tr(' · dirka na vrh · {0} nasprotnikov', rivN(d)) + wx; }
       else { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestLap ? tr(' (rekord kroga {0})', fmt(r.bestLap, true)) : '') + '.'; $('title-sub').textContent = nm + ' · ' + lapWord(lapsOf(d)).toLowerCase() + tr(' · {0} nasprotnikov', rivN(d)) + wx + (S.length === 'endurance' ? tr(' · vzdržljivostna') : '') + (S.fuel && d.pit ? tr(' · gorivo') : ''); } }
-    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno ali ležeče)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
+    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr('za avtom (telefon pokončno ali ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = tr('Prvenstvo') + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
@@ -497,7 +480,7 @@
     Render.cam.userZoom = +S.zoom;
     Render.setCrash({ body: +S.xBody, glass: +S.xGlass, paint: +S.xPaint, detail: S.carDet === 'high' ? 'full' : 'lite', parts: +S.xParts, drag: +S.xDrag, dust: +S.xDust });   // (Razbijanje · nov način: off by default; switched during a race the cars are built again)
     Core.setCrash(xPhys(race && race.player && race.cars.some(c => c.net)));   // (the rollover, the knocks, the attack, the handling: never online (a friend's car: net), where both phones must drive the same)
-    Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; samo kameri za avtom in izometrična)
+    Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; kamera za avtom)
     Render.cam.userTilt = [0.1, 0.2, 0.3][+S.camTilt] ?? 0.1;   // (Nagib kamere: kamera za avtom gleda toliko bolj naprej po cesti; razdalja ostane ista)
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
     Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : '') + (v.radio ? tr(' · policijski radio: {0} ({1})', v.radio, v.radioLang) : tr(' · policijski radio: ni glasu za slovenščino, govori angleško')); });
@@ -556,12 +539,11 @@
     if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
     if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track' && !menuOn) buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
-    if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
   // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): only the chase
   // camera is the player's, upright and on its side, so there is nothing to switch to (a camera set in code, the tests': back to it); the
   // camera buttons are hidden
-  const CAMS = ['chase'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom' };
+  const CAMS = ['chase'], CAM_NAME = { chase: 'za avtom' };
   function camPool() { return CAMS; }
   function cycleCam() {
     const pool = camPool(); if (pool.length < 2 && pool[0] === S.camera) return;
@@ -574,7 +556,7 @@
   function relang() {
     Lang.set(S.lang); Lang.apply(document.body);
     if (S.name === 'Igralec' || S.name === 'Player') { S.name = tr('Igralec'); save(); }   // (the default name, in the new language)
-    updateOrientation(); updateFsButtons(); camLabel(); refreshSegs();
+    updateFsButtons(); camLabel(); refreshSegs();
     if (race) { $('pause-restart').textContent = restartTxt(); $('h-rank').firstElementChild.textContent = tr(race.pol ? 'POLICIJA' : 'MESTO'); fltKey = null; }   // (the failures' pills: written again)
     chalBtn(); if (screen === 'chal') chalShow();   // (a challenge waiting: its button and card)
     const B = { car: buildCarScreen, upg: buildUpgScreen, track: buildTrackScreen, board: buildBoardScreen, champ: buildChampScreen, career: buildCareerScreen };
@@ -827,8 +809,8 @@
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
   }
-  const RP_CAM = { tv: 'TV', chase: 'Za avtom', iso: 'Od zgoraj', cockpit: 'Kokpit', kino: 'Kino' }, RP_SPEED = [1, 2, 4, 0.5, 0.25];
-  const RP_RING = ['tv', 'chase', 'iso', 'cockpit'];   // (the camera button: the player's own camera first, then these in turn; kino only as one's own)
+  const RP_CAM = { tv: 'TV', chase: 'Za avtom', cockpit: 'Kokpit', kino: 'Kino' }, RP_SPEED = [1, 2, 4, 0.5, 0.25];
+  const RP_RING = ['tv', 'chase', 'cockpit'];   // (the camera button: the player's own camera first, then these in turn; kino only as one's own)
   function replayUI() {
     const P = replay; if (!P) return;
     $('rp-hl').classList.toggle('on', !!P.hl);
@@ -1388,7 +1370,7 @@
     const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
     try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
     catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return false; }   // (the old one back)
-    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { }
+    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); } catch (_) { }
     stHold = true; location.reload(); return true;
   }
   function ghOwn(id) {   // the player's ghost of this track (the current physics, weather and way to drive) as it is shared
@@ -2232,7 +2214,6 @@
       return { s: q.s, n: q.n, sev: q.sev, dir: q.dir, hp, g: hp ? 1 : q.sev === 3 ? 2 : q.sev === 2 ? (a > 1.2 ? 3 : 4) : a < 0.5 ? 6 : 5 }; });
     pk.nk = -2; pk.nd = ''; pk.non = -1; $('pk-note').className = '';
   }
-  const pkRot = { a: 0 };   // (the pill's arrow: its angle as set, see noteAng)
   function pkNoteFrame(P) {   // every HUD frame: the pill (the DOM touched only when the corner or its 10 m step changes)
     const on = +S.pkNotes ? 1 : 0, el = $('pk-note');
     if (on !== pk.non) { pk.non = on; $('hud').classList.toggle('pkn', !!on); }
@@ -2246,7 +2227,6 @@
       el.className = 's' + c.sev + (c.hp ? ' hp' : '') + ' show';
     }
     if (k < 0) return;
-    noteRot($('pk-note-path').parentNode, pkRot, noteAng(track.idx(L[k].s)));   // (the isometric camera: the arrow along the road into the corner, see noteAng)
     const d = Math.max(0, Math.round((L[k].s - sp) / 10) * 10), t = d ? d + ' m' : '';
     if (t !== pk.nd) { pk.nd = t; el.children[2].textContent = t; }
   }
@@ -3364,23 +3344,6 @@
     ringcw: 'M17.1 33.3 A15 15 0 0 1 31.2 17 M25.7 22.8 L31.2 17 L25.1 11.9 M38.3 18.4 A15 15 0 0 1 45.4 38.8 M43.2 31.1 L45.4 38.8 L52.9 36.1 M40.6 44.3 A15 15 0 0 1 19.4 40.2 M27.2 42.1 L19.4 40.2 L18 48',   // (def.leftHand)
     cr: 'M22 56 V44 Q22 34 32 30 Q42 26 42 16 V12 M33 19 L42 10 L51 19', cl: 'M42 56 V44 Q42 34 32 30 Q22 26 22 16 V12 M13 19 L22 10 L31 19'   // a chicane, first right / first left
   };
-  // The corner arrows (#h-note; Pikes Peak's pill #pk-note) on the isometric camera (phone lying): that view always looks north and the car
-  // goes any way across the screen, so an upright arrow (stem up: the way in) would point the wrong way. The glyph (not its box, not the
-  // words) turns to the road's way into the corner as it lies on the screen: the road's tangent at the corner's start along the camera's own
-  // right and up axes (its matrix, columns 0 and 1: the last frame's, the same in the iso view, which never turns). Clockwise from up, as CSS
-  // rotate; the view is not mirrored, so a right bend stays clockwise. Behind the car (chase: the camera turns with the car) it stays
-  // upright. The DOM is touched only when the angle moves by more than ~2 deg (in the iso view: once per corner)
-  function noteAng(i) {
-    const C = S.camera === 'iso' ? Render.camera : null; if (!C) return 0;
-    const dx = track.tx[i], dz = track.tz[i], e = C.matrixWorld.elements;
-    const r = dx * e[0] + dz * e[2], u = dx * e[4] + dz * e[6];
-    return r * r + u * u > 1e-6 ? Math.atan2(r, u) : 0;
-  }
-  function noteRot(svg, o, a) {
-    if (Math.abs(Core.wrapPi(a - o.a)) < 0.035) return;
-    o.a = a; svg.style.transform = a ? 'rotate(' + (a * 180 / Math.PI).toFixed(1) + 'deg)' : '';
-  }
-  const hnRot = { a: 0 };
   // the sign (Core Track.signAt: the corners, the fast bends, the track's own bends; blue: a roundabout, a chicane, up while the car is in it)
   let lastNote = '', noteForce = null;   // (noteForce: the tests, window.__game.noteAt)
   function updateNote(P) {
@@ -3392,7 +3355,6 @@
       const blue = g.kind === 'ring' || g.kind === 'chic', lr = g.dir > 0 ? 'r' : 'l';
       const pk = g.kind === 'ring' ? (track.def.leftHand ? 'ringcw' : 'ring') : g.kind === 'chic' ? 'c' + lr : lr + (g.hair ? '3' : g.kind === 'fast' || !g.sev ? '0' : '1');
       key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev);
-      noteRot($('h-note-path').parentNode, hnRot, g.kind === 'ring' ? 0 : noteAng(g.i0));   // (iso: arrows and chicanes along the road; a roundabout stays upright)
     }
     if (key === lastNote) { if (key) placeNote(el); return; }
     lastNote = key; noteAt0 = '';
@@ -3769,7 +3731,7 @@
   function hudCol(dt) {
     const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
     if (M.textContent !== hcol.ic) { hcol.ic = M.textContent; M.dataset.ic = msgIcon(hcol.ic); }   // (its icon: when its text changes)
-    const on = bg === 'race' && screen === 'none' && !replay && !orientBlock && !hud.classList.contains('off') && !hud.classList.contains('shot');
+    const on = bg === 'race' && screen === 'none' && !replay && !hud.classList.contains('off') && !hud.classList.contains('shot');
     if (T.classList.contains('col') !== on) T.classList.toggle('col', on);
     if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
     if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
@@ -4832,14 +4794,13 @@
       if (n >= 8) acc = 0;
       demoSwitch -= dt;
       if (!demoTarget || demoSwitch <= 0) { demoTarget = demo.order ? demo.order[(Math.random() * 4) | 0] : demo.cars[0]; demoSwitch = 9; }
-      Render.frame(dt, acc / STEP, demoTarget, 'iso', {});
+      Render.frame(dt, acc / STEP, demoTarget, 'chase', {});
       if (screen === 'settings') updateTiltLive();
       return;
     }
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
-    if (race.nv && nv && nv.built && typeof NVMenu !== 'undefined') NVMenu.tick(race.player, !paused && screen === 'none' && phase === 'racing' && !orientBlock && !replay);   // (NEW VERSION · TEST 1: a garage's menu while the car stands on its coloured floor, js/nvmenu.js)
-    if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
+    if (race.nv && nv && nv.built && typeof NVMenu !== 'undefined') NVMenu.tick(race.player, !paused && screen === 'none' && phase === 'racing' && !replay);   // (NEW VERSION · TEST 1: a garage's menu while the car stands on its coloured floor, js/nvmenu.js)
     if (replay) { replayFrame(hlRec ? hlvDt(dtRaw) : dt); return; }   // (the best moment being recorded: on the real clock, as the video's, also when the frames are slow)
     const inp = Input.update(dt);
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
@@ -5002,7 +4963,6 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
-      case 'rot-cam': { const wasP = screen === 'pause'; setOption('camera', 'chase'); Render.resetCam(); camLabel(); if (wasP && race && !orientBlock) resume(); break; }   // (the phone held upright with the isometric camera: the chase camera, which plays either way; "Igraj pokončno": on with the race)
       case 'over-again': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else newRace(); break;   // (KONEC IGRE: the same race again, a championship's round too)
       case 'over-res': finishRace(); break;
       case 'restart': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)
@@ -5184,10 +5144,9 @@
     window.addEventListener('pointerup', unlock, { passive: true });
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); fitSegs();
-      updateOrientation();
       if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();
@@ -5245,7 +5204,7 @@
         sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); if (auto && (phase === 'intro' || phase === 'lights')) inp.thr = inp.gas = 0; stepRace(STEP, inp); } },   // (the autopilot: off the gas on the grid, on it as the lights go out)
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v), svg = $('h-note-path').parentNode;   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)
-          return { key: lastNote, cls: $('h-note').className, d: $('h-note-path').getAttribute('d'), rot: svg.style.transform, ang: g && g.kind !== 'ring' ? noteAng(g.i0) : 0, kind: g ? g.kind : null }; },
+          return { key: lastNote, cls: $('h-note').className, d: $('h-note-path').getAttribute('d'), rot: svg.style.transform, kind: g ? g.kind : null }; },
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);

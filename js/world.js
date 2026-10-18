@@ -4590,8 +4590,7 @@ const World = (function () {
   /* ---- the braking boards of a circuit (Track.brakeBoards: 300, 200 and 100 m before its heavy braking zones; Monaco's own 150, 100, 50):
      all of them in one mesh (one draw call, no shadow) on one small atlas drawn once (BB_ATL: kept from build to build, uploaded again after
      a track change frees it). An A-frame of two plates, each 30 deg off the upright (as Pikes Peak's turn boards lean back), the number
-     large on both: the chase camera sees the face to the cars coming nearly square on, the iso camera one face or the other beside the
-     roads that run up or down the screen, both at an angle beside those across it. Two legs from under the ground (the world's groundH,
+     large on both: the chase camera sees the face to the cars coming nearly square on. Two legs from under the ground (the world's groundH,
      never above the road there) up to its ridge, over a barrier (kind 1) longer ones in the barrier's line. The period circuits' (and
      Monaco's) boards white with black numbers, the others' blue with white; nothing but the number on them. A knockable post or tyre
      stack in a board's way goes. ---- */
@@ -4755,10 +4754,10 @@ const World = (function () {
     pk.ax += (ax + cvx / 2.5 - pk.ax) * e(2.5); pk.az += (az + cvz / 2.5 - pk.az) * e(2.5); pk.ay += (ay - pk.ay) * e(1.5);
     { const k = e(2.5); pk.fx += (Math.cos(ah) - pk.fx) * k; pk.fz += (Math.sin(ah) - pk.fz) * k; const l = Math.hypot(pk.fx, pk.fz) || 1; pk.fx /= l; pk.fz /= l; }
     const H = 26 + 3 * Math.sin(t * 0.21), fx = pk.fx, fz = pk.fz;
-    // where it may fly: a rough model of the three cameras (chase in portrait and landscape, iso, kino: see Render's updateCamera) projects a candidate spot;
+    // where it may fly: a rough model of the cameras (chase in portrait and landscape, kino: see Render's updateCamera) projects a candidate spot;
     // off screen, or clear of the car and the road just ahead on screen, in every view; a bit ahead of the car is nicer, and it does not jump around
     const sp1 = Math.max(spd, 1e-3), la = sstep(1.5, 16, spd), lvx = cvx / sp1 * la, lvz = cvz / sp1 * la, zc = 1.2 * (1 + 0.25 * clamp(spd / 55, 0, 1)), zi = 1.2 * (1 + 0.1 * clamp(spd / 60, 0, 1));
-    const views = [[fx * 13, fz * 13, -fx, -fz, 46 * zc, 0.98, 58, 0.46], [fx * 8.5, fz * 8.5, -fx, -fz, 30 * zc, 0.9, 46, 2.2], [clamp(lvx * 19, -24, 24), clamp(lvz * 19, -12.6, 18.6), 0, 1, 57 * zi, 0.82, 30, 2.2], [lvx * 11, lvz * 11, 0, 1, 38 * zi, 0.74, 30, 2.2]];
+    const views = [[fx * 13, fz * 13, -fx, -fz, 46 * zc, 0.98, 58, 0.46], [fx * 8.5, fz * 8.5, -fx, -fz, 30 * zc, 0.9, 46, 2.2], [lvx * 11, lvz * 11, 0, 1, 38 * zi, 0.74, 30, 2.2]];
     const cams = views.map(([ox, oz, bx, bz, D, pt, fov, as]) => { const tx = ax + ox, tz = az + oz, c = [tx + bx * D * Math.cos(pt), ay + D * Math.sin(pt), tz + bz * D * Math.cos(pt)];
       const f = [tx - c[0], ay - c[1], tz - c[2]], fl = Math.hypot(f[0], f[1], f[2]); f[0] /= fl; f[1] /= fl; f[2] /= fl; const rl = Math.hypot(f[0], f[2]), r = [-f[2] / rl, 0, f[0] / rl];
       return { c, f, r, u: [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]], k: 1 / Math.tan(fov / 2 * Math.PI / 180), as }; });
@@ -26282,7 +26281,7 @@ const World = (function () {
       if (sa < 0 && sb > 0 && def.wing) {
         // the voestalpine wing (2014): a 90 m racing car rear wing on top of Start-Ziel, the stand's roof there: two end plates (dividing the
         // stand), the main plane over the back rows on slim columns, the flap above it, the media centre's glass front under it behind the
-        // stand. All of it stays under the line from the high cameras (kino, iso: behind the stand, looking across it) to a car on the
+        // stand. All of it stays under the line from the high cameras (kino: behind the stand, looking across it) to a car on the
         // near edge of the road (height < 0.88 x offset - 4.4 m); its own mesh, faded out while such a camera is inside it (out.dyn.fade)
         const [wd, wsd] = def.wing, S0 = wd - 45, S1 = wd + 45, nav = [0.11, 0.15, 0.3], red = [0.86, 0.12, 0.16];
         const stl = [0.8, 0.83, 0.87], stl2 = [0.72, 0.75, 0.8], stlD = [0.56, 0.59, 0.64], und = [0.3, 0.33, 0.38], gls = [0.28, 0.4, 0.52], band = [0.9, 0.9, 0.9], flp = [0.1, 0.34, 0.66];
@@ -34442,7 +34441,7 @@ const World = (function () {
   function update(out, t, car, cam) {
     if (!out) return;
     const d = out.dyn;
-    if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino / iso views over Start-Ziel)
+    if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino view over Start-Ziel)
       const f = d.fade, p = cam.position, P = f.poly; let inside = p.y < f.yTop, sg = 0;
       for (let k = 0; k < 4 && inside; k++) {   // (inside the footprint: on the same side of all four edges)
         const a = P[k], b = P[(k + 1) % 4], c = Math.sign((b[0] - a[0]) * (p.z - a[1]) - (b[1] - a[1]) * (p.x - a[0]));

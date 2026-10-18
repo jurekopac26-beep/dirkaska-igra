@@ -23,7 +23,7 @@ const init = () => {
     requestAnimationFrame(check); });
 };
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'rbring' }, { width: 844, height: 390 }, { init });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring' }, { width: 844, height: 390 }, { init });
   const st = () => page.evaluate(() => { const f = document.querySelector('.pad-focus'); return { screen: window.__game.screen, focus: f ? (f.dataset.track || f.dataset.act || f.dataset.v || f.textContent.trim()) : '' }; });
   const press = async (i) => { const ok = await page.evaluate((i) => window.__press(i), i); const s = await st(); s.seen = ok; return s; };
 
@@ -71,7 +71,7 @@ try {
 }
 // (its own page and race, started without the pad: it runs whatever happened above)
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'rbring' }, { width: 844, height: 390 }, { init });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring' }, { width: 844, height: 390 }, { init });
   await startTrack(page, 'rbring');
   await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 20 && g.phase !== 'racing'; k++) g.sim(2, true); g.sim(2, true); });   // (past the intro and the lights, on the autopilot)
 

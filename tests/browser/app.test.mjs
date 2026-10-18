@@ -2,9 +2,8 @@
 // - manifest.webmanifest: name, start address, full screen, icons of the stated size (the files exist)
 // - "Namesti igro" shows only when the browser offers to install the game, and asks for it; an offer during full screen
 //   does not take the full-screen buttons away
-// - the chase camera is the player's only camera, upright and on its side: in full screen and in the installed app the screen is
-//   free (never locked), no camera row or buttons, no notice to turn the phone; an old isometric setting moves to it once; the
-//   isometric camera set in code (the tests'): a phone held upright shows the notice, its button plays on with the chase camera
+// - the chase camera is the only camera, upright and on its side: in full screen and in the installed app the screen is free
+//   (never locked), no camera row or buttons; an old isometric setting moves to it
 // - offline, on a copy of the game in a folder as on GitHub Pages: once opened, the game starts without internet; a new
 //   version is used at once and saved complete; a save that breaks off leaves the previous version complete (never a mix);
 //   a server error or a network that does not answer brings the saved game (within seconds); a game left open loads a
@@ -97,42 +96,25 @@ try {
     await ctx.close();
   }
 
-  // 4b. a phone held upright in a race while the camera chosen is a landscape one (iso): the notice to turn the phone says why, and its
-  //     button plays on upright instead (the camera behind the car, kept as the setting)
-  {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
-    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
-    await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
-    await startTrack(page, 'jezero'); await wait(800);
-    const st = () => page.evaluate(() => ({ show: document.getElementById('rotate').classList.contains('show'), txt: document.getElementById('rotate-txt').textContent, why: document.getElementById('rotate-why').textContent, btn: document.getElementById('rotate-cam').textContent, cam: window.__game.S.camera }));
-    const before = await st(); await page.tap('#rotate-cam'); await wait(500); const after = await st();
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings')).camera);
-    T.check('a phone held upright in a race, the camera a landscape one: the notice says why, its button plays on upright (the camera behind the car, kept)',
-      before.show && /ležeči/.test(before.txt) && /izometrična/.test(before.why) && before.btn === 'Igraj pokončno' && !after.show && after.cam === 'chase' && saved === 'chase', JSON.stringify({ before, after, saved }));
-    T.check('no page errors (a phone held upright)', !errors.length, errors.slice(0, 5).join(' | '));
-    await ctx.close();
-  }
-
-  // 4c. the chase camera, always: an old isometric setting (from before tdgp-defaults-v4) moves to it once; in a race on its side and
-  //     upright no notice to turn the phone, no camera button (HUD, pause), C changes nothing
+  // 4b. the chase camera, always: an old isometric setting moves to it; in a race on its side and upright no camera button (HUD, pause),
+  //     C changes nothing
   {
     const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'chase' }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
-    const moved = await page.evaluate(() => ({ cam: window.__game.S.camera, saved: JSON.parse(localStorage.getItem('tdgp-settings')).camera, v4: localStorage.getItem('tdgp-defaults-v4') }));
+    const moved = await page.evaluate(() => ({ cam: window.__game.S.camera }));
     await startTrack(page, 'jezero'); await wait(800);
     const vis = (id) => { const b = document.getElementById(id); return !!b && !b.classList.contains('off') && getComputedStyle(b).display !== 'none'; };
-    const st = () => page.evaluate((vis) => { const v = eval(vis); return { show: document.getElementById('rotate').classList.contains('show'), cam: window.__game.S.camera, btn: v('btn-cam') }; }, vis.toString());
+    const st = () => page.evaluate((vis) => { const v = eval(vis); return { cam: window.__game.S.camera, btn: v('btn-cam') }; }, vis.toString());
     const side = await st();
     await page.keyboard.press('KeyC'); await wait(300); const sideC = await st();
     await page.setViewportSize({ width: 390, height: 844 }); await wait(500); const up = await st();
     await page.evaluate(() => window.__game.pause()); await wait(200);
     const pauseCam = await page.evaluate((vis) => eval(vis)('pause-cam'), vis.toString());
-    T.check('an old isometric setting: moved to the chase camera once (kept)', moved.cam === 'chase' && moved.saved === 'chase' && moved.v4 === '1', JSON.stringify(moved));
-    T.check('the chase camera on its side and upright: no notice to turn the phone, no camera button, C changes nothing, none in the pause',
-      !side.show && side.cam === 'chase' && !side.btn && sideC.cam === 'chase' && !up.show && up.cam === 'chase' && !up.btn && !pauseCam, JSON.stringify({ side, sideC, up, pauseCam }));
+    T.check('an old isometric setting: the chase camera', moved.cam === 'chase', JSON.stringify(moved));
+    T.check('the chase camera on its side and upright: no camera button, C changes nothing, none in the pause',
+      side.cam === 'chase' && !side.btn && sideC.cam === 'chase' && up.cam === 'chase' && !up.btn && !pauseCam, JSON.stringify({ side, sideC, up, pauseCam }));
     T.check('no page errors (the chase camera always)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }

@@ -10,7 +10,7 @@ const T = checker('Medvode: the knockable roadside things');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'iso', weather: 'dry', mode: 'tt' }, { width: 844, height: 390 }, { seed: 12345 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', weather: 'dry', mode: 'tt' }, { width: 844, height: 390 }, { seed: 12345 });
   await startTrack(page, 'medvode');
   const r = await page.evaluate(() => {
     const W = Render.world, g = window.__game, race = g.race, Tr = race.track, def = Tr.def, Q = {};

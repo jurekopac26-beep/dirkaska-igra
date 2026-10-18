@@ -6,7 +6,7 @@
 //     lane or an island by it, round the big ring's island, in a bend's corner (counted)
 //   - the fence never lies on the asphalt, a sidewalk, an oncoming lane or a small ring's road
 //   - no house that was built stands inside the free ground; the houses cut by the fence are counted
-//   - what it costs: its vertices and meshes, the draw calls and vertices it adds to a frame (844x390, phone budget) and that it is seen from the iso and the chase camera
+//   - what it costs: its vertices and meshes, the draw calls and vertices it adds to a frame (844x390, phone budget) and that it is seen from the chase camera on its side and upright
 //     (the pixels that change when it is hidden)
 //   node tests/browser/medvode-fence.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -88,7 +88,7 @@ try {
   T.check('houses: none that was built stands inside the free ground (by more than 30 cm); the ones the fence cuts into are left out', R.inside === 0 && R.left < 40,
     `${R.nB} buildings built, ${R.left} left out for the fence, ${R.inside} inside the free ground${R.where.length ? ': ' + R.where.join('; ') : ''}`);
 
-  // 3. what it costs and that it is seen: six places along the road, the phone's view (844x390, chase), the fence shown and hidden; then the iso and chase views, the pixels that change
+  // 3. what it costs and that it is seen: six places along the road, the phone's view (844x390, chase), the fence shown and hidden; then the chase views (landscape, portrait), the pixels that change
   const costs = [], seen = [];
   for (const d of [150, 800, 2750, 4066, 4440, 5600]) {
     await page.setViewportSize({ width: 844, height: 390 });
@@ -102,7 +102,7 @@ try {
       return { d: Math.round(P.q.s - Tr.startS), with: m.with, without: m.without };
     }, d);
     costs.push(c);
-    for (const [cam, vp] of [['iso', { width: 800, height: 450 }], ['chase', { width: 400, height: 800 }]]) {
+    for (const [cam, vp] of [['chase', { width: 800, height: 450 }], ['chase', { width: 400, height: 800 }]]) {
       await page.setViewportSize(vp); await page.waitForTimeout(200);
       const px = await page.evaluate((cam) => {
         const g = window.__game, P = g.race.player, W = Render.world, fm = []; W.root.traverse(o => { if (o.name === 'mvFence') fm.push(o); });
@@ -123,7 +123,7 @@ try {
   T.check('per frame (the phone budget): the fence adds a few draw calls and under 50k vertices to the busiest places', maxC <= 8 && maxV < 50000,
     costs.map(c => `d${c.d}: +${c.with[0] - c.without[0]} calls, +${((c.with[1] - c.without[1]) / 1000).toFixed(0)}k of ${(c.with[1] / 1000).toFixed(0)}k vertices`).join('; '));
   const minSeen = Math.min(...seen.map(s => s.diff));
-  T.check('seen: from the iso camera (landscape) and the chase camera (portrait) at all six places the fence changes at least 150 pixels of the picture', minSeen >= 150,
+  T.check('seen: from the chase camera on its side and upright at all six places the fence changes at least 150 pixels of the picture', minSeen >= 150,
     seen.map(s => `d${s.d} ${s.cam} ${s.diff} px (${(100 * s.frac).toFixed(2)} %, noise ${s.noise})`).join('; '));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

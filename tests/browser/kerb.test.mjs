@@ -5,8 +5,8 @@
 //    Math.random), and the other tracks' kerbs untouched (still a single opaque 3-colour mesh without alpha; their fingerprints are in browser/world.test.mjs);
 //  - the gravel shoulder (a second transparent mesh) is drawn first and never written to the depth buffer, so the kerb's cream and red are never overpainted
 //    by it, whatever the depth precision (the post target of the default quality 'high' has a 16-bit depth buffer: a polygon offset on the shoulder used to
-//    pull it over the kerb 50 m and more from the camera): checked in the pictures themselves, the same frame with the shoulder hidden and shown, in both
-//    cameras that count (iso 640 x 360, chase 360 x 640 with the tilt 30 %); and it is not built where it would lie under the kerb (vertices).
+//    pull it over the kerb 50 m and more from the camera): checked in the pictures themselves, the same frame with the shoulder hidden and shown, in the
+//    chase camera (360 x 640 with the tilt 30 %; before the fix 35 grey levels of 255 off on average, nine tenths of the pixels); and it is not built where it would lie under the kerb (vertices).
 //  - where no kerb covers it, the shoulder's dirt reaches onto the asphalt softly and unevenly (alpha 0 at 6-36 cm inside the road's edge, solid
 //    from the edge on, 4 mm above the asphalt so that it shows at any depth precision), one more quad across (+~10 thousand vertices);
 //  - the white edge line (where there is no kerb) is worn and a little wavy: the same one quad per 2 m step and side as before (no new vertex, no new
@@ -100,10 +100,10 @@ const CREAM = ([d, lat, mode, maxSide]) => {
   return { d, steps, px: n, mean: n ? sum / n : 0, big: n ? big / n : 0 };
 };
 try {
-  // iso, 640 x 360, Blizu (zoom 1.1), the default quality 'high'
-  const iso = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'iso', zoom: 1.1, weather: 'dry', tod: 'day', season: 'summer' }, { width: 640, height: 360 }, { seed: 4242 });
-  await startTrack(iso.page, 'toskana');
-  const a = await iso.page.evaluate(MEASURE);
+  // 640 x 360, Blizu (zoom 1.1), the default quality 'high': the geometry
+  const land = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.1, weather: 'dry', tod: 'day', season: 'summer' }, { width: 640, height: 360 }, { seed: 4242 });
+  await startTrack(land.page, 'toskana');
+  const a = await land.page.evaluate(MEASURE);
   T.check('one kerb mesh (one draw call), named kerb', a.kerbMeshes === 1 && a.named, `${a.kerbMeshes} kerb mesh(es)`);
   T.check('the kerb has vertex alpha (the soft fade) and a transparent material', a.itemSize === 4 && a.transparent === true, `itemSize ${a.itemSize}, transparent ${a.transparent}`);
   T.check('the kerb itself stays small: 2 quads across, a metre apart (15 thousand vertices)', a.verts1 > 0 && a.verts1 < 16000, `${a.verts1} vertices`);
@@ -125,13 +125,8 @@ try {
   T.check('the line costs no new vertex: one quad (6 vertices) per 2 m step and side, as before (4926)', !!a.el && a.el.verts === 4926, `${a.el && a.el.verts} vertices`);
   T.check('its paint tile: 64 x 1024, clear at the quad\'s long edges (no outline), closing on itself along (no seam: the last row and the first differ no more than neighbouring rows do, the speckle aside), worn (on average a part of the quad painted, never empty)',
     !!a.el && a.el.tw === 64 && a.el.th === 1024 && a.el.edgeA === 0 && a.el.wrap <= 80 && a.el.mean > 0.15 && a.el.mean < 0.5, a.el && `edge alpha ${a.el.edgeA}, wrap ${a.el.wrap}, mean cover ${a.el.mean.toFixed(3)}`);
-  // the pictures: the cream band the same with and without the shoulder (before the fix 35 grey levels of 255 off on average, nine tenths of the pixels)
-  for (const [d, lat] of [[1097, null], [316, null], [425, 5.2]]) {
-    const c = await iso.page.evaluate(CREAM, [d, lat, 'iso', 960]);
-    T.check(`iso, ${d} m: the kerb's cream band is not overpainted by the shoulder`, c.px > 300 && c.mean < 1.5 && c.big < 0.03, `${c.steps} steps, ${c.px} pixels, mean difference ${c.mean.toFixed(2)}, ${(c.big * 100).toFixed(1)} % of them differ by more than 12`);
-  }
-  T.check('no page errors (iso)', !iso.errors.length, iso.errors.slice(0, 5).join(' | '));
-  await iso.ctx.close();
+  T.check('no page errors (640 x 360)', !land.errors.length, land.errors.slice(0, 5).join(' | '));
+  await land.ctx.close();
 
   // chase, 360 x 640, Blizu, the tilt 30 % (the setting camTilt 2): the kerbs 30-100 m ahead, where the depth buffer is coarsest
   const ch = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.1, camTilt: 2, weather: 'dry', tod: 'day', season: 'summer' }, { width: 360, height: 640 }, { seed: 4242 });

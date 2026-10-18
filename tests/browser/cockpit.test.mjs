@@ -13,7 +13,7 @@ const T = checker('cockpit camera and photo mode');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'jezero', car: 0 }, { width: 844, height: 390 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', car: 0 }, { width: 844, height: 390 });
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   // step the race (paused, on autopilot), two frames drawn, paused again
   const step = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); g.sim(t, true); g.resume();
@@ -85,7 +85,7 @@ try {
   T.check('Shrani sliko: a PNG file, sharper than the screen (1920 pixels across), black and white', !!shot && shot.w === 1920 && shot.h >= 800 && shot.bytes > 50000 && shot.filter === 'črno-belo' && /^dirka-rbring-\d{8}-\d{6}\.png$/.test(fname) && fname === shot.name,
     JSON.stringify({ shot, fname }));
   const gray = await page.evaluate(() => new Promise(res => {   // (the saved picture's own pixels: grey)
-    const cv = Render.snapshot(window.__game.race.player, 'iso', 400), d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let colour = 0; for (let i = 0; i < d.length; i += 4 * 97) colour += Math.abs(d[i] - d[i + 1]) + Math.abs(d[i + 1] - d[i + 2]);
+    const cv = Render.snapshot(window.__game.race.player, 'chase', 400), d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let colour = 0; for (let i = 0; i < d.length; i += 4 * 97) colour += Math.abs(d[i] - d[i + 1]) + Math.abs(d[i + 1] - d[i + 2]);
     res({ w: cv.width, colour: colour > 0 }); }));
   T.check('a still drawn on its own (Render.snapshot) has its colours (the filter goes on the saved one only)', gray.colour && gray.w >= 844, JSON.stringify(gray));
   await act('ph-hide'); await frames(1);

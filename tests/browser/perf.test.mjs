@@ -35,7 +35,7 @@ async function newMap() {
     const places = [{ x: H3.home.x, z: H3.home.z, h: H3.home.h }, { x: a0.x, z: a0.z, h: 0 }, st('school'), st('circuit'), st('home'), st('police'), st('multi'),
       { x: 40, z: 20, h: 0 }, { x: 20, z: 120, h: -1.6 }, { x: -205, z: -105, h: 0 }, { x: -272, z: -216, h: 0 }, { x: 300, z: -250, h: 1.6 }];
     const s = [];
-    for (const cam of ['chase', 'iso']) for (const p of places) {
+    for (const cam of ['chase']) for (const p of places) {
       P.place(p.x, p.z, p.h); P.vx = P.vz = 0; g.sim(0.2, true);
       Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, cam, {});
       const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, cam, {}); s.push([__gl.calls - c0, __gl.verts - v0]);

@@ -1,7 +1,7 @@
 // The replay after a race (Jezero Ring, the player on autopilot): the results screen's "Posnetek" plays the race back (the HUD and the
 // on-screen controls hidden, the replay's own controls shown); the cars where the recording has them; the camera the player drove with
-// (the isometric one over the car); pause, speed, the camera button (the player's own first, then TV: on a post away from the car, behind
-// the car, the cockpit, the own one again), the car followed; "Končaj" back to the results. "Najboljši trenutki" (the results, or the
+// (behind the car, the phone on its side); pause, speed, the camera button (the player's own first, then TV: on a post away from the car,
+// the cockpit, the own one again), the car followed; "Končaj" back to the results. "Najboljši trenutki" (the results, or the
 // replay's Trenutki): the start, the best moments of the race and the finish in the order they happened, each on the player's camera with
 // the car of the moment followed and a caption (the camera button: TV for the rest of them); then back to the results. A race driven with
 // the camera behind the car, the phone upright: its replay behind the car, the camera behind the next car (▶), at the start at once (⏮),
@@ -24,23 +24,23 @@ try {
     return { page, errors, act: (a) => page.evaluate((a) => window.__game.onAction(a), a),
       frames: (n) => page.evaluate((n) => new Promise(res => { const f0 = window.__rf, chk = () => window.__rf - f0 >= n ? res(window.__rf - f0) : setTimeout(chk, 20); chk(); }), n),
       // the replay as it is drawn now; the camera against the followed car: along its heading (behind: below 0), across it, above it, how
-      // far (on the ground), its offset east and south (+x, +z: the isometric camera looks north)
+      // far (on the ground), its offset east and south (+x, +z)
       st: () => page.evaluate(() => { const g = window.__game, cam = Render.camera, P = g.replay, c = P ? g.race.cars[P.k] : g.race.player, el = (id) => document.getElementById(id);
         const info = el('rp-info').textContent, m = /(\d+):(\d+\.\d+)$/.exec(info), dx = cam.position.x - c.x, dz = cam.position.z - c.z, r1 = (v) => +v.toFixed(1);
         return { screen: g.screen, ui: !el('replay-ui').classList.contains('off'), hud: !el('hud').classList.contains('off'), touch: !el('touch').classList.contains('off'), info, t: m ? +m[1] * 60 + +m[2] : NaN,
           cam: el('rp-cam').textContent, mode: P ? P.cam : null, k: P ? P.k : -1, speed: el('rp-speed').textContent, play: el('rp-play').textContent, fov: cam.fov,
           along: r1(dx * Math.cos(c.h) + dz * Math.sin(c.h)), side: r1(-dx * Math.sin(c.h) + dz * Math.cos(c.h)), up: r1(cam.position.y - (c.y || 0)), camD: r1(Math.hypot(dx, dz)), dx: r1(dx), dz: r1(dz) }; }) };
   };
-  const isoView = (v) => v.mode === 'iso' && v.cam === 'Od zgoraj' && v.fov === 30 && v.up > 35 && Math.abs(v.dx) < 25 && v.dz > 25 && v.dz < 80;   // (high over the car, north up)
+  const landView = (v) => v.mode === 'chase' && v.cam === 'Za avtom' && v.fov === 46 && v.up > 15 && v.along < -5 && Math.abs(v.side) < -0.5 * v.along;   // (the phone on its side: behind the car, a little lower and closer)
   const chaseView = (v) => v.mode === 'chase' && v.cam === 'Za avtom' && v.fov === 58 && v.up > 30 && v.along < -8 && Math.abs(v.side) < -0.35 * v.along;   // (the phone upright: high behind the car; in a bend a little to its side)
   const tvView = (v) => v.mode === 'tv' && v.cam === 'TV' && v.camD > 12 && v.up < 20;   // (on a post beside the track, 9 m up)
 
-  const { page, errors, act, frames, st } = await open('iso', { width: 844, height: 390 });
+  const { page, errors, act, frames, st } = await open('chase', { width: 844, height: 390 });
   const btn = await page.evaluate(() => !document.getElementById('res-replay').classList.contains('off'));
   await act('replay'); await frames(6);
   const a = await st();
   T.check('"Posnetek": the replay plays (its controls, no HUD, no touch controls), from the start, the player\'s car followed', btn && a.screen === 'none' && a.ui && !a.hud && !a.touch && a.t > 0.05 && a.t < 4 && /^Ti · /.test(a.info), JSON.stringify(a));
-  T.check('the camera the player drove with: the isometric one, over the car', isoView(a), JSON.stringify(a));
+  T.check('the camera the player drove with: behind the car', landView(a), JSON.stringify(a));
   // the cars where the recording has them
   const pose = await page.evaluate(() => { const P = window.__game.race.player; return { x: P.x, z: P.z }; });
   T.check('the player\'s car posed from the recording (on the track, near the start)', Number.isFinite(pose.x) && Number.isFinite(pose.z), JSON.stringify(pose));
@@ -58,11 +58,10 @@ try {
   T.check('the camera button: TV next (on a post away from the car)', tvView(c1), JSON.stringify(c1));
   await act('rp-cam'); await frames(1); const c2 = await st();
   await act('rp-cam'); await frames(1); const c3 = await st();
-  await act('rp-cam'); await frames(1); const c4 = await st();
-  T.check('then behind the car → the cockpit → from above again (the player\'s own)', c2.cam === 'Za avtom' && c2.mode === 'chase' && c3.cam === 'Kokpit' && c3.mode === 'cockpit' && isoView(c4),
-    [c1.cam, c2.cam, c3.cam, c4.cam].join(' → ') + ' ' + JSON.stringify(c4));
+  T.check('then the cockpit → behind the car again (the player\'s own)', c2.cam === 'Kokpit' && c2.mode === 'cockpit' && landView(c3),
+    [c1.cam, c2.cam, c3.cam].join(' → ') + ' ' + JSON.stringify(c3));
   await act('rp-next'); await frames(2); const n1 = await st();
-  T.check('another car followed, the isometric camera over it', !/^Ti · /.test(n1.info) && /·/.test(n1.info) && n1.k !== a.k && isoView(n1), JSON.stringify(n1));
+  T.check('another car followed, the camera behind it', !/^Ti · /.test(n1.info) && /·/.test(n1.info) && n1.k !== a.k && landView(n1), JSON.stringify(n1));
   // the end: back to the results
   await act('rp-exit'); await page.waitForTimeout(300); const e = await st();
   T.check('"Končaj": back to the results', e.screen === 'results' && !e.ui, JSON.stringify(e));

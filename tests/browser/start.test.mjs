@@ -1,7 +1,7 @@
 // The start's reaction on the HUD (Core LAUNCH, js/game.js reactHUD): once the player sets off, under the map, as wide as it, for a few
 // seconds: REAKCIJA and the seconds from the lights going out to the throttle (green up to 0,25 s, gold up to 0,45 s, red later); the gas
 // held through the lights: PREZGODAJ NA PLINU, 0,60 s in red; in English REACTION 0.12 s; its left edge (4 px) in the same colour, the
-// column's see-through background. Lying (640 x 360, the isometric camera) and upright (360 x 640, the chase camera): one of the column
+// column's see-through background. Lying (640 x 360) and upright (360 x 640), the chase camera: one of the column
 // under the map (hudCol): right under it (upright under the damage picture and the timing tower), above the big message (START!), inside the
 // screen, over none of the other HUD items or the controls; lying, the timing tower (the column's last) stays under it (fewer rows where the
 // room runs out: hudCol), never hidden for it; upright the tower over it, all its rows back once it is gone.
@@ -58,7 +58,7 @@ function placed(o) {   // under the map, as wide as it, on the screen, over noth
   return bad;
 }
 try {
-  for (const [w, h, cam, way] of [[640, 360, 'iso', 'lying (640 x 360, iso)'], [360, 640, 'chase', 'upright (360 x 640, chase)']]) {
+  for (const [w, h, cam, way] of [[640, 360, 'chase', 'lying (640 x 360, chase)'], [360, 640, 'chase', 'upright (360 x 640, chase)']]) {
     const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: cam, track: 'jezero', autoGas: 0, camTilt: 2 }, { width: w, height: h });
     await startTrack(page, 'jezero');
     const a = await page.evaluate(START, { press: 0.12, after: true }), pa = placed(a);

@@ -1,9 +1,8 @@
-// The corner sign (#h-note) on the HUD: (a) where it sits, on a phone lying (the isometric camera) and upright (behind the car), in nine
+// The corner sign (#h-note) on the HUD: (a) where it sits, on a phone lying and upright (both behind the car), in nine
 // HUD states (a race, with the team radio, with the wreck panel, a duel, the police, the police's checkpoint, a time trial, Pikes Peak
 // with its pill off, the driving school): high in the top row, over nothing (also the column under the map: the pit stop's bar, the start's
 // reaction, the big message, the splits, the toast; the pause, camera, tyre and rescue buttons; the controls); (b) in a race: Medvode's
-// roundabout and Harju's and Monaco's chicanes blue with their own glyphs (a roundabout upright; a chicane, like an arrow, along the road
-// on the isometric camera), a red arrow before a slow corner; with the column under the map full (laid out by game.js hudCol: the
+// roundabout and Harju's and Monaco's chicanes blue with their own glyphs (all upright: the camera behind the car turns with it), a red arrow before a slow corner; with the column under the map full (laid out by game.js hudCol: the
 // reaction, START!, the team radio, the toast) the sign over none of it, nor over the buttons and the controls; on Pikes Peak in a time
 // trial the pill (#pk-note) instead, where it was.
 //   node tests/browser/notes.test.mjs
@@ -16,11 +15,11 @@ const P_RING = 'M46.9 33.3 A15 15 0 0 0 32.8 17 M38.3 22.8 L32.8 17 L38.9 11.9 M
 const P_CR = 'M22 56 V44 Q22 34 32 30 Q42 26 42 16 V12 M33 19 L42 10 L51 19', P_CL = 'M42 56 V44 Q42 34 32 30 Q22 26 22 16 V12 M13 19 L22 10 L31 19';
 try {
   // (a) the place: every HUD state filled with its longest texts, the sign shown (no transition); its box against every other visible box
-  for (const [w, h, cam] of [[640, 360, 'iso'], [915, 412, 'iso'], [360, 640, 'chase'], [412, 915, 'chase']]) {
+  for (const [w, h, cam] of [[640, 360, 'chase'], [915, 412, 'chase'], [360, 640, 'chase'], [412, 915, 'chase']]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true });
     const page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); },
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); },
       JSON.stringify({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, camera: cam }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     const out = await page.evaluate(() => {
@@ -64,13 +63,13 @@ try {
     });
     const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 200 : m === 'pikes' || m === 'school' ? 106 : 95);
     const badOnes = out.filter(o => !o.box || o.hits.length || o.box[1] > lim(o.mode));
-    T.check(`${w}×${h} (${land ? 'lying, isometric' : 'upright, behind the car'}): the sign high in the top row in all 10 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 200, Pikes and the school ≤ 106'}), over nothing`,
+    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 10 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 200, Pikes and the school ≤ 106'}), over nothing`,
       out.length === 10 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
 
   // (b) in a race, both cameras: the sign as at a place (window.__game.noteAt), read after its .18 s pop-in (scale .8 to 1)
-  for (const [vp, cam] of [[{ width: 640, height: 360 }, 'iso'], [{ width: 360, height: 640 }, 'chase']]) {
+  for (const [vp, cam] of [[{ width: 640, height: 360 }, 'chase'], [{ width: 360, height: 640 }, 'chase']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: cam, notes: 1 }, vp);
     const land = vp.width > vp.height, tag = `${cam} ${vp.width}×${vp.height}`;
     const go = async (id) => { await startTrack(page, id); return page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 240 && g.phase !== 'racing'; k++) { g.sim(0.25, true); await new Promise(r => requestAnimationFrame(r)); } return g.phase; }); };
@@ -84,15 +83,14 @@ try {
       return Object.assign(o, { top: Math.round(b.top), pol: document.getElementById('hud').classList.contains('pol') });
     }, [d, v, !!abs]);
     const top = (o) => o.top <= (land ? 10 : o.pol ? 200 : 95);
-    const deg = (a) => a * 180 / Math.PI, rotDeg = (r) => { const m = /rotate\((-?[\d.]+)deg\)/.exec(r || ''); return m ? +m[1] : 0; };
-    // (the isometric camera: along the road as noteAng says, to its ~2 deg step; behind the car: upright)
-    const rotOk = (o, ang) => cam === 'iso' ? Math.abs(((rotDeg(o.rot) - deg(ang)) % 360 + 540) % 360 - 180) <= 2.1 : o.rot === '';
-    const txt = (o) => `${o.kind} '${o.cls}' ${o.key} rot '${o.rot}' (ang ${deg(o.ang).toFixed(1)}°) top ${o.top}`;
+    // (behind the car the sign stays upright)
+    const rotOk = (o) => o.rot === '';
+    const txt = (o) => `${o.kind} '${o.cls}' ${o.key} rot '${o.rot}' top ${o.top}`;
 
     T.check(`${tag} medvode: racing`, await go('medvode') === 'racing');
     let a = await at(300, 20), b = await at(420, 15);
     T.check(`${tag} medvode: 26 m before the first roundabout the blue sign, the roundabout's glyph, upright, in the top row; past it no blue`,
-      a.cls === 'show blue' && a.kind === 'ring' && a.d === P_RING && (cam === 'iso' ? Math.abs(rotDeg(a.rot)) <= 2.1 : a.rot === '') && top(a) && !/blue/.test(b.cls), txt(a) + ' | 420 m: ' + txt(b));
+      a.cls === 'show blue' && a.kind === 'ring' && a.d === P_RING && a.rot === '' && top(a) && !/blue/.test(b.cls), txt(a) + ' | 420 m: ' + txt(b));
 
     // the column under the map full in a race (hudCol lays it out: the reaction, START!, the team radio, the toast) and the sign shown: over
     // none of it, nor over the buttons (pause, camera, tyres, rescue), the speedometer or the controls
@@ -118,14 +116,14 @@ try {
 
     T.check(`${tag} harju: racing`, await go('harju') === 'racing');
     a = await at(540, 15);
-    T.check(`${tag} harju: before the first bale chicane (it had no sign) the blue sign, the chicane's glyph first right`, a.cls === 'show blue' && a.kind === 'chic' && a.d === P_CR && rotOk(a, a.ang) && top(a), txt(a));
+    T.check(`${tag} harju: before the first bale chicane (it had no sign) the blue sign, the chicane's glyph first right`, a.cls === 'show blue' && a.kind === 'chic' && a.d === P_CR && rotOk(a) && top(a), txt(a));
 
     T.check(`${tag} monaco: racing`, await go('monaco') === 'racing');
     a = await at(2050, 40);
-    T.check(`${tag} monaco: before the Nouvelle Chicane the blue sign, first left, along the road`, a.cls === 'show blue' && a.kind === 'chic' && a.d === P_CL && rotOk(a, a.ang) && top(a), txt(a));
+    T.check(`${tag} monaco: before the Nouvelle Chicane the blue sign, first left, along the road`, a.cls === 'show blue' && a.kind === 'chic' && a.d === P_CL && rotOk(a) && top(a), txt(a));
     const s3 = await page.evaluate(() => { const T = window.__game.race.track, g = T.hudSigns().find(x => x.kind === 'corner' && x.sev === 3 && T.signAt(x.s0 - 20, 15) === x); return g ? g.s0 - 20 : null; });
     a = s3 == null ? null : await at(s3, 15, true);
-    T.check(`${tag} monaco: 20 m before a slow corner the red arrow, along the road`, !!a && a.cls === 'show sev3' && a.kind === 'corner' && /^[rl][13]\|sev3$/.test(a.key) && rotOk(a, a.ang) && top(a), a ? txt(a) : 'no slow corner');
+    T.check(`${tag} monaco: 20 m before a slow corner the red arrow, along the road`, !!a && a.cls === 'show sev3' && a.kind === 'corner' && /^[rl][13]\|sev3$/.test(a.key) && rotOk(a) && top(a), a ? txt(a) : 'no slow corner');
     await page.evaluate(() => window.__game.noteAt(null));
 
     // Pikes Peak in a time trial: the pill instead (#hud.pkn), where it was: under the clock (lying) / under the map's row (upright)
