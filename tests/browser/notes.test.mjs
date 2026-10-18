@@ -1,10 +1,10 @@
 // The corner sign (#h-note) on the HUD: (a) where it sits, on a phone lying and upright (the camera behind the car), in nine
 // HUD states (a race, with the team radio, with the wreck panel, a duel, the police, the police's checkpoint, a time trial, Pikes Peak
-// with its pill off, the driving school): high in the top row, over nothing (also the column under the map: the pit stop's bar, the start's
+// (its own class row), the driving school): high in the top row, over nothing (also the column under the map: the pit stop's bar, the start's
 // reaction, the big message, the splits, the toast; the pause, tyre and rescue buttons; the controls); (b) in a race: Medvode's
 // roundabout and Harju's and Monaco's chicanes blue with their own glyphs (upright), a red arrow before a slow corner; with the column under the map full (laid out by game.js hudCol: the
 // reaction, START!, the team radio, the toast) the sign over none of it, nor over the buttons and the controls; on Pikes Peak in a time
-// trial the pill (#pk-note) instead, where it was.
+// trial the same sign (its own pill is gone).
 //   node tests/browser/notes.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -124,18 +124,13 @@ try {
     T.check(`${tag} monaco: 20 m before a slow corner the red arrow`, !!a && a.cls === 'show sev3' && a.kind === 'corner' && /^[rl][13]\|sev3$/.test(a.key) && top(a), a ? txt(a) : 'no slow corner');
     await page.evaluate(() => window.__game.noteAt(null));
 
-    // Pikes Peak in a time trial: the pill instead (#hud.pkn), where it was: under the clock (lying) / under the map's row (upright)
+    // Pikes Peak in a time trial: the corner sign as on every other road (#h-note; its own pill is gone), 20 m before a corner, in the top row
     T.check(`${tag} pikes: racing`, await go('pikes') === 'racing');
-    const pk = await page.evaluate(async () => {
-      const g = window.__game, $ = (id) => document.getElementById(id), raf = () => new Promise(r => requestAnimationFrame(r));
-      await raf(); await raf();
-      const pkn = $('hud').classList.contains('pkn'), disp = getComputedStyle($('h-note')).display;
-      let k = 0; for (; k < 160 && !$('pk-note').classList.contains('show'); k++) { g.sim(0.25, true); await raf(); }
-      return { pkn, disp, shown: $('pk-note').classList.contains('show'), t: k * 0.25, top: parseFloat(getComputedStyle($('pk-note')).top) / innerHeight, dmg: (parseFloat($('hud').style.getPropertyValue('--dmg-h')) || 0) / innerHeight };
-    });
-    const want = land ? 0.244 : 0.306 + pk.dmg;   // (upright with the damage picture first in the column: as much lower, the height profile with it)
-    T.check(`${tag} pikes (time trial): the corner sign off (#hud.pkn), the pill shown within 40 s at ${want} of the height as before`, pk.pkn && pk.disp === 'none' && pk.shown && Math.abs(pk.top - want) <= 0.01,
-      `pkn ${pk.pkn}, #h-note ${pk.disp}, pill ${pk.shown ? 'after ' + pk.t + ' s' : 'never'}, top ${pk.top.toFixed(3)}`);
+    const sPk = await page.evaluate(() => { const T = window.__game.race.track, x = T.hudSigns().find(x => x.kind === 'corner' && x.s0 > T.startS + 60 && T.signAt(x.s0 - 20, 15) === x); return x ? x.s0 - 20 : null; });
+    a = sPk == null ? null : await at(sPk, 15, true);
+    const noPill = await page.evaluate(() => !document.getElementById('pk-note') && !document.getElementById('hud').classList.contains('pkn'));
+    T.check(`${tag} pikes (time trial): the corner sign as on every road (no pill of its own), 20 m before a corner, in the top row`,
+      noPill && !!a && /^show sev[123]$/.test(a.cls) && a.kind === 'corner' && a.top <= (land ? 10 : 106), a ? txt(a) + (noPill ? '' : ', the pill still there') : 'no corner sign');
     await page.evaluate(() => window.__game.noteAt(null));
     T.check(`${tag}: no page errors`, !errors.length, errors.join(' | '));
     await ctx.close();

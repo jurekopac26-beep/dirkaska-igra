@@ -3,7 +3,7 @@ Dirkanje z avti
 
 ## Pikes Peak, ZDA (kronometer)
 
-Vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti so kontrolne točke CP1–CP4 z vmesnimi časi. Po cilju se osebni rekord in lestvica najboljših 10 časov shranita v brskalnik na tej napravi. Pred vožnjo lahko avto nadgradiš (motor, gume, zavore, aerodinamika); nadgradnje veljajo na vseh progah. Proga je sorazmerno skrajšana na ~6,2 km (prava je 19,99 km), višine na zaslonu so prave.
+Vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti so kontrolne točke CP1–CP4 z vmesnimi časi. Po cilju se osebni rekord in lestvica najboljših 10 časov shranita v brskalnik na tej napravi. Pred vožnjo lahko avto nadgradiš (motor, gume, zavore, aerodinamika); nadgradnje veljajo na vseh progah. Proga je sorazmerno skrajšana na ~6,2 km (prava je 19,99 km), višine na zaslonu so prave. Table pred ovinki na zaslonu so enake kot na drugih progah. Nad cesto ni dronov ne TV helikopterja, po zraku ne pada listje.
 
 ## Ouninpohja, Finska (kronometer na makadamu)
 
@@ -1015,8 +1015,15 @@ Da igra teče gladko tudi na starejših in cenejših telefonih, se količina okr
 
 - **Visoka** je polna slika, taka kot je opisana zgoraj (vsi gledalci, drevesa, čeri, balvani, rastline, morska megla …). Zmogljivejši telefoni smejo prikazati več, tudi čez smernico ~300 klicev risanja.
 - **Nizka** spoštuje proračun telefona iz `CLAUDE.md` (do ~300 klicev risanja in ~900 tisoč oglišč na progo, kolikor varno gre): daljno okrasje se ne izriše, drevesa, rastline in čeri so redkejša in se vidijo bližje, nekaj okrasnih slojev (npr. morska megla na Big Suru, razsuti balvani) odpade. **Cesta, teren, robovi, ograje, start in cilj ter bistvene table ostanejo vedno** — izgine le okras, ki ga s telefona tako rekoč ne opaziš.
+  Sence so pri Nizki enake, le cenejše za izris:
+  - Kamera za avtom riše senčno sliko samo za tla, ki jih vidi, in ne več za tla za sabo.
+  - Drevesa, grmi in kamni mečejo senco iz poenostavljene kopije: isti obris, približno polovica trikotnikov ali manj.
+  - Ploščice karoserije tekmecev (pokrova, odbijača, blatnika, ogledali) nimajo svoje sence, ker ima senca karoserije že njihov obris.
+  To skupaj prihrani četrtino do tretjino klicev risanja.
 - **Srednja** je vmes: krajši doseg prikaza in nekoliko manj okrasja.
 - **Samodejno** izbere začetno stopnjo iz naprave (bere ime grafične kartice prek `WEBGL_debug_renderer_info` ter število jeder in pomnilnik): znane šibke mobilne kartice začnejo na Nizki, zmogljive na Visoki, ostale po zmogljivosti naprave. Med vožnjo sistem meri čas sličice in, če igra teče počasi, najprej zniža ločljivost, nato (ob naslednjem premoru) sence, na koncu pa še skrajša doseg prikaza daljnega okrasja, da sličice ostanejo tekoče; ko se hitrost povrne, okrasje spet pokaže.
+
+Sledi gum na cesti se rišejo samo, kolikor jih je (prej vedno vseh 8000), pri vseh stopnjah.
 
 Svet se zgradi enkrat ob nalaganju proge, zato se sprememba stopnje v celoti pozna pri naslednji progi ali dirki (doseg prikaza se prilagodi sproti). **Visoka slika je nespremenjena** – LOD le odvzema pri nižjih stopnjah, zato zlate referenčne vrednosti (`tests/golden/world.json`) ostanejo merjene pri Visoki, proračun telefona (`tests/golden/perf.json`) pa pri Nizki.
 

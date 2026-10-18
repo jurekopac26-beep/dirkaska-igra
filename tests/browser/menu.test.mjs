@@ -95,7 +95,7 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
-    // the map switch over a route track (Riviera): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
+    // the map switch over a route track (Monte Carlo, the first real circuit): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
     const stageUI = await ev(page, 'const m = root.querySelector(".mapv"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.textContent) : null, text: m ? m.textContent.replace(/\\s+/g, "") : "", pressed: pr ? pr.textContent : "", ribbon: !!root.querySelector("#track-stage .ribbon") };');
     T.check('the track stage: the map switch is only "1" and "2" (no MAP/Flyover words), the flyover (1) is lit by default, no mode ribbon', JSON.stringify(stageUI.btns) === '["1","2"]' && stageUI.text === '12' && stageUI.pressed === '1' && !stageUI.ribbon, JSON.stringify(stageUI));
     await click(page, 'pick-weather');
@@ -134,9 +134,9 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     const name = await ev(page, 'return root.querySelector(".card h1").firstChild.textContent;');
     await click(page, 'race-single');
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, laps: __game.race && __game.race.laps, tt: __game.race && !!__game.race.timeTrial, last: __game.S.lastTrack, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id) }));
-    T.check(`Race! (${name}, the intro off): the race runs on that track, 4 laps, the menu gone, the track remembered`, r.id === 'riviera' && r.laps === 4 && !r.tt && r.last === 'riviera' && r.shown.length === 0, JSON.stringify(r));
+    T.check(`Race! (${name}, the intro off): the race runs on that track, 2 laps, the menu gone, the track remembered`, r.id === 'monaco' && r.laps === 2 && !r.tt && r.last === 'monaco' && r.shown.length === 0, JSON.stringify(r));
     await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(500);
     const t = await ev(page, 'return { scr: Menu.debug().screen, sub: Menu.debug().titleSub, shown: [...document.querySelectorAll(".screen.show")].map(e => e.id), race: !!window.__game.race, tile: !!root.querySelector(".t-single") };');
     T.check('after the race: back on the new title', t.scr === 'title' && !t.sub && t.shown.join() === 's-menu' && !t.race && t.tile, JSON.stringify(t));
@@ -187,7 +187,7 @@ try {
     await ctx.close();
   }
 
-  // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (the Riviera: its helicopter's first frame behind it).
+  // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Monte Carlo: its helicopter's first frame behind it).
   //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
   //     on it is remembered (the setting, kept), Saturday first; Race! without it starts the race from the back of the grid (13th of 13),
   //     with it the qualifying lap; the pad's B and Start; on its side Race! at the very bottom right
@@ -197,31 +197,31 @@ try {
       return { on: w.classList.contains('on'), head: w.querySelector('.ix-name h2').firstChild.textContent, days: vis('.wk-hd'), ses: vis('.wk-sname'), sky: vis('.wk-wd em'), pos: vis('.wk-pos'), stamp: vis('.wk-stamp'), go: g && g.textContent, pic: w.querySelector('.wk-pic img').getAttribute('src'),
         sw: w.querySelector('.wk-sw').getAttribute('aria-checked'), btn: r && [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight], race: !!window.__game.race };`);
     const toWeekend = async (page) => { await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300); };
-    const { ctx, page, errors } = await open({ intro: 0, track: 'riviera', mode: 'race', lastTrack: 'riviera' });
+    const { ctx, page, errors } = await open({ intro: 0, track: 'monaco', mode: 'race', lastTrack: 'monaco' });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     await toWeekend(page);
     const w0 = await wk(page);
     T.check('Race! in Circuit race: the race weekend (Saturday qualifying skipped, Sunday the race from P13 of 13), the track from afar behind it, the race waits',
-      w0 && !w0.on && w0.head === 'Riviera' && JSON.stringify(w0.days) === '["SATURDAY","SUNDAY"]' && JSON.stringify(w0.ses) === '["Qualifying","Race"]' && w0.sky.length === 2 && w0.sky.every(k => /sunny|clear/i.test(k)) &&
-      JSON.stringify(w0.pos) === '["P13/13"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-riviera.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
+      w0 && !w0.on && w0.head === 'Monte Carlo' && JSON.stringify(w0.days) === '["SATURDAY","SUNDAY"]' && JSON.stringify(w0.ses) === '["Qualifying","Race"]' && w0.sky.length === 2 && w0.sky.every(k => /sunny|clear/i.test(k)) &&
+      JSON.stringify(w0.pos) === '["P13/13"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-monaco.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
     await page.click('.intro.wk [data-wk="back"]'); await page.waitForTimeout(300);
     const b = await ev(page, 'return { wk: !!root.querySelector(".intro"), name: root.querySelector("#s-track .card h1").firstChild.textContent, race: !!window.__game.race };');
-    T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Riviera' && !b.race, JSON.stringify(b));
+    T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Monte Carlo' && !b.race, JSON.stringify(b));
     await toWeekend(page);
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     const w1 = await wk(page), kept = await page.evaluate(() => [window.__game.S.quali, JSON.parse(localStorage.getItem('tdgp-settings')).quali]);
     T.check('Saturday switched on: Start qualifying (Saturday first), the grid P1–13, the choice kept in the settings', w1.on && w1.sw === 'true' && /^Start qualifying\s*SATURDAY FIRST$/.test(w1.go) && JSON.stringify(w1.pos) === '["P1–13"]' && !w1.stamp.length && JSON.stringify(kept) === '[1,1]', JSON.stringify({ w1, kept }));
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     await page.click('.intro.wk [data-wk="go"]');
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const r0 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length, grid: r.player.grid, intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro') }; });
     T.check('Race! with qualifying off: the race, from the back of the grid (13th of 13)', r0 && !r0.quali && r0.cars === 13 && r0.grid === 13 && !r0.intro, JSON.stringify(r0));
     T.check('no page errors on the race weekend', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
   {   // (qualifying on, as left from the last time; on its side; the pad)
-    const { ctx, page, errors } = await open({ intro: 0, quali: 1, track: 'riviera', mode: 'race', lastTrack: 'riviera' }, { width: 915, height: 412 });
+    const { ctx, page, errors } = await open({ intro: 0, quali: 1, track: 'monaco', mode: 'race', lastTrack: 'monaco' }, { width: 915, height: 412 });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300);
@@ -231,7 +231,7 @@ try {
     const gone = await ev(page, 'return !root.querySelector(".intro");');
     await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 });
     const ps = await page.evaluate(() => Menu.padKey('start'));
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const r1 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length }; });
     T.check('the pad: B back to the tracks, Start the choice (with qualifying on: the qualifying lap, alone)', pb && gone && ps && r1 && r1.quali && r1.cars === 1, JSON.stringify({ pb, gone, ps, r1 }));
     T.check('no page errors on the race weekend on its side', !real(errors).length, real(errors).join(' | '));
@@ -264,19 +264,19 @@ try {
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    T.check('pad, A: the highlighted mode is chosen (the track step, the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Riviera', JSON.stringify(g));
+    T.check('pad, A: the highlighted mode is chosen (the track step, the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Monte Carlo', JSON.stringify(g));
     g = await press(5);
     const next = g.name;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== 'Riviera' && next !== '' && g.name === 'Riviera', JSON.stringify({ next, g }));
+    T.check('pad, RB and LB: the next track and back', next !== 'Monte Carlo' && next !== '' && g.name === 'Monte Carlo', JSON.stringify({ next, g }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'monaco').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'riviera', JSON.stringify(r));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'monaco', JSON.stringify(r));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

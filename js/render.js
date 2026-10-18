@@ -2783,7 +2783,7 @@ const Render = (function () {
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
       this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
-      this.dirty = false; this.lo = 1e9; this.hi = -1;
+      this.dirty = false; this.lo = 1e9; this.hi = -1; this.n = 0; g.setDrawRange(0, 0);   // (n: the marks laid so far; only they are drawn, not the empty rest)
     }
     add(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1) {
       if (!this.pkIn && curTrack && curTrack.def.theme === 'pikes') return;   // (Pikes Peak lays its own marks: pkMarks)
@@ -2791,6 +2791,7 @@ const Render = (function () {
       const nx = -dz / l * wd, nz = dx / l * wd;
       const i = this.cur; this.cur = (this.cur + 1) % this.max;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
+      if (i >= this.n) { this.n = i + 1; this.mesh.geometry.setDrawRange(0, this.n * 6); }
       const p = this.pos, o = i * 12, ya = 0.03 + (y0 || 0), yc = 0.03 + (y1 == null ? (y0 || 0) : y1);
       p[o] = x0 - nx; p[o + 1] = ya; p[o + 2] = z0 - nz; p[o + 3] = x0 + nx; p[o + 4] = ya; p[o + 5] = z0 + nz;
       p[o + 6] = x1 - nx; p[o + 7] = yc; p[o + 8] = z1 - nz; p[o + 9] = x1 + nx; p[o + 10] = yc; p[o + 11] = z1 + nz;
@@ -2806,7 +2807,7 @@ const Render = (function () {
       }
       this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; this.lo = 1e9; this.hi = -1;
     }
-    clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; }
+    clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.n = this.cur = 0; this.mesh.geometry.setDrawRange(0, 0); this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; }
   }
 
   /* ---------------- rain: streaks falling in a box around the view centre. The shader wraps each drop into the box (its place
@@ -2990,7 +2991,8 @@ const Render = (function () {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // what is drawn only into the shadow map (a kit car's hull on the lowest tier, the player's wheels' stand-ins: kitShadows): shown while it is drawn
     // (three.js draws it after it has picked what the camera draws, so the camera never draws them), hidden again after
-    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on; };
+    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on;
+        if (world && world.shadowLo) for (const [m, of] of world.shadowLo) m.visible = on && of.visible; };   // (NIZKA: the plants' shadow copies, where their meshes are shown)
       sm.render = function (...a) { show(true); try { return r0.apply(this, a); } finally { show(false); } }; }
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(30, 16 / 9, 4, 700);
@@ -5679,7 +5681,7 @@ const Render = (function () {
         : new THREE.MeshLambertMaterial({ color: 0x2b2e34 });
       v.partMats = [paint, trim];
       const add = (name, geo, mat, x, y, z, rz, uGeo, uMat, extra) => {
-        const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.z = rz || 0; m.castShadow = true; v.bodyG.add(m); parts[name] = m;
+        const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.z = rz || 0; m.castShadow = !!c.isPlayer || tierNow > 0; v.bodyG.add(m); parts[name] = m;   // (NIZKA: a rival's panels cast none, its body's shadow has their outline: 8 draws less each in the shadow pass)
         if (uGeo) { const u = new THREE.Group(); const um = new THREE.Mesh(uGeo, uMat || matUnder); u.add(um); if (extra) u.add(extra); u.position.set(x, y - 0.012, z); u.rotation.z = rz || 0; u.visible = false; v.bodyG.add(u); under[name] = u; }
       };
       const nose = S[S.length - 1][0], tail = S[0][0];
@@ -8066,6 +8068,32 @@ const Render = (function () {
     const thm = THEMES[themeId], sd = thm && thm.sunDist ? thm.sunDist / Math.hypot(sunOff[0], sunOff[1], sunOff[2]) : 1;   // (theme.sunDist: a low sun placed further up its ray, so the long shadows of casters far up-sun reach the view)
     sun.position.set(cx + sunOff[0] * sd, baseY + sunOff[1] * sd, cz + sunOff[2] * sd);
     sun.target.updateMatrixWorld();
+    fitShadow(tierNow === 0 && !shot && lastMode === 'chase', px, py, pz, tx, ty, tz);
+  }
+  // NIZKA (the phone budget), behind the car: the sun's shadow box only round the ground the camera sees (the view's corners and the middles
+  // of its top and bottom edges on the road's plane, at most 80 m past the point it looks at, 12 m more round them for the slopes), in steps
+  // of 16 m and on the shadow map's texels (the shadows do not crawl while the car drives); else the fixed 160 m square round the view's
+  // centre. A caster whose shadow falls where the camera looks is in it (the box is the sun's view), the ones behind the camera are not
+  const SH_NX = [-1, 1, 1, -1, 0, 0], SH_NY = [-1, -1, 1, 1, 1, -1], _shUp = new THREE.Vector3(0, 1, 0);
+  const _shX = new THREE.Vector3(), _shY = new THREE.Vector3(), _shZ = new THREE.Vector3(), _shF = new THREE.Vector3(), _shR = new THREE.Vector3(), _shU = new THREE.Vector3();
+  function fitShadow(on, px, py, pz, tx, ty, tz) {
+    const sc = sun.shadow.camera, T = sun.target.position;
+    let l = -80, r = 80, b = -80, t = 80;
+    if (on) {
+      _shZ.subVectors(sun.position, T).normalize(); _shX.crossVectors(_shUp, _shZ).normalize(); _shY.crossVectors(_shZ, _shX);   // (the shadow camera's axes, as its lookAt makes them)
+      _shF.set(tx - px, ty - py, tz - pz).normalize(); _shR.crossVectors(_shF, _shUp).normalize(); _shU.crossVectors(_shR, _shF);
+      const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect, R = Math.hypot(tx - px, tz - pz) + 80;
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let k = 0; k < 6; k++) {
+        const dx = _shF.x + (_shR.x * SH_NX[k]) * th + _shU.x * SH_NY[k] * tv, dy = _shF.y + _shR.y * SH_NX[k] * th + _shU.y * SH_NY[k] * tv, dz = _shF.z + _shR.z * SH_NX[k] * th + _shU.z * SH_NY[k] * tv;
+        const hd = Math.hypot(dx, dz) || 1e-6; let s = dy < -1e-4 ? (ty - py) / dy : Infinity; if (s * hd > R) s = R / hd;
+        const gx = px + dx * s - T.x, gy = ty - T.y, gz = pz + dz * s - T.z, lx = gx * _shX.x + gy * _shX.y + gz * _shX.z, ly = gx * _shY.x + gy * _shY.y + gz * _shY.z;
+        if (lx < x0) x0 = lx; if (lx > x1) x1 = lx; if (ly < y0) y0 = ly; if (ly > y1) y1 = ly; }
+      const ms = sun.shadow.mapSize.x, w = Math.min(160, Math.ceil((x1 - x0 + 24) / 16) * 16), h = Math.min(160, Math.ceil((y1 - y0 + 24) / 16) * 16);
+      const aX = T.x * _shX.x + T.y * _shX.y + T.z * _shX.z, aY = T.x * _shY.x + T.y * _shY.y + T.z * _shY.z, qx = w / ms, qy = h / ms;
+      l = Math.round(((x0 + x1 - w) / 2 + aX) / qx) * qx - aX; r = l + w; b = Math.round(((y0 + y1 - h) / 2 + aY) / qy) * qy - aY; t = b + h;
+    }
+    if (sc.left !== l || sc.right !== r || sc.bottom !== b || sc.top !== t) { sc.left = l; sc.right = r; sc.bottom = b; sc.top = t; sc.updateProjectionMatrix(); }
   }
   let sunOff = [-80, 96, 70], lastMode = 'chase';
   // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating

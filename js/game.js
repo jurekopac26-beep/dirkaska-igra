@@ -1988,7 +1988,7 @@
   }
   function pkStart() {   // newRace (after hxStart)
     const on = pk.on = !!race.timeTrial && pkIs(track.def) && !(mp && mp.race), H = $('h-sec');
-    $('hud').classList.toggle('pkc', on); $('pk-cer').className = ''; $('hud').classList.remove('pkn', 'pkleg');
+    $('hud').classList.toggle('pkc', on); $('pk-cer').className = ''; $('hud').classList.remove('pkleg');
     while (H.children.length > 3) H.lastChild.remove();
     if (!on) return;
     pk.cls = pkClsOf(Core.MODELS[S.car].id);
@@ -2087,7 +2087,6 @@
   const pkMedW = (d, wet) => pkGrav(d) ? (wet ? PK_MED_G_WET : PK_MED_G) : wet ? PK_MED_WET : PK_MED;   // (the medal times of a road, dry or wet)
   const pkLegCar = (d, c) => (pkGrav(d) ? PK_LEG_G : PK_LEG)[c];
   if (!['best', 'legend', 'off'].includes(S.pkGhost)) S.pkGhost = S.ghost ? 'best' : 'off';   // Duh: moj najboljši / legenda / brez (first time: as the ghost setting)
-  S.pkNotes = +S.pkNotes === 0 ? 0 : 1;   // Opozorila na ovinke (on unless turned off)
   const pkMedSet = (d) => pkMedW(d, wetRec(d));
   const pkMedOf = (A, t) => t > 0 ? A.findIndex(x => t <= x) : -1;
   const pkMs = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
@@ -2177,38 +2176,12 @@
     const J = pkLegIs(pkLeg.job, c, wet, d) ? pkLeg.job : pkLegJob(c, wet, d);
     pkLegRun(J, 1e9); return pkLegGet(c, wet, d);
   }
-  // The corner warnings (Opozorila na ovinke, S.pkNotes): a pace-note pill under the clock for the next corner, from 2.6 s before it
-  // at the current speed (40-230 m) until the car is in it: a hairpin big and red, a medium bend orange, a fast one faint; the arrow
-  // and the rally grade (2 a slow corner .. 6 a flat-out kink), the distance. It replaces the generic arrow (#h-note) on Pikes Peak.
-  const PK_NP = { r3: 'M20 56 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34', l3: 'M44 56 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34',
-    r2: 'M22 56 V36 Q22 20 38 20 H48 M39 11 L48 20 L39 29', l2: 'M42 56 V36 Q42 20 26 20 H16 M25 11 L16 20 L25 29',
-    r1: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l1: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25' };
-  function pk7Start() {   // pkStart: the ghost chosen for Pikes Peak (the live difference and the profile follow it), the corners ahead
+  function pk7Start() {   // pkStart: the ghost chosen for Pikes Peak (the live difference and the profile follow it)
     const wet = !!race.rain;
     if (S.pkGhost === 'off') ghPlay = null;
     else if (S.pkGhost === 'legend') ghPlay = pkLegNow(pk.cls.id, wet, track.def);
     hxStart();   // (again: the difference and the profile against this ghost)
     $('hud').classList.toggle('pkleg', !!(ghPlay && ghPlay.leg));
-    const T = track, nos = T.def.turnNos(T);
-    pk.notes = nos.map(q => { const c = T.corners.find(x => x.s0 === q.s), hp = q.sev === 3 && !!c && c.angle > 2.0, a = c ? c.angle : 0;
-      return { s: q.s, n: q.n, sev: q.sev, dir: q.dir, hp, g: hp ? 1 : q.sev === 3 ? 2 : q.sev === 2 ? (a > 1.2 ? 3 : 4) : a < 0.5 ? 6 : 5 }; });
-    pk.nk = -2; pk.nd = ''; pk.non = -1; $('pk-note').className = '';
-  }
-  function pkNoteFrame(P) {   // every HUD frame: the pill (the DOM touched only when the corner or its 10 m step changes)
-    const on = +S.pkNotes ? 1 : 0, el = $('pk-note');
-    if (on !== pk.non) { pk.non = on; $('hud').classList.toggle('pkn', !!on); }
-    const L = pk.notes, sp = track.startS + P.dist; let k = -1;
-    if (on && L && phase === 'racing' && !P.finished) { for (let i = 0; i < L.length; i++) if (L[i].s + 6 > sp) { k = i; break; } if (k >= 0 && L[k].s - sp > clamp(P.speed * 2.6, 40, 230)) k = -1; }
-    if (k !== pk.nk) { pk.nk = k; pk.nd = '';
-      if (k < 0) { el.classList.remove('show'); return; }
-      const c = L[k], lr = c.dir > 0 ? 'r' : 'l';
-      $('pk-note-path').setAttribute('d', PK_NP[lr + (c.hp ? 3 : c.sev === 1 ? 1 : 2)]);
-      el.children[1].textContent = c.hp ? tr(c.dir > 0 ? 'DESNA LASNICA' : 'LEVA LASNICA') : tr(c.dir > 0 ? 'DESNI {0}' : 'LEVI {0}', c.g);
-      el.className = 's' + c.sev + (c.hp ? ' hp' : '') + ' show';
-    }
-    if (k < 0) return;
-    const d = Math.max(0, Math.round((L[k].s - sp) / 10) * 10), t = d ? d + ' m' : '';
-    if (t !== pk.nd) { pk.nd = t; el.children[2].textContent = t; }
   }
   function finishRace() {
     phase = 'done';
@@ -3319,7 +3292,7 @@
     l1: 'M42 54 V36 Q42 20 26 20 H18 M26 11 L17 20 L26 29',
     r3: 'M20 54 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34',
     l3: 'M44 54 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34',
-    r0: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l0: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25',   // (a fast bend: Pikes' PK_NP r1/l1)
+    r0: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l0: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25',   // (a fast bend)
     ring: 'M46.9 33.3 A15 15 0 0 0 32.8 17 M38.3 22.8 L32.8 17 L38.9 11.9 M25.7 18.4 A15 15 0 0 0 18.6 38.8 M20.8 31.1 L18.6 38.8 L11.1 36.1 M23.4 44.3 A15 15 0 0 0 44.6 40.2 M36.8 42.1 L44.6 40.2 L46 48',   // anticlockwise (traffic on the right)
     ringcw: 'M17.1 33.3 A15 15 0 0 1 31.2 17 M25.7 22.8 L31.2 17 L25.1 11.9 M38.3 18.4 A15 15 0 0 1 45.4 38.8 M43.2 31.1 L45.4 38.8 L52.9 36.1 M40.6 44.3 A15 15 0 0 1 19.4 40.2 M27.2 42.1 L19.4 40.2 L18 48',   // (def.leftHand)
     cr: 'M22 56 V44 Q22 34 32 30 Q42 26 42 16 V12 M33 19 L42 10 L51 19', cl: 'M42 56 V44 Q42 34 32 30 Q22 26 22 16 V12 M13 19 L22 10 L31 19'   // a chicane, first right / first left
@@ -3447,7 +3420,6 @@
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
   function updateHUDTT(dt, P) {
     hxFrame(dt, P);   // (turn counter, live difference to the best run, height profile: below)
-    if (pk.on) pkNoteFrame(P);   // (Pikes Peak: the corner warnings)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setText('h-lap', P.finished ? tr('CILJ') : 'CP ' + P.cp + '/' + nCP);
     // altitude of the road under the car (not the body, as in the splits table), between start and summit (or the foot of a descent); frozen at the
@@ -3723,7 +3695,7 @@
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
     const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === dU ? 'd' : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
-    { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column; css #pk-note goes down with it)
+    { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column)
     const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
     let lim = H - COL_GAP;   // the column's foot: above whatever is below it
     const obs = tch.classList.contains('off') || tch.classList.contains('pad') ? [] : ['c-gas', 'c-brake', 'c-left', 'c-right', 'c-wheel', 'tilt-ind'];
