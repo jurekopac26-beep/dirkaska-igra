@@ -1,10 +1,9 @@
 // Nagib kamere (Nastavitve): the chase camera (za avtom) looks further ahead along the road. Its tilt below the horizon is 10 % (the
-// default), 20 % or 30 % smaller than the camera's own; its distance from the point it looks at stays the same, and the
-// isometric camera does not change.
+// default), 20 % or 30 % smaller than the camera's own; its distance from the point it looks at stays the same.
 //   node tests/browser/camtilt.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('Nagib kamere: the chase camera looks further ahead, from the same distance (the iso camera unchanged)');
+const T = checker('Nagib kamere: the chase camera looks further ahead, from the same distance');
 const srv = await serve();
 const browser = await launch();
 try {
@@ -33,12 +32,6 @@ try {
   T.check('chase: the camera tilts less the more it is set (20 % and 30 % against 10 %)', c2.tilt < c1.tilt && c1.tilt < c0.tilt && Math.abs(r1 - 0.8 / 0.9) < 0.005 && Math.abs(r2 - 0.7 / 0.9) < 0.005,
     JSON.stringify({ tilt: [c0.tilt, c1.tilt, c2.tilt], r1: +r1.toFixed(4), r2: +r2.toFixed(4) }));
   T.check('chase: the camera stays as far from the point it looks at', c0.dist > 10 && Math.abs(c1.dist - c0.dist) < 0.01 && Math.abs(c2.dist - c0.dist) < 0.01, JSON.stringify([c0.dist, c1.dist, c2.dist]));
-
-  // iso (phone lying): the setting moves nothing
-  await page.evaluate(() => document.querySelector('[data-set="camera"] button[data-v="iso"]').click());
-  await pick('0'); const i0 = await view('iso');
-  await pick('2'); const i2 = await view('iso');
-  T.check('iso: the camera does not move', JSON.stringify(i0) === JSON.stringify(i2), JSON.stringify([i0, i2]));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {

@@ -9,8 +9,8 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Izmišljene proge, ki jih ne bomo uporabljali, imajo v datoteki proge `test: true`: v menuju so na koncu pod naslovom »Za izbris · samo za testiranje« in ostanejo samo za testiranje.
 
 ## Kamere in grafika (odločitev uporabnika)
-- V končni igri sta samo **dve kameri**: **izometrična** (telefon ležeče, `iso`) in **za avtom** (telefon pokonci, `chase`). Kameri **kino** in **kokpit** bosta izbrisani; zdaj sta v igri samo zaradi testiranj. Zanju ne optimiziraj in ne dodajaj novih funkcij.
-- Grafiko izboljšuj za ti dve kameri. Izometrična gleda od zgoraj: pomembni so cesta in robovi, teren, strehe in krošnje, barve, senčenje. Kamera za avtom: obzorje, nebo, oddaljeni griči in cesta pred avtom. Detajli, ki jih s teh dveh kamer ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi), so odveč: poenostavi jih, da je telefon manj obremenjen.
+- V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere **izometrična**, **kino** in **kokpit** so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
+- Grafiko izboljšuj za kamero za avtom: obzorje, nebo, oddaljeni griči, cesta pred avtom in njeni robovi, teren ob njej. Detajli, ki jih s te kamere ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi, strehe od zgoraj), so odveč: poenostavi jih, da je telefon manj obremenjen.
 - Obremenitev telefona: proga naj ima do ~300 klicev risanja in ~900 tisoč oglišč (`tests/golden/perf.json`), nova proga ali izboljšava pa ne sme povečati obremenitve drugih prog.
 
 ## Pravna varnost (igra gre na Google Play)

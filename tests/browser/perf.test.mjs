@@ -6,8 +6,8 @@
 // calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
 // Then the new map of NEW VERSION · TEST 1 (js/newmap.js over Toskana, its still meshes merged by js/nvbake.js): the same budget at
-// twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car and from above
-// (the two cameras the game keeps), as 'newmap'.
+// twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car (the
+// game's one camera), as 'newmap'.
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
 //   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept)
@@ -17,7 +17,7 @@ import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './
 
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 // the new map (NEW VERSION · TEST 1, the title's button in the new menu): built and merged, the game stood still, the car put at each
-// place, both cameras; the busiest frame is checked as a track's is
+// place, the camera behind it; the busiest frame is checked as a track's is
 async function newMap() {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345, menu: true });
   await page.evaluate(() => {
@@ -35,7 +35,7 @@ async function newMap() {
     const places = [{ x: H3.home.x, z: H3.home.z, h: H3.home.h }, { x: a0.x, z: a0.z, h: 0 }, st('school'), st('circuit'), st('home'), st('police'), st('multi'),
       { x: 40, z: 20, h: 0 }, { x: 20, z: 120, h: -1.6 }, { x: -205, z: -105, h: 0 }, { x: -272, z: -216, h: 0 }, { x: 300, z: -250, h: 1.6 }];
     const s = [];
-    for (const cam of ['chase', 'iso']) for (const p of places) {
+    for (const cam of ['chase']) for (const p of places) {
       P.place(p.x, p.z, p.h); P.vx = P.vz = 0; g.sim(0.2, true);
       Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, cam, {});
       const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, cam, {}); s.push([__gl.calls - c0, __gl.verts - v0]);
