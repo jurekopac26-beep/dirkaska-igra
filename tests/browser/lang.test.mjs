@@ -102,8 +102,8 @@ try {
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const r6 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent, head: document.querySelector('#res-table thead').innerText }));
   const sR = await slovene();
-  T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 12th. (New achievements: ...)", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
-    /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 12th\.( New achievements: [A-Z][\w ,]+\.)?$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
+  T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 13th. (New achievements: ...)", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
+    /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 13th\.( New achievements: [A-Z][\w ,]+\.)?$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
 
   // 6b. a vehicle of the fleet: the MIŠKA (Small cars, its engine at the back) on the car screen; in a race destroyed (wreckCar): VEHICLE
   //     DESTROYED with Retire on the HUD, the pause with View the car and Retire, the first tap asks (Really retire? and the toast), the

@@ -647,6 +647,119 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .jl.mkf svg { display: block; overflow: visible; }
 @media (max-height: 700px) { .ix-specs b { font-size: 13.5px; } .ix-card.card { gap: 8px; padding-top: 10px; padding-bottom: 8px; } .ix-head2 { padding-bottom: 8px; } }
 @media (prefers-reduced-motion: reduce) { .ix-head2, .ix-card.card { animation: none; } .ix-summit { transition: none; } }
+/* ---------------- the race weekend before a circuit race (menu.js weekend): the track from afar, the calendar's two pages, the choice ----------------
+   (.wk.on: qualifying switched on; [data-on] shows only then, [data-off] only while it is off) */
+.intro.wk { display: block; background: radial-gradient(120% 60% at 50% 28%, #16304d 0%, var(--navy1) 55%, var(--navy2) 100%); }
+.wk.on [data-off], .wk:not(.on) [data-on] { display: none !important; }
+.wk-bg { position: absolute; inset: 0; overflow: hidden; }
+.wk-pic { position: absolute; animation: wk-near 26s ease-in-out infinite alternate; transform-origin: 50% 46%; will-change: transform; }
+.wk-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.wk.model .wk-pic { animation: float 5s ease-in-out infinite; }
+.wk.model .wk-pic img { object-fit: contain; }
+@keyframes wk-near { from { transform: scale(1); } to { transform: scale(1.12); } }
+/* (the track from afar coming slowly closer; the dark at the top and where the calendar begins) */
+.wk-bg::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(5, 8, 13, .7) 0, rgba(5, 8, 13, 0) 120px, rgba(5, 8, 13, 0) calc(var(--wk-y, 60%) - 110px), rgba(8, 18, 31, .6) calc(var(--wk-y, 60%) - 45px), var(--navy2) calc(var(--wk-y, 60%) + 6px)); }
+.wk.model .wk-bg::after { background: linear-gradient(180deg, rgba(5, 8, 13, .5) 0, rgba(5, 8, 13, 0) 110px, rgba(5, 8, 13, 0) calc(var(--wk-y, 60%) - 70px), var(--navy2) calc(var(--wk-y, 60%) + 6px)); }
+.wk-pin { position: absolute; width: 0; height: 0; opacity: 0; transition: opacity .5s ease; }
+.wk-pin.on { opacity: 1; }
+.wk-pin > span { position: absolute; left: 0; bottom: 28px; transform: translateX(-50%); white-space: nowrap; }
+.wk-pin b { display: block; font: 900 italic 11px/1 var(--f-ui); letter-spacing: .04em; padding: 4px 7px 3px; background: rgba(255, 255, 255, .95); color: #10151d; transform: skewX(-10deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, .35); }
+.wk-pin i { position: absolute; left: -1px; bottom: 0; width: 2px; height: 28px; background: rgba(255, 255, 255, .92); box-shadow: 0 0 3px rgba(0, 0, 0, .6); }
+.wk-pin i::after { content: ''; position: absolute; left: -3px; bottom: -3px; width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, .3); }
+.wk-head { position: absolute; z-index: 3; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 12px; padding: calc(14px + var(--st)) 14px 0 16px; }
+.wk-head .ix-name h2 { text-shadow: 0 2px 0 rgba(0, 0, 0, .4), 0 0 12px rgba(0, 0, 0, .5); }
+.wk-head .ix-name h2 small { text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+.wk-wx { position: absolute; z-index: 3; right: 14px; top: calc(70px + var(--st)); display: flex; align-items: center; gap: 7px; padding: 7px 12px 7px 9px; border-radius: 999px; background: rgba(8, 12, 20, .78); border: 1.5px solid rgba(255, 198, 41, .6); font: 800 italic 12px/1 var(--f-ui); letter-spacing: .08em; white-space: nowrap; }
+.wk-wx.wet { border-color: rgba(63, 208, 255, .55); }
+.wk-wx svg { width: 20px; height: 20px; }
+.wk-wx small { font-weight: 600; color: var(--lbl); letter-spacing: .04em; }
+.wk-pnl { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; padding: 0 14px calc(18px + var(--sb)); }
+.wk-kick { margin: 0; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .16em; color: var(--gold); text-transform: uppercase; }
+.wk-ttl h1 { margin: 7px 0 6px; font: 900 italic 28px/1 var(--f-ui); letter-spacing: -.4px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+.wk-what { margin: 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; color: var(--lbl); text-transform: uppercase; }
+.wk-what b { color: #fff; font-weight: 800; }
+/* the calendar's two pages: light paper, rings at the top, the day's colour at the head; only the frame of the page in play coloured
+   (Sunday red while qualifying is off, Saturday gold once it is on) */
+.wk-cal { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 2px 0; }
+.wk-pg { position: relative; height: 221px; display: flex; flex-direction: column; border-radius: 10px 10px 12px 12px; background: linear-gradient(180deg, #f4f1e8, #e2ddd0); color: #141a24; box-shadow: 0 14px 30px rgba(0, 0, 0, .55), 0 2px 0 #b9b3a3; }
+.wk-pg::before, .wk-pg::after { content: ''; position: absolute; top: -8px; width: 10px; height: 18px; border-radius: 5px; background: linear-gradient(180deg, #d8dde6, #7d8594); box-shadow: 0 2px 3px rgba(0, 0, 0, .5); z-index: 2; }
+.wk-pg::before { left: 28%; }
+.wk-pg::after { right: 28%; }
+.wk-hd { flex: 0 0 auto; padding: 10px 8px 8px; border-radius: 10px 10px 0 0; text-align: center; font: 900 italic 14px/1 var(--f-ui); letter-spacing: .14em; }
+.wk-q .wk-hd { background: var(--gold); color: var(--gold-ink); }
+.wk-r .wk-hd { background: linear-gradient(180deg, var(--curb-hi), var(--curb-lo)); color: #fff; }
+.wk:not(.on) .wk-r { box-shadow: 0 0 0 3.5px var(--curb-hi), 0 0 26px rgba(255, 81, 69, .4), 0 14px 30px rgba(0, 0, 0, .55); }
+.wk.on .wk-q { box-shadow: 0 0 0 3.5px var(--gold), 0 0 26px rgba(255, 198, 41, .4), 0 14px 30px rgba(0, 0, 0, .55); }
+.wk-q { will-change: transform; }   /* (its own layer: the page turned aside is drawn whole on every GPU) */
+.wk:not(.on) .wk-q { transform: rotate(-4deg) translateY(6px); background: linear-gradient(180deg, #d3d2cd, #bdbbb4); }
+.wk:not(.on) .wk-q .wk-dw { background: none; }
+.wk:not(.on) .wk-q .wk-dw svg circle, .wk:not(.on) .wk-q .wk-dw svg path[stroke] { fill: #a8a69f; stroke: #a8a69f; }
+.wk:not(.on) .wk-q .wk-tmp, .wk:not(.on) .wk-q .wk-ses, .wk:not(.on) .wk-q .wk-sdet, .wk:not(.on) .wk-q .wk-wd, .wk:not(.on) .wk-q .wk-wd em { color: #85878d; }
+/* (greyed by colour alone: a filter or opacity on the turned page is drawn wrong by some GPUs) */
+.wk:not(.on) .wk-q .wk-hd { background: #9aa3b2; color: #202733; }
+.wk:not(.on) .wk-q .wk-sname { text-decoration: line-through; text-decoration-thickness: 2px; }
+/* the day's weather: big, with a warm glow behind it */
+.wk-dw { padding: 8px 8px 6px; margin: 0 10px; display: flex; flex-direction: column; align-items: center; border-bottom: 1px dashed #b7b0a0; background: radial-gradient(70% 80% at 50% 45%, rgba(255, 200, 60, .32), transparent 72%); }
+.wk-r .wk-dw { background: radial-gradient(70% 80% at 50% 45%, rgba(255, 200, 60, .26), transparent 72%); }
+.wk-dw .wk-row { display: flex; align-items: center; gap: 8px; }
+.wk-tmp { font: 900 italic 34px/1 var(--f-ui); letter-spacing: -1px; }
+.wk-tmp sup { font-size: 15px; vertical-align: 15px; }
+.wk-wd { margin-top: 2px; font: 700 italic 11.5px/1.25 var(--f-ui); color: #4b5465; white-space: nowrap; }
+.wk-wd em { font-style: inherit; font-weight: 900; color: #c77700; }
+.wk-ses { margin-top: 8px; text-align: center; }
+.wk-t { display: block; font: 900 italic 24px/1 var(--f-ui); letter-spacing: -1px; }
+.wk-line { display: block; margin-top: 3px; white-space: nowrap; }
+.wk-sname { font: 900 italic 15px/1 var(--f-ui); text-transform: uppercase; }
+.wk-sdet { font: 700 italic 11.5px/1.2 var(--f-ui); color: #4b5465; }
+.wk-ft { margin-top: auto; padding-bottom: 9px; display: flex; justify-content: center; align-items: center; gap: 6px; min-height: 32px; }
+.wk-gl { font: 800 italic 10px/1 var(--f-ui); letter-spacing: .12em; color: #6b7384; }
+.wk-pos { font: 900 italic 24px/1 var(--f-ui); letter-spacing: -.4px; color: #a87700; }
+.wk:not(.on) .wk-pos { color: #d81f2a; }
+.wk-pos u { text-decoration: none; font-size: 12px; color: #6b7384; margin-left: 2px; }
+.wk-stamp { position: absolute; z-index: 3; left: 50%; top: 64%; padding: 5px 9px; border: 3px solid #d81f2a; border-radius: 6px; color: #d81f2a; font: 900 italic 13px/1 var(--f-ui); letter-spacing: .12em; background: rgba(244, 241, 232, .92); box-shadow: 0 2px 6px rgba(0, 0, 0, .25); transform: translate(-50%, -50%) rotate(-12deg); white-space: nowrap; pointer-events: none; }
+/* the switch: off grey, on gold */
+.wk-sw { position: relative; flex: 0 0 auto; width: 58px; height: 32px; border-radius: 999px; background: #222a37; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .5), 0 0 0 1.5px rgba(255, 255, 255, .3); }
+.wk-sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(180deg, #c3cad6, #8e97a6); box-shadow: 0 2px 4px rgba(0, 0, 0, .35); }
+.wk-sw i { position: absolute; top: 10px; right: 8px; font: 900 italic 11px/1 var(--f-ui); color: var(--lbl); }
+.wk-sw i::before { content: 'OFF'; }
+.wk.on .wk-sw { background: linear-gradient(180deg, var(--gold-hi), var(--gold-lo)); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25), 0 0 0 1.5px #fff0b0, 0 0 14px rgba(255, 198, 41, .35); }
+.wk.on .wk-sw::after { left: auto; right: 3px; background: #fff; }
+.wk.on .wk-sw i { right: auto; left: 9px; color: var(--gold-ink); }
+.wk.on .wk-sw i::before { content: 'ON'; }
+.wk-note { margin: 12px 4px 0; display: flex; align-items: center; gap: 6px; font: 500 13px/1.35 var(--f-ui); color: var(--lbl); }
+.wk-note[data-off] { font: 800 italic 11.5px/1.2 var(--f-ui); color: var(--gold); letter-spacing: .03em; }
+.wk-note svg { flex: 0 0 auto; width: 14px; height: 14px; }
+.wk-go { width: 100%; margin-top: 14px; height: 60px; flex-direction: column; gap: 4px; }
+.wk-go small { font: 700 italic 12px/1 var(--f-ui); opacity: .85; letter-spacing: .04em; }
+@media (prefers-reduced-motion: reduce) { .wk-pic, .wk.model .wk-pic { animation: none; } }
+@media (orientation: landscape) {
+  /* the track at the left, the calendar at the right, Race! at the very bottom right */
+  .wk-bg::after { background: linear-gradient(180deg, rgba(5, 8, 13, .65) 0, rgba(5, 8, 13, 0) 100px), linear-gradient(90deg, rgba(8, 18, 31, 0) calc(var(--wk-x, 50%) - 100px), rgba(8, 18, 31, .92) calc(var(--wk-x, 50%) - 20px), var(--navy2) calc(var(--wk-x, 50%) + 10px)); }
+  .wk.model .wk-bg::after { background: linear-gradient(180deg, rgba(5, 8, 13, .5) 0, rgba(5, 8, 13, 0) 90px), linear-gradient(90deg, rgba(8, 18, 31, 0) calc(var(--wk-x, 50%) - 80px), var(--navy2) calc(var(--wk-x, 50%) + 10px)); }
+  .wk-head .ix-name h2 { font-size: clamp(20px, 6vh, 27px); }
+  .wk-head { right: auto; width: 47%; padding-left: calc(16px + var(--sl)); }
+  .wk-wx { right: auto; left: calc(16px + var(--sl)); top: auto; bottom: calc(14px + var(--sb)); }
+  .wk-pnl { top: 0; left: 49%; padding: calc(12px + var(--st)) calc(14px + var(--sr)) calc(12px + var(--sb)) 4px; }
+  .wk-ttl h1 { font-size: 22px; margin: 5px 0 0; }
+  .wk-what { display: none; }
+  .wk-cal { margin: auto 0; padding-top: 10px; gap: 12px; }
+  .wk-note { margin: 0 4px 8px; }
+  .wk-pg { height: 164px; }
+  .wk-hd { padding: 7px 6px 5px; font-size: 12px; }
+  .wk-dw { padding: 4px 6px 3px; }
+  .wk-dw svg { width: 36px; height: 36px; }
+  .wk-tmp { font-size: 24px; }
+  .wk-wd { display: none; }
+  .wk-ses { margin-top: 4px; }
+  .wk-t { font-size: 18px; }
+  .wk-sdet { display: none; }
+  .wk-ft { padding-bottom: 6px; min-height: 28px; }
+  .wk-stamp { top: 62%; }
+  .wk:not(.on) .wk-q { transform: rotate(-3deg) translateY(4px); }
+  .wk-go { margin-top: 0; height: 54px; }
+}
+@media (orientation: landscape) and (max-height: 380px) { .wk-note { display: none; } }
+@media (max-width: 360px) { .wk-tmp { font-size: 30px; } .wk-cal { gap: 10px; } .wk-sname { font-size: 13.5px; } }
 /* ---------------- the port: the game's own scene behind the main menu, the car without a picture, the race options sheet ---------------- */
 #s-title { background: transparent; }
 .scrim { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(5, 8, 13, .62) 0%, rgba(5, 8, 13, .12) 24%, rgba(5, 8, 13, 0) 40%, rgba(5, 8, 13, .5) 100%); }

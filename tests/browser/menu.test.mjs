@@ -1,7 +1,8 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
 // Leaderboard, Credits), the four modes, the tracks of every mode in their groups (each with its picture: the map from above, or the
 // model of the land), the weather and the race options, the car (the game's own screen and back), a race from the menu (the intro
-// off, the short intro with its video and Skip) and the way back to the title, the game's own screens the menu links to, the
+// off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
+// when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
 //   node tests/browser/menu.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -170,19 +171,70 @@ try {
     T.check('no page errors in the time trial', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
-  {
-    const { ctx, page, errors } = await open({ intro: 1 });
+  {   // (the short intro: an open road, Pikes Peak's time trial; in Circuit race on a circuit the race weekend is the intro: 5a)
+    const { ctx, page, errors } = await open({ intro: 1, track: 'pikes', mode: 'tt', lastTrack: 'pikes' });
     await ready(page);
-    await click(page, 'single'); await click(page, 'mode:race');
+    await click(page, 'single'); await click(page, 'mode:trial');
     await click(page, 'race-single');
     await page.waitForFunction(() => { const v = document.getElementById('menu-host').shadowRoot.querySelector('.intro video'); return v && v.currentTime > 1.2 && !v.paused; }, null, { timeout: 90000 }).catch(() => null);
     const iv = await ev(page, 'const v = root.querySelector(".intro video"); return v ? { t: v.currentTime, paused: v.paused, dur: v.duration, head: root.querySelector(".ix-name h2") && root.querySelector(".ix-name h2").firstChild.textContent, race: !!window.__game.race } : null;');
-    T.check('the short intro: the helicopter\'s video plays over the track, the race waits', iv && iv.t > 1.2 && !iv.paused && iv.dur > 20 && iv.head === 'Riviera' && !iv.race, JSON.stringify(iv));
+    T.check('the short intro: the helicopter\'s video plays over the track, the race waits', iv && iv.t > 1.2 && !iv.paused && iv.dur > 20 && iv.head === 'Pikes Peak' && !iv.race, JSON.stringify(iv));
     await page.click('.intro [data-ix="skip"]');
-    await raceOn(page, 'riviera').catch(() => null);
+    await raceOn(page, 'pikes').catch(() => null);
     const a = await ev(page, 'return { intro: !!root.querySelector(".intro"), race: __game.race && __game.race.track.def.id };');
-    T.check('Skip: the intro is gone, the race starts', !a.intro && a.race === 'riviera', JSON.stringify(a));
+    T.check('Skip: the intro is gone, the race starts', !a.intro && a.race === 'pikes', JSON.stringify(a));
     T.check('no page errors in the intro', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (the Riviera: its helicopter's first frame behind it).
+  //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
+  //     on it is remembered (the setting, kept), Saturday first; Race! without it starts the race from the back of the grid (13th of 13),
+  //     with it the qualifying lap; the pad's B and Start; on its side Race! at the very bottom right
+  {
+    const wk = (page) => ev(page, `const w = root.querySelector('.intro.wk'); if (!w) return null; const vis = (q) => [...w.querySelectorAll(q)].filter(e => e.offsetParent).map(e => e.textContent.replace(/\\s+/g, ' ').trim());
+      const g = [...w.querySelectorAll('.wk-go')].find(e => e.offsetParent), r = g && g.getBoundingClientRect();
+      return { on: w.classList.contains('on'), head: w.querySelector('.ix-name h2').firstChild.textContent, days: vis('.wk-hd'), ses: vis('.wk-sname'), sky: vis('.wk-wd em'), pos: vis('.wk-pos'), stamp: vis('.wk-stamp'), go: g && g.textContent, pic: w.querySelector('.wk-pic img').getAttribute('src'),
+        sw: w.querySelector('.wk-sw').getAttribute('aria-checked'), btn: r && [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight], race: !!window.__game.race };`);
+    const toWeekend = async (page) => { await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300); };
+    const { ctx, page, errors } = await open({ intro: 0, track: 'riviera', mode: 'race', lastTrack: 'riviera' });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    await toWeekend(page);
+    const w0 = await wk(page);
+    T.check('Race! in Circuit race: the race weekend (Saturday qualifying skipped, Sunday the race from P13 of 13), the track from afar behind it, the race waits',
+      w0 && !w0.on && w0.head === 'Riviera' && JSON.stringify(w0.days) === '["SATURDAY","SUNDAY"]' && JSON.stringify(w0.ses) === '["Qualifying","Race"]' && w0.sky.length === 2 && w0.sky.every(k => /sunny|clear/i.test(k)) &&
+      JSON.stringify(w0.pos) === '["P13/13"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-riviera.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
+    await page.click('.intro.wk [data-wk="back"]'); await page.waitForTimeout(300);
+    const b = await ev(page, 'return { wk: !!root.querySelector(".intro"), name: root.querySelector("#s-track .card h1").firstChild.textContent, race: !!window.__game.race };');
+    T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Riviera' && !b.race, JSON.stringify(b));
+    await toWeekend(page);
+    await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
+    const w1 = await wk(page), kept = await page.evaluate(() => [window.__game.S.quali, JSON.parse(localStorage.getItem('tdgp-settings')).quali]);
+    T.check('Saturday switched on: Start qualifying (Saturday first), the grid P1–13, the choice kept in the settings', w1.on && w1.sw === 'true' && /^Start qualifying\s*SATURDAY FIRST$/.test(w1.go) && JSON.stringify(w1.pos) === '["P1–13"]' && !w1.stamp.length && JSON.stringify(kept) === '[1,1]', JSON.stringify({ w1, kept }));
+    await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
+    await page.click('.intro.wk [data-wk="go"]');
+    await raceOn(page, 'riviera').catch(() => null);
+    const r0 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length, grid: r.player.grid, intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro') }; });
+    T.check('Race! with qualifying off: the race, from the back of the grid (13th of 13)', r0 && !r0.quali && r0.cars === 13 && r0.grid === 13 && !r0.intro, JSON.stringify(r0));
+    T.check('no page errors on the race weekend', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // (qualifying on, as left from the last time; on its side; the pad)
+    const { ctx, page, errors } = await open({ intro: 0, quali: 1, track: 'riviera', mode: 'race', lastTrack: 'riviera' }, { width: 915, height: 412 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300);
+    const wl = await ev(page, `const w = root.querySelector('.intro.wk'), g = [...w.querySelectorAll('.wk-go')].find(e => e.offsetParent), r = g.getBoundingClientRect(); return { on: w.classList.contains('on'), go: g.textContent, btn: [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight] };`);
+    T.check('on its side, qualifying remembered on: Start qualifying at the very bottom right', wl.on && /^Start qualifying/.test(wl.go) && wl.btn[2] - wl.btn[0] <= 24 && wl.btn[3] - wl.btn[1] <= 24, JSON.stringify(wl));
+    const pb = await page.evaluate(() => Menu.padKey('b'));
+    const gone = await ev(page, 'return !root.querySelector(".intro");');
+    await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 });
+    const ps = await page.evaluate(() => Menu.padKey('start'));
+    await raceOn(page, 'riviera').catch(() => null);
+    const r1 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length }; });
+    T.check('the pad: B back to the tracks, Start the choice (with qualifying on: the qualifying lap, alone)', pb && gone && ps && r1 && r1.quali && r1.cars === 1, JSON.stringify({ pb, gone, ps, r1 }));
+    T.check('no page errors on the race weekend on its side', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 
