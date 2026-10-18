@@ -963,7 +963,7 @@ Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vož
 
 ## Sledi zadnjih voženj (kronometer)
 
-Na kronometru se ob cilju shranijo sledi gum tvoje vožnje: črna guma na asfaltu, kjer avto drsi, zavira ali spodrsava, in kolesnice v travi, gramozu in blatu. Izven ceste pusti kolesnice vsak izlet s ceste, ne le drsenje (te so malo bolj blede). Vsaka proga hrani sledi svojih **zadnjih 10 voženj** (enajsta izrine najstarejšo), samo za kronometer in samo v tem brskalniku oz. telefonu (IndexedDB, ena vožnja nekaj kB do nekaj deset kB; ni v izvozu profila). Ko naslednjič voziš kronometer na tej progi, so sledi prejšnjih voženj na cesti pod tvojimi svežimi: izven ceste take, kot so bile, na asfaltu bolj prosojne, vsaka starejša vožnja bolj. Na dirki, v prometu in pri begu pred policijo na isti cesti jih ni. Vse stare sledi so en sam klic risanja.
+Na kronometru se ob cilju shranijo sledi gum tvoje vožnje: črna guma na asfaltu, kjer avto drsi, zavira ali spodrsava, in kolesnice v travi, gramozu in blatu. Izven ceste pusti kolesnice vsak izlet s ceste, ne le drsenje (te so malo bolj blede). Vsaka proga hrani sledi svojih **zadnjih 10 voženj** (enajsta izrine najstarejšo), samo za kronometer in samo v tem brskalniku oz. telefonu (IndexedDB, ena vožnja nekaj kB do nekaj deset kB; ni v izvozu profila). Ko naslednjič voziš kronometer na tej progi, so sledi prejšnjih voženj na cesti pod tvojimi svežimi: starejša kot je vožnja, manj se vidi, sledi izpred 10 voženj so komaj še vidne. Izven ceste so sledi zadnje vožnje take, kot so bile, na asfaltu so prosojnejše že od začetka. Na dirki, v prometu in pri begu pred policijo na isti cesti jih ni. Vse stare sledi so en sam klic risanja.
 
 ## Deljenje duha in profila
 
