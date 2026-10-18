@@ -15,9 +15,10 @@ try {
     return { rain: r.rain, water: r.water, line: r.lineWater, ty: P.ty && { k: P.ty.k, wear: P.ty.wear }, pit: P.pitState, inPit: P.inPit, lap: P.lap,
       msg: el('h-msg').textContent, msgOn: el('h-msg').classList.contains('show'), toast: el('toast').textContent, tyre: el('h-tyre').className + ':' + el('h-tyre').textContent,
       sec: [...el('h-sec').children].map(i => i.className + ':' + i.textContent), setup: P.setup }; });
-  // step the race (paused, on autopilot), then let two frames draw the HUD (it is updated only while the race runs) and pause again
-  const sim = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); g.sim(t, true); g.resume();
-    requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
+  // step the race (paused, on autopilot), then draw the HUD as a frame of the running race would (g.hud: the race not stepped). Two real
+  // frames with the race resumed would step it on the real clock: on a slow machine the race ran differently each time (a rival's
+  // mistake, the safety car, the pit lane missed)
+  const sim = (t) => page.evaluate((t) => { const g = window.__game; g.pause(); g.sim(t, true); g.hud(); }, t);
   // on until the race clock (from the lights) reads t: however long the intro before the lights is (the Red Bull Ring's jets fly over first)
   // the HUD's messages as they come, each one (the line in the middle is shared: a rival's duel or mistake may follow the weather's news,
   // even within the same steps, so the line is not read at one moment but its log since the last look)
