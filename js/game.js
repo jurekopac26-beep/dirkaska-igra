@@ -19,7 +19,7 @@
   const CTRL_HELP_CS = 'Levi palec: levo in desno, desni: plin in zavora. Drži smer – avto sam zadrsa z nosom v ovinek in se na izhodu sam poravna; zavora v ovinku ga zavrti.';
   const CTRL_NAME = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
   const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
-    lm: 'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
+    lm: 'Prototip za 24-urne vzdržljivostne dirke: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
     muscle: 'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.',
     ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',
     truck: 'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.' };
@@ -36,8 +36,8 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  // only two cameras remain (isometric for a phone on its side, chase for an upright phone); the kino and cockpit cameras are gone, so an old setting moves to the isometric one
-  if (S.camera !== 'iso' && S.camera !== 'chase') S.camera = 'iso';
+  // one camera, behind the car, on a phone held either way (the isometric, kino and cockpit cameras are gone): an old setting moves to it
+  S.camera = 'chase';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
   // player name: printable, single spaces, max 16 characters; always escaped when rendered
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
@@ -207,7 +207,6 @@
   let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
   let fbT = 0, prevGear = 1, prevAir = 0;
   let tiltWarned = false;
-  let orientBlock = false;
   // adaptive quality (see adaptive()): pending = shadows go off at the next pause or race start; slowAvg = frame time that decided it;
   // check = windows until the effect is measured; restore = no faster without shadows, so they come back; keep = never switch them off again
   const perf = { sum: 0, n: 0, good: 0, slow: 0, pending: false, slowAvg: 0, check: 0, restore: false, keep: false };
@@ -276,7 +275,7 @@
     ['km100', '100 kilometrov', 'Prevozi 100 km.', () => [st.km, 100]],
     ['km1000', '1000 kilometrov', 'Prevozi 1000 km.', () => [st.km, 1000]],
     ['allTracks', 'Popotnik', 'Pripelji do cilja na vsaki progi.', () => [trackCards().filter(droveCard).length, trackCards().length]],
-    ['nring', 'Zeleni pekel', 'Pripelji do cilja na Nordschleife.'],
+    ['nring', 'Kralj Eifla', 'Pripelji do cilja v Nürburgu.'],
     ['champ', 'Prvak', 'Osvoji prvenstvo.'],
     ['legend', 'Legenda', 'Osvoji prvenstvo Legende.'],
     ['gold', 'Zlata medalja', 'Osvoji zlato medaljo v kronometru.'],
@@ -369,35 +368,10 @@
   }
   function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
 
-  /* ---------------- orientation: iso camera = landscape, chase camera = portrait ---------------- */
-  const wantPortrait = () => S.camera === 'chase';
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
   const APP = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
   const installedApp = () => APP;
-  // turn the screen the camera's way and keep it there. Browsers allow it only in full screen or in the installed app
-  // (Chrome on Android); elsewhere (Safari on the iPhone) the "turn your phone" notice of updateOrientation() takes over.
-  // (window.screen, the device's screen: in this file `screen` is the menu screen on show)
-  function lockOrientation() {
-    const o = window.screen && window.screen.orientation;
-    if (!o || !o.lock || !(isFs() || installedApp())) return;
-    try { o.lock(wantPortrait() ? 'portrait' : 'landscape').catch(() => { }); } catch (_) { }
-  }
-  function updateOrientation() {
-    const coarse = matchMedia('(pointer: coarse)').matches;
-    const portrait = window.innerHeight > window.innerWidth;
-    const inRace = bg === 'race' && (screen === 'none' || screen === 'pause');
-    const mismatch = coarse && inRace && portrait !== wantPortrait();
-    const el = $('rotate'), CN = { iso: 'izometrična', chase: 'za avtom' };
-    $('rotate-txt').textContent = tr(wantPortrait() ? 'Obrni telefon v pokončni položaj' : 'Obrni telefon v ležeči položaj');
-    // (or keep it as it is: the camera for that way (Nastavitve, Kamera); the button switches to it)
-    $('rotate-why').textContent = tr(wantPortrait() ? 'Kamera »{0}« je za pokončni položaj.' : 'Kamera »{0}« je za ležeči položaj.', tr(CN[S.camera] || S.camera)) + ' ' + tr(portrait ? 'Lahko pa igraš pokončno s kamero za avtom.' : 'Lahko pa igraš ležeče z izometrično kamero.');
-    $('rotate-cam').textContent = tr(portrait ? 'Igraj pokončno' : 'Igraj ležeče');
-    el.classList.toggle('to-portrait', wantPortrait());
-    el.classList.toggle('show', mismatch);
-    orientBlock = mismatch;
-    if (mismatch && phase === 'racing' && screen === 'none') pause();
-  }
 
   /* ---------------- screens ---------------- */
   // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still
@@ -419,13 +393,12 @@
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
     $('btn-pause').classList.toggle('off', !(bg === 'race' && inRace));
-    $('btn-cam').classList.toggle('off', !(bg === 'race' && inRace)); if (inRace) camLabel();
     tyreBtn();   // (the tyres for the next stop: in a race with compounds and pits)
     // (a screen over the race, the pause too: no rescue button and no VOZILO UNIČENO banner with its Odstopi / Ponovi seen through it,
     // where the menu's own buttons take the tap; the first HUD frame after it puts the banner back)
     if (!inRace) { $('btn-rescue').classList.add('off'); $('h-wreck').classList.remove('show'); wreckKey = ''; }
     if (inRace) requestAnimationFrame(() => Input.layout());
-    updateOrientation(); hudCol(0);
+    hudCol(0);
   }
   function refreshSegs() {
     for (const seg of document.querySelectorAll('.seg')) {
@@ -445,7 +418,7 @@
         $('title-sub').textContent = nm + tr(pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + wx; }
       else if (upRace(d)) { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestRace ? tr(' (najboljša dirka {0})', fmt(r.bestRace, true)) : '') + '.'; $('title-sub').textContent = nm + tr(' · dirka na vrh · {0} nasprotnikov', rivN(d)) + wx; }
       else { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestLap ? tr(' (rekord kroga {0})', fmt(r.bestLap, true)) : '') + '.'; $('title-sub').textContent = nm + ' · ' + lapWord(lapsOf(d)).toLowerCase() + tr(' · {0} nasprotnikov', rivN(d)) + wx + (S.length === 'endurance' ? tr(' · vzdržljivostna') : '') + (S.fuel && d.pit ? tr(' · gorivo') : ''); } }
-    $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
+    $('title-hint').textContent += tr(' Upravljanje: {0}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control])) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = tr('Prvenstvo') + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
@@ -555,24 +528,13 @@
     if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
     if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track' && !menuOn) buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
-    if (key === 'camera') { lockOrientation(); updateOrientation(); }
-  }
-  // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): the next one
-  // that suits the phone as it is held (lying: isometric; upright: behind the car; a computer: both), kept as the setting
-  const CAMS = ['iso', 'chase'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom' };
-  function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse ? CAMS.filter(c => (c === 'chase') === portrait) : CAMS; }
-  function cycleCam() {
-    const pool = camPool(); if (pool.length < 2 && pool[0] === S.camera) return;
-    const next = pool[(pool.indexOf(S.camera) + 1) % pool.length];
-    setOption('camera', next); Render.resetCam(); camLabel();
-    if (screen === 'none') toast(tr('Kamera: {0}', tr(CAM_NAME[next])), 1300);
   }
   // the language changed (Nastavitve): the page and what the game wrote on it again, in the new one; the screen the settings return to
   // is built again (the others are built when they open)
   function relang() {
     Lang.set(S.lang); Lang.apply(document.body);
     if (S.name === 'Igralec' || S.name === 'Player') { S.name = tr('Igralec'); save(); }   // (the default name, in the new language)
-    updateOrientation(); updateFsButtons(); camLabel(); refreshSegs();
+    updateFsButtons(); refreshSegs();
     if (race) { $('pause-restart').textContent = restartTxt(); $('h-rank').firstElementChild.textContent = tr(race.pol ? 'POLICIJA' : 'MESTO'); fltKey = null; }   // (the failures' pills: written again)
     chalBtn(); if (screen === 'chal') chalShow();   // (a challenge waiting: its button and card)
     const B = { car: buildCarScreen, upg: buildUpgScreen, track: buildTrackScreen, board: buildBoardScreen, champ: buildChampScreen, career: buildCareerScreen };
@@ -582,7 +544,6 @@
   }
   // the pause menu's restart: the climb or the stage again, the qualifying lap, the run from the police, the race
   const restartTxt = () => !race ? tr('Ponovi dirko') : race.chal ? tr('Poskusi znova') : race.timeTrial ? ttAgain(track.def) : race.quali ? tr('Ponovi krog') : race.pol ? tr('Ponovi beg') : tr('Ponovi dirko');
-  function camLabel() { const b = $('pause-cam'); if (b) b.textContent = tr('Kamera: {0}', tr(CAM_NAME[S.camera])); const h = $('btn-cam'); if (h) h.classList.toggle('dis', camPool().length < 2); }
   function enableTilt(fromStart) {
     Input.requestTilt().then(res => {
       if (res !== 'granted') { toast(tr(res === 'denied' ? 'Dostop do senzorja nagiba je zavrnjen. Uporabi tipke ali volan.' : 'Ta naprava ne podpira nagiba. Uporabi tipke ali volan.'), 3600); return; }
@@ -814,7 +775,7 @@
     const R = recd; if (!R || R.frames.length < 40) { toast(tr('Posnetka ni.'), 2000); return; }
     const own = RP_CAM[S.camera] ? S.camera : 'tv';   // (own: the camera the player drove with, the first of the replay's)
     replay = { t: R.frames[0][0], t1: R.frames[R.frames.length - 1][0], i: 0, speed: 1, play: true, cam: own, own, k: Math.max(0, R.cars.indexOf(race.player)), sc: null };
-    showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('btn-cam').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
+    showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
     Sfx.setRunning(false); Sfx.silence(); Comm.stop(); Render.setGhost(null); Render.setGhostF(null); Render.resetCam(); replayUI();
   }
   function replayEnd() {
@@ -825,8 +786,8 @@
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
   }
-  const RP_CAM = { tv: 'TV', chase: 'Za avtom', iso: 'Od zgoraj', cockpit: 'Kokpit', kino: 'Kino' }, RP_SPEED = [1, 2, 4, 0.5, 0.25];
-  const RP_RING = ['tv', 'chase', 'iso', 'cockpit'];   // (the camera button: the player's own camera first, then these in turn; kino only as one's own)
+  const RP_CAM = { tv: 'TV', chase: 'Za avtom' }, RP_SPEED = [1, 2, 4, 0.5, 0.25];
+  const RP_RING = ['tv', 'chase'];   // (the camera button: the player's own camera first, then the other)
   function replayUI() {
     const P = replay; if (!P) return;
     $('rp-hl').classList.toggle('on', !!P.hl);
@@ -1028,7 +989,7 @@
     if (!photo) return;
     const P = photo; photo = null; $('gl').style.filter = ''; $('s-photo').classList.remove('hidden');
     Render.setShot(P.prev);
-    if (P.from === 'replay' && replay) { showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('btn-cam').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off'); }
+    if (P.from === 'replay' && replay) { showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off'); }
     else { paused = P.wasPaused; showScreen(P.from === 'results' ? 'results' : 'pause'); }
   }
   function photoPose() {
@@ -1708,7 +1669,7 @@
   function pause() {
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
-    camLabel(); $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
+    $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
     stratInfo();
     showScreen('pause');
@@ -2024,7 +1985,7 @@
   }
   function pkStart() {   // newRace (after hxStart)
     const on = pk.on = !!race.timeTrial && pkIs(track.def) && !(mp && mp.race), H = $('h-sec');
-    $('hud').classList.toggle('pkc', on); $('pk-cer').className = ''; $('hud').classList.remove('pkn', 'pkleg');
+    $('hud').classList.toggle('pkc', on); $('pk-cer').className = ''; $('hud').classList.remove('pkleg');
     while (H.children.length > 3) H.lastChild.remove();
     if (!on) return;
     pk.cls = pkClsOf(Core.MODELS[S.car].id);
@@ -2123,7 +2084,6 @@
   const pkMedW = (d, wet) => pkGrav(d) ? (wet ? PK_MED_G_WET : PK_MED_G) : wet ? PK_MED_WET : PK_MED;   // (the medal times of a road, dry or wet)
   const pkLegCar = (d, c) => (pkGrav(d) ? PK_LEG_G : PK_LEG)[c];
   if (!['best', 'legend', 'off'].includes(S.pkGhost)) S.pkGhost = S.ghost ? 'best' : 'off';   // Duh: moj najboljši / legenda / brez (first time: as the ghost setting)
-  S.pkNotes = +S.pkNotes === 0 ? 0 : 1;   // Opozorila na ovinke (on unless turned off)
   const pkMedSet = (d) => pkMedW(d, wetRec(d));
   const pkMedOf = (A, t) => t > 0 ? A.findIndex(x => t <= x) : -1;
   const pkMs = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
@@ -2213,40 +2173,12 @@
     const J = pkLegIs(pkLeg.job, c, wet, d) ? pkLeg.job : pkLegJob(c, wet, d);
     pkLegRun(J, 1e9); return pkLegGet(c, wet, d);
   }
-  // The corner warnings (Opozorila na ovinke, S.pkNotes): a pace-note pill under the clock for the next corner, from 2.6 s before it
-  // at the current speed (40-230 m) until the car is in it: a hairpin big and red, a medium bend orange, a fast one faint; the arrow
-  // and the rally grade (2 a slow corner .. 6 a flat-out kink), the distance. It replaces the generic arrow (#h-note) on Pikes Peak.
-  const PK_NP = { r3: 'M20 56 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34', l3: 'M44 56 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34',
-    r2: 'M22 56 V36 Q22 20 38 20 H48 M39 11 L48 20 L39 29', l2: 'M42 56 V36 Q42 20 26 20 H16 M25 11 L16 20 L25 29',
-    r1: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l1: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25' };
-  function pk7Start() {   // pkStart: the ghost chosen for Pikes Peak (the live difference and the profile follow it), the corners ahead
+  function pk7Start() {   // pkStart: the ghost chosen for Pikes Peak (the live difference and the profile follow it)
     const wet = !!race.rain;
     if (S.pkGhost === 'off') ghPlay = null;
     else if (S.pkGhost === 'legend') ghPlay = pkLegNow(pk.cls.id, wet, track.def);
     hxStart();   // (again: the difference and the profile against this ghost)
     $('hud').classList.toggle('pkleg', !!(ghPlay && ghPlay.leg));
-    const T = track, nos = T.def.turnNos(T);
-    pk.notes = nos.map(q => { const c = T.corners.find(x => x.s0 === q.s), hp = q.sev === 3 && !!c && c.angle > 2.0, a = c ? c.angle : 0;
-      return { s: q.s, n: q.n, sev: q.sev, dir: q.dir, hp, g: hp ? 1 : q.sev === 3 ? 2 : q.sev === 2 ? (a > 1.2 ? 3 : 4) : a < 0.5 ? 6 : 5 }; });
-    pk.nk = -2; pk.nd = ''; pk.non = -1; $('pk-note').className = '';
-  }
-  const pkRot = { a: 0 };   // (the pill's arrow: its angle as set, see noteAng)
-  function pkNoteFrame(P) {   // every HUD frame: the pill (the DOM touched only when the corner or its 10 m step changes)
-    const on = +S.pkNotes ? 1 : 0, el = $('pk-note');
-    if (on !== pk.non) { pk.non = on; $('hud').classList.toggle('pkn', !!on); }
-    const L = pk.notes, sp = track.startS + P.dist; let k = -1;
-    if (on && L && phase === 'racing' && !P.finished) { for (let i = 0; i < L.length; i++) if (L[i].s + 6 > sp) { k = i; break; } if (k >= 0 && L[k].s - sp > clamp(P.speed * 2.6, 40, 230)) k = -1; }
-    if (k !== pk.nk) { pk.nk = k; pk.nd = '';
-      if (k < 0) { el.classList.remove('show'); return; }
-      const c = L[k], lr = c.dir > 0 ? 'r' : 'l';
-      $('pk-note-path').setAttribute('d', PK_NP[lr + (c.hp ? 3 : c.sev === 1 ? 1 : 2)]);
-      el.children[1].textContent = c.hp ? tr(c.dir > 0 ? 'DESNA LASNICA' : 'LEVA LASNICA') : tr(c.dir > 0 ? 'DESNI {0}' : 'LEVI {0}', c.g);
-      el.className = 's' + c.sev + (c.hp ? ' hp' : '') + ' show';
-    }
-    if (k < 0) return;
-    noteRot($('pk-note-path').parentNode, pkRot, noteAng(track.idx(L[k].s)));   // (the isometric camera: the arrow along the road into the corner, see noteAng)
-    const d = Math.max(0, Math.round((L[k].s - sp) / 10) * 10), t = d ? d + ' m' : '';
-    if (t !== pk.nd) { pk.nd = t; el.children[2].textContent = t; }
   }
   function finishRace() {
     phase = 'done';
@@ -2413,7 +2345,7 @@
     const R = champRivals(), riv = done ? '' : tr(' · tekmeci: {0}', R.txt);   // (what the rivals of the next round drive)
     if (!d) {   // the choice of a series: its tracks, its length, the best final place so far
       if (!Core.CHAMPS.some(c => c.id === champPick)) champPick = Core.CHAMPS[0].id;
-      $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke kot v F1');
+      $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke 25, 18, 15 …');
       $('ch-diff').textContent = (S.difficulty > 2 ? tr('Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()])) : tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()]))) + riv;
       $('ch-body').innerHTML = '<div class="ch-cards">' + Core.CHAMPS.map(c => {
         const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
@@ -3357,28 +3289,11 @@
     l1: 'M42 54 V36 Q42 20 26 20 H18 M26 11 L17 20 L26 29',
     r3: 'M20 54 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34',
     l3: 'M44 54 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34',
-    r0: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l0: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25',   // (a fast bend: Pikes' PK_NP r1/l1)
+    r0: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l0: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25',   // (a fast bend)
     ring: 'M46.9 33.3 A15 15 0 0 0 32.8 17 M38.3 22.8 L32.8 17 L38.9 11.9 M25.7 18.4 A15 15 0 0 0 18.6 38.8 M20.8 31.1 L18.6 38.8 L11.1 36.1 M23.4 44.3 A15 15 0 0 0 44.6 40.2 M36.8 42.1 L44.6 40.2 L46 48',   // anticlockwise (traffic on the right)
     ringcw: 'M17.1 33.3 A15 15 0 0 1 31.2 17 M25.7 22.8 L31.2 17 L25.1 11.9 M38.3 18.4 A15 15 0 0 1 45.4 38.8 M43.2 31.1 L45.4 38.8 L52.9 36.1 M40.6 44.3 A15 15 0 0 1 19.4 40.2 M27.2 42.1 L19.4 40.2 L18 48',   // (def.leftHand)
     cr: 'M22 56 V44 Q22 34 32 30 Q42 26 42 16 V12 M33 19 L42 10 L51 19', cl: 'M42 56 V44 Q42 34 32 30 Q22 26 22 16 V12 M13 19 L22 10 L31 19'   // a chicane, first right / first left
   };
-  // The corner arrows (#h-note; Pikes Peak's pill #pk-note) on the isometric camera (phone lying): that view always looks north and the car
-  // goes any way across the screen, so an upright arrow (stem up: the way in) would point the wrong way. The glyph (not its box, not the
-  // words) turns to the road's way into the corner as it lies on the screen: the road's tangent at the corner's start along the camera's own
-  // right and up axes (its matrix, columns 0 and 1: the last frame's, the same in the iso view, which never turns). Clockwise from up, as CSS
-  // rotate; the view is not mirrored, so a right bend stays clockwise. Behind the car (chase: the camera turns with the car) it stays
-  // upright. The DOM is touched only when the angle moves by more than ~2 deg (in the iso view: once per corner)
-  function noteAng(i) {
-    const C = S.camera === 'iso' ? Render.camera : null; if (!C) return 0;
-    const dx = track.tx[i], dz = track.tz[i], e = C.matrixWorld.elements;
-    const r = dx * e[0] + dz * e[2], u = dx * e[4] + dz * e[6];
-    return r * r + u * u > 1e-6 ? Math.atan2(r, u) : 0;
-  }
-  function noteRot(svg, o, a) {
-    if (Math.abs(Core.wrapPi(a - o.a)) < 0.035) return;
-    o.a = a; svg.style.transform = a ? 'rotate(' + (a * 180 / Math.PI).toFixed(1) + 'deg)' : '';
-  }
-  const hnRot = { a: 0 };
   // the sign (Core Track.signAt: the corners, the fast bends, the track's own bends; blue: a roundabout, a chicane, up while the car is in it)
   let lastNote = '', noteForce = null;   // (noteForce: the tests, window.__game.noteAt)
   function updateNote(P) {
@@ -3390,7 +3305,6 @@
       const blue = g.kind === 'ring' || g.kind === 'chic', lr = g.dir > 0 ? 'r' : 'l';
       const pk = g.kind === 'ring' ? (track.def.leftHand ? 'ringcw' : 'ring') : g.kind === 'chic' ? 'c' + lr : lr + (g.hair ? '3' : g.kind === 'fast' || !g.sev ? '0' : '1');
       key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev);
-      noteRot($('h-note-path').parentNode, hnRot, g.kind === 'ring' ? 0 : noteAng(g.i0));   // (iso: arrows and chicanes along the road; a roundabout stays upright)
     }
     if (key === lastNote) { if (key) placeNote(el); return; }
     lastNote = key; noteAt0 = '';
@@ -3503,7 +3417,6 @@
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
   function updateHUDTT(dt, P) {
     hxFrame(dt, P);   // (turn counter, live difference to the best run, height profile: below)
-    if (pk.on) pkNoteFrame(P);   // (Pikes Peak: the corner warnings)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setText('h-lap', P.finished ? tr('CILJ') : 'CP ' + P.cp + '/' + nCP);
     // altitude of the road under the car (not the body, as in the splits table), between start and summit (or the foot of a descent); frozen at the
@@ -3767,7 +3680,7 @@
   function hudCol(dt) {
     const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
     if (M.textContent !== hcol.ic) { hcol.ic = M.textContent; M.dataset.ic = msgIcon(hcol.ic); }   // (its icon: when its text changes)
-    const on = bg === 'race' && screen === 'none' && !replay && !orientBlock && !hud.classList.contains('off') && !hud.classList.contains('shot');
+    const on = bg === 'race' && screen === 'none' && !replay && !hud.classList.contains('off') && !hud.classList.contains('shot');
     if (T.classList.contains('col') !== on) T.classList.toggle('col', on);
     if (!on) { if (hcol.key) { hcol.key = ''; T.style.top = T.style.fontSize = ''; T.classList.remove('wait'); } return; }
     if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
@@ -3779,7 +3692,7 @@
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
     const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === dU ? 'd' : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
-    { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column; css #pk-note goes down with it)
+    { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column)
     const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
     let lim = H - COL_GAP;   // the column's foot: above whatever is below it
     const obs = tch.classList.contains('off') || tch.classList.contains('pad') ? [] : ['c-gas', 'c-brake', 'c-left', 'c-right', 'c-wheel', 'tilt-ind'];
@@ -3974,7 +3887,7 @@
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
   const partEn = (M, id) => (M.def && M.def.partNames && M.def.partNames[id]) || (M.body === 'formula' ? PART_EN_F : M.body === 'lm' ? PART_EN_LM : PART_EN)[id] || PART_EN[id] || 'panel';
   const WHEEL_IDS = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest', jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'Spielberg', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', baldy: 'Mount Baldy', maunakea: 'Mauna Kea', cpalace: 'Crystal Palace', riverside: 'Riverside', monterey: 'Monterey', longford: 'Longford', newcastle: 'Newcastle', rio: 'Rio de Janeiro', medvode: 'Medvode', hotham: 'Mount Hotham', townsville: 'Townsville', marrakesh: 'Marrakesh', palomar: 'Palomar Mountain', greatalpine: 'the Great Alpine Road' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest', jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'Nürburg', spa: 'Spa', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'Spielberg', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', baldy: 'Mount Baldy', maunakea: 'Mauna Kea', cpalace: 'Crystal Palace', riverside: 'Riverside', monterey: 'Monterey', longford: 'Longford', newcastle: 'Newcastle', rio: 'Rio de Janeiro', medvode: 'Medvode', hotham: 'Mount Hotham', townsville: 'Townsville', marrakesh: 'Marrakesh', palomar: 'Palomar Mountain', greatalpine: 'the Great Alpine Road' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -4689,7 +4602,6 @@
         if (sc0 !== 'none' || screen !== 'none') continue;
         if (k === '@pause' && bg === 'race') { pause(); break; }
         if (k === '@rescue' && !$('btn-rescue').classList.contains('off')) $('btn-rescue').click();
-        else if (k === '@cam' && bg === 'race' && !replay) cycleCam();
         continue;
       }
       if (screen === 'none') continue;
@@ -4709,8 +4621,8 @@
      the browser (tdgp-ctrl: { keys: { act: [code, code] }, lbl: { code: the key's name }, pads: { device: binding }, dev }); Ponastavi:
      the defaults of the page shown. ---------------- */
   const CTL_KEY = 'tdgp-ctrl';
-  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['tyre', 'Gume za postanek']];
-  const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['rescue', 'Nazaj na progo']];
+  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek']];
+  const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['rescue', 'Nazaj na progo']];
   let ctl = { keys: null, lbl: {}, pads: {}, dev: '' }, ctlTab = 'keys', ctlWait = null;
   const ctlInOk = (q) => isObj(q) && Number.isInteger(q.i) && q.i >= 0 && q.i < 64 && (q.t === 'b' || (q.t === 'a' && isFinite(q.lo) && isFinite(q.hi) && q.lo !== q.hi));
   const ctlPadOk = (b) => isObj(b) && isObj(b.steer) && Number.isInteger(b.steer.i) && b.steer.i >= 0 && b.steer.i < 64 && ['dz', 'rng', 'cur'].every(k => isFinite(b.steer[k])) &&
@@ -4830,14 +4742,13 @@
       if (n >= 8) acc = 0;
       demoSwitch -= dt;
       if (!demoTarget || demoSwitch <= 0) { demoTarget = demo.order ? demo.order[(Math.random() * 4) | 0] : demo.cars[0]; demoSwitch = 9; }
-      Render.frame(dt, acc / STEP, demoTarget, 'iso', {});
+      Render.frame(dt, acc / STEP, demoTarget, 'chase', {});
       if (screen === 'settings') updateTiltLive();
       return;
     }
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
-    if (race.nv && nv && nv.built && typeof NVMenu !== 'undefined') NVMenu.tick(race.player, !paused && screen === 'none' && phase === 'racing' && !orientBlock && !replay);   // (NEW VERSION · TEST 1: a garage's menu while the car stands on its coloured floor, js/nvmenu.js)
-    if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
+    if (race.nv && nv && nv.built && typeof NVMenu !== 'undefined') NVMenu.tick(race.player, !paused && screen === 'none' && phase === 'racing' && !replay);   // (NEW VERSION · TEST 1: a garage's menu while the car stands on its coloured floor, js/nvmenu.js)
     if (replay) { replayFrame(hlRec ? hlvDt(dtRaw) : dt); return; }   // (the best moment being recorded: on the real clock, as the video's, also when the frames are slow)
     const inp = Input.update(dt);
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
@@ -4982,7 +4893,6 @@
       case 'car-view': photoStart(screen === 'results' ? 'results' : 'pause', true); break;   // (Ogled vozila: the photo mode, the player's car up close)
       case 'retire': retireTap(el); break;
       case 'ph-lens': case 'ph-filter': case 'ph-blur': case 'ph-in': case 'ph-out': case 'ph-hide': case 'ph-save': case 'ph-exit': photoAct(act); break;
-      case 'cam-next': cycleCam(); break;
       case 'champ-go': {
         if (champDone()) { champ = null; champSave(); buildChampScreen(); break; }   // (finished: "Novo prvenstvo" -> the choice of a series)
         if (!owned(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.'), 3000); break; }
@@ -5000,7 +4910,6 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
-      case 'rot-cam': { const wasP = screen === 'pause'; setOption('camera', window.innerHeight > window.innerWidth ? 'chase' : 'iso'); Render.resetCam(); camLabel(); if (wasP && race && !orientBlock) resume(); break; }   // (the phone held the other way than the camera wants: the camera for the way it is held; "Igraj": on with the race)
       case 'over-again': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else newRace(); break;   // (KONEC IGRE: the same race again, a championship's round too)
       case 'over-res': finishRace(); break;
       case 'restart': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)
@@ -5027,7 +4936,7 @@
       if (p && p.catch) p.catch(() => toast(na, 4200));
     } catch (_) { toast(na, 4200); }
   }
-  function onFsChange() { updateFsButtons(); lockOrientation(); }
+  function onFsChange() { updateFsButtons(); }
 
   /* ---------------- the game as an app (manifest.webmanifest, sw.js) ---------------- */
   // Chrome offers to install the game with the beforeinstallprompt event: only then the title screen shows "Namesti igro".
@@ -5164,7 +5073,6 @@
       nm.addEventListener('blur', () => { nm.value = S.name; });
     }
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
-    $('btn-cam').addEventListener('click', (e) => { e.preventDefault(); Sfx.click(); cycleCam(); });
     $('btn-tyre').addEventListener('click', (e) => { e.preventDefault(); pitCmpNext(); });
     $('ws-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap on the big button; the rest of the screen drives on)
     document.addEventListener('keydown', (e) => { if (swapOn && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });
@@ -5182,10 +5090,9 @@
     window.addEventListener('pointerup', unlock, { passive: true });
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); fitSegs();
-      updateOrientation();
       if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();
@@ -5209,7 +5116,6 @@
       applyDetailDist();   // the new world's far-vegetation cull distance for this tier
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       ctlLoad();   // (the keys and the pads' buttons as the player set them)
-      Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
       Render.setStorm(S.weather === 'storm');
@@ -5224,7 +5130,6 @@
       $('loading').classList.add('off');
       last = performance.now();
       requestAnimationFrame(frame);
-      lockOrientation();   // (the installed app: straight away; in a browser tab only once full screen is on)
       ghHash();   // (opened with a friend's ghost's link)
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
@@ -5240,10 +5145,11 @@
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
+        hud(dt = 1 / 60) { if (race) { updateHUD(dt); hudCol(dt); Comm.update(); } },   // (tests: the HUD as a frame of the running race draws it, the race itself not stepped: a paused race's HUD after sim)
         sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); if (auto && (phase === 'intro' || phase === 'lights')) inp.thr = inp.gas = 0; stepRace(STEP, inp); } },   // (the autopilot: off the gas on the grid, on it as the lights go out)
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
-        noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v), svg = $('h-note-path').parentNode;   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)
-          return { key: lastNote, cls: $('h-note').className, d: $('h-note-path').getAttribute('d'), rot: svg.style.transform, ang: g && g.kind !== 'ring' ? noteAng(g.i0) : 0, kind: g ? g.kind : null }; },
+        noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v);   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)
+          return { key: lastNote, cls: $('h-note').className, d: $('h-note-path').getAttribute('d'), kind: g ? g.kind : null }; },
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);

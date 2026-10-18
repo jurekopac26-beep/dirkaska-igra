@@ -33,7 +33,7 @@ try {
     race: document.querySelector('[data-act="to-car"]').textContent }));
   const s1 = await slovene();
   T.check('title in English: Race, Championship, "Jezero Ring · 3 laps · 12 rivals", "Track: Jezero Ring", <html lang="en">', t1.lang === 'en' && t1.race === 'Race' && t1.champ === 'Championship' && t1.sub === 'Jezero Ring · 3 laps · 12 rivals' &&
-    /^Track: Jezero Ring\. Controls: Buttons, camera: behind the car \(phone upright\)\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
+    /^Track: Jezero Ring\. Controls: Buttons\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
 
   // 2. the cars and their upgrades
   await act('to-car'); await page.waitForTimeout(250);
@@ -72,7 +72,7 @@ try {
   await act('to-champ'); await page.waitForTimeout(250);
   const h5 = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.ch-card h3')].map(h => h.textContent).join('/'), meta: document.querySelector('.ch-card .tmeta').textContent, go: document.getElementById('ch-go').textContent, diff: document.getElementById('ch-diff').textContent }));
   const sh = await slovene();
-  T.check('championship in English: Home Cup / Superstars / Legends / Grand Championship, "3 races", Start the championship', h5.cards === 'Home Cup/Superstars/Legends/Grand Championship' && /^3 races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length, JSON.stringify({ h5, sh }));
+  T.check('championship in English: Home Cup / Short tracks / Legends / Grand Championship, "3 races", Start the championship', h5.cards === 'Home Cup/Short tracks/Legends/Grand Championship' && /^3 races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length, JSON.stringify({ h5, sh }));
   await act('to-career'); await page.waitForTimeout(200);
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)
@@ -95,9 +95,9 @@ try {
   const sH = await slovene(['hud', 'touch']);
   T.check('HUD in English: POS, LAP 1/3, BEST, GAS / BRAKE', h6.rank === 'POS' && /^LAP [12]\/3$/.test(h6.lap) && h6.best === 'BEST' && !sH.length, JSON.stringify({ h6, sH }));
   await page.evaluate(() => window.__game.pause()); await page.waitForTimeout(200);
-  const p6 = await page.evaluate(() => ({ restart: document.getElementById('pause-restart').textContent, cam: document.getElementById('pause-cam').textContent }));
+  const p6 = await page.evaluate(() => ({ restart: document.getElementById('pause-restart').textContent }));
   const sp = await slovene();
-  T.check('pause in English: Restart race, Camera: behind the car', p6.restart === 'Restart race' && p6.cam === 'Camera: behind the car' && !sp.length, JSON.stringify({ p6, sp }));
+  T.check('pause in English: Restart race', p6.restart === 'Restart race' && !sp.length, JSON.stringify({ p6, sp }));
   await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const r6 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent, head: document.querySelector('#res-table thead').innerText }));

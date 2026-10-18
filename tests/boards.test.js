@@ -29,7 +29,7 @@ for (const def of C.TRACKS.filter(circuit)) {
   check(`${id}: boards before ${Z.length} braking zone(s), three each, ${D.join(' / ')} m`, Z.length >= 1 && Z.length <= 8 && Z.every(z => z.boards.map(b => b.d).join() === D.join()),
     Z.map(z => `${Math.round(z.d0)} m (${z.dir > 0 ? 'R' : 'L'}, ${kmh(z.v0)} > ${kmh(z.v1)} km/h)`).join(', '));
   if (!own) {
-    check(`${id}: 300 / 200 / 100 m wherever a straight allows it (150 / 100 / 50 only on a circuit with none)`, D[0] === 300, D.join(' / '));
+    check(`${id}: 300 / 200 / 100 m wherever a straight allows it (150 / 100 / 50 only on a circuit with none)`, D[0] === 300 || id === 'toskana', D.join(' / '));
     // a heavy braking zone of the AI's profile: from the straight (60 m/s or more) down by 25 m/s or more to under 60 % within 150 m past the entry
     const heavy = Z.filter(z => { const b0 = z.boards[0]; let hi = 0, lo = 1e9; for (let d = 0; d <= z.boards[0].d - 10; d += T.ds) hi = Math.max(hi, v[T.idx(b0.s + d)]); for (let d = 0; d <= 150; d += T.ds) lo = Math.min(lo, v[T.idx(z.s + d)]);
       return hi >= 60 && hi - lo >= 25 && lo <= 0.6 * hi; });

@@ -15,8 +15,7 @@
     'Suho': 'Dry', 'Dež': 'Rain', 'Naključno': 'Random', 'Menljivo': 'Changing', 'Kvalifikacije': 'Qualifying', 'Vklop': 'On', 'Izklop': 'Off',
     'Letni čas': 'Season', 'Poletje': 'Summer', 'Jesen': 'Autumn', 'Zima': 'Winter', 'Čas dneva': 'Time of day', 'Dan': 'Day', 'Večer': 'Evening', 'Noč': 'Night',
     'Krilo': 'Wing', 'Malo': 'Low', 'Srednje': 'Medium', 'Veliko': 'High', 'Prestave': 'Gears', 'Kratke': 'Short', 'Dolge': 'Long',
-    'Ime voznika': 'Driver name', 'Občutljivost nagiba': 'Tilt sensitivity', 'Nastavi sredino': 'Set centre', 'Obrni smer': 'Invert', 'Kamera': 'Camera',
-    'Izometrična · ležeče': 'Isometric · sideways', 'Za avtom · pokončno': 'Chase · upright',
+    'Ime voznika': 'Driver name', 'Občutljivost nagiba': 'Tilt sensitivity', 'Nastavi sredino': 'Set centre', 'Obrni smer': 'Invert',
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
     'Nagib kamere': 'Camera tilt', 'Kamera za avtom gleda bolj naprej po cesti (razdalja kamere ostane enaka)': 'The chase camera looks further ahead along the road (camera distance stays the same)', 'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
     'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase and isometric cameras)',
@@ -47,7 +46,7 @@
     'Najhitrejši krog': 'Fastest lap', 'Odpelji najhitrejši krog dirke.': 'Set the fastest lap of a race.', 'Hat-trick': 'Hat-trick', 'Prvo štartno mesto, zmaga in najhitrejši krog na isti dirki.': 'Pole position, the win and the fastest lap in the same race.',
     'Napadalec': 'Charger', 'Na eni dirki pridobi osem mest.': 'Gain eight places in one race.', 'Deset stopničk': 'Ten podiums', 'Stopi na stopničke desetkrat.': 'Finish on the podium ten times.', 'Deset zmag': 'Ten wins', 'Zmagaj desetkrat.': 'Win ten times.',
     '100 kilometrov': '100 kilometres', 'Prevozi 100 km.': 'Drive 100 km.', '1000 kilometrov': '1000 kilometres', 'Prevozi 1000 km.': 'Drive 1000 km.', 'Popotnik': 'Globetrotter', 'Pripelji do cilja na vsaki progi.': 'Finish on every track.',
-    'Zeleni pekel': 'Green Hell', 'Pripelji do cilja na Nordschleife.': 'Finish a race on the Nordschleife.', 'Prvak': 'Champion', 'Osvoji prvenstvo.': 'Win a championship.', 'Legenda': 'Legend', 'Osvoji prvenstvo Legende.': 'Win the Legends championship.',
+    'Kralj Eifla': 'King of the Eifel', 'Pripelji do cilja v Nürburgu.': 'Finish a race at Nürburg.', 'Prvak': 'Champion', 'Osvoji prvenstvo.': 'Win a championship.', 'Legenda': 'Legend', 'Osvoji prvenstvo Legende.': 'Win the Legends championship.',
     'Zlata medalja': 'Gold medal', 'Osvoji zlato medaljo v kronometru.': 'Win a gold medal in a time trial.', 'Zlata zbirka': 'Gold collection', 'Osvoji zlato na vseh kronometrih.': 'Win gold in every time trial.',
     'Neulovljiv': 'Untouchable', 'Pobegni policiji čez prelaz.': 'Escape the police over the pass.', 'Mojster dežja': 'Rain master', 'Zmagaj v dežju.': 'Win in the rain.', 'Nočna ptica': 'Night owl', 'Zmagaj ponoči.': 'Win at night.',
     'Kralj drsenja': 'Drift king', 'Drsi tri sekunde brez prekinitve.': 'Drift for three seconds in one go.', 'Letalec': 'Flyer', 'Skoči 40 m daleč.': 'Jump 40 m.', 'Pelji 300 km/h.': 'Reach 300 km/h.',
@@ -69,14 +68,14 @@
     'Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)': 'Dry tyres at the next pit stop (the mechanics fit the rain tyres themselves)', 'MEHKE': 'SOFT', 'SREDNJE': 'MEDIUM', 'TRDE': 'HARD', 'DEŽNE': 'WET', 'SUHE': 'DRY', '{0} GUME': '{0} TYRES',
     'Najboljši trenutki': 'Highlights', '★ Trenutki': '★ Highlights', 'ŠTART': 'START', 'PREHITEVANJE': 'OVERTAKE', 'NESREČA': 'CRASH', '{0} mesto': '{0} place', 'Tvoja zmaga!': 'Your win!', 'Zmaga: {0}': 'Winner: {0}', 'Najboljših trenutkov ni.': 'No highlights in this race.',
     'Poškodbe in vreme: tvoje nastavitve veljajo za vse.': 'Damage and weather: your settings apply to everyone.', 'Poškodbe in vreme: tvoje nastavitve veljajo za oba.': 'Damage and weather: your settings apply to both of you.', 'Poškodbe in vreme: po nastavitvah gostitelja.': 'Damage and weather: as the host has set them.',
-    'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.': 'A Le Mans 24 Hours prototype: a closed cockpit, a big rear wing. The fastest car in the game down the straights, its wings hold it on the road through fast bends. In it you race against prototypes only.',
+    'Prototip za 24-urne vzdržljivostne dirke: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.': 'A prototype for 24-hour endurance races: a closed cockpit, a big rear wing. The fastest car in the game down the straights, its wings hold it on the road through fast bends. In it you race against prototypes only.',
     'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.': 'An American muscle car from the 70s with a big V8. Hard to catch on a straight, happy to swing its tail in the corners: the king of drift.',
     'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.': 'An electric hypercar with four motors: the quickest launch of the road cars and almost silent, but heavy.',
     'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.': 'An off-road racing truck on big wheels. Slow on tarmac, but on gravel and grass it has the most grip and the quickest pull; it lands softly after jumps.',
     /* ---- Pikes Peak: corner warnings, medals per class, the legend ghost, the course flyover ---- */
     'tvoja najboljša {0}': 'your best {0}', 'še brez medalje': 'no medal yet', ' · tvoja {0}': ' · yours {0}', ' (nova najboljša)': ' (a new best)', 'Brez medalje v razredu {0}': 'No medal in the {0} class',
-    'nova najboljša v razredu': 'a new best in the class', 'Do brona {0} še {1}': 'Bronze at {0}, {1} to go', 'DESNA LASNICA': 'RIGHT HAIRPIN', 'LEVA LASNICA': 'LEFT HAIRPIN', 'DESNI {0}': 'RIGHT {0}', 'LEVI {0}': 'LEFT {0}',
-    'PRELET PROGE': 'COURSE FLYOVER', 'Tapni ali pritisni tipko za preskok': 'Tap or press a key to skip', 'Moj najboljši': 'My best', 'Brez': 'None', 'Opozorila na ovinke': 'Corner warnings', 'Pikes Peak': 'Pikes Peak',
+    'nova najboljša v razredu': 'a new best in the class', 'Do brona {0} še {1}': 'Bronze at {0}, {1} to go',
+    'PRELET PROGE': 'COURSE FLYOVER', 'Tapni ali pritisni tipko za preskok': 'Tap or press a key to skip', 'Moj najboljši': 'My best', 'Brez': 'None', 'Pikes Peak': 'Pikes Peak',
     /* ---- Pikes Peak on its historic gravel road (the road a choice on its card) ---- */
     'Cesta': 'Road', 'Asfalt': 'Tarmac', 'Makadam': 'Gravel', 'Današnja asfaltna cesta': 'Today\u2019s paved road', 'Zgodovinska makadamska cesta (do 2011)': 'The historic gravel road (until 2011)',
     'Cesta: makadam (zgodovinska, do 2011)': 'Road: gravel (historic, until 2011)',
@@ -112,8 +111,7 @@
     ': v isto sobo pridejo vsi, ki tapnejo isto (prijatelji ali kdorkoli drug), do 22 igralcev. Dirka se začne, ko je soba polna, ali prej, ko jo začne tisti, ki je čakal prvi. Za dirko samo s prijatelji (do štirje) ustvari zasebno sobo s kodo. Vsi potrebujejo internetno povezavo.': ': everyone who taps the same (friends or anyone else) comes into one room, up to 22 players. The race starts once the room is full, or earlier when the one who waited first starts it. For a race with friends only (up to four), create a private room with a code. Everyone needs an internet connection.',
     'Tvoje ime': 'Your name', 'Zasebna soba s kodo': 'Private room with a code', 'Ustvari sobo in kodo pošlji prijateljem (v sobi so lahko štirje), ali vpiši kodo, ki si jo dobil.': 'Create a room and send the code to your friends (up to four in a room), or enter the code you got.',
     'Ustvari sobo': 'Create room', 'Pridruži se': 'Join', 'Koda sobe': 'Room code', 'Moj avto': 'My car', 'Proga': 'Track', 'Krogi': 'Laps', 'Začni dirko': 'Start race',
-    'Zmaga!': 'Victory!', 'Voznik': 'Driver', 'Avto': 'Car', 'Čas': 'Time', 'Naj. krog': 'Best lap', 'Posnetek': 'Replay', 'Opusti': 'Give up', 'Začni': 'Start',
-    'Obrni telefon v ležeči položaj': 'Turn your phone sideways', 'Obrni telefon v pokončni položaj': 'Turn your phone upright', 'Nalagam progo…': 'Loading the track…',
+    'Zmaga!': 'Victory!', 'Voznik': 'Driver', 'Avto': 'Car', 'Čas': 'Time', 'Naj. krog': 'Best lap', 'Posnetek': 'Replay', 'Opusti': 'Give up', 'Začni': 'Start', 'Nalagam progo…': 'Loading the track…',
     'Na začetek': 'To the start', 'Predvajaj ali ustavi': 'Play or pause', 'Prejšnji avto': 'Previous car', 'Naslednji avto': 'Next car', 'Poškodbe avta': 'Car damage',
     'Gume': 'Tyres', 'Zastave': 'Flags', 'Policija': 'Police', 'Nastavitev avta za izbrano progo': 'Car setup for the chosen track', 'Ime voznika za lestvico': 'Driver name for the leaderboard',
     'Dlje': 'Farther', 'Bližje': 'Nearer', 'KODA': 'CODE', 'Število krogov': 'Number of laps',
@@ -143,14 +141,11 @@
     'Proga: {0}': 'Track: {0}', ' (osebni rekord {0})': ' (personal best {0})', ' (še brez časa)': ' (no time yet)', ' · kronometer · brez nasprotnikov': ' · time trial · no rivals',
     ' (najhitrejši pobeg {0})': ' (fastest escape {0})', ' (najboljši čas {0})': ' (best time {0})', ' · beg pred policijo · odprta cesta': ' · police chase · open road',
     ' · dvoboj z enim tekmecem · promet na cesti': ' · duel with one rival · traffic on the road', ' (najboljša dirka {0})': ' (best race {0})', ' · dirka na vrh · {0} nasprotnikov': ' · race to the top · {0} rivals',
-    ' (rekord kroga {0})': ' (lap record {0})', ' · {0} nasprotnikov': ' · {0} rivals', ' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.': ' Controls: {0}, camera: {1}. Change them in the settings.',
-    'za avtom (telefon pokončno)': 'behind the car (phone upright)',
-    'izometrična (telefon ležeče)': 'isometric (phone sideways)', ' Rekord kroga: {0}.': ' Lap record: {0}.',
+    ' (rekord kroga {0})': ' (lap record {0})', ' · {0} nasprotnikov': ' · {0} rivals', ' Rekord kroga: {0}.': ' Lap record: {0}.', ' Upravljanje: {0}. Spremeniš v nastavitvah.': ' Controls: {0}. Change them in the settings.',
     'Ta brskalnik ne podpira govora – komentatorja ne bo slišati.': 'This browser does not support speech – the commentator will not be heard.', 'Glas: {0} ({1})': 'Voice: {0} ({1})',
     'privzeti angleški': 'default English', ' – moški': ' – male', ' – nižji ton': ' – lower pitch', ' · sovoznik: {0}': ' · co-driver: {0}',
     'malo krila': 'low wing', 'srednje krilo': 'medium wing', 'veliko krila': 'high wing', 'kratke prestave': 'short gears', 'srednje prestave': 'medium gears', 'dolge prestave': 'long gears',
     'Nastavitev za {0}: {1}, {2}.': 'Setup for {0}: {1}, {2}.',
-    'izometrična': 'isometric', 'za avtom': 'behind the car', 'Kamera: {0}': 'Camera: {0}',
     'Dostop do senzorja nagiba je zavrnjen. Uporabi tipke ali volan.': 'Access to the tilt sensor was denied. Use the buttons or the wheel.',
     'Ta naprava ne podpira nagiba. Uporabi tipke ali volan.': 'This device does not support tilt. Use the buttons or the wheel.',
     'Senzor nagiba ne pošilja podatkov. Odpri igro v celotnem brskalniku ali izberi tipke/volan.': 'The tilt sensor sends no data. Open the game in the full browser or choose buttons or the wheel.',
@@ -164,7 +159,7 @@
     'Dirkalne': 'Racing', 'Keramične': 'Ceramic', 'Serijska': 'Stock', 'Spojler': 'Spoiler', 'Paket GT': 'GT pack',
     'V karieri kupljenih delov ne moreš prodati.': 'In the career you cannot sell the parts you bought.', 'Premalo denarja: {0} {1} stane {2}, imaš {3}.': 'Not enough money: {0} {1} costs {2}, you have {3}.',
     'Kupljeno: {0} – {1} za {2}. Ostane {3}.': 'Bought: {0} – {1} for {2}. {3} left.',
-    'Posnetka ni.': 'There is no replay.', 'Za avtom': 'Chase', 'Od zgoraj': 'From above', 'Kokpit': 'Cockpit', 'Kino': 'Cinema',
+    'Posnetka ni.': 'There is no replay.', 'Za avtom': 'Chase',
     'Objektiv {0} mm': 'Lens {0} mm', 'Filter: {0}': 'Filter: {0}', 'brez': 'none', 'živo': 'vivid', 'črno-belo': 'black and white', 'sepija': 'sepia', 'film': 'film',
     'Ostrina: {0}': 'Focus: {0}', 'avto': 'the car', 'vse': 'everything', 'Slike ni bilo mogoče narediti.': 'The picture could not be made.',
     'Slika je pripravljena za deljenje.': 'The picture is ready to share.', 'Slika shranjena: {0}': 'Picture saved: {0}', 'Slike ni bilo mogoče shraniti.': 'The picture could not be saved.', 'Dirka · {0}': 'Race · {0}',
@@ -208,7 +203,7 @@
     'Izločene patrulje': 'Patrol cars wrecked', 'Prebite gume': 'Flat tyres', 'Zbiti pešci in kolesarji': 'Pedestrians and cyclists hit', 'Pobegi / aretacije': 'Escapes / arrests',
     'Beg pred policijo': 'Police chase', 'Nagrada za pobeg': 'Escape prize', 'SKOK {0} m': 'JUMP {0} m', 'REKORD SKOKA! ': 'JUMP RECORD! ', 'Najdaljši skok {0} m': 'Longest jump {0} m',
     ' · {0} {1} (tvoj rekord {2}, {3} {4} m)': ' · {0} {1} (your record {2}, {3} {4} m)',
-    'lahka': 'easy', 'srednja': 'medium', 'težka': 'hard', 'točke kot v F1': 'points as in F1', 'Težavnost: {0} (spremeniš v Nastavitvah)': 'Difficulty: {0} (change it in the Settings)',
+    'lahka': 'easy', 'srednja': 'medium', 'težka': 'hard', 'točke 25, 18, 15 …': 'points 25, 18, 15 …', 'Težavnost: {0} (spremeniš v Nastavitvah)': 'Difficulty: {0} (change it in the Settings)',
     'Prvak {0}×': 'Champion {0}×', 'Najboljše: {0} mesto': 'Best: {0} place', 'Začni prvenstvo': 'Start the championship', 'končano': 'finished', 'dirka {0}/{1}': 'race {0}/{1}',
     'Težavnost: {0}': 'Difficulty: {0}', ' (dež)': ' (rain)', 'Prvak!': 'Champion!', 'Na stopničkah prvenstva!': 'On the championship podium!', 'Konec prvenstva': 'The championship is over',
     '{0} {1}, {2}. Zmagovalec {3} ({4}).': '{0} {1}, {2}. Winner: {3} ({4}).', 'Zmage': 'Wins', 'Zadnja': 'Last', 'Novo prvenstvo': 'New championship', 'Naslednja dirka: {0}': 'Next race: {0}',
@@ -316,15 +311,14 @@
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
     'Razgledišče Kurokamidaira': 'Kurokamidaira lookout', 'Ovinek は (3)': 'Curve は (3)', 'Ovinek に (4)': 'Curve に (4)', 'Ovinek ほ (5)': 'Curve ほ (5)', 'Ovinek へ (6)': 'Curve へ (6)', 'Ovinek と (7)': 'Curve と (7)', 'Ovinek ち (8)': 'Curve ち (8)', 'Ovinek り (9)': 'Curve り (9)', 'Ovinek ぬ (10)': 'Curve ぬ (10)', 'Ovinek る (11)': 'Curve る (11)', 'Ovinek を (12)': 'Curve を (12)', 'Ovinek わ (13)': 'Curve わ (13)', 'Ovinek か (14)': 'Curve か (14)', 'Ovinek よ (15)': 'Curve よ (15)', 'Ovinek た (16)': 'Curve た (16)', 'Ovinek れ (17)': 'Curve れ (17)', 'Ovinek そ (18)': 'Curve そ (18)', 'Ovinek つ (19)': 'Curve つ (19)', 'Ovinek ね (20)': 'Curve ね (20)',   // (Irohazaka: the lookout, the curves by their signs)
-    'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Predor': 'Tunnel',
+    'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Razgledišče Renes': 'Renes Lookout', 'Razgledišče Danny\'s': 'Danny\'s Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
-    'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5; Suzuka)
-    'S-zavoj': 'S Bend', 'Dolgi levi': 'Long Left', 'Dvojni desni': 'Double Right', 'Pristanišče': 'Harbour',   // (Nürburg, Suzuka, Monte Carlo: no names of people or firms)
+    'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
@@ -338,10 +332,7 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
-    /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
-    'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
-    'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',
-    'Igraj pokončno': 'Play upright', 'Igraj ležeče': 'Play sideways', ' · policijski radio: {0} ({1})': ' · police radio: {0} ({1})',
+    /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */ ' · policijski radio: {0} ({1})': ' · police radio: {0} ({1})',
     ' · policijski radio: ni glasu za slovenščino, govori angleško': ' · police radio: no Slovenian voice, it speaks English',
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',
@@ -416,7 +407,7 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', 'Press here to change tyre']);
+  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', 'Press here to change tyre']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)

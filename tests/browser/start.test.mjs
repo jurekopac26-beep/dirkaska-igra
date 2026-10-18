@@ -1,7 +1,7 @@
 // The start's reaction on the HUD (Core LAUNCH, js/game.js reactHUD): once the player sets off, under the map, as wide as it, for a few
 // seconds: REAKCIJA and the seconds from the lights going out to the throttle (green up to 0,25 s, gold up to 0,45 s, red later); the gas
 // held through the lights: PREZGODAJ NA PLINU, 0,60 s in red; in English REACTION 0.12 s; its left edge (4 px) in the same colour, the
-// column's see-through background. Lying (640 x 360, the isometric camera) and upright (360 x 640, the chase camera): one of the column
+// column's see-through background. Lying (640 x 360) and upright (360 x 640), the camera behind the car: one of the column
 // under the map (hudCol): right under it (upright under the damage picture and the timing tower), above the big message (START!), inside the
 // screen, over none of the other HUD items or the controls; lying, the timing tower (the column's last) stays under it (fewer rows where the
 // room runs out: hudCol), never hidden for it; upright the tower over it, all its rows back once it is gone.
@@ -29,7 +29,7 @@ const START = async (opts) => {
     if (e.id === 'h-msg' && e.firstChild) { const R = document.createRange(); R.selectNodeContents(e); r = R.getBoundingClientRect(); }
     return { l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
   const shown = (e) => { if (!e) return false; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05) return false; } const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
-  const others = ['h-lights', 'h-msg', 'h-rank', 'h-times', 'h-tower', 'h-note', 'h-teamradio', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'c-drift', 'tilt-ind']
+  const others = ['h-lights', 'h-msg', 'h-rank', 'h-times', 'h-tower', 'h-note', 'h-teamradio', 'btn-pause', 'btn-tyre', 'btn-rescue', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'c-drift', 'tilt-ind']
     .map(id => document.getElementById(id)).filter(shown).map(e => Object.assign({ id: e.id }, box(e)));
   const tw = document.getElementById('h-tower'), towerOn = document.getElementById('hud').classList.contains('tw'), rows = () => tw.querySelectorAll('.tw-r').length;
   const M = document.getElementById('h-msg'), cs = getComputedStyle(el);
@@ -58,7 +58,7 @@ function placed(o) {   // under the map, as wide as it, on the screen, over noth
   return bad;
 }
 try {
-  for (const [w, h, cam, way] of [[640, 360, 'iso', 'lying (640 x 360, iso)'], [360, 640, 'chase', 'upright (360 x 640, chase)']]) {
+  for (const [w, h, cam, way] of [[640, 360, 'chase', 'lying (640 x 360)'], [360, 640, 'chase', 'upright (360 x 640)']]) {
     const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: cam, track: 'jezero', autoGas: 0, camTilt: 2 }, { width: w, height: h });
     await startTrack(page, 'jezero');
     const a = await page.evaluate(START, { press: 0.12, after: true }), pa = placed(a);

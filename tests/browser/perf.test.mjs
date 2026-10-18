@@ -3,11 +3,12 @@
 // passes: shadows and scene) at six places around the lap. The NIZKA tier is the one the weakest phones run, so this is
 // the budget from CLAUDE.md (up to ~300 draw calls and ~900k vertices per track); the higher tiers may exceed it.
 // Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
-// calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
+// calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones; and when a real track (not one
+// marked test: true, kept for testing only) averages more than the budget itself, 300 draw calls or 900k vertices. The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
 // Then the new map of NEW VERSION · TEST 1 (js/newmap.js over Toskana, its still meshes merged by js/nvbake.js): the same budget at
-// twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car and from above
-// (the two cameras the game keeps), as 'newmap'.
+// twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car (the
+// game's one camera), as 'newmap'.
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
 //   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept)
@@ -17,7 +18,7 @@ import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './
 
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 // the new map (NEW VERSION · TEST 1, the title's button in the new menu): built and merged, the game stood still, the car put at each
-// place, both cameras; the busiest frame is checked as a track's is
+// place, the camera behind it; the busiest frame is checked as a track's is
 async function newMap() {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345, menu: true });
   await page.evaluate(() => {
@@ -35,7 +36,7 @@ async function newMap() {
     const places = [{ x: H3.home.x, z: H3.home.z, h: H3.home.h }, { x: a0.x, z: a0.z, h: 0 }, st('school'), st('circuit'), st('home'), st('police'), st('multi'),
       { x: 40, z: 20, h: 0 }, { x: 20, z: 120, h: -1.6 }, { x: -205, z: -105, h: 0 }, { x: -272, z: -216, h: 0 }, { x: 300, z: -250, h: 1.6 }];
     const s = [];
-    for (const cam of ['chase', 'iso']) for (const p of places) {
+    for (const cam of ['chase']) for (const p of places) {
       P.place(p.x, p.z, p.h); P.vx = P.vz = 0; g.sim(0.2, true);
       Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, cam, {});
       const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, cam, {}); s.push([__gl.calls - c0, __gl.verts - v0]);
@@ -101,6 +102,7 @@ try {
     const why = [];
     if (r.maxCalls > g.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(g.maxCalls * 1.1 + 5)}`);
     if (r.maxKverts > g.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(g.maxKverts * 1.1 + 20)}k`);
+    if ((r.calls > 300 || r.kverts > 900) && !(await page.evaluate((id) => !!(Core.TRACKS.find(d => d.id === id) || {}).test, id))) why.push('over the budget of CLAUDE.md (300 draw calls, 900k vertices on average)');
     T.check(`${id}: within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));

@@ -85,13 +85,13 @@ const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : String(x));
     `passes ${off.passes} without, ${on.passes} with; finished ${on.fin}/${on.all}; winners ${off.win.map(f2).join(' ')} s vs ${on.win.map(f2).join(' ')} s`);
 }
 
-// 5. Suzuka: one DRS zone down the start / finish straight (detection before the chicane, open from after the Final Curve to the braking
+// 5. Suzuka: one DRS zone down the start / finish straight (detection before the last chicane, open from after the Final Curve to the braking
 // for the First Curve); in a race the flap opens there for a car within a second of another (from the second lap on)
 {
   const d = C.TRACKS.find(x => x.id === 'suzuka'), T = new C.Track(d), L = T.len;
   const at = (name) => { const e = d.names.find(x => x[0] === name); return ((T.nearestIdx(e[1], e[2]) * T.ds - T.startS) % L + L) % L; };
   const Z = T.drs && T.drs[0];
-  check('Suzuka: one DRS zone, detected before the chicane, open after the Final Curve, closed before the First Curve',
+  check('Suzuka: one DRS zone, detected before the last chicane, open after the Final Curve, closed before the First Curve',
     !!Z && T.drs.length === 1 && Z.det < at('Šikana') && Z.det > at('130R') && Z.act > at('Zadnji ovinek') && Z.end < at('Prvi ovinek') && Z.end > 200,
     Z ? `detection ${f2(Z.det)} m, open ${f2(Z.act)} m, closed ${f2(Z.end)} m (chicane ${f2(at('Šikana'))}, Final Curve ${f2(at('Zadnji ovinek'))}, First Curve ${f2(at('Prvi ovinek'))}; the lap ${f2(L)} m)` : 'none');
   Math.random = seeded(7);

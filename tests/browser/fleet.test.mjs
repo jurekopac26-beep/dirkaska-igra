@@ -16,17 +16,15 @@
 //    meshes alone (the rest of the scene hidden, frustum culling off, one frame, every pass counted as perf.test.mjs does): the player
 //    <= 14, a rival <= 9; the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
 //    ones mirrored), the player's casting shadows, a rival's not; the pit crew's hubs (crDims) on the wheel meshes (1 cm); the intact car
-//    drawn with its outer shell only; the cockpit's style (open / kart / formula: Render.cockpit.open); the materials the graphics test
+//    drawn with its outer shell only; the materials the graphics test
 //    expects ('dirtyCarCg' bodies, 'carCg' paint); no colour that is not glass within 0.06 of a glass colour (the glass glints and breaks by
-//    its colour); the start number lit on every K.number panel; the driver sees out (no pane of glass ahead of the eyes turned to them); a part lost: the whole buffer in the chase view, the outer shell and the engine bay
-//    ahead of the windscreen (U.engN) from the cockpit; a crushed roof (roofDmg 1) only inside body.crush, its noCrush ranges moved whole, the lining with its shell (the twins),
+//    its colour); the start number lit on every K.number panel; a part lost: the whole buffer; a crushed roof (roofDmg 1) only inside body.crush, its noCrush ranges moved whole, the lining with its shell (the twins),
 //    the cabin unmoved; dents never move a noDent range
 //  - the wreck (stage B2; sections 4b-4e): Core.wreckCar's parts off as pieces of their own (their ranges' copies, their own frozen copies
 //    of the body's material), loose parts hinged (the inside drawn behind them), the rear bumper alone (the tail lamps on the body lit),
 //    one wheel and then all off with the body sagged (never into the road), the lamps and panes, the pit crew and the marshals' refit
 //    (after limping through a corner: no offset left), a repair; as the player sees it (every
-//    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, the cockpit not blacked out under a
-//    crushed roof, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
+//    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
 //    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
 //  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
@@ -220,14 +218,6 @@ try {
       // the start number: on each K.number panel as many lit bars as the number has
       let num = null; if (U.nums) { const n = P.num, seg = [6, 2, 5, 5, 4, 5, 6, 3, 7, 6], want2 = n >= 10 ? seg[Math.floor(n / 10)] + seg[n % 10] : seg[n];
         num = U.nums.map(Q => { let lit = 0; for (const sl of Q.slots) for (const q of sl) if (q && Math.abs(col[q[0] * 3] - Q.on[0]) < 1e-4 && Math.abs(col[q[0] * 3 + 1] - Q.on[1]) < 1e-4 && Math.abs(col[q[0] * 3 + 2] - Q.on[2]) < 1e-4) lit++; return lit === want2; }).every(Boolean); }
-      // the driver sees out: no pane of glass of the outer shell ahead of the eyes (within 70 degrees of straight ahead) faces them (the
-      // glass is an opaque colour: a pane turned to the driver, a K.plate or K.box of glass, is a dark wall from the seat)
-      const eye = [E.body.eye.x * M.len / E.body.len, E.body.eye.y, 0], pa0 = geo.attributes.position.array; let wall = 0;
-      for (let t = 0; t < U.outerN / 3; t++) { const o = t * 9; if (!FL.GL.some(G => Math.abs(col[o] - G[0]) < 1e-6 && Math.abs(col[o + 1] - G[1]) < 1e-6 && Math.abs(col[o + 2] - G[2]) < 1e-6)) continue;
-        const A = [pa0[o], pa0[o + 1], pa0[o + 2]], B = [pa0[o + 3], pa0[o + 4], pa0[o + 5]], Cc = [pa0[o + 6], pa0[o + 7], pa0[o + 8]], c = [0, 1, 2].map(i => (A[i] + B[i] + Cc[i]) / 3), d = [c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]], dl = Math.hypot(...d);
-        if (!(d[0] > 0.05 && d[0] / dl > Math.cos(70 * Math.PI / 180))) continue;
-        const u = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], w = [Cc[0] - A[0], Cc[1] - A[1], Cc[2] - A[2]], nn = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
-        if (nn[0] * d[0] + nn[1] * d[1] + nn[2] * d[2] < 0) wall++; }   // (its face turned to the eyes: drawn from the seat)
       // a rival of this vehicle (its own field), else one of the field put into it for the count
       let A = R.cars.find(c => !c.isPlayer && c.m === M), swapped = null;
       if (!A) { A = R.cars.find(c => !c.isPlayer); swapped = A.m; A.m = M; Render.attachRace(R); Render.frame(0, 1, P, 'chase', { noFx: true }); }
@@ -235,16 +225,12 @@ try {
       for (const vv of [Render.viewOf(P), va]) vv.grp.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const mt = o.material;
         if (mt.userData && mt.userData.dirt) keys.push('body:' + key(mt)); else if (mt.isMeshPhongMaterial && mt.envMap && !mt.vertexColors && mt.reflectivity === 0.2) keys.push('paint:' + key(mt)); });
       if (swapped) { A.m = swapped; Render.attachRace(R); }
-      // the cockpit's style
-      const st = E.body.eye.style; Render.frame(0, 1, P, 'cockpit', { noFx: true }); const ck = Render.cockpit; Render.frame(0, 1, P, 'chase', { noFx: true });
-      const ckOk = !!ck && !!ck.open === (st !== 'closed') && !!ck.formula === (st === 'formula' || st === 'kart');
-      // a part lost (not a wheel): the chase camera draws the whole buffer (the lining, the cabin behind the hole), the cockpit the outer shell
-      // and the inner block's front only (U.engN: the engine bay a lost bonnet bares; no lining or cabin round the seat); the part back (a
+      // a part lost (not a wheel): the whole buffer drawn (the lining, the cabin behind the hole); the part back (a
       // test's shortcut): the outer shell again (the player's view as it is now: a rival swapped in and out above rebuilt the views)
       const gP = Render.viewOf(P).body.geometry, UP = gP.userData, PT = Core.partsOf(M), lose = Object.keys(PT).find(k => PT[k].wh == null), dr = () => gP.drawRange.count;
-      P.lost[lose] = true; Render.frame(0, 1, P, 'chase', { noFx: true }); const drC = dr(); Render.frame(0, 1, P, 'cockpit', { noFx: true }); const drK = dr();
+      P.lost[lose] = true; Render.frame(0, 1, P, 'chase', { noFx: true }); const drC = dr();
       Render.frame(0, 1, P, 'chase', { noFx: true }); const drC2 = dr(); delete P.lost[lose]; Render.frame(0, 1, P, 'chase', { noFx: true });
-      const ckN = UP.outerN + (UP.engN || 0), lod = { lose, ok: drC === UP.N && drK === ckN && drC2 === UP.N && dr() === UP.outerN, got: [drC, drK, drC2, dr()], want: [UP.N, ckN] };
+      const lod = { lose, ok: drC === UP.N && drC2 === UP.N && dr() === UP.outerN, got: [drC, drC2, dr()], want: [UP.N, UP.outerN] };
       // a crushed roof (roofDmg 1: four steps): nothing moves outside the roof's footprint (body.crush, fading over 15 cm in x, 10 cm in z);
       // a noCrush range moves whole (if at all); every lining point keeps its offset from the shell's point it is inset from; the rest of the
       // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves
@@ -260,7 +246,7 @@ try {
       let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
-      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, wall, aiW, st, ck: ck && { open: ck.open, formula: ck.formula }, ckOk, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
+      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
     }, m.id);
     R4.push(r);
   }
@@ -273,13 +259,10 @@ try {
   T.check('the pit crew\'s hubs (crDims) on the wheel meshes (within 1 cm)', R4.every(r => r.crew && r.crew.every(d => Math.abs(d) <= 0.01)),
     R4.filter(r => !r.crew || r.crew.some(d => Math.abs(d) > 0.01)).slice(0, 4).map(r => r.id + ' ' + (r.crew ? r.crew.map(d => d.toFixed(3)).join(',') : 'no crew')).join(' | '));
   T.check('an intact car draws its outer shell only (the inner block waits for a lost part)', R4.every(r => r.outer), lim(r => !r.outer));
-  T.check('a part lost: the chase camera draws the whole buffer (the lining, the cabin behind the hole), the cockpit the outer shell and the engine bay ahead of the windscreen (U.engN) only',
-    R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): chase / cockpit / chase / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
+  T.check('a part lost: the whole buffer drawn (the lining, the cabin behind the hole), the outer shell again once it is back',
+    R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): off / again / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
   T.check('a crushed roof: nothing moves outside the roof\'s footprint (body.crush), a noCrush range only whole, the lining with its shell (each point by its twin), the cabin and floor stay; dents never move a noDent range',
     R4.every(r => r.crushOk), R4.filter(r => !r.crushOk).concat(R4.filter(r => r.cr.nc || r.cr.moved)).slice(0, 4).map(r => `${r.id}: ${r.cr.moved} moved, ${r.cr.outside} outside, noCrush ${r.cr.nc} (spread ${r.cr.spread.toFixed(4)}), lining off ${r.cr.lining}, stray ${r.cr.stray}, noDent moved ${r.ndMoved}`).join(' | '));
-  T.check('the driver sees out: no pane of glass ahead of the eyes faces them (an opaque two-sided pane would be a wall from the seat)', R4.every(r => r.wall === 0), R4.filter(r => r.wall).slice(0, 4).map(r => `${r.id}: ${r.wall} glass triangles facing the eyes`).join(' | '));
-  T.check('the cockpit by the look\'s eye style (closed: the roof and pillars; open / kart / formula: Render.cockpit.open; kart / formula: the formula\'s wheel)', R4.every(r => r.ckOk),
-    R4.filter(r => !r.ckOk).concat(R4.filter(r => r.st !== 'closed')).slice(0, 5).map(r => `${r.id} ${r.st} ${JSON.stringify(r.ck)}`).join(', '));
   T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\', any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')),
     R4.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
   T.check('no colour that is not glass within 0.06 of a glass colour (the paint and the stripe aside)', R4.every(r => !r.near), R4.filter(r => r.near).slice(0, 3).map(r => `${r.id}: ${r.near} vertices, e.g. ${r.nearC.map(c => c.toFixed(3))}`).join(' | '));
@@ -416,8 +399,7 @@ try {
   //          drawn (the world hidden: the background the fog's flat colour, so what differs or darkens is the car's own). From the same
   //          camera (the chase camera's pose pinned) at least 35 % of the car's screen box (its body's box projected) looks different; its
   //          fire in sight (flame-coloured pixels the particles add round the car, against the same frame without them: its flames out of
-  //          the body, not inside it) and its smoke (pixels there they darken); from the cockpit of a vehicle with a roof (crushed: roofDmg
-  //          1, four steps) the upper middle of the view not dark (>= 60 %);
+  //          the body, not inside it) and its smoke (pixels there they darken);
   //          the car and its pieces drawn with at most the whole car's draw calls + 2 a piece + 1 a crack decal; what its pieces cost (the
   //          field under a wreck, section 5) ----
   const R6 = [], t7 = Date.now(), seen = kits.concat(models.filter(m => !m.kit));
@@ -446,12 +428,9 @@ try {
       const box = [Math.max(0, Math.floor(x0)), Math.min(A.w - 1, Math.ceil(x1)), Math.max(0, Math.floor(y0)), Math.min(A.h - 1, Math.ceil(y1))];
       const hb = box[3] - box[2], wb = box[1] - box[0], over = [Math.max(0, box[0] - Math.round(wb * 0.25)), Math.min(A.w - 1, box[1] + Math.round(wb * 0.25)), Math.max(0, box[2] - hb), Math.min(A.h - 1, box[3] + Math.round(hb * 0.5))];
       const intact = FL.costOf(v, P), f0 = Render.fxStats();
-      // the cockpit's view: the upper middle's share not dark (the car whole; then wrecked, burning: the driver's own smoke faint), then the
-      // wreck from the chase camera, pinned as before
-      const upOf = (K) => { let up = 0, upN = 0; for (let y = Math.round(K.h * 0.16); y < Math.round(K.h * 0.45); y += 2) for (let x = Math.round(K.w * 0.3); x < Math.round(K.w * 0.7); x += 2) {
-        const o = (y * K.w + x) * 4; upN++; if (0.299 * K.d[o] + 0.587 * K.d[o + 1] + 0.114 * K.d[o + 2] > 50) up++; } return upN ? up / upN : 0; };
-      Render.setShot(null); run(2, 'cockpit', false); const up0 = upOf(pic('cockpit', 'cockpit0'));
-      Core.wreckCar(P); run(6, 'cockpit', true); const up = upOf(pic('cockpit', 'cockpit'));
+      // two frames free (the camera's own), the wreck, its fire burning six frames, then the wreck from the chase camera, pinned as before
+      Render.setShot(null); run(2, 'chase', false);
+      Core.wreckCar(P); run(6, 'chase', true);
       // the wreck from the chase camera, then the same frame without the particles (the flames, the smoke, the bits: what they add is what
       // shows of them, not what burns inside the body)
       Render.setShot(shot); run(6, 'chase', true); v = Render.viewOf(P); const B = pic('chase', 'wreck'), f1 = Render.fxStats();
@@ -470,7 +449,7 @@ try {
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
       Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; });
-      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, up, up0, roof: v.roofStep, crush: !!v.crushF, intact, wk, pcs, n: mine.length, cracks, pics: keep };
+      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, intact, wk, pcs, n: mine.length, cracks, pics: keep };
     }, m.id);
     if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)
       for (const k in r.pics) fs.writeFileSync(path.join(dir, `${r.id}-${k}.png`), Buffer.from(r.pics[k].split(',')[1], 'base64')); delete r.pics; }
@@ -497,11 +476,6 @@ try {
   T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire (flames out of the body) and smoke in sight',
     R6.length === seen.length && R6.every(seenOk),
     R6.filter(r => !seenOk(r)).concat(R6.slice().sort((a, b) => a.diff - b.diff)).slice(0, 6).map(r => `${r.id} ${(r.diff * 100).toFixed(0)} % of ${r.px} px, fire / smoke ${r.fireV} / ${r.smokeV} px${r.fire ? '' : ' NO FIRE'}${r.flames > 0 ? '' : ' no flames'}${r.smoke > 0 ? '' : ' no smoke'}`).join(', '));
-  // (a vehicle without a roof to crush (Render's crushOf: none, v.crushF null: a kart, the formula) is not blacked out by one: its own soot
-  // on what the driver sees of it (the formula's halo) is the wreck's)
-  const ckOk = (r) => r.roof === 4 && (r.up >= 0.6 || !r.crush);
-  T.check('the cockpit of the wreck (its roof crushed, four steps) not blacked out: >= 60 % of the view\'s upper middle not dark (a vehicle with a roof to crush)', R6.every(ckOk),
-    R6.filter(r => !ckOk(r)).concat(R6.slice().sort((a, b) => a.up - b.up)).slice(0, 6).map(r => `${r.id} ${(r.up * 100).toFixed(0)} % (whole ${(r.up0 * 100).toFixed(0)} %, roof ${r.roof}${r.crush ? '' : ', none to crush'})`).join(', '));
   T.check('the wreck\'s draw calls: the car and its pieces <= the car whole + 2 a piece + 1 a crack decal', R6.every(r => r.wk.calls <= r.intact.calls + 2 * r.n + r.cracks),
     R6.filter(r => r.wk.calls > r.intact.calls + 2 * r.n + r.cracks).concat(R6).slice(0, 5).map(r => `${r.id} ${r.wk.calls} <= ${r.intact.calls} + 2 x ${r.n} + ${r.cracks}`).join(', '));
 

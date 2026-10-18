@@ -1,9 +1,9 @@
 // Položaj avta (Nastavitve): the car can sit further back / lower in the frame. Option 1 as now, then 2, 5, 7, 10, 15 and 20 m.
-// It applies to the two final cameras — za avtom (chase) and izometrična (iso); the default (option 1) changes nothing.
+// It applies to the game's one camera, za avtom (chase); the default (option 1) changes nothing.
 //   node tests/browser/carlow.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('Položaj avta: the car sits lower / further back in the frame (chase and iso)');
+const T = checker('Položaj avta: the car sits lower / further back in the frame');
 const srv = await serve();
 const browser = await launch();
 try {
@@ -29,16 +29,6 @@ try {
 
   // chase (phone upright): the more it is set back, the lower the car sits (NDC y decreases)
   T.check('chase: the car sits lower the more it is set back', c6.y < c5.y && c5.y < c4.y && c4.y < c3.y && c3.y < c2.y && c2.y < c1.y && c1.y < c0.y, JSON.stringify([c0, c1, c2, c3, c4, c5, c6]));
-
-  // iso (phone lying): the car shifts further from its default spot the more it is set; the default moves nothing
-  await pick('camera', 'iso');
-  await pick('carLow', '0'); const i0 = await carY('iso');
-  await pick('carLow', '1'); const i1 = await carY('iso');
-  await pick('carLow', '2'); const i2 = await carY('iso');
-  await pick('carLow', '4'); const i4 = await carY('iso');
-  await pick('carLow', '6'); const i6 = await carY('iso');
-  const d1 = Math.hypot(i1.x - i0.x, i1.y - i0.y), d2 = Math.hypot(i2.x - i0.x, i2.y - i0.y), d4 = Math.hypot(i4.x - i0.x, i4.y - i0.y), d6 = Math.hypot(i6.x - i0.x, i6.y - i0.y);
-  T.check('iso: the car moves further back the more it is set', d6 > d4 && d4 > d2 && d2 > d1 && d1 > 0.001, JSON.stringify([i0, i1, i2, i4, i6, +d1.toFixed(4), +d2.toFixed(4), +d4.toFixed(4), +d6.toFixed(4)]));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {

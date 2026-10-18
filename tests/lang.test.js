@@ -53,7 +53,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const tableSrc = (name) => { const m = new RegExp('\\b' + name + ' = (?=[\\[{\'])').exec(src); if (!m) return null; let i = m.index + m[0].length; const open = src[i];
     if (open === "'") return src.slice(i, strAt(src, i)[1]);
     let d = 0, j = i; for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d === 0) break; } return src.slice(i, j + 1); };
-  const T = { DRIVE_TXT: 0, CTRL_HELP: 0, CTRL_HELP_CS: 0, CTRL_NAME: 0, CAR_DESC: 0, MODE_NAME: 0, MEDAL: 0, UPG_TXT: 0, CAM_NAME: 0, RP_CAM: 0, DIFF_NAME: 0, NET_ERR: 0, W: 0, G: 0, NEED_TXT: 0, CMP_WORD: 0, PIT_CMP_NAME: 0 };
+  const T = { DRIVE_TXT: 0, CTRL_HELP: 0, CTRL_HELP_CS: 0, CTRL_NAME: 0, CAR_DESC: 0, MODE_NAME: 0, MEDAL: 0, UPG_TXT: 0, RP_CAM: 0, DIFF_NAME: 0, NET_ERR: 0, W: 0, G: 0, NEED_TXT: 0, CMP_WORD: 0, PIT_CMP_NAME: 0 };
   for (const k in T) {
     const s = tableSrc(k); if (!s) { miss.push('(no table ' + k + ')'); continue; }
     const v = Function('return ' + s)(), all = typeof v === 'string' ? [v] : Object.values(v);
@@ -95,7 +95,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const miss = [];
   for (const u of C.UPG) for (const s of [u.name].concat(u.lv)) if (!has(s) && !Lang.SAME.has(s)) miss.push('upgrade ' + s);
   for (const m of C.MODELS) if (m.credit && !has(m.credit)) miss.push('credit ' + m.id);
-  const SAME_NAME = new Set(['Jezero Ring', 'Riviera', 'Pikes Peak', 'Ouninpohja', 'Vršič', 'Nordschleife', 'Spa-Francorchamps', 'Suzuka', 'Superstars']);
+  const SAME_NAME = new Set(['Jezero Ring', 'Riviera', 'Pikes Peak', 'Ouninpohja', 'Vršič', 'Nordschleife', 'Spa-Francorchamps', 'Suzuka']);
   for (const d of C.TRACKS) { if (!d.en || !d.en.desc) miss.push('track desc ' + d.id); if (!(d.en && d.en.name) && !SAME_NAME.has(d.name)) miss.push('track name ' + d.id);
     if (d.jumpRec && !(d.jumpRec.en && d.jumpRec.en.name && d.jumpRec.en.beat)) miss.push('jump ' + d.id); }
   for (const c of C.CHAMPS) { if (!c.en || !c.en.desc) miss.push('championship desc ' + c.id); if (!(c.en && c.en.name) && !SAME_NAME.has(c.name)) miss.push('championship name ' + c.id); }
@@ -113,12 +113,12 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   Lang.set('en');
   const en = [Lang.tr('Proga: {0}', 'X'), Lang.of(d, 'name'), Lang.thou(3048), Lang.dec('1.9'), Lang.eur(12300), Lang.ord(3), Lang.place('Serpentina 4 · 1.060 m'), Lang.tr('neznano')].join('|');
   const ords = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map(Lang.ord).join(' ');
-  const pl = ['Ruski križ', 'Zavoj 3', 'Serpentina 8 · Ruska kapelica', 'Eau Rouge', 'Pristanišče'].map(Lang.place).join(', ');
+  const pl = ['Ruski križ', 'Zavoj 3', 'Serpentina 8 · Ruska kapelica', 'Eau Rouge', 'Velika lasnica'].map(Lang.place).join(', ');
   Lang.set('sl');
   check('Slovenian: the texts as written, 3.048, 1,9, 12.300 €, 3., the place names as they are', sl === 'Proga: X|Gorski reli|3.048|1,9|12.300 €|3.|Serpentina 4 · 1.060 m|neznano', sl);
   check('English: Track: X, Mountain Rally, 3,048, 1.9, €12,300, 3rd, Hairpin 4 · 1,060 m, an unknown text as it is', en === 'Track: X|Mountain Rally|3,048|1.9|€12,300|3rd|Hairpin 4 · 1,060 m|neznano', en);
   check('English places: 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords === '1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords);
-  check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Harbour', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Harbour', pl);
+  check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Grand Hairpin', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Grand Hairpin', pl);
   check('Vršič: "Vršič, Slovenija" in Slovenian, "Vršič, Slovenia" in English; its description is English', Lang.of(v, 'name') === 'Vršič, Slovenija' && v.en.name === 'Vršič, Slovenia' && /^The road over the Vršič pass/.test(v.en.desc));
 }
 
