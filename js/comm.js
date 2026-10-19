@@ -45,7 +45,7 @@ const Comm = (() => {
     goPass: ['And away they go, up the mountain!', "And they're off! {cars} cars heading for the pass!", 'The race is on! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
     introOne: ['Welcome to {track}, deep in the forests of the Eifel! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // a circuit's flying start (the Nordschleife's Circuit race, def.flyStart): the welcome, then the line as the cars roll off (no lights)
-    introFly: ['Welcome to {track}! {cars} cars, one lap of more than twenty kilometres and a flying start. You start {grid}.', 'Here we are at {track}, and what a field: {cars} cars, rolling to the line together. You start {grid}.', 'Welcome to {track}, deep in the forests of the Eifel! {rivals} rivals, no lights today: a rolling start, and you are {grid}.'],
+    introFly: ['Welcome to {track}! {cars} cars and a flying start, no lights today. You start {grid}.', 'Here we are at {track}, and what a field: {cars} cars, rolling to the line together. You start {grid}.', 'Welcome to {track}! {rivals} rivals, a rolling start, and you are {grid}. Find your way through!'],
     goFly: ['And they are rolling! The flying start is under way!', 'Here they come, the whole field on the move! The race is on!', "No lights today: they roll off, and they're racing!", 'Away they go, a rolling start! Find a gap!'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
