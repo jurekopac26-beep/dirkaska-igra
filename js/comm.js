@@ -155,6 +155,7 @@ const Comm = (() => {
     propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
     propSignal: ['The traffic light is down!', "He's flattened the traffic signal!", 'That light will be red for a while now!'],
     propStreet: ['Into the street furniture!', 'He has wiped out a bit of the city there!', 'That will need a repair crew!'],
+    propBoard: ['Down goes the braking board!', 'He has flattened a distance board!', 'That board will not be telling anyone where to brake now!'],
     // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
     introTT: ['Welcome to Pikes Peak, the climb to the clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', 'Welcome to the mountain! Fourteen thousand one hundred and fifteen feet, here we come!'],
