@@ -8313,6 +8313,49 @@ const Render = (function () {
     sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
   }
 
+  /* ---------------- the pit stop's film camera (the player's car on the autopilot in the pit lane, c.pitAP): from the chase view it rises
+     and flies over the boxes (high above the lane ahead of the car, looking back along the garages), comes down low in front of the car as it
+     nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
+     has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
+     eased into (no cuts); blended over the chase view by w (0..1) ---------------- */
+  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null };
+  function pitCine(c, dt, px, py, pz, tx, ty, tz) {
+    const T = curRace && curRace.track, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD);
+    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null;
+    if (!on || bd == null || !pz0) { pcam.w = Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
+    const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
+    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
+    pcam.t += dt;
+    // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
+    let want = on && bd != null ? 1 : 0;
+    if (want && c.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
+      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
+      if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
+    }
+    pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
+    // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
+    const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
+    const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
+    const car = [c.x, y, c.z];
+    let P, Q;
+    if (c.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
+    else if (c.pitState === 'stop' || c.pitState === 'repair' || c.pitState === 'done') {
+      const a = 0.55 + 0.35 * sw, r = 11 + sw2;   // (drifting round the car's front, on the lane's side)
+      P = at(car, Math.cos(a) * r, -Math.sin(a) * r * 0.85, 3.2 + 0.6 * sw2); Q = at(car, 0.3, 1.2, 0.7);
+    } else {
+      const k = Core.sstep(-50, -14, x);   // (0: the fly-over, 1: low in front of the car)
+      const A = at(car, 22 + 2 * sw, -2, 14 + sw2), AQ = at(car, -4, 3, 0);
+      const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
+      P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
+    }
+    // eased into: the camera glides, never jumps (the first time from the chase view)
+    if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
+    const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
+    for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
+    if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
+    const w = Core.sstep(0, 1, pcam.w), fov = camera.aspect < 1 ? 58 : 46;
+    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (50 - fov) * w];
+  }
   /* ---------------- camera ---------------- */
   function updateCamera(dt, target, mode, alpha) {
     const c = target;
@@ -8373,6 +8416,7 @@ const Render = (function () {
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     }
+    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
     if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
@@ -9126,6 +9170,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
