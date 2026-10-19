@@ -86,10 +86,10 @@
   "meshes": 4239,
   "verts": 2097019,
   "instances": 93193,
-  "props": 74,
+  "props": 70,
   "crowd": 6902,
   "world": "63566218",
-  "propsHash": "a776febf",
+  "propsHash": "a254cf13",
   "floor": "a40171a3/20048",
   "groups": {
    "-:MeshLambertMaterial": "b1325ace",
