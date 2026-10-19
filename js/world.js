@@ -4288,6 +4288,11 @@ const World = (function () {
      the mountain road, fewer in the streets, a few on a modern circuit), and on a circuit the rubber
      laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
+  // ROAD DECAL ORDER (renderOrder; each transparent and not written to the depth buffer, so this order alone decides what lies on what, at the
+  // post target's 16-bit depth and the canvas' 24-bit alike; each still depth-tested: a car or a kerb in front hides it):
+  //   0.25 the drying line (Render) < 0.4 a builder's own patches (Longford) < 0.45 the decal atlas (Nordschleife, Red Bull Ring & co.)
+  //   < 0.5 the road's wear < 0.75 a builder's covers, grates and paint (Harju) < 1 the baked tyre marks (the blob shadows, puddles, lights)
+  //   < 2 the live tyre marks (Render's Skids)
   const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
   function roadWear(o, tex) {
     if ((T.def.roadSurface === 'makadam' && !(T.def.wearPaved && T.pavedAt)) || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches; a gravel road with def.wearPaved: only its asphalt worn)
@@ -4377,7 +4382,7 @@ const World = (function () {
       if (!c.I.length) continue;
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(c.U, 2));
       g.setIndex(c.P.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(c.I, 1) : new THREE.Uint16BufferAttribute(c.I, 1)); g.computeVertexNormals(); g.computeBoundingSphere();
-      const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 2; m.matrixAutoUpdate = false; o.root.add(m);   // (after the tyre marks and the drying line: the rubber shows on a drying line too)
+      const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 0.5; m.matrixAutoUpdate = false; o.root.add(m);   // (ROAD DECAL ORDER: after the drying line, before the covers and every tyre mark)
     }
   }
   /* ---- the grass of every world (at the end of its build): the meadow's own colour varies over tens of metres (lighter, darker, drier
@@ -10002,7 +10007,7 @@ const World = (function () {
           for (let o = 0.2; o + 0.5 < hw - 0.3; o += 0.8) gm.triO(P(o, 0), P(o + 0.5, 0), P(o + 0.25, -0.6), WHT, [a[0], -999, a[1]]);
           out.giveWay++; }
       }
-      addM(gm, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+      { const m = addM(gm, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (m) { m.name = 'roadcovers'; m.renderOrder = 0.75; } }   // (ROAD DECAL ORDER: the rubber over the iron and the paint)
     }
 
     /* ---- the streets, footways, park paths and steps (ribbons on the ground, cut back where they reach the stage) ---- */
@@ -23280,7 +23285,7 @@ const World = (function () {
           if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
         }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
     }
 
@@ -25732,7 +25737,7 @@ const World = (function () {
           if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
         }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
       if (T.drs) {   // the DRS lines: 0.3 m across the whole road
         const gd = new GB(), wl = [0.95, 0.95, 0.92];
@@ -26776,7 +26781,7 @@ const World = (function () {
         for (let k = 0; k <= n; k++) { const i = (i0 + k) % N, cc = clamp((fol ? T.rl[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
           const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]); if (pr >= 0) rb.link(pr, r, 0, 1); pr = r; }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
     }
     // the start / finish line (chequered across the road) and the grid
@@ -28159,7 +28164,7 @@ const World = (function () {
       addM(gr, aMat);
     }
     // the patches of newer tar (darker) and older ones (paler), the cracks: drawn just over the road (one mesh)
-    { const gp = new GB(true), pm = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 }), uv = (p) => [p[0] / 8, -p[2] / 8];
+    { const gp = new GB(true), pm = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 }), uv = (p) => [p[0] / 8, -p[2] / 8];
       for (let k = 0; k < 170; k++) { const s0 = crH(k, 1, 101) * L, i = T.idx(s0), n = 1 + Math.floor(crH(k, 2, 101) * 4); if (bridgeAt[i] || bridgeAt[(i + n) % N]) continue;
         const o = (crH(k, 3, 101) - 0.5) * (w - 1.2) * 2, hw = 0.5 + crH(k, 4, 101) * 1.1, dark = crH(k, 5, 101) < 0.6, c = dark ? [0.74, 0.74, 0.76] : [0.93, 0.91, 0.88];
         for (let j = 0; j < n; j++) { const a = (i + j) % N, b = (i + j + 1) % N, A = Pt(a, o - hw, 0.03), B = Pt(a, o + hw, 0.03), C = Pt(b, o + hw, 0.03), D = Pt(b, o - hw, 0.03); gp.quadUp(A, B, C, D, [c, c, c, c], [uv(A), uv(B), uv(C), uv(D)]); } }
@@ -28167,7 +28172,7 @@ const World = (function () {
       for (let k = 0; k < 260; k++) { const i = Math.floor(crH(k, 6, 101) * N); if (bridgeAt[i]) continue; let o = (crH(k, 7, 101) - 0.5) * (w - 0.6) * 2, ii = i;
         for (let j = 0; j < 3; j++) { const o2 = clamp(o + (crH(k, 8 + j, 101) - 0.5) * 1.2, -w + 0.3, w - 0.3), jj = (ii + 1) % N; if (bridgeAt[jj]) break;
           const A = Pt(ii, o - 0.035, 0.032), B = Pt(ii, o + 0.035, 0.032), C = Pt(jj, o2 + 0.035, 0.032), D = Pt(jj, o2 - 0.035, 0.032); gp.quadUp(A, B, C, D, [CK, CK, CK, CK], [uv(A), uv(B), uv(C), uv(D)]); o = o2; ii = jj; } }
-      addM(gp, pm); }
+      { const m = addM(gp, pm); if (m) { m.name = 'roadpatches'; m.renderOrder = 0.4; } } }   // (ROAD DECAL ORDER: under the road's wear, so its rubber line stays over the tar, and every tyre mark)
     // in the town: a footpath on either side between the kerb and the garden walls (kind 3, set below: drawn after it)
     const footpaths = () => { const gf = new RB(true), FPc = [1.2, 1.17, 1.1], KB = [1.0, 0.98, 0.94];
       for (const side of [-1, 1]) { let pr = -1;
@@ -29029,7 +29034,7 @@ const World = (function () {
         for (let k = 0; k <= n; k++) { const i = (i0 + k) % N, cc = clamp((fol ? T.rl[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
           const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]); if (pr >= 0) rb.link(pr, r, 0, 1); pr = r; }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
     }
     // the start / finish line and the grid

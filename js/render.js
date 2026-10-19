@@ -2782,7 +2782,7 @@ const Render = (function () {
       g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setIndex(idx);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-      this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
+      this.mesh = new THREE.Mesh(g, m); this.mesh.name = 'skids'; this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;   // (ROAD DECAL ORDER, world.js: over every road decal)
       this.dirty = false; this.lo = 1e9; this.hi = -1; this.n = 0; g.setDrawRange(0, 0);   // (n: the marks laid so far; only they are drawn, not the empty rest)
     }
     add(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1) {
@@ -3472,7 +3472,7 @@ const Render = (function () {
       g.computeVertexNormals();
       const base = world.asphaltMat, m = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       if (base) m.color.copy(base.userData.dry || base.color); asphaltLook(m);
-      dryLn = new THREE.Mesh(g, m); dryLn.receiveShadow = true; dryLn.renderOrder = 1; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
+      dryLn = new THREE.Mesh(g, m); dryLn.name = 'dryline'; dryLn.receiveShadow = true; dryLn.renderOrder = 0.25; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
     }
     if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
   }
