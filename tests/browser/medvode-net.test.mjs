@@ -70,7 +70,9 @@ try {
     const probe = (x, z, hint, where, ring, isl) => {   // (isl: a point on a ring's tall island)
       const q = Tk.query(x, z, hint, Q), y = Tk.yAt(q); from.set(x, y + 30, z); rc.set(from, down); rc.far = 60;
       const hits = rc.intersectObjects(meshes, false); let h = null;
-      for (const c of hits) { const n = c.face && c.face.normal; if (n && Math.abs(n.y) < 0.7) { h = null; break; } h = c; break; }   // (a wall, a board, a post in the way: not the ground; skipped)
+      for (let k = 0; k < hits.length; k++) { const c = hits[k], n = c.face && c.face.normal; if (n && Math.abs(n.y) < 0.7) { h = null; break; }   // (a wall, a board, a post in the way: not the ground; skipped)
+        const mt = c.object.material, nx = hits[k + 1]; if (!mt.map && mt.vertexColors && nx && c.point.y - nx.point.y < 0.1) continue;   // (p10: paint, a kerb's top lying on the ground: the surface under it)
+        h = c; break; }
       if (!h) { res.other++; return; }
       const m0 = h.object.material, mk = mName(m0), dy = h.point.y - y;
       if (isl) { res.isl.n++; res.isl.mats[mk] = (res.isl.mats[mk] || 0) + 1; }

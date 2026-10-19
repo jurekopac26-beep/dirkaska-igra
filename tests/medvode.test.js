@@ -50,8 +50,8 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
 {
   const w = (p) => 2 * T.wAt(iAt(p)), wk = T.walk ? T.walk[0].filter(v => v > 0.5).length + T.walk[1].filter(v => v > 0.5).length : 0;
   let ws = 0, wn = 0; for (let d = 0; d < T.raceLen; d += 2) { ws += 2 * T.wAt(at(d)); wn++; }
-  check('widths: the real ones, ~5.8 m on average (the user\'s drawn windows: their carriageways, both directions on the rings\' legs): 7.5 m on Gorenjska cesta, 6.4 m on Medvoška cesta, ~6.2 m on the regional road, 6.5 m on the bridge, 4.8 m through Smlednik, 3.7 m up the castle road',
-    Math.abs(ws / wn - 5.8) < 0.4 && Math.abs(w(PL.gorenjska) - 7.5) < 0.2 && Math.abs(w(PL.medvoska) - 6.4) < 0.2 && Math.abs(w(PL.zbiljska) - 6.2) < 0.3 && Math.abs(w(PL.bridge) - 6.5) < 0.2 && Math.abs(w(PL.smlednik) - 4.8) < 0.2 && Math.abs(w(PL.castle2) - 3.7) < 0.2,
+  check('widths: the real ones, ~6.0 m on average (the user\'s drawn windows: their carriageways, both directions on the rings\' legs): 7.5 m on Gorenjska cesta, 6.4 m on Medvoška cesta, ~6.2 m on the regional road, 6.5 m on the bridge, 4.8 m through Smlednik, 3.7 m up the castle road',
+    Math.abs(ws / wn - 6.0) < 0.4 && Math.abs(w(PL.gorenjska) - 7.5) < 0.2 && Math.abs(w(PL.medvoska) - 6.4) < 0.2 && Math.abs(w(PL.zbiljska) - 6.2) < 0.3 && Math.abs(w(PL.bridge) - 6.5) < 0.2 && Math.abs(w(PL.smlednik) - 4.8) < 0.2 && Math.abs(w(PL.castle2) - 3.7) < 0.2,
     `average ${(ws / wn).toFixed(2)} m; ` + Object.entries(PL).map(([k, p]) => `${k}: ${w(p).toFixed(2)} m`).join(', '));
   const sf = (p) => T.sf ? T.sf[iAt(p)] : 0, sfs = [PL.lake, PL.smlednik2, PL.castle1, PL.castle2, PL.castle3].map(sf);
   check('surface: gravel (makadam) where OSM has the road unpaved, the castle road from its foot to the end; asphalt before', sfs.join() === '0,0,5,5,5' && def.surf.length === 1 && Math.abs(def.surf[0][0] - dAt(PL.castleFoot)) < 6,
@@ -125,6 +125,19 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
     if (o[0] > 0.15) { const k = Math.round(o[0] * 0.4 * (N - 1)); if (!inWinT(A.P[k * 3], A.P[k * 3 + 1])) laneOut.push(push(A.P[k * 3], A.P[k * 3 + 1], 0)); } });   // (p10: in a window the user's road, both carriageways, inside the barrier)
   check('lanes: the oncoming lanes (altDn) are road where they run inside the barrier (the run-off), a car drives them both ways; past it they run on behind the barrier (a car there is pushed back)', !laneBad.length && laneOut.every(v => v > 0.5),
     laneBad.length ? laneBad.join(', ') : `${def.altDn.length} lanes, both ways; behind the barrier pushed ${laneOut.map(v => v.toFixed(1)).join(', ')} m`);
+  // (p10) in the user's windows a lane's vehicles in sight (its open share) drive on the user's road: each point 0.5 m inside their outline at least
+  { const PV = (def.mvPaved || []).map(F => ({ o: F.p, h: F.h || [] })), inP = (P, x, z) => { let c = false; for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) if ((P[i + 1] > z) !== (P[j + 1] > z) && x < (P[j] - P[i]) * (z - P[i + 1]) / (P[j + 1] - P[i + 1]) + P[i]) c = !c; return c; };
+    const onPv = (x, z) => PV.some(F => inP(F.o, x, z) && !F.h.some(h => inP(h, x, z)));
+    let nIn = 0; const off = [];
+    def.altDn.forEach((A, n) => { const N = A.P.length / 3, cum = [0], o = A.open || [0, 1]; for (let k = 1; k < N; k++) cum.push(cum[k - 1] + Math.hypot(A.P[k * 3] - A.P[k * 3 - 3], A.P[k * 3 + 1] - A.P[k * 3 - 2]));
+      for (let k = 0; k < N; k++) { const f = cum[k] / cum[N - 1], x = A.P[k * 3], z = A.P[k * 3 + 1]; if (f < o[0] || f > o[1] || !inWinT(x, z) || [[1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]].some(([u, v]) => !inWinT(x + u, z + v))) continue; nIn++;   // (1.5 m inside the window: their road's outline ends at its border)
+        if (![[0, 0], [0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]].every(([u, v]) => onPv(x + u, z + v))) off.push(`lane ${n} (${x.toFixed(1)}, ${z.toFixed(1)})`); } });
+    check('lanes in the user\'s windows: where its vehicles are in sight, an oncoming lane runs on the user\'s road (0.5 m inside their outline)', !off.length, `${nIn} points in the windows${off.length ? ', off their road: ' + off.slice(0, 6).join('; ') : ''}`); }
+  // (p10) the user's sidewalks (def.walkLines) beside the road the cars drive on, never on its asphalt
+  { let n = 0, on = 0; const ex = [];
+    for (const L of def.walkLines || []) for (const A of [L.re, L.ge]) for (let k = 0; k + 1 < A.length; k += 2) { const x = A[k], z = A[k + 1], q = T.queryRoute(x, z, T.nearestIdx(x, z), {}); n++;
+      if (!q.over && Math.abs(q.d) < T.wAt(q.a) - 0.1) { on++; if (ex.length < 4) ex.push(`(${x.toFixed(1)}, ${z.toFixed(1)}) ${(T.wAt(q.a) - Math.abs(q.d)).toFixed(2)} m in`); } }
+    check('sidewalks in the user\'s windows: beside the route\'s asphalt, none on it (0.1 m)', n > 500 && on === 0, `${n} points, ${on} on the asphalt${ex.length ? ': ' + ex.join('; ') : ''}`); }
   check('one-way: the oncoming traffic\'s own lines round the rings and the split approaches (altDn), each a stretch of the road with a line of points',
     def.altDn.length >= 4 && def.altDn.every(a => a.b > a.a && a.P.length >= 30 && a.P.length % 3 === 0), def.altDn.map(a => `${Math.round(a.a)}-${Math.round(a.b)}`).join(', '));
   check('stops and crossings: the bus stops (OSM, with their names) and the zebra crossings on the road', def.stops.length >= 12 && def.stops.every(s => s[2]) && def.zebras.length >= 12, `${def.stops.length} stops, ${def.zebras.length} zebra crossings`);
@@ -189,7 +202,7 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
     if (P.stuckT > 3 || P.wrongT > 3) { r.rescue(P); resc++; }
     r.cars.forEach((c, j) => { if (c.finished) return; const n = offW(c); if (r.cars.some(o => o !== c && !o.finished && Math.abs(o.q.s - c.q.s) < 6 && Math.abs(o.q.d - c.q.d) < 2.6)) along[j] = t;
       if (n >= 1) off1[j] += DT; if (n >= 2) { off2[j] += DT; if (t - along[j] < 1) offA[j] += DT; }
-      if (offWR(c) >= 2) { offR[j] += DT; if (t - along[j] >= 1 && Math.hypot(c.vx, c.vz) > 1) offRS[j] += DT; }   // (p10: a car stopped against the barrier, waiting for its rescue, is not driving there)
+      if (offWR(c) >= 2) { offR[j] += DT; if (t - along[j] >= 1) offRS[j] += DT; }
       if ((c.hitCar || 0) > 0.3) hitT[j] = t;
       if (ISL.some(o => (c.x - o.R.x) ** 2 + (c.z - o.R.z) ** 2 < o.e * o.e)) { if (!islIn[j]) islIn[j] = t - hitT[j] < 1.5 ? 'knocked' : 'own'; if (islIn[j] === 'own') onIsl[j] += DT; else onIslK[j] += DT; } else islIn[j] = null; });
   }
@@ -198,7 +211,7 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
   const fin = r.cars.filter(c => c.finished).sort((a, b) => a.finishPos - b.finishPos);
   check('race: all 13 cars reach the castle', fin.length === 13, `${fin.length}/13, winner ${fin[0] ? fin[0].finishTime.toFixed(1) : '-'} s, player ${P.finishPos}. (${P.finishTime ? P.finishTime.toFixed(1) : '-'} s), player rescues ${resc}`);
   const jP = r.cars.indexOf(P), most = Math.max(...offR.filter((v, j) => j !== jP)), mostS = Math.max(...offRS.filter((v, j) => j !== jP));
-  check('race: the AI cars keep to the road and the run-off\'s paved parts (Track.roPv): none with two wheels on the run-off\'s grass or gravel (ws 2 / 5, the castle road\'s own makadam aside; a ring\'s tall island is not the run-off) for more than 3 s of its own accord (no car alongside in the last second, moving) in the whole race, 5 s in all with the knocks in the pack',
+  check('race: the AI cars keep to the road and the run-off\'s paved parts (Track.roPv): none with two wheels on the run-off\'s grass or gravel (ws 2 / 5, the castle road\'s own makadam aside; a ring\'s tall island is not the run-off) for more than 3 s of its own accord (no car alongside in the last second) in the whole race, 5 s in all with the knocks in the pack',
     mostS <= 3 && most <= 5, `per car, two wheels on the run-off alone / in all (two wheels anywhere / one): ${r.cars.map((c, j) => `${j === jP ? 'player' : '#' + j} ${offRS[j].toFixed(1)}/${offR[j].toFixed(1)} (${off2[j].toFixed(1)}/${off1[j].toFixed(1)})`).join(', ')} s; the most ${mostS.toFixed(1)} s alone, ${most.toFixed(1)} s in all (the player's autopilot ${offRS[jP].toFixed(1)} / ${offR[jP].toFixed(1)} s); ` +
     `of all the two-wheel time ${(100 * offA.reduce((a, b) => a + b, 0) / Math.max(1e-9, off2.reduce((a, b) => a + b, 0))).toFixed(0)} % with another car alongside`);
   const islMost = Math.max(...onIsl.filter((v, j) => j !== jP)), islMostK = Math.max(...onIslK.filter((v, j) => j !== jP));

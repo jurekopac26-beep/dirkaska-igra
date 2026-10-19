@@ -30984,6 +30984,12 @@ const World = (function () {
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of q) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { id: w.id, q, x0, x1, z0, z1 }; });
     const inWin = (x, z) => { for (const W of WINS) if (x >= W.x0 && x <= W.x1 && z >= W.z0 && z <= W.z1 && inPoly(W.q, x, z)) return true; return false; };
     MVWIN = WINS.length ? inWin : null;
+    const OWNW = WINS.filter((W, k) => (def.mvWin[k].kind || '') === 'k1'), inOwnWin = (x, z) => OWNW.some(W => x >= W.x0 && x <= W.x1 && z >= W.z0 && z <= W.z1 && inPoly(W.q, x, z));   // (K1: the user's own markings)
+    const wPairs = (L) => { const q = []; for (let k = 0; k + 1 < L.length; k += 2) q.push([L[k], L[k + 1]]); if (q.length > 1 && q[0][0] === q[q.length - 1][0] && q[0][1] === q[q.length - 1][1]) q.pop(); return q; };
+    const wBB = (q) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of q) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return [x0, z0, x1, z1]; };
+    const UG = (def.mvPaved || []).map(F => { const o = wPairs(F.p); return { o, h: (F.h || []).map(wPairs).filter(h => h.length >= 3), b: wBB(o) }; })
+      .concat((def.walkLines || []).map(L => { const re = wPairs(L.re), ge = wPairs(L.ge), o = re.concat(ge.reverse()); return { o, h: [], b: wBB(o) }; }));
+    const onUserGround = (x, z) => UG.some(F => x >= F.b[0] && x <= F.b[2] && z >= F.b[1] && z <= F.b[3] && inPoly(F.o, x, z) && !F.h.some(h => inPoly(h, x, z)));   // (the user's road or sidewalk)
     const winGB = (g) => { if (!WINS.length || g.winW) return g; g.winW = 1; const qO = g.quadO, tO = g.triO; let inQ = false;   // (a builder that leaves out what falls in a window: a quad or a triangle by its middle; quadUp / triUp go through these; winOff: let it through)
       g.quadO = function (a, b, c, d, ...r) { if (!this.winOff && inWin((a[0] + b[0] + c[0] + d[0]) / 4, (a[2] + b[2] + c[2] + d[2]) / 4)) return; inQ = true; qO.call(this, a, b, c, d, ...r); inQ = false; };
       g.triO = function (a, b, c, ...r) { if (!inQ && !this.winOff && inWin((a[0] + b[0] + c[0]) / 3, (a[2] + b[2] + c[2]) / 3)) return; tO.call(this, a, b, c, ...r); };
@@ -31025,9 +31031,19 @@ const World = (function () {
     const tF0 = performance.now(), FR = T.fenceRuns(), wFree = T.wallFree(0.3), wallHit = T.wallHitter(FR.runs, wFree), msRuns = performance.now() - tF0;
     // (p10) the ground in the windows: inside the cars' free ground (and the run-off's rows' last 35 cm past the barrier, a ring's disc) the surface the cars
     // drive on (the route's rows' own height on its asphalt: a ring's surface can lie up to 4 cm off them), else the terrain; lin / lout metres over it
-    const QW = {}, wCov = (x, z) => wFree.route(x, z, -0.35) || T.rings.some(Rg => Rg.zr > 0 && (x - Rg.x) ** 2 + (z - Rg.z) ** 2 < (Rg.zr + 0.35) ** 2);
+    // past it eased down to the terrain over 0.65 m (where the run-off's grass skirt would be: none under the user's ground), then the terrain
+    const QW = {}, wPast = (x, z) => { const s = wFree.insetNear(x, z, T.nearestIdx(x, z)); let p = isNaN(s) ? 1e9 : -s - 0.35;   // (metres past the cover's edge: the barrier + 0.35 m, a ring's disc)
+      for (const Rg of T.rings) if (Rg.zr > 0) p = Math.min(p, Math.hypot(x - Rg.x, z - Rg.z) - (Rg.zr + 0.35)); return p; };
+    const wCov = (x, z) => wPast(x, z) <= 0;
     const wSurf = (x, z) => { const q = T.query(x, z, T.nearestIdx(x, z), QW); let y = T.yAt(q); if (!q.deep && q.k < 0 && Math.abs(q.d) <= WA[q.a] + 0.05) y = Math.max(y, T.elevAt(T.hs(q)).y + 0.02); else y += 0.02; return y; };
-    const wY = (x, z, lin, lout) => wCov(x, z) ? wSurf(x, z) + lin : mvGround(x, z) + lout;
+    const wY = (x, z, lin, lout) => { const p = wPast(x, z); if (p <= 0) return wSurf(x, z) + lin; const yo = mvGround(x, z) + lout; return p >= 0.65 ? yo : lerp(wSurf(x, z) + lin, yo, p / 0.65); };
+    // (a flat piece on that ground: triangles split at their edges' middles (to 4 levels) where the ground bends more than 1.5 cm away from them)
+    const wTri = (g, a, b, c, hf, cols, uvf, lv) => { const ya = hf(a[0], a[1]), yb = hf(b[0], b[1]), yc = hf(c[0], c[1]);
+      if ((lv || 0) < 4) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2];
+        if (Math.abs(hf(ab[0], ab[1]) - (ya + yb) / 2) > 0.015 || Math.abs(hf(bc[0], bc[1]) - (yb + yc) / 2) > 0.015 || Math.abs(hf(ca[0], ca[1]) - (yc + ya) / 2) > 0.015) {
+          const l = (lv || 0) + 1; wTri(g, a, ab, ca, hf, cols, uvf, l); wTri(g, ab, b, bc, hf, cols, uvf, l); wTri(g, ca, bc, c, hf, cols, uvf, l); wTri(g, ab, bc, ca, hf, cols, uvf, l); return; } }
+      const A = [a[0], ya, a[1]], B = [b[0], yb, b[1]], C = [c[0], yc, c[1]]; g.triUp(A, B, C, [cols, cols, cols], uvf ? [uvf(A), uvf(B), uvf(C)] : undefined); };
+    const wQuad = (g, a, b, c, d, hf, cols, uvf) => { wTri(g, a, b, c, hf, cols, uvf, 0); wTri(g, a, c, d, hf, cols, uvf, 0); };
 
     /* ---- the buildings (def.bld): clear of the road, its sidewalks and the side roads; their footprints marked (no trees in them) ---- */
     const blds = []; let nWallDrop = 0, nNarrow = 0, nDropB = 0, nDropF = 0;
@@ -31130,7 +31146,7 @@ const World = (function () {
       const FR = [-1, -0.82, -0.5, -0.24, 0, 0.24, 0.5, 0.82, 1], tileL = 8;
       const shade = (i, f) => { const wi = WA[i], o = f * wi, lane = wi > 2.6 ? Math.abs(Math.abs(o) - wi / 2) : Math.abs(o), trk = Math.exp(-((lane - 0.85) ** 2) / 0.12);
         let k = (0.85 - 0.07 * trk) * secT[i]; if (Math.abs(f) > 0.9) k += 0.03; if (onBr[i]) k *= 0.97; return [k * 1.01, k, k * 1.02]; };
-      const KC = [0.8, 0.79, 0.76], KT = [0.86, 0.85, 0.82], SWE = [0.24, 0.24, 0.25], gwMat = new THREE.MeshLambertMaterial({ map: mvSettsTex(), vertexColors: true }), SWc = (i, o) => { const k = (0.98 + 0.06 * rpHash(i, 41 + Math.round(o))) * secT[i]; return [k, k * 0.99, k * 0.97]; };
+      const KC = [0.8, 0.79, 0.76], KT = [0.86, 0.85, 0.82], SWE = [0.24, 0.24, 0.25], gwMat = new THREE.MeshLambertMaterial({ map: mvSettsTex(), vertexColors: true }), gwAll = new RB(true), SWc = (i, o) => { const k = (0.98 + 0.06 * rpHash(i, 41 + Math.round(o))) * secT[i]; return [k, k * 0.99, k * 0.97]; };
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) {
         a.push(vp[si][i].map(([o], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           if (onBr[i]) return k < 3 ? [0.66, 0.65, 0.62] : [0.54, 0.53, 0.5];
@@ -31142,7 +31158,7 @@ const World = (function () {
         return [k * 1.02, k * 1.14, k * 1.3]; };   // (the gravel: the limestone's pale grey-beige over the makadam picture, its two wheel tracks darker and packed, the loose stones lighter at the edges)
       const islClip = (i, P) => { if (TALLW.length) for (const q of P) tallOut(q, 2); return P; };   // (the route's rows: off a tall island, TALLW)
       for (let c0 = 0; c0 < N - 1; c0 += 128) {
-        const ga = new RB(true), gw = new RB(true), gg = new RB(true), gk = winGB(new GB()), gs = new GB(true), gv = new GB(true); let pr = -1, prg = -1;
+        const ga = new RB(true), gw = gwAll, gg = new RB(true), gk = winGB(new GB()), gs = new GB(true), gv = new GB(true); let pr = -1, prg = -1;
         for (let i = c0; i <= Math.min(c0 + 128, N - 1); i++) {   // (each segment asphalt or gravel: a row in each where they meet)
           const wi = WA[i], v = i * ds / tileL, gA = i > c0 && SF[i - 1] === 5 && SF[i] === 5, gB = i < N - 1 && SF[i] === 5 && SF[i + 1] === 5, pts = islClip(i, FR.map(f => Pt(i, f * wi, 0.02))), uvs = FR.map(f => [(f * wi + wi) / tileL, v]);
           if (!(gA && gB)) { const r = ga.row(pts, FR.map(f => shade(i, f)), uvs); if (pr >= 0 && !gA) ga.link(pr, r, 0, FR.length - 1); pr = r; }
@@ -31189,7 +31205,7 @@ const World = (function () {
               const cols = os.map(o => g ? gShade(i, Math.sign(o) * 1.2) : RC(i, o)); if (side < 0) { cols.reverse(); uvs.reverse(); } return [cols, uvs]; };
             const add = (g, P, i, os) => { const [c2, u2] = cu(g, i, os, P); return (g ? grG : gr).row(P, c2, u2); };
             for (let i = c0; i <= Math.min(c0 + 128, N - 1); i++) {
-              const bar = side > 0 ? T.br[i] : T.bl[i], e = wE(si, i), y0 = WK && WK[si][i] > 0.05 ? 0.07 : 0.02, grav = !RM && SF[i] === 5;   // (without def.roSurf, beside the gravel road: gravel out to the barrier)
+              const iw = WINS.length && inWin(T.px[i], T.pz[i]), bar = side > 0 ? T.br[i] : T.bl[i], e = iw ? WA[i] : wE(si, i), y0 = !iw && WK && WK[si][i] > 0.05 ? 0.07 : 0.02, grav = !RM && SF[i] === 5;   // (p10: in a window the run-off from the asphalt's edge: the user's sidewalks over it)   // (without def.roSurf, beside the gravel road: gravel out to the barrier)
               if (onBr[i] || bar - e < 0.25) { pr = prs = pg = -1; prev = zprev = null; continue; }   // (the bridge: its deck out to the parapets, drawn with it)
               const os = [0, 1, 2, 3, 4, 5, 6].map(k => e + (bar + 0.35 - e) * k / 6), P3 = os.map((o, k) => k ? yRO(PtR(i, side * o, 0.02), i) : PtR(i, side * o, 0.02));   // (7 across: the surface round a ring is curved; the edge at the road's own height)
               const yOut = P3[6][1];
@@ -31203,7 +31219,7 @@ const World = (function () {
               else { if (pr < 0 && st) pr = add(false, st.P3, st.i, st.os); const r = add(false, P3, i, os); if (pr >= 0) gr.link(pr, r, 0, 6); pr = r; pg = -1; }
               prev = { i, os, P3 }; zprev = null;
               const A = PtR(i, side * (bar + 0.35), 0.02), B = PtR(i, side * (bar + 1.0), 0); A[1] = yOut; const gy = mvGround(B[0], B[2]); B[1] = Math.min(A[1] - 0.05, Math.max(gy + 0.03, A[1] - 0.6));
-              if (inZoneW(B[0], B[2], -0.5) || wFree.route(B[0], B[2], -0.3)) { prs = -1; continue; }   // (its outer edge still in the cars' free ground (a ring's zone, another stretch's run-off): no grass skirt over that run-off)
+              if (inZoneW(B[0], B[2], -0.5) || wFree.route(B[0], B[2], -0.3) || (WINS.length && inWin(B[0], B[2]) && (onUserGround(B[0], B[2]) || onUserGround(A[0], A[2])))) { prs = -1; continue; }   // (p10: none over the user's road or sidewalk: it eases down from the run-off's edge itself)   // (its outer edge still in the cars' free ground (a ring's zone, another stretch's run-off): no grass skirt over that run-off)
               { const qb = T.query(B[0], B[2], i, QSK); if (qb.k >= 0 && Math.abs(qb.u) <= T.stubHw(T.stubs[qb.k], qb.st) + 0.8) { prs = -1; continue; } }   // (nor over a side road going on past the barrier)
               const sp = side < 0 ? [B, A] : [A, B], gc = mvGCol(B[0], B[2]), rs = gsk.row(sp, RM ? sp.map(p => mvGCol(p[0], p[2])) : [gc, gc], sp.map(p => [p[0] / 9, -p[2] / 9])); if (prs >= 0) gsk.link(prs, rs, 0, 1); prs = rs;   // (RM: each edge the terrain's colour there, the inner one the run-off's grass's at its last row)
             }
@@ -31211,8 +31227,9 @@ const World = (function () {
           const mr = addM(gr, RM ? roMat : aMat); if (mr && RM) mr.geometry.setAttribute('aRo', new THREE.Float32BufferAttribute(aRo, 3));
           addM(grG, sMat); const mk = addM(gsk, gMat); if (mk && RM) { const nA = mk.geometry.attributes.normal; for (let k = 0; k < nA.count; k++) nA.setXYZ(k, 0, 1, 0); }   // (RM: the skirt lit as the flat grass either side of it (its slope down from the run-off's edge lit brighter: a pale band at the barrier's foot))
         }
-        addM(ga, aMat); addM(gw, gwMat); addM(gg, sMat); addM(gk, matV); addM(gs, sMat); addM(gv, gMat);
+        addM(ga, aMat); addM(gg, sMat); addM(gk, matV); addM(gs, sMat); addM(gv, gMat);
       }
+      addM(gwAll, gwMat);
     }
 
     /* ---- the markings: the centre line (dashed, solid round the bends and before the rings, none on the narrow roads and round the rings), the
@@ -31237,36 +31254,41 @@ const World = (function () {
       for (const g0 of def.giveWay || []) { const s0 = sStart + g0, wi = wS(s0);   // the route's own give-way lines (where it merges): teeth across it
         for (let o = -wi + 0.3; o + 0.5 <= wi - 0.2; o += 0.9) { const a = atSf(s0, o), b = atSf(s0, o + 0.5), c = atSf(s0 - 0.6, o + 0.25), y = hyS(s0) + 0.04; gl.triO([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], WH, [a[0], y - 5, a[1]]); } }
       for (const z0 of def.zebras || []) { const s0 = sStart + z0, i0 = T.idx(s0);   // the zebra crossings that go on across an oncoming lane beside the road (its own bars across it)
+        gl.winOff = WINS.length > 0 && !inOwnWin(T.px[i0], T.pz[i0]);   // (p10: as the route's own bars)
         for (const L of M.alts) { let bk = -1, bd = 1e9; for (let k = 0; k < L.length; k++) { const dx = L[k][0] - T.px[i0], dz = L[k][1] - T.pz[i0], a = Math.abs(dx * T.tx[i0] + dz * T.tz[i0]), o = Math.abs(dx * T.nx[i0] + dz * T.nz[i0]); if (a < 2.5 && o < WA[i0] + 16 && a < bd) { bd = a; bk = k; } }
           if (bk < 1 || bk >= L.length - 1) continue; const [x, z, y] = L[bk], tx = L[bk + 1][0] - L[bk - 1][0], tz = L[bk + 1][1] - L[bk - 1][1], tl = Math.hypot(tx, tz) || 1, ux = tx / tl, uz = tz / tl, HWa = def.altHw || 2.4;
           for (let o = -HWa + 0.3; o + 0.5 <= HWa - 0.2; o += 1.0) { const P = (u, v) => [x - uz * (o + u) + ux * v, y + 0.07, z + ux * (o + u) + uz * v]; gl.quadUp(P(0, -1.5), P(0.5, -1.5), P(0.5, 1.5), P(0, 1.5), [WH, WH, WH, WH]); } } }
-      for (const z0 of def.zebras || []) { const s0 = sStart + z0, wi = wS(s0);   // the zebra crossings: bars along the road, 0.5 m wide and 0.5 m apart, 3 m long
+      gl.winOff = false;
+      for (const z0 of def.zebras || []) { const s0 = sStart + z0, wi = wS(s0), p0 = atSf(s0, 0);   // the zebra crossings: bars along the road, 0.5 m wide and 0.5 m apart, 3 m long
+        gl.winOff = WINS.length > 0 && !inOwnWin(p0[0], p0[1]);   // (p10: in a window too, but in K1: the user's own crossings there)
         for (let o = -wi + 0.3; o + 0.5 <= wi - 0.2; o += 1.0) strip(s0 - 1.5, s0 + 1.5, () => o + 0.25, 0.25, WH, 0.04); }
+      gl.winOff = false;
       for (const r of M.rings) if (r.drive) {   // the give-way teeth across the route where it enters a ring (its oncoming traffic takes its own way round)
         let ie = -1; for (let i = 1; i < N; i++) if (inRing[i] && !inRing[i - 1]) { if (Math.hypot(T.px[i] - r.x, T.pz[i] - r.z) < r.r + 4.5) { ie = i; break; } }
         if (ie < 0) continue; const s0 = (ie - 2) * ds, wi = WA[ie - 2];
         for (let o = -wi + 0.3; o + 0.5 <= wi - 0.2; o += 0.9) { const a = atSf(s0, o), b = atSf(s0, o + 0.5), c = atSf(s0 - 0.6, o + 0.25), y = hyS(s0) + 0.04; gl.triO([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], WH, [a[0], y - 5, a[1]]); } }
       for (const [d, side] of def.stops || []) { const s0 = sStart + d;   // the bus stops: a yellow zigzag along the edge
+        if (WINS.length) { const pa = atSf(s0 - 12, 0), pb = atSf(s0 + 12, 0), pm = atSf(s0, 0); if ([pa, pm, pb].some(p => inOwnWin(p[0], p[1]))) continue; gl.winOff = true; }   // (p10: none touching K1, whole elsewhere)
         for (let k = 0; k < 8; k++) { const sa = s0 - 12 + k * 3, sb = sa + 3, oa = (s) => side * (wS(s) - (k % 2 ? 0.25 : 1.4)), ob = (s) => side * (wS(s) - (k % 2 ? 1.4 : 0.25));
           const a1 = atSf(sa, oa(sa) - 0.06), a2 = atSf(sa, oa(sa) + 0.06), b1 = atSf(sb, ob(sb) + 0.06), b2 = atSf(sb, ob(sb) - 0.06), y0 = hyS(sa) + 0.037, y1 = hyS(sb) + 0.037;
-          gl.quadUp([a1[0], y0, a1[1]], [a2[0], y0, a2[1]], [b1[0], y1, b1[1]], [b2[0], y1, b2[1]], [YE, YE, YE, YE]); } }
+          gl.quadUp([a1[0], y0, a1[1]], [a2[0], y0, a2[1]], [b1[0], y1, b1[1]], [b2[0], y1, b2[1]], [YE, YE, YE, YE]); } gl.winOff = false; }
       const W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const wi = wS(s0), uM = Math.round(wi * 2 / 0.8) / 16, a = atSf(s0 - 0.8, -wi), b = atSf(s0 - 0.8, wi), c = atSf(s0 + 0.8, wi), d = atSf(s0 + 0.8, -wi), y = hyS(s0) + 0.045;
         (s0 === sFin ? gqF : gq).quadUp([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], [d[0], y, d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
       for (const s0 of T.cpS) strip(s0 - 0.25, s0 + 0.25, () => 0, wS(s0) - 0.15, WH, 0.042);
       if (def.paint && def.paint.length) {   // (p10) the user's markings (K1's their own; the other windows' made by the pipeline from their road's outline): { p: [x, z, ...] a polygon, or l: [x, z, ...] a line w metres
         // wide; c: [r, g, b] 0-255 }, 2.5 cm over the ground they lie on (the run-off's, the route's or a ring's surface; past the barrier the user's asphalt)
-        const wPaint = (x, z) => [x, wY(x, z, 0.025, 0.095), z]; gl.winOff = true;
-        for (const F of def.paint) { const c = [F.c[0] / 255, F.c[1] / 255, F.c[2] / 255], C4 = [c, c, c, c];
+        const hP = (x, z) => wY(x, z, 0.025, 0.095); gl.winOff = true;
+        for (const F of def.paint) { const c = [F.c[0] / 255, F.c[1] / 255, F.c[2] / 255];
           if (F.l) { const L = F.l, hw = (F.w || 0.12) / 2;   // (a line: pieces of up to 1 m along it)
             for (let k = 0; k + 3 < L.length; k += 2) { const ax = L[k], az = L[k + 1], bx = L[k + 2], bz = L[k + 3], len = Math.hypot(bx - ax, bz - az); if (len < 1e-3) continue;
               const m = Math.max(1, Math.ceil(len)), nx = -(bz - az) / len * hw, nz = (bx - ax) / len * hw;
               for (let j = 0; j < m; j++) { const x0 = lerp(ax, bx, j / m), z0 = lerp(az, bz, j / m), x1 = lerp(ax, bx, (j + 1) / m), z1 = lerp(az, bz, (j + 1) / m);
-                gl.quadUp(wPaint(x0 - nx, z0 - nz), wPaint(x1 - nx, z1 - nz), wPaint(x1 + nx, z1 + nz), wPaint(x0 + nx, z0 + nz), C4); } }
+                wQuad(gl, [x0 - nx, z0 - nz], [x1 - nx, z1 - nz], [x1 + nx, z1 + nz], [x0 + nx, z0 + nz], hP, c); } }
             continue; }
           const q = []; for (let k = 0; k + 1 < F.p.length; k += 2) q.push([F.p[k], F.p[k + 1]]); if (q.length < 3) continue;
-          if (q.length === 4) { gl.quadUp(wPaint(q[0][0], q[0][1]), wPaint(q[1][0], q[1][1]), wPaint(q[2][0], q[2][1]), wPaint(q[3][0], q[3][1]), C4); continue; }
-          for (const [a, b, d] of THREE.ShapeUtils.triangulateShape(q.map(p => new THREE.Vector2(p[0], p[1])), [])) gl.triUp(wPaint(q[a][0], q[a][1]), wPaint(q[b][0], q[b][1]), wPaint(q[d][0], q[d][1]), [c, c, c]); }
+          if (q.length === 4) { wQuad(gl, q[0], q[1], q[2], q[3], hP, c); continue; }
+          for (const [a, b, d] of THREE.ShapeUtils.triangulateShape(q.map(p => new THREE.Vector2(p[0], p[1])), [])) wTri(gl, q[a], q[b], q[d], hP, c); }
         gl.winOff = false; }
       tex.checker.repeat.set(1, 1); const qMat = new THREE.MeshLambertMaterial({ map: tex.checker }); addM(gq, qMat); addM(gqF, qMat, false, finG); addM(gl, lMat);
     }
@@ -31584,19 +31606,22 @@ const World = (function () {
       const dense = (p, st) => { const o = []; for (let k = 0; k + 3 < p.length; k += 2) { const ax = p[k], az = p[k + 1], bx = p[k + 2], bz = p[k + 3], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / st)); for (let t = 0; t < m; t++) o.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); } o.push([p[p.length - 2], p[p.length - 1]]); return o; };
       for (const l of lines) { if (l.br === 2) continue;
         const nearW = WINS.length && (() => { for (let k = 0; k + 1 < l.pts.length; k += 2) for (const W of WINS) if (l.pts[k] > W.x0 - 6 && l.pts[k] < W.x1 + 6 && l.pts[k + 1] > W.z0 - 6 && l.pts[k + 1] < W.z1 + 6) return true; return false; })();
-        const hw = l.w / 2, D = dense(l.pts, nearW ? 1 : 3); let n = D.length; if (n < 2 || vrDist(D[0][0], D[0][1]) > 460 && vrDist(D[n - 1][0], D[n - 1][1]) > 460) continue;
+        const segW = (k) => WINS.some(W => Math.max(l.pts[k], l.pts[k + 2]) > W.x0 - 6 && Math.min(l.pts[k], l.pts[k + 2]) < W.x1 + 6 && Math.max(l.pts[k + 1], l.pts[k + 3]) > W.z0 - 6 && Math.min(l.pts[k + 1], l.pts[k + 3]) < W.z1 + 6);
+        const hw = l.w / 2, D = nearW ? (() => { const o = []; for (let k = 0; k + 3 < l.pts.length; k += 2) { const ax = l.pts[k], az = l.pts[k + 1], bx = l.pts[k + 2], bz = l.pts[k + 3], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / (segW(k) ? 1 : 3))); for (let t = 0; t < m; t++) o.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); } o.push([l.pts[l.pts.length - 2], l.pts[l.pts.length - 1]]); return o; })() : dense(l.pts, 3); let n = D.length;   // (p10: 1 m steps near a window only) if (n < 2 || vrDist(D[0][0], D[0][1]) > 460 && vrDist(D[n - 1][0], D[n - 1][1]) > 460) continue;
         const keep = D.map(([x, z]) => !onRoad(x, z, Math.min(hw, 1.5)) && !(nearW && inWin(x, z)));
         if (!l.br) {   // (r5: a street that meets a side road ends right at its edge, not at its last 3 m step short of it: the edge found along its own line, up to 6 m on; never on to the route, behind its fence)
           const onStubE = (x, z) => { const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k < 0) return false; const S = T.stubs[q.k]; return q.st <= (S.end === 2 ? S.L + 0.5 : S.Lend) && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + 0.05; };
           const edge = (k, j, back) => { const ax = D[k][0], az = D[k][1], dx = (D[j][0] - ax) * (back ? -1 : 1), dz = (D[j][1] - az) * (back ? -1 : 1), L = Math.hypot(dx, dz) || 1; let lo = 0, hi = -1;   // (back: beyond k, away from j: the street's own ends)
             for (let t = 0.5; t <= 6; t += 0.5) if (onStubE(ax + dx / L * t, az + dz / L * t)) { hi = t; break; }
             if (hi < 0) return null; for (let it = 0; it < 6; it++) { const m = (lo + hi) / 2; if (onStubE(ax + dx / L * m, az + dz / L * m)) hi = m; else lo = m; } return [ax + dx / L * lo, az + dz / L * lo]; };
-          const D2 = [], K2 = [];
-          for (let k = 0; k < n; k++) { if (keep[k] && k > 0 && !keep[k - 1]) { const e = edge(k, k - 1); if (e) { D2.push(e); K2.push(true); } }
-            if (k === 0 && keep[0]) { const e = edge(0, 1, true); if (e) { D2.push(e); K2.push(true); } }
+          const D2 = [], K2 = [], inW2 = (p) => nearW && inWin(p[0], p[1]);
+          const wB = (k, j) => { let a = D[k], b = D[j]; for (let it = 0; it < 12; it++) { const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; if (inWin(m[0], m[1])) b = m; else a = m; } return a; };   // (p10: a window's border between a kept point and one in it: the street ends on it, the user's road goes on)
+          const ext = (k, j, back) => { if (!back && inW2(D[j])) return wB(k, j); const e = edge(k, j, back); return e && !inW2(e) ? e : null; };
+          for (let k = 0; k < n; k++) { if (keep[k] && k > 0 && !keep[k - 1]) { const e = ext(k, k - 1); if (e) { D2.push(e); K2.push(true); } }
+            if (k === 0 && keep[0]) { const e = ext(0, 1, true); if (e) { D2.push(e); K2.push(true); } }
             D2.push(D[k]); K2.push(keep[k]);
-            if (keep[k] && k + 1 < n && !keep[k + 1]) { const e = edge(k, k + 1); if (e) { D2.push(e); K2.push(true); } }
-            if (k === n - 1 && keep[k]) { const e = edge(k, k - 1, true); if (e) { D2.push(e); K2.push(true); } } }
+            if (keep[k] && k + 1 < n && !keep[k + 1]) { const e = ext(k, k + 1); if (e) { D2.push(e); K2.push(true); } }
+            if (k === n - 1 && keep[k]) { const e = ext(k, k - 1, true); if (e) { D2.push(e); K2.push(true); } } }
           D.length = 0; D.push(...D2); keep.length = 0; keep.push(...K2); n = D.length;
         }
         const yb = l.br === 1 ? [mvGround(D[0][0], D[0][1]) + 0.2, mvGround(D[n - 1][0], D[n - 1][1]) + 0.2] : null;
@@ -31631,8 +31656,8 @@ const World = (function () {
        (def.walkLines: 1.5 m strips, re their edge on the road's side, ge on the grass's): granite setts behind a kerb (its face up from the road, its light top
        20 cm wide), a dark edging 10 cm wide on the grass's side, on the ground they lie on; no trees on either ---- */
     if (WINS.length) {
-      const PA = new Chunks(260, true), aW = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-      const pc = [0.85, 0.85, 0.87], P3 = (p) => [p[0], mvGround(p[0], p[1]) + 0.07, p[1]], uvA = (p) => [p[0] / 8, -p[1] / 8]; let nPv = 0;
+      const PA = new Chunks(260, true), aW = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 });   // (over a street's ribbon where it reaches into a window)
+      const pc = [0.85, 0.85, 0.87], hPv = (x, z) => wY(x, z, 0, 0.07), uvA = (P) => [P[0] / 8, -P[2] / 8]; let nPv = 0;   // (on the terrain as the streets are; at the free ground's edge up to the run-off's)
       const put = (a, b, c, lv) => { const ab = Math.hypot(b[0] - a[0], b[1] - a[1]), bc = Math.hypot(c[0] - b[0], c[1] - b[1]), ca = Math.hypot(a[0] - c[0], a[1] - c[1]), m = Math.max(ab, bc, ca);
         const nOn = m > 0.6 && lv < 14 ? (wCov(a[0], a[1]) ? 1 : 0) + (wCov(b[0], b[1]) ? 1 : 0) + (wCov(c[0], c[1]) ? 1 : 0) : 0;
         if (nOn === 3 && m < 4) return;   // (in the free ground: the run-off's surfaces)
@@ -31640,24 +31665,25 @@ const World = (function () {
           if (m === ab) { const e = mid(a, b); put(a, e, c, lv + 1); put(e, b, c, lv + 1); } else if (m === bc) { const e = mid(b, c); put(a, b, e, lv + 1); put(a, e, c, lv + 1); } else { const e = mid(c, a); put(a, b, e, lv + 1); put(e, b, c, lv + 1); }
           return; }
         const cx = (a[0] + b[0] + c[0]) / 3, cz = (a[1] + b[1] + c[1]) / 3; if (wCov(cx, cz)) return;
-        const A = P3(a), B = P3(b), C = P3(c), sh = 0.96 + 0.06 * rpHash(Math.floor(cx / 23), Math.floor(cz / 23)), col = [pc[0] * sh, pc[1] * sh, pc[2] * sh];
-        PA.get(cx, cz).triO(A, B, C, col, [cx, (A[1] + B[1] + C[1]) / 3 - 5, cz], col, col, uvA(a), uvA(b), uvA(c)); nPv++; };
+        const sh = 0.96 + 0.06 * rpHash(Math.floor(cx / 23), Math.floor(cz / 23)); wTri(PA.get(cx, cz), a, b, c, hPv, [pc[0] * sh, pc[1] * sh, pc[2] * sh], uvA); nPv++; };
       const pairs = (L) => { const q = []; for (let k = 0; k + 1 < L.length; k += 2) q.push([L[k], L[k + 1]]); if (q.length > 1 && q[0][0] === q[q.length - 1][0] && q[0][1] === q[q.length - 1][1]) q.pop(); return q; };
       for (const F of def.mvPaved || []) { const outer = pairs(F.p), holes = (F.h || []).map(pairs).filter(h => h.length >= 3); if (outer.length < 3) continue;
         occPoly(outer, 1); const all = outer.concat(...holes);
         for (const [i, j, k] of THREE.ShapeUtils.triangulateShape(outer.map(p => new THREE.Vector2(p[0], p[1])), holes.map(h => h.map(p => new THREE.Vector2(p[0], p[1]))))) put(all[i], all[j], all[k], 0); }
       PA.addTo(root, aW, false, true);
       const GS = new Chunks(260, true), GK = new Chunks(260), sMatW = new THREE.MeshLambertMaterial({ map: mvSettsTex(), vertexColors: true }), QK = [0.86, 0.85, 0.82], QE = [0.24, 0.24, 0.25], KCf = [0.8, 0.79, 0.76];
-      const wTop = (p) => [p[0], wY(p[0], p[1], 0.05, 0.12), p[1]], wFoot = (p) => [p[0], wY(p[0], p[1], 0, 0.07), p[1]], uvS = (p) => [p[0] / 1.6, -p[2] / 1.6];
+      const hTop = (x, z) => wY(x, z, 0.05, 0.12), wTop = (p) => [p[0], hTop(p[0], p[1]), p[1]], wFoot = (p) => [p[0], wY(p[0], p[1], 0, 0.07), p[1]], uvS = (P) => [P[0] / 1.6, -P[2] / 1.6];
+      const crs = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
       for (const L of def.walkLines || []) { const RE = pairs(L.re), GE = pairs(L.ge), n = Math.min(RE.length, GE.length); if (n < 2) continue;
         occPoly(RE.slice(0, n).concat(GE.slice(0, n).reverse()), 1);
         const at = (k, t) => [lerp(RE[k][0], GE[k][0], t), lerp(RE[k][1], GE[k][1], t)];
         for (let k = 0; k + 1 < n; k++) { const wk = Math.hypot(GE[k][0] - RE[k][0], GE[k][1] - RE[k][1]) || 1.5, tK = Math.min(0.3, 0.2 / wk), tE = Math.max(0.7, 1 - 0.1 / wk);
-          const A = [0, tK, tE, 1].map(t => wTop(at(k, t))), B = [0, tK, tE, 1].map(t => wTop(at(k + 1, t))), cx = (A[0][0] + B[3][0]) / 2, cz = (A[0][2] + B[3][2]) / 2, gk = GK.get(cx, cz);
+          if (crs(RE[k], RE[k + 1], GE[k + 1]) * crs(RE[k], GE[k + 1], GE[k]) <= 0) continue;   // (a twisted piece (the ends of a traced strip): left out)
+          const a2 = [0, tK, tE, 1].map(t => at(k, t)), b2 = [0, tK, tE, 1].map(t => at(k + 1, t)), A = a2.map(wTop), B = b2.map(wTop), cx = (A[0][0] + B[3][0]) / 2, cz = (A[0][2] + B[3][2]) / 2, gk = GK.get(cx, cz);
           const sh = 0.6 * (0.97 + 0.06 * rpHash(k >> 3, 61)), sc = [sh, sh, sh * 1.02];
-          gk.quadUp(A[0], A[1], B[1], B[0], [QK, QK, QK, QK]);   // (the kerb's light top)
-          GS.get(cx, cz).quadUp(A[1], A[2], B[2], B[1], [sc, sc, sc, sc], [uvS(A[1]), uvS(A[2]), uvS(B[2]), uvS(B[1])]);   // (the setts)
-          gk.quadUp(A[2], A[3], B[3], B[2], [QE, QE, QE, QE]);   // (the dark edging)
+          wQuad(gk, a2[0], a2[1], b2[1], b2[0], hTop, QK);   // (the kerb's light top)
+          wQuad(GS.get(cx, cz), a2[1], a2[2], b2[2], b2[1], hTop, sc, uvS);   // (the setts)
+          wQuad(gk, a2[2], a2[3], b2[3], b2[2], hTop, QE);   // (the dark edging)
           const F0 = wFoot(at(k, 0)), F1 = wFoot(at(k + 1, 0)); if (A[0][1] - F0[1] > 0.01 || B[0][1] - F1[1] > 0.01) gk.quadO(F0, F1, B[0], A[0], KCf, [(A[2][0] + B[2][0]) / 2, A[2][1] - 1, (A[2][2] + B[2][2]) / 2]); } }   // (its face up from the road)
       GS.addTo(root, sMatW, false, true); GK.addTo(root, matV, false, true);
       out.win = { n: WINS.length, paved: nPv, walks: (def.walkLines || []).length, paint: (def.paint || []).length };
@@ -31908,9 +31934,13 @@ const World = (function () {
       const wallNear = (x, z) => { const a = Math.floor(x / WC), b = Math.floor(z / WC); for (let i = a - 1; i <= a + 1; i++) for (let j = b - 1; j <= b + 1; j++) { const L = WH2.get(whK(i, j)); if (L) for (let k = 0; k < L.length; k += 2) if ((L[k] - x) ** 2 + (L[k + 1] - z) ** 2 < 0.4225) return 1; } return 0; };
       // (p10) def.rwBar ([x, z, ...], or a list of them): where the barrier runs along the user's red / white line (within 0.9 m of it), red and white blocks 1.5 m long instead of the steel
       const RWL = BAR && def.rwBar && def.rwBar.length ? (typeof def.rwBar[0] === 'number' ? [def.rwBar] : def.rwBar) : [], RWT2 = 0.81;
-      const rwNear = RWL.length ? (x, z) => { for (const L of RWL) for (let k = 0; k + 3 < L.length; k += 2) { const ax = L[k], az = L[k + 1], dx = L[k + 2] - ax, dz = L[k + 3] - az, l2 = dx * dx + dz * dz || 1e-9, t = ((x - ax) * dx + (z - az) * dz) / l2;
-          if ((k === 0 && t < 0) || (k + 4 >= L.length && t > 1)) continue;   // (not past the line's two ends)
-          const u = clamp(t, 0, 1), ex = x - ax - dx * u, ez = z - az - dz * u; if (ex * ex + ez * ez < RWT2) return 1; } return 0; } : null;
+      const rwProj = (L, x, z) => { let bd = 1e18, bs = 0, s = 0, end = 0; for (let k = 0; k + 3 < L.length; k += 2) { const ax = L[k], az = L[k + 1], dx = L[k + 2] - ax, dz = L[k + 3] - az, l2 = dx * dx + dz * dz || 1e-9, t = clamp(((x - ax) * dx + (z - az) * dz) / l2, 0, 1), ex = x - ax - dx * t, ez = z - az - dz * t, d = ex * ex + ez * ez;
+          if (d < bd) { bd = d; bs = s + t * Math.sqrt(l2); end = (k === 0 && t === 0) ? -1 : (k + 4 >= L.length && t === 1) ? 1 : 0; } s += Math.sqrt(l2); } return { d2: bd, s: bs, end, len: s }; };   // (the nearest point of the line: its distance squared, its metres along it, at its first / last end)
+      const rwEnd = (L, sg) => { const n = L.length / 2, i0 = sg < 0 ? 0 : n - 1; let j = i0, l = 0; while (l < 1 && j + sg * -1 >= 0 && j + sg * -1 < n) { j -= sg; l = Math.hypot(L[2 * j] - L[2 * i0], L[2 * j + 1] - L[2 * i0 + 1]); } return [L[2 * i0], L[2 * i0 + 1], (L[2 * i0] - L[2 * j]) / (l || 1), (L[2 * i0 + 1] - L[2 * j + 1]) / (l || 1)]; };   // (an end and its outward way over the line's last metre)
+      const rwNear = RWL.length ? (x, z) => { for (const L of RWL) { const pr = rwProj(L, x, z); if (pr.d2 >= RWT2) continue;
+          if (pr.end) { const [ex, ez, ux, uz] = rwEnd(L, pr.end); if ((x - ex) * ux + (z - ez) * uz > 0.02) continue; }   // (not past the line's two ends)
+          return 1; } return 0; } : null;
+      const rwS = (x, z) => { let b = null; for (const L of RWL) { const pr = rwProj(L, x, z); if (!b || pr.d2 < b.d2) b = pr; } return b ? b.s : 0; };   // (metres along the user's line: the blocks' colours by it, unbroken from one fence run to the next)
       let rwLen = 0;
       const chunks = new Map(), fl = { lines: [], posts: [], len: 0, cols: 0, np: 0 };
       const getC = (x, z) => { const k = Math.floor(x / CK) + ',' + Math.floor(z / CK); let c = chunks.get(k); if (!c) chunks.set(k, c = { P: [], N: [], C: [], I: [], v: 0 }); return c; };
@@ -31966,8 +31996,8 @@ const World = (function () {
             const at = (s) => { let j = 0; while (j < nc - 2 && cum[j + 1] < s) j++; const u = cum[j + 1] > cum[j] ? clamp((s - cum[j]) / (cum[j + 1] - cum[j]), 0, 1) : 0;
               let nx = lerp(nrm[j][0], nrm[j + 1][0], u), nz = lerp(nrm[j][1], nrm[j + 1][1], u); const l = Math.hypot(nx, nz) || 1; return [lerp(C[j][0], C[j + 1][0], u), lerp(C[j][1], C[j + 1][1], u), lerp(C[j][2], C[j + 1][2], u), nx / l, nz / l]; };
             for (let j = 0; j + 1 < nc;) { if (!RWS(j) || (hid[j] && hid[j + 1])) { j++; continue; } let e = j + 1; while (e + 1 < nc && RWS(e) && !(hid[e] && hid[e + 1])) e++;
-              const s0 = cum[j], s1 = cum[e], nb = Math.max(1, Math.round((s1 - s0) / BLK)), bl = (s1 - s0) / nb; rwLen += s1 - s0;
-              for (let b = 0; b < nb; b++) { const A = at(s0 + b * bl + 0.02), B = at(s0 + (b + 1) * bl - 0.02), col = RWC[b % 2], c = getC((A[0] + B[0]) / 2, (A[2] + B[2]) / 2);
+              const s0 = cum[j], s1 = cum[e], nb = Math.max(1, Math.round((s1 - s0) / BLK)), bl = (s1 - s0) / nb, A0 = at(s0 + bl / 2), p0 = Math.floor(rwS(A0[0], A0[2]) / BLK) % 2; rwLen += s1 - s0;   // (p0: the first block's colour by its place along the user's line)
+              for (let b = 0; b < nb; b++) { const A = at(s0 + b * bl + 0.02), B = at(s0 + (b + 1) * bl - 0.02), col = RWC[(p0 + b) % 2], c = getC((A[0] + B[0]) / 2, (A[2] + B[2]) / 2);
                 const F = (p, o, y) => [p[0] + p[3] * o, p[1] + y, p[2] + p[4] * o], Qd = (p, q, r2, s, n, k) => { const v = [p, q, r2, s].map(V => vtx(c, V[0], V[1], V[2], n[0], n[1], n[2], col, k)); tri(c, v[0], v[1], v[2]); tri(c, v[0], v[2], v[3]); };
                 Qd(F(A, 0, -0.1), F(B, 0, -0.1), F(B, 0.06, 0.95), F(A, 0.06, 0.95), [-A[3], 0, -A[4]], 1);           // (the face to the road, on the line as the steel's)
                 Qd(F(A, 0.06, 0.95), F(B, 0.06, 0.95), F(B, 0.4, 0.95), F(A, 0.4, 0.95), [0, 1, 0], 1.04);              // (the top: what the camera above sees)
