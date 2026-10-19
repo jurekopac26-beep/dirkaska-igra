@@ -24,7 +24,7 @@ Single race ima dva koraka.
 
 **1. korak: način dirke** (v okvirju glavnega menija). Tapneš enega od treh in odpre se izbira proge čez cel ekran (*Step 2 of 2*). Zadnji izbrani način ima kljukico:
 
-- **Circuit race**: dirka v krogih proti 12 tekmecem.
+- **Circuit race**: dirka v krogih proti 21 tekmecem (v Nürburgu 99, v prvenstvu 19).
 - **Police chase**: policija ti je za petami, pobegniti ji moraš v 3 minutah.
 - **Time trial**: sam proti uri in svojemu duhu (*ghost*), za zlati, srebrni ali bronasti čas.
 

@@ -1,6 +1,6 @@
 // Qualifying and the ghost of the best lap on a circuit, through the menus (the Red Bull Ring, the player on autopilot): Start begins
 // with qualifying (the player alone on the straight before the line, no lights, "Preskoči kvalifikacije" in the pause menu); the flying
-// lap to the line; the rivals' laps and the grid on the results screen (every driver by time, the player's row, "Na štart"); the race on
+// lap to the line; the rivals' laps and the grid on the results screen (every driver by time, the player's row in sight, "Na štart"); the race on
 // that grid; the flying lap kept as the ghost and replayed on the next qualifying lap on the lap clock (from the line on, not on the
 // run-up); "Ponovi krog" drives the lap again and keeps the rivals' laps; "Preskoči" goes to the back of the grid (22nd of 22, PLAYER_GRID); qualifying off:
 // Start goes straight to the race; a time trial never qualifies; a car with a field of its own (TITAN) qualifies against that field.
@@ -26,8 +26,9 @@ try {
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
     return page.evaluate(() => { const rows = [...document.querySelectorAll('#res-table tbody tr')].map(tr => [...tr.children].map(td => td.textContent));
       const t = (s) => { const m = /^(\d+):(\d+(?:\.\d+)?)$/.exec(s); return m ? +m[1] * 60 + +m[2] : NaN; };
-      const gh = JSON.parse(localStorage.getItem('tdgp-ghost-rbring@cs') || 'null');
-      return { rows, times: rows.map(r => t(r[3])), me: rows.findIndex((r, i) => document.querySelectorAll('#res-table tbody tr')[i].classList.contains('me')) + 1,
+      const gh = JSON.parse(localStorage.getItem('tdgp-ghost-rbring@cs') || 'null'), W = document.getElementById('res-table').parentElement, M = document.querySelector('#res-table tbody tr.me');
+      const a = W.getBoundingClientRect(), b = M ? M.getBoundingClientRect() : null, sc = b && { top: Math.round(b.top - a.top), bottom: Math.round(b.bottom - a.top), h: W.clientHeight, scroll: Math.round(W.scrollTop), deep: Math.round(b.bottom - a.top + W.scrollTop) };   // (deep: the row's bottom unscrolled)
+      return { sc, rows, times: rows.map(r => t(r[3])), me: rows.findIndex((r, i) => document.querySelectorAll('#res-table tbody tr')[i].classList.contains('me')) + 1,
         pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent, head: [...document.querySelectorAll('#res-table thead th')].map(th => th.textContent).join(','),
         btn: document.getElementById('res-restart').dataset.act + ':' + document.getElementById('res-restart').textContent, lap: window.__game.race.player.lapTimes[0], ghost: gh && { lap: gh.lap, t: gh.t, n: gh.n } }; });
   };
@@ -52,6 +53,13 @@ try {
   T.check('results: all 22 drivers with their times, fastest first, the gap to pole, the player\'s row', r1.rows.length === 22 && r1.times.every(isFinite) && sorted && r1.me >= 1 && r1.head === '#,Voznik,Avto,Čas,Zaostanek' && r1.rows[r1.me - 1][1] === 'Ti',
     r1.rows.map(r => r[1] + ' ' + r[3]).join(', '));
   T.check('results: the lap time, the starting place, "Na štart"', r1.pos === r1.me + '.' && new RegExp('Na štartu boš ' + r1.me + '\\. od 22').test(r1.sub) && Math.abs(r1.times[r1.me - 1] - r1.lap) < 0.002 && r1.btn === 'quali-go:Na štart', r1.sub + ' / ' + r1.btn);
+  // (the player's row the last of the 22, the results shown again (Ogled vozila and back): the table scrolled down to it, game.js resMe)
+  const r1d = await page.evaluate(async () => { const g = window.__game, Tb = document.getElementById('res-table'), B = Tb.querySelector('tbody'), M = B.querySelector('tr.me'), L = B.lastElementChild, W = Tb.parentElement;
+    M.classList.remove('me'); L.classList.add('me'); g.onAction('car-view'); await new Promise(r => setTimeout(r, 300)); g.onAction('ph-exit'); await new Promise(r => setTimeout(r, 200));
+    const a = W.getBoundingClientRect(), b = L.getBoundingClientRect(), out = { screen: g.screen, top: Math.round(b.top - a.top), bottom: Math.round(b.bottom - a.top), h: W.clientHeight, scroll: Math.round(W.scrollTop), deep: Math.round(b.bottom - a.top + W.scrollTop) };
+    L.classList.remove('me'); M.classList.add('me'); return out; });
+  T.check('results: the player\'s own row in sight in the table of 22 on a phone on its side (scrolled to it when below the fold, game.js resMe: the player\'s place, then the last)', !!r1.sc && r1.sc.top >= -1 && r1.sc.bottom <= r1.sc.h + 1 && (r1.sc.deep <= r1.sc.h + 1 || r1.sc.scroll > 0) &&
+    r1d.screen === 'results' && r1d.deep > r1d.h && r1d.scroll > 0 && r1d.top >= -1 && r1d.bottom <= r1d.h + 1, JSON.stringify({ me: r1.me, own: r1.sc, last: r1d }));
   T.check('the flying lap kept as the lap ghost (lap: 1, its time)', !!r1.ghost && r1.ghost.lap === 1 && Math.abs(r1.ghost.t - r1.lap) < 1e-6 && r1.ghost.n > 500, JSON.stringify(r1.ghost));
   const q1 = await state();
 

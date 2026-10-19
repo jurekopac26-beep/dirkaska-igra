@@ -4709,6 +4709,13 @@ const Core = (function () {
     // an AI driver's own threshold (0..1) for a tyre stop: spread evenly over the grid's slots, so that not all of them want the same lap (13 slots at
     // least: a field of 13 or fewer as ever; a bigger one over its own, a multiple of 7 one more: 7 g then still hits every slot once)
     _pitJ(c) { const N = Math.max(13, this._gridN || 0), M = N % 7 ? N : N + 1; return ((c.grid * 7) % M) / (M - 1); }
+    // room in the lane for an AI car's stop: fewer than three AI cars on their way in or in the lane (a field of 13 or fewer as ever); a bigger
+    // field a quarter of its AI cars at a time, but never two of them for the same crew's box (Track.crewBoxes: 12 for the AI, shared over 21)
+    _pitRoom(c) {
+      const N = this._gridN || 0, big = N > 13, lim = big ? Math.max(3, Math.ceil((N - 1) / 4)) : 3, b = big ? this._aiBox(c) : null; let n = 0;
+      for (const o of this.cars) if (!o.isPlayer && (o.pitWant || o.inPit)) { n++; if (big && !o.net && !o.sc && this._aiBox(o) === b) return false; }
+      return n < lim;
+    }
     // an AI car's box (metres from the start line): one of the crews' boxes on the apron (Track.crewBoxes; not the player's), by its place on the
     // grid among the AI cars
     _aiBox(c) {
@@ -4976,24 +4983,21 @@ const Core = (function () {
           // gives it the tyres for the water too), by the rules of the tyre stops below
           if (c.wreck && c.wreck.wl && !c.wreck.dnf) {
             if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && !T.pitAt(q.s) && this.laps * T.len - c.dist > T.len * 0.4) {
-              let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
-              if (n < 3) c.pitWant = true;
+              if (this._pitRoom(c)) c.pitWant = true;
             }
           }
           // an AI car on the wrong tyres goes in for the right ones (a track with pits; not in the last 40 % of a lap)
           // (not in the pit zone: from before its way in; each driver with a threshold of its own, not all on the same lap; at most three on
-          // their way in or in the lane at a time, the others wait a lap)
+          // their way in or in the lane at a time, a quarter of a bigger field's AI cars, one per crew's box: _pitRoom; the others wait a lap)
           else if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.k !== tyreFor(W.line) && !T.pitAt(q.s)) {
             const j = this._pitJ(c);
             if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {
-              let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
-              if (n < 3) c.pitWant = true;
+              if (this._pitRoom(c)) c.pitWant = true;
             }
           }
           // (compounds: worn-out slicks, with more than a lap still to go: in for a fresh set, by the same rules)
           else if (K && T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.wear > 0.72 + 0.1 * this._pitJ(c) && !T.pitAt(q.s) && this.laps * T.len - c.dist > T.len * 1.05) {
-            let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
-            if (n < 3) c.pitWant = true;
+            if (this._pitRoom(c)) c.pitWant = true;
           }
         }
         if (c.flt && c.flt.pw >= 0 && T.def.pit && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && !T.pitAt(q.s) && this.laps * T.len - c.dist > 300) c.pitWant = true;   // failures: a cut tyre, in for a new one (not a retired car)
@@ -5383,9 +5387,15 @@ const Core = (function () {
         // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
         // in turn, 9 m apart, from 70 m past the line), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD).
         // A short road past the line (Pikes Peak's summit, ~100 m): the slots closer together, from nearer the line, so the field still fits
-        // (the slots for the whole field: 13 cars as ever, a bigger one closer together still, never past the end of the road)
-        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, room = T.len - 20 - T.finishS, nP = Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;
-          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)); c.parkD = sd * (this.tf ? Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
+        // (the slots for the whole field: 13 cars as ever, a bigger one closer together still, never past the end of the road). A big field
+        // whose slots on a side come closer than its longest car (Pikes Peak's summit, 22 cars): two rows a side, the outer one off the asphalt
+        // as far as the barrier lets it, filled from the top down (the winner in the farthest slot: nobody then drives past a parked car or
+        // across the inner row to the outer one)
+        if (!this.timeTrial) { const room = T.len - 20 - T.finishS, nP = Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;
+          let L = 0, W = 0; if (nP > 12) for (const o of this.cars) { L = Math.max(L, o.m.len || 4.4); W = Math.max(W, o.m.wid || 1.9); }   // (the field's longest and widest car)
+          const two = nP > 12 && 2 * st < L + 0.8, k = two ? Math.max(0, nP - c.finishPos + 1) : c.finishPos - 1, sd = k % 2 ? -1 : 1;
+          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), dO = Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2);
+          c.parkD = sd * (two ? ((k >> 1) % 2 ? dO : Math.min(T.wAt(pi) - 1.5, dO - W - 0.5)) : this.tf ? dO : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }

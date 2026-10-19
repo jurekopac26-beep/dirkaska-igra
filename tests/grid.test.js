@@ -4,8 +4,8 @@
 // slot: no two cars on each other (their boxes, length x width, turned with the road), every car on the asphalt, all behind the start line;
 // with the game's car and its field, in the formula (the longest field, 5.2 m) and in the prototype. A field of 13 keeps the grid it always
 // had (the golden references): the two staggered columns. Then the finish parking past the line of an open road: the slots for the whole
-// field (22 cars), none past the end of the road; and the career's prize for a big field by the place (the first 13 as the table).
-// Test tracks (def.test) are left out.
+// field (22 cars), none past the end of the road, none on another (Pikes Peak's summit: two rows a side); and the career's prize for a
+// big field by the place (the first 13 as the table). Test tracks (def.test) are left out.
 //   node tests/grid.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -90,19 +90,23 @@ function grid(T, opts) {
     Array.from({ length: 99 }, (_, k) => C.driverChar(k)).every(c => c.agg >= 0 && c.agg <= 1 && c.err >= 0 && c.err <= 1));
 }
 
-// 5. the finish past the line of an open road: a slot of its own for every car of 22, none past the end of the road (T.len - 20); 13 cars as
-// ever (9 m apart from 70 m past the line where the road is long enough)
+// 5. the finish past the line of an open road: a slot of its own for every car of 22, none past the end of the road (T.len - 20), no two
+// slots on each other (closer along the road than the field's longest car and across it than its widest: Pikes Peak's summit, two rows a
+// side), with the game's car and the formula's field (5.2 m); 13 cars as ever (9 m apart from 70 m past the line where the road is long enough)
 {
-  const fails = [];
-  for (const d of tracks.filter(t => t.open)) {
-    const T = new C.Track(d), r = new C.Race(T, { numAI: 21, playerGrid: 99, laps: 1, tt: false, phys: 'cs', seed: 3 });
+  const fails = [], rows = [];
+  for (const d of tracks.filter(t => t.open)) for (const pm of [null, 'formula']) {
+    const T = new C.Track(d), r = new C.Race(T, Object.assign({ numAI: 21, playerGrid: 99, laps: 1, tt: false, phys: 'cs', seed: 3 }, pm ? { playerModel: model(pm) } : {}));
     r.start(); r.time = 300;
     for (const c of r.cars) { c.cp = T.cpS.length; c.dist = T.raceLen + 1; r._progressOpen(c, { s: T.finishS + 1 }, 1, 1 / 120); }   // (each over the line in turn: Race's own finish, its place's slot)
-    const S = r.finishOrder.map(c => c.parkS), past = S.filter(s => s > T.len - 20 - 0.5).length > 1, gaps = S.slice(1).map((s, k) => s - S[k]);
-    if (S.length !== 22 || past) fails.push(`${d.id}: ${S.length} at the finish, ${S.filter(s => s > T.len - 20 - 0.5).length} at the end of the road`);
-    else if (Math.min(...gaps) < 2) fails.push(`${d.id}: slots ${Math.min(...gaps).toFixed(1)} m apart`);
+    const F = r.finishOrder, S = F.map(c => c.parkS), past = S.filter(s => s > T.len - 20 - 0.5).length > 1, L = Math.max(...r.cars.map(c => c.m.len)), W = Math.max(...r.cars.map(c => c.m.wid));
+    let on = 0, near = 99; for (let i = 0; i < F.length; i++) for (let j = i + 1; j < F.length; j++) { const ds = Math.abs(F[i].parkS - F[j].parkS), dd = Math.abs(F[i].parkD - F[j].parkD); if (ds < L + 0.3 && dd < W + 0.3) on++; if (dd < W + 0.3) near = Math.min(near, ds); }
+    const offRoad = F.filter(c => { const i = T.idx(c.parkS); return Math.abs(c.parkD) + c.m.wid / 2 > Math.min(c.parkD > 0 ? T.br[i] : T.bl[i], T.wAt(i) + 3) - 0.3; }).length;   // (short of the barrier, at most 3 m off the asphalt)
+    if (S.length !== 22 || past) fails.push(`${d.id}${pm ? ' ' + pm : ''}: ${S.length} at the finish, ${S.filter(s => s > T.len - 20 - 0.5).length} at the end of the road`);
+    else if (on || offRoad) fails.push(`${d.id}${pm ? ' ' + pm : ''}: ${on} pairs of slots on each other (a ${L} m car; the nearest in a row ${near.toFixed(1)} m apart), ${offRoad} by the barrier`);
+    if (near < 9.5) rows.push(`${d.id}${pm ? ' ' + pm : ''} ${near.toFixed(1)} m${new Set(F.map(c => Math.abs(c.parkD).toFixed(1))).size > 1 ? ' (two rows)' : ''}`);
   }
-  check('open roads: the finish parking has a slot for each of 22 cars, none past the end of the road, at least 2 m apart (each side 4 m)', !fails.length, fails.join(' | '));
+  check('open roads: the finish parking has a slot for each of 22 cars, none past the end of the road, none on another (the field\'s longest car along the road, its widest across), none by the barrier', !fails.length, fails.join(' | ') || rows.join(', '));
 }
 
 // 6. the career's prize: a field of 13 or fewer as ever (the table spread over the places); more: by the place (13th and later 300 EUR)

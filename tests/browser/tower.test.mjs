@@ -55,10 +55,6 @@ try {
       purple: E.querySelectorAll('td.ob').length, green: E.querySelectorAll('td.pb').length, me: !!E.querySelector('tr.me'), stops: rows.map(tr => tr.lastElementChild.textContent) }; });
   T.check('the results: every driver\'s laps (K1-K3), the fastest of the race once in purple, each best in green, the pit stops', lt.shown && lt.head.join() === '#,Voznik,K1,K2,K3,Postanki' && lt.rows === 22 && lt.laps.filter(n => n === 3).length >= 1 && lt.purple === 1 && lt.green >= 5 && lt.me && lt.stops.every(s => /^\d+$/.test(s)), JSON.stringify(lt));
 
-  // (22 rows on a phone held upright: the table scrolled so that the player's own row is in sight, game.js resMe)
-  const sc = await page.evaluate(() => { const T = document.getElementById('res-table'), w = T.parentElement, me = T.querySelector('tbody tr.me'); if (!me) return null;
-    const a = w.getBoundingClientRect(), b = me.getBoundingClientRect(); return { pos: [...T.querySelectorAll('tbody tr')].indexOf(me) + 1, top: Math.round(b.top - a.top), bottom: Math.round(b.bottom - a.top), h: w.clientHeight, scroll: w.scrollTop }; });
-  T.check('the results: the player\'s own row in sight in the table (scrolled to it when far down)', !!sc && sc.top >= -1 && sc.bottom <= sc.h + 1, JSON.stringify(sc));
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through', false, e.stack || String(e));
