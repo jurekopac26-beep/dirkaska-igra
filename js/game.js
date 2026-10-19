@@ -2424,7 +2424,7 @@
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
-    pitBar(P);
+    pitBar(P); pitTipStep(P, dt);
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
@@ -3214,12 +3214,59 @@
     pxs.log.push({ k, hb: pxs.hb, re: on && r > 1e-9 ? +r.toFixed(4) : null }); if (pxs.log.length > 20) pxs.log.shift(); pxs.hb = -1;
     if (k === 'perfect') { race.pitLaunch(P); showMsg(tr('POPOLN IZHOD!'), 'fast', 1.6); Sfx.beep(1568, 0.14, 0.14); vibrate(25); }
   }
+  // the first pit stops on this device: short hints, one at a time, each until it has been seen once (TIP.read s up; remembered in the
+  // browser, tdgp-tips: { id: 1 }; with no storage, or what it holds spoilt, all of them again, kept for this visit only). In the order of the
+  // stop, each in its part: in (the takeover: before the way in's own toast, which follows it), box (the crew at work), out (TIP.soon s before
+  // the hand-back: pitNear for where the car will be by then at its speed). A toast about the stop (tag 'pit': gone with the autopilot,
+  // pitFree), up TIP.dur s of race time. It takes the place of the stop's own toast or a hint of an earlier part, waits for any other toast
+  // (a rule, the weather, an achievement), and for room in the column TOAST_WAIT s at most; a hint whose part is over before it showed or
+  // was seen (also one gone behind the pause, on the toast's own clock) comes at the next stop. Not with autoDrive (automated tests). log:
+  // each hint shown, when, when seen and how it ended (the tests read it)
+  const TIP = { dur: 3.2, read: 1, soon: 3 };
+  const TIPS = [
+    { id: 'in', at: 'in', txt: () => tr('Računalnik zdaj vozi skozi bokse.') },
+    // (a hint about the repair's choice, proposal 2, goes in here, in its part: { id: 'fix', at: 'in', on: (P) => the choice offered at this
+    // stop, txt: () => tr(its text) }; on: only when it applies. Its id also in tests/browser/lib.mjs, which marks the hints seen for the other tests)
+    { id: 'box', at: 'box', txt: () => tr('Mehaniki popravljajo avto.') },
+    { id: 'out', at: 'out', soon: true, txt: () => tr('Pripravi se: kmalu voziš ti.') }];
+  let tipSeen = {};
+  try { const j = JSON.parse(localStorage.getItem('tdgp-tips') || 'null'); if (isObj(j)) for (const k in j) if (j[k] === 1) tipSeen[k] = 1; } catch (_) { tipSeen = {}; }
+  const tipSave = () => { try { localStorage.setItem('tdgp-tips', JSON.stringify(tipSeen)); } catch (_) { } };   // (no storage: for this visit)
+  let tip = { on: false, at: '', after: false, cur: null, done: [], log: [] };   // (at: the part of the stop's toast up; after: the way in's own toast still to come)
+  const pitInToast = () => { tip.at = 'in'; toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); };   // (only while the autopilot drives: pitFree)
+  const tipPart = (P) => !tip.on || phase !== 'racing' || P.finished ? '' : pa.st === 'merge' ? 'out' : !P.inPit ? '' : P.pitState === 'repair' ? 'box' : P.pitDone ? 'out' : 'in';
+  const tipDue = (P, part) => part && TIPS.find(h => h.at === part && !tipSeen[h.id] && !tip.done.includes(h.id) && (!h.on || h.on(P)) && (!h.soon || pitNear({ q: { s: P.q.s + P.speed * TIP.soon }, speed: P.speed })));
+  function tipOpen(P) {   // (a stop's way in: its hints from here; true: a hint first, the way in's own toast after it)
+    tip.on = !autoDrive; tip.done = []; tip.cur = null; tip.at = '';
+    return (tip.after = !!tipDue(P, tipPart(P)));
+  }
+  function tipFree() { if (tip.cur) { tip.cur.e.end = 'free'; tip.cur = null; } tip.on = tip.after = false; }   // (the hand-back, the stop given up: pitFree)
+  function pitTipStep(P, dt) {   // each step, after the stop's events: the hint up, then the next one due
+    const c = tip.cur; if (!c && !tip.on) return;
+    const T = $('toast'), part = tipPart(P);
+    if (c) {   // (its time on race time while it shows; waiting for room in the column it stands still)
+      const up = T.classList.contains('show') && toastTag === 'pit' && T.textContent === c.txt;
+      let end = !up ? (T.classList.contains('show') ? 'other' : 'gone') : part && part !== c.at && tipDue(P, part) ? 'next' : '';   // (gone: on the toast's own clock)
+      if (!end && T.classList.contains('wait')) { c.wt += dt; if (c.wt > TOAST_WAIT) end = 'wait'; }
+      else if (!end) { c.vis += dt; if (c.vis >= TIP.read - 1e-9 && c.e.seen == null) { c.e.seen = +race.time.toFixed(2); tipSeen[c.id] = 1; tipSave(); } if (c.vis >= TIP.dur - 1e-9) end = 'time'; }
+      if (!end) return;
+      c.e.end = end; tip.cur = null; if (up) toastOff('pit');
+    }
+    if (part !== 'in') tip.after = false;
+    if (!part) return;
+    const h = tipDue(P, part), busy = T.classList.contains('show') && !(toastTag === 'pit' && tip.at !== part);   // (the stop's own toast or a hint of an earlier part: in its place)
+    if (h && !busy) {
+      const txt = h.txt(), e = { id: h.id, part, t: +race.time.toFixed(2), seen: null, end: '' };
+      tip.done.push(h.id); tip.at = part; toast(txt, TIP.dur * 2000, 'pit'); tip.cur = { id: h.id, at: part, txt, vis: 0, wt: 0, e };   // (its end on race time; the toast's own clock later: the pause, a race left)
+      tip.log.push(e); if (tip.log.length > 20) tip.log.shift();
+    } else if (!h && tip.after && !T.classList.contains('show')) { tip.after = false; pitInToast(); }
+  }
   function pitEvent(e) {
     if (phase !== 'racing') return;
     if (e === 'enter') {
       if (pa.st === 'merge') return;   // (back over the line during the countdown: nothing new)
       const P = race.player, b = race._boxD(P), stop = b != null && race.track.boxX(P.q.s, b) < 0;   // (its box ahead: a stop; running wide over the line at the way out: only the lane's limiter until back over it)
-      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); }   // (only while the autopilot drives: pitFree)
+      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); if (!tipOpen(P)) pitInToast(); }   // (the first stops: a hint first, pitTipStep)
       else showMsg(tr('BOKSI'), 'gold', 1.4);
       Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2);
     }
@@ -3249,7 +3296,7 @@
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; pitFightOpen(); pitExitOpen(); }   // (a fight for a place from here: pitFightStep; the reaction's clock for a perfect exit: pitExitStep)
-    $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
+    $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit'); tipFree();   // (the toast of the way in or a hint, if it still waits or shows: not once the player drives)
     pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false;
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
   }
@@ -5292,7 +5339,7 @@
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             quick: !!mp.quick, locked: Net.locked, setup: mp.setup && { grid: mp.setup.grid.slice() },
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
