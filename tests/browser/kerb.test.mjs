@@ -133,8 +133,8 @@ try {
   T.check('no page errors (on its side)', !iso.errors.length, iso.errors.slice(0, 5).join(' | '));
   await iso.ctx.close();
 
-  // chase, 360 x 640, Blizu, the tilt 30 % (the setting camTilt 2): the kerbs 30-100 m ahead, where the depth buffer is coarsest
-  const ch = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.1, camTilt: 2, weather: 'dry', tod: 'day', season: 'summer' }, { width: 360, height: 640 }, { seed: 4242 });
+  // chase, 360 x 640, Blizu, the tilt 30 % (always): the kerbs 30-100 m ahead, where the depth buffer is coarsest
+  const ch = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.1, weather: 'dry', tod: 'day', season: 'summer' }, { width: 360, height: 640 }, { seed: 4242 });
   await ch.page.evaluate(() => { const f = World.build; window.__built = []; World.build = function (...args) { window.__built.push(args[1] && args[1].def && args[1].def.id); return f.apply(this, args); }; });   // (which worlds are really built)
   await startTrack(ch.page, 'toskana');
   const a2 = await ch.page.evaluate(MEASURE);
