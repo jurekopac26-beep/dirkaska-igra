@@ -4273,7 +4273,7 @@ const Render = (function () {
     const xd = xDensity(c), xt = xTab(c), xs = XT_MIN.has(c.m.id) && !!c.m.kit, v = makeCarMesh(c, xd || xt || xs ? { xd, xcut: xt && !!XC.glass, xscr: xs } : undefined);   // (xs: the Kolibri's side scrapes, xtScrape, whatever the switches)
     v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit && !XT_CARS.has(c.m.id)) xBayGrey(v); if (v.xOn) v.rd0 = c.roofDmg || 0;   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey, but a reworked car's: its own bay's colours)
     v.xt = xt && !!v.kit;   // (the Kolibri: its glass, lamps and parts by the damage table, xTabHit)
-    if (v.scrS) { const B = c.m.look && c.m.look.body, S = (B && B.secs) || [], cab = S.filter(r => r[5] > 1);   // (the side scrapes' band: the body's half width, the cabin's belt)
+    if (v.scrS) { const L = c.m.def && c.m.def.look, B = L && L.body, S = (B && B.secs) || [], cab = S.filter(r => r[5] > 1);   // (the side scrapes' band: the body's half width, the cabin's belt)
       v.scrS.value.z = S.length ? Math.max(...S.map(r => r[1])) : c.m.wid * 0.5; v.scrS.value.w = cab.length ? Math.min(...cab.map(r => r[3])) : 0.6 * (B && B.roofY || 1.4); }
     if (v.kit && (tierNow === 0 || v.xOn)) ownRnd(() => kitShadows(v, c));   // (Razbijanje · nov način: every kit car's shadow from its hull, the dense body never drawn twice)
     else if (v.xOn && xd && v.body.geometry.userData.xBase) ownRnd(() => { const m = new THREE.Mesh(v.body.geometry.userData.xBase, matHull); m.castShadow = true; m.visible = false; v.body.castShadow = false; v.bodyG.add(m); v.shadowOnly = [m]; });   // (one of the 11, dense: its shadow from the body as built)   // (the lowest tier: the shadow from the hull and a rival's wheels; named without Math.random)
@@ -6383,7 +6383,7 @@ const Render = (function () {
   function repairStart(v, c) {
     const K = v.kit, R = { q: -1, kb: 0, ku: 0, P: null, D: null, idx: null, T: null, L: v.lights.map(L => L.clone()), dec: v.dec ? [v.dec.position.clone(), v.dec.quaternion.clone()] : null,
       parts: K ? Object.keys(K.dead) : Object.keys(v.parts).filter(n => !v.parts[n].visible), pi: 0, glass: false, lamps: false, trim: false, dirt0: v.dirtU ? v.dirtU.value : 0 };
-    if (!(c.dmg > 0 || R.parts.length || v.roofStep > 0)) return R;
+    if (!(c.dmg > 0 || R.parts.length || v.roofStep > 0 || (v.xtSc && v.xtSc.dn[0] + v.xtSc.dn[1] > 0))) return R;   // (the Kolibri's graze dents: its bodywork back bit by bit too, xtScrape)
     // the body as new to repair towards: the crash mode's own (its denser body: xc.rest, as built at xInit), else the model's (its arrays kept:
     // nothing on the GPU); a layout that does not match (another density): the bodywork left as it is, the rebuild at the end puts it right
     const A = v.body.geometry.attributes, xc = v.xc, g = K && !xc ? ownRnd(() => kitRecolour(K.E.geo.clone(), c.color, c.stripe !== false, c.num)) : null, B = g ? g.attributes : v.src ? v.src.attributes : null;
@@ -6497,7 +6497,7 @@ const Render = (function () {
     if (!geo.boundingBox) geo.computeBoundingBox();
     const bb = geo.boundingBox, hx = Math.max(-bb.min.x, bb.max.x), hz = Math.max(-bb.min.z, bb.max.z);
     const cx = d.lx / (M.len * 0.5) * hx, cz = d.lz / (M.wid * 0.5) * hz, cy = bb.min.y + (bb.max.y - bb.min.y) * 0.42, ks = clamp(M.len / 4.4, 0.45, 1.5);
-    const R = (0.55 + Math.min(0.6, d.amt * 1.4)) * ks, depth = Math.min(0.2, 0.035 + d.amt * 0.42) * ks;
+    const R = (0.55 + Math.min(0.6, d.amt * 1.4)) * ks, depth = Math.min(0.2, 0.035 + d.amt * 0.42) * ks * (d.sc || 1);   // (d.sc: a graze's own share, xtScrape)
     let ix = -cx, iz = -cz; const il = Math.hypot(ix, iz) || 1; ix /= il; iz /= il;
     const a = pos.array, ca = col ? col.array : null, scr = Math.min(1, d.amt * 3 + 0.3);
     const dentTris = new Set();
@@ -7944,11 +7944,14 @@ const Render = (function () {
   // a car's or the traffic's contact on its flank, not its ends) after XT_SCR.gapT s without one is a new graze, XT_SCR.ev more; rubbing on,
   // more by its speed along it. a[k] 0..1 (0 the left, 1 the right); n[k] the grazes counted. Render only, its own state (no random); a
   // replay's or a paused frame's none; a pit repair polishes it out with the bodywork (repairStep), the view built afresh after it. Each new
-  // graze dents that flank in a little too (the user's: a dent of XT_SCR.dent where it touched, along the flank, short of its ends; render
-  // only, the core's damage as it was): again there a little deeper (xDent's cluster; applyDent's own each time)
-  const XT_SCR = { ev: 0.07, m: 0.004, gap: 0.03, gapT: 0.3, dent: 0.015 };
+  // graze dents that flank in a little too (the user's: where it touched, along the flank, short of its ends; render only, the core's damage
+  // as it was): XT_SCR.dent the first, each next one on that side XT_SCR.dk of the one before (a bounded sum: grazes alone never cave it in,
+  // ~11 cm at most in one place; xDent's cluster, applyDent's depth times the same share). On NIZKA only the player's (a rival's dented body gives up its far mesh, farStep). A contact point
+  // the core left as it was (a person on foot's: no point of its own) is no graze
+  const XT_SCR = { ev: 0.07, m: 0.004, gap: 0.03, gapT: 0.3, dent: 0.015, dk: 0.75 };
   function xtScrape(v, c, dt) {
-    const S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0] }), M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
+    const S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0], dn: [0, 0] }), M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5, fresh = c.contactX !== S.cx || c.contactZ !== S.cz;
+    S.cx = c.contactX; S.cz = c.contactZ;
     if (c.air || c.inPit || c.pitG || c.net || !c.dmgMode) return;   // (no damage, a friend's car online (theirs shows its own), the pit road: none)
     const ch = Math.cos(c.h), sh = Math.sin(c.h), q = c.q, T = curRace && curRace.track, hit = [0, 0], at = [0, 0];
     if (q && q.br != null && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && c.speed > 1) {   // (a barrier beside it, as carFx has it)
@@ -7957,13 +7960,13 @@ const Render = (function () {
       if (Math.abs(ln) > Math.abs(fn) && (gap < XT_SCR.gap || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
         at[k] = c.fxWall > 0 && c.wallX != null ? (c.wallX - c.x) * ch + (c.wallZ - c.z) * sh : 0; }
     }
-    if (c.fxCar > 0 && c.contactX != null) {   // (another car, the traffic: the contact on its flank)
+    if (c.fxCar > 0 && c.contactX != null && fresh) {   // (another car, the traffic: the contact on its flank, a point of its own)
       const dx = c.contactX - c.x, dz = c.contactZ - c.z, lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch;
       if (Math.abs(lx) < 0.85 * hl && Math.abs(lz) > 0.55 * hw && Math.abs(lz) < 1.4 * hw) { const k = lz < 0 ? 0 : 1; hit[k] = Math.max(hit[k], c.speed * 0.5, 1e-3); at[k] = lx; }
     }
     for (let k = 0; k < 2; k++) { if (!hit[k]) continue;
       if (time - S.t[k] > XT_SCR.gapT) { S.a[k] = Math.min(1, S.a[k] + XT_SCR.ev); S.n[k]++;   // (a new graze: scratched, and dented in a little there)
-        if (c.dmgMode) { const d = { lx: clamp(at[k], -0.6 * hl, 0.6 * hl), lz: (k ? 1 : -1) * hw, amt: XT_SCR.dent }; if (v.xOn) xDent(v, d); else applyDent(v, d); } }
+        if (c.dmgMode && (c.isPlayer || tierNow > 0)) { const f = Math.pow(XT_SCR.dk, S.dn[k]++), d = { lx: clamp(at[k], -0.6 * hl, 0.6 * hl), lz: (k ? 1 : -1) * hw, amt: XT_SCR.dent * f, sc: f }; if (v.xOn) xDent(v, d); else applyDent(v, d); } }
       S.a[k] = Math.min(1, S.a[k] + dt * hit[k] * XT_SCR.m); S.t[k] = time; }
   }
   // a blow on the Kolibri's flank (the core's dent, a side zone, xtZone) scuffs that side as a graze does, unless xtScrape counted that
@@ -7971,7 +7974,7 @@ const Render = (function () {
   const XT_DENT = 0.02;
   function xtScuff(v, d) {
     if (d.top) return;
-    const M = v.car.m, S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0] });
+    const M = v.car.m, S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0], dn: [0, 0] });
     if (xtZone(d.lx / (M.len * 0.5), d.lz / (M.wid * 0.5))[0] !== 'S') return;
     const k = d.lz < 0 ? 0 : 1; if (time - S.t[k] <= XT_SCR.gapT) return;
     S.a[k] = Math.min(1, S.a[k] + XT_SCR.ev + d.amt); S.n[k]++; S.t[k] = time;
