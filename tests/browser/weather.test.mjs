@@ -65,9 +65,11 @@ try {
   const d0 = await hud();
   await msgs(); await simTo(21); const d1 = await hud(), m3 = await msgs();
   await sim(60); const d2 = await hud();
-  const line = await page.evaluate(() => { let m = null; Render.scene.traverse(o => { if (o.isMesh && o.renderOrder === 1 && o.geometry.attributes.color && o.geometry.attributes.color.itemSize === 4) m = o; }); return m && { vis: m.visible, op: +m.material.opacity.toFixed(2) }; });
+  const line = await page.evaluate(() => { const m = Render.scene.getObjectByName('dryline'), p = Render.scene.getObjectByName('rainpuddles');
+    return m && { vis: m.visible, op: +m.material.opacity.toFixed(2), ro: m.renderOrder, pud: p && { vis: p.visible, ro: p.renderOrder, dry: +p.material.uniforms.uDry.value.toFixed(2) } }; });
   T.check('the rain stops: rain tyres at the start, "DEŽ JE PONEHAL", the road still wet', d0.ty.k === 'wet' && d0.rain === 1 && d1.rain === 0 && m3.includes('DEŽ JE PONEHAL') && d1.water > 0.8, JSON.stringify({ d0: d0.ty, d1, m3 }));
   T.check('the road dries, the racing line first: the dry line drawn along it', d2.line < d2.water - 0.1 && line && line.vis && line.op > 0.3, JSON.stringify({ water: d2.water, line: d2.line, mesh: line }));
+  T.check('the puddles drawn over the dry line, gone on it as much as it has dried', !!line && !!line.pud && line.pud.vis && line.pud.ro > line.ro && line.pud.dry === line.op, JSON.stringify(line));
   await page.evaluate(() => window.__game.resume());
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
