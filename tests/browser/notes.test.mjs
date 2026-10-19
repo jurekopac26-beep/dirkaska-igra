@@ -1,7 +1,9 @@
-// The corner sign (#h-note) on the HUD: (a) where it sits, on a phone lying and upright (the camera behind the car), in nine
-// HUD states (a race, with the team radio, with the wreck panel, a duel, the police, the police's checkpoint, a time trial, Pikes Peak
-// (its own class row), the driving school): high in the top row, over nothing (also the column under the map: the pit stop's bar, the start's
-// reaction, the big message, the splits, the toast; the pause, tyre and rescue buttons; the controls); (b) in a race: Medvode's
+// The corner sign (#h-note) on the HUD: (a) where it sits, on a phone lying and upright (the camera behind the car), in twelve
+// HUD states, each as the game shows it (a race on a track with pits: the tyres and a two-digit lap; with the team radio, with the wreck
+// panel, with the column under the map; Nürburg's long lap, no tyres; qualifying on a track with pits: the tyres and KVALIFIKACIJE; a duel,
+// the police (POLICIJA, no total), the police's checkpoint, a time trial, Pikes Peak (its own class row), the driving school): high in the
+// top row (upright under the clock; the duel's and the police's lower, under the gap line and the panel under the clock's line), over nothing (also the column under the map: the pit stop's bar, the start's reaction, the big message, the splits, the toast;
+// the pause and rescue buttons; the controls), measured once the HUD's face (ApexMenu) is loaded; (b) in a race: Medvode's
 // roundabout and Harju's and Monaco's chicanes blue with their own glyphs (upright), a red arrow before a slow corner; with the column under the map full (laid out by game.js hudCol: the
 // reaction, START!, the team radio, the toast) the sign over none of it, nor over the buttons and the controls; on Pikes Peak in a time
 // trial the same sign (its own pill is gone).
@@ -22,21 +24,26 @@ try {
     await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); },
       JSON.stringify({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, camera: cam }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
+    await page.evaluate(() => Promise.all(['italic 800 32px ApexMenu', '700 9px ApexMenu'].map(f => document.fonts.load(f, 'AZaz09ČŠŽ'))));   // (the rows' face: measured as a phone draws it)
     const out = await page.evaluate(() => {
       const $ = (id) => document.getElementById(id);
       for (const s of document.querySelectorAll('.screen.show')) s.classList.remove('show');
       $('hud').classList.remove('off'); $('touch').classList.remove('off');
-      for (const id of ['btn-pause', 'btn-tyre']) $(id).classList.remove('off');
+      $('btn-pause').classList.remove('off');
       $('h-note').style.transition = 'none'; $('h-note').className = 'show sev3';
       const box = (e) => { const b = e.getBoundingClientRect(), cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity <= 0.05 || b.width === 0 || b.height === 0) return null; return b; };
       const ov = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
-      const others = () => { const L = []; for (const id of ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-pol', 'h-chk', 'h-map', 'h-prof', 'h-wreck', 'h-tower', 'h-teamradio', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'toast', 'btn-pause', 'btn-tyre', 'btn-rescue', 'h-school', 'h-pos', 'h-tot', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls', 'speedo', 'h-dmg', 'h-tyre', 'h-fuel', 'h-flag', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind']) { const e = $(id), b = e && box(e); if (b) L.push([id, b]); } for (const e of document.querySelectorAll('#h-rank > .h-lbl')) { const b = box(e); if (b) L.push(['rank-lbl', b]); } return L; };
+      const others = () => { const L = []; for (const id of ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-pol', 'h-chk', 'h-map', 'h-prof', 'h-wreck', 'h-tower', 'h-teamradio', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'toast', 'btn-pause', 'btn-rescue', 'h-school', 'h-main', 'h-pos', 'h-tot', 'h-speed', 'h-lap', 'h-tyre', 'h-tags', 'h-alt', 'h-turn', 'h-pkcls', 'h-fuel', 'h-flt', 'h-flag', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind']) { const e = $(id), b = e && box(e); if (b) L.push([id, b]); } for (const e of document.querySelectorAll('#h-rank > .h-lbl')) { const b = box(e); if (b) L.push(['rank-lbl', b]); } return L; };
       const res = [], check = (mode) => { const n = box($('h-note')); res.push({ mode, box: n ? [n.left, n.top, n.right, n.bottom].map(Math.round) : null, hits: n ? others().filter(([, b]) => ov(n, b)).map(([id, b]) => id + '[' + [b.left, b.top, b.right, b.bottom].map(Math.round) + ']') : [] }); };
       $('h-time').textContent = '10:23.456'; $('h-bestv').textContent = '10:22.000';
       const secs = $('h-sec').children; for (const i of secs) i.textContent = '128.412';
-      $('h-split').textContent = 'KROG 12: 10:23.456  NAJHITREJŠI'; $('h-split').className = 'show';
-      $('h-lap').textContent = 'KROG 1/3 · 12,3/20,7 KM'; $('h-pos').textContent = '12'; $('h-tot').textContent = '/13';
-      $('h-flag').className = 'on yel'; $('h-flag').textContent = 'RUMENA ZASTAVA'; $('h-tyre').className = 'on'; $('h-tyre').textContent = 'MEHKE 84 %'; $('h-fuel').className = 'on'; $('h-fuel').textContent = 'GORIVO 40 %';
+      $('h-split').textContent = 'KROG 12: 10:23.456  ' + (innerWidth < innerHeight ? '★' : 'NAJHITREJŠI'); $('h-split').className = 'show';   // (the fastest lap: upright a star for the word, game.js)
+      // (the rows as the game writes them: the lap's markup by game.js itself; the tyres: the dots and the widest compound's word)
+      const lap = (t) => { $('h-lap').innerHTML = window.__game.lapHTML(t); }, tyres = (on) => { $('h-tyre').className = on ? 'on dry cM' : ''; $('h-tyre').lastElementChild.textContent = on ? 'SREDNJE' : ''; };
+      lap('KROG 12/36'); $('h-pos').textContent = '12'; $('h-tot').textContent = '/13'; $('h-speed').textContent = '299'; tyres(true);
+      $('hud').classList.add('drs'); $('h-drs').className = 'arm'; $('h-tow').classList.add('on');
+      $('h-flag').className = 'on yel'; $('h-flag').textContent = 'RUMENA ZASTAVA'; $('h-fuel').className = 'on'; $('h-fuel').textContent = 'GORIVO 40 %';
+      $('h-flt').className = 'on'; $('h-flt').innerHTML = '<span class="pk">PREDRTA GUMA</span><span class="br">VROČE ZAVORE</span><span class="en">VROČ MOTOR</span>';
       $('hud').classList.add('tw');
       check('race');
       $('h-teamradio').style.transition = 'none'; $('h-teamradio').classList.add('on'); $('h-teamradio').lastElementChild.textContent = 'Box this lap. The rain is coming, inters are ready in the box.'; check('race+radio'); $('h-teamradio').classList.remove('on');
@@ -45,15 +52,20 @@ try {
       for (const [id, c, t] of [['h-pit', 'on', ''], ['h-react', 'show good', ''], ['h-msg', 'show', 'START!'], ['toast', 'show col', 'Sedaj lahko spustiš plin, vse bo naredil sam.']]) { $(id).style.transition = $(id).style.animation = 'none'; if (t) $(id).textContent = t; $(id).className = c; }
       $('h-react').firstElementChild.textContent = 'REAKCIJA'; $('h-react').lastElementChild.textContent = '0,23 s'; $('btn-rescue').classList.remove('off');
       check('race+column'); for (const id of ['h-pit', 'h-react', 'h-msg', 'toast']) $(id).className = ''; $('btn-rescue').classList.add('off');
-      $('hud').classList.remove('tw');
-      $('h-lap').textContent = '2,4/12,3 KM'; $('hud').classList.add('up', 'duel'); $('h-gap').textContent = 'TEKMEC SPREDAJ +12.4 s'; check('duel');
+      $('hud').classList.remove('drs'); $('h-tow').classList.remove('on'); $('h-flt').className = '';
+      lap('KROG 1/1 · 12,3/20,7 KM'); tyres(false); $('h-fuel').className = ''; check('nring');   // (Nürburg: the long lap's km, no pits, no tyres)
+      lap('KVALIFIKACIJE'); tyres(true); $('h-pos').textContent = '–'; $('h-tot').textContent = ''; $('h-flag').className = ''; $('hud').classList.remove('tw');
+      $('h-split').textContent = 'SEKTOR 2  1:05.123'; $('h-split').className = 'show sg'; check('quali');   // (qualifying on a track with pits: the tyres and the out-lap's word)
+      $('h-split').className = '';
+      lap('2,4/12,3 KM'); tyres(false); $('h-pos').textContent = '2'; $('h-tot').textContent = '/2'; $('hud').classList.add('up', 'duel'); $('h-gap').textContent = 'TEKMEC SPREDAJ +12.4 s'; check('duel');
       $('hud').classList.remove('duel');
+      $('h-tot').textContent = ''; $('h-pos').textContent = '3'; $('h-rlbl').textContent = 'POLICIJA'; lap('12,3/12,3 KM');   // (the run from the police: the patrol cars after the player, no total)
       $('hud').classList.add('pol'); $('h-heat').textContent = '★★☆☆☆'; $('h-pol').className = 'warn hid'; $('h-hidel').textContent = 'HELIKOPTER NAD TABO'; $('h-flat').textContent = 'PREBITE GUME: 2'; $('h-chk').className = 'on'; $('h-chk').innerHTML = '<b>SKRIVALIŠČE · 400 m</b><span>Garaža desno ob cesti: zapelji noter</span>';
       check('police');
       $('h-pol').className = 'pre'; $('h-heat').textContent = ''; $('h-hidel').textContent = ''; $('h-flat').textContent = ''; $('h-chk').className = 'on'; $('h-chk').innerHTML = '<b>ZAPELJI OB ROB VOZIŠČA</b><span>Parkiraj v označeno polje · 12 m (ali pobegni)</span>';
       check('police+chk');
       $('hud').classList.remove('pol', 'up'); $('h-chk').className = '';
-      $('h-lap').textContent = 'CP 2/4'; $('h-tyre').className = ''; $('h-flag').className = ''; $('h-fuel').className = ''; $('hud').classList.add('tt', 'ttd', 'ttp', 'ttn'); $('h-delta').textContent = '-1.24'; for (const i of secs) i.textContent = ''; $('h-split').textContent = 'CP 2: 2:01.42 -0.84'; $('h-alt').textContent = '2.345 m'; $('h-turn').textContent = 'OVINEK 12/156';
+      lap('CP 2/4'); $('hud').classList.add('tt', 'ttd', 'ttp', 'ttn'); $('h-delta').textContent = '-1.24'; for (const i of secs) i.textContent = ''; $('h-split').textContent = 'CP 2: 2:01.42 -0.84'; $('h-alt').textContent = '2.345 m'; $('h-turn').textContent = 'OVINEK 12/156';
       check('tt');
       $('hud').classList.add('pkc'); $('h-pkcls').textContent = 'UNLIMITED'; for (const i of secs) i.innerHTML = 'CP1<small>+0.42</small>'; $('h-split').className = 'pk show'; $('h-split').innerHTML = '<b>CP2</b><span>2:01.42</span><em class="fast">-0.84</em>';
       check('pikes');
@@ -61,10 +73,10 @@ try {
       $('hud').classList.add('school'); $('h-school').textContent = 'Zaviranje do oznake · 120 km/h'; check('school');
       return res;
     });
-    const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 200 : m === 'pikes' || m === 'school' ? 106 : 95);
+    const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 230 : m === 'duel' ? 115 : m === 'pikes' || m === 'school' ? 106 : 95);   // (upright the line under the clock is under the rows' second row: the duel's gap and the police's panel under it, their signs lower too)
     const badOnes = out.filter(o => !o.box || o.hits.length || o.box[1] > lim(o.mode));
-    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 10 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 200, Pikes and the school ≤ 106'}), over nothing`,
-      out.length === 10 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
+    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 12 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 230, the duel ≤ 115, Pikes and the school ≤ 106'}), over nothing`,
+      out.length === 12 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
 
@@ -92,9 +104,10 @@ try {
       a.cls === 'show blue' && a.kind === 'ring' && a.d === P_RING && top(a) && !/blue/.test(b.cls), txt(a) + ' | 420 m: ' + txt(b));
 
     // the column under the map full in a race (hudCol lays it out: the reaction, START!, the team radio, the toast) and the sign shown: over
-    // none of it, nor over the buttons (pause, tyres, rescue), the speedometer or the controls
+    // none of it, nor over the buttons (pause, rescue), the top left's rows or the controls
     const full = await page.evaluate(async () => {
       const g = window.__game, $ = (id) => document.getElementById(id), raf = () => new Promise(r => requestAnimationFrame(r));
+      await Promise.all(['italic 800 32px ApexMenu', '700 9px ApexMenu'].map(f => document.fonts.load(f, 'AZaz09ČŠŽ')));   // (the rows' face, as a phone draws it)
       const R = $('h-react'); R.firstElementChild.textContent = 'REAKCIJA'; R.lastElementChild.textContent = '0,23 s'; R.className = 'show good';
       g.msg('START!', 'gold', 60); g.toast('Sedaj lahko spustiš plin, vse bo naredil sam.', 60000);
       const r = $('h-teamradio'); r.lastElementChild.textContent = 'Dober postanek. Si 5., G. Moretti je 12,3 s pred tabo.'; r.classList.add('on');
@@ -103,7 +116,7 @@ try {
       for (let k = 0; k < 4; k++) await raf();
       const box = (e) => { if (!e) return null; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity <= 0.05) return null; } const b = e.getBoundingClientRect(); return b.width && b.height ? b : null; };
       const ov = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
-      const n = box($('h-note')), ids = ['h-map', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast', 'h-tower', 'btn-pause', 'btn-tyre', 'btn-rescue', 'speedo', 'h-times', 'h-rank', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'];
+      const n = box($('h-note')), ids = ['h-map', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast', 'h-tower', 'btn-pause', 'btn-rescue', 'h-main', 'h-times', 'h-rank', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'];
       const shown = ids.filter(id => box($(id))), hits = n ? shown.filter(id => ov(n, box($(id)))) : [];
       const out = { note: n ? [n.left, n.top, n.right, n.bottom].map(Math.round) : null, shown, hits, col: ['h-react', 'h-msg', 'h-teamradio', 'toast'].map(id => { const b = box($(id)); return b ? id + '@' + Math.round(b.top) : id + ' -'; }) };
       R.className = ''; $('h-msg').className = ''; $('toast').classList.remove('show'); r.classList.remove('on', 'wait');
