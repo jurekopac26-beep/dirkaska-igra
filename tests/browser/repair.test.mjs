@@ -72,6 +72,7 @@ try {
   });
   T.check('the HUD: the damage goes down as the crew works (red at the start, green once the bodywork is done)', /hsl\(0,/.test(hud.out[0]) && !/hsl\((0|120),/.test(hud.out[1]) && /hsl\(120,/.test(hud.out[2]) && /hsl\(120,/.test(hud.after), hud.out.join(' > ') + ' > ' + hud.after);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+  await page.close();   // (done with it: a race left running there slows the next page's load past openGame's 3 minutes on a busy machine)
 
   // Razbijanje · nov način (xBody, xGlass on): the player's denser body and the damage table's broken glass (KOLIBRI) repaired the same
   // way: towards its own body as built (never the model's coarser one: no NaN at any step), the table's glass back in the body with the
