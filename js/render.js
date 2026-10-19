@@ -8605,7 +8605,7 @@ const Render = (function () {
   // bits muted) but draws no lamps, glint, blob, dust, sparks or smoke for it (v.cull). A shot (the photo mode, a tool's camera): every car in
   const _ccF = new THREE.Frustum(), _ccM = new THREE.Matrix4(), _ccS = new THREE.Sphere();
   function carCull() {
-    const on = !!curRace && !cam.shot;
+    const on = !!curRace && !cam.shot && !dbg.allCars;   // (dbg.allCars: the tests, a car's own cost measured whatever the view)
     if (on) { camera.updateMatrixWorld(); _ccM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _ccF.setFromProjectionMatrix(_ccM); }
     const p = camera.position, far = scene.fog.far, reach = 4 + Math.min(12, 1.8 * Math.hypot(sunOff[0], sunOff[2]) / Math.max(1, sunOff[1]));   // (its shadow: 1.8 m of car under the sun, at most 12 m long)
     for (const v of views) { const c = v.car; if (c.isPlayer) continue;
@@ -8848,7 +8848,7 @@ const Render = (function () {
     if (fov) { showCam.fov = f; showCam.updateProjectionMatrix(); }
   }
   function info() { return renderer ? renderer.info : null; }
-  const dbg = { noSmoke: false };
+  const dbg = { noSmoke: false, allCars: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; return { alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
   function winCount() { let n = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) n++; }); return n; }   // (tests: the materials with the lit windows)
