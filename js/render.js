@@ -2802,6 +2802,7 @@ const Render = (function () {
       const c = this.col, q = i * 16;
       for (let k = 0; k < 4; k++) { c[q + k * 4] = r; c[q + k * 4 + 1] = g; c[q + k * 4 + 2] = b; c[q + k * 4 + 3] = k < 2 ? a0 : a1; }
       this.dirty = true;
+      const L = this.log; if (L && !this.noLog && L.length < MK_LOG * 13) L.push(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0 || 0, y1 == null ? (y0 || 0) : y1, this.off ? 1 : 0);   // (a time trial's run: every mark it lays and whether it is off the road, marksRec)
     }
     flush() {
       if (!this.dirty) return;
@@ -2813,6 +2814,109 @@ const Render = (function () {
     }
     clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.n = this.cur = 0; this.mesh.geometry.setDrawRange(0, 0); this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; }
   }
+
+  /* ---------------- the marks of the last time trial runs on this track (marksRec, marksTake, setOldMarks) ----------------
+     While a time trial runs, every mark laid (Skids.add) is logged; after the finish the log is packed: the segments joined into chains (each
+     starts where the one before it on that wheel ended), the nearly straight bits of a chain merged into one quad (up to MK_SEG m, off the
+     line by MK_TOL m at most), in cm and bytes: [u32 chains] per chain [i32 x, z, y (cm), u8 r, g, b, width (cm), flags (1: off the road),
+     u16 n] then n x [i16 dx, dz, dy (cm), u8 a0, a1]. The stored runs (newest first) are drawn under the live marks as one static mesh in one
+     draw call, each older run fainter and its rubber greyer (mkAge, mkGrey); nothing on another track or in a race. */
+  const MK_LOG = 40000, MK_SEG = 3, MK_TOL = 0.04, MK_MAX = 30000;   // segments logged in a run at most, merged quad length (m), off the line (m), quads drawn at most
+  const MK_RUT = 0.3;   // the alpha of a rolling rut off the road (a slide's: 0.4 .. 0.86)
+  // a stored run's look against the live marks', by its age k (0: the last run .. 9: ten runs ago): its alpha (mkAge: off the road the last
+  // run as it was laid, on the road fainter from the start; every older run fainter, ten runs ago barely seen) and how grey its rubber on the
+  // road has gone (mkGrey: old rubber, towards MK_GREY; the run's own marks stay black). Where the runs cross the same place (the braking
+  // points, the apexes) their marks add up: the rubber builds up
+  const mkAge = (k, off) => off ? lerp(1, 0.2, k / 9) : lerp(0.6, 0.1, k / 9), mkGrey = (k) => lerp(0.3, 0.9, k / 9), MK_GREY = [0.2, 0.2, 0.21];
+  function marksPack(L) {
+    const n = L.length / 13, chains = [], open = new Map();   // (the chains still open, by the x of their end: a segment goes on the one that ends where it starts)
+    for (let i = 0; i < n; i++) {
+      const o = i * 13, C0 = open.get(L[o]), hit = !!C0 && C0.ez === L[o + 1];
+      const C = hit && C0.r === L[o + 5] && C0.g === L[o + 6] && C0.b === L[o + 7] && C0.wd === L[o + 4] && C0.off === L[o + 12] ? C0 : null;
+      if (hit) open.delete(L[o]);
+      const ch = C || { x: L[o], z: L[o + 1], y: L[o + 10], wd: L[o + 4], r: L[o + 5], g: L[o + 6], b: L[o + 7], off: L[o + 12], p: [] };
+      if (!C) chains.push(ch);
+      ch.p.push(L[o + 2], L[o + 3], L[o + 11], L[o + 8], L[o + 9]); ch.ez = L[o + 3];
+      open.set(L[o + 2], ch);
+    }
+    const out = [];   // the chains merged: [x, z, y, wd, r, g, b, [x, z, y, a0, a1 ...]]
+    for (const ch of chains) {
+      const P = ch.p, m = P.length / 5, q = [];
+      let sx = ch.x, sz = ch.z, j = 0;
+      while (j < m) {   // from (sx, sz): take as many segments as stay within MK_SEG and MK_TOL of the straight line
+        let e = j;
+        for (let t = j + 1; t < m; t++) {
+          const ex = P[t * 5], ez = P[t * 5 + 1], dx = ex - sx, dz = ez - sz, l = Math.hypot(dx, dz);
+          if (l > MK_SEG || Math.abs(P[t * 5 + 4] - P[j * 5 + 4]) > 0.12) break;
+          let ok = true; for (let u = j; u < t; u++) { const px = P[u * 5] - sx, pz = P[u * 5 + 1] - sz; if (Math.abs(px * dz - pz * dx) / (l || 1) > MK_TOL) { ok = false; break; } }
+          if (!ok) break; e = t;
+        }
+        q.push(P[e * 5], P[e * 5 + 1], P[e * 5 + 2], P[j * 5 + 3], P[e * 5 + 4]); sx = P[e * 5]; sz = P[e * 5 + 1]; j = e + 1;
+      }
+      out.push(ch, q);
+    }
+    let bytes = 4; for (let i = 0; i < out.length; i += 2) bytes += 19 + out[i + 1].length / 5 * 8;
+    const B = new ArrayBuffer(bytes), D = new DataView(B), cm = (v) => Math.round(v * 100), u8 = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
+    let o = 0; D.setUint32(o, out.length / 2, true); o += 4;
+    for (let i = 0; i < out.length; i += 2) {
+      const ch = out[i], q = out[i + 1], s = q.length / 5;
+      let x = cm(ch.x), z = cm(ch.z), y = cm(ch.y);
+      D.setInt32(o, x, true); D.setInt32(o + 4, z, true); D.setInt32(o + 8, y, true); D.setUint8(o + 12, u8(ch.r)); D.setUint8(o + 13, u8(ch.g)); D.setUint8(o + 14, u8(ch.b)); D.setUint8(o + 15, Math.min(255, cm(ch.wd))); D.setUint8(o + 16, ch.off ? 1 : 0); D.setUint16(o + 17, s, true); o += 19;
+      for (let t = 0; t < s; t++) {
+        const nx = cm(q[t * 5]), nz = cm(q[t * 5 + 1]), ny = cm(q[t * 5 + 2]), i16 = (v) => Math.max(-32767, Math.min(32767, v));
+        D.setInt16(o, i16(nx - x), true); D.setInt16(o + 2, i16(nz - z), true); D.setInt16(o + 4, i16(ny - y), true); D.setUint8(o + 6, u8(q[t * 5 + 3])); D.setUint8(o + 7, u8(q[t * 5 + 4])); o += 8;
+        x += i16(nx - x); z += i16(nz - z); y += i16(ny - y);
+      }
+    }
+    return new Uint8Array(B);
+  }
+  // a packed run back to its quads, into the history mesh's arrays from quad i on (at most max); returns the next free quad
+  function marksUnpack(u8a, put, i, max) {
+    if (!(u8a instanceof Uint8Array) || u8a.length < 4) return i;
+    const D = new DataView(u8a.buffer, u8a.byteOffset, u8a.byteLength), N = D.getUint32(0, true); let o = 4;
+    for (let c = 0; c < N && i < max; c++) {
+      if (o + 19 > u8a.length) break;
+      let x = D.getInt32(o, true), z = D.getInt32(o + 4, true), y = D.getInt32(o + 8, true);
+      const r = D.getUint8(o + 12) / 255, g = D.getUint8(o + 13) / 255, b = D.getUint8(o + 14) / 255, wd = D.getUint8(o + 15) / 100, off = D.getUint8(o + 16) & 1, s = D.getUint16(o + 17, true); o += 19;
+      if (o + s * 8 > u8a.length) break;
+      for (let t = 0; t < s && i < max; t++, o += 8) {
+        const nx = x + D.getInt16(o, true), nz = z + D.getInt16(o + 2, true), ny = y + D.getInt16(o + 4, true);
+        put(i++, x / 100, z / 100, nx / 100, nz / 100, wd, r, g, b, D.getUint8(o + 6) / 255, D.getUint8(o + 7) / 255, y / 100, ny / 100, off);
+        x = nx; z = nz; y = ny;
+      }
+      if (i >= max) break;
+    }
+    return i;
+  }
+  let oldMk = null;   // the stored runs' mesh (setOldMarks)
+  function setOldMarks(runs) {
+    if (oldMk) { scene.remove(oldMk); oldMk.geometry.dispose(); oldMk.material.dispose(); oldMk = null; }
+    if (!runs || !runs.length) return 0;
+    const quads = runs.reduce((a, u) => a + (u instanceof Uint8Array ? Math.floor(u.length / 8) : 0), 0), max = Math.min(MK_MAX, quads);
+    if (!max) return 0;
+    const pos = new Float32Array(max * 12), col = new Uint8Array(max * 16);
+    const put = (i, x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1, off, k) => {
+      const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1, nx = -dz / l * wd, nz = dx / l * wd, o = i * 12, ya = 0.03 + y0, yc = 0.03 + y1;
+      pos[o] = x0 - nx; pos[o + 1] = ya; pos[o + 2] = z0 - nz; pos[o + 3] = x0 + nx; pos[o + 4] = ya; pos[o + 5] = z0 + nz;
+      pos[o + 6] = x1 - nx; pos[o + 7] = yc; pos[o + 8] = z1 - nz; pos[o + 9] = x1 + nx; pos[o + 10] = yc; pos[o + 11] = z1 + nz;
+      const A = mkAge(k, off), q = i * 16;
+      if (!off && r + g + b < 0.3) { const gr = mkGrey(k); r = lerp(r, MK_GREY[0], gr); g = lerp(g, MK_GREY[1], gr); b = lerp(b, MK_GREY[2], gr); }   // (the rubber, not the ruts of a gravel road)
+      for (let c = 0; c < 4; c++) { col[q + c * 4] = r * 255; col[q + c * 4 + 1] = g * 255; col[q + c * 4 + 2] = b * 255; col[q + c * 4 + 3] = (c < 2 ? a0 : a1) * A * 255; }
+    };
+    let n = 0;
+    for (let k = 0; k < runs.length && n < max; k++) n = marksUnpack(runs[k], (i, ...a) => put(i, ...a, k), n, max);
+    if (!n) return 0;
+    const idx = new (n * 4 > 65535 ? Uint32Array : Uint16Array)(n * 6);
+    for (let i = 0; i < n; i++) { const b = i * 4, o = i * 6; idx[o] = b; idx[o + 1] = b + 2; idx[o + 2] = b + 1; idx[o + 3] = b + 1; idx[o + 4] = b + 2; idx[o + 5] = b + 3; }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0, n * 12), 3)); g.setAttribute('color', new THREE.BufferAttribute(col.subarray(0, n * 16), 4, true)); g.setIndex(new THREE.BufferAttribute(idx, 1));
+    g.computeBoundingSphere();
+    const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+    oldMk = new THREE.Mesh(g, m); oldMk.renderOrder = 1.9; oldMk.frustumCulled = false; scene.add(oldMk);   // (under the live marks)
+    return n;
+  }
+  function marksRec(on) { if (skids) skids.log = on ? [] : null; }
+  function marksTake() { const L = skids && skids.log; if (skids) skids.log = null; return L && L.length ? L : null; }   // (the run's log; packed later, marksPack: not in the finish's own frame)
 
   /* ---------------- rain: streaks falling in a box around the view centre. The shader wraps each drop into the box (its place
      moves only with the time), so nothing is updated per drop; the box fades out towards its sides, top and bottom ---------------- */
@@ -2983,7 +3087,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'chase', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
-  const cam = { x: 0, z: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.1 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; chase and iso only)
+  const cam = { x: 0, z: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.3 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; behind the car, scaled into the screen's room: updateCamera)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
@@ -3063,6 +3167,7 @@ const Render = (function () {
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       const sh = sharedTex(); pics.forEach(t => { if (!sh.has(t)) t.dispose(); });   // the track's pictures off the GPU too (a board atlas a builder keeps for its next build goes up again then)
       if (skids) skids.clear();
+      setOldMarks(null);
     }
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
@@ -4220,7 +4325,7 @@ const Render = (function () {
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
     { const D = world && world.dyn; if (D && D.vrFin) D.vrFin.visible = !race.pol; if (D && D.vrHide) { D.vrHide.grp.visible = !!race.pol; hideDoor(D.vrHide, 0); D.vrHide.t = 0; } }   // (Vršič: the race's finish, or the building the run from the police ends in, its door up)
-    particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
+    particles.clear(); sparkP.clear(); skids.clear(); skids.log = null; setOldMarks(null); cam.init = false;   // (a time trial's old runs: the game puts them back, setOldMarks)
     if (crackWarm) { crackWarm.userData.drawn = false; scene.add(crackWarm); }   // (drawn once, then taken out: frame)
   }
   // the run from the police over: the player has driven into the building at the top (pol.goal, the event 'hideout'): a TV camera outside, down
@@ -4384,7 +4489,7 @@ const Render = (function () {
       if (a <= 0) S.mk[k] = null;
       else if (!last) S.mk[k] = [px, pz, yk];
       else { const d = Math.hypot(px - last[0], pz - last[1]);
-        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
+        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = offRoad(c, k, surf); skids.noLog = verge && !skids.off && it <= 0.14; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
         else if (d >= 4) S.mk[k] = [px, pz, yk]; }
       // spray: off every wheel in the melt water; in the rain off the front wheels (the stock spray has the rear ones)
       if (wetK && !verge && spd > 6 && (S.fw[k] || front)) {
@@ -4400,7 +4505,7 @@ const Render = (function () {
           particles.emit(px - fx * 0.8 + (R() - 0.5), gy + 0.5 + R() * 0.5, pz - fz * 0.8 + (R() - 0.5), wx * ws + c.vx * 0.1 + (R() - 0.5) * 0.8, 0.2 + R() * 0.3, wzz * ws + c.vz * 0.1 + (R() - 0.5) * 0.8, 3.5 + R() * 2.5, 2.2, 7 + R() * 4, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.15, -0.04, 0.1, gy); }
       }
     }
-    skids.pkIn = false;
+    skids.pkIn = false; skids.noLog = false;   // (noLog: a plain rut on the gravel road itself (Pikes Peak's gravel version) is not kept with the run's marks)
   }
 
   /* ---------------- Pikes Peak: driving effects (only the cars of a Pikes race; read from the car's state, nothing simulated changes) ----------------
@@ -4480,7 +4585,7 @@ const Render = (function () {
     if (c.air || spd < 2 || !near) { f.sc = f.pl = 0; return; }
     // the barrier: a stream of sparks from the corner that rubs along it (and a burst for a light knock the stock sparks leave out)
     const q = c.q, T = curRace && curRace.track;
-    if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a]))) {   // (in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
+    if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && !c.inPit) {   // (on the pit road, c.inPit: no rail beside the car either, the circuit's barriers are not the lane's walls; in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
       if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
@@ -4595,18 +4700,19 @@ const Render = (function () {
     patch(0.02, 0.08, 0.4, 0.46, 0.121); patch(-0.07, 0.07, 0.3, 0.46, -0.121);
     out.trunk = g.geometry();
     g = G();   // head (from the neck): neck, head, a cap in the team colour with its peak (inside the helmet when he wears one)
-    World.cyl(g, 0, -0.04, 0.005, 0.056, 0.12, 6, CR_SK); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 6, 4, CR_SK);
-    World.cyl(g, 0, 0.2, 0, 0.1, 0.085, 7, TM, TM, 0.085); g.quadO([-0.085, 0.215, 0.07], [0.085, 0.215, 0.07], [0.075, 0.205, 0.16], [-0.075, 0.205, 0.16], TM, [0, 0.1, 0.1]); g.quadO([-0.085, 0.212, 0.07], [0.085, 0.212, 0.07], [0.075, 0.202, 0.16], [-0.075, 0.202, 0.16], TD, [0, 0.3, 0.1]);   // cap, its peak
+    World.cyl(g, 0, -0.04, 0.005, 0.056, 0.12, 6, CR_SK); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 8, 4, CR_SK);
+    for (const ex of [-0.034, 0.034]) g.quadO([ex - 0.013, 0.168, 0.106], [ex + 0.013, 0.168, 0.106], [ex + 0.013, 0.152, 0.104], [ex - 0.013, 0.152, 0.104], K, [0, 0.16, 0]);   // (the eyes: the film camera in the pits comes close)
+    World.cyl(g, 0, 0.2, 0, 0.1, 0.085, 8, TM, TM, 0.085); g.quadO([-0.085, 0.215, 0.07], [0.085, 0.215, 0.07], [0.075, 0.205, 0.16], [-0.075, 0.205, 0.16], TM, [0, 0.1, 0.1]); g.quadO([-0.085, 0.212, 0.07], [0.085, 0.212, 0.07], [0.075, 0.202, 0.16], [-0.075, 0.202, 0.16], TD, [0, 0.3, 0.1]);   // cap, its peak
     out.head = g.geometry();
     g = G();   // full-face helmet: team colour, white crest, darker rim, dark visor
-    crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 4, (ux, uy) => uy < -0.45 ? TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? W : TM));
+    crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 5, (ux, uy) => uy < -0.45 ? TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? W : TM));
     crTBox(g, 0.1, 0.215, 0.17, 0.03, 0.17, 0.03, [[0.05, 0.07, 0.1], null, null, [0.05, 0.07, 0.1], [0.05, 0.07, 0.1]], 0.142, 0.146);
     out.helmet = g.geometry();
     const lim = (k) => k === 1 || k === 4 ? TD : TM;   // (the limbs: 6 round, faces 1 and 4 down their outer and inner side darker)
     g = G(); crLoft(g, [{ y: 0.035, rx: 0.06, rz: 0.061 }, { y: -0.13, rx: 0.056, rz: 0.058 }, { y: -0.3, rx: 0.044, rz: 0.047 }], 6, 0, (s, k) => lim(k), { cap0: TM, dome0: 0.04 }); out.uarm = g.geometry();   // upper arm (from the shoulder): the shoulder domed, the biceps, the elbow
-    g = G(); crLoft(g, [{ y: 0.01, rx: 0.048, rz: 0.05 }, { y: -0.24, rx: 0.037, rz: 0.04 }], 6, 0, (s, k) => lim(k)); crTBox(g, -0.235, -0.35, 0.082, 0.085, 0.07, 0.1, [K, K, K, K, K], 0, 0.01); out.farm = g.geometry();   // forearm (round) and glove
-    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.2, rx: 0.073, rz: 0.08, p: 2.5 }, { y: -0.46, rx: 0.06, rz: 0.066, p: 2.5 }], 6, 0, (s, k) => lim(k)); out.thigh = g.geometry();   // thigh, round to the knee (open: the trunk and the shin close it)
-    g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 6, 0, (s, k) => lim(k)); crTBox(g, -0.47, -0.36, 0.11, 0.27, 0.105, 0.2, [BO, BO, BO, BO, [0.24, 0.24, 0.25]], 0.045, 0.02); out.shin = g.geometry();   // shin (round) and boot
+    g = G(); crLoft(g, [{ y: 0.01, rx: 0.048, rz: 0.05 }, { y: -0.24, rx: 0.037, rz: 0.04 }], 6, 0, (s, k) => lim(k)); crBall(g, 0, -0.29, 0.008, 0.046, 0.066, 0.052, 6, 3, K); out.farm = g.geometry();   // forearm (round) and glove (a rounded fist)
+    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.2, rx: 0.073, rz: 0.08, p: 2.5 }, { y: -0.36, rx: 0.065, rz: 0.071, p: 2.5, hard: true }, { y: -0.41, rx: 0.063, rz: 0.069, p: 2.5, hard: true }, { y: -0.46, rx: 0.06, rz: 0.066, p: 2.5 }], 6, 0, (s, k) => s === 2 ? W : lim(k)); out.thigh = g.geometry();   // thigh, round to the knee, a white reflective band above it (open: the trunk and the shin close it)
+    g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 6, 0, (s, k) => lim(k)); crBall(g, 0, -0.415, 0.05, 0.058, 0.058, 0.135, 6, 3, (ux, uy) => uy < -0.5 ? [0.24, 0.24, 0.25] : BO); out.shin = g.geometry();   // shin (round) and boot (rounded, its toe forward, a grey sole)
     g = G();   // wheel gun, in the hand: the socket points on along the forearm (-y), the air hose plugs in at the back (+y)
     { const B = [0.2, 0.21, 0.23], S = [0.7, 0.71, 0.74]; World.cyl(g, 0, -0.2, 0.05, 0.048, 0.26, 8, B, B); World.cyl(g, 0, -0.12, 0.05, 0.053, 0.05, 8, TM, TM); World.cyl(g, 0, -0.29, 0.05, 0.036, 0.09, 8, S, S); World.box(g, 0, -0.06, -0.01, 0.035, 0.1, 0.07, 0, K, K); }
     out.gun = g.geometry();
@@ -5183,7 +5289,7 @@ const Render = (function () {
     g = G(); crTBox(g, 0.01, -0.24, 0.082, 0.085, 0.068, 0.07, [SK]); crTBox(g, -0.235, -0.33, 0.072, 0.078, 0.058, 0.09, [SK, SK, SK, SK, SK], 0, 0.01); out.farm = g.geometry();   // forearm, hand
     g = G(); crTBox(g, 0.06, -0.46, 0.15, 0.165, 0.12, 0.128, [TM]); out.thigh = g.geometry();
     g = G(); crTBox(g, 0.02, -0.38, 0.118, 0.128, 0.098, 0.102, [TM]); crTBox(g, -0.47, -0.36, 0.1, 0.25, 0.098, 0.19, [K, K, K, K, K], 0.045, 0.02); out.shin = g.geometry();   // shin and shoe
-    g = G(); crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 4, (ux, uy) => uy < -0.45 ? CR_TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? CR_W : TM));
+    g = G(); crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 5, (ux, uy) => uy < -0.45 ? CR_TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? CR_W : TM));
     crTBox(g, 0.1, 0.215, 0.17, 0.03, 0.17, 0.03, [[0.05, 0.07, 0.1], null, null, [0.05, 0.07, 0.1], [0.05, 0.07, 0.1]], 0.142, 0.146); out.helmet = g.geometry();
     g = G(); World.box(g, 0, 0.12, -0.2, 0.3, 0.46, 0.17, 0, TM, [0.2, 0.2, 0.22]); out.pack = g.geometry();   // a hiker's backpack
     return out;
@@ -7991,6 +8097,12 @@ const Render = (function () {
     return ownRnd(() => { const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q; });   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)
   }
 
+  function offRoad(c, wi, surf) {   // a wheel off the road: on the grass or in the gravel, or on a makadam verge past the road's edge
+    if (surf === 2 || surf === 3) return true;
+    if (surf !== 5 && surf !== 6) return false;
+    const T = curTrack, q = c.wq && c.wq[wi]; if (!T || !q || q.k >= 0 || !(q.a >= 0)) return false;
+    return Math.abs(q.d) > (T.wa ? T.wa[q.a] : T.w) + 0.3;
+  }
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
     const tw = M.wid * 0.43, yb = c.y || 0;
@@ -8011,7 +8123,7 @@ const Render = (function () {
     const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const ls = c.lch && !c.lch.done && c.lch.t >= 0 ? (1 - c.lch.k) / Core.LAUNCH.depth : 0, lv = ls > 0.1 ? 0.8 : 2.5;   // the start: a late reaction's wheelspin (0..1, Core LAUNCH): rubber and smoke from the first metres
-    const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
+    const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]], ruts = !!(curRace && curRace.timeTrial && c === curRace.player);
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
@@ -8022,14 +8134,16 @@ const Render = (function () {
       if (surf === 3 && curTrack && curTrack.free) intens = Math.max(intens, 0.26);   // (the new map's run-offs give way: every car leaves its tracks in them)
       if (spd < lv) intens = 0;
       // skid marks
-      const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
+      const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7 || c.inPit;   // (rain: the paving sprays like the asphalt; the cobbles are a road; the pit road is paved: no dust off it)
       const skidOn = intens > 0.14 && spd > lv && !(rainy && onHard);   // (no rubber laid on a wet road)
-      if (skidOn) {
+      const off = offRoad(c, wi, surf), rut = !skidOn && ruts && spd > 2 && off;   // (a time trial: off the road every wheel leaves its rut, fainter than a slide's)
+      if (skidOn || rut) {
+        skids.off = off;
         const last = v.sk[k];
         if (last) {
           const d = Math.hypot(px - last[0], pz - last[1]);
-          if (d > 0.45 && d < 4) {
-            const a = clamp(0.4 + intens * 0.4, 0.4, 0.86);
+          if (d > (rut ? 0.8 : 0.45) && d < 4) {
+            const a = rut ? MK_RUT : clamp(0.4 + intens * 0.4, 0.4, 0.86);
             if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
             else if (surf === 6 || (rainy && surf === 5)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
             else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], yb);
@@ -8180,8 +8294,17 @@ const Render = (function () {
       cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
-      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: 10/20/30 % flatter, the camera looks further ahead along the road; the distance D stays)
-      const ahead = ((portrait ? 13 : 8.5) + (cam.userBack || 0)) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
+      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+      const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
+      let back = cam.userBack || 0;
+      if (back > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
+        // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
+        // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before
+        const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4;
+        const room = D * Math.cos(pitch) - D * Math.sin(pitch) / Math.tan(lo) - tail - a0;
+        if (room < 20) back *= Math.max(0, room) / 20;
+      }
+      const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
       const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
@@ -8939,6 +9062,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

@@ -596,12 +596,98 @@
     pinCam.updateProjectionMatrix(); pinCam.updateMatrixWorld(); pinCam.matrixWorldInverse.copy(pinCam.matrixWorld).invert();
     return P.distanceTo(T);
   }
+  /* ---------------- a circuit race: the race weekend, the intro before it ----------------
+     In Circuit race on a circuit the intro is the weekend's calendar (Race intro Off: none, straight on): the track from afar behind it
+     (the first frame of its helicopter's flight, coming slowly closer, the start · finish marked on it; a track without a flight: its model),
+     Saturday's qualifying and Sunday's race on two pages, each with that day's weather (the race's own, wet or dry; the rest a picture of
+     the day: the game drives no temperature or wind). Qualifying is off until it is switched on on Saturday's page (the game's setting
+     S.quali: remembered): off, Race! starts the race from the back of the grid; on, the qualifying lap comes first. The track is loaded under
+     it (Menu -> bridge.launch): the choice is the start; Back goes back to the track screen. */
+  const weekendOn = (t, m) => m === 'race' && setting('intro') !== 2 && G.qualiCan(t.def);
+  const WK_TIME = { dawn: '07:00', day: '14:00', dusk: '19:30', night: '22:00' };
+  const wkMin = (sec) => sec >= 5400 ? '~' + Math.round(sec / 3600) + ' h' : '~' + Math.max(1, Math.round(sec / 60)) + ' min';
+  // the two days' weather, [Saturday, Sunday], each { k: the sky (D.weekend.sky), t: °C, wind: km/h }: wet, both wet (qualifying is driven
+  // in the race's weather); dry, one sunny and one mostly sunny (clear at night), a few degrees apart; the same each time for a track
+  function weekendSky(t, wet) {
+    const S = G.S, h = [...t.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7), sat = h % 2;
+    const t0 = ({ summer: 23, autumn: 13, winter: 2 }[S.season] ?? 20) + ({ dawn: -6, dusk: -3, night: -7 }[S.tod] || 0) + (h >>> 3) % 5 - 2, dT = 2 + (h >>> 9) % 4;
+    const day = (i, k, dt) => ({ k, t: Math.round(t0 + dt), wind: 3 + (h >>> (5 + i * 4)) % 12 });
+    if (wet) { const k = S.weather === 'storm' ? 'storm' : 'rain'; return [day(0, k, -3), day(1, k, -4)]; }
+    const fine = S.tod === 'night' ? ['clear', 'clear'] : sat ? ['sun', 'part'] : ['part', 'sun'];
+    return [day(0, fine[0], sat ? -dT : 0), day(1, S.weather === 'change' ? 'change' : fine[1], sat ? 0 : -dT)];
+  }
+  // a day's weather drawn for the page (the paper is light: the sun gold, a cloud white, rain under a dark one)
+  function skyIcon(k, w) {
+    const sun = (tr) => '<g' + (tr ? ' transform="' + tr + '"' : '') + '><circle cx="12" cy="12" r="5" fill="#f0a020"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1" stroke="#f0a020" stroke-width="2" stroke-linecap="round"/></g>';
+    const cloud = (f, c) => '<path d="M11 21.5a3.6 3.6 0 0 1 .5-7.2 4.6 4.6 0 0 1 8.7 1.2 3 3 0 0 1-.3 6z" fill="' + f + '" stroke="' + c + '" stroke-width="1.1"/>';
+    const rain = '<path d="M6.5 15a4.5 4.5 0 0 1 .7-8.9A6 6 0 0 1 18.4 8 3.6 3.6 0 0 1 18 15z" fill="#3d4757"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="#1f78b4" stroke-width="2" stroke-linecap="round"/>';
+    const g = k === 'sun' ? sun() : k === 'part' ? sun('translate(-2 -2.5)') + cloud('#fff', '#9aa6b8') : k === 'clear' ? '<path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.2A7 7 0 0 1 15.5 3.5z" fill="#d9b23c"/>'
+      : k === 'change' ? sun('translate(-2 -2.5)') + cloud('#e9edf3', '#7d8798') + '<path d="M13.2 22.8l-.7 1.5M16.7 22.8l-.7 1.5" stroke="#1f78b4" stroke-width="1.6" stroke-linecap="round"/>'
+      : rain + (k === 'storm' ? '<path d="M12.6 13l-2.2 4.2h2.6l-1.6 4.3" fill="none" stroke="#ffc629" stroke-width="1.7" stroke-linejoin="round"/>' : '');
+    return '<svg viewBox="0 0 24 24" width="' + w + '" height="' + w + '" style="overflow:visible" aria-hidden="true">' + g + '</svg>';
+  }
+  const WK_WATCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="8" fill="none" stroke="#ffc629" stroke-width="2"/><path d="M12 14V9.4M9.4 2.6h5.2M12 2.6v3.2M18.6 6.4l1.6-1.6" stroke="#ffc629" stroke-width="2" stroke-linecap="round"/></svg>';
+  function weekend(R, go) {
+    const t = R.track, X = D.weekend, W = G.weekend(t.def), sky = weekendSky(t, R.wet), country = countryOf(t), S = G.S;
+    const fly = !!RT[t.id] && hasFlight(t.id), time = WK_TIME[S.tod] || '14:00', n = W.cars;
+    const el = document.createElement('div'); el.className = 'intro wk' + (S.quali ? ' on' : '') + (fly ? '' : ' model'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', X.kick);
+    const page = (k, d) => {
+      const q = k === 'q';
+      return '<div class="wk-pg wk-' + k + '"><div class="wk-hd">' + esc((q ? X.sat : X.sun).toUpperCase()) + '</div>' +
+        '<div class="wk-dw"><div class="wk-row">' + skyIcon(d.k, 52) + '<span class="wk-tmp">' + d.t + '<sup>°</sup></span></div><span class="wk-wd"><em>' + esc(X.sky[d.k]) + '</em> · ' + d.wind + ' km/h</span></div>' +
+        '<div class="wk-ses"><b class="wk-t">' + time + '</b><span class="wk-line"><span class="wk-sname">' + esc(q ? X.quali : X.race) + '</span> <span class="wk-sdet">' + wkMin(q ? W.quali : W.race) + '</span></span></div>' +
+        (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
+          : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
+    };
+    const sun = sky[1], wet = R.wet || sun.k === 'storm';
+    el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, R.wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
+      '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(X.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' +
+      '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
+      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b>' + esc(X.mode) + '</b> · ' + esc(G.car().name) + ' · ' + laps(W.laps) + ' · ' + n + ' cars</p></div>' +
+        '<div class="wk-cal">' + page('q', sky[0]) + page('r', sky[1]) + '</div>' +
+        '<p class="wk-note" data-off>' + WK_WATCH + esc(X.hint) + '</p><p class="wk-note" data-on>' + esc(X.onNote) + '</p>' +
+        '<button class="go wk-go" data-wk="go" data-off>' + esc(X.go) + '<small>' + esc(X.goSub.toUpperCase()) + '</small></button><button class="go gold wk-go" data-wk="go" data-on>' + esc(X.goQ) + '<small>' + esc(X.goQSub.toUpperCase()) + '</small></button></div>';
+    app.appendChild(el);
+    // the picture in the room the calendar leaves (above it upright, left of it on its side): the helicopter's frame covers it, a model fits in it
+    const pic = $('.wk-pic', el);
+    const fit = () => {
+      if (!el.isConnected) { removeEventListener('resize', fit); return; }
+      const A = app.getBoundingClientRect(), P = $('.wk-pnl', el).getBoundingClientRect(), side = A.width > A.height;
+      const w = side ? Math.max(120, P.left - A.left) : A.width, h = side ? A.height : Math.max(120, P.top - A.top + 24);
+      const pw = fly ? Math.max(w, h * 1.5) : w, ph = fly ? pw / 1.5 : h;
+      el.style.setProperty('--wk-y', Math.round(P.top - A.top) + 'px'); el.style.setProperty('--wk-x', Math.round(P.left - A.left) + 'px');   // (where the calendar begins: the picture darkens into it)
+      Object.assign(pic.style, { left: (w / 2 - pw / 2).toFixed(1) + 'px', top: (h / 2 - ph / 2 + (side || !fly ? 0 : 10)).toFixed(1) + 'px', width: pw.toFixed(1) + 'px', height: ph.toFixed(1) + 'px' });
+    };
+    fit(); addEventListener('resize', fit);
+    // the start · finish on the helicopter's first frame (its camera from the flight's data, as the intro marks its places)
+    if (fly && pinCam) heliData(t.id).then((H) => {
+      const m = H && H.marks && H.marks.find(x => /^start/i.test(x[0])); if (!m || !el.isConnected) return;
+      heliCamAt(H, 0); pv3.set(m[2], m[3], m[4]).project(pinCam);
+      if (pv3.z > 1 || Math.abs(pv3.x) > 0.95 || Math.abs(pv3.y) > 0.9) return;
+      const pin = $('.wk-pin', el); pin.style.left = ((pv3.x + 1) / 2 * 100).toFixed(2) + '%'; pin.style.top = ((1 - pv3.y) / 2 * 100).toFixed(2) + '%';
+      pin.innerHTML = '<span><b>' + esc(m[0].toUpperCase()) + '</b></span><i></i>'; pin.classList.add('on');
+    });
+    const close = () => { removeEventListener('resize', fit); el.remove(); };
+    const ctl = el.__wk = {
+      back() { close(); render(); },
+      go() { close(); go(); },
+      quali() {
+        const on = !G.S.quali; G.setOption('quali', on ? 1 : 0);
+        el.classList.toggle('on', on); $('.wk-sw', el).setAttribute('aria-checked', String(on));
+      },
+    };
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-wk]'); if (!b) return;
+      G.click(); ({ back: ctl.back, go: ctl.go, q: ctl.quali })[b.dataset.wk]();
+    });
+  }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
     const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf);
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
     wx.detach();
+    if (R.kind === 'single' && weekendOn(t, R.mode)) { weekend(R, go); return; }   // (Circuit race: the race weekend's calendar is the intro)
     const el = document.createElement('div'); el.className = 'intro ix2'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
     const finishIntro = (e) => { if (e.isConnected) e.remove(); go(); };   // (the race is loaded: on to its start lights)
@@ -844,7 +930,7 @@
       case 'game': G.act(v, el); break;   // (a screen of the game itself: Settings, Leaderboard, Multiplayer, the career's)
       case 'race-single': {
         const t = curTrack(); if (!t) break;
-        select(); const wet = G.rollWet(); warmFor(t);
+        select(); const wet = G.rollWet(); if (!weekendOn(t, mode)) warmFor(t);
         G.launch((gameStart) => {   // (the track is loaded: the intro over it, then the game's own start)
           if (screen !== 'track' || !app.isConnected) { gameStart(); return; }
           beforeRace({ kind: 'single', mode, track: t, trial: mode === 'trial', wet }, () => { G.setLast(t.id); gameStart(); });
@@ -860,6 +946,8 @@
   const padRoot = () => app ? $('.intro', app) || $('.sheet-bg', app) || app : null;
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
+    const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
+    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
     if (sheet) return false;
@@ -881,6 +969,7 @@
     });
     document.addEventListener('keydown', (e) => {
       if (!G || !G.visible()) return;
+      const wk = $('.intro.wk', app); if (wk) { if (e.key === 'Escape') { e.preventDefault(); wk.__wk.back(); } return; }   // (Esc: the race weekend back to the tracks)
       if ($('.intro', app)) { if (e.key === 'Escape') { e.preventDefault(); const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return; }   // (Esc skips the intro)
       if (e.key === 'Escape') { if (sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
       if (screen === 'track' && !sheet && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));

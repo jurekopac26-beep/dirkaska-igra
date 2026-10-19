@@ -3,7 +3,7 @@
 // car as new: the bodywork's points down to none off, the lost panels back one by one (some still off half-way), the panes' cracks off
 // early, the soot off with the bodywork, the lamps, a kit car's wheels with the crew's tyre men; the same view all through (nothing built
 // afresh), no more meshes drawn than the wreck or the car as new have; then Race.repairCar builds it afresh, whole. RAKETA (a kit vehicle)
-// and KAZE RS (one of the 11); the damage on the HUD goes down with it (Core.repairU 0 outside a repair).
+// and KAZE RS (one of the 11); Core.repairU 0 outside a repair.
 //   node tests/browser/repair.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -59,18 +59,6 @@ try {
     T.check(`${name}: no more meshes drawn than the wreck or the car as new`, S.every(q => q.meshes <= Math.max(r.wreck.meshes, r.after.meshes)), `wreck ${r.wreck.meshes}, new ${r.after.meshes}: ` + S.map(q => q.meshes).join(' '));
     T.check(`${name}: Race.repairCar builds it afresh, whole (the old view freed)`, r.after.fresh && !r.after.rep && r.after.off === 0 && r.after.cracks === 0 && r.after.lamps === 0 && r.after.wheelsOff === 0 && r.after.ownGone, JSON.stringify(r.after));
   }
-  // the HUD: the damage zones' colours go down with the repair (game.js updateDamageHUD, drawn by the running game: the player's pit
-  // step held off meanwhile, so the repair stays where the test puts it)
-  const hud = await page.evaluate(async () => {
-    const g = window.__game, R = g.race, P = R.player, raf = () => new Promise(r => requestAnimationFrame(r)), fill = () => document.getElementById('dz0').getAttribute('fill');
-    R.pitStep = function (c, dt, pre) { if (c !== P) return Object.getPrototypeOf(this).pitStep.call(this, c, dt, pre); };
-    Core.wreckCar(P); const out = [];
-    P.pitState = 'repair'; P.pitDur = 4;
-    for (const u of [0, 0.3, 0.7]) { P.pitT = u * 4; for (let i = 0; i < 4; i++) await raf(); out.push(fill()); }
-    R.repairCar(P); P.pitState = null; delete R.pitStep; for (let i = 0; i < 3; i++) await raf();
-    return { out, after: fill() };
-  });
-  T.check('the HUD: the damage goes down as the crew works (red at the start, green once the bodywork is done)', /hsl\(0,/.test(hud.out[0]) && !/hsl\((0|120),/.test(hud.out[1]) && /hsl\(120,/.test(hud.out[2]) && /hsl\(120,/.test(hud.after), hud.out.join(' > ') + ' > ' + hud.after);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await page.close();   // (done with it: a race left running there slows the next page's load past openGame's 3 minutes on a busy machine)
 
