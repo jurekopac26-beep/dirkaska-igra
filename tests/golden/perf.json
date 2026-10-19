@@ -7,18 +7,18 @@
   "jsMs": 1.52
  },
  "pikes": {
-  "calls": 99,
-  "maxCalls": 111,
-  "kverts": 276,
-  "maxKverts": 364,
-  "jsMs": 0.59
+  "calls": 160,
+  "maxCalls": 185,
+  "kverts": 350,
+  "maxKverts": 469,
+  "jsMs": 2.12
  },
  "pikesg": {
-  "calls": 95,
-  "maxCalls": 111,
-  "kverts": 270,
-  "maxKverts": 293,
-  "jsMs": 0.49
+  "calls": 153,
+  "maxCalls": 206,
+  "kverts": 267,
+  "maxKverts": 321,
+  "jsMs": 2.29
  },
  "ouninpohja": {
   "calls": 179,
@@ -119,11 +119,11 @@
   "jsMs": 1.87
  },
  "sani": {
-  "calls": 91,
-  "maxCalls": 121,
-  "kverts": 217,
-  "maxKverts": 332,
-  "jsMs": 0.58
+  "calls": 176,
+  "maxCalls": 233,
+  "kverts": 236,
+  "maxKverts": 259,
+  "jsMs": 2.17
  },
  "iroha": {
   "calls": 278,
@@ -154,11 +154,11 @@
   "jsMs": 1.38
  },
  "moki": {
-  "calls": 121,
-  "maxCalls": 150,
-  "kverts": 234,
-  "maxKverts": 284,
-  "jsMs": 0.51
+  "calls": 180,
+  "maxCalls": 252,
+  "kverts": 218,
+  "maxKverts": 282,
+  "jsMs": 1.61
  },
  "maunakea": {
   "calls": 164,

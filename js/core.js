@@ -4545,8 +4545,10 @@ const Core = (function () {
       this.cars = []; this.debris = []; this.debrisId = 0; this.props = null; this.propBk = null; this.propSlots = null; this.propCap = null;
       this.finishOrder = [];
       // time trial (def.timeTrial, e.g. the Pikes Peak hill climb; a track with both ways to drive it, def.modes, driven as one when
-      // opts.tt): the player alone, standing ON the start line; the clock is race.time
-      this.timeTrial = !!((track.def.timeTrial || (opts.tt && !opts.remote && (track.def.modes || []).indexOf('tt') >= 0)) && !opts.noPlayer);
+      // opts.tt): the player alone, standing ON the start line; the clock is race.time. A time trial that can also be raced (def.timeTrial
+      // with 'race' in def.modes: Pikes Peak) is the race only when asked for one (opts.tt false), else its time trial as ever
+      const md = track.def.modes || [];
+      this.timeTrial = !!(((track.def.timeTrial && !(opts.tt === false && md.indexOf('race') >= 0)) || (opts.tt && !opts.remote && md.indexOf('tt') >= 0)) && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       // a field race: the AI drive the field of the player's vehicle (or of opts.fieldModel: a championship's car, the title demo's
       // category; see aiModel), at most model.fieldN of them (the big vehicles); this.field: its models, null in any other race
@@ -5344,8 +5346,10 @@ const Core = (function () {
         this.finishOrder.push(c); c.finishPos = this.finishOrder.length;
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
         // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
-        // in turn, 9 m apart), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD)
-        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + 70 + 9 * k)); c.parkD = sd * (this.tf ? Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
+        // in turn, 9 m apart, from 70 m past the line), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD).
+        // A short road past the line (Pikes Peak's summit, ~100 m): the slots closer together, from nearer the line, so the field still fits
+        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, room = T.len - 20 - T.finishS, st = Math.min(9, (room - 38) / 12), a0 = st < 9 ? room - 12 * st : 70;
+          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)); c.parkD = sd * (this.tf ? Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }

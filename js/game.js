@@ -78,9 +78,10 @@
   // records are kept under id@cs (Circuit Superstars; the plain track id holds the times of the removed arcade and rally physics, no longer shown)
   // (def.recId: a track re-made so that its old times no longer compare keeps new records apart.) A time trial in the rain keeps its own records
   // and ghost (id-wet): the weather of the race on it, before a race the weather setting (the wet ones only with 'rain'). A track with
-  // more ways to drive it (def.modes: Vršič) keeps the records of each apart from the race's (id-tt, id-tt-wet, id-traffic, id-police)
+  // more ways to drive it (def.modes: Vršič) keeps the records of each apart from the race's (id-tt, id-tt-wet, id-traffic, id-police); a time
+  // trial that can also be raced (def.timeTrial with def.modes: Pikes Peak) keeps the time trial's under its own key, as before, the race's apart (id-race)
   const wetRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain' || S.weather === 'storm');
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== 'race' ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@cs'; };
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== (d.timeTrial ? 'tt' : 'race') ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@cs'; };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
@@ -129,7 +130,7 @@
   // modeOf: the way a track with def.modes is driven ('race', 'tt', 'traffic': the duel with one rival on the open road, 'police': the run from the
   // police): while a race on it is on, that race's; else the setting
   const modeOf = (d) => !d || !d.modes ? 'race' : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf ? 'traffic' : 'race') : d.modes.indexOf(S.mode) >= 0 ? S.mode : d.modes[0];   // (a road with no race up it, Sani Pass: its first way)
-  const isTT = (d) => !!(d && (d.timeTrial || (hasTT(d) && modeOf(d) === 'tt')));
+  const isTT = (d) => !!(d && (d.modes ? hasTT(d) && modeOf(d) === 'tt' : d.timeTrial));   // (Pikes Peak, a time trial with def.modes: as its way)
   const MODE_NAME = { race: 'Dirka', tt: 'Kronometer', traffic: 'Promet', police: 'Policija' };   // (tr() at use)
   const upRace = (d) => !!(d && d.open && !isTT(d));   // a race against the rivals up an open road (Vršič)
   // a time trial is a hill climb (Pikes Peak), a rally special stage (def.rally: Ouninpohja) or a descent (def.descent: Katu-Jaryk, down a gravel
@@ -146,7 +147,7 @@
   const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT', 'introDescTT'], go: ['goTT', 'goStage', 'goPassTT', 'goDescTT'], cpFirst: ['cpFirst', 'cpFirstStage', null, 'cpFirstDesc'],
     record: ['summitRecord', 'stageRecord', null, 'descRecord'], even: ['summitEven', 'stageEven', null, 'descEven'], end: ['summit', 'stageEnd', null, 'descEnd'] };
   const TT_CITY = { intro: 'introCity', go: 'goCity' };   // (a city stage, def.cityStage: Harju in Jyväskylä, its own welcome and start)
-  const ttLine = (d, k) => (d && d.cityStage && TT_CITY[k]) || (k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : isDesc(d) ? 3 : d && d.modes ? 2 : 0] || TT_LINES[k][0]);   // (a hill climb, a rally stage, a mountain pass, a descent, a city stage)
+  const ttLine = (d, k) => (d && d.cityStage && TT_CITY[k]) || (k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : isDesc(d) ? 3 : d && d.modes && !d.timeTrial ? 2 : 0] || TT_LINES[k][0]);   // (a hill climb (Pikes Peak, also with its race), a rally stage, a mountain pass, a descent, a city stage)
   // (Pikes Peak on its historic gravel road: its own welcome)
   // a road's own commentator lines for a key (def.comm: Los Caracoles' instead of Vršič's): the key of its pool, registered with Comm when first said
   const ownLine = (d, key) => { const L = d && d.comm && d.comm[key]; if (!L) return key; const k = key + '@' + d.id; Comm.addLines(k, L); return k; };
@@ -1171,11 +1172,11 @@
         : kmTxt(T.len, 2) + ' km · ' + tr('{0} ovinkov', T.corners.length) + ' · ' + lapWord(lapsOf(d)).toLowerCase() + (r.bestLap ? tr(' · rekord {0}', fmt(r.bestLap, true)) : '');
       if (wetRec(d)) meta = meta.replace(tr(' · kronometer'), tr(' · kronometer v dežju'));
       if (isTT(d) && medalOf(d, r.bestTime) >= 0) meta += ' ' + MEDAL_ICON[medalOf(d, r.bestTime)];
-      const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) ? pkTrackTag(r, d) : '') + '<div class="tdesc">' + (Lang.of(d, 'desc') || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, (m, a, b) => numDot(+(a + b)) + '\u00a0m') + '</div>';   // 2862 m -> 2.862 m (as on the HUD)
+      const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) && isTT(d) ? pkTrackTag(r, d) : '') + '<div class="tdesc">' + (Lang.of(d, 'desc') || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, (m, a, b) => numDot(+(a + b)) + '\u00a0m') + '</div>';   // 2862 m -> 2.862 m (as on the HUD)
       const sep = d0.test && !sepDone ? (sepDone = true, '<div class="track-sep">' + tr('Za izbris · samo za testiranje') + '</div>') : '';   // (the made-up tracks kept for testing: after the real ones, under their own heading)
-      if (pkRoads(d0).length) return sep + pkRoadCard(d0, d, sel, desc);   // (Pikes Peak: the road, asphalt or the historic gravel)
-      if (d.modes) return sep + '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + Lang.of(d, 'name') + '</h3>' +
-        '<div class="seg tc-mode" data-set="mode" role="group" aria-label="' + tr('Način vožnje') + '">' + d.modes.map(k => '<button data-v="' + k + '" class="' + (md === k ? 'sel' : '') + '">' + tr(MODE_NAME[k]) + '</button>').join('') + '</div></div>' + desc + '</div>';
+      const modeSeg = d.modes ? '<div class="seg tc-mode" data-set="mode" role="group" aria-label="' + tr('Način vožnje') + '">' + d.modes.map(k => '<button data-v="' + k + '" class="' + (md === k ? 'sel' : '') + '">' + tr(MODE_NAME[k]) + '</button>').join('') + '</div>' : '';
+      if (pkRoads(d0).length) return sep + pkRoadCard(d0, d, sel, desc, modeSeg);   // (Pikes Peak: the road, asphalt or the historic gravel, and the way to drive it)
+      if (d.modes) return sep + '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + Lang.of(d, 'name') + '</h3>' + modeSeg + '</div>' + desc + '</div>';
       return sep + '<button class="track-card' + sel + '" data-track="' + d.id + '"><canvas></canvas><h3>' + Lang.of(d, 'name') + '</h3>' + desc + '</button>'; }).join('');
     requestAnimationFrame(() => list.querySelectorAll('.track-card').forEach(el => drawTrackMini(el.querySelector('canvas'), getTrack(el.dataset.track))));
     fitSegs();   // (the tyres' row comes and goes with the track)
@@ -1570,7 +1571,7 @@
   // qualifying gave on this track (also when it is driven again), or on the usual one
   function newRace(mode) {
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
-    const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (!!track.def.timeTrial || md === 'tt'), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
+    const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     if (cr < 0) champRun = false;
@@ -2005,10 +2006,10 @@
   const pkRoads = (d0) => Core.TRACKS.filter(x => x.variantOf === d0.id);
   const pkRoadDef = (d0) => { const V = pkRoads(d0); return V.length ? V.find(x => x.id === S.pkRoad) || d0 : d0; };
   const pkGrav = (d) => !!d && d.roadSurface === 'makadam';
-  function pkRoadCard(d0, d, sel, desc) {
+  function pkRoadCard(d0, d, sel, desc, modeSeg) {
     return '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + Lang.of(d0, 'name') + '</h3>' +
       '<div class="seg tc-mode" data-set="pkRoad" role="group" aria-label="' + tr('Cesta') + '">' + [d0].concat(pkRoads(d0)).map(x => '<button data-v="' + x.id + '" data-track="' + x.id + '" class="' + (x === d ? 'sel' : '') + '"' +
-      (pkGrav(x) ? ' title="' + tr('Zgodovinska makadamska cesta (do 2011)') + '">' + tr('Makadam') : ' title="' + tr('Današnja asfaltna cesta') + '">' + tr('Asfalt')) + '</button>').join('') + '</div></div>' + desc + '</div>';
+      (pkGrav(x) ? ' title="' + tr('Zgodovinska makadamska cesta (do 2011)') + '">' + tr('Makadam') : ' title="' + tr('Današnja asfaltna cesta') + '">' + tr('Asfalt')) + '</button>').join('') + '</div>' + (modeSeg || '') + '</div>' + desc + '</div>';
   }
   function pkClsOf(carId, carName) {   // (an unknown car: by its power and drive; an entry with no known car: Open, the class of the game's own car)
     const M = Core.heirOf(Core.MODELS.find(m => m.id === carId) || Core.MODELS.find(m => m.name === carName));   // (a retired model: its heir's class)
