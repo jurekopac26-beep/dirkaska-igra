@@ -41,10 +41,14 @@ const SETUPS = {
 // later every car of the crash set-ups gets to the repair. Montréal (the start's reaction with the pit autopilot of #112): from 6 s the
 // wrecked car of the crash set-up drives past the way in on the left two laps running (no repair); from 6.5 s all four get to the repair
 // Uncompahgre: from 6 s the crash set-up's car only rubs the wall on its nose (no panel off below 70 %: MASK in core.js); half a second
-// later every car of the crash set-ups hits it hard enough to lose panels
-const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 6.5, uncompahgre: 6.5 };
+// later every car of the crash set-ups hits it hard enough to lose panels. Since the AI keeps clear of a car alongside (aiControl) the rivals no
+// longer knock panels off each other (or the player) in the start's crowd, so the player's own crash must lose one: 'track/car' (the set-up's
+// car: rally the crash, formula, lm, the newer road car) where only that car's crash needs another time (Tianmen, Sani, Monterey: the left
+// lock from 6 s only dents the car against the barrier); Montréal from 7 s (from 6.5 s the prototype misses the way in), Riverside from 6.5 s
+// (from 6 s the formula only grazes the barrier)
+const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 5, 'tianmen/muscle': 5.5, 'sani/rally': 5, 'sani/lm': 8, 'sani/truck': 5, 'monterey/rally': 5 };
 function crashDrive(C, race, k) {
-  const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, t0 = CRASH_AT[race.track.def.id] || 6;
+  const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
   if (t >= t0 && t < t0 + 2.5) { P.inSteer = -1; P.inThr = 1; P.inBrk = 0; P.inHand = 0; P.digitalSteer = true; }
   else { if (t >= t0 + 2.5 && race.track.def.pit) P.pitWant = !P.repairN || P.inPit; P.digitalSteer = false; C.aiControl(P, race, DT); }

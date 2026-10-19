@@ -2779,6 +2779,15 @@ const Core = (function () {
     ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = 6;
     return ch.defSide;
   }
+  // a car in the lane an AI car would pass in (w: m across the road): alongside it, or up to beside the car ahead (thr, g m ahead)
+  function aiLaneBusy(c, race, thr, w, g) {
+    for (const o of race.cars) {
+      if (o === c || o === thr || o.pitG || o.inPit) continue;
+      const d = o.dist - c.dist; if (d < -(c.m.len + o.m.len) * 0.5 - 1 || d > g + (thr.m.len + o.m.len) * 0.5) continue;
+      if (Math.abs(o.q.d - w) < (c.m.wid + o.m.wid) * 0.5 + 0.4) return true;
+    }
+    return false;
+  }
   const _tfv = {};
   function aiControl(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
@@ -2790,16 +2799,17 @@ const Core = (function () {
     if (c.aiT <= 0) {
       c.aiT = 0.12 + Math.random() * 0.08;
       let target = c.laneBias;
-      let threat = null, tgap = 1e9;
+      let threat = null, tgap = 1e9, aU = null, aD = null;
       for (const o of race.cars) {
         if (o === c) continue;
         let gap = o.dist - c.dist;
-        if (gap < -4 || gap > 22) continue;
+        if (gap < -8 || gap > 22) continue;
         const lat = o.q.d - q.d;
         const closing = v - Math.max(0, o.vl);
         if (gap > 0 && Math.abs(lat) < (M.aiLat || 3.2) && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }   // (M.aiLat: a wide vehicle sees a car further to its side as in its way)
+        if (Math.abs(gap) < (M.len + o.m.len) * 0.5 + 1 && Math.abs(lat) > 1.2 && !o.pitG && !o.inPit && !c.pol) { if (lat > 0) { if (!aU || o.q.d < aU.q.d) aU = o; } else if (!aD || o.q.d > aD.q.d) aD = o; }   // (a car alongside, on either side: the nearest; the steering below keeps clear of it; a patrol car goes for the player as ever)
       }
-      c.aiThreat = threat; c.aiGap = tgap;
+      c.aiThreat = threat; c.aiGap = tgap; c.alU = aU; c.alD = aD;
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
       if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
       else if (threat && !(c.chr && aiWaits(c, threat, race, v))) {
@@ -2809,10 +2819,11 @@ const Core = (function () {
         else {
           // choose side with more room
           const wq = T.wa ? T.wa[q.i] : T.w, roomL = oPos - (-wq + 1.2), roomR = (wq - 1.2) - oPos;   // (a road of several widths: its width here)
-          const side = roomR > roomL ? 1 : -1;
-          const want = oPos + side * (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * aiAgg(c) : 1);   // (aiPass: the formula passes wider; an aggressive driver a little closer)
-          target = clamp(want - rlHere, -2 * wq, 2 * wq);
-          c.passing = 1;
+          const pw = (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * aiAgg(c) : 1), room = (s) => s > 0 ? roomR : roomL, dl = q.d - oPos;   // (aiPass: the formula passes wider; an aggressive driver a little closer)
+          let side = Math.abs(dl) > 0.8 && room(Math.sign(dl)) > pw - 1 && !c.pol ? Math.sign(dl) : roomR > roomL ? 1 : -1;   // (already out on one side of it, with room there: that side, not across behind it)
+          if (aiLaneBusy(c, race, threat, oPos + side * pw, tgap)) side = room(-side) > pw - 1 && !aiLaneBusy(c, race, threat, oPos - side * pw, tgap) ? -side : 0;   // (a car in that lane, alongside or beside the car ahead: the other side, or behind it in its wake)
+          target = clamp(oPos + side * pw - rlHere, -2 * wq, 2 * wq);
+          c.passing = side ? 1 : 0;
         }
       } else c.passing = 0;
       if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
@@ -2830,6 +2841,12 @@ const Core = (function () {
     const rlv = lerp(T.rl[i0], T.rl[i1], ft);
     const lim = (T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
     let off = clamp(rlv + c.aiOff, -lim, lim);
+    if ((c.alU || c.alD) && !c.inPit && !c.pitG) {   // a car alongside (the nearest on each side): not across into it, the offset held where that leaves it (between two: in the middle)
+      const a = c.alU, b = c.alD, hi = a ? a.q.d - (M.wid + a.m.wid) * 0.5 - 0.6 : 1e9, lo = b ? b.q.d + (M.wid + b.m.wid) * 0.5 + 0.6 : -1e9;
+      if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -lim, lim); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
+      const ah = (o) => o && o.dist > c.dist && o.vl > Math.max(5, v - 4) ? o : null, fa = ah(a), fb = ah(b);
+      c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > lim ? fb : hi < -lim ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
+    } else c.alSq = null;
     if (race.tf && c.tfLo != null) { const E = Math.max(lim + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
       const pz = T.pitAt(sT), pn = T.pitAt(q.s); if (pz && (c.inPit || pz.gap || (pn && pn.gap))) off = pz.o * pz.sd;   // (over to the lane only where it can be reached: the way in or out, or in it; beside the pit wall on with the lap, in next time)
@@ -2874,6 +2891,7 @@ const Core = (function () {
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
+    if (c.alSq) vT = Math.min(vT, Math.max(0, c.alSq.vl - 2));   // (squeezed alongside a car ahead: drop in behind it)
     if (c.flt && c.flt.pw >= 0) vT *= 1 - (c.flt.pw > 1 ? 0.25 : 0.12) * c.flt.pk;   // (failures: easier on a tyre going down, more so on a rear one: the tail would step out)
     if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
