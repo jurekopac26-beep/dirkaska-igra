@@ -51,8 +51,8 @@ try {
         Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }   // (before the S onto the apron: in the middle of the lane)
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
-        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
-          if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }   // (each man where he was sent: beyond the lane's outer edge)
+        if (c && c.mode !== 'home' && c.mode !== 'ready' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+          if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }   // (each man where he was sent out of the garage: beyond the lane's outer edge; home and ready: everybody in the garage)
         if (P.pitState === 'repair') { const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d * p.sd - p.lout).toFixed(2), yaw: +(a * p.sd * 57.3).toFixed(1) }; }
       }
       if (P.lap === 2 && !P.repairN && !P.inPit) P.pitWant = true;
@@ -116,7 +116,7 @@ try {
         Render.frame(0.05, 1, P, 'chase', {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
-        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+        if (c && c.mode !== 'home' && c.mode !== 'ready' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
           if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }
         if (P.pitState === 'repair') {
           const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d * p.sd - p.lout).toFixed(2), yaw: +(a * p.sd * 57.3).toFixed(1), sd: p.sd };
