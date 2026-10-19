@@ -2837,7 +2837,8 @@ const Render = (function () {
 
   /* ---------------- the wet road's mirror (race.water): the lights' reflections, soft streaks on the road running from under each lamp
      towards the camera (the tail and brake lights, the headlights; at night the floodlights), broken up by the rain's ripples. Instanced
-     quads turned to the camera in the shader, additive; one draw call, none on a dry road ---------------- */
+     quads turned to the camera in the shader, additive; one draw call, none on a dry road (but near the pits at dusk and at night: their
+     lamps' faint sheen on the floor, still: pitGlow) ---------------- */
   class Streaks {
     constructor(max) {
       this.max = max; this.n = 0;
@@ -2847,7 +2848,7 @@ const Render = (function () {
       this.at = [[this.P, 3, 'iPos'], [this.C, 4, 'iCol'], [this.S, 3, 'iSize']].map(([a, n, k]) => { const b = new THREE.InstancedBufferAttribute(a, n); b.setUsage(THREE.DynamicDrawUsage); g.setAttribute(k, b); return b; });
       g.instanceCount = 0;
       this.mat = new THREE.ShaderMaterial({
-        uniforms: { uT: { value: 0 }, uFog: { value: new THREE.Vector2(80, 400) } },
+        uniforms: { uT: { value: 0 }, uFog: { value: new THREE.Vector2(80, 400) }, uRip: { value: 1 } },
         vertexShader: ['attribute vec3 iPos; attribute vec4 iCol; attribute vec3 iSize; uniform vec2 uFog; varying vec2 vQ; varying vec4 vC; varying float vS;',
           'void main(){',
           '  vec2 d = cameraPosition.xz - iPos.xz; float l = length(d); d = l > 0.01 ? d / l : vec2(0.0, 1.0);',   // (along the ground, towards the camera)
@@ -2855,10 +2856,10 @@ const Render = (function () {
           '  vec4 mv = viewMatrix * vec4(w, 1.0); gl_Position = projectionMatrix * mv;',
           '  vQ = position.xy; vS = iSize.z; vC = vec4(iCol.rgb, iCol.a * (1.0 - smoothstep(uFog.x, uFog.y, -mv.z)));',   // (fading into the fog: to nothing, it is light)
           '}'].join('\n'),
-        fragmentShader: ['uniform float uT; varying vec2 vQ; varying vec4 vC; varying float vS;',
+        fragmentShader: ['uniform float uT; uniform float uRip; varying vec2 vQ; varying vec4 vC; varying float vS;',
           'void main(){',
           '  float a = exp(-vQ.x * vQ.x * 14.0) * smoothstep(0.0, 0.12, vQ.y) * pow(1.0 - vQ.y, 1.4);',
-          '  a *= 0.7 + 0.3 * sin(vQ.y * 31.0 + vS * 17.0 - uT * 5.0) * sin(vQ.y * 11.0 - vS * 5.0 + uT * 2.3);',   // (the ripples break it up)
+          '  a *= mix(1.0, 0.7 + 0.3 * sin(vQ.y * 31.0 + vS * 17.0 - uT * 5.0) * sin(vQ.y * 11.0 - vS * 5.0 + uT * 2.3), uRip);',   // (the rain's ripples break it up; a dry floor's sheen (the pits') still)
           '  gl_FragColor = vec4(vC.rgb, a * vC.a);',
           '}'].join('\n'),
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
@@ -3028,7 +3029,7 @@ const Render = (function () {
       crackWarm = new THREE.Mesh(g, matCrack); crackWarm.frustumCulled = false; crackWarm.onAfterRender = () => { crackWarm.userData.drawn = true; }; }
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(10 * 16 + 240); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars)
+    glows = new Glows(10 * 16 + 240 + 96); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars; the pits' lamps)
     skids = new Skids(8000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     streaks = new Streaks(420); scene.add(streaks.mesh); splash = new Splashes(360); scene.add(splash.mesh);   // (the wet road: the lights' reflections, the drops' splashes)
@@ -3065,7 +3066,7 @@ const Render = (function () {
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
-    curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
+    curTrack = track; seasonWorld(); floodlights(); pitLights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
@@ -3756,8 +3757,9 @@ const Render = (function () {
     const was = atmos.tod; todK = k; dawn = false; atmos = { season: atmos.season, tod: k >= 0.75 ? 'night' : k >= 0.25 ? 'dusk' : 'day' };
     applyTheme(themeId); todLights(atmos.tod !== was);
   }
-  // the lights of the time of day: the floodlights (from late dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights again
-  function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
+  // the lights of the time of day: the floodlights (from late dusk), the pits' (from dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights and the pits' again
+  function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK);
+    if (build || (todK > 0.2) !== !!pitL) pitLights(); if (pitL) pitL.mesh.material.opacity = pitK(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
   function carGlow(v) { const m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(0.16 * sstep(0.5, 1, todK)); }   // (at night the cars stay in sight under the floodlights)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
   // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
@@ -3912,6 +3914,89 @@ const Render = (function () {
     const halo = new THREE.Points(hg, glows.mat); halo.renderOrder = 7;   // (the car lights' glow material: no program of its own)
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
     scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp };
+  }
+  /* ---------------- the pits at dusk and at night (todK): the crews' garages lit inside (their floor and back wall glowing; Bathurst's and Bang
+     Saen's dark fronts glowing instead), the light spilling out of the door onto the apron, a light bar over each door with two lamps in it and
+     their pools of light on the apron and the lane, the floor a little shiny under them (the lamps' sheen: soft reflections towards the camera,
+     the wet road's streaks, still on a dry floor). All fakes: additive quads in one mesh over the 13 crews' boxes (world.pitBoxes): one draw call
+     where the pits are in view, none by day or on a track without pits; the lamps' glow with the car lights' (glows). Each pit builder's
+     garages have their own front, opening and depth (PIT_LOOK); the 1930s stalls and the 1950s shed bare warm bulbs instead ---------------- */
+  // gf: the garages' front past the lane's outer edge (bx.base; Montréal's shallow apron: def.pitApron), h: the opening's height, w: its width,
+  // d: the depth to the back wall; bz: the light bar in front of the front (the team's band, a valance); eave: [w, y] the front edge of a roof
+  // over the apron (it hides the garages' front from the camera behind the car: the lamps hang in front of it); kind: 'in' an open garage
+  // with its inside built (its floor and back wall lit), 'door' a dark front standing for the inside (dz: where it is; the glow on it), 'tent'
+  // a roof on legs, 'bulb' a stall or a shed (bulbs under its eave, no light bar, no lamps over the lane; back: its back wall)
+  const PIT_LOOK = {
+    def: { gf: 9, h: 3.3, w: 8.2, d: 6.9, bz: -0.17, kind: 'in' },   // (pitLaneScenery: Spa, Newcastle; the Red Bull Ring's building)
+    spa: { eave: [-0.9, 8.6] }, rbring: { eave: [-2.4, 14.7] }, rio: { w: 9.5, d: 7.85 }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25 },
+    townsville: { gf: 9.7, h: 3.7, w: 11.4, d: 11.1, eave: [-1.2, 4.6] }, bathurst: { h: 3.4, w: 9.4, kind: 'door', dz: 0.26, eave: [-0.8, 7.8] }, bangsaen: { gf: 8, h: 2.45, w: 8.6, kind: 'door', dz: -0.03 },
+    detroit: { gf: 9.4, h: 2.6, w: 9.2, d: 5.97, kind: 'tent' }, troisrivieres: { gf: 9.2, h: 2.9, w: 8.8, d: 6.6, bz: -0.26, kind: 'tent' },
+    cpalace: { h: 2.7, w: 8.8, d: 2.6, kind: 'bulb' }, longford: { h: 3.9, w: 9.4, d: 5.8, kind: 'bulb', back: true },
+  };
+  const PIT_IC = [0.82, 0.9, 1.0], PIT_NC = [1.0, 0.95, 0.84], PIT_WC = [1.0, 0.7, 0.4];   // (inside: cool LED; the lamps: white; the old bulbs: warm)
+  let pitTex = null, pitL = null;
+  const pitK = () => sstep(0.2, 0.5, todK) * (0.62 + 0.38 * sstep(0.5, 1, todK)) * (dawn ? 0.7 : 1);   // (dusk 0.62, night 1, the morning dimmer; off by day)
+  function pitTexture() {   // four soft shapes side by side, 64 px each: a round pool (a brighter core: the sheen under the lamp), a rectangle (its foot
+    // sharper), the light out of a door (the brightest at v = 0, its edge), a bar (a thin bright core along u)
+    const S = 64, c = document.createElement('canvas'); c.width = S * 4; c.height = S; const g = c.getContext('2d'), img = g.createImageData(S * 4, S), d = img.data;
+    const ss = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    for (let j = 0; j < S; j++) for (let i = 0; i < S * 4; i++) {
+      const k = (i / S) | 0, u = ((i % S) + 0.5) / S, v = 1 - (j + 0.5) / S, o = (j * S * 4 + i) * 4;   // (v up: the canvas's first row is the texture's top)
+      let a;
+      if (k === 0) { const r = Math.hypot(u - 0.5, v - 0.5) * 2; a = r >= 1 ? 0 : Math.pow(1 - r, 1.6) * (0.55 + 0.45 * Math.exp(-r * r * 9)); }
+      else if (k === 1) a = ss(0, 0.2, u) * ss(0, 0.2, 1 - u) * ss(0, 0.05, v) * ss(0, 0.32, 1 - v);
+      else if (k === 2) a = ss(0, 0.22, u) * ss(0, 0.22, 1 - u) * Math.exp(-3.2 * v) * ss(0, 0.15, 1 - v);
+      else a = ss(0, 0.1, u) * ss(0, 0.1, 1 - u) * Math.exp(-(((v - 0.5) / 0.2) ** 2));
+      d[o] = d[o + 1] = d[o + 2] = 255; d[o + 3] = Math.round(255 * clamp(a, 0, 1));
+    }
+    g.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
+  }
+  function pitLights() {
+    if (pitL) { scene.remove(pitL.mesh); pitL.mesh.geometry.dispose(); pitL.mesh.material.dispose(); pitL = null; }
+    const T = curTrack, B = world && world.pitBoxes; if (todK <= 0.2 || !T || !B || !B.length) return;
+    if (!pitTex) pitTex = pitTexture();
+    const L = Object.assign({}, PIT_LOOK.def, PIT_LOOK[T.def.theme]), gf = T.def.pitApron || L.gf, ww = L.w / 2, bulb = L.kind === 'bulb', CL = bulb ? PIT_WC : PIT_IC;
+    const pos = [], uv = [], col = [], idx = [], lamps = [], doors = [], hy = (s) => (T.hasElev && T.hy ? T.hy[T.idx(s)] : 0), e = 0.5 / 256, G = world.groundH;
+    // a quad A B C D (u, v: 0 0, 1 0, 1 1, 0 1 in its cell of the texture), the colour times its strength
+    const quad = (A, Bq, C, D, cell, rgb, k) => { const b = pos.length / 3, u0 = cell / 4 + e, u1 = (cell + 1) / 4 - e;
+      pos.push(...A, ...Bq, ...C, ...D); uv.push(u0, 0.01, u1, 0.01, u1, 0.99, u0, 0.99); for (let n = 0; n < 4; n++) col.push(rgb[0] * k, rgb[1] * k, rgb[2] * k); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); };
+    for (const bx of B) {
+      const y0 = (bx.y || 0) - hy(bx.s), F = bx.base + gf, P = (a, w, y) => [bx.ox + bx.tx * a + bx.nx * w, y0 + hy(bx.s + a) + y, bx.oz + bx.tz * a + bx.nz * w];   // (a along the lane from the box's middle, w out from the centre line; y over its floor)
+      const Pf = (a, w, y) => { const p = P(a, w, 0), g = G ? G(p[0], p[2]) : NaN; if (g > p[1]) p[1] = Math.min(p[1] + 1, g); p[1] += y; return p; };   // (on the floor; where the world's ground lies over it (Toronto's terrain over the apron), on that)
+      const flat = (a0, a1, w0, w1, y, cell, rgb, k) => quad(Pf(a0, w0, y), Pf(a1, w0, y), Pf(a1, w1, y), Pf(a0, w1, y), cell, rgb, k);   // (v from w0 to w1)
+      const wall = (a0, a1, w, h0, h1, cell, rgb, k) => quad(P(a0, w, h0), P(a1, w, h0), P(a1, w, h1), P(a0, w, h1), cell, rgb, k);
+      if (L.kind === 'in' || L.kind === 'tent') {   // the inside: its floor (the strip lights' sheen on an epoxy one), its back wall
+        flat(-ww + 0.2, ww - 0.2, F + 0.15, F + L.d - 0.1, 0.05, 1, CL, L.kind === 'in' ? 0.5 : 0.42);
+        wall(-ww + 0.2, ww - 0.2, F + L.d - 0.04, 0.05, L.kind === 'in' ? L.h + 0.5 : L.h - 0.1, 1, CL, L.kind === 'in' ? 0.35 : 0.3);
+        if (L.kind === 'in') for (const a of [-0.23 * L.w, 0.23 * L.w]) quad(Pf(a - 0.35, F + 0.4, 0.055), Pf(a - 0.35, F + L.d - 0.4, 0.055), Pf(a + 0.35, F + L.d - 0.4, 0.055), Pf(a + 0.35, F + 0.4, 0.055), 3, CL, 0.4);
+      } else if (L.kind === 'door') wall(-ww, ww, F + L.dz, 0.02, L.h, 1, CL, 0.46);
+      else {   // the stall's, the shed's: a pool under its roof, its back wall, three bulbs under the eave
+        flat(-ww - 0.4, ww + 0.4, F - 0.6, F + L.d + 0.6, 0.05, 0, CL, 0.6);
+        if (L.back) wall(-ww + 0.2, ww - 0.2, F + L.d, 0.05, 2.8, 1, CL, 0.3);
+        for (const a of [-0.6 * ww, 0, 0.6 * ww]) { const p = P(a, F + 0.5, L.h - 0.4); lamps.push({ x: p[0], y: p[1], z: p[2], gy: Pf(a, F + 0.5, 0.03)[1], c: CL, s: 2, a: 0.7 }); }
+      }
+      flat(-ww - 0.3, ww + 0.3, F - 0.02, F - (bulb ? 5.5 : Math.min(6, gf + 2)), 0.06, 2, bulb ? CL : PIT_NC, 0.42);   // the light out of the door, on the apron
+      { const p = Pf(0, F - 0.6, 0.03); doors.push({ x: p[0], y: p[1], z: p[2], c: CL, w: L.w * 0.45 }); }
+      if (bulb) continue;
+      wall(-ww + 0.4, ww - 0.4, F + L.bz, L.h + 0.02, L.h + 0.18, 3, PIT_NC, 1.4);   // the light bar over the door
+      const E = L.eave, lw = E ? F + E[0] - 0.3 : F + L.bz - 0.12, ly = E ? E[1] - 0.25 : L.h + 0.1, r = E ? 6.2 : 5.6, wc = bx.base + Math.min(gf / 2, 3.5) - 0.5;   // (lw, ly: the lamps; wc: their pools' middle)
+      for (const a of [-L.w / 4, L.w / 4]) { const p = P(a, lw, ly); lamps.push({ x: p[0], y: p[1], z: p[2], gy: Pf(a, lw, 0.03)[1], c: PIT_NC, s: E ? 3 : 2.4, a: 0.45 });
+        flat(a - r, a + r, wc - r, wc + r, 0.05, 0, PIT_NC, 0.3); }   // (its pool on the apron and the lane's edge)
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeBoundingSphere();   // (the pits only: out of view, not drawn)
+    const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: pitTex, vertexColors: true, transparent: true, opacity: pitK(), blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    mesh.name = 'pitLights'; mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; scene.add(mesh);
+    pitL = { mesh, lamps, doors, n: B.length, q: pos.length / 12, kind: L.kind };
+  }
+  // each frame: the pits' lamps round the view, their glow and their sheen on the floor (dry: faint and still; wet: the road's mirror, as the
+  // floodlights'), the light out of the doors mirrored too
+  function pitGlow(wk) {
+    const k = pitL.mesh.material.opacity, cx = cam.vcx || 0, cz = cam.vcz || 0; if (k <= 0) return;
+    for (const l of pitL.lamps) { const dx = l.x - cx, dz = l.z - cz; if (dx * dx + dz * dz > 170 * 170) continue;
+      glows.add(l.x, l.y, l.z, l.s, l.c[0], l.c[1], l.c[2], l.a * k); glows.add(l.x, l.y, l.z, l.s * 0.3, 1, 1, 1, 0.8 * k);
+      streaks.add(l.x, l.gy, l.z, l.c[0], l.c[1], l.c[2], (wk ? 0.36 * wk : 0.1) * k, wk ? 1.6 : 0.9, wk ? 10 : 5, l.x * 0.13); }
+    for (const d of pitL.doors) { const dx = d.x - cx, dz = d.z - cz; if (dx * dx + dz * dz < 140 * 140) streaks.add(d.x, d.y, d.z, d.c[0], d.c[1], d.c[2], (wk ? 0.22 * wk : 0.06) * k, d.w, wk ? 9 : 6, d.z * 0.11); }
   }
   // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, narrow and the brightest at the lamps,
   // each widening and fading with the distance (a soft edge all round), merging into one warm, faint fan further out
@@ -5656,12 +5741,13 @@ const Render = (function () {
       if (v.sagQ) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
     }
+    if (pitL) pitGlow(wk);   // (the pits' lamps at dusk and at night)
     glows.end();
     if (wk && flood && flood.fp) {   // (at night the floodlights too: those round the view)
       const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0;
       for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, 0.38 * wk, 1.8, 12, k * 0.13); }
     }
-    streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); }
+    streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); U.uRip.value = wk > 0 ? 1 : 0; }   // (dry: only the pits' sheen, no ripples)
     skids.flush();
   }
 
@@ -8806,6 +8892,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
