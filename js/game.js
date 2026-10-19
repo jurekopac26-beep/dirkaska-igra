@@ -369,7 +369,8 @@
   function showMsg(txt, cls, dur) {
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
-  function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
+  let swapBuzzEnd = 0;   // (ZAMENJAJ KOLO's last second: its four buzzes running till then; a knock's buzz would cut them short)
+  function vibrate(ms) { if (S.vibrate && !(performance.now() < swapBuzzEnd && !Array.isArray(ms))) Input.vibrate(ms); }
 
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
@@ -3358,11 +3359,11 @@
     const Q = P && P.wreck && P.wreck.rule, on = !!(Q && Q.ask && Q.spare && Q.due > 0 && phase === 'racing' && screen === 'none' && !replay);
     if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); swapFit(); swapTop(); } }
     if (on) { const k = Math.max(0, Math.min(1, Q.due / swapD0)); $('ws-bar').style.transform = 'scaleX(' + k.toFixed(3) + ')'; $('ws-btn').classList.toggle('hot', k <= 0.2); }   // (hot: its last 20 %, the hub on fire)
-    if (on && Q.due > 1) swapBuzz = false; else if (on && !swapBuzz) { swapBuzz = true; vibrate(SWAP_BUZZ); }   // (the last second: once a wheel, a pause in it or not)
+    if (on && Q.due > 1) swapBuzz = false; else if (on && !swapBuzz) { swapBuzz = true; swapBuzzEnd = performance.now() + 900; vibrate(SWAP_BUZZ); }   // (the last second: once a wheel, a pause in it or not)
   }
   function swapWheel() {
     if (!(swapOn && race && race.changeWheel(race.player))) return;
-    vibrate(40); for (const t of [0, 210, 420]) setTimeout(() => Sfx.wrench(), t);   // (the pits' wheel gun on the nuts)
+    swapBuzzEnd = 0; vibrate(40); for (const t of [0, 210, 420]) setTimeout(() => Sfx.wrench(), t);   // (the tap's buzz ends the warning's; the pits' wheel gun on the nuts)
     showMsg(tr('KOLO ZAMENJANO'), 'gold', 1.8); swapHUD(race.player);
   }
   function updateDamageHUD(P) {
