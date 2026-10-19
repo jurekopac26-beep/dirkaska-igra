@@ -940,6 +940,7 @@ const Sfx = (function () {
   // once; or sweep: [[t, rpm, load, speed], ...], each step a frame at its time (the turbo spooling as it would) -> Promise of the samples
   // (Float32Array, .tg: the voice's last targets). shot: a one-shot's buffer instead (its samples; the sound running)
   function probe(o) {
+    if (o.pit) return pitProbe(o);   // (a pit sound: pitProbe)
     if (o.shot) { const b = ctx && dBuf(o.shot); return Promise.resolve(b ? b.getChannelData(0).slice() : null); }
     const sr = o.sr || 44100, n = Math.round((o.dur || 0.5) * sr), OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OAC) return Promise.resolve(null);
@@ -1430,6 +1431,7 @@ const Sfx = (function () {
     if (heli.pn) set(heli.pn.pan, hp, 0.1);
     standsStep(race, player, W, cam);
     sambaStep(race, player, W, cam);   // (Rio: the samba group by the main stand)
+    if (race) pitStep(race, player, cam);   // (the player's pit stop: the guns, the jacks, the release, the hose, the limiter)
     // the Red Bull Ring's jets before the start: a roar by the distance to the nearest one
     let jv = 0; const A = W && W.dyn && W.dyn.air;
     if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
@@ -1562,7 +1564,7 @@ const Sfx = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime((straw ? 0.5 : 0.28) * vol, now); g.gain.exponentialRampToValueAtTime(0.001, now + (straw ? 0.35 : 0.1));
     src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.4);
   }
-  // impact wrench in the pits: a short, buzzing rattle
+  // impact wrench in the pits: a short, buzzing rattle (game.js, with no crew of the player's to hear: the pit stop's own sounds, pitStep)
   function wrench() {
     if (!ctx || ctx.state !== 'running' || !running) return;
     const now = ctx.currentTime, dur = 0.16 + Math.random() * 0.12;
@@ -1571,6 +1573,177 @@ const Sfx = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.06, now + 0.01); g.gain.setValueAtTime(0.06, now + dur - 0.03); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     tg.connect(g.gain); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.8;
     o.connect(bp); bp.connect(g); g.connect(bus); o.start(now); o.stop(now + dur + 0.02); trem.start(now); trem.stop(now + dur + 0.02);
+  }
+
+  /* ---- THE PITS: the player's pit stop, heard. Nothing in game.js: update compares the stop (the player's pitState, pitT) and the
+     player's crew (Render.crew: crewLogic's gunW, a bit per wheel while its gun is on the nut; liftF and liftR, how far each end of the
+     car is up on its jack) with what they were last frame, as the fleet's destruction does. Each tyre man's wheel gun as its nut comes off
+     and as it goes back on (eight a stop): the air motor's whine and the hammer's rattle (off: the rattle breaks the nut loose, then it
+     spins free; on: it spins down the thread, then the rattle tightens it), the four a little apart, each gun at its own pitch; each air
+     jack as its end of the car goes up (a clunk, the air's hiss) and comes down (the hiss, the clunk), and the car's thud as that end lands
+     on its wheels; a short whistle as the car is released (the stop done, the lollipop up; after the stop's two beeps, game.js); in a race
+     with fuel (not an electric car's battery) the hose from the stop's start till the tank is full (the nozzle's clunk on and off, the
+     fuel's rush between); the pit-lane limiter's stutter while the autopilot drives the car in the lane at the limit. Each by where it is
+     to the camera (its side, fainter further off: the film camera's view of the stop). Only the player's stop (the AI cars' crews do not
+     work), only while the race sounds run (not paused, not in the replay: update is not called there), nothing made with the sound off.
+     With no crew of the player's (a world without the boxes' crews): game.js's old rattle (wrench). Every sound is nodes on a context
+     (ac, dst), so Sfx.probe can render each one offline ---- */
+  const PIT_V = 22.2;   // (Core's pit-lane limit: 80 km/h)
+  const PIT_GUN = [[0, 1], [0.055, 1.06], [0.025, 0.95], [0.085, 1.025]];   // each wheel's gun (FL, FR, RL, RR): how much later it starts (s), its pitch
+  const PIT_LEV = { gun: 0.65, jack: 0.55, drop: 0.4, release: 0.42, hose: 0.4, lim: 0.06 };   // (each sound's level by the car; fainter further off)
+  const pitN = { gun: 0, gunOff: 0, gunOn: 0, jackUp: 0, jackDown: 0, drop: 0, release: 0, hoseOn: 0, hoseOff: 0, log: [] };   // (Sfx.levels: what played, in order)
+  const PT = { race: null, car: null, st: null, gw: 0, gk: [0, 0, 0, 0], jk: [0, 0], top: [0, 0], hose: false, fT: 0, hoseL: 0, lim: 0 };   // (what the stop was last frame)
+  let hoseV = null, limV = null;
+  const pitNoise = new WeakMap();
+  function noiseOf(ac) {   // the context's noise (a probe's offline context: its own, made once)
+    if (ac === ctx && noiseBuf) return noiseBuf;
+    let b = pitNoise.get(ac); if (b) return b;
+    b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    pitNoise.set(ac, b); return b;
+  }
+  // a gain from silence up to v in a s, held h s, down in r s (from t)
+  function pGain(ac, t, v, a, h, r) {
+    const g = ac.createGain(), p = Math.max(v, 0.0002); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(p, t + a);
+    if (h > 0) g.gain.setValueAtTime(p, t + a + h); g.gain.exponentialRampToValueAtTime(0.0001, t + a + h + r); return g;
+  }
+  // noise through a filter into g, from t for dur s (-> the filter)
+  function pNoise(ac, t, dur, type, f, q, g, rate) {
+    const s = ac.createBufferSource(); s.buffer = noiseOf(ac); s.loop = true; if (rate) s.playbackRate.value = rate;
+    const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+    s.connect(fl); fl.connect(g); s.start(t, Math.random() * 0.5); s.stop(t + dur); return fl;
+  }
+  const PULSE = (() => { const n = 512, c = new Float32Array(n); for (let i = 0; i < n; i++) c[i] = Math.pow(1 - i / (n - 1), 6); return c; })();   // (a saw's ramp -> a sharp pulse on each reset, as the helicopter's blades)
+  // a wheel gun on its nut (on: tightening it; k its pitch, v its level): the air motor's whine (a saw through a band, spinning up, lower
+  // while the hammer works), the hammer's rattle (metallic noise in two bands, struck ~24 times a second) and a click as it stops
+  function pitGun(ac, dst, t, on, k, v) {
+    const D = on ? 0.42 : 0.36, h0 = on ? 0.14 : 0, h1 = on ? D - 0.02 : 0.2, free = 1500 * k, load = 950 * k;   // (the hammer from h0 to h1: off, it breaks the nut loose first; on, it tightens it last)
+    const out = pGain(ac, t, v, 0.006, D - 0.035, 0.03); out.connect(dst);
+    const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(free * 0.45, t); o.frequency.setTargetAtTime(on ? free : load, t, 0.012); o.frequency.setTargetAtTime(on ? load : free, t + (on ? h0 : h1), 0.02);
+    const bw = ac.createBiquadFilter(); bw.type = 'bandpass'; bw.frequency.value = 2100 * k; bw.Q.value = 1.1;
+    const gw = ac.createGain(); gw.gain.setValueAtTime(on ? 0.2 : 0.07, t); gw.gain.setValueAtTime(on ? 0.07 : 0.2, t + (on ? h0 : h1));   // (under the hammer the whine is low)
+    o.connect(bw); bw.connect(gw); gw.connect(out); o.start(t); o.stop(t + D + 0.01);
+    const lfo = ac.createOscillator(); lfo.type = 'sawtooth'; lfo.frequency.value = 24 * k;
+    const sh = ac.createWaveShaper(); sh.curve = PULSE;
+    const pg = ac.createGain(); pg.gain.setValueAtTime(h0 > 0 ? 0 : 1, t); if (h0 > 0) pg.gain.setValueAtTime(1, t + h0); pg.gain.setValueAtTime(0, t + h1);
+    const gh = ac.createGain(); gh.gain.value = 0; lfo.connect(sh); sh.connect(pg); pg.connect(gh.gain);
+    pNoise(ac, t, D, 'bandpass', 3300 * k, 2.2, gh); pNoise(ac, t, D, 'bandpass', 5600 * k, 7, gh, 1.3); pNoise(ac, t, D, 'bandpass', 650 * k, 1.5, gh, 0.8);   // (the steel's ring, the hub's knock)
+    const gx = ac.createGain(); gx.gain.value = 1.7; gh.connect(gx); gx.connect(out); lfo.start(t); lfo.stop(t + D + 0.01);
+    const tc = t + D - 0.05, c = ac.createOscillator(); c.type = 'square'; c.frequency.setValueAtTime(2200 * k, tc); c.frequency.exponentialRampToValueAtTime(700 * k, tc + 0.025);
+    const cg = pGain(ac, tc, 0.18, 0.002, 0, 0.03); c.connect(cg); cg.connect(out); c.start(tc); c.stop(tc + 0.04);
+  }
+  // a metal clunk (k its pitch): a knock falling in pitch and a short band of noise
+  function pitClunk(ac, dst, t, v, k) {
+    const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(230 * k, t); o.frequency.exponentialRampToValueAtTime(95 * k, t + 0.07);
+    const g = pGain(ac, t, 0.5 * v, 0.003, 0, 0.12); o.connect(g); g.connect(dst); o.start(t); o.stop(t + 0.14);
+    const g2 = pGain(ac, t, 0.35 * v, 0.002, 0, 0.05); g2.connect(dst); pNoise(ac, t, 0.06, 'bandpass', 1500 * k, 1.8, g2);
+  }
+  // an air jack (up: its end of the car lifted): the clunk of its head on the car and the air's hiss, in as it lifts (short, rising), out
+  // as it lets the car down (falling, the clunk in it)
+  function pitJack(ac, dst, t, up, v) {
+    const dh = up ? 0.24 : 0.3, th = up ? t + 0.03 : t;
+    pitClunk(ac, dst, up ? t : t + 0.04, v, up ? 1 : 0.85);
+    const g = pGain(ac, th, 0.26 * v, up ? 0.02 : 0.008, dh * 0.35, dh * 0.65); g.connect(dst);
+    const f = pNoise(ac, th, dh + 0.02, 'bandpass', up ? 3200 : 5600, 1.1, g); f.frequency.setValueAtTime(up ? 3200 : 5600, th); f.frequency.exponentialRampToValueAtTime(up ? 5200 : 2200, th + dh);
+  }
+  // the car down on its wheels: a low thud (the tyres and the springs taking its weight) and a dull knock
+  function pitDrop(ac, dst, t, v) {
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(78, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.2);
+    const g = pGain(ac, t, 0.7 * v, 0.008, 0.02, 0.26); o.connect(g); g.connect(dst); o.start(t); o.stop(t + 0.32);
+    const g2 = pGain(ac, t, 0.4 * v, 0.004, 0, 0.12); g2.connect(dst); pNoise(ac, t, 0.14, 'lowpass', 380, 0.8, g2);
+  }
+  // the release: a pea whistle's short blast (a tone near 3 kHz trilled by the pea ~31 times a second in pitch and loudness, the breath's
+  // noise round it)
+  function pitWhistle(ac, dst, t, v) {
+    const D = 0.46, f0 = 2900, out = pGain(ac, t, v, 0.02, D - 0.06, 0.04); out.connect(dst);
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f0 * 0.94, t); o.frequency.exponentialRampToValueAtTime(f0, t + 0.04);
+    const tr = ac.createOscillator(); tr.type = 'sine'; tr.frequency.value = 31;
+    const fm = ac.createGain(); fm.gain.value = 140; tr.connect(fm); fm.connect(o.frequency);
+    const am = ac.createGain(); am.gain.value = 0.7; const ad = ac.createGain(); ad.gain.value = 0.3; tr.connect(ad); ad.connect(am.gain);
+    const go = ac.createGain(); go.gain.value = 0.3; o.connect(am); am.connect(go); go.connect(out);
+    const gn = ac.createGain(); gn.gain.value = 0.12; gn.connect(out); pNoise(ac, t, D, 'bandpass', f0, 3, gn);
+    o.start(t); tr.start(t); o.stop(t + D + 0.01); tr.stop(t + D + 0.01);
+  }
+  // the fuel hose (a loop, at its level while the tank fills): the fuel's rush (low-passed noise) and its gurgle (a band of noise swept to
+  // and fro, its loudness wavering)
+  function hoseVoice(ac, dst) {
+    const s = ac.createBufferSource(); s.buffer = noiseOf(ac); s.loop = true; s.playbackRate.value = 0.7;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.5;
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 3;
+    const l1 = ac.createOscillator(); l1.type = 'triangle'; l1.frequency.value = 6.3; const lg1 = ac.createGain(); lg1.gain.value = 150; l1.connect(lg1); lg1.connect(bp.frequency);
+    const gb = ac.createGain(); gb.gain.value = 0.9; const l2 = ac.createOscillator(); l2.frequency.value = 2.7; const lg2 = ac.createGain(); lg2.gain.value = 0.45; l2.connect(lg2); lg2.connect(gb.gain);
+    const gl = ac.createGain(); gl.gain.value = 0.55; const out = ac.createGain(); out.gain.value = 0;
+    s.connect(lp); lp.connect(gl); gl.connect(out); s.connect(bp); bp.connect(gb); gb.connect(out);
+    let pn = null; if (ac.createStereoPanner) { pn = ac.createStereoPanner(); out.connect(pn); pn.connect(dst); } else out.connect(dst);
+    s.start(0, Math.random() * 0.5); l1.start(); l2.start();
+    return { out, pn };
+  }
+  // the pit-lane limiter (a loop, at its level while it holds the car): the engine at the limit, its ignition cut ~12 times a second (a
+  // buzz at its firing, chopped)
+  function limVoice(ac, dst) {
+    const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 110;
+    const o2 = ac.createOscillator(); o2.type = 'square'; o2.frequency.value = 111; const g2 = ac.createGain(); g2.gain.value = 0.4;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 800; lp.Q.value = 1.4;
+    const vca = ac.createGain(); vca.gain.value = 0.5;
+    const ch = ac.createOscillator(); ch.type = 'square'; ch.frequency.value = 12.5; const cg = ac.createGain(); cg.gain.value = 0.45; ch.connect(cg); cg.connect(vca.gain);
+    const out = ac.createGain(); out.gain.value = 0;
+    o.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(vca); vca.connect(out); out.connect(dst);
+    o.start(); o2.start(); ch.start();
+    return { o, o2, out };
+  }
+  function pitDst(pan) { if (!ctx.createStereoPanner) return bus; const p = ctx.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(bus); return p; }   // (a one-shot's side)
+  // per frame (update): the player's stop as it is now against last frame
+  function pitStep(race, P, cam) {
+    if (PT.race !== race || PT.car !== P) { Object.assign(PT, { race, car: P, st: P.pitState || null, gw: 0, hose: false, hoseL: 0, lim: 0 }); PT.gk.fill(0); PT.jk.fill(0); PT.top.fill(0); }   // (a new race: nothing carried over)
+    const C = typeof Render !== 'undefined' ? Render.crew : null, R = C && C.P === P && C.dim && C.frame ? C : null, st = P.pitState || null, on = enabled && running, now = ctx.currentTime;
+    const lx = cam ? cam.position.x : P.x, ly = cam ? cam.position.y : (P.y || 0) + 2, lz = cam ? cam.position.z : P.z, e = cam ? cam.matrixWorld.elements : null;
+    const at = (q) => { const dx = q[0] - lx, dz = q[1] - lz, d = Math.hypot(dx, (P.y || 0) + 0.5 - ly, dz); return [e ? clamp((dx * e[0] + dz * e[2]) / Math.max(d, 4) * 1.1, -0.85, 0.85) : 0, clamp(1.2 - d / 40, 0.3, 1)]; };   // (its side of the camera, its level)
+    const Wp = (f, r) => { if (!R) return [P.x, P.z]; const F = R.frame, ch = Math.cos(F.h), sh = Math.sin(F.h); return [F.x + ch * f - sh * r, F.z + sh * f + ch * r]; };   // (a place on the car: forward, right)
+    const D = R ? R.dim : null, u = P.pitDur > 0 ? clamp(P.pitT / P.pitDur, 0, 1) : 0;
+    const log = (k, i) => { pitN[k]++; const L = pitN.log; L.push([k, i, st, +u.toFixed(3)]); if (L.length > 40) L.shift(); };
+    const fuel = !!(race && race.fuelRate && P.fuel != null && !P.m.ev);
+    if (st === 'repair' && PT.st !== 'repair') {   // the stop begins: the guns' count anew; the hose on (till the tank is full: Core's stopDur, 1.6 s and 0.9 s a tenth)
+      PT.gk.fill(0);
+      if (fuel) { PT.hose = true; PT.fT = Math.min(P.pitDur, 1.6 + (1 - clamp(P.fuel, 0, 1)) * 9) - 0.35; if (on) { const [pn, a] = at(Wp(0, 0)); pitClunk(ctx, pitDst(pn), now, 0.5 * a, 1.35); log('hoseOn', 0); } }
+    }
+    if (PT.hose && (st !== 'repair' || P.pitT >= PT.fT)) { PT.hose = false; if (on) { const [pn, a] = at(Wp(0, 0)); pitClunk(ctx, pitDst(pn), now, 0.5 * a, 1.2); log('hoseOff', 0); } }
+    // the guns: a new bit in gunW, that wheel's gun on its nut (the first time off, the second on)
+    const gw = R && R.mode === 'work' ? R.gunW | 0 : 0;
+    for (let k = 0; k < 4; k++) if (gw & (1 << k) && !(PT.gw & (1 << k))) {
+      const nutOn = PT.gk[k]++ % 2 === 1; if (!on) continue;
+      const [pn, a] = at(Wp(k < 2 ? D.fx : D.rx, (k % 2 ? 1 : -1) * (D.hw + 0.3))), G = PIT_GUN[k];
+      pitGun(ctx, pitDst(pn), now + G[0] + Math.random() * 0.03, nutOn, G[1], PIT_LEV.gun * a); pitN.gun++; log(nutOn ? 'gunOn' : 'gunOff', k);
+    }
+    PT.gw = gw;
+    // the jacks (0 the front, 1 the rear): up past 3 cm; down once it falls back from the top it reached; ready again once it is down
+    for (let j = 0; j < 2; j++) {
+      const l = R && R.mode === 'work' ? (j ? R.liftR : R.liftF) || 0 : 0, q = () => at(Wp(D ? (j ? D.tail : D.nose) : 0, 0));
+      if (PT.jk[j] === 0 && l > 0.03) { PT.jk[j] = 1; PT.top[j] = l; if (on && R) { const [pn, a] = q(); pitJack(ctx, pitDst(pn), now, true, PIT_LEV.jack * a); log('jackUp', j); } }
+      else if (PT.jk[j] === 1) { PT.top[j] = Math.max(PT.top[j], l);
+        if (l < PT.top[j] * 0.7) { PT.jk[j] = 2; if (on && (st === 'repair' || st === 'done')) {   // (not a car taken off the jacks by a rescue)
+          const [pn, a] = q(), d = pitDst(pn); pitJack(ctx, d, now, false, PIT_LEV.jack * a); pitDrop(ctx, d, now + 0.1, PIT_LEV.drop * a); log('jackDown', j); log('drop', j); } } }
+      else if (PT.jk[j] === 2 && l < 0.015) PT.jk[j] = 0;
+    }
+    // the release: the stop done, the lollipop up (after the stop's two beeps)
+    if (PT.st === 'repair' && st === 'done' && on) { const [pn, a] = at(Wp(D ? D.nose + 1 : 0, 0)); pitWhistle(ctx, pitDst(pn), now + 0.32, PIT_LEV.release * a); log('release', 0); }
+    // the loops: the hose while the tank fills, the limiter while the autopilot holds the car at the limit in the lane
+    PT.hoseL = PT.hose && on ? PIT_LEV.hose * at(Wp(0, 0))[1] : 0;
+    if (PT.hoseL && !hoseV) hoseV = hoseVoice(ctx, bus);
+    if (hoseV) { set(hoseV.out.gain, PT.hoseL, 0.06); if (hoseV.pn && PT.hoseL) set(hoseV.pn.pan, at(Wp(0, 0))[0], 0.1); }
+    PT.lim = on && P.pitAP && P.inPit && st !== 'repair' ? PIT_LEV.lim * Core.sstep(0.6, 0.92, (P.speed || 0) / PIT_V) : 0;
+    if (PT.lim && !limV) limV = limVoice(ctx, bus);
+    if (limV) { const f = clamp((P.rpm || 0) / 30, 50, 200); set(limV.out.gain, PT.lim, 0.08); set(limV.o.frequency, f, 0.05); set(limV.o2.frequency, f * 1.008, 0.05); }   // (the buzz at a four's firing: rpm / 30)
+    PT.st = st;
+  }
+  // (tests: a pit sound rendered offline at its level by the car: gunOff, gunOn, guns (the four off together, as at a stop), jackUp,
+  // jackDown, drop, release; hose, limiter (the loop, at its level))
+  function pitProbe(o) {
+    const sr = o.sr || 44100, OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!OAC) return Promise.resolve(null);
+    const ac = new OAC(1, Math.round((o.dur || 0.8) * sr), sr), d = ac.destination, t = 0.02, L = PIT_LEV;
+    const make = { gunOff: () => pitGun(ac, d, t, false, 1, L.gun), gunOn: () => pitGun(ac, d, t, true, 1, L.gun), guns: () => PIT_GUN.forEach(([dl, k]) => pitGun(ac, d, t + dl, false, k, L.gun)),
+      jackUp: () => pitJack(ac, d, t, true, L.jack), jackDown: () => { pitJack(ac, d, t, false, L.jack); pitDrop(ac, d, t + 0.1, L.drop); }, drop: () => pitDrop(ac, d, t, L.drop), release: () => pitWhistle(ac, d, t, L.release),
+      hose: () => { hoseVoice(ac, d).out.gain.value = L.hose; }, limiter: () => { const V = limVoice(ac, d); V.out.gain.value = L.lim; V.o.frequency.value = o.f || 110; V.o2.frequency.value = (o.f || 110) * 1.008; } }[o.pit];
+    if (!make) return Promise.resolve(null);
+    make(); return ac.startRendering().then(b => b.getChannelData(0));
   }
   function silence() {
     if (!ctx) return;
@@ -1581,6 +1754,7 @@ const Sfx = (function () {
     if (atmo) atmoOff(0.02);
     for (const V of [kitPl, ...kitAI]) if (V) kitOff(V, 0.02);   // (the fleet's: the engines with a preset, the fires and the hubs)
     for (const v of [...dFireV, ...dScrV]) if (v) { set(v.g.gain, 0, 0.02); if (v.amg) set(v.amg.gain, 0, 0.02); v.car = null; }
+    for (const v of [hoseV, limV]) if (v) set(v.out.gain, 0, 0.02);   // (the pits' loops)
     if (duck) { duckOn = false; set(duck.gain, 1, 0.05); }
   }
 
@@ -1588,7 +1762,8 @@ const Sfx = (function () {
     engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
       : eng ? { kind: eng.kind, preset: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value, fs: [eng.o, eng.pm, eng.tw].map(o => o.frequency.value).concat(eng.lp.frequency.value, eng.nb.frequency.value) } : null,   // Pikes Peak's sounds, the player's engine note: preset its
     ai: aiSeen.map(a => a && { id: a[0], preset: a[1], dop: +a[2].toFixed(3), f: a[3] == null ? null : +a[3].toFixed(2) }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
-    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the three nearest rivals' (their Doppler factor; a preset's firing pitch, f); dest: what broke, heard; prep: what is still to be made ahead)
+    pit: Object.assign({}, pitN, { log: pitN.log.slice(), hose: +PT.hoseL.toFixed(4), lim: +PT.lim.toFixed(4) }),
+    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the three nearest rivals' (their Doppler factor; a preset's firing pitch, f); dest: what broke, heard; pit: the pit stop's sounds played (in order: [what, wheel or end, pitState, the stop's progress]) and the loops' levels; prep: what is still to be made ahead)
   // (tests: the engines as they sound now; a rival in a registered vehicle: its preset)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.car && v.car.m.sndP ? v.car.m.sndP.kind : v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
