@@ -97,7 +97,9 @@ try {
       if (d === 150) { g.onAction('restart'); g.pause(); }
       const P = g.race.player; let n = 0; while (P.q.s - Tr.startS < d && n < 800) { g.sim(1, true); n++; }
       g.S.camera = 'chase'; Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, 'chase', {});
-      const m = {}; for (const on of [true, false]) { fm.forEach(o => { o.visible = on; }); const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {}); m[on ? 'with' : 'without'] = [__gl.calls - c0, __gl.verts - v0]; }
+      // (no time passes between the two frames, as for the pixels below: else the camera still moves a little and with it the shadow's
+      // frame, which other things then step into or out of, a difference that is not the fence's)
+      const m = {}; for (const on of [true, false]) { fm.forEach(o => { o.visible = on; }); const c0 = __gl.calls, v0 = __gl.verts; Render.frame(0, 1, P, 'chase', {}); m[on ? 'with' : 'without'] = [__gl.calls - c0, __gl.verts - v0]; }
       fm.forEach(o => { o.visible = true; });
       return { d: Math.round(P.q.s - Tr.startS), with: m.with, without: m.without };
     }, d);
