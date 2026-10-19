@@ -45,8 +45,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, five kilometres and five hairpins up the Beartooth Highway, and you start {grid}.", "Here we are above the Rock Creek valley, at the foot of the switchbacks. A race all the way to the top, and you line up {grid}.", "Welcome to the Beartooth Mountains! Thirteen cars heading for the sky, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up the Beartooth!", "And they're off! Five hairpins to the top!", "Green light! The pack charges up the mountain!", "Go, go, go! Next stop, the tundra!"],
+      introPass: ["Welcome to {track}! {cars} cars, five kilometres and five hairpins up the Beartooth Highway, and you start {grid}.", "Here we are above the Rock Creek valley, at the foot of the switchbacks. A race all the way to the top, and you line up {grid}.", "Welcome to the Beartooth Mountains! {cars} cars heading for the sky, and you start {grid}."],
+      goPass: ["And away they go, up the Beartooth!", "And they're off! Five hairpins to the top!", "The race is on! The pack charges up the mountain!", "Go, go, go! Next stop, the tundra!"],
       introPassTT: ["Welcome to {track}! Five hairpins, just you and the clock.", "Here we are at the foot of the switchbacks. {cps} checkpoints between you and the top.", "Welcome to {track}! No rivals this time, only the clock and the thin mountain air."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the switchbacks!", "And you're away! Up the mountain!"],
       introTraffic: ["Welcome to {track}, and the highway is open today: campers, motorbikes and cars both ways. Just you and {rival}, first to the top wins!", "Here we are above Rock Creek. A duel with {rival} through the summer traffic. Mind the campers in the hairpins!", "Welcome to {track}! No closed road this time: tourists crawling up every switchback. Beat {rival} to the top!"],

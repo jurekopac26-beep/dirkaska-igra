@@ -777,6 +777,7 @@ select.txt:disabled { opacity: .75; }
 #hud.tt #h-tower, #hud.pol #h-tower { display: none; }
 .tw-r { display: flex; align-items: center; gap: 4px; min-width: 7.6em; padding: 2px 6px 2px 3px; border-radius: 3px; background: rgba(10, 14, 20, .62); text-shadow: 0 1px 1px rgba(0, 0, 0, .6); }
 .tw-r b { width: 1.3em; text-align: right; font-variant-numeric: tabular-nums; }
+#h-tower.n3 .tw-r b { width: 1.9em; }   /* a field of 100 (the Nordschleife's race): three digits */
 .tw-r i { width: 3px; height: 1em; border-radius: 1px; }
 .tw-r span { width: 2.3em; letter-spacing: .04em; font-style: normal; }
 .tw-r em { margin-left: auto; padding-left: 4px; font-style: normal; font-weight: 600; color: #d6dee8; font-variant-numeric: tabular-nums; }

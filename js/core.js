@@ -4482,13 +4482,32 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      RACE
      --------------------------------------------------------------------- */
-  const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen'];
+  const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen',
+    // (the bigger fields: 21 rivals in a race, 99 at the Nordschleife; appended only, so a field of 20 or fewer has the drivers it always had)
+    'J. Lesjak', 'E. Costa', 'R. Fischer', 'Y. Ogawa', 'P. Laurent', 'M. Jensen', 'A. Gruber', 'L. Mertens', 'T. Hribar', 'S. Brandt', 'K. Nakamura', 'D. Oliveira', 'F. Ricci', 'V. Popescu',
+    'H. Larsen', 'N. Vidmar', 'G. Conti', 'B. Wagner', 'J. Svoboda', 'O. Hansen', 'I. Mazur', 'C. Fontaine', 'E. Bergström', 'T. Ito', 'M. Teixeira', 'S. Golob', 'R. Meier', 'Z. Dvořák',
+    'L. Girard', 'P. Rinaldi', 'K. Virtanen', 'D. Ueda', 'F. Kos', 'E. Rousseau', 'G. Nagy', 'H. Lehmann', 'J. Pirc', 'M. Esposito', 'T. Holm', 'V. Marin', 'B. Castro', 'C. Greco',
+    'I. Sokolov', 'N. Hall', 'O. Dahl', 'K. Mlakar', 'R. Barros', 'S. Weiss', 'A. Zorman', 'L. Okafor', 'P. Jankowski', 'D. Quintero', 'M. Hoffmann', 'E. Vasquez', 'Y. Tamura', 'G. Pellegrini',
+    'T. Becker', 'F. Almeida', 'H. Eriksen', 'J. Kuhar', 'R. Dumont', 'K. Hirano', 'N. Romano', 'B. Schmid', 'S. Turk', 'A. Jovanović', 'L. Hughes', 'V. Galli', 'O. Lund', 'M. Szabo',
+    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvalho', 'R. Moser'];
   // each driver's character (opts.chars), the same in every race: [agg 0 careful .. 1 aggressive, err 0 cool .. 1 cracks under pressure]
   const DRIVER_CHAR = [[0.8, 0.2], [0.3, 0.1], [0.9, 0.65], [0.2, 0.3], [0.5, 0.2], [0.85, 0.35], [0.6, 0.55], [0.25, 0.15], [0.55, 0.75], [0.7, 0.4],
-    [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55]];
+    [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55],
+    [0.55, 0.4], [0.55, 0.6], [0.6, 0.25], [0.55, 0.45], [0.25, 0.65], [0.7, 0.3], [0.25, 0.25], [0.55, 0.3], [0.75, 0.5], [0.65, 0.35],
+    [0.85, 0.4], [0.85, 0.1], [0.5, 0.7], [0.7, 0.75], [0.8, 0.45], [0.75, 0.5], [0.35, 0.4], [0.65, 0.45], [0.8, 0.7], [0.5, 0.15],
+    [0.3, 0.75], [0.4, 0.5], [0.55, 0.35], [0.25, 0.15], [0.7, 0.2], [0.4, 0.25], [0.55, 0.7], [0.4, 0.25], [0.7, 0.55], [0.45, 0.55],
+    [0.35, 0.15], [0.2, 0.45], [0.25, 0.45], [0.9, 0.15], [0.4, 0.5], [0.85, 0.3], [0.2, 0.4], [0.45, 0.1], [0.75, 0.55], [0.75, 0.2],
+    [0.5, 0.4], [0.55, 0.2], [0.3, 0.4], [0.35, 0.6], [0.75, 0.15], [0.55, 0.7], [0.55, 0.25], [0.35, 0.45], [0.3, 0.3], [0.25, 0.6],
+    [0.8, 0.15], [0.5, 0.2], [0.5, 0.1], [0.35, 0.35], [0.65, 0.7], [0.3, 0.15], [0.5, 0.2], [0.8, 0.35], [0.5, 0.55], [0.5, 0.5],
+    [0.4, 0.1], [0.3, 0.35], [0.25, 0.5], [0.55, 0.6], [0.75, 0.15], [0.35, 0.6], [0.5, 0.25], [0.75, 0.5], [0.4, 0.35], [0.25, 0.35],
+    [0.7, 0.35], [0.65, 0.45], [0.65, 0.25], [0.5, 0.75], [0.8, 0.4], [0.75, 0.25], [0.8, 0.45], [0.6, 0.3], [0.65, 0.35]];
   const driverChar = (k) => { const d = DRIVER_CHAR[((k % DRIVER_CHAR.length) + DRIVER_CHAR.length) % DRIVER_CHAR.length]; return { agg: d[0], err: d[1] }; };
-  const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a];
-  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
+  const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a,
+    0x1dc980, 0x73257e, 0xd2ef39, 0x4d85b3, 0x6c132a, 0x7cde80, 0x551dc9, 0x7e5c25, 0x39efde, 0xb34d9e, 0x406c13, 0x7c91de, 0xc92a1d, 0x257e46, 0xb139ef, 0xb3ae4d, 0x13576c, 0xde7caa, 0x3ac91d, 0x2f257e,
+    0xef8439, 0x4db394, 0x6c136c, 0xc2de7c, 0x39ef56, 0x7b4db3, 0x6c5613, 0x7cdbde, 0x477e25, 0x3949ef, 0xb3614d, 0xca7cde, 0xbbc91d, 0x255d7e, 0xef3976, 0x51b34d, 0x29136c, 0xdeb17c, 0x1dc9ac, 0xa3ef39,
+    0x4d6ab3, 0x811dc9, 0x7e7325, 0x39d1ef, 0x807cde, 0xc9561d, 0xe039ef, 0x13406c, 0x1dc92b, 0x4db3ae, 0xa9de7c, 0x1d39c9, 0x7e3025, 0x39ef85, 0x954db3, 0x6c6c13, 0x5839ef, 0xb37b4d, 0x8fc91d, 0x25467e,
+    0xef3948, 0xdeca7c, 0x7e255d, 0x75ef39, 0x4d50b3, 0x6c2a13, 0x7cdeb2, 0xad1dc9, 0x39a2ef, 0xb34d6a, 0x136c14, 0xc9821d, 0x257e74, 0xef39d0, 0x83b34d, 0x13296c, 0xde817c, 0x1dc957, 0xefe139];   // (one for each driver: no two alike, none like the one before it on the grid)
+  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88]; for (let n = 1; n <= 100; n++) if (CAR_NUMS.indexOf(n) < 0) CAR_NUMS.push(n);   // by grid slot (the player's own number replaces the one of its slot); then the rest of 1..100 in order, every car of a 100-car field its own
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
   // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
@@ -4528,7 +4547,7 @@ const Core = (function () {
   class Race {
     constructor(track, opts) {
       if (opts.phys !== 'cs') opts = Object.assign({}, opts, { phys: 'cs' });   // one driving physics, Circuit Superstars (the old 'rally' and 'arcade' map to it, as in Car)
-      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ) opts = Object.assign({}, opts, { numAI: track.def.rivals });   // a track's own field size (def.rivals) in a normal race; not the title-screen demo, a time trial, an online race or a championship round (its own drivers in every round)
+      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ) opts = Object.assign({}, opts, { numAI: Math.max(opts.numAI, track.def.rivals) });   // a track's own field size (def.rivals: at least that many) in a normal race; not the title-screen demo, a time trial, an online race or a championship round (its own drivers in every round). A bigger field asked for stays (the game's Nordschleife: def.raceRivals)
       this.track = track;
       this.opts = opts;
       this.laps = opts.laps || 3;
@@ -4687,6 +4706,9 @@ const Core = (function () {
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
     }
+    // an AI driver's own threshold (0..1) for a tyre stop: spread evenly over the grid's slots, so that not all of them want the same lap (13 slots at
+    // least: a field of 13 or fewer as ever; a bigger one over its own, a multiple of 7 one more: 7 g then still hits every slot once)
+    _pitJ(c) { const N = Math.max(13, this._gridN || 0), M = N % 7 ? N : N + 1; return ((c.grid * 7) % M) / (M - 1); }
     // an AI car's box (metres from the start line): one of the crews' boxes on the apron (Track.crewBoxes; not the player's), by its place on the
     // grid among the AI cars
     _aiBox(c) {
@@ -4729,16 +4751,34 @@ const Core = (function () {
       if (!T.open) return 9 + (g - 1) * 7.5;
       // a race up an open road (Vršič): the circuits' grid, where the road below the start line leaves room for it
       if (!this.opts.noPlayer && T.startS >= 13 + (this._gridN - 1) * 7.5) return 9 + (g - 1) * 7.5;
-      // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered)
-      const sp = clamp((T.startS - 9) / Math.max(1, this._gridN - 1), 2.4, 3.6);
-      return Math.min(3 + (g - 1) * sp, T.startS - 4);
+      // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered; too long for it: rows abreast)
+      const W = this._gridWide(); if (W) return 3 + Math.floor((g - 1) / W.K) * W.d;
+      return Math.min(3 + (g - 1) * this._gridSp(), T.startS - 4);
+    }
+    // the open road's tighter grid: m between two slots (in turn left and right), the whole road below the line shared out; 3.6 m at most
+    // (the title demo, a field of 13 or fewer: as ever), a bigger field up to the circuits' 7.5 m (its long cars then clear of each other in the bends)
+    _gridSp() { const N = this._gridN; return clamp((this.track.startS - 9) / Math.max(1, N - 1), 2.4, this.opts.noPlayer || N <= 13 ? 3.6 : 7.5); }
+    // a field too big for the two staggered columns below an open road's start line (Pikes Peak: ~40 m of road there, 22 cars would stand on
+    // each other at its bottom end): rows of K abreast instead, as few as give the rows 6 m (7.5 m at most), as many as the road's width takes
+    // (2.6 m apart at least); { K, cs: m across, d: m between the rows }, null: the usual grid (any field of 13 or fewer, every circuit)
+    _gridWide() {
+      if (this._gw !== undefined) return this._gw;
+      const T = this.track, N = this._gridN, o = this.opts; this._gw = null;
+      if (!T.open || this.timeTrial || o.noPlayer || o.remote || o.qualiBack > 0 || T.startS >= 13 + (N - 1) * 7.5) return null;
+      if (3 + (N - 1) * this._gridSp() <= T.startS - 4) return null;   // (the two columns fit)
+      const csOf = (K) => Math.min(3.4, 2 * (T.w - 1.6) / (K - 1));
+      for (let K = 3; csOf(K) >= 2.6; K++) {
+        const R = Math.ceil(N / K), d = R > 1 ? (T.startS - 7) / (R - 1) : 7.5;
+        if (d >= 6 || csOf(K + 1) < 2.6) { this._gw = { K, cs: csOf(K), d: Math.min(7.5, d) }; break; }
+      }
+      return this._gw;
     }
     _placeOnGrid(c, g) {
       const T = this.track;
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);   // (qualifying: on the racing line; a narrow road: the two columns closer together)
+      const W = this.timeTrial ? null : this._gridWide(), lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -4761,7 +4801,7 @@ const Core = (function () {
     }
     start() {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
-      // a flying start (opts.flying, m/s: a race up an open road): every car already rolling straight up the road from its slot on the grid,
+      // a flying start (opts.flying, m/s: a race up an open road, the Nordschleife's Circuit race): every car already rolling straight up the road from its slot on the grid,
       // in the gear for that speed; the clock runs from here, as from the lights
       if (this.opts.flying > 0 && !this.timeTrial) for (const c of this.cars) {
         const v = this.opts.flying, M = c.m; c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
@@ -4944,14 +4984,14 @@ const Core = (function () {
           // (not in the pit zone: from before its way in; each driver with a threshold of its own, not all on the same lap; at most three on
           // their way in or in the lane at a time, the others wait a lap)
           else if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.k !== tyreFor(W.line) && !T.pitAt(q.s)) {
-            const j = ((c.grid * 7) % 13) / 12;
+            const j = this._pitJ(c);
             if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {
               let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
               if (n < 3) c.pitWant = true;
             }
           }
           // (compounds: worn-out slicks, with more than a lap still to go: in for a fresh set, by the same rules)
-          else if (K && T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.wear > 0.72 + 0.1 * (((c.grid * 7) % 13) / 12) && !T.pitAt(q.s) && this.laps * T.len - c.dist > T.len * 1.05) {
+          else if (K && T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.wear > 0.72 + 0.1 * this._pitJ(c) && !T.pitAt(q.s) && this.laps * T.len - c.dist > T.len * 1.05) {
             let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
             if (n < 3) c.pitWant = true;
           }
@@ -5343,7 +5383,8 @@ const Core = (function () {
         // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
         // in turn, 9 m apart, from 70 m past the line), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD).
         // A short road past the line (Pikes Peak's summit, ~100 m): the slots closer together, from nearer the line, so the field still fits
-        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, room = T.len - 20 - T.finishS, st = Math.min(9, (room - 38) / 12), a0 = st < 9 ? room - 12 * st : 70;
+        // (the slots for the whole field: 13 cars as ever, a bigger one closer together still, never past the end of the road)
+        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, room = T.len - 20 - T.finishS, nP = Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;
           const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)); c.parkD = sd * (this.tf ? Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
       }
     }
@@ -5566,7 +5607,7 @@ const Core = (function () {
 
   /* ---------------------------------------------------------------------
      CAREER (kariera): prize money from races buys cars and upgrades. Start with 10 000 EUR and the PICO TURBO; the prize by the finishing
-     place (the winner 6000 EUR, the last of 13 300 EUR), more for a longer race (by the distance: a 2 km race 0.6x, 8 km 1x, up to 2.5x)
+     place (the winner 6000 EUR, the last of 13 300 EUR; in a bigger field the 13th and later 300 EUR), more for a longer race (by the distance: a 2 km race 0.6x, 8 km 1x, up to 2.5x)
      and a harder field (0.7x easy, 1.4x hard); the fastest lap of the race 500 EUR more, pole in qualifying 1000 EUR; the championship:
      20 000 EUR for the title, 10 000 / 6000 EUR for second / third (x the difficulty); a time trial: a medal (gold 5000, silver 3000,
      bronze 1500 EUR) or a personal best (2000 EUR), else 500 EUR for getting there. Prices: the cars below, an upgrade level 4000,
@@ -5579,10 +5620,11 @@ const Core = (function () {
     place: [6000, 4500, 3500, 2800, 2300, 1900, 1600, 1300, 1100, 900, 700, 500, 300],
     diff: [0.7, 1, 1.4, 1.8], champ: [20000, 10000, 6000], medal: { gold: 5000, silver: 3000, bronze: 1500 }, pb: 2000, finishTT: 500, fastest: 500, pole: 1000,
   };
-  // prize money for a race: pos (1 = the winner), n cars, the race distance in m, the difficulty (0..3: super težka pays most, the police run's
-  // hardest; a race itself drives it as težka); rounded to 50 EUR
+  // prize money for a race: pos (1 = the winner), n cars (up to 13: the places spread over the table, the last 300 EUR; more: the table by the
+  // place, from the 13th on 300 EUR), the race distance in m, the difficulty (0..3: super težka pays most, the police run's hardest; a race
+  // itself drives it as težka); rounded to 50 EUR
   function careerPrize(pos, n, dist, diff) {
-    const k = clamp(dist / 8000, 0.6, 2.5) * (CAREER.diff[diff] || 1), P = CAREER.place, i = Math.round((pos - 1) * (P.length - 1) / Math.max(1, n - 1));
+    const k = clamp(dist / 8000, 0.6, 2.5) * (CAREER.diff[diff] || 1), P = CAREER.place, i = n > P.length ? pos - 1 : Math.round((pos - 1) * (P.length - 1) / Math.max(1, n - 1));   // (a field of more than 13: by the place itself, the 13th and later 300 EUR)
     return Math.round(P[clamp(i, 0, P.length - 1)] * k / 50) * 50;
   }
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
