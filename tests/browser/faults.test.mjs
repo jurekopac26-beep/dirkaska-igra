@@ -1,5 +1,5 @@
 // Failures in the game (Nastavitve · Okvare, on by default; the Red Bull Ring, the player on autopilot): a cut tyre, hot brakes, a hot
-// engine each as a pill under the speedometer, the moment one comes the message, the commentator and what to do about it (a toast: the pits
+// engine each as a pill in the top left's column (under the tyres), the moment one comes the message, the commentator and what to do about it (a toast: the pits
 // change the tyre); the pit stop's new tyre takes its pill away. In English: PUNCTURE, HOT BRAKES, HOT ENGINE. Switched off: none.
 //   node tests/browser/faults.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';

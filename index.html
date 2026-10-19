@@ -15,8 +15,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/fonts.css?v=4e40b807">
-<link rel="stylesheet" href="css/style.css?v=cda91f74">
+<link rel="stylesheet" href="css/fonts.css?v=a0803dec">
+<link rel="stylesheet" href="css/style.css?v=5907a038">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=1fee2424" media="not all">
 </head>
 <body>
@@ -46,18 +46,15 @@
   <!-- ============ HUD ============ -->
   <div id="hud" class="off">
     <div id="h-rank">
-      <span class="h-lbl">MESTO</span>
-      <div class="h-rankrow"><span id="h-pos">12</span><span id="h-tot">/13</span></div>
-      <span id="h-lap" class="h-lbl">KROG 1/3</span>
+      <span id="h-rlbl" class="h-lbl">MESTO</span><!-- shown only in the run from the police: POLICIJA, the number under it is the patrol cars after the player -->
+      <div id="h-main"><!-- the two rows, a soft dark shadow behind them (no plate): the place, the total, the speed; the tyres (four dots by what is left, the compound's word), the lap -->
+        <div id="h-row1"><div class="h-rankrow"><span id="h-pos">12</span><span id="h-tot">/13</span></div><span id="h-spd"><span id="h-speed">0</span><span id="h-kmh">KM/H</span></span></div>
+        <div id="h-row2"><span id="h-tyre" aria-label="Gume"><span class="dts"><i></i><i></i><i></i><i></i></span><b></b></span><span id="h-lap">KROG 1/3</span></div>
+      </div>
+      <div id="h-tags"><span id="h-drs">DRS</span><span id="h-tow">ZAVETRJE</span></div><!-- DRS (circuits with DRS zones), the slipstream: small tags under the rows, only when there is something to show -->
       <span id="h-alt" class="h-lbl"></span>
       <span id="h-turn" class="h-lbl"></span>
       <span id="h-pkcls" class="h-lbl"></span><!-- Pikes Peak: the class of the car -->
-      <div id="speedo">
-        <canvas id="speedo-c"></canvas>
-        <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div><div id="h-tow">ZAVETRJE</div>
-      </div>
-      <div id="h-dmgrow"><div id="h-dmg" aria-label="Poškodbe avta"><svg viewBox="0 0 36 58"><rect x="6" y="3" width="24" height="52" rx="7" class="dmg-body"/><rect id="dz0" x="9" y="6" width="18" height="10" rx="3.5" fill="hsl(120,78%,52%)"/><rect id="dz1" x="9" y="42" width="18" height="10" rx="3.5" fill="hsl(120,78%,52%)"/><rect id="dz2" x="9" y="18.5" width="5" height="21" rx="1.8" fill="hsl(120,78%,52%)"/><rect id="dz3" x="22" y="18.5" width="5" height="21" rx="1.8" fill="hsl(120,78%,52%)"/><rect id="dmg-glass" x="15.5" y="19.5" width="5" height="19" rx="1.8" class="dmg-cab"/><rect id="wh0" x="1" y="8" width="5" height="11" rx="1.6" class="dmg-wh"/><rect id="wh1" x="30" y="8" width="5" height="11" rx="1.6" class="dmg-wh"/><rect id="wh2" x="1" y="39" width="5" height="11" rx="1.6" class="dmg-wh"/><rect id="wh3" x="30" y="39" width="5" height="11" rx="1.6" class="dmg-wh"/><path id="whx0" class="dmg-x" d="M0 7.5l7 12M7 7.5l-7 12"/><path id="whx1" class="dmg-x" d="M29 7.5l7 12M36 7.5l-7 12"/><path id="whx2" class="dmg-x" d="M0 38.5l7 12M7 38.5l-7 12"/><path id="whx3" class="dmg-x" d="M29 38.5l7 12M36 38.5l-7 12"/></svg><div class="dmg-nums"><b id="dmg-tot">0 %</b><div class="dmg-bar"><i id="dmg-fill"></i><s style="left:70%"></s><s style="left:80%"></s></div><div class="dmg-zs"><span id="dzn0" class="z0">▲ 0</span><span id="dzn1" class="z0">▼ 0</span><span id="dzn2" class="z0">◀ 0</span><span id="dzn3" class="z0">▶ 0</span></div></div><div id="dmg-ns" class="dmg-ns">brez rezerve</div></div><button id="btn-tyre" class="off" aria-label="Gume za postanek"><i></i><span></span></button></div><!-- the damage and beside it the tyres for the next stop (a race with compounds and pits) -->
-      <div id="h-tyre" aria-label="Gume"></div>
       <div id="h-fuel" aria-label="Gorivo"></div>
       <div id="h-flt" aria-label="Okvare"></div>
       <div id="h-flag" aria-label="Zastave"></div>
@@ -77,7 +74,7 @@
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-pit" aria-hidden="true"><b></b><span></span><i><em></em></i></div><!-- the pit stop on the autopilot: what it does now, one bar from the way in to the hand-back (game.js pitBar) -->
-    <div id="h-react" aria-live="polite"><span></span> <b></b></div><!-- the start's reaction, in the column under the map (upright under the damage picture and the tower) above the big message (game.js reactHUD, hudCol) -->
+    <div id="h-react" aria-live="polite"><span></span> <b></b></div><!-- the start's reaction, in the column under the map (upright under the tower) above the big message (game.js reactHUD, hudCol) -->
     <div id="h-msg"></div>
     <div id="h-teamradio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer (#47) -->
     <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio -->
@@ -224,7 +221,7 @@
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
         <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="1.1">Blizu</button><button data-v="1.4">Srednje</button><button data-v="1.7">Daleč</button></div></div>
-        <div class="row" title="Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)"><span class="rlbl">Položaj avta (nižje)</span><div class="seg nw" data-set="carLow"><button data-v="0">Običajno</button><button data-v="1">2 m</button><button data-v="2">5 m</button><button data-v="3">7 m</button><button data-v="4">10 m</button><button data-v="5">15 m</button><button data-v="6">20 m</button></div></div>
+        <div class="row" title="Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kamero za avtom; ves avto vedno ostane na zaslonu)"><span class="rlbl">Položaj avta (nižje)</span><div class="seg nw" data-set="carLow"><button data-v="0">Običajno</button><button data-v="1">2 m</button><button data-v="2">5 m</button><button data-v="3">7 m</button><button data-v="4">10 m</button><button data-v="5">15 m</button><button data-v="6">20 m</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -485,7 +482,7 @@
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
 <script src="js/tracks/hotham.js?v=a8a9cd82"></script>
 <script src="js/tracks/townsville.js?v=08aacb6a"></script>
-<script src="js/lang.js?v=962cfa2f"></script>
+<script src="js/lang.js?v=3eb37ae9"></script>
 <script src="js/tracks/marrakesh.js?v=3a59b91b"></script>
 <script src="js/tracks/troisrivieres.js?v=1ff731df"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=1a6b8a1d">
@@ -532,7 +529,7 @@
 <script src="js/world-toronto.js?v=72152347"></script>
 <script src="js/data/montreal.js?v=05653492"></script>
 <script src="js/world-montreal.js?v=7c70bc6a"></script>
-<script src="js/render.js?v=027eb519"></script>
+<script src="js/render.js?v=0394cacd"></script>
 <script src="js/sfx.js?v=ef5fb3e0"></script>
 <script src="js/input.js?v=f18ded64"></script>
 <script src="js/comm.js?v=7c1f7ab6"></script>
@@ -544,6 +541,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=f5314e7d"></script>
-<script src="js/game.js?v=d3af8ee2"></script>
+<script src="js/game.js?v=f01f102f"></script>
 </body>
 </html>

@@ -18,7 +18,7 @@
     'Ime voznika': 'Driver name', 'Občutljivost nagiba': 'Tilt sensitivity', 'Nastavi sredino': 'Set centre', 'Obrni smer': 'Invert',
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
     'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
-    'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase and isometric cameras)',
+    'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kamero za avtom; ves avto vedno ostane na zaslonu)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase camera; the whole car always stays on the screen)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
     '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik na reliju (angleščina)': 'Rally co-driver (English)', 'Poškodbe avtov': 'Car damage', 'Samo videz': 'Looks only',
