@@ -59,7 +59,7 @@ function placed(o) {   // under the map, as wide as it, on the screen, over noth
 }
 try {
   for (const [w, h, cam, way] of [[640, 360, 'chase', 'lying (640 x 360)'], [360, 640, 'chase', 'upright (360 x 640)']]) {
-    const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: cam, track: 'jezero', autoGas: 0, camTilt: 2 }, { width: w, height: h });
+    const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: cam, track: 'jezero', autoGas: 0 }, { width: w, height: h });
     await startTrack(page, 'jezero');
     const a = await page.evaluate(START, { press: 0.12, after: true }), pa = placed(a);
     T.check(`${way}: a press 0.12 s after the lights: REAKCIJA 0,12 s in green, shown`, /^REAKCIJA 0,1[23] s$/.test(a.txt) && /\bshow\b/.test(a.cls) && /\bgood\b/.test(a.cls) && a.op > 0.9 && Math.abs(a.re - 0.12) < 0.02,
