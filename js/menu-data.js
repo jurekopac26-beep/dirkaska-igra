@@ -9,8 +9,8 @@ window.MENU = {
   {
    "id": "race",
    "name": "Circuit race",
-   "sub": "Laps against 12 rivals. Finish as high as you can.",
-   "chip": "12 RIVALS",
+   "sub": "Laps against 21 rivals. Finish as high as you can.",
+   "chip": "21 RIVALS",
    "img": "assets/menu/mode-race.webp"
   },
   {

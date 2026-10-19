@@ -66,11 +66,13 @@ try {
     const e0 = errors.length;
     await startTrack(page, id);
     const nan = await simulate(page, 20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
-    // (more than 100 m in 20 s with the 3 s of the countdown: a car that does not move stays near 0 m; Tianmen's 45 hairpins, with the player on the last row of the grid in the pack, give 127-176 m from run to run)
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), back: Math.round(g.race._gridBack(P.grid)), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    // (more than 200 m from its slot on the grid in 20 s with the 3 s of the countdown: a car that does not move stays near its slot; the
+    // player at the back of 22 cars stands up to ~170 m behind the line, at the Nordschleife (100 cars) ~750 m; Tianmen's 45 hairpins, with
+    // the player on the last row of the grid in the pack, gave 127-176 m past the line from run to run with 13 cars)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 100 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist + r.back > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+      `dist ${r.dist} m (from ${-r.back} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
@@ -189,7 +191,7 @@ try {
       `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
   // 6d. Vršič: one card, four ways to drive it (the switch Dirka / Kronometer / Promet / Policija on the card). Kronometer: the time trial alone
-  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD
+  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 21 rivals on the grid, the HUD
   //     shows the place, the km climbed and the altitude; Promet: the duel with one rival up the open road, the traffic and the people drawn,
   //     the HUD with the rival's gap; Policija: a calm start (no start lights, nobody after the player, no stars, the commentator silent and
   //     the police radio on the air, the checkpoint ahead on the HUD), the autopilot drives through the checkpoint in Kranjska Gora (the
@@ -271,8 +273,8 @@ try {
     T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
       r.tt && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.rec.board && r.rec.board.length === 1 && !(r.race && r.race.bestTime) && /medalj/.test(r.sub),
       `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}"`);
-    T.check('Vršič race: 13 cars, the HUD with the place, the km climbed and the altitude',
-      r.back === 'race' && r.cars === 13 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
+    T.check('Vršič race: 22 cars, the HUD with the place, the km climbed and the altitude',
+      r.back === 'race' && r.cars === 22 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
       `${r.cars} cars, HUD "${r.lap}" "${r.alt}", place ${r.pos}, ${r.racing}`);
     const D = r.traffic, P = r.police, Q = r.pre, M = r.mission;
     T.check('Vršič Promet: the duel with one rival in the traffic, vehicles and people drawn, the HUD with the rival\'s gap (the commentator on, no police radio)',

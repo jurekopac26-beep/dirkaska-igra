@@ -78,8 +78,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, eleven kilometres and twenty-nine curves up into the Andes, and you start {grid}.", "Here we are by the Hoon-ka-lee-yo river, at the foot of {track}. A race all the way up to Por-tee-yo, and you line up {grid}.", "Welcome to the Andes, and to {track}, the snails! Thirteen cars heading for the border, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up into the Andes!", "And they're off! Twenty-nine curves to Por-tee-yo!", "Green light! The pack charges up the valley!", "Go, go, go! Next stop, the Inca lake!"],
+      introPass: ["Welcome to {track}! {cars} cars, eleven kilometres and twenty-nine curves up into the Andes, and you start {grid}.", "Here we are by the Hoon-ka-lee-yo river, at the foot of {track}. A race all the way up to Por-tee-yo, and you line up {grid}.", "Welcome to the Andes, and to {track}, the snails! {cars} cars heading for the border, and you start {grid}."],
+      goPass: ["And away they go, up into the Andes!", "And they're off! Twenty-nine curves to Por-tee-yo!", "The race is on! The pack charges up the valley!", "Go, go, go! Next stop, the Inca lake!"],
       introPassTT: ["Welcome to {track}! Twenty-nine curves, just you and the clock.", "Here we are at the foot of {track}. {cps} checkpoints between you and Por-tee-yo.", "Welcome to {track}! No rivals this time, only the clock and the thin mountain air."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the Caracoles!", "And you're away! Up the ladder!"],
       introTraffic: ["Welcome to {track}, and the road to Argentina is open today: trucks and buses both ways. Just you and {rival}, first to Por-tee-yo wins!", "Here we are at the foot of {track}. A duel with {rival} through the trucks on the curves. Mind the lorries in the hairpins!", "Welcome to {track}! No closed road this time: trucks crawling up and down all twenty-nine curves. Beat {rival} to the top!"],

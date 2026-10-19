@@ -44,8 +44,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, four kilometres of bends up through the Santa Monica Mountains, and you start {grid}.", "Here we are at Cornell, at the foot of {track}. Bend after bend to the top, and you line up {grid}.", "Welcome to the hills above Malibu, and to {track}! Thirteen cars, one twisty road, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up into the canyons!", "And they're off! Bend after bend to the top!", "Green light! The pack charges into the hills!", "Go, go, go! Next stop, the top of the climb!"],
+      introPass: ["Welcome to {track}! {cars} cars, four kilometres of bends up through the Santa Monica Mountains, and you start {grid}.", "Here we are at Cornell, at the foot of {track}. Bend after bend to the top, and you line up {grid}.", "Welcome to the hills above Malibu, and to {track}! {cars} cars, one twisty road, and you start {grid}."],
+      goPass: ["And away they go, up into the canyons!", "And they're off! Bend after bend to the top!", "The race is on! The pack charges into the hills!", "Go, go, go! Next stop, the top of the climb!"],
       introPassTT: ["Welcome to {track}! Four kilometres of bends, just you and the clock.", "Here we are at the foot of {track}. {cps} checkpoints between you and the top.", "Welcome to {track}! No rivals this time, only the clock and the bends."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the bends!", "And you're away! Up into the hills!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars and a lot of motorbikes both ways. Just you and {rival}, first to the top wins!", "Here we are at the foot of {track}. A duel with {rival} through the traffic on the bends. Watch out for the bikes on the apex!", "Welcome to {track}! No closed road this time: riders leaning through every bend. Beat {rival} to the top!"],

@@ -1,5 +1,5 @@
 // Bakreni gozd (gozd): a full race on autopilot with one pit stop on lap 2. The car must stop in its box, the crew
-// must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
+// must go out, work (car up on the jacks) and clear, the repair must finish, and all 22 cars must finish the race.
 // In the pit lane the player cannot steer (held at full left lock, no gas: the autopilot drives, gas and all, keeps to the lane and takes an S onto the apron to the box);
 // the box is on the apron in front of the garage (the car stops there parked straight, parallel to the lane), the crew works there and never stands on the lane.
 // While the autopilot drives, the progress bar under the map (its width): Vstop, Boks, Popravilo n %, Izvoz, one bar from ~0 % at the way in

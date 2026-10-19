@@ -1791,7 +1791,7 @@ const Render = (function () {
         if (part) (kx.mirs || (kx.mirs = {}))[part] = { x: x * sx, y, z: z * sz, w: w * sx, h, d: d * sz, sd, root: [(x + 0.03) * sx, y - h * 0.45, z0 * sz], r: 0.014 }; }
     };
     K.exhaust = (x, y, z, r, len, o) => { o = o || {}; const dir = o.dir || -1; kx.prim(x - dir * len / 2, y, z, () => tubeX(g, x - dir * len, x, y, z, r, o.n || 8, o.col || K.chrome, o.hole || [0.03, 0.03, 0.035]), o); };   // (o.hole: the dark inside; o.inner as for any primitive)
-    // a start-number panel: the car's own number (1..99) in seven-segment digits (two places and a middle one for a single digit), lit per car
+    // a start-number panel: the car's own number (1..100) in seven-segment digits (two places and a middle one for a single digit), lit per car
     // when its copy is coloured (kitRecolour): the panel centred at (x, y, z) on the surface, h tall, facing o.dir ('z' the right side, '-z'
     // the left, 'x' forward, '-x' back, 'y' up: read from behind); o: { col (the digits: K.black), bg (the panel: a colour, K.paint, K.strp;
     // white), w (1.3 h), slant (0.1: leaning forward as read), lift (the digits off the panel, 0.004), host, part }
@@ -2060,10 +2060,12 @@ const Render = (function () {
       a[o] = q[0]; a[o + 1] = q[1]; a[o + 2] = q[2]; }
     // the number: its lit segments in the digits' colour; the unlit ones taken out of this copy (each to a point: the bars overlap, at a
     // digit's corners and middle, and the middle place over the two others: an unlit bar would fight a lit one at the same height)
-    const n = Math.round(num || 0), dig = n >= 10 && n <= 99 ? [Math.floor(n / 10), n % 10, -1] : n >= 1 && n <= 9 ? [-1, -1, n] : [-1, -1, -1], pa = geo.attributes.position.array;
+    // (100, the Nordschleife's 100th car: a one from the left place's two left bars, then two noughts in the middle and the right places,
+    // sharing the bar between them)
+    const n = Math.round(num || 0), seg = n >= 10 && n <= 99 ? [KIT_SEG[Math.floor(n / 10)], KIT_SEG[n % 10], 0] : n >= 1 && n <= 9 ? [0, 0, KIT_SEG[n]] : n === 100 ? [0x30, KIT_SEG[0], KIT_SEG[0]] : [0, 0, 0], pa = geo.attributes.position.array;
     if (U.nums) for (const P of U.nums) for (let sl = 0; sl < 3; sl++) for (let k = 0; k < 7; k++) {
       const q = P.slots[sl][k]; if (!q) continue;
-      if (dig[sl] >= 0 && (KIT_SEG[dig[sl]] & (1 << k))) for (let i = q[0]; i < q[1]; i++) { a[i * 3] = P.on[0]; a[i * 3 + 1] = P.on[1]; a[i * 3 + 2] = P.on[2]; }
+      if (seg[sl] & (1 << k)) for (let i = q[0]; i < q[1]; i++) { a[i * 3] = P.on[0]; a[i * 3 + 1] = P.on[1]; a[i * 3 + 2] = P.on[2]; }
       else for (let i = q[0] + 1; i < q[1]; i++) { pa[i * 3] = pa[q[0] * 3]; pa[i * 3 + 1] = pa[q[0] * 3 + 1]; pa[i * 3 + 2] = pa[q[0] * 3 + 2]; } }
     if (U.nums) geo.attributes.position.needsUpdate = true;
     geo.attributes.color.needsUpdate = true; return geo;

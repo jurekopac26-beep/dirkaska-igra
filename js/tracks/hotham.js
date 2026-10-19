@@ -56,8 +56,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, eight kilometres along the roof of Victoria, and you start {grid}.", "Here we are high on the Great Alpine Road, snow gums all around. A race to Hotham Heights, and you line up {grid}.", "Welcome to the Victorian Alps! Thirteen cars heading for Mount Hotham, and you start {grid}."],
-      goPass: ["Lights out, and away they go along the ridge!", "And they're off! Next stop, Hotham Heights!", "Green light! The pack charges up the Great Alpine Road!", "Go, go, go! Up to the snow poles!"],
+      introPass: ["Welcome to {track}! {cars} cars, eight kilometres along the roof of Victoria, and you start {grid}.", "Here we are high on the Great Alpine Road, snow gums all around. A race to Hotham Heights, and you line up {grid}.", "Welcome to the Victorian Alps! {cars} cars heading for Mount Hotham, and you start {grid}."],
+      goPass: ["And away they go along the ridge!", "And they're off! Next stop, Hotham Heights!", "The race is on! The pack charges up the Great Alpine Road!", "Go, go, go! Up to the snow poles!"],
       introPassTT: ["Welcome to {track}! Eight kilometres of alpine road, just you and the clock.", "Here we are below Mount Little Blowhard. {cps} checkpoints between you and the village.", "Welcome to {track}! No rivals this time, only the clock and the mountain wind."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the ridge!", "And you're away! Up to Mount Hotham!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, motorbikes and trucks both ways, and remember, keep left! Just you and {rival}, first to the village wins!", "Here we are on the Great Alpine Road. A duel with {rival} through the holiday traffic. Keep left!", "Welcome to {track}! An open road, cyclists on the climb and trucks in the bends. Beat {rival} to Hotham Heights!"],

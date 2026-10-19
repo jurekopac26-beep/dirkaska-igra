@@ -18,7 +18,7 @@ window.MENU = {
 
   /* ---------- single race, step 1: the mode (step 2: the track) ---------- */
   modes: [
-    { id: 'race', name: 'Circuit race', sub: 'Laps against 12 rivals. Finish as high as you can.', chip: '12 RIVALS', img: 'assets/menu/mode-race.webp' },
+    { id: 'race', name: 'Circuit race', sub: 'Laps against 21 rivals. Finish as high as you can.', chip: '21 RIVALS', img: 'assets/menu/mode-race.webp' },
     { id: 'chase', name: 'Police chase', sub: 'The police are on your tail. Shake them off.', chip: 'GET AWAY IN 3:00', img: 'assets/menu/mode-chase.webp' },
     { id: 'trial', name: 'Time trial', sub: 'Alone against the clock and your own ghost.', chip: 'GOLD · SILVER · BRONZE', img: 'assets/menu/mode-trial.webp' },
   ],

@@ -26,7 +26,8 @@
 //    (after limping through a corner: no offset left), a repair; as the player sees it (every
 //    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
 //    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
-//  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
+//  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife (the game's own race: 21 and 99 rivals; perf.json
+//    measured with the same fields, so it is regenerated with them), within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
 //    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
