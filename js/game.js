@@ -1315,9 +1315,11 @@
     Render.setGhost(null, true); Render.setGhostF(null, true);
   }
   /* ---------------- the tyre marks of the last time trial runs (kept in the browser's IndexedDB, tdgp-marks) ----------------
-     A time trial run logs every mark it lays (Render.marksRec); at the finish they are packed (Render.marksTake) and stored with the track
-     (def.recId keeps a re-made track's apart), the newest first, MK_RUNS at most; the next time trial on that track draws them under its own
-     (Render.setOldMarks). Not online, not in the driving school; without IndexedDB (a private window) nothing is kept. */
+     A time trial run (a challenge's too) logs every mark it lays (Render.marksRec); at the finish the log is taken (Render.marksTake), packed
+     once the game is idle (Render.marksPack: not in the finish's own frame) and stored with the track (def.recId keeps a re-made track's apart;
+     Pikes Peak's winter runs, their tracks in the snow, apart from the summer's), the newest first, MK_RUNS at most; the next time trial on
+     that track draws them under its own (Render.setOldMarks). Not online, not in the driving school; without IndexedDB (a private window)
+     nothing is kept. */
   const MK_RUNS = 10, MK_DB = 'tdgp-marks';
   let mkDb = null; const mkRuns = {};   // (the database, once opened (a promise; null without it); each track's runs (a promise of the list, newest first: read once, each run stored chained to it)
   const mkKey = (d) => d.recId || d.id;
@@ -1334,15 +1336,20 @@
   function mkStart() {   // newRace: log a time trial's marks, draw the track's last runs
     const tt = race.timeTrial && !(mp && mp.race) && !school;
     Render.marksRec(tt); if (!tt) return;
-    const R = race; mkGet(mkKey(track.def)).then(list => { if (race === R && list.length) Render.setOldMarks(list); });
+    const d = track.def, R = race, snow = d.theme === 'pikes' && (race.chal ? race.chal.cond.season : S.season) === 'winter';
+    race.mkK = mkKey(d) + (snow ? '-snow' : '');
+    mkGet(race.mkK).then(list => { if (race === R && list.length) Render.setOldMarks(list); });
   }
   function mkSave() {   // a time trial run finished: its marks to the front of the track's list
-    const u = Render.marksTake(), k = mkKey(track.def); if (!u) return;
-    mkRuns[k] = mkGet(k).then(list => {
-      const L = [u].concat(list).slice(0, MK_RUNS);
-      mkOpen().then(db => { try { if (db) db.transaction('runs', 'readwrite').objectStore('runs').put(L, k); } catch (_) { } });
-      return L;
-    });
+    const L = Render.marksTake(), k = race.mkK; if (!L || !k) return;
+    mkRuns[k] = mkGet(k).then(list => new Promise((res) => {
+      const go = () => {
+        const u = Render.marksPack(L), R = u ? [u].concat(list).slice(0, MK_RUNS) : list;
+        if (u) mkOpen().then(db => { try { if (db) db.transaction('runs', 'readwrite').objectStore('runs').put(R, k); } catch (_) { } });
+        res(R);
+      };
+      if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 2000 }); else setTimeout(go, 300);
+    }));
   }
   function ghLapSample(P) {   // a circuit, after each physics step: the flying lap under way (see ghStart)
     const G = ghLap; if (!G || race.state !== 'racing') return;
@@ -4157,7 +4164,8 @@
           const fins = [...on.cars.values()].map(C => C.fin), done = fins.filter(t => t != null), place = 1 + done.filter(t => t < on.mine).length, all = done.length === fins.length;   // (the others' times as far as they are in)
           showMsg(place > 1 ? tr('CILJ! {0} MESTO', Lang.ord(place).toUpperCase()) : all ? tr('ZMAGA!') : tr('CILJ!'), 'gold', 4);
           Comm.say(place === 1 ? 'win' : 'finish', { pos: Comm.ordinal(place) }, 5);
-        } else if (race.chal) {   // a challenge: the time against the friend's (no records, no ghost of the player's own)
+        } else if (race.chal) {   // a challenge: the time against the friend's (no records, no ghost of the player's own; a time trial's marks are kept)
+          mkSave();
           const C = race.chal, t = chalTime(), d = t - C.time, el = $('h-split');
           el.textContent = tr('IZZIV {0}  {1}', fmt(C.time, true), sgn(d)); el.className = 'show ' + dCls(d); splitT = 5;
           showMsg(d < 0 ? tr('IZZIV PREMAGAN!') : tr('CILJ! {0}', sgn(d)), d < 0 ? 'fast' : 'gold', 4);

@@ -2802,7 +2802,7 @@ const Render = (function () {
       const c = this.col, q = i * 16;
       for (let k = 0; k < 4; k++) { c[q + k * 4] = r; c[q + k * 4 + 1] = g; c[q + k * 4 + 2] = b; c[q + k * 4 + 3] = k < 2 ? a0 : a1; }
       this.dirty = true;
-      const L = this.log; if (L && L.length < MK_LOG * 13) L.push(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0 || 0, y1 == null ? (y0 || 0) : y1, this.off ? 1 : 0);   // (a time trial's run: every mark it lays and whether it is off the road, marksRec)
+      const L = this.log; if (L && !this.noLog && L.length < MK_LOG * 13) L.push(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0 || 0, y1 == null ? (y0 || 0) : y1, this.off ? 1 : 0);   // (a time trial's run: every mark it lays and whether it is off the road, marksRec)
     }
     flush() {
       if (!this.dirty) return;
@@ -2816,7 +2816,7 @@ const Render = (function () {
   }
 
   /* ---------------- the marks of the last time trial runs on this track (marksRec, marksTake, setOldMarks) ----------------
-     While a time trial runs, every mark laid (Skids.add) is logged; at the finish the log is packed: the segments joined into chains (each
+     While a time trial runs, every mark laid (Skids.add) is logged; after the finish the log is packed: the segments joined into chains (each
      starts where the one before it on that wheel ended), the nearly straight bits of a chain merged into one quad (up to MK_SEG m, off the
      line by MK_TOL m at most), in cm and bytes: [u32 chains] per chain [i32 x, z, y (cm), u8 r, g, b, width (cm), flags (1: off the road),
      u16 n] then n x [i16 dx, dz, dy (cm), u8 a0, a1]. The stored runs (newest first) are drawn under the live marks as one static mesh in one
@@ -2829,15 +2829,15 @@ const Render = (function () {
   // points, the apexes) their marks add up: the rubber builds up
   const mkAge = (k, off) => off ? lerp(1, 0.2, k / 9) : lerp(0.6, 0.1, k / 9), mkGrey = (k) => lerp(0.3, 0.9, k / 9), MK_GREY = [0.2, 0.2, 0.21];
   function marksPack(L) {
-    const n = L.length / 13, chains = [], open = new Map();
+    const n = L.length / 13, chains = [], open = new Map();   // (the chains still open, by the x of their end: a segment goes on the one that ends where it starts)
     for (let i = 0; i < n; i++) {
-      const o = i * 13, k0 = L[o] + ',' + L[o + 1], C0 = open.get(k0);
-      const C = C0 && C0.r === L[o + 5] && C0.g === L[o + 6] && C0.b === L[o + 7] && C0.wd === L[o + 4] && C0.off === L[o + 12] ? C0 : null;
-      if (C0) open.delete(k0);
+      const o = i * 13, C0 = open.get(L[o]), hit = !!C0 && C0.ez === L[o + 1];
+      const C = hit && C0.r === L[o + 5] && C0.g === L[o + 6] && C0.b === L[o + 7] && C0.wd === L[o + 4] && C0.off === L[o + 12] ? C0 : null;
+      if (hit) open.delete(L[o]);
       const ch = C || { x: L[o], z: L[o + 1], y: L[o + 10], wd: L[o + 4], r: L[o + 5], g: L[o + 6], b: L[o + 7], off: L[o + 12], p: [] };
       if (!C) chains.push(ch);
-      ch.p.push(L[o + 2], L[o + 3], L[o + 11], L[o + 8], L[o + 9]);
-      open.set(L[o + 2] + ',' + L[o + 3], ch);
+      ch.p.push(L[o + 2], L[o + 3], L[o + 11], L[o + 8], L[o + 9]); ch.ez = L[o + 3];
+      open.set(L[o + 2], ch);
     }
     const out = [];   // the chains merged: [x, z, y, wd, r, g, b, [x, z, y, a0, a1 ...]]
     for (const ch of chains) {
@@ -2916,7 +2916,7 @@ const Render = (function () {
     return n;
   }
   function marksRec(on) { if (skids) skids.log = on ? [] : null; }
-  function marksTake() { const L = skids && skids.log; if (skids) skids.log = null; return L && L.length ? marksPack(L) : null; }
+  function marksTake() { const L = skids && skids.log; if (skids) skids.log = null; return L && L.length ? L : null; }   // (the run's log; packed later, marksPack: not in the finish's own frame)
 
   /* ---------------- rain: streaks falling in a box around the view centre. The shader wraps each drop into the box (its place
      moves only with the time), so nothing is updated per drop; the box fades out towards its sides, top and bottom ---------------- */
@@ -4459,7 +4459,7 @@ const Render = (function () {
       if (a <= 0) S.mk[k] = null;
       else if (!last) S.mk[k] = [px, pz, yk];
       else { const d = Math.hypot(px - last[0], pz - last[1]);
-        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = verge; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
+        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = offRoad(c, k, surf); skids.noLog = verge && !skids.off && it <= 0.14; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
         else if (d >= 4) S.mk[k] = [px, pz, yk]; }
       // spray: off every wheel in the melt water; in the rain off the front wheels (the stock spray has the rear ones)
       if (wetK && !verge && spd > 6 && (S.fw[k] || front)) {
@@ -4475,7 +4475,7 @@ const Render = (function () {
           particles.emit(px - fx * 0.8 + (R() - 0.5), gy + 0.5 + R() * 0.5, pz - fz * 0.8 + (R() - 0.5), wx * ws + c.vx * 0.1 + (R() - 0.5) * 0.8, 0.2 + R() * 0.3, wzz * ws + c.vz * 0.1 + (R() - 0.5) * 0.8, 3.5 + R() * 2.5, 2.2, 7 + R() * 4, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.15, -0.04, 0.1, gy); }
       }
     }
-    skids.pkIn = false;
+    skids.pkIn = false; skids.noLog = false;   // (noLog: a plain rut on the gravel road itself (Pikes Peak's gravel version) is not kept with the run's marks)
   }
 
   /* ---------------- Pikes Peak: driving effects (only the cars of a Pikes race; read from the car's state, nothing simulated changes) ----------------
@@ -9127,6 +9127,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
