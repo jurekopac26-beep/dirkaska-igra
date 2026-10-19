@@ -1495,6 +1495,13 @@ const Core = (function () {
   const cmpFor = (left) => left < 8000 ? 'S' : left < 16000 ? 'M' : 'H';   // the slicks for so much racing (m) still to do
   const cmpAI = (D, g) => D < 8000 ? (g % 4 === 3 ? 'M' : 'S') : D < 16000 ? 'SMMH'[g % 4] : (g % 3 ? 'M' : 'H');   // an AI car's at the start: by the race's length, a mix over the grid
   const tyreK = (ty) => ty.k === 'dry' && ty.c ? TYRE_CMP[ty.c] : null;   // (a slick's compound, if the race has them)
+  // worn out (any set): past TYRE_CLIFF[0] of wear the grip falls off a cliff, by TYRE_CLIFF[2] of what the compound's own (linear) loss
+  // leaves at TYRE_CLIFF[1]; driven on, a tyre bursts at the set's burst point (Car.ty.bp: a wear of 1 to 1 + TYRE_BURST, from a hash of
+  // the car and the set's number, no random draw; Car.ty.bw: the wheel, its Car.flat bit set until the next stop). The wear stops at TYRE_WMAX
+  const TYRE_CLIFF = [0.8, 1, 0.2], TYRE_BURST = 0.1, TYRE_WMAX = 1.2;
+  const tyreCliff = (w) => 1 - TYRE_CLIFF[2] * sstep(TYRE_CLIFF[0], TYRE_CLIFF[1], w);   // (1 below the cliff: the grip exactly as without it)
+  const tyreHash = (c, n) => { let h = Math.imul((c.id | 0) + 1, 0x9e3779b1) ^ Math.imul(n + 1, 0x85ebca77); h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d); return (h ^ (h >>> 13)) >>> 0; };
+  const tyreSet = (c, n) => Object.assign(c.ty, { n, bp: 1 + TYRE_BURST * (tyreHash(c, n) % 1001) / 1000, bw: -1 });   // (a fresh set, the n-th of the race)
   // the fuel a car carries full (kg; Race opts fuel: its weight on the car, the share burnt the same for every car): an electric one its
   // battery (0: as heavy full as empty); the formula 105, the prototype 75, the truck 90, the rally car 60, the other road cars 45; a
   // registered vehicle (js/cars) its def's own (def.tank), else by its category and mass: the share of the mass the road cars carry (45 kg
@@ -2359,7 +2366,7 @@ const Core = (function () {
   // with the box, parallel to the lane, from fl m before it: the car stands straight), out over outL m, at v m/s; room: the wall there, m past
   // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
   const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
-  const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan)
+  const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan; any set: the HUD's warning)
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
     const boxPts = (x, y, z) => { const p = []; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) p.push([sx * x, sy * y, sz * z]); return p; };
@@ -2875,6 +2882,7 @@ const Core = (function () {
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
     if (c.flt && c.flt.pw >= 0) vT *= 1 - (c.flt.pw > 1 ? 0.25 : 0.12) * c.flt.pk;   // (failures: easier on a tyre going down, more so on a rear one: the tail would step out)
+    if (c.ty && c.ty.bw >= 0) vT *= c.ty.bw > 1 ? 0.75 : 0.88;   // (worn out: a burst tyre, the same, flat at once)
     if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
       const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x)); } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
@@ -4616,7 +4624,7 @@ const Core = (function () {
       const WX = opts.weather && !opts.remote ? opts.weather : null;
       this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk, ev: 0, evK: '',
         wx: WX ? { at: Math.max(0, +WX.at || 0), dur: Math.max(1, +WX.dur || 60), r0: this.rain, r1: clamp(+WX.to || 0, 0, 1) } : null };
-      if (opts.tyres) for (const c of this.cars) c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 };
+      if (opts.tyres) for (const c of this.cars) { c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 }; tyreSet(c, 0); }   // (ty.n, bp, bw: the set's burst point, see TYRE_CLIFF)
       // compounds (opts.compounds): every car's slicks one of TYRE_CMP (the rain tyres have none): the player's choice (opts.playerCmp, else by
       // the race's length), the AI's by the race's length and the grid slot (no random draw); new ones at a stop as the car asks (c.pitCmp) or
       // for what is left of the race
@@ -4681,9 +4689,18 @@ const Core = (function () {
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
         const K = W.tyres && c.ty ? tyreK(c.ty) : null;   // (a compound: its grip, and what wear takes from it)
-        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * c.ty.wear) : 1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
+        const wl = W.tyres && c.ty ? Math.min(1, c.ty.wear) : 0;   // (the compound's own loss up to a wear of 1; past 0.8 the cliff on top)
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * tyreCliff(c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
+    }
+    // an AI car's last chance for tyres (Race step): it would reach its set's burst point (less a margin) before the way in after the next
+    // one, or before the line when there is none: by the wear a metre on this set so far (a tenth more for the slides to come); the next way
+    // in itself before the line
+    _tyresDue(c, q) {
+      const T = this.track, ty = c.ty, left = this.laps * T.len - c.dist, r = 1.1 * ty.wear / Math.max(600, c.dist - (ty.d0 || 0));
+      const dE = (((T.startS + T.def.pit[1] - q.s) % T.len) + T.len) % T.len;   // (the way to the pit lane's way in)
+      return left > dE + 30 && ty.wear + r * Math.min(dE + T.len, left) >= ty.bp - 0.02;
     }
     // an AI car's box (metres from the start line): one of the crews' boxes on the apron (Track.crewBoxes; not the player's), by its place on the
     // grid among the AI cars
@@ -4923,7 +4940,9 @@ const Core = (function () {
         if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
           const K = tyreK(c.ty);
-          c.ty.wear = Math.min(1, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1));
+          c.ty.wear = Math.min(TYRE_WMAX, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1));
+          // (worn past the set's burst point: a tyre bursts, the wheel from the same hash; not on the pit road, not past the line. ty.ev: the HUD's)
+          if (c.ty.bw < 0 && c.ty.wear >= c.ty.bp && !c.pitG && !c.inPit && !c.finished) { c.ty.bw = (tyreHash(c, c.ty.n) >>> 11) & 3; c.flat = (c.flat || 0) | (1 << c.ty.bw); c.ty.ev = 'burst'; }
           // a breakable vehicle with a wheel knocked off: in for a new one first (a track with pits; not in the last 40 % of a lap; the stop
           // gives it the tyres for the water too), by the rules of the tyre stops below
           if (c.wreck && c.wreck.wl && !c.wreck.dnf) {
@@ -4947,8 +4966,11 @@ const Core = (function () {
             let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
             if (n < 3) c.pitWant = true;
           }
+          // (any tyres that would burst before the line: in at the next way in once a lap more would take them to their burst point, whatever
+          // is left of the race and however full the lane; only a car past its last way in drives on, slowed by the cliff)
+          else if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.bw < 0 && !T.pitAt(q.s) && this._tyresDue(c, q)) c.pitWant = true;
         }
-        if (c.flt && c.flt.pw >= 0 && T.def.pit && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && !T.pitAt(q.s) && this.laps * T.len - c.dist > 300) c.pitWant = true;   // failures: a cut tyre, in for a new one (not a retired car)
+        if (((c.flt && c.flt.pw >= 0) || (c.ty && c.ty.bw >= 0)) && T.def.pit && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && !T.pitAt(q.s) && this.laps * T.len - c.dist > 300) c.pitWant = true;   // failures: a cut tyre, in for a new one; worn out: a burst one (not a retired car)
         if (c.fuel != null && this.fuelRate && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && this.state === 'racing') {   // fuel: a rival that cannot reach the line on what is left (not a retired one)
           const left = this.laps * T.len - c.dist, dE = (((T.startS + T.def.pit[1] - q.s) % T.len) + T.len) % T.len, need = left * c.fuelPm, lap = T.len * c.fuelPm * 1.1;   // comes in at the pit lane's way in on the last lap it
           if (left > 150 && c.fuel < need * 1.03 && dE > 30 && dE < 90 + c.speed * 4) {   // can still make it round to it again, or up to c.fuelK laps before when the lane is not full and it costs no extra stop
@@ -5044,9 +5066,9 @@ const Core = (function () {
       const sp = Math.hypot(c.vx, c.vz), lim = PIT_V;
       if (c.pitState === 'repair') {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
-        if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left)
+        if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left; a burst one gone)
           this.repairCar(c);
-          if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
+          if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
           if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; }   // (fuel: a full tank)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
         }
@@ -5208,7 +5230,8 @@ const Core = (function () {
       return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this) + BAY.k;   // (the S onto the apron to the box and back)
     }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
-    // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut one; 'damage', badly damaged), the laps it can be made in
+    // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut or a burst one; 'worn', worn out (TYRE_WORN) and over the cliff
+    // before the line; 'damage', badly damaged), the laps it can be made in
     // (from: the first after which a full tank and fresh tyres last to the line; to: the last on which the car still gets round to the pit
     // lane's way in; a stop is made at the end of a lap), box: this lap; loss: what it costs; pos: the place a stop now would put the car
     // in, ahead / gapA: the car it would come out behind and how far, behind / gapB: the one right behind it; fuelLaps: the laps left in the tank
@@ -5239,7 +5262,8 @@ const Core = (function () {
       }
       const W = this.wst, now = [];
       if (c.ty && W) { if (c.ty.k === 'dry' && W.line > 0.5) now.push('wet'); else if (c.ty.k === 'wet' && W.line < 0.12 && this.rain < 0.05) now.push('dry'); }
-      if (c.flt && c.flt.pw >= 0) now.push('tyre');
+      if ((c.flt && c.flt.pw >= 0) || (c.ty && c.ty.bw >= 0)) now.push('tyre');   // (a cut tyre, a burst one)
+      else if (c.ty && c.ty.wear >= TYRE_WORN && c.ty.wear + c.ty.wear / Math.max(600, c.dist - (c.ty.d0 || 0)) * left > TYRE_CLIFF[0]) now.push('worn');   // (worn out: over the cliff before the line)
       if (c.dmg > 0.45) now.push('damage');
       if (now.length) { need.push(...now); from = n0; to = Math.max(n0, Math.min(to, n0)); }
       const loss = this.pitLoss(c);
@@ -5741,7 +5765,7 @@ const Core = (function () {
   registerVehicles();
 
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
-    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY };
 })();
 
