@@ -3226,11 +3226,39 @@ const Render = (function () {
     }
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
+  // the knockable props drawn by the world's own mesh, not an instanced mesh of their kind: the braking boards on the verge (World's
+  // brakeBoards: world.bbLoose; Core 'bboard', b.home: the pose it stood in). A board knocked (or pushed) moves its own vertices in that
+  // mesh, rotated and moved as the prop is from where it stood: no draw call of its own, the number on it as it was. Only when its pose
+  // changed (L.at: the pose last drawn per slot; L.moved: the slots away from home, put back for the next race)
+  const PROP_INWORLD = new Set(['bboard']);
+  const _bq = new THREE.Quaternion(), _bq0 = new THREE.Quaternion(), _bm = new THREE.Matrix4(), _bmT = new THREE.Matrix4(), _bv = new THREE.Vector3(), _b1 = new THREE.Vector3(1, 1, 1);
+  function bbHome() {
+    const L = world && world.bbLoose; if (!L) return;
+    if (L.moved && L.moved.size) {
+      const ga = L.mesh.geometry.attributes, PA = ga.position.array, NA = ga.normal.array;
+      for (const k of L.moved) { const [a, z] = L.v[k]; PA.set(L.P0.subarray(a * 3, z * 3), a * 3); NA.set(L.N0.subarray(a * 3, z * 3), a * 3); }
+      ga.position.needsUpdate = true; ga.normal.needsUpdate = true;
+    }
+    L.at = []; L.moved = new Set();
+  }
+  function bbPose(b) {
+    const L = world && world.bbLoose, v = L && L.v[b.slot], h = b.home; if (!v || !L.at) return;
+    const p = L.at[b.slot] || (L.at[b.slot] = [h[0], h[1], h[2], 0, h[3], 0, h[4]]);
+    if (p[0] === b.x && p[1] === b.y && p[2] === b.z && p[3] === b.qx && p[4] === b.qy && p[5] === b.qz && p[6] === b.qw) return;
+    p[0] = b.x; p[1] = b.y; p[2] = b.z; p[3] = b.qx; p[4] = b.qy; p[5] = b.qz; p[6] = b.qw; L.moved.add(b.slot);
+    _bq.set(b.qx, b.qy, b.qz, b.qw).multiply(_bq0.set(0, -h[3], 0, h[4]));   // (its turn since it stood: the pose's quaternion after the inverse of the one it stood in)
+    _bm.compose(_bv.set(b.x, b.y, b.z), _bq, _b1).multiply(_bmT.makeTranslation(-h[0], -h[1], -h[2]));
+    const ga = L.mesh.geometry.attributes, PA = ga.position.array, NA = ga.normal.array, P0 = L.P0, N0 = L.N0;
+    for (let i = v[0] * 3; i < v[1] * 3; i += 3) { _bv.fromArray(P0, i).applyMatrix4(_bm).toArray(PA, i); _bv.fromArray(N0, i).applyQuaternion(_bq).toArray(NA, i); }
+    ga.position.needsUpdate = true; ga.normal.needsUpdate = true;
+  }
   function setupProps(race) {
+    bbHome();   // (the braking boards, drawn in the world's own mesh: all standing where they were built for the new race)
     if (!race || !race.props) { for (const k in propMeshes) propMeshes[k].visible = false; return; }
     if (!propMat) { propMat = new THREE.MeshLambertMaterial({ vertexColors: true }); propMatTyre = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.tyreTex }); }
     const cap = race.propCap || {}, rg = (race.track && race.track.def && race.track.def.propRegion) || '';
     for (const kind in cap) {
+      if (PROP_INWORLD.has(kind)) continue;   // (no instanced mesh of its own: see bbPose)
       let m = propMeshes[kind];
       if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
         if (m) { scene.remove(m); m.geometry.dispose(); }
@@ -3264,6 +3292,7 @@ const Render = (function () {
     for (const k in propMeshes) propMeshes[k].userData.n = 0;
     for (const b of curRace.props) {
       if (b.hidden || b.slot < 0) continue;
+      if (b.home) { bbPose(b); continue; }   // (a braking board: its part of the world's mesh, wherever the view is)
       const m = propMeshes[b.kind]; if (!m) continue;
       const dx = b.x - cx, dz = b.z - cz; if (dx * dx + dz * dz > R2) continue;
       const n = m.userData.n++;

@@ -4659,9 +4659,10 @@ const World = (function () {
      roads that run up or down the screen, both at an angle beside those across it. Two legs from under the ground (the world's groundH,
      never above the road there) up to its ridge, over a barrier (kind 1) longer ones in the barrier's line. The period circuits' (and
      Monaco's) boards white with black numbers, the others' blue with white; nothing but the number on them. A knockable post or tyre
-     stack in a board's way goes. ---- */
+     stack in a board's way goes. A board on the verge is itself knockable (Core 'bboard'): hit, it tips over and lies in the grass, still
+     drawn in this mesh (Render moves its vertices). ---- */
   let BB_ATL = null;
-  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { cpalace: 1, longford: 1, riverside: 1, monaco: 1 };
+  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { cpalace: 1, longford: 1, riverside: 1, monaco: 1 }, BB_BACK = [0.6, 0.62, 0.64];
   function bbAtlas() {   // 512 x 256: the plates 96 x 72 (row 0 blue with white numbers, row 1 white with black: 300, 200, 100, 150, 50); a white patch
     if (BB_ATL) return BB_ATL;
     const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
@@ -4677,9 +4678,10 @@ const World = (function () {
     const Z = T.brakeBoards ? T.brakeBoards() : []; if (!Z.length) return;
     const row = BB_CLASSIC[THEME] ? 1 : 0, g = new GB(true), tilt = 30 * Math.PI / 180, ct = Math.cos(tilt), st = Math.sin(tilt);
     g.dUV = [488 / 512, 1 - 240 / 256];   // (the legs and the plate's rim: the white patch, in their vertex colours)
-    const leg = [0.42, 0.43, 0.46], rim = row ? [0.86, 0.86, 0.84] : [0.16, 0.24, 0.42], W1 = [1, 1, 1], gh = o.groundH, foot = [];
+    const leg = [0.42, 0.43, 0.46], rim = row ? [0.86, 0.86, 0.84] : [0.16, 0.24, 0.42], W1 = [1, 1, 1], gh = o.groundH, foot = [], loose = [];
     for (const z of Z) for (const b of z.boards) {
       const k = BB_NUM.indexOf(b.d); if (k < 0) continue;
+      const vf = g.P.length / 3;   // (its vertices from here: a board on the verge is a knockable prop, loose)
       const hw = b.pw / 2, H = b.ph, tx = Math.cos(b.hd), tz = Math.sin(b.hd), nx = -tz, nz = tx, la = b.kind ? 0.2 : hw - 0.18;   // (la: the legs' distance from the middle; over a barrier in its line)
       const G = (a) => { const y = gh ? gh(b.x + nx * a, b.z + nz * a) : b.y; return Number.isFinite(y) ? y : b.y; }, gl = [G(-la), G(la)];   // (the ground under each leg)
       const y0 = Math.max(b.y, gl[0], gl[1]) + b.py, yF = gl.map(y => Math.max(Math.min(y, b.y) - 0.3, y0 - 5));   // (the plate's lower edge, over the road or the ground if that is higher; the legs' feet, in the ground)
@@ -4688,8 +4690,10 @@ const World = (function () {
       g.quadO(Q(-hw, -e, y0), Q(hw, -e, y0), Q(hw, 0, yR), Q(-hw, 0, yR), W1, inn, uv);   // the face to the cars coming
       g.quadO(Q(hw, e, y0), Q(-hw, e, y0), Q(-hw, 0, yR), Q(hw, 0, yR), W1, inn, uv);   // the other face (seen from above beside the roads that run down the screen)
       for (const s of [-1, 1]) g.triO(Q(s * hw, -e, y0), Q(s * hw, e, y0), Q(s * hw, 0, yR), rim, inn);   // its ends
+      if (!b.kind) for (const s of [-1, 1]) g.quadO(Q(-hw, s * e, y0), Q(hw, s * e, y0), Q(hw, 0, yR), Q(-hw, 0, yR), BB_BACK, Q(0, s * 3, y0));   // (one on the verge can be knocked over: its plates' backs, the A-frame's inside, grey metal, so a board lying on one plate shows the other whichever way it faces)
       [-1, 1].forEach((s, q) => { const [lx, , lz] = Q(s * la, 0, 0); box(g, lx, yF[q], lz, 0.05, yR - 0.02 - yF[q], 0.05, b.hd, leg, leg, true); });   // the legs
       foot.push([b.x, b.z, tx, tz, hw, { d: b.d, kind: b.kind, x: +b.x.toFixed(2), z: +b.z.toFixed(2), y0: +y0.toFixed(2), feet: yF.map(y => +y.toFixed(2)), ground: gl.map(y => +y.toFixed(2)), road: +b.y.toFixed(2) }]);
+      if (!b.kind) loose.push({ b, y: y0 - b.py, v: [vf, g.P.length / 3] });   // (y: the frame's foot as drawn, its plates' lower edge less BB.y0)
     }
     if (g.empty) return;
     const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: bbAtlas(), vertexColors: true }));
@@ -4697,6 +4701,13 @@ const World = (function () {
     o.brakeBoards = foot.map(f => f[5]);   // (for the tests: each board's number, kind, place, its plate's lower edge, its legs' feet, the ground under them, the road there)
     const P = o.props; if (P) for (let j = P.length - 1; j >= 0; j--) { const p = P[j];   // (a knockable post or tyre stack where a board stands goes)
       for (const [x, z, tx, tz, hw] of foot) { const dx = p.x - x, dz = p.z - z, a = dx * tx + dz * tz; if (Math.abs(a) < 1.2 && Math.abs(-dx * tz + dz * tx) < hw + 0.45) { P.splice(j, 1); break; } } }
+    // the boards on the verge (kind 0; not those over a barrier, which no car reaches) fall over when a car hits them: each is a knockable
+    // prop ('bboard', Core PROPK: Race.setProps makes them in this order, slot k = loose[k]) still drawn here in this one mesh: Render moves
+    // its vertices (o.bbLoose.v: from, to) by the prop's pose (from b.home, where it stood; P0, N0: the mesh's positions and normals as built)
+    if (!loose.length) return;
+    const PL = o.props || (o.props = []), ga = m.geometry.attributes;
+    for (const { b, y } of loose) PL.push({ kind: 'bboard', x: b.x, z: b.z, yaw: b.hd, col: 0, i: b.i, y });
+    o.bbLoose = { mesh: m, v: loose.map(l => l.v), P0: ga.position.array.slice(), N0: ga.normal.array.slice() };
   }
   function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's

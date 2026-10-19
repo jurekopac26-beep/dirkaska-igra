@@ -196,10 +196,10 @@
   "jsMs": 0.9
  },
  "longford": {
-  "calls": 168,
-  "maxCalls": 246,
-  "kverts": 460,
-  "maxKverts": 628,
+  "calls": 179,
+  "maxCalls": 273,
+  "kverts": 475,
+  "maxKverts": 734,
   "jsMs": 1.95
  },
  "newcastle": {
