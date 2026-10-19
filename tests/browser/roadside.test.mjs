@@ -1,21 +1,21 @@
 // The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Vršič, Medvode and Ouninpohja:
 // 1. place-name boards only at the settlements whose real name the track's data knows (def.names, the track's description), the board struck
-//    through where the road leaves the settlement; the speed limit after them (50 in, the country's limit out: 70 Slovenia, 80 Finland); chevron
+//    through where the road leaves the settlement; the speed limit after them (50 in; out: 90 on Vršič, 70 at Medvode); chevron
 //    boards on the outside of every sharpest bend (radius 17 m or under, or more than 150 degrees round; not round a roundabout) and nowhere else;
 //    the signs on the ground beside the road, not on the asphalt, facing the cars coming
 // 2. what a car can reach is knockable (Core's rssign, rschev, rsboard; the white delineators the heavier dpost): driven into one at 90 km/h the
 //    car loses a little speed (under 6 %) and takes a small dent (under 2 %), the sign flies off; a board collides at its legs (a car between
 //    them passes under it, one leg knocks it over); Medvode's signs stand behind the fence, out of reach: fixed, in the static mesh
-// 3. at night the street lamps light the road only in the settlements (Render's floodlights: none on Pikes Peak, no settlement on it), the sign
-//    faces shine; the same world again from a second build
+// 3. at night the street lamps light the road only in the settlements (Render's floodlights: none on Pikes Peak and Ouninpohja, no settlement
+//    on them whose name is known), the sign faces shine; the same world again from a second build
 //   node tests/browser/roadside.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('roadside equipment of the open roads');
-const WANT = {   // the boards each road must have (the real names), the limits in and out
-  vrsic: { boards: ['KRANJSKA GORA (konec)'], lim: [50, 70] },
+const WANT = {   // the boards each road must have (the real names), the limits in and out (none: no settlement on the road), dark: no lamps at night
+  vrsic: { boards: ['KRANJSKA GORA (konec)'], lim: [50, 90] },
   medvode: { boards: ['MEDVODE (konec)', 'ZBILJE', 'ZBILJE (konec)', 'VALBURGA', 'VALBURGA (konec)', 'SMLEDNIK', 'SMLEDNIK (konec)'], lim: [50, 70], fixed: true },
-  ouninpohja: { boards: ['OUNI', 'OKSKULMA', 'OKSKULMA (konec)', 'KAKARISTO'], lim: [50, 80] },
+  ouninpohja: { boards: ['OUNI', 'KAKARISTO'], lim: null, dark: true },   // (the hamlets: the name only; the added section's village has no name that could be checked)
 };
 const srv = await serve();
 const browser = await launch();
@@ -54,7 +54,8 @@ try {
     T.check(`${id}: place-name boards only with the real names (the track's data), each settlement's board struck through where the road leaves it`, JSON.stringify(r.names.slice().sort()) === JSON.stringify(w.boards.slice().sort()) && r.real,
       r.names.join(', '));
     T.check(`${id}: each struck-through board after its settlement's entry board`, w.boards.filter(b => b.endsWith('(konec)')).every(b => { const o = r.boards.find(x => x[0] === b), i = r.boards.find(x => x[0] === b.replace(' (konec)', '')); return o && (!i || i[1] < o[1]); }), JSON.stringify(r.boards));
-    T.check(`${id}: the speed limits: ${w.lim[0]} in each settlement, ${w.lim[1]} on the road out of it`, r.lims.some(l => l[0] === 'lim:' + w.lim[0]) && r.lims.some(l => l[0] === 'lim:' + w.lim[1]) && r.lims.every(l => l[0] === 'lim:' + w.lim[0] || l[0] === 'lim:' + w.lim[1]), JSON.stringify(r.lims));
+    if (!w.lim) T.check(`${id}: no speed limits (no settlement on the road)`, r.lims.length === 0, JSON.stringify(r.lims));
+    else T.check(`${id}: the speed limits: ${w.lim[0]} in each settlement, ${w.lim[1]} on the road out of it`, r.lims.some(l => l[0] === 'lim:' + w.lim[0]) && r.lims.some(l => l[0] === 'lim:' + w.lim[1]) && r.lims.every(l => l[0] === 'lim:' + w.lim[0] || l[0] === 'lim:' + w.lim[1]), JSON.stringify(r.lims));
     T.check(`${id}: chevron boards on the outside of the sharpest bends (all but one at most), none elsewhere`, r.nSharp > 0 && r.covered >= r.nSharp - 1 && r.strayChev === 0, `${r.covered} of ${r.nSharp} bends, ${r.nChev} chevrons, ${r.strayChev} elsewhere`);
     T.check(`${id}: every sign beside the road (none on the asphalt), on the ground, the boards and limits facing the cars coming`, r.onRoad === 0 && r.floating === 0 && r.facing === 0 && r.propFloat === 0 && r.propSunk === 0, `on the asphalt ${r.onRoad}, floating ${r.floating} (knockable: ${r.propFloat} floating, ${r.propSunk} sunk; the base at most ${r.worst} m over the ground), facing away ${r.facing}`);
     T.check(`${id}: the white delineators are the heavier plastic ones (dpost), none of the old`, (r.kinds.dpost || 0) > 0 && !r.kinds.post, JSON.stringify(r.kinds));
@@ -104,7 +105,8 @@ try {
       g.S.tod = 'day'; Render.setAtmos({ season: 'summer', tod: 'day' }, true); out.dayGlow = W.rsMesh ? W.rsMesh.material.emissive.r : null; out.dayLamps = (Render.show.lamps || []).length;
       return out;
     });
-    T.check(`${id}: at night the street lamps light the road only in the settlements`, n.zones > 0 && n.n > 0 && n.outside === 0 && n.dayLamps === 0, `${n.n} pools of light, ${n.outside} outside the ${n.zones} built-up stretches`);
+    if (w.dark) T.check(`${id}: no settlement on the road: dark at night (no street lamps)`, n.zones === 0 && n.n === 0, `${n.n} pools of light, ${n.zones} built-up stretches`);
+    else T.check(`${id}: at night the street lamps light the road only in the settlements`, n.zones > 0 && n.n > 0 && n.outside === 0 && n.dayLamps === 0, `${n.n} pools of light, ${n.outside} outside the ${n.zones} built-up stretches`);
     if (n.glow != null) T.check(`${id}: at night the sign faces shine, by day not`, n.glow > 0.3 && n.dayGlow === 0, `emissive ${n.glow} at night, ${n.dayGlow} by day`);
   }
   // a road without a settlement: dark at night (no lamps); a circuit keeps its floodlights every 30 m

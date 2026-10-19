@@ -4736,13 +4736,13 @@ const World = (function () {
   const OB = {
     // Kranjska Gora: from the start (in the town) past the hotels at Jasna (Jasna is a part of the settlement: one board, struck through after its
     // hotels), the lamps in its two built-up stretches
-    vrsic: { reg: 'SI', town: 50, out: 70, towns: [{ n: 'KRANJSKA GORA', d0: null, d1: 2404, lamps: [[-60, 1196], [1596, 2090]] }] },
+    vrsic: { reg: 'SI', town: 50, out: 90, towns: [{ n: 'KRANJSKA GORA', d0: null, d1: 2404, lamps: [[-60, 1196], [1596, 2090]] }] },
     // Medvode (the start in it), Zbilje, Valburga, Smlednik (def.names, OSM); their built-up stretches. The castle hill after Smlednik: out of them
     medvode: { reg: 'SI', town: 50, out: 70, towns: [{ n: 'MEDVODE', d0: null, d1: 1786, lamps: [[-60, 1770]] }, { n: 'ZBILJE', d0: 2052, d1: 3502, lamps: [[2058, 2880]] },
       { n: 'VALBURGA', d0: 4036, d1: 4688, lamps: [[4040, 4680]] }, { n: 'SMLEDNIK', d0: 4704, d1: 5242, lamps: [[4708, 5236]] }] },
-    // Ouni and Kakaristo: the real stage's places (a farm, the junction in the fields: the name only). The village of the added section lies on
-    // Okskulmantie, the road of the village of Okskulma (Jämsä), between the Mutanen junction and the Amazon jump: its board says OKSKULMA
-    ouni: { reg: 'FI', town: 50, out: 80, towns: [{ n: 'OUNI', d0: 1576, hamlet: true }, { n: 'OKSKULMA', d0: 6040, d1: 6594, lamps: [[6050, 6590]] }, { n: 'KAKARISTO', d0: 8634, hamlet: true }] },
+    // Ouni and Kakaristo: the real stage's places (a farm, the junction in the fields: the name only). The village of the added section has no
+    // name that could be checked: no board, no limits, no lamps
+    ouni: { reg: 'FI', town: 50, out: 80, towns: [{ n: 'OUNI', d0: 1576, hamlet: true }, { n: 'KAKARISTO', d0: 8634, hamlet: true }] },
   };
   function obAtlas(reg, small, names) {   // the atlas: the left half the signs' faces, the right half their grey backs (the same silhouette), cell 15 white (the poles); rows 4-7 the boards
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d'); x.clearRect(0, 0, 1024, 1024);
@@ -9279,7 +9279,7 @@ const World = (function () {
       for (const sd of [-1, 1]) run(s0 - (big ? 30 : 14), s0 + (big ? 80 : 40), sd, { rows: big ? 4 : 3, dens: big ? 0.8 : 0.45 + 0.15 * ((k + (sd > 0 ? 1 : 0)) % 2), label: 'OU jump ' + Math.round(s0 - sStart) });
       if (k % 2 === 0 || big) for (const sd of [-1, 1]) { const [px, pz, ii] = onSide(s0 + 8 + sd * 5, sd, 6 + R() * 3); if (!hard(px, pz)) flagAt(px, pz, T.hd[ii], 6 + R() * 2); }
     });
-    if (sY > 0) {   // the fans' marks for the jump length past the Yellow House crest: 40, 50, 57 m (Märtin, 2003)
+    if (sY > 0) {   // the fans' marks for the jump length past the Yellow House crest: 40, 50, 57 m (the record, 2003)
       [40, 50, 57].forEach((d, k) => { const [px, pz, ii] = onSide(sY + d, 1, 0.8), py = ouGround(px, pz), g = scen.get(px, pz); box(g, px, py - 0.2, pz, 0.09, 1.1, 0.09, T.hd[ii], [0.4, 0.3, 0.2]);
         bannerQ(px, py + 0.8, pz, T.tx[ii], T.tz[ii], 0.9, 0.9, 0, 1 / 8, 0.625 + k * 0.125, 0.75 + k * 0.125); });
     }

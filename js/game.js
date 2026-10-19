@@ -2328,7 +2328,7 @@
   }
 
   /* ---------------- jumps: how far each one flew (from 12 m: a popup), the run's longest; def.jumpRec = { bump, name, say, m, by, beat }:
-     the famous jump (Ouninpohja: the Yellow House, Markko Märtin's 57 m in 2003), where the player's longest is kept with the records
+     the famous jump (Ouninpohja: the Yellow House, the record of 57 m, its holder an invented driver), where the player's longest is kept with the records
      (jumpRec, per physics and weather) and the commentator names the record ---------------- */
   let jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 };
   function jumpLanded(len, s0) {
