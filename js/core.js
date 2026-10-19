@@ -1888,10 +1888,12 @@ const Core = (function () {
       if (!grounded) F = 0;
       const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : M.drive === 'RR' ? 0.62 : 0.55;   // (RR: the engine over the driven wheels)
       const lchK = this.lch && !this.lch.done ? this.lch.k : 1;   // (the start: a late reaction, the driven wheels spinning away, see LAUNCH)
-      const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK;   // (the formula's wings press the driven wheels down too)
+      const plx = this.plx ? this.plx.k : 0, plxK = 1 + PIT_LAUNCH.boost * plx;   // (a perfect exit out of the pits: more drive and grip, no wheelspin, see PIT_LAUNCH)
+      if (plx && F > 0) F *= plxK;
+      const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK * plxK;   // (the formula's wings press the driven wheels down too)
       let spin = 0;
       if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
-      this.spin = thr > 0.2 && grounded ? spin * (M.spinK || 1) : 0;
+      this.spin = thr > 0.2 && grounded ? spin * (M.spinK || 1) * (1 - Math.min(1, 2 * plx)) : 0;   // (a perfect exit: none while half of it or more is left)
       // ---- brakes: a quick ramp, capped below the grip (they never lock), along the travel ----
       this.csB += clamp(brk - this.csB, -K.brkDn * dt, K.brkUp * dt);
       const bF = this.csB;
@@ -4531,6 +4533,13 @@ const Core = (function () {
     const W = LAUNCH.win + LAUNCH.winK * L.sev;
     return L.t >= W ? 1 : 1 - LAUNCH.depth * L.sev * (1 - sstep(0.35 * W, W, L.t));
   }
+  // a perfect exit out of the pits (game.js: the player's gas pressed past LAUNCH.thr within re s of the hand-back, VOZIŠ TI!; Race.pitLaunch):
+  // the start's launch the other way round, a clean one. For win s its driven wheels get up to boost more drive and grip, all of it at
+  // first, back to none over the last part of that time (as launchK), and do not spin away while half of it or more is left (no smoke, no
+  // flare of the revs, no power oversteer through the rest of the lane and onto the circuit). c.plx: { t, k } (k: the share of it now, 1 to
+  // 0; in an object: not in the golden references' digest)
+  const PIT_LAUNCH = { re: 0.35, boost: 0.12, win: 2.5 };
+  const pitLaunchK = (t) => t >= PIT_LAUNCH.win ? 0 : 1 - sstep(0.35 * PIT_LAUNCH.win, PIT_LAUNCH.win, t);
 
   class Race {
     constructor(track, opts) {
@@ -4789,6 +4798,9 @@ const Core = (function () {
         L.t += dt; L.k = launchK(L); if (L.k >= 1) L.done = true;
       }
     }
+    // a perfect exit out of the pits (PIT_LAUNCH; game.js: the player's press within PIT_LAUNCH.re s of the hand-back): its clean launch from
+    // the next step on (c.plx, Car.step), PIT_LAUNCH.win s
+    pitLaunch(c) { c.plx = { t: 0, k: 1 }; }
 
     // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst.
     // floor(q): the verge's height relative to the road there (from the world builder; worlds whose verge drops away from the road edge)
@@ -4875,6 +4887,7 @@ const Core = (function () {
         c.steer += clamp(target - c.steer, -rate * dt, rate * dt);
         if (c.fall) { this._fall(c, dt); continue; }   // (over the edge of a drop: falling)
         c.step(dt, T);
+        if (c.plx) { const X = c.plx; X.t += dt; X.k = pitLaunchK(X.t); if (!X.k) c.plx = null; }   // (a perfect exit out of the pits: its clean launch, PIT_LAUNCH)
       }
       const SC = this.fl && this.fl.sc && this.fl.sc.car;   // (the safety car, when it is out: driven here, not one of the race's cars)
       if (SC) { aiControl(SC, this, dt); SC.steer += clamp(SC.inSteer - SC.steer, -10 * dt, 10 * dt); SC.step(dt, T); }
@@ -5798,7 +5811,7 @@ const Core = (function () {
   }
   registerVehicles();
 
-  return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY };
 })();
