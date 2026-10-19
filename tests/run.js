@@ -29,7 +29,7 @@ const SECS = {
   'browser/hlvid.test.mjs': 40, 'browser/career.test.mjs': 35, 'browser/lang.test.mjs': 30, 'browser/pad.test.mjs': 30, 'browser/faults.test.mjs': 25,
   'browser/atmos.test.mjs': 25, 'browser/champ.test.mjs': 25, 'browser/saver.test.mjs': 25, 'browser/rivals.test.mjs': 20, 'browser/medvode-castle.test.mjs': 20,
   'browser/medvode-props.test.mjs': 20, 'browser/pits.test.mjs': 20, 'browser/tower.test.mjs': 15, 'browser/hudcol.test.mjs': 150, 'browser/kerb.test.mjs': 200,
-  'browser/marks.test.mjs': 150,
+  'browser/marks.test.mjs': 250,
 };
 const DEF_SECS = 60, secs = (f) => SECS[f] || DEF_SECS;
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
