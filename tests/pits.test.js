@@ -100,5 +100,57 @@ for (const [tid, laps] of [['toskana', 6], ['rio', 5], ['toronto', 11]]) {
   } finally { Math.random = orig; }
 }
 
+// 4. the player's own stop (Core c.pitPlan; game.js POSTANEK PO MERI): its time by the rule of every stop for what it asks (the crew's jobs at
+// once, Core.stopJobs / stopDur: the repairs all, only what is needed (above NEED_DMG and the parts lost) or none; the tyres (none: 'keep',
+// unless one is cut); the tank filled up to a share, nothing when it holds more) and without one exactly as before (every AI car's: all of
+// it, a full tank). Three stops on Trois-Rivières with tyres, compounds and fuel: hard slicks and half a tank without repairs; the tyres kept,
+// a quarter of a tank (it holds more: nothing) and only the needed repairs; then no plan (all of it). Each lasts what stopDur said, does what
+// it asked (the damage, the tyres, the fuel, repairN, the dents left for what is still bent), the plan gone after it; a tank filled to half:
+// the burn a metre right after it (not as if it had been filled to the brim)
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'troisrivieres')), orig = Math.random; Math.random = seeded(11);
+  try {
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 5, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 1, damage: 2, tyres: true, compounds: true, fuel: true });
+    const P = r.player, D = (pl) => +C.stopDur(P, r, pl).toFixed(3), J = (pl) => C.stopJobs(P, r, pl);
+    P.dmg = 0.6; P.lost = { hood: 1, trunk: 1 }; P.fuel = 0.3;
+    const rule = { none: D(), all: D({ ty: 'S', fuel: 1, fix: 'all' }), bare: D({ ty: 'keep', fuel: 0.25, fix: 'none' }), need: D({ ty: 'keep', fuel: 0.5, fix: 'need' }), tyres: D({ ty: 'H', fuel: 0.25, fix: 'need' }), jobs: J({ ty: 'keep', fuel: 0.5, fix: 'need' }) };
+    P.flt = { pw: 1, pk: 0.5, brT: 20, enT: 85, brH: false, enH: false, ev: '' }; rule.cut = D({ ty: 'keep', fuel: 0.25, fix: 'none' }); rule.keepCut = C.keepTyres(P, { ty: 'keep' });
+    P.flt = undefined; P.dmg = 0; P.lost = {}; P.fuel = 1;
+    const want = { none: 7.9, all: 7.9, bare: 0, need: 3.4, tyres: 2.6, cut: 2.6 };   // (fix 3.48 = 1.2 + 3.3 * 0.6 + 2 * 0.15, the tyres 2.6, the fuel 1.6 + 0.7 * 9 = 7.9; Nujno 2.49 = 1.2 + 3.3 * 0.3 + 0.3)
+    check('the player\'s own stop, its time (Core.stopDur): the crew\'s jobs at once by the rule of every stop (no plan: all of it and a full tank, as before); none of anything: 0 s; Nujno: the damage above NEED_DMG and the parts lost; the tyres kept unless one is cut',
+      Object.keys(want).every(k => Math.abs(rule[k] - want[k]) < 1e-9) && Math.abs(rule.jobs.fix - 2.49) < 1e-9 && rule.jobs.ty === 0 && Math.abs(rule.jobs.fuel - 3.4) < 1e-9 && C.NEED_DMG === 0.3 && !rule.keepCut, JSON.stringify(rule));
+    r.start();
+    const PLANS = [{ ty: 'H', fuel: 0.5, fix: 'none' }, { ty: 'keep', fuel: 0.25, fix: 'need' }, null], out = [];
+    let t = 0, k = 0, ns = 0, inLane = false, st = null, hb = false, pm = null;
+    while (t < 900 && ns < PLANS.length) {
+      Math.random = seeded(7000 + (++k));
+      if (!P.inPit && !inLane && P.lap >= 1 && !T.pitAt(P.q.s) && !P.pitWant && (ns === 0 || P.lap > out[ns - 1].lap)) P.pitWant = true;
+      if (P.inPit && !inLane) {   // (into the lane: the plan, the damage and the fuel it is made for)
+        inLane = true; const pl = PLANS[ns]; if (pl) P.pitPlan = Object.assign({}, pl);
+        P.dmg = 0.6; P.dz = [0.7, 0.1, 0.5, 0.05]; P.lost = ns === 1 ? { hood: 1, trunk: 1 } : {}; if (ns === 0) { pm = P.fuelPm; P.fuel = 0.3; }
+        st = { lap: P.lap, plan: pl, fuel0: P.fuel, ty0: P.ty && { k: P.ty.k, c: P.ty.c, wear: P.ty.wear }, rep0: P.repairN || 0, dur: null, rt: 0, want: D(pl || undefined) };
+      }
+      if (inLane && P.pitDone) { const p1 = T.pitAt(P.q.s + Math.max(12, P.speed * 1.3)); if (!p1 || (p1.gap && p1.o <= p1.wall + 1)) hb = true; }
+      if (hb) P.pitWant = false;
+      C.aiControl(P, r, DT); r.step(DT); t += DT;
+      if (st && P.pitState === 'repair') { st.rt += DT; if (st.dur == null) st.dur = +P.pitDur.toFixed(3); }
+      if (st && P.pitDone && !st.after) st.after = { dmg: +P.dmg.toFixed(3), dz0: +P.dz[0].toFixed(3), dents: P.dents.length, lost: Object.keys(P.lost).length, rep: P.repairN || 0, fuel: +P.fuel.toFixed(3), fuelF: P.fuelF, ty: P.ty && { k: P.ty.k, c: P.ty.c, wear: P.ty.wear }, plan: P.pitPlan || null };
+      if (inLane && !P.inPit) { inLane = false; hb = false; out.push(st); ns++; if (ns === 1) st.d1 = P.dist; }
+      if (ns === 1 && out[0].d1 != null && out[0].pm == null && P.dist - out[0].d1 > 1500) out[0].pm = { before: pm, after: P.fuelPm };
+      P.hitWall = 0; P.hitCar = 0;
+    }
+    const [a, b, c] = out, f3 = (x) => +x.toFixed(3);
+    check('a stop without repairs: hard slicks, the tank up to half; the damage stays (no repairN), as long as stopDur said (3.4 s: the fuel), the plan gone after it',
+      !!a && a.after && a.dur === a.want && Math.abs(a.dur - 3.4) < 1e-9 && Math.abs(a.rt - a.dur) < 2 * DT && a.after.dmg === 0.6 && a.after.rep === a.rep0 && a.after.ty.k === 'dry' && a.after.ty.c === 'H' && a.after.ty.wear === 0 && a.after.fuel === 0.5 && a.after.fuelF === 0.5 && !a.after.plan,
+      JSON.stringify(a && { dur: a.dur, want: a.want, rt: f3(a.rt), after: a.after }));
+    check('... a tank filled up to half: the burn a metre measured from there (within ±40 % of the one before the stop, not as if filled to the brim)', !!a && !!a.pm && a.pm.after > a.pm.before * 0.6 && a.pm.after < a.pm.before * 1.4, JSON.stringify(a && a.pm));
+    check('a stop with the tyres kept, a quarter of a tank (it holds more: nothing added) and only the needed repairs: the damage down to NEED_DMG (the zones with it, a dent for each side still bent, the parts back on, repairN + 1), the same tyres (worn on, not new), the same fuel; as long as stopDur said (Nujno: 2.49 s)',
+      !!b && b.after && b.dur === b.want && Math.abs(b.dur - 2.49) < 1e-9 && Math.abs(b.rt - b.dur) < 2 * DT && b.after.dmg === 0.3 && b.after.dz0 === 0.35 && b.after.dents >= 2 && b.after.lost === 0 && b.after.rep === b.rep0 + 1 &&
+        b.after.ty.k === b.ty0.k && b.after.ty.c === b.ty0.c && b.after.ty.wear >= b.ty0.wear && b.after.ty.wear > 0.01 && b.after.fuel === f3(b.fuel0) && !b.after.plan, JSON.stringify(b && { dur: b.dur, rt: f3(b.rt), ty0: b.ty0, fuel0: f3(b.fuel0), after: b.after }));
+    check('a stop without a plan (every AI car\'s): all of it as before: repaired (repairN + 1, no damage), new slicks, a full tank (the burn from the brim again)',
+      !!c && c.after && c.dur === c.want && c.after.dmg === 0 && c.after.rep === c.rep0 + 1 && c.after.ty.wear === 0 && c.after.fuel === 1 && c.after.fuelF === 1, JSON.stringify(c && { dur: c.dur, want: c.want, after: c.after }));
+  } finally { Math.random = orig; }
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;

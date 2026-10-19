@@ -174,9 +174,10 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-pit, #h-msg, #h-teamradio { position: absolute; right: var(--map-r); width: var(--map-w); top: calc(var(--map-t) + var(--map-h) + 4px); border-radius: 8px; pointer-events: none; visibility: hidden; opacity: 0; }
 #h-pit.on, #h-msg.show, #h-teamradio.on { visibility: visible; opacity: 1; animation: colIn .2s ease-out; }
 #h-teamradio.wait { visibility: hidden; opacity: 0; }   /* (no room under the others now: it waits, its time stopped) */
+#h-msg.show.wait { visibility: hidden; opacity: 0; }   /* (above the custom stop's panel with no room even for it: hudCol) */
 @keyframes colIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
-/* the pit stop on the autopilot: AVTOPILOT · spusti plin, what it does now (Vstop, Boks, Popravilo 45 %, Izvoz, Prevzameš čez 3), one bar
-   from the way in to the hand-back */
+/* the pit stop on the autopilot, once the stop is decided (the custom stop's panel gone): AVTOPILOT · spusti plin, Prevzem čez 6,2 s (or
+   Prevzameš čez 3 past the way out), one bar from then to the hand-back */
 #h-pit { padding: 3px 5px 4px 4px; background: rgba(10, 14, 20, .45); border-left: 4px solid var(--lcd); color: #fff; }   /* (a gold edge at the left, as the big message of the pits; the wrench at the start of the title, the label and the bar the whole width) */
 #h-pit b { display: block; font: 800 italic 9.5px/1.15 var(--f-ui); color: var(--lcd); white-space: nowrap; overflow: hidden; }   /* (on one line, smaller to fit, down to 8 px: else in two, .wrap; hudCol) */
 #h-pit b.wrap { white-space: normal; }
@@ -184,6 +185,58 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-pit i { display: block; height: 5px; margin-top: 3px; border-radius: 3px; background: rgba(255, 255, 255, .16); overflow: hidden; }
 #h-pit em { display: block; width: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--lcd), var(--meter)); }
 #h-pit b::before { content: ''; display: inline-block; width: 1.3em; height: 1.3em; margin-right: .3em; vertical-align: -.3em; background: center / contain no-repeat var(--ic-wrench); }   /* (the wrench at the start of the title) */
+/* the custom stop (POSTANEK PO MERI, game.js stopOpen) from the way in to the box: upright a sheet at the bottom over the steering and the
+   pedals (the autopilot drives), on its side a panel at the right under the column (hudCol stops the column above it), the car in the middle
+   left clear. A bar draining to the box and its seconds; a row of buttons (44 px tall at least) for the tyres, the fuel and the repairs, the
+   chosen one gold, the defaults' star; the stop's seconds and a red POTRDI. #hud.shot hides it with the rest of the HUD */
+#h-stop { display: none; position: absolute; left: calc(6px + var(--sl)); right: calc(6px + var(--sr)); bottom: 0; padding: 10px 10px calc(10px + var(--sb)); border-radius: 16px 16px 0 0; background: rgba(12, 16, 22, .9); border: 1px solid var(--panel-edge); border-bottom: 0; box-shadow: 0 -6px 24px rgba(0, 0, 0, .35); pointer-events: auto; touch-action: manipulation; font-family: 'ApexMenu', var(--f-ui); color: var(--chalk); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+#h-stop.on { display: block; animation: colIn .2s ease-out; }
+#h-stop::before { content: ''; position: absolute; left: 50%; top: 4px; width: 34px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .28); transform: translateX(-50%); }   /* (the sheet's handle) */
+#h-stop button { font: inherit; color: inherit; margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+#h-stop .sp-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 7px; row-gap: 6px; margin-bottom: 9px; }
+#h-stop .sp-head b { font: 900 italic 15px/1 'ApexMenu', var(--f-ui); letter-spacing: .03em; color: var(--lcd); white-space: nowrap; }
+#h-stop .sp-head span { min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 600 italic 11px/1 'ApexMenu', var(--f-ui); color: var(--muted); white-space: nowrap; }
+#h-stop .sp-head em { margin-left: auto; font: 800 italic 14px/1 'ApexMenu', var(--f-ui); color: var(--chalk); white-space: nowrap; }
+#h-stop .sp-tb { order: 9; flex: 1 0 100%; display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .16); overflow: hidden; }   /* (the time left to choose: to the box) */
+#h-stop .sp-tb i { display: block; width: 100%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #ff8a3a, var(--lcd) 40%, var(--lcd)); }
+#h-stop .sp-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 6px; align-items: center; margin-bottom: 6px; }
+#h-stop .sp-lbl { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+#h-stop .sp-lbl b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font: 800 italic 10.5px/1 'ApexMenu', var(--f-ui); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+#h-stop .sp-lbl span { font: 800 12px/1 'ApexMenu', var(--f-ui); color: var(--lcd); white-space: nowrap; }
+#h-stop .sp-seg { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 11px; background: rgba(255, 255, 255, .07); }
+#h-stop .sp-row.foc .sp-seg { box-shadow: 0 0 0 2px rgba(255, 255, 255, .6); }   /* (the row the keys or the pad work on) */
+#h-stop .sp-seg button { position: relative; min-width: 0; min-height: 48px; padding: 3px 2px; border-radius: 8px; border: 1px solid transparent; background: rgba(255, 255, 255, .07); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; overflow: hidden; font: 800 italic 13px/1.05 'ApexMenu', var(--f-ui); text-align: center; white-space: nowrap; }
+#h-stop .sp-seg button span { max-width: 100%; font: 700 10px/1.05 'ApexMenu', var(--f-ui); white-space: normal; }
+#h-stop .sp-seg button small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font: 600 10px/1 'ApexMenu', var(--f-ui); color: var(--muted); white-space: nowrap; }
+#h-stop .sp-seg button.warn, #h-stop .sp-seg button.warn small { color: #ff8b78; }
+#h-stop .sp-seg button.sel { background: var(--lcd); color: #15120a; border-color: #ffe07a; box-shadow: 0 0 12px rgba(255, 198, 41, .3); }
+#h-stop .sp-seg button.sel small, #h-stop .sp-seg button.sel span { color: #3a2e05; }
+#h-stop .sp-seg button.def::after { content: '★'; position: absolute; top: 2px; right: 4px; font: 900 9px/1 sans-serif; color: inherit; opacity: .75; }   /* (the default) */
+#h-stop .sp-ty { --tc: #e03027; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--tc); background: #15191f; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); font: 900 10px/1 'ApexMenu', var(--f-ui); font-style: normal; color: #fff; }   /* (a tyre with its compound's band) */
+#h-stop .sp-x { flex: none; width: 13px; height: 13px; background: center / contain no-repeat url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 4l8 8M12 4l-8 8' stroke='%239fb0c3' stroke-width='2.4' stroke-linecap='round'/></svg>"); }
+#h-stop .sp-foot { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
+#h-stop .sp-tot { display: grid; grid-template-columns: auto auto; column-gap: 7px; align-items: baseline; min-width: 0; }
+#h-stop .sp-tot small { font: 700 italic 12px/1 'ApexMenu', var(--f-ui); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+#h-stop .sp-tot b { font: 900 italic 28px/1 'ApexMenu', var(--f-ui); color: var(--lcd); white-space: nowrap; }
+#h-stop .sp-tot span { grid-column: 1 / 3; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; font: 600 10.5px/1 'ApexMenu', var(--f-ui); color: var(--muted); white-space: nowrap; }
+#h-stop .sp-ok { flex: none; margin-left: auto; min-width: 128px; height: 52px; padding: 0 14px; border-radius: 12px; border: 0; background: linear-gradient(180deg, #ff5d4b, #d3291b); color: #fff; font: 900 italic 19px/1 'ApexMenu', var(--f-ui); letter-spacing: .04em; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); box-shadow: 0 3px 0 #86160d, 0 6px 16px rgba(0, 0, 0, .35); }   /* (POTRDI: red) */
+#h-stop .sp-ok:active { transform: translateY(2px); box-shadow: 0 1px 0 #86160d, 0 3px 10px rgba(0, 0, 0, .35); }
+@media (orientation: landscape) {
+  #h-stop { left: auto; right: calc(6px + var(--sr)); bottom: calc(4px + var(--sb)); width: min(284px, 46vw); padding: 5px 6px; border-radius: 14px; border-bottom: 1px solid var(--panel-edge); background: rgba(12, 16, 22, .95); }
+  #h-stop::before { display: none; }
+  #h-stop .sp-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 7px; margin-bottom: 3px; }
+  #h-stop .sp-head b { grid-column: 1; grid-row: 1; font-size: 11.5px; } #h-stop .sp-head span { display: none; } #h-stop .sp-head em { grid-column: 3; grid-row: 1; margin: 0; font-size: 11px; }
+  #h-stop .sp-tb { grid-column: 2; grid-row: 1; height: 3px; }
+  #h-stop .sp-row { grid-template-columns: 60px minmax(0, 1fr); gap: 4px; margin-bottom: 1px; }
+  #h-stop .sp-lbl b { font-size: 9.5px; } #h-stop .sp-lbl span { font-size: 11px; }
+  #h-stop .sp-seg { gap: 2px; padding: 1px; border-radius: 8px; }
+  #h-stop .sp-seg button { min-height: 45px; border-radius: 7px; font-size: 12px; }   /* (44 px and a little: never under it, however the pixels fall) */
+  #h-stop .sp-seg button span, #h-stop .sp-seg button small { font-size: 9px; }
+  #h-stop .sp-ty { width: 18px; height: 18px; font-size: 9px; }
+  #h-stop .sp-foot { margin-top: 2px; }
+  #h-stop .sp-tot b { font-size: 20px; } #h-stop .sp-tot small { font-size: 10px; } #h-stop .sp-tot span { font-size: 9px; }
+  #h-stop .sp-ok { min-width: 100px; height: 45px; font-size: 16px; }
+}
 /* the big message (START!, ZADNJI KROG!, BOKSI · AVTOPILOT ...): at most three lines, as large as the column's width allows (hudCol) */
 #h-msg { --edge: var(--lcd); display: block; padding: 3px 4px 4px 2px; border-left: 4px solid var(--edge); background: rgba(10, 14, 20, .45); text-align: center; text-wrap: balance; font: 400 italic 20px/1.05 var(--f-display); color: var(--chalk); text-shadow: 1px 2px 0 rgba(0,0,0,.6); }   /* (a coloured edge at the left by its kind; a word too wide sticks out on the right, where hudCol's fitMsg sees it) */
 /* its icon by its kind (data-ic, game.js msgIcon): a chequered flag (the laps, the finish), a wrench (the repair, the tyres, the fuel), a green

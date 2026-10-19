@@ -5,7 +5,7 @@ const Input = (function () {
   'use strict';
   const { clamp, sstep, wrapPi } = Core;
   const DEG = Math.PI / 180;
-  const S = { steer: 0, thr: 0, brk: 0, gas: 0, digital: true };   // (no handbrake: none on the screen, no key, no pad button)
+  const S = { steer: 0, thr: 0, brk: 0, gas: 0, digital: true, kbrk: false };   // (no handbrake: none on the screen, no key, no pad button)
   let mode = 'buttons';
   let layer = null;
   const ptrs = new Map();
@@ -265,6 +265,7 @@ const Input = (function () {
       if (wheel.pid === null) { const d = Math.min(Math.abs(wheel.ang), dt * 7.5); wheel.ang -= Math.sign(wheel.ang) * d; }
       steer = clamp(wheel.ang / (wheel.max * 0.86), -1, 1); digital = false;
     } else if (mode === 'tilt') { tilt.value = tiltSteer(); steer = tilt.value; digital = false; }
+    S.kbrk = kD && !brake && !(pad.on && pad.brk > 0.05);   // (the brake from its key alone: game.js, the custom stop's panel takes the arrows)
     gas = gas || kU; brake = brake || kD;
     if (pad.on) {   // the gamepad (padRead: this frame's values): the stick over the other steering, the triggers in proportion
       if (pad.steer) { steer = pad.steer; digital = false; } else if (pad.dsteer && !steer) steer = pad.dsteer;

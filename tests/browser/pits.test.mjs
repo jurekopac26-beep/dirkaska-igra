@@ -2,8 +2,9 @@
 // must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
 // In the pit lane the player cannot steer (held at full left lock, no gas: the autopilot drives, gas and all, keeps to the lane and takes an S onto the apron to the box);
 // the box is on the apron in front of the garage (the car stops there parked straight, parallel to the lane), the crew works there and never stands on the lane.
-// While the autopilot drives, the progress bar under the map (its width): Vstop, Boks, Popravilo n %, Izvoz, one bar from ~0 % at the way in
-// to 100 % at the hand-back, never back; then gone. The hand-back (VOZIŠ TI!) ~1 s before the way out joins the circuit, still in the lane
+// Once the stop is decided (the custom stop's panel left alone: the defaults at the box; tests/browser/pitstop.test.mjs), the progress bar
+// under the map (its width): Prevzem čez n s counting down, one bar from ~0 % there to 100 % at the hand-back, never back; then gone. The
+// hand-back (VOZIŠ TI!) ~1 s before the way out joins the circuit, still in the lane
 // (no countdown after it); the pit stop's film camera from the way in, the view behind the car again by the hand-back.
 // Then Bathurst, its lane on the left: one stop seen from behind the car, the car pulls over to the left onto the apron, the crew on the
 // garages' side, nobody on the lane; the camera sees the whole car during the stop (the pit building's roof does not hide it).
@@ -33,11 +34,12 @@ try {
       const o = { work: 99, max: -99, lane: 0, dev: 0, lock: 0, ghost: 0, dmg: 0, pose: null, ln: 0, lthr: 0, vmax: 0, mN: 0, mSteer: 0, mThr: 0, mBad: 0, mDmg: 0, back: null };
       // one call of the game's steps with no gas (the wheel at s, the brake b): in the lane the autopilot's own throttle and the limiter; the
       // hand-back on the way out (the step that starts on the autopilot and ends without it; never a countdown, 'merge'), the player's from it; the step that hands back
-      // the progress bar (#h-pit) after each call: on, its fill, its label (the labels in order, a fill smaller than the one before, the hand-back)
-      const pb = document.getElementById('h-pit'), B = window.__pb || (window.__pb = { n: 0, back: 0, first: null, prev: -1, seq: [], hand: null, after: 0, rect: null, pct: [] });
+      // the progress bar (#h-pit) after each call: on, its fill, its label (the labels in order, the seconds counted down, a fill smaller than the one before, the hand-back)
+      const pb = document.getElementById('h-pit'), B = window.__pb || (window.__pb = { n: 0, back: 0, first: null, prev: -1, seq: [], hand: null, after: 0, rect: null, pct: [], panel: 0 });
       const bar = (s0, s1) => { const on = pb.classList.contains('on'), f = parseFloat(pb.querySelector('em').style.width) || 0, l = pb.children[1].textContent;
-        if (on) { B.n++; if (B.first == null) B.first = f; if (f < B.prev - 1e-9) B.back++; B.prev = f; const k = l.replace(/^Popravilo \d+ %$/, 'Popravilo %'); if (B.seq[B.seq.length - 1] !== k) B.seq.push(k);
-          const m = /^Popravilo (\d+) %$/.exec(l); if (m && +m[1] !== B.pct[B.pct.length - 1]) B.pct.push(+m[1]);
+        if (on && g.pitStop.on) B.panel++;   // (never both: the bar only once the stop is decided)
+        if (on) { B.n++; if (B.first == null) B.first = f; if (f < B.prev - 1e-9) B.back++; B.prev = f; const k = l.replace(/^Prevzem čez \d+,\d s$/, 'Prevzem čez n s'); if (B.seq[B.seq.length - 1] !== k) B.seq.push(k);
+          const m = /^Prevzem čez (\d+,\d) s$/.exec(l); if (m && +m[1].replace(',', '.') !== B.pct[B.pct.length - 1]) B.pct.push(+m[1].replace(',', '.'));
           if (!B.rect && P.pitState === 'repair') { const r = pb.getBoundingClientRect(), M = document.getElementById('h-map').getBoundingClientRect(); B.rect = { l: r.left - M.left, r: r.right - M.right, gap: r.top - M.bottom, title: pb.firstElementChild.textContent }; } }
         if (s0 && !s1) B.hand = { on, f }; else if (B.hand && on) B.after++; };
       const one = (dt, s, b) => { const s0 = g.pitAuto.st, d1 = P.dmg; g.sim(dt, false, s, 0, b || 0); const s1 = g.pitAuto.st; bar(s0, s1);
@@ -90,10 +92,10 @@ try {
     T.check('the messages: BOKSI · AVTOPILOT, then VOZIŠ TI! at the hand-back (no PREVZAMEŠ ČEZ, no POPRAVILO); the toast "Sedaj lahko spustiš plin, vse bo naredil sam."; never DRŽI PLIN',
       inOrder && !ml.hm.some(m => /PREVZAMEŠ|POPRAVILO/.test(m)) && ml.ts.includes('Sedaj lahko spustiš plin, vse bo naredil sam.') && !ml.hm.concat(ml.ts).some(m => /DRŽI PLIN/.test(m)), JSON.stringify({ hm: ml.hm.filter(m => /BOKSI|PREVZAMEŠ|POPRAVILO|VOZIŠ|PLIN/.test(m)), ts: ml.ts })); }
   const pbr = await page.evaluate(() => window.__pb);
-  T.check('the progress bar under the map (its width), "AVTOPILOT · spusti plin": Vstop, Boks, Popravilo n % (up to 99), Izvoz, in that order',
-    pbr.seq.join('>') === 'Vstop>Boks>Popravilo %>Izvoz' && pbr.pct.every((v, i) => !i || v > pbr.pct[i - 1]) && pbr.pct[pbr.pct.length - 1] >= 90 &&
+  T.check('the progress bar under the map (its width), "AVTOPILOT · spusti plin", once the stop is decided (never with the custom stop\'s panel): Prevzem čez n s, the seconds counted down to under 1.5 s',
+    pbr.seq.join('>') === 'Prevzem čez n s' && pbr.panel === 0 && pbr.pct.length > 5 && pbr.pct.every((v, i) => !i || v < pbr.pct[i - 1]) && pbr.pct[pbr.pct.length - 1] < 1.5 &&
       !!pbr.rect && Math.abs(pbr.rect.l) <= 1 && Math.abs(pbr.rect.r) <= 1 && pbr.rect.gap >= 0 && pbr.rect.gap <= 6 && pbr.rect.title === 'AVTOPILOT · spusti plin', JSON.stringify({ seq: pbr.seq, pct: pbr.pct.slice(0, 3).concat(['…'], pbr.pct.slice(-2)), rect: pbr.rect }));
-  T.check('the bar fills from ~0 % at the way in, never back, to 100 % at the hand-back; then gone', pbr.n > 200 && pbr.first < 3 && pbr.back === 0 && !!pbr.hand && pbr.hand.f === 100 && !pbr.hand.on && pbr.after === 0,
+  T.check('the bar fills from ~0 % where the stop is decided, never back, to 100 % at the hand-back; then gone', pbr.n > 200 && pbr.first < 3 && pbr.back === 0 && !!pbr.hand && pbr.hand.f === 100 && !pbr.hand.on && pbr.after === 0,
     JSON.stringify({ n: pbr.n, first: pbr.first, back: pbr.back, hand: pbr.hand, after: pbr.after }));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
@@ -114,7 +116,7 @@ try {
         const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;   // (no gas)
         const ap0 = g.pitAuto.st; if (lock) g.sim(0.05, false, 1, 0); else g.sim(0.05, true);
         if (ap0 && !g.pitAuto.st && P.inPit) window.__hb2 = { cam: +Render.pitCam.toFixed(2) };
-        { const pb = document.getElementById('h-pit'), L = window.__pbEn || (window.__pbEn = []), l = pb.classList.contains('on') ? pb.children[1].textContent.replace(/^Repair \d+ %$/, 'Repair %') : ''; if (L[L.length - 1] !== l) L.push(l); }   // (the bar's labels in English, '' when gone)
+        { const pb = document.getElementById('h-pit'), L = window.__pbEn || (window.__pbEn = []), l = pb.classList.contains('on') ? pb.children[1].textContent.replace(/^You drive in \d+\.\d s$/, 'You drive in n s') : ''; if (L[L.length - 1] !== l) L.push(l); }   // (the bar's labels in English, '' when gone)
         Render.frame(0.05, 1, P, 'chase', {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
@@ -146,8 +148,8 @@ try {
   T.check('Bathurst, the film camera during the stop: close to the car and low (within 16 m, under 6 m up), it sees the whole car (nothing of the pit building between them)', v2 && v2.film > 0.95 && v2.d < 16 && v2.h < 6 && v2.seen === 3, v2 ? JSON.stringify(v2) : 'never in the box');
   const en = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice(), hb: window.__hb2 || null, bar: (window.__pbEn || []).filter(Boolean), last: (window.__pbEn || []).slice(-1)[0] }));
   T.check('Bathurst: handed back in the lane, the view behind the car again by then', !!en.hb && en.hb.cam < 0.05, JSON.stringify(en.hb));
-  T.check('Bathurst in English: PITS · AUTOPILOT, then YOU DRIVE!; the bar: Pit entry, Box, Repair n %, Pit exit, then gone; the toast in English',
-    en.hm.includes('PITS · AUTOPILOT') && en.hm.includes('YOU DRIVE!') && !en.hm.some(m => /TAKE OVER/.test(m)) && en.bar.join('>') === 'Pit entry>Box>Repair %>Pit exit' && en.last === '' && en.ts.includes('You can let go of the gas now, the car does everything by itself.'),
+  T.check('Bathurst in English: PITS · AUTOPILOT, then YOU DRIVE!; the bar: You drive in n s, then gone; the toast in English',
+    en.hm.includes('PITS · AUTOPILOT') && en.hm.includes('YOU DRIVE!') && !en.hm.some(m => /TAKE OVER/.test(m)) && en.bar.join('>') === 'You drive in n s' && en.last === '' && en.ts.includes('You can let go of the gas now, the car does everything by itself.'),
     JSON.stringify({ hm: en.hm.filter(m => /PIT|TAKE OVER|DRIVE/.test(m)), bar: en.bar, last: en.last, ts: en.ts }));
   T.check('no page errors (Bathurst)', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

@@ -13,6 +13,8 @@
 // A small icon at the left of each: the big message's by its kind (a chequered flag ZADNJI KROG!, a wrench POPRAVILO, a green light START!,
 // a warning triangle PREDRTA GUMA! and the overheating, crossed swords DVOBOJ, a star NOV REKORD!, a pit board BOKSI), the wrench on the pit
 // stop's panel, an "i" on the toast; the text right of it, never under it; in both languages, either way the phone is held.
+// The custom stop's panel at the way in (POSTANEK PO MERI): upright a sheet at the bottom, on its side at the right under the column; over
+// nothing else of the HUD, the column above it, every button 44 px tall and reached by a tap, no text cut (every way of steering, both languages).
 // The tyre button (A, the tyres for the next stop) at the left beside the damage (on its side with the steering wheel: right of the
 // speedometer just above the damage's row, the wheel's rim under it; upright: in its row right under the speedometer, the damage picture
 // being on the right under the map), over nothing of the HUD or the controls, in every steering mode either way the phone is held; a
@@ -50,10 +52,10 @@ const MEASURE = () => {
   const land = innerWidth > innerHeight, M = document.getElementById('h-msg'), cs = getComputedStyle(M);
   const colIds = (land ? [] : ['h-dmg', 'h-tower']).concat(['h-prof', 'h-wreck', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast']).concat(land ? ['h-tower'] : []);   // (upright the damage picture first in it, right under the map, the tower under it)
   const otherIds = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-pol', 'h-gap', 'h-chk', 'h-school', 'btn-pause', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls',
-    'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'].concat(land ? ['h-dmg'] : []);
+    'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind', 'h-stop'].concat(land ? ['h-dmg'] : []);
   return { w: innerWidth, h: innerHeight, screen: window.__game.screen, m: R('h-map'),
     col: colIds.filter(id => shown(document.getElementById(id))).map(R).sort((a, b) => a.t - b.t), other: otherIds.filter(id => shown(document.getElementById(id))).map(R),
-    wait: ['toast', 'h-teamradio'].filter(id => document.getElementById(id).classList.contains('wait')), msg: M.textContent, lines: shown(M) ? Math.round((M.clientHeight - 7) / parseFloat(cs.lineHeight)) : 0, fs: parseFloat(cs.fontSize), out: shown(M) ? M.scrollWidth - M.clientWidth : 0,
+    wait: ['toast', 'h-teamradio', 'h-msg'].filter(id => document.getElementById(id).classList.contains('wait')), msg: M.textContent, lines: shown(M) ? Math.round((M.clientHeight - 7) / parseFloat(cs.lineHeight)) : 0, fs: parseFloat(cs.fontSize), out: shown(M) ? M.scrollWidth - M.clientWidth : 0,
     rows: document.getElementById('h-tower').querySelectorAll('.tw-r').length };
 };
 // in the page: the icons of the column (css ::before, inline SVG as --ic-*): which one each shows (the same picture as var(--ic-<kind>)), its size,
@@ -121,6 +123,30 @@ function wrong(o) {
   for (const c of o.col) if (c.l < o.w * 0.6) bad.push(c.id + ' in the middle');
   if (o.lines > 3) bad.push('the big message in ' + o.lines + ' lines');
   if (o.out > 2) bad.push('a word of the big message ' + o.out + ' px out of its box');
+  return bad;
+}
+// in the page: the custom stop's panel (game.js stopOpen): where it is, the HUD shown beside it (not the steering and the pedals: the autopilot
+// drives, upright the sheet lies over them), each button (its height, a tap at its middle reaches it, its text in it) and the panel's texts
+const PANEL = () => {
+  const shown = (e) => { if (!e || getComputedStyle(e).visibility !== 'visible') return false; for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || +c.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
+  const R = (e) => { const r = e.getBoundingClientRect(); return { id: e.id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
+  const el = document.getElementById('h-stop'); if (!shown(el)) return null;
+  const ids = ['h-time', 'h-best', 'h-sec', 'h-split', 'btn-pause', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-map', 'h-dmg', 'h-tower', 'h-note', 'h-lights'];
+  const btns = [...el.querySelectorAll('button')].map(b => { const r = b.getBoundingClientRect(), at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return { v: b.dataset.v || 'ok', h: +r.height.toFixed(1), top: !!at && (at === b || b.contains(at)), out: b.scrollWidth - b.clientWidth }; });
+  const tx = [...el.querySelectorAll('.sp-head b, .sp-head em, .sp-lbl b, .sp-lbl span, .sp-tot b, .sp-tot span, .sp-tot small')];
+  return { w: innerWidth, h: innerHeight, p: R(el), others: ids.map(id => document.getElementById(id)).filter(shown).map(R), btns, out: tx.filter(e => e.scrollWidth - e.clientWidth > 1).map(e => e.className || e.tagName + ':' + e.textContent) };
+};
+// what is wrong with the panel: off the screen, over the middle (on its side: left of the middle; upright: in the top half less a little), over
+// another element of the HUD, a button under 44 px or under something or its text cut, a text of the panel cut
+function wrongPanel(x, k) {
+  if (!x) return ['the panel not shown'];
+  const bad = [], p = x.p, hit = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
+  if (p.l < -0.5 || p.t < -0.5 || p.r > x.w + 0.5 || p.b > x.h + 0.5) bad.push('the panel off the screen');
+  if (k === 'land' ? p.l < x.w * 0.5 : p.t < x.h * 0.45) bad.push('the panel over the middle');
+  for (const o of x.others) if (hit(p, o)) bad.push('the panel over ' + o.id);
+  for (const b of x.btns) { if (b.h < 44) bad.push(b.v + ' under 44 px'); if (!b.top) bad.push(b.v + ' under something'); if (b.out > 1) bad.push(b.v + ' its text cut'); }
+  for (const t of x.out) bad.push('cut: ' + t);
   return bad;
 }
 // on to the race (the intro and the lights stepped, no gas: a software-drawn frame is slow)
@@ -197,10 +223,34 @@ try {
     P.ty.wear = w0; return out; });
   T.check('the tyre button\'s ring: coloured as far round as the tyres have left (92 % and 40 %, as the tyre pill says), the rest dark', ring.length === 2 && ring.every(o => Math.abs(o.tl - o.left / 100) < 0.011 && o.pill.endsWith(' ' + o.left + '%') && /conic-gradient/.test(o.bg)), JSON.stringify(ring));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
-    for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
+    for (let k = 0; k < 6000 && !(g.pitStop.on && P.inPit); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)
-    P.pitDur = Math.max(P.pitDur, P.pitT + 600); g.resume(); return e; });   // (the crew's work long enough for all the pictures)
+    const r = g.race; r.__step = r.step; r.step = function () { }; g.resume(); return e; });   // (the custom stop's panel open: the race held while it is measured)
   T.check('the way in: the toast "Sedaj lahko spustiš plin, vse bo naredil sam.", about the pit stop (gone with the autopilot)', !!entry && entry.toast === TOAST && entry.tag === 'pit', JSON.stringify(entry));
+  // the custom stop's panel (POSTANEK PO MERI) at the way in, in every way of steering, in Slovenian and in English, either way the phone is
+  // held: upright the sheet at the bottom (over the steering and the pedals), on its side at the right under the column; over nothing else of
+  // the HUD, the column with the big message and the toast above it (on its side what has no room waits: the toast, then the message),
+  // every button 44 px tall and reached by a tap at its middle, no text cut
+  const panel = [];
+  for (const lang of ['sl', 'en']) {
+    await setLang(page, lang);
+    for (const k of ['land', 'port']) {
+      await turn(page, OR[k]);
+      for (const m of ['buttons', 'wheel', 'tilt']) {
+        await page.evaluate((m) => Input.setMode(m), m); await frames(page, 2);
+        const o = await texts(page, lang === 'sl' ? 'BOKSI · AVTOPILOT' : 'PITS · AUTOPILOT', { radio: null, toast: PIT[lang].toast }), x = await page.evaluate(PANEL), bad = wrong(o).concat(wrongPanel(x, k));
+        panel.push({ lang, k, m, ok: !bad.length && (o.col.some(c => c.id === 'h-msg') || (k === 'land' && o.wait.includes('h-msg') && o.wait.includes('toast'))), bad, col: o.col.map(c => c.id).join(), wait: o.wait, p: x && x.p });
+        if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `stop-${lang}-${m}-${k}.png`) });
+        await clear(page);
+      }
+    }
+  }
+  await page.evaluate(() => Input.setMode('buttons')); await setLang(page, 'sl');
+  T.check('the custom stop\'s panel at the way in (upright a sheet at the bottom, on its side at the right under the column), with buttons, the wheel and tilting, in Slovenian and in English: over nothing else of the HUD, the message and the toast above it in the column (on its side what has no room waits, the toast first), every button 44 px tall and reached by a tap, no text cut',
+    panel.length === 12 && panel.every(p => p.ok), JSON.stringify(panel.filter(p => !p.ok).concat(panel.slice(0, 2))));
+  await page.evaluate(() => { const g = window.__game, P = g.race.player, r = g.race; r.step = r.__step; delete r.__step; g.pause();
+    for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true); }
+    P.pitDur = Math.max(P.pitDur, P.pitT + 600); g.resume(); });   // (on to the box, the defaults there: the crew's work long enough for all the pictures)
   const pit = await both(page, 'race-pits', 'BOKSI · AVTOPILOT', ['h-pit', 'h-msg']);
   T.check('the pit stop: the progress bar right under the map (upright under the damage picture and the tower), the big message under it', ['land', 'port'].every(k => { const c = rest(pit[k].col.map(c => c.id)); return c[0] === 'h-pit' && c[1] === 'h-msg' && (k === 'land' || pit[k].col[0].id === 'h-dmg'); }), JSON.stringify(['land', 'port'].map(k => pit[k].col.map(c => c.id))));
   // the pit stop in every way of steering, in Slovenian and in English, the stop's longest message with the toast and the radio: the bar and
