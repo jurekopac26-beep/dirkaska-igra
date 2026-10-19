@@ -25,6 +25,8 @@ const C = loadCore(), Lang = require(path.join(ROOT, 'js', 'lang.js'));
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const def = C.TRACKS.find(d => d.id === 'medvode'), T = new C.Track(def);
+// (p10) the user's drawn windows (def.mvWin): there World draws their road, sidewalks and markings, none of its own (side roads, lanes)
+const inWinT = (x, z) => (def.mvWin || []).some(w => { const P = w.poly; let c = false; for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) if ((P[i + 1] > z) !== (P[j + 1] > z) && x < (P[j] - P[i]) * (z - P[i + 1]) / (P[j + 1] - P[i + 1]) + P[i]) c = !c; return c; });
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
 const orig = Math.random;
 const at = (d) => T.idx(T.startS + d);
@@ -48,8 +50,8 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
 {
   const w = (p) => 2 * T.wAt(iAt(p)), wk = T.walk ? T.walk[0].filter(v => v > 0.5).length + T.walk[1].filter(v => v > 0.5).length : 0;
   let ws = 0, wn = 0; for (let d = 0; d < T.raceLen; d += 2) { ws += 2 * T.wAt(at(d)); wn++; }
-  check('widths: the real ones, ~5.6 m on average: 7.5 m on Gorenjska cesta, 6.4 m on Medvoška cesta, ~6.2 m on the regional road, 6.5 m on the bridge, 4.8 m through Smlednik, 3.7 m up the castle road',
-    Math.abs(ws / wn - 5.6) < 0.4 && Math.abs(w(PL.gorenjska) - 7.5) < 0.2 && Math.abs(w(PL.medvoska) - 6.4) < 0.2 && Math.abs(w(PL.zbiljska) - 6.2) < 0.3 && Math.abs(w(PL.bridge) - 6.5) < 0.2 && Math.abs(w(PL.smlednik) - 4.8) < 0.2 && Math.abs(w(PL.castle2) - 3.7) < 0.2,
+  check('widths: the real ones, ~5.8 m on average (the user\'s drawn windows: their carriageways, both directions on the rings\' legs): 7.5 m on Gorenjska cesta, 6.4 m on Medvoška cesta, ~6.2 m on the regional road, 6.5 m on the bridge, 4.8 m through Smlednik, 3.7 m up the castle road',
+    Math.abs(ws / wn - 5.8) < 0.4 && Math.abs(w(PL.gorenjska) - 7.5) < 0.2 && Math.abs(w(PL.medvoska) - 6.4) < 0.2 && Math.abs(w(PL.zbiljska) - 6.2) < 0.3 && Math.abs(w(PL.bridge) - 6.5) < 0.2 && Math.abs(w(PL.smlednik) - 4.8) < 0.2 && Math.abs(w(PL.castle2) - 3.7) < 0.2,
     `average ${(ws / wn).toFixed(2)} m; ` + Object.entries(PL).map(([k, p]) => `${k}: ${w(p).toFixed(2)} m`).join(', '));
   const sf = (p) => T.sf ? T.sf[iAt(p)] : 0, sfs = [PL.lake, PL.smlednik2, PL.castle1, PL.castle2, PL.castle3].map(sf);
   check('surface: gravel (makadam) where OSM has the road unpaved, the castle road from its foot to the end; asphalt before', sfs.join() === '0,0,5,5,5' && def.surf.length === 1 && Math.abs(def.surf[0][0] - dAt(PL.castleFoot)) < 6,
@@ -120,7 +122,7 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
     for (const dir of [1, -1]) { let worst = 0;
       for (let k = 1; k < N - 1; k++) { if (cum[k] < o[0] * cum[N - 1] + 3 || cum[k] > o[1] * cum[N - 1] - 3) continue; let tx = A.P[k * 3 + 3] - A.P[k * 3 - 3], tz = A.P[k * 3 + 4] - A.P[k * 3 - 2]; if (dir < 0) { tx = -tx; tz = -tz; } worst = Math.max(worst, push(A.P[k * 3], A.P[k * 3 + 1], Math.atan2(tz, tx))); }
       if (worst > 0.12) laneBad.push(`lane ${n} ${dir > 0 ? 'along' : 'against'}: ${worst.toFixed(2)} m`); }
-    if (o[0] > 0.15) { const k = Math.round(o[0] * 0.4 * (N - 1)); laneOut.push(push(A.P[k * 3], A.P[k * 3 + 1], 0)); } });
+    if (o[0] > 0.15) { const k = Math.round(o[0] * 0.4 * (N - 1)); if (!inWinT(A.P[k * 3], A.P[k * 3 + 1])) laneOut.push(push(A.P[k * 3], A.P[k * 3 + 1], 0)); } });   // (p10: in a window the user's road, both carriageways, inside the barrier)
   check('lanes: the oncoming lanes (altDn) are road where they run inside the barrier (the run-off), a car drives them both ways; past it they run on behind the barrier (a car there is pushed back)', !laneBad.length && laneOut.every(v => v > 0.5),
     laneBad.length ? laneBad.join(', ') : `${def.altDn.length} lanes, both ways; behind the barrier pushed ${laneOut.map(v => v.toFixed(1)).join(', ')} m`);
   check('one-way: the oncoming traffic\'s own lines round the rings and the split approaches (altDn), each a stretch of the road with a line of points',
@@ -187,7 +189,7 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
     if (P.stuckT > 3 || P.wrongT > 3) { r.rescue(P); resc++; }
     r.cars.forEach((c, j) => { if (c.finished) return; const n = offW(c); if (r.cars.some(o => o !== c && !o.finished && Math.abs(o.q.s - c.q.s) < 6 && Math.abs(o.q.d - c.q.d) < 2.6)) along[j] = t;
       if (n >= 1) off1[j] += DT; if (n >= 2) { off2[j] += DT; if (t - along[j] < 1) offA[j] += DT; }
-      if (offWR(c) >= 2) { offR[j] += DT; if (t - along[j] >= 1) offRS[j] += DT; }
+      if (offWR(c) >= 2) { offR[j] += DT; if (t - along[j] >= 1 && Math.hypot(c.vx, c.vz) > 1) offRS[j] += DT; }   // (p10: a car stopped against the barrier, waiting for its rescue, is not driving there)
       if ((c.hitCar || 0) > 0.3) hitT[j] = t;
       if (ISL.some(o => (c.x - o.R.x) ** 2 + (c.z - o.R.z) ** 2 < o.e * o.e)) { if (!islIn[j]) islIn[j] = t - hitT[j] < 1.5 ? 'knocked' : 'own'; if (islIn[j] === 'own') onIsl[j] += DT; else onIslK[j] += DT; } else islIn[j] = null; });
   }
@@ -196,7 +198,7 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
   const fin = r.cars.filter(c => c.finished).sort((a, b) => a.finishPos - b.finishPos);
   check('race: all 13 cars reach the castle', fin.length === 13, `${fin.length}/13, winner ${fin[0] ? fin[0].finishTime.toFixed(1) : '-'} s, player ${P.finishPos}. (${P.finishTime ? P.finishTime.toFixed(1) : '-'} s), player rescues ${resc}`);
   const jP = r.cars.indexOf(P), most = Math.max(...offR.filter((v, j) => j !== jP)), mostS = Math.max(...offRS.filter((v, j) => j !== jP));
-  check('race: the AI cars keep to the road and the run-off\'s paved parts (Track.roPv): none with two wheels on the run-off\'s grass or gravel (ws 2 / 5, the castle road\'s own makadam aside; a ring\'s tall island is not the run-off) for more than 3 s of its own accord (no car alongside in the last second) in the whole race, 5 s in all with the knocks in the pack',
+  check('race: the AI cars keep to the road and the run-off\'s paved parts (Track.roPv): none with two wheels on the run-off\'s grass or gravel (ws 2 / 5, the castle road\'s own makadam aside; a ring\'s tall island is not the run-off) for more than 3 s of its own accord (no car alongside in the last second, moving) in the whole race, 5 s in all with the knocks in the pack',
     mostS <= 3 && most <= 5, `per car, two wheels on the run-off alone / in all (two wheels anywhere / one): ${r.cars.map((c, j) => `${j === jP ? 'player' : '#' + j} ${offRS[j].toFixed(1)}/${offR[j].toFixed(1)} (${off2[j].toFixed(1)}/${off1[j].toFixed(1)})`).join(', ')} s; the most ${mostS.toFixed(1)} s alone, ${most.toFixed(1)} s in all (the player's autopilot ${offRS[jP].toFixed(1)} / ${offR[jP].toFixed(1)} s); ` +
     `of all the two-wheel time ${(100 * offA.reduce((a, b) => a + b, 0) / Math.max(1e-9, off2.reduce((a, b) => a + b, 0))).toFixed(0)} % with another car alongside`);
   const islMost = Math.max(...onIsl.filter((v, j) => j !== jP)), islMostK = Math.max(...onIslK.filter((v, j) => j !== jP));
@@ -352,9 +354,9 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
     const onPaved = (x, z) => (T.stubs || []).some(S => { if (S.grav) return false; const F = {}; for (let t = 0; t <= S.Lend; t += 0.5) { const p = T.stubPt(S.k, t, F); if (Math.hypot(x - p.x, z - p.z) < (t < S.te ? T.stubHw(S, t) : Math.min(T.stubHw(S, t), S.hw)) + 0.6) return true; } return false; });   // (a gravel road's mouth shared with a paved one: asphalt)
     const sHw = (S, t) => t < S.te ? T.stubHw(S, t) : Math.min(T.stubHw(S, t), S.hw);   // (a kerb return narrower than the raster's 0.5 m cells, the half width jumping by over 1 m within 0.5 m: left out)
     for (const S of T.stubs || []) { const F = {}; for (let t = 0; t <= S.Lend; t += 0.5) { const p = T.stubPt(S.k, t, F), hw = sHw(S, t) - 0.5; if (hw < 0.3 || Math.abs(sHw(S, t + 0.5) - sHw(S, t)) > 1 || (t >= 0.5 && Math.abs(sHw(S, t - 0.5) - sHw(S, t)) > 1)) continue;
-      for (const u of [-hw, 0, hw]) { const x = p.x - p.tz * u, z = p.z + p.tx * u, q = inRun(x, z, T.stubHint(S.k, t)); if (q && !(S.grav && (onLane(x, z) || onPaved(x, z)))) want.push(['side road ' + S.k, q, S.grav ? 5 : 0]); } } }
+      for (const u of [-hw, 0, hw]) { const x = p.x - p.tz * u, z = p.z + p.tx * u; if (inWinT(x, z)) continue; const q = inRun(x, z, T.stubHint(S.k, t)); if (q && !(S.grav && (onLane(x, z) || onPaved(x, z)))) want.push(['side road ' + S.k, q, S.grav ? 5 : 0]); } } }   // (p10: none in a window)
     for (const L of lanes) for (let k = 1; k < L.length; k++) { const a = L[k - 1], b = L[k], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1;
-      for (let f = 0; f < l; f += 1) for (const o of [-(HW - 0.6), 0, HW - 0.6]) { const x = a[0] + dx * f / l - dz / l * o, z = a[1] + dz * f / l + dx / l * o, q = inRun(x, z, T.nearestIdx(x, z)); if (q) want.push(['lane', q, 0]); } }
+      for (let f = 0; f < l; f += 1) for (const o of [-(HW - 0.6), 0, HW - 0.6]) { const x = a[0] + dx * f / l - dz / l * o, z = a[1] + dz * f / l + dx / l * o; if (inWinT(x, z)) continue; const q = inRun(x, z, T.nearestIdx(x, z)); if (q) want.push(['lane', q, 0]); } }
     let nIsl = 0; if (!def.splitIsl) for (const AL of def.altDn || []) { const L = []; for (let k = 0; k + 2 < AL.P.length; k += 3) L.push([AL.P[k], AL.P[k + 1]]); const n = L.length, QS = {};   // (World.buildMedvode's islands: where the lane runs 0.4-10 m off the route's asphalt near a ring)
       const nrm = L.map((p, k) => { const a = L[Math.max(0, k - 1)], b = L[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
       const rows = L.map(([x, z], k) => { if (!(def.rings || []).some(r => Math.hypot(x - r.c[0], z - r.c[1]) < r.r + 45 && Math.hypot(x - r.c[0], z - r.c[1]) > r.r + (r.hw || 2.9) + 0.7)) return null;
@@ -431,12 +433,13 @@ const iAt = (p) => T.nearestIdx(p[0], p[1]), dAt = (p) => iAt(p) * T.ds - T.star
     const dEdgeF = (P, x, z) => { let d = 1e9; for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) { const ax = P[j], az = P[j + 1], dx = P[i] - ax, dz = P[i + 1] - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1e-9))); d = Math.min(d, Math.hypot(x - ax - dx * t, z - az - dz * t)); } return d; };
     for (const F of def.splitIsl) { const Pp = Array.isArray(F) ? F : F.p, m = Pp.length / 2;
       for (let k = 0; k < m; k += 3) { const x = Pp[2 * k], z = Pp[2 * k + 1], j = (k + 1) % m, dx = Pp[2 * j] - x, dz = Pp[2 * j + 1] - z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
-        const ya = T.yAt(T.query(x + nx * 0.5, z + nz * 0.5, T.nearestIdx(x, z), {})), yb = T.yAt(T.query(x - nx * 0.5, z - nz * 0.5, T.nearestIdx(x, z), {})); n++; if (Math.abs(ya - yb) > 0.03) { step++; if (why.length < 3) why.push(`(${x.toFixed(1)}, ${z.toFixed(1)}) ${(ya - yb).toFixed(3)} m`); }
+        const yo = (o) => T.yAt(T.query(x + nx * o, z + nz * o, T.nearestIdx(x, z), {})), ya = yo(0.5), yb = yo(-0.5), sl = (yo(1.5) - yo(-1.5)) / 3;   // (p10: a step, not the ground's own slope: the jump across the outline against the slope either side of it)
+        n++; if (Math.abs(ya - yb - sl) > 0.03) { step++; if (why.length < 3) why.push(`(${x.toFixed(1)}, ${z.toFixed(1)}) ${(ya - yb - sl).toFixed(3)} m`); }
         if (!(wf.route(x, z, 0) || wf.ring(x, z, -1))) pushed++; } }
     const inner = (F) => { const Pp = Array.isArray(F) ? F : F.p; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, best = null, bd = -1; for (let k = 0; k + 1 < Pp.length; k += 2) { x0 = Math.min(x0, Pp[k]); x1 = Math.max(x1, Pp[k]); z0 = Math.min(z0, Pp[k + 1]); z1 = Math.max(z1, Pp[k + 1]); }
       for (let x = x0; x <= x1; x += 0.25) for (let z = z0; z <= z1; z += 0.25) { if (!inPolyF(Pp, x, z)) continue; const d = dEdgeF(Pp, x, z); if (d > bd) { bd = d; best = [x, z]; } } return best; };   // (the point deepest inside it)
     for (const F of def.splitIsl) { const pI = inner(F); if (pI && T.surface(T.query(pI[0], pI[1], T.nearestIdx(pI[0], pI[1]), {})) === 2) grass++; }
-    check('islands: the other islands (def.splitIsl: splitter islands, corner lenses, medians) are grass flush with the ground the cars drive on: no step across their outline (Track.yAt within 3 cm over a metre), inside the cars\' free ground (no barrier on them), grass at the point deepest inside each (Track.surface 2)',
+    check('islands: the other islands (def.splitIsl: splitter islands, corner lenses, medians) are grass flush with the ground the cars drive on: no step across their outline (Track.yAt within 3 cm over a metre, past the ground\'s own slope), inside the cars\' free ground (no barrier on them), grass at the point deepest inside each (Track.surface 2)',
       n > 20 && step === 0 && pushed === 0 && grass === def.splitIsl.length, `${def.splitIsl.length} islands: ${step} steps of ${n} points round them${why.length ? ' (' + why.join('; ') + ')' : ''}, ${pushed} outside the free ground, grass in ${grass} of them`); }
   else check('islands: the other islands are World\'s own between the lanes and the route (this track file has no def.splitIsl): as before', !def.splitIsl);
 }

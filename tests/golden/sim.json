@@ -3724,25 +3724,25 @@
   }
  },
  "medvode/race/cs": {
-  "digest": "e26ca8a28c2003ab0212936f",
-  "lead": 2186.2,
+  "digest": "e5dad9c6ae879fd41fe5a29b",
+  "lead": 2103.5,
   "car0": [
-   204.65,
-   -1585.97
+   138.58,
+   -1273.74
   ],
   "cover": {
-   "dmg": 0.03,
-   "loose": 14,
+   "dmg": 0.88,
+   "loose": 5,
    "rescues": 0,
    "repairs": 0
   }
  },
  "medvode/demo/cs": {
-  "digest": "75fcd394da008edc10b4151c",
-  "lead": 2270.1,
+  "digest": "9c53d6244f1dbf7d3c5e0fdd",
+  "lead": 2230.4,
   "car0": [
-   213.92,
-   -1691.33
+   217.72,
+   -1682.5
   ],
   "cover": {
    "dmg": 0,
@@ -3752,11 +3752,11 @@
   }
  },
  "medvode/upg/cs": {
-  "digest": "aab9e6af317de653172095e3",
-  "lead": 2288.9,
+  "digest": "ec4dc8e709499f2f5edde20c",
+  "lead": 2243.2,
   "car0": [
-   260.66,
-   -1715.38
+   211.72,
+   -1693.09
   ],
   "cover": {
    "dmg": 0,
@@ -3766,39 +3766,25 @@
   }
  },
  "medvode/crash/cs": {
-  "digest": "94a5e80248e2e315f6e9f477",
-  "lead": 2165.8,
+  "digest": "bc8ea56b23414d8af214ce64",
+  "lead": 2089.2,
   "car0": [
-   146.44,
-   -1341.27
+   140.42,
+   -1294.8
   ],
   "cover": {
-   "dmg": 0.81,
+   "dmg": 0.75,
    "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "medvode/formula/cs": {
-  "digest": "d8c5f664f5cd6005e34b02b8",
-  "lead": 2488.5,
+  "digest": "69907b48d2ebbb8902fa5dac",
+  "lead": 2320.3,
   "car0": [
-   221.58,
-   -1661.66
-  ],
-  "cover": {
-   "dmg": 0.96,
-   "loose": 13,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "medvode/lm/cs": {
-  "digest": "e51a97a1910bdb4085e8d3bd",
-  "lead": 2421.2,
-  "car0": [
-   234.3,
-   -1709.81
+   223.69,
+   -1718.46
   ],
   "cover": {
    "dmg": 1,
@@ -3807,16 +3793,30 @@
    "repairs": 0
   }
  },
- "medvode/car/cs": {
-  "digest": "9aada41552029fbe6c5f9e07",
-  "lead": 2158.2,
+ "medvode/lm/cs": {
+  "digest": "6b5f8ea8c37a5ff3aef88ce8",
+  "lead": 2293.3,
   "car0": [
-   149.55,
-   -1181.03
+   217.97,
+   -1675.32
   ],
   "cover": {
    "dmg": 1,
    "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "medvode/car/cs": {
+  "digest": "2e7bbc5ccd6131ae2024f862",
+  "lead": 2084.5,
+  "car0": [
+   151.71,
+   -1113.56
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 6,
    "rescues": 0,
    "repairs": 0
   }

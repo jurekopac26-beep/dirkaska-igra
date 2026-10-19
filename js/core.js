@@ -657,7 +657,7 @@ const Core = (function () {
     // barrier or rings moved) is left out: the run-off as without it
     _buildRunoff(R) {
       const N = this.N; this._roM = null; this._roPv = null; if (!R || R.N !== N || !R.rle || R.hash !== this._roHash()) return;
-      const per = R.per, nd = R.nd, cell = R.cell, C = (N - 1) * per + 1, ST = 512, nS = Math.ceil((N - 1) / ST), mL = 2, rings = R.rings || [];
+      const per = R.per, nd = R.nd, cell = R.cell, C = (N - 1) * per + 1, ST = 512, nS = Math.ceil((N - 1) / ST), mL = 2, rings = R.rings || [], TS = Math.max(128, ...rings.map(g => (g.n | 0) + 2));   // (TS: a ring's tile in the atlas, its n + 2 texels square (a wider zone: more))
       const ext = (s, n) => { const out = new Uint8Array(n); let k = 0, v = 0, m = 1;   // (the run-length code -> n classes)
         for (let i = 0; i < s.length && k < n; i++) { const q = RO_DIG[s.charCodeAt(i) & 127]; v += (q & 31) * m; m *= 32; if (q & 32) continue;
           const len = Math.floor(v / 4) + 1; out.fill(v % 4, k, Math.min(n, k + len)); k += len; v = 0; m = 1; }
@@ -672,13 +672,13 @@ const Core = (function () {
         for (let y = 0; y < h; y++) { const r0 = y * w4, up = y > 0 ? -w4 : 0, dn = y < h - 1 ? w4 : 0;
           for (let k = r0; k < r0 + w4; k++) A[k] = (B[k + up] + 2 * B[k] + B[k + dn] + 2) >> 2; }
         return A; };
-      const RT = blur(ext(R.rle, nd * C), C, nd), W = Math.ceil(Math.max(mL * 2 + ST * per + 1, rings.length * 128) / 8) * 8, RS = nd + 2, H = RS * nS + (rings.length ? 128 : 0), D = new Uint8Array(W * H * 4), SW = mL * 2 + ST * per + 1;
+      const RT = blur(ext(R.rle, nd * C), C, nd), W = Math.ceil(Math.max(mL * 2 + ST * per + 1, rings.length * TS) / 8) * 8, RS = nd + 2, H = RS * nS + (rings.length ? TS : 0), D = new Uint8Array(W * H * 4), SW = mL * 2 + ST * per + 1;
       for (let k = 0; k < nS; k++) for (let y = 0; y < RS; y++) { const b = clamp(y - 1, 0, nd - 1), c0 = k * ST * per - mL, t0 = (RS * k + y) * W * 4, a = Math.max(0, -c0), e = Math.min(SW, C - c0);   // (columns c0 .. c0 + SW - 1 of row b, clamped at the road's ends)
         D.set(RT.subarray((b * C + c0 + a) * 4, (b * C + c0 + e) * 4), t0 + a * 4);
         for (let x = 0; x < SW; x++) if (x < a || x >= e) { const s = (b * C + clamp(c0 + x, 0, C - 1)) * 4, t = t0 + x * 4; D[t] = RT[s]; D[t + 1] = RT[s + 1]; D[t + 2] = RT[s + 2]; D[t + 3] = RT[s + 3]; } }
       const M = this._roM = { W, H, data: D, per, strip: ST, mL, nd, rs: RS, cell, nS, rings: [] };
-      rings.forEach((g, r) => { const TR = this.rings.find(Q => Math.hypot(Q.x - g.x, Q.z - g.z) < 0.5), n = g.n; if (!TR || !(TR.zr > 0) || n + 2 > 128) return;
-        const A = blur(ext(g.rle, n * n), n, n), x0 = 128 * r, y0 = RS * nS;
+      rings.forEach((g, r) => { const TR = this.rings.find(Q => Math.hypot(Q.x - g.x, Q.z - g.z) < 0.5), n = g.n; if (!TR || !(TR.zr > 0) || n + 2 > TS) return;
+        const A = blur(ext(g.rle, n * n), n, n), x0 = TS * r, y0 = RS * nS;
         for (let y = 0; y < n + 2; y++) for (let x = 0; x < n + 2; x++) { const s = (clamp(y - 1, 0, n - 1) * n + clamp(x - 1, 0, n - 1)) * 4, t = ((y0 + y) * W + x0 + x) * 4; D[t] = A[s]; D[t + 1] = A[s + 1]; D[t + 2] = A[s + 2]; D[t + 3] = A[s + 3]; }
         M.rings.push({ x: g.x, z: g.z, zr: TR.zr, fx0: x0 + 1 + (n - 1) / 2, fy0: y0 + 1 + (n - 1) / 2 }); });
       // the paved run-off out from each edge (stepping 0.25 m along the sample's normal: its row of the run-off), then the least over 6 m either way (a
