@@ -82,8 +82,10 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
-  function wheelInto(g, cx, cy, cz, r, wd, tire, rim) {
+  // (band: the compound's band on the sidewalls (tyreBand), the outer one only for a wheel in the body (cz off the car's middle), else both)
+  function wheelInto(g, cx, cy, cz, r, wd, tire, rim, band) {
     const S = 12, inn = [cx, cy, cz];
+    if (band != null) for (const sd of [-1, 1]) if (!cz || sd === Math.sign(cz)) bandInto(g, cx, cy, cz + sd * wd / 2, sd, r * 0.76, r * 0.92, S, band);
     const dark = [rim[0] * 0.38, rim[1] * 0.38, rim[2] * 0.4], hub = [0.15, 0.15, 0.17], lip = rim.map(v => Math.min(1, v * 1.15));
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
@@ -137,7 +139,7 @@ const Render = (function () {
   const geoCache = new Map();
   /* white body with a painted diagonal livery (colour = stripe colour), black engine vents,
      big wing, roof scoop, mud flaps and white rally wheels */
-  function rallyGeometry(M, color) {
+  function rallyGeometry(M, color, band) {
     const def = BODIES.rally, sx = M.len / def.len, sz = M.wid / def.wid;
     const W = [0.95, 0.95, 0.96], K = [0.07, 0.07, 0.08], GLASS = [0.04, 0.05, 0.08];
     let B = colArr(color); if (B[0] * 0.3 + B[1] * 0.59 + B[2] * 0.11 > 0.78) B = [0.1, 0.26, 0.74];
@@ -235,7 +237,7 @@ const Render = (function () {
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]);
+      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band);
       for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
     }
     return g.geometry();
@@ -390,11 +392,28 @@ const Render = (function () {
     fRod(g, [-0.3, 0.1, 0], [-0.78, 0.04, 0], 0.07, [0.62, 0.6, 0.56]);
     const geo = g.geometry(); geo.translate(0, 0.012, 0); return geo;
   }
-  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft, yellow medium, white hard (Core.TYRE_CMP), green
-  // on the rain tyres), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles,
-  // a phone draws 52 of them)
-  const fWheelCache = new Map(), F_WET = 0x1fa83d, F_SOFT = 0xe02119;
+  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft, yellow medium, white hard (Core.TYRE_CMP), blue
+  // on the rain tyres, as the HUD's tyre label), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12
+  // sides: ~200 triangles, a phone draws 52 of them)
+  const fWheelCache = new Map(), F_WET = 0x2b86e6, F_SOFT = 0xe02119;
   const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : c.wet < 0.9 ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, else softs)
+  // every other car's tyres carry the same band in a race with compounds (c.ty with a compound, or rain tyres); null: none, the tyres as
+  // they always were (no compounds, the showroom, a ghost). The band is in the wheels' own geometry (its variant with the band, cached like
+  // the rest: no draw call more); a pit stop's new set shows once the car is built afresh at its end (Race.repairCar: frame)
+  const tyreBand = (c) => c && c.ty && (c.ty.k === 'wet' || c.ty.c) ? tyreCol(c) : null;
+  // the set a car gets at its next stop, as the core fits it (Race, the stop's end: rain tyres for a wet line, else the compound asked for
+  // or the one for what is left of the race): its band, null without one (the player's crew holds it ready; the wheels they push home)
+  function nextBand(c) {
+    const R = curRace, W = R && R.wst; if (!c || !c.ty || !W) return null;
+    if (Core.tyreFor(W.line) === 'wet') return F_WET;
+    return c.ty.c ? Core.TYRE_CMP[c.isPlayer && Core.TYRE_CMP[c.pitCmp] ? c.pitCmp : Core.cmpFor(R.laps * R.track.len - c.dist)].col : null;
+  }
+  // the band on a tyre's wall facing sd (the axle along z through cx, cy; the wall's face at z): a ring from r0 to r1 in n segments 3 mm
+  // proud of it, quads of its own (the wall under it as ever)
+  function bandInto(g, cx, cy, z, sd, r0, r1, n, col) {
+    const B = colArr(col), p = (a, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, z + sd * 0.003], out = [cx, cy, z - sd * 5];
+    for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2; g.quadO(p(a0, r1), p(a0, r0), p(a1, r0), p(a1, r1), B, out); }
+  }
   function fWheelGeo(r, wd, col) {
     const key = r + '|' + wd + '|' + col; if (fWheelCache.has(key)) return fWheelCache.get(key);
     const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = colArr(col), RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
@@ -463,7 +482,7 @@ const Render = (function () {
   // ---- VIHAR V8: a 1970 fastback. A long bonnet with a scoop, the fastback's louvred rear window, a ducktail; twin racing stripes from the
   // nose to the tail (black on light paint, white on dark), round lamps in a black grille, three-part tail lamps (the tail mesh), chrome
   // bumpers (the bumper parts, chrome: model.chrome), twin exhausts under the rear one; chrome five-spoke wheels, wider at the back
-  function muscleGeometry(M, color, stripe) {
+  function muscleGeometry(M, color, stripe, band) {
     const def = BODIES.muscle, secs = secsOf(def, M), g = new GB(), D = decalKit(g, secs);
     const P = colArr(color), L = P[0] * 0.3 + P[1] * 0.59 + P[2] * 0.11, S = L > 0.55 ? [0.07, 0.07, 0.08] : [0.95, 0.95, 0.93];   // the stripes
     const K = [0.06, 0.06, 0.07], CH = [0.82, 0.83, 0.86], skirt = P.map(v => v * 0.55), front = secs[secs.length - 1], rear = secs[0];
@@ -494,16 +513,16 @@ const Render = (function () {
     discX(g, rear.x - 0.035, 0.7, 0, 0.06, 10, CH, -1);
     for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) muscleWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3);   // (the rear wheels in the body; the fronts are meshes of their own)
+    for (const sd of [-1, 1]) muscleWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);   // (the rear wheels in the body; the fronts are meshes of their own)
     return g.geometry();
   }
-  function muscleWheelInto(g, cx, cy, cz, r, wd) { wheelInto(g, cx, cy, cz, r, wd, [0.07, 0.07, 0.08], [0.8, 0.81, 0.84]); }
+  function muscleWheelInto(g, cx, cy, cz, r, wd, band) { wheelInto(g, cx, cy, cz, r, wd, [0.07, 0.07, 0.08], [0.8, 0.81, 0.84], band); }
 
   // ---- STRELA EV: an electric hypercar. A glass canopy with black roof rails and painted pillars, the lower body in carbon with a cyan
   // line along the sills, air intakes behind the doors, vents in the bonnet; a light bar across the nose and the tail (the tail mesh), a
   // splitter and a diffuser; aero wheels with cyan blades
   const EV_CYAN = [0.12, 0.78, 0.95];
-  function evGeometry(M, color) {
+  function evGeometry(M, color, stripe, band) {
     const def = BODIES.ev, secs = secsOf(def, M), g = new GB(), D = decalKit(g, secs);
     const P = colArr(color), K = [0.05, 0.05, 0.06], CF = [0.1, 0.1, 0.11], W = [0.95, 0.97, 1.0], front = secs[secs.length - 1], rear = secs[0];
     shellInto(g, secs, (k, e, kind) => e === 0 || e === 8 ? CF : kind !== 'b' && e >= 2 && e <= 6 ? GLASS : P, P, P);
@@ -528,12 +547,13 @@ const Render = (function () {
     World.box(g, rear.x + 0.14, 0.19, 0, 0.34, 0.1, 1.5, 0, CF);
     for (let i = -2; i <= 2; i++) World.box(g, rear.x + 0.12, 0.13, i * 0.3, 0.3, 0.2, 0.025, 0, K);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) aeroWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3);
+    for (const sd of [-1, 1]) aeroWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);
     return g.geometry();
   }
   // the electric car's wheel: a low tyre, a silver rim lip, a dark aero disc with five swept cyan blades (the spin shows), a centre lock
-  function aeroWheelInto(g, cx, cy, cz, r, wd) {
+  function aeroWheelInto(g, cx, cy, cz, r, wd, band) {
     const S = 14, T = [0.07, 0.07, 0.08], LIP = [0.66, 0.67, 0.7], DK = [0.15, 0.16, 0.18], h = wd / 2;
+    if (band != null) for (const sd of [-1, 1]) if (!cz || sd === Math.sign(cz)) bandInto(g, cx, cy, cz + sd * h, sd, r * 0.84, r * 0.95, S, band);   // (the low wall's band: wheelInto)
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
@@ -558,7 +578,7 @@ const Render = (function () {
   // ---- SAMUM 4x4: a trophy truck. Black flares over the big wheels, a livery slash in the second colour down the side, a black bed liner
   // with a spare tyre lying in it under a tube cage from the roof to the tail, a light bar on the roof, a snorkel up the A-pillar, a skid
   // plate, the coil-overs to be seen in the wheel arches
-  function truckGeometry(M, color, stripe) {
+  function truckGeometry(M, color, stripe, band) {
     const def = BODIES.truck, secs = secsOf(def, M), g = new GB(), D = decalKit(g, secs);
     const P = colArr(color), S = stripe ? stripeFor(color) : P.map(v => v * 0.7), K = [0.06, 0.06, 0.065], K2 = [0.13, 0.13, 0.14], LN = [0.17, 0.17, 0.18];
     const front = secs[secs.length - 1], rear = secs[0], r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98, hz = M.wid * 0.5 - def.wz;
@@ -584,7 +604,7 @@ const Render = (function () {
       fRod(g, [x + 0.08, r + 0.1, sd * (hz - 0.2)], [x - 0.1, 1.08, sd * 0.7], 0.07, [0.74, 0.74, 0.77]);
       fRod(g, [x + 0.05, r + 0.3, sd * (hz - 0.23)], [x - 0.05, 0.86, sd * 0.74], 0.1, S);   // (its spring)
     }
-    for (const sd of [-1, 1]) knobWheelInto(g, rx, r, sd * hz, r, 0.36);
+    for (const sd of [-1, 1]) knobWheelInto(g, rx, r, sd * hz, r, 0.36, null, band);
     // the bed: the spare lying in it, the cage from the roof down to the tail; the light bar on the roof; the snorkel
     knobWheelInto(g, -1.72, 1.24 + 0.17, 0, 0.44, 0.34, 'y');
     const cg = [0.1, 0.1, 0.11];
@@ -612,8 +632,9 @@ const Render = (function () {
   }
   // the truck's wheel: a big knobbly tyre (the tread's blocks stand proud in turn, the shoulders stepped with them), a tall sidewall, a
   // silver beadlock ring round a small dark rim; the axle along z (a wheel on the car) or y (the spare lying in the bed)
-  function knobWheelInto(g, cx, cy, cz, r, wd, ax) {
+  function knobWheelInto(g, cx, cy, cz, r, wd, ax, band) {
     const S = 16, T = [0.08, 0.08, 0.085], T2 = [0.13, 0.13, 0.135], RIM = [0.16, 0.16, 0.17], BL = [0.74, 0.75, 0.78], h = wd / 2;
+    if (band != null && ax !== 'y') for (const sd of [-1, 1]) if (!cz || sd === Math.sign(cz)) bandInto(g, cx, cy, cz + sd * (h - 0.015), sd, r * 0.64, r * 0.77, S, band);   // (on the tall recessed wall: wheelInto)
     const W = ax === 'y' ? (u, v, w) => [cx + u, cy + w, cz + v] : (u, v, w) => [cx + u, cy + v, cz + w];   // (u, v across the wheel, w along its axle)
     const p = (a, w, rr) => W(Math.cos(a) * rr, Math.sin(a) * rr, w), C = W(0, 0, 0), out = (sd) => W(0, 0, -sd * 5);
     for (let i = 0; i < S; i++) {
@@ -734,15 +755,15 @@ const Render = (function () {
   // the new section-loft bodies: shape (the body mesh), wheel (a front wheel at the origin, radius r: its own mesh, it steers), tail (the tail
   // lamps: the mesh that lights up under braking)
   const NEW_BODY = {
-    muscle: { shape: muscleGeometry, wheel: (g, r) => muscleWheelInto(g, 0, 0, 0, r, 0.25),
+    muscle: { shape: muscleGeometry, wheel: (g, r, band) => muscleWheelInto(g, 0, 0, 0, r, 0.25, band),
       tail: (g, M) => { const x = BODIES.muscle.secs[0][0] * (M.len / BODIES.muscle.len) - 0.035; for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) World.box(g, x, 0.645, sd * (0.22 + i * 0.19), 0.03, 0.12, 0.16, 0, [1, 1, 1]); } },
-    ev: { shape: evGeometry, wheel: (g, r) => aeroWheelInto(g, 0, 0, 0, r, 0.27),
+    ev: { shape: evGeometry, wheel: (g, r, band) => aeroWheelInto(g, 0, 0, 0, r, 0.27, band),
       tail: (g, M) => { const d = BODIES.ev, x = d.secs[0][0] * (M.len / d.len) - 0.03; World.box(g, x, 0.695, 0, 0.03, 0.034, 1.66 * (M.wid / d.wid), 0, [1, 1, 1]); } },
-    truck: { shape: truckGeometry, wheel: (g, r) => knobWheelInto(g, 0, 0, 0, r, 0.36),
+    truck: { shape: truckGeometry, wheel: (g, r, band) => knobWheelInto(g, 0, 0, 0, r, 0.36, null, band),
       tail: (g, M) => { const d = BODIES.truck, x = d.secs[0][0] * (M.len / d.len) - 0.03; for (const sd of [-1, 1]) World.box(g, x, 0.95, sd * 0.85 * (M.wid / d.wid), 0.02, 0.17, 0.11, 0, [1, 1, 1]); } },
   };
   const newWheelCache = new Map();
-  function newWheelGeo(M) { const key = M.id + '|' + M.rw; if (!newWheelCache.has(key)) { const g = new GB(); NEW_BODY[M.body].wheel(g, M.rw); newWheelCache.set(key, g.geometry()); } return newWheelCache.get(key); }
+  function newWheelGeo(M, band) { const key = M.id + '|' + M.rw + (band != null ? '|' + band : ''); if (!newWheelCache.has(key)) { const g = new GB(); NEW_BODY[M.body].wheel(g, M.rw, band); newWheelCache.set(key, g.geometry()); } return newWheelCache.get(key); }   // (band: tyreBand)
 
   /* =====================================================================================================================================
      KIT API v1 (frozen; additions only, by a kit patch) — how a registered vehicle (js/cars/<id>.js) is drawn and breaks apart
@@ -1593,8 +1614,9 @@ const Render = (function () {
   }
 
   // ---- the wheels (3.5): fixtures for every style, at the origin, the axle along z, the outer face towards +z (a left wheel's mesh is mirrored:
-  // scale.z = -1). hi: the player's and the showroom's (<= 400 triangles), else a rival's (<= 160) ----
-  function kitWheelGeo(W, r, wd, hi, dual) {
+  // scale.z = -1). hi: the player's and the showroom's (<= 400 triangles), else a rival's (<= 160); band: the compound's band on the outer
+  // wall (tyreBand: a ring of its own, 2 S triangles more; a round tyre's (seg) on its outer shoulder, none more) ----
+  function kitWheelGeo(W, r, wd, hi, dual, band) {
     const g = new GB(), st = W.style, TY = W.tyre || [0.065, 0.065, 0.07], TY2 = [Math.min(1, TY[0] * 1.9 + 0.03), Math.min(1, TY[1] * 1.9 + 0.03), Math.min(1, TY[2] * 1.9 + 0.03)];
     const RIM = W.rim || ({ std: [0.62, 0.63, 0.66], deep: [0.74, 0.75, 0.78], wire: [0.8, 0.81, 0.84], retro: [0.84, 0.85, 0.88], knob: [0.56, 0.57, 0.6], truck: [0.86, 0.86, 0.84], monster: [0.7, 0.71, 0.74], slick: [0.22, 0.22, 0.24], kart: [0.78, 0.66, 0.3] })[st];
     const DK = [RIM[0] * 0.3 + 0.02, RIM[1] * 0.3 + 0.02, RIM[2] * 0.3 + 0.025], CAP = W.cap || [Math.min(1, RIM[0] * 1.15), Math.min(1, RIM[1] * 1.15), Math.min(1, RIM[2] * 1.15)];
@@ -1632,6 +1654,7 @@ const Render = (function () {
         // segments; the rim's lip from its round edge (N) to the barrel (S), the inner wall from the tread (N) to the rim (S): kq + 1
         // triangles a segment. No inner shoulder (it faces the car)
         const nr = (a, k) => { const l = Math.hypot(1, k); return [Math.cos(a) / l, Math.sin(a) / l, k / l]; }, ro = r * 0.955;   // (k: the normal's lean out of the face)
+        const SHC = band != null ? colArr(band) : TY;   // (the compound's band: the outer shoulder in its colour, no triangle more: a ring on the wall would take this wheel past 400)
         const fan = (zA, rA, zB, rB, col, ins) => { for (let j = 0; j < S; j++) {
           const I0 = p(j / S * TAU, zB, rB), I1 = p((j + 1) / S * TAU, zB, rB), O = (m) => p((j * kq + m) / N * TAU, zA, rA), h = kq >> 1;
           for (let m = 0; m < kq; m++) g.triO(m < h ? I0 : I1, O(m), O(m + 1), col, ins);
@@ -1639,7 +1662,7 @@ const Render = (function () {
         for (let i = 0; i < N; i++) {
           const a0 = i / N * TAU, a1 = (i + 1) / N * TAU;
           g.quadON(p(a0, zi, r), p(a0, zo - sh, r), p(a1, zo - sh, r), p(a1, zi, r), nr(a0, 0), nr(a0, 0), nr(a1, 0), nr(a1, 0), [0, 0, zc], TY, TY, TY, TY);   // the tread
-          g.quadON(p(a0, zo - sh, r), p(a0, zo, ro), p(a1, zo, ro), p(a1, zo - sh, r), nr(a0, 0), nr(a0, 2.5), nr(a1, 2.5), nr(a1, 0), [0, 0, zc], TY, TY, TY, TY);   // the shoulder
+          g.quadON(p(a0, zo - sh, r), p(a0, zo, ro), p(a1, zo, ro), p(a1, zo - sh, r), nr(a0, 0), nr(a0, 2.5), nr(a1, 2.5), nr(a1, 0), [0, 0, zc], SHC, SHC, SHC, SHC);   // the shoulder (with a band: in its colour)
           if (st === 'retro') { const rw = r * 0.82; g.quadO(p(a0, zo, ro), p(a0, zo, rw), p(a1, zo, rw), p(a1, zo, ro), TY, out); g.quadO(p(a0, zo + 0.002, rw), p(a0, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rw), WALL, out); }
           else g.quadO(p(a0, zo, ro), p(a0, zo, rr * 1.06), p(a1, zo, rr * 1.06), p(a1, zo, ro), TY, out);   // the outer wall
         }
@@ -1647,6 +1670,7 @@ const Render = (function () {
         fan(zi, r, zi, rr, TY, inn);   // the inner wall
       }
       if (!outer) return;
+      if (band != null && !round) { const rb = st === 'retro' ? r * 0.82 : rr * 1.06, ro = sh ? r * 0.955 : knob ? r * 0.93 : r; bandInto(g, 0, 0, zo, 1, rb + (ro - rb) * 0.3, rb + (ro - rb) * 0.78, S, band); }   // (on the black of the wall: a white wall's outside it; the round tyre's: its shoulder, above)
       // (a detail at radius q, height z: a rival's lies just over its cone, never under it)
       const L = (q, z) => full || z >= zo ? z : Math.max(z, zf(q) + 0.004);
       const top = full ? zo + 0.002 : zo + 0.006, spokeQ = (a, w, r0, r1, col, z0, z1) => { const c = Math.cos(a), s = Math.sin(a), ox = -s * w, oy = c * w; z0 = L(r0, z0); z1 = L(r1, z1);
@@ -2036,10 +2060,10 @@ const Render = (function () {
     kitCache.set(M.id, E); return E;
   }
   // the four wheels' geometry (hi: the player's / the showroom's detail, else a rival's), front and rear (the rear may be twins)
-  function kitWheels(E, hi) {
-    const key = E.M.id + (E.hi ? '|H' : '') + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
+  function kitWheels(E, hi, band) {   // (band: the compound's band, tyreBand)
+    const key = E.M.id + (E.hi ? '|H' : '') + (hi ? '|hi' : '|lo') + (band != null ? '|' + band : ''); let w = kitWheelCache.get(key); if (w) return w;
     const W = E.W, r = E.M.rw;
-    w = { f: kitWheelGeo(W, r, W.w, hi, false), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual) };
+    w = { f: kitWheelGeo(W, r, W.w, hi, false, band), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual, band) };
     kitWheelCache.set(key, w); return w;
   }
   // a car's own copy of its model's body in its colours (the paint and the stripe vertices; drawRange: the outer block, as an intact car)
@@ -2221,13 +2245,14 @@ const Render = (function () {
       let k = 0.8 + 0.2 * Core.sstep(0.12, 0.62, P[o + 1]); if (N[o + 1] < -0.3) k *= 0.78; ao[i] = k; }
     return (U.ao = ao);
   }
-  function carGeometry(bodyKey, M, color, stripe) {
-    const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe;
+  function carGeometry(bodyKey, M, color, stripe, band) {   // (band: the compound's band on the rear wheels in the body, tyreBand: a body of its own)
+    if (bodyKey === 'formula' || bodyKey === 'lm') band = null;   // (their wheels are all separate)
+    const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe + (band != null ? '|' + band : '');
     if (geoCache.has(key)) return geoCache.get(key);
     const done = (geo) => { carAO(geo); geoCache.set(key, geo); return geo; };
-    if (bodyKey === 'rally') return done(smoothNormals(rallyGeometry(M, color), 38));
+    if (bodyKey === 'rally') return done(smoothNormals(rallyGeometry(M, color, band), 38));
     if (bodyKey === 'formula') return done(smoothNormals(formulaGeometry(M, color), 38));
-    if (NEW_BODY[bodyKey]) return done(smoothNormals(NEW_BODY[bodyKey].shape(M, color, stripe), 38));
+    if (NEW_BODY[bodyKey]) return done(smoothNormals(NEW_BODY[bodyKey].shape(M, color, stripe, band), 38));
     if (bodyKey === 'lm') return done(smoothNormals(lmGeometry(M, color), 38));
     const def = BODIES[bodyKey];
     const sx = M.len / def.len, sz = M.wid / def.wid;
@@ -2272,12 +2297,16 @@ const Render = (function () {
     }
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
+    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band);
     return done(smoothNormals(g.geometry(), 38));
   }
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
-  function getWheelGeo(white) {
+  const bandWheelCache = new Map();   // (the stock front wheels with a compound's band: tyreBand)
+  function getWheelGeo(white, band) {
+    if (band != null) { const key = (white ? 'w|' : 's|') + band; let geo = bandWheelCache.get(key);
+      if (!geo) { const g = new GB(); if (white) wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band); else wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band); bandWheelCache.set(key, geo = g.geometry()); }
+      return geo; }
     if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]); wheelGeoW = g.geometry(); } return wheelGeoW; }
     if (wheelGeo) return wheelGeo;
     const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]); wheelGeo = g.geometry(); return wheelGeo;
@@ -2535,7 +2564,8 @@ const Render = (function () {
     const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat(!!(opts && opts.xcut));
     const KE = M.kit ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show))) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
     const xd = opts && opts.xd || 0;   // (Razbijanje · nov način: the body dense, xDense)
-    const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false), xd) : carGeometry(M.body, M, car.color, car.stripe !== false), bodyMat);
+    const band = opts && opts.show ? null : tyreBand(car);   // (the compound's band on the tyres: the wheels' variants with it, the stock rear wheels' body)
+    const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false, band), xd) : carGeometry(M.body, M, car.color, car.stripe !== false, band), bodyMat);
     body.castShadow = true; body.receiveShadow = false; bodyG.add(body);
     const tail = new THREE.Mesh(KE ? KE.tail : tailGeo(M.body, M), matTailOff); bodyG.add(tail);
     const def = BODIES[M.body];
@@ -2556,29 +2586,31 @@ const Render = (function () {
     }
     const wf = [], wr = [];
     const fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
-    let fp = null;
+    let fp = null, bandGeo;   // (bandGeo(col): the separate wheels' geometry, front and rear, with that band: the new set the crew pushes home, crewTyres)
     if (M.body === 'formula') {
-      fp = fPartMeshes(car, bodyG);
+      fp = fPartMeshes(car, bodyG); bandGeo = (col) => ({ f: fWheelGeo(F_HUB.fr, F_HUB.fw, col != null ? col : F_SOFT), r: fWheelGeo(F_HUB.rr, F_HUB.rw, col != null ? col : F_SOFT) });
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
         const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;   // (a field of 13: the rivals' wheels cast none)
         grp.add(f, r); wf.push(f); wr.push(r);
       }
     } else if (M.body === 'lm') {
-      fp = lmPartMeshes(car, bodyG);
+      fp = lmPartMeshes(car, bodyG); bandGeo = (col) => ({ f: lmWheelGeo(LM_HUB.fr, LM_HUB.fw, col != null ? col : F_SOFT), r: lmWheelGeo(LM_HUB.rr, LM_HUB.rw, col != null ? col : F_SOFT) });
       for (const sd of [-1, 1]) {   // all four wheels separate, as the formula's (under the pontoons' humps)
         const f = new THREE.Mesh(lmWheelGeo(LM_HUB.fr, LM_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(lmWheelGeo(LM_HUB.rr, LM_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, LM_HUB.fr, sd * LM_HUB.fz); r.position.set(-M.b, LM_HUB.rr, sd * LM_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;
         grp.add(f, r); wf.push(f); wr.push(r);
       }
     } else if (KE) {
-      const hi = !!car.isPlayer || !!(opts && opts.show), W = kitWheels(KE, hi);   // (the kit: four wheels on their hubs, exactly where the physics has them; the left ones mirrored, their face out)
+      const hi = !!car.isPlayer || !!(opts && opts.show), W = kitWheels(KE, hi, band);   // (the kit: four wheels on their hubs, exactly where the physics has them; the left ones mirrored, their face out)
+      bandGeo = (col) => kitWheels(KE, hi, col);
       for (const sd of [-1, 1]) {
         const f = new THREE.Mesh(W.f, matWheel), r = new THREE.Mesh(W.r, matWheel);
         f.position.set(M.a, M.rw, sd * KE.body.hw); r.position.set(-M.b, M.rw, sd * KE.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1;
         f.castShadow = r.castShadow = !!car.isPlayer; grp.add(f, r); wf.push(f); wr.push(r);
       }
-    } else for (const sd of [-1, 1]) { const w = new THREE.Mesh(NEW_BODY[M.body] ? newWheelGeo(M) : getWheelGeo(M.body === 'rally'), matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - (def.wz != null ? def.wz : 0.1))); grp.add(w); wf.push(w); }
+    } else { bandGeo = (col) => { const w = NEW_BODY[M.body] ? newWheelGeo(M, col) : getWheelGeo(M.body === 'rally', col); return { f: w, r: w }; };   // (the rear wheels are in the body)
+      for (const sd of [-1, 1]) { const w = new THREE.Mesh(bandGeo(band).f, matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - (def.wz != null ? def.wz : 0.1))); grp.add(w); wf.push(w); } }
     let blob = null;
     if (!opts || !opts.noBlob) {
       blob = new THREE.Mesh(new THREE.PlaneGeometry(M.len * 1.25, M.wid * 1.45), matBlob);
@@ -2600,7 +2632,7 @@ const Render = (function () {
     // (the kit: its ranges (immutable, shared), this car's own state: dead (parts off), deadV (their vertices: dents and the roof's crush
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
     const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
-    return { grp, bodyG, body, tail, dec, wf, wr, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
+    return { grp, bodyG, body, tail, dec, wf, wr, fp, band: fp ? tyreCol(car) : band, bandGeo, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
       dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
 
@@ -4073,7 +4105,7 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
+    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values()]);
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
@@ -4744,9 +4776,9 @@ const Render = (function () {
       skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
     gunMen.forEach((m, i) => { m.gunI = i; M.gun.setColorAt(i, m.team); });
     const tyres = [];
-    if (roles) { const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
+    if (roles) {   // new set: yellow bands, the old ones: red (a race with compounds: theirs, crewTyres)
       for (let k = 0; k < 4; k++) { const tn = { i: k, mode: 'floor', man: roles.N[k] }, to = { i: 4 + k, mode: 'hidden', man: roles.O[k] }; tyres.push(tn, to); roles.N[k].tyre = tn; roles.O[k].tyre = to;
-        M.tyre.setColorAt(k, cmp[0]); M.tyre.setColorAt(4 + k, cmp[1]); }
+        M.tyre.setColorAt(k, CR_NEW); M.tyre.setColorAt(4 + k, CR_OLD); }
       M.jack.setColorAt(0, roles.bx.col); M.jack.setColorAt(1, roles.bx.col);
       for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
     const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
@@ -4835,10 +4867,26 @@ const Render = (function () {
       go(LP, lpSpot, yawC(0, -gs), mode === 'out' ? 'jog' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
     }
     if (mode !== 'work') { c.liftF = 0; c.liftR = 0; }
+    crewTyres(mode, u);
     c.lift = (c.liftF + c.liftR) / 2; c.liftP = Math.atan2(c.liftF - c.liftR, D.wb);
     // the engineer on the pit wall follows his car
     const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
     if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
+  }
+  // the crew's tyres in a race with tyres (P.ty): the new set's band the one the next stop fits (nextBand: Gume v boksih, or the compound for
+  // what is left; rain tyres blue), the old set's the car's own until the car is out of the box (taken off the car, it keeps its band);
+  // no band (dry, no compounds): yellow and red as ever. Pushed home (REPAIR.wheel), the new set is on the car's separate wheels at once
+  // (bandGeo: the stock rear wheels in the body wait), the car built afresh with it at the stop's end (frame: repairN)
+  const CR_NEW = new THREE.Color(0.95, 0.8, 0.14), CR_OLD = new THREE.Color(0.86, 0.14, 0.12);
+  function crewTyres(mode, u) {
+    const c = crew, P = c.P, M = c.M; if (!M.tyre || !P.ty) return;
+    const nb = nextBand(P), ob = mode === 'out' || mode === 'work' || c.oldB === undefined ? tyreBand(P) : c.oldB;
+    if (nb !== c.newB || ob !== c.oldB) { c.newB = nb; c.oldB = ob;
+      for (let k = 0; k < 4; k++) { M.tyre.setColorAt(k, nb != null ? _pc.setRGB(...colArr(nb)) : CR_NEW); M.tyre.setColorAt(4 + k, ob != null ? _pc.setRGB(...colArr(ob)) : CR_OLD); }   // (the wheels' own shades: their vertex colours)
+      M.tyre.instanceColor.needsUpdate = true; }
+    const v = views.find(v => v.car === P); if (!v || !v.bandGeo) return;
+    const on = mode === 'work' && u >= Core.REPAIR.wheel ? nb : (P.repairN || 0) !== v.repairN ? tyreBand(P) : v.band;   // (the stop just over, the car not yet built afresh: its new tyres)
+    if (v.bandW !== on) { v.bandW = on; const G = v.bandGeo(on); for (const w of v.wf) w.geometry = G.f; for (const w of v.wr) w.geometry = G.r; }
   }
   function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
     const P = crew.P, v = views.find(v => v.car === P); if (!v) return;
