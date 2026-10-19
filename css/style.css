@@ -74,7 +74,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-tyre .dts { display: grid; grid-template-columns: repeat(2, calc(var(--hb) * var(--hd))); gap: calc(var(--hb) * .0625) calc(var(--hb) * .094); }
 #h-tyre .dts i { height: calc(var(--hb) * var(--hd)); border-radius: 50%; background: var(--td, #3cd23c); box-shadow: 0 0 0 1.5px rgba(10, 14, 20, .85); }
 #h-tyre b { font: 800 italic calc(var(--hb) * var(--hw))/1 'ApexMenu', var(--f-ui); letter-spacing: .04em; color: var(--tw, #ffd23f); }
-#h-tyre.bad b { background: rgba(190, 30, 30, .78); box-shadow: 0 0 0 2px rgba(190, 30, 30, .78); border-radius: 2px; }   /* (the wrong tyres for the road: the word on a red chip) */
+#h-tyre.bad b { color: #fff; background: rgba(190, 30, 30, .78); box-shadow: 0 0 0 2px rgba(190, 30, 30, .78); border-radius: 2px; }   /* (the wrong tyres for the road: the word white on a red chip, so MEHKE reads too) */
 #h-lap { font: 800 italic calc(var(--hb) * var(--hl))/1 'ApexMenu', var(--f-ui); }
 #h-lap i { font: 700 .71em/1 'ApexMenu', var(--f-ui); letter-spacing: .05em; opacity: .85; }   /* (KROG, CP, the km of a long lap; a lap's word with no number, KVALIFIKACIJE: the whole of it) */
 #h-times { position: absolute; left: 50%; top: calc(6px + var(--st)); transform: translateX(-50%); text-align: center; }
@@ -240,7 +240,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
    armed for the next zone, within 1 s of the car ahead at the detection line: white; open: green; the colours it had on the speedometer)
    and ZAVETRJE (the slipstream: in the wake of a car ahead), white as the armed DRS: not light blue, never taken for the cold tyres */
 #h-tags { display: none; gap: 4px; margin-top: -3px; }
-#hud.drs #h-tags, #h-tags:has(> #h-tow.on) { display: flex; }
+#hud.drs #h-tags, #hud.tow #h-tags { display: flex; }
 #h-drs, #h-tow { padding: 1px 5px 0; border: 1.5px solid transparent; border-radius: 4px; background: rgba(10, 14, 20, .5); font: 800 italic calc(var(--hb) * .3)/1.15 'ApexMenu', var(--f-ui); letter-spacing: .06em; text-shadow: 0 1px 2px #000; white-space: nowrap; }
 #h-drs { display: none; border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.38); transition: background-color .15s, color .15s; }
 #hud.drs #h-drs { display: block; }
@@ -479,7 +479,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   /* no wider than the room left of the map (3 px from it, as high as it), centred: a longer one (a few places' names) in two lines while it
      shows, what is under it moving down with it (the duel's gap, the police's panel) and the corner sign under it (game.js placeNote) */
   #hud:not(.pkc) #h-split { max-width: min(46vw - 22px, 100vw - 190px); margin-left: auto; margin-right: auto; }   /* (the map 27 % of the width, 84 px at least) */
-  #hud:not(.pkc) #h-split.show { height: auto; min-height: 1.2em; }
+  #hud:not(.pkc) #h-split { height: auto; min-height: 1.2em; }   /* (also while it fades: game.js clears the text after) */
   #h-note { top: calc(var(--st) + clamp(82px, 21.5vw, 92px)); width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
   #hud.pkc #h-note { top: calc(var(--st) + clamp(94px, 24.5vw, 104px)); }
   #hud.school #h-note { top: calc(var(--st) + clamp(88px, 24vw, 96px)); }

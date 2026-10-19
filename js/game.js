@@ -1587,9 +1587,9 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); $('hud').classList.remove('tow'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
-    $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
+    $('h-msg').className = ''; $('h-split').className = ''; $('h-split').textContent = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = quali || race.pol ? '' : '/' + race.cars.length; $('h-rlbl').textContent = tr(race.pol ? 'POLICIJA' : 'MESTO');   // (the run from the police: how many patrol cars are after the player, the label says so)
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
@@ -2052,7 +2052,7 @@
     return !p.prev ? tr('Prvi čas v razredu') : p.newCB ? tr('{0} pod prejšnjim rekordom razreda ({1})', '<span class="fast">' + sgn(d) + '</span>', fmt(p.prev, true)) : tr('{0} za rekordom razreda ({1})', '<span class="slow">' + sgn(d) + '</span>', fmt(p.prev, true)); };
   function pkCeremony(r) {   // the summit: the chequered flag, the time, the place in the class, the record badge, the difference to the class best
     const p = r.pk, el = $('pk-cer'); if (!p) return;
-    $('h-msg').className = ''; msgT = 0; $('h-ttsp').className = ''; $('h-split').className = ''; splitT = 0;   // (the ceremony has it all)
+    $('h-msg').className = ''; msgT = 0; $('h-ttsp').className = ''; $('h-split').className = ''; $('h-split').textContent = ''; splitT = 0;   // (the ceremony has it all)
     const alt = track.def.alt ? numDot(track.def.alt[1]) + ' m' : '';
     el.innerHTML = '<div class="pkc-flag"><i></i></div><div class="pkc-top">' + tr('VRH') + (alt ? ' · ' + alt : '') + '</div>' +
       '<div class="pkc-time">' + fmt(r.time, true) + '</div><div class="pkc-pos">' + (p.rank === 1 ? '\u{1F3C6} ' : '') + pkPlace(p) + '</div>' +
@@ -3599,7 +3599,7 @@
     swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
-    if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
+    if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); $('hud').classList.toggle('tow', on); } }   // the slipstream: lit in the wake of a car ahead
     if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) Comm.say('drs', null, 1); } }   // the flap opens (the commentator: every other time)
     setText('h-speed', String(Math.round(P.speed * 3.6)));
     drawMinimap();
@@ -3609,10 +3609,10 @@
       lastLapCount = P.lapTimes.length;
       const t = P.lapTimes[lastLapCount - 1];
       const isBest = t <= Math.min(...P.lapTimes) + 1e-6 && lastLapCount > 1;
-      const el = $('h-split'); el.textContent = tr('KROG {0}: {1}', lastLapCount, fmt(t, true)) + (isBest ? (innerWidth < innerHeight ? '  ★' : tr('  NAJHITREJŠI')) : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;   // (upright a star for the word: the line under the second row, clear of the map)
+      const el = $('h-split'); el.textContent = tr('KROG {0}: {1}', lastLapCount, fmt(t, true)) + (isBest ? (matchMedia('(orientation: portrait)').matches ? '  ★' : tr('  NAJHITREJŠI')) : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;   // (upright a star for the word: the line under the second row, clear of the map)
       if (!P.finished && P.lap === race.laps) { showMsg(tr('ZADNJI KROG!'), 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
     }
-    if (splitT > 0) { splitT -= dt; if (splitT <= 0) $('h-split').className = ''; }
+    if (splitT > 0) { splitT -= dt; if (splitT <= 0) { const el = $('h-split'); el.className = ''; setTimeout(() => { if (!el.className) el.textContent = ''; }, 350); } }   // (the text once faded: upright a two-line box shrinks only then)
     updateCorner(P);
     updateCodrv(P);
     // wrong way

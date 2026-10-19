@@ -87,7 +87,7 @@ try {
     JSON.stringify({ sl, en }));
   T.check('the dots by what the set has left: 92 % green, 40 % red (all four the same), the word unchanged', wears.length === 2 && wears.every(o => o.dots.length === 4 && o.dots.every(c => near(c, o.want)) && o.txt === 'SREDNJE') && near(wears[0].want, 'rgb(48, 228, 37)', 12) && near(wears[1].want, 'rgb(228, 37, 37)', 2),
     JSON.stringify(wears.map(o => ({ wear: o.wear, dots: o.dots[0], want: o.want, txt: o.txt }))));
-  T.check('the wrong tyres for the road (slicks on a wet line): the word on a red chip, class "bad"', / bad/.test(bad.cls) && bad.chip === 'rgba(190, 30, 30, 0.78)' && bad.txt === 'SREDNJE', JSON.stringify(bad));
+  T.check('the wrong tyres for the road (slicks on a wet line): the word white on a red chip, class "bad"', / bad/.test(bad.cls) && bad.chip === 'rgba(190, 30, 30, 0.78)' && bad.word === 'rgb(255, 255, 255)' && bad.txt === 'SREDNJE', JSON.stringify(bad));
 
   // 4. a real pit stop at the end of the first lap (the stop's tyres: Srednje, as the T key or the pause menu would set them): cold at the
   // fitting and at the way out, about half way half a lap on, their own colours a lap on
@@ -200,17 +200,17 @@ try {
   }
   const RACE = { pos: '22', tot: '/22', lap: 'KROG 12/36', ty: true }, RACE_EN = { pos: '22', tot: '/22', lap: 'LAP 12/36', ty: true, en: true };
   const STATES = { port: [
-    ['race, SEKTOR', Object.assign({ split: 'SEKTOR 2  1:05.123' }, RACE)], ['race, the fastest lap', Object.assign({ split: 'KROG 11: 2:13.456  ★' }, RACE)],
-    ['race (en), SECTOR', Object.assign({ split: 'SECTOR 2  1:05.123' }, RACE_EN)], ['race (en), the fastest lap', Object.assign({ split: 'LAP 11: 2:13.456  ★' }, RACE_EN)],
+    ['race, SEKTOR', Object.assign({ split: 'SEKTOR 2  1:05.123' }, RACE)], ['race, the fastest lap', Object.assign({ split: 'KROG 11: 02:13.456  ★' }, RACE)],
+    ['race (en), SECTOR', Object.assign({ split: 'SECTOR 2  1:05.123' }, RACE_EN)], ['race (en), the fastest lap', Object.assign({ split: 'LAP 11: 02:13.456  ★' }, RACE_EN)],
     ['race, a long place\'s name', Object.assign({ split: LONG.sl, col: true }, RACE)], ['race (en), a long place\'s name', Object.assign({ split: LONG.en, col: true }, RACE_EN)],
-    ['flying lap, SEKTOR', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }], ['qualifying, REKORD', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true, split: 'REKORD 1:23.456  -0.523' }], ['qualifying (en), RECORD', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true, split: 'RECORD 1:23.456  -0.523' }],
-    ['Nürburg', { pos: '22', tot: '/22', lap: 'KROG 1/1 · 12,3/20,7 KM', split: 'KROG 1: 6:13.456', flt: true }],
+    ['flying lap, SEKTOR', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }], ['qualifying, REKORD', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true, split: 'REKORD 01:23.456  -0.523' }], ['qualifying (en), RECORD', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true, split: 'RECORD 01:23.456  -0.523' }],
+    ['Nürburg', { pos: '22', tot: '/22', lap: 'KROG 1/1 · 12,3/20,7 KM', split: 'KROG 1: 06:13.456', flt: true }],
     ['time trial', { pos: '', tot: '', lap: 'CP 2/4', cls: ['tt', 'ttd', 'ttn'], tt: true, alt: '2.345 m', turn: 'OVINEK 123/156', split: LONG.sl }],
     ['the duel', { pos: '2', tot: '/2', lap: '2,4/12,3 KM', cls: ['up', 'duel'], gap: 'TEKMEC 12,4 s PRED TABO', split: LONG.sl }],
     ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', cls: ['up'], pol: true, flt: true, alt: '1.611 m', split: LONG.sl }],
     ['the whole column', Object.assign({ col: true }, RACE)]],
   land: [
-    ['race', Object.assign({ split: 'KROG 11: 2:13.456  NAJHITREJŠI' }, RACE)], ['race (en)', Object.assign({ split: 'LAP 11: 2:13.456  FASTEST' }, RACE_EN)],
+    ['race', Object.assign({ split: 'KROG 11: 02:13.456  NAJHITREJŠI' }, RACE)], ['race (en)', Object.assign({ split: 'LAP 11: 02:13.456  FASTEST' }, RACE_EN)],
     ['qualifying', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true }], ['qualifying (en)', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true }], ['flying lap', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }],
     ['Nürburg', { pos: '22', tot: '/22', lap: 'KROG 1/1 · 12,3/20,7 KM' }], ['Nürburg (en)', { pos: '22', tot: '/22', lap: 'LAP 1/1 · 12.3/20.7 KM', en: true }],
     ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', pol: true }], ['the whole column, ZAMENJAJ KOLO', Object.assign({ col: true }, RACE)]] };
