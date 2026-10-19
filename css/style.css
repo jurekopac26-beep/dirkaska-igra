@@ -68,6 +68,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-tot { font: 800 italic calc(var(--hb) * .375)/1 'ApexMenu', var(--f-ui); color: #ffd23f; margin: 0 calc(var(--hb) * .16) 0 1px; }
 #h-speed { font-size: calc(var(--hb) * .72); min-width: calc(3ch + .03em); text-align: right; }   /* (room for three digits, the number at its right: KM/H and the shadow stay put at 10 and 100 km/h) */
 #h-kmh { font: 700 calc(var(--hb) * .28)/1 'ApexMenu', var(--f-ui); letter-spacing: .05em; margin-left: 3px; }
+#hud.f3 #h-pos { font-size: calc(var(--hb) * .7); } #hud.f3 #h-tot { font-size: calc(var(--hb) * .32); margin-right: calc(var(--hb) * .12); }   /* (a field of 100 or more, Nürburg's Circuit race: three digits each, the place smaller, so row 1 stays left of the clock: game.js) */
 #h-row2 { display: flex; align-items: center; }
 #h-tyre { display: none; align-items: center; gap: calc(var(--hb) * var(--hg1)); margin-right: calc(var(--hb) * var(--hg2)); }   /* (the dots and the word one group, a wider gap to the lap) */
 #h-tyre.on { display: flex; }
