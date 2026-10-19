@@ -29,10 +29,17 @@ try {
   for (let k = 0; k < 80 && await page.evaluate(() => { const r = window.__game.race, P = r.player;
     return r.cars.some(c => { const d = c.dist - P.dist; return c !== P && !c.finished && d > -8 && d < 30 && (d < 8 || d - 1 < 2 * (P.speed - c.speed) + 3); }) ||
       r.cars.some(c => c.chr && !c.chr.duelOn && c.chr.duel > 12) || /^DVOBOJ/.test(document.getElementById('h-msg').textContent); }); k++) await sim(0.5);
+  // (the HUD's message and toast logged as they come, from here on: the autopilot may still pass a car as the field bunches behind the
+  // safety car (from the back of the grid the player is often in the train), the warning to give the place back then takes the message,
+  // the toast and the board; it is let go here, as on the way to the yellow flag below: the overtaking rule has its own part)
+  await page.evaluate(() => { window.__said2 = []; if (!window.__mo) { window.__mo = new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__said2.push(t); } });
+    for (const id of ['h-msg', 'toast']) window.__mo.observe(document.getElementById(id), { childList: true, subtree: true }); } });
   await page.evaluate(() => { const r = window.__game.race; r._scOut(r.order.find(c => !c.finished)); });
   await sim(0.5);
-  const s1 = await hud();
-  T.check('safety car out: "VARNOSTNI AVTO", the board on the HUD, the car drawn with its light bar flashing', s1.sc === 'out' && s1.msg === 'VARNOSTNI AVTO' && s1.flag === 'on sc:VARNOSTNI AVTO' && s1.scDrawn && /Varnostni avto: ne prehitevaj/.test(s1.toast), JSON.stringify(s1));
+  const passed = await page.evaluate(() => { const f = window.__game.race.player.fl; if (!f || !f.owe) return false; f.owe = null; return true; });
+  if (passed) await sim(0.1);
+  const s1 = Object.assign(await hud(), { passed, said: await page.evaluate(() => window.__said2.slice()) });
+  T.check('safety car out: "VARNOSTNI AVTO", the board on the HUD, the car drawn with its light bar flashing', s1.sc === 'out' && [s1.msg, ...s1.said].includes('VARNOSTNI AVTO') && s1.flag === 'on sc:VARNOSTNI AVTO' && s1.scDrawn && [s1.toast, ...s1.said].some(t => /Varnostni avto: ne prehitevaj/.test(t)), JSON.stringify(s1));
   // (what the game tells: its commentator's lines, also when the HUD's message is taken by another at the same moment, e.g. the last lap's)
   await page.evaluate(() => { const C = window.__game.comm, o = C.say; window.__said = []; C.say = function (k) { window.__said.push(k); return o.apply(this, arguments); }; });
   let lampSeen = s1.lamp, s2 = null, inSeen = null;

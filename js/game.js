@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const tr = Lang.tr;   // (the words in the chosen language, js/lang.js: tr('Proga: {0}', name))
   const STEP = 1 / 120;
-  const LAPS = 3, NUM_AI = 12, PLAYER_GRID = 12;
+  const LAPS = 3, NUM_AI = 12, PLAYER_GRID = 99;   // (PLAYER_GRID: without qualifying the player starts at the back of the grid: Core.Race puts the player at min(the field, it))
   const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
   const DRIVE_TXT = { FR: 'Zadnji pogon', AWD: 'Štirikolesni pogon', FF: 'Prednji pogon', MR: 'Motor na sredini', RR: 'Motor zadaj' };
   const DRIVE_TAG = { FR: 'FR', AWD: '4WD', FF: 'FF', MR: 'MR', RR: 'RR' };
@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -36,6 +36,9 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
+  // one-time move to qualifying off (it was on by default, so nearly everybody has it on without having chosen it): from now on the
+  // choice on the race weekend's calendar (js/menu.js) is remembered
+  try { if (!localStorage.getItem('tdgp-defaults-v4')) { S.quali = 0; localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one camera, behind the car, on a phone held either way (the isometric, kino and cockpit cameras are gone): an old setting moves to it
   S.camera = 'chase';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
@@ -1347,7 +1350,7 @@
     const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
     try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
     catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return false; }   // (the old one back)
-    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); } catch (_) { }
+    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { }
     stHold = true; location.reload(); return true;
   }
   function ghOwn(id) {   // the player's ghost of this track (the current physics, weather and way to drive) as it is shared
@@ -1484,7 +1487,7 @@
   // of its own with the seed, weather, difficulty and physics of the race to come (Race opts aiOrder [k], qualiBack), simulated a little
   // between the frames while the player drives (about the work of their race; the rest when the player is back at the line). The times
   // make the grid: the fastest on pole, the rivals in the order of their times (Race opts playerGrid, aiOrder). "Preskoči kvalifikacije"
-  // (pause menu) goes straight to the race: the usual grid, the player 12th.
+  // (pause menu) goes straight to the race: the usual grid, the player at the back of it (PLAYER_GRID).
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
   const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
   function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
@@ -5031,6 +5034,14 @@
       ensureTrack(S.track, () => fn(startRace));
     },
     setLast(id) { S.lastTrack = id; save(); },
+    // the race weekend's calendar before a circuit race (the menu's intro there): whether the track has a qualifying lap; the cars on the
+    // grid; the laps; about how long the qualifying lap and the race take (seconds: the player's best lap, else the game's own estimate of
+    // 38 m/s on average; the qualifying lap with its run-up from the straight)
+    qualiCan: (d) => !isTT(d) && !d.open,
+    weekend(d) {
+      const T = getTrack(d.id), laps = lapsOf(d), best = rec(d.id).bestLap, lap = best > 0 ? best : T.len / 38;
+      return { cars: 1 + rivN(d), laps, quali: lap + T.qualiBack() / 38, race: lap * laps * 1.04 + 8 };
+    },
     // NEW VERSION · TEST 1 (the title's button): Toskana, alone and free, the new map over it (nvStart)
     newVer() { const d = Core.TRACKS.find(x => x.id === 'toskana'); if (!d) return; S.track = d.id; save(); refreshSegs(); nv = { built: false }; this.launch((start) => start()); },
     act: (a, el) => onAction(a, el),
