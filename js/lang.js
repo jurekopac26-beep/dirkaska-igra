@@ -17,7 +17,7 @@
     'Krilo': 'Wing', 'Malo': 'Low', 'Srednje': 'Medium', 'Veliko': 'High', 'Prestave': 'Gears', 'Kratke': 'Short', 'Dolge': 'Long',
     'Ime voznika': 'Driver name', 'Občutljivost nagiba': 'Tilt sensitivity', 'Nastavi sredino': 'Set centre', 'Obrni smer': 'Invert',
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
-    'Nagib kamere': 'Camera tilt', 'Kamera za avtom gleda bolj naprej po cesti (razdalja kamere ostane enaka)': 'The chase camera looks further ahead along the road (camera distance stays the same)', 'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
+    'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
     'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kameri za avtom in izometrično)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase and isometric cameras)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
