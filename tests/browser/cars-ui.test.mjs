@@ -235,7 +235,7 @@ try {
       localStorage.setItem('tdgp-records', JSON.stringify({ tracks: { 'pikes@cs': { bestTime: 250.5, board: [{ name: 'Ana', car: 'STARO IME', carId: 'p206', time: 250.5, splits: [], date: 1700000000000, upg: {} }] } } }));
       localStorage.setItem('tdgp-ghost-jezero@cs', JSON.stringify({ v: 1, dt: 0.1, n: 3, t: 61.5, car: 'p206', color: 0xd81f2a, stripe: true, lap: 1, q0: [0, 0, 0], d: btoa(String.fromCharCode(...new Uint8Array(3 * 7 * 2))) }));
     });
-    await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0, quali: 0, track: 'pikes' }));
+    await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0, quali: 0, track: 'pikes', mode: 'tt' }));   // (Pikes Peak's time trial: its board)
     const bd = await page.evaluate(async () => { window.__game.onAction('to-board'); await new Promise(r => setTimeout(r, 300));
       return { rows: [...document.querySelectorAll('#board-body tbody tr')].map(tr => tr.textContent).filter(t => /Ana/.test(t)), old: /STARO IME/.test(document.getElementById('board-body').textContent) }; });
     await startTrack(page, 'jezero');
