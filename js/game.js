@@ -2861,9 +2861,10 @@
   /* ---------------- pit stops ---------------- */
   let pitWrenchT = 0, pitHint = false, drsN = 0, secN = 0, pitFix = false, towOn = false;
   // the player's pit stop on the autopilot (game.js only: Core never sees it, so the Node references stay as they are). pa.st: null = the
-  // player drives; 'lane' = over the pit wall's line: in, the box, the stop, out, the gas and the brake by the autopilot; 'merge' = past the
-  // way out after a stop: PIT_OUT s of race time more onto the racing line (pitWant off, as an AI car rejoins), counted down; then the player's
-  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false, go: false, b: null, d0: 0, e0: 0, k: 0 };   // (go: a stop ahead at the way in: the progress bar, b its box, d0 the way to it, e0 from it to the way out, k the bar)
+  // player drives; 'lane' = over the pit wall's line: in, the box, the stop, out, the gas and the brake by the autopilot, handed back ~1 s before
+  // the way out joins the circuit (pitNear; pa.out: the player drives the rest of the lane); 'merge' (no longer after a stop, kept for a car
+  // that leaves the lane before pitNear sees it) = past the way out: PIT_OUT s of race time more onto the racing line, counted down; then the player's
+  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false, go: false, b: null, d0: 0, e0: 0, k: 0, out: false };   // (go: a stop ahead at the way in: the progress bar, b its box, d0 the way to it, e0 from it to the way out, k the bar)
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
@@ -3100,9 +3101,21 @@
   function pitCtl(P, hold) {   // each step before the inputs: which part of the pit stop the autopilot drives (null: none)
     if (!(phase === 'racing' && !hold && !autoDrive)) { if (pa.st || P.pitAP) pitFree(P, false); return null; }   // (the race over, the police, autoDrive: silently)
     if (pa.st === 'merge') { if (pa.t > 1e-6) return 'merge'; pitFree(P, true); return null; }   // (the countdown run out: the player's inputs from this step)
-    if (P.inPit) { if (!pa.st) { const b = race._boxD(P), x = b != null ? race.track.boxX(P.q.s, b) : 0; pa.st = 'lane'; pa.stop = false; pa.b = b; pa.go = b != null && x < 0; pa.d0 = -x; pa.e0 = 0; pa.k = 0; } return 'lane'; }
+    if (P.inPit) {
+      if (pa.out) return null;   // (handed back on the way out: the player drives the rest of it)
+      if (!pa.st) { const b = race._boxD(P), x = b != null ? race.track.boxX(P.q.s, b) : 0; pa.st = 'lane'; pa.stop = false; pa.b = b; pa.go = b != null && x < 0; pa.d0 = -x; pa.e0 = 0; pa.k = 0; }
+      if (pa.st === 'lane' && pa.stop && !race.player.finished && pitNear(P)) { pitFree(P, true); pa.out = true; return null; }   // (~1 s before the circuit: the player's wheel and gas, the film camera back behind the car)
+      return 'lane';
+    }
+    pa.out = false;
     if (pa.st) pitFree(P, false);   // (out of the lane without a stop, or rescued in it: at once, as before)
     return null;
+  }
+  // the stop done, ~1 s before the way out joins the circuit (where the car leaves the lane: Core's 'exit'): a second's run ahead at its speed
+  // (at least 12 m) is past the lane's end, or in the way out where its middle has come over the pit wall's line
+  function pitNear(P) {
+    const T = race.track, s1 = P.q.s + Math.max(12, P.speed * 1.3), p1 = T.pitAt(s1);
+    return !p1 || (p1.gap && p1.o <= p1.wall + 1);
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }

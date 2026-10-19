@@ -35,11 +35,12 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
     const T = new C.Track(d), P = d.pit, orig = Math.random; Math.random = seeded(7);
     try {
       const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 1, damage: 2 });
-      r.start(); const pl = r.player; let t = 0, k = 0, asked = false, pose = null, dev = 0, wall = 0, rep = false, lane0 = null, laneT = 0, ghost = 0, outT = null, mWall = 0, mEnd = null;
+      r.start(); const pl = r.player; let t = 0, k = 0, asked = false, pose = null, dev = 0, wall = 0, rep = false, lane0 = null, laneT = 0, ghost = 0, outT = null, mWall = 0, mEnd = null, hb = null;
       while (t < 600 && !(outT != null && t - outT >= 3 - 1e-9 && !pl.pitG)) {
         Math.random = seeded(9000 + (++k));
         if (!asked && pl.lap >= 1 && !T.pitAt(pl.q.s)) { asked = true; pl.pitWant = true; pl.dmg = 0.3; }   // (damaged on the first lap: in at its end)
-        if (outT != null) pl.pitWant = false;   // (game.js: after the stop the autopilot drives PIT_OUT s more with pitWant off, as an AI car rejoins)
+        if (rep && pl.inPit && !hb) { const p1 = T.pitAt(pl.q.s + Math.max(12, pl.speed * 1.3)); if (!p1 || (p1.gap && p1.o <= p1.wall + 1)) hb = t; }   // (game.js pitNear: ~1 s before the way out joins the circuit the player drives)
+        if (hb != null) pl.pitWant = false;   // (here the player's driving is the AI's, pitWant off, as an AI car rejoins)
         C.aiControl(pl, r, DT); r.step(DT); t += DT;
         if (pl.inPit) { if (lane0 == null) lane0 = t; laneT = t - lane0; if (pl.pitG) ghost++; if (pl.hitWall > 0.5) wall++; }
         if (outT != null && t - outT <= 3 + 1e-9) { if (pl.hitWall > 0.5) mWall++; if (!mEnd && t - outT >= 3 - 1e-9) mEnd = { d: Math.abs(pl.q.d), w: T.wa ? T.wa[pl.q.i] : T.w, kmh: Math.round(pl.speed * 3.6) }; }
@@ -49,7 +50,7 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
         if (pl.pitDone) rep = true;
         if (rep && !pl.inPit && outT == null) outT = t;
       }
-      out.push({ id: d.id, pose, dev, wall, rep, dmg: pl.dmg, laneT, ghost, solid: !pl.pitG, back: outT != null && t - outT <= 6.05, mWall, mEnd, bo: T.bayDim().o, ba: deg(T.bayPose(P[3]).a) });
+      out.push({ id: d.id, hbT: hb != null && outT != null ? outT - hb : null, pose, dev, wall, rep, dmg: pl.dmg, laneT, ghost, solid: !pl.pitG, back: outT != null && t - outT <= 6.05, mWall, mEnd, bo: T.bayDim().o, ba: deg(T.bayPose(P[3]).a) });
     } finally { Math.random = orig; }
   }
   const f1 = (x) => x.toFixed(1);
@@ -60,7 +61,8 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
     out.map(x => x.pose ? `${x.id} ${f1(x.pose.out)} m out, ${f1(x.pose.x)} m along, ${f1(x.pose.yaw)}°` : `${x.id} -`).join(', '));
   check('in and out of the box without touching a wall', out.every(x => x.wall === 0), out.filter(x => x.wall).map(x => `${x.id} ${x.wall} steps`).join(', ') || 'none');
   check('a ghost all the way through the lane, solid again within 6 s of leaving it', out.every(x => x.ghost > 0 && x.solid && x.back), out.map(x => `${x.id} ${x.solid && x.back ? 'ok' : 'STILL A GHOST'}`).join(', '));
-  check('after the stop: 3 s more on the autopilot (pitWant off, game.js counts down 3-2-1) back onto the racing line, no wall, on the asphalt', out.every(x => x.mWall === 0 && x.mEnd && x.mEnd.d < x.mEnd.w), out.map(x => `${x.id} ${x.mEnd ? x.mEnd.kmh + ' km/h' : '-'}${x.mWall ? ' WALL ' + x.mWall : ''}`).join(', '));
+  check('the hand-back after the stop (game.js pitNear) ~1 s before the way out joins the circuit, still in the lane; driven on from there (here as an AI car rejoins, pitWant off) back onto the racing line, no wall, on the asphalt 3 s after the way out',
+    out.every(x => x.hbT != null && x.hbT > 0.3 && x.hbT < 2 && x.mWall === 0 && x.mEnd && x.mEnd.d < x.mEnd.w), out.map(x => `${x.id} ${x.hbT != null ? x.hbT.toFixed(1) + ' s' : 'NO HAND-BACK'}, ${x.mEnd ? x.mEnd.kmh + ' km/h' : '-'}${x.mWall ? ' WALL ' + x.mWall : ''}`).join(', '));
 }
 
 // 3. a long race with fuel and tyres (Toskana, Rio and Toronto with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
