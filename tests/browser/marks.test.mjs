@@ -20,7 +20,7 @@ const run = (page, offAt, drawn) => page.evaluate(([offAt, drawn]) => {
   for (k = 0; !P.finished && k < 120 * 60 * 6; k++) {
     const t = g.race.time;
     if (t > offAt && t < offAt + 0.7) g.sim(STEP, false, 1, 0.6, 0); else g.sim(STEP, true);
-    if (t < drawn && k % 2) { Render.frame(1 / 60, 1, P, 'iso', {}); const c = Render.skidCount; laid += (c - prev + 8000) % 8000; prev = c; }
+    if (t < drawn && k % 2) { Render.frame(1 / 60, 1, P, 'chase', {}); const c = Render.skidCount; laid += (c - prev + 8000) % 8000; prev = c; }
   }
   for (k = 0; k < 120; k++) g.sim(STEP, true);   // (past the line: the finish is taken on the next step, the run stored)
   Render.scene.visible = true;
@@ -34,7 +34,7 @@ function chains(a) {
   return { N, off, on, quads, ok: ok && o === b.length };
 }
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'iso', track: 'rastro', mode: 'tt', ghost: 0 }, { width: 480, height: 270 }, { seed: 7 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rastro', mode: 'tt', ghost: 0 }, { width: 480, height: 270 }, { seed: 7 });
   await startTrack(page, 'rastro');
   const r1 = await run(page, 40, 400);
   const s1 = await stored(page), c1 = s1.length ? chains(s1[0]) : null;
@@ -48,7 +48,7 @@ try {
   // a race on the same road: none drawn, none logged
   const race = await page.evaluate(async () => {
     const g = window.__game; g.S.mode = 'race'; g.onAction('restart'); g.pause(); await new Promise(r => setTimeout(r, 300));
-    const P = g.race.player; for (let k = 0; k < 120 * 20; k++) { g.sim(1 / 120, true); if (k % 2) Render.frame(1 / 60, 1, P, 'iso', {}); }
+    const P = g.race.player; for (let k = 0; k < 120 * 20; k++) { g.sim(1 / 120, true); if (k % 2) Render.frame(1 / 60, 1, P, 'chase', {}); }
     const o = { tt: g.race.timeTrial, old: Render.oldMarks, take: !!Render.marksTake() }; g.S.mode = 'tt'; return o;
   });
   T.check('a race on the same road draws no stored marks and logs none', !race.tt && race.old === 0 && !race.take, JSON.stringify(race));

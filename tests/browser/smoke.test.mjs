@@ -72,7 +72,7 @@ try {
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 100 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
-    // police's block: under it); Pikes Peak in a time trial: off, its pill (#pk-note) instead
+    // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
       const g = window.__game, T = g.race.track, P = g.race.player, $ = (id) => document.getElementById(id), hud = $('hud').classList;
       if (s == null) { const H = T.hudSigns(), ahead = (x) => T.open ? x.s0 - P.q.s : ((x.s0 - P.q.s) % T.len + T.len) % T.len, n = H.filter(x => ahead(x) > 25 && (!T.open || x.s0 < T.finishS)).sort((a, b) => ahead(a) - ahead(b))[0] || H[0]; s = n ? n.s0 - 20 : null; }
@@ -83,8 +83,7 @@ try {
       return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
     const n1 = await sign(null);
-    if (id === 'pikes' || id === 'pikesg') T.check(`${id}: in the time trial the corner sign off (the pill instead), lying`, n1.pkn && n1.disp === 'none', JSON.stringify(n1));
-    else {
+    {
       await page.setViewportSize({ width: 270, height: 480 });
       const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : 95;
       await page.setViewportSize({ width: 480, height: 270 });
@@ -308,19 +307,19 @@ try {
       `${M.title} "${M.sub}", HUD "${M.goal}", messages ${JSON.stringify(M.msgs)}, rows ${JSON.stringify(M.rows.slice(0, 4))}`);
   }
 
-  // 6e. Harju, the city stage in Jyväskylä: first its evening sky from the cockpit (the sky dome drawn: the theme's own zenith and its warm glow
+  // 6e. Harju, the city stage in Jyväskylä: first its evening sky from a TV camera (the sky dome drawn: the theme's own zenith and its warm glow
   //     towards the sun by day, no glow at dusk); then to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the
   //     stage's words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
   {
     await startTrack(page, 'harju');
     const s = await page.evaluate(async () => {
       const g = window.__game, fr = async (n) => { for (let k = 0; k < n; k++) await new Promise(r => requestAnimationFrame(r)); };
-      g.S.camera = 'cockpit'; await fr(4); const day = Render.show;
+      g.S.camera = 'tv'; await fr(4); const day = Render.show;
       Render.setAtmos({ season: 'summer', tod: 'dusk' }); await fr(3); const dusk = Render.show;
       Render.setAtmos({ season: 'summer', tod: 'day' }); g.S.camera = 'chase'; await fr(2);
       return { day: { sky: day.sky, warm: day.warm, todK: day.todK }, dusk: { sky: dusk.sky, warm: dusk.warm, todK: dusk.todK } };
     });
-    T.check('Harju from the cockpit: the evening sky drawn with its warm glow towards the sun by day, none at dusk',
+    T.check('Harju from a TV camera: the evening sky drawn with its warm glow towards the sun by day, none at dusk',
       s.day.sky && s.day.todK === 0 && s.day.warm > 0.5 && s.dusk.sky && s.dusk.todK === 0.5 && s.dusk.warm === 0, JSON.stringify(s));
     const r = await page.evaluate(async () => {
       const g = window.__game;

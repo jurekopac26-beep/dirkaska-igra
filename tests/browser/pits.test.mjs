@@ -4,8 +4,8 @@
 // the box is on the apron in front of the garage (the car stops there parked straight, parallel to the lane), the crew works there and never stands on the lane.
 // While the autopilot drives, the progress bar under the map (its width): Vstop, Boks, Popravilo n %, Izvoz, Prevzameš čez 3, 2, 1, one bar
 // from ~0 % at the way in to 100 % at the hand-back, never back; then gone.
-// Then Bathurst, its lane on the left and the pit building on the iso camera's side: one stop in the iso camera, the car pulls over to the
-// left onto the apron, the crew on the garages' side, nobody on the lane; the camera looks down steeper during the stop, so the roof does not hide the car.
+// Then Bathurst, its lane on the left: one stop seen from behind the car, the car pulls over to the left onto the apron, the crew on the
+// garages' side, nobody on the lane; the camera sees the whole car during the stop (the pit building's roof does not hide it).
 //   node tests/browser/pits.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -95,10 +95,9 @@ try {
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
   // Bathurst: the pit lane on the LEFT of the straight (def.pit's offset negative, every offset measured to that side, sd -1), the pit
-  // building (two floors, the roof over the apron) on the iso camera's side of the lane (south). One stop on the autopilot (the wheel held at
-  // full right lock, towards the track), drawn in the iso camera (the phone on its side): the car turns in to the left, into its box on the
-  // apron, the crew round it on the garages' side, nobody on the lane. In the usual view (47°) the roof would hide the car in its box, so
-  // during the stop the camera looks down steeper and nothing of the world stands between it and the car. (Toronto's and Montréal's lanes
+  // building (two floors, the roof over the apron) south of the lane. One stop on the autopilot (the wheel held at full right lock, towards
+  // the track), drawn from the camera behind the car: the car turns in to the left, into its box on the apron, the crew round it on the
+  // garages' side, nobody on the lane, and nothing of the world stands between the camera and the car. (Toronto's and Montréal's lanes
   // are on the left too: tests/pits.test.js stops on every track with pits; one left-lane world here, each takes long to load)
   await startTrack(page, 'bathurst');
   // in English (as tests/browser/radio.test.mjs switches it), both logs emptied
@@ -114,7 +113,7 @@ try {
         const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;   // (no gas)
         if (lock) g.sim(0.05, false, 1, 0); else g.sim(0.05, true);
         { const pb = document.getElementById('h-pit'), L = window.__pbEn || (window.__pbEn = []), l = pb.classList.contains('on') ? pb.children[1].textContent.replace(/^Repair \d+ %$/, 'Repair %') : ''; if (L[L.length - 1] !== l) L.push(l); }   // (the bar's labels in English, '' when gone)
-        Render.frame(0.05, 1, P, 'iso', {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
+        Render.frame(0.05, 1, P, 'chase', {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
         if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
@@ -126,8 +125,7 @@ try {
           Render.world.root.traverseVisible(m => { if (m.isMesh) meshes.push(m); });
           const seen = (from) => [0, 1.9, -1.9].filter(u => { const pt = new THREE.Vector3(P.x + f[0] * u, y, P.z + f[1] * u), d = pt.clone().sub(from), L = d.length();
             rc.set(from, d.normalize()); rc.far = L - 0.3; return !rc.intersectObjects(meshes, false).length; }).length;
-          const D = C.position.distanceTo(new THREE.Vector3(P.x, y, P.z)), flat = new THREE.Vector3(P.x, y + D * Math.sin(0.82), P.z + D * Math.cos(0.82));
-          o.v = { pitch: +(Math.atan2(C.position.y - y, Math.hypot(C.position.x - P.x, C.position.z - P.z)) * 57.3).toFixed(1), seen: seen(C.position.clone()), flat: seen(flat) };
+          o.v = { pitch: +(Math.atan2(C.position.y - y, Math.hypot(C.position.x - P.x, C.position.z - P.z)) * 57.3).toFixed(1), seen: seen(C.position.clone()) };
         }
       }
       if (P.lap >= 1 && !P.repairN && !P.inPit && !Tk.pitAt(P.q.s)) { P.pitWant = true; if (P.dmg < 0.3) P.dmg = 0.4; }
@@ -143,7 +141,7 @@ try {
   T.check('Bathurst: at full right lock the car keeps to the middle of the lane, a ghost, no damage', t2.lock > 40 && t2.dev < 0.8 && t2.ghost > 40 && t2.dmg === 0, `${t2.lock} steps at full lock, at most ${t2.dev.toFixed(2)} m off the lane's centre, ${t2.ghost} steps a ghost, damage ${t2.dmg.toFixed(3)}`);
   T.check('Bathurst: the car stops in its box on the apron to the left, parked straight in front of the garage (within 4° of the lane)', t2.pose && t2.pose.sd === -1 && t2.pose.dLout > 2.5 && Math.abs(t2.pose.yaw) < 4, JSON.stringify(t2.pose));
   T.check('Bathurst: the crew stands off the lane, on the garages\' side', t2.lane === 0 && t2.work > 0 && t2.max < 9.2, `at least ${t2.work.toFixed(2)} m beyond the lane's edge at work, at most ${t2.max.toFixed(2)} m, ${t2.lane} samples on the lane`);
-  T.check('Bathurst in the iso camera: during the stop it looks down steeper (the garages on its side) and sees the whole car past the pit building\'s roof, which the usual 47° view would hide it behind', v2 && v2.pitch > 70 && v2.seen === 3 && v2.flat < 3, v2 ? `${v2.pitch}° (the usual 47°), ${v2.seen}/3 points of the car seen; at 47° ${v2.flat}/3` : 'no stop');
+  T.check('Bathurst, the camera behind the car: during the stop it sees the whole car (nothing of the pit building between them)', v2 && v2.seen === 3, v2 ? `${v2.pitch}°, ${v2.seen} of 3 points of the car in sight` : 'never in the box');
   const en = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice(), resc: window.__resc || null, bar: (window.__pbEn || []).filter(Boolean), last: (window.__pbEn || []).slice(-1)[0] }));
   T.check('Bathurst: the button Na progo during the countdown cancels it, the player\'s wheel and gas at once, the progress bar gone', !!en.resc && en.resc.st === null && !en.resc.ap && !en.resc.nr && !en.resc.bar && en.resc.steer === 1 && en.resc.thr === 0, JSON.stringify(en.resc));
   T.check('Bathurst in English: PITS · AUTOPILOT (no YOU DRIVE!: rescued); the bar: Pit entry, Box, Repair n %, Pit exit, Take over in 3, 2, then gone; the toast in English',

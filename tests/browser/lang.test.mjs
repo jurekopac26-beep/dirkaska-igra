@@ -33,7 +33,7 @@ try {
     race: document.querySelector('[data-act="to-car"]').textContent }));
   const s1 = await slovene();
   T.check('title in English: Race, Championship, "Jezero Ring · 3 laps · 12 rivals", "Track: Jezero Ring", <html lang="en">', t1.lang === 'en' && t1.race === 'Race' && t1.champ === 'Championship' && t1.sub === 'Jezero Ring · 3 laps · 12 rivals' &&
-    /^Track: Jezero Ring\. Controls: Buttons, camera: behind the car \(phone upright\)\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
+    /^Track: Jezero Ring\. Controls: Buttons\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
 
   // 2. the cars and their upgrades
   await act('to-car'); await page.waitForTimeout(250);
@@ -95,15 +95,15 @@ try {
   const sH = await slovene(['hud', 'touch']);
   T.check('HUD in English: POS, LAP 1/3, BEST, GAS / BRAKE', h6.rank === 'POS' && /^LAP [12]\/3$/.test(h6.lap) && h6.best === 'BEST' && !sH.length, JSON.stringify({ h6, sH }));
   await page.evaluate(() => window.__game.pause()); await page.waitForTimeout(200);
-  const p6 = await page.evaluate(() => ({ restart: document.getElementById('pause-restart').textContent, cam: document.getElementById('pause-cam').textContent }));
+  const p6 = await page.evaluate(() => ({ restart: document.getElementById('pause-restart').textContent }));
   const sp = await slovene();
-  T.check('pause in English: Restart race, Camera: behind the car', p6.restart === 'Restart race' && p6.cam === 'Camera: behind the car' && !sp.length, JSON.stringify({ p6, sp }));
+  T.check('pause in English: Restart race', p6.restart === 'Restart race' && !sp.length, JSON.stringify({ p6, sp }));
   await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const r6 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent, head: document.querySelector('#res-table thead').innerText }));
   const sR = await slovene();
-  T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 12th. (New achievements: ...)", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
-    /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 12th\.( New achievements: [A-Z][\w ,]+\.)?$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
+  T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 13th. (New achievements: ...)", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
+    /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 13th\.( New achievements: [A-Z][\w ,]+\.)?$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
 
   // 6b. a vehicle of the fleet: the MIŠKA (Small cars, its engine at the back) on the car screen; in a race destroyed (wreckCar): VEHICLE
   //     DESTROYED with Retire on the HUD, the pause with View the car and Retire, the first tap asks (Really retire? and the toast), the

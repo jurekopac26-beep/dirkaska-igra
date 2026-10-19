@@ -49,7 +49,7 @@ try {
     T.check('in the infield, far from the road, the car drives on (no barrier pulls it back)', Math.abs(f.q) > f.w + 20 && Math.hypot(f.x - 40, f.z - 20) > 2, JSON.stringify(f));
     // no sparks off the road: the renderer's rail sparks (js/render.js carFx) measured the gap to the track's barrier lines, and past them on
     // the new map (no barriers) the car showed a stream of sparks, as if it scraped along something unseen
-    const sp = await page.evaluate(() => { const g = window.__game, P = g.race.player; P.place(40, 20, 0); P.vx = 15; P.vz = 0; const s0 = Render.fxStats().sparks; for (let k = 0; k < 20; k++) { g.sim(1 / 60, false); Render.frame(1 / 60, 1, P, 'iso', {}); } return { sparks: Render.fxStats().sparks - s0, d: Math.abs(P.q.d), br: P.q.br }; });
+    const sp = await page.evaluate(() => { const g = window.__game, P = g.race.player; P.place(40, 20, 0); P.vx = 15; P.vz = 0; const s0 = Render.fxStats().sparks; for (let k = 0; k < 20; k++) { g.sim(1 / 60, false); Render.frame(1 / 60, 1, P, 'chase', {}); } return { sparks: Render.fxStats().sparks - s0, d: Math.abs(P.q.d), br: P.q.br }; });
     T.check('driving past the track\'s (gone) barrier lines: no sparks, nothing scrapes', sp.sparks === 0 && sp.d > sp.br, JSON.stringify(sp));
     // the ring road (js/newmap.js nordRoad, the user's green line): paved as the Nordschleife, 11 m, the fans' paint on it; driven as asphalt
     // (track.surf2, js/core.js Car.stepCS), quicker off the line than the gravel beside it

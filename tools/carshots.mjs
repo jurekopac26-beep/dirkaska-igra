@@ -13,8 +13,6 @@
 //                            the rear right (the other cars hidden)
 //   chase-total, total-34    then Core.wreckCar: everything off, burning (from the chase camera; from the front left)
 //   chase-burnt, burnt-34l   20 s of race time on: the fire burnt out, the char all over, heavy black smoke (the chase camera; the rear left)
-//   cockpit                  the driver's view (the car intact)
-//   cockpit-wreck            the driver's view of the staged wreck (the bonnet gone: the engine bay ahead, not the road through it)
 //   cut                      the three-quarter view with the bonnet, the right door and the tailgate taken off (the lining, the floor, the cabin)
 //   sheet.png                all of them on one picture (at most 1600 px wide: one Read call), with the measured size against the header's
 // Category mode: --cat <category> puts every vehicle of that category side by side (each one's three-quarter view over its side view at the
@@ -101,7 +99,6 @@ try {
           x.drawImage(c, cx - w / 2, cy - h / 2, w, h, c.width - w * 2.5 - 6, 6, w * 2.5, h * 2.5); x.strokeStyle = '#ffd640'; x.lineWidth = 2; x.strokeRect(c.width - w * 2.5 - 6, 6, w * 2.5, h * 2.5); x.strokeRect(cx - w / 2, cy - h / 2, w, h);
           return o.toDataURL('image/png'); };
         const chase = snap('chase', true);
-        g.S.camera = 'cockpit'; for (let k = 0; k < 4; k++) { g.resume(); await raf(); g.pause(); } const cockpit = snap('cockpit'); g.S.camera = 'chase';
         for (let k = 0; k < 4; k++) { g.resume(); await raf(); g.pause(); }
         // the staged wreck: the car stopped where it is, the rest of the field held still (no one runs into it), its state set by zone: what
         // the zone's damage knocks off (dz >= th) off, what it loosens (dz >= 0.6 th) hanging loose; the front left wheel off
@@ -124,7 +121,6 @@ try {
         for (const n in PT) if (!P.lost[n] && (PT[n].wh != null ? PT[n].wh === 0 : P.dz[PT[n].z] >= PT[n].th)) Core.detachPart(P, n, PT[n]);
         still(1.6); for (let k = 0; k < 90; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }   // (1.5 s drawn: the burst of bits and sparks over, the smoke there, the fire burning)
         const wreck = snap('chase', true), w34 = look(1, -1), w34r = look(-1, 1);
-        for (let k = 0; k < 6; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'cockpit', {}); } const ckWreck = snap('cockpit'); for (let k = 0; k < 4; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }
         const staged = { dmg: P.dmg, lost: Object.keys(P.lost).length, ajar: Object.keys(Render.viewOf(P).kit ? Render.viewOf(P).kit.ajar : {}).filter(n => !P.lost[n]).length };
         Core.wreckCar(P); still(1.5); for (let k = 0; k < 90; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }
         const total = snap('chase', true), t34 = look(1, -1);
@@ -132,9 +128,9 @@ try {
         still(20); for (let k = 0; k < 120; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }
         const burnt = snap('chase', true), b34 = look(-1, -1);
         const fire = Render.viewOf(P).fire;
-        return { chase, cockpit, loose, l34r, nLoose, ckWreck, wreck, w34, w34r, total, t34, burnt, b34, staged, dmg: P.dmg, lost: Object.keys(P.lost).length, fire: fire ? +(g.race.time - fire.t0).toFixed(1) : null };
+        return { chase, loose, l34r, nLoose, wreck, w34, w34r, total, t34, burnt, b34, staged, dmg: P.dmg, lost: Object.keys(P.lost).length, fire: fire ? +(g.race.time - fire.t0).toFixed(1) : null };
       });
-      for (const [k, v] of [['chase', race.chase], ['chase-loose', race.loose], ['loose-34r', race.l34r], ['chase-wreck', race.wreck], ['wreck-34', race.w34], ['wreck-34r', race.w34r], ['chase-total', race.total], ['total-34', race.t34], ['chase-burnt', race.burnt], ['burnt-34l', race.b34], ['cockpit', race.cockpit], ['cockpit-wreck', race.ckWreck]]) {
+      for (const [k, v] of [['chase', race.chase], ['chase-loose', race.loose], ['loose-34r', race.l34r], ['chase-wreck', race.wreck], ['wreck-34', race.w34], ['wreck-34r', race.w34r], ['chase-total', race.total], ['total-34', race.t34], ['chase-burnt', race.burnt], ['burnt-34l', race.b34]]) {
         png(path.join(dir, k + '.png'), v);
         tiles.push({ src: v, label: k + (k === 'chase-loose' ? ` (${race.nLoose} parts loose)` : k === 'chase-wreck' ? ` (${race.staged.lost} parts off, ${race.staged.ajar} loose)` : k === 'chase-total' ? ' (dmg ' + race.dmg.toFixed(2) + ', ' + race.lost + ' parts off)' : k === 'chase-burnt' ? ` (the fire's ${race.fire} s)` : '') }); }
       await page.evaluate(async () => { const g = window.__game; g.resume(); g.onAction('to-title'); await new Promise(r => setTimeout(r, 300)); g.onAction('to-car'); await new Promise(r => setTimeout(r, 400)); });

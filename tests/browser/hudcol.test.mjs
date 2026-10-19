@@ -2,7 +2,7 @@
 // BOKSI · AVTOPILOT ...), the team radio and the toast, each the map's width, stacked right under it and under each other (no gap, no
 // overlap), the big message in at most three lines; nothing of them over the middle of the track, none over anything else of the HUD (the
 // clock, the sectors, the place, the timing tower, the speedometer, the pause and camera buttons, the pedals and the steering, the police's
-// radio and arrows ...). A phone's touch screen upright (360x640, the camera behind the car) and on its side (640x360, the isometric camera),
+// radio and arrows ...). A phone's touch screen upright (360x640, the camera behind the car) and on its side (640x360, the same camera),
 // in every HUD: a race on a circuit (the start, a pit stop on the autopilot, the last lap), a time trial (its height profile first under
 // the map), Pikes Peak, the run from the police, the duel in the traffic, the driving school, a race with a friend over the internet. On its
 // side the tower is the column's last (fewer rows, or none, with texts above it), and what does not fit above the pedals waits (the toast,
@@ -28,7 +28,7 @@ const T = checker('the texts under the map (hudCol)');
 const SHOTS = process.env.SHOTS || '';
 const srv = await serve();
 const browser = await launch(['--disable-features=WebRtcHideLocalIpsWithMdns']);
-const OR = { port: { width: 360, height: 640, camera: 'chase' }, land: { width: 640, height: 360, camera: 'iso' } };
+const OR = { port: { width: 360, height: 640, camera: 'chase' }, land: { width: 640, height: 360, camera: 'chase' } };
 const CTX = { touch: true, context: { reducedMotion: 'reduce' } };   // (a phone; no fade-in moving the boxes while they are measured)
 const TOAST = 'Sedaj lahko spustiš plin, vse bo naredil sam.', RADIO = 'Dober postanek. Si 5., G. Moretti je 12,3 s pred tabo.';
 // the pit stop's longest message (the tyres, the repair, the fuel), its toast and a radio message, in both languages
@@ -49,9 +49,9 @@ const MEASURE = () => {
   const R = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
   const land = innerWidth > innerHeight, M = document.getElementById('h-msg'), cs = getComputedStyle(M);
   const colIds = (land ? [] : ['h-dmg', 'h-tower']).concat(['h-prof', 'h-wreck', 'h-pit', 'h-react', 'h-msg', 'h-ttsp', 'h-teamradio', 'toast']).concat(land ? ['h-tower'] : []);   // (upright the damage picture first in it, right under the map, the tower under it)
-  const otherIds = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-pol', 'h-gap', 'h-chk', 'h-school', 'pk-note', 'btn-pause', 'btn-cam', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls',
+  const otherIds = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-pol', 'h-gap', 'h-chk', 'h-school', 'btn-pause', 'btn-tyre', 'btn-rescue', 'speedo', 'h-pos', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls',
     'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-radio', 'h-tail', 'h-lights', 'h-note', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'].concat(land ? ['h-dmg'] : []);
-  return { w: innerWidth, h: innerHeight, block: document.getElementById('rotate').classList.contains('show'), screen: window.__game.screen, m: R('h-map'),
+  return { w: innerWidth, h: innerHeight, screen: window.__game.screen, m: R('h-map'),
     col: colIds.filter(id => shown(document.getElementById(id))).map(R).sort((a, b) => a.t - b.t), other: otherIds.filter(id => shown(document.getElementById(id))).map(R),
     wait: ['toast', 'h-teamradio'].filter(id => document.getElementById(id).classList.contains('wait')), msg: M.textContent, lines: shown(M) ? Math.round((M.clientHeight - 7) / parseFloat(cs.lineHeight)) : 0, fs: parseFloat(cs.fontSize), out: shown(M) ? M.scrollWidth - M.clientWidth : 0,
     rows: document.getElementById('h-tower').querySelectorAll('.tw-r').length };
@@ -94,7 +94,7 @@ const TYRE = () => {
   const R = (e) => { const r = e.getBoundingClientRect(); return { id: e.id, l: +r.left.toFixed(1), t: +r.top.toFixed(1), r: +r.right.toFixed(1), b: +r.bottom.toFixed(1) }; };
   const B = document.getElementById('btn-tyre'); if (!shown(B)) return null;
   const ids = ['h-pos', 'h-tot', 'h-lap', 'h-alt', 'h-turn', 'h-pkcls', 'speedo', 'h-dmg', 'h-tyre', 'h-fuel', 'h-flt', 'h-flag', 'h-tower', 'h-time', 'h-best', 'h-sec', 'h-split', 'h-map', 'h-pit', 'h-msg', 'h-teamradio', 'toast',
-    'btn-pause', 'btn-cam', 'btn-rescue', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'];
+    'btn-pause', 'btn-rescue', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind'];
   const b = R(B), at = document.elementFromPoint((b.l + b.r) / 2, (b.t + b.b) / 2);
   return { b, d: R(document.getElementById('h-dmg')), s: R(document.getElementById('speedo')), others: ids.map(id => document.getElementById(id)).filter(shown).map(R), top: !!at && (at === B || B.contains(at)), c: B.dataset.c };
 };
@@ -111,10 +111,10 @@ function wrongTyre(x, mode) {
   if (!x.top) bad.push('under something');
   return bad;
 }
-// what is wrong with a layout: the column not the map's width, a gap or an overlap in it, one of it over another HUD element, the rotate notice
+// what is wrong with a layout: the column not the map's width, a gap or an overlap in it, one of it over another HUD element
 function wrong(o) {
   const bad = [], near = (a, b) => Math.abs(a - b) <= 1, hit = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
-  if (o.block || o.screen !== 'none') bad.push('screen ' + o.screen + (o.block ? ' (turn the phone)' : ''));
+  if (o.screen !== 'none') bad.push('screen ' + o.screen);
   let prev = { id: 'h-map', b: o.m.b };
   for (const c of o.col) { if (!near(c.l, o.m.l) || !near(c.r, o.m.r)) bad.push(c.id + ' not the map\'s width'); const g = c.t - prev.b; if (g < 1 || g > 7) bad.push(c.id + ' ' + g.toFixed(1) + ' px under ' + prev.id); prev = c; }
   for (const c of o.col) for (const x of o.other) if (hit(c, x)) bad.push(c.id + ' over ' + x.id);
@@ -153,7 +153,7 @@ async function both(page, name, msg, want, opt = {}) {
 }
 
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'iso', track: 'gozd', tower: 1, radio: 1, damage: 1, line: 0 }, { width: 640, height: 360 }, CTX);
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'gozd', tower: 1, radio: 1, damage: 1, line: 0 }, { width: 640, height: 360 }, CTX);
 
   // 1. a race on a circuit (Bakreni gozd): the start (START!), a pit stop on the autopilot (the progress bar first under the map), the last lap
   await startTrack(page, 'gozd');
