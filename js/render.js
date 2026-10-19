@@ -5766,15 +5766,18 @@ const Render = (function () {
   const tmp = { x: 0, z: 0 }, _sunN = new THREE.Vector3();
   function wheelWorld(c, lx, lz, x, z, h) { const ch = Math.cos(h), sh = Math.sin(h); tmp.x = x + lx * ch - lz * sh; tmp.z = z + lx * sh + lz * ch; return tmp; }
 
+  // a car the race works out at a lower rate (Core Race LOD, a very big field: far from the player): how far between its last two places, so it
+  // moves on smoothly between its steps (Race.lodT); any other car: alpha
+  const lodU = (c, alpha) => curRace && curRace._lod && curRace._lod.on && curRace.lodT ? curRace.lodT(c, alpha) : alpha;
   function updateCars(dt, alpha, opt) {
     const markerOn = opt && opt.marker, now = curRace && Number.isFinite(curRace.time) ? curRace.time : time, wk = wetW > 0.05 ? Math.min(1, wetW * 1.4) : 0;   // wk: how much the wet road mirrors the lights
     _sunN.set(sunOff[0], sunOff[1], sunOff[2]).normalize();
     const sk = (atmos.tod === 'night' ? 0 : atmos.tod === 'dusk' ? 0.8 : 1) * (1 - Math.min(1, Math.max(0, wet) * 1.6)) * Math.min(1, sun.intensity);   // sk: the sun's glint on the paint
     glows.begin(); streaks.begin(); fireScan(now); xShardsRun(now);
     for (const v of views) {
-      const c = v.car, M = c.m;
-      const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha), h = c.ph + wrapPi(c.h - c.ph) * alpha;
-      const y = lerp(c.py, c.y, alpha), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
+      const c = v.car, M = c.m, u = lodU(c, alpha);
+      const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
+      const y = lerp(c.py, c.y, u), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
       // over a piece of debris on the road (Core debrisHit: hopN, hopT, hopH): the body up and down once, as if it jumped ~2 m
       if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }

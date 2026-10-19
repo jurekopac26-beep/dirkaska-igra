@@ -704,15 +704,22 @@
      with the camera the player drove with (then the TV cameras beside the track, behind a car, from above); any car followed, played
      faster or slower ---------------- */
   const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 the safety car there, 4 its lamps on; 20 min at most)
+  // a very big field (more than REC_BIG cars, Nürburg's hundred): a sample every 2 x REC_DT (the replay goes between them as ever); any field at most
+  // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
+  const REC_BIG = 30, REC_BYTES = 32e6;
   let recd = null, replay = null;
-  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map() }; }
+  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map(), bytes: 0, out: null }; }
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
-    const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX) return;
-    R.next = race.time + REC_DT;
-    const n = R.n, f = new Float32Array(1 + (n + 1) * REC_W); f[0] = race.time;
-    const put = (c, o, bits) => { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
+    const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX || R.bytes >= REC_BYTES) return;
+    if (R.out == null && R.cars.every(c => race.isOut(c))) R.out = race.time; if (R.out != null && race.time > R.out + 3) return;   // (every car finished or retired 3 s ago: the recording is over)
+    R.next = race.time + (R.n > REC_BIG ? 2 * REC_DT : REC_DT);
+    const n = R.n, f = new Float32Array(1 + (n + 1) * REC_W), LD = race._lod && race._lod.on; f[0] = race.time; R.bytes += f.byteLength;
+    const put = (c, o, bits) => { const u = LD ? race.lodT(c, 1) : 1;   // (a car worked out at a lower rate, Core LOD: where it is by now, on along its way since its last step)
+      if (u !== 1) { f[o] = c.px + (c.x - c.px) * u; f[o + 1] = (c.py || 0) + ((c.y || 0) - (c.py || 0)) * u; f[o + 2] = c.pz + (c.z - c.pz) * u; f[o + 3] = c.ph + Core.wrapPi(c.h - c.ph) * u; }
+      else { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; }
+      f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
     for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (c.rl ? rlBits(c.rl) : 0)); }
     const S = race.fl && race.fl.sc; if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0));
     R.frames.push(f);
@@ -1535,14 +1542,19 @@
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
   const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
   function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
+  // a very big field (more than Q_BIG rivals, Nürburg's hundred): the rivals' laps worked out at Q_DT (a quarter of the work), in shorter turns
+  // between the frames (the time looked at more often: a phone's frame keeps its budget); a lap at 30 Hz is Q_K slower than at the full rate,
+  // so their times (and sectors) less that, to compare with the player's lap
+  const Q_BIG = 30, Q_DT = 1 / 30, Q_K = 1.0026;   // (Q_K: Nürburg, 8 of 99 rivals: +0.17..0.34 %)
   function qsimStep(Q, ms) {   // the rivals' laps, for about ms milliseconds; true when all are done
     if (Q.phys !== physOf()) { Q.phys = physOf(); Q.sims = null; }   // (the physics changed in the pause menu: their laps again with it)
-    const G = Q.sims || (Q.sims = { k: 0, r: null, t: 0, times: [] }), cap = track.len / 8 + 120, t0 = performance.now();
+    const G = Q.sims || (Q.sims = { k: 0, r: null, t: 0, times: [] }), cap = track.len / 8 + 120, t0 = performance.now(), big = Q.nAI > Q_BIG, h = big ? Q_DT : STEP, nT = big ? 30 : 240, kT = big ? 1 / Q_K : 1;
     while (G.k < Q.nAI) {
       if (!G.r) { G.r = new Core.Race(track, { numAI: Q.nAI, aiOrder: [G.k], noPlayer: true, playerModel: Q.pm, fieldModel: Q.fm || undefined, laps: 1, qualiBack: Q.back, difficulty: Q.diff, phys: Q.phys, rain: Q.rain, seed: Q.seed, damage: 0 }); G.r.start(); G.t = 0; }   // (playerModel, fieldModel: the rivals in the race's cars, its field or one-make class; a championship's: the field of its car)
       const c = G.r.cars[0];
-      for (let n = 0; n < 240 && !c.finished && G.t < cap; n++) { G.r.step(STEP); G.t += STEP; }
-      if (c.finished || G.t >= cap) { G.times[G.k] = { k: G.k, name: c.name, car: c.m.name, color: c.color, time: c.finished && c.lapTimes[0] > 0 ? c.lapTimes[0] : Infinity, sec: !c.finished ? null : c.sec ? c.sec.best.slice() : c.secPB ? c.secPB.slice() : null }; G.k++; G.r = null; }   // (a lap never finished: last)
+      for (let n = 0; n < nT && !c.finished && G.t < cap; n++) { G.r.step(h); G.t += h; }
+      if (c.finished || G.t >= cap) { const sc = !c.finished ? null : c.sec ? c.sec.best.slice() : c.secPB ? c.secPB.slice() : null; if (sc && big) for (let j = 0; j < sc.length; j++) sc[j] *= kT;
+        G.times[G.k] = { k: G.k, name: c.name, car: c.m.name, color: c.color, time: c.finished && c.lapTimes[0] > 0 ? c.lapTimes[0] * kT : Infinity, sec: sc }; G.k++; G.r = null; }   // (a lap never finished: last)
       if (performance.now() - t0 > ms) break;
     }
     return G.k >= Q.nAI;
@@ -3873,8 +3885,9 @@
   }
   function twMark() {
     if (!tw) return;
-    const total = track.open ? track.raceLen : track.len * race.laps;
-    for (const c of race.cars) {
+    const total = track.open ? track.raceLen : track.len * race.laps, LD = race._lod && race._lod.on ? race._lod.st : null;
+    for (let i = 0; i < race.cars.length; i++) {
+      const c = race.cars[i]; if (LD && !LD[i]) continue;   // (a far car between its steps, Core LOD: not on since its last one)
       let a = tw.t.get(c); if (!a) { a = new Float32Array(Math.ceil(total / TW_M) + 4); tw.t.set(c, a); tw.n.set(c, 0); }
       let n = tw.n.get(c); const k = Math.min(a.length - 1, Math.floor(c.dist / TW_M));
       while (n <= k) a[n++] = race.time;
@@ -4772,6 +4785,14 @@
 
   /* ---------------- main loop ---------------- */
   const fr = { raf: 0, drawn: 0 };   // (tests: frames the browser offered, frames drawn)
+  // behind the results (phase 'done', offline): once every car has finished or retired, 3 s of the race on (the last ones over the line, the
+  // replay's end, recStep), then no more steps: a hundred cars on their slowing-down lap would cost a phone a whole frame each frame for nothing
+  const rest = { race: null, t: 0 };
+  const restOn = () => {
+    if (phase !== 'done' || screen === 'none' || (mp && mp.race) || !race || !race.cars.every(c => race.isOut(c))) return false;
+    if (rest.race !== race) { rest.race = race; rest.t = race.time; }
+    return race.time - rest.t >= 3;
+  };
   function frame(now) {
     requestAnimationFrame(frame); fr.raf++;
     if (saverOn() && now - last < 1000 / 30 - 3) return;   // the battery saver: 30 frames a second (every other one at 60 Hz, every fourth at 120 Hz)
@@ -4803,10 +4824,12 @@
       // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock the
       // phones share (slow frames and hitches up to 0.5 s are caught up), so a slower phone does not lose time
       const on = mp && mp.race, lim = on ? 64 : 10;
-      if (on && on.late != null) { acc = on.late; on.late = null; } else acc += on ? dtNet : dt;   // (online: the lights went out this frame)
-      let n = 0;
-      while (acc >= STEP && n < lim) { stepRace(STEP, inp); acc -= STEP; n++; }
-      if (n >= lim) acc = 0;
+      if (!restOn()) {   // (behind the results, every car home 3 s ago: no more steps, the cars stand as they were)
+        if (on && on.late != null) { acc = on.late; on.late = null; } else acc += on ? dtNet : dt;   // (online: the lights went out this frame)
+        let n = 0;
+        while (acc >= STEP && n < lim) { stepRace(STEP, inp); acc -= STEP; n++; }
+        if (n >= lim) acc = 0;
+      }
       if (on) { if (race.player.finished && on.mine == null) netMyFinish(); netFrame(false); }
       updateHUD(dt); hudCol(dt); Comm.update(); Sfx.setDuck(Comm.talking());   // (the commentator over the engines: the rest lowered under the voice)
       Sfx.update(race, race.player, null, inp.thr);
