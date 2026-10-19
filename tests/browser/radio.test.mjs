@@ -2,7 +2,8 @@
 // engineer's message in the box at the top of the HUD with the radio's click: the gaps to the cars ahead and behind, on the last lap
 // "Zadnji krog!"; in a race with fuel (6 laps) the window for the stop, on the lap it must be made BOKSI V TEM KROGU with the place the stop
 // gives, after the stop the place; the pause menu's strategy (fuel, what a stop costs, the place after it); the tyres for the next stop
-// chosen while driving (the button, the T key: Samodejno, Mehke, Srednje, Trde in turn); in English; switched off: no radio. The box: right
+// chosen while driving (the T key: Samodejno, Mehke, Srednje, Trde in turn; the pause menu's Gume v boksih follows; no tyre button on the
+// HUD); in English; switched off: no radio. The box: right
 // under the map (or under what shows above it in that column), the map's width (its text wrapped), upright and on its side.
 //   node tests/browser/radio.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -37,29 +38,29 @@ try {
   // what shows above it in the column, the message's, too. On a busy machine 300 ms are not always enough: their animations waited for
   // until they are finished, then two frames more), upright, then on its side, then upright again
   const rbox = () => page.evaluate(() => new Promise(res => setTimeout(async () => {
-    const col = ['h-teamradio', 'h-dmg', 'h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(Boolean);
+    const col = ['h-teamradio', 'h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(Boolean);
     for (let k = 0; k < 5; k++) { const a = col.flatMap(x => x.getAnimations()).filter(a => a.playState === 'running'); if (!a.length) break; await Promise.race([Promise.all(a.map(x => x.finished.catch(() => { }))), new Promise(r => setTimeout(r, 2000))]); }
     requestAnimationFrame(() => requestAnimationFrame(() => {
     const e = document.getElementById('h-teamradio'), cs = getComputedStyle(e), r = e.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
-    const above = ['h-dmg', 'h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(x => x && getComputedStyle(x).visibility === 'visible' && getComputedStyle(x).display !== 'none' && x.getClientRects().length)
-      .map(x => x.getBoundingClientRect()).filter(q => q.height > 0 && q.left < m.right - 1 && q.right > m.left + 1 && q.bottom <= r.top + 1).map(q => q.bottom);   // (what is over it in the column under the map: upright the damage picture and the tower first, when shown)
+    const above = ['h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(x => x && getComputedStyle(x).visibility === 'visible' && getComputedStyle(x).display !== 'none' && x.getClientRects().length)
+      .map(x => x.getBoundingClientRect()).filter(q => q.height > 0 && q.left < m.right - 1 && q.right > m.left + 1 && q.bottom <= r.top + 1).map(q => q.bottom);   // (what is over it in the column under the map: upright the tower first, when shown)
     res({ on: e.classList.contains('on'), vis: cs.visibility, dl: +(r.left - m.left).toFixed(1), dr: +(r.right - m.right).toFixed(1), gap: +(r.top - Math.max(m.bottom, ...above)).toFixed(1), fs: parseFloat(cs.fontSize), lines: Math.round((r.height - 9) / parseFloat(cs.lineHeight)), w: innerWidth, h: innerHeight }); })); }, 300)));
   const b1 = await rbox(); await page.setViewportSize({ width: 844, height: 390 }); const b2 = await rbox(); await page.setViewportSize({ width: 390, height: 844 }); await rbox();
-  T.check('the radio\'s box right under the map with the map\'s width (±1 px; upright under the damage picture and the tower when they are shown), its text wrapped and readable (at least 9 px), upright and on its side',
+  T.check('the radio\'s box right under the map with the map\'s width (±1 px; upright under the tower when it is shown), its text wrapped and readable (at least 9 px), upright and on its side',
     [b1, b2].every(b => b.on && b.vis === 'visible' && Math.abs(b.dl) <= 1 && Math.abs(b.dr) <= 1 && b.gap >= 2 && b.gap <= 6 && b.fs >= 9 && b.lines >= 2) && b1.h > b1.w && b2.w > b2.h, JSON.stringify({ b1, b2 }));
 
   // 2. the pause menu: the strategy as it stands (no fuel: the tyres, what a stop now costs, the place after it)
   const ps = await page.evaluate(() => { const g = window.__game; g.pause(); const el = document.getElementById('pause-strat'), t = el.textContent, on = !el.classList.contains('off'); g.resume(); return { t, on }; });
   T.check('the pause menu: the strategy (the tyres, what a stop now costs and the place after it)', ps.on && /^Gume: \d+ %\. Postanek zdaj stane okoli \d+ s, po njem bi bil \d+\.$/.test(ps.t), JSON.stringify(ps));
 
-  // 3. the tyres for the next stop while driving: the button (A, S, M, H in turn), the T key; the setting kept, the player's car told
-  const ty = await page.evaluate(() => { const g = window.__game, b = document.getElementById('btn-tyre'), out = [];
-    const st = () => ({ vis: getComputedStyle(b).display !== 'none', c: b.dataset.c, t: b.textContent, car: g.race.player.pitCmp, toast: document.getElementById('toast').textContent });
-    out.push(st()); for (let k = 0; k < 3; k++) { b.click(); out.push(st()); }
-    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyT' })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyT' })); out.push(st());
-    return { out, stored: JSON.parse(localStorage.getItem('tdgp-settings')).pitCmp }; });
-  T.check('the tyres for the next stop while driving: the button A, S, M, H in turn, then the T key back to A (the car and the setting follow)',
-    ty.out.map(x => x.t).join() === 'A,S,M,H,A' && ty.out.every(x => x.vis) && ty.out[1].car === 'S' && ty.out[3].car === 'H' && ty.out[4].car === 'auto' && ty.out[3].toast === 'Gume za postanek: Trde' && ty.stored === 'auto', JSON.stringify(ty));
+  // 3. the tyres for the next stop while driving: the T key (Samodejno, Mehke, Srednje, Trde in turn, told in a toast); the player's car, the
+  // pause menu's Gume v boksih and the setting follow; no tyre button on the HUD (nothing on it is tapped)
+  const ty = await page.evaluate(() => { const g = window.__game, out = [];
+    const st = () => { const b = document.querySelector('[data-set="pitCmp"] button.sel'); return { car: g.race.player.pitCmp, sel: b ? b.dataset.v : '', toast: document.getElementById('toast').textContent }; };
+    out.push(st()); for (let k = 0; k < 4; k++) { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyT' })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyT' })); out.push(st()); }
+    return { out, stored: JSON.parse(localStorage.getItem('tdgp-settings')).pitCmp, btn: !!document.getElementById('btn-tyre') }; });
+  T.check('the tyres for the next stop while driving: the T key, Samodejno, Mehke, Srednje, Trde in turn, back to Samodejno ("Gume za postanek: Trde"); the car, the pause menu\'s Gume v boksih and the setting follow; no tyre button',
+    ty.out.map(x => x.car).join() === 'auto,S,M,H,auto' && ty.out.every(x => x.sel === x.car) && ty.out[3].toast === 'Gume za postanek: Trde' && ty.stored === 'auto' && !ty.btn, JSON.stringify(ty));
 
   // 4. in English, at the last lap's line: "Last lap! ... is 1.2 s ahead of you"
   await lang('en');
