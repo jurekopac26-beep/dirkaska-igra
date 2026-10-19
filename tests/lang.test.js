@@ -70,7 +70,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
 {
   const html = read('index.html'), body = html.slice(html.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<!--[\s\S]*?-->/g, '');
   const dec = (t) => t.replace(/&#(\d+);/g, (m, c) => String.fromCodePoint(+c)).replace(/&times;/g, '×').replace(/&middot;/g, '·').replace(/&minus;/g, '−').replace(/&amp;/g, '&');
-  const PLACEHOLDER = new Set(['KROG 1/3', 'Jezero Ring · 3 krogi · 12 nasprotnikov', 'KAZE RS', 'FR', '10.000 €', '1×', '−', '+']);   // (written over by the game at once)
+  const PLACEHOLDER = new Set(['KROG 1/3', 'Jezero Ring · 3 krogi · 21 nasprotnikov', 'KAZE RS', 'FR', '10.000 €', '1×', '−', '+']);   // (written over by the game at once)
   const miss = [];
   for (const m of body.matchAll(/>([^<>]+)</g)) { const t = dec(m[1]).replace(/\s+/g, ' ').trim(); if (t && /[A-Za-zČŠŽčšž]/.test(t) && !has(t) && !Lang.SAME.has(t) && !PLACEHOLDER.has(t)) miss.push(t); }
   for (const m of body.matchAll(/\b(aria-label|placeholder|title)="([^"]+)"/g)) { const t = dec(m[2]); if (!has(t) && !Lang.SAME.has(t)) miss.push('@' + m[1] + ' ' + t); }

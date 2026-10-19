@@ -32,7 +32,7 @@ try {
   const t1 = await page.evaluate(() => ({ lang: document.documentElement.lang, champ: document.getElementById('btn-champ').textContent, sub: document.getElementById('title-sub').textContent, hint: document.getElementById('title-hint').textContent,
     race: document.querySelector('[data-act="to-car"]').textContent }));
   const s1 = await slovene();
-  T.check('title in English: Race, Championship, "Jezero Ring · 3 laps · 12 rivals", "Track: Jezero Ring", <html lang="en">', t1.lang === 'en' && t1.race === 'Race' && t1.champ === 'Championship' && t1.sub === 'Jezero Ring · 3 laps · 12 rivals' &&
+  T.check('title in English: Race, Championship, "Jezero Ring · 3 laps · 21 rivals", "Track: Jezero Ring", <html lang="en">', t1.lang === 'en' && t1.race === 'Race' && t1.champ === 'Championship' && t1.sub === 'Jezero Ring · 3 laps · 21 rivals' &&
     /^Track: Jezero Ring\. Controls: Buttons\. Change them in the settings\.$/.test(t1.hint) && !s1.length, JSON.stringify({ t1, s1 }));
 
   // 2. the cars and their upgrades
@@ -140,8 +140,8 @@ try {
   const g7 = await page.evaluate(() => ({ lang: document.documentElement.lang, S: window.__game.S.lang, name: document.querySelector('#set-name').closest('.row').querySelector('.rlbl').textContent, done: document.querySelector('[data-act="settings-done"]').textContent, stored: JSON.parse(localStorage.getItem('tdgp-settings')).lang, player: window.__game.S.name }));
   await act('settings-done'); await page.waitForTimeout(200);
   const t7 = await page.evaluate(() => ({ champ: document.getElementById('btn-champ').textContent, sub: document.getElementById('title-sub').textContent, race: document.querySelector('[data-act="to-car"]').textContent }));
-  T.check('Slovenian again at once: the settings (Ime voznika, Končano), the title (Dirkaj, Prvenstvo, "3 krogi · 12 nasprotnikov"), kept; the default name Igralec', g7.lang === 'sl' && g7.S === 'sl' && g7.stored === 'sl' && g7.name === 'Ime voznika' && g7.done === 'Končano' && t7.race === 'Dirkaj' && t7.champ === 'Prvenstvo' &&
-    t7.sub === 'Jezero Ring · 3 krogi · 12 nasprotnikov' && g7.player === 'Igralec', JSON.stringify({ g7, t7 }));
+  T.check('Slovenian again at once: the settings (Ime voznika, Končano), the title (Dirkaj, Prvenstvo, "3 krogi · 21 nasprotnikov"), kept; the default name Igralec', g7.lang === 'sl' && g7.S === 'sl' && g7.stored === 'sl' && g7.name === 'Ime voznika' && g7.done === 'Končano' && t7.race === 'Dirkaj' && t7.champ === 'Prvenstvo' &&
+    t7.sub === 'Jezero Ring · 3 krogi · 21 nasprotnikov' && g7.player === 'Igralec', JSON.stringify({ g7, t7 }));
   await act('to-settings'); await page.waitForTimeout(150);
   await page.evaluate(() => document.querySelector('[data-set="lang"] button[data-v="en"]').click()); await page.waitForTimeout(250);
   const g8 = await page.evaluate(() => ({ name: document.querySelector('#set-name').closest('.row').querySelector('.rlbl').textContent, player: window.__game.S.name }));

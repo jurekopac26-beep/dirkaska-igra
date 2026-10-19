@@ -1,4 +1,4 @@
-// The slipstream in the game: a race at the Red Bull Ring (12 rivals, the player on autopilot) has it; in the wake of a car ahead the
+// The slipstream in the game: a race at the Red Bull Ring (21 rivals, the player on autopilot) has it; in the wake of a car ahead the
 // speedometer's ZAVETRJE lights up, out of it it goes out (in English: SLIPSTREAM). A time trial has none (Pikes Peak).
 //   node tests/browser/slip.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';

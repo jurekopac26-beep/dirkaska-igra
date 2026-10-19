@@ -189,7 +189,7 @@ try {
       `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
   // 6d. Vršič: one card, four ways to drive it (the switch Dirka / Kronometer / Promet / Policija on the card). Kronometer: the time trial alone
-  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD
+  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 21 rivals on the grid, the HUD
   //     shows the place, the km climbed and the altitude; Promet: the duel with one rival up the open road, the traffic and the people drawn,
   //     the HUD with the rival's gap; Policija: a calm start (no start lights, nobody after the player, no stars, the commentator silent and
   //     the police radio on the air, the checkpoint ahead on the HUD), the autopilot drives through the checkpoint in Kranjska Gora (the
@@ -271,8 +271,8 @@ try {
     T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
       r.tt && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.rec.board && r.rec.board.length === 1 && !(r.race && r.race.bestTime) && /medalj/.test(r.sub),
       `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}"`);
-    T.check('Vršič race: 13 cars, the HUD with the place, the km climbed and the altitude',
-      r.back === 'race' && r.cars === 13 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
+    T.check('Vršič race: 22 cars, the HUD with the place, the km climbed and the altitude',
+      r.back === 'race' && r.cars === 22 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
       `${r.cars} cars, HUD "${r.lap}" "${r.alt}", place ${r.pos}, ${r.racing}`);
     const D = r.traffic, P = r.police, Q = r.pre, M = r.mission;
     T.check('Vršič Promet: the duel with one rival in the traffic, vehicles and people drawn, the HUD with the rival\'s gap (the commentator on, no police radio)',

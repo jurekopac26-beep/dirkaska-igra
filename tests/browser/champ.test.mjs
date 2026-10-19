@@ -2,7 +2,8 @@
 // autopilot) with the points on the results; the standings (every driver, the player's points as the place gives them) and the next
 // round on the next track; the championship kept over a reload of the page (the title button shows the round); a round left
 // before the finish does not count, a restart drives the same round again; giving it up takes a second tap; the last round of a
-// series ends it: the final standings and the record of the series.
+// series ends it: the final standings and the record of the series. A championship has 19 rivals (20 cars) in every round; one kept
+// before there were 19 (no field size saved) goes on with its 12.
 //   node tests/browser/champ.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -48,8 +49,8 @@ try {
   // 3. the standings: every driver, the player's points, round 2 next; kept in the browser
   await page.evaluate(() => document.getElementById('res-restart').click()); await page.waitForTimeout(300);
   const s1 = await standings();
-  T.check('standings after round 1: 13 drivers, the player with the points of the place, round 2 (Gorski reli) next, saved', s1.screen === 'champ' && s1.rows === 13 && s1.me === 'Ana:' + p1 && s1.tag === 'dirka 2/3' &&
-    s1.go === 'Naslednja dirka: Gorski reli' && s1.chips.startsWith('done,next') && s1.saved && s1.saved.rounds.length === 1 && s1.saved.rounds[0].order.length === 13, JSON.stringify(s1));
+  T.check('standings after round 1: 20 drivers (19 rivals), the player with the points of the place, round 2 (Gorski reli) next, saved with its field size', s1.screen === 'champ' && s1.rows === 20 && s1.saved && s1.saved.n === 19 && s1.me === 'Ana:' + p1 && s1.tag === 'dirka 2/3' &&
+    s1.go === 'Naslednja dirka: Gorski reli' && s1.chips.startsWith('done,next') && s1.saved && s1.saved.rounds.length === 1 && s1.saved.rounds[0].order.length === 20, JSON.stringify(s1));
 
   // 4. a reload of the page: the championship is still there, the title button shows the round
   await page.reload(); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 30000 }); await page.waitForTimeout(500);
@@ -85,10 +86,11 @@ try {
   await act('to-champ'); await page.waitForTimeout(300);
   const s4 = await standings();
   await act('champ-go'); await raceOn('riviera', 2);
+  const old = await page.evaluate(() => window.__game.race.cars.length);
   const r4 = await finish();
   await page.evaluate(() => document.getElementById('res-restart').click()); await page.waitForTimeout(300);
   const s5 = await standings(), rec = await page.evaluate(() => (JSON.parse(localStorage.getItem('tdgp-records') || '{}').champ || {}).domaci || null);
-  T.check('last round: the standings before it (43 points), the results lead to the final standings', s4.me === 'Ana:43' && s4.tag === 'dirka 3/3' && r4.screen === 'results' && r4.btn === 'to-champ:Končna razvrstitev', `${s4.me}, ${s4.tag}, ${r4.btn}`);
+  T.check('last round: the standings before it (43 points; a championship kept before there were 19 rivals: its 13 drivers, 13 cars in the round), the results lead to the final standings', s4.me === 'Ana:43' && s4.rows === 13 && old === 13 && s4.tag === 'dirka 3/3' && r4.screen === 'results' && r4.btn === 'to-champ:Končna razvrstitev', `${s4.me}, ${s4.rows} rows, ${old} cars, ${s4.tag}, ${r4.btn}`);
   T.check('final standings: the championship over, the place shown, "Novo prvenstvo"; the best final place kept for the series', s5.final && s5.tag === 'končano' && s5.go === 'Novo prvenstvo' && s5.chips === 'done,done,done' && rec && rec.best >= 1,
     JSON.stringify({ tag: s5.tag, go: s5.go, me: s5.me, rec }));
   await act('champ-go'); await page.waitForTimeout(200);
