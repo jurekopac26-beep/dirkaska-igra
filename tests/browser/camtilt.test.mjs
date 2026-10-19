@@ -1,37 +1,37 @@
-// Nagib kamere (Nastavitve): the chase camera (za avtom) looks further ahead along the road. Its tilt below the horizon is 10 % (the
-// default), 20 % or 30 % smaller than the camera's own; its distance from the point it looks at stays the same.
+// Nagib kamere: always 30 %, no setting. The chase camera (za avtom) looks further ahead along the road: its tilt below the horizon is
+// 30 % smaller than the camera's own (7/9 of the tilt a camera at the old default of 10 % had), from the same distance to the point it looks at.
+// Nastavitve have no row for it any more, and a visit to them or a new race leaves the tilt as it is.
 //   node tests/browser/camtilt.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('Nagib kamere: the chase camera looks further ahead, from the same distance');
+const T = checker('Nagib kamere: always 30 %, the chase camera looks further ahead, from the same distance');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'chase', weather: 'dry', track: 'jezero' }, { width: 390, height: 844 });
-  const pick = (v) => page.evaluate((v) => document.querySelector(`[data-set="camTilt"] button[data-v="${v}"]`).click(), v);
-  // the camera once it has settled, drawn in the given camera: its tilt below the horizon (degrees), its distance from the point it
-  // looks at, its position
-  const view = (mode) => page.evaluate((mode) => { const g = window.__game, P = g.race.player, C = Render.camera;
-    g.pause(); Render.resetCam(); for (let i = 0; i < 60; i++) Render.frame(1 / 60, 1, P, mode, {});
-    const d = new THREE.Vector3(); C.getWorldDirection(d);
-    return { tilt: +(Math.asin(-d.y) * 180 / Math.PI).toFixed(3), dist: +Render.cam.vd.toFixed(3), pos: [C.position.x, C.position.y, C.position.z].map(v => +v.toFixed(3)) }; }, mode);
-  const wiring = () => page.evaluate(() => ({ set: window.__game.S.camTilt, tilt: Render.cam.userTilt }));
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'chase', weather: 'dry', track: 'jezero', camTilt: 0 }, { width: 390, height: 844 });
+  // the camera once it has settled, drawn in the chase camera at the given tilt: its tilt below the horizon (degrees), its distance from
+  // the point it looks at
+  const view = (ut) => page.evaluate((ut) => { const g = window.__game, P = g.race.player, C = Render.camera, keep = Render.cam.userTilt;
+    g.pause(); if (ut != null) Render.cam.userTilt = ut; Render.resetCam(); for (let i = 0; i < 60; i++) Render.frame(1 / 60, 1, P, 'chase', {});
+    const d = new THREE.Vector3(); C.getWorldDirection(d); Render.cam.userTilt = keep;
+    return { tilt: +(Math.asin(-d.y) * 180 / Math.PI).toFixed(3), dist: +Render.cam.vd.toFixed(3) }; }, ut);
+  const tilt = () => page.evaluate(() => Render.cam.userTilt);
+
+  // Nastavitve: no row for it (an old saved camTilt is let be)
+  const row = await page.evaluate(() => ({ seg: !!document.querySelector('[data-set="camTilt"]'), label: [...document.querySelectorAll('.rlbl')].some(e => /Nagib kamere/.test(e.textContent)) }));
+  T.check('Nastavitve: no "Nagib kamere" row, none of its choices', !row.seg && !row.label, JSON.stringify(row));
 
   await startTrack(page, 'jezero');
-  const w = await wiring();
-  T.check('the default: 10 %', w.set === 0 && w.tilt === 0.1, JSON.stringify(w));
+  const t0 = await tilt();
+  await page.evaluate(() => { const g = window.__game; g.onAction('to-settings'); g.onAction('settings-done'); });
+  await startTrack(page, 'jezero');
+  const t1 = await tilt();
+  T.check('always 30 % (an old saved setting of 10 % too), after Nastavitve and a new race as well', t0 === 0.3 && t1 === 0.3, JSON.stringify([t0, t1]));
 
-  // the setting is wired through (saved, and mapped to 10 / 20 / 30 %)
-  await pick('0'); const c0 = await view('chase'); const w0 = await wiring();
-  await pick('1'); const c1 = await view('chase'); const w1 = await wiring();
-  await pick('2'); const c2 = await view('chase'); const w2 = await wiring();
-  T.check('the choice is saved and maps to 10, 20 and 30 %', w0.set === 0 && w0.tilt === 0.1 && w1.set === 1 && w1.tilt === 0.2 && w2.set === 2 && w2.tilt === 0.3, JSON.stringify([w0, w1, w2]));
-
-  // chase (phone upright): the camera tilts less the more it is set (by 0.8 / 0.9 and 0.7 / 0.9 of the default's tilt), from the same distance
-  const r1 = c1.tilt / c0.tilt, r2 = c2.tilt / c0.tilt;
-  T.check('chase: the camera tilts less the more it is set (20 % and 30 % against 10 %)', c2.tilt < c1.tilt && c1.tilt < c0.tilt && Math.abs(r1 - 0.8 / 0.9) < 0.005 && Math.abs(r2 - 0.7 / 0.9) < 0.005,
-    JSON.stringify({ tilt: [c0.tilt, c1.tilt, c2.tilt], r1: +r1.toFixed(4), r2: +r2.toFixed(4) }));
-  T.check('chase: the camera stays as far from the point it looks at', c0.dist > 10 && Math.abs(c1.dist - c0.dist) < 0.01 && Math.abs(c2.dist - c0.dist) < 0.01, JSON.stringify([c0.dist, c1.dist, c2.dist]));
+  // the chase camera (phone upright): 7/9 of the tilt of a camera at 10 %, from the same distance
+  const c10 = await view(0.1), c30 = await view(null), r = c30.tilt / c10.tilt;
+  T.check('chase: the camera tilts 30 % less than its own pitch: 7/9 of the tilt at the old 10 %', c30.tilt < c10.tilt && Math.abs(r - 0.7 / 0.9) < 0.005, JSON.stringify({ tilt: [c10.tilt, c30.tilt], r: +r.toFixed(4) }));
+  T.check('chase: the camera stays as far from the point it looks at', c10.dist > 10 && Math.abs(c30.dist - c10.dist) < 0.01, JSON.stringify([c10.dist, c30.dist]));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {
