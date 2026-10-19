@@ -53,6 +53,7 @@ try {
       g.resume(); await frames(4);
       const ws = document.getElementById('wheel-swap'), btn = document.getElementById('ws-btn'), br = btn.getBoundingClientRect(), tk = document.getElementById('ws-bar').parentElement.getBoundingClientRect(), sx = () => parseFloat((document.getElementById('ws-bar').style.transform.match(/[\d.]+/) || ['1'])[0]);
       const ctl = ['c-left', 'c-right', 'c-brake', 'c-gas', 'c-wheel', 'tilt-ind'].map(id => document.getElementById(id)).filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect()).filter(c => c.width > 0);   // (the controls as they are while it runs: the pause hides them)
+      const arrowsTop = ['c-left', 'c-right'].map(id => document.getElementById(id)).filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect().top);   // (the steering arrows' tops, while it runs)
       const roof = () => { const v = Render.viewOf(P2), m = v.spareM; if (!m) return null; v.body.geometry.computeBoundingBox(); return { vis: m.visible, y: +m.position.y.toFixed(2), top: +v.body.geometry.boundingBox.max.y.toFixed(2), x: +m.position.x.toFixed(2) }; };   // (the spare on the roof: Render spareRoof)
       g.pause();
       const sw0 = { on: ws.classList.contains('on'), w: Math.round(br.width), h: Math.round(br.height), big: br.width >= (innerWidth > innerHeight ? 0.3 : 0.6) * innerWidth && br.height >= 60,
@@ -85,11 +86,11 @@ try {
       g.resume(); await frames(3); await wait(600); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length; sw1.roof = roof();
       Sfx.wrench = gun0; sw1.gun = gun.length; sw1.buzz = buzz();
       { const M = document.getElementById('h-msg'), D = document.getElementById('h-dmg'), N = document.getElementById('dmg-ns'), d = D.getBoundingClientRect(), n = N.getBoundingClientRect(), m = M.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
-        const cut = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1, ctl2 = ['c-left', 'c-right'].map(id => document.getElementById(id)).filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect().top);
+        const cut = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
         sw1.msg = { txt: M.textContent, show: M.classList.contains('show'), gold: M.classList.contains('gold'), ic: M.dataset.ic, clear: !(M.classList.contains('show') && cut(m, d)) };
         sw1.ns = { on: D.classList.contains('nospare'), shown: N.getClientRects().length > 0 && n.height > 0, txt: N.textContent, icon: /svg/.test(getComputedStyle(N, '::before').backgroundImage),
           inPic: n.left >= d.left - 0.5 && n.right <= d.right + 0.5 && n.top >= d.top && n.bottom <= d.bottom + 0.5 && n.top > d.top + d.height / 3, oneLine: N.scrollWidth <= N.clientWidth + 1 && n.height < 2.2 * parseFloat(getComputedStyle(N).fontSize),
-          inView: d.left >= 0 && d.right <= innerWidth && d.bottom <= innerHeight, above: !ctl2.length || k.bottom <= Math.min(...ctl2), side: side(), before: sw0.side }; }
+          inView: d.left >= 0 && d.right <= innerWidth && d.bottom <= innerHeight, above: innerWidth < innerHeight || (arrowsTop.length > 0 && k.bottom <= Math.min(...arrowsTop)), colB: Math.round(k.bottom), arrows: arrowsTop.map(Math.round), side: side(), before: sw0.side }; }
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6)); const k2 = P2.dmgK; P2.dmgK = 1e-6;   // (a knock in the pack on the autopilot's way meanwhile takes nothing: under 70 %, no more damage)
       for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
       P2.dmgK = k2; const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
