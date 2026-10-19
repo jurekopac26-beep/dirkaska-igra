@@ -9122,7 +9122,7 @@ const World = (function () {
     for (const nm of T.names) { const s0 = sStart + nm.d + 60; if (nm.n === 'Ouni') for (const sd of [-1, 1]) run(s0 - 40, s0 + 100, sd, { first: 2.5, rows: 2, dens: 0.4, label: 'OU Ouni' }); }
     for (let s = sStart + 150; s < sFin - 150; s += 170) { const sd = R() < 0.5 ? -1 : 1; run(s, s + 22, sd, { rows: 2, dens: 0.35, clump: 0.9, label: 'OU group' }); }
     for (const [a, b, sd, rows, dens] of def.crowds || []) run(sStart + a, sStart + b, sd, { rows, dens, first: 3.4, label: 'OU street ' + a });   // (the village: people along its street, behind the garden fences)
-    // the TV: a scaffold camera tower behind the crowd across from the Yellow House (a cameraman on it), photographers with a MEDIA sign at the Yellow House and the Amazon
+    // the TV: a scaffold camera tower behind the crowd across from the Yellow House (a cameraman on it), photographers with a MEDIA sign at the Yellow House and the Fast Crest
     const filmer = (x, y, z, fx, fz) => {   // someone filming (a spectator's pose comes from a hash of the spot: it is nudged until the hash says 'filming')
       for (let t = 0; t < 64; t++) { const jx = x + ((t & 7) - 3.5) * 0.08, jz = z + ((t >> 3) - 3.5) * 0.08, p = crH(jx, jz, 2); if (p >= 0.25 && p < 0.35) return crowdPut(CR, jx, y, jz, fx, fz, { flag: 0.05 }, 1); }
       return false; };
@@ -9140,7 +9140,7 @@ const World = (function () {
     const media = (s0, side) => { if (!board2(s0, side, 2.6, 7, 1.6, 0.5)) return;
       for (let k = 0; k < 3; k++) { const i = T.idx(s0 + 3 + k * 2.2), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 2.7), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (!hard(x, z)) filmer(x, ouGround(x, z), z, -T.nx[i] * side - T.tx[i] * 0.6, -T.nz[i] * side - T.tz[i] * 0.6); } };
     if (sY > 0) media(sY + 64, yh.side);
-    { const am = T.names.find(n => n.n === 'Amazon'); if (am) media(sStart + am.d + 40, 1); }
+    { const am = T.names.find(n => n.n === 'Fast Crest'); if (am) media(sStart + am.d + 40, 1); }
     // portable toilets in a row behind the big crowds: the Yellow House, Kakaristo, the start
     const wc = (x, z, rot, col) => { const g = scen.get(x, z), y = ouGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // a plastic cabin, a white roof, the door (local +z) to the road
       box(g, x, y - 0.1, z, 1.15, 2.35, 1.15, rot, col, null, true); box(g, x, y + 2.25, z, 1.28, 0.12, 1.28, rot, [0.93, 0.93, 0.92], null, true);
