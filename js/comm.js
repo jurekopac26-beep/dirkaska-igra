@@ -4,12 +4,14 @@
    Only one line plays at a time; while busy, only the most important pending
    line is kept, and urgent news (lead change, finish) cuts in.
    The run from the police has no commentator: the police radio speaks instead
-   (radio(): Slovenian lines in a voice that reads them; game.js directs them).
+   (radio(): its lines' English twins; game.js directs them). The team's engineer
+   on the radio (teamRadio(): Nastavitve · Glas inženirja). Every voice speaks
+   English, whatever the page's language (only the captions follow it).
    ========================================================================= */
 const Comm = (() => {
   const synth = (typeof window !== 'undefined' && window.speechSynthesis) || null;
   let on = true, speech = true, voice = null, speaking = false, cur = null, lastEnd = 0, queue = null, notesOn = true, voice2 = null;
-  let voiceRadio = null, voiceRadio2 = null, radioMode = false;   // (the police radio's voices; radioMode: the commentator and the co-driver silent)
+  let radioMode = false, engOn = true;   // (radioMode: the commentator and the co-driver silent; engOn: the engineer's voice)
   const log = [], lastPick = {};
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -110,7 +112,7 @@ const Comm = (() => {
     chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
     chalWon: ["You beat {name}'s time! Challenge done!", "Faster than {name}, by {delta}! Send that one back!"],
     chalLost: ["Not quite, {name} is still faster, by {delta}.", "{name}'s time stands, {delta} quicker. Try again!"],
-    // the team's engineer on the radio (radio(): the co-driver's voice)
+    // the team's engineer on the radio (teamRadio(): the co-driver's voice; Nastavitve · Glas inženirja)
     radioBox: ['Box, box, box this lap!', 'Box this lap, box this lap.', 'Box this lap, we are ready for you.'],
     radioBoxWet: ['It is wet out there, box this lap for wets!', 'Box this lap for rain tyres!'],
     radioBoxDry: ['The line is dry, box this lap for slicks.', 'Box this lap, slicks are ready.'],
@@ -126,6 +128,7 @@ const Comm = (() => {
     radioFcWet: ['Forecast: rain to the finish.', 'It stays wet to the end.'],
     radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
     radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
+    radioGo: ['Go, go, go!', 'Go, go, go! All yours.', 'Go, go, go! Push now!'],   // (the hand-back after a stop: VOZIŠ TI!, game.js pitFree)
     radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],
     brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
     engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
@@ -252,24 +255,11 @@ const Comm = (() => {
       if (v.localService) sc += 0.5;
       if (sc > s2) { s2 = sc; b2 = v; }
     }
-    voice2 = b2;
-    // the police radio: a voice that reads Slovenian text (a Slovenian one, else a Croatian, Serbian or Bosnian one, else a Slovak or Czech
-    // one; a man's first), and another of its language for the dispatcher and the player's driver (none: the same voice, pitched apart)
-    let rb = null, rs = 0;
-    for (const v of vs) {
-      const L = RADIO_LANG.find(r => r[0].test(v.lang || '')); if (!L) continue;
-      const id = (v.name || '') + ' ' + (v.voiceURI || ''), sc = L[1] + (RMALE.test(id) ? 1 : RFEMALE.test(id) ? -0.5 : 0) + (v.localService ? 0.2 : 0);
-      if (sc > rs) { rs = sc; rb = v; }
-    }
-    const lg = (v) => (v.lang || '').slice(0, 2).toLowerCase();
-    voiceRadio = rb; voiceRadio2 = rb ? vs.find(v => v !== rb && lg(v) === lg(rb)) || null : null;
+    voice2 = b2;   // (also the engineer's on the team radio, and the police dispatcher's and the player's driver's)
     if (typeof onVoice === 'function') onVoice(voiceInfo());
   }
-  const RADIO_LANG = [[/^sl([-_]|$)/i, 10], [/^hr([-_]|$)/i, 7], [/^(bs|sr)([-_]|$)/i, 6], [/^(sk|cs)([-_]|$)/i, 4]];
-  const RMALE = /\bmale\b|lado|\brok\b|sre[cć]ko|matej|jakub|anton[ií]n|filip|luk[aá][sš]|nicholas|goran|\bivan\b|marko|smtm/i;
-  const RFEMALE = /female|petra|\blana\b|zuzana|laura|gabrijela|vesna|sophie|vlasta|smtf|smtl/i;
   let onVoice = null;
-  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '', radio: voiceRadio ? voiceRadio.name : '', radioLang: voiceRadio ? voiceRadio.lang : '' });
+  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '' });
   if (synth) { pickVoice(); try { synth.addEventListener('voiceschanged', pickVoice); } catch (_) { synth.onvoiceschanged = pickVoice; } }
 
   function speakNow(item) {
@@ -277,11 +267,12 @@ const Comm = (() => {
     const me = cur = { prio: item.prio, t: now(), maxT, item }; lastIt = item;
     if (!synth || !speech) { speaking = false; return; }
     try {
-      const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note ? voice2 || voice : voice;
+      const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note || item.eng ? voice2 || voice : voice;
       if (v) u.voice = v;
       u.lang = v ? v.lang : 'en-GB'; u.volume = 1;
       if (item.radio) { u.rate = item.rate; u.pitch = item.pitch; }   // (the police radio: each speaker pitched apart)
       else if (item.note) { u.rate = 1.22; u.pitch = voice2 ? 1 : 1.3; }   // the co-driver: brisk (in the commentator's voice, higher)
+      else if (item.eng) { u.rate = 1.1; u.pitch = voice2 ? 0.95 : voiceMale ? 1.15 : 0.9; }   // the engineer: clipped (in the commentator's voice, pitched apart)
       else { u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; }   // deeper tone when no male voice exists
       // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
       u.onend = u.onerror = () => { item.done = true; if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
@@ -332,37 +323,38 @@ const Comm = (() => {
     return item;
   }
 
-  // the team's engineer on the radio (game.js radioHUD): a line of LINES in the co-driver's voice, said at once (the commentator's line is
-  // cut off), else next in line for a few seconds
+  // the team's engineer on the radio (game.js teamRadioShow, Nastavitve · Glas inženirja; not the commentator's switch, silent with the sound
+  // off): a line of LINES in the co-driver's voice, said at once (the commentator's line is cut off), else next in line for a few seconds.
+  // Returns the item (item.spoken once it starts, item.done once said, item.cut if cut off: game.js opens and closes the radio round it), or null
   function teamRadio(key, vars) {
-    if (!on || !speech || !synth) return null;
+    if (!engOn || !speech || !synth) return null;
     const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);
     if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
     lastPick[key] = k;
     const text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
-    const item = { key, text, prio: 3, t: now(), note: true, ttl: 4000 };
+    const item = { key, text, prio: 3, t: now(), eng: true, ttl: 4000 };
     log.push(item); if (log.length > 200) log.shift();
     if (!busy()) { speakNow(item); return item; }
-    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    if (cur && !cur.item.note && !cur.item.eng) { cancelSpeech(); speakNow(item); return item; }
     queue = item;
     return item;
   }
   // a line of the police radio, said at once (game.js's radio director keeps the lines in turn): o.who 'okc' (the dispatcher), 'u' (a unit;
   // o.u its number: each a little different), 'heli', 'bov' (the station across the pass), in person 'cop' (the officer) and 'drv' (the
-  // player's driver); text in Slovenian, o.en the same in English with the places spelt for an English voice (said when no voice reads
-  // Slovenian). Returns the item (item.done once said, item.cut if cut off), or null: no speech (captions only). Not the commentator: heard
-  // with the sound on even when the commentator is switched off
+  // player's driver); text the line's English twin with the places spelt for an English voice (the captions stay in the page's language),
+  // in the commentator's voice (the dispatcher and the driver in the co-driver's). Returns the item (item.done once said, item.cut if cut
+  // off), or null: no English voice (captions only). Not the commentator: heard with the sound on even when the commentator is switched off
   function radio(text, o) {
     o = o || {};
     if (!speech || !synth || !text) return null;
-    const en = !voiceRadio || !!o.enOnly, w = o.who, two = w === 'okc' || w === 'drv', v2 = en ? voice2 : voiceRadio2, v = two && v2 ? v2 : en ? voice : voiceRadio;
-    if (!v || (en && !o.en)) return null;
-    const own = two && !!v2, low = en && !voiceMale && !own ? 0.82 : 1;   // (its own voice: hardly pitched; an English woman's voice: lower)
+    const w = o.who, two = w === 'okc' || w === 'drv', v = two && voice2 ? voice2 : voice;
+    if (!v) return null;
+    const own = two && !!voice2, low = !voiceMale && !own ? 0.82 : 1;   // (its own voice: hardly pitched; a woman's voice: lower)
     const pitch = low * (own ? (w === 'drv' ? 1.06 : 1) : w === 'okc' ? 1.1 : w === 'drv' ? 1.2 : w === 'cop' ? 0.86 : w === 'heli' ? 0.92 : w === 'bov' ? 1.0 : 0.8 + 0.1 * ((o.u || 0) % 3));
     const rate = w === 'cop' || w === 'drv' ? 1.02 : w === 'okc' ? 1.06 : 1.13;
     cancelSpeech(); queue = null;
-    const item = { key: 'radio', text: en ? o.en : text, prio: 9, t: now(), radio: true, voice: v, pitch, rate, who: w, lang: v.lang };
+    const item = { key: 'radio', text, prio: 9, t: now(), radio: true, voice: v, pitch, rate, who: w, lang: v.lang };
     log.push(item); if (log.length > 200) log.shift();
     speakNow(item);
     return item;
@@ -370,7 +362,7 @@ const Comm = (() => {
   function radioStop() { if (cur && cur.item && cur.item.radio) cancelSpeech(); }
   // the run from the police: only the radio speaks (say() and note() silent)
   function setRadioMode(v) { radioMode = !!v; if (radioMode) { queue = null; if (cur && cur.item && !cur.item.radio) cancelSpeech(); } }
-  const radioVoice = () => voiceRadio ? { name: voiceRadio.name, lang: voiceRadio.lang, two: !!voiceRadio2 } : null;
+  const radioVoice = () => voice ? { name: voice.name, lang: voice.lang, two: !!voice2 } : null;   // (tests: the police radio's voice)
 
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
@@ -395,11 +387,15 @@ const Comm = (() => {
   // call from a tap handler: some browsers only allow speech after a user gesture
   function unlock() { if (!synth || !speech) return; try {   // (also with the commentator off: the police radio speaks then, and iOS wants the first line from a tap)
     const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
-  function test() { cancelSpeech(); queue = null; speakNow({ key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
+  // Preizkusi glas: the commentator; k 'eng': the engineer (Glas inženirja)
+  function test(k) { cancelSpeech(); queue = null; speakNow(k === 'eng' ? { key: 'test', text: 'Radio check. Box this lap, box this lap.', prio: 9, t: now(), eng: true } : { key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
   function setOnVoice(fn) { onVoice = fn; fn(voiceInfo()); }
-  function setEnabled(v) { on = !!v; if (!on) stop(); }
+  // the commentator switched off: its own lines silent (not the co-driver's, the engineer's, the police radio's)
+  const ownLine = (it) => !!it && !it.note && !it.eng && !it.radio;
+  function setEnabled(v) { on = !!v; if (!on) { if (ownLine(queue)) queue = null; if (cur && ownLine(cur.item)) cancelSpeech(); } }
   function setSpeech(v) { speech = !!v; if (!speech) cancelSpeech(); }
   function setNotes(v) { notesOn = !!v; if (!notesOn && cur && cur.item.note) cancelSpeech(); }
+  function setEngineer(v) { engOn = !!v; if (!engOn) { if (queue && queue.eng) queue = null; if (cur && cur.item.eng) cancelSpeech(); } }
   const available = () => !!synth;
   // register (or replace) a pool at run time, e.g. a track's place lines; say() ignores keys that have no pool
   function addLines(key, arr) {
@@ -410,12 +406,12 @@ const Comm = (() => {
   }
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
-  // the commentator (the co-driver, the team radio) speaking or in the pause after a line: the game lowers its other sounds under the voice
+  // the commentator (the co-driver, the engineer) speaking or in the pause after a line: the game lowers its other sounds under the voice
   // (Sfx.setDuck; the browser's speech cannot be louder than full volume). Not the police radio: its static and its voices go together
   let lastIt = null;   // (the line spoken last: its pause after it counts too, so the duck holds between two lines)
   function talking() { const it = cur ? cur.item : lastIt; return !radioMode && busy() && !!(it && !it.radio); }
 
-  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
+  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, setEngineer, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 

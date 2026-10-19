@@ -4,7 +4,8 @@
 (function () {
   'use strict';
   // tr(sl, ...args): the text in the chosen language. The Slovenian text is the key into EN; {0}, {1} ... take the args.
-  // A text EN does not know stays as it is (a name, a number). The commentator speaks English in both languages.
+  // A text EN does not know stays as it is (a name, a number). Every voice (the commentator, the co-driver, the engineer, the police radio)
+  // speaks English in both languages: only what is written follows the language.
   const EN = {
     /* ---- the page (index.html): buttons, labels, the HUD ---- */
     '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
@@ -143,7 +144,8 @@
     ' · dvoboj z enim tekmecem · promet na cesti': ' · duel with one rival · traffic on the road', ' (najboljša dirka {0})': ' (best race {0})', ' · dirka na vrh · {0} nasprotnikov': ' · race to the top · {0} rivals',
     ' (rekord kroga {0})': ' (lap record {0})', ' · {0} nasprotnikov': ' · {0} rivals', ' Rekord kroga: {0}.': ' Lap record: {0}.', ' Upravljanje: {0}. Spremeniš v nastavitvah.': ' Controls: {0}. Change them in the settings.',
     'Ta brskalnik ne podpira govora – komentatorja ne bo slišati.': 'This browser does not support speech – the commentator will not be heard.', 'Glas: {0} ({1})': 'Voice: {0} ({1})',
-    'privzeti angleški': 'default English', ' – moški': ' – male', ' – nižji ton': ' – lower pitch', ' · sovoznik: {0}': ' · co-driver: {0}',
+    'privzeti angleški': 'default English', ' – moški': ' – male', ' – nižji ton': ' – lower pitch', ' · sovoznik in inženir: {0}': ' · co-driver and engineer: {0}',
+    ' · vsi glasovi govorijo angleško (tudi policijski radio)': ' · every voice speaks English (the police radio too)',
     'malo krila': 'low wing', 'srednje krilo': 'medium wing', 'veliko krila': 'high wing', 'kratke prestave': 'short gears', 'srednje prestave': 'medium gears', 'dolge prestave': 'long gears',
     'Nastavitev za {0}: {1}, {2}.': 'Setup for {0}: {1}, {2}.',
     'Dostop do senzorja nagiba je zavrnjen. Uporabi tipke ali volan.': 'Access to the tilt sensor was denied. Use the buttons or the wheel.',
@@ -253,7 +255,8 @@
     'Izziva ni bilo mogoče pripraviti.': 'The challenge could not be made.', 'priložen': 'included', 'ni priložen (vožnja je predolga za povezavo)': 'not included (the run is too long for a link)', 'Povezava do izziva ni veljavna.': 'The challenge link is not valid.', 'Izziva ni bilo mogoče shraniti (premalo prostora).': 'The challenge could not be saved (not enough space).',
     'Izziv sprejet': 'Challenge accepted', 'Premagaj prijateljev čas v izzivu.': 'Beat the time of a friend in a challenge.',
     // the team radio and the strategy
-    'Radio ekipe (razlike, postanki, vreme)': 'Team radio (gaps, pit stops, weather)', 'Gume za postanek': 'Tyres for the stop', 'Gume za postanek: {0}': 'Tyres for the stop: {0}',
+    'Radio ekipe (razlike, postanki, vreme)': 'Team radio (gaps, pit stops, weather)', 'Glas inženirja': 'Engineer voice', 'Gremo, gremo, gremo!': 'Go, go, go!',
+    'Inženir sporočila radia ekipe tudi izgovori, v angleščini (kot vsi glasovi v igri); ni ga slišati, ko je zvok izklopljen': 'The engineer also speaks the team radio\u2019s messages, in English (as every voice in the game); he is silent with the sound off', 'Gume za postanek': 'Tyres for the stop', 'Gume za postanek: {0}': 'Tyres for the stop: {0}',
     'Gorivo ne bo zdržalo do cilja.': 'The fuel will not last to the finish.', 'Gume ne bodo zdržale do cilja.': 'The tyres will not last to the finish.',
     'Proga je mokra, potrebuješ dežne gume.': 'The track is wet, you need rain tyres.', 'Idealna linija je suha, potrebuješ suhe gume.': 'The racing line is dry, you need slicks.',
     'Imaš predrto gumo.': 'You have a puncture.', 'Avto je močno poškodovan.': 'The car is badly damaged.', 'Boksi v tem krogu!': 'Box this lap!', 'BOKSI V TEM KROGU': 'BOX THIS LAP',
@@ -340,8 +343,7 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
-    /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */ ' · policijski radio: {0} ({1})': ' · police radio: {0} ({1})',
-    ' · policijski radio: ni glasu za slovenščino, govori angleško': ' · police radio: no Slovenian voice, it speaks English',
+    /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',
     'Skril si se v garažo na vrhu Vršiča v {0}': 'You hid in the garage at the top of the pass in {0}',

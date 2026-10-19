@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -474,8 +474,9 @@
     Core.setCrash(xPhys(race && race.player && race.cars.some(c => c.net)));   // (the rollover, the knocks, the attack, the handling: never online (a friend's car: net), where both phones must drive the same)
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; samo kameri za avtom in izometrična)
     Render.cam.userTilt = [0.1, 0.2, 0.3][+S.camTilt] ?? 0.1;   // (Nagib kamere: kamera za avtom gleda toliko bolj naprej po cesti; razdalja ostane ista)
-    Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
-    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : '') + (v.radio ? tr(' · policijski radio: {0} ({1})', v.radio, v.radioLang) : tr(' · policijski radio: ni glasu za slovenščino, govori angleško')); });
+    Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv); Comm.setEngineer(!!+S.engV);
+    // (the voices: the commentator's, the co-driver's (the engineer's too), every one English whatever the page's language)
+    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik in inženir: {0}', v.codrv) : '') + tr(' · vsi glasovi govorijo angleško (tudi policijski radio)'); });
     Input.setMode(S.control);
     Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: !!S.vibrate });
     Sfx.setEnabled(!!S.sound);
@@ -517,7 +518,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'camTilt', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'engV', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'camTilt', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -2480,8 +2481,9 @@
   }
 
   /* ---------------- the police radio (the run from the police) ----------------
-     Instead of the commentator (Comm.setRadioMode) the police talk on the radio the whole run, in Slovenian (Comm.radio: a voice that reads it;
-     none: an English voice reads the line's English twin, the places spelt for it; no speech: captions only). The squelch opens, the line is
+     Instead of the commentator (Comm.setRadioMode) the police talk on the radio the whole run: an English voice reads each line's English twin
+     (Comm.radio, the places spelt for it: every voice of the game speaks English), the caption in the page's language (Slovenian: the line as
+     written); no speech: captions only. The squelch opens, the line is
      said and shown at the bottom (its speaker's call sign first), the roger beep closes it, low static under it (Sfx.radioOpen / radioClose /
      radioBed). Who talks: the dispatcher (OKC Kranj), the units by their call signs (a patrol car by its unit number: Kranjska Gora 2; the
      motorcyclists, the unmarked car, the van), the helicopter (Bober, from Brnik), the station across the pass (PP Bovec); in person (no
@@ -2513,7 +2515,7 @@
   const RD_SK = [['v stranski ulici', 'v stransko ulico', 'iz stranske ulice', 's stransko ulico', 'a side street', 'ulica', 0], ['na dovozni poti', 'na dovozno pot', 'z dovozne poti', 'z dovozno potjo', 'a driveway', 'pot', 1],
     ['na gozdni cesti', 'na gozdno cesto', 'z gozdne ceste', 'z gozdno cesto', 'a forest road', 'cesta', 1]], RD_SKG = ['na makadamski poti', 'na makadamsko pot', 'z makadamske poti', 'z makadamsko potjo', 'a gravel track', 'pot', 1];
   const RD_DEAD = { ulica: ['to je slepa ulica', 'it is a dead end'], cesta: ['to je slepa cesta', 'it is a dead end'], pot: ['to je slepa pot', 'it is a dead end'], dela: ['tam je cesta zaprta zaradi del', 'the road is closed for works there'] };
-  // the speakers: [caption, call sign said in Slovenian, in English] (the units: rdCall)
+  // the speakers: [caption, call sign in a Slovenian line, in English (the voice says it before the line)] (the units: rdCall)
   const RD_WHO = { okc: ['OKC KRANJ', '', ''], heli: ['BOBER', 'Bober', 'Bober'], bov: ['PP BOVEC', 'Postaja Bovec', 'Bovets station'], cop: ['POLICIST', '', ''], drv: ['TI', '', ''] };
   const rdCall = (u, kind) => kind === 'moto' ? [tr('MOTORIST {0}', u), 'Motorist ' + u, 'Bike ' + u] : kind === 'uc' ? [tr('CIVILNA {0}', u), 'Civilna ' + u, 'Unmarked ' + u] : kind === 'van' || !u ? [tr('KOMBI'), 'Kombi', 'Van'] : ['KG-' + u, 'Kranjska Gora ' + u, 'Kranyska Gora ' + u];   // (the labels on the page in its language)
   // the player's car as the police describe it: the colour (the formula is feminine), the model ([Slovenian, English])
@@ -2620,12 +2622,8 @@
   const RD_WX = { dry: [['okc', 'Poročilo z Vršiča: cesta je prevozna, na prelazu je gneča.', 'Report from Vrshich: the road is open, busy at the pass.']],
     rain: [['okc', 'Na Vršiču dežuje, tlakovane serpentine so spolzke.', 'It is raining on Vrshich, the cobbled hairpins are slippery.']],
     snow: [['okc', 'Na Vršiču sneži, vozila brez verig obračamo pri Mihovem domu.', 'Snow on Vrshich, cars without chains are turned back at Meehov dom.']] };
-  // the hairpins' ordinals as a Slovenian voice says them (stems; the ending by the case: pri osmi, med osmo in deveto)
-  const RD_ORD = ['', 'prv', 'drug', 'tretj', 'četrt', 'pet', 'šest', 'sedm', 'osm', 'devet', 'deset', 'enajst', 'dvanajst', 'trinajst', 'štirinajst', 'petnajst', 'šestnajst', 'sedemnajst', 'osemnajst', 'devetnajst', 'dvajset', 'enaindvajset', 'dvaindvajset', 'triindvajset', 'štiriindvajset'];
-  const rdOrd = (n, e) => RD_ORD[n] ? RD_ORD[n] + e : n + '.';
-  // a caption's text as the voice should read it: the ordinals in words, km/h, metres, "dr."
-  const rdSpeech = (t) => t.replace(/(\d+)\. in (\d+)\. serpentin([aeio])/g, (_, a, b, e) => rdOrd(+a, e) + ' in ' + rdOrd(+b, e) + ' serpentin' + e).replace(/(\d+)\. serpentin([aeio])/g, (_, a, e) => rdOrd(+a, e) + ' serpentin' + e)
-    .replace(/(\d+) km\/h/g, '$1 na uro').replace(/(\d+) m\b/g, '$1 metrov').replace(/\bdr\. /g, 'doktorja ');
+  // what the voice says: the line's English twin, its speaker's English call sign first (in any language of the page)
+  const rdSay = (C) => C.cen ? C.cen + ', ' + C.en : C.en;
   let rd = null, rdGeoT = null, rdGeoV = null;
   // the roads the radio knows (its places, call signs and chatter are Vršič's): there it speaks instead of the commentator (rdOn: this run's);
   // elsewhere (Los Caracoles) the commentator calls the run from the police (POL_COMM: its lines for the events)
@@ -2713,7 +2711,7 @@
     o = o || {};
     const fill = (t, L) => { const s = t.replace(/\{(\w+)\}/g, (_, n) => { const v = vars && vars[n]; return v == null ? '' : Array.isArray(v) ? v[L] : String(v); }); return s.charAt(0).toUpperCase() + s.slice(1); };
     const person = who === 'cop' || who === 'drv', cs = who === 'u' ? rdCall(o.u || 0, o.kind || 'car') : RD_WHO[who] || RD_WHO.okc, prio = o.prio != null ? o.prio : person ? 3 : 1;
-    rd.q.push({ key: o.key || '', who, u: o.u || 0, lbl: tr(cs[0]), csl: cs[1], cen: cs[2], sl: fill(sl, 0), en: fill(en, 1), prio, t: performance.now() / 1000, ttl: o.ttl || [9, 14, 20, 30][prio], person });
+    rd.q.push({ key: o.key || '', who, u: o.u || 0, lbl: tr(cs[0]), cen: cs[2], sl: fill(sl, 0), en: fill(en, 1), prio, t: performance.now() / 1000, ttl: o.ttl || [9, 14, 20, 30][prio], person });
     if (rd.q.length > 8) { let w = 0; for (let i = 1; i < rd.q.length; i++) if (rd.q[i].prio < rd.q[w].prio) w = i; rd.q.splice(w, 1); }   // (the least urgent, the oldest of those)
   }
   // what the police say to an event of the run (race.pol.log)
@@ -2818,8 +2816,8 @@
     const t = performance.now() / 1000, el = $('h-radio'), C = rd.cur;
     if (C && !C.on && t >= C.at) {   // (the squelch is open: said and shown)
       C.on = true;
-      const E = Lang.cur === 'en', txt = E ? C.en : C.sl, say = E ? (C.cen ? C.cen + ', ' + C.en : C.en) : rdSpeech(C.csl ? C.csl + ', ' + C.sl : C.sl);   // (the English page: the radio's English lines)
-      C.item = Comm.radio(say, { who: C.who, u: C.u, en: C.cen ? C.cen + ', ' + C.en : C.en, enOnly: E });
+      const txt = Lang.cur === 'en' ? C.en : C.sl, say = rdSay(C);   // (the caption in the page's language, the voice in English)
+      C.item = Comm.radio(say, { who: C.who, u: C.u });
       C.until = t + (C.item ? 2.5 + say.length * 0.085 : Math.max(1.8, txt.length * 0.065));   // (said: until its end, at most this; captions only: by its length)
       el.innerHTML = '<b>' + esc(C.lbl) + '</b> ' + esc(txt); el.className = 'show' + (C.person ? ' person' : '');
       rd.log.push({ k: C.key, who: C.lbl, txt, t: race.time, said: !!C.item }); if (rd.log.length > 80) rd.log.shift();
@@ -2972,31 +2970,45 @@
   /* ---------------- the team radio (Nastavitve · Radio ekipe; race.mk: Core's Race.gap, pitLoss, plan) ---------------- */
   // the engineer: each lap the gaps to the cars ahead and behind; when a stop is needed (fuel, worn tyres, the wrong ones for the weather,
   // a cut one, heavy damage) the window for it, and on the lap it must be made "box this lap" with where the stop puts the player; rain on
-  // the radar a minute before it comes, and its end; behind the safety car a cheap stop; after the stop the place. A box at the top of the
-  // HUD with a radio's click, one message at a time (an urgent one first); the calls also in the engineer's voice (with the commentary on)
+  // the radar a minute before it comes, and its end; behind the safety car a cheap stop; the forecast at the way in (fcRadio); "go, go, go"
+  // at the hand-back (pitFree); after the stop the place. A box at the top of the HUD with a radio's click, one message at a time (an urgent
+  // one first); the calls also in the engineer's voice (Nastavitve · Glas inženirja, with the sound on: in English whatever the page's
+  // language, the radio's squelch opening as he starts and its roger beep after him instead of the click, teamRadioVoice)
   let trd = null;
   const fmtS = (g) => Lang.dec(Math.abs(g).toFixed(1));
   const BOX_V = { fuel: 'radioBox', tyres: 'radioBox', wet: 'radioBoxWet', dry: 'radioBoxDry', tyre: 'radioBoxTyre', damage: 'radioBoxFix' };
   const NEED_TXT = { fuel: 'Gorivo ne bo zdržalo do cilja.', tyres: 'Gume ne bodo zdržale do cilja.', wet: 'Proga je mokra, potrebuješ dežne gume.', dry: 'Idealna linija je suha, potrebuješ suhe gume.', tyre: 'Imaš predrto gumo.', damage: 'Avto je močno poškodovan.' };
   const CMP_WORD = { S: 'mehke', M: 'srednje', H: 'trde' };
   const needTxt = (why, P) => tr(why === 'fuel' && P && P.m.ev ? 'Baterija ne bo zdržala do cilja.' : NEED_TXT[why]);   // (why a stop: an electric car's battery)
-  function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [] }; $('h-teamradio').classList.remove('on', 'wait'); }
+  function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [], vo: null, voT: 0, voOn: false }; $('h-teamradio').classList.remove('on', 'wait'); }   // (vo: the engineer's line said, teamRadioVoice)
   function teamRadioSay(text, prio, voice, vars) {
     if (!trd || !text) return;
     const m = { text, prio, voice, vars };
     trd.log.push(text); if (trd.log.length > 40) trd.log.shift();   // (the tests read what was said)
     if (trd.cur && prio >= 3 && trd.cur.prio < 3) { trd.q.unshift(m); trd.t = 0; return; }   // (urgent: now)
-    trd.q.push(m); if (trd.q.length > 2) { trd.q.sort((a, b) => b.prio - a.prio); trd.q.length = 2; }
+    trd.q.push(m); if (prio >= 3 || trd.q.length > 2) { trd.q.sort((a, b) => b.prio - a.prio); trd.q.length = Math.min(trd.q.length, 2); }   // (urgent: before what waits)
   }
   function teamRadioShow(dt) {
+    teamRadioVoice();
     const el = $('h-teamradio');
     if (trd.cur && (el.classList.contains('wait') || (trd.t -= dt) > 0)) return;   // (no room under the map yet: its time waits too)
     if (trd.cur) { trd.cur = null; el.classList.remove('on', 'wait'); }
     const m = trd.q.shift(); if (!m) return;
     trd.cur = m; trd.t = Math.max(4, 1.5 + m.text.length * 0.055);
     el.lastElementChild.textContent = m.text; el.classList.add('on');
-    Sfx.radio(); if (m.voice) Comm.teamRadio(m.voice, m.vars);
+    const it = m.voice ? Comm.teamRadio(m.voice, m.vars) : null;   // (said: the radio round it; captions only: the click)
+    if (it) { trd.vo = it; trd.voT = performance.now() / 1000; trd.voOn = false; teamRadioVoice(); } else Sfx.radio();
   }
+  // the engineer's line said (each HUD frame, real time like the speech): the squelch opens as it starts (at once, or after the line said
+  // before it), the roger beep once it is said (cut off: none; never started, dropped from Comm's queue: nothing)
+  function teamRadioVoice() {
+    const it = trd && trd.vo; if (!it) return;
+    const t = performance.now() / 1000;
+    if (it.spoken && !trd.voOn) { trd.voOn = true; trd.voT = t; Sfx.radioOpen(); }
+    if (it.done || it.cut || t - trd.voT > (trd.voOn ? 2.5 + it.text.length * 0.1 : 5)) { if (trd.voOn && !it.cut) Sfx.radioClose(); trd.vo = null; trd.voOn = false; }
+  }
+  // the hand-back after a stop (pitFree, VOZIŠ TI!): the engineer's shout, before anything else he has to say
+  function teamRadioGo() { if (trd && race.mk && S.radio) teamRadioSay(tr('Gremo, gremo, gremo!'), 3, 'radioGo'); }
   function afterText(pl) { return pl.ahead ? tr('Po postanku boš {0}., {1} bo {2} s pred tabo.', pl.pos, pl.ahead.name, fmtS(pl.gapA)) : tr('Po postanku boš še vedno prvi.'); }
   function boxText(pl, why) {
     const P = race.player, c = why !== 'wet' && P.ty && P.ty.c && (P.ty.k === 'dry' || why === 'dry') ? (Core.TYRE_CMP[S.pitCmp] ? S.pitCmp : 'S') : null;   // (the custom stop's default, stopDef)
@@ -3147,7 +3159,7 @@
     return !p1 || (p1.gap && p1.o <= p1.wall + 1);
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
-    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
+    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; teamRadioGo(); }
     $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
     pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false; stopClose(P);
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
@@ -5042,6 +5054,7 @@
         break;
       case 'champ-car-prev': case 'champ-car-next': S.car = carStep(act === 'champ-car-next' ? 1 : -1, (m) => owned(m.id)); save(); buildChampScreen(); break;   // (the display order; the career: the cars in the garage)
       case 'comm-test': Comm.setSpeech(!!+S.sound); Comm.unlock(); Comm.test(); break;
+      case 'eng-test': Comm.setSpeech(!!+S.sound); Comm.unlock(); Comm.test('eng'); break;   // (Glas inženirja: the engineer's voice)
       case 'start': if (!owned(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); break; } if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; ensureTrack(S.track, startRace); break;
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
@@ -5294,7 +5307,7 @@
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
-        radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
+        radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSay({ en: rdWhere(track.startS + d, k == null ? -1 : k)[1] })]) : null,   // where d m after the start line is as the police say it (the caption, its English twin), and as the voice reads it)
         hud(dt = 1 / 60) { if (race) { updateHUD(dt); hudCol(dt); Comm.update(); } },   // (tests: the HUD as a frame of the running race draws it, the race itself not stepped: a paused race's HUD after sim)
         sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); if (auto && (phase === 'intro' || phase === 'lights')) inp.thr = inp.gas = 0; stepRace(STEP, inp); } },   // (the autopilot: off the gas on the grid, on it as the lights go out)
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
