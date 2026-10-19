@@ -2432,7 +2432,7 @@
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
     if (track.def.pit && !race.nv && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P || Render.crew.gunOn)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (with the crew: while the wheel guns rattle)
-    if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
+    if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate' || P.propSnd === 'isign')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     if (P.fall && !fallSeen && phase === 'racing') { fallSeen = true; showMsg(tr('ZGRMEL SI V PREPAD!'), 'slow', 2); Sfx.thud(1); vibrate(150); } else if (!P.fall) fallSeen = false;   // (Uncompahgre: over the edge of a drop, Race._fall)
     for (const c of race.cars) { c.hitWall = 0; c.hitCar = 0; c.hitDebris = 0; }
   }
@@ -3934,7 +3934,7 @@
     cs.wasAir = !!P.air;
     commWreck(P);
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' || k === 'tbollard' || k === 'mlamp' || k === 'msign' || k === 'bsign' || k === 'nsign' || k === 'zaprta' || k === 'vboard' || k === 'flagp' || k === 'cflag' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : 'propStreet';   // (Medvode's bollards, lamps, signs, flags: a post's lines; its bench: the street furniture's)
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' || k === 'tbollard' || k === 'mlamp' || k === 'msign' || k === 'bsign' || k === 'nsign' || k === 'zaprta' || k === 'vboard' || k === 'flagp' || k === 'cflag' || k === 'isign' || k === 'iboard' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : 'propStreet';   // (Medvode's bollards, lamps, signs, flags: a post's lines; its bench: the street furniture's)
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);

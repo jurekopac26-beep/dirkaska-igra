@@ -1547,7 +1547,7 @@ const Sfx = (function () {
   }
   // a knocked-over trackside prop: hollow plastic 'tock' for a cone, rubbery thump for tyres, soft thud for straw, woody knock for a crate
   let lastKnock = 0;
-  const POLES = new Set(['bollard', 'lamp', 'sign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag']);   // (Medvode's bollards, lamps, signs and flag poles: the same hollow 'tock' as a post)
+  const POLES = new Set(['bollard', 'lamp', 'sign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag', 'iboard']);   // (Medvode's bollards, lamps, signs and flag poles: the same hollow 'tock' as a post)
   function knock(kind, v) {
     if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(v)) return;
     const now = ctx.currentTime; if (now - lastKnock < 0.05) return; lastKnock = now;
