@@ -4446,7 +4446,7 @@ const Render = (function () {
     if (c.air || spd < 2 || !near) { f.sc = f.pl = 0; return; }
     // the barrier: a stream of sparks from the corner that rubs along it (and a burst for a light knock the stock sparks leave out)
     const q = c.q, T = curRace && curRace.track;
-    if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a]))) {   // (in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
+    if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && !c.inPit) {   // (on the pit road, c.inPit: no rail beside the car either, the circuit's barriers are not the lane's walls; in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
       if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
@@ -4561,18 +4561,19 @@ const Render = (function () {
     patch(0.02, 0.08, 0.4, 0.46, 0.121); patch(-0.07, 0.07, 0.3, 0.46, -0.121);
     out.trunk = g.geometry();
     g = G();   // head (from the neck): neck, head, a cap in the team colour with its peak (inside the helmet when he wears one)
-    World.cyl(g, 0, -0.04, 0.005, 0.056, 0.12, 6, CR_SK); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 6, 4, CR_SK);
-    World.cyl(g, 0, 0.2, 0, 0.1, 0.085, 7, TM, TM, 0.085); g.quadO([-0.085, 0.215, 0.07], [0.085, 0.215, 0.07], [0.075, 0.205, 0.16], [-0.075, 0.205, 0.16], TM, [0, 0.1, 0.1]); g.quadO([-0.085, 0.212, 0.07], [0.085, 0.212, 0.07], [0.075, 0.202, 0.16], [-0.075, 0.202, 0.16], TD, [0, 0.3, 0.1]);   // cap, its peak
+    World.cyl(g, 0, -0.04, 0.005, 0.056, 0.12, 6, CR_SK); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 8, 4, CR_SK);
+    for (const ex of [-0.034, 0.034]) g.quadO([ex - 0.013, 0.168, 0.106], [ex + 0.013, 0.168, 0.106], [ex + 0.013, 0.152, 0.104], [ex - 0.013, 0.152, 0.104], K, [0, 0.16, 0]);   // (the eyes: the film camera in the pits comes close)
+    World.cyl(g, 0, 0.2, 0, 0.1, 0.085, 8, TM, TM, 0.085); g.quadO([-0.085, 0.215, 0.07], [0.085, 0.215, 0.07], [0.075, 0.205, 0.16], [-0.075, 0.205, 0.16], TM, [0, 0.1, 0.1]); g.quadO([-0.085, 0.212, 0.07], [0.085, 0.212, 0.07], [0.075, 0.202, 0.16], [-0.075, 0.202, 0.16], TD, [0, 0.3, 0.1]);   // cap, its peak
     out.head = g.geometry();
     g = G();   // full-face helmet: team colour, white crest, darker rim, dark visor
-    crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 4, (ux, uy) => uy < -0.45 ? TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? W : TM));
+    crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 5, (ux, uy) => uy < -0.45 ? TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? W : TM));
     crTBox(g, 0.1, 0.215, 0.17, 0.03, 0.17, 0.03, [[0.05, 0.07, 0.1], null, null, [0.05, 0.07, 0.1], [0.05, 0.07, 0.1]], 0.142, 0.146);
     out.helmet = g.geometry();
     const lim = (k) => k === 1 || k === 4 ? TD : TM;   // (the limbs: 6 round, faces 1 and 4 down their outer and inner side darker)
     g = G(); crLoft(g, [{ y: 0.035, rx: 0.06, rz: 0.061 }, { y: -0.13, rx: 0.056, rz: 0.058 }, { y: -0.3, rx: 0.044, rz: 0.047 }], 6, 0, (s, k) => lim(k), { cap0: TM, dome0: 0.04 }); out.uarm = g.geometry();   // upper arm (from the shoulder): the shoulder domed, the biceps, the elbow
-    g = G(); crLoft(g, [{ y: 0.01, rx: 0.048, rz: 0.05 }, { y: -0.24, rx: 0.037, rz: 0.04 }], 6, 0, (s, k) => lim(k)); crTBox(g, -0.235, -0.35, 0.082, 0.085, 0.07, 0.1, [K, K, K, K, K], 0, 0.01); out.farm = g.geometry();   // forearm (round) and glove
-    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.2, rx: 0.073, rz: 0.08, p: 2.5 }, { y: -0.46, rx: 0.06, rz: 0.066, p: 2.5 }], 6, 0, (s, k) => lim(k)); out.thigh = g.geometry();   // thigh, round to the knee (open: the trunk and the shin close it)
-    g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 6, 0, (s, k) => lim(k)); crTBox(g, -0.47, -0.36, 0.11, 0.27, 0.105, 0.2, [BO, BO, BO, BO, [0.24, 0.24, 0.25]], 0.045, 0.02); out.shin = g.geometry();   // shin (round) and boot
+    g = G(); crLoft(g, [{ y: 0.01, rx: 0.048, rz: 0.05 }, { y: -0.24, rx: 0.037, rz: 0.04 }], 6, 0, (s, k) => lim(k)); crBall(g, 0, -0.29, 0.008, 0.046, 0.066, 0.052, 6, 3, K); out.farm = g.geometry();   // forearm (round) and glove (a rounded fist)
+    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.2, rx: 0.073, rz: 0.08, p: 2.5 }, { y: -0.36, rx: 0.065, rz: 0.071, p: 2.5, hard: true }, { y: -0.41, rx: 0.063, rz: 0.069, p: 2.5, hard: true }, { y: -0.46, rx: 0.06, rz: 0.066, p: 2.5 }], 6, 0, (s, k) => s === 2 ? W : lim(k)); out.thigh = g.geometry();   // thigh, round to the knee, a white reflective band above it (open: the trunk and the shin close it)
+    g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 6, 0, (s, k) => lim(k)); crBall(g, 0, -0.415, 0.05, 0.058, 0.058, 0.135, 6, 3, (ux, uy) => uy < -0.5 ? [0.24, 0.24, 0.25] : BO); out.shin = g.geometry();   // shin (round) and boot (rounded, its toe forward, a grey sole)
     g = G();   // wheel gun, in the hand: the socket points on along the forearm (-y), the air hose plugs in at the back (+y)
     { const B = [0.2, 0.21, 0.23], S = [0.7, 0.71, 0.74]; World.cyl(g, 0, -0.2, 0.05, 0.048, 0.26, 8, B, B); World.cyl(g, 0, -0.12, 0.05, 0.053, 0.05, 8, TM, TM); World.cyl(g, 0, -0.29, 0.05, 0.036, 0.09, 8, S, S); World.box(g, 0, -0.06, -0.01, 0.035, 0.1, 0.07, 0, K, K); }
     out.gun = g.geometry();
@@ -5149,7 +5150,7 @@ const Render = (function () {
     g = G(); crTBox(g, 0.01, -0.24, 0.082, 0.085, 0.068, 0.07, [SK]); crTBox(g, -0.235, -0.33, 0.072, 0.078, 0.058, 0.09, [SK, SK, SK, SK, SK], 0, 0.01); out.farm = g.geometry();   // forearm, hand
     g = G(); crTBox(g, 0.06, -0.46, 0.15, 0.165, 0.12, 0.128, [TM]); out.thigh = g.geometry();
     g = G(); crTBox(g, 0.02, -0.38, 0.118, 0.128, 0.098, 0.102, [TM]); crTBox(g, -0.47, -0.36, 0.1, 0.25, 0.098, 0.19, [K, K, K, K, K], 0.045, 0.02); out.shin = g.geometry();   // shin and shoe
-    g = G(); crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 4, (ux, uy) => uy < -0.45 ? CR_TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? CR_W : TM));
+    g = G(); crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 5, (ux, uy) => uy < -0.45 ? CR_TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? CR_W : TM));
     crTBox(g, 0.1, 0.215, 0.17, 0.03, 0.17, 0.03, [[0.05, 0.07, 0.1], null, null, [0.05, 0.07, 0.1], [0.05, 0.07, 0.1]], 0.142, 0.146); out.helmet = g.geometry();
     g = G(); World.box(g, 0, 0.12, -0.2, 0.3, 0.46, 0.17, 0, TM, [0.2, 0.2, 0.22]); out.pack = g.geometry();   // a hiker's backpack
     return out;
@@ -7888,7 +7889,7 @@ const Render = (function () {
       if (surf === 3 && curTrack && curTrack.free) intens = Math.max(intens, 0.26);   // (the new map's run-offs give way: every car leaves its tracks in them)
       if (spd < lv) intens = 0;
       // skid marks
-      const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
+      const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7 || c.inPit;   // (rain: the paving sprays like the asphalt; the cobbles are a road; the pit road is paved: no dust off it)
       const skidOn = intens > 0.14 && spd > lv && !(rainy && onHard);   // (no rubber laid on a wet road)
       if (skidOn) {
         const last = v.sk[k];
