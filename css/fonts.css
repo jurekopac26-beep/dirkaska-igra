@@ -1,4 +1,4 @@
-/* Roboto (Apache License 2.0), the menu's typeface, under a name of its own (ApexMenu): the game's other screens, whose fonts list ends in Roboto, keep looking as they did. */
+/* Roboto (Apache License 2.0), the menu's typeface and the race HUD's top left (place, speed, tyres, lap: style.css #h-rank), under a name of its own (ApexMenu): the game's other screens, whose fonts list ends in Roboto, keep looking as they did. */
 @font-face {
   font-family: 'ApexMenu';
   font-style: italic;

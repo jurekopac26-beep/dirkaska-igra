@@ -397,7 +397,6 @@
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
     $('btn-pause').classList.toggle('off', !(bg === 'race' && inRace));
-    tyreBtn();   // (the tyres for the next stop: in a race with compounds and pits)
     // (a screen over the race, the pause too: no rescue button and no VOZILO UNIČENO banner with its Odstopi / Ponovi seen through it,
     // where the menu's own buttons take the tap; the first HUD frame after it puts the banner back)
     if (!inRace) { $('btn-rescue').classList.add('off'); $('h-wreck').classList.remove('show'); wreckKey = ''; }
@@ -526,7 +525,7 @@
     if (key === 'line') Render.setLine(!!race && lineWant());
     save(); applySettings();
     if (key === 'lang') relang();
-    if (key === 'pitCmp' && race && race.player) { race.player.pitCmp = S.pitCmp; tyreBtn(); }   // (the slicks for the next pit stop)
+    if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
@@ -539,12 +538,12 @@
     Lang.set(S.lang); Lang.apply(document.body);
     if (S.name === 'Igralec' || S.name === 'Player') { S.name = tr('Igralec'); save(); }   // (the default name, in the new language)
     updateFsButtons(); refreshSegs();
-    if (race) { $('pause-restart').textContent = restartTxt(); $('h-rank').firstElementChild.textContent = tr(race.pol ? 'POLICIJA' : 'MESTO'); fltKey = null; }   // (the failures' pills: written again)
+    if (race) { $('pause-restart').textContent = restartTxt(); $('h-rlbl').textContent = tr(race.pol ? 'POLICIJA' : 'MESTO'); fltKey = null; tyreKey = '-'; }   // (the failures' pills, the tyres' word: written again)
     chalBtn(); if (screen === 'chal') chalShow();   // (a challenge waiting: its button and card)
     const B = { car: buildCarScreen, upg: buildUpgScreen, track: buildTrackScreen, board: buildBoardScreen, champ: buildChampScreen, career: buildCareerScreen };
     if (B[settingsReturn]) B[settingsReturn]();
     if (mp) buildRoom();
-    for (const k in hudCache) delete hudCache[k];   // (the HUD writes its texts again)
+    for (const k in hudCache) delete hudCache[k]; lapTxt = null;   // (the HUD writes its texts again, the lap too)
   }
   // the pause menu's restart: the climb or the stage again, the qualifying lap, the run from the police, the race
   const restartTxt = () => !race ? tr('Ponovi dirko') : race.chal ? tr('Poskusi znova') : race.timeTrial ? ttAgain(track.def) : race.quali ? tr('Ponovi krog') : race.pol ? tr('Ponovi beg') : tr('Ponovi dirko');
@@ -1579,7 +1578,7 @@
     Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
     $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: ch ? ch.cond.season : S.season, tod: ch ? ch.cond.tod : S.tod }, true);   // (a challenge: its season and time of day)
-    fuelTold = { low: false, out: false }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset(); tyreBtn();
+    fuelTold = { low: false, out: false }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -1588,11 +1587,11 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
-    $('h-tot').textContent = quali || race.pol ? '' : '/' + race.cars.length; $('h-rank').firstElementChild.textContent = tr(race.pol ? 'POLICIJA' : 'MESTO');   // (the run from the police: how many patrol cars are after the player)
+    $('h-tot').textContent = quali || race.pol ? '' : '/' + race.cars.length; $('h-rlbl').textContent = tr(race.pol ? 'POLICIJA' : 'MESTO');   // (the run from the police: how many patrol cars are after the player, the label says so)
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
     $('hud').classList.toggle('sec', !!race.secBest);   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('hud').classList.toggle('up', track.open && !race.timeTrial); $('pause-restart').textContent = restartTxt();
@@ -2397,6 +2396,7 @@
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     if (race.nv && typeof NVWalls !== 'undefined') NVWalls.step(dt, P);   // (NEW VERSION · TEST 1: the walls of fence pushed by the car, js/nvwalls.js)
+    if (P.ty && P.pitDone) tyOut = P.dist;   // (the new set on, still in the lane: where it leaves it, for the cold tyres on the HUD; each step, so a test's sim sees it too)
     twMark(); stDrive(P, dt);
     if (school) schoolStep(P, dt, inp);
     recHits();
@@ -2869,8 +2869,9 @@
   // player drives; 'lane' = over the pit wall's line: in, the box, the stop, out, the gas and the brake by the autopilot; 'merge' = past the
   // way out after a stop: PIT_OUT s of race time more onto the racing line (pitWant off, as an AI car rejoins), counted down; then the player's
   const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false, go: false, b: null, d0: 0, e0: 0, k: 0 };   // (go: a stop ahead at the way in: the progress bar, b its box, d0 the way to it, e0 from it to the way out, k the bar)
-  // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
-  let wxSeen = 0, dryHint = false, tyreKey = '';
+  // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD. tyOut: P.dist
+  // at the last step with a new set on and the car still in the pit lane (stepRace), where the new set's lap of warming up starts
+  let wxSeen = 0, dryHint = false, tyreKey = '', tyOut = null;
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
   let flSeen = 0, flPSeen = 0, flKey = '', flTold = {};
   function flagEvent(k, P) {
@@ -2910,13 +2911,25 @@
     else if (k === 'dry') { showMsg(tr('DEŽ JE PONEHAL'), 'gold', 2.2); Comm.say('rainStop', null, 2); Render.rainbow(true); if (box && P.ty.k === 'wet') toast(tr('Dež je ponehal: proga se suši, najprej na idealni liniji.'), 3800); }   // (the rain stopped: a rainbow over the land, by day)
   }
   const tyreName = (ty) => ty.k === 'wet' ? 'DEŽNE' : ({ S: 'MEHKE', M: 'SREDNJE', H: 'TRDE' })[ty.c] || 'SUHE';   // (the slicks by their compound, if the race has them)
+  // the tyres on the HUD (the second row, at the left; a race with tyres: pits on the track): four dots, all in the colour of what the set has
+  // left (one wear for the whole set: green when new, red at 40 % left or less), the compound's word in its colour (soft red, medium yellow,
+  // hard white, the rain tyres blue), on a red chip when they are the wrong ones for the road. Right after a pit stop the new set is cold:
+  // the dots and the word light blue from the fitting to the way out of the lane, their own colours a lap after it (on the screen only: the
+  // grip is the same). The start's set is never cold (no d0). Written only when the look changes (the colours in steps)
+  const TY_COLD = [127, 211, 255], TY_OWN = { S: [232, 53, 43], M: [242, 198, 22], H: [244, 244, 240] }, TY_WET = [79, 168, 255], TY_DEF = [255, 210, 63];
+  const hslRgb = (h, s, l) => { const a = s * Math.min(l, 1 - l), f = (n) => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0), f(8), f(4)].map(v => Math.round(v * 255)); };
+  const tyMix = (c, k) => 'rgb(' + TY_COLD.map((a, i) => Math.round(a + (c[i] - a) * k)).join(', ') + ')';   // (k 0: the cold light blue, 1: the colour itself)
   function tyreHUD(P) {
-    const W = race.wst, on = !!(W && W.tyres && P.ty), left = on ? Math.round((1 - P.ty.wear) * 100) : 0, bad = on && P.ty.k !== Core.tyreFor(W.line);
-    const key = on ? P.ty.k + (P.ty.c || '') + left + (bad ? 'x' : '') : '';
+    const W = race.wst, el = $('h-tyre');
+    if (!(W && W.tyres && P.ty)) { if (tyreKey !== '') { tyreKey = ''; el.className = ''; } return; }   // (no tyres: the row only the lap)
+    const ty = P.ty, left = (1 - ty.wear) * 100, bad = ty.k !== Core.tyreFor(W.line);
+    const x0 = ty.d0 == null ? null : Math.max(ty.d0, tyOut == null ? ty.d0 : tyOut), hq = Math.round((x0 == null ? 1 : clamp((P.dist - x0) / track.len, 0, 1)) * 40);   // (the warmth in 40 steps of a lap from the way out)
+    const key = ty.k + (ty.c || '') + (bad ? 'x' : '') + Math.round(left / 2) + '|' + hq;
     if (key === tyreKey) return; tyreKey = key;
-    const el = $('h-tyre'); el.className = on ? 'on ' + P.ty.k + (P.ty.k === 'dry' && P.ty.c ? ' c' + P.ty.c : '') + (left < 35 ? ' worn' : '') + (bad ? ' bad' : '') : '';
-    el.textContent = on ? tr(tyreName(P.ty)) + ' ' + left + '%' : '';
-    $('btn-tyre').style.setProperty('--tl', on ? Math.max(0, Math.min(1, left / 100)) : 1);   // (the tyre button's ring: what they have left, at a glance)
+    const own = ty.k === 'wet' ? TY_WET : TY_OWN[ty.c] || TY_DEF, dot = hslRgb(Math.round(clamp((left - 40) / 55, 0, 1) * 120), 0.78, 0.52);
+    el.className = 'on ' + ty.k + (ty.k === 'dry' && ty.c ? ' c' + ty.c : '') + (bad ? ' bad' : '') + (hq < 40 ? ' cold' : '');
+    el.style.setProperty('--td', tyMix(dot, hq / 40)); el.style.setProperty('--tw', tyMix(own, hq / 40));
+    el.lastElementChild.textContent = tr(tyreName(ty));
   }
   // the fuel (a race with fuel on): the gauge under the tyres, a tick on it at what it takes to the line (the car's own burn); a warning on
   // the lap it would not last another when it will not reach the line, the last drops (a crawl to the pits) when it is empty
@@ -3016,18 +3029,13 @@
     const last = P.lap === race.laps, g = gapsText(P);
     if (last) teamRadioSay(tr('Zadnji krog!') + (g ? ' ' + g : ''), 2, 'radioLast'); else teamRadioSay(g, 1);
   }
-  // the tyres for the next stop, chosen while driving (the tyre button at the left beside the damage, or the T key): Samodejno, Mehke, Srednje, Trde
-  // in turn (the same as the pause menu's Gume v boksih)
+  // the tyres for the next stop, chosen while driving with the T key (on the screen: the pause menu's Gume v boksih, the same choice; nothing
+  // on the HUD is tapped): Samodejno, Mehke, Srednje, Trde in turn, told in a toast
   const PIT_CMPS = ['auto', 'S', 'M', 'H'], PIT_CMP_NAME = { auto: 'Samodejno', S: 'Mehke', M: 'Srednje', H: 'Trde' };
-  const tyreBtnOn = () => !!(race && race.player && race.player.ty && race.player.ty.c && track && track.def.pit && !race.player.net);
-  function tyreBtn() {
-    const b = $('btn-tyre'), on = tyreBtnOn() && bg === 'race' && screen === 'none';
-    b.classList.toggle('off', !on); b.dataset.c = S.pitCmp; b.lastElementChild.textContent = S.pitCmp === 'auto' ? 'A' : S.pitCmp;
-    b.setAttribute('aria-label', tr('Gume za postanek: {0}', tr(PIT_CMP_NAME[S.pitCmp] || 'Samodejno')));
-  }
+  const pitCmpOn = () => !!(race && race.player && race.player.ty && race.player.ty.c && track && track.def.pit && !race.player.net);   // (a race with compounds and pits)
   function pitCmpNext() {
-    if (!tyreBtnOn() || screen !== 'none') return;
-    S.pitCmp = PIT_CMPS[(PIT_CMPS.indexOf(S.pitCmp) + 1) % PIT_CMPS.length]; save(); race.player.pitCmp = S.pitCmp; refreshSegs(); tyreBtn();
+    if (!pitCmpOn() || screen !== 'none') return;
+    S.pitCmp = PIT_CMPS[(PIT_CMPS.indexOf(S.pitCmp) + 1) % PIT_CMPS.length]; save(); race.player.pitCmp = S.pitCmp; refreshSegs();
     Sfx.click(); toast(tr('Gume za postanek: {0}', tr(PIT_CMP_NAME[S.pitCmp])), 1400);
   }
   // the pause menu: the strategy as it stands (fuel, tyres, what a stop now costs and where it would put the player, the window)
@@ -3099,7 +3107,7 @@
     }
     else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
     else if (e === 'done') { if (pa.st === 'lane') pa.stop = true; const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate, ev = race.player.m.ev;   // (an electric car: its battery charged)
-      showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); dmgKey = ''; }
+      showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); }
     else if (e === 'exit') { if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; Sfx.beep(520, 0.16, 0.14); } }   // (the countdown in the progress bar's label: pitBar)
   }
   function pitCtl(P, hold) {   // each step before the inputs: which part of the pit stop the autopilot drives (null: none)
@@ -3263,32 +3271,6 @@
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1.6 * d;
     g.beginPath(); g.arc(x, y, 4.2 * d, 0, 6.2832); g.fill(); g.stroke();
   }
-  const sp = { cv: null, ctx: null, w: 0, h: 0, dpr: 1, lastR: -1, lastG: null };
-  function drawSpeedo(P) {
-    if (!sp.ctx) { sp.cv = $('speedo-c'); sp.ctx = sp.cv.getContext('2d'); }
-    const r = sp.cv.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
-    if (w !== sp.w || h !== sp.h) { sp.cv.width = w; sp.cv.height = h; sp.w = w; sp.h = h; sp.dpr = dpr; sp.lastR = -1; }
-    const f = clamp(P.rpm / P.m.redline, 0, 1);
-    if (Math.abs(f - sp.lastR) < 0.004) return;
-    sp.lastR = f;
-    const g = sp.ctx; g.clearRect(0, 0, w, h);
-    const cx = w * 0.4, cy = h * 0.62, R = h * 0.44;
-    const a0 = Math.PI * 5 / 6, a1 = Math.PI * 2, N = 16;
-    g.lineCap = 'butt';
-    g.strokeStyle = 'rgba(8,11,16,.6)'; g.lineWidth = R * 0.34; g.beginPath(); g.arc(cx, cy, R, a0 - 0.06, a1 + 0.06); g.stroke();
-    g.lineWidth = R * 0.2;
-    for (let i = 0; i < N; i++) {
-      const t0 = i / N, t1 = (i + 0.74) / N;
-      const lit = t0 < f;
-      const col = t0 < 0.6 ? (lit ? '#5fd13a' : '#1d3319') : t0 < 0.82 ? (lit ? '#f1c21b' : '#3a3214') : (lit ? '#ee3b2b' : '#3d1a17');
-      g.strokeStyle = col; g.beginPath(); g.arc(cx, cy, R, a0 + (a1 - a0) * t0, a0 + (a1 - a0) * t1); g.stroke();
-    }
-    const an = a0 + (a1 - a0) * f;
-    g.strokeStyle = '#ffffff'; g.lineWidth = 2.2 * dpr; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(cx + Math.cos(an) * R * 0.2, cy + Math.sin(an) * R * 0.2); g.lineTo(cx + Math.cos(an) * R * 1.1, cy + Math.sin(an) * R * 1.1); g.stroke();
-    g.fillStyle = '#10151c'; g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 1.2 * dpr; g.beginPath(); g.arc(cx, cy, R * 0.16, 0, 6.2832); g.fill(); g.stroke();
-  }
   const NOTE_PATHS = {
     r1: 'M22 54 V36 Q22 20 38 20 H46 M38 11 L47 20 L38 29',
     l1: 'M42 54 V36 Q42 20 26 20 H18 M26 11 L17 20 L26 29',
@@ -3334,13 +3316,12 @@
   }
   const hudCache = {};
   function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
-  let dmgKey = '', dmgShown = null;
-  const dmgCol = (z) => 'hsl(' + Math.round(120 * (1 - Math.min(1, z))) + ',78%,' + (z < 0.02 ? 52 : 50) + '%)';
-  // the damage picture (index.html #h-dmg): each part in its colour and its % beside the car (▲ front, ▼ rear, ◀ left, ▶ right: dz 0-3), the
-  // wheels in the colour of their corner (cd, red at 0.7: crushed), a lost one crossed out (c.wreck.wl), the glass cracked, the whole damage
-  // in % over a bar with marks at 70 and 80 % (the wheel rule's: wheelRule in core.js; the whole % rounded down, so 80 % shows once it is
-  // reached). The DOM is touched only when a shown value changes
-  const DMG_ARR = ['▲', '▼', '◀', '▶'];
+  // the lap in the second row (#h-lap: its text as the game writes it, whole, in its textContent): the word before the number small (KROG, CP),
+  // the number bigger (1/2, 12/36, 2,4/12,3), what follows small (KM, a long lap's km); a word with no number (KVALIFIKACIJE, LETEČI
+  // KROG, CILJ) small, the whole of it. Written only when it changes (lapTxt: cleared with hudCache, a new language writes it again)
+  let lapTxt = null;
+  const lapHTML = (v) => { const m = /^(\D*?\s)?(\d[\d,.]*\/\d[\d,.]*)(.*)$/.exec(v); return m ? (m[1] ? '<i>' + esc(m[1]) + '</i>' : '') + '<b>' + esc(m[2]) + '</b>' + (m[3] ? '<i>' + esc(m[3]) + '</i>' : '') : '<i>' + esc(v) + '</i>'; };
+  function setLap(v) { if (lapTxt !== v) { lapTxt = v; $('h-lap').innerHTML = lapHTML(v); } }
   // ZAMENJAJ KOLO (the wheel rule, Core rule.ask: a wheel off with the spare on the roof): a big button for the 3 s to the second wheel,
   // its bar at its very foot running out with them, in the last second the phone buzzing four times (longer than a wheel off's buzz: a
   // phone cannot buzz harder, only longer); a tap on it (or Enter) puts the spare on at once, the car driving on (Race.changeWheel): KOLO
@@ -3365,30 +3346,6 @@
     if (!(swapOn && race && race.changeWheel(race.player))) return;
     swapBuzzEnd = 0; vibrate(40); for (const t of [0, 210, 420]) setTimeout(() => Sfx.wrench(), t);   // (the tap's buzz ends the warning's; the pits' wheel gun on the nuts)
     showMsg(tr('KOLO ZAMENJANO'), 'gold', 1.8); swapHUD(race.player);
-  }
-  function updateDamageHUD(P) {
-    const el = $('h-dmg'); if (!el) return;
-    const on = dmgOn();
-    if (on !== dmgShown) { el.style.display = on ? '' : 'none'; dmgShown = on; }
-    if (!on) return;
-    const W = P.wreck, RP = Core.REPAIR, u = Core.repairU(P), kz = 1 - Core.sstep(RP.body[0], RP.body[1], u), wl = W && !(u >= RP.wheel) ? W.wl : 0;   // (in the box: going down as the crew works, as the car is drawn: Render's repairStep)
-    const pc = (z) => Math.min(100, Math.round(z * kz * 100)), tot = Math.min(100, Math.floor(P.dmg * kz * 100 + 1e-6)), zs = P.dz.map(pc), cs = (P.cd || [0, 0, 0, 0]).map(v => Math.round(v * kz * 20));
-    const glass = !(u >= RP.glass) && P.winOut && P.winOut.some(v => v) ? 1 : 0;
-    const ns = !!(W && W.rule && !W.rule.spare);   // (the wheel rule's spare used: brez rezerve, till a repair in the pits gives a new one)
-    const key = zs.join(',') + '|' + cs.join(',') + '|' + tot + '|' + glass + (W ? '|' + wl + (ns ? '|ns' : '') : '');
-    if (key === dmgKey) return; dmgKey = key;
-    for (let k = 0; k < 4; k++) {
-      const col = dmgCol(P.dz[k] * kz);
-      $('dz' + k).setAttribute('fill', col);
-      const n = $('dzn' + k); n.textContent = DMG_ARR[k] + ' ' + zs[k]; n.className = zs[k] ? '' : 'z0'; n.style.color = zs[k] ? col : '';
-      const lost = !!(wl & (1 << k)), w = $('wh' + k);   // (c.wreck.wl bit k: wheel k, FL FR RL RR)
-      w.classList.toggle('lost', lost); $('whx' + k).classList.toggle('on', lost); w.style.fill = dmgCol(cs[k] / 14);
-    }
-    const tc = dmgCol(tot / 100), t = $('dmg-tot'), f = $('dmg-fill');
-    t.textContent = tot + ' %'; t.style.color = tc; f.style.width = tot + '%'; f.style.background = tc;
-    $('dmg-glass').classList.toggle('cracked', !!glass);
-    el.classList.toggle('whl', !!W);   // (a car whose wheels come off)
-    el.classList.toggle('nospare', ns);
   }
   /* ---------------- a destroyed car: VOZILO UNIČENO, Odstopi ---------------- */
   // A car at 98 % damage (damage on) is destroyed: the words under the minimap, with Odstopi in a race (the player retires, Race.retire:
@@ -3437,7 +3394,7 @@
   function updateHUDTT(dt, P) {
     hxFrame(dt, P);   // (turn counter, live difference to the best run, height profile: below)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
-    setText('h-lap', P.finished ? tr('CILJ') : 'CP ' + P.cp + '/' + nCP);
+    setLap(P.finished ? tr('CILJ') : 'CP ' + P.cp + '/' + nCP);
     // altitude of the road under the car (not the body, as in the splits table), between start and summit (or the foot of a descent); frozen at the
     // finish. A stage without altitudes (a rally stage): the distance still to go to the finish, to the nearest 0.1 km (at least 0.1 until the line)
     const al = track.def.alt, alt = track.altAt(P.finished ? track.hy[track.finishIdx] : P.roadY || 0);
@@ -3605,7 +3562,7 @@
   const spkDelta = (d) => { const a = Math.abs(d); return a < 1 ? a.toFixed(2) : a.toFixed(1); };   // never "0.0 seconds"
   const spkTime = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m ? m + (m === 1 ? ' minute ' : ' minutes ') + s.toFixed(1) : t.toFixed(1) + ' seconds'; };
   /* the start's reaction (Core LAUNCH): once the player is off the line, for a few seconds in the column under the map (hudCol: right under
-     it, upright under the damage picture and the tower; above the big message), how long after the lights went out the throttle went down: green up to 0,25 s, gold up to 0,45 s, red later;
+     it, upright under the tower; above the big message), how long after the lights went out the throttle went down: green up to 0,25 s, gold up to 0,45 s, red later;
      the foot on the gas through the lights: red, on the gas too early (counted as LAUNCH.held s). The later, the more the wheels spun away
      (Core). On a phone on its side the timing tower, the column's last, shows fewer rows meanwhile */
   function reactHUD(dt, P) {
@@ -3624,7 +3581,7 @@
     if (race.timeTrial) updateHUDTT(dt, P);
     else if (race.quali) {   // qualifying: the lap under way, the lap record beside it
       setText('h-pos', '–');
-      setText('h-lap', tr(P.finished ? 'CILJ' : P.lap >= 1 ? 'LETEČI KROG' : 'KVALIFIKACIJE'));
+      setLap(tr(P.finished ? 'CILJ' : P.lap >= 1 ? 'LETEČI KROG' : 'KVALIFIKACIJE'));
       setText('h-time', fmt(P.finished ? P.lapTimes[0] || 0 : P.lap >= 1 && phase === 'racing' ? race.time - P.lapStart : 0, true));
       setText('h-bestv', fmt(rec(track.def.id).bestLap || NaN, true));
       const Qs = qual || race.chal;   // (a challenge's lap: as qualifying's)
@@ -3633,20 +3590,18 @@
     else {
       setText('h-pos', String(P.pos || race.cars.length));
       const lapShown = clamp(P.lap, 1, race.laps);
-      setText('h-lap', tr('KROG {0}/{1}', lapShown, race.laps) + (track.len > 8000 ? ' · ' + kmTxt(clamp(P.finished ? track.len : P.dist - (lapShown - 1) * track.len, 0, track.len), 1) + '/' + kmTxt(track.len, 1) + ' KM' : ''));   // a long lap: how far round it
+      setLap(tr('KROG {0}/{1}', lapShown, race.laps) + (track.len > 8000 ? ' · ' + kmTxt(clamp(P.finished ? track.len : P.dist - (lapShown - 1) * track.len, 0, track.len), 1) + '/' + kmTxt(track.len, 1) + ' KM' : ''));   // a long lap: how far round it
       const cur = phase === 'racing' ? race.time - P.lapStart : phase === 'finish' || phase === 'done' ? (P.lapTimes[P.lapTimes.length - 1] || 0) : 0;
       setText('h-time', fmt(cur, true));
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
     if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) Comm.say('drs', null, 1); } }   // the flap opens (the commentator: every other time)
     setText('h-speed', String(Math.round(P.speed * 3.6)));
-    setText('h-gear', P.gear === -1 ? 'R' : P.m.ev ? 'D' : String(P.gear));   // (the electric car: one gear, D)
-    drawSpeedo(P);
     drawMinimap();
     updateNote(P);
     // lap events (a time trial has its own checkpoint / finish popups)
@@ -3654,7 +3609,7 @@
       lastLapCount = P.lapTimes.length;
       const t = P.lapTimes[lastLapCount - 1];
       const isBest = t <= Math.min(...P.lapTimes) + 1e-6 && lastLapCount > 1;
-      const el = $('h-split'); el.textContent = tr('KROG {0}: {1}', lastLapCount, fmt(t, true)) + (isBest ? tr('  NAJHITREJŠI') : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;
+      const el = $('h-split'); el.textContent = tr('KROG {0}: {1}', lastLapCount, fmt(t, true)) + (isBest ? (innerWidth < innerHeight ? '  ★' : tr('  NAJHITREJŠI')) : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;   // (upright a star for the word: the line under the second row, clear of the map)
       if (!P.finished && P.lap === race.laps) { showMsg(tr('ZADNJI KROG!'), 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
     }
     if (splitT > 0) { splitT -= dt; if (splitT <= 0) $('h-split').className = ''; }
@@ -3678,7 +3633,7 @@
     if (P.pitState === 'repair' && P.pitDur > 0 && !pa.go) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('h-msg').className = ''; }
   }
-  // the column under the minimap (css --map-*: its right edge and width): upright first the damage picture and the timing tower (the tower's rows
+  // the column under the minimap (css --map-*: its right edge and width): upright first the timing tower (its rows
   // from the room the texts leave), then the height profile (a time trial), the destroyed car's words, the pit
   // stop's progress, the start's reaction (reactHUD), the big message, a time trial's splits at the finish, the team radio, the toast, and on a phone on its side the timing
   // tower last. Each right under the one above, nothing over the middle of the track, never over the pedals (nor the steering, the police's
@@ -3706,13 +3661,11 @@
     if (T.classList.contains('wait') && T.classList.contains('show')) toastEnd = Math.min(toastCap, toastEnd + (dt || 0) * 1000);   // (waiting for room: its time stopped, for a while)
     const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), RX = $('h-react'), tch = $('touch');
     const twOn = !!(tw && S.tower && hud.classList.contains('tw') && !hud.classList.contains('tt') && !hud.classList.contains('pol')), tower = W > H && twOn ? TW : null;   // (on its side: the last in the column)
-    const D = $('h-dmg'), dU = W < H && dmgShown && D.getClientRects().length ? D : null, tU = W < H && twOn && TW.getClientRects().length ? TW : null;   // (upright: the damage picture first, right under the map, the tower under it, then the texts; on its side the damage picture in the left column)
-    if (!dU && D.style.top) D.style.top = '';
-    const sh = [dU, tU, hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
+    const tU = W < H && twOn && TW.getClientRects().length ? TW : null;   // (upright: the tower first, right under the map, then the texts)
+    const sh = [tU, hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
-    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === dU ? (D.classList.contains('nospare') ? 'dn' : 'd') : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
+    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
-    { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column)
     const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
     let lim = H - COL_GAP;   // the column's foot: above whatever is below it
     const obs = tch.classList.contains('off') || tch.classList.contains('pad') ? [] : ['c-gas', 'c-brake', 'c-left', 'c-right', 'c-wheel', 'tilt-ind'];
@@ -3735,7 +3688,7 @@
       const hs = L.map(e => (sk.includes(e) || e === tU ? -1 : e.offsetHeight)); y = m.bottom; for (const h of hs) if (h >= 0) y += COL_GAP + h;
       skip = sk; if (y <= lim) break out;
     }
-    let tH = -1;   // upright: the tower under the damage picture with as many rows as the room the texts leave (as on its side), none in too little
+    let tH = -1;   // upright: the tower right under the map with as many rows as the room the texts leave (as on its side), none in too little
     if (tU) { const row = TW.querySelector('.tw-r'); if (row) hcol.trh = row.offsetHeight + 1; const rh = hcol.trh || 14, room = lim - y - COL_GAP - 2, n = Math.floor((room - rh * 0.6) / rh);
       TW.classList.toggle('nofit', n < 1); const max = n >= 9 ? Infinity : Math.max(0, n); if (max !== tw.max) { tw.max = max; tw.at = 0; }
       if (n >= 1) tH = Math.min(TW.offsetHeight, room); }
@@ -3750,8 +3703,8 @@
   // the big message's size: the largest from hi down at which no word sticks out of the column, in two lines (down to 16 px), else three. Its
   // icon at the start of its first line (css #h-msg::before); a long message on a narrow phone with no room for it in three lines: none (data-icm no)
   // the big message at f px, a size hudCol's column picks under fitMsg's (fitMsg made sure of the icon only at its own): text-wrap: balance
-  // breaks the lines afresh at each size and can leave the icon alone on the first line (seen on CI's wider fonts, upright, with the damage
-  // picture over the column); then greedy lines (the icon and the first word fit on one, fitMsg's sizes), else a px less, down to MSG_MIN
+  // breaks the lines afresh at each size and can leave the icon alone on the first line (seen on CI's wider fonts, upright, with the old
+  // damage picture over the column); then greedy lines (the icon and the first word fit on one, fitMsg's sizes), else a px less, down to MSG_MIN
   function msgAt(el, f) {
     const first = () => { const g = document.createRange(); g.selectNodeContents(el); const r = g.getClientRects()[0]; return !r || r.top - el.getBoundingClientRect().top < f * 0.75; };
     el.style.fontSize = f + 'px'; el.style.removeProperty('text-wrap'); if (el.dataset.icm === 'no' || first()) return;
@@ -3771,7 +3724,7 @@
   function updateHUDUp(P) {   // a race up an open road (Vršič): the place, km done of the whole road, the altitude, the race clock, the best race so far
     const L = polLen(), al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done && !race.pol ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped; the run from the police: the building at the top)
     setText('h-pos', race.pol ? String(race.pol.cars.filter(c => c.pol.mode === 'chase').length) : String(P.pos || race.cars.length));
-    setText('h-lap', kmTxt(clamp(done ? L : P.dist, 0, L), 1) + '/' + kmTxt(L, 1) + ' KM');
+    setLap(kmTxt(clamp(done ? L : P.dist, 0, L), 1) + '/' + kmTxt(L, 1) + ' KM');
     setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : '');
     setText('h-time', fmt(P.finished ? P.finishTime : phase === 'racing' ? race.time : 0, true));
     setText('h-bestv', fmt(rec(track.def.id).bestRace || NaN, true));
@@ -5101,7 +5054,6 @@
       nm.addEventListener('blur', () => { nm.value = S.name; });
     }
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
-    $('btn-tyre').addEventListener('click', (e) => { e.preventDefault(); pitCmpNext(); });
     $('ws-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap on the big button; the rest of the screen drives on)
     document.addEventListener('keydown', (e) => { if (swapOn && !paused && screen === 'none' && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });   // (paused: Enter is the pause screen's)
     { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
@@ -5117,11 +5069,11 @@
     window.addEventListener('touchend', unlock, { passive: true });
     window.addEventListener('pointerup', unlock, { passive: true });
     window.addEventListener('resize', () => {
-      Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); fitSegs();
+      Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); fitSegs();
       if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
       if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: its title and its place for the new size)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); if (swapOn) { swapFit(); swapTop(); } }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); if (swapOn) { swapFit(); swapTop(); } }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();
@@ -5175,6 +5127,7 @@
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
         hud(dt = 1 / 60) { if (race) { updateHUD(dt); hudCol(dt); Comm.update(); } },   // (tests: the HUD as a frame of the running race draws it, the race itself not stepped: a paused race's HUD after sim)
+        lapHTML: (v) => lapHTML(v),   // (tests: the lap's markup in the second row for a text, as setLap writes it)
         sim(sec, auto, steer, thr, brk) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: thr == null ? 1 : thr, brk: brk || 0, gas: thr == null || thr > 0.05 ? 1 : 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); if (auto && (phase === 'intro' || phase === 'lights')) inp.thr = inp.gas = 0; stepRace(STEP, inp); } },   // (the autopilot: off the gas on the grid, on it as the lights go out)
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v);   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)

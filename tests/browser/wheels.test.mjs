@@ -2,8 +2,8 @@
 // 79 % takes a wheel off (no words, no Namesti kolo; no fire yet: in the last 20 % of the 3 s a small one where the wheel was, with the
 // second wheel the whole car), the second follows 3 s on, the car stops and the game is over: KONEC IGRE with a
 // big PONOVI IGRO (no results first; the HUD and the controls off). PONOVI IGRO: the same race again, the car whole; Rezultati: the
-// results, the player retired. Another car (KAZE RS): no rule. The damage picture on the HUD (the car, its parts' %, the whole %) on
-// screen, clear of the team radio and the map. Upright (360 x 640) and on its side (640 x 360), in English too.
+// results, the player retired. Another car (KAZE RS): no rule. On its side the left column (the place, the speed, the tyres) stays above
+// the steering arrows and clear of ZAMENJAJ KOLO. Upright (360 x 640) and on its side (640 x 360), in English too.
 //   node tests/browser/wheels.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -16,14 +16,10 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', damage: 2, lang: en ? 'en' : 'sl', radio: 0 }, vw, { seed: 4242 });
     await page.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'sokol'); });
     await startTrack(page, 'spa');
+    await page.evaluate(() => Promise.all(['italic 800 32px ApexMenu', '700 9px ApexMenu'].map(f => document.fonts.load(f, 'AZaz09ČŠŽ'))));   // (the top left's face: the left column measured as a phone draws it)
     const a = await page.evaluate(async () => {
       const g = window.__game, P = g.race.player, W = P.wreck, wait = (ms) => new Promise(r => setTimeout(r, ms)), frames = async (n) => { for (let i = 0; i < n; i++) await new Promise(r => requestAnimationFrame(r)); };
-      // (the damage picture, with damage, and a team radio message: clear of each other and of the screen's edges)
-      g.sim(9, true); Core.applyDamage(P, 0.2, P.m.len * 0.45, -P.m.wid * 0.4); g.resume(); await frames(4); g.pause();
-      const tr0 = document.getElementById('h-teamradio'); tr0.lastElementChild.textContent = 'Avto je močno poškodovan. Pazi na kolesa, boksi v tem krogu!'; tr0.classList.add('on'); g.resume(); await frames(3); g.pause();   // (the column under the map laid out while it runs: upright the damage picture first, the radio under it)
-      const rr = (id) => document.getElementById(id).getBoundingClientRect(), hit = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
-      const dR = rr('h-dmg'), lay = { clear: !hit(dR, rr('h-teamradio')) && !hit(dR, rr('h-map')), inView: dR.left >= 0 && dR.right <= innerWidth && dR.bottom <= innerHeight, w: Math.round(dR.width), tot: document.getElementById('dmg-tot').textContent };
-      tr0.classList.remove('on'); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0];
+      g.sim(9, true); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0];
       const rule = !!W.rule, others = g.race.cars.filter(c => !c.isPlayer).every(c => !(c.wreck && c.wreck.rule));
       const fire0 = Render.burning(P);   // (79 %, no wheel off yet: no fire)
       P.dmg = 0.79; Core.applyDamage(P, 0.03, P.m.len * 0.5, 0); const n1 = W.nL;
@@ -44,9 +40,6 @@ try {
       // ZAMENJAJ KOLO (the spare on the roof): a hit at 79 % in the new race: a big button, its bar at its foot running out, clear of the
       // steering and the pedals, no fire yet, then (the bar under 20 %, white) the hub where the wheel was on fire; a tap beside the button:
       // nothing; a tap on it: the spare on at once (four wheels, drawn), the car driving on, the button gone, no spare left; the fire put out
-      const side = () => { const D = document.getElementById('h-dmg'), a = D.querySelector('svg').getBoundingClientRect(), b = D.querySelector('.dmg-nums').getBoundingClientRect(), n = document.getElementById('dmg-ns').getBoundingClientRect();   // (the damage picture: its car and its numbers side by side, the no spare line under both)
-        const low = innerWidth > innerHeight && innerHeight <= 420;   // (on its side, 420 px tall or less: on the whole %'s line, in the numbers' block)
-        return b.left >= a.right - 1 && Math.abs((a.top + a.bottom) / 2 - (b.top + b.bottom) / 2) < 8 && (!n.height || (low ? n.top >= b.top - 1 && n.bottom <= b.bottom + 1 && n.left >= b.left : n.top >= Math.max(a.bottom, b.bottom) - 1)); };
       const vib = []; navigator.vibrate = (q) => { vib.push(q); return true; };   // (the phone's buzzes, kept: the last second's are four long ones)
       const buzz = () => vib.filter(q => Array.isArray(q) && q.join() === '150,100,150,100,150,100,150').length;
       g.pause(); g.sim(9, true); P2.dmg = 0.79; Core.applyDamage(P2, 0.03, P2.m.len * 0.5, 0);
@@ -73,12 +66,12 @@ try {
         for (const z of [1.1, 1.4, 1.7]) for (const tl of [0.1, 0.3]) for (const bk of [0, 20]) { Object.assign(C, { userZoom: z, userTilt: tl, userBack: bk }); Render.frame(0.001, 1, P2, 'chase', { noFx: true }); const c = carBox(); car.push([z, tl, bk, Math.round(c.top), Math.round(c.bottom), cut(c, br), c.bottom > 0 && c.top < innerHeight && c.right > 0 && c.left < innerWidth]); }
         [C.userZoom, C.userTilt, C.userBack] = keep; Render.frame(0.001, 1, P2, 'chase', { noFx: true });
         const hud = ['h-times', 'h-note', 'h-map', 'h-rank'].map(id => document.getElementById(id)).filter(e => e.getClientRects().length).map(e => [e.id, e.getBoundingClientRect()]).filter(([, q]) => q.width > 0 && cut(q, br)).map(([id]) => id);
-        Object.assign(sw0, { car, hud, top: Math.round(br.top), clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom), inline: btn.style.top, dmgH: Math.round(document.getElementById('h-dmg').getBoundingClientRect().height) }); }
+        Object.assign(sw0, { car, hud, top: Math.round(br.top), clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom), inline: btn.style.top }); }
       { // (a new size while the HUD is hidden by a screen over the race, as the pause's photo: the button keeps its place; back in the race,
         // placed again under the clock)
         const hudE = document.getElementById('hud'), top0 = btn.style.top; hudE.classList.add('off'); dispatchEvent(new Event('resize')); const topHid = btn.style.top; hudE.classList.remove('off');
         g.resume(); await frames(2); g.pause(); sw0.stale = { before: top0, hidden: topHid, after: btn.style.top, clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom), btop: Math.round(btn.getBoundingClientRect().top) }; }
-      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx(); sw0.buzz0 = buzz(); sw0.side = side();
+      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx(); sw0.buzz0 = buzz();
       P2.wreck.rule.due = 1.2; g.resume(); await frames(1); g.pause(); sw0.buzz12 = buzz(); P2.wreck.rule.due = 0.95; g.resume(); await frames(1); g.pause(); sw0.buzz095 = buzz();   // (the last second's buzzes: not yet at 1.2 s, at 0.95 s)
       P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
@@ -91,27 +84,24 @@ try {
       const sw1 = { nL: P2.wreck.nL, spare: P2.wreck.rule.spare, ask: P2.wreck.rule.ask, dv: +(P2.speed - v0).toFixed(2) };
       g.resume(); await frames(3); g.pause(); await wait(600); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length; sw1.roof = roof();
       Sfx.wrench = gun0; sw1.gun = gun.length; sw1.buzz = buzz();
-      { const M = document.getElementById('h-msg'), D = document.getElementById('h-dmg'), N = document.getElementById('dmg-ns'), d = D.getBoundingClientRect(), n = N.getBoundingClientRect(), m = M.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
+      { const M = document.getElementById('h-msg'), m = M.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
         const cut = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
-        sw1.msg = { txt: M.textContent, show: M.classList.contains('show'), gold: M.classList.contains('gold'), ic: M.dataset.ic, clear: !(M.classList.contains('show') && cut(m, d)) };
-        sw1.ns = { on: D.classList.contains('nospare'), shown: N.getClientRects().length > 0 && n.height > 0, txt: N.textContent, icon: /svg/.test(getComputedStyle(N, '::before').backgroundImage),
-          inPic: n.left >= d.left - 0.5 && n.right <= d.right + 0.5 && n.top >= d.top && n.bottom <= d.bottom + 0.5, grow: Math.round(d.height) - sw0.dmgH, low: innerWidth > innerHeight && innerHeight <= 420, oneLine: N.scrollWidth <= N.clientWidth + 1 && n.height < 2.2 * parseFloat(getComputedStyle(N).fontSize),
-          inView: d.left >= 0 && d.right <= innerWidth && d.bottom <= innerHeight, above: innerWidth < innerHeight || (arrowsTop.length > 0 && k.bottom <= Math.min(...arrowsTop)), colB: Math.round(k.bottom), arrows: arrowsTop.map(Math.round), side: side(), before: sw0.side }; }
+        sw1.msg = { txt: M.textContent, show: M.classList.contains('show'), gold: M.classList.contains('gold'), ic: M.dataset.ic, clear: !(M.classList.contains('show') && cut(m, k)) };
+        sw1.col = innerWidth < innerHeight || (arrowsTop.length > 0 && k.bottom <= Math.min(...arrowsTop)); sw1.colB = Math.round(k.bottom); sw1.arrows = arrowsTop.map(Math.round); }   // (on its side: the left column above the steering arrows)
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6)); const k2 = P2.dmgK; P2.dmgK = 1e-6;   // (a knock in the pack on the autopilot's way meanwhile takes nothing: under 70 %, no more damage)
       for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
       P2.dmgK = k2; const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
-      g.race.repairCar(P2); g.resume(); await frames(3); g.pause(); sw2.spare = P2.wreck.rule.spare; sw2.ns = document.getElementById('h-dmg').classList.contains('nospare') || document.getElementById('dmg-ns').getClientRects().length > 0;   // (a repair in the pits: a new spare)
+      g.race.repairCar(P2); g.resume(); await frames(3); g.pause(); sw2.spare = P2.wreck.rule.spare;   // (a repair in the pits: a new spare)
       // once more to KONEC IGRE, then Rezultati: the results, the player out (Odstop)
       g.pause(); g.sim(9, true); P2.dmg = 0.85; Core.applyDamage(P2, 0.2, P2.m.len * 0.5, 0); await frames(2); const big = { lvl: Render.viewOf(P2).fire && Render.viewOf(P2).fire.lvl };
       g.sim(4, true); await frames(4); Object.assign(big, { n: P2.wreck.nL, shown: sc.classList.contains('show') });
       document.getElementById('over-res').click(); await frames(3);
       const res = { shown: document.getElementById('s-results').classList.contains('show'), gone: !sc.classList.contains('show') };
-      return { rule, others, lay, n1, msg, fix, fire, fire0, hub, over, again, sw0, sw1, sw2, big, res };
+      return { rule, others, n1, msg, fix, fire, fire0, hub, over, again, sw0, sw1, sw2, big, res };
     });
     console.log(tag, JSON.stringify(a));
     const O = a.over;
     T.check(`${tag}: the rule on the player's SOKOL only (not the AI)`, a.rule && a.others);
-    T.check(`${tag}: the damage picture (the car, its parts' %, the whole %) on screen, clear of the team radio and the map`, a.lay.clear && a.lay.inView && /^\d+ %$/.test(a.lay.tot) && a.lay.tot !== '0 %', JSON.stringify(a.lay));
     T.check(`${tag}: a hit at 79 %: a wheel off, no words (KOLO JE ODPADLO no more), no Namesti kolo, no fire (none before either)`, a.n1 === 1 && !/KOLO JE ODPADLO|WHEEL OFF/.test(a.msg) && !a.fix && !a.fire && !a.fire0, `${a.n1} off, "${a.msg}", fix ${a.fix}, fire ${a.fire0} -> ${a.fire}`);
     T.check(`${tag}: the last 20 % of the 3 s: a small fire where the wheel was (the hub's); the second wheel: the whole car`, a.hub.on && a.hub.lvl === 1 && a.hub.k === a.hub.wk && a.hub.n === 1 && a.hub.whole === 2, JSON.stringify(a.hub));
     T.check(`${tag}: the second one off, the car stopped, out: KONEC IGRE (no results first), the HUD and the controls off`, O.shown && O.screen === 'over' && O.n >= 2 && O.out && O.v < 0.6 && O.phase === 'done' && !O.res && O.hud && O.touch, JSON.stringify(O));
@@ -126,10 +116,10 @@ try {
         && a.sw0.stale.hidden === a.sw0.stale.before && a.sw0.stale.btop >= a.sw0.stale.clock)), JSON.stringify({ car: a.sw0.car, hud: a.sw0.hud, top: a.sw0.top, clock: a.sw0.clock, inline: a.sw0.inline, stale: a.sw0.stale }));
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel left of the words on its title, the title still on one line inside the button`, a.sw0.icon && a.sw0.fit, JSON.stringify({ icon: a.sw0.icon, fit: a.sw0.fit, tf: a.sw0.tf }));
     T.check(`${tag}: ZAMENJAJ KOLO: the phone buzzes four long times in the last second (none before it), once`, a.sw0.buzz0 === 0 && a.sw0.buzz12 === 0 && a.sw0.buzz095 === 1 && a.sw0.buzz1 === 1 && a.sw1.buzz === 1, JSON.stringify({ before: a.sw0.buzz0, at12: a.sw0.buzz12, at095: a.sw0.buzz095, last: a.sw0.buzz1, after: a.sw1.buzz, all: a.sw0.vib }));
-    T.check(`${tag}: the tap: ${en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO'} (gold, the wrench), clear of the damage picture; the pits' wheel gun three times`,
+    T.check(`${tag}: the tap: ${en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO'} (gold, the wrench), clear of the left column; the pits' wheel gun three times`,
       a.sw1.msg.show && a.sw1.msg.txt === (en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO') && a.sw1.msg.gold && a.sw1.msg.ic === 'wrench' && a.sw1.msg.clear && a.sw1.gun === 3, JSON.stringify([a.sw1.msg, a.sw1.gun]));
-    T.check(`${tag}: no spare left: "${en ? 'no spare' : 'brez rezerve'}" with a wheel crossed out under the damage picture's car and numbers (they side by side, with it and without it), in it, on one line, on screen${vw.width > vw.height ? ', the left column still above the steering' : ''}; a repair in the pits: a new spare, gone`,
-      a.sw1.ns.on && a.sw1.ns.shown && a.sw1.ns.txt === (en ? 'no spare' : 'brez rezerve') && a.sw1.ns.icon && a.sw1.ns.inPic && a.sw1.ns.oneLine && a.sw1.ns.inView && a.sw1.ns.above && a.sw1.ns.side && a.sw1.ns.before && (!a.sw1.ns.low || a.sw1.ns.grow <= 1) && a.sw2.spare === 1 && !a.sw2.ns, JSON.stringify([a.sw1.ns, { spare: a.sw2.spare, ns: a.sw2.ns }]));
+    T.check(`${tag}: no spare left after the change, a new one with a repair in the pits${vw.width > vw.height ? '; the left column (the place, the speed, the tyres) still above the steering arrows' : ''}`,
+      a.sw1.spare === 0 && a.sw2.spare === 1 && (vw.width < vw.height || a.sw1.col), JSON.stringify({ spare: a.sw1.spare, spare2: a.sw2.spare, col: a.sw1.col, colB: a.sw1.colB, arrows: a.sw1.arrows }));
     T.check(`${tag}: the spare drawn lying on the roof (over the body's top, within the car's length) until it is put on, then gone`,
       !!a.sw0.roof && a.sw0.roof.vis && a.sw0.roof.y > 0.9 && a.sw0.roof.y < a.sw0.roof.top + 0.4 && Math.abs(a.sw0.roof.x) < 1.5 && !!a.sw1.roof && !a.sw1.roof.vis, JSON.stringify([a.sw0.roof, a.sw1.roof]));
     T.check(`${tag}: a tap on the button: the spare on at once (four wheels, drawn), the car not slowed, the button gone, no spare left; the hub's fire out within 5 s, the car driving on`,
