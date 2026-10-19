@@ -37,6 +37,9 @@
 
     'Varčevanje z baterijo': 'Battery saver', 'Samodejno': 'Auto', 'Baterija je skoraj prazna: varčni način (30 sličic na sekundo, nižja ločljivost).': 'The battery is nearly empty: battery saver on (30 frames a second, a lower resolution).',
     'Časovna tabela': 'Timing tower', 'TI': 'YOU', 'VODI': 'LEADER', 'BOKSI': 'PIT', 'Krogi vseh voznikov': 'Every driver\u2019s laps', 'K{0}': 'L{0}', 'Postanki': 'Stops',
+    'Postanki · gume': 'Stops · tyres', 'Gume: S mehke, M srednje, H trde, W dežne.': 'Tyres: S soft, M medium, H hard, W wet.',
+    'Dolga dirka: gume se obrabijo hitreje in ne zdržijo do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.': 'A long race: the tyres wear faster and will not last to the finish. Every rival has a strategy of its own, 1 or 2 stops.',
+    'Dolga dirka: gorivo ne zdrži do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.': 'A long race: the fuel will not last to the finish. Every rival has a strategy of its own, 1 or 2 stops.',
     'Dosežki': 'Achievements', 'Nov dosežek: {0}': 'New achievement: {0}', ' Novi dosežki: {0}.': ' New achievements: {0}.', 'Dosežki {0}/{1}': 'Achievements {0}/{1}', '{0} h {1} min': '{0} h {1} min', '{0} min': '{0} min',
     'Prevoženo': 'Driven', 'Čas vožnje': 'Time driving', 'Dirke': 'Races', 'Stopničke': 'Podiums', 'Prva štartna mesta': 'Pole positions', 'Najhitrejši krogi': 'Fastest laps', 'Kronometri': 'Time trials', 'Medalje': 'Medals',
     'Naslovi prvaka': 'Titles', 'Pobegi policiji': 'Police escapes', 'Dirke s prijatelji': 'Races with friends', 'Najvišja hitrost': 'Top speed', 'Najdaljši skok': 'Longest jump', 'Najdaljše drsenje': 'Longest drift', 'Proge': 'Tracks',

@@ -32,8 +32,8 @@ try {
   await startTrack(page, 'toskana');
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(12, true); g.hud(); });
   const f1 = await page.evaluate(() => { const E = document.getElementById('h-fuel'), b = E.querySelector('b'), P = window.__game.race.player;
-    return { shown: getComputedStyle(E).display !== 'none', text: E.textContent, tick: b ? parseFloat(b.style.left) : null, fuel: P.fuel, laps: window.__game.race.laps, tank: P.tankKg }; });
-  T.check('a race with fuel: the gauge on the HUD (GORIVO 9x %), a tick at what it takes to the line (about three quarters of the tank)', f1.shown && /^GORIVO 9\d%$/.test(f1.text) && f1.tick > 55 && f1.tick < 90 && f1.laps === 3 && f1.tank > 0, JSON.stringify(f1));
+    return { shown: getComputedStyle(E).display !== 'none', text: E.textContent, tick: b ? parseFloat(b.style.left) : null, fuel: P.fuel, laps: window.__game.race.laps, tank: P.tankKg, strat: !!window.__game.race.strat }; });
+  T.check('a race with fuel: the gauge on the HUD (GORIVO 9x %), a tick at what it takes to the line (about three quarters of the tank); no strategies in a race of the usual length', f1.shown && /^GORIVO 9\d%$/.test(f1.text) && f1.tick > 55 && f1.tick < 90 && f1.laps === 3 && f1.tank > 0 && !f1.strat, JSON.stringify(f1));
 
   // 3. a long race: no tick at first (it will not reach the line on one tank); the warning; in the pits (on autopilot): filled up
   await page.evaluate(() => window.__game.onAction('to-title')); await click('length', 'long');
@@ -56,7 +56,9 @@ try {
   // 4. the endurance race: from the afternoon into the night with the leader's progress; to the line
   await click('fuel', '0'); await click('length', 'endurance');
   const rec0 = await page.evaluate(() => { const r = JSON.parse(localStorage.getItem('tdgp-records') || '{}'); return (r.tracks || {})['toskana@cs'] || null; });
+  await page.evaluate(() => { window.__msgs.length = 0; });
   await startTrack(page, 'toskana');
+  const st0 = await page.evaluate(() => { const r = window.__game.race; return { strat: !!r.strat, plans: r.cars.filter(c => !c.isPlayer).map(c => c.st && c.st.p ? c.st.p.seq + '@' + c.st.p.at.join(',') : null), told: window.__msgs.filter(m => /^Dolga dirka: /.test(m)) }; });
   const e = await page.evaluate(async () => { const g = window.__game, out = []; window.__msgs.length = 0; g.pause();
     for (let k = 0; k < 400; k++) { g.sim(10, true); if (g.phase === 'done') break;   // (the results up: no resume, it would close them)
       g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); g.pause();
@@ -67,6 +69,13 @@ try {
   T.check('the endurance race: 9 laps; the light from the afternoon (0) to the night (1 at nine tenths of the race), step by step', e.laps === 9 && e.endu && o[0].k < 0.1 && o.every((x, i) => !i || x.k >= o[i - 1].k - 1e-6) && Math.abs(at(0.5).k - 0.56) < 0.08 && at(0.92).k === 1 && o[o.length - 1].k === 1,
     JSON.stringify(o.filter((x, i) => i % 4 === 0)));
   T.check('the evening and the night told (VEČER, PADA NOČ), the floodlights on at night and not in the afternoon', e.msgs.includes('VEČER') && e.msgs.includes('PADA NOČ') && e.msgs.indexOf('VEČER') < e.msgs.indexOf('PADA NOČ') && !o[0].flood && o[o.length - 1].flood, JSON.stringify(e.msgs));
+  // (the rivals' strategies: told at the start; on the results every car's stops and the sets it ran, 'S → M → H', with the key)
+  const lt = await page.evaluate(() => { const E = document.getElementById('res-laps'), rows = [...E.querySelectorAll('tbody tr')];
+    return { head: [...E.querySelectorAll('thead th')].map(t => t.textContent).pop(), cells: rows.map(tr => tr.lastElementChild.textContent), chips: rows.map(tr => [...tr.lastElementChild.querySelectorAll('b.tset')].map(b => b.className)), key: (E.querySelector('.ltab-k') || {}).textContent }; });
+  const okCell = (t, ch) => { const m = /^(\d+) · ([SMHW](?: → [SMHW])*)$/.exec(t); return !!m && m[2].split(' → ').length === +m[1] + 1 && ch.length === +m[1] + 1 && ch.every((k, i) => k === 'tset t' + m[2].split(' → ')[i]); };
+  T.check('a strategy race (endurance): every rival with a plan of 1 or 2 stops, told at the start (Dolga dirka: …); on the results every car\'s stops and sets (e.g. 2 · M → H → S, chips in the compounds\' colours) under Postanki · gume, the key below',
+    st0.strat && st0.plans.every(p => /^[SMH]{2,3}@\d+(,\d+)?$/.test(p)) && st0.told.length === 1 && lt.head === 'Postanki · gume' && lt.cells.length === 13 && lt.cells.every((t, i) => okCell(t, lt.chips[i])) && lt.cells.some(t => /^[12] · /.test(t)) && lt.key === 'Gume: S mehke, M srednje, H trde, W dežne.',
+    JSON.stringify({ st0, cells: lt.cells, head: lt.head, key: lt.key }));
   const rec1 = await page.evaluate(() => (JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {})['toskana@cs'] || null);
   T.check('to the line: the lap record counts, the best race time and place only for a race of the usual length', rec1 && rec1.bestLap > 0 && (rec0 ? rec1.bestRace === rec0.bestRace : !rec1.bestRace) && (rec0 ? rec1.bestPos === rec0.bestPos : !rec1.bestPos), JSON.stringify({ rec0, rec1 }));
 

@@ -1502,6 +1502,39 @@ const Core = (function () {
   const tyreCliff = (w) => 1 - TYRE_CLIFF[2] * sstep(TYRE_CLIFF[0], TYRE_CLIFF[1], w);   // (1 below the cliff: the grip exactly as without it)
   const tyreHash = (c, n) => { let h = Math.imul((c.id | 0) + 1, 0x9e3779b1) ^ Math.imul(n + 1, 0x85ebca77); h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d); return (h ^ (h >>> 13)) >>> 0; };
   const tyreSet = (c, n) => Object.assign(c.ty, { n, bp: 1 + TYRE_BURST * (tyreHash(c, n) % 1001) / 1000, bw: -1 });   // (a fresh set, the n-th of the race)
+  // strategies (Race opts strat: a long or an endurance race on a circuit with pits; a race of the usual length as ever): without fuel the
+  // tyres wear by the race's length (Race.wst.wk), a set of mediums to a wear of 1 in STRAT.m of the race at the field's average wear
+  // (STRAT.rate a metre), the soft in about a fifth of it, the hard in about four fifths: no set lasts the race (with fuel the tank makes the
+  // stops, the tyres wear as ever: STRAT.rate gives the plans their laps). Every rival's plan (Car.st, Race._stratOn): 1 or 2
+  // stops, the compound of each stint and the lap of each stop (at its end) with a window (the laps it may move to, every stint still within
+  // the wear cap), from a hash of the race's seed and the rival's grid slot (no random draw): each stint worn to STRAT.w at most (and within
+  // a full tank's laps, with fuel), a third of the field on two stops, the stops spread over the laps
+  const STRAT = { m: 0.45, rate: 0.000019, w: 0.85 };
+  const STRAT_SEQ = [[''], ['HH', 'MH', 'HM', 'SH', 'HS', 'MM'], ['MMH', 'HMM', 'MHM', 'SMH', 'HMS', 'SHM', 'MHS', 'MMM', 'SMM', 'MMS', 'SSH', 'HSS']];
+  const STRAT_ALL = [0, 1, 2, 3].map(n => { let L = ['']; for (let i = 0; i <= n; i++) L = L.flatMap(s => ['S', 'M', 'H'].map(k => s + k)); return L; });   // (every sequence of n stops: a plan made again in the race)
+  const stratHash = (a, b) => { let h = Math.imul((a | 0) + 0x632be5ab, 0x9e3779b1) ^ Math.imul((b | 0) + 1, 0x85ebca77); h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d); return (h ^ (h >>> 13)) >>> 0; };
+  // how a plan fits the laps from `from` (a stop at the end of that lap, or the start: 0) to N: its stints' highest wear (life: the laps on
+  // a set of each compound to a wear of 1), or -1 when one is worn past STRAT.w, runs longer than a tank (fuelN laps) or has no lap
+  function stratFit(seq, at, from, N, life, fuelN) {
+    let p = from, wm = 0;
+    for (let i = 0; i <= at.length; i++) { const e = i < at.length ? at[i] : N, n = e - p, w = n / life[seq[i]]; if (n < 1 || n > fuelN || w > STRAT.w) return -1; if (w > wm) wm = w; p = e; }
+    return wm;
+  }
+  // the plan of n stops for those laps the cost (seq, its index in seqs, the stops' laps, the highest wear) rates lowest: { seq, at, win, s },
+  // null when none fits. win: each stop's window, as far either way as every stint still fits with the other stops where they are
+  function stratPlan(from, N, n, seqs, life, fuelN, cost) {
+    let best = null; const at = new Array(n);
+    const walk = (i, lo) => {
+      if (i === n) { for (let j = 0; j < seqs.length; j++) { const w = stratFit(seqs[j], at, from, N, life, fuelN); if (w < 0) continue; const s = cost(seqs[j], j, at, w); if (!best || s < best.s) best = { seq: seqs[j], at: at.slice(), s }; } return; }
+      for (let x = lo; x <= N - n + i; x++) { at[i] = x; walk(i + 1, x + 1); }
+    };
+    walk(0, from + 1);
+    if (best) best.win = stratWin(best.seq, best.at, from, N, life, fuelN);
+    return best;
+  }
+  function stratWin(seq, at, from, N, life, fuelN) {
+    return at.map((x, i) => { const ok = (y) => { const b = at.slice(); b[i] = y; return stratFit(seq, b, from, N, life, fuelN) >= 0; }; let lo = x, hi = x; while (ok(lo - 1)) lo--; while (ok(hi + 1)) hi++; return [lo, hi]; });
+  }
   // the fuel a car carries full (kg; Race opts fuel: its weight on the car, the share burnt the same for every car): an electric one its
   // battery (0: as heavy full as empty); the formula 105, the prototype 75, the truck 90, the rally car 60, the other road cars 45; a
   // registered vehicle (js/cars) its def's own (def.tank), else by its category and mass: the share of the mass the road cars carry (45 kg
@@ -4620,9 +4653,9 @@ const Core = (function () {
       // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
       // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
       // follows its tyres (c.ty = { k: 'dry' | 'wet', wear }), the water where it drives (on the line or off it) and the wear (see _weather).
-      // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops
+      // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops; wk: x the tyres' wear (a strategy race's, _stratOn)
       const WX = opts.weather && !opts.remote ? opts.weather : null;
-      this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk, ev: 0, evK: '',
+      this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk, ev: 0, evK: '', wk: 1,
         wx: WX ? { at: Math.max(0, +WX.at || 0), dur: Math.max(1, +WX.dur || 60), r0: this.rain, r1: clamp(+WX.to || 0, 0, 1) } : null };
       if (opts.tyres) for (const c of this.cars) { c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 }; tyreSet(c, 0); }   // (ty.n, bp, bw: the set's burst point, see TYRE_CLIFF)
       // compounds (opts.compounds): every car's slicks one of TYRE_CMP (the rain tyres have none): the player's choice (opts.playerCmp, else by
@@ -4638,6 +4671,8 @@ const Core = (function () {
         this.fuelRate = 1 / (1.3 * track.len * (track.def.laps || 3) / 38);
         this.cars.forEach((c, i) => { c.fuel = 1; c.tankKg = fuelTank(c.m); c.fuelKg = c.tankKg; c.fuelD = 0; c.fuelPm = this.fuelRate / 38; c.fuelK = (i % 4) * 0.5; });
       }
+      // strategies (opts.strat, the game's long and endurance races: STRAT): with tyres and compounds on a circuit with pits, two laps or more
+      if (opts.strat && opts.tyres && opts.compounds && track.def.pit && !track.open && !this.timeTrial && this.laps >= 2) this._stratOn();
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       // the slipstream (opts.slip, a race with rivals): less air drag in the wake of a car ahead (c.tow, see _tow; the field only with it on)
       this.slip = opts.slip && total > 1 && !this.timeTrial ? { n: 0 } : null;
@@ -4702,6 +4737,75 @@ const Core = (function () {
       const dE = (((T.startS + T.def.pit[1] - q.s) % T.len) + T.len) % T.len;   // (the way to the pit lane's way in)
       return left > dE + 30 && ty.wear + r * Math.min(dE + T.len, left) >= ty.bp - 0.02;
     }
+    // a strategy race (opts.strat, STRAT): the wear by the race's length without fuel (wst.wk); every rival's plan (Car.st: p, the plan made at the start;
+    // seq, the compounds of the stint under way and of the one after each stop still to come; at, those stops' laps; win, their windows; hist,
+    // every set fitted, 'S', 'M', 'H' or 'W' the rain tyres; laps, the laps of the stops made; f, its own wear against STRAT.rate, measured on
+    // its last set of slicks; the player's: hist and laps only). The rivals one by one: the number of stops by the hash (a third two), the
+    // sequences that fit the race in an order of each one's own, the stops where the fewest are planned so far (strat.load, per lap). The
+    // player on Samodejno starts on autoCmp's slicks
+    _stratOn() {
+      const T = this.track, L = T.len, N = this.laps, W = this.wst, seed = this.opts.seed || 7;
+      W.wk = this.fuelRate ? 1 : Math.max(1, 1 / (STRAT.m * N * L * STRAT.rate));   // (with fuel as ever: the tank needs the stops)
+      const life = {}; for (const k in TYRE_CMP) life[k] = 1 / (W.wk * STRAT.rate * TYRE_CMP[k].wr * L);
+      const fuelN = this.fuelRate ? Math.max(1, Math.floor(1.17 * (T.def.laps || 3))) : Infinity;   // (with fuel: a tank's laps, 1.3 times the usual race less a tenth)
+      const G = this.strat = { life, fuelN, load: new Array(N + 1).fill(0) }, AI = this.cars.filter(o => !o.isPlayer && !o.net && o.ty).sort((a, b) => stratHash(seed, a.grid + 99) - stratHash(seed, b.grid + 99));   // (in an order of the seed's: not the slowest last)
+      const feas = STRAT_SEQ.map((S, n) => S.filter(seq => n && stratPlan(0, N, n, [seq], life, fuelN, () => 0)));   // (the sequences that fit this race)
+      const cap = Math.ceil(AI.length * 4 / 3 / Math.max(1, N - 1)) + 2;   // (the stops a lap with them spread evenly, and two)
+      for (const c of AI) {
+        const h = stratHash(seed, c.grid), n0 = h % 3 ? 1 : 2;
+        let p = null;
+        for (const n of [1, 2]) {
+          const S = feas[n]; if (!S.length) continue;
+          const r = (h >>> 3) % S.length, seqs = S.map((_, j) => S[(j + r) % S.length]);
+          const q = stratPlan(0, N, n, seqs, life, fuelN, (seq, j, at, w) => { let l = 0; for (const x of at) l += 0.3 * G.load[x] + 2 * Math.max(0, G.load[x] + 1 - cap);
+            return (n === n0 ? 0 : 3) + 0.5 * j + l + 0.4 * w + 0.0004 * (stratHash(h, at.reduce((a, x) => a * 64 + x, j)) % 1000); });
+          if (q && (!p || q.s < p.s)) p = q;
+        }
+        if (!p) p = { seq: 'H', at: [], win: [] };   // (none fits: no planned stop, the wear's own rules)
+        for (const x of p.at) G.load[x]++;
+        c.ty.c = p.seq[0];
+        c.st = { p: { seq: p.seq, at: p.at.slice() }, seq: p.seq, at: p.at.slice(), win: p.win, hist: [c.ty.k === 'wet' ? 'W' : p.seq[0]], laps: [], f: 1 };
+      }
+      const P = this.player;
+      if (P && P.ty) { if (!TYRE_CMP[this.opts.playerCmp]) P.ty.c = this.autoCmp(N * L); P.st = { hist: [P.ty.k === 'wet' ? 'W' : P.ty.c], laps: [] }; }
+    }
+    // the slicks for so much racing still to do (m) when none are asked for (the player's Samodejno, an AI car's stop off a plan): Core.cmpFor;
+    // in a strategy race the softest that lasts it within the plans' wear cap, else the hard
+    autoCmp(left) {
+      const G = this.strat; if (!G) return cmpFor(left);
+      const n = left / this.track.len; return n <= STRAT.w * G.life.S ? 'S' : n <= STRAT.w * G.life.M ? 'M' : 'H';
+    }
+    _stratLap(c) { const P = this.track.def.pit; return clamp(Math.floor((c.dist - P[1]) / this.track.len), 0, this.laps); }   // (a stop's lap: the one whose way in it took)
+    // a rival's planned stop (Race step, a strategy race): in at the way in on the lap of its next one (or a lap later when it missed the way
+    // in), in its window when the safety car is out (a cheap stop), at once with heavy damage (damage on); never on the last lap. As a fuel
+    // stop that must be made: asked just before the way in, however many come in on that lap (a pack together: each to its own box on the
+    // apron, the lane takes them)
+    _stratStep(c) {
+      const T = this.track, L = T.len, P = T.def.pit, S = c.st, n = Math.floor((c.dist + 30 - P[1]) / L) + 1;   // (the lap whose way in comes next)
+      if (n > this.laps - 1 || n * L + P[1] - c.dist > 90 + c.speed * 4) return;
+      const F = this.fl, sc = !!(F && F.sc && F.sc.state === 'out');
+      if ((S.at.length && (n >= S.at[0] || (sc && n >= S.win[0][0]))) || (c.dmgMode === 2 && c.dmg > 0.45)) c.pitWant = true;
+    }
+    // a rival's stop made (Race.pitStep): any stop counts as the next planned one. The plan from this lap on: the stops still planned (those
+    // at or before this lap fall into this one) with their compounds, when every stint still fits; else made again for the laps left, as many
+    // stops (one more when they do not do) and the closest to the old plan. Returns the slicks to fit
+    _stratStop(c) {
+      const S = c.st, G = this.strat, N = this.laps, lap = this._stratLap(c), life = {};
+      for (const k in G.life) life[k] = G.life[k] / S.f;   // (the car's own: as it wore its last slicks)
+      let at = S.at.slice(1), seq = S.seq.slice(1);
+      while (at.length && at[0] <= lap) { at.shift(); seq = seq.slice(1); }
+      if (!seq.length) seq = this.autoCmp(N * this.track.len - c.dist);   // (a stop more than planned: for what is left)
+      if (stratFit(seq, at, lap, N, life, G.fuelN) < 0) {
+        const old = seq, oat = at; let p = null;
+        for (let n = oat.length; n <= Math.min(3, oat.length + 1) && !p; n++) p = stratPlan(lap, N, n, STRAT_ALL[n], life, G.fuelN, (q, j, a, w) => {
+          let d = w; for (let i = 0; i < q.length; i++) if (q[i] !== old[i]) d++; for (let i = 0; i < a.length; i++) if (oat[i] != null) d += 0.3 * Math.abs(a[i] - oat[i]); return d; });
+        if (p) { seq = p.seq; at = p.at; } else { seq = this.autoCmp(N * this.track.len - c.dist); at = []; }   // (nothing fits any more: the wear's own rules)
+      }
+      S.seq = seq; S.at = at; S.win = stratWin(seq, at, lap, N, life, G.fuelN);
+      return seq[0];
+    }
+    // (before a stop's new set: how the car wore the slicks it comes in on against the plans' rate, when they ran half a lap or more)
+    _stratRate(c) { const ty = c.ty, d = c.dist - (ty.d0 || 0), L = this.track.len; if (ty.k === 'dry' && ty.c && d > L * 0.5) c.st.f = clamp(ty.wear / d * this.strat.life[ty.c] * L, 0.6, 1.6); }
     // an AI car's box (metres from the start line): one of the crews' boxes on the apron (Track.crewBoxes; not the player's), by its place on the
     // grid among the AI cars
     _aiBox(c) {
@@ -4937,10 +5041,10 @@ const Core = (function () {
         if (this.drsLast) this._drs(c, ds, dt);
         if (this.secBest) this._sectors(c, ds, dt);   // (TV sectors: the Red Bull Ring's)
         else if (!T.open && this.state !== 'grid') this._thirds(c);   // (elsewhere: the thirds of the lap)
-        if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
+        if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast (a strategy race: x wst.wk)
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
           const K = tyreK(c.ty);
-          c.ty.wear = Math.min(TYRE_WMAX, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1));
+          c.ty.wear = Math.min(TYRE_WMAX, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1) * W.wk);
           // (worn past the set's burst point: a tyre bursts, the wheel from the same hash; not on the pit road, not past the line. ty.ev: the HUD's)
           if (c.ty.bw < 0 && c.ty.wear >= c.ty.bp && !c.pitG && !c.inPit && !c.finished) { c.ty.bw = (tyreHash(c, c.ty.n) >>> 11) & 3; c.flat = (c.flat || 0) | (1 << c.ty.bw); c.ty.ev = 'burst'; }
           // a breakable vehicle with a wheel knocked off: in for a new one first (a track with pits; not in the last 40 % of a lap; the stop
@@ -4979,6 +5083,7 @@ const Core = (function () {
             if (next < 0.12 * lap || (next < c.fuelK * lap && n < 3 && Math.ceil(need * 1.12) <= Math.ceil((need - c.fuel) * 1.12))) c.pitWant = true;
           }
         }
+        if (c.st && c.st.at && !c.isPlayer && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && this.state === 'racing' && !T.pitAt(q.s)) this._stratStep(c);   // a strategy race: a rival's planned stop
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3 && !(q.k >= 0) && !T.inRingZone(c.x, c.z)) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);   // (in a side road no wrong way: it is a road of its own)
@@ -5068,7 +5173,8 @@ const Core = (function () {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
         if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left; a burst one gone)
           this.repairCar(c);
-          if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
+          if (c.ty) { if (c.st && c.st.at) this._stratRate(c); c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : c.st && c.st.at ? this._stratStop(c) : this.autoCmp(this.laps * T.len - c.dist);
+            if (c.st) { c.st.hist.push(c.ty.k === 'wet' ? 'W' : c.ty.c); c.st.laps.push(this._stratLap(c)); } }   // (a strategy race: a rival's plan from here, every car's sets and stops for the results)
           if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; }   // (fuel: a full tank)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
         }
@@ -5253,7 +5359,7 @@ const Core = (function () {
       }
       const K = c.ty && tyreK(c.ty);
       if (K) {   // worn slicks: by the wear so far (a fresh set of what the stop gives wears as its compound does)
-        const w = c.ty.wear / Math.max(600, c.dist - (c.ty.d0 || 0)), nk = TYRE_CMP[c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(left)], wn = w * nk.wr / K.wr;
+        const w = c.ty.wear / Math.max(600, c.dist - (c.ty.d0 || 0)), nk = TYRE_CMP[c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : this.autoCmp(left)], wn = w * nk.wr / K.wr;
         if (c.ty.wear + w * left > TYRE_WORN) {
           need.push('tyres');
           let b = n0 - 1; while (b < this.laps - 1 && c.ty.wear + w * (at(b + 1) - c.dist) <= TYRE_WORN + 0.05) b++;
@@ -5272,7 +5378,7 @@ const Core = (function () {
         if (o === c || o.finished || dnf(o)) continue;   // (a retired car: no place to lose to it)
         const g = this.gap(c, o); if (g == null && o.dist <= c.dist) continue;   // (one behind that has not been where c was yet: no gap known)
         let h = g == null ? -1 : g;   // (o behind c by h s; negative: ahead of it)
-        const owe = o.inPit ? (o.pitDone ? 0 : 0.5) : o.pitWant || (o.fuel != null && this.fuelRate && o.fuel < (end - o.dist) * o.fuelPm * 1.03) ? 1 : 0;
+        const owe = o.inPit ? (o.pitDone ? 0 : 0.5) : o.pitWant || (o.fuel != null && this.fuelRate && o.fuel < (end - o.dist) * o.fuelPm * 1.03) || (o.st && o.st.at && o.st.at.length) ? 1 : 0;   // (a strategy race: a stop still in a rival's plan)
         h += owe * this.pitLoss(o);   // (one that has a stop to make too: behind by it, or by what is left of it in the lane; so the place once all have stopped)
         if (h < loss) { pos++; if (loss - h < gapA) { gapA = loss - h; ahead = o; } }
         else if (h - loss < gapB) { gapB = h - loss; behind = o; }
@@ -5765,7 +5871,7 @@ const Core = (function () {
   registerVehicles();
 
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
-    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, CAREER, careerPrize, careerUpgPrice,
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY };
 })();
 
