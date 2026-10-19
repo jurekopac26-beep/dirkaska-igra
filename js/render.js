@@ -2782,9 +2782,13 @@ const Render = (function () {
       g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setIndex(idx);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-      this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
+      this.mesh = new THREE.Mesh(g, m); this.mesh.name = 'skids'; this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;   // (ROAD DECAL ORDER, world.js: over every road decal)
       this.dirty = false; this.lo = 1e9; this.hi = -1; this.n = 0; g.setDrawRange(0, 0);   // (n: the marks laid so far; only they are drawn, not the empty rest)
+      this.lift = 0;
     }
+    // a world whose road surface lies over the track's height (Detroit: world.markLift, its polygon offset world.markOffset): the marks that
+    // much higher and offset as it is, so that they show on it (3 cm over it, as over any other road)
+    onWorld(w) { const o = (w && w.markOffset) || [-1, -2], m = this.mesh.material; this.lift = (w && w.markLift) || 0; this.mesh.userData.lift = this.lift; m.polygonOffsetFactor = o[0]; m.polygonOffsetUnits = o[1]; }
     add(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1) {
       if (!this.pkIn && curTrack && curTrack.def.theme === 'pikes') return;   // (Pikes Peak lays its own marks: pkMarks)
       const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1;
@@ -2792,7 +2796,7 @@ const Render = (function () {
       const i = this.cur; this.cur = (this.cur + 1) % this.max;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
       if (i >= this.n) { this.n = i + 1; this.mesh.geometry.setDrawRange(0, this.n * 6); }
-      const p = this.pos, o = i * 12, ya = 0.03 + (y0 || 0), yc = 0.03 + (y1 == null ? (y0 || 0) : y1);
+      const p = this.pos, o = i * 12, ya = 0.03 + this.lift + (y0 || 0), yc = 0.03 + this.lift + (y1 == null ? (y0 || 0) : y1);
       p[o] = x0 - nx; p[o + 1] = ya; p[o + 2] = z0 - nz; p[o + 3] = x0 + nx; p[o + 4] = ya; p[o + 5] = z0 + nz;
       p[o + 6] = x1 - nx; p[o + 7] = yc; p[o + 8] = z1 - nz; p[o + 9] = x1 + nx; p[o + 10] = yc; p[o + 11] = z1 + nz;
       const c = this.col, q = i * 16;
@@ -3063,6 +3067,7 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    skids.onWorld(world);
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
     curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
@@ -3472,7 +3477,7 @@ const Render = (function () {
       g.computeVertexNormals();
       const base = world.asphaltMat, m = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       if (base) m.color.copy(base.userData.dry || base.color); asphaltLook(m);
-      dryLn = new THREE.Mesh(g, m); dryLn.receiveShadow = true; dryLn.renderOrder = 1; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
+      dryLn = new THREE.Mesh(g, m); dryLn.name = 'dryline'; dryLn.receiveShadow = true; dryLn.renderOrder = 0.25; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
     }
     if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
   }
@@ -3510,7 +3515,7 @@ const Render = (function () {
     g.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
   }
   function buildPuddles(T) {
-    const pos = [], uv = [], idx = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); };
+    const pos = [], uv = [], idx = [], rl = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); rl.push(T.rl ? o - T.rl[i] : 99); };   // (rl: across from the racing line, for the dry line)
     for (let s = 7; s < T.len - 7; s += 8) {
       const h = hash3(s * 0.137 + 5); if (h < 0.45) continue;
       const mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), T.w * 0.5);
@@ -3520,13 +3525,13 @@ const Render = (function () {
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);   // (facing up)
     }
     if (!pudTex) pudTex = puddleTex();
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere();
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aRl', new THREE.Float32BufferAttribute(rl, 1)); g.setIndex(idx); g.computeBoundingSphere();
     // the water: a dark mirror (looking down into it, the wet asphalt under a film of water; towards the horizon the sky, more of it the
     // flatter the view: Fresnel), the drops' rings spreading on it while it rains (two layers of cells, a drop in each now and then)
     const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3, fog: true,
-      uniforms: Object.assign({ tMap: { value: pudTex }, uK: { value: 0 }, uHor: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uDark: { value: new THREE.Color(0.055, 0.06, 0.068) }, uT: { value: 0 }, uRain: { value: 0 } }, THREE.UniformsLib.fog),
-      vertexShader: '#include <fog_pars_vertex>\nvarying vec2 vUv; varying vec3 vW;\nvoid main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
-      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; varying vec2 vUv; varying vec3 vW;\n' +
+      uniforms: Object.assign({ tMap: { value: pudTex }, uK: { value: 0 }, uHor: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uDark: { value: new THREE.Color(0.055, 0.06, 0.068) }, uT: { value: 0 }, uRain: { value: 0 }, uDry: { value: 0 } }, THREE.UniformsLib.fog),
+      vertexShader: '#include <fog_pars_vertex>\nattribute float aRl; varying vec2 vUv; varying vec3 vW; varying float vRl;\nvoid main(){ vUv = uv; vRl = aRl; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; uniform float uDry; varying vec2 vUv; varying vec3 vW; varying float vRl;\n' +
         'float pH(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }\n' +
         'float pRing(vec2 q, float t) { vec2 c = floor(q), f = fract(q) - 0.5 - (vec2(pH(c), pH(c + 7.3)) - 0.5) * 0.3; float h = pH(c + 3.1), ph = fract(t * (0.55 + 0.5 * h) + h), r = ph * 0.42;\n' +
         '  return smoothstep(0.05, 0.0, abs(length(f) - r)) * (1.0 - ph) * step(0.35, pH(c + floor(t * (0.55 + 0.5 * h) + h) * 1.7)); }\n' +
@@ -3534,8 +3539,8 @@ const Render = (function () {
         '  vec3 refl = mix(uHor, uTop, smoothstep(0.0, 0.6, cs));\n' +
         '  float rg = (pRing(vW.xz / 0.38, uT) + pRing(vW.xz / 0.3 + 11.7, uT * 1.13)) * uRain;\n' +
         '  vec3 c = mix(uDark, refl, clamp(F + 0.3 + rg * 0.4, 0.0, 1.0)) * (0.92 + 0.12 * t.r);\n' +
-        '  gl_FragColor = vec4(c, t.a * uK);\n#include <fog_fragment>\n}' });
-    const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;
+        '  gl_FragColor = vec4(c, t.a * uK * (1.0 - uDry * clamp((1.7 - abs(vRl)) / 0.75, 0.0, 1.0)));\n#include <fog_fragment>\n}' });   // (uDry: the dry line's band, dryLine: no water left on it)
+    const mesh = new THREE.Mesh(g, m); mesh.name = 'rainpuddles'; mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;   // (ROAD DECAL ORDER, world.js: over the drying line, gone where it has dried)
   }
   function puddles(R) {
     const T = R && R.track, on = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
@@ -3543,7 +3548,7 @@ const Render = (function () {
     if (!pud) return;
     const k = on ? clamp((wetW - 0.15) / 0.45, 0, 1) : 0, night = atmos.tod === 'night';
     pud.visible = k > 0.01; if (!pud.visible) return;
-    const U = pud.material.uniforms; U.uK.value = 0.88 * k; U.uT.value = time % 600; U.uRain.value = clamp(wet * 1.5, 0, 1);
+    const U = pud.material.uniforms; U.uK.value = 0.88 * k; U.uT.value = time % 600; U.uRain.value = clamp(wet * 1.5, 0, 1); U.uDry.value = dryLn && dryLn.visible ? dryLn.material.opacity : 0;
     U.uHor.value.copy(scene.fog.color).multiplyScalar(night ? 0.8 : 1); skyTop(U.uTop.value);   // (the sky in the water)
   }
 
