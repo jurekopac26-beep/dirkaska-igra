@@ -264,6 +264,27 @@ window.MENU = {
    "record": "Record"
   }
  },
+ "weekend": {
+  "kick": "Race weekend",
+  "title": "Weekend calendar",
+  "mode": "Circuit race",
+  "sat": "Saturday",
+  "sun": "Sunday",
+  "quali": "Qualifying",
+  "race": "Race",
+  "grid": "Grid",
+  "skipped": "Skipped",
+  "hint": "Switch Saturday on to fight for pole",
+  "onNote": "Saturday's lap sets your place on Sunday's grid.",
+  "go": "Race!",
+  "goSub": "Start from last place",
+  "goQ": "Start qualifying",
+  "goQSub": "Saturday first",
+  "back": "Back to the tracks",
+  "switch": "Saturday's qualifying",
+  "track": { "dry": "dry track", "wet": "wet track", "change": "may change" },
+  "sky": { "sun": "Sunny", "part": "Mostly sunny", "clear": "Clear", "rain": "Rain", "storm": "Storm", "change": "Changeable" }
+ },
  "credits": [
   [
    "The Earth",
