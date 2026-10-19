@@ -22,7 +22,7 @@ const SUITES = {
 const SECS = {
   'browser/memory.test.mjs': 1290, 'browser/perf.test.mjs': 900, 'browser/smoke.test.mjs': 830, 'browser/gfx.test.mjs': 420, 'browser/world.test.mjs': 385,
   'browser/menu.test.mjs': 245, 'browser/online.test.mjs': 175, 'browser/online4.test.mjs': 165, 'browser/onchamp.test.mjs': 145, 'browser/school.test.mjs': 100,
-  'browser/carlow.test.mjs': 90, 'browser/share.test.mjs': 85, 'browser/sound.test.mjs': 75, 'browser/chal.test.mjs': 75, 'browser/radio.test.mjs': 75,
+  'browser/carlow.test.mjs': 150, 'browser/share.test.mjs': 85, 'browser/sound.test.mjs': 75, 'browser/chal.test.mjs': 75, 'browser/radio.test.mjs': 75,
   'browser/look2.test.mjs': 70, 'browser/quali.test.mjs': 70, 'browser/look.test.mjs': 70, 'browser/sky.test.mjs': 65,
   'browser/fuel.test.mjs': 65, 'browser/app.test.mjs': 60, 'browser/replay.test.mjs': 60, 'browser/medvode-fence.test.mjs': 55, 'browser/slip.test.mjs': 50,
   'browser/weather.test.mjs': 50, 'browser/flags.test.mjs': 45, 'browser/ctrl.test.mjs': 45, 'browser/camtilt.test.mjs': 45, 'browser/rio.test.mjs': 40,
