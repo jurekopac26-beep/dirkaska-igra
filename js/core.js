@@ -2360,6 +2360,9 @@ const Core = (function () {
   // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
   const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
   const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan)
+  // an AI car in for repairs (Race.step, damage on): about the damage it comes in at (each driver a little either side of it), the run-up to
+  // the way in where it no longer decides (m), the share of a lap it must still race after the stop
+  const AI_FIX = { dmg: 0.45, run: 300, rest: 0.6 };
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
     const boxPts = (x, y, z) => { const p = []; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) p.push([sx * x, sy * y, sz * z]); return p; };
@@ -4947,6 +4950,18 @@ const Core = (function () {
             let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
             if (n < 3) c.pitWant = true;
           }
+          // (damage on, dmgMode 2: badly damaged, in for the repair, by the same rules, in a race with tyres as the stops above (every race of
+          // the game on a circuit with pits); the damage costs power, the stop about 20 s, so it is more for the show than for the time and the
+          // order changes. Each driver at a damage of its own about AI_FIX.dmg (by its grid slot, an aggressive one later); decided before the
+          // run-up to the way in (AI_FIX.run: no dive across the road into it, the next lap then) and only for a stop with more than
+          // AI_FIX.rest of a lap still to race after it: never in on the last lap)
+          if (c.dmgMode === 2 && c.dmg > 0.38 && T.def.pit && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && !T.pitAt(q.s)) {
+            const L = T.len, dE = (((T.startS + T.def.pit[1] - q.s) % L) + L) % L, j = ((c.grid * 7) % 13) / 12, ag = c.chr ? c.chr.agg : 0.5;   // (dE: to the way in, along the lap)
+            if (c.dmg > AI_FIX.dmg + 0.04 * (j - 0.5) + 0.08 * (ag - 0.5) && dE > AI_FIX.run && this.laps * L - c.dist - dE > L * AI_FIX.rest) {
+              let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
+              if (n < 3) c.pitWant = true;
+            }
+          }
         }
         if (c.flt && c.flt.pw >= 0 && T.def.pit && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && !T.pitAt(q.s) && this.laps * T.len - c.dist > 300) c.pitWant = true;   // failures: a cut tyre, in for a new one (not a retired car)
         if (c.fuel != null && this.fuelRate && !c.isPlayer && !c.net && !c.finished && !dnf(c) && !c.pitWant && !c.inPit && this.state === 'racing') {   // fuel: a rival that cannot reach the line on what is left (not a retired one)
@@ -5064,6 +5079,11 @@ const Core = (function () {
             c.pitState = 'repair'; c.pitT = 0; c.pitDur = stopDur(c, this); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';
           }
         }
+      }
+      // (a safe release: an AI car standing at its box after the stop is held there while a car comes down the lane beside it or less than
+      // ~2.5 s behind it, else it would pull out into that one, two ghosts in each other; the busier lane of the rivals in for repairs)
+      else if (c.pitDone && !c.isPlayer && bd != null && sp < 2 && Math.abs(T.boxX(q.s, bd)) < 5) {
+        for (const o of this.cars) { const g = c.dist - o.dist; if (o !== c && o.inPit && o.speed > 2 && g > -(o.m.len + c.m.len) * 0.5 && g < 8 + o.speed * 2.5) { c.vx = c.vz = 0; c.w = 0; c.stuckT = 0; return; } }
       }
       if (sp > vmax) { const k = Math.max(vmax / sp, 1 - 4 * dt); c.vx *= k; c.vz *= k; if (vmax < 1) c.w *= k; }   // the limiter (and the stop) take over smoothly
     }
