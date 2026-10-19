@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const tr = Lang.tr;   // (the words in the chosen language, js/lang.js: tr('Proga: {0}', name))
   const STEP = 1 / 120;
-  const LAPS = 3, NUM_AI = 12, PLAYER_GRID = 12;
+  const LAPS = 3, NUM_AI = 12, PLAYER_GRID = 99;   // (PLAYER_GRID: without qualifying the player starts at the back of the grid: Core.Race puts the player at min(the field, it))
   const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
   const DRIVE_TXT = { FR: 'Zadnji pogon', AWD: 'Štirikolesni pogon', FF: 'Prednji pogon', MR: 'Motor na sredini', RR: 'Motor zadaj' };
   const DRIVE_TAG = { FR: 'FR', AWD: '4WD', FF: 'FF', MR: 'MR', RR: 'RR' };
@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, camTilt: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -36,6 +36,9 @@
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.4; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one-time move to the farther view (Blizu 1.1, Srednje 1.4, Daleč 1.7: the bird's-eye cameras were too close): everybody starts on Srednje
   try { if (!localStorage.getItem('tdgp-defaults-v3')) { S.zoom = 1.4; localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
+  // one-time move to qualifying off (it was on by default, so nearly everybody has it on without having chosen it): from now on the
+  // choice on the race weekend's calendar (js/menu.js) is remembered
+  try { if (!localStorage.getItem('tdgp-defaults-v4')) { S.quali = 0; localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   // one camera, behind the car, on a phone held either way (the isometric, kino and cockpit cameras are gone): an old setting moves to it
   S.camera = 'chase';
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
@@ -367,7 +370,8 @@
   function showMsg(txt, cls, dur) {
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
-  function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
+  let swapBuzzEnd = 0;   // (ZAMENJAJ KOLO's last second: its four buzzes running till then; a knock's buzz would cut them short)
+  function vibrate(ms) { if (S.vibrate && !(performance.now() < swapBuzzEnd && !Array.isArray(ms))) Input.vibrate(ms); }
 
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
@@ -1348,7 +1352,7 @@
     const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
     try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
     catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return false; }   // (the old one back)
-    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); } catch (_) { }
+    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { }
     stHold = true; location.reload(); return true;
   }
   function ghOwn(id) {   // the player's ghost of this track (the current physics, weather and way to drive) as it is shared
@@ -1485,7 +1489,7 @@
   // of its own with the seed, weather, difficulty and physics of the race to come (Race opts aiOrder [k], qualiBack), simulated a little
   // between the frames while the player drives (about the work of their race; the rest when the player is back at the line). The times
   // make the grid: the fastest on pole, the rivals in the order of their times (Race opts playerGrid, aiOrder). "Preskoči kvalifikacije"
-  // (pause menu) goes straight to the race: the usual grid, the player 12th.
+  // (pause menu) goes straight to the race: the usual grid, the player at the back of it (PLAYER_GRID).
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
   const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
   function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
@@ -1681,6 +1685,7 @@
     paused = false; last = performance.now(); acc = 0;
     Sfx.resume(); Sfx.setRunning(true);
     showScreen('none');
+    if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: the phone may have been turned meanwhile)
   }
   // a TV shot the world directs (Render.setShot: the jets before the start, the podium) ends: the game's camera and the HUD back
   function shotOff() { Render.setShot(null); $('hud').classList.remove('shot'); }
@@ -3348,18 +3353,30 @@
   // reached). The DOM is touched only when a shown value changes
   const DMG_ARR = ['▲', '▼', '◀', '▶'];
   // ZAMENJAJ KOLO (the wheel rule, Core rule.ask: a wheel off with the spare on the roof): a big button for the 3 s to the second wheel,
-  // its bar at its very foot running out with them; a tap on it (or Enter) puts the spare on at once, the car driving on (Race.changeWheel)
-  let swapOn = false, swapD0 = 3;
+  // its bar at its very foot running out with them, in the last second the phone buzzing four times (longer than a wheel off's buzz: a
+  // phone cannot buzz harder, only longer); a tap on it (or Enter) puts the spare on at once, the car driving on (Race.changeWheel): KOLO
+  // ZAMENJANO with the wrench and the pits' wheel gun
+  let swapOn = false, swapD0 = 3, swapBuzz = false;
+  const SWAP_BUZZ = [150, 100, 150, 100, 150, 100, 150];
   function swapFit() {   // the title on one line inside the button: from the css's size down until it fits (a narrow button, a long word)
     const t = $('ws-t'); t.style.removeProperty('font-size');
     for (let f = parseFloat(getComputedStyle(t).fontSize); f > 14 && t.scrollWidth > t.clientWidth + 1;) t.style.fontSize = --f + 'px';
   }
+  function swapTop() {   // on its side: just under the clock's block, as tall as it is (the screen's height, a duel's gap line under it); upright: the css's
+    const t = $('h-times'); if (!t.getClientRects().length) return;   // (the HUD hidden by a screen over the race, e.g. the pause's photo: no clock to measure; resume() places it again)
+    $('ws-btn').style.top = innerWidth > innerHeight ? Math.round(t.getBoundingClientRect().bottom + 6) + 'px' : '';
+  }
   function swapHUD(P) {
     const Q = P && P.wreck && P.wreck.rule, on = !!(Q && Q.ask && Q.spare && Q.due > 0 && phase === 'racing' && screen === 'none' && !replay);
-    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); swapFit(); } }
+    if (on !== swapOn) { swapOn = on; $('wheel-swap').classList.toggle('on', on); if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); swapFit(); swapTop(); } }
     if (on) { const k = Math.max(0, Math.min(1, Q.due / swapD0)); $('ws-bar').style.transform = 'scaleX(' + k.toFixed(3) + ')'; $('ws-btn').classList.toggle('hot', k <= 0.2); }   // (hot: its last 20 %, the hub on fire)
+    if (on && Q.due > 1) swapBuzz = false; else if (on && !swapBuzz) { swapBuzz = true; swapBuzzEnd = performance.now() + 900; vibrate(SWAP_BUZZ); }   // (the last second: once a wheel, a pause in it or not)
   }
-  function swapWheel() { if (swapOn && race && race.changeWheel(race.player)) { vibrate(40); Sfx.beep(660, 0.12, 0.12); swapHUD(race.player); } }
+  function swapWheel() {
+    if (!(swapOn && race && race.changeWheel(race.player))) return;
+    swapBuzzEnd = 0; vibrate(40); for (const t of [0, 210, 420]) setTimeout(() => Sfx.wrench(), t);   // (the tap's buzz ends the warning's; the pits' wheel gun on the nuts)
+    showMsg(tr('KOLO ZAMENJANO'), 'gold', 1.8); swapHUD(race.player);
+  }
   function updateDamageHUD(P) {
     const el = $('h-dmg'); if (!el) return;
     const on = dmgOn();
@@ -3368,7 +3385,8 @@
     const W = P.wreck, RP = Core.REPAIR, u = Core.repairU(P), kz = 1 - Core.sstep(RP.body[0], RP.body[1], u), wl = W && !(u >= RP.wheel) ? W.wl : 0;   // (in the box: going down as the crew works, as the car is drawn: Render's repairStep)
     const pc = (z) => Math.min(100, Math.round(z * kz * 100)), tot = Math.min(100, Math.floor(P.dmg * kz * 100 + 1e-6)), zs = P.dz.map(pc), cs = (P.cd || [0, 0, 0, 0]).map(v => Math.round(v * kz * 20));
     const glass = !(u >= RP.glass) && P.winOut && P.winOut.some(v => v) ? 1 : 0;
-    const key = zs.join(',') + '|' + cs.join(',') + '|' + tot + '|' + glass + (W ? '|' + wl : '');
+    const ns = !!(W && W.rule && !W.rule.spare);   // (the wheel rule's spare used: brez rezerve, till a repair in the pits gives a new one)
+    const key = zs.join(',') + '|' + cs.join(',') + '|' + tot + '|' + glass + (W ? '|' + wl + (ns ? '|ns' : '') : '');
     if (key === dmgKey) return; dmgKey = key;
     for (let k = 0; k < 4; k++) {
       const col = dmgCol(P.dz[k] * kz);
@@ -3381,6 +3399,7 @@
     t.textContent = tot + ' %'; t.style.color = tc; f.style.width = tot + '%'; f.style.background = tc;
     $('dmg-glass').classList.toggle('cracked', !!glass);
     el.classList.toggle('whl', !!W);   // (a car whose wheels come off)
+    el.classList.toggle('nospare', ns);
   }
   /* ---------------- a destroyed car: VOZILO UNIČENO, Odstopi ---------------- */
   // A car at 98 % damage (damage on) is destroyed: the words under the minimap, with Odstopi in a race (the player retires, Race.retire:
@@ -3680,12 +3699,13 @@
   const COL_GAP = 4, COL_K = [1, 0.9, 0.82], MSG_MIN = 10;
   // the big message's icon by its kind, in either language (css #h-msg[data-ic]): a star (a record, a win, a medal), crossed swords (a duel),
   // a warning triangle (a fault, a danger, a penalty), a green light (the start, the green flag, back at the wheel), a wrench (the repair, the
-  // stop's tyres and fuel, a new wheel), a pit board P (the pits); else a chequered flag (the laps, the finish, the race, the weather)
+  // stop's tyres and fuel, a new wheel, the spare put on), a pit board P (the pits); else a chequered flag (the laps, the finish, the race,
+  // the weather)
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
     ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
     ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT|LETEČI START|FLYING START|^PREVZAMEŠ|^TAKE OVER/],
-    ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL/],
+    ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED/],
     ['pit', /BOKS|PIT|BOX/]];
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
   function hudCol(dt) {
@@ -3701,7 +3721,7 @@
     if (!dU && D.style.top) D.style.top = '';
     const sh = [dU, tU, hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
-    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === dU ? 'd' : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
+    const key = [W, H, tch.className, hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === dU ? (D.classList.contains('nospare') ? 'dn' : 'd') : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
     { const v = dU ? (D.offsetHeight + COL_GAP) + 'px' : ''; if (hud.style.getPropertyValue('--dmg-h') !== v) hud.style.setProperty('--dmg-h', v); }   // (upright: what the damage picture takes off the top of the column)
     const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
@@ -5032,6 +5052,14 @@
       ensureTrack(S.track, () => fn(startRace));
     },
     setLast(id) { S.lastTrack = id; save(); },
+    // the race weekend's calendar before a circuit race (the menu's intro there): whether the track has a qualifying lap; the cars on the
+    // grid; the laps; about how long the qualifying lap and the race take (seconds: the player's best lap, else the game's own estimate of
+    // 38 m/s on average; the qualifying lap with its run-up from the straight)
+    qualiCan: (d) => !isTT(d) && !d.open,
+    weekend(d) {
+      const T = getTrack(d.id), laps = lapsOf(d), best = rec(d.id).bestLap, lap = best > 0 ? best : T.len / 38;
+      return { cars: 1 + rivN(d), laps, quali: lap + T.qualiBack() / 38, race: lap * laps * 1.04 + 8 };
+    },
     // NEW VERSION · TEST 1 (the title's button): Toskana, alone and free, the new map over it (nvStart)
     newVer() { const d = Core.TRACKS.find(x => x.id === 'toskana'); if (!d) return; S.track = d.id; save(); refreshSegs(); nv = { built: false }; this.launch((start) => start()); },
     act: (a, el) => onAction(a, el),
@@ -5089,7 +5117,7 @@
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
     $('btn-tyre').addEventListener('click', (e) => { e.preventDefault(); pitCmpNext(); });
     $('ws-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap on the big button; the rest of the screen drives on)
-    document.addEventListener('keydown', (e) => { if (swapOn && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });
+    document.addEventListener('keydown', (e) => { if (swapOn && !paused && screen === 'none' && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });   // (paused: Enter is the pause screen's)
     { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
       for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) pd.addEventListener(t, (e) => { e.preventDefault(); photoPtr(e); }, o);
       pd.addEventListener('wheel', (e) => { e.preventDefault(); if (photo) { photo.dist = Core.clamp(photo.dist * Math.exp(e.deltaY * 0.0012), 2.5, 60); photoPose(); } }, o);
@@ -5105,8 +5133,9 @@
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); fitSegs();
       if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
+      if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: its title and its place for the new size)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); if (swapOn) { swapFit(); swapTop(); } }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();
