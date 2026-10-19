@@ -2302,8 +2302,9 @@ const Render = (function () {
   // material for all; crackWarm: one degenerate triangle of it drawn in a race's first frame, so its shader compiles at the start, not at the
   // first broken window: attachRace, frame)
   // scratches: thin bright streaks through the paint, mostly lengthwise, patchy; strongest on the roof/upper body (never inside a kit body:
-  // its lining, cabin, engine bay, vIn). Antialiased: a line thinner than a pixel (most of them, a few metres off) shows as the faint tint
-  // of what it covers of the pixel (its width over the pixel's: fwidth), never as single bright pixels glittering
+  // its lining, cabin, engine bay, vIn; nor on a rival's matte parts, vLam: dirtyCarMat). Antialiased: a line thinner than a pixel (most of
+  // them, a few metres off) shows as the faint tint of what it covers of the pixel (its width over the pixel's: fwidth), never as single
+  // bright pixels glittering
   const SCRATCH_GLSL = [
     '{ vec3 p = vLp;',
     '  float b1 = p.z * 23.0 + sin(p.x * 3.1) * 0.35 + floor(p.x * 1.7) * 0.37, band = fract(b1), aa1 = fwidth(b1);',
@@ -2312,7 +2313,7 @@ const Render = (function () {
     '  float ln2 = (1.0 - smoothstep(0.02, 0.02 + aa2, abs(band2 - 0.5))) * clamp(0.04 / max(aa2, 0.04), 0.0, 1.0) * 0.7;',
     '  float patchN = fract(sin(dot(floor(vec2(p.x * 2.3, p.z * 9.0 + p.y * 3.0)), vec2(12.9898, 78.233))) * 43758.5453);',
     '  float top = smoothstep(0.8, 1.15, p.y);',
-    '  float s = max(ln, ln2) * step(0.5, patchN) * clamp(uScr * (0.3 + top * 1.3), 0.0, 1.0) * (1.0 - vIn);',
+    '  float s = max(ln, ln2) * step(0.5, patchN) * clamp(uScr * (0.3 + top * 1.3), 0.0, 1.0) * (1.0 - max(vIn, vLam));',
     '  float L = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
     '  vec3 sc = mix(vec3(0.82, 0.82, 0.85), vec3(0.28, 0.28, 0.3), step(0.55, L));',   // dark grime on light paint, bare metal on dark paint
     '  diffuseColor.rgb = mix(diffuseColor.rgb, sc, s * 0.85); }'].join('\n');
@@ -2510,7 +2511,10 @@ const Render = (function () {
   // clone of the shared car paint + a dirt uniform (dust/mud climbs up from the sills), the scratches (uScr) and the char (uChar: CHAR_GLSL;
   // userData.char, the view's charU). A kit body's inside (its attribute aIn: 128 / 255 on the lining, the cabin, the engine bay) gets no
   // dirt and no scratches and is matte (no clear coat's sky, no glint, no highlight: it stays dark; the char it gets). A body without aIn
-  // (the 11's) reads WebGL's default for it (0, or 1 left by another program's default): the outside, either way
+  // (the 11's) reads WebGL's default for it (0, or 1 left by another program's default): the outside, either way. Two more for a rival's
+  // parts drawn as one mesh (remerge): 192 a matte piece (the dark trim, the under-parts, a smashed lens: Lambert there, so here no highlight,
+  // no sky, no glint, no night glow, no dirt, no scratches, none of Pikes Peak's layer; the char it gets), 224 the same with Pikes Peak's
+  // dust and glint (the trim's own Phong copy there, pkCarDress) and 64 an unlit one (the head lamp lenses: their colour, as MeshBasic)
   // cut: the Kolibri's damage table (Razbijanje · nov način, xtInit): a broken pane's triangles (their colour's red under -0.5) left out
   // of the body, drawn by its own mesh with the cracks (a program of its own: the others never pay for the discard)
   function dirtyCarMat(cut) {
@@ -2519,10 +2523,12 @@ const Render = (function () {
     if (cut) m.defines = { XT_CUT: '' };
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;\nvarying float vNoCh;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));\nvNoCh = step(0.9, aIn);');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nuniform float uDirt;\nuniform float uScr;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
-        '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8) * (1.0 - vIn);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = max(d, vIn); }\n' + CHAR_GLSL)   // (cgD: the dirt dulls the sun's glint; the inside has none, no sky in it either)
-        .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength *= 1.0 - 0.9 * max(cgCh, vIn * 0.85);');   // (a charred panel, the inside: no highlight)
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));\nvLamN = 1.0 - step(0.06, abs(aIn - 0.753));\nvLam = max(vLamN, 1.0 - step(0.06, abs(aIn - 0.878)));\nvUl = 1.0 - step(0.1, abs(aIn - 0.251));\nvNoCh = step(0.9, aIn);');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;\nuniform float uDirt;\nuniform float uScr;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
+        '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n#if defined(PK_ON) && defined(USE_COLOR)\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuse * vColor.rgb, vLamN);\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8) * (1.0 - max(vIn, vLam));\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = max(d, max(vIn, vLam)); }\n' + CHAR_GLSL + '\n#ifdef PK_ON\npkD = max(pkD, vLamN); pkWt *= 1.0 - vLamN;\n#endif')   // (cgD: the dirt dulls the sun's glint; the inside, a matte piece have none, no sky in them either; Pikes Peak's dust and glint not on an under-part)
+        .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength *= (1.0 - 0.9 * max(cgCh, vIn * 0.85)) * (1.0 - vLam);')   // (a charred panel, the inside: no highlight; a matte piece none at all, nor the sky)
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - vLam;')   // (the night's glow, carGlow: not on a matte piece)
+        .replace('#include <tonemapping_fragment>', '#ifdef USE_COLOR\ngl_FragColor.rgb = mix(gl_FragColor.rgb, diffuse * vColor.rgb, vUl);\n#endif\n#include <tonemapping_fragment>');   // (an unlit piece: its colour, after every light and glint)
       sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + SCRATCH_GLSL);
     };
     return cgMat(m, false, cut ? 'dirtyCarCgX' : 'dirtyCarCg');
@@ -2764,7 +2770,7 @@ const Render = (function () {
     }
     begin() { this.n = 0; }
     add(x, y, z, sz, r, g, b, a) {
-      if (this.n >= this.max) return; const i = this.n++;
+      if (this.mute || this.n >= this.max) return; const i = this.n++;   // (mute: a car out of the view, updateCars)
       this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z; this.size[i] = sz;
       this.col[i * 4] = r; this.col[i * 4 + 1] = g; this.col[i * 4 + 2] = b; this.col[i * 4 + 3] = a;
     }
@@ -4231,7 +4237,7 @@ const Render = (function () {
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
-    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd]); if (farMat) m.add(farMat);   // (farMat: the far rivals' one material)
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd, matFpM]); if (farMat) m.add(farMat);   // (matFpM: the formula's rivals' parts, remerge; farMat: the far rivals' one material)
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -4284,7 +4290,9 @@ const Render = (function () {
   // their vertices put together on a 20 cm grid, the paint's colours kept (as vertex colours, matte): one draw for its ~5, a fraction of the
   // vertices. farStep each frame: past the view's own reach + 35 m from the camera (cam.vd: the car the camera follows is that far), not
   // from the TV cameras (their lenses bring a far car close) and only while the car is whole (a dent, a part or a wheel lost: as built from
-  // then on). The detail meshes leave the camera's layer meanwhile (their own .visible stays theirs; a kit car's hull still casts its shadow)
+  // then on). The detail meshes leave the camera's layer meanwhile (their own .visible stays theirs; a kit car's hull still casts its shadow).
+  // A rival's panels drawn as one mesh (remerge, v.partsM, built before this): that mesh goes in as any other part (its matte and painted pieces by
+  // their vertex colours, the lenses not), the det group's own pieces are hidden and stay so; carCull takes the whole car out of the scene, far or not
   const FAR_LAYER = 3, FAR_CELL = 0.2;
   let farMat = null;
   function farBuild(v) {
@@ -4298,8 +4306,9 @@ const Render = (function () {
       if (!o.isMesh || !mt || !P || mt.transparent || mt.map || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
       for (let a = o; a; a = a.parent) if (!a.visible) return;   // (a hidden part: not in the far car either)
       m4.multiplyMatrices(inv, o.matrixWorld);
-      const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count);
+      const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count), U = o === v.partsM ? G.attributes.aIn : null;   // (U: a rival's parts as one mesh, remerge: its unlit pieces, the head lamp lenses, left out as their own meshes were)
       for (let i = 0; i < P.count; i++) {
+        if (U && Math.abs(U.getX(i) - 64 / 255) < 0.03) { id[i] = -1; continue; }
         p.fromBufferAttribute(P, i).applyMatrix4(m4);
         const k = Math.floor(p.x / FAR_CELL) + ',' + Math.floor(p.y / FAR_CELL) + ',' + Math.floor(p.z / FAR_CELL);
         let q = cell.get(k); if (q === undefined) { q = acc.length / 7; cell.set(k, q); acc.push(0, 0, 0, 0, 0, 0, 0); }
@@ -4309,7 +4318,7 @@ const Render = (function () {
       for (let t = 0; t + 2 < n; t += 3) tri.push(id[I ? I.getX(t) : t], id[I ? I.getX(t + 1) : t + 1], id[I ? I.getX(t + 2) : t + 2]);
     });
     const idx = [], seen = new Set();
-    for (let t = 0; t < tri.length; t += 3) { const a = tri[t], b = tri[t + 1], c = tri[t + 2]; if (a === b || b === c || a === c) continue;
+    for (let t = 0; t < tri.length; t += 3) { const a = tri[t], b = tri[t + 1], c = tri[t + 2]; if (a === b || b === c || a === c || a < 0 || b < 0 || c < 0) continue;
       const k = a < b ? (b < c ? a + ',' + b + ',' + c : a < c ? a + ',' + c + ',' + b : c + ',' + a + ',' + b) : (a < c ? b + ',' + a + ',' + c : b < c ? b + ',' + c + ',' + a : c + ',' + b + ',' + a);
       if (seen.has(k)) continue; seen.add(k); idx.push(a, b, c); }
     if (!idx.length) return;
@@ -4482,7 +4491,8 @@ const Render = (function () {
       const t0 = v.partMats[1], tm = v.partMats[1] = pkCarMat(new THREE.MeshPhongMaterial({ color: t0.color, shininess: 12, specular: 0x141518 }), u, 0, 'pkCarT', 0);   // the bumpers (dark trim): an own Phong copy, so the snow and the dirt settle on them too
       v.bodyG.traverse(o => { if (o.isMesh && o.material === t0) o.material = tm; }); t0.dispose(); }
     else if (v.fp) {   // the formula: its parts share the stock paint (an own patched copy for this car) and the side fenders have their own
-      let pm = null; v.bodyG.traverse(o => { if (o.isMesh && o.material === matCar) o.material = pm = pm || pkCarMat(matCar.clone(), u, 0, 'pkCarP'); });
+      let pm = null; v.bodyG.traverse(o => { if (o.isMesh && o.material === matCar) o.material = pm = pm || (v.mrg ? pkCarMat(dirtyCarMat(), u, 0, 'pkCarB') : pkCarMat(matCar.clone(), u, 0, 'pkCarP')); });   // (a rival's: a clean dirtyCarMat, as matFpM, patched as the body)
+      if (pm) v.fpMat = pm;   // (a rival's parts as one mesh: with this copy, remerge)
       const fm = v.fp.parts.fenderL && v.fp.parts.fenderL.material; if (fm && fm !== matCar && fm !== pm) pkCarMat(fm, u, 0, 'pkCarP');   // (the prototype's louvre panels: the stock paint, patched above)
     }
     const wm = new Map();   // the separate wheels: an own Phong copy of each material (the shared ones stay as they are)
@@ -4490,6 +4500,7 @@ const Render = (function () {
       if (!m) { m = pkCarMat(new THREE.MeshPhongMaterial({ color: o.material.color, vertexColors: o.material.vertexColors, shininess: 45, specular: 0x2c2d30 }), u, 0, 'pkWheel', 1); wm.set(o.material, m); }
       o.material = m; });
     v.pk = u; v.pkS = { mk: [null, null, null, null], x: [0, 0, 0, 0], z: [0, 0, 0, 0], fw: [0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0] };
+    if (v.mrg) ownRnd(() => remerge(v));   // (a rival's parts as one mesh: built again with these materials (the trim's own Phong copy, the formula's), remerge)
   }
   function pkCarTick(v, c, dt, opt) {
     const u = v.pk, X = u.x.value, S = v.pkS, live = !(opt && opt.noFx) && dt > 0; u.inv.value.copy(v.grp.matrixWorld).invert();
@@ -5625,7 +5636,7 @@ const Render = (function () {
       for (const [c, v] of Q.pol) {
         const m = c.pol.mode, on = m === 'chase' || m === 'search' || m === 'park' || m === 'out', a = on && flash(c.id, 0), b = on && flash(c.id, 1), near = Math.hypot(c.x - cx, c.z - cz) < 180;
         if (v.polLamps) { v.polLamps[0].material = a ? matPolOn : matPolOff; v.polLamps[1].material = b ? matPolOn : matPolOff;
-          if ((a || b) && near && v.polBar.visible) { v.polBar.updateMatrixWorld(true); _rv.setFromMatrixPosition(v.polLamps[a ? 0 : 1].matrixWorld); glows.add(_rv.x, _rv.y + 0.05, _rv.z, dusk ? 3.2 : 2.2, 0.25, 0.45, 1.0, dusk ? 1 : 0.85); } }
+          if ((a || b) && near && v.polBar.visible && !v.cull) { v.polBar.updateMatrixWorld(true); _rv.setFromMatrixPosition(v.polLamps[a ? 0 : 1].matrixWorld); glows.add(_rv.x, _rv.y + 0.05, _rv.z, dusk ? 3.2 : 2.2, 0.25, 0.45, 1.0, dusk ? 1 : 0.85); } }
         else if ((a || b) && near && m !== 'out') { const ch = Math.cos(c.h), sh = Math.sin(c.h), hl = c.m.len / 2, lz = (a ? -1 : 1) * 0.32;
           lamp(c.x + ch * (hl - 0.05) - sh * lz, c.y + 0.58, c.z + sh * (hl - 0.05) + ch * lz, 0.75); lamp(c.x + ch * 0.55 + sh * lz, c.y + 1.12, c.z + sh * 0.55 - ch * lz, 0.55); }
       }
@@ -5773,7 +5784,7 @@ const Render = (function () {
     const markerOn = opt && opt.marker, now = curRace && Number.isFinite(curRace.time) ? curRace.time : time, wk = wetW > 0.05 ? Math.min(1, wetW * 1.4) : 0;   // wk: how much the wet road mirrors the lights
     _sunN.set(sunOff[0], sunOff[1], sunOff[2]).normalize();
     const sk = (atmos.tod === 'night' ? 0 : atmos.tod === 'dusk' ? 0.8 : 1) * (1 - Math.min(1, Math.max(0, wet) * 1.6)) * Math.min(1, sun.intensity);   // sk: the sun's glint on the paint
-    glows.begin(); streaks.begin(); fireScan(now); xShardsRun(now);
+    glows.begin(); streaks.begin(); fireScan(now); xShardsRun(now); particles.mute = sparkP.mute = glows.mute = false;
     for (const v of views) {
       const c = v.car, M = c.m, u = lodU(c, alpha);
       const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
@@ -5811,10 +5822,13 @@ const Render = (function () {
       v.tail.material = v.tailDead ? vMat(v, matLensBroken) : (v.noHead ? rainL : braking) ? matTailOn : matTailOff;   // (tailDead: one of the 11's, both its tail lamps smashed or burnt out)
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking; at dusk and at night a bright lamp in a wide, faint halo
-      v.grp.updateMatrixWorld(true);
+      // out of the view (carCull): its parts' matrices not updated, its lamps, glint and blob not drawn; its effects and damage run as ever (their
+      // random numbers drawn, the skid marks laid, the state kept) but nothing of them drawn: a seeded race goes on as it does in sight
+      const vis = !v.cull;
+      if (vis) v.grp.updateMatrixWorld(true); else { v.grp.updateMatrix(); v.grp.matrixWorld.copy(v.grp.matrix); }   // (out of the scene: its own place only, what its effects read)
       const nt = todK, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
-      for (let k = 0; k < 4 && v.grp.visible; k++) {   // (not a hidden car's lamps)
+      for (let k = 0; k < 4 && v.grp.visible && vis; k++) {   // (not a hidden car's lamps)
         if (v.lampsOut || (v.lightBroken && v.lightBroken[k])) continue;   // smashed lamp (burnt out: all of them): no glow
         if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
         _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
@@ -5826,16 +5840,16 @@ const Render = (function () {
           if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl);
           if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, (braking ? 0.75 : 0.36) * wk * (0.5 + 0.5 * nt), 0.55, braking ? 6.5 : 5, c.id * 0.37 + k); }
       }
-      if (wk) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
+      if (wk && vis) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
-      if (sk > 0) {   // the sun's glint on the paint: a soft glare where the curved roof mirrors the sun into the camera (the paint's own highlight is small and sharp)
+      if (sk > 0 && vis) {   // the sun's glint on the paint: a soft glare where the curved roof mirrors the sun into the camera (the paint's own highlight is small and sharp)
         const ry = (BODIES[M.body] || BODIES.coupe).roofY * (v.noHead ? 0.9 : 0.97), cp = camera.position;
         let vx = cp.x - x, vy = cp.y - y - ry, vz = cp.z - z; const vl = Math.hypot(vx, vy, vz) || 1; vx = vx / vl + _sunN.x; vy = vy / vl + _sunN.y; vz = vz / vl + _sunN.z;
         const hl = Math.hypot(vx, vy, vz) || 1, d = (vx * e[4] + vy * e[5] + vz * e[6]) / hl, ox = (vx / hl - e[4] * d) * 2.6, oz = (vz / hl - e[6] * d) * 2.6;   // (half-way vector; where on a roof curved ~2.6 m its normal is that)
         const al = ox * e[0] + oz * e[2], ac = ox * e[8] + oz * e[10], k = 1 - (al / (M.len * 0.36)) ** 2 - (ac / (M.wid * 0.3)) ** 2;
         if (k > 0 && d > 0) glows.add(x + e[0] * al + e[8] * ac, y + ry - 0.08 * (1 - k), z + e[2] * al + e[10] * ac, 1.1 + 0.9 * k, sun.color.r, sun.color.g, sun.color.b, 0.5 * k * k * sk);
       }
-      if (v.blob) {   // without shadow maps: a shadow of the car's shape, cast a little away from the sun (with them: the soft contact shadow only)
+      if (v.blob && vis) {   // without shadow maps: a shadow of the car's shape, cast a little away from the sun (with them: the soft contact shadow only)
         const off = !settings.shadows; if (v.blobOff !== off) { v.blobOff = off; v.blob.material = off ? matBlobS : matBlob; }
         let bx = 0, bz = 0; if (off && atmos.tod !== 'night') { const f = 0.55 / Math.max(0.25, _sunN.y), sx = -_sunN.x * f, sz = -_sunN.z * f, l = Math.hypot(sx, sz), q = l > 1.3 ? 1.3 / l : 1; bx = (sx * e[0] + sz * e[2]) * q; bz = (sx * e[8] + sz * e[10]) * q; }
         v.blob.position.x = bx; v.blob.position.z = bz;
@@ -5846,6 +5860,7 @@ const Render = (function () {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5 || sf === 6) loose++; }   // (the cobbles, 7 and 8, are no dirt)
         if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
       }
+      if (!vis) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx)
       if (v.pk) pkCarTick(v, c, dt, opt);
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0);
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
@@ -5855,13 +5870,15 @@ const Render = (function () {
       if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else applyDent(v, d); if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
-        const mute = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
-        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = false; } }
+        const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
+        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
+      if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
+      if (!vis) particles.mute = sparkP.mute = glows.mute = false;
     }
     glows.end();
     if (wk && flood && flood.fp) {   // (at night the floodlights too: those round the view)
@@ -5881,16 +5898,20 @@ const Render = (function () {
     if (!matUnder) { matUnder = new THREE.MeshLambertMaterial({ color: 0x1b1d22 }); matEngine = new THREE.MeshLambertMaterial({ color: 0x5b5f66 }); matLens = new THREE.MeshBasicMaterial({ color: 0xfff1c8 }); matLensBroken = new THREE.MeshLambertMaterial({ color: 0x24272c }); }
     const at = (x) => { const L = S[S.length - 1]; if (x <= S[0][0]) return S[0]; if (x >= L[0]) return L; for (let k = 0; k < S.length - 1; k++) if (x <= S[k + 1][0]) { const t = (x - S[k][0]) / (S[k + 1][0] - S[k][0]); return S[k].map((q, i) => typeof q === 'number' ? q + (S[k + 1][i] - q) * t : q); } return L; };
     const parts = {}, under = {};
-    if (v.fp) (v.fp.lm ? lmParts : fParts)(v, parts, under);   // the formula, the prototype: their own parts (built with the mesh)
+    if (v.fp) { (v.fp.lm ? lmParts : fParts)(v, parts, under);   // the formula, the prototype: their own parts (built with the mesh)
+      if (!c.isPlayer) { v.det = ownRnd(() => new THREE.Group()); v.bodyG.add(v.det);   // (a rival's: drawn as one mesh, remerge; the rear wing, its DRS flap turning, a mesh of its own)
+        for (const n in parts) { if (tierNow === 0) parts[n].castShadow = false; if (n !== 'bumperR') v.det.add(parts[n]); }   // (NIZKA: a rival's parts cast none, as the 11's panels)
+        for (const n in under) v.det.add(under[n]); } }
     else if (v.kit) { /* the kit: its parts are ranges of the body itself (stage B2 takes a lost one off: v.kit.R.ranges); no boxes laid over it */ }
     else {
       const paint = cgMat(new THREE.MeshPhongMaterial({ color: c.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg');
       const trim = M.chrome ? cgMat(new THREE.MeshPhongMaterial({ color: 0xc4c8ce, shininess: 110, specular: 0xffffff, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.55 }), true, 'carCg')   // (the V8's chrome bumpers: the glass's sharper glint)
         : new THREE.MeshLambertMaterial({ color: 0x2b2e34 });
       v.partMats = [paint, trim];
+      v.det = ownRnd(() => new THREE.Group()); v.bodyG.add(v.det);   // (the panels, their under-parts, the lenses and the smashed tail lamps' covers in one group: a rival's drawn as one mesh, remerge)
       const add = (name, geo, mat, x, y, z, rz, uGeo, uMat, extra) => {
-        const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.z = rz || 0; m.castShadow = !!c.isPlayer || tierNow > 0; v.bodyG.add(m); parts[name] = m;   // (NIZKA: a rival's panels cast none, its body's shadow has their outline: 8 draws less each in the shadow pass)
-        if (uGeo) { const u = new THREE.Group(); const um = new THREE.Mesh(uGeo, uMat || matUnder); u.add(um); if (extra) u.add(extra); u.position.set(x, y - 0.012, z); u.rotation.z = rz || 0; u.visible = false; v.bodyG.add(u); under[name] = u; }
+        const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.z = rz || 0; m.castShadow = !!c.isPlayer || tierNow > 0; (M.chrome && mat === trim && !c.isPlayer ? v.bodyG : v.det).add(m); parts[name] = m;   // (NIZKA: a rival's panels cast none, its body's shadow has their outline: 8 draws less each in the shadow pass; a rival V8's chrome bumpers drawn on their own: as one mesh with the paint they would lose their shine)
+        if (uGeo) { const u = new THREE.Group(); const um = new THREE.Mesh(uGeo, uMat || matUnder); u.add(um); if (extra) u.add(extra); u.position.set(x, y - 0.012, z); u.rotation.z = rz || 0; u.visible = false; v.det.add(u); under[name] = u; }
       };
       const nose = S[S.length - 1][0], tail = S[0][0];
       const iGF = S.findIndex(q => q[7] === 'gf'), iGR = S.findIndex(q => q[7] === 'gr');
@@ -5921,7 +5942,10 @@ const Render = (function () {
     // head lamp lenses (they go dark when smashed); tail lamps get a dark cover when smashed
     v.lens = []; v.lightBroken = [0, 0, 0, 0];
     const lz = dB.lens || [0.11, 0.28];   // (the new bodies: their own lens, or a round one)
-    if (!v.kit) for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.noHead && !dB.noLens; v.bodyG.add(m); v.lens.push(m); }   // (the kit's lenses are in its body: kitLampOut)
+    if (!v.kit) for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.noHead && !dB.noLens; (v.det || v.bodyG).add(m); v.lens.push(m); }   // (the kit's lenses are in its body: kitLampOut)
+    // a rival's det drawn as one mesh (remerge; not the player's, nor Razbijanje · nov način's: xMirror, xEngine take its panels one by one); det
+    // itself never drawn, its matrices never updated (remerge reads its pieces' own)
+    if (v.det && !c.isPlayer && !v.xOn) { v.mrg = true; v.det.updateMatrixWorld = () => {}; ownRnd(() => remerge(v)); }
   }
   // the formula's parts, built with the car's mesh (the garage and the ghost show them too): front wing (bumperF), nose (hood), rear wing with the
   // DRS flap (bumperR), engine cover (trunk), mirrors, bargeboards (fenderL/R). Each is centred on its own origin (a loose one tumbles about
@@ -5949,6 +5973,36 @@ const Render = (function () {
       const m = parts[name], u = new THREE.Group(); u.add(new THREE.Mesh(geo, mat)); u.position.set(m.position.x, m.position.y - 0.012, m.position.z); u.visible = false; v.bodyG.add(u); under[name] = u;
     }
   }
+  // a rival's det (its panels, their under-parts, the lenses, the smashed tail lamps' covers: what of them shows now, each with its parents up
+  // to det) as one mesh in bodyG's frame, v.partsM, drawn with the body's own material (the 11's: its dirt, scratches, char and the night's
+  // glow come with the panels) and each piece's colour in its vertices (its geometry's colours where its material uses them, times its
+  // material's colour: as three.js draws it; in a fire the colour before the soot, col0: the char blackens it once). A matte piece (the
+  // dark trim, the under-parts, a smashed lens: Lambert) goes in dirtyCarMat's matte class (aIn 192: no highlight, no sky, no glint, no night
+  // glow, no dirt, no scratches; 224: Pikes Peak's trim, its dust and glint too), an unlit one (the head lamp lenses: MeshBasic) in its unlit
+  // class (aIn 64: its own colour, as MeshBasic draws it). The formula's, the prototype's: a clean dirtyCarMat (matFpM: never dirty, never
+  // scratched, never charred: the stock paint as matCar draws it, with the classes) or the car's own copy of it (v.fpMat: Pikes Peak's, the
+  // fire's, its soot in its colour). The V8's chrome bumpers are not in det (drawn on their own: the paint would dull them). One draw
+  // instead of up to 16 (SREDNJA, VISOKA: one shadow caster instead of 8; NIZKA: none, as before). Built again whenever what det shows
+  // changes (v.detDirty: a lamp smashed or burnt out, a panel lost, the crew's repair); named without Math.random (ownRnd)
+  const _rmM = new THREE.Matrix4(); let matFpM = null;
+  function remerge(v) {
+    v.detDirty = false; const L = []; let n = 0;
+    v.det.traverse(o => { if (!o.isMesh) return; for (let p = o; p !== v.det; p = p.parent) if (!p.visible) return; L.push(o); });
+    const G = L.map(o => { _rmM.identity(); for (let p = o; p !== v.det; p = p.parent) { p.updateMatrix(); _rmM.premultiply(p.matrix); }
+      const g = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(_rmM), m = Array.isArray(o.material) ? null : o.material; n += g.attributes.position.count;
+      return [g, m && (m.userData.col0 && m.userData.col0.isColor ? m.userData.col0 : m.color), m && m.vertexColors ? g.attributes.color : null, !m ? 0 : m.isMeshBasicMaterial ? 64 / 255 : m.isMeshLambertMaterial ? 192 / 255 : m === (v.partMats && v.partMats[1]) ? 224 / 255 : 0]; });   // (partMats[1]: the dark trim's Phong copy on Pikes Peak)
+    const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = new Float32Array(n * 3), A = new Float32Array(n); let k = 0;
+    for (const [g, col, gc, inn] of G) {
+      const m = g.attributes.position.count, cr = col ? col.r : 1, cg = col ? col.g : 1, cb = col ? col.b : 1;
+      P.set(g.attributes.position.array, k * 3); if (g.attributes.normal) N.set(g.attributes.normal.array, k * 3); A.fill(inn, k, k + m);
+      for (let i = 0, o = k * 3; i < m; i++, o += 3) { C[o] = cr * (gc ? gc.getX(i) : 1); C[o + 1] = cg * (gc ? gc.getY(i) : 1); C[o + 2] = cb * (gc ? gc.getZ(i) : 1); }
+      k += m; g.dispose(); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3)); geo.setAttribute('aIn', new THREE.BufferAttribute(A, 1)); geo.computeBoundingSphere();
+    const mat = v.fp ? v.fpMat || matFpM || (matFpM = dirtyCarMat()) : v.body.material;
+    if (!v.partsM) { v.partsM = new THREE.Mesh(geo, mat); v.bodyG.add(v.partsM); }
+    else { v.partsM.geometry.dispose(); v.partsM.geometry = geo; v.partsM.material = mat; }
+    v.partsM.castShadow = tierNow > 0; v.partsM.visible = n > 0; v.det.visible = false;
+  }
   function updateParts(v, c, x, y, z, h) {
     const rnd = v.kit ? rRnd : Math.random;   // (the kit's effects: the renderer's own random numbers; the 11's as they always were)
     // lamps
@@ -5957,7 +6011,8 @@ const Render = (function () {
       const L = v.lights[k];
       if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = vMat(v, matLensBroken); if (v.beam) beams(v); }   // (the night beam: the head lamps left)
       else if (v.kit) kitTailOut(v, k === 2 ? 'L' : 'R');   // (the kit's tail lamps: their side of its own tail mesh goes out)
-      else { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), vMat(v, matLensBroken)); m.position.set(L.x + 0.02, L.y, L.z); v.bodyG.add(m); (v.tailCov || (v.tailCov = [])).push(m); }   // (tailCov: taken off again by a pit repair, repLamps)
+      else { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), vMat(v, matLensBroken)); m.position.set(L.x + 0.02, L.y, L.z); (v.det || v.bodyG).add(m); (v.tailCov || (v.tailCov = [])).push(m); }   // (tailCov: taken off again by a pit repair, repLamps)
+      v.detDirty = true;   // (a rival's lenses and covers: its det's mesh built again, remerge)
       if (!v.kit && v.lightBroken[2] && v.lightBroken[3]) v.tailDead = true;   // (both tail lamps of one of the 11 smashed: its whole tail mesh dark, not lit round the covers)
       const ch = Math.cos(h), sh = Math.sin(h), wx = x + L.x * ch - L.z * sh, wz = z + L.x * sh + L.z * ch;
       for (let n = 0; n < 14; n++) particles.emit(wx, y + L.y, wz, c.vx * 0.5 + (rnd() - 0.5) * 4, 1 + rnd() * 2.5, c.vz * 0.5 + (rnd() - 0.5) * 4, 0.7 + rnd() * 0.5, 0.18, 0.12, 0.86, 0.92, 0.98, 0.95, 9, 0.6, y);   // glass shards
@@ -5976,7 +6031,7 @@ const Render = (function () {
     for (const name in v.parts) {
       const m = v.parts[name];
       if (!m.visible || !c.lost[name]) continue;
-      m.visible = false; if (v.under[name]) v.under[name].visible = true;
+      m.visible = false; if (v.under[name]) v.under[name].visible = true; v.detDirty = true;
       const ch = Math.cos(h), sh = Math.sin(h), px = m.position.x, pz = m.position.z, wx = x + px * ch - pz * sh, wz = z + px * sh + pz * ch;
       for (let n = 0; n < 10; n++) particles.emit(wx, y + m.position.y, wz, c.vx * 0.6 + (Math.random() - 0.5) * 5, 1 + Math.random() * 3, c.vz * 0.6 + (Math.random() - 0.5) * 5, 0.9 + Math.random() * 0.5, 0.22, 0.16, 0.2, 0.2, 0.22, 0.9, 9, 0.7, y);
       for (let n = 0; n < 6; n++) sparkP.emit(wx, y + m.position.y, wz, (Math.random() - 0.5) * 7, 1 + Math.random() * 3, (Math.random() - 0.5) * 7, 0.25 + Math.random() * 0.25, 2.2, 3.2, 1, 0.8, 0.4, 0.9, 0, 0, y);
@@ -6452,7 +6507,7 @@ const Render = (function () {
   }
   function repPart(v, R, name) {
     const K = v.kit;
-    if (!K) { v.parts[name].visible = true; if (v.under[name]) v.under[name].visible = false; return; }
+    if (!K) { v.parts[name].visible = true; if (v.under[name]) v.under[name].visible = false; v.detDirty = true; return; }
     const A = v.body.geometry.attributes, Rg = v.body.geometry.userData.ranges[name]; delete K.dead[name]; K.ver++;
     if (Rg && R.P) for (const [a, b] of [Rg.o, Rg.i]) if (b > a) {
       for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !R.P[pk]) continue; const s = R.P[pk].subarray(a * 3, b * 3); A[key].array.set(s, a * 3); R.D[pk].set(s, a * 3); A[key].needsUpdate = true; }
@@ -6464,7 +6519,7 @@ const Render = (function () {
   function repLamps(v) {
     v.lampsOut = false; v.tailDead = false;
     if (v.kit) kitLampsBack(v);   // (their lenses' colours: the body's, repBody)
-    else { v.lightBroken.fill(0); for (const m of v.lens) m.material = matLens; for (const m of v.tailCov || []) { v.bodyG.remove(m); m.geometry.dispose(); } v.tailCov = null; ownRnd(() => beams(v)); }
+    else { v.lightBroken.fill(0); for (const m of v.lens) m.material = matLens; for (const m of v.tailCov || []) { m.parent.remove(m); m.geometry.dispose(); } v.tailCov = null; v.detDirty = true; ownRnd(() => beams(v)); }
     for (const hb of v.hubs) if (hb) hb.material = vMat(v, matWheel);
   }
   function kitLampsBack(v) {   // a kit car's lamps lit again, all but those on a part still off (repPart brings them back with it)
@@ -8068,7 +8123,7 @@ const Render = (function () {
     if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0] || v.charU.value.z !== S[2])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
     if (!F && !(c.dmg > 0.45)) return;
     // where the smoke and the flames come out, in the world (with the body's roll, pitch and sag: after updateParts)
-    const W3 = F && F.rule && F.lvl >= 2 ? ruleSpots(v, S0) : null, Q = F && F.rule ? W3 ? W3[1] : S : fireSpot(v, S); v.bodyG.updateMatrixWorld();   // (the wheel rule's hub: right at it; its whole car: the middle spot's smoke and glow)
+    const W3 = F && F.rule && F.lvl >= 2 ? ruleSpots(v, S0) : null, Q = F && F.rule ? W3 ? W3[1] : S : fireSpot(v, S); if (!v.cull) v.bodyG.updateMatrixWorld();   // (out of the view: its smoke and glow muted, updateCars)   // (the wheel rule's hub: right at it; its whole car: the middle spot's smoke and glow)
     if (W3) for (let i = 0; i < 3; i++) _fw3[i].set(W3[i][0], W3[i][1], W3[i][2]).applyMatrix4(v.bodyG.matrixWorld);
     _fsv.set(Q[0], Q[1], Q[2]).applyMatrix4(v.bodyG.matrixWorld);
     const sx = _fsv.x, sy = _fsv.y, sz = _fsv.z;
@@ -8127,7 +8182,7 @@ const Render = (function () {
     v.lampsOut = true; for (const hb of v.hubs || []) if (hb) hb.material = vMat(v, matLensBroken);
     if (!v.lightBroken) return;
     if (v.kit) { for (let k = 0; k < 4; k++) if (!v.lightBroken[k]) { v.lightBroken[k] = 1; if (k < 2) kitLampOut(v, k); else kitTailOut(v, k === 2 ? 'L' : 'R'); } }
-    else { for (const m of v.lens || []) if (m) m.material = vMat(v, matLensBroken); v.tailDead = true; }
+    else { for (const m of v.lens || []) if (m) m.material = vMat(v, matLensBroken); v.tailDead = true; v.detDirty = true; }
     if (v.beam) beams(v);
   }
   // a shared material as this car wears it: its own charred copy once it burns (charParts), else the shared one
@@ -8144,8 +8199,8 @@ const Render = (function () {
       if (v.partMats) for (const m of v.partMats) if (m && m.color) L.push(m);
       if (v.fp) { let pm = null; const shared = new Set([matCar, matUnder, matEngine, matLens, matLensBroken, matWheel]);
         for (const n in v.fp.parts) v.fp.parts[n].traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
-          if (o.material === matCar) o.material = pm = pm || cgMat(matCar.clone(), false, 'carCg'); else if (!shared.has(o.material) && L.indexOf(o.material) < 0 && o.material.color) L.push(o.material); });
-        if (pm) L.push(pm); }
+          if (o.material === matCar) o.material = pm = pm || (v.mrg ? dirtyCarMat() : cgMat(matCar.clone(), false, 'carCg')); else if (!shared.has(o.material) && L.indexOf(o.material) < 0 && o.material.color) L.push(o.material); });
+        if (pm) { L.push(pm); v.fpMat = pm; if (v.partsM) v.partsM.material = pm; } }   // (a rival's parts drawn as one mesh: with this copy from now on, remerge)
       for (const m of L) m.userData.col0 = m.color.clone();
     }
     const SH = [matUnder, matEngine, matLensBroken, matWheel], sw = (o) => { if (!o.isMesh || !o.material || SH.indexOf(o.material) < 0) return;
@@ -8927,6 +8982,25 @@ const Render = (function () {
     U.uHeat.value = 0; if (heat) { camera.getWorldDirection(_mf); const h = Math.hypot(_mf.x, _mf.z) || 1; _mf.set(camera.position.x + _mf.x / h * 900, camera.position.y, camera.position.z + _mf.z / h * 900).project(camera);
       const hy = _mf.y * 0.5 + 0.5; if (hy > 0.05 && hy < 1.1) { U.uHeat.value = heat; U.uHorY.value = hy; U.uTm.value = time % 600; } }
   }
+  // whole cars out of the view: a car (not the player's) whose bounding sphere (half its length and its shadow's reach round it; its night
+  // beam's 22 m ahead of it, its smoke over it) is outside the camera's view or past the fog's end is taken out of the scene (three.js neither
+  // updates its matrices nor culls its meshes one by one, the shadow pass skips it); updateCars still poses it and follows its damage (its
+  // bits muted) but draws no lamps, glint, blob, dust, sparks or smoke for it (v.cull). A shot (the photo mode, a tool's camera): every car in
+  const _ccF = new THREE.Frustum(), _ccM = new THREE.Matrix4(), _ccS = new THREE.Sphere();
+  function carCull() {
+    const on = !!curRace && !cam.shot && !dbg.allCars;   // (dbg.allCars: the tests, a car's own cost measured whatever the view)
+    if (on) { camera.updateMatrixWorld(); _ccM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _ccF.setFromProjectionMatrix(_ccM); }
+    const p = camera.position, far = scene.fog.far, reach = 4 + Math.min(12, 1.8 * Math.hypot(sunOff[0], sunOff[2]) / Math.max(1, sunOff[1]));   // (its shadow: 1.8 m of car under the sun, at most 12 m long)
+    for (const v of views) { const c = v.car; if (c.isPlayer) continue;
+      let out = false;
+      if (on) { const bm = v.beam && v.beam.visible ? 10.75 : 0, h = -v.grp.rotation.y;   // (the beam: from the nose to 21.5 m ahead of it; the heading updateCars gave the car)
+        _ccS.center.set(v.grp.position.x + Math.cos(h) * bm, v.grp.position.y + 0.8, v.grp.position.z + Math.sin(h) * bm);
+        _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0);
+        out = _ccS.center.distanceTo(p) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }
+      if (out === !!v.cull) continue;
+      v.cull = out; if (out) { scene.remove(v.grp); continue; }
+      scene.add(v.grp); v.grp.updateMatrixWorld(true); }   // (back in: where updateCars put it this frame)
+  }
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
     if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
@@ -8946,6 +9020,7 @@ const Render = (function () {
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     cullByDistance();   // adaptive detail (LOD): hide the far vegetation on the lower tiers, now the camera is in its final place for this frame
+    carCull();   // (whole cars out of the view: out of the scene)
     kitPieceCull();   // (the lowest tier: the kit's pieces on the road, the nearest)
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
@@ -9157,7 +9232,7 @@ const Render = (function () {
     if (fov) { showCam.fov = f; showCam.updateProjectionMatrix(); }
   }
   function info() { return renderer ? renderer.info : null; }
-  const dbg = { noSmoke: false };
+  const dbg = { noSmoke: false, allCars: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; return { alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
   function winCount() { let n = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) n++; }); return n; }   // (tests: the materials with the lit windows)
