@@ -2792,7 +2792,7 @@ const Core = (function () {
   // LOD.k2-th (15 Hz) beyond. A car between its steps is touched where it would be by now (Race._lodPair: on along its speed since its last
   // step), so none drives into where another was a few steps ago; the turns spread by the grid slot, so each step has about the same work.
   // Alone, the cs physics and the AI drive a lap 0.2-0.3 % slower at 30 Hz, about 0.7 % at 15 Hz (Nürburg); lap, sector and finish times
-  // are taken where the line was crossed inside the longer step
+  // are taken where the line was crossed inside the longer step. The safety car on the track: the full rate within LOD.r m of it too
   const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 8 };
   // the indices 0..n-1 in I sorted by cmp, ties by the index (what a stable sort of the list gives), by insertion from the order I had the last
   // time: from one step to the next only a few cars change places (Race._byDist, the order)
@@ -2914,7 +2914,9 @@ const Core = (function () {
         if (F.yel.length && race._yelAt(q.s)) vT *= 0.8;
         if (S && S.car && !c.inPit && !c.pitWant) {
           let gap = 1e9, a = null;
-          for (const o of race.cars) { if (o === c || o.finished || o.inPit || o.pitWant || dnf(o)) continue; const g = o.dist - c.dist; if (g > 0 && g < gap) { gap = g; a = o; } }   // (not behind a retired car)
+          const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null;   // (a big field: up the list sorted by dist from the car on, the same one as the loop over all of them)
+          if (BD) { for (let k = distFrom(BD, c.dist); k < BD.length; k++) { const o = BD[k], g = o.dist - c.dist; if (g > gap) break; if (o === c || o.finished || o.inPit || o.pitWant || dnf(o) || !(g > 0)) continue; if (g < gap || race.cars.indexOf(o) < race.cars.indexOf(a)) { gap = g; a = o; } } }   // (level: the first of race.cars)
+          else for (const o of race.cars) { if (o === c || o.finished || o.inPit || o.pitWant || dnf(o)) continue; const g = o.dist - c.dist; if (g > 0 && g < gap) { gap = g; a = o; } }   // (not behind a retired car)
           const off = S.state === 'in' && !S.pit;   // (speeding off up the road: the field lets it go, at a steady pace)
           const gS = S.car.dist - c.dist; if (gS > 0 && gS < gap && !off && !(S.car.pitWant && T.pitAt(S.car.q.s))) { gap = gS; a = S.car; }   // (the safety car turning into the pit lane: not any more)
           if (off) vT = Math.min(vT, 0.7 * vpA);
@@ -5320,18 +5322,20 @@ const Core = (function () {
     }
     // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one); ow: the steps since a
     // car's last one, ex: how far one between its steps has gone on since (its speed over them). Null in any other race. The player, the cars
-    // on the grid, in or for the pits, falling, rolling, in the air, retired or held by the marshals, and everyone behind the safety car: the full rate
+    // on the grid, in or for the pits, falling, rolling, in the air, retired or held by the marshals: the full rate. The safety car on the
+    // track (driven every step, it touches every car): the full rate within LOD.r m of it as well; the queue further back as any other far car
+    // (Nürburg, 100 cars, the safety car out: as many knocks in the queue as at the full rate, at less than half the time)
     _lodPlan(dt) {
       const cars = this.cars, P = this.player, n = cars.length;
       if (n <= LOD.min || !P || this.remotes.length || this.timeTrial || this.pol || this.tf) { if (this._lod) this._lod.on = false; return null; }
       const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n) });
       L.n++; L.on = true; L.h = dt;
-      const go = this.state === 'racing' && !(this.fl && this.fl.sc);
+      const go = this.state === 'racing', X = this.fl && this.fl.sc && this.fl.sc.car;   // (X: the safety car on the track)
       for (let i = 0; i < n; i++) {
         const c = cars[i]; let k = 1;
         if (go && c !== P && !c.net && !c.locked && !c.inPit && !c.pitWant && !c.pitG && !c.pitState && !c.fall && !c.air && !c.rl && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) {
-          const g = c.dist - P.dist, dx = c.x - P.x, dz = c.z - P.z, d2 = dx * dx + dz * dz;
-          if ((g > LOD.a || g < -LOD.b) && d2 > LOD.r * LOD.r) k = Math.abs(g) > LOD.r2 && d2 > LOD.r2 * LOD.r2 ? LOD.k2 : LOD.k;
+          const g = c.dist - P.dist, dx = c.x - P.x, dz = c.z - P.z, d2 = dx * dx + dz * dz, sx = X ? c.x - X.x : 1e9, sz = X ? c.z - X.z : 0;
+          if ((g > LOD.a || g < -LOD.b) && d2 > LOD.r * LOD.r && sx * sx + sz * sz > LOD.r * LOD.r) k = Math.abs(g) > LOD.r2 && d2 > LOD.r2 * LOD.r2 ? LOD.k2 : LOD.k;
         }
         L.kk[i] = k; L.owe[i] += dt;
         if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)

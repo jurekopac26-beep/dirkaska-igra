@@ -8,7 +8,10 @@
 //      in a step of several: the time taken where the line was crossed inside it
 //   2. Marrakesh (a short circuit), 34 cars, the lights, one lap to the finish, the player last on the grid: every car home, each lap time
 //      from the line to the line, the times of the far cars on the steps of 1/120 s inside their longer steps, the order of the finish by the time
-//   3. A 22-car race: no LOD at all
+//   3. Nürburg, 100 cars, two laps, the safety car out after 10 s: LOD on behind it (the full rate within LOD.r m of it), no NaN, the
+//      safety car and the leader on the way (the queue further back stops behind a stopped car or in a pack two abreast and is rescued
+//      as often at the full rate: not checked here)
+//   4. A 22-car race: no LOD at all
 //   node tests/lod.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -27,11 +30,12 @@ function race(id, numAI, extra) {
 // a run: k steps (the player on the autopilot, Math.random seeded as tests/lib/sim.js does); `each` after every step, with the cars'
 // dist, lap and place before it (B)
 function drive(r, steps, each) {
-  const orig = Math.random, N = r.cars.length, B = { d: new Float64Array(N), l: new Int32Array(N), x: new Float64Array(N), z: new Float64Array(N) };
+  const orig = Math.random, N = r.cars.length, B = { d: new Float64Array(N), l: new Int32Array(N), x: new Float64Array(N), z: new Float64Array(N), sc: null };
   try {
     for (let k = 1; k <= steps; k++) {
       Math.random = seeded(1000 + k);
       for (let i = 0; i < N; i++) { const c = r.cars[i]; B.d[i] = c.dist; B.l[i] = c.lap; B.x[i] = c.x; B.z[i] = c.z; }
+      const X = r.fl && r.fl.sc && r.fl.sc.car; B.sc = X ? { x: X.x, z: X.z } : null;   // (the safety car, where it was when the step began)
       C.aiControl(r.player, r, DT); r.step(DT);
       if (each(k, B.d, B.l, B) === false) break;
     }
@@ -120,7 +124,29 @@ const tLin = (t, x, d0, d1, m) => t - DT * m * (d1 - x) / (d1 - d0);
   check('the finish in the order of the times, the places 1..34', ord, F.slice(0, 6).map(c => c.finishTime.toFixed(3)).join(' '));
 }
 
-// ---- 3. a 22-car race: the full rate ----
+// ---- 3. Nürburg, 100 cars, two laps, the safety car out: LOD on behind it ----
+{
+  const t0 = Date.now(), r = race('nring', 99, { flying: 15, playerGrid: 99, laps: 2 }), P = r.player, N = r.cars.length;
+  let resc = 0; const orig = r.rescue; r.rescue = function (c) { resc++; return orig.call(this, c); };
+  r.start();
+  let nan = 0, scN = 0, lodN = 0, nearN = 0, nearBad = 0, out = false, scD0 = 0; const seen = { 1: 0, 4: 0, 8: 0 }, start = new Float64Array(N);
+  drive(r, Math.round(45 / DT), (k, d0, l0, B) => {
+    if (k === Math.round(10 / DT)) { r._scOut(r.order.find(c => !c.finished)); out = true; r.cars.forEach((c, i) => { start[i] = c.dist; }); scD0 = r.fl.sc.car.dist; return; }   // (out after 10 s, ahead of the leader)
+    const D = r._lod, S = r.fl && r.fl.sc;
+    for (let i = 0; i < N; i++) { const c = r.cars[i]; if (!Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.dist + (c.y || 0))) nan++; }
+    if (!out || !S || !B.sc) return;
+    scN++; if (D && D.on && D.kk.some(x => x > 1)) lodN++;
+    for (let i = 0; i < N; i++) { const c = r.cars[i]; if (D && D.on) seen[D.kk[i]] = (seen[D.kk[i]] || 0) + 1; const dx = B.x[i] - B.sc.x, dz = B.z[i] - B.sc.z; if (c !== P && dx * dx + dz * dz <= L.r * L.r) { nearN++; if (D && D.on && !D.st[i]) nearBad++; } }
+  });
+  const S = r.fl.sc, lead = r.order[0], i0 = r.cars.indexOf(lead);
+  check('Nürburg, 100 cars, two laps, the safety car out after 10 s: no NaN, LOD on behind it (cars at 30 and 15 Hz, not the whole field at the full rate)',
+    nan === 0 && scN > 3000 && lodN === scN && seen[L.k] > 0 && seen[L.k2] > 0, `${nan} bad values, ${scN} steps with the safety car out, ${lodN} with LOD, ${JSON.stringify(seen)}; ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  check(`every car within ${L.r} m of the safety car: worked out every step`, nearN > 1000 && nearBad === 0, `${nearBad} of ${nearN} car-steps`);
+  check('the safety car and the leader behind it on the way (over 300 m in 35 s)', !!(S && S.car) && S.car.dist - scD0 > 300 && lead.dist - start[i0] > 300,
+    `the leader ${(lead.dist - start[i0]).toFixed(0)} m, the safety car ${S && S.car ? (S.car.dist - scD0).toFixed(0) + ' m, ' + S.state : 'gone'}; ${resc} rescues behind it (the queue, as at the full rate)`);
+}
+
+// ---- 4. a 22-car race: the full rate ----
 {
   const r = race('spa', 21, {}); r.start();
   drive(r, 240, () => {});
