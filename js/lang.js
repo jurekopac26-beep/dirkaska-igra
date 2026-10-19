@@ -261,6 +261,8 @@
     'Na radarju je dež: začel bo čez približno minuto.': 'Rain on the radar: it will start in about a minute.', 'Na radarju se dež umika: kmalu bo ponehal.': 'The rain is moving away on the radar: it will stop soon.',
     'Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.': 'Safety car! Box now, the stop costs only about {0} s.',
     'Dober postanek.': 'Good stop.', 'Si {0}., {1} je {2} s pred tabo.': 'You are P{0}, {1} is {2} s ahead of you.', 'Si {0}.': 'You are P{0}.',
+    'BREZ SPREMEMBE': 'NO CHANGE', 'S postankom si pridobil {0}, zdaj si {1}.': 'The stop gained you {0}, you are P{1} now.', 'S postankom si pridobil {0}, zdaj vodiš.': 'The stop gained you {0}, you are leading now.',
+    'S postankom si izgubil {0}, zdaj si {1}.': 'The stop cost you {0}, you are P{1} now.', 'Brez spremembe po postanku, še vedno si {0}.': 'No change after the stop, you are still P{0}.', 'Brez spremembe po postanku, še vedno vodiš.': 'No change after the stop, you are still leading.',
     'Postanek bo v {0}. krogu.': 'The stop will be on lap {0}.', 'Okno za postanek: od {0}. do {1}. kroga.': 'Pit window: laps {0} to {1}.', 'Zadnji krog!': 'Last lap!',
     'Gorivo za {0} kroga.': 'Fuel for {0} laps.', 'Gume: {0} %.': 'Tyres: {0} %.', 'Postanek zdaj stane okoli {0} s, po njem bi bil {1}.': 'A stop now costs about {0} s, after it you would be P{1}.',
     ' · POPRAVLJENO': ' · REPAIRED', 'POPRAVLJENO!': 'REPAIRED!', 'še {0} km': '{0} km to go', 'OVINEK {0}/{1}': 'TURN {0}/{1}', 'LETEČI KROG': 'FLYING LAP', 'LETEČI KROG!': 'FLYING LAP!',

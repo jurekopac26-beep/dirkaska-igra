@@ -2363,6 +2363,10 @@ const Core = (function () {
   // an AI car in for repairs (Race.step, damage on): about the damage it comes in at (each driver a little either side of it), the run-up to
   // the way in where it no longer decides (m), the share of a lap it must still race after the stop
   const AI_FIX = { dmg: 0.45, run: 300, rest: 0.6 };
+  // a stop's places (Race._pitSwing): the player's place this far before the way in (m: before braking for the lane) against the one once
+  // the order has settled after the stop: wait s out of the lane (~3 s after the autopilot hands the car back, which is ~1 s before the
+  // way out), and every rival that was in the lane with it out again, cap s at most
+  const PSW = { pre: 150, wait: 2, cap: 10 };
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
     const boxPts = (x, y, z) => { const p = []; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) p.push([sx * x, sy * y, sz * z]); return p; };
@@ -4995,6 +4999,7 @@ const Core = (function () {
         return b.dist - a.dist;
       });
       for (let i = 0; i < this.order.length; i++) this.order[i].pos = i + 1;
+      if (T.def.pit && P) this._pitSwing();
       if (this.mk && (this.state === 'racing' || this.state === 'done')) this._marks();
       if (this.fl) this._flags(dt);
       if (this.chr && this.state === 'racing') this._duels(dt);
@@ -5280,6 +5285,38 @@ const Core = (function () {
       if (from > to) from = n0;   // (one stop is not enough: the first one now or later, up to the last lap it can wait)
       r.from = from; r.to = to; r.box = n0 === cur && (to === cur || now.length > 0);
       return r;
+    }
+    // a stop's places (step, after the order; game.js pitSwingHUD: +2 MESTI, −1 MESTO, BREZ SPREMEMBE): the player's place PSW.pre m before
+    // the way in on the lap of a stop (before braking for the lane; which cars were ahead of it then) against the one once the order has
+    // settled after the stop, PSW.wait s out of the lane and every rival that was in the lane with it out again (PSW.cap s at most). d: the
+    // places gained (negative: lost), counted by the cars racing at both moments (gain: those ahead then and behind now, lose: the other
+    // way; one retired meanwhile is neither), so not a place won from a car that fell out; pos0, pos1: the places themselves. Only a stop
+    // made (the crew's work done), not a run through the lane; none once the player is over the line. In this.psw (not a plain field: not
+    // in the golden references' digest): n counts the results, res is the last one. Whatever the team radio's setting
+    _pitSwing() {
+      const P = this.player, T = this.track, D = T.def.pit;
+      if (T.open || this.timeTrial || P.net || this.cars.length < 2 || !(this.state === 'racing' || this.state === 'done')) return;
+      let S = this.psw;
+      if (!S) { S = { n: 0, res: null, pre: null, at: null, dE: Infinity, lane: false, stop: false, mates: null, out: -1 }; Object.defineProperty(this, 'psw', { value: S }); }
+      if (P.finished || dnf(P)) { S.lane = false; S.out = -1; return; }
+      const snap = () => { const m = new Map(); for (const o of this.cars) if (o !== P && !dnf(o)) m.set(o, o.pos < P.pos); return { pos: P.pos, m, dist: P.dist }; };
+      if (P.inPit) {
+        if (!S.lane) { S.lane = true; S.stop = false; S.mates = new Set(); S.out = -1; S.at = S.pre && P.dist - S.pre.dist < T.len / 2 ? S.pre : snap(); S.pre = null; }   // (none taken in this run-up, e.g. put back on the road in it: the place now)
+        if (P.pitDone) S.stop = true;
+        for (const o of this.cars) if (o !== P && o.inPit) S.mates.add(o);
+        return;
+      }
+      if (S.lane) { S.lane = false; if (S.stop) S.out = this.time; }   // (out of the lane after a stop: settling)
+      const L = T.len, dE = (((D[1] - P.dist) % L) + L) % L;   // (to the way in, along the lap)
+      if (dE <= PSW.pre && S.dE > PSW.pre) S.pre = snap();   // (the run-up to the way in starts: the place)
+      S.dE = dE;
+      if (S.out < 0) return;
+      const t = this.time - S.out;
+      if (t < PSW.wait) return;
+      if (t < PSW.cap) for (const o of S.mates) if (o.inPit && !o.finished && !dnf(o)) return;   // (a rival in the lane with the player: out first)
+      const gain = [], lose = [];
+      for (const [o, was] of S.at.m) { if (dnf(o)) continue; const now = o.pos < P.pos; if (was && !now) gain.push(o); else if (!was && now) lose.push(o); }
+      S.out = -1; S.res = { d: gain.length - lose.length, pos0: S.at.pos, pos1: P.pos, gain, lose, t: this.time }; S.n++;
     }
     _tow() {
       const cars = this.cars, T = this.track, L = T.len, lv = T.cross.length > 0, racing = this.state === 'racing' || this.state === 'done';

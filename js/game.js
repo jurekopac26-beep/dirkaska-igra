@@ -164,6 +164,7 @@
   const LEN_K = { short: 0.5, normal: 1, long: 2, endurance: 3 };
   const lapsOf = (d) => d.open ? 1 : Math.max(1, Math.round((d.laps || LAPS) * (LEN_K[S.length] || 1)));
   const lapWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' LAP' : ' LAPS') : n + (n === 1 ? ' KROG' : n === 2 ? ' KROGA' : n <= 4 ? ' KROGI' : ' KROGOV');
+  const placeWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' PLACE' : ' PLACES') : n + (n % 100 === 1 ? ' MESTO' : n % 100 === 2 ? ' MESTI' : n % 100 === 3 || n % 100 === 4 ? ' MESTA' : ' MEST');   // 1 MESTO, 2 MESTI, 3 MESTA, 5 MEST
   const trackCache = new Map();
   const getTrack = (id) => { if (!trackCache.has(id)) trackCache.set(id, new Core.Track(Core.TRACKS.find(d => d.id === id) || Core.TRACKS[0])); return trackCache.get(id); };
   // The car: S.car (an index into Core.MODELS) is what the game uses while it runs (the tests set it too). Stored as carId, the
@@ -1578,7 +1579,7 @@
     Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
     $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: ch ? ch.cond.season : S.season, tod: ch ? ch.cond.tod : S.tod }, true);   // (a challenge: its season and time of day)
-    fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset(); tyreBtn();
+    fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; psw = { n: 0, q: null, log: [] }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset(); tyreBtn();
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -2428,7 +2429,7 @@
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
     if (race.pol && race.pol.ev !== polSeen) for (const e of race.pol.log) if (e.n > polSeen) { polSeen = e.n; policeEvent(e.k, P, e); }
     if (race.chr && race.chr.q.length) for (const e of race.chr.q.splice(0)) chrEvent(e.k, e.c, P);
-    if (track.def.pit && race.cars.length > 1) aiPitHUD(P);
+    if (track.def.pit && race.cars.length > 1) { aiPitHUD(P); pitSwingHUD(P); }
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
     if (track.def.pit && !race.nv && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
@@ -3132,6 +3133,30 @@
     if (race.time - aip.last < AIP_GAP || msgT > 0 || P.inPit || P.pitG || pa.st) return;
     aip.q = null; aip.last = q.e.shown = race.time; showMsg(tr('{0} V BOKSIH', String(q.c.name).toUpperCase()), '', 1.6);
   }
+  // a stop's places (Core's Race._pitSwing: the place before the way in against the one once the order has settled after the stop, ~3 s
+  // after the hand-back): a big message +2 MESTI (green), −1 MESTO (red) or BREZ SPREMEMBE, the pit icon; with the team radio on also the
+  // engineer's line with the place now. The message waits for the hand-back (the autopilot's countdown, when it drives out of the lane),
+  // then while another shows (VOZIŠ TI!, the lap's, a rival's in the pits), SWING_WAIT s at most; none once the player is over the line or
+  // in the lane again. log: each result and when its message was shown (the tests read it)
+  const SWING_WAIT = 2;
+  let psw = { n: 0, q: null, log: [] };
+  const swingTxt = (d) => d > 0 ? '+' + placeWord(d) : d < 0 ? '\u2212' + placeWord(-d) : tr('BREZ SPREMEMBE');
+  function pitSwingHUD(P) {
+    const sw = race.psw;
+    if (sw && sw.n !== psw.n) { psw.n = sw.n; const r = sw.res, e = { d: r.d, pos0: r.pos0, pos1: r.pos1, t: race.time, txt: '', shown: null };
+      psw.log.push(e); if (psw.log.length > 20) psw.log.shift(); psw.q = e; swingRadio(r, P); }
+    const q = psw.q; if (!q) return;
+    if (phase !== 'racing' || P.finished || P.inPit) { psw.q = null; return; }
+    if (pa.st) { q.t = race.time; return; }   // (the autopilot's countdown out of the lane still on: from the hand-back)
+    if (msgT > 0 && race.time - q.t < SWING_WAIT) return;
+    psw.q = null; q.shown = race.time; q.txt = swingTxt(q.d); showMsg(q.txt, q.d > 0 ? 'fast' : q.d < 0 ? 'warn' : 'gold', 2);
+  }
+  function swingRadio(r, P) {   // (the engineer: the places and the place now; in his voice the same in English)
+    if (!trd || !race.mk || !S.radio || phase !== 'racing' || P.finished) return;
+    const n = Math.abs(r.d), w = placeWord(n).toLowerCase(), lead = r.pos1 === 1;
+    teamRadioSay(r.d > 0 ? tr(lead ? 'S postankom si pridobil {0}, zdaj vodiš.' : 'S postankom si pridobil {0}, zdaj si {1}.', w, r.pos1) : r.d < 0 ? tr('S postankom si izgubil {0}, zdaj si {1}.', w, r.pos1)
+      : tr(lead ? 'Brez spremembe po postanku, še vedno vodiš.' : 'Brez spremembe po postanku, še vedno si {0}.', r.pos1), 2, r.d > 0 ? 'radioGain' : r.d < 0 ? 'radioLose' : 'radioSame', { n, pl: n === 1 ? 'place' : 'places', pos: r.pos1 });
+  }
   function pitEvent(e) {
     if (phase !== 'racing') return;
     if (e === 'enter') {
@@ -3736,7 +3761,7 @@
     ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
     ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL/],
-    ['pit', /BOKS|PIT|BOX/]];
+    ['pit', /BOKS|PIT|BOX|^[+\u2212]\d+ (MEST|PLACE)|^BREZ SPREMEMBE$|^NO CHANGE$/]];   // (a stop's places: +2 MESTI, −1 MESTO; not the finish's CILJ! 3. MESTO)
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
   function hudCol(dt) {
     const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
@@ -5210,7 +5235,7 @@
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             quick: !!mp.quick, locked: Net.locked, setup: mp.setup && { grid: mp.setup.grid.slice() },
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
