@@ -4717,7 +4717,7 @@ const Render = (function () {
         if (j === 2 || j === 3) { const o = SLOTS[j === 2 ? 3 : 2], [ox, oz] = bpt(bx, o[0], bx.base + o[1]); yaw = Math.atan2(oz - z, ox - x); }   // the talkers face each other
         const m = man(bx, a + ja, bx.base + w + jw, yaw + (crHash(bx.k + j * 9.1) - 0.5) * 0.4, act); if (act === 'gun') m.gun = true; }
       man(bx, crHash(bx.k * 1.9) < 0.5 ? -0.62 : 0.62, bx.wall + 1.5, faceN(bx, -1), 'sit', null, false); }
-    // the player's crew: waits in the garage (two rows), comes out when the car is in the lane
+    // the player's crew: waits in the garage (two rows), takes up its kit when the car is in the lane, comes out as it nears the box
     let roles = null;
     if (P && pb) { const bx = boxes.find(b => b.mine); if (bx) {
       roles = { G: [], O: [], N: [] }; const wA = bx.base + 9.45, wB = bx.base + 10.4, lane = faceN(bx, -1);
@@ -4758,7 +4758,7 @@ const Render = (function () {
       if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dOut: 40, dim: roles ? crDims(P) : null };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
@@ -4770,54 +4770,63 @@ const Render = (function () {
   }
 
   // ---- the player's crew: what everybody does, from the pit state ----
+  // home: in the garage, no stop under way; ready: the car in the lane on its way to the box, everybody takes up his kit where he stands (the
+  // new tyres, the jacks); out: from the 'box' event (Core's pitState 'stop', 40 m before the box, ~4 s before the car stops) out in front of
+  // the garage at a run to his place round where the car will stop (crStopAt), waiting there ready as it comes in; earlier (c.dOut, at most
+  // 80 m before the box) where the crew has further to go than that leaves time for (Montréal: the garages behind its shallow apron); work; clear
   function crewLogic(dt) {
     const c = crew, P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
-    const L = T.len; let dB = c.pb.s - (P.q ? P.q.s : c.pb.s + 999); dB = ((dB % L) + L) % L; if (dB > L / 2) dB -= L;   // metres from the car to its box (along the lane)
+    const bd = T.def.pit ? T.def.pit[3] : null, dB = P.q && bd != null ? -T.boxX(P.q.s, bd) : -999;   // metres from the car to its box (along the lane: Core's box, where the car stops)
     const prev = c.mode; let mode;
     if (P.pitState === 'repair') mode = 'work';
     else if (prev === 'work' || prev === 'clear') mode = P.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
-    else mode = P.inPit && !P.pitDone && dB > -4 ? 'out' : 'home';
+    else mode = !P.inPit || P.pitDone ? 'home' : (P.pitState === 'stop' || dB < c.dOut) && dB > -4 ? 'out' : dB > 0 ? 'ready' : 'home';
     if (mode !== prev) { c.mode = mode; c.clearT = 0;
-      if (mode === 'out') { const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) + (c.pb.stopA || 0) };
-        for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; } }
-      if (mode === 'home') for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; }
+      if (mode === 'ready' || (mode === 'out' && prev !== 'ready')) c.frame = crStopAt(T, bd, c.pb);
+      if (mode === 'out') for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; }
+      if (mode === 'ready') for (const k of [0, 1, 2, 3]) R.N[k].tyre.mode = 'hands';   // (picked up in the garage, the car still far down the lane)
+      if (mode === 'home') { c.dOut = 40; for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; } }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
     if (mode === 'clear') c.clearT += dt;
     const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
     const pb = c.pb, so = pb.stopO != null ? pb.stopO : pb.lane, lat = (x, z) => so + (x - pb.stop[0]) * pb.nx + (z - pb.stop[1]) * pb.nz, gs = pb.tx * pb.nz - pb.tz * pb.nx < 0 ? -1 : 1;   // (gs: the garages' side of the car, +1 its right; -1 a lane on the left: Toronto)
     const wMin = F && lat(F.x, F.z) > pb.apron0 + 1.5 ? pb.apron0 + 0.25 : pb.wallO + 0.35;   // (the car in its box on the apron: nobody on the lane; else nobody across the pit-wall rail)
+    const plan = mode === 'ready', om = plan ? 'out' : mode;   // (ready: the places out there worked out as well, not gone to: how far the crew has to go, c.dOut)
     const go = (m, p, yaw, style, act) => { const wo = lat(p[0], p[1]); if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
+      if (plan) { m.ox = p[0]; m.oz = p[1]; return; }
       m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
     const lf = c.liftF, lr = c.liftR, y0 = P.y || 0;
     const hub = (k) => { const f = k < 2 ? D.fx : D.rx, sd = k % 2 ? 1 : -1, [x, z] = Wp(f, sd * D.hw); return [x, y0 + D.rw + (k < 2 ? lf : lr), z]; };
     c.gunOn = false;
-    if (mode === 'home') {
+    if (mode === 'home' || mode === 'ready') {
+      const rd = mode === 'ready';   // (ready: the new tyres in the hands, the jacks by the handle, nobody chatting)
       for (const m of c.men) { if (m.role === 'idle') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
         const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3;
-        if (m.role === 'O') { m.carry = m.tyre.mode === 'hands'; if (home && m.carry) { m.tyre.mode = 'floor'; m.carry = false; } m.act = m.carry ? 'carry' : m.act0; }
-        if (m.role === 'N') { if (home && m.tyre.mode !== 'floor') m.tyre.mode = 'floor'; m.carry = false; }
-        if (m.role === 'JF' || m.role === 'JR') { m.jack.beta += (CR_B0 - m.jack.beta) * Math.min(1, dt * 6); m.carry = !home; m.act = home ? 'stand' : 'jackR'; }
+        if (m.role === 'O') { m.carry = m.tyre.mode === 'hands'; if (home && m.carry) { m.tyre.mode = 'floor'; m.carry = false; } m.act = m.carry ? 'carry' : rd ? 'stand' : m.act0; }
+        if (m.role === 'N') { if (rd) { m.carry = true; m.act = 'carry'; } else { if (home && m.tyre.mode !== 'floor') m.tyre.mode = 'floor'; m.carry = false; } }
+        if (m.role === 'JF' || m.role === 'JR') { m.jack.beta += (CR_B0 - m.jack.beta) * Math.min(1, dt * 6); m.carry = rd || !home; m.act = m.carry ? 'jackR' : 'stand'; }
         if (m.role === 'LP') { m.carry = true; m.act = 'lolliD'; } }
-    } else {
+    }
+    if (mode !== 'home') {
       for (let k = 0; k < 4; k++) { const front = k < 2, sd = k % 2 ? 1 : -1, fk = front ? D.fx : D.rx, dO = front ? 1 : -1, G = R.G[k], O = R.O[k], N = R.N[k], tO = O.tyre, tN = N.tyre, hb = hub(k);
         // gun man: kneels outboard of the hub; nut off, (the wheel changes), nut on, then stands and raises a hand
-        const wt = mode === 'out' ? (sd * gs < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd * gs < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
+        const wt = om === 'out' ? (sd * gs < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd * gs < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
         const gSpot = Wp(fk, sd * (D.hw + 0.72 + wt)), gYaw = yawC(0, -sd);
-        if (mode === 'out') go(G, gSpot, gYaw, 'jog', 'ready');
+        if (om === 'out') go(G, gSpot, gYaw, 'run', 'ready');
         else if (mode === 'work') { const nut = (u > 0.04 && u < 0.2) || (u > 0.47 && u < 0.64);
           if (u < 0.66) { go(G, gSpot, gYaw, 'snap', 'gunK'); G.aim = hb; G.aimOff = nut ? Math.sin(time * 70 + k) * 0.008 : (u > 0.2 && u < 0.47 ? 0.14 : 0.04); if (nut) { c.gunOn = true; crSpark(hb, sd, F, dt); } }
           else go(G, Wp(fk, sd * (D.hw + 0.95)), gYaw, 'snap', 'signal'); }
         else go(G, Wp(fk - (ex ? 0.3 : 0), sd * (D.hw + 1.25 + (ex ? 0.2 : 0))), gYaw, 'snap', c.clearT < 1 ? 'signal' : 'gun');
         // tyre off: grabs the old wheel, pulls it off and steps back with it
         const oSpot = Wp(fk + dO * 0.66, sd * (D.hw + 0.78 + wt)), oYaw = yawC(-dO * 0.55, -sd * 0.78);
-        if (mode === 'out' || u < 0.18) { go(O, oSpot, oYaw, mode === 'out' ? 'jog' : 'snap', 'readyT'); O.carry = false; }
+        if (om === 'out' || u < 0.18) { go(O, oSpot, oYaw, om === 'out' ? 'run' : 'snap', 'readyT'); O.carry = false; }
         else if (u < 0.24) { go(O, oSpot, oYaw, 'snap', 'grabT'); O.aim = hb; O.carry = false; }
         else if (u < 0.38) { const t2 = crSS(0.24, 0.38, u), back = Wp(fk + dO * (0.66 + 0.55 * t2), sd * (D.hw + 0.78 + 0.45 * t2)); go(O, back, oYaw, 'snap', 'carry'); O.carry = true; tO.mode = 'lerp'; tO.from = hb; tO.t = t2; }
         else { go(O, Wp(fk + dO * (ex ? 0.3 : 1.21), sd * (D.hw + 1.23 + (mode === 'clear' ? (ex ? 0.8 : 0.4) : 0))), oYaw, 'snap', 'carry'); O.carry = true; tO.mode = 'hands'; }
         // tyre on: holds the new wheel ready, puts it on the hub, pushes it home, steps back
         const nSpot = Wp(fk - dO * 0.72, sd * (D.hw + 0.86 + wt)), nYaw = yawC(dO * 0.6, -sd * 0.86);
-        if (mode === 'out' || u < 0.34) { go(N, nSpot, nYaw, mode === 'out' ? 'jog' : 'snap', 'carry'); N.carry = true; tN.mode = 'hands'; }
+        if (om === 'out' || u < 0.34) { go(N, nSpot, nYaw, om === 'out' ? 'run' : 'snap', 'carry'); N.carry = true; tN.mode = 'hands'; }
         else if (u < uW) { const t2 = crSS(0.34, uW, u); go(N, Wp(fk - dO * (0.72 - 0.3 * t2), sd * (D.hw + 0.86 - 0.25 * t2)), nYaw, 'snap', 'carry'); N.carry = true; tN.mode = 'lerp'; tN.to = hb; tN.t = t2; }
         else if (u < 0.58) { go(N, Wp(fk - dO * 0.42, sd * (D.hw + 0.61)), nYaw, 'snap', 'pushT'); N.aim = hb; N.carry = false; tN.mode = 'hidden'; }
         else { go(N, Wp(fk - dO * 0.8, sd * (D.hw + 1.1 + (mode === 'clear' ? 0.3 : 0))), nYaw, 'snap', 'stand'); N.carry = false; tN.mode = 'hidden'; }
@@ -4825,7 +4834,7 @@ const Render = (function () {
       // jack men: front one in front of the nose (the car stops before him), rear one steps in behind the tail once it has stopped
       const JF = R.JF, JR = R.JR, dj = 0.52 + 1.3 * Math.cos(CR_B0);
       const fSpot = Wp(D.nose + 0.22 + dj, 0), rSpot = Wp(D.tail - 0.22 - dj, 0);
-      if (mode === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'jog', 'jackR'); }
+      if (om === 'out') { go(JF, fSpot, yawC(-1, 0), 'run', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'run', 'jackR'); }
       else if (mode === 'work') {
         go(JF, u < 0.93 ? fSpot : Wp(D.nose + 0.22 + dj + 0.5 * crSS(0.93, 1, u), 0), yawC(-1, 0), 'snap', u < 0.89 ? 'jackP' : 'jackR');
         go(JR, u < 0.9 ? rSpot : Wp(D.tail - 0.22 - dj - 0.4 * crSS(0.9, 1, u), 0), yawC(1, 0), 'dash', u < 0.86 ? 'jackP' : 'jackR'); }
@@ -4837,13 +4846,22 @@ const Render = (function () {
       c.liftF = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JF.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0; c.liftR = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JR.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0;
       // lollipop: held across in front of the driver, lifted when the car is released
       const LP = R.LP, lpSpot = Wp(D.nose + 0.95, gs * (D.wid * 0.5 + 0.65)), lpThere = Math.hypot(LP.x - lpSpot[0], LP.z - lpSpot[1]) < 0.6;   // (he carries it upright until he is at his spot)
-      go(LP, lpSpot, yawC(0, -gs), mode === 'out' ? 'jog' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
+      go(LP, lpSpot, yawC(0, -gs), om === 'out' ? 'run' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
     }
     if (mode !== 'work') { c.liftF = 0; c.liftR = 0; }
+    if (plan) { let L = 0; for (const m of c.men) if (m.ox != null) L = Math.max(L, Math.hypot(m.ox - m.hx, m.oz - m.hz));   // the longest way out
+      c.dOut = clamp(40 + 20 * (L / 4.4 + 0.5 + 1.2 - 3.7), 40, 80); }   // (at a run, up to speed and slowing at his place; everybody there 1.2 s before the car stops, ~3.7 s after the 'box' event at the least; ~20 m/s before it)
     c.lift = (c.liftF + c.liftR) / 2; c.liftP = Math.atan2(c.liftF - c.liftR, D.wb);
     // the engineer on the pit wall follows his car
     const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
     if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
+  }
+  // where Core stops the player's car in its box (Track.bayPose: on the apron in front of the garage, parked straight; on a shallow apron at
+  // its edge): the frame the crew waits round (World's pitBox stop only without it)
+  function crStopAt(T, bd, pb) {
+    const bp = bd != null ? T.bayPose(bd) : null, p = bp && T.pitAt(bp.s);
+    if (!p) return { x: pb.stop[0], z: pb.stop[1], h: Math.atan2(pb.tz, pb.tx) + (pb.stopA || 0) };
+    const [x, z] = crRoadAt(T, bp.s, p.sd * bp.o), i = T.idx(bp.s); return { x, z, h: Math.atan2(T.tz[i], T.tx[i]) + p.sd * bp.a };
   }
   function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
     const P = crew.P, v = views.find(v => v.car === P); if (!v) return;

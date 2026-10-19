@@ -137,7 +137,7 @@ try {
     for (const m of o.modes) if (!t2.modes.includes(m)) t2.modes.push(m);
   }
   const v2 = t2.v;
-  T.check('Bathurst (the lane on the left): repaired once, the crew went out, worked and cleared', r2 && r2.rep === 1 && ['out', 'work', 'clear'].every(m => t2.modes.includes(m)), `repairs ${r2 && r2.rep}, crew ${t2.modes.join(',')}`);
+  T.check('Bathurst (the lane on the left): repaired once, the crew took up its kit in the garage, went out, worked and cleared, in that order', r2 && r2.rep === 1 && t2.modes.join('>').startsWith('home>ready>out>work>clear'), `repairs ${r2 && r2.rep}, crew ${t2.modes.join('>')}`);
   T.check('Bathurst: at full right lock the car keeps to the middle of the lane, a ghost, no damage', t2.lock > 40 && t2.dev < 0.8 && t2.ghost > 40 && t2.dmg === 0, `${t2.lock} steps at full lock, at most ${t2.dev.toFixed(2)} m off the lane's centre, ${t2.ghost} steps a ghost, damage ${t2.dmg.toFixed(3)}`);
   T.check('Bathurst: the car stops in its box on the apron to the left, parked straight in front of the garage (within 4° of the lane)', t2.pose && t2.pose.sd === -1 && t2.pose.dLout > 2.5 && Math.abs(t2.pose.yaw) < 4, JSON.stringify(t2.pose));
   T.check('Bathurst: the crew stands off the lane, on the garages\' side', t2.lane === 0 && t2.work > 0 && t2.max < 9.2, `at least ${t2.work.toFixed(2)} m beyond the lane's edge at work, at most ${t2.max.toFixed(2)} m, ${t2.lane} samples on the lane`);

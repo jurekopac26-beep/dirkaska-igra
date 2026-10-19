@@ -547,7 +547,7 @@
        sphere just inside the camera's far plane (farUpdate), faded into the haze ---- */
     let FAR = null;
     {
-      const P0 = [], C = [], I = [], HZ = [];
+      const P0 = [], C = [], I = [], HZ = [], CL = [];   // (CL: each point's grid cell, farUpdate)
       const inner = (x, z, m) => x > out.bounds.minX + m && x < out.bounds.maxX - m && z > out.bounds.minZ + m && z < out.bounds.maxZ - m;
       const grid = (F, skip) => {   // a grid of the DEM (heights above the start line), its cells skipped where skip(x, z) for all four corners
         const Hh = (() => { const b = atob(F.b64), a = new Float32Array(b.length); for (let k = 0; k < b.length; k++) a[k] = F.lo + b.charCodeAt(k) * F.step; return a; })(), v0 = P0.length / 3;
@@ -557,7 +557,7 @@
           const vn = noise(x * 1.7, z * 1.7), scrub = granite ? clamp(1.2 - sl * 1.6 + (vn - 0.5) * 1.2, 0, 1) : 0;   // (the granite dome: bare pink rock on the steep faces, grey-green scrub in the gullies and on the gentler ground)
           const rock = [0.62 + (vn - 0.5) * 0.12, 0.47 + (vn - 0.5) * 0.08, 0.4], veg = WET ? [0.3, 0.38, 0.22] : [0.44, 0.43, 0.3];
           const col = sea ? [0.38, 0.55, 0.6] : granite ? [lerp(rock[0], veg[0], scrub), lerp(rock[1], veg[1], scrub), lerp(rock[2], veg[2], scrub)] : WET ? [lerp(0.33, 0.4, k), lerp(0.42, 0.44, k), lerp(0.24, 0.3, k)] : [lerp(0.5, 0.44, k), lerp(0.48, 0.44, k), lerp(0.32, 0.32, k)];
-          P0.push(x, sea ? WY - 0.4 : h, z); C.push(col[0], col[1], col[2]); HZ.push(clamp((d - 1500) / 14000, 0, 1) * 0.5); }
+          P0.push(x, sea ? WY - 0.4 : h, z); C.push(col[0], col[1], col[2]); HZ.push(clamp((d - 1500) / 14000, 0, 1) * 0.5); CL.push(F.cell); }
         for (let j = 0; j + 1 < F.nz; j++) for (let i = 0; i + 1 < F.nx; i++) { const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell;
           if (skip(x, z) && skip(x + F.cell, z) && skip(x, z + F.cell) && skip(x + F.cell, z + F.cell)) continue;
           const a = v0 + j * F.nx + i, b = a + 1, d2 = a + F.nx, e = d2 + 1; I.push(a, d2, b, b, d2, e); } };
@@ -565,7 +565,7 @@
       grid(D.far, (x, z) => inner(x, z, 200) || inHill(x, z));
       grid(Hp, (x, z) => inner(x, z, 120));
       // the taller buildings of the city (OpenStreetMap heights): boxes
-      const quad = (a, b, cc, d, col) => { const v = P0.length / 3; for (const p of [a, b, cc, d]) { P0.push(p[0], p[1], p[2]); C.push(col[0], col[1], col[2]); HZ.push(0.1); } I.push(v, v + 1, v + 2, v, v + 2, v + 3); };
+      const quad = (a, b, cc, d, col) => { const v = P0.length / 3; for (const p of [a, b, cc, d]) { P0.push(p[0], p[1], p[2]); C.push(col[0], col[1], col[2]); HZ.push(0.1); CL.push(0); } I.push(v, v + 1, v + 2, v, v + 2, v + 3); };
       for (const [x, z, Lb, Wb, ang, h] of D.sky) {
         const y0 = demH(clamp(x, out.bounds.minX, out.bounds.maxX), clamp(z, out.bounds.minZ, out.bounds.maxZ)) - 1, cs = Math.cos(ang), sn = Math.sin(ang), Pp = (u, v, y) => [x + cs * u - sn * v, y, z + sn * u + cs * v];
         const col = h > 30 ? vary([0.56, 0.66, 0.7], R, 0.18) : vary([0.84, 0.82, 0.78], R, 0.12), cr = [[-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]];
@@ -582,7 +582,7 @@
       m.customProgramCacheKey = () => 'tsvFar';
       const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'tsvFar';
       mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) Uh.uHz.value.copy(sc.fog.color); };
-      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0, cf: 0 };
+      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), CL: Float32Array.from(CL), cx: 1e9, cy: 0, cz: 0, cf: 0 };
     }
     const farUpdate = (cam) => {   // (no camera: the far view in its own places, the world test's pose)
       const F = FAR, g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
@@ -591,6 +591,10 @@
       F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
       const R0 = cam.far - 60, R1 = cam.far - 6;
       for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, Dd = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, Dd - 400) / 3000)), f = r / Dd;
+        // (the corners of the cell the camera is over (the 600 m cells reach into the area's edge, its pits' end; the hill's 100 m ones) would be
+        // pulled onto the sphere all round it, the cell a plane through the view a few metres under a high camera: the pit stop's, the whole
+        // screen green. Those within 1.5 cells folded into one point under the camera, under the ground: their cells nothing, or behind it all)
+        if (F.CL[v] && dx * dx + dz * dz < 2.25 * F.CL[v] * F.CL[v]) { p[k] = c.x; p[k + 1] = c.y - R0; p[k + 2] = c.z; hz[v] = 1; continue; }
         p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
       g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
     };
