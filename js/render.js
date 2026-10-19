@@ -3549,8 +3549,10 @@ const Render = (function () {
   const pitLook = (T) => { const L = Object.assign({}, PIT_LOOK.def, PIT_LOOK[T.def.theme]); if (T.def.pitApron) L.ap = T.def.pitApron; return L; };
   function pitPuddles(T, pos, uv, pw, idx) {
     const P0 = T.def.pit, L = pitLook(T), G = world.groundH, sd = P0[0] < 0 ? -1 : 1;
-    const pt = (s, o, a, film) => { const i = T.idx(s), x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o, g = G ? G(x, z) : NaN; let y = T.hasElev && T.hy ? T.hy[i] : 0;
-      if (g > y) y = Math.min(y + 1, g); pos.push(x, y + 0.04, z); pw.push(a, film); };   // (on the floor; a world's ground over it, Toronto's terrain over the apron: on that)
+    const pt = (s, o, a, film) => {   // (between the track's samples, as Track.pitAt: on the floor; a world's ground over it, Toronto's terrain over the apron: on that)
+      const f = (((s % T.len) + T.len) % T.len) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f), L = (A) => A[i] + (A[j] - A[i]) * u;
+      const x = L(T.px) + L(T.nx) * sd * o, z = L(T.pz) + L(T.nz) * sd * o, g = G ? G(x, z) : NaN; let y = T.hasElev && T.hy ? L(T.hy) : 0;
+      if (g > y) y = Math.min(y + 1, g); pos.push(x, y + 0.06, z); pw.push(a, film); };   // (over the builders' lanes, aprons and lines: 0.022 to 0.044 over the road)
     const quad = (a, b, c, d) => { if (sd > 0) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c); };   // (facing up: a b along o, b c along s)
     if (!L.asph) {   // the film: three rows across the apron (w past the lane's edge, the opacity), a strip along the lane
       const rows = [[0.03, 1], [L.ap - 2.6, 1], [L.ap - 0.3, 0.3]]; let prev = -1;
@@ -3562,8 +3564,9 @@ const Render = (function () {
       }
     }
     for (let q = P0[1] + 3; q < P0[2]; q += 6) {   // the puddles: along the lane's edges, now and then on the apron (short of the garages)
-      const s = T.startS + q, p = T.pitAt(s), h = hash3(q * 0.173 + 11); if (!p || p.t < 0.999 || h < 0.35) continue;
-      const apr = L.ap > 4.5 && hash3(q * 0.61 + 2) < 0.4, e = hash3(q * 0.37 + 5) < 0.5 ? -1 : 1, Lq = 1.6 + 3 * hash3(q * 0.83 + 1), W = 0.7 + 1.1 * hash3(q * 0.29 + 6);
+      const s = T.startS + q, p = T.pitAt(s), h = hash3(q * 0.173 + 11), Lq = 1.6 + 3 * hash3(q * 0.83 + 1), full = (d) => { const r = T.pitAt(s + d); return !!r && r.t >= 0.999; };
+      if (!p || h < 0.35 || !full(-Lq / 2) || !full(0) || !full(Lq / 2)) continue;   // (all of it where the lane and the apron run full width)
+      const apr = L.ap > 4.5 && hash3(q * 0.61 + 2) < 0.4, e = hash3(q * 0.37 + 5) < 0.5 ? -1 : 1, W = 0.7 + 1.1 * hash3(q * 0.29 + 6);
       const o = apr ? p.lout + 0.8 + W / 2 + (L.ap - 3.8 - W) * hash3(q * 0.47 + 3) : p.o + e * (3.2 - W / 2 - 0.5 * hash3(q * 0.53 + 8)), b = pos.length / 3, k = Math.floor(hash3(q * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
       pt(s - Lq / 2, o - W / 2, 1, 0); pt(s - Lq / 2, o + W / 2, 1, 0); pt(s + Lq / 2, o + W / 2, 1, 0); pt(s + Lq / 2, o - W / 2, 1, 0);
       uv.push(cu, cv, cu + 0.5, cv, cu + 0.5, cv + 0.5, cu, cv + 0.5); quad(b, b + 1, b + 2, b + 3);
@@ -3964,14 +3967,14 @@ const Render = (function () {
   // over the apron (it hides the garages' front from the camera behind the car: the lamps hang in front of it); kind: 'in' an open garage
   // with its inside built (its floor and back wall lit), 'door' a dark front standing for the inside (dz: where it is; the glow on it), 'tent'
   // a roof on legs, 'bulb' a stall or a shed (bulbs under its eave, no light bar, no lamps over the lane; back: its back wall). The rain
-  // (pitPuddles): ap, the apron's depth past the lane's outer edge where the lane runs full width (Montréal's: def.pitApron); asph: an apron
-  // of the road's asphalt (it darkens with the road: no film of water over it)
+  // (pitPuddles): ap, the apron's depth in the open past the lane's outer edge where the lane runs full width (Montréal's: def.pitApron; Crystal
+  // Palace's stalls' roofs over the last of it); asph: an apron of the road's asphalt (it darkens with the road: no film of water over it)
   const PIT_LOOK = {
     def: { gf: 9, h: 3.3, w: 8.2, d: 6.9, bz: -0.17, kind: 'in', ap: 9 },   // (pitLaneScenery: Spa, Newcastle; the Red Bull Ring's building)
     spa: { eave: [-0.9, 8.6] }, rbring: { eave: [-2.4, 14.7] }, rio: { w: 9.5, d: 7.85 }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25 },
     townsville: { gf: 9.7, h: 3.7, w: 11.4, d: 11.1, eave: [-1.2, 4.6] }, bathurst: { h: 3.4, w: 9.4, kind: 'door', dz: 0.26, eave: [-0.8, 7.8], asph: true }, bangsaen: { gf: 8, h: 2.45, w: 8.6, kind: 'door', dz: -0.03, ap: 8 },
     detroit: { gf: 9.4, h: 2.6, w: 9.2, d: 5.97, kind: 'tent' }, troisrivieres: { gf: 9.2, h: 2.9, w: 8.8, d: 6.6, bz: -0.26, kind: 'tent' },
-    cpalace: { h: 2.7, w: 8.8, d: 2.6, kind: 'bulb' }, longford: { h: 3.9, w: 9.4, d: 5.8, kind: 'bulb', back: true },
+    cpalace: { h: 2.7, w: 8.8, d: 2.6, kind: 'bulb', ap: 8.6 }, longford: { h: 3.9, w: 9.4, d: 5.8, kind: 'bulb', back: true },
   };
   const PIT_IC = [0.82, 0.9, 1.0], PIT_NC = [1.0, 0.95, 0.84], PIT_WC = [1.0, 0.7, 0.4];   // (inside: cool LED; the lamps: white; the old bulbs: warm)
   let pitTex = null, pitL = null;

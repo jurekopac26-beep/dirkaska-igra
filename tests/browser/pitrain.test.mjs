@@ -32,7 +32,7 @@ try {
         if (u[2] * v[0] - u[0] * v[2] <= 0) o.down++; }
       // a sample of the vertices against the world: the floor just under each (a ray down from 0.3 m over it), nothing right over it (up to 3 m)
       const meshes = [], mid = [0, 0]; for (let k = 0; k < n; k++) { mid[0] += P[k * 3] / n; mid[1] += P[k * 3 + 2] / n; }
-      W.root.traverseVisible(m => { if (m.isMesh && !m.isInstancedMesh && m.geometry) {   // (not the instanced crowds, trees and props: each instance tested)
+      W.root.traverseVisible(m => { if (m.isMesh && !m.isInstancedMesh && m.renderOrder >= 0 && m.geometry) {   // (not the instanced crowds, trees and props: each instance tested; not a far backdrop drawn first)
         if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere(); const c = m.geometry.boundingSphere.center.clone().applyMatrix4(m.matrixWorld); if (Math.hypot(c.x - mid[0], c.z - mid[1]) < 400 + m.geometry.boundingSphere.radius) meshes.push(m); } });
       const rc = new THREE.Raycaster(), V = THREE.Vector3; let on = 0, open = 0, tested = 0; const off = [];
       for (let k = 0; k < n; k += Math.max(1, Math.floor(n / 36))) {
