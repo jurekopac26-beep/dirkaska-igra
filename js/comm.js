@@ -119,6 +119,11 @@ const Comm = (() => {
     radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
     radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
     radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
+    // the weather forecast at the way in to a stop (a changing weather, game.js fcRadio): {when} 'within a lap' or 'in 2 to 3 laps', {p} the chance
+    radioFcRain: ['Forecast: rain {when}, {p} percent chance.', 'The radar has rain coming {when}, {p} percent.'],
+    radioFcStop: ['Forecast: the rain stops {when}, {p} percent chance.', 'The rain should ease off {when}, {p} percent.'],
+    radioFcDry: ['Forecast: dry to the finish.', 'No rain on the radar, dry to the end.'],
+    radioFcWet: ['Forecast: rain to the finish.', 'It stays wet to the end.'],
     radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
     radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
     radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],

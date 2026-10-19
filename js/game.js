@@ -490,12 +490,13 @@
   const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
   // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
-  let wxNext = null;   // (tests: the weather of the next race)
+  let wxNext = null, wxWet = null;   // (tests: the weather of the next race; a changing one's start, wet or not, rolled when the menu shows it: rollWet)
   function weatherOf(d) {
     if (wxNext) { const W = wxNext; wxNext = null; return W; }
     if (S.weather === 'storm') return { rain: 1, wx: null, storm: true };   // (a thunderstorm: rain all the race, lightning and thunder)
     if (S.weather !== 'change' || isTT(d)) return { rain: rainOf(), wx: null };
-    const wet = Math.random() < 0.5, est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38;   // (an open road: its one run)
+    const wet = wxWet != null ? wxWet : Math.random() < 0.5, est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38;   // (an open road: its one run)
+    wxWet = null;
     return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + Math.random() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + Math.random() * 30), to: wet ? 0 : 1 } };
   }
   const demoRain = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : 0;
@@ -1587,7 +1588,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; fcKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
@@ -2917,6 +2918,30 @@
     el.textContent = on ? tr(tyreName(P.ty)) + ' ' + left + '%' : '';
     $('btn-tyre').style.setProperty('--tl', on ? Math.max(0, Math.min(1, left / 100)) : 1);   // (the tyre button's ring: what they have left, at a glance)
   }
+  // the weather forecast (Menljivo vreme: Core Race.forecast, the engineer's, in the player's laps and roughly): its words (čez 2–3 kroge:
+  // the noun goes with the last number), at the way in to a stop on the radio (with the radio on) and in the custom stop's panel above the
+  // tyres (stopOpen); the HUD's cloud under the tyres with the laps while the rain is on its way (a race with tyres)
+  function fcText(f) {
+    if (!f) return '';
+    if (f.k === 'dry' || f.k === 'wet') return tr(f.k === 'dry' ? 'Suho do konca dirke.' : 'Dež do konca dirke.');
+    const st = f.k === 'stop';
+    if (f.hi <= 1) return tr(st ? 'Dež bo ponehal v manj kot krogu, verjetnost {0} %.' : 'Dež v manj kot krogu, verjetnost {0} %.', f.p);
+    const m = f.hi % 100, g = m === 2 ? 0 : m === 3 || m === 4 ? 1 : 2;   // (2: kroga; 3, 4: kroge; 5 and on: krogov. A range ends at 2 at least)
+    return tr(st ? (g === 0 ? 'Dež bo ponehal čez {0}–{1} kroga, verjetnost {2} %.' : g === 1 ? 'Dež bo ponehal čez {0}–{1} kroge, verjetnost {2} %.' : 'Dež bo ponehal čez {0}–{1} krogov, verjetnost {2} %.')
+      : (g === 0 ? 'Dež čez {0}–{1} kroga, verjetnost {2} %.' : g === 1 ? 'Dež čez {0}–{1} kroge, verjetnost {2} %.' : 'Dež čez {0}–{1} krogov, verjetnost {2} %.'), f.lo, f.hi, f.p);
+  }
+  const FC_V = { rain: 'radioFcRain', stop: 'radioFcStop', dry: 'radioFcDry', wet: 'radioFcWet' };   // (the engineer's voice: Comm LINES)
+  function fcRadio(f) {
+    if (!f || !trd || !race.mk || !S.radio) return;
+    teamRadioSay(tr('Napoved: {0}', fcText(f)), 2, FC_V[f.k], { when: f.hi == null ? '' : f.hi <= 1 ? 'within a lap' : 'in ' + f.lo + ' to ' + f.hi + ' laps', p: f.p });
+  }
+  let fcKey = '';
+  function fcHUD(P) {
+    const f = phase === 'racing' && race.wst && race.wst.tyres && !P.finished ? race.forecast(P) : null, on = !!f && f.k === 'rain';
+    const txt = on ? (f.hi <= 1 ? tr('< 1 KR.') : tr('{0}–{1} KR.', f.lo, f.hi)) : '', key = on ? txt + '|' + f.p : '';
+    if (key === fcKey) return; fcKey = key;
+    const el = $('h-fc'); el.className = on ? 'on' : ''; el.textContent = txt; el.setAttribute('aria-label', on ? fcText(f) : tr('Napoved vremena'));
+  }
   // the fuel (a race with fuel on): the gauge under the tyres, a tick on it at what it takes to the line (the car's own burn); a warning on
   // the lap it would not last another when it will not reach the line, the last drops (a crawl to the pits) when it is empty
   let fuelKey = '', fuelTold = { low: false, out: false };
@@ -3163,14 +3188,15 @@
      its side at the right under the column, hudCol stopping the column above it): the tyres (a race with tyres: a compound or the rain
      tyres, or none), the fuel (a race with fuel: the tank up to 100, 50 or 25 %, nothing when it holds more; an electric car its battery),
      the repairs (a damaged car: all, only what is needed, none: Core.stopJobs), each choice's seconds and the stop's (Core.stopDur: the
-     jobs at once), and POTRDI. Its bar the time left to choose (Race.pitETA: to the box). POTRDI: the choice is the car's plan (Core
-     c.pitPlan); not chosen when the car stands at its box: the defaults (stopDef), whatever was tapped meanwhile. Then the bar under the
-     map (pitBar) counts down to the hand-back. Touch, mouse, the keys (up and down the rows, left and right or 1-5 in a row, Enter) and the
+     jobs at once), and POTRDI; above the tyres the weather forecast in a changing weather (fcText; on the radio too, fcRadio). Its bar
+     the time left to choose (Race.pitETA: to the box). POTRDI: the choice is the car's plan (Core c.pitPlan); not chosen when the car
+     stands at its box: the defaults (stopDef), whatever was tapped meanwhile. Then the bar under the map (pitBar) counts down to the
+     hand-back. Touch, mouse, the keys (up and down the rows, left and right or 1-5 in a row, Enter) and the
      pad (the d-pad, A). The film camera (Render.pitPace) at a third of its pace while the panel shows, catching up after POTRDI.
      cst.rows: the rows shown; sel: the choice, def: the defaults, plan: what the stop was given; tl: the seconds to the box shown, of tl0;
      te / he: the estimates (every 12 steps), h: the seconds to the hand-back shown, of h0; foc: the row the keys work on (kb: keys used);
-     f0, keep: the fuel before the stop, the tyres left on (the done message) ---------------- */
-  const cst = { on: false, ok: false, rows: [], sel: null, def: null, plan: null, tl: 0, tl0: 0, te: 0, he: 0, h: 0, h0: 0, n: 0, foc: 0, kb: false, f0: 0, keep: false };
+     f0, keep: the fuel before the stop, the tyres left on (the done message); fc: the forecast at the way in (Race.forecast) ---------------- */
+  const cst = { on: false, ok: false, rows: [], sel: null, def: null, plan: null, tl: 0, tl0: 0, te: 0, he: 0, h: 0, h0: 0, n: 0, foc: 0, kb: false, f0: 0, keep: false, fc: null };
   const SP_TY = [['S', 'Mehke'], ['M', 'Srednje'], ['H', 'Trde'], ['W', 'Dežne'], ['keep', 'Ne menjaj']], SP_TY0 = [['D', 'Suhe'], ['W', 'Dežne'], ['keep', 'Ne menjaj']];   // (SP_TY0: a race without compounds)
   const SP_FUEL = [1, 0.5, 0.25], SP_FIX = [['all', 'Vse'], ['need', 'Nujno'], ['none', 'Brez']], SP_TC = { S: '#e03027', M: '#f2c616', H: '#eeeeee', W: '#4fa8ff', D: '#a3a8b1' };
   // the defaults: the rain tyres on a wet racing line, else the slicks picked for the next stop (the tyre button, Gume v boksih) or the soft
@@ -3182,12 +3208,14 @@
     if (P.ty) rows.push('ty');
     if (P.fuel != null && race.fuelRate) rows.push('fuel');
     if (dmgOn() && (P.dmg > 0.005 || lost)) rows.push('fix');
-    Object.assign(cst, { rows, def: stopDef(P), plan: null, foc: 0, kb: false, ok: false, n: 0, h0: 0, keep: false, f0: P.fuel || 0 }); cst.sel = Object.assign({}, cst.def);
+    Object.assign(cst, { rows, def: stopDef(P), plan: null, foc: 0, kb: false, ok: false, n: 0, h0: 0, keep: false, f0: P.fuel || 0, fc: race.forecast(P) }); cst.sel = Object.assign({}, cst.def);
     P.pitPlan = rows.length ? Object.assign({}, cst.def) : null;   // (Core's until POTRDI: the defaults)
+    fcRadio(cst.fc);   // (a changing weather: the engineer's forecast on the radio)
     if (!rows.length) { stopDecide(P, false); return; }   // (nothing to choose: as ever, the bar to the hand-back from the way in)
     const row = (r, lbl, items) => `<div class="sp-row" data-r="${r}"><div class="sp-lbl"><b>${tr(lbl)}</b><span></span></div><div class="sp-seg" style="--n:${items.length}">${items.join('')}</div></div>`;
     const btn = (v, inner, cls) => `<button type="button" tabindex="-1" data-v="${v}"${cls ? ` class="${cls}"` : ''}>${inner}</button>`;
     let h = `<div class="sp-head"><b>${tr('POSTANEK PO MERI')}</b><span>${tr('avtopilot pelje')}</span><em></em><i class="sp-tb"><i></i></i></div>`;
+    if (cst.fc && rows.includes('ty')) h += `<div class="sp-fc" data-k="${cst.fc.k}"><i></i><span>${fcText(cst.fc)}</span></div>`;   // (the forecast: a line above the tyres)
     if (rows.includes('ty')) h += row('ty', 'Gume', (P.ty.c ? SP_TY : SP_TY0).map(([v, n]) => btn(v, (v === 'keep' ? '<i class="sp-x"></i>' : `<i class="sp-ty" style="--tc:${SP_TC[v]}">${v === 'D' ? '' : v}</i>`) + `<span>${tr(n)}</span>`, v === 'keep' ? 'nx' : '')));
     if (rows.includes('fuel')) h += row('fuel', P.m.ev ? 'Baterija' : 'Gorivo', SP_FUEL.map(f => btn(f, `<b>${Math.round(f * 100)}\u00a0%</b><small></small>`)));
     if (rows.includes('fix')) h += row('fix', 'Popravilo', SP_FIX.map(([v, n]) => btn(v, `<b>${tr(n)}</b><small></small>`, v === 'none' ? 'warn' : '')));
@@ -3726,7 +3754,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    updateDamageHUD(P); swapHUD(P); wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
@@ -5112,10 +5140,13 @@
     },
     setPkRoad(road) { S.pkRoad = road === 'pikesg' ? 'pikesg' : 'pikes'; S.track = S.pkRoad; save(); refreshSegs(); },
     setOption: (k, v) => setOption(k, v),
-    // the weather of a "random" day is decided now (the intro over the track shows the rain it will have)
+    // the weather of a "random" day is decided now (the intro over the track shows the rain it will have); a changing one's start (the
+    // race weekend's Saturday: wet, the rain stops during the race; the change itself is rolled at the start, weatherOf); a time trial's
+    // changing weather is a random one
     rollWet() {
-      const w = S.weather; if (w === 'rain' || w === 'storm') return true;
-      if (w !== 'random') return false;
+      const w = S.weather; wxWet = null; if (w === 'rain' || w === 'storm') return true;
+      if (w === 'change' && !isTT(Core.TRACKS.find(x => x.id === S.track))) { wxWet = Math.random() < 0.5; return wxWet; }
+      if (w !== 'random' && w !== 'change') return false;
       const wet = Math.random() < (RAIN_P[S.track] || 0.35); wxNext = { rain: wet ? 1 : 0, wx: null }; return wet;
     },
     // Race!: the car must be the player's; the track is loaded (its loading screen), then fn(start) says what comes first (the intro) and calls start for the race

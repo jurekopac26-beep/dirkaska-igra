@@ -5237,6 +5237,30 @@ const Core = (function () {
       const x = T.boxX(c.q.s, bd), at = c.pitState === 'repair' || c.pitDone;
       return { box: at ? 0 : run(x, c.speed, inC, (d) => d >= -0.4), out: run(c.pitDone ? Math.max(0, x) : 0, c.pitDone ? c.speed : 0, outC, (d, v) => d + Math.max(12, v * 1.3) >= e) };
     }
+    // the engineer's weather forecast for c (game.js: the team radio, the custom stop's panel, the HUD's cloud), in c's laps: a changing
+    // weather's one change (opts.weather, wst.wx) is known to the second here, but told only roughly. k: 'rain' (dry now, the rain starts
+    // before c's finish: wx.at) or 'stop' (wet now, the rain gone before it: wx.at + dur), with n the laps to it at c's pace (_lapT); lo..hi
+    // a range of whole laps round n, always with n in it, wider the further off (0..1: within a lap), placed by the race's seed and c's lap
+    // (the same all the lap, a new estimate the next); p the chance told (%, in fives, 50 to 95: lower the further off). Else 'dry' / 'wet'
+    // to the finish (the change behind, or after the finish). Read only (its lap time kept in an object): a race steps the same whether it
+    // is asked or not. null: no change in this race (a steady weather, an online friend's), an open road, a car out of it
+    forecast(c) {
+      const W = this.wst, X = W && W.wx, T = this.track;
+      if (!X || T.open || !c || c.finished || c.net || Math.abs(X.r1 - X.r0) < 0.2) return null;
+      const lt = this._lapT(c), left = Math.max(0, this.laps * T.len - Math.max(0, c.dist)) / T.len * lt, wet = X.r1 > X.r0, dt = (wet ? X.at : X.at + X.dur) - this.time;
+      if (dt <= 0 || dt > left) return { k: (dt <= 0 ? X.r1 : this.rain) > 0 ? 'wet' : 'dry', n: null, lo: null, hi: null, p: null };
+      const n = dt / lt, R = rng(((this.opts.seed || 7) * 7919 + Math.max(0, c.lap) * 104729 + 61) >>> 0), u = R(), j = R(), w = 0.3 + 0.15 * n;
+      return { k: wet ? 'rain' : 'stop', n, lo: n < 1 ? 0 : Math.max(1, Math.floor(n - w * u)), hi: n < 1 ? 1 : Math.ceil(n + w * (1 - u)), p: clamp(Math.round((92 - 9 * n + (j - 0.5) * 12) / 5) * 5, 50, 95) };
+    }
+    // a lap's time for c (s, forecast): its best lap so far; before the first, the AI's speed profile round the lap a tenth slower (kept, in
+    // an object, while the profile stays: it changes with the grip)
+    _lapT(c) {
+      let b = Infinity; for (const t of c.lapTimes || []) if (t > 1 && t < b) b = t;
+      if (b < Infinity) return b;
+      const T = this.track, V = this.vprof, K = this._fcK || (this._fcK = {});
+      if (K.v !== V) { let t = 0; for (let i = 0; i < T.N; i++) t += T.ds / Math.max(5, V[i]); K.v = V; K.t = t * 1.1; }
+      return K.t;
+    }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut one; 'damage', badly damaged), the laps it can be made in
     // (from: the first after which a full tank and fresh tyres last to the line; to: the last on which the car still gets round to the pit
