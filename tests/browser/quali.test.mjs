@@ -2,7 +2,7 @@
 // with qualifying (the player alone on the straight before the line, no lights, "Preskoči kvalifikacije" in the pause menu); the flying
 // lap to the line; the rivals' laps and the grid on the results screen (every driver by time, the player's row, "Na štart"); the race on
 // that grid; the flying lap kept as the ghost and replayed on the next qualifying lap on the lap clock (from the line on, not on the
-// run-up); "Ponovi krog" drives the lap again and keeps the rivals' laps; "Preskoči" goes to the usual grid (12th); qualifying off:
+// run-up); "Ponovi krog" drives the lap again and keeps the rivals' laps; "Preskoči" goes to the back of the grid (13th of 13); qualifying off:
 // Start goes straight to the race; a time trial never qualifies; a car with a field of its own (TITAN) qualifies against that field.
 //   node tests/browser/quali.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -73,7 +73,7 @@ try {
   const gLap = await ghostNow();
   T.check('the next qualifying: no ghost on the run-up, the ghost of the best lap on the flying lap, right beside the player (the same autopilot line, the same lap clock)', !gRun && !!gLap && gLap.op > 0.2 && gLap.d >= 0 && gLap.d < 12, JSON.stringify({ gRun, gLap }));
 
-  // 5. "Ponovi krog": the lap again, the rivals' laps already driven stay; "Preskoči": the usual grid
+  // 5. "Ponovi krog": the lap again, the rivals' laps already driven stay; "Preskoči": the back of the grid
   await page.waitForFunction(() => window.__game.qual.sims >= 2, null, { timeout: 120000 });   // (a few of the rivals' laps done: the frames run them, also in the pause)
   const k0 = (await state()).q;
   await act('restart'); await page.waitForTimeout(300);
@@ -81,7 +81,7 @@ try {
   T.check('Ponovi krog: the qualifying lap again, the rivals\' laps (and the seed) kept', k1.quali && k1.back === 400 && k1.q.seed === k0.seed && k0.sims >= 2 && k1.q.sims >= k0.sims, JSON.stringify({ before: k0, after: k1.q }));
   await act('quali-skip'); await page.waitForTimeout(400);
   const sk = await state();
-  T.check('Preskoči kvalifikacije: straight to the race, the usual grid (12th of 13)', !sk.quali && sk.cars === 13 && sk.grid === 12 && sk.screen === 'none' && !sk.q, JSON.stringify(sk));
+  T.check('Preskoči kvalifikacije: straight to the race, from the back of the grid (13th of 13)', !sk.quali && sk.cars === 13 && sk.grid === 13 && sk.screen === 'none' && !sk.q, JSON.stringify(sk));
 
   // 6. qualifying off: Start goes straight to the race; a time trial never qualifies
   await act('to-title'); await page.waitForTimeout(200); await act('to-track'); await page.waitForTimeout(300);
@@ -92,7 +92,7 @@ try {
   await page.evaluate(() => document.querySelector('[data-set="quali"] button[data-v="1"]').click());
   await startTrack(page, 'pikes');
   const tt = await page.evaluate(() => { const r = window.__game.race; return { tt: r.timeTrial, quali: r.quali, n: r.cars.length }; });
-  T.check('qualifying off: Start goes straight to the race; the Pikes Peak time trial has no qualifying', !off.quali && off.cars === 13 && off.grid === 12 && tt.tt && !tt.quali && tt.n === 1, JSON.stringify({ off: { quali: off.quali, cars: off.cars, grid: off.grid }, tt }));
+  T.check('qualifying off: Start goes straight to the race; the Pikes Peak time trial has no qualifying', !off.quali && off.cars === 13 && off.grid === 13 && tt.tt && !tt.quali && tt.n === 1, JSON.stringify({ off: { quali: off.quali, cars: off.cars, grid: off.grid }, tt }));
 
   // 7. a car whose rivals race in its own field (TITAN: nine of them, all TITANs): qualifying sizes itself to the race and drives the race's
   //    cars; the race after it has the same nine
