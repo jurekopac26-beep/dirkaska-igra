@@ -10,7 +10,7 @@ const T = checker('lang');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { lang: 'en', quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', car: 0 }, { width: 390, height: 844 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { lang: 'en', quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', car: 0, mode: 'tt' }, { width: 390, height: 844 });   // (mode tt: Pikes Peak's tab on the leaderboard is its time trial's)
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const txt = (id) => page.evaluate((id) => document.getElementById(id).textContent, id);
   // the Slovenian left on what is shown (the screen on show, the HUD in a race, the toast): words with č, š, ž but the names of the

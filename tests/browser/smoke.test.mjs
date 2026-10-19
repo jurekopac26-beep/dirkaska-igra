@@ -131,7 +131,7 @@ try {
 
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
   {
-    await startTrack(page, 'pikes');
+    await startTrack(page, 'pikes', 'tt');   // (Pikes Peak's time trial: the way tapped on its card, the race the other)
     const r = await page.evaluate(async () => {
       const g = window.__game;
       for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }

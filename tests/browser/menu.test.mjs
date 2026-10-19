@@ -39,7 +39,7 @@ try {
     T.check('Single race: the four modes', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel"]', JSON.stringify(m));
 
     // 3. the tracks of every mode: the groups and their counts as the game's tracks say, every track with its picture
-    const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']];
+    const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']], roads = {};
     for (const [mode, gm] of MODES) {
       await click(page, 'mode:' + mode);
       const exp = await page.evaluate((gm) => {
@@ -50,6 +50,8 @@ try {
       const tabs = await ev(page, 'return Object.fromEntries([...root.querySelectorAll(".groups button")].map(b => [b.dataset.act.split(":")[1], +b.querySelector("i").textContent]));');
       const same = ['circuit', 'road', 'rally', 'test'].every(g => (tabs[g] === undefined ? 0 : tabs[g]) === (exp[g] || 0) || (g === 'test' && tabs[g] === undefined && !exp[g]));
       T.check(`${mode}: the groups of tracks and their counts are the game's (${JSON.stringify(exp)})`, same, JSON.stringify({ tabs, exp }));
+      roads[mode] = tabs.road;
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak, Sani Pass and the Moki Dugway too)`, roads.race === roads.trial && roads.race >= 19, JSON.stringify(roads));
       let seen = 0; const bad = [], urls = new Set();
       for (const g of ['circuit', 'road', 'rally', 'test']) {
         if (!exp[g]) continue;
@@ -314,13 +316,14 @@ try {
       if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...svg.querySelectorAll(".mk text")].map(c); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; }
       return out;`;
     await click(page, 'group:road'); await click(page, 'mapv:2'); await page.waitForTimeout(500);
-    const v1 = await ev(page, MEASURE);
+    let v1 = await ev(page, MEASURE);   // (on to Vršič: Pikes Peak, a map as well, comes before it in the open roads of the race)
+    for (let k = 0; k < v1.total && v1.name !== 'Vršič'; k++) { await click(page, 'track:1'); await page.waitForTimeout(400); v1 = await ev(page, MEASURE); }
     await click(page, 'track:1'); await page.waitForTimeout(500);
-    const v2 = await ev(page, MEASURE);
+    const v2 = await ev(page, MEASURE), n1 = +v1.count.split('/')[0];
     const same = (a, b) => Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
     const barOk = (v) => !v.dots && v.arr.length === 2 && v.arr.every(a => a.t >= v.pic.b - 1 && a.b <= v.scr[1] + 0.5) && v.cnt && v.cnt.x > v.arr[0].x && v.cnt.x < v.arr[1].x;
-    T.check(`${w}x${h}: under the picture a bar with the arrows and the track's number (1/${v1.total}, then 2/${v1.total}), no dots; the arrows at the same place on a map and on a model`,
-      !!v1.line && !v2.line && v1.count === '1/' + v1.total && v2.count === '2/' + v2.total && barOk(v1) && barOk(v2) && same(v1.arr[0], v2.arr[0]) && same(v1.arr[1], v2.arr[1]), JSON.stringify({ v1: { count: v1.count, arr: v1.arr, pic: v1.pic }, v2: { count: v2.count, arr: v2.arr } }));
+    T.check(`${w}x${h}: under the picture a bar with the arrows and the track's number (${v1.count}, then ${n1 + 1}/${v1.total}), no dots; the arrows at the same place on a map (Vršič) and on a model`,
+      v1.name === 'Vršič' && !!v1.line && !v2.line && n1 >= 1 && v1.count === n1 + '/' + v1.total && v2.count === (n1 + 1) + '/' + v2.total && barOk(v1) && barOk(v2) && same(v1.arr[0], v2.arr[0]) && same(v1.arr[1], v2.arr[1]), JSON.stringify({ v1: { count: v1.count, arr: v1.arr, pic: v1.pic }, v2: { count: v2.count, arr: v2.arr } }));
     const tall = v1.pic.w / v1.pic.h < 1.3, turned = /^rotate\(-90 /.test(v1.rot);
     const upright = tall ? v1.f && v1.s.y > v1.f.y + v1.pic.h * 0.4 && Math.abs(v1.s.x - v1.f.x) < v1.pic.w * 0.35 : v1.f && v1.f.x > v1.s.x + v1.pic.w * 0.4;
     T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame: Kranjska Gora (the start) below, Vršič (the finish) above' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, turned === tall && !!upright, JSON.stringify({ rot: v1.rot, pic: v1.pic, s: v1.s, f: v1.f }));

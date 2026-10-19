@@ -84,7 +84,7 @@ try {
   for (const [vp, cam] of [[{ width: 640, height: 360 }, 'chase'], [{ width: 360, height: 640 }, 'chase']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: cam, notes: 1 }, vp);
     const land = vp.width > vp.height, tag = `${cam} ${vp.width}×${vp.height}`;
-    const go = async (id) => { await startTrack(page, id); return page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 240 && g.phase !== 'racing'; k++) { g.sim(0.25, true); await new Promise(r => requestAnimationFrame(r)); } return g.phase; }); };
+    const go = async (id, mode) => { await startTrack(page, id, mode); return page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 240 && g.phase !== 'racing'; k++) { g.sim(0.25, true); await new Promise(r => requestAnimationFrame(r)); } return g.phase; }); };
     // the sign as at d m after the start line (or at s along the road) at v m/s: what noteAt says, and the box 250 ms later
     const at = (d, v, abs) => page.evaluate(async ([d, v, abs]) => {
       const g = window.__game, T = g.race.track, s = abs ? d : T.open ? T.startS + d : (((T.startS + d) % T.len) + T.len) % T.len;
@@ -138,7 +138,7 @@ try {
     await page.evaluate(() => window.__game.noteAt(null));
 
     // Pikes Peak in a time trial: the corner sign as on every other road (#h-note; its own pill is gone), 20 m before a corner, in the top row
-    T.check(`${tag} pikes: racing`, await go('pikes') === 'racing');
+    T.check(`${tag} pikes: racing`, await go('pikes', 'tt') === 'racing');
     const sPk = await page.evaluate(() => { const T = window.__game.race.track, x = T.hudSigns().find(x => x.kind === 'corner' && x.s0 > T.startS + 60 && T.signAt(x.s0 - 20, 15) === x); return x ? x.s0 - 20 : null; });
     a = sPk == null ? null : await at(sPk, 15, true);
     const noPill = await page.evaluate(() => !document.getElementById('pk-note') && !document.getElementById('hud').classList.contains('pkn'));

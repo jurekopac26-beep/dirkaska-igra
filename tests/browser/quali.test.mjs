@@ -90,7 +90,7 @@ try {
   const off = await state();
   await act('to-title'); await page.waitForTimeout(200); await act('to-track'); await page.waitForTimeout(300);
   await page.evaluate(() => document.querySelector('[data-set="quali"] button[data-v="1"]').click());
-  await startTrack(page, 'pikes');
+  await startTrack(page, 'pikes', 'tt');
   const tt = await page.evaluate(() => { const r = window.__game.race; return { tt: r.timeTrial, quali: r.quali, n: r.cars.length }; });
   T.check('qualifying off: Start goes straight to the race; the Pikes Peak time trial has no qualifying', !off.quali && off.cars === 13 && off.grid === 13 && tt.tt && !tt.quali && tt.n === 1, JSON.stringify({ off: { quali: off.quali, cars: off.cars, grid: off.grid }, tt }));
 
