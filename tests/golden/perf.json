@@ -29,9 +29,9 @@
  },
  "vrsic": {
   "calls": 185,
-  "maxCalls": 225,
+  "maxCalls": 226,
   "kverts": 314,
-  "maxKverts": 437,
+  "maxKverts": 439,
   "jsMs": 2.19
  },
  "nring": {
@@ -224,10 +224,10 @@
   "jsMs": 1.41
  },
  "medvode": {
-  "calls": 168,
-  "maxCalls": 261,
-  "kverts": 468,
-  "maxKverts": 670,
+  "calls": 171,
+  "maxCalls": 262,
+  "kverts": 469,
+  "maxKverts": 672,
   "jsMs": 1.54
  },
  "montreal": {

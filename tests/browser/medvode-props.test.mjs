@@ -1,6 +1,6 @@
 // Medvode, Slovenija: the knockable roadside things in the built world. The scenery builder puts every small thing beside the road into the prop
 // list (the yellow triangular bollards in front of every side road's mouth, closed by the fence at the road's edge, the street lamps, the zebra crossings' and the bus stops' signs, the street
-// names' plates, the closure boards, the villages' boards, the flag poles, the benches), Core simulates them (Race.setProps), the renderer draws one
+// names' plates, the closure boards, the flag poles, the benches; the villages' lettered boards stand fixed behind the fence: roadside.test.mjs), Core simulates them (Race.setProps), the renderer draws one
 // instanced mesh per kind. Checks: the counts per kind, none inside a building, standing on the ground, one instanced mesh per kind with the right
 // number of instances in view, a real bollard knocked over by the player's car in the browser, the car then stopped by the fence across the mouth.
 //   node tests/browser/medvode-props.test.mjs
@@ -26,10 +26,10 @@ try {
     const inside = (p, b) => { if (b.pts) { let w = false; const P = b.pts; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > p.z) !== (P[j][1] > p.z) && p.x < (P[j][0] - P[i][0]) * (p.z - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) w = !w; return w; }
       const dx = p.x - b.x, dz = p.z - b.z, u = dx * b.c + dz * b.s, v = -dx * b.s + dz * b.c; return Math.abs(u) < b.L / 2 + 0.1 && Math.abs(v) < b.Wd / 2 + 0.1; };
     const inBld = {}; let nIn = 0;
-    for (const p of W.props) { if (p.kind === 'post') continue; for (const b of built) { if ((p.x - b.x) ** 2 + (p.z - b.z) ** 2 > (b.L + b.Wd) ** 2) continue; if (inside(p, b)) { nIn++; inBld[p.kind] = (inBld[p.kind] || 0) + 1; break; } } }
+    for (const p of W.props) { if (p.kind === 'dpost') continue; for (const b of built) { if ((p.x - b.x) ** 2 + (p.z - b.z) ** 2 > (b.L + b.Wd) ** 2) continue; if (inside(p, b)) { nIn++; inBld[p.kind] = (inBld[p.kind] || 0) + 1; break; } } }
     // standing on the ground: its foot (centre - h0) against the terrain, or the road's / the side road's own surface
     let off = 0, worst = 0; const offBy = {};
-    for (const b of race.props) { if (b.dead || b.kind === 'post') continue; const gy = b.y - b.K.h0, q = Tr.query(b.x, b.z, b.qi, Q), ry = Tr.yAt(q), tg = W.groundH(b.x, b.z), d = Math.min(Math.abs(gy - tg), Math.abs(gy - ry));
+    for (const b of race.props) { if (b.dead || b.kind === 'dpost') continue; const gy = b.y - b.K.h0, q = Tr.query(b.x, b.z, b.qi, Q), ry = Tr.yAt(q), tg = W.groundH(b.x, b.z), d = Math.min(Math.abs(gy - tg), Math.abs(gy - ry));
       if (d > 0.8) { off++; offBy[b.kind] = (offBy[b.kind] || 0) + 1; } worst = Math.max(worst, d); }
     // the bollards are the Track's own rows
     let want = 0; for (const S of Tr.stubs) want += Tr.stubBollards(S.k).length;
@@ -41,10 +41,10 @@ try {
     const ps = W.propStats || {};
     return { by, cap, knock: W.knock, propR: W.propR, postSpots: ps.nSpots, postsKnock: ps.posts, nIn, inBld, nBuilt: built.length, off, offBy, worst, want, stubs: Tr.stubs.length, total: race.props.length, reach, all, bollards: W.props.filter(p => p.kind === 'tbollard').length };
   });
-  const K = r.by, need = { tbollard: 600, mlamp: 40, msign: 20, bsign: 8, bench: 8, nsign: 8, zaprta: 25, vboard: 3, flagp: 6, cflag: 8, post: 3 };   // (the delineator posts: knockable only where they fit inside the fence at the road's edge, the rest fixed behind it)
+  const K = r.by, need = { tbollard: 600, mlamp: 40, msign: 20, bsign: 8, bench: 8, nsign: 8, zaprta: 25, flagp: 6, cflag: 8, dpost: 3 };   // (the delineator posts, the open roads' plastic ones: knockable only where they fit inside the fence at the road's edge, the rest fixed behind it; the villages' boards: lettered, behind the fence, fixed: roadside.test.mjs)
   console.log(`   props by kind: ${JSON.stringify(K)}, ${r.total} in all; delineator posts: ${r.postsKnock} knockable of ${r.postSpots} places (the rest stand fixed beside the guard rails)`);
   console.log(`   within reach of a car (inside the barriers): ${Object.keys(r.all).map(k => `${k} ${r.reach[k] || 0}/${r.all[k]}`).join(', ')}`);
-  T.check('props: the world has every kind: bollards in front of the mouths, lamps, signs, plates, boards, flags, benches (and the delineator posts)', Object.keys(need).every(k => (K[k] || 0) >= need[k]), Object.keys(need).map(k => `${k} ${K[k] || 0}/${need[k]}`).join(', '));
+  T.check('props: the world has every kind: bollards in front of the mouths, lamps, signs, plates, flags, benches (and the delineator posts)', Object.keys(need).every(k => (K[k] || 0) >= need[k]), Object.keys(need).map(k => `${k} ${K[k] || 0}/${need[k]}`).join(', '));
   T.check('props: the bollards in the world are the Track\'s own rows (stubBollards, every side road)', r.bollards === r.want && r.want >= 600, `${r.bollards} of ${r.want} (${r.stubs} side roads)`);
   T.check('props: Core simulates all of them (propCap = the kinds\' counts in the world), the builder\'s count by kind the same', Object.keys(K).every(k => r.cap[k] === K[k]) && Object.keys(r.cap).every(k => K[k] === r.cap[k]) && Object.keys(r.knock || {}).every(k => r.knock[k] === K[k]), JSON.stringify(r.cap));
   T.check('props: none inside a building the scenery built', r.nIn === 0, `${r.nIn} inside one of ${r.nBuilt}` + (r.nIn ? ' ' + JSON.stringify(r.inBld) : ''));

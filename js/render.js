@@ -3184,9 +3184,10 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench']);   // (the small street furniture and Medvode's thin signs on poles and bench: no shadow pass of their own, the phone's budget)
+  const RS_KINDS = new Set(['rssign', 'rschev', 'rsboard']);   // (the open roads' signs and boards: World's roadside, their faces on the world's atlas)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench', 'rssign', 'rschev', 'rsboard']);   // (the small street furniture, Medvode's thin signs on poles and bench, the open roads' signs and boards: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
-    const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
+    const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack' || RS_KINDS.has(kind)), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
       g.triO(c, p0, p1, mid, [0, y + (up ? -1 : 1), 0], rim, rim); } };
     const tyre = (y0, h, r, vTop) => {   // painted tyre(s) with the tyre texture (the instance colour tints it red or white): textured side band, a ring with a dark hole top and bottom
@@ -3220,7 +3221,17 @@ const Render = (function () {
     else if (kind === 'gpost') {   // an Australian guide post: white, a red reflector on the face to the traffic on its own side (local -x), a white one on the other
       const wh = [0.95, 0.95, 0.93], rd = [0.9, 0.08, 0.06], rw = [1, 1, 1];
       W.box(g, 0, -0.65, 0, 0.12, 1.2, 0.1, 0, wh, wh); W.box(g, -0.064, 0.3, 0, 0.012, 0.16, 0.07, 0, rd, rd); W.box(g, 0.064, 0.3, 0, 0.012, 0.1, 0.07, 0, rw, rw); }
-    else if (kind === 'post') {   // roadside post (stebriček): white, a black band with orange reflectors both ways; its foot sits 10 cm in the ground
+    else if (RS_KINDS.has(kind)) {   // the open roads' sign, chevron board, place-name board (World's roadside): its face from the world's atlas (the cell per instance: iuv, setupProps),
+      // the pole(s) and a board's back on the atlas's white cell (uv x < -0.5) in their vertex colours; the face along local x, to -x, leaning back 12 degrees
+      g.dUV = [-1, -1]; const poleC = [0.6, 0.61, 0.64], B = kind === 'rsboard', C = kind === 'rschev';
+      const h0 = B ? 1.9 : C ? 1.2 : 1.8, yc = (B ? 3.0 : C ? 1.7 : 2.9) - h0, w = B ? 3.6 : C ? 1.4 : 1.45, h = B ? 0.9 : C ? 1.4 : 1.45, ln = h * Math.sin(0.21);
+      const u1 = B ? 0.5 : 0.125, v0 = B ? 0.375 : 0.875, v1 = B ? 0.5 : 1;   // (cell 0, board 0)
+      g.quadO([-0.01, yc - h / 2, -w / 2], [-0.01, yc - h / 2, w / 2], [-0.01 + ln, yc + h / 2, w / 2], [-0.01 + ln, yc + h / 2, -w / 2], white, [1, yc, 0], [[0, v0], [u1, v0], [u1, v1], [0, v1]]);
+      if (B) g.quadO([0.015, yc - h / 2, -w / 2], [0.015, yc - h / 2, w / 2], [0.015 + ln, yc + h / 2, w / 2], [0.015 + ln, yc + h / 2, -w / 2], [0.55, 0.56, 0.58], [-1, yc, 0]);
+      else g.quadO([0.015, yc - h / 2, w / 2], [0.015, yc - h / 2, -w / 2], [0.015 + ln, yc + h / 2, -w / 2], [0.015 + ln, yc + h / 2, w / 2], white, [-1, yc, 0], [[0.5, v0], [0.5 + u1, v0], [0.5 + u1, v1], [0.5, v1]]);   // (the grey back: the same silhouette)
+      if (B) for (const z of [-1.45, 1.45]) W.box(g, 0.1, -h0 - 1, z, 0.1, yc + h0 + 1.2, 0.1, 0, poleC, poleC);   // (the feet 1 m in the ground: where Core stands it, the verge may lie lower)
+      else W.box(g, 0.1, -h0 - 1, 0, 0.1, yc + h0 + 1, 0.1, 0, poleC, poleC); }
+    else if (kind === 'post' || kind === 'dpost') {   // roadside post (stebriček): white, a black band with orange reflectors both ways; its foot sits 10 cm in the ground (dpost: the open roads' plastic one, the same look)
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
@@ -3330,16 +3341,28 @@ const Render = (function () {
       for (const y of [-0.05, 0.2]) W.cyl(g, 0, y, 0, 0.283, 0.1, 10, wh, null, 0.278);
     }
   }
-  function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
+  function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); if (m.userData.atlas) m.material.dispose(); } propMeshes = {}; }
+  // the open roads' knockable signs (RS_KINDS): the world's atlas (world.rsAtlas), each instance's cell an offset to its uv (iuv, syncProps); the
+  // poles and a board's back (uv x < -0.5) on the atlas's white cell (world.rsPoleUV); at night the faces shine in the headlights (rsGlow)
+  function rsPropMat(geo, cap) {
+    const P = world.rsPoleUV, mat = new THREE.MeshLambertMaterial({ map: world.rsAtlas, emissiveMap: world.rsAtlas, vertexColors: true, alphaTest: 0.5 });
+    mat.onBeforeCompile = (sh) => { sh.vertexShader = 'attribute vec2 iuv;\n' + sh.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\n  if (uv.x < -0.5) vUv = vec2(' + P[0].toFixed(5) + ', ' + P[1].toFixed(5) + '); else vUv += iuv;'); };
+    mat.customProgramCacheKey = () => 'rsprop' + P.join();
+    const ia = new THREE.InstancedBufferAttribute(new Float32Array(cap * 2), 2); ia.setUsage(THREE.DynamicDrawUsage); geo.setAttribute('iuv', ia);
+    rsGlow(mat); return mat;
+  }
+  function rsGlow(m) { if (m && m.emissive) m.emissive.setScalar(0.42 * sstep(0.6, 0.9, todK)); }   // (dusk and night: the sign faces in the headlights; by day as built)
   function setupProps(race) {
     if (!race || !race.props) { for (const k in propMeshes) propMeshes[k].visible = false; return; }
     if (!propMat) { propMat = new THREE.MeshLambertMaterial({ vertexColors: true }); propMatTyre = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.tyreTex }); }
     const cap = race.propCap || {}, rg = (race.track && race.track.def && race.track.def.propRegion) || '';
     for (const kind in cap) {
       let m = propMeshes[kind];
-      if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
-        if (m) { scene.remove(m); m.geometry.dispose(); }
-        m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind]; m.userData.rg = rg;
+      const atlas = RS_KINDS.has(kind) ? world && world.rsAtlas : null;   // (the open roads' signs: on this world's atlas)
+      if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg || (m.userData.atlas || null) !== atlas) { propRg = rg;
+        if (m) { scene.remove(m); m.geometry.dispose(); if (m.userData.atlas) m.material.dispose(); }
+        const geo = propGeometry(kind);
+        m = new THREE.InstancedMesh(geo, atlas ? rsPropMat(geo, cap[kind]) : kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind]; m.userData.rg = rg; m.userData.atlas = atlas;
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !PROP_NOSHADOW.has(kind); m.receiveShadow = true; m.frustumCulled = false;   // (the thin signs and the bench cast none: one draw call less each in the shadow pass)
         scene.add(m); propMeshes[kind] = m;
       }
@@ -3350,7 +3373,7 @@ const Render = (function () {
     for (const b of race.props) { b.dirty = true; b.colSet = false; }
     syncProps();
   }
-  const _pm4 = new THREE.Matrix4(), _pq4 = new THREE.Quaternion(), _pv3 = new THREE.Vector3(), _ps3 = new THREE.Vector3(1, 1, 1), _pc = new THREE.Color(), _zero = new THREE.Matrix4().makeScale(0, 0, 0);
+  const _pm4 = new THREE.Matrix4(), _pq4 = new THREE.Quaternion(), _pv3 = new THREE.Vector3(), _ps3 = new THREE.Vector3(1, 1, 1), _pc = new THREE.Color(), _zero = new THREE.Matrix4().makeScale(0, 0, 0), _rs0 = [0, 0];
   const _fq = {};
   function floorAt(x, z, hint) { const T = curRace && curRace.track, f = curRace && curRace.propFloor; if (!T || (!T.hasElev && !f)) return 0; const q = T.query(x, z, (T.cross.length || T.stubs) && hint >= 0 ? hint : -1, _fq); return q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (f ? f(q) : 0); }   // particle floor: the road height there (0 on the flat circuits; the verge's where it lies lower; a side road's own)
   function syncProps() {
@@ -3373,10 +3396,11 @@ const Render = (function () {
       const dx = b.x - cx, dz = b.z - cz; if (dx * dx + dz * dz > R2) continue;
       const n = m.userData.n++;
       _pv3.set(b.x, b.y, b.z); _pq4.set(b.qx, b.qy, b.qz, b.qw); _pm4.compose(_pv3, _pq4, _ps3); m.setMatrixAt(n, _pm4);
-      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : b.kind === 'post' && b.col === 1 ? POST_SNOW : null;   // (col 1 posts: orange snow poles)
+      if (m.userData.atlas) { const C = world.rsCells[b.kind === 'rsboard' ? 'rsboard' : 'rssign'], o = (C && C[b.col]) || _rs0; m.geometry.attributes.iuv.setXY(n, o[0], o[1]); }   // (its atlas cell)
+      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : (b.kind === 'post' || b.kind === 'dpost') && b.col === 1 ? POST_SNOW : null;   // (col 1 posts: orange snow poles)
       if (c) m.setColorAt(n, _pc.setRGB(c[0], c[1], c[2])); else if (m.instanceColor) m.setColorAt(n, _pc.setRGB(1, 1, 1));
     }
-    for (const k in propMeshes) { const m = propMeshes[k]; m.count = m.userData.n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; }
+    for (const k in propMeshes) { const m = propMeshes[k]; m.count = m.userData.n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; if (m.userData.atlas) m.geometry.attributes.iuv.needsUpdate = true; }
   }
 
 
@@ -3862,7 +3886,7 @@ const Render = (function () {
     applyTheme(themeId); todLights(atmos.tod !== was);
   }
   // the lights of the time of day: the floodlights (from late dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights again
-  function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
+  function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); rsGlowAll(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
   function carGlow(v) { const m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(0.16 * sstep(0.5, 1, todK)); }   // (at night the cars stay in sight under the floodlights)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
   // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
@@ -3993,30 +4017,64 @@ const Render = (function () {
     return new THREE.CanvasTexture(c);
   }
   // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road (brightest under the
-  // lamp, fading out softly) and a glow round the lamp (the glows' points: one draw call for all of them)
+  // lamp, fading out softly) and a glow round the lamp (the glows' points: one draw call for all of them). A real open road (world.lampZones,
+  // World's roadside): the street lamps only in its settlements, the road between them dark (the headlights, the delineators' reflectors and the
+  // signs: rsGlints, rsGlow); a street lamp of the world's own there (Medvode's) lights the road under it, the poles every 30 m fill the rest
   function floodlights() {
     if (flood) { for (const o of [flood.pools, flood.poles, flood.heads, flood.halo]) { scene.remove(o); o.geometry.dispose(); } flood = null; }
+    rsGlowAll();
     const T = curTrack; if (todK <= 0.6 || !T || !world) return;
     if (!lampTex) lampTex = radialTex([[0, 1], [0.18, 0.86], [0.42, 0.46], [0.68, 0.16], [1, 0]]);
-    const L = T.len, n = Math.floor(L / 30), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), rn = new THREE.Vector3();
-    const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffd9a6, transparent: true, opacity: 0.56, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), n);
-    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), n);
-    const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), n);
+    const Z = world.lampZones, inZ = (s) => Z.some(z => s - T.startS > z[0] && s - T.startS < z[1]), own = [], spots = [];
+    if (Z) for (const p of world.props || []) if (p.kind === 'mlamp' && inZ((p.i >= 0 ? p.i : T.nearestIdx(p.x, p.z)) * T.ds)) own.push(p);
+    for (let k = 0, n = Math.floor(T.len / 30); k < n; k++) { const s = k * 30 + 10; if (Z && (!inZ(s) || own.some(p => Math.hypot(p.x - T.px[T.idx(s)], p.z - T.pz[T.idx(s)]) < 18))) continue; spots.push(k); }
+    const n = spots.length + own.length, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), rn = new THREE.Vector3();
+    const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffd9a6, transparent: true, opacity: 0.56, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), Math.max(1, n));
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), Math.max(1, spots.length));
+    const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), Math.max(1, spots.length));
     const hp = new Float32Array(n * 3), hc = new Float32Array(n * 4), hs = new Float32Array(n), fp = new Float32Array(n * 3);
-    for (let k = 0; k < n; k++) {
-      const s = k * 30 + 10, i = T.idx(s), sd = k % 2 ? 1 : -1, y = T.hasElev && T.hy ? T.hy[i] : 0, e = sd > 0 ? (T.br ? T.br[i] : T.w) : (T.bl ? T.bl[i] : T.w), d = sd * (Math.max(T.w, Math.min(e, T.w + 6)) + 1.2);
-      const gr = T.hasElev && T.grade ? T.grade[i] : 0; rn.set(-gr * T.tx[i], 1, -gr * T.tz[i]).normalize();   // (the pool in the road's plane: on a climb a level one would cut into the road ahead and float above it behind)
-      p.set(T.px[i] + T.nx[i] * sd * T.w * 0.35, y + 0.07, T.pz[i] + T.nz[i] * sd * T.w * 0.35); q.setFromUnitVectors(up, rn); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
-      fp[k * 3] = p.x; fp[k * 3 + 1] = p.y - 0.03; fp[k * 3 + 2] = p.z;
+    const pool = (k, i, x, z) => {   // the pool of light on the road at (x, z) (sample i), its place for the wet road's reflections
+      const y = T.hasElev && T.hy ? T.hy[i] : 0, gr = T.hasElev && T.grade ? T.grade[i] : 0; rn.set(-gr * T.tx[i], 1, -gr * T.tz[i]).normalize();   // (the pool in the road's plane: on a climb a level one would cut into the road ahead and float above it behind)
+      p.set(x, y + 0.07, z); q.setFromUnitVectors(up, rn); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
+      fp[k * 3] = p.x; fp[k * 3 + 1] = p.y - 0.03; fp[k * 3 + 2] = p.z; return y; };
+    spots.forEach((kk, k) => {
+      const s = kk * 30 + 10, i = T.idx(s), sd = kk % 2 ? 1 : -1, e = sd > 0 ? (T.br ? T.br[i] : T.w) : (T.bl ? T.bl[i] : T.w), d = sd * (Math.max(T.w, Math.min(e, T.w + 6)) + 1.2);
+      const y = pool(k, i, T.px[i] + T.nx[i] * sd * T.w * 0.35, T.pz[i] + T.nz[i] * sd * T.w * 0.35);
       p.set(T.px[i] + T.nx[i] * d, y, T.pz[i] + T.nz[i] * d); sc.set(1, 1, 1); m4.compose(p, q, sc); poles.setMatrixAt(k, m4);
       p.y += 9; q.setFromAxisAngle(up, -Math.atan2(T.nz[i], T.nx[i])); m4.compose(p, q, sc); heads.setMatrixAt(k, m4);
       hp[k * 3] = p.x - T.nx[i] * sd * 0.3; hp[k * 3 + 1] = p.y - 0.3; hp[k * 3 + 2] = p.z - T.nz[i] * sd * 0.3;   // (the glow just under the lamp, towards the road)
       hc[k * 4] = 1; hc[k * 4 + 1] = 0.84; hc[k * 4 + 2] = 0.6; hc[k * 4 + 3] = 0.5; hs[k] = 5.5;
-    }
+    });
+    own.forEach((l, j) => {   // a street lamp of the world's own (its arm over the road along the yaw, the lamp 1.6 m out and 7.75 m up): the pool under it, its glow
+      const k = spots.length + j, i = l.i >= 0 ? l.i : T.nearestIdx(l.x, l.z), ax = Math.cos(l.yaw || 0), az = Math.sin(l.yaw || 0), gy = world.groundH ? world.groundH(l.x, l.z) : (T.hy ? T.hy[i] : 0);
+      pool(k, i, l.x + ax * 3.2, l.z + az * 3.2);
+      hp[k * 3] = l.x + ax * 1.6; hp[k * 3 + 1] = gy + 7.65; hp[k * 3 + 2] = l.z + az * 1.6; hc[k * 4] = 1; hc[k * 4 + 1] = 0.84; hc[k * 4 + 2] = 0.6; hc[k * 4 + 3] = 0.5; hs[k] = 4.5;
+    });
+    pools.count = n; poles.count = heads.count = spots.length;
     const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('pcolor', new THREE.BufferAttribute(hc, 4)); hg.setAttribute('psize', new THREE.BufferAttribute(hs, 1));
     const halo = new THREE.Points(hg, glows.mat); halo.renderOrder = 7;   // (the car lights' glow material: no program of its own)
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
     scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp };
+  }
+  // the open roads' signs at dusk and at night: their faces shine in the headlights (World's roadside: the static mesh, Render's knockable ones)
+  function rsGlowAll() { if (!world) return; rsGlow(world.rsMesh && world.rsMesh.material); for (const k of RS_KINDS) if (propMeshes[k] && propMeshes[k].userData.atlas) rsGlow(propMeshes[k].material); }
+  // a real open road at night (world.lampZones): the reflectors of the delineators ahead of the followed car glint in its headlights (the glows'
+  // points: no draw call of their own), the brightest near, none past 120 m nor off to the side; on the post as it stands (a knocked one not)
+  const RS_REFL = { post: 0.22, dpost: 0.22, gpost: 0.3 }, _glQ = new THREE.Quaternion(), _glP = new THREE.Vector3();
+  function rsGlints(target) {
+    if (!flood || !world || !world.lampZones || !curRace || !curRace.props || !target) return;
+    const k0 = sstep(0.6, 0.9, todK), tx = Math.cos(target.h), tz = Math.sin(target.h); let n = 0;
+    for (const b of curRace.props) {
+      const y0 = RS_REFL[b.kind]; if (y0 == null || b.hidden) continue;
+      const dx = b.x - target.x, dz = b.z - target.z, d2 = dx * dx + dz * dz; if (d2 > 14400 || d2 < 9) continue;
+      const d = Math.sqrt(d2), fw = (dx * tx + dz * tz) / d; if (fw < 0.55) continue;
+      _glQ.set(b.qx, b.qy, b.qz, b.qw); _glP.set(0, 1, 0).applyQuaternion(_glQ); if (_glP.y < 0.8) continue;   // (lying down: no glint)
+      _glP.set(0, y0, 0).applyQuaternion(_glQ);
+      const a = k0 * Math.min(1, (fw - 0.55) * 4) * (1 - d / 120);
+      glows.add(b.x + _glP.x, b.y + _glP.y, b.z + _glP.z, 1.15, 1, b.kind === 'gpost' ? 0.3 : b.col === 1 ? 0.5 : 0.62, 0.2, a);
+      if (++n >= 48) break;
+    }
+    if (n) glows.end();
   }
   // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, narrow and the brightest at the lamps,
   // each widening and fading with the distance (a soft edge all round), merging into one warm, faint fan further out
@@ -8689,7 +8747,7 @@ const Render = (function () {
     updateCars(dt, alpha, opt);
     hypeStep(Math.min(dt, 0.1));
     updateRoad(dt);
-    syncDebris(); syncProps();
+    syncDebris(); syncProps(); rsGlints(target);
     for (let k = 0; k < views.length; k++) { const v = views[k], c = v.car; if ((c.repairN || 0) !== v.repairN) {   // repaired in the pits: a fresh car (and a burst of sparkle; the crew's work shown bit by bit before it, repairStep: it looks the same)
       const nv = makeView(c); nv.sk = v.sk; nv.acc = v.acc; disposeView(v, debrisRes()); views[k] = nv;   // (its loose panels on the track stay drawable)
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
@@ -8928,6 +8986,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
