@@ -3548,12 +3548,14 @@ const Render = (function () {
   const PIT_FILM = 0.4;   // (the film's opacity)
   const pitLook = (T) => { const L = Object.assign({}, PIT_LOOK.def, PIT_LOOK[T.def.theme]); if (T.def.pitApron) L.ap = T.def.pitApron; return L; };
   function pitPuddles(T, pos, uv, pw, idx) {
-    const P0 = T.def.pit, L = pitLook(T), G = world.groundH, sd = P0[0] < 0 ? -1 : 1;
-    const pt = (s, o, a, film) => {   // (between the track's samples, as Track.pitAt: on the floor; a world's ground over it, Toronto's terrain over the apron: on that)
-      const f = (((s % T.len) + T.len) % T.len) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f), L = (A) => A[i] + (A[j] - A[i]) * u;
-      const x = L(T.px) + L(T.nx) * sd * o, z = L(T.pz) + L(T.nz) * sd * o, g = G ? G(x, z) : NaN; let y = T.hasElev && T.hy ? L(T.hy) : 0;
-      if (g > y) y = Math.min(y + 1, g); pos.push(x, y + 0.06, z); pw.push(a, film); };   // (over the builders' lanes, aprons and lines: 0.022 to 0.044 over the road)
-    const quad = (a, b, c, d) => { if (sd > 0) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c); };   // (facing up: a b along o, b c along s)
+    const P0 = T.def.pit, L = pitLook(T), sd = P0[0] < 0 ? -1 : 1, G = L.lift && world.groundH;
+    const pt = (s, o, a, film) => {   // (between the track's samples, as Track.pitAt; at the road's height there, as the builders' lanes and aprons, 0.022 to 0.044 over it with their lines: over them)
+      const f = (((s % T.len) + T.len) % T.len) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f), I = (A) => A[i] + (A[j] - A[i]) * u;
+      const x = I(T.px) + I(T.nx) * sd * o, z = I(T.pz) + I(T.nz) * sd * o, g = G ? G(x, z) : NaN; let y = T.hasElev && T.hy ? I(T.hy) : 0;
+      if (g > y) y = Math.min(y + 1, g); pos.push(x, y + 0.06, z); pw.push(a, film); };   // (PIT_LOOK lift: the world's ground over the apron in places: on that)
+    const quad = (a, b, c, d) => {   // (facing up: a b along o, b c along s; none where the lane's offset turns over itself, inside a tight bend)
+      const P = (k, e) => pos[k * 3 + e], ny = (P(b, 2) - P(a, 2)) * (P(c, 0) - P(a, 0)) - (P(b, 0) - P(a, 0)) * (P(c, 2) - P(a, 2));
+      if (ny * sd <= 0) return; if (sd > 0) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c); };
     if (!L.asph) {   // the film: three rows across the apron (w past the lane's edge, the opacity), a strip along the lane
       const rows = [[0.03, 1], [L.ap - 2.6, 1], [L.ap - 0.3, 0.3]]; let prev = -1;
       for (let q = P0[1]; q <= P0[2]; q += 2) {
@@ -3968,10 +3970,11 @@ const Render = (function () {
   // with its inside built (its floor and back wall lit), 'door' a dark front standing for the inside (dz: where it is; the glow on it), 'tent'
   // a roof on legs, 'bulb' a stall or a shed (bulbs under its eave, no light bar, no lamps over the lane; back: its back wall). The rain
   // (pitPuddles): ap, the apron's depth in the open past the lane's outer edge where the lane runs full width (Montréal's: def.pitApron; Crystal
-  // Palace's stalls' roofs over the last of it); asph: an apron of the road's asphalt (it darkens with the road: no film of water over it)
+  // Palace's stalls' roofs over the last of it); asph: an apron of the road's asphalt (it darkens with the road: no film of water over it);
+  // lift: the world's ground over the apron in places (Newcastle's, Toronto's terrain): the film on it
   const PIT_LOOK = {
     def: { gf: 9, h: 3.3, w: 8.2, d: 6.9, bz: -0.17, kind: 'in', ap: 9 },   // (pitLaneScenery: Spa, Newcastle; the Red Bull Ring's building)
-    spa: { eave: [-0.9, 8.6] }, rbring: { eave: [-2.4, 14.7] }, rio: { w: 9.5, d: 7.85 }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25 },
+    spa: { eave: [-0.9, 8.6] }, newcastle: { lift: true }, rbring: { eave: [-2.4, 14.7] }, rio: { w: 9.5, d: 7.85 }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25, lift: true },
     townsville: { gf: 9.7, h: 3.7, w: 11.4, d: 11.1, eave: [-1.2, 4.6] }, bathurst: { h: 3.4, w: 9.4, kind: 'door', dz: 0.26, eave: [-0.8, 7.8], asph: true }, bangsaen: { gf: 8, h: 2.45, w: 8.6, kind: 'door', dz: -0.03, ap: 8 },
     detroit: { gf: 9.4, h: 2.6, w: 9.2, d: 5.97, kind: 'tent' }, troisrivieres: { gf: 9.2, h: 2.9, w: 8.8, d: 6.6, bz: -0.26, kind: 'tent' },
     cpalace: { h: 2.7, w: 8.8, d: 2.6, kind: 'bulb', ap: 8.6 }, longford: { h: 3.9, w: 9.4, d: 5.8, kind: 'bulb', back: true },

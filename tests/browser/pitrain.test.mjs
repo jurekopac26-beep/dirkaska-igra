@@ -30,7 +30,7 @@ try {
       for (let t = 0; t < R.idx.length; t += 3) {   // every triangle facing up
         const [a, b, c] = [R.idx[t], R.idx[t + 1], R.idx[t + 2]].map(i => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]), u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
         if (u[2] * v[0] - u[0] * v[2] <= 0) o.down++; }
-      // a sample of the vertices against the world: the floor just under each (a ray down from 0.3 m over it), nothing right over it (up to 3 m)
+      // a sample of the vertices against the world: the floor just under each (a ray down from 0.3 m over it), nothing right over it (0.3 to 3 m up)
       const meshes = [], mid = [0, 0]; for (let k = 0; k < n; k++) { mid[0] += P[k * 3] / n; mid[1] += P[k * 3 + 2] / n; }
       W.root.traverseVisible(m => { if (m.isMesh && !m.isInstancedMesh && m.renderOrder >= 0 && m.geometry) {   // (not the instanced crowds, trees and props: each instance tested; not a far backdrop drawn first)
         if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere(); const c = m.geometry.boundingSphere.center.clone().applyMatrix4(m.matrixWorld); if (Math.hypot(c.x - mid[0], c.z - mid[1]) < 400 + m.geometry.boundingSphere.radius) meshes.push(m); } });
@@ -39,7 +39,7 @@ try {
         const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2]; tested++;
         rc.set(new V(x, y + 0.3, z), new V(0, -1, 0)); rc.far = 1.5; const d = rc.intersectObjects(meshes, false)[0], dy = d ? y - d.point.y : null;
         if (dy != null && dy > -0.02 && dy < 0.14) on++; else if (off.length < 4) off.push(dy == null ? 'none' : +dy.toFixed(2));
-        rc.set(new V(x, y + 0.02, z), new V(0, 1, 0)); rc.far = 3; if (!rc.intersectObjects(meshes, false).length) open++; }
+        rc.set(new V(x, y + 0.3, z), new V(0, 1, 0)); rc.far = 2.7; if (!rc.intersectObjects(meshes, false).length) open++; }   // (from 0.3 m up: a world's ground just over the floor in places is no roof)
       Object.assign(o, { tested, on, open, off }); return o;
     }, id));
   }
@@ -55,7 +55,7 @@ try {
   const up = ok.filter(r => r.down);
   T.check('every triangle facing up (the lane on the left too: Bathurst, Montréal, Toronto)', !up.length, ok.map(r => `${r.id} ${r.tri}t ${r.down} down`).join(', '));
   const flo = ok.filter(r => r.on < r.tested * 0.9 || r.open < r.tested * 0.9);
-  T.check('on the floor (just over it) and in the open (nothing within 3 m over it: none in a garage), at least 90 % of a sample of each', !flo.length,
+  T.check('on the floor (just over it) and in the open (nothing 0.3 to 3 m over it: none in a garage), at least 90 % of a sample of each', !flo.length,
     ok.map(r => `${r.id} ${r.on}/${r.tested} on the floor, ${r.open} open${r.off.length ? ' (off: ' + r.off.join(' ') + ')' : ''}`).join(', '));
 
   // 2. a race in the rain, the camera behind the car in its box (Bathurst: the lane on the left, its apron asphalt; Spa)
