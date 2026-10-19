@@ -1517,6 +1517,63 @@ const Core = (function () {
   // (wheel: the pit crew's tyre men push the new ones home then, render.js crewLogic reads it), the lost panels one by one, the lamps, the trim
   const REPAIR = { glass: 0.06, body: [0.08, 0.6], wheel: 0.46, parts: [0.4, 0.85], lamps: 0.62, trim: 0.88 };
   const repairU = (c) => c.pitState === 'repair' && c.pitDur > 0 ? clamp(c.pitT / c.pitDur, 0, 1) : 0;
+  // the phone's vibration (game.js asks for them by name, Input.buzz plays them): a pattern for each moment, most of them the pit stop's.
+  // p: on, off, on … in ms, as navigator.vibrate takes it (every pulse 20 ms or more: a cheap phone's motor does not feel a shorter one);
+  // pri: how much it matters (5 the hand-back; 4 the stop, the car let down, the release; 3 the crew's work and the old single pulses, a
+  // crash, a landing …: Input.vibrate; 2 the way in and out; 1 only with nothing else playing: Haptic); lv: 1 the basic ones, 2 the rest
+  // (Nastavitve · Vibracija · Vklop plays both; a third choice there, the basic ones alone, would only set Input's level to 1); min: only on
+  // a stop at least that long (s: on a shorter one the crew's moments come too close together)
+  const HAPTIC = {
+    pitLine: { p: [25], pri: 2, lv: 2 },   // over the pit wall's line with no stop (running wide at the way out: BOKSI)
+    pitAP: { p: [30, 50, 30, 50, 90], pri: 2, lv: 2 },   // the autopilot takes the car (BOKSI · AVTOPILOT)
+    pitLimit: { p: [20, 40, 20, 40, 20, 40, 20, 40, 20], pri: 2, lv: 2 },   // the limiter takes it down to the lane's 80 km/h (after either, when it came in faster)
+    pitBox: { p: [25, 60, 35, 50, 50], pri: 2, lv: 2 },   // braking into the box (rising)
+    pitStop: { p: [70], pri: 4, lv: 1 },   // stopped at the box: a thud
+    jackF: { p: [35, 40, 20], pri: 3, lv: 2, min: 2 },   // the front jack lifts the nose
+    jackR: { p: [30, 40, 25], pri: 3, lv: 2, min: 2 },   // the rear jack the tail
+    gunOff: { p: [20, 30, 20, 30, 20, 30, 20], pri: 3, lv: 2 },   // the four guns undo the nuts: four short bursts
+    wheelsOn: { p: [45, 40, 25], pri: 3, lv: 2, min: 2 },   // the new wheels pushed home
+    gunOn: { p: [20, 30, 20, 30, 20, 30, 20, 50, 60], pri: 3, lv: 2 },   // the four guns do them up, then the last torque
+    rattle: { p: [20, 25, 20], pri: 1, lv: 2 },   // the guns still on the nuts on a long stop
+    dropR: { p: [80], pri: 4, lv: 2 },   // the tail let down onto its wheels
+    dropF: { p: [90, 40, 30], pri: 4, lv: 2 },   // the nose
+    go: { p: [30, 40, 30, 40, 140], pri: 4, lv: 1 },   // released (the lollipop up)
+    goFuel: { p: [30, 40, 30, 40, 30, 40, 140], pri: 4, lv: 1 },   // released with a full tank
+    goCharge: { p: [20, 30, 40, 30, 60, 30, 120], pri: 4, lv: 1 },   // released with the battery charged (rising)
+    tick: { p: [20], pri: 1, lv: 2 },   // a second of the countdown back onto the racing line
+    handBack: { p: [160, 60, 50], pri: 5, lv: 1 },   // VOZIŠ TI!: the player's car again (the strongest: the longest pulse)
+    rejoin: { p: [25, 80, 25], pri: 2, lv: 2 },   // back on the circuit after the stop
+    rivalPass: { p: [25, 35, 20], pri: 1, lv: 2 },   // a rival through the lane past the box while the car is on the jacks
+    lostPlace: { p: [50, 70, 50, 70, 50], pri: 2, lv: 2 },   // a place lost from braking into the box till back on the circuit
+    choice: { p: [25, 40, 60], pri: 3, lv: 1 },   // the stop's repair chosen (for when the game asks for one: none yet)
+  };
+  // (the crew's moments over a stop's progress u, as render.js crewLogic draws them: the guns on the nuts (undoing them, then doing them
+  // up), each end lifted (front, rear: its jack man dashes in once the car stands) and let down; a stop with no crew drawn vibrates by them)
+  const CREW_U = { nut: [[0.04, 0.2], [0.47, 0.64]], jack: [0.02, 0.15], drop: [0.89, 0.86] };
+  // the vibration's queue (Input's), on the race's clock (step: each race step's dt, so a test that runs the race faster than real time
+  // keeps the order): one pattern at a time, HAP_GAP s apart. One that matters more (pri) cuts in at once (navigator.vibrate drops the one
+  // playing); one that matters as much or less waits for it (the more important first), HAP_LATE s at most, so the stop's moments that
+  // come close together (the stop and the front jack, the new wheels and the guns, the two ends let down) follow one another; pri 1 never
+  // waits. buzz and step -> the pattern to start now ({ k, p, pri }) or null; off -> whether one was playing or waiting (to stop the motor)
+  const HAP_GAP = 0.04, HAP_LATE = 0.35;
+  function Haptic() {
+    let t = 0, end = 0, pri = 0; const q = [], n = { play: 0, wait: 0, drop: 0 };
+    const start = (e) => { end = t + e.p.reduce((a, b) => a + b, 0) / 1000 + HAP_GAP; pri = e.pri; n.play++; return e; };
+    return {
+      buzz(k, p, pr) {
+        const e = { k, p, pri: pr, by: t + HAP_LATE };
+        if (t >= end || pr > pri) return start(e);
+        if (pr > 1 && q.length < 6) { let i = q.length; while (i && q[i - 1].pri < pr) i--; q.splice(i, 0, e); n.wait++; } else n.drop++;
+        return null;
+      },
+      step(dt) {
+        t += dt; if (t < end) return null;
+        while (q.length) { const e = q.shift(); if (t <= e.by + 1e-9) return start(e); n.drop++; }   // (waited too long: its moment is gone)
+        return null;
+      },
+      off() { const was = t < end || q.length > 0; n.drop += q.length; q.length = 0; end = t; return was; },
+      get t() { return t; }, get busy() { return t < end; }, get waiting() { return q.map(e => e.k); }, n };
+  }
   // every car's grip and turn (first measured from SWGP2 gameplay video for the old slide model; stepCS builds on amax, kv and rmin):
   //   amax  : lateral grip (g) - the video's cars corner at ~1.6-2.2 g
   //   kv    : how fast momentum swings toward the nose, per radian of slide (1/s)
@@ -5742,7 +5799,7 @@ const Core = (function () {
 
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, HAPTIC, CREW_U, Haptic, PIT_V };
 })();
 
 

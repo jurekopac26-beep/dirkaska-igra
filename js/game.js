@@ -370,6 +370,7 @@
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
   function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
+  function hap(k) { if (S.vibrate) Input.buzz(k); }   // (a pattern of Core.HAPTIC by its name: the pits' moments, pitHap)
 
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
   // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
@@ -477,7 +478,7 @@
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
     Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : '') + (v.radio ? tr(' · policijski radio: {0} ({1})', v.radio, v.radioLang) : tr(' · policijski radio: ni glasu za slovenščino, govori angleško')); });
     Input.setMode(S.control);
-    Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: !!S.vibrate });
+    Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: S.vibrate ? 2 : 0 });   // (vibrate: the level, Vklop all of Core.HAPTIC's patterns; a third choice, Osnovno, would pass 1)
     Sfx.setEnabled(!!S.sound);
     if (race && race.player) race.player.assist = Core.ASSISTS[S.assist];
     refreshSegs();
@@ -779,7 +780,7 @@
     const own = RP_CAM[S.camera] ? S.camera : 'tv';   // (own: the camera the player drove with, the first of the replay's)
     replay = { t: R.frames[0][0], t1: R.frames[R.frames.length - 1][0], i: 0, speed: 1, play: true, cam: own, own, k: Math.max(0, R.cars.indexOf(race.player)), sc: null };
     showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
-    Sfx.setRunning(false); Sfx.silence(); Comm.stop(); Render.setGhost(null); Render.setGhostF(null); Render.resetCam(); replayUI();
+    Sfx.setRunning(false); Sfx.silence(); Input.buzzOff(); Comm.stop(); Render.setGhost(null); Render.setGhostF(null); Render.resetCam(); replayUI();
   }
   function replayEnd() {
     if (!replay) return;
@@ -1587,7 +1588,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; pitFree(null, false); Input.buzzOff(); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
@@ -1671,7 +1672,7 @@
   }
   function pause() {
     if (bg !== 'race' || paused || phase === 'done') return;
-    paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
+    paused = true; Sfx.setRunning(false); Input.reset(); Input.buzzOff(); Comm.stop();
     $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
     stratInfo();
@@ -1702,7 +1703,7 @@
     endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
     school = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school');
-    Sfx.setRunning(false); Sfx.silence();
+    Sfx.setRunning(false); Sfx.silence(); Input.buzzOff();
     demoShow(); Render.resetCam(); Render.setStorm(S.weather === 'storm'); Render.setAtmos({ season: S.season, tod: S.tod }, true);   // (after an endurance race: the time of day of the setting again)
     setLights(0, false);
     showScreen('title'); refreshSegs();
@@ -2185,7 +2186,7 @@
   }
   function finishRace() {
     phase = 'done';
-    Sfx.setRunning(false);
+    Sfx.setRunning(false); Input.buzzOff();
     if (mp && mp.race) { netResults(); return; }
     $('res-restart').dataset.act = 'restart'; $('res-laps').classList.add('off');
     $('res-reply').classList.add('off'); $('res-chal').classList.toggle('off', !chalCan());   // (a challenge for a friend: the best run of this track, once there is one)
@@ -2379,7 +2380,7 @@
 
   /* ---------------- per-step race logic ---------------- */
   function stepRace(dt, inp) {
-    recStep();
+    recStep(); Input.buzzStep(dt);   // (the vibration's clock: the race's)
     const P = race.player;
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
     const pit = pitCtl(P, hold);   // the pit autopilot: 'lane', 'merge' or null (the player's own car)
@@ -2422,7 +2423,7 @@
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
-    pitBar(P);
+    pitBar(P); pitHap(P, dt);
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
@@ -3095,11 +3096,14 @@
       if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); }   // (only while the autopilot drives: pitFree)
       else showMsg(tr('BOKSI'), 'gold', 1.4);
       Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2);
+      hap(stop ? 'pitAP' : 'pitLine'); if (P.speed > Core.PIT_V) hap('pitLimit');   // (came in faster than the lane's limit: the limiter's after it)
     }
-    else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
+    else if (e === 'box') { hap('pitBox'); hz.pos = race.player.pos || 0; }   // (braking into the box: the places from here on, pitHap)
+    else if (e === 'repair') { pitWrenchT = 0.15; hap('pitStop'); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
     else if (e === 'done') { if (pa.st === 'lane') pa.stop = true; const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate, ev = race.player.m.ev;   // (an electric car: its battery charged)
-      showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); dmgKey = ''; }
-    else if (e === 'exit') { if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; Sfx.beep(520, 0.16, 0.14); } }   // (the countdown in the progress bar's label: pitBar)
+      showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(ev ? ' · BATERIJA POLNA' : ' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); hap(fu ? (ev ? 'goCharge' : 'goFuel') : 'go'); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); dmgKey = ''; }
+    else if (e === 'exit') { if (hz.done) hap('rejoin');   // (back on the circuit after a stop)
+      if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; Sfx.beep(520, 0.16, 0.14); } }   // (the countdown in the progress bar's label: pitBar)
   }
   function pitCtl(P, hold) {   // each step before the inputs: which part of the pit stop the autopilot drives (null: none)
     if (!(phase === 'racing' && !hold && !autoDrive)) { if (pa.st || P.pitAP) pitFree(P, false); return null; }   // (the race over, the police, autoDrive: silently)
@@ -3121,14 +3125,14 @@
     return !p1 || (p1.gap && p1.o <= p1.wall + 1);
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
-    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
+    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
     $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
     pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false;
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
   }
   function pitCount(dt) {   // the countdown on race time: a number at each whole second (in the progress bar's label)
     pa.t -= dt; const n = Math.ceil(pa.t - 1e-6);
-    if (n > 0 && n !== pa.n) { pa.n = n; Sfx.beep(520, 0.16, 0.14); }
+    if (n > 0 && n !== pa.n) { pa.n = n; Sfx.beep(520, 0.16, 0.14); hap('tick'); }
   }
   // the pit stop's progress under the map while the autopilot drives (each step): AVTOPILOT · spusti plin, what it does now and one bar from
   // the way in (0) to the hand-back (1), never back: Vstop to 25 % by the way to the box, Boks to 30 % (braking into it), Popravilo n % to 85 %
@@ -3154,6 +3158,44 @@
     if (el.children[1].textContent !== lbl) el.children[1].textContent = lbl;
     if (bar.style.width !== w) bar.style.width = w;
     if (!el.classList.contains('on')) { el.classList.add('on'); $('touch').classList.add('ap'); }   // (#touch.ap: no tilt meter while the autopilot steers, css)
+  }
+  // the pit stop's vibrations (Core.HAPTIC, each its own; Input.buzz plays them one after another on the race's clock). pitEvent's: over the
+  // pit wall's line (the autopilot's, or running wide alone; the limiter after either when the car came in faster than the lane's limit),
+  // braking into the box, the stop, the release (a full tank, a charged battery: their own), back on the circuit after the stop; pitFree's
+  // VOZIŠ TI!; pitCount's seconds. Here, each step: the crew's work as it is drawn (Render.crew, as Sfx hears it: each end of the car up on
+  // its jack past 3 cm and let down again; the guns on the nuts, the first time undoing them, the second doing them up, and a rattle every
+  // 0.35 s while they stay on them on a long stop; with no crew of the player's drawn: at crewLogic's moments, Core.CREW_U), the new wheels
+  // pushed home (Core.REPAIR.wheel), a rival through the lane past the box while the car stands in it, the places lost from braking into
+  // the box till back on the circuit. Only in the race (not the cool-down lap; the replay and the title demo run no race steps)
+  const hz = { race: null, st: null, gw: 0, gn: 0, rT: 0, jk: [0, 0], top: [0, 0], whl: false, done: false, pos: 0, posT: -9, side: new Map() };
+  function pitHap(P, dt) {
+    if (hz.race !== race) { Object.assign(hz, { race, st: null, gw: 0, gn: 0, whl: false, done: false, pos: 0, posT: -9 }); hz.jk.fill(0); hz.top.fill(0); hz.side.clear(); }
+    const st = P.pitState || null, work = st === 'repair', u = Core.repairU(P), CU = Core.CREW_U, on = phase === 'racing' && !P.finished;
+    const bz = (k) => { if (on && !(Core.HAPTIC[k].min > P.pitDur)) hap(k); };   // (min: not on a short stop)
+    if (work && hz.st !== 'repair') { hz.gn = 0; hz.whl = false; }   // (a stop begins)
+    const C = Render.crew, R = C && C.P === P && C.dim ? C : null;
+    if (work && !hz.whl && u >= Core.REPAIR.wheel) { hz.whl = true; bz('wheelsOn'); }
+    // the guns (gunW: a bit for each wheel's gun on its nut): on the nuts, the first time off, the second on; the rattle while they stay there
+    const gw = R ? (R.mode === 'work' ? R.gunW | 0 : 0) : work && CU.nut.some(w => u > w[0] && u < w[1]) ? 15 : 0;
+    if (gw && !hz.gw) { bz(hz.gn++ % 2 ? 'gunOn' : 'gunOff'); hz.rT = 0.45; }
+    else if (gw && (hz.rT -= dt) <= 0) { hz.rT = 0.35; bz('rattle'); }
+    hz.gw = gw;
+    // the jacks (0 the front, 1 the rear): up past 3 cm; down once it falls back from the top it reached; ready again once it is down
+    for (let j = 0; j < 2; j++) {
+      const l = R ? (R.mode === 'work' ? (j ? R.liftR : R.liftF) || 0 : 0) : work && u > CU.jack[j] && u < CU.drop[j] ? 1 : 0;
+      if (hz.jk[j] === 0 && l > 0.03) { hz.jk[j] = 1; hz.top[j] = l; bz(j ? 'jackR' : 'jackF'); }
+      else if (hz.jk[j] === 1) { hz.top[j] = Math.max(hz.top[j], l); if (l < hz.top[j] * 0.7) { hz.jk[j] = 2; if (work || st === 'done') bz(j ? 'dropR' : 'dropF'); } }   // (not a car taken off the jacks by a rescue)
+      else if (hz.jk[j] === 2 && l < 0.015) hz.jk[j] = 0;
+    }
+    // a rival through the lane past the box (from behind to ahead of the car, along the track)
+    if (work) { const L = race.track.len;
+      for (const c of race.cars) { if (c === P || !c.inPit || !c.q) continue; let d = c.q.s - P.q.s; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
+        const d0 = hz.side.get(c); hz.side.set(c, d); if (d0 != null && d0 < 0 && d >= 0 && d < 12) bz('rivalPass'); } }
+    else if (hz.side.size) hz.side.clear();
+    if (st === 'done') hz.done = true;
+    if (!P.inPit) { hz.done = false; hz.pos = 0; }   // (out of the lane: pitEvent's 'exit' has had it)
+    if (hz.pos && P.pos > hz.pos) { hz.pos = P.pos; if (race.time - hz.posT > 0.8) { bz('lostPlace'); hz.posT = race.time; } }   // (a new worst place since braking into the box, pitEvent's 'box'; a pack passing at once: one)
+    hz.st = st;
   }
 
   /* ---------------- HUD ---------------- */
@@ -3424,7 +3466,7 @@
   // and the run from the police the rule is off (an ended run there would count as a time, a lap or an escape)
   const WHEEL_RULE = ['sokol'];
   function gameOver() {
-    phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
+    phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); Input.buzzOff(); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
     const n = race.player.wreck ? race.player.wreck.nL : 2;
     $('over-sub').textContent = tr(n >= 4 ? 'Odpadla so vsa štiri kolesa: avto ne more naprej.' : n === 3 ? 'Odpadla so tri kolesa: avto ne more naprej.' : 'Odpadli sta dve kolesi: avto ne more naprej.');
@@ -4049,7 +4091,7 @@
       if (!race.player.finished && race.isOut(race.player)) { const Q = race.player.wreck && race.player.wreck.rule; if (Q && Q.over) gameOver(); else retired(); return; }   // (the player retired: the results; two wheels off under the wheel rule: KONEC IGRE)
       if (!race.player.finished && !school) commTick(dt);
       if (race.player.finished) {
-        phase = 'finish'; phaseT = 0;
+        phase = 'finish'; phaseT = 0; Input.buzzOff();   // (no pit stop's vibration over the line)
         const pos = race.player.finishPos;
         if (on) {   // online: my time on the shared clock (netMyFinish) goes to the friend; who won shows on the results (the friend may still be on the way)
           const fins = [...on.cars.values()].map(C => C.fin), done = fins.filter(t => t != null), place = 1 + done.filter(t => t < on.mine).length, all = done.length === fins.length;   // (the others' times as far as they are in)
@@ -4146,7 +4188,7 @@
 
   function leaveRace() {   // the race (or its results) off the screen, the title demo back
     Net.fixClock(false); endPodium();
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence();
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence(); Input.buzzOff();
     demoShow(); Render.resetCam(); setLights(0, false);
   }
   function openOnline() {
@@ -5106,7 +5148,7 @@
       pd.addEventListener('touchstart', (e) => e.preventDefault(), o); pd.addEventListener('touchmove', (e) => e.preventDefault(), o);
       window.addEventListener('keydown', photoKey); }
     $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); pitFree(race.player, false); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); stSave(); } else checkUpdate(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Input.buzzOff(); Sfx.suspend(); stSave(); } else checkUpdate(); });   // (the motor off also where pause does nothing: the results)
     window.addEventListener('pagehide', () => { if (mp) Net.close(true); });   // (closing the game: the friend hears it at once, not only when the connection times out)
     window.addEventListener('pageshow', (e) => { if (e.persisted && mp) netLeave(); });   // (back from the browser's page cache: that room is closed)
     const unlock = () => Sfx.resume();
