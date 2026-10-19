@@ -170,6 +170,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   --ic-star: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 1L9.82 6.09L15.23 6.25L10.95 9.56L12.47 14.75L8 11.7L3.53 14.75L5.05 9.56L.77 6.25L6.18 6.09Z' fill='%23ffc629' stroke='%237a4d00' stroke-width='.7' stroke-linejoin='round'/></svg>");
   --ic-pit: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='7.1' y='10' width='1.8' height='5.8' rx='.6' fill='%23aab4c0'/><rect x='1.6' y='.8' width='12.8' height='10.4' rx='2.2' fill='%232f6fe0' stroke='%23fff' stroke-width='1'/><path d='M6.2 9V3.2h2.3a1.75 1.75 0 0 1 0 3.5H6.2' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/></svg>");
   --ic-info: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7.3' fill='%233aa0ff'/><circle cx='8' cy='4.6' r='1.25' fill='%23fff'/><path d='M8 7.2v5' stroke='%23fff' stroke-width='2.1' stroke-linecap='round'/></svg>");
+  --ic-wheel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10.1' fill='none' stroke='%23fff' stroke-width='3.4'/><circle cx='12' cy='12' r='6.2' fill='none' stroke='%23fff' stroke-width='1.8'/><path d='M12 9.7V5.8M14.19 11.29L17.9 10.08M13.35 13.86L15.64 17.02M10.65 13.86L8.36 17.02M9.81 11.29L6.1 10.08' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/><circle cx='12' cy='12' r='2.3' fill='%23fff'/></svg>");   /* (a wheel: the tyre, the rim, five spokes, the hub: ZAMENJAJ KOLO's) */
+  --ic-nospare: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10.1' fill='none' stroke='%23fff' stroke-width='3.4'/><circle cx='12' cy='12' r='6.2' fill='none' stroke='%23fff' stroke-width='1.8'/><path d='M12 9.7V5.8M14.19 11.29L17.9 10.08M13.35 13.86L15.64 17.02M10.65 13.86L8.36 17.02M9.81 11.29L6.1 10.08' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/><circle cx='12' cy='12' r='2.3' fill='%23fff'/><path d='M3.6 3.6L20.4 20.4M20.4 3.6L3.6 20.4' stroke='%23ff3b2b' stroke-width='3.2' stroke-linecap='round'/></svg>");   /* (the wheel crossed out in the lost wheel's red: no spare left) */
 }
 #h-pit, #h-msg, #h-teamradio { position: absolute; right: var(--map-r); width: var(--map-w); top: calc(var(--map-t) + var(--map-h) + 4px); border-radius: 8px; pointer-events: none; visibility: hidden; opacity: 0; }
 #h-pit.on, #h-msg.show, #h-teamradio.on { visibility: visible; opacity: 1; animation: colIn .2s ease-out; }
@@ -421,6 +423,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #wheel-swap.on { display: block; }
 #ws-btn { -webkit-appearance: none; appearance: none; position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); box-sizing: border-box; width: min(82vw, 420px); min-height: clamp(84px, 13vh, 124px); margin: 0; padding: 8px 12px calc(clamp(10px, 2vmin, 14px) + 7px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 3px solid #fff; border-radius: 18px; background: linear-gradient(180deg, #ee4630, #b51b0f); box-shadow: 0 6px 22px rgba(0, 0, 0, .55), inset 0 2px 0 rgba(255, 255, 255, .35); color: #fff; overflow: hidden; pointer-events: auto; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; animation: wsPulse .7s ease-in-out infinite alternate; }
 #ws-btn b { max-width: 100%; font: 400 italic clamp(26px, 8.6vmin, 54px)/1.05 var(--f-display); letter-spacing: .03em; white-space: nowrap; -webkit-text-stroke: .06em #fff; paint-order: stroke fill; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }   /* (heavy: the display face thickened by its own colour's outline, as the place on the HUD; game.js swapFit keeps it on one line inside the button) */
+#ws-btn b::before { content: ''; display: inline-block; width: .9em; height: .9em; margin-right: .22em; vertical-align: -.1em; background: center / contain no-repeat var(--ic-wheel); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .5)); }   /* (a wheel left of the words, on their line: what the button does at a glance; swapFit counts it too) */
 #ws-btn small { font: 700 clamp(11px, 2.9vmin, 16px)/1.1 var(--f-ui); color: rgba(255, 255, 255, .95); }
 #ws-btn i { position: absolute; left: 0; right: 0; bottom: 0; height: clamp(10px, 2vmin, 14px); background: rgba(0, 0, 0, .4); overflow: hidden; }   /* (the bar: the button's whole width at its very foot) */
 #ws-btn s { display: block; width: 100%; height: 100%; background: #ffd23c; transform-origin: left center; }
@@ -676,7 +679,7 @@ select.txt:disabled { opacity: .75; }
    a lost one crossed out; beside it the whole damage in % over a bar (marks at 70 and 80 %) and each part's % (▲ front, ▼ rear, ◀ left,
    ▶ right), in the part's colour */
 #h-dmgrow { display: flex; align-items: center; gap: 8px; contain: inline-size; }   /* (the damage and beside it the tyre button; contain: its numbers never widen the left column under it) */
-#h-dmg { display: flex; align-items: center; gap: 6px; margin-top: 3px; pointer-events: none; }
+#h-dmg { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 3px; pointer-events: none; }
 #h-dmg svg { width: clamp(26px, 7.6vh, 36px); height: auto; overflow: visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 #h-dmg .dmg-nums { display: flex; flex-direction: column; gap: 3px; min-width: clamp(58px, 15vh, 74px); padding: 3px 6px 4px; border-radius: 6px; background: rgba(10,14,20,.5); }
 #h-dmg #dmg-tot { font: 800 italic clamp(13px, 3.6vh, 17px)/1 var(--f-ui); text-shadow: 0 1px 2px rgba(0,0,0,.85); }
@@ -686,6 +689,11 @@ select.txt:disabled { opacity: .75; }
 #h-dmg .dmg-zs { display: grid; grid-template-columns: auto auto; column-gap: 8px; row-gap: 1px; font: 700 clamp(9px, 2.5vh, 12px)/1.15 var(--f-ui); text-shadow: 0 1px 2px rgba(0,0,0,.9); white-space: nowrap; }
 #h-dmg .dmg-zs .z0 { color: rgba(255,255,255,.55); }
 #h-dmg #dmg-glass.cracked { fill: rgba(255,120,110,.55); stroke: #ff3b2b; stroke-width: .8; }
+/* brez rezerve (game.js updateDamageHUD, .nospare: the wheel rule's spare used, till a repair in the pits): a row of its own under the car and
+   its numbers, a wheel crossed out in the lost wheel's red; contain: its words never widen the picture */
+#h-dmg .dmg-ns { display: none; flex: 1 0 100%; contain: inline-size; align-items: center; gap: .35em; box-sizing: border-box; padding: 2px 6px; border-radius: 6px; background: rgba(10,14,20,.5); font: 700 clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui); color: #ff6a5c; text-shadow: 0 1px 2px rgba(0,0,0,.9); white-space: nowrap; }
+#h-dmg.nospare .dmg-ns { display: flex; }
+#h-dmg .dmg-ns::before { content: ''; flex: none; width: 1.3em; height: 1.3em; background: center / contain no-repeat var(--ic-nospare); filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
 /* (a phone on its side, 420 px tall or less: the car smaller and the parts' % in one row, so the column under it stays where it was) */
 /* upright: the damage picture on the right, right under the map, as wide as it, the column of texts under it (game.js hudCol puts it first
    in the column); the tyre button alone in its row under the speedometer */
@@ -695,6 +703,7 @@ select.txt:disabled { opacity: .75; }
   #h-dmg .dmg-nums { flex: 1; min-width: 0; padding: 0; background: none; gap: 2px; }
   #h-dmg #dmg-tot { font-size: clamp(13px, 4.2vw, 17px); }
   #h-dmg .dmg-zs { column-gap: 3px; font-size: clamp(9px, 2.8vw, 12px); font-variant-numeric: tabular-nums; }
+  #h-dmg .dmg-ns { padding: 3px 0 0 2px; border-radius: 0; border-top: 1px solid rgba(255,255,255,.18); background: none; font-size: clamp(9px, 2.8vw, 12px); }   /* (inside the picture's own panel) */
 }
 @media (orientation: landscape) and (max-height: 420px) { #h-dmg svg { width: clamp(20px, 6.2vh, 28px); } #h-dmg .dmg-zs { grid-template-columns: repeat(4, auto); column-gap: 6px; } #h-dmg .dmg-zs span { min-width: 3.3em; font-variant-numeric: tabular-nums; } }   /* (each part's % as wide at 0 as at 100: the tyre button beside it stays put) */
 #h-dmg .dmg-body { fill: rgba(10,14,20,.6); stroke: rgba(255,255,255,.8); stroke-width: 1.6; }

@@ -44,6 +44,8 @@ try {
       // ZAMENJAJ KOLO (the spare on the roof): a hit at 79 % in the new race: a big button, its bar at its foot running out, clear of the
       // steering and the pedals, no fire yet, then (the bar under 20 %, white) the hub where the wheel was on fire; a tap beside the button:
       // nothing; a tap on it: the spare on at once (four wheels, drawn), the car driving on, the button gone, no spare left; the fire put out
+      const vib = []; navigator.vibrate = (q) => { vib.push(q); return true; };   // (the phone's buzzes, kept: the last second's are four long ones)
+      const buzz = () => vib.filter(q => Array.isArray(q) && q.join() === '150,100,150,100,150,100,150').length;
       g.pause(); g.sim(9, true); P2.dmg = 0.79; Core.applyDamage(P2, 0.03, P2.m.len * 0.5, 0);
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6));   // (the first wheel off: a knock on the autopilot's way meanwhile takes no more; its 3 s run on)
       g.resume(); await frames(4);
@@ -55,7 +57,8 @@ try {
         inView: br.left >= 0 && br.top >= 0 && br.right <= innerWidth && br.bottom <= innerHeight, barIn: tk.left >= br.left && tk.right <= br.right && tk.top > br.top + br.height / 2 && br.bottom - tk.bottom <= 4 && tk.width >= br.width - 8,   // (at its very foot, its whole width: only the border round it)
         clear: ctl.length > 0 && ctl.every(c => c.right <= br.left || c.left >= br.right || c.bottom <= br.top || c.top >= br.bottom), txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx(), roof: roof() };
       { const t = document.getElementById('ws-t'), rg = document.createRange(); rg.selectNodeContents(t); const r = rg.getBoundingClientRect();   // (the title: heavy, on one line inside the button; under it the same English words in both languages)
-        Object.assign(sw0, { fit: t.scrollWidth <= t.clientWidth + 1 && r.left >= br.left + 3 && r.right <= br.right - 3 && r.height < 1.6 * parseFloat(getComputedStyle(t).fontSize), heavy: parseFloat(getComputedStyle(t).webkitTextStrokeWidth) > 0, sub: document.getElementById('ws-s').textContent, tf: Math.round(parseFloat(getComputedStyle(t).fontSize)) }); }
+        Object.assign(sw0, { fit: t.scrollWidth <= t.clientWidth + 1 && r.left >= br.left + 3 && r.right <= br.right - 3 && r.height < 1.6 * parseFloat(getComputedStyle(t).fontSize), heavy: parseFloat(getComputedStyle(t).webkitTextStrokeWidth) > 0, sub: document.getElementById('ws-s').textContent, tf: Math.round(parseFloat(getComputedStyle(t).fontSize)) });
+        const ic = getComputedStyle(t, '::before'); sw0.icon = /svg/.test(ic.backgroundImage) && parseFloat(ic.width) >= 0.8 * parseFloat(getComputedStyle(t).fontSize) && ic.display === 'inline-block'; }   // (a wheel left of the words, on their line)
       { // (clear of the car, as the camera behind it frames it at every Oddaljenost, Nagib kamere and Položaj avta: the car's body projected;
         // on its side up top, under the clock, clear of the corner sign, the rank's column and the map)
         const C = Render.cam, keep = [C.userZoom, C.userTilt, C.userBack], v = Render.viewOf(P2), cut = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
@@ -67,18 +70,28 @@ try {
         [C.userZoom, C.userTilt, C.userBack] = keep; Render.frame(0.001, 1, P2, 'chase', { noFx: true });
         const hud = ['h-times', 'h-note', 'h-map', 'h-rank'].map(id => document.getElementById(id)).filter(e => e.getClientRects().length).map(e => [e.id, e.getBoundingClientRect()]).filter(([, q]) => q.width > 0 && cut(q, br)).map(([id]) => id);
         Object.assign(sw0, { car, hud, top: Math.round(br.top), clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom) }); }
-      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
+      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx(); sw0.buzz0 = buzz();
       P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
+      sw0.buzz1 = buzz(); sw0.vib = vib.length;   // (the last second's buzz: once, a few frames more or not: counted again after the tap)
       const ox = br.left > 40 ? br.left / 2 : (br.right + innerWidth) / 2, oy = br.top + br.height / 2, beside = document.elementFromPoint(ox, oy);   // (a tap beside the button, at its height)
       if (beside) beside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: ox, clientY: oy }));
       sw0.beside = { nL: P2.wreck.nL, ask: P2.wreck.rule.ask, on: ws.classList.contains('on') };
+      const gun = [], gun0 = Sfx.wrench; Sfx.wrench = () => gun.push(1);   // (the pits' wheel gun, counted)
       btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
       const sw1 = { nL: P2.wreck.nL, spare: P2.wreck.rule.spare, ask: P2.wreck.rule.ask, dv: +(P2.speed - v0).toFixed(2) };
-      g.resume(); await frames(3); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length; sw1.roof = roof();
+      g.resume(); await frames(3); await wait(600); g.pause(); sw1.on = ws.classList.contains('on'); sw1.shown = Render.viewOf(P2).wheelOff.filter(w => !w).length; sw1.roof = roof();
+      Sfx.wrench = gun0; sw1.gun = gun.length; sw1.buzz = buzz();
+      { const M = document.getElementById('h-msg'), D = document.getElementById('h-dmg'), N = document.getElementById('dmg-ns'), d = D.getBoundingClientRect(), n = N.getBoundingClientRect(), m = M.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
+        const cut = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1, ctl2 = ['c-left', 'c-right'].map(id => document.getElementById(id)).filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect().top);
+        sw1.msg = { txt: M.textContent, show: M.classList.contains('show'), gold: M.classList.contains('gold'), ic: M.dataset.ic, clear: !(M.classList.contains('show') && cut(m, d)) };
+        sw1.ns = { on: D.classList.contains('nospare'), shown: N.getClientRects().length > 0 && n.height > 0, txt: N.textContent, icon: /svg/.test(getComputedStyle(N, '::before').backgroundImage),
+          inPic: n.left >= d.left - 0.5 && n.right <= d.right + 0.5 && n.top >= d.top && n.bottom <= d.bottom + 0.5 && n.top > d.top + d.height / 3, oneLine: N.scrollWidth <= N.clientWidth + 1 && n.height < 2.2 * parseFloat(getComputedStyle(N).fontSize),
+          inView: d.left >= 0 && d.right <= innerWidth && d.bottom <= innerHeight, above: !ctl2.length || k.bottom <= Math.min(...ctl2) }; }
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6)); const k2 = P2.dmgK; P2.dmgK = 1e-6;   // (a knock in the pack on the autopilot's way meanwhile takes nothing: under 70 %, no more damage)
       for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
       P2.dmgK = k2; const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
+      g.race.repairCar(P2); g.resume(); await frames(3); g.pause(); sw2.spare = P2.wreck.rule.spare; sw2.ns = document.getElementById('h-dmg').classList.contains('nospare') || document.getElementById('dmg-ns').getClientRects().length > 0;   // (a repair in the pits: a new spare)
       // once more to KONEC IGRE, then Rezultati: the results, the player out (Odstop)
       g.pause(); g.sim(9, true); P2.dmg = 0.85; Core.applyDamage(P2, 0.2, P2.m.len * 0.5, 0); await frames(2); const big = { lvl: Render.viewOf(P2).fire && Render.viewOf(P2).fire.lvl };
       g.sim(4, true); await frames(4); Object.assign(big, { n: P2.wreck.nL, shown: sc.classList.contains('show') });
@@ -101,6 +114,12 @@ try {
         && a.sw0.beside.nL === 1 && a.sw0.beside.ask === 1 && a.sw0.beside.on, JSON.stringify(a.sw0));
     T.check(`${tag}: ZAMENJAJ KOLO clear of the car at every camera distance, tilt and car position${vw.width > vw.height ? '; on its side up top, just under the clock, clear of the corner sign, the rank\'s column and the map' : ''}`,
       a.sw0.car.length === 12 && a.sw0.car.every(c => !c[5]) && (vw.width < vw.height || (a.sw0.hud.length === 0 && a.sw0.top >= a.sw0.clock && a.sw0.top <= a.sw0.clock + 12)), JSON.stringify({ car: a.sw0.car, hud: a.sw0.hud, top: a.sw0.top, clock: a.sw0.clock }));
+    T.check(`${tag}: ZAMENJAJ KOLO: a wheel left of the words on its title, the title still on one line inside the button`, a.sw0.icon && a.sw0.fit, JSON.stringify({ icon: a.sw0.icon, fit: a.sw0.fit, tf: a.sw0.tf }));
+    T.check(`${tag}: ZAMENJAJ KOLO: the phone buzzes four long times in the last second (none before it), once`, a.sw0.buzz0 === 0 && a.sw0.buzz1 === 1 && a.sw1.buzz === 1, JSON.stringify({ before: a.sw0.buzz0, last: a.sw0.buzz1, after: a.sw1.buzz, all: a.sw0.vib }));
+    T.check(`${tag}: the tap: ${en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO'} (gold, the wrench), clear of the damage picture; the pits' wheel gun three times`,
+      a.sw1.msg.show && a.sw1.msg.txt === (en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO') && a.sw1.msg.gold && a.sw1.msg.ic === 'wrench' && a.sw1.msg.clear && a.sw1.gun === 3, JSON.stringify([a.sw1.msg, a.sw1.gun]));
+    T.check(`${tag}: no spare left: "${en ? 'no spare' : 'brez rezerve'}" with a wheel crossed out under the damage picture's numbers, in it, on one line, on screen${vw.width > vw.height ? ', the left column still above the steering' : ''}; a repair in the pits: a new spare, gone`,
+      a.sw1.ns.on && a.sw1.ns.shown && a.sw1.ns.txt === (en ? 'no spare' : 'brez rezerve') && a.sw1.ns.icon && a.sw1.ns.inPic && a.sw1.ns.oneLine && a.sw1.ns.inView && a.sw1.ns.above && a.sw2.spare === 1 && !a.sw2.ns, JSON.stringify([a.sw1.ns, { spare: a.sw2.spare, ns: a.sw2.ns }]));
     T.check(`${tag}: the spare drawn lying on the roof (over the body's top, within the car's length) until it is put on, then gone`,
       !!a.sw0.roof && a.sw0.roof.vis && a.sw0.roof.y > 0.9 && a.sw0.roof.y < a.sw0.roof.top + 0.4 && Math.abs(a.sw0.roof.x) < 1.5 && !!a.sw1.roof && !a.sw1.roof.vis, JSON.stringify([a.sw0.roof, a.sw1.roof]));
     T.check(`${tag}: a tap on the button: the spare on at once (four wheels, drawn), the car not slowed, the button gone, no spare left; the hub's fire out within 5 s, the car driving on`,
