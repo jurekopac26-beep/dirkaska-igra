@@ -4729,8 +4729,8 @@ const World = (function () {
      white delineators turn into the heavier plastic ones (Core's dpost). At night (Render.floodlights) the street lamps light the road only in the
      settlements (o.lampZones; every real open road has them, empty where it has no settlement), the sign faces and the delineators' reflectors
      shine in the headlights. d: metres after the start line.
-     OB (by the theme): reg the signs' country (SI: white boards, black lettering, red chevrons; FI: blue boards, the limits on yellow, yellow
-     chevrons), town / out the limits, towns [{ n the name, d0 the board in (null: the start is in it), d1 the board out, hamlet (the name
+     OB (by the theme): reg the signs' country, in its colours (SI: yellow boards, black lettering and edge, the
+     limits on white, red chevrons on white; FI: blue boards, white lettering and edge, the limits on yellow, black chevrons on yellow), town / out the limits, towns [{ n the name, d0 the board in (null: the start is in it), d1 the board out, hamlet (the name
      only), lamps [[d0, d1], ...] its built-up stretches }]. The other real open roads have no settlement on them (Mount Baldy's village, Hout Bay and
      Hotham Heights lie at the start or the finish): their roads dark at night, no lamp zones ---- */
   const OB = {
@@ -4753,9 +4753,11 @@ const World = (function () {
       if (kind === 'lim') {
         x.beginPath(); x.arc(cx, cy, 62, 0, Math.PI * 2); x.fillStyle = back ? grey : red; x.fill(); if (back) return;
         x.beginPath(); x.arc(cx, cy, 49, 0, Math.PI * 2); x.fillStyle = FI ? yel : wht; x.fill(); txt(arg, cx, cy + 3, arg.length > 2 ? 44 : 58, blk, 86);
-      } else if (kind === 'chev') {   // an upright board (92 px of the cell's 128: 1.0 x 1.4 m) with a chevron the way the bend turns
-        const w = 92, X0 = cx - w / 2; x.fillStyle = back ? grey : FI ? yel : red; x.fillRect(X0, y0 + 2, w, 124); if (back) return;
-        const s = arg === 'L' ? -1 : 1; x.strokeStyle = FI ? blk : wht; x.lineWidth = 19; x.lineJoin = 'miter'; x.lineCap = 'butt';
+      } else if (kind === 'chev') {   // an upright board (92 px of the cell's 128: 1.0 x 1.4 m) with a chevron the way the bend turns (SI: red on white; FI: black on
+        // yellow, a black edge)
+        const w = 92, X0 = cx - w / 2; x.fillStyle = back ? grey : FI ? yel : wht; x.fillRect(X0, y0 + 2, w, 124); if (back) return;
+        if (FI) { x.strokeStyle = blk; x.lineWidth = 6; x.strokeRect(X0 + 3, y0 + 5, w - 6, 118); }
+        const s = arg === 'L' ? -1 : 1; x.strokeStyle = FI ? blk : red; x.lineWidth = 19; x.lineJoin = 'miter'; x.lineCap = 'butt';
         x.beginPath(); x.moveTo(cx - s * 19, y0 + 26); x.lineTo(cx + s * 17, y0 + 64); x.lineTo(cx - s * 19, y0 + 102); x.stroke();
       } else if (kind === 'white') { x.fillStyle = '#ffffff'; x.fillRect(x0, y0, 128, 128); }
     };
@@ -4763,7 +4765,7 @@ const World = (function () {
     shape('white', 3 * 128, 3 * 128, false);
     names.forEach(([nm, crossed], j) => { const x0 = (j % 2) * 512, y0 = 512 + Math.floor(j / 2) * 128;
       if (FI) { x.fillStyle = '#1f5aa6'; x.fillRect(x0, y0, 512, 128); x.strokeStyle = wht; x.lineWidth = 6; x.strokeRect(x0 + 9, y0 + 9, 494, 110); txt(nm, x0 + 256, y0 + 66, 66, wht, 450); }
-      else { x.fillStyle = wht; x.fillRect(x0, y0, 512, 128); x.strokeStyle = blk; x.lineWidth = 7; x.strokeRect(x0 + 9, y0 + 9, 494, 110); txt(nm, x0 + 256, y0 + 67, nm.length > 10 ? 62 : 70, blk, 450); }
+      else { x.fillStyle = yel; x.fillRect(x0, y0, 512, 128); x.strokeStyle = blk; x.lineWidth = 7; x.strokeRect(x0 + 9, y0 + 9, 494, 110); txt(nm, x0 + 256, y0 + 67, nm.length > 10 ? 62 : 70, blk, 450); }
       if (crossed) { x.strokeStyle = red; x.lineWidth = 15; x.beginPath(); x.moveTo(x0 + 30, y0 + 112); x.lineTo(x0 + 482, y0 + 16); x.stroke(); } });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
