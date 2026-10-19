@@ -30984,6 +30984,8 @@ const World = (function () {
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of q) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { id: w.id, q, x0, x1, z0, z1 }; });
     const inWin = (x, z) => { for (const W of WINS) if (x >= W.x0 && x <= W.x1 && z >= W.z0 && z <= W.z1 && inPoly(W.q, x, z)) return true; return false; };
     MVWIN = WINS.length ? inWin : null;
+    const IW = new Uint8Array(N), IWE = new Uint8Array(N);   // (the route's samples in a window; IWE: those and their neighbours, where the run-off starts at the asphalt's edge (no gap at a window's border))
+    if (WINS.length) { for (let i = 0; i < N; i++) IW[i] = inWin(T.px[i], T.pz[i]) ? 1 : 0; for (let i = 0; i < N; i++) IWE[i] = IW[i] || (i > 0 && IW[i - 1]) || (i + 1 < N && IW[i + 1]) ? 1 : 0; }
     const OWNW = WINS.filter((W, k) => (def.mvWin[k].kind || '') === 'k1'), inOwnWin = (x, z) => OWNW.some(W => x >= W.x0 && x <= W.x1 && z >= W.z0 && z <= W.z1 && inPoly(W.q, x, z));   // (K1: the user's own markings)
     const wPairs = (L) => { const q = []; for (let k = 0; k + 1 < L.length; k += 2) q.push([L[k], L[k + 1]]); if (q.length > 1 && q[0][0] === q[q.length - 1][0] && q[0][1] === q[q.length - 1][1]) q.pop(); return q; };
     const wBB = (q) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of q) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return [x0, z0, x1, z1]; };
@@ -31032,18 +31034,41 @@ const World = (function () {
     // (p10) the ground in the windows: inside the cars' free ground (and the run-off's rows' last 35 cm past the barrier, a ring's disc) the surface the cars
     // drive on (the route's rows' own height on its asphalt: a ring's surface can lie up to 4 cm off them), else the terrain; lin / lout metres over it
     // past it eased down to the terrain over 0.65 m (where the run-off's grass skirt would be: none under the user's ground), then the terrain
-    const QW = {}, wPast = (x, z) => { const s = wFree.insetNear(x, z, T.nearestIdx(x, z)); let p = isNaN(s) ? 1e9 : -s - 0.35;   // (metres past the cover's edge: the barrier + 0.35 m, a ring's disc)
+    // (with def.barrier the cover is the run-off as drawn further down: each row out to the barrier + 0.35 m, to the asphalt's or the sidewalk's edge where it has
+    // none; each segment's halves as two triangles, hashed in an 8 m grid. Not the cars' free ground: that takes the barrier at each point's own projection,
+    // which at a step in the barrier parts from the run-off's straight edge by up to a metre)
+    let CQ = null; const CQH = new Map(), CQC = 8, cqK = (a, b) => a * 65536 + b;
+    const cqBuild = () => { CQ = [];
+      const eR = (i, si) => IWE[i] ? WA[i] : wE(si, i), bR = (i, si) => si ? T.br[i] : T.bl[i], dR = (i, si) => !onBr[i] && bR(i, si) - eR(i, si) >= 0.25;
+      const add = (ax, az, bx, bz, cx, cz) => { if (Math.abs((bx - ax) * (cz - az) - (bz - az) * (cx - ax)) < 1e-6) return; const t = [ax, az, bx, bz, cx, cz, Math.min(ax, bx, cx) - 0.7, Math.min(az, bz, cz) - 0.7, Math.max(ax, bx, cx) + 0.7, Math.max(az, bz, cz) + 0.7]; CQ.push(t);
+        for (let a = Math.floor((Math.min(ax, bx, cx) - 0.7) / CQC); a <= Math.floor((Math.max(ax, bx, cx) + 0.7) / CQC); a++) for (let b = Math.floor((Math.min(az, bz, cz) - 0.7) / CQC); b <= Math.floor((Math.max(az, bz, cz) + 0.7) / CQC); b++) {
+          const k = cqK(a, b); let L = CQH.get(k); if (!L) CQH.set(k, L = []); L.push(t); } };
+      for (let i = 0; i + 1 < N; i++) for (const si of [0, 1]) { const j = i + 1, sg = si ? 1 : -1, both = dR(i, si) && dR(j, si), oi = both ? bR(i, si) + 0.35 : eR(i, si), oj = both ? bR(j, si) + 0.35 : eR(j, si);
+        const ax = T.px[i] + T.nx[i] * sg * oi, az = T.pz[i] + T.nz[i] * sg * oi, bx = T.px[j] + T.nx[j] * sg * oj, bz = T.pz[j] + T.nz[j] * sg * oj;
+        add(T.px[i], T.pz[i], ax, az, bx, bz); add(T.px[i], T.pz[i], bx, bz, T.px[j], T.pz[j]); } };
+    const segD = (x, z, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1e-12, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)); return Math.hypot(x - ax - dx * t, z - az - dz * t); };
+    const triSD = (t, x, z) => { if (x < t[6] || x > t[8] || z < t[7] || z > t[9]) return 1e9; const ax = t[0], az = t[1], bx = t[2], bz = t[3], cx = t[4], cz = t[5];   // (-1 inside; outside the distance, 1e9 past 0.7 m: only the ease's 0.65 m counts)
+      const s1 = (bx - ax) * (z - az) - (bz - az) * (x - ax), s2 = (cx - bx) * (z - bz) - (cz - bz) * (x - bx), s3 = (ax - cx) * (z - cz) - (az - cz) * (x - cx);
+      if ((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0)) return -1;
+      return Math.min(segD(x, z, ax, az, bx, bz), segD(x, z, bx, bz, cx, cz), segD(x, z, cx, cz, ax, az)); };
+    const QW = {}, wPast = (x, z) => { let p = 1e9;   // (metres past the cover's edge: the run-off's (the barrier + 0.35 m), a ring's disc)
+      if (BAR) { if (!CQ) cqBuild(); const L = CQH.get(cqK(Math.floor(x / CQC), Math.floor(z / CQC))); if (L) for (const t of L) { const d = triSD(t, x, z); if (d < p) { p = d; if (p < 0) break; } } }
+      else { const s = wFree.insetNear(x, z, T.nearestIdx(x, z)); if (!isNaN(s)) p = -s - 0.35; }
       for (const Rg of T.rings) if (Rg.zr > 0) p = Math.min(p, Math.hypot(x - Rg.x, z - Rg.z) - (Rg.zr + 0.35)); return p; };
     const wCov = (x, z) => wPast(x, z) <= 0;
     const wSurf = (x, z) => { const q = T.query(x, z, T.nearestIdx(x, z), QW); let y = T.yAt(q); if (!q.deep && q.k < 0 && Math.abs(q.d) <= WA[q.a] + 0.05) y = Math.max(y, T.elevAt(T.hs(q)).y + 0.02); else y += 0.02; return y; };
     const wY = (x, z, lin, lout) => { const p = wPast(x, z); if (p <= 0) return wSurf(x, z) + lin; const yo = mvGround(x, z) + lout; return p >= 0.65 ? yo : lerp(wSurf(x, z) + lin, yo, p / 0.65); };
-    // (a flat piece on that ground: triangles split at their edges' middles (to 4 levels) where the ground bends more than 1.5 cm away from them)
-    const wTri = (g, a, b, c, hf, cols, uvf, lv) => { const ya = hf(a[0], a[1]), yb = hf(b[0], b[1]), yc = hf(c[0], c[1]);
-      if ((lv || 0) < 4) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2];
-        if (Math.abs(hf(ab[0], ab[1]) - (ya + yb) / 2) > 0.015 || Math.abs(hf(bc[0], bc[1]) - (yb + yc) / 2) > 0.015 || Math.abs(hf(ca[0], ca[1]) - (yc + ya) / 2) > 0.015) {
-          const l = (lv || 0) + 1; wTri(g, a, ab, ca, hf, cols, uvf, l); wTri(g, ab, b, bc, hf, cols, uvf, l); wTri(g, ca, bc, c, hf, cols, uvf, l); wTri(g, ab, bc, ca, hf, cols, uvf, l); return; } }
-      const A = [a[0], ya, a[1]], B = [b[0], yb, b[1]], C = [c[0], yc, c[1]]; g.triUp(A, B, C, [cols, cols, cols], uvf ? [uvf(A), uvf(B), uvf(C)] : undefined); };
-    const wQuad = (g, a, b, c, d, hf, cols, uvf) => { wTri(g, a, b, c, hf, cols, uvf, 0); wTri(g, a, c, d, hf, cols, uvf, 0); };
+    // (a flat piece on that ground: triangles split at their edges' middles (to 4 levels) where the ground bends more than 1.5 cm away from them; across the
+    // ease's start and end past the cover's edge (where it slopes) to 20 cm (to 6 levels): its bends between the middles. Each corner's height and distance past the edge found once)
+    const wP = (v) => v.p === v.p ? v.p : (v.p = wPast(v.x, v.z)), wKink = (pa, pb, pc) => { const lo = Math.min(pa, pb, pc), hi = Math.max(pa, pb, pc); return (lo <= 0 && hi > 0) || (lo < 0.65 && hi >= 0.65); };   // (across the ease's start or end)
+    const wTriV = (g, a, b, c, hf, cols, uvf, lv, V) => {
+      if (lv < 6 && Math.max(Math.hypot(b.x - a.x, b.z - a.z), Math.hypot(c.x - b.x, c.z - b.z), Math.hypot(a.x - c.x, a.z - c.z)) > 0.2) {
+        const ab = V((a.x + b.x) / 2, (a.z + b.z) / 2), bc = V((b.x + c.x) / 2, (b.z + c.z) / 2), ca = V((c.x + a.x) / 2, (c.z + a.z) / 2);
+        if ((lv < 4 && (Math.abs(ab.y - (a.y + b.y) / 2) > 0.015 || Math.abs(bc.y - (b.y + c.y) / 2) > 0.015 || Math.abs(ca.y - (c.y + a.y) / 2) > 0.015)) || (Math.max(a.y, b.y, c.y) - Math.min(a.y, b.y, c.y) > 0.02 && wKink(wP(a), wP(b), wP(c)))) {
+          const l = lv + 1; wTriV(g, a, ab, ca, hf, cols, uvf, l, V); wTriV(g, ab, b, bc, hf, cols, uvf, l, V); wTriV(g, ca, bc, c, hf, cols, uvf, l, V); wTriV(g, ab, bc, ca, hf, cols, uvf, l, V); return; } }
+      const A = [a.x, a.y, a.z], B = [b.x, b.y, b.z], C = [c.x, c.y, c.z]; g.triUp(A, B, C, [cols, cols, cols], uvf ? [uvf(A), uvf(B), uvf(C)] : undefined); };
+    const wTri = (g, a, b, c, hf, cols, uvf) => { const V = (x, z) => ({ x, z, y: hf(x, z), p: NaN }); wTriV(g, V(a[0], a[1]), V(b[0], b[1]), V(c[0], c[1]), hf, cols, uvf, 0, V); };
+    const wQuad = (g, a, b, c, d, hf, cols, uvf) => { wTri(g, a, b, c, hf, cols, uvf); wTri(g, a, c, d, hf, cols, uvf); };
 
     /* ---- the buildings (def.bld): clear of the road, its sidewalks and the side roads; their footprints marked (no trees in them) ---- */
     const blds = []; let nWallDrop = 0, nNarrow = 0, nDropB = 0, nDropF = 0;
@@ -31166,7 +31191,7 @@ const World = (function () {
         }
         for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; let prw = -1;
           for (let i = c0; i <= Math.min(c0 + 128, N - 1); i++) {   // the sidewalks (raised 7 cm behind the kerb, part of the road), as rows
-            const wk = WK ? WK[si][i] : 0; if (wk < 0.05 || onBr[i] || (WINS.length && inWin(T.px[i], T.pz[i]))) { prw = -1; continue; }   // (p10: in a window the user's sidewalks)
+            const wk = WK ? WK[si][i] : 0; if (wk < 0.05 || onBr[i] || IW[i]) { prw = -1; continue; }   // (p10: in a window the user's sidewalks)
             // (p10: granite setts behind the kerb's light top, a dark edging 10 cm wide on the grass's side)
             const ed = Math.max(WA[i] + 0.2, WA[i] + wk - 0.1), os = [WA[i] + 0.18, ed, ed, WA[i] + wk], pts = os.map(o => Pt(i, side * o, 0.07)), gc = SWc(i, 0).map(v => v * 0.63), cols = [gc, gc, SWE, SWE], uvs = pts.map(p => [p[0] / 1.6, -p[2] / 1.6]);
             if (side < 0) { pts.reverse(); cols.reverse(); uvs.reverse(); }
@@ -31205,7 +31230,7 @@ const World = (function () {
               const cols = os.map(o => g ? gShade(i, Math.sign(o) * 1.2) : RC(i, o)); if (side < 0) { cols.reverse(); uvs.reverse(); } return [cols, uvs]; };
             const add = (g, P, i, os) => { const [c2, u2] = cu(g, i, os, P); return (g ? grG : gr).row(P, c2, u2); };
             for (let i = c0; i <= Math.min(c0 + 128, N - 1); i++) {
-              const iw = WINS.length && inWin(T.px[i], T.pz[i]), bar = side > 0 ? T.br[i] : T.bl[i], e = iw ? WA[i] : wE(si, i), y0 = !iw && WK && WK[si][i] > 0.05 ? 0.07 : 0.02, grav = !RM && SF[i] === 5;   // (p10: in a window the run-off from the asphalt's edge: the user's sidewalks over it)   // (without def.roSurf, beside the gravel road: gravel out to the barrier)
+              const iw = IWE[i], bar = side > 0 ? T.br[i] : T.bl[i], e = iw ? WA[i] : wE(si, i), y0 = !iw && WK && WK[si][i] > 0.05 ? 0.07 : 0.02, grav = !RM && SF[i] === 5;   // (p10: in a window and next to one the run-off from the asphalt's edge: the user's sidewalks over it; beside a window the route's sidewalk's last metre over it)   // (without def.roSurf, beside the gravel road: gravel out to the barrier)
               if (onBr[i] || bar - e < 0.25) { pr = prs = pg = -1; prev = zprev = null; continue; }   // (the bridge: its deck out to the parapets, drawn with it)
               const os = [0, 1, 2, 3, 4, 5, 6].map(k => e + (bar + 0.35 - e) * k / 6), P3 = os.map((o, k) => k ? yRO(PtR(i, side * o, 0.02), i) : PtR(i, side * o, 0.02));   // (7 across: the surface round a ring is curved; the edge at the road's own height)
               const yOut = P3[6][1];
@@ -31603,6 +31628,19 @@ const World = (function () {
     {
       const SA = new Chunks(300, true), SG = new Chunks(300, true), aS = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       const sS = new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+      // (p10: a ribbon's piece that reaches into a window cut along its border: its triangles split to 30 cm there (and where a window's corner lies in one), the
+      // border found by halving on the edges that cross it; the user's road goes on. a, b, c: [x, z, u, v])
+      const wMid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, (p[2] + q[2]) / 2, (p[3] + q[3]) / 2];
+      const wInT = (a, b, c, x, z) => { const s1 = (b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (x - a[0]), s2 = (c[0] - b[0]) * (z - b[1]) - (c[1] - b[1]) * (x - b[0]), s3 = (a[0] - c[0]) * (z - c[1]) - (a[1] - c[1]) * (x - c[0]); return (s1 > 0 && s2 > 0 && s3 > 0) || (s1 < 0 && s2 < 0 && s3 < 0); };
+      const wCut = (p, q) => { let lo = p, hi = q; for (let it = 0; it < 10; it++) { const m = wMid(lo, hi); if (inWin(m[0], m[1])) hi = m; else lo = m; } return lo; };   // (p outside, q inside: the border between them)
+      const wClip = (a, b, c, emit, lv) => { const ia = inWin(a[0], a[1]) ? 1 : 0, ib = inWin(b[0], b[1]) ? 1 : 0, ic = inWin(c[0], c[1]) ? 1 : 0, nIn = ia + ib + ic; if (nIn === 3) return;
+        const ab = Math.hypot(b[0] - a[0], b[1] - a[1]), bc = Math.hypot(c[0] - b[0], c[1] - b[1]), ca = Math.hypot(a[0] - c[0], a[1] - c[1]), m = Math.max(ab, bc, ca);
+        const corner = !nIn && WINS.some(W => W.q.some(([x, z]) => wInT(a, b, c, x, z)));
+        if (!nIn && !corner) { emit(a, b, c); return; }
+        if (lv < 8 && m > 0.3) { if (m === ab) { const e = wMid(a, b); wClip(a, e, c, emit, lv + 1); wClip(e, b, c, emit, lv + 1); } else if (m === bc) { const e = wMid(b, c); wClip(a, b, e, emit, lv + 1); wClip(a, e, c, emit, lv + 1); } else { const e = wMid(c, a); wClip(a, b, e, emit, lv + 1); wClip(e, b, c, emit, lv + 1); } return; }
+        if (!nIn) { emit(a, b, c); return; }
+        if (nIn === 1) { const [p, q, r] = ic ? [a, b, c] : ia ? [b, c, a] : [c, a, b]; const u = wCut(q, r), v = wCut(p, r); emit(p, q, u); emit(p, u, v); }   // (r in the window)
+        else { const [p, q, r] = !ia ? [a, b, c] : !ib ? [b, c, a] : [c, a, b]; emit(p, wCut(p, q), wCut(p, r)); } };   // (p outside it)
       const dense = (p, st) => { const o = []; for (let k = 0; k + 3 < p.length; k += 2) { const ax = p[k], az = p[k + 1], bx = p[k + 2], bz = p[k + 3], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / st)); for (let t = 0; t < m; t++) o.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); } o.push([p[p.length - 2], p[p.length - 1]]); return o; };
       for (const l of lines) { if (l.br === 2) continue;
         const nearW = WINS.length && (() => { for (let k = 0; k + 1 < l.pts.length; k += 2) for (const W of WINS) if (l.pts[k] > W.x0 - 6 && l.pts[k] < W.x1 + 6 && l.pts[k + 1] > W.z0 - 6 && l.pts[k + 1] < W.z1 + 6) return true; return false; })();
@@ -31616,7 +31654,8 @@ const World = (function () {
             if (hi < 0) return null; for (let it = 0; it < 6; it++) { const m = (lo + hi) / 2; if (onStubE(ax + dx / L * m, az + dz / L * m)) hi = m; else lo = m; } return [ax + dx / L * lo, az + dz / L * lo]; };
           const D2 = [], K2 = [], inW2 = (p) => nearW && inWin(p[0], p[1]);
           const wB = (k, j) => { let a = D[k], b = D[j]; for (let it = 0; it < 12; it++) { const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; if (inWin(m[0], m[1])) b = m; else a = m; } return a; };   // (p10: a window's border between a kept point and one in it: the street ends on it, the user's road goes on)
-          const ext = (k, j, back) => { if (!back && inW2(D[j])) return wB(k, j); const e = edge(k, j, back); return e && !inW2(e) ? e : null; };
+          const wBx = (k, j) => { const a = wB(k, j), dx = D[j][0] - D[k][0], dz = D[j][1] - D[k][1], L = Math.hypot(dx, dz) || 1; return [a[0] + dx / L * 2 * hw, a[1] + dz / L * 2 * hw]; };   // (on past the border by the street's width: its piece in the window cut off along the border below, its other half reaching it too)
+          const ext = (k, j, back) => { if (!back && inW2(D[j])) return wBx(k, j); const e = edge(k, j, back); return e && !inW2(e) ? e : null; };
           for (let k = 0; k < n; k++) { if (keep[k] && k > 0 && !keep[k - 1]) { const e = ext(k, k - 1); if (e) { D2.push(e); K2.push(true); } }
             if (k === 0 && keep[0]) { const e = ext(0, 1, true); if (e) { D2.push(e); K2.push(true); } }
             D2.push(D[k]); K2.push(keep[k]);
@@ -31630,7 +31669,12 @@ const World = (function () {
         const C = l.grav ? SG : SA, col = l.grav ? (l.path ? [0.78, 0.72, 0.6] : [0.8, 0.86, 0.94]) : l.path ? [0.92, 0.9, 0.88] : [0.84, 0.84, 0.86];   // (gravel roads grey-beige as the castle road, the dirt paths browner)
         const at = (k, o) => { const x = D[k][0] + nrm[k][0] * o, z = D[k][1] + nrm[k][1] * o; return [x, yb ? lerp(yb[0], yb[1], k / (n - 1)) : mvGround(x, z) + (l.path ? 0.05 : 0.07), z]; };
         for (let k = 0; k + 1 < n; k++) { if (!keep[k] || !keep[k + 1]) continue; const g = C.get(D[k][0], D[k][1]), sh = 0.95 + 0.1 * rpHash(Math.round(vv[k] / 20), 3), c = [col[0] * sh, col[1] * sh, col[2] * sh];
-          for (const [o0, o1] of [[-hw, 0], [0, hw]]) g.quadUp(at(k, o0), at(k, o1), at(k + 1, o1), at(k + 1, o0), [c, c, c, c], [[(o0 + hw) / 6, vv[k] / 6], [(o1 + hw) / 6, vv[k] / 6], [(o1 + hw) / 6, vv[k + 1] / 6], [(o0 + hw) / 6, vv[k + 1] / 6]]);
+          for (const [o0, o1] of [[-hw, 0], [0, hw]]) {
+            const Q4 = nearW && !yb ? [[k, o0], [k, o1], [k + 1, o1], [k + 1, o0]].map(([kk, o]) => [D[kk][0] + nrm[kk][0] * o, D[kk][1] + nrm[kk][1] * o, (o + hw) / 6, vv[kk] / 6]) : null;
+            if (Q4 && WINS.some(W => Q4.some(q => q[0] > W.x0 - 0.1 && q[0] < W.x1 + 0.1 && q[1] > W.z0 - 0.1 && q[1] < W.z1 + 0.1))) {   // (p10: near a window: cut along its border)
+              const y = (q) => [q[0], mvGround(q[0], q[1]) + (l.path ? 0.05 : 0.07), q[1]], emit = (p, q, r) => g.triUp(y(p), y(q), y(r), [c, c, c], [[p[2], p[3]], [q[2], q[3]], [r[2], r[3]]]);
+              wClip(Q4[0], Q4[1], Q4[2], emit, 0); wClip(Q4[0], Q4[2], Q4[3], emit, 0); continue; }
+            g.quadUp(at(k, o0), at(k, o1), at(k + 1, o1), at(k + 1, o0), [c, c, c, c], [[(o0 + hw) / 6, vv[k] / 6], [(o1 + hw) / 6, vv[k] / 6], [(o1 + hw) / 6, vv[k + 1] / 6], [(o0 + hw) / 6, vv[k + 1] / 6]]); }
           if (yb) { const gs = scen.get(D[k][0], D[k][1]), cc = [0.66, 0.65, 0.62]; for (const sd of [-1, 1]) { const a = at(k, sd * hw), b = at(k + 1, sd * hw); gs.quadO([a[0], a[1] - 1.2, a[2]], [b[0], b[1] - 1.2, b[2]], [b[0], b[1] + 0.9, b[2]], [a[0], a[1] + 0.9, a[2]], cc, [D[k][0], a[1], D[k][1]]); } } }
       }
       for (const Pp of def.parking || []) {   // the car parks (OSM): asphalt a few cm over the ground (its triangles split to 4 m to follow it), clear of the road; no trees on them
