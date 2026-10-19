@@ -84,7 +84,8 @@ try {
   for (const [vp, cam] of [[{ width: 640, height: 360 }, 'chase'], [{ width: 360, height: 640 }, 'chase']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: cam, notes: 1 }, vp);
     const land = vp.width > vp.height, tag = `${cam} ${vp.width}×${vp.height}`;
-    const go = async (id, mode) => { await startTrack(page, id, mode); return page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 240 && g.phase !== 'racing'; k++) { g.sim(0.25, true); await new Promise(r => requestAnimationFrame(r)); } return g.phase; }); };
+    // (on to the race with the player driving: past the lights, and on an open road past the flying start's autopilot, #touch.ap)
+    const go = async (id, mode) => { await startTrack(page, id, mode); return page.evaluate(async () => { const g = window.__game, ap = () => document.getElementById('touch').classList.contains('ap'); for (let k = 0; k < 240 && (g.phase !== 'racing' || ap()); k++) { g.sim(0.25, true); await new Promise(r => requestAnimationFrame(r)); } return g.phase; }); };
     // the sign as at d m after the start line (or at s along the road) at v m/s: what noteAt says, and the box 250 ms later
     const at = (d, v, abs) => page.evaluate(async ([d, v, abs]) => {
       const g = window.__game, T = g.race.track, s = abs ? d : T.open ? T.startS + d : (((T.startS + d) % T.len) + T.len) % T.len;

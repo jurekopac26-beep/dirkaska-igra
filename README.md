@@ -781,12 +781,16 @@ Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, 
 
 ## Reakcija na štartu
 
-Na dirki s štartne vrste (tudi v prvenstvu, karieri, dvoboju v prometu in dirki s prijatelji; ne v kronometru, kvalifikacijah, izzivu z letečim krogom, begu pred policijo, prosti vožnji in v šoli vožnje razen vaje **Štart**) avto spelje ob prvem pritisku na plin, ko ugasnejo luči. Čas od ugasnitve luči do pritiska je **reakcija**: v stolpcu napisov pod zemljevidom (ležeče tik pod njim, pokonci pod časovno tabelo; nad sporočilom **START!**) se za nekaj sekund izpiše, npr. **REAKCIJA 0,23 s** (zeleno do 0,25 s, rumeno do 0,45 s, rdeče počasneje; v okvirčku na prosojnem ozadju z levim robom v isti barvi); časovna tabela ostane (ležeče pod njim, pokonci nad njim; kadar zmanjka prostora, z manj vrsticami).
+Na dirki s štartne vrste (tudi v prvenstvu, karieri, dvoboju v prometu in dirki s prijatelji; ne v kronometru, kvalifikacijah, izzivu z letečim krogom, begu pred policijo, prosti vožnji, v šoli vožnje razen vaje **Štart** in na dirki po odprti cesti, ki ima leteči start, glej spodaj) avto spelje ob prvem pritisku na plin, ko ugasnejo luči. Čas od ugasnitve luči do pritiska je **reakcija**: v stolpcu napisov pod zemljevidom (ležeče tik pod njim, pokonci pod časovno tabelo; nad sporočilom **START!**) se za nekaj sekund izpiše, npr. **REAKCIJA 0,23 s** (zeleno do 0,25 s, rumeno do 0,45 s, rdeče počasneje; v okvirčku na prosojnem ozadju z levim robom v isti barvi); časovna tabela ostane (ležeče pod njim, pokonci nad njim; kadar zmanjka prostora, z manj vrsticami).
 
 - **Kolesa kopljejo:** pozneje ko pritisneš, bolj pogonska kolesa zdrsavajo: 1 do 1,5 s po pritisku imajo manj oprijema (pri reakciji 0,1 s ali hitrejši nič manj, pri 0,5 s ali počasnejši do 55 % manj), za avtom je več dima in črne sledi gum. Reakcija 0,15 s do 100 m stane skoraj samo čas reakcije, reakcija 0,5 s pa še dobrih pol sekunde zraven. Najhitrejši štart ima, kdor pritisne plin takoj, ko luči ugasnejo.
 - **Prezgodaj na plinu:** če plin držiš že med lučmi in ga ob ugasnitvi ne spustiš, se izpiše **PREZGODAJ NA PLINU** in **0,60 s** (rdeče): šteje kot reakcija 0,6 s, kolesa kopljejo kot pri pozni reakciji (počasneje od dobrega pritiska, a ne katastrofa). Če ga v prvih 0,6 s po lučeh spustiš in spet pritisneš, šteje novi pritisk. S **samodejnim plinom** je plin pritisnjen ves čas: med lučmi drži zavoro in jo spusti, ko ugasnejo.
 - **Tekmeci** imajo vsak svojo reakcijo (0,15 do 0,45 s, boljši vozniki praviloma hitrejšo; vsaka dirka jih izžreba po svoje) in enako kopljejo, zato je vsak štart drugačen.
 - **Dirka s prijatelji:** vsak telefon meri reakcijo svojega avta od skupnega trenutka, ko ugasnejo luči; drugi vidijo le, kako avto spelje, zato ostanejo dirke usklajene.
+
+## Leteči start (odprte ceste)
+
+Dirka po odprti cesti (*Circuit race* → *Open roads*, vseh 19 cest, tudi v karieri in prvenstvu) nima luči: ko se dirka začne, **avti že vozijo** (~54 km/h, vsak s svojega mesta v štartni vrsti, v prestavi za to hitrost), ura teče od tega trenutka. Tvoj avto prve **3 sekunde** vodi avtopilot, pod zemljevidom se odšteva **LETEČI START · PREVZAMEŠ ČEZ 3**, **2**, **1** (pisk ob vsaki sekundi), nato **VOZIŠ TI!** in avto je tvoj. Reakcije na štartu tu ni. Kronometer, dvoboj v prometu, beg pred policijo in dirka s prijatelji na isti cesti ter dirke na dirkališčih imajo štart z lučmi kot prej. Rekordi dirk po odprtih cestah, postavljeni pred letečim startom (s štarta z mesta), so zato malo počasnejši.
 
 ## Zavetrje
 

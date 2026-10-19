@@ -22063,6 +22063,24 @@ const World = (function () {
       g.setIndex(this.I); g.computeVertexNormals(); g.computeBoundingSphere(); return g;
     }
   }
+  // a chunk's instances in up to 4 x 4 boxes (in the chunk mesh's own space: x and z from its centre), m.userData.vb: on the lower tiers
+  // Render draws a chunk only while one of its boxes is in view, and its shadow copy only while one is in the sun's shadow box (three.js
+  // tests the chunk's one bounding sphere, up to ~100 m round: a chunk beside, behind or below the camera was drawn whole). An instance's
+  // box: the unit plant's reach round its axis and its height at the instance's scale, the wind's sway on top (the plants' shaders: up to
+  // 0.16 y² of the unit plant), a metre all round (the crowd's poses: sitting, hopping; a raised flag's tip can reach up to ~0.9 m above the
+  // box, but inside its footprint, so the chase camera never sees the tip with the whole box out of view)
+  const _vbV = new THREE.Vector3();
+  function chunkBoxes(L, cx, cz, ext) {
+    const G = 4; let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let k = 0; k < L.length; k += 9) { x0 = Math.min(x0, L[k]); x1 = Math.max(x1, L[k]); z0 = Math.min(z0, L[k + 2]); z1 = Math.max(z1, L[k + 2]); }
+    const B = [], gx = (x1 - x0) / G || 1, gz = (z1 - z0) / G || 1;
+    for (let k = 0; k < L.length; k += 9) {
+      const i = Math.min(G - 1, Math.floor((L[k] - x0) / gx)), j = Math.min(G - 1, Math.floor((L[k + 2] - z0) / gz)), b = B[j * G + i] || (B[j * G + i] = new THREE.Box3());
+      const h = ext[0] * L[k + 4] + 1, x = L[k] - cx, z = L[k + 2] - cz;
+      b.expandByPoint(_vbV.set(x - h, L[k + 1] + ext[1] * L[k + 5] - 1, z - h)); b.expandByPoint(_vbV.set(x + h, L[k + 1] + ext[2] * L[k + 5] + 1, z + h));
+    }
+    return B.filter(Boolean);
+  }
   // instanced meshes per square chunk (three.js culls an InstancedMesh by its geometry's bounding sphere only: each chunk gets its own
   // geometry object sharing the base attributes, placed at the chunk centre with a sphere around all its instances)
   class IChunks {
@@ -22071,6 +22089,9 @@ const World = (function () {
     addTo(group, cast) {
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3(), c = new THREE.Color(), bs = this.base.boundingSphere || (this.base.computeBoundingSphere(), this.base.boundingSphere);
       let n = 0;
+      const pa = this.base.attributes.position.array; let rh = 0, by0 = Infinity, by1 = -Infinity;   // (the unit plant's reach round its axis, its foot and top: chunkBoxes)
+      for (let k = 0; k < pa.length; k += 3) { rh = Math.max(rh, Math.hypot(pa[k], pa[k + 2])); by0 = Math.min(by0, pa[k + 1]); by1 = Math.max(by1, pa[k + 1]); }
+      const ext = [rh + 0.16 * Math.max(by0 * by0, by1 * by1), by0, by1];
       const lo = cast && LOD.tier === 0 && !this.mat.alphaTest && !this.mat.transparent ? shadowLo(this.base) : null;
       for (const L of this.map.values()) {
         const cnt = L.length / 9; let cx = 0, cz = 0, y0 = 1e9, y1 = -1e9, smax = 0;
@@ -22084,7 +22105,7 @@ const World = (function () {
           e.set(0, L[k + 3], 0); q.setFromEuler(e); v.set(L[k] - cx, L[k + 1], L[k + 2] - cz); s.set(L[k + 4], L[k + 5], L[k + 4]); m4.compose(v, q, s); im.setMatrixAt(t, m4);
           c.setRGB(L[k + 6], L[k + 7], L[k + 8]); im.setColorAt(t, c);
         }
-        im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
+        im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.vb = chunkBoxes(L, cx, cz, ext);
         group.add(im); cullAdd(im, cx, cz, g.boundingSphere.radius); n += cnt;   // vegetation/rocks: distance-cullable on the lower tiers
         if (lo) {   // NIZKA: its shadow from the coarser copy (the same instances), in the shadow pass alone
           const sg = new THREE.BufferGeometry(); sg.setAttribute('position', lo.attributes.position); sg.setIndex(lo.index); sg.boundingSphere = g.boundingSphere;
