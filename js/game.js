@@ -1280,6 +1280,43 @@
     const F = tt || circ ? ghFriend(track.def.id) : null, C = race.chal; ghFr = F && F.g.lap === !tt && (!C || (C.ghost && Math.abs(F.t - C.time) < 0.001)) ? F : null;   // (a challenge: its own ghost only, if it came with it)   // (a friend's time trial run in a time trial, a friend's lap on a circuit's flying laps)
     Render.setGhost(null, true); Render.setGhostF(null, true);
   }
+  /* ---------------- the tyre marks of the last time trial runs (kept in the browser's IndexedDB, tdgp-marks) ----------------
+     A time trial run (a challenge's too) logs every mark it lays (Render.marksRec); at the finish the log is taken (Render.marksTake), packed
+     once the game is idle (Render.marksPack: not in the finish's own frame) and stored with the track (def.recId keeps a re-made track's apart;
+     Pikes Peak's winter runs, their tracks in the snow, apart from the summer's), the newest first, MK_RUNS at most; the next time trial on
+     that track draws them under its own (Render.setOldMarks). Not online, not in the driving school; without IndexedDB (a private window)
+     nothing is kept. */
+  const MK_RUNS = 10, MK_DB = 'tdgp-marks';
+  let mkDb = null; const mkRuns = {};   // (the database, once opened (a promise; null without it); each track's runs (a promise of the list, newest first: read once, each run stored chained to it)
+  const mkKey = (d) => d.recId || d.id;
+  function mkOpen() {
+    if (!mkDb) mkDb = new Promise((res) => { try { const q = indexedDB.open(MK_DB, 1); q.onupgradeneeded = () => q.result.createObjectStore('runs'); q.onsuccess = () => res(q.result); q.onerror = () => res(null); } catch (_) { res(null); } });
+    return mkDb;
+  }
+  function mkGet(k) {
+    return mkRuns[k] || (mkRuns[k] = mkOpen().then(db => new Promise((res) => {
+      if (!db) { res([]); return; }
+      try { const q = db.transaction('runs').objectStore('runs').get(k); q.onsuccess = () => { const v = q.result; res(Array.isArray(v) ? v.filter(u => u instanceof Uint8Array).slice(0, MK_RUNS) : []); }; q.onerror = () => res([]); } catch (_) { res([]); }
+    })));
+  }
+  function mkStart() {   // newRace: log a time trial's marks, draw the track's last runs
+    const tt = race.timeTrial && !(mp && mp.race) && !school;
+    Render.marksRec(tt); if (!tt) return;
+    const d = track.def, R = race, snow = d.theme === 'pikes' && (race.chal ? race.chal.cond.season : S.season) === 'winter';
+    race.mkK = mkKey(d) + (snow ? '-snow' : '');
+    mkGet(race.mkK).then(list => { if (race === R && list.length) Render.setOldMarks(list); });
+  }
+  function mkSave() {   // a time trial run finished: its marks to the front of the track's list
+    const L = Render.marksTake(), k = race.mkK; if (!L || !k) return;
+    mkRuns[k] = mkGet(k).then(list => new Promise((res) => {
+      const go = () => {
+        const u = Render.marksPack(L), R = u ? [u].concat(list).slice(0, MK_RUNS) : list;
+        if (u) mkOpen().then(db => { try { if (db) db.transaction('runs', 'readwrite').objectStore('runs').put(R, k); } catch (_) { } });
+        res(R);
+      };
+      if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 2000 }); else setTimeout(go, 300);
+    }));
+  }
   function ghLapSample(P) {   // a circuit, after each physics step: the flying lap under way (see ghStart)
     const G = ghLap; if (!G || race.state !== 'racing') return;
     if (P.lap !== G.lap) {   // the line: a lap is over, the next one starts at P.lapStart
@@ -1603,7 +1640,7 @@
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); secReset(); recStart(); $('res-hl').classList.add('off'); hlvClear(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto'); $('h-ttsp').className = '';
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); mkStart(); secReset(); recStart(); $('res-hl').classList.add('off'); hlvClear(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto'); $('h-ttsp').className = '';
     hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
     pkStart();   // (Pikes Peak: the class, its splits)
     Input.reset();
@@ -1717,6 +1754,7 @@
     const prev = R0.bestTime > 0 ? R0.bestTime : 0, prevSplits = Array.isArray(R0.bestSplits) ? R0.bestSplits.slice() : null;
     const newPB = !prev || time < prev;
     if (newPB) { R0.bestTime = time; R0.bestSplits = splits.slice(); ghSave(track.def.id, time); } else ghRec = null;
+    mkSave();
     const M = Core.MODELS[S.car], date = Date.now();
     const entry = { name: S.name, car: M.name, carId: M.id, time, splits, date, upg: Object.assign({}, upgOf(M.id)) };
     const board = (Array.isArray(R0.board) ? R0.board : []).concat([entry]).sort((a, b) => a.time - b.time);
@@ -4060,7 +4098,8 @@
           const fins = [...on.cars.values()].map(C => C.fin), done = fins.filter(t => t != null), place = 1 + done.filter(t => t < on.mine).length, all = done.length === fins.length;   // (the others' times as far as they are in)
           showMsg(place > 1 ? tr('CILJ! {0} MESTO', Lang.ord(place).toUpperCase()) : all ? tr('ZMAGA!') : tr('CILJ!'), 'gold', 4);
           Comm.say(place === 1 ? 'win' : 'finish', { pos: Comm.ordinal(place) }, 5);
-        } else if (race.chal) {   // a challenge: the time against the friend's (no records, no ghost of the player's own)
+        } else if (race.chal) {   // a challenge: the time against the friend's (no records, no ghost of the player's own; a time trial's marks are kept)
+          mkSave();
           const C = race.chal, t = chalTime(), d = t - C.time, el = $('h-split');
           el.textContent = tr('IZZIV {0}  {1}', fmt(C.time, true), sgn(d)); el.className = 'show ' + dCls(d); splitT = 5;
           showMsg(d < 0 ? tr('IZZIV PREMAGAN!') : tr('CILJ! {0}', sgn(d)), d < 0 ? 'fast' : 'gold', 4);
@@ -5164,7 +5203,7 @@
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
