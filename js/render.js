@@ -3864,7 +3864,7 @@ const Render = (function () {
   }
   // the lights of the time of day: the floodlights (from late dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights again
   function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
-  function carGlow(v) { const m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(0.16 * sstep(0.5, 1, todK)); }   // (at night the cars stay in sight under the floodlights)
+  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
   // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
   // and floor, the wall's colour); the facade materials get it in their shader at the first dusk or night (winU 0 by day: as built)
@@ -4195,7 +4195,7 @@ const Render = (function () {
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
-    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd]);
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd]); if (farMat) m.add(farMat);   // (farMat: the far rivals' one material)
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -4241,7 +4241,56 @@ const Render = (function () {
     carGlow(v);
     if (curTrack && curTrack.def.theme === 'pikes') pkCarDress(v);   // Pikes Peak: dust + morning glint on the paint
     if (c.chr && c.chr.rival) nameTag(v, c.name, '#ff8a7a');   // the player's standing rival (the career): its name over the car
+    if (tierNow === 0 && !c.isPlayer) ownRnd(() => farBuild(v));   // (NIZKA: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
     scene.add(v.grp); return v;
+  }
+  // NIZKA: a rival far from the camera drawn as one coarse mesh (farBuild): its opaque parts, the body and the wheels, merged in the body's frame,
+  // their vertices put together on a 20 cm grid, the paint's colours kept (as vertex colours, matte): one draw for its ~5, a fraction of the
+  // vertices. farStep each frame: past the view's own reach + 35 m from the camera (cam.vd: the car the camera follows is that far), not
+  // from the TV cameras (their lenses bring a far car close) and only while the car is whole (a dent, a part or a wheel lost: as built from
+  // then on). The detail meshes leave the camera's layer meanwhile (their own .visible stays theirs; a kit car's hull still casts its shadow)
+  const FAR_LAYER = 3, FAR_CELL = 0.2;
+  let farMat = null;
+  function farBuild(v) {
+    v.grp.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(v.bodyG.matrixWorld).invert(), m4 = new THREE.Matrix4(), p = new THREE.Vector3(), cl = new THREE.Color();
+    const keep = new Set([v.hull, v.tag, v.blob].concat(v.shadowOnly || [])), list = [], cell = new Map(), acc = [], tri = [];   // (the blob: its shadow on the road stays)
+    v.grp.traverse(o => {
+      if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite) || keep.has(o)) return;
+      list.push(o);
+      const mt = Array.isArray(o.material) ? null : o.material, G = o.geometry, P = G && G.attributes.position;
+      if (!o.isMesh || !mt || !P || mt.transparent || mt.map || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
+      for (let a = o; a; a = a.parent) if (!a.visible) return;   // (a hidden part: not in the far car either)
+      m4.multiplyMatrices(inv, o.matrixWorld);
+      const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count);
+      for (let i = 0; i < P.count; i++) {
+        p.fromBufferAttribute(P, i).applyMatrix4(m4);
+        const k = Math.floor(p.x / FAR_CELL) + ',' + Math.floor(p.y / FAR_CELL) + ',' + Math.floor(p.z / FAR_CELL);
+        let q = cell.get(k); if (q === undefined) { q = acc.length / 7; cell.set(k, q); acc.push(0, 0, 0, 0, 0, 0, 0); }
+        if (C) cl.setRGB(C.getX(i), C.getY(i), C.getZ(i)).multiply(mt.color); else cl.copy(mt.color);
+        const b = q * 7; acc[b] += p.x; acc[b + 1] += p.y; acc[b + 2] += p.z; acc[b + 3] += cl.r; acc[b + 4] += cl.g; acc[b + 5] += cl.b; acc[b + 6]++; id[i] = q;
+      }
+      for (let t = 0; t + 2 < n; t += 3) tri.push(id[I ? I.getX(t) : t], id[I ? I.getX(t + 1) : t + 1], id[I ? I.getX(t + 2) : t + 2]);
+    });
+    const idx = [], seen = new Set();
+    for (let t = 0; t < tri.length; t += 3) { const a = tri[t], b = tri[t + 1], c = tri[t + 2]; if (a === b || b === c || a === c) continue;
+      const k = a < b ? (b < c ? a + ',' + b + ',' + c : a < c ? a + ',' + c + ',' + b : c + ',' + a + ',' + b) : (a < c ? b + ',' + a + ',' + c : b < c ? b + ',' + c + ',' + a : c + ',' + b + ',' + a);
+      if (seen.has(k)) continue; seen.add(k); idx.push(a, b, c); }
+    if (!idx.length) return;
+    const nv = acc.length / 7, pos = new Float32Array(nv * 3), col = new Float32Array(nv * 3);
+    for (let q = 0; q < nv; q++) { const b = q * 7, w = acc[b + 6]; for (let j = 0; j < 3; j++) { pos[q * 3 + j] = acc[b + j] / w; col[q * 3 + j] = acc[b + 3 + j] / w; } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, farMat || (farMat = new THREE.MeshLambertMaterial({ vertexColors: true })));
+    m.castShadow = !v.hull; m.receiveShadow = false; m.visible = false; v.bodyG.add(m);   // (a kit car's shadow stays its hull's; the others' from this)
+    v.far = { mesh: m, list, on: false, ok: true, ver: v.kit ? v.kit.ver : 0 }; carGlow(v);
+  }
+  function farStep(v, x, y, z) {
+    const F = v.far, c = v.car;
+    if (F.ok && (c.dmg > 0 || (c.dents && c.dents.length) || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver !== F.ver) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;
+    const cp = camera.position, R = (cam.vd || 40) + 35, far = F.ok && lastMode !== 'tv' && !cam.shot && (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2 > R * R;
+    if (far === F.on) return;
+    F.on = far; F.mesh.visible = far;
+    for (const o of F.list) o.layers.set(far ? FAR_LAYER : 0);
   }
   function nameTag(v, txt, col) {
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const x = cv.getContext('2d');
@@ -5695,6 +5744,7 @@ const Render = (function () {
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
       let hy = 0; if (v.hop) { const H = v.hop; H.t += dt; if (H.t >= H.T) v.hop = null; else hy = H.h * Math.sin(Math.PI * H.t / H.T); }
       v.grp.position.set(x, y + hy + (jk ? crew.lift : 0), z);
+      if (v.far) farStep(v, x, y, z);
       const lat = clamp(c.w * c.speed, -16, 16), sw = M.sway || 1;   // (sway: the truck's soft, tall body rolls and pitches more)
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035 * sw, -0.045 * sw, 0.04 * sw) - v.pitch) * Math.min(1, dt * 7);

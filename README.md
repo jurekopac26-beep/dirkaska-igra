@@ -1045,6 +1045,7 @@ Da igra teče gladko tudi na starejših in cenejših telefonih, se količina okr
   - Drevesa, grmi in kamni mečejo senco iz poenostavljene kopije: isti obris, približno polovica trikotnikov ali manj.
   - Ploščice karoserije tekmecev (pokrova, odbijača, blatnika, ogledali) nimajo svoje sence, ker ima senca karoserije že njihov obris.
   To skupaj prihrani četrtino do tretjino klicev risanja.
+  Tekmeci daleč od kamere (dlje, kot je kamera od avtomobila, ki mu sledi, in še 35 m) se pri Nizki rišejo poenostavljeno: karoserija in kolesa so zlita v eno grobo mrežo (oglišča na mreži 20 cm, barve laka ostanejo, brez sijaja). To je en klic risanja namesto ~15 (pri avtomobilih iz kompleta namesto ~8) in približno tretjina oglišč. Luči, senca pod avtom ter luči varnostnega in policijskega avtomobila ostanejo. Od blizu, v TV kamerah ponovitve in v foto načinu je avto vedno poln; poškodovan avto (udrtina, odpadel del ali kolo) ostane poln.
 - **Srednja** je vmes: krajši doseg prikaza in nekoliko manj okrasja.
 - **Samodejno** izbere začetno stopnjo iz naprave (bere ime grafične kartice prek `WEBGL_debug_renderer_info` ter število jeder in pomnilnik): znane šibke mobilne kartice začnejo na Nizki, zmogljive na Visoki, ostale po zmogljivosti naprave. Med vožnjo sistem meri čas sličice in, če igra teče počasi, najprej zniža ločljivost, nato (ob naslednjem premoru) sence, na koncu pa še skrajša doseg prikaza daljnega okrasja, da sličice ostanejo tekoče; ko se hitrost povrne, okrasje spet pokaže.
 
