@@ -2311,6 +2311,16 @@ const Render = (function () {
     '  float patchN = fract(sin(dot(floor(vec2(p.x * 2.3, p.z * 9.0 + p.y * 3.0)), vec2(12.9898, 78.233))) * 43758.5453);',
     '  float top = smoothstep(0.8, 1.15, p.y);',
     '  float s = max(ln, ln2) * step(0.5, patchN) * clamp(uScr * (0.3 + top * 1.3), 0.0, 1.0) * (1.0 - vIn);',
+    // the side scrapes (XT_SCR, the Kolibri's: xtScrape, uScrS.x the left side's, .y the right's, .z the half width, .w the belt): on the
+    // flank from the sill to the belt, streaks along it at a rail's height and patches of scuffed paint, more of them the more it scraped
+    '#ifdef XT_SCR',
+    '  { float a = p.z < 0.0 ? uScrS.x : uScrS.y;',
+    '    if (a > 0.0) { float fl = smoothstep(0.8, 0.92, abs(p.z) / uScrS.z) * smoothstep(0.22, 0.3, p.y) * (1.0 - smoothstep(uScrS.w - 0.08, uScrS.w, p.y));',
+    '      float b3 = p.y * 20.0 + sin(p.x * 2.3) * 0.35 + floor(p.x * 2.6) * 0.29, aa3 = fwidth(b3);',
+    '      float l3 = (1.0 - smoothstep(0.1, 0.1 + aa3, abs(fract(b3) - 0.5))) * clamp(0.12 / max(aa3, 0.12), 0.0, 1.0);',
+    '      float n3 = fract(sin(dot(floor(vec2(p.x * 2.8 + p.y * 0.7, p.y * 6.0)), vec2(39.347, 11.135))) * 43758.5453);',
+    '      s = max(s, max(l3, 0.35) * step(1.0 - 0.92 * min(a, 1.0), n3) * min(1.0, 0.45 + a) * fl * (1.0 - vIn)); } }',
+    '#endif',
     '  float L = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
     '  vec3 sc = mix(vec3(0.82, 0.82, 0.85), vec3(0.28, 0.28, 0.3), step(0.55, L));',   // dark grime on light paint, bare metal on dark paint
     '  diffuseColor.rgb = mix(diffuseColor.rgb, sc, s * 0.85); }'].join('\n');
@@ -2511,19 +2521,20 @@ const Render = (function () {
   // (the 11's) reads WebGL's default for it (0, or 1 left by another program's default): the outside, either way
   // cut: the Kolibri's damage table (Razbijanje · nov način, xtInit): a broken pane's triangles (their colour's red under -0.5) left out
   // of the body, drawn by its own mesh with the cracks (a program of its own: the others never pay for the discard)
-  function dirtyCarMat(cut) {
-    const m = matCar.clone(), u = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) };
-    m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
-    if (cut) m.defines = { XT_CUT: '' };
+  // scr: the side scrapes (the Kolibri's, xtScrape: XT_SCR, uScrS; a program of its own too)
+  function dirtyCarMat(cut, scr) {
+    const m = matCar.clone(), u = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) }, uss = { value: new THREE.Vector4(0, 0, 1, 1) };
+    m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc; m.userData.scrS = uss; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
+    if (cut || scr) m.defines = Object.assign(cut ? { XT_CUT: '' } : {}, scr ? { XT_SCR: '' } : {});
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc;
+      sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc; sh.uniforms.uScrS = uss;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;\nvarying float vNoCh;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));\nvNoCh = step(0.9, aIn);');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nuniform float uDirt;\nuniform float uScr;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nuniform float uDirt;\nuniform float uScr;\n#ifdef XT_SCR\nuniform vec4 uScrS;\n#endif\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
         '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8) * (1.0 - vIn);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = max(d, vIn); }\n' + CHAR_GLSL)   // (cgD: the dirt dulls the sun's glint; the inside has none, no sky in it either)
         .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength *= 1.0 - 0.9 * max(cgCh, vIn * 0.85);');   // (a charred panel, the inside: no highlight)
       sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + SCRATCH_GLSL);
     };
-    return cgMat(m, false, cut ? 'dirtyCarCgX' : 'dirtyCarCg');
+    return cgMat(m, false, 'dirtyCarCg' + (cut ? 'X' : '') + (scr ? 'S' : ''));
   }
   const numTexCache = new Map();
   function numTex(n) { if (!numTexCache.has(n)) numTexCache.set(n, Tex.number(n)); return numTexCache.get(n); }
@@ -2532,7 +2543,7 @@ const Render = (function () {
     const M = Core.heirOf(car.m);   // (a retired model, still drawn (an old ghost, an old friend's car): the vehicle that took its place)
     const grp = new THREE.Group();
     const bodyG = new THREE.Group(); grp.add(bodyG);
-    const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat(!!(opts && opts.xcut));
+    const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat(!!(opts && opts.xcut), !!(opts && opts.xscr));
     const KE = M.kit ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show))) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
     const xd = opts && opts.xd || 0;   // (Razbijanje · nov način: the body dense, xDense)
     const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false), xd) : carGeometry(M.body, M, car.color, car.stripe !== false), bodyMat);
@@ -2601,7 +2612,7 @@ const Render = (function () {
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
     const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
     return { grp, bodyG, body, tail, dec, wf, wr, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
-      dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
+      dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, scrS: opts && opts.xscr && bodyMat.userData && bodyMat.userData.scrS || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
 
   /* ---------------- ghost of the best run (time trials) ---------------- */
@@ -4212,9 +4223,11 @@ const Render = (function () {
   }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
-    const xd = xDensity(c), xt = xTab(c), v = makeCarMesh(c, xd || xt ? { xd, xcut: xt && !!XC.glass } : undefined);
+    const xd = xDensity(c), xt = xTab(c), xs = XT_MIN.has(c.m.id) && !!c.m.kit, v = makeCarMesh(c, xd || xt || xs ? { xd, xcut: xt && !!XC.glass, xscr: xs } : undefined);   // (xs: the Kolibri's side scrapes, xtScrape, whatever the switches)
     v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit && !XT_CARS.has(c.m.id)) xBayGrey(v); if (v.xOn) v.rd0 = c.roofDmg || 0;   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey, but a reworked car's: its own bay's colours)
     v.xt = xt && !!v.kit;   // (the Kolibri: its glass, lamps and parts by the damage table, xTabHit)
+    if (v.scrS) { const B = c.m.look && c.m.look.body, S = (B && B.secs) || [], cab = S.filter(r => r[5] > 1);   // (the side scrapes' band: the body's half width, the cabin's belt)
+      v.scrS.value.z = S.length ? Math.max(...S.map(r => r[1])) : c.m.wid * 0.5; v.scrS.value.w = cab.length ? Math.min(...cab.map(r => r[3])) : 0.6 * (B && B.roofY || 1.4); }
     if (v.kit && (tierNow === 0 || v.xOn)) ownRnd(() => kitShadows(v, c));   // (Razbijanje · nov način: every kit car's shadow from its hull, the dense body never drawn twice)
     else if (v.xOn && xd && v.body.geometry.userData.xBase) ownRnd(() => { const m = new THREE.Mesh(v.body.geometry.userData.xBase, matHull); m.castShadow = true; m.visible = false; v.body.castShadow = false; v.bodyG.add(m); v.shadowOnly = [m]; });   // (one of the 11, dense: its shadow from the body as built)   // (the lowest tier: the shadow from the hull and a rival's wheels; named without Math.random)
     if (v.kit) v.tail.geometry = v.tail.geometry.clone();   // (the kit's body is already this car's own copy; its tail lamps too: their L / R ranges go out one by one)
@@ -5745,12 +5758,13 @@ const Render = (function () {
         if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
       }
       if (v.pk) pkCarTick(v, c, dt, opt);
+      if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0);
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
       v.wasAir = !!c.air;
-      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else applyDent(v, d); if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit)
+      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else applyDent(v, d); if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
@@ -6254,10 +6268,11 @@ const Render = (function () {
      left it. Out of the box without it: built afresh from the core's state. What it makes: ownRnd (Math.random as ever) */
   const REPAIR_N = 16;
   function repairStep(v, c) {
-    if (!v.rep) { if (c.pitState !== 'repair' || (c.repairN || 0) !== v.repairN || !v.parts || !(c.dmg > 0 || v.lampsOut || v.wheelOff.some(Boolean) || (v.dirtU && v.dirtU.value > 0.02))) return; v.rep = repairStart(v, c); }
+    if (!v.rep) { if (c.pitState !== 'repair' || (c.repairN || 0) !== v.repairN || !v.parts || !(c.dmg > 0 || v.lampsOut || v.wheelOff.some(Boolean) || (v.dirtU && v.dirtU.value > 0.02) || (v.xtSc && v.xtSc.a[0] + v.xtSc.a[1] > 0.02))) return; v.rep = repairStart(v, c); }
     else if (c.pitState !== 'repair') { if ((c.repairN || 0) === v.repairN) v.repairN = -1; return; }   // (out of the box unrepaired: built afresh, frame)
     const RP = Core.REPAIR, u = Core.repairU(c), R = v.rep; R.ku = Core.sstep(RP.body[0], RP.body[1], u);
     if (v.scrU) v.scrU.value *= 1 - R.ku; if (v.dirtU) v.dirtU.value = R.dirt0 * (1 - R.ku);   // (every frame, with the bodywork: the scratches polished out, the dirt washed off)
+    if (v.xtSc) { R.sc0 = R.sc0 || v.xtSc.a.slice(); v.xtSc.a[0] = R.sc0[0] * (1 - R.ku); v.xtSc.a[1] = R.sc0[1] * (1 - R.ku); }   // (the side scrapes with them)
     if (u >= RP.wheel && v.wheelOff.some(Boolean)) kitRefit(v);   // (every frame: with the crew's tyre men, crewLogic)
     const q = Math.floor(u * REPAIR_N); if (q === R.q) return; R.q = q; const s = q / REPAIR_N;
     if (!R.glass && s >= RP.glass) { R.glass = true; repGlass(v, R); }
@@ -6412,7 +6427,7 @@ const Render = (function () {
         cl: xc ? xc.cl.map(K => ({ u: +K.u.toFixed(3), w: +K.w.toFixed(3), A: +K.A.toFixed(3), d: +K.d.toFixed(3), R: +K.R.toFixed(3), end: !!K.end })) : [], rf: xc && xc.rf ? xRoofInfo(v, xc) : null, roofed: !!(xc && xc.rf), roof: xc ? (() => { const a = g.attributes.position.array, R = xc.rest; let sd = 0, n = 0, mx = 0;   // (the roof's own top caved in: its mean and its deepest drop, what lies on it left out)
           const top = xRoofTop(v, xc); for (let i = 0; i < xc.on; i++) { if (!top[i]) continue; const d = R[i * 3 + 1] - a[i * 3 + 1]; sd += d; n++; if (d > mx) mx = d; }
           return { mean: n ? +(sd / n).toFixed(3) : 0, max: +mx.toFixed(3) }; })() : null, caps: xc ? { F: xc.B.capF, R: xc.B.capR, S: xc.B.capS } : null,
-        torn: !!(v.kit && v.kit.xTorn), engine: !!(v.xEng && v.xEng.visible), glass: v.xGl ? v.xGl.slice() : null, panes: v.xP ? v.xP.map(P => P.broken) : null, paneK: v.xP ? v.xP.map(P => P.k) : null, rearDoors: v.kit && v.kit.xRD ? v.kit.xRD.slice() : null, xt: v.xt ? { panes: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.st])) : {}, drawn: v.xtP ? Object.keys(v.xtP).filter(k => v.xtP[k].on && !v.xtP[k].dirty) : [], frame: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.fr.length])) : {}, lamps: v.lightBroken ? v.lightBroken.slice() : null, ajar: Object.keys(v.kit.ajar), dead: Object.keys(v.kit.dead), rear: v.xtS ? v.xtS.rear : 0, rg: xc ? Math.max(0, ...xc.cl.map(K => K.rg || 0)) : 0, mir: { glass: v.xtMG ? { L: v.xtMG.L, R: v.xtMG.R } : { L: 0, R: 0 }, fold: Object.assign({}, v.kit.fold || {}) }, bent: xc && xc.tab ? xtBent(v) : null, idx: v.xtO ? v.xtO.g.drawRange.count : 0, cut: !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) } : null, mirrors: [!!(v.kit ? v.kit.dead.mirrorL : v.parts && v.parts.mirrorL && !v.parts.mirrorL.visible), !!(v.kit ? v.kit.dead.mirrorR : v.parts && v.parts.mirrorR && !v.parts.mirrorR.visible)] }; }), shards: xSh ? xSh.count : 0, shardsOn: xShOn(), ground: xGround.length, kept: xGround.filter(m => m.userData.xDeb).length, shardAt: xSh && xSh.count ? (() => { const m = new THREE.Matrix4(), p = new THREE.Vector3(), k = (xSh.k + XSH_N - 1) % XSH_N; xSh.getMatrixAt(k, m); p.setFromMatrixPosition(m); return [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)]; })() : null, shardMat: xSh ? [xSh.material.type, !!xSh.instanceColor, xSh.parent === scene] : null };
+        torn: !!(v.kit && v.kit.xTorn), engine: !!(v.xEng && v.xEng.visible), glass: v.xGl ? v.xGl.slice() : null, panes: v.xP ? v.xP.map(P => P.broken) : null, paneK: v.xP ? v.xP.map(P => P.k) : null, rearDoors: v.kit && v.kit.xRD ? v.kit.xRD.slice() : null, xt: v.xt ? { panes: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.st])) : {}, drawn: v.xtP ? Object.keys(v.xtP).filter(k => v.xtP[k].on && !v.xtP[k].dirty) : [], frame: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.fr.length])) : {}, lamps: v.lightBroken ? v.lightBroken.slice() : null, ajar: Object.keys(v.kit.ajar), dead: Object.keys(v.kit.dead), rear: v.xtS ? v.xtS.rear : 0, scr: v.xtSc ? v.xtSc.a.map(q => +q.toFixed(3)) : [0, 0], scrN: v.xtSc ? v.xtSc.n.slice() : [0, 0], rg: xc ? Math.max(0, ...xc.cl.map(K => K.rg || 0)) : 0, mir: { glass: v.xtMG ? { L: v.xtMG.L, R: v.xtMG.R } : { L: 0, R: 0 }, fold: Object.assign({}, v.kit.fold || {}) }, bent: xc && xc.tab ? xtBent(v) : null, idx: v.xtO ? v.xtO.g.drawRange.count : 0, cut: !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) } : null, mirrors: [!!(v.kit ? v.kit.dead.mirrorL : v.parts && v.parts.mirrorL && !v.parts.mirrorL.visible), !!(v.kit ? v.kit.dead.mirrorR : v.parts && v.parts.mirrorR && !v.parts.mirrorR.visible)] }; }), shards: xSh ? xSh.count : 0, shardsOn: xShOn(), ground: xGround.length, kept: xGround.filter(m => m.userData.xDeb).length, shardAt: xSh && xSh.count ? (() => { const m = new THREE.Matrix4(), p = new THREE.Vector3(), k = (xSh.k + XSH_N - 1) % XSH_N; xSh.getMatrixAt(k, m); p.setFromMatrixPosition(m); return [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)]; })() : null, shardMat: xSh ? [xSh.material.type, !!xSh.instanceColor, xSh.parent === scene] : null };
   }
   // a car's body density (metres; 0: as built): the player's the finest, the rivals' by the detail setting; never the formula's nor the lm's
   const xDensity = (c) => !XC.body || !c || !c.m || c.m.body === 'formula' || c.m.body === 'lm' ? 0 : c.isPlayer ? (XC.detail === 'full' ? 0.11 : 0.13) : XC.detail === 'full' ? 0.17 : 0;
@@ -6990,9 +7005,9 @@ const Render = (function () {
     if (top) return;   // (a rollover's roof contact: the field's alone, no cluster)
     let K = null, best = 0.5; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } }
     if (!K && xc.cl.length >= 14) { best = Infinity; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } } }
-    const old = K ? Object.assign({}, K) : null;
-    if (!K) { K = { u, w, A: 0, top }; xc.cl.push(K); } else { const s = K.A + d.amt; K.u = (K.u * K.A + u * d.amt) / s; K.w = (K.w * K.A + w * d.amt) / s; }
-    K.A += d.amt; if (xc.tab && !top) K.rg = Math.max(K.rg || 0, xtPick(v.car.m, d).row.rg || 0);   // (the Kolibri: its bonnet's ridge, the table's)
+    const old = K ? Object.assign({}, K) : null, am = XT_MIN.has(M.id) && !K ? Math.max(d.amt, XT_DENT) : d.amt;   // (the Kolibri: a blow on a new place a dent you see, XT_DENT at least; again there as hard as it was)
+    if (!K) { K = { u, w, A: 0, top }; xc.cl.push(K); } else { const s = K.A + am; K.u = (K.u * K.A + u * am) / s; K.w = (K.w * K.A + w * am) / s; }
+    K.A += am; if (xc.tab && !top) K.rg = Math.max(K.rg || 0, xtPick(v.car.m, d).row.rg || 0);   // (the Kolibri: its bonnet's ridge, the table's)
     xParams(xc, K);
     // (the car's face and tail keep their shape till it is 70 % gone, as the core keeps their parts on, MASK_DMG: a blow on an end goes
     // no deeper than X_SOFT till then, short of tearing the bonnet open; from 70 % its full depth, the next blow there)
@@ -7410,6 +7425,9 @@ const Render = (function () {
       H[m] = H[z] === 'W' || H[z] === 'R' ? H[z] : sw(H[z]); }
     return { T, H };
   })();
+  // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
+  // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
+  const XT_MIN = new Set(['kolibri']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
     const sd = w < 0 ? 'L' : 'R';
@@ -7491,7 +7509,7 @@ const Render = (function () {
     if (!XC.glass || !(f > 0) || !v.glassTris) return;
     if (key === 'ML' || key === 'MR') return xtMirGlass(v, c, key[1], f, x, y, z, h); const P = xtPanes(v)[key]; if (!P || P.st >= f) return;
     if (d && !P.ci) { const w = P.pl(d.lx, P.cy, d.lz); P.ci = [clamp(w[0], P.u0 + 0.2 * (P.u1 - P.u0), P.u1 - 0.2 * (P.u1 - P.u0)), clamp(w[1], P.v0 + 0.2 * (P.v1 - P.v0), P.v1 - 0.2 * (P.v1 - P.v0))]; }
-    const df = f - P.st; P.st = f; P.dirty = 1;
+    const df = f - P.st; P.st = f; P.dirty = 1; v.xtB = (v.xtB || 0) + 1;   // (xtB: the panes' stages gone so far, xtMin's count)
     const ch = Math.cos(h), sh = Math.sin(h), wx = x + P.cx * ch - P.cz * sh, wz = z + P.cx * sh + P.cz * ch, side = key.length > 1 ? (key[1] === 'L' ? -1 : 1) : 0;
     for (let n = 0, m = Math.round(6 + 20 * df); n < m; n++) particles.emit(wx, y + P.cy, wz, c.vx * 0.5 + (rRnd() - 0.5) * 5, 1 + rRnd() * 3, c.vz * 0.5 + (rRnd() - 0.5) * 5, 0.8 + rRnd() * 0.6, 0.16, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
     const out = side ? [-sh * side, ch * side] : [ch * Math.sign(P.cx || 1), sh * Math.sign(P.cx || 1)];   // (outwards from the pane's side)
@@ -7681,8 +7699,10 @@ const Render = (function () {
   }
   // a blow on the Kolibri (the core's dent): its row of the table, as above
   function xTabHit(v, d, c, x, y, z, h) {
+    const S = v.xtS || (v.xtS = { z: {}, rear: 0, rt: -1e9, ct: -1e9 });
+    if (XT_MIN.has(c.m.id)) { if (time - S.ct >= 0.35) S.owe = { d, b: v.xtB || 0 }; else if (S.owe && d.amt > S.owe.d.amt) S.owe.d = d; S.ct = time; }   // (a crash: blows under 0.35 s apart, any zone; xtMin after the frame's)
     if (!(d.amt >= 0.04)) return;
-    const S = v.xtS || (v.xtS = { z: {}, rear: 0, rt: -1e9 }), G = (key, f, dd) => xtGlass(v, c, key, f, x, y, z, h, dd), bump = (key, dd) => { const P = xtPanes(v)[key]; if (!P) return; const i = XT_ST.findIndex(q => q > P.st); if (i > 0) G(key, XT_ST[i], dd); };
+    const G = (key, f, dd) => xtGlass(v, c, key, f, x, y, z, h, dd), bump = (key, dd) => { const P = xtPanes(v)[key]; if (!P) return; const i = XT_ST.findIndex(q => q > P.st); if (i > 0) G(key, XT_ST[i], dd); };
     if (d.top) {   // (the roof on the road: the windscreen and that side's windows, the rear window and the other side's on a strong one)
       const s = d.amt < 0.1 ? 0 : d.amt < 0.22 ? 1 : 2, f = [0.5, 0.7, 1][s], sd = d.lz < 0 ? 'L' : 'R';
       for (const key of ['W', 'D' + sd, 'Q' + sd]) { const P = xtPanes(v)[key]; if (P && P.st >= f) bump(key); else G(key, f); }
@@ -7707,6 +7727,57 @@ const Render = (function () {
     for (const [name, deg] of fx.fold) { if (!U.ranges[name] || K.dead[name] || fx.off.includes(name)) continue;   // (folded flat already and struck as hard again there: it comes off)
       if (deg >= 90 && (K.fold && K.fold[name]) >= 90 && !again) fx.off.push(name); else kitFold(v, c, name, deg); }
     for (const name of fx.off) { xtOff(v, c, name, x, y, z, h); if (/^head/.test(name)) (v.xLamp || (v.xLamp = [0, 0, 0, 0]))[name === 'headL' ? 0 : 1] = 1; }
+  }
+  // the Kolibri (the user's): every crash at least one pane a stage on, a light one's too (under the table's 0.04): when nothing in the crash
+  // so far broke a pane (xtB as at its first blow), its hardest blow's zone's own pane (XT_HIT), else the nearest of the zone's panes
+  // (XT_MINK) on the blow's side (the far side's only from straight ahead or behind; so the rear window only from behind); none left: none
+  function xtMin(v, c, x, y, z, h) {
+    const S = v.xtS, O = S && S.owe; if (!O) return; S.owe = null;
+    if (!XC.glass || !v.glassTris || (v.xtB || 0) > O.b) return;
+    const d = O.d, M = c.m, T = xtPanes(v), sd = d.lz < 0 ? 'L' : 'R', far = sd === 'L' ? 'R' : 'L';
+    const zone = d.top ? null : xtZone(d.lx / (M.len * 0.5), d.lz / (M.wid * 0.5)), mid = zone === 'FC' || zone === 'BC';
+    const own = d.top ? ['W', 'D' + sd, 'Q' + sd] : XT_MINK[zone], hit = d.top ? 'D' + sd : XT_TAB.H[zone];
+    const ok = own.filter(k => T[k] && T[k].st < 1 && (mid || k.length === 1 || k[1] !== far)); if (!ok.length) return;
+    const dist = (k) => Math.hypot(T[k].cx - d.lx, T[k].cz - d.lz) + (k.length > 1 && k[1] !== sd ? 0.01 : 0);
+    ok.sort((a, b) => (b === hit) - (a === hit) || dist(a) - dist(b));
+    const P = T[ok[0]]; xtGlass(v, c, ok[0], XT_ST[XT_ST.findIndex(q => q > P.st)], x, y, z, h, d);
+  }
+  // the Kolibri's side scrapes (the user's: every time it grazes a barrier or another car with its side, more scratched there; XT_SCR in the
+  // body's shader, uScrS): a side touching (along a barrier: its flank against the rail, as carFx's sparks find it, the core's wall contact;
+  // a car's or the traffic's contact on its flank, not its ends) after XT_SCR.gapT s without one is a new graze, XT_SCR.ev more; rubbing on,
+  // more by its speed along it. a[k] 0..1 (0 the left, 1 the right); n[k] the grazes counted. Render only, its own state (no random); a
+  // replay's or a paused frame's none; a pit repair polishes it out with the bodywork (repairStep), the view built afresh after it. Each new
+  // graze dents that flank in a little too (the user's: a dent of XT_SCR.dent where it touched, along the flank, short of its ends; render
+  // only, the core's damage as it was): again there a little deeper (xDent's cluster; applyDent's own each time)
+  const XT_SCR = { ev: 0.07, m: 0.004, gap: 0.03, gapT: 0.3, dent: 0.015 };
+  function xtScrape(v, c, dt) {
+    const S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0] }), M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
+    if (c.air || c.inPit || c.pitG || c.net || !c.dmgMode) return;   // (no damage, a friend's car online (theirs shows its own), the pit road: none)
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), q = c.q, T = curRace && curRace.track, hit = [0, 0], at = [0, 0];
+    if (q && q.br != null && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && c.speed > 1) {   // (a barrier beside it, as carFx has it)
+      const fn = ch * q.nx + sh * q.nz, ln = -sh * q.nx + ch * q.nz, e = hl * Math.abs(fn) + hw * Math.abs(ln);
+      const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
+      if (Math.abs(ln) > Math.abs(fn) && (gap < XT_SCR.gap || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
+        at[k] = c.fxWall > 0 && c.wallX != null ? (c.wallX - c.x) * ch + (c.wallZ - c.z) * sh : 0; }
+    }
+    if (c.fxCar > 0 && c.contactX != null) {   // (another car, the traffic: the contact on its flank)
+      const dx = c.contactX - c.x, dz = c.contactZ - c.z, lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch;
+      if (Math.abs(lx) < 0.85 * hl && Math.abs(lz) > 0.55 * hw && Math.abs(lz) < 1.4 * hw) { const k = lz < 0 ? 0 : 1; hit[k] = Math.max(hit[k], c.speed * 0.5, 1e-3); at[k] = lx; }
+    }
+    for (let k = 0; k < 2; k++) { if (!hit[k]) continue;
+      if (time - S.t[k] > XT_SCR.gapT) { S.a[k] = Math.min(1, S.a[k] + XT_SCR.ev); S.n[k]++;   // (a new graze: scratched, and dented in a little there)
+        if (c.dmgMode) { const d = { lx: clamp(at[k], -0.6 * hl, 0.6 * hl), lz: (k ? 1 : -1) * hw, amt: XT_SCR.dent }; if (v.xOn) xDent(v, d); else applyDent(v, d); } }
+      S.a[k] = Math.min(1, S.a[k] + dt * hit[k] * XT_SCR.m); S.t[k] = time; }
+  }
+  // a blow on the Kolibri's flank (the core's dent, a side zone, xtZone) scuffs that side as a graze does, unless xtScrape counted that
+  // contact already (its side touched within XT_SCR.gapT); XT_DENT: the least a blow on a new place dents its body (xDent; applyDent has its own least)
+  const XT_DENT = 0.02;
+  function xtScuff(v, d) {
+    if (d.top) return;
+    const M = v.car.m, S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0] });
+    if (xtZone(d.lx / (M.len * 0.5), d.lz / (M.wid * 0.5))[0] !== 'S') return;
+    const k = d.lz < 0 ? 0 : 1; if (time - S.t[k] <= XT_SCR.gapT) return;
+    S.a[k] = Math.min(1, S.a[k] + XT_SCR.ev + d.amt); S.n[k]++; S.t[k] = time;
   }
 
   /* ---------------- the engine: its smoke, its fire, the char (stage B2: every vehicle, render only, from the core's state) ----------------
@@ -7957,7 +8028,7 @@ const Render = (function () {
   function pieceMat(v, m) {
     if (!m || v.pk) return m;
     if (m === v.body.material && m.userData.dirt) return ownRnd(() => {   // (a kit car's body: the same program, its uniforms copied)
-      const q = dirtyCarMat(!!(m.defines && 'XT_CUT' in m.defines)); q.userData.dirt.value = m.userData.dirt.value; q.userData.scr.value = m.userData.scr.value; q.userData.char.value.copy(m.userData.char.value);
+      const q = dirtyCarMat(!!(m.defines && 'XT_CUT' in m.defines), !!(m.defines && 'XT_SCR' in m.defines)); q.userData.dirt.value = m.userData.dirt.value; q.userData.scr.value = m.userData.scr.value; q.userData.char.value.copy(m.userData.char.value); q.userData.scrS.value.copy(m.userData.scrS.value);
       if (m.emissive) q.emissive.copy(m.emissive); return q; });
     if (sharedCarRes().m.has(m)) return m;
     return ownRnd(() => { const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q; });   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)

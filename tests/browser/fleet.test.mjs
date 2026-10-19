@@ -190,7 +190,7 @@ try {
   // ---- 4. in a race on Bakreni gozd: each vehicle as the player and as a rival ----
   await page.evaluate((id) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === id); }, kits.length ? kits[0].id : 'rally');
   await startTrack(page, 'gozd');
-  const R4 = [];
+  const R4 = [], bodyKey = (id) => id === 'kolibri' ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's body: its side scrapes' own program, render.js XT_SCR)
   for (const m of kits) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
@@ -263,8 +263,8 @@ try {
     R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): off / again / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
   T.check('a crushed roof: nothing moves outside the roof\'s footprint (body.crush), a noCrush range only whole, the lining with its shell (each point by its twin), the cabin and floor stay; dents never move a noDent range',
     R4.every(r => r.crushOk), R4.filter(r => !r.crushOk).concat(R4.filter(r => r.cr.nc || r.cr.moved)).slice(0, 4).map(r => `${r.id}: ${r.cr.moved} moved, ${r.cr.outside} outside, noCrush ${r.cr.nc} (spread ${r.cr.spread.toFixed(4)}), lining off ${r.cr.lining}, stray ${r.cr.stray}, noDent moved ${r.ndMoved}`).join(' | '));
-  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\', any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')),
-    R4.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
+  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\' (the KOLIBRI\'s \'dirtyCarCgS\': its side scrapes), any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')),
+    R4.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
   T.check('no colour that is not glass within 0.06 of a glass colour (the paint and the stripe aside)', R4.every(r => !r.near), R4.filter(r => r.near).slice(0, 3).map(r => `${r.id}: ${r.near} vertices, e.g. ${r.nearC.map(c => c.toFixed(3))}`).join(' | '));
   T.check('the start number lit on every K.number panel (as many bars as the car\'s number has)', R4.every(r => r.num !== false), lim(r => r.num === false) || R4.filter(r => r.num).map(r => r.id).join(', '));
 
@@ -391,7 +391,7 @@ try {
     R5.map(r => `${r.id} crew ${r.crew}, shown ${r.shown}, bits ${r.burst} then ${r.after}`).slice(0, 6).join(', '));
   T.check('the marshals\' refit (wreck.fix): the wheels back on, the body up, no bare hubs, nothing of the sag\'s offset left (it limped through a corner on its hubs first)', R5.every(r => !r.sag.wl || (r.refit.shown === 4 && r.refit.sagGone && !r.refit.hubs && r.refit.xz < 1e-9)), R5.map(r => r.id + ' ' + JSON.stringify(r.refit)).slice(0, 4).join(', '));
   T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
-  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
+  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', the KOLIBRI\'s \'dirtyCarCgS\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
 
   // ---- 4d. the wreck as a player sees it (stage B2: pictures at 844x390, the chase camera at zoom 1.2), each vehicle (the 11 too: the wreck
   //          look is every vehicle's) as the player on Bakreni gozd, paused and stepped: the car whole, then Core.wreckCar and its fire

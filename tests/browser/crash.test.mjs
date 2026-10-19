@@ -278,7 +278,7 @@ try {
   const ko = await run({ carId: 'kolibri' }, () => { const P = window.__game.race.player, v = Render.viewOf(P); Core.applyDamage(P, 0.3, P.m.len / 2, 0); for (let k = 0; k < 6; k++) Render.frame(0.05, 1, P, 'chase', {});
     return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: v.body.material.customProgramCacheKey(), mesh: !!v.xtO }; });
   const tt = await run({ xBody: 1, xGlass: 1 }, () => { const P = window.__game.race.player; return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: Render.viewOf(P).body.material.customProgramCacheKey() }; });
-  T.check('Kolibri off (the default): no table, the body\'s material as ever; another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCg' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, tornado: tt.r }));
+  T.check('Kolibri off (the default): no table, the body\'s material as ever but for its side scrapes (dirtyCarCgS: kolibri.test.mjs); another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCgS' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, tornado: tt.r }));
 
   // 10. the cars being reworked (the Medved, the Kozorog, the Lev R): the table theirs too (the spoiler: a wing where the car has one);
   // a crushed end caves the roof in, the harder the knock the deeper (the roof's own top, what lies on it left out)

@@ -239,6 +239,16 @@ const MEAS = {};
     c.dmgK = 0.6; C.applyDamage(c, 0.1, c.m.len / 2, 0);
     check('toughness: a hit costs the truck 0.6x, the kart 1.3x, a road car 1x (with the police factor 0.6 on top)', Math.abs(a.dmg - 0.06) < 1e-12 && Math.abs(b.dmg - 0.13) < 1e-12 && Math.abs(c.dmg - 0.16) < 1e-12, [a.dmg, b.dmg, c.dmg].map(v => v.toFixed(3)).join(' / '));
   }
+  { // a knock's damage times the vehicle's knockK (def.phys.knockK: the KOLIBRI's 1 / 3.5, the user's; core.js knock): the same head-on knock
+    // (Core.crashCollide, 8 m/s closing) costs the KOLIBRI 1 / 3.5 of what it costs it without one, the other car the same either way;
+    // Core.applyDamage called directly as it was (the tests' hits, the fall, wreckCar)
+    const K = model('kolibri'), K1 = Object.assign({}, K, { knockK: undefined }), O = model('levs'), crash = (M) => { const a = new C.Car(M, { phys: 'cs' }), b = new C.Car(O, { phys: 'cs' });
+      a.dmgMode = b.dmgMode = 2; a.place(0, 0, 0); b.place((M.len + O.len) / 2 - 0.03, 0, Math.PI); a.vx = 4; b.vx = -4; C.crashCollide(a, b); return [a.dmg, b.dmg]; };
+    const [k, o] = crash(K), [k1, o1] = crash(K1), d = new C.Car(K, { phys: 'cs' }); C.applyDamage(d, 0.1, d.m.len / 2, 0);
+    check('KOLIBRI: a knock costs it 1 / 3.5 of what it would (knockK), the other car as much as ever; Core.applyDamage called directly as it was',
+      Math.abs(K.knockK - 1 / 3.5) < 1e-12 && k1 > 0.01 && Math.abs(k / k1 - 1 / 3.5) < 1e-9 && o === o1 && Math.abs(d.dmg - 0.1) < 1e-12 && C.MODELS.filter(M => M.knockK).map(M => M.id).join() === 'kolibri',
+      `kolibri ${k.toFixed(4)} (without knockK ${k1.toFixed(4)}), the other ${o.toFixed(4)} / ${o1.toFixed(4)}, applyDamage 0.1 -> ${d.dmg}`);
+  }
   { // the wreck queue: the most battered zone's parts first; whatever is already off is not queued (a tail hit to 97 %: the rear's parts off at
     // once, then the wheel at the crushed rear corner, then the front's)
     const c = new C.Car(model('perun'), { phys: 'cs' }); c.dmgMode = 2;

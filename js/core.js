@@ -1790,7 +1790,7 @@ const Core = (function () {
       this.x += this.vx * dt; this.z += this.vz * dt; this.h = wrapPi(this.h + this.w * dt); this.w *= Math.exp(-dt * 3);
       const s = Math.min(1, r.t / r.T); this.y = this.roadY + r.H * 4 * s * (1 - s); this.vy = 0;
       const k = Math.floor(s * r.turns + 0.5);
-      if (k > r.k) { r.k = k; if (this.dmgMode && !this.pitG) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); const d0 = this.dmg; this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04)); if (this.wreck) wheelRule(this, d0, 0); } }   // (the wheel rule: its 80 % mark only, the knock that rolled it was a hit already)   // (never lowers a wreck's)
+      if (k > r.k) { r.k = k; if (this.dmgMode && !this.pitG) { this.dents.push({ lx: (((k * 7 + this.id * 3) % 5) / 4 - 0.5) * this.m.len * 0.5, lz: -r.dir * this.m.wid * 0.2, amt: 0.1, top: 1 }); this.roofDmg = Math.min(1, this.roofDmg + 0.3); const d0 = this.dmg; this.dmg = Math.max(this.dmg, Math.min(0.97, this.dmg + 0.04 * knockK(this))); if (this.wreck) wheelRule(this, d0, 0); } }   // (the wheel rule: its 80 % mark only, the knock that rolled it was a hit already)   // (never lowers a wreck's)
       if (r.t >= r.T) { delete this.rl; this.y = this.roadY; this.vx *= 0.8; this.vz *= 0.8; this.w = 0; }
     }
     stepCS(dt, trk) {
@@ -1996,7 +1996,7 @@ const Core = (function () {
         if (this.air) {
           this.airT += dt; this.vy -= JUMP_G * dt; this.y += this.vy * dt;
           if (this.y <= this.roadY) { const lv = M.landV || 11, lk = M.landK || 1;   // (the truck: a harder landing before it breaks, less speed lost)
-            this.impactVY = this.vy; if (this.vy < -lv) applyDamage(this, (-this.vy - lv) * 0.01); this.y = this.roadY; this.vy = 0; this.air = 0; this.landT = clamp(-this.impactVY * 0.02 + 0.05, 0.05, 0.2); this.airT = 0; const sc = clamp(-this.impactVY * 0.016 * lk, 0, 0.13 * lk); this.vx *= (1 - sc); this.vz *= (1 - sc); }
+            this.impactVY = this.vy; if (this.vy < -lv) knock(this, (-this.vy - lv) * 0.01); this.y = this.roadY; this.vy = 0; this.air = 0; this.landT = clamp(-this.impactVY * 0.02 + 0.05, 0.05, 0.2); this.airT = 0; const sc = clamp(-this.impactVY * 0.016 * lk, 0, 0.13 * lk); this.vx *= (1 - sc); this.vz *= (1 - sc); }
         } else { this.y = this.roadY; this.vy = this.gradeNow * vl; if (this.landT > 0) this.landT -= dt; }
       } else { this.y = 0; }
       this.axF += (((Fx - Fgrav) / m) - this.axF) * Math.min(1, dt * 7);
@@ -2041,6 +2041,12 @@ const Core = (function () {
      COLLISIONS
      --------------------------------------------------------------------- */
   const _q = {};
+  // The damage a knock does (a wall, another car, the traffic, street furniture, a cyclist, a log, a hard landing, the roof on the road
+  // rolling over): the formulas at those places times the vehicle's model.knockK (def.phys.knockK; 1 without one). The Kolibri's 1 / 3.5
+  // (the user's: its typical crash 1 % instead of 3.5 %, every other in proportion). Only the knocks: not the fall down a drop (Race._fall:
+  // a fixed heavy blow, its rule), Core.applyDamage called directly or the run from the police (its cars' own c.dmgK: its balance as it was)
+  const knockK = (c) => c.dmgK ? 1 : c.m.knockK || 1;
+  const knock = (c, amt, lx, lz) => applyDamage(c, amt * knockK(c), lx, lz);
   // Damage: overall 0..1 plus zones (0 front, 1 rear, 2 left = -z, 3 right = +z). lx/lz = local impact point
   // (x forward, z to the right); without a point the hit is spread over the whole car (hard landing).
   function applyDamage(c, amt, lx, lz) {
@@ -2454,7 +2460,7 @@ const Core = (function () {
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
       race.propFx(b, vrel);
-      if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) applyDamage(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
+      if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) knock(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
       return;
@@ -2595,10 +2601,10 @@ const Core = (function () {
       }
     }
     if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); }
-    if (hit > 2.5) {   // 36 km/h into the wall ≈ 21 %; which face hit follows from the wall direction seen from the car
+    if (hit > 2.5) {   // 36 km/h into the wall ≈ 21 % (times model.knockK: the Kolibri's 6 %); which face hit follows from the wall direction seen from the car
       const fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch), cx = c.corners[hitK][0], cz = c.corners[hitK][1];
       const side = Math.abs(fz) > Math.abs(fx) * 0.9;
-      applyDamage(c, (hit - 2.5) * 0.028, side ? cx * 0.45 : Math.sign(fx || cx) * Math.abs(cx) * 0.95, side ? Math.sign(fz) * Math.abs(cz) * 0.95 : cz * 0.6);
+      knock(c, (hit - 2.5) * 0.028, side ? cx * 0.45 : Math.sign(fx || cx) * Math.abs(cx) * 0.95, side ? Math.sign(fz) * Math.abs(cz) * 0.95 : cz * 0.6);
       puncture(c, cx, cz, hit);
       if (XR.roll && side && hit > 10) xRollStart(c, -Math.sign(fz), hit);   // (Razbijanje · nov način: slammed sideways into a wall: it rolls over)
     }
@@ -2654,7 +2660,7 @@ const Core = (function () {
       const dx = bpx - c.x, dz = bpz - c.z, lx = dx * Math.cos(c.h) + dz * Math.sin(c.h), behind = lx < 0 ? Math.min(1, -lx / (c.m.len * 0.5)) : 0;
       c.xgl = Math.min(0.9, Math.max(c.xgl || 0, clamp((imp - 4) / 10, 0, 0.55) + 0.35 * behind)); }
     a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
-    if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); puncture(c, dx * ch + dz * sh, -dx * sh + dz * ch, imp); }
+    if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); puncture(c, dx * ch + dz * sh, -dx * sh + dz * ch, imp); }
     a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
     if (XR.roll && imp > 9 && !a.net && !b.net) for (const c of [a, b]) {   // (Razbijanje · nov način: a knock on its side rolls it over, away from the knock)
@@ -2732,7 +2738,7 @@ const Core = (function () {
     crashLoss(a, dva, dwa, Px, Pz, ma, bpx, bpz); crashLoss(b, dvb, dwb, -Px, -Pz, mb, bpx, bpz);
     const imp = -vrel;
     a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
-    for (let n = 0; n < 2; n++) { const c = n ? b : a, dv = n ? dvb : dva; if (dv > CRASH.dv0) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (dv - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); } }
+    for (let n = 0; n < 2; n++) { const c = n ? b : a, dv = n ? dvb : dva; if (dv > CRASH.dv0) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (dv - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); } }
     const fx = Math.max(imp, Math.abs(vt) * 0.5); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
     return imp;
@@ -2750,7 +2756,7 @@ const Core = (function () {
     const Px = J * o.nx + Jt * tx, Pz = J * o.nz + Jt * tz;
     c.vx += Px / m; c.vz += Pz / m; c.w += (rn * J + rt * Jt) / I;
     c.hitWall = Math.max(c.hitWall, -vn); c.fxWall = Math.max(c.fxWall || 0, -vn); c.contactX = o.px; c.contactZ = o.pz;
-    if (-vn > 2.5) { const ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (-vn - 2.5) * 0.028, rx * ch + rz * sh, -rx * sh + rz * ch); }
+    if (-vn > 2.5) { const ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (-vn - 2.5) * 0.028, rx * ch + rz * sh, -rx * sh + rz * ch); }
     return -vn;
   }
 
@@ -3327,7 +3333,7 @@ const Core = (function () {
       if (v.st === 1) { v.vx -= J * bnx * ib; v.vz -= J * bnz * ib; v.w -= rnb * J / Ib; }
       else { const tx = this.T.tx[v.i], tz = this.T.tz[v.i]; v.v = Math.max(0, v.v - (J * bnx * ib * tx + J * bnz * ib * tz) * v.dir); }
       c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = bpx; c.contactZ = bpz;
-      if (imp > 3.5 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z; applyDamage(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * cha + dz * sha, -dx * sha + dz * cha); }
+      if (imp > 3.5 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z; knock(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * cha + dz * sha, -dx * sha + dz * cha); }
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
       return imp;
@@ -3361,7 +3367,7 @@ const Core = (function () {
       if (v.st === 1) { v.vx -= Px * ib; v.vz -= Pz * ib; v.w -= (rnb * J + rtb * Jt) / Ib; if (dvb > 6 || imp > 9) v.wreck = 1; }
       else if (v.st === 0) { v.v = Math.max(0, v.v - (Px * ib * T.tx[v.i] + Pz * ib * T.tz[v.i]) * v.dir); }
       c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp, Math.abs(vt) * 0.5); c.contactX = bpx; c.contactZ = bpz;
-      if (dva > CRASH.dv0 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (dva - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); }
+      if (dva > CRASH.dv0 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (dva - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); }
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
       return imp;
@@ -3382,7 +3388,7 @@ const Core = (function () {
       const sp = c.speed, R = this.R, vx = c.vx, vz = c.vz, f = 1 - Math.min(sp, 0.15 * sp + 1) / sp;
       const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = (px - c.x) * ch + (pz - c.z) * sh, lz = -(px - c.x) * sh + (pz - c.z) * ch, sd = lz >= 0 ? 1 : -1, k = 1.2 + 0.07 * sp;
       c.vx *= f; c.vz *= f; if (!c.air) c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24, -CSK.tapMax, CSK.tapMax);
-      applyDamage(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
+      knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
       this._knock(v, 0.8); v.w = (R() - 0.5) * 9; v.vx = vx * 0.5 - sh * sd * k; v.vz = vz * 0.5 + ch * sd * k;
       this._throwRider(v, vx, vz, c, true);
       c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
@@ -4231,7 +4237,7 @@ const Core = (function () {
             c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.35, -CSK.tapMax, CSK.tapMax);
             c.fxCar = Math.max(c.fxCar || 0, 3 + sp * 0.12); c.contactX = wx; c.contactZ = wz;
             if (c.police) { c.dmg = Math.min(1, c.dmg + 0.04 + sp * 0.005); if (sp > 9 && R() < 0.5) c.flat = (c.flat || 0) | (1 << k); this.st.logHits++; this.st.eur += POL_EUR.log; this._event('logHit', wx, wz, c); }
-            else applyDamage(c, 0.01 + sp * 0.0008);
+            else knock(c, 0.01 + sp * 0.0008);
             break; } } }
       if (P.q.s - L.s > 700 && L.t > 20) { L.st = 2; L.logs.length = 0; }
     }
@@ -5625,7 +5631,7 @@ const Core = (function () {
   const BODY_KEYS = ['coupe', 'sedan', 'hatch', 'wedge', 'rally', 'formula', 'lm', 'muscle', 'ev', 'truck'];   // (the renderer's body names: no vehicle's id)
   const PHYS_REQ = ['mass', 'a', 'b', 'kI', 'kw', 'redline', 'idle', 'gears', 'final', 'rw', 'cDrag', 'len', 'wid', 'steerMax'];
   const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
-    dmgK: [0.3, 2], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
+    dmgK: [0.3, 2], knockK: [0.1, 1], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
   const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
   const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];
   const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank'];
