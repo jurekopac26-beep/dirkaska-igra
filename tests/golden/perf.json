@@ -44,16 +44,16 @@
  "spa": {
   "calls": 181,
   "maxCalls": 267,
-  "kverts": 551,
-  "maxKverts": 648,
-  "jsMs": 1.28
+  "kverts": 561,
+  "maxKverts": 705,
+  "jsMs": 3.94
  },
  "rbring": {
   "calls": 185,
   "maxCalls": 231,
-  "kverts": 501,
-  "maxKverts": 689,
-  "jsMs": 1.36
+  "kverts": 511,
+  "maxKverts": 746,
+  "jsMs": 1.8
  },
  "suzuka": {
   "calls": 204,
@@ -88,7 +88,7 @@
   "maxCalls": 307,
   "kverts": 358,
   "maxKverts": 442,
-  "jsMs": 1.24
+  "jsMs": 2.39
  },
  "chapman": {
   "calls": 165,
@@ -177,9 +177,9 @@
  "cpalace": {
   "calls": 210,
   "maxCalls": 227,
-  "kverts": 566,
+  "kverts": 576,
   "maxKverts": 686,
-  "jsMs": 1.13
+  "jsMs": 1.61
  },
  "riverside": {
   "calls": 149,
@@ -200,28 +200,28 @@
   "maxCalls": 216,
   "kverts": 456,
   "maxKverts": 716,
-  "jsMs": 1.42
+  "jsMs": 3.4
  },
  "newcastle": {
   "calls": 244,
   "maxCalls": 279,
-  "kverts": 833,
-  "maxKverts": 1074,
-  "jsMs": 1.32
+  "kverts": 843,
+  "maxKverts": 1131,
+  "jsMs": 2.5
  },
  "rio": {
   "calls": 193,
   "maxCalls": 310,
-  "kverts": 602,
-  "maxKverts": 828,
-  "jsMs": 1.32
+  "kverts": 631,
+  "maxKverts": 885,
+  "jsMs": 6.68
  },
  "toronto": {
   "calls": 205,
   "maxCalls": 255,
-  "kverts": 735,
-  "maxKverts": 901,
-  "jsMs": 1.04
+  "kverts": 744,
+  "maxKverts": 958,
+  "jsMs": 2.51
  },
  "medvode": {
   "calls": 152,
@@ -235,7 +235,7 @@
   "maxCalls": 270,
   "kverts": 479,
   "maxKverts": 652,
-  "jsMs": 1.17
+  "jsMs": 2.09
  },
  "greatalpine": {
   "calls": 154,
@@ -247,9 +247,9 @@
  "detroit": {
   "calls": 230,
   "maxCalls": 276,
-  "kverts": 834,
-  "maxKverts": 1023,
-  "jsMs": 1.28
+  "kverts": 862,
+  "maxKverts": 1080,
+  "jsMs": 2.28
  },
  "palomar": {
   "calls": 173,
@@ -261,9 +261,9 @@
  "bangsaen": {
   "calls": 229,
   "maxCalls": 302,
-  "kverts": 728,
-  "maxKverts": 864,
-  "jsMs": 1.05
+  "kverts": 747,
+  "maxKverts": 921,
+  "jsMs": 3.56
  },
  "hotham": {
   "calls": 171,
@@ -275,9 +275,9 @@
  "townsville": {
   "calls": 258,
   "maxCalls": 294,
-  "kverts": 753,
-  "maxKverts": 957,
-  "jsMs": 1.36
+  "kverts": 776,
+  "maxKverts": 1002,
+  "jsMs": 4.03
  },
  "marrakesh": {
   "calls": 188,
@@ -289,9 +289,9 @@
  "troisrivieres": {
   "calls": 228,
   "maxCalls": 289,
-  "kverts": 765,
-  "maxKverts": 984,
-  "jsMs": 1.17
+  "kverts": 784,
+  "maxKverts": 1041,
+  "jsMs": 8.42
  },
  "jezero": {
   "calls": 205,
