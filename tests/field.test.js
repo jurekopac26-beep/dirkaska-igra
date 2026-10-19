@@ -1,5 +1,5 @@
 // The game's bigger fields on the road (no browser): the Nordschleife's Circuit race with 100 cars from a flying start (def.raceRivals 99,
-// def.flyStart; game.js newRace: numAI 99, opts.flying FLY_V 15 m/s, the player at the back of the grid), its first 30 s: every car rolling at
+// def.flyStart; game.js newRace: numAI 99, opts.flying FLY_V 15 m/s, the player in slot PLAYER_GRID 99), its first 30 s: every car rolling at
 // 15 m/s from its slot behind the line (up to ~750 m back), no start reaction (no lights), then no NaN anywhere, every car on the move and over
 // the line; and the 22-car races up two open roads as the game runs them (21 rivals, flying start): Pikes Peak (~40 m of road below the line:
 // the grid in rows abreast) the whole way to the summit, every car at the finish in a slot of its own past the line (none past the end of the
@@ -33,7 +33,7 @@ try {
     const d = C.TRACKS.find(t => t.id === 'nring'), r = race('nring', d.raceRivals), t0 = Date.now();
     r.start();
     const T = r.track, along = r.cars.map(c => { const i = c.q.i >= 0 ? c.q.i : T.idx(c.q.s); return (c.vx * Math.cos(T.hd[i]) + c.vz * Math.sin(T.hd[i])) / c.speed; }), d0 = r.cars.map(c => c.dist);
-    check('Nordschleife: 100 cars from a flying start, every one rolling at 15 m/s along the road from its slot behind the line (the last ~750 m back), no start reaction, the player at the back',
+    check('Nordschleife: 100 cars from a flying start, every one rolling at 15 m/s along the road from its slot behind the line (the last ~750 m back), no start reaction, the player 99th (the game\'s PLAYER_GRID 99)',
       r.cars.length === 100 && !r.lch && r.cars.every(c => Math.abs(c.speed - 15) < 1e-9 && c.dist < 0) && along.every(a => a > 0.97) && Math.min(...d0) < -700 && r.player.grid === 99,
       `the last ${(-Math.min(...d0)).toFixed(0)} m behind the line, the player ${r.player.grid}th`);
     run(r, 30);
