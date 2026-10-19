@@ -44,6 +44,8 @@ try {
       // ZAMENJAJ KOLO (the spare on the roof): a hit at 79 % in the new race: a big button, its bar at its foot running out, clear of the
       // steering and the pedals, no fire yet, then (the bar under 20 %, white) the hub where the wheel was on fire; a tap beside the button:
       // nothing; a tap on it: the spare on at once (four wheels, drawn), the car driving on, the button gone, no spare left; the fire put out
+      const side = () => { const D = document.getElementById('h-dmg'), a = D.querySelector('svg').getBoundingClientRect(), b = D.querySelector('.dmg-nums').getBoundingClientRect(), n = document.getElementById('dmg-ns').getBoundingClientRect();   // (the damage picture: its car and its numbers side by side, the no spare line under both)
+        return b.left >= a.right - 1 && Math.abs((a.top + a.bottom) / 2 - (b.top + b.bottom) / 2) < 8 && (!n.height || n.top >= Math.max(a.bottom, b.bottom) - 1); };
       const vib = []; navigator.vibrate = (q) => { vib.push(q); return true; };   // (the phone's buzzes, kept: the last second's are four long ones)
       const buzz = () => vib.filter(q => Array.isArray(q) && q.join() === '150,100,150,100,150,100,150').length;
       g.pause(); g.sim(9, true); P2.dmg = 0.79; Core.applyDamage(P2, 0.03, P2.m.len * 0.5, 0);
@@ -70,7 +72,7 @@ try {
         [C.userZoom, C.userTilt, C.userBack] = keep; Render.frame(0.001, 1, P2, 'chase', { noFx: true });
         const hud = ['h-times', 'h-note', 'h-map', 'h-rank'].map(id => document.getElementById(id)).filter(e => e.getClientRects().length).map(e => [e.id, e.getBoundingClientRect()]).filter(([, q]) => q.width > 0 && cut(q, br)).map(([id]) => id);
         Object.assign(sw0, { car, hud, top: Math.round(br.top), clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom) }); }
-      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx(); sw0.buzz0 = buzz();
+      g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx(); sw0.buzz0 = buzz(); sw0.side = side();
       P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
       sw0.buzz1 = buzz(); sw0.vib = vib.length;   // (the last second's buzz: once, a few frames more or not: counted again after the tap)
@@ -87,7 +89,7 @@ try {
         sw1.msg = { txt: M.textContent, show: M.classList.contains('show'), gold: M.classList.contains('gold'), ic: M.dataset.ic, clear: !(M.classList.contains('show') && cut(m, d)) };
         sw1.ns = { on: D.classList.contains('nospare'), shown: N.getClientRects().length > 0 && n.height > 0, txt: N.textContent, icon: /svg/.test(getComputedStyle(N, '::before').backgroundImage),
           inPic: n.left >= d.left - 0.5 && n.right <= d.right + 0.5 && n.top >= d.top && n.bottom <= d.bottom + 0.5 && n.top > d.top + d.height / 3, oneLine: N.scrollWidth <= N.clientWidth + 1 && n.height < 2.2 * parseFloat(getComputedStyle(N).fontSize),
-          inView: d.left >= 0 && d.right <= innerWidth && d.bottom <= innerHeight, above: !ctl2.length || k.bottom <= Math.min(...ctl2) }; }
+          inView: d.left >= 0 && d.right <= innerWidth && d.bottom <= innerHeight, above: !ctl2.length || k.bottom <= Math.min(...ctl2), side: side(), before: sw0.side }; }
       P2.dmg = Math.min(P2.dmg, 0.6); P2.dz = P2.dz.map(d => Math.min(d, 0.6)); const k2 = P2.dmgK; P2.dmgK = 1e-6;   // (a knock in the pack on the autopilot's way meanwhile takes nothing: under 70 %, no more damage)
       for (let k = 0; k < 50; k++) { g.sim(0.1, true); Render.frame(0.1, 1, P2, 'chase', {}); }   // (5 s of the race on, drawn)
       P2.dmgK = k2; const sw2 = { fire: Render.burning(P2), nL: P2.wreck.nL, v: +P2.speed.toFixed(1) };
@@ -118,8 +120,8 @@ try {
     T.check(`${tag}: ZAMENJAJ KOLO: the phone buzzes four long times in the last second (none before it), once`, a.sw0.buzz0 === 0 && a.sw0.buzz1 === 1 && a.sw1.buzz === 1, JSON.stringify({ before: a.sw0.buzz0, last: a.sw0.buzz1, after: a.sw1.buzz, all: a.sw0.vib }));
     T.check(`${tag}: the tap: ${en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO'} (gold, the wrench), clear of the damage picture; the pits' wheel gun three times`,
       a.sw1.msg.show && a.sw1.msg.txt === (en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO') && a.sw1.msg.gold && a.sw1.msg.ic === 'wrench' && a.sw1.msg.clear && a.sw1.gun === 3, JSON.stringify([a.sw1.msg, a.sw1.gun]));
-    T.check(`${tag}: no spare left: "${en ? 'no spare' : 'brez rezerve'}" with a wheel crossed out under the damage picture's numbers, in it, on one line, on screen${vw.width > vw.height ? ', the left column still above the steering' : ''}; a repair in the pits: a new spare, gone`,
-      a.sw1.ns.on && a.sw1.ns.shown && a.sw1.ns.txt === (en ? 'no spare' : 'brez rezerve') && a.sw1.ns.icon && a.sw1.ns.inPic && a.sw1.ns.oneLine && a.sw1.ns.inView && a.sw1.ns.above && a.sw2.spare === 1 && !a.sw2.ns, JSON.stringify([a.sw1.ns, { spare: a.sw2.spare, ns: a.sw2.ns }]));
+    T.check(`${tag}: no spare left: "${en ? 'no spare' : 'brez rezerve'}" with a wheel crossed out under the damage picture's car and numbers (they side by side, with it and without it), in it, on one line, on screen${vw.width > vw.height ? ', the left column still above the steering' : ''}; a repair in the pits: a new spare, gone`,
+      a.sw1.ns.on && a.sw1.ns.shown && a.sw1.ns.txt === (en ? 'no spare' : 'brez rezerve') && a.sw1.ns.icon && a.sw1.ns.inPic && a.sw1.ns.oneLine && a.sw1.ns.inView && a.sw1.ns.above && a.sw1.ns.side && a.sw1.ns.before && a.sw2.spare === 1 && !a.sw2.ns, JSON.stringify([a.sw1.ns, { spare: a.sw2.spare, ns: a.sw2.ns }]));
     T.check(`${tag}: the spare drawn lying on the roof (over the body's top, within the car's length) until it is put on, then gone`,
       !!a.sw0.roof && a.sw0.roof.vis && a.sw0.roof.y > 0.9 && a.sw0.roof.y < a.sw0.roof.top + 0.4 && Math.abs(a.sw0.roof.x) < 1.5 && !!a.sw1.roof && !a.sw1.roof.vis, JSON.stringify([a.sw0.roof, a.sw1.roof]));
     T.check(`${tag}: a tap on the button: the spare on at once (four wheels, drawn), the car not slowed, the button gone, no spare left; the hub's fire out within 5 s, the car driving on`,
