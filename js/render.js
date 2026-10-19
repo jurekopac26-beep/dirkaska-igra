@@ -3476,6 +3476,38 @@ const Render = (function () {
     }
     if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
   }
+  // the marbles (Race mb, a race with tyres): the rubber the tyres shed, a dark speckled band just off the racing line on the outside of the
+  // corners (Track.marbles: its middle and width, how thick it gets there in the vertices' alpha), as dark as the race has laid it (mb.lv;
+  // the rain washes it away). One mesh over the lap (a row every 4 m, only where there is a band; a strip ends where the band changes
+  // sides), built the first time it shows; a new world: built again for its track. Its picture: Tex.marbles, made once
+  let mbLn = null, mbTex = null;
+  function marbles(R) {
+    if (mbLn && mbLn.userData.w !== world) { scene.remove(mbLn); mbLn.geometry.dispose(); mbLn.material.dispose(); mbLn = null; }
+    const T = R && R.track, lv = R && R.mb && T === curTrack ? R.mb.lv : 0;
+    if (lv > 0.01 && !mbLn && world) {
+      const M = T.marbles(), N = T.N, st = 2, n = Math.ceil(N / st), kAt = (j) => M.k[((j * st) % N + N) % N], O = [-1, -0.45, 0.45, 1], A = [0, 1, 1, 0];
+      const pos = [], col = [], uv = [], idx = [], bk = { dy: 0, sl: 0 };
+      let last = -2, side = 0;
+      for (let j = 0; j <= n; j++) {
+        if (Math.max(kAt(j - 1), kAt(j), kAt(j + 1)) < 0.02) continue;
+        const i = (j * st) % N, k = kAt(j), sd = M.c[i] > T.rl[i] ? 1 : -1, b = pos.length / 3;
+        for (let v = 0; v < 4; v++) {
+          const o = M.c[i] + O[v] * M.h[i]; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035;
+          if (T.bank) y += T.bankAt(i * T.ds, o, bk).dy;
+          pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); col.push(1, 1, 1, A[v] * k); uv.push(o / 2, j * st * T.ds / 2);
+        }
+        if (last === j - 1 && sd === side) for (let v = 0; v < 3; v++) { const a = b - 4 + v, c = b + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+        last = j; side = sd;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals();
+      if (!mbTex) mbTex = Tex.marbles();
+      const m = new THREE.MeshLambertMaterial({ map: mbTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length }; scene.add(mbLn);
+    }
+    if (mbLn) { mbLn.visible = lv > 0.01 && !mbLn.userData.none; mbLn.material.opacity = Math.min(1, lv); }
+  }
 
   // the rain's splashes (Splashes) on the road round the view's centre: so many drops a second as it rains, where they fall on the road
   // (the track's own height there); not in the snow. Their places from a generator of their own (Math.random is left to the race)
@@ -8582,7 +8614,7 @@ const Render = (function () {
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
-      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); }
+      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); marbles(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);

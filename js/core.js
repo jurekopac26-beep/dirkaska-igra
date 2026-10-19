@@ -63,6 +63,12 @@ const Core = (function () {
   // a barrier (y1: above the cars by the wall and the spectators behind it)
   const BB = { w: 2.0, h: 1.5, y0: 0.5, y1: 1.9 };
 
+  // the marbles (Race mb, a race with tyres): the bits of rubber the tyres shed, swept off the racing line to the outside of the corners
+  // (Track.marbles). The band: gap m beside the line, wd m wide at most, edge m short of the road's edge; in a bend of the line tighter than
+  // r0 m, all of it from r1 m. n: the car-laps that lay most of it (1 - 1/e of the thickest), wash: the s at full water for the rubber laid
+  // to fall to 1/e; g: the grip a car loses on the thickest of it
+  const MARB = { gap: 1.3, wd: 3.2, edge: 0.3, r0: 350, r1: 70, n: 20, wash: 25, g: 0.06 };
+
   class Track {
     constructor(def) {
       this.def = def;
@@ -983,6 +989,22 @@ const Core = (function () {
       if (open) rds[N - 1] = 0;
       this.rds = rds;
     }
+    // the marbles' band (MARB, Race mb; closed circuits): per sample its middle (c, m from the centre line), its half width (h) and how thick
+    // it gets at most (k, 0..1: by how tight the racing line bends there, over ±16 m, and the room between the line and the road's edge on
+    // the outside of the bend: none where the line runs along the edge). Found once
+    marbles() {
+      if (this._mb) return this._mb;
+      const N = this.N, rk = this.rk, rl = this.rl, wa = this.wa, M = MARB, c = new Float32Array(N), h = new Float32Array(N), k = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; s /= 17;
+        const so = s > 0 ? -1 : 1, u0 = so * rl[i] + M.gap, u1 = Math.min(u0 + M.wd, (wa ? wa[i] : this.w) - M.edge);   // (so: the outside of the bend; +n is to the right, a right bend's inside)
+        k[i] = sstep(1 / M.r0, 1 / M.r1, Math.abs(s)) * sstep(0.6, 1.4, u1 - u0); c[i] = so * (u0 + u1) / 2; h[i] = Math.max(0, (u1 - u0) / 2);
+      }
+      return (this._mb = { c, h, k });
+    }
+    // how much of the band is under a car at sample i, d m from the centre line (0..1 of its thickest there): from a wheel on its edge (the
+    // car's middle 0.8 m outside it) to all of it with the car's middle 0.4 m inside
+    marbleAt(i, d) { const M = this._mb || this.marbles(), k = i >= 0 && i < this.N ? M.k[i] : 0; return k ? k * clamp((M.h[i] + 0.8 - Math.abs(d - M.c[i])) / 1.2, 0, 1) : 0; }
 
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
     // aero: grip that grows with speed, latA (1 + aero v^2) (the formula's wings): v^2 (curvature - latA aero) = latA (no limit once the wings hold any bend);
@@ -4634,6 +4656,9 @@ const Core = (function () {
       // the slipstream (opts.slip, a race with rivals): less air drag in the wake of a car ahead (c.tow, see _tow; the field only with it on)
       this.slip = opts.slip && total > 1 && !this.timeTrial ? { n: 0 } : null;
       if (this.slip) for (const c of this.cars) c.tow = 0;
+      // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
+      // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
+      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0 } : null;
       // failures (opts.faults, not in a time trial): every car's brakes and engine with a temperature, a tyre that a hard knock may cut (Car.flt,
       // see Car._heat and puncture; in an object: the golden references digest only the plain fields). The friends' cars: on their own phones
       if (opts.faults && !this.timeTrial) for (const c of this.cars) if (!c.net) c.flt = { pw: -1, pk: 0, brT: 20, enT: 85, brH: false, enH: false, ev: '' };
@@ -4667,6 +4692,16 @@ const Core = (function () {
     setRain(r) { this._wet(r); const W = this.wst; if (W) { W.water = W.line = this.rain; W.profW = (1 - (1 - WET) * this.rain) * this.cold.gk; } this._prof(); }   // (title demo: the weather setting at once)
     get water() { return this.wst ? this.wst.water : this.rain; }       // the water on the road (0..1; the renderer's wet road)
     get lineWater() { return this.wst ? this.wst.line : this.rain; }    // ... on the racing line (it dries first)
+    // the marbles (mb, from _weather after every car's grip): the cars on the track lay the rubber (the metres they drive, twice as much
+    // in a full slide, none on a wet road), the band grows with it (MARB.n car-laps for most of it) and the water washes it away (MARB.wash
+    // s at full water for the rubber laid to fall to 1/e). A car on it grips a little less (MARB.g of its grip on the thickest, Track.marbleAt)
+    _marbles(dt) {
+      const M = this.mb, W = this.wst, T = this.track;
+      if (this.state === 'racing') for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.speed > 1) M.d += c.speed * dt * (1 + Math.min(1, Math.abs(c.beta || 0) / 0.35)) * (1 - W.water);
+      if (W.water > 0) M.d *= Math.exp(-dt * W.water / MARB.wash);
+      M.lv = 1 - Math.exp(-M.d / (MARB.n * T.len));
+      if (M.lv > 0.001) for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.q && c.q.i >= 0 && !(c.q.k >= 0)) { const m = T.marbleAt(c.q.i, c.q.d); if (m > 0) c.wet *= 1 - MARB.g * M.lv * m; }   // (not on the pit road: the autopilot's, swept clean)
+    }
     // the rain on its schedule, the water on the road, every car's grip (with tyres); the AI's speed profile follows the grip on the line
     _weather(dt) {
       const W = this.wst, X = W.wx, T = this.track;
@@ -4684,6 +4719,7 @@ const Core = (function () {
         c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * c.ty.wear) : 1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
+      if (this.mb) this._marbles(dt);
     }
     // an AI car's box (metres from the start line): one of the crews' boxes on the apron (Track.crewBoxes; not the player's), by its place on the
     // grid among the AI cars
