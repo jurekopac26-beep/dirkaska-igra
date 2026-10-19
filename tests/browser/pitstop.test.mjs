@@ -43,7 +43,7 @@ try {
     for (let k = 0; k < 3000 && g.pitAuto.st; k++) {
       const on0 = g.pitStop.on;
       for (let i = 0; i < 6; i++) { g.sim(1 / 60, false, 0, 0); Render.frame(1 / 60, 1, P, 'chase', {}); o.t += 1 / 60; if (P.pitState === 'repair' && o.arrive == null) { o.arrive = o.t; o.dur = P.pitDur; o.plan = P.pitPlan && Object.assign({}, P.pitPlan); }
-        if (P.pitDone && o.wear == null && P.ty) o.wear = P.ty.wear; if (!g.pitAuto.st) break; }   // (wear: the tyres as the stop left them, before the way out wears them)
+        if (P.pitDone && o.wear == null && P.ty) o.wear = P.ty.wear; if (!g.pitAuto.st) break; }   // (wear: the tyres as the stop left them, before the way out wears them: new, at most the step that left the box)
       g.hud(0.1); const m = document.getElementById('h-msg').textContent; if (m && o.hm[o.hm.length - 1] !== m) o.hm.push(m);
       if (on0 && !g.pitStop.on) o.decide = o.t;
       if (g.pitStop.on) o.b1.push({ t: +o.t.toFixed(2), tl: +g.pitStop.tl.toFixed(2), w: parseFloat(el.querySelector('.sp-tb i').style.width), s: el.querySelector('.sp-head em').textContent });
@@ -68,7 +68,7 @@ try {
   const r1 = await toHandBack({ tl0: a.st.tl0 });
   const b1 = r1.b1, b2 = r1.b2, w2 = b2.map(x => x.w), s2 = b2.map(x => parseFloat(x.lbl.replace(/^Prevzem čez /, '').replace(',', '.')));
   T.check('not confirmed: at the box the defaults (all repaired, soft slicks, a full tank), the stop as long as stopDur says for them; the panel gone there',
-    r1.arrive != null && r1.decide != null && Math.abs(r1.decide - r1.arrive) < 0.2 && r1.plan && r1.plan.ty === 'S' && r1.plan.fuel === 1 && r1.plan.fix === 'all' && r1.end.dmg === 0 && r1.end.rep === r1.rep0 + 1 && r1.end.ty.c === 'S' && r1.wear === 0 && r1.end.fuel === 1 && !r1.end.plan,
+    r1.arrive != null && r1.decide != null && Math.abs(r1.decide - r1.arrive) < 0.2 && r1.plan && r1.plan.ty === 'S' && r1.plan.fuel === 1 && r1.plan.fix === 'all' && r1.end.dmg === 0 && r1.end.rep === r1.rep0 + 1 && r1.end.ty.c === 'S' && r1.wear < 1e-4 && r1.end.fuel === 1 && !r1.end.plan,
     JSON.stringify({ arrive: r1.arrive, decide: r1.decide, dur: r1.dur, plan: r1.plan, wear: r1.wear, end: r1.end }));
   T.check('bar 1: the seconds to the box from about what the car takes (within 1.5 s), draining (bar and seconds never up) to ~0 at the box',
     b1.length > 10 && Math.abs(r1.tl0 - (r1.arrive + 1)) < 1.5 && b1[0].w > 80 && b1.every((x, i) => !i || (x.w <= b1[i - 1].w + 1e-6 && x.tl <= b1[i - 1].tl + 1e-6)) && b1[b1.length - 1].tl < 1.2 && b1[b1.length - 1].w < 15 && /^\d+ s$/.test(b1[0].s),
@@ -96,7 +96,7 @@ try {
     JSON.stringify({ keys, pick, conf }));
   const r2 = await toHandBack({ dSel: pick.dSel, dDef: pick.dDef });
   T.check('confirmed without repairs: the stop shorter (the tyres and the fuel only, as stopDur says), the damage still on the car (no repairN), soft slicks, a full tank',
-    r2.arrive != null && Math.abs(r2.dur - r2.dSel) < 1e-9 && r2.dSel < r2.dDef - 0.3 && r2.end.dmg === 0.6 && r2.end.rep === r2.rep0 && r2.end.ty.c === 'S' && r2.wear === 0 && r2.end.fuel === 1,
+    r2.arrive != null && Math.abs(r2.dur - r2.dSel) < 1e-9 && r2.dSel < r2.dDef - 0.3 && r2.end.dmg === 0.6 && r2.end.rep === r2.rep0 && r2.end.ty.c === 'S' && r2.wear < 1e-4 && r2.end.fuel === 1,
     JSON.stringify({ dur: r2.dur, dSel: r2.dSel, dDef: r2.dDef, wear: r2.wear, end: r2.end }));
   { const after = r2.pace, top = Math.max(...after.map(p => p.k)), firstUp = after.findIndex(p => p.k > 1.2);
     T.check('the film camera after CONFIRM: quicker than its pace for a while (catching up, eased: no jump), then its pace again', top > 1.3 && top < 1.7 && firstUp >= 0 && after[0].k < top - 0.2 && after.slice(-5).every(p => Math.abs(p.k - 1) < 0.02) && after.every((p, i) => !i || Math.abs(p.k - after[i - 1].k) < 0.5),
