@@ -2406,6 +2406,15 @@ const Core = (function () {
       warn:    { m: 12,  rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.25, mu: 0.6, lift: 0.8,  I: 7,   dmg: 0, pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.0, 0.45], [0, 1.0, -0.45]]) },   // a yellow diamond warning sign (the Americas, Australia)
       mailbox: { m: 40, rh: 0.36, rb: 0.75, h0: 0.62, e: 0.2,  mu: 0.6,  lift: 0.3,  I: 4,    dmg: 0, pts: boxPts(0.3, 0.62, 0.25) },   // a street mail box
       meter:   { m: 14,  rh: 0.12, rb: 0.75, h0: 0.7,  e: 0.25, mu: 0.6, lift: 0.8, I: 1.6, dmg: 0, pts: boxPts(0.12, 0.7, 0.1) },   // a parking meter
+      // a braking board on the verge (Track.brakeBoards, kind 0; World's brakeBoards puts it in out.props): the A-frame of two plates BB.w x BB.h,
+      // each 30 deg off the upright, their lower edges BB.y0 over the ground, the ridge on two legs; local +x along the road (the face to the
+      // cars at -x), +z across. Light: the car loses ~2.5 % of its speed and takes a small dent (dmg); its legs in the ground, it tips over and
+      // slides a few metres (vmax: its speed across the ground when hit) instead of flying off; lying, it rests on a plate (the ridge's
+      // contacts 0.55 m in from its ends: never left standing on an end). home: the world's own mesh draws it (one draw call for all the
+      // boards; Render moves its part of that mesh from where it stood, Race.setProps: b.home)
+      bboard:  (() => { const hw = BB.w / 2, e = BB.h * 0.5, h0 = 1, y0 = BB.y0 - h0, yR = BB.y0 + BB.h * Math.cos(Math.PI / 6) - h0, la = hw - 0.18, rz = hw - 0.55;
+        return { m: 16, rh: 1.0, rb: 1.35, h0, e: 0.1, mu: 0.8, lift: 0.25, I: 10, dmg: 1, vmax: 8, home: true,
+          pts: [[0, -h0, -la], [0, -h0, la], [-e, y0, -hw], [-e, y0, hw], [e, y0, -hw], [e, y0, hw], [0, yR, -rz], [0, yR, rz]] }; })(),
     };
     KK.bsign = KK.msign;   // (Medvode's bus stop sign: the same pole and board, another picture)
     return KK;
@@ -2452,7 +2461,7 @@ const Core = (function () {
       b.sleep = false; b.t = 0; b.age = 0;
       propImpulse(b, nx * j, 0, nz * j, rx, ry, rz);
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
-      const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
+      const hs = Math.hypot(b.vx, b.vz), cap = Math.min(K.vmax || 18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }   // (vmax: a braking board's legs in the ground: it tips over rather than flies)
       race.propFx(b, vrel);
       if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) applyDamage(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
@@ -4786,14 +4795,16 @@ const Core = (function () {
     }
 
     // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst.
-    // floor(q): the verge's height relative to the road there (from the world builder; worlds whose verge drops away from the road edge)
+    // floor(q): the verge's height relative to the road there (from the world builder; worlds whose verge drops away from the road edge).
+    // it.y: the height it stands at as the builder drew it (a braking board: the foot of its plates' frame; it lands on the floor once knocked)
     setProps(list, floor) {
       const T = this.track, props = [], slots = {}, cap = {};
       this.propFloor = floor || null;
       for (const it of list) {
         const K = PROPK[it.kind]; if (!K) continue;
         const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (floor ? floor(q, true) : 0);   // (it.i: the builder's sample index, a hint that saves a full scan; the floor row of the nearest sample, as the builder's placement test saw it; in a side road its own height)
-        const b = mkProp(it.kind, it.x, gy + K.h0, it.z, it.yaw); b.col = it.col || 0; b.qi = q.i;
+        const b = mkProp(it.kind, it.x, (it.y != null ? it.y : gy) + K.h0, it.z, it.yaw); b.col = it.col || 0; b.qi = q.i;
+        if (K.home) b.home = [b.x, b.y, b.z, b.qy, b.qw];   // (drawn by the world's own mesh where it stands: Render moves that part of it from this pose)
         b.slot = slots[it.kind] = (slots[it.kind] || 0); slots[it.kind]++; cap[it.kind] = (cap[it.kind] || 0) + 1; props.push(b);
         if (K.breaks) b.parts = K.parts.map(() => { const pb = mkProp(K.breaks, it.x, gy, it.z, 0); pb.hidden = true; pb.dead = true; pb.col = b.col; cap[K.breaks] = (cap[K.breaks] || 0) + 1; props.push(pb); return pb; });
       }

@@ -4288,6 +4288,14 @@ const World = (function () {
      the mountain road, fewer in the streets, a few on a modern circuit), and on a circuit the rubber
      laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
+  // ROAD DECAL ORDER (renderOrder; each transparent and not written to the depth buffer, so this order alone decides what lies on what, at the
+  // post target's 16-bit depth and the canvas' 24-bit alike; each still depth-tested: a car or a kerb in front hides it):
+  //   0.25 the drying line (Render) < 0.4 a builder's own patches (Longford) < 0.45 the decal atlas (Nordschleife, Red Bull Ring & co.)
+  //   < 0.5 the road's wear < 0.75 a builder's covers, grates and paint (Harju, Detroit) < 1 the baked tyre marks (the blob shadows, the
+  //   lights; the rain's puddles, faded where the drying line has dried: Render's buildPuddles) < 1.5 the crowds' shade strips (crowdLayer:
+  //   multiplied over whatever lies under them) < 2 the live tyre marks (Render's Skids; a road surface over the track's height lifts them:
+  //   world.markLift, Detroit) < 4 and up: smoke, dust, particles (Longford's puffs, Spa's smoke, Render's particles), over the road and the
+  //   marks behind them. Anything transparent that does not write depth and can stand in front of the road belongs above 2, never at 0.
   const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
   function roadWear(o, tex) {
     if ((T.def.roadSurface === 'makadam' && !(T.def.wearPaved && T.pavedAt)) || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches; a gravel road with def.wearPaved: only its asphalt worn)
@@ -4377,7 +4385,7 @@ const World = (function () {
       if (!c.I.length) continue;
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(c.U, 2));
       g.setIndex(c.P.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(c.I, 1) : new THREE.Uint16BufferAttribute(c.I, 1)); g.computeVertexNormals(); g.computeBoundingSphere();
-      const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 2; m.matrixAutoUpdate = false; o.root.add(m);   // (after the tyre marks and the drying line: the rubber shows on a drying line too)
+      const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 0.5; m.matrixAutoUpdate = false; o.root.add(m);   // (ROAD DECAL ORDER: after the drying line, before the covers and every tyre mark)
     }
   }
   /* ---- the grass of every world (at the end of its build): the meadow's own colour varies over tens of metres (lighter, darker, drier
@@ -4659,9 +4667,10 @@ const World = (function () {
      roads that run up or down the screen, both at an angle beside those across it. Two legs from under the ground (the world's groundH,
      never above the road there) up to its ridge, over a barrier (kind 1) longer ones in the barrier's line. The period circuits' (and
      Monaco's) boards white with black numbers, the others' blue with white; nothing but the number on them. A knockable post or tyre
-     stack in a board's way goes. ---- */
+     stack in a board's way goes. A board on the verge is itself knockable (Core 'bboard'): hit, it tips over and lies in the grass, still
+     drawn in this mesh (Render moves its vertices). ---- */
   let BB_ATL = null;
-  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { cpalace: 1, longford: 1, riverside: 1, monaco: 1 };
+  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { cpalace: 1, longford: 1, riverside: 1, monaco: 1 }, BB_BACK = [0.6, 0.62, 0.64];
   function bbAtlas() {   // 512 x 256: the plates 96 x 72 (row 0 blue with white numbers, row 1 white with black: 300, 200, 100, 150, 50); a white patch
     if (BB_ATL) return BB_ATL;
     const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
@@ -4677,9 +4686,10 @@ const World = (function () {
     const Z = T.brakeBoards ? T.brakeBoards() : []; if (!Z.length) return;
     const row = BB_CLASSIC[THEME] ? 1 : 0, g = new GB(true), tilt = 30 * Math.PI / 180, ct = Math.cos(tilt), st = Math.sin(tilt);
     g.dUV = [488 / 512, 1 - 240 / 256];   // (the legs and the plate's rim: the white patch, in their vertex colours)
-    const leg = [0.42, 0.43, 0.46], rim = row ? [0.86, 0.86, 0.84] : [0.16, 0.24, 0.42], W1 = [1, 1, 1], gh = o.groundH, foot = [];
+    const leg = [0.42, 0.43, 0.46], rim = row ? [0.86, 0.86, 0.84] : [0.16, 0.24, 0.42], W1 = [1, 1, 1], gh = o.groundH, foot = [], loose = [];
     for (const z of Z) for (const b of z.boards) {
       const k = BB_NUM.indexOf(b.d); if (k < 0) continue;
+      const vf = g.P.length / 3;   // (its vertices from here: a board on the verge is a knockable prop, loose)
       const hw = b.pw / 2, H = b.ph, tx = Math.cos(b.hd), tz = Math.sin(b.hd), nx = -tz, nz = tx, la = b.kind ? 0.2 : hw - 0.18;   // (la: the legs' distance from the middle; over a barrier in its line)
       const G = (a) => { const y = gh ? gh(b.x + nx * a, b.z + nz * a) : b.y; return Number.isFinite(y) ? y : b.y; }, gl = [G(-la), G(la)];   // (the ground under each leg)
       const y0 = Math.max(b.y, gl[0], gl[1]) + b.py, yF = gl.map(y => Math.max(Math.min(y, b.y) - 0.3, y0 - 5));   // (the plate's lower edge, over the road or the ground if that is higher; the legs' feet, in the ground)
@@ -4688,8 +4698,10 @@ const World = (function () {
       g.quadO(Q(-hw, -e, y0), Q(hw, -e, y0), Q(hw, 0, yR), Q(-hw, 0, yR), W1, inn, uv);   // the face to the cars coming
       g.quadO(Q(hw, e, y0), Q(-hw, e, y0), Q(-hw, 0, yR), Q(hw, 0, yR), W1, inn, uv);   // the other face (seen from above beside the roads that run down the screen)
       for (const s of [-1, 1]) g.triO(Q(s * hw, -e, y0), Q(s * hw, e, y0), Q(s * hw, 0, yR), rim, inn);   // its ends
+      if (!b.kind) for (const s of [-1, 1]) g.quadO(Q(-hw, s * e, y0), Q(hw, s * e, y0), Q(hw, 0, yR), Q(-hw, 0, yR), BB_BACK, Q(0, s * 3, y0));   // (one on the verge can be knocked over: its plates' backs, the A-frame's inside, grey metal, so a board lying on one plate shows the other whichever way it faces)
       [-1, 1].forEach((s, q) => { const [lx, , lz] = Q(s * la, 0, 0); box(g, lx, yF[q], lz, 0.05, yR - 0.02 - yF[q], 0.05, b.hd, leg, leg, true); });   // the legs
       foot.push([b.x, b.z, tx, tz, hw, { d: b.d, kind: b.kind, x: +b.x.toFixed(2), z: +b.z.toFixed(2), y0: +y0.toFixed(2), feet: yF.map(y => +y.toFixed(2)), ground: gl.map(y => +y.toFixed(2)), road: +b.y.toFixed(2) }]);
+      if (!b.kind) loose.push({ b, y: y0 - b.py, v: [vf, g.P.length / 3] });   // (y: the frame's foot as drawn, its plates' lower edge less BB.y0)
     }
     if (g.empty) return;
     const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: bbAtlas(), vertexColors: true }));
@@ -4697,6 +4709,13 @@ const World = (function () {
     o.brakeBoards = foot.map(f => f[5]);   // (for the tests: each board's number, kind, place, its plate's lower edge, its legs' feet, the ground under them, the road there)
     const P = o.props; if (P) for (let j = P.length - 1; j >= 0; j--) { const p = P[j];   // (a knockable post or tyre stack where a board stands goes)
       for (const [x, z, tx, tz, hw] of foot) { const dx = p.x - x, dz = p.z - z, a = dx * tx + dz * tz; if (Math.abs(a) < 1.2 && Math.abs(-dx * tz + dz * tx) < hw + 0.45) { P.splice(j, 1); break; } } }
+    // the boards on the verge (kind 0; not those over a barrier, which no car reaches) fall over when a car hits them: each is a knockable
+    // prop ('bboard', Core PROPK: Race.setProps makes them in this order, slot k = loose[k]) still drawn here in this one mesh: Render moves
+    // its vertices (o.bbLoose.v: from, to) by the prop's pose (from b.home, where it stood; P0, N0: the mesh's positions and normals as built)
+    if (!loose.length) return;
+    const PL = o.props || (o.props = []), ga = m.geometry.attributes;
+    for (const { b, y } of loose) PL.push({ kind: 'bboard', x: b.x, z: b.z, yaw: b.hd, col: 0, i: b.i, y });
+    o.bbLoose = { mesh: m, v: loose.map(l => l.v), P0: ga.position.array.slice(), N0: ga.normal.array.slice() };
   }
   function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
@@ -10002,7 +10021,7 @@ const World = (function () {
           for (let o = 0.2; o + 0.5 < hw - 0.3; o += 0.8) gm.triO(P(o, 0), P(o + 0.5, 0), P(o + 0.25, -0.6), WHT, [a[0], -999, a[1]]);
           out.giveWay++; }
       }
-      addM(gm, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+      { const m = addM(gm, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (m) { m.name = 'roadcovers'; m.renderOrder = 0.75; } }   // (ROAD DECAL ORDER: the rubber over the iron and the paint)
     }
 
     /* ---- the streets, footways, park paths and steps (ribbons on the ground, cut back where they reach the stage) ---- */
@@ -22961,7 +22980,9 @@ const World = (function () {
     }
     const grp = new THREE.Group(); grp.name = 'crowds'; root.add(grp);
     const n = C.ppl.addTo(grp);
-    C.strip.addTo(grp, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), false, false);
+    const sm = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+    C.strip.addTo(grp, sm, false, false);
+    for (const m of grp.children) if (m.material === sm) m.renderOrder = 1.5;   // (ROAD DECAL ORDER: the strips' shade over every road decal under them, Harju's evening shadows over its covers and paint)
     return n;
   }
   function crowdFinish(C, root, out) {   // building footprints placed after the crowds hide nobody; the layer and the strips go into the world
@@ -23280,7 +23301,7 @@ const World = (function () {
           if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
         }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
     }
 
@@ -25732,7 +25753,7 @@ const World = (function () {
           if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
         }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
       if (T.drs) {   // the DRS lines: 0.3 m across the whole road
         const gd = new GB(), wl = [0.95, 0.95, 0.92];
@@ -26776,7 +26797,7 @@ const World = (function () {
         for (let k = 0; k <= n; k++) { const i = (i0 + k) % N, cc = clamp((fol ? T.rl[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
           const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]); if (pr >= 0) rb.link(pr, r, 0, 1); pr = r; }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
     }
     // the start / finish line (chequered across the road) and the grid
@@ -28159,7 +28180,7 @@ const World = (function () {
       addM(gr, aMat);
     }
     // the patches of newer tar (darker) and older ones (paler), the cracks: drawn just over the road (one mesh)
-    { const gp = new GB(true), pm = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 }), uv = (p) => [p[0] / 8, -p[2] / 8];
+    { const gp = new GB(true), pm = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 }), uv = (p) => [p[0] / 8, -p[2] / 8];
       for (let k = 0; k < 170; k++) { const s0 = crH(k, 1, 101) * L, i = T.idx(s0), n = 1 + Math.floor(crH(k, 2, 101) * 4); if (bridgeAt[i] || bridgeAt[(i + n) % N]) continue;
         const o = (crH(k, 3, 101) - 0.5) * (w - 1.2) * 2, hw = 0.5 + crH(k, 4, 101) * 1.1, dark = crH(k, 5, 101) < 0.6, c = dark ? [0.74, 0.74, 0.76] : [0.93, 0.91, 0.88];
         for (let j = 0; j < n; j++) { const a = (i + j) % N, b = (i + j + 1) % N, A = Pt(a, o - hw, 0.03), B = Pt(a, o + hw, 0.03), C = Pt(b, o + hw, 0.03), D = Pt(b, o - hw, 0.03); gp.quadUp(A, B, C, D, [c, c, c, c], [uv(A), uv(B), uv(C), uv(D)]); } }
@@ -28167,7 +28188,7 @@ const World = (function () {
       for (let k = 0; k < 260; k++) { const i = Math.floor(crH(k, 6, 101) * N); if (bridgeAt[i]) continue; let o = (crH(k, 7, 101) - 0.5) * (w - 0.6) * 2, ii = i;
         for (let j = 0; j < 3; j++) { const o2 = clamp(o + (crH(k, 8 + j, 101) - 0.5) * 1.2, -w + 0.3, w - 0.3), jj = (ii + 1) % N; if (bridgeAt[jj]) break;
           const A = Pt(ii, o - 0.035, 0.032), B = Pt(ii, o + 0.035, 0.032), C = Pt(jj, o2 + 0.035, 0.032), D = Pt(jj, o2 - 0.035, 0.032); gp.quadUp(A, B, C, D, [CK, CK, CK, CK], [uv(A), uv(B), uv(C), uv(D)]); o = o2; ii = jj; } }
-      addM(gp, pm); }
+      { const m = addM(gp, pm); if (m) { m.name = 'roadpatches'; m.renderOrder = 0.4; } } }   // (ROAD DECAL ORDER: under the road's wear, so its rubber line stays over the tar, and every tyre mark)
     // in the town: a footpath on either side between the kerb and the garden walls (kind 3, set below: drawn after it)
     const footpaths = () => { const gf = new RB(true), FPc = [1.2, 1.17, 1.1], KB = [1.0, 0.98, 0.94];
       for (const side of [-1, 1]) { let pr = -1;
@@ -28841,7 +28862,7 @@ const World = (function () {
       const pg = new GB(), RR = rng(1963); ROCK_SMOOTH = true; ico(pg, 0, 0, 0, 1, 1, [1, 1, 1], RR, 0.2); ROCK_SMOOTH = false;
       const nD = 24, nT = 10, puffs = new THREE.InstancedMesh(pg.geometry(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), src.length * 5 + nD + nT);
       const c = new THREE.Color(); for (let k = 0; k < src.length * 5 + nD + nT; k++) { const dk = k >= src.length * 5 && k < src.length * 5 + nD, tk = k >= src.length * 5 + nD; c.setRGB(tk ? 0.62 : dk ? 0.78 : 0.86, tk ? 0.62 : dk ? 0.68 : 0.86, tk ? 0.64 : dk ? 0.52 : 0.88); puffs.setColorAt(k, c); }
-      puffs.frustumCulled = false; root.add(puffs);
+      puffs.frustumCulled = false; puffs.renderOrder = 4; root.add(puffs);   // (ROAD DECAL ORDER: the smoke and the dust blend over the road's patches and the tyre marks behind them)
       const flocks = [], nB = 7;
       for (const d of [LF.mount - 520, LF.level + 330, LF.tower - 240]) { const s0 = sAt(d), i = T.idx(s0);   // the flocks in the paddocks beside the straights
         for (const side of [1, -1]) { const [x, z] = onSide(s0, side, 22); if (!openAt(x, z, 18)) continue;
@@ -29029,7 +29050,7 @@ const World = (function () {
         for (let k = 0; k <= n; k++) { const i = (i0 + k) % N, cc = clamp((fol ? T.rl[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
           const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]); if (pr >= 0) rb.link(pr, r, 0, 1); pr = r; }
       }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 0.45; }   // (ROAD DECAL ORDER: under the road's wear)
       nDecals = dcs.length;
     }
     // the start / finish line and the grid
@@ -32389,6 +32410,9 @@ const World = (function () {
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     const mkMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -10 });
     const stC = new Chunks(256, true), mkC = new Chunks(256), cuC = mkC;
+    // the track's paint, its manholes and drains' grates: flat on its surface, one mesh drawn as a road decal (ROAD DECAL ORDER: transparent, not
+    // written to the depth buffer, still depth-tested; the tyre marks over them, as Harju's covers)
+    const cvG = new GB(), cvC = { get: () => cvG }, cvMat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -10 });
     const onTrack = (x, z) => { const h = near0(x, z); if (h < 0) return null; const q = T.query(x, z, h, q0), wi = T.wa ? T.wa[q.i] : w; return Math.abs(q.d) < wi - 0.2 ? q : null; };
     const yS = (x, z) => gH(x, z);
     const YEL = [0.93, 0.74, 0.16], WHT = [0.94, 0.94, 0.92];
@@ -32435,7 +32459,7 @@ const World = (function () {
     for (const [k, x, z] of items) { if (k !== 8 || dtGroundD(x, z) > 220) continue; const st = dtStreetAt(x, z, 1.5); if (!st || st.r.cls > 4) continue;
       const hw = Math.min(st.r.hw, 9), q = onTrack(x, z), tx = q ? T.tx[q.i] : st.tx, tz = q ? T.tz[q.i] : st.tz, nx = -tz, nz = tx;   // (on the track: across the track)
       const wi = q ? (T.wa ? T.wa[q.i] : w) : hw, ox = q ? T.px[q.i] : x, oz = q ? T.pz[q.i] : z, y0 = q ? T.hy[q.i] - 0.025 : null;
-      for (let o = -wi + 0.3; o < wi - 0.3; o += 1.2) stripe(mkC, ox - tx * 1.5, oz - tz * 1.5, ox + tx * 1.5, oz + tz * 1.5, o + 0.3, 0.25, WHT, y0);
+      for (let o = -wi + 0.3; o < wi - 0.3; o += 1.2) stripe(q ? cvC : mkC, ox - tx * 1.5, oz - tz * 1.5, ox + tx * 1.5, oz + tz * 1.5, o + 0.3, 0.25, WHT, y0);
       nCross++; }
     stC.addTo(root, aMat, false, true);
 
@@ -32443,6 +32467,7 @@ const World = (function () {
        last corner (since 2024), red and white kerbs bolted on at the apexes, the gutters and curbs along the edges (not in a cross street's
        mouth), the markings of the streets it runs on, the chequered line and the grid ---- */
     const tMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }); out.asphaltMat = tMat;   // (over the streets it runs on)
+    out.markLift = 0.035; out.markOffset = [-2, -6];   // (the live tyre marks, Render's Skids: 3 cm over this surface, as over any other road, and with its polygon offset; under it they never showed)
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if (side * k > 0) kerb[side > 0 ? 1 : 0][i] = 1; }   // (the inside of the bends)
@@ -32477,7 +32502,7 @@ const World = (function () {
     }
     // the streets' markings on the track: [from, to, kind] (0 two-way: double yellow in the middle; 1 one-way: dashes between four lanes, yellow along the median)
     const MK = [[-200, 150, 0], [210, 318, 0], [372, 1385, 1], [1492, 1600, 1], [1645, 1798, 0], [1850, 2315, 0], [2355, 2432, 0]];
-    { const gd = mkC, Y2 = YEL;
+    { const gd = cvC, Y2 = YEL;
       const put = (d0, d1, o, hw, col) => { for (let d = d0; d < d1 - 0.01; d += 4) { const s0 = sAt(d), s1 = sAt(Math.min(d1, d + 4)), i = T.idx(s0);
         if (mouth[0][i] && mouth[1][i]) continue; const A = atSf(s0, o - hw), B2 = atSf(s0, o + hw), C2 = atSf(s1, o + hw), D2 = atSf(s1, o - hw);
         gd.get(A[0], A[1]).quadUp([A[0], hyS(s0) + 0.045, A[1]], [B2[0], hyS(s0) + 0.045, B2[1]], [C2[0], hyS(s1) + 0.045, C2[1]], [D2[0], hyS(s1) + 0.045, D2[1]], [col, col, col, col]); } };
@@ -32489,13 +32514,13 @@ const World = (function () {
       }
       }
     // the chequered line across the road, the grid's boxes (staggered, 7.5 m apart)
-    { const gq = new GB(true), gw = new GB(), W1 = [1, 1, 1], wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]], w0 = W_(T.idx(sStart)), uM = Math.round(w0 * 2 / 0.8) / 16;
+    { const gq = new GB(true), gw = cvG, W1 = [1, 1, 1], wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]], w0 = W_(T.idx(sStart)), uM = Math.round(w0 * 2 / 0.8) / 16;
       const a = atSf(sStart - 0.8, -w0), b = atSf(sStart - 0.8, w0), c = atSf(sStart + 0.8, w0), d = atSf(sStart + 0.8, -w0);
       gq.quadUp([a[0], HYp(a) + 0.05, a[1]], [b[0], HYp(b) + 0.05, b[1]], [c[0], HYp(c) + 0.05, c[1]], [d[0], HYp(d) + 0.05, d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]);
       for (let k = 1; k <= 14; k++) { const sb = sStart - 9 - (k - 1) * 7.5 + 2.6, lat = (k % 2 === 1 ? -1 : 1) * 3.2;
         for (const [s0, s1, l0, l1] of [[sb, sb + 0.35, lat - 1.5, lat + 1.5], [sb - 1.6, sb + 0.35, lat - 1.5, lat - 1.25]]) { const p0 = atSf(s0, l0), p1 = atSf(s0, l1), p2 = atSf(s1, l1), p3 = atSf(s1, l0);
           gw.quadUp([p0[0], HYp(p0) + 0.046, p0[1]], [p1[0], HYp(p1) + 0.046, p1[1]], [p2[0], HYp(p2) + 0.046, p2[1]], [p3[0], HYp(p3) + 0.046, p3[1]], [wh, wh, wh, wh]); } }
-      tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, mkMat); }
+      tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); }
 
     /* ---- the barriers: concrete blocks (Jersey profile) along both edges, a catch fence on them; tyre walls at the ends of the escape
        roads; the gaps of the pit lane; boards on the blocks (the game's own made-up brands), the place's banners on the fences ---- */
@@ -32598,7 +32623,7 @@ const World = (function () {
       { const g = furnC.get(x, z), y = gH(x, z), tx = T.tx[i], tz = T.tz[i], cb = ((s / 28) | 0) % 2 ? [0.1, 0.24, 0.52] : [0.72, 0.12, 0.12], wh = [0.92, 0.92, 0.9];   // the race's banners on the pole (no words: the city's colours, a white band)
         for (const e of [-1, 1]) { const bx = x + tx * e * 0.42, bz = z + tz * e * 0.42; box(g, bx, y + 4.6, bz, 0.66, 2.2, 0.03, Math.atan2(tz, tx), cb); box(g, bx, y + 5.5, bz, 0.67, 0.22, 0.035, Math.atan2(tz, tx), wh); } } }
     // the streets' manholes and storm drains (dark iron on the asphalt): on the lap and the cross streets near it
-    for (let s = 9; s < L; s += 23) { const i = T.idx(s), o = (crH(s, 1, 81) - 0.5) * W_(i) * 1.2, [x, z] = atSf(s, o), y = T.hy[i] + 0.047, g = mkC.get(x, z), mc = [0.2, 0.2, 0.21], n = 8;
+    for (let s = 9; s < L; s += 23) { const i = T.idx(s), o = (crH(s, 1, 81) - 0.5) * W_(i) * 1.2, [x, z] = atSf(s, o), y = T.hy[i] + 0.047, g = cvG, mc = [0.2, 0.2, 0.21], n = 8;
       for (let q = 0; q < n; q++) { const a0 = q / n * TAU, a1 = (q + 1) / n * TAU; g.triO([x, y, z], [x + Math.cos(a0) * 0.42, y, z + Math.sin(a0) * 0.42], [x + Math.cos(a1) * 0.42, y, z + Math.sin(a1) * 0.42], mc, [x, y - 1, z]); }
       for (const sd of [-1, 1]) { if (crH(s, sd, 82) < 0.5) continue; const wi = W_(i), yy = T.hy[i] + 0.047, dc = [0.16, 0.16, 0.17], Q = (a, o) => { const [qx, qz] = atSf(s + a, sd * o); return [qx, yy, qz]; };   // (a drain's grate at the gutter)
         g.quadUp(Q(4.5, wi - 0.55), Q(4.5, wi - 0.12), Q(5.5, wi - 0.12), Q(5.5, wi - 0.55), [dc, dc, dc, dc]); } }
@@ -32887,6 +32912,7 @@ const World = (function () {
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matVC, true, true); mkC.addTo(root, mkMat, false, true);
+    { const m = addM(cvG, cvMat); if (m) { m.name = 'roadcovers'; m.renderOrder = 0.75; } }   // (ROAD DECAL ORDER: the track's paint, manholes and grates under the rubber)
     crowdFinish(CR, root, out);
     { const NM = new Map([[gMat, 'dt-ground'], [aMat, 'dt-streets'], [mkMat, 'dt-marks'], [tMat, 'dt-track'], [cMat, 'dt-kerbs'], [rMat, 'dt-walls'], [fMat, 'dt-fences'], [matV, 'dt-scen'], [matVC, 'dt-cut'], [bMat, 'dt-bld'], [rfMat, 'dt-roofs'], [tMatT, 'dt-trees']]);   // (names: the budget's tests tell the parts apart)
       root.traverse(o => { if (o.isMesh && !o.name && NM.has(o.material)) o.name = NM.get(o.material); }); }

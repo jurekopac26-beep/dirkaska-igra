@@ -2782,9 +2782,13 @@ const Render = (function () {
       g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setIndex(idx);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-      this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
+      this.mesh = new THREE.Mesh(g, m); this.mesh.name = 'skids'; this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;   // (ROAD DECAL ORDER, world.js: over every road decal)
       this.dirty = false; this.lo = 1e9; this.hi = -1; this.n = 0; g.setDrawRange(0, 0);   // (n: the marks laid so far; only they are drawn, not the empty rest)
+      this.lift = 0;
     }
+    // a world whose road surface lies over the track's height (Detroit: world.markLift, its polygon offset world.markOffset): the marks that
+    // much higher and offset as it is, so that they show on it (3 cm over it, as over any other road)
+    onWorld(w) { const o = (w && w.markOffset) || [-1, -2], m = this.mesh.material; this.lift = (w && w.markLift) || 0; this.mesh.userData.lift = this.lift; m.polygonOffsetFactor = o[0]; m.polygonOffsetUnits = o[1]; }
     add(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1) {
       if (!this.pkIn && curTrack && curTrack.def.theme === 'pikes') return;   // (Pikes Peak lays its own marks: pkMarks)
       const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1;
@@ -2792,7 +2796,7 @@ const Render = (function () {
       const i = this.cur; this.cur = (this.cur + 1) % this.max;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
       if (i >= this.n) { this.n = i + 1; this.mesh.geometry.setDrawRange(0, this.n * 6); }
-      const p = this.pos, o = i * 12, ya = 0.03 + (y0 || 0), yc = 0.03 + (y1 == null ? (y0 || 0) : y1);
+      const p = this.pos, o = i * 12, ya = 0.03 + this.lift + (y0 || 0), yc = 0.03 + this.lift + (y1 == null ? (y0 || 0) : y1);
       p[o] = x0 - nx; p[o + 1] = ya; p[o + 2] = z0 - nz; p[o + 3] = x0 + nx; p[o + 4] = ya; p[o + 5] = z0 + nz;
       p[o + 6] = x1 - nx; p[o + 7] = yc; p[o + 8] = z1 - nz; p[o + 9] = x1 + nx; p[o + 10] = yc; p[o + 11] = z1 + nz;
       const c = this.col, q = i * 16;
@@ -3168,6 +3172,7 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    skids.onWorld(world);
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
     curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
@@ -3331,11 +3336,39 @@ const Render = (function () {
     }
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
+  // the knockable props drawn by the world's own mesh, not an instanced mesh of their kind: the braking boards on the verge (World's
+  // brakeBoards: world.bbLoose; Core 'bboard', b.home: the pose it stood in). A board knocked (or pushed) moves its own vertices in that
+  // mesh, rotated and moved as the prop is from where it stood: no draw call of its own, the number on it as it was. Only when its pose
+  // changed (L.at: the pose last drawn per slot; L.moved: the slots away from home, put back for the next race)
+  const PROP_INWORLD = new Set(['bboard']);
+  const _bq = new THREE.Quaternion(), _bq0 = new THREE.Quaternion(), _bm = new THREE.Matrix4(), _bmT = new THREE.Matrix4(), _bv = new THREE.Vector3(), _b1 = new THREE.Vector3(1, 1, 1);
+  function bbHome() {
+    const L = world && world.bbLoose; if (!L) return;
+    if (L.moved && L.moved.size) {
+      const ga = L.mesh.geometry.attributes, PA = ga.position.array, NA = ga.normal.array;
+      for (const k of L.moved) { const [a, z] = L.v[k]; PA.set(L.P0.subarray(a * 3, z * 3), a * 3); NA.set(L.N0.subarray(a * 3, z * 3), a * 3); }
+      ga.position.needsUpdate = true; ga.normal.needsUpdate = true;
+    }
+    L.at = []; L.moved = new Set();
+  }
+  function bbPose(b) {
+    const L = world && world.bbLoose, v = L && L.v[b.slot], h = b.home; if (!v || !L.at) return;
+    const p = L.at[b.slot] || (L.at[b.slot] = [h[0], h[1], h[2], 0, h[3], 0, h[4]]);
+    if (p[0] === b.x && p[1] === b.y && p[2] === b.z && p[3] === b.qx && p[4] === b.qy && p[5] === b.qz && p[6] === b.qw) return;
+    p[0] = b.x; p[1] = b.y; p[2] = b.z; p[3] = b.qx; p[4] = b.qy; p[5] = b.qz; p[6] = b.qw; L.moved.add(b.slot);
+    _bq.set(b.qx, b.qy, b.qz, b.qw).multiply(_bq0.set(0, -h[3], 0, h[4]));   // (its turn since it stood: the pose's quaternion after the inverse of the one it stood in)
+    _bm.compose(_bv.set(b.x, b.y, b.z), _bq, _b1).multiply(_bmT.makeTranslation(-h[0], -h[1], -h[2]));
+    const ga = L.mesh.geometry.attributes, PA = ga.position.array, NA = ga.normal.array, P0 = L.P0, N0 = L.N0;
+    for (let i = v[0] * 3; i < v[1] * 3; i += 3) { _bv.fromArray(P0, i).applyMatrix4(_bm).toArray(PA, i); _bv.fromArray(N0, i).applyQuaternion(_bq).toArray(NA, i); }
+    ga.position.needsUpdate = true; ga.normal.needsUpdate = true;
+  }
   function setupProps(race) {
+    bbHome();   // (the braking boards, drawn in the world's own mesh: all standing where they were built for the new race)
     if (!race || !race.props) { for (const k in propMeshes) propMeshes[k].visible = false; return; }
     if (!propMat) { propMat = new THREE.MeshLambertMaterial({ vertexColors: true }); propMatTyre = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.tyreTex }); }
     const cap = race.propCap || {}, rg = (race.track && race.track.def && race.track.def.propRegion) || '';
     for (const kind in cap) {
+      if (PROP_INWORLD.has(kind)) continue;   // (no instanced mesh of its own: see bbPose)
       let m = propMeshes[kind];
       if (!m || m.userData.cap < cap[kind] || m.userData.rg !== rg) { propRg = rg;
         if (m) { scene.remove(m); m.geometry.dispose(); }
@@ -3369,6 +3402,7 @@ const Render = (function () {
     for (const k in propMeshes) propMeshes[k].userData.n = 0;
     for (const b of curRace.props) {
       if (b.hidden || b.slot < 0) continue;
+      if (b.home) { bbPose(b); continue; }   // (a braking board: its part of the world's mesh, wherever the view is)
       const m = propMeshes[b.kind]; if (!m) continue;
       const dx = b.x - cx, dz = b.z - cz; if (dx * dx + dz * dz > R2) continue;
       const n = m.userData.n++;
@@ -3577,7 +3611,7 @@ const Render = (function () {
       g.computeVertexNormals();
       const base = world.asphaltMat, m = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       if (base) m.color.copy(base.userData.dry || base.color); asphaltLook(m);
-      dryLn = new THREE.Mesh(g, m); dryLn.receiveShadow = true; dryLn.renderOrder = 1; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
+      dryLn = new THREE.Mesh(g, m); dryLn.name = 'dryline'; dryLn.receiveShadow = true; dryLn.renderOrder = 0.25; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
     }
     if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
   }
@@ -3615,7 +3649,7 @@ const Render = (function () {
     g.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
   }
   function buildPuddles(T) {
-    const pos = [], uv = [], idx = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); };
+    const pos = [], uv = [], idx = [], rl = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); rl.push(T.rl ? o - T.rl[i] : 99); };   // (rl: across from the racing line, for the dry line)
     for (let s = 7; s < T.len - 7; s += 8) {
       const h = hash3(s * 0.137 + 5); if (h < 0.45) continue;
       const mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), T.w * 0.5);
@@ -3625,13 +3659,13 @@ const Render = (function () {
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);   // (facing up)
     }
     if (!pudTex) pudTex = puddleTex();
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere();
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aRl', new THREE.Float32BufferAttribute(rl, 1)); g.setIndex(idx); g.computeBoundingSphere();
     // the water: a dark mirror (looking down into it, the wet asphalt under a film of water; towards the horizon the sky, more of it the
     // flatter the view: Fresnel), the drops' rings spreading on it while it rains (two layers of cells, a drop in each now and then)
     const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3, fog: true,
-      uniforms: Object.assign({ tMap: { value: pudTex }, uK: { value: 0 }, uHor: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uDark: { value: new THREE.Color(0.055, 0.06, 0.068) }, uT: { value: 0 }, uRain: { value: 0 } }, THREE.UniformsLib.fog),
-      vertexShader: '#include <fog_pars_vertex>\nvarying vec2 vUv; varying vec3 vW;\nvoid main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
-      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; varying vec2 vUv; varying vec3 vW;\n' +
+      uniforms: Object.assign({ tMap: { value: pudTex }, uK: { value: 0 }, uHor: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uDark: { value: new THREE.Color(0.055, 0.06, 0.068) }, uT: { value: 0 }, uRain: { value: 0 }, uDry: { value: 0 } }, THREE.UniformsLib.fog),
+      vertexShader: '#include <fog_pars_vertex>\nattribute float aRl; varying vec2 vUv; varying vec3 vW; varying float vRl;\nvoid main(){ vUv = uv; vRl = aRl; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; uniform float uDry; varying vec2 vUv; varying vec3 vW; varying float vRl;\n' +
         'float pH(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }\n' +
         'float pRing(vec2 q, float t) { vec2 c = floor(q), f = fract(q) - 0.5 - (vec2(pH(c), pH(c + 7.3)) - 0.5) * 0.3; float h = pH(c + 3.1), ph = fract(t * (0.55 + 0.5 * h) + h), r = ph * 0.42;\n' +
         '  return smoothstep(0.05, 0.0, abs(length(f) - r)) * (1.0 - ph) * step(0.35, pH(c + floor(t * (0.55 + 0.5 * h) + h) * 1.7)); }\n' +
@@ -3639,8 +3673,8 @@ const Render = (function () {
         '  vec3 refl = mix(uHor, uTop, smoothstep(0.0, 0.6, cs));\n' +
         '  float rg = (pRing(vW.xz / 0.38, uT) + pRing(vW.xz / 0.3 + 11.7, uT * 1.13)) * uRain;\n' +
         '  vec3 c = mix(uDark, refl, clamp(F + 0.3 + rg * 0.4, 0.0, 1.0)) * (0.92 + 0.12 * t.r);\n' +
-        '  gl_FragColor = vec4(c, t.a * uK);\n#include <fog_fragment>\n}' });
-    const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;
+        '  gl_FragColor = vec4(c, t.a * uK * (1.0 - uDry * clamp((1.7 - abs(vRl)) / 0.75, 0.0, 1.0)));\n#include <fog_fragment>\n}' });   // (uDry: the dry line's band, dryLine: no water left on it)
+    const mesh = new THREE.Mesh(g, m); mesh.name = 'rainpuddles'; mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;   // (ROAD DECAL ORDER, world.js: over the drying line, gone where it has dried)
   }
   function puddles(R) {
     const T = R && R.track, on = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
@@ -3648,7 +3682,7 @@ const Render = (function () {
     if (!pud) return;
     const k = on ? clamp((wetW - 0.15) / 0.45, 0, 1) : 0, night = atmos.tod === 'night';
     pud.visible = k > 0.01; if (!pud.visible) return;
-    const U = pud.material.uniforms; U.uK.value = 0.88 * k; U.uT.value = time % 600; U.uRain.value = clamp(wet * 1.5, 0, 1);
+    const U = pud.material.uniforms; U.uK.value = 0.88 * k; U.uT.value = time % 600; U.uRain.value = clamp(wet * 1.5, 0, 1); U.uDry.value = dryLn && dryLn.visible ? dryLn.material.opacity : 0;
     U.uHor.value.copy(scene.fog.color).multiplyScalar(night ? 0.8 : 1); skyTop(U.uTop.value);   // (the sky in the water)
   }
 
@@ -6328,6 +6362,7 @@ const Render = (function () {
     R.P = xc ? { p: xc.rest, n: xc.nor0, c: xc.col0 } : B ? { p: B.position.array, n: B.normal.array, c: B.color ? B.color.array : null } : null; if (g) g.dispose();
     if (R.P && (R.P.p.length !== A.position.array.length || !R.P.n || (A.color && !R.P.c))) R.P = null;
     R.D = { p: A.position.array.slice(), n: A.normal.array.slice(), c: A.color ? A.color.array.slice() : null }; R.idx = R.P ? repDiff(R.D, R.P, A.position.count) : null;
+    if (xc && xc.rf && R.P && R.D.c && R.P.c) repShell(v, xc, R);
     if (K) { const t = v.tail.geometry, e = K.E.tail.attributes, TR = t.userData.tail || {}, out = new Uint8Array(t.attributes.position.count);   // (the tail lamps on a part hanging loose: turned back with it; one out: lit again with the lamps)
       for (const s of ['L', 'R']) if (K.tailOut[s] && TR[s]) out.fill(1, TR[s][0], TR[s][1]);
       const D = { p: t.attributes.position.array.slice(), n: t.attributes.normal.array.slice(), c: null }, P = { p: e.position.array, n: e.normal.array, c: null };
@@ -6345,9 +6380,43 @@ const Render = (function () {
       for (const i of idx) { if (skip && skip[i]) continue; for (let j = i * 3; j < i * 3 + 3; j++) a[j] = d[j] + (p[j] - d[j]) * k; }
       at.needsUpdate = true; }
   }
+  // the roof's shell through it (Razbijanje · nov način; xPaint): black paint's warm way walked back (its share of it u (1 - k), from its
+  // paint as it fades to the car's as built, as the rest does), not straight from its brown-black to the black (through KIT_GL2 on the
+  // way); and each of its facets the repair changes held at its last step's colours where a point of it would come nearer a glass colour
+  // than 0.0505 or than it is in the dent or as built, or its colours across it would (the body's shader: glass within 0.05; at the end
+  // the car's as built, never held). R.bk: those points (i), their shares (u; -1: a part put back, repPart) and paint (p); R.sh: the
+  // facets (t), how near each glass colour they may come (nb), their colours a step before (prev), how often one was held (held)
+  function repShell(v, xc, R) {
+    const rf = xc.rf, G = rf.G, K = v.kit, dv = K && K.deadV, D = R.D.c, P = R.P.c, B = rf.bk;
+    if (B) { const I = [], u = [], p = [];
+      for (let e = 0; e < G.nS; e++) { const i = G.sI[e], o = i * 3; if (!(B[e * 4] > 0) || (dv && dv[i])) continue;
+        const c = xBkCol(B[e * 4 + 1], B[e * 4 + 2], B[e * 4 + 3], B[e * 4]); if (Math.abs(c[0] - D[o]) + Math.abs(c[1] - D[o + 1]) + Math.abs(c[2] - D[o + 2]) > 3e-5) continue;   // (its colour not the way's now: straight, as any)
+        I.push(i); u.push(B[e * 4]); p.push(B[e * 4 + 1], B[e * 4 + 2], B[e * 4 + 3]); }
+      if (I.length) R.bk = { i: Uint32Array.from(I), u: Float32Array.from(u), p: Float32Array.from(p) }; }
+    const seen = new Uint8Array((D.length / 9) | 0), T = [], nb = [];
+    for (let e = 0; e < G.nS; e++) { const t = (G.sI[e] / 3) | 0, o = t * 9; if (seen[t]) continue; seen[t] = 1;
+      if (dv && (dv[t * 3] || dv[t * 3 + 1] || dv[t * 3 + 2])) continue;   // (a lost part's: repPart)
+      let same = true; for (let j = o; j < o + 9; j++) if (D[j] !== P[j]) { same = false; break; } if (same) continue;
+      T.push(t); for (const Gc of XGLC) nb.push(Math.min(XGL_NEAR2, xTriD2(D.subarray(o, o + 9), Gc), xTriD2(P.subarray(o, o + 9), Gc)) - 1e-12); }
+    if (T.length) R.sh = { t: Uint32Array.from(T), nb: Float64Array.from(nb), prev: new Float32Array(T.length * 9), held: 0 };
+  }
+  const _rsF = new Float64Array(9), rsD2 = (a, o, Gc) => { const x = a[o] - Gc[0], y = a[o + 1] - Gc[1], z = a[o + 2] - Gc[2]; return x * x + y * y + z * z; };
+  function repShellStep(R, ca, k) {
+    const W = R.bk, S = R.sh, D = R.D.c, P = R.P.c, s = 1 - k, F = _rsF;
+    if (W) for (let j = 0; j < W.i.length; j++) { if (!(W.u[j] >= 0)) continue; const o = W.i[j] * 3, q = j * 3;
+      const c = xBkCol(P[o] + (W.p[q] - P[o]) * s, P[o + 1] + (W.p[q + 1] - P[o + 1]) * s, P[o + 2] + (W.p[q + 2] - P[o + 2]) * s, W.u[j] * s); ca[o] = c[0]; ca[o + 1] = c[1]; ca[o + 2] = c[2]; }
+    if (S) for (let j = 0; j < S.t.length; j++) { const o = S.t[j] * 9; let ok = true;
+      for (let q = 0; q < 9; q++) F[q] = ca[o + q];
+      for (let g = 0; g < 2 && ok; g++) { const Gc = XGLC[g];
+        for (let q = 0; q < 9; q += 3) if (rsD2(F, q, Gc) < Math.min(XGL_NEAR2, rsD2(D, o + q, Gc), rsD2(P, o + q, Gc)) - 1e-12) { ok = false; break; }   // (a point of it)
+        if (ok && xTriD2(F, Gc) < S.nb[j * 2 + g]) ok = false; }   // (its colours across it)
+      if (!ok) { for (let q = 0; q < 9; q++) ca[o + q] = S.prev[j * 9 + q]; S.held++; } }
+  }
   function repBody(v, R) {
-    const K = v.kit, k = R.kb;
-    if (R.P) repLerp(v.body.geometry.attributes, R.D, R.P, R.idx, k, K && K.deadV);
+    const K = v.kit, k = R.kb, A = v.body.geometry.attributes, S = R.sh;
+    if (S) { const ca = A.color.array; for (let j = 0; j < S.t.length; j++) { const o = S.t[j] * 9; for (let q = 0; q < 9; q++) S.prev[j * 9 + q] = ca[o + q]; } }   // (the shell's facets as drawn now)
+    if (R.P) repLerp(A, R.D, R.P, R.idx, k, K && K.deadV);
+    if (R.P && (R.bk || S)) repShellStep(R, A.color.array, k);
     if (K) { if (R.T) repLerp(v.tail.geometry.attributes, R.T.D, R.T.P, R.T.idx, k, null);
       v.lights.forEach((L, i) => L.lerpVectors(R.L[i], v.lights0[i], k));   // (the glow points a loose part turned)
       if (R.dec && v.dec0) { v.dec.position.lerpVectors(R.dec[0], v.dec0[0], k); v.dec.quaternion.slerpQuaternions(R.dec[1], v.dec0[1], k); }
@@ -6369,6 +6438,7 @@ const Render = (function () {
     const A = v.body.geometry.attributes, Rg = v.body.geometry.userData.ranges[name]; delete K.dead[name]; K.ver++;
     if (Rg && R.P) for (const [a, b] of [Rg.o, Rg.i]) if (b > a) {
       for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !R.P[pk]) continue; const s = R.P[pk].subarray(a * 3, b * 3); A[key].array.set(s, a * 3); R.D[pk].set(s, a * 3); A[key].needsUpdate = true; }
+      if (R.bk) for (let j = 0; j < R.bk.i.length; j++) if (R.bk.i[j] >= a && R.bk.i[j] < b) R.bk.u[j] = -1;   // (as built now: no way to walk back)
       if (K.deadV) K.deadV.fill(0, a, b); }
     if (v.dec && v.dec0 && K.E.body.decalPart === name) { R.dec = null; v.dec.position.copy(v.dec0[0]); v.dec.quaternion.copy(v.dec0[1]); if (v.dec.userData.dmgHid) { v.dec.visible = true; v.dec.userData.dmgHid = 0; } }   // (its panel back as new: repBody leaves the number where it is now)
     if (R.lamps) kitLampsBack(v);   // (the lamps on it)
@@ -6629,9 +6699,10 @@ const Render = (function () {
      the footprint, up from the belt; Φ rises with c): every knock lowers it until it nears its limit, never past it. The lining with its
      twin (never under its own limit), the posts at the roof with it, what lies on it (a rack, a fin, a deflector) down whole. Its paint
      darker as it sinks (xPaint: by d / dMax, the deepest any of its points can go: 60 % darker there; on the colour the paint has, its
-     folds and scrapes, never into or through a glass colour, xOffGlass, a facet the shader takes for glass in part already as it is: a
-     black car's roof only a little darker; the lining, the posts, what lies on it, the glass as they are): the cave-in reads from above
-     and from behind, and a pit repair's colours back to col0 bring it back. Open cars, karts: none */
+     folds and scrapes, never into or through a glass colour, xOffGlass; black paint round them to a warm brown-black, 55 % darker in
+     luminance there, xBlackU; a facet the shader takes for glass in part already as it is; the lining, the posts, what lies on it,
+     the glass as they are): the cave-in reads from above and from behind, and a pit repair's colours back to col0 bring it back (black
+     paint's walked back along its warm way, no facet through a glass colour on the way: repShell). Open cars, karts: none */
   // the body's roof as built (cached on its geometry's user data: the clones of a model, a density, a colour share it): its entries (sI; a
   // point's own: vE, -1 none), limits (the deepest of them: dMax), lining, followers, riders and the masks xPush reads; null: none
   function xRoofBuild(v, xc) {
@@ -6841,7 +6912,7 @@ const Render = (function () {
     const C = G.C, NS = Math.max(8, Math.round((C.x1 - C.x0) / 0.1)) + 1, NT = Math.max(7, Math.round(2.4 * C.z / 0.12)) + 1;
     const rf = { G, C, NS, NT, c: new Float64Array(NS * NT), d: new Float32Array(G.nS), p: new Float32Array(G.nS), ay: new Float32Array(G.nS), az: new Float32Array(G.nS),
       ly: new Float32Array(G.nL), lz: new Float32Array(G.nL), fy: new Float32Array(G.nF), fz: new Float32Array(G.nF), ra: new Float64Array(G.rid.length), rb: new Float64Array(G.rid.length),
-      Lref: G.Lref, hx: xc.B.hx, hw: xc.B.hw, bx0: xc.B.x0, bx1: xc.B.x1, due: 0, dec: null };
+      Lref: G.Lref, hx: xc.B.hx, hw: xc.B.hw, bx0: xc.B.x0, bx1: xc.B.x1, due: 0, dec: null, bk: null };   // (bk: black paint's warm way per entry, xPaint)
     // the start number: on a rider part (the Titan's deflector) with that rider; on the roof by the highest roof point under it
     const dp = K && K.E.body.decalPart, ri = dp ? G.rid.findIndex(q => q.name === dp) : -1, D = v.dec && v.dec.position;
     if (D && ri >= 0) rf.dec = { r: ri, x: D.x, lo: 0 };
@@ -7053,12 +7124,13 @@ const Render = (function () {
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint); the roof's shell (a
   // roof field's entries) darker as far as it has sunk there (always with the field, xPaint or not: by its drop d over the deepest any of
   // its points can go, dMax, XROOF_DARK darker there; on the colour this makes, never lighter, never into or through a glass colour:
-  // xOffGlass; a facet with a corner the body's shader takes for glass already, a black car's deep fold, as the paint gives it: its
-  // colours, interpolated across it, never make more of it glass). Only at a knock: the points it moved
-  const XROOF_DARK = 0.6, _xpc = new Float64Array(9);
+  // xOffGlass; black paint a warm way round them instead, xBlackU, xBkFacet; a facet with a corner the body's shader takes for glass
+  // already, a black car's deep fold, as the paint gives it: its colours, interpolated across it, never make more of it glass). Only at a
+  // knock: the points it moved
+  const XROOF_DARK = 0.6, _xpc = new Float64Array(9), _xfc = new Float64Array(9), _xbu = new Float64Array(3);
   function xPaint(v, xc, tris) {
     const geo = v.body.geometry, ca = geo.attributes.color ? geo.attributes.color.array : null, nm = geo.attributes.normal.array; if (!ca || !xc.col0) return;
-    const C0 = xc.col0, N0 = xc.nor0, rf = xc.rf, vE = rf ? rf.G.vE : null, kD = rf && rf.G.dMax > 1e-6 ? XROOF_DARK / rf.G.dMax : 0, Pc = _xpc;
+    const C0 = xc.col0, N0 = xc.nor0, rf = xc.rf, vE = rf ? rf.G.vE : null, kD = rf && rf.G.dMax > 1e-6 ? XROOF_DARK / rf.G.dMax : 0, Pc = _xpc, Fc = _xfc, U = _xbu;
     for (const t of tris) {
       let dk = false;   // (a corner of the roof's shell sunk: the facet's paint darker there)
       for (let q = 0; q < 3; q++) {
@@ -7070,11 +7142,18 @@ const Render = (function () {
         Pc[q * 3] = r; Pc[q * 3 + 1] = g; Pc[q * 3 + 2] = b; if (vE && vE[i] >= 0 && rf.d[vE[i]] * kD > 0) dk = true;
       }
       if (dk) for (let q = 0; q < 3; q++) if (Pc[q * 3] >= 0 && xGlassy(Pc[q * 3], Pc[q * 3 + 1], Pc[q * 3 + 2])) { dk = false; break; }   // (a corner glass to the shader already: the facet as the paint gives it)
+      let bk = 0;   // (corners on black paint's warm way: U their share of it, -1 none)
       for (let q = 0; q < 3; q++) {
-        if (Pc[q * 3] < 0) continue; const i = t * 3 + q, o = i * 3; let r = Pc[q * 3], g = Pc[q * 3 + 1], b = Pc[q * 3 + 2];
-        if (dk) { const e = vE[i]; if (e >= 0) { let kd = 1 - clamp(rf.d[e] * kD, 0, XROOF_DARK); if (kd < 1) { kd = xOffGlass(r, g, b, kd); r *= kd; g *= kd; b *= kd; } } }   // (the roof sunk here: darker)
-        ca[o] = r; ca[o + 1] = g; ca[o + 2] = b;
+        U[q] = -1; if (Pc[q * 3] < 0) continue; const i = t * 3 + q; let r = Pc[q * 3], g = Pc[q * 3 + 1], b = Pc[q * 3 + 2];
+        if (dk) { const e = vE[i]; if (e >= 0) { const dd = clamp(rf.d[e] * kD, 0, XROOF_DARK); if (dd > 0) {   // (the roof sunk here: darker)
+          if (xBlack(r, g, b)) { U[q] = xBlackU(r, g, b, dd / XROOF_DARK); bk++; const c = xBkCol(r, g, b, U[q]); r = c[0]; g = c[1]; b = c[2]; }   // (black paint: its warm way)
+          else { const kd = xOffGlass(r, g, b, 1 - dd); r *= kd; g *= kd; b *= kd; } } } }
+        Fc[q * 3] = r; Fc[q * 3 + 1] = g; Fc[q * 3 + 2] = b;
       }
+      if (bk && Pc[0] >= 0 && Pc[3] >= 0 && Pc[6] >= 0) xBkFacet(Pc, Fc, U);   // (its colours across it off the glass too)
+      for (let q = 0; q < 3; q++) if (Pc[q * 3] >= 0) { const i = t * 3 + q, o = i * 3; ca[o] = Fc[q * 3]; ca[o + 1] = Fc[q * 3 + 1]; ca[o + 2] = Fc[q * 3 + 2];
+        if (vE && vE[i] >= 0 && (U[q] > 0 || rf.bk)) {   // (a shell point's way kept for a pit repair to walk it back, repShell: its share, its paint; 0 none)
+          const B = rf.bk || (rf.bk = new Float32Array(rf.G.nS * 4)), e = vE[i] * 4; B[e] = Math.max(0, U[q]); B[e + 1] = Pc[q * 3]; B[e + 2] = Pc[q * 3 + 1]; B[e + 3] = Pc[q * 3 + 2]; } }
     }
     geo.attributes.color.needsUpdate = true;
   }
@@ -7093,6 +7172,61 @@ const Render = (function () {
       const R2 = d2 >= XGL_FAR2 ? XGL_FAR2 : XGL_NEAR2, D = pg * pg - pp * (gg - R2);   // (t0 < t1: |t (r, g, b) - G| = R)
       if (D > 0) { const s = Math.sqrt(D), t1 = (pg + s) / pp; if (k < t1 && (pg - s) / pp < 1) k = Math.min(1, t1); } }   // (the sphere between the colour and its darkening: at its near edge)
     return k;
+  }
+  // black paint's dent (the user's choice, "a warmer black"): a black, a bit blue, made darker is the glass colours' own (KIT_GL2, GLASS),
+  // so xOffGlass stops it at their edge and a black car's dent was hardly darker (9 to 14 %; -60 % unguarded: a light, bluish patch of
+  // sky over most of it, the shader's glass). Black paint (luminance under 0.16, nearly grey, not glass to the shader already, its full
+  // darkening one xOffGlass would cut short) goes round them, warm: along a quadratic Bezier from its colour P by P XBK_Q to P XBK_T, a
+  // brown-black (the red kept longest, the blue gone first: away from the glass's blue), as far as its luminance is down by XBK_DROP f (f:
+  // its drop over the deepest any point can go; 55 % there, the end of the way), and no nearer the glass colours than XBK_OFF (0.066, as
+  // xOffGlass keeps the rest; a colour nearer already, a fold: no nearer than it was): stopped at the last point of its way (looked at in
+  // 64 steps up to there) before one that would come nearer (xBlackU: its share u of the way), never lighter than P (luminance, xBkCol).
+  // Only at a knock (xPaint)
+  const XBK_Q = [1.644, 0.754, 0.363], XBK_T = [0.56, 0.474, 0.102], XBK_DROP = 0.55, XBK_OFF = 0.066, XBK_N = 64, _xbk = [0, 0, 0];
+  const xLum = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  const xGlass2 = (r, g, b) => { let m = Infinity; for (let j = 0; j < 2; j++) { const G = XGLC[j], x = r - G[0], y = g - G[1], z = b - G[2]; m = Math.min(m, x * x + y * y + z * z); } return m; };   // (the squared distance to the nearer glass colour)
+  const xBlack = (r, g, b) => xLum(r, g, b) < 0.16 && Math.max(r, g, b) - Math.min(r, g, b) < 0.06 && !xGlassy(r, g, b) && xOffGlass(r, g, b, 1 - XROOF_DARK) > 1 - XROOF_DARK + 1e-9;
+  const xBkAt = (r, g, b, u) => { const a = (1 - u) * (1 - u), c = 2 * u * (1 - u), e = u * u;   // (the way's point at u: _xbk)
+    _xbk[0] = r * (a + c * XBK_Q[0] + e * XBK_T[0]); _xbk[1] = g * (a + c * XBK_Q[1] + e * XBK_T[1]); _xbk[2] = b * (a + c * XBK_Q[2] + e * XBK_T[2]); return _xbk; };
+  const xBkCol = (r, g, b, u) => { const c = xBkAt(r, g, b, u); if (xLum(c[0], c[1], c[2]) > xLum(r, g, b)) { c[0] = r; c[1] = g; c[2] = b; } return c; };   // (on a lighter stretch of the way: as it was)
+  function xBlackU(r, g, b, f) {
+    // u: where the way's luminance (a quadratic in u: L0 at 0, LQ its pull, LT at 1) is down to L0 (1 - XBK_DROP f), its one root in 0..1;
+    // the end of the way if it never gets that dark
+    const L0 = xLum(r, g, b), LQ = xLum(r * XBK_Q[0], g * XBK_Q[1], b * XBK_Q[2]), LT = xLum(r * XBK_T[0], g * XBK_T[1], b * XBK_T[2]), Lt = L0 * (1 - XBK_DROP * f);
+    const A = L0 - 2 * LQ + LT, B = 2 * (LQ - L0), C = L0 - Lt; let u = 1;
+    if (LT < Lt && C > 0) { if (Math.abs(A) < 1e-12) u = -C / B; else { const s = Math.sqrt(Math.max(0, B * B - 4 * A * C)), u1 = (-B - s) / (2 * A); u = u1 >= 0 && u1 <= 1 ? u1 : (-B + s) / (2 * A); } u = clamp(u, 0, 1); }
+    const lim = Math.min(XBK_OFF * XBK_OFF, Math.pow(Math.sqrt(xGlass2(r, g, b)) - 1e-4, 2)); let us = 0;
+    for (let k = 1; k <= XBK_N; k++) { const w = u * k / XBK_N, c = xBkAt(r, g, b, w); if (xGlass2(c[0], c[1], c[2]) < lim) break; us = w; }   // (the last step still off the glass)
+    return us;
+  }
+  // a facet with corners on that way: its colours, interpolated across it, kept off the glass colours too. The line from a corner left as
+  // the paint gives it (off the roof's shell, a deep fold's black 0.05..0.066 off KIT_GL2) to a deep one's brown-black passes nearer the
+  // glass than either end, through it at the shell's edge: its warm corners' ways shortened together (the largest share s of them, in 14
+  // halvings) where the facet's colours would come nearer a glass colour than 0.0505 (just off the shader's 0.05), or than its paint's
+  // own do. Pc, Fc: its corners' paint and colours (Fc rewritten), U: their shares of the way (-1: not on it)
+  function xBkFacet(Pc, Fc, U) {
+    const n0 = Math.min(XGL_NEAR2, xTriD2(Pc, XGLC[0])) - 1e-12, n1 = Math.min(XGL_NEAR2, xTriD2(Pc, XGLC[1])) - 1e-12;   // (how near it may come to each)
+    if (xTriD2(Fc, XGLC[0]) >= n0 && xTriD2(Fc, XGLC[1]) >= n1) return;
+    let lo = 0, hi = 1;
+    for (let it = 0; it <= 14; it++) {
+      const s = it < 14 ? (lo + hi) / 2 : lo;   // (the last: the largest share found clear)
+      for (let q = 0; q < 3; q++) if (U[q] >= 0) { const o = q * 3, c = xBkCol(Pc[o], Pc[o + 1], Pc[o + 2], U[q] * s); Fc[o] = c[0]; Fc[o + 1] = c[1]; Fc[o + 2] = c[2]; }
+      if (it < 14) { if (xTriD2(Fc, XGLC[0]) >= n0 && xTriD2(Fc, XGLC[1]) >= n1) lo = s; else hi = s; }
+    }
+    for (let q = 0; q < 3; q++) if (U[q] >= 0) U[q] *= lo;   // (their shares as drawn)
+  }
+  // the squared distance from the colour G to the triangle of the colours T (9 numbers): its edges, or its plane where G's foot is inside
+  const xSegD2 = (T, i, j, G) => { const dx = T[j] - T[i], dy = T[j + 1] - T[i + 1], dz = T[j + 2] - T[i + 2], px = G[0] - T[i], py = G[1] - T[i + 1], pz = G[2] - T[i + 2], ll = dx * dx + dy * dy + dz * dz;
+    const s = ll > 1e-18 ? clamp((px * dx + py * dy + pz * dz) / ll, 0, 1) : 0, x = px - s * dx, y = py - s * dy, z = pz - s * dz; return x * x + y * y + z * z; };
+  function xTriD2(T, G) {
+    let m = Math.min(xSegD2(T, 0, 3, G), xSegD2(T, 3, 6, G), xSegD2(T, 6, 0, G));
+    const abx = T[3] - T[0], aby = T[4] - T[1], abz = T[5] - T[2], acx = T[6] - T[0], acy = T[7] - T[1], acz = T[8] - T[2];
+    const nx = aby * acz - abz * acy, ny = abz * acx - abx * acz, nz = abx * acy - aby * acx, nn = nx * nx + ny * ny + nz * nz; if (nn < 1e-24) return m;   // (a degenerate one: its edges)
+    let inside = true;   // (G's foot on the plane inside every edge)
+    for (let k = 0; k < 3; k++) { const a = k * 3, b = ((k + 1) % 3) * 3, ex = T[b] - T[a], ey = T[b + 1] - T[a + 1], ez = T[b + 2] - T[a + 2], px = G[0] - T[a], py = G[1] - T[a + 1], pz = G[2] - T[a + 2];
+      if ((ey * pz - ez * py) * nx + (ez * px - ex * pz) * ny + (ex * py - ey * px) * nz < 0) { inside = false; break; } }
+    if (inside) { const s = (G[0] - T[0]) * nx + (G[1] - T[1]) * ny + (G[2] - T[2]) * nz; m = Math.min(m, s * s / nn); }
+    return m;
   }
   // a deep front crush tears the bonnet open over it: its triangles (and its lining's) within reach of the crushed nose collapsed, as a
   // lost part's are (deadV: no dent moves them again); the lining drawn from then on (kitLod: K.xTorn), the engine under it shown
