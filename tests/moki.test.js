@@ -1,5 +1,5 @@
-// Moki Dugway: an open road with two ways to drive it on one card (def.modes: the time trial and the duel in the traffic; the road is too
-// narrow for a grid of thirteen, so there is no race against the field). The road: the real line up the five switchbacks cut into the cliff
+// Moki Dugway: an open road with three ways to drive it on one card (def.modes: the race against twelve rivals, the time trial and the duel in
+// the traffic; the road is narrow, so the grid's two columns stand closer together). The road: the real line up the five switchbacks cut into the cliff
 // of Cedar Mesa (def.curves, from ~1,700 m to ~1,920 m), 4.95 km and ~336 m of climb in its real scale, no steeper than ~10.5 %; gravel
 // between the two paved ends (def.paved: the asphalt's surface there, the makadam's on the gravel). The open road's traffic is its own mix
 // (def.traffic): cars, pickups and motorbikes, no buses or trucks. A whole duel in the traffic on autopilot: both reach the mesa and the
@@ -16,9 +16,9 @@ const def = C.TRACKS.find(d => d.id === 'moki'), T = new C.Track(def);
 const opts = (o) => Object.assign({ numAI: 1, playerGrid: 2, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
 const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 
-// 1. the track: an open road, two ways to drive it, its checkpoints and climb; narrow; not a round of the big championship
-check('track: an open road with two ways to drive it (def.modes: time trial, traffic), 4 checkpoints, the road 9 m wide',
-  def.open && !def.timeTrial && (def.modes || []).join(',') === 'tt,traffic' && T.cpS.length === 4 && T.w === 4.5,
+// 1. the track: an open road, three ways to drive it, its checkpoints and climb; narrow; not a round of the big championship
+check('track: an open road with three ways to drive it (def.modes: race, time trial, traffic), 4 checkpoints, the road 9 m wide',
+  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic' && T.cpS.length === 4 && T.w === 4.5,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
 check('track: from the Valley of the Gods (~1,624 m) up to Cedar Mesa (~1,961 m), at most 5 km, ~336 m of climb', Math.abs(def.alt[0] - 1624) < 10 && Math.abs(def.alt[1] - 1961) < 10 &&
   T.raceLen > 4800 && T.raceLen <= 5000 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
@@ -62,12 +62,17 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     `${motor.length} vehicles: ${motor.filter(v => v.kind === 0).length} cars, ${motor.filter(v => v.kind === 1).length} pickups, ${motor.filter(v => v.kind === 3).length} motorbikes, ${tf.veh.length - motor.length} cyclists`);
 }
 
-// 5. the ways to drive it: opts.tt the time trial, opts.traffic the duel; no race of thirteen
+// 5. the ways to drive it: the race (thirteen cars on the grid behind the line, its two columns on the narrow road), opts.tt the time trial,
+// opts.traffic the duel
 {
   const orig = Math.random; Math.random = seeded(3);
-  const tt = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), duel = new C.Race(T, opts({ traffic: true }));
+  const tt = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), duel = new C.Race(T, opts({ traffic: true })), race = new C.Race(T, opts({ numAI: 12, playerGrid: 12 }));
   Math.random = orig;
+  race.start();
+  const backs = race.cars.map(c => -c.dist).sort((a, b) => a - b), lat = Math.max(...race.cars.map(c => Math.abs(c.q.d)));
   check('mode: opts.tt is the time trial (the player alone on the line); opts.traffic the duel with one rival', tt.timeTrial && tt.cars.length === 1 && !duel.timeTrial && duel.cars.length === 2 && !!duel.tf);
+  check('mode: without them the race, 13 cars on the grid behind the line, every one of them on the road', !race.timeTrial && race.cars.length === 13 && backs[0] > 0 && backs[12] < T.startS - 5 && lat + 1 < T.w,
+    'grid ' + backs.map(b => b.toFixed(0)).join(' ') + `, at most ${lat.toFixed(1)} m off the centre line`);
 }
 
 // 6. a whole duel in the traffic on autopilot (both cars): both reach the mesa, nobody on foot knocked down, the traffic keeps moving

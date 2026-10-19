@@ -3111,7 +3111,7 @@ const World = (function () {
       { const [x, z] = [1009.8, -135.9], g = scen.get(x, z), y = gH(x, z), rot = 1.5, cr = Math.cos(rot), sr = Math.sin(rot), hw = 8;
         for (const o of [-hw + 1, hw - 1]) box(g, x + cr * o, y, z + sr * o, 0.5, 5, 0.5, rot, [0.2, 0.2, 0.22]);
         texSpons.quadO([x - cr * hw, y + 5, z - sr * hw], [x + cr * hw, y + 5, z + sr * hw], [x + cr * hw, y + 8.4, z + sr * hw], [x - cr * hw, y + 8.4, z - sr * hw], [1, 1, 1], [x + sr * 3, y + 6, z - cr * 3], [[0.5, 0.25], [1, 0.25], [1, 0.5], [0.5, 0.5]]); }
-      // La Rascasse: the bar-restaurant on the corner, red awnings and a terrace
+      // the harbour corner: a restaurant on the corner, red awnings and a terrace
       { const [x, z] = [14.7, 507.9], rot = 0.05; if (clearance(x, z) > 9 && gH(x, z) > 0.8) { const g = scen.get(x, z), y0 = facadeBox(x, z, 22, 12, 7, rot, [0.96, 0.9, 0.8]);
           box(g, x, y0 + 7, z, 22.4, 0.5, 12.4, rot, [0.8, 0.76, 0.7], [0.75, 0.72, 0.68]); for (let k = -9; k <= 9; k += 4.5) box(g, x + k, y0 + 3, z - 6.8, 3.8, 0.25, 1.8, rot, red, red);
           for (let k = -8; k <= 8; k += 4) { cyl(g, x + k, y0, z - 10, 0.06, 2.4, 4, [0.85, 0.85, 0.85]); cone(g, x + k, y0 + 2.3, z - 10, 1.6, 0.6, 8, white, white, 0); }
@@ -3152,7 +3152,7 @@ const World = (function () {
       // marshals in orange behind the barriers at the big corners
       for (const c of T.corners) { if (c.sev < 2) continue; for (let k = 0; k < 3; k++) { const i = T.idx(c.s0 + k * 6 - 4), side = -c.dir, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 1.4 + k * 0.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z), y = gH(x, z);
         box(g, x, y, z, 0.5, 1.25, 0.35, T.hd[i], orange); box(g, x, y + 1.25, z, 0.32, 0.32, 0.32, T.hd[i], [0.96, 0.96, 0.96]); } }
-      // ---- grandstands: Boulevard Albert Ier, the harbour quay at Tabac, along the pool, Casino square, Rascasse, Sainte Dévote, the hairpin ----
+      // ---- grandstands: Boulevard Albert Ier, the harbour quay at Tabac, along the pool, Casino square, the harbour corner, Sainte Dévote, the hairpin ----
       stand(-117.6, 104, -117.6, 243, 11, blueRoof); stand(-117.6, 276, -117.6, 406, 10, red);          // Boulevard Albert Ier
       stand(-16, 212, -16, 282, 7, blueRoof, true); stand(-46, 292, -16, 292, 5, blueRoof, true);      // over the Rainier III pool
       stand(741.8, -250.3, 807.2, -260.1, 6, white); stand(14.7, -29.7, 80.1, -29.7, 6, white);        // Casino square, Sainte Dévote
@@ -3160,7 +3160,7 @@ const World = (function () {
       { const g = scen.get(870, -206); for (let z = -234; z <= -178; z += 3.2) for (const x of [872, 866, 860]) { const y = gH(x, z); seg(g, [x, y, z], [x, y + 9, z], 0.18, [0.62, 0.64, 0.68]); }
         for (let z = -234; z < -178; z += 6.4) seg(g, [872, gH(872, z), z], [872, gH(872, z) + 8, z + 3.2], 0.12, [0.62, 0.64, 0.68]); }
       // spectators on the pavements behind the catch fences (up to three rows before the house fronts): Sainte Dévote, Beau Rivage, Casino square,
-      // Mirabeau, outside the hairpin, Portier, the chicane, Tabac, the pool, Rascasse, Anthony Noghès, Boulevard Albert Ier (not in the tunnel,
+      // Mirabeau, outside the hairpin, Portier, the chicane, Tabac, the pool, the harbour corner, the last corner, Boulevard Albert Ier (not in the tunnel,
       // not on the pit side, not over the water; the stands and the street furniture keep their room)
       { const M = { rows: 3, gap: 0.95, clump: 0.55, flag: 0.07, shirts: [[0.95, 0.95, 0.93], [0.12, 0.16, 0.3], [0.84, 0.1, 0.14], [0.9, 0.84, 0.7], [0.55, 0.7, 0.86], [0.2, 0.2, 0.22], [0.96, 0.8, 0.2], [0.88, 0.5, 0.52], [0.3, 0.46, 0.34], [0.7, 0.72, 0.76]] };
         for (const [a, b2, sd, dn] of [[220, 282, -1, 0.8], [220, 282, 1, 0.6], [300, 700, -1, 0.5], [300, 700, 1, 0.5], [996, 1162, -1, 0.8], [996, 1090, 1, 0.75], [1160, 1226, -1, 0.8], [1160, 1226, 1, 0.8],
@@ -11687,7 +11687,7 @@ const World = (function () {
     txt('SUBIDA LOS CARACOLES', 576, 930, 54, '#16181c', 860); txt('29 CURVAS · RUTA 60', 512, 994, 44, '#fff', 900);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (caATex = t);
   }
-  const CA_BOARDS = [['PORTILLO', '#1d4f9a'], ['LAGUNA DEL INCA', '#1d4f9a'], ['PASO LOS LIBERTADORES', '#1f6b3a'], ['HOTEL PORTILLO', '#7a2a1c'], ['RÍO JUNCALILLO', '#1d4f9a'], ['MIRADOR LOS CARACOLES', '#6b4a22'], ['ZONA DE AVALANCHAS', '#e2b21a'], ['ARGENTINA  →', '#1f6b3a']];
+  const CA_BOARDS = [['PORTILLO', '#1d4f9a'], ['LAGUNA DEL INCA', '#1d4f9a'], ['PASO LOS LIBERTADORES', '#1f6b3a'], ['HOTEL', '#7a2a1c'], ['RÍO JUNCALILLO', '#1d4f9a'], ['MIRADOR LOS CARACOLES', '#6b4a22'], ['ZONA DE AVALANCHAS', '#e2b21a'], ['ARGENTINA  →', '#1f6b3a']];
   function caAtlas2(curves) {   // the small signs: rows 0-3, the curves' numbers (8 a row, 128 x 128: a white board, CURVA and the number, as on the real road) and two chevrons;
     // rows 4-7, the place boards (two a row, 512 x 128)
     const key = curves.length; if (caA2Tex && caA2Key === key) return caA2Tex;
@@ -23487,7 +23487,7 @@ const World = (function () {
       const M = { first: 1.2, gap: 1.15, excluded: hard, below: 3, above: 8, sit: 0.3, flag: 0.07 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1; return n; };
-      const BIG = { 'Brünnchen': 1, 'Pflanzgarten': 1, 'Karussell': 1, 'Flugplatz': 1, 'Hatzenbach': 1 }, NEW = ['Hocheichen', 'Schwedenkreuz', 'Kallenhard', 'Wehrseifen', 'Eiskurve', 'Stefan-Bellof-S', 'Kleines Karussell', 'Antoniusbuche', 'Tiergarten', 'Hohenrain'];
+      const BIG = { 'Brünnchen': 1, 'Pflanzgarten': 1, 'Karussell': 1, 'Flugplatz': 1, 'Hatzenbach': 1 }, NEW = ['Hocheichen', 'Schwedenkreuz', 'Kallenhard', 'Wehrseifen', 'Eiskurve', 'Hitri S-zavoji', 'Kleines Karussell', 'Antoniusbuche', 'Tiergarten', 'Hohenrain'];
       for (const q of T.names) {
         const wgt = FANS[q.n] || 0, sm = sAt(q.d), side = roomSide(sm), d = q.d;
         if (wgt) { const half = 18 + wgt * 12;
@@ -24182,7 +24182,7 @@ const World = (function () {
     }
 
     /* ---- spectators on the grass banks at the famous places, fans' tents and cars in the woods behind the bigger crowds, catch fences in front ---- */
-    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, "Speaker's Corner": 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Paul Frère': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
+    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, "Speaker's Corner": 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
     let nFans = 0; const crE0 = excl.length;
     for (const q of T.names) {
@@ -30120,7 +30120,7 @@ const World = (function () {
   /* ================= SUZUKA (theme 'suzuka'): the figure of eight on its real ground =================
      The Nordschleife's corridor way: the terrain is def.dem (Copernicus GLO-30, trees and buildings taken out) blended into the road heights
      near the track, def.lc the land cover (grass, forest, scrub, car parks). The crossover (Track.cross): the back straight runs over a
-     concrete bridge, the lower road (Degner -> Hairpin) between the retaining walls of its underpass. Inside the lower road's walls the ground
+     concrete bridge, the lower road (double right -> Hairpin) between the retaining walls of its underpass. Inside the lower road's walls the ground
      follows the lower road (also under the deck), outside them the lower road's samples drop out of the blend, so the walls hold up the back
      straight's embankment. The bridge (deck, parapets, the road on it) fades out while the followed car drives underneath. The stands and the
      pit building are their real outlines cut along the track (def.stands, def.pitBld: [metres after the start line, front, back offset]), the
@@ -32582,7 +32582,7 @@ const World = (function () {
       const M = { first: 1.4, gap: 1.1, excluded: (x, z) => excluded(x, z) || inRects(x, z), below: 3, above: 7, sit: 0.35, flag: 0.08 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1; nFans += n; return n; };
-      const SPOTS = [['S-zavoji', 1, 3, 0.55], ['S-zavoji', -1, 2, 0.4], ['Dolgi levi', 1, 2, 0.45], ['Degner', -1, 3, 0.6], ['Lasnica', -1, 3, 0.65], ['Lasnica', 1, 2, 0.45], ['200R', -1, 2, 0.4], ['Spoon', 1, 3, 0.6], ['Spoon', -1, 2, 0.4], ['130R', 1, 3, 0.55], ['\u0160ikana', 1, 2, 0.45], ['Prvi ovinek', 1, 2, 0.4]];
+      const SPOTS = [['S-zavoji', 1, 3, 0.55], ['S-zavoji', -1, 2, 0.4], ['Dolgi levi', 1, 2, 0.45], ['Dvojni desni', -1, 3, 0.6], ['Lasnica', -1, 3, 0.65], ['Lasnica', 1, 2, 0.45], ['200R', -1, 2, 0.4], ['Spoon', 1, 3, 0.6], ['Spoon', -1, 2, 0.4], ['130R', 1, 3, 0.55], ['\u0160ikana', 1, 2, 0.45], ['Prvi ovinek', 1, 2, 0.4]];
       for (const [n, side, rows, dn] of SPOTS) { const d = nameD(n); if (d == null) continue; run(d - 45, d + 55, side, { rows, dens: dn, label: 'SZ ' + n + (side > 0 ? ' R' : ' L') }, true); }
       for (const sd of [-1, 1]) run(260, T.len - 340, sd, { rows: 2, dens: 0.05, clump: 0.95, strip: false, label: 'SZ groups' });
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);

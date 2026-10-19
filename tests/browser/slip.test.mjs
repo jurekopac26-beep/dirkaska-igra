@@ -1,5 +1,5 @@
 // The slipstream in the game: a race at the Red Bull Ring (12 rivals, the player on autopilot) has it; in the wake of a car ahead the
-// speedometer's ZAVETRJE lights up, out of it it goes out (in English: SLIPSTREAM). A time trial has none (Pikes Peak).
+// ZAVETRJE tag under the top left's rows lights up, out of it it goes out (in English: SLIPSTREAM). A time trial has none (Pikes Peak).
 //   node tests/browser/slip.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -20,7 +20,7 @@ try {
     document.querySelector('[data-set="lang"] button[data-v="sl"]').click(); g.onAction('settings-done'); return t; });
   T.check('in English: SLIPSTREAM', en === 'SLIPSTREAM', en);
   await page.evaluate(() => { const g = window.__game; g.resume(); g.onAction('to-title'); });
-  await startTrack(page, 'pikes');
+  await startTrack(page, 'pikes', 'tt');
   const tt = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); return { slip: !!g.race.slip, tow: 'tow' in g.race.player, on: getComputedStyle(document.getElementById('h-tow')).display !== 'none' }; });
   T.check('a time trial (Pikes Peak): no slipstream', !tt.slip && !tt.tow && !tt.on, JSON.stringify(tt));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
