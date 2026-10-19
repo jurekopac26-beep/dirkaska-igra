@@ -6473,9 +6473,10 @@ const Render = (function () {
      the footprint, up from the belt; Φ rises with c): every knock lowers it until it nears its limit, never past it. The lining with its
      twin (never under its own limit), the posts at the roof with it, what lies on it (a rack, a fin, a deflector) down whole. Its paint
      darker as it sinks (xPaint: by d / dMax, the deepest any of its points can go: 60 % darker there; on the colour the paint has, its
-     folds and scrapes, never into or through a glass colour, xOffGlass, a facet the shader takes for glass in part already as it is: a
-     black car's roof only a little darker; the lining, the posts, what lies on it, the glass as they are): the cave-in reads from above
-     and from behind, and a pit repair's colours back to col0 bring it back. Open cars, karts: none */
+     folds and scrapes, never into or through a glass colour, xOffGlass; black paint round them to a warm brown-black, 55 % darker in
+     luminance there, xBlackU; a facet the shader takes for glass in part already as it is; the lining, the posts, what lies on it,
+     the glass as they are): the cave-in reads from above and from behind, and a pit repair's colours back to col0 bring it back. Open
+     cars, karts: none */
   // the body's roof as built (cached on its geometry's user data: the clones of a model, a density, a colour share it): its entries (sI; a
   // point's own: vE, -1 none), limits (the deepest of them: dMax), lining, followers, riders and the masks xPush reads; null: none
   function xRoofBuild(v, xc) {
@@ -6897,12 +6898,13 @@ const Render = (function () {
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint); the roof's shell (a
   // roof field's entries) darker as far as it has sunk there (always with the field, xPaint or not: by its drop d over the deepest any of
   // its points can go, dMax, XROOF_DARK darker there; on the colour this makes, never lighter, never into or through a glass colour:
-  // xOffGlass; a facet with a corner the body's shader takes for glass already, a black car's deep fold, as the paint gives it: its
-  // colours, interpolated across it, never make more of it glass). Only at a knock: the points it moved
-  const XROOF_DARK = 0.6, _xpc = new Float64Array(9);
+  // xOffGlass; black paint a warm way round them instead, xBlackU, xBkFacet; a facet with a corner the body's shader takes for glass
+  // already, a black car's deep fold, as the paint gives it: its colours, interpolated across it, never make more of it glass). Only at a
+  // knock: the points it moved
+  const XROOF_DARK = 0.6, _xpc = new Float64Array(9), _xfc = new Float64Array(9), _xbu = new Float64Array(3);
   function xPaint(v, xc, tris) {
     const geo = v.body.geometry, ca = geo.attributes.color ? geo.attributes.color.array : null, nm = geo.attributes.normal.array; if (!ca || !xc.col0) return;
-    const C0 = xc.col0, N0 = xc.nor0, rf = xc.rf, vE = rf ? rf.G.vE : null, kD = rf && rf.G.dMax > 1e-6 ? XROOF_DARK / rf.G.dMax : 0, Pc = _xpc;
+    const C0 = xc.col0, N0 = xc.nor0, rf = xc.rf, vE = rf ? rf.G.vE : null, kD = rf && rf.G.dMax > 1e-6 ? XROOF_DARK / rf.G.dMax : 0, Pc = _xpc, Fc = _xfc, U = _xbu;
     for (const t of tris) {
       let dk = false;   // (a corner of the roof's shell sunk: the facet's paint darker there)
       for (let q = 0; q < 3; q++) {
@@ -6914,11 +6916,16 @@ const Render = (function () {
         Pc[q * 3] = r; Pc[q * 3 + 1] = g; Pc[q * 3 + 2] = b; if (vE && vE[i] >= 0 && rf.d[vE[i]] * kD > 0) dk = true;
       }
       if (dk) for (let q = 0; q < 3; q++) if (Pc[q * 3] >= 0 && xGlassy(Pc[q * 3], Pc[q * 3 + 1], Pc[q * 3 + 2])) { dk = false; break; }   // (a corner glass to the shader already: the facet as the paint gives it)
+      let bk = 0;   // (corners on black paint's warm way: U their share of it, -1 none)
       for (let q = 0; q < 3; q++) {
-        if (Pc[q * 3] < 0) continue; const i = t * 3 + q, o = i * 3; let r = Pc[q * 3], g = Pc[q * 3 + 1], b = Pc[q * 3 + 2];
-        if (dk) { const e = vE[i]; if (e >= 0) { let kd = 1 - clamp(rf.d[e] * kD, 0, XROOF_DARK); if (kd < 1) { kd = xOffGlass(r, g, b, kd); r *= kd; g *= kd; b *= kd; } } }   // (the roof sunk here: darker)
-        ca[o] = r; ca[o + 1] = g; ca[o + 2] = b;
+        U[q] = -1; if (Pc[q * 3] < 0) continue; const i = t * 3 + q; let r = Pc[q * 3], g = Pc[q * 3 + 1], b = Pc[q * 3 + 2];
+        if (dk) { const e = vE[i]; if (e >= 0) { const dd = clamp(rf.d[e] * kD, 0, XROOF_DARK); if (dd > 0) {   // (the roof sunk here: darker)
+          if (xBlack(r, g, b)) { U[q] = xBlackU(r, g, b, dd / XROOF_DARK); bk++; const c = xBkCol(r, g, b, U[q]); r = c[0]; g = c[1]; b = c[2]; }   // (black paint: its warm way)
+          else { const kd = xOffGlass(r, g, b, 1 - dd); r *= kd; g *= kd; b *= kd; } } } }
+        Fc[q * 3] = r; Fc[q * 3 + 1] = g; Fc[q * 3 + 2] = b;
       }
+      if (bk && Pc[0] >= 0 && Pc[3] >= 0 && Pc[6] >= 0) xBkFacet(Pc, Fc, U);   // (its colours across it off the glass too)
+      for (let q = 0; q < 3; q++) if (Pc[q * 3] >= 0) { const o = (t * 3 + q) * 3; ca[o] = Fc[q * 3]; ca[o + 1] = Fc[q * 3 + 1]; ca[o + 2] = Fc[q * 3 + 2]; }
     }
     geo.attributes.color.needsUpdate = true;
   }
@@ -6937,6 +6944,60 @@ const Render = (function () {
       const R2 = d2 >= XGL_FAR2 ? XGL_FAR2 : XGL_NEAR2, D = pg * pg - pp * (gg - R2);   // (t0 < t1: |t (r, g, b) - G| = R)
       if (D > 0) { const s = Math.sqrt(D), t1 = (pg + s) / pp; if (k < t1 && (pg - s) / pp < 1) k = Math.min(1, t1); } }   // (the sphere between the colour and its darkening: at its near edge)
     return k;
+  }
+  // black paint's dent (the user's choice, "a warmer black"): a black, a bit blue, made darker is the glass colours' own (KIT_GL2, GLASS),
+  // so xOffGlass stops it at their edge and a black car's dent was hardly darker (9 to 14 %; -60 % unguarded: a light, bluish patch of
+  // sky over most of it, the shader's glass). Black paint (luminance under 0.16, nearly grey, not glass to the shader already, its full
+  // darkening one xOffGlass would cut short) goes round them, warm: along a quadratic Bezier from its colour P by P XBK_Q to P XBK_T, a
+  // brown-black (the red kept longest, the blue gone first: away from the glass's blue), as far as its luminance is down by XBK_DROP f (f:
+  // its drop over the deepest any point can go; 55 % there, the end of the way), and no nearer the glass colours than XBK_OFF (0.066, as
+  // xOffGlass keeps the rest; a colour nearer already, a fold: no nearer than it was): stopped at the last point of its way (looked at in
+  // 64 steps up to there) before one that would come nearer (xBlackU: its share u of the way), never lighter than P (luminance, xBkCol).
+  // Only at a knock (xPaint)
+  const XBK_Q = [1.644, 0.754, 0.363], XBK_T = [0.56, 0.474, 0.102], XBK_DROP = 0.55, XBK_OFF = 0.066, XBK_N = 64, _xbk = [0, 0, 0];
+  const xLum = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  const xGlass2 = (r, g, b) => { let m = Infinity; for (let j = 0; j < 2; j++) { const G = XGLC[j], x = r - G[0], y = g - G[1], z = b - G[2]; m = Math.min(m, x * x + y * y + z * z); } return m; };   // (the squared distance to the nearer glass colour)
+  const xBlack = (r, g, b) => xLum(r, g, b) < 0.16 && Math.max(r, g, b) - Math.min(r, g, b) < 0.06 && !xGlassy(r, g, b) && xOffGlass(r, g, b, 1 - XROOF_DARK) > 1 - XROOF_DARK + 1e-9;
+  const xBkAt = (r, g, b, u) => { const a = (1 - u) * (1 - u), c = 2 * u * (1 - u), e = u * u;   // (the way's point at u: _xbk)
+    _xbk[0] = r * (a + c * XBK_Q[0] + e * XBK_T[0]); _xbk[1] = g * (a + c * XBK_Q[1] + e * XBK_T[1]); _xbk[2] = b * (a + c * XBK_Q[2] + e * XBK_T[2]); return _xbk; };
+  const xBkCol = (r, g, b, u) => { const c = xBkAt(r, g, b, u); if (xLum(c[0], c[1], c[2]) > xLum(r, g, b)) { c[0] = r; c[1] = g; c[2] = b; } return c; };   // (on a lighter stretch of the way: as it was)
+  function xBlackU(r, g, b, f) {
+    // u: where the way's luminance (a quadratic in u: L0 at 0, LQ its pull, LT at 1) is down to L0 (1 - XBK_DROP f), its one root in 0..1;
+    // the end of the way if it never gets that dark
+    const L0 = xLum(r, g, b), LQ = xLum(r * XBK_Q[0], g * XBK_Q[1], b * XBK_Q[2]), LT = xLum(r * XBK_T[0], g * XBK_T[1], b * XBK_T[2]), Lt = L0 * (1 - XBK_DROP * f);
+    const A = L0 - 2 * LQ + LT, B = 2 * (LQ - L0), C = L0 - Lt; let u = 1;
+    if (LT < Lt && C > 0) { if (Math.abs(A) < 1e-12) u = -C / B; else { const s = Math.sqrt(Math.max(0, B * B - 4 * A * C)), u1 = (-B - s) / (2 * A); u = u1 >= 0 && u1 <= 1 ? u1 : (-B + s) / (2 * A); } u = clamp(u, 0, 1); }
+    const lim = Math.min(XBK_OFF * XBK_OFF, Math.pow(Math.sqrt(xGlass2(r, g, b)) - 1e-4, 2)); let us = 0;
+    for (let k = 1; k <= XBK_N; k++) { const w = u * k / XBK_N, c = xBkAt(r, g, b, w); if (xGlass2(c[0], c[1], c[2]) < lim) break; us = w; }   // (the last step still off the glass)
+    return us;
+  }
+  // a facet with corners on that way: its colours, interpolated across it, kept off the glass colours too. The line from a corner left as
+  // the paint gives it (off the roof's shell, a deep fold's black 0.05..0.066 off KIT_GL2) to a deep one's brown-black passes nearer the
+  // glass than either end, through it at the shell's edge: its warm corners' ways shortened together (the largest share s of them, in 14
+  // halvings) where the facet's colours would come nearer a glass colour than 0.0505 (just off the shader's 0.05), or than its paint's
+  // own do. Pc, Fc: its corners' paint and colours (Fc rewritten), U: their shares of the way (-1: not on it)
+  function xBkFacet(Pc, Fc, U) {
+    const n0 = Math.min(XGL_NEAR2, xTriD2(Pc, XGLC[0])) - 1e-12, n1 = Math.min(XGL_NEAR2, xTriD2(Pc, XGLC[1])) - 1e-12;   // (how near it may come to each)
+    if (xTriD2(Fc, XGLC[0]) >= n0 && xTriD2(Fc, XGLC[1]) >= n1) return;
+    let lo = 0, hi = 1;
+    for (let it = 0; it <= 14; it++) {
+      const s = it < 14 ? (lo + hi) / 2 : lo;   // (the last: the largest share found clear)
+      for (let q = 0; q < 3; q++) if (U[q] >= 0) { const o = q * 3, c = xBkCol(Pc[o], Pc[o + 1], Pc[o + 2], U[q] * s); Fc[o] = c[0]; Fc[o + 1] = c[1]; Fc[o + 2] = c[2]; }
+      if (it < 14) { if (xTriD2(Fc, XGLC[0]) >= n0 && xTriD2(Fc, XGLC[1]) >= n1) lo = s; else hi = s; }
+    }
+  }
+  // the squared distance from the colour G to the triangle of the colours T (9 numbers): its edges, or its plane where G's foot is inside
+  const xSegD2 = (T, i, j, G) => { const dx = T[j] - T[i], dy = T[j + 1] - T[i + 1], dz = T[j + 2] - T[i + 2], px = G[0] - T[i], py = G[1] - T[i + 1], pz = G[2] - T[i + 2], ll = dx * dx + dy * dy + dz * dz;
+    const s = ll > 1e-18 ? clamp((px * dx + py * dy + pz * dz) / ll, 0, 1) : 0, x = px - s * dx, y = py - s * dy, z = pz - s * dz; return x * x + y * y + z * z; };
+  function xTriD2(T, G) {
+    let m = Math.min(xSegD2(T, 0, 3, G), xSegD2(T, 3, 6, G), xSegD2(T, 6, 0, G));
+    const abx = T[3] - T[0], aby = T[4] - T[1], abz = T[5] - T[2], acx = T[6] - T[0], acy = T[7] - T[1], acz = T[8] - T[2];
+    const nx = aby * acz - abz * acy, ny = abz * acx - abx * acz, nz = abx * acy - aby * acx, nn = nx * nx + ny * ny + nz * nz; if (nn < 1e-24) return m;   // (a degenerate one: its edges)
+    let inside = true;   // (G's foot on the plane inside every edge)
+    for (let k = 0; k < 3; k++) { const a = k * 3, b = ((k + 1) % 3) * 3, ex = T[b] - T[a], ey = T[b + 1] - T[a + 1], ez = T[b + 2] - T[a + 2], px = G[0] - T[a], py = G[1] - T[a + 1], pz = G[2] - T[a + 2];
+      if ((ey * pz - ez * py) * nx + (ez * px - ex * pz) * ny + (ex * py - ey * px) * nz < 0) { inside = false; break; } }
+    if (inside) { const s = (G[0] - T[0]) * nx + (G[1] - T[1]) * ny + (G[2] - T[2]) * nz; m = Math.min(m, s * s / nn); }
+    return m;
   }
   // a deep front crush tears the bonnet open over it: its triangles (and its lining's) within reach of the crushed nose collapsed, as a
   // lost part's are (deadV: no dent moves them again); the lining drawn from then on (kitLod: K.xTorn), the engine under it shown
