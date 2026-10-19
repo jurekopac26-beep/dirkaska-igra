@@ -4476,7 +4476,9 @@ const Render = (function () {
      body part and every tool is one InstancedMesh for all the men, so all the crews of the pit lane cost a dozen meshes. Colours per instance:
      a vertex colour (k,0,k) is the team colour x k, (0,k,0) the skin tone x k. The player's crew does a real stop driven by the pit state
      (a jack man at each end, a gun man and two tyre men per wheel, the lollipop man, the engineer on the pit wall; the car goes up on the jacks),
-     the other teams idle at their garages (working at the roll cab, checking tyres, talking, waiting). */
+     the other teams idle at their garages (working at the roll cab, checking tyres, talking, waiting). Each crew's colour is its car's: the
+     player's crew in the player's paint, a band over each garage's door in its crew's colour, and the player's garage in the player's paint
+     (its back wall or closed door, the door's pillars: crGarSlab) to find it from afar, all in the rod mesh (no draw call more). */
   let crew = null;
   const CR_TAU = Math.PI * 2, CR_TM = [1, 0, 1], CR_TD = [0.55, 0, 0.55], CR_SK = [0, 1, 0], CR_W = [0.93, 0.93, 0.91], CR_K = [0.07, 0.07, 0.08];
   const CR_SKINS = [[0.96, 0.8, 0.67], [0.9, 0.72, 0.57], [0.8, 0.6, 0.45], [0.6, 0.42, 0.3], [0.43, 0.3, 0.21]];
@@ -4738,7 +4740,7 @@ const Render = (function () {
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
     const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true), farm: mk(geo.farm, nM * 2, true),
       thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
-      rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
+      rod: mk(geo.rod, (roles ? 13 + 3 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
     const skinA = geo.head.attributes.crewSkin;
     men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
       skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
@@ -4750,7 +4752,10 @@ const Render = (function () {
       M.jack.setColorAt(0, roles.bx.col); M.jack.setColorAt(1, roles.bx.col);
       for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
     const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
-    boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
+    boxes.forEach((bx, j) => { const g = bx.gar ? bx.gar.band : [bx.base + 8.955, 3.45, 3.95, 4.7]; crGarSlab(M.rod, rb + j, bx, 'band', -g[3], g[3], g[0], g[1], g[2], bx.col); });
+    if (roles && roles.bx.gar) { const bx = roles.bx, G = bx.gar, n0 = rb + boxes.length;   // the player's garage in the player's colour (to find it from afar): the back wall (a closed front: its door) and the door's pillars
+      if (G.wall) crGarSlab(M.rod, n0, bx, 'wall', -G.wall[3], G.wall[3], G.wall[0], G.wall[1], G.wall[2], bx.col);
+      if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
     crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
@@ -4880,6 +4885,23 @@ const Render = (function () {
     let xx = uy * zz - uz * zy, xy = uz * zx - ux * zz, xz = ux * zy - uy * zx; const xl = Math.hypot(xx, xy, xz); xx /= xl; xy /= xl; xz /= xl;
     const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
     const ty = thy || th; _cM.set(xx * th, yx * ty, zx * L, ax, xy * th, yy * ty, zy * L, ay, xz * th, yz * ty, zz * L, az, 0, 0, 0, 1); im.setMatrixAt(i, _cM);
+  }
+  // a panel on a crew's garage (World's bx.gar: each builder's own measures, metres out from the centre line, heights over the box's floor):
+  // band [w, y0, y1, half width] the face over the door, wall [w, y0, y1, half width] the back wall's inside (a closed front: the door),
+  // jamb [w, a, width, top] the door's pillars at -a and +a. Placed as the builder placed that part: square to the road at the box's centre
+  // (World's box() there: the heading of that sample), or along the road (gar.road names those parts: each end at its own place on it, at the
+  // road's height there), a few mm in front of the face (w) it covers
+  const _crP = [0, 0];
+  function crRoadAt(T, s, lat) {   // World's atSf: the centre line's point and normal interpolated between the samples, lat metres out
+    const L = T.len, f = (((s % L) + L) % L) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f);
+    _crP[0] = T.px[i] + (T.px[j] - T.px[i]) * u + (T.nx[i] + (T.nx[j] - T.nx[i]) * u) * lat; _crP[1] = T.pz[i] + (T.pz[j] - T.pz[i]) * u + (T.nz[i] + (T.nz[j] - T.nz[i]) * u) * lat; return _crP;
+  }
+  function crGarSlab(im, i, bx, part, a0, a1, w, y0, y1, col) {
+    const T = curTrack, k = T.idx(bx.s), wc = (bx.nx * T.nx[k] + bx.nz * T.nz[k] < 0 ? -1 : 1) * (w - 0.014), road = !!(bx.gar && bx.gar.road && bx.gar.road.includes(part));
+    let y = (bx.y || 0) + (y0 + y1) / 2, x0, z0, x1, z1;
+    if (road) { [x0, z0] = crRoadAt(T, bx.s + a0, wc); [x1, z1] = crRoadAt(T, bx.s + a1, wc); y += T.elevAt(bx.s + (a0 + a1) / 2).y - T.elevAt(bx.s).y; }
+    else { const c = Math.cos(T.hd[k]), s = Math.sin(T.hd[k]), [x, z] = crRoadAt(T, bx.s, wc); x0 = x + c * a0; z0 = z + s * a0; x1 = x + c * a1; z1 = z + s * a1; }
+    crSetRod(im, i, x0, y, z0, x1, y, z1, 0.02, y1 - y0); im.setColorAt(i, col);
   }
   function crTyreMat(t, out) {   // where a tyre is: on the floor, in its man's hands, on the hub, or on the way between
     const m = t.man, yawM = Math.PI / 2 - m.yaw;

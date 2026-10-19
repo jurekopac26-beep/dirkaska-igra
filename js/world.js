@@ -935,6 +935,7 @@ const World = (function () {
       forestPitKit(scen.get(cx, cz), T.startS + q, k, base, p.wall, mine);
       const oc = atSf(T.startS + q + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame
       (out.pitBoxes = out.pitBoxes || []).push({ k, s: T.startS + q + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine });
+      out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 8.955, 3.45, 3.95, 4.7], wall: [base + 15.9, 1.3, 3.9, 4.74], jamb: [base + 9, 4.56, 0.9, 3.45], road: 'jamb' };   // (its garage, forestGarages, for the renderer's team colours: the band over the door, the back wall above its darker panel, the front pillars)
       if (Y) out.pitBoxes[out.pitBoxes.length - 1].y = Y(T.startS + q + 5); }   // (the crews stand at the road's height of their box)
     forestGarages();
     { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the grass strip (2.7 m roofs over the box centres, forestPitKit): Core keeps the player's car off it
@@ -25928,6 +25929,7 @@ const World = (function () {
         if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the lane's side, sd)
           out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) });
+        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
         crew.set(q, tc);
       }
       T.pitStands = null;   // (no team stands on the pit wall here)
@@ -26005,7 +26007,10 @@ const World = (function () {
           exclPush(cx, cz, 7);
         }
         const oc = atSf(s0 + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame, the floor's height
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = PER ? { band: [base + 8.7, 2.66, 2.94, 4.8], wall: [base + 11.95, 0.02, 2.68, 4.7] }   // (its garage, for the renderer's team colours: the 1930s stall: a fascia on the roof's front edge, a cloth behind the back posts;
+          : LK.pits80 ? { band: [base + 8.955, 3.42, 3.92, 4.7], wall: [base + 16.85, 0.03, 3.95, 4.74], jamb: [base + 9, 4.88, 0.25, 3.42], road: 'jamb' }   // Rio's, rioPits: the band over the door, the back wall, the side walls' fronts;
+          : { band: [base + 8.955, 3.45, 3.95, 4.7], wall: [base + 15.9, 0.03, 3.9, 4.74], jamb: [base + 9, 4.56, 0.9, 3.45], road: 'jamb' }; }   // the pit building's: the band, the back wall, the front pillars)
       { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the strip behind the pit wall: Core keeps the player's car off them, a low kerb along that limit
         if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];
           const kt = [0.86, 0.86, 0.83], kf = [0.66, 0.67, 0.64];
@@ -28283,13 +28288,14 @@ const World = (function () {
         if (!mine) for (let m = 0; m < 3; m++) kcyl(g, s0, 7.6, base + 8.6, m * 0.24, 0.34, 0.22, 8, [0.12, 0.12, 0.13], m === 2 ? [0.5, 0.5, 0.52] : null);
         kbox(g, s0, 9.2, base + 7.8, 0, 0.1, 2.0, 0.1, TIMd, null, true); kbox(g, s0, 9.2, base + 7.78, 1.7, 0.7, 0.5, 0.05, tc, null, true);
         const oc = atSf(s0 + 5, 0);
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 8.955, 3.3, 3.78, 4.7], wall: [base + 14.84, 0.03, 2.75, 4.55] }; }   // (its bay of the shed below, for the renderer's team colours: the board under the eave, the back wall between the posts)
       T.pitStands = null;
       { const sE = sStart + PD[1] + 24, pE = T.pitAt(sE); if (pE) { const [x, z] = atSf(sE, pE.lout + 2.6), i = T.idx(sE);   // the PITS sign at the way in
         cyl(scen.get(x, z), x, hyS(sE) - 0.3, z, 0.08, 2.9, 5, TIMd); board(x, hyS(sE) + 2.1, z, T.tx[i], T.tz[i], 2.6, 0.75, LF_AT.ban + 2); exclPush(x, z, 3); } }
       addM(gl, aMat); addM(gp, new THREE.MeshLambertMaterial({ vertexColors: true }));
       // the pit shed: an open timber shed with a corrugated iron roof behind the crews, the length of the boxes
-      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board there, 3.7 m up)
+      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board under it, out.pitBoxes gar)
         for (let q = pq0 - 10; q < pq1 + 20; q += 10) { const s0 = sStart + q, f = f0(s0 + 5); if (f == null) continue; const [x, z] = atSf(s0 + 5, f + 3), g = scen.get(x, z);
           for (const a of [0.3, 9.7]) for (const o of [f + 0.3, f + 5.7]) kbox(g, s0, a, o, -0.2, 0.22, 4.0, 0.22, TIM, null, true);
           kbox(g, s0, 5, f + 5.9, -0.2, 10, 3.0, 0.12, TIM, null, true);
@@ -29680,7 +29686,8 @@ const World = (function () {
         kbox(g, s0, 5, p.wall + 0.75, 0.96, 2.4, 0.06, 0.9, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]); kbox(g, s0, 5, p.wall + 0.8, 2.4, 2.6, 0.07, 1.4, [0.22, 0.23, 0.26], tc);   // the crew's stand on the wall
         for (const la of [-1.1, 1.1]) kbox(g, s0, 5 + la, p.wall + 0.8, 0, 0.07, 2.4, 0.07, [0.22, 0.22, 0.24], null, true);
         const oc = atSf(s0 + 5, 0);
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 7.95, 2.5, 3.0, 4.8], wall: [base + 8, 0.02, 2.47, 4.3] }; }   // (its marquee below, for the renderer's team colours: the band along the eaves, the closed front's door)
       { const pbs = out.pitBoxes; T.pitStands = null; if (pbs && pbs.length) T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35]; }
       for (const [q0, dq] of [[PD[1] + 30, 4], [PD[2] - 26, -4]]) for (let k = 0; k < 3; k++) {   // knockable cones on the noses
         const s = sStart + q0 + k * dq, i = T.idx(s), p = T.pitAt(s); if (!p) continue; const o = (T.br[i] + 0.9 + p.o - 3.5) / 2; if (o < T.br[i] + 0.5 || o > p.o - 4) continue;
@@ -32681,7 +32688,8 @@ const World = (function () {
         if (mine) { const sb = s0 + 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY)
           out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; }
         const g = scen.get(cx, cz); pitKit(g, s0, k, base, p.wall, mine); tent(g, s0, k, base); exclPush(cx, cz, 14);
-        const oc = atSf(s0 + 5, 0); (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        const oc = atSf(s0 + 5, 0); (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.3, 2.6, 2.95, 4.8], wall: [base + 15.37, 0.03, 2.47, 4.65] }; }   // (its tent, for the renderer's team colours: the valance, the back wall)
       { const pbs = out.pitBoxes; T.pitStands = null;
         if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35]; const kt = [0.86, 0.86, 0.83], kf = [0.66, 0.67, 0.64];
           for (let q = T.pitStands[0] - 28; q < T.pitStands[1] + 28; q += 2) { const s0 = sStart + q, pi = T.pitAt(s0), pj = T.pitAt(s0 + 2); if (!pi || !pj || pi.gap || pj.gap) continue;
@@ -33926,6 +33934,7 @@ const World = (function () {
           const st = atSf(sb, sd * p.o), ctr = atSf(sb, sd * (base + 4.2));
           out.pitBox = { s: sb, x: ctr[0], z: ctr[1], hd, tx: T.tx[i], tz: T.tz[i], nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: st, y: Y }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: sb, ox: oc[0], oz: oc[1], tx: T.tx[i], tz: T.tz[i], nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: Y });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.2, 3.04, 3.7, 4.48], wall: [base + 15.82, 0.03, 2.82, 4.55] };   // (its tent above, for the renderer's team colours: the band on the roof's front, the back wall)
       }
       T.pitStands = null;
       { const sE = sAt(PD[1] + 24), pE = T.pitAt(sE); if (pE) { const [x, z, , i] = atSf(sE, sd * (pE.lout + 3)), g = scen.get(x, z), y = T.hy[i];   // the sign at the way in: BOKSI and an arrow

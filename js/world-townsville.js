@@ -307,6 +307,7 @@
         if (mine && !out.pitBox) { const sb = s0 + 6;
           out.pitBox = { s: sb, x: oc[0] + nx * (base + 4.2), z: oc[1] + nz * (base + 4.2), hd, tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * p.o), y: T.hy[i] }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 6, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine: mine && out.pitBox && out.pitBox.s === s0 + 6, y: T.hy[i] });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.7, 3.85, 4.45, 5.7], wall: [base + 20.8, 0.03, 4.55, 5.73], jamb: [base + 9.7, 5.9, 0.3, 3.85] };   // (its bay above, for the renderer's team colours: the band on the rolled-up door, the back wall over the team's panel, the side walls' fronts)
       }
       const pbs = out.pitBoxes; T.pitStands = null;
       if (pbs && pbs.length) T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];

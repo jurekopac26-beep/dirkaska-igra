@@ -233,9 +233,9 @@
  "montreal": {
   "calls": 200,
   "maxCalls": 270,
-  "kverts": 479,
-  "maxKverts": 652,
-  "jsMs": 2.09
+  "kverts": 480,
+  "maxKverts": 654,
+  "jsMs": 15.8
  },
  "greatalpine": {
   "calls": 154,
