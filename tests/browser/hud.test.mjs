@@ -67,11 +67,11 @@ try {
   // DRS and ZAVETRJE in the tags under the rows: DRS dim, white armed, green open (its colours on the old speedometer); ZAVETRJE white
   const tags = await page.evaluate(() => { const $ = (id) => document.getElementById(id), hud = $('hud'), d = $('h-drs'), w = $('h-tow'), c = (e) => getComputedStyle(e), out = {};
     const d0 = hud.classList.contains('drs'), dc = d.className, w0 = w.classList.contains('on'); d.style.transition = 'none';   // (read at once, not half way through its fade)
-    hud.classList.remove('drs'); w.classList.remove('on'); out.none = c($('h-tags')).display; hud.classList.add('drs');
+    hud.classList.remove('drs', 'tow'); w.classList.remove('on'); out.none = c($('h-tags')).display; hud.classList.add('drs');
     for (const k of ['', 'arm', 'open']) { d.className = k; out[k || 'dim'] = [c(d).color, c(d).borderTopColor, c(d).backgroundColor].join(' / '); }
-    hud.classList.remove('drs'); d.className = ''; w.classList.add('on'); out.tow = c(w).color; out.towShown = c(w).display; out.tagsTow = c($('h-tags')).display;
+    hud.classList.remove('drs'); d.className = ''; w.classList.add('on'); hud.classList.add('tow'); out.tow = c(w).color; out.towShown = c(w).display; out.tagsTow = c($('h-tags')).display;
     const r2 = $('h-row2').getBoundingClientRect(), tg = $('h-tags').getBoundingClientRect(); out.under = tg.top >= r2.bottom - 1;
-    hud.classList.toggle('drs', d0); d.className = dc; w.classList.toggle('on', w0); d.style.transition = ''; return out; });
+    hud.classList.toggle('drs', d0); hud.classList.toggle('tow', w0); d.className = dc; w.classList.toggle('on', w0); d.style.transition = ''; return out; });
   T.check('DRS and ZAVETRJE: a small row under row 2 only when needed; DRS dim, white when armed, green when open; ZAVETRJE white (not the cold tyres\' light blue)',
     tags.none === 'none' && tags.tagsTow === 'flex' && tags.under && tags.towShown === 'block' && tags.tow === CHALK && /^rgba\(255, 255, 255, 0\.38\) \/ rgba\(255, 255, 255, 0\.3\)/.test(tags.dim) && tags.arm.startsWith(CHALK + ' / ' + CHALK) && tags.open.startsWith('rgb(12, 26, 8) / rgb(98, 224, 76) / rgb(98, 224, 76)'),
     JSON.stringify(tags));

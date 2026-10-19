@@ -5091,6 +5091,7 @@
     try {
       track = getTrack(S.track);
       Render.init($('gl'));
+      try { document.fonts.load('800 italic 20px ApexMenu'); } catch (e) { }   // (the HUD's face before the first race: its rows and clock laid out in it from the first frame)
       initAutoTier();   // the device's graphics tier for 'Samodejno' (before the first world is built)
       Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
