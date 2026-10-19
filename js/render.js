@@ -3100,7 +3100,8 @@ const Render = (function () {
     // what is drawn only into the shadow map (a kit car's hull on the lowest tier, the player's wheels' stand-ins: kitShadows): shown while it is drawn
     // (three.js draws it after it has picked what the camera draws, so the camera never draws them), hidden again after
     { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on;
-        if (world && world.shadowLo) for (const [m, of] of world.shadowLo) m.visible = on && of.visible; };   // (NIZKA: the plants' shadow copies, where their meshes are shown)
+        if (world && world.shadowLo) { let fr = null; if (on) { sun.shadow.updateMatrices(sun); fr = sun.shadow.getFrustum(); }
+          for (const [m, of] of world.shadowLo) m.visible = on && (of.visible || !!of.userData.ov) && (!of.userData.vb || boxesIn(of, fr)); } };   // (NIZKA: the plants' shadow copies, where their meshes are shown or only out of the view: where their plants are in the shadow box)
       sm.render = function (...a) { show(true); try { return r0.apply(this, a); } finally { show(false); } }; }
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(30, 16 / 9, 4, 700);
@@ -4202,8 +4203,20 @@ const Render = (function () {
     }
     if (detailDist === Infinity || !world || !world.cull) return;
     const cx = camera.position.x, cz = camera.position.z;
-    for (const c of world.cull) { const dx = c.x - cx, dz = c.z - cz, rr = detailDist + c.r; c.m.visible = dx * dx + dz * dz <= rr * rr; }
+    camera.updateMatrixWorld(); _vFr.setFromProjectionMatrix(_vPm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+    for (const c of world.cull) { const dx = c.x - cx, dz = c.z - cz, rr = detailDist + c.r, m = c.m; m.visible = dx * dx + dz * dz <= rr * rr;
+      if (m.visible && m.userData.vb && !m.castShadow && !boxesIn(m, _vFr)) { m.visible = false; m.userData.ov = true; offView.push(m); } }   // (and not this frame's view: World's chunkBoxes)
   }
+  // a plant chunk none of whose boxes (World's chunkBoxes, made world-wide here once) is in the frustum fr: not drawn this frame. Its shadow
+  // copy (NIZKA) is drawn while one of them is in the sun's shadow box (init: the shadow map's show); after the frame they are shown again
+  // (unviewCull), so between frames everything is as the distance alone left it
+  const _vFr = new THREE.Frustum(), _vPm = new THREE.Matrix4(), offView = [];
+  function boxesIn(m, fr) {
+    let B = m.userData.vbw; if (!B) { m.updateWorldMatrix(true, false); B = m.userData.vbw = m.userData.vb.map(b => b.clone().applyMatrix4(m.matrixWorld)); }
+    for (let k = 0; k < B.length; k++) if (fr.intersectsBox(B[k])) return true;
+    return false;
+  }
+  function unviewCull() { for (const m of offView) { m.visible = true; m.userData.ov = false; } offView.length = 0; }
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
@@ -8935,6 +8948,7 @@ const Render = (function () {
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else { renderer.render(scene, camera); }
+    unviewCull();   // (the plant chunks out of this frame's view: shown again, cullByDistance)
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
   // than on the screen), copied to a 2D canvas at once (a WebGL canvas keeps its picture only until the page shows it)

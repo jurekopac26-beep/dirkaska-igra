@@ -4577,7 +4577,7 @@ const Core = (function () {
       // the start's reaction (LAUNCH, opts.launch): by default in a race from the grid, not in a time trial, on a flying lap (qualifying, a
       // challenge's lap), in the run from the police or the title demo. The AI's reactions from the race's seed (their own numbers: the
       // grid's draws stay as they were); the friends' cars online set off on their own phones
-      const launch = opts.launch != null ? !!opts.launch : !this.timeTrial && !(opts.qualiBack > 0) && !opts.noPlayer && !opts.police;
+      const launch = opts.launch != null ? !!opts.launch : !this.timeTrial && !(opts.qualiBack > 0) && !opts.noPlayer && !opts.police && !(opts.flying > 0);   // (a flying start: no lights to react to)
       const RL = launch ? rng(((opts.seed || 7) * 6151 + 41) >>> 0) : null, lch = (re) => ({ re, held: false, sev: 0, t: -1, k: 1, n: 0, done: false });
       if (launch) this.lch = { n: 0 };   // (in an object: the golden references digest only the plain fields)
       // grid: fastest first
@@ -4770,6 +4770,12 @@ const Core = (function () {
     }
     start() {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
+      // a flying start (opts.flying, m/s: a race up an open road): every car already rolling straight up the road from its slot on the grid,
+      // in the gear for that speed; the clock runs from here, as from the lights
+      if (this.opts.flying > 0 && !this.timeTrial) for (const c of this.cars) {
+        const v = this.opts.flying, M = c.m; c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
+        let g = 1; while (g < M.gears.length && v / M.rw * M.gears[g - 1] * M.final * 9.5493 > M.redline * 0.8) g++; c.gear = g;
+      }
       if (this.lch) for (const c of this.cars) if (c.lch && !c.isPlayer) { c.relT = c.lch.re; c.locked = true; }   // the AI: on the grid until its reaction (as the demo's staggered start)
       // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
