@@ -695,15 +695,15 @@
  },
  "medvode": {
   "meshes": 1028,
-  "verts": 1844303,
+  "verts": 1895363,
   "instances": 13129,
   "props": 440,
   "crowd": 564,
-  "world": "490c2155",
+  "world": "c997578e",
   "propsHash": "59abbac8",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "c5ddb8e9",
+   "-:MeshLambertMaterial": "9604ee63",
    "-:MeshPhongMaterial": "52f9f605",
    "crowd:MeshLambertMaterial": "72b6d05c",
    "-:MeshBasicMaterial": "b3c1a029",
