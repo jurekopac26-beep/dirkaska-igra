@@ -56,6 +56,17 @@ try {
         clear: ctl.length > 0 && ctl.every(c => c.right <= br.left || c.left >= br.right || c.bottom <= br.top || c.top >= br.bottom), txt: document.getElementById('ws-t').textContent, nL: P2.wreck.nL, fire: Render.burning(P2), bar: sx(), roof: roof() };
       { const t = document.getElementById('ws-t'), rg = document.createRange(); rg.selectNodeContents(t); const r = rg.getBoundingClientRect();   // (the title: heavy, on one line inside the button; under it the same English words in both languages)
         Object.assign(sw0, { fit: t.scrollWidth <= t.clientWidth + 1 && r.left >= br.left + 3 && r.right <= br.right - 3 && r.height < 1.6 * parseFloat(getComputedStyle(t).fontSize), heavy: parseFloat(getComputedStyle(t).webkitTextStrokeWidth) > 0, sub: document.getElementById('ws-s').textContent, tf: Math.round(parseFloat(getComputedStyle(t).fontSize)) }); }
+      { // (clear of the car, as the camera behind it frames it at every Oddaljenost, Nagib kamere and Položaj avta: the car's body projected;
+        // on its side up top, under the clock, clear of the corner sign, the rank's column and the map)
+        const C = Render.cam, keep = [C.userZoom, C.userTilt, C.userBack], v = Render.viewOf(P2), cut = (A, B) => A.left < B.right - 1 && B.left < A.right - 1 && A.top < B.bottom - 1 && B.top < A.bottom - 1;
+        const carBox = () => { const b = new THREE.Box3().setFromObject(v.bodyG || v.grp); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+          for (let k = 0; k < 8; k++) { const p = new THREE.Vector3(k & 1 ? b.max.x : b.min.x, k & 2 ? b.max.y : b.min.y, k & 4 ? b.max.z : b.min.z).project(Render.camera), x = (p.x + 1) / 2 * innerWidth, y = (1 - p.y) / 2 * innerHeight; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+          return { left: x0, top: y0, right: x1, bottom: y1 }; };
+        const car = [];
+        for (const z of [1.1, 1.4, 1.7]) for (const tl of [0.1, 0.3]) for (const bk of [0, 20]) { Object.assign(C, { userZoom: z, userTilt: tl, userBack: bk }); Render.frame(0.001, 1, P2, 'chase', { noFx: true }); const c = carBox(); car.push([z, tl, bk, Math.round(c.top), Math.round(c.bottom), cut(c, br)]); }
+        [C.userZoom, C.userTilt, C.userBack] = keep; Render.frame(0.001, 1, P2, 'chase', { noFx: true });
+        const hud = ['h-times', 'h-note', 'h-map', 'h-rank'].map(id => document.getElementById(id)).filter(e => e.getClientRects().length).map(e => [e.id, e.getBoundingClientRect()]).filter(([, q]) => q.width > 0 && cut(q, br)).map(([id]) => id);
+        Object.assign(sw0, { car, hud, top: Math.round(br.top), clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom) }); }
       g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx();
       P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
@@ -88,6 +99,8 @@ try {
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel off with the spare on the roof: a big button ("${en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO'}" heavy and on one line inside it, under it "Press here to change tyre"), all on screen, clear of the steering and the pedals, its bar at its very foot running out, no fire yet; at 20 % of the bar (white) the hub where the wheel was on fire; a tap beside it: nothing`,
       a.sw0.on && a.sw0.big && a.sw0.inView && a.sw0.barIn && a.sw0.clear && a.sw0.txt === (en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO') && a.sw0.fit && a.sw0.heavy && a.sw0.sub === 'Press here to change tyre' && a.sw0.nL === 1 && !a.sw0.fire && a.sw0.bar <= 1 && a.sw0.bar2 < a.sw0.bar && a.sw0.hub === 1 && a.sw0.hot
         && a.sw0.beside.nL === 1 && a.sw0.beside.ask === 1 && a.sw0.beside.on, JSON.stringify(a.sw0));
+    T.check(`${tag}: ZAMENJAJ KOLO clear of the car at every camera distance, tilt and car position${vw.width > vw.height ? '; on its side up top, just under the clock, clear of the corner sign, the rank\'s column and the map' : ''}`,
+      a.sw0.car.length === 12 && a.sw0.car.every(c => !c[5]) && (vw.width < vw.height || (a.sw0.hud.length === 0 && a.sw0.top >= a.sw0.clock && a.sw0.top <= a.sw0.clock + 12)), JSON.stringify({ car: a.sw0.car, hud: a.sw0.hud, top: a.sw0.top, clock: a.sw0.clock }));
     T.check(`${tag}: the spare drawn lying on the roof (over the body's top, within the car's length) until it is put on, then gone`,
       !!a.sw0.roof && a.sw0.roof.vis && a.sw0.roof.y > 0.9 && a.sw0.roof.y < a.sw0.roof.top + 0.4 && Math.abs(a.sw0.roof.x) < 1.5 && !!a.sw1.roof && !a.sw1.roof.vis, JSON.stringify([a.sw0.roof, a.sw1.roof]));
     T.check(`${tag}: a tap on the button: the spare on at once (four wheels, drawn), the car not slowed, the button gone, no spare left; the hub's fire out within 5 s, the car driving on`,
