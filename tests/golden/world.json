@@ -20,12 +20,12 @@
  },
  "monaco": {
   "meshes": 290,
-  "verts": 752713,
+  "verts": 752773,
   "instances": 3123,
-  "props": 143,
+  "props": 148,
   "crowd": 3123,
-  "world": "35ed0d2c",
-  "propsHash": "51f46d13",
+  "world": "c21670d6",
+  "propsHash": "ac344d6",
   "floor": "5bd68b2e/6692",
   "groups": {
    "-:MeshLambertMaterial": "db19a766",
@@ -35,7 +35,7 @@
    "ao:MeshBasicMaterial": "e2fcce7d",
    "tyremarks:MeshBasicMaterial": "c8624df2",
    "roadwear:MeshLambertMaterial": "a15246d6",
-   "brakeBoards:MeshLambertMaterial": "559ef4d5"
+   "brakeBoards:MeshLambertMaterial": "1cbf74e3"
   }
  },
  "toskana": {
@@ -163,12 +163,12 @@
  },
  "nring": {
   "meshes": 3288,
-  "verts": 1075430,
+  "verts": 1075682,
   "instances": 134838,
-  "props": 784,
+  "props": 805,
   "crowd": 11706,
-  "world": "823ad2bc",
-  "propsHash": "2b1fd9ad",
+  "world": "6956702f",
+  "propsHash": "fcc23a7",
   "floor": "e5170eee/41384",
   "groups": {
    "-:MeshLambertMaterial": "9829e2e2",
@@ -177,17 +177,17 @@
    "ao:MeshBasicMaterial": "d380ad03",
    "roadwear:MeshLambertMaterial": "c8e4d7ce",
    "worn:MeshLambertMaterial": "a06ea786",
-   "brakeBoards:MeshLambertMaterial": "e1671133"
+   "brakeBoards:MeshLambertMaterial": "e586fe92"
   }
  },
  "spa": {
   "meshes": 1224,
-  "verts": 678558,
+  "verts": 678810,
   "instances": 55088,
-  "props": 80,
+  "props": 101,
   "crowd": 5617,
-  "world": "2ac4db1a",
-  "propsHash": "5faf0407",
+  "world": "c96a75ee",
+  "propsHash": "2afe5d7",
   "floor": "b3d517c3/14000",
   "groups": {
    "-:MeshLambertMaterial": "e8e7036c",
@@ -197,17 +197,17 @@
    "tyremarks:MeshBasicMaterial": "9a5c2c1e",
    "roadwear:MeshLambertMaterial": "cb1ab93b",
    "worn:MeshLambertMaterial": "6756b117",
-   "brakeBoards:MeshLambertMaterial": "ff721fd9"
+   "brakeBoards:MeshLambertMaterial": "b799107d"
   }
  },
  "rbring": {
   "meshes": 652,
-  "verts": 463890,
+  "verts": 464034,
   "instances": 15578,
-  "props": 67,
+  "props": 79,
   "crowd": 2968,
-  "world": "95580695",
-  "propsHash": "99ebf243",
+  "world": "4957e0b0",
+  "propsHash": "7dce562f",
   "floor": "106192fc/8652",
   "groups": {
    "-:MeshLambertMaterial": "c5014927",
@@ -220,17 +220,17 @@
    "ao:MeshBasicMaterial": "fb91690b",
    "roadwear:MeshLambertMaterial": "e4236e6b",
    "worn:MeshLambertMaterial": "13bd875b",
-   "brakeBoards:MeshLambertMaterial": "77c077e2"
+   "brakeBoards:MeshLambertMaterial": "c5342d45"
   }
  },
  "suzuka": {
   "meshes": 895,
-  "verts": 446168,
+  "verts": 446312,
   "instances": 19293,
-  "props": 147,
+  "props": 159,
   "crowd": 1522,
-  "world": "f68f8e0",
-  "propsHash": "1cdfec55",
+  "world": "2a8f2fa2",
+  "propsHash": "e18141a2",
   "floor": "72b445dd/11620",
   "groups": {
    "-:MeshLambertMaterial": "e6dcda31",
@@ -241,7 +241,7 @@
    "tyremarks:MeshBasicMaterial": "b6a15a32",
    "roadwear:MeshLambertMaterial": "ebafee10",
    "worn:MeshLambertMaterial": "a609397d",
-   "brakeBoards:MeshLambertMaterial": "c76a4aa3"
+   "brakeBoards:MeshLambertMaterial": "a650ba15"
   }
  },
  "caracoles": {
@@ -305,12 +305,12 @@
  },
  "bathurst": {
   "meshes": 989,
-  "verts": 653320,
+  "verts": 653428,
   "instances": 14720,
-  "props": 94,
+  "props": 103,
   "crowd": 4198,
-  "world": "7c5377e3",
-  "propsHash": "9e34cc63",
+  "world": "d7b6c6ce",
+  "propsHash": "31c86d06",
   "floor": "8a20442b/12404",
   "groups": {
    "-:MeshLambertMaterial": "b027d7a7",
@@ -323,7 +323,7 @@
    "ao:MeshBasicMaterial": "b4f912c0",
    "roadwear:MeshLambertMaterial": "8cb1e885",
    "worn:MeshLambertMaterial": "1a992b4a",
-   "brakeBoards:MeshLambertMaterial": "bc2be351"
+   "brakeBoards:MeshLambertMaterial": "379f179a"
   }
  },
  "chapman": {
@@ -557,12 +557,12 @@
  },
  "cpalace": {
   "meshes": 301,
-  "verts": 382530,
+  "verts": 382566,
   "instances": 6876,
-  "props": 29,
+  "props": 32,
   "crowd": 2457,
-  "world": "c83a224a",
-  "propsHash": "3744002c",
+  "world": "7d2a4e85",
+  "propsHash": "15736fc5",
   "floor": "5a965253/6440",
   "groups": {
    "-:MeshLambertMaterial": "5ff703e7",
@@ -573,17 +573,17 @@
    "ao:MeshBasicMaterial": "3555589",
    "roadwear:MeshLambertMaterial": "3e601f8d",
    "worn:MeshLambertMaterial": "5a1d01e1",
-   "brakeBoards:MeshLambertMaterial": "67462bbf"
+   "brakeBoards:MeshLambertMaterial": "e3a49ff6"
   }
  },
  "riverside": {
   "meshes": 458,
-  "verts": 297542,
+  "verts": 297758,
   "instances": 5358,
-  "props": 46,
+  "props": 64,
   "crowd": 3125,
-  "world": "d6fc9647",
-  "propsHash": "f71f7ab9",
+  "world": "691bc1b8",
+  "propsHash": "61c87492",
   "floor": "35af8a01/10528",
   "groups": {
    "-:MeshLambertMaterial": "d4705128",
@@ -593,17 +593,17 @@
    "rsFar:MeshBasicMaterial": "a1504747",
    "ao:MeshBasicMaterial": "f4db3fe6",
    "roadwear:MeshLambertMaterial": "fc990f68",
-   "brakeBoards:MeshLambertMaterial": "7cc4bf78"
+   "brakeBoards:MeshLambertMaterial": "d2ba4ded"
   }
  },
  "monterey": {
   "meshes": 452,
-  "verts": 368418,
+  "verts": 368586,
   "instances": 13039,
-  "props": 147,
+  "props": 161,
   "crowd": 3587,
-  "world": "d382f401",
-  "propsHash": "e3fd8eb7",
+  "world": "5effc72b",
+  "propsHash": "f741a23b",
   "floor": "22497fba/7196",
   "groups": {
    "-:MeshLambertMaterial": "90115a4a",
@@ -615,7 +615,7 @@
    "ao:MeshBasicMaterial": "b17601da",
    "roadwear:MeshLambertMaterial": "49e46f84",
    "worn:MeshLambertMaterial": "ebfa5202",
-   "brakeBoards:MeshLambertMaterial": "b672e3b"
+   "brakeBoards:MeshLambertMaterial": "f282da9"
   }
  },
  "longford": {
@@ -692,12 +692,12 @@
  },
  "rio": {
   "meshes": 599,
-  "verts": 533214,
+  "verts": 533322,
   "instances": 10663,
-  "props": 151,
+  "props": 160,
   "crowd": 2408,
-  "world": "9da73a93",
-  "propsHash": "940ce7ae",
+  "world": "4404bda2",
+  "propsHash": "591d45c4",
   "floor": "8352b82e/9800",
   "groups": {
    "-:MeshLambertMaterial": "2586f5f3",
@@ -712,7 +712,7 @@
    "ao:MeshBasicMaterial": "9ed68494",
    "roadwear:MeshLambertMaterial": "42a0abc9",
    "worn:MeshLambertMaterial": "418a694",
-   "brakeBoards:MeshLambertMaterial": "6f61507b"
+   "brakeBoards:MeshLambertMaterial": "e6f70a6c"
   }
  },
  "toronto": {
@@ -759,12 +759,12 @@
  },
  "montreal": {
   "meshes": 1281,
-  "verts": 1330668,
+  "verts": 1330680,
   "instances": 9398,
-  "props": 74,
+  "props": 75,
   "crowd": 1765,
-  "world": "b4aa4eed",
-  "propsHash": "c78eb4bf",
+  "world": "f7f816a4",
+  "propsHash": "1dbba425",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "80c4d243",
@@ -788,7 +788,7 @@
    "tyremarks:MeshBasicMaterial": "866794",
    "roadwear:MeshLambertMaterial": "94b9d14f",
    "worn:MeshLambertMaterial": "3cccb8e6",
-   "brakeBoards:MeshLambertMaterial": "6245381d"
+   "brakeBoards:MeshLambertMaterial": "62ecc02e"
   }
  },
  "greatalpine": {
@@ -906,12 +906,12 @@
  },
  "townsville": {
   "meshes": 447,
-  "verts": 554145,
+  "verts": 554181,
   "instances": 6815,
-  "props": 241,
+  "props": 244,
   "crowd": 592,
-  "world": "daf3e6b0",
-  "propsHash": "c95a5eba",
+  "world": "3f367ba4",
+  "propsHash": "f3829e11",
   "floor": "f3956e45/5712",
   "groups": {
    "-:MeshLambertMaterial": "aa029b20",
@@ -922,7 +922,7 @@
    "ao:MeshBasicMaterial": "a60d9ab3",
    "tyremarks:MeshBasicMaterial": "3bee59d4",
    "roadwear:MeshLambertMaterial": "d5eab6b2",
-   "brakeBoards:MeshLambertMaterial": "d65266b6"
+   "brakeBoards:MeshLambertMaterial": "82a5666a"
   }
  },
  "marrakesh": {
@@ -963,12 +963,12 @@
  },
  "troisrivieres": {
   "meshes": 221,
-  "verts": 491334,
+  "verts": 491358,
   "instances": 2713,
-  "props": 167,
+  "props": 169,
   "crowd": 813,
-  "world": "fd0310c0",
-  "propsHash": "858cb12f",
+  "world": "f72fb233",
+  "propsHash": "4541ff2a",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "bb585933",
@@ -991,7 +991,7 @@
    "ao:MeshBasicMaterial": "c46ede68",
    "tyremarks:MeshBasicMaterial": "83b82464",
    "roadwear:MeshLambertMaterial": "75a3ed9a",
-   "brakeBoards:MeshLambertMaterial": "c208aeec"
+   "brakeBoards:MeshLambertMaterial": "4f0cfa4d"
   }
  },
  "jezero": {
