@@ -73,6 +73,10 @@ try {
         [C.userZoom, C.userTilt, C.userBack] = keep; Render.frame(0.001, 1, P2, 'chase', { noFx: true });
         const hud = ['h-times', 'h-note', 'h-map', 'h-rank'].map(id => document.getElementById(id)).filter(e => e.getClientRects().length).map(e => [e.id, e.getBoundingClientRect()]).filter(([, q]) => q.width > 0 && cut(q, br)).map(([id]) => id);
         Object.assign(sw0, { car, hud, top: Math.round(br.top), clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom) }); }
+      { // (a new size while the HUD is hidden by a screen over the race, as the pause's photo: the button keeps its place; back in the race,
+        // placed again under the clock)
+        const hudE = document.getElementById('hud'), top0 = btn.style.top; hudE.classList.add('off'); dispatchEvent(new Event('resize')); const topHid = btn.style.top; hudE.classList.remove('off');
+        g.resume(); await frames(2); g.pause(); sw0.stale = { before: top0, hidden: topHid, after: btn.style.top, clock: Math.round(document.getElementById('h-times').getBoundingClientRect().bottom), btop: Math.round(btn.getBoundingClientRect().top) }; }
       g.resume(); await frames(4); await wait(300); g.pause(); sw0.bar2 = sx(); sw0.buzz0 = buzz(); sw0.side = side();
       P2.wreck.rule.due = Math.min(P2.wreck.rule.due, 0.5); g.sim(0.05, true);   // (the bar under 20 %: the hub's fire; its time set, not driven out: wheels.test.js times it)
       g.resume(); await frames(2); g.pause(); sw0.hub = Render.burning(P2) && Render.viewOf(P2).fire ? Render.viewOf(P2).fire.lvl : 0; sw0.hot = btn.classList.contains('hot'); const v0 = P2.speed;
@@ -115,8 +119,9 @@ try {
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel off with the spare on the roof: a big button ("${en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO'}" heavy and on one line inside it, under it "Press here to change tyre"), all on screen, clear of the steering and the pedals, its bar at its very foot running out, no fire yet; at 20 % of the bar (white) the hub where the wheel was on fire; a tap beside it: nothing`,
       a.sw0.on && a.sw0.big && a.sw0.inView && a.sw0.barIn && a.sw0.clear && a.sw0.txt === (en ? 'CHANGE THE WHEEL' : 'ZAMENJAJ KOLO') && a.sw0.fit && a.sw0.heavy && a.sw0.sub === 'Press here to change tyre' && a.sw0.nL === 1 && !a.sw0.fire && a.sw0.bar <= 1 && a.sw0.bar2 < a.sw0.bar && a.sw0.hub === 1 && a.sw0.hot
         && a.sw0.beside.nL === 1 && a.sw0.beside.ask === 1 && a.sw0.beside.on, JSON.stringify(a.sw0));
-    T.check(`${tag}: ZAMENJAJ KOLO clear of the car at every camera distance, tilt and car position${vw.width > vw.height ? '; on its side up top, just under the clock, clear of the corner sign, the rank\'s column and the map' : ''}`,
-      a.sw0.car.length === 12 && a.sw0.car.every(c => !c[5]) && (vw.width < vw.height || (a.sw0.hud.length === 0 && a.sw0.top >= a.sw0.clock && a.sw0.top <= a.sw0.clock + 12)), JSON.stringify({ car: a.sw0.car, hud: a.sw0.hud, top: a.sw0.top, clock: a.sw0.clock }));
+    T.check(`${tag}: ZAMENJAJ KOLO clear of the car at every camera distance, tilt and car position${vw.width > vw.height ? '; on its side up top, just under the clock (also after a new size while a screen hid the HUD), clear of the corner sign, the rank\'s column and the map' : ''}`,
+      a.sw0.car.length === 12 && a.sw0.car.every(c => !c[5]) && (vw.width < vw.height || (a.sw0.hud.length === 0 && a.sw0.top >= a.sw0.clock && a.sw0.top <= a.sw0.clock + 12
+        && a.sw0.stale.hidden === a.sw0.stale.before && a.sw0.stale.btop >= a.sw0.stale.clock)), JSON.stringify({ car: a.sw0.car, hud: a.sw0.hud, top: a.sw0.top, clock: a.sw0.clock, stale: a.sw0.stale }));
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel left of the words on its title, the title still on one line inside the button`, a.sw0.icon && a.sw0.fit, JSON.stringify({ icon: a.sw0.icon, fit: a.sw0.fit, tf: a.sw0.tf }));
     T.check(`${tag}: ZAMENJAJ KOLO: the phone buzzes four long times in the last second (none before it), once`, a.sw0.buzz0 === 0 && a.sw0.buzz1 === 1 && a.sw1.buzz === 1, JSON.stringify({ before: a.sw0.buzz0, last: a.sw0.buzz1, after: a.sw1.buzz, all: a.sw0.vib }));
     T.check(`${tag}: the tap: ${en ? 'WHEEL CHANGED' : 'KOLO ZAMENJANO'} (gold, the wrench), clear of the damage picture; the pits' wheel gun three times`,
