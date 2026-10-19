@@ -23,8 +23,9 @@
 //    wreck's start number and a patrol car's light bar gone; open cars and karts none, their drivers and hoops never lifted; the roof's
 //    paint darker where it sank (by its drop: 60 % at the deepest it can go), on the paint's own colour, the rest of the body, the
 //    lining and the posts as they were, never into or through a glass colour as the body's shader sees one (a black car's: a warm way
-//    round them, to a brown-black, 40 % darker or more in the dent's deep half); a pit stop's repair brings its colour back; an open
-//    car's paint never darkened so
+//    round them, to a brown-black, 40 % darker or more in the dent's deep half; a reddish black's too); a pit stop's repair brings its
+//    colour back (black paint walked back along its way: at none of the 16 steps newly glass to the shader); an open car's paint never
+//    darkened so
 //   node tests/browser/crash.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -63,8 +64,8 @@ try {
   // cut short: the user's "warmer black", xBlackU): on its warm way (a quadratic Bezier P -> P (1.644, 0.754, 0.363) -> P (0.56,
   // 0.474, 0.102); offWay), its luminance down by 55 % q (bkErr) or stopped short of the glass colours (bkStop: no nearer than 0.066, or
   // than it was, bkFar, bkNear; its next step would be) or held back with its facet's other warm corners where its colours across it
-  // would come within 0.0505 of one (bkPull, xBkFacet), never lighter (bkUp); the deep half (q > 0.5): its mean luminance drop bkDeep,
-  // warm there (red >= blue, bkCold none). Any other whose darkening would come within R of a glass colour on its way from the paint's
+  // would come within 0.0505 of one (bkPull, xBkFacet), never lighter (bkUp; bkRise: a way lighter at first, a reddish black's); the
+  // deep half (q > 0.5): its mean luminance drop bkDeep, warm there (red >= blue, bkCold none). Any other whose darkening would come within R of a glass colour on its way from the paint's
   // colour (R 0.066, 0.0505 for a paint 0.05..0.066 off it already): at that sphere's near edge, or the paint's colour where it is nearer
   // than R (guard: as dark as keeps it off and never through it, never lighter than the paint); the deepest other one's t (kmax). Over the
   // roof's facets the area (in plan) the shader newly takes for glass, their colours interpolated across them (glassA, of roofA). The
@@ -75,7 +76,7 @@ try {
     const asP = (i) => { const t = (i / 3) | 0; for (let q = 0; q < 3; q++) { const j = t * 3 + q; if (painted(j) && glassy(ref(j))) return true; } return false; };   // (its facet glass to the shader in part already)
     let dMax = 0, nE = 0; for (let e = 0; e < G.nS; e++) dMax = Math.max(dMax, G.L[e] * G.W[e]);
     const o = { n: 0, err: 0, hue: 0, lighter: 0, asPaint: 0, errA: 0, guard: 0, edge: 0, inGlass: 0, glassA: 0, roofA: 0, qmax: 0, kmax: 1, sunk: 0, tSunk: 0, n0: 0, err0: 0, nR: 0, errR: 0, nL: 0, errL: 0, nan: 0, dMax: +G.dMax.toFixed(4), dMaxOk: G.dMax === dMax, idx: true,
-      bk: 0, offWay: 0, bkErr: 0, bkStop: 0, bkPull: 0, bkStopBad: 0, bkFar: Infinity, bkNear: Infinity, bkUp: 0, bkDeep: 0, bkDeepN: 0, bkMax: 0, bkCold: 0 };
+      bk: 0, offWay: 0, bkErr: 0, bkStop: 0, bkPull: 0, bkStopBad: 0, bkFar: Infinity, bkNear: Infinity, bkUp: 0, bkDeep: 0, bkDeepN: 0, bkMax: 0, bkCold: 0, bkRise: 0 };
     const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2], BQ = [1.644, 0.754, 0.363], BT = [0.56, 0.474, 0.102], way = (P, u) => P.map((x, k) => x * ((1 - u) * (1 - u) + 2 * u * (1 - u) * BQ[k] + u * u * BT[k]));   // (black paint's warm way)
     // (a facet's colours, interpolated: how near they come to Q, sampled finely (64 steps a side); pulled: a facet whose warm corners its
     // colours across it held back, the nearest of them at 0.0505 off a glass colour (or the paint's own nearest))
@@ -93,7 +94,7 @@ try {
       else if (kd < 1 && black) {   // (black paint: its warm way)
         o.bk++; const L0 = lum(P), Lr = lum(F) / L0, Lt = 1 - 0.55 * q, dP = Math.min(...GL.map(Q => dG(P, Q))), dF = Math.min(...GL.map(Q => dG(F, Q))), lim = Math.min(0.066, dP);
         let ub = 0, db = Infinity; for (let s = 0; s <= 4096; s++) { const u = s / 4096, w = way(P, u), d = dG(w, F); if (d < db) { db = d; ub = u; } } o.offWay = Math.max(o.offWay, db);   // (F on the way: at ub)
-        if (Lr > 1 + 1e-6) o.bkUp++;
+        if (Lr > 1 + 1e-6) o.bkUp++; if (lum(way(P, 0.05)) > L0) o.bkRise++;   // (bkRise: a reddish black, its way lighter at first)
         if (Math.abs(Lr - Lt) < 1e-4 || (lum(way(P, 1)) / L0 > Lt && ub > 0.999)) o.bkErr = Math.max(o.bkErr, Math.abs(Lr - Math.max(Lt, lum(way(P, 1)) / L0)));   // (as dark as it should be, or the way's end)
         else { const nx = way(P, Math.min(1, ub + 1 / 64));
           if (Lr > Lt && dF < lim + 0.006 && Math.min(...GL.map(Q => dG(nx, Q))) < lim + 0.006) o.bkStop++;   // (stopped short, the glass colours near: its next step at their edge)
@@ -349,18 +350,40 @@ try {
   // car's as built, and Race.repairCar builds it afresh in them
   const RSEQ = [[0.15, -1, 0], [0.15, 1, -0.6], [0.15, 0.1, -1], [0.15, -1, 0.6], [0.3, 1, 0], [0.3, 0, 1], [0.05, -1, -0.6], 'top', [0.15, 1, 0.6], [0.15, -0.1, 1]], NK = RSEQ.length;
   // the crew's repair stepped by hand (repair.test.mjs) on the car Q (frames(k): k frames drawn): the painted points' colours against the
-  // car's as built (xc.col0), the roof's and all of them, before, through it and after (Race.repairCar: built afresh)
-  const pitFn = `(Q, frames) => { const R = window.__game.race, v0 = Render.viewOf(Q), xc = v0.xc, G = xc.rf.G, C0 = xc.col0, K = v0.kit;
+  // car's as built (xc.col0), the roof's and all of them, before, through it and after (Race.repairCar: built afresh); and at every one of
+  // its 16 steps (REPAIR_N; the middle of each, and 0, 0.3, 0.65, 0.95) the roof shell's points (nNew) and the area (in plan) of its facets,
+  // their colours interpolated (newA, of roofA), the body's shader takes for glass that it took for glass neither in the dent nor as built
+  // (black paint's way back from its brown-black: never straight through KIT_GL2; repShell)
+  const pitFn = `(Q, frames) => { const R = window.__game.race, v0 = Render.viewOf(Q), xc = v0.xc, G = xc.rf.G, C0 = xc.col0, K = v0.kit, pos = v0.body.geometry.attributes.position.array;
     const diff = (a, shell) => { const N = shell ? G.nS : a.length / 3; let m = 0;
       for (let j = 0; j < N; j++) { const i = shell ? G.sI[j] : j; if ((K && K.deadV && K.deadV[i]) || (shell && xc.keep[i])) continue; for (let c = 0; c < 3; c++) m = Math.max(m, Math.abs(a[i * 3 + c] - C0[i * 3 + c])); }
       return +m.toFixed(6); };
-    const out = { before: diff(v0.body.geometry.attributes.color.array, 1), steps: [] };
+    const ca0 = v0.body.geometry.attributes.color.array.slice(), cut = v0.xtCut ? v0.xtCut.slice() : null, dead = K && K.deadV ? K.deadV.slice() : null, skip = (i) => xc.keep[i] || (cut && cut[i]) || (dead && dead[i]);
+    const GL = [[0.1, 0.13, 0.19], [0.04, 0.05, 0.08]], glassy = (r, g, b) => GL.some(Q => (r - Q[0]) ** 2 + (g - Q[1]) ** 2 + (b - Q[2]) ** 2 < 0.0025);   // (the shader's test: within 0.05)
+    const tris = [], seen = new Set(); let roofA = 0;
+    for (let e = 0; e < G.nS; e++) { const t = (G.sI[e] / 3) | 0, c = t * 3; if (seen.has(t)) continue; seen.add(t); if (skip(c) || skip(c + 1) || skip(c + 2)) continue;
+      const ar = Math.abs((pos[c * 3 + 3] - pos[c * 3]) * (pos[c * 3 + 8] - pos[c * 3 + 2]) - (pos[c * 3 + 5] - pos[c * 3 + 2]) * (pos[c * 3 + 6] - pos[c * 3])) / 2; tris.push([t, ar]); roofA += ar; }
+    const glassNew = (a) => { let nNew = 0, newA = 0;
+      for (let e = 0; e < G.nS; e++) { const i = G.sI[e], o = i * 3; if (!skip(i) && glassy(a[o], a[o + 1], a[o + 2]) && !glassy(ca0[o], ca0[o + 1], ca0[o + 2]) && !glassy(C0[o], C0[o + 1], C0[o + 2])) nNew++; }
+      for (const [t, ar] of tris) { const o = t * 9; let nw = 0, ns = 0;
+        for (let p = 0; p <= 8; p++) for (let q = 0; p + q <= 8; q++) { const w0 = 1 - (p + q) / 8, w1 = p / 8, w2 = q / 8, mx = (X, k) => w0 * X[o + k] + w1 * X[o + 3 + k] + w2 * X[o + 6 + k]; ns++;
+          if (glassy(mx(a, 0), mx(a, 1), mx(a, 2)) && !glassy(mx(ca0, 0), mx(ca0, 1), mx(ca0, 2)) && !glassy(mx(C0, 0), mx(C0, 1), mx(C0, 2))) nw++; }
+        newA += ar * nw / ns; }
+      return { nNew, newA: +newA.toFixed(5) }; };
+    const out = { before: diff(ca0, 1), roofA: +roofA.toFixed(3), steps: [] };
     Q.pitState = 'repair'; Q.pitDur = 4;
-    for (const u of [0, 0.3, 0.65, 0.95]) { Q.pitT = u * Q.pitDur; frames(1); const v = Render.viewOf(Q), ca = v.body.geometry.attributes.color.array; out.steps.push({ u, same: v === v0, shell: diff(ca, 1), all: diff(ca, 0) }); }
+    const U = [0, 0.3, 0.65, 0.95]; for (let q = 0; q < 16; q++) U.push((q + 0.5) / 16); U.sort((a, b) => a - b);
+    for (const u of U) { Q.pitT = u * Q.pitDur; frames(1); const v = Render.viewOf(Q), ca = v.body.geometry.attributes.color.array; out.steps.push(Object.assign({ u, same: v === v0, shell: diff(ca, 1), all: diff(ca, 0) }, glassNew(ca))); }
+    out.held = v0.rep && v0.rep.sh ? v0.rep.sh.held : 0;
     R.repairCar(Q); Q.pitState = 'done'; frames(1); Q.pitState = null; Q.pitT = 0; Q.pitDur = 0; frames(1);
     const v1 = Render.viewOf(Q), c1 = v1.body.geometry.attributes.color.array; let after = c1.length === C0.length ? 0 : 1; if (!after) for (let j = 0; j < c1.length; j++) after = Math.max(after, Math.abs(c1[j] - C0[j]));
     return Object.assign(out, { fresh: v1 !== v0, after }); }`;
   const pitOk = (PT) => { const at = (u) => PT.steps.find(q => q.u === u); return PT.before > 0.01 && at(0).shell === PT.before && at(0.3).shell < PT.before && at(0.95).shell === 0 && at(0.95).all === 0 && PT.steps.every(q => q.same) && PT.fresh && PT.after === 0; };
+  const pitGlassOk = (PT) => PT.steps.length === 20 && PT.roofA > 0.5 && PT.steps.every(q => q.nNew === 0 && q.newA <= 0.001 * PT.roofA);
+  const pitGlass = (PT) => JSON.stringify({ roofA: PT.roofA, held: PT.held, steps: PT.steps.map(q => [q.u, q.nNew, q.newA]) });
+  // (black paint, a car's dark trim too, on its warm way as the black car's: on it, as dark as it should be or stopped at the glass's
+  // edge or held back with its facet, never lighter, no nearer the glass colours than 0.066 or than it was)
+  const bkOk = (DK) => DK.bk === 0 || (DK.offWay < 1e-4 && DK.bkErr < 1e-4 && DK.bkStopBad === 0 && DK.bkUp === 0 && (DK.bkFar === null || DK.bkFar >= 0.066 - 1e-4) && (DK.bkNear === null || DK.bkNear >= -1e-4));
   for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
     const rr = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: det, carId: rival ? 'tornado' : id }, (A) => {
       const SEQ = A[0], g = window.__game, R = g.race, P = R.player;
@@ -400,13 +423,14 @@ try {
     if (side) T.check(`roof field, ${name}: a side knock lowers that side's rail and pulls it in (1 cm, 4 mm)`,
       [[2, 0], [5, 1]].every(([k, sd]) => S[k].rf.rail[sd] - S[k - 1].rf.rail[sd] >= 0.01 && S[k].rf.pull[sd] - S[k - 1].rf.pull[sd] >= 0.004), JSON.stringify(S.map(q => [q.rf.rail, q.rf.pull])));
     const DK = rr.r.dark;
-    T.check(`roof field, ${name}: its paint darker where it sank (each shell point by its drop over the deepest any can go, ${DK.dMax} m: 60 % there), on the colour the paint gives it (its folds, its scrapes; the hue kept), never lighter, never into or through a glass colour as the body's shader sees one (a facet it takes for glass in part already as the paint gives it; no more than 0.1 % of the roof newly glass to it, its colours interpolated); a point not sunk and the rest of the body as the paint gives them, the lining and the posts as built; no NaN`,
-      DK.idx && DK.dMaxOk && DK.n > 200 && DK.err < 1e-4 && DK.hue < 2e-5 && DK.lighter === 0 && DK.inGlass === 0 && DK.edge === DK.guard && DK.errA < 1e-4 && DK.roofA > 0.5 && DK.glassA <= 0.001 * DK.roofA && DK.err0 < 1e-4 && DK.nR > 300 && DK.errR < 2e-5 && DK.errL === 0 && DK.nan === 0, JSON.stringify(DK));
+    T.check(`roof field, ${name}: its paint darker where it sank (each shell point by its drop over the deepest any can go, ${DK.dMax} m: 60 % there), on the colour the paint gives it (its folds, its scrapes; the hue kept), never lighter, never into or through a glass colour as the body's shader sees one (a facet it takes for glass in part already as the paint gives it; no more than 0.1 % of the roof newly glass to it, its colours interpolated); black paint (dark trim, ${DK.bk} points) on its warm way as the black car's; a point not sunk and the rest of the body as the paint gives them, the lining and the posts as built; no NaN`,
+      DK.idx && DK.dMaxOk && DK.n > 200 && DK.err < 1e-4 && DK.hue < 2e-5 && DK.lighter === 0 && DK.inGlass === 0 && DK.edge === DK.guard && DK.errA < 1e-4 && DK.roofA > 0.5 && DK.glassA <= 0.001 * DK.roofA && bkOk(DK) && DK.err0 < 1e-4 && DK.nR > 300 && DK.errR < 2e-5 && DK.errL === 0 && DK.nan === 0, JSON.stringify(DK));
     T.check(`roof field, ${name}: its deepest point 1 - 0.6 x its share of the deepest the roof can go of the paint's colour (about 0.4 once there; the Kolibri's, the Medved's after these knocks)`,
       Math.abs(DK.kmax - (1 - 0.6 * DK.qmax)) < 1e-3 && DK.kmax >= 0.4 - 1e-4 && (DK.qmax < 0.95 || DK.kmax <= 0.43) && ((id !== 'kolibri' && id !== 'medved') || DK.qmax >= 0.95), JSON.stringify({ qmax: DK.qmax, kmax: DK.kmax }));
     if (!rival) {
       const PT = rr.r.pit;
-      T.check(`roof field, ${name}: a pit stop's repair brings the roof's colour back (with the bodywork, every point the car's as built by its end; built afresh in them after)`, pitOk(PT), JSON.stringify(PT));
+      T.check(`roof field, ${name}: a pit stop's repair brings the roof's colour back (with the bodywork, every point the car's as built by its end; built afresh in them after)`, pitOk(PT), JSON.stringify(Object.assign({}, PT, { steps: PT.steps.filter(q => [0, 0.3, 0.65, 0.95].includes(q.u)) })));
+      T.check(`roof field, ${name}: through the repair's 16 steps no roof point newly glass to the body's shader (neither in the dent nor as built), no more than 0.1 % of the roof's facets (their colours interpolated)`, pitGlassOk(PT), pitGlass(PT));
       T.check(`roof field, ${name}: after the ${NK} knocks well in (a quarter of its limit or more on average), never past the deepest limit`,
         mean[NK - 1] >= 0.25 * F.lref && S[NK - 1].roof.max <= F.lmax + 0.005, JSON.stringify({ mean: mean[NK - 1], max: S[NK - 1].roof.max, lref: F.lref, lmax: F.lmax }));
       T.check(`roof field, ${name}: the same field every time (the knocks again on the repaired car)`, rr.r.s2.every((q, k) => q.rf && q.rf.hash === S[k].rf.hash), S.map(q => q.rf.hash).join(' ') + ' / ' + rr.r.s2.map(q => q.rf && q.rf.hash).join(' '));
@@ -421,19 +445,26 @@ try {
   // colour 0.05..0.066 off KIT_GL2 was darkened into it unguarded (inGlass, glassA). Its black paint (the user's "warmer black": on main
   // d9f6919 the guard stopped it at the glass colours' edge, the dent's deep half only ~10 % darker) a warm way round them: on its way,
   // 55 % q darker in luminance or stopped at 0.066 off them (or no nearer than it was), never lighter, in the deep half 40 % darker or
-  // more on average and warm (red >= blue); the rest as any colour (-60 % q, at the edge where the guard stops it)
+  // more on average and warm (red >= blue); the rest as any colour (-60 % q, at the edge where the guard stops it). A pit stop's repair
+  // walks it back along its way (no point nor facet newly glass at any of its steps: straight back it crossed KIT_GL2 midway). Then a
+  // reddish black (0x2b1f1c: its way lighter at first) the same way, never lighter, and its repair (the way's lighter stretch: its paint)
   const bk = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carId: 'kolibri', color: 4 }, (A) => {
     const g = window.__game, R = g.race, P = R.player, frames = (k) => { for (let j = 0; j < k; j++) { P.vx = P.vz = 0; Render.frame(j ? 0.05 : 0.016, 1, P, 'chase', {}); } };
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
-    R.repairCar(P); frames(1);
-    for (const h of A[0]) { if (h === 'top') { P.dents.push({ lx: 0.25 * P.m.len / 2, lz: -0.4 * P.m.wid / 2, amt: 0.1, top: 1 }); P.roofDmg = Math.min(1, P.roofDmg + 0.3); } else Core.applyDamage(P, h[0], h[1] * P.m.len / 2, h[2] * P.m.wid / 2); frames(5); }
-    const v = Render.viewOf(P), dark = eval(A[3])(v, eval(A[1])(v, v.xc, Render.crashInfo().XC.paint), eval(A[2])(v, v.xc)); return { color: P.color, dark, pit: eval(A[4])(P, frames) }; }, [RSEQ, paintFn, asideFn, darkFn, pitFn]);
-  const BK = bk.r.dark;
+    const knock = () => { R.repairCar(P); frames(1);
+      for (const h of A[0]) { if (h === 'top') { P.dents.push({ lx: 0.25 * P.m.len / 2, lz: -0.4 * P.m.wid / 2, amt: 0.1, top: 1 }); P.roofDmg = Math.min(1, P.roofDmg + 0.3); } else Core.applyDamage(P, h[0], h[1] * P.m.len / 2, h[2] * P.m.wid / 2); frames(5); }
+      const v = Render.viewOf(P), dark = eval(A[3])(v, eval(A[1])(v, v.xc, Render.crashInfo().XC.paint), eval(A[2])(v, v.xc)); return { color: P.color, dark, pit: eval(A[4])(P, frames) }; };
+    const o = knock(); P.color = 0x2b1f1c; o.red = knock(); return o; }, [RSEQ, paintFn, asideFn, darkFn, pitFn]);
+  const BK = bk.r.dark, BR = bk.r.red.dark;
   T.check('roof field, a black car (the Kolibri, 0x1a1a1f): its black paint a warm way round the glass colours (on its way, 55 % q darker in luminance or stopped where it would come nearer them than 0.066, or than it was, a few with their facet where its colours across it would; never lighter), never into or through them as the shader sees them, a facet glass to the shader in part already as the paint gives it, no more than 0.1 % of the roof newly glass (its colours interpolated); any other colour as before; no NaN, no page errors',
     bk.r.color === 0x1a1a1f && BK.bk > 100 && BK.offWay < 1e-4 && BK.bkErr < 1e-4 && BK.bkStopBad === 0 && BK.bkPull <= 0.02 * BK.bk && BK.bkUp === 0 && BK.bkFar >= 0.066 - 1e-4 && (BK.bkNear === null || BK.bkNear >= -1e-4) && BK.edge === BK.guard && BK.asPaint > 0 && BK.errA < 1e-4 && BK.inGlass === 0 && BK.roofA > 0.5 && BK.glassA <= 0.001 * BK.roofA && BK.lighter === 0 && BK.err < 1e-4 && BK.hue < 2e-5 && BK.nan === 0 && !bk.errors.length, JSON.stringify(BK) + ' ' + bk.errors.slice(0, 2).join(' | '));
   T.check(`roof field, a black car: its dent's deep half (q > 0.5) 40 % darker or more in luminance on average (${(100 * BK.bkDeep).toFixed(1)} %; ~10 % on main), its deepest ${(100 * BK.bkMax).toFixed(1)} %, warm there (red >= blue)`,
     BK.bkDeepN > 50 && BK.bkDeep >= 0.4 && BK.bkMax >= 0.5 && BK.bkCold === 0 && BK.tSunk < 0.7, JSON.stringify({ deep: BK.bkDeep, n: BK.bkDeepN, max: BK.bkMax, cold: BK.bkCold, tSunk: BK.tSunk }));
-  T.check('roof field, a black car: a pit stop\'s repair brings its warm black back to the paint (every point the car\'s as built by its end; built afresh in them after)', pitOk(bk.r.pit), JSON.stringify(bk.r.pit));
+  T.check('roof field, a black car: a pit stop\'s repair brings its warm black back to the paint (every point the car\'s as built by its end; built afresh in them after)', pitOk(bk.r.pit), JSON.stringify(Object.assign({}, bk.r.pit, { steps: bk.r.pit.steps.filter(q => [0, 0.3, 0.65, 0.95].includes(q.u)) })));
+  T.check('roof field, a black car: through the repair\'s 16 steps its warm black walked back along its way, no roof point newly glass to the body\'s shader (neither in the dent nor as built; straight back from the brown-black it crossed KIT_GL2: ~800 points at one step), no more than 0.1 % of the roof\'s facets (their colours interpolated)', pitGlassOk(bk.r.pit), pitGlass(bk.r.pit));
+  T.check('roof field, a reddish black car (0x2b1f1c, its way lighter at first): its black paint on the same warm way, never lighter, no nearer the glass colours than 0.066 or than it was, never into them; its repair as the black one\'s (no point newly glass at any step, every point as built by its end)',
+    bk.r.red.color === 0x2b1f1c && BR.bk > 100 && BR.bkRise >= 0.9 * BR.bk && bkOk(BR) && BR.bkPull <= 0.02 * BR.bk && BR.inGlass === 0 && BR.glassA <= 0.001 * BR.roofA && BR.lighter === 0 && BR.nan === 0 && pitOk(bk.r.red.pit) && pitGlassOk(bk.r.red.pit),
+    JSON.stringify(BR) + ' ' + pitGlass(bk.r.red.pit));
   // the run from the police in the new way: a patrol car wrecked, its light bar gone with its crushed roof (no blue flashes over a wreck;
   // fleet.test.mjs 4c's, the old way's)
   const po = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1 }, async () => {
