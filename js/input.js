@@ -15,10 +15,11 @@ const Input = (function () {
   const tilt = { listening: false, raw: 0, neutral: 0, got: false, lastT: 0, sens: 22, invert: false, value: 0 };
   let autoGas = false;
   let onPause = null;
-  // the phone's vibration (vib its level: 0 none; 1 the basic patterns alone, Core.HAPTIC lv 1; 2 all of them, Nastavitve · Vibracija ·
-  // Vklop): Core.HAPTIC's patterns by name (buzz) and the old single pulses (vibrate: a crash, a landing … as much as the crew's work), one
-  // at a time on the race's clock (buzzStep: each race step's dt; Core.Haptic: which cuts in, which waits, which is dropped); buzzOff stops
-  // the motor (the pause, the page hidden, the setting off, the race's end, the replay). hlog: what started, by name, on that clock (tests)
+  // the phone's vibration (vib its level, Nastavitve · Vibracija: 0 none, Izklop; 1 the basic patterns alone, Core.HAPTIC lv 1, Osnovno; 2
+  // all of them, Vse): Core.HAPTIC's patterns by name (buzz) and the old single pulses (vibrate: a crash, a landing … at either level, as
+  // much as the crew's work), one at a time on the race's clock (buzzStep: each race step's dt; Core.Haptic: which cuts in, which waits,
+  // which is dropped); buzzOff stops the motor (the pause, the page hidden, the setting off, the race's end, the replay). hlog: what
+  // started, by name, on that clock (tests)
   let vib = 2;
   const hq = Core.Haptic(), hlog = [];
   const els = {};

@@ -1521,7 +1521,7 @@ const Core = (function () {
   // p: on, off, on … in ms, as navigator.vibrate takes it (every pulse 20 ms or more: a cheap phone's motor does not feel a shorter one);
   // pri: how much it matters (5 the hand-back; 4 the stop, the car let down, the release; 3 the crew's work and the old single pulses, a
   // crash, a landing …: Input.vibrate; 2 the way in and out; 1 only with nothing else playing: Haptic); lv: 1 the basic ones, 2 the rest
-  // (Nastavitve · Vibracija · Vklop plays both; a third choice there, the basic ones alone, would only set Input's level to 1); min: only on
+  // (Nastavitve · Vibracija · Osnovno plays the basic ones alone and the single pulses, Vse both: Input's level, 1 or 2); min: only on
   // a stop at least that long (s: on a shorter one the crew's moments come too close together)
   const HAPTIC = {
     pitLine: { p: [25], pri: 2, lv: 2 },   // over the pit wall's line with no stop (running wide at the way out: BOKSI)

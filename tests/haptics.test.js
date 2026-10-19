@@ -5,7 +5,9 @@
 // crewLogic draws them. Core.Haptic, the queue on the race's clock: one pattern at a time, one that matters more cuts in, one that matters
 // as much or less waits (the more important first), not too long, pri 1 never waits, off empties it. Then stops of 1.2 s (repairs only),
 // 2.6 s (tyres), 6 and 10.6 s (fuel) with the moments where crewLogic puts them: every moment's pattern played, in order, one at a time,
-// none more than HAP_LATE late, the rattle only on the long stops; on the short one no jacks or wheels (min).
+// none more than HAP_LATE late, the rattle only on the long stops; on the short one no jacks or wheels (min). The same stops with
+// Nastavitve · Vibracija · Osnovno (Input's level 1: the patterns above it never reach the queue): only the stop, the release and the
+// hand-back, each at its moment, the motor on for less.
 //   node tests/haptics.test.js
 'use strict';
 const fs = require('fs');
@@ -35,7 +37,7 @@ const NAMES = ['pitLine', 'pitAP', 'pitLimit', 'pitBox', 'pitStop', 'jackF', 'ja
   const pl = ks.filter(k => !(Number.isInteger(H[k].pri) && H[k].pri >= 1 && H[k].pri <= 5 && (H[k].lv === 1 || H[k].lv === 2)));
   check('each with a priority 1-5 and a level (1 basic, 2 the rest)', !pl.length, pl.join(' '));
   const basic = ks.filter(k => H[k].lv === 1).sort().join(' ');
-  check('the basic ones (a setting of the basic ones alone would keep these): the stop, the releases, the hand-back, the repair choice', basic === 'choice go goCharge goFuel handBack pitStop', basic);
+  check('the basic ones (Vibracija · Osnovno keeps these): the stop, the releases, the hand-back, the repair choice', basic === 'choice go goCharge goFuel handBack pitStop', basic);
   const top = ks.filter(k => H[k].pri === 5), maxP = Math.max(...ks.map(k => Math.max(...pulses(H[k].p))));
   check('VOZIŠ TI! the strongest: the only priority 5, the longest pulse of all', top.join() === 'handBack' && H.handBack.p[0] === maxP && ks.filter(k => k !== 'handBack').every(k => Math.max(...pulses(H[k].p)) < maxP), JSON.stringify(H.handBack));
   check('the stop, the car let down and the releases above the crew\'s work (4), the crew\'s work above the way in and out (3 > 2); pri 1 only the rattle, the countdown and a rival passing',
@@ -81,9 +83,10 @@ const STEP = 1 / 120, LATE = 0.35, GAP = 0.04, len = (k) => sum(H[k].p) / 1000;
 }
 
 // 4. stops as the game sees them: the moments where crewLogic puts them (the front jack as the car stops, the rear one's man dashes in),
-// the way in before, the hand-back and the rejoin after; the queue stepped as the race is
+// the way in before, the hand-back and the rejoin after; the queue stepped as the race is. lv: Input's level (Vibracija · Osnovno 1, Vse
+// 2): a pattern above it is never asked for (Input.buzz)
 const U = C.CREW_U;
-function stop(D, fuel) {
+function stop(D, fuel, lv = 2) {
   const ev = [['pitAP', -9], ['pitLimit', -9], ['pitBox', -3], ['pitStop', 0]];
   if (D >= 2) ev.push(['jackF', 0.05], ['jackR', Math.max(0.45, U.jack[1] * D)], ['wheelsOn', C.REPAIR.wheel * D]);
   for (let w = 0; w < 2; w++) { const [a, b] = U.nut[w]; ev.push([w ? 'gunOn' : 'gunOff', a * D + 0.01]); for (let t = a * D + 0.46; t < b * D; t += 0.35) ev.push(['rattle', t]); }
@@ -92,9 +95,9 @@ function stop(D, fuel) {
   const Q = C.Haptic(), log = [], t0 = -10; let i = 0;
   for (let t = t0; t < D + 10; t += STEP) {
     const e0 = Q.step(STEP); if (e0) log.push([e0.k, Q.t + t0, e0.pri]);
-    while (i < ev.length && ev[i][1] <= Q.t + t0 + 1e-9) { const [k] = ev[i++]; if (H[k].min > D) continue; const e = Q.buzz(k, H[k].p, H[k].pri); if (e) log.push([e.k, Q.t + t0, e.pri]); }
+    while (i < ev.length && ev[i][1] <= Q.t + t0 + 1e-9) { const [k] = ev[i++]; if (H[k].min > D || H[k].lv > lv) continue; const e = Q.buzz(k, H[k].p, H[k].pri); if (e) log.push([e.k, Q.t + t0, e.pri]); }
   }
-  const want = ev.filter(e => !(H[e[0]].min > D)), main = want.filter(e => e[0] !== 'rattle'), got = log.filter(e => e[0] !== 'rattle');
+  const want = ev.filter(e => !(H[e[0]].min > D) && H[e[0]].lv <= lv), main = want.filter(e => e[0] !== 'rattle'), got = log.filter(e => e[0] !== 'rattle');
   const late = Math.max(...got.map(g => g[1] - (main.find(e => e[0] === g[0]) || [0, g[1]])[1]));
   const one = log.every((e, j) => !j || e[2] > log[j - 1][2] || e[1] >= log[j - 1][1] + len(log[j - 1][0]) + GAP - 1e-9);
   const motor = log.filter(e => e[1] >= -1e-9 && e[1] <= D + 0.5).reduce((a, e) => a + pulses(H[e[0]].p).reduce((x, y) => x + y, 0), 0);
@@ -107,6 +110,10 @@ function stop(D, fuel) {
   check('the 1.2 s stop (repairs only): no jacks or new wheels felt; the longer ones: both jacks and the wheels', S[0].jacks === 0 && S.slice(1).every(s => s.jacks === 3), S.map(s => s.D + ' s ' + s.jacks).join(', '));
   check('the guns\' rattle only on the long stops (the guns on the nuts longer than their bursts)', S[0].rattle === 0 && S[1].rattle === 0 && S[2].rattle > 0 && S[3].rattle > S[2].rattle, S.map(s => s.D + ' s ' + s.rattle).join(', '));
   check('the motor on for at most ~1.5 s of a stop (pulses only)', S.every(s => s.motor <= 1500), S.map(s => `${s.D} s ${s.motor} ms`).join(', '));
+  const B = [stop(1.2, false, 1), stop(2.6, false, 1), stop(6, true, 1), stop(10.6, true, 1)];
+  check('Vibracija · Osnovno: on each stop only the stop, the release (with a full tank its own) and VOZIŠ TI!, in order, none late (nothing of the crew\'s work, the way in or out, no rattle)',
+    B.every((s, j) => s.ok && s.seq.map(e => e.split('@')[0]).join() === ['pitStop', j > 1 ? 'goFuel' : 'go', 'handBack'].join() && s.late < 1e-9 && !s.rattle && !s.jacks), B.map(s => s.D + ' s: ' + s.seq.join(' ')).join(' | '));
+  check('Vibracija · Osnovno: the motor on for less than with Vse on every stop', B.every((s, j) => s.motor < S[j].motor && s.motor <= 400), B.map((s, j) => `${s.D} s ${s.motor} ms (Vse ${S[j].motor})`).join(', '));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);
