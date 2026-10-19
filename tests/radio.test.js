@@ -1,6 +1,7 @@
 // Strategy and the team radio (Race opts.radio; Core only, no browser): the gaps in seconds (Race.gap, from every car's race clock at each
 // 25 m), what a stop costs (Race.pitLoss: the pit lane against the road at the race's pace, the stop itself) and the plan for one
-// (Race.plan: why, the window, "box this lap", the place it puts the car in once everyone has stopped). Off (the default), in a time
+// (Race.plan: why, the window, "box this lap", the place it puts the car in once everyone has stopped; without the radio the plan without the
+// cost and the place, for the HUD's BOKSI TA KROG). Off (the default), in a time
 // trial, on the open road, in a one-lap race: none, the race as before (the golden references).
 //   node tests/radio.test.js
 'use strict';
@@ -97,6 +98,33 @@ const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : String(x));
   check('slicks on a soaked track, rain tyres on a dry line, a cut tyre, heavy damage: box this lap',
     wet.need === 'wet' && wet.box && dry.need === 'dry' && dry.box && cut.need === 'tyre' && cut.box && dmg.need === 'damage' && dmg.box, JSON.stringify({ wet, dry, cut, dmg }));
   check('worn soft slicks that will not last the 8 laps: the window for fresh ones', worn.need === 'tyres' && worn.from >= 1 && worn.to >= worn.from && worn.to < 8, JSON.stringify(worn));
+}
+
+// 6. without the team radio (no clock): the same plan (why, the window, "box this lap": the HUD's BOKSI TA KROG, game.js boxHUD, decided at
+// the line), only no cost and no place; box at the line of the lap the stop is due and, the stop not made, at every line after; never once
+// the way in is passed (off 20 m before it)
+{
+  const T = track('rbring'), L = T.len, P1 = T.def.pit[1];
+  const run = (radio) => {
+    Math.random = seeded(21);
+    const r = new C.Race(T, { numAI: 3, playerGrid: 2, laps: 6, playerModel: C.MODELS[0], assist: 2, phys: 'cs', seed: 21, difficulty: 1, fuel: true, tyres: true, compounds: true, radio });
+    r.start();
+    const P = r.player, laps = [], offs = []; let t = 0, lap = 0, on = false, past = 0;
+    while (t < 600 && !P.finished && P.lap <= 4) {
+      C.aiControl(P, r, DT); r.step(DT); t += DT; P.hitCar = P.hitWall = 0;   // (the player never comes in: aiControl takes only the AI cars into the pits)
+      const pl = r.plan(P), dE = Math.max(1, P.lap) * L + P1 - P.dist;
+      if (P.lap !== lap) { lap = P.lap; laps.push(pl && { lap, need: pl.need.join(), from: pl.from, to: pl.to, box: pl.box, loss: pl.loss, pos: pl.pos }); }
+      if (pl && pl.box && dE <= 0) past++;
+      if (pl && pl.box !== on) { on = pl.box; if (!on) offs.push(Math.round(dE)); }
+    }
+    return { mk: !!r.mk, laps, offs, past };
+  };
+  const a = run(true), b = run(false), core = (x) => JSON.stringify(x.laps.map(l => l && [l.lap, l.need, l.from, l.to, l.box])), due = b.laps.filter(l => l.box).map(l => l.lap);
+  check('no team radio (no clock): the same plan as with it at each lap\'s line (why, the window, box), only no cost and no place',
+    a.mk && !b.mk && b.laps.length >= 4 && core(a) === core(b) && b.laps.every(l => l && l.loss === null && l.pos === null) && a.laps.every(l => l && l.loss > 5 && l.pos >= 1), core(b));
+  check('... box at the line of the lap it is due (fuel, from the second) and, the stop not made, at every line after; never past the way in (off 20 m before it)',
+    due.length >= 2 && due[0] >= 2 && due.every((n, k) => n === due[0] + k) && due[due.length - 1] === b.laps[b.laps.length - 1].lap && b.laps.every(l => !l.box || l.need === 'fuel') && b.past === 0 && b.offs.some(d => d > 0 && d <= 20),
+    JSON.stringify({ due, offs: b.offs, past: b.past }));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

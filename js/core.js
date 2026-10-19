@@ -5211,9 +5211,10 @@ const Core = (function () {
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut one; 'damage', badly damaged), the laps it can be made in
     // (from: the first after which a full tank and fresh tyres last to the line; to: the last on which the car still gets round to the pit
     // lane's way in; a stop is made at the end of a lap), box: this lap; loss: what it costs; pos: the place a stop now would put the car
-    // in, ahead / gapA: the car it would come out behind and how far, behind / gapB: the one right behind it; fuelLaps: the laps left in the tank
+    // in, ahead / gapA: the car it would come out behind and how far, behind / gapB: the one right behind it; fuelLaps: the laps left in the tank.
+    // Without the race's clock (no team radio: no mk) only why, the window and box (the HUD's BOKSI TA KROG, game.js boxHUD): loss, pos null
     plan(c) {
-      const T = this.track, L = T.len, P = T.def.pit; if (!P || !this.mk || c.finished || c.net) return null;
+      const T = this.track, L = T.len, P = T.def.pit; if (!P || c.finished || c.net) return null;
       const cur = Math.max(1, c.lap), end = this.laps * L, left = end - c.dist;
       let n0 = cur; if (c.dist > n0 * L + P[1] - 20) n0++;   // (the first lap whose way in is still ahead)
       const at = (n) => n * L + P[1];   // (the way in on lap n: before the line)
@@ -5243,8 +5244,8 @@ const Core = (function () {
       if (c.dmg > 0.45) now.push('damage');
       if (now.length) { need.push(...now); from = n0; to = Math.max(n0, Math.min(to, n0)); }
       const loss = this.pitLoss(c);
-      let pos = 1, ahead = null, gapA = Infinity, behind = null, gapB = Infinity;
-      for (const o of this.cars) {
+      let pos = this.mk ? 1 : null, ahead = null, gapA = Infinity, behind = null, gapB = Infinity;
+      if (this.mk) for (const o of this.cars) {
         if (o === c || o.finished || dnf(o)) continue;   // (a retired car: no place to lose to it)
         const g = this.gap(c, o); if (g == null && o.dist <= c.dist) continue;   // (one behind that has not been where c was yet: no gap known)
         let h = g == null ? -1 : g;   // (o behind c by h s; negative: ahead of it)

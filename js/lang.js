@@ -253,7 +253,7 @@
     'Radio ekipe (razlike, postanki, vreme)': 'Team radio (gaps, pit stops, weather)', 'Gume za postanek': 'Tyres for the stop', 'Gume za postanek: {0}': 'Tyres for the stop: {0}',
     'Gorivo ne bo zdržalo do cilja.': 'The fuel will not last to the finish.', 'Gume ne bodo zdržale do cilja.': 'The tyres will not last to the finish.',
     'Proga je mokra, potrebuješ dežne gume.': 'The track is wet, you need rain tyres.', 'Idealna linija je suha, potrebuješ suhe gume.': 'The racing line is dry, you need slicks.',
-    'Imaš predrto gumo.': 'You have a puncture.', 'Avto je močno poškodovan.': 'The car is badly damaged.', 'Boksi v tem krogu!': 'Box this lap!', 'BOKSI V TEM KROGU': 'BOX THIS LAP',
+    'Imaš predrto gumo.': 'You have a puncture.', 'Avto je močno poškodovan.': 'The car is badly damaged.', 'Boksi v tem krogu!': 'Box this lap!', 'BOKSI V TEM KROGU': 'BOX THIS LAP', 'BOKSI TA KROG': 'BOX THIS LAP', 'Opozorilo za postanek': 'Pit stop warning',
     'Po postanku boš {0}., {1} bo {2} s pred tabo.': 'After the stop you will be P{0}, {1} {2} s ahead of you.', 'Po postanku boš še vedno prvi.': 'After the stop you will still be leading.',
     'Dobiš {0} gume.': 'You get {0} tyres.', 'mehke': 'soft', 'srednje': 'medium', 'trde': 'hard',
     'Vodiš, {0} je {1} s za tabo.': 'You are leading, {0} is {1} s behind you.', 'Vodiš.': 'You are leading.',

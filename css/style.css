@@ -818,6 +818,23 @@ select.txt:disabled { opacity: .75; }
 #h-fuel.low i { background: #ff4a3d; }
 #h-fuel b { position: absolute; bottom: 0; width: 2px; height: 5px; margin-left: -1px; background: #fff; box-shadow: 0 0 2px #000; }   /* what it takes to the line */
 @keyframes fuelBlink { 50% { opacity: .45; } }
+/* BOKSI TA KROG (game.js boxHUD): the stop due this lap, right under the stack at the left (out of its flow: the pills above keep their
+   width), blue with a white edge as the sign at the pit lane's way in; near the way in (.near) brighter, the metres to it and an arrow to the
+   lane's side (.r after the words, .l before them), nudging that way */
+#h-box { display: none; position: absolute; left: 0; top: 100%; align-items: center; gap: .35em; margin-top: 3px; padding: 2px 6px; border-radius: 4px; border: 1.5px solid #f4f1ec; background: rgba(31, 63, 140, .92); color: #f4f1ec; font: 800 italic clamp(9px, 2.6vh, 12px)/1.2 var(--f-ui); white-space: nowrap; pointer-events: none; box-shadow: 0 1px 3px rgba(0, 0, 0, .5); }
+#h-box.on { display: flex; }
+#h-box.near { background: rgba(47, 111, 224, .95); }
+#h-box span { order: 1; font-variant-numeric: tabular-nums; }
+#h-box span:empty { display: none; }
+#h-box i { display: none; order: 2; width: 1.15em; height: .95em; background: currentColor; clip-path: polygon(0 32%, 50% 32%, 50% 0, 100% 50%, 50% 100%, 50% 68%, 0 68%); }   /* (the sign's arrow) */
+#h-box.near i { display: block; animation: boxNudge .5s ease-in-out infinite alternate; }
+#h-box.l i { order: -1; transform: scaleX(-1); animation-name: boxNudgeL; }
+@keyframes boxNudge { to { transform: translateX(2px); } }
+@keyframes boxNudgeL { from { transform: scaleX(-1); } to { transform: scaleX(-1) translateX(2px); } }
+@media (prefers-reduced-motion: reduce) { #h-box.near i { animation: none; } }
+@media (orientation: landscape) {   /* (on its side the stack at the left reaches down to the steering: under the clock instead, the split's line kept free, over the road far ahead) */
+  #h-box { position: fixed; left: 50%; top: calc(var(--st) + 13px + clamp(17px, 5.4vh, 28px) + clamp(10px, 2.9vh, 14px) + 1.2 * clamp(11px, 3vh, 15px)); margin: 0; transform: translateX(-50%); font-size: clamp(10px, 3vh, 14px); }
+}
 /* Pikes Peak: the corner warnings (a pace-note pill under the clock and the CP splits: a hairpin big and red, a medium bend orange, a fast
    one faint; it replaces the generic arrow #h-note there), the medal times and medals per class, the legend ghost's mark on the difference */
 #hud.pkleg #h-delta::before { content: 'LEG '; font-size: .62em; letter-spacing: .06em; color: #e8c04a; }   /* (the difference is to the legend) */

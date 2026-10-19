@@ -1578,7 +1578,7 @@
     Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
     $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: ch ? ch.cond.season : S.season, tod: ch ? ch.cond.tod : S.tod }, true);   // (a challenge: its season and time of day)
-    fuelTold = { low: false, out: false }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset(); tyreBtn();
+    fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset(); tyreBtn();
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -2930,6 +2930,28 @@
     if (P.fuel <= 0 && !fuelTold.out) { fuelTold.out = true; showMsg(tr(P.m.ev ? 'PRAZNA BATERIJA!' : 'BREZ GORIVA!'), 'slow', 2.6); Comm.say(P.m.ev ? 'batteryOut' : 'fuelOut', null, 4); }
     if (P.fuel > 0.9) fuelTold.low = fuelTold.out = false;   // (filled up again)
   }
+  // BOKSI TA KROG (a race with fuel or with the slicks' compounds, on a track with pits; whatever the team radio's setting): on the lap the
+  // stop must be made for them a blue pill, as the sign at the way in (upright under the stack at the left, on its side under the clock); the
+  // last BOX_NEAR m before the way in (def.pit[1]) an arrow to the lane's side (def.pit[0]: Montréal, Toronto, Bathurst, Trois-Rivières on the left) and the metres to it. Decided at the line,
+  // as the team radio's call, for the whole lap (Core's Race.plan, box: the fuel would not reach the next way in, the slicks would be worn
+  // out before it; from the second lap and not in the lane, so never on the plan's first guess at the burn after the start or a fill). Gone
+  // in the pit lane, or once the way in is passed (the lane walled off from the circuit beside the car); at the next line again, while due
+  const BOX_NEAR = 400;
+  let boxW = { lap: -1, due: false, key: '' };
+  function boxHUD(P) {
+    const D = track.def.pit, L = track.len, cur = Math.max(1, P.lap), out = !P.inPit && !P.pitG && !pa.st;
+    const on = !!D && phase === 'racing' && !P.finished && !race.quali && !race.timeTrial && ((P.fuel != null && !!race.fuelRate) || !!(P.ty && P.ty.c));
+    if (cur !== boxW.lap) { boxW.lap = cur; const pl = on && out && cur >= 2 ? race.plan(P) : null; boxW.due = !!pl && pl.box && pl.need.some(k => k === 'fuel' || k === 'tyres'); }
+    let key = '';
+    if (on && out && boxW.due) { const dE = cur * L + D[1] - P.dist, pz = dE < 0 ? track.pitAt(P.q.s) : null;   // (to the way in on this lap, along the race)
+      if (dE < 0 && !(pz && pz.gap && pz.d < (D[1] + D[2]) / 2)) boxW.due = false;   // (past the way in: done for this lap; where the way out touches the circuit again, before the line at Trois-Rivières, not a way in)
+      else key = dE > BOX_NEAR ? 'due' : (D[0] < 0 ? 'l' : 'r') + (dE > 25 ? Math.ceil(dE / 50) * 50 : 0); }   // (the metres in steps of 50)
+    const txt = key ? tr('BOKSI TA KROG') : '';
+    if (key + txt === boxW.key) return; boxW.key = key + txt;
+    const el = $('h-box'), m = key && key !== 'due' ? +key.slice(1) : 0;
+    el.className = !key ? '' : key === 'due' ? 'on' : 'on near ' + key[0];
+    el.firstElementChild.textContent = txt; el.lastElementChild.textContent = m ? m + ' m' : '';
+  }
   // failures (a race with them on): a cut tyre, hot brakes, a hot engine as pills under the fuel; the moment one comes: the message, the
   // commentator and what to do about it (a toast)
   let fltKey = '';
@@ -3636,7 +3658,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    updateDamageHUD(P); swapHUD(P); wreckHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); boxHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
