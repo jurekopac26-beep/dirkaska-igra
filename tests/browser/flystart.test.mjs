@@ -12,22 +12,24 @@ const srv = await serve();
 const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 844, height: 390 });
-  // the race's first moments, stepped by hand: the lights lit (each change), the message, the autopilot's mark, the order, the player's car at
-  // the start line as it takes over
+  // the race's first moments, stepped by hand from its start (restarted paused): the lights lit (each change), any message, the autopilot's
+  // mark, the order, the player's car at the start line as it takes over
   const look = () => page.evaluate(async () => {
-    const g = window.__game, $ = (id) => document.getElementById(id), r = g.race, P = r.player, out = [];
-    g.pause();
+    const g = window.__game, $ = (id) => document.getElementById(id), out = [];
+    g.onAction('restart'); g.pause(); g.sim(1 / 60, true);
+    const r = g.race, P = r.player;
     const order = () => r.cars.slice().sort((a, b) => b.dist - a.dist).map(c => c.id).join();
     const o0 = order(), line = r.cars.slice().sort((a, b) => a.grid - b.grid), lead = line.slice(1).reduce((a, c, k) => a + (line[k].dist - c.dist) / Math.max(5, c.speed), 0);   // (each gap at the pace of the car behind)
     const F = $('h-fly'), lit = () => F.classList.contains('show') ? F.querySelectorAll('i.on').length : 0;
-    let n = -1, kept = true, at = null, d0 = P.dist, msg0 = null;
+    let n = -1, kept = true, at = null, d0 = P.dist, msg0 = '', t0 = r.time;
     while (r.time < 6 && at == null) {
-      const was = r.flyOn; g.sim(1 / 60, true); if (order() !== o0) kept = false; if (msg0 == null) msg0 = $('h-msg').className.includes('show') ? $('h-msg').textContent : '';
+      const was = r.flyOn; if (was && $('h-msg').className.includes('show')) msg0 = $('h-msg').textContent;
+      g.sim(1 / 60, true); if (order() !== o0) kept = false;
       const k = lit(); if (k !== n) { n = k; out.push({ t: +r.time.toFixed(2), lit: k, txt: k ? F.lastElementChild.textContent : '', ap: $('touch').classList.contains('ap'), d: +P.dist.toFixed(1) }); }
       if (was && !r.flyOn) at = { t: +r.time.toFixed(2), d: +P.dist.toFixed(2), ap: $('touch').classList.contains('ap'), lit: k, msg: $('h-msg').textContent };
     }
     g.resume();
-    return { out, at, kept, msg0, lead: +lead.toFixed(1), d0: +d0.toFixed(0), fly: r.opts.flying, lch: !!r.lch, tt: r.timeTrial, cars: r.cars.length, lights: $('h-lights').classList.contains('show') };
+    return { out, at, kept, msg0, t0, lead: +lead.toFixed(1), d0: +d0.toFixed(0), fly: r.opts.flying, lch: !!r.lch, tt: r.timeTrial, cars: r.cars.length, lights: $('h-lights').classList.contains('show') };
   });
   for (const id of ['vrsic', 'pikes']) {
     await startTrack(page, id, 'race');
@@ -35,7 +37,7 @@ try {
     T.check(`${id}: the race begins at once, no lights, the cars in one line (the player's car at the back, ~10 s behind the leader, below the start line)`,
       r.fly > 0 && !r.lch && !r.tt && r.cars === 13 && !r.lights && r.d0 < 0 && r.lead > 8 && r.lead < 14, `${r.lead} s behind the leader, ${-r.d0} m below the line`);
     T.check(`${id}: the countdown on the autopilot, three lights then two then one, the words under them (no other message), then the lights gone and VOZIŠ TI! the moment the player's car is over the start line (~3 s), no one passing until then`,
-      lits === '3210' && r.out.slice(0, 3).map(o => o.txt).join('|') === 'LETEČI START ČEZ 3 SEKUNDE…|LETEČI START ČEZ 2 SEKUNDI…|LETEČI START ČEZ 1 SEKUNDO…' && r.out.slice(0, 3).every(o => o.ap) && !r.msg0 && r.at && r.at.lit === 0 && r.at.msg === 'VOZIŠ TI!' && !r.at.ap && r.at.d >= 0 && r.at.d < 2 && r.at.t > 2.9 && r.at.t < 3.8 && r.kept && r.out[1].t > 0.95 && r.out[1].t < 1.1 && r.out[2].t > 1.95 && r.out[2].t < 2.1,
+      r.t0 < 0.1 && lits === '3210' && r.out.slice(0, 3).map(o => o.txt).join('|') === 'LETEČI START ČEZ 3 SEKUNDE…|LETEČI START ČEZ 2 SEKUNDI…|LETEČI START ČEZ 1 SEKUNDO…' && r.out.slice(0, 3).every(o => o.ap) && !r.msg0 && r.at && r.at.lit === 0 && r.at.msg === 'VOZIŠ TI!' && !r.at.ap && r.at.d >= 0 && r.at.d < 2 && r.at.t > 2.9 && r.at.t < 3.8 && r.kept && r.out[1].t > 0.95 && r.out[1].t < 1.1 && r.out[2].t > 1.95 && r.out[2].t < 2.1,
       JSON.stringify(r.out) + ' ' + JSON.stringify(r.at));
   }
   // the same road's time trial and a circuit's race: the standing start with the lights, as ever

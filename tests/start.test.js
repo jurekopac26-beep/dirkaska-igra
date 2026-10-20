@@ -5,7 +5,7 @@
 // quicker drivers quicker on the whole), the same every time with the same seed; its car waits on the grid until then. On in a race from
 // the grid; off in a time trial, on a flying lap, in the run from the police and in the title demo (the game also turns it off in the
 // new map's free drive and in the school's lessons other than the start). The flying start of a race up an open road (opts.flying, s): no
-// reaction, every car already rolling up the road from its slot on the grid in the gear for that speed; the whole race to the finish.
+// reaction, the cars already rolling in one line up the road (below), the player's car over the start line as the countdown ends.
 //   node tests/start.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');

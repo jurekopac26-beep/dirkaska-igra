@@ -2368,7 +2368,7 @@ const Core = (function () {
   // with the box, parallel to the lane, from fl m before it: the car stands straight), out over outL m, at v m/s; room: the wall there, m past
   // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
   const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
-  const FLY_GAP = 10 / 12, FLY_SPAN = 30, FLY_KEEP = 0.8;   // the flying start's column (Race._flyColumn): ~10 s from the 13th car to the 1st, 30 s at most; the share of its gap each one keeps until the player is over the line
+  const FLY_GAP = 10 / 12, FLY_SPAN = 30, FLY_KEEP = 0.8, FLY_PL = 0.9;   // the flying start's column (Race._flyColumn): ~10 s from the 13th car to the 1st, 30 s at most; the share of its gap each one keeps until the player is over the line; the player's autopilot's share of its pace (a margin: no slide into a wall mid-corner)
   const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan)
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
@@ -2834,7 +2834,7 @@ const Core = (function () {
       c.aiThreat = threat; c.aiGap = tgap;
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
       if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
-      else if (threat && c.flyA !== undefined && race.flyOn) { target = c.laneBias; c.passing = 0; }   // (the flying start's column: no overtaking while it holds)
+      else if (threat && threat.vl > 3 && !dnf(threat) && c.flyA !== undefined && race.flyOn) { target = c.laneBias; c.passing = 0; }   // (the flying start's column: no overtaking while it holds; a stopped car is passed)
       else if (threat && !(c.chr && aiWaits(c, threat, race, v))) {
         const rlHere = T.rl[q.i];
         const oPos = threat.q.d;
@@ -2915,8 +2915,8 @@ const Core = (function () {
     { const o = c.aiThreat, g0 = (M.aiGap || 3) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
-      if (c.flyA) { const a = c.flyA, gap = a.dist - c.dist; vT = Math.min(vT, Math.max(0, a.vl) + (gap - FLY_KEEP * c.flyTg * Math.max(10, v)) * 0.45); }
-      if (c === race.player && c.dist < 0) vT = Math.min(vT, Math.max(8, -c.dist / Math.max(0.25, race.opts.flying - race.time)));
+      const a = c.flyA; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - FLY_KEEP * c.flyTg * Math.max(10, v)) * 0.45);   // (only behind a car really ahead and moving)
+      if (c === race.player) { vT *= FLY_PL; const rem = race.opts.flying - race.time; if (c.dist < 0 && rem > 0.5) vT = Math.min(vT, Math.max(8, -c.dist / rem)); }   // (no braking in the last half second: handed over at its speed)
     }
     if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart
       const F = race.fl, S = F.sc;
@@ -4812,7 +4812,7 @@ const Core = (function () {
       const at = (P, s) => P[clamp(Math.round((s - s0) / DS), 0, P.length - 1)];
       // the player's car: opts.flying s of its pace below the line (or the bottom end of the road)
       const PP = paceOf(Pl); let sP = T.startS, tP = 0;
-      while (sP - DS >= s0 && tP < this.opts.flying) { sP -= DS; tP += DS / at(PP, sP); }
+      while (sP - DS >= s0 && tP < this.opts.flying) { sP -= DS; tP += DS / (FLY_PL * at(PP, sP)); }
       const pos = new Array(n); pos[kp] = sP;
       const xy = (s) => { const i = T.idx(s); return [T.px[i] + T.nx[i] * T.rl[i], T.pz[i] + T.nz[i] * T.rl[i]]; };
       const apart = (a, b) => { const p = xy(a), q = xy(b); return Math.hypot(p[0] - q[0], p[1] - q[1]); };   // (round a hairpin a few metres of road can be the width of a car)
@@ -4823,8 +4823,8 @@ const Core = (function () {
         c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
         c.q = T.query(x, z, i, {}); c.sPrev = c.q.s; c.dist = s - T.startS;
         while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }   // (a long column: a split point already behind its first cars)
-        let v = at(paceOf(c), s); if (c === Pl && tP < this.opts.flying) v = Math.min(v, (T.startS - s) / this.opts.flying);   // (a short road below the line: the countdown's pace)
-        c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
+        let v = at(paceOf(c), s); if (c === Pl) v = Math.min(FLY_PL * v, tP < this.opts.flying ? (T.startS - s) / this.opts.flying : v);   // (a short road below the line: the countdown's pace)
+        c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v; c.w = v * T.k[i];   // (already turning in a corner)
         let g = 1; while (g < M.gears.length && v / M.rw * M.gears[g - 1] * M.final * 9.5493 > M.redline * 0.8) g++; c.gear = g;
         c.flyA = k > 0 ? cs[k - 1] : null; c.flyTg = k > 0 ? (pos[k - 1] - pos[k]) / Math.max(5, v) : tg;
       }
@@ -4845,7 +4845,7 @@ const Core = (function () {
     start() {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
       // a flying start (opts.flying: a race up an open road, the seconds the column holds): the race already under way, see _flyColumn
-      if (this.opts.flying > 0 && !this.timeTrial) this._flyColumn();
+      if (this.opts.flying > 0 && !this.timeTrial && this.player) this._flyColumn();
       if (this.lch) for (const c of this.cars) if (c.lch && !c.isPlayer) { c.relT = c.lch.re; c.locked = true; }   // the AI: on the grid until its reaction (as the demo's staggered start)
       // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
