@@ -46,7 +46,7 @@ try {
   await pa.evaluate(() => window.__game.onAction('to-title'));
   const [pd] = await Promise.all([pa.waitForEvent('download'), pa.evaluate(() => window.__game.onAction('prof-export'))]);
   const ppath = await pd.path(), prof = JSON.parse(fs.readFileSync(ppath, 'utf8'));
-  T.check('the profile as a file: every saved thing (settings, records, stats, the ghost)', /^apex-racing-profil-\d{8}\.json$/.test(pd.suggestedFilename()) && prof.kind === 'profile' && ['tdgp-settings', 'tdgp-records', 'tdgp-stats', 'tdgp-ghost-jezero@cs'].every(k => typeof prof.data[k] === 'string') && !prof.data['tdgp-noadapt'],
+  T.check('the profile as a file: every saved thing (settings, records, stats, the ghost)', /^real-roads-atlas-profil-\d{8}\.json$/.test(pd.suggestedFilename()) && prof.kind === 'profile' && ['tdgp-settings', 'tdgp-records', 'tdgp-stats', 'tdgp-ghost-jezero@cs'].every(k => typeof prof.data[k] === 'string') && !prof.data['tdgp-noadapt'],
     JSON.stringify(Object.keys(prof.data || {})));
 
   // 4. a second phone opens the link: the friend's ghost in a race at Jezero Ring
