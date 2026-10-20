@@ -2637,7 +2637,8 @@ const Core = (function () {
         }
       }
     }
-    if (best <= 0) return 0;
+    // the corners the three circles leave out (a nose into a tail beside it): the two boxes' overlap (obbHit) where the circles found none
+    if (best <= 0) { const o = obbHit(a.x, a.z, a.h, a.m.len, a.m.wid, b.x, b.z, b.h, b.m.len, b.m.wid); if (!o) return 0; best = o.pen; bnx = o.nx; bnz = o.nz; bpx = o.px; bpz = o.pz; }
     const ma = a.m.mass, mb = b.m.mass, ia = 1 / ma, ib = 1 / mb;
     // separate. A friend's car in an online race (net) is not moved here (its own phone moves it): the local car takes the
     // whole separation and, below, only its own share of the impulse (the friend's phone gives the friend's car its share)
