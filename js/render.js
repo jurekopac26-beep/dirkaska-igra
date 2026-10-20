@@ -5861,11 +5861,12 @@ const Render = (function () {
       // --- effects ---
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
       v.wasAir = !!c.air;
-      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else applyDent(v, d); if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit)
+      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = false; } }
+      if (!v.xOn && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
@@ -5975,10 +5976,11 @@ const Render = (function () {
     if (v.kit) { kitParts(v, c, x, y, z, h); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { if (!XC.glass) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); } else if (c.dmg >= 0.92) { v.winBroken[k] = 1; if (v.xt) { (v.xGl || (v.xGl = [0, 0, 0, 0]))[k] = 1; for (const key of [['W'], ['R'], ['DL', 'QL'], ['DR', 'QR']][k]) xtGlass(v, c, key, 1, x, y, z, h, null); } else xBreakWindow(v, k, c, x, y, z, h); } }   // (Razbijanje · nov način: one pane a blow, xGlassHit; a wreck all of them)
     if (v.xt && XC.glass) { for (const sd of 'LR') if (v.kit.dead['mirror' + sd]) xtGlass(v, c, 'D' + sd, 0.75, x, y, z, h, null); xtFlush(v); }   // (the Kolibri: a mirror off, its door window 75 % at least; the panes' pictures due)
-    const r0 = v.roofStep, rk = XT_MIN.has(c.m.id); if (v.xOn) { const xc = v.xc || (c.roofDmg > (v.rd0 || 0) + 1e-4 ? xInit(v) : null); if (xc && xc.rf && c.roofDmg > xc.rd + 1e-4) { xRoofAdd(xc.rf, 0, 0, (c.roofDmg - xc.rd) * (rk ? XT_ROOFK : 1), 2); xc.rd = c.roofDmg; xRoofApply(v, xc); } }   // (Razbijanje · nov način: a landing's rise into the roof field)
+    const r0 = v.roofStep, rk = XT_MIN.has(c.m.id); if (v.xOn) { const xc = v.xc || (c.roofDmg > (v.rd0 || 0) + 1e-4 ? xInit(v) : null); if (xc && xc.rf && c.roofDmg > xc.rd + 1e-4) { if (rk) xRoofAdd(xc.rf, 0, 0, (c.roofDmg - xc.rd) / Math.max(1e-6, 1 - xc.rd), 3); else xRoofAdd(xc.rf, 0, 0, c.roofDmg - xc.rd, 2); xc.rd = c.roofDmg; xRoofApply(v, xc); } }   // (Razbijanje · nov način: a landing's rise into the roof field)
+    else if (rk && xtRoof(v)) { const xr = v.xtR; if (c.roofDmg > xr.rd + 1e-4) { xRoofAdd(xr.rf, 0, 0, (c.roofDmg - xr.rd) / Math.max(1e-6, 1 - xr.rd), 3); xr.rd = c.roofDmg; xRoofApply(v, xr); } }   // (the Kolibri's default body: its roof field, xtRoof, as nov način's)
     else { const RS = rk ? 0.05 : 0.25; while (v.roofStep < 1 / RS - 1e-6 && c.roofDmg >= (v.roofStep + 1) * RS - 1e-9) { v.roofStep++; crumpleRoof(v, RS); } }   // (the Kolibri's in 20 steps: its roof a little more caved in with every 5 %)
     if (v.roofStep !== r0 || v.crackDirty) { for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].length && (v.roofStep !== r0 || v.crackDirty[k])) ownRnd(() => crackDecal(v, k)); v.crackDirty = null; }   // (a broken pane's glass moved since its crack decal was laid (the roof sank, a dent): laid again on it, never hanging in the air)
-    const crushed = v.xOn ? c.roofDmg >= 0.5 : v.roofStep * (rk ? 0.05 : 0.25) >= 0.5 - 1e-9;   // (Razbijanje · nov način: roofStep stays 0 there, the core's roofDmg itself (two old steps))
+    const crushed = v.xOn || v.xtR ? c.roofDmg >= 0.5 : v.roofStep * (rk ? 0.05 : 0.25) >= 0.5 - 1e-9;   // (Razbijanje · nov način, the Kolibri's roof field: roofStep stays 0 there, the core's roofDmg itself (two old steps))
     if (crushed || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c, crushed);
     if (v.kit) return;
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
@@ -6449,7 +6451,7 @@ const Render = (function () {
       v.lights.forEach((L, i) => L.lerpVectors(R.L[i], v.lights0[i], k));   // (the glow points a loose part turned)
       if (R.dec && v.dec0) { v.dec.position.lerpVectors(R.dec[0], v.dec0[0], k); v.dec.quaternion.slerpQuaternions(R.dec[1], v.dec0[1], k); }
       K.ver++; }
-    if (k >= 1) v.roofStep = 0;
+    if (k >= 1) { v.roofStep = 0; if (v.xtR) v.xtR = undefined; }   // (the Kolibri's default roof field: afresh, xtRoof)
   }
   function repGlass(v, R) {
     const C = v.body.geometry.attributes.color, P = R.P && R.P.c;
@@ -6557,7 +6559,7 @@ const Render = (function () {
   function crashInfo() {
     return { XC: Object.assign({}, XC), cars: views.map(v => { const g = v.body.geometry, U = g.userData || {}, xc = v.xc;
       return { id: v.car.id, model: v.car.m.id, player: !!v.car.isPlayer, xOn: !!v.xOn, xd: U.xd || 0, verts: g.attributes.position.count, xst: U.xst || null, outerN: U.outerN || g.attributes.position.count, drawn: g.drawRange.count,
-        cl: xc ? xc.cl.map(K => ({ u: +K.u.toFixed(3), w: +K.w.toFixed(3), A: +K.A.toFixed(3), d: +K.d.toFixed(3), R: +K.R.toFixed(3), end: !!K.end })) : [], rf: xc && xc.rf ? xRoofInfo(v, xc) : null, roofed: !!(xc && xc.rf), roof: xc ? (() => { const a = g.attributes.position.array, R = xc.rest; let sd = 0, n = 0, mx = 0;   // (the roof's own top caved in: its mean and its deepest drop, what lies on it left out)
+        cl: xc ? xc.cl.map(K => ({ u: +K.u.toFixed(3), w: +K.w.toFixed(3), A: +K.A.toFixed(3), d: +K.d.toFixed(3), R: +K.R.toFixed(3), end: !!K.end })) : [], rf: xc && xc.rf ? xRoofInfo(v, xc) : null, rfD: v.xtR ? xRoofInfo(v, v.xtR) : null, roofed: !!(xc && xc.rf), roof: xc ? (() => { const a = g.attributes.position.array, R = xc.rest; let sd = 0, n = 0, mx = 0;   // (the roof's own top caved in: its mean and its deepest drop, what lies on it left out)
           const top = xRoofTop(v, xc); for (let i = 0; i < xc.on; i++) { if (!top[i]) continue; const d = R[i * 3 + 1] - a[i * 3 + 1]; sd += d; n++; if (d > mx) mx = d; }
           return { mean: n ? +(sd / n).toFixed(3) : 0, max: +mx.toFixed(3) }; })() : null, caps: xc ? { F: xc.B.capF, R: xc.B.capR, S: xc.B.capS } : null,
         torn: !!(v.kit && v.kit.xTorn), engine: !!(v.xEng && v.xEng.visible), glass: v.xGl ? v.xGl.slice() : null, panes: v.xP ? v.xP.map(P => P.broken) : null, paneK: v.xP ? v.xP.map(P => P.k) : null, rearDoors: v.kit && v.kit.xRD ? v.kit.xRD.slice() : null, xt: v.xt ? { panes: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.st])) : {}, drawn: v.xtP ? Object.keys(v.xtP).filter(k => v.xtP[k].on && !v.xtP[k].dirty) : [], frame: v.xtP ? Object.fromEntries(Object.entries(v.xtP).map(([k, P]) => [k, P.fr.length])) : {}, lamps: v.lightBroken ? v.lightBroken.slice() : null, ajar: Object.keys(v.kit.ajar), dead: Object.keys(v.kit.dead), rear: v.xtS ? v.xtS.rear : 0, scr: v.xtSc ? v.xtSc.a.map(q => +q.toFixed(3)) : [0, 0], scrN: v.xtSc ? v.xtSc.n.slice() : [0, 0], rg: xc ? Math.max(0, ...xc.cl.map(K => K.rg || 0)) : 0, mir: { glass: v.xtMG ? { L: v.xtMG.L, R: v.xtMG.R } : { L: 0, R: 0 }, fold: Object.assign({}, v.kit.fold || {}) }, bent: xc && xc.tab ? xtBent(v) : null, idx: v.xtO ? v.xtO.g.drawRange.count : 0, cut: !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) } : null, mirrors: [!!(v.kit ? v.kit.dead.mirrorL : v.parts && v.parts.mirrorL && !v.parts.mirrorL.visible), !!(v.kit ? v.kit.dead.mirrorR : v.parts && v.parts.mirrorR && !v.parts.mirrorR.visible)] }; }), shards: xSh ? xSh.count : 0, shardsOn: xShOn(), ground: xGround.length, kept: xGround.filter(m => m.userData.xDeb).length, shardAt: xSh && xSh.count ? (() => { const m = new THREE.Matrix4(), p = new THREE.Vector3(), k = (xSh.k + XSH_N - 1) % XSH_N; xSh.getMatrixAt(k, m); p.setFromMatrixPosition(m); return [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)]; })() : null, shardMat: xSh ? [xSh.material.type, !!xSh.instanceColor, xSh.parent === scene] : null };
@@ -6850,13 +6852,15 @@ const Render = (function () {
     ins.sort((a, b) => a - b); const inset = ins.length ? Math.max(0, ins[ins.length >> 1]) : 0.03, mg = inset + 0.015;
     // 10. each entry's limit: per triangle (its box grown by what moves it sideways), the least over every triangle at its place (a coarse
     // panel's too: no crack, L a function of the place)
-    const sig = (z) => Math.sign(z) * clamp((Math.abs(z) / C.z - 0.45) / 0.5, 0, 1);
+    // (the Kolibri, XT_MIN: its sides drawn in from a fifth of the way out, PK as far as half of it: a blow's side caves in towards the
+    // middle, variant D; the limits measured over that reach)
+    const xt = XT_MIN.has(M.id), PK = xt ? XT_PULL : 0.5, sig = (z) => Math.sign(z) * clamp(xt ? (Math.abs(z) / C.z - XT_SIG0) / (0.95 - XT_SIG0) : (Math.abs(z) / C.z - 0.45) / 0.5, 0, 1);
     const key = (i) => ((Math.round(p[i * 3] * 1e4) + 65536) * 131072 + Math.round(p[i * 3 + 1] * 1e4) + 65536) * 131072 + Math.round(p[i * 3 + 2] * 1e4) + 65536;
     const posMin = new Map();
     for (let t = 0; t < nTo; t++) { const a = t * 3; if (cls[a] !== 1 && cls[a + 1] !== 1 && cls[a + 2] !== 1) continue;
-      let low = false, sm = 0, xm = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
-      for (let q = 0; q < 3; q++) { const i = a + q, x = p[i * 3], z = p[i * 3 + 2]; if (W[i] < 0.5) low = true; sm = Math.max(sm, Math.abs(sig(z))); xm += x / 3; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
-      const dl = 0.03 + 0.5 * colAt(Ls, xm) * sm + (low ? 0.1 : 0) + 0.01, OT = Obox(x0 - dl, x1 + dl, z0 - dl, z1 + dl); if (OT === -Infinity) continue;
+      let low = false, sm = 0, xm = 0, lm = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (let q = 0; q < 3; q++) { const i = a + q, x = p[i * 3], z = p[i * 3 + 2]; if (W[i] < 0.5) low = true; sm = Math.max(sm, Math.abs(sig(z))); xm += x / 3; if (xt) lm = Math.max(lm, colAt(Ls, x)); if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+      const dl = 0.03 + PK * (xt ? lm : colAt(Ls, xm)) * sm + (low ? 0.1 : 0) + 0.01, OT = Obox(x0 - dl, x1 + dl, z0 - dl, z1 + dl); if (OT === -Infinity) continue;
       for (let q = 0; q < 3; q++) { const i = a + q; if (cls[i] !== 1) continue; const lim = (p[i * 3 + 1] - OT - mg) / Math.max(W[i], 0.05), k = key(i), o = posMin.get(k); if (o === undefined || lim < o) posMin.set(k, lim); }
       if ((cls[a] !== 1 || cls[a + 1] !== 1 || cls[a + 2] !== 1) && tN(t)[1] > 0.45) {   // (a corner that stays (under the belt, off the roof: a coarse panel's down to the windscreen's foot):
         // its surface over what is in the way lower than its corners; each such point's own bound: the triangle's drop there (its corners'
@@ -6871,9 +6875,10 @@ const Render = (function () {
     const nS = sIa.length; if (!nS) return null;
     const sI = Int32Array.from(sIa), ss = new Float32Array(nS), st = new Float32Array(nS), We = new Float32Array(nS), L = new Float32Array(nS), g1 = new Float32Array(nS), kc = new Float32Array(nS), sg = new Float32Array(nS), entOf = new Int32Array(n).fill(-1);
     let dMax = 0;   // (the deepest any entry can go, L W: the roof's paint darkest there, xPaint)
+    const jg = xt ? new Float32Array(nS) : null;   // (the Kolibri's: its roof crumpled as it sinks, crumpleRoof's noise: xRoofApply)
     for (let e = 0; e < nS; e++) { const i = sI[e], x = p[i * 3], z = p[i * 3 + 2], pm = posMin.get(key(i)); entOf[i] = e;
       ss[e] = clamp((x - C.x0) / (C.x1 - C.x0), 0, 1); st[e] = clamp(z / C.z, -1.2, 1.2); We[e] = W[i]; L[e] = clamp(Math.min(colAt(Ls, x), pm === undefined ? Infinity : pm), 0, Lcap);
-      g1[e] = jitN(1.3 * x, 0, 1.3 * z, 31); kc[e] = 1 - Math.abs(2 * jitN(1.6 * x, 0, 1.6 * z, 13) - 1); sg[e] = sig(z); if (L[e] * We[e] > dMax) dMax = L[e] * We[e]; }
+      g1[e] = jitN(1.3 * x, 0, 1.3 * z, 31); kc[e] = 1 - Math.abs(2 * jitN(1.6 * x, 0, 1.6 * z, 13) - 1); sg[e] = sig(z); if (jg) jg[e] = jitN(x, p[i * 3 + 1], z, 1); if (L[e] * We[e] > dMax) dMax = L[e] * We[e]; }
     // the pull-in's own limit (lp): a smooth lower envelope of L over the plan (the least L round each grid node, its slope at most 0.3,
     // bilinear between them): the rails drawn in alike along a bead, a gutter, a lip (L may jump between points a few millimetres apart
     // over a cage's tube: half of it sideways would fold such a strip over), never more than the point's own L lets it
@@ -6888,14 +6893,14 @@ const Render = (function () {
     const lp = new Float32Array(nS);
     for (let e = 0; e < nS; e++) { const i = sI[e], fx = (p[i * 3] - gx0) / gs, fz = (p[i * 3 + 2] - gz0) / gs, i0 = clamp(Math.floor(fx), 0, NX - 1), k0 = clamp(Math.floor(fz), 0, NZ - 1), a = clamp(fx - i0, 0, 1), b = clamp(fz - k0, 0, 1), W1 = NX + 1;
       const q = (Ln[k0 * W1 + i0] * (1 - a) + Ln[k0 * W1 + i0 + 1] * a) * (1 - b) + (Ln[(k0 + 1) * W1 + i0] * (1 - a) + Ln[(k0 + 1) * W1 + i0 + 1] * a) * b;
-      lp[e] = clamp(Math.min(q, L[e]), 0, L[e]); }
+      lp[e] = xt ? colAt(Ls, p[i * 3]) : clamp(Math.min(q, L[e]), 0, L[e]); }   // (the Kolibri's: its column's own band limit, as far in as the limits above were measured over (dl): its side in towards the middle, never just a lip drawn in)
     // 11. the lining's own limit (its triangles span whole loft segments: its twin's drop alone could carry it into a seat)
     const posL = new Map(), lIa = [];
     for (let t = nTo; t < nT; t++) { const a = t * 3; if (cls[a] !== 2 && cls[a + 1] !== 2 && cls[a + 2] !== 2) continue;
       let g = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
       for (let q = 0; q < 3; q++) { const i = a + q, x = p[i * 3], z = p[i * 3 + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z;
         if (cls[i] === 2) { const j = tw(i); g = Math.max(g, colAt(Ls, p[j * 3]) * Math.abs(sig(p[j * 3 + 2]))); } }
-      const dl = 0.04 + 0.5 * g, OT = Obox(x0 - dl, x1 + dl, z0 - dl, z1 + dl); if (OT === -Infinity) continue;
+      const dl = 0.04 + PK * g, OT = Obox(x0 - dl, x1 + dl, z0 - dl, z1 + dl); if (OT === -Infinity) continue;
       for (let q = 0; q < 3; q++) { const i = a + q; if (cls[i] !== 2) continue; const lim = p[i * 3 + 1] - OT - 0.015, k = key(i), o = posL.get(k); if (o === undefined || lim < o) posL.set(k, lim); } }
     for (let i = on; i < n; i++) if (cls[i] === 2) lIa.push(i);
     const nL = lIa.length, lI = Int32Array.from(lIa), lE = new Int32Array(nL), lL = new Float32Array(nL);
@@ -6928,7 +6933,15 @@ const Render = (function () {
     const upT = [], linT = [];
     for (let t = 0; t < nTo; t++) { const a = t * 3; if (entOf[a] >= 0 && entOf[a + 1] >= 0 && entOf[a + 2] >= 0 && W[a] >= 0.5 && W[a + 1] >= 0.5 && W[a + 2] >= 0.5 && tN(t)[1] > 0.45) upT.push(t); }
     for (let t = nTo; t < nT; t++) { const a = t * 3; if (cls[a] === 2 && cls[a + 1] === 2 && cls[a + 2] === 2 && tN(t)[1] < -0.45) linT.push(t); }
-    return { C, Lcap, fl, m: mg, inset, Lref: Lq[Math.floor(0.75 * (Lq.length - 1))], Lmed: Lq[Math.floor(0.5 * (Lq.length - 1))], Lmin: Lq[0], nS, sI, vE: entOf, dMax, ss, st, W: We, L, lp, g1, kc, sg,
+    // 17. each follower's up-facing triangles of the shell within reach (their boxes grown by what draws them in), their plane as built over
+    // it (fT; fTo its offsets, fTg the gap as built): xRoofApply holds it under whichever lies over it now (a coarse panel's sliver over the
+    // one that holds it sinking faster, a neighbour drawn in over it: a post's top never through the roof)
+    const fTo = new Int32Array(nF + 1), fTa = [], fTga = [], rr = 0.03 + PK * Lcap;
+    for (let f = 0; f < nF; f++) { const i = fI[f], x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2]; fTo[f] = fTa.length;
+      for (const t of upT) { const o = t * 9; if (x < Math.min(p[o], p[o + 3], p[o + 6]) - rr || x > Math.max(p[o], p[o + 3], p[o + 6]) + rr || z < Math.min(p[o + 2], p[o + 5], p[o + 8]) - rr || z > Math.max(p[o + 2], p[o + 5], p[o + 8]) + rr) continue;
+        const N = tN(t); if (Math.abs(N[1]) < 1e-9) continue; const h = p[o + 1] - (N[0] * (x - p[o]) + N[2] * (z - p[o + 2])) / N[1]; if (h < y) continue; fTa.push(t); fTga.push(h - y); } }
+    fTo[nF] = fTa.length;
+    return { C, Lcap, fl, m: mg, inset, pk: PK, jg, fTo, fT: Int32Array.from(fTa), fTg: Float32Array.from(fTga), Lref: Lq[Math.floor(0.75 * (Lq.length - 1))], Lmed: Lq[Math.floor(0.5 * (Lq.length - 1))], Lmin: Lq[0], nS, sI, vE: entOf, dMax, ss, st, W: We, L, lp, g1, kc, sg,
       nL, lI, lE, lL, nF, fI, fC, fk, fB, fg, rid, rw, obs, upT: Int32Array.from(upT), linT: Int32Array.from(linT), obsI: Int32Array.from(obsIa), grid: { gx0, gz0, gs, NX, NZ, Opr: O } };
   }
   // a view's roof field (its build cached while the body is as built: a view made again mid-race, its parts already off or ajar, builds
@@ -6956,17 +6969,21 @@ const Render = (function () {
     if (U.ranges) for (const nm in U.ranges) for (const q of U.ranges[nm].subs || []) if (q.name === 'driver') for (const Q of [q.o, q.i]) if (Q && Q[1] > Q[0]) (o || (o = new Uint8Array(n))).fill(1, Q[0], Math.min(Q[1], n));
     return o;
   }
-  // a knock into the field (kind 0 a knock, 1 a rollover's roof contact, 2 a landing: amt the rise of roofDmg; u, w as xDent's): each node
+  // a knock into the field (kind 0 a knock, 1 a rollover's roof contact, 2 a landing: amt the rise of roofDmg, 3 the Kolibri's roofDmg rise:
+  // amt that share of what is left, the rise over what roofDmg has left: its roof's middle at its limit as the car is gone, a step down
+  // every per cent on the way; u, w as xDent's): each node
   // by f of what it has left, at least the step that shows (m, at the kernel's peak), times its kernel (an end: a buckle a third of the way
   // in and the hit end's header; a side: the whole rail line, the near side most), plus a base over the whole roof; never more than half
-  // of what it has left (cp): the field nears 1 knock by knock, some 8-10 visible ones on any roof, a caged one's too
-  function xRoofAdd(rf, u, w, amt, kind) {
+  // of what it has left (cp): the field nears 1 knock by knock, some 8-10 visible ones on any roof, a caged one's too. mk: that step and
+  // the base that much (the Kolibri's, XT_RMK: its roof down with every per cent too, its some 46 knocks over its life, not 8-10)
+  function xRoofAdd(rf, u, w, amt, kind, mk = 1) {
     const C = rf.C, S = (x) => (x - C.x0) / (C.x1 - C.x0), q = kind === 1 ? 1.4 : 1;
-    const f = kind === 2 ? 1 - Math.exp(-0.8 * amt) : 1 - Math.exp(-1.6 * amt * q);
-    const m = kind === 2 || rf.Lref < 0.02 ? 0 : Math.min(0.05, 0.012 + 0.14 * amt) * q / Math.max(rf.Lref, 0.2);   // (the step that shows: some 2.5 cm at its peak on a medium one; a caged roof's in proportion, its budget as long)
-    const fb = kind === 2 || rf.Lref < 0.02 ? 0 : (0.006 + 0.03 * amt) * q / Math.max(rf.Lref, 0.2), cp = Math.max(0.5, f);   // (every knock's share over the whole roof, the far end's too, of what is left there; cp: no node more than half of what it has left (a strong knock its own share): near the limit each knock still a step, ever smaller, never a wall)
+    const k2 = kind >= 2, f = kind === 3 ? clamp(amt, 0, 1) : kind === 2 ? 1 - Math.exp(-0.8 * amt) : 1 - Math.exp(-1.6 * amt * q);
+    const m = k2 || rf.Lref < 0.02 ? 0 : Math.min(0.05, 0.012 + 0.14 * amt) * q * mk / Math.max(rf.Lref, 0.2);   // (the step that shows: some 2.5 cm at its peak on a medium one; a caged roof's in proportion, its budget as long)
+    const fb = k2 || rf.Lref < 0.02 ? 0 : (0.006 + 0.03 * amt) * q * mk / Math.max(rf.Lref, 0.2), cp = Math.max(0.5, f);   // (every knock's share over the whole roof, the far end's too, of what is left there; cp: no node more than half of what it has left (a strong knock its own share): near the limit each knock still a step, ever smaller, never a wall)
     let ker;
     if (kind === 2) ker = (s, t) => 0.25 + 0.5 * Math.sin(Math.PI * s) * (1 - 0.4 * t * t);
+    else if (kind === 3) ker = (s, t) => 0.45 + 0.55 * Math.sin(Math.PI * s) * (1 - 0.4 * t * t);   // (the roof's middle all the way)
     else if (kind === 1) { const sh = clamp(S(u * rf.hx * 0.5), 0.1, 0.9), th = clamp(w * rf.hw * 0.6 / C.z, -0.8, 0.8);
       ker = (s, t) => Math.exp(-(((s - sh) / 0.3) ** 2) - (((t - th) / 0.6) ** 2)); }
     else { const e = Math.abs(u) / (Math.hypot(u, w) || 1), e2 = e * e, sE = u > 0 ? 0.72 : 0.28, se = u > 0 ? 1 : 0, tE = 0.26 * clamp(w, -1, 1),
@@ -6975,7 +6992,7 @@ const Render = (function () {
         + (1 - e2) * (0.35 + 0.65 * Math.exp(-(((s - sS) / 0.45) ** 2))) * (0.15 + 0.85 * clamp(0.5 + 0.6 * t * sd, 0, 1)); }
     for (let j = 0; j < rf.NT; j++) for (let k = 0; k < rf.NS; k++) {
       const s = k / (rf.NS - 1), t = -1.2 + 2.4 * j / (rf.NT - 1), o = j * rf.NS + k, left = 1 - rf.c[o];
-      const wk = Math.min(1, ker(s, t) + (kind === 2 ? 0 : 0.25 * (0.35 + 0.65 * Math.sin(Math.PI * s)) * (1 - 0.4 * t * t)));   // (the base: the whole roof a step down, its ends too)
+      const wk = Math.min(1, ker(s, t) + (k2 ? 0 : 0.25 * (0.35 + 0.65 * Math.sin(Math.PI * s)) * (1 - 0.4 * t * t)));   // (the base: the whole roof a step down, its ends too)
       rf.c[o] += Math.min(cp * left, Math.max(wk * Math.min(left, Math.max(f * left, m)), fb * left * (0.6 + 0.4 * Math.sin(Math.PI * s)) * (1 - 0.3 * t * t))); }
     rf.due = 1;
   }
@@ -6988,9 +7005,9 @@ const Render = (function () {
   function xRoofApply(v, xc) {
     const rf = xc.rf, G = rf.G, geo = v.body.geometry, a = geo.attributes.position.array, R = xc.rest, dv = v.kit ? v.kit.deadV : null, nd = xc.nd, tris = new Set();
     const dead = (i) => (dv && dv[i]) || (nd && nd[i]);   // (as xApply: torn, lost, a gone pane never moved again)
-    for (let e = 0; e < G.nS; e++) {   // the shell: down by L Φ W (Φ rises with the field: dΦ/dP >= 0.6), pulled in at the rails by half of it (of lp Φ W: smooth)
-      const P = xRoofP(rf, G.ss[e], G.st[e]), ph = clamp(P * (0.85 + 0.3 * G.g1[e]) + 0.25 * P * P * (G.kc[e] - 0.5), 0, 1), d = G.L[e] * ph * G.W[e]; rf.d[e] = d;
-      const nz = -G.sg[e] * 0.5 * G.lp[e] * ph * G.W[e]; rf.p[e] = nz;
+    for (let e = 0; e < G.nS; e++) {   // the shell: down by L Φ W (Φ rises with the field: dΦ/dP >= 0.6), pulled in at the rails by half of it (of lp Φ W: smooth; the Kolibri's by XT_PULL of it, G.pk)
+      const P = xRoofP(rf, G.ss[e], G.st[e]), ph = clamp(P * (0.85 + 0.3 * G.g1[e]) + 0.25 * P * P * (G.kc[e] - 0.5), 0, 1), d = G.L[e] * (G.jg ? clamp(ph * (0.55 + 0.9 * G.jg[e]), 0, 1) : ph) * G.W[e]; rf.d[e] = d;   // (the Kolibri's down crumpled, G.jg: never past its limit; drawn in smooth)
+      const nz = -G.sg[e] * G.pk * G.lp[e] * (G.jg ? Math.min(1, P) : ph) * G.W[e]; rf.p[e] = nz;   // (the Kolibri's by the field itself: its noise across the roof would fold a facet over)
       const i = G.sI[e]; if (dead(i)) continue;
       const ny = -d, dy = ny - rf.ay[e], dz = nz - rf.az[e]; if (Math.abs(dy) + Math.abs(dz) < 1e-6) continue;
       a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; rf.ay[e] = ny; rf.az[e] = nz; tris.add((i / 3) | 0); }
@@ -6999,7 +7016,11 @@ const Render = (function () {
       a[k * 3 + 1] += dy; a[k * 3 + 2] += dz; rf.ly[l] = ny; rf.lz[l] = nz; tris.add((k / 3) | 0); }
     for (let f = 0; f < G.nF; f++) { const i = G.fI[f]; if (dead(i)) continue; let mx = 0, sd = 0, sp = 0;   // the followers (posts, bars at the roof): with the roof's triangle over them
       for (let q = 0; q < 3; q++) { const e = G.fC[f * 3 + q]; if (e < 0) continue; const d = rf.d[e], l = G.fB[f * 3 + q]; if (d > mx) mx = d; sd += l * d; sp += l * rf.p[e]; }
-      const ny = -Math.max(mx * G.fk[f], sd - G.fg[f] + Math.min(0.005, sd)), dy = ny - rf.fy[f], dz = sp - rf.fz[f]; if (Math.abs(dy) + Math.abs(dz) < 1e-6) continue;   // (under it where it is drawn in to: 5 mm at least)
+      let ny = -Math.max(mx * G.fk[f], sd - G.fg[f] + Math.min(0.005, sd)), dy = ny - rf.fy[f]; const dz = sp - rf.fz[f];   // (under it where it is drawn in to: 5 mm at least)
+      { const x = a[i * 3], z = a[i * 3 + 2] + dz, y = a[i * 3 + 1] + dy; let lim = Infinity;   // (and under whichever triangle lies over it now, 5 mm or as near as built: fT)
+        for (let q = G.fTo[f]; q < G.fTo[f + 1]; q++) { const t = G.fT[q]; if (dead(t * 3) || dead(t * 3 + 1) || dead(t * 3 + 2)) continue; const h = xTriH(a, t, x, z); if (h !== null) lim = Math.min(lim, h - Math.min(0.005, G.fTg[q])); }
+        if (y > lim) { ny -= y - lim; dy = ny - rf.fy[f]; } }
+      if (Math.abs(dy) + Math.abs(dz) < 1e-6) continue;
       a[i * 3 + 1] += dy; a[i * 3 + 2] += dz; rf.fy[f] = ny; rf.fz[f] = sp; tris.add((i / 3) | 0); }
     for (let r = 0; r < G.rid.length; r++) { const Q = G.rid[r]; if (dv && dv[Q.ranges[0][0]]) continue;   // riders: down whole (A + B x), never deeper than the roof under a foot
       const X = [], Dd = []; for (let f = 0; f < Q.fx.length; f++) { let mn = Infinity; for (let q = 0; q < 3; q++) { const e = Q.fc[f * 3 + q]; if (e >= 0) mn = Math.min(mn, rf.d[e]); } if (mn < Infinity) { X.push(Q.fx[f]); Dd.push(mn); } }
@@ -7012,6 +7033,12 @@ const Render = (function () {
     xRoofDec(v, rf);
     xTouched(v, xc, geo, tris); rf.due = 0;
   }
+  // the height of triangle t (positions a) over (x, z) in plan; null: not over it
+  function xTriH(a, t, x, z) {
+    const o = t * 9, x1 = a[o], z1 = a[o + 2], x2 = a[o + 3], z2 = a[o + 5], x3 = a[o + 6], z3 = a[o + 8], d = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3); if (Math.abs(d) < 1e-14) return null;
+    const l1 = ((z2 - z3) * (x - x3) + (x3 - x2) * (z - z3)) / d, l2 = ((z3 - z1) * (x - x3) + (x1 - x3) * (z - z3)) / d, l3 = 1 - l1 - l2; if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) return null;
+    return l1 * a[o + 1] + l2 * a[o + 4] + l3 * a[o + 7];
+  }
   // the start number and the light bars down by the least drop under them (a delta: it composes with kitLoosen's turn); hidden on a buckled panel
   function xRoofDec(v, rf) {
     const Q = rf.dec; if (!Q) return; let lo, hi;
@@ -7020,7 +7047,7 @@ const Render = (function () {
   }
   // the body moved (xApply, the roof field): drawn again, its touched facets flat and painted, a broken pane's crack decal laid again on it
   function xTouched(v, xc, geo, tris) {
-    geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1; refacet(geo, tris); if (v.kit) v.kit.ver++; xPaint(v, xc, tris);
+    geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1; refacet(geo, tris); if (v.kit) v.kit.ver++; if (xc.dk) xtCrease(v, xc); else xPaint(v, xc, tris);   // (the Kolibri's default body: its creases, xtCrease)
     if (v.winBroken) for (let k = 0; k < 4; k++) if (v.winBroken[k] && !(v.xGl && v.xGl[k]) && v.glassTris[k].some(t => tris.has(t))) (v.crackDirty || (v.crackDirty = [0, 0, 0, 0]))[k] = 1;   // (a frosted pane's crack decal laid again on it)
   }
   // for the tests (crashInfo): the points of the roof's own top as built (within 4 cm of it, its middle 60 %, over its footprint; what lies
@@ -7135,7 +7162,7 @@ const Render = (function () {
   // a blow (the core's dent: lx, lz in the car's frame, its amount): into the nearest cluster within reach, or a cluster of its own
   function xDent(v, d) {
     const xc = xInit(v), M = v.car.m, u = clamp(d.lx / (M.len * 0.5), -1.2, 1.2), w = clamp(d.lz / (M.wid * 0.5), -1.2, 1.2), top = !!d.top;
-    if (xc.rf) { if (d.amt >= 0.03) xRoofAdd(xc.rf, u, w, d.amt, top ? 1 : 0); if (!XT_MIN.has(M.id)) xc.rd = Math.max(xc.rd, v.car.roofDmg || 0); }   // (every knock into the roof field; xRoofApply after the frame's knocks; the Kolibri's roofDmg rise into it as well, updateParts: its roof sinks with every per cent, its light knocks (under 0.03) too)
+    if (xc.rf) { const xr = XT_MIN.has(M.id) && !d.sc; if (d.amt >= 0.03 || xr) xRoofAdd(xc.rf, u, w, xr ? Math.max(XT_RMIN, d.amt * XT_RKN) : d.amt, top ? 1 : 0, xr ? XT_RMK : 1); if (!XT_MIN.has(M.id)) xc.rd = Math.max(xc.rd, v.car.roofDmg || 0); }   // (every knock into the roof field; xRoofApply after the frame's knocks; the Kolibri's roofDmg rise into it as well, updateParts: its roof sinks with every per cent; its every knock too, XT_RKN times as hard, XT_RMIN at least: a graze's dent never, xtScrape)
     if (top) return;   // (a rollover's roof contact: the field's alone, no cluster)
     let K = null, best = 0.5; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } }
     if (!K && xc.cl.length >= 14) { best = Infinity; for (const q of xc.cl) { if (!!q.top !== top) continue; const e = Math.hypot(q.u - u, q.w - w); if (e < best) { best = e; K = q; } } }
@@ -7971,7 +7998,49 @@ const Render = (function () {
   }
   // a blow on the Kolibri's flank (the core's dent, a side zone, xtZone) scuffs that side as a graze does, unless xtScrape counted that
   // contact already (its side touched within XT_SCR.gapT); XT_DENT: the least a blow on a new place dents its body (xDent; applyDent has its own least)
-  const XT_DENT = 0.02, XT_ROOFK = 2.5;   // (XT_ROOFK: the Kolibri's roof field takes the core's roofDmg rise 2.5 times as deep: some 80 % of its way down at 100 % damage)
+  const XT_DENT = 0.02;
+  // the Kolibri's roof, variant D (the user's: down with every knock and every per cent, and in from the side it was hit on, towards the
+  // middle): XT_RKN, XT_RMIN: a knock into its roof field that many times as hard, that much at least, XT_RMK: its least step that share
+  // (xRoofAdd's mk); XT_PULL: its sides drawn in by that share of their column's band limit (the others' half of their smooth limit lp),
+  // from XT_SIG0 of the way out (the others' 0.45); XT_CK: its default body's roof that much greyer at the deepest (xtCrease). The default
+  // body's roof the same field (xtRoof)
+  const XT_RKN = 1, XT_RMIN = 0.02, XT_RMK = 0.25, XT_PULL = 0.9, XT_SIG0 = 0.2, XT_CK = 0.6;
+  // the Kolibri's roof in the default body (no Razbijanje): the roof field as nov način's in place of crumpleRoof's steps (xRoofBuild over
+  // the body as built, its model's: every point down to its own limit, never through the seats or the driver; the lining, the posts and the
+  // start number with it), fed the same way (its every knock, xtRoofKnock; the core's roofDmg, updateParts); its paint darker where it
+  // sank (xtCrease). null: none (a body laid out otherwise than its model's: crumpleRoof as before)
+  function xtRoof(v) {
+    if (v.xtR !== undefined) return v.xtR;
+    const K = v.kit, geo = v.body.geometry, U = geo.userData || {}, p = geo.attributes.position.array, R = K ? K.E.geo.attributes.position.array : null;
+    if (!R || R.length !== p.length || !U.outerN) return (v.xtR = null);
+    let x0 = Infinity, x1 = -Infinity, hw = 0; for (let i = 0; i < U.outerN; i++) { const x = R[i * 3], z = Math.abs(R[i * 3 + 2]); if (x < x0) x0 = x; if (x > x1) x1 = x; if (z > hw) hw = z; }
+    const n = p.length / 3, rig = U.noCrush ? new Uint8Array(n) : null; if (rig) for (const [a, b] of U.noCrush) rig.fill(1, a, Math.min(b, n));
+    const C = crushOf(v), ys = []; for (let i = 0; i < U.outerN; i++) if (!(rig && rig[i]) && Math.abs(R[i * 3 + 2]) < hw * 0.6 && (!C || (R[i * 3] >= C.x0 - 0.15 && R[i * 3] <= C.x1 + 0.15))) ys.push(R[i * 3 + 1]);
+    ys.sort((a, b) => a - b);   // (B.rt: the roof's own top, as xInit's: crashInfo's probe, xRoofInfo)
+    const xc = { rest: R, on: U.outerN, rig, nd: null, col0: null, B: { x0, x1, hw, hx: Math.max(-x0, x1), rt: ys.length ? ys[Math.floor(ys.length * 0.985)] : 0 }, rd: 0 };   // (rd: the core's roofDmg it has taken in; the body as built till then)
+    xc.rf = xRoofInit(v, xc); if (!xc.rf) return (v.xtR = null);
+    const G = xc.rf.G, col = K.E.geo.attributes.color ? K.E.geo.attributes.color.array : null, keep = new Uint8Array(n), ck = new Float32Array(G.nS), near = (o, Q) => Math.abs(col[o] - Q[0]) < 0.03 && Math.abs(col[o + 1] - Q[1]) < 0.03 && Math.abs(col[o + 2] - Q[2]) < 0.03;
+    if (col) for (let i = 0; i < n; i++) if (near(i * 3, GLASS) || near(i * 3, KIT_GL2)) keep[i] = 1;   // (the glass: the shader's, by its colour)
+    if (U.ranges) for (const nm in U.ranges) for (const q of U.ranges[nm].subs || []) if (q.o) keep.fill(1, q.o[0], q.o[1]);   // (the lamps, the driver)
+    for (let e = 0; e < G.nS; e++) { const i = G.sI[e]; ck[e] = 0.4 + 0.6 * clamp((jitN(R[i * 3], 0, R[i * 3 + 2], 2) - 0.45) * 3, 0, 1); }
+    return (v.xtR = Object.assign(xc, { keep, ck, dk: new Float32Array(G.nS) }));
+  }
+  // the Kolibri's default body: its roof's paint darker where it sank (crumpleRoof's creases: towards a 0.12 grey (a black car's never into
+  // the glass colours), up to XT_CK of the way where its noise folds it (ck), by its drop over the deepest any point can go; never the
+  // glass, a lamp, a cut), its share dk: each time from the paint under it (a dent's darkening kept), as nov način's xPaint does it there
+  function xtCrease(v, xc) {
+    const rf = xc.rf, G = rf.G, A = v.body.geometry.attributes.color, ca = A ? A.array : null, dv = v.kit ? v.kit.deadV : null; if (!ca || !(G.dMax > 1e-6)) return;
+    let any = false;
+    for (let e = 0; e < G.nS; e++) { const i = G.sI[e]; if (xc.keep[i] || (dv && dv[i]) || (v.xtCut && v.xtCut[i])) continue;
+      const s = Math.min(XT_CK, XT_CK * xc.ck[e] * rf.d[e] / G.dMax), s0 = xc.dk[e]; if (s - s0 < 1e-4) continue;
+      for (let q = 0; q < 3; q++) { const o = i * 3 + q; ca[o] = (ca[o] - 0.12 * s0) / (1 - s0) * (1 - s) + 0.12 * s; }
+      xc.dk[e] = s; any = true; }
+    if (any) A.needsUpdate = true;
+  }
+  function xtRoofKnock(v, d) {
+    const xr = xtRoof(v), M = v.car.m; if (!xr || d.sc) return;   // (a graze's dent: never into the roof, xtScrape)
+    xRoofAdd(xr.rf, clamp(d.lx / (M.len * 0.5), -1.2, 1.2), clamp(d.lz / (M.wid * 0.5), -1.2, 1.2), Math.max(XT_RMIN, d.amt * XT_RKN), d.top ? 1 : 0, XT_RMK);
+  }
   function xtScuff(v, d) {
     if (d.top) return;
     const M = v.car.m, S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0], dn: [0, 0] });

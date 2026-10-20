@@ -233,17 +233,27 @@ try {
       const lod = { lose, ok: drC === UP.N && drC2 === UP.N && dr() === UP.outerN, got: [drC, drC2, dr()], want: [UP.N, UP.outerN] };
       // a crushed roof (roofDmg 1: four steps): nothing moves outside the roof's footprint (body.crush, fading over 15 cm in x, 10 cm in z);
       // a noCrush range moves whole (if at all); every lining point keeps its offset from the shell's point it is inset from; the rest of the
-      // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves
+      // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves. The KOLIBRI's roof its roof field
+      // (render.js xtRoof, variant D): its posts' tops (G.fI) go down and in with the roof, what lies on it (a rider: the spoiler) down whole
+      // as A + B x (a tilt), its lining never deeper than its twin (held at its own limit); a dent never moves a noDent point but by the field
       const pa = gP.attributes.position.array, P0 = Float32Array.from(pa), C = E.body.crush, n = UP.outerN, mv = (i, Q) => Math.hypot(pa[i * 3] - Q[i * 3], pa[i * 3 + 1] - Q[i * 3 + 1], pa[i * 3 + 2] - Q[i * 3 + 2]);
       P.roofDmg = 1; Render.frame(0, 1, P, 'chase', { noFx: true });
-      const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length };
+      const xr = Render.viewOf(P).xtR, G = xr && xr.rf ? xr.rf.G : null, fol = new Set(G ? G.fI : []), lin = new Set(G ? G.lI : []), rid = new Set();
+      if (G) for (const Q of G.rid) for (const [s0, s1] of Q.ranges) for (let i = s0; i < s1; i++) rid.add(i);
+      const fld = (i) => !!G && (G.vE[i] >= 0 || fol.has(i) || lin.has(i) || rid.has(i));   // (a point the roof field moves)
+      const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length, field: !!G };
       for (let i = 0; i < n; i++) if (mv(i, P0) > 1e-6) { cr.moved++; const x = P0[i * 3], z = P0[i * 3 + 2]; if (x < C.x0 - 0.1501 || x > C.x1 + 0.1501 || Math.abs(z) > C.z + 0.1001) cr.outside++; }
-      for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let lo = 9, hi = -9; for (let i = s0; i < s1; i++) { const d = pa[i * 3 + j] - P0[i * 3 + j]; lo = Math.min(lo, d); hi = Math.max(hi, d); } cr.spread = Math.max(cr.spread, hi - lo); }
+      for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let A = 0, B = 0;
+        if (G && j === 1 && rid.has(s0)) { let mx = 0, md = 0, sxx = 0, sxd = 0; const N = s1 - s0; for (let i = s0; i < s1; i++) { mx += P0[i * 3] / N; md += (pa[i * 3 + 1] - P0[i * 3 + 1]) / N; }   // (a rider: its tilt along the car taken out)
+          for (let i = s0; i < s1; i++) { sxx += (P0[i * 3] - mx) ** 2; sxd += (P0[i * 3] - mx) * (pa[i * 3 + 1] - P0[i * 3 + 1] - md); } B = sxx > 1e-9 ? sxd / sxx : 0; A = md - B * mx; }
+        let lo = 9, hi = -9; for (let i = s0; i < s1; i++) { const d = pa[i * 3 + j] - P0[i * 3 + j] - (j === 1 ? A + B * P0[i * 3] : 0); lo = Math.min(lo, d); hi = Math.max(hi, d); } cr.spread = Math.max(cr.spread, hi - lo); }
       for (let i = n; i < UP.N; i++) { const t = UP.twin ? UP.twin[i - n] : -1;
-        if (t < 0) { if (mv(i, P0) > 1e-6) cr.stray++; continue; }
+        if (t < 0) { if (mv(i, P0) > 1e-6 && !fol.has(i)) cr.stray++; continue; }
+        if (G && lin.has(i)) { const d = (k) => pa[i * 3 + k] - P0[i * 3 + k], dt = (k) => pa[t * 3 + k] - P0[t * 3 + k];   // (the field's lining: as deep as its twin at most, drawn in no further, never along)
+          if (d(1) < dt(1) - 1e-4 || d(1) > 1e-6 || Math.abs(d(2)) > Math.abs(dt(2)) + 1e-4 || Math.abs(d(0) - dt(0)) > 1e-4) cr.lining++; continue; }
         if (Math.hypot(pa[i * 3] - pa[t * 3] - (P0[i * 3] - P0[t * 3]), pa[i * 3 + 1] - pa[t * 3 + 1] - (P0[i * 3 + 1] - P0[t * 3 + 1]), pa[i * 3 + 2] - pa[t * 3 + 2] - (P0[i * 3 + 2] - P0[t * 3 + 2])) > 1e-4) cr.lining++; }
       const P1 = Float32Array.from(pa); P.dents.push({ lx: 0.2, lz: -0.9, amt: 1 }, { lx: -0.3, lz: 0, amt: 1 }, { lx: 0.8, lz: 0.9, amt: 1 }); Render.frame(0, 1, P, 'chase', { noFx: true });
-      let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6) ndMoved++;
+      let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
       return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };

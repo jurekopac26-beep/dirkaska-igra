@@ -9,7 +9,9 @@
 //    time: fifteen in one place under 13 cm), the other side untouched, a contact on the nose none, a person on foot's (the core's contact
 //    point left as it was) none; a repair polishes them out
 // 4. the roof (what the camera behind the car sees most): caved in more with every 10 % of damage from the first (core.js roofOf: the
-//    Kolibri's roof0 0; render.js: the roof field, XT_ROOFK; the default body's crumpleRoof in 20 steps)
+//    Kolibri's roof0 0; render.js: the roof field, its roofDmg rise a share of what is left (kind 3); the default body's the same field,
+//    xtRoof), never through the seats, the driver or the posts' tops (the field's limits, xRoofInfo); variant D (the user's): three light
+//    blows on the right flank draw the roof's right side in towards the middle (1 cm and more), more than its left
 // and with the default settings (no Razbijanje): the scrapes and the roof the same, no table; the MEDVED (a table car, not the Kolibri) with glass on:
 // a light blow breaks no pane, no scrapes (the Kolibri's only)
 //   node tests/browser/kolibri.test.mjs
@@ -62,12 +64,15 @@ try {
         P.place(Tk.px[i], Tk.pz[i], h); P.q = Tk.query(P.x, P.z, i, P.q); hold(0.6); out.rail.push(scr()); out.railD.push(moved());
       }
       out.dmg = P.dmg; R.repairCar(P); hold(0.3); out.after = scr();
+      // variant D: three light blows on the right flank, the roof's sides drawn in (xRoofInfo's pull: left, right) and lowered (rail)
+      fresh(); for (let k = 0; k < 3; k++) { knock(0.02, 0, 1); hold(0.6); } { const f = me().rf || me().rfD; out.side = f ? { pull: f.pull, rail: f.rail } : null; }
       // the roof (what the camera behind the car sees most) by the damage: blows on the flanks and the ends, the car to 10 %, 20 % ... 90 %;
-      // the roof's top (its points over 88 % of the body's height) lower on average each time
+      // the roof's top (its points over 88 % of the body's height) lower on average each time; then the field's own checks (its limits)
       fresh(); base(); { const a0 = b0, top = []; let yM = -1e9; for (let i = 1; i < a0.length; i += 3) yM = Math.max(yM, a0[i]); for (let i = 1; i < a0.length; i += 3) if (a0[i] > 0.88 * yM) top.push(i);
         const drop = () => { const a = v().body.geometry.attributes.position.array; let s = 0; for (const i of top) s += a0[i] - a[i]; return +(s / Math.max(1, top.length)).toFixed(4); };
         const at = [[1, 0.2], [0.2, -1], [-1, -0.2], [-0.2, 1]]; out.roof = []; let n = 0;
-        for (let p = 1; p <= 9; p++) { while (P.dmg < p / 10 - 1e-9) { const [u, w] = at[n++ % 4]; knock(Math.min(0.05, p / 10 - P.dmg), u, w); hold(0.6); } out.roof.push(drop()); } out.roofN = top.length; out.roofDmg = +P.roofDmg.toFixed(3); }
+        for (let p = 1; p <= 9; p++) { while (P.dmg < p / 10 - 1e-9) { const [u, w] = at[n++ % 4]; knock(Math.min(0.05, p / 10 - P.dmg), u, w); hold(0.6); } out.roof.push(drop()); } out.roofN = top.length; out.roofDmg = +P.roofDmg.toFixed(3);
+        const f = me().rf || me().rfD; out.rfI = f ? { over: f.over, flip: f.flip, clear: f.clear, clear0: f.clear0, clearL: f.clearL, clearF: f.clearF, obsUp: f.obsUp, pull: f.pull } : null; }
       R.repairCar(P); hold(0.3); out.nan = [...scr(), P.x, P.z].some(x => !Number.isFinite(x));
       return out;
     });
@@ -97,6 +102,13 @@ try {
   T.check('nov način: every graze dents that flank in a little more (its points pushed in further each time), the other side not; a contact on the nose none, a person on foot\'s (the contact point as it was) none; fifteen grazes in one place never cave it in (under 13 cm)', dentIn(x), JSON.stringify({ car: x.carD, nose: x.nose2D, rail: x.railD, stale: x.stale, many: x.many }));
   const roofIn = (r) => r.roof.length === 9 && r.roof[0] > 0.003 && r.roof.every((q, j) => j === 0 || q > r.roof[j - 1] + 0.002) && r.roof[8] > 0.08;
   T.check('nov način: the roof caved in more with every 10 % of damage, from the first (10 % to 90 %; 8 cm and more at 90 %)', roofIn(x), JSON.stringify({ roof: x.roof, n: x.roofN, roofDmg: x.roofDmg }));
+  // (variant D: the hit side drawn in towards the middle; the field's limits: nothing past its limit, no facet over, the roof 5 mm (or as near
+  // as built) over the seats and the driver, the headliner too, the posts' tops under it, nothing in the way lifted)
+  const sideIn = (r) => !!r.side && r.side.pull[1] >= 0.01 && r.side.pull[1] > r.side.pull[0] + 0.005 && r.side.rail[1] > 0;
+  const rfOk = (r) => !!r.rfI && r.rfI.over === 0 && r.rfI.flip === 0 && (r.rfI.clear === null || r.rfI.clear >= Math.min(0.005, r.rfI.clear0) - 1e-4) && (r.rfI.clearL === null || r.rfI.clearL >= 0)
+    && (r.rfI.clearF === null || r.rfI.clearF >= -1e-4) && r.rfI.obsUp <= 1e-5 && r.rfI.pull.every(q => q >= 0.03);
+  T.check('nov način: three light blows on the right flank draw the roof\'s right side in towards the middle (1 cm and more), more than its left (variant D)', sideIn(x), JSON.stringify(x.side));
+  T.check('nov način: at 90 % the roof drawn in from both sides (3 cm and more), never past its limits: no facet over, over the seats and the driver, the headliner too, the posts\' tops under it', rfOk(x), JSON.stringify(x.rfI));
   T.check('nov način: a repair polishes the scrapes out; nothing NaN, no page errors', x.after[0] === 0 && x.after[1] === 0 && !x.nan && !x.errors.length, x.errors.slice(0, 3).join(' | '));
 
   const d = await run('kolibri', {});
@@ -105,7 +117,9 @@ try {
   T.check('default settings: every graze more scratched on its side, along the barrier too; repaired: none', inc(d.car.map(q => q[0])) && d.car.every(q => q[1] === 0) && inc(d.rail.map(q => q[d.railK])) && d.after.every(q => q === 0) && !d.errors.length,
     JSON.stringify({ car: d.car, rail: d.rail }) + ' ' + d.errors.slice(0, 3).join(' | '));
 
-  T.check('default settings: the roof caved in more with every 10 % of damage, from the first (its 20 steps; 8 cm and more at 90 %)', roofIn(d), JSON.stringify({ roof: d.roof, n: d.roofN, roofDmg: d.roofDmg }));
+  T.check('default settings: the roof caved in more with every 10 % of damage, from the first (its roof field, xtRoof; 8 cm and more at 90 %)', roofIn(d), JSON.stringify({ roof: d.roof, n: d.roofN, roofDmg: d.roofDmg }));
+  T.check('default settings: three light blows on the right flank draw the roof\'s right side in towards the middle, more than its left (variant D)', sideIn(d), JSON.stringify(d.side));
+  T.check('default settings: at 90 % the roof drawn in from both sides, never past its limits (the seats never through it: its roof field, xtRoof)', rfOk(d), JSON.stringify(d.rfI));
   T.check('default settings: every graze dents that flank in a little more, the other side not; never caved in (under 13 cm)', dentIn(d), JSON.stringify({ car: d.carD, nose: d.nose2D, rail: d.railD, stale: d.stale, many: d.many }));
 
   const m = await run('medved', { xBody: 1, xGlass: 1 });
