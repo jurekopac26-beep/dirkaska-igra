@@ -10,7 +10,7 @@ Kronometer: vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnik
 
 ## Ouninpohja, Finska (kronometer na makadamu)
 
-Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~9,7 km z 28 skoki, kraji pa so v pravem vrstnem redu:
+Najslavnejša hitrostna preizkušnja na Finskem (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~9,7 km z 28 skoki, kraji pa so v pravem vrstnem redu:
 
 - prvi ovinek pri Hämepohji,
 - dolg desni ovinek ob jezeru Naarajärvi in velik vrh za njim,
@@ -19,7 +19,7 @@ Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri 
 - »stopnice« (trije skoki navzdol) do križišča Mutanen, kjer se zavije ostro levo,
 - hitra in široka Okskulmantie,
 - dodan odsek, ki ga na pravi preizkušnji ni (a je v istem slogu): vrhovi v smrekovem gozdu, ribnik s savno, vas s trgovino (KAUPPA), dvorano (SEURANTALO), šolo (KOULU), avtobusno postajo, gledalci ob ulici in ostrim levim v križišču, nato vrh za vasjo. Imena teh krajev pove samo komentator, pod uro se ne izpišejo,
-- skok Amazon čez vrh tik pred levim ovinkom,
+- skok Fast Crest čez vrh tik pred levim ovinkom,
 - lasnica v križišču Kakaristo med polji (največ gledalcev in šotor z gostilno),
 - ozka cesta mimo Liisanmutke in leteči cilj na Hassintieju.
 
@@ -44,7 +44,7 @@ Okolica:
 
 ## Harju, Finska (kronometer v mestu)
 
-Mestna hitrostna preizkušnja Relija Finska na grebenu Harju sredi Jyväskyläja. Na njej so tekmovali že na prvih Jyväskylän Suurajot leta 1951, danes pa odpira reli v četrtek zvečer (in se ponovi v petek). Proga je v pravem merilu in po pravih ulicah (OpenStreetMap), višine so iz satelitskega višinskega modela ArcticDEM (2 m), iz katerega so odstranjena drevesa in stavbe. Postavitev je iz let 2025 in 2026 (uradno 2,58 km), prerisana z zemljevida preizkušnje na rally-maps.com na ulice in poti iz OpenStreetMap. Od zastavice za start do zastavice za cilj meri ~2,47 km (narisana črta na zemljevidu meri ~2,5 km, vodnik za gledalce 2025 pa je navajal 2,50 km):
+Mestna hitrostna preizkušnja na grebenu Harju sredi Jyväskyläja. Na njej so tekmovali že leta 1951, danes pa odpira finski reli v četrtek zvečer (in se ponovi v petek). Proga je v pravem merilu in po pravih ulicah (OpenStreetMap), višine so iz satelitskega višinskega modela ArcticDEM (2 m), iz katerega so odstranjena drevesa in stavbe. Postavitev je iz let 2025 in 2026 (uradno 2,58 km), prerisana z zemljevida preizkušnje na rally-maps.com na ulice in poti iz OpenStreetMap. Od zastavice za start do zastavice za cilj meri ~2,47 km (narisana črta na zemljevidu meri ~2,5 km, vodnik za gledalce 2025 pa je navajal 2,50 km):
 
 - start na jugovzhodnem vozišču Yliopistonkatu in znani pospešek navzdol do prve lasnice v levo: obrat okoli konca sredinskega otoka pri križišču Kilpisenkatu (vozišči sta tam 14 m narazen), med voziščema so betonski bloki,
 - vzpon nazaj po drugem vozišču Yliopistonkatu mimo vznožja Nerovih stopnic (Neron portaat), polnih gledalcev,
