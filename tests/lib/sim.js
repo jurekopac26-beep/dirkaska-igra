@@ -39,12 +39,12 @@ const SETUPS = {
 // lock only grazes the inside barrier there; 1.5 s earlier every car of the crash set-ups goes off across the outside of the right-hander before it.
 // Toronto: from 6 s the formula ends up pinned against the wall by the pit entry (the autopilot misses the lane: no repair); half a second
 // later every car of the crash set-ups gets to the repair. Montréal (the start's reaction with the pit autopilot of #112): from 6 s the
-// wrecked car of the crash set-up drives past the way in on the left two laps running (no repair); from 6.5 s all four got to the repair, since
-// the corners of the cars' boxes count in a contact (carCollide) the formula's does not at 6.5 s any more, and 6 s does
-// Sani Pass: from 6 s the lm car of the crash set-up only grazes (damage 0.05); from 5.5 s it hits hard enough to lose panels
+// wrecked car of the crash set-up drives past the way in on the left two laps running (no repair); from 6.5 s all four get to the repair
 // Uncompahgre: from 6 s the crash set-up's car only rubs the wall on its nose (no panel off below 70 %: MASK in core.js); half a second
 // later every car of the crash set-ups hits it hard enough to lose panels
-const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 6, uncompahgre: 6.5, sani: 5.5 };
+// Gora, Tianmen, Sani Pass, Rastro and Palomar (the cars' boxes pushed apart in a contact, carCollide, moved the pack a little at the start): from 6 s
+// the crash set-ups only grazed (damage below 0.2 or no panel off, no repair); Gora and Tianmen from 5.5 s, Sani Pass from 8 s, Rastro and Palomar from 5 s
+const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 6.5, uncompahgre: 6.5, gora: 5.5, tianmen: 5.5, sani: 8, rastro: 5, palomar: 5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, t0 = CRASH_AT[race.track.def.id] || 6;
   if (stuck) race.rescue(P);
