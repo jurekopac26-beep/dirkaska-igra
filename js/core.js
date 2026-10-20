@@ -2426,6 +2426,14 @@ const Core = (function () {
           pts: [[0, -h0, -la], [0, -h0, la], [-e, y0, -hw], [-e, y0, hw], [e, y0, -hw], [e, y0, hw], [0, yR, -rz], [0, yR, rz]] }; })(),
     };
     KK.bsign = KK.msign;   // (Medvode's bus stop sign: the same pole and board, another picture)
+    // the roadside equipment of the real open roads (World's roadside): the plastic delineator (heavier than the old post: a little more speed lost,
+    // a small dent), the speed limit sign on its pole, the chevron board, the place-name board on its two legs (legs: where it collides, [x, z] from its
+    // middle, the board along local z; reach: how far that is). Signs 1.8 times their real size; the faces along local x, the pole behind them
+    KK.dpost = { m: 10, rh: 0.14, rb: 0.62, h0: 0.55, e: 0.3, mu: 0.6, lift: 0.8, I: 0.9, dmg: 0.35, pts: boxPts(0.07, 0.55, 0.07) };
+    KK.rssign = { m: 14, rh: 0.12, rb: 2.0, h0: 1.8, e: 0.25, mu: 0.6, lift: 0.7, I: 9, dmg: 0.5, pts: boxPts(0.05, 1.8, 0.05).concat([[0, 1.85, 0.75], [0, 1.85, -0.75], [0, 0.35, 0.75], [0, 0.35, -0.75]]) };
+    KK.rschev = { m: 10, rh: 0.12, rb: 1.4, h0: 1.2, e: 0.25, mu: 0.6, lift: 0.7, I: 4, dmg: 0.4, pts: boxPts(0.05, 1.2, 0.05).concat([[0, 1.2, 0.7], [0, 1.2, -0.7], [0, -0.2, 0.7], [0, -0.2, -0.7]]) };
+    KK.rsboard = { m: 26, rh: 0.1, rb: 2.4, h0: 1.9, e: 0.1, mu: 0.8, lift: 0.25, I: 16, dmg: 0.8, legs: [[0, 1.45], [0, -1.45]], reach: 1.55,
+      pts: [[0, -1.9, 1.45], [0, -1.9, -1.45], [0, 1.55, 1.8], [0, 1.55, -1.8], [0, 0.65, 1.8], [0, 0.65, -1.8]] };
     return KK;
   })();
   const _pq = {};
@@ -2451,20 +2459,25 @@ const Core = (function () {
     if (vrel > 1.5 && (!c.propSnd || vrel > c.propSndV)) { c.propSnd = kind; c.propSndV = vrel; }
   }
   function propCarHit(race, c, b) {
-    const K = b.K, dx = b.x - c.x, dz = b.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + K.rh + 0.1;   // (beyond the car's reach)
+    const K = b.K, dx = b.x - c.x, dz = b.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + (K.reach || K.rh) + 0.1;   // (beyond the car's reach)
     if (dx * dx + dz * dz > R * R || (K.dmg != null && b.hit1 && b.age < 0.6)) return;   // (street furniture: one knock, then it is on its way for a moment)
     const cy = c.y || 0; if (b.y - K.rb > cy + 1.3 || b.y + K.rb < cy + 0.05) return;
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     for (let i = 0; i < c.circles.length; i++) {
-      const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i], ex = b.x - ax, ez = b.z - az, r = c.rad + K.rh, e2 = ex * ex + ez * ez;
+      const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i], r = c.rad + K.rh;
+      let ex = b.x - ax, ez = b.z - az, ox = 0, oz = 0;   // (ox, oz: what is touched, from the middle: a board's nearer leg)
+      if (K.legs) for (let q = 0, best = 1e9; q < K.legs.length; q++) { const L = qRot(b, K.legs[q][0], 0, K.legs[q][1], _r3), lx = ex + L[0], lz = ez + L[2];
+        if (lx * lx + lz * lz < best) { best = lx * lx + lz * lz; ox = L[0]; oz = L[2]; } }
+      if (K.legs) { ex += ox; ez += oz; }
+      const e2 = ex * ex + ez * ez;
       if (e2 >= r * r) continue;
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
-      const px = b.x - nx * K.rh, pz = b.z - nz * K.rh, rcx = px - c.x, rcz = pz - c.z;
+      const px = (K.legs ? b.x + ox : b.x) - nx * K.rh, pz = (K.legs ? b.z + oz : b.z) - nz * K.rh, rcx = px - c.x, rcz = pz - c.z;
       const vcx = c.vx - c.w * rcz, vcz = c.vz + c.w * rcx, vrel = (vcx - b.vx) * nx + (vcz - b.vz) * nz;   // closing speed at the contact
       b.x += nx * (r - e); b.z += nz * (r - e); b.dirty = true;                                          // the prop gives way
       if (vrel < 0.5) return;
       if (K.breaks) { race.breakProp(b, nx, nz, vrel, c.vx, c.vz); propFeel(c, K.m, vrel, b.kind); return; }
-      const rx = -nx * K.rh, rz = -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away
+      const rx = K.legs ? px - b.x : -nx * K.rh, rz = K.legs ? pz - b.z : -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away (a board at its leg: it turns as well)
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
       const j = 1.35 * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);
       b.sleep = false; b.t = 0; b.age = 0;

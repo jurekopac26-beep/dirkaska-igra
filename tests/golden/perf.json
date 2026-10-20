@@ -21,17 +21,17 @@
   "jsMs": 3.54
  },
  "ouninpohja": {
-  "calls": 179,
-  "maxCalls": 195,
-  "kverts": 509,
-  "maxKverts": 603,
+  "calls": 167,
+  "maxCalls": 180,
+  "kverts": 441,
+  "maxKverts": 517,
   "jsMs": 1.37
  },
  "vrsic": {
-  "calls": 165,
-  "maxCalls": 209,
-  "kverts": 267,
-  "maxKverts": 305,
+  "calls": 164,
+  "maxCalls": 210,
+  "kverts": 266,
+  "maxKverts": 302,
   "jsMs": 8.5
  },
  "nring": {
@@ -224,10 +224,10 @@
   "jsMs": 1.41
  },
  "medvode": {
-  "calls": 165,
-  "maxCalls": 193,
-  "kverts": 410,
-  "maxKverts": 588,
+  "calls": 166,
+  "maxCalls": 194,
+  "kverts": 411,
+  "maxKverts": 590,
   "jsMs": 2.32
  },
  "montreal": {

@@ -4,10 +4,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Ouninpohja (Rally Finland, Jämsä): the most famous special stage of the rally, run from Hämepohja in the south to Hassintie in the north
   // (the direction since 1995). A POINT-TO-POINT gravel time trial, no opponents. The real stage is ~33 km with more than 75 jumps; this is a
   // scaled version (~9.7 km, 28 jumps) that keeps its places in their order: the first corner at Hämepohja, the long right-hander by Lake
-  // Naarajärvi and its big crest, the road through the Ouni farmyard, the Yellow House jump (Keltainen talo: Markko Märtin flew 57 m there
-  // in 2003), the steps down to the Mutanen junction, the fast Okskulmantie, the Fast Crest jump over a left-hander, the Kakaristo hairpin in
-  // the fields, the narrow road past Liisanmutka and the flying finish on Hassintie. Between Okskulmantie and the Fast Crest a section of the
-  // same character is added (not on the real stage's map): crests through the spruce forest, a pond, a village with a tight junction.
+  // Naarajärvi and its big crest, the road through the Ouni farmyard, the Yellow House jump (Keltainen talo: the record there is 57 m, from
+  // 2003; in the game an invented driver holds it), the steps down to the Mutanen junction, the fast Okskulmantie, the Fast Crest jump over a
+  // left-hander, the Kakaristo hairpin in the fields, the narrow road past Liisanmutka and the flying finish on Hassintie. Between Okskulmantie
+  // and the Fast Crest a section of the same character is added (not on the real stage's map): crests through the spruce forest, a pond, a
+  // village with a tight junction.
   // Game axes: x east, z south (north = up on the minimap). The road is OPEN: points[0] is the south end, the last point the north end.
   //   start / finish / cps : [x, z] positions, snapped to the nearest centre-line sample (cps = the split points CP1..CP4)
   TRACK_DEFS.push({
@@ -23,7 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // rain, a choice on the track menu (records apart): the wet gravel grips less and the puddles (seed: where they lie) drag at the wheels
     rain: { seed: 31, puddles: 46 },
     // the famous jump (game.js: each run's length there against the record, the player's own longest kept with the records)
-    jumpRec: { bump: 5, name: 'Rumena hiša', say: 'the Yellow House', m: 57, by: 'Markko Märtin', beat: 'Dlje od Märtina!', en: { name: 'Yellow House', beat: 'Further than Märtin!' } },
+    jumpRec: { bump: 5, name: 'Rumena hiša', say: 'the Yellow House', m: 57, by: 'Aarne Kivelä', beat: 'Nov rekord skoka!', en: { name: 'Yellow House', beat: 'New jump record!' } },
     // medal times (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
     medals: { cs: [235, 246, 265], wet: { cs: [258, 271, 291] } },
     // heights: [x, z, h] keyframes (m above the start line), snapped to samples, interpolated along s (not periodic); rolling lake-district hills
