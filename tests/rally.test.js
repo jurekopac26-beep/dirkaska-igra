@@ -54,7 +54,7 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
 // the famous jump and the medals
 {
   const J = def.jumpRec, big = jumps.reduce((a, j, k) => j.h > jumps[a].h ? k : a, 0);
-  check('jump record: the Yellow House is the biggest jump, Märtin\'s 57 m', J.bump === big && J.m === 57 && /Märtin/.test(J.by), `bump ${J.bump} (biggest ${big}), ${J.m} m`);
+  check('jump record: the Yellow House is the biggest jump, the record 57 m, held by an invented driver (no real names)', J.bump === big && J.m === 57 && J.by === 'Aarne Kivelä' && !/Märtin/i.test(JSON.stringify(J)), `bump ${J.bump} (biggest ${big}), ${J.m} m`);
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
   check('medals: gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
     `dry ${M.cs}, wet ${M.wet.cs}`);
