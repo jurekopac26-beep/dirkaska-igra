@@ -1626,7 +1626,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); fly.on = false; fly.n = 0; drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); $('hud').classList.remove('tow'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); fly.on = false; fly.n = 0; flyHUD(0); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); $('hud').classList.remove('tow'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-split').textContent = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
@@ -1657,7 +1657,7 @@
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
         else if (!(race.opts.flying > 0)) Comm.say(track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);   // (a flying start: the commentator only counts down, flyStep)
-        showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
+        if (!(race.opts.flying > 0)) showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);   // (a flying start: only its countdown, flyHUD; a championship's round with VOZIŠ TI!)
       }
     }
     if (race.rain && !(race.opts.flying > 0)) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
@@ -3173,14 +3173,18 @@
     return !p1 || (p1.gap && p1.o <= p1.wall + 1);
   }
   // the flying start of a race up an open road (Race opts.flying = FLY_T): the race already under way, the cars in a line ~10 s long (Race._flyColumn),
-  // the player's car FLY_T s below the start line on the autopilot, a number at each whole second of race time (LETEČI START · PREVZAMEŠ ČEZ 3, 2, 1);
-  // over the line (Race.flyOn off) VOZIŠ TI! and the player's own car, no one passing until then. The commentator only counts (Three! Two! One!), then:
-  // The race has started! (no welcome before it)
+  // the player's car FLY_T s below the start line on the autopilot; in the middle three amber lights, one going out at each whole second of race time
+  // (flyHUD); over the line (Race.flyOn off) the lights gone, VOZIŠ TI! and the player's own car, no one passing until then. The commentator only
+  // counts (Three! Two! One!), then: The race has started! (no welcome before it)
   const FLY_T = 3, fly = { on: false, n: 0 };
+  function flyHUD(n) {   // n lights lit; 0: gone
+    const e = $('h-fly'); e.classList.toggle('show', n > 0);
+    if (n > 0) e.querySelectorAll('i').forEach((l, k) => l.classList.toggle('on', k < n));
+  }
   function flyStep() {
     const n = race.flyOn ? clamp(Math.ceil(FLY_T - race.time - 1e-6), 1, FLY_T) : 0;   // (late at the line: 1 until it is over it)
-    if (n > 0 && n !== fly.n) { fly.n = n; showMsg(n === FLY_T ? tr('LETEČI START · PREVZAMEŠ ČEZ {0}', n) : tr('PREVZAMEŠ ČEZ {0}', n), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); Comm.say(['flyOne', 'flyTwo', 'flyThree'][n - 1] || 'flyOne', null, 5); }
-    if (!n) { fly.on = false; fly.n = 0; showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say('flyGo', null, 5); }
+    if (n > 0 && n !== fly.n) { fly.n = n; flyHUD(n); Sfx.beep(520, 0.16, 0.14); Comm.say(['flyOne', 'flyTwo', 'flyThree'][n - 1] || 'flyOne', null, 5); }
+    if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say('flyGo', null, 5); }
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
@@ -3713,7 +3717,7 @@
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
     ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
-    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT|LETEČI START|FLYING START|^PREVZAMEŠ|^TAKE OVER/],
+    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED/],
     ['pit', /BOKS|PIT|BOX/]];
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
