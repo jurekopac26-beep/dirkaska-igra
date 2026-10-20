@@ -14,11 +14,11 @@
   "jsMs": 1.77
  },
  "pikesg": {
-  "calls": 167,
-  "maxCalls": 203,
-  "kverts": 317,
-  "maxKverts": 428,
-  "jsMs": 3.54
+  "calls": 186,
+  "maxCalls": 244,
+  "kverts": 328,
+  "maxKverts": 414,
+  "jsMs": 1.8
  },
  "ouninpohja": {
   "calls": 179,
@@ -112,18 +112,18 @@
   "jsMs": 5.7
  },
  "uncompahgre": {
-  "calls": 180,
-  "maxCalls": 260,
-  "kverts": 411,
-  "maxKverts": 476,
-  "jsMs": 7.16
+  "calls": 219,
+  "maxCalls": 276,
+  "kverts": 431,
+  "maxKverts": 561,
+  "jsMs": 1.96
  },
  "sani": {
-  "calls": 155,
-  "maxCalls": 178,
-  "kverts": 194,
-  "maxKverts": 276,
-  "jsMs": 2.11
+  "calls": 174,
+  "maxCalls": 255,
+  "kverts": 215,
+  "maxKverts": 323,
+  "jsMs": 1.54
  },
  "iroha": {
   "calls": 243,
@@ -224,11 +224,11 @@
   "jsMs": 1.41
  },
  "medvode": {
-  "calls": 165,
-  "maxCalls": 193,
-  "kverts": 410,
-  "maxKverts": 588,
-  "jsMs": 2.32
+  "calls": 168,
+  "maxCalls": 246,
+  "kverts": 397,
+  "maxKverts": 580,
+  "jsMs": 1.48
  },
  "montreal": {
   "calls": 233,
