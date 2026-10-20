@@ -436,6 +436,7 @@
     const standPolys = STANDS.map(([d0, d1, sd, f0, depth]) => { const a = [], b = [];
       for (let d = d0; d <= d1; d += 3) { const q = crAt(sAt(d)), o = (sd > 0 ? q.br : q.bl) + f0; a.push([q.px + q.nx * sd * (o - 1), q.pz + q.nz * sd * (o - 1)]); b.push([q.px + q.nx * sd * (o + depth + 1), q.pz + q.nz * sd * (o + depth + 1)]); }
       const P = a.concat(b.reverse()), xs = P.map(p => p[0]), zs = P.map(p => p[1]); return { P, x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) }; });
+    out.stands = standPolys.map(S => S.P); out.treeMat = tMat;   // (read by the tests)
     const inStand = (x, z, r) => standPolys.some(S => x > S.x0 - r && x < S.x1 + r && z > S.z0 - r && z < S.z1 + r && (inPoly(S.P, x, z) || polyDist(S.P, x, z) < r));
     const treeOk = (x, z, r) => { if (onBld(x, z) || inWater(x, z) || pitZone(x, z) || inStand(x, z, r || 2.5)) return false; const q = near(x, z, 24); if (q.i >= 0 && q.dd < barO(q.i, q.lat > 0 ? 1 : -1) - WA[q.i] + (r || 2.5)) return false; return !onRoad(x, z, -1, 0.8); };
     const plant = (x, z, kind, ht) => { const h = ht || (kind < 2 ? 9 + R() * 8 : kind === 2 ? 9 + R() * 7 : kind === 3 ? 7 + R() * 4 : 6 + R() * 3);
