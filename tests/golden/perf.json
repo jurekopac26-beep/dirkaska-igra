@@ -1,17 +1,17 @@
 {
  "monaco": {
-  "calls": 191,
-  "maxCalls": 238,
-  "kverts": 641,
-  "maxKverts": 715,
-  "jsMs": 1.58
+  "calls": 174,
+  "maxCalls": 270,
+  "kverts": 626,
+  "maxKverts": 741,
+  "jsMs": 1.61
  },
  "pikes": {
-  "calls": 142,
-  "maxCalls": 190,
-  "kverts": 270,
-  "maxKverts": 344,
-  "jsMs": 12.01
+  "calls": 173,
+  "maxCalls": 258,
+  "kverts": 333,
+  "maxKverts": 458,
+  "jsMs": 1.77
  },
  "pikesg": {
   "calls": 167,
@@ -168,11 +168,11 @@
   "jsMs": 3.45
  },
  "baldy": {
-  "calls": 217,
-  "maxCalls": 280,
-  "kverts": 558,
-  "maxKverts": 821,
-  "jsMs": 5.83
+  "calls": 220,
+  "maxCalls": 339,
+  "kverts": 547,
+  "maxKverts": 776,
+  "jsMs": 2.07
  },
  "cpalace": {
   "calls": 261,
