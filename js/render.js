@@ -4296,7 +4296,8 @@ const Render = (function () {
   // A knock (a dent, a pane or a lamp broken, the roof pushed in: farSig) leaves the far mesh stale, not off: it is built again from the car as it
   // is now (farRebuild, one car a frame, one in the view) while the car is far, and till then the stale one is drawn (a dent or a cracked pane
   // 75 m off: a pixel or two); so a field of 100 with its rubs and nudges keeps its far meshes, the kit cars' too (their dents and roof count
-  // apart in kit.ver: kit.dk). Only what the car draws goes in (a kit body: its outer shell, the draw range). Off for good: a part or a wheel
+  // apart in kit.ver: kit.dk). Only what the car draws goes in (a kit body: its outer shell, the draw range); a kit car whose hull (its shadow
+  // on this tier, kitShadows) has more vertices than the far mesh casts its shadow from the far mesh while far (hs). Off for good: a part or a wheel
   // lost, a kit car's pieces changed (a part loose, off, torn open; kit.ver but not by a knock), or a car beaten past FAR_DMG (it smokes, its
   // scratches show, scrU: not in the far mesh's vertex colours).
   const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
@@ -4334,12 +4335,13 @@ const Render = (function () {
     for (let q = 0; q < nv; q++) { const b = q * 7, w = acc[b + 6]; for (let j = 0; j < 3; j++) { pos[q * 3 + j] = acc[b + j] / w; col[q * 3 + j] = acc[b + 3 + j] / w; } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere();
     const m = new THREE.Mesh(g, farMat || (farMat = new THREE.MeshLambertMaterial({ vertexColors: true })));
-    m.castShadow = !v.hull; m.receiveShadow = false; m.visible = false; v.bodyG.add(m);   // (a kit car's shadow stays its hull's; the others' from this)
-    v.far = { mesh: m, list, on: false, ok: true, dirty: false, sig: farSig(v), ver: v.kit ? v.kit.ver : 0, pv: v.kit ? v.kit.ver - v.kit.dk : 0 }; carGlow(v);
+    const hs = !!v.hull && idx.length < v.hull.geometry.attributes.position.count;   // (hs: the far mesh cheaper than the kit car's hull, e.g. a small open car's: its shadow too while far)
+    m.castShadow = !v.hull || hs; m.receiveShadow = false; m.visible = false; v.bodyG.add(m);   // (a kit car's shadow stays its hull's but for hs; the others' from this)
+    v.far = { mesh: m, list, on: false, ok: true, dirty: false, sig: farSig(v), ver: v.kit ? v.kit.ver : 0, pv: v.kit ? v.kit.ver - v.kit.dk : 0, hs }; carGlow(v);
   }
   function farSig(v) { let s = v.roofStep || 0; for (let k = 0; k < 4; k++) s += (v.winBroken && v.winBroken[k] ? 8 : 0) * (1 << k) + (v.lightBroken && v.lightBroken[k] ? 128 : 0) * (1 << k); return s; }
   function farRebuild(v) {   // (the far mesh built again from the car as it is now: its parts back on the camera's layer first, farStep then shows the new one)
-    const F = v.far; if (F.on) for (const o of F.list) o.layers.set(0);
+    const F = v.far; if (F.on) { for (const o of F.list) o.layers.set(0); if (F.hs) v.hull.castShadow = true; }
     F.mesh.parent && F.mesh.parent.remove(F.mesh); F.mesh.geometry.dispose(); v.far = null;
     ownRnd(() => farBuild(v)); farRb++;
   }
@@ -4351,7 +4353,7 @@ const Render = (function () {
     let far = F.ok && lastMode !== 'tv' && !cam.shot && (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2 > R * R;
     if (far && F.dirty && farRb < 1 && !v.cull && !(c.dents && c.dents.length)) { farRebuild(v); if (!v.far) return; return farStep(v, x, y, z); }   // (v.cull: out of the view, carCull: built again once back in it; the frame's one rebuild for a car that is seen)
     if (far === F.on) return;
-    F.on = far; F.mesh.visible = far;
+    F.on = far; F.mesh.visible = far; if (F.hs) v.hull.castShadow = !far;   // (hs: the far mesh casts the shadow, not the hull)
     for (const o of F.list) o.layers.set(far ? FAR_LAYER : 0);
   }
   function nameTag(v, txt, col) {
