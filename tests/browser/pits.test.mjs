@@ -23,7 +23,7 @@ try {
     const at = (d) => B.find(b => !b.mine && Math.abs(((b.s - Tk.startS - d) % L + L * 1.5) % L - L / 2) < 1);
     const ai = r.cars.filter(c => !c.isPlayer), bx = ai.map(c => at(r._boxD(c)));
     return { n: ai.length, found: bx.filter(Boolean).length, uniq: new Set(bx.filter(Boolean)).size, mine: B.filter(b => b.mine).length, all: B.length }; });
-  T.check('every AI car\'s box is one of the crews\' boxes in the world (each its own), the player\'s too', crews.found === crews.n && crews.uniq === crews.n && crews.mine === 1, JSON.stringify(crews));
+  T.check('every AI car\'s box is one of the crews\' boxes in the world (each its own; a field bigger than the crews: 21 rivals share the 12 others, every one used), the player\'s too', crews.found === crews.n && crews.uniq === Math.min(crews.n, crews.all - 1) && crews.mine === 1, JSON.stringify(crews));
   const states = [], modes = new Set(); let lastSt, maxLift = 0, r, pose = null, minLatWork = 99, maxLat = -99, onLane = 0, maxDev = 0, lockN = 0, ghostN = 0, dmgIn = 0;
   let lnN = 0, lthrN = 0, vmax = 0, mN = 0, mSteer = 0, mThr = 0, mBad = 0, mDmg = 0, back = null;
   for (let k = 0; k < 900; k++) {
