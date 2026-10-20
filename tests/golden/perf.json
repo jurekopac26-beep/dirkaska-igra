@@ -1,10 +1,10 @@
 {
  "monaco": {
-  "calls": 201,
-  "maxCalls": 264,
-  "kverts": 673,
-  "maxKverts": 742,
-  "jsMs": 1.52
+  "calls": 191,
+  "maxCalls": 238,
+  "kverts": 641,
+  "maxKverts": 715,
+  "jsMs": 1.58
  },
  "pikes": {
   "calls": 142,

@@ -1,19 +1,19 @@
 {
  "monaco": {
-  "meshes": 290,
-  "verts": 752773,
-  "instances": 3123,
+  "meshes": 289,
+  "verts": 747629,
+  "instances": 3229,
   "props": 148,
-  "crowd": 3123,
-  "world": "c21670d6",
+  "crowd": 3229,
+  "world": "d9dbb667",
   "propsHash": "ac344d6",
   "floor": "5bd68b2e/6692",
   "groups": {
-   "-:MeshLambertMaterial": "db19a766",
-   "-:MeshBasicMaterial": "9b1eb73f",
+   "-:MeshLambertMaterial": "58a1de45",
+   "-:MeshBasicMaterial": "9ec76f3c",
    "-:MeshPhongMaterial": "8c46ee8",
-   "crowd:MeshLambertMaterial": "d41154ff",
-   "ao:MeshBasicMaterial": "e2fcce7d",
+   "crowd:MeshLambertMaterial": "20b64ab1",
+   "ao:MeshBasicMaterial": "35891eb3",
    "tyremarks:MeshBasicMaterial": "c8624df2",
    "roadwear:MeshLambertMaterial": "a15246d6",
    "brakeBoards:MeshLambertMaterial": "1cbf74e3"
