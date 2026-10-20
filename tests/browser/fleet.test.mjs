@@ -190,7 +190,7 @@ try {
   // ---- 4. in a race on Bakreni gozd: each vehicle as the player and as a rival ----
   await page.evaluate((id) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === id); }, kits.length ? kits[0].id : 'rally');
   await startTrack(page, 'gozd');
-  const R4 = [];
+  const R4 = [], bodyKey = (id) => id === 'kolibri' ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's body: its side scrapes' own program, render.js XT_SCR)
   for (const m of kits) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
@@ -233,17 +233,27 @@ try {
       const lod = { lose, ok: drC === UP.N && drC2 === UP.N && dr() === UP.outerN, got: [drC, drC2, dr()], want: [UP.N, UP.outerN] };
       // a crushed roof (roofDmg 1: four steps): nothing moves outside the roof's footprint (body.crush, fading over 15 cm in x, 10 cm in z);
       // a noCrush range moves whole (if at all); every lining point keeps its offset from the shell's point it is inset from; the rest of the
-      // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves
+      // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves. The KOLIBRI's roof its roof field
+      // (render.js xtRoof, variant D): its posts' tops (G.fI) go down and in with the roof, what lies on it (a rider: the spoiler) down whole
+      // as A + B x (a tilt), its lining never deeper than its twin (held at its own limit); a dent never moves a noDent point but by the field
       const pa = gP.attributes.position.array, P0 = Float32Array.from(pa), C = E.body.crush, n = UP.outerN, mv = (i, Q) => Math.hypot(pa[i * 3] - Q[i * 3], pa[i * 3 + 1] - Q[i * 3 + 1], pa[i * 3 + 2] - Q[i * 3 + 2]);
       P.roofDmg = 1; Render.frame(0, 1, P, 'chase', { noFx: true });
-      const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length };
+      const xr = Render.viewOf(P).xtR, G = xr && xr.rf ? xr.rf.G : null, fol = new Set(G ? G.fI : []), lin = new Set(G ? G.lI : []), rid = new Set();
+      if (G) for (const Q of G.rid) for (const [s0, s1] of Q.ranges) for (let i = s0; i < s1; i++) rid.add(i);
+      const fld = (i) => !!G && (G.vE[i] >= 0 || fol.has(i) || lin.has(i) || rid.has(i));   // (a point the roof field moves)
+      const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length, field: !!G };
       for (let i = 0; i < n; i++) if (mv(i, P0) > 1e-6) { cr.moved++; const x = P0[i * 3], z = P0[i * 3 + 2]; if (x < C.x0 - 0.1501 || x > C.x1 + 0.1501 || Math.abs(z) > C.z + 0.1001) cr.outside++; }
-      for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let lo = 9, hi = -9; for (let i = s0; i < s1; i++) { const d = pa[i * 3 + j] - P0[i * 3 + j]; lo = Math.min(lo, d); hi = Math.max(hi, d); } cr.spread = Math.max(cr.spread, hi - lo); }
+      for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let A = 0, B = 0;
+        if (G && j === 1 && rid.has(s0)) { let mx = 0, md = 0, sxx = 0, sxd = 0; const N = s1 - s0; for (let i = s0; i < s1; i++) { mx += P0[i * 3] / N; md += (pa[i * 3 + 1] - P0[i * 3 + 1]) / N; }   // (a rider: its tilt along the car taken out)
+          for (let i = s0; i < s1; i++) { sxx += (P0[i * 3] - mx) ** 2; sxd += (P0[i * 3] - mx) * (pa[i * 3 + 1] - P0[i * 3 + 1] - md); } B = sxx > 1e-9 ? sxd / sxx : 0; A = md - B * mx; }
+        let lo = 9, hi = -9; for (let i = s0; i < s1; i++) { const d = pa[i * 3 + j] - P0[i * 3 + j] - (j === 1 ? A + B * P0[i * 3] : 0); lo = Math.min(lo, d); hi = Math.max(hi, d); } cr.spread = Math.max(cr.spread, hi - lo); }
       for (let i = n; i < UP.N; i++) { const t = UP.twin ? UP.twin[i - n] : -1;
-        if (t < 0) { if (mv(i, P0) > 1e-6) cr.stray++; continue; }
+        if (t < 0) { if (mv(i, P0) > 1e-6 && !fol.has(i)) cr.stray++; continue; }
+        if (G && lin.has(i)) { const d = (k) => pa[i * 3 + k] - P0[i * 3 + k], dt = (k) => pa[t * 3 + k] - P0[t * 3 + k];   // (the field's lining: as deep as its twin at most, drawn in no further, never along)
+          if (d(1) < dt(1) - 1e-4 || d(1) > 1e-6 || Math.abs(d(2)) > Math.abs(dt(2)) + 1e-4 || Math.abs(d(0) - dt(0)) > 1e-4) cr.lining++; continue; }
         if (Math.hypot(pa[i * 3] - pa[t * 3] - (P0[i * 3] - P0[t * 3]), pa[i * 3 + 1] - pa[t * 3 + 1] - (P0[i * 3 + 1] - P0[t * 3 + 1]), pa[i * 3 + 2] - pa[t * 3 + 2] - (P0[i * 3 + 2] - P0[t * 3 + 2])) > 1e-4) cr.lining++; }
       const P1 = Float32Array.from(pa); P.dents.push({ lx: 0.2, lz: -0.9, amt: 1 }, { lx: -0.3, lz: 0, amt: 1 }, { lx: 0.8, lz: 0.9, amt: 1 }); Render.frame(0, 1, P, 'chase', { noFx: true });
-      let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6) ndMoved++;
+      let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
       return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
@@ -263,8 +273,8 @@ try {
     R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): off / again / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
   T.check('a crushed roof: nothing moves outside the roof\'s footprint (body.crush), a noCrush range only whole, the lining with its shell (each point by its twin), the cabin and floor stay; dents never move a noDent range',
     R4.every(r => r.crushOk), R4.filter(r => !r.crushOk).concat(R4.filter(r => r.cr.nc || r.cr.moved)).slice(0, 4).map(r => `${r.id}: ${r.cr.moved} moved, ${r.cr.outside} outside, noCrush ${r.cr.nc} (spread ${r.cr.spread.toFixed(4)}), lining off ${r.cr.lining}, stray ${r.cr.stray}, noDent moved ${r.ndMoved}`).join(' | '));
-  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\', any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')),
-    R4.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
+  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\' (the KOLIBRI\'s \'dirtyCarCgS\': its side scrapes), any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')),
+    R4.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
   T.check('no colour that is not glass within 0.06 of a glass colour (the paint and the stripe aside)', R4.every(r => !r.near), R4.filter(r => r.near).slice(0, 3).map(r => `${r.id}: ${r.near} vertices, e.g. ${r.nearC.map(c => c.toFixed(3))}`).join(' | '));
   T.check('the start number lit on every K.number panel (as many bars as the car\'s number has)', R4.every(r => r.num !== false), lim(r => r.num === false) || R4.filter(r => r.num).map(r => r.id).join(', '));
 
@@ -391,7 +401,7 @@ try {
     R5.map(r => `${r.id} crew ${r.crew}, shown ${r.shown}, bits ${r.burst} then ${r.after}`).slice(0, 6).join(', '));
   T.check('the marshals\' refit (wreck.fix): the wheels back on, the body up, no bare hubs, nothing of the sag\'s offset left (it limped through a corner on its hubs first)', R5.every(r => !r.sag.wl || (r.refit.shown === 4 && r.refit.sagGone && !r.refit.hubs && r.refit.xz < 1e-9)), R5.map(r => r.id + ' ' + JSON.stringify(r.refit)).slice(0, 4).join(', '));
   T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
-  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
+  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', the KOLIBRI\'s \'dirtyCarCgS\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
 
   // ---- 4d. the wreck as a player sees it (stage B2: pictures at 844x390, the chase camera at zoom 1.2), each vehicle (the 11 too: the wreck
   //          look is every vehicle's) as the player on Bakreni gozd, paused and stepped: the car whole, then Core.wreckCar and its fire
