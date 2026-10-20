@@ -41,12 +41,11 @@ const Comm = (() => {
     trafficCrash: ['Contact with the traffic!', 'Ouch, that car will need a garage.', 'Straight into the traffic! That hurt.'],
     // a race up an open road (Vršič, the north side: 24 cobbled hairpins up to the pass)
     introPass: ['Welcome to {track}! {cars} cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! {cars} cars heading for the pass, and you start {grid}.'],
-    // (said as the flying start begins: the cars already rolling, no lights)
-    goPass: ['And away they go, up the mountain!', "And they're off! {cars} cars heading for the pass!", 'The race is on! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
+    // the flying start of a race up an open road (game.js flyStep): only the countdown to the start line, then the race is on
+    flyThree: ['Three!'], flyTwo: ['Two!'], flyOne: ['One!'], flyGo: ['The race has started!'],
+    goPass: ['Lights out, and away they go, up the mountain!', "And they're off! {cars} cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
     introOne: ['Welcome to {track}, deep in the forests of the Eifel! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // a circuit's flying start (the Nordschleife's Circuit race, def.flyStart): the welcome, then the line as the cars roll off (no lights)
-    introFly: ['Welcome to {track}! {cars} cars and a flying start, no lights today. You start {grid}.', 'Here we are at {track}, and what a field: {cars} cars, rolling to the line together. You start {grid}.', 'Welcome to {track}! {rivals} rivals, a rolling start, and you are {grid}. Find your way through!'],
-    goFly: ['And they are rolling! The flying start is under way!', 'Here they come, the whole field on the move! The race is on!', "No lights today: they roll off, and they're racing!", 'Away they go, a rolling start! Find a gap!'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
     nrFuchs: ['Down into the Foxhole, flat out!', 'The Fuchsröhre, the fastest part of the lap!'],
@@ -197,7 +196,7 @@ const Comm = (() => {
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],
     // time trial on a rally special stage (Ouninpohja): gravel, crests and jumps, a flying finish
     introStage: ['Welcome to {track}, the most famous stage of the Rally of Finland! Just you, the gravel and the clock.', 'Here we are at the start of {track}. {cps} splits, crest after crest, and nobody to race but the clock.', 'Welcome to {track}! Fast gravel, blind crests and big jumps. Keep it flat!'],
-    // the famous jump (def.jumpRec: Ouninpohja's Yellow House, Markko Märtin's 57 m)
+    // the famous jump (def.jumpRec: Ouninpohja's Yellow House, the record of 57 m; by: an invented driver, never a real one)
     jumpRec: ['{m} metres at {place}! The record there is {rec}, by {by}.', 'Over {place}, {m} metres! {by} flew {rec} here.', '{m} metres through the air at {place}!'],
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],

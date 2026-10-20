@@ -1,10 +1,10 @@
 {
  "monaco": {
-  "calls": 168,
-  "maxCalls": 226,
-  "kverts": 666,
-  "maxKverts": 739,
-  "jsMs": 2.33
+  "calls": 191,
+  "maxCalls": 238,
+  "kverts": 641,
+  "maxKverts": 715,
+  "jsMs": 1.58
  },
  "pikes": {
   "calls": 151,
@@ -25,14 +25,14 @@
   "maxCalls": 180,
   "kverts": 441,
   "maxKverts": 517,
-  "jsMs": 1.86
+  "jsMs": 1.37
  },
  "vrsic": {
-  "calls": 156,
-  "maxCalls": 188,
-  "kverts": 280,
-  "maxKverts": 316,
-  "jsMs": 2.63
+  "calls": 164,
+  "maxCalls": 210,
+  "kverts": 266,
+  "maxKverts": 302,
+  "jsMs": 8.5
  },
  "nring": {
   "calls": 220,
@@ -90,11 +90,158 @@
   "maxKverts": 457,
   "jsMs": 2.54
  },
- "chapman": {
-  "calls": 162,
-  "maxCalls": 176,
-  "kverts": 446,
-  "maxKverts": 478,
+ "baldy": {
+  "calls": 217,
+  "maxCalls": 280,
+  "kverts": 558,
+  "maxKverts": 821,
+  "jsMs": 5.83
+ },
+ "cpalace": {
+  "calls": 261,
+  "maxCalls": 301,
+  "kverts": 638,
+  "maxKverts": 746,
+  "jsMs": 1.51
+ },
+ "riverside": {
+  "calls": 189,
+  "maxCalls": 252,
+  "kverts": 314,
+  "maxKverts": 404,
+  "jsMs": 1.49
+ },
+ "monterey": {
+  "calls": 245,
+  "maxCalls": 339,
+  "kverts": 681,
+  "maxKverts": 763,
+  "jsMs": 2.59
+ },
+ "longford": {
+  "calls": 177,
+  "maxCalls": 262,
+  "kverts": 479,
+  "maxKverts": 746,
+  "jsMs": 1.81
+ },
+ "newcastle": {
+  "calls": 272,
+  "maxCalls": 343,
+  "kverts": 850,
+  "maxKverts": 1184,
+  "jsMs": 1.75
+ },
+ "rio": {
+  "calls": 228,
+  "maxCalls": 356,
+  "kverts": 658,
+  "maxKverts": 915,
+  "jsMs": 2.1
+ },
+ "toronto": {
+  "calls": 240,
+  "maxCalls": 322,
+  "kverts": 768,
+  "maxKverts": 977,
+  "jsMs": 1.41
+ },
+ "medvode": {
+  "calls": 166,
+  "maxCalls": 194,
+  "kverts": 411,
+  "maxKverts": 590,
+  "jsMs": 2.32
+ },
+ "montreal": {
+  "calls": 233,
+  "maxCalls": 315,
+  "kverts": 525,
+  "maxKverts": 733,
+  "jsMs": 2.16
+ },
+ "greatalpine": {
+  "calls": 211,
+  "maxCalls": 304,
+  "kverts": 496,
+  "maxKverts": 573,
+  "jsMs": 3.88
+ },
+ "detroit": {
+  "calls": 270,
+  "maxCalls": 333,
+  "kverts": 882,
+  "maxKverts": 1108,
+  "jsMs": 1.74
+ },
+ "palomar": {
+  "calls": 194,
+  "maxCalls": 262,
+  "kverts": 466,
+  "maxKverts": 548,
+  "jsMs": 4.03
+ },
+ "bangsaen": {
+  "calls": 261,
+  "maxCalls": 319,
+  "kverts": 765,
+  "maxKverts": 939,
+  "jsMs": 1.76
+ },
+ "hotham": {
+  "calls": 183,
+  "maxCalls": 224,
+  "kverts": 453,
+  "maxKverts": 506,
+  "jsMs": 2.36
+ },
+ "townsville": {
+  "calls": 261,
+  "maxCalls": 299,
+  "kverts": 731,
+  "maxKverts": 937,
+  "jsMs": 2.76
+ },
+ "marrakesh": {
+  "calls": 208,
+  "maxCalls": 263,
+  "kverts": 649,
+  "maxKverts": 724,
+  "jsMs": 1.05
+ },
+ "troisrivieres": {
+  "calls": 248,
+  "maxCalls": 308,
+  "kverts": 790,
+  "maxKverts": 1064,
+  "jsMs": 1.98
+ },
+ "jezero": {
+  "calls": 260,
+  "maxCalls": 274,
+  "kverts": 467,
+  "maxKverts": 585,
+  "jsMs": 0.87
+ },
+ "riviera": {
+  "calls": 249,
+  "maxCalls": 278,
+  "kverts": 479,
+  "maxKverts": 554,
+  "jsMs": 0.9
+ },
+ "gora": {
+  "calls": 220,
+  "maxCalls": 253,
+  "kverts": 513,
+  "maxKverts": 557,
+  "jsMs": 1.16
+ },
+ "gozd": {
+  "calls": 289,
+  "maxCalls": 312,
+  "kverts": 1240,
+  "maxKverts": 1564,
   "jsMs": 1.61
  },
  "bigsur": {

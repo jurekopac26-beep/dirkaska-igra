@@ -1592,7 +1592,7 @@
     const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
-    const flyGo = !on && !tt && !duel && !chase && !ch && mode !== 'quali' && (!!track.def.open || (!!track.def.flyStart && cr < 0));   // a race up an open road, the Nordschleife's Circuit race (def.flyStart; a championship round there: the lights): the flying start (FLY_V, the autopilot's first FLY_T s); online the lights as ever   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
+    const flyGo = !on && !tt && !duel && !chase && !ch && mode !== 'quali' && (!!track.def.open || (!!track.def.flyStart && cr < 0));   // a race up an open road, the Nordschleife's Circuit race (def.flyStart; a championship round there: the lights): the flying start (the column, the autopilot up to the start line, FLY_T s); online the lights as ever   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     if (cr < 0) champRun = false;
     const FM = cr >= 0 ? champField() : null;   // (a championship round: the rivals in the field of the car it was started with)
     const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? champN() : track.def.raceRivals || track.def.rivals || NUM_AI;   // (a championship round: its own 19 in every round; the Nordschleife's race its 99)
@@ -1619,7 +1619,7 @@
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
-      traffic: duel, police: chase, flying: flyGo ? FLY_V : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
+      traffic: duel, police: chase, flying: flyGo ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }));
     if (race.player) race.player.pitCmp = S.pitCmp;
@@ -1644,7 +1644,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); fly.t = 0; fly.n = 0; drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); $('hud').classList.remove('tow'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); fly.on = false; fly.n = 0; flyHUD(0); drsN = 0; secN = 0; towOn = false; $('h-tow').classList.remove('on'); $('hud').classList.remove('tow'); wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-split').textContent = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
@@ -1675,11 +1675,11 @@
       else if (race.tf) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
-        else Comm.say(track.open ? ownLine(track.def, 'introPass') : race.opts.flying > 0 ? 'introFly' : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words)
-        showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
+        else if (!(race.opts.flying > 0)) Comm.say(track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
+        if (!(race.opts.flying > 0)) showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);   // (a flying start: only its countdown, flyHUD; a championship's round with VOZIŠ TI!)
       }
     }
-    if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
+    if (race.rain && !(race.opts.flying > 0)) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
     if (on && mp.ch && mp.ch.on && !mp.ch.done) showMsg(tr('PRVENSTVO · DIRKA {0}/{1}', mp.ch.round + 1, mp.ch.tracks.length) + wetTxt, 'gold', 2.2);   // (a championship over the internet: which race)
     if (race.chal) { showMsg(tr('IZZIV: {0} · {1}', race.chal.name.toUpperCase(), fmt(race.chal.time, true)) + wetTxt, 'gold', 2.2); Comm.say('chalIntro', { name: race.chal.name, time: spkTime(race.chal.time) }, 3); }
     $('hud').classList.toggle('nv', !!race.nv);   // NEW VERSION · TEST 1: the new map over the track (once), then free driving from HOME (again after a restart)
@@ -2347,7 +2347,7 @@
   }
 
   /* ---------------- jumps: how far each one flew (from 12 m: a popup), the run's longest; def.jumpRec = { bump, name, say, m, by, beat }:
-     the famous jump (Ouninpohja: the Yellow House, Markko Märtin's 57 m in 2003), where the player's longest is kept with the records
+     the famous jump (Ouninpohja: the Yellow House, the record of 57 m, its holder an invented driver), where the player's longest is kept with the records
      (jumpRec, per physics and weather) and the commentator names the record ---------------- */
   let jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 };
   function jumpLanded(len, s0) {
@@ -2445,7 +2445,7 @@
     const pit = pitCtl(P, hold);   // the pit autopilot: 'lane', 'merge' or null (the player's own car)
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; if (phase === 'intro' || phase === 'lights') P.inThr = 0; }   // (autoDrive: automated tests of online races drive in real time; on the grid off the gas: it sets off as the lights go out)
-    else if (fly.t > 0) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; flyStep(dt); }   // a flying start: the autopilot drives until the player takes over
+    else if (fly.on) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; flyStep(); }   // a flying start: the autopilot drives until the player's car is over the start line
     else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
       // Race.pitStep); the player's gas and steering are not used; the brake slows it (the autopilot's throttle off), never into reverse
       P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
@@ -2455,6 +2455,7 @@
     }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
+    if (fly.on && !race.flyOn) flyStep();   // (the flying start: the player's own car the very step it is over the start line)
     if (race.nv && typeof NVWalls !== 'undefined') NVWalls.step(dt, P);   // (NEW VERSION · TEST 1: the walls of fence pushed by the car, js/nvwalls.js)
     if (P.ty && P.pitDone) tyOut = P.dist;   // (the new set on, still in the lane: where it leaves it, for the cold tyres on the HUD; each step, so a test's sim sees it too)
     twMark(); stDrive(P, dt);
@@ -3190,13 +3191,19 @@
     const T = race.track, s1 = P.q.s + Math.max(12, P.speed * 1.3), p1 = T.pitAt(s1);
     return !p1 || (p1.gap && p1.o <= p1.wall + 1);
   }
-  // the flying start of a race up an open road (Race opts.flying): every car rolling at FLY_V m/s from its slot on the grid, the player's car on the
-  // autopilot for FLY_T s of race time, a number at each whole second (LETEČI START · PREVZAMEŠ ČEZ 3, 2, 1), then VOZIŠ TI! and the player's own car
-  const FLY_V = 15, FLY_T = 3, fly = { t: 0, n: 0 };
-  function flyStep(dt) {
-    fly.t -= dt; const n = Math.ceil(fly.t - 1e-6);
-    if (n > 0 && n !== fly.n) { fly.n = n; showMsg(n === FLY_T ? tr('LETEČI START · PREVZAMEŠ ČEZ {0}', n) : tr('PREVZAMEŠ ČEZ {0}', n), 'gold', 1.1); Sfx.beep(520, 0.16, 0.14); }
-    if (fly.t <= 0) { fly.t = 0; fly.n = 0; showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); }
+  // the flying start of a race up an open road (Race opts.flying = FLY_T): the race already under way, the cars in a line ~10 s long (Race._flyColumn),
+  // the player's car FLY_T s below the start line on the autopilot; in the middle three amber lights, one going out at each whole second of race time,
+  // under them LETEČI START ČEZ 3 SEKUNDE…, 2 SEKUNDI…, 1 SEKUNDO… (flyHUD); over the line (Race.flyOn off) the lights gone, VOZIŠ TI! and the player's
+  // own car, no one passing until then. The commentator only counts (Three! Two! One!), then: The race has started! (no welcome before it)
+  const FLY_T = 3, fly = { on: false, n: 0 }, FLY_TXT = ['LETEČI START ČEZ 1 SEKUNDO…', 'LETEČI START ČEZ 2 SEKUNDI…', 'LETEČI START ČEZ 3 SEKUNDE…'];
+  function flyHUD(n) {   // n lights lit and the words for n seconds; 0: gone
+    const e = $('h-fly'); e.classList.toggle('show', n > 0); if (!(n > 0)) return;
+    e.querySelectorAll('i').forEach((l, k) => l.classList.toggle('on', k < n)); e.lastElementChild.textContent = tr(FLY_TXT[n - 1]);
+  }
+  function flyStep() {
+    const n = race.flyOn ? clamp(Math.ceil(FLY_T - race.time - 1e-6), 1, FLY_T) : 0;   // (late at the line: 1 until it is over it)
+    if (n > 0 && n !== fly.n) { fly.n = n; flyHUD(n); Sfx.beep(520, 0.16, 0.14); Comm.say(['flyOne', 'flyTwo', 'flyThree'][n - 1] || 'flyOne', null, 5); }
+    if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say('flyGo', null, 5); }
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; }
@@ -3729,7 +3736,7 @@
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
     ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
-    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT|LETEČI START|FLYING START|^PREVZAMEŠ|^TAKE OVER/],
+    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED/],
     ['pit', /BOKS|PIT|BOX/]];
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
@@ -3891,6 +3898,7 @@
       const c = race.cars[i]; if (LD && !LD[i]) continue;   // (a far car between its steps, Core LOD: not on since its last one)
       let a = tw.t.get(c); if (!a) { a = new Float32Array(Math.ceil(total / TW_M) + 4); tw.t.set(c, a); tw.n.set(c, 0); }
       let n = tw.n.get(c); const k = Math.min(a.length - 1, Math.floor(c.dist / TW_M));
+      if (!n && race.opts.flying > 0) { const v = Math.max(5, c.speed); while (n <= k) { a[n] = race.time - (c.dist - n * TW_M) / v; n++; } }   // (a flying start: the column's first cars already past the first marks, as if they had come by at their pace)
       while (n <= k) a[n++] = race.time;
       tw.n.set(c, n);
       const p = !!c.inPit; if (p && !tw.pit.get(c)) tw.stops.set(c, (tw.stops.get(c) || 0) + 1); tw.pit.set(c, p);
@@ -3986,7 +3994,7 @@
     cs.wasAir = !!P.air;
     commWreck(P);
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' || k === 'tbollard' || k === 'mlamp' || k === 'msign' || k === 'bsign' || k === 'nsign' || k === 'zaprta' || k === 'vboard' || k === 'flagp' || k === 'cflag' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : k === 'bboard' ? 'propBoard' : 'propStreet';   // (Medvode's bollards, lamps, signs, flags: a post's lines; its bench: the street furniture's; a braking board its own)
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' || k === 'dpost' || k === 'rssign' || k === 'rschev' || k === 'rsboard' || k === 'tbollard' || k === 'mlamp' || k === 'msign' || k === 'bsign' || k === 'nsign' || k === 'zaprta' || k === 'vboard' || k === 'flagp' || k === 'cflag' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : k === 'bboard' ? 'propBoard' : 'propStreet';   // (Medvode's bollards, lamps, signs, flags, the open roads' delineators, signs and boards: a post's lines; its bench: the street furniture's; a braking board its own)
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);
@@ -4069,9 +4077,8 @@
       phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('VOZI PROTI VRŠIČU'), 'gold', 1.6);
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && race.opts.flying > 0) {   // a race up an open road, the Nordschleife's Circuit race: a flying start, no lights; the cars are rolling at once, the autopilot
-      phase = 'racing'; phaseT = 0; race.start(); fly.t = FLY_T; fly.n = 0; $('touch').classList.add('ap');   // drives the player's car for its first FLY_T s (flyStep)
+      phase = 'racing'; phaseT = 0; race.start(); fly.on = true; fly.n = 0; $('touch').classList.add('ap');   // drives the player's car up to the start line, FLY_T s (flyStep)
       if (!track.open) Render.setStartLights(0, true);   // (a circuit's gantry over the line: green as the field rolls under it; the HUD's lights stay hidden)
-      Comm.say(track.open ? ownLine(track.def, 'goPass') : 'goFly', { cars: Comm.words(race.cars.length) }, 3, { ttl: 8000 });   // (after the welcome, not over it)
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && phaseT > introLen) {
       if (introLen > 1.3) shotOff();   // (the jets' shot is over: the game's camera again)
