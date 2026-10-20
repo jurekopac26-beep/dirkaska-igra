@@ -2048,7 +2048,7 @@ const Core = (function () {
   const knockK = (c) => c.dmgK ? 1 : c.m.knockK || 1;
   // the roof's sag (roofDmg 0..1, the renderer's) by the damage: from model.roof0 (def.phys.roof0; 0.4 without one) to 95 %; the Kolibri's from
   // 0 (the user's: its roof, what the camera behind it sees most, more caved in with every per cent)
-  const roofOf = (c) => { const r0 = c.m.roof0 != null ? c.m.roof0 : 0.4; return clamp((c.dmg - r0) / (0.95 - r0), 0, 1); };
+  const roofOf = (c) => { const r0 = c.m.roof0; return r0 == null ? clamp((c.dmg - 0.4) / 0.55, 0, 1) : clamp((c.dmg - r0) / (0.95 - r0), 0, 1); };   // (without one: exactly as it always was, to the last bit)
   const knock = (c, amt, lx, lz) => applyDamage(c, amt * knockK(c), lx, lz);
   // Damage: overall 0..1 plus zones (0 front, 1 rear, 2 left = -z, 3 right = +z). lx/lz = local impact point
   // (x forward, z to the right); without a point the hit is spread over the whole car (hard landing).
