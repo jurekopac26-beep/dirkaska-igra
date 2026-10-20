@@ -2455,7 +2455,7 @@ const Render = (function () {
         a[k * 3] += D[t * 3]; a[k * 3 + 1] += D[t * 3 + 1]; a[k * 3 + 2] += D[t * 3 + 2]; tris.add((k / 3) | 0); }
     }
     pos.needsUpdate = true; if (ca) geo.attributes.color.needsUpdate = true;
-    refacet(geo, tris); if (v.kit) v.kit.ver++;
+    refacet(geo, tris); if (v.kit) { v.kit.ver++; v.kit.dk++; }   // (dk: the knocks' share of ver, farStep)
   }
   // glass panes of this car's body, grouped: 0 windscreen, 1 rear window, 2 left, 3 right (found by the glass colours)
   function findGlass(v) {
@@ -2607,7 +2607,7 @@ const Render = (function () {
     if (noHead) { lights[0].set(2.62, 0.26, -0.05); lights[1].set(2.62, 0.26, 0.05); lights[2].set(-2.49, 0.34, -0.02); lights[3].set(-2.49, 0.34, 0.02); }
     // (the kit: its ranges (immutable, shared), this car's own state: dead (parts off), deadV (their vertices: dents and the roof's crush
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
-    const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
+    const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, dk: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
     return { grp, bodyG, body, tail, dec, wf, wr, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
       dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
@@ -4294,9 +4294,11 @@ const Render = (function () {
   // A rival's panels drawn as one mesh (remerge, v.partsM, built before this): that mesh goes in as any other part (its matte and painted pieces by
   // their vertex colours, the lenses not), the det group's own pieces are hidden and stay so; carCull takes the whole car out of the scene, far or not
   // A knock (a dent, a pane or a lamp broken, the roof pushed in: farSig) leaves the far mesh stale, not off: it is built again from the car as it
-  // is now (farRebuild, one car a frame) the next time the car goes far, and till then the car is drawn whole; so a field of 100 with its rubs
-  // and nudges keeps its far meshes. Off for good: a part or a wheel lost, a kit car's pieces changed, or a car beaten past FAR_DMG (it smokes,
-  // its scratches show, scrU: not in the far mesh's vertex colours).
+  // is now (farRebuild, one car a frame, one in the view) while the car is far, and till then the stale one is drawn (a dent or a cracked pane
+  // 75 m off: a pixel or two); so a field of 100 with its rubs and nudges keeps its far meshes, the kit cars' too (their dents and roof count
+  // apart in kit.ver: kit.dk). Only what the car draws goes in (a kit body: its outer shell, the draw range). Off for good: a part or a wheel
+  // lost, a kit car's pieces changed (a part loose, off, torn open; kit.ver but not by a knock), or a car beaten past FAR_DMG (it smokes, its
+  // scratches show, scrU: not in the far mesh's vertex colours).
   const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
   let farRb = 0;   // (cars whose far mesh was built again this frame: frame() sets it back)
   let farMat = null;
@@ -4311,8 +4313,9 @@ const Render = (function () {
       if (!o.isMesh || !mt || !P || mt.transparent || mt.map || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
       for (let a = o; a; a = a === v.grp ? null : a.parent) if (!a.visible) return;   // (a hidden part: not in the far car either; the car's own, not the scene's: farRebuild may run while the scene is hidden)
       m4.multiplyMatrices(inv, o.matrixWorld);
-      const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count), U = o === v.partsM ? G.attributes.aIn : null;   // (U: a rival's parts as one mesh, remerge: its unlit pieces, the head lamp lenses, left out as their own meshes were)
-      for (let i = 0; i < P.count; i++) {
+      const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count).fill(-1), U = o === v.partsM ? G.attributes.aIn : null;   // (U: a rival's parts as one mesh, remerge: its unlit pieces, the head lamp lenses, left out as their own meshes were)
+      const r0 = Math.max(0, G.drawRange.start), r1 = Math.min(n, G.drawRange.start + G.drawRange.count);   // (what is drawn: a kit body's outer shell while the car is whole, kitRange; its lining and cabin inside it not)
+      for (let i = I ? 0 : r0; i < (I ? P.count : r1); i++) {
         if (U && Math.abs(U.getX(i) - 64 / 255) < 0.03) { id[i] = -1; continue; }
         p.fromBufferAttribute(P, i).applyMatrix4(m4);
         const k = Math.floor(p.x / FAR_CELL) + ',' + Math.floor(p.y / FAR_CELL) + ',' + Math.floor(p.z / FAR_CELL);
@@ -4320,7 +4323,7 @@ const Render = (function () {
         if (C) cl.setRGB(C.getX(i), C.getY(i), C.getZ(i)).multiply(mt.color); else cl.copy(mt.color);
         const b = q * 7; acc[b] += p.x; acc[b + 1] += p.y; acc[b + 2] += p.z; acc[b + 3] += cl.r; acc[b + 4] += cl.g; acc[b + 5] += cl.b; acc[b + 6]++; id[i] = q;
       }
-      for (let t = 0; t + 2 < n; t += 3) tri.push(id[I ? I.getX(t) : t], id[I ? I.getX(t + 1) : t + 1], id[I ? I.getX(t + 2) : t + 2]);
+      for (let t = r0; t + 2 < r1; t += 3) tri.push(id[I ? I.getX(t) : t], id[I ? I.getX(t + 1) : t + 1], id[I ? I.getX(t + 2) : t + 2]);
     });
     const idx = [], seen = new Set();
     for (let t = 0; t < tri.length; t += 3) { const a = tri[t], b = tri[t + 1], c = tri[t + 2]; if (a === b || b === c || a === c || a < 0 || b < 0 || c < 0) continue;
@@ -4332,20 +4335,21 @@ const Render = (function () {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere();
     const m = new THREE.Mesh(g, farMat || (farMat = new THREE.MeshLambertMaterial({ vertexColors: true })));
     m.castShadow = !v.hull; m.receiveShadow = false; m.visible = false; v.bodyG.add(m);   // (a kit car's shadow stays its hull's; the others' from this)
-    v.far = { mesh: m, list, on: false, ok: true, dirty: false, sig: farSig(v), ver: v.kit ? v.kit.ver : 0 }; carGlow(v);
+    v.far = { mesh: m, list, on: false, ok: true, dirty: false, sig: farSig(v), ver: v.kit ? v.kit.ver : 0, pv: v.kit ? v.kit.ver - v.kit.dk : 0 }; carGlow(v);
   }
   function farSig(v) { let s = v.roofStep || 0; for (let k = 0; k < 4; k++) s += (v.winBroken && v.winBroken[k] ? 8 : 0) * (1 << k) + (v.lightBroken && v.lightBroken[k] ? 128 : 0) * (1 << k); return s; }
-  function farRebuild(v) {   // (the far mesh built again from the car as it is now; called while it is not shown: F.on false, the parts on the camera's layer)
-    const F = v.far; F.mesh.parent && F.mesh.parent.remove(F.mesh); F.mesh.geometry.dispose(); v.far = null;
+  function farRebuild(v) {   // (the far mesh built again from the car as it is now: its parts back on the camera's layer first, farStep then shows the new one)
+    const F = v.far; if (F.on) for (const o of F.list) o.layers.set(0);
+    F.mesh.parent && F.mesh.parent.remove(F.mesh); F.mesh.geometry.dispose(); v.far = null;
     ownRnd(() => farBuild(v)); farRb++;
   }
   function farStep(v, x, y, z) {
     const F = v.far, c = v.car;
-    if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver !== F.ver) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;
-    if (F.ok && !F.dirty && ((c.dents && c.dents.length) || farSig(v) !== F.sig)) F.dirty = true;   // (c.dents: taken into the body later this frame)
+    if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver - v.kit.dk !== F.pv) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;   // (a kit car: its pieces changed, not only knocked: pv)
+    if (F.ok && !F.dirty && ((c.dents && c.dents.length) || farSig(v) !== F.sig || (v.kit && v.kit.ver !== F.ver))) F.dirty = true;   // (c.dents: taken into the body later this frame; a kit car's dent or roof: kit.dk)
     const cp = camera.position, R = (cam.vd || 40) + 35;
     let far = F.ok && lastMode !== 'tv' && !cam.shot && (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2 > R * R;
-    if (far && F.dirty) { if (F.on || farRb >= 1 || (c.dents && c.dents.length)) far = false; else { farRebuild(v); if (!v.far) return; return farStep(v, x, y, z); } }
+    if (far && F.dirty && farRb < 1 && !v.cull && !(c.dents && c.dents.length)) { farRebuild(v); if (!v.far) return; return farStep(v, x, y, z); }   // (v.cull: out of the view, carCull: built again once back in it; the frame's one rebuild for a car that is seen)
     if (far === F.on) return;
     F.on = far; F.mesh.visible = far;
     for (const o of F.list) o.layers.set(far ? FAR_LAYER : 0);
@@ -6572,7 +6576,7 @@ const Render = (function () {
       dentTris.add((k / 3) | 0);
     }
     pos.needsUpdate = true; if (col) col.needsUpdate = true;
-    refacet(geo, dentTris); if (v.kit) v.kit.ver++;
+    refacet(geo, dentTris); if (v.kit) { v.kit.ver++; v.kit.dk++; }   // (dk: the knocks' share of ver, farStep)
     if (v.winBroken) for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].some(t => dentTris.has(t))) (v.crackDirty || (v.crackDirty = [0, 0, 0, 0]))[k] = 1;   // (a broken pane under it: its crack decal laid again, updateParts)
   }
 

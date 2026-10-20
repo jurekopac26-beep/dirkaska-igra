@@ -35,11 +35,11 @@
   "jsMs": 2.63
  },
  "nring": {
-  "calls": 242,
-  "maxCalls": 360,
-  "kverts": 410,
-  "maxKverts": 489,
-  "jsMs": 6.98
+  "calls": 220,
+  "maxCalls": 320,
+  "kverts": 397,
+  "maxKverts": 465,
+  "jsMs": 11.29
  },
  "spa": {
   "calls": 172,
