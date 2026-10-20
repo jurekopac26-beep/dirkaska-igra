@@ -4289,11 +4289,16 @@ const Render = (function () {
   // NIZKA: a rival far from the camera drawn as one coarse mesh (farBuild): its opaque parts, the body and the wheels, merged in the body's frame,
   // their vertices put together on a 20 cm grid, the paint's colours kept (as vertex colours, matte): one draw for its ~5, a fraction of the
   // vertices. farStep each frame: past the view's own reach + 35 m from the camera (cam.vd: the car the camera follows is that far), not
-  // from the TV cameras (their lenses bring a far car close) and only while the car is whole (a dent, a part or a wheel lost: as built from
-  // then on). The detail meshes leave the camera's layer meanwhile (their own .visible stays theirs; a kit car's hull still casts its shadow).
+  // from the TV cameras (their lenses bring a far car close) and only while the car is whole (a part or a wheel lost: as built from
+  // then on; a dent: built again, farRebuild below). The detail meshes leave the camera's layer meanwhile (their own .visible stays theirs; a kit car's hull still casts its shadow).
   // A rival's panels drawn as one mesh (remerge, v.partsM, built before this): that mesh goes in as any other part (its matte and painted pieces by
   // their vertex colours, the lenses not), the det group's own pieces are hidden and stay so; carCull takes the whole car out of the scene, far or not
-  const FAR_LAYER = 3, FAR_CELL = 0.2;
+  // A knock (a dent, a pane or a lamp broken, the roof pushed in: farSig) leaves the far mesh stale, not off: it is built again from the car as it
+  // is now (farRebuild, one car a frame) the next time the car goes far, and till then the car is drawn whole; so a field of 100 with its rubs
+  // and nudges keeps its far meshes. Off for good: a part or a wheel lost, a kit car's pieces changed, or a car beaten past FAR_DMG (it smokes,
+  // its scratches show, scrU: not in the far mesh's vertex colours).
+  const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
+  let farRb = 0;   // (cars whose far mesh was built again this frame: frame() sets it back)
   let farMat = null;
   function farBuild(v) {
     v.grp.updateMatrixWorld(true);
@@ -4304,7 +4309,7 @@ const Render = (function () {
       list.push(o);
       const mt = Array.isArray(o.material) ? null : o.material, G = o.geometry, P = G && G.attributes.position;
       if (!o.isMesh || !mt || !P || mt.transparent || mt.map || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
-      for (let a = o; a; a = a.parent) if (!a.visible) return;   // (a hidden part: not in the far car either)
+      for (let a = o; a; a = a === v.grp ? null : a.parent) if (!a.visible) return;   // (a hidden part: not in the far car either; the car's own, not the scene's: farRebuild may run while the scene is hidden)
       m4.multiplyMatrices(inv, o.matrixWorld);
       const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count), U = o === v.partsM ? G.attributes.aIn : null;   // (U: a rival's parts as one mesh, remerge: its unlit pieces, the head lamp lenses, left out as their own meshes were)
       for (let i = 0; i < P.count; i++) {
@@ -4327,12 +4332,20 @@ const Render = (function () {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere();
     const m = new THREE.Mesh(g, farMat || (farMat = new THREE.MeshLambertMaterial({ vertexColors: true })));
     m.castShadow = !v.hull; m.receiveShadow = false; m.visible = false; v.bodyG.add(m);   // (a kit car's shadow stays its hull's; the others' from this)
-    v.far = { mesh: m, list, on: false, ok: true, ver: v.kit ? v.kit.ver : 0 }; carGlow(v);
+    v.far = { mesh: m, list, on: false, ok: true, dirty: false, sig: farSig(v), ver: v.kit ? v.kit.ver : 0 }; carGlow(v);
+  }
+  function farSig(v) { let s = v.roofStep || 0; for (let k = 0; k < 4; k++) s += (v.winBroken && v.winBroken[k] ? 8 : 0) * (1 << k) + (v.lightBroken && v.lightBroken[k] ? 128 : 0) * (1 << k); return s; }
+  function farRebuild(v) {   // (the far mesh built again from the car as it is now; called while it is not shown: F.on false, the parts on the camera's layer)
+    const F = v.far; F.mesh.parent && F.mesh.parent.remove(F.mesh); F.mesh.geometry.dispose(); v.far = null;
+    ownRnd(() => farBuild(v)); farRb++;
   }
   function farStep(v, x, y, z) {
     const F = v.far, c = v.car;
-    if (F.ok && (c.dmg > 0 || (c.dents && c.dents.length) || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver !== F.ver) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;
-    const cp = camera.position, R = (cam.vd || 40) + 35, far = F.ok && lastMode !== 'tv' && !cam.shot && (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2 > R * R;
+    if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver !== F.ver) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;
+    if (F.ok && !F.dirty && ((c.dents && c.dents.length) || farSig(v) !== F.sig)) F.dirty = true;   // (c.dents: taken into the body later this frame)
+    const cp = camera.position, R = (cam.vd || 40) + 35;
+    let far = F.ok && lastMode !== 'tv' && !cam.shot && (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2 > R * R;
+    if (far && F.dirty) { if (F.on || farRb >= 1 || (c.dents && c.dents.length)) far = false; else { farRebuild(v); if (!v.far) return; return farStep(v, x, y, z); } }
     if (far === F.on) return;
     F.on = far; F.mesh.visible = far;
     for (const o of F.list) o.layers.set(far ? FAR_LAYER : 0);
@@ -9006,7 +9019,7 @@ const Render = (function () {
     if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
     updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
-    updateCars(dt, alpha, opt);
+    farRb = 0; updateCars(dt, alpha, opt);
     hypeStep(Math.min(dt, 0.1));
     updateRoad(dt);
     syncDebris(); syncProps();
