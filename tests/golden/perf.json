@@ -273,11 +273,11 @@
   "jsMs": 2.36
  },
  "townsville": {
-  "calls": 296,
-  "maxCalls": 353,
-  "kverts": 785,
-  "maxKverts": 1002,
-  "jsMs": 2.15
+  "calls": 261,
+  "maxCalls": 299,
+  "kverts": 731,
+  "maxKverts": 937,
+  "jsMs": 2.76
  },
  "marrakesh": {
   "calls": 208,
