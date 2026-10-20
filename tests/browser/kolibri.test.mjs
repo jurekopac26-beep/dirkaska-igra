@@ -8,7 +8,9 @@
 //    scratched on that side and dented in a little more there (the body's points on that side pushed in further each time, by less each
 //    time: fifteen in one place under 13 cm), the other side untouched, a contact on the nose none, a person on foot's (the core's contact
 //    point left as it was) none; a repair polishes them out
-// and with the default settings (no Razbijanje): the scrapes the same, no table; the MEDVED (a table car, not the Kolibri) with glass on:
+// 4. the roof (what the camera behind the car sees most): caved in more with every 10 % of damage from the first (core.js roofOf: the
+//    Kolibri's roof0 0; render.js: the roof field, XT_ROOFK; the default body's crumpleRoof in 20 steps)
+// and with the default settings (no Razbijanje): the scrapes and the roof the same, no table; the MEDVED (a table car, not the Kolibri) with glass on:
 // a light blow breaks no pane, no scrapes (the Kolibri's only)
 //   node tests/browser/kolibri.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -59,7 +61,14 @@ try {
         for (let f = 0; f < 8; f++) { for (let s = 0; s < 6; s++) { P.vx = tx * 14 + nx * 0.4; P.vz = tz * 14 + nz * 0.4; P.w = 0; P.inThr = 0.3; P.inBrk = 0; P.inSteer = 0; R.step(1 / 120); } Render.frame(0.05, 1, P, 'chase', {}); }
         P.place(Tk.px[i], Tk.pz[i], h); P.q = Tk.query(P.x, P.z, i, P.q); hold(0.6); out.rail.push(scr()); out.railD.push(moved());
       }
-      out.dmg = P.dmg; R.repairCar(P); hold(0.3); out.after = scr(); out.nan = [...scr(), P.x, P.z].some(x => !Number.isFinite(x));
+      out.dmg = P.dmg; R.repairCar(P); hold(0.3); out.after = scr();
+      // the roof (what the camera behind the car sees most) by the damage: blows on the flanks and the ends, the car to 10 %, 20 % ... 90 %;
+      // the roof's top (its points over 88 % of the body's height) lower on average each time
+      fresh(); base(); { const a0 = b0, top = []; let yM = -1e9; for (let i = 1; i < a0.length; i += 3) yM = Math.max(yM, a0[i]); for (let i = 1; i < a0.length; i += 3) if (a0[i] > 0.88 * yM) top.push(i);
+        const drop = () => { const a = v().body.geometry.attributes.position.array; let s = 0; for (const i of top) s += a0[i] - a[i]; return +(s / Math.max(1, top.length)).toFixed(4); };
+        const at = [[1, 0.2], [0.2, -1], [-1, -0.2], [-0.2, 1]]; out.roof = []; let n = 0;
+        for (let p = 1; p <= 9; p++) { while (P.dmg < p / 10 - 1e-9) { const [u, w] = at[n++ % 4]; knock(Math.min(0.05, p / 10 - P.dmg), u, w); hold(0.6); } out.roof.push(drop()); } out.roofN = top.length; out.roofDmg = +P.roofDmg.toFixed(3); }
+      R.repairCar(P); hold(0.3); out.nan = [...scr(), P.x, P.z].some(x => !Number.isFinite(x));
       return out;
     });
     await ctx.close();
@@ -86,6 +95,8 @@ try {
   const dentIn = (r) => inc(r.carD.map(q => q[0])) && r.carD.every(q => q[1] < 0.05) && r.nose2D[0] === r.carD[3][0] && inc(r.railD.map(q => q[r.railK])) && r.railD.every(q => q[1 - r.railK] < 0.05)
     && r.stale[1][0] === r.stale[0][0] && r.many > 0.02 && r.many < 0.13;   // (a stale contact point no graze; fifteen grazes round one place under 13 cm in all)
   T.check('nov način: every graze dents that flank in a little more (its points pushed in further each time), the other side not; a contact on the nose none, a person on foot\'s (the contact point as it was) none; fifteen grazes in one place never cave it in (under 13 cm)', dentIn(x), JSON.stringify({ car: x.carD, nose: x.nose2D, rail: x.railD, stale: x.stale, many: x.many }));
+  const roofIn = (r) => r.roof.length === 9 && r.roof[0] > 0.003 && r.roof.every((q, j) => j === 0 || q > r.roof[j - 1] + 0.002) && r.roof[8] > 0.08;
+  T.check('nov način: the roof caved in more with every 10 % of damage, from the first (10 % to 90 %; 8 cm and more at 90 %)', roofIn(x), JSON.stringify({ roof: x.roof, n: x.roofN, roofDmg: x.roofDmg }));
   T.check('nov način: a repair polishes the scrapes out; nothing NaN, no page errors', x.after[0] === 0 && x.after[1] === 0 && !x.nan && !x.errors.length, x.errors.slice(0, 3).join(' | '));
 
   const d = await run('kolibri', {});
@@ -94,6 +105,7 @@ try {
   T.check('default settings: every graze more scratched on its side, along the barrier too; repaired: none', inc(d.car.map(q => q[0])) && d.car.every(q => q[1] === 0) && inc(d.rail.map(q => q[d.railK])) && d.after.every(q => q === 0) && !d.errors.length,
     JSON.stringify({ car: d.car, rail: d.rail }) + ' ' + d.errors.slice(0, 3).join(' | '));
 
+  T.check('default settings: the roof caved in more with every 10 % of damage, from the first (its 20 steps; 8 cm and more at 90 %)', roofIn(d), JSON.stringify({ roof: d.roof, n: d.roofN, roofDmg: d.roofDmg }));
   T.check('default settings: every graze dents that flank in a little more, the other side not; never caved in (under 13 cm)', dentIn(d), JSON.stringify({ car: d.carD, nose: d.nose2D, rail: d.railD, stale: d.stale, many: d.many }));
 
   const m = await run('medved', { xBody: 1, xGlass: 1 });

@@ -8,7 +8,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     id: 'kolibri', name: 'KOLIBRI', cat: 'mali', ord: 2, drive: 'FF',
     desc: 'Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem.',
     phys: { mass: 680, a: 1.15, b: 1.18, kI: 0.95, kw: 47, redline: 8500, idle: 1000, gears: [3.3, 2.1, 1.48, 1.12, 0.9], final: 5.86, rw: 0.27, cDrag: 0.42, len: 3.39, wid: 1.47, steerMax: 0.66,
-      spinK: 0.4, knockK: 1 / 3.5 },   // (knockK: a knock's damage 1 / 3.5 of a car's, the user's: its typical crash 1 % instead of 3.5 %, core.js knock)
+      spinK: 0.4, knockK: 1 / 3.5, roof0: 0 },   // (knockK: a knock's damage 1 / 3.5 of a car's, the user's: its typical crash 1 % instead of 3.5 %, core.js knock; roof0: its roof caved in
+      // from the first per cent of damage, more with every one: core.js roofOf)
     arc: { amax: 1.66, kv: 2.1, rmin: 3.8 },
     csp: { bx: 0.15, coast: -0.095, thr: -0.03, liftP: 0, pwr: 0, out: 1, turn: 1, w: 1.02 },   // (the FF layer: pivots on the brakes, the throttle pulls it straight)
     stats: { power: 1, grip: 5, weight: 10, drift: 5 },

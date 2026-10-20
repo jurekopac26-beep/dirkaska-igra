@@ -5975,10 +5975,10 @@ const Render = (function () {
     if (v.kit) { kitParts(v, c, x, y, z, h); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { if (!XC.glass) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); } else if (c.dmg >= 0.92) { v.winBroken[k] = 1; if (v.xt) { (v.xGl || (v.xGl = [0, 0, 0, 0]))[k] = 1; for (const key of [['W'], ['R'], ['DL', 'QL'], ['DR', 'QR']][k]) xtGlass(v, c, key, 1, x, y, z, h, null); } else xBreakWindow(v, k, c, x, y, z, h); } }   // (Razbijanje · nov način: one pane a blow, xGlassHit; a wreck all of them)
     if (v.xt && XC.glass) { for (const sd of 'LR') if (v.kit.dead['mirror' + sd]) xtGlass(v, c, 'D' + sd, 0.75, x, y, z, h, null); xtFlush(v); }   // (the Kolibri: a mirror off, its door window 75 % at least; the panes' pictures due)
-    const r0 = v.roofStep; if (v.xOn) { const xc = v.xc || (c.roofDmg > (v.rd0 || 0) + 1e-4 ? xInit(v) : null); if (xc && xc.rf && c.roofDmg > xc.rd + 1e-4) { xRoofAdd(xc.rf, 0, 0, c.roofDmg - xc.rd, 2); xc.rd = c.roofDmg; xRoofApply(v, xc); } }   // (Razbijanje · nov način: a landing's rise into the roof field)
-    else while (v.roofStep < 4 && c.roofDmg >= (v.roofStep + 1) * 0.25) { v.roofStep++; crumpleRoof(v, 0.25); }
+    const r0 = v.roofStep, rk = XT_MIN.has(c.m.id); if (v.xOn) { const xc = v.xc || (c.roofDmg > (v.rd0 || 0) + 1e-4 ? xInit(v) : null); if (xc && xc.rf && c.roofDmg > xc.rd + 1e-4) { xRoofAdd(xc.rf, 0, 0, (c.roofDmg - xc.rd) * (rk ? XT_ROOFK : 1), 2); xc.rd = c.roofDmg; xRoofApply(v, xc); } }   // (Razbijanje · nov način: a landing's rise into the roof field)
+    else { const RS = rk ? 0.05 : 0.25; while (v.roofStep < 1 / RS - 1e-6 && c.roofDmg >= (v.roofStep + 1) * RS - 1e-9) { v.roofStep++; crumpleRoof(v, RS); } }   // (the Kolibri's in 20 steps: its roof a little more caved in with every 5 %)
     if (v.roofStep !== r0 || v.crackDirty) { for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].length && (v.roofStep !== r0 || v.crackDirty[k])) ownRnd(() => crackDecal(v, k)); v.crackDirty = null; }   // (a broken pane's glass moved since its crack decal was laid (the roof sank, a dent): laid again on it, never hanging in the air)
-    const crushed = v.xOn ? c.roofDmg >= 0.5 : v.roofStep >= 2;   // (Razbijanje · nov način: roofStep stays 0 there, the core's roofDmg itself (two old steps))
+    const crushed = v.xOn ? c.roofDmg >= 0.5 : v.roofStep * (rk ? 0.05 : 0.25) >= 0.5 - 1e-9;   // (Razbijanje · nov način: roofStep stays 0 there, the core's roofDmg itself (two old steps))
     if (crushed || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c, crushed);
     if (v.kit) return;
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
@@ -7971,7 +7971,7 @@ const Render = (function () {
   }
   // a blow on the Kolibri's flank (the core's dent, a side zone, xtZone) scuffs that side as a graze does, unless xtScrape counted that
   // contact already (its side touched within XT_SCR.gapT); XT_DENT: the least a blow on a new place dents its body (xDent; applyDent has its own least)
-  const XT_DENT = 0.02;
+  const XT_DENT = 0.02, XT_ROOFK = 2.5;   // (XT_ROOFK: the Kolibri's roof field takes the core's roofDmg rise 2.5 times as deep: some 80 % of its way down at 100 % damage)
   function xtScuff(v, d) {
     if (d.top) return;
     const M = v.car.m, S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0], dn: [0, 0] });

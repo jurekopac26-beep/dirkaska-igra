@@ -2046,6 +2046,9 @@ const Core = (function () {
   // (the user's: its typical crash 1 % instead of 3.5 %, every other in proportion). Only the knocks: not the fall down a drop (Race._fall:
   // a fixed heavy blow, its rule), Core.applyDamage called directly or the run from the police (its cars' own c.dmgK: its balance as it was)
   const knockK = (c) => c.dmgK ? 1 : c.m.knockK || 1;
+  // the roof's sag (roofDmg 0..1, the renderer's) by the damage: from model.roof0 (def.phys.roof0; 0.4 without one) to 95 %; the Kolibri's from
+  // 0 (the user's: its roof, what the camera behind it sees most, more caved in with every per cent)
+  const roofOf = (c) => { const r0 = c.m.roof0 != null ? c.m.roof0 : 0.4; return clamp((c.dmg - r0) / (0.95 - r0), 0, 1); };
   const knock = (c, amt, lx, lz) => applyDamage(c, amt * knockK(c), lx, lz);
   // Damage: overall 0..1 plus zones (0 front, 1 rear, 2 left = -z, 3 right = +z). lx/lz = local impact point
   // (x forward, z to the right); without a point the hit is spread over the whole car (hard landing).
@@ -2055,7 +2058,7 @@ const Core = (function () {
     if (c.m.dmgK) amt *= c.m.dmgK;   // (a vehicle's own toughness, model.dmgK: a truck's frame, a kart's tubes)
     const d0 = c.dmg;
     c.dmg = Math.min(1, c.dmg + amt);
-    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); } return; }
+    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, roofOf(c)); if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); } return; }
     const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
@@ -2071,7 +2074,7 @@ const Core = (function () {
     // windows shatter when their side of the car is badly hit (all of them in a total wreck); the roof sags as the car gets battered
     const WIN = [0.55, 0.55, 0.42, 0.42];
     for (let k = 0; k < 4; k++) if (!c.winOut[k] && (c.dz[k] >= WIN[k] || c.dmg >= 0.92)) c.winOut[k] = 1;
-    c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1));
+    c.roofDmg = Math.max(c.roofDmg, roofOf(c));
     // body parts come off once their area is damaged enough (a corner part also from its corner); a wheel (a part table with wheels,
     // kitParts) only in a heavy crash with damage on (dmgMode 2): its corner crushed (cd >= 0.7) and the car three quarters destroyed.
     // The car's face and tail (MASK: the nose with its bumper, the bonnet, the front wings, the rear bumper, the boot) only once the whole
@@ -5648,7 +5651,7 @@ const Core = (function () {
   const BODY_KEYS = ['coupe', 'sedan', 'hatch', 'wedge', 'rally', 'formula', 'lm', 'muscle', 'ev', 'truck'];   // (the renderer's body names: no vehicle's id)
   const PHYS_REQ = ['mass', 'a', 'b', 'kI', 'kw', 'redline', 'idle', 'gears', 'final', 'rw', 'cDrag', 'len', 'wid', 'steerMax'];
   const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
-    dmgK: [0.3, 2], knockK: [0.1, 1], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
+    dmgK: [0.3, 2], knockK: [0.1, 1], roof0: [0, 0.9], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
   const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
   const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];
   const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank'];
