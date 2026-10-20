@@ -1,8 +1,9 @@
-// The flying start of a race up an open road (Race opts.flying, game.js flyStep): no start lights; the moment the race begins every car is
-// already rolling up the road (FLY_V, ~54 km/h) and the autopilot drives the player's car for its first 3 s of race time, a number at each
-// whole second (LETEČI START · PREVZAMEŠ ČEZ 3, then 2, 1), then VOZIŠ TI! and the player's own car (the touch controls' autopilot mark off).
-// Vršič's race and Pikes Peak's (the newest of the 19 roads in the race); the time trial on the same road keeps its standing start, and a
-// circuit's race its lights.
+// The flying start of a race up an open road (Race opts.flying, Race._flyColumn, game.js flyStep): no start lights; the moment the race
+// begins it is already under way: the cars in one line up the road, ~10 s from the player's car at the back to the leader, the player's car
+// 3 s of its pace below the start line on the autopilot, three amber lights in the middle (#h-fly), one going out at each whole second, under
+// them LETEČI START ČEZ 3 SEKUNDE…, 2 SEKUNDI…, 1 SEKUNDO… (the commentator only counts: Three! Two! One!), and the moment it is over the line the lights gone, VOZIŠ TI! (The race has started!) and the
+// player's own car (the touch controls' autopilot mark off). No one passes until then. Vršič's race and Pikes Peak's (its short road below the line: slower);
+// the time trial on the same road keeps its standing start, and a circuit's race its lights.
 //   node tests/browser/flystart.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -11,24 +12,33 @@ const srv = await serve();
 const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 844, height: 390 });
-  // the race's first moments, stepped by hand: the speeds of the cars, the message, the autopilot's mark, who drives
+  // the race's first moments, stepped by hand from its start (restarted paused): the lights lit (each change), any message, the autopilot's
+  // mark, the order, the player's car at the start line as it takes over
   const look = () => page.evaluate(async () => {
     const g = window.__game, $ = (id) => document.getElementById(id), out = [];
-    g.pause();
-    for (const t of [0, 0.5, 1.5, 2.5, 3.2]) {
-      while (g.race.time < t) g.sim(1 / 60, true);
-      out.push({ t: +g.race.time.toFixed(2), phase: g.phase, min: Math.min(...g.race.cars.map(c => c.speed)), lights: $('h-lights').classList.contains('show'), msg: $('h-msg').textContent, ap: $('touch').classList.contains('ap') });
+    g.onAction('restart'); g.pause(); g.sim(1 / 60, true);
+    const r = g.race, P = r.player;
+    const order = () => r.cars.slice().sort((a, b) => b.dist - a.dist).map(c => c.id).join();
+    const o0 = order(), line = r.cars.slice().sort((a, b) => a.grid - b.grid), lead = line.slice(1).reduce((a, c, k) => a + (line[k].dist - c.dist) / Math.max(5, c.speed), 0);   // (each gap at the pace of the car behind)
+    const F = $('h-fly'), lit = () => F.classList.contains('show') ? F.querySelectorAll('i.on').length : 0;
+    let n = -1, kept = true, at = null, d0 = P.dist, msg0 = '', t0 = r.time;
+    while (r.time < 6 && at == null) {
+      const was = r.flyOn; if (was && $('h-msg').className.includes('show')) msg0 = $('h-msg').textContent;
+      g.sim(1 / 60, true); if (order() !== o0) kept = false;
+      const k = lit(); if (k !== n) { n = k; out.push({ t: +r.time.toFixed(2), lit: k, txt: k ? F.lastElementChild.textContent : '', ap: $('touch').classList.contains('ap'), d: +P.dist.toFixed(1) }); }
+      if (was && !r.flyOn) at = { t: +r.time.toFixed(2), d: +P.dist.toFixed(2), ap: $('touch').classList.contains('ap'), lit: k, msg: $('h-msg').textContent };
     }
-    const r = g.race; g.resume();
-    return { out, fly: r.opts.flying, lch: !!r.lch, tt: r.timeTrial, cars: r.cars.length };
+    g.resume();
+    return { out, at, kept, msg0, t0, lead: +lead.toFixed(1), d0: +d0.toFixed(0), fly: r.opts.flying, lch: !!r.lch, tt: r.timeTrial, cars: r.cars.length, lights: $('h-lights').classList.contains('show') };
   });
   for (const id of ['vrsic', 'pikes']) {
     await startTrack(page, id, 'race');
-    const r = await look(), [a, , , c, d] = r.out;
-    T.check(`${id}: the race begins at once, no lights, every car already rolling (over 40 km/h), the player's car on the autopilot`,
-      r.fly > 0 && !r.lch && !r.tt && r.cars === 13 && a.phase === 'racing' && !a.lights && a.min * 3.6 > 40 && a.ap && /^LETEČI START · PREVZAMEŠ ČEZ 3$/.test(a.msg), JSON.stringify(r.out[0]));
-    T.check(`${id}: the countdown on race time (PREVZAMEŠ ČEZ 1 before 3 s), then VOZIŠ TI! and the player's own car`,
-      c.msg === 'PREVZAMEŠ ČEZ 1' && c.ap && d.msg === 'VOZIŠ TI!' && !d.ap, JSON.stringify(r.out.slice(1)));
+    const r = await look(), lits = r.out.map(o => o.lit).join('');
+    T.check(`${id}: the race begins at once, no lights, the cars in one line (the player's car at the back, ~10 s behind the leader, below the start line)`,
+      r.fly > 0 && !r.lch && !r.tt && r.cars === 13 && !r.lights && r.d0 < 0 && r.lead > 8 && r.lead < 14, `${r.lead} s behind the leader, ${-r.d0} m below the line`);
+    T.check(`${id}: the countdown on the autopilot, three lights then two then one, the words under them (no other message), then the lights gone and VOZIŠ TI! the moment the player's car is over the start line (~3 s), no one passing until then`,
+      r.t0 < 0.1 && lits === '3210' && r.out.slice(0, 3).map(o => o.txt).join('|') === 'LETEČI START ČEZ 3 SEKUNDE…|LETEČI START ČEZ 2 SEKUNDI…|LETEČI START ČEZ 1 SEKUNDO…' && r.out.slice(0, 3).every(o => o.ap) && !r.msg0 && r.at && r.at.lit === 0 && r.at.msg === 'VOZIŠ TI!' && !r.at.ap && r.at.d >= 0 && r.at.d < 2 && r.at.t > 2.9 && r.at.t < 3.8 && r.kept && r.out[1].t > 0.95 && r.out[1].t < 1.1 && r.out[2].t > 1.95 && r.out[2].t < 2.1,
+      JSON.stringify(r.out) + ' ' + JSON.stringify(r.at));
   }
   // the same road's time trial and a circuit's race: the standing start with the lights, as ever
   for (const [id, mode] of [['vrsic', 'tt'], ['jezero', null]]) {
