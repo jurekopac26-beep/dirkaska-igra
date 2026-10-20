@@ -3173,13 +3173,13 @@
     return !p1 || (p1.gap && p1.o <= p1.wall + 1);
   }
   // the flying start of a race up an open road (Race opts.flying = FLY_T): the race already under way, the cars in a line ~10 s long (Race._flyColumn),
-  // the player's car FLY_T s below the start line on the autopilot; in the middle three amber lights, one going out at each whole second of race time
-  // (flyHUD); over the line (Race.flyOn off) the lights gone, VOZIŠ TI! and the player's own car, no one passing until then. The commentator only
-  // counts (Three! Two! One!), then: The race has started! (no welcome before it)
-  const FLY_T = 3, fly = { on: false, n: 0 };
-  function flyHUD(n) {   // n lights lit; 0: gone
-    const e = $('h-fly'); e.classList.toggle('show', n > 0);
-    if (n > 0) e.querySelectorAll('i').forEach((l, k) => l.classList.toggle('on', k < n));
+  // the player's car FLY_T s below the start line on the autopilot; in the middle three amber lights, one going out at each whole second of race time,
+  // under them LETEČI START ČEZ 3 SEKUNDE…, 2 SEKUNDI…, 1 SEKUNDO… (flyHUD); over the line (Race.flyOn off) the lights gone, VOZIŠ TI! and the player's
+  // own car, no one passing until then. The commentator only counts (Three! Two! One!), then: The race has started! (no welcome before it)
+  const FLY_T = 3, fly = { on: false, n: 0 }, FLY_TXT = ['LETEČI START ČEZ 1 SEKUNDO…', 'LETEČI START ČEZ 2 SEKUNDI…', 'LETEČI START ČEZ 3 SEKUNDE…'];
+  function flyHUD(n) {   // n lights lit and the words for n seconds; 0: gone
+    const e = $('h-fly'); e.classList.toggle('show', n > 0); if (!(n > 0)) return;
+    e.querySelectorAll('i').forEach((l, k) => l.classList.toggle('on', k < n)); e.lastElementChild.textContent = tr(FLY_TXT[n - 1]);
   }
   function flyStep() {
     const n = race.flyOn ? clamp(Math.ceil(FLY_T - race.time - 1e-6), 1, FLY_T) : 0;   // (late at the line: 1 until it is over it)
