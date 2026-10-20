@@ -1,0 +1,71 @@
+{
+  "id": "02-spa-ovinek",
+  "kraj": "Spa, Belgija",
+  "opis": "Ovinek z robniki in gledalci",
+  "spec": {
+    "track": "spa",
+    "tod": "day",
+    "weather": "dry",
+    "season": "summer",
+    "sim": 74,
+    "settings": {
+      "zoom": 1.05
+    }
+  },
+  "stil": {
+    "preset": "day",
+    "props": [
+      {
+        "t": "skids",
+        "s0": -30,
+        "s1": 70,
+        "opacity": 0.5,
+        "lines": [
+          {
+            "lat": -1.3,
+            "w": 2.6,
+            "ph": 0.3
+          },
+          {
+            "lat": 1.7,
+            "w": 2.6,
+            "ph": 2.4
+          }
+        ]
+      }
+    ],
+    "scatter": [
+      {
+        "t": "grass",
+        "n": 2400,
+        "size": 0.7,
+        "minD": 8,
+        "maxD": 60,
+        "tint": [
+          [
+            1.15,
+            1.2,
+            0.95
+          ],
+          [
+            1.3,
+            1.25,
+            0.85
+          ],
+          [
+            1.0,
+            1.12,
+            0.9
+          ]
+        ]
+      },
+      {
+        "t": "stones",
+        "n": 1800,
+        "size": 0.16,
+        "minD": 8,
+        "maxD": 55
+      }
+    ]
+  }
+}
