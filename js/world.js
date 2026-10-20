@@ -2879,7 +2879,7 @@ const World = (function () {
         return y0;
       };
       const tri2 = (g, a, b, c, col) => { const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]; const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz) || 1, m = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3]; g.triO(a, b, c, col, [m[0] - nx / l, m[1] - ny / l, m[2] - nz / l]); g.triO(a, c, b, col, [m[0] + nx / l, m[1] + ny / l, m[2] + nz / l]); };
-      const palm = (x, z, h) => { const g = scen.get(x, z), y = gH(x, z), la = R() * TAU, tx = x + Math.cos(la) * 0.6, tz = z + Math.sin(la) * 0.6;
+      const palm = (x, z, h) => { if (nearStand(x, z, 3)) return; const g = scen.get(x, z), y = gH(x, z), la = R() * TAU, tx = x + Math.cos(la) * 0.6, tz = z + Math.sin(la) * 0.6;
         cyl(g, x, y, z, 0.3, h * 0.6, 6, [0.52, 0.4, 0.26], null, 0.26); cyl(g, (x + tx) / 2, y + h * 0.6, (z + tz) / 2, 0.26, h * 0.4, 6, [0.56, 0.44, 0.28], null, 0.2);
         const top = [tx, y + h, tz], below = [tx, y + h - 4, tz], n = 9, a0 = R() * TAU;
         for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, L = 3.4 + R(), dr = 1.2 + R() * 0.8, w = 0.5, mid = [tx + Math.cos(a) * L * 0.55, y + h + 0.3, tz + Math.sin(a) * L * 0.55], tip = [tx + Math.cos(a) * L, y + h - dr, tz + Math.sin(a) * L];
@@ -2889,9 +2889,12 @@ const World = (function () {
       const flag = (x, z, h) => { const g = scen.get(x, z), y = gH(x, z); cyl(g, x, y, z, 0.07, h, 5, [0.85, 0.85, 0.88]);
         tri2(g, [x, y + h - 0.2, z], [x + 2.2, y + h - 0.2, z + 0.3], [x + 2.2, y + h - 0.9, z + 0.3], red); tri2(g, [x, y + h - 0.2, z], [x + 2.2, y + h - 0.9, z + 0.3], [x, y + h - 0.9, z], red);
         tri2(g, [x, y + h - 0.9, z], [x + 2.2, y + h - 0.9, z + 0.3], [x + 2.2, y + h - 1.6, z + 0.3], white); tri2(g, [x, y + h - 0.9, z], [x + 2.2, y + h - 1.6, z + 0.3], [x, y + h - 1.6, z], white); };
-      const stand = (ax, az, bx, bz, rows, roofCol, open) => {   // temporary grandstand facing the circuit, tiers climb away from it (open = no roof, as along the harbour)
+      const standFrame = (ax, az, bx, bz) => {   // a grandstand's front line: its length, along it (u), its middle (m), away from the track (n)
         const L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L, mx = (ax + bx) / 2, mz = (az + bz) / 2;
         let nx = -uz, nz = ux; const q = nearest(mx, mz); if (q.i >= 0 && (T.px[q.i] - mx) * nx + (T.pz[q.i] - mz) * nz > 0) { nx = -nx; nz = -nz; }   // n points away from the track
+        return { L, ux, uz, mx, mz, nx, nz }; };
+      const stand = (ax, az, bx, bz, rows, roofCol, open) => {   // temporary grandstand facing the circuit, tiers climb away from it (open = no roof, as along the harbour)
+        const { L, ux, uz, mx, mz, nx, nz } = standFrame(ax, az, bx, bz);
         const g = scen.get(mx, mz), y0 = gH(mx, mz) - 0.2, rot = Math.atan2(uz, ux);
         for (let r2 = 0; r2 < rows; r2++) { const o = 1.2 + r2 * 1.1, cx = mx + nx * o, cz = mz + nz * o, yy = y0 + r2 * 0.55;
           box(g, cx, y0, cz, L, (r2 + 1) * 0.55, 1.1, rot, [0.62, 0.63, 0.66], [0.72, 0.73, 0.75]);
@@ -2904,8 +2907,17 @@ const World = (function () {
           for (let q = 0; q < nb; q++) { const t0 = q / nb, t1 = (q + 1) / nb, slot = (q + Math.floor(Math.abs(mx) + Math.abs(mz))) % 8, u0 = (slot % 2) * 0.5, u1 = u0 + 0.5, vT = 1 - Math.floor(slot / 2) * 0.25, vB = vT - 0.25;
             const A = [ax + (bx - ax) * t0 + nx * 0.9, y0 + 0.2, az + (bz - az) * t0 + nz * 0.9], Bq = [ax + (bx - ax) * t1 + nx * 0.9, y0 + 0.2, az + (bz - az) * t1 + nz * 0.9];
             texSpons.quadO(A, Bq, [Bq[0], y0 + 1.2, Bq[2]], [A[0], y0 + 1.2, A[2]], [1, 1, 1], [mx + nx * 4, y0 + 0.6, mz + nz * 4], flip ? [[u1, vB], [u0, vB], [u0, vT], [u1, vT]] : [[u0, vB], [u1, vB], [u1, vT], [u0, vT]]); } }
-        exclRect.push({ x: mx + nx * back / 2, z: mz + nz * back / 2, hx: L / 2 + 2, hz: back / 2 + 2, rot });
       };
+      // the grandstands (built further down, after the city): Boulevard Albert Ier, over the Rainier III pool, Casino square, Sainte Dévote, the
+      // hairpin on scaffolding; their ground kept free at once of the houses, palms and trees placed before them
+      const STANDS = [[-117.6, 104, -117.6, 243, 11, 'blue'], [-117.6, 276, -117.6, 406, 10, 'red'], [-16, 212, -16, 282, 7, 'blue', true], [-46, 292, -16, 292, 5, 'blue', true],
+        [741.8, -250.3, 807.2, -260.1, 6, 'white'], [14.7, -29.7, 80.1, -29.7, 6, 'white'], [880.7, -233.9, 885.6, -178.4, 7, 'red']];   // [front line from, to, rows, roof, open]
+      const standRects = STANDS.map(([ax, az, bx, bz, rows]) => { const { L, ux, uz, mx, mz, nx, nz } = standFrame(ax, az, bx, bz), back = 1.2 + rows * 1.1;
+        return { x: mx + nx * back / 2, z: mz + nz * back / 2, hx: L / 2 + 2, hz: back / 2 + 2, rot: Math.atan2(uz, ux) }; });
+      exclRect.push(...standRects);
+      const nearStand = (x, z, m) => standRects.some(r => inRect(x, z, { x: r.x, z: r.z, hx: r.hx + m, hz: r.hz + m, rot: r.rot }));   // (m: a tree crown's reach)
+      const onStand = (x, z, W, D, rot) => { const cr = Math.cos(rot), sr = Math.sin(rot);   // a house's footprint (every 1/4 of it) over a stand
+        for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) { const u = W * a / 4, v = D * b / 4; if (nearStand(x + u * cr - v * sr, z + u * sr + v * cr, 0)) return true; } return false; };
       // ---- the harbour: jetties with lighthouses, pontoons, yachts from day-boats to superyachts ----
       const yacht = (x, z, L, rot) => { const cr = Math.cos(rot), sr = Math.sin(rot), W0 = L * (L > 40 ? 0.17 : 0.3), rk = MC_ROCK;
         for (const [tu, tv] of [[-0.5, 0], [0.5, 0], [0, 0.5], [0, -0.5], [0, 0], [-0.5, 0.5], [0.5, -0.5]]) { const px = x + cr * L * tu - sr * W0 * tv, pz = z + sr * L * tu + cr * W0 * tv;
@@ -2957,7 +2969,7 @@ const World = (function () {
         box(g, x, y0 + 11, z, 34.4, 0.8, 24.4, 0, [0.8, 0.78, 0.72], [0.6, 0.62, 0.66]); for (let k = -2; k <= 2; k++) box(g, x + k * 6.5, y0 + 3.2, z - 13.2, 5, 0.3, 2.4, 0, red, red); excl.push({ x, z, r: 22 }); }
       { const [x, z] = [656.8, -34.6], g = scen.get(x, z), y0 = facadeBox(x, z, 58, 32, 24, 0.15, [0.95, 0.84, 0.76]);                     // Hôtel Hermitage, glass cupola
         box(g, x, y0 + 24, z, 58.4, 0.8, 32.4, 0.15, [0.85, 0.76, 0.7], [0.45, 0.45, 0.5]); ico(g, x + 10, y0 + 25, z, 6, 0.55, [0.62, 0.76, 0.82], R, 0); excl.push({ x, z, r: 36 }); }
-      for (let k = 0; k < 44; k++) { const x = 660 + R() * 163, z = -296 + R() * 62; if (clearance(x, z) > 4 && !excluded(x, z)) (R() < 0.6 ? palm(x, z, 7 + R() * 4) : ico(scen.get(x, z), x, gH(x, z) + 3, z, 2.6 + R(), 1, vary([0.24, 0.45, 0.2], R, 0.15), R, 0.2)); }   // Boulingrins gardens
+      for (let k = 0; k < 44; k++) { const x = 660 + R() * 163, z = -296 + R() * 62; if (clearance(x, z) > 4 && !excluded(x, z) && !nearStand(x, z, 3.5)) (R() < 0.6 ? palm(x, z, 7 + R() * 4) : ico(scen.get(x, z), x, gH(x, z) + 3, z, 2.6 + R(), 1, vary([0.24, 0.45, 0.2], R, 0.15), R, 0.2)); }   // Boulingrins gardens
       for (const [fx, fz] of [[709.1, -227.4], [758.1, -237.2], [807.1, -247.0], [679.7, -204.5]]) if (clearance(fx, fz) > 3) flag(fx, fz, 9);
       // ---- the Fairmont hotel above the hairpin, built over the tunnel; fades with the tunnel roof when you are inside ----
       { const [x, z] = [973.8, -103.2], rot = Math.atan2(114, -142), L = 150, D = 72, y0 = 16, H = 24, cr = Math.cos(rot), sr = Math.sin(rot);
@@ -3016,7 +3028,7 @@ const World = (function () {
           if (excluded(x, z) || gH(x, z) < 0.8) continue;
           const cr0 = Math.cos(rot), sr0 = Math.sin(rot); let bad = false;
           for (const [u, v] of [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]]) { const px = x + u * cr0 - v * sr0, pz = z + u * sr0 + v * cr0; if (clearance(px, pz) < 2.5 || gH(px, pz) < 0.8 || excluded(px, pz)) { bad = true; break; } }
-          if (bad || placed.some(p => Math.hypot(p[0] - x, p[1] - z) < (p[2] + rad) * 0.8)) continue;
+          if (bad || placed.some(p => Math.hypot(p[0] - x, p[1] - z) < (p[2] + rad) * 0.8) || onStand(x, z, W, D, rot)) continue;
           const monte = z < -60 || x > 400, pal = monte ? PAL.mc : PAL.condamine, col = pal[Math.floor(R() * pal.length)], H = 10 + R() * 12, y0 = facadeBox(x, z, W, D, H, rot, col, null, monte && R() < 0.7), g = scen.get(x, z);
           if (!monte || R() < 0.4) gable(g, x, y0 + H, z, W + 0.6, D + 0.6, 2.4 + R(), rot, tile, col); else { box(g, x, y0 + H, z, W, 0.6, D, rot, col.map(v => v * 0.86), [0.72, 0.72, 0.7]); roofKit(g, x, y0 + H + 0.6, z, W, D, rot, col); }
           const fx = x - side * T.nx[i] * (D / 2 + 0.6), fz = z - side * T.nz[i] * (D / 2 + 0.6);
@@ -3032,7 +3044,7 @@ const World = (function () {
           const y = gH(x, z); if (y < 0.8) continue;                                            // not in the water
           if (placed.some(p => Math.hypot(p[0] - x, p[1] - z) < (p[2] + rad) * 0.84)) continue;
           const ni = nearest(x, z).i, rot = ni >= 0 ? T.hd[ni] + (R() < 0.5 ? 0 : Math.PI / 2) : (R() - 0.5) * 0.6;
-          { const cr0 = Math.cos(rot), sr0 = Math.sin(rot); let bad = false; for (const [u, v] of [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]]) { const px = x + u * cr0 - v * sr0, pz = z + u * sr0 + v * cr0; if (clearance(px, pz) < 2.5 || gH(px, pz) < 0.8) { bad = true; break; } } if (bad) continue; }
+          { const cr0 = Math.cos(rot), sr0 = Math.sin(rot); let bad = false; for (const [u, v] of [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]]) { const px = x + u * cr0 - v * sr0, pz = z + u * sr0 + v * cr0; if (clearance(px, pz) < 2.5 || gH(px, pz) < 0.8) { bad = true; break; } } if (bad || onStand(x, z, W, D, rot)) continue; }
           const maxH = Math.min(Z.pal === 'mc' ? 72 : Z.pal === 'rock' ? 14 : 30, 9 + Math.max(0, c) * (Z.pal === 'mc' ? 0.55 : 0.3));   // low next to the circuit, towers further back
           const H = Math.max(8, Math.min(maxH, (Z.pal === 'mc' ? 14 + R() * R() * 60 : 10 + R() * 16)));
           const col = PAL[Z.pal][Math.floor(R() * PAL[Z.pal].length)], y0 = facadeBox(x, z, W, D, H, rot, col, null, Z.pal === 'mc' && R() < 0.75), g = scen.get(x, z);
@@ -3067,7 +3079,7 @@ const World = (function () {
         let vx = dy * uz, vy = dz * ux - dx * uz, vz = -dy * ux; const vl = Math.hypot(vx, vy, vz) || 1; vx /= vl; vy /= vl; vz /= vl;
         const h = w / 2, C = (p, a, b) => [p[0] + ux * a * h + vx * b * h, p[1] + vy * b * h, p[2] + uz * a * h + vz * b * h], mid = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, (p0[2] + p1[2]) / 2];
         for (const [a0, b0, a1, b1] of [[1, 1, 1, -1], [1, -1, -1, -1], [-1, -1, -1, 1], [-1, 1, 1, 1]]) g.quadO(C(p0, a0, b0), C(p0, a1, b1), C(p1, a1, b1), C(p1, a0, b0), col, mid); };
-      const stonePine = (x, z, h) => { if (clearance(x, z) < 8.5 || gH(x, z) < 0.8) return; const g = scen.get(x, z), y = gH(x, z), cx = x + (R() - 0.5) * 1.6, cz = z + (R() - 0.5) * 1.6;   // umbrella pine: tall bare trunk, wide flat crown
+      const stonePine = (x, z, h) => { if (clearance(x, z) < 8.5 || gH(x, z) < 0.8 || nearStand(x, z, 6)) return; const g = scen.get(x, z), y = gH(x, z), cx = x + (R() - 0.5) * 1.6, cz = z + (R() - 0.5) * 1.6;   // umbrella pine: tall bare trunk, wide flat crown
         seg(g, [x, y, z], [cx, y + h * 0.8, cz], 0.6, [0.45, 0.33, 0.24]);
         ico(g, cx, y + h * 0.84, cz, 5.4 + R() * 1.6, 0.4, vary([0.2, 0.36, 0.16], R, 0.12), R, 0.25);
         ico(g, cx + (R() - 0.5) * 3, y + h * 0.93, cz + (R() - 0.5) * 3, 3.6, 0.45, vary([0.25, 0.43, 0.19], R, 0.12), R, 0.25); excl.push({ x, z, r: 4 }); };
@@ -3153,10 +3165,7 @@ const World = (function () {
       for (const c of T.corners) { if (c.sev < 2) continue; for (let k = 0; k < 3; k++) { const i = T.idx(c.s0 + k * 6 - 4), side = -c.dir, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 1.4 + k * 0.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z), y = gH(x, z);
         box(g, x, y, z, 0.5, 1.25, 0.35, T.hd[i], orange); box(g, x, y + 1.25, z, 0.32, 0.32, 0.32, T.hd[i], [0.96, 0.96, 0.96]); } }
       // ---- grandstands: Boulevard Albert Ier, the harbour quay at Tabac, along the pool, Casino square, the harbour corner, Sainte Dévote, the hairpin ----
-      stand(-117.6, 104, -117.6, 243, 11, blueRoof); stand(-117.6, 276, -117.6, 406, 10, red);          // Boulevard Albert Ier
-      stand(-16, 212, -16, 282, 7, blueRoof, true); stand(-46, 292, -16, 292, 5, blueRoof, true);      // over the Rainier III pool
-      stand(741.8, -250.3, 807.2, -260.1, 6, white); stand(14.7, -29.7, 80.1, -29.7, 6, white);        // Casino square, Sainte Dévote
-      stand(880.7, -233.9, 885.6, -178.4, 7, red);                                                     // the hairpin, on scaffolding
+      for (const [ax, az, bx, bz, rows, roof, open] of STANDS) stand(ax, az, bx, bz, rows, { blue: blueRoof, red, white }[roof], open);   // (STANDS: further up)
       { const g = scen.get(870, -206); for (let z = -234; z <= -178; z += 3.2) for (const x of [872, 866, 860]) { const y = gH(x, z); seg(g, [x, y, z], [x, y + 9, z], 0.18, [0.62, 0.64, 0.68]); }
         for (let z = -234; z < -178; z += 6.4) seg(g, [872, gH(872, z), z], [872, gH(872, z) + 8, z + 3.2], 0.12, [0.62, 0.64, 0.68]); }
       // spectators on the pavements behind the catch fences (up to three rows before the house fronts): Sainte Dévote, Beau Rivage, Casino square,
