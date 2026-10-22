@@ -1,5 +1,5 @@
 /* =========================================================================
-   APEX RACING — the menu: main menu, Single race (mode, track, car, weather), the intro before a race (the globe, the helicopter's
+   Real Roads Atlas — the menu: main menu, Single race (mode, track, car, weather), the intro before a race (the globe, the helicopter's
    flight, the country's music), the credits. It lives in a shadow root of its own (css/menu.css), so nothing of the game's page
    reaches it and it reaches nothing of the game's: the game talks to it through Menu.init(bridge) (js/game.js, "the menu's bridge")
    and Menu.show(screen), and the menu to the game through that bridge. The texts are in English (js/menu-data.js and here).
