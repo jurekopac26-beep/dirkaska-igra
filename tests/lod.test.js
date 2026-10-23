@@ -2,7 +2,8 @@
 // hundred). An AI car away from the player is worked out every LOD.k-th step (30 Hz) or, further away, every LOD.k2-th (15 Hz), over the
 // time since its last step; within LOD.a m ahead of the player, LOD.b m behind it along the race or LOD.r m of it in the world, at the full
 // rate. Every 13/20/22-car race (and every golden reference) stays at the full rate. Checked here:
-//   1. Nürburg, 100 cars, the flying start (15 m/s), the player 12th on the autopilot, 30 s: no NaN; cars at all three rates; every car near
+//   1. Nürburg, 100 cars, the flying start's column with a 15 s countdown (the player at its back 15 s below the line, half the field far
+//      below it too: their crossings of the line in a longer step), the player on the autopilot, 30 s: no NaN; cars at all three rates; every car near
 //      the player worked out every step over one step; the far ones every 4th or 8th step at most, and on the way (none stuck, none rescued,
 //      each over 250 m) and drawn smoothly between their steps (Race.lodT, as render.js and the replay use it); the cars that cross the line
 //      in a step of several: the time taken where the line was crossed inside it
@@ -89,7 +90,7 @@ const tLin = (t, x, d0, d1, m) => t - DT * m * (d1 - x) / (d1 - d0);
   check('a far car drawn smoothly between its steps (Race.lodT): it moves on as fast as it goes, every step, not in jumps every 4th or 8th',
     jerk.length > 10000 && jq(0.99) < 0.1 && jq(1) < 1, `off by p50 ${jq(0.5).toFixed(3)}, p99 ${jq(0.99).toFixed(3)}, most ${jq(1).toFixed(2)} m a step (${jerk.length} car-steps)`);
   check('over the line in a step of several: the lap starts where the line was crossed inside it (on the steps of 1/120 s), not at the step\'s end',
-    cross > 50 && crossIn > 10 && crossBad === 0, `${cross} crossings, ${crossIn} in a longer step, ${crossBad} wrong; worst ${(worst * 1000).toFixed(1)} ms from the even crossing`);
+    cross > 20 && crossIn > 10 && crossBad === 0, `${cross} crossings, ${crossIn} in a longer step, ${crossBad} wrong; worst ${(worst * 1000).toFixed(1)} ms from the even crossing`);   // (only the cars below the line at the start cross it: the column's others start past it, on their first lap)
 }
 
 // ---- 2. Marrakesh, 34 cars, one lap to the finish ----
@@ -126,7 +127,7 @@ const tLin = (t, x, d0, d1, m) => t - DT * m * (d1 - x) / (d1 - d0);
 
 // ---- 3. Nürburg, 100 cars, two laps, the safety car out: LOD on behind it ----
 {
-  const t0 = Date.now(), r = race('nring', 99, { flying: 15, playerGrid: 99, laps: 2 }), P = r.player, N = r.cars.length;
+  const t0 = Date.now(), r = race('nring', 99, { flying: 3, playerGrid: 99, laps: 2 }), P = r.player, N = r.cars.length;
   let resc = 0; const orig = r.rescue; r.rescue = function (c) { resc++; return orig.call(this, c); };
   r.start();
   let nan = 0, scN = 0, lodN = 0, nearN = 0, nearBad = 0, out = false, scD0 = 0; const seen = { 1: 0, 4: 0, 8: 0 }, start = new Float64Array(N);

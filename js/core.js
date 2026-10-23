@@ -4916,6 +4916,7 @@ const Core = (function () {
         const i = T.idx(s), lat = T.rl[i], x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
         c.q = T.query(x, z, i, {}); c.sPrev = c.q.s; c.dist = s - T.startS;
+        if (!T.open && c.dist >= 0) { c.lap = 1; c.lapStart = 0; }   // (a circuit: a car already past the line is on its first lap from the start, no crossing of it to time)
         while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }   // (a long column: a split point already behind its first cars)
         let v = at(paceOf(c), s); if (c === Pl) v = Math.min(FLY_PL * v, tP < this.opts.flying ? (T.startS - s) / this.opts.flying : v);   // (a short road below the line: the countdown's pace)
         c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v; c.w = v * T.k[i];   // (already turning in a corner)
