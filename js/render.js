@@ -2550,8 +2550,10 @@ const Render = (function () {
     };
     return cgMat(m, false, 'dirtyCarCg' + (cut ? 'X' : '') + (scr ? 'S' : ''));
   }
+  // the start numbers' roundels (kept for good: at most the 100 numbers), each on the GPU as soon as it is made, not when its car is first
+  // drawn: in a field of 100 a different set of cars comes into view each race, and the textures on the GPU would follow it
   const numTexCache = new Map();
-  function numTex(n) { if (!numTexCache.has(n)) numTexCache.set(n, Tex.number(n)); return numTexCache.get(n); }
+  function numTex(n) { if (!numTexCache.has(n)) { const t = Tex.number(n); numTexCache.set(n, t); if (renderer) renderer.initTexture(t); } return numTexCache.get(n); }
 
   function makeCarMesh(car, opts) {
     const M = Core.heirOf(car.m);   // (a retired model, still drawn (an old ghost, an old friend's car): the vehicle that took its place)
