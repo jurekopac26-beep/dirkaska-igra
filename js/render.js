@@ -4385,7 +4385,7 @@ const Render = (function () {
     const inv = new THREE.Matrix4().copy(v.bodyG.matrixWorld).invert(), m4 = new THREE.Matrix4(), p = new THREE.Vector3(), cl = new THREE.Color();
     const keep = new Set([v.hull, v.tag, v.blob].concat(v.shadowOnly || [])), list = [], cell = new Map(), acc = [], tri = [];   // (the blob: its shadow on the road stays)
     v.grp.traverse(o => {
-      if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite) || keep.has(o)) return;
+      if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite) || keep.has(o) || o.userData.farKeep) return;   // (farKeep: added after the far car was made, drawn as it is near or far: the patrol car's band and light bar, polGear)
       list.push(o);
       const mt = Array.isArray(o.material) ? null : o.material, G = o.geometry, P = G && G.attributes.position;
       if (!o.isMesh || !mt || !P || mt.transparent || mt.map || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
@@ -5601,10 +5601,10 @@ const Render = (function () {
       polTex = new THREE.CanvasTexture(cv); polKey = pk; matPolBand = new THREE.MeshLambertMaterial({ map: polTex }); matPolOn = new THREE.MeshBasicMaterial({ color: 0x3a78ff }); matPolOff = new THREE.MeshLambertMaterial({ color: 0x0e1c3c }); matPolBar = new THREE.MeshLambertMaterial({ color: 0x1a1a1a }); }
     v.dec.visible = false;
     const L = M.len * 0.62, hb = new THREE.PlaneGeometry(L, L / 8), y = def.secs ? (def.secs[Math.floor(def.secs.length / 2)][2] + def.secs[Math.floor(def.secs.length / 2)][3]) * 0.5 + 0.06 : 0.62;
-    for (const sd of [-1, 1]) { const b = new THREE.Mesh(hb, matPolBand); b.position.set(-0.05, y, sd * (M.wid * 0.5 + 0.015)); b.rotation.y = sd > 0 ? 0 : Math.PI; v.bodyG.add(b); }
+    for (const sd of [-1, 1]) { const b = new THREE.Mesh(hb, matPolBand); b.position.set(-0.05, y, sd * (M.wid * 0.5 + 0.015)); b.rotation.y = sd > 0 ? 0 : Math.PI; b.userData.farKeep = 1; v.bodyG.add(b); }
     const bar = new THREE.Group(), w = M.wid * 0.6; bar.add(new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.07, w), matPolBar));
     v.polLamps = [-1, 1].map(sd => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.12, w * 0.4), matPolOff); l.position.set(0, 0.08, sd * w * 0.27); bar.add(l); return l; });
-    bar.position.set(v.dec.position.x, v.dec.position.y + 0.04, 0); v.bodyG.add(bar); v.polBar = bar; v.polBand = hb;
+    bar.position.set(v.dec.position.x, v.dec.position.y + 0.04, 0); bar.traverse(o => { o.userData.farKeep = 1; }); v.bodyG.add(bar); v.polBar = bar; v.polBand = hb;   // (farKeep: not part of a far car rebuilt after a knock, farBuild)
   }
   function updateRoad(dt) {
     const Q = road, R = curRace; if (!Q || !R || !R.tf) return;
@@ -5924,27 +5924,9 @@ const Render = (function () {
       if (vis) v.grp.updateMatrixWorld(true); else { v.grp.updateMatrix(); v.grp.matrixWorld.copy(v.grp.matrix); }   // (out of the scene: its own place only, what its effects read)
       const nt = todK, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
-      for (let k = 0; k < 4 && v.grp.visible && vis; k++) {   // (not a hidden car's lamps)
-        if (v.lampsOut || (v.lightBroken && v.lightBroken[k])) continue;   // smashed lamp (burnt out: all of them): no glow
-        if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
-        _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
-        if (v.noHead) { if (k === 2 && rainL) { glows.add(_lv.x, _lv.y, _lv.z, 1.5, 1.0, 0.15, 0.08, 0.9); if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, 0.6 * wk, 0.5, 5.5, c.id * 0.37 + k); } }
-        else if (k < 2) { glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl);
-          if (nt) { glows.add(_lv.x, _lv.y, _lv.z, 0.42, 1.0, 0.97, 0.9, 0.85 * nt); glows.add(_lv.x, _lv.y, _lv.z, 2.8, 1.0, 0.86, 0.66, 0.085 * nt * rl); }
-          if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.9, 0.72, 0.3 * wk * (0.35 + 0.65 * nt), 0.6, 5, c.id * 0.37 + k); }
-        else { glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * rl);
-          if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl);
-          if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, (braking ? 0.75 : 0.36) * wk * (0.5 + 0.5 * nt), 0.55, braking ? 6.5 : 5, c.id * 0.37 + k); }
-      }
-      if (wk && vis) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
+      v.gq = { braking, rainL, wk, sk, x, y, z, nt, rl, gy };   // (carGlows: this frame's lamps, also for carCull's car back in view)
+      if (vis) carGlows(v);
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
-      if (sk > 0 && vis) {   // the sun's glint on the paint: a soft glare where the curved roof mirrors the sun into the camera (the paint's own highlight is small and sharp)
-        const ry = (BODIES[M.body] || BODIES.coupe).roofY * (v.noHead ? 0.9 : 0.97), cp = camera.position;
-        let vx = cp.x - x, vy = cp.y - y - ry, vz = cp.z - z; const vl = Math.hypot(vx, vy, vz) || 1; vx = vx / vl + _sunN.x; vy = vy / vl + _sunN.y; vz = vz / vl + _sunN.z;
-        const hl = Math.hypot(vx, vy, vz) || 1, d = (vx * e[4] + vy * e[5] + vz * e[6]) / hl, ox = (vx / hl - e[4] * d) * 2.6, oz = (vz / hl - e[6] * d) * 2.6;   // (half-way vector; where on a roof curved ~2.6 m its normal is that)
-        const al = ox * e[0] + oz * e[2], ac = ox * e[8] + oz * e[10], k = 1 - (al / (M.len * 0.36)) ** 2 - (ac / (M.wid * 0.3)) ** 2;
-        if (k > 0 && d > 0) glows.add(x + e[0] * al + e[8] * ac, y + ry - 0.08 * (1 - k), z + e[2] * al + e[10] * ac, 1.1 + 0.9 * k, sun.color.r, sun.color.g, sun.color.b, 0.5 * k * k * sk);
-      }
       if (v.blob && vis) {   // without shadow maps: a shadow of the car's shape, cast a little away from the sun (with them: the soft contact shadow only)
         const off = !settings.shadows; if (v.blobOff !== off) { v.blobOff = off; v.blob.material = off ? matBlobS : matBlob; }
         let bx = 0, bz = 0; if (off && atmos.tod !== 'night') { const f = 0.55 / Math.max(0.25, _sunN.y), sx = -_sunN.x * f, sz = -_sunN.z * f, l = Math.hypot(sx, sz), q = l > 1.3 ? 1.3 / l : 1; bx = (sx * e[0] + sz * e[2]) * q; bz = (sx * e[8] + sz * e[10]) * q; }
@@ -5956,7 +5938,7 @@ const Render = (function () {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5 || sf === 6) loose++; }   // (the cobbles, 7 and 8, are no dirt)
         if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
       }
-      if (!vis) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx)
+      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0);
@@ -7190,7 +7172,7 @@ const Render = (function () {
   }
   // the body moved (xApply, the roof field): drawn again, its touched facets flat and painted, a broken pane's crack decal laid again on it
   function xTouched(v, xc, geo, tris) {
-    geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1; refacet(geo, tris); if (v.kit) v.kit.ver++; if (xc.dk) xtCrease(v, xc); else xPaint(v, xc, tris);   // (the Kolibri's default body: its creases, xtCrease)
+    geo.attributes.position.needsUpdate = true; xc.ver = (xc.ver || 0) + 1; refacet(geo, tris); if (v.kit) { v.kit.ver++; v.kit.dk++; } if (xc.dk) xtCrease(v, xc); else xPaint(v, xc, tris);   // (the Kolibri's default body: its creases, xtCrease)
     if (v.winBroken) for (let k = 0; k < 4; k++) if (v.winBroken[k] && !(v.xGl && v.xGl[k]) && v.glassTris[k].some(t => tris.has(t))) (v.crackDirty || (v.crackDirty = [0, 0, 0, 0]))[k] = 1;   // (a frosted pane's crack decal laid again on it)
   }
   // for the tests (crashInfo): the points of the roof's own top as built (within 4 cm of it, its middle 60 %, over its footprint; what lies
@@ -9216,20 +9198,48 @@ const Render = (function () {
   // beam's 22 m ahead of it, its smoke over it) is outside the camera's view or past the fog's end is taken out of the scene (three.js neither
   // updates its matrices nor culls its meshes one by one, the shadow pass skips it); updateCars still poses it and follows its damage (its
   // bits muted) but draws no lamps, glint, blob, dust, sparks or smoke for it (v.cull). A shot (the photo mode, a tool's camera): every car in
-  const _ccF = new THREE.Frustum(), _ccM = new THREE.Matrix4(), _ccS = new THREE.Sphere();
+  const _ccF = new THREE.Frustum(), _ccM = new THREE.Matrix4(), _ccS = new THREE.Sphere(), _ccD = new THREE.Vector3(), _ccV = new THREE.Vector3();
+  // a car's lamp glows, its paint's blur in the water on a wet road and the sun's glint on its roof, as updateCars set them for this frame (v.gq);
+  // also for a car carCull brings back into view (the camera cut to it this frame: its lamps not dark for a frame)
+  function carGlows(v) {
+    const c = v.car, M = c.m, G = v.gq; if (!G || !v.grp.visible) return;
+    const { braking, rainL, wk, sk, x, y, z, nt, rl, gy } = G;
+    for (let k = 0; k < 4; k++) {   // (not a hidden car's lamps)
+      if (v.lampsOut || (v.lightBroken && v.lightBroken[k])) continue;   // smashed lamp (burnt out: all of them): no glow
+      if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
+      _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
+      if (v.noHead) { if (k === 2 && rainL) { glows.add(_lv.x, _lv.y, _lv.z, 1.5, 1.0, 0.15, 0.08, 0.9); if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, 0.6 * wk, 0.5, 5.5, c.id * 0.37 + k); } }
+      else if (k < 2) { glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl);
+        if (nt) { glows.add(_lv.x, _lv.y, _lv.z, 0.42, 1.0, 0.97, 0.9, 0.85 * nt); glows.add(_lv.x, _lv.y, _lv.z, 2.8, 1.0, 0.86, 0.66, 0.085 * nt * rl); }
+        if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.9, 0.72, 0.3 * wk * (0.35 + 0.65 * nt), 0.6, 5, c.id * 0.37 + k); }
+      else { glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * rl);
+        if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl);
+        if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, (braking ? 0.75 : 0.36) * wk * (0.5 + 0.5 * nt), 0.55, braking ? 6.5 : 5, c.id * 0.37 + k); }
+    }
+    if (wk) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
+    if (sk > 0) { const e = v.grp.matrixWorld.elements;   // the sun's glint on the paint: a soft glare where the curved roof mirrors the sun into the camera (the paint's own highlight is small and sharp)
+      const ry = (BODIES[M.body] || BODIES.coupe).roofY * (v.noHead ? 0.9 : 0.97), cp = camera.position;
+      let vx = cp.x - x, vy = cp.y - y - ry, vz = cp.z - z; const vl = Math.hypot(vx, vy, vz) || 1; vx = vx / vl + _sunN.x; vy = vy / vl + _sunN.y; vz = vz / vl + _sunN.z;
+      const hl = Math.hypot(vx, vy, vz) || 1, d = (vx * e[4] + vy * e[5] + vz * e[6]) / hl, ox = (vx / hl - e[4] * d) * 2.6, oz = (vz / hl - e[6] * d) * 2.6;   // (half-way vector; where on a roof curved ~2.6 m its normal is that)
+      const al = ox * e[0] + oz * e[2], ac = ox * e[8] + oz * e[10], k = 1 - (al / (M.len * 0.36)) ** 2 - (ac / (M.wid * 0.3)) ** 2;
+      if (k > 0 && d > 0) glows.add(x + e[0] * al + e[8] * ac, y + ry - 0.08 * (1 - k), z + e[2] * al + e[10] * ac, 1.1 + 0.9 * k, sun.color.r, sun.color.g, sun.color.b, 0.5 * k * k * sk);
+    }
+  }
   function carCull() {
     const on = !!curRace && !cam.shot && !dbg.allCars;   // (dbg.allCars: the tests, a car's own cost measured whatever the view)
-    if (on) { camera.updateMatrixWorld(); _ccM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _ccF.setFromProjectionMatrix(_ccM); }
+    if (on) { camera.updateMatrixWorld(); _ccM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _ccF.setFromProjectionMatrix(_ccM); camera.getWorldDirection(_ccD); }
     const p = camera.position, far = scene.fog.far, reach = 4 + Math.min(12, 1.8 * Math.hypot(sunOff[0], sunOff[2]) / Math.max(1, sunOff[1]));   // (its shadow: 1.8 m of car under the sun, at most 12 m long)
+    let back = false;
     for (const v of views) { const c = v.car; if (c.isPlayer) continue;
       let out = false;
       if (on) { const bm = v.beam && v.beam.visible ? 10.75 : 0, h = -v.grp.rotation.y;   // (the beam: from the nose to 21.5 m ahead of it; the heading updateCars gave the car)
         _ccS.center.set(v.grp.position.x + Math.cos(h) * bm, v.grp.position.y + 0.8, v.grp.position.z + Math.sin(h) * bm);
         _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0);
-        out = _ccS.center.distanceTo(p) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }
+        out = _ccD.dot(_ccV.subVectors(_ccS.center, p)) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }   // (past the fog by its depth in the view, as the fog itself counts it: a car at the side of the screen as far as one ahead)
       if (out === !!v.cull) continue;
       v.cull = out; if (out) { scene.remove(v.grp); continue; }
-      scene.add(v.grp); v.grp.updateMatrixWorld(true); }   // (back in: where updateCars put it this frame)
+      scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
+    if (back) { glows.end(); streaks.end(); }
   }
   function frame(dt, alpha, target, mode, opt) {
     time += dt;

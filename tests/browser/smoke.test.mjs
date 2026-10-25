@@ -65,14 +65,15 @@ try {
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);
+    const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
     const nan = await simulate(page, 20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), back: Math.round(g.race._gridBack(P.grid)), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
-    // (more than 200 m from where it started in 20 s: a car that does not move stays there; the player at the back of 22 cars on a grid
-    // stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the line; Tianmen's
-    // 45 hairpins give ~360 m)
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
+    // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
+    // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist + r.back > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m (from ${-r.back} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {

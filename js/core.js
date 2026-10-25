@@ -4568,12 +4568,12 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen',
     // (the bigger fields: 21 rivals in a race, 99 at the Nordschleife; appended only, so a field of 20 or fewer has the drivers it always had)
-    'J. Lesjak', 'E. Costa', 'R. Fischer', 'Y. Ogawa', 'P. Laurent', 'M. Jensen', 'A. Gruber', 'L. Mertens', 'T. Hribar', 'S. Brandt', 'K. Nakamura', 'D. Oliveira', 'F. Ricci', 'V. Popescu',
+    'J. Lesjak', 'E. Costa', 'R. Felmstad', 'Y. Ogawa', 'P. Laurent', 'M. Jorvang', 'A. Gruber', 'L. Mertens', 'T. Hribar', 'S. Brandt', 'K. Nakaroshi', 'D. Oliveira', 'F. Ricci', 'V. Popescu',
     'H. Larsen', 'N. Vidmar', 'G. Conti', 'B. Wagner', 'J. Svoboda', 'O. Hansen', 'I. Mazur', 'C. Fontaine', 'E. Bergström', 'T. Ito', 'M. Teixeira', 'S. Golob', 'R. Meier', 'Z. Dvořák',
     'L. Girard', 'P. Rinaldi', 'K. Virtanen', 'D. Ueda', 'F. Kos', 'E. Rousseau', 'G. Nagy', 'H. Lehmann', 'J. Pirc', 'M. Esposito', 'T. Holm', 'V. Marin', 'B. Castro', 'C. Greco',
     'I. Sokolov', 'N. Hall', 'O. Dahl', 'K. Mlakar', 'R. Barros', 'S. Weiss', 'A. Zorman', 'L. Okafor', 'P. Jankowski', 'D. Quintero', 'M. Hoffmann', 'E. Vasquez', 'Y. Tamura', 'G. Pellegrini',
     'T. Becker', 'F. Almeida', 'H. Eriksen', 'J. Kuhar', 'R. Dumont', 'K. Hirano', 'N. Romano', 'B. Schmid', 'S. Turk', 'A. Jovanović', 'L. Hughes', 'V. Galli', 'O. Lund', 'M. Szabo',
-    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvalho', 'R. Moser'];
+    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvelos', 'R. Moser'];
   // each driver's character (opts.chars), the same in every race: [agg 0 careful .. 1 aggressive, err 0 cool .. 1 cracks under pressure]
   const DRIVER_CHAR = [[0.8, 0.2], [0.3, 0.1], [0.9, 0.65], [0.2, 0.3], [0.5, 0.2], [0.85, 0.35], [0.6, 0.55], [0.25, 0.15], [0.55, 0.75], [0.7, 0.4],
     [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55],
@@ -4916,7 +4916,7 @@ const Core = (function () {
         const i = T.idx(s), lat = T.rl[i], x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
         c.q = T.query(x, z, i, {}); c.sPrev = c.q.s; c.dist = s - T.startS;
-        if (!T.open && c.dist >= 0) { c.lap = 1; c.lapStart = 0; }   // (a circuit: a car already past the line is on its first lap from the start, no crossing of it to time)
+        if (!T.open && c.dist >= 0) { const PC = paceOf(c); let t = 0; for (let x = T.startS; x < s; x += DS) t += DS / Math.max(5, at(PC, x)); c.lap = 1; c.lapStart = -t; }   // (a circuit: a car already past the line is on its first lap, timed from when it would have crossed the line at its pace: a whole lap, its first third too)
         while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }   // (a long column: a split point already behind its first cars)
         let v = at(paceOf(c), s); if (c === Pl) v = Math.min(FLY_PL * v, tP < this.opts.flying ? (T.startS - s) / this.opts.flying : v);   // (a short road below the line: the countdown's pace)
         c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v; c.w = v * T.k[i];   // (already turning in a corner)
