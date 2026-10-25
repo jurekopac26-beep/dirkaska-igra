@@ -47,22 +47,23 @@ try {
     const r = await page.evaluate(() => { const g = window.__game; return { fly: g.race.opts.flying || 0, phase: g.phase, lights: document.getElementById('h-lights').classList.contains('show') }; });
     T.check(`${id}${mode ? ' (' + mode + ')' : ''}: no flying start, the lights`, !r.fly && (r.phase === 'intro' || r.phase === 'lights'), JSON.stringify(r));
   }
-  // the commentator's lines that say how many ({cars}, {rivals}: the field's own in words) and the flying start's (goFly; the open roads' goPass, no
-  // lights in them): every line of the pools, the game's own and every road's, with a field of 22 and of 100: filled in, no gaps, a capital after a full stop
+  // the commentator's lines that say how many ({cars}, {rivals}: the field's own in words; the open roads' goPass: their start with the lights,
+  // online) and the flying start's (only the countdown: flyThree, flyTwo, flyOne, flyGo; no lights in them): every line of the pools, the game's
+  // own and every road's, with a field of 22 and of 100: filled in, no gaps, a capital after a full stop
   const lines = await page.evaluate(() => {
-    Comm.setEnabled(true); Comm.setSpeech(true); const out = [], r0 = Math.random, own = ['introPass', 'goPass'];
+    Comm.setEnabled(true); Comm.setSpeech(true); const out = [], flyOut = [], r0 = Math.random, own = ['introPass', 'goPass'];
     for (const d of Core.TRACKS) if (d.comm) for (const k of own) if (d.comm[k]) Comm.addLines(k + '@' + d.id, d.comm[k]);
-    const keys = ['intro', 'introOne', 'introPass', 'goPass', 'introFly', 'goFly'].concat(Core.TRACKS.filter(d => d.comm).flatMap(d => own.filter(k => d.comm[k]).map(k => k + '@' + d.id)));
+    const fly = ['flyThree', 'flyTwo', 'flyOne', 'flyGo'], keys = ['intro', 'introOne', 'introPass', 'goPass'].concat(fly, Core.TRACKS.filter(d => d.comm).flatMap(d => own.filter(k => d.comm[k]).map(k => k + '@' + d.id)));
     for (const n of [22, 100]) for (const key of keys) {
       const len = (key.includes('@') ? Core.TRACKS.find(d => d.id === key.split('@')[1]).comm[key.split('@')[0]] : null), L = len ? len.length : 8;
-      for (let i = 0; i < L; i++) { Math.random = () => (i + 0.5) / L; const it = Comm.say(key, { track: 'Vršič', laps: 2, grid: Comm.ordinal(n), cars: Comm.words(n), rivals: Comm.words(n - 1) }, 9); if (it) out.push(it.text); }
+      for (let i = 0; i < L; i++) { Math.random = () => (i + 0.5) / L; const it = Comm.say(key, { track: 'Vršič', laps: 2, grid: Comm.ordinal(n), cars: Comm.words(n), rivals: Comm.words(n - 1) }, 9); if (it) out.push(it.text), fly.includes(key) && flyOut.push(it.text); }
     }
     Math.random = r0; Comm.stop(); Comm.setEnabled(false);
-    return { avail: Comm.available(), n: out.length, bad: [...new Set(out)].filter(t => /[{}]|\s[,.!?]|\s\s|^\s|[.!?] [a-z]|Lights out|Green light|[Tt]hirteen cars|[Tt]welve rivals/.test(t)),
+    return { avail: Comm.available(), n: out.length, bad: [...new Set(out)].filter(t => /[{}]|\s[,.!?]|\s\s|^\s|[.!?] [a-z]|[Tt]hirteen cars|[Tt]welve rivals/.test(t)), fly: [...new Set(flyOut)], flyBad: flyOut.filter(t => /[Ll]ights|[Gg]reen/.test(t)),
       some: out.filter(t => /Twenty-two|twenty-two|A hundred|a hundred|Ninety-nine/.test(t)).slice(0, 3), ord: [21, 22, 23, 31, 99, 100].map(Comm.ordinal).join(' ') };
   });
   T.check('commentary: every line that says how many cars or rivals, and the flying start\'s, filled in with the field (22, 100), no gaps, no lights at a flying start',
-    !lines.avail || (lines.n > 100 && !lines.bad.length && lines.some.length > 0 && lines.ord === 'twenty-first 22nd 23rd 31st 99th 100th'), JSON.stringify(lines).slice(0, 900));
+    !lines.avail || (lines.n > 100 && !lines.bad.length && lines.fly.join('|') === 'Three!|Two!|One!|The race has started!' && !lines.flyBad.length && lines.some.length > 0 && lines.ord === 'twenty-first 22nd 23rd 31st 99th 100th'), JSON.stringify(lines).slice(0, 900));
   // a championship round on the Nordschleife (Legende, its last round; the rounds before it driven): its own 19 rivals and the lights
   await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(500);   // (the 100-car race off first: the page reloads quicker)
   await page.evaluate(() => { const K = Core.champKeys(19), d = Core.CHAMPS.find(c => c.id === 'legende'), i = d.tracks.indexOf('nring');

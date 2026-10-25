@@ -45,7 +45,6 @@ const Comm = (() => {
     flyThree: ['Three!'], flyTwo: ['Two!'], flyOne: ['One!'], flyGo: ['The race has started!'],
     goPass: ['Lights out, and away they go, up the mountain!', "And they're off! {cars} cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
     introOne: ['Welcome to {track}, deep in the forests of the Eifel! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
-    // a circuit's flying start (the Nordschleife's Circuit race, def.flyStart): the welcome, then the line as the cars roll off (no lights)
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
     nrFuchs: ['Down into the Foxhole, flat out!', 'The Fuchsröhre, the fastest part of the lap!'],

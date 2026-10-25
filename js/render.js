@@ -2348,21 +2348,27 @@ const Render = (function () {
      angle (fresnel), its sky in the colour of the race's sky (a warm dusk, a dark night, a grey rain: the fog's colour), and a sharp glint of
      the sun with a broad sheen round it and a rim on the sun side, sharper and brighter on the glass (the body's panes by their colour, a
      chrome trim by its material). One patch after what a material already does (the dirt, which dulls it, and the scratches); the sun
-     and the sky are shared uniforms set every frame (cgSet) */
-  const CGU = { sun: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Color(0, 0, 0) }, env: { value: new THREE.Color(1, 1, 1) } }, cgOb = new WeakMap();
-  const CG_COMMON = '#include <common>\nuniform vec3 uCgSun;\nuniform vec3 uCgSunC;\nuniform vec3 uCgEnv;\nuniform float uCgG;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif';
+     and the sky are shared uniforms set every frame (cgSet).
+     In a race the car's colour then rolls off before white (CG_ROLL): in a strong sun the sheen and the sky in the clear coat used to
+     push a bright paint's roof, bonnet and boot past white on every channel. Up to a luma of 0.75 nothing changes; above it the colour
+     grows ever slower towards a luma of 0.75 + uCgSh, all its channels alike, so the paint keeps its hue and the sheen its shape. A
+     stronger sun still makes it brighter; in the garage nothing (uCgSh 0) */
+  const CG_SH = 0.25;   // the roll-off's headroom above the knee (luma)
+  const CGU = { sun: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Color(0, 0, 0) }, env: { value: new THREE.Color(1, 1, 1) }, sh: { value: 0 } }, cgOb = new WeakMap();
+  const CG_COMMON = '#include <common>\nuniform vec3 uCgSun;\nuniform vec3 uCgSunC;\nuniform vec3 uCgEnv;\nuniform float uCgG;\nuniform float uCgSh;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif';
   const CG_ENV = (() => { const c = THREE.ShaderChunk.envmap_fragment, e = c.replace('#ifdef ENVMAP_BLENDING_MULTIPLY', 'envColor.rgb *= uCgEnv;\n#ifdef ENVMAP_BLENDING_MULTIPLY').replace(/specularStrength \* reflectivity/g, 'specularStrength * cgR');
     return ['float cgG = uCgG;', '#ifdef USE_COLOR', 'cgG = max(cgG, 1.0 - step(0.05, min(distance(vColor.rgb, vec3(0.1, 0.13, 0.19)), distance(vColor.rgb, vec3(0.04, 0.05, 0.08)))));', '#endif',
       'vec3 cgN = normalize(normal), cgV = normalize(vViewPosition);', 'float cgFr = pow(1.0 - clamp(dot(cgN, cgV), 0.0, 1.0), 5.0);',
       '#ifdef USE_ENVMAP', 'float cgR = min(1.0, reflectivity + cgG * 0.2 + cgFr * mix(0.3, 0.5, cgG)) * (1.0 - cgD * 0.8);', '#endif',
       e.includes('cgR') && e.includes('uCgEnv') ? e : c].join('\n'); })();
+  const CG_ROLL = '{ float cgY = dot(outgoingLight, vec3(0.299, 0.587, 0.114)); if (uCgSh > 0.0 && cgY > 0.75) outgoingLight *= (0.75 + uCgSh * (1.0 - exp((0.75 - cgY) / uCgSh))) / cgY; }';   // (its slope 1 at the knee)
   const CG_GLINT = ['{ vec3 cgL = normalize((viewMatrix * vec4(uCgSun, 0.0)).xyz), cgH = normalize(cgL + cgV);',
     '  float cgNl = max(dot(cgN, cgL), 0.0), cgNh = max(dot(cgN, cgH), 0.0);',
     '  float cg = (pow(cgNh, mix(40.0, 140.0, cgG)) * mix(2.6, 4.0, cgG) + pow(cgNh, 8.0) * 0.4) * smoothstep(0.0, 0.25, cgNl) + cgFr * 0.6 * cgNl;',
-    '  outgoingLight += uCgSunC * cg * (1.0 - cgD); }',
+    '  outgoingLight += uCgSunC * cg * (1.0 - cgD); }', CG_ROLL,
     'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'].join('\n');
   function cgPatch(sh, ug, glint) {
-    Object.assign(sh.uniforms, { uCgSun: CGU.sun, uCgSunC: CGU.sunC, uCgEnv: CGU.env, uCgG: ug });
+    Object.assign(sh.uniforms, { uCgSun: CGU.sun, uCgSunC: CGU.sunC, uCgEnv: CGU.env, uCgG: ug, uCgSh: CGU.sh });
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', CG_COMMON).replace('#include <envmap_fragment>', CG_ENV);
     if (glint) sh.fragmentShader = sh.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', CG_GLINT);
   }
@@ -2376,8 +2382,8 @@ const Render = (function () {
   // the sun and the sky of the view: the race's (its sun's direction, colour and strength, the fog's colour against the clear day the
   // paint's sky picture was made for) or the garage's key light
   function cgSet(show) {
-    if (show) { CGU.sun.value.set(-6, 10, 7).normalize(); CGU.sunC.value.setHex(0xfff2dd).multiplyScalar(0.55); CGU.env.value.setRGB(1, 1, 1); return; }
-    CGU.sun.value.set(sunOff[0], sunOff[1], sunOff[2]).normalize(); CGU.sunC.value.copy(sun.color).multiplyScalar(Math.min(1.2, sun.intensity * 0.6));
+    if (show) { CGU.sun.value.set(-6, 10, 7).normalize(); CGU.sunC.value.setHex(0xfff2dd).multiplyScalar(0.55); CGU.env.value.setRGB(1, 1, 1); CGU.sh.value = 0; return; }
+    CGU.sun.value.set(sunOff[0], sunOff[1], sunOff[2]).normalize(); CGU.sunC.value.copy(sun.color).multiplyScalar(Math.min(1.2, sun.intensity * 0.6)); CGU.sh.value = CG_SH;
     const f = scene.fog.color; CGU.env.value.setRGB(Math.min(1.1, f.r / 0.74), Math.min(1.1, f.g / 0.83), Math.min(1.1, f.b / 0.89));
   }
   // sky/horizon/ground cube map for glossy paint and glass reflections (generated, no image files)
@@ -4555,7 +4561,7 @@ const Render = (function () {
     '  float gl = (pow(nh, mix(36.0, 120.0, pkG)) * mix(2.4, 4.2, pkG) + pow(nh, 8.0) * 0.4) * smoothstep(0.0, 0.3, ndl) + fr * mix(1.2, 1.8, pkG) * ndl;',   // a sharp glint, a broad warm sheen and a rim on the sun side
     '  gl *= 1.0 - pkTy * (0.85 - 0.85 * pkWt);',   // (dry rubber hardly shines)
     '  outgoingLight += uPkSunC * gl * (1.0 - pkD) + pkWt * (vec3(0.5, 0.56, 0.64) * 0.3 * fr + uPkSunC * pow(nh, 50.0) * 1.6); }',   // a wet tyre: the sky and a sharp sun glint in the water film
-    'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'].join('\n');
+    CG_ROLL, 'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'].join('\n');
   function pkCarMat(m, u, gl, key, wh) {   // add the dust + glint to a paint material (keeps what it already did: the body's scratches; of the common sun's glint only its clear coat, cgPatch); wh: a wheel's own material
     const ob = cgOb.has(m) ? cgOb.get(m) : m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile ? m.onBeforeCompile : null, ug = { value: gl }, uw = { value: wh ? 1 : 0 };
     m.onBeforeCompile = (sh, r) => {
