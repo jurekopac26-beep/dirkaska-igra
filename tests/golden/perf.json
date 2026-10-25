@@ -63,11 +63,11 @@
   "jsMs": 1.46
  },
  "caracoles": {
-  "calls": 148,
-  "maxCalls": 169,
-  "kverts": 288,
-  "maxKverts": 376,
-  "jsMs": 1.6
+  "calls": 154,
+  "maxCalls": 197,
+  "kverts": 283,
+  "maxKverts": 457,
+  "jsMs": 1.67
  },
  "katu": {
   "calls": 152,
@@ -126,11 +126,11 @@
   "jsMs": 1.24
  },
  "iroha": {
-  "calls": 193,
-  "maxCalls": 219,
-  "kverts": 614,
-  "maxKverts": 751,
-  "jsMs": 1.72
+  "calls": 200,
+  "maxCalls": 249,
+  "kverts": 629,
+  "maxKverts": 770,
+  "jsMs": 1.85
  },
  "mulholland": {
   "calls": 151,
