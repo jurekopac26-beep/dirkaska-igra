@@ -70,6 +70,7 @@ for (const f of list) {
   const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
   if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN)`);
   results.push({ f, ok: r.status === 0, s: ((Date.now() - t0) / 1000).toFixed(0), timedOut });
+  if (r.status !== 0 && process.env.GITHUB_ACTIONS) console.log(`::error title=${f}::${timedOut ? `stopped after ${LIMIT_OF(f) / 60000} min` : `exit ${r.status != null ? r.status : r.signal}`} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);   // (on GitHub: an annotation of the check run, readable where the job's log is not)
 }
 console.log('\n=== summary');
 for (const r of results) console.log(`${r.ok ? 'OK  ' : 'FAIL'} ${r.f} (${r.s} s)${r.timedOut ? ' — timed out' : ''}`);
