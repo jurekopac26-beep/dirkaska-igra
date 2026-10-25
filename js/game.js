@@ -4419,8 +4419,8 @@
   function netRace(at) {
     const s = mp.setup; mp.setup = null;
     if (mp.role === 'host') for (const p of mp.players) if (s.grid.includes(p.id)) p.in = false;   // (back in the room when they say so)
-    const cars = new Map(); for (const id of s.grid) if (id !== mp.me) cars.set(id, { buf: [], fin: null, left: false, off: false });
-    const big = s.grid.length > NET_BIG;   // (a big grid: 10 states a second, 200 ms in the past, the host passes them on in batches)
+    const cars = new Map(); for (const id of s.grid) if (id !== mp.me) cars.set(id, { buf: [], fin: null, left: false, off: false, ps: null, ft: null, ex: 0, ez: 0, ey: 0, eh: 0 });   // (ps ... eh: netPlace)
+    const big = s.grid.length > NET_BIG;   // (a big grid: 10 states a second, the host passes them on in batches; lag: netPlace's patience, 200 ms)
     mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, rain: s.rain, grid: s.grid, roster: s.roster || mp.players.filter(p => s.grid.includes(p.id)), cars, sendT: -1e9, late: null, mine: null,
       big, iv: big ? 100 : 50, lag: big ? 200 : 100, fwd: [], fwdT: -1e9, sent: new Map() };
     Net.fixClock(true);   // (the clock as it was at the start, until the race is over. The watchdog keeps its patience from the setup for a while: a phone that was frozen just before the start, e.g. switched away, still joins late)
@@ -4476,23 +4476,36 @@
       if (mp.role === 'host') { m.id = 'h'; if (R.big) R.fwd.push(m); else for (const id of R.grid) if (id !== 'h') Net.sendTo(id, m); } else Net.send(m);
     }
     if (R.big && mp.role === 'host') netBatch(now);
-    for (const c of race.remotes) { const C = R.cars.get(c.netOf.id); if (C && !C.off && C.buf.length) netPlace(c, C.buf, now, R.lag); }
+    for (const c of race.remotes) { const C = R.cars.get(c.netOf.id); if (C && !C.off && C.buf.length) netPlace(c, C, now, R.lag); }
   }
-  function netPlace(c, B, now, lag) {
-    const t = now - lag;   // the friend 100 ms in the past (a big grid: 200 ms): nearly always between two received states
-    while (B.length > 2 && B[1].k <= t) B.shift();
-    let a = B[0], b = B[1] && B[1].k > a.k ? B[1] : null;
-    if (b && t >= b.k) { a = b; b = null; }   // (late states: on from the newest one)
-    const k = b ? Core.clamp((t - a.k) / (b.k - a.k), 0, 1) : 0, ex = !b && t > a.k ? Math.min(0.25, (t - a.k) / 1000) : 0;   // (no newer state yet: on along its speed for a moment)
-    const L = (p) => (b ? a[p] + (b[p] - a[p]) * k : a[p]), n = b && k > 0.5 ? b : a;
-    c.x = c.px = L('x') + a.vx * ex; c.z = c.pz = L('z') + a.vz * ex; c.y = c.py = L('y') + a.vy * ex;
-    c.h = c.ph = a.h + (b ? Core.wrapPi(b.h - a.h) * k : 0) + a.w * ex;
-    c.vx = L('vx'); c.vz = L('vz'); c.vy = L('vy'); c.w = L('w'); c.vl = L('vl'); c.air = n.a; c.delta = L('d'); c.inBrk = n.b; c.inHand = n.hb; c.inThr = n.th; c.gear = n.g; c.rpm = L('rp');   // (its speed follows from vx, vz)
-    c.axF = L('ax'); c.roadY = L('ry'); c.gradeNow = L('gr'); c.bankSl = L('bs'); c.onCurb = n.cb; for (let i = 0; i < 4; i++) c.ws[i] = +(n.ws || '')[i] || 0;
-    c.latR = L('lr'); c.beta = L('be'); c.spin = L('sp'); c.lock = n.lk; c.slipF = L('sf');   // (for the smoke, skid marks and dust)
+  // a state carried on to the moment now (the shared clock): along its speed, turning at its yaw rate (the mean direction over the
+  // time), falling if it is in the air; at most cap seconds
+  function netAt(s, now, cap) {
+    const t = Core.clamp((now - s.k) / 1000, 0, cap), a = s.w * t, ch = Math.cos(a / 2), sh = Math.sin(a / 2);
+    return { t, x: s.x + (s.vx * ch - s.vz * sh) * t, z: s.z + (s.vz * ch + s.vx * sh) * t, y: s.y + s.vy * t - (s.a ? 4.9 * t * t : 0), h: s.h + a };
+  }
+  // a friend's car where it is now, not where it was: its newest state carried on for the time the state took to come (the line's
+  // delay, ~20-150 ms; at most lag + 250 ms). Shown in the past instead (100 ms, as before), each phone saw the other 3-10 m behind
+  // where it really was, the gap different on the two screens, and bumped into a car that was no longer there. A newer state's
+  // correction does not jump: the car goes on from where it was shown and the difference fades out in ~0.15 s (C.ex ... C.eh);
+  // a big one (a reset onto the track) at once
+  function netPlace(c, C, now, lag) {
+    const B = C.buf, n = B[B.length - 1], cap = (lag + 250) / 1000, p = netAt(n, now, cap);
+    const f = C.ft == null ? 0 : Math.exp(-Math.max(0, now - C.ft) / 150); C.ft = now;
+    C.ex *= f; C.ez *= f; C.ey *= f; C.eh *= f;
+    if (C.ps !== n) {
+      const o = C.ps && netAt(C.ps, now, cap);
+      if (o && o.t < cap) { C.ex += o.x - p.x; C.ez += o.z - p.z; C.ey += o.y - p.y; C.eh += Core.wrapPi(o.h - p.h); }   // (an older state carried on past its cap stood still: no place to go on from)
+      C.ps = n;
+    }
+    if (Math.hypot(C.ex, C.ez) > 6 || Math.abs(C.ey) > 3 || Math.abs(C.eh) > 1) C.ex = C.ez = C.ey = C.eh = 0;
+    c.x = c.px = p.x + C.ex; c.z = c.pz = p.z + C.ez; c.y = c.py = p.y + C.ey; c.h = c.ph = Core.wrapPi(p.h + C.eh);
+    c.vx = n.vx; c.vz = n.vz; c.vy = n.vy; c.w = n.w; c.vl = n.vl; c.air = n.a; c.delta = n.d; c.inBrk = n.b; c.inHand = n.hb; c.inThr = n.th; c.gear = n.g; c.rpm = n.rp;   // (its speed follows from vx, vz)
+    c.axF = n.ax; c.roadY = n.ry; c.gradeNow = n.gr; c.bankSl = n.bs; c.onCurb = n.cb; for (let i = 0; i < 4; i++) c.ws[i] = +(n.ws || '')[i] || 0;
+    c.latR = n.lr; c.beta = n.be; c.spin = n.sp; c.lock = n.lk; c.slipF = n.sf;   // (for the smoke, skid marks and dust)
     c.netPG = n.pg == null ? null : n.pg ? 1 : 0;   // (on the pit road its phone's way: Race.step)
-    if (!b && t - a.k > lag + 150) { c.vx = c.vz = c.vy = c.w = c.vl = c.latR = c.spin = c.slipF = c.inThr = 0; c.lock = 0; c.rpm = c.m.idle; }   // (no word from it for a while: it stands, also for a bump)
-    const z = B[B.length - 1]; c.dist = z.di; c.lap = z.lp;
+    if (now - n.k > 2 * lag + 150) { c.vx = c.vz = c.vy = c.w = c.vl = c.latR = c.spin = c.slipF = c.inThr = 0; c.lock = 0; c.rpm = c.m.idle; }   // (no word from it for a while: it stands, also for a bump)
+    c.dist = n.di; c.lap = n.lp;
   }
   // my finish on the shared clock, right after the step that crossed the line: the race is at the clock's time now less what
   // still waits in acc, and the line was crossed race.time - finishTime before that. The race's own order follows that clock too

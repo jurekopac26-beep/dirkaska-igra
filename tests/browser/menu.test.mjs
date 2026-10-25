@@ -129,6 +129,7 @@ try {
     await click(page, 'credits');
     let c = await ev(page, 'const s = root.querySelector(".sheet.credits"); return s ? s.textContent : "";');
     T.check('Credits: the sheet names the data the pictures of the Earth are made from, and closes', /WorldCover/.test(c) && /Natural Earth/.test(c));
+    T.check('Credits: the tracks\' data (OpenStreetMap under the ODbL, Copernicus heights, tree heights), the typeface and the online library are named', /© OpenStreetMap contributors/.test(c) && /ODbL\) 1\.0/.test(c) && /Copernicus DEM GLO-30/.test(c) && /Canopy Height/.test(c) && /Roboto/.test(c) && /PeerJS/.test(c), c.slice(0, 120));
     await done(page);
     T.check('the credits sheet is closed again', !(await ev(page, 'return !!root.querySelector(".sheet");')));
 

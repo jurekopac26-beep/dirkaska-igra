@@ -287,6 +287,26 @@ window.MENU = {
  },
  "credits": [
   [
+   "Roads, buildings and land",
+   "© OpenStreetMap contributors (openstreetmap.org/copyright). The road lines, side streets, buildings, bridges, water and land use of the tracks are made from OpenStreetMap data, available under the Open Database License (ODbL) 1.0 (opendatacommons.org/licenses/odbl/1-0). The data derived from it in the track files is available under the same licence. Partly read through Overture Maps Foundation (overturemaps.org) and Protomaps (protomaps.com)."
+  ],
+  [
+   "Track layouts",
+   "Some circuit centre lines: TUMFTM racetrack-database, Technical University of Munich (LGPL-3.0), derived from OpenStreetMap. Layout checks: f1-circuits by Tomislav Bacinger (MIT)."
+  ],
+  [
+   "Heights (Copernicus)",
+   "Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved."
+  ],
+  [
+   "Heights (other)",
+   "Relief de la Wallonie - Modèle Numérique de Terrain (MNT) 2021-2022, © Service public de Wallonie (SPW), CC BY 4.0, via Mapterhorn (mapterhorn.com). ArcticDEM: DEMs provided by the Polar Geospatial Center under NSF-OPP awards 1043681, 1559691 and 1542736; © Maxar; CC BY 4.0. Seabed: ETOPO (NOAA, public domain) and GLOBathy (CC BY 4.0)."
+  ],
+  [
+   "Trees",
+   "High Resolution Canopy Height Maps, Meta and World Resources Institute (2024), CC BY 4.0."
+  ],
+  [
    "The Earth",
    "NASA Blue Marble, NASA Earth Observatory. Public domain."
   ],
@@ -303,8 +323,20 @@ window.MENU = {
    "Outlines and names: Natural Earth. Public domain."
   ],
   [
+   "Typeface",
+   "Roboto, © The Roboto Project Authors (github.com/googlefonts/roboto-3-classic), Apache License 2.0 (apache.org/licenses/LICENSE-2.0)."
+  ],
+  [
+   "Online play",
+   "PeerJS 1.5.5 (peerjs.com), by Michelle Bu, Eric Zhang and contributors, MIT licence. Players find each other through the free public PeerJS server."
+  ],
+  [
    "Music and sound",
    "Original, made for this game."
+  ],
+  [
+   "Names",
+   "Only place names are used. Cars, drivers, signs and fans are fictional and not connected to any real brand, company, event or person."
   ]
  ],
  "creditLine": "NASA · © ESA WorldCover 2021, Copernicus · EU-DEM, USGS · Natural Earth"

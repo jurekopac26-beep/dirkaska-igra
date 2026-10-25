@@ -397,7 +397,7 @@
   }
 
   /* ---------------- overlays: sheets ---------------- */
-  function creditsSheet() {   // where the menu's pictures of the Earth and its land come from, as their licences ask
+  function creditsSheet() {   // where the data of the tracks (OpenStreetMap, heights, trees) and the menu's pictures, the typeface and the online library come from, as their licences ask
     return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
       D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }

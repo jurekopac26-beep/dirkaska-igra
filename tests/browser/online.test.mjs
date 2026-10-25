@@ -73,15 +73,15 @@ try {
   const cA = await cars(A.page), cB = await cars(B.page);
   T.check("race: the two of them on the grid, each with the other's car; the same start number is changed for the friend", cA.n === 2 && cB.n === 2 && cA.model === 'pico' && cB.model === 'kaze' && cA.me === 1 && cA.it === 2 && cB.me === 2 && cB.it === 1 && cA.grid.join() === '1,2' && cB.grid.join() === '2,1',
     `host ${JSON.stringify(cA)}, friend ${JSON.stringify(cB)}`);
-  // each sees the other's car where the other really is: the host's last frame showed the friend's car as it was 100 ms
-  // earlier; after allowing for that and for the time between the two phones' last frames, within 12 m (a car standing still
+  // each sees the other's car where the other really is: the host's last frame showed the friend's car where it was at that
+  // moment (its newest state carried on, game.js netPlace); after allowing for the time between the two phones' last frames, within 12 m (a car standing still
   // or somewhere else would be off by far more)
   await wait(8000);
   const seen = [];
   for (let i = 0; i < 3; i++) {
     const va = await A.page.evaluate(() => { const r = window.__game.race; return { x: r.remote.x, z: r.remote.z, t: window.__game.net.race.frameT }; });
     const vb = await B.page.evaluate(() => { const r = window.__game.race; return { x: r.player.x, z: r.player.z, v: r.player.speed, t: window.__game.net.race.frameT }; });
-    seen.push(Math.hypot(va.x - vb.x, va.z - vb.z) - vb.v * Math.abs(vb.t - (va.t - 100)) / 1000);
+    seen.push(Math.hypot(va.x - vb.x, va.z - vb.z) - vb.v * Math.abs(vb.t - va.t) / 1000);
     await wait(1500);
   }
   const moved = await A.page.evaluate(() => window.__game.race.remote.dist);
