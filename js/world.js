@@ -6596,7 +6596,8 @@ const World = (function () {
     // 5 leafy wedges from a raised centre. Kinds: 0 grass, 1 shrub (dwarf willow above the trees), 2 flower spikes, 3 aspen suckers (the groves' undergrowth), 4 flower cushion.
     // The season: the 'color' attribute is a green probe the render's season code recolours (it is ground: normals up), the shader reads it back (green: summer, straw:
     // autumn, near white: winter) and takes its own colours: iC summer, iA autumn (flowers: the petals). Winter: most grass under the snow, the rest and the shrubs low and
-    // snow-capped, no flowers; autumn: straw, rust and gold, no flowers. Only the pieces within ~60 m of where the camera looks are drawn (one draw, refilled per 8 m)
+    // snow-capped, no flowers; autumn: straw, rust and gold, no flowers. Only the pieces round where the camera looks are drawn (one draw, refilled every 5 m), shrinking
+    // away towards the patch's edge (no edge where pieces come and go as the view moves on)
     const pos = [], aQ = [], aB = [], aN = [], nrm = [], col = [], G = rng(9602);
     for (let k = 0; k < 5; k++) {
       const a = k / 5 * TAU + (G() - 0.5) * 0.5, ca = Math.cos(a), sa = Math.sin(a), lk = 0.7 + G() * 0.3, r0 = 0.05, rt = 0.3 + G() * 0.12, n = [ca * 0.45, 1, sa * 0.45], nl = Math.hypot(n[0], 1, n[2]);
@@ -6653,22 +6654,25 @@ const World = (function () {
     for (let k = 0; k < NI; k++) { const c = key(Math.floor(L[k * 14] / CS), Math.floor(L[k * 14 + 2] / CS)); let a = cells.get(c); if (!a) cells.set(c, a = []); a.push(k); }
     const sP = new Float32Array(NI * 4), sS = new Float32Array(NI * 4), sC = new Float32Array(NI * 3), sA = new Float32Array(NI * 3), span = new Map(); let o = 0;
     for (const [c, a] of cells) { span.set(c, [o, a.length]); for (const k of a) { const b = k * 14; sP.set(L.slice(b, b + 4), o * 4); sS.set(L.slice(b + 4, b + 8), o * 4); sC.set(L.slice(b + 8, b + 11), o * 3); sA.set(L.slice(b + 11, b + 14), o * 3); o++; } }
-    const CAP = 680, RW = 60, ring = [];
-    for (let b = -5; b <= 5; b++) for (let a = -5; a <= 5; a++) { const d = Math.hypot(a, b) * CS; if (d < RW + CS * 0.7) ring.push([a, b, d]); }
-    ring.sort((p, q) => p[2] - q[2]);
+    // the patch: full size out to RF - FW from the point the camera looks at this frame, shrunk to nothing at RF (the shader); filled out to RF + DR round the point of
+    // the last refill (DR: how far the look point may get from it before the next refill is drawn), nearest cells first (up to ~1850 pieces within 52 m of the road on
+    // the hairpins, ~800 on average)
+    const CAP = 2000, RF = 46, FW = 14, DR = 8, M = Math.ceil((RF + DR) / CS), win = [], uL = { value: new THREE.Vector3(0, 0, RF) };
+    for (let b = -M; b <= M; b++) for (let a = -M; a <= M; a++) win.push([a, b, 0]);
     const mk = (n) => { const at = new THREE.InstancedBufferAttribute(new Float32Array(CAP * n), n); at.setUsage(THREE.DynamicDrawUsage); return at; };
     const iP = mk(4), iS = mk(4), iC = mk(3), iA = mk(3);
     base.setAttribute('iP', iP); base.setAttribute('iS', iS); base.setAttribute('iC', iC); base.setAttribute('iA', iA); base.instanceCount = 0; base.setDrawRange(0, 0);
     const uT0 = { value: 0 }, mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uT = (out.dyn.pkAmb && out.dyn.pkAmb.uT) || uT0;   // (pkAmbient's clock)
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aQ;\nattribute vec4 aB;\nattribute vec3 aN;\nattribute vec4 iP;\nattribute vec4 iS;\nattribute vec3 iC;\nattribute vec3 iA;\nuniform float uT;\nvarying vec3 vPkC;')
+      sh.uniforms.uPkL = uL;   // (the look point x, z and where the pieces have shrunk to nothing round it)
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aQ;\nattribute vec4 aB;\nattribute vec3 aN;\nattribute vec4 iP;\nattribute vec4 iS;\nattribute vec3 iC;\nattribute vec3 iA;\nuniform float uT;\nuniform vec3 uPkL;\nvarying vec3 vPkC;')
         .replace('#include <beginnormal_vertex>', [
         'float pkK = floor( iS.w ), pkSd = fract( iS.w ), pkF = step( 0.5, pkK ) * ( 1.0 - step( 1.5, pkK ) ) + step( 2.5, pkK );   // pkF: the shrub form (kinds 1, 3, 4)',
         'float pkWn = step( 0.7, min( color.r, min( color.g, color.b ) ) ), pkSu = ( 1.0 - pkWn ) * step( color.r * 1.3, color.g ), pkAu = 1.0 - pkWn - pkSu;   // the season (the probe)',
         'float pkFl = step( 1.5, pkK ) * ( 1.0 - step( 2.5, pkK ) ) + step( 3.5, pkK );   // flowers',
         'float pkH = mix( aB.x, aQ.w, pkF ), pkC = cos( iP.w ), pkS = sin( iP.w );',
-        'float pkVis = 1.0 - pkFl * ( 1.0 - pkSu ) - ( 1.0 - pkF ) * pkWn * step( 0.4, pkSd );   // (no flowers but in summer; winter: most grass under the snow)',
+        'float pkVis = ( 1.0 - pkFl * ( 1.0 - pkSu ) - ( 1.0 - pkF ) * pkWn * step( 0.4, pkSd ) ) * ( 1.0 - smoothstep( uPkL.z - ' + FW.toFixed(1) + ', uPkL.z, distance( iP.xz, uPkL.xy ) ) );   // (no flowers but in summer; winter: most grass under the snow; shrinking away towards the patch\'s edge)',
         'float pkHy = iS.y * mix( 1.0, mix( 0.45, 0.7, pkF ), pkWn ) * pkVis;',
         'vec3 pkL = mix( vec3( position.x * iS.x + aB.y * iS.z, position.y, position.z * iS.x + aB.z * iS.z ), vec3( aQ.x * iS.x, aQ.y, aQ.z * iS.x ), pkF ) * vec3( pkVis, pkHy, pkVis );',
         'vec3 objectNormal = mix( aN, normalize( vec3( aQ.x * 0.8, 1.0, aQ.z * 0.8 ) ), pkF );',
@@ -6689,25 +6693,30 @@ const World = (function () {
     };
     mat.customProgramCacheKey = () => 'pkVeg';
     const mesh = new THREE.Mesh(base, mat); mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.name = 'pkVeg'; root.add(mesh);
-    // refill when the point the camera looks at moves to another 8 m cell: the camera's ray to the ground (not far ahead of a low camera); the new pieces are drawn
-    // from the next frame (their buffers go up to the GPU before it draws: count and data stay in step)
-    const st = { key: null, pend: -1 };
-    const fill = (fx, fz) => {
-      const c0 = Math.floor(fx / CS), c1 = Math.floor(fz / CS); let n = 0;
-      for (const [a, b] of ring) { const sp = span.get(key(c0 + a, c1 + b)); if (!sp) continue; const m = Math.min(sp[1], CAP - n); if (m <= 0) break;
-        const s0 = sp[0]; iP.array.set(sP.subarray(s0 * 4, (s0 + m) * 4), n * 4); iS.array.set(sS.subarray(s0 * 4, (s0 + m) * 4), n * 4); iC.array.set(sC.subarray(s0 * 3, (s0 + m) * 3), n * 3); iA.array.set(sA.subarray(s0 * 3, (s0 + m) * 3), n * 3); n += m; }
+    // refill when the point the camera looks at (its ray to the ground; not far ahead of a low camera) is 5 m from the last refill's; the new pieces are drawn from
+    // the next frame (their buffers go up to the GPU before it draws: count and data stay in step), the shrinking from where the camera looks in every frame
+    const st = { at: null, pend: null, fx: 0, fz: 0, rc: 0 };
+    const fill = (fx, fz) => {   // the cells within RF + DR of (fx, fz), nearest first (their squares' distance); rc: how far round it every piece is in (less where CAP cut it)
+      const c0 = Math.floor(fx / CS), c1 = Math.floor(fz / CS), R = RF + DR; let n = 0, rc = R;
+      for (const w of win) { const x0 = (c0 + w[0]) * CS, z0 = (c1 + w[1]) * CS; w[2] = Math.hypot(Math.max(0, x0 - fx, fx - x0 - CS), Math.max(0, z0 - fz, fz - z0 - CS)); }
+      win.sort((p, q) => p[2] - q[2]);
+      for (const [a, b, dc] of win) { if (dc >= R) break; const sp = span.get(key(c0 + a, c1 + b)); if (!sp) continue; const m = Math.min(sp[1], CAP - n);
+        if (m > 0) { const s0 = sp[0]; iP.array.set(sP.subarray(s0 * 4, (s0 + m) * 4), n * 4); iS.array.set(sS.subarray(s0 * 4, (s0 + m) * 4), n * 4); iC.array.set(sC.subarray(s0 * 3, (s0 + m) * 3), n * 3); iA.array.set(sA.subarray(s0 * 3, (s0 + m) * 3), n * 3); n += m; }
+        if (m < sp[1]) { rc = dc; break; } }
       for (const at of [iP, iS, iC, iA]) { at.updateRange.offset = 0; at.updateRange.count = Math.max(1, n) * at.itemSize; at.needsUpdate = true; }
-      return n;
+      return [n, fx, fz, rc];
     };
     mesh.onBeforeRender = (r, sc, cam) => {
-      if (st.pend >= 0) { base.instanceCount = st.pend; base.setDrawRange(0, st.pend ? Infinity : 0); st.pend = -1; }
+      if (st.pend) { const n = st.pend[0]; base.instanceCount = n; base.setDrawRange(0, n ? Infinity : 0); st.fx = st.pend[1]; st.fz = st.pend[2]; st.rc = st.pend[3]; st.pend = null; }
       const e = cam.matrixWorld.elements, cx = e[12], cy = e[13], cz = e[14], fx = -e[8], fy = -e[9], fz = -e[10], gy = pkGround(cx, cz);
       let d = Math.min(160, Math.max(0, cy - gy) / Math.max(0.02, -fy)); if (cy - gy < 6) d = Math.min(d, 30);
-      const px = cx + fx * d, pz = cz + fz * d, k = Math.floor(px / 8) + ',' + Math.floor(pz / 8);
-      if (k !== st.key) { st.key = k; st.pend = fill(px, pz); }
+      const px = cx + fx * d, pz = cz + fz * d;
+      if (!st.at || Math.hypot(px - st.at[0], pz - st.at[1]) > 5) { st.at = [px, pz]; st.pend = fill(px, pz); }
+      uL.value.set(px, pz, Math.min(RF, st.rc - Math.hypot(px - st.fx, pz - st.fz)));   // (shrunk to nothing before the drawn pieces end: all within rc of the drawn refill's point are in)
     };
     out.dyn.pkVeg = () => {   // (World.update without a car: the buffers in a fixed state, so the world's fingerprint does not depend on the last view)
-      for (const at of [iP, iS, iC, iA]) at.array.fill(0); const n = fill(0, 0); base.instanceCount = n; base.setDrawRange(0, n ? Infinity : 0); st.pend = -1; st.key = null; };
+      for (const at of [iP, iS, iC, iA]) at.array.fill(0); const f = fill(0, 0); base.instanceCount = f[0]; base.setDrawRange(0, f[0] ? Infinity : 0);
+      st.pend = null; st.at = null; st.fx = st.fz = 0; st.rc = f[3]; uL.value.set(0, 0, RF); };
     // more fallen logs and scattered rocks in the forest near the road (merged into the scenery; own stream)
     const logC = [0.46, 0.4, 0.33], moss = [0.3, 0.36, 0.17], graniteF = [[0.5, 0.47, 0.44], [0.46, 0.44, 0.42], [0.54, 0.49, 0.45]];
     let nLog = 0, nRock = 0;
