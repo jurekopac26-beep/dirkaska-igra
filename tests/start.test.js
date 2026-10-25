@@ -145,5 +145,23 @@ function aiRace(seed, sec) {
     `winner ${fin[0] ? fin[0].finishTime.toFixed(1) : '-'} s`);
 }
 
+// the flying start with long vehicles on twisty roads (Iroha's downhill hairpins, Tianmen's, Rastro's): the car right ahead of the player
+// placed by both vehicles' lengths, so up to the line no contact and a car's gap at least between their bumpers, the player over it in time
+{
+  const orig = Math.random, out = []; let ok = true;
+  for (const mid of ['titan', 'kamen', 'predsednik']) for (const id of ['iroha', 'tianmen', 'rastro']) {
+    Math.random = seeded(3);
+    const T = track(id), M = C.MODELS.find(m => m.id === mid), r = new C.Race(T, { numAI: 12, playerGrid: 99, laps: 1, playerModel: M, assist: 2, phys: 'cs', seed: 11, difficulty: 1, flying: 3, damage: 2 });
+    r.start();
+    const P = r.player, A = r.cars.filter(c => c !== P).sort((a, b) => b.grid - a.grid)[0];
+    let t = 0, k = 0, hit = 0, bMin = 1e9;
+    while (r.flyOn && t < 6) { for (const c of r.cars) c.hitCar = 0; Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; hit = Math.max(hit, P.hitCar || 0, A.hitCar || 0); bMin = Math.min(bMin, A.dist - P.dist - (A.m.len + P.m.len) / 2); }
+    const good = !hit && bMin > 1.2 && t > 2.8 && t < 3.8; if (!good) ok = false;
+    out.push(`${mid}/${id} ${bMin.toFixed(1)} m${hit ? ' HIT' : ''} ${t.toFixed(2)} s`);
+  }
+  Math.random = orig;
+  check('flying start, long vehicles on twisty roads: no contact up to the line, the car right ahead over a metre clear of the player\'s bumper, over the line in ~3 s', ok, out.join(', '));
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exit(bad ? 1 : 0);

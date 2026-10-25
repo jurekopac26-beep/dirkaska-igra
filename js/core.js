@@ -2916,8 +2916,8 @@ const Core = (function () {
     { const o = c.aiThreat, g0 = (M.aiGap || 3) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
-      const a = c.flyA; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - FLY_KEEP * c.flyTg * Math.max(10, v)) * 0.45);   // (only behind a car really ahead and moving)
-      const P = race.player; if (c.flyP && P && P.vl > 3 && !dnf(P)) vT = Math.min(vT, Math.max(0, P.vl) + (c.flyG0 - (c.dist - P.dist)) * 0.45);   // (the car right ahead of the player: no further ahead of it than it started)
+      const a = c.flyA; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - (a.flyP ? (a.m.len + M.len) / 2 + 5 : FLY_KEEP * c.flyTg * Math.max(10, v))) * 0.45);   // (only behind a car really ahead and moving)
+      const P = race.player; if (c.flyP && P && P.vl > 3 && !dnf(P)) vT = Math.min(vT, Math.max(0, P.vl) + 1.5 + (c.flyG0 - (c.dist - P.dist)) * 0.45);   // (the car right ahead of the player: not much further ahead of it than it started; a little room on the throttle, the two do not hold each other back)
       if (c === race.player) { const rem = race.opts.flying - race.time; if (c.dist < 0 && rem > 0.5) vT = Math.min(vT, Math.max(8, -c.dist / rem)); }   // (no braking in the last half second: handed over at its speed)
     }
     if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart
@@ -4821,7 +4821,7 @@ const Core = (function () {
       const vP = Math.min(FLY_PL * at(PP, sP), tP < this.opts.flying ? (T.startS - sP) / this.opts.flying : Infinity);   // (the player's speed; a short road below the line: the countdown's pace)
       const xy = (s) => { const i = T.idx(s); return [T.px[i] + T.nx[i] * T.rl[i], T.pz[i] + T.nz[i] * T.rl[i]]; };
       const apart = (a, b) => { const p = xy(a), q = xy(b); return Math.hypot(p[0] - q[0], p[1] - q[1]); };   // (round a hairpin a few metres of road can be the width of a car)
-      for (let k = kp - 1; k >= 0; k--) { const near = k === kp - 1, m = near ? 10 : 12; let s = Math.min(s0 + len, pos[k + 1] + Math.max(m, (near ? FLY_NEAR * FLY_PL : tg) * at(paceOf(cs[k + 1]), pos[k + 1]))); while (s < s0 + len && apart(s, pos[k + 1]) < m) s += DS; pos[k] = s; }   // (ahead: the next car covers the gap in tg s; the one right ahead of the player in FLY_NEAR s at the player's pace)
+      for (let k = kp - 1; k >= 0; k--) { const near = k === kp - 1, m = near ? Math.max(10, (cs[k].m.len + Pl.m.len) / 2 + 6) : 12; let s = Math.min(s0 + len, pos[k + 1] + Math.max(m, (near ? FLY_NEAR * FLY_PL : tg) * at(paceOf(cs[k + 1]), pos[k + 1]))); while (s < s0 + len && apart(s, pos[k + 1]) < m) s += DS; pos[k] = s; }   // (ahead: the next car covers the gap in tg s; the one right ahead of the player in FLY_NEAR s at the player's pace)
       for (let k = 0; k < n; k++) {
         const c = cs[k], M = c.m, s = pos[k];
         const i = T.idx(s), lat = T.rl[i], x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
