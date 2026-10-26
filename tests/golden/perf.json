@@ -28,11 +28,11 @@
   "jsMs": 1.21
  },
  "vrsic": {
-  "calls": 154,
-  "maxCalls": 166,
-  "kverts": 280,
-  "maxKverts": 309,
-  "jsMs": 2.1
+  "calls": 164,
+  "maxCalls": 194,
+  "kverts": 298,
+  "maxKverts": 369,
+  "jsMs": 2.38
  },
  "nring": {
   "calls": 161,
@@ -238,11 +238,11 @@
   "jsMs": 1.37
  },
  "greatalpine": {
-  "calls": 150,
-  "maxCalls": 167,
-  "kverts": 487,
-  "maxKverts": 550,
-  "jsMs": 1.55
+  "calls": 151,
+  "maxCalls": 166,
+  "kverts": 499,
+  "maxKverts": 627,
+  "jsMs": 1.87
  },
  "detroit": {
   "calls": 220,
