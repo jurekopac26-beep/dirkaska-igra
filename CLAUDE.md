@@ -28,5 +28,16 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 
 ## Postopek
 - Po vsaki spremembi v `js/` ali `css/` zaženi `node tools/stamp.js`, za nove reference `npm run golden:update`.
-- Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih; pred pushem morajo biti zeleni `npm run test:node` in brskalniški testi.
-- Pull request odpri samo, če uporabnik to izrecno prosi.
+- Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih.
+- Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni `npm run test:node` in brskalniški testi, ki se nanašajo na spremembo; celotni brskalniški testi tečejo na GitHubu v pull requestu. Na `main` gre sprememba šele, ko so ti zeleni in jo uporabnik potrdi.
+- Pull request odpri samo, če uporabnik to izrecno prosi, ali za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop).
+
+## Kje je kaj (manj iskanja)
+- Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` 3,9 MB, `README.md` 400 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
+- Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
+
+## Orodje za napake (`docs/orodje-za-napake.md`)
+- Načrt, odločitve in sklopi so v `docs/orodje-za-napake.md`. Vsak sklop je svoja seja in svoja veja (`orodje-za-napake/sklop-NN-<ime>`). Ob koncu sklopa posodobi razdelek Stanje v načrtu in uporabniku napiši kratek seznam za preizkus na telefonu.
+- Orodje je samo v slovenščini: je v `js/napake.js`, gradi svoj DOM in ne uporablja `tr()`, da ga `tests/lang.test.js` ne zahteva v angleščini.
+- Repozitorij je javen: slik napak, zapiskov uporabnika in seznama napak ne shranjuj v repozitorij.
+- Poročila o napakah: besedilo `RRA-NAPAKE …` (oblika v načrtu) pove žig različice, progo (`id`), čas, krog in `s` (metri od štarta); `v_krogu=[…]` so imena iz kode (razlaga v kazalu). Napaka iz starejšega žiga je morda že popravljena: preveri `git log`.
