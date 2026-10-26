@@ -37,7 +37,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 - **Barve svinčnika (6):** rdeča `#FF3B30`, oranžna `#FF9500`, rumena `#FFE14D`, modra `#2AA8FF`, vijolična `#C061FF`, bela `#FFFFFF`. Zelene ni (trava).
 - **Zastavica med dirko:** v vseh načinih razen dirke s prijateljem (`js/net.js`).
 - **Repozitorij je javen:** slike napak, zapiski in seznam napak (F) **ne gredo v repozitorij**.
-- **Testi (kombinacija):** lokalno `npm run test:node` in brskalniški testi, ki se nanašajo na sklop; celotni brskalniški testi na GitHubu v pull requestu sklopa.
+- **Testi (kombinacija):** lokalno samo testi, ki se nanašajo na sklop (Node in brskalniški); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu sklopa (`.github/workflows/tests.yml`). Celoten Node nabor tu traja okoli 1 h (26. 10. 2026: `golden` 12 min, `races` več kot 15 min in ga `tests/run.js` ustavi, skupaj ~51 min brez konca `races`), na GitHubu okoli 20 min. Če ga poganjaš lokalno, nastavi `TEST_TIMEOUT_MIN=40`.
 - **Potrditev vnaprej (26. 10. 2026):** uporabnik je potrdil vse sklope. Vsak sklop gre na `main`, ko so testi zeleni (lokalno in na GitHubu), in takoj se začne naslednji; ne čakaj na potrditev med sklopi. Uporabnik preizkuša sproti in javi napake, ki se popravijo v naslednjem sklopu ali posebej.
 - **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop.
 - **Vsak popravljen hrošč** dobi svoj test (`tests/napake/<št>.test.js` ali v obstoječem testu teme), okoli 10 min na popravek.
@@ -112,14 +112,14 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 
 ## Sklopi
 
-Časi so moje delo; vsak sklop, ki spremeni kodo igre, vzame še čas za teste (lokalni Node testi tu trajajo dlje od 4 min iz `tests/run.js`, glej sklop 1; celotni brskalniški na GitHubu okoli pol ure). Sklopi gredo eden za drugim brez čakanja (potrditev vnaprej), zato so datumi samo okvir: skupaj okoli 30–40 ur v zaporednih sejah.
+Časi so moje delo; vsak sklop, ki spremeni kodo igre, vzame še čas za teste (lokalno samo povezani testi, celotni nabori na GitHubu okoli pol ure). Sklopi gredo eden za drugim brez čakanja (potrditev vnaprej), zato so datumi samo okvir: skupaj okoli 30–40 ur v zaporednih sejah.
 
 ### Sklop 1 · Načrt, kazalo, pravila — 0,5–1 h · 26. 10. 2026
 
 - Ta načrt (`docs/orodje-za-napake.md`).
 - Kazalo kode `docs/kazalo.md`: kje v kodi je kaj, po temah, z imeni funkcij (brez številk vrstic).
 - `CLAUDE.md`: razdelek o orodju za napake, kazalu in poročilih; kombinacija testov; pull request za vsak sklop.
-- Testi: `npm run test:node`. Koda igre se ne spremeni.
+- Testi: `npm run test:node` (vsi zeleni; `races.test.js` je presegel 15 min in je bil pognan še posebej). Koda igre se ne spremeni.
 - **Preizkus:** uporabnik prebere načrt in potrdi.
 
 ### Sklop 2 · Razdeljen README — 1–1,5 h · 27. 10.
