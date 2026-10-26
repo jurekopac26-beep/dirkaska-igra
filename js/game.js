@@ -4802,7 +4802,7 @@
     const o = { on, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null };
     o.tick = (now) => {
       if (!o.on) return;
-      if (!o.el) { o.el = document.createElement('div'); o.el.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:99999;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.65);color:#7CFF8A;font:600 12px/1.35 monospace;pointer-events:none;white-space:pre'; document.body.appendChild(o.el); }
+      if (!o.el) { o.el = document.createElement('div'); o.el.style.cssText = 'position:fixed;left:10px;top:66px;z-index:99999;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.65);color:#7CFF8A;font:600 12px/1.35 monospace;pointer-events:none;white-space:pre'; document.body.appendChild(o.el); }
       if (o.last) o.worst = Math.max(o.worst, now - o.last); o.last = now; o.n++;
       if (!o.t0) o.t0 = now;
       if (now - o.t0 >= 1000) {
