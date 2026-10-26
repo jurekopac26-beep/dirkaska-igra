@@ -29,7 +29,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 ## Postopek
 - Po vsaki spremembi v `js/` ali `css/` zaženi `node tools/stamp.js`, za nove reference `npm run golden:update`.
 - Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih.
-- Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni `npm run test:node` in brskalniški testi, ki se nanašajo na spremembo; celotni brskalniški testi tečejo na GitHubu v pull requestu. Na `main` gre sprememba šele, ko so ti zeleni in jo uporabnik potrdi.
+- Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni `npm run test:node` in brskalniški testi, ki se nanašajo na spremembo; celotni brskalniški testi tečejo na GitHubu v pull requestu. Na `main` gre sprememba šele, ko so ti zeleni in jo uporabnik potrdi (sklope iz `docs/orodje-za-napake.md` je uporabnik potrdil vnaprej: na `main`, ko so testi zeleni).
 - Pull request odpri samo, če uporabnik to izrecno prosi, ali za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop).
 
 ## Kje je kaj (manj iskanja)
