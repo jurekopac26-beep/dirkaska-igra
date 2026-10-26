@@ -12,6 +12,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | čaka |
+| 3b | Stabilni testi | čaka |
 | 4 | Posnetek | čaka |
 | 5 | Označevanje | čaka |
 | 6 | Slika in pošiljanje | čaka |
@@ -140,6 +141,19 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 - **Hiter vstop prek naslova:** `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>`. Igra se odpre naravnost na dirki, `t` premakne posnetek ali dirko na čas. Za teste in `tools/shot.mjs`.
 - **Testi:** node in brskalniški test za hiter vstop.
 - **Preizkus:** povezava z `?proga=bathurst` odpre dirko na Bathurstu.
+
+### Sklop 3b · Stabilni testi — 1–2 h · pred sklopom 4
+
+Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
+
+- **Težava:** brskalniški testi na GitHubu občasno padejo, vsakič na drugem testu, tudi pri spremembah samo v dokumentaciji:
+  - `tests/browser/weather.test.mjs` – menjava dežnih gum v boksih, avto v 3 minutah ne zapelje v bokse (PR #165);
+  - `tests/browser/pits.test.mjs` – »Bathurst: at full right lock the car keeps to the middle of the lane« (`main` d9c6a88);
+  - `tests/browser/radio.test.mjs` – polje radia pod zemljevidom, razmik 6,9 px pokonci in 3,8 px ležeče (PR #167).
+  Prej so bili zeleni, verjetno je vzrok v novostih na `main` (22 avtov, leteči start) ali v počasnih strojih GitHuba.
+- **Kaj:** za vsakega najdi vzrok (čas, naključje, več avtov, mejne vrednosti) in popravi test ali igro. Testov ne izklapljaj in ne preskakuj. Če je padel pravi hrošč v igri, ga popravi.
+- **Preveri:** vsak popravljen test lokalno zaženi večkrat zapored (npr. 5×), nato celotne nabore na GitHubu.
+- Če pri delu najdeš še kak test, ki občasno pade, ga dodaj sem.
 
 ### Sklop 4 · Posnetek — 1,5–2,5 h · 28. 10.
 
