@@ -1,0 +1,8 @@
+# Pikes Peak, ZDA (kronometer, dirka)
+
+[← Vse proge](../../README.md#proge) · proga `pikes` (`js/tracks/pikes.js`); različica na makadamu `pikesg`
+
+Kronometer: vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti so kontrolne točke CP1–CP4 z vmesnimi časi. Po cilju se osebni rekord in lestvica najboljših 10 časov shranita v brskalnik na tej napravi. Pred vožnjo lahko avto nadgradiš (motor, gume, zavore, aerodinamika); nadgradnje veljajo na vseh progah. Proga je sorazmerno skrajšana na ~6,2 km (prava je 19,99 km), višine na zaslonu so prave. Table pred ovinki na zaslonu so enake kot na drugih progah. Nad cesto ni dronov ne TV helikopterja, po zraku ne pada listje.
+
+- **Kronometer** je prvi način proge: rekordi, duhovi, lestvice razredov, medalje, legenda in komentatorjevi stavki vzpona so isti kot prej (shranjeni pod istim ključem `pikes@cs`).
+- **Dirka**: 21 tekmecev, en vzpon do vrha (izbira v *Circuit race* pod *Open roads*; asfalt ali makadam). Dirka se začne z letečim startom (kolona, glej »Leteči start«); pod štartno črto je le ~40 m ceste, zato se tvoj avto do črte pripelje počasneje. Brez letečega starta (spletna dirka) 22 avtov stoji v vrstah po štiri, 6,6 m narazen (`Race._gridWide`). Za ciljem je do konca ceste le ~100 m, zato so mesta, kamor po cilju zapelje vsak avto, bližje skupaj (od 38 m za črto, izmenično levo in desno, za vseh 22 avtov do konca ceste; pri 22 avtih v dveh vrstah na vsaki strani, zunanja ob asfaltu, zmagovalec na najbolj oddaljenem mestu, da nihče ne pelje mimo parkiranih avtov). Rekordi dirke so ločeni od kronometra (`pikes-race@cs`), komentator ima za dirko svoje stavke. Kvalifikacij ni (odprta cesta), v dirki s prijateljem Pikes Peaka ni.

@@ -1,0 +1,21 @@
+# Sani Pass, Južna Afrika (dirka, kronometer, dvoboj v prometu)
+
+[← Vse proge](../../README.md#proge) · proga `sani` (`js/tracks/sani.js`)
+
+Makadamska cesta čez gorovje Drakensberg, ki povezuje KwaZulu-Natal (Južnoafriška republika) z visoko planoto Lesota. Igra vzame zgornjih 5 km ceste v pravem merilu: **od doline potoka Mkhomazana (~2.230 m, ~2,9 km nad južnoafriškim mejnim prehodom, kjer se začne makadam) do vrha strmine pod lesotskim mejnim prehodom (2.872 m), kjer se makadam konča**. Proga je dolga 4,99 km, vzpon je 643 m (povprečno 12,9 %, najbolj strmo 24 %), zgornji del je 13 gostih serpentin pod bazaltnimi stenami (Twelve Apostles). Vsa proga je na makadamu, kot je v OpenStreetMap tudi prava cesta; asfaltiranih je le zadnjih ~100 m pri mejnem prehodu, za ciljem. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet**:
+
+- **Dirka**: 21 tekmecev, start ob potoku Mkhomazana (štartna mreža za črto), en vzpon do vrha pod lesotskim mejnim prehodom. Cesta je široka komaj za dve vozili, zato stojita stolpca štartne mreže bližje skupaj, v serpentinah se vozi v prvi prestavi in prehitevanje je težko. Pod mestom so prevoženi kilometri in nadmorska višina, po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta).
+- **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino (na 1, 2, 3,05 in 4 km), lestvica najboljših 10, duh in medalje (zlata 3:17, srebrna 3:27, bronasta 3:42, v dežju 3:43 / 3:54 / 4:11; zlato je čas relijskega avta na avtopilotu × 1,01).
+- **Promet**: dvoboj z enim tekmecem po odprti cesti. **Promet vozi po levi** (kot v JAR in Lesotu): terenski avtomobili in pickupi, kombiji in motoristi na potovalnih motorjih, redko gorski kolesar; avtobusov in tovornjakov ni. Tekmec (AI) srečuje promet po levi in ga prehiteva po desni.
+- **Terensko vozilo**: SAMUM 4x4 (več oprijema na makadamu in mehko vzmetenje) je tu najhitrejši avto igre (avtopilot 3:06, relijski avto 3:15, cestni avti 3:20–3:38); vsi avti prevozijo strmino brez reševanja.
+- **Ovinki**: serpentine so oštevilčene od spodaj (na pravi cesti nimajo številk), pod uro se izpišejo z višino (npr. Serpentina 4 · 2.682 m, Serpentina 8 · Twelve Apostles), na zunanji strani vsake so rumene table s puščicami. Pod uro se izpišejo še Mkhomazana, Drakensberg in na vrhu Lesoto · 2.872 m, komentator ima na tej progi svoje stavke.
+- **Dež**: na makadamu je 34 luž (kot na Ouninpohji), makadam je temnejši, iz luž pljuska blato. Za avti se v suhem dviga gost oker prah.
+- **Oblika in višine**: sredinska črta je iz OpenStreetMap; najožje serpentine (polmer ~7 m) so odprte na ~10 m, kraki so vsaj 20 m narazen (cesta se je premaknila povprečno za 0,5 m, največ za 8,4 m). Cesta je v igri široka 9 m (OpenStreetMap širine nima, prava je ~5–6 m), kot so širše tudi druge proge. Višine so iz satelitskega višinskega modela Copernicus, očiščene (naraščajoče do vrha), z naklonom največ 24 % (na krajših odsekih prave ceste je strmeje, a 30-metrski model teh ne loči); serpentine so položnejše od krakov med njimi.
+
+Okolica:
+
+- **Letni časi**: poleti zelena travnata pobočja, jeseni zlata, pozimi (suha zima Drakensberga) rjava, s snegom na senčnih južnih pobočjih višje gor in na planoti, slapovi so zamrznjeni, s pečin visijo ledene sveče.
+- **Gore**: teren je iz pravega višinskega modela, raba tal (trava, grmičevje, mokrišča, vas) iz satelitske karte ESA WorldCover in OpenStreetMap. Strma pobočja so temen bazalt v plasteh, ob pečinah iz OpenStreetMap (tudi Twelve Apostles nad 8. serpentino) in na strminah stojijo skalne čeri, ob cesti ležijo skalni bloki in kamenje.
+- **Voda**: potoki iz OpenStreetMap tečejo po grapah, kjer padajo strmo, so beli slapovi; kjer prečkajo cesto, je na makadamu brod iz mokrega kamenja.
+- **Vrh**: gola visoka planota z nizko travo, kamnite hiše in okrogle koče s slamnatimi strehami po obrisih iz OpenStreetMap, suhozidni obori za živino, čredi ovac in koz s pastirjem. Mejni prehod je generična stavba s kabino in dvignjeno rdeče-belo zapornico, brez grbov, zastav in napisov; gostilna na vrhu je le ena od kamnitih hiš, brez imena.
+- **Dirka**: start z lučmi, rjavi portali kontrolnih točk z višino, cilj s tablo SANI PASS in višino, parkirišče s terenskimi avtomobili in gledalci, nad cesto krožita jastreba.
