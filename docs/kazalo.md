@@ -137,6 +137,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 
 - **Hiter vstop:** `tests/quick.test.js` (naslov), `tests/browser/quick.test.mjs` (igra)
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
+- **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs`, video trenutka `hlvid.test.mjs`
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`

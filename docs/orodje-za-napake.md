@@ -12,7 +12,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | končano |
-| 3b | Stabilni testi | čaka |
+| 3b | Stabilni testi | končano (PR #170) |
 | 4 | Posnetek | čaka |
 | 5 | Označevanje | čaka |
 | 6 | Slika in pošiljanje | čaka |
@@ -157,6 +157,14 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Kaj:** za vsakega najdi vzrok (čas, naključje, več avtov, mejne vrednosti) in popravi test ali igro. Testov ne izklapljaj in ne preskakuj. Če je padel pravi hrošč v igri, ga popravi.
 - **Preveri:** vsak popravljen test lokalno zaženi večkrat zapored (npr. 5×), nato celotne nabore na GitHubu.
 - Če pri delu najdeš še kak test, ki občasno pade, ga dodaj sem.
+- **Narejeno (vzroki in popravki):**
+  - `share` – `waitForFunction` je preverjal samo ob sličicah, ki jih počasen stroj izriše malo: zdaj `polling: 250` in do 60 s.
+  - `radio` – meritev je ujela sporočilo nad poljem v prvi sličici njegove animacije (0,2 s, zdrs s 3 px višje): razmik 6,9 namesto ~4 px. Polje se zdaj meri v sličici, ko se v stolpcu nič ne premika (sicer počaka znova).
+  - `carlow` – v polju 22 avtov je avtopilot v prvem krogu včasih zadržan (dotik, zdrs) in je na Kemmlu šele pospeševal (164 km/h, 7 s pozneje). Zdaj vozi, dokler ni na ravnini res na polnem plinu (nad 175 km/h), po potrebi krog pozneje. Lokalno 6 ponovitev 213–223 km/h.
+  - `weather` – na suhih gumah v dežju se avtopilot zaleti v druge (prvi krog, ovinek 3, in na vstopu v bokse, kamor hkrati zavije polje po dežne gume); poškodba je narasla do 1,0, avto je obstal pred boksi do konca dirke (lokalno 1 od 8). Test preverja vreme in gume: zdaj vozi brez poškodb (`damage: 0`, kot `carlow` in `radio`).
+  - `pits` (Bathurst) – ko drug avto hkrati zavije v bokse ob igralcu, avto vstopi v pas pozneje (padec: 78 korakov namesto ~97) in se mu umakne (lokalno s silo 0,33–0,45 m, na GitHubu 1,04 m od sredine). Volan na to ne vpliva. Zdaj odmik do 0,8 m velja v praznem pasu, ob drugem avtu pa mora ostati v svojem pasu (do 1,6 m; pas je širok 7 m). Brez drugega avta 30 ponovitev s semeni: 0,07–0,43 m.
+  - `Vozila` (posel na GitHubu): nabor traja 11–28 min, omejitev je bila 30 min; v PR #170 ga je počasen stroj prekinil tik pred koncem. Omejitev je zdaj 60 min (`.github/workflows/tests.yml`).
+  - Na drugih vejah so občasno padli še `online4` (»a fifth finds the room full« – povezava z gostiteljem prekinjena), `memory` (»textures do not grow« 64 → 66) in `perf`; vzrok ni raziskan, ker so bile na vejah s spremembami igre. Če padejo na `main` ali pri spremembah samo v dokumentaciji, jih dodaj sem.
 
 ### Sklop 4 · Posnetek — 1,5–2,5 h · 28. 10.
 
