@@ -5212,6 +5212,47 @@
     $('on-code').addEventListener('keyup', (e) => e.stopPropagation());
   }
 
+  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> (Core.quickArgs) opens the game
+     straight on a race on that track, without the menus, the flyover or qualifying (for the tests and tools/shot.mjs; a player's link works
+     the same). The way, the weather and the car are set as the menus set them; t: the race driven on the autopilot to t s after the start
+     (the loading screen meanwhile; the replay has it too), then paused there. Not with a friend's challenge or ghost link ---------------- */
+  let quick = null;   // (tests: what the address asked; done once the race is there, or when there is none to start)
+  function quickGo() {
+    const q = Core.quickArgs(location.search); if (!q) return;
+    if (q.bad.length) toast(tr('Hitri vstop: neveljavno {0}.', q.bad.join(', ')), 4000);
+    quick = { q, done: false };
+    if (!q.track || /[#&](izziv|duh)=/.test(location.hash)) { quick.done = true; return; }   // (no race: the title)
+    const d = Core.TRACKS.find(x => x.id === q.track);
+    S.track = d.id; if (d.theme === 'pikes') S.pkRoad = d.id === 'pikesg' ? 'pikesg' : 'pikes';
+    if (q.mode && d.modes) S.mode = q.mode;
+    if (q.weather) S.weather = q.weather;
+    if (q.car) { if (owned(q.car)) S.car = Core.MODELS.findIndex(m => m.id === q.car); else toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); }
+    save(); refreshSegs();
+    if (!owned(Core.MODELS[S.car].id)) { quick.done = true; return; }   // (a career's car not bought: the menus, as their Start)
+    if (S.control === 'tilt') enableTilt(true);
+    Comm.unlock(); champRun = false; school = null; qual = null; pkF.fresh = true;
+    ensureTrack(S.track, () => { newRace(); pkFlySkip(); if (q.t > 0) quickRun(q.t); else quick.done = true; });
+  }
+  // the race on the autopilot up to t s after the start (or to the player's finish), a slice of it per frame under the loading screen
+  function quickRun(t) {
+    $('ld-msg').textContent = tr('Previjam dirko na {0} …', fmt(t)); $('loading').classList.remove('off');
+    paused = true;   // (the main loop steps nothing meanwhile)
+    const inp = { steer: 0, thr: 0, brk: 0, gas: 0, digital: true }, there = () => !race || phase === 'finish' || phase === 'done' || (phase === 'racing' && race.time >= t);
+    const slice = () => {
+      const w0 = performance.now();
+      while (!there() && performance.now() - w0 < 50) {
+        Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk;
+        if (phase === 'intro' || phase === 'lights') inp.thr = 0;   // (off the gas on the grid)
+        inp.gas = inp.thr > 0.05 ? 1 : 0;
+        updatePhase(STEP, inp); stepRace(STEP, inp);
+      }
+      if (!there()) { setTimeout(slice, 0); return; }
+      $('loading').classList.add('off'); paused = false; quick.done = true;
+      if (phase === 'racing') pause();
+    };
+    setTimeout(slice, 0);
+  }
+
   /* ---------------- boot ---------------- */
   function boot() {
     if (typeof THREE === 'undefined') { $('ld-msg').textContent = tr('Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.'); return; }
@@ -5241,9 +5282,10 @@
       requestAnimationFrame(frame);
       ghHash();   // (opened with a friend's ghost's link)
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
+      quickGo();   // (opened with a quick entry's address: straight on a race)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)

@@ -6034,9 +6034,30 @@ const Core = (function () {
   }
   registerVehicles();
 
+  // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
+  // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
+  // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
+  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police' };
+  const QUICK_WX = { suho: 'dry', dry: 'dry', dez: 'rain', 'dež': 'rain', rain: 'rain' };
+  function quickArgs(search) {
+    const P = new URLSearchParams(search || ''), id = P.get('proga');
+    if (id == null) return null;
+    const q = { track: null, mode: null, t: null, weather: null, car: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
+    const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
+    if (d) q.track = d.id; else q.bad.push('proga=' + id);
+    if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
+      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']);
+      if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
+    }
+    if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
+    if (P.has('vreme')) { const w = QUICK_WX[low('vreme')]; if (w) q.weather = w; else q.bad.push('vreme=' + P.get('vreme')); }
+    if (P.has('avto')) { const M = MODELS.find(m => m.id === low('avto')); if (M) q.car = heirOf(M).id; else q.bad.push('avto=' + P.get('avto')); }   // (a retired model's: its heir)
+    return q;
+  }
+
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs };
 })();
 
 

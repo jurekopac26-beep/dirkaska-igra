@@ -11,7 +11,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 0 | Zasebnost (Cloudflare) | odloženo |
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
-| 3 | Hitrejši testi, hiter vstop | čaka |
+| 3 | Hitrejši testi, hiter vstop | končano |
 | 4 | Posnetek | čaka |
 | 5 | Označevanje | čaka |
 | 6 | Slika in pošiljanje | čaka |
@@ -139,6 +139,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 - **Tih izpis** `--quiet` v `tests/run.js`: samo napake in povzetek.
 - **Hiter vstop prek naslova:** `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>`. Igra se odpre naravnost na dirki, `t` premakne posnetek ali dirko na čas. Za teste in `tools/shot.mjs`.
 - **Testi:** node in brskalniški test za hiter vstop.
+- **Narejeno:** `npm run test:related` (`tests/run.js --related --quiet`; `--files` za izbrane datoteke, seznam `RELATED` za velike skupne datoteke), `--quiet`, hiter vstop (`Core.quickArgs`, `quickGo` v `js/game.js`). `nacin`: `dirka`, `kronometer`, `promet`, `policija` (ali kot v kodi), samo načini proge. `t`: dirka na avtopilotu do `t` s po štartu pod nalagalnim zaslonom, nato pavza (posnetek ima vožnjo do tja); premik posnetka na čas pride s časovnico v sklopu 4. Način, vreme in avto se shranijo kot v meniju. Testi `tests/quick.test.js`, `tests/browser/quick.test.mjs`, `shards.test.js` (`--related`, `--quiet`); opis v `tests/README.md`.
 - **Preizkus:** povezava z `?proga=bathurst` odpre dirko na Bathurstu.
 
 ### Sklop 4 · Posnetek — 1,5–2,5 h · 28. 10.

@@ -1,7 +1,8 @@
 // The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 4 shares on 4 machines at once, see
 // .github/workflows/tests.yml): for every suite and 1-6 shares each test in exactly one share, none left out; the browser tests' 4 shares
 // about as long as each other (by run.js's SECS); every browser test that takes long (over 4 min) has its time in SECS, and SECS names
-// only tests in the list; a bad --shard stops with an error, never runs everything.
+// only tests in the list; a bad --shard stops with an error, never runs everything. --related (npm run test:related): the tests of the
+// files given (--files) by their names and RELATED; --quiet: a passing test prints nothing, the summary how many passed.
 //   node tests/shards.test.js
 'use strict';
 const { spawnSync } = require('child_process');
@@ -47,6 +48,30 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
 {
   const res = ['0/4', '5/4', '2', 'x/y', ''].map(a => { const r = a ? run('browser', '--shard', a, '--list') : run('browser', '--shard'); return { a, st: r.status, out: r.stdout.trim() }; });
   check('a bad --shard (0/4, 5/4, 2, x/y, none) stops with an error, runs nothing', res.every(r => r.st === 2 && !r.out), res.map(r => `"${r.a}" exit ${r.st}`).join(', '));
+}
+
+// 5. --related: the tests of the files changed
+{
+  const rel = (files) => { const r = run('--related', '--files', files, '--list'); return r.status === 0 ? lines(r).slice(1) : ['exit ' + r.status]; };
+  const cases = [
+    ['docs/proge/medvode.md', ['medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs']],
+    ['js/world-montreal.js', ['stamp.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/gfx.test.mjs']],
+    ['js/core.js', ['stamp.test.js', 'golden.test.js', 'start.test.js', 'quick.test.js']],
+    ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
+    ['README.md', ['fleet.test.js']],
+    ['tools/carshots.mjs', []],
+  ];
+  const off = cases.map(([f, want]) => [f, rel(f)]).filter(([f, got], i) => got.join() !== cases[i][1].join());
+  check('--related --files: a file\'s tests by name (a track\'s description, a world of its own), the big shared files by RELATED, a changed test itself (and its theme\'s), the .md files the brand check; none for an unrelated tool',
+    !off.length, off.map(([f, got]) => `${f}: ${got.join(', ') || 'none'}`).join('; '));
+  const r = run('--files', 'js/core.js', '--list');
+  check('--files without --related: an error (exit 2)', r.status === 2);
+}
+
+// 6. --quiet: a passing test prints nothing of its own, the summary how many passed
+{
+  const r = run('--related', '--files', 'tools/stamp.js', '--quiet'), out = r.stdout;
+  check('--quiet: only the summary for a passing test (stamp.test.js)', r.status === 0 && !/###|^OK  /m.test(out) && /^1 of 1 tests passed/m.test(out), out.trim().split('\n').slice(-3).join(' | '));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

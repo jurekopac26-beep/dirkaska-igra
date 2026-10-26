@@ -32,7 +32,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
-| `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`) |
+| `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek) |
 | `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
@@ -58,6 +58,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **plošček v menijih**, **Kontrole** `Kontrole (from Nastavitve)`
 - **števec sličic** `the frame counter` (`PH`: naslov `?fps`, okvirček zgoraj levo; `PH.tick`, `PH.s` koraki, `PH.r` risanje; osnova za prikaz za razvijalca, sklop 9)
 - **polje in štart:** `NUM_AI` 21 (22 avtov), `CH_AI` 19 (prvenstvo), `PLAYER_GRID` 999 (igralec zadnji v polju); leteči start `flyStep`, `flyHUD`, `FLY_T`
+- **hiter vstop** `the quick entry` (`quickGo`, `quickRun`): naslov `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>` odpre dirko brez menija; branje naslova `Core.quickArgs`; za teste `window.__game.quick` (opis v `tests/README.md`)
 - **glavna zanka** `main loop`, **dogodki** `events` (`switch (act)` za `data-act`), **aplikacija** `the game as an app`, **most do menija** `the menu's bridge`, **zagon** `boot`
 
 ## Teme v `js/core.js`
@@ -69,6 +70,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
 - **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
 - **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)
+- **hiter vstop** `quickArgs(search)` (naslov → proga, način, `t`, vreme, avto, neveljavni deli)
 - **naključje** `rng(seed)` (mulberry32); `Math.random` je še v učinkih poškodb (sklop 16)
 
 ## Teme v `js/render.js`
@@ -133,6 +135,8 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 
 ## Testi po temah
 
+- **Hiter vstop:** `tests/quick.test.js` (naslov), `tests/browser/quick.test.mjs` (igra)
+- **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Posnetek:** `tests/browser/replay.test.mjs`, video trenutka `hlvid.test.mjs`
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
