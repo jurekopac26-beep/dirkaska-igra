@@ -2,6 +2,7 @@
 
 Samodejni testi za igro. Igra sama ne potrebuje namestitve; testi potrebujejo le Node.js (22) in za teste
 v brskalniku Playwright (`npm install` ga namesti, `npx playwright install chromium` prenese brskalnik).
+Opisi prog, ki jih testi preverjajo, so v `docs/proge/<id>.md`, opis igre po temah v `docs/igra.md` (prej oboje v `README.md`).
 
 ```sh
 npm install          # enkrat
