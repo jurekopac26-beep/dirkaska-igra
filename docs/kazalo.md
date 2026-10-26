@@ -16,7 +16,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi |
 | `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
 | `js/world-montreal.js`, `world-toronto.js`, `world-townsville.js` | svetovi v svojih datotekah: `World.ext[tema]` s pomočniki `extAPI` (vzor za sklop 17) |
-| `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`), plošček |
+| `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
 | `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
 | `js/sfx.js` | zvok (sintetiziran) |
@@ -43,7 +43,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" js/game.js`):
 
 - **nastavitve** `settings`, **stanje** `state`, **zasloni** `screens`, **izbira avta** `car select`, **izbira proge** `track select`
-- **posnetek** `replay: the race recorded` — `recStart`, `recStep`, `replayStart`, `replayEnd`, `replayUI`, `replayAct`, `replayFrame`, `REC_MAX` (20 min), `RP_CAM`, `RP_SPEED`
+- **posnetek** `replay: the race recorded` — `recStart`, `recStep`, `replayStart`, `replayEnd`, `replayUI`, `replayAct`, `replayFrame`, `REC_MAX` (20 min), `RP_CAM`, `RP_SPEED`; časovnica `rpLineBind` (tap, vlečenje), skok na čas `rpSeek`, iskanje sličice `rpIdx` (zadnja sličica do časa t), čas `rpClock` (00:41.3); stikalo Cel posnetek | Zastavice (`replay.mode`, zastavice v `recd.flags`: sklop 7)
+- **Posnetek do sem** (gumb v pavzi `pause-rp`, tipka I: `Input.onReplay`) — `rpHereOk`, `rpHere`, `replay.here` (`keep`, `wait`), shranjevanje in vračanje stanja avtov `rpKeep` / `rpBack`, Nazaj v dirko `rpRace`, odštevanje 3 · 2 · 1 `rpCd`, `cdStep` (v glavni zanki), `cdOff` (pavza ga ustavi); `RP_BACK` (začetek 10 s pred zdaj)
 - **najboljši trenutki** `replayHL`, video trenutka `the best moment as a video` (`hlvStart`, `hlvStop`)
 - **Foto** `photo mode` — `photoStart`, `photoSave` (slika, Web Share, prenos), `photoEnd`
 - **duh** `ghost of the best run`, sledi gum zadnjih voženj `the tyre marks of the last time trial runs`
@@ -138,7 +139,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Hiter vstop:** `tests/quick.test.js` (naslov), `tests/browser/quick.test.mjs` (igra)
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
-- **Posnetek:** `tests/browser/replay.test.mjs`, video trenutka `hlvid.test.mjs`
+- **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu), video trenutka `hlvid.test.mjs`
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
