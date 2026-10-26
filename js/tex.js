@@ -247,8 +247,8 @@ const Tex = (function () {
     const c = cv(64, 64), x = c.getContext('2d');
     x.fillStyle = bg || '#f4f4f0'; x.beginPath(); x.arc(32, 32, 29, 0, Math.PI * 2); x.fill();
     x.lineWidth = 3; x.strokeStyle = 'rgba(0,0,0,0.5)'; x.stroke();
-    x.fillStyle = fg || '#111'; x.font = '900 34px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText(String(n), 32, 35);
+    const t = String(n); x.fillStyle = fg || '#111'; x.font = '900 ' + (t.length > 2 ? 24 : 34) + 'px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';   // (100: smaller, inside the disc)
+    x.fillText(t, 32, t.length > 2 ? 34 : 35);
     return mk(c, false);
   }
 

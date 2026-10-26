@@ -30,7 +30,7 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     const t = await ev(page, 'return { tiles: [...root.querySelectorAll(".tile b")].map(e => e.textContent), small: [...root.querySelectorAll(".tsmall span")].map(e => e.textContent), sub: root.querySelector(".t-single small").textContent, logo: root.querySelector(".logo").textContent };');
-    T.check('the title: Single race, Multiplayer, Career; Settings and Leaderboard; the logo', JSON.stringify(t.tiles) === '["SINGLE RACE","MULTIPLAYER","CAREER"]' && t.small.includes('Settings') && t.small.includes('Leaderboard') && /APEX\s*RACING/i.test(t.logo), JSON.stringify(t));
+    T.check('the title: Single race, Multiplayer, Career; Settings and Leaderboard; the logo', JSON.stringify(t.tiles) === '["SINGLE RACE","MULTIPLAYER","CAREER"]' && t.small.includes('Settings') && t.small.includes('Leaderboard') && /REAL ROADS ATLAS\s*RACING GAME/i.test(t.logo), JSON.stringify(t));
     T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && /Circuit race/.test(t.sub), t.sub);
 
     // 2. the modes
@@ -191,7 +191,7 @@ try {
 
   // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Monte Carlo: its helicopter's first frame behind it).
   //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
-  //     on it is remembered (the setting, kept), Saturday first; Race! without it starts the race from the back of the grid (13th of 13),
+  //     on it is remembered (the setting, kept), Saturday first; Race! without it starts the race from the back of the grid (22nd of 22),
   //     with it the qualifying lap; the pad's B and Start; on its side Race! at the very bottom right
   {
     const wk = (page) => ev(page, `const w = root.querySelector('.intro.wk'); if (!w) return null; const vis = (q) => [...w.querySelectorAll(q)].filter(e => e.offsetParent).map(e => e.textContent.replace(/\\s+/g, ' ').trim());
@@ -204,21 +204,21 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     await toWeekend(page);
     const w0 = await wk(page);
-    T.check('Race! in Circuit race: the race weekend (Saturday qualifying skipped, Sunday the race from P13 of 13), the track from afar behind it, the race waits',
+    T.check('Race! in Circuit race: the race weekend (Saturday qualifying skipped, Sunday the race from P22 of 22), the track from afar behind it, the race waits',
       w0 && !w0.on && w0.head === 'Monte Carlo' && JSON.stringify(w0.days) === '["SATURDAY","SUNDAY"]' && JSON.stringify(w0.ses) === '["Qualifying","Race"]' && w0.sky.length === 2 && w0.sky.every(k => /sunny|clear/i.test(k)) &&
-      JSON.stringify(w0.pos) === '["P13/13"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-monaco.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
+      JSON.stringify(w0.pos) === '["P22/22"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-monaco.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
     await page.click('.intro.wk [data-wk="back"]'); await page.waitForTimeout(300);
     const b = await ev(page, 'return { wk: !!root.querySelector(".intro"), name: root.querySelector("#s-track .card h1").firstChild.textContent, race: !!window.__game.race };');
     T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Monte Carlo' && !b.race, JSON.stringify(b));
     await toWeekend(page);
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     const w1 = await wk(page), kept = await page.evaluate(() => [window.__game.S.quali, JSON.parse(localStorage.getItem('tdgp-settings')).quali]);
-    T.check('Saturday switched on: Start qualifying (Saturday first), the grid P1–13, the choice kept in the settings', w1.on && w1.sw === 'true' && /^Start qualifying\s*SATURDAY FIRST$/.test(w1.go) && JSON.stringify(w1.pos) === '["P1–13"]' && !w1.stamp.length && JSON.stringify(kept) === '[1,1]', JSON.stringify({ w1, kept }));
+    T.check('Saturday switched on: Start qualifying (Saturday first), the grid P1–22, the choice kept in the settings', w1.on && w1.sw === 'true' && /^Start qualifying\s*SATURDAY FIRST$/.test(w1.go) && JSON.stringify(w1.pos) === '["P1–22"]' && !w1.stamp.length && JSON.stringify(kept) === '[1,1]', JSON.stringify({ w1, kept }));
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     await page.click('.intro.wk [data-wk="go"]');
     await raceOn(page, 'monaco').catch(() => null);
     const r0 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length, grid: r.player.grid, intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro') }; });
-    T.check('Race! with qualifying off: the race, from the back of the grid (13th of 13)', r0 && !r0.quali && r0.cars === 13 && r0.grid === 13 && !r0.intro, JSON.stringify(r0));
+    T.check('Race! with qualifying off: the race, from the back of the grid (22nd of 22)', r0 && !r0.quali && r0.cars === 22 && r0.grid === 22 && !r0.intro, JSON.stringify(r0));
     T.check('no page errors on the race weekend', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

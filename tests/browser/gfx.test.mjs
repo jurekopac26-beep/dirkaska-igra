@@ -35,7 +35,7 @@ try {
     await frames(3);
     const L = await look(), pk = id === 'pikes' || id === 'pikesg', why = [];
     const bodies = Object.keys(L.cars.body), paints = Object.keys(L.cars.paint);
-    if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg'))) why.push('bodies ' + JSON.stringify(L.cars.body));
+    if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg') && k !== 'dirtyCarCgS')) why.push('bodies ' + JSON.stringify(L.cars.body));   // (dirtyCarCgS: a KOLIBRI's, its side scrapes)
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
     const wet = WATER.includes(id);
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));

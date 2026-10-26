@@ -4,8 +4,8 @@
 // let go after the lights and pressed again, the new press counts. The AI: each car's reaction from the race's seed (0.15-0.45 s, the
 // quicker drivers quicker on the whole), the same every time with the same seed; its car waits on the grid until then. On in a race from
 // the grid; off in a time trial, on a flying lap, in the run from the police and in the title demo (the game also turns it off in the
-// new map's free drive and in the school's lessons other than the start). The flying start of a race up an open road (opts.flying, m/s): no
-// reaction, every car already rolling up the road from its slot on the grid in the gear for that speed; the whole race to the finish.
+// new map's free drive and in the school's lessons other than the start). The flying start of a race up an open road (opts.flying, s): no
+// reaction, the cars already rolling in one line up the road (below), the player's car over the start line as the countdown ends.
 //   node tests/start.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -114,23 +114,53 @@ function aiRace(seed, sec) {
   check('off in a time trial, on a flying lap, in the title demo, in the run from the police and when turned off (no car with it)', !has(tt) && !has(quali) && !has(demo) && !has(off) && !(pol && has(pol)), '');
 }
 
-// the flying start (opts.flying: the game's race up an open road): every car rolling at that speed straight up the road from its slot, in a
-// gear the speed fits (under 80 % of the redline), no reaction to the lights (no LAUNCH); the race on autopilot to the finish, every car there
+// the flying start (opts.flying: the game's race up an open road, the countdown's seconds): the race already under way, the cars in one line
+// on the road in the order of the grid, the player's car at the back (here asked for the middle of the grid), ~10 s from it to the first (each
+// ~0.8 s of its pace ahead of the next; the car right ahead of the player just ~0.3 s ahead, at its speed), every one rolling up the road at
+// its pace, in a gear for it, no reaction to the lights (no LAUNCH); the player's car below the start line, over it as the countdown ends
+// (Race.flyOn off: the game hands it over then); no one passes until then, no two come close, and the car right ahead is still right ahead
+// (it has not got away); the race on autopilot to the finish, every car there
 {
   const orig = Math.random; Math.random = seeded(3);
-  const T = track('bigsur'), r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, flying: 15 });
+  const T = track('bigsur'), r = new C.Race(T, { numAI: 12, playerGrid: 7, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, flying: 3 });
   r.start();
   const along = r.cars.map(c => { const i = c.q.i >= 0 ? c.q.i : T.idx(c.q.s); return (c.vx * Math.cos(T.hd[i]) + c.vz * Math.sin(T.hd[i])) / c.speed; });
   const rev = r.cars.map(c => c.speed / c.m.rw * c.m.gears[c.gear - 1] * c.m.final * 9.5493 / c.m.redline);
-  check('flying start: every car rolling at 15 m/s up the road from its slot behind the line, in a gear for it, no reaction (no LAUNCH)',
-    !r.lch && !r.timeTrial && r.cars.length === 13 && r.cars.every(c => Math.abs(c.speed - 15) < 1e-9 && c.dist < 0) && along.every(a => a > 0.98) && rev.every(x => x < 0.8),
-    `gears ${r.cars.map(c => c.gear).join('')}, at most ${Math.round(Math.max(...rev) * 100)} % of the redline`);
-  let t = 0, k = 0;
+  const line = r.cars.filter(c => c !== r.player).sort((a, b) => a.grid - b.grid).concat([r.player]), gaps = line.slice(1).map((c, k) => (line[k].dist - c.dist) / c.speed), span = gaps.reduce((a, b) => a + b, 0);
+  check('flying start: the column in the order of the grid, the player at the back below the start line, the car right ahead ~0.3 s ahead at its speed, ~10 s from it to the first car, each rolling up the road at its pace (over 80 km/h), in a gear for it, no LAUNCH',
+    !r.lch && !r.timeTrial && r.cars.length === 13 && r.player.dist < -50 && r.flyOn && gaps.slice(0, -1).every(g => g > 0.5 && g < 1.3) && gaps[gaps.length - 1] > 0.15 && gaps[gaps.length - 1] < 0.45 && Math.abs(line[line.length - 2].speed - r.player.speed) < 1.5 && span > 7 && span < 12 && r.cars.every(c => c.speed * 3.6 > 80 && c.speed * 3.6 < 260) && along.every(a => a > 0.97) && rev.every(x => x < 0.95),
+    `gaps ${gaps.map(g => g.toFixed(2)).join(' ')} s (${span.toFixed(1)} s), ${r.cars.map(c => Math.round(c.speed * 3.6)).join(',')} km/h, at most ${Math.round(Math.max(...rev) * 100)} % of the redline, along ${Math.min(...along).toFixed(3)}`);
+  const order = () => r.cars.slice().sort((a, b) => b.dist - a.dist).map(c => c.id).join();
+  const o0 = order(); let t = 0, k = 0, near = 1e9, kept = true;
+  while (r.flyOn && t < 6) {
+    Math.random = seeded(5000 + (++k)); C.aiControl(r.player, r, DT); r.step(DT); t += DT; if (order() !== o0) kept = false;
+    for (const a of r.cars) for (const b of r.cars) if (a !== b) near = Math.min(near, Math.hypot(a.x - b.x, a.z - b.z));
+  }
+  const A = line[line.length - 2], gA = A.dist - r.player.dist;
+  check('flying start: the player\'s car over the start line as the countdown ends (~3 s), no one passing until then, no two cars close, the car right ahead still right ahead (under 20 m, as fast)', !r.flyOn && t > 2.9 && t < 3.6 && r.player.dist >= 0 && kept && near > 8 && gA > 6 && gA < 20 && Math.abs(A.speed - r.player.speed) < 2, `over the line at ${t.toFixed(2)} s, the nearest two ${near.toFixed(1)} m apart, the car ahead ${gA.toFixed(1)} m ahead at ${Math.round(A.speed * 3.6)} km/h (the player ${Math.round(r.player.speed * 3.6)})`);
   while (t < 300 && r.cars.some(c => !c.finished)) { Math.random = seeded(5000 + (++k)); C.aiControl(r.player, r, DT); r.step(DT); t += DT; if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); }
   Math.random = orig;
   const fin = r.cars.filter(c => c.finished).sort((a, b) => a.finishTime - b.finishTime), still = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 11 });
   check('flying start: the race on autopilot, all 13 cars at the finish; without opts.flying the standing start with its reaction', fin.length === 13 && !!still.lch && still.cars.every(c => c.speed === 0),
     `winner ${fin[0] ? fin[0].finishTime.toFixed(1) : '-'} s`);
+}
+
+// the flying start with long vehicles on twisty roads (Iroha's downhill hairpins, Tianmen's, Rastro's): the car right ahead of the player
+// placed by both vehicles' lengths, so up to the line no contact and a car's gap at least between their bumpers, the player over it in time
+{
+  const orig = Math.random, out = []; let ok = true;
+  for (const mid of ['titan', 'kamen', 'predsednik']) for (const id of ['iroha', 'tianmen', 'rastro']) {
+    Math.random = seeded(3);
+    const T = track(id), M = C.MODELS.find(m => m.id === mid), r = new C.Race(T, { numAI: 12, playerGrid: 99, laps: 1, playerModel: M, assist: 2, phys: 'cs', seed: 11, difficulty: 1, flying: 3, damage: 2 });
+    r.start();
+    const P = r.player, A = r.cars.filter(c => c !== P).sort((a, b) => b.grid - a.grid)[0];
+    let t = 0, k = 0, hit = 0, bMin = 1e9;
+    while (r.flyOn && t < 6) { for (const c of r.cars) c.hitCar = 0; Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; hit = Math.max(hit, P.hitCar || 0, A.hitCar || 0); bMin = Math.min(bMin, A.dist - P.dist - (A.m.len + P.m.len) / 2); }
+    const good = !hit && bMin > 1.2 && t > 2.8 && t < 3.8; if (!good) ok = false;
+    out.push(`${mid}/${id} ${bMin.toFixed(1)} m${hit ? ' HIT' : ''} ${t.toFixed(2)} s`);
+  }
+  Math.random = orig;
+  check('flying start, long vehicles on twisty roads: no contact up to the line, the car right ahead over a metre clear of the player\'s bumper, over the line in ~3 s', ok, out.join(', '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

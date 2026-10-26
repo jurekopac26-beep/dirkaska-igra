@@ -86,10 +86,10 @@
   "meshes": 4239,
   "verts": 2097019,
   "instances": 93193,
-  "props": 64,
+  "props": 70,
   "crowd": 6902,
   "world": "63566218",
-  "propsHash": "863cbddb",
+  "propsHash": "a254cf13",
   "floor": "a40171a3/20048",
   "groups": {
    "-:MeshLambertMaterial": "b1325ace",
@@ -102,19 +102,20 @@
   }
  },
  "vrsic": {
-  "meshes": 4221,
-  "verts": 2135084,
+  "meshes": 4222,
+  "verts": 2135216,
   "instances": 67045,
-  "props": 1204,
+  "props": 1272,
   "crowd": 1418,
-  "world": "e03c69ca",
-  "propsHash": "a2f6a948",
+  "world": "17f0566d",
+  "propsHash": "82b99b65",
   "floor": "3ff9d2e0/25760",
   "groups": {
    "-:MeshLambertMaterial": "d0a979a0",
    "-:MeshPhongMaterial": "27028c0a",
    "crowd:MeshLambertMaterial": "a10d5435",
    "-:MeshBasicMaterial": "53ebce8c",
+   "rsSigns:MeshLambertMaterial": "6c8fd13",
    "ao:MeshBasicMaterial": "612c8153",
    "tyremarks:MeshBasicMaterial": "f8f32119",
    "roadwear:MeshLambertMaterial": "779685b7"
@@ -696,13 +697,13 @@
   }
  },
  "medvode": {
-  "meshes": 1035,
-  "verts": 1847950,
+  "meshes": 1036,
+  "verts": 1849594,
   "instances": 7988,
-  "props": 805,
+  "props": 802,
   "crowd": 649,
-  "world": "94f496a4",
-  "propsHash": "5ac7c254",
+  "world": "2d7fed40",
+  "propsHash": "a14eaeb1",
   "floor": "17dd3a61/13356",
   "groups": {
    "-:MeshLambertMaterial": "95faa777",
@@ -711,6 +712,7 @@
    "-:MeshBasicMaterial": "b8fa4dc2",
    "mvCastle:MeshLambertMaterial": "d0fb684f",
    "mvFence:MeshLambertMaterial": "9f02da6b",
+   "rsSigns:MeshLambertMaterial": "cd471b6",
    "ao:MeshBasicMaterial": "1c11be80",
    "tyremarks:MeshBasicMaterial": "ba87396f",
    "roadwear:MeshLambertMaterial": "cb786fa0"

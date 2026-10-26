@@ -51,9 +51,9 @@ try {
       fam: getComputedStyle(document.getElementById('h-pos')).fontFamily, shadow: getComputedStyle(document.getElementById('h-main')).backgroundImage.slice(0, 20), plate: getComputedStyle(document.getElementById('h-main')).backgroundColor,
       rankFx: ['filter', 'transform', 'contain', 'containerType', 'backdropFilter', 'willChange'].map(k => getComputedStyle(document.getElementById('h-rank'))[k] || '').concat(['filter', 'transform', 'contain', 'containerType'].map(k => getComputedStyle(document.getElementById('h-main'))[k] || '')) }; });
   const inRow = (a, row) => a.cy > row.t && a.cy < row.b;
-  T.check('row 1: the place, the total (small, yellow: /13), the speed, KM/H, left to right on one row; row 2 under it: the tyres left of the lap (KROG 1/4)',
+  T.check('row 1: the place, the total (small, yellow: /22), the speed, KM/H, left to right on one row; row 2 under it: the tyres left of the lap (KROG 1/4)',
     rows.order1 === 'h-pos,h-tot,h-spd,h-speed,h-kmh' && rows.order2 === 'h-tyre,h-lap' && rows.pos.r <= rows.tot.l + 1 && rows.tot.r <= rows.spd.l + 1 && rows.spd.r <= rows.kmh.l + 1 && [rows.pos, rows.tot, rows.spd, rows.kmh].every(a => inRow(a, rows.row1))
-      && rows.row2.t >= rows.row1.b - 1 && rows.tyre.r < rows.lap.l && rows.kmhTxt === 'KM/H' && rows.totTxt === '/13' && rows.totC === 'rgb(255, 210, 63)' && /^KROG [1-4]\/4$/.test(rows.lap1) && /ApexMenu/.test(rows.fam),
+      && rows.row2.t >= rows.row1.b - 1 && rows.tyre.r < rows.lap.l && rows.kmhTxt === 'KM/H' && rows.totTxt === '/22' && rows.totC === 'rgb(255, 210, 63)' && /^KROG [1-4]\/4$/.test(rows.lap1) && /ApexMenu/.test(rows.fam),
     JSON.stringify(rows));
   T.check('the soft shadow: a radial gradient behind the two rows, no plate; nothing on #h-rank or round the rows that would move the fixed timing tower (filter, transform, contain ...)',
     /radial-gradient/.test(rows.shadow) && rows.plate === 'rgba(0, 0, 0, 0)' && rows.rankFx.every(v => !v || v === 'none' || v === 'normal' || v === 'auto'), JSON.stringify({ shadow: rows.shadow, plate: rows.plate, fx: rows.rankFx }));
@@ -134,7 +134,8 @@ try {
   const PUT = (st) => { const g = window.__game, $ = (id) => document.getElementById(id), hud = $('hud');
     hud.classList.remove('pol', 'duel', 'up', 'tt', 'ttd', 'ttn'); for (const c of st.cls || []) hud.classList.add(c);
     const T = $('h-tyre'); if (st.ty) { T.className = 'on dry cM'; T.lastElementChild.textContent = st.en ? 'MEDIUM' : 'SREDNJE'; } else T.className = '';
-    $('h-pos').textContent = st.pos; $('h-tot').textContent = st.tot; $('h-speed').textContent = '299'; $('h-lap').innerHTML = g.lapHTML(st.lap);
+    $('h-pos').textContent = st.pos; $('h-tot').textContent = st.tot; hud.classList.toggle('f3', st.tot.length > 3);   // (f3: a field of 100 or more, as game.js sets it)
+    $('h-speed').textContent = '299'; $('h-lap').innerHTML = g.lapHTML(st.lap);
     hud.classList.toggle('pol', !!st.pol); $('h-rlbl').textContent = st.pol ? (st.en ? 'POLICE' : 'POLICIJA') : (st.en ? 'POS' : 'MESTO'); hud.classList.toggle('tw', !st.pol && !st.tt);
     hud.classList.toggle('drs', !!st.col); $('h-drs').className = st.col ? 'open' : ''; $('h-tow').classList.toggle('on', !!st.col);
     $('h-fuel').className = st.col ? 'on' : ''; $('h-fuel').innerHTML = st.col ? 'GORIVO 100%<i style="width:100%"></i><b style="left:62%"></b>' : '';
@@ -204,7 +205,7 @@ try {
     ['race (en), SECTOR', Object.assign({ split: 'SECTOR 2  1:05.123' }, RACE_EN)], ['race (en), the fastest lap', Object.assign({ split: 'LAP 11: 02:13.456  ★' }, RACE_EN)],
     ['race, a long place\'s name', Object.assign({ split: LONG.sl, col: true }, RACE)], ['race (en), a long place\'s name', Object.assign({ split: LONG.en, col: true }, RACE_EN)],
     ['flying lap, SEKTOR', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }], ['qualifying, REKORD', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true, split: 'REKORD 01:23.456  -0.523' }], ['qualifying (en), RECORD', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true, split: 'RECORD 01:23.456  -0.523' }],
-    ['Nürburg', { pos: '22', tot: '/22', lap: 'KROG 1/1 · 12,3/20,7 KM', split: 'KROG 1: 06:13.456', flt: true }],
+    ['Nürburg', { pos: '100', tot: '/100', lap: 'KROG 1/1 · 12,3/20,7 KM', split: 'KROG 1: 06:13.456', flt: true }],
     ['time trial', { pos: '', tot: '', lap: 'CP 2/4', cls: ['tt', 'ttd', 'ttn'], tt: true, alt: '2.345 m', turn: 'OVINEK 123/156', split: LONG.sl }],
     ['the duel', { pos: '2', tot: '/2', lap: '2,4/12,3 KM', cls: ['up', 'duel'], gap: 'TEKMEC 12,4 s PRED TABO', split: LONG.sl }],
     ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', cls: ['up'], pol: true, flt: true, alt: '1.611 m', split: LONG.sl }],
@@ -212,7 +213,7 @@ try {
   land: [
     ['race', Object.assign({ split: 'KROG 11: 02:13.456  NAJHITREJŠI' }, RACE)], ['race (en)', Object.assign({ split: 'LAP 11: 02:13.456  FASTEST' }, RACE_EN)],
     ['qualifying', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true }], ['qualifying (en)', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true }], ['flying lap', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }],
-    ['Nürburg', { pos: '22', tot: '/22', lap: 'KROG 1/1 · 12,3/20,7 KM' }], ['Nürburg (en)', { pos: '22', tot: '/22', lap: 'LAP 1/1 · 12.3/20.7 KM', en: true }],
+    ['Nürburg', { pos: '100', tot: '/100', lap: 'KROG 1/1 · 12,3/20,7 KM' }], ['Nürburg (en)', { pos: '100', tot: '/100', lap: 'LAP 1/1 · 12.3/20.7 KM', en: true }],
     ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', pol: true }], ['the whole column, ZAMENJAJ KOLO', Object.assign({ col: true }, RACE)]] };
   const all = [];
   await page.evaluate((s) => { window.__hudS0 = s; }, s0);

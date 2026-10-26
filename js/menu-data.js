@@ -1,16 +1,16 @@
-/* APEX RACING menu: the texts and the per-track map data of the menu (the tracks themselves, the cars, the times and the settings come from the game).
+/* Real Roads Atlas menu: the texts and the per-track map data of the menu (the tracks themselves, the cars, the times and the settings come from the game).
    Made from maketa-menija/data.js; edit here. */
 window.MENU = {
  "game": {
-  "l1": "APEX",
-  "l2": "RACING"
+  "l1": "REAL ROADS ATLAS",
+  "l2": "RACING GAME"
  },
  "modes": [
   {
    "id": "race",
    "name": "Circuit race",
-   "sub": "Laps against 12 rivals. Finish as high as you can.",
-   "chip": "12 RIVALS",
+   "sub": "Laps against 21 rivals. Finish as high as you can.",
+   "chip": "21 RIVALS",
    "img": "assets/menu/mode-race.webp"
   },
   {

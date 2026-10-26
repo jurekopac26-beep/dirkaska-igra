@@ -14,10 +14,14 @@ const Comm = (() => {
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth', 'twenty-first'];
-  const ordinal = (n) => ORD[n] || n + 'th';
+  const ordinal = (n) => ORD[n] || n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');   // (22nd, 23rd, 31st, 100th: the big fields)
+  // a number of cars or rivals in words, for the lines that say how many ({cars}, {rivals}: twenty-two, a hundred)
+  const ONES = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  const words = (n) => n >= 0 && n < 20 ? ONES[n] : n < 100 ? TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '') : n === 100 ? 'a hundred' : String(n);
 
   const LINES = {
-    intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
+    intro: ['Welcome to {track}! {laps} laps, {cars} cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! {cars} cars, {laps} laps, and you start {grid}.'],
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
     introNetN: ['Welcome to {track}! {n} friends on the grid today, {laps}, and no one else. Let the best driver win!', 'Here we are at {track}: {n} of you over {laps}. Friends now, rivals for a while!', 'Good day and welcome to {track}! {n} players, {laps}. Who takes this one?'],
     // the open road (Vršič, Los Caracoles: traffic both ways): the duel with one rival, the run from the police (on Vršič the police radio instead, game.js)
@@ -36,8 +40,10 @@ const Comm = (() => {
     bikeHit: ['A cyclist down! Careful out there!', 'Oh, that cyclist did not see you coming!', 'Mind the cyclists on the edge of the road!'],
     trafficCrash: ['Contact with the traffic!', 'Ouch, that car will need a garage.', 'Straight into the traffic! That hurt.'],
     // a race up an open road (Vršič, the north side: 24 cobbled hairpins up to the pass)
-    introPass: ['Welcome to {track}! Thirteen cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! Thirteen cars heading for the pass, and you start {grid}.'],
-    goPass: ['Lights out, and away they go, up the mountain!', "And they're off! Thirteen cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
+    introPass: ['Welcome to {track}! {cars} cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! {cars} cars heading for the pass, and you start {grid}.'],
+    // the flying start of a race up an open road (game.js flyStep): only the countdown to the start line, then the race is on
+    flyThree: ['Three!'], flyTwo: ['Two!'], flyOne: ['One!'], flyGo: ['The race has started!'],
+    goPass: ['Lights out, and away they go, up the mountain!', "And they're off! {cars} cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
     introOne: ['Welcome to {track}, deep in the forests of the Eifel! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
@@ -189,7 +195,7 @@ const Comm = (() => {
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],
     // time trial on a rally special stage (Ouninpohja): gravel, crests and jumps, a flying finish
     introStage: ['Welcome to {track}, the most famous stage of the Rally of Finland! Just you, the gravel and the clock.', 'Here we are at the start of {track}. {cps} splits, crest after crest, and nobody to race but the clock.', 'Welcome to {track}! Fast gravel, blind crests and big jumps. Keep it flat!'],
-    // the famous jump (def.jumpRec: Ouninpohja's Yellow House, Markko Märtin's 57 m)
+    // the famous jump (def.jumpRec: Ouninpohja's Yellow House, the record of 57 m; by: an invented driver, never a real one)
     jumpRec: ['{m} metres at {place}! The record there is {rec}, by {by}.', 'Over {place}, {m} metres! {by} flew {rec} here.', '{m} metres through the air at {place}!'],
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
@@ -305,7 +311,7 @@ const Comm = (() => {
     let k = Math.floor(Math.random() * pool.length);
     if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
     lastPick[key] = k;
-    let text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
+    let text = pool[k].replace(/\{(\w+)\}/g, (_, n, at, src) => { const v = vars && vars[n] != null ? String(vars[n]) : ''; return /[.!?]\s+$/.test(src.slice(0, at)) ? v.charAt(0).toUpperCase() + v.slice(1) : v; });   // (a value that begins a sentence with a capital: {cars} cars ...)
     text = text.charAt(0).toUpperCase() + text.slice(1);
     const item = { key, text, prio: prio == null ? 1 : prio, t: now() };
     if (opt && opt.ttl > 0) item.ttl = opt.ttl;
@@ -411,7 +417,7 @@ const Comm = (() => {
   let lastIt = null;   // (the line spoken last: its pause after it counts too, so the duck holds between two lines)
   function talking() { const it = cur ? cur.item : lastIt; return !radioMode && busy() && !!(it && !it.radio); }
 
-  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
+  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, words, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 

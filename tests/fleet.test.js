@@ -239,6 +239,16 @@ const MEAS = {};
     c.dmgK = 0.6; C.applyDamage(c, 0.1, c.m.len / 2, 0);
     check('toughness: a hit costs the truck 0.6x, the kart 1.3x, a road car 1x (with the police factor 0.6 on top)', Math.abs(a.dmg - 0.06) < 1e-12 && Math.abs(b.dmg - 0.13) < 1e-12 && Math.abs(c.dmg - 0.16) < 1e-12, [a.dmg, b.dmg, c.dmg].map(v => v.toFixed(3)).join(' / '));
   }
+  { // a knock's damage times the vehicle's knockK (def.phys.knockK: the KOLIBRI's 1 / 3.5, the user's; core.js knock): the same head-on knock
+    // (8 m/s closing; a race's Core.carCollide, the run from the police's Core.crashCollide) costs the KOLIBRI 1 / 3.5 of what it costs it
+    // without one, the other car the same either way; Core.applyDamage called directly as it was (the tests' hits, the fall, wreckCar)
+    const K = model('kolibri'), K1 = Object.assign({}, K, { knockK: undefined }), O = model('levs'), crash = (M, fn) => { const a = new C.Car(M, { phys: 'cs' }), b = new C.Car(O, { phys: 'cs' });
+      a.dmgMode = b.dmgMode = 2; a.place(0, 0, 0); b.place((M.len + O.len) / 2 - 0.03, 0, Math.PI); a.vx = 4; b.vx = -4; fn(a, b); return [a.dmg, b.dmg]; };
+    const R = [C.carCollide, C.crashCollide].map(fn => [...crash(K, fn), ...crash(K1, fn)]), d = new C.Car(K, { phys: 'cs' }); C.applyDamage(d, 0.1, d.m.len / 2, 0);
+    check('KOLIBRI: a knock (a race\'s car to car, the police run\'s) costs it 1 / 3.5 of what it would (knockK), the other car as much as ever; Core.applyDamage called directly as it was',
+      Math.abs(K.knockK - 1 / 3.5) < 1e-12 && R.every(([k, o, k1, o1]) => k1 > 0.005 && Math.abs(k / k1 - 1 / 3.5) < 1e-9 && o === o1) && Math.abs(d.dmg - 0.1) < 1e-12 && C.MODELS.filter(M => M.knockK).map(M => M.id).join() === 'kolibri',
+      R.map(([k, o, k1, o1], i) => `${i ? 'police' : 'race'}: kolibri ${k.toFixed(4)} (without knockK ${k1.toFixed(4)}), the other ${o.toFixed(4)} / ${o1.toFixed(4)}`).join('; ') + `; applyDamage 0.1 -> ${d.dmg}`);
+  }
   { // the wreck queue: the most battered zone's parts first; whatever is already off is not queued (a tail hit to 97 %: the rear's parts off at
     // once, then the wheel at the crushed rear corner, then the front's)
     const c = new C.Car(model('perun'), { phys: 'cs' }); c.dmgMode = 2;
@@ -449,13 +459,13 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     if (!parkedOff(T, X) || places > 1 || X.wreck.side !== -1 || tStop < 0 || tStop > (held ? 9.5 : 12) || (held && places !== 1))
       bad.push(`${what}: ${fmtStand(T, X)}, on the ${X.wreck.side > 0 ? 'right' : 'left'}, stood after ${tStop.toFixed(1)} s, ${places} placements by the marshals`);
   }
-  { // the leader retiring 40 m before the line of a one-lap race rolls over it: no lap, no finish
+  { // the leading rival retiring 40 m before the line of a one-lap race rolls over it: no lap, no finish (the first rival in the order: the player on the autopilot may lead)
     const T = track('jezero'); Math.random = seeded(17);
     const r = new C.Race(T, { numAI: 4, playerGrid: 5, laps: 1, playerModel: model('jelen'), assist: 2, seed: 17, difficulty: 1, damage: 2 });
     r.start(); const P = r.player; let k = 0; const step = () => { Math.random = seeded(17000 + ++k); C.aiControl(P, r, DT); r.step(DT); };
-    let L = null; for (let i = 0; i < 200 / DT && !L; i++) { step(); const o = r.order[0]; if (!o.isPlayer && !o.finished && o.dist > T.len - 40) L = o; }
+    let L = null; for (let i = 0; i < 200 / DT && !L; i++) { step(); const o = r.order.find(c => !c.isPlayer && !c.finished); if (o && o.dist > T.len - 40) L = o; }
     if (L) { r.retire(L); for (let i = 0; i < 15 / DT; i++) step(); }
-    rows.push(`retired 40 m before the line: ${L ? (L.finished ? 'finished!' : 'no finish, ' + (L.dist - T.len).toFixed(0) + ' m past the line') : '(no leader there)'}`);
+    rows.push(`retired 40 m before the line: ${L ? (L.finished ? 'finished!' : 'no finish, ' + (L.dist - T.len).toFixed(0) + ' m past the line') : '(no rival there)'}`);
     if (!L || L.finished || r.finishOrder.includes(L) || L.lap > 1) bad.push('retired before the line: ' + (L ? 'lap ' + L.lap + ', finished ' + L.finished : 'no set-up'));
   }
   check('a retired car drives off onto the run-off and stands there: from 15-25 m/s within 12 s, from standing across the road within 15 s; off the asphalt (or at the barrier), no hard knock once it stands, no lap or finish past the line; on Spa\'s Kemmel straight (no room on the right): over to the left, or put there by the marshals once', !bad.length, bad.length ? bad.join('; ') : rows.join('; '));
