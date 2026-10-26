@@ -2,7 +2,7 @@
 
 Kje v kodi je kaj, da ni treba iskati na slepo. Imena funkcij in naslovi razdelkov so takšni, kot so v kodi: poišči jih z `grep -n "function ime"` ali po naslovu razdelka (`/* ---------------- naslov`). Številk vrstic namenoma ni, ker se spreminjajo.
 
-**Velike datoteke ne beri v celoti:** `js/world.js` (3,9 MB, ~34.600 vrstic), `js/render.js` (~9.400), `js/core.js` (~5.800), `js/game.js` (~5.200), `README.md` (400 KB), `tests/README.md` (110 KB). Najprej poišči ime tu, nato z grepom, nato preberi samo tisti del.
+**Velike datoteke ne beri v celoti:** `js/world.js` (3,9 MB, ~34.600 vrstic), `js/render.js` (~9.400), `js/core.js` (~5.800), `js/game.js` (~5.200), `docs/igra.md` (115 KB), `tests/README.md` (110 KB). Najprej poišči ime tu, nato z grepom, nato preberi samo tisti del.
 
 Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 
@@ -33,6 +33,10 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
 | `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`) |
+| `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
+| `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
+| `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
+| `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
 
 ## Teme v `js/game.js`
 
@@ -52,6 +56,8 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **kvalifikacije**, **kariera**, **prvenstvo**, **šola vožnje**, **Pikes Peak** (razredi, opozorila, medalje), **skoki** `jumps`
 - **internet** `a race with a friend over the internet`, `a championship over the internet`
 - **plošček v menijih**, **Kontrole** `Kontrole (from Nastavitve)`
+- **števec sličic** `the frame counter` (`PH`: naslov `?fps`, okvirček zgoraj levo; `PH.tick`, `PH.s` koraki, `PH.r` risanje; osnova za prikaz za razvijalca, sklop 9)
+- **polje in štart:** `NUM_AI` 21 (22 avtov), `CH_AI` 19 (prvenstvo), `PLAYER_GRID` 999 (igralec zadnji v polju); leteči start `flyStep`, `flyHUD`, `FLY_T`
 - **glavna zanka** `main loop`, **dogodki** `events` (`switch (act)` za `data-act`), **aplikacija** `the game as an app`, **most do menija** `the menu's bridge`, **zagon** `boot`
 
 ## Teme v `js/core.js`
@@ -61,6 +67,8 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
 - **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
+- **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
+- **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)
 - **naključje** `rng(seed)` (mulberry32); `Math.random` je še v učinkih poškodb (sklop 16)
 
 ## Teme v `js/render.js`
@@ -131,6 +139,8 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, `roll.test.js`, `knock.test.js`, testi prog `<id>.test.js`
+- **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
+- **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
 - **Opis vseh testov:** `tests/README.md` (velik; išči po imenu testa)
 
 ## Imena v poročilih o napakah

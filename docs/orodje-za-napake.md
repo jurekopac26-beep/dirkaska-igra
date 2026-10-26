@@ -9,9 +9,10 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | Sklop | Ime | Stanje |
 |---|---|---|
 | 0 | Zasebnost (Cloudflare) | odloženo |
-| 1 | Načrt, kazalo, pravila | v delu |
-| 2 | Razdeljen README | čaka |
+| 1 | Načrt, kazalo, pravila | končano (PR #165) |
+| 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | čaka |
+| 3b | Stabilni testi | čaka |
 | 4 | Posnetek | čaka |
 | 5 | Označevanje | čaka |
 | 6 | Slika in pošiljanje | čaka |
@@ -37,8 +38,10 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 - **Barve svinčnika (6):** rdeča `#FF3B30`, oranžna `#FF9500`, rumena `#FFE14D`, modra `#2AA8FF`, vijolična `#C061FF`, bela `#FFFFFF`. Zelene ni (trava).
 - **Zastavica med dirko:** v vseh načinih razen dirke s prijateljem (`js/net.js`).
 - **Repozitorij je javen:** slike napak, zapiski in seznam napak (F) **ne gredo v repozitorij**.
-- **Testi (kombinacija):** lokalno samo testi, ki se nanašajo na sklop (Node in brskalniški); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu sklopa (`.github/workflows/tests.yml`). Celoten Node nabor tu traja okoli 1 h (26. 10. 2026: `golden` 12 min, `races` več kot 15 min in ga `tests/run.js` ustavi, skupaj ~51 min brez konca `races`), na GitHubu okoli 20 min. Če ga poganjaš lokalno, nastavi `TEST_TIMEOUT_MIN=40`.
+- **Testi (kombinacija):** lokalno samo testi, ki se nanašajo na sklop (Node in brskalniški); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu sklopa (`.github/workflows/tests.yml`). Celoten Node nabor tu traja okoli 1 h (26. 10. 2026: `golden` 12 min, `races` več kot 15 min in ga `tests/run.js` ustavi, skupaj ~51 min brez konca `races`). Na GitHubu trajajo testi 35–55 min: Node okoli 35 min, en del brskalniških do okoli 55 min. Če ga poganjaš lokalno, nastavi `TEST_TIMEOUT_MIN=40`.
 - **Potrditev vnaprej (26. 10. 2026):** uporabnik je potrdil vse sklope. Vsak sklop gre na `main`, ko so testi zeleni (lokalno in na GitHubu), in takoj se začne naslednji; ne čakaj na potrditev med sklopi. Uporabnik preizkuša sproti in javi napake, ki se popravijo v naslednjem sklopu ali posebej.
+- **Sklopi se začnejo sami (26. 10. 2026, uporabnik: »Vseh 17 sklopov začni sam in ne sprašuj, če lahko začneš naslednjega«):** ko je sklop na `main`, seja brez vprašanja zažene sejo za naslednji sklop iz tabele Stanje (model `claude-opus-5-5`) in ji to navodilo prenese, tudi ta stavek. Sklopa 0 in 8 ostaneta odložena in se preskočita, razen če uporabnik reče drugače. Uporabnika se med sklopi ne sprašuje za potrditev, samo pri odločitvah, ki so res njegove (npr. sprememba zasnove); ob koncu vsakega sklopa dobi kratek seznam za preizkus.
+- **Napor high (26. 10. 2026, uporabnik: »nastavi high za vse seje«):** `.claude/settings.json` z `{"effortLevel": "high"}`; vsaka seja, ki klonira `main`, dela z naporom high.
 - **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop.
 - **Vsak popravljen hrošč** dobi svoj test (`tests/napake/<št>.test.js` ali v obstoječem testu teme), okoli 10 min na popravek.
 - **Odloženo:** sklop 0 (repozitorij zaseben, igra na Cloudflare Pages z dostopom samo za uporabnika; GitHub Pro bi stal okoli 4 $/mesec, če bi kdaj izbrali samo zasebno kodo) in sklop 8 (orodje skrito v izdaji za Google Play). Do sklopa 8 je orodje privzeto vklopljeno.
@@ -112,7 +115,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 
 ## Sklopi
 
-Časi so moje delo; vsak sklop, ki spremeni kodo igre, vzame še čas za teste (lokalno samo povezani testi, celotni nabori na GitHubu okoli pol ure). Sklopi gredo eden za drugim brez čakanja (potrditev vnaprej), zato so datumi samo okvir: skupaj okoli 30–40 ur v zaporednih sejah.
+Časi so moje delo; vsak sklop, ki spremeni kodo igre, vzame še čas za teste (lokalno samo povezani testi, celotni nabori na GitHubu 35–55 min). Sklopi gredo eden za drugim brez čakanja (potrditev vnaprej), zato so datumi samo okvir: skupaj okoli 30–40 ur v zaporednih sejah.
 
 ### Sklop 1 · Načrt, kazalo, pravila — 0,5–1 h · 26. 10. 2026
 
@@ -122,12 +125,13 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 - Testi: `npm run test:node` (vsi zeleni; `races.test.js` je presegel 15 min in je bil pognan še posebej). Koda igre se ne spremeni.
 - **Preizkus:** uporabnik prebere načrt in potrdi.
 
-### Sklop 2 · Razdeljen README — 1–1,5 h · 27. 10.
+### Sklop 2 · Razdeljen README — 1–1,5 h · 26. 10. 2026
 
 - **Opisi prog:** iz `README.md` (400 KB) v `docs/proge/<id>.md`, ena datoteka na progo.
 - **V `README.md` ostanejo:** kratek opis igre, seznam prog s povezavami, »Nova proga«, »Nov meni«, »Zasluge« (licence morajo ostati v README po `CLAUDE.md`).
 - **Povezave:** posodobi tiste v `CLAUDE.md`, `tests/README.md` in `maketa-menija/README.md`.
-- **Testi:** `npm run test:node`. Koda igre se ne spremeni.
+- **Testi:** povezani testi (`fleet.test.js` pregleda vse `.md` v repozitoriju; noben test ali orodje ne bere besedila iz `README.md`); celotni nabori na GitHubu. Koda igre se ne spremeni.
+- **Narejeno:** 40 opisov v `docs/proge/<id>.md` (Pikes Peak skupaj z makadamom, Toskana skupaj z Gromskim rtom; Monte Carlo, Toronto in štiri testne proge opisa nimajo), opisi delov igre (fizika, dirka, boksi, vreme, grafika, vozni park …) v `docs/igra.md`. V `README.md` (62 KB) ostanejo opis igre, seznam »Proge« s povezavami, »Nov meni«, »Zgradba projekta« z »Novo vozilo« in »Nova proga« ter »Zasluge«.
 - **Preizkus:** povezave v README delujejo na GitHubu.
 
 ### Sklop 3 · Hitrejši testi, hiter vstop — 2 h · 27. 10.
@@ -137,6 +141,19 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 - **Hiter vstop prek naslova:** `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>`. Igra se odpre naravnost na dirki, `t` premakne posnetek ali dirko na čas. Za teste in `tools/shot.mjs`.
 - **Testi:** node in brskalniški test za hiter vstop.
 - **Preizkus:** povezava z `?proga=bathurst` odpre dirko na Bathurstu.
+
+### Sklop 3b · Stabilni testi — 1–2 h · pred sklopom 4
+
+Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
+
+- **Težava:** brskalniški testi na GitHubu občasno padejo, vsakič na drugem testu, tudi pri spremembah samo v dokumentaciji:
+  - `tests/browser/weather.test.mjs` – menjava dežnih gum v boksih, avto v 3 minutah ne zapelje v bokse (PR #165);
+  - `tests/browser/pits.test.mjs` – »Bathurst: at full right lock the car keeps to the middle of the lane« (`main` d9c6a88);
+  - `tests/browser/radio.test.mjs` – polje radia pod zemljevidom, razmik 6,9 px pokonci in 3,8 px ležeče (PR #167).
+  Prej so bili zeleni, verjetno je vzrok v novostih na `main` (22 avtov, leteči start) ali v počasnih strojih GitHuba.
+- **Kaj:** za vsakega najdi vzrok (čas, naključje, več avtov, mejne vrednosti) in popravi test ali igro. Testov ne izklapljaj in ne preskakuj. Če je padel pravi hrošč v igri, ga popravi.
+- **Preveri:** vsak popravljen test lokalno zaženi večkrat zapored (npr. 5×), nato celotne nabore na GitHubu.
+- Če pri delu najdeš še kak test, ki občasno pade, ga dodaj sem.
 
 ### Sklop 4 · Posnetek — 1,5–2,5 h · 28. 10.
 
@@ -174,6 +191,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 
 - **Dnevnik napak:** `window.onerror`, `unhandledrejection`, zatikanja (pod 20 sličic/s več kot 1 s). Hrani zadnjih 50 zapisov; priloži se poročilu.
 - **Prikaz s tipko O** (in v Nastavitvah orodja): FPS, klici risanja in oglišča (`renderer.info`), `s` v metrih, krog, tema, nivo podrobnosti (LOD).
+- **Gradi na obstoječem števcu sličic** (main, PR #164): naslov `?fps` vklopi `PH` v `js/game.js` (iskanje: `grep -n "the frame counter" js/game.js`). Okvirček zgoraj levo pod podatkom o krogu kaže sličice na sekundo, najpočasnejšo sličico zadnje sekunde ter povprečni čas korakov dirke (`PH.s`) in risanja (`PH.r`, `Render.frame`); osvežuje se enkrat na sekundo (`PH.tick` v glavni zanki). Prikaz s tipko O naj uporabi isti `PH` (vklop tudi s tipko, ne samo z naslovom) in mu doda vrstice; meritev zatikanj za dnevnik (pod 20 sličic/s več kot 1 s) naj bere iste čase sličic. Fizika velikih polj ima svoj nivo podrobnosti (`LOD` in `Race._lodPlan` v `js/core.js`, samo nad 30 avti, npr. Nürburg s 100 avti): prikaz naj pove, ali je vklopljen.
 - **Testi:** `napake.test.mjs`; GitHub vse.
 - **Preizkus:** prikaz na A25 med dirko na pravi progi (npr. Bathurst, Spa).
 
