@@ -13,7 +13,7 @@
 //    background; the car's own colours: every vehicle in every player's and rival's colour, stripe on and off, no vertex but the glass
 //    within 0.06 of a glass colour (Render.kitGlassNear)
 //  - in a race (Bakreni gozd: a pit track, the pit crew knows the car), each vehicle as the player and as a rival: the draw calls of its
-//    meshes alone (the rest of the scene hidden, frustum culling off, one frame, every pass counted as perf.test.mjs does): the player
+//    meshes alone (the rest of the scene hidden, frustum culling and carCull off, one frame, every pass counted as perf.test.mjs does): the player
 //    <= 14, a rival <= 9; the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
 //    ones mirrored), the player's casting shadows, a rival's not; the pit crew's hubs (crDims) on the wheel meshes (1 cm); the intact car
 //    drawn with its outer shell only; the materials the graphics test
@@ -26,7 +26,8 @@
 //    (after limping through a corner: no offset left), a repair; as the player sees it (every
 //    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
 //    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
-//  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
+//  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife (the game's own race: 21 and 99 rivals; perf.json
+//    measured with the same fields, so it is regenerated with them), within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
 //    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
@@ -58,12 +59,14 @@ try {
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
     // one frame's draws with only `keep` (some of the scene's children) and the lights shown, frustum culling off on them
     const frameWith = (keep, target, mode) => {
+      Render.setDebug({ allCars: true }); Render.frame(0, 1, target, mode || 'chase', { noFx: true });   // (every car in the scene, one out of the view too: Render's carCull off while it is measured)
       const S = Render.scene, saved = S.children.map(o => [o, o.visible]), culled = [];
       for (const o of S.children) o.visible = !!o.isLight || keep.includes(o);
       for (const k of keep) k.traverse(o => { if (o.frustumCulled) { culled.push(o); o.frustumCulled = false; } });
       const c0 = __gl.calls, v0 = __gl.verts; Render.frame(0, 1, target, mode || 'chase', { noFx: true });
       const r = [__gl.calls - c0, __gl.verts - v0];
       for (const [o, v] of saved) o.visible = v; for (const o of culled) o.frustumCulled = true;
+      Render.setDebug({ allCars: false });
       return r;
     };
     // a view's own cost: its group alone minus the empty scene (what every frame draws anyway: the post pass, ...)

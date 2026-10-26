@@ -72,8 +72,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, eight kilometres and thirteen hairpins up the South Grade, and you start {grid}.", "Here we are at the foot of {track}. Hairpin after hairpin to the top, and you line up {grid}.", "Welcome to the mountain above Pauma Valley, and to {track}! Thirteen cars, one grade, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up the mountain!", "And they're off! Thirteen hairpins to the top!", "Green light! The pack charges up the grade!", "Go, go, go! Next stop, the top of the grade!"],
+      introPass: ["Welcome to {track}! {cars} cars, eight kilometres and thirteen hairpins up the South Grade, and you start {grid}.", "Here we are at the foot of {track}. Hairpin after hairpin to the top, and you line up {grid}.", "Welcome to the mountain above Pauma Valley, and to {track}! {cars} cars, one grade, and you start {grid}."],
+      goPass: ["And away they go, up the mountain!", "And they're off! Thirteen hairpins to the top!", "The race is on! The pack charges up the grade!", "Go, go, go! Next stop, the top of the grade!"],
       introPassTT: ["Welcome to {track}! Eight kilometres of hairpins, just you and the clock.", "Here we are at the foot of {track}. {cps} checkpoints between you and the top.", "Welcome to {track}! No rivals this time, only the clock and the hairpins."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the hairpins!", "And you're away! Up the South Grade!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, riders and cyclists both ways. Just you and {rival}, first to the top wins!", "Here we are at the foot of {track}. A duel with {rival} through the traffic on the hairpins. Watch out for the cyclists on the climb!", "Welcome to {track}! No closed road this time: riders leaning through every hairpin. Beat {rival} to the top!"],
