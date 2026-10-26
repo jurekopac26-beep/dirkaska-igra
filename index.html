@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=a0803dec">
-<link rel="stylesheet" href="css/style.css?v=639f01cc">
+<link rel="stylesheet" href="css/style.css?v=9b156b05">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=0169ba8c" media="not all">
 </head>
 <body>
@@ -25,23 +25,36 @@
   <div id="vignette"></div>
 
   <!-- ============ REPLAY (after the race: TV cameras beside the track) ============ -->
-  <div id="replay-ui" class="off">
-    <div class="rp-top"><span class="rp-rec">&#9679; POSNETEK</span><span id="rp-info"></span></div>
-    <div class="rp-prog"><i id="rp-prog"></i></div>
-    <div class="rp-bar">
-      <button data-act="rp-restart" aria-label="Na začetek">&#9198;</button>
-      <button data-act="rp-play" id="rp-play" aria-label="Predvajaj ali ustavi">&#10074;&#10074;</button>
-      <button data-act="rp-speed" id="rp-speed">1&times;</button>
-      <button data-act="rp-cam" id="rp-cam">TV</button>
-      <button data-act="rp-prev" aria-label="Prejšnji avto">&#9664;</button>
-      <button data-act="rp-next" aria-label="Naslednji avto">&#9654;</button>
-      <button data-act="rp-hl" id="rp-hl" aria-label="Najboljši trenutki">&#9733; Trenutki</button>
-      <button data-act="rp-photo" id="rp-photo">Foto</button>
-      <button data-act="rp-exit" class="rp-exit">Končaj</button>
-      <button data-act="rp-skip" id="rp-skip" class="rp-skip">Preskoči</button>
+  <div id="replay-ui" class="off"><!-- here: Posnetek do sem (the race so far, the race waiting on the pause) -->
+    <div class="rp-top">
+      <div class="rp-row">
+        <span class="rp-rec" id="rp-rec">&#9679; POSNETEK</span>
+        <span class="rp-car"><button data-act="rp-prev" aria-label="Prejšnji avto">&#9664;</button><span id="rp-info"></span><button data-act="rp-next" aria-label="Naslednji avto">&#9654;</button></span>
+        <span class="rp-mode"><button data-act="rp-all" id="rp-all" class="sel">Cel posnetek</button><button data-act="rp-flags" id="rp-flags" disabled>Zastavice</button></span>
+      </div>
+      <div id="rp-wait" class="rp-wait"></div>
     </div>
-    <div id="rp-hl-cap" class="off"></div>
+    <div class="rp-bot">
+      <div id="rp-hl-cap" class="off"></div>
+      <div class="rp-line"><span id="rp-now" class="rp-t">00:00.0</span><div class="rp-prog" id="rp-line"><i id="rp-prog"></i><b id="rp-knob"></b><span class="rp-zdaj">ZDAJ</span></div><span id="rp-len" class="rp-t">00:00.0</span></div>
+      <div class="rp-bar">
+        <button data-act="rp-restart" aria-label="Na začetek">&#9198;</button>
+        <button data-act="rp-b5" class="rp-s5" aria-label="5 s nazaj">&minus;5 s</button>
+        <button data-act="rp-fback" aria-label="Sličica nazaj">&#9664;&#10073;</button>
+        <button data-act="rp-play" id="rp-play" aria-label="Predvajaj ali ustavi">&#10074;&#10074;</button>
+        <button data-act="rp-fnext" aria-label="Sličica naprej">&#10073;&#9654;</button>
+        <button data-act="rp-f5" class="rp-s5" aria-label="5 s naprej">+5 s</button>
+        <button data-act="rp-speed" id="rp-speed">1&times;</button>
+        <button data-act="rp-cam" id="rp-cam">TV</button>
+        <button data-act="rp-hl" id="rp-hl" aria-label="Najboljši trenutki">&#9733;<span class="rp-wd"> Trenutki</span></button>
+        <button data-act="rp-photo" id="rp-photo">Foto</button>
+        <button data-act="rp-exit" class="rp-exit">Končaj</button>
+        <button data-act="rp-race" class="rp-go">Nazaj v dirko</button>
+        <button data-act="rp-skip" id="rp-skip" class="rp-skip">Preskoči</button>
+      </div>
+    </div>
   </div>
+  <div id="rp-count" class="off"></div><!-- Nazaj v dirko: 3 · 2 · 1, then the race goes on -->
 
   <!-- ============ HUD ============ -->
   <div id="hud" class="off">
@@ -297,6 +310,7 @@
       <div class="btns">
         <button class="btn primary" data-act="resume">Nadaljuj</button>
         <button class="btn fsbtn" data-act="fullscreen">Celoten zaslon</button>
+        <button class="btn" data-act="rp-here" id="pause-rp">Posnetek do sem</button>
         <button class="btn" data-act="restart" id="pause-restart">Ponovi dirko</button>
         <button class="btn off" data-act="quali-skip" id="pause-skip">Preskoči kvalifikacije</button>
         <button class="btn" data-act="photo" id="pause-photo">Foto</button>
@@ -483,7 +497,7 @@
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
 <script src="js/tracks/hotham.js?v=9c00121d"></script>
 <script src="js/tracks/townsville.js?v=08aacb6a"></script>
-<script src="js/lang.js?v=900f4a01"></script>
+<script src="js/lang.js?v=3cea5b52"></script>
 <script src="js/tracks/marrakesh.js?v=3a59b91b"></script>
 <script src="js/tracks/troisrivieres.js?v=1ff731df"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=1a6b8a1d">
@@ -532,7 +546,7 @@
 <script src="js/world-montreal.js?v=7c70bc6a"></script>
 <script src="js/render.js?v=27212f48"></script>
 <script src="js/sfx.js?v=19ca0616"></script>
-<script src="js/input.js?v=f18ded64"></script>
+<script src="js/input.js?v=5807015b"></script>
 <script src="js/comm.js?v=75a0091d"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=39210409"></script>
@@ -542,6 +556,6 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=2c24d435"></script>
-<script src="js/game.js?v=b6c01d88"></script>
+<script src="js/game.js?v=6a817811"></script>
 </body>
 </html>

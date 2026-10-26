@@ -13,7 +13,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | končano |
 | 3b | Stabilni testi | končano (PR #170) |
-| 4 | Posnetek | čaka |
+| 4 | Posnetek | končano |
 | 5 | Označevanje | čaka |
 | 6 | Slika in pošiljanje | čaka |
 | 7 | Zastavica med dirko | čaka |
@@ -175,6 +175,16 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Testi:** `tests/browser/replay.test.mjs` (razširi), `ctrl`, `pad`, `lang`; GitHub vse.
 - **Najbolj negotov sklop** (vračanje stanja dirke).
 - **Preizkus:** skok s klikom, vlečenje, 5 s nazaj, Posnetek do sem sredi dirke in nadaljevanje na S25 in A25, ležeče in pokonci.
+- **Narejeno:**
+  - **Časovnica** (`rpLineBind`, `rpSeek`, `rpIdx`): debelejša, tap skoči, vlečenje premika (posnetek med vlečenjem stoji, nato teče naprej); levo čas, desno dolžina (`rpClock`, 00:41.3).
+  - **Gumbi:** na začetek, −5 s, sličica nazaj, predvajaj/ustavi, sličica naprej, +5 s, hitrost, kamera, ★ Trenutki, Foto, Končaj. Prejšnji/naslednji avto sta zgoraj ob imenu avta (◀ Ti · čas ▶), da so gumbi ležeče v eni vrsti (od 640 px; pod 760 px ★ brez besede), pokonci v dveh. Sličica je en posneti trenutek (`REC_DT`, 1/20 s; pri več kot 30 avtih 1/10 s).
+  - **Stikalo** Cel posnetek | Zastavice (n) zgoraj desno; brez zastavic je Zastavice siv. Zastavice bere iz `recd.flags` (sklop 7 jih doda in naredi način Zastavice).
+  - **Posnetek do sem** (`rpHere`): gumb v pavzi za Celoten zaslon, tipka I v Kontrolah (`KEY_DEF.replay`, `Input.onReplay`); ni v dirki s prijateljem in ne pred 2 s posnetka. Začne 10 s pred zdaj (`RP_BACK`) in teče. Napis ● POSNETEK DO SEM, ploščica »Dirka čaka na pavzi · krog x/y«, zelena oznaka ZDAJ na koncu časovnice, zelen gumb Nazaj v dirko namesto Končaj (tudi tipka I).
+  - **Stanje avtov:** `rpKeep` pred ogledom shrani vse lastnosti vsakega posnetega avta (kopiji `q` in `ws`) in stanje varnostnega avta, `rpBack` jih vrne; `rl` (prevračanje), ki ga postavi posnetek, se odstrani. Test primerja 22 avtov po 22 lastnostih: vsi enaki, čas dirke enak.
+  - **Nazaj v dirko** (`rpRace`): avti nazaj, prikaz dirke in gumbi nazaj, odštevanje 3 · 2 · 1 (`rpCd`, `cdStep` v glavni zanki na času igre, s piskom), nato `resume()`. Pavza med odštevanjem ga ustavi in odpre pavzo; I med odštevanjem spet odpre posnetek.
+  - **Hitri vstop** (`quickRun`): HUD se osveži, preden se dirka ustavi (prej je kazal začetne vrednosti).
+  - Prevodi v `js/lang.js`; testi `replay` (razširjen: Bathurst s hitrim vstopom), `ctrl` in `pad` (nova tipka), `lang`.
+  - **Opomba:** začetek 10 s pred zdaj, prejšnji/naslednji avto zgoraj in ★ brez besede na ozkem zaslonu so moje odločitve; če uporabnik želi drugače, se popravi v naslednjem sklopu.
 
 ### Sklop 5 · Označevanje — 1,5–2 h · 29. 10.
 

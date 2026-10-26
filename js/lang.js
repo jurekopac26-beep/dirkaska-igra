@@ -67,6 +67,10 @@
     'Mehke': 'Soft', 'Trde': 'Hard', 'Gume v boksih': 'Pit tyres', 'Gume za suho na progah z boksi (za dež jih mehaniki dajo sami)': 'Dry tyres on the tracks with pits (the mechanics fit the rain tyres themselves)',
     'Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)': 'Dry tyres at the next pit stop (the mechanics fit the rain tyres themselves)', 'MEHKE': 'SOFT', 'SREDNJE': 'MEDIUM', 'TRDE': 'HARD', 'DEŽNE': 'WET', 'SUHE': 'DRY', '{0} GUME': '{0} TYRES',
     'Najboljši trenutki': 'Highlights', '★ Trenutki': '★ Highlights', 'ŠTART': 'START', 'PREHITEVANJE': 'OVERTAKE', 'NESREČA': 'CRASH', '{0} mesto': '{0} place', 'Tvoja zmaga!': 'Your win!', 'Zmaga: {0}': 'Winner: {0}', 'Najboljših trenutkov ni.': 'No highlights in this race.',
+    /* ---- the replay: the timeline, a frame, 5 s; Posnetek do sem (the race so far, from the pause or the key I) ---- */
+    'Posnetek do sem': 'Replay to here', 'Trenutki': 'Highlights', '\u25cf POSNETEK DO SEM': '\u25cf REPLAY TO HERE', 'Cel posnetek': 'Whole replay', 'Zastavice': 'Flags', 'Zastavice ({0})': 'Flags ({0})', 'ZDAJ': 'NOW',
+    '5 s nazaj': '5 s back', '5 s naprej': '5 s on', 'Sličica nazaj': 'Frame back', 'Sličica naprej': 'Frame on', 'Nazaj v dirko': 'Back to the race',
+    'Dirka čaka na pavzi': 'The race waits on the pause', 'Dirka čaka na pavzi · krog {0}/{1}': 'The race waits on the pause · lap {0}/{1}',
     'Poškodbe in vreme: tvoje nastavitve veljajo za vse.': 'Damage and weather: your settings apply to everyone.', 'Poškodbe in vreme: tvoje nastavitve veljajo za oba.': 'Damage and weather: your settings apply to both of you.', 'Poškodbe in vreme: po nastavitvah gostitelja.': 'Damage and weather: as the host has set them.',
     'Prototip za 24-urne vzdržljivostne dirke: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.': 'A prototype for 24-hour endurance races: a closed cockpit, a big rear wing. The fastest car in the game down the straights, its wings hold it on the road through fast bends. In it you race against prototypes only.',
     'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.': 'An American muscle car from the 70s with a big V8. Hard to catch on a straight, happy to swing its tail in the corners: the king of drift.',
@@ -408,7 +412,7 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m']);
+  const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)

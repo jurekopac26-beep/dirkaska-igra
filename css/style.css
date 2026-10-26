@@ -528,15 +528,52 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 /* ================= REPLAY: the controls over the picture ================= */
 #replay-ui { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
 #replay-ui.off { display: none; }
-#replay-ui .rp-top { position: absolute; left: calc(12px + var(--sl)); right: calc(12px + var(--sr)); top: calc(10px + var(--st)); display: flex; gap: 12px; align-items: center; font: 700 italic clamp(12px, 3.4vh, 16px)/1.2 var(--f-ui); color: #fff; text-shadow: 0 1px 3px #000; }
+#replay-ui .rp-top { position: absolute; left: calc(12px + var(--sl)); right: calc(12px + var(--sr)); top: calc(10px + var(--st)); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font: 700 italic clamp(12px, 3.4vh, 16px)/1.2 var(--f-ui); color: #fff; text-shadow: 0 1px 3px #000; }
+#replay-ui .rp-row { width: 100%; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
 #replay-ui .rp-rec { color: #ff4a3a; letter-spacing: .06em; animation: rpBlink 1.2s steps(2) infinite; }
 @keyframes rpBlink { 50% { opacity: .35; } }
-#replay-ui .rp-prog { position: absolute; left: calc(12px + var(--sl)); right: calc(12px + var(--sr)); bottom: calc(64px + var(--sb)); height: 4px; border-radius: 2px; background: rgba(255,255,255,.25); }
-#replay-ui .rp-prog i { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--lcd); }
-#replay-ui .rp-bar { position: absolute; left: 50%; bottom: calc(12px + var(--sb)); transform: translateX(-50%); display: flex; gap: 6px; pointer-events: auto; }
-#replay-ui .rp-bar button { min-width: 44px; min-height: 42px; padding: 0 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; font: 700 clamp(13px, 3.6vh, 16px)/1 var(--f-ui); cursor: pointer; }
+/* the car followed (◀ name · time ▶) and the switch Cel posnetek | Zastavice (n) (grey without flags) */
+#replay-ui .rp-car { display: inline-flex; align-items: center; gap: 8px; }
+#replay-ui .rp-top button { pointer-events: auto; min-width: 36px; min-height: 34px; padding: 0 10px; border-radius: 9px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; font: 700 clamp(12px, 3.4vh, 15px)/1 var(--f-ui); text-shadow: none; cursor: pointer; }
+#replay-ui .rp-top button:active { background: rgba(255,255,255,.18); }
+#replay-ui .rp-mode { margin-left: auto; display: inline-flex; }
+#replay-ui .rp-mode button { border-radius: 0; white-space: nowrap; }
+#replay-ui .rp-mode button:first-child { border-radius: 9px 0 0 9px; border-right-width: 1px; }
+#replay-ui .rp-mode button:last-child { border-radius: 0 9px 9px 0; border-left-width: 1px; }
+#replay-ui .rp-mode button.sel { background: rgba(255,255,255,.88); color: #14181f; }
+#replay-ui .rp-mode button:disabled { color: rgba(255,255,255,.38); cursor: default; }
+/* Posnetek do sem: the plate under the title, the timeline's green end ZDAJ, Nazaj v dirko for Končaj */
+#replay-ui .rp-wait { display: none; padding: 4px 10px; border-radius: 6px; background: rgba(12,16,40,.78); font: 600 clamp(11px, 3vh, 14px)/1.25 var(--f-ui); font-style: normal; color: var(--chalk); text-shadow: none; }
+#replay-ui.here .rp-wait { display: block; }
+/* the bottom: the caption of the moment, the timeline with the times, the buttons (in rows as the width allows) */
+#replay-ui .rp-bot { position: absolute; left: calc(12px + var(--sl)); right: calc(12px + var(--sr)); bottom: calc(10px + var(--sb)); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#replay-ui .rp-line { width: 100%; display: flex; align-items: center; gap: 10px; }
+#replay-ui .rp-t { flex: none; font: 700 clamp(11px, 3.2vh, 14px)/1 var(--f-ui); color: #fff; text-shadow: 0 1px 3px #000; font-variant-numeric: tabular-nums; }
+#replay-ui .rp-prog { position: relative; flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.28); pointer-events: auto; touch-action: none; cursor: pointer; }
+#replay-ui .rp-prog::before { content: ''; position: absolute; left: -8px; right: -8px; top: -12px; bottom: -12px; }   /* (a finger's room to tap and drag) */
+#replay-ui .rp-prog i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--lcd); }
+#rp-knob { position: absolute; top: 50%; left: 0; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.6); pointer-events: none; }
+#replay-ui .rp-zdaj { display: none; position: absolute; right: 0; bottom: calc(100% + 7px); transform: translateX(50%); font: 800 clamp(9px, 2.4vh, 11px)/1 var(--f-ui); letter-spacing: .08em; color: #2fd36b; text-shadow: 0 1px 2px #000; pointer-events: none; }
+#replay-ui .rp-zdaj::after { content: ''; position: absolute; left: 50%; top: 100%; width: 4px; height: 21px; margin-left: -2px; border-radius: 2px; background: #2fd36b; }
+#replay-ui.here .rp-zdaj { display: block; }
+#replay-ui .rp-bar { max-width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; pointer-events: auto; }
+#replay-ui .rp-bar button { min-width: 42px; min-height: 42px; padding: 0 9px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; font: 700 clamp(13px, 3.6vh, 16px)/1 var(--f-ui); white-space: nowrap; cursor: pointer; }
 #replay-ui .rp-bar button:active { background: rgba(255,255,255,.18); }
+#replay-ui .rp-bar .rp-s5 { font-size: clamp(12px, 3.2vh, 14px); }
 #replay-ui .rp-bar .rp-exit { background: rgba(230,59,46,.8); border-color: rgba(255,255,255,.5); }
+#replay-ui .rp-bar .rp-go { display: none; background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
+#replay-ui.here .rp-bar .rp-exit { display: none; }
+#replay-ui.here .rp-bar .rp-go { display: block; }
+@media (max-width: 760px) {   /* a phone on its side: the buttons in one row (★ without its word); upright in two */
+  #replay-ui .rp-bar { gap: 4px; }
+  #replay-ui .rp-bar button { min-width: 36px; padding: 0 6px; }
+  #replay-ui .rp-wd { display: none; }
+}
+/* Nazaj v dirko: 3 · 2 · 1 over the race */
+#rp-count { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 21; font: 400 italic clamp(64px, 24vh, 150px)/1 var(--f-display); color: #fff; text-shadow: 3px 3px 0 rgba(0,0,0,.45), 0 0 24px rgba(0,0,0,.5); pointer-events: none; }
+#rp-count.off { display: none; }
+#rp-count.pop { animation: rpPop .9s ease-out both; }
+@keyframes rpPop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: .85; transform: translate(-50%, -50%) scale(.92); } }
 
 /* ================= CAREER (Kariera): the money, the garage; the price of a car, the prices of upgrades ================= */
 #s-career { justify-content: center; }
@@ -853,13 +890,13 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
 /* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
-#rp-hl-cap { position: absolute; left: 50%; bottom: calc(80px + var(--sb)); transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
+#rp-hl-cap { max-width: 100%; padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
 #rp-hl-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }
 #replay-ui .rp-bar #rp-hl.on { background: rgba(255,207,46,.85); color: #14181f; border-color: #fff; }
 /* the best moment after a race (Video po dirki): while it plays and is recorded only Preskoči on the replay's bar; then the video under the
    results (a tap: big, a tap again: back) with Deli */
 #replay-ui .rp-bar .rp-skip { display: none; }
-#replay-ui.auto .rp-bar button { display: none; }
+#replay-ui.auto .rp-bar button, #replay-ui.auto .rp-top button, #replay-ui.auto .rp-t { display: none; }
 #replay-ui.auto .rp-bar .rp-skip { display: block; padding: 0 16px; }
 #replay-ui .rp-bar .rp-skip::after { content: ' \25b6\25b6'; font-size: .8em; }
 .res-vid { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 6px 8px 6px 6px; border-radius: 10px; border: 2px solid rgba(255,198,41,.4); background: rgba(255,198,41,.08); }
@@ -873,11 +910,6 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .res-vid .rv-txt b { font: 700 italic clamp(12px, 3.4vh, 16px)/1.2 var(--f-ui); color: var(--lcd); }
 .res-vid .rv-txt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .res-vid .rv-share { flex: none; min-height: 40px; padding: 8px 16px; }
-@media (max-width: 600px) {   /* a phone upright: the replay's buttons in two rows, the progress and the caption above them */
-  #replay-ui .rp-bar { flex-wrap: wrap; justify-content: center; width: calc(100% - 24px); }
-  #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
-  #rp-hl-cap { bottom: calc(128px + var(--sb)); }
-}
 /* Pikes Peak: the course flyover before the start (TV captions at the famous places; the touch controls out of the picture while it runs) */
 #pk-fly { display: none; position: absolute; left: calc(14px + var(--sl)); top: calc(14px + var(--st)); max-width: calc(100% - 90px); padding: 8px 14px 9px; border-left: 4px solid var(--lcd); border-radius: 0 8px 8px 0; background: linear-gradient(90deg, rgba(10, 14, 22, .82), rgba(10, 14, 22, .55)); color: var(--chalk); pointer-events: none; opacity: 0; }
 #pk-fly.show { display: block; }
