@@ -11,7 +11,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 0 | Zasebnost (Cloudflare) | odloženo |
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
-| 3 | Hitrejši testi, hiter vstop | čaka |
+| 3 | Hitrejši testi, hiter vstop | končano |
 | 3b | Stabilni testi | čaka |
 | 4 | Posnetek | čaka |
 | 5 | Označevanje | čaka |
@@ -140,6 +140,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 - **Tih izpis** `--quiet` v `tests/run.js`: samo napake in povzetek.
 - **Hiter vstop prek naslova:** `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>`. Igra se odpre naravnost na dirki, `t` premakne posnetek ali dirko na čas. Za teste in `tools/shot.mjs`.
 - **Testi:** node in brskalniški test za hiter vstop.
+- **Narejeno:** `npm run test:related` (`tests/run.js --related --quiet`; `--files` za izbrane datoteke, seznam `RELATED` za velike skupne datoteke), `--quiet`, hiter vstop (`Core.quickArgs`, `quickGo` v `js/game.js`). `nacin`: `dirka`, `kronometer`, `promet`, `policija` (ali kot v kodi), samo načini proge. `t`: dirka na avtopilotu do `t` s po štartu pod nalagalnim zaslonom, nato pavza (posnetek ima vožnjo do tja); premik posnetka na čas pride s časovnico v sklopu 4. Način, vreme in avto se shranijo kot v meniju. Testi `tests/quick.test.js`, `tests/browser/quick.test.mjs`, `shards.test.js` (`--related`, `--quiet`); opis v `tests/README.md`.
 - **Preizkus:** povezava z `?proga=bathurst` odpre dirko na Bathurstu.
 
 ### Sklop 3b · Stabilni testi — 1–2 h · pred sklopom 4
@@ -150,6 +151,8 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - `tests/browser/weather.test.mjs` – menjava dežnih gum v boksih, avto v 3 minutah ne zapelje v bokse (PR #165);
   - `tests/browser/pits.test.mjs` – »Bathurst: at full right lock the car keeps to the middle of the lane« (`main` d9c6a88);
   - `tests/browser/radio.test.mjs` – polje radia pod zemljevidom, razmik 6,9 px pokonci in 3,8 px ležeče (PR #167).
+  - `tests/browser/carlow.test.mjs` – »on its side: flat out on the Kemmel straight (over 170 km/h…)«, izmerjeno 164 km/h (PR #167, Igra v brskalniku 3/4);
+  - `tests/browser/share.test.mjs` – korak 4, drugi telefon odpre povezavo `#duh=…`: `waitForFunction` na `tdgp-fghost-jezero` po 20 s poteče (PR #168, 2/4; lokalno 1 od 3). Duh je takrat že shranjen; stran izriše le nekaj sličic, `waitForFunction` pa privzeto preverja po sličicah (`raf`). Predlog: `polling: 250`.
   Prej so bili zeleni, verjetno je vzrok v novostih na `main` (22 avtov, leteči start) ali v počasnih strojih GitHuba.
 - **Kaj:** za vsakega najdi vzrok (čas, naključje, več avtov, mejne vrednosti) in popravi test ali igro. Testov ne izklapljaj in ne preskakuj. Če je padel pravi hrošč v igri, ga popravi.
 - **Preveri:** vsak popravljen test lokalno zaženi večkrat zapored (npr. 5×), nato celotne nabore na GitHubu.

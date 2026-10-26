@@ -7,6 +7,7 @@
     "test:node": "node tests/run.js node",
     "test:browser": "node tests/run.js browser",
     "test:fleet": "node tests/run.js fleet",
+    "test:related": "node tests/run.js --related --quiet",
     "icons": "node tools/icons.mjs",
     "golden:update": "node tests/golden.test.js --update && node tests/races.test.js --update && node tests/browser/world.test.mjs --update && node tests/browser/perf.test.mjs --update"
   },
