@@ -293,16 +293,16 @@ try {
     T.check('round 2 in the PICO TURBO: qualifying with the nine TITANs (sized and driven by the championship\'s car), the race after it the same nine',
       q0 === 9 && qr.length === 10 && qr.filter(c => c === 'TITAN').length === 9 && qr.includes('PICO TURBO') && r2.n === 10 && r2.cars === 'titan' && r2.me === 'pico', JSON.stringify({ q0, qr, r2 }));
     // a championship started in the FORMULA ORKAN (a one-make class, no field of its own; kept after round 1) and the next round in the
-    // PICO TURBO: still twelve formulas (the standings, "tekmeci: 12× FORMULA ORKAN", the race)
-    await page.evaluate(() => localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, car: 'formula', rounds: [{ track: 'jezero', order: Core.champKeys(12), rain: 0 }] })));
+    // PICO TURBO: still its nineteen formulas (the standings, "tekmeci: 19× FORMULA ORKAN", the race)
+    await page.evaluate(() => localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, car: 'formula', n: 19, rounds: [{ track: 'jezero', order: Core.champKeys(19), rain: 0 }] })));
     await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
     await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); }); await act('to-champ'); await wait(250);
     const s3 = await st();
     await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'gora'); }, null, { timeout: 90000 });
     const r3 = await rivals();
-    T.check('a championship started in the FORMULA ORKAN, round 2 in the PICO TURBO: its rivals still formulas (the standings: twelve, "tekmeci: 12× FORMULA ORKAN"; the race: twelve)',
-      s3.mycar === 'PICO TURBO' && /tekmeci: 12× FORMULA ORKAN/.test(s3.diff) && s3.rows.filter(c => c === 'FORMULA ORKAN').length === 12 && r3.n === 13 && r3.cars === 'formula' && r3.me === 'pico',
+    T.check('a championship started in the FORMULA ORKAN, round 2 in the PICO TURBO: its rivals still formulas (the standings: nineteen, "tekmeci: 19× FORMULA ORKAN"; the race: nineteen)',
+      s3.mycar === 'PICO TURBO' && /tekmeci: 19× FORMULA ORKAN/.test(s3.diff) && s3.rows.filter(c => c === 'FORMULA ORKAN').length === 19 && r3.n === 20 && r3.cars === 'formula' && r3.me === 'pico',
       JSON.stringify({ s3: { rows: s3.rows, mycar: s3.mycar, diff: s3.diff }, r3 }));
     T.check('no page errors (championship)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();

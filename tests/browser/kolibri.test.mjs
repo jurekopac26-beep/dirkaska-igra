@@ -55,8 +55,16 @@ try {
       { const s0 = scr(); P.fxCar = 2; Render.frame(0.05, 1, P, 'chase', {}); hold(0.5); out.stale = [s0, scr()]; }
       // (twelve more grazes on the left, round one place: each a little deeper, never caved in)
       for (let k = 0; k < 12; k++) touch((k % 2) * 0.04, -P.m.wid / 2); out.many = most();
-      // along the barrier: the car put against the rail (1 cm off it), driven along it at 14 m/s for 0.4 s, then back on the road, three times
-      fresh(); base(); const Tk = R.track, q = Tk.query(P.x, P.z, P.q ? P.q.i : 0, {}), i = q.i, tx = Tk.tx[i], tz = Tk.tz[i], h = Math.atan2(tz, tx), nx = Tk.nx[i], nz = Tk.nz[i];
+      // along the barrier: the car put against the rail (1 cm off it), driven along it at 14 m/s for 0.4 s, then back on the road, three times;
+      // on a stretch with nothing on it (railAt: from where the player stands back along the road, the first spot with no prop and no rival
+      // within 4 m of its path, 4 m behind to 14 m ahead: a braking board on the verge by the rail, on Bathurst's main straight, is a knock on the
+      // nose that dents both flanks; a full field of 22 puts the player's grid slot just short of it)
+      const railAt = (j0) => { const Tk = R.track, L = [...(R.props || []), ...R.cars.filter(c => c !== P)];
+        const clear = (j) => { const dd = Tk.br[j] - P.m.wid / 2 - 0.01, x0 = Tk.px[j] + Tk.nx[j] * dd, z0 = Tk.pz[j] + Tk.nz[j] * dd;
+          return !L.some(b => { const ex = b.x - x0, ez = b.z - z0, s = Math.max(-4, Math.min(14, ex * Tk.tx[j] + ez * Tk.tz[j])); return Math.hypot(ex - Tk.tx[j] * s, ez - Tk.tz[j] * s) < 4; }); };
+        let j = j0; for (let n = 0; n < 100 && !clear(j); n++) j = (j - 1 + Tk.N) % Tk.N; return j; };
+      fresh(); base(); const Tk = R.track, q = Tk.query(P.x, P.z, P.q ? P.q.i : 0, {}), i = railAt(q.i), tx = Tk.tx[i], tz = Tk.tz[i], h = Math.atan2(tz, tx), nx = Tk.nx[i], nz = Tk.nz[i];
+      out.railI = [q.i, i];
       out.railK = (-Math.sin(h) * nx + Math.cos(h) * nz) > 0 ? 1 : 0; out.rail = [scr()]; out.railD = [moved()];
       for (let k = 0; k < 3; k++) {
         const dd = Tk.br[i] - P.m.wid / 2 - 0.01; P.place(Tk.px[i] + nx * dd, Tk.pz[i] + nz * dd, h); P.q = Tk.query(P.x, P.z, i, P.q);
@@ -83,7 +91,7 @@ try {
   const st = (p) => (p && Object.entries(p).filter(([, f]) => f > 0).map(([k, f]) => k + ':' + f).join(' ')) || 'none';
 
   const x = await run('kolibri', { xBody: 1, xGlass: 1 });
-  console.log('nov način:', JSON.stringify({ key: x.key, nose: x.nose.map(st), one: st(x.one), left: st(x.left), rear: st(x.rear), dent: x.dent, car: x.car, carD: x.carD, nose2: x.nose2, nose2D: x.nose2D, carN: x.carN, rail: x.rail, railD: x.railD, railK: x.railK, after: x.after }));
+  console.log('nov način:', JSON.stringify({ key: x.key, nose: x.nose.map(st), one: st(x.one), left: st(x.left), rear: st(x.rear), dent: x.dent, car: x.car, carD: x.carD, nose2: x.nose2, nose2D: x.nose2D, carN: x.carN, rail: x.rail, railD: x.railD, railK: x.railK, railI: x.railI, after: x.after }));
   const steps = x.nose.map(p => Object.values(p).reduce((a, b) => a + (b > 0 ? [0, 0.5, 0.7, 0.75, 1].indexOf(b) : 0), 0));
   T.check('nov način: the Kolibri\'s body its own program (the table\'s cut and the scrapes: dirtyCarCgXS)', x.key === 'dirtyCarCgXS' && x.xt, x.key);
   T.check('nov način: every light crash on the nose a pane a stage on: the windscreen 0.5, 0.7, 0.75, 1, then a side window; never the rear window',
@@ -112,7 +120,7 @@ try {
   T.check('nov način: a repair polishes the scrapes out; nothing NaN, no page errors', x.after[0] === 0 && x.after[1] === 0 && !x.nan && !x.errors.length, x.errors.slice(0, 3).join(' | '));
 
   const d = await run('kolibri', {});
-  console.log('default:', JSON.stringify({ key: d.key, xt: d.xt, nose: d.nose.map(st), car: d.car, carD: d.carD, rail: d.rail, railD: d.railD, after: d.after }));
+  console.log('default:', JSON.stringify({ key: d.key, xt: d.xt, nose: d.nose.map(st), car: d.car, carD: d.carD, rail: d.rail, railD: d.railD, railI: d.railI, after: d.after }));
   T.check('default settings: the Kolibri\'s side scrapes all the same (dirtyCarCgS), no table, its panes as before (no stage)', d.key === 'dirtyCarCgS' && !d.xt && d.nose.every(p => p === null), d.key);
   T.check('default settings: every graze more scratched on its side, along the barrier too; repaired: none', inc(d.car.map(q => q[0])) && d.car.every(q => q[1] === 0) && inc(d.rail.map(q => q[d.railK])) && d.after.every(q => q === 0) && !d.errors.length,
     JSON.stringify({ car: d.car, rail: d.rail }) + ' ' + d.errors.slice(0, 3).join(' | '));

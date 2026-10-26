@@ -96,8 +96,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, five kilometres and forty-five bends up the cliffs to the cave, and you start {grid}.", "Here we are on the mountain road above Jahng-jyah-jyeh, at the foot of the hairpins. You start {grid}.", "Welcome to {track}! The road of ninety-nine bends, and the top half of it is ours today. You start {grid}."],
-      goPass: ["Lights out, and away they go, up the ninety-nine bends!", "And they're off! Next stop, the cave in the mountain!", "Green light! The pack dives into the first hairpin!", "Go, go, go! Up the cliffs to Tianmen!"],
+      introPass: ["Welcome to {track}! {cars} cars, five kilometres and forty-five bends up the cliffs to the cave, and you start {grid}.", "Here we are on the mountain road above Jahng-jyah-jyeh, at the foot of the hairpins. You start {grid}.", "Welcome to {track}! The road of ninety-nine bends, and the top half of it is ours today. You start {grid}."],
+      goPass: ["And away they go, up the ninety-nine bends!", "And they're off! Next stop, the cave in the mountain!", "The race is on! The pack dives into the first hairpin!", "Go, go, go! Up the cliffs to Tianmen!"],
       introPassTT: ["Welcome to {track}! Forty-five bends, just you and the clock.", "Here we are at the foot of the hairpins. {cps} checkpoints between you and the cave.", "Welcome to {track}! No rivals today, only the cliffs and the clock."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the bends!", "And you're away! Up to the gate of heaven!"],
       introTraffic: ["Welcome to {track}, and the road is open today: the tour buses are going up and down. Just you and {rival}, first to the cave wins!", "Here we are at the foot of the hairpins, with the buses on the road. You and {rival}, up to Tianmen Cave!"],

@@ -1,5 +1,5 @@
 // Bakreni gozd (gozd): a full race on autopilot with one pit stop on lap 2. The car must stop in its box, the crew
-// must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
+// must go out, work (car up on the jacks) and clear, the repair must finish, and all 22 cars must finish the race.
 // In the pit lane the player cannot steer (held at full left lock, no gas: the autopilot drives, gas and all, keeps to the lane and takes an S onto the apron to the box);
 // the box is on the apron in front of the garage (the car stops there parked straight, parallel to the lane), the crew works there and never stands on the lane.
 // While the autopilot drives, the progress bar under the map (its width): Vstop, Boks, Popravilo n %, Izvoz, one bar from ~0 % at the way in
@@ -23,7 +23,7 @@ try {
     const at = (d) => B.find(b => !b.mine && Math.abs(((b.s - Tk.startS - d) % L + L * 1.5) % L - L / 2) < 1);
     const ai = r.cars.filter(c => !c.isPlayer), bx = ai.map(c => at(r._boxD(c)));
     return { n: ai.length, found: bx.filter(Boolean).length, uniq: new Set(bx.filter(Boolean)).size, mine: B.filter(b => b.mine).length, all: B.length }; });
-  T.check('every AI car\'s box is one of the crews\' boxes in the world (each its own), the player\'s too', crews.found === crews.n && crews.uniq === crews.n && crews.mine === 1, JSON.stringify(crews));
+  T.check('every AI car\'s box is one of the crews\' boxes in the world (each its own; a field bigger than the crews: 21 rivals share the 12 others, every one used), the player\'s too', crews.found === crews.n && crews.uniq === Math.min(crews.n, crews.all - 1) && crews.mine === 1, JSON.stringify(crews));
   const states = [], modes = new Set(); let lastSt, maxLift = 0, r, pose = null, minLatWork = 99, maxLat = -99, onLane = 0, maxDev = 0, lockN = 0, ghostN = 0, dmgIn = 0;
   let lnN = 0, lthrN = 0, vmax = 0, mN = 0, mSteer = 0, mThr = 0, mBad = 0, mDmg = 0, back = null;
   for (let k = 0; k < 900; k++) {

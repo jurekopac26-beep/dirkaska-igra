@@ -3,8 +3,8 @@
 // textures, shader programs or JavaScript memory behind. Round 1 warms up (caches fill, first shaders compile); from round 2 to the
 // last the counts must stay flat.
 // Every measurement is taken in the same state, so it does not depend on what happened to be on screen before: a fresh
-// race on jezero at the start lights (no contacts yet), the game paused, and one frame drawn with frustum culling off, so
-// every visible object is on the GPU; then garbage collection.
+// race on jezero at the start lights (no contacts yet), the game paused, and one frame drawn with frustum culling off (and every
+// car in the scene: Render's carCull off), so every visible object is on the GPU; then garbage collection.
 //   node tests/browser/memory.test.mjs            (MEM_ROUNDS=4 for more rounds)
 import { serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
 
@@ -18,9 +18,10 @@ try {
     await startTrack(page, 'jezero'); await simulate(page, 2);
     return page.evaluate(async () => {
       const g = window.__game; g.pause();
+      Render.setDebug({ allCars: true }); Render.frame(0, 1, g.race.player, g.S.camera, { noFx: true });   // (every car in the scene, one out of the view too: Render's carCull off)
       const culled = []; Render.scene.traverse(o => { if (o.frustumCulled) { culled.push(o); o.frustumCulled = false; } });
       Render.frame(0, 1, g.race.player, g.S.camera, { noFx: true });
-      for (const o of culled) o.frustumCulled = true;
+      for (const o of culled) o.frustumCulled = true; Render.setDebug({ allCars: false });
       for (let i = 0; i < 3; i++) { if (window.gc) window.gc(); await new Promise(r => setTimeout(r, 150)); }
       const inf = Render.info();
       return { geometries: inf.memory.geometries, textures: inf.memory.textures, programs: inf.programs ? inf.programs.length : 0, heapMB: performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 0 };

@@ -113,11 +113,13 @@ export function simulate(page, sec) {
 }
 
 // a small check list that prints OK/FAIL lines and sets the exit code
+// (on GitHub a failed check also as an annotation, ::error: the check run's annotations name it, readable where the job's log is not)
+const ghErr = (title, msg) => { if (process.env.GITHUB_ACTIONS) console.log(`::error title=${String(title).replace(/[\r\n:,%]/g, ' ')}::${String(msg).slice(0, 900).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`); };
 export function checker(title) {
   let bad = 0, n = 0;
   console.log('== ' + title);
   return {
-    check(name, ok, detail = '') { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); return ok; },
+    check(name, ok, detail = '') { n++; if (!ok) { bad++; ghErr(title, `FAIL ${name}${detail ? ' — ' + detail : ''}`); } console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); return ok; },
     done() { console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`); process.exitCode = bad ? 1 : 0; return bad; },
   };
 }

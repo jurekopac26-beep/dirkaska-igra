@@ -86,8 +86,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, six kilometres of real road from the football ground to the castle, and you start {grid}.", "Here we are in Med-voh-deh, by the football ground. Roundabouts, a bridge and a castle hill ahead, and you line up {grid}.", "Welcome to {track}! Three roundabouts, the lake, the Sava and the castle road, and you start {grid}."],
-      goPass: ["Lights out, and away they go, towards the roundabout!", "And they're off, down Medvoška street!", "Green light! Six kilometres to the castle!", "Go, go, go! Next stop, the old castle!"],
+      introPass: ["Welcome to {track}! {cars} cars, six kilometres of real road from the football ground to the castle, and you start {grid}.", "Here we are in Med-voh-deh, by the football ground. Roundabouts, a bridge and a castle hill ahead, and you line up {grid}.", "Welcome to {track}! Three roundabouts, the lake, the Sava and the castle road, and you start {grid}."],
+      goPass: ["And away they go, towards the roundabout!", "And they're off, down Medvoška street!", "The race is on! Six kilometres to the castle!", "Go, go, go! Next stop, the old castle!"],
       introPassTT: ["Welcome to {track}! Six kilometres to the castle, just you and the clock.", "Here we are in Med-voh-deh. {cps} checkpoints between you and the castle.", "Welcome to {track}! No rivals this time, only the clock, the roundabouts and the hill."],
       goPassTT: ["Green light! The clock is running!", "Go! Mind the roundabout!", "And you're away, towards Zbeel-yeh!"],
       introTraffic: ["Welcome to {track}, and the roads are open today: cars, buses and bikes both ways. Just you and {rival}, first to the castle wins!", "Here we are in Med-voh-deh. A duel with {rival} through the traffic, round the roundabouts and over the Sava!", "Welcome to {track}! The buses stop where they stop. Beat {rival} to the castle!"],

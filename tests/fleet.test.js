@@ -459,13 +459,13 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     if (!parkedOff(T, X) || places > 1 || X.wreck.side !== -1 || tStop < 0 || tStop > (held ? 9.5 : 12) || (held && places !== 1))
       bad.push(`${what}: ${fmtStand(T, X)}, on the ${X.wreck.side > 0 ? 'right' : 'left'}, stood after ${tStop.toFixed(1)} s, ${places} placements by the marshals`);
   }
-  { // the leader retiring 40 m before the line of a one-lap race rolls over it: no lap, no finish
+  { // the leading rival retiring 40 m before the line of a one-lap race rolls over it: no lap, no finish (the first rival in the order: the player on the autopilot may lead)
     const T = track('jezero'); Math.random = seeded(17);
     const r = new C.Race(T, { numAI: 4, playerGrid: 5, laps: 1, playerModel: model('jelen'), assist: 2, seed: 17, difficulty: 1, damage: 2 });
     r.start(); const P = r.player; let k = 0; const step = () => { Math.random = seeded(17000 + ++k); C.aiControl(P, r, DT); r.step(DT); };
-    let L = null; for (let i = 0; i < 200 / DT && !L; i++) { step(); const o = r.order[0]; if (!o.isPlayer && !o.finished && o.dist > T.len - 40) L = o; }
+    let L = null; for (let i = 0; i < 200 / DT && !L; i++) { step(); const o = r.order.find(c => !c.isPlayer && !c.finished); if (o && o.dist > T.len - 40) L = o; }
     if (L) { r.retire(L); for (let i = 0; i < 15 / DT; i++) step(); }
-    rows.push(`retired 40 m before the line: ${L ? (L.finished ? 'finished!' : 'no finish, ' + (L.dist - T.len).toFixed(0) + ' m past the line') : '(no leader there)'}`);
+    rows.push(`retired 40 m before the line: ${L ? (L.finished ? 'finished!' : 'no finish, ' + (L.dist - T.len).toFixed(0) + ' m past the line') : '(no rival there)'}`);
     if (!L || L.finished || r.finishOrder.includes(L) || L.lap > 1) bad.push('retired before the line: ' + (L ? 'lap ' + L.lap + ', finished ' + L.finished : 'no set-up'));
   }
   check('a retired car drives off onto the run-off and stands there: from 15-25 m/s within 12 s, from standing across the road within 15 s; off the asphalt (or at the barrier), no hard knock once it stands, no lap or finish past the line; on Spa\'s Kemmel straight (no room on the right): over to the left, or put there by the marshals once', !bad.length, bad.length ? bad.join('; ') : rows.join('; '));

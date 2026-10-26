@@ -19,14 +19,15 @@ try {
   const r0 = await page.evaluate(() => document.getElementById('career-rival').textContent);
   T.check('the career screen: the standing rival chosen after the first race', r0 === 'Stalni tekmec: izbran bo po prvi dirki v karieri.', r0);
 
-  // 2. the first race: the driver just ahead becomes the rival
+  // 2. the first race: the driver nearest ahead becomes the rival (one of the 19 every field has: a championship's too)
   await startTrack(page, 'jezero');
   const chars = await page.evaluate(() => window.__game.race.cars.filter(c => c.chr).map(c => c.name + ' ' + c.chr.agg + '/' + c.chr.err));
   await toEnd(); await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const f1 = await page.evaluate(() => { const g = window.__game, rows = [...document.querySelectorAll('#res-table tbody tr')].map(tr => tr.children[1].textContent);
-    return { sub: document.getElementById('res-sub').textContent, rival: g.career.rival, name: g.career.rival && Core.DRIVER_NAMES[g.career.rival.k], rows, me: rows.indexOf('Ti') }; });
-  T.check('in a race every rival has its character; after the first race of the career the driver just ahead is the standing rival (on the results, with its character)', chars.length === 12 &&
-    f1.rival && f1.rival.me === 0 && f1.rival.him === 0 && f1.rows[f1.me > 0 ? f1.me - 1 : 1] === f1.name && new RegExp(f1.name.replace('.', '\\.') + ' \\((agresivna|previdna|uravnotežena) vožnja(, (popušča pod pritiskom|mirna kri))?\\) je zdaj tvoj stalni tekmec\\.').test(f1.sub), JSON.stringify({ f1, chars: chars.slice(0, 3) }));
+    const me = rows.indexOf('Ti'), ok = (n) => { const k = Core.DRIVER_NAMES.indexOf(n); return k >= 0 && k < 19; };
+    return { sub: document.getElementById('res-sub').textContent, rival: g.career.rival, name: g.career.rival && Core.DRIVER_NAMES[g.career.rival.k], rows, me, want: rows.slice(0, me).reverse().find(ok) || rows.slice(me + 1).find(ok) }; });
+  T.check('in a race every rival has its character; after the first race of the career the driver nearest ahead (of the first 19) is the standing rival (on the results, with its character)', chars.length === 21 &&
+    f1.rival && f1.rival.me === 0 && f1.rival.him === 0 && f1.rival.k < 19 && f1.want === f1.name && new RegExp(f1.name.replace('.', '\\.') + ' \\((agresivna|previdna|uravnotežena) vožnja(, (popušča pod pritiskom|mirna kri))?\\) je zdaj tvoj stalni tekmec\\.').test(f1.sub), JSON.stringify({ f1, chars: chars.slice(0, 3) }));
   await act('to-title'); await act('to-career'); await page.waitForTimeout(150);
   const r1 = await page.evaluate(() => document.getElementById('career-rival').textContent);
   T.check('the career screen: the rival, its character, the head-to-head (ti 0, tekmec 0)', r1.startsWith('Stalni tekmec: ' + f1.name + ' (') && r1.endsWith(' · ti 0, tekmec 0.'), r1);

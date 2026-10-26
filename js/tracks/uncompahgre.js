@@ -9,7 +9,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // vans and motorbikes both ways: def.traffic) and a run from the police up the open road (def.police: their patrol cars).
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; metres, origin = the start line, x east, z south. The bends
   // are wide enough as they are (a radius of 30 m or more): the line is only smoothed. The road is 10 m wide (the real one ~7 m: two lanes and
-  // hardly a shoulder), widened as Vršič and Los Caracoles so that 13 cars fit on the grid and the traffic passes both ways.
+  // hardly a shoulder), widened as Vršič and Los Caracoles so that the grid (22 cars) fits and the traffic passes both ways.
   // Heights (UNC_H): USGS 3DEP (via the AWS Terrain Tiles) along the line, cleaned (a running median, monotone up to the finish, smoothed) and
   // fitted with grades of at most 10 %, every 1/530 of the road from points[0], decimetres above the start line (~2543 m).
   // Scenery data for the world builder (as Vršič's and Los Caracoles': vrPrep reads the same forms): terrain (dem: the same model, 12 m cells; a
@@ -55,8 +55,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to the Un-come-pah-gree Gorge! Thirteen cars, five kilometres of cliff road with no guard rails, and you start {grid}.", "Here we are above You-ray, at the foot of the Million Dollar Highway. A race up the gorge, and you line up {grid}.", "Welcome to the Un-come-pah-gree Gorge! Thirteen cars on a shelf above the river, and you start {grid}. Keep it off the edge!"],
-      goPass: ["Lights out, and away they go into the gorge!", "And they're off! Mind the drop on the right!", "Green light! The pack charges up the cliff road!", "Go, go, go! Up the Million Dollar Highway!"],
+      introPass: ["Welcome to the Un-come-pah-gree Gorge! {cars} cars, five kilometres of cliff road with no guard rails, and you start {grid}.", "Here we are above You-ray, at the foot of the Million Dollar Highway. A race up the gorge, and you line up {grid}.", "Welcome to the Un-come-pah-gree Gorge! {cars} cars on a shelf above the river, and you start {grid}. Keep it off the edge!"],
+      goPass: ["And away they go into the gorge!", "And they're off! Mind the drop on the right!", "The race is on! The pack charges up the cliff road!", "Go, go, go! Up the Million Dollar Highway!"],
       introPassTT: ["Welcome to the Un-come-pah-gree Gorge! Five kilometres of cliff road, just you and the clock.", "Here we are above You-ray. {cps} checkpoints between you and the snow shed.", "Welcome to the Million Dollar Highway! No rivals, no guard rails, only the clock."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the gorge!", "And you're away! Up the cliffs!"],
       introTraffic: ["Welcome to the Un-come-pah-gree Gorge, and the road is open today: tourists and motorbikes both ways. Just you and {rival}, first to the snow shed wins!", "Here we are above You-ray. A duel with {rival} through the traffic on the cliff road. No guard rails, so no mistakes!", "Welcome to the Million Dollar Highway! Campers crawling up and down the gorge. Beat {rival} to the top!"],
