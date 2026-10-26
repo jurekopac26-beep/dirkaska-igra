@@ -824,6 +824,141 @@ const World = (function () {
     };
   }
 
+  /* ---- the seam where a road's asphalt gives way to gravel along it (Medvode: the castle road): not a straight line across the road but a worn
+     transition, one overlay over each seam (gravelSeams). Its masks, back m on the asphalt and fwd m on the gravel, 2w across (one tile for every
+     seam, mirrored on every other one; all the noise seeded, the same on every build):
+       mask   R the sand film (the gravel's own, fine) spilt over the asphalt, G the asphalt's cover (carried on over the gravel), B gravel over it
+       prints R the tyres' lanes in the sand, G where across a lane, B the sand's colour (patches), A the sand heaped at the lanes' edges
+     The asphalt: opaque over the last metre before the seam (the joint of the road's meshes never shows), past it worn into tongues along the four
+     wheel tracks (cleanest in them), soft-edged patches between, fewer and smaller on to fwd m; the gravel reaching back over the seam between
+     the tracks and dragged out onto the asphalt in long streaks between and beside them (the tracks themselves kept clear). The sand: a thin
+     film ~5 m onto the asphalt, its front in broad lobes, cloudy and patchy, a little thinner in the wheel tracks, more by the edges; in it two
+     pairs of tyre lanes wandering slowly, 3.5-5.5 m long, where the sand is pressed darker (damp), dry and paler beside them ---- */
+  function gravelSeamMasks(w, wr, back, fwd) {
+    const MW = 256, MH = 512, len = back + fwd, W2 = 2 * w, W2r = 2 * wr, M1 = new Uint8Array(MW * MH * 4), M2 = new Uint8Array(MW * MH * 4);   // (wr: the road's real half width at the seam)
+    const n1 = valueNoise2(9811, 1.7), n2 = valueNoise2(9812, 0.55), n3 = valueNoise2(9813, 0.3), n4 = valueNoise2(9814, 1.25), n5 = valueNoise2(9815, 0.45);
+    const TRK = [0.2, 0.36, 0.64, 0.8];   // (the four wheel tracks, shares of the width)
+    const tracks = (pp, wb, s) => { let m = 0; for (const c of TRK) m = Math.max(m, Math.exp(-(((pp - c - wb) / s) ** 2))); return m; };
+    const wb0 = 0.025 * (2 * n2(0, 3.1) - 1);
+    for (let py = 0; py < MH; py++) for (let px = 0; px < MW; px++) {
+      const X = (px + 0.5) / MW * W2, d = (py + 0.5) / MH * len - back, pp = X / W2, Xr = pp * W2r;   // across (m), how far onto the gravel (m; < 0 on the asphalt)
+      const endF = 1 - sstep(0.7 * fwd, fwd, d), wb = 0.025 * (2 * n2(d * 0.6, 3.1) - 1);   // (nothing left at the overlay's end; the tracks wander a little)
+      let a, b = 0;
+      if (d < 0) a = sstep(-1.2, -0.05, d);   // the asphalt: the overlay's own fading in over the road's, opaque by the seam
+      else {   // past the seam: tongues along the wheel tracks, patches between, a little more at the edges and on the crown
+        const q = 0.65 * n4(X + 11, d) + 0.35 * n5(X, d + 3), g = Math.pow(Math.min(1, d / fwd), 0.8), tk = tracks(pp, wb, 0.04), ed = sstep(0.75, 1, Math.abs(2 * pp - 1)), md = Math.exp(-(((pp - 0.5) / 0.09) ** 2));
+        const t = 0.55 + 0.45 * g - 0.75 * (1 - 0.35 * g) * tk + 0.3 * ed * sstep(0, 0.3, g) + 0.14 * md * sstep(0, 0.2, g);
+        a = sstep(t - 0.2, t + 0.2, q) * endF;
+      }
+      let S = 0;   // the gravel between the tracks reaching back over the seam, its front ragged
+      if (d < 0.6) { const fa = -1.0 - 0.45 * (2 * n2(X * 1.3, 8.8) - 1) - 0.25 * (2 * n3(X * 2.3, 1.7) - 1); S = (1 - sstep(0.25, 0.75, tracks(pp, wb, 0.06))) * sstep(fa - 0.3, fa + 0.3, d) * (1 - sstep(0.2, 0.6, d)); }
+      S *= endF; { const A = a + S * (1 - a); b = A > 0 ? S / A : 0; a = A; }
+      {   // the gravel dragged out onto the asphalt by the tyres: thin streaks along the road (warped across, unevenly spaced), fewer further from the seam, none in the tracks
+        const Lx = 4 * (0.55 + 0.9 * n1(X * 1.2, 21.7)), F = Math.pow(Math.min(1, Math.max(0, 1 + (d - 0.2) / Lx)), 0.7) * (1 - sstep(0.1, 1.6 + 0.8 * n2(X * 1.5, 31.3), d));
+        const Xw = X + 0.45 * (2 * n2(X * 0.7 + 3, 17.1) - 1) + 0.2 * (2 * n4(X * 1.9, 5.5) - 1);
+        const q = 0.55 * n3(Xw * 1.1, d * 0.12 + 5) + 0.25 * n5(Xw * 0.88 + 4, d * 0.2) + 0.2 * n1(Xw * 0.9, d * 0.3 + 2), th = 0.53 + 0.3 * (1 - F) + 0.3 * (n2(Xw * 0.5 + 8, 2.2) - 0.5);
+        const St = 0.8 * sstep(th - 0.05, th + 0.05, q) * F * (1 - 0.9 * tracks(pp, wb, 0.06)) * endF;
+        if (St > 0) { const A = a + St * (1 - a); b = (St + b * a * (1 - St)) / A; a = A; }
+      }
+      // the sand film: its reach in broad lobes across (longer by the edges), the front ragged in the small too, cloudy and patchy
+      const ed = sstep(0.5, 1, Math.abs(2 * pp - 1)), lob = 0.45 * n4(Xr * 0.7 + 23, 4.4) + 0.3 * n2(Xr * 0.42 + 9, 8.1) + 0.25 * n3(Xr * 0.5 + 4, 1.7), Lr = Math.min(back - 0.4, 5 * 2 * lob * (1 + 0.35 * ed));
+      const dj = d + 0.45 * (2 * n5(Xr * 1.1 + 2, d * 0.6 + 3) - 1), u = dj < 0 ? Math.max(0, 1 + dj / Lr) : 1, fr = sstep(0, 0.4, u) * (0.66 + 0.34 * u);
+      const cl = 0.55 * n3(Xr * 0.75 + 7, d * 0.75 + 3) + 0.45 * n5(Xr * 0.9 + 1, d * 0.8 + 13), pt = n1(Xr * 0.9 + 3, d * 0.7 + 9);
+      const fm = 0.8 * fr * (1 - 0.3 * (1 - sstep(0.28, 0.72, cl))) * (1 - 0.28 * (1 - sstep(0.3, 0.7, pt))) * (1 - 0.1 * tracks(pp, wb0, 0.06)) * lerp(0.85, 1.25, ed);
+      let ln = 0, lp = 0.5, best = 1e9, rg = 0;
+      for (let k = 0; k < 4; k++) {   // the tyres' lanes in it: two pairs, each pair wandering together and each lane a little on its own, wider by the seam
+        const pr = k >> 1, xc = (TRK[k] + wb0) * W2r + 0.09 * (2 * n1(d * 0.5 + 11 + pr * 7.7, 3.3 + pr) - 1) + 0.0315 * (2 * n5(d * 0.35 + k * 4.1, 9.9) - 1);
+        const hw = 0.25 * (0.85 + 0.3 * n4(d * 0.6 + k * 5.3, 2.2 + k)) * (1 + 0.6 * sstep(-1.8, 0, d)), dx = Xr - xc, adx = Math.abs(dx);
+        const Lt = 5.6 * (0.65 + 0.7 * n2(k * 3.7 + 1, 6.6)), on = sstep(-Lt, -Lt + 2.8, d) * (1 - sstep(0.1, 1.0, d)) * (0.7 + 0.3 * sstep(0.2, 0.55, n3(d * 0.45 + k * 9.1, k * 2.3)));
+        ln = Math.max(ln, (1 - sstep(hw - 0.045, hw + 0.045, adx)) * on);
+        if (adx < best) { best = adx; lp = clamp(0.5 + 0.5 * dx / hw, 0, 1); }
+        rg = Math.max(rg, Math.exp(-(((adx - hw - 0.07) / 0.06) ** 2)) * on * (0.55 + 0.45 * n5(d * 1.1 + k * 3, k * 7)));
+      }
+      const cv = 0.6 * (2 * n4(Xr * 0.6 + 19, d * 0.55 + 5) - 1) + 0.4 * (2 * n3(Xr * 0.4 + 3, d * 0.38 + 1) - 1);   // (the colour: patches 0.7-2.5 m)
+      const gEnd = d > 0 ? (1 - sstep(0.2, 1.6 + 1.0 * n5(X, 17.3), d)) * (0.2 + 0.8 * a) : 1;   // (on the gravel side only briefly, over the asphalt's tongues)
+      const o = (py * MW + px) * 4, B8 = (v) => Math.round(clamp(v, 0, 1) * 255);
+      M1[o] = B8(fm * gEnd * endF); M1[o + 1] = B8(a); M1[o + 2] = B8(b); M1[o + 3] = 255;
+      M2[o] = B8(ln * gEnd); M2[o + 1] = B8(lp); M2[o + 2] = B8(0.5 + 0.5 * clamp(1.6 * cv, -1, 1)); M2[o + 3] = B8(Math.min(1, rg * Math.min(1, fm * 1.8)) * gEnd * endF);
+    }
+    const tx = (D) => { const t = new THREE.DataTexture(D, MW, MH, THREE.RGBAFormat, THREE.UnsignedByteType); t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter;
+      t.generateMipmaps = true; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; t.needsUpdate = true; return t; };
+    return { mask: tx(M1), prints: tx(M2) };
+  }
+  const gravTone = new WeakMap();
+  function gravelTone(t) {   // the gravel picture's mean brightness and 1 / its spread (0..1; cached): the sand's grain is that picture's, finer, its contrast set from these
+    if (gravTone.has(t)) return gravTone.get(t);
+    let m = 0.47, sd = 0.08;
+    try { const c = t && t.image && t.image.getContext ? t.image : null; if (c) { const D = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let s1 = 0, s2 = 0, n = 0;
+      for (let k = 0; k < D.length; k += 4) { const l = (D[k] + D[k + 1] + D[k + 2]) / 765; s1 += l; s2 += l * l; n++; } m = s1 / n; sd = Math.sqrt(Math.max(1e-6, s2 / n - m * m)); } } catch (e) { /* (no canvas: the defaults) */ }
+    const v = new THREE.Vector2(m, 1 / sd); if (t) gravTone.set(t, v); return v;
+  }
+  // the overlay's fragment shader, after the material's map and vertex colours: the gravel over the asphalt (mask B), the asphalt's cover (G), then the
+  // sand film (R: grains from the gravel picture at 2.8 x its scale, two of them crossed, settling in the asphalt's pores first) and in it the tyres'
+  // lanes: more sand pressed into them, darker and more saturated (damp), with the tread's ribs across them (fading to their mean where they get finer
+  // than ~3 px: no shimmer), the sand heaped at their edges, dry and paler beside them, its colour warmer or greyer in patches. diffuse: the wet road's darkening
+  const GSEAM_FRAG = '\nvec4 sM = texture2D(uSeam, vSeam);\n' +
+    'diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(uGrav, vUv * uGS).rgb * uGT * diffuse, sM.b);\n' +
+    'diffuseColor.a *= sM.g;\n' +
+    '{ vec3 g1 = texture2D(uGrav, vUv * uGS * 2.8).rgb, g2 = texture2D(uGrav, vec2(vUv.y, -vUv.x) * uGS * 3.836 + 0.31).rgb, gm = 0.5 * (g1 + g2);\n' +
+    '  float gL = dot(gm, vec3(0.3333)), gl = (gL - uGM.x) * uGM.y * 1.4;\n' +
+    '  float cv = clamp(sM.r * (1.0 + 0.8 * gl), 0.0, 1.0);\n' +
+    '  cv = clamp(cv * (1.0 + 0.5 * clamp(dot(texture2D(map, vUv, 2.5).rgb - texture2D(map, vUv).rgb, vec3(3.0)), -0.85, 0.85)), 0.0, 1.0);\n' +
+    '  vec3 sc = mix(vec3(gL), gm, 0.75) * uGT * vec3(1.07, 1.03, 0.97) * diffuse;\n' +
+    '  vec4 s2 = texture2D(uSeam2, vSeam); float ln = s2.r, rg = s2.a, cvv = s2.b * 2.0 - 1.0;\n' +
+    '  float ph = (vSeam.y * uSL.x - uSL.y) / 0.32 + abs(s2.g - 0.5), rb = 0.5 + 0.5 * cos(6.2831853 * ph);\n' +
+    '  rb = mix(rb, 0.5, smoothstep(0.22, 0.42, fwidth(ph)));\n' +
+    '  cv *= 1.0 + 0.3 * ln * (1.0 - 0.45 * rb); cv += 0.4 * rg * (1.0 - cv);\n' +
+    '  float gy = dot(sc, vec3(0.3333)); sc = mix(vec3(gy), sc, 1.0 + 0.5 * ln) * mix(1.0, 0.6, ln) * (1.0 + 0.18 * rg) * (1.0 + 0.07 * (1.0 - ln));\n' +
+    '  gy = dot(sc, vec3(0.3333)); sc = mix(sc, vec3(gy), 0.042 * (1.0 - ln));\n' +
+    '  if (cvv < 0.0) sc = mix(sc, vec3(gy), -0.15 * cvv); sc *= 1.0 + 0.12 * cvv;\n' +
+    '  float a0 = diffuseColor.a, A = a0 + cv * (1.0 - a0);\n' +
+    '  diffuseColor = vec4(A > 1e-4 ? (diffuseColor.rgb * a0 * (1.0 - cv) + sc * cv) / A : sc, A); }\n';
+  /* ---- the seams along a road where its surface changes from asphalt to gravel (see gravelSeamMasks): an overlay over each, back m on the asphalt,
+     fwd m on the gravel, across the road's width: the asphalt (its own picture, UVs and shading, so it continues the road's) carried on over the
+     gravel through the masks, the sand film over it in the gravel's picture and tint. o: { gravel(i): the segment i..i+1 is gravel, map (the
+     asphalt), grav, gs (its scale on the road's UVs), gt (its tint), tileL, FR (the shares of the width across), wa(i) (the half width),
+     shade(i, f), y, own }. One mesh, one draw call (null: no seam) ---- */
+  function gravelSeams(root, T, o) {
+    const N = T.N, ds = T.ds, back = 10, fwd = 12, len = back + fwd, rows = 22, Y = o.y, tileL = o.tileL, FR = o.FR;
+    const cuts = []; for (let i = 1; i < N - 1; i++) { const a = !o.gravel(i - 1), b = !o.gravel(i); if (a !== b) cuts.push([i, a ? 1 : -1]); }   // (1: the asphalt behind)
+    if (!cuts.length) return null;
+    const M = gravelSeamMasks(T.w, o.wa(cuts[0][0]), back, fwd); o.own.push(M.mask, M.prints);
+    const at = (s, f) => { const q = clamp(s / ds, 0, N - 1.001), i = Math.floor(q), t = q - i, j = i + 1, oi = f * o.wa(i), oj = f * o.wa(j), si = o.shade(i, f), sj = o.shade(j, f);
+      return { p: [lerp(T.px[i] + T.nx[i] * oi, T.px[j] + T.nx[j] * oj, t), lerp(T.hy[i], T.hy[j], t) + Y, lerp(T.pz[i] + T.nz[i] * oi, T.pz[j] + T.nz[j] * oj, t)],
+        c: [lerp(si[0], sj[0], t), lerp(si[1], sj[1], t), lerp(si[2], sj[2], t)], uv: [(f + 1) * T.w / tileL, s / tileL] }; };   // (u over the road's nominal width T.w: on a narrower road the grain a little finer across)
+    const P = [], Nn = [], C = [], U = [], S = [];
+    cuts.forEach(([b0, dir], ci) => {
+      const flip = ci % 2 === 1, G = [];   // (every other seam mirrored across: not the same pattern twice)
+      for (let r = 0; r <= rows; r++) { const d = -back + len * r / rows, s = b0 * ds + dir * d; G.push(FR.map(f => { const v = at(s, f), x = (f + 1) / 2; v.sm = [flip ? 1 - x : x, (d + back) / len]; return v; })); }
+      for (let r = 0; r < rows; r++) for (let c = 0; c < FR.length - 1; c++) {
+        let q = [G[r][c], G[r][c + 1], G[r + 1][c + 1], G[r + 1][c]];
+        const ux = q[1].p[0] - q[0].p[0], uz = q[1].p[2] - q[0].p[2], vx = q[2].p[0] - q[0].p[0], vz = q[2].p[2] - q[0].p[2];
+        if (uz * vx - ux * vz < 0) q = [q[0], q[3], q[2], q[1]];   // (wound to face up)
+        for (const [A, B, Cc] of [[q[0], q[1], q[2]], [q[0], q[2], q[3]]]) {
+          const e1 = [B.p[0] - A.p[0], B.p[1] - A.p[1], B.p[2] - A.p[2]], e2 = [Cc.p[0] - A.p[0], Cc.p[1] - A.p[1], Cc.p[2] - A.p[2]];
+          let nx = e1[1] * e2[2] - e1[2] * e2[1], ny = e1[2] * e2[0] - e1[0] * e2[2], nz = e1[0] * e2[1] - e1[1] * e2[0]; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+          if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+          for (const v of [A, B, Cc]) { P.push(...v.p); Nn.push(nx, ny, nz); C.push(...v.c); U.push(...v.uv); S.push(...v.sm); }
+        }
+      }
+    });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setAttribute('aSeam', new THREE.Float32BufferAttribute(S, 2));
+    g.computeBoundingSphere();
+    const mat = new THREE.MeshLambertMaterial({ map: o.map, vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide }), gt = new THREE.Vector3(...o.gt), gm = gravelTone(o.grav);
+    mat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, { uSeam: { value: M.mask }, uSeam2: { value: M.prints }, uGrav: { value: o.grav }, uGS: { value: o.gs }, uGT: { value: gt }, uGM: { value: gm }, uSL: { value: new THREE.Vector2(len, back) } });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aSeam; varying vec2 vSeam;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSeam = aSeam;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uSeam, uSeam2, uGrav; uniform float uGS; uniform vec3 uGT; uniform vec2 uGM, uSL; varying vec2 vSeam;')
+        .replace('#include <alphamap_fragment>', '#include <alphamap_fragment>' + GSEAM_FRAG);
+    };
+    mat.customProgramCacheKey = () => 'gravelSeam'; mat.extensions = { derivatives: true };   // (fwidth)
+    const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.renderOrder = 0.55; m.matrixAutoUpdate = false; m.name = 'roadSeams';
+    m.userData.seams = { back, fwd, at: cuts.map(([i, dir]) => [i * ds, dir]), mask: M.mask };   // (for the tests)
+    root.add(m); return m;
+  }
+
   /* ---- Toskana's white edge line: its paint in one 64 x 1024 RGBA tile (u across the line's quad: the line's width lw and a margin M either
      side, 0 by the road's centre; v along it: one tile = PER m, a whole number of tiles round the lap, so it closes on itself). Alpha is the
      paint's cover: soft edges (a smoothstep over 3 cm, centred on the edge), the edges wandering a little (a shared meander of +-1.5 cm and the
@@ -31280,6 +31415,9 @@ const World = (function () {
         }
         addM(ga, aMat); addM(gg, sMat); addM(gk, matV); addM(gs, sMat); addM(gv, gMat);
       }
+      // the asphalt giving way to the gravel (def.surf: the castle road) worn, not cut straight across: the overlay over each seam (gravelSeams)
+      gravelSeams(root, T, { gravel: (i) => SF[i] === 5 && SF[i + 1] === 5, map: tex.asphalt, grav: tex.makadam, gs: tileL / 6, gt: [1.06, 1.17, 1.29], tileL, FR,
+        wa: (i) => WA[i], shade, y: 0.035, own: out.ownTex });
     }
 
     /* ---- the markings: the centre line (dashed, solid round the bends and before the rings, none on the narrow roads and round the rings), the

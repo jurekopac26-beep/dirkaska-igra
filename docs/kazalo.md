@@ -131,7 +131,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *riviera* | *Riviera (test)* | city | splošni `build()` |
 | *toskana* | *Toskana (test)* | italia | splošni `build()` |
 
-Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; skupne funkcije išči pri `buildVrsic` in `buildCaracoles`. Skupni elementi ob progi so npr. `brakeBoards` (table pred zaviranjem) in `wornGrass` (obrabljena trava).
+Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; skupne funkcije išči pri `buildVrsic` in `buildCaracoles`. Skupni elementi ob progi so npr. `brakeBoards` (table pred zaviranjem), `wornGrass` (obrabljena trava) in `gravelSeams` (obrabljen prehod asfalta v makadam, zdaj samo v Medvodah; maski riše `gravelSeamMasks`).
 
 ## Testi po temah
 
@@ -141,7 +141,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
-- **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`
+- **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, `roll.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
 - **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
