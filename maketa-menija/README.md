@@ -2,7 +2,7 @@
 
 Samostojna, klikljiva maketa menija igre v angleščini. **Ni povezana z igro**: igra je ne naloži, nič v igri ne spremeni in ni del `main`. Avti, makete prog in posnetki ozadja so zajeti iz prave igre.
 
-> **Posodobitev:** meni je zdaj v igri (`js/menu.js`, `css/menu.css`, opis v korenskem `README.md`, razdelek »Nov meni«). Maketa je ostala taka, kot je bila (zgodovina in primerjava), zato **spremembe menija delaj v igri**, ne tukaj. Orodja v `orodja/` še vedno izrisujejo slike za meni v igri (glej spodaj).
+> **Posodobitev:** meni je zdaj v igri (`js/menu.js`, `css/menu.css`, opis v korenskem `README.md`, razdelek »Nov meni«; opisi prog so v `docs/proge/<id>.md`). Maketa je ostala taka, kot je bila (zgodovina in primerjava), zato **spremembe menija delaj v igri**, ne tukaj. Orodja v `orodja/` še vedno izrisujejo slike za meni v igri (glej spodaj).
 
 Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2LB5V>
 
