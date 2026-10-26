@@ -1,0 +1,138 @@
+# Kazalo kode
+
+Kje v kodi je kaj, da ni treba iskati na slepo. Imena funkcij in naslovi razdelkov so takšni, kot so v kodi: poišči jih z `grep -n "function ime"` ali po naslovu razdelka (`/* ---------------- naslov`). Številk vrstic namenoma ni, ker se spreminjajo.
+
+**Velike datoteke ne beri v celoti:** `js/world.js` (3,9 MB, ~34.600 vrstic), `js/render.js` (~9.400), `js/core.js` (~5.800), `js/game.js` (~5.200), `README.md` (400 KB), `tests/README.md` (110 KB). Najprej poišči ime tu, nato z grepom, nato preberi samo tisti del.
+
+Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
+
+## Datoteke
+
+| Datoteka | Kaj |
+|---|---|
+| `index.html` | stran igre: zasloni (`<section id="s-…">`), HUD, posnetek (`#replay-ui`), pavza (`#s-pause`) |
+| `js/game.js` | stanje igre, zasloni, HUD, glavna zanka, posnetek, Foto, dogodki gumbov (`data-act`) |
+| `js/core.js` | proga (`Track`), fizika avtov, AI, dirka (`Race`), predmeti ob progi; brez DOM in THREE |
+| `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi |
+| `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
+| `js/world-montreal.js`, `world-toronto.js`, `world-townsville.js` | svetovi v svojih datotekah: `World.ext[tema]` s pomočniki `extAPI` (vzor za sklop 17) |
+| `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`), plošček |
+| `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
+| `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
+| `js/sfx.js` | zvok (sintetiziran) |
+| `js/comm.js` | angleški komentator |
+| `js/net.js` | dirka s prijatelji prek interneta |
+| `js/tex.js` | teksture (narisane v kodi) |
+| `js/journey.js`, `js/geo.js`, `js/intro-data.js`, `js/routes.js` | uvod pred dirko (globus, prelet); `geo/intro-data/routes` so narejeni z orodji, ne urejaj ročno |
+| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane) |
+| `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
+| `js/cars/<id>.js` | vozila |
+| `js/data/` | podatki svetov (npr. OSM, višine) |
+| `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`) |
+| `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
+| `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
+| `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
+| `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`) |
+
+## Teme v `js/game.js`
+
+Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" js/game.js`):
+
+- **nastavitve** `settings`, **stanje** `state`, **zasloni** `screens`, **izbira avta** `car select`, **izbira proge** `track select`
+- **posnetek** `replay: the race recorded` — `recStart`, `recStep`, `replayStart`, `replayEnd`, `replayUI`, `replayAct`, `replayFrame`, `REC_MAX` (20 min), `RP_CAM`, `RP_SPEED`
+- **najboljši trenutki** `replayHL`, video trenutka `the best moment as a video` (`hlvStart`, `hlvStop`)
+- **Foto** `photo mode` — `photoStart`, `photoSave` (slika, Web Share, prenos), `photoEnd`
+- **duh** `ghost of the best run`, sledi gum zadnjih voženj `the tyre marks of the last time trial runs`
+- **deljenje** profila in izziv `sharing`, `a challenge (Izziv)`
+- **dirka** `race lifecycle` (`pause`, `resume`, start, konec), `per-step race logic`, `phases`
+- **HUD** `HUD`, `time trial HUD`, `the timing tower`, uničen avto, `the wheel rule`
+- **odprta cesta** (Vršič: promet, policija) `the open road`, `the police radio`
+- **boksi** `pit stops`, radio ekipe `the team radio`
+- **sovoznik** `the co-driver`, **komentator** `commentator`
+- **kvalifikacije**, **kariera**, **prvenstvo**, **šola vožnje**, **Pikes Peak** (razredi, opozorila, medalje), **skoki** `jumps`
+- **internet** `a race with a friend over the internet`, `a championship over the internet`
+- **plošček v menijih**, **Kontrole** `Kontrole (from Nastavitve)`
+- **glavna zanka** `main loop`, **dogodki** `events` (`switch (act)` za `data-act`), **aplikacija** `the game as an app`, **most do menija** `the menu's bridge`, **zagon** `boot`
+
+## Teme v `js/core.js`
+
+- **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
+- **avto** fizika (`Car`, `stepCS`), nadgradnje `car upgrades`, deli vozil `a registered vehicle's parts`
+- **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
+- **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
+- **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
+- **naključje** `rng(seed)` (mulberry32); `Math.random` je še v učinkih poškodb (sklop 16)
+
+## Teme v `js/render.js`
+
+Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil, `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews`, odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`**, prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
+
+## Proge in graditelji sveta
+
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) se po `CLAUDE.md` ne urejajo.
+
+| id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
+|---|---|---|---|
+| baldy | Mount Baldy, ZDA | baldy | `buildBaldy` |
+| bangsaen | Bang Saen, Tajska | bangsaen | `buildBangsaen` |
+| bathurst | Bathurst, Avstralija | bathurst | `buildRbring` (videz `RB_LOOK`) |
+| beartooth | Beartooth, ZDA | beartooth | `buildBeartooth` |
+| bigsur | Big Sur, ZDA | bigsur | `buildBigSur` |
+| caracoles | Los Caracoles, Čile | caracoles | `buildCaracoles` |
+| chapman | Chapman's Peak, Južna Afrika | chapman | `buildChapman` |
+| cpalace | Crystal Palace, Anglija | cpalace | `buildRbring` (`RB_LOOK`, `cpPark`) |
+| detroit | Detroit, ZDA | detroit | `buildDetroit` |
+| greatalpine | Great Alpine Road, Avstralija | greatalpine | `buildGreatAlpine` |
+| harju | Harju, Finska | harju | `buildHarju` |
+| hotham | Mount Hotham, Avstralija | hotham | `buildHotham` |
+| iroha | Irohazaka, Japonska | iroha | `buildIroha` |
+| katu | Katu-Jaryk, Rusija | katu | `buildKatu` |
+| longford | Longford, Avstralija | longford | `buildLongford` |
+| marrakesh | Marrakesh, Maroko | marrakesh | `buildMarrakesh` |
+| maunakea | Mauna Kea, ZDA | maunakea | `buildMaunakea` |
+| medvode | Medvode, Slovenija | medvode | `buildMedvode` |
+| moki | Moki Dugway, ZDA | moki | `buildMoki` |
+| monaco | Monte Carlo, Monako | monaco | splošni `build()` (`MC_TER`) |
+| monterey | Monterey, ZDA | monterey | `buildMonterey` |
+| montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
+| mulholland | Mulholland Highway, ZDA | mulholland | `buildMulholland` |
+| newcastle | Newcastle, Avstralija | newcastle | `buildNewcastle` |
+| nring | Nürburg, Nemčija | nring | `buildNring` |
+| ouninpohja | Ouninpohja, Finska | ouni | `buildOuni` |
+| palomar | Palomar Mountain, ZDA | palomar | `buildPalomar` |
+| pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `buildPikes` |
+| rastro | Rio do Rastro, Brazilija | rastro | `buildRastro` |
+| rbring | Štajerska, Avstrija | rbring | `buildRbring` |
+| rio | Rio de Janeiro, Brazilija | rio | `buildRbring` (`RB_LOOK`) |
+| riverside | Riverside, ZDA | riverside | `buildRiverside` |
+| sani | Sani Pass, Južna Afrika | sani | `buildSani` |
+| spa | Spa, Belgija | spa | `buildSpa` |
+| suzuka | Suzuka, Japonska | suzuka | `buildSuzuka` |
+| tianmen | Tianmen, Kitajska | tianmen | `buildTianmen` |
+| toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
+| townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
+| troisrivieres | Trois-Rivières, Kanada | troisrivieres | `buildTroisRivieres` |
+| uncompahgre | Uncompahgre, ZDA | uncompahgre | `buildUncompahgre` |
+| vrsic | Vršič, Slovenija | vrsic | `buildVrsic` |
+| *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
+| *gozd* | *Bakreni gozd (test)* | forest | splošni `build()` |
+| *grom* | *Gromski rt (test)* | kamp | splošni `build()` |
+| *jezero* | *Jezero Ring (test)* | lake | splošni `build()` |
+| *riviera* | *Riviera (test)* | city | splošni `build()` |
+| *toskana* | *Toskana (test)* | italia | splošni `build()` |
+
+Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; skupne funkcije išči pri `buildVrsic` in `buildCaracoles`. Skupni elementi ob progi so npr. `brakeBoards` (table pred zaviranjem) in `wornGrass` (obrabljena trava).
+
+## Testi po temah
+
+- **Posnetek:** `tests/browser/replay.test.mjs`, video trenutka `hlvid.test.mjs`
+- **Foto in deljenje:** `share.test.mjs`
+- **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
+- **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
+- **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`
+- **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, `roll.test.js`, `knock.test.js`, testi prog `<id>.test.js`
+- **Opis vseh testov:** `tests/README.md` (velik; išči po imenu testa)
+
+## Imena v poročilih o napakah
+
+Izpolni sklop 10 (»V krogu«): ime iz poročila → datoteka · funkcija. Do takrat glej teme zgoraj.
