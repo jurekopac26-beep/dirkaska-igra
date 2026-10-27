@@ -26,7 +26,7 @@ const CHANGED = 0.5;   // (a picture counts as changed from this share of change
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
 const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), pred = flag('--pred'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
 const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor');
-let orient = ['pokonci', 'lezece'].filter(has); if (!orient.length) orient = ['pokonci', 'lezece'];
+let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci', 'lezece'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
 if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme))) {
   console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
