@@ -8,7 +8,7 @@
 // Foto from it and back.
 // Posnetek do sem (sklop 4 of docs/orodje-za-napake.md; Bathurst at 25 s by the quick entry, the pause): the pause's button, the race so
 // far (its plate, the timeline ending at ZDAJ, Nazaj v dirko for Končaj), the race standing; the timeline (a tap, a drag), 5 s back and on, a
-// frame back and on, the times; the buttons in one row on a phone on its side, in two upright; the key I back: every car exactly as the race
+// frame back and on, the times; the buttons (with Označi, js/napake.js) in one row on a phone on its side, in two upright; the key I back: every car exactly as the race
 // left it, 3 · 2 · 1, then the race goes on; I in the race: the replay at once; the pause in the count: the pause screen.
 //   node tests/browser/replay.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -144,10 +144,10 @@ try {
     // the layout: on its side every button in one row inside the screen, the timeline above them, the plate clear of the top row
     const lay = () => Q.evaluate(() => { const r = (e) => e.getBoundingClientRect(), bs = [...document.querySelectorAll('#replay-ui .rp-bar button')].filter(b => b.offsetParent !== null).map(r), line = r(document.getElementById('rp-line')),
       W = innerWidth, H = innerHeight, tops = [...new Set(bs.map(b => Math.round(b.top)))], top = [...document.querySelectorAll('#replay-ui .rp-row > *')].map(r), wait = r(document.getElementById('rp-wait'));
-      return { n: bs.length, rows: tops.length, inside: bs.every(b => b.left >= 0 && b.right <= W && b.bottom <= H), lineAbove: line.bottom < Math.min(...bs.map(b => b.top)), lineW: Math.round(line.width), W,
+      return { n: bs.length, rows: tops.length, used: Math.round(Math.max(...tops.map(t => { const r = bs.filter(b => Math.round(b.top) === t); return Math.max(...r.map(b => b.right)) - Math.min(...r.map(b => b.left)); }))), inside: bs.every(b => b.left >= 0 && b.right <= W && b.bottom <= H), lineAbove: line.bottom < Math.min(...bs.map(b => b.top)), lineW: Math.round(line.width), W,
         topClear: top.every(t => t.bottom <= wait.top + 1), topAbove: Math.max(...top.map(t => t.bottom), wait.bottom) < line.top - 20 }; });
     const l0 = await lay();
-    T.check('on its side (640 × 360): the 11 buttons in one row inside the screen, the timeline above them, the top clear of the plate and the timeline', l0.n === 11 && l0.rows === 1 && l0.inside && l0.lineAbove && l0.lineW > 0.6 * l0.W && l0.topClear && l0.topAbove, JSON.stringify(l0));
+    T.check('on its side (640 × 360): the 12 buttons (Označi too) in one row inside the screen, a twentieth of it to spare (a wider font: GitHub draws it about 6 % wider than here), the timeline above them, the top clear of the plate and the timeline', l0.n === 12 && l0.rows === 1 && l0.used < 0.95 * (l0.W - 24) && l0.inside && l0.lineAbove && l0.lineW > 0.6 * l0.W && l0.topClear && l0.topAbove, JSON.stringify(l0));
     // the timeline: a tap a quarter along it, then a drag from a fifth to 60 %
     const line = await Q.evaluate(() => { const b = document.getElementById('rp-line').getBoundingClientRect(); return { x: b.left, y: b.top + b.height / 2, w: b.width }; });
     const at = (u) => h0.rp.t0 + u * (h0.rp.t1 - h0.rp.t0);   // (the timeline: the recording's first frame to now)
@@ -179,7 +179,7 @@ try {
     // upright: the buttons in two rows
     await Q.setViewportSize({ width: 360, height: 640 }); await qa('rp-b5'); await qf(3);
     const l1 = await lay();
-    T.check('upright (360 × 640): the buttons in two rows inside the screen, the timeline above them, the top clear of it', l1.n === 11 && l1.rows === 2 && l1.inside && l1.lineAbove && l1.topClear && l1.topAbove, JSON.stringify(l1));
+    T.check('upright (360 × 640): the buttons in two rows inside the screen, a twentieth of each to spare, the timeline above them, the top clear of it', l1.n === 12 && l1.rows === 2 && l1.used < 0.95 * (l1.W - 24) && l1.inside && l1.lineAbove && l1.topClear && l1.topAbove, JSON.stringify(l1));
     await Q.setViewportSize({ width: 640, height: 360 }); await qf(2);
     // Nazaj v dirko by the key I: every car back, 3 · 2 · 1, then the race on
     await Q.evaluate(() => { const el = document.getElementById('rp-count'); window.__cnt = []; new MutationObserver(() => { if (!el.classList.contains('off')) { const t = el.textContent; if (window.__cnt[window.__cnt.length - 1] !== t) window.__cnt.push(t); } }).observe(el, { childList: true, characterData: true, subtree: true, attributes: true }); });
