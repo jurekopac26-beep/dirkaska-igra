@@ -23,8 +23,8 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 11 | D · Samodejne zastavice | čaka |
 | 12 | E · Datoteka s posnetkom | čaka |
 | 13 | F · Seznam napak | čaka |
-| 14 | Posnetki zaslona, predogled pred mainom | čaka |
-| 15 | Posnetki pred/po na GitHubu | čaka |
+| 14 | Posnetki zaslona, predogled pred mainom | končano (PR #174) |
+| 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
 | 16 | Ponovljive dirke | čaka |
 | 17 | Razdeljen world.js | čaka |
 
