@@ -18,15 +18,23 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 6 | Slika in pošiljanje | končano (skupaj s 7) |
 | 7 | Zastavica med dirko | končano (skupaj s 6) |
 | 8 | Skrito v izdaji za Google Play | odloženo |
-| 9 | Dnevnik napak, prikaz za razvijalca | čaka |
-| 10 | G · V krogu | čaka |
-| 11 | D · Samodejne zastavice | čaka |
-| 12 | E · Datoteka s posnetkom | čaka |
-| 13 | F · Seznam napak | čaka |
+| 9 | Dnevnik napak, prikaz za razvijalca | čaka · skupaj z 10 in 11 (veriga, korak 3) |
+| 10 | G · V krogu | čaka · skupaj z 9 in 11 (veriga, korak 3) |
+| 11 | D · Samodejne zastavice | čaka · skupaj z 9 in 10 (veriga, korak 3) |
+| 12 | E · Datoteka s posnetkom | čaka (veriga, korak 4, zadnji) |
+| 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
 | 14 | Posnetki zaslona, predogled pred mainom | končano (PR #174) |
 | 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
-| 16 | Ponovljive dirke | čaka |
-| 17 | Razdeljen world.js | čaka |
+| 16 | Ponovljive dirke | vzporedno |
+| 17 | Razdeljen world.js | vzporedno |
+
+**Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
+
+- **Veriga orodja** (sklop za sklopom, ker vsi urejajo `js/napake.js` in posnetek v `js/game.js`): 5 → **6+7** → **9+10+11** → **12**. Združeni sklopi so ena seja, ena veja (`orodje-za-napake/sklop-06-07-<ime>`, `…/sklop-09-10-11-<ime>`) in en pull request. Ko je korak na `main`, seja zažene sejo za naslednji korak verige z navodilom »Naredi sklope 6 in 7 po docs/orodje-za-napake.md« (oz. »sklope 9, 10 in 11«, »sklop 12«). Po sklopu 12 se veriga konča.
+- **Vzporedno**, vsak v svoji seji in veji, takoj: **14+15** (orodja za posnetke zaslona in delovni tok), **16** (ponovljive dirke), **17** (razdeljen `world.js`, lahko več pull requestov). Te seje po koncu ne zaženejo nove seje.
+- **13** (seznam napak) naredi glavna seja kot zasebno spletno stran; ni v repozitoriju.
+- **Pred združitvijo v `main`** vsaka seja vanjo združi svežo `main` in še enkrat lokalno požene teste, povezane s spremembo. Spori so najverjetnejši v `index.html`, `sw.js`, `tools/stamp.js`, `docs/kazalo.md` in v tej tabeli: obdrži spremembe obeh strani. Če sklop 16 spremeni reference (`golden`, `races`), jih ustvari znova z orodji repozitorija; sklop 17 pa ne sme spremeniti sveta (reference ostanejo enake kot na `main`).
+- **GitHub** požene največ okoli 20 opravil hkrati, en pull request jih ima 6, zato lahko testi pri več hkratnih pull requestih nekaj časa čakajo v vrsti.
 
 ## Odločitve (veljajo za vse sklope)
 
@@ -42,7 +50,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 - **Potrditev vnaprej (26. 10. 2026):** uporabnik je potrdil vse sklope. Vsak sklop gre na `main`, ko so testi zeleni (lokalno in na GitHubu), in takoj se začne naslednji; ne čakaj na potrditev med sklopi. Uporabnik preizkuša sproti in javi napake, ki se popravijo v naslednjem sklopu ali posebej.
 - **Sklopi se začnejo sami (26. 10. 2026, uporabnik: »Vseh 17 sklopov začni sam in ne sprašuj, če lahko začneš naslednjega«):** ko je sklop na `main`, seja brez vprašanja zažene sejo za naslednji sklop iz tabele Stanje (model `claude-opus-5-5`) in ji to navodilo prenese, tudi ta stavek. Sklopa 0 in 8 ostaneta odložena in se preskočita, razen če uporabnik reče drugače. Uporabnika se med sklopi ne sprašuje za potrditev, samo pri odločitvah, ki so res njegove (npr. sprememba zasnove); ob koncu vsakega sklopa dobi kratek seznam za preizkus.
 - **Napor high (26. 10. 2026, uporabnik: »nastavi high za vse seje«):** `.claude/settings.json` z `{"effortLevel": "high"}`; vsaka seja, ki klonira `main`, dela z naporom high.
-- **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop.
+- **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop oziroma na združen korak (glej Pospešitev pod Stanjem); sklop 17 ima lahko več pull requestov.
 - **Vsak popravljen hrošč** dobi svoj test (`tests/napake/<št>.test.js` ali v obstoječem testu teme), okoli 10 min na popravek.
 - **Odloženo:** sklop 0 (repozitorij zaseben, igra na Cloudflare Pages z dostopom samo za uporabnika; GitHub Pro bi stal okoli 4 $/mesec, če bi kdaj izbrali samo zasebno kodo) in sklop 8 (orodje skrito v izdaji za Google Play). Do sklopa 8 je orodje privzeto vklopljeno.
 
