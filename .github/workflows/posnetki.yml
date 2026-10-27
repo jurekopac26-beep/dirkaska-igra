@@ -1,0 +1,43 @@
+# Posnetki pred/po ob pull requestu (sklop 15 v docs/orodje-za-napake.md): tools/shot.mjs --nabor posname nekaj pravih prog (NABOR v
+# tools/shot.mjs in prave proge, ki jih sprememba spreminja) na main in na veji, pokonci in ležeče, ter jih primerja. Slike (pred, po,
+# primerjava) so v artefaktu, kratek povzetek z deležem spremenjenih pikslov v povzetku posla. Samo ob spremembi igre (ne dokumentacije).
+name: Posnetki pred/po
+on:
+  pull_request:
+    paths: ['index.html', 'sw.js', 'js/**', 'css/**', 'assets/**', 'fonts/**', 'tools/shot.mjs', 'tests/browser/lib.mjs', '.github/workflows/posnetki.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: posnetki-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  posnetki:
+    name: Posnetki pred/po
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30   # (nabor traja lokalno ~3 min, na CI nekaj več)
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2   # (pull request: združitev z main in njena starša; HEAD^1 = main, v katero gre sprememba)
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/shot.mjs --nabor --pred HEAD^1 --out posnetki
+      - id: slike
+        if: ${{ !cancelled() && hashFiles('posnetki/povzetek.md') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: posnetki-${{ github.event.pull_request.number }}
+          path: posnetki/
+          retention-days: 14
+      - if: ${{ !cancelled() && hashFiles('posnetki/povzetek.md') != '' }}
+        run: |
+          cat posnetki/povzetek.md >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Slike (zip): ${{ steps.slike.outputs.artifact-url }}" >> "$GITHUB_STEP_SUMMARY"
