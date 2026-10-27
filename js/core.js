@@ -2716,7 +2716,13 @@ const Core = (function () {
         }
       }
     }
-    if (best <= 0) return 0;
+    // the corners the three circles leave out (a nose into a tail beside it): the cars' boxes are only pushed apart (obbHit, the normal from b to a),
+    // so that no body is drawn in another; no impulse, no knock, no damage: those stay as the circles give them
+    if (best <= 0) { if (a.inPit || b.inPit) return 0; const o = obbHit(a.x, a.z, a.h, a.m.len, a.m.wid, b.x, b.z, b.h, b.m.len, b.m.wid); if (!o) return 0;   // (not in the pit lane: the crews' work and the way in stay as they were)
+      const ia = 1 / a.m.mass, ib = 1 / b.m.mass, tot = ia + ib, nx = o.nx * o.pen, nz = o.nz * o.pen;
+      if (b.net) { a.x += nx; a.z += nz; } else if (!a.net) { a.x += nx * ia / tot; a.z += nz * ia / tot; }
+      if (a.net) { b.x -= nx; b.z -= nz; } else if (!b.net) { b.x -= nx * ib / tot; b.z -= nz * ib / tot; }
+      return 0; }
     const ma = a.m.mass, mb = b.m.mass, ia = 1 / ma, ib = 1 / mb;
     // separate. A friend's car in an online race (net) is not moved here (its own phone moves it): the local car takes the
     // whole separation and, below, only its own share of the impulse (the friend's phone gives the friend's car its share)
@@ -5718,6 +5724,9 @@ const Core = (function () {
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
       if (F.t >= 1.6) { c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; applyDamage(c, 0.32); this.rescue(c); }
     }
+    // when a car was last put somewhere else at once (rescue, the marshals' refit beside the road): the replay's recording marks it (game.js
+    // recStep), so Orodje za napake does not take it for a jump. A Map, not a car's own number: the race's state as it was (tests/golden)
+    putBack(c) { (this.putT || (this.putT = new Map())).set(c, this.time); }
     rescue(c) {
       const T = this.track; if (this._bp) this._bp.bd = null;
       if (c.ty && !c.isPlayer) c.pitWant = false;   // (an AI car in for tyres: it tries again from the next lap)
@@ -5731,7 +5740,7 @@ const Core = (function () {
       c.locked = false;
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       if (T.open && Number.isFinite(s) && Number.isFinite(c.dist)) c.dist += c.q.s - s;   // open road: the distance follows the car back to the sample (checkpoints / finish stay exact)
-      c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.inPit = false; c.pitState = null; c.pitDone = false; if (c.pitG) { c.pitG = false; c.pitGT = 0; }   // (back on the circuit, not in the pit lane)
+      c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; this.putBack(c); c.inPit = false; c.pitState = null; c.pitDone = false; if (c.pitG) { c.pitG = false; c.pitGT = 0; }   // (back on the circuit, not in the pit lane)
       // a breakable vehicle on a track without pits: the marshals put its lost wheels back on, beside the road (off its side's edge, clear of
       // the barrier); it stands for the 6 s that takes (Race._wreckStep), then drives back on. W.fix counts the refits (a partial repair:
       // repairN stays, the renderer's and the commentator's lost-wheel latches follow W.fix)
@@ -5860,7 +5869,7 @@ const Core = (function () {
       }
       const [s, sd] = best || fb || [c.q.s, own], i = T.idx(s), d = sd * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4));
       W.side = sd;
-      c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
+      c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i]; this.putBack(c);   // (put somewhere else at once, as by rescue: the replay's recording)
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       W.stop = true; W.cr = 0; parkBrake(c);
       W.fin = retiredOff(T, c, -0.2) ? null : [c.x, c.z];

@@ -8,6 +8,10 @@
    (IndexedDB, the last 20) and offered at the end of the replay (Deli zdaj, Samo shrani sliko, Kopiraj besedilo) or by Deli at any time.
    The flag in the race (the button by the pause button, F, the pad's Select) keeps only the race's time; the replay's Zastavice goes
    through them. Its settings (Nastavitve · Orodje za napake) are its own (tdgp-napake). The game (js/game.js) gives its hooks with Napake.init.
+   The log (Dnevnik napak: the page's errors, the promises let down, the hitches of the race; the last 50, kept in the game) goes with the
+   report; Prikaz za razvijalca (O) shows the frame counter of the game with more lines. What a loop circles goes with its note (v_krogu);
+   the recording itself flags what looks wrong (a car standing, a jump, under the road, a rival the wrong way; the log's hitches): grey on
+   the timeline, Potrdi or Zavrzi.
    ========================================================================= */
 const Napake = (function () {
   'use strict';
@@ -24,7 +28,8 @@ const Napake = (function () {
   };
   // the game's hooks: replay(), rec(), stop(), seek(t), span(), shot(maxSide), info(), toast(text, ms), ui() (the replay's buttons again),
   // where(t) (the player's car at a time: lap, s, x, z), meta() (version, track, mode, weather), map() (the track's line), shotAt(t, maxSide),
-  // flag() (a flag in the race now: { t, n } or null), flags() (the race's flags: [{ t }])
+  // flag() (a flag in the race now: { t, n } or null), flags() (the race's flags: [{ t }]), inLoops(loops) (the names of what the loops circle),
+  // track(), recW (the numbers a car in a sample of the recording), dev(on) (Prikaz za razvijalca), kje() (the race now: { t, track, rec, lap, s })
   let G = null;
   let M = null;   // the marking under way: { strokes [{ c, p: [[u, v] ...] (0..1 of the screen), loop }], hist, notes {colour: text}, pos {colour: [u, v]}, tool, col, cur, t }
   const Z = { rec: null, items: [], id: '', d0: null, meta: null, map: null, out: null, done: '' };   // the collection: the moments kept, for the recording they belong to (out: its picture as made, done: the version last shared or saved)
@@ -221,13 +226,14 @@ const Napake = (function () {
   function add() {
     const P = G.replay(); if (!P) return;
     const info = G.info() || {}, n = Z.items.length + 1;
+    const cols = [...new Set(M.strokes.filter(s => s.loop).map(s => s.c))].sort((a, b) => a - b);
+    const vk = {}; for (const c of cols) { try { vk[c] = G.inLoops(M.strokes.filter(s => s.loop && s.c === c).map(s => s.p)); } catch (_) { vk[c] = []; } }   // (what each colour's loops circle: before the pictures, the camera as on the screen)
     let img = null; try { img = G.shot(SHOT); } catch (_) { }
     const gib = GIB.map(d => d ? small(G.shotAt(P.t + d, GIB_PX), GIB_PX) : null);   // (the motion: 0.6 s and 0.3 s before, 0.3 s after; the moment's own is its picture)
-    const cols = [...new Set(M.strokes.filter(s => s.loop).map(s => s.c))].sort((a, b) => a - b);
     if (!Z.items.length) { Z.d0 = new Date(); Z.id = 'nk-' + Z.d0.getTime(); Z.meta = G.meta(); Z.map = G.map(); }
     Z.items.push(Object.assign({ n, t: P.t, w: W, h: H, img, gib,
       strokes: M.strokes.map(s => ({ c: s.c, barva: BARVE[s.c][0], loop: s.loop, p: s.p.map(q => q.slice()) })),
-      zapisi: cols.map(c => ({ c, barva: BARVE[c][0], text: (M.notes[c] || '').trim(), pos: (M.pos[c] || [0, 0]).slice() })) }, info, { t: P.t }));
+      zapisi: cols.map(c => ({ c, barva: BARVE[c][0], text: (M.notes[c] || '').trim(), pos: (M.pos[c] || [0, 0]).slice(), v: vk[c] || [] })) }, info, { t: P.t }));
     close(); G.ui();
     G.toast('Trenutek ' + n + ' je v zbirki (' + clock(P.t) + '). Zastavica je na časovnici.', 2600);
     setTimeout(() => { pripravi().catch(() => { }); }, 60);   // (the picture made and kept in the game meanwhile: Deli has it at once)
@@ -242,9 +248,16 @@ const Napake = (function () {
   // the flags on the timeline: the moments kept (numbered) and the race's own not yet marked (⚑); a tap: the replay there, standing
   function flags() {
     const line = $('rp-line'), sp = G && G.span(); if (!line) return;
-    for (const f of line.querySelectorAll('.nk-flag')) f.remove();
+    for (const f of line.querySelectorAll('.nk-flag, .nk-auto')) f.remove();
     if (!sp) return;
+    for (const f of samodejne()) {   // (the tool's own: grey with !, confirmed white; a tap: the replay there and what it is, Potrdi / Zavrzi)
+      const b = mk('b', 'nk-auto' + (f.st === 'ok' ? ' ok' : ''), '<span>!</span>');
+      b.style.left = (100 * clamp((f.t - sp[0]) / Math.max(1e-3, sp[1] - sp[0]), 0, 1)).toFixed(2) + '%'; b.setAttribute('aria-label', 'Samodejna zastavica: ' + VRSTE[f.kind]);
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (!M) { G.seek(f.t); aPokazi(f); } });
+      line.appendChild(b);
+    }
     for (const p of tocke()) {
+      if (p.kind === 'samo') continue;
       const race = p.kind === 'dirka', f = mk('b', 'nk-flag' + (race ? ' dirka' : ''), '<span>' + (race ? '&#9873;' : p.n) + '</span>');
       f.style.left = (100 * clamp((p.t - sp[0]) / Math.max(1e-3, sp[1] - sp[0]), 0, 1)).toFixed(2) + '%';
       f.setAttribute('aria-label', (race ? 'Zastavica ' : 'Trenutek ') + p.n);
@@ -257,6 +270,7 @@ const Napake = (function () {
     if (!G) return []; const sp = G.span(), end = sp ? sp[1] + 1e-6 : Infinity, out = [], done = pokrite();
     for (const it of Z.items) if (it.t <= end) out.push({ t: it.t, kind: 'zbirka', n: it.n });   // (the race so far: a moment kept later on is not yet there)
     G.flags().forEach((f, j) => { if (f.t <= end && !done.has(j)) out.push({ t: f.t, kind: 'dirka', n: j + 1 }); });
+    potrjene().forEach((f, j) => { if (f.t <= end) out.push({ t: f.t, kind: 'samo', n: j + 1 }); });
     return out.sort((a, b) => a.t - b.t);
   }
   // the race's flags marked: each moment kept stands for the nearest flag it is from 2 s after to 1 s before (Zastavice plays a flag so)
@@ -268,7 +282,7 @@ const Napake = (function () {
   function sync() {   // the replay's buttons drawn again (js/game.js replayUI): a new recording starts a new collection
     if (!G) return; const rec = G.rec();
     if (rec !== Z.rec) { Z.rec = rec; Z.items = []; Z.id = ''; Z.meta = Z.map = Z.out = null; Z.done = ''; }
-    flags();
+    aIsci(); flags();
     const d = $('nk-deli'); if (d) { const n = Z.items.length; d.classList.toggle('off', !n || !N.on || !!(G.replay() && G.replay().hl && G.replay().hl.auto)); d.innerHTML = '&#8679; Deli (' + n + ')'; }
   }
 
@@ -291,6 +305,150 @@ const Napake = (function () {
     G.toast('⚑ Zastavica ' + r.n + ' · ' + clock(r.t) + ' – dirka teče naprej', 1800);
     const b = $('nk-fl'); if (b) { b.classList.remove('tap'); requestAnimationFrame(() => b.classList.add('tap')); }
   }
+
+  /* ---------------- the log (Dnevnik napak): the page's errors, the promises let down, the hitches in the race (under 20 frames a second
+     for over 1 s); the last 50, kept in the game (tdgp-napake-dnevnik: after a crash the next visit still has them, Nastavitve orodja) ---------------- */
+  const LOG_KEY = 'tdgp-napake-dnevnik', LOG_MAX = 50, ZAT = { ms: 1000 / 20, dur: 1000, gap: 250 };   // (a hitch: frames over 50 ms apart for over 1 s; it ends 250 ms after its last slow frame)
+  const REC = typeof Symbol === 'function' ? Symbol('rec') : '_rec';   // (the recording a note belongs to: in memory only, never in the saved log)
+  const D = { l: [], n: 0, run: null, last: 0, save: 0 };   // (l: [{ w (the clock, ms), kind (napaka, obljuba, zatik), msg, src, x (times), t, track, lap, s (the race then), ms, fps, worst (a hitch), old (an earlier visit's) }]; n: notes this visit)
+  function dLoad() { try { const l = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); if (Array.isArray(l)) D.l = l.filter(e => e && typeof e === 'object' && typeof e.kind === 'string').slice(-LOG_MAX).map(e => Object.assign(e, { old: 1 })); } catch (_) { } }
+  function dSave() { try { localStorage.setItem(LOG_KEY, JSON.stringify(D.l)); } catch (_) { } }
+  function zapis(kind, msg, src, more) {
+    msg = String(msg == null ? '' : msg).replace(/\s+/g, ' ').trim().slice(0, 240); src = String(src || '');
+    const L = D.l[D.l.length - 1];
+    if (L && !L.old && L.kind === kind && kind !== 'zatik' && L.msg === msg && L.src === src) { L.x = (L.x || 1) + 1; dLater(); return L; }   // (the same error every frame: once, counted)
+    let k = null; try { k = G && G.kje ? G.kje() : null; } catch (_) { }
+    const e = Object.assign({ w: Date.now(), kind, msg, src }, k ? { t: +k.t.toFixed(2), track: k.track, lap: k.lap, s: k.s } : {}, more || {});
+    if (k) e[REC] = k.rec;
+    D.l.push(e); D.n++; if (D.l.length > LOG_MAX) D.l.splice(0, D.l.length - LOG_MAX);
+    dSave(); return e;
+  }
+  function dLater() { if (!D.save) D.save = setTimeout(() => { D.save = 0; dSave(); }, 2000); }
+  const kraj = (f) => { try { const u = new URL(f, location.href); return (u.origin === location.origin ? u.pathname.replace(/^.*?\/(js|css)\//, '$1/') : u.href).replace(/\?v=\w+/, ''); } catch (_) { return String(f || ''); } };   // (js/render.js, not the whole address)
+  try {
+    window.addEventListener('error', (e) => { if (!e || !e.message) return; zapis('napaka', e.message, e.filename ? kraj(e.filename) + ':' + (e.lineno || 0) + ':' + (e.colno || 0) : ''); });
+    window.addEventListener('unhandledrejection', (e) => { const r = e && e.reason; zapis('obljuba', r && r.message ? (r.name ? r.name + ': ' : '') + r.message : String(r)); });
+    document.addEventListener('visibilitychange', () => { D.last = 0; D.run = null; });   // (back to the page: the frames stood while it was hidden, no hitch)
+  } catch (_) { }
+  dLoad();
+  // the hitches, from the game's frame times (js/game.js frame, beside the frame counter PH.tick): on, while the race is driven
+  function okvir(now, on) {
+    const dt = D.last ? now - D.last : 0; D.last = now;
+    if (!on || !(dt > 0)) { zEnd(); return; }
+    const R = D.run;
+    if (dt > ZAT.ms) {
+      if (!R) { let k = null; try { k = G && G.kje ? G.kje() : null; } catch (_) { } D.run = { t0: now - dt, t1: now, n: 1, nk: 1, worst: dt, k }; }
+      else { R.n++; R.nk = R.n; R.t1 = now; R.worst = Math.max(R.worst, dt); }
+    } else if (R) { R.n++; if (now - R.t1 > ZAT.gap) zEnd(); }
+  }
+  function zEnd() {
+    const R = D.run; D.run = null; if (!R) return;
+    const dur = R.t1 - R.t0, fps = R.nk * 1000 / Math.max(1, dur); if (dur < ZAT.dur || fps >= 1000 / ZAT.ms) return;
+    const k = R.k, e = { w: Date.now(), kind: 'zatik', msg: '', src: '', ms: Math.round(dur), fps: +fps.toFixed(1), worst: Math.round(R.worst) };
+    if (k) { Object.assign(e, { t: +k.t.toFixed(2), track: k.track, lap: k.lap, s: k.s }); e[REC] = k.rec; }
+    D.l.push(e); D.n++; if (D.l.length > LOG_MAX) D.l.splice(0, D.l.length - LOG_MAX); dSave();
+  }
+  // the log for a report: this race's notes (its hitches, its errors) and the errors of this visit elsewhere
+  const dnevnik = () => D.l.filter(e => (e[REC] && e[REC] === Z.rec) || (!e.old && e.kind !== 'zatik' && !(e[REC] && e[REC] !== Z.rec)));
+  const vejica = (x, d = 1) => x.toFixed(d).replace('.', ',');
+  function dVrstica(e) {   // D 00:41.3 K2 s=1284m zatik 1,4 s · 8 sličic/s · najdaljša 420 ms   /   D ob 14:03:12 napaka »...« js/render.js:12:5 (×3)
+    const d = new Date(e.w), kdaj = e.t != null ? clock(e.t) + (e.lap ? ' K' + e.lap : '') + (e.s != null ? ' s=' + e.s + 'm' : '') + (e.track && e.track !== (Z.meta && Z.meta.track) ? ' proga=' + e.track : '') : 'ob ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
+    const kaj = e.kind === 'zatik' ? 'zatik ' + vejica(e.ms / 1000) + ' s · ' + vejica(e.fps) + ' sličic/s · najdaljša ' + e.worst + ' ms' : e.kind + ' »' + e.msg + '«' + (e.src ? ' ' + e.src : '') + (e.x > 1 ? ' (×' + e.x + ')' : '');
+    return 'D ' + kdaj + ' ' + kaj + (e.old ? ' (prejšnji obisk)' : '');
+  }
+
+  /* ---------------- Prikaz za razvijalca (O, Nastavitve orodja): the game's frame counter (PH in js/game.js) with more lines ---------------- */
+  function dev() {
+    if (!G || !N.on) return;
+    N.dev = N.dev ? 0 : 1; nSave(); G.toast('Prikaz za razvijalca: ' + (N.dev ? 'vklop' : 'izklop'), 1400);
+  }
+
+  /* ---------------- the tool's own flags (samodejne zastavice): what the recording tells (zaznaj), and the log's hitches. Grey with ! on
+     the timeline; a tap shows what it is: Potrdi (into Zastavice, the report) or Zavrzi. Found after the race (or Posnetek do sem) in slices
+     of a few ms, never in the race ---------------- */
+  // the limits: a car standing (under v m/s) over stoji s, once it has moved (over gre m/s); a jump of more than its speed's way by preskok m
+  // (across) or poskok m (up or down) in one sample; pod m under the road on it; a rival going the wrong way (over vnaz m/s) for over nazaj s;
+  // the same of a car within spoj s: one; at most max
+  const AZ = { stoji: 5, v: 0.8, gre: 3, preskok: 2.5, poskok: 2.5, pod: 1, podT: 0.2, nazaj: 2, vnaz: 3, spoj: 10, max: 40 };
+  const VRSTE = { obtical: 'Avto stoji', preskok: 'Preskok', poskok: 'Skok gor ali dol', pod_cesto: 'Pod cesto', nazaj: 'Vozi v napačno smer', zatik: 'Zatikanje' };
+  // a scan of recording R (frames, n, cars) on track T, W numbers a car, frames i0 .. i1; S its state (to go on from), out the flags found
+  function zaznaj(R, T, W, S, out, i0, i1) {
+    const F = R.frames, n = R.n, eo = {};
+    if (!S.c) S.c = Array.from({ length: n }, () => ({ t: null, q: {}, qi: -1 }));
+    const push = (kind, t, k, val, opis) => {
+      const o = out.find(f => f.kind === kind && f.k === k && Math.abs(f.t - t) < AZ.spoj);
+      if (o) { if (val > o.val) { o.val = val; o.opis = opis; } return; }
+      if (out.length >= AZ.max) { S.vec = (S.vec || 0) + 1; return; }
+      out.push({ id: S.id = (S.id || 0) + 1, kind, t, k, val, opis, st: 'nov' });
+    };
+    for (let i = i0; i < i1; i++) {
+      const f = F[i], t = f[0];
+      for (let k = 0; k < n; k++) {
+        const c = S.c[k], o = 1 + k * W, x = f[o], y = f[o + 1], z = f[o + 2], v = Math.abs(f[o + 4]), bits = f[o + 6] % 8, off = bits & 4, res = bits & 2;   // (off: in the pit lane, finished, retired; res: put back on the road)
+        if (!Number.isFinite(x + y + z)) continue;
+        if (c.t == null) { c.t = t; c.x = x; c.y = y; c.z = z; c.v = v; c.q = T.query(x, z, -1, c.q); c.qi = c.q.i; continue; }
+        const dt = Math.max(1e-3, t - c.t), d = Math.hypot(x - c.x, z - c.z);
+        if (!res) {   // (put back on the road: a jump that is no bug)
+          const lim = Math.max(v, c.v) * dt * 1.5 + AZ.preskok; if (d > lim) push('preskok', c.t, k, d, 'skok ' + vejica(d) + ' m v eni sličici');
+          const dy = Math.abs(y - c.y); if (dy > AZ.poskok + Math.max(v, c.v) * dt * 0.5) push('poskok', c.t, k, dy, 'navpično ' + vejica(dy) + ' m v eni sličici');
+        }
+        if (v > AZ.gre) c.moved = true;
+        if (c.moved && !off && !res && v < AZ.v) { if (c.s0 == null) c.s0 = t; } else if (c.s0 != null) { if (t - c.s0 > AZ.stoji) push('obtical', c.s0, k, t - c.s0, 'stoji ' + vejica(t - c.s0) + ' s'); c.s0 = null; }
+        const q = c.q = T.query(x, z, c.qi, c.q); c.qi = q.i;
+        const onRoad = !(q.k >= 0) && Math.abs(q.d) < T.wAt(q.a) - 0.5, ry = T.hasElev ? T.elevAt(q.s, eo).y : 0, bank = T.bank ? T.bank[q.a] * T.wAt(q.a) : 0;
+        const under = onRoad && !res && y < ry - AZ.pod - bank;
+        if (under) { if (c.u0 == null) { c.u0 = t; c.um = 0; } c.um = Math.max(c.um, ry - y); }
+        else if (c.u0 != null) { if (t - c.u0 >= AZ.podT) push('pod_cesto', c.u0, k, c.um, vejica(c.um) + ' m pod cesto'); c.u0 = null; }
+        const back = !R.cars[k].isPlayer && !off && !res && d / dt > AZ.vnaz && ((x - c.x) * q.tx + (z - c.z) * q.tz) / Math.max(1e-6, d) < -0.5;
+        if (back) { if (c.b0 == null) c.b0 = c.t; } else if (c.b0 != null) { if (t - c.b0 > AZ.nazaj) push('nazaj', c.b0, k, t - c.b0, 'v napačno smer ' + vejica(t - c.b0) + ' s'); c.b0 = null; }
+        c.t = t; c.x = x; c.y = y; c.z = z; c.v = v;
+      }
+    }
+    if (i1 >= F.length && F.length) {   // (the recording's end so far: what is still going on counts as it is; later it is the same flag, longer)
+      const t = F[F.length - 1][0];
+      S.c.forEach((c, k) => {
+        if (c.s0 != null && t - c.s0 > AZ.stoji) push('obtical', c.s0, k, t - c.s0, 'stoji ' + vejica(t - c.s0) + ' s');
+        if (c.u0 != null && t - c.u0 >= AZ.podT) push('pod_cesto', c.u0, k, c.um, vejica(c.um) + ' m pod cesto');
+        if (c.b0 != null && t - c.b0 > AZ.nazaj) push('nazaj', c.b0, k, t - c.b0, 'v napačno smer ' + vejica(t - c.b0) + ' s');
+      });
+    }
+    return out;
+  }
+  const A = { rec: null, i: 0, S: null, l: [], zat: new Map(), job: 0 };   // (the recording scanned, the next frame, the scan's state, the flags found, the log's hitches as flags)
+  function aIsci() {   // (sync: the replay's buttons drawn again; the scan goes on in slices while the replay is open)
+    const rec = G && G.rec(); if (!rec) return;
+    if (rec !== A.rec) { A.rec = rec; A.i = 0; A.S = { id: 0 }; A.l = []; A.zat = new Map(); if (A.job) clearTimeout(A.job); A.job = 0; aSkrij(); }
+    if (!A.job && A.i < rec.frames.length && G.replay()) A.job = setTimeout(aKos, 30);
+  }
+  function aKos() {
+    A.job = 0; const rec = G && G.rec(); if (!rec || rec !== A.rec || !G.replay()) return;
+    const t0 = performance.now(), F = rec.frames, T = G.track(); let i = A.i;
+    try { while (i < F.length && performance.now() - t0 < 6) { const j = Math.min(F.length, i + Math.max(4, Math.round(400 / rec.n))); zaznaj(rec, T, G.recW, A.S, A.l, i, j); i = j; } }
+    catch (e) { i = F.length; zapis('napaka', 'zaznaj: ' + (e && e.message), ''); }
+    A.i = i;
+    if (i < F.length) A.job = setTimeout(aKos, 16); else { A.l.sort((a, b) => a.t - b.t); flags(); }
+  }
+  function samodejne() {   // the tool's own flags of this recording, by time (the scan's and the log's hitches), not thrown away
+    if (!G || !A.rec || A.rec !== G.rec()) return [];
+    const pk = Math.max(0, A.rec.cars.findIndex(c => c.isPlayer)), F = A.rec.frames, t1 = F.length ? F[F.length - 1][0] : 0;   // (t1: a hitch no later than the recording, one just before the pause)
+    for (const e of D.l) if (e.kind === 'zatik' && e[REC] === A.rec && e.t != null && !A.zat.has(e)) A.zat.set(e, { id: 'z' + A.zat.size, kind: 'zatik', t: Math.min(e.t, t1), k: pk, val: e.ms, opis: vejica(e.ms / 1000) + ' s pod 20 sličic/s (' + vejica(e.fps) + ' sličic/s)', st: 'nov' });
+    return A.l.concat([...A.zat.values()]).filter(f => f.st !== 'ne').sort((a, b) => a.t - b.t);
+  }
+  const potrjene = () => samodejne().filter(f => f.st === 'ok');
+  const avIme = (f) => { const c = A.rec && A.rec.cars[f.k]; return !c ? '' : c.isPlayer ? 'ti' : 'tekmec#' + f.k; };
+  // what a flag of the tool's own is, over the replay: Potrdi / Zavrzi
+  function aPokazi(f) {
+    let el = $('nk-auto'); if (!el) { el = mk('div', 'nk-auto-dlg'); el.id = 'nk-auto'; const bot = $('replay-ui').querySelector('.rp-bot'); bot.insertBefore(el, bot.querySelector('.rp-line')); }   // (above the timeline: the picture clear)
+    const c = A.rec && A.rec.cars[f.k];
+    el.innerHTML = '<b>! ' + VRSTE[f.kind] + '</b><span>' + clock(f.t) + (c ? ' · ' + (c.isPlayer ? 'ti' : 'tekmec#' + f.k + ' (' + String(c.name || '').replace(/[<>&"]/g, '') + ')') : '') + ' · ' + f.opis + '</span>' +
+      '<div>' + (f.st === 'ok' ? '<em>potrjena</em>' : '<button data-a="ok">Potrdi</button>') + '<button data-a="ne">Zavrzi</button><button data-a="x" aria-label="Zapri">&#10005;</button></div>';
+    el.dataset.id = f.id;
+    el.onclick = (e) => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); const a = b.dataset.a;
+      if (a === 'ok') { f.st = 'ok'; G.toast('Potrjena: ' + VRSTE[f.kind] + ' (' + clock(f.t) + '). Je v Zastavicah in v poročilu.', 2200); }
+      else if (a === 'ne') f.st = 'ne';
+      aSkrij(); G.ui(); };
+  }
+  function aSkrij() { const el = $('nk-auto'); if (el) el.remove(); }
 
   /* ---------------- the report: the text for the chat and the picture ---------------- */
   // the device: the phone's model (Chrome gives it on Android: SM-A256B is a Galaxy A25), else the system; the browser
@@ -321,12 +479,16 @@ const Napake = (function () {
     const glava = 'RRA-NAPAKE v=' + (meta.ver || '?') + ' proga=' + (meta.track || '?') + ' način=' + (meta.mode || '?') + '/' + (meta.wx || '?') + ' naprava=' + devKoda() + ' ' + w + 'x' + h;
     const vrstice = items.map(it => {
       const pre = '#' + it.n + ' ' + clock(it.t, 3) + ' K' + it.lap + ' s=' + it.s + 'm', car = it.car && it.car !== 'ti' ? ' avto=' + it.car : '';
-      return it.zapisi.length ? it.zapisi.map(z => pre + ' ' + z.barva + ' »' + z.text + '«' + car) : [pre + ' (brez zapisa)' + car];
+      return it.zapisi.length ? it.zapisi.map(z => pre + ' ' + z.barva + ' »' + z.text + '«' + car + ' v_krogu=[' + (z.v || []).join(', ') + ']') : [pre + ' (brez zapisa)' + car];
     });
     const zv = zast.map(f => '⚑' + f.n + ' ' + clock(f.t, 3) + ' K' + (f.lap || '?') + ' s=' + (f.s != null ? f.s : '?') + 'm (zastavica med dirko, ni označena)');
+    // the tool's own flags confirmed (Potrdi): where the car of it was; the log: this race's notes and the visit's errors
+    const av = potrjene().map((f, j) => Object.assign({ n: j + 1, f }, G ? G.where(f.t, f.k >= 0 ? f.k : null) || {} : {}));
+    const avv = av.map(a => '!' + a.n + ' ' + clock(a.f.t, 3) + ' K' + (a.lap || '?') + ' s=' + (a.s != null ? a.s : '?') + 'm ' + a.f.kind + ' ' + avIme(a.f) + ' »' + a.f.opis + '« (samodejna zastavica)');
+    const dn = dnevnik().map(dVrstica);
     const stamp = d0.getFullYear() + p2(d0.getMonth() + 1) + p2(d0.getDate()) + '-' + p2(d0.getHours()) + p2(d0.getMinutes());
-    return { items, meta, zast, glava, vrstice, zv, w, h, d0, ime: 'napake_' + (meta.track || 'proga') + '_' + stamp,
-      text: [glava].concat(...vrstice, zv).join('\n') };
+    return { items, meta, zast, av, glava, vrstice, zv, avv, dn, w, h, d0, ime: 'napake_' + (meta.track || 'proga') + '_' + stamp,
+      text: [glava].concat(...vrstice, zv, avv, dn).join('\n') };
   }
 
   // the picture of the report: per sheet up to 3 moments (on their side a 2 x 2 grid with the field of the data and the map; upright 3 side
@@ -361,7 +523,7 @@ const Napake = (function () {
     }
     // the text under it: the first line, this sheet's moments, on the last sheet the race's flags not marked
     const fs = Math.round(19 * u), lh = Math.round(fs * 1.4), meas = mk('canvas').getContext('2d'); meas.font = fs + 'px ' + MONO;
-    const raw = [R.glava + (nj > 1 ? '  (slika ' + (j + 1) + '/' + nj + ')' : '')].concat(...its.map(it => R.vrstice[it.n - 1] || []), j === nj - 1 ? R.zv : []);
+    const raw = [R.glava + (nj > 1 ? '  (slika ' + (j + 1) + '/' + nj + ')' : '')].concat(...its.map(it => R.vrstice[it.n - 1] || []), j === nj - 1 ? R.zv.concat(R.avv, R.dn) : []);
     const lines = []; for (const l of raw) lines.push(...wrap(meas, l, W - 2 * pad - 2 * g2, '   '));
     const tH = lines.length * lh + 2 * g2, H = y + tH + pad;
     const k = Math.min(1, S / Math.max(W, H)), cv = mk('canvas'); cv.width = Math.round(W * k); cv.height = Math.round(H * k);
@@ -435,7 +597,7 @@ const Napake = (function () {
     row('Različica: ' + (m.ver || '?'), f, c);
     row('Naprava: ' + devIme(), f, c);
     row('Zaslon: ' + R.w + ' × ' + R.h + ' · ' + datum(R.d0), f, c);
-    row(trenutkov(R.items.length) + ' · zastavic iz dirke: ' + (G ? G.flags().length : 0), f, c);
+    row(trenutkov(R.items.length) + ' · zastavic iz dirke: ' + (G ? G.flags().length : 0) + (R.av.length ? ' · samodejnih: ' + R.av.length : ''), f, c);
     const mb = side ? [px + dw, py + pd, pw - dw - pd, ph - 2 * pd] : [px + pd, py + dh, pw - 2 * pd, ph - dh - pd];
     if (Z.map && mb[2] > 40 && mb[3] > 40) zemljevid(x, Z.map, R, its, mb, u);
   }
@@ -449,6 +611,7 @@ const Napake = (function () {
     }
     const [sx, sz] = P(map.start[0], map.start[1]); x.fillStyle = '#e63b2e'; x.fillRect(sx - 5 * u, sz - 5 * u, 10 * u, 10 * u);
     x.textAlign = 'center'; x.textBaseline = 'middle';
+    for (const a of R.av) if (a.x != null) { const [q, r] = P(a.x, a.z); x.fillStyle = '#b8c0ca'; x.beginPath(); x.moveTo(q, r - 9 * u); x.lineTo(q + 8 * u, r + 6 * u); x.lineTo(q - 8 * u, r + 6 * u); x.closePath(); x.fill(); }   // (the tool's own, confirmed: grey)
     for (const f of R.zast) if (f.x != null) { const [q, r] = P(f.x, f.z); x.fillStyle = '#FF9500'; x.beginPath(); x.moveTo(q, r - 9 * u); x.lineTo(q + 8 * u, r + 6 * u); x.lineTo(q - 8 * u, r + 6 * u); x.closePath(); x.fill(); }
     for (const it of R.items) if (it.x != null) {
       const [q, r] = P(it.x, it.z), on = its.includes(it), rad = 13 * u;
@@ -460,7 +623,7 @@ const Napake = (function () {
   const blob = (cv, type, q) => new Promise((res) => { try { cv.toBlob((b) => res(b), type || 'image/png', q); } catch (_) { res(null); } });
   // the picture made (once for each version of the collection) and kept in the game: { id, name, date, track, n, flags, text, status, files: [{ name, blob, w, h }], thumb }
   let making = null;
-  const verOf = () => Z.id + ':' + Z.items.length + ':' + (G ? G.flags().length : 0) + ':' + N.size;   // (the collection as it is now)
+  const verOf = () => Z.id + ':' + Z.items.length + ':' + (G ? G.flags().length : 0) + ':' + N.size + ':' + potrjene().length + ':' + D.n;   // (the collection as it is now; D.n: the log's notes so far)
   function pripravi() {
     const ver = verOf();
     if (Z.out && Z.out.ver === ver) return Promise.resolve(Z.out.rec);
@@ -542,14 +705,14 @@ const Napake = (function () {
   /* ---------------- the choice: at the end of the replay (Nastavitve: Ob koncu) or with Deli in the replay ---------------- */
   function konec() {   // js/game.js replayEnd: the replay after the race is over
     if (!G || !N.on) return;
-    const R = Z.items.length || (G.flags().length && Z.rec === G.rec()); if (!R) return;
+    const R = Z.items.length || ((G.flags().length || potrjene().length) && Z.rec === G.rec()); if (!R) return;
     if (Z.done === verOf()) return;   // (as it was when last shared or saved: not again)
     if (N.end === 'ask') { izbira(); return; }
     pripravi().then(rec => dejanje(N.end === 'share' ? 'deli' : 'shrani', rec), () => G.toast('Slike napak ni bilo mogoče narediti.', 2600));
   }
   function izbira() {
     if (!G) return; zapri();
-    if (!Z.items.length && !G.flags().length) return;
+    if (!Z.items.length && !G.flags().length && !potrjene().length) return;
     const el = mk('div', 'nk-dlg'); el.id = 'nk-dlg'; document.body.appendChild(el);
     el.innerHTML = '<div class="nk-box"><h3>Zbirka napak</h3><p class="nk-sub"></p><div class="nk-prev"><span>Pripravljam sliko …</span></div><div class="nk-acts"></div>' +
       '<label class="nk-keep"><input type="checkbox"' + (N.keep ? ' checked' : '') + '> Obdrži tudi v igri</label><div class="nk-end"><button data-nk-d="zapri">Zapri</button></div></div>';
@@ -575,33 +738,36 @@ const Napake = (function () {
   function zapri() { const el = $('nk-dlg'); if (!el) return; if (el.dataset.url) URL.revokeObjectURL(el.dataset.url); el.remove(); }
 
   /* ---------------- Nastavitve · Orodje za napake (its own panel over the settings) ---------------- */
-  const NK_KEY = 'tdgp-napake', NK_DEF = { on: 1, end: 'ask', flag: 'btn', size: 1600, keep: 1 };
+  const NK_KEY = 'tdgp-napake', NK_DEF = { on: 1, end: 'ask', flag: 'btn', size: 1600, keep: 1, dev: 0 };
   const N = Object.assign({}, NK_DEF);
   function nLoad() {
     try { const o = JSON.parse(localStorage.getItem(NK_KEY) || 'null'); if (!o || typeof o !== 'object') return;
-      if (o.on === 0 || o.on === 1) N.on = o.on; if (o.keep === 0 || o.keep === 1) N.keep = o.keep;
+      if (o.on === 0 || o.on === 1) N.on = o.on; if (o.keep === 0 || o.keep === 1) N.keep = o.keep; if (o.dev === 0 || o.dev === 1) N.dev = o.dev;
       if (['ask', 'share', 'save'].includes(o.end)) N.end = o.end; if (['btn', 'key', 'off'].includes(o.flag)) N.flag = o.flag; if (o.size === 1600 || o.size === 2400) N.size = o.size; } catch (_) { }
   }
   function nSave() { try { localStorage.setItem(NK_KEY, JSON.stringify(N)); } catch (_) { } apply(); }
-  function apply() { const R = $('replay-ui'); if (R) R.classList.toggle('nk-off', !N.on); flBtn(); if (!N.on && M) close(); if (G && G.replay()) G.ui(); }
+  function apply() { const R = $('replay-ui'); if (R) R.classList.toggle('nk-off', !N.on); flBtn(); if (!N.on && M) close(); if (G && G.dev) G.dev(N.on && N.dev); if (G && G.replay()) G.ui(); }
   const NK_ROWS = [['on', 'Orodje', [[1, 'Vklop'], [0, 'Izklop']]], ['end', 'Ob koncu posnetka', [['ask', 'Vprašaj'], ['share', 'Deli'], ['save', 'Shrani']]],
-    ['flag', 'Zastavica med dirko', [['btn', 'Gumb + tipka F'], ['key', 'Samo tipka'], ['off', 'Izklop']]], ['size', 'Velikost slike', [[1600, '1600 px'], [2400, '2400 px']]]];
+    ['flag', 'Zastavica med dirko', [['btn', 'Gumb + tipka F'], ['key', 'Samo tipka'], ['off', 'Izklop']]], ['size', 'Velikost slike', [[1600, '1600 px'], [2400, '2400 px']]], ['dev', 'Prikaz za razvijalca', [[1, 'Vklop'], [0, 'Izklop']]]];
   let urls = [];
   function nastavitve() {
     let el = $('nk-set'); if (el) el.remove();
     el = mk('div', 'nk-dlg nk-set'); el.id = 'nk-set'; document.body.appendChild(el);
     el.innerHTML = '<div class="nk-box"><h3>Orodje za napake</h3>' + NK_ROWS.map(([k, lbl, opts]) => '<div class="nk-row"><span>' + lbl + '</span><div class="nk-seg" data-k="' + k + '">' +
       opts.map(([v, t]) => '<button data-v="' + v + '"' + (N[k] === v ? ' class="sel"' : '') + '>' + t + '</button>').join('') + '</div></div>').join('') +
-      '<p class="nk-hint">Zastavica med dirko: gumb ob pavzi, tipka F (Kontrole) ali Select na ploščku. V posnetku Označi, Dodaj k zbirki, nato Deli.</p>' +
+      '<p class="nk-hint">Zastavica med dirko: gumb ob pavzi, tipka F (Kontrole) ali Select na ploščku. V posnetku Označi, Dodaj k zbirki, nato Deli. Prikaz za razvijalca: tipka O.</p>' +
+      '<div class="nk-row"><span>Dnevnik napak <small class="nk-dn-n"></small></span><span class="nk-dn-b"><button data-nk-d="dn-kop">Kopiraj</button><button data-nk-d="dn-del">Počisti</button></span></div><pre class="nk-dn"></pre>' +
       '<div class="nk-row"><span>Shranjene napake</span><button data-nk-d="vse">Deli vse neposlane</button></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
       '<div class="nk-end"><button data-nk-d="zapri">Zapri</button></div></div>';
     el.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') nZapri(); });
     el.addEventListener('click', async (e) => {
       e.stopPropagation(); if (e.target === el) { nZapri(); return; }
       const sb = e.target.closest('.nk-seg button');
-      if (sb) { e.preventDefault(); const k = sb.parentElement.dataset.k, v = k === 'on' || k === 'size' ? +sb.dataset.v : sb.dataset.v; N[k] = v; nSave(); for (const b of sb.parentElement.children) b.classList.toggle('sel', b === sb); return; }
+      if (sb) { e.preventDefault(); const k = sb.parentElement.dataset.k, v = k === 'on' || k === 'size' || k === 'dev' ? +sb.dataset.v : sb.dataset.v; N[k] = v; nSave(); for (const b of sb.parentElement.children) b.classList.toggle('sel', b === sb); return; }
       const b = e.target.closest('[data-nk-d]'); if (!b) return; e.preventDefault();
       const a = b.dataset.nkD; if (a === 'zapri') { nZapri(); return; }
+      if (a === 'dn-kop') { G.toast(await kopirajBesedilo(D.l.map(dVrstica).join('\n') || '(dnevnik je prazen)') ? 'Dnevnik je kopiran.' : 'Dnevnika ni bilo mogoče kopirati.', 2200); return; }
+      if (a === 'dn-del') { D.l = []; dSave(); dnPanel(); return; }
       const l = await dbAll().catch(() => []);
       if (a === 'vse') {
         const un = l.filter(r => r.status !== 'poslano'); if (!un.length) { G.toast('Neposlanih napak ni.', 2000); return; }
@@ -615,7 +781,11 @@ const Napake = (function () {
       else if (a === 'deli' || a === 'shrani') { const keep = N.keep; N.keep = 1; await dejanje(a, rec, 0); N.keep = keep; }
       seznam();
     });
-    seznam();
+    seznam(); dnPanel();
+  }
+  function dnPanel() {   // (the log in the tool's settings: the newest first)
+    const el = document.querySelector('#nk-set .nk-dn'), n = document.querySelector('#nk-set .nk-dn-n'); if (!el) return;
+    n.textContent = '(' + D.l.length + ')'; el.textContent = D.l.length ? D.l.slice().reverse().map(dVrstica).join('\n') : 'Ni zapisov.';
   }
   function nZapri() { const el = $('nk-set'); if (el) el.remove(); for (const u of urls) URL.revokeObjectURL(u); urls = []; }
   async function seznam() {
@@ -628,7 +798,10 @@ const Napake = (function () {
         '<em class="' + (r.status === 'poslano' ? 'ok' : '') + '">' + r.status + '</em></div><span><button data-nk-d="deli" data-id="' + r.id + '">Deli</button><button data-nk-d="shrani" data-id="' + r.id + '">Shrani</button><button data-nk-d="del" data-id="' + r.id + '" aria-label="Izbriši">&#10005;</button></span></div>'; }).join('');
   }
 
-  return { init, open, close, sync, dirka, flag, tocke, konec, izbira, nastavitve, pripravi, shranjene: () => dbAll(),
+  return { init, open, close, sync, dirka, flag, tocke, konec, izbira, nastavitve, pripravi, shranjene: () => dbAll(), okvir, dev, zaznaj, porocilo: () => porocilo().text,
+    get dnevnik() { return D.l.map(e => Object.assign({}, e, { tukaj: !!(e[REC] && G && e[REC] === G.rec()) })); },   // (tukaj: of this race's recording)
+    get samodejne() { return samodejne().map(f => ({ id: f.id, kind: f.kind, t: f.t, k: f.k, val: f.val, opis: f.opis, st: f.st })); },
+    get iskanje() { return { i: A.i, n: A.rec ? A.rec.frames.length : 0, done: !!A.rec && A.i >= A.rec.frames.length }; },
     get on() { return !!M; },
     get zbirka() { return Z.items; },
     get nast() { return Object.assign({}, N); },
@@ -637,8 +810,8 @@ const Napake = (function () {
       const host = $('nk-bubs');
       return { on: !!M, tool: M ? M.tool : null, col: M ? M.col : -1, strokes: M ? M.strokes.map(s => ({ c: s.c, loop: s.loop, n: s.p.length })) : [], hist: M ? M.hist.length : 0, notes: M ? Object.assign({}, M.notes) : {},
         bubbles: host ? [...host.children].map(el => { const r = el.getBoundingClientRect(); return { c: +el.dataset.c, x: r.left, y: r.top, w: r.width, h: r.height, text: el.querySelector('textarea').value }; }) : [],
-        zbirka: Z.items.map(it => ({ n: it.n, t: it.t, lap: it.lap, s: it.s, img: it.img ? [it.img.width, it.img.height] : null, gib: (it.gib || []).map(g => g ? [g.width, g.height] : null), strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text) })),
-        tocke: tocke(), slika: Z.out ? { files: Z.out.rec.files.map(f => ({ name: f.name, w: f.w, h: f.h, bytes: f.blob.size })), text: Z.out.rec.text, status: Z.out.rec.status } : null,
+        zbirka: Z.items.map(it => ({ n: it.n, t: it.t, lap: it.lap, s: it.s, img: it.img ? [it.img.width, it.img.height] : null, gib: (it.gib || []).map(g => g ? [g.width, g.height] : null), strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text), v: it.zapisi.map(z => z.v) })),
+        tocke: tocke(), auto: $('nk-auto') ? $('nk-auto').innerText : null, slika: Z.out ? { files: Z.out.rec.files.map(f => ({ name: f.name, w: f.w, h: f.h, bytes: f.blob.size })), text: Z.out.rec.text, status: Z.out.rec.status } : null,
         dlg: (() => { const d = $('nk-dlg'); return d ? [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent) : null; })() };
     } };
 })();
