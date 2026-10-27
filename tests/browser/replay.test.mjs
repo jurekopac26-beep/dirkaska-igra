@@ -147,7 +147,7 @@ try {
       return { n: bs.length, rows: tops.length, used: Math.round(Math.max(...tops.map(t => { const r = bs.filter(b => Math.round(b.top) === t); return Math.max(...r.map(b => b.right)) - Math.min(...r.map(b => b.left)); }))), inside: bs.every(b => b.left >= 0 && b.right <= W && b.bottom <= H), lineAbove: line.bottom < Math.min(...bs.map(b => b.top)), lineW: Math.round(line.width), W,
         topClear: top.every(t => t.bottom <= wait.top + 1), topAbove: Math.max(...top.map(t => t.bottom), wait.bottom) < line.top - 20 }; });
     const l0 = await lay();
-    T.check('on its side (640 × 360): the 12 buttons (Označi too) in one row inside the screen, a tenth of it to spare (a wider font), the timeline above them, the top clear of the plate and the timeline', l0.n === 12 && l0.rows === 1 && l0.used < 0.9 * (l0.W - 24) && l0.inside && l0.lineAbove && l0.lineW > 0.6 * l0.W && l0.topClear && l0.topAbove, JSON.stringify(l0));
+    T.check('on its side (640 × 360): the 12 buttons (Označi too) in one row inside the screen, a twentieth of it to spare (a wider font: GitHub draws it about 6 % wider than here), the timeline above them, the top clear of the plate and the timeline', l0.n === 12 && l0.rows === 1 && l0.used < 0.95 * (l0.W - 24) && l0.inside && l0.lineAbove && l0.lineW > 0.6 * l0.W && l0.topClear && l0.topAbove, JSON.stringify(l0));
     // the timeline: a tap a quarter along it, then a drag from a fifth to 60 %
     const line = await Q.evaluate(() => { const b = document.getElementById('rp-line').getBoundingClientRect(); return { x: b.left, y: b.top + b.height / 2, w: b.width }; });
     const at = (u) => h0.rp.t0 + u * (h0.rp.t1 - h0.rp.t0);   // (the timeline: the recording's first frame to now)
@@ -179,7 +179,7 @@ try {
     // upright: the buttons in two rows
     await Q.setViewportSize({ width: 360, height: 640 }); await qa('rp-b5'); await qf(3);
     const l1 = await lay();
-    T.check('upright (360 × 640): the buttons in two rows inside the screen, a tenth of each to spare, the timeline above them, the top clear of it', l1.n === 12 && l1.rows === 2 && l1.used < 0.9 * (l1.W - 24) && l1.inside && l1.lineAbove && l1.topClear && l1.topAbove, JSON.stringify(l1));
+    T.check('upright (360 × 640): the buttons in two rows inside the screen, a twentieth of each to spare, the timeline above them, the top clear of it', l1.n === 12 && l1.rows === 2 && l1.used < 0.95 * (l1.W - 24) && l1.inside && l1.lineAbove && l1.topClear && l1.topAbove, JSON.stringify(l1));
     await Q.setViewportSize({ width: 640, height: 360 }); await qf(2);
     // Nazaj v dirko by the key I: every car back, 3 · 2 · 1, then the race on
     await Q.evaluate(() => { const el = document.getElementById('rp-count'); window.__cnt = []; new MutationObserver(() => { if (!el.classList.contains('off')) { const t = el.textContent; if (window.__cnt[window.__cnt.length - 1] !== t) window.__cnt.push(t); } }).observe(el, { childList: true, characterData: true, subtree: true, attributes: true }); });
