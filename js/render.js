@@ -5090,6 +5090,8 @@ const Render = (function () {
       if (mode === 'home') for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
     if (mode === 'clear') c.clearT += dt;
+    if (mode !== 'clear') c.keepTy = mode === 'home' ? false : mode === 'out' || prev !== 'work' ? Core.keepTyres(P, P.pitPlan) : c.keepTy;   // (the player's stop without new tyres, game.js: the tyre men and the jacks stay at the garage; as it was when the work began)
+    const keep = c.keepTy;
     const F = c.frame, u = mode === 'work' ? clamp(ps.pitT / Math.max(0.1, ps.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
     const pb = c.pb, so = pb.stopO != null ? pb.stopO : pb.lane, lat = (x, z) => so + (x - pb.stop[0]) * pb.nx + (z - pb.stop[1]) * pb.nz, gs = pb.tx * pb.nz - pb.tz * pb.nx < 0 ? -1 : 1;   // (gs: the garages' side of the car, +1 its right; -1 a lane on the left: Toronto)
@@ -5108,6 +5110,8 @@ const Render = (function () {
         if (m.role === 'LP') { m.carry = true; m.act = 'lolliD'; } }
     } else {
       for (let k = 0; k < 4; k++) { const front = k < 2, sd = k % 2 ? 1 : -1, fk = front ? D.fx : D.rx, dO = front ? 1 : -1, G = R.G[k], O = R.O[k], N = R.N[k], tO = O.tyre, tN = N.tyre, hb = hub(k);
+        if (keep) { for (const m of [G, O, N]) { const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null; m.carry = m === N && !home; m.act = m.carry ? 'carry' : m.act0; }
+          tO.mode = 'hidden'; tN.mode = Math.hypot(N.x - N.hx, N.z - N.hz) < 0.3 ? 'floor' : 'hands'; crewWheel(k, false); continue; }
         // gun man: kneels outboard of the hub; nut off, (the wheel changes), nut on, then stands and raises a hand
         const wt = mode === 'out' ? (sd * gs < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd * gs < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
         const gSpot = Wp(fk, sd * (D.hw + 0.72 + wt)), gYaw = yawC(0, -sd);
@@ -5132,7 +5136,8 @@ const Render = (function () {
       // jack men: front one in front of the nose (the car stops before him), rear one steps in behind the tail once it has stopped
       const JF = R.JF, JR = R.JR, dj = 0.52 + 1.3 * Math.cos(CR_B0);
       const fSpot = Wp(D.nose + 0.22 + dj, 0), rSpot = Wp(D.tail - 0.22 - dj, 0);
-      if (mode === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'jog', 'jackR'); }
+      if (keep) for (const m of [JF, JR]) { m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; }
+      else if (mode === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'jog', 'jackR'); }
       else if (mode === 'work') {
         go(JF, u < 0.93 ? fSpot : Wp(D.nose + 0.22 + dj + 0.5 * crSS(0.93, 1, u), 0), yawC(-1, 0), 'snap', u < 0.89 ? 'jackP' : 'jackR');
         go(JR, u < 0.9 ? rSpot : Wp(D.tail - 0.22 - dj - 0.4 * crSS(0.9, 1, u), 0), yawC(1, 0), 'dash', u < 0.86 ? 'jackP' : 'jackR'); }
@@ -6509,6 +6514,7 @@ const Render = (function () {
      left it. Out of the box without it: built afresh from the core's state. What it makes: ownRnd (Math.random as ever) */
   const REPAIR_N = 16;
   function repairStep(v, c) {
+    if (!v.rep && c.pitPlan && c.pitPlan.fix === 'none') { if (c.pitState === 'repair' && Core.repairU(c) >= Core.REPAIR.wheel && v.wheelOff.some(Boolean)) kitRefit(v); return; }   // (the player's stop without repairs, game.js: the body stays as it is, a kit car's new wheels with the tyre men all the same)
     if (!v.rep) { if (c.pitState !== 'repair' || (c.repairN || 0) !== v.repairN || !v.parts || !(c.dmg > 0 || v.lampsOut || v.wheelOff.some(Boolean) || (v.dirtU && v.dirtU.value > 0.02) || (v.xtSc && v.xtSc.a[0] + v.xtSc.a[1] > 0.02))) return; v.rep = repairStart(v, c); }
     else if (c.pitState !== 'repair') { if ((c.repairN || 0) === v.repairN) v.repairN = -1; return; }   // (out of the box unrepaired: built afresh, frame)
     const RP = Core.REPAIR, u = Core.repairU(c), R = v.rep; R.ku = Core.sstep(RP.body[0], RP.body[1], u);
@@ -6517,7 +6523,7 @@ const Render = (function () {
     if (u >= RP.wheel && v.wheelOff.some(Boolean)) kitRefit(v);   // (every frame: with the crew's tyre men, crewLogic)
     const q = Math.floor(u * REPAIR_N); if (q === R.q) return; R.q = q; const s = q / REPAIR_N;
     if (!R.glass && s >= RP.glass) { R.glass = true; repGlass(v, R); }
-    const kb = Core.sstep(RP.body[0], RP.body[1], s); if (kb !== R.kb) { R.kb = kb; repBody(v, R); }
+    const kb = Core.sstep(RP.body[0], RP.body[1], s) * R.kmax; if (kb !== R.kb) { R.kb = kb; repBody(v, R); }
     while (R.pi < R.parts.length && s >= RP.parts[0] + (RP.parts[1] - RP.parts[0]) * (R.pi + 0.5) / R.parts.length) repPart(v, R, R.parts[R.pi++]);   // (evenly over the phase)
     if (!R.lamps && s >= RP.lamps) { R.lamps = true; repLamps(v); }
     if (!R.trim && s >= RP.trim) { R.trim = true; repTrim(v); }
@@ -6526,7 +6532,8 @@ const Render = (function () {
   // drawn), the vertices that differ (idx), the parts lost; nothing bent (dirt only): no copies
   function repairStart(v, c) {
     const K = v.kit, R = { q: -1, kb: 0, ku: 0, P: null, D: null, idx: null, T: null, L: v.lights.map(L => L.clone()), dec: v.dec ? [v.dec.position.clone(), v.dec.quaternion.clone()] : null,
-      parts: K ? Object.keys(K.dead) : Object.keys(v.parts).filter(n => !v.parts[n].visible), pi: 0, glass: false, lamps: false, trim: false, dirt0: v.dirtU ? v.dirtU.value : 0 };
+      parts: K ? Object.keys(K.dead) : Object.keys(v.parts).filter(n => !v.parts[n].visible), pi: 0, glass: false, lamps: false, trim: false, dirt0: v.dirtU ? v.dirtU.value : 0,
+      kmax: c.pitPlan && c.pitPlan.fix === 'need' ? Math.max(0, 1 - Core.NEED_DMG / Math.max(c.dmg, 1e-6)) : 1 };   // (kmax: the player's Nujno, the bodywork only down to Core.NEED_DMG: Race._mend)
     if (!(c.dmg > 0 || R.parts.length || v.roofStep > 0 || (v.xtSc && v.xtSc.dn[0] + v.xtSc.dn[1] > 0))) return R;   // (the Kolibri's graze dents: its bodywork back bit by bit too, xtScrape)
     // the body as new to repair towards: the crash mode's own (its denser body: xc.rest, as built at xInit), else the model's (its arrays kept:
     // nothing on the GPU); a layout that does not match (another density): the bodywork left as it is, the rebuild at the end puts it right
@@ -8609,22 +8616,29 @@ const Render = (function () {
      eased into (no cuts); blended over the chase view by w (0..1). In the replay the same over either of its cameras (behind the car, TV),
      from the recording's pit state (c.rpPit, game.js rpPit) on its own clock (dt × its speed, still while it stands); over the TV cameras
      (tv) cut in and out, never blended (a post 100 m off with its long lens, cutting to the next every 170 m); after resetCam (snap: the
-     replay's jump in time, another camera or car) where it is then at once, the same while the replay stands ---------------- */
-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null, snap: false }, PC_TAN = Math.tan(25 * Math.PI / 180);
+     replay's jump in time, another camera or car) where it is then at once, the same while the replay stands. Its pace k (pitPace, game.js):
+     while the player picks the stop (POSTANEK PO MERI) a third (its moves, the sways, the blend; it still keeps up with the car: the rest of
+     the car's way carried along), then a little quicker to catch up once the choice is made (POTRDI) and back to 1; the pace itself eased,
+     never a jump ---------------- */
+  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null, snap: false, k: 1, kT: 1, kH: 0, c: null }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  function pitPace(k, hold) { pcam.kT = k; pcam.kH = hold || 0; }   // (the pace to go to; hold: s at it, then back to 1)
   function pitCine(c, dt, px, py, pz, tx, ty, tz, tv) {
     const ps = c.rpPit || c, T = curRace && curRace.track, on = !!(ps.pitAP && ps.inPit && T && T.def.pit && curRace._boxD);
     const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null, snap = pcam.snap, w0 = pcam.w; pcam.snap = false;
-    if (!on || bd == null || !pz0) { pcam.w = snap || tv ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
+    if (pcam.kH > 0 && (pcam.kH -= dt) <= 0) pcam.kT = 1;
+    pcam.k += (pcam.kT - pcam.k) * (1 - Math.exp(-dt * 4));
+    const k = pcam.k;
+    if (!on || bd == null || !pz0) { pcam.w = snap || tv ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; pcam.c = null; if (!on) { pcam.k = pcam.kT = 1; pcam.kH = 0; } return null; } }
     const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
     const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
-    pcam.t += dt;
+    pcam.t += dt * k;
     // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
     let want = on && bd != null ? 1 : 0;
     if (want && ps.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
       if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
       if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
     }
-    pcam.w = snap ? want : tv ? (want > 0 ? 1 : 0) : want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
+    pcam.w = snap ? want : tv ? (want > 0 ? 1 : 0) : want > pcam.w ? Math.min(want, pcam.w + dt * k / 1.4) : Math.max(want, pcam.w - dt / 1.2);
     // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
     const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
     const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
@@ -8641,9 +8655,11 @@ const Render = (function () {
       P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
     }
     // eased into: the camera glides, never jumps (the first time from the chase view); cut to its place (snap; the TV cameras' way in)
-    if (snap || (tv && !(w0 > 0))) { pcam.p = P.slice(); pcam.q = Q.slice(); }
+    if (snap || (tv && !(w0 > 0))) { pcam.p = P.slice(); pcam.q = Q.slice(); pcam.c = null; }
     else if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
-    const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
+    const e = 1 - Math.exp(-dt * 1.6 * k), e2 = 1 - Math.exp(-dt * 3 * k), cr = Math.max(0, 1 - k);   // (slower: cr of the car's way since the last frame carried along, so it lags the car no more than at its pace)
+    if (pcam.c && cr > 0) for (let j = 0; j < 3; j++) { const d = (car[j] - pcam.c[j]) * cr; pcam.p[j] += d; pcam.q[j] += d; }
+    pcam.c = car;
     for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
     if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
     const w = Core.sstep(0, 1, pcam.w), fov = camera.fov;   // (the view under it: behind the car 58° upright, 46° on its side; a TV camera's lens)
@@ -9514,6 +9530,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, pitPace, get pitPaceK() { return pcam.k; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

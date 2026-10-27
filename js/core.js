@@ -1511,14 +1511,22 @@ const Core = (function () {
   const FUEL_SHARE = { reli: 0.05, teren: 0.05, dirkalni: 0.07, tovornjaki: 0.04 };
   const fuelTank = (M) => M.ev ? 0 : M.tank != null ? M.tank : M.body === 'formula' ? 105 : M.body === 'lm' ? 75 : M.body === 'truck' ? 90 : M.id === 'rally' ? 60
     : M.kit ? Math.max(10, Math.round(M.mass * (FUEL_SHARE[M.cat] || 0.036) / 5) * 5) : 45;
-  // how long a stop at the box takes (s): the repairs by the damage and the parts lost (5 s at most), new tyres 2.6 s at least, the fuel 1.6 s
-  // and 0.9 s for every tenth of the tank to fill
-  function stopDur(c, race) {
+  // how long a stop at the box takes (s): the crew's jobs at once, so the longest of them: the repairs by the damage and the parts lost (5 s
+  // at most), new tyres 2.6 s, the fuel 1.6 s and 0.9 s for every tenth of the tank to fill; a kit vehicle a second more for every wheel
+  // knocked off (wh). pl: the player's own choice (c.pitPlan, game.js: POSTANEK PO MERI; none: all of it and a full tank, as every AI car's):
+  // its tyres ('keep': none, unless a tyre is cut or a wheel off: keepTyres), the tank filled up to pl.fuel (no time when it holds more),
+  // the repairs all, only what is needed ('need': the parts lost, the bodywork above NEED_DMG) or none
+  const NEED_DMG = 0.3;
+  const keepTyres = (c, pl) => !!(pl && pl.ty === 'keep' && !(c.flt && c.flt.pw >= 0) && !(c.wreck && c.wreck.wl));
+  function stopJobs(c, race, pl) {
     let lost = 0; for (const k in c.lost) lost++;
-    let d = Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15); if (c.ty) d = Math.max(d, 2.6); if (c.fuel != null && race.fuelRate) d = Math.max(d, 1.6 + (1 - c.fuel) * 9);
-    if (c.wreck) d += c.wreck.nL;   // (a kit vehicle: a second more for every wheel knocked off)
-    return d;
+    const fix = pl ? pl.fix : 'all', J = { fix: 0, ty: 0, fuel: 0, wh: c.wreck ? c.wreck.nL : 0 };
+    J.fix = fix === 'none' ? 0 : fix === 'need' ? (c.dmg > NEED_DMG || lost ? Math.min(5, 1.2 + 3.3 * Math.max(0, c.dmg - NEED_DMG) + lost * 0.15) : 0) : Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15);
+    if (c.ty && !keepTyres(c, pl)) J.ty = 2.6;
+    if (c.fuel != null && race.fuelRate) { const f = pl && pl.fuel != null ? pl.fuel : 1; if (!pl || f > c.fuel) J.fuel = 1.6 + (Math.max(f, c.fuel) - c.fuel) * 9; }
+    return J;
   }
+  function stopDur(c, race, pl) { const J = stopJobs(c, race, pl); return Math.max(J.fix, J.ty, J.fuel) + J.wh; }
   // the stop's repair as the renderer and the HUD show it, bit by bit (render only: the damage itself is undone at once by repairCar at the
   // end of the stop): its progress u (0 outside a repair) and the phases over it: the glass, the bodywork (from .. to), the wheels back on
   // (wheel: the pit crew's tyre men push the new ones home then, render.js crewLogic reads it), the lost panels one by one, the lamps, the trim
@@ -2435,7 +2443,7 @@ const Core = (function () {
   // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
   const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
   const FLY_GAP = 10 / 12, FLY_SPAN = 30, FLY_KEEP = 0.8, FLY_PL = 0.9, FLY_NEAR = 0.3;   // the flying start's column (Race._flyColumn): ~10 s from the 13th car to the 1st, 30 s at most; the share of its gap each one keeps until the player is over the line; the player's autopilot's share of its pace (a margin: no slide into a wall mid-corner); the car right ahead of the player: this many s of its pace ahead, at its pace (it does not get away)
-  const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan)
+  const LANE_K = 5, SC_K = 0.45, TYRE_WORN = 0.75, ETA_A = 5;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan); the speeding up in the lane (m/s², Race.pitETA)
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
     const boxPts = (x, y, z) => { const p = []; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) p.push([sx * x, sy * y, sz * z]); return p; };
@@ -5124,7 +5132,7 @@ const Core = (function () {
         if (c.fuel != null && this.fuelRate) {   // the fuel burnt (a share of the tank a second), the car lighter; empty: the last drops (a crawl, 40 km/h at most)
           if (this.state === 'racing' && !c.finished && !c.inPit) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * cdt);
           c.fuelKg = c.tankKg * c.fuel; if (c.fuel <= 0) c.inThr = c.speed > 11 ? 0 : Math.min(c.inThr, 0.4);
-          const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = (1 - c.fuel) / used;
+          const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = ((c.fuelF != null ? c.fuelF : 1) - c.fuel) / used;   // (fuelF: what a stop filled it up to, when not to the brim: the player's choice)
         }
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
         // steering smoothing
@@ -5320,9 +5328,14 @@ const Core = (function () {
       if (c.pitState === 'repair') {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
         if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left)
-          this.repairCar(c);
-          if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
-          if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; }   // (fuel: a full tank)
+          const pl = c.pitPlan, t = pl && pl.ty, keep = keepTyres(c, pl);   // (the player's own choice, game.js: its tyres, dry or wet against the water too, the fuel and the repairs it asked for; then gone. keep: its set stays on, unless one is cut or a wheel is off)
+          if (!pl || pl.fix === 'all') this.repairCar(c); else this._mend(c, pl.fix === 'need');
+          if (c.ty && !keep) { c.ty.k = t === 'W' ? 'wet' : t && t !== 'keep' ? 'dry' : tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; if (c.ty.c) c.ty.c = TYRE_CMP[t] ? t : c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
+          if (c.fuel != null && this.fuelRate) {
+            if (!pl) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; if (c.fuelF != null) c.fuelF = 1; }   // (fuel: a full tank)
+            else if (pl.fuel > c.fuel) { c.fuel = Math.min(1, pl.fuel); c.fuelKg = c.tankKg * c.fuel; c.fuelD = c.dist; c.fuelF = c.fuel; }   // (up to the share asked for; more in it already: nothing)
+          }
+          if (pl) c.pitPlan = null;
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
         }
         return;
@@ -5336,7 +5349,7 @@ const Core = (function () {
           vmax = Math.min(vmax, Math.sqrt(2 * 6.5 * Math.max(0, ds - 0.2)));
           if (!c.pitState) { c.pitState = 'stop'; c.pitEv = 'box'; }
           if (sp < 1.5 && Math.abs(ds) < 4 && (q.d * pz.sd > pz.lout + Math.min(1, T.bayDim().o * 0.5) || sp < 0.3)) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle; in the box on the apron, or stopped short of it)
-            c.pitState = 'repair'; c.pitT = 0; c.pitDur = stopDur(c, this); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';
+            c.pitState = 'repair'; c.pitT = 0; c.pitDur = stopDur(c, this, c.pitPlan); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';
           }
         }
       }
@@ -5485,7 +5498,48 @@ const Core = (function () {
     pitLoss(c) {
       const T = this.track, P = T.def.pit, M = this.mk; if (!P || !M) return null;
       if (M.lane == null) { let tr = 0; for (let d = P[1]; d < P[2]; d += T.ds) tr += T.ds / Math.max(PIT_V, this.vprof[T.idx(T.startS + d)]); M.lane = (P[2] - P[1]) / PIT_V - tr + LANE_K; }
-      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this) + BAY.k;   // (the S onto the apron to the box and back)
+      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this, c.pitPlan) + BAY.k;   // (the S onto the apron to the box and back; the player's own choice, once it made one)
+    }
+    // the time (s) the autopilot takes in the pit lane as it drives it (aiControl, pitStep), for the player's pit stop panel (game.js): box,
+    // from where c is to its box (0 once it stands there): the lane's limit (15 m/s through the S of the way in and out), the turn onto the
+    // apron at BAY.v, the braking curve that ends at the box; out, from the box to where the player gets the car back (game.js pitNear: a
+    // second's run, 12 m at least, short of where the way out's middle comes over the pit wall's line): off from a standstill, BAY.v and
+    // 0.6 m/s more a metre past the box, the lane's limit. Both at ~5 m/s² more speed a second (ETA_A) up to each limit, at least a crawl
+    // (0.6 m/s), metre by metre, to the box (0.4 m short of it: where the car stands) and to the hand-back (as fast as the car comes to it)
+    pitETA(c) {
+      const T = this.track, bd = this._boxD(c); if (bd == null || !T.def.pit) return null;
+      const H = this._eta || (this._eta = {}), s0 = T.startS + bd; let e = H[bd];   // (e: the way out's end over the pit wall's line, m past the box)
+      if (e == null) { e = 0; for (; e < 600; e++) { const p = T.pitAt(s0 + e); if (!p || (p.gap && p.o <= p.wall + 1)) break; } H[bd] = e; }
+      const lane = (x, v) => { const pz = T.pitAt(s0 + x + v * 0.8 + 6), pn = T.pitAt(s0 + x); return (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V; };   // (aiControl's: easy through the S)
+      const run = (d, v, cap, end) => { let t = 0; v = Math.max(0, v); for (let n = 0; n < 900 && !end(d, v); n++) { const vn = Math.max(0.6, Math.min(cap(d + 1, v), Math.sqrt(v * v + 2 * ETA_A))); t += 2 / (Math.max(0.6, v) + vn); v = vn; d++; } return t; };
+      const inC = (x, v) => { const ds = -x; let w = lane(x, v); if (ds < BAY.inL + 60) w = Math.min(w, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, ds - BAY.inL))); if (ds < 40) w = Math.min(w, Math.sqrt(2 * 6.5 * Math.max(0, ds - 0.2))); return w; };
+      const outC = (x, v) => Math.min(lane(x, v), x < BAY.outL ? BAY.v + 0.6 * Math.max(0, x) : PIT_V);
+      const x = T.boxX(c.q.s, bd), at = c.pitState === 'repair' || c.pitDone;
+      return { box: at ? 0 : run(x, c.speed, inC, (d) => d >= -0.4), out: run(c.pitDone ? Math.max(0, x) : 0, c.pitDone ? c.speed : 0, outC, (d, v) => d + Math.max(12, v * 1.3) >= e) };
+    }
+    // the engineer's weather forecast for c (game.js: the team radio, the custom stop's panel, the HUD's cloud), in c's laps: a changing
+    // weather's one change (opts.weather, wst.wx) is known to the second here, but told only roughly. k: 'rain' (dry now, the rain starts
+    // before c's finish: wx.at) or 'stop' (wet now, the rain gone before it: wx.at + dur), with n the laps to it at c's pace (_lapT); lo..hi
+    // a range of whole laps round n, always with n in it, wider the further off (0..1: within a lap), placed by the race's seed and c's lap
+    // (the same all the lap, a new estimate the next); p the chance told (%, in fives, 50 to 95: lower the further off). Else 'dry' / 'wet'
+    // to the finish (the change behind, or after the finish). Read only (its lap time kept in an object): a race steps the same whether it
+    // is asked or not. null: no change in this race (a steady weather, an online friend's), an open road, a car out of it
+    forecast(c) {
+      const W = this.wst, X = W && W.wx, T = this.track;
+      if (!X || T.open || !c || c.finished || c.net || Math.abs(X.r1 - X.r0) < 0.2) return null;
+      const lt = this._lapT(c), left = Math.max(0, this.laps * T.len - Math.max(0, c.dist)) / T.len * lt, wet = X.r1 > X.r0, dt = (wet ? X.at : X.at + X.dur) - this.time;
+      if (dt <= 0 || dt > left) return { k: (dt <= 0 ? X.r1 : this.rain) > 0 ? 'wet' : 'dry', n: null, lo: null, hi: null, p: null };
+      const n = dt / lt, R = rng(((this.opts.seed || 7) * 7919 + Math.max(0, c.lap) * 104729 + 61) >>> 0), u = R(), j = R(), w = 0.3 + 0.15 * n;
+      return { k: wet ? 'rain' : 'stop', n, lo: n < 1 ? 0 : Math.max(1, Math.floor(n - w * u)), hi: n < 1 ? 1 : Math.ceil(n + w * (1 - u)), p: clamp(Math.round((92 - 9 * n + (j - 0.5) * 12) / 5) * 5, 50, 95) };
+    }
+    // a lap's time for c (s, forecast): its best lap so far; before the first, the AI's speed profile round the lap a tenth slower (kept, in
+    // an object, while the profile stays: it changes with the grip)
+    _lapT(c) {
+      let b = Infinity; for (const t of c.lapTimes || []) if (t > 1 && t < b) b = t;
+      if (b < Infinity) return b;
+      const T = this.track, V = this.vprof, K = this._fcK || (this._fcK = {});
+      if (K.v !== V) { let t = 0; for (let i = 0; i < T.N; i++) t += T.ds / Math.max(5, V[i]); K.v = V; K.t = t * 1.1; }
+      return K.t;
     }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut one; 'damage', badly damaged), the laps it can be made in
@@ -5500,7 +5554,7 @@ const Core = (function () {
       const need = []; let from = n0, to = this.laps - 1;
       let fuelLaps = null;
       if (c.fuel != null && this.fuelRate) {   // fuel: what the car has burnt a metre since it was filled (a twentieth more), a full tank after the stop
-        const used = c.dist - (c.fuelD || 0), bm = used > 1000 && c.fuel < 0.99 ? (1 - c.fuel) / used * 1.05 : c.fuelPm * 1.25;
+        const F = c.fuelF != null ? c.fuelF : 1, used = c.dist - (c.fuelD || 0), bm = used > 1000 && c.fuel < F - 0.01 ? (F - c.fuel) / used * 1.05 : c.fuelPm * 1.25;   // (F: filled up to, not to the brim: the player's choice)
         fuelLaps = c.fuel / (bm * L);
         if (c.fuel < left * bm) {
           need.push('fuel');
@@ -5664,6 +5718,23 @@ const Core = (function () {
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
       if (c.flt) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a new tyre for a cut one)
+      c.repairN = (c.repairN || 0) + 1;
+    }
+    // a stop's repairs as the player asked for them (c.pitPlan.fix, game.js) when not all: 'need' (Nujno) the parts lost, the wings, the lamps,
+    // the glass, the bodywork down to NEED_DMG (the zones and the corners in proportion; the renderer builds the car afresh, repairN, and dents
+    // it again by what is left: a dent at the middle of each side still bent); 'none' (Brez) nothing of the body. Either way a cut tyre and a
+    // kit vehicle's wheels knocked off are new (the tyre men's: keepTyres changes them anyway; W.fix, the renderer puts the wheels back on)
+    _mend(c, need) {
+      const W = c.wreck;
+      if (c.flt && c.flt.pw >= 0) { c.flt.pw = -1; c.flt.pk = 0; }
+      if (W && W.wl) { for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.fix++; if (W.rule) Object.assign(W.rule, { due: -1, burn: 0, ask: 0 }); }
+      if (!need) return;
+      const k = c.dmg > NEED_DMG ? NEED_DMG / c.dmg : 1, M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
+      c.dmg *= k; c.roofDmg *= k; for (let i = 0; i < 4; i++) { c.dz[i] *= k; c.cd[i] *= k; }
+      c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.winOut = [0, 0, 0, 0]; c.lost = {}; c.detach = [];
+      if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
+      if (W) wreck0(W);
+      c.dents = []; [[hl * 0.85, 0], [-hl * 0.85, 0], [0, -hw], [0, hw]].forEach(([lx, lz], i) => { if (c.dz[i] > 0.03) c.dents.push({ lx, lz, amt: Math.min(0.35, c.dz[i] / 1.7) }); });   // (applyDamage's zone takes 1.7 x a knock)
       c.repairN = (c.repairN || 0) + 1;
     }
 
@@ -6125,7 +6196,7 @@ const Core = (function () {
 
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
 })();
 
 

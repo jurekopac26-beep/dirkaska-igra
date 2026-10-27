@@ -1,6 +1,6 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
 // Leaderboard, Credits), the four modes, the tracks of every mode in their groups (each with its picture: the map from above, or the
-// model of the land), the weather and the race options, the car (the game's own screen and back), a race from the menu (the intro
+// model of the land), the weather (Dry, Rain, Random and Changing) and the race options, the car (the game's own screen and back), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
@@ -107,6 +107,10 @@ try {
     // the rain covers the whole picture (a canvas is not stretched by top and bottom: it once stopped half way) and stops above the bar with the arrows
     const rc = await ev(page, 'const cv = root.querySelector("#track-stage canvas.rainfx"), pic = root.querySelector("#track-stage .dio"), ar = root.querySelector("#track-stage .arrow"); const r = cv.getBoundingClientRect(), p = pic.getBoundingClientRect(); return { cv: [r.top, r.bottom, r.width], pic: [p.top, p.bottom, p.width], arrow: ar.getBoundingClientRect().top };');
     T.check('the rain covers the whole picture and stops above the bar with the arrows', Math.abs(rc.cv[0] - rc.pic[0]) < 1.5 && Math.abs(rc.cv[1] - rc.pic[1]) < 1.5 && Math.abs(rc.cv[2] - rc.pic[2]) < 1.5 && rc.cv[1] <= rc.arrow + 1, JSON.stringify(rc));
+    // Changing (the game's "Menljivo": the rain starts or stops during the race): the fourth tile in the same row, pressed alone; the weather box says it
+    await click(page, 'weather:3');
+    const wc = await ev(page, 'const b = [...root.querySelectorAll(".wopts button")], r = b.map(e => e.getBoundingClientRect()); return { w: window.__game.S.weather, names: b.map(e => e.querySelector("b").textContent), pressed: b.map(e => e.getAttribute("aria-pressed")), row: r.every(x => Math.abs(x.top - r[0].top) < 1), box: root.querySelector("[data-act=\\"pick-weather\\"] b").textContent };');
+    T.check('the weather sheet: Dry, Rain, Random and Changing in one row; Changing sets the game\'s changing weather, pressed alone, the weather box says Changing', wc.w === 'change' && wc.names.join() === 'Dry,Rain,Random,Changing' && wc.pressed.join() === 'false,false,false,true' && wc.row && wc.box === 'Changing', JSON.stringify(wc));
     await click(page, 'more-options'); await click(page, 'opt:season:autumn'); await click(page, 'opt:tod:dusk'); await click(page, 'opt:length:short');
     s = await page.evaluate(() => ({ season: __game.S.season, tod: __game.S.tod, length: __game.S.length }));
     T.check('the race options sheet: Autumn, Dusk and a Short race are the game\'s settings', s.season === 'autumn' && s.tod === 'dusk' && s.length === 'short', JSON.stringify(s));
@@ -197,7 +201,7 @@ try {
     const wk = (page) => ev(page, `const w = root.querySelector('.intro.wk'); if (!w) return null; const vis = (q) => [...w.querySelectorAll(q)].filter(e => e.offsetParent).map(e => e.textContent.replace(/\\s+/g, ' ').trim());
       const g = [...w.querySelectorAll('.wk-go')].find(e => e.offsetParent), r = g && g.getBoundingClientRect();
       return { on: w.classList.contains('on'), head: w.querySelector('.ix-name h2').firstChild.textContent, days: vis('.wk-hd'), ses: vis('.wk-sname'), sky: vis('.wk-wd em'), pos: vis('.wk-pos'), stamp: vis('.wk-stamp'), go: g && g.textContent, pic: w.querySelector('.wk-pic img').getAttribute('src'),
-        sw: w.querySelector('.wk-sw').getAttribute('aria-checked'), btn: r && [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight], race: !!window.__game.race };`);
+        sw: w.querySelector('.wk-sw').getAttribute('aria-checked'), btn: r && [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight], race: !!window.__game.race, wx: w.querySelector('.wk-wx').textContent.replace(/\\s+/g, ' ').trim() };`);
     const toWeekend = async (page) => { await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300); };
     const { ctx, page, errors } = await open({ intro: 0, track: 'monaco', mode: 'race', lastTrack: 'monaco' });
     await ready(page);
@@ -210,15 +214,18 @@ try {
     await page.click('.intro.wk [data-wk="back"]'); await page.waitForTimeout(300);
     const b = await ev(page, 'return { wk: !!root.querySelector(".intro"), name: root.querySelector("#s-track .card h1").firstChild.textContent, race: !!window.__game.race };');
     T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Monte Carlo' && !b.race, JSON.stringify(b));
+    await page.evaluate(() => { window.__game.S.weather = 'change'; });   // (Changing: the weekend's Sunday changeable, Saturday as the race starts)
     await toWeekend(page);
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     const w1 = await wk(page), kept = await page.evaluate(() => [window.__game.S.quali, JSON.parse(localStorage.getItem('tdgp-settings')).quali]);
     T.check('Saturday switched on: Start qualifying (Saturday first), the grid P1–22, the choice kept in the settings', w1.on && w1.sw === 'true' && /^Start qualifying\s*SATURDAY FIRST$/.test(w1.go) && JSON.stringify(w1.pos) === '["P1–22"]' && !w1.stamp.length && JSON.stringify(kept) === '[1,1]', JSON.stringify({ w1, kept }));
+    T.check('Changing weather: Sunday changeable ("CHANGEABLE · may change"), Saturday dry or rain as the race will start', w1.sky.length === 2 && w1.sky[1] === 'Changeable' && /^(Sunny|Mostly sunny|Clear|Rain)$/.test(w1.sky[0]) && /^CHANGEABLE ?· may change$/.test(w1.wx), JSON.stringify({ sky: w1.sky, wx: w1.wx }));
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     await page.click('.intro.wk [data-wk="go"]');
     await raceOn(page, 'monaco').catch(() => null);
-    const r0 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length, grid: r.player.grid, intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro') }; });
+    const r0 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length, grid: r.player.grid, intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro'), rain: r.rain, wx: r.wst && r.wst.wx && Object.assign({}, r.wst.wx) }; });
     T.check('Race! with qualifying off: the race, from the back of the grid (22nd of 22)', r0 && !r0.quali && r0.cars === 22 && r0.grid === 22 && !r0.intro, JSON.stringify(r0));
+    T.check('Changing weather: the race starts as Saturday showed (rain or dry), the change to come (to the other)', r0 && !!r0.wx && r0.rain === (w1.sky[0] === 'Rain' ? 1 : 0) && r0.wx.r1 === 1 - r0.rain && r0.wx.at > 0, JSON.stringify({ sat: w1.sky[0], rain: r0 && r0.rain, wx: r0 && r0.wx }));
     T.check('no page errors on the race weekend', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -305,6 +312,11 @@ try {
     T.check(`${w}x${h}: the track step${side ? ' (on its side: the stage left, the card right)' : ''}: Race! and Back inside the screen, the card above them, the stage next to it`,
       inside(g.go) && inside(g.foot) && g.card.bottom <= g.foot.top + 1 && g.card.top >= g.groups.bottom - 1 && g.drows.every(inside) && (side ? g.st.right <= g.card.left + 1 && g.st.height >= g.H - 2 : g.st.bottom <= g.card.top + 40), JSON.stringify({ st: g.st, card: g.card, go: g.go }));
     T.check(`${w}x${h}: the card shows its car and weather boxes without scrolling`, g.cardScroll <= 2, 'scroll ' + g.cardScroll);
+    // the weather sheet: its four tiles (Dry, Rain, Random, Changing) in one row inside it, 44 px tall at least, no name cut
+    await click(page, 'pick-weather'); await page.waitForTimeout(300);
+    const ws = await ev(page, 'const b = [...root.querySelectorAll(".wopts button")], r = b.map(e => e.getBoundingClientRect()), s = root.querySelector(".sheet").getBoundingClientRect(); return { n: b.length, row: r.every(x => Math.abs(x.top - r[0].top) < 1), inside: r.every(x => x.left >= s.left - 0.5 && x.right <= s.right + 0.5) && s.top >= -0.5 && s.bottom <= innerHeight + 0.5 && s.left >= -0.5 && s.right <= innerWidth + 0.5, cut: b.filter(e => { const t = e.querySelector("b"); return t.scrollWidth > t.clientWidth + 1; }).map(e => e.textContent), h: Math.min(...r.map(x => x.height)) };');
+    T.check(`${w}x${h}: the weather sheet: Dry, Rain, Random and Changing in one row inside it, 44 px tall at least, no name cut`, ws.n === 4 && ws.row && ws.inside && !ws.cut.length && ws.h >= 44, JSON.stringify(ws));
+    await done(page);
 
     // the bar under the picture (the arrows and the track's number, 3/14, no dots) is in the same place on a map (Vršič) and on a model (the
     // next track); an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it

@@ -54,6 +54,7 @@
     rain: '<svg width="22" height="24" viewBox="0 0 24 24"><path d="M6.5 15a4.5 4.5 0 0 1 .7-8.9A6 6 0 0 1 18.4 8 3.6 3.6 0 0 1 18 15z" fill="#fff"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="#3fd0ff" stroke-width="2" stroke-linecap="round"/></svg>',
     siren: '<svg width="22" height="24" viewBox="0 0 24 24"><path d="M6.5 19v-5.5a5.5 5.5 0 0 1 11 0V19z" fill="#ff4a4a"/><path d="M12 8a5.5 5.5 0 0 1 5.5 5.5V19H12z" fill="#3a78ff"/><rect x="4.5" y="19" width="15" height="3" rx="1" fill="#fff"/><path d="M12 1.8v2.6M4.4 4.8l1.8 1.8M19.6 4.8l-1.8 1.8M1.6 11.5h2.3M20.1 11.5h2.3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
     watch: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="12" cy="14" r="8" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 14V9.4" stroke="#3fd0ff" stroke-width="2.2" stroke-linecap="round"/><path d="M9.4 2.6h5.2M12 2.6v3.2M18.6 6.4l1.6-1.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+    change: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.6" fill="#fff"/><path d="M8 1.5v1.8M1.5 8h1.8M3.4 3.4l1.3 1.3M12.6 3.4l-1.3 1.3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M9.4 18.5a3.9 3.9 0 0 1 .4-7.8 5 5 0 0 1 9.4 1.4 3.2 3.2 0 0 1-.3 6.4z" fill="#fff" stroke="#0b192b" stroke-width="1"/><path d="M11 20.6l-.8 2M14.4 20.6l-.8 2M17.8 20.6l-.8 2" stroke="#3fd0ff" stroke-width="1.8" stroke-linecap="round"/></svg>',
     dice: '<svg width="22" height="24" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="17" rx="4" fill="#fff"/><g fill="#0b192b"><circle cx="8.6" cy="9.4" r="1.7"/><circle cx="12" cy="13" r="1.7"/><circle cx="15.4" cy="16.6" r="1.7"/><circle cx="15.4" cy="9.4" r="1.7"/><circle cx="8.6" cy="16.6" r="1.7"/></g></svg>',
     mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   };
@@ -68,8 +69,8 @@
   /* ---------------- the game's tracks as the menu shows them ---------------- */
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' }]);
   const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel' };
-  const WEATHER = ['Dry', 'Rain', 'Random'], W_SET = ['dry', 'rain', 'random'];
-  const wIcon = (w) => [I.sun, I.rain, I.dice][Math.max(0, WEATHER.indexOf(w))];
+  const WEATHER = ['Dry', 'Rain', 'Random', 'Changing'], W_SET = ['dry', 'rain', 'random', 'change'];   // (Changing: the rain starts or stops during the race, the game's 'change')
+  const wIcon = (w) => [I.sun, I.rain, I.dice, I.change][Math.max(0, WEATHER.indexOf(w))];
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
   const GROUP_ORDER = ['circuit', 'road', 'rally', 'test'];
@@ -98,7 +99,7 @@
   const trackImg = (t, wet) => 'assets/tracks/' + t.id + (wet ? '-rain' : '') + '.webp';
   const dio = (t) => '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div><div class="dio"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +
     '<img src="' + trackImg(t) + '" alt="3D model of the ' + esc(t.name) + ' track"><img class="wet" src="' + trackImg(t, true) + '" alt=""></div></div>';
-  const weatherIdx = () => { const w = G.S.weather; return w === 'rain' || w === 'storm' ? 1 : w === 'random' || w === 'change' ? 2 : 0; };
+  const weatherIdx = () => { const w = G.S.weather; return w === 'rain' || w === 'storm' ? 1 : w === 'random' ? 2 : w === 'change' ? 3 : 0; };
   const modeOf = (id) => MODES.find(m => m.id === id) || MODES[0];
   const money = () => G.career() ? G.career().money : null;
 
@@ -110,7 +111,7 @@
   const curTrack = () => TRACKS()[trackIdx] || null;
   const wxMode = () => W_SET[weatherIdx()];
 
-  /* ---------------- the weather on the track model: the wet model fades in and rain falls; Random swaps between the two ---------------- */
+  /* ---------------- the weather on the track model: the wet model fades in and rain falls; Random swaps between the two, Changing too, slower ---------------- */
   const wx = (function () {
     const cv = document.createElement('canvas'); cv.className = 'rainfx'; cv.setAttribute('aria-hidden', 'true');
     const ctx = cv.getContext('2d'), calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -143,13 +144,13 @@
       if (!raf && (want || a)) raf = requestAnimationFrame(frame);
     }
     return {
-      // after a render of the track screen (mode 'dry' | 'rain' | 'random'): the new stage starts in the weather shown before, so a
+      // after a render of the track screen (mode 'dry' | 'rain' | 'random' | 'change'): the new stage starts in the weather shown before, so a
       // change fades over; on entering the screen it starts in its own weather
       attach(stage, m, entering) {
         if (entering) { wet = m === 'rain'; a = wet && !calm ? 1 : 0; }
         stage.classList.toggle('rainy', wet);   // (before anything measures the new stage, so the weather already shown does not fade in again)
         (stage.querySelector('.dio') || stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map, the intro's video)
-        if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random') timer = setInterval(() => show(!wet), 2600); }
+        if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random' || m === 'change') timer = setInterval(() => show(!wet), m === 'change' ? 4200 : 2600); }
         void stage.offsetWidth;
         show(m === 'rain' ? true : m === 'dry' ? false : wet);
       },
@@ -405,7 +406,7 @@
   function weatherSheet() {
     const t = curTrack() || TR[0], S = G.S;
     let h = '<div class="sheet-bg clear" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Weather"><h2>Weather</h2><div class="wopts">' +
-      WEATHER.map((w, i) => '<button aria-pressed="' + (weatherIdx() === i && (i === 1 ? S.weather === 'rain' : i === 2 ? S.weather === 'random' : S.weather === 'dry')) + '" data-act="weather:' + i + '">' + wIcon(w) + '<b>' + w + '</b></button>').join('') + '</div>';
+      WEATHER.map((w, i) => '<button aria-pressed="' + (S.weather === W_SET[i]) + '" data-act="weather:' + i + '">' + wIcon(w) + '<b>' + w + '</b></button>').join('') + '</div>';   // (a storm, set in the race options: Rain shown, none pressed)
     if (mode === 'race' && !t.def.open) h += '<div class="lapsrow"><span>LAPS</span><div class="stepper"><button data-act="laps:-1" aria-label="Fewer laps">−</button><b>' + t.laps + '</b><button data-act="laps:1" aria-label="More laps">+</button></div></div>';
     return h + '<div class="row"><button class="back" data-act="more-options" aria-label="More options"><span class="dots3">···</span></button><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
@@ -607,14 +608,16 @@
   const WK_TIME = { dawn: '07:00', day: '14:00', dusk: '19:30', night: '22:00' };
   const wkMin = (sec) => sec >= 5400 ? '~' + Math.round(sec / 3600) + ' h' : '~' + Math.max(1, Math.round(sec / 60)) + ' min';
   // the two days' weather, [Saturday, Sunday], each { k: the sky (D.weekend.sky), t: °C, wind: km/h }: wet, both wet (qualifying is driven
-  // in the race's weather); dry, one sunny and one mostly sunny (clear at night), a few degrees apart; the same each time for a track
+  // in the race's weather); dry, one sunny and one mostly sunny (clear at night), a few degrees apart; the same each time for a track.
+  // Changing: Sunday changeable, Saturday as the race starts (wet: the rain stops during it; G.rollWet)
   function weekendSky(t, wet) {
     const S = G.S, h = [...t.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7), sat = h % 2;
     const t0 = ({ summer: 23, autumn: 13, winter: 2 }[S.season] ?? 20) + ({ dawn: -6, dusk: -3, night: -7 }[S.tod] || 0) + (h >>> 3) % 5 - 2, dT = 2 + (h >>> 9) % 4;
     const day = (i, k, dt) => ({ k, t: Math.round(t0 + dt), wind: 3 + (h >>> (5 + i * 4)) % 12 });
-    if (wet) { const k = S.weather === 'storm' ? 'storm' : 'rain'; return [day(0, k, -3), day(1, k, -4)]; }
     const fine = S.tod === 'night' ? ['clear', 'clear'] : sat ? ['sun', 'part'] : ['part', 'sun'];
-    return [day(0, fine[0], sat ? -dT : 0), day(1, S.weather === 'change' ? 'change' : fine[1], sat ? 0 : -dT)];
+    if (S.weather === 'change') return [wet ? day(0, 'rain', -3) : day(0, fine[0], sat ? -dT : 0), day(1, 'change', wet ? -4 : sat ? 0 : -dT)];
+    if (wet) { const k = S.weather === 'storm' ? 'storm' : 'rain'; return [day(0, k, -3), day(1, k, -4)]; }
+    return [day(0, fine[0], sat ? -dT : 0), day(1, fine[1], sat ? 0 : -dT)];
   }
   // a day's weather drawn for the page (the paper is light: the sun gold, a cloud white, rain under a dark one)
   function skyIcon(k, w) {
@@ -639,7 +642,7 @@
         (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
           : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
     };
-    const sun = sky[1], wet = R.wet || sun.k === 'storm';
+    const sun = sky[1], wet = (R.wet && sun.k !== 'change') || sun.k === 'storm';   // (Changing: its own sky, may change, wet at the start or not)
     el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, R.wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
       '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(X.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' +
       '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
@@ -696,7 +699,7 @@
     const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, from = G.S.lastTrack && G.S.lastTrack !== t.id && XI[G.S.lastTrack] && XI[G.S.lastTrack].top && trackById(G.S.lastTrack) ? G.S.lastTrack : null;
     const globe = setting('intro') === 0 && G.S.lastTrack !== t.id && !calm && window.Journey && window.GEO && GEO.tracks[t.id] && Journey.supported();
     const country = countryOf(t), car = G.car();
-    const what = [modeOf(R.mode).name, car && car.name, R.mode === 'race' && !t.def.open ? laps(t.laps) : null, R.wet ? 'Rain' : 'Dry'].filter(Boolean).join(' · ');
+    const what = [modeOf(R.mode).name, car && car.name, R.mode === 'race' && !t.def.open ? laps(t.laps) : null, G.S.weather === 'change' && !R.trial ? 'Changing' : R.wet ? 'Rain' : 'Dry'].filter(Boolean).join(' · ');
     const cr = cardRect(rect), side = cr.x >= rect.x + rect.w - 2;   // (on its side: the title and the buttons over the card, the stage the whole height at the left)
     el.innerHTML = '<div class="ix-head2" style="' + (side ? 'left:' + Math.round(cr.x) + 'px;height:' + Math.round(cr.y) + 'px' : 'height:' + Math.round(rect.y) + 'px') + '"><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div>' +
       '<div class="ix-ctl"><button class="ix-mus" data-ix="music" aria-pressed="' + (setting('music') === 0) + '" aria-label="' + esc(D.intro.music) + '">' + SPK(setting('music') === 0) + '</button><button class="ix-skip" data-ix="skip">' + esc(D.intro.skip) + I.chev + '</button></div></div>' +
