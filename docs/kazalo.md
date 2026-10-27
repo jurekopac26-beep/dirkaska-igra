@@ -59,7 +59,8 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **plošček v menijih**, **Kontrole** `Kontrole (from Nastavitve)`
 - **števec sličic** `the frame counter` (`PH`: naslov `?fps`, okvirček zgoraj levo; `PH.tick`, `PH.s` koraki, `PH.r` risanje; osnova za prikaz za razvijalca, sklop 9)
 - **polje in štart:** `NUM_AI` 21 (22 avtov), `CH_AI` 19 (prvenstvo), `PLAYER_GRID` 999 (igralec zadnji v polju); leteči start `flyStep`, `flyHUD`, `FLY_T`
-- **hiter vstop** `the quick entry` (`quickGo`, `quickRun`): naslov `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>` odpre dirko brez menija; branje naslova `Core.quickArgs`; za teste `window.__game.quick` (opis v `tests/README.md`)
+- **hiter vstop** `the quick entry` (`quickGo`, `quickRun`): naslov `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>` odpre dirko brez menija; branje naslova `Core.quickArgs`; za teste `window.__game.quick` (opis v `tests/README.md`)
+- **testni način, ponovljive dirke** `the test mode` (`repro`, `grand`): hitri vstop vklopi testni način za ves obisk; seme dirke je `seme` iz naslova (privzeto 1), `Race` dobi `repro: true`; vreme, ki ga nastavitve prepustijo naključju, megla na Big Suru in čakanje luči pred štartom so iz toka istega semena, novega za vsako dirko (`newRace`). Za teste `window.__game.repro`, `window.__game.recSum()` (povzetek posnetka)
 - **glavna zanka** `main loop`, **dogodki** `events` (`switch (act)` za `data-act`), **aplikacija** `the game as an app`, **most do menija** `the menu's bridge`, **zagon** `boot`
 
 ## Teme v `js/core.js`
@@ -72,7 +73,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
 - **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)
 - **hiter vstop** `quickArgs(search)` (naslov → proga, način, `t`, vreme, avto, neveljavni deli)
-- **naključje** `rng(seed)` (mulberry32); `Math.random` je še v učinkih poškodb (sklop 16)
+- **naključje** `rng(seed)` (mulberry32). Naključni dogodki dirke (kolo odpade, razbitine in predmeti, predrta guma, reakcije in napake AI) so iz `rand()`: številke dirke, ki se stopa (`Race.rnd`; `RAND` nastavita `Race.step` in `aiControl`). Ponovljiva dirka (`opts.repro`) jih vzame iz semena (`opts.seed`), sicer `Math.random` kot doslej. Promet (`Traffic.R`) in policija (`R`, `RD`) imata vedno svoje tokove iz semena; vizualni učinki v `js/game.js` in `js/render.js` ostanejo naključni
 
 ## Teme v `js/render.js`
 
@@ -137,6 +138,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 ## Testi po temah
 
 - **Hiter vstop:** `tests/quick.test.js` (naslov), `tests/browser/quick.test.mjs` (igra)
+- **Ponovljive dirke** (seme, testni način): `tests/repro.test.js` (jedro), `tests/browser/repro.test.mjs` (igra s hitrim vstopom)
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu), video trenutka `hlvid.test.mjs`
