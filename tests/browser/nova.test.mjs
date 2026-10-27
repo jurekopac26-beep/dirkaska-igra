@@ -15,11 +15,14 @@ const row = (page) => page.evaluate(() => { const s = document.querySelector('#s
   return s ? { label: r.querySelector('.rlbl').textContent, btns: [...s.querySelectorAll('button')].map(b => b.dataset.v + ':' + b.textContent + (b.classList.contains('sel') ? '*' : '')) } : null; });
 const rowS = (page) => page.evaluate(() => { const s = document.querySelector('#s-settings [data-set="slide"]'), r = s && s.closest('.row');
   return s ? { label: r.querySelector('.rlbl').textContent, btns: [...s.querySelectorAll('button')].map(b => b.dataset.v + ':' + b.textContent + (b.classList.contains('sel') ? '*' : '')) } : null; });
+// the settings, opened again until they show (a race just started may still be on its loading screen and miss the first ask)
+const settings = async (page) => { for (let k = 0; k < 20; k++) { await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
+  if (await page.isVisible('#s-settings [data-set="phys"] [data-v="nova"]')) return; } };
 const saved = (page) => page.evaluate(() => { try { return JSON.parse(localStorage.getItem('tdgp-settings') || '{}').phys; } catch (_) { return null; } });
 try {
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', {}, { width: 640, height: 360 });
-    await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
+    await settings(page);
     const r = await row(page);
     T.check('settings: the row Fizika vožnje with Klasična (marked) and Nova', r && r.label === 'Fizika vožnje' && r.btns.join(',') === 'cs:Klasična*,nova:Nova', JSON.stringify(r));
     const r2 = await rowS(page);
@@ -38,7 +41,7 @@ try {
     T.check('a race on Bathurst with Nova: every car (the player and the rivals) drives the new physics', st.phys === 'nova' && st.cars.length > 10 && st.cars.every(p => p === 'nova'), JSON.stringify({ phys: st.phys, cars: [...new Set(st.cars)] }));
     T.check('20 s on the autopilot: nothing NaN, the cars moving', !nan && st.moving >= st.n - 1, `${st.moving} of ${st.n} moving at ${st.t.toFixed(1)} s`);
     // back to Klasična during the race: the race keeps its physics, a toast; the next race classic
-    await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
+    await settings(page);
     await page.click('#s-settings [data-set="phys"] [data-v="cs"]'); await page.waitForTimeout(200);
     const tt = await page.evaluate(() => ({ toast: document.getElementById('toast').textContent, phys: window.__game.race.opts.phys, cars: [...new Set(window.__game.race.cars.map(c => c.phys))] }));
     T.check('Klasična during the race: the race keeps the new physics, a toast says it applies from the next race', tt.phys === 'nova' && tt.cars.join() === 'nova' && /naslednje dirke/.test(tt.toast), JSON.stringify(tt));
@@ -46,11 +49,11 @@ try {
     const nx = await page.evaluate(() => ({ phys: window.__game.race.opts.phys, cars: [...new Set(window.__game.race.cars.map(c => c.phys))] }));
     T.check('the next race (Spa): the classic physics', nx.phys === 'cs' && nx.cars.join() === 'cs' && await saved(page) === 'cs', JSON.stringify(nx));
     // the sliding style: Drseč with Klasična, no car has it; with Nova the player's car only
-    await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
+    await settings(page);
     await page.click('#s-settings [data-set="slide"] [data-v="1"]'); await page.waitForTimeout(200);
     await startTrack(page, 'spa');
     const sc = await page.evaluate(() => window.__game.race.cars.filter(c => c.nvSl).length);
-    await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
+    await settings(page);
     await page.click('#s-settings [data-set="phys"] [data-v="nova"]'); await page.waitForTimeout(200);
     await startTrack(page, 'bathurst');
     const sn = await page.evaluate(() => { const r = window.__game.race; return { player: !!r.player.nvSl, rivals: r.cars.filter(c => !c.isPlayer && c.nvSl).length, phys: r.opts.phys }; });
