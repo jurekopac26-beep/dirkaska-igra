@@ -310,6 +310,7 @@
         if (mine) { const sb = s0 + 5, bp = T.bayPose(P0[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the left, sd)
           out.pitBox = { s: sb, x: oc[0] + nx * (base + 4.2), z: oc[1] + nz * (base + 4.2), hd, tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a, y: T.hy[i] }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: T.hy[i] });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.24, 2.75, 3.2, 4.9], wall: [base + 16.475, 0.03, 3.17, 4.68], jamb: [base + 9.2, 4.8, 0.2, 2.75] };   // (its garage above, for the renderer's team colours: the band along its front, the back wall, the side walls' fronts)
       }
       const pbs = out.pitBoxes; T.pitStands = null;
       if (pbs && pbs.length) T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];

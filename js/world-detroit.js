@@ -533,7 +533,8 @@
         if (mine) { const sb = s0 + 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY)
           out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, bp.o), stopO: bp.o, stopA: bp.a }; }
         const g = scen.get(cx, cz); pitKit(g, s0, k, base, p.wall, mine); tent(g, s0, k, base); exclPush(cx, cz, 14);
-        const oc = atSf(s0 + 5, 0); (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        const oc = atSf(s0 + 5, 0); (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.3, 2.6, 2.95, 4.8], wall: [base + 15.37, 0.03, 2.47, 4.65] }; }   // (its tent, for the renderer's team colours: the valance, the back wall)
       { const pbs = out.pitBoxes; T.pitStands = null;
         if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35]; const kt = [0.86, 0.86, 0.83], kf = [0.66, 0.67, 0.64];
           for (let q = T.pitStands[0] - 28; q < T.pitStands[1] + 28; q += 2) { const s0 = sStart + q, pi = T.pitAt(s0), pj = T.pitAt(s0 + 2); if (!pi || !pj || pi.gap || pj.gap) continue;

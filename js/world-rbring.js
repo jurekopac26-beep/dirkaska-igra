@@ -1598,6 +1598,7 @@
         if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the lane's side, sd)
           out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) });
+        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
         crew.set(q, tc);
       }
       T.pitStands = null;   // (no team stands on the pit wall here)
@@ -1675,7 +1676,10 @@
           exclPush(cx, cz, 7);
         }
         const oc = atSf(s0 + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame, the floor's height
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = PER ? { band: [base + 8.7, 2.66, 2.94, 4.8], wall: [base + 11.95, 0.02, 2.68, 4.7] }   // (its garage, for the renderer's team colours: the 1930s stall: a fascia on the roof's front edge, a cloth behind the back posts;
+          : LK.pits80 ? { band: [base + 8.955, 3.42, 3.92, 4.7], wall: [base + 16.85, 0.03, 3.95, 4.74], jamb: [base + 9, 4.88, 0.25, 3.42], road: 'jamb' }   // Rio's, rioPits: the band over the door, the back wall, the side walls' fronts;
+          : { band: [base + 8.955, 3.45, 3.95, 4.7], wall: [base + 15.9, 0.03, 3.9, 4.74], jamb: [base + 9, 4.56, 0.9, 3.45], road: 'jamb' }; }   // the pit building's: the band, the back wall, the front pillars)
       { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the strip behind the pit wall: Core keeps the player's car off them, a low kerb along that limit
         if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];
           const kt = [0.86, 0.86, 0.83], kf = [0.66, 0.67, 0.64];

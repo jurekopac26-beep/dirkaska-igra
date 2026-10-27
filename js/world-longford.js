@@ -360,13 +360,14 @@
         if (!mine) for (let m = 0; m < 3; m++) kcyl(g, s0, 7.6, base + 8.6, m * 0.24, 0.34, 0.22, 8, [0.12, 0.12, 0.13], m === 2 ? [0.5, 0.5, 0.52] : null);
         kbox(g, s0, 9.2, base + 7.8, 0, 0.1, 2.0, 0.1, TIMd, null, true); kbox(g, s0, 9.2, base + 7.78, 1.7, 0.7, 0.5, 0.05, tc, null, true);
         const oc = atSf(s0 + 5, 0);
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 8.955, 3.3, 3.78, 4.7], wall: [base + 14.84, 0.03, 2.75, 4.55] }; }   // (its bay of the shed below, for the renderer's team colours: the board under the eave, the back wall between the posts)
       T.pitStands = null;
       { const sE = sStart + PD[1] + 24, pE = T.pitAt(sE); if (pE) { const [x, z] = atSf(sE, pE.lout + 2.6), i = T.idx(sE);   // the PITS sign at the way in
         cyl(scen.get(x, z), x, hyS(sE) - 0.3, z, 0.08, 2.9, 5, TIMd); board(x, hyS(sE) + 2.1, z, T.tx[i], T.tz[i], 2.6, 0.75, LF_AT.ban + 2); exclPush(x, z, 3); } }
       addM(gl, aMat); addM(gp, new THREE.MeshLambertMaterial({ vertexColors: true }));
       // the pit shed: an open timber shed with a corrugated iron roof behind the crews, the length of the boxes
-      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board there, 3.7 m up)
+      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board under it, out.pitBoxes gar)
         for (let q = pq0 - 10; q < pq1 + 20; q += 10) { const s0 = sStart + q, f = f0(s0 + 5); if (f == null) continue; const [x, z] = atSf(s0 + 5, f + 3), g = scen.get(x, z);
           for (const a of [0.3, 9.7]) for (const o of [f + 0.3, f + 5.7]) kbox(g, s0, a, o, -0.2, 0.22, 4.0, 0.22, TIM, null, true);
           kbox(g, s0, 5, f + 5.9, -0.2, 10, 3.0, 0.12, TIM, null, true);

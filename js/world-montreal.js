@@ -371,6 +371,7 @@
       if (mine) { const sb = s0 + 5, lo = p.o, bp = T.bayPose(PD[3]);   // (the car stops at the edge of the shallow apron, parked straight: Core Track.bayDim, def.pitApron; mirrored to the left, sg)
         out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, bp.o * sg), stopO: bp.o, stopA: sg * bp.a }; }
       (out.pitBoxes = out.pitBoxes || []).push({ k: nb++, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: 0 });
+      out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [PB[2] - 0.14, 3.5, 4.0, 4.7], wall: [PB[2] + 13, 0.05, 4.15, 4.74], jamb: [PB[2], 4.88, 0.24, 3.4], road: 'band wall jamb' };   // (its garage below, for the renderer's team colours: the band, the back wall, the side walls' fronts, all built along the road)
       // the team's stand on the pit wall strip: a desk with screens under a roof in the team's colour, stools
       const g = scen.get(oc[0], oc[1]), wv = p.wall;
       kb(g, s0 + 5, wv + 0.8, 0.96, 2.5, 0.06, 1.0, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]);
@@ -399,7 +400,7 @@
       const P8 = [at(s0, o0, y0), at(s1, o0, y0), at(s1, o1, y0), at(s0, o1, y0), at(s0, o0, y1), at(s1, o0, y1), at(s1, o1, y1), at(s0, o1, y1)], m = at((s0 + s1) / 2, (o0 + o1) / 2, (y0 + y1) / 2);
       for (const [a, b, c, d, cc] of [[0, 1, 5, 4, col], [1, 2, 6, 5, col], [2, 3, 7, 6, col], [3, 0, 4, 7, col], [4, 5, 6, 7, top || col]]) g.quadO(P8[a], P8[b], P8[c], P8[d], cc, m); };
     const crewQ = new Set(); for (let q = pq0; q <= pq1; q += 10) crewQ.add(q);
-    for (let q = PB[0]; q < PB[1] - 1; q += 10) {
+    for (let q = pq0 - Math.floor((pq0 - PB[0]) / 10) * 10; q < PB[1] - 1; q += 10) {   // (the bays line up with the crews' boxes: the crews' garages open, each behind its box)
       const s0 = sStart + q, s1 = s0 + 10, mid = atSf(s0 + 5, sg * (F0 + 8)), g = scen.get(mid[0], mid[1]), crew = crewQ.has(q), k = crew ? ((q - pq0) / 10) | 0 : 0;
       slab(g, s0, s1, F0, F0 + 13, 4.2, 4.6, WH, WT);                                   // the ground floor's ceiling
       face(g, s0, s1, F0 + 13, 0, 4.2, crew ? TEAM[k % TEAM.length].map(v => v * 0.8 + 0.1) : [0.5, 0.52, 0.55]);   // the garage's back wall

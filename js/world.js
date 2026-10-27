@@ -1070,6 +1070,7 @@ const World = (function () {
       forestPitKit(scen.get(cx, cz), T.startS + q, k, base, p.wall, mine);
       const oc = atSf(T.startS + q + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame
       (out.pitBoxes = out.pitBoxes || []).push({ k, s: T.startS + q + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine });
+      out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 8.955, 3.45, 3.95, 4.7], wall: [base + 15.9, 1.3, 3.9, 4.74], jamb: [base + 9, 4.56, 0.9, 3.45], road: 'jamb' };   // (its garage, forestGarages, for the renderer's team colours: the band over the door, the back wall above its darker panel, the front pillars)
       if (Y) out.pitBoxes[out.pitBoxes.length - 1].y = Y(T.startS + q + 5); }   // (the crews stand at the road's height of their box)
     forestGarages();
     { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the grass strip (2.7 m roofs over the box centres, forestPitKit): Core keeps the player's car off it

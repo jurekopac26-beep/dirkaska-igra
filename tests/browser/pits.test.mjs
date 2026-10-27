@@ -66,8 +66,8 @@ try {
         Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }   // (before the S onto the apron: in the middle of the lane)
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
-        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
-          if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }   // (each man where he was sent: beyond the lane's outer edge)
+        if (c && c.mode !== 'home' && c.mode !== 'ready' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+          if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }   // (each man where he was sent out of the garage: beyond the lane's outer edge; home and ready: everybody in the garage)
         if (P.pitState === 'repair') { const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d * p.sd - p.lout).toFixed(2), yaw: +(a * p.sd * 57.3).toFixed(1) }; }
       }
       if (P.lap === 2 && !P.repairN && !P.inPit) P.pitWant = true;
@@ -150,7 +150,7 @@ try {
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) { const e = Math.abs(P.q.d * p.sd - p.o);
           if (g.race.cars.some(x => x !== P && (x.inPit || x.pitWant) && Math.abs(x.dist - P.dist) < 25)) { o.busy++; o.devB = Math.max(o.devB, e); } else o.dev = Math.max(o.dev, e); } }
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
-        if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+        if (c && c.mode !== 'home' && c.mode !== 'ready' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
           if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.05) { if (c.mode === 'work') o.work = Math.min(o.work, d); o.max = Math.max(o.max, d); if (d < 0) o.lane++; } }
         if (P.pitState === 'repair') {
           const p = Tk.pitAt(P.q.s), hd = Math.atan2(P.q.tz, P.q.tx); let a = P.h - hd; a = Math.atan2(Math.sin(a), Math.cos(a)); o.pose = { dLout: +(P.q.d * p.sd - p.lout).toFixed(2), yaw: +(a * p.sd * 57.3).toFixed(1), sd: p.sd };
@@ -171,7 +171,7 @@ try {
     for (const m of o.modes) if (!t2.modes.includes(m)) t2.modes.push(m);
   }
   const v2 = t2.v;
-  T.check('Bathurst (the lane on the left): repaired once, the crew went out, worked and cleared', r2 && r2.rep === 1 && ['out', 'work', 'clear'].every(m => t2.modes.includes(m)), `repairs ${r2 && r2.rep}, crew ${t2.modes.join(',')}`);
+  T.check('Bathurst (the lane on the left): repaired once, the crew took up its kit in the garage, went out, worked and cleared, in that order', r2 && r2.rep === 1 && t2.modes.join('>').startsWith('home>ready>out>work>clear'), `repairs ${r2 && r2.rep}, crew ${t2.modes.join('>')}`);
   // (the lane 7 m wide: within 1.6 m of its middle the car is wholly in it)
   T.check('Bathurst: at full right lock the car keeps to the middle of the lane (with another car coming in beside it: in its lane), a ghost, no damage', t2.lock > 40 && t2.dev < 0.8 && t2.devB < 1.6 && t2.ghost > 40 && t2.dmg === 0,
     `${t2.lock} steps at full lock, at most ${t2.dev.toFixed(2)} m off the lane's centre (${t2.busy} steps another car coming in beside it: at most ${t2.devB.toFixed(2)} m), ${t2.ghost} steps a ghost, damage ${t2.dmg.toFixed(3)}`);

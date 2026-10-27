@@ -295,6 +295,7 @@
           const st = atSf(sb, sd * p.o), ctr = atSf(sb, sd * (base + 4.2));
           out.pitBox = { s: sb, x: ctr[0], z: ctr[1], hd, tx: T.tx[i], tz: T.tz[i], nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: st, y: Y }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: sb, ox: oc[0], oz: oc[1], tx: T.tx[i], tz: T.tz[i], nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: Y });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.2, 3.04, 3.7, 4.48], wall: [base + 15.82, 0.03, 2.82, 4.55] };   // (its tent above, for the renderer's team colours: the band on the roof's front, the back wall)
       }
       T.pitStands = null;
       { const sE = sAt(PD[1] + 24), pE = T.pitAt(sE); if (pE) { const [x, z, , i] = atSf(sE, sd * (pE.lout + 3)), g = scen.get(x, z), y = T.hy[i];   // the sign at the way in: BOKSI and an arrow

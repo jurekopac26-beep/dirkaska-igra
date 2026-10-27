@@ -88,7 +88,7 @@ try {
   };
   await act('rp-speed');   // (2×)
   const F1 = await run(live.ap - 4, live.back + 3), m1 = modes(F1), work1 = F1.filter(f => f.mode === 'work'), lift1 = Math.max(0, ...F1.map(f => f.lift));
-  T.check('played back behind the car: the crew goes out, works and clears (at home before and after)', /^home>out>work>clear>home$/.test(m1), m1);
+  T.check('played back behind the car: the crew takes up its kit, goes out, works and clears (at home before and after)', /^home>ready>out>work>clear>home$/.test(m1), m1);
   T.check('the car up on the jacks while they work', lift1 > 0.05, `max lift ${lift1.toFixed(3)} m`);
   const wl = work1.length ? work1[work1.length - 1].t - work1[0].t : 0;
   T.check('the crew works as long as in the race (the repair\'s length)', work1.length > 5 && Math.abs(wl - live.dur) < 0.3, `${wl.toFixed(2)} s in the replay, ${live.dur.toFixed(2)} s in the race`);
@@ -100,7 +100,7 @@ try {
   // the TV cameras: the film camera at the box over them too, the TV camera again from the hand-back
   await act('rp-cam');
   const F2 = await run(live.ap - 4, live.back + 3), f2 = film(F2, 'tv'), m2 = modes(F2);
-  T.check('over the TV cameras: the same film at the box (close and low), none of it before the lane and from the hand-back; the crew out, at work, clearing', f2.ok && /^home>out>work>clear>home$/.test(m2), m2 + ' ' + JSON.stringify(f2.d));
+  T.check('over the TV cameras: the same film at the box (close and low), none of it before the lane and from the hand-back; the crew ready, out, at work, clearing', f2.ok && /^home>ready>out>work>clear>home$/.test(m2), m2 + ' ' + JSON.stringify(f2.d));
   // never half over a TV camera (a post up to ~110 m off with a long lens, the next one every 170 m): cut in and out; while it has the view it
   // glides (each frame's step at most 2 m more than twice the car's)
   const half2 = F2.filter(f => f.w > 0.02 && f.w < 0.98), st2 = [];
@@ -112,7 +112,7 @@ try {
   await act('rp-cam'); await act('rp-speed');
   const sp = await page.evaluate(() => window.__game.replay.speed);
   const F3 = await run(live.ap - 4, live.back + 3), m3 = modes(F3), lift3 = Math.max(0, ...F3.map(f => f.lift)), f3 = film(F3, 'chase');
-  T.check('at 4×: out, work, clear, the jacks, the film camera at the box', sp === 4 && /^home>out>work>clear>home$/.test(m3) && lift3 > 0.05 && f3.ok, `${sp}× ${m3}, lift ${lift3.toFixed(3)} m ` + JSON.stringify(f3.d));
+  T.check('at 4×: ready, out, work, clear, the jacks, the film camera at the box', sp === 4 && /^home>ready>out>work>clear>home$/.test(m3) && lift3 > 0.05 && f3.ok, `${sp}× ${m3}, lift ${lift3.toFixed(3)} m ` + JSON.stringify(f3.d));
 
   // the phone upright (390 × 844), 4×: the film camera's lens wider (as wide across as on its side, at most 80° high), the whole car and the
   // crew at their places in the picture while they work

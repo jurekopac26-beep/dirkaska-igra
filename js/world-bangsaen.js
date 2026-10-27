@@ -242,7 +242,8 @@
         kbox(g, s0, 5, p.wall + 0.75, 0.96, 2.4, 0.06, 0.9, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]); kbox(g, s0, 5, p.wall + 0.8, 2.4, 2.6, 0.07, 1.4, [0.22, 0.23, 0.26], tc);   // the crew's stand on the wall
         for (const la of [-1.1, 1.1]) kbox(g, s0, 5 + la, p.wall + 0.8, 0, 0.07, 2.4, 0.07, [0.22, 0.22, 0.24], null, true);
         const oc = atSf(s0 + 5, 0);
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 7.95, 2.5, 3.0, 4.8], wall: [base + 8, 0.02, 2.47, 4.3] }; }   // (its marquee below, for the renderer's team colours: the band along the eaves, the closed front's door)
       { const pbs = out.pitBoxes; T.pitStands = null; if (pbs && pbs.length) T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35]; }
       for (const [q0, dq] of [[PD[1] + 30, 4], [PD[2] - 26, -4]]) for (let k = 0; k < 3; k++) {   // knockable cones on the noses
         const s = sStart + q0 + k * dq, i = T.idx(s), p = T.pitAt(s); if (!p) continue; const o = (T.br[i] + 0.9 + p.o - 3.5) / 2; if (o < T.br[i] + 0.5 || o > p.o - 4) continue;
