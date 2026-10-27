@@ -84,6 +84,7 @@ Direction C4-2: a tall sky band with big icons, plus a weather animation in CSS 
 - `boksi-sklop-workflow.js`: the workflow script used to build a group (build, verify, review, fix). Adapt it to 10B.
 
 ## The user's pages (private to the old account; the user can share them from the Share menu)
+- All images on one page (share this one): https://claude.ai/artifact/7X3mBSLdhkKJM87gLV2ige
 - Choices: https://claude.ai/artifact/RG7o6rfghHayFEmBwSAv7f
 - Questions and variants: https://claude.ai/artifact/TGhHeuzdvFQ3h5nbcGvRGW
 - Camera storyboard: https://claude.ai/artifact/HGBPqmkp56k2x9C6kq9RsY
