@@ -267,7 +267,7 @@ const Napake = (function () {
   }
   // the flags for Zastavice, by time: the moments kept and the race's flags not marked
   function tocke() {
-    if (!G) return []; const sp = G.span(), end = sp ? sp[1] + 1e-6 : Infinity, out = [], done = pokrite();
+    if (!G) return []; const rec = G.rec(), sp = G.span(), end = sp ? sp[1] + (rec && rec.file ? 0.25 : 1e-6) : Infinity, out = [], done = pokrite();   // (an opened file: its recording ends there, a flag just after its last sample is still its own)
     for (const it of Z.items) if (it.t <= end) out.push({ t: it.t, kind: 'zbirka', n: it.n });   // (the race so far: a moment kept later on is not yet there)
     G.flags().forEach((f, j) => { if (f.t <= end && !done.has(j)) out.push({ t: f.t, kind: 'dirka', n: j + 1 }); });
     potrjene().forEach((f, j) => { if (f.t <= end) out.push({ t: f.t, kind: 'samo', n: j + 1 }); });

@@ -3,7 +3,8 @@
 // as posnetek_bathurst_<LLLLMMDD-UUMM>.rrp (gzip, a fraction of the samples' raw size); read back the same samples to the last bit and the
 // header (the track, the version, the cars, the flag). Not a recording: why, no replay. A fresh page (the title, no race): Odpri … opens
 // the file into its replay: the same samples, the same cars, the flag in Zastavice, the tool's own scan, the report (naprava of the file,
-// posnetek=<name>); pojdi: the replay at a time poses the cars as recorded, a picture of it; Končaj: the title. tools/posnetek.mjs on the
+// posnetek=<name>); pojdi: the replay at a time poses the cars as recorded, a picture of it; Končaj: the title; a flag just after the last
+// sample still the file's own (Zastavice). tools/posnetek.mjs on the
 // file: the summary, its JSON, a picture at a time.
 //   node tests/browser/napake-posnetek.test.mjs
 import fs from 'node:fs';
@@ -88,6 +89,17 @@ try {
   await P.click('[data-act="rp-exit"]'); await P.waitForTimeout(600);
   const o3 = await P.evaluate(() => ({ screen: window.__game.screen, replay: !!window.__game.replay, race: !!window.__game.race }));
   T.check('Končaj: the title (no replay, no race)', o3.screen === 'title' && !o3.replay && !o3.race, JSON.stringify(o3));
+  // a flag just after the recording's last sample (the race's clock goes on between samples, 1/20 s apart): the file's own, on its timeline.
+  // The file written unpacked (Napake.rrp.pack, no gzip: read as well)
+  const o4 = await P.evaluate(async (b64) => {
+    const { H, frames } = await Napake.rrp.beri(new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))])), t1 = frames[frames.length - 1][0];
+    H.flags = [{ t: 5 }, { t: t1 + 0.04 }];
+    const why = await Napake.rrp.odpri(new Blob([Napake.rrp.pack(H, frames)]), 'ob-koncu.rrp');
+    for (let i = 0; i < 600 && !window.__game.replay; i++) await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 300));
+    return { why, replay: !!window.__game.replay, flags: document.getElementById('rp-flags').textContent, nflag: document.querySelectorAll('#rp-line .nk-flag').length, tocke: Napake.tocke().map(p => +p.t.toFixed(3)), t1 };
+  }, bytes.toString('base64'));
+  T.check('a file whose flag is just after its last sample (and one at 5 s), unpacked: opened, both flags on its timeline (Zastavice (2))', o4.why === '' && o4.replay && o4.flags === 'Zastavice (2)' && o4.nflag === 2, JSON.stringify(o4));
   T.check('no errors on the page (the file opened)', e2.length === 0, e2.slice(0, 4).join(' | '));
   await P.context().close();
 
