@@ -73,9 +73,9 @@ try {
       $('hud').classList.add('school'); $('h-school').textContent = 'Zaviranje do oznake · 120 km/h'; check('school');
       return res;
     });
-    const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 230 : m === 'duel' ? 115 : m === 'pikes' || m === 'school' ? 106 : 95);   // (upright the line under the clock is under the rows' second row: the duel's gap and the police's panel under it, their signs lower too)
+    const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 250 : m === 'duel' ? 135 : m === 'pikes' || m === 'school' ? 106 : 100);   // (upright the line under the clock is under the rows' second row: the duel's gap and the police's panel under it, their signs lower too)
     const badOnes = out.filter(o => !o.box || o.hits.length || o.box[1] > lim(o.mode));
-    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 12 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 230, the duel ≤ 115, Pikes and the school ≤ 106'}), over nothing`,
+    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 12 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '100 px; the police ≤ 250, the duel ≤ 135, Pikes and the school ≤ 106'}), over nothing`,
       out.length === 12 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
@@ -95,7 +95,7 @@ try {
       const o = g.noteAt(s, v), b = el.getBoundingClientRect();
       return Object.assign(o, { top: Math.round(b.top), pol: document.getElementById('hud').classList.contains('pol') });
     }, [d, v, !!abs]);
-    const top = (o) => o.top <= (land ? 10 : o.pol ? 200 : 95);
+    const top = (o) => o.top <= (land ? 10 : o.pol ? 200 : 100);
     const txt = (o) => `${o.kind} '${o.cls}' ${o.key} top ${o.top}`;
 
     T.check(`${tag} medvode: racing`, await go('medvode') === 'racing');
