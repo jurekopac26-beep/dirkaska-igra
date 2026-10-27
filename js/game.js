@@ -809,6 +809,7 @@
   function replayEnd() {
     if (!replay) return;
     if (replay.here) { rpRace(); return; }   // (the race so far: back into the race, never the results)
+    if (recd && recd.file) { Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); Napake.konec(); toTitle(); return; }   // (an opened file: the moments kept to share, then the title)
     Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     if (recd) for (const c of recd.cars) if (c.rl) delete c.rl;   // (a roll the replay posed: over with it)
     hlvStop();   // (the best moment's video: done)
@@ -900,6 +901,7 @@
   }
   // the version (js/game.js's stamp, tools/stamp.js: git log -S 'game.js?v=...' index.html finds it), the track, the way it is raced, the weather
   function rpMeta() {
+    if (recd && recd.file) { const H = recd.file; return { ver: H.ver, track: H.track, name: H.name, mode: H.mode, wx: H.wx, laps: H.laps, dev: H.dev, file: H.ime || '' }; }   // (an opened file: the race as it was driven, its device)
     const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), d = track.def;
     const how = [modeOf(d)].concat(race.quali ? ['kvalifikacije'] : [], race.champ ? ['prvenstvo'] : [], inCareer() ? ['kariera'] : [], race.chal ? ['izziv'] : [], school ? ['sola'] : []);
     return { ver: m ? m[1] : '?', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
@@ -956,6 +958,40 @@
     for (const [i0, i1] of run) out.push('cesta:' + i0 + '-' + i1);
     return out;
   }
+  /* the recording as a file (Orodje za napake, sklop 12: js/napake.js writes and reads posnetek_<proga>_<date>.rrp; Nastavitve orodja ·
+     Odpri posnetek, tools/posnetek.mjs): besides the frames what the replay needs, the cars (model, name, colour, number, grid, the laps for
+     rpLap), the race (laps, weather, a time trial, the finish order), its moments (ev, the highlights) and its flags. Opened, a race of its
+     own is set up on the track with those cars (never stepped: the replay poses them) and the replay plays it; Končaj: the title */
+  function rrpOf() {
+    const R = recd; if (!R || !race || R.frames.length < 40) return null;
+    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
+    const H = Object.assign(rpMeta(), { w: REC_W, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
+      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {})),
+      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
+    delete H.file; delete H.dev; return { H, frames: R.frames };
+  }
+  // a file's recording opened (H its header, frames the samples, js/napake.js has checked them): '' or why not
+  function rrpOpen(H, frames) {
+    const d = Core.TRACKS.find(x => x.id === H.track); if (!d) return 'proge ' + H.track + ' ta različica igre nima';
+    if (mp && mp.race) return 'dirka s prijateljem še teče';
+    if (H.w !== REC_W) frames = frames.map(f => { const g = new Float32Array(1 + (H.n + 1) * REC_W); g[0] = f[0]; for (let k = 0; k <= H.n; k++) for (let j = 0; j < Math.min(H.w, REC_W); j++) g[1 + k * REC_W + j] = f[1 + k * H.w + j]; return g; });   // (another width of a car: what both have)
+    if (replay) { Napake.close(); hlOff(); replay = null; }
+    if (bg === 'race') toTitle();
+    Render.setAtmos({ season: H.season || 'summer', tod: H.tod || 'day' }, true);
+    ensureTrack(d.id, () => {
+      const cars = H.cars.map((o, k) => { const c = new Core.Car(modelById(o.m), { id: k + 1, isPlayer: !!o.pl, name: o.name, color: o.color, phys: physOf() });
+        Object.assign(c, { num: o.num, grid: o.grid, lap: o.lap, lapStart: o.lapStart, lapTimes: o.lapTimes || [], finished: !!o.fin }); if (o.fin) c.finishTime = o.ft; return c; });
+      race = new Core.Race(track, { numAI: 0, laps: H.laps || 1, phys: physOf(), rain: H.rain || 0, damage: 0, seed: 7 });
+      race.cars = cars; race.player = cars.find(c => c.isPlayer) || cars[0]; race.timeTrial = !!H.tt; race.state = 'done'; race.time = frames[frames.length - 1][0];
+      race.finishOrder = (H.fin || []).map(k => cars[k]).filter(Boolean);
+      race.fl = !track.open && cars.length > 1 ? { yel: [], ev: 0, evK: '', sc: null, scUsed: false, pev: 0, pevK: '' } : null;   // (the safety car, where it was out)
+      Render.setStorm(false); Render.setLine(false); Render.setMarks(null); Render.attachRace(race); Render.resetCam();
+      bg = 'race'; phase = 'done'; phaseT = 0; paused = false; school = null; qual = null; champRun = false;
+      recd = { cars, n: cars.length, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H };
+      replayStart();
+    });
+    return '';
+  }
   const NK_HOOKS = {
     replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms), ui: () => replayUI(),
     inLoops: rpInLoops, track: () => track, recW: REC_W, dev: (on) => { PH.dev = !!on; },
@@ -964,7 +1000,9 @@
     stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
     seek: (t) => { if (!replay) return; hlOff(); rpSeek(t); replay.play = false; if (replay.mode === 'flags') replay.zt = t; replayUI(); },   // (a flag's tap in Zastavice: that flag on now)
     span: () => replay && recd && recd.frames.length ? [recd.frames[0][0], replay.t1] : null,
-    shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max)
+    shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max),
+    rrp: rrpOf, open: rrpOpen,
+    view: (k, cam) => { const P = replay; if (!P) return; if (k >= 0 && k < recd.n) P.k = k; if (RP_CAM[cam]) P.cam = cam; Render.resetCam(); replayUI(); }   // (tools/posnetek.mjs: the car followed, the camera)
   };
   function replayAct(a) {
     const P = replay, R = recd; if (!P) return;
