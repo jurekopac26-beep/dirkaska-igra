@@ -46,7 +46,8 @@
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
-  S.phys = 'cs';   // one driving physics: Circuit Superstars (the old 'rally' and 'arcade' were removed; old saves get cs)
+  if (S.phys !== 'nova') S.phys = 'cs';   // two driving physics (Nastavitve → Fizika vožnje): 'cs' the classic kinematic drift, 'nova' the new one (Car.stepNova); the old 'rally' and 'arcade' were removed, their saves get cs
+  const physOf = () => S.phys === 'nova' ? 'nova' : 'cs';
   if (!['dry', 'rain', 'random', 'change', 'storm'].includes(S.weather)) S.weather = 'dry';
   for (const k of ['cmp', 'pitCmp']) if (!['auto', 'S', 'M', 'H'].includes(S[k])) S[k] = 'auto';   // (the slicks: for the start, for a pit stop)
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
@@ -75,13 +76,13 @@
   const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o), posNum = (v) => typeof v === 'number' && isFinite(v) && v > 0;
   if (!isObj(records)) records = {};
   if (!isObj(records.tracks)) { records.tracks = {}; if (records.bestLap) records.tracks.jezero = { bestLap: records.bestLap, bestRace: records.bestRace, bestPos: records.bestPos }; }
-  // records are kept under id@cs (Circuit Superstars; the plain track id holds the times of the removed arcade and rally physics, no longer shown)
+  // records are kept under id@cs and id@nova, each physics its own (the plain track id holds the times of the removed arcade and rally physics, no longer shown)
   // (def.recId: a track re-made so that its old times no longer compare keeps new records apart.) A time trial in the rain keeps its own records
   // and ghost (id-wet): the weather of the race on it, before a race the weather setting (the wet ones only with 'rain'). A track with
   // more ways to drive it (def.modes: Vršič) keeps the records of each apart from the race's (id-tt, id-tt-wet, id-traffic, id-police); a time
   // trial that can also be raced (def.timeTrial with def.modes: Pikes Peak) keeps the time trial's under its own key, as before, the race's apart (id-race)
   const wetRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain' || S.weather === 'storm');
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== (d.timeTrial ? 'tt' : 'race') ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@cs'; };
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== (d.timeTrial ? 'tt' : 'race') ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
@@ -139,7 +140,7 @@
   const isDesc = (d) => !!(d && d.descent);
   // medal times of a time trial (def.medals.cs: [gold, silver, bronze] in s, .wet.cs in the rain): the medal of a time (0 gold .. 2 bronze, -1 none)
   const MEDAL = ['Zlata medalja', 'Srebrna medalja', 'Bronasta medalja'], MEDAL_EN = ['gold', 'silver', 'bronze'], MEDAL_ICON = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
-  const medalSet = (d) => { const M = d && d.medals && (wetRec(d) ? d.medals.wet : d.medals); return (M && M[physOf()]) || null; };
+  const medalSet = (d) => { const M = d && d.medals && (wetRec(d) ? d.medals.wet : d.medals); return (M && (M[physOf()] || M.cs)) || null; };   // (the new physics: the classic one's medal times, its laps are as quick)
   const medalOf = (d, t) => { const M = medalSet(d); if (!M || !(t > 0)) return -1; for (let k = 0; k < 3; k++) if (t <= M[k]) return k; return -1; };
   const medalLine = (d, t) => { const M = medalSet(d); if (!M) return ''; const k = medalOf(d, t), n = k < 0 ? 2 : k - 1;   // (won, and how far the next one is)
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + tr(MEDAL[k]) : tr('Brez medalje')) + (n >= 0 ? tr(k < 0 ? ' · do brona {0} ({1})' : n === 0 ? ' · do zlata {0} ({1})' : ' · do srebra {0} ({1})', fmt(M[n], true), sgn(t - M[n])) : '') + '.'; };
@@ -489,8 +490,6 @@
     if (race && race.player) race.player.assist = Core.ASSISTS[S.assist];
     refreshSegs();
   }
-  // driving physics: Circuit Superstars' kinematic drift ('cs', the only one)
-  const physOf = () => 'cs';
   // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn, less in the Andes);
   // the title demo rains only with 'rain'
   const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, caracoles: 0.2, bigsur: 0.2, rastro: 0.4, moki: 0.1, rio: 0.45, baldy: 0.15, palomar: 0.15 };   // (the Andes in summer, the Californian coast: mostly dry; the Serra Geral: humid; Rio in March: tropical showers)
@@ -530,6 +529,7 @@
     if (key === 'saver') { perf.sum = perf.n = 0; perf.good = perf.slow = 0; }   // (the frame times measured again from now)
     if (key === 'tower') $('hud').classList.toggle('tw', !!tw && !!S.tower);
     if (key === 'line') Render.setLine(!!race && lineWant());
+    if (key === 'phys' && race) toast(tr('Fizika velja od naslednje dirke.'), 2600);   // (a race keeps the physics it started with: its rivals' pace and lines are worked out for it)
     save(); applySettings();
     if (key === 'lang') relang();
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
@@ -4526,7 +4526,7 @@
   // a friend: the host starts. Load the track, then say ready (once the clocks are matched)
   function netPrepare(m) {
     const grid = Array.isArray(m.grid) ? m.grid.map(String).slice(0, Net.room) : [], rs = Array.isArray(m.roster) ? m.roster : [];
-    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: 'cs', damage: Core.clamp(m.damage | 0, 0, 2), faults: m.faults === 1 ? 1 : 0, rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4),
+    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'nova' ? 'nova' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), faults: m.faults === 1 ? 1 : 0, rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4),
       grid, roster: rs.filter(p => p && grid.includes(p.id)).map(p => Object.assign(peerOf(p), { id: String(p.id) })) };
     mp.track = m.track; mp.laps = mp.setup.laps;
     Net.hold(30000); buildRoom();
