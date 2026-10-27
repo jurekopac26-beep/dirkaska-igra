@@ -47,3 +47,4 @@
 - 91: IZBRANO C42-1 (sonce se vrti, oblaki plujejo; C4-2 z animacijo). Opomnik prestavljen na 3. 11. 9.00 (08:00 UTC).
 ---\n- 1A: 11 vej potisnjenih na GitHub (27. 10.), brez PR. Predaja: veja claude/boksi-predaja, predaja/PREDAJA.md.
 - Opomnik prestavljen na 3. 11. ob 23.00 (22:00 UTC) po želji uporabnika.
+- 27. 10. ZAUSTAVLJENO po »začni«: agent 1 (združevanje) ustavljen. Na GitHubu claude/boksi-vse = d606543 (združena zvok + posnetek). Lokalno v scratchpad/vse-wt nedokončan merge boksi-izbira (spori rešeni, ne commitano).

@@ -88,3 +88,16 @@ Direction C4-2: a tall sky band with big icons, plus a weather animation in CSS 
 - Choices: https://claude.ai/artifact/RG7o6rfghHayFEmBwSAv7f
 - Questions and variants: https://claude.ai/artifact/TGhHeuzdvFQ3h5nbcGvRGW
 - Camera storyboard: https://claude.ai/artifact/HGBPqmkp56k2x9C6kq9RsY
+
+## Update 27 Oct: work started and stopped (the user said »začni«, then stopped it)
+The user picked a 4-agent plan to save tokens, all in **one batch / one PR** on branch `claude/boksi-vse`. Run the agents sequentially:
+1. **Merging** (lighter model). Merge the 10 branches into `claude/boksi-vse` and adapt izbira and obvestila to the new HUD. Run `npm run test:node` plus the browser tests pits, hudcol, lang, camtilt and pitreplay.
+2. **Camera and HUD** (main model). The camera with the menu and the rising exit, 101, 2B, 91 C42-1, 78, 100.
+3. **Track and pits** (main model). Fix junction B (troisrivieres, cpalace), then 5, 76, 68, 82, 44, 48, 72, 95C, 87 (dirty car only).
+4. **Verify** (lighter model). All tests, perf on the 13 pit tracks, references, one before/after page on Bathurst.
+
+Then one diff review, the fixes, and ask the user before opening and merging the PR.
+
+**State when stopped:** `claude/boksi-vse` on GitHub = d606543. It is origin/main plus the merges of boksi-zvok and boksi-posnetek. The merge of boksi-izbira was in progress and is lost, so redo it, then continue with gume, obvestila, noc-dez, ekipa, gume-pavza, proga-opozorila and prikljucek-b. Keep a progress file `predaja/NAPREDEK.md` on `claude/boksi-vse` and push after every 2–3 steps.
+
+`boksi-vse-slike.pdf` in this folder has all the images and choices in one file.
