@@ -1,0 +1,700 @@
+diff --git a/js/render.js b/js/render.js
+index f4ff46d..65ef33e 100644
+--- a/js/render.js
++++ b/js/render.js
+@@ -4791,7 +4791,7 @@ const Render = (function () {
+   // of a turn from +z toward +x; p > 2 squares the section off, a superellipse), each face k of segment s in the colour col(s, k) (null: left out;
+   // four colours: per corner, ring s first), smooth normals (the faces round each point averaged, the caps' too, but not across a 'hard' ring; or
+   // opt.nrm(point), the shape's own); opt.cap0 / cap1: the first / last ring closed in that colour (or f(k)), dome0 / dome1: its middle that far
+-  // out (a dome). Returns the rings' points
++  // out (a dome); opt.xf(point): every point mapped (moved, turned, axes swapped) before the normals are found. Returns the rings' points
+   function crLoft(g, R, n, o, col, opt) {
+     opt = opt || {};
+     const nr = R.length, P = [], C = [];
+@@ -4805,6 +4805,7 @@ const Render = (function () {
+     const mid = (s) => [(C[s][0] + C[s + 1][0]) / 2, (C[s][1] + C[s + 1][1]) / 2, (C[s][2] + C[s + 1][2]) / 2];
+     // F[s + 1][k]: the outward normal of face k of segment s (s = -1: the first cap, nr - 1: the last one)
+     const F = [], caps = [[opt.cap0, 0, 1, opt.dome0 || 0], [opt.cap1, nr - 1, nr - 2, opt.dome1 || 0]], cp = caps.map(([cc, r, r2, d]) => cc ? [C[r][0], C[r][1] + (Math.sign(R[r].y - R[r2].y) || 1) * d, C[r][2]] : null);
++    if (opt.xf) { for (const q of P) for (let k = 0; k < n; k++) q[k] = opt.xf(q[k]); for (let r = 0; r < nr; r++) C[r] = opt.xf(C[r]); for (let i = 0; i < 2; i++) if (cp[i]) cp[i] = opt.xf(cp[i]); }   // (opt.xf: the whole shape moved or turned, e.g. a foot lofted along its length)
+     const capN = (ci) => { const [cc, r, r2] = caps[ci]; if (!cc) return null; const a = cp[ci], out = [];
+       for (let k = 0; k < n; k++) { const b = P[r][k], c = P[r][(k + 1) % n]; out.push(outw(unit(crs(sub(b, a), sub(c, a))), [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3], C[r2])); }
+       return out; };
+@@ -4825,48 +4826,166 @@ const Render = (function () {
+       for (let k = 0; k < n; k++) { const k1 = (k + 1) % n, c = typeof cc === 'function' ? cc(k) : cc; g.triON(a, P[r][k], P[r][k1], m, vN(r, k, s), vN(r, k1, s), C[r2], c, c, c); } });
+     return P;
+   }
++  // a smooth surface over u (0..1 round, or across a patch: opt.open) and v (0..1, top to bottom): fn(u, v) its point; normals from its slopes,
++  // outward from inn; colour per face (col(u, v) at the face's middle: crisp panels and stripes) or per point (opt.smooth: col(u, v) there, shaded across)
++  function crShell(g, nu, nv, fn, col, inn, opt) {
++    opt = opt || {}; const ring = !opt.open, cols = ring ? nu : nu + 1, P = [], N = [], e = 1e-3;
++    for (let j = 0; j <= nv; j++) for (let i = 0; i < cols; i++) {
++      const u = i / nu, v = j / nv, p = fn(u, v), a = fn(u + e, v), b = fn(u - e, v), c = fn(u, Math.min(1, v + e)), d = fn(u, Math.max(0, v - e));
++      const du = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dv = [c[0] - d[0], c[1] - d[1], c[2] - d[2]];
++      let n = [du[1] * dv[2] - du[2] * dv[1], du[2] * dv[0] - du[0] * dv[2], du[0] * dv[1] - du[1] * dv[0]], l = Math.hypot(n[0], n[1], n[2]);
++      if (l < 1e-9) { n = [p[0] - inn[0], p[1] - inn[1], p[2] - inn[2]]; l = Math.hypot(n[0], n[1], n[2]) || 1; }   // (a pole)
++      n = [n[0] / l, n[1] / l, n[2] / l]; if (n[0] * (p[0] - inn[0]) + n[1] * (p[1] - inn[1]) + n[2] * (p[2] - inn[2]) < 0) n = [-n[0], -n[1], -n[2]];
++      P.push(p); N.push(n); }
++    const I = (i, j) => j * cols + (ring ? i % nu : i);
++    const big = (a, b, c) => { const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]; return Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) > 1e-10; };
++    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
++      const q = [I(i, j), I(i + 1, j), I(i + 1, j + 1), I(i, j + 1)], cs = opt.smooth ? [col(i / nu, j / nv), col((i + 1) / nu, j / nv), col((i + 1) / nu, (j + 1) / nv), col(i / nu, (j + 1) / nv)] : null, cf = cs ? null : col((i + 0.5) / nu, (j + 0.5) / nv);
++      if (!cs && !cf) continue;
++      for (const [x, y, z] of [[0, 1, 2], [0, 2, 3]]) { const A = q[x], B = q[y], C = q[z]; if (!big(P[A], P[B], P[C])) continue;
++        g.triON(P[A], P[B], P[C], N[A], N[B], N[C], inn, cs ? cs[x] : cf, cs ? cs[y] : cf, cs ? cs[z] : cf); } }
++  }
++  // the colours of the crew's clothes and kit (team-coded: (k,0,k) is the team colour x k; (0,k,0) the skin x k)
++  const CR_TD2 = [0.36, 0, 0.36], CR_ZIP = [0.72, 0, 0.72], CR_SIL = [0.8, 0.82, 0.85], CR_GL = [0.1, 0.1, 0.11], CR_BT = [0.085, 0.085, 0.095], CR_SO = [0.64, 0.64, 0.61], CR_SOB = [0.2, 0.2, 0.2],
++    CR_TC = [0.25, 0.25, 0.26], CR_MET = [0.68, 0.69, 0.72], CR_PAD = [0.14, 0.14, 0.15], CR_BAL = [0.12, 0.12, 0.13];
++  // the full-face helmet's shell (in the neck's space): u round from the front, v from the crown down to the rim (lower at the chin), the chin
++  // bar standing forward; off: that much bigger (the visor over it)
++  const CR_HC = [0, 0.176, 0.012], CR_HR = [0.134, 0.146, 0.152];
++  const crThMax = (a) => Math.PI * (0.8 + 0.05 * (0.5 + 0.5 * Math.cos(a)));
++  function crHelm(a, th, off) { const st = Math.sin(th), ct = Math.cos(th), ca = Math.cos(a), sa = Math.sin(a), chin = crSS(1.72, 2.3, th) * Math.max(0, ca) ** 2, o = off || 0;
++    return [(CR_HR[0] + o) * st * sa * (1 - 0.1 * chin), CR_HC[1] + (CR_HR[1] + o) * ct - 0.006 * chin, CR_HC[2] + (CR_HR[2] + o) * st * ca + 0.026 * chin]; }
+   function crewGeos() {   // the parts, each in its joint's space: +y up, +z forward, +x the man's left; limbs hang from their joint along -y
+-    const G = () => new World.GB(), out = {}, TM = CR_TM, TD = CR_TD, W = CR_W, K = CR_K, BO = [0.09, 0.09, 0.1];
+-    let g = G();   // trunk (from the hip joint), rounded (8 round, a little squared off; smooth shading): the overall's trousers, a black belt,
+-    // the chest broadening to the shoulders, dark down the sides (shaded into the overall's colour), the shoulders rounded off and white
+-    // (from above, as the cameras see the crew: the men stand out from the car and the apron), a badge on the chest, the name panel on the
+-    // back. (No bottom: the thighs hide it)
+-    const sd = (k) => k === 2 || k === 6 ? TD : TM;   // (points 2 and 6: the man's sides)
+-    crLoft(g, [{ y: -0.13, rx: 0.165, rz: 0.104, p: 3 }, { y: 0.045, rx: 0.17, rz: 0.11, p: 3, hard: true }, { y: 0.11, rx: 0.177, rz: 0.116, p: 3, hard: true },
+-      { y: 0.3, rx: 0.19, rz: 0.12, p: 3 }, { y: 0.5, rx: 0.212, rz: 0.115, p: 3, hard: true }, { y: 0.575, rx: 0.198, rz: 0.108, p: 2.8 }, { y: 0.625, rx: 0.15, rz: 0.088, p: 2.4 }], 8, 0,
+-      (s, k) => { if (s === 1) return K; if (s >= 4) return W; const a = sd(k), b = sd((k + 1) % 8); return a === b ? a : [a, b, b, a]; }, { cap1: W, dome1: 0.025 });
+-    const patch = (x0, x1, y0, y1, z) => g.quadO([x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], W, [0, (y0 + y1) / 2, 0]);   // flat white patches on the overall
+-    patch(0.02, 0.08, 0.4, 0.46, 0.121); patch(-0.07, 0.07, 0.3, 0.46, -0.121);
++    const G = () => new World.GB(), out = {}, TM = CR_TM, TD = CR_TD, TD2 = CR_TD2, W = CR_W, K = CR_K, SIL = CR_SIL;
++    let g = G();
++    // trunk (from the hip joint), 12 round, rounded off square (a superellipse), smooth: the fire suit's trousers, a black belt with its buckle,
++    // the chest broadening to the shoulders (wider than the hips), the waist in; dark side panels down the flanks (shaded into the team colour),
++    // a light piping round the chest under the dark shoulder yoke, a dark collar standing up round the neck; the zip down the front, a badge on
++    // the chest, the team's mark (a light chevron and bar) between the shoulder blades. (No bottom: the thighs hide it.) Faces: 11 the front's
++    // middle, 2 the left flank, 5 the back, 8 the right flank
++    const side = (k) => k === 2 || k === 8 ? 2 : k === 1 || k === 7 ? 1 : k === 3 || k === 9 ? 3 : 0;   // (0 front/back, 2 the flank's middle; 1, 3 shaded into it)
++    const RT = [{ y: -0.14, rx: 0.15, rz: 0.1, p: 2.2 }, { y: -0.05, rx: 0.168, rz: 0.113, p: 2.3 }, { y: 0.035, rx: 0.17, rz: 0.112, p: 2.35, hard: true }, { y: 0.095, rx: 0.17, rz: 0.112, p: 2.35, hard: true },
++      { y: 0.19, rx: 0.158, rz: 0.107, p: 2.3, z: 0.004 }, { y: 0.31, rx: 0.178, rz: 0.12, p: 2.4, z: 0.01 }, { y: 0.42, rx: 0.198, rz: 0.126, p: 2.5, z: 0.012 }, { y: 0.483, rx: 0.207, rz: 0.122, p: 2.5, z: 0.009, hard: true },
++      { y: 0.498, rx: 0.208, rz: 0.12, p: 2.5, z: 0.007, hard: true }, { y: 0.545, rx: 0.2, rz: 0.11, p: 2.4 }, { y: 0.585, rx: 0.17, rz: 0.095, p: 2.2 }, { y: 0.608, rx: 0.12, rz: 0.08, p: 2.1 }, { y: 0.624, rx: 0.08, rz: 0.071, hard: true }, { y: 0.676, rx: 0.07, rz: 0.064 }];
++    crLoft(g, RT, 12, 0.5, (s, k) => {
++      if (s === 2) return k === 11 ? CR_MET : K;   // the belt, its buckle
++      if (s === 7) return SIL;   // the piping under the yoke
++      if (s >= 8 && s <= 11) return TD2;   // the shoulder yoke
++      if (s === 12) return CR_BAL;   // the collar
++      const f = side(k), mid = s >= 3 && k === 11 ? CR_ZIP : TM;   // (the zip's flap down the front)
++      return f === 2 ? TD : f === 1 ? [mid, TD, TD, mid] : f === 3 ? [TD, mid, mid, TD] : mid; }, {});
++    const surf = (x, y, front, o) => { let a = 0; while (a < RT.length - 2 && RT[a + 1].y < y) a++; const r0 = RT[a], r1 = RT[a + 1], t = r1.y > r0.y ? clamp((y - r0.y) / (r1.y - r0.y), 0, 1) : 0, L = (f, d) => (r0[f] == null ? d : r0[f]) + ((r1[f] == null ? d : r1[f]) - (r0[f] == null ? d : r0[f])) * t;
++      const rx = L('rx', 0), rz = L('rz', 0), p = L('p', 2), zz = rz * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(x) / rx, p)), 1 / p) + (o || 0.0025); return [x, y, L('z', 0) + (front ? zz : -zz)]; };   // (a point on the suit's surface, off it by o)
++    const flat = (x0, x1, y0, y1, front, col) => g.quadO(surf(x0, y0, front), surf(x1, y0, front), surf(x1, y1, front), surf(x0, y1, front), col, [0, (y0 + y1) / 2, 0]);
++    for (let k = 0; k < 9; k++) { const y0 = 0.1 + k * 0.058, y1 = y0 + 0.058; flat(-0.0045, 0.0045, y0, Math.min(0.62, y1), true, K); }   // the zip
++    flat(0.035, 0.105, 0.395, 0.44, true, W); flat(-0.1, -0.04, 0.41, 0.43, true, W);   // a badge on the left chest, a name tag on the right
++    flat(-0.075, 0, 0.345, 0.365, false, W); flat(0, 0.075, 0.345, 0.365, false, W);   // the team's mark on the back: a bar
++    for (const sx of [-1, 1]) g.quadO(surf(sx * 0.085, 0.385, false), surf(sx * 0.058, 0.385, false), surf(0, 0.45, false), surf(0, 0.42, false), W, [0, 0.42, 0]);   // and a chevron over it
+     out.trunk = g.geometry();
+-    g = G();   // head (from the neck): neck, head, a cap in the team colour with its peak (inside the helmet when he wears one)
+-    World.cyl(g, 0, -0.04, 0.005, 0.056, 0.12, 6, CR_SK); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 8, 4, CR_SK);
+-    for (const ex of [-0.034, 0.034]) g.quadO([ex - 0.013, 0.168, 0.106], [ex + 0.013, 0.168, 0.106], [ex + 0.013, 0.152, 0.104], [ex - 0.013, 0.152, 0.104], K, [0, 0.16, 0]);   // (the eyes: the film camera in the pits comes close)
+-    World.cyl(g, 0, 0.2, 0, 0.1, 0.085, 8, TM, TM, 0.085); g.quadO([-0.085, 0.215, 0.07], [0.085, 0.215, 0.07], [0.075, 0.205, 0.16], [-0.075, 0.205, 0.16], TM, [0, 0.1, 0.1]); g.quadO([-0.085, 0.212, 0.07], [0.085, 0.212, 0.07], [0.075, 0.202, 0.16], [-0.075, 0.202, 0.16], TD, [0, 0.3, 0.1]);   // cap, its peak
++    // head (from the neck), the men without helmets: neck, the head (smooth), ears, nose, eyes and brows; a cap in the team colour with its peak,
++    // over it the radio headset (a band over the cap, the ear cups, the microphone's boom)
++    g = G();
++    crLoft(g, [{ y: -0.045, rx: 0.054, rz: 0.056 }, { y: 0.085, rx: 0.052, rz: 0.054 }], 8, 0, () => CR_SK, {});
++    const HD = [0, 0.165, 0.008], hd = (u, v) => { const a = u * CR_TAU, th = v * Math.PI, jaw = crSS(1.9, 2.6, th) * Math.max(0, Math.cos(a)); return [0.088 * Math.sin(th) * Math.sin(a) * (1 - 0.18 * jaw), HD[1] + 0.112 * Math.cos(th), HD[2] + 0.1 * Math.sin(th) * Math.cos(a) + 0.008 * jaw]; };
++    crShell(g, 12, 7, hd, () => CR_SK, HD);
++    for (const sx of [-1, 1]) crBall(g, sx * 0.09, 0.165, -0.005, 0.014, 0.028, 0.02, 5, 3, [0, 0.9, 0]);   // ears
++    crBall(g, 0, 0.148, 0.106, 0.014, 0.022, 0.016, 5, 3, CR_SK);   // nose
++    for (const ex of [-0.034, 0.034]) { g.quadO([ex - 0.013, 0.17, 0.1], [ex + 0.013, 0.17, 0.1], [ex + 0.012, 0.158, 0.101], [ex - 0.012, 0.158, 0.101], K, [0, 0.16, 0]);
++      g.quadO([ex - 0.016, 0.186, 0.098], [ex + 0.016, 0.188, 0.097], [ex + 0.015, 0.181, 0.099], [ex - 0.015, 0.179, 0.1], [0, 0.32, 0], [0, 0.16, 0]); }   // eyes, brows
++    crShell(g, 12, 3, (u, v) => { const a = u * CR_TAU, th = v * 1.2; return [0.096 * Math.sin(th) * Math.sin(a), HD[1] + 0.022 + 0.104 * Math.cos(th), HD[2] - 0.004 + 0.106 * Math.sin(th) * Math.cos(a)]; }, () => TM, HD);   // the cap
++    { const pk = (t, r) => { const a = (t - 0.5) * 1.9; return [Math.sin(a) * r, 0.205 - 0.012 * (r - 0.09) / 0.07, 0.01 + Math.cos(a) * r]; };   // its peak (curved, a little down at the front), dark under it
++      for (let k = 0; k < 6; k++) { const t0 = k / 6, t1 = (k + 1) / 6; g.quadO(pk(t0, 0.09), pk(t1, 0.09), pk(t1, 0.165), pk(t0, 0.165), TM, [0, 0.0, 0.05]); g.quadO(pk(t0, 0.09), pk(t1, 0.09), pk(t1, 0.165), pk(t0, 0.165), TD2, [0, 0.4, 0.05]); } }
++    for (let k = 0; k < 6; k++) { const a0 = -1.35 + k / 6 * 2.7, a1 = -1.35 + (k + 1) / 6 * 2.7, b = (a) => [Math.sin(a) * 0.112, HD[1] + 0.025 + Math.cos(a) * 0.112];   // the headset's band over the cap
++      g.quadO([b(a0)[0], b(a0)[1], -0.012], [b(a1)[0], b(a1)[1], -0.012], [b(a1)[0], b(a1)[1], 0.008], [b(a0)[0], b(a0)[1], 0.008], CR_BAL, [0, HD[1], 0]); }
++    for (const sx of [-1, 1]) crBall(g, sx * 0.1, 0.16, -0.002, 0.024, 0.04, 0.036, 6, 3, (ux) => ux * sx > 0.6 ? TD : CR_BAL);   // the ear cups (the team colour on them)
++    World.box(g, 0.112, 0.13, 0.03, 0.008, 0.008, 0.09, -1.1, CR_BAL);   // the microphone's boom
+     out.head = g.geometry();
+-    g = G();   // full-face helmet: team colour, white crest, darker rim, dark visor
+-    crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 10, 5, (ux, uy) => uy < -0.45 ? TD : (Math.abs(ux) < 0.2 && uy > 0.3 ? W : TM));
+-    crTBox(g, 0.1, 0.215, 0.17, 0.03, 0.17, 0.03, [[0.05, 0.07, 0.1], null, null, [0.05, 0.07, 0.1], [0.05, 0.07, 0.1]], 0.142, 0.146);
++    // full-face helmet (the men with helmets, from the neck): the dark balaclava's neck; the shell in the team colour (smooth), a light stripe
++    // over the crown from the visor to the back, the dark rubber rim, the chin bar forward under the visor; the visor over it (dark, glossy, the
++    // sky's light along its top), its hinge plates; a vent on the forehead, a small one on the chin bar, a little spoiler at the back
++    g = G();
++    crLoft(g, [{ y: -0.045, rx: 0.053, rz: 0.055 }, { y: 0.08, rx: 0.056, rz: 0.058 }], 8, 0, () => CR_BAL, {});
++    const VIS = (a, th) => (a / 1.06) ** 4 + ((th - 1.6) / 0.31) ** 4 < 1;
++    crShell(g, 16, 9, (u, v) => { const a = (u - 0.5 / 16) * CR_TAU; return crHelm(a, v * crThMax(a)); }, (u, v) => {
++      const a = (u - 0.5 / 16) * CR_TAU, aa = Math.atan2(Math.sin(a), Math.cos(a)), th = v * crThMax(a);
++      if (v > 0.9) return K;   // the rim
++      if (VIS(aa, th)) return [0.03, 0.035, 0.05];   // (under the visor)
++      if ((Math.abs(aa) < 0.2 || Math.abs(aa) > Math.PI - 0.2) && th < 2.25) return W;   // the stripe over the crown
++      if (th > 1.95 && th < 2.12 && Math.abs(aa) > 0.6) return TD2;   // a dark line round the lower shell
++      return TM; }, CR_HC);
++    crShell(g, 10, 4, (u, v) => { const t = v * 2 - 1, a = (u * 2 - 1) * 1.1 * (1 - 0.22 * t ** 4); return crHelm(a, 1.27 + v * 0.66, 0.005); }, (u, v) => {   // the visor
++      const k = crSS(0, 0.5, v), e = Math.abs(u * 2 - 1) > 0.92 ? 0.6 : 1; return [(0.34 + (0.03 - 0.34) * k) * e, (0.4 + (0.035 - 0.4) * k) * e, (0.48 + (0.05 - 0.48) * k) * e]; }, CR_HC, { open: true, smooth: true });
++    for (const sx of [-1, 1]) { const p = crHelm(sx * 1.32, 1.42, 0.004); crBall(g, p[0], p[1], p[2], 0.006, 0.017, 0.017, 6, 3, [0.16, 0.16, 0.18]); }   // the visor's hinge plates
++    { const p = crHelm(0, 0.74, 0.003); crBall(g, p[0], p[1], p[2], 0.024, 0.011, 0.02, 6, 3, (ux, uy) => uy > 0.2 ? [0.2, 0.2, 0.22] : K); }   // the vent on the forehead
++    { const p = crHelm(0, 2.12, 0.002); crBall(g, p[0], p[1], p[2], 0.026, 0.009, 0.006, 6, 3, K); }   // the chin bar's vent
++    { const p = crHelm(Math.PI, 2.02, 0.004); crBall(g, p[0], p[1], p[2], 0.06, 0.011, 0.012, 6, 3, TD2); }   // the spoiler
+     out.helmet = g.geometry();
+-    const lim = (k) => k === 1 || k === 4 ? TD : TM;   // (the limbs: 6 round, faces 1 and 4 down their outer and inner side darker)
+-    g = G(); crLoft(g, [{ y: 0.035, rx: 0.06, rz: 0.061 }, { y: -0.13, rx: 0.056, rz: 0.058 }, { y: -0.3, rx: 0.044, rz: 0.047 }], 6, 0, (s, k) => lim(k), { cap0: TM, dome0: 0.04 }); out.uarm = g.geometry();   // upper arm (from the shoulder): the shoulder domed, the biceps, the elbow
+-    g = G(); crLoft(g, [{ y: 0.01, rx: 0.048, rz: 0.05 }, { y: -0.24, rx: 0.037, rz: 0.04 }], 6, 0, (s, k) => lim(k)); crBall(g, 0, -0.29, 0.008, 0.046, 0.066, 0.052, 6, 3, K); out.farm = g.geometry();   // forearm (round) and glove (a rounded fist)
+-    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.2, rx: 0.073, rz: 0.08, p: 2.5 }, { y: -0.36, rx: 0.065, rz: 0.071, p: 2.5, hard: true }, { y: -0.41, rx: 0.063, rz: 0.069, p: 2.5, hard: true }, { y: -0.46, rx: 0.06, rz: 0.066, p: 2.5 }], 6, 0, (s, k) => s === 2 ? W : lim(k)); out.thigh = g.geometry();   // thigh, round to the knee, a white reflective band above it (open: the trunk and the shin close it)
+-    g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 6, 0, (s, k) => lim(k)); crBall(g, 0, -0.415, 0.05, 0.058, 0.058, 0.135, 6, 3, (ux, uy) => uy < -0.5 ? [0.24, 0.24, 0.25] : BO); out.shin = g.geometry();   // shin (round) and boot (rounded, its toe forward, a grey sole)
+-    g = G();   // wheel gun, in the hand: the socket points on along the forearm (-y), the air hose plugs in at the back (+y)
+-    { const B = [0.2, 0.21, 0.23], S = [0.7, 0.71, 0.74]; World.cyl(g, 0, -0.2, 0.05, 0.048, 0.26, 8, B, B); World.cyl(g, 0, -0.12, 0.05, 0.053, 0.05, 8, TM, TM); World.cyl(g, 0, -0.29, 0.05, 0.036, 0.09, 8, S, S); World.box(g, 0, -0.06, -0.01, 0.035, 0.1, 0.07, 0, K, K); }
++    // upper arm (from the shoulder): the shoulder domed, the deltoid and biceps, in to the elbow; the flanks' dark panels down its sides, a
++    // reflective band round it, a dark pad on the elbow (behind: -z)
++    const lim = (k) => k === 1 || k === 5;   // (8 round: faces 1 and 5 its two sides)
++    g = G(); crLoft(g, [{ y: 0.03, rx: 0.058, rz: 0.06 }, { y: 0.0, rx: 0.064, rz: 0.065 }, { y: -0.09, rx: 0.061, rz: 0.061 }, { y: -0.13, rx: 0.059, rz: 0.059, hard: true }, { y: -0.16, rx: 0.058, rz: 0.058, hard: true },
++      { y: -0.24, rx: 0.05, rz: 0.051 }, { y: -0.305, rx: 0.046, rz: 0.049 }], 8, 0.5, (s, k) => s === 3 ? SIL : s === 5 && (k === 2 || k === 3 || k === 4) ? CR_PAD : lim(k) ? TD : TM, { cap0: TM, dome0: 0.022 });
++    out.uarm = g.geometry();
++    // forearm and glove (from the elbow): the forearm tapering to the wrist, the glove's cuff in the team's dark colour, the hand flat and wide
++    // (a mitten: the fingers together, their grooves dark lines), the thumb on its own
++    g = G(); crLoft(g, [{ y: 0.015, rx: 0.05, rz: 0.052 }, { y: -0.07, rx: 0.049, rz: 0.05 }, { y: -0.16, rx: 0.041, rz: 0.043 }, { y: -0.2, rx: 0.039, rz: 0.041, hard: true }, { y: -0.2, rx: 0.047, rz: 0.048, hard: true },
++      { y: -0.238, rx: 0.045, rz: 0.046, hard: true }, { y: -0.248, rx: 0.036, rz: 0.031 }, { y: -0.272, rx: 0.045, rz: 0.026, p: 3 }, { y: -0.318, rx: 0.047, rz: 0.027, p: 3 }, { y: -0.347, rx: 0.043, rz: 0.025, p: 3, z: 0.004 },
++      { y: -0.372, rx: 0.035, rz: 0.02, p: 2.6, z: 0.01 }], 8, 0.5, (s, k) => s < 3 ? (lim(k) ? TD : TM) : s === 4 ? TD : s === 3 ? CR_GL : CR_GL, { cap1: CR_GL, dome1: 0.012 });
++    for (const sz of [-1, 1]) for (const fx of [-0.021, 0, 0.021]) g.quadO([fx - 0.0025, -0.32, sz * 0.0275], [fx + 0.0025, -0.32, sz * 0.0275], [fx + 0.0025, -0.364, sz * 0.024 + 0.006], [fx - 0.0025, -0.364, sz * 0.024 + 0.006], [0.03, 0.03, 0.035], [0, -0.34, 0]);   // the fingers' grooves
++    crLoft(g, [{ y: -0.25, rx: 0.015, rz: 0.015, x: 0.012, z: 0.022 }, { y: -0.282, rx: 0.014, rz: 0.013, x: 0.014, z: 0.034 }, { y: -0.31, rx: 0.011, rz: 0.011, x: 0.012, z: 0.04 }], 6, 0, () => CR_GL, { cap1: CR_GL, dome1: 0.01 });   // the thumb
++    out.farm = g.geometry();
++    // thigh (from the hip): round to the knee, the front fuller; the dark side panels, a reflective band above the knee (open: the trunk and the shin close it)
++    g = G(); crLoft(g, [{ y: 0.07, rx: 0.083, rz: 0.092 }, { y: -0.04, rx: 0.082, rz: 0.094, z: 0.006 }, { y: -0.18, rx: 0.074, rz: 0.083, z: 0.006 }, { y: -0.31, rx: 0.064, rz: 0.07, z: 0.003 },
++      { y: -0.35, rx: 0.062, rz: 0.068, hard: true }, { y: -0.39, rx: 0.061, rz: 0.067, hard: true }, { y: -0.47, rx: 0.059, rz: 0.064 }], 8, 0.5, (s, k) => s === 4 ? SIL : lim(k) ? TD : TM);
++    out.thigh = g.geometry();
++    // shin (from the knee): the calf, a reflective band, the trouser's cuff over the boot; the knee pad; the boot: its leg, the foot lofted from
++    // heel to toe (the toe cap scuffed lighter), the thick light rubber sole under it, dark beneath
++    g = G(); crLoft(g, [{ y: 0.03, rx: 0.062, rz: 0.066 }, { y: -0.05, rx: 0.058, rz: 0.064, z: -0.008 }, { y: -0.13, rx: 0.056, rz: 0.062, z: -0.01 }, { y: -0.22, rx: 0.05, rz: 0.054, z: -0.006, hard: true },
++      { y: -0.26, rx: 0.049, rz: 0.052, z: -0.004, hard: true }, { y: -0.33, rx: 0.047, rz: 0.05 }, { y: -0.347, rx: 0.053, rz: 0.056, hard: true }, { y: -0.347, rx: 0.045, rz: 0.049, hard: true }, { y: -0.418, rx: 0.046, rz: 0.054, z: 0.006 }],
++      8, 0.5, (s, k) => s === 3 ? SIL : s >= 6 ? CR_BT : lim(k) ? TD : TM);
++    crBall(g, 0, -0.025, 0.056, 0.056, 0.064, 0.026, 6, 3, (ux, uy, uz) => uz > 0.4 ? CR_PAD : TM);   // the knee pad
++    const footXf = (p) => [p[0], p[2], p[1]];   // (lofted along the foot: its y the length, z the height)
++    crLoft(g, [{ y: -0.078, rx: 0.038, rz: 0.03, z: -0.44 }, { y: -0.045, rx: 0.046, rz: 0.042, z: -0.434 }, { y: 0.03, rx: 0.05, rz: 0.036, z: -0.438 }, { y: 0.11, rx: 0.053, rz: 0.027, z: -0.447 },
++      { y: 0.168, rx: 0.049, rz: 0.023, z: -0.451 }, { y: 0.2, rx: 0.039, rz: 0.017, z: -0.454 }], 8, 0, (s) => s >= 3 ? CR_TC : CR_BT, { cap0: CR_BT, dome0: 0.008, cap1: CR_TC, dome1: 0.014, xf: footXf });
++    crLoft(g, [{ y: -0.084, rx: 0.042, rz: 0.012, z: -0.461, p: 4 }, { y: -0.04, rx: 0.05, rz: 0.012, z: -0.461, p: 4 }, { y: 0.1, rx: 0.057, rz: 0.012, z: -0.461, p: 4 }, { y: 0.19, rx: 0.048, rz: 0.012, z: -0.461, p: 4 },
++      { y: 0.215, rx: 0.034, rz: 0.011, z: -0.46, p: 4 }], 6, 0.5, (s, k) => k === 2 ? CR_SOB : CR_SO, { cap0: CR_SO, dome0: 0.004, cap1: CR_SO, dome1: 0.006, xf: footXf });   // the sole (face 2: beneath)
++    out.shin = g.geometry();
++    // wheel gun, in the hand (from the hand joint): the motor's body in front of the fist pointing on along the forearm (-y), dark, a band in the
++    // team colour and a ridge round it; the bright anvil and the socket at its end (dark inside); the rubber pistol grip back into the palm; the
++    // air hose's brass fitting at the back (+y, where the hose plugs in)
++    g = G();
++    { const B = [0.17, 0.18, 0.2], S = [0.74, 0.75, 0.78];
++      crLoft(g, [{ y: 0.075, rx: 0.026, rz: 0.026, z: 0.05 }, { y: 0.055, rx: 0.042, rz: 0.042, z: 0.05 }, { y: 0.0, rx: 0.05, rz: 0.05, z: 0.05 }, { y: -0.045, rx: 0.05, rz: 0.05, z: 0.05, hard: true }, { y: -0.055, rx: 0.054, rz: 0.054, z: 0.05, hard: true },
++        { y: -0.085, rx: 0.054, rz: 0.054, z: 0.05, hard: true }, { y: -0.095, rx: 0.05, rz: 0.05, z: 0.05, hard: true }, { y: -0.17, rx: 0.048, rz: 0.048, z: 0.05 }, { y: -0.205, rx: 0.04, rz: 0.04, z: 0.05, hard: true },
++        { y: -0.205, rx: 0.028, rz: 0.028, z: 0.05, hard: true }, { y: -0.29, rx: 0.029, rz: 0.029, z: 0.05 }, { y: -0.335, rx: 0.035, rz: 0.035, z: 0.05 }], 10, 0, (s) => s === 4 ? TM : s === 3 || s === 5 ? CR_MET : s >= 9 ? S : s === 8 ? [0.4, 0.41, 0.44] : B,
++        { cap0: B, dome0: 0.012, cap1: [0.05, 0.05, 0.06] });
++      crLoft(g, [{ y: 0.03, rx: 0.019, rz: 0.03 }, { y: -0.055, rx: 0.021, rz: 0.032 }], 8, 0, () => K, { cap1: K, dome1: 0.01, xf: (p) => [p[0], -0.04 + p[2], p[1]] });   // the grip
++      World.box(g, 0, -0.085, 0.01, 0.008, 0.03, 0.02, 0, CR_MET);   // the trigger
++      crLoft(g, [{ y: 0.07, rx: 0.013, rz: 0.013, z: 0.05 }, { y: 0.1, rx: 0.012, rz: 0.012, z: 0.05 }], 6, 0, () => [0.72, 0.58, 0.28], { cap1: [0.5, 0.4, 0.2] }); }   // the fitting
+     out.gun = g.geometry();
+-    g = G();   // wheel and tyre, axle along x: tread, sidewalls with a band in the compound colour (per instance), the rim
+-    { const n = 10, Wd = 0.135, inn = [0, 0, 0], p = (x, r, a) => [x, Math.cos(a) * r, Math.sin(a) * r], BL = [0.07, 0.07, 0.08], SW = [0.1, 0.1, 0.11];
+-      for (let k = 0; k < n; k++) { const a0 = k / n * CR_TAU, a1 = (k + 1) / n * CR_TAU;
+-        g.quadO(p(-Wd, 0.33, a0), p(Wd, 0.33, a0), p(Wd, 0.33, a1), p(-Wd, 0.33, a1), BL, inn);
+-        for (const x of [-Wd, Wd]) { g.quadO(p(x, 0.33, a0), p(x, 0.33, a1), p(x, 0.275, a1), p(x, 0.275, a0), SW, inn); g.quadO(p(x, 0.275, a0), p(x, 0.275, a1), p(x, 0.255, a1), p(x, 0.255, a0), TM, inn);
+-          g.quadO(p(x, 0.255, a0), p(x, 0.255, a1), p(x, 0.215, a1), p(x, 0.215, a0), SW, inn); g.triO(p(x * 0.9, 0.215, a0), p(x * 0.9, 0.215, a1), [x * 0.7, 0, 0], k % 2 ? [0.62, 0.63, 0.66] : [0.44, 0.45, 0.48], inn); } } }
++    // wheel and tyre, the axle along x: the tread (a groove round it), the sidewalls with a band in the compound's colour (per instance), the rim
++    // (five spokes), the centre-lock nut
++    g = G();
++    { const n = 16, Wd = 0.135, inn = [0, 0, 0], p = (x, r, a) => [x, Math.cos(a) * r, Math.sin(a) * r], BL = [0.07, 0.07, 0.08], SW = [0.1, 0.1, 0.11], RIM = [0.55, 0.56, 0.6], RD = [0.32, 0.33, 0.36];
++      for (let k = 0; k < n; k++) { const a0 = k / n * CR_TAU, a1 = (k + 1) / n * CR_TAU, nr = (a) => [0, Math.cos(a), Math.sin(a)];
++        for (const [x0, x1, r0, r1, c] of [[-Wd, -0.03, 0.33, 0.33, BL], [-0.03, -0.022, 0.326, 0.326, [0.04, 0.04, 0.045]], [-0.022, 0.022, 0.33, 0.33, BL], [0.022, 0.03, 0.326, 0.326, [0.04, 0.04, 0.045]], [0.03, Wd, 0.33, 0.33, BL]])
++          g.quadON(p(x0, r0, a0), p(x1, r1, a0), p(x1, r1, a1), p(x0, r0, a1), nr(a0), nr(a0), nr(a1), nr(a1), inn, c, c, c, c);
++        for (const x of [-Wd, Wd]) { g.quadO(p(x, 0.33, a0), p(x, 0.33, a1), p(x, 0.278, a1), p(x, 0.278, a0), SW, inn); g.quadO(p(x, 0.278, a0), p(x, 0.278, a1), p(x, 0.258, a1), p(x, 0.258, a0), TM, inn);
++          g.quadO(p(x, 0.258, a0), p(x, 0.258, a1), p(x, 0.222, a1), p(x, 0.222, a0), SW, inn); g.quadO(p(x * 0.92, 0.222, a0), p(x * 0.92, 0.222, a1), p(x * 0.8, 0.2, a1), p(x * 0.8, 0.2, a0), RIM, inn);
++          if (k % 3 === 0 && k < 15) g.quadO(p(x * 0.8, 0.2, a0 - 0.02), p(x * 0.8, 0.2, a1 + 0.02), p(x * 0.62, 0.05, a0 + 0.3), p(x * 0.62, 0.05, a0 + 0.08), RIM, inn); else g.quadO(p(x * 0.8, 0.2, a0), p(x * 0.8, 0.2, a1), p(x * 0.45, 0.05, a1), p(x * 0.45, 0.05, a0), RD, inn); } }
++      for (const x of [-Wd * 0.62, Wd * 0.62]) crLoft(g, [{ y: 0, rx: 0.045, rz: 0.045 }, { y: 0.035, rx: 0.04, rz: 0.04 }], 6, 0, () => [0.75, 0.76, 0.8], { cap1: [0.6, 0.61, 0.64], xf: (q) => [x + Math.sign(x) * q[1], q[0], q[2]] }); }   // the nuts
+     out.tyre = g.geometry();
+-    g = G();   // lever jack: frame in the team colour on two wheels, the saddle toward +z (the long handle is a rod)
+-    World.box(g, 0, 0.05, 0.18, 0.26, 0.08, 0.72, 0, TM, TM); for (const sx of [-1, 1]) crCylX(g, sx * 0.13, sx * 0.19, 0.08, 0, 0.08, 8, K, [0.5, 0.5, 0.52]);
+-    World.box(g, 0, 0.13, 0.46, 0.08, 0.1, 0.08, 0, [0.5, 0.51, 0.54]); World.box(g, 0, 0.23, 0.46, 0.46, 0.05, 0.16, 0, K, [0.12, 0.12, 0.13]);
++    // lever jack: two rails in the team colour on two wheels (tyres, bright hubs), the cross members, the pivot, the lifting arm up to the
++    // saddle toward +z (the long handle is a rod)
++    g = G();
++    for (const sx of [-1, 1]) { World.box(g, sx * 0.09, 0.04, 0.17, 0.04, 0.06, 0.74, 0, TM, TM); crCylX(g, sx * 0.13, sx * 0.19, 0.08, 0, 0.08, 12, K, [0.6, 0.6, 0.63]); crCylX(g, sx * 0.19, sx * 0.2, 0.08, 0, 0.035, 8, CR_MET, CR_MET); }
++    World.box(g, 0, 0.05, -0.08, 0.22, 0.04, 0.05, 0, TD2); World.box(g, 0, 0.05, 0.42, 0.22, 0.04, 0.05, 0, TD2);
++    World.box(g, 0, 0.08, 0.38, 0.1, 0.07, 0.1, 0, [0.5, 0.51, 0.54]); World.box(g, 0, 0.13, 0.46, 0.07, 0.1, 0.07, 0, [0.5, 0.51, 0.54]);
++    World.box(g, 0, 0.23, 0.46, 0.46, 0.05, 0.16, 0, K, [0.12, 0.12, 0.13]); World.box(g, 0, 0.275, 0.46, 0.4, 0.012, 0.12, 0, [0.2, 0.2, 0.21]);
+     out.jack = g.geometry();
+-    g = G(); World.box(g, 0, -0.5, 0.5, 1, 1, 1, 0, TM, TM); out.rod = g.geometry();   // unit rod along +z (air hoses, jack handles, the lollipop pole)
++    g = G();   // unit rod along +z, round (six sides, flat top and bottom): the air hoses, the jack handles, the lollipop's pole, the bands over the garage doors
++    for (let k = 0; k < 6; k++) { const a0 = k / 6 * CR_TAU, a1 = (k + 1) / 6 * CR_TAU, q = (a, z) => [Math.cos(a) * 0.5, Math.sin(a) * 0.5, z], nr = (a) => [Math.cos(a), Math.sin(a), 0];
++      g.quadON(q(a0, 0), q(a1, 0), q(a1, 1), q(a0, 1), nr(a0), nr(a1), nr(a1), nr(a0), [0, 0, 0.5], TM, TM, TM, TM); }
++    out.rod = g.geometry();
+     g = G();   // the lollipop sign: red disc, white rim, facing +-z
+     { const n = 12, R = 0.24, r = 0.19, t = 0.012, inn = [0, 0, 0], p = (rr, a, z) => [Math.cos(a) * rr, Math.sin(a) * rr, z], RED = [0.86, 0.1, 0.08];
+       for (let k = 0; k < n; k++) { const a0 = k / n * CR_TAU, a1 = (k + 1) / n * CR_TAU; g.quadO(p(R, a0, -t), p(R, a1, -t), p(R, a1, t), p(R, a0, t), W, inn);
+@@ -4874,16 +4993,61 @@ const Render = (function () {
+     out.disc = g.geometry();
+     return out;
+   }
+-  function crewMaterial(skin) {   // Lambert with vertex colours; the team (and skin) colour codes are resolved per instance in the vertex shader
+-    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
++  // the far crews' bodies (CR_FAR m and more from the camera): one simple shape of the whole man, each part on its bone (crewBone: 0 the trunk,
++  // 1 the head and cap (no helmet), 2 the helmet, 3/4 the upper arms, 5/6 the forearms, 7/8 the thighs, 9/10 the shins), posed in the vertex shader
++  // from the rig (crewFarMaterial): all the far men in one draw
++  function crewFarGeo() {
++    const TM = CR_TM, TD = CR_TD, TD2 = CR_TD2, K = CR_K, parts = [], add = (g, b) => parts.push([g.geometry(), b]);
++    let g = new World.GB();
++    crLoft(g, [{ y: -0.14, rx: 0.15, rz: 0.1, p: 2.6 }, { y: 0.035, rx: 0.169, rz: 0.111, p: 2.8, hard: true }, { y: 0.095, rx: 0.169, rz: 0.111, p: 2.8, hard: true }, { y: 0.3, rx: 0.176, rz: 0.117, p: 2.9, z: 0.01 },
++      { y: 0.49, rx: 0.207, rz: 0.12, p: 3, z: 0.008 }, { y: 0.6, rx: 0.15, rz: 0.088, p: 2.4 }, { y: 0.674, rx: 0.07, rz: 0.064 }], 6, 0, (s, k) => s === 1 ? K : s >= 4 ? TD2 : k === 1 || k === 4 ? TD : TM, {});
++    add(g, 0);
++    g = new World.GB(); crBall(g, 0, 0.165, 0.008, 0.09, 0.112, 0.102, 6, 4, CR_SK);
++    crShell(g, 6, 2, (u, v) => { const a = u * CR_TAU, th = v * 1.2; return [0.098 * Math.sin(th) * Math.sin(a), 0.188 + 0.104 * Math.cos(th), 0.004 + 0.108 * Math.sin(th) * Math.cos(a)]; }, () => TM, [0, 0.165, 0]);
++    g.quadO([-0.07, 0.205, 0.09], [0.07, 0.205, 0.09], [0.06, 0.195, 0.165], [-0.06, 0.195, 0.165], TM, [0, 0.1, 0.1]); add(g, 1);
++    g = new World.GB(); crShell(g, 8, 4, (u, v) => { const a = (u - 0.5 / 8) * CR_TAU; return crHelm(a, v * crThMax(a)); }, (u, v) => { const a = (u - 0.5 / 8) * CR_TAU, aa = Math.atan2(Math.sin(a), Math.cos(a));
++      return v > 0.3 && v < 0.6 && Math.abs(aa) < 1.0 ? [0.05, 0.06, 0.08] : TM; }, CR_HC); add(g, 2);
++    for (const b of [3, 4]) { g = new World.GB(); crLoft(g, [{ y: 0.035, rx: 0.06, rz: 0.061 }, { y: -0.14, rx: 0.058, rz: 0.058 }, { y: -0.3, rx: 0.047, rz: 0.049 }], 6, 0, (s, k) => k === 1 || k === 4 ? TD : TM, { cap0: TM, dome0: 0.035 }); add(g, b); }
++    for (const b of [5, 6]) { g = new World.GB(); crLoft(g, [{ y: 0.015, rx: 0.049, rz: 0.051 }, { y: -0.235, rx: 0.039, rz: 0.042 }], 6, 0, () => TM); crBall(g, 0, -0.295, 0.006, 0.044, 0.068, 0.03, 5, 3, CR_GL); add(g, b); }
++    for (const b of [7, 8]) { g = new World.GB(); crLoft(g, [{ y: 0.06, rx: 0.08, rz: 0.09 }, { y: -0.34, rx: 0.063, rz: 0.069 }, { y: -0.39, rx: 0.061, rz: 0.067 }, { y: -0.46, rx: 0.059, rz: 0.064 }], 6, 0, (s, k) => s === 1 ? CR_SIL : k === 1 || k === 4 ? TD : TM); add(g, b); }
++    for (const b of [9, 10]) { g = new World.GB(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.36, rx: 0.048, rz: 0.051 }], 6, 0, (s, k) => k === 1 || k === 4 ? TD : TM);
++      crBall(g, 0, -0.43, 0.06, 0.054, 0.046, 0.135, 5, 3, (ux, uy) => uy < -0.45 ? CR_SO : CR_BT); add(g, b); }
++    let n = 0; for (const [q] of parts) n += q.attributes.position.count;
++    const pos = new Float32Array(n * 3), nrm = new Float32Array(n * 3), col = new Float32Array(n * 3), bone = new Float32Array(n); let o = 0;
++    for (const [q, b] of parts) { const c = q.attributes.position.count; pos.set(q.attributes.position.array, o * 3); nrm.set(q.attributes.normal.array, o * 3); col.set(q.attributes.color.array, o * 3); bone.fill(b, o, o + c); o += c; q.dispose(); }
++    const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nrm, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.setAttribute('crewBone', new THREE.BufferAttribute(bone, 1));
++    return out;
++  }
++  const CR_SHADE = (skin) => '#include <color_vertex>\n#ifdef USE_INSTANCING_COLOR\n  { vec3 c0 = color.rgb; vColor.rgb = c0;\n    if (c0.g < 0.002 && abs(c0.r - c0.b) < 0.002 && c0.r > 0.004) vColor.rgb = instanceColor.rgb * c0.r;\n' +
++    (skin ? '    else if (c0.r < 0.002 && c0.b < 0.002 && c0.g > 0.004) vColor.rgb = crewSkin * c0.g;\n' : '') + '  }\n#endif';
++  // the crew's materials: vertex colours, the team (and skin) colour codes resolved per instance in the vertex shader. Matte (Lambert: the
++  // suits, the skin, the gloves, the tyres) or with a sheen (gloss: Phong's shininess and the highlight's strength: the helmets' shells and
++  // visors, the guns' metal, the jacks)
++  function crewMaterial(skin, gloss, spec) {
++    const m = gloss ? new THREE.MeshPhongMaterial({ vertexColors: true, shininess: gloss, specular: new THREE.Color(spec, spec, spec) }) : new THREE.MeshLambertMaterial({ vertexColors: true });
+     m.onBeforeCompile = (sh) => {
+       if (skin) sh.vertexShader = 'attribute vec3 crewSkin;\n' + sh.vertexShader;
+-      sh.vertexShader = sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef USE_INSTANCING_COLOR\n  { vec3 c0 = color.rgb; vColor.rgb = c0;\n    if (c0.g < 0.002 && abs(c0.r - c0.b) < 0.002 && c0.r > 0.004) vColor.rgb = instanceColor.rgb * c0.r;\n' +
+-        (skin ? '    else if (c0.r < 0.002 && c0.b < 0.002 && c0.g > 0.004) vColor.rgb = crewSkin * c0.g;\n' : '') + '  }\n#endif');
++      sh.vertexShader = sh.vertexShader.replace('#include <color_vertex>', CR_SHADE(skin));
+     };
+     m.customProgramCacheKey = () => skin ? 'crew-skin' : 'crew';
+     return m;
+   }
++  // the far crews' material: the crew's (with the skin), every vertex moved by its bone's matrix, read from the bones' texture (one row of
++  // 11 matrices per instance, crewRow; 3 texels a matrix: its rows)
++  function crewFarMaterial(tex, w, h) {
++    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
++    m.onBeforeCompile = (sh) => {
++      sh.uniforms.crewBones = { value: tex }; sh.uniforms.crewBonesN = { value: new THREE.Vector2(w, h) };
++      sh.vertexShader = 'attribute vec3 crewSkin;\nattribute float crewBone;\nattribute float crewRow;\nuniform sampler2D crewBones;\nuniform vec2 crewBonesN;\n' + sh.vertexShader
++        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n  float crV = (crewRow + 0.5) / crewBonesN.y, crU = (crewBone * 3.0 + 0.5) / crewBonesN.x, crD = 1.0 / crewBonesN.x;\n' +
++          '  vec4 crA = texture2D(crewBones, vec2(crU, crV)), crB = texture2D(crewBones, vec2(crU + crD, crV)), crC = texture2D(crewBones, vec2(crU + 2.0 * crD, crV));\n' +
++          '  mat4 crM = mat4(crA.x, crB.x, crC.x, 0.0, crA.y, crB.y, crC.y, 0.0, crA.z, crB.z, crC.z, 0.0, crA.w, crB.w, crC.w, 1.0);\n  objectNormal = mat3(crM) * objectNormal;')
++        .replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed = (crM * vec4(transformed, 1.0)).xyz;')
++        .replace('#include <color_vertex>', CR_SHADE(true));
++    };
++    m.customProgramCacheKey = () => 'crew-far';
++    return m;
++  }
+   // poses: O = [hip height, lean, twist, side bend, head nod, head turn, hipL x, hipL z, kneeL, hipR x, hipR z, kneeR]; H = hands (L, R) and elbow poles (L, R), in the man's space
+   const CR_STAND = [0.915, 0.03, 0, 0, 0, 0, -0.03, 0.05, 0.06, -0.03, -0.05, 0.06], CR_RELAX = [0.24, 0.86, 0.05, -0.24, 0.86, 0.05, 0.3, -0.2, -1, -0.3, -0.2, -1];
+   const CR_KNEEL = [0.5, 0.28, 0, 0, 0.25, 0, -1.45, 0.08, 1.45, 0.05, -0.05, 1.52], CR_SQUAT = [0.66, 0.35, 0, 0, -0.15, 0, -0.95, 0.15, 1.55, -0.95, -0.15, 1.55];
+@@ -4909,10 +5073,10 @@ const Render = (function () {
+       case 'gun': hand(1, -0.22, 0.95, 0.16); pole(1, -0.6, -0.5, -0.6); break;
+       case 'sit': setO(CR_SIT); O[1] += br; hand(0, 0.19, 1.05, 0.42); hand(1, -0.19, 1.05 + 0.012 * Math.max(0, Math.sin(t * 9 + ph)), 0.45); pole(0, 1, -1, 0); pole(1, -1, -1, 0); break;
+       case 'ready': setO(CR_SQUAT); hand(1, -0.14, 0.93, 0.44); hand(0, -0.02, 0.96, 0.4); pole(1, -1, -0.6, 0); pole(0, 1, -0.6, 0); break;
+-      case 'gunK': { setO(CR_KNEEL); const a = m.aim;   // kneeling at the hub: the gun's socket on the wheel nut (the hand stays a gun's length short of it)
++      case 'gunK': { setO(CR_KNEEL); O[1] = 0.36; O[4] = 0.32; const a = m.aim;   // kneeling at the hub, leaning in, the head down to it: the gun's socket on the wheel nut (the hand on its grip a gun's length short of it), the other hand on the gun's body
+         if (a) { crLocal(m, a[0], a[1], a[2], H, 3); const sx = -0.195, sy = O[0] + 0.5, sz = 0.16, dx = H[3] - sx, dy = H[4] - sy, dz = H[5] - sz, l = Math.hypot(dx, dy, dz) || 1, back = 0.3 + (m.aimOff || 0);
+-          H[3] -= dx / l * back; H[4] -= dy / l * back; H[5] -= dz / l * back; H[0] = H[3] + 0.13; H[1] = H[4] + 0.05; H[2] = H[5] - 0.06; }
+-        pole(1, -1, -0.8, -0.2); pole(0, 1, -0.8, -0.2); break; }
++          H[3] -= dx / l * back; H[4] -= dy / l * back; H[5] -= dz / l * back; H[0] = H[3] + dx / l * 0.17 + 0.05; H[1] = H[4] + dy / l * 0.17 + 0.035; H[2] = H[5] + dz / l * 0.17; }
++        pole(1, -1, -0.8, -0.2); pole(0, 1, -0.9, 0.1); break; }
+       case 'signal': hand(1, -0.22, 0.95, 0.16); pole(1, -0.6, -0.5, -0.6); hand(0, 0.28, 2.0, 0.1); pole(0, 1, 0, 0); break;
+       case 'readyT': setO(CR_CROUCH); hand(0, 0.28, 0.95, 0.36); hand(1, -0.28, 0.95, 0.36); pole(0, 1, -0.5, -0.3); pole(1, -1, -0.5, -0.3); break;
+       case 'grabT': case 'pushT': { setO(CR_LOW); const a = m.aim;   // both hands on the tyre's sides
+@@ -4968,7 +5132,7 @@ const Render = (function () {
+   }
+ 
+   function setupCrew(race) {
+-    if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose()); crew = null; }
++    if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose()); if (crew.far) crew.far.tex.dispose(); crew = null; }
+     const boxes = world && world.pitBoxes; if (!boxes || !boxes.length || !race) return;
+     const P = race.player || null, pb = world.pitBox, ai = race.cars.filter(c => c !== P); let ai0 = 0;
+     for (const bx of boxes) bx.col = new THREE.Color().setRGB(...bx.team);   // the teams: the player's box in the player's colour, the others in the AI cars' colours
+@@ -4979,7 +5143,7 @@ const Render = (function () {
+     const men = [], bpt = (bx, a, w) => [bx.ox + bx.tx * a + bx.nx * w, bx.oz + bx.tz * a + bx.nz * w];
+     const man = (bx, a, w, yaw, act, role, helmet) => { const id = men.length + bx.k * 17, h1 = crHash(id * 1.37 + 0.5), h2 = crHash(id * 2.71 + 1.3), h3 = crHash(id * 0.91 + 7.1), [x, z] = bpt(bx, a, w);
+       const m = { id, role: role || 'idle', act, act0: act, bx, team: bx.col, x, y: bx.y || 0, z, yaw, hx: x, hz: z, hyaw: yaw, gx: x, gz: z, gyaw: yaw, style: 'walk', spd: 0, ph: h2 * 6, t0: h3 * 50, h1, h2,
+-        sc: 0.95 + h1 * 0.1, bulk: 0.92 + h2 * 0.2, skin: CR_SKINS[Math.min(4, (h3 * 5) | 0)], helmet: helmet != null ? helmet : h1 > 0.72, O: new Float32Array(CR_STAND), H: new Float32Array(CR_RELAX), look: 0, carry: false };
++        sc: 0.95 + h1 * 0.1, bulk: 0.92 + h2 * 0.2, skin: CR_SKINS[Math.min(4, (h3 * 5) | 0)], helmet: helmet != null ? helmet : h1 > 0.72, O: new Float32Array(CR_STAND), H: new Float32Array(CR_RELAX), vO: new Float32Array(12), vH: new Float32Array(12), look: 0, carry: false, near: false };
+       men.push(m); return m; };
+     const faceN = (bx, s) => Math.atan2(bx.nz * s, bx.nx * s), faceT = (bx, s) => Math.atan2(bx.tz * s, bx.tx * s);
+     // the other teams (and every box in the menu demo): four men busy at the garage, an engineer on the pit wall. All of them at the garage's
+@@ -5005,33 +5169,36 @@ const Render = (function () {
+       for (const k of ['JF', 'JR']) roles[k].jack = { beta: CR_B0, man: roles[k] };
+       for (const m of roles.G) m.air = bpt(bx, (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz, bx.base + 9.05);   // the air line comes out of the garage front
+       roles.bx = bx; } }
+-    // meshes: every part and tool one InstancedMesh; the bounding sphere covers the whole pit so the frustum culling works
++    // meshes: every part and tool one InstancedMesh; the bounding sphere covers the whole pit so the frustum culling works. The men near the
++    // camera (CR_NEAR_MAX at most) in the detailed parts, the others in one far body (crewFarGeo: posed on the GPU from the bones' texture)
+     let cx = 0, cz = 0; for (const b of boxes) { cx += b.ox; cz += b.oz; } cx /= boxes.length; cz /= boxes.length;
+     let rad = 0; for (const b of boxes) rad = Math.max(rad, Math.hypot(b.ox - cx, b.oz - cz)); rad += 40;
+-    const bs = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad), geo = crewGeos(), mat = crewMaterial(false), matS = crewMaterial(true), grp = new THREE.Group(), meshes = [], nM = men.length;
++    const bs = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad), geo = crewGeos(), mat = crewMaterial(false, 7, 0.05), matS = crewMaterial(true, 6, 0.04), matH = crewMaterial(false, 70, 0.42), matG = crewMaterial(false, 36, 0.45), grp = new THREE.Group(), meshes = [], nM = men.length;
+     const mk = (g, n, cast, mt) => { if (!n) { g.dispose(); return null; } g.boundingSphere = bs.clone(); const im = new THREE.InstancedMesh(g, mt || mat, n);
+       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.castShadow = cast; im.receiveShadow = true;
+       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
+-    const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
+-    geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
+-    const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true), farm: mk(geo.farm, nM * 2, true),
+-      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
+-      rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
+-    const skinA = geo.head.attributes.crewSkin;
+-    men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
+-      skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
++    const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0, farOK = !!(renderer && renderer.capabilities.floatVertexTextures), NC = farOK ? Math.min(nM, CR_NEAR_MAX) : nM;
++    geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NC * 3), 3));
++    const M = { trunk: mk(geo.trunk, NC, true), head: mk(geo.head, NC, true, matS), helmet: mk(geo.helmet, NC, true, matH), uarm: mk(geo.uarm, NC * 2, true), farm: mk(geo.farm, NC * 2, true),
++      thigh: mk(geo.thigh, NC * 2, true), shin: mk(geo.shin, NC * 2, true), gun: mk(geo.gun, gunMen.length, true, matG), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true, matG),
++      rod: mk(geo.rod, (roles ? CR_RODS : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
++    let far = null, matF = null;
++    if (farOK && nM) { const W = 33, tex = new THREE.DataTexture(new Float32Array(W * 4 * nM), W, nM, THREE.RGBAFormat, THREE.FloatType); tex.needsUpdate = true;
++      const fg = crewFarGeo(), rows = new Float32Array(nM); for (let i = 0; i < nM; i++) rows[i] = i;
++      fg.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3)); fg.setAttribute('crewRow', new THREE.InstancedBufferAttribute(rows, 1));
++      matF = crewFarMaterial(tex, W, nM); const im = mk(fg, nM, false, matF); for (let i = 0; i < nM; i++) im.setMatrixAt(i, _ident); far = { im, tex, D: tex.image.data, W }; }
+     gunMen.forEach((m, i) => { m.gunI = i; M.gun.setColorAt(i, m.team); });
+     const tyres = [];
+     if (roles) { const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
+       for (let k = 0; k < 4; k++) { const tn = { i: k, mode: 'floor', man: roles.N[k] }, to = { i: 4 + k, mode: 'hidden', man: roles.O[k] }; tyres.push(tn, to); roles.N[k].tyre = tn; roles.O[k].tyre = to;
+         M.tyre.setColorAt(k, cmp[0]); M.tyre.setColorAt(4 + k, cmp[1]); }
+       M.jack.setColorAt(0, roles.bx.col); M.jack.setColorAt(1, roles.bx.col);
+-      for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
+-    const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
++      for (let i = 0; i < CR_RODS; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 16 ? [0.13, 0.13, 0.14] : i < 20 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
++    const rb = roles ? CR_RODS : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
+     boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
+     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
+     scene.add(grp);
+-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
++    crew = { grp, meshes, mats: [mat, matS, matH, matG].concat(matF ? [matF] : []), M, far, NC, sig: '', men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
+       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
+     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
+@@ -5143,15 +5310,20 @@ const Render = (function () {
+     if (walk > 0) { crGait(m, run, _cO2, _cH2); for (let k = 0; k < 12; k++) _cO[k] += (_cO2[k] - _cO[k]) * walk; if (!m.carry) for (let k = 0; k < 12; k++) _cH[k] += (_cH2[k] - _cH[k]) * walk; }
+     // where he looks: his car when it is near (the engineer always), otherwise now and then around
+     let lk = null; const P = crew.P;
+-    if (m.lookAt) lk = m.lookAt; else if (P && m.act !== 'bench' && m.act !== 'kneel' && m.act !== 'gunK' && Math.hypot(P.x - m.x, P.z - m.z) < 45) lk = [P.x, P.z];
++    if (m.lookAt) lk = m.lookAt; else if (m.act === 'gunK' && m.aim) lk = [m.aim[0], m.aim[2]]; else if (P && m.act !== 'bench' && m.act !== 'kneel' && m.act !== 'gunK' && Math.hypot(P.x - m.x, P.z - m.z) < 45) lk = [P.x, P.z];
+     const la = lk ? -wrapPi(Math.atan2(lk[1] - m.z, lk[0] - m.x) - m.yaw) : Math.sin(time * 0.23 + m.t0) * 0.7 * Math.max(0, Math.sin(time * 0.11 + m.t0 * 2));
+     m.look += (clamp(la, -1.2, 1.2) - m.look) * Math.min(1, dt * 4); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
+-    const ko = 1 - Math.exp(-dt * (walk > 0.3 ? 24 : 12)), kh = 1 - Math.exp(-dt * 14);
+-    for (let k = 0; k < 12; k++) { m.O[k] += (_cO[k] - m.O[k]) * ko; m.H[k] += (_cH[k] - m.H[k]) * kh; }
++    // into the pose on a critically damped spring (no jerk where one action follows another: eased in and out), quicker while walking and for
++    // hands on a tool that moves (the jack's handle, the gun on the nut)
++    const tool = m.act === 'jackP' || m.act === 'jackR' || m.act === 'gunK';
++    crSpring(m.O, m.vO, _cO, walk > 0.3 ? 26 : 9, dt); crSpring(m.H, m.vH, _cH, walk > 0.3 || tool ? 26 : 11, dt);
+     // the other teams change what they do now and then
+     if (m.role === 'idle' && (m.act0 === 'cross' || m.act0 === 'hips' || m.act0 === 'talk')) { const q = Math.floor((time + m.t0 * 7) / (7 + m.h1 * 8)); if (q !== m.q) { m.q = q; const r = crHash(q * 3.1 + m.id); m.act = r < 0.33 ? 'hips' : r < 0.66 ? 'cross' : 'talk'; } }
+   }
+-  const _cM = new THREE.Matrix4(), _cM2 = new THREE.Matrix4(), _cQ = new THREE.Quaternion(), _cS = new THREE.Vector3(1, 1, 1);
++  function crSpring(x, v, t, w, dt) { const e = Math.exp(-w * dt); for (let k = 0; k < 12; k++) { const d = x[k] - t[k], c2 = v[k] + w * d; x[k] = t[k] + (d + c2 * dt) * e; v[k] = (v[k] - w * c2 * dt) * e; } }
++  const _cM = new THREE.Matrix4(), _cM2 = new THREE.Matrix4(), _cQ = new THREE.Quaternion(), _cS = new THREE.Vector3(1, 1, 1), _ident = new THREE.Matrix4();
++  const CR_NEAR_MAX = 26, CR_NEAR = 21, CR_FAR = 24, CR_RODS = 21;   // (the detailed men: at most so many, within so many metres of the camera (kept to CR_FAR); the player's crew's rods: 16 hose pieces, the jacks' handles and bars, the lollipop's pole)
++  function crBone(D, o, e) { D[o] = e[0]; D[o + 1] = e[4]; D[o + 2] = e[8]; D[o + 3] = e[12]; D[o + 4] = e[1]; D[o + 5] = e[5]; D[o + 6] = e[9]; D[o + 7] = e[13]; D[o + 8] = e[2]; D[o + 9] = e[6]; D[o + 10] = e[10]; D[o + 11] = e[14]; }
+   function crSetRod(im, i, ax, ay, az, bx, by, bz, th, thy) {   // a rod from a to b, th thick (thy tall if given)
+     let zx = bx - ax, zy = by - ay, zz = bz - az; const L = Math.hypot(zx, zy, zz); if (L < 1e-4) { im.setMatrixAt(i, _zero); return; } zx /= L; zy /= L; zz /= L;
+     let ux = 0, uy = 1, uz = 0; if (Math.abs(zy) > 0.95) { ux = 1; uy = 0; }
+@@ -5178,31 +5350,51 @@ const Render = (function () {
+     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
+     if (c.grp.visible !== near) c.grp.visible = near;
+     if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
+-    const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
++    const M = c.M, F = c.far, rel = (im, i, src) => im.setMatrixAt(i, src), cp = camera.position;
++    // who is drawn in detail: the men near the camera (CR_NEAR m, kept to CR_FAR m), the closest CR_NEAR_MAX of them; the others the far body
++    const L = c.nearL || (c.nearL = []); L.length = 0;
++    for (const m of c.men) { m.d2 = (m.x - cp.x) ** 2 + (m.y + 1 - cp.y) ** 2 + (m.z - cp.z) ** 2; if (!F || m.d2 < (m.near ? CR_FAR * CR_FAR : CR_NEAR * CR_NEAR)) L.push(m); }
++    if (L.length > c.NC) { L.sort((a, b) => a.d2 - b.d2); L.length = c.NC; }
++    for (const m of c.men) m.near = false; for (const m of L) m.near = true;
++    let sig = ''; for (const m of c.men) sig += m.near ? '1' : '0';
++    if (sig !== c.sig) {   // the slots anew: each near man's parts (his head or his helmet), each far man's row; their colours
++      c.sig = sig; let j = 0, jh = 0, jm = 0, jf = 0; const skA = M.head.geometry.attributes.crewSkin, skF = F ? F.im.geometry.attributes.crewSkin : null;
++      for (const m of c.men) {
++        if (m.near) { m.slot = j++; for (const k of ['trunk']) M[k].setColorAt(m.slot, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(m.slot * 2, m.team); M[k].setColorAt(m.slot * 2 + 1, m.team); }
++          if (m.helmet) { m.hs = jm++; M.helmet.setColorAt(m.hs, m.team); } else { m.hs = jh++; M.head.setColorAt(m.hs, m.team); skA.setXYZ(m.hs, m.skin[0], m.skin[1], m.skin[2]); } }
++        else { m.fs = jf++; F.im.setColorAt(m.fs, m.team); skF.setXYZ(m.fs, m.skin[0], m.skin[1], m.skin[2]); } }
++      for (const k of ['trunk', 'head', 'helmet', 'uarm', 'farm', 'thigh', 'shin']) { const im = M[k], n = k === 'head' ? jh : k === 'helmet' ? jm : k === 'trunk' ? j : j * 2; im.count = n; im.visible = n > 0; im.instanceColor.needsUpdate = true; }
++      skA.needsUpdate = true; if (F) { F.im.count = jf; F.im.visible = jf > 0; F.im.instanceColor.needsUpdate = true; skF.needsUpdate = true; } }
+     for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
+       crewMan(m, dt); crRig(m);
+-      _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(M.trunk, i, _cM);
+-      rel(M.head, i, CRM.neck); rel(M.helmet, i, m.helmet ? CRM.neck : _zero);
+-      rel(M.uarm, i * 2, CRM.shL); rel(M.uarm, i * 2 + 1, CRM.shR); rel(M.farm, i * 2, CRM.elL); rel(M.farm, i * 2 + 1, CRM.elR);
+-      rel(M.thigh, i * 2, CRM.hipL); rel(M.thigh, i * 2 + 1, CRM.hipR); rel(M.shin, i * 2, CRM.knL); rel(M.shin, i * 2 + 1, CRM.knR);
++      _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; }
++      if (m.near) { const j = m.slot; rel(M.trunk, j, _cM); rel(m.helmet ? M.helmet : M.head, m.hs, CRM.neck);
++        rel(M.uarm, j * 2, CRM.shL); rel(M.uarm, j * 2 + 1, CRM.shR); rel(M.farm, j * 2, CRM.elL); rel(M.farm, j * 2 + 1, CRM.elR);
++        rel(M.thigh, j * 2, CRM.hipL); rel(M.thigh, j * 2 + 1, CRM.hipR); rel(M.shin, j * 2, CRM.knL); rel(M.shin, j * 2 + 1, CRM.knR); }
++      else { const D = F.D, o = m.fs * F.W * 4, B = (b, mt) => mt ? crBone(D, o + b * 12, mt.elements) : D.fill(0, o + b * 12, o + b * 12 + 12);   // (his bones: the trunk, the head or the helmet (the other one folded away), the limbs)
++        B(0, _cM); B(1, m.helmet ? null : CRM.neck); B(2, m.helmet ? CRM.neck : null); B(3, CRM.shL); B(4, CRM.shR); B(5, CRM.elL); B(6, CRM.elR); B(7, CRM.hipL); B(8, CRM.hipR); B(9, CRM.knL); B(10, CRM.knR); }
+       if (m.gun) rel(M.gun, m.gunI, CRM.hdR);
+-      if (m.role === 'G' && M.rod) {   // air hose: gun -> the floor behind him -> the garage
+-        _cv.set(0, 0.07, 0.05).applyMatrix4(CRM.hdR); const bx = m.x - Math.cos(m.yaw) * 0.55, bz = m.z - Math.sin(m.yaw) * 0.55;
+-        crSetRod(M.rod, m.wheel * 2, _cv.x, _cv.y, _cv.z, bx, m.y + 0.03, bz, 0.032); crSetRod(M.rod, m.wheel * 2 + 1, bx, m.y + 0.03, bz, m.air[0], m.y + 0.03, m.air[1], 0.032); }
++      if (m.role === 'G' && M.rod) {   // the air hose: out of the gun's back, curving down to the floor behind him (three pieces), along it to the garage
++        const e = CRM.hdR.elements, bl = Math.hypot(e[4], e[5], e[6]) || 1; _cv.set(0, 0.1, 0.05).applyMatrix4(CRM.hdR);
++        const fx = m.x - Math.cos(m.yaw) * 0.62, fz = m.z - Math.sin(m.yaw) * 0.62, fy = m.y + 0.03, p0 = [_cv.x, _cv.y, _cv.z], p1 = [_cv.x + e[4] / bl * 0.3, Math.max(fy + 0.05, _cv.y + e[5] / bl * 0.3 - 0.12), _cv.z + e[6] / bl * 0.3];
++        const p2 = [fx + (m.x - fx) * 0.35, fy + 0.02, fz + (m.z - fz) * 0.35], p3 = [fx, fy, fz], bz = (t) => { const u = 1 - t, a = u * u * u, b = 3 * u * u * t, cc = 3 * u * t * t, d = t * t * t; return [a * p0[0] + b * p1[0] + cc * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + cc * p2[1] + d * p3[1], a * p0[2] + b * p1[2] + cc * p2[2] + d * p3[2]]; };
++        let q = p0; for (let k = 1; k <= 3; k++) { const r = bz(k / 3); crSetRod(M.rod, m.wheel * 4 + k - 1, q[0], q[1], q[2], r[0], r[1], r[2], 0.034); q = r; }
++        crSetRod(M.rod, m.wheel * 4 + 3, fx, fy, fz, m.air[0], fy, m.air[1], 0.034); }
+       if (m.jack && M.jack) { const j = m.jack, fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), dj = 0.52 + 1.3 * Math.cos(CR_B0), ax = m.x + fx * dj, az = m.z + fz * dj, ji = m.role === 'JF' ? 0 : 1;
+         _cQ.setFromEuler(_ce.set(0, Math.PI / 2 - m.yaw, 0, 'YXZ')); _cM2.compose(_cv.set(ax, m.y, az), _cQ, _cS); M.jack.setMatrixAt(ji, _cM2);
+         const px = ax - fx * 0.1, pz = az - fz * 0.1, gl = 0.1 + 1.3 * Math.cos(j.beta), gx = ax - fx * gl, gz = az - fz * gl, gy = m.y + 0.14 + 1.3 * Math.sin(j.beta), lx = Math.sin(m.yaw) * 0.24, lz = -Math.cos(m.yaw) * 0.24;
+-        crSetRod(M.rod, 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
++        crSetRod(M.rod, 16 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, 18 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
+       if (m.role === 'LP' && M.disc) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
+         const want = m.act === 'lolliH' ? [Math.cos(m.yaw), 0, Math.sin(m.yaw)] : [0, 1, 0]; m.pd = m.pd || [0, 1, 0];
+         for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * Math.min(1, dt * 8); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
+-        _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
++        _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, 20, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
+         const nx = Math.sin(m.yaw), nz = -Math.cos(m.yaw);   // the sign's face points along his left-right, i.e. along the car (y = the pole, z = that normal, x = y cross z)
+         const xx = d1 * nz, xy = d2 * nx - d0 * nz, xz = -d1 * nx, xl = Math.hypot(xx, xy, xz) || 1;
+         _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(0, _cM); }
+     }
+     for (const t of c.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
+     for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
++    if (F) F.tex.needsUpdate = true;
+   }
+ 
+   /* ---------------- the open road (race.tf: Vršič's duel in the traffic, and race.pol: the run from the police) ----------------
+@@ -8524,48 +8716,58 @@ const Render = (function () {
+     sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
+   }
+ 
+-  /* ---------------- the pit stop's film camera (the player's car on the autopilot in the pit lane, c.pitAP): from the chase view it rises
+-     and flies over the boxes (high above the lane ahead of the car, looking back along the garages), comes down low in front of the car as it
+-     nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
+-     has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
+-     eased into (no cuts); blended over the chase view by w (0..1) ---------------- */
+-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null };
++  /* ---------------- the pit stop's camera (the player's car on the autopilot in the pit lane, c.pitAP): down the lane the camera behind the car
++     as everywhere. As the car brakes into its box (its last ~11 m, and the stop) it swings over ~1.5 s, eased, to the car's side on the pit
++     wall's side, square on to it (its axis across the lane, the car parked parallel to it), PC_D m out on the lane and ~2 m up, its lens wide
++     enough for the whole car and the crew round it (upright PC_W m across, on its side more); nothing stands between it and the car (the rail
++     is 12 m or more from the car on every track with pits). There it nearly stands still while the crew works: a slow drift of a few cm a
++     second along the car and a tiny rise and fall. When the car is released it stays put a moment, turns after the car and glides back
++     behind it, the chase view fully again by the hand-back (~1 s before the way out: game.js pitCtl). pcam.w (0..1): how much of the side
++     view (Render.pitCam); the side point moves with the car along the lane while it brakes in, and is left where it was at the release ---------------- */
++  const pcam = { k: 0, w: 0, t: 0, S: null, F: null, T: null, sx: null, dl0: null, rel: null, wr: null };
++  const PC_D = [9.6, 8], PC_H = [3.0, 2.2], PC_Q = [0.9, 0.7], PC_W = 6.3;   // (upright, on its side: how far out, how high; the width the lens takes in upright)
+   function pitCine(c, dt, px, py, pz, tx, ty, tz) {
+-    const T = curRace && curRace.track, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD);
+-    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null;
+-    if (!on || bd == null || !pz0) { pcam.w = Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
+-    const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
+-    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
++    const T = curRace && curRace.track, pb = world && world.pitBox, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD && pb);
++    const bd = on ? curRace._boxD(c) : null, x = bd != null ? T.boxX(c.q.s, bd) : null;
++    const want = x != null && !c.pitDone && (c.pitState === 'repair' || (c.pitState === 'stop' && x > -11));   // (braking into the box: ~1.5 s before it stops)
++    const out = on && x != null && c.pitDone && !!pcam.S, trk = !want && !!pcam.S && (out || pcam.wr != null);   // released: the camera tracks the car out, low beside it on the lane's side (and on, fading, once handed back)
++    if (want) { pcam.k = Math.min(1, pcam.k + dt / 1.5); pcam.wr = null; } else if (!trk) pcam.k = Math.max(0, pcam.k - dt / 1.2);
++    let w = pcam.k * pcam.k * pcam.k * (pcam.k * (pcam.k * 6 - 15) + 10);   // (eased in: smootherstep)
++    if (trk && !out) { pcam.wr = Math.max(0, pcam.wr - dt / 0.6); w = Core.sstep(0, 1, pcam.wr); }   // (out of the lane or handed back: #145's quick fade)
++    else if (out) {   // the way out, as the film camera of #145 had it (the same numbers): its weight down to nothing by the hand-back's place (where game.js pitNear hands back: the way out's middle over the pit wall's line, or the lane's end)
++      let wt = 1;
++      if (x > 0) { if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
++        if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; wt = Core.sstep(hb, hb + 45, dl); } }
++      const wr = pcam.wr == null ? 1 : pcam.wr; pcam.wr = wt > wr ? Math.min(wt, wr + dt / 1.4) : Math.max(wt, wr - dt / 1.2); w = Core.sstep(0, 1, pcam.wr); pcam.k = 0;
++    }
++    if (!on && !trk && pcam.k <= 0) w = 0;
++    pcam.w = w;
++    if (w <= 0) { if (!want) { pcam.S = null; pcam.t = 0; pcam.dl0 = null; pcam.rel = null; pcam.wr = null; } return null; }
++    // the box's frame: tx along the lane, gx towards the garages (the pit wall on the other side); the car's height
++    const ax = pb.tx, az = pb.tz, gx = pb.nx, gz = pb.nz, y = c.y || 0, portrait = camera.aspect < 1, st = pb.stop;
+     pcam.t += dt;
+-    // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
+-    let want = on && bd != null ? 1 : 0;
+-    if (want && c.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
+-      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
+-      if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
+-    }
+-    pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
+-    // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
+-    const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
+-    const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
+-    const car = [c.x, y, c.z];
+-    let P, Q;
+-    if (c.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
+-    else if (c.pitState === 'stop' || c.pitState === 'repair' || c.pitState === 'done') {
+-      const a = 0.55 + 0.35 * sw, r = 11 + sw2;   // (drifting round the car's front, on the lane's side)
+-      P = at(car, Math.cos(a) * r, -Math.sin(a) * r * 0.85, 3.2 + 0.6 * sw2); Q = at(car, 0.3, 1.2, 0.7);
+-    } else {
+-      const k = Core.sstep(-50, -14, x);   // (0: the fly-over, 1: low in front of the car)
+-      const A = at(car, 22 + 2 * sw, -2, 14 + sw2), AQ = at(car, -4, 3, 0);
+-      const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
+-      P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
+-    }
+-    // eased into: the camera glides, never jumps (the first time from the chase view)
+-    if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
+-    const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
+-    for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
+-    if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
+-    const w = Core.sstep(0, 1, pcam.w), fov = camera.aspect < 1 ? 58 : 46;
+-    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (50 - fov) * w];
++    const dr = 0.16 * Math.sin(pcam.t * 0.19), hr = 0.035 * Math.sin(pcam.t * 0.27 + 1);   // (the drift: at most 3 cm/s along the car, 1 cm/s up and down)
++    if (want || !pcam.S) {
++      const p = T.pitAt(c.q.s), room = p ? Math.abs(c.q.d) - p.wall - 1.8 : 99, D = Math.min(PC_D[portrait ? 0 : 1], room);   // (never over the pit wall's rail)
++      const along = (c.x - st[0]) * ax + (c.z - st[1]) * az, sx0 = st[0] + ax * along, sz0 = st[1] + az * along;   // (level with the car along the lane, out from its place in the box)
++      pcam.S = [sx0 - gx * D, y + PC_H[portrait ? 0 : 1], sz0 - gz * D]; pcam.F = 2 * Math.atan(PC_W / 2 / D / camera.aspect) * 180 / Math.PI;
++    }
++    const S = pcam.S, fc = camera.aspect < 1 ? 58 : 46, fs = clamp(pcam.F, 42, 76);
++    let P = [S[0] + ax * dr, S[1] + hr, S[2] + az * dr], Q = [c.x + ax * dr * 0.5, y + PC_Q[camera.aspect < 1 ? 0 : 1], c.z + az * dr * 0.5], F = fs;
++    if (trk) {   // the way out exactly as the film camera of #145: past the box (x > 0) it heads for a place low beside the car on the lane's side
++      // (2 m behind it, 6.5 m out, 1.8 m up, swaying) and looks 5 m ahead of it, gliding there (1.6 / 3 a second: it falls back as the car
++      // speeds up, the garages and the other crews rush past); the glide starts from the side view (its lens too, from the side view's to 50°)
++      const i = c.q.i, pz0 = T.pitAt(c.q.s), sd = pz0 ? pz0.sd : 1, fx = T.tx[i], fz = T.tz[i], gxT = T.nx[i] * sd, gzT = T.nz[i] * sd, car = [c.x, y, c.z];
++      const at = (b, f, g, h) => [b[0] + fx * f + gxT * g, b[1] + h, b[2] + fz * f + gzT * g], sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);
++      if (!pcam.rel) pcam.rel = { p: P.slice(), q: Q.slice(), f: fs };
++      const xo = x != null ? x : 99, R = pcam.rel, PT = xo > 0 ? at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2) : P, QT = xo > 0 ? at(car, 5, 1, 0.8) : Q, e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
++      for (let j = 0; j < 3; j++) { R.p[j] += (PT[j] - R.p[j]) * e; R.q[j] += (QT[j] - R.q[j]) * e2; } R.f += (50 - R.f) * e;
++      if (world.groundH) { const gH = world.groundH(R.p[0], R.p[2]); if (Number.isFinite(gH) && R.p[1] < gH + 0.6) R.p[1] = gH + 0.6; }
++      P = R.p; Q = R.q; F = R.f;
++    } else if (world.groundH) { const gH = world.groundH(P[0], P[2]); if (Number.isFinite(gH) && P[1] < gH + 0.6) P[1] = gH + 0.6; }
++    // (the side view's own haze and floor (updateCamera): with the side view, and on the way out fading as the glide leaves it, to #145's)
++    const g = trk ? clamp((pcam.rel.f - 50) / Math.max(1e-3, fs - 50), 0, 1) : 1;
++    return [px + (P[0] - px) * w, py + (P[1] - py) * w, pz + (P[2] - pz) * w, tx + (Q[0] - tx) * w, ty + (Q[1] - ty) * w, tz + (Q[2] - tz) * w, fc + (F - fc) * w, w * g];
+   }
+   /* ---------------- camera ---------------- */
+   function updateCamera(dt, target, mode, alpha) {
+@@ -8627,12 +8829,13 @@ const Render = (function () {
+       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
+       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+     }
+-    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
+-    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
++    let pw = 0;   // (the pit stop's side view: how much of it; its haze as far off as a 30 m view's, the garages behind the car clear)
++    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; pw = o[7]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
++    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4 - 3.4 * pw; if (py < gf) py = gf; }   // (the pit stop's side view: low beside the car, its own floor)   // mountain worlds: never under the slope behind the car
+     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
+     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
+     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
+-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
++    { let dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz); if (pw > 0 && dC < 30) dC += (30 - dC) * pw; const r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
+     // sun/shadow follows view center
+     lastMode = mode === 'tv' ? 'tv' : 'chase';
+diff --git a/tests/browser/pits.test.mjs b/tests/browser/pits.test.mjs
+index e2c1d89..e3bee0d 100644
+--- a/tests/browser/pits.test.mjs
++++ b/tests/browser/pits.test.mjs
+@@ -4,9 +4,11 @@
+ // the box is on the apron in front of the garage (the car stops there parked straight, parallel to the lane), the crew works there and never stands on the lane.
+ // While the autopilot drives, the progress bar under the map (its width): Vstop, Boks, Popravilo n %, Izvoz, one bar from ~0 % at the way in
+ // to 100 % at the hand-back, never back; then gone. The hand-back (VOZIŠ TI!) ~1 s before the way out joins the circuit, still in the lane
+-// (no countdown after it); the pit stop's film camera from the way in, the view behind the car again by the hand-back.
+-// Then Bathurst, its lane on the left: one stop seen from behind the car, the car pulls over to the left onto the apron, the crew on the
+-// garages' side, nobody on the lane; the camera sees the whole car during the stop (the pit building's roof does not hide it).
++// (no countdown after it); the camera behind the car down the lane, at the car's side during the stop, behind it again by the hand-back.
++// Then Bathurst, its lane on the left, on a phone held upright: one stop, the car pulls over to the left onto the apron, the crew on the
++// garages' side, nobody on the lane; the camera behind the car down the lane (no fly-over), then beside the car on the pit wall's side,
++// square on to it, close and low, nearly still while the crew works, the whole car and the gun men in the picture and nothing between
++// the camera and the car (the pit building's roof does not hide it); its moves smooth (no jumps), the chase view again by the hand-back.
+ //   node tests/browser/pits.test.mjs
+ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+ 
+@@ -25,12 +27,12 @@ try {
+     return { n: ai.length, found: bx.filter(Boolean).length, uniq: new Set(bx.filter(Boolean)).size, mine: B.filter(b => b.mine).length, all: B.length }; });
+   T.check('every AI car\'s box is one of the crews\' boxes in the world (each its own), the player\'s too', crews.found === crews.n && crews.uniq === crews.n && crews.mine === 1, JSON.stringify(crews));
+   const states = [], modes = new Set(); let lastSt, maxLift = 0, r, pose = null, minLatWork = 99, maxLat = -99, onLane = 0, maxDev = 0, lockN = 0, ghostN = 0, dmgIn = 0;
+-  let lnN = 0, lthrN = 0, vmax = 0, mN = 0, mSteer = 0, mThr = 0, mBad = 0, mDmg = 0, back = null;
++  let lnN = 0, lthrN = 0, vmax = 0, mN = 0, mSteer = 0, mThr = 0, mBad = 0, mDmg = 0, back = null, camL = 0, camLN = 0, camR = 0;
+   for (let k = 0; k < 900; k++) {
+     // 1 s of game time in 20 steps, the renderer (and the pit crew) stepped along without drawing
+     r = await page.evaluate(() => {
+       const g = window.__game, P = g.race.player, Tk = g.race.track, st = []; Render.scene.visible = false;
+-      const o = { work: 99, max: -99, lane: 0, dev: 0, lock: 0, ghost: 0, dmg: 0, pose: null, ln: 0, lthr: 0, vmax: 0, mN: 0, mSteer: 0, mThr: 0, mBad: 0, mDmg: 0, back: null };
++      const o = { work: 99, max: -99, lane: 0, dev: 0, lock: 0, ghost: 0, dmg: 0, pose: null, ln: 0, lthr: 0, vmax: 0, mN: 0, mSteer: 0, mThr: 0, mBad: 0, mDmg: 0, back: null, camL: 0, camLN: 0, camR: 0 };
+       // one call of the game's steps with no gas (the wheel at s, the brake b): in the lane the autopilot's own throttle and the limiter; the
+       // hand-back on the way out (the step that starts on the autopilot and ends without it; never a countdown, 'merge'), the player's from it; the step that hands back
+       // the progress bar (#h-pit) after each call: on, its fill, its label (the labels in order, a fill smaller than the one before, the hand-back)
+@@ -51,6 +53,8 @@ try {
+         if (!window.__brk && g.pitAuto.st === 'lane' && !P.pitState && Tk.boxX(P.q.s, Tk.def.pit[3]) < -70) { const B = window.__brk = { min: 99, vl: 9, rev: false, thr: false }; for (let j = 0; j < 144; j++) { g.sim(1 / 120, false, -1, 0, 1); B.min = Math.min(B.min, P.speed); B.vl = Math.min(B.vl, P.vl); if (P.gear === -1) B.rev = true; if (P.inThr > 0) B.thr = true; } }
+         if (lock) one(0.05, -1); else if (g.pitAuto.st || (P.inPit && window.__hbT == null)) for (let j = 0; j < 6; j++) one(1 / 120, -1); else { g.sim(0.05, true); bar(null, null); if (window.__hbT != null && P.inPit) window.__hbT += 0.05; }
+         Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]);
++        if (g.pitAuto.st === 'lane' && P.inPit && !P.pitState) { o.camLN++; o.camL = Math.max(o.camL, Render.pitCam); }   // (down the lane to the box: the camera behind the car, no side view)
++        if (P.pitState === 'repair' && P.pitT > 0.8) o.camR = Math.max(o.camR, Render.pitCam);
+         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }   // (before the S onto the apron: in the middle of the lane)
+         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
+         if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+@@ -65,6 +69,7 @@ try {
+     for (const [s, m, l] of r.st) { if (s !== lastSt) { states.push(`${r.t.toFixed(1)} s ${s}`); lastSt = s; } if (m) modes.add(m); maxLift = Math.max(maxLift, l); }
+     const o = r.o; if (o.pose) pose = o.pose; minLatWork = Math.min(minLatWork, o.work); maxLat = Math.max(maxLat, o.max); onLane += o.lane; maxDev = Math.max(maxDev, o.dev); lockN += o.lock; ghostN += o.ghost; dmgIn += o.dmg;
+     lnN += o.ln; lthrN += o.lthr; vmax = Math.max(vmax, o.vmax); mN += o.mN; mSteer += o.mSteer; mThr += o.mThr; mBad += o.mBad; mDmg += o.mDmg; if (o.back) back = o.back;
++    camL = Math.max(camL, o.camL); camLN += o.camLN; camR = Math.max(camR, o.camR);
+     if (r.fin && r.finished === r.n) break;
+     if (r.phase === 'done' && k > 5) break;
+   }
+@@ -84,7 +89,7 @@ try {
+   const hbT = await page.evaluate(() => window.__hbT);
+   T.check('the hand-back on the way out: still in the lane, ~1 s before it joins the circuit (no countdown after it)', !!back && back.inPit && hbT != null && hbT > 0.4 && hbT < 1.8 && mN === 0, JSON.stringify({ back, toCircuit: hbT != null ? +hbT.toFixed(2) : null, merge: mN }));
+   T.check('then the player\'s wheel and gas at once (the wheel held at full left lock), the autopilot off', !!back && back.steer === -1 && back.thr === 0 && !back.nr && !back.pw && !back.ap, JSON.stringify(back));
+-  T.check('the film camera has handed the view back to the camera behind the car by the hand-back', !!back && back.cam < 0.05, JSON.stringify(back));
++  T.check('the camera: behind the car down the lane to the box (no fly-over), at the car\'s side during the stop, behind it again by the hand-back', camLN > 40 && camL === 0 && camR > 0.99 && !!back && back.cam < 0.05, JSON.stringify({ lane: camLN + ' steps, side view at most ' + camL, stop: camR, back }));
+   const ml = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice() }));
+   { const seq = ['BOKSI · AVTOPILOT', 'VOZIŠ TI!']; let at = -1; const inOrder = seq.every(m => (at = ml.hm.indexOf(m, at + 1)) >= 0);
+     T.check('the messages: BOKSI · AVTOPILOT, then VOZIŠ TI! at the hand-back (no PREVZAMEŠ ČEZ, no POPRAVILO); the toast "Sedaj lahko spustiš plin, vse bo naredil sam."; never DRŽI PLIN',
+@@ -102,11 +107,13 @@ try {
+   // the track), drawn from the camera behind the car: the car turns in to the left, into its box on the apron, the crew round it on the
+   // garages' side, nobody on the lane, and nothing of the world stands between the camera and the car. (Toronto's and Montréal's lanes
+   // are on the left too: tests/pits.test.js stops on every track with pits; one left-lane world here, each takes long to load)
++  await page.setViewportSize({ width: 390, height: 844 });   // (upright: the narrowest picture of the car from its side)
+   await startTrack(page, 'bathurst');
+   // in English (as tests/browser/radio.test.mjs switches it), both logs emptied
+   await page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); }, 'en');
+   await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; window.__hm.length = 0; window.__ts.length = 0; });
+   let t2 = { work: 99, max: -99, lane: 0, lock: 0, dev: 0, pose: null, ghost: 0, dmg: 0, modes: [], v: null }, r2 = null;
++  await page.evaluate(() => { window.__cam = { lane: { n: 0, film: 0, ahead: -1e9, low: 1e9 }, prev: null, prev2: null, jump: 0, jumpAt: null, a: null, b: null, rt: 0, atRep: null }; });
+   for (let k = 0; k < 500 && !(r2 && r2.rep && !r2.inPit && !r2.st); k++) {
+     r2 = await page.evaluate(() => {
+       const g = window.__game, P = g.race.player, Tk = g.race.track, o = { work: 99, max: -99, lane: 0, lock: 0, dev: 0, pose: null, ghost: 0, dmg: 0, modes: [], v: null }; Render.scene.visible = false;
+@@ -116,6 +123,14 @@ try {
+         if (ap0 && !g.pitAuto.st && P.inPit) window.__hb2 = { cam: +Render.pitCam.toFixed(2) };
+         { const pb = document.getElementById('h-pit'), L = window.__pbEn || (window.__pbEn = []), l = pb.classList.contains('on') ? pb.children[1].textContent.replace(/^Repair \d+ %$/, 'Repair %') : ''; if (L[L.length - 1] !== l) L.push(l); }   // (the bar's labels in English, '' when gone)
+         Render.frame(0.05, 1, P, 'chase', {}); const c = Render.crew; if (c && c.mode && !o.modes.includes(c.mode)) o.modes.push(c.mode);
++        // the camera: where it is after every step (its moves: the second difference of its place, a jump shows as a big one); down the lane
++        // to the box (before the car brakes into it): the chase view (behind the car, high); in the box: still
++        { const C = Render.camera, K = window.__cam, p = [C.position.x, C.position.y, C.position.z], f = [Math.cos(P.h), Math.sin(P.h)];
++          if (P.inPit && K.prev && K.prev2) { const j = Math.hypot(p[0] - 2 * K.prev[0] + K.prev2[0], p[1] - 2 * K.prev[1] + K.prev2[1], p[2] - 2 * K.prev[2] + K.prev2[2]); if (j > K.jump) { K.jump = j; K.jumpAt = P.pitState || (P.pitDone ? 'out' : 'lane'); } }
++          K.prev2 = K.prev; K.prev = p;
++          if (g.pitAuto.st === 'lane' && P.inPit && !P.pitState) { K.lane.n++; K.lane.film = Math.max(K.lane.film, Render.pitCam); K.lane.ahead = Math.max(K.lane.ahead, (p[0] - P.x) * f[0] + (p[2] - P.z) * f[1]); K.lane.low = Math.min(K.lane.low, p[1] - (P.y || 0)); }
++          if (P.pitState === 'repair') { K.rt += 0.05; if (K.atRep == null) K.atRep = +Render.pitCam.toFixed(2); const d = new THREE.Vector3(); C.getWorldDirection(d);
++            if (K.rt >= 0.8 && !K.a) K.a = { p, d: d.toArray() }; if (K.rt >= 3.3 && !K.b) K.b = { p, d: d.toArray() }; } }
+         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }
+         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
+         if (c && c.mode !== 'home' && c.roles) for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; const q = Tk.query(m.x, m.z, P.q.i, {}), p = Tk.pitAt(q.s); if (!p) continue; const d = q.d * p.sd - p.lout;
+@@ -127,10 +142,18 @@ try {
+           Render.world.root.traverseVisible(m => { if (m.isMesh) meshes.push(m); });
+           const seen = (from) => [0, 1.9, -1.9].filter(u => { const pt = new THREE.Vector3(P.x + f[0] * u, y, P.z + f[1] * u), d = pt.clone().sub(from), L = d.length();
+             rc.set(from, d.normalize()); rc.far = L - 0.3; return !rc.intersectObjects(meshes, false).length; }).length;
+-          o.v = { pitch: +(Math.atan2(C.position.y - y, Math.hypot(C.position.x - P.x, C.position.z - P.z)) * 57.3).toFixed(1), seen: seen(C.position.clone()), film: +Render.pitCam.toFixed(2), d: +Math.hypot(C.position.x - P.x, C.position.z - P.z).toFixed(1), h: +(C.position.y - y).toFixed(1) };
++          // the side view, once the car has stood 1.6 s: how far out and how high, square on to the car (the angle between its axis and the
++          // car's heading), on the pit wall's side (away from the garages: the pit box's frame), and what is in the picture (the car's ends and
++          // roof, the four gun men, in the screen's coordinates)
++          if (window.__cam.rt >= 1.6 && !window.__cam.side) { C.updateMatrixWorld(); const d = new THREE.Vector3(); C.getWorldDirection(d); const pb = Render.world.pitBox, hl = P.m.len / 2;
++            const ndc = (x, yy, z) => { const v = new THREE.Vector3(x, yy, z).project(C); return Math.max(Math.abs(v.x), Math.abs(v.y)); };
++            const car = Math.max(ndc(P.x + f[0] * hl, y - 0.5, P.z + f[1] * hl), ndc(P.x - f[0] * hl, y - 0.5, P.z - f[1] * hl), ndc(P.x, y + 0.3, P.z));
++            const guns = Math.max(...Render.crew.roles.G.map(m => Math.max(ndc(m.x, m.y + 0.05, m.z), ndc(m.x, m.y + 1.2, m.z))));
++            window.__cam.side = { film: +Render.pitCam.toFixed(2), seen: seen(C.position.clone()), d: +Math.hypot(C.position.x - P.x, C.position.z - P.z).toFixed(2), h: +(C.position.y - (P.y || 0)).toFixed(2),
++              square: +(Math.acos(Math.abs(d.x * f[0] + d.z * f[1]) / (Math.hypot(d.x, d.z) || 1)) * 57.3).toFixed(1), wall: +((C.position.x - P.x) * pb.nx + (C.position.z - P.z) * pb.nz).toFixed(2), car: +car.toFixed(2), guns: +guns.toFixed(2), fov: +C.fov.toFixed(1) }; }
+         }
+       }
+-      if (P.lap >= 1 && !P.repairN && !P.inPit && !Tk.pitAt(P.q.s)) { P.pitWant = true; if (P.dmg < 0.3) P.dmg = 0.4; }
++      if (P.lap >= 1 && !P.repairN && !P.inPit && !Tk.pitAt(P.q.s)) { P.pitWant = true; if (P.dmg < 0.7) P.dmg = 0.75; }   // (a stop of ~3.7 s)
+       if (P.repairN && !P.inPit) P.pitWant = false;
+       Render.scene.visible = true;
+       return { o, rep: P.repairN || 0, inPit: P.inPit, st: g.pitAuto.st };
+@@ -143,7 +166,14 @@ try {
+   T.check('Bathurst: at full right lock the car keeps to the middle of the lane, a ghost, no damage', t2.lock > 40 && t2.dev < 0.8 && t2.ghost > 40 && t2.dmg === 0, `${t2.lock} steps at full lock, at most ${t2.dev.toFixed(2)} m off the lane's centre, ${t2.ghost} steps a ghost, damage ${t2.dmg.toFixed(3)}`);
+   T.check('Bathurst: the car stops in its box on the apron to the left, parked straight in front of the garage (within 4° of the lane)', t2.pose && t2.pose.sd === -1 && t2.pose.dLout > 2.5 && Math.abs(t2.pose.yaw) < 4, JSON.stringify(t2.pose));
+   T.check('Bathurst: the crew stands off the lane, on the garages\' side', t2.lane === 0 && t2.work > 0 && t2.max < 9.2, `at least ${t2.work.toFixed(2)} m beyond the lane's edge at work, at most ${t2.max.toFixed(2)} m, ${t2.lane} samples on the lane`);
+-  T.check('Bathurst, the film camera during the stop: close to the car and low (within 16 m, under 6 m up), it sees the whole car (nothing of the pit building between them)', v2 && v2.film > 0.95 && v2.d < 16 && v2.h < 6 && v2.seen === 3, v2 ? JSON.stringify(v2) : 'never in the box');
++  const cm = await page.evaluate(() => { const K = window.__cam, a = K.a, b = K.b; return { lane: K.lane, jump: +K.jump.toFixed(2), jumpAt: K.jumpAt, atRep: K.atRep, side: K.side || null,
++    still: a && b ? { moved: +Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]).toFixed(3), turned: +(Math.acos(Math.min(1, a.d[0] * b.d[0] + a.d[1] * b.d[1] + a.d[2] * b.d[2])) * 57.3).toFixed(2) } : null }; });
++  T.check('Bathurst, down the lane to the box: the camera behind the car as on the circuit (no side view, no fly-over: behind the car, high over it)', cm.lane.n > 40 && cm.lane.film === 0 && cm.lane.ahead < 0 && cm.lane.low > 8, JSON.stringify(cm.lane));
++  const sv = cm.side;
++  T.check('Bathurst, the stop: the camera beside the car on the pit wall\'s side, square on to it (within 6°), 7-11 m out and 1.3-2.5 m up, the side view whole by the time the car stands', !!sv && sv.film > 0.99 && cm.atRep > 0.8 && sv.wall < -6 && sv.d > 7 && sv.d < 11 && sv.h > 1.3 && sv.h < 2.5 && sv.square > 84, JSON.stringify(Object.assign({ atRep: cm.atRep }, sv)));
++  T.check('Bathurst, the stop: the whole car and the four gun men in the picture (upright), nothing between the camera and the car (the pit building does not hide it)', !!sv && sv.car < 0.97 && sv.guns < 1 && sv.seen === 3, JSON.stringify(sv));
++  T.check('Bathurst, the stop: the camera nearly still while the crew works (over 2.5 s: under 15 cm, under 1.5°)', !!cm.still && cm.still.moved < 0.15 && cm.still.turned < 1.5, JSON.stringify(cm.still));
++  T.check('Bathurst: the camera\'s moves in the pits smooth (no jump: a step\'s change of its speed under 0.6 m)', cm.jump < 0.6, JSON.stringify({ jump: cm.jump, at: cm.jumpAt }));
+   const en = await page.evaluate(() => ({ hm: window.__hm.slice(), ts: window.__ts.slice(), hb: window.__hb2 || null, bar: (window.__pbEn || []).filter(Boolean), last: (window.__pbEn || []).slice(-1)[0] }));
+   T.check('Bathurst: handed back in the lane, the view behind the car again by then', !!en.hb && en.hb.cam < 0.05, JSON.stringify(en.hb));
+   T.check('Bathurst in English: PITS · AUTOPILOT, then YOU DRIVE!; the bar: Pit entry, Box, Repair n %, Pit exit, then gone; the toast in English',

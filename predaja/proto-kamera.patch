@@ -1,0 +1,120 @@
+diff --git a/js/render.js b/js/render.js
+index f4ff46d..422c306 100644
+--- a/js/render.js
++++ b/js/render.js
+@@ -8524,48 +8524,58 @@ const Render = (function () {
+     sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
+   }
+ 
+-  /* ---------------- the pit stop's film camera (the player's car on the autopilot in the pit lane, c.pitAP): from the chase view it rises
+-     and flies over the boxes (high above the lane ahead of the car, looking back along the garages), comes down low in front of the car as it
+-     nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
+-     has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
+-     eased into (no cuts); blended over the chase view by w (0..1) ---------------- */
+-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null };
++  /* ---------------- the pit stop's camera (the player's car on the autopilot in the pit lane, c.pitAP): down the lane the camera behind the car
++     as everywhere. As the car brakes into its box (its last ~11 m, and the stop) it swings over ~1.5 s, eased, to the car's side on the pit
++     wall's side, square on to it (its axis across the lane, the car parked parallel to it), PC_D m out on the lane and ~2 m up, its lens wide
++     enough for the whole car and the crew round it (upright PC_W m across, on its side more); nothing stands between it and the car (the rail
++     is 12 m or more from the car on every track with pits). There it nearly stands still while the crew works: a slow drift of a few cm a
++     second along the car and a tiny rise and fall. When the car is released it stays put a moment, turns after the car and glides back
++     behind it, the chase view fully again by the hand-back (~1 s before the way out: game.js pitCtl). pcam.w (0..1): how much of the side
++     view (Render.pitCam); the side point moves with the car along the lane while it brakes in, and is left where it was at the release ---------------- */
++  const pcam = { k: 0, w: 0, t: 0, S: null, F: null, T: null, sx: null, dl0: null, rel: null, wr: null };
++  const PC_D = [9.6, 8], PC_H = [3.0, 2.2], PC_Q = [0.9, 0.7], PC_W = 6.3;   // (upright, on its side: how far out, how high; the width the lens takes in upright)
+   function pitCine(c, dt, px, py, pz, tx, ty, tz) {
+-    const T = curRace && curRace.track, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD);
+-    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null;
+-    if (!on || bd == null || !pz0) { pcam.w = Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
+-    const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
+-    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
++    const T = curRace && curRace.track, pb = world && world.pitBox, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD && pb);
++    const bd = on ? curRace._boxD(c) : null, x = bd != null ? T.boxX(c.q.s, bd) : null;
++    const want = x != null && !c.pitDone && (c.pitState === 'repair' || (c.pitState === 'stop' && x > -11));   // (braking into the box: ~1.5 s before it stops)
++    const out = on && x != null && c.pitDone && !!pcam.S, trk = !want && !!pcam.S && (out || pcam.wr != null);   // released: the camera tracks the car out, low beside it on the lane's side (and on, fading, once handed back)
++    if (want) { pcam.k = Math.min(1, pcam.k + dt / 1.5); pcam.wr = null; } else if (!trk) pcam.k = Math.max(0, pcam.k - dt / 1.2);
++    let w = pcam.k * pcam.k * pcam.k * (pcam.k * (pcam.k * 6 - 15) + 10);   // (eased in: smootherstep)
++    if (trk && !out) { pcam.wr = Math.max(0, pcam.wr - dt / 0.6); w = Core.sstep(0, 1, pcam.wr); }   // (out of the lane or handed back: #145's quick fade)
++    else if (out) {   // the way out, as the film camera of #145 had it (the same numbers): its weight down to nothing by the hand-back's place (where game.js pitNear hands back: the way out's middle over the pit wall's line, or the lane's end)
++      let wt = 1;
++      if (x > 0) { if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
++        if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; wt = Core.sstep(hb, hb + 45, dl); } }
++      const wr = pcam.wr == null ? 1 : pcam.wr; pcam.wr = wt > wr ? Math.min(wt, wr + dt / 1.4) : Math.max(wt, wr - dt / 1.2); w = Core.sstep(0, 1, pcam.wr); pcam.k = 0;
++    }
++    if (!on && !trk && pcam.k <= 0) w = 0;
++    pcam.w = w;
++    if (w <= 0) { if (!want) { pcam.S = null; pcam.t = 0; pcam.dl0 = null; pcam.rel = null; pcam.wr = null; } return null; }
++    // the box's frame: tx along the lane, gx towards the garages (the pit wall on the other side); the car's height
++    const ax = pb.tx, az = pb.tz, gx = pb.nx, gz = pb.nz, y = c.y || 0, portrait = camera.aspect < 1, st = pb.stop;
+     pcam.t += dt;
+-    // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
+-    let want = on && bd != null ? 1 : 0;
+-    if (want && c.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
+-      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
+-      if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
+-    }
+-    pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
+-    // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
+-    const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
+-    const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
+-    const car = [c.x, y, c.z];
+-    let P, Q;
+-    if (c.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
+-    else if (c.pitState === 'stop' || c.pitState === 'repair' || c.pitState === 'done') {
+-      const a = 0.55 + 0.35 * sw, r = 11 + sw2;   // (drifting round the car's front, on the lane's side)
+-      P = at(car, Math.cos(a) * r, -Math.sin(a) * r * 0.85, 3.2 + 0.6 * sw2); Q = at(car, 0.3, 1.2, 0.7);
+-    } else {
+-      const k = Core.sstep(-50, -14, x);   // (0: the fly-over, 1: low in front of the car)
+-      const A = at(car, 22 + 2 * sw, -2, 14 + sw2), AQ = at(car, -4, 3, 0);
+-      const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
+-      P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
+-    }
+-    // eased into: the camera glides, never jumps (the first time from the chase view)
+-    if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
+-    const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
+-    for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
+-    if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
+-    const w = Core.sstep(0, 1, pcam.w), fov = camera.aspect < 1 ? 58 : 46;
+-    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (50 - fov) * w];
++    const dr = 0.16 * Math.sin(pcam.t * 0.19), hr = 0.035 * Math.sin(pcam.t * 0.27 + 1);   // (the drift: at most 3 cm/s along the car, 1 cm/s up and down)
++    if (want || !pcam.S) {
++      const p = T.pitAt(c.q.s), room = p ? Math.abs(c.q.d) - p.wall - 1.8 : 99, D = Math.min(PC_D[portrait ? 0 : 1], room);   // (never over the pit wall's rail)
++      const along = (c.x - st[0]) * ax + (c.z - st[1]) * az, sx0 = st[0] + ax * along, sz0 = st[1] + az * along;   // (level with the car along the lane, out from its place in the box)
++      pcam.S = [sx0 - gx * D, y + PC_H[portrait ? 0 : 1], sz0 - gz * D]; pcam.F = 2 * Math.atan(PC_W / 2 / D / camera.aspect) * 180 / Math.PI;
++    }
++    const S = pcam.S, fc = camera.aspect < 1 ? 58 : 46, fs = clamp(pcam.F, 42, 76);
++    let P = [S[0] + ax * dr, S[1] + hr, S[2] + az * dr], Q = [c.x + ax * dr * 0.5, y + PC_Q[camera.aspect < 1 ? 0 : 1], c.z + az * dr * 0.5], F = fs;
++    if (trk) {   // the way out exactly as the film camera of #145: past the box (x > 0) it heads for a place low beside the car on the lane's side
++      // (2 m behind it, 6.5 m out, 1.8 m up, swaying) and looks 5 m ahead of it, gliding there (1.6 / 3 a second: it falls back as the car
++      // speeds up, the garages and the other crews rush past); the glide starts from the side view (its lens too, from the side view's to 50°)
++      const i = c.q.i, pz0 = T.pitAt(c.q.s), sd = pz0 ? pz0.sd : 1, fx = T.tx[i], fz = T.tz[i], gxT = T.nx[i] * sd, gzT = T.nz[i] * sd, car = [c.x, y, c.z];
++      const at = (b, f, g, h) => [b[0] + fx * f + gxT * g, b[1] + h, b[2] + fz * f + gzT * g], sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);
++      if (!pcam.rel) pcam.rel = { p: P.slice(), q: Q.slice(), f: fs };
++      const xo = x != null ? x : 99, R = pcam.rel, PT = xo > 0 ? at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2) : P, QT = xo > 0 ? at(car, 5, 1, 0.8) : Q, e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
++      for (let j = 0; j < 3; j++) { R.p[j] += (PT[j] - R.p[j]) * e; R.q[j] += (QT[j] - R.q[j]) * e2; } R.f += (50 - R.f) * e;
++      if (world.groundH) { const gH = world.groundH(R.p[0], R.p[2]); if (Number.isFinite(gH) && R.p[1] < gH + 0.6) R.p[1] = gH + 0.6; }
++      P = R.p; Q = R.q; F = R.f;
++    } else if (world.groundH) { const gH = world.groundH(P[0], P[2]); if (Number.isFinite(gH) && P[1] < gH + 0.6) P[1] = gH + 0.6; }
++    // (the side view's own haze and floor (updateCamera): with the side view, and on the way out fading as the glide leaves it, to #145's)
++    const g = trk ? clamp((pcam.rel.f - 50) / Math.max(1e-3, fs - 50), 0, 1) : 1;
++    return [px + (P[0] - px) * w, py + (P[1] - py) * w, pz + (P[2] - pz) * w, tx + (Q[0] - tx) * w, ty + (Q[1] - ty) * w, tz + (Q[2] - tz) * w, fc + (F - fc) * w, w * g];
+   }
+   /* ---------------- camera ---------------- */
+   function updateCamera(dt, target, mode, alpha) {
+@@ -8627,12 +8637,13 @@ const Render = (function () {
+       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
+       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+     }
+-    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
+-    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
++    let pw = 0;   // (the pit stop's side view: how much of it; its haze as far off as a 30 m view's, the garages behind the car clear)
++    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; pw = o[7]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
++    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4 - 3.4 * pw; if (py < gf) py = gf; }   // (the pit stop's side view: low beside the car, its own floor)   // mountain worlds: never under the slope behind the car
+     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
+     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
+     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
+-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
++    { let dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz); if (pw > 0 && dC < 30) dC += (30 - dC) * pw; const r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
+     // sun/shadow follows view center
+     lastMode = mode === 'tv' ? 'tv' : 'chase';

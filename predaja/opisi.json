@@ -1,0 +1,367 @@
+{
+ "opomba": "Samo slike (makete), v igri ni nič spremenjeno. 84: Bathurst, Avstralija, esse v 3. krogu od 4, kamera za avtom, telefon pokonci 390 × 844 pri 2×, kakovost visoka, pravi HUD med tekočo dirko. 91: prava pavza na Bathurstu, vreme Menljivo (zdaj suho, dež od začetka 3. kroga), pavza v 2. krogu od 4; da napoved paše, so gumbi v pavzi pri vseh šestih 40 px visoki namesto 44 px.",
+ "variante": [
+  {
+   "id": "84-A1",
+   "ime": "Tanka ostra črna črta",
+   "opis": "Tanek (1,5 m) skoraj črn pas z ostrim robom teče točno po idealni liniji skozi esse in je povsod enako temen.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja, ~12 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-A1.jpg"
+  },
+  {
+   "id": "84-A2",
+   "ime": "Dve sledi koles",
+   "opis": "Namesto enega pasu sta na idealni liniji dve ozki temni progasti sledi koles, med njima ostane svetel asfalt.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja, ~25 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-A2.jpg"
+  },
+  {
+   "id": "84-A3",
+   "ime": "Mehka siva senca",
+   "opis": "Široka (3,6 m) siva senca z mehkimi robovi in malo kontrasta, kakršna je linija zgodaj v dirki.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja, ~22 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-A3.jpg"
+  },
+  {
+   "id": "84-A4",
+   "ime": "Sijoča črna linija",
+   "opis": "Skoraj črn 2,3 m pas z ostrim robom, ki ima po sredini moder sijaj zglajene gume, v daljavi močnejši.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja, ~12 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-A4.jpg"
+  },
+  {
+   "id": "84-A5",
+   "ime": "Le zaviranje in izhodi",
+   "opis": "Linija je temna in progasta le tam, kjer avti zavirajo pred ovinkom in pospešujejo iz njega, vmes skoraj izgine.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja, ~12 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-A5.jpg"
+  },
+  {
+   "id": "84-A6",
+   "ime": "Lisasta linija z odtisi",
+   "opis": "Linija je sestavljena iz temnih lis, svetlejših lukenj in kratkih zaviralnih sledi, rob je raztrgan.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja, ~12 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-A6.jpg"
+  },
+  {
+   "id": "84-B1",
+   "ime": "Široka plast, gost pas drobcev",
+   "opis": "Širok (6 m) mehak siv pas gume s finimi sledmi, na zunanji strani ovinka pa gost pas drobnih črnih drobcev.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~32 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-B1.jpg"
+  },
+  {
+   "id": "84-B2",
+   "ime": "Izrazite sledi, veliki kosi",
+   "opis": "Izrazite dolge črne sledi gum na tanki podlagi, zunaj ovinka pa redki debeli kosi gume s svetlejšim vrhom.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~26 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-B2.jpg"
+  },
+  {
+   "id": "84-B3",
+   "ime": "Zgodaj: rahla plast, redki drobci",
+   "opis": "Bleda, ožja plast (4,5 m) in le redki drobni drobci ob zunanjem robu linije, kot zgodaj v dirki.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~26 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-B3.jpg"
+  },
+  {
+   "id": "84-B4",
+   "ime": "Pozno: temna plast, črni drobci",
+   "opis": "Temna 6,5 m plast in debel črn pas drobcev z ostrim notranjim robom, kot proti koncu dirke.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~46 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-B4.jpg"
+  },
+  {
+   "id": "84-B5",
+   "ime": "Sijoča plast, rjavi drobci",
+   "opis": "Plast ima po sredini moder sijaj zglajene gume, rjavkast prah drobcev pa leži na obeh straneh linije.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~44 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-B5.jpg"
+  },
+  {
+   "id": "84-B6",
+   "ime": "Lise v ovinkih, sivi drobci",
+   "opis": "Plast je lisasta in temna le ob zaviranju in izhodih, sivi zrnati drobci so samo na zunanji strani ovinkov.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~31 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-B6.jpg"
+  },
+  {
+   "id": "84-AB1",
+   "ime": "Črno jedro v sivi plasti",
+   "opis": "Ostro skoraj črno jedro (1,6 m) sredi svetle sive 6 m plasti, zunaj ovinka pa gruče črnih drobcev.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~35 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-AB1.jpg"
+  },
+  {
+   "id": "84-AB2",
+   "ime": "Sledi koles v široki plasti",
+   "opis": "V progasti široki plasti sta dve temni sledi koles, zunaj ovinka pa gost pas drobnih zrnatih drobcev.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~41 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-AB2.jpg"
+  },
+  {
+   "id": "84-AB3",
+   "ime": "Mehak prehod, gost pas drobcev",
+   "opis": "Mehko temno jedro se postopno zlije s 6,5 m plastjo, ob njej leži gost temen pas drobcev z ostrim notranjim robom.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~44 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-AB3.jpg"
+  },
+  {
+   "id": "84-AB4",
+   "ime": "Zgodaj: komaj vidna linija",
+   "opis": "Bleda plast s tankim sivim jedrom in le nekaj drobci, linija je komaj vidna, kot zgodaj v dirki.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~29 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-AB4.jpg"
+  },
+  {
+   "id": "84-AB5",
+   "ime": "Pozno: sijoče jedro, obilo drobcev",
+   "opis": "Sijoče črno jedro (svoj material s sijajem) v temni matirani plasti in debel pas drobcev na obeh straneh linije, kot pozno v dirki.",
+   "klici_risanja": 3,
+   "strosek": "+3 klici risanja, ~62 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-AB5.jpg"
+  },
+  {
+   "id": "84-AB6",
+   "ime": "Jedro le pri zaviranju",
+   "opis": "Plast je enakomerna po vsem krogu, temno progasto jedro pa se pojavi le ob zaviranju in izhodih, zunaj ovinka so grobi rjavo-sivi drobci.",
+   "klici_risanja": 2,
+   "strosek": "+2 klica risanja, ~29 tisoč oglišč na cel krog Bathursta (meja ~900 tisoč), 1–2 majhni teksturi",
+   "slika": "84-AB6.jpg"
+  },
+  {
+   "id": "91-C1",
+   "ime": "Trak celic po krogih",
+   "opis": "Pod gumbi so štiri celice za kroge z ikono vremena, odstotkom dežja in modrim trakom, trenutni krog je rumeno obrobljen, rumena črta BOKS med 2. in 3. krogom, spodaj nasvet »Gume za dež: v boks na koncu 2. kroga«.",
+   "slika": "91-C1.jpg"
+  },
+  {
+   "id": "91-C2",
+   "ime": "Navpičen seznam krogov",
+   "opis": "Seznam z vrstico za vsak krog (ikona, »suho / dež / močan dež«, odstotek v modri kapsuli), med 2. in 3. krogom pa rumena črtkana vrstica »Konec 2. kroga: v boks, gume za dež«.",
+   "slika": "91-C2.jpg"
+  },
+  {
+   "id": "91-C3",
+   "ime": "Stolpci verjetnosti dežja",
+   "opis": "Stolpčni graf verjetnosti dežja po krogih z rumeno črtkano črto pri 50 % (»gume za dež«), trenutni krog označen z ZDAJ, nasvet v rumenem okvirju pod grafom.",
+   "slika": "91-C3.jpg"
+  },
+  {
+   "id": "91-C4",
+   "ime": "Časovnica z oblaki",
+   "opis": "Pas neba čez vso dirko od sonca do dežja z zabrisanim prehodom »± pol kroga«, pod njim črta krogov z rdečo piko TI in modrim P za postanek na koncu 2. kroga.",
+   "slika": "91-C4.jpg"
+  },
+  {
+   "id": "91-C5",
+   "ime": "Kompaktni čipi pod naslovom",
+   "opis": "Takoj pod naslovom Pavza je vrsta štirih majhnih čipov (krog, ikona, odstotek) in rumen čip »BOKS konec 2. kroga · gume za dež«, ostali meni ostane skoraj nespremenjen.",
+   "slika": "91-C5.jpg"
+  },
+  {
+   "id": "91-C6",
+   "ime": "Nasvet, asfalt in oprijem",
+   "opis": "Na vrhu menija je velik rumen nasvet »V boks na koncu 2. kroga« z ikono gume za dež, pod njim po krogih temperatura asfalta in barvni trakovi oprijema suhih gum.",
+   "slika": "91-C6.jpg"
+  },
+  {
+   "id": "91-C4-1",
+   "ime": "Tanek pas v eni vrstici",
+   "opis": "Tanek barvni pas čez vso dirko z majhnimi ikonami nad njim, TI in P sta kar na pasu, pod njim le številke krogov in ena vrstica nasveta.",
+   "slika": "91-C4-1.jpg"
+  },
+  {
+   "id": "91-C4-2",
+   "ime": "Visok pas, velike ikone",
+   "opis": "Visok pas neba z velikimi ikonami, sijem sonca levo in padajočimi dežnimi kapljami desno, prehod »± pol kroga« v temni kapsuli, spodaj črta krogov s TI in P.",
+   "slika": "91-C4-2.jpg"
+  },
+  {
+   "id": "91-C4-3",
+   "ime": "Temnenje in odstotki",
+   "opis": "Pas se od svetlega neba temni v temno sivo-modro z močjo dežja, nad vsakim krogom je odstotek (suho, 10 %, 75 %, 90 %), bela krivulja s črtkanim pasom negotovosti kaže, kdaj pride dež.",
+   "slika": "91-C4-3.jpg"
+  },
+  {
+   "id": "91-C4-4",
+   "ime": "Večerno nebo",
+   "opis": "Na večerni dirki ima pas barve neba ob tej uri: od oranžnega sončnega zahoda prek vijoličastega mraka do temnih dežnih oblakov, ikone so večerne (nizko sonce, osvetljen oblak).",
+   "slika": "91-C4-4.jpg"
+  },
+  {
+   "id": "91-C4-5",
+   "ime": "Nasvet na oznaki P",
+   "opis": "Nasvet je kar na pasu: rumen oblaček »V BOKS · gume za dež« z ikono gume kaže na P, črtkan lok od TI do P pa pove »še ~2,8 km«.",
+   "slika": "91-C4-5.jpg"
+  },
+  {
+   "id": "91-C4-6",
+   "ime": "Pas z oprijemom in asfaltom",
+   "opis": "Pod pasom neba je vrstica s temperaturo asfalta po krogih (37 → 21 °C) in črta oprijema, ki se ob dežju spusti z zelene na rdečo (98 % → 46 %), spodaj črta krogov s TI in P.",
+   "slika": "91-C4-6.jpg"
+  },
+  {
+   "id": "91-C6-1",
+   "ime": "Vrstica nasveta s čipi",
+   "opis": "Pod naslovom Pavza ena rumeno obrobljena vrstica »V boks na koncu 2. kroga · gume za dež« in pod njo štirje majhni čipi s temperaturo asfalta in barvno piko oprijema za vsak krog.",
+   "slika": "91-C6-1.jpg"
+  },
+  {
+   "id": "91-C6-2",
+   "ime": "Kartica s stolpci oprijema",
+   "opis": "Velika rumena kartica z gumo za dež in nasvetom, pod njo stolpci oprijema suhih gum po krogih v barvah od zelene do rdeče, pod vsakim stolpcem temperatura asfalta.",
+   "slika": "91-C6-2.jpg"
+  },
+  {
+   "id": "91-C6-3",
+   "ime": "Cesta, ki se moči",
+   "opis": "Pod kratkim nasvetom je trak ceste, ki je v 1. in 2. krogu suh in svetel, v 3. in 4. pa vse temnejši in moker z lužami; na njem oprijem v kapsulah, nad njim temperatura, rdeč avto TI in znak P.",
+   "slika": "91-C6-3.jpg"
+  },
+  {
+   "id": "91-C6-4",
+   "ime": "Temperatura kot črta",
+   "opis": "Kartica z nasvetom in pod njo majhen črtni graf temperature asfalta (oranžno → modro) z vrednostmi pri točkah, črtkana črta »dež« in oprijem v barvnih kapsulah pod vsakim krogom.",
+   "slika": "91-C6-4.jpg"
+  },
+  {
+   "id": "91-C6-5",
+   "ime": "Dva stolpca: nasvet, tabela",
+   "opis": "Kartica v dveh stolpcih: levo guma za dež in velik »V BOKS / na koncu 2. kroga / gume za dež«, desno tabela krogov z asfaltom in oprijemom ter črtkano vrstico boksa med 2. in 3. krogom.",
+   "slika": "91-C6-5.jpg"
+  },
+  {
+   "id": "91-C6-6",
+   "ime": "Priporočene gume po krogih",
+   "opis": "Pod nasvetom so štiri celice krogov z znakom priporočene gume (T trde, D dež, v 3. krogu »D ali S«), temperaturo in oprijemom ter legenda M mehke, S srednje, T trde, D dež.",
+   "slika": "91-C6-6.jpg"
+  },
+  {
+   "id": "84-B5-1",
+   "ime": "Ozek mehak prehod",
+   "opis": "Sijoča temna plast, ob njej na obeh straneh ozek (~1,4 m) gladek prehod v barvi gume, ki proti robu hitro posvetli v asfalt.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja (plast in prehod v enem meshu; prej B5 +2), ~96 tisoč oglišč na cel krog v maketi (z vrsto na 4 m in manj stolpci približno pol), 1 tekstura 512 × 512",
+   "slika": "84-B5-1.jpg",
+   "povecava": "84-B5-1-povecava.jpg"
+  },
+  {
+   "id": "84-B5-2",
+   "ime": "Širok prehod do roba",
+   "opis": "Prah v barvi gume se na obeh straneh širi skoraj do roba ceste (~3,9 m) in proti zunanjosti postaja vse svetlejši, kot bleda meglica.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja (plast in prehod v enem meshu; prej B5 +2), ~96 tisoč oglišč na cel krog v maketi (z vrsto na 4 m in manj stolpci približno pol), 1 tekstura 512 × 512",
+   "slika": "84-B5-2.jpg",
+   "povecava": "84-B5-2-povecava.jpg"
+  },
+  {
+   "id": "84-B5-3",
+   "ime": "Zrnat prehod",
+   "opis": "Prehod je zrnat: drobni delci gume so gosti ob liniji, proti robu pa redkejši in svetlejši, sijaj na liniji ostane.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja (plast in prehod v enem meshu; prej B5 +2), ~96 tisoč oglišč na cel krog v maketi (z vrsto na 4 m in manj stolpci približno pol), 1 tekstura 512 × 512",
+   "slika": "84-B5-3.jpg",
+   "povecava": "84-B5-3-povecava.jpg"
+  },
+  {
+   "id": "84-B5-4",
+   "ime": "Prah le zunaj ovinka",
+   "opis": "Svetlejši prah gume je le na zunanji strani ovinkov (~3,3 m), notranja stran ob robniku ostane čista.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja (plast in prehod v enem meshu; prej B5 +2), ~96 tisoč oglišč na cel krog v maketi (z vrsto na 4 m in manj stolpci približno pol), 1 tekstura 512 × 512",
+   "slika": "84-B5-4.jpg",
+   "povecava": "84-B5-4-povecava.jpg"
+  },
+  {
+   "id": "84-B5-5",
+   "ime": "Pozno: temno, močan sijaj",
+   "opis": "Pozno v dirki: temna široka plast z močnim sijajem po sredini, prehod ostane temen in zrnat skoraj do robov ceste.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja (plast in prehod v enem meshu; prej B5 +2), ~96 tisoč oglišč na cel krog v maketi (z vrsto na 4 m in manj stolpci približno pol), 1 tekstura 512 × 512",
+   "slika": "84-B5-5.jpg",
+   "povecava": "84-B5-5-povecava.jpg"
+  },
+  {
+   "id": "84-B5-6",
+   "ime": "Zgodaj: komaj opazno",
+   "opis": "Zgodaj v dirki: bleda plast s šibkim sijajem in le kratek, komaj opazen svetlejši prehod.",
+   "klici_risanja": 1,
+   "strosek": "+1 klic risanja (plast in prehod v enem meshu; prej B5 +2), ~96 tisoč oglišč na cel krog v maketi (z vrsto na 4 m in manj stolpci približno pol), 1 tekstura 512 × 512",
+   "slika": "84-B5-6.jpg",
+   "povecava": "84-B5-6-povecava.jpg"
+  },
+  {
+   "id": "91-C42-1",
+   "ime": "Sonce se vrti, oblaki plujejo",
+   "opis": "Sončni žarki se počasi vrtijo in sij utripa, svetli oblaki plujejo čez deževna kroga, dež enakomerno pada.",
+   "video": "91-C42-1.mp4",
+   "velikost_kB": 213,
+   "slika": "91-C42-1.jpg",
+   "slika_ob_s": 1.5
+  },
+  {
+   "id": "91-C42-2",
+   "ime": "Dve plasti oblakov, pljuski",
+   "opis": "Daljni drobni in bližnji temni oblaki plujejo z različno hitrostjo, kaplje padajo iz pasu na črto krogov in tam mehko pljusknejo.",
+   "video": "91-C42-2.mp4",
+   "velikost_kB": 212,
+   "slika": "91-C42-2.jpg",
+   "slika_ob_s": 1.0
+  },
+  {
+   "id": "91-C42-3",
+   "ime": "Dihajoč prehod",
+   "opis": "Sončni del pasu se počasi širi in krči, meglica nad prehodom »± pol kroga« mehko utripa, da negotova menjava vremena vidno »diha«; dež je rahel.",
+   "video": "91-C42-3.mp4",
+   "velikost_kB": 160,
+   "slika": "91-C42-3.jpg",
+   "slika_ob_s": 1.5
+  },
+  {
+   "id": "91-C42-4",
+   "ime": "Veter",
+   "opis": "Naklon dežja v sunkih niha, sunki vetra potiskajo oblake, čez sončni del pa švigajo bele črte vetra.",
+   "video": "91-C42-4.mp4",
+   "velikost_kB": 258,
+   "slika": "91-C42-4.jpg",
+   "slika_ob_s": 1.93
+  },
+  {
+   "id": "91-C42-5",
+   "ime": "Nevihta se zbira",
+   "opis": "Nebo proti 4. krogu počasi temni in svetli, temni oblaki plujejo, gost dež, enkrat v zanki mehak blisk s strelo nad 4. krogom.",
+   "video": "91-C42-5.mp4",
+   "velikost_kB": 261,
+   "slika": "91-C42-5.jpg",
+   "slika_ob_s": 3.7
+  },
+  {
+   "id": "91-C42-6",
+   "ime": "TI utripa, žarek do P",
+   "opis": "Okoli rdeče pike TI se širi obroč, svetel žarek steče od TI do P, ki se ob prihodu rahlo poveča; vreme v ozadju mirno pluje in dežuje.",
+   "video": "91-C42-6.mp4",
+   "velikost_kB": 199,
+   "slika": "91-C42-6.jpg",
+   "slika_ob_s": 2.2
+  }
+ ],
+ "opomba_2": "Drugi krog: šest različic 91 C4 in 91 C6 (ista prava pavza na Bathurstu, Menljivo, pavza v 2. krogu od 4; C4-4 na večerni dirki) in šest različic 84 B5 (isti kader kot prej; prah ob liniji je v barvi gume, svetlejši, v mehkem prehodu; plast in prehod sta en sam mesh, zato +1 klic risanja namesto +2). Pregledne slike: 91-C4-pregled.jpg, 91-C6-pregled.jpg, 84-B5-pregled.jpg; povečave ovinka 84-B5-1-povecava.jpg … 84-B5-6-povecava.jpg.",
+ "opomba_3": "Tretji krog: 91 C4-2 z animacijo vremena v šestih različicah (91-C42-1.mp4 … 91-C42-6.mp4, H.264, 780 × 1688, 30 sl./s, zanka 6 s brez preskoka; le CSS transform in opacity na SVG v pavzi, besedilo se ne premika, ob prefers-reduced-motion brez animacije; slike 91-C42-k.jpg so trenutek iz videa, pregled 91-C42-pregled.jpg)."
+}
