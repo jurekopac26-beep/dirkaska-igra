@@ -18,9 +18,9 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 6 | Slika in pošiljanje | končano (skupaj s 7) |
 | 7 | Zastavica med dirko | končano (skupaj s 6) |
 | 8 | Skrito v izdaji za Google Play | odloženo |
-| 9 | Dnevnik napak, prikaz za razvijalca | čaka · skupaj z 10 in 11 (veriga, korak 3) |
-| 10 | G · V krogu | čaka · skupaj z 9 in 11 (veriga, korak 3) |
-| 11 | D · Samodejne zastavice | čaka · skupaj z 9 in 10 (veriga, korak 3) |
+| 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
+| 10 | G · V krogu | končano (skupaj z 9 in 11) |
+| 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
 | 12 | E · Datoteka s posnetkom | čaka (veriga, korak 4, zadnji) |
 | 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
 | 14 | Posnetki zaslona, predogled pred mainom | končano (PR #174) |
@@ -251,6 +251,12 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Gradi na obstoječem števcu sličic** (main, PR #164): naslov `?fps` vklopi `PH` v `js/game.js` (iskanje: `grep -n "the frame counter" js/game.js`). Okvirček zgoraj levo pod podatkom o krogu kaže sličice na sekundo, najpočasnejšo sličico zadnje sekunde ter povprečni čas korakov dirke (`PH.s`) in risanja (`PH.r`, `Render.frame`); osvežuje se enkrat na sekundo (`PH.tick` v glavni zanki). Prikaz s tipko O naj uporabi isti `PH` (vklop tudi s tipko, ne samo z naslovom) in mu doda vrstice; meritev zatikanj za dnevnik (pod 20 sličic/s več kot 1 s) naj bere iste čase sličic. Fizika velikih polj ima svoj nivo podrobnosti (`LOD` in `Race._lodPlan` v `js/core.js`, samo nad 30 avti, npr. Nürburg s 100 avti): prikaz naj pove, ali je vklopljen.
 - **Testi:** `napake.test.mjs`; GitHub vse.
 - **Preizkus:** prikaz na A25 med dirko na pravi progi (npr. Bathurst, Spa).
+- **Narejeno** (skupaj s sklopoma 10 in 11, ena veja in en pull request):
+  - **Dnevnik napak** (`D`, `zapis`): napake strani (`window` `error`: sporočilo, datoteka:vrstica:stolpec brez `?v=`), zavrnjene obljube (`unhandledrejection`) in zatikanja (`okvir`: sličice več kot 50 ms narazen več kot 1 s; samo med vožnjo dirke, ne v pavzi, posnetku, menijih in ko je stran skrita). Vsak zapis ima čas dirke, progo, krog in `s`, če je bil v dirki. Isto sporočilo zapored se samo šteje (×n). Zadnjih 50 ostane v igri (`tdgp-napake-dnevnik`), da so po sesutju še tam ob naslednjem obisku.
+  - **V poročilu** vrstice `D …` (ta dirka in napake tega obiska zunaj dirk), npr. `D 00:25.0 K1 s=863m zatik 2,6 s · 3,4 sličic/s · najdaljša 633 ms`, `D 00:12.3 K1 s=230m napaka »TypeError: …« js/render.js:123:45 (×3)`.
+  - **Nastavitve orodja:** Prikaz za razvijalca (Vklop / Izklop) in Dnevnik napak (vsi zapisi, najnovejši zgoraj; Kopiraj, Počisti).
+  - **Prikaz za razvijalca** (tipka **O** v Kontrolah, `KEY_DEF.dev`; ali v nastavitvah orodja; shranjen kot `dev`): isti števec sličic `PH` kot `?fps` (sličice/s, najpočasnejša sličica, koraki, risanje) in vrstice `phMore`: klici risanja in oglišča na sličico (`renderer.info` vseh prehodov sličice; oglišča = 3 na trikotnik), `s` in krog (v posnetku sledenega avta), tema in podrobnosti (NIZKA / SREDNJA / VISOKA, samodejno), fizika LOD (vklopljen ali ne) in število avtov.
+  - **Opomba (moje odločitve):** O deluje samo, ko je orodje vklopljeno. Zatikanje šteje sličice, ki jih igra res nariše (z varčevanjem baterije 30 na sekundo, kar je nad mejo). Na počasnem stroju (testi) je zatikanje skoraj ves čas: test `napake-slika` zato vrstic `D` ne šteje.
 
 ### Sklop 10 · G · V krogu — 1,5–2,5 h · 31. 10.
 
@@ -262,6 +268,10 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Imena** so tista iz kode, da se jih najde z grepom; razlaga imen je v `docs/kazalo.md`.
 - **Testi:** `napake.test.mjs`; GitHub vse.
 - **Preizkus:** obkroži tekmeca in tablo, preveri besedilo.
+- **Narejeno:**
+  - **Dodaj k zbirki** za vsako barvo izračuna, kaj je v njenih krogih (`rpInLoops` v `js/game.js`, pred slikami, s kamero, kot je na zaslonu): avti (`ti`, `tekmec#n` = `race.cars[n]`, `varnostni_avto`; sredina ali dva vogala avta), podrti predmeti (`predmet:<kind>#j` = `race.props[j]`, največ 8, nato `+n predmetov`), poimenovani kraji (`kraj:<ime>` iz `def.names`), boksi (`boksi`, `def.pit`) in odseki ceste (`cesta:i0-i1`: vzorci proge `track.px[i]`, sredina ali rob v krogu, do 700 m od kamere).
+  - **Besedilo:** vsaka vrstica zapisa ima na koncu `v_krogu=[tekmec#9, cesta:463-468]` (prazen krog `v_krogu=[]`). Razlaga imen je v `docs/kazalo.md` (»Imena v poročilih o napakah«).
+  - **Opomba:** table ob progi niso podrti predmeti in nimajo imena; v krogu je cesta pod njimi ali ob njih. Predmeti so tam, kjer so ob koncu posnetka (posnetek jih ne hrani).
 
 ### Sklop 11 · D · Samodejne zastavice — 1–1,5 h · 1. 11.
 
@@ -273,6 +283,12 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Iz dnevnika:** zatikanje.
 - **V posnetku:** sive zastavice s klicajem, Potrdi / Zavrzi.
 - **Testi:** `napake.test.mjs` (umetno sestavljen posnetek); GitHub vse.
+- **Narejeno:**
+  - **Posnetek** ima v bitih avta še 2 (postavljen nazaj na cesto od prejšnje sličice: `Race.putBack` (`race.putT`) v `Race.rescue`, montaža koles ob cesti in šola vožnje) in 4 (ne dirka: boksi, cilj, odstop).
+  - **`zaznaj`** pregleda sličice posnetka (meje `AZ`): avto stoji več kot 5 s, potem ko je že vozil (`obtical`; ne v boksih, po cilju ali odstopu); preskok v eni sličici za več, kot ga nese hitrost, in 2,5 m (`preskok`; ne ob postavitvi nazaj); navpično več kot 2,5 m v eni sličici (`poskok`); več kot 1 m pod cesto na cesti vsaj 0,2 s (`pod_cesto`; nagnjeni ovinki upoštevani); tekmec v napačno smer hitreje od 3 m/s več kot 2 s (`nazaj`). Ista vrsta istega avta v 10 s je ena zastavica, največ 40. Iz dnevnika: zatikanja te dirke (`zatik`).
+  - **Kdaj:** samo v posnetku (po dirki ali Posnetek do sem), po kosih po 6 ms, med dirko nič; Posnetek do sem nadaljuje, kjer je ostal.
+  - **V posnetku:** sive zastavice s klicajem na časovnici (`.nk-auto`, ločeno od `recd.flags` in zbirke); tap skoči tja in nad časovnico pokaže, kaj je (npr. »! Avto stoji · 00:41.3 · tekmec#5 (ime) · stoji 6,2 s«), s **Potrdi** in **Zavrzi**. Potrjena je bela, šteje v Zastavice (n), način Zastavice jo predvaja in je v poročilu: `!1 00:41.300 K2 s=1284m obtical tekmec#5 »stoji 6,2 s« (samodejna zastavica)` ter siva na zemljevidu slike. Zavržena izgine. Nepotrjene niso v poročilu.
+  - **Testi:** nov `tests/browser/napake-samodejno.test.mjs` (sklopi 9, 10, 11: prikaz O, dnevnik, zatikanje iz danih časov sličic, v krogu, `zaznaj` na umetnem posnetku na pravi progi, tudi v dveh kosih, Potrdi / Zavrzi, poročilo, nastavitve), `napake-slika` (`v_krogu`, vrstice `D`), `ctrl` in `pad` (nova tipka O).
 
 ### Sklop 12 · E · Datoteka s posnetkom — 1,5–2 h · 1. 11.
 

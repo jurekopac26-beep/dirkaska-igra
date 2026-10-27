@@ -43,12 +43,12 @@ try {
   // the picture and the text
   const R = await Q.evaluate(async () => { const r = await Napake.pripravi(); return { name: r.name, files: r.files.map(f => ({ name: f.name, w: f.w, h: f.h, type: f.blob.type, bytes: f.blob.size })), text: r.text, status: r.status, n: r.n, flags: r.flags }; });
   const ver = await Q.evaluate(() => /[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src'))[1]);
-  const f0 = R.files[0], L = R.text.split('\n'), it = st.zbirka;
+  const f0 = R.files[0], L = R.text.split('\n').filter(l => !/^D /.test(l)), it = st.zbirka;   // (D: the log's lines, Dnevnik napak: a slow machine's hitches; napake-samodejno.test.mjs)
   T.check('the picture: napake_bathurst_LLLLMMDD-UUMM.png, a PNG 1600 px wide, at most 1600 tall', R.files.length === 1 && /^napake_bathurst_\d{8}-\d{4}\.png$/.test(f0.name) && f0.type === 'image/png' && f0.w === 1600 && f0.h <= 1600 && f0.h > 600 && f0.bytes > 50000, JSON.stringify(R.files));
   const clk = (t) => { const u = Math.round(t * 1000), m = Math.floor(u / 60000); return String(m).padStart(2, '0') + ':' + ((u % 60000) / 1000).toFixed(3).padStart(6, '0'); };
-  T.check('the text: the first line (the version is game.js\'s stamp, the track, the mode and the weather, the device, the screen), a line for each note, the flag not marked',
+  T.check('the text: the first line (the version is game.js\'s stamp, the track, the mode and the weather, the device, the screen), a line for each note (with v_krogu=[...]), the flag not marked',
     L.length === 4 && L[0].startsWith('RRA-NAPAKE v=' + ver + ' proga=bathurst način=race/suho naprava=') && L[0].endsWith(' 640x360') &&
-    L[1] === `#1 ${clk(it[0].t)} K1 s=${it[0].s}m rdeča »Sledi gum sredi ravnine«` && L[2] === `#2 ${clk(it[1].t)} K1 s=${it[1].s}m modra »Tekmeci v koloni«` &&
+    L[1].startsWith(`#1 ${clk(it[0].t)} K1 s=${it[0].s}m rdeča »Sledi gum sredi ravnine« v_krogu=[`) && L[2].startsWith(`#2 ${clk(it[1].t)} K1 s=${it[1].s}m modra »Tekmeci v koloni« v_krogu=[`) && L.slice(1, 3).every(l => l.endsWith(']')) &&
     /^⚑1 00:\d\d\.\d{3} K1 s=\d+m \(zastavica med dirko, ni označena\)$/.test(L[3]) && R.flags === 1, R.text);
   // the red loop where it was drawn (its right edge at 290, 150 of the 640 × 360 screen: the first moment top left, 776 px wide from 16, 16)
   const k = 776 / 640, [p1, p3] = await pix(Q, 0, [[16 + 290 * k, 16 + 150 * k], [1600 - 6, 6]]);
