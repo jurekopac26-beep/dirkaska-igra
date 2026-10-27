@@ -545,6 +545,11 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 /* Posnetek do sem: the plate under the title, the timeline's green end ZDAJ, Nazaj v dirko for Končaj */
 #replay-ui .rp-wait { display: none; padding: 4px 10px; border-radius: 6px; background: rgba(12,16,40,.78); font: 600 clamp(11px, 3vh, 14px)/1.25 var(--f-ui); font-style: normal; color: var(--chalk); text-shadow: none; }
 #replay-ui.here .rp-wait { display: block; }
+/* the second row: the plate (Posnetek do sem) on the left; Zastavice's Prejšnja / Naslednja on the right (the flag on now, of how many) */
+#replay-ui .rp-row2 { width: 100%; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
+#replay-ui .rp-fnav { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+#replay-ui .rp-fnav.off { display: none; }
+#replay-ui .rp-fnav span { min-width: 52px; text-align: center; color: #FFE14D; font-style: normal; }
 /* the bottom: the caption of the moment, the timeline with the times, the buttons (in rows as the width allows) */
 #replay-ui .rp-bot { position: absolute; left: calc(12px + var(--sl)); right: calc(12px + var(--sr)); bottom: calc(10px + var(--sb)); display: flex; flex-direction: column; align-items: center; gap: 8px; }
 #replay-ui .rp-line { width: 100%; display: flex; align-items: center; gap: 10px; }
