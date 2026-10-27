@@ -803,7 +803,7 @@
   function replayEnd() {
     if (!replay) return;
     if (replay.here) { rpRace(); return; }   // (the race so far: back into the race, never the results)
-    hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
+    Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     if (recd) for (const c of recd.cars) if (c.rl) delete c.rl;   // (a roll the replay posed: over with it)
     hlvStop();   // (the best moment's video: done)
     if (race && race.fl) race.fl.sc = null;
@@ -835,7 +835,7 @@
   }
   function rpRace() {   // Nazaj v dirko: the cars back, the HUD and the controls back, then the count
     const P = replay; if (!P || !P.here) return;
-    hlOff(); rpBack(P.here.keep); replay = null;
+    Napake.close(); hlOff(); rpBack(P.here.keep); replay = null;
     $('replay-ui').classList.add('off'); showScreen('none'); Render.resetCam(); Comm.stop();
     rpCd = { t: 3 }; cdShow();
   }
@@ -864,7 +864,24 @@
     $('replay-ui').classList.toggle('here', !!P.here); $('rp-rec').textContent = tr(P.here ? '\u25cf POSNETEK DO SEM' : '\u25cf POSNETEK');
     const nf = (recd && recd.flags || []).length;   // (the flags: sklop 7; until then none, the button grey)
     $('rp-flags').textContent = tr('Zastavice ({0})', nf); $('rp-flags').disabled = !nf; $('rp-all').classList.toggle('sel', P.mode === 'all'); $('rp-flags').classList.toggle('sel', P.mode === 'flags');
+    Napake.sync();   // (Orodje za napake: the moments kept, as flags on the timeline)
   }
+  // Orodje za napake (js/napake.js, Označi in the replay): the replay's hooks; a moment's time, the followed car's lap at it (counted back
+  // from the car's lap times) and its metres from the start along the track
+  function rpInfo() {
+    const P = replay, c = recd.cars[P.k], T = track, q = c.q;
+    let L = c.lap || 1, ts = c.lapStart, j = (c.lapTimes || []).length - 1;
+    while (L > 1 && j >= 0 && P.t < ts) { ts -= c.lapTimes[j--]; L--; }
+    const s = !q ? 0 : T.open ? q.s - T.startS : ((q.s - T.startS) % T.len + T.len) % T.len;
+    return { track: T.def.id, lap: T.open ? 1 : Core.clamp(L, 1, race.laps || 1), laps: T.open ? 1 : race.laps || 1, s: Math.round(Math.max(0, s)), k: P.k, car: c.isPlayer ? 'ti' : c.name, cam: P.cam, here: !!P.here };
+  }
+  const NK_HOOKS = {
+    replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms),
+    stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
+    seek: (t) => { if (!replay) return; hlOff(); rpSeek(t); replay.play = false; replayUI(); },
+    span: () => replay && recd && recd.frames.length ? [recd.frames[0][0], replay.t1] : null,
+    shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max)
+  };
   function replayAct(a) {
     const P = replay, R = recd; if (!P) return;
     if (a === 'rp-hl') { if (P.hl) { hlOff(); replayUI(); } else replayHL(); return; }   // (Trenutki: the highlights on, or off: the whole race again)
@@ -5218,7 +5235,7 @@
   };
 
   function bindUI() {
-    rpLineBind();
+    rpLineBind(); Napake.init(NK_HOOKS);
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
       if (b) { e.preventDefault(); onAction(b.dataset.act, b); return; }
@@ -5351,7 +5368,7 @@
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       ctlLoad();   // (the keys and the pads' buttons as the player set them)
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
-      Input.onReplay = () => { if (replay) { if (replay.here && screen === 'none') rpRace(); } else if (screen === 'none' || screen === 'pause') rpHere(); };   // (I: Posnetek do sem; in it again: Nazaj v dirko)
+      Input.onReplay = () => { if (Napake.on) return; if (replay) { if (replay.here && screen === 'none') rpRace(); } else if (screen === 'none' || screen === 'pause') rpHere(); };   // (I: Posnetek do sem; in it again: Nazaj v dirko; not while marking: Označi)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
       Render.setStorm(S.weather === 'storm');
       Input.onPad = (id, wheel) => toast(tr(!wheel ? 'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.' : ctl.pads[id] ? 'Volan je povezan.' : 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.'), 5200);
