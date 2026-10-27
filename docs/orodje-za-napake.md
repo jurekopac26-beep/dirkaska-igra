@@ -25,8 +25,8 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
 | 14 | Posnetki zaslona, predogled pred mainom | končano (PR #174) |
 | 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
-| 16 | Ponovljive dirke | vzporedno |
-| 17 | Razdeljen world.js | vzporedno |
+| 16 | Ponovljive dirke | končano (PR #175) |
+| 17 | Razdeljen world.js | končano (PR #176, #180) |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -300,6 +300,12 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Kje:** `Math.random` v `js/core.js` (npr. odpadanje koles, razbitine) zamenja `rng` iz `Core` s semenom dirke (`race.opts.seed`).
 - **Vizualni učinki** v `js/game.js` in `js/render.js` lahko ostanejo naključni.
 - **Testi:** ista dirka dvakrat da enak posnetek; `races.test.js`, `golden`.
+- **Narejeno:**
+  - **Testni način** je hitri vstop (`?proga=…`): vklopi se za ves obisk. Seme dirke je `seme=<n>` iz naslova (celo število od 1, privzeto 1; `Core.quickArgs` → `q.seed`). Isti naslov dvakrat da isto dirko in enak posnetek; tudi ponovni začetek dirke v istem obisku je ista dirka.
+  - **Jedro** (`js/core.js`): vseh 15 `Math.random` je zdaj `rand()`, številke dirke, ki se stopa (`Race.rnd`; `RAND` nastavita `Race.step` in `aiControl` in ga po koncu vrneta). Z `opts.repro` je `Race.rnd` tok iz `opts.seed`, brez njega `Math.random` kot doslej, zato se zunaj testnega načina igra in reference (`golden`, `races`) ne spremenijo.
+  - **Igra** (`js/game.js`, `repro`, `grand`): v testnem načinu so iz semena še vreme, ki ga nastavitve prepustijo naključju (naključno, menljivo), megla na Big Suru in čakanje luči pred štartom, iz toka, ki je nov za vsako dirko (`newRace`); kvalifikacije in njihove simulacije tekmecev imajo isto seme. Ne v dirki s prijateljem. Vizualni učinki, komentar, radio in zvok ostanejo naključni.
+  - **Za teste:** `window.__game.repro` (seme, ali je dirka ponovljiva), `window.__game.recSum()` (povzetek posnetka). Node: `repro: true` v nastavitvah `Core.Race`.
+  - **Testi:** nov `tests/repro.test.js` (Bathurst s trčenjem: z `repro` nobenega klica `Math.random`, isto seme da isto dirko do zadnjega bita, drugo seme drugo), nov `tests/browser/repro.test.mjs` (dvakrat `?seme=5` enak posnetek in isti avti, `?seme=6` druga dirka), `quick.test.js` (`seme`). `golden` in `races` brez novih referenc.
 
 ### Sklop 17 · Razdeljen world.js — 3–5 h · 4.–5. 11.
 
