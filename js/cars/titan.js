@@ -13,7 +13,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.42, kv: 1.8, rmin: 7.5 },
     csp: { bx: 0.12, coast: -0.06, thr: -0.01, liftP: 0.04, pwr: 0.04, out: 1.2, turn: 0.75, w: 0.92, tv: 1.2 },   // (the FR layer: lift-off and power rotation; its own bx, coast, thr, liftP, pwr, out, turn, w, tv)
     stats: { power: 10, grip: 1, weight: 1, drift: 10 },
-    price: 60000, pk: 'open', field: ['titan'], fieldN: 9,
+    price: 60000, pk: 'open', field: ['titan'], fieldN: 9, fill: ['kolibri', 'miska'],   // (a bigger race: 9 of its own through the field, the rest these two, its pace together)
     snd: { kind: 'diesel', hz: 1, turbo: 0.8, loud: 1.3 },
     expect: { t100: [6.69, 7.86], vmax: [153, 163], latG: [1.82, 1.92], d100: [30.1, 33.2] },
     partNames: { grille: 'front grille', deflector: 'roof deflector', skirtL: 'left side skirt', skirtR: 'right side skirt' },

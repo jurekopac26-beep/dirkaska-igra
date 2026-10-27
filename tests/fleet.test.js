@@ -12,8 +12,9 @@
 //  - destruction: Core.wreckCar takes every part off (the wheels only with damage on), the same every time; the repair puts it all back;
 //    the wreck sequence (from 96 %, from a hit and from a hard landing: the bonnet, boot, bumpers and wing 0.4 s apart); any two wheels
 //    lost still leave >= 40 km/h; every contact circle of a long vehicle touches (cars, debris, props)
-//  - the AI: aiModel without a vehicle is the old four cars (the same objects), fieldSize and the qualifying sim follow the field; a
-//    one-make race of every vehicle for 20 s (every rival > 150 m on, every speed profile its model's own and finite, no NaN); retiring:
+//  - the AI: aiModel without a vehicle is the old four cars (the same objects), fieldSize and the qualifying sim follow the field; a big
+//    vehicle's bigger race (fieldN, fill): its own fieldN spread through the field, the rest its fill's cars in turn; a
+//    one-make race of every vehicle (a big one's: mixed) for 20 s (every rival > 150 m on, every speed profile its model's own and finite, no NaN); retiring:
 //    two wheels off (damage alone, or damage for looks only, never); a retired car drives off onto the run-off (from speed, or standing
 //    across the road; on Spa's Kemmel straight over to the side with room) and stands there, the marshals place one that does not get
 //    there (never two on one spot; with no spot that takes it, once, and there it stays), never a lap or a finish for it; the flags: an
@@ -169,8 +170,8 @@ check('Core: the 11 first, in their places, then all the new ones in the roster 
     R5.id === 'p206' && R5.retired === true && H5 === model('levs') && !H5.retired && H5.name === R5.name && R5.glb === undefined && R5.credit === undefined && C.MODELS.every(M => M === R5 || C.heirOf(M) === M),
     `${R5.id}: retired ${R5.retired}, heir ${H5 && H5.id}, name ${R5.name}, glb ${R5.glb}, credit ${R5.credit}`);
   const inField = [];
-  for (const M of [null].concat(C.MODELS.filter(m => !m.retired))) for (let k = 0; k < 16; k++) { const A = C.aiModel(k, M || undefined); if (!A || A.retired) inField.push((M ? M.id : 'none') + ':' + k); }
-  check('the retired model in no AI field: aiModel with every model in use as the player\'s (and with none), drivers 0-15', !inField.length, inField.slice(0, 6).join(', '));
+  for (const M of [null].concat(C.MODELS.filter(m => !m.retired))) for (let k = 0; k < 16; k++) for (const n of [undefined, 16]) { const A = C.aiModel(k, M || undefined, n); if (!A || A.retired) inField.push((M ? M.id : 'none') + ':' + k + (n ? '/' + n : '')); }
+  check('the retired model in no AI field: aiModel with every model in use as the player\'s (and with none), drivers 0-15 (a big vehicle\'s fill too)', !inField.length, inField.slice(0, 6).join(', '));
   // the fuel a vehicle carries full (a race with fuel on a circuit with pits: c.tankKg, Core.fuelTank): an electric one its battery (0),
   // every other some, by its size: the trucks and the monster truck the most (over twice any road car's), the limousine more than any
   // road car, the kart and the small cars less than a road car's 45 kg; the 11 as they always were
@@ -341,10 +342,24 @@ const MEAS = {};
   check('aiModel with a field: the field\'s vehicles (TITAN: titans); SOKOL R / PANTER 6 (no field): the four road cars', Array.from({ length: 12 }, (_, k) => C.aiModel(k, T) === T && C.aiModel(k, S) === C.MODELS[(k * 3 + 1) % 4] && C.aiModel(k, model('panter')) === C.MODELS[(k * 3 + 1) % 4]).every(Boolean));
   // the qualifying sim (game.js qsimStep: each rival alone, aiOrder [k], sized by fieldSize, the player's car as playerModel): the race's cars
   const F = model('formula'), Tq = track('rbring'), qs = (pm, k) => new C.Race(Tq, { numAI: C.fieldSize(pm, 12), aiOrder: [k], noPlayer: true, playerModel: pm, laps: 1, qualiBack: 200, seed: 3, damage: 0 }).cars;
-  const sizes = [C.fieldSize(T, 12), C.fieldSize(T, 5), C.fieldSize(model('kaze'), 12), C.fieldSize(F, 12), C.fieldSize(null, 12), C.fieldSize(model('goljat'), 12)];
-  check('fieldSize: as many rivals as the race (TITAN 9 of 12, 5 of 5; KAZE, the formula, none: 12; GOLJAT 7); the qualifying sim drives the race\'s cars (TITAN: each of its 9 a TITAN; the formula: formulas)',
-    sizes.join() === '9,5,12,12,12,7' && Array.from({ length: 9 }, (_, k) => { const L = qs(T, k); return L.length === 1 && L[0].m === T; }).every(Boolean) && qs(F, 3)[0].m === F && qs(model('kaze'), 4)[0].m === C.MODELS[(4 * 3 + 1) % 4],
+  const capped = { field: ['titan'], fieldN: 9 };   // (a big vehicle with no fill: its field capped)
+  const sizes = [C.fieldSize(T, 12), C.fieldSize(T, 5), C.fieldSize(model('kaze'), 12), C.fieldSize(F, 12), C.fieldSize(null, 12), C.fieldSize(model('goljat'), 99), C.fieldSize(capped, 12), C.fieldSize(capped, 5)];
+  check('fieldSize: as many rivals as the race (TITAN 12 of 12, 5 of 5; KAZE, the formula, none: 12; GOLJAT 99 of 99; a big vehicle with no fill: fieldN at most, 9 of 12, 5 of 5); the qualifying sim drives the race\'s cars (TITAN\'s 12: each its own of aiModel; the formula: formulas)',
+    sizes.join() === '12,5,12,12,12,99,9,5' && Array.from({ length: 12 }, (_, k) => { const L = qs(T, k); return L.length === 1 && L[0].m === C.aiModel(k, T, 12); }).every(Boolean) && qs(F, 3)[0].m === F && qs(model('kaze'), 4)[0].m === C.MODELS[(4 * 3 + 1) % 4],
     sizes.join(','));
+  // a big vehicle's bigger race (fieldN and a fill): driver 0 its own, its own fieldN of the n in all, spread evenly (no gap between two
+  // of them, or after the last, over n / fieldN rounded up), the others its fill's cars in turn (each as many as the next, one more at most);
+  // as many as fieldN or fewer: all its own
+  const mix = [];
+  for (const M of C.MODELS.filter(m => m.fill && !m.retired)) for (const n of [12, 21, 99]) {
+    const L = Array.from({ length: n }, (_, k) => C.aiModel(k, M, n)), own = L.map((A, k) => A === M ? k : -1).filter(k => k >= 0), fill = M.fill.map(id => model(id));
+    const gaps = own.map((k, i) => (i + 1 < own.length ? own[i + 1] : n) - k), cnt = fill.map(A => L.filter(B => B === A).length);
+    const ok = L[0] === M && own.length === M.fieldN && Math.max(...gaps) <= Math.ceil(n / M.fieldN) && L.every(A => A === M || fill.includes(A)) && Math.max(...cnt) - Math.min(...cnt) <= 1 &&
+      Array.from({ length: M.fieldN }, (_, k) => C.aiModel(k, M, M.fieldN) === M).every(Boolean);
+    mix.push({ id: M.id, n, ok, own: own.join(' '), cnt: cnt.join('/') });
+  }
+  check(`a big vehicle's bigger race: its own fieldN spread through the field, the rest its fill's cars in turn (${[...new Set(mix.map(q => q.id))].join(', ')}; 12, 21 and 99 rivals)`,
+    mix.length >= 12 && mix.every(q => q.ok), mix.filter(q => !q.ok).concat(mix).slice(0, 3).map(q => `${q.id} x${q.n}: own at ${q.own}, fill ${q.cnt}`).join('; '));
 }
 
 // ---- 7. a one-make race of every vehicle, 20 s ----
@@ -356,10 +371,11 @@ const MEAS = {};
     r.start(); const P = r.player, ai = r.cars.filter(c => !c.isPlayer);
     let nan = false;
     for (let k = 1; k <= 20 / DT; k++) { Math.random = seeded(7000 + k); C.aiControl(P, r, DT); r.step(DT); for (const c of r.cars) if (!fin(c.x + c.z + c.vx + c.vz + c.h)) nan = true; }
-    const want = M.field ? Math.min(12, M.fieldN || 12) : 12, cars = M.field ? ai.every(c => c.m === C.aiModel(0, M)) : ai.every((c, k) => c.m === C.MODELS[(k * 3 + 1) % 4]);
+    const want = C.fieldSize(M, 12), ids = (L) => L.map(A => A.id).sort().join();
+    const cars = M.field ? ids(ai.map(c => c.m)) === ids(Array.from({ length: want }, (_, k) => C.aiModel(k, M, want))) : ai.every((c, k) => c.m === C.MODELS[(k * 3 + 1) % 4]);
     const prof = M.field ? r.cars.every(c => c.vprof instanceof Float32Array && c.vprof.every(v => fin(v) && v > 0)) && P.vprof === ai[0].vprof : ai.every(c => !c.vprof) && !P.vprof && r.vprof.every(fin);
     const minD = Math.min(...ai.map(c => c.dist));
-    check(`${id}: a ${M.field ? 'one-make ' : ''}race, 20 s: ${want} rivals${M.field ? ' in ' + M.field.join('/') : ' in the four road cars'}, every one > 150 m on, ${M.field ? 'every profile the model\'s own, finite' : 'the race\'s profile'}, no NaN`,
+    check(`${id}: a ${M.fill ? 'mixed ' : M.field ? 'one-make ' : ''}race, 20 s: ${want} rivals${M.field ? ' in ' + M.field.concat(M.fill || []).join('/') : ' in the four road cars'}, every one > 150 m on, ${M.field ? 'every profile the model\'s own, finite' : 'the race\'s profile'}, no NaN`,
       ai.length === want && cars && prof && minD > 150 && !nan, `slowest rival ${minD.toFixed(0)} m${nan ? ', NaN' : ''}`);
   }
 }
@@ -661,7 +677,7 @@ if (!only.length) {
     X = coreWith(`var VEHICLE_DEFS = VEHICLE_DEFS || [];
       VEHICLE_DEFS.push({ id: 'ev', patch: true, cat: 'reli', field: ['ev', 'lev'], price: 21000, partNames: { spoiler: 'rear spoiler' }, snd: { kind: 'i4', hz: 1.1, loud: 1 }, look: { body: { len: 4.62 } },
         parts: { set: 'car', ht: 1.42, y0: 0.2, extra: { spoiler: { z: 1, th: 0.6, m: 2, r: 0.4, h: 0.05, lx: -0.95, lz: 0, f: 0.97 } } } });
-      VEHICLE_DEFS.push({ id: 'pico', patch: true, field: ['ev'], parts: { set: 'car', ht: 1.42, y0: 0.2 } }, { id: 'titan', patch: true, fieldN: 5, desc: 'Drugo besedilo.', tank: 150 },
+      VEHICLE_DEFS.push({ id: 'pico', patch: true, field: ['ev'], parts: { set: 'car', ht: 1.42, y0: 0.2 } }, { id: 'titan', patch: true, fieldN: 5, fill: null, desc: 'Drugo besedilo.', tank: 150 }, { id: 'kamen', patch: true, fill: ['nowhere'] },
         { id: 'vortex', patch: true, field: ['zzglb'] }, { id: 'zzbare', patch: true, glb: null });
       VEHICLE_DEFS.push({ id: 'nosuch', patch: true, cat: 'mali' }, { id: 'kaze', patch: true, colour: 'red' }, { id: 'raketa', patch: true, parts: { set: 'car', ht: 1.4, y0: 0.2, drop: ['wheelFL'] } },
         { id: 'muscle', patch: true, parts: { set: 'race', ht: 1.3, y0: 0.2, over: { wing: { df: 0.8 }, bumperF: { df: 0.5 } } } });
@@ -676,15 +692,15 @@ if (!only.length) {
   check('patch defs: one attaches its fields to a vehicle (the STRELA EV: category, part table with its extra, price, sound preset, look, names; the Core without the patch untouched)', ev.cat === 'reli' && X.partsOf(ev) === ev.parts && ev.parts.spoiler && ev.parts.wheelRR.wh === 3 &&
     X.CAREER.car.ev === 21000 && ev.sndP.kind === 'i4' && ev.def.look.body.len === 4.62 && ev.def.partNames.spoiler === 'rear spoiler' && ev.glb === undefined && !C.MODELS.find(o => o.id === 'ev').parts && C.CAREER.car.ev === 75000, Object.keys(ev.parts).length + ' parts');
   const four = (k) => X.MODELS[(k * 3 + 1) % 4];
-  check('fields: a patched field (the STRELA EV\'s: an EV / LEV R cup; the PICO TURBO\'s: STRELA EVs); a glb model races in one only with a look of its own for the AI (a throwaway def with a look: in; one with no look: out, the field left empty: the four road cars); a patch may take the glb away (null: in again); the retired model never (left out of a field that names it); fieldN and texts patched, the def itself untouched; a def\'s own fuel tank (def.tank), a patched one',
+  check('fields: a patched field (the STRELA EV\'s: an EV / LEV R cup; the PICO TURBO\'s: STRELA EVs); a glb model races in one only with a look of its own for the AI (a throwaway def with a look: in; one with no look: out, the field left empty: the four road cars); a patch may take the glb away (null: in again); the retired model never (left out of a field that names it); fieldN, the fill (null: none, the field capped again) and texts patched, the def itself untouched; a def\'s own fuel tank (def.tank), a patched one',
     Array.from({ length: 6 }, (_, k) => X.aiModel(k, ev) === (k % 2 ? m('lev') : ev) && X.aiModel(k, m('pico')) === ev && X.aiModel(k, m('vortex')) === four(k) && X.aiModel(k, m('zzok')) === (k % 2 ? m('zzskin') : m('zzok')) &&
       X.aiModel(k, m('zzskin')) === m('zzskin') && X.aiModel(k, m('zzbare')) === m('zzbare')).every(Boolean) &&
     m('zzglb') && X.aiModel(0, m('zzglb')) === four(0) && m('zzskin').glb === 'zz' && m('zzbare').glb === null && X.DEFS.find(d => d.id === 'zzbare' && !d.patch).glb === 'zz' && m('p206').retired &&
-    m('titan').fieldN === 5 && m('titan').def.desc === 'Drugo besedilo.' && X.DEFS.find(d => d.id === 'titan' && !d.patch).desc !== 'Drugo besedilo.' &&
+    m('titan').fieldN === 5 && m('titan').fill === null && X.fieldSize(m('titan'), 12) === 5 && C.fieldSize(model('titan'), 12) === 12 && m('titan').def.desc === 'Drugo besedilo.' && X.DEFS.find(d => d.id === 'titan' && !d.patch).desc !== 'Drugo besedilo.' &&
     X.fuelTank(m('titan')) === 150 && X.fuelTank(m('zzok')) === 33 && C.fuelTank(model('titan')) === 210 && C.fuelTank(model('raketa')) === 40);   // (the fuel: a def's own tank, a patch's; the RAKETA's from its mass, the LEV S's 1080 kg)
   const why = (id) => (X.DEFS_SKIPPED.find(s => s.id === id) || {}).why || '';
-  check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, a tank below 0, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range, a part mounted on no part); good ones register as given (bscale kept, rW over a standard r)',
-    skipped.join() === ['hatch', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zztank', 'zzx1', 'zzx2', 'zzx3', 'zzx4', 'zzx5'].join() && /downforce/.test(why('muscle')) && /tank/.test(why('zztank')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) && /on: nosuch/.test(why('zzx5')) &&
+  check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, a fill of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, a tank below 0, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range, a part mounted on no part); good ones register as given (bscale kept, rW over a standard r)',
+    skipped.join() === ['hatch', 'kamen', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zztank', 'zzx1', 'zzx2', 'zzx3', 'zzx4', 'zzx5'].join() && /downforce/.test(why('muscle')) && /tank/.test(why('zztank')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) && /on: nosuch/.test(why('zzx5')) && /fill: no vehicle/.test(why('kamen')) &&
     X.MODELS.length === C.MODELS.length + 5 && X.MODELS.slice(0, C.MODELS.length).every((o, i) => o.id === C.MODELS[i].id) && X.ARC.zzbs.bscale === 1.3 && Math.abs(m('zzbs').parts.doorL.r - 0.3 * m('zzbs').wid) < 1e-12 && X.ARC.zzok.bscale === 1,
     'skipped ' + skipped.join(', ') + '; ' + ['muscle', 'zzx1', 'zzx2', 'zzx3', 'zzx4', 'zzx5'].map(id => id + ': ' + why(id)).join(' / '));
   { // a patched one of the 11 with a part table of its own breaks apart as a registered vehicle does (the pico, the STRELA EV)

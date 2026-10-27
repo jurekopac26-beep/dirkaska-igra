@@ -76,7 +76,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 - **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
 - **avto** fizika (`Car`, `stepCS`), nadgradnje `car upgrades`, deli vozil `a registered vehicle's parts`
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
-- **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
+- **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel` (vozila tekmecev: polje `field`, pri velikih vozilih `fieldN` in dopolnitev `fill`; število `fieldSize`); vožnja po stranski cesti
 - **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
 - **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
 - **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)

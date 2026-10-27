@@ -4599,18 +4599,26 @@ const Core = (function () {
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
   // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
   // a field left empty: none), driver k in field[k % n]; without a vehicle or a field, the four road cars in turn (MODELS[(k * 3 + 1) % 4],
-  // the same objects as always)
+  // the same objects as always). A big vehicle (pm.fieldN) in a race of more rivals than that (n, the race's AI count) with a fill
+  // (pm.fill: ids of quicker-drawn cars of about its pace, the same rule as the field's): its own fieldN spread evenly through the n
+  // (driver k one of them when k x fieldN mod n < fieldN: the first, and every n / fieldN after it), the others the fill's cars in turn
   const aiBody = (M) => !M.glb || !!(M.def && M.def.look);
-  function fieldOf(pm) {
-    if (!pm || !pm.field) return null;
-    const L = []; for (const id of pm.field) { const M = MODELS.find(m => m.id === id); if (M && aiBody(M) && !M.retired) L.push(M); }
+  function modelsOf(ids) {
+    if (!ids) return null;
+    const L = []; for (const id of ids) { const M = MODELS.find(m => m.id === id); if (M && aiBody(M) && !M.retired) L.push(M); }
     return L.length ? L : null;
   }
-  function aiModel(k, pm) { const F = fieldOf(pm); return F ? F[k % F.length] : MODELS[(k * 3 + 1) % 4]; }
-  // how many AI cars a race of this vehicle has when n are asked for: model.fieldN at most when its field races (not a one-make class:
-  // the formula's rivals are formulas); the qualifying sim sizes itself by it
-  const fieldSize = (pm, n) => { const F = pm && !pm.oneMake ? fieldOf(pm) : null; return F && pm.fieldN ? Math.min(n, pm.fieldN) : n; };
-  const aiDriver = (k, pm) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: aiModel(k, pm), color: AI_COLORS[k % AI_COLORS.length] });
+  const fieldOf = (pm) => pm ? modelsOf(pm.field) : null;
+  function aiModel(k, pm, n) {
+    const F = fieldOf(pm); if (!F) return MODELS[(k * 3 + 1) % 4];
+    const L = modelsOf(pm.fill), h = pm.fieldN; if (!L || !h || !(n > h)) return F[k % F.length];
+    const j = Math.floor(k * h / n);   // (its own cars before driver k)
+    return (k * h) % n < h ? F[j % F.length] : L[(k - j - 1) % L.length];
+  }
+  // how many AI cars a race of this vehicle has when n are asked for: model.fieldN at most when its field races and has no fill (not a
+  // one-make class: the formula's rivals are formulas); the qualifying sim sizes itself by it
+  const fieldSize = (pm, n) => { const F = pm && !pm.oneMake ? fieldOf(pm) : null; return F && pm.fieldN && !modelsOf(pm.fill) ? Math.min(n, pm.fieldN) : n; };
+  const aiDriver = (k, pm, n) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: aiModel(k, pm, n), color: AI_COLORS[k % AI_COLORS.length] });
   // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up when behind (max, from metres)]
   // (skill 1 = the racing-line speed profile; the cars' own limit on the autopilot is about 1.12, the little pico understeers past ~1.08)
   const DIFF = [
@@ -4648,7 +4656,8 @@ const Core = (function () {
       this.timeTrial = !!(((track.def.timeTrial && !(opts.tt === false && md.indexOf('race') >= 0)) || (opts.tt && !opts.remote && md.indexOf('tt') >= 0)) && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       // a field race: the AI drive the field of the player's vehicle (or of opts.fieldModel: a championship's car, the title demo's
-      // category; see aiModel), at most model.fieldN of them (the big vehicles); this.field: its models, null in any other race
+      // category; see aiModel), at most model.fieldN of them (the big vehicles; with a fill, the rest of the field its cars); this.field:
+      // its models, null in any other race
       const oneMake = opts.playerModel && opts.playerModel.oneMake ? opts.playerModel : null;   // the player in the formula: every rival in one too
       const FM = oneMake ? null : opts.fieldModel || opts.playerModel || null, field = fieldOf(FM);
       this.field = field;
@@ -4669,7 +4678,7 @@ const Core = (function () {
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
+        aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null, nAI), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
       }
       // the start's reaction (LAUNCH, opts.launch): by default in a race from the grid, not in a time trial, on a flying lap (qualifying, a
       // challenge's lap), in the run from the police or the title demo. The AI's reactions from the race's seed (their own numbers: the
@@ -5907,7 +5916,7 @@ const Core = (function () {
      order is append-only: a shipped vehicle is retired, never removed), with Tmax as the loop at the models computes it, its ARC and CSP
      entries, its career price and its expanded part table. An invalid one is skipped with a console warning and listed in DEFS_SKIPPED
      (the fleet test fails on any). A patch def ({ id, patch: true, ... }) attaches fields to a vehicle already registered, one of the 11
-     included (its look, its part table, its field ...): cat, ord, desc, stats, price, pk, field, fieldN, snd, expect, partNames, parts,
+     included (its look, its part table, its field ...): cat, ord, desc, stats, price, pk, field, fieldN, fill, snd, expect, partNames, parts,
      glb, credit, retired, look, tank (the fuel it carries full, kg: fuelTank).
      --------------------------------------------------------------------- */
   const DEFS = (typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS : []).slice(), DEFS_SKIPPED = [];
@@ -5917,8 +5926,8 @@ const Core = (function () {
   const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
     dmgK: [0.3, 2], knockK: [0.1, 1], roof0: [0, 0.9], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
   const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
-  const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];
-  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank'];
+  const DEF_OPT = ['ord', 'field', 'fieldN', 'fill', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];
+  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'fill', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank'];
   const isNum = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
   const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
   // the checks of a def's fields ('' when fine); a patch def's fields get the same
@@ -5933,6 +5942,7 @@ const Core = (function () {
     pk: (v) => PK_IDS.indexOf(v) >= 0 ? '' : 'pk not one of ' + PK_IDS.join(' '),
     field: (v) => v === null || (Array.isArray(v) && v.length >= 1 && v.length <= 12 && v.every(x => typeof x === 'string')) ? '' : 'field: null or a list of 1-12 ids',
     fieldN: (v) => Number.isInteger(v) && v >= 1 && v <= 20 ? '' : 'fieldN not 1..20',
+    fill: (v) => v === null || (Array.isArray(v) && v.length >= 1 && v.length <= 12 && v.every(x => typeof x === 'string')) ? '' : 'fill: null or a list of 1-12 ids',
     num: (v) => Number.isInteger(v) && v >= 1 && v <= 99 ? '' : 'num not 1..99',
     snd: (v) => isObj(v) && SND_KINDS.indexOf(v.kind) >= 0 && isNum(v.hz, 0.3, 3) && isNum(v.loud, 0.1, 3) && (v.turbo == null || isNum(v.turbo, 0, 1)) && Object.keys(v).every(k => ['kind', 'hz', 'loud', 'turbo'].indexOf(k) >= 0) ? '' : 'snd: { kind (SND_KINDS), hz 0.3..3, loud 0.1..3, turbo? 0..1 }',
     expect: (v) => isObj(v) && Object.keys(v).every(k => ['t100', 'vmax', 'latG', 'd100'].indexOf(k) >= 0 && Array.isArray(v[k]) && v[k].length === 2 && isNum(v[k][0], 0, 1e4) && isNum(v[k][1], v[k][0], 1e4)) ? '' : 'expect: { t100, vmax, latG, d100: [lo, hi] }',
@@ -5999,6 +6009,7 @@ const Core = (function () {
         parts: expandParts(d.parts, P), field: d.field ? d.field.slice() : null,
       });
       for (const k of ['fieldN', 'num', 'glb', 'credit', 'retired', 'tank']) if (d[k] != null) M[k] = d[k];
+      if (d.fill) M.fill = d.fill.slice();
       // the AI's room for a big vehicle (unless the def sets its own): the edge margin, the passing offset, the follow gap (centre to
       // centre), how far to its side a car counts as in its way and as one to follow (the hard-coded 3.2 / 2.1 for the others)
       if (P.aiEdge == null) M.aiEdge = Math.max(1.25, 0.43 * P.wid + 0.5);
@@ -6021,12 +6032,12 @@ const Core = (function () {
       for (const k in d) if (!why && k !== 'id' && k !== 'patch' && PATCH_KEYS.indexOf(k) < 0) why = 'patch: unknown key ' + k;
       for (const k of PATCH_KEYS) if (!why && d[k] !== undefined && !(k === 'field' && d[k] === null)) why = k === 'parts' ? partsBad(d[k]) : DEF_CHECK[k](d[k]);
       if (!why && d.parts) { let df = 0; const PT = expandParts(d.parts, M); for (const k in PT) df += PT[k].df || 0; if (df > 1 + 1e-9) why = 'parts: the downforce shares (df) add up to more than 1'; }
-      if (!why && d.field) { const miss = d.field.find(id => !MODELS.some(m => m.id === id)); if (miss) why = 'field: no vehicle ' + miss; }
+      for (const k of ['field', 'fill']) if (!why && d[k]) { const miss = d[k].find(id => !MODELS.some(m => m.id === id)); if (miss) why = k + ': no vehicle ' + miss; }
       if (why) { skip(d, why); continue; }
       const D = M.def = Object.assign({}, M.def || { id: M.id, name: M.name });
       for (const k of PATCH_KEYS) if (d[k] !== undefined) D[k] = d[k];
       if (d.cat !== undefined) M.cat = d.cat; if (d.ord !== undefined) M.ord = d.ord; if (d.stats !== undefined) M.stats = Object.assign({}, d.stats);
-      if (d.field !== undefined) M.field = d.field ? d.field.slice() : null; if (d.fieldN !== undefined) M.fieldN = d.fieldN;
+      if (d.field !== undefined) M.field = d.field ? d.field.slice() : null; if (d.fieldN !== undefined) M.fieldN = d.fieldN; if (d.fill !== undefined) M.fill = d.fill ? d.fill.slice() : null;
       if (d.parts !== undefined) M.parts = expandParts(d.parts, M);
       if (d.snd !== undefined) M.sndP = d.snd; if (d.price !== undefined) CAREER.car[M.id] = d.price;
       for (const k of ['glb', 'credit', 'retired', 'tank']) if (d[k] !== undefined) M[k] = d[k];

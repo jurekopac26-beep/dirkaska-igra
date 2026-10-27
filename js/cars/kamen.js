@@ -12,7 +12,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.4, kv: 1.8, rmin: 8 },
     csp: { bx: 0.12, coast: -0.07, thr: -0.015, liftP: 0, pwr: 0.03, out: 1.1, turn: 0.7, w: 0.9, tv: 1.25 },   // (the AWD layer: steady, straightens quickly; its own bx, coast, thr, pwr, out, turn, w, tv)
     stats: { power: 10, grip: 1, weight: 1, drift: 10 },
-    price: 70000, pk: 'open', field: ['kamen'], fieldN: 5,   // (5 rivals: its field and 40 of its pieces in view within the phone's budget)
+    price: 70000, pk: 'open', field: ['kamen'], fieldN: 5, fill: ['miska', 'kolibri'],   // (5 of its own: its field and 40 of its pieces in view within the phone's budget; a bigger race: the rest these two, about its pace)
     snd: { kind: 'diesel', hz: 0.85, turbo: 0.7, loud: 1.3 },
     expect: { t100: [6.01, 7.06], vmax: [135, 143], latG: [1.79, 1.89], d100: [33.7, 37.3] },
     partNames: { spareL: 'spare wheel', spareR: 'spare wheel' },
