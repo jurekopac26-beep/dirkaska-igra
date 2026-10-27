@@ -47,6 +47,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     turns: [[-98.8,277.5],[-530.1,172.9],[-304.7,-482.5],[-141.8,-397.7],[26.3,-331.3],[-66.7,-225.8],[-295.9,-351.0],[-135.7,-44.8],[7.4,-205.6]],   // the corners (their apexes): Ramp Bend, South Tower Corner, North Tower Crescent, the Glades, Fisherman's Bend, the Pond Hairpin, Big Tree Bend, the Stadium Dip, the Stadium Curve
     pit: [14, -100, 130, 10],     // pit lane on the right of the Stadium Straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pitLanes: [15, 15],   // as in its day: no deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-35, 85],           // the first and the last of the 13 crews' boxes
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered stand across the straight from the pits
     stands: [[-60, 70, -1, 8, 1, 2, 0, 'GRANDSTAND']],

@@ -220,6 +220,7 @@
     C.aMat = aMat; C.lMat = lMat;
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if (side * k > 0 || Math.abs(k) > 1 / 60) kerb[side > 0 ? 1 : 0][i] = 1; }
+    K.pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
     const shade = (i, o) => { const rl = T.rl[i]; let k = (0.84 - (0.15 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * (0.96 + 0.06 * Math.sin(i * 0.013)); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
@@ -264,7 +265,7 @@
     for (const c of T.corners) { if (c.sev < 3) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 8; k <= i1c + 12; k++) { const ii = ((k % N) + N) % N, bar = si ? T.br[ii] : T.bl[ii]; if (bar > T.w + 6 && !C.jm[si][ii]) tyreOn[si][ii] = 1; } }
     const kindAt = (i, side) => {   // -1 none (the pit lane's way in and out), 1 concrete, 2 tyres
-      if (side < 0 && C.def.pit) { const p = T.pitAt(i * ds); if (p && p.gap) return -1; }
+      if (side < 0 && C.def.pit) { if (K.pitOpen(i)) return -1; const p = T.pitAt(i * ds); if (p && p.gap) return -1; }   // (pitOpen: the deceleration and acceleration lanes too)
       return tyreOn[side2(side)][i] ? 2 : 1;
     };
     C.wallKind = kindAt;
@@ -358,6 +359,7 @@
       else if (pi.t > 0.05) quad(gl, s0, s1, oi + 3.5, Math.max(oi + 3.6, PB[2] * pi.t), Math.max(oj + 3.6, PB[2] * pj.t), oj + 3.5, 0.02, one, true);   // (the way in and out: asphalt out to the building line)
       if (q % 6 === 0) { const p = atSf(s0, sg * (oi + 2)); exclPush(p[0], p[1], 9.5); }   // (no trees in the lane, on its strip or apron)
     }
+    K.pitJunction(gl, gp, null);   // the deceleration and acceleration lanes, the gores (in the lane's meshes; the ground flat)
     // the 80 km/h line across the lane at its two ends
     for (const q of [PD[1] + 45, PD[2] - 34]) { const p = T.pitAt(sStart + q); if (p) quad(gp, sStart + q, sStart + q + 0.4, p.o - 3.4, p.o + 3.4, p.o + 3.4, p.o - 3.4, 0.036, wl); }
     // the crews' boxes (13, 10 m apart), the dividers, the player's box (out.pitBox)
