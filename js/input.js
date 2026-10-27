@@ -15,7 +15,13 @@ const Input = (function () {
   const tilt = { listening: false, raw: 0, neutral: 0, got: false, lastT: 0, sens: 22, invert: false, value: 0 };
   let autoGas = false;
   let onPause = null;
-  let vib = true;
+  // the phone's vibration (vib its level, Nastavitve · Vibracija: 0 none, Izklop; 1 the basic patterns alone, Core.HAPTIC lv 1, Osnovno; 2
+  // all of them, Vse): Core.HAPTIC's patterns by name (buzz) and the old single pulses (vibrate: a crash, a landing … at either level, as
+  // much as the crew's work), one at a time on the race's clock (buzzStep: each race step's dt; Core.Haptic: which cuts in, which waits,
+  // which is dropped); buzzOff stops the motor (the pause, the page hidden, the setting off, the race's end, the replay). hlog: what
+  // started, by name, on that clock (tests)
+  let vib = 2;
+  const hq = Core.Haptic(), hlog = [];
   const els = {};
   const pressed = { left: false, right: false, gas: false, brake: false };
 
@@ -69,7 +75,7 @@ const Input = (function () {
     if (o.autoGas != null) autoGas = !!o.autoGas;
     if (o.tiltSens != null) tilt.sens = o.tiltSens;
     if (o.tiltInvert != null) tilt.invert = !!o.tiltInvert;
-    if (o.vibrate != null) vib = !!o.vibrate;
+    if (o.vibrate != null) { vib = o.vibrate === true ? 2 : +o.vibrate || 0; if (!vib) buzzOff(); }   // (true: all of them)
   }
 
   function wheelAngle(x, y) { return Math.atan2(y - R.wheel.cy, x - R.wheel.cx); }
@@ -284,8 +290,19 @@ const Input = (function () {
   const map = { left: 'c-left', right: 'c-right', gas: 'c-gas', brake: 'c-brake' };
   function setPressed(k, v) { if (pressed[k] === v) return; pressed[k] = v; const e = els[map[k]]; if (e) e.classList.toggle('on', !!v); }
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
-  function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }
+  function hapGo(e) {   // a pattern starting now (Core.Haptic's: { k, p })
+    if (!e) return;
+    hlog.push([e.k, +hq.t.toFixed(3)]); if (hlog.length > 80) hlog.shift();
+    if (navigator.vibrate) { try { navigator.vibrate(e.p); } catch (_) { } }
+  }
+  function buzz(k, p, pri) {   // Core.HAPTIC's pattern k (or a pattern p of its own at pri): now, after the one playing, or not at all
+    const H = Core.HAPTIC[k]; if (!vib || !(H || p) || (H && H.lv > vib)) return;
+    hapGo(hq.buzz(k, p || H.p, pri || H.pri));
+  }
+  function vibrate(ms) { buzz('pulse', [Math.round(ms)], 3); }
+  function buzzStep(dt) { hapGo(hq.step(dt)); }
+  function buzzOff() { if (hq.off() && navigator.vibrate) { try { navigator.vibrate(0); } catch (_) { } } }
 
-  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, padRaw, padList, setKeys, setPads, captureKey, get keyMap() { return keyMap; }, set onPad(fn) { onPad = fn; }, set onTyre(fn) { onTyre = fn; }, set onReplay(fn) { onReplay = fn; }, pad, state: S, tilt, get mode() { return mode; } };
+  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, buzz, buzzStep, buzzOff, get haptics() { return { log: hlog.slice(), level: vib, busy: hq.busy, waiting: hq.waiting, n: Object.assign({}, hq.n) }; }, padRead, padRaw, padList, setKeys, setPads, captureKey, get keyMap() { return keyMap; }, set onPad(fn) { onPad = fn; }, set onTyre(fn) { onTyre = fn; }, set onReplay(fn) { onReplay = fn; }, pad, state: S, tilt, get mode() { return mode; } };
 })();
 

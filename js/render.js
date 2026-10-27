@@ -5098,7 +5098,7 @@ const Render = (function () {
       m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
     const lf = c.liftF, lr = c.liftR, y0 = P.y || 0;
     const hub = (k) => { const f = k < 2 ? D.fx : D.rx, sd = k % 2 ? 1 : -1, [x, z] = Wp(f, sd * D.hw); return [x, y0 + D.rw + (k < 2 ? lf : lr), z]; };
-    c.gunOn = false;
+    c.gunOn = false; c.gunW = 0;   // (gunW: a bit for each wheel whose gun is on its nut now: Sfx's wheel guns)
     if (mode === 'home') {
       for (const m of c.men) { if (m.role === 'idle') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
         const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3;
@@ -5113,7 +5113,7 @@ const Render = (function () {
         const gSpot = Wp(fk, sd * (D.hw + 0.72 + wt)), gYaw = yawC(0, -sd);
         if (mode === 'out') go(G, gSpot, gYaw, 'jog', 'ready');
         else if (mode === 'work') { const nut = (u > 0.04 && u < 0.2) || (u > 0.47 && u < 0.64);
-          if (u < 0.66) { go(G, gSpot, gYaw, 'snap', 'gunK'); G.aim = hb; G.aimOff = nut ? Math.sin(time * 70 + k) * 0.008 : (u > 0.2 && u < 0.47 ? 0.14 : 0.04); if (nut) { c.gunOn = true; crSpark(hb, sd, F, dt); } }
+          if (u < 0.66) { go(G, gSpot, gYaw, 'snap', 'gunK'); G.aim = hb; G.aimOff = nut ? Math.sin(time * 70 + k) * 0.008 : (u > 0.2 && u < 0.47 ? 0.14 : 0.04); if (nut) { c.gunOn = true; c.gunW |= 1 << k; crSpark(hb, sd, F, dt); } }
           else go(G, Wp(fk, sd * (D.hw + 0.95)), gYaw, 'snap', 'signal'); }
         else go(G, Wp(fk - (ex ? 0.3 : 0), sd * (D.hw + 1.25 + (ex ? 0.2 : 0))), gYaw, 'snap', c.clearT < 1 ? 'signal' : 'gun');
         // tyre off: grabs the old wheel, pulls it off and steps back with it
