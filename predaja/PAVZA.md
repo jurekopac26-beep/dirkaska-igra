@@ -45,3 +45,5 @@
 - 84 (proga se zgumira): PRESTAVLJENO NA KASNEJE po želji uporabnika ("shrani si, da morava to še narediti"). Smer B5 (prah v barvi gume, svetlejši, mehak prehod); 6 različic B5 v moznosti2/84-B5-*, priporočeno B5-3; izbira še odprta. Skupina 3 je brez 84.
 - Opomnik 3. 11. 03:16 UTC (trig_01FENN9pnUaAMWXRNKrowW7A): 84 + pregled vseh predlogov + 12 novih predlogov (102–113) na strani.
 - 91: IZBRANO C42-1 (sonce se vrti, oblaki plujejo; C4-2 z animacijo). Opomnik prestavljen na 3. 11. 9.00 (08:00 UTC).
+---\n- 1A: 11 vej potisnjenih na GitHub (27. 10.), brez PR. Predaja: veja claude/boksi-predaja, predaja/PREDAJA.md.
+- Opomnik prestavljen na 3. 11. ob 23.00 (22:00 UTC) po želji uporabnika.

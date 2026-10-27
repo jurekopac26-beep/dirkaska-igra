@@ -59,7 +59,7 @@ Read this first, then `CLAUDE.md`. Everything here comes from a long earlier ses
 Direction C4-2: a tall sky band with big icons, plus a weather animation in CSS (transform and opacity only, seamless 6 s loop, reduced-motion fallback, no moving text). The user chose **C42-1** (the sun's rays turn slowly and the glow pulses, light clouds drift, rain falls); see `opisi.json`. The overlay code is in `ov5.mjs`.
 
 ## Later (not now)
-- **84 »Proga se zgumira«**: saved for later at the user's request. Direction B5: a glossy rubber layer, and beside it dust in the rubber's own colour, lighter, fading softly outward. Six variants B5-1 … B5-6 are in `opisi.json`, each +1 draw call; I recommended B5-3. ~3–4 h. The user asked for a reminder on 3 Nov, with an overview of all proposals and 12 new proposals (102–113). That reminder (3 Nov, 9:00 Slovenian time) lives on the old account, so set your own if the user wants it.
+- **84 »Proga se zgumira«**: saved for later at the user's request. Direction B5: a glossy rubber layer, and beside it dust in the rubber's own colour, lighter, fading softly outward. Six variants B5-1 … B5-6 are in `opisi.json`, each +1 draw call; I recommended B5-3. ~3–4 h. The user asked for a reminder on 3 Nov, with an overview of all proposals and 12 new proposals (102–113). That reminder (3 Nov, 23:00 Slovenian time) lives on the old account, so set your own if the user wants it.
 - **With new mechanic characters (3B):**
   - 43a rival crews working on their cars
   - 66 new nose
