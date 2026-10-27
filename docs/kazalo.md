@@ -15,7 +15,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/core.js` | proga (`Track`), fizika avtov, AI, dirka (`Race`), predmeti ob progi; brez DOM in THREE |
 | `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi |
 | `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
-| `js/world-montreal.js`, `world-toronto.js`, `world-townsville.js` | svetovi v svojih datotekah: `World.ext[tema]` s pomočniki `extAPI` (vzor za sklop 17) |
+| `js/world-<tema>.js` | svetovi v svojih datotekah (`World.ext[tema]`, tabela prog spodaj). `montreal`, `toronto`, `townsville`: pomočniki `extAPI` (`K.<ime>`). Premaknjeni iz `world.js` (sklop 17: `newcastle`, `detroit`, `marrakesh`, `troisrivieres`): koda nespremenjena, pomočnike vzame iz `World.api` (`API` v `world.js`: nespremenljivi ob nalaganju, spremenljivo stanje kot `K.<ime>`, `T` in druge podatke gradnje prepiše `SYNC` pred gradnjo); kar `world.js` uporablja od njih, je `API.<ime>` |
 | `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov); opis spodaj |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
@@ -63,7 +63,8 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **plošček v menijih**, **Kontrole** `Kontrole (from Nastavitve)`
 - **števec sličic** `the frame counter` (`PH`: naslov `?fps`, okvirček zgoraj levo; `PH.tick`, `PH.s` koraki, `PH.r` risanje; osnova za prikaz za razvijalca, sklop 9)
 - **polje in štart:** `NUM_AI` 21 (22 avtov), `CH_AI` 19 (prvenstvo), `PLAYER_GRID` 999 (igralec zadnji v polju); leteči start `flyStep`, `flyHUD`, `FLY_T`
-- **hiter vstop** `the quick entry` (`quickGo`, `quickRun`): naslov `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>` odpre dirko brez menija; branje naslova `Core.quickArgs`; za teste `window.__game.quick` (opis v `tests/README.md`)
+- **hiter vstop** `the quick entry` (`quickGo`, `quickRun`): naslov `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>` odpre dirko brez menija; branje naslova `Core.quickArgs`; za teste `window.__game.quick` (opis v `tests/README.md`)
+- **testni način, ponovljive dirke** `the test mode` (`repro`, `grand`): hitri vstop vklopi testni način za ves obisk; seme dirke je `seme` iz naslova (privzeto 1), `Race` dobi `repro: true`; vreme, ki ga nastavitve prepustijo naključju, megla na Big Suru in čakanje luči pred štartom so iz toka istega semena, novega za vsako dirko (`newRace`). Za teste `window.__game.repro`, `window.__game.recSum()` (povzetek posnetka)
 - **glavna zanka** `main loop`, **dogodki** `events` (`switch (act)` za `data-act`), **aplikacija** `the game as an app`, **most do menija** `the menu's bridge`, **zagon** `boot`
 
 ## Orodje za napake (`js/napake.js`)
@@ -84,7 +85,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 - **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
 - **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)
 - **hiter vstop** `quickArgs(search)` (naslov → proga, način, `t`, vreme, avto, neveljavni deli)
-- **naključje** `rng(seed)` (mulberry32); `Math.random` je še v učinkih poškodb (sklop 16)
+- **naključje** `rng(seed)` (mulberry32). Naključni dogodki dirke (kolo odpade, razbitine in predmeti, predrta guma, reakcije in napake AI) so iz `rand()`: številke dirke, ki se stopa (`Race.rnd`; `RAND` nastavita `Race.step` in `aiControl`). Ponovljiva dirka (`opts.repro`) jih vzame iz semena (`opts.seed`), sicer `Math.random` kot doslej. Promet (`Traffic.R`) in policija (`R`, `RD`) imata vedno svoje tokove iz semena; vizualni učinki v `js/game.js` in `js/render.js` ostanejo naključni
 
 ## Teme v `js/render.js`
 
@@ -104,14 +105,14 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | caracoles | Los Caracoles, Čile | caracoles | `buildCaracoles` |
 | chapman | Chapman's Peak, Južna Afrika | chapman | `buildChapman` |
 | cpalace | Crystal Palace, Anglija | cpalace | `buildRbring` (`RB_LOOK`, `cpPark`) |
-| detroit | Detroit, ZDA | detroit | `buildDetroit` |
+| detroit | Detroit, ZDA | detroit | `js/world-detroit.js` (`buildDetroit`) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `buildGreatAlpine` |
 | harju | Harju, Finska | harju | `buildHarju` |
 | hotham | Mount Hotham, Avstralija | hotham | `buildHotham` |
 | iroha | Irohazaka, Japonska | iroha | `buildIroha` |
 | katu | Katu-Jaryk, Rusija | katu | `buildKatu` |
 | longford | Longford, Avstralija | longford | `buildLongford` |
-| marrakesh | Marrakesh, Maroko | marrakesh | `buildMarrakesh` |
+| marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | maunakea | Mauna Kea, ZDA | maunakea | `buildMaunakea` |
 | medvode | Medvode, Slovenija | medvode | `buildMedvode` |
 | moki | Moki Dugway, ZDA | moki | `buildMoki` |
@@ -119,7 +120,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | monterey | Monterey, ZDA | monterey | `buildMonterey` |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mulholland | Mulholland Highway, ZDA | mulholland | `buildMulholland` |
-| newcastle | Newcastle, Avstralija | newcastle | `buildNewcastle` |
+| newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `buildNring` |
 | ouninpohja | Ouninpohja, Finska | ouni | `buildOuni` |
 | palomar | Palomar Mountain, ZDA | palomar | `buildPalomar` |
@@ -134,7 +135,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | tianmen | Tianmen, Kitajska | tianmen | `buildTianmen` |
 | toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
 | townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
-| troisrivieres | Trois-Rivières, Kanada | troisrivieres | `buildTroisRivieres` |
+| troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | uncompahgre | Uncompahgre, ZDA | uncompahgre | `buildUncompahgre` |
 | vrsic | Vršič, Slovenija | vrsic | `buildVrsic` |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
@@ -149,6 +150,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 ## Testi po temah
 
 - **Hiter vstop:** `tests/quick.test.js` (naslov), `tests/browser/quick.test.mjs` (igra)
+- **Ponovljive dirke** (seme, testni način): `tests/repro.test.js` (jedro), `tests/browser/repro.test.mjs` (igra s hitrim vstopom)
 - **Posnetki pred/po:** `tools/shot.mjs` (možnosti: `tests/shot.test.js`), na GitHubu `posnetki.yml`; predogled vej `stran.yml`, `tools/predogled.mjs`
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
