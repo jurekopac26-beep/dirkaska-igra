@@ -26,7 +26,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 14 | Posnetki zaslona, predogled pred mainom | vzporedno, skupaj s 15 |
 | 15 | Posnetki pred/po na GitHubu | vzporedno, skupaj s 14 |
 | 16 | Ponovljive dirke | končano (PR #175) |
-| 17 | Razdeljen world.js | vzporedno |
+| 17 | Razdeljen world.js | končano (PR #176, #180) |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
