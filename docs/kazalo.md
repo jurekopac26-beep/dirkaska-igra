@@ -34,6 +34,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
 | `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
 | `.github/workflows/` | `tests.yml` testi, `posnetki.yml` posnetki pred/po ob pull requestu (artefakt in povzetek), `stran.yml` objava strani s predogledom vej |
 | `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek) |
@@ -69,7 +70,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 
 ## Orodje za napake (`js/napake.js`)
 
-Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igre: `replay`, `rec`, `stop`, `seek`, `span`, `shot`, `info`, `toast`, `ui`, `where`, `meta`, `map`, `shotAt`, `flag`, `flags`, `inLoops`, `track`, `recW`, `dev`, `kje`). Gradi svoj DOM v `#replay-ui`: gumb `#nk-on` (Označi) pred Foto, platno `#nk-cv`, oblački `#nk-bubs`, paleta `#nk-pal` (v `.rp-bot` pred časovnico; ležeče `position: fixed` ob levem robu), gumba `#nk-bar` (Dodaj k zbirki, Zapri). Med označevanjem ima `#replay-ui` razred `mark`.
+Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igre: `replay`, `rec`, `stop`, `seek`, `span`, `shot`, `info`, `toast`, `ui`, `where`, `meta`, `map`, `shotAt`, `flag`, `flags`, `inLoops`, `track`, `recW`, `dev`, `kje`, `rrp`, `open`, `view`). Gradi svoj DOM v `#replay-ui`: gumb `#nk-on` (Označi) pred Foto, platno `#nk-cv`, oblački `#nk-bubs`, paleta `#nk-pal` (v `.rp-bot` pred časovnico; ležeče `position: fixed` ob levem robu), gumba `#nk-bar` (Dodaj k zbirki, Zapri). Med označevanjem ima `#replay-ui` razred `mark`.
 
 - **označevanje** `open`, `close`, `act` (svinčnik, barve `BARVE`, razveljavi `undo`, radirka `rub`), risanje `down` / `move` / `up` / `draw`; črte v deležih zaslona (0..1); sklenjen krog `isLoop`
 - **oblački** `bubbles` (en oblaček na barvo, dokler je na sliki krog te barve; zapis v `M.notes`), postavitev ob krogu `place`, prostor `room` (mimo palete in časovnice), premik `grip`
@@ -82,6 +83,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 - **dnevnik napak** `D` (`D.l`, zadnjih 50 `LOG_MAX`, shranjen v `tdgp-napake-dnevnik`, `dLoad` / `dSave`): `zapis` (`window` `error` → `napaka`, `unhandledrejection` → `obljuba`; isto sporočilo zapored se samo šteje, `x`), zatikanja `okvir(now, on)` / `zEnd` (sličice več kot 50 ms narazen več kot 1 s, `ZAT`; samo med vožnjo dirke), zapis `REC` (posnetek, ki mu zapis pripada; samo v pomnilniku), v poročilu `dnevnik` (ta dirka in napake tega obiska) in vrstice `dVrstica` (`D …`); za teste `Napake.dnevnik`
 - **prikaz za razvijalca** `dev` (tipka O, `N.dev`, `apply` → kljuka `dev` → `PH.dev` v `js/game.js`)
 - **samodejne zastavice** `zaznaj(R, T, W, S, out, i0, i1)` (pregled sličic posnetka; meje `AZ`, vrste `VRSTE`: `obtical`, `preskok`, `poskok`, `pod_cesto`, `nazaj`, iz dnevnika `zatik`), pregled po kosih `aIsci` / `aKos` (6 ms naenkrat, samo v posnetku; stanje `A`), seznam `samodejne` (brez zavrženih), potrjene `potrjene` (v `tocke` kot `samo`, v poročilu `!n …`, na zemljevidu sive), na časovnici `.nk-auto` (siva !, potrjena bela), okence `aPokazi` (`#nk-auto`: Potrdi / Zavrzi), `aSkrij`; za teste `Napake.samodejne`, `Napake.iskanje`, `Napake.zaznaj`, `Napake.porocilo()`
+- **datoteka s posnetkom** `.rrp` (sklop 12): zapis `rrpPisi` (glava iz kljuke `rrp` → `rrpOf` v `js/game.js`, plus naprava, datum, dnevnik te dirke `dn`) → `rrpPack` (`RRP1`, dolžina glave, glava JSON, vzorci Float32 po številkah: druga razlika bitov, zigzag, 4 ravnine bajtov) → gzip (`CompressionStream`); branje `rrpBeri` / `rrpUnpack` (preverjanje glave in časov), odpiranje `rrpOdpri` → kljuka `open` (`rrpOpen` v `js/game.js`: dirka s temi avti, ki se ne stopa, `recd.file` = glava; `replayEnd` nato naslovnica, `rpMeta` vrne podatke datoteke); `rrpShrani` (prenos `posnetek_<proga>_<LLLLMMDD-UUMM>.rrp`); gumbi: Nastavitve orodja → Posnetek dirke (Shrani, Odpri …, `.nk-rrp-in`), izbira → Shrani posnetek (.rrp); za teste in orodje `Napake.rrp` (`pisi`, `beri`, `odpri`, `shrani`, `pack`, `unpack`, `pojdi`, `kje`, `slika`)
 
 ## Teme v `js/core.js`
 
@@ -165,6 +167,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`
 - **Orodje za napake:** `tests/browser/napake-samodejno.test.mjs` (prikaz za razvijalca O, dnevnik: napaka, obljuba, zatikanje; v krogu: tekmec, cesta, kraj; samodejne zastavice: `zaznaj` na umetnem posnetku, Potrdi / Zavrzi, poročilo), `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)
+- **Datoteka s posnetkom:** `tests/browser/napake-posnetek.test.mjs` (Shrani v nastavitvah orodja, branje do zadnjega bita, ne-posnetek, Odpri … na naslovnici, poročilo iz datoteke, `pojdi`, Končaj, `tools/posnetek.mjs`)
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)

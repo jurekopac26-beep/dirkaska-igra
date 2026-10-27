@@ -21,7 +21,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
 | 10 | G · V krogu | končano (skupaj z 9 in 11) |
 | 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
-| 12 | E · Datoteka s posnetkom | čaka (veriga, korak 4, zadnji) |
+| 12 | E · Datoteka s posnetkom | končano (veriga orodja je končana) |
 | 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
 | 14 | Posnetki zaslona, predogled pred mainom | končano (PR #174) |
 | 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
@@ -295,6 +295,14 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Zapis:** posnetek (`recd`: avti, `frames`, dogodki) v datoteko `posnetek_<proga>_<datum>.rrp`: glava JSON (proga, način, žig, naprava) in sličice Float32, stisnjeno z `CompressionStream` (gzip). Okoli 1–1,5 MB za 3 min.
 - **Odpiranje:** Nastavitve orodja → Odpri posnetek; za Clauda prek `tools/` in Playwrighta.
 - **Testi:** zapis in branje dasta enak posnetek; GitHub vse.
+- **Narejeno:**
+  - **Datoteka** `posnetek_<proga>_<LLLLMMDD-UUMM>.rrp` (`js/napake.js`: `rrpPisi`, `rrpPack`): gzip (`CompressionStream`) iz `RRP1`, dolžine glave, glave JSON in vzorcev. Glava (`rrpOf` v `js/game.js`): različica, proga, način, vreme, krogi, letni čas in čas dneva, avti (model, ime, barva, številka, štartno mesto, igralec, krogi za `rpLap`, cilj), vrstni red na cilju, dogodki za Najboljše trenutke (`ev`), zastavice dirke (`flags`), naprava, datum in dnevnik te dirke (`dn`). Vzorci so `recd.frames` z vsemi biti avta (zavira, postavljen nazaj, ne dirka, prevračanje), zato `zaznaj` deluje tudi na odprtem posnetku.
+  - **Velikost:** vzorci po številkah (vsi časi, nato x prvega avta v vseh vzorcih …), vsaka številka kot druga razlika bitov od prejšnjih dveh (zigzag) v 4 ravninah bajtov; prebrani so enaki do zadnjega bita. Bathurst, 22 avtov: 25 s je 130 KB (surovo 292 KB), 3 min okoli 1 MB.
+  - **Shrani:** Nastavitve → Orodje za napake → Posnetek dirke → **Shrani** (siv brez posnetka) in v izbiri zbirke **Shrani posnetek (.rrp)**; datoteka gre v Prenose (obvestilo pove ime, velikost in kje je).
+  - **Odpri:** Nastavitve orodja → Posnetek dirke → **Odpri …** (izbira datoteke; med dirko drugi tap v 3 s, ker se dirka konča). Igra naloži progo, postavi dirko s temi avti (`rrpOpen`; se ne stopa) in predvaja posnetek: Označi, zastavice, Deli, samodejne zastavice in dnevnik kot po dirki. Poročilo ima napravo iz datoteke in na koncu prve vrstice `posnetek=<ime>`. **Končaj** ponudi zbirko (kot po dirki) in vrne naslovnico. Datoteka iz druge različice igre se odpre z obvestilom (svet je lahko malo drugačen); ne-posnetek ali poškodovana datoteka pove zakaj.
+  - **Za Clauda:** `node tools/posnetek.mjs <datoteka> [--t 41.3,00:52.1] [--zastavice] [--avto ti|<k>] [--kamera chase|tv] [--pokonci] [--lezece]` (Playwright) izpiše glavo, zastavice dirke, samodejne zastavice s krogom in `s`, dnevnik in besedilo poročila ter naredi slike posnetka; v `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`). Opis v `tests/README.md`, pravilo v `CLAUDE.md`.
+  - **Testi:** nov `tests/browser/napake-posnetek.test.mjs` (10 preverjanj), `napake-slika` (nov gumb v izbiri).
+  - **Opomba (moje odločitve):** trenutki zbirke (slike, oznake) niso v datoteki, samo zastavice dirke; na odprtem posnetku se označijo znova. Promet in policija odprte ceste nista posneta (samo avti dirke).
 
 ### Sklop 13 · F · Seznam napak — ~1 h · 1. 11.
 
