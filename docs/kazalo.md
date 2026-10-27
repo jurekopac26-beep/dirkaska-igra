@@ -16,6 +16,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi |
 | `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
 | `js/world-montreal.js`, `world-toronto.js`, `world-townsville.js` | svetovi v svojih datotekah: `World.ext[tema]` s pomočniki `extAPI` (vzor za sklop 17) |
+| `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov); opis spodaj |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
 | `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
@@ -28,7 +29,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
 | `js/cars/<id>.js` | vozila |
 | `js/data/` | podatki svetov (npr. OSM, višine) |
-| `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`) |
+| `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`; gumbi v eni vrsti: pod 960 px ★ in Označi brez besede, pod 820 px tesneje) |
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
@@ -46,7 +47,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" js/game.js`):
 
 - **nastavitve** `settings`, **stanje** `state`, **zasloni** `screens`, **izbira avta** `car select`, **izbira proge** `track select`
-- **posnetek** `replay: the race recorded` — `recStart`, `recStep`, `replayStart`, `replayEnd`, `replayUI`, `replayAct`, `replayFrame`, `REC_MAX` (20 min), `RP_CAM`, `RP_SPEED`; časovnica `rpLineBind` (tap, vlečenje), skok na čas `rpSeek`, iskanje sličice `rpIdx` (zadnja sličica do časa t), čas `rpClock` (00:41.3); stikalo Cel posnetek | Zastavice (`replay.mode`, zastavice v `recd.flags`: sklop 7)
+- **posnetek** `replay: the race recorded` — `recStart`, `recStep`, `replayStart`, `replayEnd`, `replayUI`, `replayAct`, `replayFrame`, `REC_MAX` (20 min), `RP_CAM`, `RP_SPEED`; časovnica `rpLineBind` (tap, vlečenje), skok na čas `rpSeek`, iskanje sličice `rpIdx` (zadnja sličica do časa t), čas `rpClock` (00:41.3); stikalo Cel posnetek | Zastavice (`replay.mode`, zastavice v `recd.flags`: sklop 7); za orodje za napake `NK_HOOKS` (kljuke za `Napake.init`) in `rpInfo` (čas, krog sledenega avta iz `lapTimes`, metri od štarta), `replayUI` kliče `Napake.sync`
 - **Posnetek do sem** (gumb v pavzi `pause-rp`, tipka I: `Input.onReplay`) — `rpHereOk`, `rpHere`, `replay.here` (`keep`, `wait`), shranjevanje in vračanje stanja avtov `rpKeep` / `rpBack`, Nazaj v dirko `rpRace`, odštevanje 3 · 2 · 1 `rpCd`, `cdStep` (v glavni zanki), `cdOff` (pavza ga ustavi); `RP_BACK` (začetek 10 s pred zdaj)
 - **najboljši trenutki** `replayHL`, video trenutka `the best moment as a video` (`hlvStart`, `hlvStop`)
 - **Foto** `photo mode` — `photoStart`, `photoSave` (slika, Web Share, prenos), `photoEnd`
@@ -64,6 +65,14 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **polje in štart:** `NUM_AI` 21 (22 avtov), `CH_AI` 19 (prvenstvo), `PLAYER_GRID` 999 (igralec zadnji v polju); leteči start `flyStep`, `flyHUD`, `FLY_T`
 - **hiter vstop** `the quick entry` (`quickGo`, `quickRun`): naslov `?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>` odpre dirko brez menija; branje naslova `Core.quickArgs`; za teste `window.__game.quick` (opis v `tests/README.md`)
 - **glavna zanka** `main loop`, **dogodki** `events` (`switch (act)` za `data-act`), **aplikacija** `the game as an app`, **most do menija** `the menu's bridge`, **zagon** `boot`
+
+## Orodje za napake (`js/napake.js`)
+
+Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igre: `replay`, `rec`, `stop`, `seek`, `span`, `shot`, `info`, `toast`). Gradi svoj DOM v `#replay-ui`: gumb `#nk-on` (Označi) pred Foto, platno `#nk-cv`, oblački `#nk-bubs`, paleta `#nk-pal` (v `.rp-bot` pred časovnico; ležeče `position: fixed` ob levem robu), gumba `#nk-bar` (Dodaj k zbirki, Zapri). Med označevanjem ima `#replay-ui` razred `mark`.
+
+- **označevanje** `open`, `close`, `act` (svinčnik, barve `BARVE`, razveljavi `undo`, radirka `rub`), risanje `down` / `move` / `up` / `draw`; črte v deležih zaslona (0..1); sklenjen krog `isLoop`
+- **oblački** `bubbles` (en oblaček na barvo, dokler je na sliki krog te barve; zapis v `M.notes`), postavitev ob krogu `place`, prostor `room` (mimo palete in časovnice), premik `grip`
+- **zbirka** `add` (trenutek: čas, krog, `s`, slika `G.shot` 1280 px, oznake, `zapisi`), zastavice na časovnici `flags` (`.nk-flag`, tap: `seek`), `sync` (nov posnetek: nova zbirka); `Napake.zbirka` za sklop 6, `Napake.stanje` za teste
 
 ## Teme v `js/core.js`
 
@@ -143,7 +152,8 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Posnetki pred/po** (orodje, ne test): `tools/shot.mjs`, na GitHubu `posnetki.yml`; predogled vej `stran.yml`, `tools/predogled.mjs`
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
-- **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu), video trenutka `hlvid.test.mjs`
+- **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`
+- **Orodje za napake:** `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice)
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
