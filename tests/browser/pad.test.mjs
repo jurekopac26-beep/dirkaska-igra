@@ -101,8 +101,8 @@ try {
     window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' })); await raf(); look(); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
     for (const i of [1, 5]) { const b = window.__pad.buttons[i]; b.pressed = true; b.value = 1; await raf(); look(); b.pressed = false; b.value = 0; await raf(); }
     o.screen = g.screen; return o; });
-  T.check('no handbrake on the keyboard or the pad: no such action (the keys: left, right, gas, brake, pause, tyre, replay, flag; the pad: steer, gas, brake, pause, rescue); Space, B and RB in the race: no "hand" in the input, the player\'s car never on the handbrake (P.inHand 0), the race goes on',
-    hk.keys === 'left,right,gas,brake,pause,tyre,replay,flag' && hk.padDef === 'steer,gas,brake,pause,rescue' && hk.hand.length === 3 && hk.hand.every(h => h === false) && hk.inHand.every(v => v === 0) && hk.phase.every(p => p === 'racing') && hk.screen === 'none', JSON.stringify(hk));
+  T.check('no handbrake on the keyboard or the pad: no such action (the keys: left, right, gas, brake, pause, tyre, replay, flag, dev; the pad: steer, gas, brake, pause, rescue); Space, B and RB in the race: no "hand" in the input, the player\'s car never on the handbrake (P.inHand 0), the race goes on',
+    hk.keys === 'left,right,gas,brake,pause,tyre,replay,flag,dev' && hk.padDef === 'steer,gas,brake,pause,rescue' && hk.hand.length === 3 && hk.hand.every(h => h === false) && hk.inHand.every(v => v === 0) && hk.phase.every(p => p === 'racing') && hk.screen === 'none', JSON.stringify(hk));
   T.check('no page errors (no handbrake)', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through (no handbrake)', false, e.stack || String(e));

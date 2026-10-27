@@ -33,7 +33,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.onAction('to-settings'); });
   await click('[data-act="to-ctrl"]');
   const k0 = await rows();
-  T.check('Kontrole (no pad connected: the keyboard): the default keys, two for each action; no handbrake (no Drift, no Preslednica), no camera (one camera); I for Posnetek do sem; F for Zastavica (Orodje za napake)', k0.join(' | ') === 'Levo ← A | Desno → D | Plin ↑ W | Zavora ↓ S | Pavza Esc P | Gume za postanek T — | Posnetek do sem I — | Zastavica (napaka) F —', k0.join(' | '));
+  T.check('Kontrole (no pad connected: the keyboard): the default keys, two for each action; no handbrake (no Drift, no Preslednica), no camera (one camera); I for Posnetek do sem; F for Zastavica (Orodje za napake); O for Prikaz za razvijalca', k0.join(' | ') === 'Levo ← A | Desno → D | Plin ↑ W | Zavora ↓ S | Pavza Esc P | Gume za postanek T — | Posnetek do sem I — | Zastavica (napaka) F — | Prikaz za razvijalca O —', k0.join(' | '));
 
   // 2. set: Plin's second key I; Levo's second J; Esc keeps a box as it was, Backspace clears it; a key taken from the action it was on
   await click(slot('ctl-key', 'gas', 1)); const w1 = await page.evaluate((s) => document.querySelector(s).textContent, slot('ctl-key', 'gas', 1));
@@ -45,7 +45,7 @@ try {
   await click(slot('ctl-key', 'brake', 1)); await key('KeyD', 'd');   // (D taken from Desno, in place of S)
   const k1 = await rows(), st1 = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-ctrl')).keys);
   T.check('a box waits for a key ("Pritisni tipko …"); I for Plin (taken from Posnetek do sem), J for Levo; Esc: Pavza kept; Backspace: the tyres\' first none, N their second; D taken from Desno for Zavora\'s second (S no more); kept (no handbrake\'s)',
-    w1 === 'Pritisni tipko …' && k1.join(' | ') === 'Levo ← J | Desno → — | Plin ↑ I | Zavora ↓ D | Pavza Esc P | Gume za postanek — N | Posnetek do sem — — | Zastavica (napaka) F —' && st1.gas[1] === 'KeyI' && st1.brake[1] === 'KeyD' && st1.tyre.join() === ',KeyN' && st1.replay.join() === ',' && !('drift' in st1),
+    w1 === 'Pritisni tipko …' && k1.join(' | ') === 'Levo ← J | Desno → — | Plin ↑ I | Zavora ↓ D | Pavza Esc P | Gume za postanek — N | Posnetek do sem — — | Zastavica (napaka) F — | Prikaz za razvijalca O —' && st1.gas[1] === 'KeyI' && st1.brake[1] === 'KeyD' && st1.tyre.join() === ',KeyN' && st1.replay.join() === ',' && !('drift' in st1),
     JSON.stringify({ w1, k1, st1 }));
 
   // 3. the race with them: I the throttle (W no more), J left (Space with it: nothing), D the brake
