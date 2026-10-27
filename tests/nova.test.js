@@ -10,7 +10,8 @@
 // - car contacts: a rear-end knock bounces the cars apart (they part at 0.3 of the closing speed or more; cs about 0.1), a knock
 //   on a rear corner turns the car hit (cs: no yaw from it); the walls as in cs (the user's: the same impulse for both physics)
 // - a race (Spa, Bathurst: 12 rivals, 150 s): nothing NaN, every car moving, no more knocks between the cars than 1.5x cs's + 20, at
-//   most 6 slides past 40 deg in the field; the autopilot's lap alone on Bathurst within 4 % of cs's
+//   most 6 slides past 40 deg in the field; the rivals over the kerbs at the apex and the exit as in the reference video (a wheel on a
+//   kerb 6 % of the time or more; cs's under 3 %); the autopilot's lap alone on Bathurst within 4 % of cs's
 //   node tests/nova.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -101,20 +102,22 @@ function pack(tid, phys) {
   const T = new C.Track(C.TRACKS.find(d => d.id === tid));
   const race = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
   race.start();
-  const pc = new Map(), ps = new Map(); let hits = 0, slides = 0, nan = false;
+  const pc = new Map(), ps = new Map(); let hits = 0, slides = 0, nan = false, kerb = 0, tot = 0;
   for (let k = 1; k <= 150 / DT; k++) {
     Math.random = seeded(1000 + k);
     C.aiControl(race.player, race, DT); race.step(DT);
     for (const c of race.cars) { if (!Number.isFinite(c.x + c.z + c.vx + c.vz + c.w)) nan = true;
       const h = c.hitCar > 3; if (h && !pc.get(c)) hits++; pc.set(c, h); c.hitCar = 0;
-      const sl = Math.abs(c.beta || 0) > 0.7 && c.speed > 8; if (sl && !ps.get(c)) slides++; ps.set(c, sl); }
+      const sl = Math.abs(c.beta || 0) > 0.7 && c.speed > 8; if (sl && !ps.get(c)) slides++; ps.set(c, sl);
+      if (!c.isPlayer) { tot++; if (c.onCurb) kerb++; } }
   }
-  return { hits, slides, nan, moving: race.cars.filter(c => c.speed > 5).length, n: race.cars.length };
+  return { hits, slides, nan, moving: race.cars.filter(c => c.speed > 5).length, n: race.cars.length, kerb: kerb / tot };
 }
 for (const tid of ['spa', 'bathurst']) {
   const n = pack(tid, 'nova'), s = pack(tid, 'cs');
   ok(`race ${tid}: nothing NaN, every car moving, knocks between cars <= 1.5x cs's + 20, slides past 40 deg <= 6`, !n.nan && n.moving === n.n && n.hits <= 1.5 * s.hits + 20 && n.slides <= 6,
     `nova ${n.hits} knocks, ${n.slides} slides, ${n.moving}/${n.n} moving; cs ${s.hits} knocks, ${s.slides} slides`);
+  ok(`race ${tid}: the rivals over the kerbs (a wheel on one 6 % of the time or more; cs under 3 %)`, n.kerb >= 0.06 && s.kerb < 0.03, `nova ${f(n.kerb * 100, 1)} %, cs ${f(s.kerb * 100, 1)} %`);
 }
 {
   const lap = (phys) => { Math.random = seeded(5); const T = new C.Track(C.TRACKS.find(d => d.id === 'bathurst'));

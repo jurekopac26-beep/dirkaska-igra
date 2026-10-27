@@ -1667,8 +1667,9 @@ const Core = (function () {
     vLo: 2.5, vHi: 7,  // below vLo the car turns kinematically (parking), blended into the tyres' forces up to vHi
     rMax: 3.2,         // yaw rate cap (rad/s)
     kick: 4,           // a cs attitude kick from the traffic, debris or the police (csKc, rad) becomes this much yaw rate (rad/s per rad)
+    aiKerb: 1.2, aiSide: 0.35,   // the rivals (aiControl): out over the kerbs by up to aiKerb m where the line runs along the edge; the room they leave a car alongside (m; cs 0.6)
     carE: 0.4, carMu: 0.35, carYaw: 1,   // car contacts: restitution (cs 0.1: here they bounce apart), the bodies' friction (a side swipe turns them), the knock's turn
-    kerbH: 0.035, kerbW: 24, kerbZ: 0.3, kerbKick: 0.012, kerbLat: 0.93, kerbG: 1.2,   // a kerb lifts its wheel 3.5 cm on a spring (24 rad/s, damping 0.3),
+    kerbH: 0.05, kerbW: 24, kerbZ: 0.3, kerbKick: 0.016, kerbLat: 0.93, kerbG: 1.2,   // a kerb lifts its wheel 5 cm on a spring (24 rad/s, damping 0.3; the video: the body rolls 2-5 deg),
                        // kicked up at the entry by the speed (m/s per m/s, <= 0.45 m/s); its side grip share; a wheel going up loses kerbG of its grip per m/s
                        // (<= 35 %); render.js shows the lift (c.nvY, nvR, nvP)
   };
@@ -3161,11 +3162,15 @@ const Core = (function () {
     let i0, i1, ft;
     if (T.open) { const f = clamp(fi, 0, N - 1); i0 = Math.min(N - 2, Math.floor(f)); i1 = i0 + 1; ft = f - i0; }   // open road: the look-ahead stops at the end
     else { i0 = ((Math.floor(fi) % N) + N) % N; i1 = (i0 + 1) % N; ft = fi - Math.floor(fi); }
-    const rlv = lerp(T.rl[i0], T.rl[i1], ft);
-    const lim = (T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
+    let rlv = lerp(T.rl[i0], T.rl[i1], ft);
+    let lim = (T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
+    if (c.phys === 'nova' && T.curb && T.curb[i0] && T.br && !c.inPit && !c.pitWant && !c.pitG) {   // the new physics' rivals over the kerbs at the apex and the exit (the reference video): where the line runs along the asphalt's edge, out by up to NVK.aiKerb, never nearer a barrier than half the car and 0.6 m
+      const lin = (T.wa ? T.wa[i0] : T.w) - 1.7, near = clamp((Math.abs(rlv) - lin + 0.8) / 0.8, 0, 1);
+      if (near > 0) { const sd = rlv > 0 ? 1 : -1, room = clamp((sd > 0 ? T.br[i0] : T.bl[i0]) - M.wid * 0.5 - 0.6 - lin, 0, NVK.aiKerb); rlv += sd * room * near; lim = Math.max(lim, Math.abs(rlv)); }
+    }
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if ((c.alU || c.alD) && !c.inPit && !c.pitG) {   // a car alongside (the nearest on each side): not across into it, the offset held where that leaves it (between two: in the middle)
-      const a = c.alU, b = c.alD, hi = a ? a.q.d - (M.wid + a.m.wid) * 0.5 - 0.6 : 1e9, lo = b ? b.q.d + (M.wid + b.m.wid) * 0.5 + 0.6 : -1e9;
+      const a = c.alU, b = c.alD, gs = c.phys === 'nova' ? NVK.aiSide : 0.6, hi = a ? a.q.d - (M.wid + a.m.wid) * 0.5 - gs : 1e9, lo = b ? b.q.d + (M.wid + b.m.wid) * 0.5 + gs : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
       if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -lim, lim); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
       const ah = (o) => o && o.dist > c.dist && o.vl > Math.max(5, v - 4) ? o : null, fa = ah(a), fb = ah(b);
       c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > lim ? fb : hi < -lim ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
