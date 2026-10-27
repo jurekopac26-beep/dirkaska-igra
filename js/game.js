@@ -717,7 +717,7 @@
   // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
   const REC_BIG = 30, REC_BYTES = 32e6;
   let recd = null, replay = null;
-  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map(), bytes: 0, out: null }; }
+  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map(), bytes: 0, out: null, pit: [] }; }
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
@@ -731,8 +731,16 @@
       f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
     for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (c.rl ? rlBits(c.rl) : 0)); }
     const S = race.fl && race.fl.sc; if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0));
-    R.frames.push(f);
+    R.frames.push(f); recPit(R);
     if (!race.timeTrial && !(mp && mp.race)) recPasses(R);
+  }
+  // the player's pit stops, for the replay's (its crew at work, the film camera: rpPit): an entry at a sample whenever the player's pit state
+  // has changed (in the lane, pitState, the stop done, the autopilot driving; the repair's start and length, the stops done), a few a stop
+  function recPit(R) {
+    const c = race.player; if (!c) return;
+    const L = R.pit, e = L[L.length - 1], inPit = !!c.inPit, st = c.pitState || null, done = !!c.pitDone, ap = !!c.pitAP;
+    if (e && e.inPit === inPit && e.st === st && e.done === done && e.ap === ap) return;
+    L.push({ t: race.time, inPit, st, done, ap, t0: race.time - (c.pitT || 0), dur: c.pitDur || 0, n: c.repairN || 0 });
   }
   /* the highlights (Najboljši trenutki): the best moments noted as they happen - the overtakes (a car behind another at the last sample is
      ahead of it now, both racing close together: not in the pits, not under the safety car) and the heavy crashes - then played as a
@@ -813,7 +821,8 @@
     if (!replay) return;
     if (replay.here) { rpRace(); return; }   // (the race so far: back into the race, never the results)
     Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
-    if (recd) for (const c of recd.cars) if (c.rl) delete c.rl;   // (a roll the replay posed: over with it)
+    if (recd) for (const c of recd.cars) { if (c.rl) delete c.rl; if (c.rpPit) delete c.rpPit; }   // (a roll the replay posed, its pit stop: over with it)
+    Render.crewSnap();   // (the player's crew as the race has it again)
     hlvStop();   // (the best moment's video: done)
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
@@ -935,13 +944,23 @@
     c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0);   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
   }
+  // the player's pit state where the recording has it at time t (recPit's log): c.rpPit, what the renderer reads for the crew and the pit
+  // stop's film camera in the replay (Render crewLogic, pitCine); the race's own fields stay as the race left them (it goes on after it)
+  function rpPit(t) {
+    const L = recd.pit, c = race.player; if (!c || !L || !L.length) return;
+    let i = L.length - 1; while (i > 0 && L[i].t > t) i--;
+    const e = L[i], o = c.rpPit || (c.rpPit = {});
+    o.inPit = e.inPit; o.pitState = e.st; o.pitDone = e.done; o.pitAP = e.ap; o.pitT = Core.clamp(t - e.t0, 0, e.dur); o.pitDur = e.dur; o.n = e.n;
+  }
   function replayFrame(dt) {
     if (replay.hl && (replay.play || replay.hl.auto) && replay.t >= replay.hl.clips[replay.hl.i].t1 && !hlRec) { hlNext(); if (!replay) return; }   // (the highlights: the next moment; the best moment: once its video is done)
-    const P = replay, R = recd, F = R.frames;
+    const P = replay, R = recd, F = R.frames, t0 = P.t;
+    if (P.tl !== t0) Render.crewSnap();   // (the time moved other than by playing (the start, ⏮, a moment of the highlights): the player's crew there at once)
     if (P.play) { P.t = Math.min(P.t1, P.t + dt * P.speed); P.clk = (P.clk || 0) + dt; if (P.t >= P.t1) { P.play = false; replayUI(); } }   // (clk: the game's clock while it plays, for the tests)
     let i = P.i; while (i < F.length - 2 && F[i + 1][0] <= P.t) i++; while (i > 0 && F[i][0] > P.t) i--; P.i = i;
     const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((P.t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
     for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * REC_W, u);
+    rpPit(P.t);
     const o = 1 + R.n * REC_W, scOn = A[o + 6] >= 2;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
       if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] >= 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in' }; }
@@ -951,7 +970,7 @@
     $('rp-info').textContent = (c.isPlayer ? tr('Ti') : c.name) + ' · ' + fmt(Math.max(0, P.t), true);
     const pc = (C ? Core.clamp(100 * (P.t - C.t0) / Math.max(1e-3, C.t1 - C.t0), 0, 100) : 100 * (P.t - F[0][0]) / Math.max(1e-3, P.t1 - F[0][0])).toFixed(1) + '%';
     $('rp-prog').style.width = pc; $('rp-knob').style.left = pc; $('rp-now').textContent = rpClock(P.t); $('rp-len').textContent = rpClock(P.t1);
-    Render.frame(dt, 1, c, P.cam, { noFx: true });
+    P.tl = P.t; Render.frame(dt, 1, c, P.cam, { noFx: true, rdt: P.t - t0 });   // (rdt: the recording's own step, dt × the speed, 0 while it stands: the pit crew and the film camera on its clock)
     if (hlRec) { hlvDraw(dt); if (C && P.t >= C.t1 && ++hlRec.tail >= HLV_TAIL) hlvStop(); }   // (the video ends with the moment's last picture, held a few frames: the encoder's last ones are lost at its stop)
   }
 
@@ -5449,6 +5468,7 @@
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
+        get rpPit() { return recd && { log: recd.pit.map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
         hud(dt = 1 / 60) { if (race) { updateHUD(dt); hudCol(dt); Comm.update(); } },   // (tests: the HUD as a frame of the running race draws it, the race itself not stepped: a paused race's HUD after sim)

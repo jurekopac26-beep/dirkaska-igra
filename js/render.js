@@ -5076,21 +5076,21 @@ const Render = (function () {
     return { fx, rx, hw, rw: M.rw, wid: M.wid, nose: d.secs[d.secs.length - 1][0] * sx + 0.05, tail: d.secs[0][0] * sx - 0.06, wb: fx - rx };
   }
 
-  // ---- the player's crew: what everybody does, from the pit state ----
-  function crewLogic(dt) {
+  // ---- the player's crew: what everybody does, from the pit state (in the replay the recording's: c.rpPit, game.js rpPit) ----
+  function crewLogic(dt, snap) {
     const c = crew, P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
-    const L = T.len; let dB = c.pb.s - (P.q ? P.q.s : c.pb.s + 999); dB = ((dB % L) + L) % L; if (dB > L / 2) dB -= L;   // metres from the car to its box (along the lane)
+    const ps = P.rpPit || P, L = T.len; let dB = c.pb.s - (P.q ? P.q.s : c.pb.s + 999); dB = ((dB % L) + L) % L; if (dB > L / 2) dB -= L;   // metres from the car to its box (along the lane)
     const prev = c.mode; let mode;
-    if (P.pitState === 'repair') mode = 'work';
-    else if (prev === 'work' || prev === 'clear') mode = P.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
-    else mode = P.inPit && !P.pitDone && dB > -4 ? 'out' : 'home';
+    if (ps.pitState === 'repair') mode = 'work';
+    else if (prev === 'work' || prev === 'clear') mode = ps.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
+    else mode = ps.inPit && !ps.pitDone && dB > -4 ? 'out' : 'home';
     if (mode !== prev) { c.mode = mode; c.clearT = 0;
       if (mode === 'out') { const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) + (c.pb.stopA || 0) };
         for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; } }
       if (mode === 'home') for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
     if (mode === 'clear') c.clearT += dt;
-    const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
+    const F = c.frame, u = mode === 'work' ? clamp(ps.pitT / Math.max(0.1, ps.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
     const pb = c.pb, so = pb.stopO != null ? pb.stopO : pb.lane, lat = (x, z) => so + (x - pb.stop[0]) * pb.nx + (z - pb.stop[1]) * pb.nz, gs = pb.tx * pb.nz - pb.tz * pb.nx < 0 ? -1 : 1;   // (gs: the garages' side of the car, +1 its right; -1 a lane on the left: Toronto)
     const wMin = F && lat(F.x, F.z) > pb.apron0 + 1.5 ? pb.apron0 + 0.25 : pb.wallO + 0.35;   // (the car in its box on the apron: nobody on the lane; else nobody across the pit-wall rail)
@@ -5139,7 +5139,7 @@ const Render = (function () {
       else { go(JF, Wp(D.nose + 0.72 + dj, gs * (D.wid * 0.5 + 1.6)), yawC(-1, 0), 'run', 'jackR'); go(JR, Wp(D.tail - 0.62 - dj, gs * (D.wid * 0.5 + 1.2)), yawC(1, 0), 'walk', 'jackR'); }
       JF.carry = JR.carry = true;
       const atF = mode === 'work' && Math.hypot(JF.x - fSpot[0], JF.z - fSpot[1]) < 0.15, atR = mode === 'work' && Math.hypot(JR.x - rSpot[0], JR.z - rSpot[1]) < 0.15;
-      const bF = atF && u < 0.89 ? CR_B1 : CR_B0, bR = atR && u < 0.86 ? CR_B1 : CR_B0, js = Math.min(1, dt * 9);   // pushing the handle down lifts that end of the car
+      const bF = atF && u < 0.89 ? CR_B1 : CR_B0, bR = atR && u < 0.86 ? CR_B1 : CR_B0, js = snap ? 1 : Math.min(1, dt * 9);   // pushing the handle down lifts that end of the car (snap: at once, crewJump)
       JF.jack.beta += (bF - JF.jack.beta) * js; JR.jack.beta += (bR - JR.jack.beta) * js;
       c.liftF = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JF.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0; c.liftR = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JR.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0;
       // lollipop: held across in front of the driver, lifted when the car is released
@@ -5151,6 +5151,19 @@ const Render = (function () {
     // the engineer on the pit wall follows his car
     const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
     if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
+  }
+  // the replay jumped in time (Render.crewSnap: its start, a moment of the highlights; the race's own state again after it): the player's
+  // crew as the pit state has it there at once (the mode from scratch, every man at his place, the tyres and the jacks with them), not
+  // walking over from where the last frame left them. The stop's last part ('clear', the car driving off) is not jumped into: the crew at home
+  function crewJump() {
+    const c = crew, R = c.roles, P = c.P; if (!R || !P) return;
+    const n = P.rpPit ? P.rpPit.n : P.repairN || 0;   // (the stops done: the old wheels on the floor at home after one, none before)
+    c.mode = 'home'; c.clearT = 0; R.JF.jack.beta = R.JR.jack.beta = CR_B0;
+    for (const m of c.men) if (m.role !== 'idle') m.act = m.act0;
+    for (let k = 0; k < 4; k++) { R.N[k].tyre.mode = 'floor'; R.O[k].tyre.mode = n ? 'floor' : 'hidden'; }
+    crewLogic(0);   // (the mode and everybody's place in it: 'out' hands the new wheels out)
+    if (c.mode === 'work') for (let k = 0; k < 4; k++) R.O[k].tyre.mode = 'hidden';   // (the old wheels on the car till they come off: crewLogic's)
+    for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; }
   }
   function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
     const P = crew.P, v = views.find(v => v.car === P); if (!v) return;
@@ -5164,7 +5177,7 @@ const Render = (function () {
   }
 
   // ---- every frame ----
-  function crewMan(m, dt) {
+  function crewMan(m, dt, snap) {   // (snap: in the pose at once, crewJump)
     const dx = m.gx - m.x, dz = m.gz - m.z, d = Math.hypot(dx, dz);
     const vmax = m.style === 'run' ? 4.4 : m.style === 'dash' ? 3.4 : m.style === 'jog' ? 3.1 : m.style === 'snap' ? 2.4 : 1.45, want = d > 0.015 ? Math.min(vmax, d * 3.5 + 0.25) : 0;
     m.spd = Math.max(0, m.spd + clamp(want - m.spd, -14 * dt, 9 * dt));
@@ -5179,8 +5192,8 @@ const Render = (function () {
     let lk = null; const P = crew.P;
     if (m.lookAt) lk = m.lookAt; else if (P && m.act !== 'bench' && m.act !== 'kneel' && m.act !== 'gunK' && Math.hypot(P.x - m.x, P.z - m.z) < 45) lk = [P.x, P.z];
     const la = lk ? -wrapPi(Math.atan2(lk[1] - m.z, lk[0] - m.x) - m.yaw) : Math.sin(time * 0.23 + m.t0) * 0.7 * Math.max(0, Math.sin(time * 0.11 + m.t0 * 2));
-    m.look += (clamp(la, -1.2, 1.2) - m.look) * Math.min(1, dt * 4); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
-    const ko = 1 - Math.exp(-dt * (walk > 0.3 ? 24 : 12)), kh = 1 - Math.exp(-dt * 14);
+    m.look += (clamp(la, -1.2, 1.2) - m.look) * (snap ? 1 : Math.min(1, dt * 4)); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
+    const ko = snap ? 1 : 1 - Math.exp(-dt * (walk > 0.3 ? 24 : 12)), kh = snap ? 1 : 1 - Math.exp(-dt * 14);
     for (let k = 0; k < 12; k++) { m.O[k] += (_cO[k] - m.O[k]) * ko; m.H[k] += (_cH[k] - m.H[k]) * kh; }
     // the other teams change what they do now and then
     if (m.role === 'idle' && (m.act0 === 'cross' || m.act0 === 'hips' || m.act0 === 'talk')) { const q = Math.floor((time + m.t0 * 7) / (7 + m.h1 * 8)); if (q !== m.q) { m.q = q; const r = crHash(q * 3.1 + m.id); m.act = r < 0.33 ? 'hips' : r < 0.66 ? 'cross' : 'talk'; } }
@@ -5208,13 +5221,15 @@ const Render = (function () {
   }
   function updateCrew(dt) {
     if (!crew) return;
-    const c = crew; crewLogic(dt);
+    const c = crew, snap = c.snap; c.snap = false;
+    if (snap) crewJump();
+    crewLogic(dt, snap);
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
     if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
     const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
     for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
-      crewMan(m, dt); crRig(m);
+      crewMan(m, dt, snap); crRig(m);
       _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(M.trunk, i, _cM);
       rel(M.head, i, CRM.neck); rel(M.helmet, i, m.helmet ? CRM.neck : _zero);
       rel(M.uarm, i * 2, CRM.shL); rel(M.uarm, i * 2 + 1, CRM.shR); rel(M.farm, i * 2, CRM.elL); rel(M.farm, i * 2 + 1, CRM.elR);
@@ -5229,7 +5244,7 @@ const Render = (function () {
         crSetRod(M.rod, 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
       if (m.role === 'LP' && M.disc) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
         const want = m.act === 'lolliH' ? [Math.cos(m.yaw), 0, Math.sin(m.yaw)] : [0, 1, 0]; m.pd = m.pd || [0, 1, 0];
-        for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * Math.min(1, dt * 8); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
+        for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * (snap ? 1 : Math.min(1, dt * 8)); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
         _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
         const nx = Math.sin(m.yaw), nz = -Math.cos(m.yaw);   // the sign's face points along his left-right, i.e. along the car (y = the pole, z = that normal, x = y cross z)
         const xx = d1 * nz, xy = d2 * nx - d0 * nz, xz = -d1 * nx, xl = Math.hypot(xx, xy, xz) || 1;
@@ -8591,29 +8606,32 @@ const Render = (function () {
      and flies over the boxes (high above the lane ahead of the car, looking back along the garages), comes down low in front of the car as it
      nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
      has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
-     eased into (no cuts); blended over the chase view by w (0..1) ---------------- */
-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null };
-  function pitCine(c, dt, px, py, pz, tx, ty, tz) {
-    const T = curRace && curRace.track, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD);
-    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null;
-    if (!on || bd == null || !pz0) { pcam.w = Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
+     eased into (no cuts); blended over the chase view by w (0..1). In the replay the same over either of its cameras (behind the car, TV),
+     from the recording's pit state (c.rpPit, game.js rpPit) on its own clock (dt × its speed, still while it stands); over the TV cameras
+     (tv) cut in and out, never blended (a post 100 m off with its long lens, cutting to the next every 170 m); after resetCam (snap: the
+     replay's jump in time, another camera or car) where it is then at once, the same while the replay stands ---------------- */
+  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null, snap: false }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  function pitCine(c, dt, px, py, pz, tx, ty, tz, tv) {
+    const ps = c.rpPit || c, T = curRace && curRace.track, on = !!(ps.pitAP && ps.inPit && T && T.def.pit && curRace._boxD);
+    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null, snap = pcam.snap, w0 = pcam.w; pcam.snap = false;
+    if (!on || bd == null || !pz0) { pcam.w = snap || tv ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
     const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
     const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
     pcam.t += dt;
     // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
     let want = on && bd != null ? 1 : 0;
-    if (want && c.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
+    if (want && ps.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
       if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
       if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
     }
-    pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
+    pcam.w = snap ? want : tv ? (want > 0 ? 1 : 0) : want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
     // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
     const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
     const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
     const car = [c.x, y, c.z];
     let P, Q;
-    if (c.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
-    else if (c.pitState === 'stop' || c.pitState === 'repair' || c.pitState === 'done') {
+    if (ps.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
+    else if (ps.pitState === 'stop' || ps.pitState === 'repair' || ps.pitState === 'done') {
       const a = 0.55 + 0.35 * sw, r = 11 + sw2;   // (drifting round the car's front, on the lane's side)
       P = at(car, Math.cos(a) * r, -Math.sin(a) * r * 0.85, 3.2 + 0.6 * sw2); Q = at(car, 0.3, 1.2, 0.7);
     } else {
@@ -8622,20 +8640,22 @@ const Render = (function () {
       const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
       P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
     }
-    // eased into: the camera glides, never jumps (the first time from the chase view)
-    if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
+    // eased into: the camera glides, never jumps (the first time from the chase view); cut to its place (snap; the TV cameras' way in)
+    if (snap || (tv && !(w0 > 0))) { pcam.p = P.slice(); pcam.q = Q.slice(); }
+    else if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
     const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
     for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
     if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
-    const w = Core.sstep(0, 1, pcam.w), fov = camera.aspect < 1 ? 58 : 46;
-    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (50 - fov) * w];
+    const w = Core.sstep(0, 1, pcam.w), fov = camera.fov;   // (the view under it: behind the car 58° upright, 46° on its side; a TV camera's lens)
+    const fF = Core.clamp(2 * Math.atan(PC_TAN / Math.min(1, camera.aspect)) * 180 / Math.PI, 50, 80);   // (its lens: 50°, upright as wide as that across (at most 80° high): the whole car and its crew at the box)
+    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (fF - fov) * w];
   }
   /* ---------------- camera ---------------- */
-  function updateCamera(dt, target, mode, alpha) {
+  function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
-    const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
+    const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
     if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
@@ -8690,7 +8710,7 @@ const Render = (function () {
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
+    if (!shot && (mode !== 'tv' || c.rpPit)) { const o = pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz, mode === 'tv'); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
     if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
@@ -8913,7 +8933,8 @@ const Render = (function () {
     return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return (places(T) || PL).map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
   })();
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
-  function resetCam() { cam.init = false; }
+  function resetCam() { cam.init = false; pcam.snap = true; }   // (the camera there at once; the pit stop's film camera too: where it is then, pitCine)
+  function crewSnap() { if (crew) crew.snap = true; }   // (the replay jumped in time: the player's crew where it is then, at the next frame: crewJump)
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
   // updated by its owner every frame; null: back to the game's camera (from scratch)
   function setShot(s) { if (!s && cam.shot) cam.init = false; cam.shot = s || null; }
@@ -9245,8 +9266,9 @@ const Render = (function () {
   }
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
+    const cdt = opt && opt.rdt != null ? opt.rdt : dt;   // (the replay: the recording's own step, dt × its speed, 0 while it stands: the pit crew and the film camera on that clock)
     if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
-    updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
+    updateCrew(cdt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
     farRb = 0; updateCars(dt, alpha, opt);
     hypeStep(Math.min(dt, 0.1));
@@ -9258,7 +9280,7 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
     World.update(world, time, target, camera);
-    if (target) updateCamera(dt, target, mode, alpha);
+    if (target) updateCamera(dt, target, mode, alpha, cdt);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     cullByDistance();   // adaptive detail (LOD): hide the far vegetation on the lower tiers, now the camera is in its final place for this frame
@@ -9492,6 +9514,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
