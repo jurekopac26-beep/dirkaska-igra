@@ -15,7 +15,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/core.js` | proga (`Track`), fizika avtov, AI, dirka (`Race`), predmeti ob progi; brez DOM in THREE |
 | `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi |
 | `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
-| `js/world-<tema>.js` | svetovi v svojih datotekah (`World.ext[tema]`, tabela prog spodaj). `montreal`, `toronto`, `townsville`: pomočniki `extAPI` (`K.<ime>`). Premaknjeni iz `world.js` (sklop 17: ulični krogi `newcastle`, `detroit`, `marrakesh`, `troisrivieres`; gorske ceste razen Vršiča, Los Caracolesa in Pikes Peaka): koda nespremenjena, pomočnike vzame iz `World.api` (`API` v `world.js`: nespremenljivi ob nalaganju, spremenljivo stanje kot `K.<ime>`, `T` in druge podatke gradnje prepiše `SYNC` pred gradnjo); kar `world.js` uporablja od njih, je `API.<ime>` |
+| `js/world-<tema>.js` | svetovi v svojih datotekah (`World.ext[tema]`, tabela prog spodaj). `montreal`, `toronto`, `townsville`: pomočniki `extAPI` (`K.<ime>`). Premaknjeni iz `world.js` (sklop 17: vse proge razen Pikes Peaka, Ouninpohje, Vršiča, Los Caracolesa, Nürburga in splošnega `build()`; `world-rbring.js` gradi Štajersko, Bathurst, Rio in Crystal Palace): koda nespremenjena, pomočnike vzame iz `World.api` (`API` v `world.js`: nespremenljivi ob nalaganju, spremenljivo stanje kot `K.<ime>`, `T` in druge podatke gradnje prepiše `SYNC` pred gradnjo); kar `world.js` uporablja od njih, je `API.<ime>` |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
 | `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
@@ -85,26 +85,26 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
 | baldy | Mount Baldy, ZDA | baldy | `js/world-baldy.js` (`buildBaldy`) |
-| bangsaen | Bang Saen, Tajska | bangsaen | `buildBangsaen` |
-| bathurst | Bathurst, Avstralija | bathurst | `buildRbring` (videz `RB_LOOK`) |
+| bangsaen | Bang Saen, Tajska | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
+| bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`, videz `RB_LOOK`) |
 | beartooth | Beartooth, ZDA | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
 | bigsur | Big Sur, ZDA | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
 | caracoles | Los Caracoles, Čile | caracoles | `buildCaracoles` |
 | chapman | Chapman's Peak, Južna Afrika | chapman | `js/world-chapman.js` (`buildChapman`) |
-| cpalace | Crystal Palace, Anglija | cpalace | `buildRbring` (`RB_LOOK`, `cpPark`) |
+| cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`, `RB_LOOK`, `cpPark`) |
 | detroit | Detroit, ZDA | detroit | `js/world-detroit.js` (`buildDetroit`) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
-| harju | Harju, Finska | harju | `buildHarju` |
+| harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | hotham | Mount Hotham, Avstralija | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
-| longford | Longford, Avstralija | longford | `buildLongford` |
+| longford | Longford, Avstralija | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | maunakea | Mauna Kea, ZDA | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
-| medvode | Medvode, Slovenija | medvode | `buildMedvode` |
+| medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
 | moki | Moki Dugway, ZDA | moki | `js/world-moki.js` (`buildMoki`) |
 | monaco | Monte Carlo, Monako | monaco | splošni `build()` (`MC_TER`) |
-| monterey | Monterey, ZDA | monterey | `buildMonterey` |
+| monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mulholland | Mulholland Highway, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
@@ -113,12 +113,12 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | palomar | Palomar Mountain, ZDA | palomar | `js/world-palomar.js` (`buildPalomar`) |
 | pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `buildPikes` |
 | rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
-| rbring | Štajerska, Avstrija | rbring | `buildRbring` |
-| rio | Rio de Janeiro, Brazilija | rio | `buildRbring` (`RB_LOOK`) |
-| riverside | Riverside, ZDA | riverside | `buildRiverside` |
+| rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
+| rio | Rio de Janeiro, Brazilija | rio | `js/world-rbring.js` (`buildRbring`, `RB_LOOK`) |
+| riverside | Riverside, ZDA | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | sani | Sani Pass, Južna Afrika | sani | `js/world-sani.js` (`buildSani`) |
-| spa | Spa, Belgija | spa | `buildSpa` |
-| suzuka | Suzuka, Japonska | suzuka | `buildSuzuka` |
+| spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
+| suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
 | townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
