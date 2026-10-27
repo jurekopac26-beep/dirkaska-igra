@@ -44,8 +44,8 @@ try {
   const a1 = await Q.evaluate(() => ({ f: window.__game.recFlags, toast: document.getElementById('toast').textContent, paused: window.__game.paused, screen: window.__game.screen, t: window.__game.race.time }));
   T.check('the tap: a flag with only the race\'s time ({ t }), the toast "⚑ Zastavica 1 · 00:2x.x – dirka teče naprej", the race not paused',
     a1.f && a1.f.length === 1 && Object.keys(a1.f[0]).join() === 't' && a1.f[0].t >= t0 && /^⚑ Zastavica 1 · 00:2\d\.\d – dirka teče naprej$/.test(a1.toast) && !a1.paused && a1.screen === 'none', JSON.stringify(a1));
-  await Q.waitForTimeout(400);
-  const t1 = await Q.evaluate(() => window.__game.race.time);
+  // (the race's clock goes on: waited for, not a fixed time - a busy machine draws few frames)
+  const t1 = await Q.waitForFunction((t) => window.__game.race.time > t && window.__game.race.time, a1.t, { timeout: 15000, polling: 50 }).then(h => h.jsonValue(), () => a1.t);
   T.check('the race went on after the tap', t1 > a1.t, JSON.stringify({ was: a1.t, now: t1 }));
   // the key F, then the pad's Select (a second apart)
   await Q.waitForFunction((t) => window.__game.race.time > t + 1, a1.t, { timeout: 30000, polling: 100 });
