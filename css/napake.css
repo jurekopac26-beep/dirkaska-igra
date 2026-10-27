@@ -78,6 +78,7 @@
 .nk-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .nk-box button { min-height: 42px; padding: 0 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(255,255,255,.07); color: #fff; font: 700 15px/1 var(--f-ui); cursor: pointer; }
 .nk-box button:active { background: rgba(255,255,255,.2); }
+.nk-box button:disabled { opacity: .4; cursor: default; }
 .nk-acts button.first { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
 .nk-keep { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 600; }
 .nk-keep input { width: 20px; height: 20px; }
