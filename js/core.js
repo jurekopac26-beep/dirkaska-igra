@@ -2205,7 +2205,7 @@ const Core = (function () {
         if (dF < 1) F = Math.min(F, left(capR, exR, lR0) / (1 - dF));
         if (dF > 0) F = Math.min(F, left(capF, exF, lF0) / dF);
         const sR = Math.abs(alR) / K.aPkR;   // (and the rear tyres' slip: past NA.ts of their peak the drive is cut back, the tail does not run away)
-        if (dF < 1 && sR > NA.ts) F *= Math.max(0.1, 1 - (sR - NA.ts) / 0.4);
+        if (dF < 1 && sR > NA.ts) F *= 1 - lo * (1 - Math.max(0.1, 1 - (sR - NA.ts) / 0.4));   // (not when parking or pulling away: lo)
       }
       const bS = clamp(lF + K.brkF + NA.bb, 0.5, 0.9);   // (the brakes' front share follows the load: on the brakes it moves forward)
       const FxF = clamp(F * dF - (fwd ? fb : 0) * bS, -exF, exF), FxR = clamp(F * (1 - dF) - (fwd ? fb : 0) * (1 - bS), -exR, exR);
