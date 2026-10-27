@@ -8669,10 +8669,10 @@ const Render = (function () {
     } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
       // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
       // travel, so a sliding car shows its angle)
-      // (the new physics, Car.stepNova: the view follows 2.5x quicker, as in the reference video the user chose, where the car shows 5-12 deg
-      // against the view in a corner; with the classic lag of 0.36 s the view's own lag alone showed 12-16 deg)
+      // (the same lag for both physics: with it the new one, Car.stepNova, shows the car ~21 deg against the view in a quick corner, p95 26,
+      // as the reference video does: 0.37 deg per deg/s of the view's turn, ~21 deg above 50 deg/s, p95 30; the user's choice)
       const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
-      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (c.phys === 'nova' ? 7 : 2.8)));
+      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
       cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;

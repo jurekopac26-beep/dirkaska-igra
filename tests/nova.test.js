@@ -5,6 +5,12 @@
 //   100 km/h corners at 1.9-2.4 g and does not spin; braking hard in a corner rotates the car a little, no spin; straight braking from
 //   150 km/h does not rotate it; the same engine and brakes as cs (0-100 km/h and 100-0 km/h within 2 %); with the low assist the
 //   throttle in a corner turns the rear-wheel-drive car more than with the high one (the tail steps out)
+// - full lock on the buttons (the phone's steering) from 60, 110 and 160 km/h with the throttle holding the speed, the drift assist high,
+//   in a front-, a rear- and a four-wheel-drive car, the formula, the truck and the little rear-engined car: the car grips with a little slide
+//   (peak under 20 deg; the reference video: ~21 deg against the view in a quick corner, the view's lag included), no spin; with the low
+//   assist at 110 km/h under 35 deg
+// - the low assist: full throttle in a corner steps a rear-driven car's tail out (the V8: 10-45 deg) and does not spin it (the formula
+//   neither); braking hard in a corner does not spin a front-driven car or the little rear-engined one
 // - the kerbs: the wheels on one lift the car a little (up to 2-8 cm, the body rolled away from them) and it settles again past it; a cs
 //   car is never lifted
 // - car contacts: a rear-end knock bounces the cars apart (they part at 0.3 of the closing speed or more; cs about 0.1), a knock
@@ -59,6 +65,22 @@ for (const id of ['rally', 'kaze']) {
     for (let i = 0; i < 1.2 / DT; i++) { HN.step(c, { st: 0.8, thr: 1 }); mx = Math.max(mx, Math.abs(c.beta) - b0); } return mx * D; };
   const lo = thrRot(0), hi = thrRot(2);
   ok('plane: full throttle in a corner turns the KAZE RS (FR) more with the low drift assist than with the high one', lo > hi + 2, `low +${f(lo, 1)} deg, high +${f(hi, 1)} deg`);
+}
+
+// ---- full lock on the buttons; the low assist's throttle and brakes ----
+{
+  const lock = (id, kmh, assist) => { const c = HN.mkCar(id, { v: kmh, assist, digital: true }); for (let i = 0; i < 0.3 / DT; i++) HN.step(c, { st: 0, thr: 'hold' });
+    let mx = 0; for (let i = 0; i < 3 / DT; i++) { HN.step(c, { st: 1, thr: 'hold' }); mx = Math.max(mx, Math.abs(c.beta)); } return mx * D; };
+  const ids = ['pico', 'kaze', 'rally', 'formula', 'truck', 'miska'], hi = [], lo = [];
+  for (const id of ids) { for (const v of [60, 110, 160]) hi.push([id + '@' + v, lock(id, v, 2)]); lo.push([id, lock(id, 110, 0)]); }
+  const wH = hi.reduce((a, b) => b[1] > a[1] ? b : a), wL = lo.reduce((a, b) => b[1] > a[1] ? b : a);
+  ok('plane: full lock on the buttons, assist high: a little slide in every car (peak < 20 deg), low assist at 110 km/h < 35 deg', wH[1] < 20 && wL[1] < 35,
+    `high: most ${f(wH[1], 1)} deg (${wH[0]}), low: most ${f(wL[1], 1)} deg (${wL[0]})`);
+  const ped = (id, what) => { const c = HN.mkCar(id, { v: what === 'thr' ? 70 : 100, assist: 0 }); for (let i = 0; i < 3 / DT; i++) HN.step(c, { st: 0.7, thr: 'hold' }); const b0 = Math.abs(c.beta); let mx = 0, sp = 0;
+    for (let i = 0; i < 1.5 / DT; i++) { HN.step(c, { st: 0.7, thr: what === 'thr' ? 1 : 0, brk: what === 'brk' ? 1 : 0 }); mx = Math.max(mx, Math.abs(c.beta) - b0); sp = Math.max(sp, Math.abs(c.beta)); } return { d: mx * D, sp: sp > 1.2 }; };
+  const mu = ped('muscle', 'thr'), fo = ped('formula', 'thr'), pb = ped('pico', 'brk'), mb = ped('miska', 'brk');
+  ok('plane, low assist: full throttle in a corner steps the V8\'s tail out (10-45 deg), no spin (nor the formula\'s)', mu.d >= 10 && mu.d <= 45 && !mu.sp && !fo.sp, `V8 +${f(mu.d, 1)} deg, formula +${f(fo.d, 1)} deg`);
+  ok('plane, low assist: braking hard in a corner spins neither the front-driven PICO nor the rear-engined MIŠKA', !pb.sp && !mb.sp, `PICO +${f(pb.d, 1)} deg, MIŠKA +${f(mb.d, 1)} deg`);
 }
 
 // ---- the kerbs: a plane with a kerb on the right (+z side) from x 20 m to 40 m, the car runs along x with its right wheels on it ----
