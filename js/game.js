@@ -494,16 +494,21 @@
   // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn, less in the Andes);
   // the title demo rains only with 'rain'
   const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, caracoles: 0.2, bigsur: 0.2, rastro: 0.4, moki: 0.1, rio: 0.45, baldy: 0.15, palomar: 0.15 };   // (the Andes in summer, the Californian coast: mostly dry; the Serra Geral: humid; Rio in March: tropical showers)
-  const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
+  const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && grand() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
   // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
   let wxNext = null;   // (tests: the weather of the next race)
+  // the test mode (repeatable races, sklop 16): opened with the quick entry, every race of the visit the same race when started the same way.
+  // The race's seed is the address's (?seme=<n>, else 1) and Race opts.repro draws its random events from it (Core: rand); here the weather
+  // the settings leave to chance, Big Sur's mist and the lights' hold, from a stream of the same seed, new for every race (newRace). Online: no
+  let repro = null;   // ({ seed, R }; tests: window.__game.repro)
+  const grand = () => repro && repro.R ? repro.R() : Math.random();
   function weatherOf(d) {
     if (wxNext) { const W = wxNext; wxNext = null; return W; }
     if (S.weather === 'storm') return { rain: 1, wx: null, storm: true };   // (a thunderstorm: rain all the race, lightning and thunder)
     if (S.weather !== 'change' || isTT(d)) return { rain: rainOf(), wx: null };
-    const wet = Math.random() < 0.5, est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38;   // (an open road: its one run)
-    return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + Math.random() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + Math.random() * 30), to: wet ? 0 : 1 } };
+    const wet = grand() < 0.5, est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38;   // (an open road: its one run)
+    return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + grand() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + grand() * 30), to: wet ? 0 : 1 } };
   }
   const demoRain = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : 0;
   // the title demo shows off one category: a vehicle of it picked at random once a visit (a category first, every one as likely; then the
@@ -1645,7 +1650,7 @@
     if (Q.phys !== physOf()) { Q.phys = physOf(); Q.sims = null; }   // (the physics changed in the pause menu: their laps again with it)
     const G = Q.sims || (Q.sims = { k: 0, r: null, t: 0, times: [] }), cap = track.len / 8 + 120, t0 = performance.now(), big = Q.nAI > Q_BIG, h = big ? Q_DT : STEP, nT = big ? 30 : 240, kT = big ? 1 / Q_K : 1;
     while (G.k < Q.nAI) {
-      if (!G.r) { G.r = new Core.Race(track, { numAI: Q.nAI, aiOrder: [G.k], noPlayer: true, playerModel: Q.pm, fieldModel: Q.fm || undefined, laps: 1, qualiBack: Q.back, difficulty: Q.diff, phys: Q.phys, rain: Q.rain, seed: Q.seed, damage: 0 }); G.r.start(); G.t = 0; }   // (playerModel, fieldModel: the rivals in the race's cars, its field or one-make class; a championship's: the field of its car)
+      if (!G.r) { G.r = new Core.Race(track, { numAI: Q.nAI, aiOrder: [G.k], noPlayer: true, playerModel: Q.pm, fieldModel: Q.fm || undefined, laps: 1, qualiBack: Q.back, difficulty: Q.diff, repro: !!repro, phys: Q.phys, rain: Q.rain, seed: Q.seed, damage: 0 }); G.r.start(); G.t = 0; }   // (playerModel, fieldModel: the rivals in the race's cars, its field or one-make class; a championship's: the field of its car)
       const c = G.r.cars[0];
       for (let n = 0; n < nT && !c.finished && G.t < cap; n++) { G.r.step(h); G.t += h; }
       if (c.finished || G.t >= cap) { const sc = !c.finished ? null : c.sec ? c.sec.best.slice() : c.secPB ? c.secPB.slice() : null; if (sc && big) for (let j = 0; j < sc.length; j++) sc[j] *= kT;
@@ -1683,6 +1688,7 @@
   // mode 'quali': the qualifying lap (a new qualifying, or its lap again: the rivals' laps already driven stay); else a race, on the grid
   // qualifying gave on this track (also when it is driven again), or on the usual one
   function newRace(mode) {
+    if (repro) repro.R = Core.rng((repro.seed * 2731 + 19) >>> 0);   // (the test mode: this race's draws from its seed, from the start)
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
     const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';
@@ -1691,13 +1697,13 @@
     if (cr < 0) champRun = false;
     const FM = cr >= 0 ? champField() : null;   // (a championship round: the rivals in the field of the car it was started with)
     const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? champN() : track.def.raceRivals || track.def.rivals || NUM_AI;   // (a championship round: its own 19 in every round; the Nordschleife's race its 99)
-    if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, storm: !!W.storm, nAI: Core.fieldSize(fieldFor(M, FM), nAI), pm: M, fm: FM, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }   // (as many rivals as the race will have: a big vehicle's field is smaller)
+    if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: repro ? repro.seed : (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, storm: !!W.storm, nAI: Core.fieldSize(fieldFor(M, FM), nAI), pm: M, fm: FM, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }   // (as many rivals as the race will have: a big vehicle's field is smaller)
     const Q = !quali && !on && !tt && qual && qual.res && qual.id === track.def.id && qual.cr === cr ? qual : null;   // the race after qualifying
     if (!quali && !Q) qual = null;
     if (quali) { qual.lapShown = false; qual.wait = false; }
     const W = ch ? { rain: ch.cond.rain, wx: null, storm: false } : quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     const solo = tt || quali || !!ch, lapRun = !!ch && !tt;   // (alone: a time trial, qualifying, a challenge: its time trial or a circuit's flying lap)
-    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist };
+    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
     Core.setCrash(xPhys(on));   // (Razbijanje · nov način: its physics off in an online race)
     if (on) {   // online: the players on the grid in the host's order (in turn from race to race), no AI; the host's physics and damage for all
       const nums = netNums(on), rs = on.roster;
@@ -1718,7 +1724,7 @@
       wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }));
     if (race.player) race.player.pitCmp = S.pitCmp;
-    if (track.def.mist) race.opts.mist = !race.rain && !W.wx && !quali && (S.tod === 'dawn' || ((S.weather === 'random' || S.weather === 'change') && Math.random() < track.def.mist));   // Big Sur: the marine layer (Render: dyn.bsMist), every morning and on some dry runs
+    if (track.def.mist) race.opts.mist = !race.rain && !W.wx && !quali && (S.tod === 'dawn' || ((S.weather === 'random' || S.weather === 'change') && grand() < track.def.mist));   // Big Sur: the marine layer (Render: dyn.bsMist), every morning and on some dry runs
     $('pit-row').classList.toggle('off', !(race.player && race.player.ty && race.player.ty.c));   // (the slicks for a stop: a race with tyres)
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
     race.quali = quali || lapRun; race.storm = !on && !school && !!W.storm;   // (the driving school: always dry; a challenge's lap: as qualifying's, from the line)
@@ -4182,7 +4188,7 @@
     } else if (phase === 'intro' && phaseT > introLen) {
       if (introLen > 1.3) shotOff();   // (the jets' shot is over: the game's camera again)
       phase = 'lights'; phaseT = on ? phaseT - 1.3 : 0; $('h-lights').classList.add('show');
-      holdT = on ? on.hold : 0.5 + Math.random() * 0.9;
+      holdT = on ? on.hold : 0.5 + grand() * 0.9;
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'lights') {
       const n = Math.min(5, Math.floor(phaseT / 0.8) + 1);
@@ -5331,6 +5337,7 @@
     if (!owned(Core.MODELS[S.car].id)) { quick.done = true; return; }   // (a career's car not bought: the menus, as their Start)
     if (S.control === 'tilt') enableTilt(true);
     Comm.unlock(); champRun = false; school = null; qual = null; pkF.fresh = true;
+    repro = { seed: q.seed || 1, R: null };   // (the test mode for the visit: repeatable races)
     ensureTrack(S.track, () => { newRace(); pkFlySkip(); if (q.t > 0) quickRun(q.t); else quick.done = true; });
   }
   // the race on the autopilot up to t s after the start (or to the player's finish), a slice of it per frame under the loading screen
@@ -5387,7 +5394,8 @@
       quickGo();   // (opened with a quick entry's address: straight on a race)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
+        get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
