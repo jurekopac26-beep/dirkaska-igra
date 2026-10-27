@@ -29,6 +29,20 @@ na dirki (brez menija, preleta in kvalifikacij). `nacin`: `dirka`, `kronometer`,
 Način, vreme in avto se nastavijo kot v meniju. Napačen del javi obvestilo »Hitri vstop: neveljavno …«. Branje naslova: `Core.quickArgs`,
 v igri `quickGo` v `js/game.js`; `window.__game.quick` pove, kaj je naslov zahteval in ali je dirka že tam (`done`).
 
+**Posnetki pred/po** (`tools/shot.mjs`, prek hitrega vstopa): `node tools/shot.mjs bathurst --m 1284` postavi avto na idealno linijo 1284 m po
+štartu (`s` iz poročila o napaki), skrije druge avte in shrani pogled kamere za avtom brez HUD-a, pokonci (360 × 640) in ležeče (640 × 360);
+`--pokonci` ali `--lezece` samo enega, `--m 400,1284` več mest, `--t <s>` mesto, kamor pride avtopilot (s tekmeci), `--vreme dez`.
+`--pred main` (ali drug ref ali mapa s kopijo igre) posname ista mesta še v drugi različici in naredi `…-primerjava.png` (pred | po | razlika,
+spremenjeni piksli vijolični) ter `povzetek.md` z deležem spremenjenih pikslov; ista koda da pod 0,5 % (gledalci, zastave). Slike so v
+`test-results/shots/`. Za primerjavo vzemi pravo progo (`CLAUDE.md`). `--nabor` je nabor za pull requeste (`NABOR` v orodju in prave proge,
+katerih datoteke sprememba spreminja): na GitHubu ga ob pull requestu, ki spremeni igro, požene `.github/workflows/posnetki.yml`
+(»Posnetki pred/po«, ~5 min): slike so v artefaktu `posnetki-<št>`, povzetek v povzetku posla. Ne šteje kot test: rdeč je le, ko igra na veji javi napako.
+
+**Predogled pred mainom** (`.github/workflows/stran.yml`, `tools/predogled.mjs`): stran na GitHub Pages ima `main` v korenu, vsak odprt pull
+request iz tega repozitorija (največ 3 najnovejši) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
+vsaki spremembi `main` in ob odprtju, spremembi ali zaprtju pull requesta. Deluje, ko je v Settings → Pages → Source izbrano »GitHub Actions«
+(do tedaj ostane objava z veje `main`, potek pa to samo javi). Predogled ima svoj service worker, shranjene nastavitve in napredek pa deli z glavno igro.
+
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
 (`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
 (drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški testi tečejo s 30 minutami na test); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima trikrat toliko časa, smoke in perf pa dvakrat (na GitHubu 90 in 60 minut).
