@@ -408,6 +408,7 @@
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
     $('btn-pause').classList.toggle('off', !(bg === 'race' && inRace));
+    Napake.dirka(bg === 'race' && !(mp && mp.race));   // (Orodje za napake: the flag button beside the pause button; not in a race with a friend)
     // (a screen over the race, the pause too: no rescue button and no VOZILO UNIČENO banner with its Odstopi / Ponovi seen through it,
     // where the menu's own buttons take the tap; the first HUD frame after it puts the banner back)
     if (!inRace) { $('btn-rescue').classList.add('off'); $('h-wreck').classList.remove('show'); wreckKey = ''; }
@@ -717,7 +718,7 @@
   // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
   const REC_BIG = 30, REC_BYTES = 32e6;
   let recd = null, replay = null;
-  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map(), bytes: 0, out: null }; }
+  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [] }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js)
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
@@ -817,6 +818,7 @@
     hlvStop();   // (the best moment's video: done)
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
+    Napake.konec();   // (Orodje za napake: the moments kept, to share or save)
   }
   /* Posnetek do sem (the pause's button, the key I while racing; never online, where the race goes on): the race stands on the pause and
      its replay so far is watched. The replay poses the race's own cars (rpPose), so each car's own fields are kept first (where it is on
@@ -871,23 +873,64 @@
     $('rp-hl').classList.toggle('on', !!P.hl);
     $('rp-play').innerHTML = P.play ? '&#10074;&#10074;' : '&#9654;'; $('rp-speed').textContent = Lang.dec(P.speed) + '\u00d7'; $('rp-cam').textContent = tr(RP_CAM[P.cam]);
     $('replay-ui').classList.toggle('here', !!P.here); $('rp-rec').textContent = tr(P.here ? '\u25cf POSNETEK DO SEM' : '\u25cf POSNETEK');
-    const nf = (recd && recd.flags || []).length;   // (the flags: sklop 7; until then none, the button grey)
+    Napake.sync();   // (Orodje za napake: the moments kept and the race's flags, on the timeline)
+    const L = Napake.tocke(), nf = L.length;   // (the flags: the race's own and the moments kept; none: the button grey)
+    if (P.mode === 'flags' && !nf) P.mode = 'all';
     $('rp-flags').textContent = tr('Zastavice ({0})', nf); $('rp-flags').disabled = !nf; $('rp-all').classList.toggle('sel', P.mode === 'all'); $('rp-flags').classList.toggle('sel', P.mode === 'flags');
-    Napake.sync();   // (Orodje za napake: the moments kept, as flags on the timeline)
+    const zi = P.mode === 'flags' ? rpZCur(L) : -1;
+    $('rp-fnav').classList.toggle('off', zi < 0); if (zi >= 0) $('rp-zi').textContent = '\u2691 ' + (zi + 1) + '/' + nf;
+  }
+  /* Zastavice: the flags one after another (Prejšnja, Naslednja), each played again and again from RP_ZB s before it to RP_ZA s after it;
+     the points are Napake.tocke() (the race's flags and the moments kept, by time); P.zt the one on now */
+  const RP_ZB = 2, RP_ZA = 1;
+  const rpZCur = (L) => { const P = replay; let j = 0; for (let k = 1; k < L.length; k++) if (Math.abs(L[k].t - P.zt) < Math.abs(L[j].t - P.zt)) j = k; return j; };
+  function rpZGo(j) {
+    const P = replay, L = Napake.tocke(); if (!L.length) { P.mode = 'all'; return; }
+    j = (j + L.length) % L.length; P.mode = 'flags'; P.zt = L[j].t; rpSeek(P.zt - RP_ZB); P.play = true;
   }
   // Orodje za napake (js/napake.js, Označi in the replay): the replay's hooks; a moment's time, the followed car's lap at it (counted back
   // from the car's lap times) and its metres from the start along the track
+  function rpLap(c, t) { let L = c.lap || 1, ts = c.lapStart, j = (c.lapTimes || []).length - 1; while (L > 1 && j >= 0 && t < ts) { ts -= c.lapTimes[j--]; L--; } return track.open ? 1 : Core.clamp(L, 1, race.laps || 1); }
+  const rpS = (q) => { const T = track; return Math.round(Math.max(0, !q ? 0 : T.open ? q.s - T.startS : ((q.s - T.startS) % T.len + T.len) % T.len)); };
   function rpInfo() {
-    const P = replay, c = recd.cars[P.k], T = track, q = c.q;
-    let L = c.lap || 1, ts = c.lapStart, j = (c.lapTimes || []).length - 1;
-    while (L > 1 && j >= 0 && P.t < ts) { ts -= c.lapTimes[j--]; L--; }
-    const s = !q ? 0 : T.open ? q.s - T.startS : ((q.s - T.startS) % T.len + T.len) % T.len;
-    return { track: T.def.id, lap: T.open ? 1 : Core.clamp(L, 1, race.laps || 1), laps: T.open ? 1 : race.laps || 1, s: Math.round(Math.max(0, s)), k: P.k, car: c.isPlayer ? 'ti' : c.name, cam: P.cam, here: !!P.here };
+    const P = replay, c = recd.cars[P.k], T = track;
+    return { track: T.def.id, lap: rpLap(c, P.t), laps: T.open ? 1 : race.laps || 1, s: rpS(c.q), k: P.k, car: c.isPlayer ? 'ti' : c.name, cam: P.cam, here: !!P.here, x: c.x, z: c.z };
+  }
+  function rpWhere(t, k) {   // a car at time t as recorded (k: the player's when not given, a flag of the race): its lap, metres from the start, where on the map
+    const F = recd && recd.frames; if (!F || !F.length) return null;
+    if (k == null) k = Math.max(0, recd.cars.indexOf(race.player));
+    const f = F[rpIdx(F, t)], o = 1 + k * REC_W, x = f[o], z = f[o + 2];
+    return { lap: rpLap(recd.cars[k], t), s: rpS(track.query(x, z, -1, {})), x, z };
+  }
+  // the version (js/game.js's stamp, tools/stamp.js: git log -S 'game.js?v=...' index.html finds it), the track, the way it is raced, the weather
+  function rpMeta() {
+    const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), d = track.def;
+    const how = [modeOf(d)].concat(race.quali ? ['kvalifikacije'] : [], race.champ ? ['prvenstvo'] : [], inCareer() ? ['kariera'] : [], race.chal ? ['izziv'] : [], school ? ['sola'] : []);
+    return { ver: m ? m[1] : '?', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+  }
+  function rpMap() {   // the track's line for the picture's map (at most about 600 points), its start
+    const T = track, st = Math.max(1, Math.floor(T.N / 600)), pts = [];
+    for (let i = 0; i < T.N; i += st) pts.push([T.px[i], T.pz[i]]);
+    const i0 = T.idx(T.startS); return { pts, open: !!T.open, start: [T.px[i0], T.pz[i0]] };
+  }
+  // a picture of the replay at another time (the moment's motion: 0.6 s and 0.3 s before it, 0.3 s after), then the replay back where it stands
+  function rpShotAt(t, max) {
+    const P = replay; if (!P) return null;
+    const t0 = P.t; rpPoseAll(Core.clamp(t, recd.frames[0][0], P.t1), P.i); Render.resetCam();
+    let cv = null; try { cv = Render.snapshot(recd.cars[P.k], P.cam, max); } catch (_) { }
+    P.i = rpPoseAll(t0, P.i); Render.resetCam();
+    return cv;
+  }
+  // a flag in the race (Orodje za napake: the button, F, the pad's Select): only its time is kept
+  function rpFlag() {
+    if (!race || !recd || bg !== 'race' || (mp && mp.race) || replay || photo || screen !== 'none' || (race.state !== 'racing' && race.state !== 'done')) return null;
+    recd.flags.push({ t: race.time }); return { t: race.time, n: recd.flags.length };
   }
   const NK_HOOKS = {
-    replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms),
+    replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms), ui: () => replayUI(),
+    where: rpWhere, meta: rpMeta, map: rpMap, shotAt: rpShotAt, flag: rpFlag, flags: () => (recd ? recd.flags : []),
     stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
-    seek: (t) => { if (!replay) return; hlOff(); rpSeek(t); replay.play = false; replayUI(); },
+    seek: (t) => { if (!replay) return; hlOff(); rpSeek(t); replay.play = false; if (replay.mode === 'flags') replay.zt = t; replayUI(); },   // (a flag's tap in Zastavice: that flag on now)
     span: () => replay && recd && recd.frames.length ? [recd.frames[0][0], replay.t1] : null,
     shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max)
   };
@@ -895,6 +938,7 @@
     const P = replay, R = recd; if (!P) return;
     if (a === 'rp-hl') { if (P.hl) { hlOff(); replayUI(); } else replayHL(); return; }   // (Trenutki: the highlights on, or off: the whole race again)
     if (P.hl && a !== 'rp-play' && a !== 'rp-speed' && a !== 'rp-cam') hlOff();   // (a car, the start: the viewer's own way through the race; a camera: the moments go on with it)
+    if (a === 'rp-restart' || a === 'rp-b5' || a === 'rp-f5') P.mode = 'all';   // (the viewer's own way through the race: the whole of it)
     if (a === 'rp-restart') { P.t = R.frames[0][0]; P.i = 0; P.play = true; Render.resetCam(); }
     else if (a === 'rp-play') { if (!P.play && P.t >= P.t1) { P.t = R.frames[0][0]; P.i = 0; Render.resetCam(); } P.play = !P.play; }   // (played to the end: from the start again, the camera there at once)
     else if (a === 'rp-b5' || a === 'rp-f5') rpSeek(P.t + (a === 'rp-f5' ? 5 : -5));
@@ -906,6 +950,8 @@
     else if (a === 'rp-cam') { const K = [P.own].concat(RP_RING.filter(c => c !== P.own)); P.cam = K[(K.indexOf(P.cam) + 1) % K.length]; Render.resetCam(); }
     else if (a === 'rp-prev' || a === 'rp-next') { P.k = (P.k + (a === 'rp-next' ? 1 : R.n - 1)) % R.n; Render.resetCam(); }
     else if (a === 'rp-all') P.mode = 'all';
+    else if (a === 'rp-flags') { const L = Napake.tocke(); let j = L.findIndex(p => p.t >= P.t - RP_ZB - 0.01); rpZGo(j < 0 ? 0 : j); }   // (the first flag from here on)
+    else if (a === 'rp-zprev' || a === 'rp-znext') { if (P.mode === 'flags') rpZGo(rpZCur(Napake.tocke()) + (a === 'rp-znext' ? 1 : -1)); }
     else if (a === 'rp-race') { rpRace(); return; }
     else if (a === 'rp-exit' || a === 'rp-skip') { replayEnd(); return; }   // (Preskoči: the best moment cut short)
     replayUI();
@@ -916,7 +962,7 @@
     const at = (e) => { const P = replay, F = recd && recd.frames, r = el.getBoundingClientRect(); if (P && F) rpSeek(F[0][0] + Core.clamp((e.clientX - r.left) / Math.max(1, r.width), 0, 1) * (P.t1 - F[0][0])); };
     el.addEventListener('pointerdown', (e) => {
       if (!replay || (replay.hl && replay.hl.auto)) return;
-      e.preventDefault(); hlOff(); drag = { id: e.pointerId, play: replay.play }; replay.play = false;
+      e.preventDefault(); hlOff(); drag = { id: e.pointerId, play: replay.play }; replay.play = false; replay.mode = 'all';
       try { el.setPointerCapture(e.pointerId); } catch (_) { }
       at(e); replayUI();
     });
@@ -935,18 +981,28 @@
     c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0);   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
   }
-  function replayFrame(dt) {
-    if (replay.hl && (replay.play || replay.hl.auto) && replay.t >= replay.hl.clips[replay.hl.i].t1 && !hlRec) { hlNext(); if (!replay) return; }   // (the highlights: the next moment; the best moment: once its video is done)
+  // every recorded car (and the safety car, where it was out) where the recording has it at time t; i: a sample near it to search from
+  function rpPoseAll(t, i) {
     const P = replay, R = recd, F = R.frames;
-    if (P.play) { P.t = Math.min(P.t1, P.t + dt * P.speed); P.clk = (P.clk || 0) + dt; if (P.t >= P.t1) { P.play = false; replayUI(); } }   // (clk: the game's clock while it plays, for the tests)
-    let i = P.i; while (i < F.length - 2 && F[i + 1][0] <= P.t) i++; while (i > 0 && F[i][0] > P.t) i--; P.i = i;
-    const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((P.t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
+    while (i < F.length - 2 && F[i + 1][0] <= t) i++; while (i > 0 && F[i][0] > t) i--;
+    const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
     for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * REC_W, u);
     const o = 1 + R.n * REC_W, scOn = A[o + 6] >= 2;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
       if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] >= 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in' }; }
       else race.fl.sc = null;
     }
+    return i;
+  }
+  function replayFrame(dt) {
+    if (replay.hl && (replay.play || replay.hl.auto) && replay.t >= replay.hl.clips[replay.hl.i].t1 && !hlRec) { hlNext(); if (!replay) return; }   // (the highlights: the next moment; the best moment: once its video is done)
+    const P = replay, R = recd, F = R.frames;
+    if (P.play) {   // (clk: the game's clock while it plays, for the tests)
+      P.t = Math.min(P.t1, P.t + dt * P.speed); P.clk = (P.clk || 0) + dt;
+      if (P.mode === 'flags' && P.zt != null && P.t >= Math.min(P.zt + RP_ZA, P.t1)) rpSeek(P.zt - RP_ZB);   // (Zastavice: the flag's moment again)
+      else if (P.t >= P.t1) { P.play = false; replayUI(); }
+    }
+    P.i = rpPoseAll(P.t, P.i);
     const c = R.cars[P.k], H = P.hl, C = H && H.auto ? H.clips[H.i] : null;   // (the best moment: its own progress)
     $('rp-info').textContent = (c.isPlayer ? tr('Ti') : c.name) + ' · ' + fmt(Math.max(0, P.t), true);
     const pc = (C ? Core.clamp(100 * (P.t - C.t0) / Math.max(1e-3, C.t1 - C.t0), 0, 100) : 100 * (P.t - F[0][0]) / Math.max(1e-3, P.t1 - F[0][0])).toFixed(1) + '%';
@@ -4823,6 +4879,7 @@
         if (k === '@rescue' && !$('btn-rescue').classList.contains('off')) $('btn-rescue').click();
         continue;
       }
+      if (k === 'back' && sc0 === 'none' && screen === 'none' && bg === 'race' && !replay) { Napake.flag('pad'); continue; }   // (Select / Back: a flag, Orodje za napake)
       if (screen === 'none') { if (k === 'b' && swapOn && sc0 === 'none') swapWheel(); continue; }
       if (menuOn && (screen === 'title' || screen === 'track') && Menu.padKey(k)) continue;   // (the new menu: B, Start, LB and RB are its own)
       if (k === 'start') { const m = padFind('.btn.primary, .go'); if (m) m.click(); }
@@ -4840,7 +4897,7 @@
      the browser (tdgp-ctrl: { keys: { act: [code, code] }, lbl: { code: the key's name }, pads: { device: binding }, dev }); Ponastavi:
      the defaults of the page shown. ---------------- */
   const CTL_KEY = 'tdgp-ctrl';
-  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek'], ['replay', 'Posnetek do sem']];
+  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek'], ['replay', 'Posnetek do sem'], ['flag', 'Zastavica (napaka)']];
   const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['rescue', 'Nazaj na progo']];
   let ctl = { keys: null, lbl: {}, pads: {}, dev: '' }, ctlTab = 'keys', ctlWait = null;
   const ctlInOk = (q) => isObj(q) && Number.isInteger(q.i) && q.i >= 0 && q.i < 64 && (q.t === 'b' || (q.t === 'a' && isFinite(q.lo) && isFinite(q.hi) && q.lo !== q.hi));
@@ -5134,7 +5191,7 @@
       case 'car-buy': carBuy(); break;
       case 'replay': replayStart(); break;
       case 'rp-restart': case 'rp-play': case 'rp-speed': case 'rp-cam': case 'rp-prev': case 'rp-next': case 'rp-exit': case 'rp-hl': case 'rp-skip':
-      case 'rp-b5': case 'rp-f5': case 'rp-fback': case 'rp-fnext': case 'rp-all': case 'rp-race': replayAct(act); break;
+      case 'rp-b5': case 'rp-f5': case 'rp-fback': case 'rp-fnext': case 'rp-all': case 'rp-flags': case 'rp-zprev': case 'rp-znext': case 'rp-race': replayAct(act); break;
       case 'rp-here': rpHere(); break;
       case 'replay-hl': replayHL(); break;
       case 'vid-share': hlvShare(); break;
@@ -5421,6 +5478,7 @@
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       ctlLoad();   // (the keys and the pads' buttons as the player set them)
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
+      Input.onFlag = () => { if (screen === 'none' && !replay) Napake.flag('key'); };   // (F: a flag in the race, Orodje za napake)
       Input.onReplay = () => { if (Napake.on) return; if (replay) { if (replay.here && screen === 'none') rpRace(); } else if (screen === 'none' || screen === 'pause') rpHere(); };   // (I: Posnetek do sem; in it again: Nazaj v dirko; not while marking: Označi)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
       Render.setStorm(S.weather === 'storm');
@@ -5441,7 +5499,7 @@
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
       window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
-        get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+        get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, get recFlags() { return recd ? recd.flags.map(f => Object.assign({}, f)) : null; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
