@@ -33,6 +33,9 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
+| `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
+| `.github/workflows/` | `tests.yml` testi, `posnetki.yml` posnetki pred/po ob pull requestu (artefakt in povzetek), `stran.yml` objava strani s predogledom vej |
 | `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek) |
 | `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
@@ -146,6 +149,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 ## Testi po temah
 
 - **Hiter vstop:** `tests/quick.test.js` (naslov), `tests/browser/quick.test.mjs` (igra)
+- **Posnetki pred/po** (orodje, ne test): `tools/shot.mjs`, na GitHubu `posnetki.yml`; predogled vej `stran.yml`, `tools/predogled.mjs`
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`
