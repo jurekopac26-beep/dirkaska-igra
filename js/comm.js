@@ -139,6 +139,9 @@ const Comm = (() => {
     radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
     radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
     radioGo: ['Go, go, go!', 'Go, go, go! All yours.', 'Go, go, go! Push now!'],   // (the hand-back after a stop: VOZIŠ TI!, game.js pitFree)
+    radioGain: ['Great stop, you gained {n} {pl}. P{pos} now.', 'The stop worked, up {n} {pl} to P{pos}.'],   // (the places a stop gained or lost, game.js swingRadio)
+    radioLose: ['We lost {n} {pl} in the stop. P{pos} now.', 'Down {n} {pl} after the stop, P{pos}. Keep pushing.'],
+    radioSame: ['No change after the stop, still P{pos}.', 'Same place after the stop, P{pos}.'],
     radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],
     brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
     engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],

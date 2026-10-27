@@ -61,8 +61,11 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   // after a race too: it would play before the results)
   // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer)
   const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal' }, settings));
-  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
-  await page.addInitScript(([raw, adapt]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive]);
+  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself; tdgp-tips:
+  // the hints of the first pit stops all seen, so a test's stop shows only the stop's own toast, as on a phone that has stopped before;
+  // opts.tips: none seen, as on a new phone (tests/browser/pits.test.mjs). A new hint's id goes in here too)
+  await page.addInitScript(([raw, adapt, tips]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw);
+    if (!tips) localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1 })); }, [raw, !!opts.adaptive, !!opts.tips]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);

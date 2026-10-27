@@ -165,6 +165,7 @@
   const LEN_K = { short: 0.5, normal: 1, long: 2, endurance: 3 };
   const lapsOf = (d) => d.open ? 1 : Math.max(1, Math.round((d.laps || LAPS) * (LEN_K[S.length] || 1)));
   const lapWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' LAP' : ' LAPS') : n + (n === 1 ? ' KROG' : n === 2 ? ' KROGA' : n <= 4 ? ' KROGI' : ' KROGOV');
+  const placeWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' PLACE' : ' PLACES') : n + (n % 100 === 1 ? ' MESTO' : n % 100 === 2 ? ' MESTI' : n % 100 === 3 || n % 100 === 4 ? ' MESTA' : ' MEST');   // 1 MESTO, 2 MESTI, 3 MESTA, 5 MEST
   const trackCache = new Map();
   const getTrack = (id) => { if (!trackCache.has(id)) trackCache.set(id, new Core.Track(Core.TRACKS.find(d => d.id === id) || Core.TRACKS[0])); return trackCache.get(id); };
   // The car: S.car (an index into Core.MODELS) is what the game uses while it runs (the tests set it too). Stored as carId, the
@@ -1817,7 +1818,7 @@
     Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
     $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: ch ? ch.cond.season : S.season, tod: ch ? ch.cond.tod : S.tod }, true);   // (a challenge: its season and time of day)
-    fuelTold = { low: false, out: false }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
+    fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; psw = { n: 0, q: null, log: [] }; pfg = { hb: -1, out: -1, c: null, t0: 0, g: 0, lead: false, e: null, key: '', log: [] }; pxs = { hb: -1, log: [] }; $('h-fight').className = ''; $('hud').classList.remove('fight'); fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -2640,6 +2641,7 @@
     }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
     const ph0 = PH.on ? performance.now() : 0;
+    if (pxs.hb >= 0) pitExitStep(P, inp);   // (the gas after the hand-back: a perfect exit out of the pits)
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     if (PH.on) PH.s += performance.now() - ph0;
     if (fly.on && !race.flyOn) flyStep();   // (the flying start: the player's own car the very step it is over the start line)
@@ -2672,12 +2674,13 @@
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
-    pitBar(P); pitHap(P, dt);
+    pitBar(P); pitHap(P, dt); pitTipStep(P, dt);
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
     if (race.pol && race.pol.ev !== polSeen) for (const e of race.pol.log) if (e.n > polSeen) { polSeen = e.n; policeEvent(e.k, P, e); }
     if (race.chr && race.chr.q.length) for (const e of race.chr.q.splice(0)) chrEvent(e.k, e.c, P);
+    if (track.def.pit && race.cars.length > 1) { aiPitHUD(P); pitSwingHUD(P); pitFightStep(P); }
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
     if (track.def.pit && !race.nv && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
@@ -3227,6 +3230,28 @@
     if (P.fuel <= 0 && !fuelTold.out) { fuelTold.out = true; showMsg(tr(P.m.ev ? 'PRAZNA BATERIJA!' : 'BREZ GORIVA!'), 'slow', 2.6); Comm.say(P.m.ev ? 'batteryOut' : 'fuelOut', null, 4); }
     if (P.fuel > 0.9) fuelTold.low = fuelTold.out = false;   // (filled up again)
   }
+  // BOKSI TA KROG (a race with fuel or with the slicks' compounds, on a track with pits; whatever the team radio's setting): on the lap the
+  // stop must be made for them a blue pill, as the sign at the way in (upright under the stack at the left, on its side under the clock); the
+  // last BOX_NEAR m before the way in (def.pit[1]) an arrow to the lane's side (def.pit[0]: Montréal, Toronto, Bathurst, Trois-Rivières on the left) and the metres to it. Decided at the line,
+  // as the team radio's call, for the whole lap (Core's Race.plan, box: the fuel would not reach the next way in, the slicks would be worn
+  // out before it; from the second lap and not in the lane, so never on the plan's first guess at the burn after the start or a fill). Gone
+  // in the pit lane, or once the way in is passed (the lane walled off from the circuit beside the car); at the next line again, while due
+  const BOX_NEAR = 400;
+  let boxW = { lap: -1, due: false, key: '' };
+  function boxHUD(P) {
+    const D = track.def.pit, L = track.len, cur = Math.max(1, P.lap), out = !P.inPit && !P.pitG && !pa.st;
+    const on = !!D && phase === 'racing' && !P.finished && !race.quali && !race.timeTrial && ((P.fuel != null && !!race.fuelRate) || !!(P.ty && P.ty.c));
+    if (cur !== boxW.lap) { boxW.lap = cur; const pl = on && out && cur >= 2 ? race.plan(P) : null; boxW.due = !!pl && pl.box && pl.need.some(k => k === 'fuel' || k === 'tyres'); }
+    let key = '';
+    if (on && out && boxW.due) { const dE = cur * L + D[1] - P.dist, pz = dE < 0 ? track.pitAt(P.q.s) : null;   // (to the way in on this lap, along the race)
+      if (dE < 0 && !(pz && pz.gap && pz.d < (D[1] + D[2]) / 2)) boxW.due = false;   // (past the way in: done for this lap; where the way out touches the circuit again, before the line at Trois-Rivières, not a way in)
+      else key = dE > BOX_NEAR ? 'due' : (D[0] < 0 ? 'l' : 'r') + (dE > 25 ? Math.ceil(dE / 50) * 50 : 0); }   // (the metres in steps of 50)
+    const txt = key ? tr('BOKSI TA KROG') : '';
+    if (key + txt === boxW.key) return; boxW.key = key + txt;
+    const el = $('h-box'), m = key && key !== 'due' ? +key.slice(1) : 0;
+    el.className = !key ? '' : key === 'due' ? 'on' : 'on near ' + key[0];
+    el.firstElementChild.textContent = txt; el.lastElementChild.textContent = m ? m + ' m' : '';
+  }
   // failures (a race with them on): a cut tyre, hot brakes, a hot engine as pills under the fuel (and a tyre burst from wear, with or without
   // them: wearTold); the moment one comes: the message, the commentator and what to do about it (a toast)
   let fltKey = '';
@@ -3394,12 +3419,161 @@
     else if (k === 'duelEnd') { const won = P.dist > c.dist; if (won) showMsg(tr('DVOBOJ DOBLJEN'), 'fast', 1.6); Comm.say(won ? 'duelWon' : 'duelLost', { name: commName(c) }, 2); }
     else if (k === 'mistake' && (near || rv)) { if (near) showMsg(tr('NAPAKA: {0}', String(c.name).toUpperCase()), 'gold', 1.2); Comm.say('aiMistake', { name: commName(c) }, 2); }
   }
+  // a rival into the pits (whatever for: the tyres, a cut one, the fuel, the damage; Core's Race.step): a short big message by the driver's
+  // name as the team radio gives it (J. NOVAK V BOKSIH, the pit icon), for the first three and the cars up to three places from the player
+  // (their places as they come in); one every AIP_GAP s at most. It waits while the big message is the player's own (the lap, the pit stop:
+  // the player in the lane), AIP_WAIT s at most, else it is dropped; a newer one waits behind it no more. log: every rival in, its place and
+  // the player's then, and when its message was shown (the tests read it)
+  const AIP_GAP = 5, AIP_WAIT = 2;
+  let aip = { was: new Set(), q: null, last: -Infinity, log: [] };
+  function aiPitHUD(P) {
+    const O = race.order && race.order.length === race.cars.length ? race.order : race.cars.slice().sort((a, b) => b.dist - a.dist), pi = O.indexOf(P), on = phase === 'racing' && !P.finished;
+    for (const c of race.cars) {
+      if (c === P || c.net) continue;
+      if (!c.inPit) { aip.was.delete(c); continue; }
+      if (aip.was.has(c)) continue;
+      aip.was.add(c); const i = O.indexOf(c), e = { n: c.name, i, pi, t: race.time, shown: null };
+      aip.log.push(e); if (aip.log.length > 40) aip.log.shift();
+      if (on && !aip.q && !c.finished && i >= 0 && (i < 3 || Math.abs(i - pi) <= 3)) aip.q = { c, t: race.time, e };
+    }
+    const q = aip.q; if (!q) return;
+    if (!on || !q.c.inPit || race.time - q.t > AIP_WAIT) { aip.q = null; return; }
+    if (race.time - aip.last < AIP_GAP || msgT > 0 || P.inPit || P.pitG || pa.st) return;
+    aip.q = null; aip.last = q.e.shown = race.time; showMsg(tr('{0} V BOKSIH', String(q.c.name).toUpperCase()), '', 1.6);
+  }
+  // a stop's places (Core's Race._pitSwing: the place before the way in against the one once the order has settled after the stop, ~3 s
+  // after the hand-back): a big message +2 MESTI (green), −1 MESTO (red) or BREZ SPREMEMBE, the pit icon; with the team radio on also the
+  // engineer's line with the place now. The message waits for the hand-back (the autopilot's countdown, when it drives out of the lane),
+  // then while another shows (VOZIŠ TI!, the lap's, a rival's in the pits), SWING_WAIT s at most; none once the player is over the line or
+  // in the lane again. log: each result and when its message was shown (the tests read it)
+  const SWING_WAIT = 2;
+  let psw = { n: 0, q: null, log: [] };
+  const swingTxt = (d) => d > 0 ? '+' + placeWord(d) : d < 0 ? '\u2212' + placeWord(-d) : tr('BREZ SPREMEMBE');
+  function pitSwingHUD(P) {
+    const sw = race.psw;
+    if (sw && sw.n !== psw.n) { psw.n = sw.n; const r = sw.res, e = { d: r.d, pos0: r.pos0, pos1: r.pos1, t: race.time, txt: '', shown: null };
+      psw.log.push(e); if (psw.log.length > 20) psw.log.shift(); psw.q = e; swingRadio(r, P); }
+    const q = psw.q; if (!q) return;
+    if (phase !== 'racing' || P.finished || P.inPit) { psw.q = null; return; }
+    if (pa.st) { q.t = race.time; return; }   // (the autopilot's countdown out of the lane still on: from the hand-back)
+    if (msgT > 0 && race.time - q.t < SWING_WAIT) return;
+    psw.q = null; q.shown = race.time; q.txt = swingTxt(q.d); showMsg(q.txt, q.d > 0 ? 'fast' : q.d < 0 ? 'warn' : 'gold', 2);
+  }
+  function swingRadio(r, P) {   // (the engineer: the places and the place now; in his voice the same in English)
+    if (!trd || !race.mk || !S.radio || phase !== 'racing' || P.finished) return;
+    const n = Math.abs(r.d), w = placeWord(n).toLowerCase(), lead = r.pos1 === 1;
+    teamRadioSay(r.d > 0 ? tr(lead ? 'S postankom si pridobil {0}, zdaj vodiš.' : 'S postankom si pridobil {0}, zdaj si {1}.', w, r.pos1) : r.d < 0 ? tr('S postankom si izgubil {0}, zdaj si {1}.', w, r.pos1)
+      : tr(lead ? 'Brez spremembe po postanku, še vedno vodiš.' : 'Brez spremembe po postanku, še vedno si {0}.', r.pos1), 2, r.d > 0 ? 'radioGain' : r.d < 0 ? 'radioLose' : 'radioSame', { n, pl: n === 1 ? 'place' : 'places', pos: r.pos1 });
+  }
+  // a fight for a place out of the pits (BOJ ZA MESTO): from the hand-back (VOZIŠ TI!, pitFree) to PFG.win s after the car has left the lane
+  // (the way out joined the circuit), a rival on the circuit (not in the lane, racing, on the same lap: the raw distances) alongside or
+  // PFG.near s or less ahead or behind, the nearest in time: a pill in the place of BOKSI TA KROG (upright under the stack at the left, on its
+  // side under the clock) with the driver's name and the gap at the speed now (+0,8 s: the rival behind, green; −0,4 s: ahead, orange; at the
+  // faster car's speed, as the duel's gap on the open road). Gone once the gap opens past PFG.open s, after PFG.dur s, once the player is past
+  // the rival (it was ahead or alongside, now behind), or the rival or the player out of the race, over the line or in the lane; one fight a
+  // stop. Not a friend's car online (its distance from its phone). log: each fight, how it began and ended (the tests read it)
+  const PFG = { near: 1.5, open: 2, dur: 5, win: 4 };
+  let pfg = { hb: -1, out: -1, c: null, t0: 0, g: 0, lead: false, e: null, key: '', log: [] };
+  const pfgGap = (P, o) => (P.dist - o.dist) / Math.max(12, P.speed, o.speed);   // (s: + the rival behind, − ahead)
+  const fightTxt = (g) => { const r = Math.round(Math.abs(g) * 10) / 10; return (r ? (g > 0 ? '+' : '\u2212') : '') + Lang.dec(r.toFixed(1)) + ' s'; };
+  function pitFightOpen() { pfg.hb = race.time; pfg.out = -1; }   // (the hand-back; the tests on the circuit too)
+  function pitFightStep(P) {
+    const F = pfg; if (F.hb < 0) return;
+    if (F.out < 0 && !P.inPit) F.out = race.time;   // (out of the lane: on the circuit)
+    const on = phase === 'racing' && !P.finished && !(F.out >= 0 && P.inPit);   // (not in the lane again)
+    if (F.c) {
+      const o = F.c, g = pfgGap(P, o), d = o.dist - P.dist, side = (P.m.len + o.m.len) / 2 + 2;
+      if (d >= -side) F.lead = true;   // (ahead or alongside: passed once it is behind)
+      F.g = g; const end = !on || o.inPit || race.isOut(o) ? 'out' : F.lead && d < -side ? 'pass' : Math.abs(g) > PFG.open ? 'gap' : race.time - F.t0 > PFG.dur ? 'time' : '';
+      if (end) { F.e.end = end; F.e.t1 = race.time; F.e.g1 = +g.toFixed(2); F.c = null; F.hb = -1; }
+      return;
+    }
+    if (!on || (F.out >= 0 && race.time - F.out > PFG.win)) { F.hb = -1; return; }
+    let best = null, bg = Infinity;
+    for (const o of race.cars) { if (o === P || o.net || o.inPit || race.isOut(o)) continue; const g = pfgGap(P, o); if (Math.abs(g) < Math.abs(bg)) { bg = g; best = o; } }
+    if (!best || Math.abs(bg) > PFG.near) return;
+    F.c = best; F.t0 = race.time; F.g = bg; F.lead = false;
+    F.e = { n: best.name, hb: F.hb, out: F.out, t0: race.time, g0: +bg.toFixed(2), end: '', t1: null, g1: null, txt: [] }; F.log.push(F.e); if (F.log.length > 20) F.log.shift();
+  }
+  function pitFightHUD() {   // (each frame: the pill when its words change)
+    const F = pfg, o = F.c, txt = o ? fightTxt(F.g) : '', key = o ? o.id + '|' + txt + '|' + Lang.cur : '';
+    if (key === F.key) return; F.key = key;
+    const el = $('h-fight'); el.className = !o ? '' : 'on' + (txt[0] === '+' ? ' behind' : txt[0] === '\u2212' ? ' ahead' : ''); $('hud').classList.toggle('fight', !!o);
+    if (!o) return;
+    el.children[0].textContent = tr('BOJ ZA MESTO'); el.children[1].textContent = String(o.name).toUpperCase(); el.children[2].textContent = txt;
+    if (F.e && F.e.txt.length < 60) F.e.txt.push(txt);
+  }
+  // a perfect exit out of the pits (POPOLN IZHOD!): the hand-back (VOZIŠ TI!, pitFree) starts the reaction's clock; the gas pressed (past
+  // Core.LAUNCH.thr, as at the start) within Core.PIT_LAUNCH.re s of it: a clean launch (Race.pitLaunch: no wheelspin through the rest of
+  // the lane and onto the circuit, a little more drive for a couple of seconds) and POPOLN IZHOD! in place of VOZIŠ TI!. The foot on the gas
+  // already at the hand-back (too early), a later press or none: a normal exit, nothing shown. Not with Samodejni plin (its gas always on).
+  // log: each hand-back, how it went ('perfect', 'early', 'late', 'auto') and the reaction (s; null: none in time) (the tests read it)
+  let pxs = { hb: -1, log: [] };
+  function pitExitOpen() { pxs.hb = race.time; }   // (the hand-back; the tests on the circuit too)
+  function pitExitStep(P, inp) {   // (each step from the hand-back, before the race's step: the player's inputs)
+    const r = race.time - pxs.hb, on = inp.thr > Core.LAUNCH.thr, W = Core.PIT_LAUNCH.re + 1e-9;
+    let k = '';
+    if (+S.autoGas) k = 'auto';
+    else if (phase !== 'racing' || P.finished) k = 'late';   // (the race over meanwhile: a normal exit)
+    else if (r < 1e-9) k = on ? 'early' : '';   // (the step of the hand-back: the foot already on the gas)
+    else if (on || r > W) k = on && r <= W ? 'perfect' : 'late';
+    if (!k) return;
+    pxs.log.push({ k, hb: pxs.hb, re: on && r > 1e-9 ? +r.toFixed(4) : null }); if (pxs.log.length > 20) pxs.log.shift(); pxs.hb = -1;
+    if (k === 'perfect') { race.pitLaunch(P); showMsg(tr('POPOLN IZHOD!'), 'fast', 1.6); Sfx.beep(1568, 0.14, 0.14); vibrate(25); }
+  }
+  // the first pit stops on this device: short hints, one at a time, each until it has been seen once (TIP.read s up; remembered in the
+  // browser, tdgp-tips: { id: 1 }; with no storage, or what it holds spoilt, all of them again, kept for this visit only). In the order of the
+  // stop, each in its part: in (the takeover: before the way in's own toast, which follows it), box (the crew at work), out (TIP.soon s before
+  // the hand-back: pitNear for where the car will be by then at its speed). A toast about the stop (tag 'pit': gone with the autopilot,
+  // pitFree), up TIP.dur s of race time. It takes the place of the stop's own toast or a hint of an earlier part, waits for any other toast
+  // (a rule, the weather, an achievement), and for room in the column TOAST_WAIT s at most; a hint whose part is over before it showed or
+  // was seen (also one gone behind the pause, on the toast's own clock) comes at the next stop. Not with autoDrive (automated tests). log:
+  // each hint shown, when, when seen and how it ended (the tests read it)
+  const TIP = { dur: 3.2, read: 1, soon: 3 };
+  const TIPS = [
+    { id: 'in', at: 'in', txt: () => tr('Računalnik zdaj vozi skozi bokse.') },
+    // (a hint about the repair's choice, proposal 2, goes in here, in its part: { id: 'fix', at: 'in', on: (P) => the choice offered at this
+    // stop, txt: () => tr(its text) }; on: only when it applies. Its id also in tests/browser/lib.mjs, which marks the hints seen for the other tests)
+    { id: 'box', at: 'box', txt: () => tr('Mehaniki popravljajo avto.') },
+    { id: 'out', at: 'out', soon: true, txt: () => tr('Pripravi se: kmalu voziš ti.') }];
+  let tipSeen = {};
+  try { const j = JSON.parse(localStorage.getItem('tdgp-tips') || 'null'); if (isObj(j)) for (const k in j) if (j[k] === 1) tipSeen[k] = 1; } catch (_) { tipSeen = {}; }
+  const tipSave = () => { try { localStorage.setItem('tdgp-tips', JSON.stringify(tipSeen)); } catch (_) { } };   // (no storage: for this visit)
+  let tip = { on: false, at: '', after: false, cur: null, done: [], log: [] };   // (at: the part of the stop's toast up; after: the way in's own toast still to come)
+  const pitInToast = () => { tip.at = 'in'; toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); };   // (only while the autopilot drives: pitFree)
+  const tipPart = (P) => !tip.on || phase !== 'racing' || P.finished ? '' : pa.st === 'merge' ? 'out' : !P.inPit ? '' : P.pitState === 'repair' ? 'box' : P.pitDone ? 'out' : 'in';
+  const tipDue = (P, part) => part && TIPS.find(h => h.at === part && !tipSeen[h.id] && !tip.done.includes(h.id) && (!h.on || h.on(P)) && (!h.soon || pitNear({ q: { s: P.q.s + P.speed * TIP.soon }, speed: P.speed })));
+  function tipOpen(P) {   // (a stop's way in: its hints from here; true: a hint first, the way in's own toast after it)
+    tip.on = !autoDrive; tip.done = []; tip.cur = null; tip.at = '';
+    return (tip.after = !!tipDue(P, tipPart(P)));
+  }
+  function tipFree() { if (tip.cur) { tip.cur.e.end = 'free'; tip.cur = null; } tip.on = tip.after = false; }   // (the hand-back, the stop given up: pitFree)
+  function pitTipStep(P, dt) {   // each step, after the stop's events: the hint up, then the next one due
+    const c = tip.cur; if (!c && !tip.on) return;
+    const T = $('toast'), part = tipPart(P);
+    if (c) {   // (its time on race time while it shows; waiting for room in the column it stands still)
+      const up = T.classList.contains('show') && toastTag === 'pit' && T.textContent === c.txt;
+      let end = !up ? (T.classList.contains('show') ? 'other' : 'gone') : part && part !== c.at && tipDue(P, part) ? 'next' : '';   // (gone: on the toast's own clock)
+      if (!end && T.classList.contains('wait')) { c.wt += dt; if (c.wt > TOAST_WAIT) end = 'wait'; }
+      else if (!end) { c.vis += dt; if (c.vis >= TIP.read - 1e-9 && c.e.seen == null) { c.e.seen = +race.time.toFixed(2); tipSeen[c.id] = 1; tipSave(); } if (c.vis >= TIP.dur - 1e-9) end = 'time'; }
+      if (!end) return;
+      c.e.end = end; tip.cur = null; if (up) toastOff('pit');
+    }
+    if (part !== 'in') tip.after = false;
+    if (!part) return;
+    const h = tipDue(P, part), busy = T.classList.contains('show') && !(toastTag === 'pit' && tip.at !== part);   // (the stop's own toast or a hint of an earlier part: in its place)
+    if (h && !busy) {
+      const txt = h.txt(), e = { id: h.id, part, t: +race.time.toFixed(2), seen: null, end: '' };
+      tip.done.push(h.id); tip.at = part; toast(txt, TIP.dur * 2000, 'pit'); tip.cur = { id: h.id, at: part, txt, vis: 0, wt: 0, e };   // (its end on race time; the toast's own clock later: the pause, a race left)
+      tip.log.push(e); if (tip.log.length > 20) tip.log.shift();
+    } else if (!h && tip.after && !T.classList.contains('show')) { tip.after = false; pitInToast(); }
+  }
   function pitEvent(e) {
     if (phase !== 'racing') return;
     if (e === 'enter') {
       if (pa.st === 'merge') return;   // (back over the line during the countdown: nothing new)
       const P = race.player, b = race._boxD(P), stop = b != null && race.track.boxX(P.q.s, b) < 0;   // (its box ahead: a stop; running wide over the line at the way out: only the lane's limiter until back over it)
-      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); toast(tr('Sedaj lahko spustiš plin, vse bo naredil sam.'), 4200, 'pit'); }   // (only while the autopilot drives: pitFree)
+      if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); if (!tipOpen(P)) pitInToast(); }   // (the first stops: a hint first, pitTipStep)
       else showMsg(tr('BOKSI'), 'gold', 1.4);
       Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2);
       hap(stop ? 'pitAP' : 'pitLine'); if (P.speed > Core.PIT_V) hap('pitLimit');   // (came in faster than the lane's limit: the limiter's after it)
@@ -3446,8 +3620,8 @@
     if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say('flyGo', null, 5); }
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
-    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; teamRadioGo(); }
-    $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit');   // (the toast of the way in, if it still waits or shows: not once the player drives)
+    if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; teamRadioGo(); pitFightOpen(); pitExitOpen(); }   // (a fight for a place from here: pitFightStep; the reaction's clock for a perfect exit: pitExitStep)
+    $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit'); tipFree();   // (the toast of the way in or a hint, if it still waits or shows: not once the player drives)
     pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false; stopClose(P);
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
   }
@@ -4055,7 +4229,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    swapHUD(P); wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    swapHUD(P); wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); boxHUD(P); pitFightHUD(); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); $('hud').classList.toggle('tow', on); } }   // the slipstream: lit in the wake of a car ahead
@@ -4107,9 +4281,9 @@
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
     ['warn', /PREDRT|PREBIT|PUNCTURE|IZRABLJEN|TYRES WORN|POČIL|POČEN|BURST|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
-    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
+    ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POPOLN IZHOD|PERFECT EXIT|POLNI PLIN|FLAT OUT/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED|DOLITO|TOPPED UP|NAPOLNJENO|CHARGED|POSTANEK OPRAVLJEN|STOP DONE/],
-    ['pit', /BOKS|PIT|BOX/]];
+    ['pit', /BOKS|PIT|BOX|^[+\u2212]\d+ (MEST|PLACE)|^BREZ SPREMEMBE$|^NO CHANGE$/]];   // (a stop's places: +2 MESTI, −1 MESTO; not the finish's CILJ! 3. MESTO)
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
   function hudCol(dt) {
     const hud = $('hud'), T = $('toast'), R = $('h-teamradio'), M = $('h-msg'), TW = $('h-tower');
@@ -5683,7 +5857,7 @@
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             quick: !!mp.quick, locked: Net.locked, setup: mp.setup && { grid: mp.setup.grid.slice() },
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: recd.pit.map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
