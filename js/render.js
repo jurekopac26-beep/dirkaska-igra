@@ -8669,10 +8669,12 @@ const Render = (function () {
     } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
       // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
       // travel, so a sliding car shows its angle)
-      // (the same lag for both physics: with it the new one, Car.stepNova, shows the car ~21 deg against the view in a quick corner, p95 26,
-      // as the reference video does: 0.37 deg per deg/s of the view's turn, ~21 deg above 50 deg/s, p95 30; the user's choice)
-      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
-      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
+      // (the new physics, Car.stepNova: the car slides into a quick corner itself, NVK.attT, and the view follows the travel closely, 0.08 s
+      // behind: the car ~22 deg against the view above 50 deg/s of its turn, three quarters of it the car's own slide, as the reference video
+      // shows; the user's choice; the classic one as before)
+      const nv = c.phys === 'nova', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
+      const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
+      cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
       cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;

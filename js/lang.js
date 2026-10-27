@@ -19,6 +19,8 @@
     'Oddaljenost': 'Distance', 'Blizu': 'Near', 'Daleč': 'Far', 'Pomoč pri driftu': 'Drift assist',
     'Fizika vožnje': 'Driving physics', 'Klasična': 'Classic', 'Nova': 'New', 'Fizika velja od naslednje dirke.': 'The physics applies from the next race.',
     'Klasična: dosedanja vožnja. Nova: avto drsi po oprijemu gum, na robniku se rahlo dvigne, ob trku se odbije od drugega avta': 'Classic: the driving as before. New: the car slides by the grip of its tyres, lifts a little over the kerbs and bounces off another car in a knock',
+    'Slog nove fizike': 'New physics style', 'Običajen': 'Normal', 'Drseč': 'Sliding',
+    'Velja za novo fiziko. Drseč: avto v hitrem ovinku drsi bolj postrani, zadek gre ven prvi': 'For the new physics. Sliding: the car slides further sideways in a quick corner, the tail goes out first',
     'Položaj avta (nižje)': 'Car position (lower)', 'Običajno': 'Normal',
     'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kamero za avtom; ves avto vedno ostane na zaslonu)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase camera; the whole car always stays on the screen)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',

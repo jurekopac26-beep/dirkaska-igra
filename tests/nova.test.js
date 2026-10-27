@@ -6,9 +6,17 @@
 //   150 km/h does not rotate it; the same engine and brakes as cs (0-100 km/h and 100-0 km/h within 2 %); with the low assist the
 //   throttle in a corner turns the rear-wheel-drive car more than with the high one (the tail steps out)
 // - full lock on the buttons (the phone's steering) from 60, 110 and 160 km/h with the throttle holding the speed, the drift assist high,
-//   in a front-, a rear- and a four-wheel-drive car, the formula, the truck and the little rear-engined car: the car grips with a little slide
-//   (peak under 20 deg; the reference video: ~21 deg against the view in a quick corner, the view's lag included), no spin; with the low
+//   in a front-, a rear- and a four-wheel-drive car, the formula, the truck and the little rear-engined car: the car slides into the corner
+//   (peak 15-32 deg; the reference video: ~21 deg against the view in a quick corner, mostly the car's own slide), no spin; with the low
 //   assist at 110 km/h under 35 deg
+// - the body's slide in a steady corner (NVK.attT): 0.2-0.4 s x the path rate (the video: ~0.3 deg per deg/s), in phase with it (at
+//   0.3 s into a turn-in at least half of the steady slide)
+// - the sliding style (Car.nvSl, Nastavitve → Slog nove fizike: Drseč): full lock at 60 km/h 35-60 deg, no spin; it leads the turn (at
+//   0.25 s into the turn-in more slide than the normal style)
+// - the grass, two wheels on it at 100 km/h, coasting: 0.08-0.18 g more slowing than on the asphalt (the video: 0.1-0.15 g), the car
+//   fidgets (the path's turn jitters, rms > 1.5 deg/s; on the asphalt < 0.3); slicks on the makadam corner about as hard as in
+//   cs (0.95-1.15 x: their stages as quick as in cs)
+// - the rivals' pace (NVK.aiSpr): their skills spread 0.6 as far as in cs, the fastest the same
 // - the low assist: full throttle in a corner steps a rear-driven car's tail out (the V8: 10-45 deg) and does not spin it (the formula
 //   neither); braking hard in a corner does not spin a front-driven car or the little rear-engined one
 // - the kerbs: the wheels on one lift the car a little (up to 2-8 cm, the body rolled away from them) and it settles again past it; a cs
@@ -74,13 +82,58 @@ for (const id of ['rally', 'kaze']) {
   const ids = ['pico', 'kaze', 'rally', 'formula', 'truck', 'miska'], hi = [], lo = [];
   for (const id of ids) { for (const v of [60, 110, 160]) hi.push([id + '@' + v, lock(id, v, 2)]); lo.push([id, lock(id, 110, 0)]); }
   const wH = hi.reduce((a, b) => b[1] > a[1] ? b : a), wL = lo.reduce((a, b) => b[1] > a[1] ? b : a);
-  ok('plane: full lock on the buttons, assist high: a little slide in every car (peak < 20 deg), low assist at 110 km/h < 35 deg', wH[1] < 20 && wL[1] < 35,
-    `high: most ${f(wH[1], 1)} deg (${wH[0]}), low: most ${f(wL[1], 1)} deg (${wL[0]})`);
+  const wN = hi.reduce((a, b) => b[1] < a[1] ? b : a);
+  ok('plane: full lock on the buttons, assist high: every car slides into the corner (peak 15-32 deg), low assist at 110 km/h < 35 deg', wN[1] >= 15 && wH[1] <= 32 && wL[1] < 35,
+    `high: ${f(wN[1], 1)} (${wN[0]}) to ${f(wH[1], 1)} deg (${wH[0]}), low: most ${f(wL[1], 1)} deg (${wL[0]})`);
   const ped = (id, what) => { const c = HN.mkCar(id, { v: what === 'thr' ? 70 : 100, assist: 0 }); for (let i = 0; i < 3 / DT; i++) HN.step(c, { st: 0.7, thr: 'hold' }); const b0 = Math.abs(c.beta); let mx = 0, sp = 0;
     for (let i = 0; i < 1.5 / DT; i++) { HN.step(c, { st: 0.7, thr: what === 'thr' ? 1 : 0, brk: what === 'brk' ? 1 : 0 }); mx = Math.max(mx, Math.abs(c.beta) - b0); sp = Math.max(sp, Math.abs(c.beta)); } return { d: mx * D, sp: sp > 1.2 }; };
   const mu = ped('muscle', 'thr'), fo = ped('formula', 'thr'), pb = ped('pico', 'brk'), mb = ped('miska', 'brk');
   ok('plane, low assist: full throttle in a corner steps the V8\'s tail out (10-45 deg), no spin (nor the formula\'s)', mu.d >= 10 && mu.d <= 45 && !mu.sp && !fo.sp, `V8 +${f(mu.d, 1)} deg, formula +${f(fo.d, 1)} deg`);
   ok('plane, low assist: braking hard in a corner spins neither the front-driven PICO nor the rear-engined MIŠKA', !pb.sp && !mb.sp, `PICO +${f(pb.d, 1)} deg, MIŠKA +${f(mb.d, 1)} deg`);
+}
+
+// ---- the body's slide in a corner; the sliding style ----
+{
+  const taus = [['kaze', 80], ['rally', 110], ['formula', 140], ['truck', 70]].map(([id, v]) => { const r = HN.steady(id, v, 0.6); return [id, r.tau]; });
+  const lo = taus.reduce((a, b) => b[1] < a[1] ? b : a), hi = taus.reduce((a, b) => b[1] > a[1] ? b : a);
+  ok('plane: the body slides in a steady corner by 0.2-0.4 s x the path rate (the video: ~0.3 deg per deg/s)', lo[1] >= 0.2 && hi[1] <= 0.4, taus.map(([id, t]) => `${id} ${f(t)} s`).join(', '));
+  const turn = (id, sl) => { const c = HN.mkCar(id, { v: 80, digital: true }); if (sl) c.nvSl = true; for (let i = 0; i < 0.3 / DT; i++) HN.step(c, { st: 0, thr: 'hold' });
+    let b03 = 0, b025 = 0, mx = 0; for (let i = 0; i < 3 / DT; i++) { HN.step(c, { st: 0.6, thr: 'hold' }); const b = Math.abs(c.beta) * D; if (i === Math.round(0.3 / DT)) b03 = b; if (i === Math.round(0.25 / DT)) b025 = b; mx = Math.max(mx, b); }
+    return { b03, b025, end: Math.abs(c.beta) * D, mx }; };
+  const k = turn('kaze', false);
+  ok('plane: the slide in phase with the turn (0.3 s into a turn-in at least half of the steady slide)', k.b03 >= 0.5 * k.end, `${f(k.b03, 1)} of ${f(k.end, 1)} deg`);
+  const lockS = (id) => { const c = HN.mkCar(id, { v: 60, digital: true }); c.nvSl = true; for (let i = 0; i < 0.3 / DT; i++) HN.step(c, { st: 0, thr: 'hold' });
+    let mx = 0; for (let i = 0; i < 3 / DT; i++) { HN.step(c, { st: 1, thr: 'hold' }); mx = Math.max(mx, Math.abs(c.beta) * D); } return mx; };
+  const sl = ['kaze', 'formula', 'truck'].map(id => [id, lockS(id)]), sk = turn('kaze', true);
+  ok('the sliding style: full lock at 60 km/h 35-60 deg, no spin; ahead of the turn (more slide 0.25 s into it than the normal style)', sl.every(([, b]) => b >= 35 && b <= 60) && sk.b025 > k.b025 + 3,
+    sl.map(([id, b]) => `${id} ${f(b, 1)} deg`).join(', ') + `; 0.25 s in: ${f(sk.b025, 1)} deg (normal ${f(k.b025, 1)})`);
+}
+
+// ---- the grass: two wheels on it (z > 0), coasting from 100 km/h, the steer holding the line; slicks on the makadam ----
+{
+  const plane = (sf) => ({ hasElev: false, def: {}, open: false, rings: [], altC: [], query(x, z, h, o) { o = o || {}; Object.assign(o, { i: 0, a: 0, s: x, d: z, tx: 1, tz: 0, nx: 0, nz: 1, x, z, bl: 1e9, br: 1e9 }); return o; },
+    surface(q) { return q.d > 0 ? sf : 0; } });
+  const run = (sf) => { const T = plane(sf), c = new C.Car(C.MODELS.find(m => m.id === 'rally'), { isPlayer: true, phys: 'nova', assist: 2 }); c.place(0, 0, 0); c.locked = false; c.vx = 100 / 3.6; c.gear = 4;
+    const om = []; let pa = 0, v1 = 0, v2 = 0;
+    for (let i = 0; i < 2.5 / DT; i++) { c.inSteer = c.steer = Math.max(-1, Math.min(1, -0.25 * c.z - 0.15 * c.vz)); c.inThr = 0; c.inBrk = 0; c.step(DT, T); const a = Math.atan2(c.vz, c.vx); om.push((a - pa) / DT * D); pa = a;
+      if (i === Math.round(0.5 / DT)) v1 = Math.hypot(c.vx, c.vz); if (i === Math.round(1 / DT)) v2 = Math.hypot(c.vx, c.vz); }
+    let s2 = 0, n = 0; for (let i = 60; i < om.length - 60; i++) { let m = 0; for (let j = i - 60; j <= i + 60; j++) m += om[j]; m /= 121; s2 += (om[i] - m) ** 2; n++; }
+    return { dec: (v1 - v2) / 0.5 / 9.81, rms: Math.sqrt(s2 / n) }; };
+  const a = run(0), g = run(2);
+  ok('grass, two wheels on it at 100 km/h: 0.08-0.18 g more slowing than on the asphalt, the car fidgets (rms of its turn > 1.5 deg/s; asphalt < 0.3)', g.dec - a.dec >= 0.08 && g.dec - a.dec <= 0.18 && g.rms > 1.5 && a.rms < 0.3,
+    `+${f(g.dec - a.dec)} g, rms ${f(g.rms, 1)} deg/s (asphalt ${f(a.rms, 1)})`);
+  const ay = (H, id) => { H.surf(5); const r = H.steady(id, 70, 1.0).ay; H.surf(0); return r; };
+  const fN = ay(HN, 'formula'), fS = ay(HC, 'formula'), lN = ay(HN, 'lm'), lS = ay(HC, 'lm');
+  ok('slicks on the makadam: the formula and the prototype corner about as hard as in cs (0.95-1.15 x; 70 km/h, full lock)', [fN / fS, lN / lS].every(r => r >= 0.95 && r <= 1.15),
+    `formula ${f(fN)} g (cs ${f(fS)}), prototype ${f(lN)} g (cs ${f(lS)})`);
+}
+
+// ---- the rivals' pace ----
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'spa')), sk = (phys) => { const r = new C.Race(T, { numAI: 12, playerGrid: 13, laps: 1, phys, seed: 4, difficulty: 1 }); const s = r.cars.filter(c => !c.isPlayer).map(c => c.skill); return [Math.min(...s), Math.max(...s)]; };
+  const n = sk('nova'), s = sk('cs');
+  ok(`the rivals' pace (NVK.aiSpr): spread ${C.NVK.aiSpr} as far as in cs, the fastest the same`, Math.abs((n[1] - n[0]) / (s[1] - s[0]) - C.NVK.aiSpr) < 0.12 && Math.abs(n[1] - s[1]) < 0.01,
+    `nova ${f(n[0], 3)}-${f(n[1], 3)}, cs ${f(s[0], 3)}-${f(s[1], 3)}`);
 }
 
 // ---- the kerbs: a plane with a kerb on the right (+z side) from x 20 m to 40 m, the car runs along x with its right wheels on it ----

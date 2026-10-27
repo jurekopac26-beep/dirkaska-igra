@@ -6,7 +6,7 @@ const { loadCore } = require(ROOT + '/tests/lib/core.js');
 const C = loadCore();
 const ov = JSON.parse(process.argv[2] || '{}');
 Object.assign(C.NVK, ov.K || {}); (ov.A || []).forEach((a, i) => a && Object.assign(C.NVASSIST[i], a));
-const H = require(ROOT + '/tests/lib/handling.js')(C, 'nova');
+const H0 = require(ROOT + '/tests/lib/handling.js')(C, 'nova'), H = Object.assign({}, H0, { mkCar: (id, o) => { const c = H0.mkCar(id, o); if (process.env.SL) c.nvSl = true; return c; } });   // (SL=1: the sliding style, Car.nvSl)
 const D = 180 / Math.PI, DT = H.DT;
 const ids = process.argv[3] ? process.argv[3].split(',') : ['kaze', 'pico', 'rally', 'strega', 'muscle', 'formula', 'lm', 'truck', 'miska', 'titan', 'mravlja', 'bizon', 'medved', 'tornado'];
 const f = (v, d = 1) => Number.isFinite(v) ? (+v).toFixed(d) : String(v);
