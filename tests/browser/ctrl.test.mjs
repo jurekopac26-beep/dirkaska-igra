@@ -130,7 +130,7 @@ try {
   await click('[data-act="to-ctrl"]'); await act('ctrl-tab', '#ctrl-tabs [data-v="keys"]');
   const en = await page.evaluate(() => ({ h: document.querySelector('#s-ctrl h2').textContent, tabs: [...document.querySelectorAll('#ctrl-tabs button')].map(b => b.textContent), rows: [...document.querySelectorAll('#ctrl-body .ctl-row')].map(r => r.innerText.replace(/\s+/g, ' ').trim()) }));
   T.check('in English: Controls, Keyboard, Gamepad and wheel, the keys\' rows (no Drift, no Space)', en.h === 'Controls' && en.tabs.join() === 'Keyboard,Gamepad and wheel' &&
-    en.rows.join(' | ') === 'Left ← A | Right → D | Throttle ↑ W | Brake ↓ S | Pause Esc P | Tyres for the stop T — | Replay to here I — | Flag (a bug) F —', JSON.stringify(en));
+    en.rows.join(' | ') === 'Left ← A | Right → D | Throttle ↑ W | Brake ↓ S | Pause Esc P | Tyres for the stop T — | Replay to here I — | Flag (a bug) F — | Developer view O —', JSON.stringify(en));
 
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {
