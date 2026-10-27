@@ -33,7 +33,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Pull request odpri samo, če uporabnik to izrecno prosi, ali za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop oziroma na združen korak; sklop 17 jih ima lahko več).
 
 ## Kje je kaj (manj iskanja)
-- Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` 3,9 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
+- Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` in `js/world-pikes.js` po ~0,5 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
 - Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
 
 ## Orodje za napake (`docs/orodje-za-napake.md`)

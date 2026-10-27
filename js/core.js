@@ -21,6 +21,13 @@ const Core = (function () {
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
+  // the random events of a race that change the game (a wheel off, the debris, the AI's reactions and mistakes …): from rand(), the
+  // stepped race's numbers (Race.rnd: Race.step and aiControl set RAND to them). A repeatable race (opts.repro, the test mode: the quick
+  // entry's ?seme=, a test) draws them from its seed, so the same race twice is the same, whatever Math.random does; else Math.random,
+  // as ever (the tests that seed Math.random keep their sequence and the golden references theirs)
+  const MR = () => Math.random();
+  let RAND = MR;
+  const rand = () => RAND();
 
   /* ---------------------------------------------------------------------
      TRACK
@@ -1656,11 +1663,12 @@ const Core = (function () {
     aPk: 0.12, aPkR: 0.15,   // slip angle at the peak (rad): front 6.9 deg, rear 8.6 deg (the rear saturates later: a turn-in's yaw overshoot does not spin it)
     aW: 0.14,          // past the peak the grip falls toward fall over ~aW rad
     fall: 0.85,        // the grip left in a big slide (share of the peak)
-    balR: 0.97,        // the rear axle's peak against the front's (< 1: the tail goes first on the brakes and on the throttle)
+    balR: 1.08,        // the rear axle's peak against the front's (> 1: at the limit the front goes first, the car runs wide a little as in the reference
+                       // video; the tail goes on the brakes, the throttle or a lift through the load and the friction ellipse)
     hK: 0.35,          // load transfer: x model.hcg / wheelbase per g of the car's own acceleration (the game's grip is ~2.3 g: a real car's transfer at
                        // that would lift the rear off on the brakes; 1.6 g of braking moves ~10 % of the weight to the front)
     comb: 1.1,         // friction ellipse: the drive / brake force that leaves an axle no side grip, x its side peak
-    brkF: 0.68,        // brakes: the front axle's share
+    brkF: 0.04,        // brakes: the front axle's share is its share of the load and this much more (plus the assist's NA.bb: the rear never locks first)
     lockX: 0.05,       // full lock: this much more front slip than the demand needs (rad)
     capK: 0.94,        // full lock asks for this share of the steady limit (a margin: the tail slides from the pedals, a kerb or a knock, not from the steer)
     stMax: 0.6,        // the wheels' most lock (rad)
@@ -1674,13 +1682,15 @@ const Core = (function () {
                        // (<= 35 %); render.js shows the lift (c.nvY, nvR, nvP)
   };
   // nova assists (ASSISTS level): cs the counter-steer (the front wheels turned toward the travel by that share of the excess slide), att
-  // the slide angle the stability aid lets the car reach (rad), k its yaw torque per rad beyond it (rad/s^2 per rad), tc the traction
-  // control: the drive may take this share of what the cornering leaves the driven axle (more than 1: the tail steps out on the throttle),
-  // yf the yaw follow: the wheels turned further (or back) by this share of the yaw rate still missing against the path rate asked for
+  // the slide beyond the steady one that the stability aid lets the car reach (rad), k its yaw torque per rad beyond it (rad/s^2 per rad),
+  // tc the traction control: the drive may take this share of what the cornering leaves the driven axle (more than 1: the tail steps out
+  // on the throttle), ts: past this share of their peak slip the rear tyres' drive is cut back; sp: the driven wheels' side grip lost per
+  // unit of wheelspin (Car.spin); bb: the brakes' front share above the load's (K.brkF); yf the yaw follow: the wheels turned
+  // further (or back) by this share of the yaw rate still missing against the path rate asked for
   const NVASSIST = [
-    { cs: 0.35, att: 0.9, k: 12, tc: 1.6, yf: 0.3 },    // nizka
-    { cs: 0.65, att: 0.7, k: 25, tc: 1.25, yf: 0.6 },   // srednja
-    { cs: 0.9, att: 0.55, k: 40, tc: 1.0, yf: 1.0 },    // visoka (the AI's)
+    { cs: 0.35, att: 0.3, k: 35, tc: 1.6, ts: 2.0, sp: 0.12, bb: 0.04, yf: 0.3 },  // nizka
+    { cs: 0.65, att: 0.2, k: 45, tc: 1.25, ts: 1.3, sp: 0.06, bb: 0.05, yf: 0.6 }, // srednja
+    { cs: 0.9, att: 0.1, k: 60, tc: 1.0, ts: 0.9, sp: 0, bb: 0.06, yf: 1.0 },      // visoka (the AI's)
   ];
   // the side grip at slip angle al >= 0 (share of the peak): a quarter sine up to the peak pk, then down toward NVK.fall; and the slip angle
   // that gives share f (0..1) on the rising part
@@ -2171,7 +2181,7 @@ const Core = (function () {
       // ---- the demand: a path rate (the steer x its cap, as cs), and the wheels turned as far as the car's steady model needs for it ----
       const v = Math.max(spd, 0.5), gA = this.aeroK ? 1 + this.aeroK * spd * spd : 1;
       const mu0 = K.aL * P.amax * gA;                                                      // the axles' peak grip (g) on dry asphalt
-      const lF0 = b / L, lR0 = a / L, hL = K.hK * (M.hcg || 0.5) / L;
+      const lF0 = b / L, lR0 = a / L, hL = K.hK * (M.hcg || Math.min(0.5, 0.2 * L)) / L;   // (no hcg given: a small car's lower)
       const lF = clamp(lF0 - hL * this.axF / G, 0.25, 0.75), lR = 1 - lF;                   // the load: forward on the brakes, back on the throttle
       const capF = mu0 * latF * m * G * lF, capR = mu0 * latB * m * G * lR * K.balR;       // each axle's side peak (N)
       const kvU = ARC[M.id] ? P.kv / ARC[M.id].kv : 1;
@@ -2194,12 +2204,16 @@ const Core = (function () {
         const aY = Math.max(aD, Math.abs(this.csAn)), left = (cap, ex, l0) => ex * Math.sqrt(Math.max(0, 1 - Math.min(1, m * aY * l0 / Math.max(1, cap)) ** 2)) * NA.tc;
         if (dF < 1) F = Math.min(F, left(capR, exR, lR0) / (1 - dF));
         if (dF > 0) F = Math.min(F, left(capF, exF, lF0) / dF);
+        const sR = Math.abs(alR) / K.aPkR;   // (and the rear tyres' slip: past NA.ts of their peak the drive is cut back, the tail does not run away)
+        if (dF < 1 && sR > NA.ts) F *= Math.max(0.1, 1 - (sR - NA.ts) / 0.4);
       }
-      const FxF = clamp(F * dF - (fwd ? fb : 0) * K.brkF, -exF, exF), FxR = clamp(F * (1 - dF) - (fwd ? fb : 0) * (1 - K.brkF), -exR, exR);
+      const bS = clamp(lF + K.brkF + NA.bb, 0.5, 0.9);   // (the brakes' front share follows the load: on the brakes it moves forward)
+      const FxF = clamp(F * dF - (fwd ? fb : 0) * bS, -exF, exF), FxR = clamp(F * (1 - dF) - (fwd ? fb : 0) * (1 - bS), -exR, exR);
       const gl = this.ck ? this.ck.gl : (this.xgl || 0);   // (a crash in the run from the police, Razbijanje's knock: the grip lost for a moment)
       const yK = lo * (1 - gl);
-      const FyF = -Math.sign(alF) * capF * Math.sqrt(Math.max(0, 1 - (FxF / exF) ** 2)) * nvCurve(Math.abs(alF), K.aPk) * yK;
-      const FyR = -Math.sign(alR) * capR * Math.sqrt(Math.max(0, 1 - (FxR / exR) ** 2)) * nvCurve(Math.abs(alR), K.aPkR) * yK;
+      const wsp = F > 0 && fwd ? clamp(spin * NA.sp, 0, 0.45) : 0;   // (the driven wheels spinning: their side grip goes too; the low assists only)
+      const FyF = -Math.sign(alF) * capF * Math.sqrt(Math.max(0, 1 - (FxF / exF) ** 2)) * nvCurve(Math.abs(alF), K.aPk) * yK * (1 - wsp * dF);
+      const FyR = -Math.sign(alR) * capR * Math.sqrt(Math.max(0, 1 - (FxR / exR) ** 2)) * nvCurve(Math.abs(alR), K.aPkR) * yK * (1 - wsp * (1 - dF));
       // ---- forces (body frame) and the yaw torque ----
       let Fx = 0, Fy = 0, Mz = 0;
       const ux = spd > 0.05 ? vl / spd : 1, uy = spd > 0.05 ? vt / spd : 0, cd = Math.cos(dl), sd = Math.sin(dl);
@@ -2228,7 +2242,7 @@ const Core = (function () {
       if (this.bankSl && grounded) { const b2 = trk.bank2 && !trk.bank, a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = (b2 ? this.bnx : this.q.nx) * a2, wz = (b2 ? this.bnz : this.q.nz) * a2, fl = m * (wx * ch + wz * sh);
         Fx += fl; Fy += m * (-wx * sh + wz * ch); Fgrav += fl; }
       // ---- the stability aid (the drift assist): past its slide angle a yaw torque back, while the slide still grows ----
-      const att = -beta;
+      const att = bSS - beta;   // (the slide beyond the steady one the steer asks for)
       if (fwd && grounded && spd > 4) { const ex = Math.abs(att) - NA.att; if (ex > 0 && this.w * att > 0) Mz -= Math.sign(att) * NA.k * ex * this.I * lo; }
       // ---- yaw: the torque; parking: the kinematic turn; reversing as cs; in the air the spin dies away ----
       if (!grounded) this.w *= Math.exp(-dt / KC.airYawT);
@@ -2364,14 +2378,14 @@ const Core = (function () {
     const W = c.wreck;
     for (let j = 0; j < n; j++) {
       const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partsOf(c.m)[WHEELS[k]]); if (!on.length) return;
-      detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(Math.random() * on.length))]]);
+      detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(rand() * on.length))]]);
     }
   }
   function wheelRule(c, d0, amt) {
     const W = c.wreck, Q = W.rule, d1 = c.dmg;
     if (!Q || W.dnf || c.finished || c.dmgMode !== 2) return;
     if (d1 >= WRULE.d2 && amt >= WRULE.hard) {   // a hard hit at 80 % or over: two at once, sometimes three or four
-      let n = 2; if (Math.random() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (Math.random() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
+      let n = 2; if (rand() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (rand() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
       ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); return;
     }
     const hit = d0 >= WRULE.d1 && amt >= WRULE.hit;   // (a hit from 70 %: its damage before it sets when the second goes)
@@ -2608,9 +2622,9 @@ const Core = (function () {
       if (vrel > 0.3) {
         const kick = Math.min(24, 1.35 * vrel);
         d.vx += kick * nx; d.vz += kick * nz; d.vy = Math.max(d.vy, 1 + Math.min(4, vrel * 0.18));
-        d.wy += (Math.random() - 0.5) * 10; d.wx += (Math.random() - 0.5) * 8; d.rest = false; d.ground = false;
+        d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false;
         const k = Math.min(0.06, d.m * 0.004);                       // the car feels it: speed loss + twitch, more for big parts
-        c.vx *= 1 - k; c.vz *= 1 - k; c.w += (Math.random() - 0.5) * d.m * 0.05;
+        c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * d.m * 0.05;
         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
       }
       return;
@@ -2713,7 +2727,7 @@ const Core = (function () {
   }
   function propFeel(c, m, vrel, kind) {   // what the driver feels: a little speed and a twitch, a thump
     const k = Math.min(0.045, m * 0.0016) * Math.min(1, vrel / 8);
-    c.vx *= 1 - k; c.vz *= 1 - k; c.w += (Math.random() - 0.5) * m * 0.012;
+    c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * m * 0.012;
     c.hitDebris = Math.max(c.hitDebris || 0, vrel * clamp(m / 30, 0.12, 0.35));
     if (vrel > 4) { c.propKnock = kind; c.propKnockV = vrel; }
     if (vrel > 1.5 && (!c.propSnd || vrel > c.propSndV)) { c.propSnd = kind; c.propSndV = vrel; }
@@ -2742,7 +2756,7 @@ const Core = (function () {
       const j = 1.35 * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);
       b.sleep = false; b.t = 0; b.age = 0;
       propImpulse(b, nx * j, 0, nz * j, rx, ry, rz);
-      b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
+      b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (rand() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(K.vmax || 18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }   // (vmax: a braking board's legs in the ground: it tips over rather than flies)
       race.propFx(b, vrel);
       if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) knock(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
@@ -2762,7 +2776,7 @@ const Core = (function () {
     if (ib) { b.x += nx * pen * ib / it; b.y += ny * pen * ib / it; b.z += nz * pen * ib / it; b.dirty = true; }
     if (vr > 0) {
       const j = 1.15 * vr / it; a.vx -= j * nx * ia; a.vy -= j * ny * ia; a.vz -= j * nz * ia;
-      if (ib) { b.vx += j * nx * ib; b.vy += j * ny * ib; b.vz += j * nz * ib; if (b.sleep) { b.sleep = false; b.t = 0; b.age = 0; b.wy += (Math.random() - 0.5) * 3; } }
+      if (ib) { b.vx += j * nx * ib; b.vy += j * ny * ib; b.vz += j * nz * ib; if (b.sleep) { b.sleep = false; b.t = 0; b.age = 0; b.wy += (rand() - 0.5) * 3; } }
     }
   }
   function propStep(race, b, T, dt) {
@@ -2786,7 +2800,7 @@ const Core = (function () {
     if (q.k >= 0) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits)
     if (pen > 0 && b.y - gy < 3.2) {
       b.x -= nx * pen; b.z -= nz * pen;
-      const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (Math.random() - 0.5) * vn; }
+      const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (rand() - 0.5) * vn; }
     }
     if (T.open && b.y - gy < 3.2) { const pen = endPen(T, q, K.rh); if (pen > 0) { const nx = _en[0], nz = _en[1]; b.x += nx * pen; b.z += nz * pen; const vn = b.vx * nx + b.vz * nz; if (vn < 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; } } }   // open road: the end walls
     let touch = false, maxPen = 0;                                                  // ground: impulses at every contact point below it
@@ -2898,7 +2912,7 @@ const Core = (function () {
   // a puncture (failures, Car.flt): a hard knock (a wall or a car, 40 km/h and more across) may cut the tyre on the corner that took it,
   // the likelier the harder (up to one in four); one at a time (a second waits for the pits). lx, lz: the knock in the car's frame
   function puncture(c, lx, lz, hit) {
-    const F = c.flt; if (!F || c.pitG || F.pw >= 0 || hit < 11 || Math.random() > Math.min(0.25, (hit - 11) / 20)) return;
+    const F = c.flt; if (!F || c.pitG || F.pw >= 0 || hit < 11 || rand() > Math.min(0.25, (hit - 11) / 20)) return;
     F.pw = (lx >= 0 ? 0 : 2) + (lz >= 0 ? 1 : 0); F.pk = 0; F.ev = 'puncture';   // (the wheel: 0 front left, 1 front right, 2 rear left, 3 rear right)
   }
 
@@ -3108,7 +3122,8 @@ const Core = (function () {
   }
   function distFromS(W, s) { let lo = 0, hi = W.length; while (lo < hi) { const m = (lo + hi) >> 1; if (W[m].q.s < s) lo = m + 1; else hi = m; } return lo; }
   function distFrom(BD, d) { let lo = 0, hi = BD.length; while (lo < hi) { const m = (lo + hi) >> 1; if (BD[m].dist < d) lo = m + 1; else hi = m; } return lo; }
-  function aiControl(c, race, dt) {
+  function aiControl(c, race, dt) { const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
+  function aiDrive(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
     const q = c.q;
     const v = Math.max(0, c.vl);
@@ -3116,7 +3131,7 @@ const Core = (function () {
     // --- avoidance / overtaking ---
     c.aiT -= dt;
     if (c.aiT <= 0) {
-      c.aiT = 0.12 + Math.random() * 0.08;
+      c.aiT = 0.12 + rand() * 0.08;
       let target = c.laneBias;
       let threat = null, tgap = 1e9, aU = null, aD = null;
       const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null, L0 = BD ? distFrom(BD, c.dist - 8.5) : 0;   // (a big field: only the cars alongside and just ahead, from the list sorted by dist)
@@ -3262,7 +3277,7 @@ const Core = (function () {
       const ch = c.chr;
       if (brk > 0.3 && !ch.brk) {
         ch.brk = true;
-        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && Math.random() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
+        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && rand() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
       } else if (thr > 0.4) ch.brk = false;
     }
     // don't stamp on the brakes while turning hard (trail-braking is stable: the slide is the design)
@@ -4931,6 +4946,7 @@ const Core = (function () {
       const remoteAt = new Map(); for (const r of RMS) remoteAt.set(Math.min(total, r.grid || total), r);
       Object.defineProperty(this, 'remotes', { value: [], enumerable: false });   // (not in the golden references' digest of the race's plain fields)
       const R = rng(opts.seed || 7);
+      Object.defineProperty(this, 'rnd', { value: opts.repro ? rng(((opts.seed || 7) * 48271 + 29) >>> 0) : MR, enumerable: false });   // (the race's own random numbers: rand)
       // AI roster
       const diff = DIFF[clamp(opts.difficulty == null ? 1 : opts.difficulty, 0, 2)]; this.diff = diff;   // (the fourth level, super težka, is the police's: a race takes it as težka)
       if (oneMake) this.oneMake = oneMake;
@@ -5201,8 +5217,8 @@ const Core = (function () {
       this.flyOn = true;
     }
 
-    spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default Math.random; a patrol car's: the police's own, see step)
-      const rnd = R || Math.random;
+    spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default the race's (rand); a patrol car's: the police's own, see step)
+      const rnd = R || rand;
       const P = partsOf(c.m)[name], hl = c.m.len * 0.5, hw = c.m.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h);
       const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + rnd() * 3;
@@ -5269,9 +5285,9 @@ const Core = (function () {
       b.parts.forEach((p, k) => {
         const o = qRot(b, K.parts[k][0], K.parts[k][1], K.parts[k][2], _r3), f = K.pf[k];
         p.x = b.x + o[0]; p.y = b.y + o[1]; p.z = b.z + o[2]; p.qx = b.qx; p.qy = b.qy; p.qz = b.qz; p.qw = b.qw;
-        const side = (Math.random() - 0.5) * 2.4, vv = b.kind === 'bstack' || b.kind === 'rbstack' ? Math.min(11, vn * 0.62) : Math.min(14, vn * 0.78);
+        const side = (rand() - 0.5) * 2.4, vv = b.kind === 'bstack' || b.kind === 'rbstack' ? Math.min(11, vn * 0.62) : Math.min(14, vn * 0.78);
         p.vx = svx * 0.2 + nx * vv * f[0] + tx * side; p.vz = svz * 0.2 + nz * vv * f[0] + tz * side; p.vy = f[1] + vv * 0.05 * (k + 1);
-        p.wx = (Math.random() - 0.5) * 9; p.wy = (Math.random() - 0.5) * 7; p.wz = (Math.random() - 0.5) * 9;
+        p.wx = (rand() - 0.5) * 9; p.wy = (rand() - 0.5) * 7; p.wz = (rand() - 0.5) * 9;
         p.dead = false; p.hidden = false; p.sleep = false; p.dirty = true; p.t = 0; p.age = 0; p.qi = b.qi;
         if (p.slot < 0) { p.slot = this.propSlots[p.kind]; this.propSlots[p.kind]++; }
         this._bkPut(p);
@@ -5288,7 +5304,8 @@ const Core = (function () {
       for (const b of this.props) if (!b.sleep && !b.dead) propStep(this, b, T, dt);
     }
 
-    step(dt) {
+    step(dt) { const R0 = RAND; RAND = this.rnd; try { this._step(dt); } finally { RAND = R0; } }   // (its random events from its own numbers: rand)
+    _step(dt) {
       const T = this.track, cars = this.cars;
       if (this.wst && this.wst.on) this._weather(dt);
       T.inRain = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0;   // (the puddles; the track is shared with the title screen's race: the weather of the race being stepped)
@@ -6310,7 +6327,7 @@ const Core = (function () {
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
     if (id == null) return null;
-    const q = { track: null, mode: null, t: null, weather: null, car: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
+    const q = { track: null, mode: null, t: null, weather: null, car: null, seed: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
@@ -6319,6 +6336,7 @@ const Core = (function () {
     }
     if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
     if (P.has('vreme')) { const w = QUICK_WX[low('vreme')]; if (w) q.weather = w; else q.bad.push('vreme=' + P.get('vreme')); }
+    if (P.has('seme')) { const v = P.get('seme').trim(); if (/^\d{1,10}$/.test(v) && +v >= 1 && +v <= 2147483647) q.seed = +v; else q.bad.push('seme=' + P.get('seme')); }   // (the test mode's seed: a whole number from 1)
     if (P.has('avto')) { const M = MODELS.find(m => m.id === low('avto')); if (M) q.car = heirOf(M).id; else q.bad.push('avto=' + P.get('avto')); }   // (a retired model's: its heir)
     return q;
   }
