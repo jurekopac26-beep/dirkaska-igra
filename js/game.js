@@ -501,7 +501,7 @@
   // the test mode (repeatable races, sklop 16): opened with the quick entry, every race of the visit the same race when started the same way.
   // The race's seed is the address's (?seme=<n>, else 1) and Race opts.repro draws its random events from it (Core: rand); here the weather
   // the settings leave to chance, Big Sur's mist and the lights' hold, from a stream of the same seed, new for every race (newRace). Online: no
-  let repro = null;   // ({ seed, R }; tests: Game.repro)
+  let repro = null;   // ({ seed, R }; tests: window.__game.repro)
   const grand = () => repro && repro.R ? repro.R() : Math.random();
   function weatherOf(d) {
     if (wxNext) { const W = wxNext; wxNext = null; return W; }
