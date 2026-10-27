@@ -65,6 +65,60 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
     out.every(x => x.hbT != null && x.hbT > 0.3 && x.hbT < 2 && x.mWall === 0 && x.mEnd && x.mEnd.d < x.mEnd.w), out.map(x => `${x.id} ${x.hbT != null ? x.hbT.toFixed(1) + ' s' : 'NO HAND-BACK'}, ${x.mEnd ? x.mEnd.kmh + ' km/h' : '-'}${x.mWall ? ' WALL ' + x.mWall : ''}`).join(', '));
 }
 
+// 4. the junctions with the circuit (Track.pitJ, every real circuit with pits; the test tracks keep theirs as they were): a deceleration
+// lane before the way in and an acceleration lane after the way out, never into a bend (R < 120 m or a kerb within 4 m), at least the 15 m
+// taper; the whole pit road asphalt (Track.surface 0: the lanes, the gore, the pit lane itself; the apron paving), its barrier open to
+// every car along the lanes; the autopilot and the AI cars drive into the deceleration lane before the way in (the car's centre past the
+// circuit's edge by more than 2 m at the lane's end) and keep to the acceleration lane past the way out, merging back as it closes
+{
+  const REAL = PITS.filter(d => !d.test), res = [];
+  for (const d of REAL) {
+    const T = new C.Track(d), P = d.pit, J = T.pitJ(), sd = P[0] < 0 ? -1 : 1, q = {}, bad = [];
+    if (!J) { res.push({ id: d.id, bad: ['no junction'] }); continue; }
+    const bend = (dd) => { const i = T.idx(T.startS + dd); return Math.abs(T.k[i]) > 1 / 120 || !!T.curb[i]; };
+    for (const [from, len, dir] of [[P[1], J.li, -1], [P[2], J.lo, 1]]) if (len > 15) for (let e = 0; e <= len; e++) if (bend(from + dir * e)) { bad.push(`lane into a bend at ${from + dir * e}`); break; }
+    const surf = (dd, o) => { const s = T.startS + dd, f = (((s % T.len) + T.len) % T.len) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f), L = (A) => A[i] + (A[j] - A[i]) * u;   // (between the samples)
+      return T.surface(T.query(L(T.px) + L(T.nx) * o * sd, L(T.pz) + L(T.nz) * o * sd, i, q)); };
+    for (let dd = J.a + 1; dd < J.b; dd += 1) {
+      const u = T.pitLead(T.startS + dd), p = u < 0 ? T.pitAt(T.startS + dd) : null; let lo, hi;
+      if (u >= 0) { if (u < 0.3) continue; lo = T.w + 0.3; hi = T.w + 0.1 + 7 * u - 0.3; }
+      else if (p && (dd < J.ga || dd > J.gb)) { lo = T.w + 0.3; hi = p.lout - 0.3; }
+      else if (p) { lo = p.lin + 0.3; hi = p.lout - 0.3; if (p.t > 0.999 && surf(dd, p.lout + 2) !== 4) bad.push(`apron at ${dd} not paving`); }
+      else continue;
+      for (const o of [lo, (lo + hi) / 2, hi]) { const sf = surf(dd, o); if (sf !== 0) { bad.push(`surface ${sf} at ${dd}/${o.toFixed(1)}`); break; } }
+    }
+    res.push({ id: d.id, bad, li: J.li, lo: J.lo });
+  }
+  check('the pit road\'s junctions: a deceleration lane before the way in, an acceleration lane after the way out (never into a bend, at least the 15 m taper); the lanes, the gore and the pit lane asphalt, the apron paving',
+    res.every(x => !x.bad.length), res.map(x => x.bad.length ? `${x.id} ${x.bad.slice(0, 3).join('; ')}` : `${x.id} ${x.li}/${x.lo} m`).join(', '));
+  const out = [];
+  for (const d of REAL) {
+    const T = new C.Track(d), P = d.pit, J = T.pitJ(), sd = P[0] < 0 ? -1 : 1, orig = Math.random; Math.random = seeded(7);
+    try {
+      const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 1, damage: 2 });
+      r.start(); const pl = r.player; let t = 0, k = 0, asked = false, rep = false, inLane = null, accel = 0, accelN = 0, back = false, wall = 0;
+      const dS = (s) => { let x = s - T.startS; x = ((x % T.len) + T.len) % T.len; return x > T.len / 2 ? x - T.len : x; };
+      while (t < 600 && !back) {
+        Math.random = seeded(9000 + (++k));
+        if (!asked && pl.lap >= 1 && !T.pitAt(pl.q.s)) { asked = true; pl.pitWant = true; pl.dmg = 0.3; }
+        if (pl.pitDone) rep = true; if (rep && !pl.inPit) pl.pitWant = false;
+        C.aiControl(pl, r, DT); r.step(DT); t += DT;
+        const dd = dS(pl.q.s), dl = pl.q.d * sd;
+        if (asked && !rep && inLane == null && dd > P[1] - 1 && dd < P[1] + 5) inLane = dl - T.w;   // (at the lane's end, where the pit lane starts)
+        if (asked && !rep && inLane == null && dd > P[1] + 5 && dd < P[1] + 30) inLane = -1;   // (never seen there)
+        if (asked && (dd > J.a - 30 && dd < P[1] + 30 || rep && dd > J.gb && dd < J.b + 30) && pl.hitWall > 0.5) wall++;
+        if (rep && dd > P[2] && dd < P[2] + (J.lo - J.tb) / 2) { accelN++; if (dl > T.w + 1.5) accel++; }   // (along the first half of the acceleration lane's parallel part)
+        if (rep && dd > J.b + 20 && Math.abs(pl.q.d) < T.w) back = true;
+        pl.hitWall = 0;
+      }
+      out.push({ id: d.id, inLane, lane: J.li > 15, accel: accelN ? accel / accelN : 1, back, wall });
+    } finally { Math.random = orig; }
+  }
+  check('the autopilot uses them: in the deceleration lane at the way in (its centre more than 2 m past the circuit\'s edge; where there is only the taper, the cars cross the gore as before), in the acceleration lane along its parallel part, back on the circuit after it, no wall',
+    out.every(x => (!x.lane || (x.inLane != null && x.inLane > 2)) && x.accel > 0.9 && x.back && x.wall === 0),
+    out.map(x => `${x.id} ${x.inLane == null ? '-' : x.inLane.toFixed(1)} m in, ${Math.round(x.accel * 100)} % in the lane out${x.back ? '' : ' NOT BACK'}${x.wall ? ' WALL ' + x.wall : ''}`).join(', '));
+}
+
 // 3. a long race with fuel and tyres (Toskana, Rio and Toronto with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
 // own box on the apron parked straight; on the pit road nobody touches anybody and nobody is damaged, the ghosts keep out of each other; everybody to
 // the line, no ghost left

@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, NRC, NRT, RB, TAU, addShore, atS, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl, gable,
     ico, inPoly, lerp, nrDem, nrDist, nrGH, nrGround, nrLC, nrLCf, nrLump, nrNear, nrPrep, nrTileGeo, nrTileOn, propFloorTable, rng, shoreBand,
-    sstep, valueNoise2, vary, waterMat, waterline, wrapS
+    sstep, valueNoise2, vary, waterMat, waterline, wrapS, pitJunction, pitKerbs, pitOpen, pitRoadAt
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -135,6 +135,7 @@
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true }), pvMat = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true });
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if (side * k > 0) kerb[side > 0 ? 1 : 0][i] = 1; }   // (the street circuit: kerbs on the insides only)
+    pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const RCH = 256, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, secT = new Float32Array(N);
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 40 + Math.floor(crH(k, 3, 37) * 60), t = 0.9 + crH(k, 5, 37) * 0.14; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o) => { const rl = T.rl[i]; let k = (0.86 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
@@ -158,8 +159,8 @@
             const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], vv]));
             if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk;
           } else pk[si] = -1;
-          // the verge from the edge to the wall: the pavement (Thai kerbs painted black and white), in a junction's mouth the street's asphalt
-          const inner = w + (kerb[si][i] ? T.curbW : 0.02), wd = wide(i, side), pave = [0.86, 0.86, 0.84], blk = Math.floor(ii * ds / 1.0) % 2 ? [0.12, 0.12, 0.13] : [0.95, 0.95, 0.93];
+          // the verge from the edge to the wall: the pavement (Thai kerbs painted black and white), in a junction's mouth (and where the pit lane joins) the street's asphalt
+          const inner = w + (kerb[si][i] ? T.curbW : 0.02), wd = wide(i, side) || (side > 0 && !!def.pit && pitOpen(i)), pave = [0.86, 0.86, 0.84], blk = Math.floor(ii * ds / 1.0) % 2 ? [0.12, 0.12, 0.13] : [0.95, 0.95, 0.93];
           const ord = (a) => side > 0 ? a : a.slice().reverse();
           if (wd) { const pts = ord([Pt(i, side * inner, 0.022), Pt(i, side * (bar + 0.15), 0.022)]), rr = gm.row(pts, [[0.98, 0.98, 1], [0.98, 0.98, 1]], pts.map(p => [p[0] / 8, -p[2] / 8])); if (pm[si] >= 0) gm.link(pm[si], rr, 0, 1); pm[si] = rr; pv[si] = -1; }
           else { const o3 = [inner, inner + (kerb[si][i] ? 0.02 : 0.32), inner + (kerb[si][i] ? 0.03 : 0.34), bar + 0.15], cl = [kerb[si][i] ? pave : blk, kerb[si][i] ? pave : blk, pave, pave], hh = [0.024, 0.024, 0.026, 0.026];
@@ -185,7 +186,7 @@
     /* ---- the barriers: concrete walls the whole way round (open only where the pit lane leaves and joins), the debris fence on them, the
        game's own advertising boards on the walls ---- */
     const side2 = (side) => (side > 0 ? 1 : 0), conc = [0.8, 0.8, 0.78], concD = [0.64, 0.64, 0.62];
-    const wallAt = (i, side) => !(side > 0 && PD && (() => { const p = T.pitAt(i * ds); return p && p.gap; })());
+    const wallAt = (i, side) => !(side > 0 && PD && (pitOpen(i) || (() => { const p = T.pitAt(i * ds); return p && p.gap; })()));   // (pitOpen: the deceleration and acceleration lanes too)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const wallRow = (gr, i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), o2 = side * (bar + 0.5);
       let p = [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, 1.0), Pt(i, o, 1.1), Pt(i, o2, 1.1)], c = [concD, conc, conc, [0.9, 0.9, 0.88], [0.84, 0.84, 0.82]];
@@ -228,6 +229,7 @@
         if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(s0, pi.o - 3.36, 0.033), at(s0, pi.o - 3.18, 0.033), at(s1, pj.o - 3.18, 0.033), at(s1, pj.o - 3.36, 0.033), [wl, wl, wl, wl]);
         if (pi.t > 0.999 && pj.t > 0.999) gp.quadUp(at(s0, pi.o + 3.5, 0.022), at(s0, pi.o + 11.5, 0.022), at(s1, pj.o + 11.5, 0.022), at(s1, pj.o + 3.5, 0.022), [apC, apC, apC, apC]);
       }
+      pitJunction(gl, gp, hyS);   // the deceleration and acceleration lanes, the gores (in the lane's meshes)
       const kbox = (g, s0, a, wo, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = atSf(s0 + a, wo); box(g, x, hyS(s0 + a) + y, z, sx, sy, sz, hd, col, top, nb); };
       const kcyl = (g, s0, a, wo, y, r, h, n, col, top) => { const [x, z] = atSf(s0 + a, wo); cyl(g, x, hyS(s0 + a) + y, z, r, h, n, col, top); };
       for (let q = pq0, k = 0; q <= pq1; q += 10, k++) { const s0 = sStart + q, i = T.idx(s0), p = T.pitAt(s0); if (!p || p.t < 0.999) continue;
@@ -487,7 +489,7 @@
       for (const side of [-1, 1]) for (let d = 10; d < L; d += 9) { const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i]; if (wide(i, side) || (side > 0 && PD && T.pitAt(s))) continue;
         const r = crH(d, side, 41), [x, z] = atSf(s, side * (bar + 2.4)); if (ocGet(x, z) === 2 || seaD(x, z) > -40 || inTrack(x, z)) continue;
         const g = scen.get(x, z), hd = T.hd[i];
-        if (r < 0.2) { const n = 2 + Math.floor(crH(d, side, 42) * 3); for (let k = 0; k < n; k++) { const [mx, mz] = atSf(s + k * 0.95, side * (bar + 2.3)); moto(g, mx, mz, hd + side * 1.2, MB[Math.floor(crH(d + k, side, 43) * MB.length)]); nMb++; } }
+        if (r < 0.2) { const n = 2 + Math.floor(crH(d, side, 42) * 3); for (let k = 0; k < n; k++) { const [mx, mz] = atSf(s + k * 0.95, side * (bar + 2.3)); if (pitRoadAt(mx, mz, 1)) continue; moto(g, mx, mz, hd + side * 1.2, MB[Math.floor(crH(d + k, side, 43) * MB.length)]); nMb++; } }   // (none on the pit road's junction)
         else if (r < 0.4) { spirit(g, x, z, hd + (side > 0 ? -Math.PI / 2 : Math.PI / 2)); nSp++; }
       }
       // plastic water barriers (red and white) across each side street a little behind the wall, cars parked behind them

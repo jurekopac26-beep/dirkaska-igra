@@ -991,6 +991,64 @@ const World = (function () {
     return D;
   }
 
+  /* ---- the pit road's junctions with the circuit on the pit lane's side (Core.Track.pitJ): before the way in the deceleration lane, after the
+     way out the acceleration lane (7 m, widening out of the circuit's edge), parted from the circuit by a broken line (it may be crossed);
+     between the circuit and the pit lane up to the pit wall's nose the gore, bordered by solid lines, white chevrons across it. Asphalt
+     from the circuit's edge out (Core's surface: asphalt too). pitOpen(i): sample i lies in a junction, where no barrier, kerb or dressing
+     stands on the pit lane's side (the builders' barriers, kerbs, verges ask it). pitJunction(ga, gl, H): its asphalt into the builder's
+     own lane mesh (ga: with UVs, the lane's asphalt material, col: its colour, default white), its paint into the lane's lines (gl): no
+     draw call more; H(s): the road's height at s (null: flat, 0; left out: the samples' heights, T.hy, between them) ---- */
+  function pitOpenD(d) { const J = T.pitJ ? T.pitJ() : null; return !!J && ((d >= J.a - 2 && d <= J.ga) || (d >= J.gb - 2.1 && d <= J.b + 2)); }   // (from the pit wall's last 2 m on: a builder's barrier runs on to its next sample, so it ends at the nose, not in the gore)
+  function pitOpen(i) { if (!T.def.pit || T.open) return false; const L = T.len; let d = i * T.ds - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; return pitOpenD(d); }
+  let PJB = null;   // (the junctions' bounding box on this build's track, pitRoadAt's quick test; its query and hint)
+  function pitRoadAt(x, z, m) {   // (x, z) on a junction's asphalt or within m of it (and not on the circuit itself): nobody stands there
+    const P = T.def.pit, J = P && !T.open && T.pitJ ? T.pitJ() : null; if (!J) return false;
+    const sd = P[0] < 0 ? -1 : 1, L = T.len;
+    if (!PJB || PJB.T !== T) { PJB = { T, x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9, q: {}, h: -1 };
+      for (let d = J.a; d <= J.b; d += 2) { if (d > J.ga + 2 && d < J.gb - 2) continue; const i = T.idx(T.startS + d); for (const o of [0, sd * (T.w + 9)]) { const px = T.px[i] + T.nx[i] * o, pz = T.pz[i] + T.nz[i] * o; PJB.x0 = Math.min(PJB.x0, px); PJB.x1 = Math.max(PJB.x1, px); PJB.z0 = Math.min(PJB.z0, pz); PJB.z1 = Math.max(PJB.z1, pz); } } }
+    const B = PJB; if (x < B.x0 - 12 || x > B.x1 + 12 || z < B.z0 - 12 || z > B.z1 + 12) return false;
+    const q = T.query(x, z, B.h, B.q); for (let k = 0; k < 400; k++) { const h = q.i; T.query(x, z, h, q); if (q.i === h) break; } B.h = q.i; let d = q.s - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
+    if (!pitOpenD(d)) return false; const u = T.pitLead(q.s), p = u < 0 ? T.pitAt(q.s) : null, hi = u >= 0 ? T.w + 0.1 + 7 * u : p ? p.lout : T.w, dl = q.d * sd;   // (the query on from its hint until the nearest sample: its search reaches 10)
+    return dl > T.w + 0.1 && dl < hi + m;
+  }
+  function pitExcl(push) {   // the builder's exclusion circles (push(x, z, r)) along the junctions: no scenery placed on their asphalt
+    const P = T.def.pit, J = P && !T.open && T.pitJ ? T.pitJ() : null; if (!J) return; const sd = P[0] < 0 ? -1 : 1;
+    for (const [a, b] of [[J.a, J.ga], [J.gb, J.b]]) for (let d = a; d <= b; d += 3) { const s = T.startS + d, u = T.pitLead(s), p = u < 0 ? T.pitAt(s) : null, hi = u >= 0 ? T.w + 0.1 + 7 * u : p ? p.lout : T.w;
+      if (hi < T.w + 0.6) continue; const [x, z] = atSf(s, sd * (T.w + hi) / 2); push(x, z, (hi - T.w) / 2 + 1.5); }
+  }
+  function pitKerbs(kerb) { const P = T.def.pit; if (P && !T.open) for (let i = 0; i < T.N; i++) if (pitOpen(i)) kerb[P[0] < 0 ? 0 : 1][i] = 0; return kerb; }   // (kerb: [left, right] per sample)
+  function pitJunction(ga, gl, H, col) {
+    const P = T.def.pit, J = P && !T.open && T.pitJ ? T.pitJ() : null; if (!J) return;
+    const sd = P[0] < 0 ? -1 : 1, w = T.w, S0 = T.startS, one = col || [1, 1, 1], wl = [0.95, 0.95, 0.94];
+    if (H === undefined) H = T.hy ? (s) => { const f = wrapS(s) / T.ds, i0 = Math.floor(f) % T.N, i1 = (i0 + 1) % T.N; return T.hy[i0] + (T.hy[i1] - T.hy[i0]) * (f - Math.floor(f)); } : null;   // (by default the samples' heights, as the street builders lay their verges)
+    const pt = (d, o, y) => { const s = S0 + d, [x, z] = atSf(s, sd * o); return [x, (H ? H(s) : 0) + y, z]; }, U = (p) => [p[0] / 8, -p[2] / 8];
+    const quad = (g, A, B, C, D, col, uv) => { if (g.quadUp) return g.quadUp(A, B, C, D, [col, col, col, col], uv ? [A, B, C, D].map(U) : undefined);   // (a GB, or an RB: two rows linked, wound to face up)
+      if ((B[2] - A[2]) * (D[0] - A[0]) - (B[0] - A[0]) * (D[2] - A[2]) < 0) [A, B, C, D] = [B, A, D, C];
+      const r0 = g.row([A, B], [col, col], uv ? [U(A), U(B)] : undefined), r1 = g.row([D, C], [col, col], uv ? [U(D), U(C)] : undefined); g.link(r0, r1, 0, 1); };
+    const strip = (g, d0, d1, a0, b0, a1, b1, y, col, uv) => quad(g, pt(d0, a0, y), pt(d0, b0, y), pt(d1, b1, y), pt(d1, a1, y), col, uv);
+    const uA = (d, inn) => (inn ? sstep(J.a, J.a + J.ta, d) : sstep(J.b, J.b - J.tb, d)), lo = w - 0.35, yA = 0.05, yL = 0.062;   // (lo: over the circuit's own edge line, here the broken one or the gore's solid one)
+    for (const [d0, d1, P0, inn] of [[J.a, J.ga, P[1], true], [J.gb, J.b, P[2], false]]) {
+      const cut = []; for (let d = d0; ; ) { cut.push(d); if (d >= d1) break; let n = Math.min(d1, d + (d < J.a + J.ta || d >= J.b - J.tb ? 1 : 2)); if (d < P0 && n > P0) n = P0; d = n; }   // (1 m steps in the tapers, 2 m along the rest; one ends where the pit lane starts / ends)
+      for (let k = 0; k + 1 < cut.length; k++) {
+        const a = cut[k], b = cut[k + 1], lead = inn ? b <= P0 : a >= P0;
+        if (lead) { const ha = w + 0.1 + 7 * uA(a, inn), hb = w + 0.1 + 7 * uA(b, inn);   // the deceleration / acceleration lane
+          strip(ga, a, b, lo, ha, lo, hb, yA, one, true);
+          if ((Math.floor((a + b) / 4) & 1) === 0) strip(gl, a, b, w - 0.32, w - 0.12, w - 0.32, w - 0.12, yL, wl);   // the broken line: 2 m on, 2 m off
+          if (ha > w + 0.5 && hb > w + 0.5) strip(gl, a, b, ha - 0.32, ha - 0.14, hb - 0.32, hb - 0.14, yL, wl);   // its outer edge
+        } else { const pa = T.pitAt(S0 + a), pb = T.pitAt(S0 + b); if (!pa || !pb) continue;   // the gore
+          strip(ga, a, b, lo, pa.lin + 0.1, lo, pb.lin + 0.1, yA, one, true);
+          strip(gl, a, b, w - 0.32, w - 0.12, w - 0.32, w - 0.12, yL, wl);   // its solid lines: along the circuit, along the lane
+          if (pa.lin > w + 0.9 && pb.lin > w + 0.9) strip(gl, a, b, pa.lin - 0.25, pa.lin - 0.05, pb.lin - 0.25, pb.lin - 0.05, yL, wl); }
+      }
+    }
+    for (const [a, b] of [[P[1] + 0.01, P[1] + 2.6], [P[2] - 2.6, P[2] - 0.01]]) { const pa = T.pitAt(S0 + a), pb = T.pitAt(S0 + b); if (!pa || !pb) continue;   // the pit lane's own first and last metres (a builder's lane from its first whole sample on: no strip of grass across it)
+      strip(ga, a, b, pa.lin, pa.lout, pb.lin, pb.lout, 0.03, one, true); strip(gl, a, b, pa.lout - 0.32, pa.lout - 0.14, pb.lout - 0.32, pb.lout - 0.14, 0.04, wl); }
+    for (const [a, b, dir] of [[P[1], J.ga, 1], [J.gb, P[2], -1]]) for (let d = a + 2; d < b - 1; d += 4) {   // the chevrons across the gore: white bars 0.6 m wide every 4 m, slanting towards the lane
+      const p = T.pitAt(S0 + d); if (!p || p.lin < w + 1.2) continue; const Lc = (p.lin - w - 0.3) * 0.6, e = dir * 0.6;
+      quad(gl, pt(d, w + 0.05, yL + 0.002), pt(d + e, w + 0.05, yL + 0.002), pt(d + e + dir * Lc, p.lin - 0.3, yL + 0.002), pt(d + dir * Lc, p.lin - 0.3, yL + 0.002), wl);
+    }
+  }
+
   /* ---- the pit lane (Bakreni gozd, Toskana, Gromski rt, as in the reference; Spa): an asphalt lane on the outside of the straight behind a bare rail
      on a grass strip, a pale concrete apron with painted boxes where the crews stand in rows, a row of garages behind. opt: the builder's R, scen,
      prop(kind, x, z, yaw), excl(x, z, r), root, out, ownTex; Y(s): the road's height at s (the flat circuits: none, everything at the heights
@@ -1007,6 +1065,7 @@ const World = (function () {
       gp.quadUp(at(i, a1 - 0.32, 0.033), at(i, a1 - 0.14, 0.033), at(j, b1 - 0.14, 0.033), at(j, b1 - 0.32, 0.033), [wl, wl, wl, wl]);                        // solid line on the outer edge
       if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(i, a0 + 0.14, 0.033), at(i, a0 + 0.32, 0.033), at(j, b0 + 0.32, 0.033), at(j, b0 + 0.14, 0.033), [wl, wl, wl, wl]);   // dashed inner line
       if (pi.t > 0.999 && pj.t > 0.999) gp.quadUp(at(i, a1, 0.022), at(i, a1 + 9, 0.022), at(j, b1 + 9, 0.022), at(j, b1, 0.022), [conc, conc, conc, conc]); }  // concrete apron
+    pitJunction(gl, gp, Y);   // the deceleration and acceleration lanes, the gores (in the lane's meshes)
     const TEAM = [[0.85, 0.16, 0.13], [0.16, 0.36, 0.8], [0.95, 0.95, 0.94], [0.18, 0.62, 0.3], [0.96, 0.72, 0.12], [0.14, 0.14, 0.16], [0.95, 0.45, 0.1], [0.5, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55], [0.7, 0.1, 0.1]];
     // ---- garage and box dressing (no random draws here: the scenery after it stays the same). a = metres along from the box start, w = lateral ----
     const kbox = (g, s0, a, w, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = atSf(s0 + a, w); box(g, x, yS(y, s0 + a), z, sx, sy, sz, hd, col, top, nb); };
@@ -1110,7 +1169,7 @@ const World = (function () {
   const EXT = {};
   function extAPI() {
     return { T, THEME, GB, RB, Chunks, IChunks, box, cyl, cone, ico, puff, gable, roofKit, hex, vary, rng, clamp, lerp, sstep, TAU, atS, atSf, wrapS, crAt, inPoly, polyDist,
-      valueNoise2, waterMat, shoreBand, waterline, mergeBands, addShore, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, swayMat, treeMark, treesTo, nrLump };
+      valueNoise2, waterMat, shoreBand, waterline, mergeBands, addShore, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, swayMat, treeMark, treesTo, nrLump, pitOpen, pitKerbs, pitJunction };
   }
 
   /* ---------------- BUILD ---------------- */
@@ -3693,7 +3752,7 @@ const World = (function () {
       const bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w + 8)) : T.w + 8, d0 = T.w + 2.0, d1 = Math.min(bar - 0.7, T.w + 13);
       if (d1 < d0 + 0.3) continue;
       const d = d0 + (d1 - d0) * Math.pow(crH(s, side, 6), 1.6), x = T.px[i] + T.nx[i] * d * side, z = T.pz[i] + T.nz[i] * d * side;
-      if (T.surface(T.query(x, z, i, q)) !== 2) continue;   // (on the grass only: not on the gravel, the run-off, the paths)
+      if (T.surface(T.query(x, z, i, q)) !== 2 || pitRoadAt(x, z, 1)) continue;   // (on the grass only: not on the gravel, the run-off, the paths; its blades not over the pit road's junctions)
       const y = (gH ? gH(x, z) : (T.hasElev && T.hy ? T.hy[i] : 0)) - 0.02, u = crH(x, z, 7), g = 0.9 + 0.2 * crH(x, z, 8), lc = lawn(x, z);
       tu.add(x, y, z, u * 26, 0.9 + 0.8 * crH(x, z, 9), 0.34 + 0.3 * crH(x, z, 10), [lc[0] * g, lc[1] * g, lc[2] * g]);
       if (u < 0.2) { const f = 0.85 + 0.15 * crH(x, z, 11); fl.add(x + 0.2, y, z - 0.1, u * 41, 0.8 + 0.3 * crH(x, z, 12), 0.5 + 0.2 * crH(x, z, 13), [f, f, f]); }
@@ -4021,7 +4080,8 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
+  function finish(o, tex) { if (o.props && T.def.pit) o.props = o.props.filter(p => !pitRoadAt(p.x, p.z, 0.6));   // (no knockable prop on the pit road's junctions)
+     o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4512,7 +4572,7 @@ const World = (function () {
   }
   // one spectator at (x, y, z) facing (fx, fz); o: sit (share sitting in the front row), flag (share with a flag), shirts; row 0 = front
   function crowdPut(C, x, y, z, fx, fz, o, row) {
-    if (!crFree(C, x, z)) return false;
+    if (!crFree(C, x, z) || pitRoadAt(x, z, 1.5)) return false;   // (nobody on the pit road's junctions)
     const h = (k) => crH(x, z, k), fl = o && o.flag != null ? o.flag : 0.05, p = h(2);
     const pose = o && o.pose != null ? o.pose : o && o.sit && row === 0 && h(1) < o.sit ? 6 : p < fl ? 5 : p < fl + 0.1 ? 1 : p < fl + 0.2 ? 2 : p < fl + 0.3 ? 3 : p < fl + 0.43 ? 4 : 0;
     const kid = h(3) < 0.04, sxz = kid ? 0.8 : 0.92 + 0.16 * h(4), sy = kid ? 0.7 : 0.9 + 0.2 * h(5);
@@ -4786,7 +4846,7 @@ const World = (function () {
     clearance, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
-    nrTileOn, nrTreeGeo, nringProps, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
+    nrTileOn, nrTreeGeo, nringProps, pikesProps, pitExcl, pitJunction, pitKerbs, pitLaneScenery, pitOpen, pitRoadAt, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
     shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wrapS
   };
   Object.defineProperties(API, {

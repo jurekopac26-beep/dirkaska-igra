@@ -12,7 +12,7 @@
   if (typeof World === 'undefined' || !World.ext) return;
   World.ext.toronto = function (scene, tex, opts, W) {
     const { T, GB, RB, Chunks, IChunks, box, cyl, cone, ico, puff, hex, vary, rng, clamp, lerp, sstep, TAU, atSf, crAt, inPoly, crowdCtx, crowdRun, crowdFinish, crowdUV,
-      waterMat, shoreBand, waterline, addShore } = W;
+      waterMat, shoreBand, waterline, addShore, pitOpen, pitJunction } = W;
     const R = rng(2874), N = T.N, ds = T.ds, def = T.def, D = def.tor, L = T.len, sStart = T.startS, w = T.w, WA = T.wa || new Float64Array(N).fill(w);
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, props: [], ownTex: [], farClip: true, propR: 170, winMaps: [] };
@@ -194,7 +194,7 @@
           for (const sd of [-1, 1]) {   // the sidewalk
             const si = sd > 0 ? 1 : 0, o0 = wi + CURB, o2 = o0 + 0.25 + swOf(i), om = (o0 + o2) / 2, P0 = Pt(i, sd * om, 0);
             const pz = sd < 0 ? pitAtI(i) : null;
-            if ((pz && pz.o > 0) || onRoad(P0[0], P0[2], -1, 0.2) || onRoad(...Pt(i, sd * (o2 - 0.2), 0).filter((_, k) => k !== 1), -1, 0)) { ps[si] = -1; continue; }
+            if ((pz && pz.o > 0) || (sd < 0 && pitOpen(i)) || onRoad(P0[0], P0[2], -1, 0.2) || onRoad(...Pt(i, sd * (o2 - 0.2), 0).filter((_, k) => k !== 1), -1, 0)) { ps[si] = -1; continue; }
             const yt = 0.17;
             let pp = [Pt(i, sd * o0, 0.0), Pt(i, sd * o0, yt), Pt(i, sd * o2, yt)], cc = [concK, conc, conc];
             if (sd < 0) { pp = pp.reverse(); cc = cc.slice().reverse(); }
@@ -252,7 +252,7 @@
       const c = Math.cos(h), sn = Math.sin(h), ring = (yy) => g.row(POQ.map(([a, b]) => [x + a * c - b * sn, yy, z + a * sn + b * c]), POC.concat(POC, POC, POC, POC));
       g.link(ring(y), ring(y + 3.6), 0, 4);
     };
-    const gapAt = (i, sd) => { if (sd > 0 || !def.pit) return false; const p = pitAtI(i); return !!p && p.gap; };
+    const gapAt = (i, sd) => { if (sd > 0 || !def.pit) return false; if (pitOpen(i)) return true; const p = pitAtI(i); return !!p && p.gap; };   // (pitOpen: the deceleration and acceleration lanes too)
     const wallRow = (g, i, sd, bar) => {   // the block's cross-section at sample i, its faces towards the road (rows left -> right)
       const shade = 0.93 + 0.07 * Math.sin(Math.floor(i * ds / 3.8) * 2.1), c0 = [0.62 * shade, 0.62 * shade, 0.6 * shade], c1 = [0.8 * shade, 0.8 * shade, 0.78 * shade], c2 = [0.86, 0.86, 0.84];
       let p = [Pt(i, sd * (bar - 0.02), -0.05), Pt(i, sd * (bar + 0.06), 0.28), Pt(i, sd * (bar + 0.2), 0.84), Pt(i, sd * (bar + 0.42), 0.84), Pt(i, sd * (bar + 0.62), -0.05)], c = [c0, c1, c1, c2, c0];
@@ -289,6 +289,7 @@
         if (!p.gap && p.t > 0.999) { const j = T.idx(sStart + q + 2); gp.quadUp(at(i, p.lout, 0.03), at(i, p.lout + 9, 0.03), at(j, p.lout + 9, 0.03), at(j, p.lout, 0.03), [apron, apron, apron, apron]);
           if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(i, p.lin + 0.15, 0.035), at(i, p.lin + 0.3, 0.035), at(j, p.lin + 0.3, 0.035), at(j, p.lin + 0.15, 0.035), [wl, wl, wl, wl]); }
       }
+      pitJunction(gl, gp);   // the deceleration and acceleration lanes, the gores (in the lane's meshes; on the samples' heights, as the lane)
       addM(gl, aMat); 
       const TEAM = [[0.85, 0.16, 0.13], [0.16, 0.36, 0.8], [0.95, 0.95, 0.94], [0.18, 0.62, 0.3], [0.96, 0.72, 0.12], [0.14, 0.14, 0.16], [0.95, 0.45, 0.1], [0.5, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55], [0.7, 0.1, 0.1]];
       const WH = [0.93, 0.93, 0.92], FR = [0.62, 0.63, 0.66];

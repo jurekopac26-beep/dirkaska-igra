@@ -1101,7 +1101,7 @@ const Core = (function () {
       const conflict = (s, side) => {
         const i = this.idx(s), d = dS(s);
         if (d < 14 || d > L - 14 || Math.abs(k[i]) > 1 / 160) return true;   // (the start line's gantry; a bend)
-        if (def.pit) { const p = this.pitAt(s); if (p && p.sd === side && p.gap) return true; }   // (where the pit lane leaves or joins the circuit)
+        if (def.pit) { const p = this.pitAt(s); if ((p && p.sd === side && p.gap) || (!p && this.pitLead(s) >= 0 && side === (def.pit[0] < 0 ? -1 : 1))) return true; }   // (where the pit lane leaves or joins the circuit, its deceleration and acceleration lanes: pitJ)
         if (this.gap && this.gap[side > 0 ? 1 : 0][i]) return true;   // (a side road's mouth)
         for (const c of this.cross || []) for (const f of [c.lo, c.up]) { const dd = Math.abs(i - f); if (Math.min(dd, N - dd) * ds < 30) return true; }   // (a bridge)
         return false;
@@ -1282,6 +1282,48 @@ const Core = (function () {
       const S = this.pitStands, e = S ? Math.min(sstep(S[0] - 26, S[0] - 1, d), sstep(S[1] + 26, S[1] + 1, d)) : 0, wall = br + 0.25, lin = o - 3.5;
       return { d, o, t, br, sd, gap: o - 3.5 < br + 0.8, wall, lin, lout: o + 3.5, inner: wall + 0.12 + Math.max(0, lin - 0.3 - wall - 0.12) * e };
     }
+    // the pit lane's junctions with the circuit: before the way in (def.pit[1]) a deceleration lane beside the circuit, after the way out
+    // (def.pit[2]) an acceleration lane, 7 m wide like the pit lane (its centre where pitAt starts and ends, w + 3.6), each widening out of
+    // the circuit's edge over its first (last) PIT_LANE.taper m; between the circuit and the pit lane up to the pit wall's nose (pitAt gap) the
+    // hatched gore. All asphalt (surface: _pave). Their lengths: def.pitLanes [in, out] (m, default PIT_LANE.len), each cut short so that it
+    // never reaches into a bend (R < 120 m or a kerb, 4 m clear of it: the way in right after a corner, Bathurst); where less than 12 m is
+    // left, only the taper of PIT_LANE.min m (the lane's end not cut off square beside the circuit: the cars coming out cross no grass).
+    // -> { a, b: where the lanes start and end, li, lo: their lengths, ta, tb: their tapers, ga, gb: the gap's ends (m from the start
+    // line) } (null: no pit lane)
+    pitJ() {
+      if (this._pj !== undefined) return this._pj;
+      const P = this.def.pit; if (!P || this.open || this.def.test) return (this._pj = null);   // (the test tracks, def.test: their pit lanes as they were)
+      const S0 = this.startS, bend = (d) => { const i = this.idx(S0 + d); return Math.abs(this.k[i]) > 1 / 120 || !!this.curb[i]; };
+      const room = (from, dir, want) => { let e = 0; while (e < want + 4 && !bend(from + dir * e)) e++; e -= 4; return Math.max(PIT_LANE.min, e < 12 ? 0 : Math.min(want, e)); };
+      const W = this.def.pitLanes || [PIT_LANE.len, PIT_LANE.len], li = room(P[1], -1, W[0]), lo = room(P[2], 1, W[1]), tap = (l) => Math.min(l, PIT_LANE.taper, Math.max(PIT_LANE.min, l * 0.6));
+      let ga = P[1]; while (ga < P[2] && this.pitAt(S0 + ga).gap) ga += 0.5;
+      let gb = P[2]; while (gb > P[1] && this.pitAt(S0 + gb).gap) gb -= 0.5;
+      return (this._pj = { a: P[1] - li, b: P[2] + lo, li, lo, ta: tap(li), tb: tap(lo), ga, gb });
+    }
+    // the deceleration or acceleration lane at s (pitJ): its width there, 0..1 of the 7 m (its outer edge w + 0.1 + 7 u); -1 outside them
+    pitLead(s) {
+      const J = this._pj !== undefined ? this._pj : this.pitJ(); if (!J) return -1;
+      const L = this.len, P = this.def.pit; let d = s - this.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
+      if (d >= J.a && d < P[1]) return sstep(J.a, J.a + J.ta, d);
+      if (d > P[2] && d <= J.b) return sstep(J.b, J.b - J.tb, d);
+      return -1;
+    }
+    // where the pit road is paved, per sample on the pit lane's side (measured to that side): [lo, hi, ap] at 3 i .. 3 i + 2 (0, 0, 0:
+    // nowhere). Asphalt from lo to hi: the deceleration and acceleration lanes and the gore from the circuit's edge out, the pit lane itself
+    // from its inner edge to its outer one; past it to ap, where it runs full width, the concrete apron in front of the garages (def.pitApron:
+    // paving). Built once: surface() reads it for every wheel
+    _pave() {
+      const N = this.N, V = this._pv = new Float32Array(3 * N), J = this.pitJ(); if (!J) return V;
+      const L = this.len, A = this.def.pitApron || 9;
+      for (let i = 0; i < N; i++) {
+        const s = i * this.ds; let d = s - this.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d < J.a - 2 || d > J.b + 2) continue;
+        const u = this.pitLead(s), p = u < 0 ? this.pitAt(s) : null, k = 3 * i;
+        if (u >= 0) V[k + 1] = V[k + 2] = this.w + 0.1 + 7 * u;
+        else if (p && (d < J.ga + this.ds || d > J.gb - this.ds)) V[k + 1] = V[k + 2] = p.lout;   // (the gore to the sample past the nose: no grass between the samples there)
+        else if (p) { V[k] = p.lin; V[k + 1] = p.lout; V[k + 2] = p.lout + (p.t >= 0.999 ? A : 0); }
+      }
+      return V;
+    }
     // the 13 crews' boxes as the world builds them (def.pitRow: every 10 m from its first, where the lane runs full width; a crew in each of the
     // first 13): their centres, metres from the start line. The player's is def.pit[3], the AI cars' the others (Race._aiBox)
     crewBoxes() {
@@ -1373,6 +1415,10 @@ const Core = (function () {
         return 5;
       }
       if (q.k >= 0) { const S = this.stubs[q.k]; return Math.abs(q.u) <= this.stubHw(S, q.st, q.u) ? (S.grav ? 5 : 0) : 3; }
+      if (this.def.pit && !this.open) {   // the pit road (the lane, the deceleration and acceleration lanes, the gore): asphalt; the apron: paving (_pave)
+        const V = this._pv || this._pave(), a = 3 * q.a, b = 3 * ((q.a + 1) % this.N), t = q.t, dl = this.def.pit[0] < 0 ? -d : d;
+        if (dl > 0 && dl >= V[a] + (V[b] - V[a]) * t) { if (dl <= V[a + 1] + (V[b + 1] - V[a + 1]) * t) return 0; if (dl <= V[a + 2] + (V[b + 2] - V[a + 2]) * t) return 4; }
+      }
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
       if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
@@ -2515,6 +2561,7 @@ const Core = (function () {
   // the order has settled after the stop: wait s out of the lane (~3 s after the autopilot hands the car back, which is ~1 s before the
   // way out), and every rival that was in the lane with it out again, cap s at most
   const PSW = { pre: 150, wait: 2, cap: 10 };
+  const PIT_LANE = { len: 110, taper: 25, min: 15 };   // the deceleration lane before the way into the pits and the acceleration lane after the way out (Track.pitJ): m, at most; the taper; the shortest (a taper only)
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
     const boxPts = (x, y, z) => { const p = []; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) p.push([sx * x, sy * y, sz * z]); return p; };
@@ -2723,6 +2770,7 @@ const Core = (function () {
         const q = trk.query(px, pz, c.q.i, _q);
         let br = q.br, bl = q.bl, inner = -1e9, sd = 1;
         if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom; a lane on the left: all measured to that side, sd)
+        if (trk.def.pit) { const u = trk.pitLead(q.s); if (u > 0) { const e = trk.w + 0.7 + 7 * u; if (trk.def.pit[0] > 0) br = Math.max(br, e); else bl = Math.max(bl, e); } }   // (the deceleration and acceleration lanes: open to every car, their barrier taken away out to their outer edge, Track.pitJ)
         const qd = q.d * sd;
         if (qd > br) { pen = qd - br; nx = -q.nx * sd; nz = -q.nz * sd; }
         else if (qd < inner) { pen = inner - qd; nx = q.nx * sd; nz = q.nz * sd; }
@@ -3006,6 +3054,7 @@ const Core = (function () {
         if (BD && o.dist - c.dist > 22.5) break;
         if (o === c) continue;
         let gap = o.dist - c.dist;
+        if (c.pitG && o.pitG && !T.open) { const L = T.len; gap = ((gap % L) + L) % L; if (gap > L / 2) gap -= L; }   // (two on the pit road: where they are, whatever lap each is on; a lapped car in the lane is in the way too)
         if (gap < -8 || gap > 22) continue;
         const lat = o.q.d - q.d;
         const closing = v - Math.max(0, o.vl);
@@ -3066,6 +3115,10 @@ const Core = (function () {
         off = u * pz.sd;
       } else if (!c.isPlayer && !pz) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = P[0] < 0 ? -lim : lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
     }
+    if (T.def.pit && !T.open && T.pitLead(sT) >= 0) {   // the deceleration lane: a car coming in (and the player's autopilot) moves over into it as it opens; the acceleration lane: a car in it keeps to it, and merges as it closes, looking 0.8 s further ahead (a gentle line at speed) (Track.pitJ)
+      const ps = T.def.pit[0] < 0 ? -1 : 1, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
+      const inn = d < T.def.pit[1], u = inn ? T.pitLead(sT) : Math.max(0, T.pitLead(sT + v * 0.8));
+      if (inn ? c.pitWant : q.d * ps > T.w + 0.3) off = ps * Math.max(off * ps, T.w - 3.4 + 7 * u); }
     if (c.parkS != null) off = lerp(off, c.parkD, sstep(c.parkS - 90, c.parkS - 30, sT));   // (past the finish of a race up the road: over to its slot, see Race._progressOpen)
     const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
     const tz = lerp(T.pz[i0], T.pz[i1], ft) + lerp(T.nz[i0], T.nz[i1], ft) * off;
@@ -3101,7 +3154,13 @@ const Core = (function () {
     if (c.ty && c.ty.bw >= 0) vT *= c.ty.bw > 1 ? 0.75 : 0.88;   // (worn out: a burst tyre, the same, flat at once)
     if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
-      const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x)); } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
+      const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) { vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x));
+        const pz = T.pitAt(q.s); if (pz && q.d * pz.sd > pz.lout - 0.5) for (const o of race.cars) {   // (out of the box onto the lane: it waits on the apron while a car coming along the lane would pass it (from 30 m behind to 8 m ahead of it, on the lane's line), or one just ahead is still turning into its own box)
+          if (o === c || !o.pitG) continue; let g = c.dist - o.dist; g = ((g % T.len) + T.len) % T.len; if (g > T.len / 2) g -= T.len;
+          const ob = o.pitDone ? null : race._boxD(o), xb = ob != null ? T.boxX(q.s, ob) : null;
+          if (xb != null && xb > -28 && xb < -2 && o.speed > 0.5 && g > -30 && g < 40) { vT = 0; break; }
+          if (o.speed < 4 || (xb != null && xb > -6)) continue;
+          if (g > -8 && g < 30 && Math.abs(o.q.d * pz.sd - pz.o) < 2.6) { vT = 0; break; } } } } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
     const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiThreat.vl < 1 && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5);   // (a ghost on the pit road already level with a car standing at its box: on through it, not stopped in it)
     { const o = c.aiThreat, g0 = (M.aiGap || 3) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
@@ -4632,7 +4691,7 @@ const Core = (function () {
   // and not in the way into or out of the pit lane (its side of the road)
   function retiredOff(T, c, tol) {
     const q = c.q, W = c.wreck, hw = c.m.wid * 0.5, ld = W.side * q.d, lim = (W.side > 0 ? q.br : q.bl) - hw - 0.4, pz = W.side > 0 && T.def.pit ? T.pitAt(q.s) : null;
-    if (pz && pz.gap) return false;
+    if ((pz && pz.gap) || (W.side === (T.def.pit && T.def.pit[0] < 0 ? -1 : 1) && T.pitLead(q.s) >= 0)) return false;   // (nor in the deceleration or acceleration lane: Track.pitJ)
     return ld - hw >= T.w + tol || (ld >= lim - 0.3 + Math.min(0, tol) && ld - hw >= T.w - 0.7);
   }
   // how a retired car of half width hw could stand at s (sample i) on side sd, its centre as far out as retireControl steers it and the
@@ -4641,7 +4700,7 @@ const Core = (function () {
   // of it on the asphalt, or in the way into the pits)
   function standQ(T, s, i, sd, hw) {
     const lim = (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4, pz = sd > 0 && T.def.pit ? T.pitAt(s) : null;
-    if (pz && pz.gap) return 0;
+    if ((pz && pz.gap) || (T.def.pit && sd === (T.def.pit[0] < 0 ? -1 : 1) && T.pitLead(s) >= 0)) return 0;
     return lim >= T.w + hw + 0.3 ? 2 : lim >= T.w + hw - 0.7 ? 1 : 0;
   }
   // standing still on purpose (retired, waiting for the marshals): a light brake and the handbrake (a held brake pedal at a standstill

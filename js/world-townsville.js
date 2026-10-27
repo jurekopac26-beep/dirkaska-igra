@@ -14,7 +14,7 @@
   if (typeof World === 'undefined' || !World.ext) return;
   World.ext.townsville = function (scene, tex, opts, W) {
     const { T, GB, RB, Chunks, IChunks, box, cyl, cone, puff, vary, rng, clamp, lerp, sstep, TAU, atSf, crAt, inPoly, polyDist, crowdCtx, crowdRun, crowdFinish, crowdUV,
-      waterMat, shoreBand, waterline, addShore } = W;
+      waterMat, shoreBand, waterline, addShore, pitOpen, pitJunction } = W;
     const R = rng(4810), N = T.N, ds = T.ds, def = T.def, D = def.tsv, L = T.len, sStart = T.startS, w = T.w, WA = T.wa || new Float64Array(N).fill(w);
     const season = opts && opts.season ? opts.season : 'summer', WET = season === 'summer' || season === 'autumn';   // (the wet season greens the town; the dry season browns it)
     const root = new THREE.Group(); scene.add(root);
@@ -197,7 +197,7 @@
       for (let c0 = 0; c0 < N; c0 += CH) { const i0 = c0 % N, gs = stG(T.px[i0], T.pz[i0], 'w'); const ps = [-1, -1];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) { const i = ii % N, wi = WA[i];
           for (const sd of [-1, 1]) { const si = sd > 0 ? 1 : 0, b = barO(i, sd), o0 = wi + CURB, o2 = Math.min(b + 0.3, o0 + 3.4);
-            if (b - wi <= 3.2 || !JP[si][i] || (sd > 0 && pitAtI(i))) { ps[si] = -1; continue; }
+            if (b - wi <= 3.2 || !JP[si][i] || (sd > 0 && (pitAtI(i) || pitOpen(i)))) { ps[si] = -1; continue; }
             const mid = Pt(i, sd * (o0 + 0.9), 0);
             const far2 = Pt(i, sd * (o2 - 0.3), 0); if ((onRoad(mid[0], mid[2], -1, 0.1) && !(near(mid[0], mid[2], 10).dd < CURB - 0.1)) || onRoad(far2[0], far2[2], -1, 0.1)) { ps[si] = -1; continue; }
             let pp = [Pt(i, sd * o0, 0.0), Pt(i, sd * o0, 0.15), Pt(i, sd * (o0 + 0.3), 0.15), Pt(i, sd * o2, 0.15)], cc = [concK, conc, conc, conc];
@@ -242,7 +242,7 @@
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.09, 1, 0.09, 0, [0.5, 0.51, 0.53], null, true); return g.geometry(); })();
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
-    const gapAt = (i, sd) => { if (sd < 0 || !def.pit) return false; const p = pitAtI(i); return !!p && p.gap; };
+    const gapAt = (i, sd) => { if (sd < 0 || !def.pit) return false; if (pitOpen(i)) return true; const p = pitAtI(i); return !!p && p.gap; };   // (pitOpen: the deceleration and acceleration lanes too)
     const wallRow = (g, i, sd, bar) => {
       const shade = 0.93 + 0.07 * Math.sin(Math.floor(i * ds / 3.8) * 2.1), c0 = [0.62 * shade, 0.62 * shade, 0.6 * shade], c1 = [0.82 * shade, 0.82 * shade, 0.8 * shade], c2 = [0.88, 0.88, 0.86];
       let p = [Pt(i, sd * (bar - 0.02), -0.05), Pt(i, sd * (bar + 0.06), 0.28), Pt(i, sd * (bar + 0.2), 0.84), Pt(i, sd * (bar + 0.42), 0.84), Pt(i, sd * (bar + 0.62), -0.05)], c = [c0, c1, c1, c2, c0];
@@ -287,6 +287,7 @@
         if (!p.gap && p.t > 0.999) { const j = T.idx(sStart + q + 2); gp.quadUp(at(i, p.lout, 0.03), at(i, p.lout + 9, 0.03), at(j, p.lout + 9, 0.03), at(j, p.lout, 0.03), [apron, apron, apron, apron]);
           if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(i, p.lin + 0.15, 0.035), at(i, p.lin + 0.3, 0.035), at(j, p.lin + 0.3, 0.035), at(j, p.lin + 0.15, 0.035), [wl, wl, wl, wl]); }
       }
+      pitJunction(gl, gp);   // the deceleration and acceleration lanes, the gores (in the lane's meshes; on the samples' heights, as the lane)
       addM(gl, aMat);
       const TEAM = [[0.85, 0.16, 0.13], [0.16, 0.36, 0.8], [0.95, 0.95, 0.94], [0.18, 0.62, 0.3], [0.96, 0.72, 0.12], [0.14, 0.14, 0.16], [0.95, 0.45, 0.1], [0.5, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55], [0.7, 0.1, 0.1]];
       const WH = [0.9, 0.9, 0.88], CON = [0.78, 0.77, 0.74], FR = [0.62, 0.63, 0.66];

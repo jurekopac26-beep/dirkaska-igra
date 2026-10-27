@@ -9,7 +9,7 @@
   const API = World.api;
   const {
     Chunks, GB, IChunks, RB, TAU, addShore, atS, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdUV, cyl, hjCutMat, ico,
-    irFarUpdate, lerp, nrChamfer, ouCutMat, rbCrowdTex, rng, shoreBand, sstep, valueNoise2, waterMat, wrapS
+    irFarUpdate, lerp, nrChamfer, ouCutMat, rbCrowdTex, rng, shoreBand, sstep, valueNoise2, waterMat, wrapS, pitJunction, pitKerbs, pitOpen, pitRoadAt
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -298,11 +298,13 @@
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if (side * k > 0) kerb[side > 0 ? 1 : 0][i] = 1; }   // (the inside of the bends)
+    pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const concAt = new Uint8Array(N); for (let i = 0; i < N; i++) { const d = dS(i * ds); if ((d > 2425 - L && d < 2480 - L) || (d >= 2425 && d < 2480)) concAt[i] = 1; }
     const mouth = [new Uint8Array(N), new Uint8Array(N)];   // the samples whose edge opens into a cross street (no curb, no gutter)
     for (let i = 0; i < N; i++) for (const sd of [-1, 1]) { const o = sd * (W_(i) + 0.9), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, st = dtStreetAt(x, z, 0.5);
       if (st && Math.abs((st.tx * T.tx[i] + st.tz * T.tz[i])) < 0.75) mouth[sd > 0 ? 1 : 0][i] = 1; }
     for (const M of mouth) { const c = M.slice(); for (let i = 0; i < N; i++) if (c[i]) for (let o = -2; o <= 2; o++) M[(i + o + N) % N] = 1; }
+    if (def.pit) for (let i = 0; i < N; i++) if (pitOpen(i)) mouth[def.pit[0] < 0 ? 0 : 1][i] = 1;   // (nor where the pit lane leaves and joins the circuit)
     const secT = new Float32Array(N); for (let i0 = 0, k = 0; i0 < N; k++) { const n = 20 + Math.floor(crH(k, 3, 41) * 40), t = 0.9 + crH(k, 5, 41) * 0.12; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const CH = 128;
     for (let c0 = 0; c0 < N; c0 += CH) {
@@ -353,7 +355,7 @@
        roads; the gaps of the pit lane; boards on the blocks (the game's own made-up brands), the place's banners on the fences ---- */
     const PD = def.pit, esc = [new Uint8Array(N), new Uint8Array(N)];
     for (const [a, b, sd, off, e] of def.walls || []) if (off > 8 && e === 6) for (let d = a; d <= b; d += ds) { const i = T.idx(sAt(d)); if ((sd > 0 ? T.br[i] : T.bl[i]) > W_(i) + off - 1.5) esc[sd > 0 ? 1 : 0][i] = 1; }
-    const kindAt = (i, side) => { if (side > 0 && PD) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; } return esc[side > 0 ? 1 : 0][i] ? 2 : 1; };
+    const kindAt = (i, side) => { if (side > 0 && PD) { if (pitOpen(i)) return -1; const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; } return esc[side > 0 ? 1 : 0][i] ? 2 : 1; };   // (pitOpen: the deceleration and acceleration lanes too)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const scen = new Chunks(256), fenceC = new Chunks(256, true), bn = new GB(true);   // (bn: every board and banner, one atlas: dtBoards)
@@ -500,6 +502,7 @@
         if (pi.t > 0.999 && pj.t > 0.999) { gp.quadUp(at(s0, pi.o + 3.5, 0.032), at(s0, pi.o + 12.5, 0.032), at(s1, pj.o + 12.5, 0.032), at(s1, pj.o + 3.5, 0.032), [apC, apC, apC, apC]);
           gp.quadUp(at(s0, pi.o - 0.08, 0.044), at(s0, pi.o + 0.08, 0.044), at(s1, pj.o + 0.08, 0.044), at(s1, pj.o - 0.08, 0.044), [[0.1, 0.32, 0.86], [0.1, 0.32, 0.86], [0.1, 0.32, 0.86], [0.1, 0.32, 0.86]]); }   // (the blue line down the lane's middle)
       }
+      pitJunction(gl, gp, hyS);   // the deceleration and acceleration lanes, the gores (in the lane's meshes)
       const TEAM = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.1, 0.62, 0.72], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.4, 0.42, 0.46], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];
       const kbox = (g, s0, a, wo, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = atSf(s0 + a, wo); box(g, x, hyS(s0 + a) + y, z, sx, sy, sz, hd, col, top, nb); };
       const kcyl = (g, s0, a, wo, y, r, h, n, col, top) => { const [x, z] = atSf(s0 + a, wo); cyl(g, x, hyS(s0 + a) + y, z, r, h, n, col, top); };
@@ -698,7 +701,7 @@
         const [ax, az] = p.pts[bi], [bx, bz] = p.pts[(bi + 1) % p.pts.length], ux = (bx - ax) / bl, uz = (bz - az) / bl, vx = -uz, vz = ux, yaw = Math.atan2(vz, vx);
         let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of p.pts) { const u = (x - ax) * ux + (z - az) * uz, v = (x - ax) * vx + (z - az) * vz; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
         for (let v = v0 + 3; v < v1 - 3; v += 16) for (const half of [-1, 1]) for (let u = u0 + 1.5; u < u1 - 1.5; u += 2.7) {
-          const vc = v + half * 2.7, x = ax + ux * u + vx * vc, z = az + uz * u + vz * vc; if (!dtInPoly(p.pts, x, z) || bldIn(x, z, 1) || excluded(x, z) || dtStreetAt(x, z, 0.5)) continue; const bq = barAt(x, z); if (bq.ad < bq.lim + 2) continue;
+          const vc = v + half * 2.7, x = ax + ux * u + vx * vc, z = az + uz * u + vz * vc; if (!dtInPoly(p.pts, x, z) || bldIn(x, z, 1) || excluded(x, z) || dtStreetAt(x, z, 0.5) || pitRoadAt(x, z, 2.5)) continue; const bq = barAt(x, z); if (bq.ad < bq.lim + 2) continue;
           { const y = gH(x, z) + 0.06, a1 = [x + ux * 1.35 - vx * 2.6 * half, y, z + uz * 1.35 - vz * 2.6 * half], a2 = [x + ux * 1.35 + vx * 2.6 * half, y, z + uz * 1.35 + vz * 2.6 * half], wl = [0.92, 0.92, 0.9];
             lines.get(x, z).quadUp([a1[0] - ux * 0.06, y, a1[2] - uz * 0.06], [a1[0] + ux * 0.06, y, a1[2] + uz * 0.06], [a2[0] + ux * 0.06, y, a2[2] + uz * 0.06], [a2[0] - ux * 0.06, y, a2[2] - uz * 0.06], [wl, wl, wl, wl]); }
           if (crH(Math.round(x * 2), Math.round(z * 2), 61) > 0.45 * dens || dtGroundD(x, z) > 110) continue;
@@ -770,6 +773,7 @@
     return g.geometry();
   }
   function dtFurn(g, kind, x, y, z, yaw) {   // the standing street furniture at (x, y, z), its arm along yaw: lamps, mast-arm signals, benches, bus shelters, bins, hydrants, bollards
+    if (pitRoadAt(x, z, 0.6)) return;   // (none on the pit road's junctions)
     const c = Math.cos(yaw), s = Math.sin(yaw), dk = [0.24, 0.25, 0.27], st = [0.56, 0.58, 0.6];
     const B = (ox, oy, oz, sx, sy, sz, col, top) => box(g, x + ox * c - oz * s, y + oy, z + ox * s + oz * c, sx, sy, sz, yaw, col, top || col);
     if (kind === 'lamp') { B(0, 0, 0, 0.34, 0.5, 0.34, dk); cyl(g, x, y + 0.5, z, 0.12, 8.3, 5, dk, dk, 0.07); B(0.55, 8.85, 0, 1.2, 0.08, 0.08, dk); B(1.3, 8.72, 0, 0.75, 0.16, 0.34, [0.42, 0.44, 0.46], [0.5, 0.52, 0.54]); }
