@@ -2669,7 +2669,13 @@ const Core = (function () {
         }
       }
     }
-    if (best <= 0) return 0;
+    // the corners the three circles leave out (a nose into a tail beside it): the cars' boxes are only pushed apart (obbHit, the normal from b to a),
+    // so that no body is drawn in another; no impulse, no knock, no damage: those stay as the circles give them
+    if (best <= 0) { if (a.inPit || b.inPit) return 0; const o = obbHit(a.x, a.z, a.h, a.m.len, a.m.wid, b.x, b.z, b.h, b.m.len, b.m.wid); if (!o) return 0;   // (not in the pit lane: the crews' work and the way in stay as they were)
+      const ia = 1 / a.m.mass, ib = 1 / b.m.mass, tot = ia + ib, nx = o.nx * o.pen, nz = o.nz * o.pen;
+      if (b.net) { a.x += nx; a.z += nz; } else if (!a.net) { a.x += nx * ia / tot; a.z += nz * ia / tot; }
+      if (a.net) { b.x -= nx; b.z -= nz; } else if (!b.net) { b.x -= nx * ib / tot; b.z -= nz * ib / tot; }
+      return 0; }
     const ma = a.m.mass, mb = b.m.mass, ia = 1 / ma, ib = 1 / mb;
     // separate. A friend's car in an online race (net) is not moved here (its own phone moves it): the local car takes the
     // whole separation and, below, only its own share of the impulse (the friend's phone gives the friend's car its share)
