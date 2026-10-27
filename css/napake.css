@@ -1,0 +1,121 @@
+/* Orodje za napake (js/napake.js): Označi in the replay. The replay stands; the drawing over the picture, the palette (on its side down
+   the left edge, upright a row above the timeline), the bubbles to write in, Dodaj k zbirki; the moments kept as flags on the timeline */
+#nk-cv { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: auto; touch-action: none; cursor: crosshair; }
+#nk-cv.rub { cursor: cell; }
+#replay-ui.mark #nk-cv { display: block; }
+#nk-bubs { position: absolute; inset: 0; pointer-events: none; }
+#replay-ui.mark .rp-top, #replay-ui.mark .rp-bar, #replay-ui.mark #rp-hl-cap { display: none; }
+#replay-ui.mark .rp-prog, #replay-ui.mark .nk-flag { pointer-events: none; }   /* (the picture stays the one marked) */
+
+#replay-ui .rp-bar .nk-on { color: #FFE14D; }
+.nk-pal, .nk-bar { display: none; pointer-events: auto; }
+#replay-ui.mark .nk-pal, #replay-ui.mark .nk-bar { display: flex; }
+
+/* the palette: on its side a column down the left edge (the timeline and its bar beside it), its buttons as tall as the screen allows */
+#replay-ui { --nk-b: min(40px, calc((100vh - 20px - var(--st) - var(--sb) - 32px) / 9)); }
+.nk-pal { position: fixed; left: calc(10px + var(--sl)); top: calc(10px + var(--st)); bottom: calc(10px + var(--sb)); flex-direction: column; justify-content: center; gap: 4px; }
+#replay-ui.mark .rp-bot { left: calc(22px + var(--sl) + var(--nk-b)); }
+.nk-pal button { flex: none; display: grid; place-items: center; width: var(--nk-b); height: var(--nk-b); padding: 0; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; cursor: pointer; }
+.nk-pal button:active { background: rgba(255,255,255,.18); }
+.nk-pal button.sel { border-color: #fff; background: rgba(255,255,255,.24); }
+.nk-pal button:disabled { opacity: .4; cursor: default; }
+.nk-pal button i { width: 62%; height: 62%; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px rgba(0,0,0,.4); }
+.nk-pal button.sel i { transform: scale(1.12); }
+.nk-pal svg { width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.nk-pal [data-nk="pen"] svg { stroke: var(--cur, #fff); }
+
+/* Dodaj k zbirki, Zapri: where the replay's bar was */
+.nk-bar { max-width: 100%; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.nk-bar button { min-height: 42px; padding: 0 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; font: 700 clamp(13px, 3.6vh, 16px)/1 var(--f-ui); white-space: nowrap; cursor: pointer; }
+.nk-bar button:active { background: rgba(255,255,255,.18); }
+.nk-bar .nk-add { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
+.nk-bar .nk-close.warn { background: rgba(230,59,46,.85); border-color: rgba(255,255,255,.6); }
+
+@media (orientation: portrait) {   /* upright: the palette a row above the timeline, as wide as the screen allows */
+  #replay-ui { --nk-b: min(40px, calc((100vw - 24px - var(--sl) - var(--sr) - 32px) / 9)); }
+  .nk-pal { position: static; flex-direction: row; justify-content: center; margin-bottom: 8px; }   /* (clear of ZDAJ over the timeline's end) */
+  #replay-ui.mark .rp-bot { left: calc(12px + var(--sl)); }
+}
+
+/* the bubbles: the colour's note, moved by its top */
+.nk-bub { position: absolute; pointer-events: auto; border-radius: 10px; border: 2px solid var(--c); background: rgba(12,16,24,.88); box-shadow: 0 2px 10px rgba(0,0,0,.5); overflow: hidden; }
+.nk-bub.drag { box-shadow: 0 4px 18px rgba(0,0,0,.7); }
+.nk-bub.pulse { animation: nkPulse .6s ease-out; }
+.nk-grip { display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; background: var(--c); color: #14181f; font: 700 12px/1.2 var(--f-ui); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.nk-bub.drag .nk-grip { cursor: grabbing; }
+.nk-grip b { letter-spacing: -2px; font-size: 14px; }
+.nk-bub textarea { display: block; width: 100%; box-sizing: border-box; min-height: 56px; margin: 0; padding: 6px 8px; resize: none; border: 0; outline: none; background: transparent; color: #fff; font: 600 15px/1.3 var(--f-ui); }
+.nk-bub textarea::placeholder { color: rgba(255,255,255,.45); }
+@keyframes nkPulse { 0% { transform: scale(1); } 35% { transform: scale(1.06); } 100% { transform: scale(1); } }
+
+/* the moments kept: flags on the timeline (a tap: the replay there) */
+.nk-flag { position: absolute; bottom: 50%; width: 2px; height: 20px; margin-left: -1px; background: #FFE14D; box-shadow: 0 0 2px #000; pointer-events: auto; cursor: pointer; }
+.nk-flag::before { content: ''; position: absolute; left: -9px; right: -9px; top: -4px; bottom: -6px; }   /* (a finger's room) */
+.nk-flag span { position: absolute; left: 2px; top: 0; padding: 0 4px; border-radius: 0 3px 3px 0; background: #FFE14D; color: #14181f; font: 800 10px/13px var(--f-ui); pointer-events: none; }
+
+/* the flag in the race: a round yellow button left of the pause button (hidden with it: #btn-pause.off); on its side the pause stands left of the map */
+#nk-fl { position: absolute; z-index: 6; right: calc(10px + var(--sr) + 52px); top: calc(8px + var(--st)); width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 2px solid rgba(20,24,31,.55); background: #FFD21F; color: #14181f; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.45); cursor: pointer; touch-action: none; }
+#nk-fl svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+#nk-fl.off, #btn-pause.off + #nk-fl { display: none; }
+#nk-fl.tap { animation: nkTap .35s ease-out; }
+@keyframes nkTap { 0% { transform: scale(.82); background: #fff; } 100% { transform: scale(1); } }
+@media (orientation: landscape) { #nk-fl { right: calc(var(--map-r) + var(--map-w) + 8px + 52px); } }
+
+/* the race's flags not yet marked, on the timeline (orange, ⚑); Deli in the replay's second row; the tool off: no Označi, no Deli */
+.nk-flag.dirka, .nk-flag.dirka span { background: #FF9500; }
+.nk-flag.dirka span { font-size: 11px; }
+#replay-ui .rp-top #nk-deli { margin-left: auto; border-color: rgba(255,225,77,.7); color: #FFE14D; }
+#replay-ui .rp-fnav:not(.off) + #nk-deli { margin-left: 0; }
+#nk-deli.off, #replay-ui.nk-off #nk-on, #replay-ui.nk-off #nk-deli { display: none; }
+
+/* the choice (Zbirka napak) and the tool's settings: a panel over everything (the toast still above) */
+.nk-dlg { position: fixed; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; padding: calc(10px + var(--st)) calc(10px + var(--sr)) calc(10px + var(--sb)) calc(10px + var(--sl)); background: rgba(5,8,12,.6); }
+.nk-box { width: min(520px, 100%); max-height: 100%; overflow-y: auto; box-sizing: border-box; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); background: #161b23; color: #fff; font: 600 14px/1.35 var(--f-ui); box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+.nk-box h3 { margin: 0 0 4px; font: 800 20px/1.2 var(--f-ui); color: #FFE14D; }
+.nk-sub, .nk-hint { margin: 0 0 8px; color: rgba(255,255,255,.7); font-weight: 500; font-size: 13px; }
+.nk-prev { display: grid; place-items: center; min-height: 80px; margin: 6px 0 10px; border-radius: 8px; background: rgba(255,255,255,.05); color: rgba(255,255,255,.6); }
+.nk-prev img { display: block; max-width: 100%; max-height: 34vh; border-radius: 6px; }
+.nk-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.nk-box button { min-height: 42px; padding: 0 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(255,255,255,.07); color: #fff; font: 700 15px/1 var(--f-ui); cursor: pointer; }
+.nk-box button:active { background: rgba(255,255,255,.2); }
+.nk-acts button.first { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
+.nk-keep { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 600; }
+.nk-keep input { width: 20px; height: 20px; }
+.nk-end { display: flex; justify-content: flex-end; margin-top: 10px; }
+.nk-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.nk-seg { display: inline-flex; border-radius: 9px; overflow: hidden; border: 2px solid rgba(255,255,255,.22); }
+.nk-box .nk-seg button { min-height: 36px; border: 0; border-radius: 0; background: transparent; color: rgba(255,255,255,.7); font-size: 13px; }
+.nk-box .nk-seg button + button { border-left: 2px solid rgba(255,255,255,.14); }
+.nk-box .nk-seg button.sel { background: #e8edf3; color: #14181f; }
+.nk-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.nk-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; background: rgba(255,255,255,.05); }
+.nk-item img, .nk-item i { width: 72px; height: 48px; object-fit: cover; border-radius: 4px; background: #2a313c; flex: none; }
+.nk-item > div { flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nk-item b { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nk-item small { color: rgba(255,255,255,.65); font-size: 11px; }
+.nk-item em { font-style: normal; font-size: 11px; color: #FF9500; }
+.nk-item em.ok { color: #4cd964; }
+.nk-item span { display: flex; gap: 4px; flex: none; margin-left: auto; }   /* (narrow: under the name) */
+.nk-box .nk-item button { min-height: 34px; padding: 0 9px; font-size: 13px; }
+html[lang="en"] .nk-setrow { display: none; }   /* (the tool is Slovenian only) */
+
+/* the tool's own flags (samodejne zastavice): grey with ! on the timeline, confirmed white; a tap shows what it is over the replay (Potrdi / Zavrzi) */
+.nk-auto { position: absolute; bottom: 50%; width: 2px; height: 16px; margin-left: -1px; background: #8f98a3; box-shadow: 0 0 2px #000; pointer-events: auto; cursor: pointer; }
+.nk-auto::before { content: ''; position: absolute; left: -8px; right: -8px; top: -4px; bottom: -6px; }
+.nk-auto span { position: absolute; left: 2px; top: 0; padding: 0 3px; border-radius: 0 3px 3px 0; background: #8f98a3; color: #14181f; font: 800 10px/12px var(--f-ui); pointer-events: none; }
+.nk-auto.ok, .nk-auto.ok span { background: #e8edf3; }
+#replay-ui.mark .nk-auto { pointer-events: none; }
+.nk-auto-dlg { width: min(460px, 100%); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 10px; border-radius: 10px; border: 2px solid #8f98a3; background: rgba(12,16,24,.9); color: #fff; font: 600 13px/1.3 var(--f-ui); pointer-events: auto; }
+.nk-auto-dlg b { color: #e8edf3; }
+.nk-auto-dlg span { flex: 1 1 160px; color: rgba(255,255,255,.8); }
+.nk-auto-dlg div { display: flex; gap: 6px; margin-left: auto; align-items: center; }
+.nk-auto-dlg button { min-height: 34px; padding: 0 11px; border-radius: 8px; border: 2px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); color: #fff; font: 700 13px/1 var(--f-ui); cursor: pointer; }
+.nk-auto-dlg button[data-a="ok"] { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
+.nk-auto-dlg em { font-style: normal; color: #4cd964; }
+#replay-ui.mark .nk-auto-dlg { display: none; }
+
+/* the log in the tool's settings (Dnevnik napak) */
+.nk-dn-b { display: flex; gap: 6px; }
+.nk-box .nk-dn-b button { min-height: 34px; padding: 0 10px; font-size: 13px; }
+.nk-dn-n { color: rgba(255,255,255,.6); font-weight: 500; }
+.nk-dn { max-height: 120px; overflow: auto; margin: 6px 0 0; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,.05); color: rgba(255,255,255,.8); font: 500 11px/1.35 ui-monospace, Consolas, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }

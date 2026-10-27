@@ -21,6 +21,13 @@ const Core = (function () {
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
+  // the random events of a race that change the game (a wheel off, the debris, the AI's reactions and mistakes …): from rand(), the
+  // stepped race's numbers (Race.rnd: Race.step and aiControl set RAND to them). A repeatable race (opts.repro, the test mode: the quick
+  // entry's ?seme=, a test) draws them from its seed, so the same race twice is the same, whatever Math.random does; else Math.random,
+  // as ever (the tests that seed Math.random keep their sequence and the golden references theirs)
+  const MR = () => Math.random();
+  let RAND = MR;
+  const rand = () => RAND();
 
   /* ---------------------------------------------------------------------
      TRACK
@@ -2107,14 +2114,14 @@ const Core = (function () {
     const W = c.wreck;
     for (let j = 0; j < n; j++) {
       const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partsOf(c.m)[WHEELS[k]]); if (!on.length) return;
-      detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(Math.random() * on.length))]]);
+      detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(rand() * on.length))]]);
     }
   }
   function wheelRule(c, d0, amt) {
     const W = c.wreck, Q = W.rule, d1 = c.dmg;
     if (!Q || W.dnf || c.finished || c.dmgMode !== 2) return;
     if (d1 >= WRULE.d2 && amt >= WRULE.hard) {   // a hard hit at 80 % or over: two at once, sometimes three or four
-      let n = 2; if (Math.random() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (Math.random() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
+      let n = 2; if (rand() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (rand() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
       ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); return;
     }
     const hit = d0 >= WRULE.d1 && amt >= WRULE.hit;   // (a hit from 70 %: its damage before it sets when the second goes)
@@ -2351,9 +2358,9 @@ const Core = (function () {
       if (vrel > 0.3) {
         const kick = Math.min(24, 1.35 * vrel);
         d.vx += kick * nx; d.vz += kick * nz; d.vy = Math.max(d.vy, 1 + Math.min(4, vrel * 0.18));
-        d.wy += (Math.random() - 0.5) * 10; d.wx += (Math.random() - 0.5) * 8; d.rest = false; d.ground = false;
+        d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false;
         const k = Math.min(0.06, d.m * 0.004);                       // the car feels it: speed loss + twitch, more for big parts
-        c.vx *= 1 - k; c.vz *= 1 - k; c.w += (Math.random() - 0.5) * d.m * 0.05;
+        c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * d.m * 0.05;
         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
       }
       return;
@@ -2456,7 +2463,7 @@ const Core = (function () {
   }
   function propFeel(c, m, vrel, kind) {   // what the driver feels: a little speed and a twitch, a thump
     const k = Math.min(0.045, m * 0.0016) * Math.min(1, vrel / 8);
-    c.vx *= 1 - k; c.vz *= 1 - k; c.w += (Math.random() - 0.5) * m * 0.012;
+    c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * m * 0.012;
     c.hitDebris = Math.max(c.hitDebris || 0, vrel * clamp(m / 30, 0.12, 0.35));
     if (vrel > 4) { c.propKnock = kind; c.propKnockV = vrel; }
     if (vrel > 1.5 && (!c.propSnd || vrel > c.propSndV)) { c.propSnd = kind; c.propSndV = vrel; }
@@ -2485,7 +2492,7 @@ const Core = (function () {
       const j = 1.35 * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);
       b.sleep = false; b.t = 0; b.age = 0;
       propImpulse(b, nx * j, 0, nz * j, rx, ry, rz);
-      b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
+      b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (rand() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(K.vmax || 18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }   // (vmax: a braking board's legs in the ground: it tips over rather than flies)
       race.propFx(b, vrel);
       if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) knock(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
@@ -2505,7 +2512,7 @@ const Core = (function () {
     if (ib) { b.x += nx * pen * ib / it; b.y += ny * pen * ib / it; b.z += nz * pen * ib / it; b.dirty = true; }
     if (vr > 0) {
       const j = 1.15 * vr / it; a.vx -= j * nx * ia; a.vy -= j * ny * ia; a.vz -= j * nz * ia;
-      if (ib) { b.vx += j * nx * ib; b.vy += j * ny * ib; b.vz += j * nz * ib; if (b.sleep) { b.sleep = false; b.t = 0; b.age = 0; b.wy += (Math.random() - 0.5) * 3; } }
+      if (ib) { b.vx += j * nx * ib; b.vy += j * ny * ib; b.vz += j * nz * ib; if (b.sleep) { b.sleep = false; b.t = 0; b.age = 0; b.wy += (rand() - 0.5) * 3; } }
     }
   }
   function propStep(race, b, T, dt) {
@@ -2529,7 +2536,7 @@ const Core = (function () {
     if (q.k >= 0) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits)
     if (pen > 0 && b.y - gy < 3.2) {
       b.x -= nx * pen; b.z -= nz * pen;
-      const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (Math.random() - 0.5) * vn; }
+      const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (rand() - 0.5) * vn; }
     }
     if (T.open && b.y - gy < 3.2) { const pen = endPen(T, q, K.rh); if (pen > 0) { const nx = _en[0], nz = _en[1]; b.x += nx * pen; b.z += nz * pen; const vn = b.vx * nx + b.vz * nz; if (vn < 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; } } }   // open road: the end walls
     let touch = false, maxPen = 0;                                                  // ground: impulses at every contact point below it
@@ -2641,7 +2648,7 @@ const Core = (function () {
   // a puncture (failures, Car.flt): a hard knock (a wall or a car, 40 km/h and more across) may cut the tyre on the corner that took it,
   // the likelier the harder (up to one in four); one at a time (a second waits for the pits). lx, lz: the knock in the car's frame
   function puncture(c, lx, lz, hit) {
-    const F = c.flt; if (!F || c.pitG || F.pw >= 0 || hit < 11 || Math.random() > Math.min(0.25, (hit - 11) / 20)) return;
+    const F = c.flt; if (!F || c.pitG || F.pw >= 0 || hit < 11 || rand() > Math.min(0.25, (hit - 11) / 20)) return;
     F.pw = (lx >= 0 ? 0 : 2) + (lz >= 0 ? 1 : 0); F.pk = 0; F.ev = 'puncture';   // (the wheel: 0 front left, 1 front right, 2 rear left, 3 rear right)
   }
 
@@ -2850,7 +2857,8 @@ const Core = (function () {
   }
   function distFromS(W, s) { let lo = 0, hi = W.length; while (lo < hi) { const m = (lo + hi) >> 1; if (W[m].q.s < s) lo = m + 1; else hi = m; } return lo; }
   function distFrom(BD, d) { let lo = 0, hi = BD.length; while (lo < hi) { const m = (lo + hi) >> 1; if (BD[m].dist < d) lo = m + 1; else hi = m; } return lo; }
-  function aiControl(c, race, dt) {
+  function aiControl(c, race, dt) { const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
+  function aiDrive(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
     const q = c.q;
     const v = Math.max(0, c.vl);
@@ -2858,7 +2866,7 @@ const Core = (function () {
     // --- avoidance / overtaking ---
     c.aiT -= dt;
     if (c.aiT <= 0) {
-      c.aiT = 0.12 + Math.random() * 0.08;
+      c.aiT = 0.12 + rand() * 0.08;
       let target = c.laneBias;
       let threat = null, tgap = 1e9, aU = null, aD = null;
       const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null, L0 = BD ? distFrom(BD, c.dist - 8.5) : 0;   // (a big field: only the cars alongside and just ahead, from the list sorted by dist)
@@ -3000,7 +3008,7 @@ const Core = (function () {
       const ch = c.chr;
       if (brk > 0.3 && !ch.brk) {
         ch.brk = true;
-        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && Math.random() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
+        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && rand() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
       } else if (thr > 0.4) ch.brk = false;
     }
     // don't stamp on the brakes while turning hard (trail-braking is stable: the slide is the design)
@@ -4669,6 +4677,7 @@ const Core = (function () {
       const remoteAt = new Map(); for (const r of RMS) remoteAt.set(Math.min(total, r.grid || total), r);
       Object.defineProperty(this, 'remotes', { value: [], enumerable: false });   // (not in the golden references' digest of the race's plain fields)
       const R = rng(opts.seed || 7);
+      Object.defineProperty(this, 'rnd', { value: opts.repro ? rng(((opts.seed || 7) * 48271 + 29) >>> 0) : MR, enumerable: false });   // (the race's own random numbers: rand)
       // AI roster
       const diff = DIFF[clamp(opts.difficulty == null ? 1 : opts.difficulty, 0, 2)]; this.diff = diff;   // (the fourth level, super težka, is the police's: a race takes it as težka)
       if (oneMake) this.oneMake = oneMake;
@@ -4939,8 +4948,8 @@ const Core = (function () {
       this.flyOn = true;
     }
 
-    spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default Math.random; a patrol car's: the police's own, see step)
-      const rnd = R || Math.random;
+    spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default the race's (rand); a patrol car's: the police's own, see step)
+      const rnd = R || rand;
       const P = partsOf(c.m)[name], hl = c.m.len * 0.5, hw = c.m.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h);
       const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + rnd() * 3;
@@ -5007,9 +5016,9 @@ const Core = (function () {
       b.parts.forEach((p, k) => {
         const o = qRot(b, K.parts[k][0], K.parts[k][1], K.parts[k][2], _r3), f = K.pf[k];
         p.x = b.x + o[0]; p.y = b.y + o[1]; p.z = b.z + o[2]; p.qx = b.qx; p.qy = b.qy; p.qz = b.qz; p.qw = b.qw;
-        const side = (Math.random() - 0.5) * 2.4, vv = b.kind === 'bstack' || b.kind === 'rbstack' ? Math.min(11, vn * 0.62) : Math.min(14, vn * 0.78);
+        const side = (rand() - 0.5) * 2.4, vv = b.kind === 'bstack' || b.kind === 'rbstack' ? Math.min(11, vn * 0.62) : Math.min(14, vn * 0.78);
         p.vx = svx * 0.2 + nx * vv * f[0] + tx * side; p.vz = svz * 0.2 + nz * vv * f[0] + tz * side; p.vy = f[1] + vv * 0.05 * (k + 1);
-        p.wx = (Math.random() - 0.5) * 9; p.wy = (Math.random() - 0.5) * 7; p.wz = (Math.random() - 0.5) * 9;
+        p.wx = (rand() - 0.5) * 9; p.wy = (rand() - 0.5) * 7; p.wz = (rand() - 0.5) * 9;
         p.dead = false; p.hidden = false; p.sleep = false; p.dirty = true; p.t = 0; p.age = 0; p.qi = b.qi;
         if (p.slot < 0) { p.slot = this.propSlots[p.kind]; this.propSlots[p.kind]++; }
         this._bkPut(p);
@@ -5026,7 +5035,8 @@ const Core = (function () {
       for (const b of this.props) if (!b.sleep && !b.dead) propStep(this, b, T, dt);
     }
 
-    step(dt) {
+    step(dt) { const R0 = RAND; RAND = this.rnd; try { this._step(dt); } finally { RAND = R0; } }   // (its random events from its own numbers: rand)
+    _step(dt) {
       const T = this.track, cars = this.cars;
       if (this.wst && this.wst.on) this._weather(dt);
       T.inRain = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0;   // (the puddles; the track is shared with the title screen's race: the weather of the race being stepped)
@@ -5662,6 +5672,9 @@ const Core = (function () {
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
       if (F.t >= 1.6) { c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; applyDamage(c, 0.32); this.rescue(c); }
     }
+    // when a car was last put somewhere else at once (rescue, the marshals' refit beside the road): the replay's recording marks it (game.js
+    // recStep), so Orodje za napake does not take it for a jump. A Map, not a car's own number: the race's state as it was (tests/golden)
+    putBack(c) { (this.putT || (this.putT = new Map())).set(c, this.time); }
     rescue(c) {
       const T = this.track; if (this._bp) this._bp.bd = null;
       if (c.ty && !c.isPlayer) c.pitWant = false;   // (an AI car in for tyres: it tries again from the next lap)
@@ -5675,7 +5688,7 @@ const Core = (function () {
       c.locked = false;
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       if (T.open && Number.isFinite(s) && Number.isFinite(c.dist)) c.dist += c.q.s - s;   // open road: the distance follows the car back to the sample (checkpoints / finish stay exact)
-      c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.inPit = false; c.pitState = null; c.pitDone = false; if (c.pitG) { c.pitG = false; c.pitGT = 0; }   // (back on the circuit, not in the pit lane)
+      c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; this.putBack(c); c.inPit = false; c.pitState = null; c.pitDone = false; if (c.pitG) { c.pitG = false; c.pitGT = 0; }   // (back on the circuit, not in the pit lane)
       // a breakable vehicle on a track without pits: the marshals put its lost wheels back on, beside the road (off its side's edge, clear of
       // the barrier); it stands for the 6 s that takes (Race._wreckStep), then drives back on. W.fix counts the refits (a partial repair:
       // repairN stays, the renderer's and the commentator's lost-wheel latches follow W.fix)
@@ -5799,7 +5812,7 @@ const Core = (function () {
       }
       const [s, sd] = best || fb || [c.q.s, own], i = T.idx(s), d = sd * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4));
       W.side = sd;
-      c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
+      c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i]; this.putBack(c);   // (put somewhere else at once, as by rescue: the replay's recording)
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       W.stop = true; W.cr = 0; parkBrake(c);
       W.fin = retiredOff(T, c, -0.2) ? null : [c.x, c.z];
@@ -6040,9 +6053,31 @@ const Core = (function () {
   }
   registerVehicles();
 
+  // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
+  // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
+  // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
+  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police' };
+  const QUICK_WX = { suho: 'dry', dry: 'dry', dez: 'rain', 'dež': 'rain', rain: 'rain' };
+  function quickArgs(search) {
+    const P = new URLSearchParams(search || ''), id = P.get('proga');
+    if (id == null) return null;
+    const q = { track: null, mode: null, t: null, weather: null, car: null, seed: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
+    const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
+    if (d) q.track = d.id; else q.bad.push('proga=' + id);
+    if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
+      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']);
+      if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
+    }
+    if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
+    if (P.has('vreme')) { const w = QUICK_WX[low('vreme')]; if (w) q.weather = w; else q.bad.push('vreme=' + P.get('vreme')); }
+    if (P.has('seme')) { const v = P.get('seme').trim(); if (/^\d{1,10}$/.test(v) && +v >= 1 && +v <= 2147483647) q.seed = +v; else q.bad.push('seme=' + P.get('seme')); }   // (the test mode's seed: a whole number from 1)
+    if (P.has('avto')) { const M = MODELS.find(m => m.id === low('avto')); if (M) q.car = heirOf(M).id; else q.bad.push('avto=' + P.get('avto')); }   // (a retired model's: its heir)
+    return q;
+  }
+
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs };
 })();
 
 

@@ -697,17 +697,18 @@
   }
  },
  "medvode": {
-  "meshes": 1036,
-  "verts": 1849594,
+  "meshes": 1037,
+  "verts": 1851706,
   "instances": 7988,
   "props": 802,
   "crowd": 649,
-  "world": "2d7fed40",
+  "world": "4e1b8680",
   "propsHash": "a14eaeb1",
   "floor": "17dd3a61/13356",
   "groups": {
    "-:MeshLambertMaterial": "95faa777",
    "-:MeshPhongMaterial": "c71e2a1e",
+   "roadSeams:MeshLambertMaterial": "646aa41a",
    "crowd:MeshLambertMaterial": "48313664",
    "-:MeshBasicMaterial": "b8fa4dc2",
    "mvCastle:MeshLambertMaterial": "d0fb684f",

@@ -52,7 +52,8 @@ try {
   // 4. a second phone opens the link: the friend's ghost in a race at Jezero Ring
   const B = await openGame(browser, srv.base + '/index.html' + link.slice(link.indexOf('#')), { quality: 'normal', shadows: 0, camera: 'chase', track: 'riviera' }, { width: 390, height: 844 });
   const pb = B.page;
-  await pb.waitForFunction(() => !!localStorage.getItem('tdgp-fghost-jezero'), null, { timeout: 20000 });
+  // (polled every 250 ms, not on the page's frames: on a slow machine the title draws only a few frames in 20 s, the ghost long kept by then)
+  await pb.waitForFunction(() => !!localStorage.getItem('tdgp-fghost-jezero'), null, { timeout: 60000, polling: 250 });
   const g1 = await pb.evaluate(() => ({ track: window.__game.S.track, hash: location.hash, toast: document.getElementById('toast').textContent, stored: JSON.parse(localStorage.getItem('tdgp-fghost-jezero')) }));
   T.check('the link opened: the friend\'s ghost kept for Jezero Ring, the track chosen, a message; the address cleaned', g1.track === 'jezero' && g1.hash === '' && /Duh igralca Ana na progi Jezero Ring/.test(g1.toast) && g1.stored.name === 'Ana' && g1.stored.ghost.lap === 1, JSON.stringify({ track: g1.track, hash: g1.hash, toast: g1.toast }));
   await startTrack(pb, 'jezero');
