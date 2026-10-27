@@ -106,6 +106,8 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `docs/` | opisi prog (`docs/proge/<id>.md`), opis igre po temah (`docs/igra.md`), kazalo kode (`docs/kazalo.md`), načrt orodja za napake |
 | `tools/stamp.js` | po vsaki spremembi datoteke v `js/` ali `css/` zaženi `node tools/stamp.js`: povezave v `index.html` dobijo oznako vsebine (`?v=…`), da brskalnik po posodobitvi ne pomeša starih in novih datotek |
 | `tools/carshots.mjs` | slike vozila za pregled: `node tools/carshots.mjs <id>` (od strani, spredaj, zadaj in zgoraj z mrežo 1 m, razstavni pogled, pogled za avtom, zrahljani deli, razbitina, zgorelo vozilo; vse skupaj v `sheet.png`) ali `node tools/carshots.mjs --cat <kategorija>` (vsa vozila kategorije drugo ob drugem); slike so v `test-results/carshots/` |
+| `tools/shot.mjs` | posnetki proge za primerjavo pred in po: `node tools/shot.mjs bathurst --m 1284` (avto na idealni liniji 1284 m po štartu, kamera za avtom, pokonci in ležeče); z `--pred main` še ista mesta v `main` in primerjava (pred, po, razlika); slike in `povzetek.md` so v `test-results/shots/` |
+| `tools/predogled.mjs`, `.github/workflows/` | testi ob pull requestu (`tests.yml`), posnetki pred/po (`posnetki.yml`), stran na GitHub Pages s predogledom odprtih pull requestov v `beta/` (`stran.yml`; opis v `tests/README.md`) |
 
 Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) ne deluje. Z diska (brez spletnega strežnika) igra deluje, le brez igranja brez interneta in namestitve.
 

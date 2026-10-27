@@ -14,19 +14,27 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 3 | Hitrejši testi, hiter vstop | končano |
 | 3b | Stabilni testi | končano (PR #170) |
 | 4 | Posnetek | končano |
-| 5 | Označevanje | čaka |
-| 6 | Slika in pošiljanje | čaka |
-| 7 | Zastavica med dirko | čaka |
+| 5 | Označevanje | končano |
+| 6 | Slika in pošiljanje | čaka · skupaj s 7 (veriga, korak 2) |
+| 7 | Zastavica med dirko | čaka · skupaj s 6 (veriga, korak 2) |
 | 8 | Skrito v izdaji za Google Play | odloženo |
-| 9 | Dnevnik napak, prikaz za razvijalca | čaka |
-| 10 | G · V krogu | čaka |
-| 11 | D · Samodejne zastavice | čaka |
-| 12 | E · Datoteka s posnetkom | čaka |
-| 13 | F · Seznam napak | čaka |
-| 14 | Posnetki zaslona, predogled pred mainom | čaka |
-| 15 | Posnetki pred/po na GitHubu | čaka |
-| 16 | Ponovljive dirke | čaka |
-| 17 | Razdeljen world.js | čaka |
+| 9 | Dnevnik napak, prikaz za razvijalca | čaka · skupaj z 10 in 11 (veriga, korak 3) |
+| 10 | G · V krogu | čaka · skupaj z 9 in 11 (veriga, korak 3) |
+| 11 | D · Samodejne zastavice | čaka · skupaj z 9 in 10 (veriga, korak 3) |
+| 12 | E · Datoteka s posnetkom | čaka (veriga, korak 4, zadnji) |
+| 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
+| 14 | Posnetki zaslona, predogled pred mainom | vzporedno, skupaj s 15 |
+| 15 | Posnetki pred/po na GitHubu | vzporedno, skupaj s 14 |
+| 16 | Ponovljive dirke | vzporedno |
+| 17 | Razdeljen world.js | končano (PR #176 in naslednji) |
+
+**Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
+
+- **Veriga orodja** (sklop za sklopom, ker vsi urejajo `js/napake.js` in posnetek v `js/game.js`): 5 → **6+7** → **9+10+11** → **12**. Združeni sklopi so ena seja, ena veja (`orodje-za-napake/sklop-06-07-<ime>`, `…/sklop-09-10-11-<ime>`) in en pull request. Ko je korak na `main`, seja zažene sejo za naslednji korak verige z navodilom »Naredi sklope 6 in 7 po docs/orodje-za-napake.md« (oz. »sklope 9, 10 in 11«, »sklop 12«). Po sklopu 12 se veriga konča.
+- **Vzporedno**, vsak v svoji seji in veji, takoj: **14+15** (orodja za posnetke zaslona in delovni tok), **16** (ponovljive dirke), **17** (razdeljen `world.js`, lahko več pull requestov). Te seje po koncu ne zaženejo nove seje.
+- **13** (seznam napak) naredi glavna seja kot zasebno spletno stran; ni v repozitoriju.
+- **Pred združitvijo v `main`** vsaka seja vanjo združi svežo `main` in še enkrat lokalno požene teste, povezane s spremembo. Spori so najverjetnejši v `index.html`, `sw.js`, `tools/stamp.js`, `docs/kazalo.md` in v tej tabeli: obdrži spremembe obeh strani. Če sklop 16 spremeni reference (`golden`, `races`), jih ustvari znova z orodji repozitorija; sklop 17 pa ne sme spremeniti sveta (reference ostanejo enake kot na `main`).
+- **GitHub** požene največ okoli 20 opravil hkrati, en pull request jih ima 6, zato lahko testi pri več hkratnih pull requestih nekaj časa čakajo v vrsti.
 
 ## Odločitve (veljajo za vse sklope)
 
@@ -42,7 +50,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 - **Potrditev vnaprej (26. 10. 2026):** uporabnik je potrdil vse sklope. Vsak sklop gre na `main`, ko so testi zeleni (lokalno in na GitHubu), in takoj se začne naslednji; ne čakaj na potrditev med sklopi. Uporabnik preizkuša sproti in javi napake, ki se popravijo v naslednjem sklopu ali posebej.
 - **Sklopi se začnejo sami (26. 10. 2026, uporabnik: »Vseh 17 sklopov začni sam in ne sprašuj, če lahko začneš naslednjega«):** ko je sklop na `main`, seja brez vprašanja zažene sejo za naslednji sklop iz tabele Stanje (model `claude-opus-5-5`) in ji to navodilo prenese, tudi ta stavek. Sklopa 0 in 8 ostaneta odložena in se preskočita, razen če uporabnik reče drugače. Uporabnika se med sklopi ne sprašuje za potrditev, samo pri odločitvah, ki so res njegove (npr. sprememba zasnove); ob koncu vsakega sklopa dobi kratek seznam za preizkus.
 - **Napor high (26. 10. 2026, uporabnik: »nastavi high za vse seje«):** `.claude/settings.json` z `{"effortLevel": "high"}`; vsaka seja, ki klonira `main`, dela z naporom high.
-- **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop.
+- **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop oziroma na združen korak (glej Pospešitev pod Stanjem); sklop 17 ima lahko več pull requestov.
 - **Vsak popravljen hrošč** dobi svoj test (`tests/napake/<št>.test.js` ali v obstoječem testu teme), okoli 10 min na popravek.
 - **Odloženo:** sklop 0 (repozitorij zaseben, igra na Cloudflare Pages z dostopom samo za uporabnika; GitHub Pro bi stal okoli 4 $/mesec, če bi kdaj izbrali samo zasebno kodo) in sklop 8 (orodje skrito v izdaji za Google Play). Do sklopa 8 je orodje privzeto vklopljeno.
 
@@ -192,6 +200,18 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - Postavitev ležeče in pokonci (od 360 × 640 oz. 640 × 360).
 - **Testi:** nov `tests/browser/napake.test.mjs`; GitHub vse.
 - **Preizkus:** obkroži z dvema barvama, piši v oblačka, razveljavi, premakni oblaček.
+- **Narejeno:**
+  - **`js/napake.js`** (modul `Napake`, samo slovensko, svoj DOM) in **`css/napake.css`**; igra mu da kljuke (`NK_HOOKS`, `rpInfo` v `js/game.js`).
+  - **Označi** (pero ✎) je dvanajsti gumb posnetka, pred Foto. Ustavi posnetek; gumbi posnetka in zgornja vrstica se skrijejo, namesto njih sta **Dodaj k zbirki** in **Zapri**. Časovnica ostane vidna, med označevanjem se ne odziva (slika ostane ista).
+  - **Paleta:** svinčnik (v trenutni barvi), 6 barv, razveljavi, radirka. Ležeče navpično ob levem robu (časovnica in gumba se umaknejo desno), pokonci vrstica nad časovnico. Od 360 × 640 oz. 640 × 360.
+  - **Risanje:** črte s temnim robom (vidne tudi bela in rumena na svetli cesti), shranjene v deležih zaslona. Radirka zbriše celo črto, ki se je dotakne; razveljavi vrne tudi radirko.
+  - **Oblački:** sklenjen krog (konec ob začetku ali čez njega) odpre oblaček v svoji barvi desno ob krogu (levo, če ni prostora; mimo palete in časovnice) s kazalcem v njem. Drugi krog iste barve gre v isti oblaček (oblaček zatrepeta). Odprta črta oblačka ne odpre. Oblaček se premakne za vrh. Ko krogov barve ni več (razveljavi, radirka), oblaček izgine, zapis ostane v pomnilniku in se vrne z njim.
+  - **Zapri** z oznakami najprej vpraša (»Zavrzi oznake?«, drugi tap v 3 s).
+  - **Dodaj k zbirki:** trenutek v pomnilniku (`Napake.zbirka`: čas, krog sledenega avta, metri od štarta `s`, slika 1280 px brez oznak, črte, zapisi po barvah s položajem oblačka) in **zastavica s številko** na časovnici; tap nanjo skoči na trenutek. Zbirka velja za en posnetek (ostane tudi po Nazaj v dirko in ponovnem Posnetku do sem); nova dirka začne novo. Sklop 6 iz nje sestavi sliko.
+  - **Tipke:** tipkanje v oblaček ne sproži tipk igre; I med označevanjem ne naredi nič (oznake se ne izgubijo).
+  - **Gumbi posnetka:** pod 960 px ★ in Označi brez besede, pod 820 px tesneje, pokonci pisava 13 px. Pisava na GitHubu nariše vrsto okoli 6–10 % širše kot lokalno (prvi tek: ležeče 587 od 616 px, pokonci 326 od 336 px); test zahteva vsaj dvajsetino rezerve.
+  - **Testi:** nov `tests/browser/napake.test.mjs` (20 preverjanj), `replay` (12 gumbov, rezerva v vrsti).
+  - **Opomba (moje odločitve):** zastavice zbirke so zaenkrat ločene od `recd.flags` (zastavice med dirko, sklop 7); Zastavice (n) jih še ne šteje. Slika trenutka je shranjena brez oznak (oznake so vektorske, sklop 6 jih nariše v svoji velikosti).
 
 ### Sklop 6 · Slika in pošiljanje — 1,5–2 h · 30. 10.
 
