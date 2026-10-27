@@ -41,7 +41,7 @@ try {
       // (the rows as the game writes them: the lap's markup by game.js itself; the tyres: the dots and the widest compound's word)
       const lap = (t) => { $('h-lap').innerHTML = window.__game.lapHTML(t); }, tyres = (on) => { $('h-tyre').className = on ? 'on dry cM' : ''; $('h-tyre').lastElementChild.textContent = on ? 'SREDNJE' : ''; };
       lap('KROG 12/36'); $('h-pos').textContent = '12'; $('h-tot').textContent = '/13'; $('h-speed').textContent = '299'; tyres(true);
-      $('hud').classList.add('drs'); $('h-drs').className = 'arm'; $('h-tow').classList.add('on');
+      $('hud').classList.add('drs'); $('h-drs').className = 'arm';
       $('h-flag').className = 'on yel'; $('h-flag').textContent = 'RUMENA ZASTAVA'; $('h-fuel').className = 'on'; $('h-fuel').textContent = 'GORIVO 40 %';
       $('h-flt').className = 'on'; $('h-flt').innerHTML = '<span class="pk">PREDRTA GUMA</span><span class="br">VROČE ZAVORE</span><span class="en">VROČ MOTOR</span>';
       $('hud').classList.add('tw');
@@ -52,7 +52,7 @@ try {
       for (const [id, c, t] of [['h-pit', 'on', ''], ['h-react', 'show good', ''], ['h-msg', 'show', 'START!'], ['toast', 'show col', 'Sedaj lahko spustiš plin, vse bo naredil sam.']]) { $(id).style.transition = $(id).style.animation = 'none'; if (t) $(id).textContent = t; $(id).className = c; }
       $('h-react').firstElementChild.textContent = 'REAKCIJA'; $('h-react').lastElementChild.textContent = '0,23 s'; $('btn-rescue').classList.remove('off');
       check('race+column'); for (const id of ['h-pit', 'h-react', 'h-msg', 'toast']) $(id).className = ''; $('btn-rescue').classList.add('off');
-      $('hud').classList.remove('drs'); $('h-tow').classList.remove('on'); $('h-flt').className = '';
+      $('hud').classList.remove('drs'); $('h-flt').className = '';
       lap('KROG 1/1 · 12,3/20,7 KM'); tyres(false); $('h-fuel').className = ''; check('nring');   // (Nürburg: the long lap's km, no pits, no tyres)
       lap('KVALIFIKACIJE'); tyres(true); $('h-pos').textContent = '–'; $('h-tot').textContent = ''; $('h-flag').className = ''; $('hud').classList.remove('tw');
       $('h-split').textContent = 'SEKTOR 2  1:05.123'; $('h-split').className = 'show sg'; check('quali');   // (qualifying on a track with pits: the tyres and the out-lap's word)
