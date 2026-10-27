@@ -58,7 +58,7 @@ try {
   // Deli: the choice on a computer
   await Q.click('#nk-deli'); await Q.waitForFunction(() => document.querySelector('#nk-dlg .nk-prev img') && document.querySelector('#nk-dlg .nk-prev img').complete, null, { timeout: 30000, polling: 100 });
   const D = await Q.evaluate(() => ({ acts: Napake.stanje.dlg, keep: document.querySelector('#nk-dlg .nk-keep input').checked, sub: document.querySelector('#nk-dlg .nk-sub').textContent, img: document.querySelector('#nk-dlg .nk-prev img').naturalWidth }));
-  T.check('Deli: the choice (a computer: Kopiraj sliko first, Samo shrani sliko, Kopiraj besedilo; Obdrži tudi v igri on), the picture shown', D.acts.join() === 'Kopiraj sliko,Samo shrani sliko,Kopiraj besedilo' && D.keep && D.sub === '2 trenutka · zastavic iz dirke: 1' && D.img === 1600, JSON.stringify(D));
+  T.check('Deli: the choice (a computer: Kopiraj sliko first, Samo shrani sliko, Kopiraj besedilo, Shrani posnetek (.rrp); Obdrži tudi v igri on), the picture shown', D.acts.join() === 'Kopiraj sliko,Samo shrani sliko,Kopiraj besedilo,Shrani posnetek (.rrp)' && D.keep && D.sub === '2 trenutka · zastavic iz dirke: 1' && D.img === 1600, JSON.stringify(D));
   await Q.click('#nk-dlg [data-nk-d="besedilo"]'); await Q.waitForTimeout(200);
   const clip = await Q.evaluate(() => navigator.clipboard.readText().catch(() => ''));
   T.check('Kopiraj besedilo: the text in the clipboard', clip === R.text, clip.slice(0, 120));
@@ -117,7 +117,7 @@ try {
   await P.waitForFunction(() => window.__shared, null, { timeout: 30000 }); await P.waitForTimeout(300);
   const sh = await P.evaluate(async () => ({ s: window.__shared, db: (await Napake.shranjene()).map(r => r.status), dlg: !!document.getElementById('nk-dlg'), toast: document.getElementById('toast').textContent }));
   T.check('a phone: Deli zdaj first (no Kopiraj sliko); the share sheet gets the picture (napake_bathurst_....png) and the text; poslano, the choice closed',
-    pa.join() === 'Deli zdaj,Samo shrani sliko,Kopiraj besedilo' && sh.s.names.length === 1 && /^napake_bathurst_\d{8}-\d{4}\.png$/.test(sh.s.names[0]) && sh.s.types[0] === 'image/png' && /^RRA-NAPAKE /.test(sh.s.text) && sh.db.join() === 'poslano' && !sh.dlg,
+    pa.join() === 'Deli zdaj,Samo shrani sliko,Kopiraj besedilo,Shrani posnetek (.rrp)' && sh.s.names.length === 1 && /^napake_bathurst_\d{8}-\d{4}\.png$/.test(sh.s.names[0]) && sh.s.types[0] === 'image/png' && /^RRA-NAPAKE /.test(sh.s.text) && sh.db.join() === 'poslano' && !sh.dlg,
     JSON.stringify({ pa, sh }));
   T.check('no page errors (the phone)', B.errors.length === 0, B.errors.slice(0, 5).join(' | '));
   await P.context().close();
