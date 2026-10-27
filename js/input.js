@@ -45,6 +45,7 @@ const Input = (function () {
       if (keyIs('pause', e.code) && onPause) onPause();
       if (keyIs('tyre', e.code) && onTyre) onTyre();   // (the tyres for the next stop)
       if (keyIs('replay', e.code) && onReplay) onReplay();   // (Posnetek do sem: the race so far, straight from the race)
+      if (keyIs('flag', e.code) && onFlag) onFlag();   // (a flag in the race: Orodje za napake)
     });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; ptrs.clear(); wheel.pid = null; });
@@ -157,11 +158,11 @@ const Input = (function () {
 
   /* ---------------- the controls (Nastavitve · Kontrole): the keys for each action, and for each pad or wheel its own buttons and axes
      (stored by game.js, given here with setKeys / setPads). A pad in the standard layout by default: the left stick steers, RT / R2 or
-     A / Cross the throttle, LT / L2 or X / Square the brake, Start the pause, Y / Triangle the rescue (one camera: no button for it; no
+     A / Cross the throttle, LT / L2 or X / Square the brake, Start the pause, Y / Triangle the rescue, Select / Back a flag of Orodje za napake (game.js padFrame) (one camera: no button for it; no
      handbrake: no action for it, on the keys or the pad; an old binding of one, 'drift', is not read). A wheel (another layout): the
      wheel's axis steers in proportion (no curve, a small dead zone), its pedals are axes found and measured in Kontrole (where each
      rests and where it is pressed down). */
-  const KEY_DEF = { left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], gas: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'], pause: ['Escape', 'KeyP'], tyre: ['KeyT', ''], replay: ['KeyI', ''] };
+  const KEY_DEF = { left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], gas: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'], pause: ['Escape', 'KeyP'], tyre: ['KeyT', ''], replay: ['KeyI', ''], flag: ['KeyF', ''] };
   const WHEEL_RE = /wheel|volant|lenkrad|racing|driving force|g2[79]|g9[02]\d|g923|g29|t\d{3}|t-gt|tmx|thrustmaster|fanatec|moza|simagic/i;
   let keyMap = {}, driveKeys = new Set(), capture = null;
   const keyDown = (act) => { const m = keyMap[act]; return !!(m && ((m[0] && keys[m[0]]) || (m[1] && keys[m[1]]))); };
@@ -189,7 +190,7 @@ const Input = (function () {
      until the screen is touched again. The device: the one picked in Kontrole while connected, else the first. */
   const PAD_DZ = 0.15, PAD_B = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, back: 8, start: 9 };
   const pad = { on: false, name: '', wheel: false, steer: 0, dsteer: 0, thr: 0, brk: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [], moved: {} };
-  let onPad = null, onTyre = null, onReplay = null;
+  let onPad = null, onTyre = null, onReplay = null, onFlag = null;
   function padAxis(v) { const a = Math.abs(v || 0); if (!(a > PAD_DZ)) return 0; return Math.sign(v) * Math.pow(Math.min(1, (a - PAD_DZ) / (1 - PAD_DZ)), 1.5); }   // (a dead zone, finer near the middle)
   function steerOf(v, s) {   // the steering axis through its calibration: turned the other way, full lock at rng of the axis, the dead zone in the middle, the curve
     const x = (v || 0) * (s.inv ? -1 : 1), a = Math.abs(x) / Math.max(0.05, s.rng || 1), dz = s.dz || 0;
@@ -286,6 +287,6 @@ const Input = (function () {
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
   function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }
 
-  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, padRaw, padList, setKeys, setPads, captureKey, get keyMap() { return keyMap; }, set onPad(fn) { onPad = fn; }, set onTyre(fn) { onTyre = fn; }, set onReplay(fn) { onReplay = fn; }, pad, state: S, tilt, get mode() { return mode; } };
+  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, padRaw, padList, setKeys, setPads, captureKey, get keyMap() { return keyMap; }, set onPad(fn) { onPad = fn; }, set onTyre(fn) { onTyre = fn; }, set onReplay(fn) { onReplay = fn; }, set onFlag(fn) { onFlag = fn; }, pad, state: S, tilt, get mode() { return mode; } };
 })();
 
