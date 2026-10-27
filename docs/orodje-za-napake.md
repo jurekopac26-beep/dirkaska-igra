@@ -14,7 +14,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 3 | Hitrejši testi, hiter vstop | končano |
 | 3b | Stabilni testi | končano (PR #170) |
 | 4 | Posnetek | končano |
-| 5 | Označevanje | čaka |
+| 5 | Označevanje | končano |
 | 6 | Slika in pošiljanje | čaka · skupaj s 7 (veriga, korak 2) |
 | 7 | Zastavica med dirko | čaka · skupaj s 6 (veriga, korak 2) |
 | 8 | Skrito v izdaji za Google Play | odloženo |
@@ -200,6 +200,18 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - Postavitev ležeče in pokonci (od 360 × 640 oz. 640 × 360).
 - **Testi:** nov `tests/browser/napake.test.mjs`; GitHub vse.
 - **Preizkus:** obkroži z dvema barvama, piši v oblačka, razveljavi, premakni oblaček.
+- **Narejeno:**
+  - **`js/napake.js`** (modul `Napake`, samo slovensko, svoj DOM) in **`css/napake.css`**; igra mu da kljuke (`NK_HOOKS`, `rpInfo` v `js/game.js`).
+  - **Označi** (pero ✎) je dvanajsti gumb posnetka, pred Foto. Ustavi posnetek; gumbi posnetka in zgornja vrstica se skrijejo, namesto njih sta **Dodaj k zbirki** in **Zapri**. Časovnica ostane vidna, med označevanjem se ne odziva (slika ostane ista).
+  - **Paleta:** svinčnik (v trenutni barvi), 6 barv, razveljavi, radirka. Ležeče navpično ob levem robu (časovnica in gumba se umaknejo desno), pokonci vrstica nad časovnico. Od 360 × 640 oz. 640 × 360.
+  - **Risanje:** črte s temnim robom (vidne tudi bela in rumena na svetli cesti), shranjene v deležih zaslona. Radirka zbriše celo črto, ki se je dotakne; razveljavi vrne tudi radirko.
+  - **Oblački:** sklenjen krog (konec ob začetku ali čez njega) odpre oblaček v svoji barvi desno ob krogu (levo, če ni prostora; mimo palete in časovnice) s kazalcem v njem. Drugi krog iste barve gre v isti oblaček (oblaček zatrepeta). Odprta črta oblačka ne odpre. Oblaček se premakne za vrh. Ko krogov barve ni več (razveljavi, radirka), oblaček izgine, zapis ostane v pomnilniku in se vrne z njim.
+  - **Zapri** z oznakami najprej vpraša (»Zavrzi oznake?«, drugi tap v 3 s).
+  - **Dodaj k zbirki:** trenutek v pomnilniku (`Napake.zbirka`: čas, krog sledenega avta, metri od štarta `s`, slika 1280 px brez oznak, črte, zapisi po barvah s položajem oblačka) in **zastavica s številko** na časovnici; tap nanjo skoči na trenutek. Zbirka velja za en posnetek (ostane tudi po Nazaj v dirko in ponovnem Posnetku do sem); nova dirka začne novo. Sklop 6 iz nje sestavi sliko.
+  - **Tipke:** tipkanje v oblaček ne sproži tipk igre; I med označevanjem ne naredi nič (oznake se ne izgubijo).
+  - **Gumbi posnetka:** pod 960 px ★ in Označi brez besede, pod 820 px tesneje, pokonci pisava 13 px. Pisava na GitHubu nariše vrsto okoli 6–10 % širše kot lokalno (prvi tek: ležeče 587 od 616 px, pokonci 326 od 336 px); test zahteva vsaj dvajsetino rezerve.
+  - **Testi:** nov `tests/browser/napake.test.mjs` (20 preverjanj), `replay` (12 gumbov, rezerva v vrsti).
+  - **Opomba (moje odločitve):** zastavice zbirke so zaenkrat ločene od `recd.flags` (zastavice med dirko, sklop 7); Zastavice (n) jih še ne šteje. Slika trenutka je shranjena brez oznak (oznake so vektorske, sklop 6 jih nariše v svoji velikosti).
 
 ### Sklop 6 · Slika in pošiljanje — 1,5–2 h · 30. 10.
 
