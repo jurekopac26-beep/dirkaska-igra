@@ -53,7 +53,7 @@ async function screen(name, vp, touch) {
   // the tyres: each dot its own colour; one on fire; ZAMENJAJ KOLO
   const dots = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.w = [0, 0.24, 0.5, 0.9]; P.kt.d = [0, 0, 0, 0]; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
     return [...document.querySelectorAll('#h-tyre .dts i')].map(i => getComputedStyle(i).backgroundColor); });
-  T.check('the KOLIBRI\'s dots: each tyre its own colour (new green, worn yellow to orange, never red from the wear alone)', /rgb\(4\d, 2\d\d, 4\d\)|rgb\(5\d, 2\d\d, 5\d\)/.test(dots[0]) && new Set(dots).size === 4 && !/rgb\(2[45]\d, [0-5]\d, /.test(dots[3]), dots.join(' | '));
+  T.check('the KOLIBRI\'s dots: each tyre its own colour (new green, worn yellow to orange, never red from the wear alone)', (() => { const c = dots.map(x => (x.match(/\d+/g) || []).map(Number)); return c[0][1] > 200 && c[0][0] < 80 && new Set(dots).size === 4 && c.every(v => v[1] > 90) && c[1][0] < c[2][0] && c[2][1] > c[3][1]; })(), dots.join(' | '));
   const sw = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.d = [0.2, 1, 0, 0]; P.kt.hot = 1; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
     const hot = document.querySelectorAll('#h-tyre .dts i')[1].className; Core.applyDamage(P, 0.009, 0, 0.7); g.sim(0.3, true); await new Promise(r => requestAnimationFrame(r)); await new Promise(r => requestAnimationFrame(r));
     const W = document.getElementById('wheel-swap'), B = document.getElementById('ws-btn'), r = B.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect(), lb = document.getElementById('ws-l').getBoundingClientRect();
@@ -93,7 +93,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) 
 {
   const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', null, { width: 390, height: 844 }, { touch: true });
   const s = await page.evaluate(async () => { const g = window.__game; g.onAction('to-settings'); await new Promise(r => setTimeout(r, 300));
-    const seg = (k) => [...document.querySelectorAll(`[data-set="${k}"] button`)].map(b => b.textContent.trim() + (b.classList.contains('on') ? '*' : ''));
+    const seg = (k) => [...document.querySelectorAll(`[data-set="${k}"] button`)].map(b => b.textContent.trim() + (b.classList.contains('sel') ? '*' : ''));
     return { dmg: g.S.damage, tower: g.S.tower, tw: seg('tower'), dm: seg('damage') }; });
   T.check('a new player: Poškodbe avtov Samo videz, Časovna tabela Zgoraj; its choices Izklop · Zgoraj · Ob zemljevidu', s.dmg === 1 && s.tower === 1 && s.tw.join(' ') === 'Izklop Zgoraj* Ob zemljevidu' && s.dm[1] === 'Samo videz*', JSON.stringify(s));
   T.check('settings: no page errors', !errors.length, errors.join(' | '));
