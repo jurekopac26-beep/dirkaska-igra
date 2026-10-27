@@ -98,22 +98,34 @@ Oznake: p10 / p50 / p90, n je število ovinkov ali dogodkov. Enote so SI, ay in 
 
 Metode (seja 27. 10. 2026, analiza v ločenem pomočniku, skripte niso v repozitoriju): ω kamere iz premika točk neba z odštevanjem paralakse, umerjeno na zaprtje kroga (360° na krog), goriščna razdalja 390 px pri širini 960 (vidno polje ≈ 102°); hitrost iz belih talnih oznak (štartna mreža, ciljna črta) v širinah avta W, iz pike na zemljevidu (V1) in iz odometrije ceste ob avtu (V2, V3; preverjeno na ciljni črti 1–3 %); zasuk avta proti kameri iz predlog na lastnem avtu (streha, odbijač) in vizualno; trki iz padca številke poškodb in skoka ω, potrjeni na sličicah; tekmeci iz oznak z imeni nad avti (razdalja), seznama mest (OCR, prehitevanja) in zemljevida. Svet v videih je glede na avte zgoščen (ovinki 10–40 m pri 17–35 m/s), zato primerjaj v g, °/s in dolžinah avta, ne v metrih proge.
 
-## 6. Primerjava z igro (nova fizika, stanje na veji `claude/ecstatic-cannon-x2e2se`)
+## 6. Primerjava z igro (nova fizika, stanje 27. 10. 2026, po uglaševanju)
 
-Merjeno z orodji v `tools/nova/` (opis v `docs/kazalo.md`):
+Merjeno z orodji v `tools/nova/` (opis v `docs/kazalo.md`). Proge za `cam.js`: Bathurst, Spa, Suzuka, Monaco, Red Bull Ring, Detroit (igralec na avtopilotu, pomoč visoka); za `train.js` in `pack.js` še Montreal in Townsville.
 
-| Količina | Video | Igra, nova fizika | Orodje |
-|---|---|---|---|
-| Zasuk avta proti kameri za avtom | 0,25–0,37°/(°/s), > 50 °/s p50 21°, v fazi z ω | naklon 0,32, > 50 °/s p50 22°, p95 26° (kamera kot pri klasični, `render.js`: 2,8) | `cam.js` |
-| Od tega pravi zdrs | pretežno zdrs (kamera sledi smeri gibanja) | pretežno zamik kamere: zdrs v ovinku 1–8°, poln zasuk na gumbih pri visoki pomoči do ≈ 14° | `tune.js`, `cam.js` |
-| ay na meji (cesta) | mestni p90 2,5 g, turni p90 2,9 g | 2,0–2,4 g (cestni), formula / prototip 2,4–3,0 g | `tune.js` |
-| Zaviranje | p50 1,0–1,2 g (kratka, 1,6 s) | zavore kot pri klasični (100–0 km/h 23,9 m) | `nova.test.js` |
-| Trk: skok ω / sprememba smeri / bočno / izguba hitrosti | 30 °/s / 2,4° / 1–1,5 m/s / 1,4 m/s | 34 °/s / 5° / 1,1 m/s / 1,8 m/s | `pack.js` |
-| Razmik v koloni | p50 1,33 dolžine, ≈ 0,2 s | 69 % časa v skupini pod 0,5 s, 57 % pod 15 m | `pack.js` |
-| Tekmec ob avtu | 23–33 % | 16 % | `pack.js` |
-| Prehitevanja AI–AI | ≈ 9–10 na minuto (12 avtov) | ni izmerjeno | — |
-| Razvlečenje polja | 2–3 s na začetku, +0,5–1 s na krog | ni izmerjeno (razpon hitrosti tekmecev po težavnosti: `DIFF` v `core.js`) | — |
-| Robniki (tekmeci) | čez robnike na vrhu in izhodu | kolo na robniku 13–20 % časa (klasična < 2 %) | `sweep.js` |
+| Količina | Video | Igra, nova fizika | Klasična | Orodje |
+|---|---|---|---|---|
+| Zasuk avta proti kameri za avtom | 0,25–0,37°/(°/s), > 50 °/s p50 21°, v fazi z ω | naklon 0,27–0,33, > 50 °/s p50 20,6–23,1°, p95 28–29,5° (mestni, turni, formula, prototip, tovornjak, muscle, mali) | 0,64, p50 42° | `cam.js` |
+| Od tega pravi zdrs | pretežno zdrs, zamik kamere < 0,1 s | zdrs > 50 °/s p50 16–18,6° (72–80 % zasuka), v fazi (0,3 s v zavoj že 70 % ustaljenega); kamera 0,08 s za smerjo vožnje | zdrs p50 24,5° | `cam.js`, `nova.test.js` |
+| Ustaljen zdrs na °/s | ≈ 0,3 s | 0,31–0,38 s (plošča, 70–140 km/h) | 0,35–0,6 s | `nova.test.js` |
+| Drseči slog (izbira) | V2 formula: 0,85°/(°/s), ≈ 45°, prehiteva ω | formula: naklon 0,77, > 50 °/s p50 51°, zdrs p50 46°; 0,25 s v zavoj 24° (običajni 6°) | — | `cam.js SL=1`, `nova.test.js` |
+| Polni zasuk na gumbih (visoka pomoč) | — | 21–26° (60–160 km/h, vsi razredi), brez vrtenja; nizka pomoč 110 km/h do 23° | | `tune.js` |
+| ay na meji (cesta) | mestni p90 2,5 g, turni p90 2,9 g | 2,0–2,4 g (cestni), formula / prototip 2,4–3,0 g (nespremenjeno) | | `tune.js` |
+| Zaviranje | p50 1,0–1,2 g (kratka, 1,6 s) | kot pri klasični (100–0 km/h 23,9 m) | | `nova.test.js` |
+| Trava: pojemek | +0,1–0,15 g (turni) | dve kolesi +0,10–0,14 g (tovornjak +0,05), štiri +0,20–0,28 g | +0,20–0,25 / +0,37–0,47 g | `nova.test.js` |
+| Trava: nemir (rms ω) | 1,4–1,85× | dve kolesi +2,2–4,3 °/s ob osnovi 2,9 °/s v dirki: 1,25–1,8×; štiri 1,7–3,2× | brez | `nova.test.js` |
+| Slick gume na makadamu | — | formula in prototip na makadamskih etapah −1,4 … +1,8 % od klasične (prej 3–7 % počasneje) | | `races-nova.js` |
+| Trk: skok ω / sprememba smeri / bočno / izguba hitrosti | 30 °/s / 2,4° / 1–1,5 m/s / 1,4 m/s | 35 °/s / smer vožnje 3,7° (telo 7,6°) / 1,2 m/s / 1,5 m/s | 70 °/s / 3,8° / 1,4 / 1,2 | `pack.js` |
+| Razmik v koloni | p50 1,33 dolžine, ≈ 0,2 s | p25 / p50 / p75 2,3 / 3,3 / 5,3 dolžine, 0,25 / 0,36 / 0,55 s | 3,0 / 4,7 / 6,9 dolžine, 0,49 s | `train.js` |
+| Tekmec ob igralcu | 23–33 % | 18 % (igralec v skupini) | 10 % | `train.js` |
+| Prehitevanja AI–AI (12 avtov) | 7,6–10,8 na minuto, ≈ 0,8 na AI | 8,9 na minuto, 0,74 na AI (ponovno v 10 s 36 %) | 6,4–7,5 | `train.js` |
+| Razvlečenje polja | 2–3 s na začetku, +0,5–1 s na krog (1,1–2,2 % kroga) | 3,5 s po 1. krogu, +1,16 % kroga na krog | +2,1 % | `train.js` |
+| Robniki (tekmeci) | čez robnike na vrhu in izhodu | kolo na robniku 12 % časa (klasična < 1 %) | | `nova.test.js`, `sweep.js` |
+| Dirke na vseh pravih progah | — | 210 dirk (suho, dež, formula, prototip, novejši avti): vse do cilja, brez NaN in vrtenj; zmagovalec > 3 % od klasične 7 (prej 15), mediana odstopanja 0,74 % | | `races-nova.js` |
+
+Opombe k merjenju:
+- `train.js` postavi igralca na avtopilotu na hitrost sredine polja (kot igralec na posnetku, ki vozi v skupini); prehitevanje šteje, ko par zamenja vrstni red za vsaj 1 s (`HOLD=2`: za 2 s; tako je prehitevanj okoli 15 % manj in manj vrnjenih). Na posnetku so razmiki merjeni ob igralcu na zaslonu (v počasnejših delih), zato so v dolžinah krajši; v sekundah je igra blizu (0,36 proti ≈ 0,2–0,3 s).
+- Proge v igri so v resnični velikosti (krog 75–150 s), na posnetku zgoščene (41–53 s), zato je razvlečenje primerjano v % kroga.
+- Zasuk pri nizki pomoči z avtopilotom (`cam.js AS=0`) ni primerljiv: avtopilot ni narejen za nizko pomoč (niha tudi brez zdrsa telesa).
 
 ## 7. Stanje in odprte točke
 
