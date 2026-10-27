@@ -1800,7 +1800,7 @@
       race.nv = true;
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
-      laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
+      laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }));
@@ -1859,6 +1859,7 @@
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
         else if (!(race.opts.flying > 0)) Comm.say(track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
         if (!(race.opts.flying > 0)) showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);   // (a flying start: only its countdown, flyHUD; a championship's round with VOZIŠ TI!)
+        if (race.strat) toast(tr(race.fuelRate ? 'Dolga dirka: gorivo ne zdrži do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.' : 'Dolga dirka: gume se obrabijo hitreje in ne zdržijo do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.'), 5200);   // (a strategy race, Core STRAT: with fuel the tank makes the stops, else the tyres)
       }
     }
     if (race.rain && !(race.opts.flying > 0)) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
@@ -3167,12 +3168,13 @@
   function tyreHUD(P) {
     const W = race.wst, el = $('h-tyre');
     if (!(W && W.tyres && P.ty)) { if (tyreKey !== '') { tyreKey = ''; el.className = ''; } return; }   // (no tyres: the row only the lap)
-    const ty = P.ty, left = (1 - ty.wear) * 100, bad = ty.k !== Core.tyreFor(W.line);
+    const ty = P.ty, left = Math.max(0, (1 - ty.wear) * 100), bad = ty.k !== Core.tyreFor(W.line), cl = ty.wear >= Core.TYRE_CLIFF[0];   // (worn past 1: 0 %; cl: over the cliff, Core TYRE_CLIFF)
+    wearTold(P);
     const x0 = ty.d0 == null ? null : Math.max(ty.d0, tyOut == null ? ty.d0 : tyOut), hq = Math.round((x0 == null ? 1 : clamp((P.dist - x0) / track.len, 0, 1)) * 40);   // (the warmth in 40 steps of a lap from the way out)
-    const key = ty.k + (ty.c || '') + (bad ? 'x' : '') + Math.round(left / 2) + '|' + hq;
+    const key = ty.k + (ty.c || '') + (bad ? 'x' : '') + (cl ? 'c' : '') + Math.round(left / 2) + '|' + hq;
     if (key === tyreKey) return; tyreKey = key;
     const own = ty.k === 'wet' ? TY_WET : TY_OWN[ty.c] || TY_DEF, dot = hslRgb(Math.round(clamp((left - 40) / 55, 0, 1) * 120), 0.78, 0.52);
-    el.className = 'on ' + ty.k + (ty.k === 'dry' && ty.c ? ' c' + ty.c : '') + (bad ? ' bad' : '') + (hq < 40 ? ' cold' : '');
+    el.className = 'on ' + ty.k + (ty.k === 'dry' && ty.c ? ' c' + ty.c : '') + (bad ? ' bad' : '') + (cl ? ' cliff' : '') + (hq < 40 ? ' cold' : '');
     el.style.setProperty('--td', tyMix(dot, hq / 40)); el.style.setProperty('--tw', tyMix(own, hq / 40));
     el.lastElementChild.textContent = tr(tyreName(ty));
   }
@@ -3200,6 +3202,18 @@
     if (key === fcKey) return; fcKey = key;
     const el = $('h-fc'); el.className = on ? 'on' : ''; el.textContent = txt; el.setAttribute('aria-label', on ? fcText(f) : tr('Napoved vremena'));
   }
+  // worn tyres (Core TYRE_CLIFF): a set worn past Core.TYRE_WORN: GUME IZRABLJENE, the commentator and what comes (a toast: the cliff, then a
+  // burst); its pill red and blinking over the cliff (tyreHUD); the engineer's box call: Race.plan's 'worn'. The moment a tyre bursts
+  // (Car.ty.ev): POČILA GUMA!, the commentator, what to do (its pill with the failures', fltHUD)
+  let tyreTold = false;
+  function wearTold(P) {
+    const ty = P.ty, e = ty.ev; if (e) ty.ev = '';
+    if (ty.wear < Core.TYRE_WORN - 0.1) tyreTold = false;   // (a fresh set, a new race)
+    if (phase !== 'racing' || P.finished) return;
+    if (e === 'burst') { tyreTold = true; showMsg(tr('POČILA GUMA!'), 'slow', 2.6); toast(tr('Guma je počila: avto slabše prime in je počasnejši. Zapelji v bokse, mehaniki zamenjajo gume.'), 4800); Comm.say('tyreBurst', null, 4); vibrate(60); }
+    else if (!tyreTold && ty.wear >= Core.TYRE_WORN && !P.inPit) { tyreTold = true; showMsg(tr('GUME IZRABLJENE'), 'warn', 2.4);
+      toast(tr('Gume so izrabljene: nad 80 % obrabe hitro izgubljajo oprijem, nad 100 % lahko guma poči. Zapelji v bokse po nove.'), 5200); Comm.say('tyresWorn', null, 3); }
+  }
   // the fuel (a race with fuel on): the gauge under the tyres, a tick on it at what it takes to the line (the car's own burn); a warning on
   // the lap it would not last another when it will not reach the line, the last drops (a crawl to the pits) when it is empty
   let fuelKey = '', fuelTold = { low: false, out: false };
@@ -3213,13 +3227,13 @@
     if (P.fuel <= 0 && !fuelTold.out) { fuelTold.out = true; showMsg(tr(P.m.ev ? 'PRAZNA BATERIJA!' : 'BREZ GORIVA!'), 'slow', 2.6); Comm.say(P.m.ev ? 'batteryOut' : 'fuelOut', null, 4); }
     if (P.fuel > 0.9) fuelTold.low = fuelTold.out = false;   // (filled up again)
   }
-  // failures (a race with them on): a cut tyre, hot brakes, a hot engine as pills under the fuel; the moment one comes: the message, the
-  // commentator and what to do about it (a toast)
+  // failures (a race with them on): a cut tyre, hot brakes, a hot engine as pills under the fuel (and a tyre burst from wear, with or without
+  // them: wearTold); the moment one comes: the message, the commentator and what to do about it (a toast)
   let fltKey = '';
   function fltHUD(P) {
-    const F = P.flt, pk = !!F && F.pw >= 0, br = !!F && F.brH, en = !!F && F.enH, key = (pk ? 'p' : '') + (br ? 'b' : '') + (en ? 'e' : '');
+    const F = P.flt, pk = !!F && F.pw >= 0, bu = !!(P.ty && P.ty.bw >= 0), br = !!F && F.brH, en = !!F && F.enH, key = (pk ? 'p' : '') + (bu ? 'u' : '') + (br ? 'b' : '') + (en ? 'e' : '');   // (bu: worn out, a burst tyre, wearTold)
     if (key !== fltKey) { fltKey = key; const el = $('h-flt'); el.className = key ? 'on' : '';
-      el.innerHTML = (pk ? '<span class="pk">' + tr('PREDRTA GUMA') + '</span>' : '') + (br ? '<span class="br">' + tr('VROČE ZAVORE') + '</span>' : '') + (en ? '<span class="en">' + tr('VROČ MOTOR') + '</span>' : ''); }
+      el.innerHTML = (pk ? '<span class="pk">' + tr('PREDRTA GUMA') + '</span>' : '') + (bu ? '<span class="pk">' + tr('POČENA GUMA') + '</span>' : '') + (br ? '<span class="br">' + tr('VROČE ZAVORE') + '</span>' : '') + (en ? '<span class="en">' + tr('VROČ MOTOR') + '</span>' : ''); }
     if (!F || !F.ev) return;
     const e = F.ev; F.ev = '';
     if (phase !== 'racing' || P.finished) return;
@@ -3229,15 +3243,15 @@
   }
   /* ---------------- the team radio (Nastavitve · Radio ekipe; race.mk: Core's Race.gap, pitLoss, plan) ---------------- */
   // the engineer: each lap the gaps to the cars ahead and behind; when a stop is needed (fuel, worn tyres, the wrong ones for the weather,
-  // a cut one, heavy damage) the window for it, and on the lap it must be made "box this lap" with where the stop puts the player; rain on
+  // a cut or burst one, worn out, heavy damage) the window for it, and on the lap it must be made "box this lap" with where the stop puts the player; rain on
   // the radar a minute before it comes, and its end; behind the safety car a cheap stop; the forecast at the way in (fcRadio); "go, go, go"
   // at the hand-back (pitFree); after the stop the place. A box at the top of the HUD with a radio's click, one message at a time (an urgent
   // one first); the calls also in the engineer's voice (Nastavitve · Glas inženirja, with the sound on: in English whatever the page's
   // language, the radio's squelch opening as he starts and its roger beep after him instead of the click, teamRadioVoice)
   let trd = null;
   const fmtS = (g) => Lang.dec(Math.abs(g).toFixed(1));
-  const BOX_V = { fuel: 'radioBox', tyres: 'radioBox', wet: 'radioBoxWet', dry: 'radioBoxDry', tyre: 'radioBoxTyre', damage: 'radioBoxFix' };
-  const NEED_TXT = { fuel: 'Gorivo ne bo zdržalo do cilja.', tyres: 'Gume ne bodo zdržale do cilja.', wet: 'Proga je mokra, potrebuješ dežne gume.', dry: 'Idealna linija je suha, potrebuješ suhe gume.', tyre: 'Imaš predrto gumo.', damage: 'Avto je močno poškodovan.' };
+  const BOX_V = { fuel: 'radioBox', tyres: 'radioBox', wet: 'radioBoxWet', dry: 'radioBoxDry', tyre: 'radioBoxTyre', worn: 'radioBoxWorn', damage: 'radioBoxFix' };
+  const NEED_TXT = { fuel: 'Gorivo ne bo zdržalo do cilja.', tyres: 'Gume ne bodo zdržale do cilja.', wet: 'Proga je mokra, potrebuješ dežne gume.', dry: 'Idealna linija je suha, potrebuješ suhe gume.', tyre: 'Imaš predrto gumo.', worn: 'Gume so izrabljene.', damage: 'Avto je močno poškodovan.' };
   const CMP_WORD = { S: 'mehke', M: 'srednje', H: 'trde' };
   const needTxt = (why, P) => tr(why === 'fuel' && P && P.m.ev ? 'Baterija ne bo zdržala do cilja.' : NEED_TXT[why]);   // (why a stop: an electric car's battery)
   function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [], vo: null, voT: 0, voOn: false }; $('h-teamradio').classList.remove('on', 'wait'); }   // (vo: the engineer's line said, teamRadioVoice)
@@ -3271,7 +3285,7 @@
   function teamRadioGo() { if (trd && race.mk && S.radio) teamRadioSay(tr('Gremo, gremo, gremo!'), 3, 'radioGo'); }
   function afterText(pl) { return pl.ahead ? tr('Po postanku boš {0}., {1} bo {2} s pred tabo.', pl.pos, pl.ahead.name, fmtS(pl.gapA)) : tr('Po postanku boš še vedno prvi.'); }
   function boxText(pl, why) {
-    const P = race.player, c = why !== 'wet' && P.ty && P.ty.c && (P.ty.k === 'dry' || why === 'dry') ? (Core.TYRE_CMP[S.pitCmp] ? S.pitCmp : 'S') : null;   // (the custom stop's default, stopDef)
+    const P = race.player, c = why !== 'wet' && P.ty && P.ty.c && (P.ty.k === 'dry' || why === 'dry') ? dfCmp(P) : null;   // (the custom stop's default, stopDef)
     return needTxt(why, P) + ' ' + tr('Boksi v tem krogu!') + ' ' + afterText(pl) + (c ? ' ' + tr('Dobiš {0} gume.', tr(CMP_WORD[c])) : '');
   }
   function gapsText(P) {
@@ -3294,9 +3308,10 @@
     // the safety car out with a stop due anyway: a cheap one now
     const SC = race.fl && race.fl.sc;
     if (pl && SC && SC.state === 'out' && !trd.sc && pl.from != null && pl.from <= pl.cur + 1 && !P.inPit) { trd.sc = true; teamRadioSay(tr('Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.', Math.round(pl.loss)), 3, 'radioSC'); }
-    // an urgent stop (the wrong tyres, a cut one, heavy damage): at once, not at the line
+    // an urgent stop (the wrong tyres, a cut or burst one, worn out, heavy damage): at once, not at the line (a tyre's once the message about
+    // it, PREDRTA GUMA! / POČILA GUMA! / GUME IZRABLJENE, has had its time)
     if (pl && pl.box && !P.inPit && trd.box !== P.lap) { const now = pl.need.find(k => k !== 'fuel' && k !== 'tyres');   // (each told twice at most: once, and once more a lap on)
-      if (now && (trd.urg[now] || 0) < 2) { trd.urg[now] = (trd.urg[now] || 0) + 1; trd.box = P.lap; showMsg(tr('BOKSI V TEM KROGU'), 'gold', 2); teamRadioSay(boxText(pl, now), 3, BOX_V[now]); } }
+      if (now && (trd.urg[now] || 0) < 2 && !((now === 'tyre' || now === 'worn') && msgT > 0)) { trd.urg[now] = (trd.urg[now] || 0) + 1; trd.box = P.lap; showMsg(tr('BOKSI V TEM KROGU'), 'gold', 2); teamRadioSay(boxText(pl, now), 3, BOX_V[now]); } }
     // out of the pit lane: the place now
     if (P.inPit) trd.pit = true;
     else if (trd.pit) { trd.pit = false; const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null, ga = A ? race.gap(A, P) : null;
@@ -3327,7 +3342,7 @@
     if (!pl) { el.classList.add('off'); el.textContent = ''; return; }
     const t = [];
     if (pl.fuelLaps != null) t.push(tr(P.m.ev ? 'Baterija za {0} kroga.' : 'Gorivo za {0} kroga.', Lang.dec(pl.fuelLaps.toFixed(1))));   // (an electric car: its battery)
-    if (P.ty && P.ty.c && P.ty.k === 'dry') t.push(tr('Gume: {0} %.', Math.round((1 - P.ty.wear) * 100)));
+    if (P.ty && P.ty.c && P.ty.k === 'dry') t.push(tr('Gume: {0} %.', Math.max(0, Math.round((1 - P.ty.wear) * 100))));   // (worn past 1: 0 %)
     t.push(tr('Postanek zdaj stane okoli {0} s, po njem bi bil {1}.', Math.round(pl.loss), pl.pos));
     if (pl.from != null) t.push(pl.from === pl.to ? tr('Postanek bo v {0}. krogu.', pl.from) : tr('Okno za postanek: od {0}. do {1}. kroga.', pl.from, pl.to));
     el.textContent = t.join(' '); el.classList.remove('off');
@@ -3485,7 +3500,8 @@
   const SP_FUEL = [1, 0.5, 0.25], SP_FIX = [['all', 'Vse'], ['need', 'Nujno'], ['none', 'Brez']], SP_TC = { S: '#e03027', M: '#f2c616', H: '#eeeeee', W: '#4fa8ff', D: '#a3a8b1' };
   // the defaults: the rain tyres on a wet racing line, else the slicks picked for the next stop (the tyre button, Gume v boksih) or the soft
   // ones; the tank full; all repairs
-  const stopDef = (P) => ({ ty: race.wst && Core.tyreFor(race.wst.line) === 'wet' ? 'W' : !(P.ty && P.ty.c) ? 'D' : Core.TYRE_CMP[S.pitCmp] ? S.pitCmp : 'S', fuel: 1, fix: 'all' });
+  const dfCmp = (P) => Core.TYRE_CMP[P.pitCmp] ? P.pitCmp : 'S';   // (the slicks the stop's panel and the engineer's call start from: the one chosen for the next stop, else the soft; also in a strategy race (Core STRAT): the panel shows what each costs)
+  const stopDef = (P) => ({ ty: race.wst && Core.tyreFor(race.wst.line) === 'wet' ? 'W' : !(P.ty && P.ty.c) ? 'D' : dfCmp(P), fuel: 1, fix: 'all' });
   const stopOpts = (r) => r === 'ty' ? (race.player.ty && race.player.ty.c ? SP_TY : SP_TY0).map(o => o[0]) : r === 'fuel' ? SP_FUEL : SP_FIX.map(o => o[0]);
   function stopOpen(P) {
     const el = $('h-stop'), lost = Object.keys(P.lost || {}).length, rows = [];
@@ -4090,7 +4106,7 @@
   // the weather)
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
-    ['warn', /PREDRT|PREBIT|PUNCTURE|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
+    ['warn', /PREDRT|PREBIT|PUNCTURE|IZRABLJEN|TYRES WORN|POČIL|POČEN|BURST|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
     ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POLNI PLIN|FLAT OUT/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED|DOLITO|TOPPED UP|NAPOLNJENO|CHARGED|POSTANEK OPRAVLJEN|STOP DONE/],
     ['pit', /BOKS|PIT|BOX/]];
@@ -4282,15 +4298,19 @@
     }
     if (h !== tw.html) { tw.html = h; $('h-tower').innerHTML = h; }
   }
-  // the results of a race on a circuit (two laps or more): every driver's laps, the driver's best in green, the race's fastest in purple, the pit stops
+  // the results of a race on a circuit (two laps or more): every driver's laps, the driver's best in green, the race's fastest in purple, the pit
+  // stops; a strategy race's (a long or an endurance one, Core STRAT): their number and every set the car ran ('1 · M → H', each a chip in
+  // its compound's colour, W the rain tyres), a key under the table
+  const setsHtml = (c) => (c.st.hist.length - 1) + ' · ' + c.st.hist.map(k => '<b class="tset t' + k + '">' + k + '</b>').join(' → ');
   function lapTable(res) {
-    const el = $('res-laps'), n = race.laps, all = race.cars.flatMap(c => c.lapTimes.filter(t => t > 0)), best = all.length ? Math.min(...all) : NaN;
+    const el = $('res-laps'), n = race.laps, all = race.cars.flatMap(c => c.lapTimes.filter(t => t > 0)), best = all.length ? Math.min(...all) : NaN, st = !!race.strat;
     if (track.open || n < 2) { el.classList.add('off'); el.innerHTML = ''; return; }
     const cols = Array.from({ length: n }, (_, k) => k);
-    el.innerHTML = '<p class="ltab-h">' + tr('Krogi vseh voznikov') + '</p><div class="laps-wrap"><table class="ltab laps"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th>' + cols.map(k => '<th>' + tr('K{0}', k + 1) + '</th>').join('') + '<th>' + tr('Postanki') + '</th></tr></thead><tbody>' +
+    el.innerHTML = '<p class="ltab-h">' + tr('Krogi vseh voznikov') + '</p><div class="laps-wrap"><table class="ltab laps"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th>' + cols.map(k => '<th>' + tr('K{0}', k + 1) + '</th>').join('') + '<th>' + tr(st ? 'Postanki · gume' : 'Postanki') + '</th></tr></thead><tbody>' +
       res.map((r, i) => { const c = r.car, lt = c.lapTimes.filter(t => t > 0), pb = lt.length ? Math.min(...lt) : NaN;
         return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm"><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + esc(c.isPlayer ? tr('Ti') : c.name) + '</td>' +
-          cols.map(k => { const t = c.lapTimes[k]; return '<td class="' + (t === best ? 'ob' : t === pb ? 'pb' : '') + '">' + (t > 0 ? fmt(t) : '–') + '</td>'; }).join('') + '<td>' + ((tw && tw.stops.get(c)) || 0) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+          cols.map(k => { const t = c.lapTimes[k]; return '<td class="' + (t === best ? 'ob' : t === pb ? 'pb' : '') + '">' + (t > 0 ? fmt(t) : '–') + '</td>'; }).join('') + (st && c.st ? '<td class="sets">' + setsHtml(c) : '<td>' + ((tw && tw.stops.get(c)) || 0)) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+      (st ? '<p class="ltab-k">' + tr('Gume: S mehke, M srednje, H trde, W dežne.') + '</p>' : '');
     el.classList.remove('off');
   }
 

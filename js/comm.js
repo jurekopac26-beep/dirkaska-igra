@@ -114,6 +114,9 @@ const Comm = (() => {
     batteryLow: ['The battery is running low! Box this lap for a charge.', 'Not much charge left in that battery, pit now!'],   // (an electric car)
     batteryOut: ['The battery is flat! Crawling along on the last of the charge!', 'Flat battery! That car is creeping back to the pits now.'],
     puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    // worn tyres (a race with tyres): worn out, the cliff ahead; driven on, a tyre bursts
+    tyresWorn: ['Those tyres are worn out! The grip is about to fall away.', 'The tyres are finished, time to come in for a fresh set!', 'Look at those tyres, worn right down! Box now or pay the price.'],
+    tyreBurst: ['Bang! A tyre has burst! Those tyres were finished!', 'The tyre has given up! That is what happens when you stay out too long!', 'A blowout! The worn tyre could not take any more!'],
     // a friend's challenge (the challenge link): the run, beaten or not
     chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
     chalWon: ["You beat {name}'s time! Challenge done!", "Faster than {name}, by {delta}! Send that one back!"],
@@ -124,6 +127,7 @@ const Comm = (() => {
     radioBoxDry: ['The line is dry, box this lap for slicks.', 'Box this lap, slicks are ready.'],
     radioBoxFix: ['Box this lap, we will fix the car.', 'Box this lap, box this lap, we have new parts ready.'],
     radioBoxTyre: ['Puncture! Box this lap, we have a new tyre ready.', 'Box this lap for a new tyre!'],
+    radioBoxWorn: ['The tyres are gone, box this lap!', 'Tyres are finished. Box, box, box!'],
     radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
     radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
     radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
