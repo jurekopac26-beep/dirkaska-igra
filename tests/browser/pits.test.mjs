@@ -22,7 +22,8 @@ try {
   // (the hints as on a new phone: opts.tips; tdgp-tips holds them all seen and one more id, x, but cannot be read as the game starts
   // (Storage.getItem throws for it, as with the storage blocked): the game starts without an error and shows them all, then saves what it
   // has seen (no x). The test reads the key past the block: __lsGet)
-  const blocked = () => { localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1, x: 1 })); const get = Storage.prototype.getItem; window.__lsGet = (k) => get.call(localStorage, k);
+  // (the first clean lap's achievement, its toast at the line where the pit entry is, would hold the first hint back: it is given already)
+  const blocked = () => { localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1, x: 1 })); localStorage.setItem('tdgp-stats', JSON.stringify({ v: 1, ach: { cleanLap: 1 } })); const get = Storage.prototype.getItem; window.__lsGet = (k) => get.call(localStorage, k);
     Storage.prototype.getItem = function (k) { if (k === 'tdgp-tips') throw new DOMException('The operation is insecure.', 'SecurityError'); return get.call(this, k); }; };
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 640, height: 360 }, { tips: true, init: blocked });
   await startTrack(page, 'gozd');
