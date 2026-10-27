@@ -22,7 +22,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 10 | G · V krogu | čaka · skupaj z 9 in 11 (veriga, korak 3) |
 | 11 | D · Samodejne zastavice | čaka · skupaj z 9 in 10 (veriga, korak 3) |
 | 12 | E · Datoteka s posnetkom | čaka (veriga, korak 4, zadnji) |
-| 13 | F · Seznam napak | dela glavna seja (ni v repozitoriju) |
+| 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
 | 14 | Posnetki zaslona, predogled pred mainom | vzporedno, skupaj s 15 |
 | 15 | Posnetki pred/po na GitHubu | vzporedno, skupaj s 14 |
 | 16 | Ponovljive dirke | vzporedno |
