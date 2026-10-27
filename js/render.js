@@ -8022,12 +8022,14 @@ const Render = (function () {
      nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
      has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
      eased into (no cuts); blended over the chase view by w (0..1). In the replay the same over either of its cameras (behind the car, TV),
-     from the recording's pit state (c.rpPit, game.js rpPit) on its own clock (dt × its speed, still while it stands) ---------------- */
-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null };
-  function pitCine(c, dt, px, py, pz, tx, ty, tz) {
+     from the recording's pit state (c.rpPit, game.js rpPit) on its own clock (dt × its speed, still while it stands); over the TV cameras
+     (tv) cut in and out, never blended (a post 100 m off with its long lens, cutting to the next every 170 m); after resetCam (snap: the
+     replay's jump in time, another camera or car) where it is then at once, the same while the replay stands ---------------- */
+  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null, snap: false }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  function pitCine(c, dt, px, py, pz, tx, ty, tz, tv) {
     const ps = c.rpPit || c, T = curRace && curRace.track, on = !!(ps.pitAP && ps.inPit && T && T.def.pit && curRace._boxD);
-    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null;
-    if (!on || bd == null || !pz0) { pcam.w = Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
+    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null, snap = pcam.snap, w0 = pcam.w; pcam.snap = false;
+    if (!on || bd == null || !pz0) { pcam.w = snap || tv ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
     const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
     const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
     pcam.t += dt;
@@ -8037,7 +8039,7 @@ const Render = (function () {
       if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
       if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
     }
-    pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
+    pcam.w = snap ? want : tv ? (want > 0 ? 1 : 0) : want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
     // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
     const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
     const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
@@ -8053,13 +8055,15 @@ const Render = (function () {
       const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
       P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
     }
-    // eased into: the camera glides, never jumps (the first time from the chase view)
-    if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
+    // eased into: the camera glides, never jumps (the first time from the chase view); cut to its place (snap; the TV cameras' way in)
+    if (snap || (tv && !(w0 > 0))) { pcam.p = P.slice(); pcam.q = Q.slice(); }
+    else if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
     const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
     for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
     if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
     const w = Core.sstep(0, 1, pcam.w), fov = camera.fov;   // (the view under it: behind the car 58° upright, 46° on its side; a TV camera's lens)
-    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (50 - fov) * w];
+    const fF = Core.clamp(2 * Math.atan(PC_TAN / Math.min(1, camera.aspect)) * 180 / Math.PI, 50, 80);   // (its lens: 50°, upright as wide as that across (at most 80° high): the whole car and its crew at the box)
+    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (fF - fov) * w];
   }
   /* ---------------- camera ---------------- */
   function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
@@ -8112,7 +8116,7 @@ const Render = (function () {
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (!shot && (mode !== 'tv' || c.rpPit)) { const o = pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
+    if (!shot && (mode !== 'tv' || c.rpPit)) { const o = pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz, mode === 'tv'); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
     if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
@@ -8335,7 +8339,7 @@ const Render = (function () {
     return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return (places(T) || PL).map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
   })();
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
-  function resetCam() { cam.init = false; pcam.w = 0; pcam.p = null; pcam.t = 0; }   // (the camera there at once; the pit stop's film camera too: from it again)
+  function resetCam() { cam.init = false; pcam.snap = true; }   // (the camera there at once; the pit stop's film camera too: where it is then, pitCine)
   function crewSnap() { if (crew) crew.snap = true; }   // (the replay jumped in time: the player's crew where it is then, at the next frame: crewJump)
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
   // updated by its owner every frame; null: back to the game's camera (from scratch)

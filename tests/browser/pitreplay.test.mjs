@@ -1,10 +1,12 @@
 // The player's pit stop in the replay (Bathurst, Avstralija: the race on autopilot, one stop on lap 1, the car a little damaged). The race
 // records the player's pit state as it changes (a few entries a stop: in the lane on the autopilot, stop, repair, done, the hand-back, out of
 // the lane); "Posnetek" plays the stop back as a short film: the crew goes out, works (the car up on the jacks) and clears as long as in the
-// race, the pit stop's film camera takes over from the camera behind the car (close to the car and low at the box) and gives the view back
-// by the hand-back; the same over the TV cameras; at 4× the crew still does it all. A jump into the middle of the stop with the replay
-// paused: the crew at work at once (every man in his place, the old wheels in their hands, the car on the jacks), nothing moves while it
-// stands; Foto there: the crew at work round the car in the picture, the picture saved. ⏮: the crew at home at once (no tyre in anyone's
+// race, the pit stop's film camera takes over from the camera behind the car (close to the car and low at the box, the whole car and the
+// crew at their places in the picture) and gives the view back by the hand-back; the same over the TV cameras, cut in and out (never
+// blended with a TV post) and gliding while it has the view; at 4× the crew still does it all; the phone upright (390 × 844): a wider lens,
+// the whole car and the crew in the picture. A jump into the middle of the stop with the replay paused: the crew at work at once (every man
+// in his place, the old wheels in their hands, the car on the jacks), nothing moves while it stands, the film camera there at once and kept
+// over a tap on the camera button (the same picture), none of it on another car, there again at once back on the player's; Foto there: the crew at work round the car in the picture, the picture saved. ⏮: the crew at home at once (no tyre in anyone's
 // hands). "Končaj": the race's own pit state untouched (the replay's overlay gone, the car's view not rebuilt), no page errors.
 //   node tests/browser/pitreplay.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -15,10 +17,22 @@ const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 640, height: 360 });
   // the replay's frames counted and logged (each: the replay's time, its camera, the crew's mode, the film camera's weight, the jacks' lift,
-  // the camera's distance from the player's car on the ground and its height over it)
+  // the camera's distance from the player's car on the ground and its height over it, the camera and the car, the lens; with the crew at
+  // work under the film camera: how many of the car's corners and of the crew at their places (the wheel guns, the new wheels, the jacks)
+  // are out of the picture)
   await page.evaluate(() => { window.__rf = 0; window.__fr = []; const o = Render.frame; Render.frame = function (dt, a, target, mode, opt) { const r = o.apply(this, arguments); window.__rf++;
     const g = window.__game, P = g.replay, c = Render.crew, pc = g.race && g.race.player, cm = Render.camera;
-    if (P && opt && opt.rdt != null && c && pc) window.__fr.push({ t: P.t, cam: P.cam, mode: c.mode, w: Render.pitCam, lift: c.lift, st: pc.rpPit ? pc.rpPit.pitState : 'none', d: Math.hypot(cm.position.x - pc.x, cm.position.z - pc.z), h: cm.position.y - (pc.y || 0) });
+    if (!(P && opt && opt.rdt != null && c && pc)) return r;
+    let fit = null;
+    if (c.mode === 'work' && Render.pitCam > 0.95) {
+      cm.updateMatrixWorld(); const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cm.projectionMatrix, cm.matrixWorldInverse)), v = new THREE.Vector3();
+      const D = c.dim, R = c.roles, ch = Math.cos(pc.h), sh = Math.sin(pc.h), y = pc.y || 0, pts = [];
+      for (const f of [D.nose, D.tail]) for (const s of [-1, 1]) pts.push([pc.x + ch * f - sh * s * D.wid / 2, y + 0.5, pc.z + sh * f + ch * s * D.wid / 2]);
+      for (const m of R.G.concat(R.N, [R.JF, R.JR])) if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.2) pts.push([m.x, (m.y || 0) + 1, m.z]);
+      fit = { n: pts.length, out: pts.filter(p => !fr.containsPoint(v.set(p[0], p[1], p[2]))).length };
+    }
+    window.__fr.push({ t: P.t, cam: P.cam, mode: c.mode, w: Render.pitCam, lift: c.lift, st: pc.rpPit ? pc.rpPit.pitState : 'none', d: Math.hypot(cm.position.x - pc.x, cm.position.z - pc.z), h: cm.position.y - (pc.y || 0),
+      p: [cm.position.x, cm.position.y, cm.position.z], x: pc.x, z: pc.z, fov: cm.fov, asp: cm.aspect, fit });
     return r; }; });
   await startTrack(page, 'bathurst');
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
@@ -67,6 +81,11 @@ try {
     return { ok: rep.length > 5 && w > 0.95 && near && wPre === 0 && post.length > 5 && wPost < 0.05 && F.every(f => f.cam === lbl),
       d: { repN: rep.length, w: +w.toFixed(3), dMax: +Math.max(0, ...at.map(f => f.d)).toFixed(1), hMax: +Math.max(-99, ...at.map(f => f.h)).toFixed(1), wPre: +wPre.toFixed(3), postN: post.length, wPost: +wPost.toFixed(3), cams: [...new Set(F.map(f => f.cam))] } };
   };
+  // the crew at work under the film camera: the car's four corners and every man at his place in the picture (with most of them there at times)
+  const framed = (F) => {
+    const W = F.filter(f => f.fit), bad = W.filter(f => f.fit.out > 0), nMax = Math.max(0, ...W.map(f => f.fit.n));
+    return { ok: W.length > 5 && nMax >= 12 && !bad.length, d: { n: W.length, nMax, bad: bad.length, first: bad[0] && { t: +bad[0].t.toFixed(2), out: bad[0].fit.out, of: bad[0].fit.n }, fov: +Math.max(0, ...W.map(f => f.fov)).toFixed(1), asp: W.length ? +W[0].asp.toFixed(3) : 0 } };
+  };
   await act('rp-speed');   // (2×)
   const F1 = await run(live.ap - 4, live.back + 3), m1 = modes(F1), work1 = F1.filter(f => f.mode === 'work'), lift1 = Math.max(0, ...F1.map(f => f.lift));
   T.check('played back behind the car: the crew goes out, works and clears (at home before and after)', /^home>out>work>clear>home$/.test(m1), m1);
@@ -75,17 +94,33 @@ try {
   T.check('the crew works as long as in the race (the repair\'s length)', work1.length > 5 && Math.abs(wl - live.dur) < 0.3, `${wl.toFixed(2)} s in the replay, ${live.dur.toFixed(2)} s in the race`);
   const f1 = film(F1, 'chase');
   T.check('behind the car: none of the film camera before the lane; it has the view at the box (close to the car and low: within 16 m, under 6 m up); none of it from the hand-back', f1.ok, JSON.stringify(f1.d));
+  const fr1 = framed(F1);
+  T.check('on its side (640 × 360): the film camera at the box has the whole car and the crew at their places (the wheel guns, the new wheels, the jacks) in the picture', fr1.ok, JSON.stringify(fr1.d));
 
   // the TV cameras: the film camera at the box over them too, the TV camera again from the hand-back
   await act('rp-cam');
   const F2 = await run(live.ap - 4, live.back + 3), f2 = film(F2, 'tv'), m2 = modes(F2);
   T.check('over the TV cameras: the same film at the box (close and low), none of it before the lane and from the hand-back; the crew out, at work, clearing', f2.ok && /^home>out>work>clear>home$/.test(m2), m2 + ' ' + JSON.stringify(f2.d));
+  // never half over a TV camera (a post up to ~110 m off with a long lens, the next one every 170 m): cut in and out; while it has the view it
+  // glides (each frame's step at most 2 m more than twice the car's)
+  const half2 = F2.filter(f => f.w > 0.02 && f.w < 0.98), st2 = [];
+  for (let i = 1; i < F2.length; i++) { const a = F2[i - 1], b = F2[i]; if (a.w >= 0.98 && b.w >= 0.98) st2.push(Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]) - 2 * Math.hypot(b.x - a.x, b.z - a.z)); }
+  T.check('over the TV cameras the film camera cuts in and out (never blended with a TV post), and glides while it has the view (no jumps)', !half2.length && st2.length > 20 && Math.max(...st2) < 2,
+    JSON.stringify({ half: half2.slice(0, 3).map(f => ({ t: +f.t.toFixed(2), w: +f.w.toFixed(3) })), steps: st2.length, worst: st2.length ? +Math.max(...st2).toFixed(2) : null }));
 
   // 4×, behind the car: the crew still goes through it all
   await act('rp-cam'); await act('rp-speed');
   const sp = await page.evaluate(() => window.__game.replay.speed);
   const F3 = await run(live.ap - 4, live.back + 3), m3 = modes(F3), lift3 = Math.max(0, ...F3.map(f => f.lift)), f3 = film(F3, 'chase');
   T.check('at 4×: out, work, clear, the jacks, the film camera at the box', sp === 4 && /^home>out>work>clear>home$/.test(m3) && lift3 > 0.05 && f3.ok, `${sp}× ${m3}, lift ${lift3.toFixed(3)} m ` + JSON.stringify(f3.d));
+
+  // the phone upright (390 × 844), 4×: the film camera's lens wider (as wide across as on its side, at most 80° high), the whole car and the
+  // crew at their places in the picture while they work
+  await page.setViewportSize({ width: 390, height: 844 }); await frames(3);
+  const F4 = await run(live.rep - 1, live.done + 0.3), fr4 = framed(F4);
+  T.check('upright (390 × 844): the film camera at the box has a wider lens and the whole car and the crew at their places (the wheel guns, the new wheels, the jacks) in the picture',
+    fr4.ok && fr4.d.asp < 0.5 && fr4.d.fov > 75, JSON.stringify(fr4.d));
+  await page.setViewportSize({ width: 640, height: 360 }); await frames(3);
 
   // paused, a jump into the middle of the repair: the crew at work at once
   await act('rp-play');
@@ -97,6 +132,15 @@ try {
   T.check('paused, a jump to the middle of the repair: the crew at work at once, every man in his place, the old wheels in hand and the new ones on, the car on the jacks',
     !j1.play && j1.mode === 'work' && j1.off < 0.01 && j1.lift > 0.05 && j1.tyres === 'hidden,hidden,hidden,hidden,hands,hands,hands,hands', JSON.stringify(Object.assign({}, j1, { xs: undefined })));
   T.check('nothing moves while it stands', j2.xs === j1.xs && j2.lift === j1.lift && j2.tyres === j1.tyres, j2.xs === j1.xs ? '' : 'moved');
+  // the film camera there at once too; while it stands a tap on the camera (TV, then behind the car again) keeps the same picture, another
+  // car has none of it, back on the player's it is there again at once
+  const camNow = () => page.evaluate(() => { const g = window.__game, cm = Render.camera, P = g.race.player; return { w: +Render.pitCam.toFixed(3), d: +Math.hypot(cm.position.x - P.x, cm.position.z - P.z).toFixed(2), p: [cm.position.x, cm.position.y, cm.position.z], cam: g.replay.cam, k: g.replay.k, play: g.replay.play }; });
+  const c0 = await camNow(), sw = [];
+  for (const a of ['rp-cam', 'rp-cam', 'rp-next', 'rp-prev']) { await act(a); await frames(3); sw.push(Object.assign({ a }, await camNow())); }
+  const same = (o) => Math.hypot(o.p[0] - c0.p[0], o.p[1] - c0.p[1], o.p[2] - c0.p[2]) < 0.1;
+  T.check('paused at the box: the film camera has the view at once; the camera button (TV, then behind the car) keeps it, the same picture; another car: none of it; back on the player: the film camera at once',
+    c0.w > 0.95 && c0.d < 16 && sw.every(o => !o.play) && sw[0].cam === 'tv' && sw[0].w > 0.95 && same(sw[0]) && sw[1].cam === 'chase' && sw[1].w > 0.95 && same(sw[1]) && sw[2].k !== c0.k && sw[2].w === 0 && sw[3].k === c0.k && sw[3].w > 0.95 && sw[3].d < 16,
+    JSON.stringify([c0].concat(sw).map(o => Object.assign({}, o, { p: undefined, moved: +Math.hypot(o.p[0] - c0.p[0], o.p[1] - c0.p[1], o.p[2] - c0.p[2]).toFixed(3) }))));
 
   // Foto there: the crew round the car in the picture, the picture saved
   await page.evaluate(() => { Render.scene.visible = true; window.__game.lastPhoto = null; });
