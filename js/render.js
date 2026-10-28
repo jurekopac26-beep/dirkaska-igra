@@ -5216,7 +5216,10 @@ const Render = (function () {
   }
 
   function setupCrew(race) {
-    if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose()); crew = null; }
+    if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose());
+      const own = crew.grp.children.filter(o => o.isMesh && !o.isInstancedMesh); if (crew.exit) { scene.remove(crew.exit.grp); own.push(...crew.exit.grp.children); }
+      for (const o of own) { o.geometry.dispose(); if (o.material.map) o.material.map.dispose(); o.material.dispose(); }   // (the flags, the tyre marks, the exit's light and marshal)
+      crew = null; }
     const boxes = world && world.pitBoxes; if (!boxes || !boxes.length || !race) return;
     const P = race.player || null, pb = world.pitBox, ai = race.cars.filter(c => c !== P); let ai0 = 0;
     for (const bx of boxes) bx.col = new THREE.Color().setRGB(...bx.team);   // the teams: the player's box in the player's colour, the others in the AI cars' colours
@@ -5283,16 +5286,15 @@ const Render = (function () {
       if (G.wall) crGarSlab(M.rod, n0, bx, 'wall', -G.wall[3], G.wall[3], G.wall[0], G.wall[1], G.wall[2], bx.col);
       if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
     const gx = roles ? crewGarage(race, roles.bx, M, rb + boxes.length, nT - CR_STACK.length, grp) : null;   // the player's garage: its door (44), its flag (95C), the stack of used tyres (72)
-    const marks = crewMarks(boxes, grp);   // the tyre marks in front of every garage (48)
-    if (roles) crewFlags(race, boxes, M, rb + boxes.length + 4, grp);   // each garage's upright flag with its driver's three letters (95C)
+    const marks = ownRnd(() => crewMarks(boxes, grp));   // the tyre marks in front of every garage (48)   (these meshes, the flags' and the exit's: named without Math.random, ownRnd: a seeded race runs as without them)
+    if (roles) ownRnd(() => crewFlags(race, boxes, M, rb + boxes.length + 4, grp));   // each garage's upright flag with its driver's three letters (95C)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
     crew = { grp, meshes, mats: [mat, matS, matJ, matT], M, men, roles, tyres, cover: nT ? geo.tyre.attributes.crewCover : null, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dOut: 40, dim: roles ? crDims(P) : null };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
-    crew.gar = gx; crew.marks = marks; crew.exit = crewExit(race, grp);   // (the pit exit's light and marshal, 5 and 76)
-    if (crew.exit) crew.rad = Math.max(crew.rad, Math.hypot(crew.exit.x - cx, crew.exit.z - cz) + 20);   // (in sight from where the exit is)
+    crew.gar = gx; crew.marks = marks; crew.exit = ownRnd(() => crewExit(race));   // (the pit exit's light and marshal, 5 and 76)
   }
   // ---- the player's garage, its pit and its exit (44, 48, 72, 95C, 5, 76) ----
   // 44 its door: where the garage's front is closed (World's bx.gar.wall at its front: a door in the player's colour before the dark inside)
@@ -5374,8 +5376,8 @@ const Render = (function () {
   // and a marshal beside it who waves a blue flag while a car is on its way out of the lane and another comes along the circuit to where
   // they meet (within EX_BLUE s of the acceleration lane's end). Two meshes: the post, its lamp housing and the marshal (lit), the lamps and
   // the flag's cloth (unlit, as a lamp and a bright flag look in any light)
-  const EX_BLUE = 4;
-  function crewExit(race, grp) {
+  const EX_BLUE = 4, EX_NEAR = 300;   // (the blue flag: the car coming within 4 s; the exit drawn with the crew or from within 300 m of it)
+  function crewExit(race) {
     const T = curTrack, J = T.pitJ ? T.pitJ() : null, P = T.def.pit; if (!J || !P) return null;
     const sd = P[0] < 0 ? -1 : 1, d = J.gb - 4, s = T.startS + d, pz = T.pitAt(s); if (!pz) return null;
     const pb = world.pitBox, yAt = (ss) => (pb && pb.y || 0) + T.elevAt(ss).y - (pb ? T.elevAt(pb.s).y : 0), y = yAt(s);
@@ -5389,16 +5391,16 @@ const Render = (function () {
     add(new THREE.CylinderGeometry(0.2, 0.24, 1.55, 8).translate(0, 0.78, 0), [1, 0.48, 0.1], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
     add(new THREE.SphereGeometry(0.14, 8, 6).translate(0, 1.7, 0), [0.95, 0.95, 0.95], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
     const body = new THREE.BufferGeometry(); body.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); body.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); body.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); body.computeBoundingSphere();
-    const post = new THREE.Mesh(body, new THREE.MeshLambertMaterial({ vertexColors: true })); post.name = 'pitExit'; grp.add(post);
+    const post = new THREE.Mesh(body, new THREE.MeshLambertMaterial({ vertexColors: true })); post.name = 'pitExit';
     // the lamps (two discs as squares on the housing's face) and the cloth (a quad off the marshal's hand, its far edge waving)
     const fx = Math.sin(yaw), fz = Math.cos(yaw), F = 0.16, lamp = (yc) => { const h = 0.18, cx = lx + fx * F, cz = lz + fz * F, rx = fz, rz = -fx; return [cx - rx * h, y + yc - h, cz - rz * h, cx + rx * h, y + yc - h, cz + rz * h, cx - rx * h, y + yc + h, cz - rz * h, cx + rx * h, y + yc + h, cz + rz * h]; };
     const lp = new Float32Array(4 * 3 * 2 + 4 * 3), lc = new Float32Array(lp.length);
     lp.set(lamp(2.78), 0); lp.set(lamp(2.24), 12);
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(lp, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(lc, 3).setUsage(THREE.DynamicDrawUsage));
     g.setIndex([0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11]); g.boundingSphere = new THREE.Sphere(new THREE.Vector3((lx + mx) / 2, y + 2, (lz + mz) / 2), 5);
-    const lm = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })); lm.name = 'pitExitLamps'; grp.add(lm);
+    const lm = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })); lm.name = 'pitExitLamps'; const eg = new THREE.Group(); eg.add(post, lm); scene.add(eg);   // (a group of its own, not the crew's: in sight from near the exit too, without the whole crew drawn from there)
     const hand = [mx + nx * 0.3, ym + 1.55, mz + nz * 0.3];   // (his hand out towards the lane)
-    return { x: lx, z: lz, lm, lp, lc, hand, tx, tz, nx, nz, d, J, sd, red: -1, blue: 0, wave: 0, key: '' };
+    return { x: lx, z: lz, grp: eg, lm, lp, lc, hand, tx, tz, nx, nz, d, J, sd, red: -1, blue: 0, wave: 0, key: '' };
   }
   function crewExitStep(c, dt, near) {
     const E = c.exit, R = curRace; if (!E || !R) return;
@@ -5412,6 +5414,7 @@ const Render = (function () {
       else if (!o.pitG && !o.inPit && dd < J.b && dd > J.b - 400 && (J.b - dd) / Math.max(8, o.speed) < EX_BLUE) come = true; }
     const blue = out && come;
     E.wave += dt; E.blue = blue ? Math.min(1, E.blue + dt * 4) : Math.max(0, E.blue - dt * 3);
+    near = near || Math.hypot(cam.vcx - E.x, cam.vcz - E.z) < EX_NEAR; if (E.grp.visible !== near) E.grp.visible = near;
     if (!near) return;
     const key = (red ? 'r' : 'g') + (E.blue > 0 ? Math.round(E.wave * 20) : 'n');
     if (key === E.key) return; E.key = key;
