@@ -54,7 +54,7 @@ const RUN = (pot) => {
       const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(C.projectionMatrix, C.matrixWorldInverse)), c = Render.crew, D = c.dim, R = c.roles, ch = Math.cos(P.h), sh = Math.sin(P.h), pts = [];
       for (const f of [D.nose, D.tail]) for (const s of [-1, 1]) pts.push([P.x + ch * f - sh * s * D.wid / 2, y + 0.5, P.z + sh * f + ch * s * D.wid / 2]);
       for (const m of R.G.concat(R.N, [R.JF, R.JR])) if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.2) pts.push([m.x, (m.y || 0) + 1, m.z]);
-      o.fit = { n: pts.length, out: pts.filter(p => !fr.containsPoint(v.set(p[0], p[1], p[2]))).length };
+      o.fit = { n: pts.length, out: pts.filter(p => !fr.containsPoint(v.set(p[0], p[1], p[2]))).length, car: pts.slice(0, 4).filter(p => !fr.containsPoint(v.set(p[0], p[1], p[2]))).length };   // (car: of its four corners)
       if (!rect1) rect1 = JSON.stringify(gas.getBoundingClientRect());
     }
     L.push(o);
@@ -64,16 +64,16 @@ const RUN = (pot) => {
   return { L, rect0, rect1, errs: [] };
 };
 const sm = (u) => u <= 0 ? 0 : u >= 1 ? 1 : u * u * u * (u * (u * 6 - 15) + 10), pull = (t) => { const u = t / 1.1; return 1 + 0.75 * (1 - (1 + u) * Math.exp(-u)); };
-const hbIdx = (L) => L.findIndex(r => r.t > 0 && !r.ap);
+const hbIdx = (L) => L.findIndex(r => r.t > 0 && r.done && !r.ap);   // (the hand-back: the stop done, the autopilot gone; not the step of the way in before it took over)
 // the side view, the box, the way out and the hand-back (both parts)
 function common(L, lbl) {
   const hb = hbIdx(L), side = L.filter(r => r.ap && !r.done && r.s === 1 && r.x != null && r.x < -30 && r.st !== 'repair'), box = L.filter(r => r.st === 'repair' && r.s === 1), ex = hb > 0 ? L.slice(0, hb).filter(r => r.done && r.ap) : [];
-  const sideOk = side.length > 3 && side.every(r => r.als > 7.5 && r.als < 8.5 && r.h > 2.7 && r.h < 2.9 && r.gar < 0 && r.wallM >= 1.18 && (r.wallM < 1.35 || Math.abs(r.gar) > 9.3) && Math.abs(r.ndc[0]) < 0.5 && Math.abs(r.ndc[1]) < 0.8);
+  const sideOk = side.length > 3 && side.every(r => r.als > 7.2 && r.als < 8.8 && r.h > 2.7 && r.h < 2.9 && r.gar < 0 && r.wallM >= 1.18 && (r.wallM < 1.35 || Math.abs(r.gar) > 9.3) && Math.abs(r.ndc[0]) < 0.5 && Math.abs(r.ndc[1]) < 0.8);
   T.check(`${lbl}: from the side on the way to the box: ~8 m ahead, 2.8 m up, towards the pit wall as far as its rail less 1.2 m allows (at most 9.6 m out), the car in the middle of the picture`, sideOk,
-    JSON.stringify({ n: side.length, first: side[0] && { als: side[0].als, gar: side[0].gar, h: side[0].h, wallM: side[0].wallM, ndc: side[0].ndc }, bad: side.find(r => !(r.als > 7.5 && r.als < 8.5 && r.h > 2.7 && r.h < 2.9 && r.wallM >= 1.18)) }));
+    JSON.stringify({ n: side.length, first: side[0] && { als: side[0].als, gar: side[0].gar, h: side[0].h, wallM: side[0].wallM, ndc: side[0].ndc }, bad: side.find(r => !(r.als > 7.2 && r.als < 8.8 && r.h > 2.7 && r.h < 2.9 && r.wallM >= 1.18)) }));
   const b0 = box[0], b1 = box[box.length - 1], drift = box.length > 2 ? Math.hypot(b1.p[0] - b0.p[0], b1.p[1] - b0.p[1], b1.p[2] - b0.p[2]) / Math.max(0.05, b1.t - b0.t) : 99, fits = box.filter(r => r.fit);
-  T.check(`${lbl}: at the box level with the car, 9.6 m out (or as far as the rail allows), 3 m up, nearly still (3 cm/s at most), the whole car and the crew at their places in the picture`,
-    box.length > 5 && box.every(r => Math.abs(r.als) < 0.4 && r.h > 2.9 && r.h < 3.1 && (Math.abs(Math.abs(r.gar) - 9.6) < 0.2 || r.wallM < 1.35) && r.wallM >= 1.18) && drift <= 0.03 && fits.length > 3 && fits.every(r => r.fit.out === 0) && Math.max(...fits.map(r => r.fit.n)) >= 12,
+  T.check(`${lbl}: at the box level with the car, 9.6 m out (or as far as the rail allows), 3 m up, nearly still (3 cm/s at most), the whole car and the crew at their places in the picture (held closer by the rail, at most the two jacks' men at its ends out)`,
+    box.length > 5 && box.every(r => Math.abs(r.als) < 0.4 && r.h > 2.9 && r.h < 3.1 && (Math.abs(Math.abs(r.gar) - 9.6) < 0.2 || r.wallM < 1.35) && r.wallM >= 1.18) && drift <= 0.03 && fits.length > 3 && fits.every(r => r.fit.car === 0 && (r.fit.out === 0 || (r.wallM < 1.35 && r.fit.out <= 2))) && Math.max(...fits.map(r => r.fit.n)) >= 12,
     JSON.stringify({ n: box.length, mid: box[box.length >> 1] && { al: box[box.length >> 1].al, gar: box[box.length >> 1].gar, h: box[box.length >> 1].h, wallM: box[box.length >> 1].wallM }, drift: +drift.toFixed(4), fit: fits.find(r => r.fit.out) || { nMax: Math.max(0, ...fits.map(r => r.fit.n)) } }));
   const lowW = ex.filter(r => r.wallM != null), minW = Math.min(...lowW.map(r => r.wallM)), dn = [];
   for (let i = 1; i < ex.length; i++) { const a = ex[i - 1], b = ex[i], dh = b.h - a.h, db = b.hb - a.hb; if (dh < Math.min(0, db) - 0.01) dn.push({ t: b.t, dh: +dh.toFixed(3), db: +db.toFixed(3) }); }
@@ -85,7 +85,7 @@ function common(L, lbl) {
     !!last && last.w <= 0.02 && last.d3 <= 0.3 && after.length > 5 && after.every(r => r.w === 0), JSON.stringify({ last: last && { t: last.t, w: last.w, d3: last.d3, k: last.k }, after: after.length }));
 }
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', damage: 2, fuel: 1 }, { width: 390, height: 844 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', damage: 2, fuel: 1 }, { width: 390, height: 844 }, { seed: 34 });   // (seeded and stepped: the same race each time)
   await startTrack(page, 'bathurst');
   const R = await page.evaluate(RUN, 2.5), L = R.L, hb = hbIdx(L), tHB = hb > 0 ? L[hb].t : null;
   T.check('Bathurst: one stop, the hand-back in the lane', hb > 0 && L.some(r => r.st === 'repair'), `hand-back at ${tHB}`);

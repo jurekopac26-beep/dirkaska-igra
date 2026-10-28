@@ -21,7 +21,7 @@ const ON = ([lap, pit]) => { const g = window.__game, P = g.race.player, Tk = g.
   for (let k = 0; k < 400 && g.phase !== 'racing'; k++) g.sim(0.1, true);
   for (let k = 0; k < 60000 && P.dist / Tk.len < lap; k++) { if (pit && !P.repairN && P.lap >= 1 && !P.inPit && !Tk.pitAt(P.q.s)) P.pitWant = true; if (P.repairN && !P.inPit) P.pitWant = false; g.sim(0.05, true); }
   return { lap: P.dist / Tk.len, rep: P.repairN || 0 }; };
-const PAUSE = () => { const g = window.__game; g.resume(); g.pause(); return true; };
+const PAUSE = () => { const g = window.__game; g.resume(); g.pause(); document.getElementById('s-pause').style.display = ''; return true; };   // (the pause screen shown again: hidden while the race was stepped)
 const STATE = () => { const g = window.__game, el = document.getElementById('pause-info'), P = g.race.player, f = g.race.forecast(P), tabs = [...el.querySelectorAll('.pi-tab')];
   return { info: g.pauseInfo, cls: el.className, f, laps: g.race.laps, prog: Math.max(0, P.dist) / g.race.track.len, tabs: tabs.map(t => ({ v: t.dataset.v, txt: t.textContent, on: t.classList.contains('on'), shown: getComputedStyle(t).display !== 'none' })),
     big: el.querySelector('.pi-big').textContent, tip: (el.querySelector('.pf-tip span') || {}).textContent || '', svgN: el.querySelectorAll('.pi-fc svg').length, pN: [...el.querySelectorAll('.pi-fc svg text')].filter(t => t.textContent === 'P').length,
@@ -46,7 +46,9 @@ try {
   await startTrack(page, 'bathurst');
   const on1 = await page.evaluate(ON, [1.45, true]);
   // the change: the rain on its way in ~1 lap (from the side it is on now to the other)
-  await page.evaluate(() => { const r = window.__game.race, X = r.wst && r.wst.wx; if (!X) return; const lt = r._lapT(r.player); X.r0 = r.rain; X.r1 = r.rain > 0.5 ? 0 : 0.9; X.at = r.time + lt * 0.9 - (X.r1 > X.r0 ? 0 : X.dur); });
+  // (the player on the tyres for now, the other ones due: a stop for them, P)
+  await page.evaluate(() => { const r = window.__game.race, P = r.player, X = r.wst && r.wst.wx; if (!X) return; const lt = r._lapT(P); X.r0 = r.rain; X.r1 = r.rain > 0.5 ? 0 : 0.9; X.at = r.time + lt * 0.9 - (X.r1 > X.r0 ? 0 : X.dur);
+    if (P.ty) P.ty.k = X.r1 > X.r0 ? 'dry' : 'wet'; });
   await page.evaluate(PAUSE);
   const s1 = await page.evaluate(STATE);
   T.check('a long race (4 laps) in a changing weather, paused in lap 2 after the player\'s stop', s1.laps === 4 && on1.lap > 1.4 && on1.lap < 2 && on1.rep === 1 && !!s1.f && (s1.f.k === 'rain' || s1.f.k === 'stop'), JSON.stringify({ on1, laps: s1.laps, f: s1.f }));
@@ -55,8 +57,12 @@ try {
   const bigRe = f.k === 'rain' ? /^Dež (v manj kot krogu|čez ~\d+(,5)? krog(a|e|ov)?)$/ : /^Suho (v manj kot krogu|čez ~\d+(,5)? krog(a|e|ov)?)$/;
   T.check('91: the weather\'s tab first (both tabs: the weather and the stops), the header as the forecast has it', s1.cls === 'pause-info fc two' && s1.tabs.every(t => t.shown) && s1.tabs[0].on && bigRe.test(s1.big) && fc && fc.big === s1.big, JSON.stringify({ cls: s1.cls, big: s1.big, tabs: s1.tabs }));
   T.check('91: the band: the change where the forecast puts it (the middle of its range), TI where the player is, P at the end of the lap the change comes in (a stop for the other tyres), its words',
-    s1.svgN === 1 && s1.tiN === 1 && Math.abs(fc.XM - xl(s1.prog)) < 0.6 && Math.abs(fc.XR - xl(mid)) < 0.6 && (needP ? fc.B === B && Math.abs(fc.XP - xl(B)) < 0.6 && s1.pN === 1 && s1.tip === (f.k === 'rain' ? 'Gume za dež' : 'Gume za suho') + `: v boks na koncu ${B}. kroga.` : fc.B == null && s1.pN === 0 && !s1.tip),
+    s1.svgN === 1 && s1.tiN === 1 && Math.abs(fc.XM - xl(s1.prog)) < 0.6 && Math.abs(fc.XR - xl(mid)) < 0.6 && needP && fc.B === B && Math.abs(fc.XP - xl(B)) < 0.6 && s1.pN === 1 && s1.tip === (f.k === 'rain' ? 'Gume za dež' : 'Gume za suho') + `: v boks na koncu ${B}. kroga.`,
     JSON.stringify({ XM: fc.XM, XR: fc.XR, XP: fc.XP, B: fc.B, want: { XM: xl(s1.prog), XR: xl(mid), B, needP }, tip: s1.tip }));
+  { // (on the tyres for what comes already: no P, no words)
+    const s0 = await page.evaluate(() => { const r = window.__game.race, P = r.player, f = r.forecast(P), k0 = P.ty.k; P.ty.k = f.k === 'rain' ? 'wet' : 'dry'; window.__game.resume(); window.__game.pause(); document.getElementById('s-pause').style.display = '';
+      const el = document.getElementById('pause-info'), o = { pN: [...el.querySelectorAll('.pi-fc svg text')].filter(t => t.textContent === 'P').length, tip: !!el.querySelector('.pf-tip'), B: window.__game.pauseInfo.fc.B }; P.ty.k = k0; window.__game.resume(); window.__game.pause(); document.getElementById('s-pause').style.display = ''; return o; });
+    T.check('91: already on the tyres for what comes: no P, no stop in words', s0.pN === 0 && !s0.tip && s0.B == null, JSON.stringify(s0)); }
   const an = await page.evaluate(ANIMS), cls = (c) => an.list.filter(a => a.cls && a.cls.split(' ').includes(c));
   T.check('91: animated (C42-1): the sun\'s rays turn, its glow breathes, the clouds drift, the rain falls; transform and opacity only, endless, every loop a divisor of 6 s, no text under them',
     ['pf-rot', 'pf-glow', 'pf-drift', 'pf-fall'].every(c => cls(c).length >= 1) && an.list.every(a => a.props.length && a.props.every(p => p === 'transform' || p === 'opacity') && a.it === Infinity && 6000 % a.dur === 0 && a.play === 'running') && an.textMoves === 0,

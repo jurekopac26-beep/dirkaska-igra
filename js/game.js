@@ -3590,32 +3590,34 @@
     F.e = { n: best.name, hb: F.hb, out: F.out, t0: race.time, g0: +bg.toFixed(2), end: '', t1: null, g1: null, txt: [] }; F.log.push(F.e); if (F.log.length > 20) F.log.shift();
   }
   // a rival out of the pits just ahead (IZ BOKSOV): a rival on its way out after its stop (done, in the lane, POUT.lane m or less from the
-  // lane's end) that joins the circuit ahead of the player, POUT.near s or less before the player is there (both at their speeds now; the
-  // player on the circuit before the way out, POUT.look s or less from it, driving it himself): the pill of BOJ ZA MESTO in its place, with
-  // IZ BOKSOV, the pit icon, the driver's name and the gap (−1,2 s: ahead, orange; at the merge as it will be, then as it is). Gone once the
-  // rival has joined and the gap opens past POUT.open s, once the player is past it, after POUT.dur s, or the player or the rival out of the
-  // race, over the line or in the lane; once a stop. Not over a fight out of the player's own stop (BOJ ZA MESTO first). log: each one, how
-  // it began and ended (the tests read it)
-  const POUT = { lane: 150, near: 2, look: 6, open: 2.5, dur: 6 };
+  // lane's end) that joins the circuit ahead of the player, POUT.near s or less before the player is there (the player at his speed now, the
+  // rival at its own and through the way out's S at POUT.sv m/s, its last POUT.s m; the player on the circuit before the way out, POUT.look s or
+  // less from it, driving it himself): the pill of BOJ ZA MESTO in its place, with IZ BOKSOV, the pit icon, the driver's name and the gap
+  // (−1,2 s: ahead, orange; at the lane's end as it will be, then as it is). Gone once the player is past it (or would be there first), the
+  // gap opens past POUT.open s after the rival has joined, after POUT.dur s, or the player or the rival out of the race, over the line or in
+  // the lane; once a stop. Not over a fight out of the player's own stop (BOJ ZA MESTO first). log: each one, how it began and ended (the
+  // tests read it)
+  const POUT = { lane: 150, near: 2, look: 6, open: 2.5, dur: 6, s: 30, sv: 15 };
   let pout = { c: null, t0: 0, g: 0, e: null, seen: new Set(), log: [] };
   const wrapL = (d) => { const L = track.len; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };
+  const poutETA = (o, dR) => Math.max(0, dR - POUT.s) / clamp(o.speed, 8, Core.PIT_V || 22.2) + Math.min(Math.max(0, dR), POUT.s) / POUT.sv;   // (the rival to the lane's end)
   function pitOutStep(P) {
     const F = pout, T = track, D = T.def.pit, sE = T.startS + D[2], on = phase === 'racing' && !P.finished && !P.inPit && !P.pitG && !pa.st && !pfg.c;
     for (const o of F.seen) if (!o.inPit) F.seen.delete(o);   // (out of the lane: a next stop may be told again)
+    const dP = wrapL(sE - P.q.s), tP = dP / Math.max(10, P.speed);
     if (F.c) {
-      const o = F.c, dd = wrapL(o.q.s - P.q.s), side = (P.m.len + o.m.len) / 2 + 2, g = o.inPit ? F.g : -dd / Math.max(12, P.speed, o.speed);
-      if (o.inPit) { const tR = wrapL(sE - o.q.s) / Math.max(8, o.speed), tP = wrapL(sE - P.q.s) / Math.max(10, P.speed); if (tP > 0) F.g = -(tP - tR); } else F.g = g;
-      const end = !on || o.finished || race.isOut(o) ? 'out' : dd < -side ? 'pass' : !o.inPit && Math.abs(F.g) > POUT.open ? 'gap' : race.time - F.t0 > POUT.dur ? 'time' : '';
+      const o = F.c, dd = wrapL(o.q.s - P.q.s), dR = wrapL(sE - o.q.s), joined = !o.inPit || dR <= 0;
+      if (joined) F.g = -dd / Math.max(12, P.speed, o.speed); else if (dP > 0) F.g = -(tP - poutETA(o, dR));   // (joined: the gap as it is; else as it will be at the lane's end)
+      const end = !on || o.finished || race.isOut(o) ? 'out' : F.g > -0.05 || (!joined && dP <= 0) ? 'pass' : joined && -F.g > POUT.open ? 'gap' : race.time - F.t0 > POUT.dur ? 'time' : '';
       if (end) { F.e.end = end; F.e.t1 = race.time; F.e.g1 = +F.g.toFixed(2); F.c = null; }
       return;
     }
-    if (!on) return;
-    const dP = wrapL(sE - P.q.s), tP = dP / Math.max(10, P.speed); if (dP <= 0 || tP > POUT.look) return;
+    if (!on || dP <= 0 || tP > POUT.look) return;
     let best = null, bg = 0;
     for (const o of race.cars) {
       if (o === P || o.net || !o.inPit || !o.pitDone || o.finished || F.seen.has(o)) continue;
-      const dR = wrapL(sE - o.q.s); if (dR < 0 || dR > POUT.lane) continue;
-      const tR = dR / Math.max(8, o.speed), gap = tP - tR; if (gap > 0 && gap <= POUT.near && (!best || gap < bg)) { best = o; bg = gap; }   // (it joins first, just ahead)
+      const dR = wrapL(sE - o.q.s); if (dR <= 0 || dR > POUT.lane) continue;
+      const gap = tP - poutETA(o, dR); if (gap > 0 && gap <= POUT.near && (!best || gap < bg)) { best = o; bg = gap; }   // (it joins first, just ahead)
     }
     if (!best) return;
     F.seen.add(best); F.c = best; F.t0 = race.time; F.g = -bg;
