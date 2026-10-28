@@ -5,16 +5,20 @@
 //    door's pillars (gar.jamb) a light grey roller door between them, down to the top of the opening; both while no stop is under way
 //    (Crystal Palace's stall, Detroit's and Trois-Rivières' tents and Longford's shed, open at the front: none). 95C the flags: by every
 //    garage's left-hand pillar an upright cloth out towards the lane, facing along it, in its crew's colour with its driver's three
-//    letters (the player's LIP), on a pole 4 m tall. 72 the
-//    stack of used tyres: by the right-hand pillar seven tyres lying flat in two piles, each up on the one below. 48 the tyre marks: in
+//    letters (the player's: the profile name's first three letters, ANA; 5a), on a pole 4 m tall. 72 the stack of used tyres: by the
+//    right-hand pillar three tyres to begin with lying flat in two piles (2 + 1), each up on the one below, the rest of its twelve not
+//    drawn. 48 the tyre marks: in
 //    front of every crew's garage two dark arcs from where the car stands in the box out to the lane, fading as they go. 5 and 76 the pit
 //    exit: by the end of the pit wall on the way out (Track.pitJ gb) the light's post and the marshal.
 // 2. Bathurst, a stop: the door down until the car comes down the lane to it (the crew's 'ready'), up within 1.6 s, up through the stop,
-//    down again once the crew is back in its garage (within 2.6 s); the light red before the start, green in the race; the blue flag only
+//    down again once the crew is back in its garage (within 2.6 s), and with the crew back in the stack four tyres higher for the stop's
+//    new tyres (P3: 3 + 4 a stop with new tyres, at most 12, by turns on the two piles); the light red before the start, green in the race,
+//    red under a red flag (7A: the race stopped, Race.fl.red); the blue flag only
 //    while a car is on its way out of the lane and another comes along the circuit to where they meet (within 4 s of it), its cloth gone
 //    otherwise; the light red while the safety car comes past the way out.
 // 3. 87 the car's dirt: on the grass it builds up (four wheels, a second: more than 0.012), its colour halfway to the mud's (dirtW ~0.55),
 //    on gravel a light dust (0.15), through a puddle or in the rain mud (1); not on the asphalt or the cobbles.
+// 4. 5a the player's flag: the profile name's first three letters, letters only (»7 Žan-Luka« ŽAN); no name: IGR.
 //   node tests/browser/pitkit.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -49,16 +53,18 @@ try {
       if (!F) out.bad.push('no flags'); else { const U = F.userData, A = F.geometry.attributes.position.array, per = 8; out.flag = U.flags.map(f => f.code).join(' ');
         if (U.flags.length !== B0.length) out.bad.push('flags ' + U.flags.length + ' for ' + B0.length + ' garages');
         U.flags.forEach((f, j) => { const b = B0[j], Gb = b.gar || {}, fr = Gb.jamb ? Gb.jamb[0] : Gb.band ? Gb.band[0] : b.base + 9, hwb = Gb.jamb ? Gb.jamb[1] : Gb.band ? Gb.band[3] - 0.15 : 4.56, lb = (x, z) => ({ a: (x - b.ox) * b.tx + (z - b.oz) * b.tz, w: (x - b.ox) * b.nx + (z - b.oz) * b.nz });
-          const want = b.mine ? 'LIP' : c3(b.drv && b.drv.name), L = lb(f.pole[0], f.pole[1]), pts = []; for (let k = 0; k < per; k++) pts.push(Object.assign(lb(A[(j * per + k) * 3], A[(j * per + k) * 3 + 2]), { y: A[(j * per + k) * 3 + 1] - (b.y || 0) }));
+          const want = b.mine ? 'ANA' : c3(b.drv && b.drv.name), L = lb(f.pole[0], f.pole[1]), pts = []; for (let k = 0; k < per; k++) pts.push(Object.assign(lb(A[(j * per + k) * 3], A[(j * per + k) * 3 + 2]), { y: A[(j * per + k) * 3 + 1] - (b.y || 0) }));
           if (f.code !== want || f.col !== b.col.getHex() || (b.mine && f.col !== PAINT)) out.bad.push('flag ' + j + ' ' + f.code + '/' + want + ' #' + f.col.toString(16));
           if (Math.abs(L.a + hwb) > 0.2 || L.w > fr || L.w < fr - 0.6) out.bad.push('flag ' + j + ' pole at ' + L.a.toFixed(2) + '/' + (L.w - fr).toFixed(2));
           if (!pts.every(p => Math.abs(p.a - L.a) < 0.12) || !(pts[per - 1].w < pts[0].w - 1.2) || Math.max(...pts.map(p => p.y)) - Math.min(...pts.map(p => p.y)) < 2.4) out.bad.push('flag ' + j + ' cloth ' + JSON.stringify(pts.map(p => [+p.a.toFixed(2), +(p.w - fr).toFixed(2)])));
         }); }
-      // the stack: two piles by the right-hand pillar, each tyre up on the one below, lying flat (the axle up)
-      const S = X.stack, piles = [[], []];
-      for (let j = 0; j < S.n; j++) { c.M.tyre.getMatrixAt(S.t0 + j, m4); m4.decompose(v, q, sc); const ax = new THREE.Vector3(1, 0, 0).applyQuaternion(q), L = loc(v.x, v.z);
-        piles[j < 4 ? 0 : 1].push({ y: v.y - (bx.y || 0), a: L.a, w: L.w, up: Math.abs(ax.y) }); }
-      out.stack = piles.map(p => p.length).join('+');
+      // the stack: two piles by the right-hand pillar, each tyre up on the one below, lying flat (the axle up); the slots past the tyres
+      // laid not drawn (scale 0)
+      const S = X.stack, piles = [[], []]; let gone = 0;
+      for (let j = 0; j < S.n; j++) { c.M.tyre.getMatrixAt(S.t0 + j, m4); m4.decompose(v, q, sc); if (sc.x < 0.01) { gone++; continue; } if (gone) out.bad.push('tyre ' + j + ' drawn past one not drawn');
+        const ax = new THREE.Vector3(1, 0, 0).applyQuaternion(q), L = loc(v.x, v.z); piles[j % 2].push({ y: v.y - (bx.y || 0), a: L.a, w: L.w, up: Math.abs(ax.y) }); }
+      out.stack = piles.map(p => p.length).join('+'); out.stackN = S.n;
+      if (S.n !== 12) out.bad.push('tyre slots ' + S.n);
       for (const p of piles) p.forEach((t, k) => { if (t.up < 0.98 || Math.abs(t.a - (X.hw - 0.05)) > 0.25 || t.w > X.front || t.w < X.front - 1.6 || (k && !(t.y > p[k - 1].y + 0.2 && t.y < p[k - 1].y + 0.35))) out.bad.push('tyre ' + JSON.stringify(t)); });
       // the marks: in front of every garage, from the box out to the lane, fading
       const Mk = c.grp.children.find(o => o.name === 'pitMarks'), B = Render.world.pitBoxes;
@@ -74,8 +80,8 @@ try {
   T.check('13 circuits with pits', ids.length === 13 && res.length === 13, ids.join(', '));
   T.check('44 the garage door: a closed front (gar.wall at the front) rolls, an open one between pillars gets a light grey roller door, none on the open tents and shed; down while no stop is under way',
     res.every(r => !r.bad.some(b => /^door/.test(b))), res.map(r => `${r.id} ${r.door || '-'}${r.doorH ? ' ' + r.doorH + ' m' : ''} ${r.bad.filter(b => /^door/.test(b)).join('; ')}`).join(', '));
-  T.check('95C the flags: at every garage by its left pillar, in its crew\'s colour, its driver\'s three letters (the player\'s LIP: Ana Lipnik), the cloth out towards the lane facing along it, ~2.6 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).slice(0, 2).join('; ')}`).join(', '));
-  T.check('72 the stack of used tyres: seven by the right pillar in two piles (4 + 3), lying flat, each up on the one below', res.every(r => !r.bad.some(b => /^tyre/.test(b))), res.map(r => `${r.id} ${r.stack} ${r.bad.filter(b => /^tyre/.test(b)).slice(0, 2).join('; ')}`).join(', '));
+  T.check('95C the flags: at every garage by its left pillar, in its crew\'s colour, its driver\'s three letters (the player\'s ANA: Ana Lipnik, the profile name\'s first three, 5a), the cloth out towards the lane facing along it, ~2.6 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).slice(0, 2).join('; ')}`).join(', '));
+  T.check('72 the stack of used tyres: three by the right pillar to begin with, in two piles (2 + 1), lying flat, each up on the one below; the rest of its twelve not drawn', res.every(r => r.stack === '2+1' && !r.bad.some(b => /^tyre/.test(b))), res.map(r => `${r.id} ${r.stack} ${r.bad.filter(b => /^tyre/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('48 the tyre marks: two in front of every crew\'s garage, from the box towards the lane, fading out', res.every(r => !r.bad.some(b => /mark/.test(b))), res.map(r => `${r.id} ${r.marks} ${r.bad.filter(b => /mark/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('5 and 76 the exit\'s post at the end of the pit wall on the way out', res.every(r => !r.bad.some(b => /exit/.test(b))), res.map(r => `${r.id} ${r.exitD} ${r.bad.filter(b => /exit/.test(b)).join('; ')}`).join(', '));
 
@@ -88,6 +94,7 @@ try {
     g.pause(); Render.scene.visible = false; fr(); out.light.grid = lamp();   // (the scene not drawn: the frames only step the pit's logic)
     for (let k = 0; k < 400 && g.phase !== 'racing'; k++) { g.sim(0.1, true); fr(); }
     g.sim(0.2, true); fr(); fr(); out.light.race = lamp();
+    { const F0 = g.race.fl; g.race.fl = Object.assign({}, F0 || {}, { red: true }); fr(); fr(); out.light.red = lamp(); g.race.fl = F0; fr(); fr(); out.light.after = lamp(); }   // (7A: a red flag, the race stopped; the game has none of its own yet)
     // the rule of the blue flag (the race stood still, two cars put where it looks for them)
     const J = Tk.pitJ(), L = Tk.len, at = (d) => Tk.startS + d, cars = g.race.cars.filter(x => !x.isPlayer), A = cars[0], C2 = cars[1], keep = [A, C2].map(o => ({ o, s: o.q.s, pitG: o.pitG, pitDone: o.pitDone, inPit: o.inPit, vx: o.vx, vz: o.vz }));
     const put = (o, s, pitG, done, sp) => { o.q.s = s; o.pitG = pitG; o.pitDone = done; o.inPit = false; o.vx = sp; o.vz = 0; };
@@ -104,13 +111,27 @@ try {
       const md = c.mode, o = X.open; if (md + (o >= 1 ? 'U' : o <= 0 ? 'D' : 'm') !== last) { last = md + (o >= 1 ? 'U' : o <= 0 ? 'D' : 'm'); out.door.push([+t.toFixed(2), md, +o.toFixed(2)]); }
       if (md === 'ready' && tR == null) tR = t; if (tR != null && tUp == null && o >= 1) tUp = t; if (md === 'work' && o < 1) upAll = false;
       if (P.pitDone && md === 'home' && tHome == null) tHome = t; if (tHome != null && tDown == null && o <= 0) { tDown = t; break; } }
-    out.doorT = { up: tUp != null && tR != null ? +(tUp - tR).toFixed(2) : null, down: tDown != null ? +(tDown - tHome).toFixed(2) : null, upAll }; Render.scene.visible = true;
+    out.doorT = { up: tUp != null && tR != null ? +(tUp - tR).toFixed(2) : null, down: tDown != null ? +(tDown - tHome).toFixed(2) : null, upAll };
+    { const S = X.stack, m4 = new THREE.Matrix4(), v = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), piles = [[], []];   // (P3: the stack once the crew is back in)
+      for (let j = 0; j < S.n; j++) { c.M.tyre.getMatrixAt(S.t0 + j, m4); m4.decompose(v, q, sc); if (sc.x > 0.01) piles[j % 2].push(+(v.y - (X.stack.y0 || 0)).toFixed(3)); }
+      out.stack = { tyN: P.ty ? P.ty.n : null, n: piles[0].length + piles[1].length, piles: piles.map(p => p.length).join('+'), up: piles.every(p => p.every((y, k) => !k || (y > p[k - 1] + 0.2 && y < p[k - 1] + 0.35))) }; }
+    Render.scene.visible = true;
     return out; });
-  T.check('5 the light: red before the start, green in the race', B.light.grid === 'red' && B.light.race === 'green', JSON.stringify(B.light));
+  T.check('5 the light: red before the start, green in the race; 7A red under a red flag (the race stopped), green again after it', B.light.grid === 'red' && B.light.race === 'green' && B.light.red === 'red' && B.light.after === 'green', JSON.stringify(B.light));
   T.check('76 the blue flag: out while a car leaves the lane and another comes to where they meet within 4 s (the cloth out, waving: half a metre and more off the hand), not for one 7 s away, not with nobody leaving (the cloth gone)',
     B.blue.both > 0.9 && B.blue.cloth > 0.5 && B.blue.far === 0 && B.blue.noneOut === 0 && B.blue.clothOff < 0.01, JSON.stringify(B.blue));
+  T.check('P3 the stack after a stop with new tyres, the crew back in: four tyres more (3 + 4 a stop, by turns on the two piles), each up on the one below',
+    B.stack.tyN >= 1 && B.stack.n === Math.min(12, 3 + 4 * B.stack.tyN) && B.stack.up, JSON.stringify(B.stack));
   T.check('44 the door at a stop: up within 1.6 s of the crew getting ready, up through the stop, down within 2.6 s once the crew is back in',
     B.doorT.up != null && B.doorT.up <= 1.7 && B.doorT.upAll && B.doorT.down != null && B.doorT.down <= 2.7, JSON.stringify({ t: B.doorT, door: B.door }));
+
+  // 4. 5a the player's flag with other names: letters only, the first three; none: IGR
+  const nm = [];
+  for (const [name, want] of [['7 Žan-Luka', 'ŽAN'], ['', 'IGR']]) {
+    await page.evaluate((n) => { window.__game.S.name = n; }, name); await startTrack(page, 'bathurst');
+    nm.push(await page.evaluate((w) => { const c = Render.crew, F = c.grp.children.find(o => o.name === 'pitFlags'), B0 = Render.world.pitBoxes, j = B0.findIndex(b => b.mine); return { got: F && j >= 0 ? F.userData.flags[j].code : null, want: w }; }, want));
+  }
+  T.check('5a the player\'s flag: the profile name\'s first three letters, letters only (»7 Žan-Luka« ŽAN), no name IGR', nm.every(r => r.got === r.want), JSON.stringify(nm));
 
   // 3. the dirt (the race stood still, the player's wheels put on each surface, a second of frames)
   const D = await page.evaluate(() => {

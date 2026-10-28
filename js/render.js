@@ -5263,7 +5263,7 @@ const Render = (function () {
     const mk = (g, n, cast, mt) => { if (!n) { g.dispose(); return null; } g.boundingSphere = bs.clone(); const im = new THREE.InstancedMesh(g, mt || mat, n);
       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.castShadow = cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
-    const gunMen = men.filter(m => m.gun), nT = roles ? 8 + CR_STACK.length : 0;   // (the player's: the four new and the four old tyres, then the stack of used ones by its garage, crewGarage)
+    const gunMen = men.filter(m => m.gun), nT = roles ? 8 + CR_STACK : 0;   // (the player's: the four new and the four old tyres, then the stack of used ones by its garage, crewGarage, crewStack)
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
     const matJ = crewMaterial(false, 'jacket'), matT = crewMaterial(false, 'tyre');   // (the rain's: the jackets, the tyres' covers, crewRain)
     if (nT) geo.tyre.setAttribute('crewCover', new THREE.InstancedBufferAttribute(new Float32Array(nT), 1));
@@ -5285,7 +5285,7 @@ const Render = (function () {
     if (roles && roles.bx.gar) { const bx = roles.bx, G = bx.gar, n0 = rb + boxes.length;   // the player's garage in the player's colour (to find it from afar): the back wall (a closed front: its door) and the door's pillars
       if (G.wall) crGarSlab(M.rod, n0, bx, 'wall', -G.wall[3], G.wall[3], G.wall[0], G.wall[1], G.wall[2], bx.col);
       if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
-    const gx = roles ? crewGarage(race, roles.bx, M, rb + boxes.length, nT - CR_STACK.length, grp) : null;   // the player's garage: its door (44), its flag (95C), the stack of used tyres (72)
+    const gx = roles ? crewGarage(race, roles.bx, M, rb + boxes.length, nT - CR_STACK, grp) : null;   // the player's garage: its door (44), its flag (95C), the stack of used tyres (72)
     const marks = ownRnd(() => crewMarks(boxes, grp));   // the tyre marks in front of every garage (48)   (these meshes, the flags' and the exit's: named without Math.random, ownRnd: a seeded race runs as without them)
     if (roles) ownRnd(() => crewFlags(race, boxes, M, rb + boxes.length + 4, grp));   // each garage's upright flag with its driver's three letters (95C)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
@@ -5295,6 +5295,7 @@ const Render = (function () {
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
     crew.gar = gx; crew.marks = marks; crew.exit = ownRnd(() => crewExit(race));   // (the pit exit's light and marshal, 5 and 76)
+    if (gx) crewStack(M, gx.stack, CR_STACK0);   // (the stack of used tyres as the race begins, 72)
   }
   // ---- the player's garage, its pit and its exit (44, 48, 72, 95C, 5, 76) ----
   // 44 its door: where the garage's front is closed (World's bx.gar.wall at its front: a door in the player's colour before the dark inside)
@@ -5302,11 +5303,13 @@ const Render = (function () {
   // garage), up over CR_DOOR[0] s as the car comes down the lane to it (the crew's 'ready'), down again over CR_DOOR[1] s once the crew is back
   // in. A garage open at the front (Detroit's and Trois-Rivières' tents, Longford's shed): none. One rod (the crew's InstancedMesh)
   const CR_DOOR = [1.6, 2.6];
-  // 72 the stack of used tyres in front of the garage, by its right-hand pillar: two piles (the crew's tyre, its band in the compound's colour)
-  const CR_STACK = [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2]];   // (the pile, the tyre's place up it)
+  // 72 the stack of used tyres in front of the garage, by its right-hand pillar: two piles (the crew's tyre, its band in the compound's colour),
+  // the tyres laid on them by turns. It grows with the player's stops (P3): CR_STACK0 before the first, the four taken off at each stop with
+  // new tyres put on (Core's ty.n) once the crew is back in its garage, CR_STACK at most (two piles of six); the slots left over not drawn
+  const CR_STACK = 12, CR_STACK0 = 3;
   // 95C (crewFlags) an upright flag by every garage's left-hand pillar: on a 4 m pole (a rod) a cloth 1.4 x 2.6 m out over the apron towards the lane,
   // facing the cars coming down it, in its crew's colour with its driver's three letters stacked (as the timing tower's: an AI car's surname;
-  // the player's, the profile's name, race.opts.playerName, its last word's first three; none given: TI). One mesh, one atlas
+  // the player's, the profile's name, race.opts.playerName, its first three letters: codeMe; none given: IGR). One mesh, one atlas
   function crewGarage(race, bx, M, n0, t0, grp) {
     const G = bx.gar || {}, T = curTrack, col = bx.col, grey = new THREE.Color(0.7, 0.71, 0.73);
     const front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
@@ -5315,20 +5318,29 @@ const Render = (function () {
     else if (G.jamb) { const [w, a, wd, y1] = G.jamb; out.door = { i: n0 + 3, part: 'jamb', a0: -(a - wd / 2), a1: a - wd / 2, w: w + 0.12, y1, col: grey }; }   // (an open front: a grey roller door inside the pillars, a hand's width behind their faces)
     if (out.door) crDoorSet(M.rod, bx, out.door, 0);
     // the stack: in front of the right pillar, two piles of used tyres lying flat (on its side, as a tyre on the floor: crTyreMat)
-    const S = crew && crew.tyreS || new THREE.Vector3(1, 1, 1), sa = hw - 0.05, sw = front - 0.55, BANDS = [CR_OLD, CR_NEW, new THREE.Color(0.93, 0.93, 0.9)];
-    CR_STACK.forEach(([pile, k], j) => { const a = sa - pile * 0.08, w = sw - pile * 0.72, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w;
-      _cQ.setFromEuler(_ce.set(0, crHash(j * 3.7 + bx.k) * 6.28, Math.PI / 2, 'YXZ')); _cM.compose(_cv.set(X, y0 + (0.14 + k * 0.275) * S.x, Z), _cQ, S); M.tyre.setMatrixAt(t0 + j, _cM);
-      M.tyre.setColorAt(t0 + j, BANDS[(j * 7 + bx.k) % 3]); });
-    out.stack = { t0, n: CR_STACK.length, a: sa, w: sw }; out.front = front; out.hw = hw;
+    const BANDS = [CR_OLD, CR_NEW, new THREE.Color(0.93, 0.93, 0.9)];
+    out.stack = { t0, n: CR_STACK, a: hw - 0.05, w: front - 0.55, y0, bx, shown: -1 }; out.front = front; out.hw = hw;
+    for (let j = 0; j < CR_STACK; j++) M.tyre.setColorAt(t0 + j, BANDS[(j * 7 + bx.k) % 3]);   // (laid on by crewStack, setupCrew: CR_STACK0 to begin with)
     return out;
   }
-  const code3 = (n) => (String(n || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();
+  function crewStack(M, st, n) {   // the stack's first n tyres (by turns on the two piles), the rest not drawn
+    if (st.shown === n) return; st.shown = n; const S = crew && crew.tyreS || _cS1, bx = st.bx;
+    for (let j = 0; j < st.n; j++) {
+      if (j >= n) { M.tyre.setMatrixAt(st.t0 + j, _zero); continue; }
+      const pile = j % 2, k = j >> 1, a = st.a - pile * 0.08, w = st.w - pile * 0.72, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w;
+      _cQ.setFromEuler(_ce.set(0, crHash(j * 3.7 + bx.k) * 6.28, Math.PI / 2, 'YXZ')); _cM.compose(_cv.set(X, st.y0 + (0.14 + k * 0.275) * S.x, Z), _cQ, S); M.tyre.setMatrixAt(st.t0 + j, _cM);
+    }
+    M.tyre.instanceMatrix.needsUpdate = true;
+  }
+  const _cS1 = new THREE.Vector3(1, 1, 1);
+  const code3 = (n) => (String(n || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();   // (a driver's: his surname's first three)
+  const codeMe = (n) => (String(n || '').replace(/[^\p{L}]+/gu, '') || 'IGR').slice(0, 3).toUpperCase();   // (the player's: the profile name's first three letters, 5a: Ana Lipnik ANA; none: IGR)
   function crewFlags(race, boxes, M, i0, grp) {
     const T = curTrack, P = race.player, N = 16, cv = document.createElement('canvas'); cv.width = 64 * N; cv.height = 256; const x = cv.getContext('2d');
     const pos = [], nrm = [], uv = [], idx = [], flags = []; let nv = 0;
     boxes.forEach((bx, j) => {
       const G = bx.gar || {}, col = bx.col, front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
-      const code = bx.mine && P ? code3(race.opts && race.opts.playerName) : code3(bx.drv && bx.drv.name), lum = col.r * 0.3 + col.g * 0.59 + col.b * 0.11, cx = (j % N) * 64;
+      const code = bx.mine && P ? codeMe(race.opts && race.opts.playerName) : code3(bx.drv && bx.drv.name), lum = col.r * 0.3 + col.g * 0.59 + col.b * 0.11, cx = (j % N) * 64;
       x.fillStyle = '#' + col.getHexString(); x.fillRect(cx, 0, 64, 256); x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 4; x.strokeRect(cx + 2, 2, 60, 252);
       x.fillStyle = lum > 0.62 ? '#14161a' : '#ffffff'; x.font = '900 50px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
       [...code].forEach((ch, k) => x.fillText(ch, cx + 32, 58 + k * 64, 54));
@@ -5372,7 +5384,7 @@ const Render = (function () {
     m.name = 'pitMarks'; m.renderOrder = 2; grp.add(m); return m;
   }
   // 5 and 76: at the end of the pit wall on the way out (Track.pitJ gb: the real tracks), a post with the pit exit's light facing the cars
-  // coming down the lane (red over green: green while the exit is open; red before the start and while the safety car's train passes it),
+  // coming down the lane (red over green: green while the exit is open; red before the start, under a red flag and while the safety car's train passes it),
   // and a marshal beside it who waves a blue flag while a car is on its way out of the lane and another comes along the circuit to where
   // they meet (within EX_BLUE s of the acceleration lane's end). Two meshes: the post, its lamp housing and the marshal (lit), the lamps and
   // the flag's cloth (unlit, as a lamp and a bright flag look in any light)
@@ -5405,8 +5417,9 @@ const Render = (function () {
   function crewExitStep(c, dt, near) {
     const E = c.exit, R = curRace; if (!E || !R) return;
     const T = curTrack, L = T.len, dS = (ss) => { let x = ss - T.startS; x = ((x % L) + L) % L; return x > L / 2 ? x - L : x; }, J = E.J;
-    // the exit closed: before the start, or the safety car (or the leader behind it) within 250 m before where the lanes meet
-    const F = R.fl, sc = F && F.sc && F.sc.state === 'out' ? F.sc.car : null, scD = sc ? J.b - dS(sc.q ? sc.q.s : sc.s || 0) : 1e9, red = R.state !== 'racing' || (scD > -20 && scD < 250);
+    // the exit closed: before the start, under a red flag (7A: the race stopped, Race.fl.red), or the safety car (or the leader behind it)
+    // within 250 m before where the lanes meet
+    const F = R.fl, sc = F && F.sc && F.sc.state === 'out' ? F.sc.car : null, scD = sc ? J.b - dS(sc.q ? sc.q.s : sc.s || 0) : 1e9, red = R.state !== 'racing' || !!(F && F.red) || (scD > -20 && scD < 250);
     // the blue flag: a car on its way out (on the pit road past the boxes) while another comes along the circuit to the acceleration lane's end
     let out = false, come = false;
     for (const o of R.cars) { if (o.finished || !o.q) continue; const dd = dS(o.q.s);
@@ -5449,6 +5462,7 @@ const Render = (function () {
       if (mode === 'ready') for (const k of [0, 1, 2, 3]) R.N[k].tyre.mode = 'hands';   // (picked up in the garage, the car still far down the lane)
       if (mode === 'home') { c.dOut = 40; for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; } }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
+    if (mode === 'home' && c.gar && c.gar.stack) crewStack(c.M, c.gar.stack, Math.min(CR_STACK, CR_STACK0 + 4 * (P.ty && P.ty.n || 0)));   // (P3: the used tyres of every stop with new ones on the stack, the crew back in)
     if (mode === 'clear') c.clearT += dt;
     if (mode !== 'clear') c.keepTy = mode === 'home' ? false : mode === 'out' || prev !== 'work' ? Core.keepTyres(P, P.pitPlan) : c.keepTy;   // (the player's stop without new tyres, game.js: the tyre men and the jacks stay at the garage; as it was when the work began)
     const keep = c.keepTy;
