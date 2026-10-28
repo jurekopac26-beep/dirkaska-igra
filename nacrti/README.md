@@ -68,3 +68,7 @@ Nato pregled in šele potem commit.
 7. Meni se odpre spodaj, kadar bi zgoraj pokril označene dele: da/ne (`plosce/oz/oz7_zeleno_oranzna.jpg`).
 8. Cene (`cene/cene.html`): stroški dirkanja (prijavnina, obraba gum) da/ne; serijski del samo kot gumb ↺ SERIJSKO (pri gumah serijske Cesta 280 € med 16); nove moči delov (turbo +14 %, lahek akumulator −6 kg); tabli za ceno potrebujeta vse številke in piko (širša tabla ali manjše črke).
 9. Tabla YOUR CAR: zapisano »svetijo samo črke« (verzija 2 na `plosce/av_table/tabla_luc.jpg`, kot »naravnost v oko kamere«); uporabnik je pred tem napisal številko 3, zato potrdi.
+
+## Pomembno: veja z garažo zaostaja za `main` (28. 10.)
+Veja `claude/3d-garage-cars-sum9uk` (garaža) je 760 commitov za `main` (skupni prednik `6e3a9f55`). Na `main` je 33 avtov v `js/cars/*.js` s kategorijami (Mali avti, Športni, Superšportni, Klasika …), nov izbor avtov in avto KOLIBRI (`js/cars/kolibri.js`) z ločenimi deli, ki se razbijejo (žarometa, zadnji luči, strešni spojler, tablica, brisalca, antena, ugreznjena streha) in svojimi gumami (`Car.kt`). Garaže (`garaza.html`, `js/garage3d.js`) na `main` še ni.
+Uporabnik želi garažo najprej za KOLIBRIJA (vse, kar se ponuja, 16 možnosti na element). Ocena: približno 220 ur (od tega 20 ur prenos garaže na `main`), vsak naslednji avto 15–20 ur; manjša prva različica s 4 možnostmi na element približno 80 ur. Pred delom preberi `CLAUDE.md` z `main` (lahko ima nova pravila).
