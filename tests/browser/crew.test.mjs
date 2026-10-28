@@ -7,8 +7,9 @@
 // 2. Out: every man at his place round where the car will stop (Core's Track.bayPose; Townsville's and Trois-Rivières' World pitBox stop is
 //    the lane's middle) well before the car is there (at least 0.6 s of waiting, ready), off the lane (beyond its outer edge; Montréal's
 //    shallow apron: the car stops at its edge, its far side over the lane, the men on that side no further onto it than 1.2 m), none of them
-//    in the car's way as it comes in, and the camera behind the car has them in sight (in the frame, nothing of the world in front of them:
-//    Townsville's far view no longer folds a plane through the view round the camera, world-townsville.js farUpdate).
+//    in the car's way as it comes in, and the pit stop's camera has them in sight (js/render.js pitCine; the custom stop's panel left alone:
+//    the view behind the car pulled back, or already swinging to the car's side as it brakes into its box; in the frame, nothing of the
+//    world in front of them: Townsville's far view no longer folds a plane through the view round the camera, world-townsville.js farUpdate).
 // 3. Then the work: where they waited is where the car stopped (the work's frame within 1.5 m and 4° of it).
 //   node tests/browser/crew.test.mjs            (CREW_ONLY=montreal,townsville: only those)
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -41,7 +42,7 @@ try {
       const lout = (x, z) => { const q = Tk.query(x, z, P.q.i, {}), p = Tk.pitAt(q.s); return p ? q.d * p.sd - p.lout : 99; };   // (how far beyond the lane's outer edge)
       const inCar = (m) => { const dx = m.x - P.x, dz = m.z - P.z, ch = Math.cos(P.h), sh = Math.sin(P.h), f = dx * ch + dz * sh, r = -dx * sh + dz * ch;   // (how far the man is from the car's outline 0.2 m out: < 0 in it)
         return Math.max(f - D.nose - 0.2, D.tail - 0.2 - f, Math.abs(r) - D.wid / 2 - 0.2); };
-      let t = 0, tBox = null, tOut = null, dOut = null, tReady = null, tRep = null, home = 99, kit = true, clr = 99, lane = 99, F0 = null, F1 = null, seen = null, last = '';
+      let t = 0, tBox = null, tOut = null, dOut = null, tReady = null, tRep = null, home = 99, kit = true, clr = 99, lane = 99, F0 = null, F1 = null, seen = null, last = '', cam = null;
       const arr = new Map(), hid = [];
       Render.scene.visible = false;
       for (let k = 0; k < 400 && !(tRep != null && t > tRep + 0.5); k++) {
@@ -57,8 +58,8 @@ try {
           for (const m of role) { clr = Math.min(clr, inCar(m)); if (!arr.has(m) && at(m)) arr.set(m, t); if (arr.has(m)) lane = Math.min(lane, lout(m.x, m.z)); }
           if (tReady == null && arr.size === role.length) {
             tReady = t; last = name(role.reduce((a, m) => arr.get(m) > arr.get(a) ? m : a, role[0]));
-            // the camera behind the car then: each man (his chest) in the frame, nothing of the world between
-            const C = Render.camera, rc = new THREE.Raycaster(), meshes = []; Render.world.root.traverseVisible(o => { if (o.isMesh) meshes.push(o); });
+            // the pit stop's camera then (as the game has it: pulled back behind the car, or swinging to its side): each man (his chest) in the frame, nothing of the world between
+            const C = Render.camera, rc = new THREE.Raycaster(), meshes = [], ci = Render.pitCamInfo; Render.world.root.traverseVisible(o => { if (o.isMesh) meshes.push(o); }); cam = ci ? { f: +ci.f.toFixed(2), s: +ci.s.toFixed(2) } : null;
             seen = role.filter(m => { const v = new THREE.Vector3(m.x, (m.y || 0) + 1.2, m.z), d = v.clone().sub(C.position), L = d.length(), s = v.clone().project(C);
               if (Math.abs(s.x) > 1 || Math.abs(s.y) > 1 || s.z > 1) { hid.push(`${name(m)} out of the frame (${s.x.toFixed(2)}, ${s.y.toFixed(2)})`); return false; }
               rc.set(C.position, d.normalize()); rc.far = L - 0.3; const h = rc.intersectObjects(meshes, false);
@@ -70,10 +71,10 @@ try {
       Render.scene.visible = true;
       const dh = F0 && F1 ? Math.abs(Math.atan2(Math.sin(F1.h - F0.h), Math.cos(F1.h - F0.h))) * 180 / Math.PI : 99, r2 = (v) => v == null ? null : +v.toFixed(2);
       return Object.assign(out, { seq: seq.join('>'), tBox: r2(tBox), tOut: r2(tOut), tReady: r2(tReady), tRep: r2(tRep), wait: tRep != null && tReady != null ? r2(tRep - tReady) : -1, last, home: r2(home), kit,
-        clr: r2(clr), lane: r2(lane), jump: F0 && F1 ? r2(Math.hypot(F1.x - F0.x, F1.z - F0.z)) : 99, dh: +dh.toFixed(1), seen, n: role.length, hid: hid.slice(0, 3).join('; '), dOut: r2(dOut), cdOut: r2(c.dOut) });
+        clr: r2(clr), lane: r2(lane), jump: F0 && F1 ? r2(Math.hypot(F1.x - F0.x, F1.z - F0.z)) : 99, dh: +dh.toFixed(1), seen, n: role.length, cam, hid: hid.slice(0, 3).join('; '), dOut: r2(dOut), cdOut: r2(c.dOut) });
     }));
     const r = res[res.length - 1];
-    console.log(`   ${r.id}: ${r.bad.length ? r.bad.join('; ') : `${r.seq}; box ${r.tBox} s, out ${r.tOut} s (${r.dOut} m before the box), all ready ${r.tReady} s (the last ${r.last}), stopped ${r.tRep} s: ${r.wait} s waiting; ${r.seen}/${r.n} in sight${r.hid ? ' (' + r.hid + ')' : ''}; ${r.clr} m clear of the car, ${r.lane} m beyond the lane's edge; the work ${r.jump} m, ${r.dh}° from where they waited`}`);
+    console.log(`   ${r.id}: ${r.bad.length ? r.bad.join('; ') : `${r.seq}; box ${r.tBox} s, out ${r.tOut} s (${r.dOut} m before the box), all ready ${r.tReady} s (the last ${r.last}), stopped ${r.tRep} s: ${r.wait} s waiting; ${r.seen}/${r.n} in sight (the pit camera ${r.cam ? 'pulled back ' + r.cam.f + '×, swung ' + r.cam.s : 'off'})${r.hid ? ' (' + r.hid + ')' : ''}; ${r.clr} m clear of the car, ${r.lane} m beyond the lane's edge; the work ${r.jump} m, ${r.dh}° from where they waited`}`);
   }
   const ok = (f) => res.every(r => !r.bad.length && f(r)), fail = (f) => res.filter(r => r.bad.length || !f(r)).map(r => r.id).join(', ');
   const c1 = (r) => r.seq === 'ready>out>work' && r.home >= 0 && r.kit, c2 = (r) => r.tBox != null && r.tOut != null && (r.cdOut > 40 ? r.tOut <= r.tBox && r.dOut <= r.cdOut + 0.5 && r.dOut <= 80 : r.tOut === r.tBox), c3 = (r) => r.wait >= 0.6, c4 = (r) => r.lane >= (r.id === 'montreal' ? -1.2 : 0);
@@ -83,7 +84,7 @@ try {
   T.check('every man at his place at least 0.6 s before the car stops', ok(c3), fail(c3) || `at least ${Math.min(...res.map(r => r.wait))} s, at most ${Math.max(...res.map(r => r.wait))} s`);
   T.check('off the lane (Montréal\'s shallow apron: no further onto it than 1.2 m)', ok(c4), fail(c4) || res.map(r => `${r.id} ${r.lane}`).join(', '));
   T.check('nobody in the car\'s way as it comes in (0.2 m round its body)', ok(c5), fail(c5) || `at least ${Math.min(...res.map(r => r.clr))} m clear`);
-  T.check('the camera behind the car has them all in sight as they wait', ok(c6), fail(c6) || res.map(r => r.seen).join(', '));
+  T.check('the pit stop\'s camera has them all in sight as they wait (pulled back behind the car, or swinging to its side)', ok(c6), fail(c6) || res.map(r => r.seen).join(', '));
   T.check('where they waited is where the car stopped (Core\'s Track.bayPose: within 1.5 m and 4°, as Core parks it straight)', ok(c7), fail(c7) || `at most ${Math.max(...res.map(r => r.jump))} m, ${Math.max(...res.map(r => r.dh))}°`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

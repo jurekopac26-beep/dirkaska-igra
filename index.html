@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=a0803dec">
-<link rel="stylesheet" href="css/style.css?v=ccb675aa">
+<link rel="stylesheet" href="css/style.css?v=2f050cdd">
 <link rel="stylesheet" href="css/napake.css?v=bc33da14">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=5f0f88be" media="not all">
 </head>
@@ -75,7 +75,7 @@
       <div id="h-flt" aria-label="Okvare"></div>
       <div id="h-flag" aria-label="Zastave"></div>
       <div id="h-box" aria-label="Opozorilo za postanek"><b></b><i></i><span></span></div><!-- BOKSI TA KROG: the stop due this lap, under the stack (on its side under the clock), near the way in an arrow to the pit lane's side (game.js boxHUD) -->
-      <div id="h-fight" aria-label="Boj za mesto"><b></b><span></span><em></em></div><!-- BOJ ZA MESTO out of the pits: a rival alongside or close, its name and the gap, in the place of BOKSI TA KROG (game.js pitFightHUD) -->
+      <div id="h-fight" aria-label="Boj za mesto"><b></b><span></span><em></em></div><!-- BOJ ZA MESTO out of the pits: a rival alongside or close, its name and the gap, in the place of BOKSI TA KROG; IZ BOKSOV the same way: a rival out of the pits just ahead (game.js pitFightHUD, pitOutStep) -->
       <div id="h-tower" aria-hidden="true"></div><!-- the timing tower: the order with the gaps, as on TV -->
     </div>
     <div id="h-times">
@@ -326,6 +326,7 @@
         <button class="btn" data-act="to-settings">Nastavitve</button>
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
       </div>
+      <div id="pause-info" class="pause-info off"><div class="pi-hd" role="tablist"><button type="button" class="pi-tab" role="tab" data-act="pi-tab" data-v="fc">Vreme do cilja</button><button type="button" class="pi-tab" role="tab" data-act="pi-tab" data-v="st">Postanki</button><b class="pi-big"></b></div><div class="pi-fc"></div><div class="pi-st"></div></div>
       <p id="pause-strat" class="pause-strat off"></p>
       <div class="row pit-row off" id="pit-row" title="Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)"><span class="rlbl">Gume v boksih</span><div class="seg" data-set="pitCmp"><button data-v="auto">Samodejno</button><button data-v="S">Mehke</button><button data-v="M">Srednje</button><button data-v="H">Trde</button></div></div>
     </div>
@@ -504,7 +505,7 @@
 <script src="js/tracks/bangsaen.js?v=536bb480"></script>
 <script src="js/tracks/hotham.js?v=9c00121d"></script>
 <script src="js/tracks/townsville.js?v=e049a353"></script>
-<script src="js/lang.js?v=b1451d57"></script>
+<script src="js/lang.js?v=8b7dbfd9"></script>
 <script src="js/tracks/marrakesh.js?v=3a59b91b"></script>
 <script src="js/tracks/troisrivieres.js?v=a21f01d6"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=1a6b8a1d">
@@ -585,7 +586,7 @@
 <script src="js/world-detroit.js?v=9bceb50d"></script>
 <script src="js/world-marrakesh.js?v=5b1b3225"></script>
 <script src="js/world-troisrivieres.js?v=6554f80d"></script>
-<script src="js/render.js?v=8b22fca6"></script>
+<script src="js/render.js?v=fba981f0"></script>
 <script src="js/sfx.js?v=8e3a7737"></script>
 <script src="js/input.js?v=6d628ff3"></script>
 <script src="js/comm.js?v=510ae963"></script>
@@ -598,6 +599,6 @@
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=8013acbb"></script>
 <script src="js/napake.js?v=5f3b3632"></script>
-<script src="js/game.js?v=39a0b57a"></script>
+<script src="js/game.js?v=a40723ac"></script>
 </body>
 </html>

@@ -742,9 +742,9 @@
   // has changed (in the lane, pitState, the stop done, the autopilot driving; the repair's start and length, the stops done), a few a stop
   function recPit(R) {
     const c = race.player; if (!c) return;
-    const L = R.pit, e = L[L.length - 1], inPit = !!c.inPit, st = c.pitState || null, done = !!c.pitDone, ap = !!c.pitAP;
-    if (e && e.inPit === inPit && e.st === st && e.done === done && e.ap === ap) return;
-    L.push({ t: race.time, inPit, st, done, ap, t0: race.time - (c.pitT || 0), dur: c.pitDur || 0, n: c.repairN || 0 });
+    const L = R.pit, e = L[L.length - 1], inPit = !!c.inPit, st = c.pitState || null, done = !!c.pitDone, ap = !!c.pitAP, cf = c.pitCfT != null;
+    if (e && e.inPit === inPit && e.st === st && e.done === done && e.ap === ap && e.cf === cf) return;
+    L.push({ t: race.time, inPit, st, done, ap, cf, t0: race.time - (c.pitT || 0), dur: c.pitDur || 0, n: c.repairN || 0, apT: c.pitApT, cfT: c.pitCfT, bxT: c.pitBoxT });
   }
   /* the highlights (Najboljši trenutki): the best moments noted as they happen - the overtakes (a car behind another at the last sample is
      ahead of it now, both racing close together: not in the pits, not under the safety car) and the heavy crashes - then played as a
@@ -1000,6 +1000,10 @@
     let i = L.length - 1; while (i > 0 && L[i].t > t) i--;
     const e = L[i], o = c.rpPit || (c.rpPit = {});
     o.inPit = e.inPit; o.pitState = e.st; o.pitDone = e.done; o.pitAP = e.ap; o.pitT = Core.clamp(t - e.t0, 0, e.dur); o.pitDur = e.dur; o.n = e.n;
+    // (the pit stop's camera, Render pitCine: the takeover, POTRDI and the box as the race had them, on the replay's clock)
+    let j = i; while (j > 0 && L[j - 1].ap && L[j - 1].inPit) j--;
+    o.tNow = t; o.pitApT = e.ap ? (L[j].apT != null ? L[j].apT : L[j].t) : null; o.pitCfT = e.ap && e.cf ? e.cfT : null; o.pitBoxT = null;
+    if (e.ap) for (let m = j; m < L.length && L[m].ap; m++) if (L[m].st === 'repair') { const b = L[m].bxT != null ? L[m].bxT : L[m].t0; if (t >= b) o.pitBoxT = b; break; }   // (the box: from the stop's repair entry, also a moment before it when the car braked into its box)
   }
   // every recorded car (and the safety car, where it was out) where the recording has it at time t; i: a sample near it to search from
   function rpPoseAll(t, i) {
@@ -1818,7 +1822,7 @@
     Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
     $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: ch ? ch.cond.season : S.season, tod: ch ? ch.cond.tod : S.tod }, true);   // (a challenge: its season and time of day)
-    fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; psw = { n: 0, q: null, log: [] }; pfg = { hb: -1, out: -1, c: null, t0: 0, g: 0, lead: false, e: null, key: '', log: [] }; pxs = { hb: -1, log: [] }; $('h-fight').className = ''; $('hud').classList.remove('fight'); fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
+    fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; psw = { n: 0, q: null, log: [] }; pfg = { hb: -1, out: -1, c: null, t0: 0, g: 0, lead: false, e: null, key: '', log: [] }; pout = { c: null, t0: 0, g: 0, e: null, seen: new Set(), log: [] }; pxs = { hb: -1, log: [] }; $('h-fight').className = ''; $('hud').classList.remove('fight'); fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -1918,7 +1922,7 @@
     $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
     $('pause-rp').classList.toggle('off', !rpHereOk());   // (Posnetek do sem: not online, nor before 2 s of the race are recorded)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
-    stratInfo();
+    stratInfo(); pauseInfo();
     showScreen('pause');
     adaptBreak();
   }
@@ -2680,7 +2684,7 @@
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
     if (race.pol && race.pol.ev !== polSeen) for (const e of race.pol.log) if (e.n > polSeen) { polSeen = e.n; policeEvent(e.k, P, e); }
     if (race.chr && race.chr.q.length) for (const e of race.chr.q.splice(0)) chrEvent(e.k, e.c, P);
-    if (track.def.pit && race.cars.length > 1) { aiPitHUD(P); pitSwingHUD(P); pitFightStep(P); }
+    if (track.def.pit && race.cars.length > 1) { aiPitHUD(P); pitSwingHUD(P); pitFightStep(P); pitOutStep(P); }
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
     if (track.def.pit && !race.nv && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
@@ -3117,7 +3121,7 @@
   // player drives; 'lane' = over the pit wall's line: in, the box, the stop, out, the gas and the brake by the autopilot, handed back ~1 s before
   // the way out joins the circuit (pitNear; pa.out: the player drives the rest of the lane); 'merge' (no longer after a stop, kept for a car
   // that leaves the lane before pitNear sees it) = past the way out: PIT_OUT s of race time more onto the racing line, counted down; then the player's
-  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false, go: false, b: null, d0: 0, e0: 0, k: 0, out: false };   // (go: a stop ahead at the way in: the progress bar, b its box, d0 the way to it, e0 from it to the way out, k the bar)
+  const PIT_OUT = 3, pa = { st: null, t: 0, n: 0, stop: false, go: false, b: null, d0: 0, e0: 0, k: 0, out: false, bv: 1, bi: 0 };   // (go: a stop ahead at the way in: the progress bar, b its box, d0 the way to it, e0 from it to the way out, k the bar)
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD. tyOut: P.dist
   // at the last step with a new set on and the car still in the pit lane (stepRace), where the new set's lap of warming up starts
   let wxSeen = 0, dryHint = false, tyreKey = '', tyOut = null;
@@ -3372,6 +3376,96 @@
     if (pl.from != null) t.push(pl.from === pl.to ? tr('Postanek bo v {0}. krogu.', pl.from) : tr('Okno za postanek: od {0}. do {1}. kroga.', pl.from, pl.to));
     el.textContent = t.join(' '); el.classList.remove('off');
   }
+  /* ---------------- the pause's race box under its buttons (pauseInfo): the weather to the finish (a changing weather: Race.forecast, roughly
+     as the engineer tells it) and every driver's stops (a race with pits and rivals: the timing tower's count, tw.stops, and the sets each car
+     ran, tw.sets), each on a tab of its own over the same place when there are both (piTab, the last one picked). The weather: a tall sky band
+     over the whole race with big icons (the sun, a sun with a cloud, a cloud where it changes, rain, heavy rain), the change blurred over
+     its range (± pol kroga), under it the laps with the player (TI) and where a stop for the other tyres fits (P, at the end of the lap the
+     change comes in; a race with tyres and pits, the player not on them yet) and that stop in words. Animated in CSS (.pf-*: transform and
+     opacity only, every loop a divisor of 6 s, none with prefers-reduced-motion; the text never moves): the sun's rays turn slowly, its glow
+     breathes, light clouds drift over the rain, the rain falls. The stops: the order as it stands, each car's colour, its code, its stops and
+     its sets (a chip in each compound's colour, W the rain tyres, D slicks without compounds) ---------------- */
+  let piTab = 'fc';
+  const piSeed = (s) => () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const lapsW = (n, one, two, few, many) => { const d = Math.abs(n) % 1 > 1e-6, m = Math.round(n) % 100; return d || m === 2 ? two : m === 1 ? one : m === 3 || m === 4 ? few : many; };   // (Slovenian: 1 krog, 2 / 1,5 kroga, 3-4 kroge, 5 krogov)
+  function fcBand(f, P) {
+    const N = Math.max(1, race.laps), W = 316, H = 132, x0 = 9, x1 = W - 9, LP = (x1 - x0) / N, xl = (k) => x0 + LP * clamp(k, 0, N), by = 2, bh = 80, AY = by + bh + 22;
+    const prog = clamp(Math.max(0, P.dist) / track.len, 0, N), XM = xl(prog), ch = f.k === 'rain' || f.k === 'stop';
+    const mid = ch ? prog + (f.lo + f.hi) / 2 : 0, hwL = ch ? (f.hi - f.lo) / 2 : 0, XR = ch ? xl(mid) : f.k === 'dry' ? x1 + 99 : x0 - 99, HW = ch ? Math.max(10, hwL * LP) : 0;
+    const wetAt = (x) => f.k === 'wet' || (f.k === 'rain' && x > XR) || (f.k === 'stop' && x < XR), n1 = (v) => v.toFixed(1), off = (x) => clamp((x - x0) / (x1 - x0), 0, 1).toFixed(3);
+    // the band: the dry colours on the dry side, the wet ones on the wet side, a soft change between
+    const DRY = [['#e9b43a', 0.6], ['#c9a65a', 0.45]], WET = [['#2f6fb0', 0.8], ['#1d4f8a', 0.92]], st = (o, c) => `<stop offset="${o}" stop-color="${c[0]}" stop-opacity="${c[1]}"/>`;
+    const grad = f.k === 'dry' ? st(0, DRY[0]) + st(1, DRY[1]) : f.k === 'wet' ? st(0, WET[0]) + st(1, WET[1]) : f.k === 'rain' ? st(0, DRY[0]) + st(off(XR - HW), DRY[1]) + st(off(XR + HW), WET[0]) + st(1, WET[1])
+      : st(0, WET[1]) + st(off(XR - HW), WET[0]) + st(off(XR + HW), DRY[1]) + st(1, DRY[0]);
+    // the wet side's mask (its clouds and rain): opaque on the wet side, a soft edge over the change
+    const mk = f.k === 'wet' ? `<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>` : f.k === 'rain' ? `<rect x="${n1(XR - HW)}" y="0" width="${n1(2 * HW)}" height="${H}" fill="url(#pfM)"/><rect x="${n1(XR + HW)}" y="0" width="${W}" height="${H}" fill="#fff"/>`
+      : f.k === 'stop' ? `<rect x="0" y="0" width="${n1(Math.max(0, XR - HW))}" height="${H}" fill="#fff"/><rect x="${n1(XR - HW)}" y="0" width="${n1(2 * HW)}" height="${H}" fill="url(#pfN)"/>` : '';
+    const defs = `<linearGradient id="pfS" x1="${x0}" y1="0" x2="${x1}" y2="0" gradientUnits="userSpaceOnUse">${grad}</linearGradient>
+      <radialGradient id="pfG" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe08a" stop-opacity=".8"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="pfM" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
+      <linearGradient id="pfN" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="pfW" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <mask id="pfK" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">${mk}</mask><clipPath id="pfC"><rect x="${x0}" y="${by}" width="${x1 - x0}" height="${bh}" rx="12"/></clipPath>`;
+    // the icons over the laps' middles (at most six), the cloud over the change; the sun's rays turn, its glow breathes
+    const CL = 'M6 18h12a4 4 0 0 0 0-8 5.6 5.6 0 0 0-10.7 1.5A3.3 3.3 0 0 0 6 18z', cloud = (x, y, s, fill, op) => `<path transform="translate(${n1(x - s / 2)} ${n1(y - s / 2)}) scale(${(s / 24).toFixed(3)})" d="${CL}" fill="${fill}" opacity="${op}"/>`;
+    const sunD = (x, y, r) => `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r * 0.46)}" fill="#ffc629"/>`, rays = (x, y, r) => `<g class="pf-rot pf-fb" stroke="#ffc629" stroke-width="${n1(r * 0.17)}" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => { const q = a * Math.PI / 180; return `<line x1="${n1(x + Math.cos(q) * r * 0.66)}" y1="${n1(y + Math.sin(q) * r * 0.66)}" x2="${n1(x + Math.cos(q) * r * 0.95)}" y2="${n1(y + Math.sin(q) * r * 0.95)}"/>`; }).join('')}</g>`;
+    const drops = (x, y, n, heavy) => Array.from({ length: n }, (_, j) => { const dx = x - 8 + j * (16 / Math.max(1, n - 1)), y0 = y + 7 + (j % 2) * 3; return `<line x1="${n1(dx)}" y1="${n1(y0)}" x2="${n1(dx - 2)}" y2="${n1(y0 + 5)}" stroke="#7fc3ff" stroke-width="${heavy ? 2.2 : 1.8}" stroke-linecap="round"/>`; }).join('');
+    const icon = { sun: (x, y) => rays(x, y, 20) + sunD(x, y, 20), part: (x, y) => rays(x - 6, y - 6, 13) + sunD(x - 6, y - 6, 13) + cloud(x + 3, y + 3, 30, '#eef3f8', 1),
+      cloud: (x, y) => cloud(x, y, 32, '#dfe6ee', 0.95), rain: (x, y) => cloud(x, y - 3, 32, '#d4dde8', 1) + drops(x, y + 2, 3, false), heavy: (x, y) => cloud(x, y - 3, 34, '#8796a8', 1) + drops(x, y + 2, 4, true) };
+    const nI = Math.min(N, 6), ic = [];
+    for (let j = 0; j < nI; j++) { const k = nI === N ? j + 0.5 : (j + 0.5) * N / nI, x = xl(k); if (ch && Math.abs(x - XR) < 22) continue; const d = ch ? Math.abs(x - XR) / LP : 9, wet = wetAt(x); ic.push([x, wet ? (d < 1 || f.k === 'wet' ? 'rain' : 'heavy') : (d < 1 ? 'part' : 'sun')]); }
+    if (ch && XR > x0 + 14 && XR < x1 - 14) ic.push([XR, 'cloud']);
+    const g0 = ic.find(e => e[1] === 'sun') || ic.find(e => e[1] === 'part');
+    const glow = g0 ? `<g class="pf-glow pf-fb"><circle cx="${n1(g0[0])}" cy="${by + 30}" r="44" fill="url(#pfG)"/></g>` : '';
+    // the wet side's weather: light clouds drifting left (a layer repeating every 120 px, drift 120 px in 6 s) and the rain falling (drawn
+    // twice 40 px apart, a fall of 40 px each 0.75 s), thicker away from the change
+    let wetFx = '';
+    if (f.k !== 'dry') {
+      const wa = f.k === 'stop' ? x0 : Math.max(x0, XR - HW), wb = f.k === 'stop' ? Math.min(x1, XR + HW) : x1, R = piSeed(11); let cl = '', rn = '';
+      for (let r = 0; r < 4; r++) for (const [dx, y, s, op] of [[10, by + 14, 46, 0.3], [70, by + 26, 38, 0.24]]) cl += cloud(wa - 10 + r * 120 + dx, y, s, '#dfe7f0', op);
+      for (let j = 0; j < 130; j++) { const x = wa + R() * (wb - wa), t = f.k === 'stop' ? (wb - x) / Math.max(1, wb - wa) : (x - wa) / Math.max(1, wb - wa); if (R() > 0.3 + 0.7 * (f.k === 'wet' ? 1 : t)) continue;
+        const y = by + 40 + R() * 40, l = 7 + R() * 7, o = (0.35 + R() * 0.5).toFixed(2); for (const dy of [0, -40]) rn += `<line x1="${n1(x)}" y1="${n1(y + dy)}" x2="${n1(x - l * 0.32)}" y2="${n1(y + dy + l)}" stroke="rgba(170,215,255,${o})" stroke-width="1.4" stroke-linecap="round"/>`; }
+      wetFx = `<g mask="url(#pfK)"><g class="pf-drift">${cl}</g><g class="pf-fall">${rn}</g></g>`;
+    }
+    const pillT = !ch ? '' : hwL === 0.5 ? tr('± pol kroga') : tr(lapsW(hwL, '± {0} krog', '± {0} kroga', '± {0} kroge', '± {0} krogov'), Lang.dec(String(hwL))), PX = clamp(XR, x0 + 42, x1 - 42);
+    const pill = ch ? `<rect x="${n1(PX - 40)}" y="${by + bh - 21}" width="80" height="17" rx="8.5" fill="rgba(10,14,20,.72)"/><text x="${n1(PX)}" y="${by + bh - 8.5}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">${pillT}</text>` : '';
+    // the stop for the other tyres: at the end of the lap the change comes in (not past the finish), on a track with pits in a race with tyres
+    const need = ch && track.def.pit && race.wst && race.wst.tyres && P.ty && (f.k === 'rain' ? P.ty.k !== 'wet' : P.ty.k !== 'dry'), B = need ? Math.max(Math.ceil(prog + 1e-6), Math.round(mid)) : 0, XP = need && B < N ? xl(B) : null;
+    // the laps: the line, the part done, a tick at each lap's end, the laps' names (the one under way gold), TI and P
+    const cur = Math.min(N - 1, Math.floor(prog)), every = N <= 12 ? 1 : Math.ceil(N / 8);
+    let ax = `<line x1="${x0}" y1="${AY}" x2="${x1}" y2="${AY}" stroke="rgba(255,255,255,.25)" stroke-width="3" stroke-linecap="round"/><line x1="${x0}" y1="${AY}" x2="${n1(XM)}" y2="${AY}" stroke="#ffc629" stroke-width="3" stroke-linecap="round"/>`;
+    if (N <= 40) for (let k = 0; k <= N; k++) ax += `<line x1="${n1(xl(k))}" y1="${AY - 5}" x2="${n1(xl(k))}" y2="${AY + 5}" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>`;
+    for (let k = 0; k < N; k++) if (k % every === 0 || k === cur) ax += `<text x="${n1(xl(k + 0.5))}" y="${H - 4}" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="${k === cur ? '#ffc629' : '#9fb0c3'}">${N <= 4 ? tr('{0}. krog', k + 1) : k + 1}</text>`;
+    if (XP != null) ax += `<g transform="translate(${n1(XP)} ${AY})"><rect x="-11" y="-11" width="22" height="22" rx="5" fill="#2f6fe0" stroke="#fff" stroke-width="1.6"/><text x="0" y="5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">P</text></g>`;
+    ax += `<circle cx="${n1(XM)}" cy="${AY}" r="6.5" fill="#e63b2e" stroke="#fff" stroke-width="2"/><text x="${n1(XM)}" y="${AY - 11}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">${tr('TI')}</text>`;
+    const svg = `<svg class="pf-tl" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>${defs}</defs><rect x="${x0}" y="${by}" width="${x1 - x0}" height="${bh}" rx="12" fill="url(#pfS)"/>
+      <g clip-path="url(#pfC)">${glow}${wetFx}${ch ? `<rect x="${n1(XR - HW)}" y="${by}" width="${n1(2 * HW)}" height="${bh}" fill="url(#pfW)"/>` : ''}</g>
+      ${ic.map(([x, k]) => icon[k](x, k === 'cloud' ? by + 24 : by + 28)).join('')}${pill}${ax}</svg>`;
+    const lap = (n) => `<b>${tr('{0}. kroga', n)}</b>`, tip = XP != null ? `<p class="pf-tip"><i>P</i><span>${tr(f.k === 'rain' ? 'Gume za dež: v boks na koncu {0}.' : 'Gume za suho: v boks na koncu {0}.', lap(B))}</span></p>` : '';
+    const m = ch ? (f.lo + f.hi) / 2 : 0, big = f.k === 'dry' ? tr('Suho do cilja') : f.k === 'wet' ? tr('Dež do cilja') : f.hi <= 1 ? tr(f.k === 'rain' ? 'Dež v manj kot krogu' : 'Suho v manj kot krogu')
+      : tr(f.k === 'rain' ? lapsW(m, 'Dež čez ~{0} krog', 'Dež čez ~{0} kroga', 'Dež čez ~{0} kroge', 'Dež čez ~{0} krogov') : lapsW(m, 'Suho čez ~{0} krog', 'Suho čez ~{0} kroga', 'Suho čez ~{0} kroge', 'Suho čez ~{0} krogov'), Lang.dec(String(m)));
+    return { big, html: svg + tip, k: f.k, B: XP != null ? B : null, XR, XM, XP };
+  }
+  function stopsList() {   // every driver in the order as it stands: the place, the colour, the code, the stops, the sets run
+    const o = race.order && race.order.length ? race.order : race.cars;
+    return '<ol class="ps-l">' + o.map((c, i) => { const n = tw.stops.get(c) || 0, s = tw.sets.get(c), h = s ? s.h : [];
+      const sets = h.slice(-4).map(k => `<b class="tset t${k}">${k}</b>`).join('') + (h.length > 4 ? '<small>+' + (h.length - 4) + '</small>' : '');
+      return `<li class="${c === race.player ? 'me' : ''}${c.inPit ? ' pit' : ''}"><b>${i + 1}</b><i style="background:${hexCss(c.color)}"></i><span>${esc(twCode(c))}</span><em>${n}</em><u>${sets}</u></li>`; }).join('') + '</ol>';
+  }
+  function pauseInfo() {
+    const el = $('pause-info'), P = race && race.player, on = !!P && phase === 'racing' && !P.finished && !track.open;
+    const f = on ? race.forecast(P) : null, sp = on && !!tw && !!track.def.pit && !(mp && mp.race);
+    if (!f && !sp) { el.classList.add('off'); el.className = 'pause-info off'; $('s-pause').classList.remove('pi'); piInfo = null; return; }
+    if (piTab === 'fc' && !f) piTab = 'st'; else if (piTab === 'st' && !sp) piTab = 'fc';
+    const b = f ? fcBand(f, P) : null, tabs = el.querySelectorAll('.pi-tab');
+    tabs[0].classList.toggle('off', !f); tabs[1].classList.toggle('off', !sp);
+    tabs.forEach(t => { const a = t.dataset.v === piTab; t.classList.toggle('on', a); t.setAttribute('aria-selected', a ? 'true' : 'false'); });
+    el.querySelector('.pi-big').textContent = piTab === 'fc' && b ? b.big : '';
+    el.querySelector('.pi-fc').innerHTML = b ? b.html : ''; el.querySelector('.pi-st').innerHTML = sp ? stopsList() : '';
+    el.className = 'pause-info ' + piTab + (f && sp ? ' two' : ''); $('s-pause').classList.add('pi');
+    piInfo = { tab: piTab, fc: b && { k: b.k, big: b.big, B: b.B, XR: b.XR, XM: b.XM, XP: b.XP }, st: sp };
+  }
+  let piInfo = null;
   // an endurance race: the time of day with the leader's progress, from the afternoon (0) to the night (1, at about nine tenths of the race):
   // the light blended, the lamps coming on; the evening and the night told
   let enduK = 0;
@@ -3495,12 +3589,44 @@
     F.c = best; F.t0 = race.time; F.g = bg; F.lead = false;
     F.e = { n: best.name, hb: F.hb, out: F.out, t0: race.time, g0: +bg.toFixed(2), end: '', t1: null, g1: null, txt: [] }; F.log.push(F.e); if (F.log.length > 20) F.log.shift();
   }
-  function pitFightHUD() {   // (each frame: the pill when its words change)
-    const F = pfg, o = F.c, txt = o ? fightTxt(F.g) : '', key = o ? o.id + '|' + txt + '|' + Lang.cur : '';
-    if (key === F.key) return; F.key = key;
-    const el = $('h-fight'); el.className = !o ? '' : 'on' + (txt[0] === '+' ? ' behind' : txt[0] === '\u2212' ? ' ahead' : ''); $('hud').classList.toggle('fight', !!o);
+  // a rival out of the pits just ahead (IZ BOKSOV): a rival on its way out after its stop (done, in the lane, POUT.lane m or less from the
+  // lane's end) that joins the circuit ahead of the player, POUT.near s or less before the player is there (both at their speeds now; the
+  // player on the circuit before the way out, POUT.look s or less from it, driving it himself): the pill of BOJ ZA MESTO in its place, with
+  // IZ BOKSOV, the pit icon, the driver's name and the gap (−1,2 s: ahead, orange; at the merge as it will be, then as it is). Gone once the
+  // rival has joined and the gap opens past POUT.open s, once the player is past it, after POUT.dur s, or the player or the rival out of the
+  // race, over the line or in the lane; once a stop. Not over a fight out of the player's own stop (BOJ ZA MESTO first). log: each one, how
+  // it began and ended (the tests read it)
+  const POUT = { lane: 150, near: 2, look: 6, open: 2.5, dur: 6 };
+  let pout = { c: null, t0: 0, g: 0, e: null, seen: new Set(), log: [] };
+  const wrapL = (d) => { const L = track.len; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };
+  function pitOutStep(P) {
+    const F = pout, T = track, D = T.def.pit, sE = T.startS + D[2], on = phase === 'racing' && !P.finished && !P.inPit && !P.pitG && !pa.st && !pfg.c;
+    for (const o of F.seen) if (!o.inPit) F.seen.delete(o);   // (out of the lane: a next stop may be told again)
+    if (F.c) {
+      const o = F.c, dd = wrapL(o.q.s - P.q.s), side = (P.m.len + o.m.len) / 2 + 2, g = o.inPit ? F.g : -dd / Math.max(12, P.speed, o.speed);
+      if (o.inPit) { const tR = wrapL(sE - o.q.s) / Math.max(8, o.speed), tP = wrapL(sE - P.q.s) / Math.max(10, P.speed); if (tP > 0) F.g = -(tP - tR); } else F.g = g;
+      const end = !on || o.finished || race.isOut(o) ? 'out' : dd < -side ? 'pass' : !o.inPit && Math.abs(F.g) > POUT.open ? 'gap' : race.time - F.t0 > POUT.dur ? 'time' : '';
+      if (end) { F.e.end = end; F.e.t1 = race.time; F.e.g1 = +F.g.toFixed(2); F.c = null; }
+      return;
+    }
+    if (!on) return;
+    const dP = wrapL(sE - P.q.s), tP = dP / Math.max(10, P.speed); if (dP <= 0 || tP > POUT.look) return;
+    let best = null, bg = 0;
+    for (const o of race.cars) {
+      if (o === P || o.net || !o.inPit || !o.pitDone || o.finished || F.seen.has(o)) continue;
+      const dR = wrapL(sE - o.q.s); if (dR < 0 || dR > POUT.lane) continue;
+      const tR = dR / Math.max(8, o.speed), gap = tP - tR; if (gap > 0 && gap <= POUT.near && (!best || gap < bg)) { best = o; bg = gap; }   // (it joins first, just ahead)
+    }
+    if (!best) return;
+    F.seen.add(best); F.c = best; F.t0 = race.time; F.g = -bg;
+    F.e = { n: best.name, t0: race.time, g0: +F.g.toFixed(2), d0: +dP.toFixed(1), end: '', t1: null, g1: null, txt: [] }; F.log.push(F.e); if (F.log.length > 20) F.log.shift();
+  }
+  function pitFightHUD() {   // (each frame: the pill when its words change; BOJ ZA MESTO, else IZ BOKSOV)
+    const F = pfg.c ? pfg : pout.c ? pout : null, o = F && F.c, ob = F === pout, txt = o ? fightTxt(F.g) : '', key = o ? (ob ? 'o' : 'f') + o.id + '|' + txt + '|' + Lang.cur : '';
+    if (key === pfg.key) return; pfg.key = key;
+    const el = $('h-fight'); el.className = !o ? '' : 'on' + (ob ? ' out' : '') + (txt[0] === '+' ? ' behind' : txt[0] === '\u2212' ? ' ahead' : ''); $('hud').classList.toggle('fight', !!o);
     if (!o) return;
-    el.children[0].textContent = tr('BOJ ZA MESTO'); el.children[1].textContent = String(o.name).toUpperCase(); el.children[2].textContent = txt;
+    el.children[0].textContent = tr(ob ? 'IZ BOKSOV' : 'BOJ ZA MESTO'); el.children[1].textContent = String(o.name).toUpperCase(); el.children[2].textContent = txt;
     if (F.e && F.e.txt.length < 60) F.e.txt.push(txt);
   }
   // a perfect exit out of the pits (POPOLN IZHOD!): the hand-back (VOZIŠ TI!, pitFree) starts the reaction's clock; the gas pressed (past
@@ -3579,7 +3705,7 @@
       hap(stop ? 'pitAP' : 'pitLine'); if (P.speed > Core.PIT_V) hap('pitLimit');   // (came in faster than the lane's limit: the limiter's after it)
     }
     else if (e === 'box') { hap('pitBox'); hz.pos = race.player.pos || 0; }   // (braking into the box: the places from here on, pitHap)
-    else if (e === 'repair') { const P = race.player; pitWrenchT = 0.15; hap('pitStop'); pitFix = P.dmg > 0.01 && !(P.pitPlan && P.pitPlan.fix === 'none'); cst.f0 = P.fuel; cst.keep = Core.keepTyres(P, P.pitPlan); if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }   // (what the stop does: the player's own choice, stopOpen)
+    else if (e === 'repair') { const P = race.player; if (P.pitBoxT == null) P.pitBoxT = race.time; pitWrenchT = 0.15; hap('pitStop'); pitFix = P.dmg > 0.01 && !(P.pitPlan && P.pitPlan.fix === 'none'); cst.f0 = P.fuel; cst.keep = Core.keepTyres(P, P.pitPlan); if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }   // (what the stop does: the player's own choice, stopOpen)
     else if (e === 'done') { if (pa.st === 'lane') pa.stop = true; const P = race.player, ty = P.ty && !cst.keep ? P.ty : null, ev = P.m.ev, fu = P.fuel != null && race.fuelRate && P.fuel > cst.f0 + 1e-6, pc = fu ? Math.round(P.fuel * 100) : 0;   // (an electric car: its battery charged; the tank filled up to less than full: how far)
       const fw = !fu ? '' : pc >= 100 ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') : tr(ev ? 'NAPOLNJENO DO {0} %' : 'DOLITO DO {0} %', pc);
       showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fw ? fw + (pitFix ? tr(' · POPRAVLJENO') : '') : pitFix ? tr('POPRAVLJENO!') : tr('POSTANEK OPRAVLJEN')) + (ty && fw ? ' · ' + fw : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); hap(fu ? (ev ? 'goCharge' : 'goFuel') : 'go'); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); }
@@ -3591,7 +3717,7 @@
     if (pa.st === 'merge') { if (pa.t > 1e-6) return 'merge'; pitFree(P, true); return null; }   // (the countdown run out: the player's inputs from this step)
     if (P.inPit) {
       if (pa.out) return null;   // (handed back on the way out: the player drives the rest of it)
-      if (!pa.st) { const b = race._boxD(P), x = b != null ? race.track.boxX(P.q.s, b) : 0; pa.st = 'lane'; pa.stop = false; pa.b = b; pa.go = b != null && x < 0; pa.d0 = -x; pa.e0 = 0; pa.k = 0; if (pa.go) stopOpen(P); }   // (a stop ahead: the custom stop's panel)
+      if (!pa.st) { const b = race._boxD(P), x = b != null ? race.track.boxX(P.q.s, b) : 0; pa.st = 'lane'; pa.stop = false; pa.b = b; pa.go = b != null && x < 0; pa.d0 = -x; pa.e0 = 0; pa.k = 0; P.pitApT = race.time; P.pitCfT = P.pitBoxT = null; if (pa.go) stopOpen(P); }   // (a stop ahead: the custom stop's panel; the pit stop's camera from here: Render pitCine, its times pitApT, pitCfT, pitBoxT)
       if (pa.st === 'lane' && pa.stop && !race.player.finished && pitNear(P)) { pitFree(P, true); pa.out = true; return null; }   // (~1 s before the circuit: the player's wheel and gas, the film camera back behind the car)
       return 'lane';
     }
@@ -3622,7 +3748,7 @@
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; teamRadioGo(); pitFightOpen(); pitExitOpen(); }   // (a fight for a place from here: pitFightStep; the reaction's clock for a perfect exit: pitExitStep)
     $('h-pit').classList.remove('on'); $('touch').classList.remove('ap'); toastOff('pit'); tipFree();   // (the toast of the way in or a hint, if it still waits or shows: not once the player drives)
-    pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false; stopClose(P);
+    pa.st = null; pa.t = 0; pa.n = 0; pa.stop = false; pa.go = false; stopClose(P); if (P) P.pitApT = P.pitCfT = P.pitBoxT = null;
     if (P && P.pitAP) { P.pitAP = false; P.pitWant = false; P.noReverse = false; }   // (only what the autopilot set: a pitWant from autoDrive or a test stays)
   }
   function pitCount(dt) {   // the countdown on race time: a number at each whole second (in the progress bar's label)
@@ -3635,9 +3761,21 @@
   // when the estimate drops) and one bar from there (0) to the hand-back (1), never back; Prevzameš čez 3, 2, 1 from 95 % (a countdown past
   // the way out, 'merge'). Only a stop: not over the line at the way out alone
   const PB_M = 0.95;
+  // the driving buttons (ZAVORA, PLIN, the arrows, the wheel) on a stop: faded out over PB_BTN.out s from the takeover (the autopilot drives),
+  // back in from ~2 s to ~0.5 s before the hand-back (VOZIŠ TI!; by the estimate of the time to it, cst.he, which runs ~0.2 s long on the
+  // way out: PB_BTN.in0 to PB_BTN.in1 of it; never back down once coming in), the pause button as ever. Only their opacity (#touch's --apv),
+  // on race time: still in a pause
+  const PB_BTN = { out: 1, in0: 2.2, in1: 0.75 }, PB_BOX = 11;   // (PB_BOX: m before its box, the car braking into it, ~1.3 s before it stands)
+  function pitBtnVis(P) {
+    if (!(pa.st === 'lane' && pa.go)) { pa.bi = 0; return 1; }
+    const o = P.pitApT != null ? clamp(1 - (race.time - P.pitApT) / PB_BTN.out, 0, 1) : 0;
+    if (cst.ok && cst.h0 > 0) pa.bi = Math.max(pa.bi, clamp((PB_BTN.in0 - cst.he) / (PB_BTN.in0 - PB_BTN.in1), 0, 1));
+    return Math.max(o, pa.bi);
+  }
   function pitBar(P) {
     const el = $('h-pit'); let k = -1, lbl = '';
     if (pa.st === 'lane' && pa.go && pa.b != null) {
+      if (P.pitBoxT == null && !P.pitDone && P.pitState && race.track.boxX(P.q.s, pa.b) > -PB_BOX) P.pitBoxT = race.time;   // (the car brakes into its box: the pit stop's camera to its side unless POTRDI did it, Render pitCine)
       if (cst.on) stopStep(P);
       if (cst.ok) {
         if (--cst.n <= 0) { cst.n = 12; const e = race.pitETA(P); if (e) cst.he = e.box + (P.pitDone ? 0 : P.pitState === 'repair' ? Math.max(0, P.pitDur - P.pitT) : Core.stopDur(P, race, P.pitPlan)) + e.out; } else cst.he -= STEP;
@@ -3647,6 +3785,7 @@
       }
     } else if (pa.st === 'merge') { k = PB_M + (1 - PB_M) * clamp(1 - pa.t / PIT_OUT, 0, 1); lbl = tr('Prevzameš čez {0}', pa.n || 1); }
     const tch = $('touch'), ap = k >= 0 || cst.on; if (tch.classList.contains('ap') !== ap) tch.classList.toggle('ap', ap);   // (#touch.ap: no tilt meter while the autopilot steers, css)
+    { const v = pitBtnVis(P); if (v !== pa.bv) { pa.bv = v; if (v >= 1) tch.style.removeProperty('--apv'); else tch.style.setProperty('--apv', v.toFixed(3)); } }   // (the driving buttons: css #touch .tb, #c-wheel)
     if (k < 0) { if (el.classList.contains('on')) el.classList.remove('on'); return; }
     pa.k = Math.max(pa.k, k);
     const w = (pa.k * 100).toFixed(1) + '%', bar = el.lastElementChild.firstElementChild, ttl = tr('AVTOPILOT · spusti plin');
@@ -3665,7 +3804,7 @@
      the time left to choose (Race.pitETA: to the box). POTRDI: the choice is the car's plan (Core c.pitPlan); not chosen when the car
      stands at its box: the defaults (stopDef), whatever was tapped meanwhile. Then the bar under the map (pitBar) counts down to the
      hand-back. Touch, mouse, the keys (up and down the rows, left and right or 1-5 in a row, Enter) and the
-     pad (the d-pad, A). The film camera (Render.pitPace) at a third of its pace while the panel shows, catching up after POTRDI.
+     pad (the d-pad, A). The pit stop's camera (Render pitCine) pulls back while the panel shows and swings to the car's side on POTRDI.
      cst.rows: the rows shown; sel: the choice, def: the defaults, plan: what the stop was given; tl: the seconds to the box shown, of tl0;
      te / he: the estimates (every 12 steps), h: the seconds to the hand-back shown, of h0; foc: the row the keys work on (kb: keys used);
      f0, keep: the fuel before the stop, the tyres left on (the done message); fc: the forecast at the way in (Race.forecast) ---------------- */
@@ -3696,7 +3835,7 @@
     h += `<div class="sp-foot"><div class="sp-tot"><small>${tr('Postanek')}</small><b></b><span>${tr('★ privzeto · delajo hkrati')}</span></div><button type="button" tabindex="-1" class="sp-ok">${tr('POTRDI')}</button></div>`;
     el.innerHTML = h; el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); cst.on = true;
     const e = race.pitETA(P); cst.te = cst.tl = cst.tl0 = Math.max(0.5, e ? e.box : 8);
-    Render.pitPace(1 / 3); stopDraw(P); stopBar();
+    stopDraw(P); stopBar();
   }
   function stopDraw(P) {   // the choice, the defaults' stars, each button's seconds (or what stays: the fuel in the tank, the damage), each row's and the stop's
     const el = $('h-stop'), sel = cst.sel, sec = (x) => (x > 0.005 ? Lang.dec(x.toFixed(1)) : '0') + '\u00a0s';
@@ -3724,12 +3863,11 @@
   function stopPick(r, v) { if (!cst.on || !cst.rows.includes(r)) return; cst.sel[r] = v; Sfx.click(); stopDraw(race.player); }
   function stopOk() { if (!cst.on) return; Sfx.click(); vibrate(20); stopDecide(race.player, true); }
   function stopDecide(P, ok) {   // POTRDI (ok: the choice) or the car at its box (the defaults): the panel gone, the bar to the hand-back (pitBar)
-    if (ok) P.pitPlan = Object.assign({}, cst.sel);
+    if (ok) { P.pitPlan = Object.assign({}, cst.sel); P.pitCfT = race.time; }   // (POTRDI: the pit stop's camera swings to the car's side, Render pitCine; else it does at the box)
     cst.plan = P.pitPlan ? Object.assign({}, P.pitPlan) : null; cst.on = false; cst.ok = true; cst.n = 0; cst.h0 = 0; pa.k = 0;
     const el = $('h-stop'); el.classList.remove('on'); el.setAttribute('aria-hidden', 'true');
-    Render.pitPace(ok ? 1.6 : 1, ok ? 2.5 : 0);   // (POTRDI: a little quicker for a while, so the film camera catches up)
   }
-  function stopClose(P) { if (cst.on || cst.ok) { cst.on = cst.ok = false; const el = $('h-stop'); el.classList.remove('on'); el.setAttribute('aria-hidden', 'true'); Render.pitPace(1); } if (P && P.pitPlan) P.pitPlan = null; }   // (pitFree: out of the lane, rescued, the race over)
+  function stopClose(P) { if (cst.on || cst.ok) { cst.on = cst.ok = false; const el = $('h-stop'); el.classList.remove('on'); el.setAttribute('aria-hidden', 'true'); } if (P && P.pitPlan) P.pitPlan = null; }   // (pitFree: out of the lane, rescued, the race over)
   // the keys and the pad on the panel: up and down a row (round), left and right in it, a choice by its number, Enter / A: POTRDI
   function stopNav(k, n) {
     if (!cst.on || screen !== 'none' || paused || replay) return false;
@@ -4435,7 +4573,7 @@
   const TW_M = 25;
   let tw = null;
   function twStart() {
-    tw = !race.timeTrial && !race.quali && !race.pol && race.cars.length > 1 ? { t: new Map(), n: new Map(), pit: new Map(), stops: new Map(), html: '', at: 0, max: Infinity } : null;
+    tw = !race.timeTrial && !race.quali && !race.pol && race.cars.length > 1 ? { t: new Map(), n: new Map(), pit: new Map(), stops: new Map(), sets: new Map(), html: '', at: 0, max: Infinity } : null;
     $('hud').classList.toggle('tw', !!tw && !!S.tower); $('h-tower').innerHTML = ''; $('h-tower').classList.toggle('n3', race.cars.length >= 100);   // (a field of 100: the places' column wide enough for three digits)
   }
   function twMark() {
@@ -4449,6 +4587,7 @@
       while (n <= k) a[n++] = race.time;
       tw.n.set(c, n);
       const p = !!c.inPit; if (p && !tw.pit.get(c)) tw.stops.set(c, (tw.stops.get(c) || 0) + 1); tw.pit.set(c, p);
+      if (c.ty) { const k = c.ty.k === 'wet' ? 'W' : c.ty.c || 'D', e = tw.sets.get(c); if (!e) tw.sets.set(c, { n: c.ty.n, h: [k] }); else if (e.n !== c.ty.n) { e.n = c.ty.n; e.h.push(k); } }   // (the sets each car ran: the pause's stops, pauseInfo)
     }
   }
   function twGap(c, L) {   // seconds behind the leader L at the last mark c passed (null: none yet)
@@ -5483,7 +5622,7 @@
       case 'net-ch-del': chDel(+(el && el.dataset.i)); break;
       case 'net-ch-new': chNew(); break;
       case 'to-settings': settingsReturn = screen; showScreen('settings'); refreshSegs(); break;
-      case 'settings-done': showScreen(settingsReturn === 'settings' ? 'title' : settingsReturn); if (settingsReturn === 'car') buildCarScreen(); break;
+      case 'settings-done': showScreen(settingsReturn === 'settings' ? 'title' : settingsReturn); if (settingsReturn === 'car') buildCarScreen(); if (settingsReturn === 'pause' && race) { stratInfo(); pauseInfo(); } break;   // (back in the pause: its texts in the language chosen)
       case 'to-ctrl': ctlTab = Input.padList().length ? 'pad' : 'keys'; ctlWait = null; showScreen('ctrl'); ctlBuild(); break;
       case 'ctrl-tab': ctlTab = el.dataset.v === 'pad' ? 'pad' : 'keys'; ctlWait = null; Input.captureKey(null); ctlBuild(); break;
       case 'ctrl-done': ctlWait = null; Input.captureKey(null); showScreen('settings'); refreshSegs(); break;
@@ -5563,6 +5702,7 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
+      case 'pi-tab': if (el && el.dataset.v && el.dataset.v !== piTab) { piTab = el.dataset.v; Sfx.click(); pauseInfo(); } break;   // (the pause's race box: the weather or the stops)
       case 'over-again': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else newRace(); break;   // (KONEC IGRE: the same race again, a championship's round too)
       case 'over-res': finishRace(); break;
       case 'restart': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)
@@ -5849,7 +5989,7 @@
       quickGo();   // (opened with a quick entry's address: straight on a race)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0 }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pauseInfo() { return piInfo && JSON.parse(JSON.stringify(piInfo)); }, get stopsLog() { return tw && race ? race.cars.map(c => ({ name: c.name, me: c === race.player, n: tw.stops.get(c) || 0, sets: (tw.sets.get(c) || { h: [] }).h.slice() })) : null; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0, he: cst.he }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
         get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, get recFlags() { return recd ? recd.flags.map(f => Object.assign({}, f)) : null; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
@@ -5857,7 +5997,7 @@
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             quick: !!mp.quick, locked: Net.locked, setup: mp.setup && { grid: mp.setup.grid.slice() },
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: recd.pit.map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,

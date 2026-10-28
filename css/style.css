@@ -377,6 +377,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #touch.m-wheel #c-wheel { display: block; }
 #touch.m-tilt #tilt-ind { display: flex; }
 #touch.ap #tilt-ind { display: none; }   /* (the pit stop on the autopilot, game.js pitBar: it steers, the phone's tilt is not used; the column under the map has the room) */
+#touch .tb, #touch #c-wheel { opacity: var(--apv, 1); }   /* (a pit stop: the driving buttons faded out while the autopilot drives, back in just before the hand-back: game.js pitBtnVis) */
 #touch.m-tilt #c-brake { right: auto; left: calc(14px + var(--sl)); }
 @media (orientation: landscape) { #touch.m-tilt #c-brake { height: clamp(80px, 29vh, 132px); } }   /* (tilting, on its side: the brake on the left under the column of the place, the speed and the tyres, as low as before; the whole left half brakes anyway) */
 #btn-pause { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(8px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
@@ -965,6 +966,7 @@ select.txt:disabled { opacity: .75; }
 #h-fight em { margin-left: .45em; font-style: normal; font-variant-numeric: tabular-nums; }
 #h-fight.behind em { color: #9fe07a; }
 #h-fight.ahead em { color: #ffb86a; }
+#h-fight.out b::before { background-image: var(--ic-pit); }   /* (IZ BOKSOV: a rival out of the pits just ahead, game.js pitOutStep: the pit icon) */
 @media (orientation: landscape) {   /* (on its side the stack at the left reaches down to the steering: under the clock instead, the split's line kept free, over the road far ahead) */
   #h-fight { position: fixed; left: 50%; top: calc(var(--st) + 13px + clamp(17px, 5.4vh, 28px) + clamp(10px, 2.9vh, 14px) + 1.2 * clamp(11px, 3vh, 15px)); margin: 0; transform: translateX(-50%); font-size: clamp(10px, 3vh, 14px); }
   #h-box { position: fixed; left: 50%; top: calc(var(--st) + 13px + clamp(17px, 5.4vh, 28px) + clamp(10px, 2.9vh, 14px) + 1.2 * clamp(11px, 3vh, 15px)); margin: 0; transform: translateX(-50%); font-size: clamp(10px, 3vh, 14px); }
@@ -1000,6 +1002,70 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .on-ch-tracks .btn.mini { padding: 0 7px; min-height: 0; line-height: 1.5; margin-left: 6px; }
 .ch-tab td small { opacity: .8; }
 .pause-strat { margin: 12px 2px 0; font: 600 13px/1.4 var(--f-ui); color: var(--chalk); opacity: .9; }   /* the strategy as it stands (fuel, tyres, a stop now) */
+/* the pause's race box (game.js pauseInfo): the weather to the finish and every driver's stops, on two tabs over one place. With it the
+   pause's buttons 40 px tall; upright on a short phone the six in the middle two to a row; on its side the panel wide, the buttons left and
+   the box, the strategy and Gume v boksih right */
+.pause-info { margin: 12px 0 0; padding: 7px 9px 8px; border-radius: 12px; background: rgba(8, 11, 16, .58); border: 1px solid rgba(255, 255, 255, .1); }
+.pause-info.off { display: none; }
+.pi-hd { display: flex; align-items: center; gap: 12px; min-width: 0; margin-bottom: 3px; }
+.pi-tab { flex: none; margin: 0; padding: 6px 0 5px; border: 0; background: none; font: 700 11px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: #9fb0c3; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pi-tab.off { display: none; }
+.pause-info:not(.two) .pi-tab { pointer-events: none; cursor: default; }
+.pause-info.two .pi-tab { min-height: 28px; }
+.pause-info.two .pi-tab.on { color: #fff; box-shadow: inset 0 -2px #ffc629; }
+.pi-tab:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.pi-big { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 italic 17px/1.1 var(--f-ui); color: #ffc629; }
+.pause-info.two .pi-hd { flex-wrap: wrap; row-gap: 1px; }
+.pause-info.two .pi-big { flex-basis: 100%; margin-left: 0; font-size: 16px; }   /* (two tabs: the forecast's words under them) */
+.pause-info.st .pi-big { display: none; }
+.pause-info.fc .pi-st, .pause-info.st .pi-fc { display: none; }
+.pf-tl { display: block; width: 100%; height: auto; font-family: var(--f-ui); }
+.pf-tip { display: flex; align-items: center; gap: 6px; margin: 3px 0 0; font: 600 12.5px/1.25 var(--f-ui); color: var(--chalk); }
+.pf-tip i { flex: none; width: 16px; height: 16px; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 4px; background: #2f6fe0; color: #fff; font: 700 normal 10px/13px var(--f-ui); text-align: center; }
+.pf-tip b { color: #ffc629; }
+/* the weather's motion (C42-1): transform and opacity only, every loop a divisor of 6 s (seamless), the text still; none if motion is reduced */
+.pf-fb { transform-box: fill-box; transform-origin: center; }
+.pf-rot { animation: pfRot 6s linear infinite; }
+@keyframes pfRot { to { transform: rotate(45deg); } }
+.pf-glow { animation: pfGlow 3s ease-in-out infinite; }
+@keyframes pfGlow { 0%, 100% { opacity: .55; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.1); } }
+.pf-drift { animation: pfDrift 6s linear infinite; }
+@keyframes pfDrift { to { transform: translateX(-120px); } }
+.pf-fall { animation: pfFall .75s linear infinite; }
+@keyframes pfFall { to { transform: translateY(40px); } }
+@media (prefers-reduced-motion: reduce) { .pause-info .pf-rot, .pause-info .pf-glow, .pause-info .pf-drift, .pause-info .pf-fall { animation: none; } }
+/* every driver's stops: the order in two columns down (the place, the colour, the code, the stops, the sets: a chip each, the last four) */
+.ps-l { list-style: none; margin: 3px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(11, auto); grid-auto-flow: column; column-gap: 8px; row-gap: 0; font: 600 11px/1.35 var(--f-ui); color: var(--chalk); }
+.ps-l li { display: flex; align-items: center; gap: 3px; min-width: 0; padding: 0 3px; border-radius: 4px; }
+.ps-l li.me { background: rgba(255, 198, 41, .24); }
+.ps-l li > b { flex: none; width: 1.5em; text-align: right; font-style: italic; color: #9fb0c3; }
+.ps-l li > i { flex: none; width: 3px; height: 10px; border-radius: 1px; }
+.ps-l li > span { flex: none; min-width: 2.3em; font-weight: 700; }
+.ps-l li > em { flex: none; min-width: .8em; font-style: normal; text-align: center; color: #fff; }
+.ps-l li.pit > em { color: #ffc629; }
+.ps-l li > u { display: flex; gap: 1px; min-width: 0; overflow: hidden; text-decoration: none; }
+.ps-l .tset { flex: none; display: inline-block; width: 12px; height: 12px; box-sizing: border-box; border: 2px solid #a3a8b1; border-radius: 50%; background: rgba(10, 13, 18, .7); color: #fff; font: 700 normal 7px/8px var(--f-ui); text-align: center; }
+.ps-l .tset.tS { border-color: #e8352b; } .ps-l .tset.tM { border-color: #f2c616; } .ps-l .tset.tH { border-color: #f4f4f0; } .ps-l .tset.tW { border-color: #4fa8ff; }
+.ps-l small { font-size: 9px; color: #9fb0c3; }
+#s-pause.pi .btns .btn { min-height: 40px; padding-top: 8px; padding-bottom: 8px; }
+@media (orientation: portrait) { #s-pause.pi .small-panel { padding-top: 14px; padding-bottom: 14px; } }
+@media (orientation: portrait) and (max-height: 760px) {
+  #s-pause.pi .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  #s-pause.pi .btns .btn { padding-left: 12px; padding-right: 8px; white-space: nowrap; font-size: clamp(13px, 4.2vw, 16px); }
+  #s-pause.pi .btns .btn.primary, #s-pause.pi .btns .btn.ghost { grid-column: 1 / -1; }
+  #s-pause.pi .panel h2 { margin-bottom: 4px; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  #s-pause.pi .small-panel { width: min(880px, 96vw); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-auto-rows: min-content; column-gap: 14px; align-items: start; }
+  #s-pause.pi .small-panel > h2 { grid-column: 1; grid-row: 1; }
+  #s-pause.pi .small-panel > .btns { grid-column: 1; grid-row: 2 / span 4; margin-top: 4px; }
+  #s-pause.pi .pause-info { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+  #s-pause.pi .pause-strat { grid-column: 2; grid-row: 3; margin-top: 8px; font-size: 12px; }
+  #s-pause.pi .pit-row { grid-column: 2; grid-row: 4; margin-top: 8px; }
+  #s-pause.pi .pit-row .seg button { padding-left: 6px; padding-right: 6px; }
+  .pf-tip { font-size: 11px; }
+  .ps-l { font-size: 10.5px; line-height: 1.28; }
+}
 .wx-row .seg button, .pit-row .seg button, .seg.nw button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }

@@ -8889,69 +8889,125 @@ const Render = (function () {
     sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
   }
 
-  /* ---------------- the pit stop's film camera (the player's car on the autopilot in the pit lane, c.pitAP): from the chase view it rises
-     and flies over the boxes (high above the lane ahead of the car, looking back along the garages), comes down low in front of the car as it
-     nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
-     has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
-     eased into (no cuts); blended over the chase view by w (0..1). In the replay the same over either of its cameras (behind the car, TV),
-     from the recording's pit state (c.rpPit, game.js rpPit) on its own clock (dt × its speed, still while it stands); over the TV cameras
-     (tv) cut in and out, never blended (a post 100 m off with its long lens, cutting to the next every 170 m); after resetCam (snap: the
-     replay's jump in time, another camera or car) where it is then at once, the same while the replay stands. Its pace k (pitPace, game.js):
-     while the player picks the stop (POSTANEK PO MERI) a third (its moves, the sways, the blend; it still keeps up with the car: the rest of
-     the car's way carried along), then a little quicker to catch up once the choice is made (POTRDI) and back to 1; the pace itself eased,
-     never a jump ---------------- */
-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null, snap: false, k: 1, kT: 1, kH: 0, c: null }, PC_TAN = Math.tan(25 * Math.PI / 180);
-  function pitPace(k, hold) { pcam.kT = k; pcam.kH = hold || 0; }   // (the pace to go to; hold: s at it, then back to 1)
-  function pitCine(c, dt, px, py, pz, tx, ty, tz, tv) {
-    const ps = c.rpPit || c, T = curRace && curRace.track, on = !!(ps.pitAP && ps.inPit && T && T.def.pit && curRace._boxD);
-    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null, snap = pcam.snap, w0 = pcam.w; pcam.snap = false;
-    if (pcam.kH > 0 && (pcam.kH -= dt) <= 0) pcam.kT = 1;
-    pcam.k += (pcam.kT - pcam.k) * (1 - Math.exp(-dt * 4));
-    const k = pcam.k;
-    if (!on || bd == null || !pz0) { pcam.w = snap || tv ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; pcam.c = null; if (!on) { pcam.k = pcam.kT = 1; pcam.kH = 0; } return null; } }
-    const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
-    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
-    pcam.t += dt * k;
-    // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
-    let want = on && bd != null ? 1 : 0;
-    if (want && ps.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
-      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
-      if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
-    }
-    pcam.w = snap ? want : tv ? (want > 0 ? 1 : 0) : want > pcam.w ? Math.min(want, pcam.w + dt * k / 1.4) : Math.max(want, pcam.w - dt / 1.2);
-    // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
-    const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
-    const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
-    const car = [c.x, y, c.z];
-    let P, Q;
-    if (ps.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
-    else if (ps.pitState === 'stop' || ps.pitState === 'repair' || ps.pitState === 'done') {
-      const a = 0.55 + 0.35 * sw, r = 11 + sw2;   // (drifting round the car's front, on the lane's side)
-      P = at(car, Math.cos(a) * r, -Math.sin(a) * r * 0.85, 3.2 + 0.6 * sw2); Q = at(car, 0.3, 1.2, 0.7);
-    } else {
-      const k = Core.sstep(-50, -14, x);   // (0: the fly-over, 1: low in front of the car)
-      const A = at(car, 22 + 2 * sw, -2, 14 + sw2), AQ = at(car, -4, 3, 0);
-      const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
-      P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
-    }
-    // eased into: the camera glides, never jumps (the first time from the chase view); cut to its place (snap; the TV cameras' way in)
-    if (snap || (tv && !(w0 > 0))) { pcam.p = P.slice(); pcam.q = Q.slice(); pcam.c = null; }
-    else if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
-    const e = 1 - Math.exp(-dt * 1.6 * k), e2 = 1 - Math.exp(-dt * 3 * k), cr = Math.max(0, 1 - k);   // (slower: cr of the car's way since the last frame carried along, so it lags the car no more than at its pace)
-    if (pcam.c && cr > 0) for (let j = 0; j < 3; j++) { const d = (car[j] - pcam.c[j]) * cr; pcam.p[j] += d; pcam.q[j] += d; }
-    pcam.c = car;
-    for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
-    if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
-    const w = Core.sstep(0, 1, pcam.w), fov = camera.fov;   // (the view under it: behind the car 58° upright, 46° on its side; a TV camera's lens)
-    const fF = Core.clamp(2 * Math.atan(PC_TAN / Math.min(1, camera.aspect)) * 180 / Math.PI, 50, 80);   // (its lens: 50°, upright as wide as that across (at most 80° high): the whole car and its crew at the box)
-    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (fF - fov) * w];
+  /* ---------------- the pit stop's camera (the player's car on the autopilot in the pit lane, c.pitAP; in the replay the recording's pit
+     state, c.rpPit with its clock tNow, game.js rpPit). Its times from game.js: pitApT the takeover at the way in (the custom stop's panel
+     opens), pitCfT POTRDI, pitBoxT the car standing at its box. From the takeover the camera behind the car pulls back ever more slowly: the
+     same view scaled about the car (the car where it was on the screen, only smaller) to PC.pull more of the distance, critically damped
+     (τ PC.tau: half the way in ~1.9 s, 90 % in ~4.3 s). On POTRDI (not confirmed: at the box) it swings in PC.sw s (smootherstep) round
+     the car on the pit wall's side down to the side view: PC.ahead m ahead of the car, out towards the pit wall as far as its rail less
+     PC.wall m allows (at most PC.out m from the car), PC.hT m up, looking at the car; as the car brakes into its box (its last ~28 m) level
+     with it, PC.out m out, PC.hB m up, there nearly still (a drift of 3 cm/s at most). Out of the box low beside the car, 2 m behind it,
+     then it rises with the way out (smoothstep of the way to the hand-back's place, never down) to the camera behind the car, where it is
+     exactly at the hand-back (VOZIŠ TI!: game.js pitNear). Out of the box always in the lane, PC.wall m or more from the pit wall's rail
+     (2B; in the swing too while it is low). Over the replay's TV cameras: cut in where the side view begins, cut out at the hand-back
+     (a view behind the car of its own to rise to). w (Render.pitCam): how much of the side view (0: behind the car, pulled back or not; 1:
+     the side view; over the TV cameras 1 while it has the view); a stop broken off (the race over, a rescue) fades back in 0.6 s ---------------- */
+  const pcam = { w: 0, kM: 0, last: null, T: null, bd: null, sx: null, snap: false, dbg: null };
+  const PC = { pull: 0.75, tau: 1.1, sw: 2, ahead: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [1.5, 4], back: 2, jack: 2.2 }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  const smoother = (u) => u <= 0 ? 0 : u >= 1 ? 1 : u * u * u * (u * (u * 6 - 15) + 10);
+  const _la = [0, 0, 0, 0], _lb = [0, 0, 0, 0];
+  function laneAt(T, s, sd, o) {   // the lane's frame at s (between the track's samples): [x, z, the pit side's normal x, z]
+    const L = T.len, f = (((s % L) + L) % L) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f);
+    o[0] = lerp(T.px[i], T.px[j], u); o[1] = lerp(T.pz[i], T.pz[j], u); o[2] = lerp(T.nx[i], T.nx[j], u) * sd; o[3] = lerp(T.nz[i], T.nz[j], u) * sd; return o;
   }
+  function pcLim(T, s, i, sd) { const p = T.pitAt(s); return (p ? Math.max(p.wall, p.inner) : (sd > 0 ? T.br[i] : T.bl[i]) + 0.25) + PC.wall; }   // (the camera's least offset at s: the pit wall's rail and PC.wall m)
+  function pitOn(c) { const ps = c.rpPit || c; return !!(ps.pitAP && ps.inPit); }
+  function pitCine(c, dt, px, py, pz, tx, ty, tz, fov0, tv, cx, cz, by) {
+    const ps = c.rpPit || c, T = curRace && curRace.track, D = T && T.def.pit, snap = pcam.snap; pcam.snap = false;
+    const bd = ps.pitAP && ps.inPit && D && curRace._boxD && c.q ? curRace._boxD(c) : null;
+    if (bd == null) {   // (none: gone at once over a TV camera, after a jump; else back to the view behind the car in 0.6 s from where it was)
+      pcam.kM = 0; pcam.dbg = null;
+      const L = pcam.last; pcam.w = snap || tv || !L ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.last = null; return null; }
+      const w = sstep(0, 1, pcam.w), y = c.y || 0;
+      return [px + (c.x + L[0] - px) * w, py + (y + L[1] - py) * w, pz + (c.z + L[2] - pz) * w, tx + (c.x + L[3] - tx) * w, ty + (y + L[4] - ty) * w, tz + (c.z + L[5] - tz) * w, fov0 + (L[6] - fov0) * w, w, near0(w)];
+    }
+    const now = ps.tNow != null ? ps.tNow : curRace.time, x = T.boxX(c.q.s, bd), sd = D[0] < 0 ? -1 : 1, i = c.q.i, portrait = camera.aspect < 1, o = portrait ? 0 : 1, y = c.y || 0;
+    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, off = c.q.d * sd, out = !!ps.pitDone && x > 0;   // (along the lane; towards the garages; the car's offset on the pit side)
+    // the exit: the way to the hand-back's place (game.js pitNear: a run of max(12 m, 1.3 s) ahead of the car past the lane's end, or where the
+    // way out's middle is over the pit wall's line), smoothstep, never back
+    let k = 0;
+    if (out) {
+      if (pcam.T !== T || pcam.bd !== bd) { pcam.T = T; pcam.bd = bd; pcam.sx = null; const s0 = T.startS + bd; for (let d = 0; d < 600; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
+      const u = clamp(x / Math.max(1, (pcam.sx != null ? pcam.sx : 200) - Math.max(12, c.speed * 1.3)), 0, 1); k = u * u * (3 - 2 * u);
+      if (!snap) k = Math.max(k, pcam.kM);
+    }
+    pcam.kM = k;
+    // the side view (low beside the car): the way to the box, at the box, the way out
+    const tS = ps.pitCfT != null ? ps.pitCfT : ps.pitBoxT != null ? ps.pitBoxT : null, side = tS != null || ps.pitState === 'repair' || !!ps.pitDone;
+    const ts = tS != null ? Math.max(0, now - tS) : 0, dr = 0.16 * Math.sin(ts * 0.19);   // (the drift: at most 3 cm/s along the lane)
+    let along, outD, h, qa, lb;   // (lb: how much of the box's lens)
+    if (out) { const e = sstep(0, 12, x); lb = 1 - e; along = -PC.back * e + dr * (1 - e); outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; }   // (it looks a little ahead of the car: upright the narrow lens keeps it in the picture)
+    else { const b = ps.pitState === 'repair' || ps.pitDone ? 1 : sstep(-28, -1, x); lb = b; along = PC.ahead * (1 - b) + dr; outD = PC.out[o]; h = lerp(PC.hT[o], PC.hB[o], b); qa = 0; }
+    const sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lc = laneAt(T, c.q.s, sd, _lb), oC = Math.max(pcLim(T, sC, T.idx(sC), sd), off - outD);
+    const ox = cx - (lc[0] + lc[2] * off), oz = cz - (lc[1] + lc[3] * off);   // (the car off its lane point: its own place, drawn)
+    let Lp = [la[0] + la[2] * oC + ox, y + h, la[1] + la[3] * oC + oz], Lq;
+    { const lq = laneAt(T, c.q.s + qa, sd, _la); Lq = [lq[0] + lq[2] * off + ox, y + PC.q[o], lq[1] + lq[3] * off + oz]; }
+    // its lens: 50°, upright as wide as that across (at most 80° high); at the box upright wide enough across for the car and the crew round it
+    // (the jacks' men PC.jack m past its nose and tail) from where it is (at most 90° high)
+    const fF = clamp(2 * Math.atan(PC_TAN / Math.min(1, camera.aspect)) * 180 / Math.PI, 50, 80), Dm = crew && crew.P === c && crew.dim, half = (Dm ? Math.max(Dm.nose, -Dm.tail) : 2.3) + PC.jack;
+    const fB = camera.aspect < 1 ? clamp(2 * Math.atan(half / Math.max(1, Math.hypot(Lp[0] - cx, Lp[2] - cz)) / camera.aspect) * 180 / Math.PI, fF, 90) : fF, fL = fF + (fB - fF) * lb;
+    // the side view and the way out: low beside the car up to the view behind it (k)
+    const S = [Lp[0] + (px - Lp[0]) * k, Lp[1] + (py - Lp[1]) * k, Lp[2] + (pz - Lp[2]) * k, Lq[0] + (tx - Lq[0]) * k, Lq[1] + (ty - Lq[1]) * k, Lq[2] + (tz - Lq[2]) * k, fL + (fov0 - fL) * k];
+    let R, w, f = 1, s = 1;
+    if (tv) { if (!side) { pcam.w = 0; pcam.last = null; pcam.dbg = { f: 1, s: 0, k, w: 0 }; return null; } R = S; w = 1; }   // (over a TV camera: cut in, the side view at once)
+    else {
+      // pulled back: the view behind the car scaled about the car on the ground (Kx, by, Kz) by f; less of it on the way out
+      const tp = ps.pitApT != null ? Math.max(0, now - ps.pitApT) : 99, u = tp / PC.tau; f = 1 + PC.pull * (1 - (1 + u) * Math.exp(-u)) * (1 - k);
+      const B = [cx + (px - cx) * f, by + (py - by) * f, cz + (pz - cz) * f, cx + (tx - cx) * f, by + (ty - by) * f, cz + (tz - cz) * f, fov0];
+      s = side ? (tS != null ? smoother(ts / PC.sw) : 1) : 0;
+      if (s <= 0) R = B; else if (s >= 1) R = S;
+      else {   // the swing: round the car on the pit wall's side (the angle from ahead towards the wall, the distance and the height about the car, each eased)
+        const wx = -gx, wz = -gz, rel = (P) => { const dx = P[0] - cx, dz = P[2] - cz, a = dx * fx + dz * fz, b = dx * wx + dz * wz; return [Math.atan2(b, a), Math.hypot(a, b), P[1] - y]; };
+        const A = rel(B), Z = rel(S); if (A[0] < 0) A[0] += 2 * Math.PI; if (Z[0] < 0 && A[0] > Math.PI + 1) Z[0] += 2 * Math.PI;
+        const th = lerp(A[0], Z[0], s), r = lerp(A[1], Z[1], s), hh = lerp(A[2], Z[2], s);
+        let a = Math.cos(th) * r, b = Math.sin(th) * r;
+        const room = (off - pcLim(T, c.q.s + a, T.idx(c.q.s + a), sd)) + Math.max(0, hh - 4) * 2; if (b > room) b = room;   // (low: never beyond the pit wall's rail; high up over it)
+        R = [cx + fx * a + wx * b, y + hh, cz + fz * a + wz * b, lerp(B[3], S[3], s), lerp(B[4], S[4], s), lerp(B[5], S[5], s), lerp(B[6], S[6], s)];
+      }
+      w = s * (1 - k);
+    }
+    if (s >= 1) {   // 2B: low beside the car (the side view, at the box, on the way out) never over the pit wall nor through it (the lane's frame at the camera)
+      const q = T.query(R[0], R[2], i, {}), p = T.pitAt(q.s);
+      if (p && !p.gap) { const lim = Math.max(p.wall, p.inner) + PC.wall, d = q.d * sd; if (d < lim) { const n = laneAt(T, q.s, sd, _la); R[0] += n[2] * (lim - d); R[2] += n[3] * (lim - d); } }
+    }
+    if (world && world.groundH) { const gH = world.groundH(R[0], R[2]); if (Number.isFinite(gH) && R[1] < gH + 0.6) R[1] = gH + 0.6; }
+    pcam.w = w; pcam.last = [R[0] - c.x, R[1] - y, R[2] - c.z, R[3] - c.x, R[4] - y, R[5] - c.z, R[6]];
+    pcam.dbg = { f, s, k, w, side, base: [px, py, pz, tx, ty, tz], car: [cx, by, cz] };
+    return [R[0], R[1], R[2], R[3], R[4], R[5], R[6], w, near0(w)];
+  }
+  function near0(w) { return 4 + (0.5 - 4) * clamp(w, 0, 1); }   // (the near plane: the camera behind the car's 4 m, the side view's 0.5 m)
   /* ---------------- camera ---------------- */
+  // the camera behind the car: its heading and zoom eased each frame (chaseStep), its pose from them (chasePose: [px, py, pz, tx, ty, tz, fov];
+  // also the pit stop's camera's view behind the car over the replay's TV cameras, pitCine)
+  function chaseStep(c, dt, h, spd, pitZ, k2) {
+    // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
+    // travel, so a sliding car shows its angle)
+    const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
+    cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
+    cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
+  }
+  function chasePose(c, x, z, baseY) {
+    // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
+    const portrait = camera.aspect < 1;
+    const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+    const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
+    let back = cam.userBack || 0;
+    if (back > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
+      // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
+      // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before
+      const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4;
+      const room = D * Math.cos(pitch) - D * Math.sin(pitch) / Math.tan(lo) - tail - a0;
+      if (room < 20) back *= Math.max(0, room) / 20;
+    }
+    const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
+    const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs), tx = x + fx * ahead, tz = z + fz * ahead;
+    return [tx - fx * D * Math.cos(pitch), baseY + D * Math.sin(pitch), tz - fz * D * Math.cos(pitch), tx, baseY, tz, fov];
+  }
   function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
-    const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
+    const spd = c.speed, pitZ = crew && c === crew.P && !pitOn(c) && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it (not under the pit stop's camera, pitCine: its view behind the car as ever)
     if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
@@ -8983,35 +9039,18 @@ const Render = (function () {
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
     } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
-      // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
-      // travel, so a sliding car shows its angle)
-      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
-      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
-      cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
-      // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
-      const portrait = camera.aspect < 1;
-      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
-      const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
-      let back = cam.userBack || 0;
-      if (back > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
-        // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
-        // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before
-        const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4;
-        const room = D * Math.cos(pitch) - D * Math.sin(pitch) / Math.tan(lo) - tail - a0;
-        if (room < 20) back *= Math.max(0, room) / 20;
-      }
-      const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
-      const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
-      tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
-      px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
-      if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+      chaseStep(c, dt, h, spd, pitZ, k2);
+      const o = chasePose(c, x, z, baseY); px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5];
+      if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (!shot && (mode !== 'tv' || c.rpPit)) { const o = pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz, mode === 'tv'); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
-    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    let pw = 0;   // (the pit stop's side view: how much of it; its haze as far off as a 30 m view's, the garages behind the car clear; its own floor)
+    if (!shot && mode === 'tv' && c.rpPit && pitOn(c)) chaseStep(c, dt, h, spd, 1, k2);   // (over a TV camera the pit stop's camera rises to a view behind the car of its own: kept up as behind the car)
+    if (!shot && (mode !== 'tv' || c.rpPit)) { const vc = mode === 'tv' ? chasePose(c, x, z, baseY) : null, o = vc ? pitCine(c, cdt != null ? cdt : dt, vc[0], vc[1], vc[2], vc[3], vc[4], vc[5], vc[6], true, x, z, baseY) : pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz, camera.fov, false, x, z, baseY); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; pw = o[7]; near = o[8]; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
+    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4 - 3.4 * pw; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+    { let dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz); if (pw > 0 && dC < 30) dC += (30 - dC) * pw; const r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = mode === 'tv' ? 'tv' : 'chase';
@@ -9811,6 +9850,6 @@ const Render = (function () {
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW, pitDrops: pitSp }; }   // (tests)
   function pitWet() { const T = curTrack; if (!T || !T.def.pit || !world || !world.pitBoxes || !world.pitBoxes.length) return null; const pos = [], uv = [], pw = [], idx = []; pitPuddles(T, pos, uv, pw, idx); return { pos, pw, idx, ap: pitLook(T).ap, asph: !!pitLook(T).asph }; }   // (tests: the pits' wet parts of this world)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, pitPace, get pitPaceK() { return pcam.k; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, goalShot, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
