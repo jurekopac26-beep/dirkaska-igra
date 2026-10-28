@@ -25,6 +25,7 @@ Mapa je bila pushana z izrecnim dovoljenjem uporabnika, da delo preživi menjavo
 | `koncept/popravki/` | kaj je posamezen krog spremenil v sceni (`diff -u`), kot vodilo za izvedbo v igri |
 | `naloge/` | navodila (briefi), ki so jih dobili agenti posameznih krogov |
 | `servis_robot_k3.patch` | nedokončan servis z industrijskima robotoma (glej K3) |
+| `naloga_kolibri.md` | navodila za drugi račun, ki dela dele za KOLIBRIJA, in dogovor, kako jih garaža priklopi |
 
 Krogi v `plosce/`: `av_table` table za maketami in luč v krogu, `oz` označevanje + meni + grafi + glava + gume po straneh, `mn` meni s 4 možnostmi in predali, `pr` prosojen predogled na avtu, `kl` ključ na rdečem gumbu, `lt`/`lf`/`lf2` dvigala, `rb` obroč nad avtom, `sz` star zid, `np` tablice z imeni, `tp` tuning deli, `eg` auspuhi, `lb`/`lb2` napisi na policah, `an_*` procesi menjave od klika do konca, `el_*` vsi elementi s klikom, `av_1` omarica z maketami.
 
