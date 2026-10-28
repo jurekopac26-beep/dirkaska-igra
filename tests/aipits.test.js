@@ -118,7 +118,7 @@ const dE = (T, c) => (((T.startS + T.def.pit[1] - c.q.s) % T.len) + T.len) % T.l
 // everybody to the line
 {
   const out = [];
-  for (const [tid, laps, seed] of [['spa', 2, 14], ['montreal', 2, 2]]) {   // (the seeds where a rival does crash: the AI drives cleaner now, most seeds of two laps have no damaged one)
+  for (const [tid, laps, seed] of [['spa', 2, 23], ['montreal', 2, 2]]) {   // (the seed where a rival does crash: the AI drives cleaner now, of seeds 1-80 only Spa's 16 and 23 have a damaged one in two laps, Montréal's none)
     const R = race(tid, { laps, seed, faults: true, flags: true, chars: true, slip: true, radio: true, launch: true });
     const stops = [...R.st.values()].flatMap(x => x.stops);
     out.push({ tid, stops, fix: stops.filter(p => p.dmg > 0.4).length, rep: stops.every(p => p.out == null || p.out < 0.05),   // (out null: over the line in the lane)
