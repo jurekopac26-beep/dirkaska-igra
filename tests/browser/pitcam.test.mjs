@@ -68,9 +68,10 @@ const hbIdx = (L) => L.findIndex(r => r.t > 0 && r.done && !r.ap);   // (the han
 // the side view, the box, the way out and the hand-back (both parts)
 function common(L, lbl) {
   const hb = hbIdx(L), side = L.filter(r => r.ap && !r.done && r.s === 1 && r.x != null && r.x < -30 && r.st !== 'repair'), box = L.filter(r => r.st === 'repair' && r.s === 1), ex = hb > 0 ? L.slice(0, hb).filter(r => r.done && r.ap) : [];
-  const sideOk = side.length > 3 && side.every(r => r.als > 7.2 && r.als < 8.8 && r.h > 2.7 && r.h < 2.9 && r.gar < 0 && r.wallM >= 1.18 && (r.wallM < 1.35 || Math.abs(r.gar) > 9.3) && Math.abs(r.ndc[0]) < 0.5 && Math.abs(r.ndc[1]) < 0.8);
+  const sideOk = side.length > 3 && side.every(r => r.als > 7 && r.als < 9 && r.h > 2.7 && r.h < 2.9 && r.gar < 0 && r.wallM >= 1.18 && (r.wallM < 1.5 || Math.abs(r.gar) > 9.3) && Math.abs(r.ndc[0]) < 0.5 && Math.abs(r.ndc[1]) < 0.8);
+  // (measured where the lane bends, Trois-Rivières: along the lane's own way within a metre, at the rail within 0.3 m)
   T.check(`${lbl}: from the side on the way to the box: ~8 m ahead, 2.8 m up, towards the pit wall as far as its rail less 1.2 m allows (at most 9.6 m out), the car in the middle of the picture`, sideOk,
-    JSON.stringify({ n: side.length, first: side[0] && { als: side[0].als, gar: side[0].gar, h: side[0].h, wallM: side[0].wallM, ndc: side[0].ndc }, bad: side.find(r => !(r.als > 7.2 && r.als < 8.8 && r.h > 2.7 && r.h < 2.9 && r.wallM >= 1.18)) }));
+    JSON.stringify({ n: side.length, first: side[0] && { als: side[0].als, gar: side[0].gar, h: side[0].h, wallM: side[0].wallM, ndc: side[0].ndc }, bad: side.find(r => !(r.als > 7 && r.als < 9 && r.h > 2.7 && r.h < 2.9 && r.wallM >= 1.18 && (r.wallM < 1.5 || Math.abs(r.gar) > 9.3))) }));
   const b0 = box[0], b1 = box[box.length - 1], drift = box.length > 2 ? Math.hypot(b1.p[0] - b0.p[0], b1.p[1] - b0.p[1], b1.p[2] - b0.p[2]) / Math.max(0.05, b1.t - b0.t) : 99, fits = box.filter(r => r.fit);
   T.check(`${lbl}: at the box level with the car, 9.6 m out (or as far as the rail allows), 3 m up, nearly still (3 cm/s at most), the whole car and the crew at their places in the picture (held closer by the rail, at most the two jacks' men at its ends out)`,
     box.length > 5 && box.every(r => Math.abs(r.als) < 0.4 && r.h > 2.9 && r.h < 3.1 && (Math.abs(Math.abs(r.gar) - 9.6) < 0.2 || r.wallM < 1.35) && r.wallM >= 1.18) && drift <= 0.03 && fits.length > 3 && fits.every(r => r.fit.car === 0 && (r.fit.out === 0 || (r.wallM < 1.35 && r.fit.out <= 2))) && Math.max(...fits.map(r => r.fit.n)) >= 12,

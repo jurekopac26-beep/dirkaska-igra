@@ -1048,12 +1048,16 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .ps-l .tset.tS { border-color: #e8352b; } .ps-l .tset.tM { border-color: #f2c616; } .ps-l .tset.tH { border-color: #f4f4f0; } .ps-l .tset.tW { border-color: #4fa8ff; }
 .ps-l small { font-size: 9px; color: #9fb0c3; }
 #s-pause.pi .btns .btn { min-height: 40px; padding-top: 8px; padding-bottom: 8px; }
+#s-pause.pi .small-panel { overflow-y: auto; overscroll-behavior: contain; }   /* (a screen smaller than any it was fitted to: it scrolls, nothing out of reach) */
 @media (orientation: portrait) { #s-pause.pi .small-panel { padding-top: 14px; padding-bottom: 14px; } }
 @media (orientation: portrait) and (max-height: 760px) {
   #s-pause.pi .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
   #s-pause.pi .btns .btn { padding-left: 12px; padding-right: 8px; white-space: nowrap; font-size: clamp(13px, 4.2vw, 16px); }
   #s-pause.pi .btns .btn.primary, #s-pause.pi .btns .btn.ghost { grid-column: 1 / -1; }
-  #s-pause.pi .panel h2 { margin-bottom: 4px; }
+  #s-pause.pi .panel h2 { margin-bottom: 4px; font-size: 28px; }
+  #s-pause.pi .pause-info { margin-top: 8px; }
+  #s-pause.pi .pause-strat { margin-top: 6px; font-size: 12px; line-height: 1.35; }
+  #s-pause.pi .pit-row { margin-top: 6px; }
 }
 @media (orientation: landscape) and (max-height: 500px) {
   #s-pause.pi .small-panel { width: min(880px, 96vw); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-auto-rows: min-content; column-gap: 14px; align-items: start; }

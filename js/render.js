@@ -8903,7 +8903,7 @@ const Render = (function () {
      (a view behind the car of its own to rise to). w (Render.pitCam): how much of the side view (0: behind the car, pulled back or not; 1:
      the side view; over the TV cameras 1 while it has the view); a stop broken off (the race over, a rescue) fades back in 0.6 s ---------------- */
   const pcam = { w: 0, kM: 0, last: null, T: null, bd: null, sx: null, snap: false, dbg: null };
-  const PC = { pull: 0.75, tau: 1.1, sw: 2, ahead: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [1.5, 4], back: 2, jack: 2.2 }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  const PC = { pull: 0.75, tau: 1.1, sw: 2, ahead: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [0, 4], back: 2, jack: 2.2 }, PC_TAN = Math.tan(25 * Math.PI / 180);
   const smoother = (u) => u <= 0 ? 0 : u >= 1 ? 1 : u * u * u * (u * (u * 6 - 15) + 10);
   const _la = [0, 0, 0, 0], _lb = [0, 0, 0, 0];
   function laneAt(T, s, sd, o) {   // the lane's frame at s (between the track's samples): [x, z, the pit side's normal x, z]
@@ -8936,7 +8936,7 @@ const Render = (function () {
     const tS = ps.pitCfT != null ? ps.pitCfT : ps.pitBoxT != null ? ps.pitBoxT : null, side = tS != null || ps.pitState === 'repair' || !!ps.pitDone;
     const ts = tS != null ? Math.max(0, now - tS) : 0, dr = 0.16 * Math.sin(ts * 0.19);   // (the drift: at most 3 cm/s along the lane)
     let along, outD, h, qa, lb;   // (lb: how much of the box's lens)
-    if (out) { const e = sstep(0, 12, x); lb = 1 - e; along = -PC.back * e + dr * (1 - e); outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; }   // (it looks a little ahead of the car: upright the narrow lens keeps it in the picture)
+    if (out) { const e = sstep(0, 12, x); lb = 1 - sstep(0, 30, x); along = -PC.back * e + dr * (1 - e); outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; }   // (on its side it looks a little ahead of the car; upright at it, the box's wider lens a while longer: the whole car in the picture)
     else { const b = ps.pitState === 'repair' || ps.pitDone ? 1 : sstep(-28, -1, x); lb = b; along = PC.ahead * (1 - b) + dr; outD = PC.out[o]; h = lerp(PC.hT[o], PC.hB[o], b); qa = 0; }
     const sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lc = laneAt(T, c.q.s, sd, _lb), oC = Math.max(pcLim(T, sC, T.idx(sC), sd), off - outD);
     const ox = cx - (lc[0] + lc[2] * off), oz = cz - (lc[1] + lc[3] * off);   // (the car off its lane point: its own place, drawn)
