@@ -1,0 +1,36 @@
+import fs from 'fs';
+const SP = '/tmp/claude-0/-home-user-dirkaska-igra/2bb27175-330b-5cd8-945e-d44eb8d706b8/scratchpad/';
+const P = (f) => ({ probe: fs.readFileSync(SP + f, 'utf8') });
+// (pictures only) 27. 10., six boat tracks along the old go-kart line (window.__BOATK 0..5): from above, the start, the east loop, iso and chase (bv5): final after the review
+export default { tag: 'bv5', list: [
+  { probe: 'window.__BOATK = 0' }, P('boat27-page.js'), P('boat27d-page.js'),
+  { viewport: [1800, 450] }, { kind: 'top', name: 'all0', cx: -32, cz: 207, span: 80 },
+  { viewport: [900, 600] }, { kind: 'top', name: 'start0', cx: -108, cz: 216, span: 44 }, { kind: 'top', name: 'east0', cx: 62, cz: 205, span: 60 },
+  { viewport: [960, 540] }, { kind: 'drive', name: 'iso0', mode: 'iso', x: -95, z: 212, h: 0 },
+  { viewport: [540, 960] }, { kind: 'drive', name: 'chase0', mode: 'chase', x: -150, z: 213, h: 0 },
+  { probe: 'window.__BOATK = 1' }, P('boat27-page.js'), P('boat27d-page.js'),
+  { viewport: [1800, 450] }, { kind: 'top', name: 'all1', cx: -32, cz: 207, span: 80 },
+  { viewport: [900, 600] }, { kind: 'top', name: 'start1', cx: -108, cz: 216, span: 44 }, { kind: 'top', name: 'east1', cx: 62, cz: 205, span: 60 },
+  { viewport: [960, 540] }, { kind: 'drive', name: 'iso1', mode: 'iso', x: -95, z: 212, h: 0 },
+  { viewport: [540, 960] }, { kind: 'drive', name: 'chase1', mode: 'chase', x: -150, z: 213, h: 0 },
+  { probe: 'window.__BOATK = 2' }, P('boat27-page.js'), P('boat27d-page.js'),
+  { viewport: [1800, 450] }, { kind: 'top', name: 'all2', cx: -32, cz: 207, span: 80 },
+  { viewport: [900, 600] }, { kind: 'top', name: 'start2', cx: -108, cz: 216, span: 44 }, { kind: 'top', name: 'east2', cx: 62, cz: 205, span: 60 },
+  { viewport: [960, 540] }, { kind: 'drive', name: 'iso2', mode: 'iso', x: -95, z: 212, h: 0 },
+  { viewport: [540, 960] }, { kind: 'drive', name: 'chase2', mode: 'chase', x: -150, z: 213, h: 0 },
+  { probe: 'window.__BOATK = 3' }, P('boat27-page.js'), P('boat27d-page.js'),
+  { viewport: [1800, 450] }, { kind: 'top', name: 'all3', cx: -32, cz: 207, span: 80 },
+  { viewport: [900, 600] }, { kind: 'top', name: 'start3', cx: -108, cz: 216, span: 44 }, { kind: 'top', name: 'east3', cx: 62, cz: 205, span: 60 },
+  { viewport: [960, 540] }, { kind: 'drive', name: 'iso3', mode: 'iso', x: -95, z: 212, h: 0 },
+  { viewport: [540, 960] }, { kind: 'drive', name: 'chase3', mode: 'chase', x: -150, z: 213, h: 0 },
+  { probe: 'window.__BOATK = 4' }, P('boat27-page.js'), P('boat27d-page.js'),
+  { viewport: [1800, 450] }, { kind: 'top', name: 'all4', cx: -32, cz: 207, span: 80 },
+  { viewport: [900, 600] }, { kind: 'top', name: 'start4', cx: -108, cz: 216, span: 44 }, { kind: 'top', name: 'east4', cx: 62, cz: 205, span: 60 },
+  { viewport: [960, 540] }, { kind: 'drive', name: 'iso4', mode: 'iso', x: -95, z: 212, h: 0 },
+  { viewport: [540, 960] }, { kind: 'drive', name: 'chase4', mode: 'chase', x: -150, z: 213, h: 0 },
+  { probe: 'window.__BOATK = 5' }, P('boat27-page.js'), P('boat27d-page.js'),
+  { viewport: [1800, 450] }, { kind: 'top', name: 'all5', cx: -32, cz: 207, span: 80 },
+  { viewport: [900, 600] }, { kind: 'top', name: 'start5', cx: -108, cz: 216, span: 44 }, { kind: 'top', name: 'east5', cx: 62, cz: 205, span: 60 },
+  { viewport: [960, 540] }, { kind: 'drive', name: 'iso5', mode: 'iso', x: -95, z: 212, h: 0 },
+  { viewport: [540, 960] }, { kind: 'drive', name: 'chase5', mode: 'chase', x: -150, z: 213, h: 0 },
+] };

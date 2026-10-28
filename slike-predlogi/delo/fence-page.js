@@ -1,0 +1,39 @@
+(() => {
+  // (pictures only) a heavier iron fence round the construction site, six versions on the places of its panels (window.__FEN(k), k = 0..5);
+  // the site's own light mesh panels and their feet hidden. Panels are textured planes (with patterned shadows), posts and feet instanced.
+  const H = window.__H3, S = H.site, sc = Render.scene, out = {}; if (!S || !S.fence) return 'no site fence';
+  const F = S.fence, gy = (x, z) => H.ground(x, z), Y = new THREE.Vector3(0, 1, 0);
+  S.fenceIM.visible = false; S.feetIM.visible = false;
+  const tex = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d'); draw(c, w, h); const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t; };
+  const L = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
+  const inst = (geo, mat, list, shadow = true, dm) => { const im = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(); list.forEach(([x, y, z, ry, sx = 1, sy = 1, sz = 1], k) => { q.setFromAxisAngle(Y, ry); m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(sx, sy, sz)); im.setMatrixAt(k, m4); }); im.count = list.length; im.castShadow = shadow; im.receiveShadow = true; if (dm) im.customDepthMaterial = dm; return im; };
+  // a panel's ends and its outward side
+  const ends = ([x, z, ry, sx], s, r = 1.75) => [x + Math.cos(-ry) * s * r * sx, z + Math.sin(-ry) * s * r * sx];
+  const panels = (G, t, h, lift, opaque) => { const m = new THREE.MeshLambertMaterial(opaque ? { map: t, side: THREE.DoubleSide } : { map: t, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }), dm = opaque ? undefined : new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: t, alphaTest: 0.4 });
+    G.add(inst(new THREE.PlaneGeometry(3.5, h), m, F.map(f => [f[0], gy(f[0], f[1]) + lift + h / 2, f[1], f[2], f[3]]), true, dm)); };
+  const posts = (G, geo, mat, y, every = 1) => { const L2 = []; F.forEach((f, k) => { if (k % every) return; const [x, z] = ends(f, -1); L2.push([x, gy(x, z) + y, z, f[2]]); }); G.add(inst(geo, mat, L2)); };
+  const V = [];
+  // 1. heavy welded mesh panels: thick dark frame, dense mesh, two rails; square posts, big concrete feet, a brace every third panel
+  { const G = new THREE.Group(), t = tex(256, 176, (c, w, h) => { c.clearRect(0, 0, w, h); c.strokeStyle = '#a9afb4'; c.lineWidth = 2; for (let i = 6; i < w; i += 8) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, h); c.stroke(); } for (let j = 6; j < h; j += 8) { c.beginPath(); c.moveTo(0, j); c.lineTo(w, j); c.stroke(); } c.fillStyle = '#6c7278'; c.fillRect(0, 0, w, 10); c.fillRect(0, h - 10, w, 10); c.fillRect(0, 0, 10, h); c.fillRect(w - 10, 0, 10, h); c.fillRect(0, h * 0.36, w, 6); c.fillRect(0, h * 0.68, w, 6); });
+    panels(G, t, 2.4, 0.18, false); posts(G, new THREE.BoxGeometry(0.12, 2.65, 0.12), L(0x5d6368), 1.32); { const Lf = []; F.forEach(f => { const [x, z] = ends(f, -1); Lf.push([x, gy(x, z) + 0.14, z, f[2] + Math.PI / 2]); }); G.add(inst(new THREE.BoxGeometry(0.42, 0.28, 0.95), L(0xa8a49c), Lf)); }
+    { const Lb = []; F.forEach((f, k) => { if (k % 3) return; const ry = f[2], nx = -Math.sin(-ry), nz = Math.cos(-ry), x = f[0] + nx * 0.7, z = f[1] + nz * 0.7; Lb.push([x, gy(x, z) + 1.0, z, ry]); }); const geo = new THREE.BoxGeometry(0.07, 2.1, 0.07); geo.rotateX(0.62); G.add(inst(geo, L(0x5d6368), Lb)); } V.push(G); }
+  // 2. corrugated steel sheet hoarding, dark green, a light band along the top; solid, posts behind
+  { const G = new THREE.Group(), t = tex(256, 192, (c, w, h) => { c.fillStyle = '#2f5a3c'; c.fillRect(0, 0, w, h); for (let i = 0; i < w; i += 8) { const g = c.createLinearGradient(i, 0, i + 8, 0); g.addColorStop(0, '#3d6e4b'); g.addColorStop(0.5, '#264a31'); g.addColorStop(1, '#3d6e4b'); c.fillStyle = g; c.fillRect(i, 0, 8, h); } c.fillStyle = '#d8dcd6'; c.fillRect(0, 0, w, 12); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, h - 8, w, 8); });
+    panels(G, t, 2.5, 0.05, true); posts(G, new THREE.BoxGeometry(0.14, 2.7, 0.14), L(0x2a2e31), 1.35); V.push(G); }
+  // 3. iron palisade: black bars with spear tops, two rails; square posts with caps
+  { const G = new THREE.Group(), t = tex(256, 168, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#1f2326'; for (let i = 4; i < w; i += 11) { c.fillRect(i, 14, 4, h - 14); c.beginPath(); c.moveTo(i - 3, 16); c.lineTo(i + 2, 2); c.lineTo(i + 7, 16); c.closePath(); c.fill(); } c.fillRect(0, 26, w, 6); c.fillRect(0, h - 24, w, 6); });
+    panels(G, t, 2.3, 0.05, false); posts(G, new THREE.BoxGeometry(0.16, 2.45, 0.16), L(0x1f2326), 1.22); posts(G, new THREE.SphereGeometry(0.11, 8, 6), L(0x1f2326), 2.5); V.push(G); }
+  // 4. chain-link with barbed wire on top: round galvanised posts with arms leaning out
+  { const G = new THREE.Group(), t = tex(256, 192, (c, w, h) => { c.clearRect(0, 0, w, h); c.strokeStyle = '#b9bfc4'; c.lineWidth = 1.6; const top = 30; for (let i = -h; i < w + h; i += 9) { c.beginPath(); c.moveTo(i, top); c.lineTo(i + (h - top), h); c.stroke(); c.beginPath(); c.moveTo(i, h); c.lineTo(i + (h - top), top); c.stroke(); } c.strokeStyle = '#7b8186'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, top + 1); c.lineTo(w, top + 1); c.stroke(); c.lineWidth = 1.5; for (const y of [6, 15, 24]) { c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); for (let x = 5; x < w; x += 16) { c.beginPath(); c.moveTo(x - 3, y - 3); c.lineTo(x + 3, y + 3); c.moveTo(x + 3, y - 3); c.lineTo(x - 3, y + 3); c.stroke(); } } });
+    panels(G, t, 2.6, 0.02, false); posts(G, new THREE.CylinderGeometry(0.05, 0.05, 2.65, 8), L(0x9ba1a6), 1.32); V.push(G); }
+  // 5. mesh panels with a green privacy screen (a few grommets), the light concrete feet as now
+  { const G = new THREE.Group(), t = tex(256, 148, (c, w, h) => { c.fillStyle = '#2e6a3f'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; for (let i = 0; i < w; i += 3) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, h); c.stroke(); } c.fillStyle = '#4c8c5c'; c.fillRect(0, 0, w, 7); c.fillRect(0, h - 7, w, 7); c.fillStyle = '#d0d4d8'; for (let x = 12; x < w; x += 40) for (const y of [3, h - 4]) { c.beginPath(); c.arc(x, y, 2.5, 0, 6.3); c.fill(); } c.fillStyle = '#9aa0a6'; c.fillRect(0, 0, 5, h); c.fillRect(w - 5, 0, 5, h); });
+    panels(G, t, 2.0, 0.12, true); { const Lf = []; F.forEach(f => { for (const s of [-1, 1]) { const [x, z] = ends(f, s, 1.72); Lf.push([x, gy(x, z) + 0.08, z, f[2] + Math.PI / 2]); } }); G.add(inst(new THREE.BoxGeometry(0.28, 0.16, 0.7), L(0x9a9690), Lf)); } V.push(G); }
+  // 6. concrete Jersey blocks with a mesh panel on top
+  { const G = new THREE.Group(), sh = new THREE.Shape(); sh.moveTo(-0.3, 0); sh.lineTo(0.3, 0); sh.lineTo(0.3, 0.08); sh.lineTo(0.14, 0.32); sh.lineTo(0.12, 0.82); sh.lineTo(-0.12, 0.82); sh.lineTo(-0.14, 0.32); sh.lineTo(-0.3, 0.08); sh.closePath();
+    const jg = new THREE.ExtrudeGeometry(sh, { depth: 3.45, bevelEnabled: false }); jg.translate(0, 0, -1.725); jg.rotateY(Math.PI / 2); G.add(inst(jg, L(0xb8b3aa), F.map(f => [f[0], gy(f[0], f[1]), f[1], f[2], f[3], 1, 1])));
+    const t = tex(256, 112, (c, w, h) => { c.clearRect(0, 0, w, h); c.strokeStyle = '#c3c8cc'; c.lineWidth = 2; for (let i = 6; i < w; i += 10) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, h); c.stroke(); } for (let j = 6; j < h; j += 10) { c.beginPath(); c.moveTo(0, j); c.lineTo(w, j); c.stroke(); } c.fillStyle = '#8d9398'; c.fillRect(0, 0, w, 8); c.fillRect(0, h - 8, w, 8); c.fillRect(0, 0, 8, h); c.fillRect(w - 8, 0, 8, h); });
+    panels(G, t, 1.6, 0.82, false); V.push(G); }
+  V.forEach((G, k) => { G.visible = k === 0; G.traverse(o => { o.userData.keep = true; }); sc.add(G); });
+  window.__FEN = (k) => { V.forEach((G, i) => { G.visible = i === k; }); return k; };
+  out.panels = F.length; return JSON.stringify(out); })()
