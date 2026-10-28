@@ -466,3 +466,9 @@ Popravki po pregledu slik (20. 10. ponoči):
 - `blender/kit.py` (gradniki), `blender/gas.py <0-5> <mapa>` (6 verzij A–F, izris + izvoz .glb), `blender/compose_gas.py` (listi 50-x). Modeli: `blender/modeli/v0..v5.glb` (4.400–6.900 trikotnikov). Listi: `listi/vse41-gasilski-avto`.
 - Izmerjeno: 6 verzij v slikah ~35 min. Prenos v igro po »začni« ocena 4–6 h. Uporabnik še ni izbral verzije.
 - Uporabnik je zahteval 10 novih, posebnih misij (z več dela, npr. požar na vrhu, reševalno vozilo z grafom srčnega utripa). Makete: `blender/miss.py <1-10> <mapa>`, HUD: `blender/hud_miss.py`; slike `listi/vse42-posebne-misije`. Predstavitev: artifact V456h8wG1ox2nvxLz4CFLQ (kopija v `misije-10/`).
+
+## 28. 10. zvečer: še 15 posebnih misij (11–25)
+- Uporabnik: »Misije so mi všeč, dodaj še 15 novih posebnih misij tej spletni strani. Probaj se spomniti čim bolj zanimive misije.«
+- Misije (vse na progah, ki so že v igri): 11 Ognjena reka (Mauna Kea), 12 Avtek na daljinca (Suzuka), 13 Lovec na tornado (Detroit), 14 Sladoledar (Rio de Janeiro), 15 Na tirih (Longford), 16 Za balonom (Toskana), 17 Ledeni most (Trois-Rivières), 18 Kaskader (Moki Dugway), 19 Pred plimo (Townsville), 20 Fotosafari (Great Alpine Road), 21 Zadnji trajekt (Riviera), 22 Smetarski dan (Crystal Palace), 23 Lovec na meteorite (Marrakesh), 24 Žetev pred nevihto (Medvode), 25 Spremljevalni avto (Spa).
+- Makete: `blender/miss2.py <11-25> <mapa>` (uporabi gradnike iz `miss.py`), prikaz na zaslonu `blender/hud_miss2.py`; slike `listi/vse43-posebne-misije-2`. Predstavitev ima zdaj 33 prosojnic (kopija v `misije-10/`), tudi »Še šest idej v rezervi«.
+- Ocena: novih 15 misij 200–290 h; vseh 25 s sistemom 350–500 h (s skupnimi gradniki realno 20–30 % manj).
