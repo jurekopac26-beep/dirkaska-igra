@@ -1,0 +1,29 @@
+BRIEF AN5: FIVE MORE PROCESSES, EACH FROM THE TAP TO THE END, IN PICTURES
+
+The user (Slovenian): "Dodaj še slike 5 naključnih procesov od začetka do konca." = Add pictures of five more processes (part changes),
+each from the start (the tap) to the end, the same way as your current animation round. Same rules as your AN brief (an_common.txt):
+pictures only, NO game code, NO git commands at all, one browser render at a time (the machine is very loaded: be patient, long
+timeouts, render in batches), keep a progress file.
+
+THE FIVE (spread over the three AN agents; do only yours, AFTER your current element is finished and sent in your final report):
+  AN-GUME agent:    (1) RIMS: GOLD 5-SPOKE (Zlata, 5 krakov) from the regal onto the car, all four wheels (show one in detail);
+                    (2) TURBO from the regal's storey D into the engine bay (the bonnet opens, the part goes in, the bonnet closes).
+  AN-AUSPUH agent:  (3) HEADLAMPS: LED from the front chest's HEADLAMPS drawer onto the car (both lamps);
+                    (4) PAINT: the body painted RED after a tap on the red paint circle on the floor (the game's painting process:
+                        the chamber / the spray / the drying, as the earlier paint boards in P/final_z show; find them).
+  AN-SPOJLER agent: (5) AERO KIT: SPORT, tapped on its car model on the front chest's top, fitted to the car (bumpers, sills, wing).
+Output folders: P/out/an_platisca, P/out/an_turbo, P/out/an_zarometi, P/out/an_barvanje, P/out/an_aero (f01..fNN.png, plosca.png,
+info.json with steps, arms, reach checks, timing).
+
+THE NEWEST RULES TO SHOW (the user's latest decisions; use what exists, say what you could not):
+- The scene: P/concepts/_e_store2_av1.js (the newest front chest; NO shelf-edge name tags on the regal).
+- The card: full screen width, at the top, never over the car (8 px gap). It always shows FOUR options (four buyable parts, the stock
+  part not among them, a small "↺ SERIJSKO" button in the bottom row); one option is always selected: the tapped element (or, when the
+  menu opened another way, the cheapest of the four). If P/out/mn/DONE and P/concepts/_card4.js exist, use that new card; otherwise
+  draw the four-tile card yourself in the same spirit (four tiles with small pictures, name, stat line, price).
+- Right after the tap, the selected option shows on the car as a translucent 3D preview (a light turquoise ghost with a soft bright
+  edge) until KUPI IN NAMESTI; if P/out/pr/DONE and P/out/pr/predogled.patch exist, use that preview code, otherwise a simple ghost.
+- KUPI IN NAMESTI greyed out with "premalo kreditov" when the player cannot afford it (TURBO costs 23.000 CR, the player has 11.500:
+  for TURBO show the player with enough credits, e.g. 30.000 CR, and say so).
+- ROKA 1 takes the old part, ROKA 2 brings the new one, the arms never cross; the step bar, PRESKOČI, credits counting down, KONČANO.
+Look at every picture yourself; send a short SendMessage report to "main" when each process's board is done, then go on with the next.

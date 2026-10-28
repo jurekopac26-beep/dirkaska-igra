@@ -1,0 +1,127 @@
+--- _e_store2_av1.js
++++ _e_store2_kl.js
+@@ -2822,6 +2822,114 @@
+ const amWrenchTex = () => pdTex('amwrench', 256, 256, (g, W, H) => { g.translate(W / 2, H / 2); g.rotate(-Math.PI / 4); g.fillStyle = '#ffffff'; const L = 190, w = 30;
+   g.fillRect(-L / 2 + 30, -w / 2, L - 60, w); g.beginPath(); g.arc(-L / 2 + 30, 0, 36, 0, Math.PI * 2); g.fill(); g.beginPath(); g.arc(L / 2 - 30, 0, 32, 0, Math.PI * 2); g.fill();
+   g.globalCompositeOperation = 'destination-out'; g.fillRect(-L / 2 - 10, -13, 46, 26); g.beginPath(); g.arc(L / 2 - 30, 0, 15, 0, Math.PI * 2); g.fill(); });
++// ==== KL (agent KL; the user: "Ključ na rdečem gumbu postavi vodoravno, naredi ga v več različnih pozicijah."): the service button's wrench
++//      lies HORIZONTALLY on the phone. KL.ang turns it in the button's own frame so that it reads level on the screen in the first view (after
++//      the chest's turn, the top's curve at its cell and the camera's angle; measured by KL's probe: the wrench's two ends on one screen row).
++//      KL.type: 1 a flat white wrench printed on the cap, centred, its open jaw to the right; 2 the same, its open jaw to the left; 3 bigger,
++//      from edge to edge, a thin white ring round the cap's rim; 4 a raised white 3D wrench lying on the cap (a little relief, a tiny shadow);
++//      5 the wrench on the button's front (the navy pedestal, toward the camera), the cap plain red and glossy; 6 a double open-end wrench,
++//      centred, symmetric. 0: today's diagonal print (amWrenchTex). The button itself (size, colours, pedestal, place) and its tap area (its
++//      cell of the top) stay as they were ----
++const KL = { type: 1, ang: -0.106, ped: [0.0205,0.0575] };   // (ang: the wrench's axis (cos a, 0, -sin a) in the button's frame is the screen's horizontal; ped: the pedestal's height band [y0, y1] the collar leaves visible from the camera)
++const KLR = 0.135, KLB = 0.135 * 0.18, KLY = 0.1;   // (the cap: a sphere's top of radius KLR squashed to KLB high, its foot at KLY in the button's frame)
++const klDomeY = (r) => KLY + KLB * Math.sqrt(Math.max(0, 1 - (r / KLR) * (r / KLR)));
++// the wrench's outline (metres, x along its axis, y across: up = away from the camera): a straight handle, a round head at each end, each
++// end 'open' (an open jaw: a slot with a rounded bottom) or 'ring' (a closed ring); { outer: [[x, y]] (CCW), holes: [[[x, y]]] (CW) }
++const klWrenchPts = (L, ends, o = {}) => { const rh = L * (o.rh || 0.18), w = L * (o.w || 0.15), sh = rh * (o.sh || 0.44), ec = rh * (o.ec || 0.2), a0 = Math.asin(w / 2 / rh), as = Math.asin(sh / rh), xc = L / 2 - rh, step = o.step || 0.003;
++  const arc = (out, cx, cy, r, t0, t1, n) => { for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; out.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]); } };
++  const head = (kind) => { const p = [];   // (the right-hand head round its own middle (0, 0), CCW from where the handle's lower edge meets it to where its upper edge does)
++    if (kind === 'ring') arc(p, 0, 0, rh, -(Math.PI - a0), Math.PI - a0, 40);
++    else { arc(p, 0, 0, rh, -(Math.PI - a0), -as, 22); const xo = rh * Math.cos(as), n = Math.max(1, Math.ceil((xo - ec) / step)); for (let i = 1; i <= n; i++) p.push([xo + (ec - xo) * i / n, -sh]);
++      arc(p, ec, 0, sh, -Math.PI / 2, -Math.PI * 1.5, 18); for (let i = 1; i <= n; i++) p.push([ec + (xo - ec) * i / n, sh]); arc(p, 0, 0, rh, as, Math.PI - a0, 22); }
++    return p; };
++  const xa = -xc + rh * Math.cos(a0), xb = xc - rh * Math.cos(a0), ns = Math.max(1, Math.ceil((xb - xa) / step)), out = [];
++  for (let i = 0; i < ns; i++) out.push([xa + (xb - xa) * i / ns, -w / 2]);
++  head(ends[1]).forEach(([x, y]) => out.push([xc + x, y]));
++  for (let i = 1; i < ns; i++) out.push([xb + (xa - xb) * i / ns, w / 2]);
++  head(ends[0]).reverse().forEach(([x, y]) => out.push([-xc - x, y]));   // (the left head: the right one mirrored, its order reversed so the outline stays CCW)
++  const holes = []; [[0, -xc], [1, xc]].forEach(([k, cx]) => { if (ends[k] !== 'ring') return; const h = []; arc(h, cx, 0, rh * (o.hole || 0.5), 0, -Math.PI * 2, 28); h.pop(); holes.push(h); });
++  for (let i = out.length - 1; i > 0; i--) { const a = out[i], b = out[i - 1]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 1e-6) out.splice(i, 1); }
++  return { outer: out, holes, rh, w }; };
++// the outline on a canvas (map: metres -> px), filled with the even-odd rule (the holes cut out)
++const klPath = (g, W, map) => { g.beginPath(); [W.outer].concat(W.holes).forEach(pl => { pl.forEach(([x, y], i) => { const [px, py] = map(x, y); if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath(); }); };
++const klFill = (g, W, map, col) => { g.fillStyle = col; klPath(g, W, map); g.fill('evenodd'); };
++// a print on the cap: a canvas over the cap's square [-KLR, KLR]^2 (seen from above, up = away from the camera), its parts given by fn(g, map)
++const klCapTex = (key, fn) => pdTex('kl_' + key, 1024, 1024, (g, W, H) => { const map = (x, y) => [(x + KLR) / (2 * KLR) * W, (KLR - y) / (2 * KLR) * H]; fn(g, map, W / (2 * KLR)); });
++// a decal hugging the cap's dome (the dome's own shape a hair above it, planar uv: the print as seen from straight above), turned by KL.ang
++const klCapDecal = (P, tex, mat = {}) => { const g = new T.SphereGeometry(KLR + 0.0004, 64, 16, 0, Math.PI * 2, 0, Math.PI / 2), pa = g.attributes.position, uv = g.attributes.uv;
++  for (let i = 0; i < pa.count; i++) uv.setXY(i, 0.5 + pa.getX(i) / (2 * KLR), 0.5 - pa.getZ(i) / (2 * KLR));
++  const m = new T.Mesh(g, new T.MeshPhongMaterial(Object.assign({ color: 0xffffff, map: tex, transparent: true, shininess: 90, specular: 0x666666, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, depthWrite: false }, mat)));
++  m.scale.y = KLB / KLR; m.position.y = KLY; m.rotation.y = KL.ang; m.renderOrder = 2; P.add(m); return m; };
++// the raised wrench (KL.type 4): the outline extruded t high, every long triangle split (to 15 mm: the dome bends less than 0.2 mm over that) and every vertex lifted onto the dome (its foot
++// 1 mm into the cap); the top's normals the dome's
++const klRaised = (W, t) => { const sh = new T.Shape(W.outer.map(([x, y]) => new T.Vector2(x, y))); W.holes.forEach(h => sh.holes.push(new T.Path(h.map(([x, y]) => new T.Vector2(x, y)))));
++  let g = new T.ExtrudeGeometry(sh, { depth: t, bevelEnabled: false, curveSegments: 1 }); g.rotateX(-Math.PI / 2); g = g.index ? g.toNonIndexed() : g;
++  const P0 = g.attributes.position, N0 = g.attributes.normal, P = [], N = [], e = 0.015;
++  const tri = (a, b, c, na, nb, nc) => { const d = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]), dab = d(a, b), dbc = d(b, c), dca = d(c, a), mx = Math.max(dab, dbc, dca), mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, (p[2] + q[2]) / 2];
++    if (mx <= e) { P.push(...a, ...b, ...c); N.push(...na, ...nb, ...nc); return; }
++    if (mx === dab) { const m = mid(a, b), nm = mid(na, nb); tri(a, m, c, na, nm, nc); tri(m, b, c, nm, nb, nc); }
++    else if (mx === dbc) { const m = mid(b, c), nm = mid(nb, nc); tri(a, b, m, na, nb, nm); tri(a, m, c, na, nm, nc); }
++    else { const m = mid(c, a), nm = mid(nc, na); tri(a, b, m, na, nb, nm); tri(m, b, c, nm, nb, nc); } };
++  const v = (i) => [P0.getX(i), P0.getY(i), P0.getZ(i)], n = (i) => [N0.getX(i), N0.getY(i), N0.getZ(i)];
++  for (let i = 0; i < P0.count; i += 3) if (!(N0.getY(i) < -0.5 && N0.getY(i + 1) < -0.5 && N0.getY(i + 2) < -0.5)) tri(v(i), v(i + 1), v(i + 2), n(i), n(i + 1), n(i + 2));   // (its underside, in the cap, left out)
++  for (let i = 0; i < P.length; i += 3) { const x = P[i], z = P[i + 2], r = Math.hypot(x, z), up = N[i + 1] > 0.5; P[i + 1] += klDomeY(r) - 0.001;
++    if (up) { const s = Math.sqrt(Math.max(0.05, 1 - (r / KLR) * (r / KLR))), nx = KLB * x / (KLR * KLR * s), nz = KLB * z / (KLR * KLR * s), L = Math.hypot(nx, 1, nz); N[i] = nx / L; N[i + 1] = 1 / L; N[i + 2] = nz / L; } }
++  const G = new T.BufferGeometry(); G.setAttribute('position', new T.Float32BufferAttribute(P, 3)); G.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); G.computeBoundingSphere(); g.dispose(); return G; };
++// the wrench on the pedestal's front (KL.type 5): a strip of the pedestal's cone a hair outside it, KL.PW wide (radians), centred toward the
++// camera (the side of the axis' normal (sin a, 0, cos a)), its print (the canvas: u along the cone, round it; v down its height)
++const KLPW = 1.25;
++const klPedestal = (P) => { const r0 = 0.15, r1 = 0.17, y0 = 0.02, h = 0.05, d = 0.0012, th0 = KL.ang - KLPW / 2, arcL = (r0 + r1) / 2 * KLPW;
++  const [b0, b1] = KL.ped, hh = (b1 - b0) * 0.86, L = Math.min(0.13, hh / (2 * 0.15)), W = klWrenchPts(L, ['ring', 'open'], { rh: 0.15, w: 0.115 }), yc = (b0 + b1) / 2;
++  const tex = pdTex('kl_ped', 1024, Math.round(1024 * h / arcL), (g, Wc, Hc) => { const map = (x, y) => [(x / arcL + 0.5) * Wc, (y0 + h - (yc + y)) / h * Hc]; klFill(g, W, map, '#ffffff'); });
++  const geo = new T.CylinderGeometry(r0 + d, r1 + d, h, 32, 1, true, th0, KLPW), m = new T.Mesh(geo, new T.MeshPhongMaterial({ color: 0xffffff, map: tex, transparent: true, shininess: 60, specular: 0x444444, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, depthWrite: false }));
++  m.position.y = y0 + h / 2; m.renderOrder = 2; P.add(m); KL.pedL = L; return m; };
++// the wrench on the button by KL.type (P: the button's group, its foot at 0); KL.btn: the group (for the probe)
++const klWrench = (P) => { KL.btn = P; const t = KL.type, C = '#ffffff';
++  if (t === 1 || t === 2) { const W = klWrenchPts(0.17, t === 1 ? ['ring', 'open'] : ['open', 'ring']); klCapDecal(P, klCapTex('w' + t, (g, map) => klFill(g, W, map, C))); }
++  else if (t === 3) { const W = klWrenchPts(0.224, ['ring', 'open'], { rh: 0.165, w: 0.135 });
++    klCapDecal(P, klCapTex('w3', (g, map, s) => { klFill(g, W, map, C); const [cx, cy] = map(0, 0); g.strokeStyle = C; g.lineWidth = 0.0075 * s; g.beginPath(); g.arc(cx, cy, 0.1265 * s, 0, Math.PI * 2); g.stroke(); })); }
++  else if (t === 4) { const W = klWrenchPts(0.16, ['ring', 'open']);
++    klCapDecal(P, klCapTex('w4s', (g, map, s) => { g.filter = 'blur(' + Math.round(0.0035 * s) + 'px)'; g.globalAlpha = 0.55; klFill(g, W, (x, y) => map(x + 0.0035, y - 0.005), '#3a0006'); g.filter = 'none'; g.globalAlpha = 1; }), { shininess: 10, specular: 0x000000 });   // (its tiny shadow: soft, a little down and right on the screen)
++    const m = new T.Mesh(klRaised(W, 0.0055), PR.mat(0xf6f6f2, { shininess: 70, specular: 0x666666 })); m.rotation.y = KL.ang; m.castShadow = true; P.add(m); }
++  else if (t === 5) klPedestal(P);
++  else if (t === 6) { const W = klWrenchPts(0.178, ['open', 'open'], { rh: 0.17, w: 0.14 }); klCapDecal(P, klCapTex('w6', (g, map) => klFill(g, W, map, C))); }
++  else if (t >= 7 && t <= 12) klCapDecal(P, klCapTex('w' + t, (g, map, s) => KL2[t](g, map, s))); };
++// ---- KL2 (the user: "6 različnih postavitev ključa (ikone) v rdečem gumbu in dizajna"): six more designs of the cap's print, KL.type 7..12, each
++//      one canvas over the cap (klCapTex: metres, y away from the camera), level on the screen like 1..6. A shape's knock-out (destination-out)
++//      lets the cap's own red show through, so the red always matches the cap ----
++const klRot = (W, a, dx = 0, dy = 0) => { const c = Math.cos(a), sn = Math.sin(a), f = ([x, y]) => [x * c - y * sn + dx, x * sn + y * c + dy]; return Object.assign({}, W, { outer: W.outer.map(f), holes: W.holes.map(h => h.map(f)) }); };
++const klCut = (g, fn) => { g.save(); g.globalCompositeOperation = 'destination-out'; fn(); g.restore(); };
++const klCircle = (g, map, s, r, cx = 0, cy = 0) => { const [px, py] = map(cx, cy); g.beginPath(); g.arc(px, py, r * s, 0, Math.PI * 2); };
++const klGear = (n, r0, r1, rh) => { const out = [], hole = []; for (let i = 0; i < n; i++) { const a = i * Math.PI * 2 / n, t = Math.PI / n;   // (a gear: n teeth between r0 (root) and r1 (tip), a round hole rh)
++    [[a - t * 0.95, r0], [a - t * 0.42, r1], [a + t * 0.42, r1], [a + t * 0.95, r0]].forEach(([b, r]) => out.push([r * Math.cos(b), r * Math.sin(b)])); }
++  for (let i = 0; i < 48; i++) { const b = -i * Math.PI * 2 / 48; hole.push([rh * Math.cos(b), rh * Math.sin(b)]); } return { outer: out, holes: [hole] }; };
++const klDriver = (L) => { const hl = L * 0.4, hw = L * 0.19, sw = L * 0.065, x0 = -L / 2, xh = x0 + hl, xt = L / 2, out = [];   // (a screwdriver along x: a rounded handle (left), the shaft, a flat tip (right))
++  for (let i = 0; i <= 8; i++) { const b = Math.PI / 2 + i * Math.PI / 8; out.push([x0 + hw / 2 + hw / 2 * Math.cos(b), hw / 2 * Math.sin(b)]); }
++  out.push([xh - 0.004, -hw / 2], [xh, -hw * 0.3], [xh, -sw / 2], [xt - L * 0.07, -sw / 2], [xt, -sw * 0.32], [xt, sw * 0.32], [xt - L * 0.07, sw / 2], [xh, sw / 2], [xh, hw * 0.3], [xh - 0.004, hw / 2]);
++  return { outer: out, holes: [] }; };
++const KL2 = {
++  // 7 pressed in: a big wrench sunk into the cap: its floor a pale pink-white, a soft shadow inside along its far edges, a dark seam round it
++  7: (g, map, s) => { const W = klWrenchPts(0.205, ['ring', 'open'], { rh: 0.17, w: 0.14 }), d = 0.007; klFill(g, W, map, '#f2dcdc');
++    g.save(); klPath(g, W, map); g.clip('evenodd'); g.filter = 'blur(' + Math.round(0.0028 * s) + 'px)'; g.fillStyle = 'rgba(90,0,10,0.85)'; g.beginPath(); g.rect(-50, -50, g.canvas.width + 100, g.canvas.height + 100);
++      [W.outer].concat(W.holes).forEach(pl => { pl.forEach(([x, y], i) => { const [px, py] = map(x, y - d); if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath(); }); g.fill('evenodd'); g.restore();
++    g.strokeStyle = 'rgba(70,0,8,0.7)'; g.lineWidth = 0.0016 * s; klPath(g, W, map); g.stroke(); },
++  // 8 a badge: a white disc in the middle with the wrench cut out of it (red), a thin white ring round it
++  8: (g, map, s) => { const W = klWrenchPts(0.118, ['ring', 'open'], { rh: 0.19, w: 0.16 }); g.fillStyle = '#fff'; klCircle(g, map, s, 0.074); g.fill(); klCut(g, () => klFill(g, W, map, '#000'));
++    g.strokeStyle = '#fff'; g.lineWidth = 0.0055 * s; klCircle(g, map, s, 0.0855); g.stroke(); },
++  // 9 the service sign: a white gear (outline) behind the wrench, a red gap round the wrench where they cross
++  9: (g, map, s) => { const G = klGear(9, 0.071, 0.088, 0.056), W = klWrenchPts(0.196, ['ring', 'open'], { rh: 0.17, w: 0.14 }); klFill(g, G, map, '#fff');
++    klCut(g, () => { g.lineWidth = 0.011 * s; g.lineJoin = 'round'; klPath(g, { outer: W.outer, holes: [] }, map); g.stroke(); g.fill(); }); klFill(g, W, map, '#fff'); },
++  // 10 a racing stripe: a white band across the whole cap (level), a thin pinstripe each side, the wrench cut out of the band (red)
++  10: (g, map, s) => { const b = 0.031, W = klWrenchPts(0.158, ['ring', 'open'], { rh: 0.17, w: 0.14 }), band = (y0, y1) => { const [ax, ay] = map(-0.2, y1), [bx, by] = map(0.2, y0); g.fillRect(ax, ay, bx - ax, by - ay); };
++    g.fillStyle = '#fff'; band(-b, b); band(b + 0.006, b + 0.0115); band(-b - 0.0115, -b - 0.006); klCut(g, () => klFill(g, W, map, '#000')); },
++  // 11 crossed tools: the wrench and a screwdriver in an X, a red gap round the wrench where they cross
++  11: (g, map, s) => { const a = 0.82, D = klRot(klDriver(0.19), -a), W = klRot(klWrenchPts(0.19, ['ring', 'open'], { rh: 0.17, w: 0.14 }), a); klFill(g, D, map, '#fff');
++    klCut(g, () => { g.lineWidth = 0.011 * s; g.lineJoin = 'round'; klPath(g, { outer: W.outer, holes: [] }, map); g.stroke(); g.fill(); }); klFill(g, W, map, '#fff'); },
++  // 12 a small wrench in the cap's upper part (away from the camera), a thin white ring round the rim, a soft painted gloss at the upper left
++  12: (g, map, s) => { const W = klRot(klWrenchPts(0.118, ['ring', 'open'], { rh: 0.19, w: 0.16 }), 0, 0, 0.048); klFill(g, W, map, '#fff');
++    g.strokeStyle = '#fff'; g.lineWidth = 0.0065 * s; klCircle(g, map, s, 0.1265); g.stroke();
++    const [hx, hy] = map(-0.052, 0.07), gr = g.createRadialGradient(hx, hy, 0, hx, hy, 0.045 * s); gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
++    g.save(); g.translate(hx, hy); g.rotate(-0.6); g.scale(1.6, 0.7); g.translate(-hx, -hy); g.fillStyle = gr; g.beginPath(); g.arc(hx, hy, 0.045 * s, 0, Math.PI * 2); g.fill(); g.restore(); } };
+ // ---- the parts on the top: a model on its stand, or the service element; returns { obj, top, glows } ----
+ const amPart = (g, M, key, kind, v) => { const P = new T.Group(); g.add(P); let top = 0; const glows = [];
+   if (key === 'aero') { const style = v === 1 ? 'white' : v === 2 ? 'carpaint' : 'kitpaint', md = amModel(style, kind, v === 3 ? 0.072 : AMF.sc); let h0 = 0;
+@@ -2840,7 +2948,8 @@
+     if (v === 1) {   // (the push button: a round aluminium foot, a short navy pedestal, a chrome collar, the red cap with a white wrench)
+       amCyl(P, M.AL, 0.2, 0.21, 0.02, 0); amCyl(P, M.NV, 0.15, 0.17, 0.05, 0.02); const col = new T.Mesh(new T.TorusGeometry(0.15, 0.016, 12, 48), M.STL); col.rotation.x = Math.PI / 2; col.position.y = 0.074; P.add(col);
+       const RD = PR.mat(0xd8202a, { shininess: 90, specular: 0x666666, emissive: 0x2a0204 }); amCyl(P, RD, 0.135, 0.14, 0.03, 0.07); const cap = new T.Mesh(new T.SphereGeometry(0.135, 48, 10, 0, Math.PI * 2, 0, Math.PI / 2), RD); cap.scale.y = 0.18; cap.position.y = 0.1; P.add(cap);
+-      const ic = new T.Mesh(new T.CircleGeometry(0.1, 40), new T.MeshLambertMaterial({ map: amWrenchTex(), transparent: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); ic.rotation.x = -Math.PI / 2; ic.position.y = 0.1 + 0.135 * 0.18 + 0.0005; ic.renderOrder = 2; P.add(ic);
++      KL.btn = P; if (KL.type) klWrench(P);   // (KL: the wrench lying horizontally, by KL.type; 0: today's diagonal print below)
++      else { const ic = new T.Mesh(new T.CircleGeometry(0.1, 40), new T.MeshLambertMaterial({ map: amWrenchTex(), transparent: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); ic.rotation.x = -Math.PI / 2; ic.position.y = 0.1 + 0.135 * 0.18 + 0.0005; ic.renderOrder = 2; P.add(ic); }
+       top = 0.13; }
+     else if (v === 2) {   // (the single-post lift: a base plate, the orange post with its carriage, two arms forward, a tiny car on them)
+       const OR = PR.mat(0xff7a1a, { shininess: 60, specular: 0x553311 }), DK = PR.mat(0x2a2d33, { shininess: 40 }), YL = PR.mat(0xf2c230, { shininess: 30 });

@@ -1,0 +1,19 @@
+NEW ROUND AV (relayed by the main session). THE USER'S WORDS: "Maketa v barvi avta, rdeč gumb. Zbriši GT PACK, tam pusti prazen prostor.
+Ostale 3 makete naj ostanejo na istem prostoru. Aero paketi naj bodo različnih barv, avti naj imajo tudi različne poslikave. Naredi 6
+različnih verzij. Ko klikneš na aero paket, se osvetli maketa avta in ne štirikotnik kot sedaj. Izboljšaj grafiko dvigala, dodaj še
+različna dvigala."
+= Combine your version 2's models (painted like a car) with version 1's service element (the big red push button). Remove the GT PACK
+model: its place on the top stays EMPTY (no plinth either? keep the bare top, or only its empty plinth/turntable: your choice, say which);
+STREET, SPORT and RACE stay exactly where they are. The aero kit parts get DIFFERENT colours (not all carbon), and each car model gets its
+own LIVERY (different paint and graphics: stripes, a racing number, two-tone, a flame, a chequer band...; generic, no brands). SIX
+versions with different kit colours and liveries. When an aero model is tapped, the CAR MODEL itself lights up (light turquoise with the
+yellow rim around the model's own silhouette, like the tapped parts on the car), not the rectangular cell (the cell stays the invisible
+tap area). Show it in tap_aero.png (tap on RACE now, GT is gone: flag "AERO PAKET – DIRKALNI", the aero card with Dirkalni selected) and in
+tap_all.png (each model's own silhouette lit). The lift: another agent (LF) makes six lift designs as a patch; when the file P/out/lf/DONE
+exists, apply P/out/lf/lift.patch to each of your store copies and set the lift design k in your version k (its setting is in the
+patch, e.g. PBL.type = k); render your finals after that. If the patch does not apply, say so and render without it.
+Your files: store copies P/concepts/_e_store2_av1.js .. av6.js (from your _e_store2_am2.js / am1.js; only the front cabinets' block plus the
+lift patch; gift hidden; never the regal's other parts, never PROPOSAL 1), P/mk_base_av<k>.sh, body P/concepts/_av_body.js, P/mk_av.sh,
+P/render_av.sh, P/harness_av.mjs; outputs P/out/av_1 .. av_6 (f0.png, vrh_zoom.png, omarici_hq.png, tap_servis.png, tap_aero.png,
+tap_all.png, tap_all_zoom.png, info.json with the liveries and kit colours, the measures (every element >= 40x40), the load); progress
+P/out/av/notes.md; one render at a time (LF renders too); NO git commands. Look at every picture before you finish. Final report as before.

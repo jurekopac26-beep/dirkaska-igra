@@ -1,0 +1,427 @@
+--- _e_store2_am2.js
++++ _e_store2_lf.js
+@@ -1111,7 +1111,7 @@
+ //      "!", the electric one with a bolt; no words); the controls on the side as the game's, the side plate a warning label; the carriage
+ //      as the game's (the same plate, crosshead, ribs, guides, latch and lever, pin bosses), its plate bevelled (lighter chamfers), six
+ //      bolt heads, a warning label instead of the blank plate ----
+-const PBL = { on: true, top: 2.77, cap: 0.042, S: 0.048, R: 0.045, plate: 0.78 };   // (top: the column's body top, its cap's top 5 cm over it (was 2.98 and 3.085); plate: the carriage's plate top over its foot (cy + plate; was 0.9): at the game's highest lift (1.35 m) the SAMUM's carriage (its pads' level 0.486 m) reaches 2.76 m, under the column's top)
++const PBL = { on: true, top: 2.77, cap: 0.042, S: 0.048, R: 0.045, plate: 0.78, type: 1 };   // (LF: type: the lift's design, 0 PB's as it was, 1..6 the six lifts of the LF block (LFT), 1 by default; top: the column's body top, its cap's top 5 cm over it (was 2.98 and 3.085); plate: the carriage's plate top over its foot (cy + plate; was 0.9): at the game's highest lift (1.35 m) the SAMUM's carriage (its pads' level 0.486 m) reaches 2.76 m, under the column's top)
+ const PBC = { ZN: [0.6, 0.62, 0.65], ZNt: [0.74, 0.76, 0.79], AR: [0.35, 0.37, 0.41], PL: [0.24, 0.25, 0.27], PLt: [0.29, 0.3, 0.32], BLK: [0.07, 0.07, 0.08], DK: [0.12, 0.12, 0.13],
+   GR: [0.17, 0.18, 0.2], GRt: [0.23, 0.24, 0.26], CAP: [0.13, 0.135, 0.15], CAPe: [0.30, 0.31, 0.33], CAPt: [0.18, 0.19, 0.21], SLOT: [0.025, 0.027, 0.03], WALL: [0.07, 0.072, 0.08], WALLt: [0.16, 0.165, 0.18],
+   CH0: [0.2, 0.205, 0.22], CH1: [0.3, 0.31, 0.33], PIN: [0.56, 0.58, 0.62], TOOTH: [0.4, 0.41, 0.44], TOOTHd: [0.14, 0.145, 0.16], RACK: [0.1, 0.105, 0.115],
+@@ -1250,20 +1250,403 @@
+   const ly = ph - 0.14; World.box(g, 0, cy + ly, zf + 0.069, 0.1, 0.09, 0.03, 0, C.AR); World.box(g, 0.055, cy + ly - 0.03, zf + 0.087, 0.012, 0.012, 0.012, 0, C.ZN); pbObox(g, [0.05, cy + ly + 0.03, zf + 0.09], [0.15, cy + ly + 0.07, zf + 0.09], 0.016, 0.01, [0.72, 0.12, 0.09]);   // (the lock's latch and its lever under the plate's top, as the game's)
+   for (const i of [0, 2]) { const [px, pz] = L.arms[i].p; pbCyl(g, [px, (0.0225 + cy) / 2, pz], 'y', 0.024, cy - 0.0225, 8, C.ZN); pbCyl(g, [px, cy + 0.11, pz], 'y', 0.048, 0.07, 12, C.ZN, [0.4, 0.42, 0.45]); }
+   return { P: g.P, N: g.N, C: g.C, gl: pbGlArr(g), n: g.P.length / 3 }; };
+-// the game's lift back (its column geometry, its carriage and arms' build and the carriage's mesh) when PB built its own
+-const pbLiftOff = () => { const L = D.LIFT; if (!L || !L._pb) return; const o = L._pb; o.mesh.geometry.dispose(); o.mesh.geometry = o.geo; L.cmesh.geometry.dispose(); L.cmesh.geometry = o.cgeo; L.geo = o.B; L.n0 = o.n0; delete L._pb; if (D.poseLift) D.poseLift(); };
+-// the new lift (after wLiftColour: v its variant); returns its load before / after (meshes, vertices)
++// ==== LF: SIX LIFTS (agent LF; the user: "Izboljšaj grafiko dvigala, dodaj še različna dvigala."): PBL.type picks the lift's design
++//      (0: PB's lift as it was (pbColumnGeo, pbCarriage, the game's arms); 1..6 the six below; default 1). Every design keeps the game's
++//      lift: the same place behind the car (the column round (0, -1.72), its face z -1.605: the stowed arms pass before it), the same arms'
++//      pins, moves and pads' height (the arms built anew in the game's own way: liftGeo's tags arm / kd / kp / kr, so poseLift moves them as
++//      the game's; the cups r 6.2 cm: the lane 1.38 m), the carriage moved by poseLift (its vertices up by L.c; nothing of it nearer the car
++//      than the game's crosshead, z -1.392), the column's piece (its dissolve, its gloss); the robots' box zLiftObs (0.54 × 3.1 × 0.48 at
++//      (0.03, 1.55, -1.80)) holds every column. One merged mesh each: the column (with its base and power unit), the carriage, the arms
++//      (the game's three); designs 4 and 6 a fourth: their LED line (additive, the piece's dissolve). At the game's highest lift (1.35 m,
++//      the SAMUM: its carriage up by 1.836 m) each carriage stays under its column's top (LFT[k].ph: the carriage plate's height).
++//   1 PB's lift refined: cleaner bevels (no chips, scuffs or stain), a chrome hydraulic ram in the track (the carriage rides on it: its
++//     bushing), the lock rack beside it, the arms' pads ribbed rubber in yellow cups, a cable chain from the power unit up to a small
++//     control box (up, down with arrows, the red stop on yellow, a key, a lamp), yellow and black on the base flange's edges
++//   2 TELESKOPSKI: a round three-stage telescopic column (an orange foot stage, a chrome stage with an orange collar, the chrome ram)
++//     with the carriage ON TOP: a head on the ram, a fork plate from it down to the arms' yoke. Low at rest (the head's top 1.25 m); the
++//     ram (in the carriage's mesh: it rises with it) runs out to 3.05 m at the SAMUM's 1.35 m (its foot then 12 cm inside the chrome
++//     stage; at rest the ram's lower part lies under the floor: the floor hides it, its mirror is cut at the floor)
++//   3 INDUSTRIJSKI: a heavy box-section column (0.40 × 0.315 m) with stiffener bands, a wide track with the lock ladder (zinc rails and
++//     steel rungs), a counterweight housing on its back (its bolted cover, its window), bolted gussets at its foot, hazard stripes on the
++//     foot, the flange, the housing and the carriage's crosshead
++//   4 ELEGANTEN RAZSTAVNI: a slim rounded white column with orange lines, a soft warm LED line along its track, a rounded white plinth
++//     that hides the power unit, a slim touch panel; an orange rounded carriage with white bands, white arms
++//   5 DVOJNI STEBER ZADAJ: two slim orange columns side by side (0.12 × 0.18 m each, 0.34 m apart) on one base, a cross beam on top, a
++//     tie at their backs, the carriage between them (its shoes in the columns' tracks); the power unit behind
++//   6 STENSKA KONZOLA: a dark graphite column tapering up from a heavy faceted plinth (the power unit in it), an orange LED line in its
++//     track, and a large faceted orange boom (the carriage) that carries the arms; graphite arms with orange cups ----
++const LFC = { CHR: [0.8, 0.82, 0.85], CHRt: [0.92, 0.93, 0.95], CHRd: [0.46, 0.48, 0.52], WH: [0.85, 0.86, 0.87], WHt: [0.93, 0.94, 0.95], WHs: [0.72, 0.73, 0.75], WHd: [0.6, 0.61, 0.63],
++  GP: [0.13, 0.14, 0.16], GPt: [0.2, 0.21, 0.24], GPe: [0.34, 0.35, 0.39], SAT: [0.6, 0.62, 0.65], SATt: [0.7, 0.72, 0.75], RUB: [0.075, 0.075, 0.08], RUBt: [0.15, 0.15, 0.16],
++  GLASS: [0.05, 0.06, 0.08], LED: [1.3, 1.08, 0.78], LEDo: [1.45, 0.62, 0.14], LEDg: [0.2, 1.1, 0.35], LEDr: [1.3, 0.15, 0.1], LEDw: [1.1, 1.1, 1.1] };
++const LFGL = { CHROME: 2.8, SATIN: 1.6 };
++const lfMix = (a, b, t) => a.map((x, i) => x * (1 - t) + b[i] * t);
++// a smooth upright cylinder round (cx, cz) from y0 to y1 (n sides, round shading; col at its foot, colTop at its top), its top capped (top: colour)
++const lfCylY = (g, cx, cz, r, y0, y1, n, col, top, colTop) => { const P = (a, y) => [cx + Math.cos(a) * r, y, cz + Math.sin(a) * r], N = (a) => [Math.cos(a), 0, Math.sin(a)], ins = [cx, (y0 + y1) / 2, cz], ct = colTop || col;
++  for (let i = 0; i < n; i++) { const a0 = i / n * 2 * Math.PI, a1 = (i + 1) / n * 2 * Math.PI; g.quadON(P(a0, y0), P(a1, y0), P(a1, y1), P(a0, y1), N(a0), N(a1), N(a1), N(a0), ins, col, col, ct, ct);
++    if (top) g.triO([cx, y1, cz], P(a0, y1), P(a1, y1), top, [cx, y1 - 1, cz]); } };
++// an outline round (cx, cz): a rectangle 2 hx × 2 hz, its front corners (+z) rounded by rf, its back ones by rb (n segments a corner); [x, z] points
++const lfOutline = (cx, cz, hx, hz, rf, rb, n) => { const out = [], arc = (ox, oz, r, a0) => { for (let i = 0; i <= n; i++) { const a = a0 + i / n * Math.PI / 2, p = [ox + Math.cos(a) * r, oz + Math.sin(a) * r]; const q = out[out.length - 1]; if (!q || Math.hypot(q[0] - p[0], q[1] - p[1]) > 1e-5) out.push(p); } };
++  arc(cx + hx - rf, cz + hz - rf, rf, 0); arc(cx - hx + rf, cz + hz - rf, rf, Math.PI / 2); arc(cx - hx + rb, cz - hz + rb, rb, Math.PI); arc(cx + hx - rb, cz - hz + rb, rb, 1.5 * Math.PI);
++  if (Math.hypot(out[0][0] - out[out.length - 1][0], out[0][1] - out[out.length - 1][1]) < 1e-5) out.pop(); return out; };
++// an upright prism on an outline from y0 to y1: its normals smooth where the outline bends by under 40 degrees (the round corners); col(n, top):
++// a vertex's colour by its outward normal (top: at y1); skip(n, a, b): leave that face out (a front cut round a slot); top: its cap's colour
++const lfPrismO = (g, pts, y0, y1, col, top, skip) => { const m = pts.length, c = [pts.reduce((s, p) => s + p[0], 0) / m, (y0 + y1) / 2, pts.reduce((s, p) => s + p[1], 0) / m];
++  const sn = pts.map((a, i) => { const b = pts[(i + 1) % m], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; let n = [dz / l, 0, -dx / l]; if (n[0] * ((a[0] + b[0]) / 2 - c[0]) + n[2] * ((a[1] + b[1]) / 2 - c[2]) < 0) n = [-n[0], 0, -n[2]]; return n; });
++  const vn = (i, j) => { const a = sn[i], b = sn[j]; if (a[0] * b[0] + a[2] * b[2] < 0.766) return null; const x = a[0] + b[0], z = a[2] + b[2], l = Math.hypot(x, z) || 1; return [x / l, 0, z / l]; };
++  for (let i = 0; i < m; i++) { const j = (i + 1) % m, a = pts[i], b = pts[j], n = sn[i]; if (skip && skip(n, a, b)) continue;
++    const na = vn((i + m - 1) % m, i) || n, nb = vn(i, j) || n; g.quadON([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]], na, nb, nb, na, c, col(na, 0), col(nb, 0), col(nb, 1), col(na, 1)); }
++  if (top) for (let i = 0; i < m; i++) { const a = pts[i], b = pts[(i + 1) % m]; g.triO([c[0], y1, c[2]], [a[0], y1, a[1]], [b[0], y1, b[1]], top, [c[0], y1 - 1, c[2]]); } };
++// between two outlines of the same count (lower lo at y0, upper up at y1): flat faces, col(n): a face's colour by its normal; skip(n, i)
++const lfLoft = (g, lo, y0, up, y1, col, skip) => { const m = lo.length, c = [lo.concat(up).reduce((s, p) => s + p[0], 0) / (2 * m), (y0 + y1) / 2, lo.concat(up).reduce((s, p) => s + p[1], 0) / (2 * m)];
++  for (let i = 0; i < m; i++) { const j = (i + 1) % m, A = [lo[i][0], y0, lo[i][1]], B = [lo[j][0], y0, lo[j][1]], Cq = [up[j][0], y1, up[j][1]], Dq = [up[i][0], y1, up[i][1]];
++    const u = V(B[0] - A[0], B[1] - A[1], B[2] - A[2]), w = V(Dq[0] - A[0], Dq[1] - A[1], Dq[2] - A[2]), n = V().crossVectors(u, w).normalize(), mid = V((A[0] + Cq[0]) / 2 - c[0], (A[1] + Cq[1]) / 2 - c[1], (A[2] + Cq[2]) / 2 - c[2]); if (n.dot(mid) < 0) n.negate();
++    if (skip && skip(n.toArray(), i)) continue; g.quadO(A, B, Cq, Dq, col(n.toArray()), c); } };
++const lfCap = (g, pts, y, col, down) => { const m = pts.length, c = [pts.reduce((s, p) => s + p[0], 0) / m, y, pts.reduce((s, p) => s + p[1], 0) / m]; for (let i = 0; i < m; i++) { const a = pts[i], b = pts[(i + 1) % m]; g.triO(c, [a[0], y, a[1]], [b[0], y, b[1]], col, [c[0], y + (down ? 1 : -1), c[2]]); } };
++const lfScale = (pts, cx, cz, d) => pts.map(([x, z]) => { const dx = x - cx, dz = z - cz, l = Math.hypot(dx, dz) || 1; return [x + dx / l * d, z + dz / l * d]; });
++// the column's finished geometry: its gloss, the low 0.4 m darker towards the floor (as the game's pieces); the carriage's arrays
++const lfGeo = (g) => { const geo = g.geometry(), gl = pbGlArr(g); geo.setAttribute('gloss', new T.BufferAttribute(gl, 1));
++  const Pp = geo.attributes.position, Cc = geo.attributes.color; for (let i = 0; i < Pp.count; i++) { const y = Pp.getY(i); if (y < 0.4) { const t = Math.min(1, Math.max(0, y / 0.4)), a = 0.5 + 0.5 * t * t * (3 - 2 * t); Cc.setXYZ(i, Cc.getX(i) * a, Cc.getY(i) * a, Cc.getZ(i) * a); } }
++  geo.computeBoundingSphere(); return geo; };
++const lfCarOut = (g) => ({ P: g.P, N: g.N, C: g.C, gl: pbGlArr(g), n: g.P.length / 3 });
++// the floor plate (the game's 1.12 × 0.635 m): st.line: a clean one (no yellow and black: a thin line of that colour round it); pl, plt its colours
++const lfPlate = (g, st = {}) => { const L = D.LIFT, X = L.x, zf = L.z + L.hz, C = PBC, pz0 = zf, pz1 = -2.24, pzc = (pz0 + pz1) / 2, pd = pz0 - pz1, ps = pd - 0.14, yt = 0.015, ins = [X, -1, pzc];
++  pbGl(g, PBGL.PLATE); pbBox(g, X, 0, pzc, 1.12, 0.012, pd, st.pl || C.PL, st.plt || C.PLt); pbGl(g, PBGL.PAINT);
++  if (st.line) for (const [bx, bz, sx, sz] of [[X, pz0 - 0.035, 1.05, 0.012], [X, pz1 + 0.035, 1.05, 0.012], [X - 0.519, pzc, 0.012, pd - 0.07], [X + 0.519, pzc, 0.012, pd - 0.07]]) pbBox(g, bx, 0.012, bz, sx, 0.0015, sz, st.line);
++  else { for (const [bx, bz, sx, sz] of [[X, pz0 - 0.035, 1.12, 0.07], [X, pz1 + 0.035, 1.12, 0.07], [X - 0.525, pzc, 0.07, ps], [X + 0.525, pzc, 0.07, ps]]) pbBox(g, bx, 0.012, bz, sx, 0.0015, sz, C.BLK);
++    pbHazard(g, [X - 0.56, yt, pz0], [1, 0, 0], [0, 0, -1], 1.12, 0.07, 0.07, ins); pbHazard(g, [X + 0.56, yt, pz1], [-1, 0, 0], [0, 0, 1], 1.12, 0.07, 0.07, ins);
++    pbHazard(g, [X - 0.56, yt, pz1 + 0.07], [0, 0, 1], [1, 0, 0], ps, 0.07, 0.07, ins); pbHazard(g, [X + 0.56, yt, pz0 - 0.07], [0, 0, -1], [-1, 0, 0], ps, 0.07, 0.07, ins); }
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.4, -1.71], [0.4, -1.71], [-0.4, -2.12], [0.4, -2.12], [-0.13, -2.17], [0.33, -2.17]]) { pbCyl(g, [X + bx, 0.016, bz], 'y', 0.026, 0.004, 8, C.AR); pbCyl(g, [X + bx, 0.022, bz], 'y', 0.02, 0.012, 6, st.bolt || C.ZN, st.boltT || C.ZNt); } };
++// the foot band in yellow and black on an upright box's four faces (round (cx, cz), half sizes hx, hz, from y0 to y1)
++const lfFootHz = (g, cx, cz, hx, hz, y0, y1, pitch = 0.075, e = 0.025) => { const h = y1 - y0, ins = [cx, (y0 + y1) / 2, cz];
++  pbHazard(g, [cx - hx + e, y0, cz + hz + 0.003], [1, 0, 0], [0, 1, 0], 2 * hx - 2 * e, h, pitch, ins); pbHazard(g, [cx + hx - e, y0, cz - hz - 0.003], [-1, 0, 0], [0, 1, 0], 2 * hx - 2 * e, h, pitch, ins);
++  pbHazard(g, [cx + hx + 0.003, y0, cz + hz - e], [0, 0, -1], [0, 1, 0], 2 * hz - 2 * e, h, pitch, ins); pbHazard(g, [cx - hx - 0.003, y0, cz - hz + e], [0, 0, 1], [0, 1, 0], 2 * hz - 2 * e, h, pitch, ins); };
++// a small control box on the column's +x face (xs) round z zc from y0 (0.24 m tall): its edges cut, the up button green and the down one
++// black (white arrows on them), the red stop on its yellow ring, a key switch and a green lamp; k: its paint
++const lfCtl = (g, xs, zc, y0, k = [0.15, 0.16, 0.18], d = 0.06) => { const C = PBC, kt = lfMix(k, [1, 1, 1], 0.12), x1 = xs + d, ins = [xs - 0.1, y0 + 0.12, zc];
++  pbGl(g, PBGL.PAINT); pbPrism(g, xs + d / 2, zc, d / 2, 0.075, 0.008, y0, y0 + 0.24, [k, kt, k, k, k, k, kt, kt], kt);
++  const btn = (y, z, col, up) => { pbBox(g, x1 + 0.002, y - 0.02, z, 0.004, 0.04, 0.04, col); const s = up ? 1 : -1, x = x1 + 0.0045; g.triO([x, y + 0.011 * s, z], [x, y - 0.008 * s, z - 0.01], [x, y - 0.008 * s, z + 0.01], C.WHITE, ins); };
++  btn(y0 + 0.18, zc + 0.035, C.GRN, true); btn(y0 + 0.12, zc + 0.035, [0.06, 0.06, 0.07], false);
++  pbCyl(g, [x1 + 0.004, y0 + 0.12, zc - 0.035], 'x', 0.03, 0.008, 12, C.YL); pbCyl(g, [x1 + 0.017, y0 + 0.12, zc - 0.035], 'x', 0.02, 0.018, 10, C.RED, [0.85, 0.16, 0.12]);
++  pbGl(g, PBGL.METAL); pbCyl(g, [x1 + 0.004, y0 + 0.05, zc - 0.035], 'x', 0.011, 0.008, 8, C.ZN, C.ZNt); pbGl(g, PBGL.PAINT); pbBox(g, x1 + 0.0085, y0 + 0.044, zc - 0.035, 0.002, 0.012, 0.0025, C.BLK);
++  pbCyl(g, [x1 + 0.002, y0 + 0.05, zc + 0.035], 'x', 0.006, 0.004, 8, [0.3, 1, 0.45]); };
++// a compact power unit on a column's back face zb (round x xc): its plate, the oil tank (the oil's level), the pump block and the red
++// release lever, the upright motor (its cooling rings, the black fan cover), the pressure hose into the column, the motor's lead away
++// over the floor; a warning label on the tank (its depth 11 cm)
++const lfPU = (g, xc, zb, y0 = 0.034, o = {}) => { const C = PBC, X = xc, t0 = zb - 0.006, t1 = zb - 0.106, tc = (t0 + t1) / 2;
++  pbGl(g, PBGL.PAINT); if (o.plate !== false) pbBox(g, X, y0, zb - 0.003, 0.26, 0.5, 0.006, C.DK);
++  pbGl(g, PBGL.PLATE); pbBox(g, X - 0.02, y0, tc, 0.2, 0.15, t0 - t1, C.OIL, C.OIL); pbBox(g, X - 0.02, y0 + 0.15, tc, 0.2, 0.08, t0 - t1, C.TANK, C.TANKt);
++  pbGl(g, PBGL.MATTE); pbCyl(g, [X - 0.085, y0 + 0.24, tc], 'y', 0.018, 0.02, 8, C.BLK);
++  pbGl(g, PBGL.METAL); pbBox(g, X + 0.02, y0 + 0.23, tc, 0.1, 0.06, 0.09, C.AL, C.ALt);
++  pbGl(g, PBGL.PAINT); pbObox(g, [X + 0.07, y0 + 0.27, t1 + 0.02], [X + 0.12, y0 + 0.25, t1 + 0.02], 0.01, 0.01, C.RED); pbCyl(g, [X + 0.125, y0 + 0.248, t1 + 0.02], 'x', 0.01, 0.018, 8, C.RED);
++  pbCyl(g, [X + 0.02, y0 + 0.385, tc], 'y', 0.045, 0.19, 12, C.MOT, C.MOTd); for (const y of [0.32, 0.36, 0.4, 0.44]) pbCyl(g, [X + 0.02, y0 + y, tc], 'y', 0.0485, 0.007, 12, C.MOTd);
++  pbGl(g, PBGL.MATTE); pbCyl(g, [X + 0.02, y0 + 0.492, tc], 'y', 0.047, 0.024, 12, C.BLK, [0.2, 0.21, 0.22]);
++  pbSign(g, [X - 0.02, y0 + 0.08, t1 - 0.0003], [-1, 0, 0], [0, 1, 0], 0.08, '!');
++  const hx = o.hx != null ? o.hx : X + 0.06; pbTube(g, [[X + 0.05, y0 + 0.26, tc + 0.02], [(X + 0.06 + hx) / 2, y0 + 0.32, zb - 0.02], [hx, y0 + 0.36, zb + (o.hz || 0.01)]], 0.009, C.BLK, 8, 6);
++  pbTube(g, [[X + 0.068, y0 + 0.4, tc], [X + 0.09, y0 + 0.3, tc - 0.02], [X + 0.1, y0 + 0.05, tc - 0.03], [X + 0.09, 0.019, t1 - 0.015], [X + 0.05, 0.019, -2.3]], 0.006, C.BLK, 14, 5); };
++// ---- the arms (the game's liftGeo's arms, built anew: the knuckle on its pin, the outer tube (its top face lit), the two inner ones, the
++//      pad's seat, its screw and the adapter, the cup and a ribbed rubber pad; every vertex tagged as the game tags it, so poseLift swings,
++//      runs out and turns them as the game's). A: { KN, KNt (the knuckle), OR, ORt (the outer tube), IN, INt, INgl (the inner tubes), CUP, RUB, RUBt } ----
++const lfArms = (A) => { const L = D.LIFT, g = pbGB(), T = { arm: [], kd: [], kp: [], kr: [] }, n = () => g.P.length / 3; let m0 = 0;
++  const tag = (arm, kd, kp, kr, ym) => { for (let i = m0, e = n(); i < e; i++) { T.arm[i] = arm; T.kd[i] = kd; T.kp[i] = ym != null ? (g.P[i * 3 + 1] > ym ? kp[1] : kp[0]) : kp; T.kr[i] = kr; } m0 = n(); };
++  const SX = 0.06, PB0 = 0.15, C = PBC;
++  for (let i = 0; i < 4; i++) { const lc = L.arms[i].lc;
++    pbGl(g, PBGL.PAINT); pbCyl(g, [0, 0, 0], 'y', 0.052, 0.045, 12, A.KN, A.KNt); World.box(g, (0.04 + lc - 0.06) / 2, -0.0225, 0, lc - 0.1, 0.045, 0.075, 0, A.OR, A.ORt); tag(i, 0, 0, 0);
++    pbGl(g, A.INgl || PBGL.METAL); World.box(g, (0.11 + lc + 0.02) / 2, -0.018, 0, lc - 0.09, 0.036, 0.062, 0, A.IN, A.INt || A.IN); tag(i, 1, 0, 0);
++    World.box(g, (0.16 + lc + 0.04) / 2, -0.0145, 0, lc - 0.12, 0.029, 0.05, 0, A.IN, A.INt || A.IN); World.box(g, lc, 0.0145, 0, 0.07, 0.008, 0.07, 0, C.AR); tag(i, 2, 0, 0);
++    pbCyl(g, [lc, 0.0225 + SX / 2, 0], 'y', 0.02, SX, 8, C.ZN); tag(i, 2, [0, 1], 0, 0.0225 + SX / 2);
++    pbCyl(g, [lc, 0.0225 + (SX + PB0) / 2, 0], 'y', 0.04, PB0 - SX, 12, C.AR, C.ZN); tag(i, 2, [1, 2], 1, 0.0225 + (SX + PB0) / 2);
++    pbGl(g, PBGL.PAINT); pbCyl(g, [lc, 0.0285 + PB0, 0], 'y', 0.062, 0.012, 14, A.CUP, lfMix(A.CUP, [1, 1, 1], 0.15)); tag(i, 2, 2, 0);
++    pbGl(g, PBGL.MATTE); pbCyl(g, [lc, 0.0435 + PB0, 0], 'y', 0.058, 0.018, 14, A.RUB, A.RUBt); for (const dz of [-0.026, 0, 0.026]) World.box(g, lc, 0.0525 + PB0, dz, 2 * Math.sqrt(0.054 * 0.054 - (Math.abs(dz) + 0.006) ** 2), 0.004, 0.012, 0, A.RUB, A.RUBt); tag(i, 2, 2, 0); }
++  return { P: Float32Array.from(g.P), N: Float32Array.from(g.N), C: Float32Array.from(g.C), gl: pbGlArr(g), arm: Int8Array.from(T.arm), kd: Uint8Array.from(T.kd), kp: Uint8Array.from(T.kp), kr: Uint8Array.from(T.kr), n: n() }; };
++const lfArmsOf = (O, k) => { const C = PBC, base = { KN: O.OR, KNt: O.ORt, OR: O.OR, ORt: O.HI, IN: C.ZN, INt: C.ZNt, CUP: C.YL, RUB: LFC.RUB, RUBt: LFC.RUBt };
++  if (k === 2) return Object.assign(base, { IN: LFC.CHR, INt: LFC.CHRt, INgl: LFGL.CHROME });
++  if (k === 3) return Object.assign(base, { IN: C.AR, INt: [0.42, 0.44, 0.48], KN: C.DK, KNt: C.GRt });
++  if (k === 4) return Object.assign(base, { KN: LFC.WH, KNt: LFC.WHt, OR: LFC.WH, ORt: LFC.WHt, IN: LFC.SAT, INt: LFC.SATt, INgl: LFGL.SATIN, CUP: O.OR });
++  if (k === 6) return Object.assign(base, { KN: LFC.GP, KNt: LFC.GPe, OR: LFC.GP, ORt: LFC.GPe, IN: LFC.SAT, INt: LFC.SATt, INgl: LFGL.SATIN, CUP: O.OR });
++  return base; };
++// the carriage's common parts (liftGeo's): the yoke (crosshead) over the pins from the column's face (zb0, default its face) to the game's
++// front (z -1.392), its top's front edge lit, the gusset, the pins down to the arms and a boss on each; cy: the crosshead's underside
++const lfYoke = (g, O, o = {}) => { const L = D.LIFT, cy = L.du + D.PAD.h + 0.02 + 0.0135, zf = L.z + L.hz, C = PBC, z0 = o.z0 != null ? o.z0 : zf;
++  pbGl(g, PBGL.PAINT); if (o.bar !== false) { World.box(g, 0, cy, (z0 - 1.392) / 2, 1.4, 0.075, -1.392 - z0, 0, o.col || O.OR, o.top || O.ORt);
++    g.quadO([-0.7, cy + 0.0755, -1.41], [0.7, cy + 0.0755, -1.41], [0.7, cy + 0.0755, -1.392], [-0.7, cy + 0.0755, -1.392], o.hi || O.HI, [0, cy, -1.5]); }
++  if (o.gusset !== false) World.box(g, 0, cy + 0.075, o.gz || zf + 0.079, 0.3, 0.13, 0.05, 0, o.col || O.OR, o.top || O.ORt);
++  if (o.hazard) { g.quadO([-0.62, cy + 0.008, -1.3917], [0.62, cy + 0.008, -1.3917], [0.62, cy + 0.067, -1.3917], [-0.62, cy + 0.067, -1.3917], C.BLK, [0, cy + 0.03, -1.5]); pbHazard(g, [-0.62, cy + 0.008, -1.3912], [1, 0, 0], [0, 1, 0], 1.24, 0.059, 0.06, [0, cy + 0.03, -1.5]); }
++  pbGl(g, PBGL.METAL); for (const i of [0, 2]) { const [px, pz] = L.arms[i].p; pbCyl(g, [px, (0.0225 + cy) / 2, pz], 'y', 0.024, cy - 0.0225, 8, C.ZN); pbCyl(g, [px, cy + 0.11, pz], 'y', 0.048, 0.07, 12, o.boss || C.ZN, o.bossT || [0.4, 0.42, 0.45]); }
++  return cy; };
++// the carriage's plate (PB's: up the column's face, its edges cut and lit), its guides round the column's front corners (gx: their x),
++// six bolts, a warning label, the lock's latch and lever under its top; ph: its height over cy
++const lfPlateCar = (g, O, cy, ph, o = {}) => { const L = D.LIFT, zf = L.z + L.hz, C = PBC, hx = o.hx || 0.205, ch = o.ch || 0.014, zc = zf + (o.hz || 0.026) + 0.002;
++  pbGl(g, PBGL.PAINT); pbPrism(g, 0, zc, hx, o.hz || 0.026, ch, cy + 0.075, cy + ph, [O.OR, O.HI, O.OR, O.HI2, O.OR, O.HI2, O.OR, O.HI], O.ORt);
++  const zfc = zc + (o.hz || 0.026); for (const y of o.ribs || [0.26, 0.56]) World.box(g, 0, cy + y, zfc + 0.004, 2 * hx - 0.03, o.ribH || 0.04, 0.008, 0, o.rib || O.RIB, o.ribT || O.OR);
++  if (o.sign !== false) pbSign(g, [0.1, cy + 0.425, zfc + 0.0002], [1, 0, 0], [0, 1, 0], 0.085, '!');
++  pbGl(g, PBGL.METAL); const gx = o.gx || 0.2; if (o.guides !== false) for (const sx of [-1, 1]) World.box(g, sx * gx, cy + 0.11, zf - 0.02, 0.016, ph - 0.14, 0.1, 0, o.guide || C.ZN, o.guideT || o.guide || C.ZN);
++  if (o.bolts !== false) for (const [bx, by] of [[-0.17, 0.14], [0.17, 0.14], [-0.17, 0.42], [0.17, 0.42], [-0.17, ph - 0.045], [0.17, ph - 0.045]]) pbCyl(g, [bx * hx / 0.205, cy + by, zfc + 0.004], 'z', 0.011, 0.008, 6, C.AR, C.ZN);
++  if (o.latch !== false) { const ly = ph - 0.14; World.box(g, 0, cy + ly, zfc + 0.015, 0.1, 0.09, 0.03, 0, C.AR); World.box(g, 0.055, cy + ly - 0.03, zfc + 0.033, 0.012, 0.012, 0.012, 0, C.ZN); pbObox(g, [0.05, cy + ly + 0.03, zfc + 0.036], [0.15, cy + ly + 0.07, zfc + 0.036], 0.016, 0.01, [0.72, 0.12, 0.09]); }
++  return zfc; };
++// ==== 1: PB's lift refined ====
++const lfCol1 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, Z = L.z, HZ = L.hz, HX = 0.18, CHF = 0.03, zf = Z + HZ, zb = Z - HZ, xs = X + HX, TOP = LFT[1].top, S = PBL.S, R = PBL.R, C = PBC;
++  lfPlate(g);
++  // the base flange (dark steel), its six bolts, yellow and black along its side and back edges, the gussets at its sides
++  const fy0 = 0.012, fy1 = 0.034, fz0 = zb - 0.012, fz1 = zf - 0.004; pbGl(g, PBGL.PAINT); pbBox(g, X, fy0, (fz0 + fz1) / 2, 0.48, fy1 - fy0, fz1 - fz0, C.GR, C.GRt);
++  const hy = fy1 + 0.0006, hi = [X, -1, Z]; pbHazard(g, [X - 0.24, hy, fz0 + 0.028], [1, 0, 0], [0, 0, -1], 0.48, 0.028, 0.045, hi); pbHazard(g, [X - 0.24, hy, fz1 - 0.012], [0, 0, -1], [1, 0, 0], fz1 - fz0 - 0.04, 0.028, 0.045, hi); pbHazard(g, [X + 0.212, hy, fz1 - 0.012], [0, 0, -1], [1, 0, 0], fz1 - fz0 - 0.04, 0.028, 0.045, hi);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.205, Z - 0.075], [0.205, Z - 0.075], [-0.205, Z + 0.07], [0.205, Z + 0.07], [-0.11, fz0 + 0.01], [0.11, fz0 + 0.01]]) pbCyl(g, [X + bx, fy1 + 0.007, bz], 'y', 0.015, 0.014, 6, C.ZN, C.ZNt);
++  pbGl(g, PBGL.PAINT); for (const sx of [-1, 1]) for (const dz of [-0.06, 0.06]) { const x0 = X + sx * HX, x1 = X + sx * (HX + 0.052), y0 = fy1, y1 = 0.21;
++    for (const zz of [Z + dz - 0.006, Z + dz + 0.006]) g.triO([x0, y0, zz], [x1, y0, zz], [x0, y1, zz], O.DKO, [x0, y0 + 0.03, Z + dz]);
++    g.quadO([x1, y0, Z + dz - 0.006], [x1, y0, Z + dz + 0.006], [x0, y1, Z + dz + 0.006], [x0, y1, Z + dz - 0.006], O.HI2, [x0, y0, Z + dz]); }
++  pbPrism(g, X, Z, HX, HZ, CHF, fy1, 0.24, C.BLK); lfFootHz(g, X, Z, HX, HZ, fy1, 0.24);
++  // the column: its bevels lit (the front ones lightest), clean paint; a lit line round it under the cap; the front face round the track
++  const y0 = 0.24, ys0 = 0.30, ys1 = TOP - 0.1, BEV = lfMix(O.OR, [1, 0.95, 0.86], 0.32);
++  pbPrism(g, X, Z, HX, HZ, CHF, y0, TOP, [O.OR, BEV, O.OR, O.HI2, O.OR, O.HI2, O.OR, BEV], null, [0]);
++  pbPrism(g, X, Z, HX + 0.002, HZ + 0.002, CHF, TOP - 0.03, TOP - 0.018, O.HI2, null, [0]); g.quadO([X - HX + CHF, TOP - 0.03, zf + 0.002], [X + HX - CHF, TOP - 0.03, zf + 0.002], [X + HX - CHF, TOP - 0.018, zf + 0.002], [X - HX + CHF, TOP - 0.018, zf + 0.002], O.HI2, [X, TOP, Z]);
++  const fq = (x0, x1, a, b, col) => g.quadO([X + x0, a, zf], [X + x1, a, zf], [X + x1, b, zf], [X + x0, b, zf], col, [X, (a + b) / 2, Z]);
++  fq(-HX + CHF, -S, y0, TOP, O.OR); fq(S, HX - CHF, y0, TOP, O.OR); fq(-S, S, y0, ys0, O.OR); fq(-S, S, ys1, TOP, O.OR);
++  const zr = zf - R; g.quadO([X - S, ys0, zf], [X - S, ys0, zr], [X - S, ys1, zr], [X - S, ys1, zf], C.WALL, [X - S - 0.05, ys0, zr]); g.quadO([X + S, ys0, zf], [X + S, ys0, zr], [X + S, ys1, zr], [X + S, ys1, zf], C.WALL, [X + S + 0.05, ys0, zr]);
++  g.quadO([X - S, ys0, zf], [X + S, ys0, zf], [X + S, ys0, zr], [X - S, ys0, zr], C.WALLt, [X, ys0 - 0.05, zr]); g.quadO([X - S, ys1, zf], [X + S, ys1, zf], [X + S, ys1, zr], [X - S, ys1, zr], C.WALL, [X, ys1 + 0.05, zr]);
++  g.quadO([X - S, ys0, zr], [X + S, ys0, zr], [X + S, ys1, zr], [X - S, ys1, zr], C.SLOT, [X, ys0, zr - 0.05]);
++  // in the track: the lock rack (left: sloped teeth) and the chrome ram (right: its rod the full track, held at its top by a clevis)
++  const rx0 = X - S + 0.005, rx1 = X - 0.008, rz = zr + 0.008; pbBox(g, (rx0 + rx1) / 2, ys0, zr + 0.004, rx1 - rx0, ys1 - ys0, 0.008, C.RACK, C.RACK, true);
++  for (let y = ys0 + 0.05; y < ys1 - 0.06; y += 0.055) { const A = (x) => [x, y, rz], Bp = (x) => [x, y, rz + 0.018], Cp = (x) => [x, y + 0.03, rz], c = [(rx0 + rx1) / 2, y + 0.01, rz + 0.005];
++    g.quadO(A(rx0), A(rx1), Bp(rx1), Bp(rx0), C.TOOTHd, c); g.quadO(Bp(rx0), Bp(rx1), Cp(rx1), Cp(rx0), C.TOOTH, c); g.triO(A(rx0), Bp(rx0), Cp(rx0), C.TOOTHd, c); g.triO(A(rx1), Bp(rx1), Cp(rx1), C.TOOTHd, c); }
++  const rcx = X + 0.022, rcz = zr + 0.022; pbGl(g, LFGL.CHROME); lfCylY(g, rcx, rcz, 0.0135, ys0 + 0.02, ys1 - 0.045, 14, LFC.CHR, null, LFC.CHRt);
++  pbGl(g, PBGL.METAL); pbBox(g, rcx, ys1 - 0.05, rcz, 0.04, 0.05, 0.036, C.AR, C.ZN); pbCyl(g, [rcx, ys1 - 0.025, rcz + 0.018], 'z', 0.008, 0.006, 8, C.ZNt); pbBox(g, rcx, ys0, rcz, 0.036, 0.02, 0.034, C.AR, C.ZN);
++  // the zinc guide rails either side of the track (a little proud, their inner edges lit)
++  pbGl(g, PBGL.PAINT); for (const s of [-1, 1]) { const xa = X + s * S, xb = X + s * (S + 0.03), x0 = Math.min(xa, xb), x1 = Math.max(xa, xb); pbBox(g, (x0 + x1) / 2, ys0 - 0.02, zf + 0.004, 0.03, ys1 - ys0 + 0.06, 0.008, C.ZN, C.ZNt);
++    g.quadO([xa + s * 0.0005, ys0 - 0.02, zf + 0.0081], [xa + s * 0.006, ys0 - 0.02, zf + 0.0081], [xa + s * 0.006, ys1 + 0.04, zf + 0.0081], [xa + s * 0.0005, ys1 + 0.04, zf + 0.0081], C.ZNt, [xa, ys0, zf]); }
++  // the cap (PB's: a dark plate, its top bevelled and lit, four bolts)
++  const c0 = TOP, c1 = TOP + 0.022, c2 = TOP + PBL.cap, cw = 0.2, cd = 0.135, iw = 0.175, id = 0.11; pbBox(g, X, c0, Z, 2 * cw, c1 - c0, 2 * cd, C.CAP, C.CAP);
++  const cq = [[cw, cd, iw, id], [-cw, cd, -iw, id], [-cw, -cd, -iw, -id], [cw, -cd, iw, -id]];
++  for (let i = 0; i < 4; i++) { const [ax, az, aix, aiz] = cq[i], [bx2, bz2, bix, biz] = cq[(i + 1) % 4]; g.quadO([X + ax, c1, Z + az], [X + bx2, c1, Z + bz2], [X + bix, c2, Z + biz], [X + aix, c2, Z + aiz], C.CAPe, [X, c0, Z]); }
++  g.quadO([X - iw, c2, Z - id], [X + iw, c2, Z - id], [X + iw, c2, Z + id], [X - iw, c2, Z + id], C.CAPt, [X, c0, Z]);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.12, -0.065], [0.12, -0.065], [-0.12, 0.065], [0.12, 0.065]]) pbCyl(g, [X + bx, c2 + 0.004, Z + bz], 'y', 0.011, 0.008, 6, C.AR, C.ZN);
++  // the side (+x): the control box, a warning label; the cable chain from the power unit up into the control box (its links, its bracket)
++  lfCtl(g, xs, Z - 0.035, 0.98); pbGl(g, PBGL.PAINT); pbBox(g, xs + 0.002, 1.40, Z, 0.006, 0.17, 0.13, C.WHITE); pbSign(g, [xs + 0.005, 1.478, Z], [0, 0, -1], [0, 1, 0], 0.1, '!');
++  const chz = Z - 0.088; pbBox(g, xs + 0.016, 0.3, chz, 0.032, 0.05, 0.05, C.AR, C.ZN); for (let y = 0.355, i = 0; y < 0.97; y += 0.044, i++) pbBox(g, xs + 0.016, y, chz, 0.03, 0.04, 0.036, i & 1 ? C.BLK : [0.12, 0.12, 0.13], [0.24, 0.24, 0.26]);
++  pbGl(g, PBGL.MATTE); pbTube(g, [[xs + 0.016, 0.31, chz - 0.01], [xs + 0.01, 0.3, zb - 0.03], [X + 0.14, 0.42, -1.93], [X + 0.127, 0.47, -1.94]], 0.008, C.BLK, 10, 5);
++  // the power unit at the foot, on the back (PB's)
++  pbGl(g, PBGL.PAINT); pbBox(g, X, fy1, zb - 0.004, 0.3, 0.58, 0.008, C.DK);
++  pbGl(g, PBGL.PLATE); const tx0 = X - 0.13, tx1 = X + 0.11, tz0 = -2.015, tz1 = -1.855, txc = (tx0 + tx1) / 2, tzc = (tz0 + tz1) / 2; pbBox(g, txc, 0.012, tzc, tx1 - tx0, 0.19, tz1 - tz0, C.OIL, C.OIL); pbBox(g, txc, 0.202, tzc, tx1 - tx0, 0.1, tz1 - tz0, C.TANK, C.TANKt);
++  pbGl(g, PBGL.MATTE); pbCyl(g, [X - 0.08, 0.312, -1.975], 'y', 0.022, 0.02, 8, C.BLK);
++  pbGl(g, PBGL.METAL); pbBox(g, X + 0.03, 0.302, -1.935, 0.13, 0.07, 0.11, C.AL, C.ALt);
++  pbGl(g, PBGL.PAINT); pbObox(g, [X + 0.095, 0.345, -1.905], [X + 0.16, 0.322, -1.905], 0.012, 0.012, C.RED); pbCyl(g, [X + 0.165, 0.32, -1.905], 'x', 0.012, 0.022, 8, C.RED);
++  pbCyl(g, [X + 0.03, 0.492, -1.935], 'y', 0.068, 0.236, 14, C.MOT, C.MOTd); for (const y of [0.41, 0.45, 0.49, 0.53, 0.57]) pbCyl(g, [X + 0.03, y, -1.935], 'y', 0.0715, 0.008, 14, C.MOTd);
++  pbGl(g, PBGL.MATTE); pbCyl(g, [X + 0.03, 0.625, -1.935], 'y', 0.071, 0.026, 14, C.BLK, [0.2, 0.21, 0.22]);
++  pbGl(g, PBGL.PAINT); pbBox(g, X + 0.112, 0.455, -1.935, 0.03, 0.085, 0.065, C.MOT, C.MOT); pbSign(g, [X + 0.1272, 0.497, -1.935], [0, 0, -1], [0, 1, 0], 0.052, 'bolt');
++  pbSign(g, [tx1 + 0.0003, 0.17, tzc], [0, 0, -1], [0, 1, 0], 0.09, '!');
++  pbGl(g, PBGL.MATTE); pbTube(g, [[X + 0.06, 0.37, -1.905], [X + 0.075, 0.43, -1.875], [X + 0.08, 0.475, -1.852], [X + 0.08, 0.5, zb - 0.012]], 0.011, C.BLK, 10, 6);
++  pbTube(g, [[X + 0.127, 0.47, -1.94], [X + 0.135, 0.43, -1.99], [X + 0.125, 0.3, -2.02], [X + 0.11, 0.06, -2.025], [X + 0.09, 0.02, -2.06], [X + 0.05, 0.019, -2.3]], 0.007, C.BLK, 18, 5);
++  pbGl(g, PBGL.METAL); pbCyl(g, [X + 0.08, 0.5, zb - 0.01], 'z', 0.017, 0.02, 8, C.ZN); pbCyl(g, [X + 0.06, 0.38, -1.905], 'y', 0.016, 0.018, 8, C.ZN);
++  return lfGeo(g); };
++const lfCar1 = (O) => { const L = D.LIFT, g = pbGB(), zf = L.z + L.hz, ph = LFT[1].ph, cy = lfYoke(g, O); lfPlateCar(g, O, cy, ph, { ch: 0.016 });
++  // the ram's bushing at the plate's top (round the chrome rod, in the track)
++  pbGl(g, PBGL.METAL); const rcx = L.x + 0.022, rcz = zf - PBL.R + 0.022; pbCyl(g, [rcx, cy + ph + 0.005, rcz], 'y', 0.021, 0.03, 12, PBC.AR, PBC.ZN); return lfCarOut(g); };
++// ==== 2: TELESKOPSKI (the round telescopic column, the carriage on top) ====
++const lfCol2 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, zf = L.z + L.hz, C = PBC, ZC = zf - 0.15, zb = ZC - 0.15;
++  lfPlate(g);
++  // the flange (its corners cut, behind the column's face), eight bolts; the square foot in yellow and black
++  pbGl(g, PBGL.PAINT); pbPrism(g, X, -1.772, 0.23, 0.163, 0.04, 0.012, 0.034, C.GR, C.GRt);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.205, ZC - 0.09], [0.205, ZC - 0.09], [-0.205, ZC + 0.09], [0.205, ZC + 0.09], [-0.1, -1.918], [0.1, -1.918]]) pbCyl(g, [X + bx, 0.041, bz], 'y', 0.015, 0.014, 6, C.ZN, C.ZNt);
++  pbGl(g, PBGL.PAINT); pbPrism(g, X, ZC, 0.19, 0.15, 0.03, 0.034, 0.2, C.BLK, C.GR); lfFootHz(g, X, ZC, 0.19, 0.15, 0.034, 0.2, 0.075, 0.032);
++  // stage 1: the orange tube, a lit lip at its top, the dark gland; stage 2: chrome, an orange collar at its top (the wiper's dark face)
++  lfCylY(g, X, ZC, 0.145, 0.2, 0.745, 32, O.OR, null, O.OR); lfCylY(g, X, ZC, 0.15, 0.745, 0.785, 32, O.HI2, C.GR, O.HI); lfCylY(g, X, ZC, 0.124, 0.785, 0.8, 28, C.GR, C.GRt);
++  pbGl(g, LFGL.CHROME); lfCylY(g, X, ZC, 0.112, 0.8, 0.935, 28, LFC.CHRd, null, LFC.CHR);
++  pbGl(g, PBGL.PAINT); lfCylY(g, X, ZC, 0.119, 0.935, 0.98, 28, O.OR, C.GR, O.HI);
++  // a warning label on stage 1's front; the controls on a slim post at the side; the power unit behind the foot (no plate)
++  pbSign(g, [X + 0.1452, 0.5, ZC], [0, 0, -1], [0, 1, 0], 0.08, '!');
++  pbBox(g, X + 0.222, 0.034, -1.85, 0.036, 0.8, 0.036, C.GR, C.GRt); lfCtl(g, X + 0.204, -1.85, 0.8);
++  lfPU(g, X, zb, 0.034, { plate: false, hz: 0.035 }); return lfGeo(g); };
++const lfCar2 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, zf = L.z + L.hz, C = PBC, ZC = zf - 0.15, hb = LFT[2].hb - L.c0, ht = LFT[2].ht - L.c0, cols = [O.OR, O.HI, O.OR, O.HI2, O.OR, O.HI2, O.OR, O.HI];
++  const cy = lfYoke(g, O, { gz: zf + 0.063 });
++  // the fork plate from the yoke up to the head (its edges cut and lit), two ribs, a label, its bolts
++  pbGl(g, PBGL.PAINT); pbPrism(g, X, zf + 0.02, 0.075, 0.018, 0.008, cy + 0.075, ht - 0.012, cols, O.ORt);
++  for (const y of [0.3, 0.62]) World.box(g, X, cy + y, zf + 0.04, 0.13, 0.035, 0.008, 0, O.RIB, O.OR); pbSign(g, [X, cy + 0.47, zf + 0.0382], [1, 0, 0], [0, 1, 0], 0.07, '!');
++  pbGl(g, PBGL.METAL); for (const [bx, by] of [[-0.05, 0.14], [0.05, 0.14], [-0.05, hb - cy - 0.05], [0.05, hb - cy - 0.05]]) pbCyl(g, [bx, cy + by, zf + 0.04], 'z', 0.009, 0.008, 6, C.AR, C.ZN);
++  // the head on the ram: round (as the stages), a lit lip round its top, a dark pad on its top with four bolts
++  pbGl(g, PBGL.PAINT); lfCylY(g, X, ZC, 0.152, hb, ht, 32, O.OR, O.ORt, O.HI2); lfCylY(g, X, ZC, 0.155, ht - 0.032, ht - 0.018, 32, O.HI, null, O.HI);
++  lfCylY(g, X, ZC, 0.11, ht, ht + 0.006, 24, C.GR, C.GRt); pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.06, -0.06], [0.06, -0.06], [-0.06, 0.06], [0.06, 0.06]]) pbCyl(g, [X + bx, ht + 0.009, ZC + bz], 'y', 0.01, 0.006, 6, C.AR, C.ZN);
++  // stage 3: the chrome ram under the head (2.06 m: at the SAMUM's 1.35 m its foot is still 12 cm in stage 2; at rest its lower part is
++  // under the floor), its dark wiper ring under the head
++  pbGl(g, LFGL.CHROME); lfCylY(g, X, ZC, 0.085, hb - 2.06, hb, 28, LFC.CHR, null, LFC.CHRt); pbGl(g, PBGL.PAINT); lfCylY(g, X, ZC, 0.092, hb - 0.022, hb, 24, C.GR, null, C.GRt);
++  return lfCarOut(g); };
++// ==== 3: INDUSTRIJSKI (heavy box section, lock ladder, counterweight housing, bolted gussets, hazard stripes) ====
++const lfCol3 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, zf = L.z + L.hz, C = PBC, HX = 0.2, HZ = 0.1575, ZC = zf - HZ, zb = ZC - HZ, CHF = 0.035, TOP = LFT[3].top, S = 0.07, R = 0.05, xs = X + HX, BEV = lfMix(O.OR, [1, 0.95, 0.86], 0.3);
++  lfPlate(g);
++  // the heavy flange, eight bolts, yellow and black round its sides and back; two bolted gussets at each side
++  const fy1 = 0.04, fz1 = zf - 0.004, fz0 = zb - 0.03; pbGl(g, PBGL.PAINT); pbBox(g, X, 0.012, (fz0 + fz1) / 2, 0.48, fy1 - 0.012, fz1 - fz0, C.GR, C.GRt);
++  const hy = fy1 + 0.0006, hi = [X, -1, ZC]; pbHazard(g, [X - 0.24, hy, fz0 + 0.03], [1, 0, 0], [0, 0, -1], 0.48, 0.03, 0.045, hi); pbHazard(g, [X - 0.24, hy, fz1 - 0.012], [0, 0, -1], [1, 0, 0], fz1 - fz0 - 0.042, 0.03, 0.045, hi); pbHazard(g, [X + 0.21, hy, fz1 - 0.012], [0, 0, -1], [1, 0, 0], fz1 - fz0 - 0.042, 0.03, 0.045, hi);
++  for (const sx of [-1, 1]) for (const dz of [-0.075, 0.075]) { const x0 = X + sx * HX, x1 = X + sx * (HX + 0.04), y0 = fy1, y1 = 0.36, zc = ZC + dz;
++    for (const zz of [zc - 0.008, zc + 0.008]) g.triO([x0, y0, zz], [x1, y0, zz], [x0, y1, zz], O.DKO, [x0, y0 + 0.03, zc]);
++    g.quadO([x1, y0, zc - 0.008], [x1, y0, zc + 0.008], [x0, y1, zc + 0.008], [x0, y1, zc - 0.008], O.HI2, [x0, y0, zc]); }
++  pbGl(g, PBGL.METAL); for (const sx of [-1, 1]) for (const dz of [-0.12, -0.03, 0.03, 0.12]) pbCyl(g, [X + sx * 0.222, fy1 + 0.007, ZC + dz], 'y', 0.013, 0.014, 6, C.ZN, C.ZNt);
++  for (const bx of [-0.19, 0.19]) pbCyl(g, [X + bx, fy1 + 0.007, fz0 + 0.015], 'y', 0.013, 0.014, 6, C.ZN, C.ZNt);
++  pbGl(g, PBGL.PAINT); pbPrism(g, X, ZC, HX, HZ, CHF, fy1, 0.3, C.BLK); lfFootHz(g, X, ZC, HX, HZ, fy1, 0.3, 0.085, 0.036);
++  // the column: heavy cut edges (lit), stiffener bands on its sides, the front face round the wide track
++  const y0 = 0.3, ys0 = 0.36, ys1 = TOP - 0.1; pbPrism(g, X, ZC, HX, HZ, CHF, y0, TOP, [O.OR, BEV, O.OR, O.HI2, O.OR, O.HI2, O.OR, BEV], null, [0]);
++  for (const y of [0.8, 1.4, 2.0]) for (const sx of [-1, 1]) pbBox(g, X + sx * (HX + 0.004), y, ZC, 0.008, 0.045, 2 * HZ - 2 * CHF - 0.01, O.RIB, O.ORt);
++  const fq = (x0, x1, a, b, col) => g.quadO([X + x0, a, zf], [X + x1, a, zf], [X + x1, b, zf], [X + x0, b, zf], col, [X, (a + b) / 2, ZC]);
++  fq(-HX + CHF, -S, y0, TOP, O.OR); fq(S, HX - CHF, y0, TOP, O.OR); fq(-S, S, y0, ys0, O.OR); fq(-S, S, ys1, TOP, O.OR);
++  const zr = zf - R; g.quadO([X - S, ys0, zf], [X - S, ys0, zr], [X - S, ys1, zr], [X - S, ys1, zf], C.WALL, [X - S - 0.05, ys0, zr]); g.quadO([X + S, ys0, zf], [X + S, ys0, zr], [X + S, ys1, zr], [X + S, ys1, zf], C.WALL, [X + S + 0.05, ys0, zr]);
++  g.quadO([X - S, ys0, zf], [X + S, ys0, zf], [X + S, ys0, zr], [X - S, ys0, zr], C.WALLt, [X, ys0 - 0.05, zr]); g.quadO([X - S, ys1, zf], [X + S, ys1, zf], [X + S, ys1, zr], [X - S, ys1, zr], C.WALL, [X, ys1 + 0.05, zr]);
++  g.quadO([X - S, ys0, zr], [X + S, ys0, zr], [X + S, ys1, zr], [X - S, ys1, zr], C.SLOT, [X, ys0, zr - 0.05]);
++  // the lock ladder: two zinc rails, steel rungs every 7 cm (the windows between them dark)
++  pbGl(g, PBGL.METAL); for (const sx of [-1, 1]) pbBox(g, X + sx * 0.052, ys0, zr + 0.008, 0.016, ys1 - ys0, 0.016, C.ZN, C.ZNt, true);
++  for (let y = ys0 + 0.04; y < ys1 - 0.03; y += 0.07) pbBox(g, X, y, zr + 0.009, 0.088, 0.018, 0.012, C.TOOTH, C.ZNt);
++  pbGl(g, PBGL.PAINT); for (const s of [-1, 1]) { const xa = X + s * S, xb = X + s * (S + 0.034), x0 = Math.min(xa, xb), x1 = Math.max(xa, xb); pbBox(g, (x0 + x1) / 2, ys0 - 0.02, zf + 0.005, 0.034, ys1 - ys0 + 0.06, 0.01, C.ZN, C.ZNt);
++    g.quadO([xa + s * 0.0005, ys0 - 0.02, zf + 0.0101], [xa + s * 0.007, ys0 - 0.02, zf + 0.0101], [xa + s * 0.007, ys1 + 0.04, zf + 0.0101], [xa + s * 0.0005, ys1 + 0.04, zf + 0.0101], C.ZNt, [xa, ys0, zf]); }
++  // the cap: a heavy dark plate, its top bevelled (lit), six bolts
++  const c0 = TOP, c1 = TOP + 0.022, c2 = TOP + 0.04, cw = HX + 0.025, cd = HZ + 0.02, iw = HX, id = HZ - 0.005; pbBox(g, X, c0, ZC, 2 * cw, c1 - c0, 2 * cd, C.CAP, C.CAP);
++  const cq = [[cw, cd, iw, id], [-cw, cd, -iw, id], [-cw, -cd, -iw, -id], [cw, -cd, iw, -id]];
++  for (let i = 0; i < 4; i++) { const [ax, az, aix, aiz] = cq[i], [bx2, bz2, bix, biz] = cq[(i + 1) % 4]; g.quadO([X + ax, c1, ZC + az], [X + bx2, c1, ZC + bz2], [X + bix, c2, ZC + biz], [X + aix, c2, ZC + aiz], C.CAPe, [X, c0, ZC]); }
++  g.quadO([X - iw, c2, ZC - id], [X + iw, c2, ZC - id], [X + iw, c2, ZC + id], [X - iw, c2, ZC + id], C.CAPt, [X, c0, ZC]);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.14, -0.09], [0, -0.09], [0.14, -0.09], [-0.14, 0.09], [0, 0.09], [0.14, 0.09]]) pbCyl(g, [X + bx, c2 + 0.004, ZC + bz], 'y', 0.012, 0.008, 6, C.AR, C.ZN);
++  // the counterweight housing on the back: graphite, its edges cut, yellow and black at its foot, its bolted cover, a window on the weight
++  const hz0 = zb - 0.11, hzc = zb - 0.055, H0 = 0.6, H1 = 2.4; pbGl(g, PBGL.PAINT); pbPrism(g, X, hzc, 0.15, 0.055, 0.02, H0, H1, [LFC.GP, LFC.GPe, LFC.GP, LFC.GPe, LFC.GP, LFC.GPe, LFC.GP, LFC.GPe], LFC.GPt);
++  pbPrism(g, X, hzc, 0.152, 0.057, 0.02, H0, H0 + 0.1, C.BLK); pbHazard(g, [X + 0.13, H0, hz0 - 0.0035], [-1, 0, 0], [0, 1, 0], 0.26, 0.1, 0.06, [X, H0, hzc]); for (const sx of [-1, 1]) pbHazard(g, [X + sx * 0.1555, H0, hz0 + 0.02 + (sx < 0 ? 0.07 : 0)], [0, 0, sx < 0 ? -1 : 1], [0, 1, 0], 0.07, 0.1, 0.06, [X, H0, hzc]);
++  pbBox(g, X, 1.0, hz0 - 0.0016, 0.22, 1.1, 0.003, LFC.GPt, LFC.GPe); pbBox(g, X, 1.62, hz0 - 0.0036, 0.07, 0.4, 0.001, C.SLOT); pbBox(g, X, 1.7, hz0 - 0.0042, 0.054, 0.035, 0.001, C.YL);
++  pbGl(g, PBGL.METAL); for (const by of [1.04, 1.5, 2.06]) for (const sx of [-1, 1]) pbCyl(g, [X + sx * 0.095, by, hz0 - 0.005], 'z', 0.009, 0.004, 6, C.AR, C.ZN);
++  // the power unit under the housing; the controls on the side; a warning label
++  lfPU(g, X, zb, fy1); lfCtl(g, xs, ZC - 0.02, 0.98); pbGl(g, PBGL.PAINT); pbBox(g, xs + 0.002, 1.42, ZC, 0.006, 0.17, 0.13, C.WHITE); pbSign(g, [xs + 0.005, 1.498, ZC], [0, 0, -1], [0, 1, 0], 0.1, '!');
++  return lfGeo(g); };
++const lfCar3 = (O) => { const L = D.LIFT, g = pbGB(), zf = L.z + L.hz, C = PBC, ph = LFT[3].ph, cy = lfYoke(g, O, { hazard: true, gz: zf + 0.087 });
++  const zfc = lfPlateCar(g, O, cy, ph, { hx: 0.235, hz: 0.03, ch: 0.018, gx: 0.212, ribs: [0.2, 0.5], rib: C.DK, ribT: C.GR, ribH: 0.03 });
++  pbGl(g, PBGL.METAL); for (const [bx, by] of [[-0.21, 0.28], [0.21, 0.28], [-0.21, 0.58], [0.21, 0.58]]) pbCyl(g, [bx, cy + by, zfc + 0.004], 'z', 0.012, 0.008, 6, C.AR, C.ZN);
++  return lfCarOut(g); };
++// ==== 4: ELEGANTEN RAZSTAVNI (slim rounded white column, orange lines, a soft LED line in its track, the power unit hidden) ====
++const lfCol4 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, zf = L.z + L.hz, C = PBC, W = LFC, HX = 0.135, HZ = 0.1, ZC = zf - HZ, TOP = LFT[4].top, S = 0.022, R = 0.03, xs = X + HX, wh = () => W.WH;
++  lfPlate(g, { line: O.OR, pl: [0.19, 0.2, 0.22], plt: [0.24, 0.25, 0.27], bolt: [0.3, 0.31, 0.33], boltT: [0.4, 0.41, 0.43] });
++  // the plinth: rounded white (the power unit in it), an orange line round it, its top edge rounded off; vent slits at its back
++  const PZ1 = -2.02, PC = (zf + PZ1) / 2, PH = (zf - PZ1) / 2, po = (d) => lfOutline(X, PC, 0.2 + d, PH + d, 0.05 + d, 0.1 + d, 4);
++  pbGl(g, PBGL.PLATE); lfPrismO(g, po(0), 0.012, 0.128, () => W.WHs); lfPrismO(g, po(0.0015), 0.128, 0.14, () => O.OR); lfPrismO(g, po(0), 0.14, 0.15, () => W.WHs); lfLoft(g, po(0), 0.15, po(-0.012), 0.162, () => W.WH); lfCap(g, po(-0.012), 0.162, W.WHt);
++  pbGl(g, PBGL.PAINT); for (const y of [0.04, 0.062, 0.084, 0.106]) pbBox(g, X, y, PZ1 - 0.0008, 0.14, 0.008, 0.002, C.SLOT);
++  // the column: rounded, white; its front cut round the track; orange lines either side of the track and round it under its top
++  const co = (d) => lfOutline(X, ZC, HX + d, HZ + d, 0.05 + d, 0.09 + d, 4), y0 = 0.162, ys0 = 0.32, ys1 = TOP - 0.12, fx = HX - 0.05;
++  pbGl(g, 1.3); lfPrismO(g, co(0), y0, TOP, wh, null, (n, a, b) => n[2] > 0.99 && Math.abs(a[1] - zf) < 1e-4 && Math.abs(b[1] - zf) < 1e-4);
++  const fq = (x0, x1, a, b, col) => g.quadO([X + x0, a, zf], [X + x1, a, zf], [X + x1, b, zf], [X + x0, b, zf], col, [X, (a + b) / 2, ZC]);
++  fq(-fx, -S, y0, TOP, W.WH); fq(S, fx, y0, TOP, W.WH); fq(-S, S, y0, ys0, W.WH); fq(-S, S, ys1, TOP, W.WH);
++  const zr = zf - R; g.quadO([X - S, ys0, zf], [X - S, ys0, zr], [X - S, ys1, zr], [X - S, ys1, zf], W.WHs, [X - S - 0.05, ys0, zr]); g.quadO([X + S, ys0, zf], [X + S, ys0, zr], [X + S, ys1, zr], [X + S, ys1, zf], W.WHs, [X + S + 0.05, ys0, zr]);
++  g.quadO([X - S, ys0, zf], [X + S, ys0, zf], [X + S, ys0, zr], [X - S, ys0, zr], W.WHs, [X, ys0 - 0.05, zr]); g.quadO([X - S, ys1, zf], [X + S, ys1, zf], [X + S, ys1, zr], [X - S, ys1, zr], W.WHd, [X, ys1 + 0.05, zr]);
++  g.quadO([X - S, ys0, zr], [X + S, ys0, zr], [X + S, ys1, zr], [X - S, ys1, zr], [0.92, 0.88, 0.8], [X, ys0, zr - 0.05]);
++  pbGl(g, PBGL.PAINT); for (const sx of [-1, 1]) pbBox(g, X + sx * 0.06, ys0 - 0.04, zf + 0.0015, 0.012, ys1 - ys0 + 0.08, 0.003, O.OR, O.HI);
++  lfPrismO(g, co(0.002), TOP - 0.06, TOP - 0.047, () => O.OR); lfPrismO(g, co(0.002), y0, y0 + 0.012, () => O.OR);
++  // its top rounded off (white), a slim touch panel on its side (dark glass; its lit dots: the LED mesh)
++  pbGl(g, 1.3); lfLoft(g, co(0), TOP, co(-0.02), TOP + 0.022, (n) => n[1] > 0.6 ? W.WHt : W.WH); lfCap(g, co(-0.02), TOP + 0.022, W.WHt);
++  pbGl(g, PBGL.METAL); pbBox(g, xs + 0.002, 0.98, ZC + 0.02, 0.004, 0.2, 0.04, W.GLASS, W.GLASS);
++  return lfGeo(g); };
++const lfGlow4 = (O) => { const L = D.LIFT, X = L.x, zf = L.z + L.hz, TOP = LFT[4].top, ys0 = 0.32, ys1 = TOP - 0.12, zr = zf - 0.03 + 0.0015, W = LFC, k = (c, f) => c.map(x => x * f), Z0 = [0, 0, 0], ZC = zf - 0.1;
++  const q = [], V4 = (x0, x1, y0, y1, z, c0, c1) => q.push([[X + x0, y0, z], [X + x1, y0, z], [X + x1, y1, z], [X + x0, y1, z], c0, c1, c1, c0]);
++  V4(-0.007, 0.007, ys0 + 0.01, ys1 - 0.01, zr, W.LED, W.LED); V4(-0.021, -0.007, ys0 + 0.01, ys1 - 0.01, zr, k(W.LED, 0.08), k(W.LED, 0.5)); V4(0.007, 0.021, ys0 + 0.01, ys1 - 0.01, zr, k(W.LED, 0.5), k(W.LED, 0.08));
++  V4(-0.07, -0.022, ys0, ys1, zf + 0.0035, Z0, k(W.LED, 0.16)); V4(0.022, 0.07, ys0, ys1, zf + 0.0035, k(W.LED, 0.16), Z0);
++  const xs = X + 0.135 + 0.0045; [[1.12, W.LEDg], [1.06, W.LEDw], [1.0, W.LEDr]].forEach(([y, c]) => q.push([[xs, y - 0.009, ZC + 0.011], [xs, y - 0.009, ZC + 0.029], [xs, y + 0.009, ZC + 0.029], [xs, y + 0.009, ZC + 0.011], c, c, c, c]));
++  return q; };
++const lfCar4 = (O) => { const L = D.LIFT, g = pbGB(), zf = L.z + L.hz, W = LFC, ph = LFT[4].ph, cy = lfYoke(g, O, { boss: W.WH, bossT: W.WHt, gz: zf + 0.083 });
++  lfPlateCar(g, O, cy, ph, { hx: 0.165, hz: 0.028, ch: 0.024, gx: 0.146, ribs: [0.22, 0.5], rib: W.WH, ribT: W.WHt, ribH: 0.03, guide: W.WHs, guideT: W.WH, bolts: false, latch: false });
++  return lfCarOut(g); };
++// ==== 5: DVOJNI STEBER ZADAJ (two slim columns, a cross beam on top, the carriage between them) ====
++const lfCol5 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, zf = L.z + L.hz, C = PBC, XC = 0.17, HXc = 0.06, HZc = 0.09, ZC = zf - HZc, zb = ZC - HZc, CH = 0.015, TOP = LFT[5].top, BEV = lfMix(O.OR, [1, 0.95, 0.86], 0.3);
++  lfPlate(g);
++  const fy1 = 0.034, fz1 = zf - 0.004, fz0 = zb - 0.02; pbGl(g, PBGL.PAINT); pbBox(g, X, 0.012, (fz0 + fz1) / 2, 0.48, fy1 - 0.012, fz1 - fz0, C.GR, C.GRt);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.215, ZC - 0.05], [0.215, ZC - 0.05], [-0.215, ZC + 0.05], [0.215, ZC + 0.05], [-0.05, fz0 + 0.012], [0.05, fz0 + 0.012]]) pbCyl(g, [X + bx, fy1 + 0.007, bz], 'y', 0.013, 0.014, 6, C.ZN, C.ZNt);
++  for (const sx of [-1, 1]) { const cx = X + sx * XC, xi = X + sx * (XC - HXc);
++    pbGl(g, PBGL.PAINT); pbPrism(g, cx, ZC, HXc, HZc, CH, fy1, 0.22, C.BLK); lfFootHz(g, cx, ZC, HXc, HZc, fy1, 0.22, 0.06, 0.018);
++    pbPrism(g, cx, ZC, HXc, HZc, CH, 0.22, TOP, [O.OR, BEV, O.OR, O.HI2, O.OR, O.HI2, O.OR, BEV], null);
++    // the track on its inner face (a dark channel, zinc lips), the lock's notches in the left one
++    pbBox(g, xi - sx * 0.003, 0.26, ZC + 0.025, 0.006, TOP - 0.34, 0.036, C.SLOT, C.SLOT); pbGl(g, PBGL.METAL); for (const dz of [-0.021, 0.021]) pbBox(g, xi - sx * 0.004, 0.25, ZC + 0.025 + dz, 0.008, TOP - 0.32, 0.006, C.ZN, C.ZNt);
++    if (sx < 0) { pbGl(g, PBGL.PAINT); for (let y = 0.4; y < TOP - 0.15; y += 0.07) pbBox(g, xi - sx * 0.0062, y, ZC + 0.025, 0.0015, 0.022, 0.024, C.TOOTH, C.TOOTH); } }
++  // the cross beam on top (its edges cut and lit, a dark line along its front), its dark cap and bolts; the tie at the columns' backs
++  pbGl(g, PBGL.PAINT); pbPrism(g, X, ZC, 0.235, HZc, 0.02, TOP, TOP + 0.12, [O.OR, BEV, O.OR, O.HI2, O.OR, O.HI2, O.OR, BEV], O.ORt); pbBox(g, X, TOP + 0.05, zf + 0.0008, 0.39, 0.018, 0.0016, O.RIB);
++  pbBox(g, X, TOP + 0.12, ZC, 0.47, 0.016, 2 * HZc + 0.01, C.CAP, C.CAPt); pbGl(g, PBGL.METAL); for (const bx of [-0.17, 0.17]) for (const dz of [-0.05, 0.05]) pbCyl(g, [X + bx, TOP + 0.14, ZC + dz], 'y', 0.011, 0.008, 6, C.AR, C.ZN);
++  pbGl(g, PBGL.PAINT); pbBox(g, X, 1.3, zb + 0.012, 0.22, 0.08, 0.024, O.OR, O.ORt); pbBox(g, X, 0.62, zb + 0.012, 0.22, 0.06, 0.024, O.OR, O.ORt);
++  // the power unit behind (its plate across the two backs), the controls on the right column's side, a warning label
++  lfPU(g, X, zb, fy1, { hx: X + XC }); lfCtl(g, X + XC + HXc, ZC - 0.005, 0.98, undefined, 0.04); pbGl(g, PBGL.PAINT); pbBox(g, X + XC, 1.36, zf + 0.002, 0.09, 0.12, 0.003, C.WHITE); pbSign(g, [X + XC, 1.42, zf + 0.0037], [1, 0, 0], [0, 1, 0], 0.075, '!');
++  return lfGeo(g); };
++const lfCar5 = (O) => { const L = D.LIFT, g = pbGB(), zf = L.z + L.hz, C = PBC, ph = LFT[5].ph, ZP = -1.632, cols = [O.OR, O.HI, O.OR, O.HI2, O.OR, O.HI2, O.OR, O.HI], cy = lfYoke(g, O, { gz: ZP + 0.036 + 0.025 });
++  // the plate between the columns (its shoes in their tracks), joined to the yoke under it; ribs, a label, bolts, the lock's latch
++  pbGl(g, PBGL.PAINT); pbBox(g, 0, cy, (ZP - 0.036 + zf) / 2, 0.208, 0.075, zf - (ZP - 0.036), O.OR, O.ORt); pbPrism(g, 0, ZP, 0.104, 0.036, 0.01, cy + 0.075, cy + ph, cols, O.ORt);
++  const zfc = ZP + 0.036; for (const y of [0.24, 0.48]) World.box(g, 0, cy + y, zfc + 0.004, 0.18, 0.03, 0.008, 0, O.RIB, O.OR); pbSign(g, [0, cy + 0.36, zfc + 0.0002], [1, 0, 0], [0, 1, 0], 0.075, '!');
++  pbGl(g, PBGL.METAL); for (const sx of [-1, 1]) for (const y of [0.1, ph - 0.1]) World.box(g, sx * 0.106, cy + y, zf - 0.09 + 0.025, 0.012, 0.08, 0.034, 0, C.ZN, C.ZNt);
++  for (const [bx, by] of [[-0.075, 0.13], [0.075, 0.13], [-0.075, ph - 0.05], [0.075, ph - 0.05]]) pbCyl(g, [bx, cy + by, zfc + 0.004], 'z', 0.01, 0.008, 6, C.AR, C.ZN);
++  const ly = ph - 0.13; World.box(g, 0, cy + ly, zfc + 0.015, 0.08, 0.07, 0.03, 0, C.AR); pbObox(g, [0.04, cy + ly + 0.025, zfc + 0.036], [0.12, cy + ly + 0.055, zfc + 0.036], 0.014, 0.01, [0.72, 0.12, 0.09]);
++  return lfCarOut(g); };
++// ==== 6: STENSKA KONZOLA (a graphite column out of a heavy faceted plinth, an orange LED line, the large orange boom) ====
++const lfOct = (x0, x1, z0, z1, c) => [[x1 - c, z1], [x0 + c, z1], [x0, z1 - c], [x0, z0 + c], [x0 + c, z0], [x1 - c, z0], [x1, z0 + c], [x1, z1 - c]];
++const lfCol6 = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, zf = L.z + L.hz, C = PBC, W = LFC, TOP = LFT[6].top, S = 0.025, R = 0.026, PT = 0.42;
++  lfPlate(g, { line: O.OR, pl: [0.16, 0.17, 0.19], plt: [0.21, 0.22, 0.25], bolt: W.GPe, boltT: W.SAT });
++  // the plinth: faceted (its sides and back sloping in, its front upright at the column's face), graphite, an orange chamfer round its
++  // top; vent slits on its back slope (the power unit inside)
++  const gcol = (n) => Math.abs(n[0]) > 0.3 && Math.abs(n[2]) > 0.3 ? W.GPe : n[1] > 0.5 ? W.GPt : W.GP;
++  const p0 = lfOct(X - 0.24, X + 0.24, -2.03, zf, 0.05), p1 = lfOct(X - 0.2, X + 0.2, -1.97, zf, 0.04), p2 = lfOct(X - 0.185, X + 0.185, -1.955, zf - 0.012, 0.035);
++  pbGl(g, PBGL.PLATE); lfLoft(g, p0, 0.012, p1, PT, gcol); pbGl(g, PBGL.PAINT); lfLoft(g, p1, PT, p2, PT + 0.015, () => O.OR); pbGl(g, PBGL.PLATE); lfCap(g, p2, PT + 0.015, W.GPt);
++  const bz = (y) => -2.03 + (y - 0.012) / (PT - 0.012) * 0.06, sl = Math.hypot(0.06, PT - 0.012), ny = 0.06 / sl, nz = -(PT - 0.012) / sl;
++  for (const y of [0.07, 0.11, 0.15, 0.19]) { const za = bz(y), zb2 = bz(y + 0.014), o = 0.0012; g.quadO([X - 0.13, y, za + nz * o], [X + 0.13, y, za + nz * o], [X + 0.13, y + 0.014, zb2 + nz * o], [X - 0.13, y + 0.014, zb2 + nz * o], C.SLOT, [X, y, -1.8]); }
++  // the column: tapering up, its cut edges lit, its front upright at the face, cut round the track
++  const cb = lfOct(X - 0.15, X + 0.15, -1.835, zf, 0.04), ct = lfOct(X - 0.125, X + 0.125, -1.81, zf, 0.03), y0 = PT + 0.015, ys0 = 0.52, ys1 = TOP - 0.1;
++  pbGl(g, 1.3); lfLoft(g, cb, y0, ct, TOP, gcol, (n) => n[2] > 0.99);
++  const xa = (y) => 0.11 - (y - y0) / (TOP - y0) * 0.015, fq = (x0s, x1s, a, b) => { const xx = (s, y) => s === 'L' ? -xa(y) : s === 'R' ? xa(y) : s; g.quadO([X + xx(x0s, a), a, zf], [X + xx(x1s, a), a, zf], [X + xx(x1s, b), b, zf], [X + xx(x0s, b), b, zf], W.GP, [X, (a + b) / 2, -1.72]); };
++  fq('L', -S, y0, TOP); fq(S, 'R', y0, TOP); fq(-S, S, y0, ys0); fq(-S, S, ys1, TOP);
++  const zr = zf - R, DK = [0.05, 0.05, 0.06]; g.quadO([X - S, ys0, zf], [X - S, ys0, zr], [X - S, ys1, zr], [X - S, ys1, zf], DK, [X - S - 0.05, ys0, zr]); g.quadO([X + S, ys0, zf], [X + S, ys0, zr], [X + S, ys1, zr], [X + S, ys1, zf], DK, [X + S + 0.05, ys0, zr]);
++  g.quadO([X - S, ys0, zf], [X + S, ys0, zf], [X + S, ys0, zr], [X - S, ys0, zr], W.GPt, [X, ys0 - 0.05, zr]); g.quadO([X - S, ys1, zf], [X + S, ys1, zf], [X + S, ys1, zr], [X - S, ys1, zr], DK, [X, ys1 + 0.05, zr]);
++  g.quadO([X - S, ys0, zr], [X + S, ys0, zr], [X + S, ys1, zr], [X - S, ys1, zr], [0.3, 0.16, 0.08], [X, ys0, zr - 0.05]);
++  // the cap: its edges cut (lit), an orange line along its front
++  pbGl(g, PBGL.PAINT); const cti = lfOct(X - 0.105, X + 0.105, -1.79, zf - 0.02, 0.02); lfLoft(g, ct, TOP, cti, TOP + 0.03, gcol); lfCap(g, cti, TOP + 0.03, W.GPt);
++  pbBox(g, X, TOP - 0.016, zf + 0.0012, 2 * xa(TOP) - 0.02, 0.012, 0.0024, O.OR, O.HI);
++  // the controls on the side (graphite), a small warning label on the plinth's side
++  lfCtl(g, X + 0.143, -1.72, 0.98, W.GPt); pbSign(g, [X + 0.2186, 0.24, -1.82], [0, 0, -1], [-0.0976, 0.9952, 0], 0.07, '!');
++  return lfGeo(g); };
++const lfGlow6 = (O) => { const L = D.LIFT, X = L.x, zf = L.z + L.hz, TOP = LFT[6].top, ys0 = 0.52, ys1 = TOP - 0.1, zr = zf - 0.026 + 0.0015, W = LFC, k = (c, f) => c.map(x => x * f), Z0 = [0, 0, 0];
++  const q = [], V4 = (x0, x1, y0, y1, z, c0, c1) => q.push([[X + x0, y0, z], [X + x1, y0, z], [X + x1, y1, z], [X + x0, y1, z], c0, c1, c1, c0]);
++  V4(-0.006, 0.006, ys0 + 0.01, ys1 - 0.01, zr, W.LEDo, W.LEDo); V4(-0.024, -0.006, ys0 + 0.01, ys1 - 0.01, zr, k(W.LEDo, 0.1), k(W.LEDo, 0.55)); V4(0.006, 0.024, ys0 + 0.01, ys1 - 0.01, zr, k(W.LEDo, 0.55), k(W.LEDo, 0.1));
++  V4(-0.07, -0.025, ys0, ys1, zf + 0.0012, Z0, k(W.LEDo, 0.2)); V4(0.025, 0.07, ys0, ys1, zf + 0.0012, k(W.LEDo, 0.2), Z0);
++  return q; };
++const lfCar6 = (O) => { const L = D.LIFT, g = pbGB(), zf = L.z + L.hz, C = PBC, W = LFC, ph = LFT[6].ph, cy = lfYoke(g, O, { bar: false, gusset: false, boss: W.GP, bossT: W.GPe });
++  // the boom: faceted, from the column's face to the game's front (z -1.393), its back and top falling away to the pins; a graphite band
++  // along its front; the plate up the column (a graphite panel in it)
++  const zb = zf, zr = -1.393, ST = [[-0.72, 0.075, 0.072], [-0.46, 0.15, 0.1], [-0.2, 0.27, 0.13], [0, 0.32, 0.14], [0.2, 0.27, 0.13], [0.46, 0.15, 0.1], [0.72, 0.075, 0.072]];
++  const sec = ([x, tb, tf]) => { const c2 = Math.min(0.03, tf * 0.4); return [[x, cy, zb], [x, cy + tb, zb], [x, cy + tf, zr - c2], [x, cy + tf - c2, zr], [x, cy, zr]]; }, FC = [O.DKO, O.ORt, O.HI, O.OR, O.DKO];
++  pbGl(g, PBGL.PAINT); for (let s = 0; s + 1 < ST.length; s++) { const a = sec(ST[s]), b = sec(ST[s + 1]), ins = [(ST[s][0] + ST[s + 1][0]) / 2, cy + 0.04, (zb + zr) / 2];
++    for (let k = 0; k < 5; k++) { const k1 = (k + 1) % 5; g.quadO(a[k], b[k], b[k1], a[k1], FC[k], ins); } }
++  for (const e of [0, ST.length - 1]) { const p = sec(ST[e]), ins = [0, cy + 0.04, (zb + zr) / 2]; for (let k = 1; k + 1 < 5; k++) g.triO(p[0], p[k], p[k + 1], O.DKO, ins); }
++  g.quadO([-0.7, cy + 0.012, zr + 0.0008], [0.7, cy + 0.012, zr + 0.0008], [0.7, cy + 0.034, zr + 0.0008], [-0.7, cy + 0.034, zr + 0.0008], W.GP, [0, cy, -1.5]);
++  const zfc = lfPlateCar(g, O, cy, ph, { hx: 0.17, hz: 0.03, ch: 0.022, guides: false, bolts: false, sign: false, latch: false, ribs: [] });
++  pbBox(g, 0, cy + 0.36, zfc + 0.0008, 0.22, ph - 0.44, 0.0016, W.GP); pbBox(g, 0, cy + ph - 0.06, zfc + 0.0008, 0.22, 0.012, 0.0016, O.HI);
++  return lfCarOut(g); };
++// ---- the six (top: the column's body top, its cap over it; ph: the carriage plate's height (at the SAMUM's 1.35 m its top under the
++//      column's top); TELESKOPSKI: hb, ht the head's underside and top at rest) ----
++const LFT = {
++  1: { nm: 'Izpopolnjeno', col: lfCol1, car: lfCar1, ph: 0.7, top: 2.715 },
++  2: { nm: 'Teleskopski', col: lfCol2, car: lfCar2, ph: null, hb: 1.12, ht: 1.25, top: 0.98 },
++  3: { nm: 'Industrijski', col: lfCol3, car: lfCar3, ph: 0.69, top: 2.68 },
++  4: { nm: 'Eleganten razstavni', col: lfCol4, car: lfCar4, glow: lfGlow4, ph: 0.74, top: 2.74 },
++  5: { nm: 'Dvojni steber zadaj', col: lfCol5, car: lfCar5, ph: 0.62, top: 2.62 },
++  6: { nm: 'Stenska konzola', col: lfCol6, car: lfCar6, glow: lfGlow6, ph: 0.7, top: 2.7 } };
++// the LED line's mesh (quads [a, b, c, d, colours a..d]): additive, unlit, over 1 (it glows in the HDR picture); the piece's dissolve
++const lfGlowMesh = (quads) => { const L = D.LIFT, P = [], Cc = [], v = (p, c) => { P.push(p[0], p[1], p[2]); Cc.push(c[0], c[1], c[2]); };
++  quads.forEach(([a, b, c, d, ca, cb, cc, cd]) => { v(a, ca); v(b, cb); v(c, cc); v(a, ca); v(c, cc); v(d, cd); });
++  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(P, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(Cc, 3)); geo.computeBoundingSphere();
++  const m = new T.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
++  m.onBeforeCompile = (sh) => { sh.uniforms.uHide = L.piece.u; sh.fragmentShader = 'uniform float uHide;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n\tif (uHide > 0.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < uHide) discard;'); };
++  m.customProgramCacheKey = () => 'lfGlowHide'; const mesh = new T.Mesh(geo, m); mesh.userData.lfGlow = true; return mesh; };
++// <<<< LF (the six lifts)
++// the game's lift back (its column geometry, its carriage and arms' build and the carriage's mesh) when PB built its own (LF: the arms'
++// mesh's geometry back too, the LED line away)
++const pbLiftOff = () => { const L = D.LIFT; if (!L || !L._pb) return; const o = L._pb; o.mesh.geometry.dispose(); o.mesh.geometry = o.geo; L.cmesh.geometry.dispose(); L.cmesh.geometry = o.cgeo;
++  if (o.ageo) { L.mesh.geometry.dispose(); L.mesh.geometry = o.ageo; } if (o.glow) { if (o.glow.parent) o.glow.parent.remove(o.glow); o.glow.geometry.dispose(); o.glow.material.dispose(); }
++  L.geo = o.B; L.n0 = o.n0; delete L._pb; if (D.poseLift) D.poseLift(); };
++// the new lift (after wLiftColour: v its variant; LF: PBL.type its design, 0 PB's (the game's arms), 1..6 LFT's (their own arms, LED
++// lines)); returns its load before / after (meshes, vertices)
+ const pbLift = (v) => { const L = D.LIFT; if (!L || !L.piece || !L.geo || !L.cmesh) return null; pbLiftOff();
+   const mesh = L.piece.root.children.find(o => o.isMesh && o !== L.cmesh && !o.userData.wBand && o.geometry.attributes.gloss); if (!mesh) return null;
+-  const O = pbPaint(v), B0 = L.geo, n0 = L.n0, n = B0.arm.length, before = { column: mesh.geometry.attributes.position.count, carriage: n0, arms: n - n0 };
+-  const geo = pbColumnGeo(O), cg = pbCarriage(O), m = cg.n, na = n - n0, N = m + na, B = { P: new Float32Array(N * 3), N: new Float32Array(N * 3), C: new Float32Array(N * 3), gl: new Float32Array(N), arm: new Int8Array(N), kd: new Uint8Array(N), kp: new Uint8Array(N), kr: new Uint8Array(N) };
+-  B.P.set(cg.P, 0); B.P.set(B0.P.subarray(n0 * 3), m * 3); B.N.set(cg.N, 0); B.N.set(B0.N.subarray(n0 * 3), m * 3); B.C.set(cg.C, 0); B.C.set(B0.C.subarray(n0 * 3), m * 3);
+-  B.gl.set(cg.gl, 0); B.gl.set(B0.gl.subarray(n0), m); B.arm.fill(-1, 0, m); B.arm.set(B0.arm.subarray(n0), m); B.kd.set(B0.kd.subarray(n0), m); B.kp.set(B0.kp.subarray(n0), m); B.kr.set(B0.kr.subarray(n0), m);
+-  const cgeo = new T.BufferGeometry(); for (const [nm, k] of [['position', 3], ['normal', 3], ['color', 3]]) cgeo.setAttribute(nm, new T.BufferAttribute(new Float32Array(m * k), k).setUsage(T.DynamicDrawUsage));
+-  cgeo.setAttribute('gloss', new T.BufferAttribute(B.gl.slice(0, m), 1)); cgeo.boundingSphere = new T.Sphere(V(L.x, 1.2, -0.6), 3.4);
+-  L._pb = { mesh, geo: mesh.geometry, cgeo: L.cmesh.geometry, B: B0, n0 }; mesh.geometry = geo; L.cmesh.geometry = cgeo; L.geo = B; L.n0 = m; if (D.poseLift) D.poseLift();
+-  const after = { column: geo.attributes.position.count, carriage: m, arms: na };
+-  return (PBL.info = { v: v || null, top: PBL.top, capTop: +(PBL.top + PBL.cap + 0.008).toFixed(3), meshes: 3, before, after, verts: { before: before.column + before.carriage + before.arms, after: after.column + after.carriage + after.arms } }); };
++  const ty = PBL.type || 0, Dz = LFT[ty] || null, O = pbPaint(v), B0 = L.geo, n0 = L.n0, n = B0.arm.length, before = { column: mesh.geometry.attributes.position.count, carriage: n0, arms: n - n0 };
++  const geo = Dz ? Dz.col(O) : pbColumnGeo(O), cg = Dz ? Dz.car(O) : pbCarriage(O), ag = Dz ? lfArms(lfArmsOf(O, ty)) : null, m = cg.n, na = ag ? ag.n : n - n0, N = m + na;
++  const B = { P: new Float32Array(N * 3), N: new Float32Array(N * 3), C: new Float32Array(N * 3), gl: new Float32Array(N), arm: new Int8Array(N), kd: new Uint8Array(N), kp: new Uint8Array(N), kr: new Uint8Array(N) };
++  B.P.set(cg.P, 0); B.N.set(cg.N, 0); B.C.set(cg.C, 0); B.gl.set(cg.gl, 0); B.arm.fill(-1, 0, m);
++  if (ag) { B.P.set(ag.P, m * 3); B.N.set(ag.N, m * 3); B.C.set(ag.C, m * 3); B.gl.set(ag.gl, m); B.arm.set(ag.arm, m); B.kd.set(ag.kd, m); B.kp.set(ag.kp, m); B.kr.set(ag.kr, m); }
++  else { B.P.set(B0.P.subarray(n0 * 3), m * 3); B.N.set(B0.N.subarray(n0 * 3), m * 3); B.C.set(B0.C.subarray(n0 * 3), m * 3); B.gl.set(B0.gl.subarray(n0), m); B.arm.set(B0.arm.subarray(n0), m); B.kd.set(B0.kd.subarray(n0), m); B.kp.set(B0.kp.subarray(n0), m); B.kr.set(B0.kr.subarray(n0), m); }
++  const dyn = (k, gl) => { const q = new T.BufferGeometry(); for (const [nm, kk] of [['position', 3], ['normal', 3], ['color', 3]]) q.setAttribute(nm, new T.BufferAttribute(new Float32Array(k * kk), kk).setUsage(T.DynamicDrawUsage));
++    q.setAttribute('gloss', new T.BufferAttribute(gl, 1)); q.boundingSphere = new T.Sphere(V(L.x, 1.2, -0.6), 3.4); return q; };
++  const cgeo = dyn(m, B.gl.slice(0, m)), ageo = ag ? dyn(na, B.gl.slice(m)) : null, glow = Dz && Dz.glow ? lfGlowMesh(Dz.glow(O)) : null;
++  L._pb = { mesh, geo: mesh.geometry, cgeo: L.cmesh.geometry, ageo: ageo ? L.mesh.geometry : null, glow, B: B0, n0 }; mesh.geometry = geo; L.cmesh.geometry = cgeo; if (ageo) L.mesh.geometry = ageo; if (glow) L.piece.root.add(glow);
++  L.geo = B; L.n0 = m; if (D.poseLift) D.poseLift();
++  geo.computeBoundingBox(); const after = { column: geo.attributes.position.count, carriage: m, arms: na, glow: glow ? glow.geometry.attributes.position.count : 0 }, top = +geo.boundingBox.max.y.toFixed(3);
++  return (PBL.info = { v: v || null, type: ty, nm: Dz ? Dz.nm : 'PB', top: Dz ? Dz.top : PBL.top, capTop: Dz ? top : +(PBL.top + PBL.cap + 0.008).toFixed(3), meshes: glow ? 4 : 3, before, after, verts: { before: before.column + before.carriage + before.arms, after: after.column + after.carriage + after.arms + after.glow } }); };
+ // <<<< PB BLOCK
+ // >>>> GM BLOCK (agent GM)
+ // ==== GM: TWO TYRE SETS GO (THE ONES THE CAR COVERS), THE BACK LIGHT BLUE WITH SHADOWS AND SLOTS (agent GM; the user, on PB's P3, the

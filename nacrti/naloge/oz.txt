@@ -1,0 +1,43 @@
+BRIEF OZ: HOW THE ELEMENTS ARE MARKED WHEN THE MENU (CARD) OPENS
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all, not even git status).
+Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch
+folder /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/oz. Progress file P/out/oz/notes.md (the
+container can restart). Many other agents render now: one browser at a time yourself, long timeouts, never write another agent's files
+or the shared base files (copy what you need).
+
+THE USER'S WORDS (Slovenian): "Prikaži, kako so elementi označeni, ko se odpre meni."
+= Show how the elements are marked in the garage when the menu (the card, okvirček) is open.
+
+WHAT TO SHOW. Today's rule: the tapped element turns light turquoise with a yellow rim on its own shape, a tap ring, a name flag, and the
+card opens at the bottom across the WHOLE screen width (6-8 px margins) without covering the car (8 px gap; read
+scratchpad/wf/prompts/card_rule.txt), the aero menu with kit thumbnails. Make SIX versions of the marking while the card is open, each
+shown on the same THREE elements: TRACK tyres (regal, bottom shelf), TURBO (regal, storey D), and the SPORT aero model (the front chest's
+top). Version 1 is today's rule exactly; versions 2-6 are your best alternatives, for example:
+  - a clean yellow/turquoise outline (glow contour) only, the element keeps its own colours;
+  - the tapped element bright and the rest of the garage dimmed a little (spotlight), the car stays normal;
+  - the element's shelf name tag lights up too (the edge-to-edge tags from P/out/lb2: the tag turns yellow with navy letters), and the
+    other options of the same kind (the other two tyre sets for TRACK; for TURBO the ten tuning parts are one menu with tabs: mark only
+    TURBO; for SPORT the other kit models) get a soft outline and a small number that matches their row in the card, so the player sees
+    which row is which element;
+  - a thin line or pointer from the selected card row to the element;
+  - the element lifted forward a little on its shelf with a soft light from above.
+For every version make it clear on the picture which row of the card is selected and which element that is. In the version with the
+row numbers, add one more frame: the player picks another row in the card (e.g. MOUNTAIN instead of TRACK) and the marking moves to that
+element.
+Everything must read on a phone at 412x915, DPR 1, in the game's first view; the marking must not hide the element's shape; the card's
+rule stays (whole width, does not cover the car). Generic names only, British English in-world labels.
+
+THE SCENE: the latest one: start from P/concepts/_e_store2_lb2.js (am2 + the edge-to-edge shelf tags). If P/concepts/_e_store2_av1.js
+exists and P/out/av_1/info.json is written, build the front chest from it (car-colour models, red service button, GT PACK removed, RACE
+under a locked dome); otherwise use the chest in lb2 and say so. Keep the lift as in lb2. Find how the project makes tap pictures (the
+highlight, ring, flag and card code): look at P/mk_el_regal.sh, P/render_el_regal.sh and the EL agents' notes (P/out/el_regal/notes.md,
+P/out/el_spredaj/notes.md, if present) and the LB scripts in scratchpad/lb (mk2.sh, render2.sh, harness_lb.mjs); copy what you need into
+scratchpad/oz and run only your own copies.
+
+PICTURES -> P/out/oz/: v1_track.png, v1_turbo.png, v1_sport.png ... v6_*.png (412x915 each, the real UI, CAR=muscle), plus the extra
+frame of the row-number version (vN_mountain.png); plosca_oznacevanje.png: a board, one row per version (its three frames side by side, a
+short Slovenian title and one line on what it does), the extra frame next to its version; info.json { name, text (Slovenian), versions:
+[{ nr, ime, opis (Slovenian), what is marked, the card's gap to the car in px }] }; DONE when finished. Look at every picture yourself
+at full resolution before DONE (the right element marked, the right row selected, the card not over the car).
+FINAL REPORT: the six versions in one line each, which you recommend and why, the files, the scene used. Plain language.

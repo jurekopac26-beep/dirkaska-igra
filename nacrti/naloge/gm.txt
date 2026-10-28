@@ -1,0 +1,43 @@
+BRIEF GM: TWO TYRE SETS GO (THE ONES THE CAR COVERS), THE BACK LIGHT BLUE WITH SHADOWS AND SLOTS
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch folder
+/tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/gm. Progress file P/out/gm/notes.md (the container can
+restart). One browser render at a time. Never write to another agent's files; never edit the shared base files (P/concepts/s.js,
+_sk_body.js, _sm_body.js, _sw_body.js, _sx_body.js, _e_common.js, _menus_*.js).
+
+THE USER'S WORDS (Slovenian), with a screenshot of P/out/bg/pred_po.png (top: BEFORE = L3 version A, light-blue backs; bottom: BG v1):
+"P3. Zbriši 2 kompleta gum v regalih, kjer sem označil, ker težko klikneš na njih, ker jih prekriva avto. Zato naj bosta ta dva regala
+prazna. Sedaj lahko izbiraš samo še med 3 vrstami gum. Naredi, da so plošče take, kot so bile prej na drugi sliki zgoraj, modre s
+sencami, in dodaj jim reže. Okrogle trodelne."
+- "P3" = the user picked background P3 (slotted pegboard, P/out/pb). "Okrogle trodelne" = the gripper's telescopic rods version 1
+  (P/out/grt/grt_1.png): nothing to draw for that now, only note it.
+- The screenshot shows no visible marks, so decide WHICH two tyre sets by measuring: in the first view (HOMEC, 412x915) measure each
+  tyre set on storey A (bays 0-4: Sneg, Makadam, Cesta, Dirkališče, Gorska) with the ID pass: visible share of its outline, the largest
+  tap rectangle, and how much of it the CAR covers. Remove the TWO sets the car covers most (expected: bay 2's Cesta, mostly behind the
+  car and the lift, and bay 1's Makadam, partly under the car's bonnet; follow the numbers). Their storey-A places stay EMPTY (no
+  tyres, no stands; the shelf board and back stay). Three tyre kinds are left to choose from.
+- The backs: "like before in the top picture: light blue with shadows, and add slots": the regal's back panels go back to the LIGHT
+  BLUE of L3 version A (the colour and the soft shade under each board as there), now with P3's slots (the oblong slots in staggered
+  rows) cut into them: light-blue slotted pegboard. Keep BG v1's navy perforated posts, the 4th storey's front posts, PB's new lift,
+  no lit panels on top. Make sure the slots read but stay calm (the parts must stand out); the regal's light must not change.
+
+THE STARTING POINT: agent PB's store P/concepts/_e_store2_pb.js with RG.BG = 1 and RG.PB = 3 (read P/out/pb/notes.md, info.json;
+P/out/bg/notes.md; P/out/l3/notes.md for version A's light blue and shade). Your store copy P/concepts/_e_store2_gm.js (regal part only;
+never the cabinets' XC block, never the PROPOSAL 1 section), P/mk_base_gm.sh -> base_gm.js, your bodies, scripts, harness copy. Patch
+P/out/gm/regal_gm.patch = diff -u _e_store2_pb.js _e_store2_gm.js.
+Also the TYRE MENU: the menu's "Gume" tab (MENUS part 'tyres', P/concepts/_menus_final.js) now offers only the three remaining kinds: do
+NOT edit the shared menus file; in your body make a copy of the tyres part with the two removed kinds left out for your pictures.
+
+PICTURES -> P/out/gm/:
+  f0.png: the first view (412x915, real UI, CAR=muscle, the orange lift, no hint banner);
+  hq/prvi_pogled.png: the same in HQ as round V1/W made it (DPR 4, 1648x3660);
+  regal.png: the regal of the first view at DPR 4 (above the spoilers down to the tyres);
+  pred_po.png: before (PB P3) / after: the regal crop, Slovenian captions (which two tyre sets went and why: the measured car cover; the
+  light-blue slotted back);
+  gume_tap.png: the first view after tapping one remaining tyre set (light turquoise + yellow rim, the ring, its flag, the card with the
+  tyres menu showing only the THREE kinds, that kind selected), as the project's earlier tap pictures;
+  info.json { name, text (Slovenian), tyres (per set before: visible share, tap rectangle, car cover; which went), back (what it is,
+  contrast of the parts), captions, notes (incl. "prijemalo: okrogle trodelne teleskopske palice, izbrano") }.
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+FINAL REPORT: which tyre sets went (the numbers), the back, the files, what you could not get right. Plain language.

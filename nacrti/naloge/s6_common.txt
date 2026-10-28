@@ -1,0 +1,59 @@
+COMMON PART OF THE S6 BRIEFS (read it whole).
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your own scratch folder
+(named in your brief). The container can restart at any time: keep a running progress file (named in your brief) so a resumed you can
+continue. Run at most ONE browser render at a time (two other agents render in parallel). Never write to another agent's files.
+
+THE USER'S WORDS (Slovenian, this round; the user chose option 6 "STEKLENA VITRINA" of the last round, P/final_z/00j_omarici_6_moznosti.png):
+"Naredi verzijo 6 v 6 različnih načinih. Poskusi, da sta regala spodaj vse do roba. Mogoče da so odprti ali višji, ne vem, presodi sam,
+in naredi, da bo najboljše, da ima uporabnik čim več prostora, da klikne. In ko klikne na element. Prikaži tudi v sliki, kako je, če so
+vsi elementi kliknjeni."
+So: six variants of the glass showcase cabinets in front of the car, where the two cabinets fill the bottom of the first view out to the
+screen's edges (left, right and as far down as works), maybe open or taller, whatever gives the player the MOST room to tap each element;
+plus pictures of a tap on one element and of ALL elements in the tapped state at once.
+
+THE STARTING POINT: option 6 by agent XC: store P/concepts/_e_store2_om6.js (it already has X0's regal patch: the regal's end section is
+gone, and the EXH fix: no over-lit exhausts; XC's code between "// >>>> XC BLOCKS" and "// <<<< XC BLOCKS", frontRegal calls om6Fronts;
+its source block /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/xc/om6_block.js and xc_common.js),
+base P/concepts/base_om6.js (P/mk_base_om6.sh), body P/concepts/_xc_body.js (P/mk_xc.sh, P/render_xc.sh, P/harness_xc.mjs), notes
+P/out/xc/notes.md, pictures P/out/om6/ (f0.png, omarici_hq.png, info.json with the measures). Read XC's notes and info.json first.
+The first view is HOMEC (412x915, the real UI, CAR=muscle, the yellow lift). The tap look of this project: the tapped element light
+turquoise with a yellow rim (store/base helpers ztTurq and the yellow rim used for taps, tapPx: the ring, ztFlag: the name flag, the card
+"okvirček" with the part's menu: cardHTML(MPART(id)) as P/concepts/_z2t1_body.js t1Card does it). In-world labels are British English,
+white on navy with the regal's yellow line; the game's HUD stays as the game draws it; UI flags and cards use the menu's Slovenian names.
+
+WHAT EVERY VARIANT MUST DO:
+  - The ELEMENTS: in the showcase UNDERGLOW (BLUE, TURQUOISE, PURPLE, RED, GREEN), INDICATORS (CLEAR, SMOKED, SEQUENTIAL), AERO KITS
+    (STREET, SPORT, RACE, GT PACK), DECALS (FLAMES, CHEQUERED, STAR), COLOURED NUTS; on the TOPS the headlamps (LED, Rumeni, Dimljeni,
+    Bi-LED), the tail lamps (Dimljene, Prozorne, Okrogle, LED-trak), the discs (Dirkalni diski, Keramične), the grilles (Satasta,
+    Mrežasta, Kromirana, Karbonska, V barvi avta), the calipers (Rdeče, Rumene, Zlate, V barvi avta). The left cabinet: the lights (tops:
+    headlamps, tail lamps; showcase: underglow, indicators); the right: the rest. The daily gift stays between them (it is tapped too).
+    The tops keep the same items but you MAY space them out over a wider top and stand them so each is a good target (today the grilles
+    stand like books and each is only 4 px tall to tap: fix that), and you may raise or lower the tops if your variant needs it.
+  - TO THE EDGES: in the first view the two cabinets reach the screen's left and right edges (no floor visible beside them at their
+    height) and come as far down toward the screen's bottom edge as your variant can (wider, deeper toward the camera, a lower front, a
+    sloped or stepped front: your choice). The colour pools in the floor must stay fully visible and tappable (they are the paint
+    choices), and so must the car and the regal. Keep at least 0.3 m from the trolleys' parking outlines and routes (store PROPOSAL 1
+    section, P/out/vt/info.json: they park front-left).
+  - ROOM TO TAP: the aim is the biggest tap target for every element. Measure every element in f0 with the ID pass (visible box, LARGEST
+    TAP RECTANGLE in CSS px, px, share of outline, what covers it) and compare with option 6 of the last round (P/out/om6/info.json) and with
+    today's (round W) numbers. Report per element and the minimum, median and count of elements whose largest tap rectangle is at least
+    40x40 CSS px (and at least 30x30). Every element fully inside the screen (at least 6 px from an edge) and fully visible.
+  - Everything faces the first view's camera (it looks from the front right, from above). No brands; the game's look.
+PICTURES PER VARIANT k -> P/out/s6_<k>/:
+  f0.png        the first view (412x915, real UI, no hint banner);
+  omarici_hq.png the cabinets close, HQ (DPR 4 or the HQ machinery of round V1/W), from the first view's direction;
+  tap_one.png   the first view right after the player taps ONE element: Luč pod avtom – Rdeča (the RED underglow strip): it turns light
+                turquoise with the yellow rim, the tap ring on it, its name flag ("LUČ POD AVTOM – RDEČA"), the card (okvirček) of the
+                underglow menu (MPART('underglow'), tab Barva, Rdeča selected) at the top, as the project's earlier tap pictures do;
+  tap_all.png   the first view with ALL the cabinets' elements (showcase and tops, and the gift) in the tapped state at once, each light
+                turquoise with its yellow rim, so the player sees every element's tap area; and tap_all_zoom.png: the same at DPR 3,
+                cropped to the cabinets;
+  info.json     { name (Slovenian), text (2-3 Slovenian sentences), captions (Slovenian, one per picture), measure (per element; min,
+                median, counts >= 40x40 and >= 30x30; the same for option 6 and today), footprint (how far beyond today's footprint, the
+                distance to the trolleys), load (meshes, vertices, draw calls of the cabinets and of the frame: say what costs most),
+                notes }.
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+FINAL REPORT (your last message): per variant what you built, the tap numbers against option 6 and today, the files, what you could not get
+right.

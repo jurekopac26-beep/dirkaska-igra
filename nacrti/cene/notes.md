@@ -1,0 +1,48 @@
+# CN progress (real-world prices, 4 x 4 options per garage element)
+- started; read brief cn.txt, _menus_final.js (16 parts), el_regal elementi.json (game stat style: "sneg +57 · suho −16")
+- coordinator additions: A) cars -> avti.json (realistic new price per car type); B) economy -> ekonomija.json (rewards, costs, service by damage x car value)
+- step 1 tyres: writing gume.json (user's numbers 140..6.000 €)
+- 00:36 gume.json written (16 sets, 140..6.000 €), GUME_DONE touched
+- searches (vir): rims: felgenoutlet set 4 alloys 359-729 €, forged sets 4.500-13.700 € (eBay.de F12 forged set, wheelbasealloys forged), carbon above -> 200..16.000
+- exhaust: cat-back $650-1.500, full system $1.000-3.000 (thepricer), titanium race full ~$5.000 (radical forum) -> 150..9.000
+- wing: universal carbon swan neck ~$600 (eBay), Voltex/APR $1.650-4.200, ADRO 992 $5.500 (bulletproof, adro) -> 90..6.000
+- aero kit: lip $50-150, full kit $600-2.000, widebody £1.500-6.000 + fitting, carbon GT-R kit $12-18k (hodoor, body-kit.co.uk) -> 150..20.000
+- headlamps: aftermarket halogen $40-150 each, LED modules $600-900 each, laser >$5.000 each (beforward, synchrony) -> 80..8.000 pair
+- tail lamps: aftermarket $50-200, smoked LED sets $550-820, OEM OLED $1.800-2.500 each (thepricer, go-parts) -> 60..4.000 pair
+- indicators: sequential side repeater pairs $16-60 (eBay), modules ~90-150 € (partseurope) -> 15..600 set
+- rally lights: LED pods $140-440 each, pairs $260-690 (walmart listings) -> 60..3.500 (pro rally pod)
+- underglow: kits $23-70 budget, premium app kits $250-480, 2-4 h install (oldcarsweekly, subimods) -> 20..700
+- grille: honeycomb ABS 300-1.500 € (mecalife), carbon $200-1.300 (alibaba guide), install $300-500 -> 40..2.500
+- stripes: DIY vinyl $25-150, painted $600-3.000, factory painted $10.000 (getjerry, thedrive) -> 25..8.000
+- decals: generic $18-46 (eBay), branded hood decal $295 + install (stellantis) -> 15..800
+- calipers: paint kit ~$40 (audizine), powder coat $65-150 per caliper + rebuild, high-end refinish ~$1.200 (rennlist) -> 30..1.200
+- brakes: big iron kits $1.195-6.295, carbon ceramic kits $6.000-21.395, factory CCB options $9.000-17.990 (buybrakes, motor1) -> 30..20.000
+- wheel nuts: steel sets of 20 $25-60, titanium $150-350 (classicindustries, burgertuning) -> 20..400
+- air filter: panel £43-84, induction kit £150-180, carbon intake £930-2.200 inc VAT (demon-tweeks) -> 15..2.200
+- ECU chip: stage 1 remap £396-600, stage 2 ~£1.000, stage 3 several thousand, standalone ECU+harness ~$2.150 (fensport, nexsys) -> 150..5.000
+- turbo: bolt-on single $1.000-3.000 (N54 $800-8.000), twin kits $6.000-10.000 + install (getjerry, my350z) -> 500..12.000
+- light battery: lithium race $400-2.200, MSRP $685-1.360 (enginebuildermag, dragzine, crateinsider) -> 90..2.000
+- springs: lowering springs $100-500 per set (getjerry, realtruck) -> 90..800
+- dampers: coilovers $300-5.000, track-spec $2.000-3.000+, install $300-800 (getjerry, realtruck); motorsport 3-way: separate search
+- anti-roll bars: complete adjustable F+R kits $557-1.025, £559-751 (onefastshop, garagewhifbitz) -> 100..1.800
+- horn: single snail horns $8-18, train horn kits $20-150, full onboard air system ~$1.330 (walmart listings) -> 10..1.300
+- dampers top: Moton 3-way kits £4.940-6.600, $6.600-8.860 (macgracing, fidanza) -> dampers 200..9.000
+- tyre smoke: coloured smoke drift tyres ~130-140 € each (eBay.de ALPHA), premium up to $475 each (lsxmag) -> 120..1.000 per pair of driven tyres
+- bonnet: fibreglass $360-400, carbon $650-3.000+ (forum lists, revozport) -> 150..4.000
+- doors: carbon race doors pair $2.315-4.000 (bimmerworld, americanmuscle, gspeed) -> 300..4.000 pair
+- mirrors: carbon covers pair $52-534, fibreglass/carbon housings $250-400 pair, supercar carbon mirrors $1.990-3.790 (cjponyparts, dmc) -> 30..3.800 pair
+- boot lid: carbon lids $572-1.710 (Carbon Creations), Anderson $989-4.499 (carid, onefastshop) -> 150..4.500
+- roof: aftermarket carbon roofs $957-2.500, OEM carbon roof $6.295-12.360 (turnermotorsport, carid, forums) -> 100 (wrap)..12.000
+- window tint: $15-60 per window, full car $150-800+, ceramic film £150-300 (alibaba guide, cdcautodetailing) -> 15..250 per window
+- paint: full respray £2.400-5.000 (whocanfixmycar, bumper, webuyanycar), budget £329-898 (checkatrade), quality $3.000-10.000+, wrap $3.500-6.000 (gilroyblackout) -> 500..15.000
+- louvres: ABS $50-200, real carbon $300-600 (walmart, eBay) -> 50..700
+- numbers: roundel+number sets £19 (eBay), single 11" roundel $51, windscreen numerals $9 each (discoveryparts) -> 10..250
+- accessories: rally mud flaps $16-196, vehicle-specific sets up to CA$477 (rally armor, demon-tweeks); antenna/scoop/hooks: estimate -> 15..900
+- (01:20) step 2 research done for parts; read js: Core.CAREER (core.js 4240-4262), garage.js SRV/PAINT/STRIPE/profile, game.js careerPay/POL_EUR, chest signs (concepts base_av1.js: RENT A CAR ONE RACE 450€, FOR SALE 4280€)
+- next: car prices (search), then build cene.json/avti.json/ekonomija.json + cene.html
+- cars (vir): Rally2 cap 260.766 € excl. tax 2023 (motorsactu), Fabia R5 221.000 € (irishtimes); LMP2 capped 483.000 € w/o engine (24h-lemans 2026 preview); F2 Dallara ~500.000 € w/o engine (wikipedia); trophy truck new build $200-400k, top $600k-1M (getjerry, wilwood); Cayman ~61.500 € DE (arawheels); Mustang GT US $47.055-51.575 (motor1); Golf R US $48.325 (aol)
+- rentals: race weekend rental $2.500-6.000, $1.000-1.500/day (proformance, mazdamotorsports); service: UK full service £180-300 (bumper), accident repair avg £765-1.919 (whocanfixmycar, bodyshopmag)
+- (01:45) designing 4x4 data per element (script cn_scripts/build.py): per-element category names; stock part = the button below (MN rule), not one of the 16 (except tyres: Cesta kept, marked namesceno)
+- 01:01 elements.py (35 elements incl. no tyres) validated: 4x4, monotonic, unique, EN stat lines
+- 01:07 built cene.json (37 el. incl. gume + servis), avti.json, ekonomija.json, cene.html (phone 390px no page overflow, light/dark checked)
+- 01:07 DONE: final report sent (min/max table, categories, cars, economy, service examples, uncertainties)

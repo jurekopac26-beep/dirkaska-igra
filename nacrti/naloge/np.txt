@@ -1,0 +1,43 @@
+BRIEF NP: DESK NAME PLATES IN FRONT OF THE REGAL'S ELEMENTS INSTEAD OF THE SHELF-EDGE TAGS (8 VERSIONS)
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all, not even git status).
+Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch
+folder scratchpad/lb (yours). Progress file P/out/np/notes.md. Other agents render now: one browser at a time yourself.
+
+THE USER'S WORDS (Slovenian): "Napise zbriši iz polic in pred elemente postavi napise na tablicah, kot jih imajo politiki pred seboj za
+svoje ime, ali pa v obliki toblerone. Naredi 6 verzij in 2 po svoji izbiri."
+= Remove the tags from the shelves' front edges (LB/LB2). Instead, in front of every element on the regal stand a small name sign like
+the desk name plates politicians have in front of them at a conference, or a triangular prism (Toblerone shape). Six versions of these,
+plus two more of your own choice: 8 versions in all.
+
+THE SIX (vary shape, material and colour; one each):
+  1. classic conference desk plate: a wedge-shaped plate leaning back, navy face, white capitals, the thin yellow line;
+  2. folded tent card (an A-shaped card standing on the shelf), white card with navy capitals and a yellow stripe;
+  3. Toblerone prism (triangular, equal sides), navy with white capitals on the front face, yellow edges;
+  4. Toblerone prism in yellow with navy capitals (strong contrast), slightly rounded edges;
+  5. acrylic/clear plate in a dark metal holder (the letters on the clear plate, white with a navy backing strip);
+  6. brushed aluminium plate on a small black base, dark engraved-looking capitals.
+  7 and 8: your own best ideas, e.g. a plate tilted back so it faces the first-view camera (bigger letters on the screen), a three-sided
+  prism that also shows the price or a stat icon on its other faces, an edge-lit plate whose letters glow softly. Explain why you chose
+  them.
+THE SAME FOR ALL: one plate in front of every element (the 28 elements and names of LB: tyres SNOW, TRACK, MOUNTAIN; exhausts; rims;
+the ten tuning parts, two per bay on storey D; the five wings on the top board); British English, generic names; no plate on the empty
+places. Each plate stands on the shelf in front of its element, centred on it, as big as it can be while it does NOT cover the element in
+the first view (ID pass: each element's visible pixels and its largest tap square stay the same or lose at most a few %, report it), does
+not touch the posts (5 cm), and leaves the robot arm a free way to take the element (check the gripper's approach from the front; if a
+plate is in the way, place it lower/closer to the edge or say how it would move aside). The shelf-edge tags are gone (lips bare as in
+am2). Keep the phone load low: one atlas texture, one or two materials, merged meshes per shelf (report draw calls, vertices, texture
+size vs LB2's 23 draw calls / 336 vertices / 2048x1024).
+MEASURE for every version: plate size in cm; in the first view (HOMEC, DPR 1) capital height in px and how many plates can be read
+(from about 7 px); at DPR 4; and two close views (TURBO and TRACK) with capital height (use your LB2 close-camera way; the 72° lens is
+fine, say so).
+
+START from P/concepts/_e_store2_am2.js (no shelf tags) and your LB/LB2 code (atlas, measuring, close cameras). One store copy
+P/concepts/_e_store2_np.js with a switch NP.type = 1..8 (0 = no plates) so one patch holds all eight; regal_np.patch = diff -u
+_e_store2_am2.js _e_store2_np.js, checked to apply cleanly to a fresh am2 (and together with LF's lift.patch).
+PICTURES -> P/out/np/: f0_v1.png ... f0_v8.png (first view, DPR 1); hq_v1..v8.png (the regal at DPR 4); blizu_v<N>_turbo.png and
+blizu_v<N>_track.png for each version; plosca_tablice_8.png: a board, 8 rows or a 4x2 grid: per version a DPR-4 crop of two storeys
+with their plates and its two close views, a short Slovenian name and one line; info.json { name, text (Slovenian), versions: [{ nr, ime,
+opis, velikost_cm, prvi_pogled_crke_px, berljivih_v_prvem_pogledu, blizu_crke_px, pokritost_elementov_%, draw_calls, vertices }] };
+DONE when finished. Look at every picture yourself at full resolution before DONE.
+FINAL REPORT: the eight versions in one line each, which you recommend and why, the numbers, the files. Plain language.

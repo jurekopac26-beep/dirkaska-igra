@@ -1,0 +1,93 @@
+--- _e_store2_av1.js
++++ _e_store2_rb.js
+@@ -3396,7 +3396,89 @@
+     const m = new T.Mesh(new T.BoxGeometry(0.368, 0.11, 0.238), M); m.position.set(L.x, 2.86, L.z); m.castShadow = m.receiveShadow = true; m.userData.wBand = true; L.piece.root.add(m); WLIFTBAND = m;
+     t.repeat.set(1, 1); }
+   return { v: v || 'modra', n }; };
+-const ZBASE = (o = {}) => { const S = SBASEX(), W = winPolysP(); ZS = S; const st = storesAll(W, o, S); pbLiftOff(); st.lift = wLiftColour(o.lift !== undefined ? o.lift : WLIFTV); st.liftPB = PBL.on ? pbLift(o.lift !== undefined ? o.lift : WLIFTV) : null; return { S, W, st }; };   // (W: the lift's colour; PB: the game's lift back first (pbLiftOff), then its new graphics (pbLift, PBL))
++// ==== RB (agent KL/RB; the user: "Naredi 6 različnih verzij, kako bi izgledalo, če zbrišeš VRŠIČ, SLOVENIJA, da so tam samo štange od rok, ki
++//      visita na njih."): the place banner goes (the lettered band round the stored chamber, S.band, and the stored chamber itself under it:
++//      its navy band, rims, light and glass); only the structure the two arms hang from stays: the round rail (RNG.R 3.3 m at RNG.Y 4.5 m, its
++//      hangers to the ceiling) and the bridge across it (the arms' carriages at its ends, the same place and height: the arms and their reach
++//      as before). RB.type 1..6 its design (0: today's, the banner on): 1 a round steel tube; 2 a square box section (navy, a light line);
++//      3 a light lattice truss; 4 an I-beam with the trolleys and their wheels; 5 a double rail with a cable tray outside it; 6 a slim rail
++//      with small pendant lamps outside it. Each design a few merged meshes (one per material) ----
++const RB = { type: 2 };   // (the recommended design)
++const RBC = { R: 3.3, Y: 4.5, ceil: 4.8, br: 3.55 };   // (the rail's radius and height (ringRail's RNG), the ceiling, the bridge's half length (bridge(): 7.1 m))
++// geometry merged per material: add(geo, matrix) (the geometry disposed), mesh(material)
++const rbAcc = () => { const P = [], N = []; return { add(geo, m) { const g = geo.index ? geo.toNonIndexed() : geo.clone(); if (m) g.applyMatrix4(m); const p = g.attributes.position, n = g.attributes.normal;
++    for (let i = 0; i < p.count; i++) { P.push(p.getX(i), p.getY(i), p.getZ(i)); N.push(n.getX(i), n.getY(i), n.getZ(i)); } g.dispose(); geo.dispose(); return this; },
++  mesh(mat, par) { const G = new T.BufferGeometry(); G.setAttribute('position', new T.Float32BufferAttribute(P, 3)); G.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); G.computeBoundingSphere();
++    const m = new T.Mesh(G, mat); m.castShadow = false; m.receiveShadow = false; if (par) par.add(m); return m; } }; };
++const rbM = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => new T.Matrix4().compose(V(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(rx, ry, rz)), V(sx, sy, sz));
++// a rod (a thin cylinder, n sides) from a to b
++const rbRod = (A, a, b, r, n = 6) => { const d = V(...b).sub(V(...a)), L = d.length(), m = new T.Matrix4().compose(V(...a).add(V(...b)).multiplyScalar(0.5), new T.Quaternion().setFromUnitVectors(V(0, 1, 0), d.normalize()), V(1, 1, 1));
++  A.add(new T.CylinderGeometry(r, r, L, n, 1, true), m); };
++// a ring round y of radius R at height y: a torus of tube r
++const rbTorus = (A, R, y, r, rs = 8, ts = 160) => A.add(new T.TorusGeometry(R, r, rs, ts), rbM(0, y, 0, Math.PI / 2));
++// a profile swept round y (radius R, height y): edges [[dr0, dy0], [dr1, dy1]] each a flat strip, its normal outward from the profile's middle
++const rbSweep = (A, R, y, edges, n = 160) => { const P = [], N = [], c = edges.reduce((s, [p, q]) => [s[0] + (p[0] + q[0]) / 2 / edges.length, s[1] + (p[1] + q[1]) / 2 / edges.length], [0, 0]);
++  edges.forEach(([p, q]) => { let nr = q[1] - p[1], ny = -(q[0] - p[0]); const L = Math.hypot(nr, ny); nr /= L; ny /= L; const mx = (p[0] + q[0]) / 2 - c[0], my = (p[1] + q[1]) / 2 - c[1]; if (nr * mx + ny * my < 0) { nr = -nr; ny = -ny; }
++    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, b = (i + 1) / n * Math.PI * 2, pt = (e, t) => [(R + e[0]) * Math.cos(t), y + e[1], (R + e[0]) * Math.sin(t)], nn = (t) => [nr * Math.cos(t), ny, nr * Math.sin(t)];
++      const v = [pt(p, a), pt(q, a), pt(q, b), pt(p, b)], w = [nn(a), nn(a), nn(b), nn(b)], tri = [[0, 1, 2], [0, 2, 3]];
++      const e1 = V(...v[1]).sub(V(...v[0])), e2 = V(...v[2]).sub(V(...v[0])), gn = e1.cross(e2), flip = gn.dot(V(...w[0]).add(V(...w[2]))) < 0;
++      tri.forEach(t => (flip ? [t[0], t[2], t[1]] : t).forEach(k => { P.push(...v[k]); N.push(...w[k]); })); } });
++  const G = new T.BufferGeometry(); G.setAttribute('position', new T.Float32BufferAttribute(P, 3)); G.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); A.add(G); };
++const rbBox = (A, w, h, d, x, y, z, ry = 0) => A.add(new T.BoxGeometry(w, h, d), rbM(x, y, z, 0, ry, 0));
++// a rectangle's four edges (a box section w across, h high, its foot at y0) as sweep edges; an I-beam's (flanges b wide, tf thick, web tw, h high)
++const rbRect = (w, h, y0 = 0) => { const a = [-w / 2, y0], b = [w / 2, y0], c = [w / 2, y0 + h], d = [-w / 2, y0 + h]; return [[a, b], [b, c], [c, d], [d, a]]; };
++const rbI = (b, h, tf, tw, y0 = 0) => [...rbRect(b, tf, y0), ...rbRect(b, tf, y0 + h - tf), [[-tw / 2, y0 + tf], [-tw / 2, y0 + h - tf]], [[tw / 2, y0 + tf], [tw / 2, y0 + h - tf]]];
++const rbMats = () => ({ ST: PR.mat(0xb3bac3, { shininess: 90, specular: 0x888888 }), GR: PR.mat(0x2f343c, { shininess: 50, specular: 0x333333 }), NV: PR.mat(0x1b2b5c, { shininess: 40 }), YL: PR.mat(0xf2c230, { shininess: 40 }),
++  BK: PR.mat(0x15161a, { shininess: 30 }), LED: new T.MeshBasicMaterial({ color: new T.Color(0x47c6ff).multiplyScalar(2.2) }), WARM: new T.MeshBasicMaterial({ color: new T.Color(0xffe2b0).multiplyScalar(1.9) }), OR: PR.mat(0xe8742a, { shininess: 30 }) });
++// the hangers: k rods/posts from the rail's top (y0) to the ceiling at the rail's 12 old places (every 30 deg)
++const rbHang = (A, y0, f) => { for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6, x = RBC.R * Math.cos(a), z = RBC.R * Math.sin(a); f(A, x, z, a, y0); } };
++// ---- the six rails (in the room's frame) ----
++const rbRail = (t, M) => { const g = PR.group(), Y = RBC.Y, R = RBC.R, C = RBC.ceil;
++  if (t === 1) { const A = rbAcc(); rbTorus(A, R, Y + 0.08, 0.06, 10); rbHang(A, Y + 0.13, (A, x, z) => rbRod(A, [x, Y + 0.12, z], [x, C, z], 0.016, 6)); A.mesh(M.ST, g); }
++  else if (t === 2) { const A = rbAcc(); rbSweep(A, R, Y + 0.02, rbRect(0.15, 0.15)); rbHang(A, Y + 0.17, (A, x, z, a) => rbBox(A, 0.05, C - Y - 0.17, 0.05, x, (C + Y + 0.17) / 2, z, -a)); A.mesh(M.NV, g);
++    const L = rbAcc(); rbTorus(L, R + 0.077, Y + 0.05, 0.009, 4); L.mesh(M.LED, g); }
++  else if (t === 3) { const A = rbAcc(), y0 = Y + 0.02, y1 = Y + 0.27, n = 72; rbTorus(A, R, y0, 0.024, 6); rbTorus(A, R, y1, 0.024, 6);
++    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, b = (i + 1) / n * Math.PI * 2, p = (t2, y) => [R * Math.cos(t2), y, R * Math.sin(t2)]; rbRod(A, i % 2 ? p(a, y0) : p(a, y1), i % 2 ? p(b, y1) : p(b, y0), 0.011, 4); if (i % 2 === 0) rbRod(A, p(a, y0), p(a, y1), 0.011, 4); }
++    rbHang(A, y1, (A, x, z, a) => { if (Math.round(a / (Math.PI / 6)) % 2 === 0) rbRod(A, [x, y1, z], [x, C, z], 0.014, 6); }); A.mesh(M.ST, g); }
++  else if (t === 4) { const A = rbAcc(); rbSweep(A, R, Y + 0.1, rbI(0.17, 0.2, 0.024, 0.026)); rbHang(A, Y + 0.3, (A, x, z, a) => rbBox(A, 0.06, C - Y - 0.3, 0.06, x, (C + Y + 0.3) / 2, z, -a)); A.mesh(M.GR, g); }
++  else if (t === 5) { const A = rbAcc(), y = Y + 0.08; rbTorus(A, R - 0.09, y, 0.032, 8); rbTorus(A, R + 0.09, y, 0.032, 8);
++    for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2; rbBox(A, 0.05, 0.03, 0.26, R * Math.cos(a), y - 0.04, R * Math.sin(a), -a + Math.PI / 2); }
++    for (let i = 0; i < 12; i++) { const a = (i + 0.5) / 12 * Math.PI * 2; rbBox(A, 0.46, 0.025, 0.04, (R + 0.3) * Math.cos(a), y - 0.035, (R + 0.3) * Math.sin(a), -a); }   // (the tray's brackets, out from the rails)
++    rbHang(A, y + 0.03, (A, x, z) => rbRod(A, [x, y + 0.03, z], [x, C, z], 0.014, 6)); A.mesh(M.ST, g);
++    const Tr = rbAcc(), rt = R + 0.45; rbSweep(Tr, rt, y - 0.022, [[[-0.1, 0], [0.1, 0]], [[0.1, 0], [0.1, 0.07]], [[-0.1, 0], [-0.1, 0.07]]]); Tr.mesh(PR.mat(0x8d949d, { shininess: 60, specular: 0x555555, side: T.DoubleSide }), g);
++    const Cb = rbAcc(); [-0.05, 0, 0.05].forEach((o, k) => rbTorus(Cb, rt + o, y + 0.0, 0.019, 5)); Cb.mesh(M.BK, g); const Co = rbAcc(); rbTorus(Co, rt - 0.025, y + 0.03, 0.017, 5); Co.mesh(M.OR, g); }
++  else if (t === 6) { const A = rbAcc(), y = Y + 0.06, Sh = rbAcc(), Bu = rbAcc(), rl = R + 0.5; rbTorus(A, R, y, 0.032, 8); rbHang(A, y + 0.03, (A, x, z) => rbRod(A, [x, y + 0.03, z], [x, C, z], 0.011, 6));
++    for (let k = 0; k < 12; k++) { const a = (k + 0.5) / 12 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a), x = rl * c, z = rl * s, yl = y - 0.36;   // (a short outrigger out from the rail, a cable, a shade, its warm lamp)
++      rbRod(A, [R * c, y, R * s], [x, y, z], 0.012, 5); rbRod(A, [x, y, z], [x, yl + 0.07, z], 0.005, 4);
++      Sh.add(new T.CylinderGeometry(0.025, 0.1, 0.09, 14, 1, true), rbM(x, yl + 0.035, z)); Sh.add(new T.CylinderGeometry(0.02, 0.025, 0.03, 8), rbM(x, yl + 0.09, z));
++      Bu.add(new T.CircleGeometry(0.085, 14), rbM(x, yl + 0.005, z, Math.PI / 2)); }
++    A.mesh(M.ST, g); Sh.mesh(PR.mat(0x23272e, { shininess: 60, side: T.DoubleSide }), g); Bu.mesh(M.WARM, g); }
++  g.updateMatrixWorld(true); return g; };
++// ---- the six bridges (the bridge's own frame: x along it, its middle on the ring's axis, y 0 at RNG.Y; the arms' carriages hang at x +-3.4
++//      just under y 0, as with today's bridge) ----
++const rbBridge = (t, M, th) => { const g = PR.group(), L = 2 * RBC.br, R = RBC.R; g.position.y = RBC.Y; g.rotation.y = -th;
++  const trucks = (A, w = 0.4, h = 0.14, d = 0.4, y = 0.2) => { for (const s of [-1, 1]) rbBox(A, w, h, d, s * R, y, 0); };
++  if (t === 1) { const A = rbAcc(); A.add(new T.CylinderGeometry(0.075, 0.075, L, 14, 1), rbM(0, 0.15, 0, 0, 0, Math.PI / 2)); A.mesh(M.ST, g); const B = rbAcc(); for (const s of [-1, 1]) { B.add(new T.CylinderGeometry(0.1, 0.1, 0.22, 12, 1), rbM(s * R, 0.12, 0, Math.PI / 2)); } B.mesh(M.GR, g); }
++  else if (t === 2) { const A = rbAcc(); rbBox(A, L, 0.16, 0.16, 0, 0.14, 0); trucks(A, 0.36, 0.1, 0.3, 0.2); A.mesh(M.NV, g); const Ld = rbAcc(); for (const s of [-1, 1]) rbBox(Ld, L, 0.012, 0.012, 0, 0.1, s * 0.083); Ld.mesh(M.LED, g); }
++  else if (t === 3) { const A = rbAcc(), y0 = 0.07, y1 = 0.29, zb = 0.09, n = 28;   // (a triangular truss: two bottom chords, one top chord, diagonals on its slopes, ties under)
++    for (const z of [-zb, zb]) rbRod(A, [-L / 2, y0, z], [L / 2, y0, z], 0.022, 6); rbRod(A, [-L / 2, y1, 0], [L / 2, y1, 0], 0.022, 6);
++    for (let i = 0; i < n; i++) { const xa = -L / 2 + L * i / n, xb = -L / 2 + L * (i + 1) / n; for (const z of [-zb, zb]) rbRod(A, i % 2 ? [xa, y0, z] : [xa, y1, 0], i % 2 ? [xb, y1, 0] : [xb, y0, z], 0.01, 4); rbRod(A, [xa, y0, -zb], [xa, y0, zb], 0.009, 4); }
++    A.mesh(M.ST, g); const Y = rbAcc(); trucks(Y, 0.34, 0.12, 0.34, 0.17); Y.mesh(M.YL, g); }
++  else if (t === 4) { const A = rbAcc(); rbBox(A, L, 0.022, 0.15, 0, 0.061, 0); rbBox(A, L, 0.022, 0.15, 0, 0.229, 0); rbBox(A, L, 0.146, 0.022, 0, 0.145, 0); A.mesh(M.GR, g);   // (an I-beam; its trolleys on the ring's bottom flange, and over the arms' carriages on its own bottom flange)
++    const Y = rbAcc(), W = rbAcc(); for (const s of [-1, 1]) { rbBox(Y, 0.42, 0.08, 0.3, s * R, 0.27, 0); for (const dx of [-0.13, 0.13]) for (const dz of [-0.12, 0.12]) W.add(new T.CylinderGeometry(0.045, 0.045, 0.03, 12), rbM(s * R + dx, 0.33, dz, Math.PI / 2));
++      rbBox(Y, 0.3, 0.05, 0.2, s * 3.4, 0.025, 0); for (const dx of [-0.09, 0.09]) for (const dz of [-0.09, 0.09]) W.add(new T.CylinderGeometry(0.03, 0.03, 0.022, 10), rbM(s * 3.4 + dx, 0.06, dz, Math.PI / 2)); }
++    Y.mesh(M.YL, g); W.mesh(M.BK, g); }
++  else if (t === 5) { const A = rbAcc(); for (const z of [-0.09, 0.09]) A.add(new T.CylinderGeometry(0.04, 0.04, L, 10, 1), rbM(0, 0.12, z, 0, 0, Math.PI / 2)); for (let i = 0; i <= 16; i++) rbBox(A, 0.04, 0.03, 0.24, -L / 2 + 0.1 + (L - 0.2) * i / 16, 0.09, 0);
++    A.mesh(M.ST, g); const Y = rbAcc(); trucks(Y, 0.34, 0.1, 0.34, 0.17); Y.mesh(M.YL, g); }
++  else if (t === 6) { const A = rbAcc(); rbBox(A, L, 0.08, 0.1, 0, 0.1, 0); for (const s of [-1, 1]) rbBox(A, 0.24, 0.07, 0.16, s * R, 0.12, 0); A.mesh(M.ST, g); }
++  g.updateMatrixWorld(true); return g; };
++// the banner and the stored chamber out, today's rail and bridge out, the design RB.type in (the arms stay where parkArms put them)
++const rbVis = (o) => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
++const rbCount = (objs) => { let meshes = 0, verts = 0; objs.forEach(o => o && o.traverse(q => { if (q.isMesh && rbVis(q)) { meshes++; verts += q.geometry.attributes.position.count; } })); return { meshes, verts }; };
++const rbApply = (S) => { const old = [S.band, ...chamberParts(), S.rail, S.br].filter(Boolean); RB.before = rbCount(old); if (!RB.type) { RB.after = RB.before; return; }
++  old.forEach(o => { o.visible = false; }); const M = rbMats(); S.rbRail = rbRail(RB.type, M); S.rbBridge = rbBridge(RB.type, M, PARKTH); RB.after = rbCount([S.rbRail, S.rbBridge]);
++  console.error('RBCOUNT ' + JSON.stringify({ type: RB.type, before: RB.before, after: RB.after })); };
++const ZBASE = (o = {}) => { const S = SBASEX(), W = winPolysP(); ZS = S; const st = storesAll(W, o, S); pbLiftOff(); st.lift = wLiftColour(o.lift !== undefined ? o.lift : WLIFTV); st.liftPB = PBL.on ? pbLift(o.lift !== undefined ? o.lift : WLIFTV) : null; rbApply(S); return { S, W, st }; };   // (RB: the banner off, the rail and bridge by RB.type)   // (W: the lift's colour; PB: the game's lift back first (pbLiftOff), then its new graphics (pbLift, PBL))
+ // (for eTap / eCard, which build the scene themselves: their before(S))
+ const ZBEFORE = (o = {}) => (S) => { ZS = S; return storesAll(winPolysP(), o, S); };
+ // ---- an arm with its carriage where the picture wants it (o.t: along the bridge, as zArm's checks: roka 1 on the + half, roka 2 on the −

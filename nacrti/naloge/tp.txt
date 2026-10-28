@@ -1,0 +1,51 @@
+BRIEF TP: BETTER GRAPHICS FOR THE TEN TUNING PARTS ON THE REGAL'S TOP STOREY (D)
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all, not even git status).
+Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch
+folder /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/tp. Progress file P/out/tp/notes.md (the
+container can restart: write what you did and what is next after every step). Several other agents render at the same time: keep to one
+browser at a time yourself, never write to another agent's files, never edit the shared base files (P/concepts/_e_store2_am2.js etc.).
+
+THE USER'S WORDS (Slovenian): "Izboljšaj grafiko elementov na polici vzadaj za avtom, na zgornji polici, vsem 10 elementom."
+= Improve the graphics of all ten elements on the top shelf (storey D) of the regal behind the car: AIR FILTER, ECU CHIP, TURBO, LIGHT
+BATTERY, SPRINGS, DAMPERS, ANTI-ROLL BARS, SPORT PADS, HORN, TYRE SMOKE (U5K / U5P / U5M in the store; with L3U5.on they stand on D's
+board without plinths, at L3U5.w / BGU5.w places).
+
+THE STARTING POINT: P/concepts/_e_store2_am2.js. Copy it to P/concepts/_e_store2_tp.js and change ONLY the tuning parts (U5P builders,
+U5M materials, helpers you add next to them). Not the places, not the shelves, not the lift, not the front cabinets, not the tags.
+Read how the pictures are made: P/out/lb/notes.md and the LB agent's scripts in scratchpad/lb (mk.sh, render.sh, harness_lb.mjs,
+frames.js, insert.py) are a working example of base + store + harness -> 412x915 phone frames (HOMEC first view, DPR 1 and DPR 4). Copy
+what you need into scratchpad/tp; do not run their scripts in their folder. Also read P/out/l3/notes.md and P/out/bg/notes.md (why the
+parts stand where they stand) and the EXH block in the store (EXHMET: how the exhausts' metal got its calm reflection; reuse that idea
+for the parts' chrome and aluminium instead of white Phong highlights).
+
+WHAT "BETTER" MEANS HERE (the game's two cameras: the first view from above-front and the close view when the player taps a part):
+- Each part should read at once as what it is, look like a real, well made aftermarket part, and look good from above (tops and the
+  front faces are what the player sees). Generic look only: no brands, no logos, no real product names; any printed text is generic.
+- Shapes: smoother silhouettes where they show (enough segments on round parts), bevelled/rounded edges instead of raw boxes,
+  believable proportions and the details that make each part recognisable (e.g. the filter's pleats and cap, the turbo's compressor
+  wheel blades in the inlet and its scroll housings, the ECU's case and connector, the battery's case and posts, the coil springs'
+  closed ground ends, the dampers' threaded body and adjuster, the anti-roll bars' bushings and end links, the brake pads' backing
+  plates and friction, the horn's trumpets, the smoke cartridges' caps and valves). Drop details too small to see from the two
+  cameras.
+- Materials: calm, rich metals (brushed aluminium, chrome, cast iron, anodised colours) with soft reflections and no blown-out white
+  highlights; clear colour contrast against the light-blue slotted back and the shelf; a soft contact shadow under each part so it
+  sits on the board.
+- Keep each part's footprint and height about as now (within ±1-2 cm) and at least 5 cm off every post, so the places, the arms'
+  grabs and the tags stay valid; keep each part a group with the same origin and keys, and keep the tap highlight working (the tapped
+  part turns light turquoise with the yellow rim: check how the store highlights a part and keep it working on your new meshes).
+- Phone load: do not raise the draw calls of the ten parts (merge static meshes of one material inside a part where you can) and keep
+  their vertices reasonable. Report draw calls and vertices of the ten parts before and after.
+
+PICTURES -> P/out/tp/:
+  f0_pred.png, f0_po.png (the first view, DPR 1, before and after);
+  polica_pred_po.png (storey D cropped from the first view at DPR 4, before on top, after below);
+  deli_10.png (all ten parts, each in a close view as when tapped, before | after side by side, a Slovenian caption per pair);
+  tap.png (one part tapped after the change: the highlight works);
+  plosca_deli.png (a board: first view after, the D crop before/after, the ten pairs, short Slovenian text);
+  info.json { name, text (Slovenian), parts: { name -> what changed (Slovenian, one line), draw calls before/after, vertices before/after } };
+  regal_tp.patch = diff -u _e_store2_am2.js _e_store2_tp.js (check it applies cleanly to a fresh copy of am2, and together with
+  P/out/lb/regal_lb.patch); DONE when everything is finished.
+Look at every picture yourself at full resolution before DONE and fix anything that looks wrong (a floating part, a part in a post,
+blown-out white, a part that does not read as what it is).
+FINAL REPORT: per part what changed, the numbers, the files, what you could not get right. Plain language.

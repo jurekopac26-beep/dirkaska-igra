@@ -1,0 +1,32 @@
+BRIEF EG: THE TWO MIDDLE EXHAUSTS ON THE REGAL GREY INSTEAD OF VIOLET
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all, not even git status).
+Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch
+folder /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/eg. Progress file P/out/eg/notes.md (the
+container can restart). Many other agents render at the same time: one browser at a time yourself, never write to another agent's files,
+never edit the shared base files.
+
+THE USER'S WORDS (Slovenian): "Auspuha na sredini naj bosta siva in ne vijolična."
+= The two exhausts in the middle bay of the regal behind the car (bay 2: TITANIUM on storey B and STRAIGHT on storey C, check this in the
+store) must be grey, not violet/blue.
+
+WHERE THE COLOUR COMES FROM: P/concepts/_e_store2_am2.js. The titanium (base colour 0x8f86d6, kind 'ti') and the blued straight pipe
+(0x5b6bd6, kind 'blue') get heat-tint vertex colours (EXHMET.ramps ti / blue: silver, straw, violet, blue), and a later calmer exhaust
+block (around exhCalmEnv, C.mats) recolours them again. Read the EXH notes P/out/exh/notes.md and P/out/gm/notes.md first. Find every
+place that makes these two exhausts violet or blue (base colours, ramps, the calm block, the tips) and make them grey.
+
+THE NEW LOOK: both grey metal, still calm (no white highlights), still clearly two different kinds next to the others: TITANIUM a light,
+satin warm grey (brushed titanium, maybe a very faint straw tint only near the tips, never violet or blue), STRAIGHT a darker steel grey
+(polished steel). They must still read apart from the chrome SPORT/RACE exhausts and from CARBON/TWIN. Nothing else on the regal changes.
+Also note in notes.md where else these two kinds would look violet in the game (the exhaust on the car when installed, the menu's
+thumbnails, the drawers in front), so the change can be carried there later; do not change those now unless they are in the same
+store block.
+
+Copy the store to P/concepts/_e_store2_eg.js and change only this. Read how the pictures are made in P/out/lb/notes.md and the LB agent's
+scripts in scratchpad/lb (mk.sh, render.sh, harness_lb.mjs, frames.js, insert.py): copy what you need into scratchpad/eg.
+
+PICTURES -> P/out/eg/: f0_pred.png, f0_po.png (first view, DPR 1); pred_po.png (the middle bay cropped from the first view at DPR 4,
+before | after, plus the whole exhaust row of storeys B and C after, so the user sees all six exhausts together); blizu.png (a close
+view of the two grey exhausts, as when one is tapped); info.json { name, text (Slovenian, short), colours before/after };
+regal_eg.patch = diff -u _e_store2_am2.js _e_store2_eg.js (check it applies cleanly to a fresh copy of am2); DONE when finished.
+Look at every picture yourself at full resolution before DONE. FINAL REPORT: what you changed, the colours, the files. Plain language.

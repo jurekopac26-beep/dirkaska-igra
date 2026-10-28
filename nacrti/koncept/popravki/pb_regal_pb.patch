@@ -1,0 +1,388 @@
+--- _e_store2_bg.js	2026-10-26 03:15:19.391055246 +0000
++++ _e_store2_pb.js	2026-10-26 04:29:53.310208080 +0000
+@@ -1,3 +1,4 @@
++// ==== PB (my copy of concepts/_e_store2_bg.js, agent BG's store; my changes are marked "PB:" and my block ">>>> PB BLOCK" after BG's)
+ // ==== BG (my copy of concepts/_e_store2_l3.js, agent L3's store; my changes are marked "BG:" and my block ">>>> BG BLOCK" before regalAll)
+ // ==== L3 (my copy of concepts/_e_store2_r.js, agent R's store; my changes are marked "L3:" and my block ">>>> L3 BLOCK" before regalAll)
+ // ==== W (my copy of concepts/_e_store2_vf.js, the merged store of the last round; my changes are marked "W:"): the user: "Sedaj je
+@@ -197,6 +198,7 @@
+     // (R: the top board 2.66 m, was 2.90 (W) and 3.31: the upper storey's free height 0.68 m to the top's lip, 0.715 m to its underside, as the storeys below (0.54-0.71 m))
+   WL: null,   // (R: the spoilers' light: null as today, 'L1'..'L6' the six versions (wingLight, after regalAll's R block))
+   BG: null,   // (BG: the regal's background and posts: null the light-blue back and the navy perforated posts, 1..6 the six versions (BGV, the BG block))
++  PB: null,   // (PB: six versions of BG's version 1, the light-grey pegboard: 1..6 (PBV, the PB block) over RG.BG; null: BG's own)
+   WZ: 0.1, WSC: [1.0, 1.1, 1.05, 1.05, 1.0] };   // (WZ: the spoilers 0.1 m nearer the
+ // top's front edge (the gripper's fingers' root stays in front of the top board when the jaws close on a spoiler's stand); WSC: the wings'
+ // sizes on the top (1.1 to 1.45 m, a car's width, each clear of its neighbours at rest and on its way out))
+@@ -863,7 +865,7 @@
+     build: (p, add) => { add('post', bgB(0.05, p.h, 0.05, p.x, p.h / 2, p.z)); },
+     mat: () => PR.lam(0xdde1e5) } };
+ // a bay's four posts (specs: { x, z, h, front } in the bay's frame) in the version's style, merged; returns { style, list, meshes }
+-const bgPostsBuild = (fr, specs, M) => { const v = BGV[RG.BG], key = v ? v.posts : 'navy', S = BGPS[key], parts = {}, order = [];
++const bgPostsBuild = (fr, specs, M) => { const v = bgVer(), key = v ? v.posts : 'navy', S = BGPS[key], parts = {}, order = [];
+   const add = (k, it) => { if (!parts[k]) { parts[k] = []; order.push(k); } parts[k].push(it); }; specs.forEach(p => S.build(p, add));
+   if (v && v.led) { const L = specs[3].x - specs[0].x, z = specs[1].z + 0.03 + 0.0162; RG.LV.slice(0, 4).map(y => y - 0.01).concat([RG.TOP - 0.05]).forEach(yc => add('led', bgB(L - 0.07, 0.007, 0.002, 0, yc - 0.021, z))); }   // (the LED lines: on each board's lip, its lower edge)
+   const meshes = order.map(k => { const m = new T.Mesh(bgMerge(parts[k]), S.mat(k, M)); m.userData.bgPost = k; fr.add(m); return m; });
+@@ -872,7 +874,8 @@
+ //      the sides, the foot, the top corners) ----
+ const BGTX = {};
+ const bgRand = (s) => () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+-const bgBackTex = (kind, Wm, Hm) => { const key = kind + ':' + Wm.toFixed(3) + ':' + Hm.toFixed(3); if (BGTX[key]) return BGTX[key];
++const bgBackTex = (kind, Wm, Hm) => { if (kind.slice(0, 2) === 'pb') return pbBackTex(kind, Wm, Hm);   // (PB: the six pegboards (pbBackTex, the PB block))
++  const key = kind + ':' + Wm.toFixed(3) + ':' + Hm.toFixed(3); if (BGTX[key]) return BGTX[key];
+   const CW = 1024, CH = 512, c = document.createElement('canvas'); c.width = CW; c.height = CH; const g = c.getContext('2d'), sx = CW / Wm, sy = CH / Hm, R = bgRand(7 + kind.length * 131);
+   const X = (m) => m * sx, Y = (m) => m * sy;   // (metres from the band's left / top edge to canvas px)
+   const lin = (y0, y1, stops) => { const gr = g.createLinearGradient(0, Y(y0), 0, Y(y1)); stops.forEach(([t, col]) => gr.addColorStop(t, col)); return gr; };
+@@ -922,7 +925,7 @@
+   const cr = (x) => { const gr = g.createRadialGradient(x, 0, 0, x, 0, X(0.6)); gr.addColorStop(0, `rgba(0,0,0,${ao.corner})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); }; cr(0); cr(CW);
+   const t = new T.CanvasTexture(c); t.anisotropy = 8; return (BGTX[key] = t); };
+ // one band of a bay's back (i the storey from A, top the last one's index): the version's back (RG.BG), or as before (the light blue)
+-const bgBackBand = (sc, i, top, y0, y1, col, f) => { const v = BGV[RG.BG]; if (v && v.f) f = v.f[Math.min(i, 3)]; if (!v) { const m = (i === top ? bayBackAOH : bayBackAO)(sc, y0, y1, col, f); m.userData.bgBack = i; return m; }
++const bgBackBand = (sc, i, top, y0, y1, col, f) => { const v = bgVer(); if (v && v.f) f = v.f[Math.min(i, 3)]; if (!v) { const m = (i === top ? bayBackAOH : bayBackAO)(sc, y0, y1, col, f); m.userData.bgBack = i; return m; }
+   // (the band runs on BGP.ext behind the posts between two bays (there the bays' backs part round the ring: the gap between them closed; the
+   //  regal's two ends not); one texture a version, the wider bands' pattern stretched by under 6 %)
+   const eL = sc.k > 0 ? BGP.ext : 0, eR = sc.k < sc.nb - 1 ? BGP.ext : 0, Wm = sc.L - BGP.planeW, Hm = y1 - y0 - 0.01, key = v.back + ':' + f;
+@@ -939,7 +942,7 @@
+   if (kind === 'R') { const gr = g.createRadialGradient(32, 32, 4, 32, 32, 31); gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.55, `rgba(${rgb},0.75)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
+   else { g.filter = 'blur(7px)'; g.fillStyle = `rgb(${rgb})`; g.fillRect(14, 14, 36, 36); }
+   return (BGSH[key] = new T.CanvasTexture(cv)); };
+-const bgShadows = (out) => { const v = BGV[RG.BG]; if (!v || !v.sh) return 0; const t0 = SHT(), r0 = SHR(), n = { box: 0, round: 0, stands: 0 };
++const bgShadows = (out) => { const v = bgVer(); if (!v || !v.sh) return 0; const t0 = SHT(), r0 = SHR(), n = { box: 0, round: 0, stands: 0 };
+   out.par.traverse(m => { if (!m.isMesh || !m.material) return; const M = m.material;
+     if (M.map === t0 || M.map === r0) { const R = M.map === r0, c = M.clone(); c.map = bgShTex(R ? 'R' : 'B', v.sh); m.material = c; n[R ? 'round' : 'box']++; }
+     else if (M.uniforms && M.uniforms.uTint && m.userData.l3Shadow) { M.uniforms.uTint.value.setRGB(v.sh[0] / 255 * 0.55, v.sh[1] / 255 * 0.55, v.sh[2] / 255 * 0.55); n.stands++; } });
+@@ -950,6 +953,315 @@
+ // L3's places: bay 0 0.89/0.89, 1 0.99/1.01, 2 1.03/1.01, 3 1.01/1.01, 4 0.88/0.89)
+ BGU5.w = {"filter": [-0.38, 0, 1.3], "chip": [0.23, 0.07, 1.29], "turbo": [-0.255, 0.017, 1.42], "batt": [0.375, 0.105, 1.42], "springs": [-0.385, 0.07, 1.12], "dampers": [0.175, 0.105, 1.09], "arb": [-0.245, 0.105, 1.056], "pads": [0.35, 0.105, 1.23], "horn": [-0.305, -0.035, 1.23], "smoke": [0.33, 0, 1.24]};
+ // <<<< BG BLOCK
++// >>>> PB BLOCK (agent PB)
++// ==== PB: SIX VERSIONS OF THE LIGHT-GREY PEGBOARD BACK AND A BETTER-LOOKING LIFT (agent PB; the user, on BG's version 1 (the light-grey
++//      perforated metal back, the navy perforated posts): "Naredi to ozadje v 6 različnih verzijah in izboljšaj grafiko dvigala"). The rest
++//      of PB, marked "PB:" where it is: RG.PB (the version, over RG.BG 1), bgVer (every place that read BGV[RG.BG]), bgBackTex (the 'pb'
++//      kinds: pbBackTex), regalAll (pbExtras), ZBASE (pbLiftOff, pbLift).
++//   THE SIX PEGBOARDS (RG.PB 1..6; every one light-grey perforated metal with BG version 1's navy perforated posts; drawn on one 1024 × 512
++//   canvas a version as BG's, unlit (MeshBasic): the regal's light and the room's do not change):
++//   1 version 1 refined: its 4 cm grid of round holes (1.1 cm), each a clean dark well with a lit lower lip and a shaded upper rim, no streaks;
++//     a soft shade under each board (a contact line, then a smooth falloff) instead of the straight band
++//   2 finer and denser: round holes 0.7 cm on a 2.5 cm grid, the sheet brighter
++//   3 slotted: upright oblong slots (0.7 × 2.2 cm) in staggered rows, industrial slotted pegboard
++//   4 a shadow board: version 1's pegboard with a painted yellow line (1.5 cm) round each part, as workshops mark their tools: a rounded
++//     rectangle 4 cm out of the part's outline seen straight on (a circle 6 cm out round each rim; neighbours share the room between
++//     them, no two lines cross; pbOutlines: one unlit mesh in the storey's shading)
++//   5 cool blue-grey with square holes (1.1 cm on a 4 cm grid)
++//   6 warm grey (3 cm grid, 0.9 cm holes) with a few generic J-hooks (one in every second band, at its best free place the first view
++//     sees; every one with a coiled hose or lead where there is room; pbHooks: one mesh) and a thin yellow line along each board's back
++//     edge (painted on the sheet right over the board)
++//   (sh: the soft shadows' colour on this back, as BG's; posts: always BG version 1's navy perforated ones) ----
++const PBV = {
++  1: { oz: 'Perforirana plošča, izčiščena', st: 'temno modri perforirani stebri', back: 'pb1', posts: 'navy', sh: [20, 22, 26] },
++  2: { oz: 'Gostejše drobne luknjice', st: 'temno modri perforirani stebri', back: 'pb2', posts: 'navy', sh: [20, 22, 26] },
++  3: { oz: 'Podolgovate reže', st: 'temno modri perforirani stebri', back: 'pb3', posts: 'navy', sh: [20, 22, 26] },
++  4: { oz: 'Plošča z obrisi delov', st: 'temno modri perforirani stebri', back: 'pb1', posts: 'navy', sh: [20, 22, 26], outline: { col: '#f2c21a', w: 0.015, d: 0.04, dr: 0.06, rc: 0.05, gap: 0.03 } },
++  5: { oz: 'Hladna modro siva s kvadratnimi luknjami', st: 'temno modri perforirani stebri', back: 'pb5', posts: 'navy', sh: [16, 22, 34] },
++  6: { oz: 'Topla siva s kavlji in rumeno črto', st: 'temno modri perforirani stebri', back: 'pb6', posts: 'navy', sh: [32, 27, 20], hooks: true } };
++const bgVer = () => (RG.PB && PBV[RG.PB]) || BGV[RG.BG];
++// the sheets: base colour, holes (shape, pitch x / y, size, stagger), the hole's well / lip / rim colours, the shade under the board (a, h),
++// the other shading as BG's (ao), a painted line at the foot (P6)
++const PBK = {
++  pb1: { base: '#d0d4d9', hole: 'round', px: 0.04, py: 0.04, r: 0.0055, well: '#2e3339', lip: '#f3f5f7', rim: '#9da3aa', shade: { a: 0.46, h: 0.17 } },
++  pb2: { base: '#e4e8ec', hole: 'round', px: 0.025, py: 0.025, r: 0.0035, well: '#353a40', lip: '#f8fafc', rim: '#b0b6bd', shade: { a: 0.40, h: 0.16 } },
++  pb3: { base: '#ced2d7', hole: 'slot', px: 0.034, py: 0.04, sw: 0.0070, sh: 0.022, stagger: true, well: '#2c3137', lip: '#f2f4f6', rim: '#979ea6', shade: { a: 0.46, h: 0.17 } },
++  pb5: { base: '#b3c1d0', hole: 'square', px: 0.04, py: 0.04, s: 0.011, well: '#202a36', lip: '#d8e3ee', rim: '#7d8ca0', shade: { a: 0.46, h: 0.17 } },
++  pb6: { base: '#d4ccbf', hole: 'round', px: 0.03, py: 0.03, r: 0.0045, well: '#3a332b', lip: '#f7f1e8', rim: '#a89f92', shade: { a: 0.46, h: 0.17 }, line: { col: '#efbf1a', h: 0.012, y: 0.004 } } };
++const pbBackTex = (kind, Wm, Hm) => { const key = kind + ':' + Wm.toFixed(3) + ':' + Hm.toFixed(3); if (BGTX[key]) return BGTX[key]; const K = PBK[kind];
++  const CW = 1024, CH = 512, c = document.createElement('canvas'); c.width = CW; c.height = CH; const g = c.getContext('2d'), sx = CW / Wm, sy = CH / Hm, R = bgRand(11 + kind.length * 37);
++  const X = (m) => m * sx, Y = (m) => m * sy;
++  g.fillStyle = K.base; g.fillRect(0, 0, CW, CH);
++  for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(${R() < 0.5 ? '255,255,255' : '0,0,0'},0.012)`; g.fillRect(X(R() * Wm), 0, X(0.02 + R() * 0.12), CH); }   // (a faint rolled-sheet sheen, upright)
++  if (K.line) { g.fillStyle = K.line.col; g.fillRect(0, CH - Y(K.line.y + K.line.h), CW, Y(K.line.h)); g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, CH - Y(K.line.y + K.line.h) - 1, CW, 1); }
++  const shape = (cx, cy, dx, dy, grow) => { g.beginPath(); const gx = grow / sx, gy = grow / sy;   // (grow: canvas px)
++    if (K.hole === 'round') g.ellipse(cx + dx, cy + dy, X(K.r) + grow, Y(K.r) + grow, 0, 0, 7);
++    else if (K.hole === 'square') { const w = X(K.s) + 2 * grow, h = Y(K.s) + 2 * grow; g.rect(cx + dx - w / 2, cy + dy - h / 2, w, h); }
++    else { const w = X(K.sw) + 2 * grow, h = Y(K.sh) + 2 * grow, rr = Math.min(w, h) / 2; g.roundRect ? g.roundRect(cx + dx - w / 2, cy + dy - h / 2, w, h, rr) : g.rect(cx + dx - w / 2, cy + dy - h / 2, w, h); }
++    g.fill(); };
++  const lineY = K.line ? Hm - K.line.y - K.line.h - 0.01 : Hm;   // (no holes in the painted line)
++  const x0 = K.px / 2 - ((Wm / 2) % K.px); let row = 0;
++  for (let yy = K.py / 2; yy < lineY; yy += K.py, row++) { const off = K.stagger && (row & 1) ? K.px / 2 : 0;
++    for (let xx = x0 + off - K.px; xx < Wm + K.px; xx += K.px) { if (xx < -0.01 || xx > Wm + 0.01) continue; const cx = X(xx), cy = Y(yy);
++      g.fillStyle = K.lip; shape(cx, cy, 0, 1.1, 0.2); g.fillStyle = K.rim; shape(cx, cy, 0, -0.7, 0.2); g.fillStyle = K.well; shape(cx, cy, 0, 0, 0);
++      g.fillStyle = 'rgba(0,0,0,0.35)'; shape(cx, cy, 0, -0.8, -0.9); } }   // (the well's upper wall in its own shade)
++  // the shading: under the board above a contact line and a smooth falloff (the soft shade), the sides, the foot, the top corners (BG's)
++  const S = K.shade, sh = g.createLinearGradient(0, 0, 0, Y(S.h)); [[0, 1], [0.08, 0.72], [0.25, 0.42], [0.5, 0.17], [0.75, 0.05], [1, 0]].forEach(([t, k]) => sh.addColorStop(t, `rgba(0,0,0,${(S.a * k).toFixed(3)})`));
++  g.fillStyle = sh; g.fillRect(0, 0, CW, Y(S.h)); g.fillStyle = 'rgba(0,0,0,0.30)'; g.fillRect(0, 0, CW, Y(0.003));
++  const band = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); };
++  band(0, 0, X(0.28), 0, 0.28); band(CW, 0, CW - X(0.28), 0, 0.28); band(0, CH, 0, CH - Y(0.06), K.line ? 0.12 : 0.2);
++  const cr = (x) => { const gr = g.createRadialGradient(x, 0, 0, x, 0, X(0.6)); gr.addColorStop(0, 'rgba(0,0,0,0.30)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); }; cr(0); cr(CW);
++  const t = new T.CanvasTexture(c); t.anisotropy = 8; return (BGTX[key] = t); };
++// ---- the version's extras, after the regal's parts stand (regalAll): P4 the painted outlines, P6 the hooks; each one mesh for the whole
++//      regal (in out.par) ----
++// every part on show with its bay and its storey's back band: [{ nm, sc, objs, band }] (the tyre sets, the exhausts with their stands, each
++// rim, the tuning parts; not the spoilers: the top has no back)
++const pbParts = (out) => { const L = [], add = (nm, sc, objs) => L.push({ nm, sc, objs });
++  out.tyres.forEach((g, i) => add('gume ' + i, out.secs[i], [g]));
++  out.exh.forEach(x => add('auspuh ' + x.si + '/' + x.lv, x.sec, [x.g]));
++  out.rims.forEach(q => q.ps.forEach((p, j) => add('platišče ' + q.si + '/' + q.lv + '/' + j, q.sec, [p])));
++  if (out.tun && out.tun.places) out.tun.places.forEach(p => add(p.nm, out.secs[p.si != null ? p.si : p.bay != null ? p.bay : 0], [p.part || p.g]));
++  return L; };
++const pbHull2 = (P) => { const p = P.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]); if (p.length < 3) return p; const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], up = [];
++  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
++  for (const q of p.slice().reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
++  return lo.slice(0, -1).concat(up.slice(0, -1)); };   // (counter-clockwise)
++// a part's outline seen straight on its bay's back (x, y in the bay's frame): the convex hull of its vertices; its bay index found from where it stands
++const pbPartXY = (it) => { const sc0 = it.sc, P = []; sc0.g.updateMatrixWorld(true); const v = V();
++  it.objs.forEach(o => o.traverse(m => { if (!m.isMesh || !m.visible || !m.geometry || !m.geometry.attributes.position) return; const M = m.material; if (M && !Array.isArray(M) && M.transparent && M.depthWrite === false) return;
++    const pa = m.geometry.attributes.position, st = Math.max(1, Math.floor(pa.count / 400)); m.updateMatrixWorld(true);
++    for (let i = 0; i < pa.count; i += st) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); sc0.g.worldToLocal(v); P.push([v.x, v.y]); } }));
++  return P.length ? pbHull2(P) : null; };
++// the band a part stands in front of (its lowest point's storey): the back's mesh of that storey in its bay
++const pbBand = (sc, y) => { let best = null; (sc.backs || []).forEach(m => { const h = m.geometry.parameters.height, y0 = m.position.y - h / 2, y1 = m.position.y + h / 2; if (y >= y0 - 0.06 && y < y1 && (!best || y0 > best.y0)) best = { m, y0, y1, f: m.material.color ? m.material.color.r : 1 }; }); return best; };
++// a convex polygon (ccw) grown by d with round corners (steps <= 15 degrees), closed
++const pbGrow = (H, d) => { const out = [], n = H.length; for (let i = 0; i < n; i++) { const a = H[(i + n - 1) % n], b = H[i], c = H[(i + 1) % n];
++    const n0 = Math.atan2(-(b[0] - a[0]), b[1] - a[1]), n1 = Math.atan2(-(c[0] - b[0]), c[1] - b[1]); let d1 = n1 - n0; while (d1 < 0) d1 += 2 * Math.PI; while (d1 > 2 * Math.PI) d1 -= 2 * Math.PI;
++    const k = Math.max(1, Math.ceil(d1 / (Math.PI / 12))); for (let j = 0; j <= k; j++) { const t = n0 + d1 * j / k; out.push([b[0] + d * Math.cos(t), b[1] + d * Math.sin(t)]); } }
++  out.push(out[0]); return out; };
++// a rounded rectangle round a hull (its box grown by d, its corners round with radius rc), closed
++const pbRRect = (H, d, rc) => { const x0 = Math.min(...H.map(p => p[0])) - d, x1 = Math.max(...H.map(p => p[0])) + d, y0 = Math.min(...H.map(p => p[1])) - d, y1 = Math.max(...H.map(p => p[1])) + d, r = Math.min(rc, (x1 - x0) / 2, (y1 - y0) / 2), out = [];
++  for (const [cx, cy, a0] of [[x1 - r, y0 + r, -Math.PI / 2], [x1 - r, y1 - r, 0], [x0 + r, y1 - r, Math.PI / 2], [x0 + r, y0 + r, Math.PI]]) for (let j = 0; j <= 6; j++) { const t = a0 + j / 6 * Math.PI / 2; out.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]); }
++  out.push(out[0]); return out; };
++// a painted line along a polyline (x, y in a bay's frame) on its back at z, clipped to the band (y0..y1, x0..x1), w wide: quads into P / C (par's frame)
++const pbLineInto = (acc, sc, pts, z, w, clip, col, shadeAt) => { const seg = [];
++  for (let i = 0; i + 1 < pts.length; i++) { let [ax, ay] = pts[i], [bx, by] = pts[i + 1], t0 = 0, t1 = 1; const dx = bx - ax, dy = by - ay;
++    const lim = (p, q) => { if (Math.abs(p) < 1e-9) return q >= 0; const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; } return true; };
++    if (!lim(-dx, ax - clip[0]) || !lim(dx, clip[2] - ax) || !lim(-dy, ay - clip[1]) || !lim(dy, clip[3] - ay)) continue;
++    seg.push([[ax + dx * t0, ay + dy * t0], [ax + dx * t1, ay + dy * t1]]); }
++  const W = (x, y) => acc.par.worldToLocal(sc.g.localToWorld(V(x, y, z)));
++  seg.forEach(([a, b]) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < 1e-4) return; const ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L, nx = -uy * w / 2, ny = ux * w / 2, e = w / 2;
++    const A = [a[0] - ux * e, a[1] - uy * e], Bq = [b[0] + ux * e, b[1] + uy * e], q = [[A[0] - nx, A[1] - ny], [Bq[0] - nx, Bq[1] - ny], [Bq[0] + nx, Bq[1] + ny], [A[0] + nx, A[1] + ny]].map(p => W(p[0], p[1]));
++    [[0, 1, 2], [0, 2, 3]].forEach(t => t.forEach(k => { const p = q[k], s = shadeAt(k === 0 || k === 3 ? A[1] : Bq[1]); acc.P.push(p.x, p.y, p.z); acc.C.push(col.r * s, col.g * s, col.b * s); })); }); };
++// P4: a painted line round each part on the back (its outline straight on, grown by d), in the storey's shading (the band's f and the soft
++// shade under the board above): one unlit mesh
++const pbOutlines = (out, O) => { const acc = { par: out.par, P: [], C: [] }, col = new T.Color(O.col); out.par.updateMatrixWorld(true); const ents = [];
++  pbParts(out).forEach(it => { const H = pbPartXY(it); if (!H || H.length < 3) return; const xs = H.map(p => p[0]), ys = H.map(p => p[1]), b = pbBand(it.sc, Math.min(...ys) + 0.02); if (!b) return;
++    const rim = /^platišče/.test(it.nm); ents.push({ it, H, b, rim, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), dL: rim ? O.dr : O.d, dR: rim ? O.dr : O.d }); });
++  // (neighbours in a band share the space between them: no two outlines cross; inside the bay's posts)
++  const bands = new Map(); ents.forEach(e => { if (!bands.has(e.b.m)) bands.set(e.b.m, []); bands.get(e.b.m).push(e); });
++  bands.forEach(L => { L.sort((a, b) => a.x0 - b.x0); for (let i = 0; i + 1 < L.length; i++) { const A = L[i], Bn = L[i + 1], half = Math.max(0.008, (Bn.x0 - A.x1) / 2 - O.gap / 2); A.dR = Math.min(A.dR, half); Bn.dL = Math.min(Bn.dL, half); } });
++  let n = 0; ents.forEach(e => { const sc = e.it.sc, xl = -sc.L / 2 + 0.05, xr = sc.L / 2 - 0.05, b = e.b, sh = (y) => b.f * (1 - 0.42 * Math.max(0, 1 - (b.y1 - y) / 0.17) ** 2);
++    let pts; if (e.rim) pts = pbGrow(e.H, Math.max(0.01, Math.min(e.dL, e.dR)));
++    else { const x0 = Math.max(xl, e.x0 - e.dL), x1 = Math.min(xr, e.x1 + e.dR); pts = pbRRect([[x0, e.y0 - O.d], [x1, e.y1 + O.d]], 0, O.rc); }
++    pbLineInto(acc, sc, pts, -sc.D / 2 + 0.045 + 0.0015, O.w, [xl - 0.01, b.y0 + 0.006, xr + 0.01, b.y1 - 0.008], col, sh); n++; });
++  if (!acc.P.length) return null; const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(acc.P, 3)); geo.setAttribute('color', new T.Float32BufferAttribute(acc.C, 3)); geo.computeBoundingSphere();
++  const m = new T.Mesh(geo, new T.MeshBasicMaterial({ vertexColors: true, side: T.DoubleSide })); m.userData.pbOutline = true; out.par.add(m); return { mesh: m, parts: n, verts: acc.P.length / 3 }; };
++// P6: a few generic J-hooks (one in every second band, in a free place: >= 5 cm off every part's outline, its coil >= 3 cm), dark graphite
++// (a backplate, the rod out of the sheet, its tip turned up), every second one with a coiled hose or lead on it: one vertex-coloured mesh
++const PBHOOK = { at: null, col: [0.16, 0.17, 0.19], coils: [[0.72, 0.13, 0.1], [0.13, 0.13, 0.14], [0.92, 0.7, 0.1], [0.16, 0.36, 0.72]], R: 0.068, r: 0.012 };
++const pbHooks = (out) => { const byBay = out.secs.map(() => []); pbParts(out).forEach(it => { const H = pbPartXY(it); if (H) byBay[out.secs.indexOf(it.sc)].push(H); });
++  const dist = (H, x, y) => { let inside = true, md = Infinity; for (let i = 0; i < H.length; i++) { const a = H[i], b = H[(i + 1) % H.length], ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey || 1;
++      if (ex * (y - a[1]) - ey * (x - a[0]) < 0) inside = false; let t = ((x - a[0]) * ex + (y - a[1]) * ey) / L2; t = Math.max(0, Math.min(1, t)); md = Math.min(md, Math.hypot(x - a[0] - t * ex, y - a[1] - t * ey)); } return inside ? -md : md; };
++  const geos = [], at = []; let nc = 0; out.par.updateMatrixWorld(true); const K = PBHOOK;
++  out.secs.forEach((sc, k) => (sc.backs || []).forEach((bm, bi) => { const h = bm.geometry.parameters.height, y0 = bm.position.y - h / 2, y1 = bm.position.y + h / 2, cand = [];
++    // (the best free place of the band: the most room round it among places the camera sees (the top board's or the next board's lip hides
++    // the band's top 0.3 m from the first view); a coil where there is room for it, else a bare hook; one in every second band)
++    if ((k + bi) % 2) return; let best = null; for (let x = -sc.L / 2 + 0.12; x <= sc.L / 2 - 0.12 + 1e-6; x += 0.04) for (let y = y0 + 0.16; y <= y1 - 0.3 + 1e-6; y += 0.03) {
++      const cyc = y - (K.R - K.r) + 0.003, room = Math.min(...byBay[k].map(H => Math.min(dist(H, x, cyc), dist(H, x, y) + 0.04)), 9) - (cyc - K.R - K.r < y0 + 0.02 ? 9 : 0);
++      if (!best || room > best.room + 1e-6) best = { x, y, room }; }
++    for (const [x, y] of best && best.room >= 0.05 ? [[best.x, best.y]] : []) { const coil = best.room >= K.R + K.r + 0.03, cyc = y - (K.R - K.r) + 0.003; at.push([k, bi, +x.toFixed(3), +y.toFixed(3), coil, +best.room.toFixed(3)]);
++      const zb = -sc.D / 2 + 0.045, M = new T.Matrix4().compose(sc.g.localToWorld(V(x, y, zb)), new T.Quaternion().setFromRotationMatrix(new T.Matrix4().extractRotation(sc.g.matrixWorld)), V(1, 1, 1)), pm = new T.Matrix4().copy(out.par.matrixWorld).invert().multiply(M);
++      const add = (g, m, col) => { g.applyMatrix4(m); g.applyMatrix4(pm); const q = g.index ? g.toNonIndexed() : g; if (q !== g) g.dispose(); const n = q.attributes.position.count, C = new Float32Array(n * 3); for (let i = 0; i < n; i++) C.set(col, i * 3); q.setAttribute('color', new T.BufferAttribute(C, 3)); geos.push(q); };
++      add(new T.BoxGeometry(0.026, 0.04, 0.005), new T.Matrix4().makeTranslation(0, -0.004, 0.0025), K.col);
++      const rod = new T.CylinderGeometry(0.0045, 0.0045, 0.1, 6); rod.rotateX(Math.PI / 2); add(rod, new T.Matrix4().makeTranslation(0, 0, 0.05), K.col);
++      const tip = new T.CylinderGeometry(0.0045, 0.0045, 0.035, 6); add(tip, new T.Matrix4().makeRotationX(-0.3).setPosition(0, 0.015, 0.1), K.col);
++      if (coil) { add(new T.TorusGeometry(K.R, K.r, 6, 20), new T.Matrix4().makeTranslation(0, cyc - y, 0.065), K.coils[nc % K.coils.length]); nc++; } } }));
++  if (!geos.length) return null; let nv = 0; geos.forEach(g => { nv += g.attributes.position.count; }); const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3); let o = 0;
++  geos.forEach(g => { P.set(g.attributes.position.array, o * 3); N.set(g.attributes.normal.array, o * 3); C.set(g.attributes.color.array, o * 3); o += g.attributes.position.count; g.dispose(); });
++  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(P, 3)); geo.setAttribute('normal', new T.BufferAttribute(N, 3)); geo.setAttribute('color', new T.BufferAttribute(C, 3)); geo.computeBoundingSphere();
++  const m = new T.Mesh(geo, new T.MeshPhongMaterial({ vertexColors: true, shininess: 40, specular: 0x333333 })); m.userData.pbHooks = true;   /* (no shadow pass for them: small) */ out.par.add(m); PBHOOK.at = at; return { mesh: m, hooks: at.length, coils: nc, verts: nv, at }; };
++const pbExtras = (out) => { const v = RG.PB && PBV[RG.PB]; out.pb = { v: RG.PB || null, nm: v ? v.oz : null }; if (!v) return out.pb;
++  if (v.outline) out.pb.outline = pbOutlines(out, v.outline); if (v.hooks) out.pb.hooks = pbHooks(out); return out.pb; };
++// ---- THE LIFT (the game's single-post lift behind the car: garage3d.js buildLift / liftGeo / poseLift): its column, base and power unit
++//      (the piece's one vertex-coloured mesh) and its carriage (the carriage's mesh) built anew in the same low-poly vertex colours, the same
++//      materials (the piece's dissolve, the gloss), the same footprint (the base plate 1.12 × 0.635 m, the column 0.36 × 0.23 m about
++//      (0, -1.72)) and inside zLiftObs's box; the arms and pads as the game's (the same vertices, their places and moves: poseLift moves the
++//      new carriage as the old one). Built after W's colour (wLiftColour: its orange); the game's own geometry kept and put back first
++//      (pbLiftOff), so W's recolouring always starts from the game's.
++//      THE NEW LIFT: a bolted base flange on the yellow-and-black floor plate (6 bolts, gussets at the sides), the column with bevelled
++//      edges (the chamfers a lighter paint: edge highlights), a paint chip or two, a few scuffs; a recessed slot down its inner face with
++//      the safety-lock rack (sloped steel teeth) on one side and the lifting chain on the other, the zinc guide rails either side; a
++//      bevelled cap, LOWER (PBL.top: the column's body top; was 2.98 m, the cap's top 3.085 m); at its foot on the back the power unit
++//      (the oil tank (its oil level), the pump block with its red release lever, the motor with its cooling rings and fan cover, its
++//      terminal box), the pressure hose into the column, the motor's lead down the plate, generic warning labels (a yellow triangle with
++//      "!", the electric one with a bolt; no words); the controls on the side as the game's, the side plate a warning label; the carriage
++//      as the game's (the same plate, crosshead, ribs, guides, latch and lever, pin bosses), its plate bevelled (lighter chamfers), six
++//      bolt heads, a warning label instead of the blank plate ----
++const PBL = { on: true, top: 2.77, cap: 0.042, S: 0.048, R: 0.045, plate: 0.78 };   // (top: the column's body top, its cap's top 5 cm over it (was 2.98 and 3.085); plate: the carriage's plate top over its foot (cy + plate; was 0.9): at the game's highest lift (1.35 m) the SAMUM's carriage (its pads' level 0.486 m) reaches 2.76 m, under the column's top)
++const PBC = { ZN: [0.6, 0.62, 0.65], ZNt: [0.74, 0.76, 0.79], AR: [0.35, 0.37, 0.41], PL: [0.24, 0.25, 0.27], PLt: [0.29, 0.3, 0.32], BLK: [0.07, 0.07, 0.08], DK: [0.12, 0.12, 0.13],
++  GR: [0.17, 0.18, 0.2], GRt: [0.23, 0.24, 0.26], CAP: [0.13, 0.135, 0.15], CAPe: [0.30, 0.31, 0.33], CAPt: [0.18, 0.19, 0.21], SLOT: [0.025, 0.027, 0.03], WALL: [0.07, 0.072, 0.08], WALLt: [0.16, 0.165, 0.18],
++  CH0: [0.2, 0.205, 0.22], CH1: [0.3, 0.31, 0.33], PIN: [0.56, 0.58, 0.62], TOOTH: [0.4, 0.41, 0.44], TOOTHd: [0.14, 0.145, 0.16], RACK: [0.1, 0.105, 0.115],
++  TANK: [0.76, 0.78, 0.8], TANKt: [0.84, 0.86, 0.88], OIL: [0.6, 0.53, 0.36], AL: [0.56, 0.58, 0.61], ALt: [0.66, 0.68, 0.71], MOT: [0.25, 0.27, 0.31], MOTd: [0.15, 0.16, 0.19], RED: [0.72, 0.1, 0.08],
++  WHITE: [0.86, 0.87, 0.85], CHIP: [0.52, 0.54, 0.58], YL: [0.92, 0.7, 0.1], STAIN: [0.13, 0.13, 0.14], GRN: [0.12, 0.55, 0.22] };
++const PBGL = { MATTE: 0.15, PAINT: 1, PLATE: 1.3, METAL: 2.2 };
++const pbGB = () => { const g = new World.GB(); g.glL = []; return g; };
++const pbGl = (g, k) => g.glL.push([g.P.length / 3, k]);
++const pbGlArr = (g) => { const n = g.P.length / 3, gl = new Float32Array(n).fill(1); g.glL.forEach(([i, k], j) => gl.fill(k, i, j + 1 < g.glL.length ? g.glL[j + 1][0] : n)); return gl; };
++const pbBox = (g, cx, cy, cz, sx, sy, sz, col, top, noBottom) => World.box(g, cx, cy, cz, sx, sy, sz, 0, col, top || col, noBottom);
++const pbObox = (g, a, b, w, h, col) => { const d = V(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(); if (L < 1e-4) return; d.divideScalar(L);
++  const up = Math.abs(d.y) > 0.95 ? V(1, 0, 0) : V(0, 1, 0), sd = V().crossVectors(d, up).normalize().multiplyScalar(w / 2), u = V().crossVectors(sd, d).normalize().multiplyScalar(h / 2);
++  const P = (e, i, j) => { const o = e ? b : a; return [o[0] + sd.x * i + u.x * j, o[1] + sd.y * i + u.y * j, o[2] + sd.z * i + u.z * j]; }, c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], q = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
++  for (let k = 0; k < 4; k++) { const [i0, j0] = q[k], [i1, j1] = q[(k + 1) % 4]; g.quadO(P(0, i0, j0), P(0, i1, j1), P(1, i1, j1), P(1, i0, j0), col, c); }
++  g.quadO(P(0, -1, -1), P(0, 1, -1), P(0, 1, 1), P(0, -1, 1), col, c); g.quadO(P(1, -1, -1), P(1, 1, -1), P(1, 1, 1), P(1, -1, 1), col, c); };
++const pbCyl = (g, c, axis, r, len, n, col, cap, a0 = 0) => { const A = (t, a, rr) => { const u = Math.cos(a) * rr, v = Math.sin(a) * rr; return axis === 'x' ? [c[0] + t, c[1] + u, c[2] + v] : axis === 'y' ? [c[0] + u, c[1] + t, c[2] + v] : [c[0] + u, c[1] + v, c[2] + t]; };
++  for (let i = 0; i < n; i++) { const p0 = a0 + i / n * 2 * Math.PI, p1 = a0 + (i + 1) / n * 2 * Math.PI; g.quadO(A(-len / 2, p0, r), A(len / 2, p0, r), A(len / 2, p1, r), A(-len / 2, p1, r), col, c);
++    for (const e of [-1, 1]) g.triO(A(e * len / 2, 0, 0), A(e * len / 2, p0, r), A(e * len / 2, p1, r), cap || col, A(-e * len, 0, 0)); } };
++const pbAddGeo = (g, geo, col) => { const q = geo.index ? geo.toNonIndexed() : geo, P = q.attributes.position.array, N = q.attributes.normal.array;
++  for (let i = 0; i < P.length; i += 9) g.triN([P[i], P[i + 1], P[i + 2]], [P[i + 3], P[i + 4], P[i + 5]], [P[i + 6], P[i + 7], P[i + 8]], [N[i], N[i + 1], N[i + 2]], [N[i + 3], N[i + 4], N[i + 5]], [N[i + 6], N[i + 7], N[i + 8]], col, col, col);
++  geo.dispose(); if (q !== geo) q.dispose(); };
++const pbTube = (g, pts, r, col, n = 16, rad = 6) => pbAddGeo(g, new T.TubeGeometry(new T.CatmullRomCurve3(pts.map(p => V(p[0], p[1], p[2]))), n, r, rad, false), col);
++// an upright prism round (cx, cz) (half sizes hx, hz, its upright edges cut by ch) from y0 to y1; cols: one colour or one a face (0 the
++// front +z, 1 its left chamfer, 2 the left side, 3, 4 the back, 5, 6 the right side, 7 the front's right chamfer); top (null: open); skip faces
++const pbPrism = (g, cx, cz, hx, hz, ch, y0, y1, cols, top, skip) => { const q = [[hx - ch, hz], [-hx + ch, hz], [-hx, hz - ch], [-hx, -hz + ch], [-hx + ch, -hz], [hx - ch, -hz], [hx, -hz + ch], [hx, hz - ch]], c = [cx, (y0 + y1) / 2, cz], P = (i, y) => [cx + q[i % 8][0], y, cz + q[i % 8][1]];
++  for (let i = 0; i < 8; i++) if (!skip || !skip.includes(i)) g.quadO(P(i, y0), P(i + 1, y0), P(i + 1, y1), P(i, y1), Array.isArray(cols[0]) ? cols[i] : cols, c);
++  if (top) for (let i = 1; i < 7; i++) g.triO(P(0, y1), P(i, y1), P(i + 1, y1), top, c); };
++// the game's yellow-and-black stripes (garage3d.js hazard): from corner o along u (w) and v (h), the yellow ones over black
++const pbHazard = (g, o, u, v, w, h, pitch, inside) => { const P = (a, b) => [o[0] + u[0] * a + v[0] * b, o[1] + u[1] * a + v[1] * b, o[2] + u[2] * a + v[2] * b];
++  const clip = (pts, x0, sg) => { const out = []; for (let j = 0; j < pts.length; j++) { const a = pts[j], b = pts[(j + 1) % pts.length], ia = sg * (a[0] - x0) >= 0, ib = sg * (b[0] - x0) >= 0;
++      if (ia) out.push(a); if (ia !== ib) out.push([x0, a[1] + (b[1] - a[1]) * (x0 - a[0]) / (b[0] - a[0])]); } return out; };
++  for (let i = -Math.ceil(h / pitch) - 1; i * pitch < w; i++) { if (i & 1) continue; const q = clip(clip([[i * pitch, 0], [(i + 1) * pitch, 0], [(i + 1) * pitch + h, h], [i * pitch + h, h]], 0, 1), w, -1);
++    for (let j = 1; j + 1 < q.length; j++) g.triO(P(...q[0]), P(...q[j]), P(...q[j + 1]), PBC.YL, inside); } };
++// a generic warning label on a face (no words): centre c, right u, up v (unit, in the face), side s: a black triangle, a yellow one in it, the
++// symbol ('!' or 'bolt') in black; each layer 0.6 mm further out of the face (n = u × v)
++const pbSign = (g, c, u, v, s, kind = '!') => { const n = V(...u).cross(V(...v)).toArray(), h = s * Math.sqrt(3) / 2;
++  const P = (x, y, k) => [c[0] + u[0] * x + v[0] * y + n[0] * k, c[1] + u[1] * x + v[1] * y + n[1] * k, c[2] + u[2] * x + v[2] * y + n[2] * k], ins = [c[0] - n[0] * 0.05, c[1] - n[1] * 0.05, c[2] - n[2] * 0.05];
++  const tri = (sc, k, col) => g.triO(P(0, h * 2 / 3 * sc, k), P(-s / 2 * sc, -h / 3 * sc, k), P(s / 2 * sc, -h / 3 * sc, k), col, ins);
++  const quad = (x0, y0, x1, y1, k, col) => g.quadO(P(x0, y0, k), P(x1, y0, k), P(x1, y1, k), P(x0, y1, k), col, ins);
++  tri(1, 0.0006, PBC.BLK); tri(0.78, 0.0012, PBC.YL);
++  if (kind === '!') { quad(-0.042 * s, -0.04 * s, 0.042 * s, 0.27 * s, 0.0018, PBC.BLK); quad(-0.045 * s, -0.17 * s, 0.045 * s, -0.085 * s, 0.0018, PBC.BLK); }
++  else { const z = [[0.06, 0.3], [-0.1, 0.0], [0.0, 0.0], [-0.06, -0.2], [0.11, 0.06], [0.01, 0.06]].map(([x, y]) => [x * s, y * s]);
++    g.triO(P(...z[0], 0.0018), P(...z[1], 0.0018), P(...z[5], 0.0018), PBC.BLK, ins); g.triO(P(...z[1], 0.0018), P(...z[2], 0.0018), P(...z[5], 0.0018), PBC.BLK, ins);
++    g.triO(P(...z[2], 0.0018), P(...z[4], 0.0018), P(...z[5], 0.0018), PBC.BLK, ins); g.triO(P(...z[2], 0.0018), P(...z[3], 0.0018), P(...z[4], 0.0018), PBC.BLK, ins); } };
++// the lift's paint by W's variant (its colour at the game's blue's brightness: wLiftColour's way): the face, the top faces, the ribs, the
++// edge highlights (the bevels), the scuffs; null: the game's blue
++const pbPaint = (v) => { const V0 = v && WLIFT[v], LBL = [0.08, 0.22, 0.58], LBLd = [0.05, 0.14, 0.4];
++  const base = V0 ? new T.Color(V0.c) : new T.Color(...LBL), rib = V0 ? new T.Color(V0.rib) : new T.Color(...LBLd), k = (C, f) => [Math.min(1, C.r * f), Math.min(1, C.g * f), Math.min(1, C.b * f)];
++  const mix = (a, b, t) => a.map((x, i) => x * (1 - t) + b[i] * t), OR = k(base, 1);
++  return { OR, ORt: k(base, 0.69 / 0.58), RIB: k(rib, 1), HI: mix(OR, [1, 0.93, 0.82], 0.22), HI2: mix(OR, [1, 0.93, 0.82], 0.1), SC: mix(OR, [0.22, 0.17, 0.12], 0.22), DKO: k(base, 0.86) }; };
++// the column, its base and its power unit: one geometry in world metres (the piece's mesh), as the game's piece (the low 0.4 m darker)
++const pbColumnGeo = (O) => { const L = D.LIFT, g = pbGB(), X = L.x, Z = L.z, HZ = L.hz, HX = 0.18, CHF = 0.025, zf = Z + HZ, zb = Z - HZ, xs = X + HX, TOP = PBL.top, S = PBL.S, R = PBL.R, C = PBC;
++  // the floor plate (the game's: tread, black edges, the yellow stripes, six anchor bolts); a dark oil stain by the power unit
++  const pz0 = zf, pz1 = -2.24, pzc = (pz0 + pz1) / 2, pd = pz0 - pz1, ps = pd - 0.14;
++  pbGl(g, PBGL.PLATE); pbBox(g, X, 0, pzc, 1.12, 0.012, pd, C.PL, C.PLt);
++  pbGl(g, PBGL.PAINT); for (const [bx, bz, sx, sz] of [[X, pz0 - 0.035, 1.12, 0.07], [X, pz1 + 0.035, 1.12, 0.07], [X - 0.525, pzc, 0.07, ps], [X + 0.525, pzc, 0.07, ps]]) pbBox(g, bx, 0.012, bz, sx, 0.0015, sz, C.BLK);
++  const yt = 0.015, ins = [X, -1, pzc]; pbHazard(g, [X - 0.56, yt, pz0], [1, 0, 0], [0, 0, -1], 1.12, 0.07, 0.07, ins); pbHazard(g, [X + 0.56, yt, pz1], [-1, 0, 0], [0, 0, 1], 1.12, 0.07, 0.07, ins);
++  pbHazard(g, [X - 0.56, yt, pz1 + 0.07], [0, 0, 1], [1, 0, 0], ps, 0.07, 0.07, ins); pbHazard(g, [X + 0.56, yt, pz0 - 0.07], [0, 0, -1], [-1, 0, 0], ps, 0.07, 0.07, ins);
++  g.quadO([X - 0.05, 0.0128, -1.9], [X + 0.2, 0.0128, -1.93], [X + 0.25, 0.0128, -2.1], [X - 0.02, 0.0128, -2.12], C.STAIN, [X, -1, -2]);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.4, -1.71], [0.4, -1.71], [-0.4, -2.12], [0.4, -2.12], [-0.13, -2.15], [0.33, -2.15]]) { pbCyl(g, [X + bx, 0.016, bz], 'y', 0.026, 0.004, 8, C.AR); pbCyl(g, [X + bx, 0.022, bz], 'y', 0.02, 0.012, 6, C.ZN, C.ZNt); }
++  // the base flange (dark steel, not in front of the column: the stowed rear arms pass 1.75 cm before its face), its six bolts, the gussets
++  const fy0 = 0.012, fy1 = 0.034, fz0 = zb - 0.012, fz1 = zf - 0.004; pbGl(g, PBGL.PAINT); pbBox(g, X, fy0, (fz0 + fz1) / 2, 0.48, fy1 - fy0, fz1 - fz0, C.GR, C.GRt);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.212, Z - 0.075], [0.212, Z - 0.075], [-0.212, Z + 0.07], [0.212, Z + 0.07], [-0.11, fz0 + 0.0], [0.11, fz0 + 0.0]]) { if (bz < zb) continue; pbCyl(g, [X + bx, fy1 + 0.007, bz], 'y', 0.016, 0.014, 6, C.ZN, C.ZNt); }
++  pbGl(g, PBGL.PAINT); for (const sx of [-1, 1]) for (const dz of [-0.06, 0.06]) { const x0 = X + sx * HX, x1 = X + sx * (HX + 0.052), y0 = fy1, y1 = 0.21;
++    for (const zz of [Z + dz - 0.006, Z + dz + 0.006]) g.triO([x0, y0, zz], [x1, y0, zz], [x0, y1, zz], O.DKO, [x0, y0 + 0.03, Z + dz]);
++    g.quadO([x1, y0, Z + dz - 0.006], [x1, y0, Z + dz + 0.006], [x0, y1, Z + dz + 0.006], [x0, y1, Z + dz - 0.006], O.HI2, [x0, y0, Z + dz]); }
++  // the column's foot in black and yellow (the game's band), from the flange up to 0.24 m
++  pbPrism(g, X, Z, HX, HZ, CHF, fy1, 0.24, C.BLK);
++  pbHazard(g, [X - 0.155, fy1, zf + 0.003], [1, 0, 0], [0, 1, 0], 0.31, 0.24 - fy1, 0.075, [X, 0.1, Z]); pbHazard(g, [X + 0.155, fy1, zb - 0.003], [-1, 0, 0], [0, 1, 0], 0.31, 0.24 - fy1, 0.075, [X, 0.1, Z]);
++  pbHazard(g, [xs + 0.003, fy1, zf - 0.025], [0, 0, -1], [0, 1, 0], 2 * HZ - 0.05, 0.24 - fy1, 0.075, [X, 0.1, Z]); pbHazard(g, [X - HX - 0.003, fy1, zb + 0.025], [0, 0, 1], [0, 1, 0], 2 * HZ - 0.05, 0.24 - fy1, 0.075, [X, 0.1, Z]);
++  // the column: its sides and back, the bevels a lighter paint (the front ones lightest: they catch the room's light); the front face round the slot
++  const y0 = 0.24, ys0 = 0.30, ys1 = TOP - 0.1;
++  pbPrism(g, X, Z, HX, HZ, CHF, y0, TOP, [O.OR, O.HI, O.OR, O.HI2, O.OR, O.HI2, O.OR, O.HI], null, [0]);
++  const fq = (x0, x1, a, b, col) => g.quadO([X + x0, a, zf], [X + x1, a, zf], [X + x1, b, zf], [X + x0, b, zf], col, [X, (a + b) / 2, Z]);
++  fq(-HX + CHF, -S, y0, TOP, O.OR); fq(S, HX - CHF, y0, TOP, O.OR); fq(-S, S, y0, ys0, O.OR); fq(-S, S, ys1, TOP, O.OR);
++  // the slot (R deep): its walls dark, its floor and roof, its back black
++  const zr = zf - R; g.quadO([X - S, ys0, zf], [X - S, ys0, zr], [X - S, ys1, zr], [X - S, ys1, zf], C.WALL, [X - S - 0.05, ys0, zr]); g.quadO([X + S, ys0, zf], [X + S, ys0, zr], [X + S, ys1, zr], [X + S, ys1, zf], C.WALL, [X + S + 0.05, ys0, zr]);
++  g.quadO([X - S, ys0, zf], [X + S, ys0, zf], [X + S, ys0, zr], [X - S, ys0, zr], C.WALLt, [X, ys0 - 0.05, zr]); g.quadO([X - S, ys1, zf], [X + S, ys1, zf], [X + S, ys1, zr], [X - S, ys1, zr], C.WALL, [X, ys1 + 0.05, zr]);
++  g.quadO([X - S, ys0, zr], [X + S, ys0, zr], [X + S, ys1, zr], [X - S, ys1, zr], C.SLOT, [X, ys0, zr - 0.05]);
++  // in the slot: the safety-lock rack (left: a steel strip, sloped teeth every 5.5 cm, lit on their slopes) and the lifting chain (right:
++  // its plates in two shades, the pins lighter)
++  pbGl(g, PBGL.PAINT); const rx0 = X - S + 0.006, rx1 = X - 0.006, rz = zr + 0.008; pbBox(g, (rx0 + rx1) / 2, ys0, zr + 0.004, rx1 - rx0, ys1 - ys0, 0.008, C.RACK, C.RACK, true);
++  for (let y = ys0 + 0.05; y < ys1 - 0.06; y += 0.055) { const A = (x) => [x, y, rz], Bp = (x) => [x, y, rz + 0.018], Cp = (x) => [x, y + 0.03, rz], c = [(rx0 + rx1) / 2, y + 0.01, rz + 0.005];
++    g.quadO(A(rx0), A(rx1), Bp(rx1), Bp(rx0), C.TOOTHd, c); g.quadO(Bp(rx0), Bp(rx1), Cp(rx1), Cp(rx0), C.TOOTH, c); g.triO(A(rx0), Bp(rx0), Cp(rx0), C.TOOTHd, c); g.triO(A(rx1), Bp(rx1), Cp(rx1), C.TOOTHd, c); }
++  const cz = zr + 0.02; for (let y = ys0 + 0.01, i = 0; y < ys1 - 0.06; y += 0.05, i++) { const w = i & 1 ? 0.013 : 0.018, cx = X + 0.0255, col = i & 1 ? C.CH1 : C.CH0, c = [cx, y + 0.025, cz - 0.01];
++    g.quadO([cx - w, y, cz], [cx + w, y, cz], [cx + w, y + 0.05, cz], [cx - w, y + 0.05, cz], col, c); g.quadO([cx - w, y, cz], [cx - w, y, cz - 0.012], [cx - w, y + 0.05, cz - 0.012], [cx - w, y + 0.05, cz], C.CH0, c);
++    g.quadO([cx + w, y, cz], [cx + w, y, cz - 0.012], [cx + w, y + 0.05, cz - 0.012], [cx + w, y + 0.05, cz], C.CH0, c);
++    for (const px of [-0.009, 0.009]) g.quadO([cx + px - 0.004, y - 0.004, cz + 0.0008], [cx + px + 0.004, y - 0.004, cz + 0.0008], [cx + px + 0.004, y + 0.004, cz + 0.0008], [cx + px - 0.004, y + 0.004, cz + 0.0008], C.PIN, c); }
++  // the zinc guide rails either side of the slot (a little proud of the face, their inner edges lit)
++  for (const s of [-1, 1]) { const xa = X + s * S, xb = X + s * (S + 0.03), x0 = Math.min(xa, xb), x1 = Math.max(xa, xb); pbBox(g, (x0 + x1) / 2, ys0 - 0.02, zf + 0.004, 0.03, ys1 - ys0 + 0.06, 0.008, C.ZN, C.ZNt);
++    g.quadO([xa + s * 0.0005, ys0 - 0.02, zf + 0.0081], [xa + s * 0.006, ys0 - 0.02, zf + 0.0081], [xa + s * 0.006, ys1 + 0.04, zf + 0.0081], [xa + s * 0.0005, ys1 + 0.04, zf + 0.0081], C.ZNt, [xa, ys0, zf]); }
++  // wear: paint chips on the front bevels, a few darker scuffs on the face beside the rails
++  pbGl(g, PBGL.METAL); const chamf = (sx, y, h) => { const a = [X + sx * (HX - CHF), y, zf], b = [X + sx * HX, y, zf - CHF], n = [sx * 0.7071 * 0.0008, 0, 0.7071 * 0.0008], t = 0.35, a1 = [a[0] + (b[0] - a[0]) * t, 0, a[2] + (b[2] - a[2]) * t], b1 = [a[0] + (b[0] - a[0]) * (t + 0.4), 0, a[2] + (b[2] - a[2]) * (t + 0.4)];
++    g.quadO([a1[0] + n[0], y, a1[2] + n[2]], [b1[0] + n[0], y, b1[2] + n[2]], [b1[0] + n[0], y + h, b1[2] + n[2]], [a1[0] + n[0], y + h, a1[2] + n[2]], C.CHIP, [X, y, Z]); };
++  chamf(-1, 0.71, 0.014); chamf(-1, 1.43, 0.009); chamf(1, 0.93, 0.012); chamf(1, 1.86, 0.008); chamf(-1, 2.31, 0.01);
++  pbGl(g, PBGL.PAINT); for (const [x, y, w, h] of [[0.105, 0.42, 0.022, 0.3], [-0.115, 0.55, 0.016, 0.22], [0.125, 1.15, 0.012, 0.16], [-0.1, 1.62, 0.014, 0.12]]) g.quadO([X + x - w / 2, y, zf + 0.0006], [X + x + w / 2, y, zf + 0.0006], [X + x + w / 2, y + h, zf + 0.0006], [X + x - w / 2, y + h, zf + 0.0006], O.SC, [X, y, Z]);
++  // the cap: a dark plate a little wider than the column, its top bevelled (the bevels lit), four bolts on it
++  const c0 = TOP, c1 = TOP + 0.022, c2 = TOP + PBL.cap, cw = 0.2, cd = 0.135, iw = 0.175, id = 0.11; pbBox(g, X, c0, Z, 2 * cw, c1 - c0, 2 * cd, C.CAP, C.CAP);
++  const cq = [[cw, cd, iw, id], [-cw, cd, -iw, id], [-cw, -cd, -iw, -id], [cw, -cd, iw, -id]];
++  for (let i = 0; i < 4; i++) { const [ax, az, aix, aiz] = cq[i], [bx2, bz2, bix, biz] = cq[(i + 1) % 4]; g.quadO([X + ax, c1, Z + az], [X + bx2, c1, Z + bz2], [X + bix, c2, Z + biz], [X + aix, c2, Z + aiz], C.CAPe, [X, c0, Z]); }
++  g.quadO([X - iw, c2, Z - id], [X + iw, c2, Z - id], [X + iw, c2, Z + id], [X - iw, c2, Z + id], C.CAPt, [X, c0, Z]);
++  pbGl(g, PBGL.METAL); for (const [bx, bz] of [[-0.12, -0.065], [0.12, -0.065], [-0.12, 0.065], [0.12, 0.065]]) pbCyl(g, [X + bx, c2 + 0.004, Z + bz], 'y', 0.011, 0.008, 6, C.AR, C.ZN);
++  // the side (+x): the controls as the game's (up, down, the red stop on yellow), the side plate a warning label
++  pbGl(g, PBGL.PAINT); pbBox(g, xs + 0.03, 0.98, Z - 0.035, 0.06, 0.24, 0.15, [0.15, 0.16, 0.18]);
++  pbBox(g, xs + 0.061, 1.14, Z, 0.004, 0.04, 0.04, C.GRN); pbBox(g, xs + 0.061, 1.08, Z, 0.004, 0.04, 0.04, [0.06, 0.06, 0.07]);
++  pbCyl(g, [xs + 0.064, 1.1, Z - 0.075], 'x', 0.032, 0.008, 12, C.YL); pbCyl(g, [xs + 0.078, 1.1, Z - 0.075], 'x', 0.021, 0.022, 10, [0.72, 0.1, 0.08]);
++  pbBox(g, xs + 0.002, 1.40, Z, 0.006, 0.17, 0.13, C.WHITE); pbSign(g, [xs + 0.005, 1.478, Z], [0, 0, -1], [0, 1, 0], 0.1, '!');
++  // the power unit at the foot, on the back: its plate on the column, the oil tank (the oil's level), the pump block and its red release
++  // lever, the motor (its cooling rings, the fan cover on top, the terminal box with the electric label), the pressure hose into the column,
++  // the motor's lead down to the plate and away to the wall; the warning label on the tank's side
++  pbBox(g, X, fy1, zb - 0.004, 0.3, 0.58, 0.008, C.DK);
++  pbGl(g, PBGL.PLATE); const tx0 = X - 0.13, tx1 = X + 0.11, tz0 = -2.015, tz1 = -1.855, txc = (tx0 + tx1) / 2, tzc = (tz0 + tz1) / 2; pbBox(g, txc, 0.012, tzc, tx1 - tx0, 0.19, tz1 - tz0, C.OIL, C.OIL); pbBox(g, txc, 0.202, tzc, tx1 - tx0, 0.1, tz1 - tz0, C.TANK, C.TANKt);
++  pbGl(g, PBGL.MATTE); pbCyl(g, [X - 0.08, 0.312, -1.975], 'y', 0.022, 0.02, 8, C.BLK);
++  pbGl(g, PBGL.METAL); pbBox(g, X + 0.03, 0.302, -1.935, 0.13, 0.07, 0.11, C.AL, C.ALt);
++  pbGl(g, PBGL.PAINT); pbObox(g, [X + 0.095, 0.345, -1.905], [X + 0.16, 0.322, -1.905], 0.012, 0.012, C.RED); pbCyl(g, [X + 0.165, 0.32, -1.905], 'x', 0.012, 0.022, 8, C.RED);
++  pbCyl(g, [X + 0.03, 0.492, -1.935], 'y', 0.068, 0.236, 14, C.MOT, C.MOTd); for (const y of [0.41, 0.45, 0.49, 0.53, 0.57]) pbCyl(g, [X + 0.03, y, -1.935], 'y', 0.0715, 0.008, 14, C.MOTd);
++  pbGl(g, PBGL.MATTE); pbCyl(g, [X + 0.03, 0.625, -1.935], 'y', 0.071, 0.026, 14, C.BLK, [0.2, 0.21, 0.22]);
++  pbGl(g, PBGL.PAINT); pbBox(g, X + 0.112, 0.455, -1.935, 0.03, 0.085, 0.065, C.MOT, C.MOT); pbSign(g, [X + 0.1272, 0.497, -1.935], [0, 0, -1], [0, 1, 0], 0.052, 'bolt');
++  pbSign(g, [tx1 + 0.0003, 0.17, tzc], [0, 0, -1], [0, 1, 0], 0.09, '!');
++  pbGl(g, PBGL.MATTE); pbTube(g, [[X + 0.06, 0.37, -1.905], [X + 0.075, 0.43, -1.875], [X + 0.08, 0.475, -1.852], [X + 0.08, 0.5, zb - 0.012]], 0.011, C.BLK, 10, 6);
++  pbTube(g, [[X + 0.127, 0.47, -1.94], [X + 0.135, 0.43, -1.99], [X + 0.125, 0.3, -2.032], [X + 0.11, 0.06, -2.04], [X + 0.09, 0.02, -2.1], [X + 0.05, 0.019, -2.3]], 0.007, C.BLK, 18, 5);
++  pbGl(g, PBGL.METAL); pbCyl(g, [X + 0.08, 0.5, zb - 0.01], 'z', 0.017, 0.02, 8, C.ZN); pbCyl(g, [X + 0.06, 0.38, -1.905], 'y', 0.016, 0.018, 8, C.ZN);
++  const geo = g.geometry(), gl = pbGlArr(g); geo.setAttribute('gloss', new T.BufferAttribute(gl, 1));
++  const Pp = geo.attributes.position, Cc = geo.attributes.color; for (let i = 0; i < Pp.count; i++) { const y = Pp.getY(i); if (y < 0.4) { const t = Math.min(1, Math.max(0, y / 0.4)), a = 0.5 + 0.5 * t * t * (3 - 2 * t); Cc.setXYZ(i, Cc.getX(i) * a, Cc.getY(i) * a, Cc.getZ(i) * a); } }
++  geo.computeBoundingSphere(); return geo; };
++// the carriage (liftGeo's carriage: its level 0 the carriage's lowest, x and z in the world, as the game builds it) in the new paint: P N C gl
++const pbCarriage = (O) => { const L = D.LIFT, g = pbGB(), cy = L.du + D.PAD.h + 0.02 + 0.0135, zf = L.z + L.hz, C = PBC;
++  const ph = PBL.plate; pbGl(g, PBGL.PAINT); pbPrism(g, 0, zf + 0.028, 0.205, 0.026, 0.012, cy + 0.075, cy + ph, [O.OR, O.HI, O.OR, O.HI2, O.OR, O.HI2, O.OR, O.HI], O.ORt);
++  World.box(g, 0, cy, (zf - 1.39) / 2, 1.4, 0.075, -1.392 - zf, 0, O.OR, O.ORt);
++  World.box(g, 0, cy + 0.075, zf + 0.079, 0.3, 0.13, 0.05, 0, O.OR, O.ORt);
++  for (const y of [0.26, 0.56]) World.box(g, 0, cy + y, zf + 0.058, 0.38, 0.04, 0.008, 0, O.RIB, O.OR);
++  pbSign(g, [0.1, cy + 0.425, zf + 0.054], [1, 0, 0], [0, 1, 0], 0.085, '!');
++  g.quadO([-0.7, cy + 0.0755, zf - 0.02], [0.7, cy + 0.0755, zf - 0.02], [0.7, cy + 0.0755, -1.392], [-0.7, cy + 0.0755, -1.392], O.HI, [0, cy, -1.5]);   // (the crosshead's top edge lit: a thin lighter face over it)
++  pbGl(g, PBGL.METAL); for (const sx of [-1, 1]) World.box(g, sx * 0.2, cy + 0.11, zf - 0.02, 0.016, ph - 0.14, 0.1, 0, C.ZN);
++  for (const [bx, by] of [[-0.17, 0.14], [0.17, 0.14], [-0.17, 0.42], [0.17, 0.42], [-0.17, ph - 0.045], [0.17, ph - 0.045]]) pbCyl(g, [bx, cy + by, zf + 0.058], 'z', 0.011, 0.008, 6, C.AR, C.ZN);
++  const ly = ph - 0.14; World.box(g, 0, cy + ly, zf + 0.069, 0.1, 0.09, 0.03, 0, C.AR); World.box(g, 0.055, cy + ly - 0.03, zf + 0.087, 0.012, 0.012, 0.012, 0, C.ZN); pbObox(g, [0.05, cy + ly + 0.03, zf + 0.09], [0.15, cy + ly + 0.07, zf + 0.09], 0.016, 0.01, [0.72, 0.12, 0.09]);   // (the lock's latch and its lever under the plate's top, as the game's)
++  for (const i of [0, 2]) { const [px, pz] = L.arms[i].p; pbCyl(g, [px, (0.0225 + cy) / 2, pz], 'y', 0.024, cy - 0.0225, 8, C.ZN); pbCyl(g, [px, cy + 0.11, pz], 'y', 0.048, 0.07, 12, C.ZN, [0.4, 0.42, 0.45]); }
++  return { P: g.P, N: g.N, C: g.C, gl: pbGlArr(g), n: g.P.length / 3 }; };
++// the game's lift back (its column geometry, its carriage and arms' build and the carriage's mesh) when PB built its own
++const pbLiftOff = () => { const L = D.LIFT; if (!L || !L._pb) return; const o = L._pb; o.mesh.geometry.dispose(); o.mesh.geometry = o.geo; L.cmesh.geometry.dispose(); L.cmesh.geometry = o.cgeo; L.geo = o.B; L.n0 = o.n0; delete L._pb; if (D.poseLift) D.poseLift(); };
++// the new lift (after wLiftColour: v its variant); returns its load before / after (meshes, vertices)
++const pbLift = (v) => { const L = D.LIFT; if (!L || !L.piece || !L.geo || !L.cmesh) return null; pbLiftOff();
++  const mesh = L.piece.root.children.find(o => o.isMesh && o !== L.cmesh && !o.userData.wBand && o.geometry.attributes.gloss); if (!mesh) return null;
++  const O = pbPaint(v), B0 = L.geo, n0 = L.n0, n = B0.arm.length, before = { column: mesh.geometry.attributes.position.count, carriage: n0, arms: n - n0 };
++  const geo = pbColumnGeo(O), cg = pbCarriage(O), m = cg.n, na = n - n0, N = m + na, B = { P: new Float32Array(N * 3), N: new Float32Array(N * 3), C: new Float32Array(N * 3), gl: new Float32Array(N), arm: new Int8Array(N), kd: new Uint8Array(N), kp: new Uint8Array(N), kr: new Uint8Array(N) };
++  B.P.set(cg.P, 0); B.P.set(B0.P.subarray(n0 * 3), m * 3); B.N.set(cg.N, 0); B.N.set(B0.N.subarray(n0 * 3), m * 3); B.C.set(cg.C, 0); B.C.set(B0.C.subarray(n0 * 3), m * 3);
++  B.gl.set(cg.gl, 0); B.gl.set(B0.gl.subarray(n0), m); B.arm.fill(-1, 0, m); B.arm.set(B0.arm.subarray(n0), m); B.kd.set(B0.kd.subarray(n0), m); B.kp.set(B0.kp.subarray(n0), m); B.kr.set(B0.kr.subarray(n0), m);
++  const cgeo = new T.BufferGeometry(); for (const [nm, k] of [['position', 3], ['normal', 3], ['color', 3]]) cgeo.setAttribute(nm, new T.BufferAttribute(new Float32Array(m * k), k).setUsage(T.DynamicDrawUsage));
++  cgeo.setAttribute('gloss', new T.BufferAttribute(B.gl.slice(0, m), 1)); cgeo.boundingSphere = new T.Sphere(V(L.x, 1.2, -0.6), 3.4);
++  L._pb = { mesh, geo: mesh.geometry, cgeo: L.cmesh.geometry, B: B0, n0 }; mesh.geometry = geo; L.cmesh.geometry = cgeo; L.geo = B; L.n0 = m; if (D.poseLift) D.poseLift();
++  const after = { column: geo.attributes.position.count, carriage: m, arms: na };
++  return (PBL.info = { v: v || null, top: PBL.top, capTop: +(PBL.top + PBL.cap + 0.008).toFixed(3), meshes: 3, before, after, verts: { before: before.column + before.carriage + before.arms, after: after.column + after.carriage + after.arms } }); };
++// <<<< PB BLOCK
+ const regalAll = (S, W, o = {}) => { S.segs.forEach(sg => { sg.g.visible = false; }); const par = PR.group(), M = MT(), A = rgAngles(S), out = { A, par }, BLUE = FO.blue || 0x8fd0f5;
+   const GB = 4, BOARDS = { 0: [0, 1, 2, 3], 1: [0, 1, 2, 3], 2: [0, 1, 2, 3], 3: [0, 1, 2, 3], 4: [0, 1, 2, 3] };   // (IDEA 5: bay 4 gets D's board too, the floor of its tuning parts)   // (bay 4 (v2): A, B, C as the others, no D: open over C; no E board anywhere, as in h)
+   const BT = rgBackTop(), secs = A.a.map((a, k) => { const sc = rgFrame(par, a, A.L, 0.66, RG.TOP, { front: RG.FRONT, backTop: BT }); BOARDS[k].forEach(lv => rgBoard(sc, RG.LV[lv]));
+@@ -981,8 +1293,9 @@
+   wingLight(out, WLV[RG.WL] ? RG.WL : null);   // (R: the spoilers' light, one of six versions (RG.WL; null: as before); L3: only R's L1..L6 here)
+   // (BG: NO LIT PANELS ON THE TOP any more (the user: "Zbriši plošče v zgornjem regalu"): L3's l3Panels is not called, the spoilers stand on the
+   //  top board with only the garage's wall behind them; RG.WL keeps R's L1..L6 (wingLight), null as today)
+-  out.bg = { v: RG.BG, nm: BGV[RG.BG] ? BGV[RG.BG].oz + ' · ' + BGV[RG.BG].st : null, posts: secs[0].posts.style, frontUp: BGP.frontUp };
++  out.bg = { v: RG.BG, nm: bgVer() ? bgVer().oz + ' · ' + bgVer().st : null, posts: secs[0].posts.style, frontUp: BGP.frontUp };
+   bgShadows(out);   // (BG: the soft shadows in the version's shadow colour (BGV sh))
++  pbExtras(out);   // (PB: the version's extras: P4 the painted outlines behind the parts, P6 the hooks (PBV, the PB block))
+   return out; };
+ // ---- a sign board standing on a bay's top board BEHIND its spoiler (h's signOn, kept for the proposals): 5 cm and more off the spoiler's
+ //      back (S.dz more), on two legs outside the spoiler's width, its lower edge 1.2 cm over the wing (or S.y0); S: { w, h, x, dz, y0, tex
+@@ -1515,7 +1828,7 @@
+     const m = new T.Mesh(new T.BoxGeometry(0.368, 0.11, 0.238), M); m.position.set(L.x, 2.86, L.z); m.castShadow = m.receiveShadow = true; m.userData.wBand = true; L.piece.root.add(m); WLIFTBAND = m;
+     t.repeat.set(1, 1); }
+   return { v: v || 'modra', n }; };
+-const ZBASE = (o = {}) => { const S = SBASEX(), W = winPolysP(); ZS = S; const st = storesAll(W, o, S); st.lift = wLiftColour(o.lift !== undefined ? o.lift : WLIFTV); return { S, W, st }; };   // (W: the lift's colour)
++const ZBASE = (o = {}) => { const S = SBASEX(), W = winPolysP(); ZS = S; const st = storesAll(W, o, S); pbLiftOff(); st.lift = wLiftColour(o.lift !== undefined ? o.lift : WLIFTV); st.liftPB = PBL.on ? pbLift(o.lift !== undefined ? o.lift : WLIFTV) : null; return { S, W, st }; };   // (W: the lift's colour; PB: the game's lift back first (pbLiftOff), then its new graphics (pbLift, PBL))
+ // (for eTap / eCard, which build the scene themselves: their before(S))
+ const ZBEFORE = (o = {}) => (S) => { ZS = S; return storesAll(winPolysP(), o, S); };
+ // ---- an arm with its carriage where the picture wants it (o.t: along the bridge, as zArm's checks: roka 1 on the + half, roka 2 on the −

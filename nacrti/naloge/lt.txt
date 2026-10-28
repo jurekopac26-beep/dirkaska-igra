@@ -1,0 +1,34 @@
+BRIEF LT: THE TELESCOPIC LIFT IN SIX VERSIONS
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all). Everything goes in
+P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch folder
+/tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/lt. Progress file P/out/lt/notes.md. One browser
+render at a time (several agents render now: long timeouts). Never write another agent's files; never edit the shared base files.
+
+THE USER'S WORDS (Slovenian): "Naredi še 6 različnih verzij teleskopskega." = after the board P/out/lf/dvigala_6.png (agent LF's six lifts),
+make SIX different versions of design 2, TELESKOPSKI (a round telescopic hydraulic column: an orange tube, a chrome stage with an orange
+collar, the chrome ram; the carriage on top as a round head with a plate down to the arms; low at rest, the ram extends when lifting).
+Agent LF is at the same time making six versions of another design (the industrial double column, PBL.type 7..12) in its own files.
+
+THE STARTING POINT: LF's store P/concepts/_e_store2_lf.js (its LF block, PBL.type 1..6; read P/out/lf/notes.md and info.json, and its
+picture script P/concepts/lf_dvigala.js and scratch scripts /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/
+scratchpad/lf/: copy what you need, never edit them). Copy the store to P/concepts/_e_store2_lt.js. Put ALL your code in ONE separate
+block with its own markers ("// >>>> LT BLOCK" / "// <<<< LT BLOCK") placed after LF's block, and hook it into the lift build with the
+smallest possible change (one dispatch line: PBL.type 13..18 → your builder), so it can later be merged with LF's new types. Write
+P/out/lt/lift_lt.patch = diff -u _e_store2_lf.js _e_store2_lt.js; check it applies to a fresh copy of _e_store2_lf.js; write P/out/lt/DONE.
+THE RULES (as LF's brief /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/lf.txt): the
+same place behind the car, the game's arms and pads, the car lifted to 1.35 m (the SAMUM 4x4 case: keep the ram long enough; LF noted
+its ram is still 12 cm in its stage at 1.35 m and that at rest the ram's lower part sits below the floor: solve or keep it hidden
+cleanly), inside the robots' box zLiftObs, at least 10 cm from the spoilers, orange as the main colour, generic, symbols only, low cost.
+SIX VERSIONS, clearly different, e.g.:
+  13 LF's teleskopski refined (cleaner chrome, a rubber boot (bellows) at each stage joint, a hydraulic hose);
+  14 SQUARE telescopic (three square stages, orange with black corners);
+  15 TWIN RAMS: two slim telescopic rams side by side under one carriage head;
+  16 SHOWROOM: white stages with orange rings and soft LED rings at the joints;
+  17 HEAVY DUTY: four stages, thick, with a wide base flange, hazard stripes and a lock collar;
+  18 a telescopic ram that rises out of a round floor pit (flush cover plate) with a visible cylinder skirt, only the upper stages above
+     the floor.
+PICTURES -> P/out/lt/: teleskopski_6.png (board: per version a DPR-4 close-up from the first view's direction, a side view, the first-view
+crop with the car at rest, the car raised to 1.35 m; Slovenian names, descriptions, measurements: height at rest, extended height, gap to
+the spoilers, load), dvigalo_<k>.png, info.json, notes.md. Look at every picture before you finish.
+FINAL REPORT: the six versions, the patch, the files, what you could not get right. Plain language.

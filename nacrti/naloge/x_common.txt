@@ -1,0 +1,24 @@
+COMMON PART OF THE X BRIEFS (read it whole).
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your own scratch folder
+(named in your brief). The container can restart at any time: keep a running progress file (named in your brief: done / next / files) so a
+resumed you can continue. Run at most ONE browser render at a time (three other agents render in parallel; the machine is shared). Use
+your own copy of P/harness_w.mjs with long timeouts. Never write to another agent's files.
+
+THE USER'S WORDS (Slovenian, this round, with a screenshot of the first view, P/out/w/hq/prvi_pogled.png):
+"Zgoraj desno sem označil regal številka 6, tega zbriši. Spodaj pa sem označil stvari v regalu, ki jih postavi drugače v regal, lahko tudi
+spremeniš regale. Naredi 6 različnih možnosti v sliki."
+- "regal številka 6" = the regal's END SECTION right of bay 4 (bays 0-4 are 1-5): it goes. Its contents (Gorska tyres on A, the rims
+  Oranžna 10 krakov on B and Črna mreža on C) move into bay 4 (agent X0 does this).
+- "stvari v regalu" circled at the bottom = the contents of the FRONT CABINETS' DRAWERS (both cabinets in front of the car): the aero kit
+  models (STREET, SPORT, RACE, GT PACK), the underglow (Luč pod avtom), the indicators (CLEAR, SMOKED, SEQUENTIAL) and the decals
+  (FLAMES, CHEQUERED, STAR). They are small and hard to see in the drawers. Six different ways to show them, the cabinets may change.
+
+THE STARTING POINT is round W (P/out/w/notes.md, info.json, f0.png, hq/prvi_pogled.png, omarici_hq.png): store P/concepts/_e_store2_w.js
+(V1's cabinets: vCabFronts, vDrawer, VDR, VC, vColFrame, vShowRow, vSigShow, vDecalShow, vDecalTex, vSigLamp, aeroDrawer/AEDR; the
+lift yellow by WLIFTV; English labels), base P/concepts/base_w.js (P/mk_base_w.sh), body P/concepts/_w_body.js (its frames make f0, the
+HQ first view, the cabinets HQ (omarici_hq), the measures), P/mk_w.sh, P/render_w.sh. The trolleys of proposal 1 park front-left
+(store's PROPOSAL 1 section; their parking outlines and their routes must stay clear: keep everything you add at least 0.3 m from them).
+Every in-world label is in British English, white on navy with the regal's yellow line (the game's look: dark navy, yellow lines,
+generic names only, no brands). The game's HUD and the VRŠIČ, SLOVENIJA banner stay as the game draws them.

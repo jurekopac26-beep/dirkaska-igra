@@ -1,0 +1,55 @@
+# Odločitve uporabnika (za kodo po »začni«)
+- Aero paket na avtu: barva b) rumena + temno modra z modro črto (kot predogled). (2026-10-27)
+- Paketi pridejo s samovozečim vozičkom (niso shranjeni v garaži): potrjeno. (2026-10-27)
+- Krila na regalu: večja nevidna mesta za klik (P/out/an_spojler/tap_krila.png): narejeno v sliki, čaka potrditev.
+- 6A: meni 4 polja v mreži 2 × 2 (MN _card4.js). (2026-10-27)
+- 7A: meniji z več kot 4 možnostmi: listanje po straneh s po 4 (‹ › in pikice), nič ne krajšamo.
+- 8B: gume: 4. polje v meniju zaklenjeno, na regalu ostanejo 3 gume (Sneg, Dirkališče, Gorska), Makadam se ne vrne.
+- 9B: aero: samo 3 paketi (Cestni, Športni, Dirkalni) + SERIJSKO; izjema od pravila 4; Paket GT ga ni.
+- 10A: krilo je del aero paketa (Športni, Dirkalni imata krilo).
+- 12: srednja auspuha (Titanov B, Ravni C) siva – potrjeno s sliko (regal_eg.patch). Mali vijoličen konec SPORT: vprašanje poslano (vprasanje_auspuh.png).
+- 11: (glej spodaj) podaljšana roka +1 m.
+- Odprto: 1 dvigalo, 2 tablice, 3 zid, 4 ključ, 5 označevanje, cena izposoje (BORROWED), table A/B.
+- 11B: omarica spredaj 1 m bliže avtu (roka seže v predal). Odprto: kam barvni krogi (slika rešitev v delu).
+- Table za maketami: različica A (tablica s ceno nad tablo). YOUR CAR zelena; BORROWED modra + rdeča RENT 450€ desno nad njo (cena izposoje še odprta); FOR SALE modra + rdeča 4280€ desno nad njo, desni rob poravnan; vse tri obrnjene točno proti kameri; ključavnica na plošči pred vrati makete. (risanje table3 v delu)
+- Tabla BORROWED se preimenuje v RENT A CAR.
+- Rdeča tablica nad RENT A CAR: »ONE RACE 450€« (najem za eno dirko, 450€).
+- 1: dvigalo 15 (teleskopsko, dvojni bat, klik dvigne avto) – uporabnik želi 6 oblik (LT2, PBL.type 19..24) v delu.
+- 2-3: tablice z imeni pred elementi regala = toblerone prizma, temno modra z rumenimi robovi (NP.type 3, regal_np.patch).
+- 11 (končno): omarica ostane na mestu (barvni krogi ostanejo). Roka, ki vzema luči, ima teleskopski podaljšek +1 m: vzame del iz predala, ga preda drugi roki, skupaj namestita, ista roka vrne stari del v predal (slika v delu: an_zarometi/podaljsek.png).
+- 4: ključ na rdečem gumbu = različica 4, bel 3D ključ v reliefu, vodoraven, z majhno senco (KL.type 4; v kodi lažja mreža ~2.000 oglišč).
+- Table (table4): rdeča tablica nad RENT A CAR samo »450€«; YOUR CAR še bolj obrnjena proti kameri; FOR SALE povsem vodoravna z mizo; napis SERVICE na sredini pod gumbom.
+- 3: star zid za regalom = različica 3, betonski bloki z napeljavo (SZ.type 3, regal_sz.patch).
+- 5: označevanje = kombinacija svetel obris + žaromet; 6 verzij z različnimi barvami (ne vedno rumena) v delu (oz/oz2_6.png). Zastavica z imenom (npr. MOTOR – TURBO): belo ozadje kot meni, črne črke.
+- Označevanje: maska/obarvanje okoli elementa mora biti PROSOJNO (element in njegove barve se vidijo skozi), npr. pri maketi SPORT.
+- 5 (končno pravilo): kliknjen element MODER (prosojen + moder obris), vsi ostali elementi iz istega menija ZELENI (prosojni + zelen obris); v meniju kliknjeno polje modro, ostala zelena; vrstni red polj v meniju = vrstni red elementov v prizoru (levo→desno, zgoraj→dol); zastavica bela, črne črke. (slika oz3 v delu)
+- Zastavica z imenom nad elementom (npr. MOTOR – TURBO): ODSTRANJENA (ime je že v meniju).
+- Dvigalo: uporabnik je zožil izbor na 19 in 21; 6 manjših različic (PBL.type 25..30) z nevidnim mestom za klik ≥40×40 v delu (lt/dvigalo_manjse_6.png).
+- Napis VRŠIČ, SLOVENIJA (trak na obroču nad avtom): uporabnik ga želi zbrisati; ostane samo konstrukcija, na kateri visita roki; 6 verzij v delu (rb/obroc_6.png).
+- Označevanje maket: maska samo na maketah (avtih), NE na tablah/tablicah s cenami; table niso zatemnjene; klik na tablo še vedno izbere maketo.
+- SPREMEMBA (nadomesti 8B in 9B): aero in gume imajo v meniju samo 3 možnosti, ki so vidne v garaži (Cestni/Športni/Dirkalni; Sneg/Dirkališče/Gorska); brez 4. polja (ni GT, ni Makadama, ni zaklenjenega polja); v 2×2 ostane 4. celica prazna, SERIJSKO gumb spodaj.
+- Meni: napis »✓ serijsko nameščeno« ODSTRANJEN; gumb »↺ SERIJSKO« se pokaže samo, ko je na avtu nameščen neserijski del (čaka potrditev).
+- Klik na avto, ko je meni odprt: ZAMENJA meni (trenutni se zapre brez nakupa, predogled izgine, kliknjen del avta moder + njegov meni). Klik na prazen prostor = zapre meni (kot NAZAJ). Klik na prosojni predogled = nič.
+- Meni: gumb KUPI IN NAMESTI enak kot igrin gumb »Race!« (rdeč, zaobljen, bel krepek ležeč napis); gumb nazaj enak kot igrin siv kvadraten gumb s puščico ‹ (brez napisa NAZAJ). Slika v delu (oz/gumbi.png).
+- Meni gume: brez naslova »Gume« in brez zavihkov Gume/Dim gum (dim gum ima svoj meni). Strani: 1 »GUME V AKCIJI« (3 na regalu, akcijska cena), › 2 »SREDNJE ŠPORTNE«, › 3 »PROFESIONALNE«; na vsaki strani od najcenejše do najdražje. Gume s strani 2–3 (niso na regalu) bi pripeljal voziček. (slika v delu: oz/gume_strani.png)
+- CENE: vsak element ima v meniju 4 strani × 4 možnosti = 16, razvrščeno od najcenejše do najdražje; 4 kategorije z razumljivimi imeni; cene po resničnih razponih (gume komplet 140 € .. 6.000 €). Raziskava za vse elemente v delu (out/cene/cene.json, cene.html). ODPRTO: valuta v igri € ali CR.
+- VALUTA: vse cene v garaži in igri v € in čim bolj realne; avto stane toliko, kot tak nov avto v trgovini. Raziskava avtov in ekonomije (nagrade, stroški) v delu (out/cene/avti.json, ekonomija.json).
+- SERVIS: cena servisa raste s poškodbo avta (bolj razbit = dražje) in z vrednostjo avta; predlog formule v delu.
+- Denar zgoraj desno: namesto »CR« prazen zlat kovanček (brez znakov); cene povsod v € (npr. 1.920 €).
+- Meni: odstranjen čas »⏱ 9 s« zgoraj desno v okvirčku (pri vseh menijih).
+- Meni ostane odprt, dokler igralec nekaj ne klikne (ni samodejnega zapiranja ali časovnika).
+- Glava zgoraj levo: »NAZAJ« (namesto GARAŽA), spodaj »IZBERI PROGO« (namesto TVOJ AVTO); napis ne sme biti bel (slabo viden) – 3 barvne možnosti v delu (oz/glava.png).
+- Meni: ploščice z mehko senco (dvignjene) in del na sliki ploščice z mehko senco pod sabo.
+- Meni: izbrana možnost (npr. ŠPORTNI AERO PAKET) v večjem okvirčku z večjo pisavo + 2 grafa: OPRIJEM in KM/H, stolpci za vse možnosti (nameščena siva, izbrana modra, ostale zelene) in sprememba glede na nameščeno. (slika v delu: oz/aero_detajl.png)
+- Omarica spredaj, spodaj desno: dodan 4. okrogel element (ŠPORTNI DISKI) → SPORT DISCS, RACE DISCS, CERAMIC, COLOURED NUTS. (slika v delu: mn/predal_4_okrogli.png)
+- Označevanje: uporabnik izbral OZ2 različico 4 (oranžen obris, močnejša zatemnitev 58 %); kombinacija z modro/zeleno v sliki A/B (oz/oz4_izbira.png).
+- Smerniki (INDICATORS) na omarici: dodan 4. (CHROME) → 4 enakomerno. (slika v delu: mn/smerniki_4.png)
+- Označevanje (NOVO, nadomesti modro/zeleno): ob kliku vsi elementi menija oranžni; kliknjen manj prosojen, ostali 3 bolj prosojni; 6 verzij prosojnosti in drugih barv za ostale v delu (oz/oz5_oranzna.png).
+- Graf v meniju: samo stolpci, brez okvirjev in besedila (morda le ikoni gume in merilnika); ob izbiri se stolpci animirano spremenijo iz prejšnje vrednosti v novo (~0,4 s). (slika v delu: oz/graf_animacija.png)
+- Grafi z drugimi podatki (6 verzij v delu: oz/grafi_info_6.png): pospešek 0–100, zavorna pot, oprijem po podlagah, moč KM, teža, čas kroga na Vršiču.
+- Maketa YOUR CAR: okrogel podstavek (krog) pod maketo ima v sebi prižgano luč, ki sveti od spodaj = igralec ima ta avto zdaj v garaži pred sabo. (slike v delu: av_table/krog_luc.png)
+- Označevanje OZ5 (SPREMEMBA): kliknjen (glavni) element ZELEN, ostali 3 elementi menija ORANŽNI; prosojnost po OZ5; v meniju izbrano polje zeleno, ostala oranžna. (slike v delu: oz/oz7_zeleno_oranzna.png)
+- Tabla YOUR CAR: napis/tabla naj bo tudi OSVETLJEN (skupaj z lučjo v krogu pod maketo). (slike v delu: av_table/tabla_luc.png)
+- Tabla YOUR CAR: še bolj obrnjena proti kameri (zdaj stoji preveč naravnost); slike z nagibom nazaj in zasukom v delu (av_table/tabla_luc.png).
+- IZBRANO tabla YOUR CAR: »svetijo samo črke« (plošča navadno zelena, bele črke svetijo z mehkim belo-zelenim sijem; tabla_luc.png različica 2, 0 dodatnih klicev) + krog pod maketo zelena luč (krog_luc 1). Kot table: »naravnost v oko kamere« (nagib nazaj 37°, zasuk 35°; tabla_luc_kot_oko.png).
+- IZBRANO označevanje OZ7 različica 2 »Bel rob«: kliknjen element debel zelen obris z belo zunanjo črto + rahla zelena maska; ostali 3 elementi menija samo tanek oranžen obris brez maske; v meniju izbrana ploščica zelena, ostale 3 oranžne; ostala garaža zatemnjena 58 %.

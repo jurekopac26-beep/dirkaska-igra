@@ -1,0 +1,7 @@
+BRIEF O3A: 3D CURVED FRONT CABINETS, VERSIONS 1 and 2
+First read the common part: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/o3_common.txt
+and the versions: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/o3_vars.txt
+You make versions 1 and 2. Your scratch folder: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/o3a ;
+progress file P/out/o3a/notes.md. Your files: per version k a store copy P/concepts/_e_store2_o3<k>.js (from _e_store2_pb.js; change only
+the front cabinets: the XC block and frontRegal's call; never the regal, never the PROPOSAL 1 section), P/mk_base_o3<k>.sh ->
+base_o3<k>.js, your body P/concepts/_o3a_body.js, P/mk_o3a.sh, P/render_o3a.sh, your own harness copy P/harness_o3a.mjs.

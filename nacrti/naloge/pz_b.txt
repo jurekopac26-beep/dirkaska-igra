@@ -1,0 +1,7 @@
+BRIEF PZB: THE CURVED PLAN CHEST WITH PARTS ON THE TOP, VERSIONS 4, 5, 6
+Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/pz_common.txt
+Agent PNB (who built form 4) makes versions 1-3 at the same time; you make versions 4, 5, 6 from PNB's form 4 code (copy, never edit its
+files). Your files: store copies P/concepts/_e_store2_pz4.js .. pz6.js (from _e_store2_pn4.js; change only the front cabinets' block,
+keep the gift hidden; never the regal, never PROPOSAL 1), P/mk_base_pz<k>.sh, body P/concepts/_pzb_body.js, scripts P/mk_pzb.sh,
+P/render_pzb.sh, harness copy P/harness_pzb.mjs; scratch folder /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/
+scratchpad/pzb; progress file P/out/pzb/notes.md.

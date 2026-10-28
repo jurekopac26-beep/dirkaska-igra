@@ -1,0 +1,57 @@
+--- _e_store2_av1.js	2026-10-28 00:24:06.394181559 +0000
++++ _e_store2_mn4o.js	2026-10-28 00:47:17.733497381 +0000
+@@ -106,7 +106,13 @@
+   return g; };
+ // the brakes: a disc (stock grey, drilled, ceramic dark with a gold hat) and a caliper (grey, red, yellow, gold, the car's own)
+ const DISC_KINDS = ['ser', 'sport', 'dirk', 'ker'];
+-const discPart = (kind) => { const g = new T.Group(), D = kind === 'ker' ? PR.mat(0x3a3d42, { shininess: 60 }) : PR.mat(0x9aa2ac, { shininess: 100, specular: 0x888888 });
++// MN4O: SPORT DISCS (Športni diski, the cheapest disc): 0.15 m (RACE DISCS 0.17), lighter steel, a grey hat, 8 drilled holes and 6 curved slots
++const mnSportDisc = () => { const g = new T.Group(), D = PR.mat(0xc6ccd3, { shininess: 110, specular: 0x999999 }); zcy(g, 0.15, 0.15, 0.022, 0, 0, 0, D, 'z', 32); zcy(g, 0.062, 0.062, 0.036, 0, 0, 0.009, ZMAT.grey(), 'z', 20);
++  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; zcy(g, 0.007, 0.007, 0.026, Math.cos(a) * 0.1, Math.sin(a) * 0.1, 0, ZMAT.black(), 'z', 6); }
++  for (let i = 0; i < 6; i++) { const a = (i + 0.5) / 6 * Math.PI * 2, b = zbx(g, 0.05, 0.007, 0.004, Math.cos(a) * 0.125, Math.sin(a) * 0.125, 0.0115, ZMAT.black()); b.rotation.z = a + Math.PI / 2 - 0.5; }
++  return g; };
++const discPart = (kind) => { if (kind === 'sport') return mnSportDisc();   // (MN4O: the sport disc, its own)
++  const g = new T.Group(), D = kind === 'ker' ? PR.mat(0x3a3d42, { shininess: 60 }) : PR.mat(0x9aa2ac, { shininess: 100, specular: 0x888888 });
+   zcy(g, 0.17, 0.17, 0.025, 0, 0, 0, D, 'z', 32); zcy(g, 0.07, 0.07, 0.04, 0, 0, 0.01, kind === 'ker' ? ZMAT.gold() : ZMAT.grey(), 'z', 20);
+   if (kind === 'dirk' || kind === 'sport') for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; zcy(g, 0.008, 0.008, 0.03, Math.cos(a) * 0.12, Math.sin(a) * 0.12, 0, ZMAT.black(), 'z', 6); }
+   return g; };
+@@ -1899,6 +1905,7 @@
+ const vSigLamp = (kind) => { const g = new T.Group(), w = 0.13, h = 0.056, d = 0.03; zbx(g, w, h, d, 0, 0, d / 2, PR.mat(0x111215, { shininess: 60 }));
+   if (kind === 'proz') { zbx(g, w - 0.01, h - 0.01, 0.006, 0, 0, d + 0.002, PR.mat(0xe9eef3, { shininess: 160, specular: 0xffffff })); zcy(g, 0.019, 0.019, 0.008, -0.02, 0, d + 0.005, EM(0xffa01a, 1.5), 'z', 20); zbx(g, 0.05, 0.016, 0.008, 0.035, 0, d + 0.005, EM(0xffa01a, 1.3)); }
+   else if (kind === 'dim') { zbx(g, w - 0.01, h - 0.01, 0.006, 0, 0, d + 0.002, PR.mat(0x2a1d0c, { shininess: 150, specular: 0x555555 })); zbx(g, w - 0.03, h - 0.026, 0.006, 0, 0, d + 0.004, EM(0xd07a14, 0.6)); }
++  else if (kind === 'krom') { zbx(g, w - 0.004, h - 0.004, 0.008, 0, 0, d + 0.001, ZMAT.chrome()); zbx(g, w - 0.022, h - 0.022, 0.006, 0, 0, d + 0.006, PR.mat(0xffb347, { shininess: 160, specular: 0xffffff })); zbx(g, w - 0.05, 0.014, 0.006, 0, 0, d + 0.009, EM(0xffa01a, 1.2)); }   // (MN4O: CHROME, the 4th indicator)
+   else { zbx(g, w - 0.01, h - 0.01, 0.006, 0, 0, d + 0.002, PR.mat(0x1a1408, { shininess: 140, specular: 0x444444 })); for (let i = 0; i < 6; i++) zbx(g, 0.013, h - 0.024, 0.007, -0.045 + i * 0.018, 0, d + 0.005, EM(0xffa01a, 0.45 + i * 0.22)); }
+   return g; };
+ // the boards of a drawer's show (in the drawer's frame: its floor top at y -0.03, its front at z +0.2): kinds [[key, NAME]], each board's
+@@ -2166,9 +2173,9 @@
+   lamp: { led: ['LED', 'Žarometi – LED'], rum: ['YELLOW', 'Žarometi – Rumeni'], dim: ['SMOKED', 'Žarometi – Dimljeni'], bil: ['BI-LED', 'Žarometi – Bi-LED'] },
+   cal: { rde: ['RED', 'Čeljusti – Rdeče'], rum: ['YELLOW', 'Čeljusti – Rumene'], zla: ['GOLD', 'Čeljusti – Zlate'], barva: ['BODY COLOUR', 'Čeljusti – V barvi avta'] },
+   grille: { sat: ['HONEYCOMB', 'Maska – Satasta'], mrez: ['MESH', 'Maska – Mrežasta'], krom: ['CHROME', 'Maska – Kromirana'], karb: ['CARBON', 'Maska – Karbonska'], barva: ['BODY COLOUR', 'Maska – V barvi avta'] },
+-  disc: { dirk: ['RACE DISCS', 'Zavore – Dirkalni diski'], ker: ['CERAMIC', 'Zavore – Keramične'] },
++  disc: { sport: ['SPORT DISCS', 'Zavore – Športni diski'], dirk: ['RACE DISCS', 'Zavore – Dirkalni diski'], ker: ['CERAMIC', 'Zavore – Keramične'] },   // (MN4O: + SPORT DISCS)
+   ug: { mod: ['BLUE', 'Luč pod avtom – Modra'], tur: ['TURQUOISE', 'Luč pod avtom – Turkizna'], vij: ['PURPLE', 'Luč pod avtom – Vijolična'], rde: ['RED', 'Luč pod avtom – Rdeča'], zel: ['GREEN', 'Luč pod avtom – Zelena'] },
+-  sig: { proz: ['CLEAR', 'Žmigavci – Prozorni'], dim: ['SMOKED', 'Žmigavci – Dimljeni'], tek: ['SEQUENTIAL', 'Žmigavci – Tekoči'] },
++  sig: { proz: ['CLEAR', 'Žmigavci – Prozorni'], dim: ['SMOKED', 'Žmigavci – Dimljeni'], tek: ['SEQUENTIAL', 'Žmigavci – Tekoči'], krom: ['CHROME', 'Žmigavci – Kromirani'] },   // (MN4O: + CHROME)
+   aero: { 1: ['STREET', 'Aero paket – Cestni'], 2: ['SPORT', 'Aero paket – Športni'], 3: ['RACE', 'Aero paket – Dirkalni'], 4: ['GT PACK', 'Aero paket – Paket GT'] },
+   decal: { flames: ['FLAMES', 'Nalepke – Plameni'], check: ['CHEQUERED', 'Nalepke – Šahovnica'], star: ['STAR', 'Nalepke – Zvezda'] }, nuts: { nuts: ['COLOURED NUTS', 'Barvne matice'] } };
+ const PDGRP = { ug: 'UNDERGLOW', sig: 'INDICATORS', aero: 'AERO KITS', decal: 'DECALS', nuts: 'COLOURED NUTS', tail: 'TAIL LAMPS', lamp: 'HEADLAMPS', cal: 'CALIPERS', grille: 'GRILLES', disc: 'BRAKE DISCS' };
+@@ -2552,9 +2559,9 @@
+ const PNL = { R: 10, topT: 0.022, over: 0.012, gapTop: 0.012, yback: 662, bE: 0.185, st: 0.018,
+   dr: { fT: 0.018, pullH: 0.01, pullD: 0.005, wall: 0.008, inset: 0.008 + 0.01 + 0.016, slide: 0.01, dd: 0.03, under: 0.012, ftDeep: 0.016, clr: 0.014, tagD: 0.026, sMax: 1.15, lab: { H: 64, font: 46, pad: 6, line: 7 } },
+   G: { HL: ['HEADLAMPS', [['lamp', 'led'], ['lamp', 'rum'], ['lamp', 'dim'], ['lamp', 'bil']]], TL: ['TAIL LAMPS', [['tail', 'dim'], ['tail', 'proz'], ['tail', 'okr'], ['tail', 'led']]],
+-    UG: ['UNDERGLOW', [['ug', 'mod'], ['ug', 'tur'], ['ug', 'vij'], ['ug', 'rde'], ['ug', 'zel']]], IND: ['INDICATORS', [['sig', 'proz'], ['sig', 'dim'], ['sig', 'tek']]], NUTS: ['NUTS', [['nuts', 'nuts']]],
++    UG: ['UNDERGLOW', [['ug', 'mod'], ['ug', 'tur'], ['ug', 'vij'], ['ug', 'rde'], ['ug', 'zel']]], IND: ['INDICATORS', [['sig', 'proz'], ['sig', 'dim'], ['sig', 'tek'], ['sig', 'krom']]], NUTS: ['NUTS', [['nuts', 'nuts']]],
+     GR: ['GRILLES', [['grille', 'sat'], ['grille', 'mrez'], ['grille', 'krom'], ['grille', 'karb'], ['grille', 'barva']]], CAL: ['CALIPERS', [['cal', 'rde'], ['cal', 'rum'], ['cal', 'zla'], ['cal', 'barva']]],
+-    AERO: ['AERO KITS', [['aero', 1], ['aero', 2], ['aero', 3], ['aero', 4]]], DEC: ['DECALS', [['decal', 'flames'], ['decal', 'check'], ['decal', 'star']]], DISC: ['DISCS', [['disc', 'dirk'], ['disc', 'ker']]] } };
++    AERO: ['AERO KITS', [['aero', 1], ['aero', 2], ['aero', 3], ['aero', 4]]], DEC: ['DECALS', [['decal', 'flames'], ['decal', 'check'], ['decal', 'star']]], DISC: ['DISCS', [['disc', 'sport'], ['disc', 'dirk'], ['disc', 'ker']]] } };   // (MN4O: SPORT DISCS first)
+ const pnPart = (key, from, to) => [PNL.G[key][0], PNL.G[key][1].slice(from, to)];   // (a slice of a group: its name, its items from..to)
+ const PNF = {
+   4: { H: 0.9715, D: 0.6405, P: 0.0718, N: 12, open: [0, 3, 6, 10], plinth: 0.0755, pulls: [0.2716, 0.3732, 0.4802, 0.5499], stileX: 183.5 },   // (the top drawer pulled 2 cm more than the plan's: its outer cells under the top were 40)
+@@ -2958,6 +2965,7 @@
+     { paint: 0x1e3a8a, stripe: 0xd4a52a, decals: [['hoodcheq', 0xf2f2ee, 0x1c1d22], ['number', '99', 0xd4a52a, 0x1c1d22]], kit: [0xd4a52a, 0x1c1d22, 0xf2f2ee], txt: 'temno modra z zlatima črtama, šahovnico na pokrovu in zlato številko 99, paket zlat' }] } };
+ const AVT = { top: [['aero', 1], ['aero', 2], ['aero', 3], null, ['srv', 'srv']], bands: [['AERO KITS', 3], [null, 1], ['SERVICE', 1]],
+   L: [['HL'], ['UG', 0, 4], ['GR', 0, 4], ['CAL']], R: [['TL'], ['UG', 4, 5, 'IND'], ['GR', 4, 5, 'DEC'], ['DISC', null, null, 'NUTS']], lock: 3 };
++AVT.R = [['TL'], ['IND'], ['GR', 4, 5, 'DEC'], ['DISC', null, null, 'NUTS']];   // (MN4O: no GREEN underglow: the INDICATORS row alone; the bottom-right row four round items)
+ // ---- the car's surface for the decals: a raycast on the game's car mesh (its own metres: x forward, y up, z right) ----
+ let AVRAY = null;
+ const avRay = () => { if (AVRAY) return AVRAY; const S = amSrc(), g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(S.P, 3)); g.computeBoundingBox(); g.computeBoundingSphere();
