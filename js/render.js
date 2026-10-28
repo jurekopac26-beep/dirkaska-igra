@@ -3200,6 +3200,10 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
+    // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
+    if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });
+      for (const t of pics) if (sh.has(t)) renderer.initTexture(t); }
     skids.onWorld(world);
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
