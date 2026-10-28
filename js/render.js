@@ -8938,7 +8938,7 @@ const Render = (function () {
     let along, outD, h, qa, lb;   // (lb: how much of the box's lens)
     if (out) { const e = sstep(0, 12, x); lb = 1 - sstep(0, 30, x); along = -PC.back * e + dr * (1 - e); outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; }   // (on its side it looks a little ahead of the car; upright at it, the box's wider lens a while longer: the whole car in the picture)
     else { const b = ps.pitState === 'repair' || ps.pitDone ? 1 : sstep(-28, -1, x); lb = b; along = PC.ahead * (1 - b) + dr; outD = PC.out[o]; h = lerp(PC.hT[o], PC.hB[o], b); qa = 0; }
-    const sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lc = laneAt(T, c.q.s, sd, _lb), oC = Math.max(pcLim(T, sC, T.idx(sC), sd), off - outD);
+    const sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lc = laneAt(T, c.q.s, sd, _lb), lim = pcLim(T, sC, T.idx(sC), sd), oC = Math.max(lim, off - outD);
     const ox = cx - (lc[0] + lc[2] * off), oz = cz - (lc[1] + lc[3] * off);   // (the car off its lane point: its own place, drawn)
     let Lp = [la[0] + la[2] * oC + ox, y + h, la[1] + la[3] * oC + oz], Lq;
     { const lq = laneAt(T, c.q.s + qa, sd, _la); Lq = [lq[0] + lq[2] * off + ox, y + PC.q[o], lq[1] + lq[3] * off + oz]; }
@@ -8972,7 +8972,7 @@ const Render = (function () {
     }
     if (world && world.groundH) { const gH = world.groundH(R[0], R[2]); if (Number.isFinite(gH) && R[1] < gH + 0.6) R[1] = gH + 0.6; }
     pcam.w = w; pcam.last = [R[0] - c.x, R[1] - y, R[2] - c.z, R[3] - c.x, R[4] - y, R[5] - c.z, R[6]];
-    pcam.dbg = { f, s, k, w, side, base: [px, py, pz, tx, ty, tz], car: [cx, by, cz] };
+    pcam.dbg = { f, s, k, w, side, base: [px, py, pz, tx, ty, tz], car: [cx, by, cz], low: { along: +(sC - c.q.s).toFixed(3), off: oC - off, lim: lim - off, outD } };   // (low: the side view's place against the car: along the lane, its offset and the rail's limit from the car's, how far out it may go)
     return [R[0], R[1], R[2], R[3], R[4], R[5], R[6], w, near0(w)];
   }
   function near0(w) { return 4 + (0.5 - 4) * clamp(w, 0, 1); }   // (the near plane: the camera behind the car's 4 m, the side view's 0.5 m)
