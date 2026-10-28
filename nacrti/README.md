@@ -20,7 +20,7 @@ Mapa je bila pushana z izrecnim dovoljenjem uporabnika, da delo preživi menjavo
 | `plosce/` | plošče (JPG, največ 1600 px), ki jih je uporabnik videl; po krogih (glej spodaj) |
 | `plosce/koncne/` | končne plošče 16 elementov avta, postavitve regala in omarice, vprašanja (`vprasanja_1/2`, `vprasanje_auspuh`, `zakaj_omarica`) |
 | `seznam_elementov.html` | seznam vseh 95 elementov, ki se jih klikne |
-| `cene/` | `cene.json` (37 elementov, 4 kategorije × 4 možnosti, od najcenejše do najdražje), `gume.json`, `avti.json`, `ekonomija.json` (nagrade, servis po poškodbi in vrednosti avta), `cene.html` (pregled), `notes.md` (viri) |
+| `cene/` | `cene.json` (40 elementov: 39 delov in servis, 4 kategorije × 4 možnosti, od najcenejše do najdražje), `gume.json`, `avti.json`, `ekonomija.json` (nagrade, servis po poškodbi in vrednosti avta), `cene.html` (pregled), `notes.md` (viri) |
 | `koncept/scena/` | koda koncepta, iz katere so slike (glej »Kako narediti slike«) |
 | `koncept/popravki/` | kaj je posamezen krog spremenil v sceni (`diff -u`), kot vodilo za izvedbo v igri |
 | `naloge/` | navodila (briefi), ki so jih dobili agenti posameznih krogov |

@@ -1,0 +1,227 @@
+{
+ "builds": [
+  {
+   "nr": 1,
+   "ime": "SERIJSKI",
+   "deli": [],
+   "skupaj_eur": 0,
+   "draw_calls_plus": 0,
+   "verts_plus": 0
+  },
+  {
+   "nr": 2,
+   "ime": "UPDATE 1 · CESTNI",
+   "deli": [
+    {
+     "element": "Platišča",
+     "moznost": "Lita, 5 krakov",
+     "cena_eur": 800
+    },
+    {
+     "element": "Žarometi",
+     "moznost": "LED z dnevno lučjo",
+     "cena_eur": 750
+    },
+    {
+     "element": "Zatemnitev stekel",
+     "moznost": "Rahla folija",
+     "cena_eur": 15
+    },
+    {
+     "element": "Senčni pas",
+     "moznost": "Bel",
+     "cena_eur": 12
+    },
+    {
+     "element": "Vzmeti",
+     "moznost": "Znižane, 2 cm",
+     "cena_eur": 90
+    },
+    {
+     "element": "Auspuh",
+     "moznost": "Športni",
+     "cena_eur": 300
+    }
+   ],
+   "skupaj_eur": 1967,
+   "draw_calls_plus": 0,
+   "verts_plus": 348
+  },
+  {
+   "nr": 3,
+   "ime": "UPDATE 2 · ŠPORTNI",
+   "deli": [
+    {
+     "element": "Zadnje krilo",
+     "moznost": "Kratko krilo",
+     "cena_eur": 600
+    },
+    {
+     "element": "Platišča",
+     "moznost": "Črna mreža",
+     "cena_eur": 1600
+    },
+    {
+     "element": "Aero paket (odbijači in pragovi)",
+     "moznost": "Spojler in pragovi",
+     "cena_eur": 500
+    },
+    {
+     "element": "Hauba",
+     "moznost": "Jeklena z režami",
+     "cena_eur": 250
+    },
+    {
+     "element": "Dirkalne črte",
+     "moznost": "Široki črti",
+     "cena_eur": 60
+    },
+    {
+     "element": "Zavorne čeljusti (barva)",
+     "moznost": "Rdeče, lakirane",
+     "cena_eur": 200
+    },
+    {
+     "element": "Zadnje luči",
+     "moznost": "LED",
+     "cena_eur": 300
+    }
+   ],
+   "skupaj_eur": 3510,
+   "draw_calls_plus": 0,
+   "verts_plus": 852
+  },
+  {
+   "nr": 4,
+   "ime": "UPDATE 3 · DIRKALNI",
+   "deli": [
+    {
+     "element": "Hauba",
+     "moznost": "Karbonska z zajemalko",
+     "cena_eur": 2300
+    },
+    {
+     "element": "Zadnje krilo",
+     "moznost": "GT krilo",
+     "cena_eur": 2600
+    },
+    {
+     "element": "Aero paket (odbijači in pragovi)",
+     "moznost": "Dirkalni",
+     "cena_eur": 4500
+    },
+    {
+     "element": "Gume (komplet štirih)",
+     "moznost": "GT slik",
+     "cena_eur": 3200
+    },
+    {
+     "element": "Številke in krogi",
+     "moznost": "Na vratih",
+     "cena_eur": 15
+    },
+    {
+     "element": "Vzmeti",
+     "moznost": "Športne, 4 cm",
+     "cena_eur": 390
+    },
+    {
+     "element": "Dodatki (antena, kljuke, lovilci, zajemalka)",
+     "moznost": "Dirkalni, spredaj in zadaj",
+     "cena_eur": 230
+    }
+   ],
+   "skupaj_eur": 13235,
+   "draw_calls_plus": 0,
+   "verts_plus": 2418
+  },
+  {
+   "nr": 5,
+   "ime": "RELI",
+   "deli": [
+    {
+     "element": "Relijske luči",
+     "moznost": "Štiri okrogle",
+     "cena_eur": 450
+    },
+    {
+     "element": "Dodatki (antena, kljuke, lovilci, zajemalka)",
+     "moznost": "Relijski lovilci",
+     "cena_eur": 340
+    },
+    {
+     "element": "Dodatki (antena, kljuke, lovilci, zajemalka)",
+     "moznost": "Relijska zajemalka",
+     "cena_eur": 760
+    },
+    {
+     "element": "Vzmeti",
+     "moznost": "Za makadam",
+     "cena_eur": 680
+    },
+    {
+     "element": "Gume (komplet štirih)",
+     "moznost": "Reli makadam",
+     "cena_eur": 1200
+    },
+    {
+     "element": "Platišča",
+     "moznost": "Jeklena, reli",
+     "cena_eur": 340
+    },
+    {
+     "element": "Nalepke",
+     "moznost": "Dirkalna podoba",
+     "cena_eur": 550
+    },
+    {
+     "element": "Številke in krogi",
+     "moznost": "Na vratih",
+     "cena_eur": 15
+    }
+   ],
+   "skupaj_eur": 4335,
+   "draw_calls_plus": 0,
+   "verts_plus": 1332
+  },
+  {
+   "nr": 6,
+   "ime": "DRIFT / SHOW",
+   "deli": [
+    {
+     "element": "Luč pod avtom",
+     "moznost": "Vijolična",
+     "cena_eur": 30
+    },
+    {
+     "element": "Platišča",
+     "moznost": "Oranžna, 10 krakov",
+     "cena_eur": 1100
+    },
+    {
+     "element": "Nalepke",
+     "moznost": "Šahovnica po bokih",
+     "cena_eur": 340
+    },
+    {
+     "element": "Zadnje luči",
+     "moznost": "Dimljene",
+     "cena_eur": 100
+    },
+    {
+     "element": "Žaluzije na zadnjem steklu",
+     "moznost": "Plastične, črne",
+     "cena_eur": 50
+    },
+    {
+     "element": "Dim gum",
+     "moznost": "Vijoličen",
+     "cena_eur": 350
+    }
+   ],
+   "skupaj_eur": 1970,
+   "draw_calls_plus": 2,
+   "verts_plus": 2442
+  }
+ ]
+}

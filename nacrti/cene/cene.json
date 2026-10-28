@@ -5717,39 +5717,75 @@
    "opomba": "Zdaj so barve strehe brezplačne (9 barv). Barvo izbereš posebej; cena je za način (folija, lak, karbon)."
   },
   {
-   "id": "dodatki",
-   "element": "Dodatki (antena, kljuke, lovilci, zajemalka)",
-   "element_en": "Extras (antenna, hooks, flaps, scoop)",
-   "enota": "kos ali komplet",
-   "enota_en": "piece or set",
-   "min_eur": 15,
-   "max_eur": 900,
-   "vir": "Relijski lovilci blata $16–196, za določen avto do CA$477 (rally armor, demon-tweeks); antene, kljuke in zajemalke: ocena",
+   "id": "antena",
+   "element": "Antena",
+   "element_en": "Antenna",
+   "enota": "ena antena na strehi",
+   "enota_en": "one roof antenna",
+   "min_eur": 5,
+   "max_eur": 250,
+   "vir": "Lažna plavut pod $50 pri trgovcu, na dražbi pod £5 (saabtechtalk forum); delujoče plavuti FM/DAB/GPS £52–198 (lrparts, carcommunications, incartec), eBay $40–57; dirkalna antena za radijsko zvezo: ocena",
    "serijsko": {
-    "ime": "Brez dodatkov",
-    "ime_en": "No extras",
-    "kaj": "čista karoserija (gumb pod okvirčkom, ni med 16)"
+    "ime": "Serijska",
+    "ime_en": "Stock",
+    "kaj": "palična antena (gumb pod okvirčkom, ni med 16)"
    },
-   "zdaj_v_meniju": "Antena 150 CR; Strešna zajemalka 1.000 CR; Kljuke za vleko 200 CR; Lovilci blata 400 CR",
+   "zdaj_v_meniju": "Antena 150 CR",
    "kategorije": [
     {
-     "ime": "ANTENE",
-     "ime_en": "ANTENNAS",
-     "opis": "Antene na strehi.",
-     "opis_en": "Roof antennas.",
+     "ime": "PALIČNE",
+     "ime_en": "ROD",
+     "opis": "Palične antene: poceni in preproste.",
+     "opis_en": "Rod antennas: cheap and simple.",
      "razpon_eur": [
-      15,
-      80
+      5,
+      25
      ],
      "moznosti": [
       {
-       "ime": "Kratka antena",
-       "ime_en": "Short antenna",
-       "cena_eur": 15,
+       "ime": "Gumijasta palica",
+       "ime_en": "Rubber rod",
+       "cena_eur": 5,
        "kaj_nudi": "samo videz",
        "kaj_nudi_en": "looks only",
        "na_regalu": false
       },
+      {
+       "ime": "Kratka antena",
+       "ime_en": "Short antenna",
+       "cena_eur": 10,
+       "kaj_nudi": "samo videz · krajša",
+       "kaj_nudi_en": "looks only · shorter",
+       "na_regalu": false
+      },
+      {
+       "ime": "Kratka, karbonska",
+       "ime_en": "Short, carbon",
+       "cena_eur": 18,
+       "kaj_nudi": "krajša · karbon",
+       "kaj_nudi_en": "shorter · carbon",
+       "na_regalu": false
+      },
+      {
+       "ime": "Dirkalna palica",
+       "ime_en": "Racing rod",
+       "cena_eur": 25,
+       "kaj_nudi": "upogljiva · dirkalni videz",
+       "kaj_nudi_en": "flexible · racing look",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "PLAVUTI",
+     "ime_en": "SHARK FINS",
+     "opis": "Plavut namesto palice: samo videz.",
+     "opis_en": "A shark fin instead of the rod: looks only.",
+     "razpon_eur": [
+      30,
+      75
+     ],
+     "moznosti": [
       {
        "ime": "Antena",
        "ime_en": "Antenna",
@@ -5761,155 +5797,704 @@
       {
        "ime": "Plavut v barvi",
        "ime_en": "Body-colour fin",
-       "cena_eur": 50,
+       "cena_eur": 45,
        "kaj_nudi": "plavut · v barvi avta",
        "kaj_nudi_en": "shark fin · in the car’s colour",
        "na_regalu": false
       },
       {
+       "ime": "Plavut, kromirana",
+       "ime_en": "Chrome fin",
+       "cena_eur": 60,
+       "kaj_nudi": "plavut · krom",
+       "kaj_nudi_en": "shark fin · chrome",
+       "na_regalu": false
+      },
+      {
+       "ime": "Plavut, karbonski videz",
+       "ime_en": "Carbon-look fin",
+       "cena_eur": 75,
+       "kaj_nudi": "plavut · karbonski vzorec",
+       "kaj_nudi_en": "shark fin · carbon pattern",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "DELUJOČE PLAVUTI",
+     "ime_en": "WORKING FINS",
+     "opis": "Plavuti z radiem v notranjosti.",
+     "opis_en": "Fins with a radio aerial inside.",
+     "razpon_eur": [
+      90,
+      170
+     ],
+     "moznosti": [
+      {
+       "ime": "Plavut z radiem",
+       "ime_en": "Fin with radio",
+       "cena_eur": 90,
+       "kaj_nudi": "plavut · radio FM",
+       "kaj_nudi_en": "shark fin · FM radio",
+       "na_regalu": false
+      },
+      {
+       "ime": "Plavut z digitalnim radiem",
+       "ime_en": "Fin with digital radio",
+       "cena_eur": 110,
+       "kaj_nudi": "plavut · digitalni radio",
+       "kaj_nudi_en": "shark fin · digital radio",
+       "na_regalu": false
+      },
+      {
        "ime": "Karbonska plavut",
        "ime_en": "Carbon fin",
-       "cena_eur": 80,
-       "kaj_nudi": "plavut · karbon",
-       "kaj_nudi_en": "shark fin · carbon",
-       "na_regalu": false
-      }
-     ]
-    },
-    {
-     "ime": "KLJUKE ZA VLEKO",
-     "ime_en": "TOW HOOKS",
-     "opis": "Vlečni trakovi in kljuke spredaj in zadaj.",
-     "opis_en": "Tow straps and hooks front and rear.",
-     "razpon_eur": [
-      100,
-      230
-     ],
-     "moznosti": [
-      {
-       "ime": "Vlečni trak",
-       "ime_en": "Tow strap",
-       "cena_eur": 100,
-       "kaj_nudi": "rdeč trak · samo videz",
-       "kaj_nudi_en": "red strap · looks only",
-       "na_regalu": false
-      },
-      {
-       "ime": "Kljuke za vleko",
-       "ime_en": "Tow hooks",
        "cena_eur": 140,
-       "kaj_nudi": "samo videz",
-       "kaj_nudi_en": "looks only",
+       "kaj_nudi": "plavut · karbon · radio",
+       "kaj_nudi_en": "shark fin · carbon · radio",
        "na_regalu": false
       },
       {
-       "ime": "Zložljiva kljuka",
-       "ime_en": "Folding hook",
-       "cena_eur": 180,
-       "kaj_nudi": "zloži se k odbijaču",
-       "kaj_nudi_en": "folds to the bumper",
+       "ime": "Plavut z GPS",
+       "ime_en": "Fin with GPS",
+       "cena_eur": 170,
+       "kaj_nudi": "plavut · radio in GPS",
+       "kaj_nudi_en": "shark fin · radio and GPS",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "VRHUNSKE",
+     "ime_en": "PREMIUM",
+     "opis": "Tovarniške in dirkalne antene.",
+     "opis_en": "Factory and racing antennas.",
+     "razpon_eur": [
+      190,
+      250
+     ],
+     "moznosti": [
+      {
+       "ime": "Tovarniška plavut",
+       "ime_en": "Factory fin",
+       "cena_eur": 190,
+       "kaj_nudi": "radio, GPS in telefon",
+       "kaj_nudi_en": "radio, GPS and phone",
        "na_regalu": false
       },
       {
-       "ime": "Dirkalni, spredaj in zadaj",
-       "ime_en": "Racing, front and rear",
+       "ime": "Tovarniška v barvi",
+       "ime_en": "Factory fin, body colour",
+       "cena_eur": 210,
+       "kaj_nudi": "radio, GPS in telefon · v barvi avta",
+       "kaj_nudi_en": "radio, GPS and phone · in the car’s colour",
+       "na_regalu": false
+      },
+      {
+       "ime": "Suhi karbon",
+       "ime_en": "Dry carbon",
        "cena_eur": 230,
-       "kaj_nudi": "spredaj in zadaj",
-       "kaj_nudi_en": "front and rear",
-       "na_regalu": false
-      }
-     ]
-    },
-    {
-     "ime": "LOVILCI BLATA",
-     "ime_en": "MUD FLAPS",
-     "opis": "Lovilci za kolesi: za makadam.",
-     "opis_en": "Flaps behind the wheels: for gravel.",
-     "razpon_eur": [
-      280,
-      470
-     ],
-     "moznosti": [
-      {
-       "ime": "Lovilci blata",
-       "ime_en": "Mud flaps",
-       "cena_eur": 280,
-       "kaj_nudi": "samo videz",
-       "kaj_nudi_en": "looks only",
+       "kaj_nudi": "radio in GPS · suhi karbon",
+       "kaj_nudi_en": "radio and GPS · dry carbon",
        "na_regalu": false
       },
       {
-       "ime": "Relijski lovilci",
-       "ime_en": "Rally flaps",
-       "cena_eur": 340,
-       "kaj_nudi": "za makadam",
-       "kaj_nudi_en": "for gravel",
-       "na_regalu": false
-      },
-      {
-       "ime": "Relijski, debeli",
-       "ime_en": "Rally, thick",
-       "cena_eur": 400,
-       "kaj_nudi": "za makadam · zdržijo",
-       "kaj_nudi_en": "for gravel · durable",
-       "na_regalu": false
-      },
-      {
-       "ime": "Za vsa kolesa",
-       "ime_en": "All four wheels",
-       "cena_eur": 470,
-       "kaj_nudi": "za makadam · vsa kolesa",
-       "kaj_nudi_en": "for gravel · all wheels",
-       "na_regalu": false
-      }
-     ]
-    },
-    {
-     "ime": "ZAJEMALKE",
-     "ime_en": "SCOOPS",
-     "opis": "Strešne zajemalke za zrak.",
-     "opis_en": "Roof air scoops.",
-     "razpon_eur": [
-      550,
-      900
-     ],
-     "moznosti": [
-      {
-       "ime": "Strešna zajemalka",
-       "ime_en": "Roof scoop",
-       "cena_eur": 550,
-       "kaj_nudi": "moč +0,5 %",
-       "kaj_nudi_en": "power +0.5 %",
-       "na_regalu": false
-      },
-      {
-       "ime": "Zajemalka, karbonska",
-       "ime_en": "Scoop, carbon",
-       "cena_eur": 650,
-       "kaj_nudi": "moč +0,5 % · karbon",
-       "kaj_nudi_en": "power +0.5 % · carbon",
-       "na_regalu": false
-      },
-      {
-       "ime": "Relijska zajemalka",
-       "ime_en": "Rally scoop",
-       "cena_eur": 760,
-       "kaj_nudi": "moč +0,5 % · hladnejša kabina",
-       "kaj_nudi_en": "power +0.5 % · cooler cockpit",
-       "na_regalu": false
-      },
-      {
-       "ime": "Karbonska dirkalna",
-       "ime_en": "Carbon racing",
-       "cena_eur": 900,
-       "kaj_nudi": "moč +1 %",
-       "kaj_nudi_en": "power +1 %",
+       "ime": "Dirkalna za radijsko zvezo",
+       "ime_en": "Team radio antenna",
+       "cena_eur": 250,
+       "kaj_nudi": "radijska zveza z ekipo",
+       "kaj_nudi_en": "team radio",
        "na_regalu": false
       }
      ]
     }
    ],
-   "opomba": "Zdaj so ti štirje dodatki dvakrat (zavihka Streha · Dodatki in Aero paket · Dodatki); predlog: en element."
+   "opomba": "Prej v elementu Dodatki (zavihka Streha in Aero paket · Dodatki: Antena 150 CR, plavut · samo videz). Antena je ime iz menija; ostale tri stare možnosti (Kratka antena, Plavut v barvi, Karbonska plavut) so med 16."
+  },
+  {
+   "id": "vlecne_kljuke",
+   "element": "Vlečne kljuke",
+   "element_en": "Tow hooks",
+   "enota": "spredaj in/ali zadaj",
+   "enota_en": "front and/or rear",
+   "min_eur": 10,
+   "max_eur": 350,
+   "vir": "Zložljive aluminijaste dirkalne kljuke $157–198 kos (onefastshop, subimods, sp-power), ploščata aluminijasta £51,65 (gprdirect); vlečni trakovi od ~10 € (ocena)",
+   "serijsko": {
+    "ime": "Serijska",
+    "ime_en": "Stock",
+    "kaj": "privijaš jo samo za vleko (gumb pod okvirčkom, ni med 16)"
+   },
+   "zdaj_v_meniju": "Kljuke za vleko 200 CR",
+   "kategorije": [
+    {
+     "ime": "TRAKOVI",
+     "ime_en": "STRAPS",
+     "opis": "Vlečni trakovi, pritrjeni na šasijo.",
+     "opis_en": "Tow straps fixed to the chassis.",
+     "razpon_eur": [
+      10,
+      40
+     ],
+     "moznosti": [
+      {
+       "ime": "Vlečni trak",
+       "ime_en": "Tow strap",
+       "cena_eur": 10,
+       "kaj_nudi": "rdeč trak · samo videz",
+       "kaj_nudi_en": "red strap · looks only",
+       "na_regalu": false
+      },
+      {
+       "ime": "Trak, širok",
+       "ime_en": "Wide strap",
+       "cena_eur": 18,
+       "kaj_nudi": "širok trak · samo videz",
+       "kaj_nudi_en": "wide strap · looks only",
+       "na_regalu": false
+      },
+      {
+       "ime": "Trak spredaj in zadaj",
+       "ime_en": "Straps front and rear",
+       "cena_eur": 28,
+       "kaj_nudi": "dva trakova · spredaj in zadaj",
+       "kaj_nudi_en": "two straps · front and rear",
+       "na_regalu": false
+      },
+      {
+       "ime": "Dirkalni trak",
+       "ime_en": "Racing strap",
+       "cena_eur": 40,
+       "kaj_nudi": "za pravila dirk · trak",
+       "kaj_nudi_en": "to the racing rules · strap",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "KLJUKE",
+     "ime_en": "HOOKS",
+     "opis": "Nepremične kovinske kljuke.",
+     "opis_en": "Fixed metal hooks.",
+     "razpon_eur": [
+      55,
+      110
+     ],
+     "moznosti": [
+      {
+       "ime": "Kljuke za vleko",
+       "ime_en": "Tow hooks",
+       "cena_eur": 55,
+       "kaj_nudi": "samo videz",
+       "kaj_nudi_en": "looks only",
+       "na_regalu": false
+      },
+      {
+       "ime": "Aluminijasta kljuka",
+       "ime_en": "Aluminium hook",
+       "cena_eur": 70,
+       "kaj_nudi": "aluminij",
+       "kaj_nudi_en": "aluminium",
+       "na_regalu": false
+      },
+      {
+       "ime": "Ploščata kljuka",
+       "ime_en": "Flat hook",
+       "cena_eur": 90,
+       "kaj_nudi": "aluminij · za dolg previs",
+       "kaj_nudi_en": "aluminium · for a long overhang",
+       "na_regalu": false
+      },
+      {
+       "ime": "Barvna kljuka",
+       "ime_en": "Coloured hook",
+       "cena_eur": 110,
+       "kaj_nudi": "aluminij · v barvi črt",
+       "kaj_nudi_en": "aluminium · in the stripe colour",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "ZLOŽLJIVE",
+     "ime_en": "FOLDING",
+     "opis": "Kljuke, ki se zložijo k odbijaču.",
+     "opis_en": "Hooks that fold to the bumper.",
+     "razpon_eur": [
+      140,
+      200
+     ],
+     "moznosti": [
+      {
+       "ime": "Zložljiva kljuka",
+       "ime_en": "Folding hook",
+       "cena_eur": 140,
+       "kaj_nudi": "zloži se k odbijaču",
+       "kaj_nudi_en": "folds to the bumper",
+       "na_regalu": false
+      },
+      {
+       "ime": "Zložljiva, eloksirana",
+       "ime_en": "Folding, anodised",
+       "cena_eur": 160,
+       "kaj_nudi": "zloži se · ne zbledi",
+       "kaj_nudi_en": "folds away · never fades",
+       "na_regalu": false
+      },
+      {
+       "ime": "Zložljiva, nerjaveča",
+       "ime_en": "Folding, stainless",
+       "cena_eur": 180,
+       "kaj_nudi": "zloži se · nerjaveče jeklo",
+       "kaj_nudi_en": "folds away · stainless steel",
+       "na_regalu": false
+      },
+      {
+       "ime": "Zložljiva, polirana",
+       "ime_en": "Folding, polished",
+       "cena_eur": 200,
+       "kaj_nudi": "zloži se · zrcalni sijaj",
+       "kaj_nudi_en": "folds away · mirror shine",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "DIRKALNE",
+     "ime_en": "RACING",
+     "opis": "Dirkalne kljuke po pravilih dirk.",
+     "opis_en": "Race hooks to the racing rules.",
+     "razpon_eur": [
+      230,
+      350
+     ],
+     "moznosti": [
+      {
+       "ime": "Dirkalna, spredaj",
+       "ime_en": "Racing, front",
+       "cena_eur": 230,
+       "kaj_nudi": "za pravila dirk",
+       "kaj_nudi_en": "to the racing rules",
+       "na_regalu": false
+      },
+      {
+       "ime": "Dirkalni, spredaj in zadaj",
+       "ime_en": "Racing, front and rear",
+       "cena_eur": 270,
+       "kaj_nudi": "za pravila dirk · spredaj in zadaj",
+       "kaj_nudi_en": "to the racing rules · front and rear",
+       "na_regalu": false
+      },
+      {
+       "ime": "Dirkalni, titanovi",
+       "ime_en": "Racing, titanium",
+       "cena_eur": 310,
+       "kaj_nudi": "spredaj in zadaj · titan",
+       "kaj_nudi_en": "front and rear · titanium",
+       "na_regalu": false
+      },
+      {
+       "ime": "Motošport",
+       "ime_en": "Motorsport",
+       "cena_eur": 350,
+       "kaj_nudi": "spredaj in zadaj · hiter priklop",
+       "kaj_nudi_en": "front and rear · quick hook-up",
+       "na_regalu": false
+      }
+     ]
+    }
+   ],
+   "opomba": "Prej v elementu Dodatki (Kljuke za vleko 200 CR, samo videz). Stare možnosti Vlečni trak, Kljuke za vleko, Zložljiva kljuka in Dirkalni, spredaj in zadaj so med 16."
+  },
+  {
+   "id": "lovilci_blata",
+   "element": "Lovilci blata",
+   "element_en": "Mud flaps",
+   "enota": "komplet za kolesa",
+   "enota_en": "set for the wheels",
+   "min_eur": 15,
+   "max_eur": 350,
+   "vir": "Univerzalni relijski $16–196, komplet 4 $25–48,50 (rally armor, sp-power), za določen avto CA$250–477 za 4 (4runner6g forum); relijski komplet z nosilci NOK 946 (demon-tweeks)",
+   "serijsko": {
+    "ime": "Brez",
+    "ime_en": "None",
+    "kaj": "brez lovilcev (gumb pod okvirčkom, ni med 16)"
+   },
+   "zdaj_v_meniju": "Lovilci blata 400 CR",
+   "kategorije": [
+    {
+     "ime": "UNIVERZALNI",
+     "ime_en": "UNIVERSAL",
+     "opis": "Gumijasti lovilci za vsak avto.",
+     "opis_en": "Rubber flaps for any car.",
+     "razpon_eur": [
+      15,
+      45
+     ],
+     "moznosti": [
+      {
+       "ime": "Gumijasti, črni",
+       "ime_en": "Rubber, black",
+       "cena_eur": 15,
+       "kaj_nudi": "samo videz",
+       "kaj_nudi_en": "looks only",
+       "na_regalu": false
+      },
+      {
+       "ime": "Lovilci blata",
+       "ime_en": "Mud flaps",
+       "cena_eur": 25,
+       "kaj_nudi": "samo videz",
+       "kaj_nudi_en": "looks only",
+       "na_regalu": false
+      },
+      {
+       "ime": "Gumijasti z robom",
+       "ime_en": "Rubber, edged",
+       "cena_eur": 35,
+       "kaj_nudi": "samo videz · z obrobo",
+       "kaj_nudi_en": "looks only · edged",
+       "na_regalu": false
+      },
+      {
+       "ime": "Univerzalni, široki",
+       "ime_en": "Universal, wide",
+       "cena_eur": 45,
+       "kaj_nudi": "ščitijo karoserijo",
+       "kaj_nudi_en": "protect the body",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "RELIJSKI",
+     "ime_en": "RALLY",
+     "opis": "Relijski lovilci za makadam.",
+     "opis_en": "Rally flaps for gravel.",
+     "razpon_eur": [
+      60,
+      120
+     ],
+     "moznosti": [
+      {
+       "ime": "Relijski lovilci",
+       "ime_en": "Rally flaps",
+       "cena_eur": 60,
+       "kaj_nudi": "za makadam",
+       "kaj_nudi_en": "for gravel",
+       "na_regalu": false
+      },
+      {
+       "ime": "Relijski, barvni",
+       "ime_en": "Rally, coloured",
+       "cena_eur": 80,
+       "kaj_nudi": "za makadam · izbereš barvo",
+       "kaj_nudi_en": "for gravel · choose the colour",
+       "na_regalu": false
+      },
+      {
+       "ime": "Relijski, debeli",
+       "ime_en": "Rally, thick",
+       "cena_eur": 100,
+       "kaj_nudi": "za makadam · zdržijo",
+       "kaj_nudi_en": "for gravel · durable",
+       "na_regalu": false
+      },
+      {
+       "ime": "Relijski s številko",
+       "ime_en": "Rally with number",
+       "cena_eur": 120,
+       "kaj_nudi": "za makadam · tvoja številka",
+       "kaj_nudi_en": "for gravel · your number",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "ZA TA AVTO",
+     "ime_en": "MADE FOR THIS CAR",
+     "opis": "Narejeni za ta avto, z nosilci.",
+     "opis_en": "Made for this car, with brackets.",
+     "razpon_eur": [
+      150,
+      260
+     ],
+     "moznosti": [
+      {
+       "ime": "Za ta avto",
+       "ime_en": "Made to fit",
+       "cena_eur": 150,
+       "kaj_nudi": "za makadam · ščitijo karoserijo",
+       "kaj_nudi_en": "for gravel · protect the body",
+       "na_regalu": false
+      },
+      {
+       "ime": "Za ta avto, barvni",
+       "ime_en": "Made to fit, coloured",
+       "cena_eur": 180,
+       "kaj_nudi": "ščitijo karoserijo · izbereš barvo",
+       "kaj_nudi_en": "protect the body · choose the colour",
+       "na_regalu": false
+      },
+      {
+       "ime": "Za vsa kolesa",
+       "ime_en": "All four wheels",
+       "cena_eur": 220,
+       "kaj_nudi": "za makadam · vsa kolesa",
+       "kaj_nudi_en": "for gravel · all wheels",
+       "na_regalu": false
+      },
+      {
+       "ime": "Z nosilci",
+       "ime_en": "With brackets",
+       "cena_eur": 260,
+       "kaj_nudi": "vsa kolesa · hitra menjava",
+       "kaj_nudi_en": "all wheels · quick change",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "DIRKALNI",
+     "ime_en": "RACING",
+     "opis": "Tekmovalni lovilci za reli.",
+     "opis_en": "Competition rally flaps.",
+     "razpon_eur": [
+      290,
+      350
+     ],
+     "moznosti": [
+      {
+       "ime": "Dirkalni, 4 mm",
+       "ime_en": "Racing, 4 mm",
+       "cena_eur": 290,
+       "kaj_nudi": "za makadam · zdržijo skoke",
+       "kaj_nudi_en": "for gravel · survive jumps",
+       "na_regalu": false
+      },
+      {
+       "ime": "Dirkalni, poliuretan",
+       "ime_en": "Racing, polyurethane",
+       "cena_eur": 310,
+       "kaj_nudi": "za makadam · ne počijo",
+       "kaj_nudi_en": "for gravel · never crack",
+       "na_regalu": false
+      },
+      {
+       "ime": "Dirkalni s ščitniki",
+       "ime_en": "Racing with guards",
+       "cena_eur": 330,
+       "kaj_nudi": "ščitijo tudi pragove",
+       "kaj_nudi_en": "protect the sills too",
+       "na_regalu": false
+      },
+      {
+       "ime": "Tovarniški relijski",
+       "ime_en": "Works rally",
+       "cena_eur": 350,
+       "kaj_nudi": "za makadam · najtrdnejši",
+       "kaj_nudi_en": "for gravel · the toughest",
+       "na_regalu": false
+      }
+     ]
+    }
+   ],
+   "opomba": "Prej v elementu Dodatki (Lovilci blata 400 CR, samo videz). Stare možnosti Lovilci blata, Relijski lovilci, Relijski, debeli in Za vsa kolesa so med 16 (cene nižje kot prej, ker je zgornja meja ~350 € za komplet)."
+  },
+  {
+   "id": "stresna_zajemalka",
+   "element": "Strešna zajemalka",
+   "element_en": "Roof scoop",
+   "enota": "ena zajemalka",
+   "enota_en": "one scoop",
+   "min_eur": 25,
+   "max_eur": 3000,
+   "vir": "Relijske karbonske strešne zajemalke £280–388 (demon-tweeks), $610 (elite-performance); oblikovane strešne zajemalke $1.344–3.218 (carid); nalepljene plastične od ~25 € (ocena)",
+   "serijsko": {
+    "ime": "Brez",
+    "ime_en": "None",
+    "kaj": "gladka streha (gumb pod okvirčkom, ni med 16)"
+   },
+   "zdaj_v_meniju": "Strešna zajemalka 1.000 CR",
+   "kategorije": [
+    {
+     "ime": "NALEPLJENE",
+     "ime_en": "STICK-ON",
+     "opis": "Nalepljene zajemalke: samo videz.",
+     "opis_en": "Stick-on scoops: looks only.",
+     "razpon_eur": [
+      25,
+      80
+     ],
+     "moznosti": [
+      {
+       "ime": "Nalepljena, plastična",
+       "ime_en": "Stick-on, plastic",
+       "cena_eur": 25,
+       "kaj_nudi": "samo videz",
+       "kaj_nudi_en": "looks only",
+       "na_regalu": false
+      },
+      {
+       "ime": "Nalepljena v barvi",
+       "ime_en": "Stick-on, body colour",
+       "cena_eur": 40,
+       "kaj_nudi": "samo videz · v barvi avta",
+       "kaj_nudi_en": "looks only · in the car’s colour",
+       "na_regalu": false
+      },
+      {
+       "ime": "Nalepljena, karbonski videz",
+       "ime_en": "Stick-on, carbon look",
+       "cena_eur": 60,
+       "kaj_nudi": "samo videz · karbonski vzorec",
+       "kaj_nudi_en": "looks only · carbon pattern",
+       "na_regalu": false
+      },
+      {
+       "ime": "Nalepljena z mrežo",
+       "ime_en": "Stick-on with mesh",
+       "cena_eur": 80,
+       "kaj_nudi": "samo videz · mreža",
+       "kaj_nudi_en": "looks only · mesh",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "RELIJSKE",
+     "ime_en": "RALLY",
+     "opis": "Prave zajemalke, ki pihajo zrak noter.",
+     "opis_en": "Real scoops that blow air inside.",
+     "razpon_eur": [
+      120,
+      240
+     ],
+     "moznosti": [
+      {
+       "ime": "Strešna zajemalka",
+       "ime_en": "Roof scoop",
+       "cena_eur": 120,
+       "kaj_nudi": "moč +0,5 %",
+       "kaj_nudi_en": "power +0.5 %",
+       "na_regalu": false
+      },
+      {
+       "ime": "Relijska zajemalka",
+       "ime_en": "Rally scoop",
+       "cena_eur": 160,
+       "kaj_nudi": "moč +0,5 % · hladnejša kabina",
+       "kaj_nudi_en": "power +0.5 % · cooler cockpit",
+       "na_regalu": false
+      },
+      {
+       "ime": "Relijska, nastavljiva",
+       "ime_en": "Rally, adjustable",
+       "cena_eur": 200,
+       "kaj_nudi": "moč +0,5 % · hladnejša kabina · nastavljiva",
+       "kaj_nudi_en": "power +0.5 % · cooler cockpit · adjustable",
+       "na_regalu": false
+      },
+      {
+       "ime": "Relijska z mrežo",
+       "ime_en": "Rally with mesh",
+       "cena_eur": 240,
+       "kaj_nudi": "moč +0,5 % · hladnejša kabina · mreža",
+       "kaj_nudi_en": "power +0.5 % · cooler cockpit · mesh",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "KARBONSKE",
+     "ime_en": "CARBON",
+     "opis": "Karbonske zajemalke iz motošporta.",
+     "opis_en": "Carbon scoops from motorsport.",
+     "razpon_eur": [
+      300,
+      600
+     ],
+     "moznosti": [
+      {
+       "ime": "Zajemalka, karbonska",
+       "ime_en": "Scoop, carbon",
+       "cena_eur": 300,
+       "kaj_nudi": "moč +0,5 % · karbon",
+       "kaj_nudi_en": "power +0.5 % · carbon",
+       "na_regalu": false
+      },
+      {
+       "ime": "Karbonska, relijska",
+       "ime_en": "Carbon, rally",
+       "cena_eur": 380,
+       "kaj_nudi": "moč +0,5 % · hladnejša kabina · karbon",
+       "kaj_nudi_en": "power +0.5 % · cooler cockpit · carbon",
+       "na_regalu": false
+      },
+      {
+       "ime": "Karbonska z dvema vhodoma",
+       "ime_en": "Carbon, twin inlet",
+       "cena_eur": 480,
+       "kaj_nudi": "moč +1 % · hladnejša kabina",
+       "kaj_nudi_en": "power +1 % · cooler cockpit",
+       "na_regalu": false
+      },
+      {
+       "ime": "Karbonska dirkalna",
+       "ime_en": "Carbon racing",
+       "cena_eur": 600,
+       "kaj_nudi": "moč +1 %",
+       "kaj_nudi_en": "power +1 %",
+       "na_regalu": false
+      }
+     ]
+    },
+    {
+     "ime": "OBLIKOVANE",
+     "ime_en": "SCULPTED",
+     "opis": "Velike zajemalke, oblikovane skupaj s streho.",
+     "opis_en": "Big scoops shaped together with the roof.",
+     "razpon_eur": [
+      900,
+      3000
+     ],
+     "moznosti": [
+      {
+       "ime": "Zajemalka za motor",
+       "ime_en": "Engine scoop",
+       "cena_eur": 900,
+       "kaj_nudi": "moč +1 % · zrak za motor",
+       "kaj_nudi_en": "power +1 % · air for the engine",
+       "na_regalu": false
+      },
+      {
+       "ime": "Oblikovana",
+       "ime_en": "Sculpted",
+       "cena_eur": 1400,
+       "kaj_nudi": "moč +1 % · oblikovana s streho",
+       "kaj_nudi_en": "power +1 % · shaped with the roof",
+       "na_regalu": false
+      },
+      {
+       "ime": "Oblikovana z mrežo",
+       "ime_en": "Sculpted with mesh",
+       "cena_eur": 2100,
+       "kaj_nudi": "moč +1,5 % · mreža",
+       "kaj_nudi_en": "power +1.5 % · mesh",
+       "na_regalu": false
+      },
+      {
+       "ime": "Oblikovana, karbonska",
+       "ime_en": "Sculpted, carbon",
+       "cena_eur": 3000,
+       "kaj_nudi": "moč +1,5 % · karbon",
+       "kaj_nudi_en": "power +1.5 % · carbon",
+       "na_regalu": false
+      }
+     ]
+    }
+   ],
+   "opomba": "Prej v elementu Dodatki (Strešna zajemalka 1.000 CR, +2 KM). Stare možnosti Strešna zajemalka, Zajemalka karbonska, Relijska zajemalka in Karbonska dirkalna so med 16. Vrh razpona (1.300–3.000 €) so oblikovane okrasne zajemalke; prave relijske karbonske stanejo do ~600 €."
   },
   {
    "id": "zatemnitev",
