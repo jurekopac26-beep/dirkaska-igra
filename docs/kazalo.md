@@ -87,6 +87,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
 - **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
+- **gume in postanek:** obraba vsake gume `tyreW4` (`TW4`, `Car.ty.w4`), štiri gume kot deleži kompleta `tyreWear4`, prepad oprijema vsake gume `tyreCliff4`, poči najbolj obrabljena `tyreMost`; dež upočasni postanek `RAIN_STOP` (v `stopJobs`: `J.rain`); omejitev v pasu se po postanku konča ob predaji (`Race.pitStep`); vožnja po izvozu in pasu za pospeševanje (`aiDrive`, `Track.pitJ`)
 - **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
 - **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)
 - **hiter vstop** `quickArgs(search)` (naslov → proga, način, `t`, vreme, avto, neveljavni deli)
@@ -94,7 +95,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 
 ## Teme v `js/render.js`
 
-Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil, `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews`, odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`** (za avtom `chaseStep`, `chasePose`; kamera v boksih `the pit stop's camera`: `pitCine`, številke `PC`, za teste `Render.pitCam`, `Render.pitCamInfo`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
+Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil, `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (igralčeva garaža: vrata, zastava, stare gume `crewGarage`, `CR_DOOR`, `CR_STACK`; sledi gum pred garažami `crewMarks`; luč in modra zastava ob izvozu `crewExit`, `crewExitStep`, `EX_BLUE`; umazanija avta `dirtyCarMat`: `uDirt`, `uDirtW`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`** (za avtom `chaseStep`, `chasePose`; kamera v boksih `the pit stop's camera`: `pitCine`, številke `PC`, za teste `Render.pitCam`, `Render.pitCamInfo`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
 
 ## Proge in graditelji sveta
 
@@ -163,6 +164,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Orodje za napake:** `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
+- **Garaža, sledi, izvoz, umazanija:** `pitkit.test.mjs` (garažna vrata, zastava, stare gume, sledi gum, luč in modra zastava ob izvozu, umazanija); obraba vsake gume `wear.test.js`, pike na HUD-u `hud.test.mjs`, `wear.test.mjs`; dež v postanku `pits.test.js`
 - **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 13 prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
 - **Pavza (vreme do cilja, postanki):** `pauseinfo.test.mjs`; **tekmec iz boksov pred tabo:** `pitout.test.mjs`
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`

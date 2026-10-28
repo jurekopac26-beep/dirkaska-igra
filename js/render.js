@@ -2565,14 +2565,14 @@ const Render = (function () {
   // of the body, drawn by its own mesh with the cracks (a program of its own: the others never pay for the discard)
   // scr: the side scrapes (the Kolibri's, xtScrape: XT_SCR, uScrS; a program of its own too)
   function dirtyCarMat(cut, scr) {
-    const m = matCar.clone(), u = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) }, uss = { value: new THREE.Vector4(0, 0, 1, 1) };
-    m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc; m.userData.scrS = uss; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
+    const m = matCar.clone(), u = { value: 0 }, uw = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) }, uss = { value: new THREE.Vector4(0, 0, 1, 1) };
+    m.userData.dirt = u; m.userData.dirtW = uw; m.userData.scr = us; m.userData.char = uc; m.userData.scrS = uss; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
     if (cut || scr) m.defines = Object.assign(cut ? { XT_CUT: '' } : {}, scr ? { XT_SCR: '' } : {});
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc; sh.uniforms.uScrS = uss;
+      sh.uniforms.uDirt = u; sh.uniforms.uDirtW = uw; sh.uniforms.uScr = us; sh.uniforms.uChar = uc; sh.uniforms.uScrS = uss;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));\nvLamN = 1.0 - step(0.06, abs(aIn - 0.753));\nvLam = max(vLamN, 1.0 - step(0.06, abs(aIn - 0.878)));\nvUl = 1.0 - step(0.1, abs(aIn - 0.251));\nvNoCh = step(0.9, aIn);');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;\nuniform float uDirt;\nuniform float uScr;\n#ifdef XT_SCR\nuniform vec4 uScrS;\n#endif\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
-        '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n#if defined(PK_ON) && defined(USE_COLOR)\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuse * vColor.rgb, vLamN);\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8) * (1.0 - max(vIn, vLam));\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = max(d, max(vIn, vLam)); }\n' + CHAR_GLSL + '\n#ifdef PK_ON\npkD = max(pkD, vLamN); pkWt *= 1.0 - vLamN;\n#endif')   // (cgD: the dirt dulls the sun's glint; the inside, a matte piece have none, no sky in them either; Pikes Peak's dust and glint not on an under-part)
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;\nuniform float uDirt;\nuniform float uDirtW;\nuniform float uScr;\n#ifdef XT_SCR\nuniform vec4 uScrS;\n#endif\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
+        '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n#if defined(PK_ON) && defined(USE_COLOR)\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuse * vColor.rgb, vLamN);\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35), rear = 1.0 - smoothstep(-1.9, -0.7, vLp.x + (n - 0.5) * 0.5);\n  float sp = fract(sin(dot(floor(vLp * vec3(19.0, 23.0, 19.0)), vec3(39.35, 11.13, 83.17))) * 24634.63);\n  float d = clamp(uDirt * (0.55 + 0.9 * low + 0.45 * rear) * (0.62 + 0.55 * n) * (0.8 + 0.4 * sp), 0.0, 0.88) * (1.0 - max(vIn, vLam));\n  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.55, 0.46, 0.33), vec3(0.28, 0.21, 0.14), uDirtW) * (0.85 + 0.3 * sp), d); cgD = max(d, max(vIn, vLam)); }\n' + CHAR_GLSL + '\n#ifdef PK_ON\npkD = max(pkD, vLamN); pkWt *= 1.0 - vLamN;\n#endif')   // (cgD: the dirt dulls the sun's glint; the inside, a matte piece have none, no sky in them either; Pikes Peak's dust and glint not on an under-part)
         .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength *= (1.0 - 0.9 * max(cgCh, vIn * 0.85)) * (1.0 - vLam);')   // (a charred panel, the inside: no highlight; a matte piece none at all, nor the sky)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - vLam;')   // (the night's glow, carGlow: not on a matte piece)
         .replace('#include <tonemapping_fragment>', '#ifdef USE_COLOR\ngl_FragColor.rgb = mix(gl_FragColor.rgb, diffuse * vColor.rgb, vUl);\n#endif\n#include <tonemapping_fragment>');   // (an unlit piece: its colour, after every light and glint)
@@ -2661,7 +2661,7 @@ const Render = (function () {
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
     const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, dk: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
     return { grp, bodyG, body, tail, dec, wf, wr, fp, band: fp ? tyreCol(car) : band, bandGeo, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
-      dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, scrS: opts && opts.xscr && bodyMat.userData && bodyMat.userData.scrS || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
+      dirtU: bodyMat.userData && bodyMat.userData.dirt || null, dirtW: bodyMat.userData && bodyMat.userData.dirtW || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, scrS: opts && opts.xscr && bodyMat.userData && bodyMat.userData.scrS || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
 
   /* ---------------- ghost of the best run (time trials) ---------------- */
@@ -5260,13 +5260,13 @@ const Render = (function () {
     const mk = (g, n, cast, mt) => { if (!n) { g.dispose(); return null; } g.boundingSphere = bs.clone(); const im = new THREE.InstancedMesh(g, mt || mat, n);
       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.castShadow = cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
-    const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
+    const gunMen = men.filter(m => m.gun), nT = roles ? 8 + CR_STACK.length : 0;   // (the player's: the four new and the four old tyres, then the stack of used ones by its garage, crewGarage)
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
     const matJ = crewMaterial(false, 'jacket'), matT = crewMaterial(false, 'tyre');   // (the rain's: the jackets, the tyres' covers, crewRain)
     if (nT) geo.tyre.setAttribute('crewCover', new THREE.InstancedBufferAttribute(new Float32Array(nT), 1));
     const M = { trunk: mk(geo.trunk, nM, true, matJ), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true, matJ), farm: mk(geo.farm, nM * 2, true, matJ),
       thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true, matT), jack: mk(geo.jack, roles ? 2 : 0, true),
-      rod: mk(geo.rod, (roles ? 13 + 3 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
+      rod: mk(geo.rod, (roles ? 13 + 3 + 2 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };   // (the player's garage: + its door and its flag's pole, crewGarage)
     const skinA = geo.head.attributes.crewSkin;
     men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
       skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
@@ -5282,12 +5282,136 @@ const Render = (function () {
     if (roles && roles.bx.gar) { const bx = roles.bx, G = bx.gar, n0 = rb + boxes.length;   // the player's garage in the player's colour (to find it from afar): the back wall (a closed front: its door) and the door's pillars
       if (G.wall) crGarSlab(M.rod, n0, bx, 'wall', -G.wall[3], G.wall[3], G.wall[0], G.wall[1], G.wall[2], bx.col);
       if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
+    const gx = roles ? crewGarage(race, roles.bx, M, rb + boxes.length, nT - CR_STACK.length, grp) : null;   // the player's garage: its door (44), its flag (95C), the stack of used tyres (72)
+    const marks = crewMarks(boxes, grp);   // the tyre marks in front of every garage (48)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
     crew = { grp, meshes, mats: [mat, matS, matJ, matT], M, men, roles, tyres, cover: nT ? geo.tyre.attributes.crewCover : null, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dOut: 40, dim: roles ? crDims(P) : null };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
+    crew.gar = gx; crew.marks = marks; crew.exit = crewExit(race, grp);   // (the pit exit's light and marshal, 5 and 76)
+    if (crew.exit) crew.rad = Math.max(crew.rad, Math.hypot(crew.exit.x - cx, crew.exit.z - cz) + 20);   // (in sight from where the exit is)
+  }
+  // ---- the player's garage, its pit and its exit (44, 48, 72, 95C, 5, 76) ----
+  // 44 its door: where the garage's front is closed (World's bx.gar.wall at its front: a door in the player's colour before the dark inside)
+  // that door rolls up; where it is open, a roller door between the door's pillars (gar.jamb: the opening's width and height), a light grey one (the garage's inside, in the player's colour, shows as it goes up); down while no stop is under way (the crew in the
+  // garage), up over CR_DOOR[0] s as the car comes down the lane to it (the crew's 'ready'), down again over CR_DOOR[1] s once the crew is back
+  // in. A garage open at the front (Detroit's and Trois-Rivières' tents, Longford's shed): none. One rod (the crew's InstancedMesh)
+  const CR_DOOR = [1.6, 2.6];
+  // 72 the stack of used tyres in front of the garage, by its right-hand pillar: two piles (the crew's tyre, its band in the compound's colour)
+  const CR_STACK = [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2]];   // (the pile, the tyre's place up it)
+  // 95C an upright flag by its left-hand pillar: on a pole (a rod) a tall cloth in the player's colour with the driver's three letters (as the
+  // timing tower's: the profile's name, race.opts.playerName, its last word's first three; the player's car alone: TI), one mesh
+  function crewGarage(race, bx, M, n0, t0, grp) {
+    const G = bx.gar || {}, T = curTrack, col = bx.col, grey = new THREE.Color(0.7, 0.71, 0.73);
+    const front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
+    const out = { door: null, open: 0 };
+    if (G.wall && G.wall[0] < front + 0.6) { const [w, ya, y1, h] = G.wall; out.door = { i: n0, part: 'wall', a0: -h, a1: h, w, y1, ya, col }; }   // (a closed front in the player's colour, a door before the dark inside: Bathurst's garages, Bang Saen's marquee; it rolls up)
+    else if (G.jamb) { const [w, a, wd, y1] = G.jamb; out.door = { i: n0 + 3, part: 'jamb', a0: -(a - wd / 2), a1: a - wd / 2, w: w + 0.12, y1, col: grey }; }   // (an open front: a grey roller door inside the pillars, a hand's width behind their faces)
+    if (out.door) crDoorSet(M.rod, bx, out.door, 0);
+    // the flag: its pole in front of the left pillar, the cloth out towards the next box, facing the lane
+    const pa = -hw, pw = front - 0.45, H = 3.05, [px, pz] = [bx.ox + bx.tx * pa + bx.nx * pw, bx.oz + bx.tz * pa + bx.nz * pw];
+    crSetRod(M.rod, n0 + 4, px, y0, pz, px, y0 + H, pz, 0.055); M.rod.setColorAt(n0 + 4, _pc.setRGB(0.18, 0.19, 0.21));
+    const P = race.player, nm = P ? race.opts && race.opts.playerName : null, code = (String(nm || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256; const x = cv.getContext('2d'), lum = col.r * 0.3 + col.g * 0.59 + col.b * 0.11;
+    x.fillStyle = '#' + col.getHexString(); x.fillRect(0, 0, 64, 256); x.fillStyle = lum > 0.62 ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.85)'; x.fillRect(0, 0, 7, 256);   // (a stripe along the pole)
+    x.fillStyle = lum > 0.62 ? '#14161a' : '#ffffff'; x.font = '900 50px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    [...code].forEach((ch, k) => x.fillText(ch, 35, 62 + k * 62, 54));
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 2;
+    const W = 0.62, y1c = H - 0.12, y0c = 0.95, pos = [], uv = [], idx = [], NS = 4;   // (the cloth: four strips, a slight wave in it; u mirrored: the letters read from the lane)
+    for (let i = 0; i <= NS; i++) { const u = i / NS, a = pa - W * u, wv = pw - Math.sin(u * Math.PI) * 0.08 * u, X = bx.ox + bx.tx * a + bx.nx * wv, Z = bx.oz + bx.tz * a + bx.nz * wv, top = y1c - 0.18 * u * u;
+      pos.push(X, y0 + y0c + 0.06 * u, Z, X, y0 + top, Z); uv.push(1 - u, 0, 1 - u, 1); if (i) { const b = (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    const fm = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide })); fm.name = 'pitFlag'; fm.userData = { code, col: col.getHex(), pole: [px, pz], H }; grp.add(fm); out.flag = fm;
+    // the stack: in front of the right pillar, two piles of used tyres lying flat (on its side, as a tyre on the floor: crTyreMat)
+    const S = crew && crew.tyreS || new THREE.Vector3(1, 1, 1), sa = hw - 0.05, sw = front - 0.55, BANDS = [CR_OLD, CR_NEW, new THREE.Color(0.93, 0.93, 0.9)];
+    CR_STACK.forEach(([pile, k], j) => { const a = sa - pile * 0.08, w = sw - pile * 0.72, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w;
+      _cQ.setFromEuler(_ce.set(0, crHash(j * 3.7 + bx.k) * 6.28, Math.PI / 2, 'YXZ')); _cM.compose(_cv.set(X, y0 + (0.14 + k * 0.275) * S.x, Z), _cQ, S); M.tyre.setMatrixAt(t0 + j, _cM);
+      M.tyre.setColorAt(t0 + j, BANDS[(j * 7 + bx.k) % 3]); });
+    out.stack = { t0, n: CR_STACK.length, a: sa, w: sw }; out.front = front; out.hw = hw;
+    return out;
+  }
+  function crDoorSet(im, bx, D, u) {   // the door u (0 down .. 1 up): its slab from its bottom edge to the top of the opening
+    const yb = (D.ya || 0.02) + (D.y1 - (D.ya || 0.02) - 0.16) * u;
+    crGarSlab(im, D.i, bx, D.part, D.a0, D.a1, D.w, yb, D.y1, D.col);
+  }
+  function crewGarStep(c, dt, snap, near) {
+    const X = c.gar; if (!X || !X.door) return;
+    const want = c.mode === 'home' ? 0 : 1, o = snap ? want : want > X.open ? Math.min(want, X.open + dt / CR_DOOR[0]) : Math.max(want, X.open - dt / CR_DOOR[1]);
+    if (o === X.open && !snap) return; X.open = o;
+    if (near || snap) { const k = Core.sstep(0, 1, o); crDoorSet(c.M.rod, c.roles.bx, X.door, k); c.M.rod.instanceMatrix.needsUpdate = true; } else X.stale = true;
+    if (near && X.stale) X.stale = false;
+  }
+  // 48 the tyre marks in front of every garage: where the cars pull away from the box onto the lane, two dark arcs from the rear wheels'
+  // place in the box (Track.bayDim) curving out to the lane, darker where they start (the wheels spinning up), each box's its own length.
+  // One mesh (the skid marks' material: over the apron, no depth write)
+  function crewMarks(boxes, grp) {
+    const T = curTrack, o = T.bayDim().o, pos = [], col = [], idx = []; let n = 0;
+    for (const bx of boxes) {
+      const L = 6 + crHash(bx.k * 2.3) * 3, k0 = 0.5 + crHash(bx.k * 4.1) * 0.25, y = (bx.y || 0) + 0.025, wc = bx.base + o;
+      for (const sd of [-1, 1]) for (let i = 0; i <= 8; i++) {
+        const u = i / 8, a = -1.35 + L * u, w = wc + sd * 0.78 - Math.min(o + 0.6, 3.2) * u * u, da = L, dw = -2 * Math.min(o + 0.6, 3.2) * u, l = Math.hypot(da, dw), ha = -dw / l * 0.13, hw = da / l * 0.13;
+        for (const s2 of [-1, 1]) { const A = a + ha * s2, Wd = w + hw * s2; pos.push(bx.ox + bx.tx * A + bx.nx * Wd, y, bx.oz + bx.tz * A + bx.nz * Wd); col.push(0.03, 0.03, 0.035, k0 * Math.pow(1 - u, 1.3) * (u < 0.12 ? 1.25 : 1)); }
+        if (i) { const b = n + (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); }
+        if (i === 8) n += 18; }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx); g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+    m.name = 'pitMarks'; m.renderOrder = 2; grp.add(m); return m;
+  }
+  // 5 and 76: at the end of the pit wall on the way out (Track.pitJ gb: the real tracks), a post with the pit exit's light facing the cars
+  // coming down the lane (red over green: green while the exit is open; red before the start and while the safety car's train passes it),
+  // and a marshal beside it who waves a blue flag while a car is on its way out of the lane and another comes along the circuit to where
+  // they meet (within EX_BLUE s of the acceleration lane's end). Two meshes: the post, its lamp housing and the marshal (lit), the lamps and
+  // the flag's cloth (unlit, as a lamp and a bright flag look in any light)
+  const EX_BLUE = 4;
+  function crewExit(race, grp) {
+    const T = curTrack, J = T.pitJ ? T.pitJ() : null, P = T.def.pit; if (!J || !P) return null;
+    const sd = P[0] < 0 ? -1 : 1, d = J.gb - 4, s = T.startS + d, pz = T.pitAt(s); if (!pz) return null;
+    const pb = world.pitBox, yAt = (ss) => (pb && pb.y || 0) + T.elevAt(ss).y - (pb ? T.elevAt(pb.s).y : 0), y = yAt(s);
+    const at = (ss, lat) => { const p = crRoadAt(T, ss, lat * sd); return [p[0], p[1]]; }, k = T.idx(s), tx = T.tx[k], tz = T.tz[k], nx = T.nx[k] * sd, nz = T.nz[k] * sd;
+    const [lx, lz] = at(s, pz.wall + 0.35), [mx, mz] = at(s + 3, pz.wall + 0.55);   // (the light against the wall's end on the lane's side; the marshal a little on)
+    const pos = [], nrm = [], col = [], add = (g0, c, M4) => { const g = g0.toNonIndexed(); g.applyMatrix4(M4); const A = g.attributes.position.array, N = g.attributes.normal.array; for (let i = 0; i < A.length; i++) { pos.push(A[i]); nrm.push(N[i]); col.push(c[i % 3]); } g.dispose(); g0.dispose(); };
+    const yaw = Math.atan2(-tx, -tz), M4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));   // (facing back up the lane)
+    add(new THREE.CylinderGeometry(0.06, 0.07, 2.7, 6).translate(0, 1.35, 0), [0.25, 0.26, 0.28], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.BoxGeometry(0.52, 1.15, 0.26).translate(0, 2.5, 0.02), [0.07, 0.07, 0.08], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
+    const ym = yAt(s + 3), qm = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw + 0.5 * sd, 0));   // the marshal: as the yellow flag's (orange overalls, the pole), turned to the lane
+    add(new THREE.CylinderGeometry(0.2, 0.24, 1.55, 8).translate(0, 0.78, 0), [1, 0.48, 0.1], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.SphereGeometry(0.14, 8, 6).translate(0, 1.7, 0), [0.95, 0.95, 0.95], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
+    const body = new THREE.BufferGeometry(); body.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); body.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); body.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); body.computeBoundingSphere();
+    const post = new THREE.Mesh(body, new THREE.MeshLambertMaterial({ vertexColors: true })); post.name = 'pitExit'; grp.add(post);
+    // the lamps (two discs as squares on the housing's face) and the cloth (a quad off the marshal's hand, its far edge waving)
+    const fx = Math.sin(yaw), fz = Math.cos(yaw), F = 0.16, lamp = (yc) => { const h = 0.18, cx = lx + fx * F, cz = lz + fz * F, rx = fz, rz = -fx; return [cx - rx * h, y + yc - h, cz - rz * h, cx + rx * h, y + yc - h, cz + rz * h, cx - rx * h, y + yc + h, cz - rz * h, cx + rx * h, y + yc + h, cz + rz * h]; };
+    const lp = new Float32Array(4 * 3 * 2 + 4 * 3), lc = new Float32Array(lp.length);
+    lp.set(lamp(2.78), 0); lp.set(lamp(2.24), 12);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(lp, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(lc, 3).setUsage(THREE.DynamicDrawUsage));
+    g.setIndex([0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11]); g.boundingSphere = new THREE.Sphere(new THREE.Vector3((lx + mx) / 2, y + 2, (lz + mz) / 2), 5);
+    const lm = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })); lm.name = 'pitExitLamps'; grp.add(lm);
+    const hand = [mx + nx * 0.3, ym + 1.55, mz + nz * 0.3];   // (his hand out towards the lane)
+    return { x: lx, z: lz, lm, lp, lc, hand, tx, tz, nx, nz, d, J, sd, red: -1, blue: 0, wave: 0, key: '' };
+  }
+  function crewExitStep(c, dt, near) {
+    const E = c.exit, R = curRace; if (!E || !R) return;
+    const T = curTrack, L = T.len, dS = (ss) => { let x = ss - T.startS; x = ((x % L) + L) % L; return x > L / 2 ? x - L : x; }, J = E.J;
+    // the exit closed: before the start, or the safety car (or the leader behind it) within 250 m before where the lanes meet
+    const F = R.fl, sc = F && F.sc && F.sc.state === 'out' ? F.sc.car : null, scD = sc ? J.b - dS(sc.q ? sc.q.s : sc.s || 0) : 1e9, red = R.state !== 'racing' || (scD > -20 && scD < 250);
+    // the blue flag: a car on its way out (on the pit road past the boxes) while another comes along the circuit to the acceleration lane's end
+    let out = false, come = false;
+    for (const o of R.cars) { if (o.finished || !o.q) continue; const dd = dS(o.q.s);
+      if (o.pitG && (o.pitDone || !o.inPit) && dd > J.gb - 140 && dd < J.b) out = true;
+      else if (!o.pitG && !o.inPit && dd < J.b && dd > J.b - 400 && (J.b - dd) / Math.max(8, o.speed) < EX_BLUE) come = true; }
+    const blue = out && come;
+    E.wave += dt; E.blue = blue ? Math.min(1, E.blue + dt * 4) : Math.max(0, E.blue - dt * 3);
+    if (!near) return;
+    const key = (red ? 'r' : 'g') + (E.blue > 0 ? Math.round(E.wave * 20) : 'n');
+    if (key === E.key) return; E.key = key;
+    const C = E.lc, set = (o, r, g, b) => { for (let i = 0; i < 4; i++) { C[o + i * 3] = r; C[o + i * 3 + 1] = g; C[o + i * 3 + 2] = b; } };
+    set(0, red ? 1 : 0.22, red ? 0.12 : 0.04, red ? 0.08 : 0.04); set(12, red ? 0.03 : 0.2, red ? 0.12 : 1, red ? 0.05 : 0.35); set(24, 0.05, 0.3, 0.95);
+    const Pp = E.lp, [hx, hy, hz] = E.hand, b = E.blue;   // the cloth: 0.95 x 0.62 off the hand, out over the lane and swinging (folded away when not shown)
+    const sw = Math.sin(E.wave * 7) * 0.9, ux = E.tx * Math.cos(sw) - E.nx * Math.sin(sw) * 0.6, uz = E.tz * Math.cos(sw) - E.nz * Math.sin(sw) * 0.6, Lf = 0.95 * b, Hf = 0.62 * b;
+    Pp.set([hx, hy, hz, hx + ux * Lf, hy + Math.sin(E.wave * 5.3) * 0.12 * b, hz + uz * Lf, hx, hy - Hf, hz, hx + ux * Lf, hy - Hf + Math.sin(E.wave * 5.3) * 0.12 * b, hz + uz * Lf], 24);
+    const g = E.lm.geometry; g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
   }
   function crDims(P) {   // the car's hubs, nose and tail (car frame: forward, right), as the car mesh builds them
     const M = P.m, d = BODIES[M.body], sx = M.len / d.len, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98, hw = M.wid * 0.5 - 0.1;
@@ -5510,6 +5634,7 @@ const Render = (function () {
     crewLogic(dt, snap); crewRain(c);
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
+    crewGarStep(c, dt, snap, near); crewExitStep(c, dt, near);
     if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
     const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
     for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
@@ -6233,11 +6358,15 @@ const Render = (function () {
         let bx = 0, bz = 0; if (off && atmos.tod !== 'night') { const f = 0.55 / Math.max(0.25, _sunN.y), sx = -_sunN.x * f, sz = -_sunN.z * f, l = Math.hypot(sx, sz), q = l > 1.3 ? 1.3 / l : 1; bx = (sx * e[0] + sz * e[2]) * q; bz = (sx * e[8] + sz * e[10]) * q; }
         v.blob.position.x = bx; v.blob.position.z = bz;
       }
-      // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; washed off only in the pits: repairStep)
+      // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; washed off only in the pits: repairStep): low on the body,
+      // on its tail (thrown up by the wheels) and a film over the rest, in splashes; its colour by where it came from (dirtW: the share of mud,
+      // from the rain or a puddle, darker; the grass's halfway; gravel and makadam a light dust), so a car that has been off shows it from behind
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);   // (in the box: polished out with the bodywork, repairStep)
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
-        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5 || sf === 6) loose++; }   // (the cobbles, 7 and 8, are no dirt)
-        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
+        let loose = 0, mud = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5 || sf === 6) { loose++; mud += sf === 6 ? 1 : sf === 2 ? 0.55 : 0.15; } }   // (the cobbles, 7 and 8, are no dirt)
+        if (loose) { const da = Math.min(1 - v.dirtU.value, dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.02 * clamp(c.speed / 12, 0.2, 1.5)), wt = wetW > 0.1 ? 1 : mud / loose;   // (rain: mud, two and a half times as fast)
+          if (v.dirtW && da > 0) v.dirtW.value += (wt - v.dirtW.value) * da / (v.dirtU.value + da);   // (the colour: the dirt's mean by where it came from)
+          v.dirtU.value += Math.max(0, da); }
       }
       if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);

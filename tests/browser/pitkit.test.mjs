@@ -1,0 +1,124 @@
+// The player's garage, the pits and their exit (js/render.js crewGarage, crewMarks, crewExit; the player's car's dirt, dirtyCarMat), on
+// every circuit with pits (not the test tracks), and Bathurst, Avstralija step by step (the profile's name Jure Kopač):
+// 1. 44 the garage door: where the garage's front is closed (World's gar.wall at the front: Bathurst's
+//    garages, Bang Saen's marquee) that door in the player's colour, down to the floor; where the front is open between the
+//    door's pillars (gar.jamb) a light grey roller door between them, down to the top of the opening; both while no stop is under way
+//    (Crystal Palace's stall, Detroit's and Trois-Rivières' tents and Longford's shed, open at the front: none). 95C the flag: by the left-hand pillar
+//    in front of the garage an upright cloth in the player's colour with the driver's three letters (KOP), on a pole 3 m tall. 72 the
+//    stack of used tyres: by the right-hand pillar seven tyres lying flat in two piles, each up on the one below. 48 the tyre marks: in
+//    front of every crew's garage two dark arcs from where the car stands in the box out to the lane, fading as they go. 5 and 76 the pit
+//    exit: by the end of the pit wall on the way out (Track.pitJ gb) the light's post and the marshal.
+// 2. Bathurst, a stop: the door down until the car comes down the lane to it (the crew's 'ready'), up within 1.6 s, up through the stop,
+//    down again once the crew is back in its garage (within 2.6 s); the light red before the start, green in the race; the blue flag only
+//    while a car is on its way out of the lane and another comes along the circuit to where they meet (within 4 s of it), its cloth gone
+//    otherwise; the light red while the safety car comes past the way out.
+// 3. 87 the car's dirt: on the grass it builds up (four wheels, a second: more than 0.012), its colour halfway to the mud's (dirtW ~0.55),
+//    on gravel a light dust (0.15), through a puddle or in the rain mud (1); not on the asphalt or the cobbles.
+//   node tests/browser/pitkit.test.mjs
+import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+
+const T = checker('the garage door, the flag, the used tyres, the tyre marks, the pit exit, the dirt');
+const srv = await serve();
+const browser = await launch();
+try {
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', zoom: 1.2, name: 'Jure Kopač', damage: 2, fuel: 1 }, { width: 640, height: 360 }, { seed: 4 });
+  const ids = await page.evaluate(() => Core.TRACKS.filter(d => d.pit && !d.open && !d.test).map(d => d.id));
+  const res = [];
+  for (const id of ids) {
+    await startTrack(page, id);
+    res.push(await page.evaluate(() => {
+      const g = window.__game; g.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none';
+      const race = g.race, P = race.player, Tk = race.track, c = Render.crew, out = { id: Tk.def.id, bad: [] }; if (!c || !c.roles || !c.gar) return Object.assign(out, { bad: ['no garage'] });
+      const bx = c.roles.bx, G = bx.gar || {}, X = c.gar, m4 = new THREE.Matrix4(), v = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), cl = new THREE.Color();
+      const PAINT = new THREE.Color(P.color).getHex(), loc = (x, z) => ({ a: (x - bx.ox) * bx.tx + (z - bx.oz) * bx.tz, w: (x - bx.ox) * bx.nx + (z - bx.oz) * bx.nz });   // (along the box, out from the centre line)
+      // the door
+      out.door = X.door ? X.door.part : null;
+      if (X.door) { c.M.rod.getMatrixAt(X.door.i, m4); m4.decompose(v, q, sc); c.M.rod.getColorAt(X.door.i, cl); const E = m4.elements, L = loc(v.x + E[8] / 2, v.z + E[10] / 2), y0 = bx.y || 0;   // (a rod from one end along its z: the door's middle half way along it)
+        out.doorH = +sc.y.toFixed(2); out.doorW = +sc.z.toFixed(2);
+        if (Math.abs(sc.y - (X.door.y1 - (X.door.ya || 0.02))) > 0.05) out.bad.push('door not down ' + sc.y.toFixed(2));
+        const jw = (() => { if (X.door.part !== 'jamb') return X.door.a1 - X.door.a0; const p = [1, 2].map(k => { c.M.rod.getMatrixAt(X.door.i - 3 + k, m4); return new THREE.Vector3().setFromMatrixPosition(m4); }); return p[0].distanceTo(p[1]) - G.jamb[2]; })();   // (between the pillars as they stand: on a bend the row is curved)
+        if (Math.abs(sc.z - jw) > 0.3) out.bad.push('door width ' + sc.z.toFixed(2) + ' for ' + jw.toFixed(2));
+        if (Math.abs(L.a) > 0.6 || Math.abs(L.w - X.door.w) > 0.4) out.bad.push('door at ' + L.a.toFixed(1) + '/' + (L.w - X.door.w).toFixed(2));
+        if (X.door.part === 'jamb' ? cl.getHSL({}).s > 0.1 || cl.getHSL({}).l < 0.6 : cl.getHex() !== PAINT) out.bad.push('door colour ' + cl.getHexString()); }   // (a light grey roller door; Bang Saen's front its paint, as before)
+      const front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, want = G.wall && G.wall[0] < front + 0.6 ? 'wall' : G.jamb ? 'jamb' : null;   // (a closed front rolls up; an open one between pillars gets a grey door)
+      if (out.door !== want) out.bad.push('door ' + out.door + ' (want ' + want + ')');
+      // the flag
+      const F = c.grp.children.find(o => o.name === 'pitFlag');
+      if (!F) out.bad.push('no flag'); else { const U = F.userData, L = loc(U.pole[0], U.pole[1]); out.flag = U.code;
+        if (U.code !== 'KOP' || U.col !== PAINT) out.bad.push('flag ' + U.code + ' #' + U.col.toString(16));
+        if (Math.abs(L.a + X.hw) > 0.2 || L.w > X.front || L.w < X.front - 1.2 || Math.abs(U.H - 3.05) > 0.1) out.bad.push('flag at ' + L.a.toFixed(2) + '/' + (L.w - X.front).toFixed(2));
+        F.geometry.computeBoundingBox(); const bb = F.geometry.boundingBox; if (bb.max.y - bb.min.y < 1.8) out.bad.push('flag cloth ' + (bb.max.y - bb.min.y).toFixed(2) + ' m tall'); }
+      // the stack: two piles by the right-hand pillar, each tyre up on the one below, lying flat (the axle up)
+      const S = X.stack, piles = [[], []];
+      for (let j = 0; j < S.n; j++) { c.M.tyre.getMatrixAt(S.t0 + j, m4); m4.decompose(v, q, sc); const ax = new THREE.Vector3(1, 0, 0).applyQuaternion(q), L = loc(v.x, v.z);
+        piles[j < 4 ? 0 : 1].push({ y: v.y - (bx.y || 0), a: L.a, w: L.w, up: Math.abs(ax.y) }); }
+      out.stack = piles.map(p => p.length).join('+');
+      for (const p of piles) p.forEach((t, k) => { if (t.up < 0.98 || Math.abs(t.a - (X.hw - 0.05)) > 0.25 || t.w > X.front || t.w < X.front - 1.6 || (k && !(t.y > p[k - 1].y + 0.2 && t.y < p[k - 1].y + 0.35))) out.bad.push('tyre ' + JSON.stringify(t)); });
+      // the marks: in front of every garage, from the box out to the lane, fading
+      const Mk = c.grp.children.find(o => o.name === 'pitMarks'), B = Render.world.pitBoxes;
+      if (!Mk) out.bad.push('no marks'); else { const P = Mk.geometry.attributes.position.array, C = Mk.geometry.attributes.color.array, n = P.length / 3, per = 2 * 9 * 2;
+        out.marks = n / per; if (n !== B.length * per) out.bad.push(n + ' mark vertices for ' + B.length + ' boxes');
+        B.forEach((b, i) => { for (let m = 0; m < 2; m++) { const o = i * per + m * 18, a0 = C[(o) * 4 + 3], a1 = C[(o + 16) * 4 + 3], w0 = (P[o * 3] - b.ox) * b.nx + (P[o * 3 + 2] - b.oz) * b.nz, w1 = (P[(o + 16) * 3] - b.ox) * b.nx + (P[(o + 16) * 3 + 2] - b.oz) * b.nz;
+          if (!(a0 > 0.4 && a1 < 0.02 && w0 > b.base && w0 < b.base + 9 && w1 < w0 - 0.5)) out.bad.push('mark ' + i + '/' + m + ' ' + [a0, a1, w0 - b.base, w1 - b.base].map(x => x.toFixed(2))); } }); }
+      // the exit's post
+      const E = c.exit, J = Tk.pitJ(); if (!E) out.bad.push('no exit post'); else { let d = ((Tk.query(E.x, E.z, -1, {}).s - Tk.startS) % Tk.len + Tk.len) % Tk.len; if (d > Tk.len / 2) d -= Tk.len; out.exitD = +(d - J.gb).toFixed(1); if (Math.abs(d - J.gb + 4) > 3) out.bad.push('exit post at ' + d.toFixed(1) + ' (the wall ends at ' + J.gb + ')'); }
+      return out;
+    }));
+  }
+  T.check('13 circuits with pits', ids.length === 13 && res.length === 13, ids.join(', '));
+  T.check('44 the garage door: a closed front (gar.wall at the front) rolls, an open one between pillars gets a light grey roller door, none on the open tents and shed; down while no stop is under way',
+    res.every(r => !r.bad.some(b => /^door/.test(b))), res.map(r => `${r.id} ${r.door || '-'}${r.doorH ? ' ' + r.doorH + ' m' : ''} ${r.bad.filter(b => /^door/.test(b)).join('; ')}`).join(', '));
+  T.check('95C the flag: by the left pillar, in front of the garage, the player\'s colour, KOP (Jure Kopač), 3 m pole, a cloth ~2 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).join('; ')}`).join(', '));
+  T.check('72 the stack of used tyres: seven by the right pillar in two piles (4 + 3), lying flat, each up on the one below', res.every(r => !r.bad.some(b => /^tyre/.test(b))), res.map(r => `${r.id} ${r.stack} ${r.bad.filter(b => /^tyre/.test(b)).slice(0, 2).join('; ')}`).join(', '));
+  T.check('48 the tyre marks: two in front of every crew\'s garage, from the box towards the lane, fading out', res.every(r => !r.bad.some(b => /mark/.test(b))), res.map(r => `${r.id} ${r.marks} ${r.bad.filter(b => /mark/.test(b)).slice(0, 2).join('; ')}`).join(', '));
+  T.check('5 and 76 the exit\'s post at the end of the pit wall on the way out', res.every(r => !r.bad.some(b => /exit/.test(b))), res.map(r => `${r.id} ${r.exitD} ${r.bad.filter(b => /exit/.test(b)).join('; ')}`).join(', '));
+
+  // 2. Bathurst step by step
+  await startTrack(page, 'bathurst');
+  const B = await page.evaluate(() => {
+    const g = window.__game, P = g.race.player, Tk = g.race.track, c = Render.crew, X = c.gar, E = c.exit, out = { light: {}, door: [], blue: {} };
+    const lamp = () => { const C = E.lc; return C[0] > 0.9 && C[1] < 0.2 ? 'red' : C[13] > 0.9 ? 'green' : '?'; }, fr = () => Render.frame(1 / 30, 1, P, 'chase', {});
+    const cloth = () => { const p = E.lp; return Math.hypot(p[27] - p[24], p[29] - p[26]); };
+    g.pause(); Render.scene.visible = false; fr(); out.light.grid = lamp();   // (the scene not drawn: the frames only step the pit's logic)
+    for (let k = 0; k < 400 && g.phase !== 'racing'; k++) { g.sim(0.1, true); fr(); }
+    g.sim(0.2, true); fr(); fr(); out.light.race = lamp();
+    // the rule of the blue flag (the race stood still, two cars put where it looks for them)
+    const J = Tk.pitJ(), L = Tk.len, at = (d) => Tk.startS + d, cars = g.race.cars.filter(x => !x.isPlayer), A = cars[0], C2 = cars[1], keep = [A, C2].map(o => ({ o, s: o.q.s, pitG: o.pitG, pitDone: o.pitDone, inPit: o.inPit, vx: o.vx, vz: o.vz }));
+    const put = (o, s, pitG, done, sp) => { o.q.s = s; o.pitG = pitG; o.pitDone = done; o.inPit = false; o.vx = sp; o.vz = 0; };
+    const blueNow = () => { for (let k = 0; k < 12; k++) fr(); return +E.blue.toFixed(2); };
+    put(A, at(J.gb - 20), true, true, 15); put(C2, at(J.b - 60), false, false, 40); out.blue.both = blueNow(); out.blue.cloth = +cloth().toFixed(2);
+    put(C2, at(J.b - 300), false, false, 40); out.blue.far = blueNow();   // (7.5 s away)
+    put(C2, at(J.b - 60), false, false, 40); put(A, at(J.gb - 300), false, false, 40); out.blue.noneOut = blueNow(); out.blue.clothOff = +cloth().toFixed(3);
+    for (const k of keep) Object.assign(k.o, { pitG: k.pitG, pitDone: k.pitDone, inPit: k.inPit, vx: k.vx, vz: k.vz }), k.o.q.s = k.s;
+    fr();
+    // the stop: the door as the car comes down the lane, through the stop and after it
+    for (let k = 0; k < 40000; k++) { if (!P.inPit && !Tk.pitAt(P.q.s) && !P.pitWant) P.pitWant = true; if (P.pitWant && Tk.pitAt(P.q.s + 90) && !Tk.pitAt(P.q.s)) break; g.sim(0.05, true); }
+    let t = 0, last = '', tR = null, tUp = null, tHome = null, tDown = null, upAll = true;
+    for (let k = 0; k < 9000; k++) { g.sim(1 / 30, !P.inPit && !P.pitDone, 0, 0); fr(); t += 1 / 30;   // (the autopilot to the way in, then the game's own in the lane)
+      const md = c.mode, o = X.open; if (md + (o >= 1 ? 'U' : o <= 0 ? 'D' : 'm') !== last) { last = md + (o >= 1 ? 'U' : o <= 0 ? 'D' : 'm'); out.door.push([+t.toFixed(2), md, +o.toFixed(2)]); }
+      if (md === 'ready' && tR == null) tR = t; if (tR != null && tUp == null && o >= 1) tUp = t; if (md === 'work' && o < 1) upAll = false;
+      if (P.pitDone && md === 'home' && tHome == null) tHome = t; if (tHome != null && tDown == null && o <= 0) { tDown = t; break; } }
+    out.doorT = { up: tUp != null && tR != null ? +(tUp - tR).toFixed(2) : null, down: tDown != null ? +(tDown - tHome).toFixed(2) : null, upAll }; Render.scene.visible = true;
+    return out; });
+  T.check('5 the light: red before the start, green in the race', B.light.grid === 'red' && B.light.race === 'green', JSON.stringify(B.light));
+  T.check('76 the blue flag: out while a car leaves the lane and another comes to where they meet within 4 s (the cloth out, waving: half a metre and more off the hand), not for one 7 s away, not with nobody leaving (the cloth gone)',
+    B.blue.both > 0.9 && B.blue.cloth > 0.5 && B.blue.far === 0 && B.blue.noneOut === 0 && B.blue.clothOff < 0.01, JSON.stringify(B.blue));
+  T.check('44 the door at a stop: up within 1.6 s of the crew getting ready, up through the stop, down within 2.6 s once the crew is back in',
+    B.doorT.up != null && B.doorT.up <= 1.7 && B.doorT.upAll && B.doorT.down != null && B.doorT.down <= 2.7, JSON.stringify({ t: B.doorT, door: B.door }));
+
+  // 3. the dirt (the race stood still, the player's wheels put on each surface, a second of frames)
+  const D = await page.evaluate(() => {
+    const g = window.__game, P = g.race.player, v = Render.viewOf(P), out = {}; g.pause(); Render.scene.visible = false;
+    const run = (sf, wet) => { v.dirtU.value = 0; v.dirtW.value = 0; const ws = P.ws.slice(), sp = P.speed; for (let k = 0; k < 4; k++) P.ws[k] = sf; Render.wetFx && 0;
+      for (let k = 0; k < 30; k++) Render.frame(1 / 30, 1, P, 'chase', {}); const r = [+v.dirtU.value.toFixed(4), +v.dirtW.value.toFixed(2)]; for (let k = 0; k < 4; k++) P.ws[k] = ws[k]; return r; };
+    out.asphalt = run(0); out.grass = run(2); out.gravel = run(3); out.puddle = run(6); out.cobbles = run(7); Render.scene.visible = true;
+    return out; });
+  T.check('87 the dirt: on the grass it builds up (more than 0.012 a second on four wheels, standing), halfway to mud\'s colour; gravel a light dust, a puddle mud; none on the asphalt or the cobbles',
+    D.asphalt[0] === 0 && D.cobbles[0] === 0 && D.grass[0] > 0.012 && Math.abs(D.grass[1] - 0.55) < 0.02 && Math.abs(D.gravel[1] - 0.15) < 0.02 && Math.abs(D.puddle[1] - 1) < 0.02 && D.puddle[0] > D.grass[0] * 0.99, JSON.stringify(D));
+  T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
+} catch (e) {
+  T.check('the test ran through', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' '));
+} finally {
+  await browser.close(); await srv.close();
+}
+T.done();
