@@ -311,7 +311,7 @@
   // (a new achievement waits for a message of the race on the toast to go: never over a rule the player has to know)
   const achQ = [];
   function achToast(t) { achQ.push(t); if (achQ.length === 1) achPump(); }
-  function achPump() { if (!achQ.length) return; if ($('toast').classList.contains('show')) { setTimeout(achPump, 600); return; } toast(achQ[0], 3000); setTimeout(() => { achQ.shift(); achPump(); }, 3200); }
+  function achPump() { if (!achQ.length) return; if ($('toast').classList.contains('show') || (paused && screen === 'pause')) { setTimeout(achPump, 600); return; } toast(achQ[0], 3000); setTimeout(() => { achQ.shift(); achPump(); }, 3200); }   // (not over the pause either: P1A, toastHold)
   const achLine = () => { const L = achNew.map(id => tr(ACH.find(a => a[0] === id)[1])); achNew = []; return L.length ? tr(' Novi dosežki: {0}.', L.join(', ')) : ''; };
   // per race: the drift under way, wall or car contact (this lap, this race), the laps counted, pole position for this race
   let stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: false, done: false };
@@ -373,6 +373,12 @@
   function toastOff(tag) { if (tag && toastTag !== tag) return; clearTimeout(toast._t); $('toast').classList.remove('show', 'wait'); toastTag = ''; }   // (tag: only a toast about that)
   const TOAST_WAIT = 6;
   let toastEnd = 0, toastCap = 0, toastTag = '';
+  // P1A: a race's toast (a new achievement, a notice) is not shown over the pause: held there with the time it had left (toastHold, pause)
+  // and shown again as the race goes on (toastBack, resume), for TOAST_BACK s at least; a toast of the pause's own buttons shows as ever
+  const TOAST_BACK = 1.5;
+  let toastHeld = null;
+  function toastHold() { const el = $('toast'); if (!el.classList.contains('show')) return; toastHeld = { txt: el.textContent, left: toastEnd - performance.now(), tag: toastTag }; clearTimeout(toast._t); el.classList.remove('show', 'wait'); toastTag = ''; }
+  function toastBack() { const h = toastHeld; toastHeld = null; if (h) toast(h.txt, Math.max(h.left, TOAST_BACK * 1000), h.tag); }
   function showMsg(txt, cls, dur) {
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
@@ -1826,7 +1832,7 @@
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
-    bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0;
+    bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0; toastHeld = null;
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
@@ -1918,18 +1924,18 @@
   function pause() {
     if (rpCd) { cdOff(); paused = false; }   // (the count after Posnetek do sem: the pause again instead)
     if (bg !== 'race' || paused || phase === 'done') return;
-    paused = true; Sfx.setRunning(false); Input.reset(); Input.buzzOff(); Comm.stop();
+    paused = true; Sfx.setRunning(false); Input.reset(); Input.buzzOff(); Comm.stop(); toastHold();
     $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
     $('pause-rp').classList.toggle('off', !rpHereOk());   // (Posnetek do sem: not online, nor before 2 s of the race are recorded)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
     stratInfo(); pauseInfo();
-    showScreen('pause');
+    showScreen('pause'); pwFit();
     adaptBreak();
   }
   function resume() {
     paused = false; last = performance.now(); acc = 0;
     Sfx.resume(); Sfx.setRunning(true);
-    showScreen('none');
+    showScreen('none'); toastBack();
     if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: the phone may have been turned meanwhile)
   }
   // a TV shot the world directs (Render.setShot: the jets before the start, the podium) ends: the game's camera and the HUD back
@@ -3380,76 +3386,55 @@
     if (pl.from != null) t.push(pl.from === pl.to ? tr('Postanek bo v {0}. krogu.', pl.from) : tr('Okno za postanek: od {0}. do {1}. kroga.', pl.from, pl.to));
     el.textContent = t.join(' '); el.classList.remove('off');
   }
-  /* ---------------- the pause's race box under its buttons (pauseInfo): the weather to the finish (a changing weather: Race.forecast, roughly
-     as the engineer tells it) and every driver's stops (a race with pits and rivals: the timing tower's count, tw.stops, and the sets each car
-     ran, tw.sets), each on a tab of its own over the same place when there are both (piTab, the last one picked). The weather: a tall sky band
-     over the whole race with big icons (the sun, a sun with a cloud, a cloud where it changes, rain, heavy rain), the change blurred over
-     its range (± pol kroga), under it the laps with the player (TI) and where a stop for the other tyres fits (P, at the end of the lap the
-     change comes in; a race with tyres and pits, the player not on them yet) and that stop in words. Animated in CSS (.pf-*: transform and
-     opacity only, every loop a divisor of 6 s, none with prefers-reduced-motion; the text never moves): the sun's rays turn slowly, its glow
-     breathes, light clouds drift over the rain, the rain falls. The stops: the order as it stands, each car's colour, its code, its stops and
-     its sets (a chip in each compound's colour, W the rain tyres, D slicks without compounds) ---------------- */
-  let piTab = 'fc';
-  const piSeed = (s) => () => (s = (s * 16807) % 2147483647) / 2147483647;
+  /* ---------------- the pause's weather and race box (pauseInfo). Above its buttons (4B, the user's choice): the weather lap by lap to the
+     finish in a changing weather (Race.forecast, roughly as the engineer tells it), no box round it: an icon for every lap after the one under
+     way, »Krog N« under each (wxRow): the laps clear of the change's range dry (the sun) or wet (rain, heavy rain where it rains hard), the
+     ones in its range the in-between icons (a sun with a cloud on the dry side, the cloud on the lap of its middle, light rain on the wet
+     side); none on the last lap. More than fit across (about 6 upright, 8 on its side: pwFit) and the row swipes sideways, the next icon cut
+     at the edge and a line under it (Povleci za vseh N krogov →); under it the stop for the other tyres (a race with tyres and pits, the
+     player not on them yet: P on that lap's icon and in words). Animated in CSS (C42-1, .pf-*: transform and opacity only, every loop a
+     divisor of 6 s, none with prefers-reduced-motion; the text never moves): the sun's rays turn slowly, its glow breathes, the light clouds
+     drift, the rain falls. Under the buttons the race box: every driver's stops (a race with pits and rivals: the timing tower's count,
+     tw.stops, and the sets each car ran, tw.sets): the order as it stands, each car's colour, its code, its stops and its sets (a chip in each
+     compound's colour, W the rain tyres, D slicks without compounds) ---------------- */
   const lapsW = (n, one, two, few, many) => { const d = Math.abs(n) % 1 > 1e-6, m = Math.round(n) % 100; return d || m === 2 ? two : m === 1 ? one : m === 3 || m === 4 ? few : many; };   // (Slovenian: 1 krog, 2 / 1,5 kroga, 3-4 kroge, 5 krogov)
-  function fcBand(f, P) {
-    const N = Math.max(1, race.laps), W = 316, H = 132, x0 = 9, x1 = W - 9, LP = (x1 - x0) / N, xl = (k) => x0 + LP * clamp(k, 0, N), by = 2, bh = 80, AY = by + bh + 22;
-    const prog = clamp(Math.max(0, P.dist) / track.len, 0, N), XM = xl(prog), ch = f.k === 'rain' || f.k === 'stop';
-    const mid = ch ? prog + (f.lo + f.hi) / 2 : 0, hwL = ch ? (f.hi - f.lo) / 2 : 0, XR = ch ? xl(mid) : f.k === 'dry' ? x1 + 99 : x0 - 99, HW = ch ? Math.max(10, hwL * LP) : 0;
-    const wetAt = (x) => f.k === 'wet' || (f.k === 'rain' && x > XR) || (f.k === 'stop' && x < XR), n1 = (v) => v.toFixed(1), off = (x) => clamp((x - x0) / (x1 - x0), 0, 1).toFixed(3);
-    // the band: the dry colours on the dry side, the wet ones on the wet side, a soft change between
-    const DRY = [['#e9b43a', 0.6], ['#c9a65a', 0.45]], WET = [['#2f6fb0', 0.8], ['#1d4f8a', 0.92]], st = (o, c) => `<stop offset="${o}" stop-color="${c[0]}" stop-opacity="${c[1]}"/>`;
-    const grad = f.k === 'dry' ? st(0, DRY[0]) + st(1, DRY[1]) : f.k === 'wet' ? st(0, WET[0]) + st(1, WET[1]) : f.k === 'rain' ? st(0, DRY[0]) + st(off(XR - HW), DRY[1]) + st(off(XR + HW), WET[0]) + st(1, WET[1])
-      : st(0, WET[1]) + st(off(XR - HW), WET[0]) + st(off(XR + HW), DRY[1]) + st(1, DRY[0]);
-    // the wet side's mask (its clouds and rain): opaque on the wet side, a soft edge over the change
-    const mk = f.k === 'wet' ? `<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>` : f.k === 'rain' ? `<rect x="${n1(XR - HW)}" y="0" width="${n1(2 * HW)}" height="${H}" fill="url(#pfM)"/><rect x="${n1(XR + HW)}" y="0" width="${W}" height="${H}" fill="#fff"/>`
-      : f.k === 'stop' ? `<rect x="0" y="0" width="${n1(Math.max(0, XR - HW))}" height="${H}" fill="#fff"/><rect x="${n1(XR - HW)}" y="0" width="${n1(2 * HW)}" height="${H}" fill="url(#pfN)"/>` : '';
-    const defs = `<linearGradient id="pfS" x1="${x0}" y1="0" x2="${x1}" y2="0" gradientUnits="userSpaceOnUse">${grad}</linearGradient>
-      <radialGradient id="pfG" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe08a" stop-opacity=".8"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient>
-      <linearGradient id="pfM" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
-      <linearGradient id="pfN" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-      <linearGradient id="pfW" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-      <mask id="pfK" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">${mk}</mask><clipPath id="pfC"><rect x="${x0}" y="${by}" width="${x1 - x0}" height="${bh}" rx="12"/></clipPath>`;
-    // the icons over the laps' middles (at most six), the cloud over the change; the sun's rays turn, its glow breathes
-    const CL = 'M6 18h12a4 4 0 0 0 0-8 5.6 5.6 0 0 0-10.7 1.5A3.3 3.3 0 0 0 6 18z', cloud = (x, y, s, fill, op) => `<path transform="translate(${n1(x - s / 2)} ${n1(y - s / 2)}) scale(${(s / 24).toFixed(3)})" d="${CL}" fill="${fill}" opacity="${op}"/>`;
-    const sunD = (x, y, r) => `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r * 0.46)}" fill="#ffc629"/>`, rays = (x, y, r) => `<g class="pf-rot pf-fb" stroke="#ffc629" stroke-width="${n1(r * 0.17)}" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => { const q = a * Math.PI / 180; return `<line x1="${n1(x + Math.cos(q) * r * 0.66)}" y1="${n1(y + Math.sin(q) * r * 0.66)}" x2="${n1(x + Math.cos(q) * r * 0.95)}" y2="${n1(y + Math.sin(q) * r * 0.95)}"/>`; }).join('')}</g>`;
-    const drops = (x, y, n, heavy) => Array.from({ length: n }, (_, j) => { const dx = x - 8 + j * (16 / Math.max(1, n - 1)), y0 = y + 7 + (j % 2) * 3; return `<line x1="${n1(dx)}" y1="${n1(y0)}" x2="${n1(dx - 2)}" y2="${n1(y0 + 5)}" stroke="#7fc3ff" stroke-width="${heavy ? 2.2 : 1.8}" stroke-linecap="round"/>`; }).join('');
-    const icon = { sun: (x, y) => rays(x, y, 20) + sunD(x, y, 20), part: (x, y) => rays(x - 6, y - 6, 13) + sunD(x - 6, y - 6, 13) + cloud(x + 3, y + 3, 30, '#eef3f8', 1),
-      cloud: (x, y) => cloud(x, y, 32, '#dfe6ee', 0.95), rain: (x, y) => cloud(x, y - 3, 32, '#d4dde8', 1) + drops(x, y + 2, 3, false), heavy: (x, y) => cloud(x, y - 3, 34, '#8796a8', 1) + drops(x, y + 2, 4, true) };
-    const nI = Math.min(N, 6), ic = [];
-    for (let j = 0; j < nI; j++) { const k = nI === N ? j + 0.5 : (j + 0.5) * N / nI, x = xl(k); if (ch && Math.abs(x - XR) < 22) continue; const d = ch ? Math.abs(x - XR) / LP : 9, wet = wetAt(x); ic.push([x, wet ? (d < 1 || f.k === 'wet' ? 'rain' : 'heavy') : (d < 1 ? 'part' : 'sun')]); }
-    if (ch && XR > x0 + 14 && XR < x1 - 14) ic.push([XR, 'cloud']);
-    const g0 = ic.find(e => e[1] === 'sun') || ic.find(e => e[1] === 'part');
-    const glow = g0 ? `<g class="pf-glow pf-fb"><circle cx="${n1(g0[0])}" cy="${by + 30}" r="44" fill="url(#pfG)"/></g>` : '';
-    // the wet side's weather: light clouds drifting left (a layer repeating every 120 px, drift 120 px in 6 s) and the rain falling (drawn
-    // twice 40 px apart, a fall of 40 px each 0.75 s), thicker away from the change
-    let wetFx = '';
-    if (f.k !== 'dry') {
-      const wa = f.k === 'stop' ? x0 : Math.max(x0, XR - HW), wb = f.k === 'stop' ? Math.min(x1, XR + HW) : x1, R = piSeed(11); let cl = '', rn = '';
-      for (let r = 0; r < 4; r++) for (const [dx, y, s, op] of [[10, by + 14, 46, 0.3], [70, by + 26, 38, 0.24]]) cl += cloud(wa - 10 + r * 120 + dx, y, s, '#dfe7f0', op);
-      for (let j = 0; j < 130; j++) { const x = wa + R() * (wb - wa), t = f.k === 'stop' ? (wb - x) / Math.max(1, wb - wa) : (x - wa) / Math.max(1, wb - wa); if (R() > 0.3 + 0.7 * (f.k === 'wet' ? 1 : t)) continue;
-        const y = by + 40 + R() * 40, l = 7 + R() * 7, o = (0.35 + R() * 0.5).toFixed(2); for (const dy of [0, -40]) rn += `<line x1="${n1(x)}" y1="${n1(y + dy)}" x2="${n1(x - l * 0.32)}" y2="${n1(y + dy + l)}" stroke="rgba(170,215,255,${o})" stroke-width="1.4" stroke-linecap="round"/>`; }
-      wetFx = `<g mask="url(#pfK)"><g class="pf-drift">${cl}</g><g class="pf-fall">${rn}</g></g>`;
+  const PW_CL = 'M6 18h12a4 4 0 0 0 0-8 5.6 5.6 0 0 0-10.7 1.5A3.3 3.3 0 0 0 6 18z', PW_HARD = 0.6;   // (the cloud's outline; heavy rain from this much rain)
+  function pwIcon(k) {   // one lap's icon (48 × 44): sun, part (a sun with a cloud), cloud, rain, heavy
+    const n1 = (v) => v.toFixed(1), cloud = (x, y, s, fill, op) => `<g class="pf-drift"><path transform="translate(${n1(x - s / 2)} ${n1(y - s / 2)}) scale(${(s / 24).toFixed(3)})" d="${PW_CL}" fill="${fill}" opacity="${op}"/></g>`;
+    const sun = (x, y, r) => `<circle class="pf-glow pf-fb" cx="${x}" cy="${y}" r="${n1(r)}" fill="url(#pwG)"/><g class="pf-rot pf-fb" stroke="#ffc629" stroke-width="${n1(r * 0.17)}" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => { const q = a * Math.PI / 180; return `<line x1="${n1(x + Math.cos(q) * r * 0.62)}" y1="${n1(y + Math.sin(q) * r * 0.62)}" x2="${n1(x + Math.cos(q) * r * 0.86)}" y2="${n1(y + Math.sin(q) * r * 0.86)}"/>`; }).join('')}</g><circle cx="${x}" cy="${y}" r="${n1(r * 0.46)}" fill="#ffc629"/>`;
+    const drops = (x, y, n, hv) => { const L = Array.from({ length: n }, (_, j) => { const dx = x - 8 + j * (16 / (n - 1)), y0 = y + 7 + (j % 2) * 3; return `<line x1="${n1(dx)}" y1="${n1(y0)}" x2="${n1(dx - 2)}" y2="${n1(y0 + (hv ? 7 : 5.5))}"/>`; }).join('');
+      return `<g stroke="#7fb6ff" stroke-width="${hv ? 2.4 : 2}" stroke-linecap="round"><g class="pf-fall">${L}</g><g class="pf-fall pf-f2">${L}</g></g>`; };   // (twice, half a fall apart: it never stops)
+    const I = { sun: () => sun(24, 22, 20), part: () => sun(18, 16, 13) + cloud(27, 25, 30, '#eef3f8', 1), cloud: () => cloud(24, 22, 32, '#dfe6ee', 0.95), rain: () => drops(24, 22, 3, false) + cloud(24, 19, 32, '#d4dde8', 1), heavy: () => drops(24, 22, 4, true) + cloud(24, 19, 34, '#8796a8', 1) };
+    return `<svg viewBox="0 0 48 44" aria-hidden="true">${I[k]()}</svg>`;
+  }
+  function wxRow(f, P) {
+    const N = Math.max(1, race.laps), prog = clamp(Math.max(0, P.dist) / track.len, 0, N), cur = Math.min(N - 1, Math.floor(prog)) + 1;   // (cur: the lap under way)
+    if (cur >= N) return null;
+    const ch = f.k === 'rain' || f.k === 'stop', A = ch ? prog + f.lo : 0, Z = ch ? prog + f.hi : 0, M = (A + Z) / 2, X = race.wst && race.wst.wx;
+    const wetK = (r) => r >= PW_HARD ? 'heavy' : 'rain', laps = [];
+    for (let L = cur + 1; L <= N; L++) {   // (the lap from L - 1 to L laps done)
+      let k;
+      if (!ch) k = f.k === 'wet' ? wetK(race.rain) : 'sun';
+      else if (L <= A || L - 1 >= Z) k = (f.k === 'rain') === (L - 1 >= Z) ? wetK(f.k === 'rain' ? (X ? X.r1 : 1) : race.rain) : 'sun';   // (clear of the range: the side it is on)
+      else k = L - 1 <= M && M < L ? 'cloud' : (f.k === 'rain') === (L - 0.5 > M) ? 'rain' : 'part';   // (in it: the cloud on the middle's lap, light rain on the wet side, a sun with a cloud on the dry side)
+      laps.push([L, k]);
     }
-    const pillT = !ch ? '' : hwL === 0.5 ? tr('± pol kroga') : tr(lapsW(hwL, '± {0} krog', '± {0} kroga', '± {0} kroge', '± {0} krogov'), Lang.dec(String(hwL))), PX = clamp(XR, x0 + 42, x1 - 42);
-    const pill = ch ? `<rect x="${n1(PX - 40)}" y="${by + bh - 21}" width="80" height="17" rx="8.5" fill="rgba(10,14,20,.72)"/><text x="${n1(PX)}" y="${by + bh - 8.5}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">${pillT}</text>` : '';
     // the stop for the other tyres: at the end of the lap the change comes in (not past the finish), on a track with pits in a race with tyres
-    const need = ch && track.def.pit && race.wst && race.wst.tyres && P.ty && (f.k === 'rain' ? P.ty.k !== 'wet' : P.ty.k !== 'dry'), B = need ? Math.max(Math.ceil(prog + 1e-6), Math.round(mid)) : 0, XP = need && B < N ? xl(B) : null;
-    // the laps: the line, the part done, a tick at each lap's end, the laps' names (the one under way gold), TI and P
-    const cur = Math.min(N - 1, Math.floor(prog)), every = N <= 12 ? 1 : Math.ceil(N / 8);
-    let ax = `<line x1="${x0}" y1="${AY}" x2="${x1}" y2="${AY}" stroke="rgba(255,255,255,.25)" stroke-width="3" stroke-linecap="round"/><line x1="${x0}" y1="${AY}" x2="${n1(XM)}" y2="${AY}" stroke="#ffc629" stroke-width="3" stroke-linecap="round"/>`;
-    if (N <= 40) for (let k = 0; k <= N; k++) ax += `<line x1="${n1(xl(k))}" y1="${AY - 5}" x2="${n1(xl(k))}" y2="${AY + 5}" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>`;
-    for (let k = 0; k < N; k++) if (k % every === 0 || k === cur) ax += `<text x="${n1(xl(k + 0.5))}" y="${H - 4}" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="${k === cur ? '#ffc629' : '#9fb0c3'}">${N <= 4 ? tr('{0}. krog', k + 1) : k + 1}</text>`;
-    if (XP != null) ax += `<g transform="translate(${n1(XP)} ${AY})"><rect x="-11" y="-11" width="22" height="22" rx="5" fill="#2f6fe0" stroke="#fff" stroke-width="1.6"/><text x="0" y="5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">P</text></g>`;
-    ax += `<circle cx="${n1(XM)}" cy="${AY}" r="6.5" fill="#e63b2e" stroke="#fff" stroke-width="2"/><text x="${n1(XM)}" y="${AY - 11}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">${tr('TI')}</text>`;
-    const svg = `<svg class="pf-tl" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>${defs}</defs><rect x="${x0}" y="${by}" width="${x1 - x0}" height="${bh}" rx="12" fill="url(#pfS)"/>
-      <g clip-path="url(#pfC)">${glow}${wetFx}${ch ? `<rect x="${n1(XR - HW)}" y="${by}" width="${n1(2 * HW)}" height="${bh}" fill="url(#pfW)"/>` : ''}</g>
-      ${ic.map(([x, k]) => icon[k](x, k === 'cloud' ? by + 24 : by + 28)).join('')}${pill}${ax}</svg>`;
-    const lap = (n) => `<b>${tr('{0}. kroga', n)}</b>`, tip = XP != null ? `<p class="pf-tip"><i>P</i><span>${tr(f.k === 'rain' ? 'Gume za dež: v boks na koncu {0}.' : 'Gume za suho: v boks na koncu {0}.', lap(B))}</span></p>` : '';
+    const need = ch && track.def.pit && race.wst && race.wst.tyres && P.ty && (f.k === 'rain' ? P.ty.k !== 'wet' : P.ty.k !== 'dry'), B = need ? Math.max(Math.ceil(prog + 1e-6), Math.round(prog + (f.lo + f.hi) / 2)) : 0;
     const m = ch ? (f.lo + f.hi) / 2 : 0, big = f.k === 'dry' ? tr('Suho do cilja') : f.k === 'wet' ? tr('Dež do cilja') : f.hi <= 1 ? tr(f.k === 'rain' ? 'Dež v manj kot krogu' : 'Suho v manj kot krogu')
       : tr(f.k === 'rain' ? lapsW(m, 'Dež čez ~{0} krog', 'Dež čez ~{0} kroga', 'Dež čez ~{0} kroge', 'Dež čez ~{0} krogov') : lapsW(m, 'Suho čez ~{0} krog', 'Suho čez ~{0} kroga', 'Suho čez ~{0} kroge', 'Suho čez ~{0} krogov'), Lang.dec(String(m)));
-    return { big, html: svg + tip, k: f.k, B: XP != null ? B : null, XR, XM, XP };
+    return { k: f.k, big, laps, B: need && B < N ? B : null };
   }
+  // the row as wide as it is: all of it (the icons spread out) or, more than fit, a swipe (the cells PW_C px or a little more, so many that
+  // the next one is half out at the edge) and the line under it
+  const PW_C = 50, PW_GAP = 4;
+  function pwFit() {
+    const wx = $('pause-wx'), row = wx.querySelector('.pw-row'), n = row.children.length, W = row.clientWidth; if (!n || !W) return;
+    const long = n * PW_C + (n - 1) * PW_GAP > W + 0.5, k = Math.max(1, Math.floor((W + PW_GAP) / (PW_C + PW_GAP)));
+    wx.classList.toggle('long', long); row.style.setProperty('--pwc', long ? ((W + PW_GAP) / (k + 0.5) - PW_GAP).toFixed(2) + 'px' : ''); if (piInfo && piInfo.wx) piInfo.wx.long = long;
+  }
+  if (window.ResizeObserver) new ResizeObserver(() => pwFit()).observe($('pause-wx').querySelector('.pw-row'));   // (shown, turned, the panel resized: fitted again)
+  window.addEventListener('resize', () => { if (screen === 'pause') { pwFit(); requestAnimationFrame(pwFit); setTimeout(pwFit, 80); } });   // (and at once on a turn: the layout may come a frame later)
   function stopsList() {   // every driver in the order as it stands: the place, the colour, the code, the stops, the sets run
     const o = race.order && race.order.length ? race.order : race.cars;
     return '<ol class="ps-l">' + o.map((c, i) => { const n = tw.stops.get(c) || 0, s = tw.sets.get(c), h = s ? s.h : [];
@@ -3457,17 +3442,19 @@
       return `<li class="${c === race.player ? 'me' : ''}${c.inPit ? ' pit' : ''}"><b>${i + 1}</b><i style="background:${hexCss(c.color)}"></i><span>${esc(twCode(c))}</span><em>${n}</em><u>${sets}</u></li>`; }).join('') + '</ol>';
   }
   function pauseInfo() {
-    const el = $('pause-info'), P = race && race.player, on = !!P && phase === 'racing' && !P.finished && !track.open;
-    const f = on ? race.forecast(P) : null, sp = on && !!tw && !!track.def.pit && !(mp && mp.race);
-    if (!f && !sp) { el.classList.add('off'); el.className = 'pause-info off'; $('s-pause').classList.remove('pi'); piInfo = null; return; }
-    if (piTab === 'fc' && !f) piTab = 'st'; else if (piTab === 'st' && !sp) piTab = 'fc';
-    const b = f ? fcBand(f, P) : null, tabs = el.querySelectorAll('.pi-tab');
-    tabs[0].classList.toggle('off', !f); tabs[1].classList.toggle('off', !sp);
-    tabs.forEach(t => { const a = t.dataset.v === piTab; t.classList.toggle('on', a); t.setAttribute('aria-selected', a ? 'true' : 'false'); });
-    el.querySelector('.pi-big').textContent = piTab === 'fc' && b ? b.big : '';
-    el.querySelector('.pi-fc').innerHTML = b ? b.html : ''; el.querySelector('.pi-st').innerHTML = sp ? stopsList() : '';
-    el.className = 'pause-info ' + piTab + (f && sp ? ' two' : ''); $('s-pause').classList.add('pi');
-    piInfo = { tab: piTab, fc: b && { k: b.k, big: b.big, B: b.B, XR: b.XR, XM: b.XM, XP: b.XP }, st: sp };
+    const el = $('pause-info'), wx = $('pause-wx'), P = race && race.player, on = !!P && phase === 'racing' && !P.finished && !track.open;
+    const f = on ? race.forecast(P) : null, sp = on && !!tw && !!track.def.pit && !(mp && mp.race), w = f ? wxRow(f, P) : null;
+    if (w) {
+      wx.querySelector('.pw-row').innerHTML = w.laps.map(([L, k]) => `<div class="pw-c${L === w.B ? ' pit' : ''}" data-k="${k}">${pwIcon(k)}${L === w.B ? '<i>P</i>' : ''}<b>${tr('Krog {0}', L)}</b></div>`).join('');
+      wx.querySelector('.pw-more').textContent = tr('Povleci za vseh {0} krogov →', w.laps.length);
+      wx.querySelector('.pw-tip').innerHTML = w.B != null ? `<p class="pf-tip"><i>P</i><span>${tr(f.k === 'rain' ? 'Gume za dež: v boks na koncu {0}.' : 'Gume za suho: v boks na koncu {0}.', `<b>${tr('{0}. kroga', w.B)}</b>`)}</span></p>` : '';
+      wx.setAttribute('aria-label', w.big); wx.querySelector('.pw-row').scrollLeft = 0;
+    } else { wx.querySelector('.pw-row').innerHTML = ''; wx.querySelector('.pw-tip').innerHTML = ''; }
+    wx.classList.toggle('off', !w); wx.classList.remove('long');
+    el.classList.toggle('off', !sp); el.querySelector('.pi-st').innerHTML = sp ? stopsList() : '';
+    $('s-pause').classList.toggle('pi', !!(w || sp)); $('s-pause').classList.toggle('wx', !!w);   // (wx: the weather's row over the buttons, CSS: upright the buttons two to a row on a taller phone too)
+    piInfo = w || sp ? { wx: w && { k: w.k, big: w.big, B: w.B, laps: w.laps.map(e => e.slice()), long: false }, st: sp } : null;
+    if (w) pwFit();
   }
   let piInfo = null;
   // an endurance race: the time of day with the leader's progress, from the afternoon (0) to the night (1, at about nine tenths of the race):
@@ -5629,7 +5616,7 @@
       case 'net-ch-del': chDel(+(el && el.dataset.i)); break;
       case 'net-ch-new': chNew(); break;
       case 'to-settings': settingsReturn = screen; showScreen('settings'); refreshSegs(); break;
-      case 'settings-done': showScreen(settingsReturn === 'settings' ? 'title' : settingsReturn); if (settingsReturn === 'car') buildCarScreen(); if (settingsReturn === 'pause' && race) { stratInfo(); pauseInfo(); } break;   // (back in the pause: its texts in the language chosen)
+      case 'settings-done': showScreen(settingsReturn === 'settings' ? 'title' : settingsReturn); if (settingsReturn === 'car') buildCarScreen(); if (settingsReturn === 'pause' && race) { stratInfo(); pauseInfo(); pwFit(); } break;   // (back in the pause: its texts in the language chosen)
       case 'to-ctrl': ctlTab = Input.padList().length ? 'pad' : 'keys'; ctlWait = null; showScreen('ctrl'); ctlBuild(); break;
       case 'ctrl-tab': ctlTab = el.dataset.v === 'pad' ? 'pad' : 'keys'; ctlWait = null; Input.captureKey(null); ctlBuild(); break;
       case 'ctrl-done': ctlWait = null; Input.captureKey(null); showScreen('settings'); refreshSegs(); break;
@@ -5709,7 +5696,6 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
-      case 'pi-tab': if (el && el.dataset.v && el.dataset.v !== piTab) { piTab = el.dataset.v; Sfx.click(); pauseInfo(); } break;   // (the pause's race box: the weather or the stops)
       case 'over-again': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else newRace(); break;   // (KONEC IGRE: the same race again, a championship's round too)
       case 'over-res': finishRace(); break;
       case 'restart': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)

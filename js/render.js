@@ -9034,17 +9034,23 @@ const Render = (function () {
      state, c.rpPit with its clock tNow, game.js rpPit). Its times from game.js: pitApT the takeover at the way in (the custom stop's panel
      opens), pitCfT POTRDI, pitBoxT the car standing at its box. From the takeover the camera behind the car pulls back ever more slowly: the
      same view scaled about the car (the car where it was on the screen, only smaller) to PC.pull more of the distance, critically damped
-     (τ PC.tau: half the way in ~1.9 s, 90 % in ~4.3 s). On POTRDI (not confirmed: at the box) it swings in PC.sw s (smootherstep) round
-     the car on the pit wall's side down to the side view: PC.ahead m ahead of the car, out towards the pit wall as far as its rail less
-     PC.wall m allows (at most PC.out m from the car), PC.hT m up, looking at the car; as the car brakes into its box (its last ~28 m) level
-     with it, PC.out m out, PC.hB m up, there nearly still (a drift of 3 cm/s at most). Out of the box low beside the car, 2 m behind it,
-     then it rises with the way out (smoothstep of the way to the hand-back's place, never down) to the camera behind the car, where it is
+     (τ PC.tau: half the way in ~1.9 s, 90 % in ~4.3 s; after 6 s on by PC.creep a second). On POTRDI (not confirmed: as the car brakes into
+     its box) it swings in PC.sw s (smootherstep) round the car on the pit wall's side, never past its side, down to the side view (2B):
+     PC.side m behind the car (in a narrow lane further, PC.dmin m from it), out towards the pit wall as far as its rail less PC.wall m
+     allows (at most PC.out m from the car), PC.hT m up,
+     looking sideways-forward at the car; over the last ~25 m (P2B) it looks between the car and its box, the crew waiting there in the
+     picture with the car (from further behind where the lens is too narrow for both: pcFit); as the car stops level with it again, PC.out m
+     out, PC.hB m up, and from the car braking into its box on a slow orbit round it, PC.orb a second from square to it towards behind it
+     (3A, one way). The user's rules over all of it: it never looks back against the car's way (its heading: the side view turned on round
+     the car as it heads out towards the pit wall, psi; the point it looks at carried on where it still would) and it never stands still.
+     Out of the box low beside the car, 2 m behind it, then it rises with the way out (smoothstep of the way to the hand-back's place, never
+     down) to the camera behind the car, where it is
      exactly at the hand-back (VOZIŠ TI!: game.js pitNear). Out of the box always in the lane, PC.wall m or more from the pit wall's rail
      (2B; in the swing too while it is low). Over the replay's TV cameras: cut in where the side view begins, cut out at the hand-back
      (a view behind the car of its own to rise to). w (Render.pitCam): how much of the side view (0: behind the car, pulled back or not; 1:
      the side view; over the TV cameras 1 while it has the view); a stop broken off (the race over, a rescue) fades back in 0.6 s ---------------- */
   const pcam = { w: 0, kM: 0, last: null, T: null, bd: null, sx: null, snap: false, dbg: null };
-  const PC = { pull: 0.75, tau: 1.1, sw: 2, ahead: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [0, 4], back: 2, jack: 2.2 }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  const PC = { pull: 0.75, tau: 1.1, creep: 0.003, sw: 2, side: 2, dmin: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [0, 4], back: 2, jack: 2.2, orb: Math.PI / 180, psi0: 2 * Math.PI / 180, look: [-36, -25], fitM: 0.055, keep: Math.tan(2 * Math.PI / 180) }, PC_TAN = Math.tan(25 * Math.PI / 180);
   const smoother = (u) => u <= 0 ? 0 : u >= 1 ? 1 : u * u * u * (u * (u * 6 - 15) + 10);
   const _la = [0, 0, 0, 0], _lb = [0, 0, 0, 0];
   function laneAt(T, s, sd, o) {   // the lane's frame at s (between the track's samples): [x, z, the pit side's normal x, z]
@@ -9053,6 +9059,22 @@ const Render = (function () {
   }
   function pcLim(T, s, i, sd) { const p = T.pitAt(s); return (p ? Math.max(p.wall, p.inner) : (sd > 0 ? T.br[i] : T.bl[i]) + 0.25) + PC.wall; }   // (the camera's least offset at s: the pit wall's rail and PC.wall m)
   function pitOn(c) { const ps = c.rpPit || c; return !!(ps.pitAP && ps.inPit); }
+  // P2B: the points the camera keeps in the picture over the last ~25 m before the box (and at it), in the lane's frame at the car (m along
+  // it, m in from the car towards the garages): the car's corners, and its crew's places round its box d m ahead and B m further in (the
+  // jacks' men PC.jack m past the nose and the tail, the wheel men by the hubs). pcFit: the least distance behind the car (m, at most 30)
+  // from which they take up no more across than the lens (lens(the distance to the car)) less mg either side, G m out
+  const _pf = new Float64Array(20);
+  function pcPts(Dm, d, B) {
+    const P = _pf, tl = Dm ? -Dm.tail : 2.3, nl = Dm ? Dm.nose : 2.3, w = Dm ? Dm.wid / 2 : 0.95, hf = Dm ? Dm.fx : 1.4, hr = Dm ? Dm.rx : -1.4, hw = (Dm ? Dm.hw : 0.8) + 0.9;
+    P.set([-tl, -w, -tl, w, nl, -w, nl, w, d - tl - PC.jack, B, d + nl + PC.jack, B, d + hf, B - hw, d + hr, B - hw, d + hf, B + hw, d + hr, B + hw]); return P;
+  }
+  function pcFit(G, P, lens, mg) {
+    const ok = (a) => { let lo = 9, hi = -9; for (let j = 0; j < 20; j += 2) { const t = Math.atan2(G + P[j + 1], a + P[j]); if (t < lo) lo = t; if (t > hi) hi = t; }
+      return hi - lo <= 2 * (Math.atan(Math.tan(lens(Math.hypot(a, G)) * Math.PI / 360) * camera.aspect) - mg) + 1e-4; };
+    if (ok(0)) return 0; let lo = 0, hi = 30; if (!ok(hi)) return hi;
+    for (let n = 0; n < 16; n++) { const m = (lo + hi) / 2; if (ok(m)) hi = m; else lo = m; }
+    return hi;
+  }
   function pitCine(c, dt, px, py, pz, tx, ty, tz, fov0, tv, cx, cz, by) {
     const ps = c.rpPit || c, T = curRace && curRace.track, D = T && T.def.pit, snap = pcam.snap; pcam.snap = false;
     const bd = ps.pitAP && ps.inPit && D && curRace._boxD && c.q ? curRace._boxD(c) : null;
@@ -9073,27 +9095,52 @@ const Render = (function () {
       if (!snap) k = Math.max(k, pcam.kM);
     }
     pcam.kM = k;
-    // the side view (low beside the car): the way to the box, at the box, the way out
+    // the side view (low beside the car): the way to the box, at the box, the way out. Never ahead of the car's side (rule 1, the user): φ,
+    // its angle round the car behind the car's side, from where it sits behind the car (a m behind, outD m out), the orbit at the box (po:
+    // PC.orb a second from the car braking into its box, on through the stop and out of it: never still, rule 2) and the car's own turn out
+    // towards the pit wall (psi, its heading against the lane): always behind the side of the car's way, looking sideways-forward
     const tS = ps.pitCfT != null ? ps.pitCfT : ps.pitBoxT != null ? ps.pitBoxT : null, side = tS != null || ps.pitState === 'repair' || !!ps.pitDone;
-    const ts = tS != null ? Math.max(0, now - tS) : 0, dr = 0.16 * Math.sin(ts * 0.19);   // (the drift: at most 3 cm/s along the lane)
-    let along, outD, h, qa, lb;   // (lb: how much of the box's lens)
-    if (out) { const e = sstep(0, 12, x); lb = 1 - sstep(0, 30, x); along = -PC.back * e + dr * (1 - e); outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; }   // (on its side it looks a little ahead of the car; upright at it, the box's wider lens a while longer: the whole car in the picture)
-    else { const b = ps.pitState === 'repair' || ps.pitDone ? 1 : sstep(-28, -1, x); lb = b; along = PC.ahead * (1 - b) + dr; outD = PC.out[o]; h = lerp(PC.hT[o], PC.hB[o], b); qa = 0; }
-    const sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lc = laneAt(T, c.q.s, sd, _lb), lim = pcLim(T, sC, T.idx(sC), sd), oC = Math.max(lim, off - outD);
-    const ox = cx - (lc[0] + lc[2] * off), oz = cz - (lc[1] + lc[3] * off);   // (the car off its lane point: its own place, drawn)
-    let Lp = [la[0] + la[2] * oC + ox, y + h, la[1] + la[3] * oC + oz], Lq;
-    { const lq = laneAt(T, c.q.s + qa, sd, _la); Lq = [lq[0] + lq[2] * off + ox, y + PC.q[o], lq[1] + lq[3] * off + oz]; }
+    const ts = tS != null ? Math.max(0, now - tS) : 0, po = ps.pitBoxT != null ? PC.orb * Math.max(0, now - ps.pitBoxT) : 0;
+    const lc = laneAt(T, c.q.s, sd, _lb), ln = Math.hypot(lc[2], lc[3]) || 1, lnx = lc[2] / ln, lnz = lc[3] / ln, lts = lnz * fx - lnx * fz < 0 ? -1 : 1;   // (the lane's frame at the car, between the track's samples: towards the garages, and along: a tight bend's samples a few degrees apart)
+    const hx = Math.cos(c.h || 0), hz = Math.sin(c.h || 0), psi = Math.max(0, Math.atan2(-(hx * lnx + hz * lnz), (hx * lnz - hz * lnx) * lts) - PC.psi0);   // (psi: its turn out past PC.psi0, a lane's own small swerves left out)
+    let a, outD, h, qa, lb, beta;   // (lb: how much of the box's lens; beta: how far the look turns from the car to the middle of the car and its box, P2B)
+    if (out) { const e = sstep(0, 12, x); lb = 1 - sstep(0, 30, x); a = PC.back * e; outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; beta = 1 - sstep(0, 6, x); }   // (on its side it looks a little ahead of the car; upright at it, the box's wider lens a while longer: the whole car in the picture)
+    else { const b = ps.pitState === 'repair' || ps.pitDone ? 1 : sstep(-28, -1, x); lb = b; a = 1 - b; outD = PC.out[o]; h = lerp(PC.hT[o], PC.hB[o], b); qa = 0; beta = sstep(PC.look[0], PC.look[1], x); }   // (a: for now how much of the side view's place behind the car)
     // its lens: 50°, upright as wide as that across (at most 80° high); at the box upright wide enough across for the car and the crew round it
     // (the jacks' men PC.jack m past its nose and tail) from where it is (at most 90° high)
     const fF = clamp(2 * Math.atan(PC_TAN / Math.min(1, camera.aspect)) * 180 / Math.PI, 50, 80), Dm = crew && crew.P === c && crew.dim, half = (Dm ? Math.max(Dm.nose, -Dm.tail) : 2.3) + PC.jack;
-    const fB = camera.aspect < 1 ? clamp(2 * Math.atan(half / Math.max(1, Math.hypot(Lp[0] - cx, Lp[2] - cz)) / camera.aspect) * 180 / Math.PI, fF, 90) : fF, fL = fF + (fB - fF) * lb;
+    const lens = (dC) => fF + ((camera.aspect < 1 ? clamp(2 * Math.atan(half / Math.max(1, dC) / camera.aspect) * 180 / Math.PI, fF, 90) : fF) - fF) * lb;
+    // P2B: over the last ~25 m the car and its box (the crew waiting round it) both in the picture: from further behind the car where the lens
+    // is too narrow for both from its side (pcFit), looking at the middle of them
+    // (the box's place: fixed until the car stands in it, then with the car as it stood there, pcam.sr, which leaves it: so the look turns with the car)
+    const bp = pcam.bpT === T && pcam.bpD === bd ? pcam.bp : (pcam.bpT = T, pcam.bpD = bd, pcam.sr = null, pcam.bp = T.bayPose(bd));
+    let d = Math.max(0, -x), B = bp ? bp.o - off : 0; if (ps.pitState === 'repair') pcam.sr = [d, B]; else if (ps.pitDone && pcam.sr) { d = pcam.sr[0]; B = pcam.sr[1]; } else if (!ps.pitDone) pcam.sr = null;
+    const lat = (sq) => Math.max(1, Math.min(outD, off - pcLim(T, sq, T.idx(sq), sd)));   // (how far out it may go at sq: outD, or the pit wall's rail less PC.wall)
+    let G0 = lat(c.q.s - (out ? a : PC.side));
+    if (!out) { let ab = PC.side; for (let n = 0; n < 3; n++) { ab = Math.max(PC.side, Math.sqrt(Math.max(0, PC.dmin * PC.dmin - G0 * G0))); G0 = lat(c.q.s - ab); } a *= ab; }   // (the side view PC.side m behind the car, further where the lane is narrow: PC.dmin m from it, the whole car in the picture; the rail where that is)
+    const pts = beta > 0 && bp ? pcPts(Dm, d, B) : null;
+    if (pts) { a = Math.max(a, beta * (1 - sstep(-4, -0.5, x)) * pcFit(G0, pts, lens, PC.fitM * (1 - sstep(-6, -0.5, x)))); G0 = lat(c.q.s - a); }   // (square to the car again as it stops: the box's lens is the crew's, no room to spare)
+    let phi = Math.atan2(a, G0) + po + psi, rr = Math.hypot(a, G0); G0 = lat(c.q.s - rr * Math.sin(phi)); phi = Math.atan2(a, G0) + po + psi; rr = Math.hypot(a, G0);   // (the rail where the camera is)
+    const along = -rr * Math.sin(phi), sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lim = pcLim(T, sC, T.idx(sC), sd), oC = Math.max(lim, off - rr * Math.cos(phi));
+    const ox = cx - (lc[0] + lc[2] * off), oz = cz - (lc[1] + lc[3] * off);   // (the car off its lane point: its own place, drawn)
+    let Lp = [la[0] + la[2] * oC + ox, y + h, la[1] + la[3] * oC + oz], Lq;
+    { const lq = laneAt(T, c.q.s + qa, sd, _la); Lq = [lq[0] + lq[2] * off + ox, y + PC.q[o], lq[1] + lq[3] * off + oz]; }
+    if (pts) {   // (the look turned towards the middle of the angles those points take from here: the car's corners by its heading, the crew's places round the box's middle along the lane there)
+      let lo = 9, hi = -9; const bm = laneAt(T, c.q.s + d, sd, _lb), ib = T.idx(c.q.s + d), btx = T.tx[ib], btz = T.tz[ib], bX = bm[0] + bm[2] * (off + B) + ox, bZ = bm[1] + bm[3] * (off + B) + oz;
+      for (let j = 0; j < 20; j += 2) { let X, Z; if (j < 8) { X = cx + hx * pts[j] - hz * pts[j + 1]; Z = cz + hz * pts[j] + hx * pts[j + 1]; } else { const u = pts[j] - d, v = pts[j + 1] - B; X = bX + btx * u + bm[2] * v; Z = bZ + btz * u + bm[3] * v; }
+        const ux = X - Lp[0], uz = Z - Lp[2], A = Math.atan2(ux * gx + uz * gz, ux * fx + uz * fz); if (A < lo) lo = A; if (A > hi) hi = A; }
+      const q0 = Math.atan2((Lq[0] - Lp[0]) * gx + (Lq[2] - Lp[2]) * gz, (Lq[0] - Lp[0]) * fx + (Lq[2] - Lp[2]) * fz), th = q0 + ((lo + hi) / 2 - q0) * beta, dq = Math.hypot(Lq[0] - Lp[0], Lq[2] - Lp[2]);
+      Lq = [Lp[0] + (fx * Math.cos(th) + gx * Math.sin(th)) * dq, Lq[1], Lp[2] + (fz * Math.cos(th) + gz * Math.sin(th)) * dq];
+    }
+    const fL = lens(Math.hypot(Lp[0] - cx, Lp[2] - cz));
     // the side view and the way out: low beside the car up to the view behind it (k)
     const S = [Lp[0] + (px - Lp[0]) * k, Lp[1] + (py - Lp[1]) * k, Lp[2] + (pz - Lp[2]) * k, Lq[0] + (tx - Lq[0]) * k, Lq[1] + (ty - Lq[1]) * k, Lq[2] + (tz - Lq[2]) * k, fL + (fov0 - fL) * k];
     let R, w, f = 1, s = 1;
     if (tv) { if (!side) { pcam.w = 0; pcam.last = null; pcam.dbg = { f: 1, s: 0, k, w: 0 }; return null; } R = S; w = 1; }   // (over a TV camera: cut in, the side view at once)
     else {
       // pulled back: the view behind the car scaled about the car on the ground (Kx, by, Kz) by f; less of it on the way out
-      const tp = ps.pitApT != null ? Math.max(0, now - ps.pitApT) : 99, u = tp / PC.tau; f = 1 + PC.pull * (1 - (1 + u) * Math.exp(-u)) * (1 - k);
+      const tp = ps.pitApT != null ? Math.max(0, now - ps.pitApT) : 99, u = tp / PC.tau, cr = ps.pitApT == null || tp < 6 ? 0 : tp < 8 ? (tp - 6) * (tp - 6) / 4 : tp - 7;   // (cr: after 6 s on, ever so slowly, never still: the car held up in the lane, rule 2)
+      f = 1 + (PC.pull * (1 - (1 + u) * Math.exp(-u)) + PC.creep * cr) * (1 - k);
       const B = [cx + (px - cx) * f, by + (py - by) * f, cz + (pz - cz) * f, cx + (tx - cx) * f, by + (ty - by) * f, cz + (tz - cz) * f, fov0];
       s = side ? (tS != null ? smoother(ts / PC.sw) : 1) : 0;
       if (s <= 0) R = B; else if (s >= 1) R = S;
@@ -9112,8 +9159,11 @@ const Render = (function () {
       if (p && !p.gap) { const lim = Math.max(p.wall, p.inner) + PC.wall, d = q.d * sd; if (d < lim) { const n = laneAt(T, q.s, sd, _la); R[0] += n[2] * (lim - d); R[2] += n[3] * (lim - d); } }
     }
     if (world && world.groundH) { const gH = world.groundH(R[0], R[2]); if (Number.isFinite(gH) && R[1] < gH + 0.6) R[1] = gH + 0.6; }
+    // rule 1: never looking back against the car's way (its heading), in no phase: where it would (less than 2° forward of square to it, a
+    // tight turn into or out of the lane) the point it looks at is carried on along the heading as far as that needs (the camera stays put)
+    { const vx = R[3] - R[0], vz = R[5] - R[2], gp = PC.keep * Math.abs(vx * hz - vz * hx) - (vx * hx + vz * hz); if (gp > 0) { R[3] += hx * gp; R[5] += hz * gp; } }
     pcam.w = w; pcam.last = [R[0] - c.x, R[1] - y, R[2] - c.z, R[3] - c.x, R[4] - y, R[5] - c.z, R[6]];
-    pcam.dbg = { f, s, k, w, side, base: [px, py, pz, tx, ty, tz], car: [cx, by, cz], low: { along: +(sC - c.q.s).toFixed(3), off: oC - off, lim: lim - off, outD } };   // (low: the side view's place against the car: along the lane, its offset and the rail's limit from the car's, how far out it may go)
+    pcam.dbg = { f, s, k, w, side, base: [px, py, pz, tx, ty, tz], car: [cx, by, cz], low: { along: +(sC - c.q.s).toFixed(3), off: oC - off, lim: lim - off, outD, a, phi, po, psi, beta } };   // (low: the side view's place against the car: along the lane, its offset and the rail's limit from the car's, how far out it may go; a, phi: behind the car, its angle behind the car's side; po: the orbit's part; psi: the car's turn out; beta: the look towards the box)
     return [R[0], R[1], R[2], R[3], R[4], R[5], R[6], w, near0(w)];
   }
   function near0(w) { return 4 + (0.5 - 4) * clamp(w, 0, 1); }   // (the near plane: the camera behind the car's 4 m, the side view's 0.5 m)

@@ -1002,24 +1002,27 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .on-ch-tracks .btn.mini { padding: 0 7px; min-height: 0; line-height: 1.5; margin-left: 6px; }
 .ch-tab td small { opacity: .8; }
 .pause-strat { margin: 12px 2px 0; font: 600 13px/1.4 var(--f-ui); color: var(--chalk); opacity: .9; }   /* the strategy as it stands (fuel, tyres, a stop now) */
-/* the pause's race box (game.js pauseInfo): the weather to the finish and every driver's stops, on two tabs over one place. With it the
-   pause's buttons 40 px tall; upright on a short phone the six in the middle two to a row; on its side the panel wide, the buttons left and
-   the box, the strategy and Gume v boksih right */
+/* the pause (game.js pauseInfo): above its buttons the weather lap by lap (4B: an icon and »Krog N« for every lap after the one under way,
+   no box; more than fit and it swipes sideways, pwFit), under them the race box with every driver's stops. With either the pause's buttons
+   40 px tall; upright on a short phone the six in the middle two to a row; on its side the panel wide: the title, the weather and the
+   buttons left (.pause-l), the box, the strategy and Gume v boksih right (.pause-r) */
+.pause-wx { margin: 0 0 10px; }
+.pause-wx.off { display: none; }
+.pw-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.pw-row { display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+.pw-row::-webkit-scrollbar { display: none; }
+.pw-c { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.pause-wx.long .pw-c { flex: 0 0 var(--pwc, 50px); }
+.pw-c svg { display: block; width: 44px; height: 40px; overflow: visible; }
+.pw-c > b { font: 700 italic 12px/1.15 var(--f-ui); color: #fff; white-space: nowrap; }
+.pw-c > i { position: absolute; top: 0; left: calc(50% + 12px); width: 15px; height: 15px; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 4px; background: #2f6fe0; color: #fff; font: 700 normal 9.5px/12px var(--f-ui); text-align: center; }   /* (the lap whose end the stop for the other tyres is at) */
+.pw-more { display: none; margin: 1px 0 0; font: 600 11.5px/1.3 var(--f-ui); color: rgba(255, 255, 255, .65); }
+.pause-wx.long .pw-more { display: block; }
+.pw-tip .pf-tip { margin-top: 3px; }
 .pause-info { margin: 12px 0 0; padding: 7px 9px 8px; border-radius: 12px; background: rgba(8, 11, 16, .58); border: 1px solid rgba(255, 255, 255, .1); }
 .pause-info.off { display: none; }
-.pi-hd { display: flex; align-items: center; gap: 12px; min-width: 0; margin-bottom: 3px; }
-.pi-tab { flex: none; margin: 0; padding: 6px 0 5px; border: 0; background: none; font: 700 11px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: #9fb0c3; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.pi-tab.off { display: none; }
-.pause-info:not(.two) .pi-tab { pointer-events: none; cursor: default; }
-.pause-info.two .pi-tab { min-height: 28px; }
-.pause-info.two .pi-tab.on { color: #fff; box-shadow: inset 0 -2px #ffc629; }
-.pi-tab:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
-.pi-big { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 italic 17px/1.1 var(--f-ui); color: #ffc629; }
-.pause-info.two .pi-hd { flex-wrap: wrap; row-gap: 1px; }
-.pause-info.two .pi-big { flex-basis: 100%; margin-left: 0; font-size: 16px; }   /* (two tabs: the forecast's words under them) */
-.pause-info.st .pi-big { display: none; }
-.pause-info.fc .pi-st, .pause-info.st .pi-fc { display: none; }
-.pf-tl { display: block; width: 100%; height: auto; font-family: var(--f-ui); }
+.pi-hd { display: flex; align-items: center; min-width: 0; margin-bottom: 3px; }
+.pi-tab { flex: none; padding: 6px 0 5px; font: 700 11px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: #fff; box-shadow: inset 0 -2px #ffc629; }
 .pf-tip { display: flex; align-items: center; gap: 6px; margin: 3px 0 0; font: 600 12.5px/1.25 var(--f-ui); color: var(--chalk); }
 .pf-tip i { flex: none; width: 16px; height: 16px; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 4px; background: #2f6fe0; color: #fff; font: 700 normal 10px/13px var(--f-ui); text-align: center; }
 .pf-tip b { color: #ffc629; }
@@ -1029,11 +1032,12 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 @keyframes pfRot { to { transform: rotate(45deg); } }
 .pf-glow { animation: pfGlow 3s ease-in-out infinite; }
 @keyframes pfGlow { 0%, 100% { opacity: .55; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.1); } }
-.pf-drift { animation: pfDrift 6s linear infinite; }
-@keyframes pfDrift { to { transform: translateX(-120px); } }
+.pf-drift { animation: pfDrift 6s ease-in-out infinite; }
+@keyframes pfDrift { 0%, 100% { transform: translateX(-1.5px); } 50% { transform: translateX(1.5px); } }
 .pf-fall { animation: pfFall .75s linear infinite; }
-@keyframes pfFall { to { transform: translateY(40px); } }
-@media (prefers-reduced-motion: reduce) { .pause-info .pf-rot, .pause-info .pf-glow, .pause-info .pf-drift, .pause-info .pf-fall { animation: none; } }
+.pf-fall.pf-f2 { animation-delay: -.375s; }
+@keyframes pfFall { 0% { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(5px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pause-wx .pf-rot, .pause-wx .pf-glow, .pause-wx .pf-drift, .pause-wx .pf-fall { animation: none; } .pause-wx .pf-f2 { display: none; } }
 /* every driver's stops: the order in two columns down (the place, the colour, the code, the stops, the sets: a chip each, the last four) */
 .ps-l { list-style: none; margin: 3px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(11, auto); grid-auto-flow: column; column-gap: 8px; row-gap: 0; font: 600 11px/1.35 var(--f-ui); color: var(--chalk); }
 .ps-l li { display: flex; align-items: center; gap: 3px; min-width: 0; padding: 0 3px; border-radius: 4px; }
@@ -1055,20 +1059,63 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
   #s-pause.pi .btns .btn { padding-left: 12px; padding-right: 8px; white-space: nowrap; font-size: clamp(13px, 4.2vw, 16px); }
   #s-pause.pi .btns .btn.primary, #s-pause.pi .btns .btn.ghost { grid-column: 1 / -1; }
   #s-pause.pi .panel h2 { margin-bottom: 4px; font-size: 28px; }
+  #s-pause.pi .pause-wx { margin-bottom: 8px; }
   #s-pause.pi .pause-info { margin-top: 8px; }
   #s-pause.pi .pause-strat { margin-top: 6px; font-size: 12px; line-height: 1.35; }
   #s-pause.pi .pit-row { margin-top: 6px; }
 }
+@media (orientation: portrait) and (max-height: 940px) {   /* (the same with the weather's row over the buttons: up to a tall phone) */
+  #s-pause.pi.wx .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  #s-pause.pi.wx .btns .btn { padding-left: 12px; padding-right: 8px; white-space: nowrap; font-size: clamp(13px, 4.2vw, 16px); }
+  #s-pause.pi.wx .btns .btn.primary, #s-pause.pi.wx .btns .btn.ghost { grid-column: 1 / -1; }
+  #s-pause.pi.wx .panel h2 { margin-bottom: 4px; font-size: 28px; }
+  #s-pause.pi.wx .pause-wx { margin-bottom: 8px; }
+  #s-pause.pi.wx .pause-info { margin-top: 8px; }
+  #s-pause.pi.wx .pause-strat { margin-top: 6px; font-size: 12px; line-height: 1.35; }
+  #s-pause.pi.wx .pit-row { margin-top: 6px; }
+}
+/* the weather's row on a short screen (upright up to 700 px, on its side): its icons smaller and the rest closer, so all of it fits (360 × 640, 640 × 360) */
+@media (orientation: portrait) and (max-height: 700px), (orientation: landscape) and (max-height: 500px) {
+  .pause-wx .pw-c svg { width: 34px; height: 31px; }
+  .pause-wx .pw-c > b { font-size: 11px; }
+  .pause-wx .pw-c > i { left: calc(50% + 8px); }
+  .pause-wx .pw-more { font-size: 10.5px; }
+  .pause-wx .pf-tip { margin-top: 2px; font-size: 11px; }
+  #s-pause.pi.wx .pause-wx { margin-bottom: 4px; }
+  #s-pause.pi.wx .panel h2 { margin-bottom: 2px; font-size: 24px; }
+}
+@media (orientation: portrait) and (max-height: 700px) {
+  #s-pause.pi.wx .small-panel { padding-top: 10px; padding-bottom: 10px; }
+  #s-pause.pi.wx .btns { margin-top: 6px; gap: 6px; }
+  #s-pause.pi.wx .pause-info { margin-top: 6px; padding: 5px 8px 6px; }
+  #s-pause.pi.wx .pi-tab { padding: 4px 0; }
+  #s-pause.pi.wx .ps-l { font-size: 10.5px; line-height: 1.2; }
+  #s-pause.pi.wx .pause-strat { margin-top: 4px; font-size: 11.5px; line-height: 1.3; }
+  #s-pause.pi.wx .ps-l { line-height: 1.15; }
+  #s-pause.pi.wx .pit-row { margin: 4px 0 0; flex-wrap: nowrap; gap: 6px; }   /* (Gume v boksih beside its buttons, the words in two lines if need be) */
+  #s-pause.pi.wx .pit-row .rlbl { flex: 0 1 auto; min-width: 0; font-size: 12px; line-height: 1.15; }
+  #s-pause.pi.wx .pit-row .seg { flex: none; }
+  #s-pause.pi.wx .pit-row .seg button { min-height: 34px; padding-left: 7px; padding-right: 7px; }
+}
 @media (orientation: landscape) and (max-height: 500px) {
-  #s-pause.pi .small-panel { width: min(880px, 96vw); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-auto-rows: min-content; column-gap: 14px; align-items: start; }
-  #s-pause.pi .small-panel > h2 { grid-column: 1; grid-row: 1; }
-  #s-pause.pi .small-panel > .btns { grid-column: 1; grid-row: 2 / span 4; margin-top: 4px; }
-  #s-pause.pi .pause-info { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
-  #s-pause.pi .pause-strat { grid-column: 2; grid-row: 3; margin-top: 8px; font-size: 12px; }
-  #s-pause.pi .pit-row { grid-column: 2; grid-row: 4; margin-top: 8px; }
+  #s-pause.pi .small-panel { width: min(880px, 96vw); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: 14px; align-items: start; }
+  #s-pause.pi .pause-l { grid-column: 1; min-width: 0; }
+  #s-pause.pi .pause-r { grid-column: 2; min-width: 0; }
+  #s-pause.pi .pause-l > h2 { margin-bottom: 4px; }
+  #s-pause.pi .pause-wx { margin-bottom: 6px; }
+  #s-pause.pi .pause-l > .btns { margin-top: 4px; }
+  #s-pause.pi .pause-info { margin-top: 0; }
+  #s-pause.pi .pause-strat { margin-top: 8px; font-size: 12px; }
+  #s-pause.pi .pit-row { margin-top: 8px; }
   #s-pause.pi .pit-row .seg button { padding-left: 6px; padding-right: 6px; }
   .pf-tip { font-size: 11px; }
   .ps-l { font-size: 10.5px; line-height: 1.28; }
+  #s-pause.pi.wx .small-panel { padding-top: 6px; padding-bottom: 6px; }
+  #s-pause.pi.wx .pause-l > h2 { font-size: 22px; }
+  #s-pause.pi.wx .pause-l > .btns { margin-top: 2px; gap: 4px; }
+  #s-pause.pi.wx .ps-l { line-height: 1.2; }
+  #s-pause.pi.wx .pause-strat { margin-top: 6px; font-size: 11.5px; line-height: 1.3; }
+  #s-pause.pi.wx .pit-row { margin-top: 6px; margin-bottom: 0; }
 }
 .wx-row .seg button, .pit-row .seg button, .seg.nw button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }

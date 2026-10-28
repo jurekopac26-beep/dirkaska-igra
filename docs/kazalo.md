@@ -56,7 +56,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **dirka** `race lifecycle` (`pause`, `resume`, start, konec), `per-step race logic`, `phases`
 - **HUD** `HUD`, `time trial HUD`, `the timing tower`, uničen avto, `the wheel rule`
 - **odprta cesta** (Vršič: promet, policija) `the open road`, `the police radio`
-- **boksi** `pit stops`, radio ekipe `the team radio`; postanek po meri `the custom stop` (`stopOpen`, `stopDecide`: časi za kamero boksov `pitApT`, `pitCfT`, `pitBoxT`), gumbi za vožnjo v boksih `pitBtnVis` (101), tekmec iz boksov pred tabo `pitOutStep` (100, tablica `#h-fight` z `pitFightHUD`); okno dirke v pavzi `pauseInfo` (vreme do cilja `fcBand`, postanki `stopsList`; 91, 78)
+- **boksi** `pit stops`, radio ekipe `the team radio`; postanek po meri `the custom stop` (`stopOpen`, `stopDecide`: časi za kamero boksov `pitApT`, `pitCfT`, `pitBoxT`), gumbi za vožnjo v boksih `pitBtnVis` (101), tekmec iz boksov pred tabo `pitOutStep` (100, tablica `#h-fight` z `pitFightHUD`); pavza `pauseInfo` (vreme po krogih nad gumbi `wxRow`, ikone `pwIcon`, podrsanje `pwFit`; okno s postanki `stopsList`; 4B, 78), obvestila med pavzo `toastHold`, `toastBack` (P1A)
 - **sovoznik** `the co-driver`, **komentator** `commentator`
 - **kvalifikacije**, **kariera**, **prvenstvo**, **šola vožnje**, **Pikes Peak** (razredi, opozorila, medalje), **skoki** `jumps`
 - **internet** `a race with a friend over the internet`, `a championship over the internet`
@@ -95,7 +95,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 
 ## Teme v `js/render.js`
 
-Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil, `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (igralčeva garaža: vrata, stare gume `crewGarage`, `CR_DOOR`, `CR_STACK`; zastave ob garažah `crewFlags`; sledi gum pred garažami `crewMarks`; luč in modra zastava ob izvozu `crewExit`, `crewExitStep`, `EX_BLUE`; umazanija avta `dirtyCarMat`: `uDirt`, `uDirtW`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`** (za avtom `chaseStep`, `chasePose`; kamera v boksih `the pit stop's camera`: `pitCine`, številke `PC`, za teste `Render.pitCam`, `Render.pitCamInfo`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
+Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil, `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (igralčeva garaža: vrata, stare gume `crewGarage`, `CR_DOOR`, `CR_STACK`; zastave ob garažah `crewFlags`; sledi gum pred garažami `crewMarks`; luč in modra zastava ob izvozu `crewExit`, `crewExitStep`, `EX_BLUE`; umazanija avta `dirtyCarMat`: `uDirt`, `uDirtW`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`** (za avtom `chaseStep`, `chasePose`; kamera v boksih `the pit stop's camera`: `pitCine`, številke `PC`, zadnjih 25 m `pcPts`, `pcFit`, za teste `Render.pitCam`, `Render.pitCamInfo`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
 
 ## Proge in graditelji sveta
 
@@ -166,7 +166,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Garaža, sledi, izvoz, umazanija:** `pitkit.test.mjs` (garažna vrata, zastava, stare gume, sledi gum, luč in modra zastava ob izvozu, umazanija); obraba vsake gume `wear.test.js`, pike na HUD-u `hud.test.mjs`, `wear.test.mjs`; dež v postanku `pits.test.js`
 - **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 13 prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
-- **Pavza (vreme do cilja, postanki):** `pauseinfo.test.mjs`; **tekmec iz boksov pred tabo:** `pitout.test.mjs`
+- **Pavza (vreme po krogih nad gumbi, postanki, obvestila med pavzo):** `pauseinfo.test.mjs`; **tekmec iz boksov pred tabo:** `pitout.test.mjs`
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, `roll.test.js`, `knock.test.js`, testi prog `<id>.test.js`
