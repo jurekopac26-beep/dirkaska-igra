@@ -1,8 +1,9 @@
 // The Kolibri's tyres (Race opts.tyreRule; the game: the player's KOLIBRI, every track): each tyre its own wear and damage (Car.kt). The
 // wear: a clean run up a road ~0.24 whatever its length, a race on a circuit about 4 times the usual tyres' (worn: less grip), a slide and
-// a wheel off the road (grass, gravel: that wheel only) more. The damage only from knocks (damage Samo videz or Vklop): the corner's tyre
-// the most, the one beside it a little, the far one none; ~6 average knocks or 3 hard ones in one corner set it on fire (only one burns:
-// less side grip, the drive the same); the wear alone never does. A burning tyre's wheel comes off at the next real knock, the second
+// a wheel off the road (grass, gravel: that wheel only) more. The damage only from knocks (damage Samo videz or Vklop), only to be seen:
+// the corner's tyre the most, the one beside it a little, the far one none; knocks alone never set one on fire. One burns (only one: less
+// side grip, the drive the same) where the car caught fire before: its damage at 80 %, a hard hit from 70 %, the most knocked tyre; in a
+// race with the wheel rule only; the wear never does. A burning tyre's wheel comes off at the next real knock, the second
 // 1-4 s later (at once at a real knock, sooner sliding), a big knock takes two at once; two gone: the car stops, the game is over.
 // ZAMENJAJ KOLO (Race.changeWheel) puts a new one on. A pit stop: four new tyres, cold for a lap. Damage off: the wear only.
 //   node tests/kolibri-tyres.test.js
@@ -45,18 +46,25 @@ function until(r, fn, s, slide) {   // steps until fn() or s seconds; the player
   Q.kt.w = [1, 1, 1, 1]; Q.kt.d = [0, 0, 0, 0]; C.ktWear(Q, { track: J }, 5000);
   check('the wear alone never sets one on fire', Q.kt.hot === -1);
 }
-// 3. knocks: the corner's tyre, a little the one beside it, not the far one; 6 average or 3 hard ones set it on fire, a touch next to nothing
+// 3. knocks: the corner's tyre, a little the one beside it, not the far one, only to be seen; a tyre burns only where the car caught fire
+// before (its damage at 80 %, a hard hit from 70 %), a touch next to nothing
 {
   const { P, K } = setUp(); C.applyDamage(P, 0.01, FL[0], FL[1]);
   check('an average knock on the front left corner: that tyre ~1/6, the ones beside it a little, the far one nothing', K.d[0] > 0.14 && K.d[0] < 0.2 && K.d[1] > 0 && K.d[1] < 0.06 && K.d[2] > 0 && K.d[2] < 0.06 && K.d[3] === 0, f2(K.d));
-  for (let i = 0; i < 4; i++) C.applyDamage(P, 0.01, FL[0], FL[1]);
-  const at5 = K.hot; C.applyDamage(P, 0.01, FL[0], FL[1]);
-  check('about 6 average knocks in one corner: that tyre burns (only it)', at5 === -1 && K.hot === 0 && K.d[0] === 1, `${f2(K.d)} hot ${K.hot}`);
-  const h = setUp(); for (let i = 0; i < 3; i++) C.applyDamage(h.P, 0.032, -L, Wd);
+  for (let i = 0; i < 9; i++) C.applyDamage(P, 0.01, FL[0], FL[1]);
+  const h = setUp(); for (let i = 0; i < 6; i++) C.applyDamage(h.P, 0.032, -L, Wd);
+  const g0 = C.ktGrip(P).slice();
+  check('ten average knocks in one corner, six hard ones: no tyre burns, no wheel off, the grip as new (the tyre only redder, up to 0.75)', K.hot === -1 && h.K.hot === -1 && !h.W.nL && K.d[0] === 0.75 && g0.every(v => v === 1), `${f2(K.d)}; hard ${f2(h.K.d)}, dmg ${h.P.dmg.toFixed(3)}`);
   const t = setUp(); for (let i = 0; i < 10; i++) C.applyDamage(t.P, 0.002, FL[0], FL[1]);
-  check('3 hard knocks burn it; ten touches next to nothing', h.K.hot === 3 && t.K.d[0] < 0.12, `hard ${f2(h.K.d)}; touches ${f2(t.K.d)}`);
+  check('ten touches next to nothing', t.K.d[0] < 0.12, `touches ${f2(t.K.d)}`);
+  P.dmg = 0.79; C.applyDamage(P, 0.012, -L, Wd);
+  check('the car\'s damage at 80 % (where it caught fire before): the most knocked tyre burns, that knock takes no wheel', K.hot === 0 && !P.wreck.wl, `dmg ${P.dmg.toFixed(3)}, hot ${K.hot}`);
+  const a = setUp(); a.P.dmg = 0.7; C.applyDamage(a.P, 0.01, -L, Wd); const soft = a.K.hot; C.applyDamage(a.P, 0.021, -L, Wd);
+  check('from 70 %: an average knock sets none on fire, a hard one (2 %) at once, at its corner', soft === -1 && a.K.hot === 3, `${soft} -> ${a.K.hot}`);
   const g = C.ktGrip(P);
   check('a burning tyre: much less side grip, the drive, the speed and the brakes as before', g[4] < 0.75 && g[0] === 1, `side ${g[4]}, wheel ${g[0]}`);
+  const n = setUp({ wheelRule: undefined }); n.P.dmg = 0.79; C.applyDamage(n.P, 0.02, FL[0], FL[1]);
+  check('without the wheel rule (a time trial, qualifying): no tyre on fire at 80 %', n.K.hot === -1);
   const z = setUp({ damage: 0 }); for (let i = 0; i < 8; i++) C.applyDamage(z.P, 0.03, FL[0], FL[1]);
   check('damage off: no tyre damage, no fire (the wear only)', z.K.d.every(v => v === 0) && z.K.hot === -1);
 }
