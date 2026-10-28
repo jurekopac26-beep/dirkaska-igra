@@ -1824,11 +1824,12 @@ const Core = (function () {
       const tw = this.tw, wpos = _wpos; wpos[0][0] = a; wpos[0][1] = -tw; wpos[1][0] = a; wpos[1][1] = tw; wpos[2][0] = -b; wpos[2][1] = -tw; wpos[3][0] = -b; wpos[3][1] = tw;
       const ldK = K.kLt * Math.min(1, Math.abs(this.csAn) / Math.max(1, K.aL * P.amax * G)), sgO = Math.sign(this.wPath);   // outer wheels carry more of the side load
       let muSum = 0, muF = 0, muR = 0, curb = 0, dragC0 = 0, dragC1 = 0, latF = 0, latB = 0, latFw = 0, latBw = 0, dragP = 0, dragN = 0;
+      const kg = this.kt ? ktGrip(this) : null;   // (the Kolibri's own tyres, Car.kt: each wheel's wear, cold after a stop; a tyre on fire: less side grip)
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
         const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
-        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
+        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1), tr = S.tr * lk, lt = S.lat * lk * (kg ? kg[4] : 1);   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
         const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;   // (a flat tyre's drag: the tyre's, not the ground's; a wheel knocked off: the hub's)
@@ -2067,6 +2068,7 @@ const Core = (function () {
     const d0 = c.dmg;
     c.dmg = Math.min(1, c.dmg + amt);
     if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, roofOf(c)); if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); } return; }
+    if (c.kt) ktHit(c, amt, lx, lz);   // (the Kolibri's tyres)
     const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
@@ -2109,6 +2111,51 @@ const Core = (function () {
   // blow it out). With none left: no asking, the hub's fire, the second wheel in 3 s, the whole car on fire. After a change the 80 % mark
   // takes a wheel again only when crossed (rule.chg), a hit from 70 % at once
   const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08, t2: 3, hub: 0.2 };
+  // The Kolibri's tyres (Race opts.tyreRule: the vehicles they are for; Car.kt on the player's car): each its own wear (w) and damage (d),
+  // 0..1. The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean, whatever its length; a race on a circuit
+  // KT.lap a metre (4 times the tyres' usual), a slide up to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times
+  // (that wheel only: a gravel road is its road); the slicks' compound as theirs (K.wr). Worn: KT.loss of the wheel's grip (the slicks'
+  // compound: its own loss). The damage only from knocks with damage on (applyDamage: ktHit): the tyre at the knock's corner the most, the
+  // nearer one beside it a little, the far corner none; an average knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to
+  // none. One at 1 burns (kt.hot: the most knocked one, never more than one): less side grip for the whole car (KT.burn), the speed, the
+  // drive and the brakes as ever. The wear alone never sets one on fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop):
+  // KT.cold less grip meanwhile. A burning tyre's wheel comes off at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt)
+  const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4 };
+  const ktNew = (c, cold) => { const K = c.kt; for (let k = 0; k < 4; k++) { K.w[k] = 0; K.d[k] = 0; } K.hot = -1; K.cold = cold ? 1 : 0; K.d0 = c.dist; };
+  const ktMk = (c) => { c.kt = { w: [0, 0, 0, 0], d: [0, 0, 0, 0], hot: -1, cold: 0, d0: 0, g: [1, 1, 1, 1, 1] }; };
+  function ktGrip(c) {   // [the four wheels' grip shares, the side grip's share]
+    const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = 1 - KT.cold * K.cold;
+    for (let k = 0; k < 4; k++) g[k] = (1 - loss * K.w[k]) * cd;
+    g[4] = K.hot >= 0 ? KT.burn : 1; return g;
+  }
+  // the tyres' wear over ds metres (Race step), the set's on c.ty (the radio, the pits) the four's mean
+  function ktWear(c, race, ds) {
+    const K = c.kt, T = race.track, Ty = c.ty && tyreK(c.ty), sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
+    const base = (T.open ? KT.run / Math.max(500, T.raceLen) / 1.52 * (1 + KT.slide * sl) : KT.lap * (Ty ? Ty.wr : 1) * (1 + 5 * sl)) * ds;   // (a circuit: 4 times the usual tyres' wear, a slide as theirs)
+    let s = 0; for (let k = 0; k < 4; k++) { const off = c.ws && (c.ws[k] === 2 || c.ws[k] === 3); K.w[k] = Math.min(1, K.w[k] + base * (off ? KT.off : 1)); s += K.w[k]; }
+    if (c.ty) c.ty.wear = s / 4;
+    if (c.inPit) K.d0 = c.dist;   // (cold from the stop until a lap after the way out)
+    if (K.cold > 0) K.cold = clamp(1 - (c.dist - K.d0) / T.len, 0, 1);
+  }
+  // a knock on the Kolibri (applyDamage, from a point: lx, lz; amt with its knockK): a burning tyre's wheel off at a real one (a big one:
+  // two at once), the second wheel at once at a real one while it is due, else the damage to the tyres
+  function ktHit(c, amt, lx, lz) {
+    const K = c.kt, W = c.wreck, Q = W && W.rule;
+    if (!K || W && W.dnf || c.finished) return;
+    const real = amt >= KT.real;
+    if (Q && Q.kt && W.nL === 1 && Q.due > 0) { if (real) { Q.due = -1; Q.ask = 0; ruleDrop(c, 1); ruleFire(Q, 2); } else Q.due -= 0.8 * Math.min(1, amt / KT.real); return; }
+    if (Q && Q.kt && K.hot >= 0 && !W.nL && real) {
+      const k = K.hot; K.hot = -1; detachPart(c, WHEELS[k]);
+      if (amt >= KT.big) { ruleDrop(c, 1); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); }
+      else { Q.due = Q.due0 = KT.t2; Q.t1 = 0; Q.ask = Q.spare ? 1 : 0; }
+      return;
+    }
+    const hl = c.m.len * 0.5, hw = c.m.wid * 0.5, D = [0, 1, 2, 3].map(k => Math.hypot(lx - (k < 2 ? hl : -hl), lz - (k & 1 ? hw : -hw)));
+    let k0 = 0; for (let k = 1; k < 4; k++) if (D[k] < D[k0]) k0 = k;
+    const f = 0.167 * Math.pow(amt / KT.avg, 0.6) * clamp((amt - 0.0015) / 0.004, 0, 1); if (!(f > 0)) return;
+    for (let k = 0; k < 4; k++) { if (k === (k0 ^ 3) || (W && W.wl & (1 << k))) continue; const wt = k === k0 ? 1 : 0.22 * (D[k0] + 0.3) / (D[k] + 0.3); K.d[k] = Math.min(1, K.d[k] + f * wt); }
+    if (K.hot < 0) { let m = -1; for (let k = 0; k < 4; k++) if (K.d[k] >= 1 && (m < 0 || K.d[k] > K.d[m])) m = k; if (m >= 0) K.hot = m; }
+  }
   const ruleFire = (Q, lvl) => { if (!Q.burn) Q.fn = (Q.fn || 0) + 1; if ((Q.burn || 0) < lvl) Q.burn = lvl; };
   function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on
     const W = c.wreck;
@@ -2119,7 +2166,7 @@ const Core = (function () {
   }
   function wheelRule(c, d0, amt) {
     const W = c.wreck, Q = W.rule, d1 = c.dmg;
-    if (!Q || W.dnf || c.finished || c.dmgMode !== 2) return;
+    if (!Q || Q.kt || W.dnf || c.finished || c.dmgMode !== 2) return;   // (the Kolibri's: its tyres, ktHit)
     if (d1 >= WRULE.d2 && amt >= WRULE.hard) {   // a hard hit at 80 % or over: two at once, sometimes three or four
       let n = 2; if (rand() < clamp((amt - 0.15) / 0.2, 0, 1)) { n = 3; if (rand() < 0.5 * clamp((amt - 0.3) / 0.5, 0, 1)) n = 4; }
       ruleDrop(c, Math.max(W.nL < 2 ? 1 : 0, n - W.nL)); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); return;
@@ -4725,7 +4772,10 @@ const Core = (function () {
       // its second wheel (-1: none coming), over: two wheels gone and the car stopped, the game is over (the game shows PONOVI IGRO); fn, burn:
       // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel); due0:
       // the time the second wheel was given (ZAMENJAJ KOLO's bar)
-      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && P.dmgMode === 2 && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0 }; }
+      // The Kolibri's tyres (opts.tyreRule: its vehicles; KT, ktHit): on the player's car (Car.kt), its wheel rule (rule.kt) already with damage
+      // Samo videz: a burning tyre's wheel off at a real knock, the second 1-4 s later (sooner sliding and knocking, at once at a real knock)
+      { const P = this.player, TR = opts.tyreRule; if (P && !P.net && Array.isArray(TR) && TR.indexOf(P.m.id) >= 0) ktMk(P); }
+      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0, kt: !!P.kt }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -4804,7 +4854,7 @@ const Core = (function () {
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
         const K = W.tyres && c.ty ? tyreK(c.ty) : null;   // (a compound: its grip, and what wear takes from it)
-        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * c.ty.wear) : 1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * (c.kt ? 0 : c.ty.wear)) : 1 - 0.1 * (c.kt ? 0 : c.ty.wear)) : 1 - (1 - WET) * w) * this.cold.gk; }
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
     }
@@ -5142,7 +5192,8 @@ const Core = (function () {
         if (this.drsLast) this._drs(c, ds, cdt);
         if (this.secBest) this._sectors(c, ds, cdt);   // (TV sectors: the Red Bull Ring's)
         else if (!T.open && this.state !== 'grid') this._thirds(c, ds, m, dt);   // (elsewhere: the thirds of the lap)
-        if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
+        if (c.kt && ds > 0 && this.state === 'racing') ktWear(c, this, ds);   // (the Kolibri's tyres, each its own: KT)
+        if (c.ty && ds > 0 && this.state === 'racing' && !c.kt) {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
           const K = tyreK(c.ty);
           c.ty.wear = Math.min(1, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1));
@@ -5270,6 +5321,7 @@ const Core = (function () {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
         if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left)
           this.repairCar(c);
+          if (c.kt) ktNew(c, true);   // (the Kolibri: four new tyres, cold)
           if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
           if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; }   // (fuel: a full tank)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
@@ -5712,6 +5764,7 @@ const Core = (function () {
       if (c.flt && c.flt.pw === k) { c.flt.pw = -1; c.flt.pk = 0; }
       delete c.lost[WHEELS[k]]; W.wl &= ~(1 << k); W.nL = 0; W.lt = 0; W.fix++;   // (W.fix: the renderer puts the wheel back on, kitRefit)
       Q.spare = 0; Q.ask = 0; Q.due = -1; Q.chg++; if (Q.burn) { Q.burn = 0; Q.xn++; }
+      if (c.kt) { c.kt.w[k] = 0; c.kt.d[k] = 0; }   // (the spare: a new tyre)
       return true;
     }
     // a car out of the race (Odstop): an AI car that can not race on (see _wreckStep), or the player pressing Odstopi (game.js; any car).
@@ -5766,7 +5819,11 @@ const Core = (function () {
       const Q = W.rule;   // the wheel rule (wheelRule): the second wheel when its time is up; two gone: the car stops at once (2.5 a second
       // of its speed lost, as well as the brakes and the hubs on the road), there it retires and the game is over
       if (Q && !W.dnf && !c.finished) {
-        if (Q.due > 0 && !c.pitG) {   // (on the pit road, no damage there: it waits; the repair in the box clears it)
+        if (Q.due > 0 && !c.pitG && Q.kt) {   // (the Kolibri's: KT.t2 s, used up quicker sliding (up to 3 times) and steering hard; never in under 1 s)
+          Q.t1 = (Q.t1 || 0) + dt; Q.due -= dt * (1 + 2 * Math.min(1, Math.abs(c.beta || 0) / 0.25));
+          if (Q.due <= 0 && Q.t1 < 1) Q.due = 0.001;
+          if (Q.due <= 0) { Q.due = -1; Q.ask = 0; if (W.nL < 2) ruleDrop(c, 1); ruleFire(Q, 2); }
+        } else if (Q.due > 0 && !c.pitG) {   // (on the pit road, no damage there: it waits; the repair in the box clears it)
           Q.due -= dt; if (Q.due <= WRULE.t2 * WRULE.hub && W.nL === 1) ruleFire(Q, 1);   // (its last 20 %: the hub where the wheel was catches fire)
           if (Q.due <= 0) { Q.due = -1; Q.ask = 0; if (W.nL < 2) ruleDrop(c, 1); ruleFire(Q, 2); }   // (the second wheel: the whole car)
         }
@@ -6077,7 +6134,7 @@ const Core = (function () {
 
   return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs };
 })();
 
 

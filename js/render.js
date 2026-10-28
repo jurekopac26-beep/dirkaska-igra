@@ -5152,6 +5152,17 @@ const Render = (function () {
     const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
     if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
   }
+  // the KOLIBRI's tyre on fire (Core Car.kt.hot): that wheel only a little red, a dark red and a faint glow of its own (emissive ~0.45), no
+  // light round it and none on the road: far less than a tail lamp. Each of its meshes gets a red copy of its material while it burns
+  const KT_RED = { col: new THREE.Color(0.5, 0.1, 0.08), em: new THREE.Color(0.55, 0.07, 0.03), ei: 0.45 };
+  function ktGlow(v, c) {
+    const k = c.kt && c.kt.hot >= 0 ? c.kt.hot : -1; if (k === (v.ktHot == null ? -1 : v.ktHot)) return;
+    const set = (j, on) => { if (j < 0) return; const want = j % 2 ? 1 : -1; for (const w of j < 2 ? v.wf : v.wr) if (Math.sign(w.position.z) === want) w.traverse(o => {
+      if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
+      if (on) { if (!o.userData.ktM0) { const m = o.material.clone(); m.color = (m.color ? m.color.clone() : new THREE.Color(1, 1, 1)).multiply(KT_RED.col); if (m.emissive) { m.emissive = KT_RED.em.clone(); m.emissiveIntensity = KT_RED.ei; } o.userData.ktM0 = o.material; o.material = m; } }
+      else if (o.userData.ktM0) { o.material.dispose(); o.material = o.userData.ktM0; delete o.userData.ktM0; } }); };
+    set(v.ktHot == null ? -1 : v.ktHot, false); set(k, true); v.ktHot = k;
+  }
   function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
     const P = crew.P, v = views.find(v => v.car === P); if (!v) return;
     const list = k < 2 ? v.wf : v.wr, want = k % 2 ? 1 : -1;
@@ -5912,6 +5923,7 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
         for (const w of v.wf) w.geometry = W(H.fr, H.fw, col); for (const w of v.wr) w.geometry = W(H.rr, H.rw, col); } }
