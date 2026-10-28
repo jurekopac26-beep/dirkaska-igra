@@ -37,6 +37,11 @@ Napisano 28. 10. 2026 v seji z garažo. Ta seja dela garažo (veja `claude/3d-ga
 - Najprej cel KOLIBRI (vzorec za vse): uporabnik vidi in potrdi videz vsakega elementa enkrat, ne 33-krat; dogovor iz razdelka 2 se preizkusi na enem avtu; garaža lahko KOLIBRIJA priklopi in preizkusi od začetka do konca.
 - **Zgodnji preizkus:** ko so na KOLIBRIJU gotovi prvi trije elementi (`krilo`, `platisca`, `zarometi`), jih poskusno namesti še na tri zelo različne avte (en športni, en klasični, formula ali tovornjak), da se vidi, ali `mounts` in `DELI.build` delujeta tudi tam (~6 ur). Če ne, popravi dogovor zdaj, ne po 33 avtih.
 - Nato ostali avti **po kategorijah** (najprej Mali avti, ker so si oblike podobne), in pri vsakem avtu hkrati razbijanje na ravni KOLIBRIJA in `mounts` (en obisk datoteke avta namesto dveh).
+- **Štirje sklopi** (po vsakem ena skupna plošča za uporabnika in njegova potrditev, preden nadaljuješ):
+  1. okostje dogovora + `krilo`, `platisca`, `zarometi` + poskus na treh drugih avtih;
+  2. ostali vidni 3D deli;
+  3. barve in nalepke, skriti deli, razbijanje novih delov;
+  4. pregled vseh 624 možnosti, stran za ogled, testi, push na svojo vejo.
 
 ## 4. Kasneje: ostali avti
 - **Razbijanje na ravni KOLIBRIJA** za ostalih 32 avtov (ločeni žarometi in zadnje luči, ki se razbijejo, spojler, antena, tablica, brisalci, ugrezanje strehe, svoje gume `Car.kt`): približno 5 ur na avto.
