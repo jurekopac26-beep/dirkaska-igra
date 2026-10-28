@@ -17,8 +17,18 @@ MIS = {
     42: ('Ogledalo za zvezde', 'Palomar Mountain, ZDA', 'Pripelji ogledalo do kupole samo z rdečimi lučmi', '04:30'),
     43: ('Vroče zavore', 'Rio do Rastro, Brazilija', 'Spusti se varno, ali zapelji na izletni pas', '03:05'),
     44: ('Skalni podor', "Chapman's Peak, Južna Afrika", 'Odstrani skale s ceste, preden jo odprejo za promet', '12:00'),
-    45: ('Turistični vlakec', 'Monte Carlo, Monako', 'Pelji vlakec skozi ovinke, da vagončki ne zadenejo robnika', '06:15'),
+    45: ('Turistični vlakec', 'Monte Carlo, Monako', 'Vozi vlakec tako, da vagončki ne zadenejo robnika', '06:15'),
 }
+
+def pin_below(d, p, label, col=ACC, sub=None, dx=0):
+    px, py = p[0] * W, p[1] * H; lx = px + dx
+    w = d.textlength(label, font=F(B, 16)) + 28
+    if sub: w = max(w, d.textlength(sub, font=F(R, 14)) + 28)
+    hg = 54 if sub else 34; x0, y0 = lx - w / 2, py + 18
+    d.rounded_rectangle((x0, y0, x0 + w, y0 + hg), 10, fill=(14, 18, 24, 215), outline=col, width=2)
+    d.polygon([(lx - 9, y0), (lx + 9, y0), (px, py + 4)], fill=col)
+    text(d, (lx, y0 + 17), label, F(B, 16), col, 'mm')
+    if sub: text(d, (lx, y0 + 38), sub, F(R, 14), FG, 'mm')
 
 def arrow(d, cx, cy, ang, L, col, w=10):
     a = math.radians(ang); ux, uy = math.sin(a), -math.cos(a); px, py = -uy, ux
@@ -69,7 +79,7 @@ def draw4(k):
         hint(d, 'Sledi puščici iskalnika, nato s sondo poišči zasutega in ga odkoplji')
     if k == 37:
         base(d, k, 7)
-        if 'ljudje' in pts: pin(d, pts['ljudje'], 'POMOČ!', RED, '2 osebi na strehi')
+        if 'ljudje' in pts: pin_below(d, pts['ljudje'], 'POMOČ!', RED, '2 osebi na strehi')
         panel(d, (x, 16, W - 16, 210))
         row(d, x, 30, 'REŠENI', '3 / 8', GRN)
         bar(d, x + 18, 72, 284, 'GLOBINA VODE', '1,4 m', 0.56, BLU)
@@ -92,7 +102,7 @@ def draw4(k):
         base(d, k, 48)
         panel(d, (x, 16, W - 16, 220))
         text(d, (x + 18, 26), 'MIR KONJ', F(B, 17), MUT)
-        horse_icon(d, x + 40, 76, GRN); horse_icon(d, x + 80, 76, YEL)
+        face(d, x + 36, 78, 17, 1, GRN); face(d, x + 80, 78, 17, 0, YEL)
         bar(d, x + 120, 52, 182, '', '80 %', 0.8, GRN)
         row(d, x, 116, 'SUNKI', '2', YEL); row(d, x, 154, 'DO HLEVA', '3,4 km'); text(d, (x + 18, 192), 'zaviraj zgodaj, ovinki počasi', F(R, 16), MUT)
         hint(d, 'Konji čutijo vsak sunek: zaviraj zgodaj in skozi ovinke pelji počasi')
@@ -116,7 +126,7 @@ def draw4(k):
         hint(d, 'Hitro, a gladko: ostri sunki potnikom obrnejo želodec')
     if k == 42:
         base(d, k, 18)
-        if 'kupola' in pts: pin(d, pts['kupola'], 'KUPOLA', (255, 90, 80, 255), 'samo rdeče luči')
+        if 'kupola' in pts: pin_below(d, pts['kupola'], 'KUPOLA', (255, 90, 80, 255), 'samo rdeče luči')
         panel(d, (x, 16, W - 16, 236))
         text(d, (x + 18, 26), 'LUČI', F(B, 17), MUT); toggle(d, x + 90, 20, W - 34, 54, 'RDEČE', 'BELE', True, (196, 22, 28, 235))
         bar(d, x + 18, 72, 284, 'TRESLJAJI', '25 %', 0.25, GRN)
@@ -124,7 +134,7 @@ def draw4(k):
         hint(d, 'Bele luči motijo opazovanje: pelji počasi ob rdeči luči in mesecu')
     if k == 43:
         base(d, k, 54)
-        if 'rampa' in pts: pin(d, pts['rampa'], 'IZLETNI PAS', YEL, '400 m')
+        if 'rampa' in pts: pin_below(d, pts['rampa'], 'IZLETNI PAS', YEL, '400 m')
         panel(d, (x, 16, W - 16, 300))
         gauge(d, x + 160, 140, 86, 0.84, 'ZAVORE', '640 °C', 0.7)
         text(d, (x + 18, 196), 'PRESTAVA', F(B, 17), MUT); text(d, (W - 34, 182), '3', F(B, 48), FG, 'ra')
@@ -133,7 +143,7 @@ def draw4(k):
         hint(d, 'Prestavi nižje in zaviraj z motorjem; če zavore odpovejo, zapelji na izletni pas')
     if k == 44:
         base(d, k, 4)
-        if 'pada' in pts: pin(d, pts['pada'], 'PADA!', RED)
+        if 'pada' in pts: pin_below(d, pts['pada'], 'PADA!', RED, 'umakni se', dx=120)
         panel(d, (x, 16, W - 16, 300))
         bar(d, x + 18, 30, 284, 'CESTA OČIŠČENA', '45 %', 0.45, GRN)
         gauge(d, x + 160, 196, 78, 0.62, 'NEVARNOST PODORA', 'srednja', 0.75)
@@ -150,7 +160,7 @@ def draw4(k):
         d.line((ox - 20, oy - 52, ox + 34, oy - 30, ox + 46, oy + 10), fill=RED, width=3)
         for i, (cx_, cy_, c) in enumerate(((ox + 2, oy + 75, FG), (ox + 40, oy + 52, FG), (ox + 58, oy + 12, FG), (ox + 40, oy - 30, RED))):
             d.rounded_rectangle((cx_ - 9, cy_ - 9, cx_ + 9, cy_ + 9), 3, fill=c)
-        row(d, x, 250, 'POTNIKI', '38'); row(d, x, 288, 'ZADNJI VAGON', 'reže ovinek', RED)
+        row(d, x, 250, 'POTNIKI', '38'); row(d, x, 288, 'ZADNJI', 'reže ovinek', RED)
         hint(d, 'Zavij široko: zadnji vagonček reže ovinek in zadene robnik')
     Image.alpha_composite(im, ov).convert('RGB').save(os.path.join(OUT, 'm%02d%s.jpg' % (k, SUF)), quality=90)
 
