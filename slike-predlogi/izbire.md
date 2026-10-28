@@ -478,3 +478,9 @@ Popravki po pregledu slik (20. 10. ponoči):
 - Misije (vse na progah, ki so že v igri): 26 Zadnji odstotek (Tianmen), 27 Splavi čoln (Uncompahgre), 28 Svetilnik v nevihti (Big Sur), 29 Božična noč (Štajerska), 30 Ratrak (Mount Baldy), 31 Dinozavrovo jajce (Riverside), 32 Opičja tolpa (Irohazaka), 33 Odvoz snega (Montréal), 34 Mestni avtobus (Toronto), 35 Reševalci na plaži (Newcastle). Prvih šest je bilo prej »v rezervi«; rezerva ima zdaj šest novih idej (plaz, poplava, peščeni vihar, konji v prikolici, solna ravnica, potisni letalo).
 - Makete: `blender/miss3.py <26-35> <mapa>` (gradniki iz `miss.py` in `miss2.py`; misija 27 ima še sliko zadnje kamere `m27_inset.png`), prikaz na zaslonu `blender/hud_miss3.py`; slike `listi/vse44-posebne-misije-3`. Predstavitev ima zdaj 44 prosojnic (kopija v `misije-10/`).
 - Ocena: misije 26–35 130–180 h; vseh 35 s sistemom 480–680 h (s skupnimi gradniki realno 20–30 % manj).
+
+## 28. 10. ponoči: še 10 posebnih misij (36–45)
+- Uporabnik: »Dodaj še 10 misij v predstavitev.«
+- Misije (vse na progah, ki so že v igri): 36 Plaz (Vršič), 37 Poplava (Bang Saen), 38 Peščeni vihar (Moki Dugway), 39 Konji v prikolici (Monterey), 40 Varnostni avto (Bathurst), 41 Dirkalni taksi (Nürburg), 42 Ogledalo za zvezde (Palomar Mountain), 43 Vroče zavore (Rio do Rastro), 44 Skalni podor (Chapman's Peak), 45 Turistični vlakec (Monte Carlo). Plaz, poplava, vihar in konji so bili prej »v rezervi«; rezerva ima zdaj: solna ravnica, potisni letalo, vleka sani, mačka na drevesu, kit na plaži, ledena ploskev.
+- Makete: `blender/miss4.py <36-45> <mapa>` (gradniki iz `miss.py`, `miss2.py` in `miss3.py`), prikaz na zaslonu `blender/hud_miss4.py`; slike `listi/vse45-posebne-misije-4`. Predstavitev ima zdaj 55 prosojnic (kopija v `misije-10/`).
+- Ocena: misije 36–45 125–175 h; vseh 45 s sistemom 605–855 h (s skupnimi gradniki realno 20–30 % manj).
