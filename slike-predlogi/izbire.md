@@ -460,3 +460,9 @@ Popravki po pregledu slik (20. 10. ponoči):
 - Poslano: vse39-proge-za-colne/48-0 … 48-6 (vsaka verzija od zgoraj, start, izometrična kamera, kamera za avtom). Čakam izbiro.
 - Pri prenosu v kodo: newmap.js – laguna (jetski predlog 0, otoka) ven, kanal po H3.kartPts (širina po izbiri), povezava s kanalom do morja; ena višinska
   mreža za dno in breg (kot water3), voda za tlemi s polygon offsetom.
+
+## 28. 10. popoldne: Blender, gasilski avto, 10 posebnih misij
+- Uporabnik: »Ja, naredi gasilski avto v Blenderju v slikah«. Blender 5.2 je nameščen v oblaku kot Python modul (`pip install bpy` v venv), uporabniku ni treba nameščati ničesar.
+- `blender/kit.py` (gradniki), `blender/gas.py <0-5> <mapa>` (6 verzij A–F, izris + izvoz .glb), `blender/compose_gas.py` (listi 50-x). Modeli: `blender/modeli/v0..v5.glb` (4.400–6.900 trikotnikov). Listi: `listi/vse41-gasilski-avto`.
+- Izmerjeno: 6 verzij v slikah ~35 min. Prenos v igro po »začni« ocena 4–6 h. Uporabnik še ni izbral verzije.
+- Uporabnik je zahteval 10 novih, posebnih misij (z več dela, npr. požar na vrhu, reševalno vozilo z grafom srčnega utripa). Makete: `blender/miss.py <1-10> <mapa>`, HUD: `blender/hud_miss.py`; slike `listi/vse42-posebne-misije`. Predstavitev: artifact V456h8wG1ox2nvxLz4CFLQ (kopija v `misije-10/`).
