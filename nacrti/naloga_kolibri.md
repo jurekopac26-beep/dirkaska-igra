@@ -33,6 +33,11 @@ Napisano 28. 10. 2026 v seji z garažo. Ta seja dela garažo (veja `claude/3d-ga
 7. Preprosta stran za ogled (npr. `maketa-delov/index.html`, ne v meniju igre): KOLIBRI na vrtljivi plošči, izbira elementa in možnosti (~6 ur).
 8. Testi (`tests/…`: vseh 576 se zgradi brez napake, števila oglišč, razbijanje) in `node tools/stamp.js`, `npm run golden:update` po potrebi, `npm run test:node`, brskalniški testi (~6 ur). Commit in push na svojo vejo; PR samo, če ga uporabnik izrecno prosi.
 
+## 3a. Vrstni red: najprej KOLIBRI, nato ostali (priporočilo)
+- Najprej cel KOLIBRI (vzorec za vse): uporabnik vidi in potrdi videz vsakega elementa enkrat, ne 33-krat; dogovor iz razdelka 2 se preizkusi na enem avtu; garaža lahko KOLIBRIJA priklopi in preizkusi od začetka do konca.
+- **Zgodnji preizkus:** ko so na KOLIBRIJU gotovi prvi trije elementi (`krilo`, `platisca`, `zarometi`), jih poskusno namesti še na tri zelo različne avte (en športni, en klasični, formula ali tovornjak), da se vidi, ali `mounts` in `DELI.build` delujeta tudi tam (~6 ur). Če ne, popravi dogovor zdaj, ne po 33 avtih.
+- Nato ostali avti **po kategorijah** (najprej Mali avti, ker so si oblike podobne), in pri vsakem avtu hkrati razbijanje na ravni KOLIBRIJA in `mounts` (en obisk datoteke avta namesto dveh).
+
 ## 4. Kasneje: ostali avti
 - **Razbijanje na ravni KOLIBRIJA** za ostalih 32 avtov (ločeni žarometi in zadnje luči, ki se razbijejo, spojler, antena, tablica, brisalci, ugrezanje strehe, svoje gume `Car.kt`): približno 5 ur na avto.
 - **`mounts` in pregled 576 možnosti** za vsak avto: približno 12 ur na avto (deli so takrat že narejeni). Avti, kjer kak element ne pride v poštev (formula, LM, tovornjak), v `mounts` tega elementa nimajo; garaža ga potem ne ponudi.
