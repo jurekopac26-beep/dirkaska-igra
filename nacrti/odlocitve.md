@@ -53,3 +53,4 @@
 - Tabla YOUR CAR: še bolj obrnjena proti kameri (zdaj stoji preveč naravnost); slike z nagibom nazaj in zasukom v delu (av_table/tabla_luc.png).
 - IZBRANO tabla YOUR CAR: »svetijo samo črke« (plošča navadno zelena, bele črke svetijo z mehkim belo-zelenim sijem; tabla_luc.png različica 2, 0 dodatnih klicev) + krog pod maketo zelena luč (krog_luc 1). Kot table: »naravnost v oko kamere« (nagib nazaj 37°, zasuk 35°; tabla_luc_kot_oko.png).
 - IZBRANO označevanje OZ7 različica 2 »Bel rob«: kliknjen element debel zelen obris z belo zunanjo črto + rahla zelena maska; ostali 3 elementi menija samo tanek oranžen obris brez maske; v meniju izbrana ploščica zelena, ostale 3 oranžne; ostala garaža zatemnjena 58 %.
+- Razbijanje: KOLIBRI (na main) se razbija bolje kot ostali avti; ostalih 32 avtov je treba posodobiti na raven KOLIBRIJA (ločene luči, spojler, antena, tablica, brisalci, streha, svoje gume). Ocena ~5 h na avto.
