@@ -151,7 +151,7 @@ Odprto:
 
 ## 8. Tekmeci in trki ločeno od fizike (28. 10. 2026)
 
-Po preizkusu uporabnik ostaja pri klasični fiziki. Nastavitve tekmecev in trkov so zato neodvisne od fizike (Nastavitve: »Tekmeci: …«, »Trki: …«, opis v `docs/igra.md`, razdelek »Preizkus: tekmeci in trki«; `Core.setTest`, `TX`). Privzeto je vse kot prej. Meritve so z `tools/nova/train.js` (8 prog × 4 krogi, 12 tekmecev, igralec na avtopilotu v skupini), `pack.js` (8 prog × 150 s) in `sweep.js` (12 prog × 400 s, mešano polje).
+Po preizkusu uporabnik ostaja pri klasični fiziki. Nastavitve tekmecev in trkov so zato neodvisne od fizike (Nastavitve: kategorija »Preizkus: tekmeci in trki«, opis v `docs/igra.md`, razdelek »Preizkus: tekmeci in trki«; `Core.setTest`, `TX`). Privzeto je vse kot prej. Meritve so z `tools/nova/train.js` (8 prog × 4 krogi, 12 tekmecev, igralec na avtopilotu v skupini), `pack.js` (8 prog × 150 s) in `sweep.js` (12 prog × 400 s, mešano polje).
 
 **Tekmeci.** Kolono oblikujejo nastavitve tekmecev, ne fizika: klasična fizika z nastavitvami nove da skoraj enako kolono kot nova.
 

@@ -113,7 +113,7 @@ Nova fizika je narejena po treh posnetkih arkadne dirkaške igre, ki jih je izbr
 
 ## Preizkus: tekmeci in trki
 
-V Nastavitvah (pod »Razbijanje: poškodbe vplivajo na vožnjo«) je devet vrstic za preizkušanje, kako se vozijo tekmeci in kako se avti odbijajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vseh pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
+V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) z devetimi vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« in »Trki med avti«: kako se vozijo tekmeci in kako se avti odbijajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vseh pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
 
 **Tekmeci** (`aiControl`, `Race`):
 
@@ -134,7 +134,7 @@ V Nastavitvah (pod »Razbijanje: poškodbe vplivajo na vožnjo«) je devet vrsti
 | Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); klasična privzeto brez, nova 0,35. Pri klasični se delita samo hitrosti (pravega vrtenja ni) |
 | Vrtenje ob trku | Brez, majhno (0,15), manjše (0,4), večje (1,6) | koliko trk zavrti avto: pri klasični je to sunek smeri (kot največ 23°, pri večjem tudi več), ki ga avto sam ujame, pri novi pravo vrtenje; privzeto 1 |
 
-Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Vrstica »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem.
+Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Nastavitev »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem.
 
 Meritve (klasična, klasična z nastavitvami nove, nova; slog Težak) so v `docs/nova-fizika-meritve.md`, razdelek 8.
 

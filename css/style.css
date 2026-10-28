@@ -419,6 +419,15 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .set-list { overflow-y: auto; flex: 1; padding-right: 6px; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 .set-list .row { border-bottom: 1px solid rgba(255,255,255,.06); padding-bottom: 7px; }
 .set-panel .btns { margin-top: 8px; }
+/* a category of the settings (Preizkus: tekmeci in trki): a folded group, its rows inside */
+.set-cat { margin: 14px 0 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; background: rgba(255,255,255,.03); }
+.set-cat > summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; cursor: pointer; list-style: none; font: 800 italic clamp(13px, 3.6vh, 16px)/1.2 var(--f-ui); color: var(--chalk); }
+.set-cat > summary::-webkit-details-marker { display: none; }
+.set-cat > summary::before { content: '\25B8'; display: inline-block; width: 1em; transition: transform .15s; color: var(--sky); }
+.set-cat[open] > summary::before { transform: rotate(90deg); }
+.set-cat > summary:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 10px; }
+.set-cat .set-body { padding: 0 12px 6px; }
+.set-sub { margin: 12px 0 2px; font: 700 12px/1 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 input[type=range] { width: 160px; accent-color: var(--curb); }
 .val { font: 700 italic 13px/1 var(--f-ui); color: var(--lcd); min-width: 3em; }
 .tilt-live { position: relative; width: 120px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; }

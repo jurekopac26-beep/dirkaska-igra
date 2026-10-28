@@ -5,8 +5,8 @@
 // - switched back to Klasična during that race: the race keeps its physics, a toast says it applies from the next race; the next race classic
 // - the row Slog nove fizike (Običajen marked on a fresh profile; in English "New physics style: Normal / Sliding"): Drseč chosen with Nova,
 //   the next race's player car has the sliding style (Car.nvSl), the rivals not; with Klasična no car has it
-// - Preizkus: tekmeci in trki (Nastavitve: 5 rows Tekmeci: …, 4 rows Trki: …; Core.setTest): all nine on Privzeto on a fresh profile, Core.TX all
-//   null; Trki: slog Težak sets the bounce, the rub and the turn (Core.TX), a row under it overrides it, a rival row sets its number; kept in the
+// - Preizkus: tekmeci in trki (Nastavitve: its own folded category after the profile row, with 5 rows Tekmeci and 4 rows Trki med avti;
+//   Core.setTest): the category folded and the nine rows inside it, all on Privzeto on a fresh profile, Core.TX all null; Trki: slog Težak sets the bounce, the rub and the turn (Core.TX), a row under it overrides it, a rival row sets its number; kept in the
 //   settings (localStorage); in English; a race with the rivals' spread narrower deals out narrower paces, back on Privzeto the old ones and
 //   nothing set; the spread's toast says from the next race
 //   node tests/browser/nova.test.mjs
@@ -75,9 +75,14 @@ try {
     const tx = () => page.evaluate(() => Object.assign({}, Core.TX));
     const pick = async (k, v) => { await page.click(`#s-settings [data-set="${k}"] [data-v="${v}"]`); await page.waitForTimeout(150); };
     await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
-    const r0 = await rows(), t0 = await tx();
-    T.check('Preizkus: nine rows (Tekmeci: ×5, Trki: ×4), each on Privzeto on a fresh profile, Core.TX all null',
-      r0.every(r => !r.missing && r.sel === '0:Privzeto') && r0.slice(0, 5).every(r => /^Tekmeci: /.test(r.label)) && r0.slice(5).every(r => /^Trki: /.test(r.label)) && Object.values(t0).every(v => v === null), JSON.stringify({ rows: r0.map(r => r.label + ' ' + r.n + ' ' + r.sel), tx: t0 }));
+    const cat = () => page.evaluate(() => { const d = document.getElementById('set-test'); return d ? { open: d.open, cat: d.querySelector('summary').textContent, subs: [...d.querySelectorAll('.set-sub')].map(e => e.textContent), inside: d.querySelectorAll('[data-set^="tAi"], [data-set^="tCr"]').length, after: !!d.previousElementSibling.querySelector('[data-act="prof-export"]') } : null; });
+    const c0 = await cat(), r0 = await rows(), t0 = await tx();
+    T.check('Preizkus: its own category in the settings (after the profile row), folded, with the two groups Tekmeci and Trki med avti and the nine rows inside',
+      c0 && !c0.open && c0.cat === 'Preizkus: tekmeci in trki' && c0.subs.join() === 'Tekmeci,Trki med avti' && c0.inside === 9 && c0.after, JSON.stringify(c0));
+    await page.click('#set-test > summary'); await page.waitForTimeout(150);
+    T.check('Preizkus: a tap on its title opens it, the rows can be pressed', (await cat()).open && await page.isVisible('#s-settings [data-set="tCrE"] [data-v="1"]'));
+    T.check('Preizkus: nine rows, each on Privzeto on a fresh profile, Core.TX all null',
+      r0.every(r => !r.missing && r.sel === '0:Privzeto') && r0.slice(0, 5).map(r => r.label).join() === 'Razpon hitrosti,Razmik za avtom,Pritisk na avto pred sabo,Prostor ob boku,Vožnja čez robnike' && r0.slice(5).map(r => r.label).join() === 'Slog trkov,Odboj med avti,Drgnjenje ob stiku,Vrtenje ob trku' && Object.values(t0).every(v => v === null), JSON.stringify({ rows: r0.map(r => r.label + ' ' + r.n + ' ' + r.sel), tx: t0 }));
     await pick('tCrStyle', 1);
     const t1 = await tx(); await pick('tCrE', 4); const t2 = await tx(); await pick('tAiSpr', 3); await pick('tAiFol', 2); await pick('tAiKerb', 3); await pick('tAiPush', 1); await pick('tAiSide', 3); await pick('tCrMu', 1); await pick('tCrYaw', 4);
     const t3 = await tx();
@@ -88,8 +93,9 @@ try {
       && await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('tdgp-settings') || '{}'); return s.tAiSpr === 3 && s.tCrStyle === 1 && s.tCrE === 4 && s.tCrYaw === 4; }), JSON.stringify(t3));
     await page.click('#s-settings [data-set="lang"] [data-v="en"]'); await page.waitForTimeout(300);
     const en = await rows();
-    T.check('Preizkus in English: Rivals: pace spread / Knocks: style, Heavy, no bounce marked',
-      en[0].label === 'Rivals: pace spread' && en[5].label === 'Knocks: style' && en[5].sel === '1:Heavy, no bounce' && en[8].label === 'Knocks: turn in a knock', JSON.stringify(en.map(r => r.label + ' ' + r.sel)));
+    const enc = await cat();
+    T.check('Preizkus in English: Test: rivals and knocks (Rivals, Knocks between cars), Pace spread / Knock style, Heavy, no bounce marked',
+      enc.cat === 'Test: rivals and knocks' && enc.subs.join() === 'Rivals,Knocks between cars' && en[0].label === 'Pace spread' && en[5].label === 'Knock style' && en[5].sel === '1:Heavy, no bounce' && en[8].label === 'Turn in a knock', JSON.stringify([enc, en.map(r => r.label + ' ' + r.sel)]));
     await page.click('#s-settings [data-set="lang"] [data-v="sl"]'); await page.waitForTimeout(200);
     // a race with the rivals' spread narrow, the classic physics: the paces dealt out narrower, then back on Privzeto
     const spread = () => page.evaluate(() => { const k = window.__game.race.cars.filter(c => !c.isPlayer && !c.sc).map(c => c.skill); return { w: Math.max(...k) - Math.min(...k), phys: window.__game.race.opts.phys, n: k.length }; });
