@@ -428,6 +428,7 @@
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
+    $('cr-note').textContent = tr(+S.tCrStyle === 1 ? 'Težak: odboj 0, drgnjenje 0,8, vrtenje 1,3. Vrstice spodaj to preglasijo.' : 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1).');
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);

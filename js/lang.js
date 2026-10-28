@@ -30,6 +30,7 @@
     'Koliko prostora tekmec pusti avtu ob sebi, ko vozita vštric. Manj prostora: bolj se drgnejo in je več stikov': 'How much room a rival leaves a car alongside when they drive side by side. Less room: they rub more and there are more contacts',
     'Vožnja čez robnike': 'Driving over kerbs', 'Ne': 'No', 'Do 1,2 m': 'Up to 1.2 m', 'Do 2,2 m': 'Up to 2.2 m',
     'Ali tekmeci na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m)': 'Whether the rivals drive over the kerb at the apex and the exit of a corner (never nearer a barrier than half a car and 0.6 m)',
+    'Težak: odboj 0, drgnjenje 0,8, vrtenje 1,3. Vrstice spodaj to preglasijo.': 'Heavy: bounce 0, rub 0.8, spin 1.3. The rows below override this.', 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1).': 'Default: bounce, rub and spin follow the chosen physics (classic 0.1 / 0 / 1, new 0.4 / 0.35 / 1).',
     'Slog trkov': 'Knock style', 'Težak, brez odboja': 'Heavy, no bounce',
     'Težak: avta se ob trku skoraj ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti. Vrstice pod to vrstico to spremenijo. Velja za vse trke med avti': 'Heavy: the cars hardly bounce apart in a knock, they stay together and grind along each other, an off-centre knock turns them more. The rows under this one change that. For all knocks between cars',
     'Odboj med avti': 'Bounce between cars', 'Srednji': 'Medium', 'Zelo velik': 'Very big',
