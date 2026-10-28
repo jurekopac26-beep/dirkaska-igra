@@ -16,6 +16,7 @@
 // - the grass, two wheels on it at 100 km/h, coasting: 0.08-0.18 g more slowing than on the asphalt (the video: 0.1-0.15 g), the car
 //   fidgets (the path's turn jitters, rms > 1.5 deg/s; on the asphalt < 0.3); slicks on the makadam corner about as hard as in
 //   cs (0.95-1.15 x: their stages as quick as in cs)
+// - the Kolibri's own tyres (Car.kt): worn ones, or a burning one, corner less hard (as in cs)
 // - the rivals' pace (NVK.aiSpr): their skills spread 0.6 as far as in cs, the fastest the same
 // - the low assist: full throttle in a corner steps a rear-driven car's tail out (the V8: 10-45 deg) and does not spin it (the formula
 //   neither); braking hard in a corner does not spin a front-driven car or the little rear-engined one
@@ -126,6 +127,14 @@ for (const id of ['rally', 'kaze']) {
   const fN = ay(HN, 'formula'), fS = ay(HC, 'formula'), lN = ay(HN, 'lm'), lS = ay(HC, 'lm');
   ok('slicks on the makadam: the formula and the prototype corner about as hard as in cs (0.95-1.15 x; 70 km/h, full lock)', [fN / fS, lN / lS].every(r => r >= 0.95 && r <= 1.15),
     `formula ${f(fN)} g (cs ${f(fS)}), prototype ${f(lN)} g (cs ${f(lS)})`);
+}
+
+// ---- the Kolibri's own tyres (Car.kt, as cs): worn tyres corner less hard, a burning one less still ----
+{
+  const ay = (w, hot) => { const c = HN.mkCar('kaze', { v: 80 }); c.kt = { w: [w, w, w, w], d: [0, 0, 0, 0], hot, cold: 0, d0: 0, g: [1, 1, 1, 1, 1] };
+    for (let i = 0; i < 4 / DT; i++) HN.step(c, { st: 1, thr: 'hold' }); return Math.abs(c.wPath) * Math.hypot(c.vx, c.vz) / 9.81; };
+  const a0 = ay(0, -1), a1 = ay(1, -1), a2 = ay(0, 0);
+  ok('the Kolibri\'s tyres with the new physics: worn ones corner less hard, a burning one less than new ones', a1 < a0 - 0.05 && a2 < a0 - 0.05, `new ${f(a0)} g, worn ${f(a1)} g, one burning ${f(a2)} g`);
 }
 
 // ---- the rivals' pace ----

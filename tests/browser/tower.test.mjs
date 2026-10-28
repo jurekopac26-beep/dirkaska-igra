@@ -9,7 +9,7 @@ const T = checker('tower');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', tower: 1 }, { width: 390, height: 844 }, { seed: 7 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', tower: 2 }, { width: 390, height: 844 }, { seed: 7 });
   await startTrack(page, 'jezero');
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(22, true); g.resume(); });
   // (the tower is drawn four times a second of the race; a slow software renderer takes a few frames to get there, on a busy machine over 20 s: read it once it shows
@@ -30,7 +30,7 @@ try {
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="tower"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
   await page.waitForTimeout(300);
   const off = await page.evaluate(() => getComputedStyle(document.getElementById('h-tower')).display);
-  await page.evaluate(() => { document.querySelector('[data-set="tower"] button[data-v="1"]').click(); window.__game.resume(); });
+  await page.evaluate(() => { document.querySelector('[data-set="tower"] button[data-v="2"]').click(); window.__game.resume(); });
   T.check('switched off in the settings: gone', off === 'none', off);
 
   // on its side: at the right, under the map

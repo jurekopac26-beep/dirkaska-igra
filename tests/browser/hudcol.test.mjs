@@ -127,7 +127,7 @@ async function both(page, name, msg, want, opt = {}) {
 }
 
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'gozd', tower: 1, radio: 1, damage: 1, line: 0 }, { width: 640, height: 360 }, CTX);
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'gozd', tower: 2, radio: 1, damage: 1, line: 0 }, { width: 640, height: 360 }, CTX);
 
   // 1. a race on a circuit (Bakreni gozd): the start (START!), a pit stop on the autopilot (the progress bar first under the map), the last lap
   await startTrack(page, 'gozd');
