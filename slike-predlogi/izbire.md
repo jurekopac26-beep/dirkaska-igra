@@ -472,3 +472,9 @@ Popravki po pregledu slik (20. 10. ponoči):
 - Misije (vse na progah, ki so že v igri): 11 Ognjena reka (Mauna Kea), 12 Avtek na daljinca (Suzuka), 13 Lovec na tornado (Detroit), 14 Sladoledar (Rio de Janeiro), 15 Na tirih (Longford), 16 Za balonom (Toskana), 17 Ledeni most (Trois-Rivières), 18 Kaskader (Moki Dugway), 19 Pred plimo (Townsville), 20 Fotosafari (Great Alpine Road), 21 Zadnji trajekt (Riviera), 22 Smetarski dan (Crystal Palace), 23 Lovec na meteorite (Marrakesh), 24 Žetev pred nevihto (Medvode), 25 Spremljevalni avto (Spa).
 - Makete: `blender/miss2.py <11-25> <mapa>` (uporabi gradnike iz `miss.py`), prikaz na zaslonu `blender/hud_miss2.py`; slike `listi/vse43-posebne-misije-2`. Predstavitev ima zdaj 33 prosojnic (kopija v `misije-10/`), tudi »Še šest idej v rezervi«.
 - Ocena: novih 15 misij 200–290 h; vseh 25 s sistemom 350–500 h (s skupnimi gradniki realno 20–30 % manj).
+
+## 28. 10. ponoči: še 10 posebnih misij (26–35)
+- Uporabnik: »Vse misije so dobre. Dodaj še dodatnih 10 misij v predstavitev.«
+- Misije (vse na progah, ki so že v igri): 26 Zadnji odstotek (Tianmen), 27 Splavi čoln (Uncompahgre), 28 Svetilnik v nevihti (Big Sur), 29 Božična noč (Štajerska), 30 Ratrak (Mount Baldy), 31 Dinozavrovo jajce (Riverside), 32 Opičja tolpa (Irohazaka), 33 Odvoz snega (Montréal), 34 Mestni avtobus (Toronto), 35 Reševalci na plaži (Newcastle). Prvih šest je bilo prej »v rezervi«; rezerva ima zdaj šest novih idej (plaz, poplava, peščeni vihar, konji v prikolici, solna ravnica, potisni letalo).
+- Makete: `blender/miss3.py <26-35> <mapa>` (gradniki iz `miss.py` in `miss2.py`; misija 27 ima še sliko zadnje kamere `m27_inset.png`), prikaz na zaslonu `blender/hud_miss3.py`; slike `listi/vse44-posebne-misije-3`. Predstavitev ima zdaj 44 prosojnic (kopija v `misije-10/`).
+- Ocena: misije 26–35 130–180 h; vseh 35 s sistemom 480–680 h (s skupnimi gradniki realno 20–30 % manj).
