@@ -3,8 +3,9 @@
 // 1. 44 the garage door: where the garage's front is closed (World's gar.wall at the front: Bathurst's
 //    garages, Bang Saen's marquee) that door in the player's colour, down to the floor; where the front is open between the
 //    door's pillars (gar.jamb) a light grey roller door between them, down to the top of the opening; both while no stop is under way
-//    (Crystal Palace's stall, Detroit's and Trois-Rivières' tents and Longford's shed, open at the front: none). 95C the flag: by the left-hand pillar
-//    in front of the garage an upright cloth in the player's colour with the driver's three letters (KOP), on a pole 3 m tall. 72 the
+//    (Crystal Palace's stall, Detroit's and Trois-Rivières' tents and Longford's shed, open at the front: none). 95C the flags: by every
+//    garage's left-hand pillar an upright cloth out towards the lane, facing along it, in its crew's colour with its driver's three
+//    letters (the player's KOP), on a pole 4 m tall. 72 the
 //    stack of used tyres: by the right-hand pillar seven tyres lying flat in two piles, each up on the one below. 48 the tyre marks: in
 //    front of every crew's garage two dark arcs from where the car stands in the box out to the lane, fading as they go. 5 and 76 the pit
 //    exit: by the end of the pit wall on the way out (Track.pitJ gb) the light's post and the marshal.
@@ -42,12 +43,17 @@ try {
         if (X.door.part === 'jamb' ? cl.getHSL({}).s > 0.1 || cl.getHSL({}).l < 0.6 : cl.getHex() !== PAINT) out.bad.push('door colour ' + cl.getHexString()); }   // (a light grey roller door; Bang Saen's front its paint, as before)
       const front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, want = G.wall && G.wall[0] < front + 0.6 ? 'wall' : G.jamb ? 'jamb' : null;   // (a closed front rolls up; an open one between pillars gets a grey door)
       if (out.door !== want) out.bad.push('door ' + out.door + ' (want ' + want + ')');
-      // the flag
-      const F = c.grp.children.find(o => o.name === 'pitFlag');
-      if (!F) out.bad.push('no flag'); else { const U = F.userData, L = loc(U.pole[0], U.pole[1]); out.flag = U.code;
-        if (U.code !== 'KOP' || U.col !== PAINT) out.bad.push('flag ' + U.code + ' #' + U.col.toString(16));
-        if (Math.abs(L.a + X.hw) > 0.2 || L.w > X.front || L.w < X.front - 1.2 || Math.abs(U.H - 3.05) > 0.1) out.bad.push('flag at ' + L.a.toFixed(2) + '/' + (L.w - X.front).toFixed(2));
-        F.geometry.computeBoundingBox(); const bb = F.geometry.boundingBox; if (bb.max.y - bb.min.y < 1.8) out.bad.push('flag cloth ' + (bb.max.y - bb.min.y).toFixed(2) + ' m tall'); }
+      // the flags: one at every garage, its crew's colour, its driver's three letters (the player's: KOP), the pole in front of the left
+      // pillar, the cloth from it out towards the lane, facing along the lane (its points all as far along it as the pole), ~2.6 m tall
+      const F = c.grp.children.find(o => o.name === 'pitFlags'), B0 = Render.world.pitBoxes, c3 = (n) => (String(n || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();
+      if (!F) out.bad.push('no flags'); else { const U = F.userData, A = F.geometry.attributes.position.array, per = 8; out.flag = U.flags.map(f => f.code).join(' ');
+        if (U.flags.length !== B0.length) out.bad.push('flags ' + U.flags.length + ' for ' + B0.length + ' garages');
+        U.flags.forEach((f, j) => { const b = B0[j], Gb = b.gar || {}, fr = Gb.jamb ? Gb.jamb[0] : Gb.band ? Gb.band[0] : b.base + 9, hwb = Gb.jamb ? Gb.jamb[1] : Gb.band ? Gb.band[3] - 0.15 : 4.56, lb = (x, z) => ({ a: (x - b.ox) * b.tx + (z - b.oz) * b.tz, w: (x - b.ox) * b.nx + (z - b.oz) * b.nz });
+          const want = b.mine ? 'KOP' : c3(b.drv && b.drv.name), L = lb(f.pole[0], f.pole[1]), pts = []; for (let k = 0; k < per; k++) pts.push(Object.assign(lb(A[(j * per + k) * 3], A[(j * per + k) * 3 + 2]), { y: A[(j * per + k) * 3 + 1] - (b.y || 0) }));
+          if (f.code !== want || f.col !== b.col.getHex() || (b.mine && f.col !== PAINT)) out.bad.push('flag ' + j + ' ' + f.code + '/' + want + ' #' + f.col.toString(16));
+          if (Math.abs(L.a + hwb) > 0.2 || L.w > fr || L.w < fr - 0.6) out.bad.push('flag ' + j + ' pole at ' + L.a.toFixed(2) + '/' + (L.w - fr).toFixed(2));
+          if (!pts.every(p => Math.abs(p.a - L.a) < 0.12) || !(pts[per - 1].w < pts[0].w - 1.2) || Math.max(...pts.map(p => p.y)) - Math.min(...pts.map(p => p.y)) < 2.4) out.bad.push('flag ' + j + ' cloth ' + JSON.stringify(pts.map(p => [+p.a.toFixed(2), +(p.w - fr).toFixed(2)])));
+        }); }
       // the stack: two piles by the right-hand pillar, each tyre up on the one below, lying flat (the axle up)
       const S = X.stack, piles = [[], []];
       for (let j = 0; j < S.n; j++) { c.M.tyre.getMatrixAt(S.t0 + j, m4); m4.decompose(v, q, sc); const ax = new THREE.Vector3(1, 0, 0).applyQuaternion(q), L = loc(v.x, v.z);
@@ -68,7 +74,7 @@ try {
   T.check('13 circuits with pits', ids.length === 13 && res.length === 13, ids.join(', '));
   T.check('44 the garage door: a closed front (gar.wall at the front) rolls, an open one between pillars gets a light grey roller door, none on the open tents and shed; down while no stop is under way',
     res.every(r => !r.bad.some(b => /^door/.test(b))), res.map(r => `${r.id} ${r.door || '-'}${r.doorH ? ' ' + r.doorH + ' m' : ''} ${r.bad.filter(b => /^door/.test(b)).join('; ')}`).join(', '));
-  T.check('95C the flag: by the left pillar, in front of the garage, the player\'s colour, KOP (Jure Kopač), 3 m pole, a cloth ~2 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).join('; ')}`).join(', '));
+  T.check('95C the flags: at every garage by its left pillar, in its crew\'s colour, its driver\'s three letters (the player\'s KOP: Jure Kopač), the cloth out towards the lane facing along it, ~2.6 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('72 the stack of used tyres: seven by the right pillar in two piles (4 + 3), lying flat, each up on the one below', res.every(r => !r.bad.some(b => /^tyre/.test(b))), res.map(r => `${r.id} ${r.stack} ${r.bad.filter(b => /^tyre/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('48 the tyre marks: two in front of every crew\'s garage, from the box towards the lane, fading out', res.every(r => !r.bad.some(b => /mark/.test(b))), res.map(r => `${r.id} ${r.marks} ${r.bad.filter(b => /mark/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('5 and 76 the exit\'s post at the end of the pit wall on the way out', res.every(r => !r.bad.some(b => /exit/.test(b))), res.map(r => `${r.id} ${r.exitD} ${r.bad.filter(b => /exit/.test(b)).join('; ')}`).join(', '));

@@ -5221,9 +5221,9 @@ const Render = (function () {
     const P = race.player || null, pb = world.pitBox, ai = race.cars.filter(c => c !== P); let ai0 = 0;
     for (const bx of boxes) bx.col = new THREE.Color().setRGB(...bx.team);   // the teams: the player's box in the player's colour, the others in the AI cars' colours
     const L = curTrack.len, at = (d) => boxes.find(b => !b.mine && Math.abs(((b.s - curTrack.startS - d) % L + L * 1.5) % L - L / 2) < 1);   // (the box at d metres from the start line)
-    const own = new Map(); for (const c of ai) { const bx = race._boxD && !c.net ? at(race._boxD(c)) : null; if (bx && !own.has(bx)) { own.set(bx, c); bx.col = new THREE.Color(c.color); } }   // (each AI car's crew at the box it stops in: its colour)
+    const own = new Map(); for (const c of ai) { const bx = race._boxD && !c.net ? at(race._boxD(c)) : null; if (bx && !own.has(bx)) { own.set(bx, c); bx.col = new THREE.Color(c.color); bx.drv = c; } }   // (each AI car's crew at the box it stops in: its colour)
     const used = new Set(own.values());
-    for (const bx of boxes) { if (bx.mine && P) bx.col = new THREE.Color(P.color); else if (!own.has(bx)) { while (ai[ai0] && used.has(ai[ai0])) ai0++; if (ai[ai0]) bx.col = new THREE.Color(ai[ai0++].color); } }
+    for (const bx of boxes) { if (bx.mine && P) { bx.col = new THREE.Color(P.color); bx.drv = P; } else if (!own.has(bx)) { while (ai[ai0] && used.has(ai[ai0])) ai0++; if (ai[ai0]) { bx.drv = ai[ai0]; bx.col = new THREE.Color(ai[ai0++].color); } } }   // (drv: the driver whose three letters its flag shows, crewFlags)
     const men = [], bpt = (bx, a, w) => [bx.ox + bx.tx * a + bx.nx * w, bx.oz + bx.tz * a + bx.nz * w];
     const man = (bx, a, w, yaw, act, role, helmet) => { const id = men.length + bx.k * 17, h1 = crHash(id * 1.37 + 0.5), h2 = crHash(id * 2.71 + 1.3), h3 = crHash(id * 0.91 + 7.1), [x, z] = bpt(bx, a, w);
       const m = { id, role: role || 'idle', act, act0: act, bx, team: bx.col, x, y: bx.y || 0, z, yaw, hx: x, hz: z, hyaw: yaw, gx: x, gz: z, gyaw: yaw, style: 'walk', spd: 0, ph: h2 * 6, t0: h3 * 50, h1, h2,
@@ -5266,7 +5266,7 @@ const Render = (function () {
     if (nT) geo.tyre.setAttribute('crewCover', new THREE.InstancedBufferAttribute(new Float32Array(nT), 1));
     const M = { trunk: mk(geo.trunk, nM, true, matJ), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true, matJ), farm: mk(geo.farm, nM * 2, true, matJ),
       thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true, matT), jack: mk(geo.jack, roles ? 2 : 0, true),
-      rod: mk(geo.rod, (roles ? 13 + 3 + 2 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };   // (the player's garage: + its door and its flag's pole, crewGarage)
+      rod: mk(geo.rod, (roles ? 13 + 3 + 1 + boxes.length : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };   // (the player's garage: + its door, crewGarage; each garage's flag's pole, crewFlags)
     const skinA = geo.head.attributes.crewSkin;
     men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
       skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
@@ -5284,6 +5284,7 @@ const Render = (function () {
       if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
     const gx = roles ? crewGarage(race, roles.bx, M, rb + boxes.length, nT - CR_STACK.length, grp) : null;   // the player's garage: its door (44), its flag (95C), the stack of used tyres (72)
     const marks = crewMarks(boxes, grp);   // the tyre marks in front of every garage (48)
+    if (roles) crewFlags(race, boxes, M, rb + boxes.length + 4, grp);   // each garage's upright flag with its driver's three letters (95C)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
     crew = { grp, meshes, mats: [mat, matS, matJ, matT], M, men, roles, tyres, cover: nT ? geo.tyre.attributes.crewCover : null, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dOut: 40, dim: roles ? crDims(P) : null };
@@ -5301,8 +5302,9 @@ const Render = (function () {
   const CR_DOOR = [1.6, 2.6];
   // 72 the stack of used tyres in front of the garage, by its right-hand pillar: two piles (the crew's tyre, its band in the compound's colour)
   const CR_STACK = [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2]];   // (the pile, the tyre's place up it)
-  // 95C an upright flag by its left-hand pillar: on a pole (a rod) a tall cloth in the player's colour with the driver's three letters (as the
-  // timing tower's: the profile's name, race.opts.playerName, its last word's first three; the player's car alone: TI), one mesh
+  // 95C (crewFlags) an upright flag by every garage's left-hand pillar: on a 4 m pole (a rod) a cloth 1.4 x 2.6 m out over the apron towards the lane,
+  // facing the cars coming down it, in its crew's colour with its driver's three letters stacked (as the timing tower's: an AI car's surname;
+  // the player's, the profile's name, race.opts.playerName, its last word's first three; none given: TI). One mesh, one atlas
   function crewGarage(race, bx, M, n0, t0, grp) {
     const G = bx.gar || {}, T = curTrack, col = bx.col, grey = new THREE.Color(0.7, 0.71, 0.73);
     const front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
@@ -5310,20 +5312,6 @@ const Render = (function () {
     if (G.wall && G.wall[0] < front + 0.6) { const [w, ya, y1, h] = G.wall; out.door = { i: n0, part: 'wall', a0: -h, a1: h, w, y1, ya, col }; }   // (a closed front in the player's colour, a door before the dark inside: Bathurst's garages, Bang Saen's marquee; it rolls up)
     else if (G.jamb) { const [w, a, wd, y1] = G.jamb; out.door = { i: n0 + 3, part: 'jamb', a0: -(a - wd / 2), a1: a - wd / 2, w: w + 0.12, y1, col: grey }; }   // (an open front: a grey roller door inside the pillars, a hand's width behind their faces)
     if (out.door) crDoorSet(M.rod, bx, out.door, 0);
-    // the flag: its pole in front of the left pillar, the cloth out towards the next box, facing the lane
-    const pa = -hw, pw = front - 0.45, H = 3.05, [px, pz] = [bx.ox + bx.tx * pa + bx.nx * pw, bx.oz + bx.tz * pa + bx.nz * pw];
-    crSetRod(M.rod, n0 + 4, px, y0, pz, px, y0 + H, pz, 0.055); M.rod.setColorAt(n0 + 4, _pc.setRGB(0.18, 0.19, 0.21));
-    const P = race.player, nm = P ? race.opts && race.opts.playerName : null, code = (String(nm || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();
-    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256; const x = cv.getContext('2d'), lum = col.r * 0.3 + col.g * 0.59 + col.b * 0.11;
-    x.fillStyle = '#' + col.getHexString(); x.fillRect(0, 0, 64, 256); x.fillStyle = lum > 0.62 ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.85)'; x.fillRect(0, 0, 7, 256);   // (a stripe along the pole)
-    x.fillStyle = lum > 0.62 ? '#14161a' : '#ffffff'; x.font = '900 50px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    [...code].forEach((ch, k) => x.fillText(ch, 35, 62 + k * 62, 54));
-    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 2;
-    const W = 0.62, y1c = H - 0.12, y0c = 0.95, pos = [], uv = [], idx = [], NS = 4;   // (the cloth: four strips, a slight wave in it; u mirrored: the letters read from the lane)
-    for (let i = 0; i <= NS; i++) { const u = i / NS, a = pa - W * u, wv = pw - Math.sin(u * Math.PI) * 0.08 * u, X = bx.ox + bx.tx * a + bx.nx * wv, Z = bx.oz + bx.tz * a + bx.nz * wv, top = y1c - 0.18 * u * u;
-      pos.push(X, y0 + y0c + 0.06 * u, Z, X, y0 + top, Z); uv.push(1 - u, 0, 1 - u, 1); if (i) { const b = (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); } }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
-    const fm = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide })); fm.name = 'pitFlag'; fm.userData = { code, col: col.getHex(), pole: [px, pz], H }; grp.add(fm); out.flag = fm;
     // the stack: in front of the right pillar, two piles of used tyres lying flat (on its side, as a tyre on the floor: crTyreMat)
     const S = crew && crew.tyreS || new THREE.Vector3(1, 1, 1), sa = hw - 0.05, sw = front - 0.55, BANDS = [CR_OLD, CR_NEW, new THREE.Color(0.93, 0.93, 0.9)];
     CR_STACK.forEach(([pile, k], j) => { const a = sa - pile * 0.08, w = sw - pile * 0.72, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w;
@@ -5331,6 +5319,28 @@ const Render = (function () {
       M.tyre.setColorAt(t0 + j, BANDS[(j * 7 + bx.k) % 3]); });
     out.stack = { t0, n: CR_STACK.length, a: sa, w: sw }; out.front = front; out.hw = hw;
     return out;
+  }
+  const code3 = (n) => (String(n || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();
+  function crewFlags(race, boxes, M, i0, grp) {
+    const T = curTrack, P = race.player, N = 16, cv = document.createElement('canvas'); cv.width = 64 * N; cv.height = 256; const x = cv.getContext('2d');
+    const pos = [], nrm = [], uv = [], idx = [], flags = []; let nv = 0;
+    boxes.forEach((bx, j) => {
+      const G = bx.gar || {}, col = bx.col, front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
+      const code = bx.mine && P ? code3(race.opts && race.opts.playerName) : code3(bx.drv && bx.drv.name), lum = col.r * 0.3 + col.g * 0.59 + col.b * 0.11, cx = (j % N) * 64;
+      x.fillStyle = '#' + col.getHexString(); x.fillRect(cx, 0, 64, 256); x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 4; x.strokeRect(cx + 2, 2, 60, 252);
+      x.fillStyle = lum > 0.62 ? '#14161a' : '#ffffff'; x.font = '900 50px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      [...code].forEach((ch, k) => x.fillText(ch, cx + 32, 58 + k * 64, 54));
+      const k0 = T.idx(bx.s), sd = bx.nx * T.nx[k0] + bx.nz * T.nz[k0] < 0 ? -1 : 1, H = 4, pa = -hw, pw = front - 0.15, [px, pz] = [bx.ox + bx.tx * pa + bx.nx * pw, bx.oz + bx.tz * pa + bx.nz * pw];
+      crSetRod(M.rod, i0 + j, px, y0, pz, px, y0 + H, pz, 0.055); M.rod.setColorAt(i0 + j, _pc.setRGB(0.18, 0.19, 0.21));
+      const W = 1.4, NS = 3, u0 = (j % N) / N, du = 1 / N;   // (the cloth: from the pole out towards the lane, a slight wave along it; u left to right as the cars coming down the lane see it)
+      for (let i = 0; i <= NS; i++) { const f = i / NS, w = pw - 0.1 - W * f, a = pa + Math.sin(f * Math.PI) * 0.07, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w, u = u0 + du * (sd > 0 ? 1 - f : f);
+        pos.push(X, y0 + 1.25 + 0.06 * f, Z, X, y0 + H - 0.1 - 0.15 * f * f, Z); nrm.push(-bx.tx, 0, -bx.tz, -bx.tx, 0, -bx.tz); uv.push(u, 0, u, 1);
+        if (i) { const b = nv + (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); } }
+      nv += (NS + 1) * 2; flags.push({ code, col: col.getHex(), pole: [px, pz], mine: !!bx.mine, k: bx.k });
+    });
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 2;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere();
+    const fm = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide })); fm.name = 'pitFlags'; fm.userData = { flags, H: 4 }; grp.add(fm);
   }
   function crDoorSet(im, bx, D, u) {   // the door u (0 down .. 1 up): its slab from its bottom edge to the top of the opening
     const yb = (D.ya || 0.02) + (D.y1 - (D.ya || 0.02) - 0.16) * u;
@@ -5340,8 +5350,7 @@ const Render = (function () {
     const X = c.gar; if (!X || !X.door) return;
     const want = c.mode === 'home' ? 0 : 1, o = snap ? want : want > X.open ? Math.min(want, X.open + dt / CR_DOOR[0]) : Math.max(want, X.open - dt / CR_DOOR[1]);
     if (o === X.open && !snap) return; X.open = o;
-    if (near || snap) { const k = Core.sstep(0, 1, o); crDoorSet(c.M.rod, c.roles.bx, X.door, k); c.M.rod.instanceMatrix.needsUpdate = true; } else X.stale = true;
-    if (near && X.stale) X.stale = false;
+    crDoorSet(c.M.rod, c.roles.bx, X.door, Core.sstep(0, 1, o)); c.M.rod.instanceMatrix.needsUpdate = true;   // (one rod, only while it moves)
   }
   // 48 the tyre marks in front of every garage: where the cars pull away from the box onto the lane, two dark arcs from the rear wheels'
   // place in the box (Track.bayDim) curving out to the lane, darker where they start (the wheels spinning up), each box's its own length.

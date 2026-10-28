@@ -101,8 +101,8 @@ try {
       r.pud && r.pitV > 50 && r.verts > r.pitV && (id === 'bathurst' ? r.film === 0 : r.film > 60) && r.on.pud === 1 && r.off.pud === 1 && r.fx.puddles > 0.3, JSON.stringify({ pud: r.pud, film: r.film, verts: r.verts, pitV: r.pitV, on: r.on, fx: r.fx }));
     if (id === 'spa') T.check('spa: the apron darker with the film of water (the same draw calls)', r.on.lum != null && r.on.lum < r.off.lum * 0.95 && r.on.calls === r.off.calls, JSON.stringify({ on: r.on, off: r.off }));
     T.check(`${id}: the rain splashing in the pits`, r.drops > 20, `${r.drops} drops in the pits in 40 frames`);
-    T.check(`${id}: the crews in their rain jackets (the trunk and the arms, no new mesh), the new set waiting on the floor in its covers, the old set beside it bare`,
-      r.parts === 2 && r.wetOn.every(v => v === 1) && r.jacket && r.tyreMat && r.cv0.join() === '1,1,1,1,0,0,0,0' && r.cv1.join() === '1,1,1,1,0,0,0,0',
+    T.check(`${id}: the crews in their rain jackets (the trunk and the arms, no new mesh), the new set waiting on the floor in its covers, the old set beside it bare (and the stack of used tyres)`,
+      r.parts === 2 && r.wetOn.every(v => v === 1) && r.jacket && r.tyreMat && r.cv0.slice(0, 8).join() === '1,1,1,1,0,0,0,0' && r.cv1.slice(0, 8).join() === '1,1,1,1,0,0,0,0' && r.cv0.slice(8).every(v => v === 0) && r.cv1.slice(8).every(v => v === 0),   // (after the eight: the stack of used tyres by the garage, pitkit.test.mjs: bare)
       JSON.stringify({ parts: r.parts, wet: r.wetOn, meshes: r.meshes, covers: r.cv0, oldDown: r.cv1 }));
     wetMeshes = r.meshes;
   }

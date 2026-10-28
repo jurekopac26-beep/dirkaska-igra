@@ -4,8 +4,8 @@
 //    the 13 boxes: there the cars whose box has one) in that car's colour; over each garage's door a band in its crew's colour; the
 //    player's garage also in the player's paint (its back wall or, where the front is closed, its door; the door's pillars where it has
 //    them), and no other garage.
-// 2. Where they are: each band and each of the player's panels in sight from the lane in front of its box (nothing of the world in
-//    front of it: not buried in the wall or the roof) and on the face it covers (the world right behind it: not floating; a door may
+// 2. Where they are: each band and each of the player's panels in sight from the lane in front of its box (its grey roller door up, as
+//    during a stop: pitkit.test.mjs; nothing of the world in front of it: not buried in the wall or the roof) and on the face it covers (the world right behind it: not floating; a door may
 //    stand a little before a dark inside; Crystal Palace's stall has no back wall, its cloth hangs behind the back posts, and Longford's
 //    board hangs under the shed's eave). Where two neighbouring garages overlap on a bend (Trois-Rivières' first tents), one stands before
 //    the other: those bands only on their faces, at most 3 of them.
@@ -46,11 +46,12 @@ try {
       const bands = B.map((bx, j) => ({ bx, p: inst(rb + j), kind: 'band' })), extra = [0, 1, 2].map(k => inst(rb + nB + k));
       out.bandsCol = bands.every(b => b.p && b.p.col === hex(b.bx.col));
       const G = mine.gar || {}, want = (G.wall ? 1 : 0) + (G.jamb ? 2 : 0);
-      out.minePanels = want >= 1 && extra.filter(Boolean).length === want && extra.every(p => !p || p.col === GREEN) && rod.count === rb + nB + 3;
+      out.minePanels = want >= 1 && extra.filter(Boolean).length === want && extra.every(p => !p || p.col === GREEN) && rod.count === rb + nB + 3 + 1 + nB;   // (then the garage's door and every garage's flag's pole: pitkit.test.mjs)
       out.parts = (G.wall ? 'wall' : '') + (G.jamb ? '+pillars' : '');
       // 2. where they are: the camera at the box (the world's scenery near it drawn), rays against the world's meshes and the rods
       const pt = (bx, a, w) => new THREE.Vector3(bx.ox + bx.tx * a + bx.nx * w, (bx.y || 0) + 1.6, bx.oz + bx.tz * a + bx.nz * w);
       { const E = pt(mine, -20, mine.lane), F = pt(mine, 0, mine.base + 8); Render.setShot({ px: E.x, py: E.y + 3, pz: E.z, tx: F.x, ty: F.y, tz: F.z, fov: 50, fogD: 120, near: 0.5, sky: true, noCut: true }); for (let k = 0; k < 2; k++) Render.frame(0.05, 1, P, 'chase', {}); Render.setShot(null); }
+      if (c.gar && c.gar.door && c.gar.door.part === 'jamb') { c.gar.open = 1; Render.frame(0.001, 1, P, 'chase', {}); }   // (a grey roller door before the back wall: up, as during a stop; a closed front in the paint, gar.wall, stays down: it is the panel)
       const meshes = []; W.root.traverseVisible(m => { if (m.isMesh) meshes.push(m); });
       const rc = new THREE.Raycaster(), panels = bands.concat([{ bx: mine, p: extra[0], kind: 'wall' }, { bx: mine, p: extra[1], kind: 'pillar' }, { bx: mine, p: extra[2], kind: 'pillar' }].filter(q => q.p));
       out.n = panels.length; out.far = 0; out.ahead = [];
