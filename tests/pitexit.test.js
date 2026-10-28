@@ -3,11 +3,14 @@
 // player alone on the Red Bull Ring, on the autopilot, in at the end of the first lap; handed back ~1 s before the way out joins the
 // circuit (as game.js pitNear), then the autopilot's steering (in the lane until it leaves it) with full throttle from 0.15 s after the
 // hand-back, with the clean launch and without it (a press as quick, but not counted: today's exit), and from 0.6 s (a late press, a
-// normal exit). With it, each of the 10 cars: no wheelspin through the rest of the lane and onto the circuit's asphalt (while half of it
-// or more is left), less over its whole time; quicker, but only a little (more speed 1.5 s after the hand-back, a few metres more 3 and
-// 6 s after it); its share 1 at first, never up, gone after PIT_LAUNCH.win s. Without it the exit as before: the wheels spin in the lane;
-// the late press further behind still. Bathurst too (its lane on the left). Not a plain field (the golden references' digest): a car
-// never given one has none.
+// normal exit); out of the lane, from where the autopilot first brakes for the corner ahead, its gas and brake (a driver would brake there:
+// on the paved pit road the car is quick enough to reach the first corner within the 6 s, and full throttle into it would only compare
+// who runs off harder). The pit lane's speed limit ends at the hand-back (Race.pitStep: the driver's gas from there). With it, each of
+// the 10 cars: no wheelspin through the rest of the lane and onto the circuit's asphalt (while half of it or more is left), less over its
+// whole time; quicker, but only a little (more speed 1.5 s after the hand-back, a few metres more 3 and 6 s after it); its share 1 at
+// first, never up, gone after PIT_LAUNCH.win s. Without it the exit as before: the wheels spin in the lane; the late press further behind
+// still. Bathurst too (its lane on the left; Hell Corner right after the way out: quicker where the first of the two brakes for it).
+// Not a plain field (the golden references' digest): a car never given one has none.
 //   node tests/pitexit.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -41,13 +44,14 @@ function run(tid, mi, press, clean) {
       if (P.pitDone && P.inPit && near(r, P)) { hb = r.time; break; }
       r.step(DT);
     }
-    const o = { hb, v0: P.speed, spinHalf: 0, spinWin: 0, spinLane: 0, out: null, asph: null, v15: NaN, d3: NaN, d6: NaN, ks: [], plx0: P.plx, plxEnd: undefined, kind: '' };
+    const o = { hb, v0: P.speed, spinHalf: 0, spinWin: 0, spinLane: 0, out: null, asph: null, v15: NaN, d3: NaN, d6: NaN, ks: [], plx0: P.plx, plxEnd: undefined, kind: '', ds: [], vs: [], brk: null };
     if (hb < 0) return o;
-    const d0 = P.dist; let pressed = false;
+    const d0 = P.dist; let pressed = false, brk = false;
     for (let j = 0; j < 6 / DT; j++) {
       Math.random = seeded(5000 + (++k));
       P.pitWant = P.inPit; C.aiControl(P, r, DT);   // (the autopilot's steering: along the lane until it leaves it)
-      const on = r.time - hb >= press - 1e-9; P.inThr = on ? 1 : 0; P.inBrk = 0;
+      if (!P.inPit && P.inBrk > 0 && !brk) { brk = true; o.brk = j; }   // (out of the lane, from where the autopilot first brakes for the corner ahead: its gas and brake, as a driver would)
+      const on = r.time - hb >= press - 1e-9; if (!brk) { P.inThr = on ? 1 : 0; P.inBrk = 0; }
       if (on && !pressed) { pressed = true; if (clean) { r.pitLaunch(P); o.kind = typeof P.plx; } }
       const kNow = P.plx ? P.plx.k : 0;
       r.step(DT);
@@ -60,6 +64,7 @@ function run(tid, mi, press, clean) {
       if (o.asph == null && !P.inPit && !P.pitG) o.asph = t;
       if (Math.abs(t - 1.5) < DT / 2) o.v15 = P.speed;
       if (Math.abs(t - 3) < DT / 2) o.d3 = P.dist - d0;
+      o.ds.push(P.dist - d0); o.vs.push(P.speed);
     }
     o.d6 = P.dist - d0; o.plxEnd = P.plx;
     return o;
@@ -95,10 +100,13 @@ const rows = CARS.map(mi => ({ id: C.MODELS[mi].id, mi, a: run('rbring', mi, 0.1
 
 // 2. Bathurst (its lane on the left): the same for the rally car and the muscle car
 {
-  const B = [4, 8].map(mi => ({ id: C.MODELS[mi].id, a: run('bathurst', mi, 0.15, true), b: run('bathurst', mi, 0.15, false) }));
-  check('Bathurst (the lane on the left): handed back in the lane, with it no wheelspin while half of it or more is left; quicker by a little; without it the wheels spin',
-    B.every(x => x.a.hb > 0 && x.a.out > 0.4 && x.a.spinHalf === 0 && x.a.spinLane === 0 && x.b.spinLane > 0.3 && x.a.d6 > x.b.d6 + 0.5 && x.a.d6 - x.b.d6 < 12 && x.a.plxEnd === null),
-    B.map(x => `${x.id}: out after ${f2(x.a.out)} s, spin ${f2(x.a.spinHalf)}/${f2(x.b.spinLane)}, +${f2(x.a.d6 - x.b.d6)} m`).join(', '));
+  // (quicker where the first of the two brakes for Hell Corner, both on full throttle until then: more speed, more distance; past it the
+  // corner's line, not the launch, sets who is ahead)
+  const B = [4, 8].map(mi => { const a = run('bathurst', mi, 0.15, true), b = run('bathurst', mi, 0.15, false), j = Math.min(a.brk == null ? 1e9 : a.brk, b.brk == null ? 1e9 : b.brk);
+    return { id: C.MODELS[mi].id, a, b, j: j < 1e9 ? j : -1, dv: j < 1e9 ? a.vs[j] - b.vs[j] : NaN, dd: j < 1e9 ? a.ds[j] - b.ds[j] : NaN }; });
+  check('Bathurst (the lane on the left): handed back in the lane, with it no wheelspin while half of it or more is left; quicker by a little (where the first of the two brakes for Hell Corner); without it the wheels spin',
+    B.every(x => x.a.hb > 0 && x.a.out > 0.4 && x.a.spinHalf === 0 && x.a.spinLane === 0 && x.b.spinLane > 0.3 && x.j > 0 && x.dv > 0.3 && x.dd > 0.5 && x.dd < 12 && x.a.plxEnd === null),
+    B.map(x => `${x.id}: out after ${f2(x.a.out)} s, spin ${f2(x.a.spinHalf)}/${f2(x.b.spinLane)}, braking ${f2((x.j + 1) * DT)} s after the hand-back: +${f2(x.dv * 3.6)} km/h, +${f2(x.dd)} m`).join(', '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

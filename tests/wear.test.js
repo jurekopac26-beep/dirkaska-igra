@@ -66,9 +66,10 @@ const T = track('rbring');
   while (t < 12) step();
   P.ty.wear = bp0 - 0.004; A.ty.wear = A.ty.bp - 0.002;
   while (t < 80 && !at) { const w = P.ty.wear; step(); if (P.ty.bw < 0 && (P.flat || 0)) early = true;
-    if (P.ty.bw >= 0) { at = { w0: w, w: P.ty.wear, bw: P.ty.bw, flat: P.flat, ev: P.ty.ev, wet: P.wet }; P.ty.ev = ''; plan = r.plan(P); } }
+    if (P.ty.bw >= 0) { at = { w0: w, w: P.ty.wear, bw: P.ty.bw, flat: P.flat, ev: P.ty.ev, wet: P.wet, w4: P.ty.w4.map(f3) }; P.ty.ev = ''; plan = r.plan(P); } }
   const ok0 = !!at && !early && at.w0 < bp0 && at.w >= bp0 && at.w < bp0 + 0.003 && at.bw >= 0 && at.bw <= 3 && at.flat === (1 << at.bw) && at.ev === 'burst';
   check('worn past its burst point: one tyre bursts (that wheel\'s Car.flat bit, the event for the HUD), not before', ok0, JSON.stringify({ bp: f3(bp0), at }));
+  check('... the one that bursts: the most worn of the four (Car.ty.w4)', !!at && at.w4.every(w => w <= at.w4[at.bw]) && at.w4[at.bw] > Math.min(...at.w4), JSON.stringify(at && { bw: at.bw, w4: at.w4 }));
   check('... the engineer: box for a new tyre (the plan\'s \'tyre\')', !!plan && plan.need.indexOf('tyre') >= 0 && plan.from != null, JSON.stringify(plan && { need: plan.need, box: plan.box, from: plan.from }));
   d1 = P.dist; const t1 = t; while (t < t1 + 15) step();
   check('... the car drives on on the flat (slower, steadily on)', P.dist - d1 > 250 && Number.isFinite(P.x) && P.flat === at.flat, `${Math.round(P.dist - d1)} m in 15 s`);
@@ -130,6 +131,34 @@ const T = track('rbring');
     for (const c of r.cars) { if (!c.finished) maxW = Math.max(maxW, c.ty.wear); if (c.ty.bw >= 0) burst = true; } }
   check('a race of the usual length: the most worn set far from the warning (75 %) and the cliff, no burst, all finish', maxW < 0.5 && C.tyreCliff(maxW) === 1 && !burst && r.cars.every(c => c.finished),
     `the most worn ${f3(maxW)} (${r.cars.map(c => c.ty.c).join('')})`);
+}
+
+// 5. each tyre's own wear (Core.TW4, tyreW4: Car.ty.w4, front left, front right, rear left, rear right): a step's wear shared out by what each
+// tyre works, the four always averaging it: cornering the outer ones more (the side the car turns away from), braking the fronts, pulling
+// away the driven wheels (the rear-wheel drive's rears, the front-wheel drive's fronts, all four alike with four-wheel drive). In a race
+// the four apart (more than a tenth of the set's wear between the most and the least worn), averaging ty.wear exactly; a new set: none on
+// any. The grip cliff each tyre's own (Core.tyreCliff4): an even set as ever (tyreCliff of its wear), an uneven one losing grip as soon as a
+// tyre is past 80 %, each a quarter of its cliff
+{
+  const M = (id) => C.MODELS.find(m => m.id === id) || C.MODELS[0], share = (o) => { const c = Object.assign({ m: M('kaze'), speed: 30, csAn: 0, wPath: 0, inBrk: 0, inThr: 0, ty: { wear: 0.01, w4: [0, 0, 0, 0] } }, o);
+    C.tyreW4(c, 0.01); return c.ty.w4.map(w => w / 0.01); };
+  const avg = (w) => (w[0] + w[1] + w[2] + w[3]) / 4, rwd = C.MODELS.find(m => m.drive === 'FR' || m.drive === 'MR'), ff = C.MODELS.find(m => m.drive === 'FF'), awd = C.MODELS.find(m => m.drive === 'AWD');
+  const L = share({ csAn: 12, wPath: 0.3 }), R = share({ csAn: -12, wPath: -0.3 }), B = share({ inBrk: 1 }), Dr = share({ m: rwd, speed: 4, inThr: 1 }), Df = share({ m: ff, speed: 4, inThr: 1 }), Da = share({ m: awd, speed: 4, inThr: 1 }), S = share({});
+  const f2 = (w) => w.map(x => x.toFixed(2)).join(' ');
+  check('each tyre\'s share of a step\'s wear: cornering the outer ones more (the left ones turning one way, the right ones the other), braking the fronts, pulling away the driven wheels (rear-wheel drive the rears, front-wheel drive the fronts, four-wheel drive all alike), straight on all alike; always averaging the step\'s wear',
+    [L, R, B, Dr, Df, Da, S].every(w => Math.abs(avg(w) - 1) < 1e-9) && L[0] > L[1] && L[2] > L[3] && R[1] > R[0] && R[3] > R[2] && B[0] > B[2] && B[1] > B[3] && Dr[2] > Dr[0] && Df[0] > Df[2] && Math.abs(Da[0] - Da[2]) < 1e-9 && S.every(x => Math.abs(x - 1) < 1e-9),
+    `left ${f2(L)}, right ${f2(R)}, braking ${f2(B)}, RWD off ${f2(Dr)}, FF ${f2(Df)}, AWD ${f2(Da)}, straight ${f2(S)}`);
+  Math.random = seeded(5);
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 5, difficulty: 1, tyres: true, compounds: true, playerCmp: 'S' });
+  r.start(); const P = r.player, n0 = P.ty.w4.slice(); let t = 0;
+  while (t < 400 && P.lap < 3) { Math.random = seeded(4000 + Math.round(t / DT)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+  const W = P.ty.w4.slice(), sp = Math.max(...W) - Math.min(...W);
+  check('two laps of the Red Bull Ring on softs: the four tyres apart (more than a tenth of the set\'s wear between the most and the least worn), averaging the set\'s wear exactly; the set at the start none on any',
+    n0.every(w => w === 0) && Math.abs(avg(W) - P.ty.wear) < 1e-9 && sp > 0.1 * P.ty.wear && P.ty.wear > 0.05, `wear ${f3(P.ty.wear)}, the four ${W.map(f3).join(' ')}`);
+  const even = { wear: 0.85, w4: [1, 1, 1, 1] }, odd = { wear: 0.8, w4: [0.7, 0.9, 0.7, 0.9] }, fresh = { wear: 0.9, w4: [0, 0, 0, 0] }, c1 = C.tyreCliff;
+  check('the grip cliff each tyre\'s own: a set worn evenly exactly as before (tyreCliff of its wear, also where only the set\'s wear is known); at 80 % with two tyres at 90 % already 5 % less (each tyre a quarter of its cliff)',
+    C.tyreCliff4(even) === c1(0.85) && C.tyreCliff4(fresh) === c1(0.9) && c1(0.8) === 1 && Math.abs(C.tyreCliff4(odd) - (c1(0.7) + c1(0.9)) / 2) < 1e-12 && Math.abs(C.tyreCliff4(odd) - 0.95) < 1e-9,
+    `even ${f3(C.tyreCliff4(even))} (${f3(c1(0.85))}), uneven ${f3(C.tyreCliff4(odd))}`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

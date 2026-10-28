@@ -3164,8 +3164,10 @@
     else if (k === 'dry') { showMsg(tr('DEŽ JE PONEHAL'), 'gold', 2.2); Comm.say('rainStop', null, 2); Render.rainbow(true); if (box && P.ty.k === 'wet') toast(tr('Dež je ponehal: proga se suši, najprej na idealni liniji.'), 3800); }   // (the rain stopped: a rainbow over the land, by day)
   }
   const tyreName = (ty) => ty.k === 'wet' ? 'DEŽNE' : ({ S: 'MEHKE', M: 'SREDNJE', H: 'TRDE' })[ty.c] || 'SUHE';   // (the slicks by their compound, if the race has them)
-  // the tyres on the HUD (the second row, at the left; a race with tyres: pits on the track): four dots, all in the colour of what the set has
-  // left (one wear for the whole set: green when new, red at 40 % left or less), the compound's word in its colour (soft red, medium yellow,
+  // the tyres on the HUD (the second row, at the left; a race with tyres: pits on the track): four dots as the wheels sit (front left, front
+  // right; rear left, rear right), each in the colour of what that tyre has left (Core.tyreWear4: each tyre's own wear, the outer ones in the
+  // corners and the fronts under braking wearing more; green when new, red at 40 % left or less), a tyre past the cliff blinking (its share of
+  // the grip gone, Core.tyreCliff4), the compound's word in its colour (soft red, medium yellow,
   // hard white, the rain tyres blue), on a red chip when they are the wrong ones for the road. Right after a pit stop the new set is cold:
   // the dots and the word light blue from the fitting to the way out of the lane, their own colours a lap after it (on the screen only: the
   // grip is the same). The start's set is never cold (no d0). Written only when the look changes (the colours in steps)
@@ -3175,16 +3177,18 @@
   function tyreHUD(P) {
     const W = race.wst, el = $('h-tyre');
     if (!(W && W.tyres && P.ty)) { if (tyreKey !== '') { tyreKey = ''; el.className = ''; } return; }   // (no tyres: the row only the lap)
-    const ty = P.ty, left = Math.max(0, (1 - ty.wear) * 100), bad = ty.k !== Core.tyreFor(W.line), cl = ty.wear >= Core.TYRE_CLIFF[0];   // (worn past 1: 0 %; cl: over the cliff, Core TYRE_CLIFF)
+    const ty = P.ty, w4 = Core.tyreWear4(ty, tyW4), lf = w4.map(w => Math.max(0, (1 - w) * 100)), bad = ty.k !== Core.tyreFor(W.line), cl = ty.wear >= Core.TYRE_CLIFF[0];   // (worn past 1: 0 %; cl: the set over the cliff, Core TYRE_CLIFF)
     wearTold(P);
     const x0 = ty.d0 == null ? null : Math.max(ty.d0, tyOut == null ? ty.d0 : tyOut), hq = Math.round((x0 == null ? 1 : clamp((P.dist - x0) / track.len, 0, 1)) * 40);   // (the warmth in 40 steps of a lap from the way out)
-    const key = ty.k + (ty.c || '') + (bad ? 'x' : '') + (cl ? 'c' : '') + Math.round(left / 2) + '|' + hq;
+    const c4 = w4.map(w => w >= Core.TYRE_CLIFF[0]), key = ty.k + (ty.c || '') + (bad ? 'x' : '') + (cl ? 'c' : '') + lf.map(x => Math.round(x / 2)).join(',') + c4.map(Number).join('') + '|' + hq;
     if (key === tyreKey) return; tyreKey = key;
-    const own = ty.k === 'wet' ? TY_WET : TY_OWN[ty.c] || TY_DEF, dot = hslRgb(Math.round(clamp((left - 40) / 55, 0, 1) * 120), 0.78, 0.52);
+    const own = ty.k === 'wet' ? TY_WET : TY_OWN[ty.c] || TY_DEF;
     el.className = 'on ' + ty.k + (ty.k === 'dry' && ty.c ? ' c' + ty.c : '') + (bad ? ' bad' : '') + (cl ? ' cliff' : '') + (hq < 40 ? ' cold' : '');
-    el.style.setProperty('--td', tyMix(dot, hq / 40)); el.style.setProperty('--tw', tyMix(own, hq / 40));
+    el.querySelectorAll('.dts i').forEach((d, k) => { d.style.setProperty('--td', tyMix(hslRgb(Math.round(clamp((lf[k] - 40) / 55, 0, 1) * 120), 0.78, 0.52), hq / 40)); d.classList.toggle('cl', c4[k]); });
+    el.style.setProperty('--tw', tyMix(own, hq / 40));
     el.lastElementChild.textContent = tr(tyreName(ty));
   }
+  const tyW4 = [0, 0, 0, 0];
   // the weather forecast (Menljivo vreme: Core Race.forecast, the engineer's, in the player's laps and roughly): its words (čez 2–3 kroge:
   // the noun goes with the last number), at the way in to a stop on the radio (with the radio on) and in the custom stop's panel above the
   // tyres (stopOpen); the HUD's cloud under the tyres with the laps while the rain is on its way (a race with tyres)
@@ -3851,6 +3855,7 @@
       const J = Core.stopJobs(P, race, sel); R.querySelector('.sp-lbl span').textContent = sec(r === 'ty' ? J.ty : r === 'fuel' ? J.fuel : J.fix);
     }
     el.querySelector('.sp-tot b').textContent = sec(Core.stopDur(P, race, sel));
+    const Jr = Core.stopJobs(P, race, sel).rain; el.querySelector('.sp-tot span').textContent = tr('★ privzeto · delajo hkrati') + (Jr ? ' · ' + tr('dež +{0}', sec(Jr)) : '');   // (in the rain the crew is slower: Core RAIN_STOP)
   }
   function stopBar() {   // the panel's bar and seconds: the time left to choose
     const el = $('h-stop'), w = (clamp(cst.tl / cst.tl0, 0, 1) * 100).toFixed(1) + '%', b = el.querySelector('.sp-tb i'), t = Math.ceil(cst.tl - 1e-6) + '\u00a0s', em = el.querySelector('.sp-head em');

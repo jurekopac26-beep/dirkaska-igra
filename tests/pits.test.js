@@ -209,5 +209,28 @@ for (const [tid, laps, sd] of [['toskana', 6, 34], ['rio', 5, 13], ['toronto', 1
   } finally { Math.random = orig; }
 }
 
+// 5. the rain slows the crew (Core RAIN_STOP: wet wheel nuts and hands, the covers off the new set): a stop with work in it 0.3 s longer at
+// the lightest rain, 0.6 s at the heaviest (Race.rain, the rain falling now), nothing in the dry or for a stop with nothing to do; the
+// engineer's cost of a stop (Race.pitLoss) and the panel's time (stopDur) with it; a stop made in heavy rain on the Red Bull Ring lasts
+// that (pitDur, the time stood at the box), the same in a second run (no random draw)
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'rbring')), mk = (rain) => new C.Race(T, { numAI: 1, playerGrid: 1, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 1, damage: 2, tyres: true, fuel: true, radio: true, rain });
+  const r = mk(0), P = r.player, D = (pl) => C.stopDur(P, r, pl), rows = {};
+  for (const [k, rain] of [['dry', 0], ['drizzle', 0.02], ['light', 0.1], ['half', 0.5], ['heavy', 1]]) { r.rain = rain; rows[k] = { all: +(D() - (r.rain = 0, D())).toFixed(4), bare: (r.rain = rain, +D({ ty: 'keep', fuel: 0.25, fix: 'none' }).toFixed(4)) }; }
+  r.rain = 0; const L0 = r.pitLoss(P); r.rain = 1; const L1 = r.pitLoss(P); r.rain = 0;
+  const want = (rain) => rain > 0.02 ? C.RAIN_STOP[0] + C.RAIN_STOP[1] * (rain - 0.02) / 0.98 : 0;
+  check('the rain slows the crew: a stop 0.3 s longer at the lightest rain, 0.6 s at the heaviest (between by how hard it rains), nothing in the dry, nothing for a stop with nothing to do; Race.pitLoss with it',
+    rows.dry.all === 0 && rows.drizzle.all === 0 && Math.abs(rows.light.all - want(0.1)) < 1e-4 && Math.abs(rows.half.all - want(0.5)) < 1e-4 && Math.abs(rows.heavy.all - 0.6) < 1e-4 && rows.light.all >= 0.3 && Object.values(rows).every(x => x.bare === 0) && Math.abs(L1 - L0 - 0.6) < 1e-9,
+    JSON.stringify(Object.assign(rows, { loss: [+L0.toFixed(2), +L1.toFixed(2)] })));
+  const stop = () => { const orig = Math.random; Math.random = seeded(7);
+    try { const q = mk(1), Q = q.player; q.start(); let t = 0, k = 0, o = null, rt = 0;
+      while (t < 600 && !(o && Q.pitDone)) { Math.random = seeded(9000 + (++k)); if (Q.lap >= 1 && !Q.repairN && !Q.inPit && !T.pitAt(Q.q.s)) Q.pitWant = true;
+        C.aiControl(Q, q, DT); q.step(DT); t += DT; if (Q.pitState === 'repair') { rt += DT; if (!o) o = { dur: Q.pitDur, rain: q.rain, dry: (() => { const r0 = q.rain; q.rain = 0; const d = C.stopDur(Q, q); q.rain = r0; return d; })() }; } Q.hitWall = Q.hitCar = 0; }
+      return o && Object.assign(o, { rt }); } finally { Math.random = orig; } };
+  const a = stop(), b = stop();
+  check('... a stop made in heavy rain (the Red Bull Ring): it lasts the dry stop and 0.6 s (pitDur, the time stood at the box); the same in a second run',
+    !!a && !!b && a.rain === 1 && Math.abs(a.dur - a.dry - 0.6) < 1e-9 && Math.abs(a.rt - a.dur) < 2 * DT && a.dur === b.dur && a.rt === b.rt, JSON.stringify({ a, b }));
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;

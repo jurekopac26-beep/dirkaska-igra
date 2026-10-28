@@ -45,8 +45,10 @@ const SETUPS = {
 // below 70 %: MASK in core.js); half a second later every car of the crash set-ups hits it hard enough to lose panels. Since the AI keeps
 // clear of a car alongside (aiControl) the rivals no longer knock panels off each other (or the player) in the start's crowd, so the
 // player's own crash must lose one: Tianmen, Sani and Monterey (from 6 s the left lock only dents that car against the barrier: earlier, or
-// Sani's prototype later), Riverside from 6.5 s (from 6 s the formula only grazes the barrier)
-const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 5, 'tianmen/muscle': 5.5, 'sani/rally': 5, 'sani/lm': 8, 'sani/truck': 5, 'monterey/rally': 5 };
+// Sani's prototype later), Riverside from 6.5 s (from 6 s the formula only grazes the barrier). Detroit's truck: since the pit road's
+// junctions (the acceleration and deceleration lanes, Track.pitJ) the left lock from 6 s only dents it (0.35, no panel off); from 5.5 s it
+// loses one
+const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 5, 'tianmen/muscle': 5.5, 'sani/rally': 5, 'sani/lm': 8, 'sani/truck': 5, 'monterey/rally': 5, 'detroit/truck': 5.5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

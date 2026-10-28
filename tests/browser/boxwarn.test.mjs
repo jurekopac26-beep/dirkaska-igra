@@ -21,19 +21,20 @@ const OR = { port: { width: 360, height: 640 }, land: { width: 640, height: 360 
 const toRacing = (page) => page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 800 && g.phase !== 'racing'; k++) g.sim(0.05, false, 0, 0); return g.phase; });
 const frames = (page, n = 2) => page.evaluate((n) => new Promise(r => { let k = 0; const f = () => (++k >= n ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
 // the race on (paused, a quarter of a second at a time on autopilot, the HUD after each) until fn(g, P, dE, opt) (dE: the metres to this lap's
-// way in along the race); what the warning shows each time it changes ({ lap, dE, st: classes|words|metres, pit: in the lane or on the pit
-// road }) and the plan at each line (opt.pit: the player comes in at the next way in)
+// way in along the race); what the warning shows each time it changes or the car comes onto the pit road or leaves it ({ lap, dE, st:
+// classes|words|metres, pit: in the lane or on the pit road }: the warning as the car comes in, whether it went at the way in a step before
+// or in the same step) and the plan at each line (opt.pit: the player comes in at the next way in)
 const run = (page, fn, max, opt = {}) => page.evaluate(async ([src, max, opt]) => {
   const g = window.__game, P = g.race.player, Tk = g.race.track, D = Tk.def.pit, f = new Function('g', 'P', 'dE', 'o', 'return (' + src + ')(g, P, dE, o)'), B = document.getElementById('h-box');
   const dEOf = () => Math.max(1, P.lap) * Tk.len + D[1] - P.dist, st = () => B.className + '|' + B.firstElementChild.textContent + '|' + B.lastElementChild.textContent;
-  const out = { ch: [], lines: [] }; let last = null, lap = P.lap;
+  const out = { ch: [], lines: [] }; let last = null, lastPit = null, lap = P.lap;
   g.pause();
   for (let k = 0; k < max; k++) {
     if (opt.pit) P.pitWant = !P.repairN;   // (the player comes in: at the next way in)
     g.sim(0.25, true); g.hud(0.25);
     if (P.lap !== lap) { lap = P.lap; const pl = g.race.plan(P); out.lines.push({ lap, box: !!pl && pl.box, need: pl ? pl.need.join() : '', mk: !!g.race.mk }); }
-    const s = st(), dE = dEOf();
-    if (s !== last) { last = s; out.ch.push({ lap: P.lap, dE: Math.round(dE), st: s, pit: !!(P.inPit || P.pitG) }); }
+    const s = st(), dE = dEOf(), pit = !!(P.inPit || P.pitG);
+    if (s !== last || pit !== lastPit) { last = s; lastPit = pit; out.ch.push({ lap: P.lap, dE: Math.round(dE), st: s, pit }); }
     if (f(g, P, dE, opt)) { out.ok = true; break; }
   }
   out.lap = P.lap; out.L = Tk.len; out.st = st(); out.fuel = +P.fuel.toFixed(3);
@@ -150,7 +151,7 @@ try {
   const d = await run(page, (g, P, dE) => P.lap === 3 && dE < g.race.track.len / 2, 3000);
   const gone = d.ch.find(x => x.lap === 2 && x.st === '||'), back = d.ch.find(x => x.lap === 3 && x.st.startsWith('on'));
   T.check('... the stop not made: gone once past the way in (not in the lane), not back at the way out (it joins the circuit before the line here), at the third lap\'s line again',
-    !!d.ok && !!gone && !gone.pit && gone.dE < 0 && gone.dE > -120 && !!back && d.ch[d.ch.indexOf(gone) + 1] === back && back.dE > d.L / 2 && back.st === 'on|BOX THIS LAP|' && d.lines.some(l => l.lap === 3 && l.box), JSON.stringify(d.ch));
+    !!d.ok && !!gone && !gone.pit && gone.dE < 0 && gone.dE > -120 && !!back && d.ch.slice(d.ch.indexOf(gone) + 1).find(x => x.st !== gone.st) === back && back.dE > d.L / 2 && back.st === 'on|BOX THIS LAP|' && d.lines.some(l => l.lap === 3 && l.box), JSON.stringify(d.ch));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' '));

@@ -1,8 +1,10 @@
 // The rivals in the pits on the HUD (game.js aiPitHUD; Core's Race.step brings a badly damaged AI car in for the repair): Detroit (5 laps,
 // damage on, no team radio), the player on autopilot from the back of the grid, the other rivals' damage only for the looks (none of them
-// in for repairs but the ones hit here). On the first lap the two cars just ahead of the player badly damaged (~450 m before the way in, before
-// the run-up to it): they come in at its end and are repaired; a big message as the first comes in, by the driver's name as the team radio
-// gives it (J. NOVAK V BOKSIH, the pit icon), none for the second (one every 5 s at most). On the next lap, in English, the first of the
+// in for repairs but the ones hit here). The player waits 10 s at the start: last, so that the two cars just ahead of it are the field's last
+// two (in a field of 22 a badly damaged car slowing for the way in is passed by every car close behind it, 3 to 6 places, and would no longer
+// be near the player: here only the player is behind them, and it is ~10 s back). On the first lap these two badly damaged (~450 m before the
+// way in, before the run-up to it): they come in at its end and are repaired; a big message as the first comes in, by the driver's name as the
+// team radio gives it (J. NOVAK V BOKSIH, the pit icon), none for the second (one every 5 s at most). On the next lap, in English, the first of the
 // first three and a car five places from the player: only the former's (… IN THE PITS); messages only for the first three and the cars up
 // to three places from the player. The longest of them in both languages fits the column under the map upright and on its side, three
 // lines at most.
@@ -63,10 +65,11 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'detroit', damage: 2, radio: 0, fuel: 0, length: 'normal', weather: 'dry', tod: 'day', tower: 1 }, { width: 640, height: 360 }, { touch: true, seed: 11 });
   await startTrack(page, 'detroit');
   await toRacing(page);
+  await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 40; k++) g.sim(0.25, false, 0, 0, 1); });   // (the player waits 10 s at the start, on the brake: last)
 
-  // 1. the first lap: the two cars just ahead of the player badly damaged (~450 m before the way in); in at its end, repaired; the first
-  // one's message, none for the second (in less than 5 s after it)
-  const a = await wave(page, [{ at: (g, P, dE) => P.lap === 1 && dE(P) < 480, who: ['p-1', 'p-2'] }], false, 1600);
+  // 1. the first lap: the two cars just ahead of the player (the field's last two) badly damaged (~450 m before the way in); in at its end,
+  // repaired; the first one's message, none for the second (in less than 5 s after it)
+  const a = await wave(page, [{ at: (g, P, dE) => { const O = g.race.order, c = O[O.indexOf(P) - 1]; return !!c && c.lap === 1 && dE(c) < 480; }, who: ['p-1', 'p-2'] }], false, 1600);
   const aShown = a.log.filter(e => e.shown != null), aBad = wrongNotes(a, ' V BOKSIH', -1);
   T.check('the two cars just ahead of the player badly damaged on the first lap: in at its end (still damaged), repaired, out again',
     !!a.ok && a.hit.length === 2 && a.hit.every(h => h.inn > 0.4 && h.out < 0.05) && a.log.filter(e => a.hit.some(h => h.n === e.n)).length === 2, JSON.stringify(a.hit));

@@ -77,7 +77,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-tyre b { font: 800 italic calc(var(--hb) * var(--hw))/1 'ApexMenu', var(--f-ui); letter-spacing: .04em; color: var(--tw, #ffd23f); }
 #h-tyre.bad b { color: #fff; background: rgba(190, 30, 30, .78); box-shadow: 0 0 0 2px rgba(190, 30, 30, .78); border-radius: 2px; }   /* (the wrong tyres for the road: the word white on a red chip, so MEHKE reads too) */
 #h-tyre.cliff b { color: #fff; background: rgba(190, 30, 30, .78); box-shadow: 0 0 0 2px rgba(190, 30, 30, .78); border-radius: 2px; animation: fuelBlink 0.8s steps(2) infinite; }   /* (worn over the cliff, Core TYRE_CLIFF: the word white on a red chip and blinking, the dots red: a burst ahead, game.js tyreHUD) */
-#h-tyre.cliff .dts i { animation: fuelBlink 0.8s steps(2) infinite; }
+#h-tyre .dts i.cl { animation: fuelBlink 0.8s steps(2) infinite; }   /* (a tyre past the cliff, Core tyreCliff4: its own dot; the word as the set goes over it) */
 #h-lap { font: 800 italic calc(var(--hb) * var(--hl))/1 'ApexMenu', var(--f-ui); }
 #h-lap i { font: 700 .71em/1 'ApexMenu', var(--f-ui); letter-spacing: .05em; opacity: .85; }   /* (KROG, CP, the km of a long lap; a lap's word with no number, KVALIFIKACIJE: the whole of it) */
 #h-times { position: absolute; left: 50%; top: calc(6px + var(--st)); transform: translateX(-50%); text-align: center; }   /* (the clock, the best and the line under it in the bundled face, as the rows beside it: the same widths on every phone and on CI) */

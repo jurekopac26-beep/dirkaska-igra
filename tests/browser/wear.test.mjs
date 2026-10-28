@@ -1,6 +1,6 @@
 // Worn-out tyres in the game (Core.TYRE_CLIFF; the Red Bull Ring, mediums, the player on autopilot, the team radio on, failures off): worn
 // past 75 % the message GUME IZRABLJENE (once a set), the commentator and what comes next (a toast: the cliff at 80 %, a burst past 100 %),
-// the engineer's box call once the message has had its time; over the cliff the tyres (the top left: four dots and the word) blink, the word on a red chip; past the set's burst point
+// the engineer's box call once the message has had its time; over the cliff the tyres (the top left: four dots, one a tyre, and the word) blink, the word on a red chip, each dot while its own tyre is past it (Core.tyreWear4); past the set's burst point
 // POČILA GUMA!, the commentator, the toast (into the pits), the pill POČENA GUMA with the failures' (they are off), the tyres at 0 % (never
 // below); both messages with the warning icon; the pills on the screen upright and on its side; in English TYRES WORN, TYRE BURST!, BURST
 // TYRE; a fresh set: no pill.
@@ -22,7 +22,9 @@ try {
     const C = window.__game.comm, o = C.say; window.__said = []; C.say = function (k) { window.__said.push(k); return o.apply(this, arguments); }; });
   const hud = () => page.evaluate(() => { const g = window.__game, P = g.race.player, ty = document.getElementById('h-tyre'), fl = document.getElementById('h-flt'), M = document.getElementById('h-msg');
     const box = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; };
-    return { tyre: ty.lastElementChild.textContent, td: ty.style.getPropertyValue('--td'), cls: ty.className, blink: getComputedStyle(ty.lastElementChild).animationName, dotBlink: getComputedStyle(ty.querySelector('.dts i')).animationName, tyIn: box(ty), flt: [...fl.children].map(s => s.className + ':' + s.textContent), fltOn: getComputedStyle(fl).display !== 'none', fltIn: !fl.children.length || box(fl),
+    const dts = [...ty.querySelectorAll('.dts i')], w4 = Core.tyreWear4(P.ty, [0, 0, 0, 0]);   // (each dot its own tyre: Core.tyreWear4)
+    return { tyre: ty.lastElementChild.textContent, td: dts.map(i => i.style.getPropertyValue('--td')).join(' '), cls: ty.className, blink: getComputedStyle(ty.lastElementChild).animationName, dotBlink: getComputedStyle(dts[0]).animationName,
+      dotsOk: dts.length === 4 && dts.every((i, k) => (getComputedStyle(i).animationName === 'fuelBlink') === (w4[k] >= Core.TYRE_CLIFF[0])) && w4.some(w => w >= Core.TYRE_CLIFF[0]), w4: w4.map(w => +w.toFixed(3)), tyIn: box(ty), flt: [...fl.children].map(s => s.className + ':' + s.textContent), fltOn: getComputedStyle(fl).display !== 'none', fltIn: !fl.children.length || box(fl),
       msg: M.textContent, ic: M.dataset.ic || '', toast: document.getElementById('toast').textContent, msgs: window.__msgs.splice(0), said: window.__said.splice(0), radio: g.teamRadio.log.slice(),
       wear: +P.ty.wear.toFixed(3), bp: P.ty.bp, bw: P.ty.bw, flat: P.flat || 0, lap: P.lap }; });
 
@@ -48,7 +50,7 @@ try {
   await page.evaluate(() => { window.__game.race.player.ty.wear = 0.9; });
   await sim(0.3);
   const h3 = await hud();
-  T.check('over the cliff (90 %): the word on a red chip and the dots blinking', /\bcliff\b/.test(h3.cls) && h3.blink === 'fuelBlink' && h3.dotBlink === 'fuelBlink' && h3.tyre === 'SREDNJE' && h3.tyIn && !h3.msgs.some(m => /IZRABLJENE|POČILA/.test(m)), JSON.stringify(h3));
+  T.check('over the cliff (90 %): the word on a red chip and the dots of the tyres past it blinking (each tyre its own wear)', /\bcliff\b/.test(h3.cls) && h3.blink === 'fuelBlink' && h3.dotsOk && h3.tyre === 'SREDNJE' && h3.tyIn && !h3.msgs.some(m => /IZRABLJENE|POČILA/.test(m)), JSON.stringify(h3));
 
   // 3. past the set's burst point: the burst (failures off)
   await page.evaluate(() => { const P = window.__game.race.player; P.ty.wear = P.ty.bp - 0.0001; });
