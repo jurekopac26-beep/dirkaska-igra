@@ -42,6 +42,7 @@ Napisano 28. 10. 2026 v seji z garažo. Ta seja dela garažo (veja `claude/3d-ga
   2. ostali vidni 3D deli;
   3. barve in nalepke, skriti deli, razbijanje novih delov;
   4. pregled vseh 624 možnosti, stran za ogled, testi, push na svojo vejo.
+- Če uporabnik želi boljše razbijanje ostalih avtov **prej**, kot so gotovi deli za garažo: razbijanje delaj že po dogovoru iz razdelka 2 (deli z imeni `headL`, `headR`, `tailL`, `tailR`, `spoiler`, `aerial`, `plate` …, in hkrati zapiši `mounts` za ta avto), da kasnejši prehod za garažo samo preveri možnosti in ne predeluje avta drugič.
 
 ## 4. Kasneje: ostali avti
 - **Razbijanje na ravni KOLIBRIJA** za ostalih 32 avtov (ločeni žarometi in zadnje luči, ki se razbijejo, spojler, antena, tablica, brisalci, ugrezanje strehe, svoje gume `Car.kt`): približno 5 ur na avto.
