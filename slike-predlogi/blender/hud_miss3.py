@@ -104,8 +104,8 @@ def draw3(k):
         hint(d, 'Volan obrni v nasprotno smer, kot naj gre prikolica')
     if k == 28:
         base(d, k, 46)
-        if 'svetilnik' in pts: pin(d, pts['svetilnik'], 'SVETILNIK', RED, 'luč ne sveti', dx=-80)
-        if 'ladja' in pts: pin(d, pts['ladja'], 'LADJA', YEL, '1,4 km do čeri', dx=80)
+        if 'svetilnik' in pts: pin(d, pts['svetilnik'], 'SVETILNIK', RED, 'luč ne sveti', dx=-90)
+        if 'ladja' in pts: pin(d, pts['ladja'], 'LADJA', YEL, '1,4 km do čeri')
         panel(d, (x, 16, W - 16, 300))
         row(d, x, 30, 'SERVISER', 'v avtu', GRN)
         bar(d, x + 18, 72, 284, 'LADJA DO ČERI', '1,4 km', 0.3, RED, True)
@@ -140,7 +140,7 @@ def draw3(k):
         band_gauge(d, x + 160, 140, 84, 30, 38, 34, 50, 'TEMPERATURA JAJCA', '34 °C')
         text(d, (x + 18, 184), 'RAZPOKE', F(B, 17), MUT)
         for i in range(5):
-            cx_ = x + 112 + i * 28; c = RED if i < 2 else (255, 255, 255, 50)
+            cx_ = x + 124 + i * 26; c = RED if i < 2 else (255, 255, 255, 50)
             d.line((cx_, 184, cx_ + 8, 194, cx_ + 2, 202, cx_ + 10, 212), fill=c, width=4)
         text(d, (W - 34, 184), '2 / 5', F(B, 22), RED, 'ra')
         bar(d, x + 18, 232, 284, 'TRESLJAJI', '40 %', 0.4, YEL)
