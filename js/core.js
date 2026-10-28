@@ -1724,6 +1724,15 @@ const Core = (function () {
   // of the car and its count of knocks (xrK). Its numbers: none random (the race's own draws untouched)
   const XR = { roll: 0, bump: 0, ai: 0, handle: 0, glass: 0 };
   const XROLL = { p: 0.1 };
+  // Preizkus: tekmeci in trki (Nastavitve; setTest). What the settings ask for, over what the driving physics gives: null = as the physics has it (the
+  // default: nothing changes, the golden references are the same), a number = that, whatever the physics. The rivals (aiControl, Race): aiSpr the spread
+  // of their paces (a share of the difficulty's: 1 whole, 0.3 close together), aiFol the gap they keep behind a car (-1 the old rule, M.aiGap; 0 and up the
+  // new one: that many metres between the bumpers), aiPush how much quicker right behind a car, aiSide the room they leave a car alongside (m),
+  // aiKerb how far out over the kerbs at the apex and the exit (m; 0 none). The knocks between cars (carCollide): cE the bounce (restitution; 0 none),
+  // cMu the rub along the contact (a share of the push; 0 none), cYaw how much a knock turns the car (a share of the physics' own; 0 none)
+  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cE: null, cMu: null, cYaw: null };
+  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } }
+  const txv = (k, cs, nv, c) => TX[k] != null ? TX[k] : c.phys === 'nova' ? nv : cs;   // (a rival's setting: asked for, else by its physics)
   function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
   // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
   // track rod: up to 0.05 of the lock, as a tyre going down pulls 0.03)
@@ -3028,18 +3037,22 @@ const Core = (function () {
     if (vrel >= 0) return 0;
     const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx;
     const nv = a.phys === 'nova' || b.phys === 'nova';   // (nova: the cars bounce apart, the knock and the rub between the bodies turn them; its tyres catch it)
-    const e = nv ? NVK.carE : CSK.carE;
+    const e = TX.cE != null ? TX.cE : nv ? NVK.carE : CSK.carE, ys = TX.cYaw != null ? TX.cYaw : 1, cy = NVK.carYaw * ys;   // (TX: the settings Trki; ys the share of the turn, cy nova's own)
     // angular terms damped to keep contact spins moderate; the push goes to the travel, the turn to the tap below (not the yaw rate)
-    const aK = nv ? NVK.carYaw : XR.bump ? 1 : 0.6, J = -(1 + e) * vrel / (ia + ib + rna * rna / a.I * aK + rnb * rnb / b.I * aK);   // (xBump, nova: the turn undamped)
+    const aK = nv ? cy : XR.bump ? 1 : 0.6, J = -(1 + e) * vrel / (ia + ib + rna * rna / a.I * aK + rnb * rnb / b.I * aK);   // (xBump, nova: the turn undamped)
     if (!a.net) { a.vx += J * bnx * ia; a.vz += J * bnz * ia; }
     if (!b.net) { b.vx -= J * bnx * ib; b.vz -= J * bnz * ib; }
     if (nv) {
-      if (!a.net) a.w += rna * J / a.I * NVK.carYaw; if (!b.net) b.w -= rnb * J / b.I * NVK.carYaw;
-      const tx = -bnz, tz = bnx, vtr = (vax - vbx) * tx + (vaz - vbz) * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx;   // (the rub along the contact)
-      const Jt = clamp(-vtr / (ia + ib + rta * rta / a.I + rtb * rtb / b.I), -NVK.carMu * J, NVK.carMu * J);
-      if (!a.net) { a.vx += Jt * tx * ia; a.vz += Jt * tz * ia; a.w += rta * Jt / a.I * NVK.carYaw; }
-      if (!b.net) { b.vx -= Jt * tx * ib; b.vz -= Jt * tz * ib; b.w -= rtb * Jt / b.I * NVK.carYaw; }
-    } else { if (!a.air && !a.net) a.csKc = clamp(a.csKc + rna * J / a.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); if (!b.air && !b.net) b.csKc = clamp(b.csKc - rnb * J / b.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); }   // cs: a tap swings the tail, the car catches itself
+      if (!a.net) a.w += rna * J / a.I * cy; if (!b.net) b.w -= rnb * J / b.I * cy;
+      const tx = -bnz, tz = bnx, vtr = (vax - vbx) * tx + (vaz - vbz) * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = TX.cMu != null ? TX.cMu : NVK.carMu;   // (the rub along the contact)
+      const Jt = clamp(-vtr / (ia + ib + rta * rta / a.I + rtb * rtb / b.I), -mu * J, mu * J);
+      if (!a.net) { a.vx += Jt * tx * ia; a.vz += Jt * tz * ia; a.w += rta * Jt / a.I * cy; }
+      if (!b.net) { b.vx -= Jt * tx * ib; b.vz -= Jt * tz * ib; b.w -= rtb * Jt / b.I * cy; }
+    } else {
+      if (TX.cMu) { const tx = -bnz, tz = bnx, vtr = (vax - vbx) * tx + (vaz - vbz) * tz, Jt = clamp(-vtr / (ia + ib), -TX.cMu * J, TX.cMu * J);   // (the setting Trki: drgnjenje; the classic cars' turn is not a free yaw: only the speeds share the rub)
+        if (!a.net) { a.vx += Jt * tx * ia; a.vz += Jt * tz * ia; } if (!b.net) { b.vx -= Jt * tx * ib; b.vz -= Jt * tz * ib; } }
+      const tm = CSK.tapMax * Math.max(1, ys);   // (the kick's cap grows with a stronger turn: Trki: vrtenje Večje)
+      if (!a.air && !a.net) a.csKc = clamp(a.csKc + rna * J / a.I * CSK.tapT * ys, -tm, tm); if (!b.air && !b.net) b.csKc = clamp(b.csKc - rnb * J / b.I * CSK.tapT * ys, -tm, tm); }   // cs: a tap swings the tail, the car catches itself
     const imp = -vrel;
     if (XR.bump && imp > 4) for (const [c, rn, sg] of [[a, rna, 1], [b, rnb, -1]]) { if (c.net || c.rl) continue;   // (Razbijanje · nov način: the knock turns it, its grip goes for a moment)
       if (!nv) c.w += sg * rn * J / c.I * 0.9;   // (nova: turned in full above)
@@ -3259,13 +3272,14 @@ const Core = (function () {
     else { i0 = ((Math.floor(fi) % N) + N) % N; i1 = (i0 + 1) % N; ft = fi - Math.floor(fi); }
     let rlv = lerp(T.rl[i0], T.rl[i1], ft);
     let lim = (T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
-    if (c.phys === 'nova' && T.curb && T.curb[i0] && T.br && !c.inPit && !c.pitWant && !c.pitG) {   // the new physics' rivals over the kerbs at the apex and the exit (the reference video): where the line runs along the asphalt's edge, out by up to NVK.aiKerb, never nearer a barrier than half the car and 0.6 m
+    const kerbOut = txv('aiKerb', 0, NVK.aiKerb, c);   // (the new physics' rivals, or by the setting Tekmeci: robniki, over the kerbs at the apex and the exit (the reference video): where the line runs along the asphalt's edge, out by up to kerbOut, never nearer a barrier than half the car and 0.6 m)
+    if (kerbOut > 0 && T.curb && T.curb[i0] && T.br && !c.inPit && !c.pitWant && !c.pitG) {
       const lin = (T.wa ? T.wa[i0] : T.w) - 1.7, near = clamp((Math.abs(rlv) - lin + 0.8) / 0.8, 0, 1);
-      if (near > 0) { const sd = rlv > 0 ? 1 : -1, room = clamp((sd > 0 ? T.br[i0] : T.bl[i0]) - M.wid * 0.5 - 0.6 - lin, 0, NVK.aiKerb); rlv += sd * room * near; lim = Math.max(lim, Math.abs(rlv)); }
+      if (near > 0) { const sd = rlv > 0 ? 1 : -1, room = clamp((sd > 0 ? T.br[i0] : T.bl[i0]) - M.wid * 0.5 - 0.6 - lin, 0, kerbOut); rlv += sd * room * near; lim = Math.max(lim, Math.abs(rlv)); }
     }
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if ((c.alU || c.alD) && !c.inPit && !c.pitG) {   // a car alongside (the nearest on each side): not across into it, the offset held where that leaves it (between two: in the middle)
-      const a = c.alU, b = c.alD, gs = c.phys === 'nova' ? NVK.aiSide : 0.6, hi = a ? a.q.d - (M.wid + a.m.wid) * 0.5 - gs : 1e9, lo = b ? b.q.d + (M.wid + b.m.wid) * 0.5 + gs : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
+      const a = c.alU, b = c.alD, gs = txv('aiSide', 0.6, NVK.aiSide, c), hi = a ? a.q.d - (M.wid + a.m.wid) * 0.5 - gs : 1e9, lo = b ? b.q.d + (M.wid + b.m.wid) * 0.5 + gs : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
       if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -lim, lim); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
       const ah = (o) => o && o.dist > c.dist && o.vl > Math.max(5, v - 4) ? o : null, fa = ah(a), fb = ah(b);
       c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > lim ? fb : hi < -lim ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
@@ -3315,14 +3329,14 @@ const Core = (function () {
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
-    else if (c.phys === 'nova' && c.aiThreat && !c.isPlayer && !c.pitWant && !c.inPit && c.aiGap < 22) vT *= 1 + NVK.aiPush;   // (the new physics: right behind a car, pressing it, in a tight train as in the reference video; the following below holds it a car's length behind)
+    else if (c.aiThreat && !c.isPlayer && !c.pitWant && !c.inPit && c.aiGap < 22 && txv('aiPush', 0, NVK.aiPush, c) > 0) vT *= 1 + txv('aiPush', 0, NVK.aiPush, c);   // (the new physics: right behind a car, pressing it, in a tight train as in the reference video; the following below holds it a car's length behind)
     if (c.alSq) vT = Math.min(vT, Math.max(0, c.alSq.vl - 2));   // (squeezed alongside a car ahead: drop in behind it)
     if (c.flt && c.flt.pw >= 0) vT *= 1 - (c.flt.pw > 1 ? 0.25 : 0.12) * c.flt.pk;   // (failures: easier on a tyre going down, more so on a rear one: the tail would step out)
     if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
       const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x)); } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
     const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiThreat.vl < 1 && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5);   // (a ghost on the pit road already level with a car standing at its box: on through it, not stopped in it)
-    { const o = c.aiThreat, g0 = (o && c.phys === 'nova' ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + NVK.aiFolM) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
+    { const o = c.aiThreat, fol = txv('aiFol', -1, NVK.aiFolM, c), g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
       const a = c.flyA; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - (a.flyP ? (a.m.len + M.len) / 2 + 7 : FLY_KEEP * c.flyTg * Math.max(10, v))) * 0.45);
@@ -5032,7 +5046,7 @@ const Core = (function () {
       const diff = DIFF[clamp(opts.difficulty == null ? 1 : opts.difficulty, 0, 2)]; this.diff = diff;   // (the fourth level, super težka, is the police's: a race takes it as težka)
       if (oneMake) this.oneMake = oneMake;
       const aiSpecs = [];
-      const sLo = opts.phys === 'nova' ? diff[1] - (diff[1] - diff[0]) * NVK.aiSpr : diff[0];   // (the new physics: the field's paces closer together, NVK.aiSpr)
+      const spr = TX.aiSpr != null ? TX.aiSpr : opts.phys === 'nova' ? NVK.aiSpr : 1, sLo = spr === 1 ? diff[0] : diff[1] - (diff[1] - diff[0]) * spr;   // (the new physics, or the setting Tekmeci: razpon hitrosti: the field's paces closer together, NVK.aiSpr)
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], sLo, k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
         aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
@@ -6436,7 +6450,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { setCrash, XR, setTest, TX, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs };
 })();
