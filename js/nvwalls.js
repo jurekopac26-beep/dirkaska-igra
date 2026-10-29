@@ -2,17 +2,22 @@
 // countryside's garages) pushed aside by the car. The car is three circles along its length; a piece is a line with a thickness. On
 // contact the two take an impulse (by their masses: a barrier full of water is heavy, a fence light), a piece slides and turns on the
 // ground until its friction stops it, pushes the pieces it runs into, and a wooden one hit hard falls over (then the car drives over it).
-// Stepped with the race (js/game.js stepRace); the pieces moved are drawn where they are (their instances).
+// The solid things (H3.solids: the volcano's foot, the park's rides; js/nvpark.js) are lines with a thickness that do not move: the car
+// bounces off them. Stepped with the race (js/game.js stepRace); the pieces moved are drawn where they are (their instances).
 const NVWalls = (function () {
   'use strict';
   const KIND = { plastic: { m: 160, mu: 0.55 }, wood: { m: 45, mu: 0.75, fall: 4 } };   // (kg; the friction on the ground; wood: the speed it is hit with that knocks it over, m/s)
   const CELL = 6, E = 0.25;   // (the grid's cells, m; the bounce)
-  let W = null; const grid = new Map(), moving = new Set();
+  let W = null; const grid = new Map(), moving = new Set(), solid = new Map();
   const key = (x, z) => Math.floor(x / CELL) * 100003 + Math.floor(z / CELL);
   function put(p) { p.k = key(p.x, p.z); let l = grid.get(p.k); if (!l) grid.set(p.k, l = []); l.push(p); }
   function take(p) { const l = grid.get(p.k); if (l) { const i = l.indexOf(p); if (i >= 0) l.splice(i, 1); } }
   function init(H3) {
-    W = H3 && H3.walls; grid.clear(); moving.clear(); if (!W) return;
+    W = H3 && H3.walls; grid.clear(); moving.clear(); solid.clear();
+    for (const q of (H3 && H3.solids) || []) {   // (in every cell the car's middle may be in when it touches one: its bounds and the car's 0.95 m)
+      const m = q.r + 1; for (let i = Math.floor((Math.min(q.ax, q.bx) - m) / CELL); i <= Math.floor((Math.max(q.ax, q.bx) + m) / CELL); i++) for (let j = Math.floor((Math.min(q.az, q.bz) - m) / CELL); j <= Math.floor((Math.max(q.az, q.bz) + m) / CELL); j++) { const k = i * 100003 + j; let l = solid.get(k); if (!l) solid.set(k, l = []); l.push(q); }
+    }
+    if (!W) return;
     for (const p of W.pieces) { p.vx = p.vz = p.w = 0; p.tilt = 0; p.fall = 0; p.hw = W.dims[p.kind].hw; p.h = W.dims[p.kind].h; p.m = KIND[p.kind].m; p.I = p.m * p.len * p.len / 12; put(p); }
   }
   // the nearest point of a piece's middle line to (x, z) and the way out of it (null: further than r + its half width)
@@ -32,9 +37,19 @@ const NVWalls = (function () {
     return j;
   }
   function step(dt, car) {
-    if (!W || !car) return;
+    if (!car) return;
     // the car: three circles along it (front, middle, back)
     const mc = (car.m && car.m.mass) || 1200, c = Math.cos(car.h), s = Math.sin(car.h);
+    if (solid.size) for (const o of [1.3, 0, -1.3]) {   // the solid things: the car out of them, its speed into them bounced back (q.e: how much, E if not given)
+      const x = car.x + c * o, z = car.z + s * o, r = 0.95, l = solid.get(key(x, z)); if (!l) continue;
+      for (const q of l) {
+        const dx = q.bx - q.ax, dz = q.bz - q.az, L2 = dx * dx + dz * dz, u = L2 ? Math.max(0, Math.min(1, ((x - q.ax) * dx + (z - q.az) * dz) / L2)) : 0;
+        const ex = x - q.ax - dx * u, ez = z - q.az - dz * u, d = Math.hypot(ex, ez), pen = r + q.r - d; if (pen <= 0) continue;
+        const nx = d > 1e-6 ? ex / d : -s, nz = d > 1e-6 ? ez / d : c, vn = car.vx * nx + car.vz * nz, e = q.e != null ? q.e : E;
+        car.x += nx * pen; car.z += nz * pen; if (vn < 0) { car.vx -= (1 + e) * vn * nx; car.vz -= (1 + e) * vn * nz; }
+      }
+    }
+    if (!W) return;
     for (const o of [1.3, 0, -1.3]) {
       const x = car.x + c * o, z = car.z + s * o, r = 0.95;
       near(x, z, (p) => {
@@ -72,6 +87,6 @@ const NVWalls = (function () {
     _m.compose(_p.set(p.x, p.y, p.z), _q, _s.set(p.len / W.dims[p.kind].L, 1, 1)); im.setMatrixAt(p.i, _m); im.instanceMatrix.needsUpdate = true;
   }
   // (the tests: the pieces, and those moving)
-  const state = () => ({ n: W ? W.pieces.length : 0, plastic: W ? W.pieces.filter(p => p.kind === 'plastic').length : 0, wood: W ? W.pieces.filter(p => p.kind === 'wood').length : 0, moving: moving.size });
+  const state = () => ({ solids: [...new Set([].concat(...solid.values()))].length, n: W ? W.pieces.length : 0, plastic: W ? W.pieces.filter(p => p.kind === 'plastic').length : 0, wood: W ? W.pieces.filter(p => p.kind === 'wood').length : 0, moving: moving.size });
   return { init, step, state, pieces: () => (W ? W.pieces : []) };
 })();
