@@ -113,7 +113,7 @@ Nova fizika je narejena po treh posnetkih arkadne dirkaške igre, ki jih je izbr
 
 ## Preizkus: tekmeci in trki
 
-V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) z devetimi vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« in »Trki med avti«: kako se vozijo tekmeci in kako se avti odbijajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vseh pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
+V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) s 13 vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« (5) in »Trki med avti« (8): kako se vozijo tekmeci in kako se avti obnašajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vseh pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
 
 **Tekmeci** (`aiControl`, `Race`):
 
@@ -125,18 +125,22 @@ V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci 
 | Prostor ob boku | 0,6 m, 0,35 m, 0,15 m | koliko prostora pusti avtu ob sebi; klasična privzeto 0,6 m, nova 0,35 m |
 | Vožnja čez robnike | Ne, do 1,2 m, do 2,2 m | na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m); klasična privzeto ne, nova do 1,2 m |
 
-**Trki** (`carCollide`, vsi stiki med avti, tudi med tekmeci):
+**Trki med avti** (`carCollide`, vsi stiki med avti, tudi med tekmeci; vrstica pod slogom vedno preglasi njegov del):
 
 | Vrstica | Stopnje | Kaj pomeni |
 |---|---|---|
-| Slog | Težak, brez odboja | odboj 0, drgnjenje 0,8, vrtenje 1,3; avta se ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti; vrstice pod to vrstico slog preglasijo |
+| Slog trkov | Realističen, težak | ravni odbijači, brez odboja (0), gume zadržijo potisk vstran, drgnjenje 0,5, vrtenje 1, drugi avto 8-krat težji, brez isker; pod vrstico je izpisano, kaj slog nastavi |
+| Občutek teže | Enak, 2×, 4×, 8×, 16× | kolikokrat težji je drugi avto v trku z igralcem (zaletiš se vanj ali on vate), tudi pri vrtenju: težji se težje premakne, igralec se ob njem ustavi; med dvema tekmecema se nič ne spremeni (`TX.cMass`, `heavyK`). Privzeto: enak, pri realističnem slogu 8× |
 | Odboj med avti | Brez, majhen (0,1), srednji (0,25), velik (0,4), zelo velik (0,6) | kolikšen del hitrosti približevanja avta ohranita kot odmik; klasična privzeto 0,1, nova 0,4 |
-| Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); klasična privzeto brez, nova 0,35. Pri klasični se delita samo hitrosti (pravega vrtenja ni) |
+| Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); klasična privzeto brez, nova 0,35, realističen slog 0,5 |
 | Vrtenje ob trku | Brez, majhno (0,15), manjše (0,4), večje (1,6) | koliko trk zavrti avto: pri klasični je to sunek smeri (kot največ 23°, pri večjem tudi več), ki ga avto sam ujame, pri novi pravo vrtenje; privzeto 1 |
+| Oblika ob stiku | Zaobljena, Ravni odbijači | zaobljena (kot doslej, trije krogi): konca avta sta okrogla, trk z zamikom avta odrine vstran. Ravni odbijači (`TX.cBox`, `rbCollide`, `rboxHit`): pravokotnik z zaobljenimi vogali (polmer 0,3 m), odbijač ali bok potisne naravnost, potisk gre skozi sredino dela, ki se dotika; prekrivanje se odpravi mehko (2 cm ostane, 40 % ostanka na korak, nad 20 cm takoj), zato avto ne poskoči nazaj; vrtenje s celo vztrajnostjo, pri klasični kot sunek smeri, ki traja toliko kot pri pravem avtu (0,0055 s na m/s hitrosti, 0,06–0,3 s; 0,15 s pri 100 km/h) in se pri trajnem potiskanju ne kopiči. Tekmeci z ravnimi odbijači puščajo med odbijačema vsaj 0,4 m in se umaknejo, če so preblizu (če vrstica Razmik za avtom ni nastavljena), prostor ob boku pa merijo z vogali zasukanega avta (`aiReach`) |
+| Potisk vstran | Avto zavije, Gume zadržijo | pri klasični fiziki: avto zavije (kot doslej) pomeni, da drsni zakon potisk vstran spremeni v smer vožnje in avto odpelje vstran. Gume zadržijo (`TX.cScrub`, `cSlide`, `stepCS`): bočni del potiska, ki ga dobi od drugega avta (ne tisti, ki le ustavi njegovo lastno približevanje), gre mimo drsnega zakona; gume ga odrgnejo v (0,006 × hitrost) s, največ s pojemkom, ki ga dovoli oprijem, ki ga ovinek pusti (vsaj tretjina). Avto malo zdrsne vstran, smer ostane. Nova fizika to dela sama s pnevmatikami |
+| Iskre in blisk | Vklop, Izklop | izklop: trk med avtoma ne sproži isker, bliska in prahu (`TX.cFx` 0, `c.fxQ` v `js/render.js`); praske na karoseriji ostanejo. Iskre ob ograji ostanejo |
 
-Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Nastavitev »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem.
+Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Nastavitev »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem. V boksih (avto v boksni stezi) ostane zaobljena oblika, da delo mehanikov in uvoz ostaneta kot doslej.
 
-Meritve (klasična, klasična z nastavitvami nove, nova; slog Težak) so v `docs/nova-fizika-meritve.md`, razdelek 8.
+Meritve (klasična, klasična z nastavitvami nove, nova; realistični slog) so v `docs/nova-fizika-meritve.md`, razdelek 8.
 
 ## Zelo veliko polje (avti daleč od tebe)
 
@@ -207,7 +211,7 @@ V premoru je pod gumbi **strategija**: za koliko krogov imaš še goriva, koliko
 
 ## Prvenstvo
 
-Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Gorski reli, Riviera), **Kratke proge** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa, Štajerska, Suzuka, Nürburg) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (**19 tekmecev**, 20 avtov, v posamezni dirki jih je 21; z velikimi vozili 5 do 9; tudi v Nürburgu, kjer jih je sicer 99, tam s štartom z lučmi; prvenstvo, začeto pred to spremembo, do konca vozi s svojimi 12 tekmeci; pred vsako dirko kvalifikacije, brez njih štart z zadnjega mesta; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi vozili: s tistimi, s katerimi dirkajo proti avtu, s katerim si prvenstvo začel (npr. proti TITAN-u tovornjaki TITAN, proti formuli formule, proti starejšim cestnim avtom KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR; glej **Vozni park**), zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).
+Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Gorski reli, Riviera), **Kratke proge** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Bathurst, Spa, Štajerska, Suzuka, Nürburg) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (**19 tekmecev**, 20 avtov, v posamezni dirki jih je 21; z velikimi vozili 5 do 9; tudi v Nürburgu, kjer jih je sicer 99, tam s štartom z lučmi; prvenstvo, začeto pred to spremembo, do konca vozi s svojimi 12 tekmeci; pred vsako dirko kvalifikacije, brez njih štart z zadnjega mesta; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi vozili: s tistimi, s katerimi dirkajo proti avtu, s katerim si prvenstvo začel (npr. proti TITAN-u tovornjaki TITAN, proti formuli formule, proti starejšim cestnim avtom KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR; glej **Vozni park**), zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).
 
 - Po vsaki dirki pokaže rezultat tudi osvojene točke, gumb **Lestvica prvenstva** pa lestvico in naslednjo dirko. Med dirkami lahko zamenjaš avto (◀ ▶ ali **Izberi avto**, ki odpre izbiro avta in se vrne v prvenstvo); tekmeci in težavnost ostanejo tisti, s katerimi si prvenstvo začel.
 - Dirka šteje, ko prečkaš cilj ali odstopiš z uničenim vozilom (glej **Razpadanje vozil**). Če jo prej zapustiš ali ponoviš (Pavza → Ponovi dirko), jo odpelješ znova.

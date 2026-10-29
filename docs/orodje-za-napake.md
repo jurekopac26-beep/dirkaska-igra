@@ -8,7 +8,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 
 | Sklop | Ime | Stanje |
 |---|---|---|
-| 0 | Zasebnost (Cloudflare) | odloženo |
+| 0 | Zasebnost (Cloudflare) | odloženo (uporabnik 29. 10.: pozneje, ko bo res potrebno) |
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | končano |
@@ -17,7 +17,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 5 | Označevanje | končano |
 | 6 | Slika in pošiljanje | končano (skupaj s 7) |
 | 7 | Zastavica med dirko | končano (skupaj s 6) |
-| 8 | Skrito v izdaji za Google Play | odloženo |
+| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog) |
 | 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
 | 10 | G · V krogu | končano (skupaj z 9 in 11) |
 | 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
@@ -364,7 +364,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je.
 
 ## Skupaj
 
