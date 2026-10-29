@@ -26,6 +26,10 @@ GUESS = {
     'riverside': (33.9367, -117.2726, 1500),   # the old circuit east of the town
     'uncompahgre': (38.0160, -107.6720, 1500), # above Ouray
     'iroha': (36.7280, 139.5600, 2000),        # the second Irohazaka, its lower curves
+    'caracoles': (-32.8630, -70.1580, 2500),   # by the Juncalillo river below the curves (from Portillo back along the road)
+    'rastro': (-28.3930, -49.5390, 2500),      # below the hairpins (from the viewpoint at the top back along the road)
+    'katu': (50.9100, 88.2200, 3000),          # the edge of the Ulagan plateau above the Chulyshman
+    'tianmen': (29.0570, 110.4800, 2500),      # bend 54 (from the square below the cave back along the road)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 

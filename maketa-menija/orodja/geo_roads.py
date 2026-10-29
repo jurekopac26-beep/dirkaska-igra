@@ -15,6 +15,11 @@ GUESS = {
     'detroit': (42.3300, -83.0380, 800),
     'medvode': (46.1418, 14.4091, 300),     # (by the heights: geo_match.py, then here closer)
     'moki': (37.2651, -109.9335, 300),
+    'bangsaen': (13.2890, 100.9120, 1200),   # the beach road of Bang Saen
+    'rastro': (-28.395563, -49.543377, 300),  # (by the heights: geo_match.py, then here closer)
+    'tianmen': (29.0570, 110.4800, 2500),     # bend 54 (the heights on the cliffs say little: here by the road)
+    'caracoles': (-32.865047, -70.154688, 150),
+    'katu': (50.909479, 88.210047, 150),
 }
 CELL = 2.0   # metres per cell of the distance map
 

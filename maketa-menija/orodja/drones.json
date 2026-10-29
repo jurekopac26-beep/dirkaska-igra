@@ -16,5 +16,10 @@
   ["bigsur", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
   ["detroit", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
   ["maunakea", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
-  ["moki", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}]
+  ["moki", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
+  ["caracoles", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["rastro", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["katu", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["tianmen", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["bangsaen", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}]
 ]

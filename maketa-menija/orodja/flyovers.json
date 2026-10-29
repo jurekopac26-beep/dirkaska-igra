@@ -455,5 +455,159 @@
     1961
    ]
   }
+ ],
+ [
+  "caracoles",
+  {
+   "kbps": 450,
+   "speed": 385,
+   "back": 500,
+   "up": 316,
+   "ahead": 250,
+   "fogNear": 1078,
+   "fogFar": 4158,
+   "places": [
+    {
+     "n": "Curva 1 · 2,271 m",
+     "d": 1092
+    },
+    {
+     "n": "Curva 17 · Mirador",
+     "d": 4742
+    },
+    {
+     "n": "Galería",
+     "d": 6906
+    },
+    {
+     "n": "Curva 29 · Llano La Calavera",
+     "d": 9680
+    }
+   ],
+   "alt": [
+    2200,
+    2866
+   ]
+  }
+ ],
+ [
+  "rastro",
+  {
+   "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 146,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
+   "places": [
+    {
+     "n": "Hairpin 8 · 1,209 m",
+     "d": 1998
+    },
+    {
+     "n": "Rio do Rastro Falls",
+     "d": 2953
+    },
+    {
+     "n": "Top of the Serra · 1,389 m",
+     "d": 3880
+    }
+   ],
+   "alt": [
+    1010,
+    1421
+   ]
+  }
+ ],
+ [
+  "katu",
+  {
+   "kbps": 450,
+   "speed": 166,
+   "back": 216,
+   "up": 136,
+   "ahead": 108,
+   "fogNear": 465,
+   "fogFar": 1793,
+   "places": [
+    {
+     "n": "Katu-Yaryk Pass · 1,206 m",
+     "d": 500
+    },
+    {
+     "n": "Hairpin 4 · 1,052 m",
+     "d": 2100
+    },
+    {
+     "n": "Traverse above the Chulyshman",
+     "d": 3260
+    }
+   ],
+   "alt": [
+    1242,
+    683
+   ]
+  }
+ ],
+ [
+  "tianmen",
+  {
+   "kbps": 450,
+   "speed": 172,
+   "back": 224,
+   "up": 141,
+   "ahead": 112,
+   "fogNear": 482,
+   "fogFar": 1858,
+   "places": [
+    {
+     "n": "Bend 66 · 839 m",
+     "d": 1098
+    },
+    {
+     "n": "Bend 77 · 961 m",
+     "d": 2290
+    },
+    {
+     "n": "The Loop",
+     "d": 3931
+    }
+   ],
+   "alt": [
+    729,
+    1218
+   ]
+  }
+ ],
+ [
+  "bangsaen",
+  {
+   "kbps": 450,
+   "speed": 128,
+   "back": 166,
+   "up": 105,
+   "ahead": 83,
+   "fogNear": 358,
+   "fogFar": 1382,
+   "places": [
+    {
+     "n": "Turn 3 · Khao Lam",
+     "d": 638
+    },
+    {
+     "n": "Bang Saen Sai 2",
+     "d": 1398
+    },
+    {
+     "n": "Hairpin · Khao Sam Muk",
+     "d": 2202
+    },
+    {
+     "n": "Laem Thaen",
+     "d": 2548
+    }
+   ]
+  }
  ]
 ]

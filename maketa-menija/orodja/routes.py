@@ -35,7 +35,7 @@ def game_en(names):
 def en(n):
     m = re.match(r'(Zavoj|Serpentina) (\d+)(.*)$', n)
     if m and n not in GAME_EN: return ('Turn ' if m.group(1) == 'Zavoj' else 'Hairpin ') + m.group(2) + m.group(3)
-    if n.startswith('Lasnica '): return n[8:] + ' Hairpin'
+    if n.startswith('Lasnica ') and not n.startswith('Lasnica · '): return n[8:] + ' Hairpin'   # (Lasnica · <place>: the game's own English)
     return EN.get(n, GAME_EN.get(n, n))
 
 def grade(im):   # the rainy grade of the game (less saturated, a little cooler)
