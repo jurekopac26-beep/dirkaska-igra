@@ -118,8 +118,13 @@ const dE = (T, c) => (((T.startS + T.def.pit[1] - c.q.s) % T.len) + T.len) % T.l
 // everybody to the line
 {
   const out = [];
-  for (const [tid, laps, seed] of [['spa', 2, 23], ['montreal', 2, 2]]) {   // (the seed where a rival does crash: the AI drives cleaner now, of seeds 1-80 only Spa's 16 and 23 have a damaged one in two laps, Montréal's none)
-    const R = race(tid, { laps, seed, faults: true, flags: true, chars: true, slip: true, radio: true, launch: true });
+  // (the damage is dealt here, as in 1 to 3: the AI drives so cleanly now that no rival is hurt in two laps by the race itself, of the seeds 1-100 of
+  // Spa and Montréal none is, and none in four laps of seeds 1-24 on Spa, Montréal and Bathurst; on main the rivals are as clean. Before, a few seeds
+  // had one: Spa's 16 and 23. The rival on the grid's fifth place, hurt on the first lap, is in at its end; the rest is the game's own set-up)
+  for (const [tid, laps, seed] of [['spa', 2, 23], ['montreal', 2, 2]]) {
+    let A = null;
+    const R = race(tid, { laps, seed, faults: true, flags: true, chars: true, slip: true, radio: true, launch: true },
+      (r) => { const c = byGrid(r, 5); if (!A && r.state === 'racing' && c.lap === 1 && c.dist > r.track.len * 0.3) { A = c; c.dmg = 0.8; } });
     const stops = [...R.st.values()].flatMap(x => x.stops);
     out.push({ tid, stops, fix: stops.filter(p => p.dmg > 0.4).length, rep: stops.every(p => p.out == null || p.out < 0.05),   // (out null: over the line in the lane)
       pitR: [...R.st.values()].reduce((a, x) => a + x.pitR, 0), fin: R.fin, all: R.r.cars.length });
