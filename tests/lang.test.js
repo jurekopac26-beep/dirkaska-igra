@@ -41,7 +41,7 @@ const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l =
 
 // 1. every tr(...) in the game's scripts: each string of its first argument is in the dictionary
 const missing = [], keysUsed = new Set();
-for (const f of ['js/game.js', 'js/nvmenu.js']) {
+for (const f of ['js/game.js', 'js/nvmenu.js', 'js/missions.js']) {
   const src = noComments(read(f));
   for (const m of src.matchAll(/\btr\(/g)) for (const s of literals(firstArg(src, m.index + 3))) { if (s === '') continue; keysUsed.add(s); if (!has(s)) missing.push(s); }
 }
