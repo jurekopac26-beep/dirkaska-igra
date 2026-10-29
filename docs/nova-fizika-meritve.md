@@ -167,7 +167,7 @@ Po preizkusu uporabnik ostaja pri klasični fiziki. Nastavitve tekmecev in trkov
 
 Tesnejša kolona poveča število stikov (klasična + nastavitve nove: 3,5-krat več močnih stikov kot klasična), zato je razmik za avtom nastavljiv.
 
-**Trki** (kontroliran trk na ravnini, reli avto BURJA R7, hitrosti po stiku; Težak = odboj 0, drgnjenje 0,8, vrtenje 1,3):
+**Trki** (kontroliran trk na ravnini, reli avto BURJA R7, hitrosti po stiku; Težak = odboj 0, drgnjenje 0,8, vrtenje 1,3; številke »Težak« so brez teže drugega avta, ki jo je Težak pozneje dobil: 12-krat težji drugi avto ob trku z igralcem, brez isker; 100 km/h v stoječ avto, sredina: igralec in drugi ~8 km/h):
 
 | Trk | Klasična | Klasična, Težak | Nova |
 |---|---|---|---|
@@ -177,3 +177,39 @@ Tesnejša kolona poveča število stikov (klasična + nastavitve nove: 3,5-krat 
 | Bok ob boku 100 km/h, B zavije vanj za 15° | A 96, B 103; smer A −17°, B +8° | A 101, B 98; smer A −19°, B +8° | A 98, B 101; smer A −10°, B +5° |
 
 V dirki (8 prog × 150 s, z igralcem): klasična skok vrtenja 73 °/s in sprememba smeri 12,9° v 0,5 s (video 30 °/s in 2,4°), nova 35 °/s in 6,3°. Odboj ob lahkih stikih je pri obeh enak (bočno 1,1–1,2 m/s, video 1–1,5 m/s); razlika je v vrtenju, ker klasična trk pretvori v sunek smeri (`csKc`, največ 0,4 rad) in ga ni mogoče omejiti drugače kot z `tapT` (1,5 → 0,45: skok vrtenja 63 → 44 °/s, smer 13° → 9,6°; meritve so hrupne). Zato ima vrstica »Vrtenje ob trku« pri klasični stopnje 0, 0,15, 0,4 in 1,6 (pri 1,6 se poveča tudi omejitev sunka).
+
+### Realističen trk (29. 10. 2026)
+
+Uporabnik je pri slogu »Težak, brez odboja« še vedno videl odboj od avta, drugi avto se je dal preveč premakniti, ob trku pa se je zasvetilo. Vzroki (meritve na ravnini, `carCollide` s krogi):
+
+- **Okrogla konca.** Avto so trije krogi; trk od zadaj z zamikom ima zato poševno normalo in igralca potisne vstran (pri 0,6 m zamika do 15 km/h bočno).
+- **Drsni zakon klasične fizike.** Bočni potisk vidi kot zdrs in ga spremeni v smer vožnje: avto odpelje vstran (z 12-krat težjim drugim avtom pri naletnem trku 120 → 100 km/h igralca obrne za 23°).
+- **Sunek smeri `tapT` (1,5 s)** se pri trajnem potiskanju kopiči do 23°.
+- **Razmikanje v enem koraku**: avto poskoči nazaj za 16–30 cm.
+- **Iskre** imajo na točki stika kratek svetel blisk (`sparks` v `js/render.js`).
+
+Slog se zdaj imenuje **Realističen, težak** (`TX`: cE 0, cMu 0,5, cYaw 1, cMass 8, cFx 0, cBox 1, cScrub 1). Kaj naredi, je opisano v `docs/igra.md` (razdelek »Preizkus: tekmeci in trki«): ravni odbijači z zaobljenimi vogali (`rbCollide`, `rboxHit`), mehko razmikanje, vrtenje s pravim časom umiritve (`RB_TAPT`), gume, ki zadržijo potisk vstran (`cSlide`, `stepCS`), in brez isker (`fxQ`).
+
+Kontrolirani trki na ravnini (klasična, reli avto BURJA R7; skript s scenariji v seji, ne v repozitoriju; »narazen«: največja hitrost, s katero se avta razmikata v 1,5 s po stiku; »skok«: največji premik igralca v enem koraku zaradi razmikanja):
+
+| Trk | Privzeto | Stari Težak (12×) | Realističen, enaka teža | Realističen, težak (8×) |
+|---|---|---|---|---|
+| 50 km/h v stoječ avto (zavore) | narazen 5 km/h, skok 16 cm, drugi 7,6 m | narazen 0, skok 30 cm, drugi 0,2 m | narazen 0, skok 1 cm, drugi 7,5 m | narazen 0, skok 2 cm, drugi 0,2 m |
+| 100 km/h v stoječ avto, zamik 0,9 m | igralec odbit (62 km/h, 10°), narazen 60 km/h | igralec 23°, skok 16 cm | igralec 4,5°, narazen 0,2 km/h | igralec ustavljen, 10°, drugi 0,4 m |
+| Naletni 120 → 100 km/h, zamik 0,6 m | igralec 6,3°, 15 km/h bočno | igralec 23°, 38 km/h bočno | igralec 1,3°, 4 km/h bočno | igralec 2,0°, 5 km/h bočno |
+| Igralec se 1 s nasloni na avto ob sebi (100 km/h) | drugi odrinjen 1,5 m | — (brez stika s krogi) | drugi 0,5 m | drugi 0,15 m |
+| Drugi avto ga od zadaj, 120 → 100 km/h | igralec 9,3°, 20 km/h bočno | igralec 10,5° | igralec 0,8° | igralec 1,6° |
+| Bočni trk v avto, ki vozi 100 km/h (pod 20°) | drugi se obrne za 13° | — | drugi 3,8° | — |
+
+Nova fizika z realističnim slogom: 50 km/h v težak stoječ avto: skok 2 cm, drugi 0,2 m; bočni trk v vozeči avto se v 1,2 s izravna (pnevmatike).
+
+**Tekmeci z ravnimi odbijači.** Ker okrogli konci ne zakrivajo več vogalov, je bilo stikov med tekmeci 3- do 7-krat več. Tekmec je po starem pravilu sledil 3 m od sredine do sredine in z zamikom »zlezel« v okrogli konec avta pred sabo. Pri ravnih odbijačih zato tekmec pusti med odbijačema vsaj 0,4 m (`RB_FOL`, če vrstica »Razmik za avtom« ni nastavljena) in se umakne, če je bliže. Prostor ob boku meri z vogali avta, zasukanega proti cesti (`aiReach`). Dogodki stika (avto z udarcem nad 5 km/h, nov dogodek po 0,5 s brez stika), 12 tekmecev, igralec na avtopilotu, 120 s:
+
+| Proga | Privzeto | Ravni odbijači brez prilagoditve tekmecev | Realističen trk, enaka teža / težak (8×) |
+|---|---|---|---|
+| Spa | 15 | 51 | 22 / 26 |
+| Monaco | 20 | 45 | 31 / 48 |
+| Suzuka | 8 | 52 | 23 / 21 |
+| Bathurst | 6 | 41 | 14 / 14 |
+
+Močnih stikov (nad 14 km/h) je približno toliko kot privzeto (0–3 na dirko), zasukov čez 40° ni, vrednosti NaN ni. Pri 8× je v Monaku več dotikov, ker avtopilot igralca v lasnicah potiska težke avte. `tests/nova.test.js` preverja trke na ravnini in dirki na Spa in Bathurstu z realističnim slogom.
