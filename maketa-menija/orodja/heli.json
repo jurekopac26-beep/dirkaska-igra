@@ -84,6 +84,39 @@
  "bigsur": {
   "sea": true
  },
+ "monterey": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "mulholland": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "palomar": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "riverside": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "uncompahgre": {
+  "kbps": 550
+ },
+ "iroha": {
+  "kbps": 550
+ },
+ "harju": {
+  "kbps": 550
+ },
  "montreal": {
   "kbps": 550,
   "sea": true
