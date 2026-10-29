@@ -155,7 +155,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const [z, r] of [[0.555, 0.088], [0.365, 0.078]]) K.discX(tx - 0.001, 0.822, sd * z, r, 10, [0.36, 0.05, 0.05], -1, { host: tp });   // (their red rims)
           K.discX(tx - 0.002, 0.822, sd * 0.215, 0.045, 8, [0.86, 0.86, 0.84], -1, { host: tp });
         }
-        K.rect(tx - 0.001, 0.46, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'plate' });   // (the plate: a part of its own on the bumper)
+        K.box(tx + 0.002, 0.405, 0, 0.006, 0.11, 0.5, 0, [0.93, 0.93, 0.9], null, true, { part: 'plate' });   // (the plate: a part of its own on the bumper)
         K.part('bumperR', () => {
           K.face([[tx, 0.605, -0.745], [tx, 0.605, 0.745], [tx, 0.618, 0.745], [tx, 0.618, -0.745]], K.shade(P, 0.6));   // (the bumper's top line)
           K.face([[tx, 0.315, -0.66], [tx, 0.315, 0.66], [tx, 0.37, 0.69], [tx, 0.37, -0.69]], B);                          // (its black valance)

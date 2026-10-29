@@ -136,7 +136,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      low down, four pipes in chrome rings out of it ----
         for (const sd of [-1, 1]) for (const z of [0.475, 0.68]) { const tp = sd < 0 ? 'tailL' : 'tailR';   // (each side's pair a part of its own, its rings with it)
           K.discX(-2.283, 0.78, sd * z, 0.088, 10, [0.5, 0.51, 0.54], -1, { host: tp }); K.tailLamp(-2.284, 0.78, sd * z, 0.146, 0.146, { round: true, host: tp }); }
-        K.rect(-2.282, 0.585, 0, 0.46, 0.09, [0.93, 0.93, 0.9], { dir: '-x', part: 'plate' });
+        K.box(-2.279, 0.54, 0, 0.006, 0.09, 0.46, 0, [0.93, 0.93, 0.9], null, true, { part: 'plate' });   // (the plate: a thin plate, a part of its own)
         K.part('trunk', () => K.deli('krilo', () => {}));   // (the garage's wing on the deck: mounts.krilo; none stock)
         K.part('bumperR', () => {
           K.rect(-2.282, 0.33, 0, 1.4, 0.15, B, { dir: '-x' });                // the black valance the pipes come out of

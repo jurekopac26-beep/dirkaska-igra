@@ -126,7 +126,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.tailLamp(-1.974, 0.66, zc, 0.17, 0.1, { d: 0.012, host: tp });
           for (const s2 of [-1, 1]) K.tailLamp(-1.98, 0.66, zc + s2 * 0.085, 0.1, 0.1, { round: true, host: tp });
         }
-        K.rect(-1.973, 0.43, 0, 0.4, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'plate' });   // (the plate: a part of its own on the bumper)
+        K.box(-1.97, 0.375, 0, 0.006, 0.11, 0.4, 0, [0.93, 0.93, 0.9], null, true, { part: 'plate' });   // (the plate: a part of its own on the bumper)
         K.rect(-1.972, 0.5, 0, 1.28, 0.012, SH, { dir: '-x', part: 'bumperR' }); DC.side([[-1.97, 0.494], [-1.47, 0.494], [-1.47, 0.506], [-1.97, 0.506]], SH, null, 0.004);   // (its top's shut line)
         K.exhaust(-1.995, 0.25, 0.42, 0.032, 0.2, { part: 'body' });
         const fy = L.topY(-1.0, 0.6) + 0.004, fc = []; for (let i = 0; i < 8; i++) { const a = -i / 8 * Math.PI * 2; fc.push([-1.0 + Math.cos(a) * 0.045, fy, 0.6 + Math.sin(a) * 0.045]); }
