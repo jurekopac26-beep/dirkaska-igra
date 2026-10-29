@@ -349,7 +349,7 @@ window.RM = (function () {
     // cull: the trees and other repeated things are left out from this far into the haze (0 its start, 1 its end), where they hardly show
     // alt: the real heights at the start and the finish (the gradients of the line then as steep as the real road's)
     opt = Object.assign({ W: 704, H: 432, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, cull: 0.75, fov: 37, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, places: [], fogNear: 900, fogFar: 3400, alt: null }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
     const r = getR(opt.W, opt.H); wet(Bw, opt.rain);
     const L = lights(Bw, box, opt.rain); L[1].shadow.mapSize.set(opt.shadow, opt.shadow);
     r.shadowMap.autoUpdate = false; r.shadowMap.needsUpdate = true;   // nothing in the world moves: its shadows are drawn once
