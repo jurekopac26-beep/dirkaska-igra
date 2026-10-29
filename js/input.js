@@ -52,6 +52,7 @@ const Input = (function () {
       if (keyIs('tyre', e.code) && onTyre) onTyre();   // (the tyres for the next stop)
       if (keyIs('replay', e.code) && onReplay) onReplay();   // (Posnetek do sem: the race so far, straight from the race)
       if (keyIs('flag', e.code) && onFlag) onFlag();   // (a flag in the race: Orodje za napake)
+      if (keyIs('dev', e.code) && onDev) onDev();   // (Prikaz za razvijalca: Orodje za napake)
     });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; ptrs.clear(); wheel.pid = null; });
@@ -168,7 +169,7 @@ const Input = (function () {
      handbrake: no action for it, on the keys or the pad; an old binding of one, 'drift', is not read). A wheel (another layout): the
      wheel's axis steers in proportion (no curve, a small dead zone), its pedals are axes found and measured in Kontrole (where each
      rests and where it is pressed down). */
-  const KEY_DEF = { left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], gas: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'], pause: ['Escape', 'KeyP'], tyre: ['KeyT', ''], replay: ['KeyI', ''], flag: ['KeyF', ''] };
+  const KEY_DEF = { left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], gas: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'], pause: ['Escape', 'KeyP'], tyre: ['KeyT', ''], replay: ['KeyI', ''], flag: ['KeyF', ''], dev: ['KeyO', ''] };
   const WHEEL_RE = /wheel|volant|lenkrad|racing|driving force|g2[79]|g9[02]\d|g923|g29|t\d{3}|t-gt|tmx|thrustmaster|fanatec|moza|simagic/i;
   let keyMap = {}, driveKeys = new Set(), capture = null;
   const keyDown = (act) => { const m = keyMap[act]; return !!(m && ((m[0] && keys[m[0]]) || (m[1] && keys[m[1]]))); };
@@ -196,7 +197,7 @@ const Input = (function () {
      until the screen is touched again. The device: the one picked in Kontrole while connected, else the first. */
   const PAD_DZ = 0.15, PAD_B = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, back: 8, start: 9 };
   const pad = { on: false, name: '', wheel: false, steer: 0, dsteer: 0, thr: 0, brk: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [], moved: {} };
-  let onPad = null, onTyre = null, onReplay = null, onFlag = null;
+  let onPad = null, onTyre = null, onReplay = null, onFlag = null, onDev = null;
   function padAxis(v) { const a = Math.abs(v || 0); if (!(a > PAD_DZ)) return 0; return Math.sign(v) * Math.pow(Math.min(1, (a - PAD_DZ) / (1 - PAD_DZ)), 1.5); }   // (a dead zone, finer near the middle)
   function steerOf(v, s) {   // the steering axis through its calibration: turned the other way, full lock at rng of the axis, the dead zone in the middle, the curve
     const x = (v || 0) * (s.inv ? -1 : 1), a = Math.abs(x) / Math.max(0.05, s.rng || 1), dz = s.dz || 0;
@@ -305,6 +306,6 @@ const Input = (function () {
   function buzzStep(dt) { hapGo(hq.step(dt)); }
   function buzzOff() { if (hq.off() && navigator.vibrate) { try { navigator.vibrate(0); } catch (_) { } } }
 
-  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, buzz, buzzStep, buzzOff, get haptics() { return { log: hlog.slice(), level: vib, busy: hq.busy, waiting: hq.waiting, n: Object.assign({}, hq.n) }; }, padRead, padRaw, padList, setKeys, setPads, captureKey, get keyMap() { return keyMap; }, set onPad(fn) { onPad = fn; }, set onTyre(fn) { onTyre = fn; }, set onReplay(fn) { onReplay = fn; }, set onFlag(fn) { onFlag = fn; }, pad, state: S, tilt, get mode() { return mode; } };
+  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, buzz, buzzStep, buzzOff, get haptics() { return { log: hlog.slice(), level: vib, busy: hq.busy, waiting: hq.waiting, n: Object.assign({}, hq.n) }; }, padRead, padRaw, padList, setKeys, setPads, captureKey, get keyMap() { return keyMap; }, set onPad(fn) { onPad = fn; }, set onTyre(fn) { onTyre = fn; }, set onReplay(fn) { onReplay = fn; }, set onFlag(fn) { onFlag = fn; }, set onDev(fn) { onDev = fn; }, pad, state: S, tilt, get mode() { return mode; } };
 })();
 

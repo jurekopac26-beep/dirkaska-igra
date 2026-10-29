@@ -1,5 +1,5 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot (its corner sign high on the screen, lying and upright), settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
+// raced for 20 s on autopilot (its corner sign high on the screen, lying and upright), settings migrate (two driving physics, Klasična and Nova: an old save's removed physics becomes Klasična; four difficulty levels), the
 // title demo runs, a Pikes Peak run, an Ouninpohja run, a Harju run and a Katu-Jaryk descent finish and their records are
 // saved (Ouninpohja also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the
 // chase, the police radio, the arrows, the mission in the building at the top). Zero page errors allowed.
@@ -12,14 +12,15 @@ const T = checker('smoke');
 const srv = await serve();
 const browser = await launch();
 try {
-  // 1. settings: one driving physics (no row for it) and the migration of old saves (the 'rally' and 'arcade' physics were removed)
-  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs']]) {
+  // 1. settings: the row Fizika vožnje (Klasična, Nova; tests/browser/nova.test.mjs) and the migration of old saves (the 'rally' and 'arcade'
+  // physics were removed: Klasična; Nova kept)
+  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs'], ['{"phys":"nova"}', 'nova']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', seed);
     const got = await page.evaluate(() => window.__game.S.phys);
     T.check(`saved settings ${seed || '(none)'} -> physics '${want}'`, got === want && !errors.length, `got '${got}'${errors.length ? ', errors: ' + errors.join(' | ') : ''}`);
     if (seed === null) {
-      const row = await page.evaluate(() => document.querySelectorAll('[data-set="phys"]').length);
-      T.check('settings: no driving-physics row (Circuit Superstars only)', row === 0, row + ' rows');
+      const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="phys"] button')].map(b => b.dataset.v).join(','));
+      T.check('settings: one driving-physics row, Klasična and Nova', row === 'cs,nova', row);
     }
     await ctx.close();
   }

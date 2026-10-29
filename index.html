@@ -16,8 +16,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=a0803dec">
-<link rel="stylesheet" href="css/style.css?v=ad6c0840">
-<link rel="stylesheet" href="css/napake.css?v=bc33da14">
+<link rel="stylesheet" href="css/style.css?v=63fd18dd">
+<link rel="stylesheet" href="css/napake.css?v=7f2316f1">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=5f0f88be" media="not all">
 </head>
 <body>
@@ -60,13 +60,14 @@
 
   <!-- ============ HUD ============ -->
   <div id="hud" class="off">
+    <div id="tw-strip" aria-hidden="true"></div><!-- the timing tower at the top (Časovna tabela: Zgoraj): six drivers in one row (game.js twHUD) -->
     <div id="h-rank">
       <span id="h-rlbl" class="h-lbl">MESTO</span><!-- shown only in the run from the police: POLICIJA, the number under it is the patrol cars after the player -->
       <div id="h-main"><!-- the two rows, a soft dark shadow behind them (no plate): the place, the total, the speed; the tyres (four dots by what is left, the compound's word), the lap -->
         <div id="h-row1"><div class="h-rankrow"><span id="h-pos">22</span><span id="h-tot">/22</span></div><span id="h-spd"><span id="h-speed">0</span><span id="h-kmh">KM/H</span></span></div>
         <div id="h-row2"><span id="h-tyre" aria-label="Gume"><span class="dts"><i></i><i></i><i></i><i></i></span><b></b></span><span id="h-lap">KROG 1/3</span></div>
       </div>
-      <div id="h-tags"><span id="h-drs">DRS</span><span id="h-tow">ZAVETRJE</span></div><!-- DRS (circuits with DRS zones), the slipstream: small tags under the rows, only when there is something to show -->
+      <div id="h-tags"><span id="h-drs">DRS</span></div><!-- DRS (circuits with DRS zones): a small tag under the rows, only when there is something to show -->
       <span id="h-alt" class="h-lbl"></span>
       <span id="h-turn" class="h-lbl"></span>
       <span id="h-pkcls" class="h-lbl"></span><!-- Pikes Peak: the class of the car -->
@@ -121,8 +122,8 @@
         </svg>
       </div>
     </div>
-    <div id="c-brake" class="tb pedal"><span>ZAVORA</span></div>
-    <div id="c-gas" class="tb pedal gas"><span>PLIN</span></div>
+    <div id="c-brake" class="tb pedal" aria-label="Zavora"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="13" width="34" height="21" rx="4" fill="none" stroke="#ff7a64" stroke-width="2.5"/><path d="M12 19h24M12 23.5h24M12 28h24" stroke="#ff7a64" stroke-width="2"/></svg></div>
+    <div id="c-gas" class="tb pedal gas" aria-label="Plin"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 31l14-14 14 14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
   <button id="btn-pause" class="off" aria-label="Pavza"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
@@ -242,11 +243,13 @@
         <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="1.1">Blizu</button><button data-v="1.4">Srednje</button><button data-v="1.7">Daleč</button></div></div>
         <div class="row" title="Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kamero za avtom; ves avto vedno ostane na zaslonu)"><span class="rlbl">Položaj avta (nižje)</span><div class="seg nw" data-set="carLow"><button data-v="0">Običajno</button><button data-v="1">2 m</button><button data-v="2">5 m</button><button data-v="3">7 m</button><button data-v="4">10 m</button><button data-v="5">15 m</button><button data-v="6">20 m</button></div></div>
+        <div class="row" title="Klasična: dosedanja vožnja. Nova: avto drsi po oprijemu gum, na robniku se rahlo dvigne, ob trku se odbije od drugega avta"><span class="rlbl">Fizika vožnje</span><div class="seg" data-set="phys"><button data-v="cs">Klasična</button><button data-v="nova">Nova</button></div></div>
+        <div class="row" title="Velja za novo fiziko. Drseč: avto v hitrem ovinku drsi bolj postrani, zadek gre ven prvi"><span class="rlbl">Slog nove fizike</span><div class="seg" data-set="slide"><button data-v="0">Običajen</button><button data-v="1">Drseč</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row"><span class="rlbl">Časovna tabela</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Časovna tabela</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Zgoraj</button><button data-v="2">Ob zemljevidu</button></div></div>
         <div class="row" title="Idealna linija na cesti pred avtom: zeleno plin, rumeno ovinek, rdeče zaviranje"><span class="rlbl">Idealna linija</span><div class="seg" data-set="line"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak, Katu-Jaryk)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -278,6 +281,23 @@
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Osnovno: kratki sunki ob trkih in pristankih, v boksih le postanek, izpust in VOZIŠ TI!. Vse: v boksih še vsak trenutek dela mehanikov ter pot v bokse in iz njih."><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Osnovno</button><button data-v="2">Vse</button></div></div>
         <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
+        <details class="set-cat" id="set-test">
+          <summary>Preizkus: tekmeci in trki</summary>
+          <div class="set-body">
+            <div class="set-sub">Tekmeci</div>
+            <div class="row" title="Kako različno hitri so tekmeci (po težavnosti). Ožji razpon: tekmeci so bolj skupaj, nastane kolona in več prehitevanj. Najhitrejši je vedno enak. Velja od naslednje dirke. Privzeto: kot pri izbrani fiziki"><span class="rlbl">Razpon hitrosti</span><div class="seg nw" data-set="tAiSpr"><button data-v="0">Privzeto</button><button data-v="1">Širok</button><button data-v="2">Ožji</button><button data-v="3">Zelo ožji</button></div></div>
+            <div class="row" title="Koliko prostora (med odbijačema) tekmec pusti avtu pred sabo. Kot doslej je najtesneje: vozi tik za odbijačem; večji razmik pomeni manj trkov od zadaj"><span class="rlbl">Razmik za avtom</span><div class="seg nw" data-set="tAiFol"><button data-v="0">Privzeto</button><button data-v="1">Kot doslej</button><button data-v="2">0,5 m</button><button data-v="3">1,5 m</button><button data-v="4">3 m</button></div></div>
+            <div class="row" title="Tekmec tik za drugim avtom vozi malo hitreje in ga pritiska: majhen 2 %, velik 4 %"><span class="rlbl">Pritisk na avto pred sabo</span><div class="seg nw" data-set="tAiPush"><button data-v="0">Privzeto</button><button data-v="1">Izklop</button><button data-v="2">Majhen</button><button data-v="3">Velik</button></div></div>
+            <div class="row" title="Koliko prostora tekmec pusti avtu ob sebi, ko vozita vštric. Manj prostora: bolj se drgnejo in je več stikov"><span class="rlbl">Prostor ob boku</span><div class="seg nw" data-set="tAiSide"><button data-v="0">Privzeto</button><button data-v="1">0,6 m</button><button data-v="2">0,35 m</button><button data-v="3">0,15 m</button></div></div>
+            <div class="row" title="Ali tekmeci na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m)"><span class="rlbl">Vožnja čez robnike</span><div class="seg nw" data-set="tAiKerb"><button data-v="0">Privzeto</button><button data-v="1">Ne</button><button data-v="2">Do 1,2 m</button><button data-v="3">Do 2,2 m</button></div></div>
+            <div class="set-sub">Trki med avti</div>
+            <div class="row" title="Težak: avta se ob trku skoraj ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti. Vrstice pod to vrstico to spremenijo. Velja za vse trke med avti"><span class="rlbl">Slog trkov</span><div class="seg nw" data-set="tCrStyle"><button data-v="0">Privzeto</button><button data-v="1">Težak, brez odboja</button></div></div>
+            <div class="set-note" id="cr-note"></div>
+            <div class="row" title="Koliko se avta odbijeta po trku (0 = nič, 0,1 = klasična, 0,4 = nova fizika)"><span class="rlbl">Odboj med avti</span><div class="seg nw" data-set="tCrE"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Majhen</button><button data-v="3">Srednji</button><button data-v="4">Velik</button><button data-v="5">Zelo velik</button></div></div>
+            <div class="row" title="Ali se avta ob trku drgneta in vlečeta drug drugega (hitrost se deli ob stiku)"><span class="rlbl">Drgnjenje ob stiku</span><div class="seg nw" data-set="tCrMu"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Srednje</button><button data-v="3">Močno</button></div></div>
+            <div class="row" title="Koliko trk zavrti avto (klasična: sunek, ki ga avto sam ujame; nova: pravo vrtenje)"><span class="rlbl">Vrtenje ob trku</span><div class="seg nw" data-set="tCrYaw"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Majhno</button><button data-v="3">Manjše</button><button data-v="4">Večje</button></div></div>
+          </div>
+        </details>
       </div>
       <div class="btns horiz"><button class="btn primary" data-act="settings-done">Končano</button></div>
     </div>
@@ -458,7 +478,7 @@
     </div>
   </section>
 
-  <div id="wheel-swap"><button id="ws-btn" type="button" aria-label="Zamenjaj kolo"><b id="ws-t">ZAMENJAJ KOLO</b><small id="ws-s">Pritisni tukaj za menjavo kolesa</small><i><s id="ws-bar"></s></i></button></div><!-- the wheel rule, a wheel off with the spare on the roof: a big button, its bar running out at its very foot; a tap on it puts the spare on at once (game.js swapHUD; under the title the same English words in both languages) -->
+  <div id="wheel-swap"><button id="ws-btn" type="button" aria-label="Zamenjaj kolo"><span class="ic"></span><b id="ws-t">ZAMENJAJ KOLO</b><small id="ws-s">Pritisni tukaj za menjavo kolesa</small><i><s id="ws-bar"></s></i></button><b id="ws-l">ZAMENJAJ KOLO</b></div><!-- the wheel rule, a wheel off with the spare on the roof: a big button, its bar running out at its very foot; a tap on it puts the spare on at once (game.js swapHUD; under the title the same English words in both languages) -->
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">REAL ROADS ATLAS</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
@@ -510,7 +530,7 @@
 <script src="js/tracks/bangsaen.js?v=536bb480"></script>
 <script src="js/tracks/hotham.js?v=9c00121d"></script>
 <script src="js/tracks/townsville.js?v=e049a353"></script>
-<script src="js/lang.js?v=e7692a91"></script>
+<script src="js/lang.js?v=d2ebaffc"></script>
 <script src="js/tracks/marrakesh.js?v=3a59b91b"></script>
 <script src="js/tracks/troisrivieres.js?v=a21f01d6"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=1a6b8a1d">
@@ -550,7 +570,7 @@
 <script src="js/cars/goljat.js?v=4d334b8c"></script>
 <script src="js/cars/levs.js?v=9b87c0ea"></script>
 <script src="js/cars/levk.js?v=8a1e8fea"></script>
-<script src="js/core.js?v=fa2e4824"></script>
+<script src="js/core.js?v=58bf3567"></script>
 <script src="js/tex.js?v=850856cc"></script>
 <script src="js/world.js?v=7bfe7838"></script>
 <script src="js/world-pikes.js?v=8d84a53f"></script>
@@ -591,9 +611,9 @@
 <script src="js/world-detroit.js?v=9bceb50d"></script>
 <script src="js/world-marrakesh.js?v=5b1b3225"></script>
 <script src="js/world-troisrivieres.js?v=6554f80d"></script>
-<script src="js/render.js?v=b6919374"></script>
+<script src="js/render.js?v=0dd798e0"></script>
 <script src="js/sfx.js?v=8e3a7737"></script>
-<script src="js/input.js?v=6d628ff3"></script>
+<script src="js/input.js?v=d9f18dde"></script>
 <script src="js/comm.js?v=510ae963"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=39210409"></script>
@@ -603,7 +623,7 @@
 <script src="js/journey.js?v=e98f02ed"></script>
 <script src="js/intro-data.js?v=73d3de66"></script>
 <script src="js/menu.js?v=8013acbb"></script>
-<script src="js/napake.js?v=5f3b3632"></script>
-<script src="js/game.js?v=6a2371af"></script>
+<script src="js/napake.js?v=d5cb8bd9"></script>
+<script src="js/game.js?v=08536c86"></script>
 </body>
 </html>

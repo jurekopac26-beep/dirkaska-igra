@@ -41,7 +41,7 @@ try {
       // (the rows as the game writes them: the lap's markup by game.js itself; the tyres: the dots and the widest compound's word)
       const lap = (t) => { $('h-lap').innerHTML = window.__game.lapHTML(t); }, tyres = (on) => { $('h-tyre').className = on ? 'on dry cM' : ''; $('h-tyre').lastElementChild.textContent = on ? 'SREDNJE' : ''; };
       lap('KROG 12/36'); $('h-pos').textContent = '12'; $('h-tot').textContent = '/13'; $('h-speed').textContent = '299'; tyres(true);
-      $('hud').classList.add('drs'); $('h-drs').className = 'arm'; $('h-tow').classList.add('on');
+      $('hud').classList.add('drs'); $('h-drs').className = 'arm';
       $('h-flag').className = 'on yel'; $('h-flag').textContent = 'RUMENA ZASTAVA'; $('h-fuel').className = 'on'; $('h-fuel').textContent = 'GORIVO 40 %';
       $('h-flt').className = 'on'; $('h-flt').innerHTML = '<span class="pk">PREDRTA GUMA</span><span class="br">VROČE ZAVORE</span><span class="en">VROČ MOTOR</span>';
       $('h-box').className = 'on near r'; $('h-box').firstElementChild.textContent = 'BOKSI TA KROG'; $('h-box').lastElementChild.textContent = '400 m';   // (under the stack; on its side under the clock)
@@ -55,7 +55,7 @@ try {
       check('race+column'); for (const id of ['h-pit', 'h-react', 'h-msg', 'toast']) $(id).className = ''; $('btn-rescue').classList.add('off');
       $('hud').classList.add('fight'); $('h-fight').className = 'on ahead'; $('h-fight').children[0].textContent = 'FIGHT FOR POSITION'; $('h-fight').children[1].textContent = 'J. VAN DER BERGHE'; $('h-fight').children[2].textContent = '\u22121.4 s';   // (BOJ ZA MESTO out of the pits, in BOKSI TA KROG's place)
       check('race+fight'); $('hud').classList.remove('fight'); $('h-fight').className = '';
-      $('hud').classList.remove('drs'); $('h-tow').classList.remove('on'); $('h-flt').className = '';
+      $('hud').classList.remove('drs'); $('h-flt').className = '';
       $('h-box').className = '';   // (only in a race on a circuit with pits)
       lap('KROG 1/1 · 12,3/20,7 KM'); tyres(false); $('h-fuel').className = ''; check('nring');   // (Nürburg: the long lap's km, no pits, no tyres)
       lap('KVALIFIKACIJE'); tyres(true); $('h-pos').textContent = '–'; $('h-tot').textContent = ''; $('h-flag').className = ''; $('hud').classList.remove('tw');
@@ -77,9 +77,9 @@ try {
       $('hud').classList.add('school'); $('h-school').textContent = 'Zaviranje do oznake · 120 km/h'; check('school');
       return res;
     });
-    const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 230 : m === 'duel' ? 115 : m === 'pikes' || m === 'school' ? 106 : 95);   // (upright the line under the clock is under the rows' second row: the duel's gap and the police's panel under it, their signs lower too)
+    const land = w > h, lim = (m) => land ? (m === 'school' ? 0.27 * h : 10) : (/^police/.test(m) ? 250 : m === 'duel' ? 135 : m === 'pikes' || m === 'school' ? 106 : 100);   // (upright the line under the clock is under the rows' second row: the duel's gap and the police's panel under it, their signs lower too)
     const badOnes = out.filter(o => !o.box || o.hits.length || o.box[1] > lim(o.mode));
-    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 13 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '95 px; the police ≤ 230, the duel ≤ 115, Pikes and the school ≤ 106'}), over nothing`,
+    T.check(`${w}×${h} (${land ? 'lying' : 'upright'}): the sign high in the top row in all 13 HUD states (top ≤ ${land ? '10 px; the school ≤ 27 %' : '100 px; the police ≤ 250, the duel ≤ 135, Pikes and the school ≤ 106'}), over nothing`,
       out.length === 13 && !badOnes.length && !errors.length, (badOnes.length ? badOnes.map(o => `${o.mode} [${o.box}] ${o.hits.length ? 'OVER ' + o.hits.join(' ') : 'too low'}`).join('; ') : out.map(o => `${o.mode} [${o.box}]`).join(' ')) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
@@ -99,7 +99,7 @@ try {
       const o = g.noteAt(s, v), b = el.getBoundingClientRect();
       return Object.assign(o, { top: Math.round(b.top), pol: document.getElementById('hud').classList.contains('pol') });
     }, [d, v, !!abs]);
-    const top = (o) => o.top <= (land ? 10 : o.pol ? 200 : 95);
+    const top = (o) => o.top <= (land ? 10 : o.pol ? 200 : 100);
     const txt = (o) => `${o.kind} '${o.cls}' ${o.key} top ${o.top}`;
 
     T.check(`${tag} medvode: racing`, await go('medvode') === 'racing');

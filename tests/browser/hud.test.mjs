@@ -1,10 +1,10 @@
 // The top left of the HUD (design 5, »rahla senca«) in a race on Spa, Belgija (a real track with pits and compounds): no speedometer dial
-// or gear, no damage picture, no tyre button A; row 1: the place, the total (small), the speed, KM/H; row 2: the tyres at the left (four
+// or gear, no damage picture, no tyre button A; row 1: the place and the total (as big), the speed and KM/H under them; row 2: the tyres at the left (four
 // dots as the wheels sit, each in the colour of what its tyre has left (Core.tyreWear4), and the compound's word in its colour, no wear %;
 // Slovenian and English), the lap at
 // the right, 4 px from the dots to the word and 10 px from the word to the lap at 390 px (the approved mock); no tyres: the lap alone, at
 // the left; the wrong tyres: the word on a red chip. DRS (dim, white armed, green open) and ZAVETRJE (white, not the cold tyres' blue) in
-// small tags under the rows. The start's set never cold; after a real pit stop (the autopilot through the lane, as
+// small tags under the rows (ZAVETRJE no longer shown). The start's set never cold; after a real pit stop (the autopilot through the lane, as
 // tests/browser/pits.test.mjs drives it) the word and the dots light blue (#7fd3ff) at the fitting and at the way out, about half way to
 // their own colours half a lap on, their own a lap on. The fastest lap's time under the clock: upright the time and a star, lying the
 // word. The budgets, with the worst texts forced and the HUD's face (ApexMenu) loaded, measured on the letters' boxes, the corner sign
@@ -35,7 +35,7 @@ const TYRES = () => { const g = window.__game, P = g.race.player, t = document.g
     want: col(P.ty.wear), wants: Core.tyreWear4(P.ty, [0, 0, 0, 0]).map(col), w4: Core.tyreWear4(P.ty, [0, 0, 0, 0]).map(w => +w.toFixed(3)), k: P.ty.k, c: P.ty.c, wear: +P.ty.wear.toFixed(3), dist: +P.dist.toFixed(1), shown: getComputedStyle(t).display !== 'none' }; };
 
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'spa', cmp: 'M', length: 'long', tower: 1, radio: 0, fuel: 0, damage: 0, notes: 1 }, { width: 390, height: 844 }, { touch: true, context: { reducedMotion: 'reduce' } });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'spa', cmp: 'M', length: 'long', tower: 2, radio: 0, fuel: 0, damage: 0, notes: 1 }, { width: 390, height: 844 }, { touch: true, context: { reducedMotion: 'reduce' } });
   await startTrack(page, 'spa');
   const fonts = await page.evaluate(async () => { await Promise.all(['italic 800 32px ApexMenu', 'italic 700 12px ApexMenu', '700 9px ApexMenu'].map(f => document.fonts.load(f, 'AZaz09ČŠŽ/–')));
     return document.fonts.check('italic 800 32px ApexMenu') && document.fonts.check('700 9px ApexMenu'); });
@@ -54,8 +54,8 @@ try {
       fam: getComputedStyle(document.getElementById('h-pos')).fontFamily, shadow: getComputedStyle(document.getElementById('h-main')).backgroundImage.slice(0, 20), plate: getComputedStyle(document.getElementById('h-main')).backgroundColor,
       rankFx: ['filter', 'transform', 'contain', 'containerType', 'backdropFilter', 'willChange'].map(k => getComputedStyle(document.getElementById('h-rank'))[k] || '').concat(['filter', 'transform', 'contain', 'containerType'].map(k => getComputedStyle(document.getElementById('h-main'))[k] || '')) }; });
   const inRow = (a, row) => a.cy > row.t && a.cy < row.b;
-  T.check('row 1: the place, the total (small, yellow: /22), the speed, KM/H, left to right on one row; row 2 under it: the tyres left of the lap (KROG 1/4)',
-    rows.order1 === 'h-pos,h-tot,h-spd,h-speed,h-kmh' && rows.order2 === 'h-tyre,h-lap' && rows.pos.r <= rows.tot.l + 1 && rows.tot.r <= rows.spd.l + 1 && rows.spd.r <= rows.kmh.l + 1 && [rows.pos, rows.tot, rows.spd, rows.kmh].every(a => inRow(a, rows.row1))
+  T.check('row 1: the place and the total (as big, yellow: 21/22) on a line, under them the speed and KM/H; row 2 under it: the tyres left of the lap (KROG 1/4)',
+    rows.order1 === 'h-pos,h-tot,h-spd,h-speed,h-kmh' && rows.order2 === 'h-tyre,h-lap' && rows.pos.r <= rows.tot.l + 1 && Math.abs(rows.pos.b - rows.tot.b) < 2 && rows.spd.t >= rows.pos.b - 2 && rows.spd.r <= rows.kmh.l + 1 && [rows.pos, rows.tot, rows.spd, rows.kmh].every(a => inRow(a, rows.row1))
       && rows.row2.t >= rows.row1.b - 1 && rows.tyre.r < rows.lap.l && rows.kmhTxt === 'KM/H' && rows.totTxt === '/22' && rows.totC === 'rgb(255, 210, 63)' && /^KROG [1-4]\/4$/.test(rows.lap1) && /ApexMenu/.test(rows.fam),
     JSON.stringify(rows));
   T.check('the soft shadow: a radial gradient behind the two rows, no plate; nothing on #h-rank or round the rows that would move the fixed timing tower (filter, transform, contain ...)',
@@ -67,16 +67,15 @@ try {
     t.className = ''; out.alone = +(r($('h-lap')).left - r($('h-row2')).left).toFixed(2); out.lapL = +r($('h-lap')).left.toFixed(1); out.posL = +r($('h-pos')).left.toFixed(1); t.className = c0; return out; });
   T.check('row 2\'s gaps at 390 px as in the approved mock: the dots to the word 4 px, the word to the lap 10 px (the big number 32 px); without tyres the lap alone at the left',
     Math.abs(gaps.dw - 4) <= 0.5 && Math.abs(gaps.wl - 10) <= 0.5 && Math.abs(gaps.big - 32) <= 0.5 && Math.abs(gaps.alone) <= 0.5 && Math.abs(gaps.lapL - gaps.posL) <= 2, JSON.stringify(gaps));
-  // DRS and ZAVETRJE in the tags under the rows: DRS dim, white armed, green open (its colours on the old speedometer); ZAVETRJE white
-  const tags = await page.evaluate(() => { const $ = (id) => document.getElementById(id), hud = $('hud'), d = $('h-drs'), w = $('h-tow'), c = (e) => getComputedStyle(e), out = {};
-    const d0 = hud.classList.contains('drs'), dc = d.className, w0 = w.classList.contains('on'); d.style.transition = 'none';   // (read at once, not half way through its fade)
-    hud.classList.remove('drs', 'tow'); w.classList.remove('on'); out.none = c($('h-tags')).display; hud.classList.add('drs');
+  // DRS in the tags under the rows: dim, white armed, green open (its colours on the old speedometer); no ZAVETRJE any more (the user's)
+  const tags = await page.evaluate(() => { const $ = (id) => document.getElementById(id), hud = $('hud'), d = $('h-drs'), c = (e) => getComputedStyle(e), out = {};
+    const d0 = hud.classList.contains('drs'), dc = d.className; d.style.transition = 'none';   // (read at once, not half way through its fade)
+    hud.classList.remove('drs', 'tow'); out.none = c($('h-tags')).display; out.tow = !!$('h-tow'); hud.classList.add('drs'); out.tagsDrs = c($('h-tags')).display;
     for (const k of ['', 'arm', 'open']) { d.className = k; out[k || 'dim'] = [c(d).color, c(d).borderTopColor, c(d).backgroundColor].join(' / '); }
-    hud.classList.remove('drs'); d.className = ''; w.classList.add('on'); hud.classList.add('tow'); out.tow = c(w).color; out.towShown = c(w).display; out.tagsTow = c($('h-tags')).display;
     const r2 = $('h-row2').getBoundingClientRect(), tg = $('h-tags').getBoundingClientRect(); out.under = tg.top >= r2.bottom - 1;
-    hud.classList.toggle('drs', d0); hud.classList.toggle('tow', w0); d.className = dc; w.classList.toggle('on', w0); d.style.transition = ''; return out; });
-  T.check('DRS and ZAVETRJE: a small row under row 2 only when needed; DRS dim, white when armed, green when open; ZAVETRJE white (not the cold tyres\' light blue)',
-    tags.none === 'none' && tags.tagsTow === 'flex' && tags.under && tags.towShown === 'block' && tags.tow === CHALK && /^rgba\(255, 255, 255, 0\.38\) \/ rgba\(255, 255, 255, 0\.3\)/.test(tags.dim) && tags.arm.startsWith(CHALK + ' / ' + CHALK) && tags.open.startsWith('rgb(12, 26, 8) / rgb(98, 224, 76) / rgb(98, 224, 76)'),
+    hud.classList.toggle('drs', d0); d.className = dc; d.style.transition = ''; return out; });
+  T.check('DRS: a small row under row 2 only when needed; dim, white when armed, green when open; no ZAVETRJE label',
+    tags.none === 'none' && tags.tagsDrs === 'flex' && tags.under && !tags.tow && /^rgba\(255, 255, 255, 0\.38\) \/ rgba\(255, 255, 255, 0\.3\)/.test(tags.dim) && tags.arm.startsWith(CHALK + ' / ' + CHALK) && tags.open.startsWith('rgb(12, 26, 8) / rgb(98, 224, 76) / rgb(98, 224, 76)'),
     JSON.stringify(tags));
 
   // 3. the tyres: the compound's word only (no digit, no %), in its colour; in English; the dots by the wear (8 % and 60 % worn, the four
@@ -147,7 +146,7 @@ try {
     $('h-pos').textContent = st.pos; $('h-tot').textContent = st.tot; hud.classList.toggle('f3', st.tot.length > 3);   // (f3: a field of 100 or more, as game.js sets it)
     $('h-speed').textContent = '299'; $('h-lap').innerHTML = g.lapHTML(st.lap);
     hud.classList.toggle('pol', !!st.pol); $('h-rlbl').textContent = st.pol ? (st.en ? 'POLICE' : 'POLICIJA') : (st.en ? 'POS' : 'MESTO'); hud.classList.toggle('tw', !st.pol && !st.tt);
-    hud.classList.toggle('drs', !!st.col); $('h-drs').className = st.col ? 'open' : ''; $('h-tow').classList.toggle('on', !!st.col);
+    hud.classList.toggle('drs', !!st.col); $('h-drs').className = st.col ? 'open' : '';
     $('h-fuel').className = st.col ? 'on' : ''; $('h-fuel').innerHTML = st.col ? 'GORIVO 100%<i style="width:100%"></i><b style="left:62%"></b>' : '';
     $('h-flt').className = st.col || st.flt ? 'on' : ''; $('h-flt').innerHTML = st.col || st.flt ? '<span class="pk">PREDRTA GUMA</span><span class="br">VROČE ZAVORE</span><span class="en">VROČ MOTOR</span>' : '';
     $('h-flag').className = st.col ? 'on yel' : ''; $('h-flag').textContent = st.col ? 'RUMENA ZASTAVA' : '';
@@ -166,7 +165,7 @@ try {
     const ext = (rs) => rs.length ? { l: Math.min(...rs.map(r => r.l)), t: Math.min(...rs.map(r => r.t)), r: Math.max(...rs.map(r => r.r)), b: Math.max(...rs.map(r => r.b)) } : null;
     const dots = [...document.querySelectorAll('#h-tyre .dts i')].filter(vis).map(e => box(e.getBoundingClientRect(), 'dot'));
     const r1 = glyphs($('h-row1')), r2 = glyphs($('h-row2')).concat(dots);
-    const under = glyphs($('h-rlbl')).concat(els(['h-drs', 'h-tow', 'h-fuel', 'h-flag']), glyphs($('h-alt')), glyphs($('h-turn')), [...$('h-flt').children].filter(vis).map(e => box(e.getBoundingClientRect(), 'flt')));
+    const under = glyphs($('h-rlbl')).concat(els(['h-drs', 'h-fuel', 'h-flag']), glyphs($('h-alt')), glyphs($('h-turn')), [...$('h-flt').children].filter(vis).map(e => box(e.getBoundingClientRect(), 'flt')));
     return { w: innerWidth, h: innerHeight, r1: ext(r1), r2: ext(r2), r2g: r2, col: r1.concat(r2, under), under, colExt: ext(r1.concat(r2, under)), clock: glyphs($('h-time'), 'time').concat(glyphs($('h-best'), 'best')),
       split: glyphs($('h-split'), 'split'), gap: glyphs($('h-gap'), 'gap'), pol: glyphs($('h-pol'), 'pol').concat(els(['h-bust', 'h-hide', 'h-chk'])), note: els(['h-note'])[0] || null,
       map: els(['h-map'])[0], pause: els(['btn-pause'])[0] || null, ws: $('wheel-swap').classList.contains('on') ? box($('ws-btn').getBoundingClientRect()) : null,

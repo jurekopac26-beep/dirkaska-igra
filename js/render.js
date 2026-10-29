@@ -3234,6 +3234,10 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
+    // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
+    if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });
+      for (const t of pics) if (sh.has(t)) renderer.initTexture(t); }
     skids.onWorld(world);
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
@@ -5573,6 +5577,17 @@ const Render = (function () {
     const on = mode === 'work' && u >= Core.REPAIR.wheel ? nb : (P.repairN || 0) !== v.repairN ? tyreBand(P) : v.band;   // (the stop just over, the car not yet built afresh: its new tyres)
     if (v.bandW !== on) { v.bandW = on; const G = v.bandGeo(on); for (const w of v.wf) w.geometry = G.f; for (const w of v.wr) w.geometry = G.r; }
   }
+  // the KOLIBRI's tyre on fire (Core Car.kt.hot): that wheel only a little red, a dark red and a faint glow of its own (emissive ~0.45), no
+  // light round it and none on the road: far less than a tail lamp. Each of its meshes gets a red copy of its material while it burns
+  const KT_RED = { col: new THREE.Color(0.5, 0.1, 0.08), em: new THREE.Color(0.55, 0.07, 0.03), ei: 0.45 };
+  function ktGlow(v, c) {
+    const k = c.kt && c.kt.hot >= 0 ? c.kt.hot : -1; if (k === (v.ktHot == null ? -1 : v.ktHot)) return;
+    const set = (j, on) => { if (j < 0) return; const want = j % 2 ? 1 : -1; for (const w of j < 2 ? v.wf : v.wr) if (Math.sign(w.position.z) === want) w.traverse(o => {
+      if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
+      if (on) { if (!o.userData.ktM0) { const m = o.material.clone(); m.color = (m.color ? m.color.clone() : new THREE.Color(1, 1, 1)).multiply(KT_RED.col); if (m.emissive) { m.emissive = KT_RED.em.clone(); m.emissiveIntensity = KT_RED.ei; } o.userData.ktM0 = o.material; o.material = m; } }
+      else if (o.userData.ktM0) { o.material.dispose(); o.material = o.userData.ktM0; delete o.userData.ktM0; } }); };
+    set(v.ktHot == null ? -1 : v.ktHot, false); set(k, true); v.ktHot = k;
+  }
   function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
     const P = crew.P, v = views.find(v => v.car === P); if (!v) return;
     const list = k < 2 ? v.wf : v.wr, want = k % 2 ? 1 : -1;
@@ -6341,7 +6356,7 @@ const Render = (function () {
       if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
       let hy = 0; if (v.hop) { const H = v.hop; H.t += dt; if (H.t >= H.T) v.hop = null; else hy = H.h * Math.sin(Math.PI * H.t / H.T); }
-      v.grp.position.set(x, y + hy + (jk ? crew.lift : 0), z);
+      v.grp.position.set(x, y + hy + (jk ? crew.lift : 0) + (c.nvY || 0), z);   // (nvY, nvR, nvP: the new physics' kerbs lift the car a little, Car.stepNova)
       if (v.far) farStep(v, x, y, z);
       const lat = clamp(c.w * c.speed, -16, 16), sw = M.sway || 1;   // (sway: the truck's soft, tall body rolls and pitches more)
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
@@ -6351,7 +6366,7 @@ const Render = (function () {
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
       const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
-      v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
+      v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
       v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
       if (c.rl) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
@@ -6362,6 +6377,7 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
         for (const w of v.wf) w.geometry = W(H.fr, H.fw, col); for (const w of v.wr) w.geometry = W(H.rr, H.rw, col); } }
@@ -9187,8 +9203,12 @@ const Render = (function () {
   function chaseStep(c, dt, h, spd, pitZ, k2) {
     // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
     // travel, so a sliding car shows its angle)
-    const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
-    cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
+    // (the new physics, Car.stepNova: the car slides into a quick corner itself, NVK.attT, and the view follows the travel closely, 0.08 s
+    // behind: the car ~22 deg against the view above 50 deg/s of its turn, three quarters of it the car's own slide, as the reference video
+    // shows; the user's choice; the classic one as before)
+    const nv = c.phys === 'nova', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
+    const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
+    cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
     cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
   }
   function chasePose(c, x, z, baseY) {
