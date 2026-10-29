@@ -10,7 +10,7 @@
      limit: the seconds to do it in (none: the clock runs up); stars: [the time for 3 stars, for 2] (else 3 for a mission done);
      opts: what the race is made with (Core.Race's options over the game's own: alone, no laps, the traffic ...), a function of the def;
      rows: the gauges of the panel [{ k, label, bar: true (a bar under it), col }], set with run.set(k, text, frac, col);
-     begin(run), step(run, dt): the mission's own logic; run.win(), run.fail(why) end it; the player over the finish line is a win
+     made(race): its own cars on the race before it is drawn; begin(run), step(run, dt): the mission's own logic; run.win(), run.fail(why) end it; the player over the finish line is a win
      unless the mission's finish(run) says otherwise. */
 const Missions = (function () {
   'use strict';
@@ -94,6 +94,8 @@ const Missions = (function () {
     if (cur.car && typeof Core !== 'undefined') { const M = Core.MODELS.find(m => m.id === cur.car); if (M) o.playerModel = M; }
     return o;
   }
+  // the race is made, not drawn yet: the mission's own cars (made(race), e.g. the escort)
+  function made(race) { if (cur && cur.made && race) cur.made(race); }
   // the race is made: the mission's run on it
   function begin(race) {
     if (!cur || !race) { run = null; hud(false); return; }
@@ -228,7 +230,7 @@ const Missions = (function () {
     },
   });
 
-  return { add, DEFS, byId, init, start, opts, begin, step, over, stop, on, openList, closeList, Run, recOf, starsOf, placeOf, clock,
+  return { add, DEFS, byId, init, start, opts, made, begin, step, over, stop, on, openList, closeList, Run, recOf, starsOf, placeOf, clock,
     get run() { return run; }, get cur() { return cur; } };
 })();
 if (typeof module !== 'undefined') module.exports = Missions;
