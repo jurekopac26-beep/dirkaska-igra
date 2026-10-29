@@ -65,7 +65,12 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "montreal": 240,
+  "toronto": 240,
+  "troisrivieres": 240,
+  "greatalpine": 300,
+  "hotham": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -242,6 +247,31 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "montreal": {
+   "base": 10
+  },
+  "toronto": {
+   "base": 81
+  },
+  "troisrivieres": {
+   "base": 32
+  },
+  "greatalpine": {
+   "start": "Tambo River",
+   "finish": "Ash Range",
+   "alt": [
+    123,
+    337
+   ]
+  },
+  "hotham": {
+   "start": "Mount Little Blowhard",
+   "finish": "Hotham Heights",
+   "alt": [
+    1495,
+    1753
+   ]
   }
  },
  "intro": {
