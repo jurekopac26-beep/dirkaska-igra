@@ -1,0 +1,45 @@
+COMMON PART OF THE O3 BRIEFS (read it whole).
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your own scratch folder
+(named in your brief). The container can restart at any time: keep a running progress file (named in your brief). Run at most ONE browser
+render at a time (three other agents render in parallel). Never write to another agent's files; never edit the shared base files.
+
+THE USER'S WORDS (Slovenian, this round), after the six flat glass-showcase variants P/final_z/00k_vitrina_6_razlicic.png (P/out/s6_1 ..
+s6_6: the cabinets rebuilt straight and parallel to the screen, one card per element):
+"Omarici pred avtom sta sedaj preveč 2D. Naredi 6 verzij, da je omara pred avtom v 3D obliki, bolj podobno ovalnemu regalu, ki smo ga
+imeli v prejšnjih verzijah."
+= The flat card walls look 2D. Make six versions where the cabinet(s) in front of the car are clearly THREE-DIMENSIONAL and CURVED like
+the oval regal behind the car (the regal follows an arc round the turntable, radius about 4.75 m; the original front cabinets also
+followed the ring's arc: see P/out/w/omarici_hq.png and round W's f0): the front cabinets follow the same kind of arc on the near side
+of the ring, so the garage reads as one oval round the car. Visible depth: the top surface, the front, the rounded/curved ends, shading
+and soft shadows, items standing IN the cabinet with depth, seen in perspective from the first view.
+At the same time keep what the user asked before: each element as large a tap target as possible (the flat variants reached 40x40 CSS
+px for all 36; a curved 3D cabinet will lose some: get as close as you can, and report it), the cabinets reaching toward the screen's
+side and bottom edges, the colour pools in the floor fully visible, the gift between/among them, the trolleys' parking outlines and routes
+at least 0.3 m away, the lift orange, English in-world labels (white on navy, the yellow line), no brands.
+
+THE STARTING POINT: agent PB's store P/concepts/_e_store2_pb.js (RG.BG = 1, RG.PB = 3: the regal's slotted back, the new orange lift; read
+P/out/pb/notes.md) whose cabinets are XC's option 6 (curved, glass; its block between "// >>>> XC BLOCKS" and "// <<<< XC BLOCKS",
+frontRegal calls om6Fronts; P/out/xc/notes.md) and the six flat variants' code and measures for reuse: S6A (P/concepts/_e_store2_s61.js,
+s62; P/out/s6a/notes.md: its tap marking, its "rectangle from the first view" method, its measure body P/concepts/_s6a_body.js), S6B
+(_s63, _s64; P/out/s6b/notes.md), S6C (_s65, _s66; its 36-element ID pass s6Pass; P/out/s6c/notes.md). Another agent (GM) is changing
+the regal's back to light blue with slots and removing two tyre sets in its own store; you change ONLY the front cabinets (the XC block
+and frontRegal's call), so the two can be merged later. Look at the regal's look (posts, back, boards) and let the front cabinets match it.
+
+THE ELEMENTS (as in the S6 round): showcase UNDERGLOW (BLUE, TURQUOISE, PURPLE, RED, GREEN), INDICATORS (CLEAR, SMOKED, SEQUENTIAL), AERO KITS
+(STREET, SPORT, RACE, GT PACK), DECALS (FLAMES, CHEQUERED, STAR), COLOURED NUTS; on the tops the headlamps (LED, Rumeni, Dimljeni, Bi-LED),
+tail lamps (Dimljene, Prozorne, Okrogle, LED-trak), discs (Dirkalni diski, Keramične), grilles (Satasta, Mrežasta, Kromirana, Karbonska,
+V barvi avta), calipers (Rdeče, Rumene, Zlate, V barvi avta); the daily gift. The left side the lights; the right the rest.
+
+PICTURES PER VERSION k -> P/out/o3_<k>/:
+  f0.png (the first view, HOMEC, 412x915, real UI, CAR=muscle, the orange lift, no hint banner);
+  omarici_hq.png (the cabinets close, HQ, from the first view's direction) AND omarici_3d.png (a second HQ view from higher and more to the
+    side, so the 3D curved shape is plain);
+  tap_one.png (tap on Luč pod avtom – Rdeča: light turquoise + yellow rim, ring, flag "LUČ POD AVTOM – RDEČA", the underglow card);
+  tap_all.png and tap_all_zoom.png (all elements in the tapped state at once; the zoom at DPR 3 cropped to the cabinets);
+  info.json { name (Slovenian), text (2-3 Slovenian sentences), captions, measure (per element; min, median, counts >= 40x40 and >= 30x30;
+    the same for the flat S6 variant 1 and for option 6), footprint (beyond today's, trolleys), load (meshes, vertices, draw calls), notes }.
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+FINAL REPORT (your last message): per version what you built, the tap numbers against S6 v1 and option 6, the files, what you could not
+get right.

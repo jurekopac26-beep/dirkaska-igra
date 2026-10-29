@@ -1,0 +1,8 @@
+BRIEF EL-CAR: THE ELEMENTS ON THE CAR
+Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/el_common.txt
+Your group: every tappable element ON THE CAR on the turntable (the 16 elements of the earlier boards: karoserija/barva, hauba, vrata,
+prtljažnik, streha, črte in nalepke, stekla (every window: say how the windows are tapped), žarometi, zadnje luči, maska, aero (odbijači
+in pragovi), auspuh, gume, platišča, zavore, luč pod avtom; plus anything else on the car that is tappable). Folder P/out/el_avto,
+JSON group "avto". Files: store copy P/concepts/_e_store2_el_car.js, body P/concepts/_el_car_body.js, scripts P/mk_el_car.sh,
+P/render_el_car.sh, harness copy P/harness_el_car.mjs; scratch /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/
+scratchpad/el_car; progress P/out/el_avto/notes.md.

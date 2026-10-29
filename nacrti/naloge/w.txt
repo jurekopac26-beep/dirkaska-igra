@@ -1,0 +1,66 @@
+BRIEF W: THE UPPER SHELF LOWER, ITS PARTS INSIDE THEIR BAYS, ENGLISH LABELS, THE LIFT NOT BLUE
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch folder
+/tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/w. The container can restart at any time: keep a
+running progress file P/out/w/notes.md (done / next / files) so a resumed you can continue. One browser render at a time.
+
+THE USER'S WORDS (Slovenian, this round): "Sedaj je zgornja polica previsoka. Naredi, da bo malo nižja. Elementi v zgornji polici naj ne
+prekrivajo desnega ali levega dela pregrade. Napisi naj bodo v angleščini. Naredi v sliki, kako bi izgledalo. Dvigalka, ki dvigne avto, naj
+bo druge barve kot modra, saj modre so že police zadaj."
+
+THE STARTING POINT is the merged scene of the last round: store P/concepts/_e_store2_vf.js (base part by agent V1: idea 5's tuning parts on
+the upper shelf (U5, U5K, U5P, u5Shelf, near line 351-470), the tail lamps on the left front cabinet, the cabinets with one drawer row; its
+"// ==== PROPOSAL 1" section by agent V2: the trolleys parked front-left), base P/concepts/base_vf.js (built like P/mk_base_v.sh but with
+_e_store2_vf.js), bodies P/concepts/_v_body.js (V1's: f0, the HQ first view, the labelled HQ, the shelf HQ, the cabinets HQ; read its
+notes P/out/v/notes.md and info.json) and P/concepts/_vt_body.js (V2's trolley frames; P/out/vt/notes.md, info.json); the merged renders
+are in P/out/vf/ and P/out/v/. Make your own copy P/concepts/_e_store2_w.js, P/mk_base_w.sh -> base_w.js, and your bodies.
+
+1. THE UPPER SHELF A LITTLE LOWER. Now the upper storey runs from D's board (RG.LV[3] = 1.89 m) to the top board (RG.TOP 3.31 m; bays 0-3
+   have 1.327 m free, bay 4 1.371 m), much taller than the storeys below (0.54-0.71 m). Bring the top board down to about 2.90 m (the free
+   height about 1.0 m; between 2.85 and 2.95 m is fine): the top board, the posts, the light-blue back (it stays light blue up to the new
+   top), the end section if it follows the top, and the spoilers standing on the top (they come down with it). Every tuning part with its
+   plinth and plate stays at least 8 cm under the top board's underside; scale a part down a little if it must, but keep it well readable.
+2. NOTHING OVER THE POSTS ("pregrada" = the regal's upright posts between the bays and at its ends). In the first view today several
+   plinths and parts reach over the posts: FILTER ZRAKA over bay 0's left post, LAHEK AKUMULATOR and VZMETI over the post between bays 1
+   and 2, HUPA and DIM GUM over bay 4's posts, and others (see P/out/v/hq/prvi_pogled.png, the upper shelf). Make every place (plinth,
+   part, name plate) stand inside its own bay with a clear gap to both posts: in 3D at least 5 cm from each post's inner face, AND in the
+   first view (HOMEC, 412x915) no pixel of a place may cover a post: measure it with an ID pass (each place's pixels vs. the posts' pixels:
+   overlap 0 px, and the gap in CSS px to the nearest post, per place). Narrower plinths, the two places of a bay closer together, parts a
+   little smaller: whatever reads best. The lift's column must still hide nothing of a place (the base already kept bays 2-3 clear of it:
+   keep that). Re-measure each place's tap size in f0 (as V1 and idea 5 did) and compare with before.
+3. THE LABELS IN ENGLISH ("napisi"): every text that stands in the 3D garage (not the game's HUD, which follows the player's language):
+   the ten plinth plates, the aero model's labels in the drawer, the drawer boards (indicators, decals), the trolleys' names and the scrap
+   bin, and any other in-world text you find (search the store and bodies for every canvas text / sign / plate; list what you changed).
+   Use British English as the game's own English (js/lang.js says "bonnet", "colour"). The names:
+     Filter zraka AIR FILTER · Čip ECU CHIP · Turbo TURBO · Lahek akumulator LIGHT BATTERY · Vzmeti SPRINGS · Amortizerji DAMPERS ·
+     Stabilizatorji ANTI-ROLL BARS · Športne ploščice SPORT PADS · Hupa HORN · Dim gum TYRE SMOKE ·
+     aero kits: Cestni STREET · Športni SPORT · Dirkalni RACE · Paket GT GT PACK ·
+     indicators (Žmigavci): Prozorni CLEAR · Dimljeni SMOKED · Tekoči SEQUENTIAL · decals (Nalepke): Plameni FLAMES · Šahovnica
+     CHEQUERED · Zvezda STAR · trolleys: HAUBE BONNETS · POKROVI BOOT LIDS · STEKLA GLASS · VRATA DOORS · ODPADNO STEKLO BROKEN GLASS.
+   Keep the plates' look (white on navy, the yellow line); if an English name is longer, fit it (two lines or a smaller font), never cut.
+   Leave the game's HUD and the big location banner as the game draws them (they follow the game's language setting); say so in notes.
+4. THE LIFT NOT BLUE. The single-column lift that lifts the car (its column behind the table, its carriage and arms, whatever of it is
+   blue; the obstacle box zLiftObs at (0.03, 1.55, -1.80)) is blue like the regal behind it. Recolour all its blue parts. Make FOUR
+   variants: Y safety yellow (about #F2C200, with black where it suits: base, caps, a black-and-yellow band), O orange (about #F07A1A),
+   R red (about #C8202A), G graphite with steel (about #3A3F47 and brushed steel). Keep its shapes, its lights and its yellow-and-black
+   floor plate. Variant Y is the main one for all other pictures (it echoes the regal's yellow lines and stands apart from the blue).
+
+THE PICTURES -> P/out/w/ (all with the real UI, CAR=muscle, no hint banner unless said):
+  f0.png: the first view, 412x915, variant Y;
+  hq/prvi_pogled.png: the same in HQ exactly as V1 made it (DPR 4, 1648x3660, MSAA, anisotropy), variant Y;
+  hq/zgornja_polica_hq.png: the upper shelf as V1 made it (DPR 8 re-render of the first view's camera, cropped to the regal), English plates
+    sharp and readable;
+  dvigalka_barve.png: the four lift colours side by side: the same crop of the first view (the car, the lift's column, the regal around it)
+    for Y, O, R, G, each with its name under it in Slovenian (Rumena, Oranžna, Rdeča, Grafitna) — a board 2x2 or 4 in a row;
+  pred_po_polica.png: before / after: the upper shelf in P/out/v/hq/prvi_pogled.png (crop) beside the same crop of your HQ, with a short
+    Slovenian caption under each (lower top, nothing over the posts, English plates);
+  omarici_hq.png: the cabinets as V1's hq/omarici_hq.png with the English drawer labels (and the aero labels);
+  vozicki_en.png: V2's parking picture (P/out/vt f6's camera) on your scene, so the English trolley names show;
+  info.json: { name, text (2-3 Slovenian sentences), captions (one per picture, Slovenian), heights (old/new top, free height, headroom
+    per part), posts (per place: overlap px, gap px, 3D gap), measure (tap sizes before/after), reach, labels (old -> new), notes }.
+  REACH: re-run the base's place-reach check for the ten upper-shelf places and the spoilers on the lowered top (say how they compare).
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+
+FINAL REPORT (your last message): what changed (store functions, numbers), the post check per place, the label list, the lift colours, the
+reach, the files, what you could not get right. Plain language.

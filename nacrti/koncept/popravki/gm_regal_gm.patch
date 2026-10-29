@@ -1,0 +1,123 @@
+--- _e_store2_pb.js	2026-10-26 04:29:53.310208080 +0000
++++ _e_store2_gm.js	2026-10-26 09:40:41.145536031 +0000
+@@ -1,3 +1,4 @@
++// ==== GM (my copy of concepts/_e_store2_pb.js, agent PB's store; my changes are marked "GM:" and my block ">>>> GM BLOCK" after PB's)
+ // ==== PB (my copy of concepts/_e_store2_bg.js, agent BG's store; my changes are marked "PB:" and my block ">>>> PB BLOCK" after BG's)
+ // ==== BG (my copy of concepts/_e_store2_l3.js, agent L3's store; my changes are marked "BG:" and my block ">>>> BG BLOCK" before regalAll)
+ // ==== L3 (my copy of concepts/_e_store2_r.js, agent R's store; my changes are marked "L3:" and my block ">>>> L3 BLOCK" before regalAll)
+@@ -199,6 +200,7 @@
+   WL: null,   // (R: the spoilers' light: null as today, 'L1'..'L6' the six versions (wingLight, after regalAll's R block))
+   BG: null,   // (BG: the regal's background and posts: null the light-blue back and the navy perforated posts, 1..6 the six versions (BGV, the BG block))
+   PB: null,   // (PB: six versions of BG's version 1, the light-grey pegboard: 1..6 (PBV, the PB block) over RG.BG; null: BG's own)
++  GM: null,   // (GM: 1 L3 A's light-blue back with P3's slots, the two tyre sets the car covers gone (GMV, GMG, the GM block); 2 the same back without slots (a reference); null: PB's)
+   WZ: 0.1, WSC: [1.0, 1.1, 1.05, 1.05, 1.0] };   // (WZ: the spoilers 0.1 m nearer the
+ // top's front edge (the gripper's fingers' root stays in front of the top board when the jaws close on a spoiler's stand); WSC: the wings'
+ // sizes on the top (1.1 to 1.45 m, a car's width, each clear of its neighbours at rest and on its way out))
+@@ -925,7 +927,8 @@
+   const cr = (x) => { const gr = g.createRadialGradient(x, 0, 0, x, 0, X(0.6)); gr.addColorStop(0, `rgba(0,0,0,${ao.corner})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); }; cr(0); cr(CW);
+   const t = new T.CanvasTexture(c); t.anisotropy = 8; return (BGTX[key] = t); };
+ // one band of a bay's back (i the storey from A, top the last one's index): the version's back (RG.BG), or as before (the light blue)
+-const bgBackBand = (sc, i, top, y0, y1, col, f) => { const v = bgVer(); if (v && v.f) f = v.f[Math.min(i, 3)]; if (!v) { const m = (i === top ? bayBackAOH : bayBackAO)(sc, y0, y1, col, f); m.userData.bgBack = i; return m; }
++const bgBackBand = (sc, i, top, y0, y1, col, f) => { const v = bgVer(); if (v && v.gm) return gmBackBand(sc, i, top, y0, y1, col, f, v);   // (GM: L3 A's light blue with P3's slots (gmBackBand, the GM block))
++  if (v && v.f) f = v.f[Math.min(i, 3)]; if (!v) { const m = (i === top ? bayBackAOH : bayBackAO)(sc, y0, y1, col, f); m.userData.bgBack = i; return m; }
+   // (the band runs on BGP.ext behind the posts between two bays (there the bays' backs part round the ring: the gap between them closed; the
+   //  regal's two ends not); one texture a version, the wider bands' pattern stretched by under 6 %)
+   const eL = sc.k > 0 ? BGP.ext : 0, eR = sc.k < sc.nb - 1 ? BGP.ext : 0, Wm = sc.L - BGP.planeW, Hm = y1 - y0 - 0.01, key = v.back + ':' + f;
+@@ -979,7 +982,7 @@
+   4: { oz: 'Plošča z obrisi delov', st: 'temno modri perforirani stebri', back: 'pb1', posts: 'navy', sh: [20, 22, 26], outline: { col: '#f2c21a', w: 0.015, d: 0.04, dr: 0.06, rc: 0.05, gap: 0.03 } },
+   5: { oz: 'Hladna modro siva s kvadratnimi luknjami', st: 'temno modri perforirani stebri', back: 'pb5', posts: 'navy', sh: [16, 22, 34] },
+   6: { oz: 'Topla siva s kavlji in rumeno črto', st: 'temno modri perforirani stebri', back: 'pb6', posts: 'navy', sh: [32, 27, 20], hooks: true } };
+-const bgVer = () => (RG.PB && PBV[RG.PB]) || BGV[RG.BG];
++const bgVer = () => (RG.GM && GMV[RG.GM]) || (RG.PB && PBV[RG.PB]) || BGV[RG.BG];   // (GM: GM's version first (GMV, the GM block))
+ // the sheets: base colour, holes (shape, pitch x / y, size, stagger), the hole's well / lip / rim colours, the shade under the board (a, h),
+ // the other shading as BG's (ao), a painted line at the foot (P6)
+ const PBK = {
+@@ -1017,7 +1020,7 @@
+ // every part on show with its bay and its storey's back band: [{ nm, sc, objs, band }] (the tyre sets, the exhausts with their stands, each
+ // rim, the tuning parts; not the spoilers: the top has no back)
+ const pbParts = (out) => { const L = [], add = (nm, sc, objs) => L.push({ nm, sc, objs });
+-  out.tyres.forEach((g, i) => add('gume ' + i, out.secs[i], [g]));
++  out.tyres.forEach((g) => add('gume ' + g.userData.si, out.secs[g.userData.si], [g]));   // (GM: the set's own bay)
+   out.exh.forEach(x => add('auspuh ' + x.si + '/' + x.lv, x.sec, [x.g]));
+   out.rims.forEach(q => q.ps.forEach((p, j) => add('platišče ' + q.si + '/' + q.lv + '/' + j, q.sec, [p])));
+   if (out.tun && out.tun.places) out.tun.places.forEach(p => add(p.nm, out.secs[p.si != null ? p.si : p.bay != null ? p.bay : 0], [p.part || p.g]));
+@@ -1262,6 +1265,59 @@
+   const after = { column: geo.attributes.position.count, carriage: m, arms: na };
+   return (PBL.info = { v: v || null, top: PBL.top, capTop: +(PBL.top + PBL.cap + 0.008).toFixed(3), meshes: 3, before, after, verts: { before: before.column + before.carriage + before.arms, after: after.column + after.carriage + after.arms } }); };
+ // <<<< PB BLOCK
++// >>>> GM BLOCK (agent GM)
++// ==== GM: TWO TYRE SETS GO (THE ONES THE CAR COVERS), THE BACK LIGHT BLUE WITH SHADOWS AND SLOTS (agent GM; the user, on PB's P3, the
++//      slotted pegboard: "P3. Zbriši 2 kompleta gum v regalih, kjer sem označil, ker težko klikneš na njih, ker jih prekriva avto. Zato naj
++//      bosta ta dva regala prazna. Sedaj lahko izbiraš samo še med 3 vrstami gum. Naredi, da so plošče take, kot so bile prej na drugi
++//      sliki zgoraj, modre s sencami, in dodaj jim reže. Okrogle trodelne."). The rest of GM, marked "GM:" where it is: RG.GM (the
++//      version), bgVer (GMV first), bgBackBand (gmBackBand), regalAll (the tyre sets of GMG's bays are not built: their places on storey A
++//      stay empty, no tyres, no shadows; the board and the back stay; out.gm), pbParts (a tyre set's bay from its userData.si).
++//   RG.GM 1: L3 version A's light-blue back (the game's light blue FO.blue × each storey's shade 0.78 / 0.86 / 0.94 / 0.98 as there, and
++//   the soft shade under each board, at the sides, at the foot and in the top corners exactly as L3's AOT / aoTexH, drawn in metres) with
++//   P3's oblong slots cut in it (0.7 × 2.2 cm on a 3.4 × 4 cm grid, every second row half a step over): each slot a navy well in the
++//   blue's own tone with a faintly lit lower lip and a shaded upper rim, calmer than P3's near-black wells. Unlit (MeshBasic) as before:
++//   the regal's light and the room's do not change. Over it BG version 1's navy perforated posts (storey D's front posts too), PB's lift,
++//   no lit panels on top; the soft shadows stay navy (as L3's, made for the light blue). The back's bands run 5 cm behind the posts
++//   between two bays as BG's (one texture for the storeys, one for the top band; the end bays use a part of it: their UVs). RG.GM 2: the
++//   same back without the slots (only the reference of the measures).
++//   GMG: storey A's bays whose tyre sets are gone: the two the car covers most in the first view (GM's measure: bay 2 Cesta, bay 1 Makadam)
++const GMV = {
++  1: { oz: 'Svetlo modra plošča z režami', st: 'temno modri perforirani stebri', back: 'gm', posts: 'navy', gm: { slots: true } },
++  2: { oz: 'Svetlo modra plošča brez rež (primerjava)', st: 'temno modri perforirani stebri', back: 'gm', posts: 'navy', gm: { slots: false } } };
++const GMG = [1, 2];
++const gmGone = (i) => !!(RG.GM && GMV[RG.GM] && GMG.includes(i));
++// the slots (P3's sizes) and their tones, as multipliers of the light blue (0..255 on a base of GMS.base: the material's colour is the blue
++// × the storey's shade × 255 / base, so the plain sheet is exactly L3's blue and the lip a touch lighter): well, rim (the upper edge in
++// shade), lip (the lower edge in light), wall (the well's upper wall, darker)
++const GMS = { px: 0.034, py: 0.04, sw: 0.007, sh: 0.022, base: 236, well: [105, 125, 158], rim: [190, 199, 213], lip: 250, wall: 0.14 };   // (GM's tone test E of A..E:
++// the crop's back step (the mean L* step between neighbouring back pixels, its busyness) 3.1 (P3 5.2, no slots 0.75), the parts' edges ΔE 42.7 (P3 35.9))
++// a band's texture: the sheet (slots or not), then L3's shading over a W3 × Hm band (AOT 128 × 128 stretched over a storey, aoTexH's
++// 128 × round(128 h / 0.49) over the top band), at L3's place (its band was W3 = L - 0.07 wide, centred); the canvas covers Wf (the middle
++// bay's band with its 5 cm behind each side's posts); xm: metres from the bay's middle
++const gmBackTex = (top, W3, Wf, Hm, slots) => { const key = 'gm:' + (top ? 't' : 's') + ':' + W3.toFixed(3) + ':' + Wf.toFixed(3) + ':' + Hm.toFixed(4) + ':' + (slots ? JSON.stringify([GMS.well, GMS.rim, GMS.lip, GMS.wall, GMS.base]) : 0); if (BGTX[key]) return BGTX[key];
++  const CW = 1024, CH = 512, c = document.createElement('canvas'); c.width = CW; c.height = CH; const g = c.getContext('2d'), sx = CW / Wf, sy = CH / Hm, K = GMS;
++  const X = (xm) => (xm + Wf / 2) * sx, Y = (ym) => ym * sy, col = (a) => (Array.isArray(a) ? `rgb(${a[0]},${a[1]},${a[2]})` : `rgb(${a},${a},${a})`);
++  g.fillStyle = col(K.base); g.fillRect(0, 0, CW, CH);
++  if (slots) { const shape = (cx, cy, dy, grow) => { const w = K.sw * sx + 2 * grow, h = K.sh * sy + 2 * grow, r = Math.min(w, h) / 2; g.beginPath(); if (g.roundRect) g.roundRect(cx - w / 2, cy + dy - h / 2, w, h, r); else g.rect(cx - w / 2, cy + dy - h / 2, w, h); g.fill(); };
++    let row = 0; for (let yy = K.py / 2; yy < Hm; yy += K.py, row++) { const off = (row & 1) ? 0 : K.px / 2, n = Math.ceil(Wf / 2 / K.px) + 1;
++      for (let j = -n; j <= n; j++) { const xx = j * K.px + off; if (Math.abs(xx) > Wf / 2 + 0.01) continue; const cx = X(xx), cy = Y(yy);
++        g.fillStyle = col(K.lip); shape(cx, cy, 1.1, 0.25); g.fillStyle = col(K.rim); shape(cx, cy, -0.8, 0.25); g.fillStyle = col(K.well); shape(cx, cy, 0, 0);
++        g.fillStyle = `rgba(0,0,0,${K.wall})`; shape(cx, cy, -0.9, -1.0); } } }
++  // L3's shading (AOT: under the board above 0.55 over 52 px, the sides 0.3 over 22 px, the foot 0.22 over 16 px, the top corners 0.35 in 46 px)
++  const HP = top ? Math.max(128, Math.round(128 * Hm / 0.49)) : 128, ux = W3 / 128, uy = Hm / HP, AX = (p) => X(-W3 / 2 + p * ux), AY = (p) => Y(p * uy);
++  const lin = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); };
++  lin(0, AY(0), 0, AY(52), 0.55); lin(AX(0), 0, AX(22), 0, 0.3); lin(AX(128), 0, AX(106), 0, 0.3); lin(0, AY(HP), 0, AY(HP - 16), 0.22);
++  const cr = (p) => { g.save(); g.setTransform(ux * sx, 0, 0, uy * sy, AX(p), AY(0)); const gr = g.createRadialGradient(0, 0, 0, 0, 0, 46); gr.addColorStop(0, 'rgba(0,0,0,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(-60, 0, 120, 128); g.restore(); }; cr(0); cr(128);
++  const t = new T.CanvasTexture(c); t.anisotropy = 8; return (BGTX[key] = t); };
++// one band of a bay's back (bgBackBand's, for GMV): the plane as BG's (5 cm behind the posts next to a bay), its UVs the part of the middle
++// bay's texture it covers; the material: the light blue × the storey's shade (as L3's bayBackAO / bayBackAOH)
++const GMMAT = {};
++const gmBackBand = (sc, i, top, y0, y1, col, f, v) => { const ext = BGP.ext, eL = sc.k > 0 ? ext : 0, eR = sc.k < sc.nb - 1 ? ext : 0, Wm = sc.L - BGP.planeW, Wf = Wm + 2 * ext, Hm = y1 - y0 - 0.01;
++  const tex = gmBackTex(i === top, sc.L - 0.07, Wf, Hm, v.gm.slots), key = tex.uuid + ':' + f + ':' + col;
++  const mat = GMMAT[key] || (GMMAT[key] = new T.MeshBasicMaterial({ map: tex, color: new T.Color(col).multiplyScalar(f * 255 / GMS.base) }));
++  const geo = new T.PlaneGeometry(Wm + eL + eR, Hm), uv = geo.attributes.uv, u0 = (ext - eL) / Wf, u1 = 1 - (ext - eR) / Wf; for (let k = 0; k < uv.count; k++) uv.setX(k, u0 + uv.getX(k) * (u1 - u0));
++  const m = new T.Mesh(geo, mat); m.position.set((eR - eL) / 2, (y0 + y1) / 2, -sc.D / 2 + 0.045); m.userData.bgBack = i; m.userData.gmBack = true; sc.g.add(m); return m; };
++// <<<< GM BLOCK
+ const regalAll = (S, W, o = {}) => { S.segs.forEach(sg => { sg.g.visible = false; }); const par = PR.group(), M = MT(), A = rgAngles(S), out = { A, par }, BLUE = FO.blue || 0x8fd0f5;
+   const GB = 4, BOARDS = { 0: [0, 1, 2, 3], 1: [0, 1, 2, 3], 2: [0, 1, 2, 3], 3: [0, 1, 2, 3], 4: [0, 1, 2, 3] };   // (IDEA 5: bay 4 gets D's board too, the floor of its tuning parts)   // (bay 4 (v2): A, B, C as the others, no D: open over C; no E board anywhere, as in h)
+   const BT = rgBackTop(), secs = A.a.map((a, k) => { const sc = rgFrame(par, a, A.L, 0.66, RG.TOP, { front: RG.FRONT, backTop: BT }); BOARDS[k].forEach(lv => rgBoard(sc, RG.LV[lv]));
+@@ -1272,8 +1328,9 @@
+     return sc; }); out.secs = secs;
+   // A: the tyre sets (X0: bay 4's the Gorska set, TSETS[4], the end section's); B and C: the exhausts (bays 0..2) and the rims (bays 3 and 4;
+   // X0: bay 4's the end section's two kinds); the spoilers on top
+-  out.tyres = secs.map((sc, i) => { const g = new T.Group(); g.position.set(0, RG.LV[0] + 0.018, 0.04); sc.g.add(g); tyreSet(g, i, 'row'); g.scale.setScalar(l3TyreScale(i)); g.userData.tyreScale = l3TyreScale(i); g.userData.si = i; g.userData.r = TSETS[i][3]; g.userData.kind = TSETS[i][2];   // (X0: bay 4 (GB) as the others: TSETS[4] Gorska, was B4.tyre)
+-    shadowB(g, 1.22, 0.66, 0.1, 0.26, -sc.D / 2 + 0.01, 0.8, false); shadowB(g, 1.18, 0.42, 0.05, 0.003, -0.04, 0.85, true); return g; });
++  out.tyres = secs.map((sc, i) => { if (gmGone(i)) return null;   // (GM: the two tyre sets the car covers most are gone (GMG): their places stay empty)
++    const g = new T.Group(); g.position.set(0, RG.LV[0] + 0.018, 0.04); sc.g.add(g); tyreSet(g, i, 'row'); g.scale.setScalar(l3TyreScale(i)); g.userData.tyreScale = l3TyreScale(i); g.userData.si = i; g.userData.r = TSETS[i][3]; g.userData.kind = TSETS[i][2];   // (X0: bay 4 (GB) as the others: TSETS[4] Gorska, was B4.tyre)
++    shadowB(g, 1.22, 0.66, 0.1, 0.26, -sc.D / 2 + 0.01, 0.8, false); shadowB(g, 1.18, 0.42, 0.05, 0.003, -0.04, 0.85, true); return g; }).filter(Boolean);   // (GM: only the sets that stay; each its bay in userData.si)
+   out.exh = []; out.rims = [];
+   [1, 2].forEach((lv, li) => { [0, 1, 2].forEach((si, j) => { const g = new T.Group(); g.position.set(0, RG.LV[lv] + 0.018, 0); secs[si].g.add(g); out.exh.push({ si, sec: secs[si], lv, g, e: exhOnStands(g, M, li * 3 + j, secs[si]) }); });
+     const g = new T.Group(); g.position.set(0, RG.LV[lv] + 0.018, 0); secs[3].g.add(g); out.rims.push({ si: 3, sec: secs[3], lv, g, ps: rimsOn2(g, RIM4[li * 2], secs[3]), nm: RIM4[li * 2].nm });
+@@ -1296,6 +1353,7 @@
+   out.bg = { v: RG.BG, nm: bgVer() ? bgVer().oz + ' · ' + bgVer().st : null, posts: secs[0].posts.style, frontUp: BGP.frontUp };
+   bgShadows(out);   // (BG: the soft shadows in the version's shadow colour (BGV sh))
+   pbExtras(out);   // (PB: the version's extras: P4 the painted outlines behind the parts, P6 the hooks (PBV, the PB block))
++  out.gm = { v: RG.GM || null, nm: RG.GM && GMV[RG.GM] ? GMV[RG.GM].oz : null, gone: RG.GM ? GMG.map(i => ({ bay: i, kind: TSETS[i][0] })) : [], tyres: out.tyres.map(g => TSETS[g.userData.si][0]) };   // (GM)
+   return out; };
+ // ---- a sign board standing on a bay's top board BEHIND its spoiler (h's signOn, kept for the proposals): 5 cm and more off the spoiler's
+ //      back (S.dz more), on two legs outside the spoiler's width, its lower edge 1.2 cm over the wing (or S.y0); S: { w, h, x, dz, y0, tex

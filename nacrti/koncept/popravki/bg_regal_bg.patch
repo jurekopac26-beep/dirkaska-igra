@@ -1,0 +1,225 @@
+--- _e_store2_l3.js	2026-10-23 23:34:41.539474692 +0000
++++ _e_store2_bg.js	2026-10-26 03:15:19.391055246 +0000
+@@ -1,3 +1,4 @@
++// ==== BG (my copy of concepts/_e_store2_l3.js, agent L3's store; my changes are marked "BG:" and my block ">>>> BG BLOCK" before regalAll)
+ // ==== L3 (my copy of concepts/_e_store2_r.js, agent R's store; my changes are marked "L3:" and my block ">>>> L3 BLOCK" before regalAll)
+ // ==== W (my copy of concepts/_e_store2_vf.js, the merged store of the last round; my changes are marked "W:"): the user: "Sedaj je
+ //      zgornja polica previsoka. Naredi, da bo malo nižja. Elementi v zgornji polici naj ne prekrivajo desnega ali levega dela pregrade.
+@@ -195,6 +196,7 @@
+ const RG = { R: 4.75, LV: [0.06, 0.705, 1.35, 1.995, 2.64], FRONT: 2.0125, H: 0.645, ET: null, TOP: 2.66,   // (L3: EVERY STOREY 0.645 m from board to board (H): A 0.06, B 0.705, C 1.35, D 1.995, the top board's middle 2.64 (LV[4]; RG.TOP 2.66 as R's), the lit panels' level 2.66-3.30; were A 0.10, B 0.81, C 1.35, D 1.89, the top 2.66: 0.71, 0.54, 0.54, 0.77; FRONT D's top face)
+     // (R: the top board 2.66 m, was 2.90 (W) and 3.31: the upper storey's free height 0.68 m to the top's lip, 0.715 m to its underside, as the storeys below (0.54-0.71 m))
+   WL: null,   // (R: the spoilers' light: null as today, 'L1'..'L6' the six versions (wingLight, after regalAll's R block))
++  BG: null,   // (BG: the regal's background and posts: null the light-blue back and the navy perforated posts, 1..6 the six versions (BGV, the BG block))
+   WZ: 0.1, WSC: [1.0, 1.1, 1.05, 1.05, 1.0] };   // (WZ: the spoilers 0.1 m nearer the
+ // top's front edge (the gripper's fingers' root stays in front of the top board when the jaws close on a spoiler's stand); WSC: the wings'
+ // sizes on the top (1.1 to 1.45 m, a car's width, each clear of its neighbours at rest and on its way out))
+@@ -217,10 +219,11 @@
+ // front ones o.front high: in F only the back posts go on up), the top board and its lip (sc.topM), the back panel
+ const rgFrame = (par, a, L, D, top, o = {}) => { const M = RGM(), g = new T.Group(); g.position.copy(rgAt(a, D / 2 - 0.33)); g.rotation.y = 0.3 - a; par.add(g);
+   const fr = new T.Group(); g.add(fr);
+-  for (const x of [-L / 2, L / 2]) for (const z of [-D / 2 + 0.03, D / 2 - 0.03]) { const h = z > 0 && o.front ? (o.frontAt ? o.frontAt(x) : o.front) : top; bx(fr, 0.06, h, 0.05, x, h / 2, z, M.UP); if (z > 0) for (let y = 0.15; y < h - 0.1; y += 0.12) bx(fr, 0.02, 0.05, 0.052, x, y, z + 0.001, M.HOLE); }
++  const pSpec = []; for (const x of [-L / 2, L / 2]) for (const z of [-D / 2 + 0.03, D / 2 - 0.03]) { const h = z > 0 && o.front && !BGP.frontUp ? (o.frontAt ? o.frontAt(x) : o.front) : top; pSpec.push({ x, z, h, front: z > 0 }); }   // (BG: the front posts up to the top board as the back ones (BGP.frontUp): storey D has its front posts, at every bay boundary and at both ends)
++  const posts = bgPostsBuild(fr, pSpec, M);   // (BG: the four posts in the version's style (RG.BG; null: today's navy perforated ones), merged: one mesh a material)
+   const tb = bx(fr, L + 0.06, 0.035, D, 0, top - 0.02, 0, M.BD), tl = bx(fr, L + 0.06, 0.05, 0.03, 0, top - 0.05, D / 2, M.UP);   // (the lip hangs under the board's front edge: a level tool takes a spoiler's stand over it)
+   const bh = o.backTop || top; bx(fr, L, bh, 0.02, 0, bh / 2, -D / 2, o.back || M.BK);
+-  const q = new T.Quaternion().setFromEuler(new T.Euler(0, 0.3 - a, 0)), sc = { g, frame: fr, L, D, top, a, q, M, topM: [tb, tl] };
++  const q = new T.Quaternion().setFromEuler(new T.Euler(0, 0.3 - a, 0)), sc = { g, frame: fr, L, D, top, a, q, M, topM: [tb, tl], posts };   // (BG: posts: { style, list, meshes })
+   sc.at = (x, y, z) => g.localToWorld(V(x, y, z)); sc.out = V(0, 0, 1).applyQuaternion(q); sc.along = V(1, 0, 0).applyQuaternion(q); g.updateMatrixWorld(true); return sc; };
+ // a board across a section at y (from z0 to z1), its lip at the front (navy, as every lip of the regal)
+ const rgBoard = (sc, y, m, z0 = -sc.D / 2, z1 = sc.D / 2) => { bx(sc.frame, sc.L + 0.06, 0.035, z1 - z0, 0, y, (z0 + z1) / 2, sc.M.BD); bx(sc.frame, sc.L + 0.06, 0.05, 0.03, 0, y - 0.01, z1, m || sc.M.UP); };
+@@ -463,7 +466,8 @@
+ // plate, part }] }; every place is under its bay's group (st.regal.par: the arm checks see it)
+ const u5Shelf = (secs) => { const M = U5M(), y0 = RG.LV[3] + 0.0175, out = { places: [] };
+   U5K.forEach(([bi, s, nm, key], k) => { const sc = secs[bi], [x, pw, ps] = U5W[key], pd = U5.pd, g = new T.Group(); g.position.set(x, y0, U5.pz); sc.g.add(g);   // (W: U5W)
+-    if (L3U5.on) { const [lx, lz, ls] = L3U5.w[key], part = U5P[key](M); g.position.set(lx, y0, lz); part.scale.setScalar(ls); g.add(part); out.places.push({ k, nm, bay: bi, g, plinth: null, plate: null, part }); return; }   // (L3: NO PLINTH, NO PLATE: the part on D's board itself, bigger (L3U5))
++    if (L3U5.on) { const [lx, lz, ls] = (BGU5.w || L3U5.w)[key], part = U5P[key](M);   // (BG: the places with storey D's front posts (BGU5))
++      g.position.set(lx, y0, lz); part.scale.setScalar(ls); g.add(part); out.places.push({ k, nm, bay: bi, g, plinth: null, plate: null, part }); return; }   // (L3: NO PLINTH, NO PLATE: the part on D's board itself, bigger (L3U5))
+     const plinth = zbx(g, pw, U5.ph, pd, 0, U5.ph / 2, 0, M.NAVY); zbx(g, pw + 0.01, 0.012, pd + 0.01, 0, U5.ph + 0.006, 0, M.LT);
+     const ph = U5.plate, plate = new T.Mesh(new T.BoxGeometry(pw - 0.03, ph, 0.006), u5PlateMats(nm, (pw - 0.03) / ph));
+     plate.position.set(0, U5.ph / 2 - 0.01, pd / 2 + 0.003); g.add(plate);
+@@ -787,13 +791,172 @@
+ // grow alike, at most 1.4 ×): [x, z, scale]; bays 0 1.32 ×, 1 1.37 ×, 2 1.17 ×, 3 1.18 ×, 4 1.25 × their size on the plinths)
+ L3U5.w = {"filter":[-0.505,0.035,1.37],"chip":[0.21,0.035,1.37],"turbo":[-0.31,0.017,1.42],"batt":[0.375,0.035,1.42],"springs":[-0.385,0.035,1.12],"dampers":[0.18,0.035,1.09],"arb":[-0.245,0.035,1.056],"pads":[0.38,0.035,1.23],"horn":[-0.23,0.035,1.3],"smoke":[0.46,0.035,1.3]};
+ // <<<< L3 BLOCK
++// >>>> BG BLOCK (agent BG)
++// ==== BG: NO LIT PANELS ON THE TOP, FRONT POSTS ON THE 4TH STOREY, SIX VERSIONS OF THE REGAL'S BACKGROUND AND POSTS (agent BG; the user,
++//      after L3's six versions: "Zbriši plošče v zgornjem regalu, naredi 6 različnih ozadij, naredi, da je med ECU CHIP in TURBO ter na
++//      celotnem 4. regalu podporna palica, tako kot je v prvih 3 regalih, naredi različne podporne palice za vse regale v teh 6
++//      verzijah"). The rest of BG, marked "BG:" where it is: RG.BG (the version), rgFrame (the posts: bgPostsBuild; the front ones go up
++//      to the top board as the back ones: storey D has its front posts at every bay boundary and at both ends, as the storeys below),
++//      regalAll (the back's bands: bgBackBand; no l3Panels: only the garage's wall behind the spoilers), u5Shelf (the parts' places: BGU5)
++//      THE SIX VERSIONS (RG.BG 1..6; null: the light-blue back and the navy perforated posts as before, with storey D's front posts):
++//   1 light-grey perforated metal (a workshop pegboard: 4 cm holes' grid) + the navy perforated uprights (today's posts)
++//   2 a dark navy slat wall (7.6 cm slats, their top edges catching the light), lit from above (a light pool under each board) + round chrome tubes
++//   3 a glossy cool-white back (a faint sheen), a thin cyan LED line on each board's front edge (its lip's lower edge) and a cyan glow on
++//     the wall under it + slim graphite square tubes (4 × 4 cm)
++//   4 satin aluminium diamond plate (brushed, the raised lozenges lit from above) + aluminium T-slot profiles (5 × 5 cm, a dark slot a face)
++//   5 a gradient: the game's light blue at each board fading to navy under the next + black powder-coated posts with a yellow line
++//   6 warm light plywood (its grain, a darker edge) + white square posts (5 × 5 cm)
++//   (f: a version's own shading of the storeys from A up (the game's light blue: 0.78, 0.86, 0.94, 0.98); led: the cyan LED lines on the
++//   boards' front edges; sh: the soft shadows' colour on this back (the game's are navy, made for the light blue; null: as they are))
++//   Every back is drawn in its band's metres on one 1024 × 512 canvas a version (the shading of the game's AOT baked in: dark under the board
++//   above, at the sides and the foot), shown unlit (MeshBasic, as the light-blue one): the regal's light and the room's do not change. Every
++//   post style stays inside today's post (0.06 × 0.05 m about the same axis): the parts' places clear of today's posts clear every style. The
++//   posts are merged: one mesh a material a bay (today: 34 meshes a bay; with storey D's front posts 46) ----
++const BGP = { frontUp: true,   // (the front posts up to the top board; false: as before, up to D's board)
++  W: 0.06, D: 0.05, planeW: 0.01, ext: 0.05 };   // (W, D: the posts' envelope (today's post); planeW: a version's back band is sc.L - planeW wide (to the posts' axes; today's sc.L - 0.07), ext more at each side next to a bay)
++const BGV = {
++  1: { oz: 'Svetlo siva perforirana plošča', st: 'temno modri perforirani stebri', back: 'peg', posts: 'navy', sh: [20, 22, 26] },
++  2: { oz: 'Temno modra stena z letvami, osvetljena od zgoraj', st: 'okrogle kromirane cevi', back: 'slat', posts: 'chrome', f: [0.94, 0.96, 0.98, 1.0] },
++  3: { oz: 'Sijoče bela stena s cian LED črtami', st: 'tanke grafitne kvadratne cevi', back: 'white', posts: 'graphite', led: true, sh: [24, 30, 38] },
++  4: { oz: 'Brušena aluminijasta rebrasta pločevina', st: 'aluminijasti profili z utori', back: 'diamond', posts: 'tslot', sh: [20, 22, 26] },
++  5: { oz: 'Preliv od svetlo modre do temno modre', st: 'črni stebri z rumeno črto', back: 'grad', posts: 'black' },
++  6: { oz: 'Svetla topla vezana plošča', st: 'beli kvadratni stebri', back: 'ply', posts: 'white', sh: [46, 30, 14] } };
++// many boxes / cylinders in one geometry: [{ g, m }] (a geometry, its placing matrix) -> one BufferGeometry (position, normal, uv, index)
++const bgMerge = (list) => { let nv = 0, ni = 0; list.forEach(({ g }) => { nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; });
++  const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = new Float32Array(nv * 2), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni), v = V(), nm = new T.Matrix3(); let ov = 0, oi = 0;
++  list.forEach(({ g, m }) => { nm.getNormalMatrix(m); const p = g.attributes.position, n = g.attributes.normal, u = g.attributes.uv;
++    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(m); P[(ov + i) * 3] = v.x; P[(ov + i) * 3 + 1] = v.y; P[(ov + i) * 3 + 2] = v.z;
++      v.fromBufferAttribute(n, i).applyMatrix3(nm).normalize(); N[(ov + i) * 3] = v.x; N[(ov + i) * 3 + 1] = v.y; N[(ov + i) * 3 + 2] = v.z; if (u) { U[(ov + i) * 2] = u.getX(i); U[(ov + i) * 2 + 1] = u.getY(i); } }
++    if (g.index) for (let i = 0; i < g.index.count; i++) I[oi++] = g.index.getX(i) + ov; else for (let i = 0; i < p.count; i++) I[oi++] = i + ov;
++    ov += p.count; g.dispose(); });
++  const out = new T.BufferGeometry(); out.setAttribute('position', new T.BufferAttribute(P, 3)); out.setAttribute('normal', new T.BufferAttribute(N, 3)); out.setAttribute('uv', new T.BufferAttribute(U, 2));
++  out.setIndex(new T.BufferAttribute(I, 1)); out.computeBoundingBox(); out.computeBoundingSphere(); return out; };
++const bgB = (w, h, d, x, y, z) => ({ g: new T.BoxGeometry(w, h, d), m: new T.Matrix4().makeTranslation(x, y, z) });
++const bgC = (r, h, x, y, z, seg = 20) => ({ g: new T.CylinderGeometry(r, r, h, seg), m: new T.Matrix4().makeTranslation(x, y, z) });
++// the boards' levels a post crosses (A..D and the top board's middle): the tubes' collars
++const bgLevels = () => RG.LV.slice(0, 4).concat([RG.TOP - 0.02]);
++// the T-slot profile's face: satin aluminium, a dark slot down the middle (its lips lit), the corners' bevels (u across a face, v along the post)
++let BGTSLOT = null;
++const bgTslotTex = () => { if (BGTSLOT) return BGTSLOT; const c = document.createElement('canvas'); c.width = 64; c.height = 8; const g = c.getContext('2d');
++  const gr = g.createLinearGradient(0, 0, 64, 0); gr.addColorStop(0, '#8e959d'); gr.addColorStop(0.07, '#d3d8dd'); gr.addColorStop(0.3, '#c9ced4'); gr.addColorStop(0.7, '#c4c9cf'); gr.addColorStop(0.93, '#bfc4ca'); gr.addColorStop(1, '#7e858d');
++  g.fillStyle = gr; g.fillRect(0, 0, 64, 8); g.fillStyle = '#e6eaee'; g.fillRect(22, 0, 2, 8); g.fillStyle = '#2b3036'; g.fillRect(24, 0, 16, 8); g.fillStyle = '#5a6068'; g.fillRect(40, 0, 2, 8);
++  const t = new T.CanvasTexture(c); t.anisotropy = 4; return (BGTSLOT = t); };
++// the post styles: w × d (inside BGP's envelope), the parts of a post (k: the material's key), the materials
++const BGPS = {
++  navy: { w: 0.06, d: 0.05, nm: 'temno modri perforirani (kot danes)',
++    build: (p, add) => { add('post', bgB(0.06, p.h, 0.05, p.x, p.h / 2, p.z)); if (p.front) for (let y = 0.15; y < p.h - 0.1; y += 0.12) add('hole', bgB(0.02, 0.05, 0.052, p.x, y, p.z + 0.001)); },
++    mat: (k, M) => (k === 'post' ? M.UP : M.HOLE) },
++  chrome: { w: 0.048, d: 0.048, nm: 'okrogle kromirane cevi (premer 4,8 cm)',
++    build: (p, add) => { add('tube', bgC(0.024, p.h, p.x, p.h / 2, p.z, 16)); add('tube', bgC(0.029, 0.016, p.x, 0.008, p.z, 12));   // (16 sides a tube, 12 a collar: round enough at this size)
++      bgLevels().forEach(y => { if (y < p.h + 0.01) add('tube', bgC(0.0285, 0.05, p.x, Math.min(y, p.h - 0.025), p.z, 12)); }); },
++    mat: () => exhMetMat('chrome', T.FrontSide) },   // (EXH's polished chrome: the lit garage's reflection over its colour, a small highlight)
++  graphite: { w: 0.04, d: 0.04, nm: 'tanke grafitne kvadratne cevi (4 × 4 cm)',
++    build: (p, add) => { add('post', bgB(0.04, p.h, 0.04, p.x, p.h / 2, p.z)); },
++    mat: (k) => (k === 'led' ? new T.MeshBasicMaterial({ color: new T.Color(0.30, 0.90, 1.0) }) : PR.mat(0x3a3e46, { shininess: 55, specular: 0x3c3c3c })) },
++  tslot: { w: 0.05, d: 0.05, nm: 'aluminijasti profili z utori (5 × 5 cm)',
++    build: (p, add) => { add('post', bgB(0.05, p.h, 0.05, p.x, p.h / 2, p.z)); },
++    mat: () => PR.mat(0xffffff, { map: bgTslotTex(), shininess: 45, specular: 0x4a4a4a }) },
++  black: { w: 0.06, d: 0.05, nm: 'črni stebri z rumeno črto',
++    build: (p, add) => { add('post', bgB(0.06, p.h, 0.05, p.x, p.h / 2, p.z)); add('line', bgB(0.014, p.h - 0.06, 0.002, p.x, p.h / 2, p.z + 0.0255)); },
++    mat: (k) => (k === 'post' ? PR.mat(0x1c1e22, { shininess: 22, specular: 0x262626 }) : PR.lam(0xf6c21c, { emissive: 0x2a1e00 })) },
++  white: { w: 0.05, d: 0.05, nm: 'beli kvadratni stebri (5 × 5 cm)',
++    build: (p, add) => { add('post', bgB(0.05, p.h, 0.05, p.x, p.h / 2, p.z)); },
++    mat: () => PR.lam(0xdde1e5) } };
++// a bay's four posts (specs: { x, z, h, front } in the bay's frame) in the version's style, merged; returns { style, list, meshes }
++const bgPostsBuild = (fr, specs, M) => { const v = BGV[RG.BG], key = v ? v.posts : 'navy', S = BGPS[key], parts = {}, order = [];
++  const add = (k, it) => { if (!parts[k]) { parts[k] = []; order.push(k); } parts[k].push(it); }; specs.forEach(p => S.build(p, add));
++  if (v && v.led) { const L = specs[3].x - specs[0].x, z = specs[1].z + 0.03 + 0.0162; RG.LV.slice(0, 4).map(y => y - 0.01).concat([RG.TOP - 0.05]).forEach(yc => add('led', bgB(L - 0.07, 0.007, 0.002, 0, yc - 0.021, z))); }   // (the LED lines: on each board's lip, its lower edge)
++  const meshes = order.map(k => { const m = new T.Mesh(bgMerge(parts[k]), S.mat(k, M)); m.userData.bgPost = k; fr.add(m); return m; });
++  return { style: key, list: specs.map(p => Object.assign({ w: S.w, d: S.d, W: BGP.W, D: BGP.D }, p)), meshes }; };
++// ---- the backs: each drawn on a canvas in its band's metres (W × H m), then the game's back shading over it (AOT's: under the board above,
++//      the sides, the foot, the top corners) ----
++const BGTX = {};
++const bgRand = (s) => () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
++const bgBackTex = (kind, Wm, Hm) => { const key = kind + ':' + Wm.toFixed(3) + ':' + Hm.toFixed(3); if (BGTX[key]) return BGTX[key];
++  const CW = 1024, CH = 512, c = document.createElement('canvas'); c.width = CW; c.height = CH; const g = c.getContext('2d'), sx = CW / Wm, sy = CH / Hm, R = bgRand(7 + kind.length * 131);
++  const X = (m) => m * sx, Y = (m) => m * sy;   // (metres from the band's left / top edge to canvas px)
++  const lin = (y0, y1, stops) => { const gr = g.createLinearGradient(0, Y(y0), 0, Y(y1)); stops.forEach(([t, col]) => gr.addColorStop(t, col)); return gr; };
++  let ao = { top: 0.55, topH: 0.20, side: 0.30, sideW: 0.28, foot: 0.22, footH: 0.06, corner: 0.35 };
++  if (kind === 'peg') {   // a light-grey pegboard: holes on a 4 cm grid (1 cm across), each a dark well with a lit lower lip
++    g.fillStyle = '#d0d4d9'; g.fillRect(0, 0, CW, CH);
++    for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(${R() < 0.5 ? '255,255,255' : '0,0,0'},0.025)`; g.fillRect(0, Y(R() * Hm), CW, Y(0.004 + R() * 0.01)); }
++    const p = 0.04, r = 0.0052; for (let yy = p / 2; yy < Hm; yy += p) for (let xx = p / 2 - ((Wm / 2) % p); xx < Wm; xx += p) { if (xx < 0) continue;
++      g.fillStyle = '#eef1f4'; g.beginPath(); g.ellipse(X(xx), Y(yy) + 1.2, X(r), Y(r), 0, 0, 7); g.fill();
++      g.fillStyle = '#3b4148'; g.beginPath(); g.ellipse(X(xx), Y(yy), X(r), Y(r), 0, 0, 7); g.fill(); }
++  } else if (kind === 'slat') {   // a dark navy slat wall: 7.6 cm slats, the groove under each dark, the slat's top edge catching the light; a light pool from above
++    ao = { top: 0.30, topH: 0.04, side: 0.30, sideW: 0.28, foot: 0.25, footH: 0.08, corner: 0.25 };
++    g.fillStyle = lin(0, Hm, [[0, '#4165b8'], [0.35, '#2e4a90'], [1, '#22376f']]); g.fillRect(0, 0, CW, CH);
++    const p = 0.076; for (let yy = 0.028; yy < Hm; yy += p) { g.fillStyle = 'rgba(6,10,24,0.85)'; g.fillRect(0, Y(yy), CW, Y(0.011));
++      g.fillStyle = 'rgba(0,0,0,0.30)'; g.fillRect(0, Y(yy + 0.011), CW, Y(0.006)); g.fillStyle = 'rgba(150,185,255,0.40)'; g.fillRect(0, Y(yy - 0.004), CW, Y(0.004)); }
++    const pool = g.createRadialGradient(CW / 2, -Y(0.25), 0, CW / 2, -Y(0.25), X(1.2)); pool.addColorStop(0, 'rgba(120,160,255,0.22)'); pool.addColorStop(1, 'rgba(120,160,255,0)'); g.fillStyle = pool; g.fillRect(0, 0, CW, CH);
++  } else if (kind === 'white') {   // a glossy cool white: a faint diagonal sheen; under the board above a thin cyan LED line and its glow
++    ao = { top: 0.0, topH: 0.20, side: 0.20, sideW: 0.28, foot: 0.16, footH: 0.06, corner: 0.18 };
++    g.fillStyle = '#dce3ea'; g.fillRect(0, 0, CW, CH);
++    g.save(); g.transform(1, 0, -0.55, 1, 0, 0); [[0.25, 0.10, 0.06], [0.62, 0.22, 0.05], [1.15, 0.12, 0.05], [1.55, 0.3, 0.04]].forEach(([x0, w, a]) => { const gr = g.createLinearGradient(X(x0), 0, X(x0 + w), 0);
++      gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, `rgba(255,255,255,${a * 2.2})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(X(x0), 0, X(w), CH * 2); }); g.restore();
++    g.fillStyle = lin(0, 0.30, [[0, 'rgba(70,215,245,0.50)'], [0.3, 'rgba(70,215,245,0.20)'], [1, 'rgba(70,215,245,0)']]); g.fillRect(0, 0, CW, Y(0.30));
++    g.fillStyle = 'rgba(10,20,30,0.30)'; g.fillRect(0, 0, CW, Y(0.004)); g.fillStyle = '#2fd8f4'; g.fillRect(0, Y(0.004), CW, Y(0.009)); g.fillStyle = 'rgba(190,250,255,0.85)'; g.fillRect(0, Y(0.006), CW, Y(0.004));
++  } else if (kind === 'diamond') {   // satin aluminium diamond plate: brushed streaks, the raised lozenges (two ways, staggered) lit from above
++    ao = { top: 0.45, topH: 0.20, side: 0.28, sideW: 0.28, foot: 0.22, footH: 0.06, corner: 0.30 };
++    g.fillStyle = '#a6adb5'; g.fillRect(0, 0, CW, CH);
++    for (let i = 0; i < 900; i++) { const l = R() < 0.5; g.fillStyle = `rgba(${l ? '255,255,255' : '0,0,0'},${0.03 + R() * 0.05})`; g.fillRect(X(R() * Wm) - X(0.4), Y(R() * Hm), X(0.2 + R() * 0.8), 1); }
++    const p = 0.034, a = 0.0145, b = 0.0042; let row = 0;
++    for (let yy = p / 4; yy < Hm + p; yy += p / 2, row++) for (let xx = (row % 2) * p / 2; xx < Wm + p; xx += p) { const ang = ((Math.round(xx / p * 2) + row) % 2 ? 1 : -1) * Math.PI / 4;
++      const L = (dx, dy, col) => { g.fillStyle = col; g.beginPath(); g.ellipse(X(xx) + dx, Y(yy) + dy, X(a), Y(b), ang, 0, 7); g.fill(); };
++      L(1.6, 2.0, 'rgba(50,55,62,0.70)'); L(-0.9, -1.2, 'rgba(240,244,248,0.90)'); L(0, 0, '#c0c6cd'); }
++  } else if (kind === 'grad') {   // the game's light blue at the board (the band's foot) fading to navy under the board above
++    ao = { top: 0.25, topH: 0.10, side: 0.22, sideW: 0.28, foot: 0.10, footH: 0.05, corner: 0.20 };
++    g.fillStyle = lin(0, Hm, [[0, '#1b2b5c'], [0.30, '#223b80'], [0.62, '#5596d4'], [0.88, '#8bcdf2'], [1, '#95d5f7']]); g.fillRect(0, 0, CW, CH);
++  } else if (kind === 'ply') {   // warm light plywood: the grain (long wavy lines, darker and lighter streaks), a knot or two, a darker edge
++    ao = { top: 0.42, topH: 0.20, side: 0.26, sideW: 0.28, foot: 0.20, footH: 0.06, corner: 0.28 };
++    g.fillStyle = '#d6b88c'; g.fillRect(0, 0, CW, CH);
++    for (let i = 0; i < 26; i++) { const y = R() * Hm, h = 0.01 + R() * 0.05; g.fillStyle = `rgba(${R() < 0.5 ? '255,236,200' : '150,105,55'},${0.07 + R() * 0.1})`; g.fillRect(0, Y(y), CW, Y(h)); }
++    for (let i = 0; i < 150; i++) { const y0 = R() * Hm, amp = 0.002 + R() * 0.012, f = 1 + R() * 3, ph = R() * 6; g.strokeStyle = `rgba(${R() < 0.7 ? '120,80,40' : '250,230,190'},${0.10 + R() * 0.22})`; g.lineWidth = 0.6 + R() * 1.4;
++      g.beginPath(); for (let xx = 0; xx <= Wm + 0.01; xx += 0.02) { const yy = y0 + amp * Math.sin(xx * f * 2 + ph) + amp * 0.5 * Math.sin(xx * f * 5.3 + ph * 2); xx ? g.lineTo(X(xx), Y(yy)) : g.moveTo(X(xx), Y(yy)); } g.stroke(); }
++    for (let i = 0; i < 2; i++) { const x = 0.2 + R() * (Wm - 0.4), y = 0.12 + R() * (Hm - 0.24); g.fillStyle = 'rgba(120,78,36,0.35)'; g.beginPath(); g.ellipse(X(x), Y(y), X(0.022), Y(0.009), 0, 0, 7); g.fill();
++      g.strokeStyle = 'rgba(120,78,36,0.25)'; g.lineWidth = 1; g.beginPath(); g.ellipse(X(x), Y(y), X(0.045), Y(0.018), 0, 0, 7); g.stroke(); }
++  }
++  // the shading (the game's AOT in metres: under the board above, the sides, the foot, the top corners)
++  const band = (x0, y0, x1, y1, a) => { if (!a) return; const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); };
++  band(0, 0, 0, Y(ao.topH), ao.top); band(0, 0, X(ao.sideW), 0, ao.side); band(CW, 0, CW - X(ao.sideW), 0, ao.side); band(0, CH, 0, CH - Y(ao.footH), ao.foot);
++  const cr = (x) => { const gr = g.createRadialGradient(x, 0, 0, x, 0, X(0.6)); gr.addColorStop(0, `rgba(0,0,0,${ao.corner})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); }; cr(0); cr(CW);
++  const t = new T.CanvasTexture(c); t.anisotropy = 8; return (BGTX[key] = t); };
++// one band of a bay's back (i the storey from A, top the last one's index): the version's back (RG.BG), or as before (the light blue)
++const bgBackBand = (sc, i, top, y0, y1, col, f) => { const v = BGV[RG.BG]; if (v && v.f) f = v.f[Math.min(i, 3)]; if (!v) { const m = (i === top ? bayBackAOH : bayBackAO)(sc, y0, y1, col, f); m.userData.bgBack = i; return m; }
++  // (the band runs on BGP.ext behind the posts between two bays (there the bays' backs part round the ring: the gap between them closed; the
++  //  regal's two ends not); one texture a version, the wider bands' pattern stretched by under 6 %)
++  const eL = sc.k > 0 ? BGP.ext : 0, eR = sc.k < sc.nb - 1 ? BGP.ext : 0, Wm = sc.L - BGP.planeW, Hm = y1 - y0 - 0.01, key = v.back + ':' + f;
++  const mat = BGMAT[key] || (BGMAT[key] = new T.MeshBasicMaterial({ map: bgBackTex(v.back, Wm, 0.605), color: new T.Color(f, f, f) })), m = new T.Mesh(new T.PlaneGeometry(Wm + eL + eR, Hm), mat);
++  m.position.set((eR - eL) / 2, (y0 + y1) / 2, -sc.D / 2 + 0.045); m.userData.bgBack = i; sc.g.add(m); return m; };
++const BGMAT = {};
++// the tuning parts' places with storey D's front posts (BGU5.w: [x, z, scale] a part; null: L3's (L3U5.w)); from the optimiser (../bg
++// _bg_frames.js bgOpt), appended below
++const BGU5 = { w: null };
++// the soft shadows (the game's shadowB / shadowR decals: navy, made for the light-blue back; L3's stand shadows) in the version's own shadow
++// colour (BGV sh: a neutral grey on the grey and the white backs, a warm brown on the plywood): the same shapes and the same opacity
++const BGSH = {};
++const bgShTex = (kind, c) => { const key = kind + c.join(','); if (BGSH[key]) return BGSH[key]; const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), rgb = c.join(',');
++  if (kind === 'R') { const gr = g.createRadialGradient(32, 32, 4, 32, 32, 31); gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.55, `rgba(${rgb},0.75)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
++  else { g.filter = 'blur(7px)'; g.fillStyle = `rgb(${rgb})`; g.fillRect(14, 14, 36, 36); }
++  return (BGSH[key] = new T.CanvasTexture(cv)); };
++const bgShadows = (out) => { const v = BGV[RG.BG]; if (!v || !v.sh) return 0; const t0 = SHT(), r0 = SHR(), n = { box: 0, round: 0, stands: 0 };
++  out.par.traverse(m => { if (!m.isMesh || !m.material) return; const M = m.material;
++    if (M.map === t0 || M.map === r0) { const R = M.map === r0, c = M.clone(); c.map = bgShTex(R ? 'R' : 'B', v.sh); m.material = c; n[R ? 'round' : 'box']++; }
++    else if (M.uniforms && M.uniforms.uTint && m.userData.l3Shadow) { M.uniforms.uTint.value.setRGB(v.sh[0] / 255 * 0.55, v.sh[1] / 255 * 0.55, v.sh[2] / 255 * 0.55); n.stands++; } });
++  return (out.bgShadows = n); };
++// (BG: the parts' places with storey D's front posts, from the optimiser (../bg _bg_frames.js bgOpt: the outlines >= 3 px off every post's
++// envelope and the lift's column in the first view, >= 4 px between the two parts of a bay, >= 5 cm off every post in 3D, >= 6 cm under
++// the top board, each at most its size in L3, as big on the screen as it can): [x, z, scale]; their outlines' area on the screen against
++// L3's places: bay 0 0.89/0.89, 1 0.99/1.01, 2 1.03/1.01, 3 1.01/1.01, 4 0.88/0.89)
++BGU5.w = {"filter": [-0.38, 0, 1.3], "chip": [0.23, 0.07, 1.29], "turbo": [-0.255, 0.017, 1.42], "batt": [0.375, 0.105, 1.42], "springs": [-0.385, 0.07, 1.12], "dampers": [0.175, 0.105, 1.09], "arb": [-0.245, 0.105, 1.056], "pads": [0.35, 0.105, 1.23], "horn": [-0.305, -0.035, 1.23], "smoke": [0.33, 0, 1.24]};
++// <<<< BG BLOCK
+ const regalAll = (S, W, o = {}) => { S.segs.forEach(sg => { sg.g.visible = false; }); const par = PR.group(), M = MT(), A = rgAngles(S), out = { A, par }, BLUE = FO.blue || 0x8fd0f5;
+   const GB = 4, BOARDS = { 0: [0, 1, 2, 3], 1: [0, 1, 2, 3], 2: [0, 1, 2, 3], 3: [0, 1, 2, 3], 4: [0, 1, 2, 3] };   // (IDEA 5: bay 4 gets D's board too, the floor of its tuning parts)   // (bay 4 (v2): A, B, C as the others, no D: open over C; no E board anywhere, as in h)
+   const BT = rgBackTop(), secs = A.a.map((a, k) => { const sc = rgFrame(par, a, A.L, 0.66, RG.TOP, { front: RG.FRONT, backTop: BT }); BOARDS[k].forEach(lv => rgBoard(sc, RG.LV[lv]));
+     // (v3) the back's bands: one a storey under each board, the game's light blue a little darker the lower it is (as before), and over the
+     // last board (D's; bay 4's C) one band up to the back's top in the same light blue, shaded as the storeys (bayBackAOH): no pale band
+     const ys = BOARDS[k].map(lv => RG.LV[lv]).concat([BT + 0.01]), ao = [0.78, 0.86, 0.94, 0.98];
+-    for (let i = 0; i + 1 < ys.length; i++) (i === ys.length - 2 ? bayBackAOH : bayBackAO)(sc, ys[i] + 0.02, ys[i + 1] - 0.01, BLUE, i === ys.length - 2 ? 0.98 : ao[i]);
++    sc.k = k; sc.nb = A.a.length; sc.backs = []; for (let i = 0; i + 1 < ys.length; i++) sc.backs.push(bgBackBand(sc, i, ys.length - 2, ys[i] + 0.02, ys[i + 1] - 0.01, BLUE, i === ys.length - 2 ? 0.98 : ao[i]));   // (BG: the bands in the version's background (RG.BG; null: the light blue as before, bayBackAO / bayBackAOH))
+     return sc; }); out.secs = secs;
+   // A: the tyre sets (X0: bay 4's the Gorska set, TSETS[4], the end section's); B and C: the exhausts (bays 0..2) and the rims (bays 3 and 4;
+   // X0: bay 4's the end section's two kinds); the spoilers on top
+@@ -816,7 +979,10 @@
+   out.tun = u5Shelf(secs);   // (IDEA 5: the tuning parts on show on the upper shelf)
+   exhMetal(out);   // (EXH: the exhausts' metal (and the same chrome elsewhere on the regal) as polished metal, not blown out to white)
+   wingLight(out, WLV[RG.WL] ? RG.WL : null);   // (R: the spoilers' light, one of six versions (RG.WL; null: as before); L3: only R's L1..L6 here)
+-  l3Panels(out, RG.WL);   // (L3: R's L3 in six versions, RG.WL 'A'..'F', the panels' level one storey tall)
++  // (BG: NO LIT PANELS ON THE TOP any more (the user: "Zbriši plošče v zgornjem regalu"): L3's l3Panels is not called, the spoilers stand on the
++  //  top board with only the garage's wall behind them; RG.WL keeps R's L1..L6 (wingLight), null as today)
++  out.bg = { v: RG.BG, nm: BGV[RG.BG] ? BGV[RG.BG].oz + ' · ' + BGV[RG.BG].st : null, posts: secs[0].posts.style, frontUp: BGP.frontUp };
++  bgShadows(out);   // (BG: the soft shadows in the version's shadow colour (BGV sh))
+   return out; };
+ // ---- a sign board standing on a bay's top board BEHIND its spoiler (h's signOn, kept for the proposals): 5 cm and more off the spoiler's
+ //      back (S.dz more), on two legs outside the spoiler's width, its lower edge 1.2 cm over the wing (or S.y0); S: { w, h, x, dz, y0, tex

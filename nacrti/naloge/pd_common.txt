@@ -1,0 +1,56 @@
+COMMON PART OF THE PD BRIEFS (read it whole).
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your own scratch folder
+(named in your brief). The container can restart at any time: keep a running progress file (named in your brief). Run at most ONE browser
+render at a time (two other agents render in parallel). Never write to another agent's files; never edit the shared base files.
+
+THE USER'S WORDS (Slovenian, this round), after the six 3D curved cabinets with open drawers (P/final_z/00l_omarici_3d_6_verzij.png,
+P/out/o3_1 .. o3_6): "Ne izgleda dobro 3D. Naredi 6 različnih verzij po tvoji izbiri sprednjega regala, da bodo vsi elementi v predalih
+izgledali, kot da so res v predalu. Zbriši škatlo darilo."
+= The 3D look was not good: the "drawers" read as flat tilted trays/cards, the items as stickers on them. Make six versions of the FRONT
+cabinet(s) (in front of the car) where every element in a drawer really looks like it lies IN a drawer, and REMOVE the daily gift box
+from the scene (it was between the cabinets; the space is free now).
+
+WHAT MAKES A DRAWER LOOK REAL (use these; this is the point of the round):
+  - a real drawer box: front panel with thickness and a handle/pull, side walls and back wall with thickness, a floor below the rim, the
+    drawer opening in the cabinet body above/behind it dark (the cavity), ball-bearing slides visible on the sides of a pulled-out drawer;
+  - drawers pulled out in a STAIRCASE (the lowest pulled out furthest) so the first view's camera (from the front right, above) looks
+    down INTO each one;
+  - the items lie or stand INSIDE, below the drawer's rim, nested in a two-tone FOAM INSERT (dark grey top layer with a cut-out of each
+    item's shape, a contrasting colour (e.g. yellow or light blue) showing at the bottom of each cut-out around the item) or in dividers /
+    bins; the rim and the front panel overlap the items a little where the view says so (that occlusion is what sells "inside");
+  - soft contact shadows / ambient occlusion inside the drawer (darker in the corners and under the rim), the drawer's inside a little
+    darker than the room, no item floating, no item tilted toward the camera like a card (they lie as they would in a drawer);
+  - real materials: painted steel or wood fronts, aluminium handles, a slightly glossy floor, foam with a matt fine texture.
+TAP SIZE: each element's tap area is the item plus its cut-out/compartment in the drawer; aim for every element >= 40x40 CSS px in the first
+view and never below 30x30; measure with the ID pass (S6A/S6C/O3B methods: P/out/s6a/notes.md, P/out/s6c/notes.md, P/out/o3b/notes.md) and
+report min / median / counts against O3 version 3 and the flat S6 variant 1. Realism comes first this round; if a version can't reach
+40x40 for all, say how far it gets.
+
+THE SCENE: start from agent GM's store P/concepts/_e_store2_gm.js (the latest regal: light-blue slotted back, tyre sets Cesta and Makadam
+removed, PB's orange lift; read P/out/gm/notes.md, P/out/pb/notes.md) whose front cabinets are XC's option 6 (the XC block between
+"// >>>> XC BLOCKS" and "// <<<< XC BLOCKS", frontRegal calls om6Fronts). You change ONLY the front cabinets (the XC block, frontRegal's
+call) and HIDE the daily gift box (find how the store/base builds it: giftBox in P/concepts/s.js, the store's gift handling; hide it in
+your store copy, not in the shared files). Reuse what helps from the earlier cabinet rounds (the items' models: vSigLamp, vDecalTex, the
+aero quarter-car models, the underglow strips, the coloured nuts, the tops' parts; O3B's/O3C's layout code for the first-view camera).
+THE ELEMENTS (35 now, without the gift): UNDERGLOW (BLUE, TURQUOISE, PURPLE, RED, GREEN), INDICATORS (CLEAR, SMOKED, SEQUENTIAL), AERO KITS
+(STREET, SPORT, RACE, GT PACK), DECALS (FLAMES, CHEQUERED, STAR), COLOURED NUTS; the headlamps (LED, Rumeni, Dimljeni, Bi-LED), tail lamps
+(Dimljene, Prozorne, Okrogle, LED-trak), discs (Dirkalni diski, Keramične), grilles (Satasta, Mrežasta, Kromirana, Karbonska, V barvi
+avta), calipers (Rdeče, Rumene, Zlate, V barvi avta). At least the first five groups are IN DRAWERS; your version may put the others in
+drawers too, or keep them on the top (then on a rubber mat or in a top tray, also looking real). English in-world labels (white on navy
+with the yellow line), no brands. The colour pools in the floor fully visible; the trolleys' parking outlines and routes at least 0.3 m
+away; the cabinets may reach the screen's side and bottom edges.
+
+PICTURES PER VERSION k -> P/out/pd_<k>/:
+  f0.png (the first view, HOMEC, 412x915, real UI, CAR=muscle, no hint banner);
+  omarici_hq.png (the cabinets close, HQ, from the first view's direction) AND predal_zoom.png (a closer HQ look into one or two drawers,
+    so the drawer, the foam/dividers and the items inside are plain);
+  tap_one.png (tap on Luč pod avtom – Rdeča: light turquoise + yellow rim on the item and its cut-out, the ring, the flag "LUČ POD AVTOM –
+    RDEČA", the underglow card);
+  tap_all.png and tap_all_zoom.png (all elements tapped at once; the zoom at DPR 3 cropped to the cabinets);
+  info.json { name (Slovenian), text (2-3 Slovenian sentences), captions, measure (per element; min, median, counts >= 40x40 / >= 30x30;
+    the same for O3 version 3), footprint, load (meshes, vertices, draw calls; merge the static cabinet parts), notes }.
+  Look at every picture yourself before you finish (Read the PNG): ask "does every item look like it really lies in a drawer?" and fix
+  what does not.
+FINAL REPORT (your last message): per version what you built, the tap numbers, the files, what you could not get right.

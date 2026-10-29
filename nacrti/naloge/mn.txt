@@ -1,0 +1,40 @@
+BRIEF MN: THE MENU CARD ALWAYS OPENS WITH FOUR OPTIONS (NEW CARD DESIGN)
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all, not even git status;
+reading it is fine). Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals
+and your scratch folders. Progress file P/out/mn/notes.md (the container can restart). Other agents render now: one browser at a time.
+
+THE USER'S WORDS (Slovenian): "V meniju naj se vedno odprejo 4 možnosti, posodobi design menuja."
+= Whenever the menu card opens, it shows exactly FOUR options. Update the card's design for that.
+
+YOU BUILT THE CURRENT CARD (EL-REGAL: full width, two columns, thumbnails, KUPI IN NAMESTI, the card-rule gaps). Now make the new card:
+- Exactly 4 option tiles every time, the same layout in every menu, so the player always sees the same shape. Choose the layout that
+  reads best on a 412 px wide phone with the card's rules (full width, 6-8 px margins, never over the car, 8 px gap): e.g. ONE ROW of
+  four tall tiles (a big thumbnail of the option on top, the name, the stat line, the price; installed = "✓ nameščen" badge; selected =
+  turquoise frame with the yellow rim as the element's marking), or a 2x2 grid. Make the main design with one, and show the other once
+  on the board for comparison, and say which you recommend.
+- Thumbnails for every option (you have most already: parts, rims, tyres, exhausts, wings, aero kits as the car/model with that kit);
+  colours as a painted swatch on a small car shape; no plain squares.
+- When a kind has MORE than four options: pages of four (small page dots and ‹ › arrows at the tile row's ends, swipe), or tabs that
+  each hold four, whichever fits that menu better; the installed option is always findable (first on page 1, or a "nameščen" mark on
+  its page dot).
+- When a kind has FEWER than four: fill it in a sensible way, first with the stock option ("Serijske gume", "Serijski auspuh", "Brez
+  krila", "Serijski paket"), then with a related option (another tab's item) or one locked tile ("zaklenjeno", padlock, the level or
+  price to unlock), never an empty hole. Say per menu how its four are made. (Note: the tyres menu has three kinds on the regal now
+  (Sneg, Dirkališče, Gorska): with the stock tyres it is exactly four.)
+- The rest of the card stays clear and compact: the element's name and tab row at the top, the four tiles, the bottom row (‹ NAZAJ,
+  credits note, KUPI IN NAMESTI · price; greyed out with "premalo kreditov" when the player cannot afford it, not red).
+DATA: P/concepts/_menus_final.js (window.MENUS.parts: every part's tabs, options, prices, stat lines), your elementi.json and the other
+EL groups' if present (P/out/el_avto, P/out/el_spredaj). Cover EVERY menu and tab in the game's garage.
+
+OUTPUT -> P/out/mn/:
+  meni_vsi.png: a board with every menu/tab in the new card at phone size (412 px wide card crops), grouped (regal, car, front chest,
+  paint), each titled in Slovenian and with one line on how its four are made;
+  tap_1.png ... tap_6.png: six full phone frames in the garage's first view with the new card open (TRACK tyres, TURBO, a rim pair, the
+  GT WING, the SPORT aero model, and one car part, e.g. the bonnet), checking the card rule (the gap to the car in px on each);
+  primerjava.png: the old card vs the new card for the same element (TURBO), and the alternative layout (2x2 or one row) once;
+  _card4.js: the card's code as one reusable module in P/concepts/ (so the other agents can re-render their pictures with it: a short
+  README comment at its top on how to call it); info.json { name, text (Slovenian), menus: [{ meni, zavihek, moznosti (the four),
+  kako (pages / tabs / filled with ...) }] }; DONE when finished.
+Scene: as in your EL-REGAL finals (_e_store2_av1.js, no shelf-edge tags). Look at every picture yourself at full resolution before DONE.
+FINAL REPORT: the layout you chose and why, the menus where four needed pages or fillers, the files. Plain language.

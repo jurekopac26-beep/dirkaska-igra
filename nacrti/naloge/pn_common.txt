@@ -1,0 +1,26 @@
+COMMON PART OF THE PN BRIEFS (read it whole).
+
+THE USER'S WORDS (Slovenian), after the board P/final_z/00m_pravi_predali_6_verzij.png (six front cabinets with real drawers):
+"Naredi 2 v 6 različnih oblikah. 3 naredi ravne omarice in 3 naredi rahlo zavite."
+= The user chose version 2, PREDALNIK ZA NAČRTE (the plan chest: one long low navy chest, wide shallow drawers, some pulled out to
+different depths, items lying in recesses in dark felt over light-blue felt, small name tags, the group names on the fronts; all parts in
+drawers, no gift; agent PDA's work: store P/concepts/_e_store2_pd2.js, block source /tmp/claude-0/-home-user-dirkaska-igra/
+d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/pda/pda_block.js, body P/concepts/_pda_body.js, notes P/out/pda/notes.md, pictures
+P/out/pd_2/). Make it in SIX different FORMS: three with STRAIGHT cabinets and three with GENTLY CURVED cabinets (a slight curve, much
+flatter than the regal's arc, following the ring's direction).
+
+THE RULES (as round PD; read /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/pd_common.txt
+for the full list): PICTURES ONLY, no changes in the game repo, no git, one render at a time, never write another agent's files or the
+shared base files; real drawers (front with thickness and a pull, sides, back, floor below the rim, slides, the dark cavity, staircase
+pulls, items lying IN recesses in the felt, soft shadows, nothing floating or tilted like a card); the 35 elements (no gift), all in
+drawers as in version 2; English labels (white on navy, the yellow line), no brands; the colour pools fully visible, the trolleys 0.3 m
+away; the regal from GM's store (P/concepts/_e_store2_gm.js: light-blue slotted back, three tyre sets, orange lift); each element >= 40x40
+CSS px in the first view if at all possible (never below 30x30), measured with the ID pass, reported against version 2 (P/out/pd_2/
+info.json). Version 2's weak point to improve where a form allows: its empty top took about 85 px of screen height, so its drawer rows
+and items were small (make the top lower/thinner or use it, so the drawers get more of the screen).
+
+PICTURES PER FORM k -> P/out/pn_<k>/: f0.png, omarici_hq.png, predal_zoom.png, omarici_3d.png (a higher side view showing the form:
+straight or gently curved), tap_one.png (Luč pod avtom – Rdeča, as before), tap_all.png, tap_all_zoom.png, info.json { name (Slovenian),
+text, captions, measure (per element; min, median, counts; version 2 for comparison), footprint, load, notes }. Look at every picture
+yourself before you finish and ask "does every item lie in a drawer, and does the form read as straight / gently curved?".
+FINAL REPORT: per form what you built, the tap numbers, the files, what you could not get right.

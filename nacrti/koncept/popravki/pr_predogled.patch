@@ -1,0 +1,218 @@
+--- _e_store2_av1.js	2026-10-27 09:14:41.908848044 +0000
++++ _e_store2_pr.js	2026-10-27 09:15:58.961221621 +0000
+@@ -3915,3 +3915,215 @@
+   for (const fam of ZC_FAM.concat([null])) { const s0 = t1Fresh(i, Q[0], so0, margs, fam); if (!s0) continue; if (tried.some(q => Math.abs(zcAng(q.th - s0.th)) < 0.05 && Math.abs(q.t - s0.t) < 0.06 && Math.abs(q.lift - s0.lift) < 0.01)) continue; tried.push(s0);
+     const c = run(s0); if (c.ok && (!best || !best.ok || c.re.length < best.re.length)) best = c; else if (!best || (!best.ok && !c.ok && c.at > best.at)) best = c; if (best.ok && !best.re.length) break; o.set(0); }
+   return best || { ok: false, at: 0, n: Q.length - 1, why: 'ni čiste začetne drže', re: [], poses: [], ex: { cA: 9, cG: 9, cC: 9 }, strict: 0 }; };
++
++// ==== PDV (agent PR, round PR: the user: "Ko uporabnik klikne na element, naj se takoj pokaže na avtu ta element v 3D obliki, prosojen, kako
++//      bi izgledal ta element na avtu, če ga kupi in namesti. Vedno je eden od 4 izbran že pod defaultom, in to je najcenejši."): THE PREVIEW
++//      ON THE CAR of the option selected in the card: the part's OWN geometry (the store's builders: the regal's tyres, exhausts, rims, wings,
++//      the tuning parts, the chest's lamps, grilles, discs, calipers, nuts, strips, the kits' parts), merged into ONE geometry in the car's own
++//      frame (the colours in its vertices) and drawn with ONE SHARED translucent material (a light turquoise ghost, 40-60 % see-through, a soft
++//      bright edge where its surface turns away from the camera; colour and light parts in their own colour with the same edge). Where the
++//      part is hidden by the car itself (under the bonnet, behind a wheel, under the floor, on the far side of the tail) a second shared
++//      material draws it through the body, fainter (x-ray: a depth test that passes only BEHIND what is already drawn), and the bonnet / the
++//      wheel arch over it turns into dark glass (a thin translucent patch on the body with a light outline). Its light outline: the part's
++//      own edges (one line mesh, a shared line material). Lit lamps: a soft glow sprite each (one shared texture). The pulse: uP (0..1, a
++//      1.6 s breathing of the alpha and the edge; the pictures show uP 0.6). Draw calls while a preview shows: the ghost's fill, its x-ray,
++//      its lines (1-3), + the glass patch and its outline (0-2), + the glows (0-4), + the floor pool (underglow) ====
++const PDV = { list: [], M: null, t: 0.6, glowTex: null, sm: {}, lowered: null };
++const pdvW = new T.Color(0xffffff);
++const pdvMats = () => { if (PDV.M) return PDV.M; const C = LIGHTC(), edge = C.clone().lerp(pdvW, 0.4);
++  const vs = 'attribute vec3 color; attribute vec2 ek;\nvarying vec3 vC; varying vec3 vN; varying vec3 vV; varying vec2 vK;\nvoid main() { vC = color; vK = ek; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = -mv.xyz; gl_Position = projectionMatrix * mv; }';
++  const fs = 'uniform vec3 uEdge; uniform float uA, uE, uP, uR;\nvarying vec3 vC; varying vec3 vN; varying vec3 vV; varying vec2 vK;\n'
++    + 'void main() { vec3 n = normalize(vN), v = normalize(vV); float f = 1.0 - abs(dot(n, v)); float rim = smoothstep(uR, 1.0, f) * vK.x;\n'
++    + '  float l = 0.62 + 0.38 * max(dot(n, normalize(vec3(0.3, 0.85, 0.45))), 0.0);\n'
++    + '  vec3 c = vC * l + uEdge * rim * uE * (0.75 + 0.5 * uP);\n'
++    + '  gl_FragColor = vec4(c, clamp(uA * vK.y * (0.8 + 0.4 * uP) + rim * 0.5, 0.0, 0.95)); }';
++  const mk = (a, e, r, depth) => { const m = new T.ShaderMaterial({ vertexShader: vs, fragmentShader: fs, uniforms: { uEdge: { value: edge.clone() }, uA: { value: a }, uE: { value: e }, uP: { value: PDV.t }, uR: { value: r } }, transparent: true, depthWrite: false, side: T.FrontSide });
++    if (depth != null) m.depthFunc = depth; m.userData.own = true; return m; };
++  PDV.M = { fill: mk(0.46, 1.25, 0.32), xray: mk(0.24, 1.1, 0.3, T.GreaterDepth),
++    line: new T.LineBasicMaterial({ color: C.clone().lerp(pdvW, 0.45), transparent: true, opacity: 0.6, depthWrite: false }),
++    lineSoft: new T.LineBasicMaterial({ color: C.clone().lerp(pdvW, 0.45), transparent: true, opacity: 0.32, depthWrite: false }),
++    lineX: new T.LineBasicMaterial({ color: C.clone().lerp(pdvW, 0.45), transparent: true, opacity: 0.55, depthWrite: false, depthTest: false }),
++    glass: new T.MeshBasicMaterial({ color: 0x07182a, transparent: true, opacity: 0.62, depthWrite: false, side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
++    halo: null };
++  return PDV.M; };
++// the pulse (the game would call it each frame with the time: a 1.6 s breathing; the pictures: one moment)
++const pdvPulse = (t) => { PDV.t = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 / 1.6); if (PDV.M) for (const k of ['fill', 'xray']) PDV.M[k].uniforms.uP.value = PDV.t; };
++// a material's colour as the part shows it (its own colour + what it gives off; a textured one a mid grey: carbon, prints)
++const pdvOwn = (mt) => { if (!mt) return new T.Color(0.5, 0.5, 0.5); const c = mt.color ? mt.color.clone() : new T.Color(0.6, 0.6, 0.6); if (mt.map) c.multiplyScalar(0.45); if (mt.emissive) c.add(mt.emissive); return c; };
++// the ghost's vertex colour: 'tint' light turquoise, lighter on the part's light faces, darker on its dark ones (its pattern still reads);
++// 'real' the part's own colour (k: how bright); a function: its own
++const pdvCol = (mt, mode, k = 1) => { const o = pdvOwn(mt); if (typeof mode === 'function') return mode(mt, o);
++  if (mode === 'real') return o.multiplyScalar(k);
++  const l = Math.min(1.2, (o.r + o.g + o.b) / 3); return LIGHTC().multiplyScalar((0.38 + 0.56 * l) * k); };
++// ONE geometry of the parts under the roots (each root: a group NOT in the scene, its own transform = its place in the car's frame):
++// positions, normals, the colours; no additive glows, no sprites
++const pdvGeo = (roots, mode, k, a0 = 1) => { const P = [], N = [], C = [], E = [], p = V(), n = V(), nm = new T.Matrix3();
++  roots.forEach(r => { r.updateMatrixWorld(true); r.traverse(m => { if (!m.isMesh || !m.geometry || !m.geometry.attributes.position) return; for (let q = m; q; q = q.parent) if (!q.visible) return;
++    const mats = [].concat(m.material); if (mats.some(q => q && q.blending && q.blending !== T.NormalBlending)) return;
++    const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry; if (!g.attributes.normal) g.computeVertexNormals(); nm.getNormalMatrix(m.matrixWorld);
++    const A = g.attributes.position, B = g.attributes.normal, groups = Array.isArray(m.material) && g.groups.length ? g.groups : [{ start: 0, count: A.count, materialIndex: 0 }];
++    const VC = g.attributes.color, ek = m.userData.ek == null ? 1 : m.userData.ek, ea = m.userData.ea == null ? a0 : m.userData.ea;
++    groups.forEach(gr => { const mt = mats[gr.materialIndex] || mats[0], own = mt && mt.vertexColors && VC, c = own ? null : pdvCol(mt, mode, k), e = Math.min(A.count, gr.start + gr.count);
++      for (let i = gr.start; i < e; i++) { p.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld); n.fromBufferAttribute(B, i).applyMatrix3(nm).normalize(); P.push(p.x, p.y, p.z); N.push(n.x, n.y, n.z); if (own) C.push(VC.getX(i), VC.getY(i), VC.getZ(i)); else C.push(c.r, c.g, c.b); E.push(ek, ea); } });
++    if (g !== m.geometry) g.dispose(); }); });
++  const G = new T.BufferGeometry(); G.setAttribute('position', new T.Float32BufferAttribute(P, 3)); G.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); G.setAttribute('color', new T.Float32BufferAttribute(C, 3)); G.setAttribute('ek', new T.Float32BufferAttribute(E, 2));
++  G.computeBoundingSphere(); return G; };
++// the soft glow of a lit lamp (one shared texture; one sprite material a colour)
++const pdvGlowTex = () => { if (PDV.glowTex) return PDV.glowTex; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
++  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return (PDV.glowTex = new T.CanvasTexture(c)); };
++const pdvGlowMat = (hex, k = 1) => { const key = hex + '|' + k; return PDV.sm[key] || (PDV.sm[key] = new T.SpriteMaterial({ map: pdvGlowTex(), color: new T.Color(hex).multiplyScalar(k), transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending })); };
++// THE PREVIEW: a group in the car (par: its body group, or its group for what does not move with the body: the wheels' parts) with the
++// ghost's meshes; o: { mode ('tint' | 'real' | fn), k, xray (draw it through the body too), fill (false: only through the body), lines
++// ('d' depth-tested, 'x' seen through, false), lineAngle, glows: [[x, y, z, hex, size, k]], glass: [{ x0, x1, z0, z1, n }] (dark glass
++// on the body's top over a hidden part), extra: [meshes of its own (a floor pool)] }
++const pdvShow = (roots, o = {}) => { const c = G3.cur; if (!c || !c.v) return null; const M = pdvMats(), par = o.par || c.v.bodyG, g = new T.Group(); g.name = 'pdvGhost'; par.add(g); PDV.list.push(g);
++  const geo = pdvGeo([].concat(roots), o.mode || 'tint', o.k == null ? 1 : o.k, o.a || 1), info = { verts: geo.attributes.position.count, meshes: 0, kinds: [] };
++  const add = (m, ro, kind) => { m.renderOrder = ro; m.castShadow = false; m.receiveShadow = false; m.layers.set(1); m.frustumCulled = false; g.add(m); info.meshes++; info.kinds.push(kind); return m; };
++  if (o.glass) o.glass.forEach(q => pdvGlass(g, q, add));
++  if (o.xray) add(new T.Mesh(o.xrayRoots ? pdvGeo([].concat(o.xrayRoots), o.mode || 'tint', o.k == null ? 1 : o.k, o.a || 1) : geo, M.xray), 6, 'xray');
++  if (o.fill !== false) add(new T.Mesh(geo, M.fill), 7, 'fill');
++  if (o.lines !== false) { const eg = new T.EdgesGeometry(geo, o.lineAngle || 32); info.lineSegs = eg.attributes.position.count / 2; add(new T.LineSegments(eg, o.lines === 'x' ? M.lineX : o.lines === 's' ? M.lineSoft : M.line), 8, 'lines'); }
++  if (o.halo) { const [x, y, z, s] = o.halo, sp = new T.Sprite(pdvGlowMat(LIGHTC().getHex(), 0.55)); sp.position.set(x, y, z); sp.scale.set(s, s, s); sp.material.depthTest = false; add(sp, 4, 'halo'); }
++  (o.glows || []).forEach(([x, y, z, hex, s, k]) => { const sp = new T.Sprite(pdvGlowMat(hex, k || 1)); sp.position.set(x, y, z); sp.scale.set(s, s, s); add(sp, 9, 'glow'); });
++  (o.extra || []).forEach(m => add(m, m.renderOrder || 5, 'extra'));
++  g.userData.info = info; return g; };
++// dark glass on the body's top over a hidden part (the bonnet turns see-through there): a grid following the body's top (its probe), 1 cm
++// over it, and its light outline
++const pdvGlass = (g, q, add) => { const c = G3.cur, P = c.probe, n = q.n || 10, m = q.m || 8, pts = [], top = (x, z) => { const y = P.top(x, z); return y == null ? null : y + 0.008; };
++  const pos = [], idx = []; for (let i = 0; i <= n; i++) for (let j = 0; j <= m; j++) { const x = q.x0 + (q.x1 - q.x0) * i / n, z = q.z0 + (q.z1 - q.z0) * j / m, y = top(x, z); pos.push(x, y == null ? q.y || 0.9 : y, z); }
++  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) { const a = i * (m + 1) + j, b = a + m + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
++  const G = new T.BufferGeometry(); G.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); G.setIndex(idx); G.computeVertexNormals();
++  add(new T.Mesh(G, pdvMats().glass), 5, 'glass');
++  const ring = []; for (let i = 0; i <= n; i++) ring.push(i * (m + 1)); for (let j = 1; j <= m; j++) ring.push(n * (m + 1) + j); for (let i = n - 1; i >= 0; i--) ring.push(i * (m + 1) + m); for (let j = m - 1; j >= 0; j--) ring.push(j);
++  const L = []; for (let i = 0; i < ring.length - 1; i++) { const a = ring[i] * 3, b = ring[i + 1] * 3; L.push(pos[a], pos[a + 1] + 0.002, pos[a + 2], pos[b], pos[b + 1] + 0.002, pos[b + 2]); }
++  const LG = new T.BufferGeometry(); LG.setAttribute('position', new T.Float32BufferAttribute(L, 3)); add(new T.LineSegments(LG, pdvMats().line), 8, 'glassline'); };
++const pdvOff = () => { while (PDV.list.length) { const g = PDV.list.pop(); if (g.parent) g.parent.remove(g); g.traverse(m => { if (m.geometry) m.geometry.dispose(); }); }
++  if (PDV.lowered && G3.cur) { G3.cur.v.bodyG.position.y = PDV.lowered.y0; PDV.lowered = null; } };
++// the draw calls the preview adds (the frame drawn with it and without it)
++const pdvCalls = () => { const R = G3.renderer, n = () => { R.info.autoReset = false; R.info.reset(); __garage.advance(0); const c = R.info.render.calls, t = R.info.render.triangles; R.info.autoReset = true; return [c, t]; };
++  const a = n(); PDV.list.forEach(g => { g.visible = false; }); const b = n(); PDV.list.forEach(g => { g.visible = true; }); n(); return { with: a[0], without: b[0], added: a[0] - b[0], tris: a[1] - b[1] }; };
++// ---- the parts in the car's frame (c.kit: K; the wheels c.wheels: the front ones are meshes of their own in v.grp, the rear ones in the body) ----
++const pdvPlace = (fn, x, y, z, rx = 0, ry = 0, rz = 0, s = 1) => { const r = new T.Group(); r.position.set(x, y, z); r.rotation.set(rx, ry, rz); if (Array.isArray(s)) r.scale.set(...s); else r.scale.setScalar(s); fn(r); return r; };
++const pdvWheels = () => G3.cur.wheels;
++// TYRES (the regal's set si): its tyre (the tread's cylinder, the set's colour band on the sidewall) round each wheel, 2 % bigger than the
++// car's own tyre (which shows faintly through); tread blocks by the set (snow: sipes, track: smooth, mountain: knobs); the colour band in
++// its colour
++const pdvTyreG = (si, w) => pdvPlace(r => { const [, col, typ] = TSETS[si], R = w.r * 1.025, Wd = w.wd * 1.02, TR = PR.lam(0x30333a);
++  const t = new T.Mesh(new T.CylinderGeometry(R, R, Wd, 36, 1, true), TR); t.rotation.x = Math.PI / 2; r.add(t);
++  const band = new T.Mesh(new T.RingGeometry(R * 0.78, R * 0.9, 36), new T.MeshBasicMaterial({ color: col })); band.position.z = w.sd * (Wd / 2 + 0.004); if (w.sd < 0) band.rotation.y = Math.PI; band.userData.real = true; r.add(band);
++  const side = new T.Mesh(new T.RingGeometry(R * 0.9, R, 36), TR); side.position.z = w.sd * (Wd / 2 + 0.003); if (w.sd < 0) side.rotation.y = Math.PI; r.add(side);
++  const nB = typ === 'mtn' ? 22 : typ === 'snow' ? 30 : 0; for (let i = 0; i < nB; i++) { const a = (i + 0.5) / nB * Math.PI * 2, b = new T.Mesh(new T.BoxGeometry(typ === 'mtn' ? 0.06 : 0.012, 0.03, Wd * (typ === 'mtn' ? (i % 2 ? 0.42 : 0.8) : 0.9)), TR);
++    b.position.set(Math.cos(a) * (R + 0.008), Math.sin(a) * (R + 0.008), typ === 'mtn' ? (i % 2 ? w.sd * Wd * 0.25 : 0) : 0); b.rotation.z = a + (typ === 'snow' ? 0.5 : 0); r.add(b); } }, w.x, w.y, w.z);
++// the colour band in its own colour, the rest turquoise
++const pdvTyreCol = (mt, o) => mt && mt.isMeshBasicMaterial ? o.clone().multiplyScalar(1.2) : pdvCol(mt, 'tint');
++const pdvTyres = (si) => { const c = G3.cur; return pdvShow(pdvWheels().map(w => pdvTyreG(si, w)), { par: c.v.grp, mode: pdvTyreCol, lines: 'd', lineAngle: 40 }); };
++// RIMS (RIM4 d): the regal's rim on each wheel, its face 5 mm over the car's spokes, sized to the car's rim; in its own colour
++const pdvRims = (d) => { const c = G3.cur; return pdvShow(pdvWheels().map(w => pdvPlace(r => { const q = new T.Group(); rimD(q, d); q.children[0].position.y = 0; r.add(q); }, w.x, w.y, w.z + w.sd * (w.spk + 0.006), 0, w.sd < 0 ? Math.PI : 0, 0, w.r * 0.68 / 0.235)),
++  { par: c.v.grp, mode: 'real', k: 1.0, a: 1.35, lines: 's', lineAngle: 35 }); };
++// the colour of a part that is not stock: its own colour (the black mesh: a dark grey so it still reads)
++// EXHAUSTS (EX6 k): the regal's exhaust under the rear: its tip(s) where the car's own pipes leave the bumper; on the near side (Dvojni:
++// one each side); the silencer under the floor: through the body (the rear bumper see-through)
++const pdvExhaust = (k) => { const c = G3.cur, K = c.kit, s = 0.85, tipEnd = k === 5 ? -0.535 : k === 3 ? -0.56 : k === 4 ? -0.43 : -0.45, cyR = k === 5 ? 0.09 : k === 3 ? 0.15 : k === 4 ? 0.11 : 0.13;
++  const x = K.rear - 0.04 - tipEnd * s, y = 0.31 - cyR * s, zs = k === 4 ? [0.56, -0.56] : [0.56];
++  return pdvShow(zs.map(z => pdvPlace(r => exh6(r, k, null), x, y, z, 0, 0, 0, s)), { mode: 'tint', k: 1.1, a: 1.7, xray: true, lines: 'x', lineAngle: 35 }); };
++// WINGS (the regal's wing group w, its kind kk): cloned on the deck as the card's picture puts it (EL-REGAL's elThumbs)
++const pdvWing = (w, kk) => { const K = G3.cur.kit, cl = w.clone(true); cl.position.set(0, 0, 0); cl.rotation.set(0, 0, 0); cl.scale.setScalar(1);
++  cl.traverse(m => { if (m.isMesh) { const mt = [].concat(m.material)[0]; if (mt && (mt.transparent || mt.depthWrite === false)) m.visible = false; } });
++  return pdvShow([pdvPlace(r => r.add(cl), K.deckX + 0.06, K.deckY - 0.01, 0, 0, -Math.PI / 2, 0, kk === 2 ? 0.95 : 1.0)], { mode: 'tint', xray: true, lines: 'd', lineAngle: 30 }); };
++// AERO KITS (k 1..3): AMA's kit parts (amKit, as on the scale models) in the kit's colours (AV's rule: a colour too close to the car's blue
++// gives way to its line colour or white)
++const pdvKitCols = (k) => { let cols = (typeof AVL !== 'undefined' && AVL[AV.v] && AVL[AV.v].m[k - 1]) ? AVL[AV.v].m[k - 1].kit.slice() : [AERO_COL[k], 0x1c1d22, 0xf2f2ee];
++  const p = new T.Color(G3.cur.spec.color), d = (h) => { const q = new T.Color(h); return Math.abs(q.r - p.r) + Math.abs(q.g - p.g) + Math.abs(q.b - p.b); }; if (d(cols[0]) < 0.5) cols = [d(cols[2]) >= 0.5 ? cols[2] : 0xf2f2ee, cols[1], cols[0]]; return cols; };
++const pdvKit = (k) => { const c = G3.cur, cols = pdvKitCols(k), r = new T.Group(), rx2 = new T.Group();   // (through the body only what is not on the far side: a far sill seen through the doors would float)
++  amKit(c.kit, k).forEach(([w, h, d, x, y, z, rx, ry, rz, ck]) => { const mk = () => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), new T.MeshBasicMaterial({ color: ck === 'k' ? cols[0] : ck === 'l' ? cols[2] : cols[1] })); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); return m; };
++    r.add(mk()); if (z > -0.3) rx2.add(mk()); });
++  return pdvShow([r], { mode: 'real', k: 1.0, xray: true, xrayRoots: [rx2], lines: 'd', lineAngle: 30 }); };
++// HEADLAMPS (LAMP_KINDS kind): the chest's lamp (lampPart) in each of the car's four round lamps (the big outer ones, the small inner ones),
++// its glass in its colour, lit (a soft glow at each lamp of the near side)
++const pdvHead = (kind) => { const c = G3.cur, x = 2.43, roots = [], col = LAMP_KINDS[kind] || 0xffffff;
++  for (const sd of [-1, 1]) for (const [z, y, rr] of [[0.64, 0.68, 0.095], [0.4, 0.67, 0.065]]) roots.push(pdvPlace(r => r.add(lampPart(kind)), x - 0.01, y, sd * z, 0, 0, 0, rr / 0.088 * 1.06));
++  const lit = (mt, o) => mt && mt.emissive && (mt.emissive.r + mt.emissive.g + mt.emissive.b) > 0.04 && kind !== 'dim' ? new T.Color(col).multiplyScalar(1.6) : pdvCol(mt, 'tint');
++  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), gr = g.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
++  const pool = new T.Mesh(new T.PlaneGeometry(1.5, 1.9), new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), color: new T.Color(col).multiplyScalar(0.9), transparent: true, opacity: 0.8, blending: T.AdditiveBlending, depthWrite: false })); pool.rotation.x = -Math.PI / 2; pool.position.set(x + 0.62, 0.021, 0.1);
++  return pdvShow(roots, { mode: lit, lines: 's', lineAngle: 40, a: 1.3, extra: [pool], glows: [[x + 0.1, 0.68, 0.64, col, 0.75, 1.2], [x + 0.1, 0.67, 0.4, col, 0.5, 1.0], [x + 0.1, 0.68, -0.64, col, 0.5, 0.8]] }); };
++// TAIL LAMPS (TAIL_KINDS kind): the chest's lit tail lamp (vTailLit) over each side's three lamps (LED-trak: one bar across the whole tail);
++// the tail faces away from the first view: through the body, and the glow at the near corner
++const pdvTail = (kind) => { const c = G3.cur, K = c.kit, x = -2.395, roots = [];
++  if (kind === 'led') roots.push(pdvPlace(r => r.add(vTailLit(kind)), x, 0.645 - 0.05, 0, 0, -Math.PI / 2, 0, [1.42 / VTL.L, 1, 1]));
++  else for (const sd of [-1, 1]) roots.push(pdvPlace(r => r.add(vTailLit(kind)), x, 0.645 - 0.05, sd * 0.41, 0, -Math.PI / 2, 0, [0.58 / VTL.L, 1, 1]));
++  const lit = (mt, o) => mt && mt.isMeshBasicMaterial ? new T.Color(0xff2030).multiplyScalar(1.7) : pdvCol(mt, 'real', 1.0).lerp(LIGHTC(), 0.25);
++  return pdvShow(roots, { mode: lit, xray: true, a: 1.5, lines: 'x', lineAngle: 40, glows: [[x - 0.14, 0.66, 0.66, 0xff2030, 0.75, 1.2], [x - 0.14, 0.66, 0.25, 0xff2030, 0.55, 1.0]] }); };
++// INDICATORS (VSIGS kind): the chest's lit indicator lamp (vSigLamp) at each front corner (on the wing's side by the nose, its lens out) and on
++// the nose under the big lamps; lit amber (Tekoči: the segments brighter outward)
++const pdvSig = (kind) => { const c = G3.cur, P = c.probe, roots = [], glows = [];
++  for (const sd of [-1, 1]) { const x = 2.12, y = 0.6, zs = (P.side(x, y, sd) || 0.9) + 0.003; roots.push(pdvPlace(r => r.add(vSigLamp(kind)), x, y, sd * zs, 0, sd < 0 ? Math.PI : 0, 0, 0.95));
++    roots.push(pdvPlace(r => r.add(vSigLamp(kind)), 2.425, 0.53, sd * 0.62, 0, Math.PI / 2, 0, 0.9));
++    if (sd > 0) glows.push([x, y, zs + 0.08, 0xffa01a, 0.42, 1.2], [2.52, 0.53, 0.62, 0xffa01a, 0.34, 1.0]); }
++  const lit = (mt, o) => mt && mt.isMeshBasicMaterial ? o.clone().multiplyScalar(1.15) : pdvCol(mt, 'real', 1.0).lerp(LIGHTC(), 0.35);
++  return pdvShow(roots, { mode: lit, a: 1.4, lines: 's', lineAngle: 40, glows }); };
++// UNDERGLOW (GLOW_COLS key): the chest's strip under each sill (its light down), and its light on the floor round the car (the game's EV
++// pool: additive, the car's footprint and a little round it)
++const pdvUg = (key) => { const c = G3.cur, K = c.kit, col = GLOW_COLS[key] || 0xffffff, L = K.wfx - K.wrx - 0.2, roots = [];
++  for (const sd of [-1, 1]) roots.push(pdvPlace(r => r.add(stripPart(key, true)), (K.wfx + K.wrx) / 2, K.bottom + 0.012, sd * (K.sideZ - 0.06), 0, 0, 0, [L / 2.2, 1, 1]));
++  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), gr = g.createRadialGradient(64, 64, 6, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
++  const pool = new T.Mesh(new T.PlaneGeometry(K.front - K.rear + 0.7, 2 * K.hw + 0.9), new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), color: new T.Color(col).multiplyScalar(1.35), transparent: true, opacity: 0.85, blending: T.AdditiveBlending, depthWrite: false }));
++  pool.rotation.x = -Math.PI / 2; pool.position.set((K.front + K.rear) / 2, 0.02, 0); pool.renderOrder = 4;
++  const lit = (mt, o) => mt && mt.isMeshBasicMaterial ? new T.Color(col).multiplyScalar(1.8) : pdvCol(mt, 'tint');
++  return pdvShow(roots, { par: c.v.grp, mode: lit, xray: true, lines: 'x', lineAngle: 40, extra: [pool] }); };
++// GRILLES (GRILLE_KINDS kind): the chest's grille between the inner lamps on the nose
++const pdvGrille = (kind) => { const r = pdvPlace(q => q.add(grillePart(kind)), 2.405, 0.585, 0, 0, 0, 0, [1, 0.62, 0.62]);
++  return pdvShow([r], { mode: 'tint', k: 1.2, a: 1.4, lines: 'd', lineAngle: 30, halo: [2.5, 0.585, 0.1, 0.7] }); };
++// CALIPERS (CAL_COLS kind): the game's own caliper (its ring segment, as zavore draws it) in each wheel between the dish and the spokes, a
++// little thicker, in its colour; the part behind the spokes through them
++const pdvCal = (kind) => { const c = G3.cur, roots = pdvWheels().map(w => { const r = w.r, lv = 0, a0 = Math.PI * 0.62, a1 = Math.PI * 0.98, r0 = r * 0.3, r1 = r * 0.47, zk = w.z + w.sd * (w.dish + 0.004);
++    return pdvPlace(q => { const sh = new T.Shape(), n = 12; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; (i ? sh.lineTo : sh.moveTo).call(sh, Math.cos(a) * r1, Math.sin(a) * r1); } for (let i = n; i >= 0; i--) { const a = a0 + (a1 - a0) * i / n; sh.lineTo(Math.cos(a) * r0, Math.sin(a) * r0); }
++      const m = new T.Mesh(new T.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: false, curveSegments: 4 }), PR.mat(CAL_COLS[kind] || 0x8a929c)); m.position.z = -0.006; q.add(m); }, w.x, w.y, zk, 0, w.sd < 0 ? Math.PI : 0, 0); });
++  return pdvShow(roots, { par: c.v.grp, mode: 'real', k: 1.25, a: 1.5, xray: true, lines: 's', lineAngle: 30 }); };
++// BRAKE DISCS (DISC_KINDS kind): the chest's disc (discPart: drilled, ceramic) in each wheel just inside the spokes, sized to the car's disc
++const pdvDisc = (kind) => { const c = G3.cur, roots = pdvWheels().map(w => pdvPlace(q => q.add(discPart(kind)), w.x, w.y, w.z + w.sd * (w.dish - 0.012), 0, w.sd < 0 ? Math.PI : 0, 0, w.r * 0.5 / 0.17));
++  return pdvShow(roots, { par: c.v.grp, mode: 'tint', k: 1.15, a: 1.6, xray: true, lines: 'x', lineAngle: 30 }); };
++// COLOURED NUTS: the chest's set (xcNuts: the five nuts, their studs) on each wheel's hub over the spokes, in their colour
++const pdvNuts = () => { const c = G3.cur, roots = pdvWheels().map(w => pdvPlace(q => { const g = new T.Group(); xcNuts(g, 0.1, 0, 0, 0); const n0 = g.children[0]; n0.children.slice(0, 3).forEach(m => { m.visible = false; }); q.add(g); }, w.x, w.y, w.z + w.sd * (w.spk - 0.006), 0, w.sd < 0 ? Math.PI : 0, 0, w.r * 0.42 / 0.1 * 0.62));
++  const col = (mt, o) => { const l = (o.r + o.g + o.b) / 3; return l > 0.6 && Math.abs(o.r - o.b) < 0.08 ? pdvCol(mt, 'tint') : o.clone().multiplyScalar(1.25); };
++  return pdvShow(roots, { par: c.v.grp, mode: col, a: 1.6, lines: 's', lineAngle: 40 }); };
++// DECALS (VDECALS kind): the sheet's print laid on the bonnet (cells of a grid on the body's top, 1 cm over it, where the print has colour;
++// their colours from the print; the cells on the print's edge light turquoise: the ghost's edge)
++const pdvDecalTex = (kind) => { const W = 192, H = 128, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.drawImage(vDecalTex(kind).image, 0, 0, W, H); return g.getImageData(0, 0, W, H); };
++const pdvDecal = (kind) => { const c = G3.cur, P = c.probe, im = pdvDecalTex(kind), x0 = 2.3, x1 = 1.02, z0 = -0.6, z1 = 0.6, nu = 64, nv = 44, cell = [];
++  const at = (u, v) => { const X = Math.min(im.width - 1, Math.max(0, Math.round(10 + u * (im.width - 20)))), Y = Math.min(im.height - 1, Math.max(0, Math.round(10 + v * (im.height - 20)))), i = (Y * im.width + X) * 4; return [im.data[i], im.data[i + 1], im.data[i + 2]]; };
++  const ink = (q) => !(q[0] > 225 && q[1] > 225 && q[2] > 225) && !(Math.abs(q[0] - 185) < 30 && Math.abs(q[1] - 194) < 30 && Math.abs(q[2] - 204) < 30);
++  for (let i = 0; i < nu; i++) { cell.push([]); for (let j = 0; j < nv; j++) cell[i].push(ink(at((i + 0.5) / nu, (j + 0.5) / nv))); }
++  const pos = [], nor = [], col = [], E = LIGHTC().lerp(pdvW, 0.35), y = (x, z) => (P.top(x, z) || c.kit.hoodY) + 0.011;
++  for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) { if (!cell[i][j]) continue; const edge = !(i && j && i < nu - 1 && j < nv - 1 && cell[i - 1][j] && cell[i + 1][j] && cell[i][j - 1] && cell[i][j + 1]);
++    const q = at((i + 0.5) / nu, (j + 0.5) / nv), cc = edge ? E : new T.Color(q[0] / 255, q[1] / 255, q[2] / 255).multiplyScalar(1.1);
++    const xa = x0 + (x1 - x0) * i / nu, xb = x0 + (x1 - x0) * (i + 1) / nu, za = z0 + (z1 - z0) * j / nv, zb = z0 + (z1 - z0) * (j + 1) / nv, A = [xa, y(xa, za), za], B = [xb, y(xb, za), za], C2 = [xb, y(xb, zb), zb], D2 = [xa, y(xa, zb), zb];
++    for (const p of [A, C2, B, A, D2, C2]) { pos.push(...p); nor.push(0, 1, 0); col.push(cc.r, cc.g, cc.b); } }
++  const G = new T.BufferGeometry(); G.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); G.setAttribute('normal', new T.Float32BufferAttribute(nor, 3)); G.setAttribute('color', new T.Float32BufferAttribute(col, 3));
++  const m = new T.Mesh(G, new T.MeshBasicMaterial({ vertexColors: true })); m.userData.ek = 0.15; return pdvShow([m], { lines: false }); };
++// THE TUNING PARTS (U5P key): the hidden ones through the body under dark glass (the bonnet over the engine bay; the near wheel arches);
++// the springs also lower the body by their 3 cm; the horn's sound in two rings in front of the nose; the tyre smoke a cloud of its colour
++// at the near rear wheel
++const PDVBAY = { x0: 1.63, x1: 2.31, z0: -0.6, z1: 0.62 };
++const pdvTun = (key) => { const c = G3.cur, K = c.kit, M = U5M(), W = pdvWheels().filter(w => w.sd > 0), hood = [{ x0: PDVBAY.x0, x1: PDVBAY.x1, z0: PDVBAY.z0, z1: PDVBAY.z1, n: 12, m: 10 }];
++  const arch = (w) => ({ x0: w.x - 0.36, x1: w.x + 0.36, z0: w.z - 0.02, z1: w.z + 0.02 });
++  const X = { mode: 'tint', k: 1.15, a: 1.9, xray: true, lines: 'x', lineAngle: 40, glass: hood, halo: [1.98, 0.86, 0.1, 0.9] };
++  if (key === 'filter') return pdvShow([pdvPlace(r => r.add(U5P.filter(M)), 1.98, 0.5, 0.22, 0, 0, 0, 1.0)], X);
++  if (key === 'chip') { const g = U5P.chip(M), p = g.children.find(q => q.isGroup) || g; p.position.set(0, 0, 0); p.rotation.set(-1.25, 0, 0); return pdvShow([pdvPlace(r => r.add(p), 1.86, 0.62, 0.3, 0, 0.3, 0, 1.15)], X); }
++  if (key === 'turbo') return pdvShow([pdvPlace(r => r.add(U5P.turbo(M)), 1.98, 0.44, 0.34, 0, -Math.PI / 2, 0, 1.0)], X);
++  if (key === 'batt') return pdvShow([pdvPlace(r => r.add(U5P.batt(M)), 2.06, 0.55, 0.32, 0, Math.PI / 2, 0, 1.0)], X);
++  if (key === 'springs' || key === 'dampers') { const roots = pdvWheels().map(w => pdvPlace(r => { const g = U5P[key](M), one = new T.Group(); g.updateMatrixWorld(true);
++      g.children.slice().forEach(m => { const b = new T.Box3().setFromObject(m); if ((b.min.x + b.max.x) / 2 > 0.03) one.add(m); }); one.position.x = key === 'springs' ? -0.115 : -0.105; r.add(one); }, w.x, key === 'springs' ? 0.36 : 0.3, w.z - w.sd * 0.22, 0, 0, 0, key === 'springs' ? 1.0 : 1.05));
++    if (key === 'springs') { PDV.lowered = { y0: c.v.bodyG.position.y }; c.v.bodyG.position.y -= 0.03; }
++    const wf = W.find(q => q.front) || W[0]; return pdvShow(roots, { par: c.v.grp, mode: 'tint', k: 1.15, a: 1.9, xray: true, lines: 'x', halo: [wf.x, 0.55, wf.z, 0.95] }); }
++  if (key === 'arb') { const roots = [[K.wfx - 0.3, 1.3], [K.wrx + 0.32, 1.05]].map(([x, wz]) => pdvPlace(r => { const g = U5P.arb(M); r.add(g); }, x, 0.2, 0, 0, Math.PI / 2, 0, [wz / 0.55, 1, 1]));
++    return pdvShow(roots, { mode: 'tint', k: 1.15, a: 1.9, xray: true, lines: 'x' }); }
++  if (key === 'pads') { const a = Math.PI * 0.8, roots = pdvWheels().map(w => pdvPlace(r => { for (const dz of [-0.02, 0.02]) { const p = new T.Mesh(new T.BoxGeometry(0.15, 0.065, 0.012), M.RED); p.position.z = dz; r.add(p);
++        const f = new T.Mesh(new T.BoxGeometry(0.13, 0.05, 0.01), M.DK); f.position.set(0, -0.004, dz * 0.45); r.add(f); } }, w.x + Math.cos(a) * w.r * 0.39, w.y + Math.sin(a) * w.r * 0.39, w.z + w.sd * (w.dish - 0.03), 0, 0, a - Math.PI / 2));
++    const wf = W.find(q => q.front) || W[0]; return pdvShow(roots, { par: c.v.grp, mode: 'tint', k: 1.2, a: 1.9, xray: true, lines: 'x', halo: [wf.x, wf.y, wf.z + 0.1, 0.8] }); }
++  if (key === 'horn') { const h = pdvPlace(r => r.add(U5P.horn(M)), 2.22, 0.36, 0.28, 0, Math.PI / 2, 0, 0.8), cam = G3.camera.getWorldPosition(V()), ctr = V(2.62, 0.62, 0.36);
++    const rings = pdvPlace(r => { [0.09, 0.16, 0.23].forEach((rr, i) => { const t = new T.Mesh(new T.TorusGeometry(rr, 0.008 + i * 0.002, 6, 28, Math.PI * 0.9), PR.lam(0xffffff)); t.rotation.z = -Math.PI * 0.45; r.add(t); }); }, ctr.x, ctr.y, ctr.z);
++    rings.lookAt(cam); return pdvShow([h, rings], { mode: 'tint', k: 1.2, a: 1.9, xray: true, lines: 'x', lineAngle: 40, glass: [{ x0: 1.9, x1: 2.32, z0: -0.2, z1: 0.62, n: 6, m: 8 }], halo: [2.4, 0.6, 0.35, 0.8] }); }
++  if (key === 'smoke') { const col = 0x2a8cff, w = W.find(q => !q.front) || W[0], roots = [pdvPlace(r => { const S = [[0.0, 0.16, 0.0, 0.16], [-0.24, 0.2, 0.05, 0.2], [-0.5, 0.28, 0.08, 0.25], [-0.78, 0.36, 0.12, 0.28], [-0.2, 0.36, 0.02, 0.15], [-0.55, 0.52, 0.06, 0.2], [0.12, 0.1, 0.1, 0.1]];
++      S.forEach(([x, y, z, rr]) => { const s = new T.Mesh(new T.IcosahedronGeometry(rr, 1), new T.MeshBasicMaterial({ color: col })); s.position.set(x, y, z); r.add(s); }); }, w.x - 0.3, 0, w.z + 0.08)];
++    return pdvShow(roots, { par: c.v.grp, mode: 'real', k: 1.15, lines: false }); }
++  return null; };

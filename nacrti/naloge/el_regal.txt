@@ -1,0 +1,7 @@
+BRIEF EL-REGAL: THE ELEMENTS ON THE REGAL (behind the car) AND THE LIFT
+Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/el_common.txt
+Your group: every tappable element on the REGAL: the tyre sets (3), the exhausts (each), the rim pairs (each), the tuning parts (10), the
+spoilers on the top (5), and anything else tappable there (the lift? say whether it is tappable and what it does). Folder
+P/out/el_regal, JSON group "regal". Files: store copy P/concepts/_e_store2_el_regal.js, body P/concepts/_el_regal_body.js, scripts
+P/mk_el_regal.sh, P/render_el_regal.sh, harness copy P/harness_el_regal.mjs; scratch /tmp/claude-0/-home-user-dirkaska-igra/
+d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/el_regal; progress P/out/el_regal/notes.md.

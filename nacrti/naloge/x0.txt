@@ -1,0 +1,21 @@
+BRIEF X0: THE REGAL'S END SECTION GOES, ITS PARTS INTO BAY 4
+First read the common part: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/x_common.txt
+Your scratch folder: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/x0 ; progress file P/out/x0/notes.md.
+Three other agents (XA, XB, XC) redesign the front cabinets in their own copies of the store at the same time; they will apply YOUR change
+as a patch before their final renders, so: touch ONLY the regal (regalAll and what builds the end section and bay 4's tyres and rims),
+never the cabinets, never the PROPOSAL 1 section.
+1. Copy P/concepts/_e_store2_w.js to P/concepts/_e_store2_x0.js and remove the END SECTION right of bay 4 (its posts, boards, back panel,
+   lip, its tyres and rims, anything that belongs to it). Bays 0-4 stay as they are; bay 4's right posts become the regal's right end
+   (finish it as the left end of bay 0 is finished).
+2. Bay 4 gets the end section's parts: A the Gorska tyres (replacing the Vijoličen set: tyre smoke is on the upper shelf as TYRE SMOKE
+   now), B the rims Oranžna 10 krakov, C the rims Črna mreža (replacing the Serijska rims, which are on the car, and the Serijska with
+   Barvne matice). Barvne matice leave the regal: the cabinet agents show them as COLOURED NUTS. Keep each place's look and spacing as
+   the other bays (two tyres / a rim pair per storey, as now). Keep st.regal's lists consistent (tyres[4] kind, rims si 4 with nm).
+3. Write the patch: cd P/concepts && diff -u _e_store2_w.js _e_store2_x0.js > P/out/x0/regal.patch ; check that it applies cleanly to a
+   fresh copy of _e_store2_w.js. When it does, write the file P/out/x0/DONE (one line: the time). Do this AS SOON AS the store change is
+   right, before your pictures, because the others wait for it.
+4. Pictures -> P/out/x0/: f0.png (the first view, 412x915, as round W's f0, yellow lift) and hq_regal.png (the regal of the first view at
+   DPR 4, cropped like W's pred_po_polica crops), before/after: pred_po_regal.png (W's f0 crop beside yours, Slovenian captions).
+   MEASURE in f0 bay 4's new places (tyres, both rim pairs) as round W measured places; run the base's place-reach check for them.
+   info.json { name, text, captions, measure, reach, notes }. Look at every picture yourself before you finish.
+FINAL REPORT: what you removed and moved, the patch, the measures, the reach, the files, what you could not get right.

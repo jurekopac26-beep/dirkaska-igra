@@ -1,0 +1,47 @@
+BRIEF PR: A TRANSLUCENT 3D PREVIEW ON THE CAR FOR EVERY ELEMENT THE PLAYER TAPS
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all, not even git status;
+reading it is fine). Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals
+and your scratch folder /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/pr. Progress file
+P/out/pr/notes.md (the container can restart). Many agents render now: one browser at a time yourself, long timeouts, never write another
+agent's files or the shared base files (copy what you need).
+
+THE USER'S WORDS (Slovenian): "Ko uporabnik klikne na element, naj se takoj pokaže na avtu ta element v 3D obliki, prosojen, kako bi
+izgledal ta element na avtu, če ga kupi in namesti. Vedno je eden od 4 izbran že pod defaultom, in to je najcenejši."
+= When the player taps an element, the car at once shows that element as a translucent 3D preview: how it would look on the car once
+bought and installed. In the menu one of the four options is always selected (the tapped one; if the menu opened without a specific
+element, the cheapest of the four), and the preview shows that selected option.
+
+WHAT EXISTS: AV's translucent aero-kit preview on the real car (P/out/av_1/predogled_paketi.png, the AV notes in P/out/av_1/ or
+P/out/av/notes.md, the code in P/concepts/_e_store2_av1.js: find how the kit is shown translucent). The tap pictures of every element
+(P/out/el_regal: 28 regal elements, their elementi.json; P/out/el_avto and P/out/el_spredaj if present) and how the parts look on the
+car (the earlier element boards P/final_z/01_karoserija.png ... 16_luc_pod_avtom.png and their bodies P/concepts/_z_*_body.js; the
+game's car parts in js/garage3d.js).
+
+MAKE THE PREVIEW FOR EVERY KIND OF ELEMENT (one picture each, the first view, 412x915, DPR 1, CAR=muscle, the element marked as tapped):
+tyres (the three regal sets), exhausts (six), rims (four), wings (five), aero kits (STREET, SPORT, RACE), headlamps, tail lamps,
+indicators, underglow, grilles, decals, calipers, brakes/nuts, and the ten tuning parts. Rules for the look:
+- The previewed part sits exactly where the real part would go on the car, translucent (a light turquoise ghost with a soft bright
+  edge, about 40-60 % see-through, the car's own part faintly visible through it or hidden if the new part replaces it), clearly
+  readable in the first view; a gentle pulse is fine (say how it would animate; the picture shows one moment).
+- Parts that are hidden inside the car (the engine parts: AIR FILTER, ECU CHIP, TURBO, LIGHT BATTERY; SPRINGS, DAMPERS, ANTI-ROLL BARS;
+  SPORT PADS; HORN; TYRE SMOKE): find the best way to show them, e.g. the bonnet or the wheel arch turns translucent and the ghost of
+  the part shows inside, or the effect the part gives (lower stance for springs, smoke puff colour at a rear wheel, ...). Choose per
+  part and explain.
+- Colours and light-type parts (underglow, lamps, calipers, decals) preview in their real colour (lit lamps glow softly), still with
+  the ghost edge so the player sees it is not bought yet.
+- The card: if P/out/mn/DONE and P/concepts/_card4.js exist, use the new four-option card (call it as its header says); otherwise use
+  the EL-REGAL card (full width, at the top, never over the car) and say so. The selected tile matches the preview.
+- Nothing on the car may look broken (no z-fighting, no part floating off the car); the preview must not cover the menu.
+Keep the cost low: the ghost is the part's own geometry with one shared translucent material (report draw calls added while a preview
+shows).
+
+THE SCENE: P/concepts/_e_store2_av1.js (no shelf-edge tags); copy it to P/concepts/_e_store2_pr.js for your preview code; write
+P/out/pr/predogled.patch = diff -u _e_store2_av1.js _e_store2_pr.js. Copy the EL agents' pipelines (P/mk_el_regal.sh,
+P/render_el_regal.sh, P/harness_el_regal.mjs and the el_regal scratch scripts) into scratchpad/pr and run only your copies.
+
+OUTPUT -> P/out/pr/: <nn>_<kind>.png per element kind (the full phone frame with the card and the preview), and a 2x zoom of the car
+for each (<nn>_<kind>_avto.png); plosca_predogled.png: a board with all of them small and numbered, a Slovenian title per picture and
+one line on how that preview looks; info.json { name, text (Slovenian), elementi: [{ nr, ime, kako (how the preview shows, Slovenian),
+izbran (the selected option), draw_calls }] }; DONE when finished. Look at every picture yourself at full resolution before DONE.
+FINAL REPORT: how the preview looks per kind, the hidden parts' solutions, the files. Plain language.

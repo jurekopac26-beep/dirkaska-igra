@@ -1,0 +1,53 @@
+BRIEF L3: EQUAL SHELF LEVELS, NO PLINTHS UNDER THE TUNING PARTS, THE EXHAUST STANDS' SHADOWS, SIX VERSIONS OF THE LIT PANELS (L3)
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch folder
+/tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/l3. Progress file P/out/l3/notes.md (the container can
+restart). One browser render at a time (other agents render now). Never write to another agent's files; never edit the shared base files
+(P/concepts/s.js, _sk_body.js, _sm_body.js, _sw_body.js, _sx_body.js, _e_common.js, _menus_*.js).
+
+THE USER'S WORDS (Slovenian, this round), after seeing P/out/r/spojlerji_6.png (six ways to light the spoilers on the regal's top):
+"L3, naredi 6 različnih verzij, vsi regali/plošče naj bodo enako visoki. Elemente v 3. polici, kot so TURBO, ECU CHIP itd., vsem tem
+elementom zbriši podstavke z napisi. Popravi sence na stojalih za auspuh."
+- The user chose L3 (the light-blue lit panels behind the wings). Make SIX different versions of it.
+- "All shelf levels / panels equally high": the regal's levels (A tyres, B and C exhausts/rims, D the tuning parts) and the level of the
+  lit panels above the top board must all be the SAME height (the same spacing from board to board, and the lit panel level as tall as
+  one storey). Today: boards at A 0.10, B 0.81, C 1.35, D 1.89 m, the top board at 2.66 m (spacings 0.71, 0.54, 0.54, 0.77) and R's
+  panels on the top. Choose one storey height h for all (about 0.62-0.66 m works: e.g. h = 0.64 gives B 0.74, C 1.38, D 2.02, top 2.66 and
+  the panels from 2.66 to 3.30). Everything must still fit: the tyres on A (today up to 0.66 m tall: scale the tyre sets a little or lower
+  A's board, keep 2 cm headroom at least), the exhausts and rims on B and C, the tuning parts on D, the wings in front of the panels.
+- On the tuning shelf (TURBO, ECU CHIP, AIR FILTER, LIGHT BATTERY, SPRINGS, DAMPERS, ANTI-ROLL BARS, SPORT PADS, HORN, TYRE SMOKE):
+  REMOVE the navy plinths with the name plates. The parts stand directly on the shelf board (a part that cannot stand by itself gets
+  only a small plain stand, no plate). Use the freed height to make the parts a little bigger; keep every part inside its bay clear of
+  the posts (round W's rules: 0 px overlap in the first view, at least 5 cm in 3D) and at least 6 cm under the next board.
+- THE EXHAUST STANDS' SHADOWS: look closely (DPR 4 crops of bays 0-2, storeys B and C) at the stands under the exhausts and their
+  shadows: find what is wrong (e.g. shadows missing so the stands float, shadows in the wrong place or direction, dark or light
+  patches/bands, the contact-shadow decals under the feet offset or too big, shadow acne), say it in plain words and fix it so every
+  stand stands on its board with a soft contact shadow under its foot, consistent with the scene's light.
+
+THE STARTING POINT: agent R's store P/concepts/_e_store2_r.js (om6's cabinets, X0's regal, EXH + R's calmer exhausts, the top at 2.66,
+the lift orange (WLIFTV 'O'), the spoiler lighting versions RG.WL 'L1'..'L6'); read P/out/r/notes.md and info.json, P/out/w/notes.md (the
+upper shelf: U5W, u5PlateTex), P/out/x0/notes.md. Your store copy: P/concepts/_e_store2_l3.js (change only the regal part; never the
+cabinets' XC block, never the PROPOSAL 1 section); P/mk_base_l3.sh -> base_l3.js; your bodies, scripts and harness copy. Write the patch
+P/out/l3/regal_l3.patch = diff -u _e_store2_r.js _e_store2_l3.js.
+
+THE SIX VERSIONS OF L3 (all with the equal levels, no plinths, the fixed shadows; each clearly different, the wings never blown out to white,
+the rest of the scene not brighter or darker):
+  A as R's L3: a light-blue lit panel behind each wing in a navy frame, now exactly one storey tall;
+  B one continuous lit band across all five bays (navy mullions only at the posts), the wings as silhouettes in front of it;
+  C cool white panels (crisper silhouettes, a thin bright rim on each wing), thin navy frames;
+  D gradient panels: light cyan glowing at the bottom, fading to dark navy at the top (a horizon glow behind the wings);
+  E panels with a subtle lit hexagon pattern (as the garage floor's), a technical look;
+  F warm panels (soft warm white) behind the blue wings, a warmer showroom contrast.
+PICTURES -> P/out/l3/:
+  f0_A.png ... f0_F.png (the first view, HOMEC, 412x915, real UI, CAR=muscle, the orange lift, no hint banner);
+  regal_A.png ... regal_F.png (the regal of the first view at DPR 4, from above the panels down to the tyres);
+  l3_6.png: the six regal crops on one board with each version's Slovenian name under it;
+  pred_po.png: before (R's L3) / after (version A): the whole regal, with Slovenian captions (equal levels, no plinths, the shadows);
+  sence_pred_po.png: the exhaust stands at DPR 4 before / after with a Slovenian caption saying what was wrong;
+  info.json { name, text (Slovenian), levels (old/new board heights, h, headroom per storey and per part), parts (tap sizes in f0 before
+  / after, posts check), shadows (cause, fix), versions (per version: what it is, the wings' near-white share and mean brightness),
+  captions, notes }.
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+FINAL REPORT: the levels, the parts without plinths (sizes), the shadows (cause/fix), the six versions, the patch, the files, what you could
+not get right. Plain language.

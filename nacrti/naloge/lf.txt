@@ -1,0 +1,38 @@
+BRIEF LF: THE LIFT: BETTER GRAPHICS AND SIX DIFFERENT LIFTS
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all). Everything goes in
+P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch folder
+/tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/lf. Progress file P/out/lf/notes.md (the container can
+restart). One browser render at a time (another agent renders now). Never write to another agent's files; never edit the shared base files.
+
+THE USER'S WORDS (Slovenian, part of a longer message): "Izboljšaj grafiko dvigala, dodaj še različna dvigala."
+= Improve the lift's graphics further and make DIFFERENT lifts. Another agent (AMA) makes six versions of the front chest at the same time
+and will show lift k in its version k: so make SIX lift designs, switchable by one setting, and deliver them as a patch it can apply.
+
+THE STARTING POINT: agent PB's lift (the single orange column behind the car with its carriage and arms; its block in the store, "PB:" /
+PBL, pbColumnGeo, the carriage, the power unit; read P/out/pb/notes.md, info.json, dvigalo_pred_po.png). Copy the latest store
+P/concepts/_e_store2_am2.js to P/concepts/_e_store2_lf.js and change ONLY the lift code (never the regal's other parts, never the front
+cabinets' XC block, never the PROPOSAL 1 section). Add a setting (e.g. PBL.type = 1..6, default 1) that picks the design. Write
+P/out/lf/lift.patch = diff -u _e_store2_am2.js _e_store2_lf.js, check that it applies cleanly to a fresh copy of _e_store2_am2.js and of
+_e_store2_am1.js, then write P/out/lf/DONE (one line: the time). Do this as soon as the code is right, before your pictures: AMA waits.
+
+THE SIX LIFTS (all keep the game's function: the car is lifted on the turntable from behind by arms under its sills, up to 1.35 m at the
+underside show (the SAMUM 4x4 reaches 2.761 m with the carriage: keep the column high enough); the same place behind the car; the robots'
+obstacle box zLiftObs (0.54 x 3.1 x 0.48 at (0.03, 1.55, -1.80)) must still contain the lift or say exactly what changed; the cap at least
+10 cm from the spoilers on the regal's top in the first view; orange as the main colour (the user's choice) unless a design says otherwise;
+generic, no brands, symbols only; low cost: merged meshes, report meshes/vertices per design):
+  1 PB's lift refined: cleaner bevels, a chrome hydraulic ram visible in the track, the carriage with rubber pads on its arms, a cable chain,
+    a small control box with buttons, safety yellow-and-black on the base edges;
+  2 TELESKOPSKI: a round telescopic hydraulic column (three chrome-and-orange stages) instead of the square post, the carriage on top;
+  3 INDUSTRIJSKI: a heavy box-section column with a visible lock ladder, a counterweight housing, bolted gussets, hazard stripes;
+  4 ELEGANTEN RAZSTAVNI: a slim rounded column, white and orange, an LED strip along the track that glows softly, a hidden power unit;
+  5 DVOJNI STEBER ZADAJ: two slim columns side by side behind the car (as one lift unit) with a cross beam on top and the arms between,
+    still inside the obstacle box;
+  6 STENSKA KONZOLA: a cantilever lift: the column set into a heavy floor plinth with a large orange boom that carries the arms (a
+    futuristic look), within the same box.
+PICTURES -> P/out/lf/: dvigala_6.png: the six lifts on one board (each: a DPR-4 close-up from the first view's direction, a side view, and
+the first view crop with the car), Slovenian names and short descriptions; dvigalo_<k>.png (each close-up alone); info.json { name,
+text (Slovenian), designs (what each is, sizes, load, the obstacle box, the cap's distance to the spoilers), notes }. Check that the car
+can still be lifted: render one picture per design with the car raised to 1.35 m (the underside show) and put it on the board.
+Look at every picture yourself before you finish.
+FINAL REPORT: the six designs, the patch, the files, what you could not get right. Plain language.

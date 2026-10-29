@@ -1,0 +1,33 @@
+COMMON PART OF THE EL BRIEFS (read it whole).
+
+PICTURES AND DATA ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all; reading it is
+fine). Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your
+scratch folder (named in your brief). The container can restart: keep a progress file. One browser render at a time (other agents render
+now: long timeouts). Never write another agent's files or the shared base files.
+
+THE USER'S WORDS (Slovenian): "Prikaži mi prosim za vse elemente, kaj se zgodi, ko klikneš nanje, za vse elemente na sliki, ki jih lahko
+klikneš. Za vsak element eno sliko. Prosim napiši mi še seznam, kaj je kakšen element, kaj lahko zamenjaš, koliko stane, kaj nudi, kako
+se pozna na avtu itd."
+= For EVERY tappable element of the garage's first view: ONE picture of what happens when it is tapped (the element highlighted: light
+turquoise with the yellow rim on its own shape, the tap ring, the name flag, and the card (okvirček) that opens with that element's menu:
+the right tab, that kind selected, KUPI IN NAMESTI and the price, as the project's tap pictures do; for an element already on the car the
+card shows "✓ nameščen"). And the DATA for a list: what the element is, what it changes, the options with prices and what each offers
+(the menus' stat lines), how it shows on the car, who does it (which robot arm, which tool) and about how long.
+
+THE SCENE: start from P/concepts/_e_store2_am2.js (regal, lift, the curved chest with the aero models and the service button, the
+trolleys). Before your FINAL renders: apply P/out/lb/regal_lb.patch (shelf name tags) if P/out/lb/DONE exists and P/out/lf/lift.patch if
+P/out/lf/DONE exists (keep PBL.type = 1); and if the front chest's newest version exists (P/out/av_1/info.json written and
+P/concepts/_e_store2_av1.js present), build the front chest from _e_store2_av1.js instead (the user's newest choice: car-colour models,
+the red service button, GT PACK removed, RACE under a locked dome). Say in your report which scene your pictures show.
+THE DATA SOURCES: the menus P/concepts/_menus_final.js (window.MENUS.parts: each part's id, name, tabs, options with tab, name, price,
+stat lines) and P/concepts/_menus_win.js; the game's garage js/garage.js (service prices and the condition), js/lang.js (English names);
+the earlier element boards P/final_z/01_karoserija.png ... 16_luc_pod_avtom.png and their bodies (P/concepts/_z_*_body.js: what each
+change looks like and which arm does it); the latest decisions (P/out/*/notes.md of the rounds W, X0, R, L3, BG, PB, GM, PZA, AMA).
+OUTPUT per element (one picture each, 412x915, the real UI, CAR=muscle) -> your folder P/out/el_<group>/: <nn>_<short-name>.png, and
+one data file P/out/el_<group>/elementi.json: a list of { nr, skupina, ime (Slovenian), ime_en (the in-world English tag if any), kje (where
+in the garage), kaj_je (what it is, one sentence), kaj_zamenjas (what the player can change), moznosti: [{ ime, cena (CR), kaj_nudi (the
+stat line or effect), na_avtu (how it shows on the car) }], kdo_in_kako (which arm/tool/robot, the steps in one sentence), cas (s),
+slika (file name) }. Also a board P/out/el_<group>/plosca.png with all your pictures small and numbered.
+Look at every picture yourself before you finish (the right element highlighted, the right card, nothing covered).
+FINAL REPORT: the number of elements, the files, anything missing in the menus (an element with no menu entry, a price you had to
+guess: mark guesses clearly in the JSON with "ocena": true).

@@ -1,0 +1,50 @@
+BRIEF R: THE UPPER SHELF LOWER STILL, CALMER EXHAUSTS, SIX WAYS TO LIGHT THE SPOILERS
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading it is fine). Everything
+goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch folder
+/tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/r. Progress file P/out/r/notes.md (the container can
+restart). One browser render at a time (three other agents render now). Never write to another agent's files; never edit the shared base
+files (P/concepts/s.js, _sk_body.js, _sm_body.js, _sw_body.js, _sx_body.js, _e_common.js, _menus_*.js).
+
+THE USER'S WORDS (Slovenian, this round), with the regal picture P/out/x0/pred_po_regal.png where they circled bay 2's two exhausts
+(that picture was rendered BEFORE agent EXH's fix): "Teli auspuhi so še vedno presvetli. Zgornja polica naj bo nižja. Naredi še v različnih
+verzijah, da so spojlerji različno osvetljeni." And just before: "Steber naj bo namesto rumene oranžne barve" (the lift's column orange).
+
+THE STARTING POINT: P/concepts/_e_store2_om6.js (round W's scene + X0: the regal's end section gone, bay 4 Gorska tyres / Oranžna 10
+krakov / Črna mreža rims + EXH: the exhausts' metal fixed (block "EXH:", exhMetal, EXHMET) + XC's option 6 cabinets). Read
+P/out/w/notes.md (the upper shelf: RG.TOP 2.90, U5W table of places, u5PlateTex), P/out/x0/notes.md, P/out/exh/notes.md and info.json
+(cause and fix of the bright exhausts), P/out/xc/notes.md. Your store copy: P/concepts/_e_store2_r.js (change ONLY the regal part and the
+lift colour default; never the cabinets' XC block, never the PROPOSAL 1 section), P/mk_base_r.sh -> base_r.js, your bodies, scripts,
+your own harness copy. Write the patch P/out/r/regal_r.patch = diff -u _e_store2_om6.js _e_store2_r.js so it can go into other stores.
+
+1. THE LIFT ORANGE: the lift variant O (orange #F07A1A) is the default in all your pictures (round W's WLIFTV / wLiftColour).
+2. THE EXHAUSTS CALMER: with EXH's fix bay 2's exhausts lost their white blow-out, but the user still finds them too bright. Make all
+   the regal's exhausts clearly calmer, still metal (shading from light to dark, the titanium's blue-violet heat tint), not glowing:
+   in the first view and in a DPR-4 crop of bay 2, the brightest 1 % of each exhaust's pixels below about 215 (sRGB, any channel) and
+   their mean brightness close to the other metal parts on the regal (the rims' spokes). Report before (EXH) / after numbers.
+3. THE UPPER SHELF LOWER: today its top board is at 2.90 m (free 0.92 m); the storeys below are 0.54-0.71 m. Bring the top down to about
+   2.62-2.68 m (free about 0.66-0.72 m, like the storeys below), with the posts, the light-blue back and the spoilers on top coming down
+   with it. Every place (plinth, part, plate) stays inside its bay clear of the posts (W's rules: 0 px overlap in the first view, at least
+   5 cm in 3D) and at least 6 cm under the top board's underside. The tall parts (DAMPERS, SPRINGS, TYRE SMOKE, the filter) may become
+   shorter or be shown lying/leaning if that reads better; keep every part as large on screen as you can: measure each place's tap size
+   in f0 before (round W / om6) and after.
+4. SIX WAYS TO LIGHT THE SPOILERS (the five wings standing on the lowered top): make six lighting versions, each clearly different, e.g.
+   L1 a small spotlight over each wing from the front (a warm pool on each wing, the rest of the top darker);
+   L2 an LED strip along the top board's front edge lighting the wings from below (uplight, soft glow under each wing);
+   L3 a backlight: a light-blue lit panel behind the wings (the wings as dark-blue silhouettes with a bright rim);
+   L4 calm and even: matte wings, a soft wash from the ceiling, no hot spots (the most restful);
+   L5 each wing on its own small lit plinth/light box (white light from below, a clean showroom look);
+   L6 a coloured accent: a cyan rim light from the side matching the ring's light, the wings' edges glowing.
+   No version may blow the wings out to white or make the rest of the scene brighter or darker. Keep the wings' colours and stripes.
+   Measure in the first view each wing's share of near-white pixels and its mean brightness per version.
+PICTURES -> P/out/r/:
+  f0_L1.png ... f0_L6.png: the first view (HOMEC, 412x915, real UI, CAR=muscle, the orange lift, no hint banner) per lighting version;
+  regal_L1.png ... regal_L6.png: the regal of the first view at DPR 4, cropped from just above the spoilers down to storey C;
+  spojlerji_6.png: the six regal crops in a 2x3 or 3x2 board with each version's Slovenian name under it;
+  pred_po_polica.png: before (om6 / round W) / after: the regal crop with the old and the new upper shelf height, Slovenian captions;
+  auspuhi_pred_po.png: bay 2 at DPR 4: EXH's result beside your calmer exhausts (and the whole regal), Slovenian captions;
+  info.json { name, text (Slovenian), heights (old/new top, free height, headroom per part), posts (per place), measure (tap sizes before/
+  after), exhausts (numbers), spoilers (per version), captions, notes }.
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+FINAL REPORT: what changed (numbers), per lighting version what it is, the exhaust numbers, the shelf numbers, the patch, the files, what
+you could not get right. Plain language.

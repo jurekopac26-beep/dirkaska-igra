@@ -1,0 +1,214 @@
+{
+ "element": "Gume (komplet štirih)",
+ "element_en": "Tyres (set of four)",
+ "enota": "komplet 4 gum (brez platišč)",
+ "min_eur": 140,
+ "max_eur": 6000,
+ "vir": "uporabnikova raziskava cen (komplet 4): varčne cestne 140–220 €, standardne 240–360 €, premium / velike 400–800 €, polslik (dnevi na dirkališču) 500–1.000 €, profesionalni slik (reli / dirkališče) 1.400–2.400 €, vrhunski motošport (GT3, prototipi) 3.200–6.000 €",
+ "opomba": "Cene so v € (kot jih je napisal uporabnik); igra zdaj kaže kredite (CR), pretvorbe ni. Stat vrstice v slogu menija (oprijem glede na serijske gume Cesta = 0). Stari zavihek Gume je imel 5 gum (Sneg, Makadam, Cesta, Dirkališče, Gorska): vseh 5 ostane, z istimi učinki, dobijo pa novo ceno in mesto. Zavihek Dim gum ostane posebej (glej cene.json: dim gum).",
+ "kategorije": [
+  {
+   "ime": "CESTNE",
+   "ime_en": "ROAD",
+   "opis": "Gume za vsak dan: varčne in srednji razred. Za suho in mokro, nekaj za sneg.",
+   "opis_en": "Everyday tyres: budget and mid-range. For dry and wet, some for snow.",
+   "razpon_eur": [
+    140,
+    360
+   ],
+   "moznosti": [
+    {
+     "ime": "Varčne",
+     "ime_en": "Budget",
+     "cena_eur": 140,
+     "kaj_nudi": "suho −4 · mokro −6 · obraba hitra",
+     "kaj_nudi_en": "dry −4 · wet −6 · wears fast",
+     "na_regalu": false,
+     "kaj_je": "varčne poletne gume, majhna mera"
+    },
+    {
+     "ime": "Celoletne",
+     "ime_en": "All-season",
+     "cena_eur": 200,
+     "kaj_nudi": "sneg +12 · suho −3 · mokro −2",
+     "kaj_nudi_en": "snow +12 · dry −3 · wet −2",
+     "na_regalu": false,
+     "kaj_je": "varčne celoletne gume"
+    },
+    {
+     "ime": "Cesta",
+     "ime_en": "Road",
+     "cena_eur": 280,
+     "kaj_nudi": "za suho in mokro",
+     "kaj_nudi_en": "for dry and wet",
+     "na_regalu": false,
+     "kaj_je": "standardne poletne gume srednjega razreda; serijske gume avta",
+     "namesceno": true,
+     "opomba": "serijske: na avtu ob začetku (✓ nameščene), na regalu jih ni"
+    },
+    {
+     "ime": "Zimske",
+     "ime_en": "Winter",
+     "cena_eur": 360,
+     "kaj_nudi": "sneg +38 · suho −10",
+     "kaj_nudi_en": "snow +38 · dry −10",
+     "na_regalu": false,
+     "kaj_je": "standardne zimske gume"
+    }
+   ]
+  },
+  {
+   "ime": "PREMIUM",
+   "ime_en": "PREMIUM",
+   "opis": "Večje in boljše cestne gume ter gume za posebne podlage: makadam, gorske prelaze, sneg.",
+   "opis_en": "Bigger, better road tyres and tyres for special surfaces: gravel, mountain passes, snow.",
+   "razpon_eur": [
+    400,
+    800
+   ],
+   "moznosti": [
+    {
+     "ime": "Premium poletne",
+     "ime_en": "Premium summer",
+     "cena_eur": 400,
+     "kaj_nudi": "suho +4 · mokro +4",
+     "kaj_nudi_en": "dry +4 · wet +4",
+     "na_regalu": false,
+     "kaj_je": "premium poletne gume, velika mera (18–19 palcev)"
+    },
+    {
+     "ime": "Makadam",
+     "ime_en": "Gravel",
+     "cena_eur": 520,
+     "kaj_nudi": "makadam +50 · suho −12",
+     "kaj_nudi_en": "gravel +50 · dry −12",
+     "na_regalu": false,
+     "kaj_je": "terenske gume (all-terrain) za makadam",
+     "opomba": "stara guma iz menija; kompleta ni več na regalu"
+    },
+    {
+     "ime": "Gorska",
+     "ime_en": "Mountain",
+     "cena_eur": 640,
+     "kaj_nudi": "sneg +25 · suho −6",
+     "kaj_nudi_en": "snow +25 · dry −6",
+     "na_regalu": true,
+     "kaj_je": "premium gume za vse vreme z oznako za sneg (gorski prelazi)",
+     "opomba": "na regalu: 5. polje, spodnja polica; ostane na svojem mestu"
+    },
+    {
+     "ime": "Sneg",
+     "ime_en": "Snow",
+     "cena_eur": 800,
+     "kaj_nudi": "sneg +57 · suho −16",
+     "kaj_nudi_en": "snow +57 · dry −16",
+     "na_regalu": true,
+     "kaj_je": "premium zimske gume, velika mera",
+     "opomba": "na regalu: 1. polje, spodnja polica; ostane na svojem mestu"
+    }
+   ]
+  },
+  {
+   "ime": "ŠPORTNE",
+   "ime_en": "SPORT",
+   "opis": "Polslik za dneve na dirkališču in tekmovalne reli gume za makadam in sneg. Več oprijema, hitrejša obraba.",
+   "opis_en": "Semi-slicks for track days and competition rally tyres for gravel and snow. More grip, faster wear.",
+   "razpon_eur": [
+    850,
+    1400
+   ],
+   "moznosti": [
+    {
+     "ime": "Polslik cestni",
+     "ime_en": "Street semi-slick",
+     "cena_eur": 850,
+     "kaj_nudi": "suho +8 · mokro −8 · obraba hitra",
+     "kaj_nudi_en": "dry +8 · wet −8 · wears fast",
+     "na_regalu": false,
+     "kaj_je": "cestno dovoljeni polslik (dnevi na dirkališču)"
+    },
+    {
+     "ime": "Polslik dirkalni",
+     "ime_en": "Track semi-slick",
+     "cena_eur": 1000,
+     "kaj_nudi": "suho +12 · mokro −16 · obraba hitra",
+     "kaj_nudi_en": "dry +12 · wet −16 · wears fast",
+     "na_regalu": false,
+     "kaj_je": "polslik z mehko zmesjo za dirkališče"
+    },
+    {
+     "ime": "Reli makadam",
+     "ime_en": "Rally gravel",
+     "cena_eur": 1200,
+     "kaj_nudi": "makadam +65 · suho −14",
+     "kaj_nudi_en": "gravel +65 · dry −14",
+     "na_regalu": false,
+     "kaj_je": "tekmovalne reli gume za makadam"
+    },
+    {
+     "ime": "Reli sneg",
+     "ime_en": "Rally snow",
+     "cena_eur": 1400,
+     "kaj_nudi": "sneg +75 · suho −22",
+     "kaj_nudi_en": "snow +75 · dry −22",
+     "na_regalu": false,
+     "kaj_je": "tekmovalne reli gume z žeblji za sneg in led"
+    }
+   ]
+  },
+  {
+   "ime": "DIRKALNE",
+   "ime_en": "RACING",
+   "opis": "Profesionalni slik in dežne dirkalne gume: največ oprijema na suhem, za dež posebne. Od klubskih dirk do prototipov.",
+   "opis_en": "Professional slicks and racing wets: the most grip on dry, special ones for rain. From club racing to prototypes.",
+   "razpon_eur": [
+    1600,
+    6000
+   ],
+   "moznosti": [
+    {
+     "ime": "Dirkališče",
+     "ime_en": "Track",
+     "cena_eur": 1600,
+     "kaj_nudi": "suho +18 · mokro −30",
+     "kaj_nudi_en": "dry +18 · wet −30",
+     "na_regalu": true,
+     "kaj_je": "profesionalni slik za klubske dirke (reli asfalt, dirkališče)",
+     "opomba": "na regalu: 4. polje, spodnja polica; ostane na svojem mestu"
+    },
+    {
+     "ime": "Dežne dirkalne",
+     "ime_en": "Racing wet",
+     "cena_eur": 2400,
+     "kaj_nudi": "mokro +24 · suho −8 · obraba hitra",
+     "kaj_nudi_en": "wet +24 · dry −8 · wears fast",
+     "na_regalu": false,
+     "kaj_je": "profesionalne dirkalne gume za dež"
+    },
+    {
+     "ime": "GT slik",
+     "ime_en": "GT slick",
+     "cena_eur": 3200,
+     "kaj_nudi": "suho +24 · mokro −34",
+     "kaj_nudi_en": "dry +24 · wet −34",
+     "na_regalu": false,
+     "kaj_je": "slik za dirkalnike GT3"
+    },
+    {
+     "ime": "Prototip slik",
+     "ime_en": "Prototype slick",
+     "cena_eur": 6000,
+     "kaj_nudi": "suho +30 · mokro −38 · obraba hitra",
+     "kaj_nudi_en": "dry +30 · wet −38 · wears fast",
+     "na_regalu": false,
+     "kaj_je": "slik za prototipe (vzdržljivostne dirke)"
+    }
+   ]
+  }
+ ],
+ "na_regalu_danes": {
+  "Sneg": "PREMIUM, 4. mesto (800 €)",
+  "Gorska": "PREMIUM, 3. mesto (640 €)",
+  "Dirkališče": "DIRKALNE, 1. mesto (1.600 €)"
+ }
+}

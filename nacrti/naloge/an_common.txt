@@ -1,0 +1,49 @@
+COMMON PART OF THE AN BRIEFS (read it whole).
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, NO git commands at all; reading it is fine).
+Everything goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals and your scratch
+folder (named in your brief). The container can restart: keep a progress file (named in your brief). One browser render at a time (five
+other agents render now: be patient, long timeouts). Never write another agent's files or the shared base files.
+
+THE USER'S WORDS (Slovenian): "Naredi še, kako izgleda animacija, ko klikneš element iz regala, vsi koraki od klika do konca animacije.
+Naredi v slikah za 3 različne elemente, da vidim, kako izgleda."
+= Show, as a sequence of pictures, the whole animation when the player taps an element ON THE REGAL (behind the car): every step from the
+tap to the end. Three elements, one agent each: TYRES (Dirkališče / TRACK, bay 3), EXHAUST (Titanov / TITANIUM), SPOILER (GT krilo /
+GT WING, on the regal's top).
+
+THE SCENE (the latest): store P/concepts/_e_store2_am2.js (the regal: equal storeys, light-blue slotted back, three tyre sets, calmer
+exhausts, rims, tuning parts without plinths, spoilers on the top; PB's orange lift; the front: the curved plan chest with the whole-car
+aero models and the service button; the trolleys parked front-left; the robot arms on the ring's bridge). Copy it to your own store copy.
+Two patches are being made right now: P/out/lb/regal_lb.patch (name tags on the regal's shelves) and P/out/lf/lift.patch (six lift
+designs, PBL.type): before your FINAL renders, if P/out/lb/DONE and/or P/out/lf/DONE exist, apply those patches to your store copy (LF:
+keep PBL.type = 1); if a patch does not apply, say so and go on without it.
+
+THE PROJECT'S RULES FOR A CHANGE (as the earlier process pictures: P/final_z/11_aero.png, 12_auspuh.png, 13_gume.png, 14_platisca.png and
+their bodies P/concepts/_z_aero_body.js, _z_exhaust_body.js, _z_tyres_body.js, _z_rims_body.js; the arms' code and checks in the store:
+zArm, zRest, zLinks, the reach checks, workBridge; P/out/z2t/base.md): ROKA 1 takes the OLD part off the car and puts it into the empty
+place on the regal; ROKA 2 brings the NEW part from the regal to the car and fits it; the arms never cross (roka 1 on the bridge's +
+half, roka 2 on the - half), telescopic masts; the tapped element light turquoise with the yellow rim, the tap ring, the name flag;
+the card (okvirček) with the part's menu (MPART(...), the right tab, the kind selected, KUPI IN NAMESTI and the price); the step bar of the
+change (Tapni / Snemanje / Izberi / Menjava / Montaža or the element's own steps as in the earlier boards), the progress line, PRESKOČI;
+the credits counting down after the purchase; KONČANO at the end. Every pose checked by the store's reach/pose checks (strict margins
+where they hold: 5 cm from parts, 10 cm from the column and the car); if a pose is not clean, show the closest clean one and say so.
+
+THE STEPS (about 10-12 pictures, 412x915, the real UI, CAR=muscle; the camera as the game would move it: from the first view toward the
+action, then back):
+  1 the first view, the player's finger on the element on the regal (a tap ring);
+  2 the element highlighted (turquoise + yellow rim, its name tag, the flag), the camera starting to come closer;
+  3 the card with the menu (the kind chosen, the price, KUPI IN NAMESTI);
+  4 after KUPI IN NAMESTI: the credits go down, the arms wake up, the camera moves to the car's part;
+  5 roka 1 at the car taking the old part off (the tool on it: wrench / gripper);
+  6 roka 2 at the regal taking the new part (from its place, the tag under it);
+  7 the arms passing each other on their own halves (the old part going to the regal, the new to the car);
+  8 roka 2 fitting the new part on the car; roka 1 putting the old part into the empty regal place;
+  9 the arms back to rest, the camera returning;
+ 10 the end: KONČANO, the new part on the car (a short close look), the regal place now holding the old part (and its tag changed if the
+    old part has its own name), the first view again.
+  Add steps where the element needs them (the tyres: four wheels: show one wheel in detail and the others in one or two pictures; the
+  car on the lift if the game lifts it for that change; the spoiler: the boot lid holes, the wing on its posts).
+OUTPUT per element -> P/out/an_<name>/ (gume, auspuh, spojler): f01.png ... f12.png, plosca.png (a board of all steps with numbered
+Slovenian captions, as the earlier boards), info.json { name, text (Slovenian), steps (per picture: what happens, which arm, the reach
+check), timing (a sensible duration per step in seconds, the whole animation's length), notes }. Look at every picture yourself.
+FINAL REPORT: the steps, the timing, the reach results, the patches applied, the files, what you could not get right.

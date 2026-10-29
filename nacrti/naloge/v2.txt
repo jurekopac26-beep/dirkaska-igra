@@ -1,0 +1,62 @@
+BRIEF V2: PROPOSAL 1's TROLLEYS OFF THE CAR'S PATH
+
+PICTURES ONLY. Do not change anything in the game repo /home/user/dirkaska-igra (no edits, no git commands; reading its code is fine).
+Everything you make goes in P = /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/proposals (and your
+scratch folder /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/v2). The container can restart at any
+time: keep a running progress file P/out/vt/notes.md (what is done, what is next, which files) so a resumed you can continue. Run at most ONE
+browser render at a time (another agent renders in parallel; the machine is shared). Use your own copy of P/harness_z2t1.mjs (long timeouts).
+
+THE USER'S WORDS (Slovenian, this round): "1 voziček za levim delom regala je ok, ampak sedaj vozički blokirajo, da se avto pripelje in
+odpelje." The user picked proposal 1 "Voziček za levim koncem regala" (P/out/z2t1: info.json, f0-f10, check_parking.png; store
+P/concepts/_e_store2_t1.js with its "// ==== PROPOSAL 1" section at the end; bodies P/concepts/_z2t1_body.js and _z2t1_reach_body.js; build
+P/mk_base_z2t1.sh, P/mk_z2t1.sh, P/render_z2t1.sh). Read its info.json and both bodies first.
+
+THE CAR'S PATH (from the game, js/garage3d.js, swap() near line 5219, and ROOM near line 388): the room is x -9..9, z -5 (back wall)..9; a
+roll-up door in each side wall, x = -9 and x = +9, opening |z| <= 2.5. A new car comes in from x = -15 through the LEFT door along z = 0 and
+stops on the table at x = 0; the old car drives out along z = 0 to the right through the RIGHT door. The car's box in the concept scene is
+x -2.95..2.95, z -1.363..1.363, 1.34 m high. Proposal 1's parked trolleys (measured): hood x -7.06..-4.76, z -0.86..0.50; lid x -6.90..-4.58,
+z 0.65..2.10; glass x -6.62..-4.04, z 1.84..4.07; door x -4.96..-3.20, z 3.12..4.87. So the bonnet and lid trolleys stand right on the path
+and the glass trolley touches it. A probe of mine: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/v/
+(_plan_body.js, plan_log.txt, out_plan/f0.png: a plan from above and the first view's visible floor on a 0.25 m grid at heights 0-2 m).
+THE FIRST VIEW (HOMEC) sees on the floor roughly x from (-3.5 + 0.67 z) to 2.75 (z = 0: -3.5; z = 3: -1.5; z = 4.5: -0.5; z = 5.5: +0.25),
+nearly the same at heights 0-2 m; everything left of that edge is out of the picture.
+
+WHAT TO DO: move the four parked trolleys (keep proposal 1's trolley design, its parts, its tools, its swap poses at the car) so that:
+  1. no part of a parked trolley or of its yellow parking outline is within the car's band: keep |z| >= 1.9 everywhere (car half-width 1.37
+     + 0.5 m) for the whole width of the room, and leave both doorways and the straight line between them free;
+  2. none of them shows in the first view: magenta check 0 px and the ID measure 0 px, as proposal 1 proved it (t1Magenta, t1CountMagenta);
+  3. each handle is reached by the arms: the 8 handle routes (roka 2 brings, roka 1 takes back) clean in proposal 1's reach test;
+  4. they keep >= 0.3 m from the front cabinets (S.left, S.right), the gift between them, the colour pools in the floor and everything
+     else standing there. ANOTHER AGENT (V1) is redesigning the front cabinets' contents but keeps their footprint: keep your distance
+     from that footprint.
+  The natural place is further round the ring's FRONT-LEFT, on the near side of the car's path: e.g. as proposal 1 parks them (like extra
+  bays of the regal, handle toward the ring about 5.1 m from its middle) but at angles from about 150 deg down to about 105 deg (find the
+  exact angles: every point at z >= 1.9, out of sight, reachable), or a row beside the path if that works better. Name the place in the
+  user's terms ("levo spredaj, ob poti avta, a ne na njej").
+  The trolleys' ways from the parking to the car (t1Route) change with it: shorter now, round the ring's near side; keep them clear of the
+  cabinets, the lift's column and the car as proposal 1 does. Their working places at the car stay as they are unless they must change.
+
+EDIT ONLY the store's PROPOSAL 1 section: make P/concepts/_e_store2_vt.js = a copy of _e_store2_t1.js and change only lines from
+"// ==== PROPOSAL 1" to the end (t1ParkA, t1Park, t1ParkLines, t1Route, ... whatever you need). The other agent edits the part above that
+line in its own copy; the two are merged later by taking its file and replacing its PROPOSAL 1 section with yours. Build: P/mk_base_vt.sh ->
+P/concepts/base_vt.js; your picture body P/concepts/_vt_body.js = a copy of _z2t1_body.js with your changes (it may only need its frames'
+cameras and texts for the new place); reach body P/concepts/_vt_reach_body.js; scripts P/mk_vt.sh, P/render_vt.sh; output P/out/vt/.
+
+THE PICTURES (412x915, the real UI, CAR=muscle, as proposal 1's):
+  f0 the first view (no trolley in sight); f2 roka 1 at the bonnet's hinges, roka 2 bringing the bonnets' trolley from its new place;
+  f5 roka 2 bolts on the new bonnet, roka 1 (free first) takes the trolley back; f6 the new parking place (with the first view as an inset);
+  f10 the magenta check (-> also check_parking.png); and two NEW ones:
+  fPLAN: a plan from above (a real render from straight above, the ceiling and the ring's rail hidden, as in my probe but bigger and
+    sharper, the room filling the picture) with drawn overlays: the car's path (a green band, |z| <= 1.37, from the left door to the right
+    door, labelled "pot avta: leva vrata -> plošča -> desna vrata"), the parked trolleys (yellow outlines with their names), the first
+    view's sight (a translucent blue wedge, labelled "prvi pogled"), the old proposal 1 places (red dashed, labelled "prej: na poti avta");
+  fDRIVE: the car driving in: a car on the path at about x = -5.5 (just through the left door, its lamps on) passing the parked trolleys,
+    seen from a camera in front-left at about 1.7 m height, so that the free gap between the car and the nearest trolley is plain; write
+    the measured gap on the picture ("razmik 0,xx m").
+  Reach: run your reach test for all 8 handle routes and anything else whose way changed; all clean (the strict rule where it holds, else
+  proposal 1's old rule, as its notes say). info.json in P/out/vt/: { name, text (2-3 Slovenian sentences), parking (where, numbers,
+  proof), captions (one per picture, Slovenian), reach, notes }.
+  Look at every picture yourself before you finish (Read the PNG) and fix what looks wrong.
+
+FINAL REPORT (your last message): the new place in numbers (angles / positions, the gaps to the car's band, to the cabinets), the proof it is
+out of sight, the reach results, the files, what you could not get right. Plain language.

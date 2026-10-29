@@ -1,0 +1,6 @@
+BRIEF AN-SPOJLER: THE ANIMATION OF A REGAL ELEMENT, STEP BY STEP
+Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/an_common.txt
+Your element: SPOILER: GT krilo / GT WING (on the regal's top) onto the car's boot lid (the car had no wing: no old part, so roka 1 prepares the boot lid instead: say how).
+Your files: store copy P/concepts/_e_store2_an_spojler.js, P/mk_base_an_spojler.sh -> base_an_spojler.js, body P/concepts/_an_spojler_body.js, scripts
+P/mk_an_spojler.sh, P/render_an_spojler.sh, harness copy P/harness_an_spojler.mjs; scratch folder /tmp/claude-0/-home-user-dirkaska-igra/
+d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/an_spojler; progress file P/out/an_spojler/notes.md.
