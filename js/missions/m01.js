@@ -51,7 +51,7 @@
       } else if (r.stage === 'fight') {
         KIT.hold(P);
         const tk = r.truck; tk.lift += (0.32 - tk.lift) * Math.min(1, dt * 1.5); tk.ext += (0.1 - tk.ext) * Math.min(1, dt * 1.5);
-        if (typeof THREE !== 'undefined' && r.H.center) { const c = r.H.center, dx = c.x - P.x, dz = c.z - P.z, lx = dx * Math.cos(P.h) + dz * Math.sin(P.h), lz = -dx * Math.sin(P.h) + dz * Math.cos(P.h); tk.yaw += (Math.atan2(-lz, lx) - tk.yaw) * Math.min(1, dt * 2); }
+        if (r.H.center) tk.yaw += (tk.yawTo(r.H.center.x, r.H.center.z) - tk.yaw) * Math.min(1, dt * 2);
         r.aim.step();
         const spray = (r.aim.spray || r.autoSpray) && r.water > 0, pt = r.autoSpray ? r.autoSpray : r.aim.point;
         if (spray) r.water = Math.max(0, r.water - K.FLOW * dt);

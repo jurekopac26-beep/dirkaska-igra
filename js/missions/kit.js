@@ -3,8 +3,8 @@
      MisKit.truckModel(base, over): the player's vehicle as a clone of a model (Core.MODELS: never changed) with its own numbers (vLim ...).
      MisKit.fireTruck(run): the fire engine C · Avtolestev (slike-predlogi blender/modeli/v2.glb, 8.4 x 2.5 x 3.4 m) of simple bodies on the
        player's own view (its body hidden, the physics its own): the cab, the body with its shutters, three axles, the turntable at the back
-       and the ladder of four sections over the cab with its basket at the tip, the blue lamps flashing (~8 draw calls). Its ladder: lift
-       (0..1.4 rad), ext (0..1: 7.2 to 28.4 m), yaw (rad, from forward); tip(): the basket in the world; nozzle(): where the water leaves.
+       and the ladder of five sections over the cab with its basket at the tip, the blue lamps flashing (~8 draw calls). Its ladder: lift
+       (0..1.4 rad), ext (0..1: 7.2 to 33.6 m), yaw (rad, from forward); tip(): the basket in the world; nozzle(): where the water leaves.
      MisKit.fire(run, max): flames (one Points draw: the spots set with spot(i, x, y, z, size); size 0 is out), smoke over them (one more).
      MisKit.jet(run): the water's stream from a point to a point (one Points draw) and its splash; set(from, to, on).
      MisKit.aim(run, o): the finger's aim on the screen (drag anywhere over the game) and the GASI button held; a ring where the water goes;
@@ -51,11 +51,11 @@ const MisKit = (function () {
 
   /* ---------------- the fire engine C · Avtolestev ---------------- */
   const RED = 0xc4161c, DRED = 0x8e0e12, BLK = 0x1b1d21, GRY = 0x9aa1a8, SIL = 0xd5dade, GLS = 0x1d2733, YEL = 0xe2c12b, WH = 0xeef1f4;
-  const LAD = { piv: [-2.9, 3.25], sec: 4, L0: 7.2, step: 7.07, wid: [0.92, 0.8, 0.68, 0.56] };   // (the ladder: its pivot on the turntable, four sections; out in full 7.2 + 3 x 7.07 = 28.4 m)
+  const LAD = { piv: [-2.9, 3.25], sec: 5, L0: 7.2, step: 6.6, wid: [0.94, 0.84, 0.74, 0.64, 0.54] };   // (the ladder: its pivot on the turntable, five sections; out in full 7.2 + 4 x 6.6 = 33.6 m)
   function fireTruck(run) {
     const P = run.P, R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null;
     const T = { lift: 0, ext: 0, yaw: 0, flash: 0, v };
-    if (!has3() || !v) return Object.assign(T, { step() {}, tip: () => null, nozzle: () => null, len: () => LAD.L0 + T.ext * LAD.step * (LAD.sec - 1) });
+    if (!has3() || !v) return Object.assign(T, { step() {}, tip: () => null, nozzle: () => null, yawTo: (x, z) => Math.atan2(-(-(x - P.x) * Math.sin(P.h) + (z - P.z) * Math.cos(P.h)), (x - P.x) * Math.cos(P.h) + (z - P.z) * Math.sin(P.h)), len: () => LAD.L0 + T.ext * LAD.step * (LAD.sec - 1) });
     // the physics' own body out of sight (its wheels too: the truck's six are its own)
     for (const o of [v.body, v.tail, v.dec].concat(v.wf || [], v.wr || [])) if (o) o.visible = false;
     if (v.marker) v.marker.visible = false;
@@ -117,8 +117,10 @@ const MisKit = (function () {
         T.lift = clamp(T.lift, 0, 1.4); T.ext = clamp(T.ext, 0, 1); pose();
         T.flash += dt; const a = lit !== false && (T.flash * 2.2) % 1 < 0.5; la.material = a ? on : off; lb.material = a || lit === false ? off : on;
       },
-      tip() { bk.updateMatrixWorld(true); return bk.localToWorld(_v.set(0.5, 0.6, 0)).clone(); },
-      nozzle() { bk.updateMatrixWorld(true); return bk.localToWorld(_v.set(1.15, 0.9, 0)).clone(); },
+      // the turntable's angle that points the ladder at a world point (x, z): from the turntable itself, not the truck's middle
+      yawTo(x, z) { turn.updateWorldMatrix(true, false); turn.getWorldPosition(_v); const h = P.h, dx = x - _v.x, dz = z - _v.z; return Math.atan2(-(-dx * Math.sin(h) + dz * Math.cos(h)), dx * Math.cos(h) + dz * Math.sin(h)); },
+      tip() { bk.updateWorldMatrix(true, false); return bk.localToWorld(_v.set(0.5, 0.6, 0)).clone(); },
+      nozzle() { bk.updateWorldMatrix(true, false); return bk.localToWorld(_v.set(1.15, 0.9, 0)).clone(); },
     });
   }
 

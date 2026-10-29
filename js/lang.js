@@ -453,6 +453,13 @@
     'Požar na vrhu': 'Fire at the top', 'V hiši na vrhu prelaza gori. Gasilci morajo po serpentinah gor, preden ogenj požre hišo.': 'A house at the top of the pass is on fire. The firefighters must get up the hairpins before the fire eats the house.',
     'Pridi do hiše, preden zgori, in pogasi ogenj.': 'Get to the house before it burns down and put out the fire.', 'Pelji po serpentinah do hiše na vrhu prelaza.': 'Drive up the hairpins to the house at the top of the pass.',
     'HIŠA': 'HOUSE', 'OGENJ': 'FIRE', 'VODA': 'WATER', 'Hiša je zgorela.': 'The house burnt down.', 'Zapeljal si mimo hiše.': 'You drove past the house.',
+    'Zataknjeno kolo': 'The stuck wheel', 'Ob dirkališču je obstalo panoramsko kolo. V kabinah visoko nad tlemi čakajo ljudje.': 'A Ferris wheel beside the circuit has stopped. People wait in its cabins high above the ground.',
+    'Z avtolestvijo reši ljudi iz kabin obstalega kolesa.': 'Rescue the people from the cabins of the stuck wheel with the aerial ladder.', 'Pelji po dirkališču do panoramskega kolesa ob zadnji ravnini.': 'Drive round the circuit to the Ferris wheel by the last straight.',
+    'DOLŽINA': 'LENGTH', 'KOT': 'ANGLE', 'NIHANJE KOŠA': 'BASKET SWAY', 'REŠENI': 'RESCUED', 'V KOŠU': 'IN THE BASKET', 'DVIGNI': 'RAISE', 'IZTEGNI': 'EXTEND',
+    'mirno': 'calm', 'vetrovno': 'windy', 'močno': 'strong', 'KABINA {0}': 'CABIN {0}', '{0} oseba': '{0} person', '{0} osebi': '{0} people',
+    'Ustavi ob kolesu.': 'Stop by the wheel.', 'Kolo si zgrešil: vrni se nazaj do njega.': 'You missed the wheel: go back to it.', 'Do kolesa: {0} km': 'To the wheel: {0} km', 'Zapeljal si mimo kolesa.': 'You drove past the wheel.',
+    'Koš je poln: spusti lestev in jo potegni nazaj, da ljudje izstopijo.': 'The basket is full: lower the ladder and pull it in so the people can step out.', 'Počakaj, da se koš umiri ob kabini.': 'Wait for the basket to settle by the cabin.',
+    'Lestev dvigni in iztegni počasi: v vetru se koš ziblje.': 'Raise and extend the ladder slowly: the basket sways in the wind.',
     'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
