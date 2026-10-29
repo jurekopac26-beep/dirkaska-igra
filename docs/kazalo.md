@@ -16,24 +16,31 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi; goreča guma KOLIBRIJA `ktGlow` |
 | `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
 | `js/world-<tema>.js` | svetovi v svojih datotekah (`World.ext[tema]`, tabela prog spodaj). `montreal`, `toronto`, `townsville`: pomočniki `extAPI` (`K.<ime>`). Premaknjeni iz `world.js` (sklop 17: vse prave proge; v `world.js` ostane splošni `build()` testnih prog in Monaka; `world-rbring.js` gradi Štajersko, Bathurst, Rio in Crystal Palace): koda nespremenjena, pomočnike vzame iz `World.api` (`API` v `world.js`: nespremenljivi ob nalaganju, spremenljivo stanje kot `K.<ime>`, `T` in druge podatke gradnje prepiše `SYNC` pred gradnjo); kar `world.js` uporablja od njih, je `API.<ime>` |
-| `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov, v krogu), zbirna slika in pošiljanje, zastavica med dirko, dnevnik napak, prikaz za razvijalca, samodejne zastavice, nastavitve orodja; opis spodaj |
+| `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov, v krogu), zbirna slika in pošiljanje, Zgodovina napak, zastavica med dirko, dnevnik napak, prikaz za razvijalca, samodejne zastavice, nastavitve orodja; opis spodaj |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem, `flag` na F za zastavico, `dev` na O za prikaz za razvijalca: `Input.onDev`), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
 | `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
+| `garaza.html`, `js/garage.js`, `js/garage3d.js`, `css/garage.css` | garaža (opis v `README.md`): odpre jo tap na avto na izbiri avta (`game.js` `carTapLay`, `garageOpen`; nazaj `garageBack`, `?zaslon=avto&avto=<id>`); v `garage3d.js` pot širokih vozil `laneWay` (`LN`, `laneObsG`, `carLane`, `crab`, stojala vstran `FREE[k].away`), hitri žarki proti avtu `castAxis` / `rayGrid` (v `probeOf`), načrti servisa `svcPlan` |
 | `js/sfx.js` | zvok (sintetiziran) |
 | `js/comm.js` | angleški komentator |
 | `js/net.js` | dirka s prijatelji prek interneta |
 | `js/tex.js` | teksture (narisane v kodi) |
 | `js/journey.js`, `js/geo.js`, `js/intro-data.js`, `js/routes.js` | uvod pred dirko (globus, prelet); `geo/intro-data/routes` so narejeni z orodji, ne urejaj ročno |
-| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane) |
+| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane; `nvwalls`: ograje, ki jih avto odrine, trdne ovire `H3.solids` (tudi napihljivi gradovi, od katerih se avto odbije), premične stvari v parku `H3.loose` (`looseBuild`, `looseStep`: se podrejo, baloni odletijo) in ljudje, ki se umaknejo (`walkStep`)) |
+| `js/nvpark.js`, `js/nvbase.js`, `js/nvedge.js` | notranjost male proge na novem zemljevidu: lunapark z vulkanom (lava, vlakec), trgovina z igračami in stekleni most; reševalna baza s helidromom, pot do boksov in parkirišče; rob male proge in notranjih cest (robnik, črta, priključki; vogal razcepa ceste 2: robnik proge teče v robnik ceste, `raceRoad` z `lead`) |
+| `js/missions.js`, `css/missions.css` | posebne misije: seznam (`Missions.add`, vadbena misija `vaja`), potek misije (`Run`: ura, omejitev časa, `set`, `win`, `fail`), prikaz v HUD-u (`#mis`), rezultat (`#mis-res`), seznam misij (`#mis-list`), rekordi (`rra-misije`), hitri vstop `?misija=<id>`; priklopi v `js/game.js`: `MS`, `MisBridge` (opts, made in begin v `newRace`, step v `stepRace`, over v fazi racing, stop v `toTitle`) |
+| `js/missions/m<nn>.js` | posamezne misije (`Missions.add`): `m06.js` Srce v hladilni torbi (spremstvo: dirkalni avto `race.escort` v podobi policije, `c.police`, promet se mu umika; `opts.tfCars`: promet samo avti in tovornjaki, v `Traffic._populate`; luči spremstva v `render.js` `updateRoad`; bolnišnica z reševalnim avtom ob cilju: `hospital`, `run.add`) |
 | `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
-| `js/cars/<id>.js` | vozila |
+| `js/cars/<id>.js` | vozila (`mounts`: mesta za dele iz garaže, ovoji `K.deli`) |
+| `js/deli.js`, `js/data/deli.js`, `js/deli/<skupina>.js` | deli iz garaže: seznam `DELI_DATA` (40 elementov × 16 možnosti), risanje `DELI.build` (iz `K.deli` v `build(K)` avta; krilo `krilo`, luči `zarometi`), platišča `DELI.wheel`, del posebej `DELI.mesh` (`Render.deliMesh`), učinek `DELI.effect` (`Core.applyDeli`); elementi sklopa 2 po skupinah v `js/deli/` (`DELI.add`); dogovor `docs/deli.md` |
 | `js/data/` | podatki svetov (npr. OSM, višine) |
 | `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`; gumbi v eni vrsti: pod 960 px ★ in Označi brez besede, pod 820 px tesneje) |
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
+| `tools/deli-plosca.mjs` | plošča delov iz garaže za uporabnika (16 možnosti elementa na avtu; `docs/deli.md`) |
 | `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/misija-slika.mjs` | slike posebne misije (`?misija=<id>`, avtopilot do `--t` s ali `--pred` m pred ciljem ali `--konec`, pokonci in ležeče, s prikazom misije; `test-results/misije/`) |
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
 | `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
@@ -44,6 +51,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
+| `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
+| `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 
 ## Teme v `js/game.js`
 
@@ -79,8 +88,9 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 - **zbirka** `add` (trenutek: čas, krog, `s`, x, z, slika `G.shot` 1280 px, slike gibanja `gib` ob `GIB` −0,6/−0,3/+0,3 s, 400 px, oznake, `zapisi`; vsak zapis ima `v`: kaj je v krogih njegove barve, `G.inLoops`, izračunano pred slikami), zastavice na časovnici `flags` (`.nk-flag`, zastavice dirke `.nk-flag.dirka` ⚑, tap: `seek`), točke za način Zastavice `tocke`, zastavice dirke, ki jih nadomesti trenutek `pokrite`, `sync` (nov posnetek: nova zbirka; gumb Deli `#nk-deli`); `Napake.zbirka`, `Napake.stanje` za teste
 - **zastavica med dirko** gumb `#nk-fl` (za `#btn-pause`, skrit z njim: css), `dirka` (iz `showScreen`), `flag` (gumb, tipka, plošček)
 - **poročilo** `porocilo` (besedilo `RRA-NAPAKE`, ime datoteke, naprava `naprava` / `devIme` / `devKoda`, `MODELI`), slika `sestavi` / `list` (postavitev), `moment`, `marks`, polje podatkov `polje`, zemljevid `zemljevid`; `pripravi` (slika enkrat na različico zbirke `verOf`, shrani v IndexedDB)
-- **shranjeno v igri** IndexedDB `rra-napake` / `slike` (`dbPut`, `dbAll`, `dbDel`, `dbMark`; zadnjih 20 `DB_MAX`), `Napake.shranjene()`
-- **pošiljanje** `deli` (Web Share), `shrani` (prenos), `kopirajSliko`, `kopirajBesedilo`, `dejanje`, `done` (poslano, Obdrži tudi v igri); izbira `izbira` (`#nk-dlg`), ob koncu posnetka `konec`
+- **shranjeno v igri** IndexedDB `rra-napake` / `slike` (`dbPut`, `dbAll`, `dbDel`, `dbSet`, `dbMark` → Poslano; zadnjih 100 `DB_MAX`, polne slike najnovejših 20 `DB_FULL`, starejši `lite`: mala slika in besedilo), `Napake.shranjene()`, za teste `Napake.zg`
+- **Zgodovina napak** (sklop 18) `zgodovina` (`#nk-zg`; gumb `data-nk="zg"` v `#nk-bar`, v izbiri, v Nastavitvah orodja), seznam `seznam(box)` (vrstica `.nk-item`, stanje `stPill`), zapis `zgEna` (stanja `STANJA`, `stOf`: neposlano, poslano, popravljeno, zaprto; `.nk-sts`), `zgRec` (zapis brez slik: mala slika), `vseNeposlane`, `zgOsvezi`; za teste `Napake.stanje.zg`
+- **pošiljanje** `deli` (Web Share), `shrani` (prenos), `kopirajSliko`, `kopirajBesedilo`, `dejanje`, `done` (Poslano, Obdrži tudi slike v igri: brez nje `lite`); izbira `izbira` (`#nk-dlg`), ob koncu posnetka `konec`
 - **nastavitve orodja** `tdgp-napake` (`N`, `NK_DEF`: `on`, `end`, `flag`, `size`, `keep`, `dev`), vrstica v Nastavitvah `.nk-setrow` (v angleščini skrita), panel `nastavitve` (`#nk-set`), seznam `seznam`, dnevnik v panelu `dnPanel` (Kopiraj, Počisti)
 - **dnevnik napak** `D` (`D.l`, zadnjih 50 `LOG_MAX`, shranjen v `tdgp-napake-dnevnik`, `dLoad` / `dSave`): `zapis` (`window` `error` → `napaka`, `unhandledrejection` → `obljuba`; isto sporočilo zapored se samo šteje, `x`), zatikanja `okvir(now, on)` / `zEnd` (sličice več kot 50 ms narazen več kot 1 s, `ZAT`; samo med vožnjo dirke), zapis `REC` (posnetek, ki mu zapis pripada; samo v pomnilniku), v poročilu `dnevnik` (ta dirka in napake tega obiska) in vrstice `dVrstica` (`D …`); za teste `Napake.dnevnik`
 - **prikaz za razvijalca** `dev` (tipka O, `N.dev`, `apply` → kljuka `dev` → `PH.dev` v `js/game.js`)
@@ -90,7 +100,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 ## Teme v `js/core.js`
 
 - **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
-- **avto** fizika (`Car`; klasična `stepCS`, `CSK`; nova `stepNova`, `NVK`, `NVASSIST`, zdrs telesa v ovinku `Car.nvA`, drseči slog `Car.nvSl`, trki avtov `carCollide`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, `testOf` v `js/game.js`), nadgradnje `car upgrades`, deli vozil `a registered vehicle's parts`
+- **avto** fizika (`Car`; klasična `stepCS`, `CSK`; nova `stepNova`, `NVK`, `NVASSIST`, zdrs telesa v ovinku `Car.nvA`, drseči slog `Car.nvSl`, trki avtov `carCollide` in posledice trka `carKnockFx`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, slog `TEST_REAL`, `testOf` v `js/game.js`; realističen trk: ravni odbijači `rbCollide` / `rboxHit` / `RB_*`, občutek teže `heavyK`, gume ob potisku `cSlide` in `cSx`/`cSz` v `stepCS`, tekmeci z ravnimi odbijači `aiReach` / `RB_FOL`, brez isker `c.fxQ`), nadgradnje `car upgrades`, deli iz garaže `the garage's parts` (`applyDeli`: `Car` z `opts.deli`, dirka `playerDeli`), deli vozil `a registered vehicle's parts`
 - **gume KOLIBRIJA** `KT`, `ktGrip`, `ktWear`, `ktHit`, `ktFire` (guma zagori pri 80 % poškodbe; `Car.kt`, možnost `tyreRule`; pravilo koles `rule.kt` v `wheelRule` / `_wreckStep`)
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
@@ -103,7 +113,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 
 ## Teme v `js/render.js`
 
-Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil, `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (igralčeva garaža: vrata, stare gume `crewGarage`, `CR_DOOR`, `CR_STACK`, kupa raste `crewStack`; zastave ob garažah `crewFlags`, črke `code3`, igralčeve `codeMe`; sledi gum pred garažami `crewMarks`; luč in modra zastava ob izvozu `crewExit`, `crewExitStep`, `EX_BLUE`; umazanija avta `dirtyCarMat`: `uDirt`, `uDirtW`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`** (za avtom `chaseStep`, `chasePose`; kamera v boksih `the pit stop's camera`: `pitCine`, številke `PC`, zadnjih 25 m `pcPts`, `pcFit`, za teste `Render.pitCam`, `Render.pitCamInfo`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
+Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil (deli iz garaže: `K.deli`, telo z deli `kitEntry(M, hi, deli)`, `deliMesh`; razpoka v vsakem oknu `crackPanes`; gladko senčenje `K.skin` z `smooth`), `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (igralčeva garaža: vrata, stare gume `crewGarage`, `CR_DOOR`, `CR_STACK`, kupa raste `crewStack`; zastave ob garažah `crewFlags`, črke `code3`, igralčeve `codeMe`; sledi gum pred garažami `crewMarks`; luč in modra zastava ob izvozu `crewExit`, `crewExitStep`, `EX_BLUE`; umazanija avta `dirtyCarMat`: `uDirt`, `uDirtW`) (mehaniki pri Nizki po velikosti na zaslonu: `updateCrew`, preprosti komplet `crewGeosLo`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`** (za avtom `chaseStep`, `chasePose`; kamera v boksih `the pit stop's camera`: `pitCine`, številke `PC`, zadnjih 25 m `pcPts`, `pcFit`, za teste `Render.pitCam`, `Render.pitCamInfo`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
 
 ## Proge in graditelji sveta
 
@@ -130,7 +140,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | maunakea | Mauna Kea, ZDA | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
 | moki | Moki Dugway, ZDA | moki | `js/world-moki.js` (`buildMoki`) |
-| monaco | Monte Carlo, Monako | monaco | splošni `build()` (`MC_TER`) |
+| monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
 | monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mulholland | Mulholland Highway, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
@@ -169,13 +179,14 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`
-- **Orodje za napake:** `tests/browser/napake-samodejno.test.mjs` (prikaz za razvijalca O, dnevnik: napaka, obljuba, zatikanje; v krogu: tekmec, cesta, kraj; samodejne zastavice: `zaznaj` na umetnem posnetku, Potrdi / Zavrzi, poročilo), `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)
+- **Orodje za napake:** `tests/browser/napake-samodejno.test.mjs` (prikaz za razvijalca O, dnevnik: napaka, obljuba, zatikanje; v krogu: tekmec, cesta, kraj; samodejne zastavice: `zaznaj` na umetnem posnetku, Potrdi / Zavrzi, poročilo), `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice; Zgodovina napak: stanje, ohranjanje po deljenju, meja 100/20), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)
 - **Datoteka s posnetkom:** `tests/browser/napake-posnetek.test.mjs` (Shrani v nastavitvah orodja, branje do zadnjega bita, ne-posnetek, Odpri … na naslovnici, poročilo iz datoteke, `pojdi`, Končaj, `tools/posnetek.mjs`)
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Garaža, sledi, izvoz, umazanija:** `pitkit.test.mjs` (garažna vrata, zastava, stare gume, sledi gum, luč in modra zastava ob izvozu, umazanija); obraba vsake gume `wear.test.js`, pike na HUD-u `hud.test.mjs`, `wear.test.mjs`; dež v postanku `pits.test.js`
 - **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 13 prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
 - **Pavza (vreme po krogih nad gumbi, postanki, obvestila med pavzo):** `pauseinfo.test.mjs`; **tekmec iz boksov pred tabo:** `pitout.test.mjs`
+- **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`)
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`

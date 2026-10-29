@@ -8,7 +8,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 
 | Sklop | Ime | Stanje |
 |---|---|---|
-| 0 | Zasebnost (Cloudflare) | odloženo |
+| 0 | Zasebnost (Cloudflare) | odloženo (uporabnik 29. 10.: pozneje, ko bo res potrebno) |
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | končano |
@@ -17,7 +17,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 5 | Označevanje | končano |
 | 6 | Slika in pošiljanje | končano (skupaj s 7) |
 | 7 | Zastavica med dirko | končano (skupaj s 6) |
-| 8 | Skrito v izdaji za Google Play | odloženo |
+| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog) |
 | 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
 | 10 | G · V krogu | končano (skupaj z 9 in 11) |
 | 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
@@ -27,6 +27,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
 | 16 | Ponovljive dirke | končano (PR #175) |
 | 17 | Razdeljen world.js | končano (PR #176, #180) |
+| 18 | Zgodovina napak | končano |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -94,10 +95,11 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - **Deli zdaj** – na telefonu meni Deli (Web Share), na računalniku je prva izbira **Kopiraj sliko** za Ctrl + V;
   - **Samo shrani sliko** – v Prenose; obvestilo pove, kje je (Samsung: *Moje datoteke → Prenosi*, Edge: mapa *Prenosi*);
   - **Kopiraj besedilo** – oblika spodaj.
-- **Shranjene napake:**
-  - zadnjih 20 slik ostane v igri (IndexedDB), označenih z »neposlano« ali »poslano«;
+- **Shranjene napake** (od sklopa 18 **Zgodovina napak**):
+  - zadnjih 100 zbirk ostane v igri (IndexedDB), najnovejših 20 s polnimi slikami, starejše z malo sliko in besedilom;
+  - stanje Neposlano → Poslano → Popravljeno → Zaprto;
   - gumb »Deli vse neposlane«;
-  - kljukica »Obdrži tudi v igri«.
+  - kljukica »Obdrži tudi slike v igri«.
 - **Nastavitve → Orodje za napake:**
   - Vklop;
   - Ob koncu (Vprašaj / Deli / Shrani);
@@ -331,6 +333,19 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - **Za teste:** `window.__game.repro` (seme, ali je dirka ponovljiva), `window.__game.recSum()` (povzetek posnetka). Node: `repro: true` v nastavitvah `Core.Race`.
   - **Testi:** nov `tests/repro.test.js` (Bathurst s trčenjem: z `repro` nobenega klica `Math.random`, isto seme da isto dirko do zadnjega bita, drugo seme drugo), nov `tests/browser/repro.test.mjs` (dvakrat `?seme=5` enak posnetek in isti avti, `?seme=6` druga dirka), `quick.test.js` (`seme`). `golden` in `races` brez novih referenc.
 
+### Sklop 18 · Zgodovina napak — 1–1,5 h · 29. 10. 2026
+
+- **Naročilo uporabnika** (29. 10. 2026, glavna seja): »v urejevalniku ko shranim popravek ne morem kasneje gledati za nazaj stare popravke, naredi da imaš še zgodovino starih popravkov, pri katerih tudi piše status«. Veja `orodje-za-napake/sklop-18-zgodovina`, en pull request.
+- **Prej:** zapis v IndexedDB (zadnjih 20), stanje samo neposlano/poslano; po deljenju se je brez »Obdrži tudi v igri« izbrisal; seznam samo v Nastavitvah orodja.
+- **Narejeno:**
+  - **Zgodovina napak** (`zgodovina`, `#nk-zg`): gumb **Zgodovina** v vrstici označevanja (Dodaj k zbirki · Zgodovina · Zapri; vrstica gumbov posnetka ostane, kot je), v izbiri ob Zapri in v Nastavitvah orodja (vrstica Zgodovina napak: Deli vse neposlane, Odpri; seznam pod njo). Panel je nad posnetkom, izbiro in nastavitvami; Zapri vrne tja, od koder je bil odprt.
+  - **Seznam:** pri vsaki zbirki mala slika, proga (»Bathurst, Avstralija«), datum, število trenutkov in zastavic, stanje z barvo (Neposlano oranžno, Poslano modro, Popravljeno zeleno, Zaprto sivo); najnovejša prva. Dotik odpre zapis: slika, stanje (4 gumbi, ročna sprememba), besedilo `RRA-NAPAKE`, Kopiraj sliko (računalnik), Deli, Shrani sliko, Kopiraj besedilo, Izbriši (dvakrat v 3 s).
+  - **Stanje:** Neposlano ob nastanku in ob vsaki novi različici zbirke; Poslano samodejno ob Deli in Kopiraj sliko (samo iz Neposlano: Popravljeno in Zaprto ostaneta, tudi ko zapis znova deliš); Popravljeno in Zaprto ročno.
+  - **Nič se ne izgubi:** deljenje ali shranjevanje zapisa ne izbriše. Kljukica v izbiri je zdaj **Obdrži tudi slike v igri**: brez nje zapis po dejanju ostane z malo sliko (320 px JPEG) in besedilom. Hrani se do **100** zbirk (`DB_MAX`); najnovejših **20** (`DB_FULL`) ima polne slike, starejšim se slike odstranijo (`lite`, `nf`: koliko slik je imela), najstarejše nad 100 gredo ven. Zapis brez slik deli in shrani malo sliko (`<ime>_mala.jpg`) z besedilom.
+  - **Velikost:** mala slika in besedilo sta okoli 20–30 KB, 80 starejših zapisov okoli 2 MB; polne slike (20) kot doslej.
+  - **Testi:** `tests/browser/napake.test.mjs` (Zgodovina v vrstici označevanja in v izbiri, zapis po Deli brez slik, ročno stanje, ponovno Deli, Kopiraj besedilo, pokonci in ležeče, meja 100/20), `napake-slika.test.mjs` (seznam v Nastavitvah: dotik, Izbriši).
+  - **Opomba (moje odločitve):** Kopiraj besedilo stanja ne spremeni (kot doslej; poslano je, ko gre slika); ponovno deljenje iz zgodovine slik ne odstrani ne glede na kljukico. Gumb Zgodovina ni v vrstici gumbov posnetka (tam ni prostora), ampak v vrstici označevanja, ki se odpre z Označi.
+
 ### Sklop 17 · Razdeljen world.js — 3–5 h · 4.–5. 11.
 
 - **Kaj:** graditelje prog (`buildSpa`, `buildRbring`, …) iz `js/world.js` (3,9 MB, 34.603 vrstic) premakni v `js/world-<tema>.js`.
@@ -349,7 +364,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je.
 
 ## Skupaj
 

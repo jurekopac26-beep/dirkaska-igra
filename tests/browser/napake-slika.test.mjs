@@ -3,10 +3,10 @@
 // collection: napake_bathurst_LLLLMMDD-UUMM.png, 1600 px wide at most 1600 tall, the moments with their marks (the red loop where it was
 // drawn), each moment's 3 pictures of its motion; the text for the chat (RRA-NAPAKE v=<game.js's stamp> proga način naprava size, a line
 // for each note, the flag not marked with its lap and metres). Deli in the replay: the choice (a computer: Kopiraj sliko first, Samo
-// shrani sliko, Kopiraj besedilo, Obdrži tudi v igri); Kopiraj besedilo copies the text; Samo shrani sliko downloads the picture; kept in
+// shrani sliko, Kopiraj besedilo, Obdrži tudi slike v igri); Kopiraj besedilo copies the text; Samo shrani sliko downloads the picture; kept in
 // the game (IndexedDB) as neposlano, Kopiraj sliko makes it poslano. Four moments: two pictures (_1, _2); 2400 px in the settings. The
 // end of the replay with Ob koncu Shrani: the picture to the downloads at once. Nastavitve: the tool's row (not in English), its panel with
-// the pictures kept (Izbriši). A phone (a touch screen): Deli zdaj first, the share sheet gets the picture and the text, then poslano.
+// Zgodovina napak (a tap, Izbriši). A phone (a touch screen): Deli zdaj first, the share sheet gets the picture and the text, then poslano.
 //   node tests/browser/napake-slika.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -58,7 +58,7 @@ try {
   // Deli: the choice on a computer
   await Q.click('#nk-deli'); await Q.waitForFunction(() => document.querySelector('#nk-dlg .nk-prev img') && document.querySelector('#nk-dlg .nk-prev img').complete, null, { timeout: 30000, polling: 100 });
   const D = await Q.evaluate(() => ({ acts: Napake.stanje.dlg, keep: document.querySelector('#nk-dlg .nk-keep input').checked, sub: document.querySelector('#nk-dlg .nk-sub').textContent, img: document.querySelector('#nk-dlg .nk-prev img').naturalWidth }));
-  T.check('Deli: the choice (a computer: Kopiraj sliko first, Samo shrani sliko, Kopiraj besedilo, Shrani posnetek (.rrp); Obdrži tudi v igri on), the picture shown', D.acts.join() === 'Kopiraj sliko,Samo shrani sliko,Kopiraj besedilo,Shrani posnetek (.rrp)' && D.keep && D.sub === '2 trenutka · zastavic iz dirke: 1' && D.img === 1600, JSON.stringify(D));
+  T.check('Deli: the choice (a computer: Kopiraj sliko first, Samo shrani sliko, Kopiraj besedilo, Shrani posnetek (.rrp); Obdrži tudi slike v igri on), the picture shown', D.acts.join() === 'Kopiraj sliko,Samo shrani sliko,Kopiraj besedilo,Shrani posnetek (.rrp)' && D.keep && D.sub === '2 trenutka · zastavic iz dirke: 1' && D.img === 1600, JSON.stringify(D));
   await Q.click('#nk-dlg [data-nk-d="besedilo"]'); await Q.waitForTimeout(200);
   const clip = await Q.evaluate(() => navigator.clipboard.readText().catch(() => ''));
   T.check('Kopiraj besedilo: the text in the clipboard', clip === R.text, clip.slice(0, 120));
@@ -86,9 +86,11 @@ try {
   // the settings' panel: the pictures kept (the newest first), Izbriši
   await Q.waitForSelector('#nk-set .nk-item');
   const S1 = await Q.evaluate(() => ({ items: [...document.querySelectorAll('#nk-set .nk-item')].map(e => e.innerText.replace(/\s+/g, ' ')), thumbs: [...document.querySelectorAll('#nk-set .nk-item img')].filter(i => i.complete).length, row: document.querySelector('#s-settings .nk-setrow').offsetParent !== null }));
-  await Q.click('#nk-set .nk-item [data-nk-d="del"]'); await Q.waitForFunction(() => !document.querySelector('#nk-set .nk-item'), null, { timeout: 10000 });
+  await Q.click('#nk-set .nk-item'); await Q.waitForSelector('#nk-zg [data-nk-d="del"]');
+  await Q.click('#nk-zg [data-nk-d="del"]'); await Q.click('#nk-zg [data-nk-d="del"]'); await Q.waitForFunction(() => !document.querySelector('#nk-set .nk-item'), null, { timeout: 10000 });
   const S2 = await Q.evaluate(async () => (await Napake.shranjene()).length);
-  T.check('Nastavitve: the row Orodje za napake; its panel lists the picture kept (its name, 4 moments, neposlano: a new version), Izbriši takes it out of the game', S1.row && S1.items.length === 1 && /napake_bathurst_\d{8}-\d{4}/.test(S1.items[0]) && /4 trenutki/.test(S1.items[0]) && /neposlano/.test(S1.items[0]) && S2 === 0, JSON.stringify({ S1, S2 }));
+  await Q.click('#nk-zg [data-nk-d="zapri"]');
+  T.check('Nastavitve: the row Orodje za napake; its panel lists Zgodovina napak (the track, 4 moments, Neposlano: a new version), a tap opens it, Izbriši (twice) takes it out of the game', S1.row && S1.items.length === 1 && /Bathurst, Avstralija/.test(S1.items[0]) && /4 trenutki/.test(S1.items[0]) && /Neposlano/.test(S1.items[0]) && S2 === 0, JSON.stringify({ S1, S2 }));
   await Q.click('#nk-set [data-k="end"] [data-v="save"]'); await Q.click('#nk-set [data-nk-d="zapri"]');
   // the end of the replay with Ob koncu Shrani: downloaded at once (js/game.js replayEnd calls Napake.konec)
   const [dl2] = await Promise.all([Q.waitForEvent('download'), Q.evaluate(() => Napake.konec())]);

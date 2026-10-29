@@ -1005,7 +1005,8 @@
     mapV = G.S.mapV === 2 ? 2 : 1;   // (1 the flyover by default, 2 the map)
     render();
   }
-  function hide() {   // another screen of the game is up: the menu's moving things rest
+  function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
+    want = null;
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); clearTimeout(preT);
     for (const v of app.querySelectorAll('video')) v.pause();
@@ -1032,5 +1033,7 @@
     } catch (e) { fail(e); }
   }
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
+  // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
+  // that screen from the garage (game.js garageBack)
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
 })();
