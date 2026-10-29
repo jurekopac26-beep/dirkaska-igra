@@ -18,6 +18,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'car', ht: 1.22, y0: 0.2,   // (the debris thrown from where the look has the parts: the tailgate is the fastback's glass, the wings run to the nose)
       over: { trunk: { lx: -0.5, y: 1.07 }, fenderL: { lx: 0.71, lz: -0.77, y: 0.57, h: 0.15 }, fenderR: { lx: 0.71, lz: 0.77, y: 0.57, h: 0.15 }, doorL: { lx: -0.085, lz: -0.94, y: 0.67 }, doorR: { lx: -0.085, lz: 0.94, y: 0.67 },
         mirrorL: { lx: 0.09, lz: -0.89, y: 0.94 }, mirrorR: { lx: 0.09, lz: 0.89, y: 0.94 }, quarterL: { lx: -0.575, lz: -0.84, y: 0.68, h: 0.15 }, quarterR: { lx: -0.575, lz: 0.84, y: 0.68, h: 0.15 } } },   // (the wings with their tops lie as thick as they are)
+    // where the garage's parts go (js/deli.js, look units; a trial on a classic, sklop 1): a wing on the tail's deck (no part of its own: the
+    // body's); the head lamps in the covered pods (they stay), each option round as the stock lamp (its colour, ring and details on its
+    // slightly bulging lens), in the wings; the rims on its wheels
+    mounts: {
+      krilo: { x: -2.08, w: 0.5, part: 'body' },
+      zarometi: { x: 2.106, y0: 0.57, lean: 0, zc: 0.5, yc: 0.57, s: 0.3, hosts: ['fenderL', 'fenderR'], socket: 'host', ringW: 0.006, bulge: 0.012,
+        shape: Array.from({ length: 10 }, (_, i) => [Math.cos(i / 10 * Math.PI * 2) * 0.056, Math.sin(i / 10 * Math.PI * 2) * 0.056]) },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): one loft through the sections below, cut by the regions into the bonnet's top (with
     // the power bulge), the wings to the nose (the covered lamps with them), the doors (their glass), the rear wings (the quarter lights), the
     // tailgate (the fastback's glass in its frame) and the nose and tail ends (bumpers: the mouth, the chrome blades); the windows and their
@@ -115,9 +124,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const s = sd < 0 ? 'L' : 'R';
           DC.band([[1.84, 0.5], [1.95, 0.14], [2.06, 0.1], [2.1, 0.5], [2.06, 0.9], [1.95, 0.86]], COV, [sd], 0.008);   // the lamp's cover: a dark glass teardrop on the wing's tip,
           K.cyl([1.99, 0.57, sd * 0.5], [2.11, 0.57, sd * 0.5], 0.068, COV, { n: 10, capA: null, capB: null });            // its round front proud of the tip (the lamp's pod)
-          K.headLamp(2.112, 0.57, sd * 0.5, 0.058, { host: 'fender' + s });
           K.discX(2.138, 0.455, sd * 0.51, 0.026, 6, K.rgb(0xff9a1e), 1, { host: 'fender' + s });                         // the indicator under it
         }
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(2.112, 0.57, sd * 0.5, 0.058, { host: sd < 0 ? 'fenderL' : 'fenderR' }); });   // (the lamps in the pods; the garage's in their place: mounts.zarometi)
+        K.part('body', () => K.deli('krilo', () => {}));   // (the garage's wing on the tail's deck: mounts.krilo; none stock)
         // ---- the centre stripe (the stripe colour; the paint when the car has none) along the roof and the tail's deck ----
         for (const [x0, x1] of [[-0.72, -0.17], [-2.2, -1.5]]) DC.top([[x0, -0.11], [x1, -0.11], [x1, 0.11], [x0, 0.11]], S, 0.007);
         // ---- the tail: the lamps over the blades (chrome bezels), the blades round the corners, the plate between them, the twin pipes ----

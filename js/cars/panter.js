@@ -4,6 +4,9 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
+  // the head lamp's outline on each wing's nose (u out from the car's middle, v up; metres round the lamp's middle, z 0.605, y 0.61): a
+  // triangle with its corners rounded off, from under the wing's crest down to the belt and the lid's edge (the stock lamp and the garage's)
+  const LAMP = [[0.012, 0.126], [0.151, -0.056], [0.143, -0.072], [-0.14, -0.072], [-0.148, -0.056], [-0.012, 0.126]];
   VEHICLE_DEFS.push({
     id: 'panter', name: 'PANTER 6', cat: 'sportni', ord: 2, drive: 'RR',
     desc: 'Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep.',
@@ -24,6 +27,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         hood: { lx: 0.66, y: 0.69 }, fenderL: { lx: 0.69, lz: -0.79, y: 0.63, h: 0.2 }, fenderR: { lx: 0.69, lz: 0.79, y: 0.63, h: 0.2 },
         quarterL: { h: 0.15 }, quarterR: { h: 0.15 },
       },
+    },
+    // where the garage's parts go (js/deli.js, look units; a trial on a second body, sklop 1): the wing over the engine lid's rear edge in
+    // the whale tail's part; the head lamps in the wings' noses, every option in the stock lamp's triangle (its colour, ring and details on
+    // the bulging lens), in the fenders; the rims on its wheels
+    mounts: {
+      krilo: { x: -2.05, w: 0.59, part: 'wing' },
+      zarometi: { x: 2.035, y0: 0.61, lean: 0, zc: 0.605, yc: 0.61, s: 0.42, hosts: ['fenderL', 'fenderR'], socket: 'host', shape: LAMP, bulge: 0.03 },
+      platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres): one loft from the tail panel to the front lid's edge (the lid low between the
     // wings, the roof's arc, the fastback's glass and the engine lid, the hips flaring out behind the doors); the high front wings with the
@@ -49,7 +60,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: -0.28, y: 1.07, style: 'closed' },
         door: [0.7, -0.5], bumpF: 0.18, bumpR: 0.25, bumpY: [0.5, 0.52], engRear: true,
         crush: { x0: -1.05, x1: 0.33, z: 0.58 },                         // (the roof and the rear window's top; the whale tail far behind it)
-        lamps: [[2.08, 0.65, 0.605], [-2.06, 0.655, 0.62]] },           // (the tail's glow at the light bar's ends)
+        lamps: [[2.08, 0.61, 0.605], [-2.06, 0.655, 0.62]] },           // (the tail's glow at the light bar's ends)
       wheels: { style: 'std', spokes: 5, w: 0.205, wR: 0.255, rim: [0.8, 0.81, 0.84], cap: [0.12, 0.12, 0.13], gap: 0.06 },
       // the bumpers first (the corners under their tops go with them); the front wings to the nose, the hips (quarters) to the tail: the
       // bonnet and the engine lid only between them; the engine lid up to the rear window's foot (the std trunk ends at the last 'gr' section)
@@ -91,9 +102,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const rings = WC.map(([x, yc, zc]) => { const yb = L.prop(x, 'ybelt'), w = L.prop(x, 'w'), yt = L.prop(x, 'yt'), wt = L.prop(x, 'wt');
             return [[x, yb, sd * w], [x, yb + 0.7 * (yc - yb), sd * (w - 0.25 * (w - zc))], [x, yc, sd * zc], [x, yc - 0.45 * (yc - yt), sd * (zc - 0.3 * (zc - wt))], [x, yt, sd * wt]]; });
           K.skin(rings, P, P, P);
-          K.cyl([2.02, 0.65, sd * 0.605], [2.074, 0.65, sd * 0.605], 0.1, CH, { n: 10, capA: null, capB: null });   // (the lamp's chrome bucket: it stands out of the wing)
-          K.headLamp(2.076, 0.65, sd * 0.605, 0.09, { ring: CH });
         });
+        // ---- the head lamps: a triangle filling each wing's nose (LAMP), its lens bulging out of it, a slim chrome frame round it, in the
+        //      fenders (the garage's lamps in their place, in the same triangle: K.deli, mounts.zarometi) ----
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(2.041, 0.61, sd * 0.605, 0.1, { polys: [LAMP], ring: CH, ringW: 0.008, bulge: 0.03, d: 0.02, host: sd < 0 ? 'fenderL' : 'fenderR' }); });
         // ---- the hips: the rear wings' shoulders over the driven wheels, flaring out behind the doors (skins on the loft's low belt: over the
         //      crest, then in under the sail and the quarter window; at the tail a valley by the engine lid), in the quarters ----
         const HC = [[-0.5, 0, 0], [-0.65, 0.8, 0.85], [-0.835, 0.82, 0.862], [-1.02, 0.83, 0.865], [-1.39, 0.825, 0.862], [-1.8, 0.8, 0.845], [-2.05, 0.745, 0.775]];   // x, the crest's height and its z (0: none, at the door)
@@ -107,7 +119,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the wipers on the cowl ----
         for (const z of [-0.5, 0.06]) K.bar([0.67, L.topY(0.67, z) + 0.012, z], [0.58, L.topY(0.58, z + 0.42) + 0.012, z + 0.42], 0.01, B, { n: 4, part: 'body' });
         // ---- the whale tail on the engine lid (the wing): its deck over the lid, the rubber lip round its edge, the intake grille ----
-        K.part('wing', () => {
+        K.part('wing', () => K.deli('krilo', () => {   // (the garage's wing in its place: mounts.krilo)
           const st = [[-1.48, 0, 0.44], [-1.62, 0.975, 0.52], [-1.82, 0.985, 0.58], [-2.0, 0.985, 0.6], [-2.09, 1.015, 0.6]];   // x, the deck's height (0: on the lid), its half width
           const rings = st.map(([x, yt, zo]) => {
             const end = x < -2.04, y0 = (z) => (end ? 0.945 : L.topY(x, z) - 0.012), top = yt || L.topY(x, 0) + 0.006, zi = zo - 0.035, zb = end ? zo : zo + 0.03;
@@ -115,7 +127,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.skin(rings, (k, e) => e === 1 || e === 3 || (k === 3 && e === 2) ? B : P, P, B);
           K.rect(-1.8, 0.992, 0, 0.28, 0.68, B, { dir: 'y' });                                            // the intake grille on the deck
           for (const x of [-1.71, -1.77, -1.83, -1.89]) K.rect(x, 0.996, 0, 0.022, 0.64, [0.2, 0.2, 0.21], { dir: 'y' });
-        }, { noCrush: true, noDent: true, hinge: [[-1.48, 0.94, -0.4], [-1.48, 0.94, 0.4]] });
+        }), { noCrush: true, noDent: true, hinge: [[-1.48, 0.94, -0.4], [-1.48, 0.94, 0.4]] });
         // ---- the impact bumpers: rounded, short black bellows at their ends, a rubber strip along the face, the plates; the front one with
         //      the indicators and a black lip under it ----
         const prof = [[0.07, -0.14], [-0.045, -0.14], [-0.065, -0.08], [-0.065, 0.08], [-0.045, 0.14], [0.07, 0.14]];   // (u in, v up)
