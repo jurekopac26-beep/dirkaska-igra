@@ -1818,7 +1818,7 @@ const Render = (function () {
     K.tailLamp = (x, y, z, w, h, o) => {   // a tail lamp (lights up when braking): into the tail mesh, its left or right range; o.round: a disc (radius w / 2)
       o = o || {}; const side = z < 0 ? 'L' : 'R', T = kx.tails[side], dir = o.dir || -1, sc = (p) => [p[0] * sx, p[1], p[2] * sz], tg = { quadO: (a, b, c, d, cl, i) => T.quadO(sc(a), sc(b), sc(c), sc(d), cl, sc(i)), triO: (a, b, c, cl, i) => T.triO(sc(a), sc(b), sc(c), cl, sc(i)) };
       if (o.round) discX(tg, x + dir * 0.006, y, z, w / 2, o.n || 10, [1, 1, 1], dir); else World.box(tg, x + dir * 0.008, y - h / 2, z, o.d || 0.03, h, w, 0, [1, 1, 1]);
-      kx.tailAt.push([x * sx, y, z * sz]);
+      kx.tailAt.push([x * sx, y, z * sz]); if (kx.dl) (kx.tailDl || (kx.tailDl = {}))[kx.dl] = 1;   // (drawn by a garage part (K.deli): Render.deliMesh shows the tail mesh with it)
       if (o.host) { kx.partOk(o.host); if (!kx.tailHost[side]) kx.tailHost[side] = o.host; }   // (the part it sits on: its side of the tail mesh goes with it, turns with it)
     };
     K.grille = (x, y, z, w, h, o) => {   // a grille facing forward (o.dir -1: back) at (x, y, z) (its centre), w wide, h tall: dark, with slats; o.frame: a frame colour
@@ -1991,7 +1991,7 @@ const Render = (function () {
     geo.userData = { kit: true, outerN, N: total, engN, ranges, order, paint: { i: Uint32Array.from(pI), k: Float32Array.from(pK) }, strp: { i: Uint32Array.from(sI), k: Float32Array.from(sK) }, lamps, noCrush, noDent, twin, tris, budget: B, nums: kx.nums.length ? kx.nums : null, deli };
     // the tail lamps: their own mesh (lit when braking), the left ones then the right ones
     const tl = kx.tails, tg = new GB(); for (const s of ['L', 'R']) { const T = tl[s]; for (let i = 0; i < T.P.length; i++) { tg.P.push(T.P[i]); tg.N.push(T.N[i]); tg.C.push(T.C[i]); } }
-    const tail = tg.geometry(), nL = tl.L.P.length / 3; tail.userData = { tail: { L: [0, nL], R: [nL, tg.P.length / 3] }, host: Object.assign({}, kx.tailHost) };
+    const tail = tg.geometry(), nL = tl.L.P.length / 3; tail.userData = { tail: { L: [0, nL], R: [nL, tg.P.length / 3] }, host: Object.assign({}, kx.tailHost), dl: Object.keys(kx.tailDl || {}) };
     return { geo, tail, tris };
   }
 
@@ -2249,7 +2249,8 @@ const Render = (function () {
   function kitStatus(id) { const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null; return kitEntry(M).status; }
   // (the garage, DELI.mesh) option n of part id alone where it sits on vehicle M (a model or its id): a THREE.Group in the car's frame
   // (metres), the body built with it and only the part's own triangles kept (those K.deli drew: geo.userData.deli, and the car's own
-  // housing round it, K.deli's around; own: the option's alone) in colour's paint; the rims: the four wheels on their hubs. null: M has no
+  // housing round it, K.deli's around; own: the option's alone) in colour's paint, tail lamps with their lit part (the tail mesh, all of
+  // the car's tail lamps: those of the option fitted); the rims: the four wheels on their hubs. null: M has no
   // mount for it (or its build failed)
   function deliMesh(M, id, n, color, own) {
     if (typeof M === 'string') M = Core.MODELS.find(m => m.id === M);
@@ -2270,7 +2271,9 @@ const Render = (function () {
       out.setAttribute(at, new THREE.BufferAttribute(arr, s)); }
     g.dispose(); if (!N) { out.dispose(); return null; }
     out.computeBoundingSphere(); out.computeBoundingBox();
-    grp.add(new THREE.Mesh(out, matCar || new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 }))); return grp;
+    grp.add(new THREE.Mesh(out, matCar || new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 })));
+    if ((E.tail.userData.dl || []).some(k => k === id || (!own && k === id + '+'))) grp.add(new THREE.Mesh(E.tail.clone(), matTailOff || new THREE.MeshLambertMaterial({ color: 0x6a1212 })));   // (tail lamps: their lit part, the tail mesh)
+    return grp;
   }
   // (tests, trying a look out) a look built on vehicle id's model as the build would (not cached, not registered: its status, the colour-
   // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs)
@@ -9586,7 +9589,8 @@ const Render = (function () {
   // cut: [part ids] (a kit vehicle: those parts off, the inner block drawn: what a car looks like with them lost), deli (the garage's parts on it: car.deli), at: [a, b] (an orthographic
   // view's middle in its own plane: side [x, y], front / rear [z, y] (as seen), top [x, z]; with span: a close-up), grid: false (no grid, box
   // or hubs), bg (a flat background colour), blob: false (no shadow blob), cam: { p: [x, y, z], t: [x, y, z], fov } (a camera of its own, car
-  // frame: instead of the view), mark: [[x, y, z] ...] (car frame: the returned canvas's .marks are their pixels [px, py]) }
+  // frame: instead of the view), mark: [[x, y, z] ...] (car frame: the returned canvas's .marks are their pixels [px, py]), brake (the tail
+  // lamps lit) }
   function carShot(o) {
     const M = Core.MODELS.find(m => m.id === o.id); if (!M || !renderer) return null;
     if (!showScene) initShowroom();
@@ -9615,7 +9619,8 @@ const Render = (function () {
       car.grp.rotation.y = v === '34r' ? 0.6 : -0.6;   // (34f: the nose and the right side towards the camera; 34r: the tail and the right side)
       showCam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); showCam.lookAt(0, 0.55 * k + dy, 0);
     }
-    cgSet(true); renderer.render(showScene, showCam);
+    const tl0 = o.brake && car.tail ? car.tail.material : null; if (tl0) car.tail.material = matTailOn;   // (o.brake: the tail lamps lit, as when braking)
+    cgSet(true); renderer.render(showScene, showCam); if (tl0) car.tail.material = tl0;
     const out = document.createElement('canvas'); out.width = W; out.height = H; const x = out.getContext('2d'); x.drawImage(renderer.domElement, 0, 0, W, H);
     const pr = (px, py, pz) => { const p = new THREE.Vector3(px, py, pz).project(showCam); return [(p.x * 0.5 + 0.5) * W, (0.5 - p.y * 0.5) * H]; };
     if (o.mark) out.marks = o.mark.map(q => pr(q[0], q[1], q[2]));   // (o.mark: points (car frame) whose pixels the caller wants)
