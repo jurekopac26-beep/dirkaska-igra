@@ -435,6 +435,13 @@
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
     /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
+    /* ---- the special missions (js/missions.js) ---- */
+    'Zmanjkalo je časa.': 'Out of time.', 'MISIJA NEUSPELA': 'MISSION FAILED', 'MISIJA {0}': 'MISSION {0}', 'Najboljši': 'Best', 'Ponovi': 'Again', 'Misije': 'Missions',
+    'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
+    'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR', 'Vaja: na vrh': 'Practice: to the top',
+    'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
+    'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
+    'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
