@@ -34,7 +34,7 @@ CFG = {
     'townsville': dict(kind='real', start='Townsville', country='Australia', region='Queensland', l1='queensland'),
     'chapman': dict(kind='real', start='Hout Bay', finish="Chapman's Peak", country='South Africa', region='Cape Peninsula', l1='cape'),
     'sani': dict(kind='real', start='Mkhomazana', finish='Sani Pass', country='South Africa', region='Drakensberg', l1='drakensberg'),
-    'marrakesh': dict(kind='real', start='Marrakesh', country='Morocco', region='Marrakesh-Safi', l1='morocco'),,
+    'marrakesh': dict(kind='real', start='Marrakesh', country='Morocco', region='Marrakesh-Safi', l1='morocco'),
     'montreal': dict(kind='real', start='Montréal', country='Canada', region='Quebec', l1='quebec'),
     'toronto': dict(kind='real', start='Toronto', country='Canada', region='Ontario', l1='greatlakes'),
     'troisrivieres': dict(kind='real', start='Trois-Rivières', country='Canada', region='Quebec', l1='quebec'),
