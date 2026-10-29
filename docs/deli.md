@@ -12,6 +12,7 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 | `js/render.js` | `K.deli`, `K.topY`, avto z deli (`kitEntry(M, hi, deli)`), `Render.deliMesh`, `Render.kitInfo(id, deli)`, `Render.carShot({ deli })`, `Render.setShowCar(model, barva, številka, deli)` |
 | `js/core.js` | `Core.applyDeli(car, deli)`: učinek na fiziko; `Car` (`opts.deli`), `Race` (`opts.playerDeli`); `mounts` v definiciji vozila |
 | `tests/deli.test.js` | test dogovora (seznam, učinki, fizika, vse možnosti na vseh avtih z `mounts`) |
+| `tools/deli-plosca.mjs` | plošča za uporabnika iz prave igre: serijski del, širši pogledi in 16 možnosti elementa z imeni, cenami in učinki (`node tools/deli-plosca.mjs krilo,zarometi [--car kolibri]` → `test-results/deli/`) |
 
 ## Dogovor
 
@@ -38,6 +39,34 @@ PANTER (športni), JASTREB (klasični), TITAN (tovornjak) imajo `mounts` za posk
 - JASTREB: nima dela za krilo, zato je krilo v `body` (ne odpade). Žarometi (želja uporabnika): cela pokrita luč je luč (stekleni pokrov v obliki solze, okroglo ohišje in luč v njem; vse v podobsegu leče, razbita potemni vse); luč iz garaže je okrogla v ohišju (`shape`), pokrov in ohišje v njenih barvah (`around`, `DELI.lampLook`).
 - TITAN: spojler na zadnjem robu strešnega deflektorja (želja uporabnika; del `deflector`, `s` 2, `top`); en sklop luči na stran čez štiri serijske luči na odbijaču.
 - Serijski videz JASTREBA in TITANA je ostal enak (trikotniki po delih enaki kot prej); PANTER ima nove serijske žaromete.
+
+## Stanje in naslednji sklopi
+
+Načrt je na veji garaže (`git fetch origin claude/3d-garage-cars-sum9uk`, nato `git show origin/claude/3d-garage-cars-sum9uk:nacrti/naloga_kolibri.md`, razdelka 3 in 3a). Datotek garaže in mape `nacrti/` ne spreminjaj. Vsak sklop dela svoja seja; uporabnik ji napiše »Naredi sklop N po docs/deli.md«.
+
+| Sklop | Kaj | Stanje |
+|---|---|---|
+| 1 | dogovor; `krilo`, `platisca`, `zarometi` na KOLIBRIJU; poskus na PANTERJU, JASTREBU, TITANU | narejeno (pull request); luč JASTREBA v enem kosu čaka na izbiro uporabnika |
+| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | čaka |
+| 3 | barve in nalepke (`barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`), skriti deli (načrt 2.6; učinki `lower`, `tint`, `tyre`), razbijanje novih delov | čaka |
+| 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | čaka |
+
+Odločitve uporabnika (29. 10. 2026, po sklopu 1):
+- Deli ostanejo na PANTERJU, JASTREBU in TITANU; ostali avti pridejo na vrsto kasneje.
+- Vsak sklop gre na `main` s svojim pull requestom, ko so testi zeleni in ga uporabnik potrdi.
+- Sklop 2 se dela takoj v kodi igre na svoji veji, brez prototipa, s slikami iz prave igre (`tools/deli-plosca.mjs`).
+- Plošče v sklopu 2: odločitev je še odprta. Možnosti sta ena plošča na skupino iz tabele (spredaj, zadaj, streha, bok in kolesa) s potrditvijo vmes ali ena plošča na koncu.
+- Vse seje delajo z naporom high.
+- Uporabnik dobi po vsakem koraku eno ploščo in nato počakaš na njegovo potrditev. Vprašanja mu postavljaš v slikah, odgovarjaš v slovenščini, kratko.
+
+Kako se doda element (vzorec sta `krilo` in `zarometi` v `js/deli.js`):
+1. V `js/cars/kolibri.js` dodaj mesto `mounts.<element>` (kje je del, koliko prostora ima) in ovoj `K.deli('<element>', () => <serijski del>)` okrog serijskega dela v `build(K)`. Serijski avto mora ostati enak (`tests/kit.test.js`, zlate reference).
+2. V `DELI.build` (`js/deli.js`) nariši 16 možnosti pod istimi imeni delov kot serijski. Možnosti naj bodo preproste: malo trikotnikov, podrobnosti samo z `K.hi`, okrogle oblike na Normalnem z manj odseki (`sq`).
+3. `tests/deli.test.js` vzame nov element sam, ko ima mesto v `mounts`: vseh 16 možnosti se zgradi, del posebej in meje iz točke 6.
+4. Ploščo narediš z `node tools/deli-plosca.mjs <element,…>`. Bližnji pogled novega elementa dodaj v `VIEWS` v orodju.
+5. Na koncu `node tools/stamp.js`, `npm run test:related` in posodobi kazalo.
+
+Dokler sklop 1 ni na `main`, spoji vejo `claude/sleepy-newton-dlus7o` v svojo vejo.
 
 ## Spremembe dogovora
 
