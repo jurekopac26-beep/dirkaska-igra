@@ -301,12 +301,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             for (const s2 of [-1, 1]) K.box(x0 - 0.02, 0.4, z + s2 * 0.205, 0.44, 0.1, 0.06, 0, SEAT2, SEAT2, true, IN);
             K.plate([[x0 - 0.25, 0.47, z - 0.18], [x0 - 0.25, 0.47, z + 0.18], [x0 - 0.38, 1.08, z + 0.162], [x0 - 0.38, 1.08, z - 0.162]], 0.09, SEAT, IN);
             for (const s2 of [-1, 1]) K.plate([[x0 - 0.22, 0.5, z + s2 * 0.2], [x0 - 0.3, 0.52, z + s2 * 0.2], [x0 - 0.4, 0.98, z + s2 * 0.19], [x0 - 0.32, 0.98, z + s2 * 0.19]], 0.06, SEAT2, IN);
-            K.plate([[x0 - 0.37, 1.1, z - 0.11], [x0 - 0.37, 1.1, z + 0.11], [x0 - 0.4, 1.25, z + 0.1], [x0 - 0.4, 1.25, z - 0.1]], 0.07, SEAT2, IN);
+            K.plate([[x0 - 0.37, 1.0, z - 0.11], [x0 - 0.37, 1.0, z + 0.11], [x0 - 0.39, 1.12, z + 0.1], [x0 - 0.39, 1.12, z - 0.1]], 0.07, SEAT2, IN);   // (no higher than the old seats' backs: the roof's room to cave in, crash.test.mjs)
             K.bar([x0 - 0.33, 1.03, z + sd * 0.17], [x0 + 0.08, 0.5, z - sd * 0.12], 0.012, [0.32, 0.32, 0.34], inn({ n: 3 })); }
           // the rear bench (its cushion, its back, two headrests), the parcel shelf
           K.box(-1.0, 0.3, 0, 0.42, 0.15, 1.0, 0, SEAT2, SEAT, true, IN);
           K.plate([[-1.2, 0.45, -0.5], [-1.2, 0.45, 0.5], [-1.3, 0.98, 0.49], [-1.3, 0.98, -0.49]], 0.08, SEAT, IN);
-          for (const sd of [-1, 1]) K.plate([[-1.3, 0.99, sd * 0.28 - 0.09], [-1.3, 0.99, sd * 0.28 + 0.09], [-1.32, 1.1, sd * 0.28 + 0.085], [-1.32, 1.1, sd * 0.28 - 0.085]], 0.06, SEAT2, IN);
+          for (const sd of [-1, 1]) K.plate([[-1.29, 0.93, sd * 0.28 - 0.09], [-1.29, 0.93, sd * 0.28 + 0.09], [-1.31, 1.02, sd * 0.28 + 0.085], [-1.31, 1.02, sd * 0.28 - 0.085]], 0.06, SEAT2, IN);
           K.face([[-1.34, 0.93, 0.62], [-1.34, 0.93, -0.62], [-1.62, 0.93, -0.6], [-1.62, 0.93, 0.6]], PL, IN);
           // the console: the gear lever (its gaiter, the knob), the hand brake
           K.box(0.18, 0.32, 0, 0.32, 0.1, 0.2, 0, PL2, PL, true, IN);
@@ -315,9 +315,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(0.168, 0.595, 0, 0.04, 0.04, 0.04, 0, BLK, [0.9, 0.9, 0.9], true, IN);
           K.box(-0.12, 0.27, 0, 0.32, 0.06, 0.1, 0, PL, PL, true, IN);
           K.bar([0.0, 0.34, 0], [-0.25, 0.42, 0], 0.014, PL3, inn());
-          // the pedals, the interior mirror
+          // the pedals (no interior mirror: hanging from the roof it held the roof up, crash.test.mjs's roof field)
           for (const dz of [-0.1, 0, 0.1]) face([[0.6, 0.3, DZ + dz - 0.03], [0.6, 0.3, DZ + dz + 0.03], [0.62, 0.38, DZ + dz + 0.03], [0.62, 0.38, DZ + dz - 0.03]], [0.3, 0.3, 0.32], [-0.9, 0.3, 0], IN);
-          K.box(0.21, 1.25, 0, 0.03, 0.06, 0.2, 0, PL, PL, false, IN); K.bar([0.22, 1.28, 0], [0.24, 1.33, 0], 0.008, PL, inn({ n: 3 }));
           // the doors' cards (inside each door, going with it): a red insert, the arm rest, the pull, the window's crank, the speaker
           for (const sd of [-1, 1]) { const host = sd < 0 ? 'doorL' : 'doorR', z = sd * 0.675, oo = { inner: true, host }, dir = sd < 0 ? 'z' : '-z';
             K.rect(0.2, 0.68, z, 0.95, 0.3, PL, Object.assign({ dir }, oo));
