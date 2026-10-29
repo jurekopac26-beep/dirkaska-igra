@@ -262,7 +262,7 @@
  [
   "medvode",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 225,
    "back": 292,
    "up": 184,
@@ -296,7 +296,7 @@
  [
   "baldy",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 260,
    "back": 338,
    "up": 213,
@@ -330,7 +330,7 @@
  [
   "beartooth",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 175,
    "back": 228,
    "up": 144,
@@ -356,7 +356,7 @@
  [
   "bigsur",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 140,
    "back": 182,
    "up": 115,
@@ -386,7 +386,7 @@
  [
   "detroit",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 130,
    "back": 169,
    "up": 107,
@@ -399,7 +399,7 @@
  [
   "maunakea",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 205,
    "back": 266,
    "up": 168,
@@ -429,7 +429,7 @@
  [
   "moki",
   {
-   "kbps": 900,
+   "kbps": 450,
    "speed": 175,
    "back": 228,
    "up": 144,

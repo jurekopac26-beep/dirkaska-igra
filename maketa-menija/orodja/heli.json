@@ -82,6 +82,25 @@
   "edgeTint": true
  },
  "bigsur": {
-  "sea": true
+  "sea": true,
+  "kbps": 550
+ },
+ "medvode": {
+  "kbps": 550
+ },
+ "baldy": {
+  "kbps": 550
+ },
+ "beartooth": {
+  "kbps": 550
+ },
+ "detroit": {
+  "kbps": 550
+ },
+ "maunakea": {
+  "kbps": 550
+ },
+ "moki": {
+  "kbps": 550
  }
 }
