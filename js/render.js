@@ -4495,7 +4495,7 @@ const Render = (function () {
     birds.reset(birds.gull);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same)
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
-    for (const c of race.cars) views.push(makeView(c));
+    for (const c of race.cars) { const v = makeView(c); if (c.police && c.pol && c.pol.kind === 'car') polGear(v); views.push(v); }   // (a special mission's escort: a race car in the police's look)
     for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
@@ -5785,6 +5785,9 @@ const Render = (function () {
     // the patrol cars (and the unmarked car): a view each (as the race's cars); a patrol car's gear, its lamps flashing blue (two quick flashes
     // a side) while it chases, searches or stands at a strip or a roadblock (dark while it waits in an ambush); the unmarked car's hidden
     // lamps behind its grille and its windscreen once it has shown itself
+    for (const v of views) { const c = v.car; if (!v.polLamps || !c.police || R.pol && PC.indexOf(c) >= 0) continue;   // (a special mission's escort among the race's cars: its lamps flashing while it leads)
+      const on = c.pol.mode === 'chase' && !c.locked, a = on && flash(c.id, 0), b = on && flash(c.id, 1); v.polLamps[0].material = a ? matPolOn : matPolOff; v.polLamps[1].material = b ? matPolOn : matPolOff;
+      if ((a || b) && v.polBar.visible && !v.cull && Math.hypot(c.x - cx, c.z - cz) < 180) { v.polBar.updateMatrixWorld(true); _rv.setFromMatrixPosition(v.polLamps[a ? 0 : 1].matrixWorld); glows.add(_rv.x, _rv.y + 0.05, _rv.z, dusk ? 3.2 : 2.2, 0.25, 0.45, 1.0, dusk ? 1 : 0.85); } }
     if (R.pol) {
       for (const c of PC) if (!Q.pol.has(c) && (c.pol.kind === 'car' || c.pol.kind === 'uc')) { const v = makeView(c); if (c.pol.kind === 'car') polGear(v); else v.dec.visible = false; views.push(v); Q.pol.set(c, v); }
       for (const [c, v] of Q.pol) if (PC.indexOf(c) < 0) { const k = views.indexOf(v); if (k >= 0) views.splice(k, 1); disposeView(v, debrisRes()); Q.pol.delete(c); }   // (its loose panels on the road stay drawable: they share its panels' geometry and paint)
@@ -8609,8 +8612,8 @@ const Render = (function () {
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
-    if (c.fxCar > 3) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }
-    if (XC.dust && (c.fxWall > 4 || c.fxCar > 4)) { const w = c.fxCar > c.fxWall, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
+    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }   // (c.fxQ: Trki: iskre izklop, a knock between cars without sparks or dust)
+    if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }
     if (XC.drag && v.kit && spd > 4 && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (const bn of ['bumperF', 'bumperR']) if (v.kit.ajar[bn] && !v.kit.dead[bn]) {   // (Razbijanje · nov način: a bumper hanging loose drags on the road: sparks off its low end)
@@ -8619,7 +8622,7 @@ const Render = (function () {
       const acc = v.xDragA || (v.xDragA = {}); acc[bn] = (acc[bn] || 0) + dt * (60 + spd * 6);   // (a stream: more the faster it drags; by time, not by frame)
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
-    c.fxWall = 0; c.fxCar = 0;
+    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)
     if (v.kit && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {
