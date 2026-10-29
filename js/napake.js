@@ -4,8 +4,9 @@
    Označi stands the replay still; over the picture a pencil in 6 colours, undo and an eraser. A closed loop opens a bubble of its
    colour beside it to write in (one colour on a picture is one note: every red loop goes to the red note); a bubble moves by its top.
    Dodaj k zbirki keeps the moment (the picture, the marks, the notes, 3 more pictures of its motion) in memory and puts a flag on the
-   timeline. The collection becomes a picture (the moments, the track's data and map, the text for the chat), kept in the game
-   (IndexedDB, the last 20) and offered at the end of the replay (Deli zdaj, Samo shrani sliko, Kopiraj besedilo) or by Deli at any time.
+   timeline. The collection becomes a picture (the moments, the track's data and map, the text for the chat), kept in the game's
+   Zgodovina napak (IndexedDB: the last 100, the newest 20 with their pictures; its state Neposlano, Poslano, Popravljeno, Zaprto) and
+   offered at the end of the replay (Deli zdaj, Samo shrani sliko, Kopiraj besedilo) or by Deli at any time.
    The flag in the race (the button by the pause button, F, the pad's Select) keeps only the race's time; the replay's Zastavice goes
    through them. Its settings (Nastavitve · Orodje za napake) are its own (tdgp-napake). The game (js/game.js) gives its hooks with Napake.init.
    The log (Dnevnik napak: the page's errors, the promises let down, the hitches of the race; the last 50, kept in the game) goes with the
@@ -47,7 +48,7 @@ const Napake = (function () {
     pal.innerHTML = '<button data-nk="pen" aria-label="Svinčnik">' + ICON.pen + '</button>' +
       BARVE.map(([n, c], k) => '<button data-nk="col" data-c="' + k + '" aria-label="' + n + '" style="--c:' + c + '"><i></i></button>').join('') +
       '<button data-nk="undo" aria-label="Razveljavi">' + ICON.undo + '</button><button data-nk="erase" aria-label="Radirka">' + ICON.erase + '</button>';
-    const bar = mk('div', 'nk-bar', '<button data-nk="add" class="nk-add">+ Dodaj k zbirki</button><button data-nk="close" class="nk-close">Zapri</button>'); bar.id = 'nk-bar';
+    const bar = mk('div', 'nk-bar', '<button data-nk="add" class="nk-add">+ Dodaj k zbirki</button><button data-nk="zg" class="nk-zgb">Zgodovina</button><button data-nk="close" class="nk-close">Zapri</button>'); bar.id = 'nk-bar';
     const bot = R.querySelector('.rp-bot'); bot.insertBefore(pal, R.querySelector('.rp-line')); bot.appendChild(bar);
     for (const box of [pal, bar]) box.addEventListener('click', (e) => { const b = e.target.closest('[data-nk]'); if (!b) return; e.preventDefault(); act(b.dataset.nk, b); });
     cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
@@ -85,6 +86,7 @@ const Napake = (function () {
     else if (a === 'erase') M.tool = 'erase';
     else if (a === 'undo') undo();
     else if (a === 'add') { add(); return; }
+    else if (a === 'zg') { zgodovina(); return; }
     else if (a === 'close') {   // (marks on the picture: a second tap within 3 s throws them away)
       if (M.strokes.length && performance.now() - ask > 3000) { ask = performance.now(); closeBtn(); setTimeout(closeBtn, 3100); return; }
       close(); return;
@@ -632,7 +634,7 @@ const Napake = (function () {
     const p = Promise.all(cvs.map(c => blob(c))).then(async (bs) => {
       if (bs.some(b => !b)) throw new Error('slika');
       const files = bs.map((b, i) => ({ name: R.ime + (cvs.length > 1 ? '_' + (i + 1) : '') + '.png', blob: b, w: cvs[i].width, h: cvs[i].height }));
-      const rec = { id: Z.id || 'nk-' + R.d0.getTime(), name: R.ime, date: R.d0.getTime(), track: R.meta.track || '', n: R.items.length, flags: R.zast.length, text: R.text, status: 'neposlano', files, thumb: await blob(small(cvs[0], 320), 'image/jpeg', 0.8) };
+      const rec = { id: Z.id || 'nk-' + R.d0.getTime(), name: R.ime, date: R.d0.getTime(), track: R.meta.track || '', n: R.items.length, flags: R.zast.length, text: R.text, status: 'neposlano', tname: R.meta.name || '', files, thumb: await blob(small(cvs[0], 320), 'image/jpeg', 0.8) };
       Z.out = { ver, rec }; making = null;
       await dbPut(rec).catch(() => { });
       return rec;
@@ -641,8 +643,9 @@ const Napake = (function () {
     return p;
   }
 
-  /* ---------------- kept in the game (IndexedDB rra-napake: the last 20 pictures, neposlano or poslano) ---------------- */
-  const DB_N = 'rra-napake', DB_S = 'slike', DB_MAX = 20;
+  /* ---------------- kept in the game (IndexedDB rra-napake: Zgodovina napak, the last 100 collections; the newest 20 with their pictures,
+     the older ones with the small picture and the text only: nf, the pictures it had) ---------------- */
+  const DB_N = 'rra-napake', DB_S = 'slike', DB_MAX = 100, DB_FULL = 20;
   let dbP = null;
   function db() {
     if (!dbP) dbP = new Promise((res, rej) => { try { const r = indexedDB.open(DB_N, 1); r.onupgradeneeded = () => r.result.createObjectStore(DB_S, { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } });
@@ -651,15 +654,20 @@ const Napake = (function () {
   const dbDo = (mode, fn) => db().then(d => new Promise((res, rej) => { const t = d.transaction(DB_S, mode), s = t.objectStore(DB_S), out = fn(s); t.oncomplete = () => res(out && 'result' in out ? out.result : undefined); t.onerror = () => rej(t.error); }));
   const dbAll = () => dbDo('readonly', s => s.getAll()).then(l => (l || []).sort((a, b) => b.date - a.date));
   const dbDel = (id) => dbDo('readwrite', s => s.delete(id));
+  const lite = (o) => { if (o.files && o.files.length) { o.nf = o.files.length; o.files = []; } return o; };   // (the pictures out, the small one and the text kept)
   async function dbPut(rec) {
     await dbDo('readwrite', s => s.put(rec));
-    const l = await dbAll(); for (const o of l.slice(DB_MAX)) await dbDel(o.id);   // (the last 20)
+    const l = await dbAll();
+    for (const o of l.slice(DB_FULL, DB_MAX)) if (o.files && o.files.length) await dbDo('readwrite', s => s.put(lite(o)));
+    for (const o of l.slice(DB_MAX)) await dbDel(o.id);
   }
-  async function dbMark(id, status) { const l = await dbAll(), o = l.find(r => r.id === id); if (o && o.status !== status) { o.status = status; await dbDo('readwrite', s => s.put(o)); } }
+  async function dbSet(id, f) { const l = await dbAll(), o = l.find(r => r.id === id); if (!o) return null; Object.assign(o, typeof f === 'function' ? f(o) : f); await dbDo('readwrite', s => s.put(o)); return o; }
+  // shared or copied for the chat: Poslano (a later state, Popravljeno or Zaprto, stays)
+  const dbMark = (id) => dbSet(id, o => (stOf(o) === 'neposlano' ? { status: 'poslano' } : {}));
 
   /* ---------------- sharing: Deli zdaj (the phone's share sheet), Kopiraj sliko (a computer: Ctrl + V), Samo shrani sliko, Kopiraj besedilo ---------------- */
   const coarse = () => { try { return matchMedia('(pointer: coarse)').matches; } catch (_) { return false; } };
-  const fileOf = (f) => (typeof File === 'function' ? new File([f.blob], f.name, { type: 'image/png' }) : null);
+  const fileOf = (f) => (typeof File === 'function' ? new File([f.blob], f.name, { type: f.blob.type || 'image/png' }) : null);
   function canShare(files) { try { return !!(navigator.share && navigator.canShare && files.every(Boolean) && navigator.canShare({ files })); } catch (_) { return false; } }
   async function deli(recs) {   // 'share', 'abort', or 'no' (no share sheet here)
     const files = [].concat(...recs.map(r => r.files.map(fileOf))), text = recs.map(r => r.text).join('\n\n');
@@ -681,22 +689,23 @@ const Napake = (function () {
     try { const ta = mk('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch (_) { return false; }
   }
   const KJE = 'Telefon: Moje datoteke → Prenosi; računalnik (Edge): mapa Prenosi.';
-  // what was done with the collection: shared or copied for the chat is poslano; without Obdrži tudi v igri it leaves the game
-  async function done(rec, how) {
+  // what was done with the collection: shared or copied for the chat is Poslano; it stays in Zgodovina napak, without Obdrži tudi slike v
+  // igri as the small picture and the text (hist: from Zgodovina napak, as it is)
+  async function done(rec, how, hist) {
     Z.done = Z.out && Z.out.rec === rec ? Z.out.ver : Z.done;
-    if (how === 'poslano') { rec.status = 'poslano'; await dbMark(rec.id, 'poslano').catch(() => { }); }
-    if (!N.keep) await dbDel(rec.id).catch(() => { });
+    if (how === 'poslano') { if (stOf(rec) === 'neposlano') rec.status = 'poslano'; await dbMark(rec.id).catch(() => { }); }
+    if (!N.keep && !hist) await dbSet(rec.id, lite).catch(() => { });
   }
-  async function dejanje(a, rec, i) {   // the choice's buttons; true: the choice may close
+  async function dejanje(a, rec, i, hist) {   // the choice's buttons (and Zgodovina napak's: hist); true: the choice may close
     if (a === 'deli') {
       const how = await deli([rec]);
-      if (how === 'share') { await done(rec, 'poslano'); G.toast('Slika napak je poslana v meni Deli.', 2600); return true; }
+      if (how === 'share') { await done(rec, 'poslano', hist); G.toast('Slika napak je poslana v meni Deli.', 2600); return true; }
       if (how === 'abort') return false;
-      shrani(rec); await done(rec, 'shranjeno'); G.toast('Deljenje tu ne gre: slika je v Prenosih (' + rec.files[0].name + '). ' + KJE, 4600); return true;
+      shrani(rec); await done(rec, 'shranjeno', hist); G.toast('Deljenje tu ne gre: slika je v Prenosih (' + rec.files[0].name + '). ' + KJE, 4600); return true;
     }
-    if (a === 'shrani') { shrani(rec); await done(rec, 'shranjeno'); G.toast('Shranjeno v Prenose: ' + rec.files.map(f => f.name).join(', ') + '. ' + KJE, 4600); return true; }
+    if (a === 'shrani') { shrani(rec); await done(rec, 'shranjeno', hist); G.toast('Shranjeno v Prenose: ' + rec.files.map(f => f.name).join(', ') + '. ' + KJE, 4600); return true; }
     if (a === 'slika') {
-      if (await kopirajSliko(rec.files[i])) { await done(rec, 'poslano'); G.toast('Slika ' + (rec.files.length > 1 ? (i + 1) + '/' + rec.files.length + ' ' : '') + 'je kopirana: v pogovoru pritisni Ctrl + V.', 3200); return rec.files.length === 1; }
+      if (await kopirajSliko(rec.files[i])) { await done(rec, 'poslano', hist); G.toast('Slika ' + (rec.files.length > 1 ? (i + 1) + '/' + rec.files.length + ' ' : '') + 'je kopirana: v pogovoru pritisni Ctrl + V.', 3200); return rec.files.length === 1; }
       G.toast('Slike ni bilo mogoče kopirati: shrani jo.', 2600); return false;
     }
     if (a === 'besedilo') { G.toast(await kopirajBesedilo(rec.text) ? 'Besedilo je kopirano.' : 'Besedila ni bilo mogoče kopirati.', 2400); return false; }
@@ -771,7 +780,7 @@ const Napake = (function () {
   async function rrpOdpri(blob, name) {
     if (!G || !G.open) return 'ni igre';
     let r = null; try { r = await rrpBeri(blob); } catch (e) { const why = (e && e.message) || 'napaka'; G.toast('Posnetka ni bilo mogoče odpreti: ' + why + '.', 3600); return why; }
-    r.H.ime = name || ''; nZapri(); zapri();
+    r.H.ime = name || ''; nZapri(); zapri(); zgZapri();
     const why = G.open(r.H, r.frames);
     if (why) G.toast('Posnetka ni bilo mogoče odpreti: ' + why + '.', 3600);
     else if (r.H.ver && r.H.ver !== '?' && r.H.ver !== verIgre()) G.toast('Posnetek je iz druge različice igre (' + r.H.ver + '): svet je lahko malo drugačen.', 3200);
@@ -792,12 +801,14 @@ const Napake = (function () {
     if (!Z.items.length && !G.flags().length && !potrjene().length) return;
     const el = mk('div', 'nk-dlg'); el.id = 'nk-dlg'; document.body.appendChild(el);
     el.innerHTML = '<div class="nk-box"><h3>Zbirka napak</h3><p class="nk-sub"></p><div class="nk-prev"><span>Pripravljam sliko …</span></div><div class="nk-acts"></div>' +
-      '<label class="nk-keep"><input type="checkbox"' + (N.keep ? ' checked' : '') + '> Obdrži tudi v igri</label><div class="nk-end"><button data-nk-d="zapri">Zapri</button></div></div>';
+      '<label class="nk-keep"><input type="checkbox"' + (N.keep ? ' checked' : '') + '> Obdrži tudi slike v igri</label><p class="nk-hint">Zapis ostane v Zgodovini napak; brez kljukice le z malo sliko in besedilom.</p>' +
+      '<div class="nk-end"><button data-nk-d="zg">Zgodovina</button><button data-nk-d="zapri">Zapri</button></div></div>';
     const zast = Z.rec === G.rec() ? G.flags().length : 0;
     el.querySelector('.nk-sub').textContent = trenutkov(Z.items.length) + (zast ? ' · zastavic iz dirke: ' + zast : '');
     el.querySelector('.nk-keep input').addEventListener('change', (e) => { N.keep = e.target.checked ? 1 : 0; nSave(); });
     el.addEventListener('click', (e) => { e.stopPropagation(); if (e.target === el) zapri(); });
     el.querySelector('[data-nk-d="zapri"]').addEventListener('click', (e) => { e.preventDefault(); zapri(); });
+    el.querySelector('[data-nk-d="zg"]').addEventListener('click', (e) => { e.preventDefault(); zgodovina(); });
     el.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') zapri(); });
     pripravi().then((rec) => {
       if (!el.isConnected) return;
@@ -837,7 +848,7 @@ const Napake = (function () {
       '<div class="nk-row"><span>Dnevnik napak <small class="nk-dn-n"></small></span><span class="nk-dn-b"><button data-nk-d="dn-kop">Kopiraj</button><button data-nk-d="dn-del">Počisti</button></span></div><pre class="nk-dn"></pre>' +
       '<div class="nk-row"><span>Posnetek dirke <small>(.rrp)</small></span><span class="nk-dn-b"><button data-nk-d="rrp-shrani"' + (G && G.rec() && G.rec().frames.length >= RRP.min ? '' : ' disabled') + '>Shrani</button><button data-nk-d="rrp-odpri">Odpri …</button></span></div>' +
       '<input type="file" class="nk-rrp-in" hidden>' +   // (no accept: a phone's picker greys out a kind it does not know; rrpBeri checks the file)
-      '<div class="nk-row"><span>Shranjene napake</span><button data-nk-d="vse">Deli vse neposlane</button></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
+      '<div class="nk-row"><span>Zgodovina napak</span><span class="nk-dn-b"><button data-nk-d="vse">Deli vse neposlane</button><button data-nk-d="zg">Odpri</button></span></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
       '<div class="nk-end"><button data-nk-d="zapri">Zapri</button></div></div>';
     el.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') nZapri(); });
     el.querySelector('.nk-rrp-in').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) rrpOdpri(f, f.name); });
@@ -854,18 +865,8 @@ const Napake = (function () {
         if (G && G.kje() && !(G.rec() && G.rec().file) && performance.now() - rrpAsk > 3000) { rrpAsk = performance.now(); G.toast('Dirka se bo končala. Za odpiranje posnetka tapni še enkrat.', 3000); return; }
         rrpAsk = 0; el.querySelector('.nk-rrp-in').click(); return;
       }
-      const l = await dbAll().catch(() => []);
-      if (a === 'vse') {
-        const un = l.filter(r => r.status !== 'poslano'); if (!un.length) { G.toast('Neposlanih napak ni.', 2000); return; }
-        const how = await deli(un);
-        if (how === 'share') { for (const r of un) await dbMark(r.id, 'poslano').catch(() => { }); G.toast('Poslano: ' + un.length + '.', 2200); }
-        else if (how === 'no') { for (const r of un) shrani(r); G.toast('Deljenje tu ne gre: slike so v Prenosih. ' + KJE, 4200); }
-        seznam(); return;
-      }
-      const rec = l.find(r => r.id === b.dataset.id); if (!rec) return;
-      if (a === 'del') await dbDel(rec.id).catch(() => { });
-      else if (a === 'deli' || a === 'shrani') { const keep = N.keep; N.keep = 1; await dejanje(a, rec, 0); N.keep = keep; }
-      seznam();
+      if (a === 'vse') { await vseNeposlane(); return; }
+      if (a === 'zg') zgodovina(b.dataset.id);
     });
     seznam(); dnPanel();
   }
@@ -874,17 +875,90 @@ const Napake = (function () {
     n.textContent = '(' + D.l.length + ')'; el.textContent = D.l.length ? D.l.slice().reverse().map(dVrstica).join('\n') : 'Ni zapisov.';
   }
   function nZapri() { const el = $('nk-set'); if (el) el.remove(); for (const u of urls) URL.revokeObjectURL(u); urls = []; }
-  async function seznam() {
-    const box = document.querySelector('#nk-set .nk-list'); if (!box) return;
-    let l = []; try { l = await dbAll(); } catch (_) { box.innerHTML = '<span class="nk-hint">Shranjevanje v igri tu ne deluje.</span>'; return; }
-    for (const u of urls) URL.revokeObjectURL(u); urls = [];
-    if (!l.length) { box.innerHTML = '<span class="nk-hint">Ni shranjenih napak.</span>'; return; }
-    box.innerHTML = l.map(r => { const u = r.thumb ? URL.createObjectURL(r.thumb) : ''; if (u) urls.push(u);
-      return '<div class="nk-item" data-id="' + r.id + '">' + (u ? '<img src="' + u + '" alt="">' : '<i></i>') + '<div><b>' + r.name + '</b><small>' + datum(new Date(r.date)) + ' · ' + trenutkov(r.n) + (r.files.length > 1 ? ' · ' + r.files.length + ' slike' : '') + '</small>' +
-        '<em class="' + (r.status === 'poslano' ? 'ok' : '') + '">' + r.status + '</em></div><span><button data-nk-d="deli" data-id="' + r.id + '">Deli</button><button data-nk-d="shrani" data-id="' + r.id + '">Shrani</button><button data-nk-d="del" data-id="' + r.id + '" aria-label="Izbriši">&#10005;</button></span></div>'; }).join('');
+  // the list of Zgodovina napak (in the tool's settings and in its own panel): the newest first, a tap opens the one (data-nk-d="zg")
+  async function seznam(box, U) {
+    box = box || document.querySelector('#nk-set .nk-list'); U = U || urls; if (!box) return [];
+    let l = []; try { l = await dbAll(); } catch (_) { box.innerHTML = '<span class="nk-hint">Shranjevanje v igri tu ne deluje.</span>'; return []; }
+    for (const u of U) URL.revokeObjectURL(u); U.length = 0;
+    if (!l.length) { box.innerHTML = '<span class="nk-hint">Ni shranjenih napak.</span>'; return l; }
+    box.innerHTML = l.map(r => { const u = r.thumb ? URL.createObjectURL(r.thumb) : ''; if (u) U.push(u);
+      return '<button class="nk-item" data-nk-d="zg" data-id="' + esc(r.id) + '">' + (u ? '<img src="' + u + '" alt="">' : '<i></i>') + '<span class="nk-it"><b>' + esc(progaOf(r)) + '</b><small>' + opisOf(r) + '</small></span>' + stPill(r) + '</button>'; }).join('');
+    return l;
   }
 
-  return { init, open, close, sync, dirka, flag, tocke, konec, izbira, nastavitve, pripravi, shranjene: () => dbAll(), okvir, dev, zaznaj, porocilo: () => porocilo().text,
+  /* ---------------- Zgodovina napak: every collection kept (js: dbPut), its state; from the marking's bar, the choice and the tool's settings ---------------- */
+  const STANJA = [['neposlano', 'Neposlano'], ['poslano', 'Poslano'], ['popravljeno', 'Popravljeno'], ['zaprto', 'Zaprto']];
+  const stOf = (r) => (STANJA.some(s => s[0] === r.status) ? r.status : 'neposlano');
+  const stPill = (r) => { const s = stOf(r); return '<em class="nk-st st-' + s + '">' + STANJA.find(x => x[0] === s)[1] + '</em>'; };
+  const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const zastavic = (n) => n + ' ' + (n % 100 === 1 ? 'zastavica' : n % 100 === 2 ? 'zastavici' : n % 100 === 3 || n % 100 === 4 ? 'zastavice' : 'zastavic');
+  const progaOf = (r) => r.tname || r.track || r.name;
+  const nSlik = (r) => (r.files && r.files.length) || r.nf || 0;
+  const opisOf = (r) => datum(new Date(r.date)) + ' · ' + trenutkov(r.n || 0) + ' · ' + zastavic(r.flags || 0) + (nSlik(r) > 1 ? ' · ' + nSlik(r) + ' slike' : '') + (r.files && r.files.length ? '' : ' · mala slika');
+  // a record as the choice's buttons take it: its pictures, or (older, pictures out) the small one
+  const zgRec = (r) => (r.files && r.files.length ? r : Object.assign({}, r, { files: r.thumb ? [{ name: r.name + '_mala.jpg', blob: r.thumb, w: 320, h: 0 }] : [] }));
+  async function vseNeposlane() {
+    const un = (await dbAll().catch(() => [])).filter(r => stOf(r) === 'neposlano').map(zgRec).filter(r => r.files.length);
+    if (!un.length) { G.toast('Neposlanih napak ni.', 2000); return; }
+    const how = await deli(un);
+    if (how === 'share') { for (const r of un) await dbMark(r.id).catch(() => { }); G.toast('Poslano: ' + un.length + '.', 2200); }
+    else if (how === 'no') { for (const r of un) shrani(r); G.toast('Deljenje tu ne gre: slike so v Prenosih. ' + KJE, 4200); }
+    zgOsvezi();
+  }
+  let zgUrls = [], zgId = '', zgDel = 0;
+  function zgodovina(id) {   // the panel over everything (the replay, the choice, the settings): the list, or the one record (id)
+    zgZapri();
+    const el = mk('div', 'nk-dlg nk-zg'); el.id = 'nk-zg'; document.body.appendChild(el);
+    el.innerHTML = '<div class="nk-box"><h3>Zgodovina napak</h3><div class="nk-zg-in"><span class="nk-hint">Nalagam …</span></div><div class="nk-end"><button data-nk-d="zapri">Zapri</button></div></div>';
+    el.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') zgZapri(); });
+    el.addEventListener('click', async (e) => {
+      e.stopPropagation(); if (e.target === el) { zgZapri(); return; }
+      const b = e.target.closest('[data-nk-d]'); if (!b) return; e.preventDefault();
+      const a = b.dataset.nkD;
+      if (a === 'zapri') { zgZapri(); return; }
+      if (a === 'zg') { zgEna(b.dataset.id); return; }
+      if (a === 'nazaj') { zgSeznam(); return; }
+      if (a === 'vse') { await vseNeposlane(); return; }
+      const r = (await dbAll().catch(() => [])).find(o => o.id === zgId); if (!r) { zgSeznam(); return; }
+      if (a === 'st') { await dbSet(r.id, { status: b.dataset.v }).catch(() => { }); zgOsvezi(); return; }
+      if (a === 'del') {   // (a second tap within 3 s)
+        if (performance.now() - zgDel > 3000) { zgDel = performance.now(); b.textContent = 'Res izbriši?'; b.classList.add('warn'); setTimeout(() => { if (b.isConnected) { b.textContent = 'Izbriši'; b.classList.remove('warn'); } }, 3100); return; }
+        zgDel = 0; await dbDel(r.id).catch(() => { }); zgSeznam(); seznam(); return;
+      }
+      await dejanje(a, zgRec(r), +b.dataset.i || 0, true); zgOsvezi();
+    });
+    if (id) zgEna(id); else zgSeznam();
+  }
+  const zgIn = () => document.querySelector('#nk-zg .nk-zg-in');
+  async function zgSeznam() {
+    const box = zgIn(); if (!box) return; zgId = '';
+    box.innerHTML = '<div class="nk-row"><span class="nk-zg-n">Shranjene zbirke</span><button data-nk-d="vse">Deli vse neposlane</button></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
+      '<p class="nk-hint">Stanje: Neposlano → Poslano (samodejno ob Deli ali Kopiraj sliko) → Popravljeno (ko Claude javi popravek) → Zaprto (po preizkusu). Dotik odpre zapis.</p>';
+    const l = await seznam(box.querySelector('.nk-list'), zgUrls), n = box.querySelector('.nk-zg-n');
+    if (n) n.textContent = 'Shranjene zbirke (' + l.length + ')';
+  }
+  async function zgEna(id) {
+    const box = zgIn(); if (!box) return;
+    const r = (await dbAll().catch(() => [])).find(o => o.id === id); if (!r) { zgSeznam(); return; }
+    zgId = r.id; zgDel = 0; for (const u of zgUrls) URL.revokeObjectURL(u); zgUrls = [];
+    const R = zgRec(r), f = R.files[0], u = f ? URL.createObjectURL(f.blob) : ''; if (u) zgUrls.push(u);
+    const B = [], nf = r.files.length;
+    if (!coarse() && nf) r.files.forEach((x, i) => B.push(['slika', 'Kopiraj sliko' + (nf > 1 ? ' ' + (i + 1) + '/' + nf : ''), i]));
+    if (R.files.length && (coarse() || canShare(R.files.map(fileOf)))) B.push(['deli', 'Deli', 0]);
+    if (R.files.length) B.push(['shrani', nf ? 'Shrani sliko' : 'Shrani malo sliko', 0]);
+    B.push(['besedilo', 'Kopiraj besedilo', 0]);
+    box.innerHTML = '<button data-nk-d="nazaj" class="nk-back">&#8592; Vse zbirke</button>' +
+      '<p class="nk-sub"><b>' + esc(progaOf(r)) + '</b> · ' + opisOf(r) + '</p>' +
+      '<div class="nk-prev">' + (u ? '<img alt="Slika napak" src="' + u + '">' : '<span>Slike ni.</span>') + '</div>' +
+      '<div class="nk-sts">' + STANJA.map(([v, t]) => '<button data-nk-d="st" data-v="' + v + '" class="st-' + v + (stOf(r) === v ? ' sel' : '') + '">' + t + '</button>').join('') + '</div>' +
+      '<pre class="nk-txt"></pre><div class="nk-acts">' + B.map(([a, t, i]) => '<button data-nk-d="' + a + '" data-i="' + i + '">' + t + '</button>').join('') + '<button data-nk-d="del" class="nk-delb">Izbriši</button></div>';
+    box.querySelector('.nk-txt').textContent = r.text || '';
+  }
+  function zgOsvezi() { if (zgId) zgEna(zgId); else zgSeznam(); seznam(); }   // (and the settings' list, if open)
+  function zgZapri() { const el = $('nk-zg'); if (el) el.remove(); for (const u of zgUrls) URL.revokeObjectURL(u); zgUrls = []; zgId = ''; }
+
+  return { init, open, close, sync, dirka, flag, tocke, konec, izbira, nastavitve, pripravi, zgodovina, shranjene: () => dbAll(),
+    zg: { put: dbPut, MAX: DB_MAX, FULL: DB_FULL },   // (the tests: Zgodovina napak's bounds) okvir, dev, zaznaj, porocilo: () => porocilo().text,
     // the recording as a file (the tests, tools/posnetek.mjs): write, read, open; pojdi: the replay to t (k the car followed, cam), slika: its picture
     rrp: { pisi: rrpPisi, beri: rrpBeri, odpri: rrpOdpri, shrani: rrpShrani, pack: rrpPack, unpack: rrpUnpack,
       pojdi: (t, k, cam) => { if (!G || !G.replay()) return false; G.view(k == null ? -1 : k, cam); G.seek(t); return true; },
@@ -903,6 +977,8 @@ const Napake = (function () {
         bubbles: host ? [...host.children].map(el => { const r = el.getBoundingClientRect(); return { c: +el.dataset.c, x: r.left, y: r.top, w: r.width, h: r.height, text: el.querySelector('textarea').value }; }) : [],
         zbirka: Z.items.map(it => ({ n: it.n, t: it.t, lap: it.lap, s: it.s, img: it.img ? [it.img.width, it.img.height] : null, gib: (it.gib || []).map(g => g ? [g.width, g.height] : null), strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text), v: it.zapisi.map(z => z.v) })),
         tocke: tocke(), auto: $('nk-auto') ? $('nk-auto').innerText : null, slika: Z.out ? { files: Z.out.rec.files.map(f => ({ name: f.name, w: f.w, h: f.h, bytes: f.blob.size })), text: Z.out.rec.text, status: Z.out.rec.status } : null,
-        dlg: (() => { const d = $('nk-dlg'); return d ? [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent) : null; })() };
+        dlg: (() => { const d = $('nk-dlg'); return d ? [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent) : null; })(),
+        zg: (() => { const d = $('nk-zg'); return d ? { id: zgId, items: [...d.querySelectorAll('.nk-item')].map(e => e.innerText.replace(/\s+/g, ' ').trim()), st: (d.querySelector('.nk-sts .sel') || {}).textContent || null,
+          acts: [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent), text: (d.querySelector('.nk-txt') || {}).textContent || null } : null; })() };
     } };
 })();
