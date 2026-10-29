@@ -2,6 +2,7 @@
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
 // the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
 // (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START, the others' choices and START say V IZDELAVI, HOME's box Garaža v izdelavi);
+// the small circuit's infield (the park with its solid volcano, the rescue base, the edges) and the park's barrels, cones and stalls the car knocks over;
 // back to the title the page loads again.
 //   node tests/browser/newver.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -102,10 +103,10 @@ try {
       let trap = null; if (tr) { P.place(tr[0], tr[1], 0); P.vx = P.vz = 0; P.y = P.py = P.roadY = T.ground2(tr[0], tr[1]); g.sim(0.3, false, 0, 0); trap = P.ws.join(''); }
       return { sl: +(sl || 0).toFixed(2), drop: +(gOut - gIn).toFixed(2), apron: T.surf2(x + nx * (B.w + 3), z + nz * (B.w + 3), 0), trap }; });
     T.check('the bend by the water banked as the Karussell (0.28 across, the inside 2 m lower over 8 m, its concrete bowl paved); a car in a gravel trap: on gravel', !!rb && rb.sl > 0.2 && rb.drop > 1.8 && rb.apron === 0 && /3/.test(rb.trap || ''), JSON.stringify(rb));
-    // the gravel ways as wide as the Mountain Rally's road (10-14 m; the mock-up's width only on the snowy hill top)
-    const gw = await page.evaluate(() => { const H = window.__H3, ws = H.net.filter(e => (e.kind === 'dirt' || e.kind === 'forest') && e.id !== 'mx').map(e => 2 * e.hw), pw = H.paths.map(p => p.wd).concat([H.roads.forest.wd, H.roads.over.wd, H.forest.wd]);
+    // the gravel ways as wide as the Mountain Rally's road (10-14 m; the mock-up's width only on the snowy hill top; the school's ways in the infield gone: the park)
+    const gw = await page.evaluate(() => { const H = window.__H3, ws = H.net.filter(e => (e.kind === 'dirt' || e.kind === 'forest') && e.id !== 'mx').map(e => 2 * e.hw), pw = H.paths.filter(Boolean).map(p => p.wd).concat([H.roads.forest.wd, H.roads.over.wd, H.forest.wd]);
       return { n: ws.length, min: Math.min(...ws, ...pw), max: Math.max(...ws, ...pw), forest: H.roads.forest.wd }; });
-    T.check('the gravel ways 10-14 m wide, as the Mountain Rally\'s road (the forest roads 13 m and more)', gw.n > 30 && gw.min >= 10 && gw.max <= 14 && gw.forest >= 13, JSON.stringify(gw));
+    T.check('the gravel ways 10-14 m wide, as the Mountain Rally\'s road (the forest roads 13 m and more)', gw.n > 20 && gw.min >= 10 && gw.max <= 14 && gw.forest >= 13, JSON.stringify(gw));
     // the west's gravel as the user redrew it: the forest loop, the way to the track's south-west corner and the way down the hill's south-west side gone; a new way
     // from the ring road past its south-west hairpin up to the track's south-west corner, driven as gravel
     const nw = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track, H = window.__H3, ids = H.net.filter(e => e.P[0][0] > -5000).map(e => e.id), e = H.net.find(q => q.id === 'loopB'), N = H.net.find(q => q.id === 'nord');
@@ -142,6 +143,28 @@ try {
       return out;
     });
     T.check('a car into a plastic barrier at 12 m/s: the barrier slides away (metres) and turns; into a wooden fence at 8 m/s: it falls over', cr.plastic.moved > 2 && cr.plastic.tilt === 0 && cr.wood.tilt === 90 && cr.wood.moved > 0.5, JSON.stringify(cr));
+    // the small circuit's infield as the user chose it in the pictures (js/nvpark.js, js/nvbase.js, js/nvedge.js): the park's three lanes, its
+    // volcano (solid: a car driven at it stops at its foot) with the lava moving; the rescue base with its helicopter; the circuit's and the inner
+    // roads' edges (kerbs, lines, the dashed mouths of the lanes)
+    const pk = await page.evaluate(() => { const H = window.__H3, B = NVPark.built, g = __game, P = g.race.player, V = NVPark.VC, a = 0.7, sx = V.x + Math.cos(a) * 45, sz = V.z + Math.sin(a) * 45, h = a + Math.PI;
+      P.place(sx, sz, h); P.vx = Math.cos(h) * 15; P.vz = Math.sin(h) * 15; P.y = P.py = P.roadY = H.ground(sx, sz); g.sim(4, false, 0, 1);
+      return { lanes: B && B.LP.length, volc: !!(B && B.volc), heli: !!(NVBase.built && NVBase.built.heli), solids: NVWalls.state().solids, edge: H.edgeD, stop: { d: +Math.hypot(P.x - V.x, P.z - V.z).toFixed(1), v: +Math.hypot(P.vx, P.vz).toFixed(1), y: +P.y.toFixed(2) } }; });
+    T.check('the infield: the park (three lanes, the volcano solid: a car driven at it at 15 m/s stops at its foot), the rescue base with its helicopter, the edges (kerbs, lines, dashed mouths)', pk.lanes === 3 && pk.volc && pk.heli && pk.solids > 20 && pk.stop.d > 17 && pk.stop.v < 1 && pk.stop.y < 1 && pk.edge && pk.edge.kerb > 100 && pk.edge.line > 100 && pk.edge.mouth > 100, JSON.stringify(pk));
+    // the park's loose things (js/nvwalls.js looseBuild): the barrels, the cones and the stalls (a counter, its roof, two posts) one mesh of their own; the car
+    // into a barrel at 12 m/s: it flies off and lies tipped over, the car keeps 95 % of its speed and more; into a stall at 10 m/s: it falls apart, its roof
+    // and posts down on the floor
+    const ls = await page.evaluate(() => { const st = NVWalls.state(), m = Render.scene.getObjectByName('loose'); return { n: st.loose, kinds: st.looseKinds, moving: st.looseMoving, mesh: !!(m && m.parent), dyn: !!(m && m.userData.dyn) }; });
+    T.check('the park\'s barrels, cones and stalls: loose, one mesh of their own (not merged with the still ones)', ls.n > 80 && ls.kinds.barrel > 10 && ls.kinds.cone > 10 && ls.kinds.counter > 5 && ls.kinds.roof === ls.kinds.counter && ls.kinds.post === 2 * ls.kinds.counter && !ls.moving && ls.mesh && ls.dyn, JSON.stringify(ls));
+    const lk = await page.evaluate(() => { const g = __game, P = g.race.player, out = {};
+      for (const [kind, v] of [['barrel', 12], ['counter', 10]]) {
+        const ps = NVWalls.loose().filter(b => b.kind === kind && !b.knocked), b = ps[Math.floor(ps.length / 2)], x0 = b.x, z0 = b.z, gy0 = __H3.ground(b.x, b.z); let best = null;
+        for (let k = 0; k < 16; k++) { const an = k / 16 * Math.PI * 2, sx = b.x - Math.cos(an) * 8, sz = b.z - Math.sin(an) * 8, d = Math.abs(__H3.ground(sx, sz) - gy0); if (!best || d < best.d) best = { an, sx, sz, d }; }
+        P.place(best.sx, best.sz, best.an); P.vx = Math.cos(best.an) * v; P.vz = Math.sin(best.an) * v; P.y = P.py = P.roadY = __H3.ground(best.sx, best.sz);
+        let vPre = v, vPost = v, hit = false; for (let k = 0; k < 240; k++) { const vb = Math.hypot(P.vx, P.vz); g.sim(1 / 60, false, 0, 0); if (!hit && Math.hypot(b.x - x0, b.z - z0) > 0.05) { hit = true; vPre = vb; vPost = Math.hypot(P.vx, P.vz); } }
+        out[kind] = { moved: +Math.hypot(b.x - x0, b.z - z0).toFixed(1), up: +(1 - 2 * (b.qx * b.qx + b.qz * b.qz)).toFixed(2), keep: +(vPost / vPre).toFixed(3), parts: b.grp ? b.grp.parts.map(p => +(p.y - p.fy).toFixed(2)) : null };
+      }
+      return out; });
+    T.check('the car into a barrel at 12 m/s: it flies off (metres) and lies tipped over, the car keeps 95 % of its speed and more; into a stall at 10 m/s: it falls apart (its roof and posts down on the floor)', lk.barrel.moved > 3 && Math.abs(lk.barrel.up) < 0.5 && lk.barrel.keep > 0.95 && lk.counter.moved > 2 && lk.counter.keep > 0.92 && !!lk.counter.parts && lk.counter.parts.slice(1).every(y => y < 0.5), JSON.stringify(lk));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });

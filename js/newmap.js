@@ -3381,7 +3381,7 @@ body.mk-clean #h-msg { display: none !important; }
     const m = new THREE.Mesh(g, mat('ringConcM', () => new THREE.MeshLambertMaterial({ map: tx, vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }))); m.renderOrder = 2; m.receiveShadow = true; return add(m); }
   // the new map's build in steps (a generator: each yield a step, so the wait screen can show how far it is, js/game.js nvStart); hub4 runs it at once
   function hub4(o) { const g = hub4G(o); let r = g.next(); while (!r.done) r = g.next(); return r.value; }
-  function* hub4G(o = {}) { const t = T(), w = t.w, P0 = P(); const YARD = H3.YARD = o.yard !== false; hideRivals(true);
+  function* hub4G(o = {}) { const t = T(), w = t.w, P0 = P(); const YARD = H3.YARD = o.yard !== false; hideRivals(true); H3.solids = []; H3.loose = null;   // (the solid things and the loose ones: js/nvwalls.js, anew each build)
     // the infield as the user chose it in the pictures (13.–22. 10.): the park (js/nvpark.js), the rescue base, the way to the boxes and the big lot
     // (js/nvbase.js) instead of the school's gravel ways, the construction site and its pit; grass everywhere else inside the circuit
     H3.PARKM = YARD && typeof NVPark !== 'undefined' && o.park !== false; H3.BASEM = H3.PARKM && typeof NVBase !== 'undefined'; H3.top = 0.04; if (o.bank !== false && !H3.bank0) { H3.bank0 = makeBank(-190, 118, 0.28, [1180, 1296]); H3.bankN = bankWorld(H3.bank0); H3.bankV = bankVerge(H3.bank0); } H3.bankDy = H3.bank0 ? H3.bank0.fn : () => 0;
