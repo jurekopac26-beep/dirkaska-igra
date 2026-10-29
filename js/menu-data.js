@@ -65,7 +65,10 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "newcastle": 240,
+  "townsville": 240,
+  "marrakesh": 240
  },
  "routeMaps": {
   "vrsic": {
@@ -242,6 +245,15 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "newcastle": {
+   "base": 3
+  },
+  "townsville": {
+   "base": 6
+  },
+  "marrakesh": {
+   "base": 502
   }
  },
  "intro": {
