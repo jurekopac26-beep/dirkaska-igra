@@ -38,7 +38,8 @@ MIS = {1: ('Požar na vrhu', 'gasilsko vozilo'), 2: ('Zlata ura', 'reševalno vo
        47: ('Gozdni požar', 'gasilska cisterna 4×4'), 48: ('Narasla reka', 'visok reševalni tovornjak'), 49: ('Zataknjeno kolo', 'avtolestev'),
        50: ('Panji na pašo', 'tovornjak s panji'), 51: ('Dinozaver na tovornjaku', 'tovornjak z dinozavrom'), 52: ('Hiša na tovornjaku', 'tovornjak s hišo'),
        53: ('Snežne verige', 'avtobus z verigami'), 54: ('Dirka tovornjakov', 'dirkalni tovornjak'), 55: ('Medvedi na cesti', 'terenec nadzornika')}
-ORDER = [1, 2, 4, 6, 7, 8, 9, 10, 11, 13, 17, 19, 23, 26, 29, 30, 33, 34, 35, 37, 39, 40, 43, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55]
+# listi s telefoni; 13 (Lovec na tornado) je od 29. 10. med neizbranimi, zato ima list 2 pet telefonov
+GROUPS = [[1, 2, 4, 6, 7, 8], [9, 10, 11, 17, 19], [23, 26, 29, 30, 33, 34], [35, 37, 39, 40, 43, 45], [46, 47, 48, 49, 50, 51], [52, 53, 54, 55]]
 
 def wrap(d, t, f, w):
     words, lines, cur = t.split(), [], ''
@@ -69,5 +70,5 @@ def phone_sheet(ks, name):
         d.text((x, y + 6 + 24 * max(1, min(2, len(tl)))), v, font=F(R, 17), fill=MUT)
     sh.save(os.path.join(OUT, name + SUF + '.jpg'), quality=92)
 
-for n in range(6): phone_sheet(ORDER[n * 6:n * 6 + 6], 'kamera%d' % (n + 1))
+for n, ks in enumerate(GROUPS): phone_sheet(ks, 'kamera%d' % (n + 1))
 print('sestavljeno')

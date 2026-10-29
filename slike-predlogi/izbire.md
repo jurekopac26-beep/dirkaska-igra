@@ -509,3 +509,14 @@ Popravki po pregledu slik (20. 10. ponoči):
   sestavljene slike `blender/sestavi5.py`, predstavitev `blender/deck5.py`. Slike: `listi/vse46-posebne-misije-5`.
 - Predstavitev ima zdaj 73 prosojnic (kopija v `misije-10/`): tabela izbora in časov na začetku, izbranih 24 misij (s slikami 29 in 35),
   10 novih, kamera igralca, čas in žetoni, na koncu neizbrane misije v rezervi.
+
+## 29. 10. dopoldne: 13 med neizbranimi, čas za vse, kar čaka na kodo
+- »lovec na tornado dodaj na seznam za neizbrane« → misija 13 (Lovec na tornado, Detroit) je med neizbranimi; seznam neizbranih ima zdaj 22 misij.
+  Izbor je zdaj 23 misij: 306–430 h izdelave · 130–170 min igranja. Skupaj z 10 novimi in sistemom misij 440–618 h (realno okoli 310–495 h),
+  žetoni okoli 145–300 mio; vseh 33 misij se enkrat odigra v 189–248 min (3,2–4,1 h). List kamere igralca 2/6 ima pet telefonov (brez 13).
+  Predstavitev: `blender/deck6.py` (podatki iz `deck5.py`), listi s telefoni `blender/sestavi5.py` (GROUPS); kopija v `misije-10/`.
+- Ocena za kodo po »začni« (brez misij, ki jih uporabnik dela z drugim računom): že odobreno na slikah 92–135 h (tla ob morju 12–18,
+  kmetija 8–10, mala proga in okolica 24–36, helikopter in helidrom 14–20, gradbišče, most, vulkan in motokros 10–14, začetek igre 2–3,
+  avtošola s 27 nalogami 16–24, preverjanje 6–10); po izbirah še 13–20 h (proga za čolne in plaža 8–12, gasilski avto 4–6, priključek
+  motokrosa pri B 1–2); pozneje 28–44 h (ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku).
+  Skupaj brez misij 133–199 h (okoli 17–25 delovnih dni po 8 h); nepravilnosti s 15 slik cele mape niso vštete.
