@@ -32,10 +32,12 @@ const srv = await serve(ROOT), browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, carDet: 'high' }, { width: 960, height: 540 }, { seed: 11 });
   await page.evaluate(async () => { window.__game.onAction('to-car'); await new Promise(r => setTimeout(r, 400)); });   // (the showroom exists)
-  const M = await page.evaluate((id) => { const m = Core.MODELS.find(m => m.id === id); return m && { len: m.len, wid: m.wid, ht: Render.kitInfo(id) ? Render.kitInfo(id).bbox.max[1] : 1.4, mounts: Object.keys((m.def && m.def.mounts) || {}) }; }, car);
+  const M = await page.evaluate((id) => { const m = Core.MODELS.find(m => m.id === id); return m && { len: m.len, wid: m.wid, ht: Render.kitInfo(id) ? Render.kitInfo(id).bbox.max[1] : 1.4, mounts: Object.keys((m.def && m.def.mounts) || {}), lamp: m.def && m.def.mounts && m.def.mounts.zarometi ? [m.def.mounts.zarometi.x, m.def.mounts.zarometi.yc] : null }; }, car);
   if (!M) throw new Error('no such vehicle: ' + car);
   const K = { len: 3.7, wid: 1.65, ht: 1.36 }, sc = (v) => [v[0] * M.len / K.len, v[1] * M.ht / K.ht, v[2] * M.wid / K.wid];   // (KOLIBRI's size: its cameras on another car)
-  const cam = (el) => { const v = VIEWS[el] || VIEWS[REAR.includes(el) ? 'car34r' : 'car34f']; return { p: sc(v.p), t: sc(v.t), fov: v.fov }; };
+  const cam = (el) => { const v = VIEWS[el] || VIEWS[REAR.includes(el) ? 'car34r' : 'car34f'], p = sc(v.p), t = sc(v.t);
+    if (el === 'zarometi' && M.lamp) { const d = [M.lamp[0] - t[0], M.lamp[1] - t[1], 0]; return { p: p.map((q, i) => q + d[i]), t: t.map((q, i) => q + d[i]), fov: v.fov }; }   // (aimed at the car's lamps: their face's x, their height)
+    return { p, t, fov: v.fov }; };
   const shot = (view, deli) => page.evaluate(({ car, color, c, deli }) => {
     const s = Render.carShot({ id: car, deli, color, cam: c, w: 800, h: 472, grid: false });
     const o = document.createElement('canvas'); o.width = 400; o.height = 236; const x = o.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(s, 0, 0, 400, 236);

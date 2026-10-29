@@ -80,6 +80,12 @@ Za vsak avto kategorije (en obisk datoteke `js/cars/<id>.js`):
 4. Plošča na avto: `node tools/deli-plosca.mjs krilo,platisca,zarometi --car <id> --ns 1,6,11,16` (izbor možnosti; celotna plošča brez `--ns`) in razbitina z `node tools/carshots.mjs <id>`. Uporabniku pošlji eno ploščo za vso kategorijo in počakaj na njegovo potrditev.
 5. Pull request za kategorijo odpri, ko so povezani testi lokalno zeleni. Na `main` gre, ko so testi na GitHubu zeleni in uporabnik potrdi.
 
+### Športni (`sokol`, `jelen`, `lisica`)
+
+- Razbijanje kot pri KOLIBRIJU (`parts.extra`, imena v `partNames`): `headL`, `headR`, `tailL`, `tailR`, `plate`, `wiperFront`. SOKOL ima žarometa v kotih nosu na sprednjem odbijaču (`on: 'bumperF'`), tablico na zadnjem (`on: 'bumperR'`), račji rep je `wing` (`partNames.wing`: ducktail). JELEN ima par okroglih luči na stran v glavi nosu (del ohišja), tablico na zadnji plošči. LISICA ima steklo dvignjenih žarometov (žarometa ostaneta), zadnjo luč z obrobo, tablico na zadnjem odbijaču. Antene in spojlerja nimajo (serijski videz ostane), streha se ugreza kot prej (`crush`).
+- `mounts`: SOKOL krilo na pokrovu za steklom v delu `wing` (namesto račjega repa), žaromet v kotu nosu (`shape`: stadion reže, ravna leča); JELEN krilo na kratkem pokrovu v delu `trunk` (odpre se in odpade s prtljažnikom), žaromet namesto para okroglih luči (`shape`: stadion okrog obeh, izbočen); LISICA krilo na pokrovu prtljažnika (`trunk`), žaromet v čelu dvignjenega žarometa (`lean` < 0: nagnjeno naprej, `shape`: zaobljen pravokotnik, ravna leča). Vsi `platisca`.
+- Serijski avti so enaki kot prej (isti trikotniki z barvami, isti sij luči; preverjeno s prstnim odtisom geometrije). Možnosti: krilo do +220, žarometi do +240 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
@@ -94,7 +100,7 @@ Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in n
 | Sklop 2 · bok in kolesa | `ogledala`, `vrata`, `zavore`, `matice` | `js/deli/bok.js` |
 | Sklop 3 · barve in skriti deli | `barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`; skriti deli (načrt 2.6: `filter_zraka`, `cip`, `turbo`, `akumulator`, `vzmeti`, `amortizerji`, `stabilizatorji`, `hupa`, `dim_gum`) in učinki `lower`, `tint`, `tyre` | `js/deli/barve.js`, `js/deli/skriti.js` |
 | Avti · Mali avti | `miska`, `raketa`, `levs`, `levk` | `js/cars/<id>.js` |
-| Avti · Športni | `sokol`, `jelen`, `lisica` | `js/cars/<id>.js` |
+| Avti · Športni | `sokol`, `jelen`, `lisica` | `js/cars/<id>.js` (narejeno, razdelek »Športni«) |
 
 Pravila, da se seje ne motijo:
 - `js/deli.js` in dogovor ostaneta, kot sta. Sprememba dogovora gre v »Spremembe dogovora« in jo povej uporabniku.
@@ -113,4 +119,5 @@ Pravila, da se seje ne motijo:
 - 29. 10. 2026 (poskus, želje uporabnika): `zarometi` dobi `shape`, `bulge`, `ringW` (avtova lastna oblika luči), `krilo` dobi `s` in `top` (tovornjak); `K.headLamp` z obrisom zna izbočeno lečo (`bulge`) in obris z zarezo (zvezdast okrog sredine); `DELI.mesh` vzame trikotnike, ki jih je narisal `K.deli` (prej celoten del, kar je pri lučeh v krilih vrnilo celo krilo); `K.deli(id, stock, around)` z avtovim ohišjem okrog dela; `DELI.lampLook(n)` (barvi leče in obroča možnosti).
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
+- 29. 10. 2026 (Športni): rezervno kolo (`K.tyre`, LISICA v prtljažniku) ostane z avtovimi serijskimi platišči (`kx.spare` v `js/render.js`), platišča iz garaže so samo na štirih kolesih: notranjost avta z deli ostane enaka (`tests/deli.test.js`). `tools/deli-plosca.mjs` usmeri bližnji pogled žarometov na višino in ploskev `mounts.zarometi` avta.
 - 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).

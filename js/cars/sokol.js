@@ -4,6 +4,11 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
+  // the garage's head lamp in the nose's corner slot (its stadium, a little inside the black slot; u out from the car's middle, v up;
+  // metres round z 0.52, y 0.338): every option takes this outline
+  const SLOT = [];
+  for (let i = 0; i <= 3; i++) { const a = -Math.PI / 2 + Math.PI * i / 3; SLOT.push([0.034 + 0.044 * Math.cos(a), 0.044 * Math.sin(a)]); }
+  for (let i = 0; i <= 3; i++) { const a = Math.PI / 2 + Math.PI * i / 3; SLOT.push([-0.034 + 0.044 * Math.cos(a), 0.044 * Math.sin(a)]); }
   VEHICLE_DEFS.push({
     id: 'sokol', name: 'SOKOL R', cat: 'sportni', ord: 1, drive: 'FR',
     desc: 'Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom.',
@@ -15,12 +20,32 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 35000, pk: 'ta1', field: null,
     snd: { kind: 'rotary', hz: 1, turbo: 0.7, loud: 1 },
     expect: { t100: [3.27, 3.84], vmax: [231, 245], latG: [2.23, 2.33], d100: [22.9, 25.3] },
+    partNames: { wing: 'ducktail', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamps', tailR: 'right tail lamps', plate: 'number plate',
+      wiperFront: 'windscreen wiper' },
     parts: { set: 'race', ht: 1.23, y0: 0.18,
+      // (as KOLIBRI's: the lamps in the nose's corner slots parts of their own, mounted on the front bumper (they go with it); a hit on
+      // their corner knocks one out. The tail lamps, two a side on the dark panel, likewise out of the tail; the number plate on the rear
+      // bumper, the wipers on the cowl)
+      extra: {
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.12, h: 0.06, lx: 1.0, lz: -0.59, f: 0.17, on: 'bumperF' },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.12, h: 0.06, lx: 1.0, lz: 0.59, f: 0.17, on: 'bumperF' },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.17, h: 0.05, lx: -1.0, lz: -0.52, f: 0.61 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.17, h: 0.05, lx: -1.0, lz: 0.52, f: 0.61 },
+        plate: { z: 1, th: 0.4, m: 1, r: 0.17, h: 0.02, lx: -1.0, lz: 0, f: 0.27, on: 'bumperR' },
+        wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.45, h: 0.03, lx: 0.26, lz: -0.05, f: 0.64 },
+      },
       over: {
         wing: { f: 0.72, lx: -0.95, m: 3 },
         // (where the look has them: the glass hatch up on the fastback, the bonnet with the nose's top, the doors with their glass, the hips)
         trunk: { lx: -0.62, y: 1.06 }, hood: { lx: 0.68 }, doorL: { y: 0.75 }, doorR: { y: 0.75 }, quarterL: { y: 0.66 }, quarterR: { y: 0.66 },
       },
+    },
+    // where the garage's parts go (js/deli.js, look units): the wing on the deck behind the glass hatch, in the ducktail's part (the
+    // lip's place); the head lamps in the nose's corner slots (every option in the slot's stadium, SLOT), in the lamps' parts; the rims
+    mounts: {
+      krilo: { x: -2.12, w: 0.69, part: 'wing' },
+      zarometi: { x: 2.147, y0: 0.338, lean: 0, zc: 0.52, yc: 0.338, s: 0.4, hosts: ['headL', 'headR'], shape: SLOT, bulge: 0, ringW: 0.004 },
+      platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the ducktail rising behind the glass hatch, the bubble
     // canopy (its glass wrapping round, black pillars and frames, two bubbles on the roof), the long bonnet sunk between the front wings'
@@ -88,11 +113,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const p of [[[x0, zi], [x1, zi], [x1, zi + t], [x0, zi + t]], [[x0, zo(x0) - t], [x1, zo(x1) - t], [x1, zo(x1)], [x0, zo(x0)]],
             [[x0, zi], [x0 + t, zi], [x0 + t, zo(x0 + t)], [x0, zo(x0)]], [[x1 - t, zi], [x1, zi], [x1, zo(x1)], [x1 - t, zo(x1 - t)]]]) D2.top(Z(p), D, 0.005);
         }
-        // the ducktail's lip: it kicks up off the deck and curls over the tail's face, fading into the corners (the 'wing', with the deck before it)
-        K.part('wing', () => {
+        // the ducktail's lip: it kicks up off the deck and curls over the tail's face, fading into the corners (the 'wing', with the deck
+        // before it; the garage's wing in its place: K.deli, mounts.krilo)
+        K.part('wing', () => K.deli('krilo', () => {
           const ring = ([z, k]) => { const t = (x) => L.topY(x, z); return [[-2.02, t(-2.02) - 0.006, z], [-2.115, t(-2.115) + 0.046 * k, z], [-2.165, t(-2.145) + 0.068 * k, z], [-2.158, t(-2.145) + 0.02 * k, z], [-2.147, t(-2.145) - 0.012, z]]; };
           K.skin([[-0.67, 0.3], [-0.45, 0.85], [0, 1], [0.45, 0.85], [0.67, 0.3]].map(ring), P, P, P);
-        }, { noCrush: true });
+        }), { noCrush: true });
         // the side: a pinstripe in the stripe colour over the sills from arch to arch, the side markers, the doors' shut lines and handles; the
         // glass hatch's black foot, the bonnet's shut line at the cowl
         D2.side([[XA + 0.04, 0.395], [XB - 0.04, 0.395], [XB - 0.04, 0.418], [XA + 0.04, 0.418]], K.strp, null, 0.006);
@@ -117,19 +143,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.face(oval(sd * 0.52, 0.338, 0.085, 0.052, 2), B);
           K.box(2.04, 0.16, 0, 0.16, 0.045, 1.0, 0, B);                                              // the chin (up into the nose's underside)
         });
-        for (const sd of [-1, 1]) K.headLamp(fx, 0.358, sd * 0.52, 0.03, { shape: 'rect', w: 0.13, h: 0.032, ring: null });
+        // the lamps in the slots (parts of their own, on the bumper: headL, headR; the garage's in their place: K.deli, mounts.zarometi)
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(fx, 0.358, sd * 0.52, 0.03, { shape: 'rect', w: 0.13, h: 0.032, ring: null, host: sd < 0 ? 'headL' : 'headR' }); });
         // ---- the tail: the dark panel right across with two round lamps a side and the reversing lamps; the plate, the diffuser, the twin
         //      tail pipes (right) ----
         const tx = -2.147;
         K.face([[tx, 0.74, -0.7], [tx, 0.74, 0.7], [tx, 0.905, 0.664], [tx, 0.905, -0.664]], SMK, { part: 'body' });
-        for (const sd of [-1, 1]) {
-          K.tailLamp(tx, 0.822, sd * 0.555, 0.15, 0.15, { round: true });
-          K.tailLamp(tx, 0.822, sd * 0.365, 0.13, 0.13, { round: true });
-          for (const [z, r] of [[0.555, 0.088], [0.365, 0.078]]) K.discX(tx - 0.001, 0.822, sd * z, r, 10, [0.36, 0.05, 0.05], -1, { part: 'body' });   // (their red rims)
-          K.discX(tx - 0.002, 0.822, sd * 0.215, 0.045, 8, [0.86, 0.86, 0.84], -1, { part: 'body' });
+        for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR';   // (each side's lamps a part of its own: the lenses, their rims, the reversing lamp)
+          K.tailLamp(tx, 0.822, sd * 0.555, 0.15, 0.15, { round: true, host: tp });
+          K.tailLamp(tx, 0.822, sd * 0.365, 0.13, 0.13, { round: true, host: tp });
+          for (const [z, r] of [[0.555, 0.088], [0.365, 0.078]]) K.discX(tx - 0.001, 0.822, sd * z, r, 10, [0.36, 0.05, 0.05], -1, { host: tp });   // (their red rims)
+          K.discX(tx - 0.002, 0.822, sd * 0.215, 0.045, 8, [0.86, 0.86, 0.84], -1, { host: tp });
         }
+        K.rect(tx - 0.001, 0.46, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'plate' });   // (the plate: a part of its own on the bumper)
         K.part('bumperR', () => {
-          K.rect(tx - 0.001, 0.46, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x' });
           K.face([[tx, 0.605, -0.745], [tx, 0.605, 0.745], [tx, 0.618, 0.745], [tx, 0.618, -0.745]], K.shade(P, 0.6));   // (the bumper's top line)
           K.face([[tx, 0.315, -0.66], [tx, 0.315, 0.66], [tx, 0.37, 0.69], [tx, 0.37, -0.69]], B);                          // (its black valance)
           K.box(-2.07, 0.24, 0, 0.16, 0.075, 1.2, 0, B);                                              // (the diffuser, up to the valance's foot)
@@ -142,7 +169,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.skin([ring(0.53, 0.3), ring(0.49, 0.85), ring(0.42, 1)], P, P, [0.42, 0.47, 0.54]);
           K.bar([0.45, 0.9, sd * 0.905], [0.47, 0.85, sd * 0.79], 0.016, B, { n: 4 });   // (down onto the sail: the side glass is at z 0.79 there)
         });
-        for (const z of [-0.5, 0.05]) K.bar([0.6, L.topY(0.6, z) + 0.012, z], [0.5, L.topY(0.5, z + 0.5) + 0.012, z + 0.5], 0.009, B, { n: 4, part: 'body' });
+        for (const z of [-0.5, 0.05]) K.bar([0.6, L.topY(0.6, z) + 0.012, z], [0.5, L.topY(0.5, z + 0.5) + 0.012, z + 0.5], 0.009, B, { n: 4, part: 'wiperFront' });
         // ---- the hinges: the bonnet at the cowl, the hatch at the roof, the doors at their front edges; the ducktail at the lip (a loose one
         //      sinks at the glass's foot: no lip dropping into the tail) ----
         K.hinge('hood', [0.63, 0.83, -0.5], [0.63, 0.83, 0.5]);

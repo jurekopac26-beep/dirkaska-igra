@@ -1772,7 +1772,7 @@ const Render = (function () {
     K.tyre = (x, y, z, o) => {
       o = o || {}; const ax = o.axis || 'z', fc = o.face === -1 ? -1 : 1;
       if (['x', 'y', 'z'].indexOf(ax) < 0) kitFail('tyre: axis x, y or z');
-      const Wt = Object.assign({}, W, o.style ? { style: o.style } : {}); if (KIT_STYLES.indexOf(Wt.style) < 0) kitFail('tyre: style not one of ' + KIT_STYLES.join(' '));
+      const Wt = Object.assign({}, kx.spare || W, o.style ? { style: o.style } : {}); if (KIT_STYLES.indexOf(Wt.style) < 0) kitFail('tyre: style not one of ' + KIT_STYLES.join(' '));
       const geo = kitWheelGeo(Wt, o.r || M.rw, o.w || W.w, !!o.hi, false), pa = geo.attributes.position.array, ca = geo.attributes.color.array, cm = new Map();
       const T = (i) => { const u = pa[i], v = pa[i + 1], w = pa[i + 2] * fc;   // (the wheel's frame: the axle along z, the face to +z) -> the look's: metres over the scale
         const m = ax === 'z' ? [u, v, w] : ax === 'x' ? [w, v, -u] : [u, w, -v]; return [x + m[0] / sx, y + m[1], z + m[2] / sz]; };
@@ -2018,8 +2018,9 @@ const Render = (function () {
   const kitCache = new Map(), kitCacheHi = new Map(), kitDeliCache = new Map(), kitWheelCache = new Map(), kitShowLRU = [];   // (kitCacheHi: the Visoki bodies, Nastavitve · Detajli avtov)
   function kitBuild(M, look, fb, hi, deli) {
     const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb);
+    kx.spare = Object.assign({}, kx.wheels);   // (a spare wheel's look, K.tyre: the vehicle's own rims, never the garage's)
     if (deli) { kx.deli = deli; if (deli.platisca && typeof DELI !== 'undefined') Object.assign(kx.wheels, DELI.wheel(deli.platisca)); }   // (the parts fitted: K.deli draws them; the rims: the wheels' look)
-    if (hi && kx.wheels.segHi) kx.wheels.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
+    if (hi && kx.wheels.segHi) kx.wheels.seg = kx.spare.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
     kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
