@@ -33,13 +33,14 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 - `run`: `t`, `left`, `set(k, besedilo, delež, barva)`, `say(namig)`, `win()`, `fail(zakaj)`, `add(obj)` (THREE predmet misije v sceni, odstrani se sam ob koncu).
 - Igra: hitri vstop `index.html?misija=<id>`; priklopi v `js/game.js` (`MS`, `MisBridge`). Rezultat: zvezdice, čas, rekord (`localStorage` `rra-misije`).
 - Gradniki, ki jih misije že imajo: spremstvo kot dirkalni avto v podobi policije (`m06.js` `made`: `c.police`, `c.pol.mode = 'chase'`, promet se mu umakne; hitrost s `c.skCap`), promet samo avti in tovornjaki (`opts.tfCars`), noč (`Render.setAtmos`), stavbe in vozila iz preprostih teles (`m06.js` `hospital`).
+- Slike za preverjanje: `node tools/misija-slika.mjs <id> [--t 20,60] [--pred 60] [--konec] [--pokonci] [--lezece]` (kamera za avtom s prikazom misije, v `test-results/misije/`, z vrstico stanja misije); ne piši svoje skripte.
 - Testi: `tests/missions.test.js` (sistem in besedila vseh misij), za vsako misijo `tests/m<nn>.test.js` (brez brskalnika) in `tests/browser/m<nn>.test.mjs`; dodaj jih v `tests/run.js` (`SUITES`, `RELATED`) in `tests/README.md`.
 
 ## Stanje
 
 | Skupina (seja) | Misije | Ocena (h) | Stanje |
 |---|---|---|---|
-| 0 | Sistem misij | – | PR #187 |
+| 0 | Sistem misij | – | končano (PR #187) |
 | 1 | 06 | – | narejeno (veja `misije/06`) |
 | 2 · ogenj, gasilski avto C | 01, 49, 46, 47 | 13–20 | |
 | 3 · voda | 19, 35, 37, 48 | 14–20 | |
