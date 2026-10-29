@@ -81,8 +81,12 @@ const NVBase = (function () {
     const C = (par, r0, r1, h, m, x = 0, y = 0, z = 0, seg = 12) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, h, seg), m); o.position.set(x, y, z); par.add(o); return o; };
     const sign = (par, text, w, h, x, y, z, ry, bg, fg) => { const s = new THREE.Mesh(new THREE.PlaneGeometry(w, h), L(0xffffff, { map: tex(512, Math.round(512 * h / w), (c, W2, H2) => { c.fillStyle = bg; c.fillRect(0, 0, W2, H2); c.fillStyle = fg; c.font = 'bold ' + Math.round(H2 * 0.62) + 'px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, W2 / 2, H2 / 2 + 2); }) })); s.position.set(x, y, z); s.rotation.y = ry || 0; par.add(s); return s; };
 
-    // ---- the way to the boxes: its asphalt, a dashed white line along both edges (only dashes between it and the base or the lot)
-    const RP = R.RP; strip(RP, RW * 2, 0.1, ASPH); for (const s of [-1, 1]) strip(off(RP, s * (RW - 0.25)).slice(8, -8), 0.3, 0.13, WL, 3, 2.5);
+    // ---- the way to the boxes: the inner roads' asphalt (js/newmap.js raceRoad: their look, rounded into road 2 where it crosses it, under the
+    // circuit's asphalt), a dashed white line along both edges (only dashes between it and the base or the lot), none across road 2
+    const RP = R.RP, jump = H3.net.find(e => e.id === 'jump'), JP = jump ? jump.P : [], JHW = jump ? jump.hw : 6.2;
+    MK.raceRoad(ROUTE, { id: 'route0', w: RW * 2, lines: false, kerbs: false, dust: false, step: 0.5 });
+    for (const s of [-1, 1]) { const runs = []; let cur = null; for (const p of off(RP, s * (RW - 0.25))) { if (!JP.length || segD(JP, p[0], p[1]) > JHW + 2.5) { if (!cur) runs.push(cur = []); cur.push(p); } else cur = null; }
+      for (const P of runs) if (P.length > 17) strip(P.slice(8, -8), 0.3, 0.13, WL, 3, 2.5); }
     // ---- the base: the apron (flat, its own level; the circuit's kerb along its edge there, js/nvedge.js)
     const AP = R.apron, y0 = (() => { const v = R.AP.map(([x, z]) => gy(x, z)).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; })();
     { const sh = new THREE.Shape(R.AP.map(([x, z]) => new THREE.Vector2(x, z))), g = new THREE.ShapeGeometry(sh, 4), pa = g.attributes.position, uvA = new Float32Array(pa.count * 2);
@@ -118,11 +122,18 @@ const NVBase = (function () {
         if (!R.lotIn(m[0] + (Qo[i][0] - Q[i][0]) * 1.5, m[1] + (Qo[i][1] - Q[i][1]) * 1.5) || (TLc && TLc.dist(m[0], m[1], 20) < MK.T().w + 3)) continue;
         const [P, I] = Math.floor(acc / 1.2) % 2 ? [wht, wi] : [red, ri]; side(P, I, Q[i - 1], Q[i], Qo[i], Qo[i - 1], 0.16, 0.16); side(P, I, Q[i - 1], Q[i], Q[i], Q[i - 1], 0.05, 0.16); }
       if (ri.length) flat(geo(red, ri), L(0xd8282a), 3); if (wi.length) flat(geo(wht, wi), L(0xf4f4f0), 3); }
-    { const lines = [], li = [], mid = [], mi = [], lamps = [], BW = 2.5, BD = 5, AIS = 6.5, PER = 2 * BD + AIS, x0 = Math.ceil(LB[0] / BW) * BW, fits = (x, za, zb) => R.lotIn(x, za - 0.8) && R.lotIn(x, zb + 0.8) && R.lotIn(x + BW, za - 0.8) && R.lotIn(x + BW, zb + 0.8) && R.lotIn(x - 1.0, (za + zb) / 2) && R.lotIn(x + BW + 1.0, (za + zb) / 2);
+    { const lines = [], li = [], mid = [], mi = [], lamps = [], rows = [], BW = 2.5, BD = 5, AIS = 6.5, PER = 2 * BD + AIS, x0 = Math.ceil(LB[0] / BW) * BW, fits = (x, za, zb) => R.lotIn(x, za - 0.8) && R.lotIn(x, zb + 0.8) && R.lotIn(x + BW, za - 0.8) && R.lotIn(x + BW, zb + 0.8) && R.lotIn(x - 1.0, (za + zb) / 2) && R.lotIn(x + BW + 1.0, (za + zb) / 2);
       const quad = (P, I, xa, za, xb, zb, dy) => { const q = P.length / 3; P.push(xa, gy(xa, za) + dy, za, xb, gy(xb, za) + dy, za, xb, gy(xb, zb) + dy, zb, xa, gy(xa, zb) + dy, zb); I.push(q, q + 2, q + 1, q, q + 3, q + 2); };
       for (let zr = LB[2] + AIS; zr + 2 * BD < LB[3]; zr += PER) { const zm = zr + BD; for (const [za, zb] of [[zr, zm], [zm, zm + BD]]) { let run = null; const flush = () => { if (!run) return; const [xs, xe] = run;
-            for (let x = xs; x <= xe + 1e-6; x += BW) quad(lines, li, x - 0.06, za, x + 0.06, zb, 0.09); if (za === zr) { quad(mid, mi, xs - 0.06, zm - 0.06, xe + 0.06, zm + 0.06, 0.09); for (let x = xs; x <= xe + 1e-6; x += BW) if ((Math.round(x / BW) % 6 + 6) % 6 === 3 && x > xs && x < xe) lamps.push([x, zm]); lamps.push([xs - 0.9, zm], [xe + 0.9, zm]); } run = null; };
+            for (let x = xs; x <= xe + 1e-6; x += BW) quad(lines, li, x - 0.06, za, x + 0.06, zb, 0.09); rows.push([xs - 0.5, xe + 0.5, za - 0.5, zb + 0.5]); if (za === zr) { quad(mid, mi, xs - 0.06, zm - 0.06, xe + 0.06, zm + 0.06, 0.09); for (let x = xs; x <= xe + 1e-6; x += BW) if ((Math.round(x / BW) % 6 + 6) % 6 === 3 && x > xs && x < xe) lamps.push([x, zm]); lamps.push([xs - 0.9, zm], [xe + 0.9, zm]); } run = null; };
           for (let x = x0; x < LB[1]; x += BW) { if (fits(x, zr, zm + BD)) run = run ? [run[0], x + BW] : [x, x + BW]; else flush(); } flush(); } }
+      // along road 2 behind its low kerb one row of bays across the road (as in the pictures), where the lot is deep enough and the rows above are not
+      { const J = H3.net.find(e => e.id === 'jump'), JP = J ? J.P : [], hw = J ? J.hw : 6.2, inRows = (x, z) => rows.some(r => x > r[0] && x < r[1] && z > r[2] && z < r[3]);
+        const A = off(JP, hw + 3.0), Bq = off(JP, hw + 3.0 + BD); let acc = 0, next = 0;
+        for (let i = 1; i < A.length; i++) { acc += Math.hypot(A[i][0] - A[i - 1][0], A[i][1] - A[i - 1][1]); if (acc < next) continue;
+          const a = A[i], b = Bq[i], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, ux = -tz / l * BW / 2, uz = tx / l * BW / 2, pts = [a, b, [a[0] + ux, a[1] + uz], [a[0] - ux, a[1] - uz], [b[0] + ux, b[1] + uz], [b[0] - ux, b[1] - uz]];
+          if (!pts.every(([x, z]) => R.lotIn(x, z) && !inRows(x, z))) continue; next = acc + BW;
+          const q = lines.length / 3, nx = -tz / l * 0.06, nz = tx / l * 0.06; lines.push(a[0] + nx, gy(a[0], a[1]) + 0.09, a[1] + nz, b[0] + nx, gy(b[0], b[1]) + 0.09, b[1] + nz, b[0] - nx, gy(b[0], b[1]) + 0.09, b[1] - nz, a[0] - nx, gy(a[0], a[1]) + 0.09, a[1] - nz); li.push(q, q + 1, q + 2, q, q + 2, q + 3, q, q + 2, q + 1, q, q + 3, q + 2); } }
       if (li.length) flat(geo(lines, li), WL, 4); if (mi.length) flat(geo(mid, mi), WL, 4);
       const STEEL = PH(0x9aa0a8), HEAD = L(0xfff6d8); for (const [x, z] of lamps) { const lp = new THREE.Group(); lp.position.set(x, gy(x, z), z); C(lp, 0.08, 0.11, 6.5, STEEL, 0, 3.25, 0, 6); B(lp, 1.6, 0.18, 0.4, STEEL, 0, 6.5, 0); for (const s of [-1, 1]) B(lp, 0.5, 0.12, 0.35, HEAD, s * 0.75, 6.4, 0); put(lp); }
       built = { lamps: lamps.length, bays: li.length / 6 }; }
