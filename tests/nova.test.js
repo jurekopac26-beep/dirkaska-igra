@@ -27,6 +27,10 @@
 // - a race (Spa, Bathurst: 12 rivals, 150 s): nothing NaN, every car moving, no more knocks between the cars than 1.5x cs's + 20, at
 //   most 6 slides past 40 deg in the field; the rivals over the kerbs at the apex and the exit as in the reference video (a wheel on a
 //   kerb 6 % of the time or more; cs's under 3 %); the autopilot's lap alone on Bathurst within 4 % of cs's
+// - Preizkus: tekmeci in trki (Nastavitve; Core.setTest, TX), for either physics and nothing by default: the bounce of a knock (cE: the classic 0.1,
+//   the new 0.4, 0 none ... 0.6), the rub along the contact (cMu), the turn a knock gives (cYaw: the classic's attitude kick and the new one's
+//   spin, 0 none), the spread of the rivals' paces (aiSpr), the rivals over the kerbs (aiKerb: in the classic physics too, and off in the new one) and
+//   a close train with a wheel-to-wheel field (aiSpr, aiPush, aiSide, aiFol: more of the time a car is right behind another)
 //   node tests/nova.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -135,6 +139,49 @@ for (const id of ['rally', 'kaze']) {
     for (let i = 0; i < 4 / DT; i++) HN.step(c, { st: 1, thr: 'hold' }); return Math.abs(c.wPath) * Math.hypot(c.vx, c.vz) / 9.81; };
   const a0 = ay(0, -1), a1 = ay(1, -1), a2 = ay(0, 0);
   ok('the Kolibri\'s tyres with the new physics: worn ones corner less hard, a burning one less than new ones', a1 < a0 - 0.05 && a2 < a0 - 0.05, `new ${f(a0)} g, worn ${f(a1)} g, one burning ${f(a2)} g`);
+}
+
+// ---- Preizkus: tekmeci in trki (Core.setTest): the settings over either physics, nothing by default ----
+{
+  const all = () => Object.keys(C.TX).every(k => C.TX[k] === null);
+  C.setTest({ cE: 0.3, aiSpr: 'x', aiPush: NaN, cMu: null }); const part = C.TX.cE === 0.3 && C.TX.aiSpr === null && C.TX.aiPush === null && C.TX.cMu === null; C.setTest(null);
+  ok('Preizkus: nothing set by default, only numbers taken, setTest(null) clears them all', all() && part, JSON.stringify(C.TX));
+  const test = (tx, fn) => { C.setTest(tx || null); try { return fn(); } finally { C.setTest(null); } };
+  // the bounce: a rear-end knock on the plane (72 km/h into 36), the share of the closing speed the cars part at
+  const rear = (H, tx) => test(tx, () => { const A = H.mkCar('rally', { v: 72 }), B = H.mkCar('rally', { v: 36 }); A.place(0, 0, 0); A.vx = 20; B.place(A.m.len + 0.05, 0, 0); B.vx = 10; C.carCollide(B, A); return (B.vx - A.vx) / 10; });
+  const rc = [null, { cE: 0 }, { cE: 0.25 }, { cE: 0.6 }].map(t => rear(HC, t)), rn = [null, { cE: 0 }].map(t => rear(HN, t));
+  ok('Preizkus: the bounce of a knock: classic 0.1 by default, none with cE 0, 0.25 and 0.6 as asked; the new physics 0.4, none with cE 0', Math.abs(rc[0] - 0.1) < 0.03 && Math.abs(rc[1]) < 0.02 && Math.abs(rc[2] - 0.25) < 0.03 && Math.abs(rc[3] - 0.6) < 0.03 && Math.abs(rn[0] - 0.4) < 0.03 && Math.abs(rn[1]) < 0.02,
+    `classic ${rc.map(x => f(x)).join(' / ')}, new ${rn.map(x => f(x)).join(' / ')}`);
+  // the rub: B turning in against A at 100 km/h, the relative speed after the knock
+  const swipe = (H, tx) => test(tx, () => { const A = H.mkCar('rally', { v: 100 }), B = H.mkCar('rally', { v: 100 }); A.place(0, 0, 0); A.vx = 27.8; B.place(A.m.len - 3.0, 1.7, -0.26); B.vx = 27.8 * Math.cos(-0.26); B.vz = 27.8 * Math.sin(-0.26); B.h = -0.26;
+    C.carCollide(B, A); return Math.hypot(B.vx - A.vx, B.vz - A.vz); });
+  const sc = [null, { cMu: 0.8 }].map(t => swipe(HC, t)), sn = [null, { cMu: 0 }].map(t => swipe(HN, t));
+  ok('Preizkus: the rub along the contact: the classic cars share their speed more with cMu 0.8 than by default; the new physics with cMu 0 less than by default', sc[1] < 0.7 * sc[0] && sn[1] > 1.2 * sn[0], `classic ${f(sc[0])} -> ${f(sc[1])} m/s apart, new ${f(sn[0])} -> ${f(sn[1])}`);
+  // the turn: a light knock (the classic's attitude kick csKc is capped at 0.4 rad: 0.15 stays under it), the new physics' yaw rate
+  const lite = (H, tx) => test(tx, () => { const A = H.mkCar('rally', { v: 60 }), B = H.mkCar('rally', { v: 60 }); A.place(0, 0, 0); A.vx = 16.7; B.place(A.m.len - 3.0, 1.55, -0.06); B.vx = 16.7 * Math.cos(-0.06); B.vz = 16.7 * Math.sin(-0.06); B.h = -0.06;
+    C.carCollide(B, A); return [Math.abs(A.csKc), Math.abs(A.w)]; });
+  const yc = [null, { cYaw: 0 }, { cYaw: 0.15 }, { cYaw: 1.6 }].map(t => lite(HC, t)[0]), yn = [null, { cYaw: 0 }, { cYaw: 0.4 }].map(t => lite(HN, t)[1]);
+  ok('Preizkus: the turn of a knock: the classic kick none with cYaw 0, small with 0.15, more than by default with 1.6 (its cap grows too); the new physics\' spin none with 0, less with 0.4', yc[1] === 0 && yc[2] > 0 && yc[2] < 0.5 * yc[0] && yc[3] > yc[0] + 0.1 && yn[1] === 0 && yn[2] > 0 && yn[2] < yn[0],
+    `classic ${yc.map(x => f(x, 3)).join(' / ')} rad, new ${yn.map(x => f(x, 3)).join(' / ')} rad/s`);
+  // the field: the paces' spread and the fastest one the same
+  const sp = (phys, tx) => test(tx, () => { Math.random = seeded(5); const T = new C.Track(C.TRACKS.find(d => d.id === 'spa')), r = new C.Race(T, { numAI: 12, playerGrid: 13, laps: 1, phys, seed: 4, difficulty: 1 }), k = r.cars.filter(c => !c.isPlayer).map(c => c.skill); return [Math.min(...k), Math.max(...k)]; });
+  const s0 = sp('cs'), s1 = sp('cs', { aiSpr: 0.3 }), s2 = sp('nova', { aiSpr: 1 }), s3 = sp('nova');
+  ok('Preizkus: the rivals\' pace spread (aiSpr): 0.3 of the classic\'s with 0.3, the new physics\' own 0.6 by default and the classic\'s with 1, the fastest always the same',
+    Math.abs((s1[1] - s1[0]) / (s0[1] - s0[0]) - 0.3) < 0.05 && Math.abs((s2[1] - s2[0]) - (s0[1] - s0[0])) < 1e-9 && Math.abs((s3[1] - s3[0]) / (s0[1] - s0[0]) - C.NVK.aiSpr) < 0.05 && [s1, s2, s3].every(x => Math.abs(x[1] - s0[1]) < 0.01),
+    `classic ${f(s0[0], 3)}-${f(s0[1], 3)}, 0.3: ${f(s1[0], 3)}-${f(s1[1], 3)}, new 1: ${f(s2[0], 3)}-${f(s2[1], 3)}, new: ${f(s3[0], 3)}-${f(s3[1], 3)}`);
+  // races on Spa (12 rivals, 150 s): the rivals' wheel on a kerb, and how much of the time a car is within half a second behind another
+  const spa = (phys, tx) => test(tx, () => { Math.random = seeded(64); const T = new C.Track(C.TRACKS.find(d => d.id === 'spa'));
+    const race = new C.Race(T, { numAI: 12, playerGrid: 13, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys, chars: true, slip: true }); race.start();
+    let kerb = 0, tot = 0, near = 0, nearN = 0;
+    for (let k = 1; k <= 150 / DT; k++) { Math.random = seeded(1000 + k); C.aiControl(race.player, race, DT); race.step(DT);
+      for (const c of race.cars) if (!c.isPlayer && k * DT > 8) { tot++; if (c.onCurb) kerb++; }
+      if (k * DT > 10 && k % 12 === 0) for (const c of race.cars) { if (c.speed < 8 || c.isPlayer) continue; let nd = 1e9; for (const o of race.cars) { const d = o.dist - c.dist; if (o !== c && d > 0 && d < nd) nd = d; } nearN++; if (nd / c.speed < 0.5) near++; } }
+    return { kerb: kerb / tot, near: near / nearN }; });
+  const rcs = spa('cs'), rck = spa('cs', { aiKerb: 1.2 }), rnv = spa('nova'), rnk = spa('nova', { aiKerb: 0 }), rtight = spa('cs', { aiSpr: 0.3, aiPush: 0.04, aiSide: 0.15, aiFol: 1.5 });
+  ok('Preizkus: the rivals over the kerbs (aiKerb): the classic physics 6 % of the time or more with 1.2, under 3 % by default; the new physics under 3 % with 0, 6 % or more by default',
+    rck.kerb >= 0.06 && rcs.kerb < 0.03 && rnv.kerb >= 0.06 && rnk.kerb < 0.03, `classic ${f(rcs.kerb * 100, 1)} % -> ${f(rck.kerb * 100, 1)} %, new ${f(rnv.kerb * 100, 1)} % -> ${f(rnk.kerb * 100, 1)} %`);
+  ok('Preizkus: a close train (aiSpr 0.3, aiPush 0.04, aiSide 0.15, aiFol 1.5) on the classic physics: a car within half a second behind another 8 points of the time more than by default',
+    rtight.near >= rcs.near + 0.08, `${f(rcs.near * 100, 1)} % -> ${f(rtight.near * 100, 1)} %`);
 }
 
 // ---- the rivals' pace ----

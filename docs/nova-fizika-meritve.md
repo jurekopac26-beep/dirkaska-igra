@@ -148,3 +148,32 @@ Odprto:
 3. **Formula na strmem makadamu** (Moki, Harju): po trku z bližnjim avtom včasih obstane na robu ≈ 8 s (vrtenje koles v prazno v klancu), nato reševanje; 0–2 na dirko, tudi pred to sejo.
 4. **Nizka pomoč z avtopilotom** (`cam.js AS=0`) niha; igralec z nizko pomočjo na plošči je v redu (polni zasuk 21–26°), preveri na telefonu.
 5. Prednja kolesa so na sliki zasukana glede na telo (ne protizavijajo v zdrsu); po želji bi lahko kazala smer gum.
+
+## 8. Tekmeci in trki ločeno od fizike (28. 10. 2026)
+
+Po preizkusu uporabnik ostaja pri klasični fiziki. Nastavitve tekmecev in trkov so zato neodvisne od fizike (Nastavitve: kategorija »Preizkus: tekmeci in trki«, opis v `docs/igra.md`, razdelek »Preizkus: tekmeci in trki«; `Core.setTest`, `TX`). Privzeto je vse kot prej. Meritve so z `tools/nova/train.js` (8 prog × 4 krogi, 12 tekmecev, igralec na avtopilotu v skupini), `pack.js` (8 prog × 150 s) in `sweep.js` (12 prog × 400 s, mešano polje).
+
+**Tekmeci.** Kolono oblikujejo nastavitve tekmecev, ne fizika: klasična fizika z nastavitvami nove da skoraj enako kolono kot nova.
+
+| | Klasična | Klasična + nastavitve nove | Nova | Video |
+|---|---|---|---|---|
+| Razmik v koloni (mediana) | 4,6 dolžine, 0,49 s | 3,3 dolžine, 0,35 s | 3,3 dolžine, 0,36 s | 1,33 dolžine, ≈ 0,2 s |
+| Tekmec ob igralcu | 11 % | 19 % | 17 % | 23–33 % |
+| Prehitevanja med tekmeci na minuto | 7,3 | 8,9 | 7,8 | 7,6–10,8 |
+| Razvlečenje polja na krog | 2,4 % kroga | 0,7 % | 0,9 % | 1,1–2,2 % |
+| Močni stiki (> 3 m/s), 12 prog × 400 s | 74 | 261 | 103 | — |
+| Zasuki čez 40° | 2 | 2 | 0 | — |
+| Čas s kolesom na robniku | 1 % | 14 % | 15 % | — |
+
+Tesnejša kolona poveča število stikov (klasična + nastavitve nove: 3,5-krat več močnih stikov kot klasična), zato je razmik za avtom nastavljiv.
+
+**Trki** (kontroliran trk na ravnini, reli avto BURJA R7, hitrosti po stiku; Težak = odboj 0, drgnjenje 0,8, vrtenje 1,3):
+
+| Trk | Klasična | Klasična, Težak | Nova |
+|---|---|---|---|
+| Naletni, 72 → 36 km/h | A 52, B 56 km/h | A 54, B 54 | A 47, B 61 |
+| 100 km/h v stoječ avto, sredina | A 45, B 55 | A 50, B 50 | A 30, B 70 |
+| 100 km/h v stoječ avto, zamik 0,9 m | A 72, B 38; smer A −13°, B +3° | A 56, B 44; smer A −16°, B −17° | A 63, B 44; smer A −18°, B −4° |
+| Bok ob boku 100 km/h, B zavije vanj za 15° | A 96, B 103; smer A −17°, B +8° | A 101, B 98; smer A −19°, B +8° | A 98, B 101; smer A −10°, B +5° |
+
+V dirki (8 prog × 150 s, z igralcem): klasična skok vrtenja 73 °/s in sprememba smeri 12,9° v 0,5 s (video 30 °/s in 2,4°), nova 35 °/s in 6,3°. Odboj ob lahkih stikih je pri obeh enak (bočno 1,1–1,2 m/s, video 1–1,5 m/s); razlika je v vrtenju, ker klasična trk pretvori v sunek smeri (`csKc`, največ 0,4 rad) in ga ni mogoče omejiti drugače kot z `tapT` (1,5 → 0,45: skok vrtenja 63 → 44 °/s, smer 13° → 9,6°; meritve so hrupne). Zato ima vrstica »Vrtenje ob trku« pri klasični stopnje 0, 0,15, 0,4 in 1,6 (pri 1,6 se poveča tudi omejitev sunka).
