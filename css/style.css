@@ -999,6 +999,17 @@ body.pkfly #touch { visibility: hidden; }
   .car-strip { top: calc(48px + var(--st)); bottom: auto; }
   #s-car .car-nav { top: max(16%, calc(126px + var(--st))); }   /* (the arrows below the strip on a short phone too) */
 }
+/* the car screen: the car on the turntable is a button (game.js carTapLay sets it over the car's place for a whole turn, between the rows
+   and the panel; the rows, the arrows and the panel stay over it): a tap opens the garage (garaza.html) with that car; its hint at its foot */
+.car-gar { position: absolute; display: none; padding: 0; margin: 0; border: 0; border-radius: 18px; background: transparent; cursor: pointer; }
+.car-gar.on { display: block; }
+.car-gar:focus-visible { outline: 3px solid var(--sky); outline-offset: -3px; }
+.car-gar.pad-focus { outline-offset: -3px; }
+.car-gar-hint { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; max-width: calc(100% - 8px); padding: 5px 11px 5px 8px; border-radius: 14px; border: 2px solid rgba(255,255,255,.24); background: rgba(14,18,25,.66); font: 700 italic 12px/1 var(--f-ui); color: var(--chalk); white-space: nowrap; pointer-events: none; transition: background .15s, border-color .15s, transform .15s; }
+.car-gar-hint svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--lcd); }
+.car-gar-hint span { overflow: hidden; text-overflow: ellipsis; }
+.car-gar:hover .car-gar-hint, .car-gar.pad-focus .car-gar-hint { border-color: var(--lcd); }
+.car-gar:active .car-gar-hint { background: rgba(160,36,28,.78); border-color: var(--curb); transform: translateX(-50%) scale(.96); }
 /* the career's garage by category */
 .garage .gcat { grid-column: 1 / -1; margin: 6px 2px 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--lcd); }
 .garage .gcat:first-child { margin-top: 0; }
