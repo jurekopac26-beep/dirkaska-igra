@@ -6,7 +6,7 @@ Napisano 28. 10. 2026 v seji z garažo. Ta seja dela garažo (veja `claude/3d-ga
 - Delaj na **novi veji iz `main`**, npr. `claude/kolibri-deli` (`git fetch origin main && git checkout -b claude/kolibri-deli origin/main`).
 - Preberi `CLAUDE.md` na `main` (pravila igre: pravna varnost, kameri `iso` in `chase`, obremenitev telefona, `node tools/stamp.js`, testi, prevodi v `js/lang.js`, PR samo na izrecno prošnjo).
 - Iz veje z garažo preberi (ne spreminjaj):
-  `git fetch origin claude/3d-garage-cars-sum9uk` in nato `git show origin/claude/3d-garage-cars-sum9uk:nacrti/<pot>`:
+  `git fetch origin nacrti` in nato `git show origin/nacrti:nacrti/<pot>`:
   - `nacrti/cene/cene.json`: 39 elementov × 16 možnosti (in servis) (imena SI/EN, cena, kaj nudi, `na_regalu`). **To je seznam, ki ga narediš.** Kopiraj ga na svojo vejo kot `js/data/deli.json` (ali kot JS v `js/cars/_deli.js`), da sta meni garaže in tvoji deli isti seznam.
   - `nacrti/odlocitve.md`: odločitve uporabnika (videz delov, barve, gume po straneh …).
   - `nacrti/plosce/` (npr. `an_*`, `pr`, `el_*`, `koncne/01_karoserija.jpg … 16_luc_pod_avtom.jpg`): kako so deli videti na slikah garaže.
