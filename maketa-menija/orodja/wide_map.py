@@ -30,6 +30,7 @@ RING_M = 150.0  # the made-up rim of ground-only cells round the island's trees,
 RING_PX = {'monaco': 8, 'riviera': 18}   # (where the island is a whole town to the tile's edge: only a thin rim)
 WATER_OUT = {'monaco', 'riviera'}   # (the game's sea is a plane far wider than the harbour: the painted land's own sea is used)
 SEA_LC = {'bangsaen'}   # (the game's sea plane is left out of the island (routemap: far backdrop), its seabed would show: cut out where the real land cover is sea)
+H_SMOOTH = {'rastro': 5.0, 'tianmen': 6.0, 'bangsaen': 2.0}   # (output pixels: where the heights are coarse for the tile's scale, their steps would show in the shading)
 THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nring', 'spa': 'spa', 'rbring': 'rbring', 'suzuka': 'suzuka', 'monaco': 'monaco', 'riviera': 'city'}
 # the sun of each theme (routemap_page.js: THEMES sunOff, default [-80, 96, 70]; x east, y up, z south), its strength and the sky light
 SUN = {'ouni': ([-88, 72, 58], 1.18, 0.56), 'vrsic': ([-84, 70, 56], 1.16, 0.58), 'pikes': ([104, 48, -60], 1.58, 0.75), 'nring': ([-80, 76, 70], 1.1, 0.6),
@@ -104,6 +105,8 @@ def paint_land(F):
     if z is not None and 'lc' in z.files: alb, h, lc = z['alb'], z['h'], z['lc']
     else:
         alb, h, lc = _paint_land(F); os.makedirs(os.path.dirname(cache), exist_ok=True); np.savez(cache, alb=alb, h=h, lc=lc)
+    if F.tid in SEA_LC: h = np.where(np.isin(lc, (0, 80)), 0.0, h).astype(np.float32)   # (the sea flat: no seabed in the shading)
+    if F.tid in H_SMOOTH: h = ndimage.gaussian_filter(h, H_SMOOTH[F.tid])
     # the sun in the output grid's axes: x right, z down in the tile; the world's vector (sx east, sz south) turned by the tile's fit
     sv, sunI, hemiI = SUN.get(THEME.get(F.tid, F.tid), ([-80, 96, 70], 0.98, 0.62)); sx, sy, sz = sv
     su = (F.A * sx - F.B * sz) / F.k; sv_ = (F.B * sx + F.A * sz) / F.k
@@ -241,6 +244,9 @@ def build(tid):
         e = F.ext; wat = ndimage.binary_erosion(np.isin(lc_t[e:e + F.H, e:e + F.W], (0, 80)), iterations=2, border_value=1)
         a_d = a_d * (~wat)
     m = island_mask(a_d, F.mpp, RING_PX.get(tid))
+    if tid in SEA_LC:   # by the sea the island goes on to the shore (no rim cut there: its beach and its palms stay), fading back to the cut further off
+        r1 = RING_M / F.mpp; w = np.clip((ndimage.distance_transform_edt(~wat) - r1) / 30.0, 0, 1)
+        m = island_mask(a_d, F.mpp, 10) * (1 - w) + m * w   # (a rim of 10 pixels at least: a thinner one leaves a veil over the empty pixels)
     bg_t = to_tile(bg, F)
     alb_t = to_tile(alb, F)
     bg_m, g = match_to_island(bg_t, isle_d, m, F, lc_t, alb_t)   # (the dry land at the tile's pixels)

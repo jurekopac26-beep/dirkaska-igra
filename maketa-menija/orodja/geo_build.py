@@ -86,7 +86,7 @@ if 'vectors' in ONLY:
     keep = {t['names']['country'] for t in P['tracks'].values()}
     SHORT = {'United States of America': 'USA', "People's Republic of China": 'China', 'Democratic Republic of the Congo': 'DR Congo', 'Republic of the Congo': 'Congo',
              'The Bahamas': 'Bahamas', 'Federated States of Micronesia': 'Micronesia'}
-    BIG = ('USA', 'Canada', 'Russia', 'China', 'Australia', 'Brazil')   # (the big countries' outlines coarser)
+    BIG = ('USA', 'Canada', 'Russia', 'China', 'Australia', 'Brazil', 'Chile')   # (the big countries' outlines coarser; Chile: its thousands of fjord islands)
     for rec, g in read('ne_10m_admin_0_countries'):
         nm = rec.get('NAME_EN') or rec['NAME']; nm = SHORT.get(nm, nm)
         if rec['TYPE'] in ('Dependency', 'Lease') or (rec['TYPE'] == 'Indeterminate' and nm != 'Antarctica'): continue   # (no bases, leases and small dependencies)
