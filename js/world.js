@@ -30,6 +30,11 @@ const World = (function () {
     };
   }
   let LOD = makeLOD(2);   // set per build() from opts.tier; VISOKA by default
+  // three.js names every object it makes (a mesh, a geometry, a material) with Math.random (MathUtils.generateUUID: four draws), which the
+  // browser tests seed and share with the race: what a world adds for one tier alone (NIZKA's lighter far plants) is made with Math.random
+  // swapped for World's own generator (never reset: the names stay unique), so a seeded race runs as it did before (as Render's ownRnd)
+  const uuW = { s: 7919 };
+  function ownRnd(fn) { const r = Math.random; Math.random = () => { uuW.s = (uuW.s * 48271) % 2147483647; return uuW.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
   // decorative meshes eligible for the runtime draw-distance cull (vegetation and trees only: Render hides the far ones on the lower tiers to
   // keep the draw-call count down; the base — road, terrain, barriers, buildings, signs — is never in this list). Each entry: {m, x, z, r}
   // (the mesh and its chunk centre and radius in world space). Filled during build(), handed out as out.cull in finish().
@@ -4785,7 +4790,7 @@ const World = (function () {
     clearance, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
-    nrTileOn, nrTreeGeo, nringProps, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
+    nrTileOn, nrTreeGeo, nringProps, ownRnd, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
     shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wrapS
   };
   Object.defineProperties(API, {
