@@ -13,7 +13,7 @@
 //    triangles, Visoki <= 850; a stock car's 400 / 700, tests/browser/fleet.test.mjs), the parts in their
 //    stock part ids (the wing's range in 'spoiler', the lamps' in 'headL' / 'headR'); Render.deliMesh: the part alone where it sits, a
 //    vehicle without a mount: null and its body the stock one; a car's own lamp shape (mounts.zarometi.shape: PANTER's triangles,
-//    JASTREB's round lamps in their pods): every option within it, its lens bulging
+//    JASTREB's lamps the noses of their glass domes): every option within it, its lens bulging
 //   node tests/deli.test.js
 'use strict';
 const fs = require('fs');
@@ -126,8 +126,8 @@ check('Render.deliMesh: the wing alone on the roof\'s rear edge, the lamps on th
   mW && mL ? `wing x ${bW[0].toFixed(2)}..${bW[3].toFixed(2)} y ${bW[1].toFixed(2)}..${bW[4].toFixed(2)}, lamps x ${bL[0].toFixed(2)}..${bL[3].toFixed(2)}` : 'null');
 const other = C.MODELS.find(m => m.kit && m.id !== 'kolibri' && !m.def.mounts);
 check('a vehicle without the mount: no part drawn (deliMesh null, its body the stock one)', !!other && R.deliMesh(other, 'krilo', 3) === null && R.kitInfo(other.id, { krilo: 3 }).deli === '', other ? other.id : 'none');
-// a car's own lamp (mounts.zarometi.shape): every option within its outline (PANTER's triangles on the wings' noses, JASTREB's round lamps
-// in their pods), its lens bulging out (in front of the face by more than the flat lens' 4 mm)
+// a car's own lamp (mounts.zarometi.shape): every option within its outline (PANTER's triangles on the wings' noses, JASTREB's lamps
+// the noses of their glass domes), its lens bulging out (in front of the face by more than the flat lens' 4 mm)
 const shapeBad = [];
 for (const M of MOUNTED.filter(m => m.def.mounts.zarometi && m.def.mounts.zarometi.shape)) { const z = M.def.mounts.zarometi, S = z.shape;
   const u0 = Math.min(...S.map(q => q[0])), u1 = Math.max(...S.map(q => q[0])), v0 = Math.min(...S.map(q => q[1])), v1 = Math.max(...S.map(q => q[1])), mg = (z.ringW || 0.008) + 0.012;

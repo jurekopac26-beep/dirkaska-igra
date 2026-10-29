@@ -997,7 +997,8 @@ const Render = (function () {
        K.endplate(pts [[x, y] ...], z, th, col, o)      a plate in the x-y plane at z (endplates, fins)
        K.skin(rings, col(k, e) | colour, capA, capB, o) a loft through rings of points (all the same count; each ring convex and closed:
                                its last point joins its first): noses, pods, tubs, boat tails, stacks, snorkels; along any axis (each end cap
-                               faces away from its neighbour ring)
+                               faces away from its neighbour ring); o.smooth: smooth-shaded (a corner's normal the quads' of its colour
+                               round that point: a round shape from few points, a band of another colour its own edge)
        K.sweep(profile [[u, v] ...], path [[x, y, z] ...], col, o)   a profile (convex) along a path (u across, v up); o: { capA, capB, scale(i) }
        K.flare(x, r0, r1, z0, z1, col, o)   a wheel-arch extension over the wheel at x: radius r0..r1 (metres: round whatever the look's
                                scale), from z0 (in) to z1 (out); o: { n, a0, a1, y }
@@ -1554,12 +1555,23 @@ const Render = (function () {
   }
   // a skin through rings of points (K.skin, K.sweep, K.driver's torso): fLoft's sides; each end cap (a fan from the ring's middle) faces away
   // from its neighbour ring's middle, whatever the axis the skin runs along (fLoft's caps assume x: a skin up y or across z would face in)
-  function kitSkin(g, R, col, capA, capB) {
+  function kitSkin(g, R, col, capA, capB, smooth) {
     const n = R[0].length, mid = (ring) => { const m = [0, 0, 0]; for (const p of ring) { m[0] += p[0] / n; m[1] += p[1] / n; m[2] += p[2] / n; } return m; };
+    const C = R.slice(1).map((B, k) => { const c = [0, 0, 0]; for (const p of R[k].concat(B)) for (let i = 0; i < 3; i++) c[i] += p[i] / (2 * n); return c; });   // (each band's middle: inside)
+    const Q = C.map((c, k) => R[0].map((p, e) => col(k, e)));   // (each quad's colour)
+    // smooth: each quad's normal by its area, facing away from its band's middle; a corner's normal the quads' of its colour round that point
+    const F = smooth ? Q.map((row, k) => row.map((cl, e) => { const e1 = (e + 1) % n, A = R[k], B = R[k + 1], c = C[k];
+      const u = [B[e1][0] - A[e][0], B[e1][1] - A[e][1], B[e1][2] - A[e][2]], v = [B[e][0] - A[e1][0], B[e][1] - A[e1][1], B[e][2] - A[e1][2]];
+      const f = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]], s = (A[e][0] - c[0]) * f[0] + (A[e][1] - c[1]) * f[1] + (A[e][2] - c[2]) * f[2] < 0 ? -1 : 1;
+      return [s * f[0], s * f[1], s * f[2]]; })) : null;
+    const same = (a, b) => a === b || (Array.isArray(a) && Array.isArray(b) && a[0] === b[0] && a[1] === b[1] && a[2] === b[2]);
+    const corner = (k, e, cl) => { const q = [0, 0, 0];   // (ring point k, e)
+      for (const kk of [k - 1, k]) for (const ee of [e - 1, e]) { const j = (ee + n) % n; if (kk < 0 || kk >= Q.length || !same(Q[kk][j], cl)) continue; for (let i = 0; i < 3; i++) q[i] += F[kk][j][i]; }
+      const l = Math.hypot(q[0], q[1], q[2]) || 1; return [q[0] / l, q[1] / l, q[2] / l]; };
     for (let k = 0; k < R.length - 1; k++) {
-      const A = R[k], B = R[k + 1], c = [0, 0, 0];
-      for (const p of A.concat(B)) { c[0] += p[0] / (2 * n); c[1] += p[1] / (2 * n); c[2] += p[2] / (2 * n); }
-      for (let e = 0; e < n; e++) { const e1 = (e + 1) % n; g.quadO(A[e], B[e], B[e1], A[e1], col(k, e), c); }
+      const A = R[k], B = R[k + 1], c = C[k];
+      for (let e = 0; e < n; e++) { const e1 = (e + 1) % n, cl = Q[k][e];
+        if (F) g.quadON(A[e], B[e], B[e1], A[e1], corner(k, e, cl), corner(k + 1, e, cl), corner(k + 1, e1, cl), corner(k, e1, cl), c, cl, cl, cl, cl); else g.quadO(A[e], B[e], B[e1], A[e1], cl, c); }
     }
     for (const [ring, cc, nb] of [[R[0], capA, R[1]], [R[R.length - 1], capB, R[R.length - 2]]]) {
       if (!cc) continue;
@@ -1750,7 +1762,7 @@ const Render = (function () {
     K.endplate = (pts, z, th, col, o) => { const n = pts.length, cx = pts.reduce((s, p) => s + p[0], 0) / n, cy = pts.reduce((s, p) => s + p[1], 0) / n; kx.prim(cx, cy, z, () => fPlate(g, pts, z, th || 0.012, col), o); };
     K.skin = (rings, col, capA, capB, o) => { if (!Array.isArray(rings) || rings.length < 2 || rings.some(R => !Array.isArray(R) || R.length !== rings[0].length || R.length < 3)) kitFail('skin: 2+ rings of the same 3+ points');
       const m = [0, 0, 0], n = rings.length * rings[0].length; for (const R of rings) for (const p of R) for (let i = 0; i < 3; i++) m[i] += p[i] / n;
-      kx.prim(m[0], m[1], m[2], () => kitSkin(g, rings, typeof col === 'function' ? col : () => col, capA || null, capB || null), o); };
+      kx.prim(m[0], m[1], m[2], () => kitSkin(g, rings, typeof col === 'function' ? col : () => col, capA || null, capB || null, !!(o && o.smooth)), o); };
     K.sweep = (profile, path, col, o) => { o = o || {}; K.skin(kitSweepRings(profile, path, o.scale), col, o.capA, o.capB, o); };
     K.flare = (x, r0, r1, z0, z1, col, o) => { o = o || {}; kx.prim(x, K.rw + (r0 + r1) / 2 * 0.7, (z0 + z1) / 2, () => kitFlare(g, x, o.y != null ? o.y : K.rw, r0, r1, z0, z1, col, o.n || 7, o.a0 != null ? o.a0 : 0.16, o.a1 != null ? o.a1 : Math.PI - 0.16, sx), o); };
     // a wheel and its tyre in the body (a spare on a tailgate, in a bed, on a buggy's deck): the look's own wheel (a rival's detail; o.hi the
