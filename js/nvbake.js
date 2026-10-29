@@ -8,7 +8,7 @@
 const NVBake = (function () {
   'use strict';
   const CELL = 64;   // (m: the cells' size)
-  const hooked = (m) => m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile;
+  const hooked = (m) => m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile;   // (kept as they are, unless m.userData.bake: a shader of its own that only needs the world position, the one meadow's)
   // a merge key: one-colour materials by their kind (the colour goes into the vertices), the rest by the material itself
   function keyOf(o, m, ic) {
     const tag = [m.type, m.side, m.depthWrite, m.depthTest, m.polygonOffset ? m.polygonOffsetFactor + '/' + m.polygonOffsetUnits : 0, m.fog, m.flatShading, m.alphaTest, o.renderOrder].join('|');
@@ -62,7 +62,7 @@ const NVBake = (function () {
       if (!o.isMesh || o.isSkinnedMesh || o.userData.dyn) return;   // (dyn: what moves, the walls' pieces of fence, js/nvwalls.js)
       const m = o.material, g = o.geometry;
       // (a geometry's face groups only count with an array of materials: one material draws the whole of it)
-      let why = Array.isArray(m) ? 'multi' : !g || !g.attributes.position ? 'nogeo' : g.morphAttributes.position ? 'morph' : m.aoMap || m.lightMap ? 'uv2' : hooked(m) ? 'shader' : !shown(o) ? 'hidden' : isFinite(g.drawRange.count) && g.drawRange.count < (g.index ? g.index.count : g.attributes.position.count) ? 'range' : '';
+      let why = Array.isArray(m) ? 'multi' : !g || !g.attributes.position ? 'nogeo' : g.morphAttributes.position ? 'morph' : m.aoMap || m.lightMap ? 'uv2' : hooked(m) && !m.userData.bake ? 'shader' : !shown(o) ? 'hidden' : isFinite(g.drawRange.count) && g.drawRange.count < (g.index ? g.index.count : g.attributes.position.count) ? 'range' : '';
       if (!why && !o.isInstancedMesh) { _b.setFromObject(o); if (![_b.min.x, _b.min.y, _b.min.z, _b.max.x, _b.max.y, _b.max.z].every(Number.isFinite)) why = 'nan'; }
       if (why) { kept++; whys[why] = (whys[why] || 0) + 1; return; }
       if (o.isInstancedMesh) {   // every instance on its own: its matrix, its colour
