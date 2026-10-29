@@ -14,7 +14,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/game.js` | stanje igre, zasloni, HUD, glavna zanka, posnetek, Foto, dogodki gumbov (`data-act`) |
 | `js/core.js` | proga (`Track`), fizika avtov, AI, dirka (`Race`), predmeti ob progi; brez DOM in THREE |
 | `js/render.js` | izris: avti, delci, sledi gum, kamere, nebo, poškodbe, boksi; goreča guma KOLIBRIJA `ktGlow` |
-| `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti |
+| `js/world.js` | gradnja sveta ob progi: `build()` izbere graditelja po temi (tabela spodaj), `LOD` za nivo podrobnosti; `ownRnd` (`API.ownRnd`): predmeti THREE samo ene stopnje (npr. lažje oddaljene rastline na NIZKI) brez porabe `Math.random`, da dirka s semenom teče enako |
 | `js/world-<tema>.js` | svetovi v svojih datotekah (`World.ext[tema]`, tabela prog spodaj). `montreal`, `toronto`, `townsville`: pomočniki `extAPI` (`K.<ime>`). Premaknjeni iz `world.js` (sklop 17: vse prave proge; v `world.js` ostane splošni `build()` testnih prog in Monaka; `world-rbring.js` gradi Štajersko, Bathurst, Rio in Crystal Palace): koda nespremenjena, pomočnike vzame iz `World.api` (`API` v `world.js`: nespremenljivi ob nalaganju, spremenljivo stanje kot `K.<ime>`, `T` in druge podatke gradnje prepiše `SYNC` pred gradnjo); kar `world.js` uporablja od njih, je `API.<ime>` |
 | `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov, v krogu), zbirna slika in pošiljanje, Zgodovina napak, zastavica med dirko, dnevnik napak, prikaz za razvijalca, samodejne zastavice, nastavitve orodja; opis spodaj |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem, `flag` na F za zastavico, `dev` na O za prikaz za razvijalca: `Input.onDev`), plošček |
@@ -34,7 +34,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
-| `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`), `--nizka`: grafika NIZKA; `test-results/shots/` |
+| `tools/obremenitev.mjs` | obremenitev telefona po predmetih: šest vzorcev `perf.test.mjs`, vsak klic risanja (tudi senčni) pripisan mreži in vrstici graditelja, ki jo je dodala (`[mulholland:553<world:4349]`), svet ali drugo, oddaljeni deli instanciranih mrež; `test-results/obremenitev/` |
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
 | `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
@@ -176,7 +177,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
-- **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
+- **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; razčlenitev po predmetih `tools/obremenitev.mjs`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
 - **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
