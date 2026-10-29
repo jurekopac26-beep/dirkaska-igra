@@ -484,3 +484,28 @@ Popravki po pregledu slik (20. 10. ponoči):
 - Misije (vse na progah, ki so že v igri): 36 Plaz (Vršič), 37 Poplava (Bang Saen), 38 Peščeni vihar (Moki Dugway), 39 Konji v prikolici (Monterey), 40 Varnostni avto (Bathurst), 41 Dirkalni taksi (Nürburg), 42 Ogledalo za zvezde (Palomar Mountain), 43 Vroče zavore (Rio do Rastro), 44 Skalni podor (Chapman's Peak), 45 Turistični vlakec (Monte Carlo). Plaz, poplava, vihar in konji so bili prej »v rezervi«; rezerva ima zdaj: solna ravnica, potisni letalo, vleka sani, mačka na drevesu, kit na plaži, ledena ploskev.
 - Makete: `blender/miss4.py <36-45> <mapa>` (gradniki iz `miss.py`, `miss2.py` in `miss3.py`), prikaz na zaslonu `blender/hud_miss4.py`; slike `listi/vse45-posebne-misije-4`. Predstavitev ima zdaj 55 prosojnic (kopija v `misije-10/`).
 - Ocena: misije 36–45 125–175 h; vseh 45 s sistemom 605–855 h (s skupnimi gradniki realno 20–30 % manj).
+
+## 29. 10. ponoči: izbor 24 misij, še 10 novih (46–55), kamera igralca, časi
+- Uporabnik je izbral 24 misij: 1, 2, 4, 6, 7, 8, 9, 10, 11, 13, 17, 19, 23, 26, 29, 30, 33, 34, 35, 37, 39, 40, 43, 45, in naročil še 10 novih.
+  Med delom: »nič ne delaj v kodi, samo pripravi« – igra ni spremenjena, vse je v slikah in predstavitvi.
+- Pripombe k izbranim:
+  - 6: »naj bodo na cesti tudi ostali avtomobili, brez ljudi in kolesarjev« – zdaj devet avtov in tovornjak; pred policijo zapeljejo na desni rob
+    in ustavijo (utripalke), nasproti vozeči ustavijo na svojem robu. Policija in igralec sta zdaj na desnem pasu (ZDA).
+  - 29: »kako mečeš darila? naredi v slikah« – štiri slike (približaj se, drži VRZI s piko, darilo leti, zadetek). Smer izbere igra sama
+    (proti hiši ob cesti), igralec določa moč z dolžino pritiska.
+  - 35: »kako iščeš? naredi v slikah« – štiri slike (reševalec kaže krog, štirikolesnik do vode, skuter: plavalec se pokaže na valu in zakliče,
+    krog se zmanjša; na sani in na obalo), pri 3 in 4 še pogled z vozila.
+  - 45: »naredi na drugi progi« – zdaj Riviera, Francija: promenada s palmami, plaža s senčniki, serpentina do razgledne točke.
+- Nove misije (vse na progah, ki jih izbor še ne uporablja): 46 Požar v predoru (Uncompahgre), 47 Gozdni požar (Great Alpine Road),
+  48 Narasla reka (Longford), 49 Zataknjeno kolo (Suzuka), 50 Panji na pašo (Medvode), 51 Dinozaver na tovornjaku (Crystal Palace),
+  52 Hiša na tovornjaku (Big Sur), 53 Snežne verige (Los Caracoles), 54 Dirka tovornjakov (Nürburg), 55 Medvedi na cesti (Beartooth).
+- Kamera igralca »Blizu«: `blender/kamera.py <misija> <mapa>` postavi isto kamero kot igra (js/render.js, način 'chase', telefon pokonci):
+  D = 46 · zoom · 1,1 (Blizu), nagib 0,98 · 0,9, cilj 13 m pred avtom na tleh, zorno polje 58°. 34 posnetkov (vsa izbrana in nova vozila),
+  listi `kamera1`–`kamera6`. Ugotovitev: vozilo se vidi predvsem od zgoraj (streha, oblika, barva), ponoči predvsem luči.
+- Časi (izdelava · igranje ene vožnje): izbranih 24 misij 322–454 h · 135–177 min; novih 10 misij 124–174 h · 59–78 min;
+  sistem misij 10–14 h; skupaj 456–642 h (s skupnimi gradniki realno okoli 320–515 h); vseh 34 misij se enkrat odigra v 194–255 min.
+  Misija 6 je zdaj 12–16 h (prej 10–14 h, +2 h za promet, ki se umika).
+- Makete: `blender/miss5.py <misija> <mapa>` (46–55, 6, 45, 291–294 = met darila, 351–354 = iskanje), prikaz na zaslonu `blender/hud_miss5.py`,
+  sestavljene slike `blender/sestavi5.py`, predstavitev `blender/deck5.py`. Slike: `listi/vse46-posebne-misije-5`.
+- Predstavitev ima zdaj 73 prosojnic (kopija v `misije-10/`): tabela izbora in časov na začetku, izbranih 24 misij (s slikami 29 in 35),
+  10 novih, kamera igralca, čas in žetoni, na koncu neizbrane misije v rezervi.
