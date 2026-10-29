@@ -103,6 +103,7 @@
       farm: { wall: [0.95, 0.93, 0.86], roof: [0.66, 0.32, 0.2], end: [0.93, 0.9, 0.82], barn: [0.86, 0.82, 0.72], barnRoof: [0.62, 0.3, 0.2], barnEnd: [0.84, 0.8, 0.7] },   // a white house under red tiles
       tvSkip: [3, 6, 7, 9], recov: [0, 4, 10], photo: [0, 4, 10], jets: [[0.97, 0.97, 0.97], [0.97, 0.97, 0.97], [0.97, 0.97, 0.97]],
       screen: { name: ['RIO DE JANEIRO', ''], km: '5,031 km', sub: '11 zavojev', fans: ['#ffd21f', '#0a6a3a', '#f4f4f0', '#123c8c', '#e2202c', '#ff9a2e', '#0a6a3a'], glow: '255,210,31' },
+      ground: rioGround, verge: rioVerge, road: rioRoad, apron: rioApron,   // (the ground's patches and the worn verges: rioGround, rioVerge)
       colMod: (P) => (x, z, c) => {   // the tropics in the rainy summer: a lush, deeper green in patches; the marsh by the lagoon olive and muddy
         const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.16 + (m - 0.5) * 0.1, mf = nrLCf(x, z, 2);
         c[0] *= k * 0.88; c[1] *= k * 0.94; c[2] *= k * 0.8;
@@ -192,6 +193,7 @@
     const { PD, PB, hyS, atSf, kbox, kface, scen, board, AT, exclPush, TEAM, pq0, pq1, CR } = c, sStart = T.startS;
     RIO_PRE = { roof: 0 };
     const CON = [0.8, 0.78, 0.72], CONT = [0.72, 0.7, 0.66], CON2 = [0.86, 0.84, 0.79], GL = [0.17, 0.21, 0.25], SH = [0.66, 0.67, 0.68];
+    const RF = [[0.5, 0.49, 0.46], [0.46, 0.45, 0.42], [0.53, 0.51, 0.47], [0.44, 0.44, 0.42], [0.49, 0.47, 0.43]];   // the flat roof, weathered grey bay by bay (the chase camera sees it from above, a wide plane by the straight)
     const gb = (s) => { const p = T.pitAt(s); return p && p.t > 0.999 ? p.o + 12.5 : null; };   // the garages' front (the apron's back edge)
     const crewQ = new Set(); for (let q = pq0, n = 0; q <= pq1 && n < 13; q += 10) { const p = T.pitAt(sStart + q); if (p && p.t >= 0.999) { crewQ.add(q); n++; } }
     let mid = null;
@@ -206,7 +208,7 @@
       kbox(g, s0, 5, f0 + 7.9, 4.0, 10.02, 8.0, 15.2, CON, CONT);                                         // the two floors above
       for (const y of [4.9, 8.9]) { kface(g, s0, 0.2, 9.8, f0 + 0.28, y, y + 2.4, GL); kbox(g, s0, 5, f0 + 0.2, y - 0.9, 10.02, 0.5, 0.4, CON2, null, true); }   // ribbon windows over a slab edge
       for (let a = 1.25; a < 10; a += 2.5) kbox(g, s0, a, f0 - 0.05, 4.0, 0.16, 8.0, 0.55, CON2, null, true);   // the concrete fins in front of them (against the sun)
-      kbox(g, s0, 5, f0 + 7.9, 12.0, 10.02, 0.25, 15.6, CON2, [0.7, 0.69, 0.66]); kbox(g, s0, 5, f0 + 0.05, 12.25, 10.02, 1.0, 0.18, CON2);   // the roof and its parapet
+      kbox(g, s0, 5, f0 + 7.9, 12.0, 10.02, 0.25, 15.6, CON2, RF[((q / 10) | 0) % RF.length]); kbox(g, s0, 5, f0 + 0.05, 12.25, 10.02, 1.0, 0.18, CON2);   // the roof and its parapet
       kbox(g, s0, 5, f0 - 0.06, 12.4, 10.02, 0.32, 0.05, [0.02, 0.5, 0.26], null, true); kbox(g, s0, 5, f0 - 0.06, 12.72, 10.02, 0.16, 0.05, [0.98, 0.82, 0.1], null, true);   // painted in green and yellow
       kbox(g, s0, 5, f0 + 0.3, 14.1, 10.02, 0.07, 0.07, [0.18, 0.34, 0.66], null, true); kbox(g, s0, 0.1, f0 + 0.3, 13.25, 0.06, 0.9, 0.06, [0.18, 0.34, 0.66], null, true);   // a blue railing over it
       if (((q / 10) | 0) % 4 === 1) { const [tx, tz] = atSf(s0 + 5, f0 + 11), ty = hyS(s0 + 5) + 12.25;   // on the roof: a blue water tank on a stand (as on every roof in Rio), a grey plant box
@@ -353,6 +355,83 @@
     if (!cam) return;
     const r = cam.far * 0.9;
     for (const m of S.meshes) { m.position.set(cam.position.x, cam.position.y, cam.position.z); m.scale.setScalar(r); m.updateMatrix(); if (S.fog) m.material.color.copy(S.fog.color); }
+  }
+  /* ---- Rio, round 3: the ground the chase camera sees (it looks down on the flat basin: the road and 80-160 m of land round it, no sky).
+     rioGround: the ground's material (the terrain and the verges) paints the open land in patches finer than the terrain's 8 m cells, in
+     world space from a small tileable noise map (no more draws): the tropical grass burnt straw-yellow in places, darker lush clumps, the
+     pale sand of the old marsh showing through, and the worn verges (rioVerge tints them: the shader reads the tint as dust); rioVerge: the
+     grass along the asphalt worn to dust where the wheels run off, more on the outside of the corners' exits ---- */
+  const RIO_UU = { s: 6031 };
+  function rioOwn(fn) {   // THREE objects made here named without Math.random (generateUUID draws from it: the race with a seed stays the same)
+    const r = Math.random; Math.random = () => { RIO_UU.s = (RIO_UU.s * 48271) % 2147483647; return RIO_UU.s / 2147483647; };
+    try { return fn(); } finally { Math.random = r; }
+  }
+  function rioNoiseTex() {   // 128 px, tileable: r, g, b three independent value noises (4, 8 and 16 cells across, summed), a the fine grain
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data;
+    const oct = (g, seed) => { const r = rng(seed), v = new Float32Array(g * g); for (let k = 0; k < v.length; k++) v[k] = r();
+      return (u, w) => { const a = u * g, b = w * g, i = Math.floor(a), j = Math.floor(b), fu = a - i, fv = b - j, su = fu * fu * (3 - 2 * fu), sv = fv * fv * (3 - 2 * fv), at = (p, q) => v[(q % g) * g + (p % g)];
+        return lerp(lerp(at(i, j), at(i + 1, j), su), lerp(at(i, j + 1), at(i + 1, j + 1), su), sv); }; };
+    const N = [0, 1, 2].map(ch => [oct(4, 6110 + ch), oct(8, 6120 + ch), oct(16, 6130 + ch)]), g = rng(6140);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+      const u = i / S, v = j / S, o = (j * S + i) * 4;
+      for (let ch = 0; ch < 3; ch++) { const n = N[ch][0](u, v) * 0.5 + N[ch][1](u, v) * 0.3 + N[ch][2](u, v) * 0.2; d[o + ch] = clamp(Math.round((0.5 + (n - 0.5) * 1.7) * 255), 0, 255); }   // (stretched: the sums crowd round the middle)
+      d[o + 3] = Math.round(g() * 255);
+    }
+    x.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.premultiplyAlpha = false; return t;
+  }
+  function rioGround(m, ownTex) {   // (in place of World's grassLook for this material, with what it does: grassLook leaves a material it has marked)
+    const nt = rioOwn(() => ownTex(rioNoiseTex()));
+    m.userData.grassLook = true;
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uRioN = { value: nt };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vRioW; varying float vRioD;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvRioW = (modelMatrix * vec4(transformed, 1.0)).xz; vRioD = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uRioN;\nvarying vec2 vRioW; varying float vRioD;')
+        .replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          vec4 nA = texture2D(uRioN, vRioW * 0.0071), nB = texture2D(uRioN, vRioW * 0.031 + nA.gb * 0.35), nC = texture2D(uRioN, vRioW * 0.13), nD = texture2D(uRioN, vRioW * 0.47);
+          float near = 1.0 - smoothstep(70.0, 160.0, vRioD);
+          vec3 cg = diffuseColor.rgb; float gg = clamp((cg.g - max(cg.r, cg.b)) * 8.0, 0.0, 1.0);   // (where it is green)
+          cg *= mix(1.0, 0.86 + 0.28 * (nA.b * 0.6 + nB.b * 0.4), gg);   // lighter and darker patches, tens of metres across
+          cg *= 1.0 + gg * (nD.r * 0.6 + nC.a * 0.4 - 0.5) * 0.24 * near;   // clumps a metre or two across (near: far away they would shimmer)
+          float L = dot(cg, vec3(0.3, 0.59, 0.11)); cg = mix(cg, mix(vec3(L), cg, 0.72) * vec3(1.04, 0.96, 0.86), gg * 0.75);   // the loud green toned down
+          float lum = dot(cg, vec3(0.299, 0.587, 0.114));
+          float dry = smoothstep(0.5, 0.72, nA.r * 0.55 + nB.g * 0.45) * gg;   // burnt straw-yellow
+          float lush = smoothstep(0.58, 0.8, nA.g * 0.45 + nB.b * 0.55) * (1.0 - dry) * gg;   // dark lush clumps
+          float sand = smoothstep(0.58, 0.9, nB.r * 0.75 + nC.g * 0.25) * smoothstep(0.2, 0.9, dry) * 0.75;   // bare sand in the dry patches, soft-edged
+          float dust = smoothstep(1.16, 1.5, vColor.r / max(vColor.g, 0.05));   // a worn verge (rioVerge's tint)
+          sand = max(sand, dust * (0.65 + 0.35 * nD.g));
+          cg = mix(cg, vec3(lum) * vec3(1.36, 1.12, 0.62), dry * 0.55);
+          cg *= vec3(0.84, 0.91, 0.88) + vec3(0.16, 0.09, 0.12) * (1.0 - lush);
+          diffuseColor.rgb = mix(cg, diffuse * vec3(0.8, 0.73, 0.58) * clamp(lum * 2.3, 0.45, 1.15) * (0.86 + 0.28 * nD.b), sand * 0.85);
+        }`);
+    };
+    m.customProgramCacheKey = () => 'rioGroundN';   // (N: its loud green toned down, as grassLook's)
+  }
+  function rioRoad(i, o, k) {   // the asphalt's tone across the road (k as buildRbring shades it): the old surface of the 1980s in blotches of
+    // lighter, sun-bleached and darker, patched binder tens of metres across, and paler along the edges, where the wheels seldom run
+    const P = API.NR, x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, a = Math.abs(o) / T.w;
+    return k * (1.03 + (P.n3(x * 1.6 + 51, z * 1.6) - 0.5) * 0.26 + (P.n4(x * 1.4 + 17, z * 1.4 - 9) - 0.5) * 0.12 + 0.07 * sstep(0.72, 1, a));
+  }
+  function rioApron(q) {   // the pit apron's concrete (a 2 m strip at q metres from the start line): grey, weathered, in 6 m slabs of their own tone, darker
+    // where the cars stand (towards the lane); in the sun from above a wide pale plane by the straight
+    const k = 0.55 + 0.05 * crH(Math.floor(q / 6), 7, 113), a = [k, k, k * 0.95], b = [k * 0.92, k * 0.9, k * 0.85];
+    return [b, a, a, b];
+  }
+  let RIO_EX = null;   // the corners' exits of the last Rio build: per side, how much the verge is worn on the outside
+  function rioVerge(cols, pr, nb, i, side) {   // the verge row's colours (pr: [offset, height] across it; up to nb its own strip): dust along the edge
+    if (!RIO_EX || RIO_EX.T !== T) {
+      const N = T.N, ex = [new Float32Array(N), new Float32Array(N)];
+      for (let k = 0; k < N; k++) { const a = Math.abs(T.k[k]); if (a < 1 / 160) continue; const si = T.k[k] > 0 ? 0 : 1, f = sstep(1 / 160, 1 / 60, a);   // (the outside: left of a right-hander)
+        for (let q = 0; q < 26; q++) { const j = (k + q) % N, v = f * (1 - q / 26); if (v > ex[si][j]) ex[si][j] = v; } }   // (and 50 m on past it)
+      RIO_EX = { T, ex };
+    }
+    const w = T.w, e = RIO_EX.ex[side > 0 ? 1 : 0][i], wob = 0.5 + 0.5 * Math.sin(i * 0.37 + side) * Math.sin(i * 0.11), dc = [1.42, 0.98, 0.6];
+    for (let k = 0; k <= nb; k++) {
+      const o = pr[k][0], f = sstep(w + 0.9 + 2.6 * e + 0.5 * wob, w + 0.05, o) * (0.55 + 0.25 * wob + 0.2 * e), c = cols[k];
+      if (f > 0.01) cols[k] = [lerp(c[0], dc[0], f), lerp(c[1], dc[1], f), lerp(c[2], dc[2], f)];
+    }
   }
   /* ---- Rio, round 2: more round the circuit. rioPre (before the trees and the crowd layer): the kart track's ground kept clear, the samba
      group by the main stand, the people on the banks; rioMore (from rioExtra): the kart track and its karts, the convention centre and its car
@@ -1294,6 +1373,7 @@
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(nrGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];   // (the Nordschleife's meadow grass: no mowing stripes; the vertex colours make it Styrian)
+    if (LK.ground) LK.ground(gMat, ownTex);   // (Rio: its own patches in the ground's shader)
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt, white edge lines, red and white kerbs (256 m chunks, culled; the grass verges out past the barriers at the end) ---- */
@@ -1309,8 +1389,8 @@
     const secT = new Float32Array(N), brk = new Float32Array(N);
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 97) * 70), t = 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
-    const MOW_D = LK.trees === 'rio' ? [0.12, 0.08, 0.1] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
+    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; if (LK.road) k = LK.road(i, o, k); return [k, k, k * 1.02]; };   // (LK.road: Rio's worn asphalt)
+    const MOW_D = LK.trees === 'rio' ? [0.05, 0.035, 0.045] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
@@ -1629,7 +1709,7 @@
         gl.quadUp(A, Bq, C, D, [one, one, one, one], [[A[0] / 8, -A[2] / 8], [Bq[0] / 8, -Bq[2] / 8], [C[0] / 8, -C[2] / 8], [D[0] / 8, -D[2] / 8]]);
         gp.quadUp(at(s0, pi.o + 3.18, 0.033), at(s0, pi.o + 3.36, 0.033), at(s1, pj.o + 3.36, 0.033), at(s1, pj.o + 3.18, 0.033), [wl, wl, wl, wl]);   // solid line on the outer edge
         if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(s0, pi.o - 3.36, 0.033), at(s0, pi.o - 3.18, 0.033), at(s1, pj.o - 3.18, 0.033), at(s1, pj.o - 3.36, 0.033), [wl, wl, wl, wl]);   // dashed inner line
-        if (pi.t > 0.999 && pj.t > 0.999) { gp.quadUp(at(s0, pi.o + 3.5, 0.022), at(s0, pi.o + 12.5, 0.022), at(s1, pj.o + 12.5, 0.022), at(s1, pj.o + 3.5, 0.022), [apC, apC, apC, apC]);   // concrete apron
+        if (pi.t > 0.999 && pj.t > 0.999) { gp.quadUp(at(s0, pi.o + 3.5, 0.022), at(s0, pi.o + 12.5, 0.022), at(s1, pj.o + 12.5, 0.022), at(s1, pj.o + 3.5, 0.022), LK.apron ? LK.apron(q) : [apC, apC, apC, apC]);   // concrete apron (LK.apron: Rio's, weathered slab by slab)
           if (q % 20 === 0) gp.quadUp(at(s0, pi.o + 3.5, 0.03), at(s0, pi.o + 3.7, 0.03), at(s1, pj.o + 3.7, 0.03), at(s1, pj.o + 3.5, 0.03), [wl, wl, wl, wl]); }   // (dashes along the fast lane's edge)
       }
       const TEAM = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.1, 0.62, 0.72], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.4, 0.42, 0.46], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];
@@ -2242,6 +2322,7 @@
             for (let b = 1; b <= MOW_N; b++) { const o = Math.min(o1 + b * MOW_W, o2), h = h1 + (h2 - h1) * (o - o1) / (o2 - o1); band.push([o, h], [o, h]); }   // (each edge twice: a sharp change of colour)
             const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], nb = 2 + 2 * MOW_N;
             const pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pr.map(([o], k) => { const p = pts[k]; if (k <= nb) return k < 2 ? vg : (Math.floor((k - 1) / 2) % 2 ? vg : vgD); const gc = nrGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
+            if (LK.verge) LK.verge(cols, pr, nb, i, side);   // (Rio: worn to dust along the asphalt)
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));
             const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];

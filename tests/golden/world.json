@@ -655,11 +655,11 @@
   "instances": 10663,
   "props": 160,
   "crowd": 2408,
-  "world": "4404bda2",
+  "world": "b9e8a95b",
   "propsHash": "591d45c4",
   "floor": "8352b82e/9800",
   "groups": {
-   "-:MeshLambertMaterial": "2586f5f3",
+   "-:MeshLambertMaterial": "ec7bfcf7",
    "-:MeshBasicMaterial": "84fe9ef6",
    "crowd:MeshLambertMaterial": "b9500ae6",
    "champagne:ShaderMaterial": "c906711c",
