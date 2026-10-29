@@ -126,24 +126,24 @@
   "jsMs": 2.01
  },
  "iroha": {
-  "calls": 202,
-  "maxCalls": 269,
-  "kverts": 653,
-  "maxKverts": 842,
-  "jsMs": 2.06
+  "calls": 200,
+  "maxCalls": 265,
+  "kverts": 611,
+  "maxKverts": 779,
+  "jsMs": 2.18
  },
  "mulholland": {
-  "calls": 147,
-  "maxCalls": 169,
-  "kverts": 575,
-  "maxKverts": 891,
-  "jsMs": 2.04
+  "calls": 149,
+  "maxCalls": 171,
+  "kverts": 490,
+  "maxKverts": 730,
+  "jsMs": 2.51
  },
  "beartooth": {
-  "calls": 182,
-  "maxCalls": 280,
-  "kverts": 340,
-  "maxKverts": 499,
+  "calls": 170,
+  "maxCalls": 257,
+  "kverts": 319,
+  "maxKverts": 462,
   "jsMs": 1.52
  },
  "rastro": {
@@ -259,11 +259,11 @@
   "jsMs": 2.73
  },
  "bangsaen": {
-  "calls": 220,
-  "maxCalls": 287,
-  "kverts": 613,
-  "maxKverts": 784,
-  "jsMs": 1.78
+  "calls": 216,
+  "maxCalls": 280,
+  "kverts": 626,
+  "maxKverts": 808,
+  "jsMs": 1.69
  },
  "hotham": {
   "calls": 148,

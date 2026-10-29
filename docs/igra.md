@@ -449,6 +449,12 @@ Da igra teče gladko tudi na starejših in cenejših telefonih, se količina okr
   - Bližji mehaniki so taki kot vedno. Roke in noge pri Nizki ne mečejo sence, trup in glava jo. Čelado dobijo le mehaniki, ki jo nosijo.
   - Igralčeva ekipa se riše vedno. TV kamere v ponovitvi sliko približajo, zato so mehaniki tam podrobni.
   Na štartu, kjer je bil v sliki ves pas boksov, to prihrani do okoli 230 tisoč oglišč.
+  Proge, ki so bile blizu meje, imajo pri Nizki rezervo (najbolj obremenjen trenutek, `tests/golden/perf.json`; s kamere za avtom razlike ni videti):
+  - Mulholland Highway: grmičevje (chaparral), ki je od ceste dlje kot 60 m, ima tri kepe namesto pet (891 → 730 tisoč oglišč).
+  - Irohazaka: javorji dlje kot ~38 m od ceste (kjer so drevesa že redkejša) so narisani s krošnjo bližnjih bukev ali hrastov v barvi javorja (842 → 779 tisoč oglišč).
+  - Beartooth: blazinice cvetja in kamni ob cesti so lažji, suha debla in nizki krummholz ne mečejo sence, redki sloji so v večjih kosih (280 → 257 klicev risanja).
+  - Bang Saen: fasade so v dvakrat širših kosih (287 → 280 klicev). Preostanek ob štartu je polje 20 avtov tik pred kamero.
+  Novi predmeti, ki jih ima samo Nizka, se ustvarijo z `World.api.ownRnd` (brez porabe `Math.random`), zato dirka s semenom teče enako. Razčlenitev po predmetih: `tools/obremenitev.mjs`.
 - **Srednja** je vmes: krajši doseg prikaza in nekoliko manj okrasja.
 - **Samodejno** izbere začetno stopnjo iz naprave (bere ime grafične kartice prek `WEBGL_debug_renderer_info` ter število jeder in pomnilnik): znane šibke mobilne kartice začnejo na Nizki, zmogljive na Visoki, ostale po zmogljivosti naprave. Med vožnjo sistem meri čas sličice in, če igra teče počasi, najprej zniža ločljivost, nato (ob naslednjem premoru) sence, na koncu pa še skrajša doseg prikaza daljnega okrasja, da sličice ostanejo tekoče; ko se hitrost povrne, okrasje spet pokaže.
 
