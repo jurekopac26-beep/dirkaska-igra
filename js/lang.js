@@ -465,6 +465,11 @@
     'Ustavi ob kolesu.': 'Stop by the wheel.', 'Kolo si zgrešil: vrni se nazaj do njega.': 'You missed the wheel: go back to it.', 'Do kolesa: {0} km': 'To the wheel: {0} km', 'Zapeljal si mimo kolesa.': 'You drove past the wheel.',
     'Koš je poln: spusti lestev in jo potegni nazaj, da ljudje izstopijo.': 'The basket is full: lower the ladder and pull it in so the people can step out.', 'Počakaj, da se koš umiri ob kabini.': 'Wait for the basket to settle by the cabin.',
     'Lestev dvigni in iztegni počasi: v vetru se koš ziblje.': 'Raise and extend the ladder slowly: the basket sways in the wind.',
+    'Gozdni požar': 'Bushfire', 'Veter žene ogenj po pobočju navzdol proti kmetiji. Cesta je zadnja ovira pred hišo.': 'The wind drives the fire down the slope toward a farm. The road is the last thing between it and the house.',
+    'Ustavi ogenj pred kmetijo; vodo natoči v jezercu.': 'Stop the fire before the farm; refill the water at the pond.', 'Gasi rob ognja ob cesti; ko zmanjka vode, jo natoči v jezercu.': 'Put out the edge of the fire along the road; when the water runs out, refill it at the pond.',
+    'OGENJ DO HIŠE': 'FIRE TO THE HOUSE', 'VETER': 'WIND', 'POGAŠENO': 'PUT OUT', 'Ogenj je preskočil cesto.': 'The fire jumped the road.', 'Zapeljal si mimo ognja.': 'You drove past the fire.',
+    'Polnjenje vode.': 'Filling up with water.', 'Vode ni več: vrni se do jezerca na kmetiji.': 'No water left: go back to the pond on the farm.', 'Vode ni več: pelji do jezerca na kmetiji.': 'No water left: drive to the pond on the farm.',
+    'Prehitro za gašenje: upočasni pod 30 km/h.': 'Too fast to spray: slow down under 30 km/h.', 'Predaleč: curek ne seže do tja.': 'Too far: the water does not reach that far.', 'Do ognja: {0} km': 'To the fire: {0} km',
     'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)

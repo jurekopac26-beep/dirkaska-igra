@@ -5,11 +5,12 @@
        player's own view (its body hidden, the physics its own): the cab, the body with its shutters, three axles, the turntable at the back
        and the ladder of five sections over the cab with its basket at the tip, the blue lamps flashing (~8 draw calls). Its ladder: lift
        (0..1.4 rad), ext (0..1: 7.2 to 33.6 m), yaw (rad, from forward); tip(): the basket in the world; nozzle(): where the water leaves.
-     MisKit.fire(run, max): flames (one Points draw: the spots set with spot(i, x, y, z, size); size 0 is out), smoke over them (one more).
+     MisKit.fire(run, max, { per, spread }): flames (one Points draw: the spots set with spot(i, x, y, z, size); size 0 is out; per flames a
+       spot, spread over spread x its size), smoke over them (one more).
      MisKit.jet(run): the water's stream from a point to a point (one Points draw) and its splash; set(from, to, on).
      MisKit.aim(run, o): the finger's aim on the screen (drag anywhere over the game) and the GASI button held; a ring where the water goes;
        o.plane 'v' (a wall facing the camera through o.focus) or 'g' (the ground at o.focus's height). on(true) shows it, the driving
-       controls hidden; point: the world point aimed at; spray: GASI held.
+       controls hidden (o.drive: kept, the pad over the upper part of the screen only, GASI over the pedals: aimed while driving); point: the world point aimed at; spray: GASI held.
      MisKit.hold(car, on): the parked car held still (locked, no reverse) every step while the crew works; hold(car, false) lets it go.
    All of it is the run's own (run.add): out of the scene and freed when the run ends. Loadable without a browser (the tests: no THREE,
    the logic only). */
@@ -143,10 +144,11 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     const P = new THREE.Points(G, M); P.frustumCulled = false; P.renderOrder = 3;
     return { P, G, M, pos, sz, n, per };
   }
-  function fire(run, max) {
+  function fire(run, max, opt) {
+    opt = Object.assign({ per: 6, spread: 1 }, opt);
     const F = { n: max, spots: new Array(max).fill(null), step() {}, spot(i, x, y, z, s) { F.spots[i] = s > 0 ? [x, y, z, s] : null; } };
     if (!has3() || typeof Render === 'undefined' || !Render.camera) return F;
-    const fl = points(max, 6, FL_FS, {}, {});
+    const fl = points(max, opt.per, FL_FS, {}, {});
     const sm = points(max, 4, SM_FS, {}, { uRise: { value: 2.6 }, uGrow: { value: 1.6 }, uRate: { value: 0.22 }, uCol: { value: new THREE.Color(0x3a3a3f) }, uOp: { value: 0.85 } });
     run.add(fl.P); run.add(sm.P);
     let t = 0;
@@ -154,7 +156,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     F.spot = (i, x, y, z, s) => {
       F.spots[i] = s > 0 ? [x, y, z, s] : null;
       for (const [o, k0, f] of [[fl, i * fl.per, 1], [sm, i * sm.per, 1.6]]) for (let k = 0; k < o.per; k++) {
-        const j = k0 + k, a = (k / o.per) * 6.283, r = s * 0.35 * (k % 2 ? 1 : 0.5);
+        const j = k0 + k, a = (k / o.per) * 6.283 + i, r = s * 0.35 * opt.spread * (k % 2 ? 1 : 0.5 + 0.25 * (k % 3));
         o.pos[j * 3] = x + Math.cos(a) * r; o.pos[j * 3 + 1] = y + (o === sm ? s * 0.4 : 0); o.pos[j * 3 + 2] = z + Math.sin(a) * r; o.sz[j] = s > 0 ? s * f : 0;
       }
       fl.G.attributes.position.needsUpdate = fl.G.attributes.aSize.needsUpdate = true; sm.G.attributes.position.needsUpdate = sm.G.attributes.aSize.needsUpdate = true;
@@ -206,10 +208,10 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     btn.addEventListener('pointerup', off); btn.addEventListener('pointercancel', off); btn.addEventListener('pointerleave', off);
     const touch = document.getElementById('touch');
     A.on = (show) => {
-      show = !!show; if (show === A.shown) return; A.shown = show; pad.classList.toggle('on', show);
-      if (touch) touch.classList.toggle('mis-hide', show); document.body.classList.toggle('mis-aiming', show);
+      show = !!show; if (show === A.shown) return; A.shown = show; pad.classList.toggle('on', show); pad.classList.toggle('drive', !!A.o.drive);
+      if (!A.o.drive) { if (touch) touch.classList.toggle('mis-hide', show); document.body.classList.toggle('mis-aiming', show); }
       if (!show) off();
-      if (show && typeof Input !== 'undefined' && Input.reset) Input.reset();
+      if (show && !A.o.drive && typeof Input !== 'undefined' && Input.reset) Input.reset();
     };
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), pl = new THREE.Plane(), hit = new THREE.Vector3(), n = new THREE.Vector3();
     A.step = () => {

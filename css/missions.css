@@ -85,3 +85,5 @@ body.mis-aiming.mis-ladder #mis .mis-hint { max-width: calc(100% - min(46vw, 230
 #mis-tags i { position: absolute; transform: translate(-50%, -100%); padding: 2px 7px 3px; border: 2px solid #c9d1dc; border-radius: 7px; background: rgba(9, 13, 20, .82); color: #fff; font: 500 10px/1.25 var(--f-ui, sans-serif); font-style: normal; text-align: center; white-space: nowrap; }
 #mis-tags i b { display: block; font-weight: 800; font-size: 11px; color: #ffd34d; }
 #mis-tags i.go { border-color: #ffd34d; }
+#mis-aim.drive { bottom: calc(clamp(96px, 35vh, 160px) + 30px + var(--sb, 0px)); }   /* (aimed while driving, mission 47: the pad over the road only, the driving controls under it) */
+#mis-aim.drive .gasi { bottom: 8px; width: 78px; height: 78px; font-size: 17px; }
