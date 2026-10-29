@@ -63,7 +63,7 @@
 #mis-list .mis-c em { flex: none; font: 800 11px var(--f-ui); font-style: normal; letter-spacing: .06em; color: #ffb020; }
 #mis-list .mis-none { font: 500 14px var(--f-ui); color: #b9c2cf; }
 /* the finger's aim and the GASI button (js/missions/kit.js MisKit.aim): over the game while the crew works, the driving controls hidden */
-#touch.mis-hide { visibility: hidden; }
+#touch.mis-hide, body.mis-aiming #btn-rescue { visibility: hidden; }
 #mis-aim { position: fixed; inset: 0; z-index: 5; display: none; touch-action: none; }
 #mis-aim.on { display: block; }
 #mis-aim .ring { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border: 3px solid rgba(255, 255, 255, .9); border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .35); display: none; pointer-events: none; }
@@ -72,3 +72,4 @@
 #mis-aim .ring.on { display: block; }
 #mis-aim .gasi { position: absolute; right: calc(16px + var(--sr, 0px)); bottom: calc(18px + var(--sb, 0px)); width: 92px; height: 92px; border: 0; border-radius: 50%; background: #c8202a; color: #fff; font: 900 20px var(--f-ui, sans-serif); letter-spacing: .04em; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); touch-action: none; user-select: none; -webkit-user-select: none; }
 #mis-aim .gasi.on { background: #ff3b30; transform: scale(.94); }
+body.mis-aiming #mis .mis-hint { left: calc(12px + var(--sl)); transform: none; bottom: calc(26px + var(--sb)); max-width: calc(100% - 150px); text-align: left; }

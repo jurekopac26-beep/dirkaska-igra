@@ -447,6 +447,13 @@
     'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
     'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
     'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
+    /* (the fire missions: js/missions/kit.js, m01.js) */
+    'GASI': 'SPRAY', 'Zmanjkalo je vode.': 'Out of water.', 'Voda je pošla.': 'The water has run out.',
+    'Povleci s prstom, da usmeriš curek na ogenj, in drži GASI.': 'Drag your finger to aim the water at the fire, and hold SPRAY.',
+    'Požar na vrhu': 'Fire at the top', 'V hiši na vrhu prelaza gori. Gasilci morajo po serpentinah gor, preden ogenj požre hišo.': 'A house at the top of the pass is on fire. The firefighters must get up the hairpins before the fire eats the house.',
+    'Pridi do hiše, preden zgori, in pogasi ogenj.': 'Get to the house before it burns down and put out the fire.', 'Pelji po serpentinah do hiše na vrhu prelaza.': 'Drive up the hairpins to the house at the top of the pass.',
+    'HIŠA': 'HOUSE', 'OGENJ': 'FIRE', 'VODA': 'WATER', 'Hiša je zgorela.': 'The house burnt down.', 'Zapeljal si mimo hiše.': 'You drove past the house.',
+    'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

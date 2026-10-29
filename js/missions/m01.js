@@ -11,7 +11,7 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  const K = { S0: 4200, HOUSE: 150, ZONE: [-60, 4], VSTOP: 3, VHELP: 8.5, F0: 0.3, GROW: 0.004, BURN: 0.0028, WATER: 1500, FLOW: 25, HIT: 0.42, R: 3.4, BACK: 0.012, OUT: 0.03, SPOTS: 6 };
+  const K = { S0: 4200, HOUSE: 150, ZONE: [-24, -6], VSTOP: 3, VHELP: 8.5, F0: 0.3, GROW: 0.004, BURN: 0.0028, WATER: 1500, FLOW: 25, HIT: 0.42, R: 3.4, BACK: 0.012, OUT: 0.03, SPOTS: 6 };
 
   Missions.add({
     id: '01', title: 'Požar na vrhu', track: 'vrsic', limit: 330, stars: [230, 280], K,
@@ -32,13 +32,13 @@
     begin(r) {
       const T = r.race.track, sH = T.finishS - K.HOUSE, i = T.idx(sH), side = T.br[i] >= T.bl[i] ? 1 : -1, w = T.wS(sH);
       r.sH = sH; r.house = 1; r.water = K.WATER; r.f = K.F0; r.stage = 'drive'; r.fl = new Array(K.SPOTS).fill(K.F0);
-      const p = KIT.at(T, sH, side * (w + 9));
+      const p = KIT.at(T, sH, side * (w + 4.5));
       r.H = KIT.house(r, { x: p.x, y: Math.max(p.y, p.ty) - 0.1, z: p.z }, { ry: p.ry });
       r.truck = KIT.fireTruck(r); r.fire = KIT.fire(r, K.SPOTS); r.jet = KIT.jet(r);
       r.aim = KIT.aim(r, { plane: 'v', focus: typeof THREE !== 'undefined' ? new THREE.Vector3(r.H.center.x, r.H.center.y, r.H.center.z) : null });
       this.flames(r); this.show(r);
     },
-    flames(r) { r.H.fl.forEach((p, k) => r.fire.spot(k, p[0], p[1], p[2], r.fl[k] > K.OUT ? 1.6 + 3.2 * r.fl[k] : 0)); },
+    flames(r) { r.H.fl.forEach((p, k) => r.fire.spot(k, p[0], p[1], p[2], r.fl[k] > K.OUT ? 3 + 5 * r.fl[k] : 0)); },
     step(r, dt) {
       const P = r.P, T = r.race.track, s = P.q ? P.q.s : 0, d = s - r.sH, v = Math.hypot(P.vx || 0, P.vz || 0);
       const lit = r.stage !== 'done';
@@ -47,7 +47,7 @@
         const inZ = d >= K.ZONE[0] && d <= K.ZONE[1];
         if (inZ && v < K.VHELP) { const k = Math.exp(-dt * 2.5); P.vx *= k; P.vz *= k; }   // (in front of the house: the truck pulls up by itself)
         if (inZ && v < K.VSTOP) { r.stage = 'fight'; r.aim.on(true); if (r.aim.toFocus) r.aim.toFocus(); }
-        r.say(inZ ? 'Ustavi pri hiši.' : d > K.ZONE[1] ? 'Hišo si zgrešil: vrni se nazaj do nje.' : tr('Do hiše na vrhu: {0} km', dec((Math.max(0, -d) / 1000).toFixed(1))));
+        r.say(inZ ? 'Ustavi pri hiši.' : d > 10 ? 'Hišo si zgrešil: vrni se nazaj do nje.' : tr('Do hiše na vrhu: {0} km', dec((Math.max(0, -d) / 1000).toFixed(1))));
       } else if (r.stage === 'fight') {
         KIT.hold(P);
         const tk = r.truck; tk.lift += (0.32 - tk.lift) * Math.min(1, dt * 1.5); tk.ext += (0.1 - tk.ext) * Math.min(1, dt * 1.5);
@@ -66,7 +66,7 @@
         r.f = sum / K.SPOTS;
         if (r.jet && typeof THREE !== 'undefined') r.jet.set(r.truck.nozzle(), pt, spray);
         r.say(r.water <= 0 ? 'Voda je pošla.' : 'Povleci s prstom, da usmeriš curek na ogenj, in drži GASI.');
-        if (r.f <= 0) { r.stage = 'done'; r.aim.on(false); if (r.jet) r.jet.set(null, null, false); r.win(); }
+        if (r.f <= 0) { r.stage = 'done'; r.aim.on(false); KIT.hold(P, false); if (r.jet) r.jet.set(null, null, false); r.win(); }
         else if (r.water <= 0) r.fail(tr('Zmanjkalo je vode.'));
       }
       // the house burns with the fire

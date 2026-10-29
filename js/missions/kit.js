@@ -10,7 +10,7 @@
      MisKit.aim(run, o): the finger's aim on the screen (drag anywhere over the game) and the GASI button held; a ring where the water goes;
        o.plane 'v' (a wall facing the camera through o.focus) or 'g' (the ground at o.focus's height). on(true) shows it, the driving
        controls hidden; point: the world point aimed at; spray: GASI held.
-     MisKit.hold(car): the parked car held still (its own brake): every step while the crew works.
+     MisKit.hold(car, on): the parked car held still (locked, no reverse) every step while the crew works; hold(car, false) lets it go.
    All of it is the run's own (run.add): out of the scene and freed when the run ends. Loadable without a browser (the tests: no THREE,
    the logic only). */
 const MisKit = (function () {
@@ -127,8 +127,8 @@ const MisKit = (function () {
 void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph * aSize * uRise; p.x += sin(aSeed * 40.0 + uT) * ph * aSize * 0.25; p.z += cos(aSeed * 31.0 + uT * 0.8) * ph * aSize * 0.25;
   vA = (1.0 - ph) * smoothstep(0.0, 0.12, ph); vH = ph; vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_PointSize = aSize * (1.0 + uGrow * ph) * (1.0 - 0.35 * ph * (1.0 - uGrow)) * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }`;
-  const FL_FS = `varying float vA; varying float vH; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; q.y *= 0.8 + 0.4 * gl_PointCoord.y; float d = dot(q, q); if (d > 1.0) discard;
-  float k = (1.0 - d); vec3 c = mix(vec3(1.0, 0.92, 0.55), vec3(1.0, 0.32, 0.05), clamp(vH * 1.6 + d * 0.6, 0.0, 1.0)); gl_FragColor = vec4(c * k * vA * 1.25, 1.0); }`;
+  const FL_FS = `varying float vA; varying float vH; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; q.x /= 0.28 + 0.72 * gl_PointCoord.y; float d = dot(q, q); if (d > 1.0) discard;
+  float k = (1.0 - d); vec3 c = mix(vec3(1.0, 0.93, 0.6), vec3(1.0, 0.36, 0.04), clamp(vH * 1.5 + d * 0.7, 0.0, 1.0)); gl_FragColor = vec4(c, clamp(k * 1.6, 0.0, 1.0) * vA); }`;
   const SM_FS = `uniform vec3 uCol; uniform float uOp; varying float vA; varying float vH; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float d = dot(q, q); if (d > 1.0) discard;
   gl_FragColor = vec4(uCol * (1.0 - 0.25 * vH), (1.0 - d) * vA * uOp); }`;
   function scaleNow() { const c = Render.camera, el = document.getElementById('gl'); const h = el ? el.height : (typeof innerHeight !== 'undefined' ? innerHeight : 800); return h / (2 * Math.tan(c.fov * Math.PI / 360)); }
@@ -144,8 +144,8 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
   function fire(run, max) {
     const F = { n: max, spots: new Array(max).fill(null), step() {}, spot(i, x, y, z, s) { F.spots[i] = s > 0 ? [x, y, z, s] : null; } };
     if (!has3() || typeof Render === 'undefined' || !Render.camera) return F;
-    const fl = points(max, 5, FL_FS, { blending: THREE.AdditiveBlending }, {});
-    const sm = points(max, 4, SM_FS, {}, { uRise: { value: 5 }, uGrow: { value: 2.2 }, uRate: { value: 0.16 }, uCol: { value: new THREE.Color(0x2b2b2e) }, uOp: { value: 0.55 } });
+    const fl = points(max, 6, FL_FS, {}, {});
+    const sm = points(max, 4, SM_FS, {}, { uRise: { value: 2.6 }, uGrow: { value: 1.6 }, uRate: { value: 0.22 }, uCol: { value: new THREE.Color(0x3a3a3f) }, uOp: { value: 0.85 } });
     run.add(fl.P); run.add(sm.P);
     let t = 0;
     F.smoke = sm; F.flames = fl;
@@ -153,7 +153,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
       F.spots[i] = s > 0 ? [x, y, z, s] : null;
       for (const [o, k0, f] of [[fl, i * fl.per, 1], [sm, i * sm.per, 1.6]]) for (let k = 0; k < o.per; k++) {
         const j = k0 + k, a = (k / o.per) * 6.283, r = s * 0.35 * (k % 2 ? 1 : 0.5);
-        o.pos[j * 3] = x + Math.cos(a) * r; o.pos[j * 3 + 1] = y + (o === sm ? s * 1.2 : 0); o.pos[j * 3 + 2] = z + Math.sin(a) * r; o.sz[j] = s > 0 ? s * f : 0;
+        o.pos[j * 3] = x + Math.cos(a) * r; o.pos[j * 3 + 1] = y + (o === sm ? s * 0.4 : 0); o.pos[j * 3 + 2] = z + Math.sin(a) * r; o.sz[j] = s > 0 ? s * f : 0;
       }
       fl.G.attributes.position.needsUpdate = fl.G.attributes.aSize.needsUpdate = true; sm.G.attributes.position.needsUpdate = sm.G.attributes.aSize.needsUpdate = true;
     };
@@ -205,7 +205,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     const touch = document.getElementById('touch');
     A.on = (show) => {
       show = !!show; if (show === A.shown) return; A.shown = show; pad.classList.toggle('on', show);
-      if (touch) touch.classList.toggle('mis-hide', show);
+      if (touch) touch.classList.toggle('mis-hide', show); document.body.classList.toggle('mis-aiming', show);
       if (!show) off();
       if (show && typeof Input !== 'undefined' && Input.reset) Input.reset();
     };
@@ -222,7 +222,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     };
     // (the aim's start: on the focus, before the finger moves)
     A.toFocus = () => { const C = Render.camera, f = A.o.focus; if (!C || !f) return; const p = f.clone().project(C); A.sx = clamp((p.x + 1) / 2, 0, 1); A.sy = clamp((1 - p.y) / 2, 0, 1); };
-    run.add(new THREE.Group()); run.props[run.props.length - 1].userData.misUndo = () => { pad.remove(); if (touch) touch.classList.remove('mis-hide'); };
+    run.add(new THREE.Group()); run.props[run.props.length - 1].userData.misUndo = () => { pad.remove(); if (touch) touch.classList.remove('mis-hide'); document.body.classList.remove('mis-aiming'); };
     return A;
   }
 
@@ -247,7 +247,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     o = Object.assign({ L: 10, W: 7.5, H: 3.2, roof: 0xa8432c, wall: 0xeae4d8, ry: 0 }, o);
     const H = { g: null, burn() {}, fl: [] };
     // (the flames' places: on the roof and in the windows, in the house's own frame, then in the world)
-    const loc = [[-o.L * 0.3, o.H + 1.0, 0], [o.L * 0.15, o.H + 1.4, 0], [o.L * 0.36, o.H + 0.7, o.W * 0.2], [-o.L * 0.05, o.H * 0.5, o.W / 2 + 0.2], [o.L * 0.3, o.H * 0.5, -o.W / 2 - 0.2], [-o.L * 0.4, o.H * 0.5, o.W / 2 + 0.2]];
+    const loc = [[-o.L * 0.3, o.H + 2.9, 0], [o.L * 0.15, o.H + 3.0, 0], [o.L * 0.36, o.H + 1.9, o.W * 0.25], [-o.L * 0.05, o.H * 0.5, o.W / 2 + 0.2], [o.L * 0.3, o.H * 0.5, -o.W / 2 - 0.2], [-o.L * 0.4, o.H * 0.5, o.W / 2 + 0.2]];
     const c = Math.cos(o.ry), sn = Math.sin(o.ry);
     H.fl = loc.map(([x, y, z]) => [p.x + x * c + z * sn, p.y + y, p.z - x * sn + z * c]);
     H.center = { x: p.x, y: p.y + o.H * 0.8, z: p.z };
@@ -269,7 +269,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
   }
 
   // the parked truck held still while the crew works (the run's step, after the race's)
-  function hold(c) { c.vx = 0; c.vz = 0; c.w = 0; c.inThr = 0; c.inBrk = 1; if ('speed' in c) c.speed = 0; }
+  function hold(c, on) { if (on === false) { c.locked = false; return; } c.locked = true; c.vx = 0; c.vz = 0; c.w = 0; c.inThr = 0; c.inBrk = 0; }
 
   return { truckModel, fireTruck, fire, jet, aim, hold, at, house, prism, merged, parts, LAD };
 })();
