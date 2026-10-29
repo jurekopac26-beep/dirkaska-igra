@@ -125,7 +125,7 @@
         return '<button class="g-car' + (id === S.car ? ' sel' : '') + (locked(id) ? ' locked' : '') + '" data-car="' + id + '"><div class="th">' + (t ? '<img alt="" src="' + t + '">' : '<i></i>') + '</div><b>' + esc(m.name) + '</b>' + s2 + '</button>';
       }).join('') + '</div>' + '<div class="g-meter">' + METER.map(([l, k]) =>
         '<small>' + esc(tr(l)) + '</small><span><i class="up" style="width:' + st[k] * 10 + '%"></i><i style="width:' + b0[k] * 10 + '%"></i></span><b>' + (Math.round(st[k] * 10) / 10).toFixed(1).replace('.', Lang.cur === 'en' ? '.' : ',') + '</b>').join('') + '</div>' +
-        '<p class="g-hint">' + esc(tr(CARDESC[Mm.id] || Mm.desc)) + '</p>';
+        '<p class="g-hint">' + esc(tr(Mm.desc)) + '</p>';
       requestAnimationFrame(() => { const el = document.querySelector('.g-car.sel'); if (el) el.scrollIntoView({ block: 'nearest', inline: 'center' }); });
       queueThumbs();
     } else if (panel === 'upg') {
@@ -152,12 +152,6 @@
   const METER = [['Moč', 'power'], ['Oprijem', 'grip'], ['Teža', 'weight'], ['Drift', 'drift']];   // (the stat bars of the car panel)
   const DONE_NAME = { gume: 'Gume', zavore: 'Zavore', aero: 'Aerodinamika', motor: 'Motor', clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' };
   const UPG_FX = { motor: ['', 'Športni izpuh', 'Dvojni izpuh, zračniki', 'Štirje izpuhi, zajemalnik'], gume: ['', 'Bel napis', 'Rumen pas', 'Rdeč pas'], zavore: ['', 'Rdeče čeljusti', 'Rumene čeljusti', 'Zlate, karbonski diski'], aero: ['', 'Spojler, spodnja ustnica', 'Zadnje krilo', 'Krilo GT, krilca, pragovi'] };
-  // the cars' words (game.js CAR_DESC)
-  const CARDESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
-    lm: 'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
-    muscle: 'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.',
-    ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',
-    truck: 'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.' };
   function render() { head(); body(); }
 
   /* ---------------- the car pictures for the list (drawn by Garage3D one at a time, between frames) ---------------- */

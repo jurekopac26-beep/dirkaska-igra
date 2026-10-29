@@ -1,4 +1,4 @@
-// The sky's show: at night the stars and the moon over the horizon (the cockpit), the windows of the buildings lit (Riviera's facades) and
+// The sky's show: at night the stars and the moon over the horizon (the replay's TV cameras), the windows of the buildings lit (Riviera's facades) and
 // dark by day; the morning (Jutro) with its mist in the valleys (Spa: layers over the low land) and none on a flat
 // world; a rainbow after the rain by day (none at night); a thunderstorm (Nevihta): rain, lightning (a flash, the thunder after it) and at
 // night the lamps' streaks on the wet road; an endurance race's time of day moved on smoothly (the light between day and night, the
@@ -14,12 +14,12 @@ try {
   const frames = (n) => page.evaluate((n) => new Promise(res => { let k = 0; const f = () => (++k >= n ? res() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
   const show = () => page.evaluate(() => Render.show);
 
-  // 1. night at Riviera: the windows lit; the cockpit sees the stars and the moon
+  // 1. night at Riviera: the windows lit; a TV camera sees the stars and the moon
   await startTrack(page, 'riviera');
-  await page.evaluate(() => { window.__game.sim(4, true); window.__game.S.camera = 'cockpit'; }); await frames(6);
+  await page.evaluate(() => { window.__game.sim(4, true); window.__game.S.camera = 'tv'; }); await frames(6);
   const n1 = await show();
   await page.evaluate(() => { window.__game.S.camera = 'chase'; }); await frames(3);
-  T.check('night: the windows of the buildings lit (facade materials patched), the stars and the moon over the horizon from the cockpit', n1.todK === 1 && n1.win > 0.99 && n1.winMats > 0 && n1.sky && n1.stars && n1.moon, JSON.stringify(n1));
+  T.check('night: the windows of the buildings lit (facade materials patched), the stars and the moon over the horizon from a TV camera', n1.todK === 1 && n1.win > 0.99 && n1.winMats > 0 && n1.sky && n1.stars && n1.moon, JSON.stringify(n1));
   await page.evaluate(() => Render.setAtmos({ season: 'summer', tod: 'day' })); await frames(3);
   const d1 = await show();
   T.check('by day: the windows dark, no stars, no moon', d1.todK === 0 && d1.win === 0 && !d1.stars && !d1.moon, JSON.stringify(d1));

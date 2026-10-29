@@ -22,13 +22,24 @@ try {
   await sim(30);
 
   // 1. the safety car out (brought out here for the leader), the field behind it, in again, green at the line. (Out when the player has
-  // room: no rival alongside or less than 30 m ahead of them, so the autopilot is not in the middle of a pass that it would finish under the
-  // safety car: the warning to give the place back would take the HUD's message and board)
-  for (let k = 0; k < 40 && await page.evaluate(() => { const r = window.__game.race, P = r.player; return r.cars.some(c => c !== P && !c.finished && c.dist > P.dist - 8 && c.dist < P.dist + 30); }); k++) await sim(1);
+  // room: no rival alongside, none less than 8 m ahead and none up to 30 m ahead that the player would catch within 2 s, so the autopilot is
+  // not in the middle of a pass that it would finish under the safety car: the warning to give the place back would take the HUD's message
+  // and board. Not just none within 30 m ahead: in the train of the first laps that takes over a minute, longer than the wait, and the
+  // safety car came out in the middle of a pass. Nor a duel's message on the HUD, nor one about to start: 15 s near the car ahead or behind)
+  for (let k = 0; k < 80 && await page.evaluate(() => { const r = window.__game.race, P = r.player;
+    return r.cars.some(c => { const d = c.dist - P.dist; return c !== P && !c.finished && d > -8 && d < 30 && (d < 8 || d - 1 < 2 * (P.speed - c.speed) + 3); }) ||
+      r.cars.some(c => c.chr && !c.chr.duelOn && c.chr.duel > 12) || /^DVOBOJ/.test(document.getElementById('h-msg').textContent); }); k++) await sim(0.5);
+  // (the HUD's message and toast logged as they come, from here on: the autopilot may still pass a car as the field bunches behind the
+  // safety car (from the back of the grid the player is often in the train), the warning to give the place back then takes the message,
+  // the toast and the board; it is let go here, as on the way to the yellow flag below: the overtaking rule has its own part)
+  await page.evaluate(() => { window.__said2 = []; if (!window.__mo) { window.__mo = new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__said2.push(t); } });
+    for (const id of ['h-msg', 'toast']) window.__mo.observe(document.getElementById(id), { childList: true, subtree: true }); } });
   await page.evaluate(() => { const r = window.__game.race; r._scOut(r.order.find(c => !c.finished)); });
   await sim(0.5);
-  const s1 = await hud();
-  T.check('safety car out: "VARNOSTNI AVTO", the board on the HUD, the car drawn with its light bar flashing', s1.sc === 'out' && s1.msg === 'VARNOSTNI AVTO' && s1.flag === 'on sc:VARNOSTNI AVTO' && s1.scDrawn && /Varnostni avto: ne prehitevaj/.test(s1.toast), JSON.stringify(s1));
+  const passed = await page.evaluate(() => { const f = window.__game.race.player.fl; if (!f || !f.owe) return false; f.owe = null; return true; });
+  if (passed) await sim(0.1);
+  const s1 = Object.assign(await hud(), { passed, said: await page.evaluate(() => window.__said2.slice()) });
+  T.check('safety car out: "VARNOSTNI AVTO", the board on the HUD, the car drawn with its light bar flashing', s1.sc === 'out' && [s1.msg, ...s1.said].includes('VARNOSTNI AVTO') && s1.flag === 'on sc:VARNOSTNI AVTO' && s1.scDrawn && [s1.toast, ...s1.said].some(t => /Varnostni avto: ne prehitevaj/.test(t)), JSON.stringify(s1));
   // (what the game tells: its commentator's lines, also when the HUD's message is taken by another at the same moment, e.g. the last lap's)
   await page.evaluate(() => { const C = window.__game.comm, o = C.say; window.__said = []; C.say = function (k) { window.__said.push(k); return o.apply(this, arguments); }; });
   let lampSeen = s1.lamp, s2 = null, inSeen = null;
@@ -38,15 +49,19 @@ try {
     !!inSeen && /^on scin:SC GRE S PROGE$/.test(inSeen.flag) && !inSeen.lamp && !s2.sc && !s2.scDrawn && lampSeen && (/ZELENA ZASTAVA/.test(s2.msg) || /(^|,)green(,|$)/.test(said) || s2.phase !== 'racing'), JSON.stringify({ inSeen, s2, said }));
 
   // 2. a rival stopped 550 m ahead of the player (put there, at the edge of the road): a yellow flag, the marshal's flag, the flag on the HUD in the zone
-  await page.evaluate(() => { const r = window.__game.race, P = r.player, T = r.track, c = r.order.filter(o => !o.isPlayer && !o.finished).pop();
+  await page.evaluate(() => { const r = window.__game.race, P = r.player, T = r.track, c = r.order.filter(o => !o.isPlayer && !o.finished).pop(); if (!c) return;   // (every rival already home: nothing to stop)
     const i = T.idx(P.q.s + 550), off = T.w - 1.5; c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
     c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.dist = P.dist + 550; window.__stop = c; });
+  // (the HUD's message and toast logged as they come: the player may cross the line within the same steps, its last lap's message and an
+  // achievement's toast then take both at once)
+  await page.evaluate(() => { window.__said2 = []; if (!window.__mo) { window.__mo = new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__said2.push(t); } });
+    for (const id of ['h-msg', 'toast']) window.__mo.observe(document.getElementById(id), { childList: true, subtree: true }); } });
   const hasStop = await page.evaluate(() => !!window.__stop);
   if (hasStop) {
     for (let k = 0; k < 20; k++) await page.evaluate(() => { const c = window.__stop, g = window.__game; c.vx = c.vz = 0; c.locked = true; g.pause(); g.sim(0.2, true); });
     await sim(0.1);
-    const y1 = Object.assign(await hud(), await page.evaluate(() => { const c = window.__stop, P = window.__game.race.player, L = window.__game.race.track.len; return { stopped: c.name, fl: c.fl && { stopT: +c.fl.stopT.toFixed(2), v: +c.fl.v.toFixed(1) }, ahead: Math.round((((c.q.s - P.q.s) % L) + L) % L) }; }));
-    T.check('a car stopped ahead: "RUMENA ZASTAVA" (or another message at the same moment, the rule told), a marshal waving the flag beside the track', y1.yel >= 1 && y1.marshals >= 1 && (/RUMENA ZASTAVA/.test(y1.msg) || /^Rumena zastava: pred tabo je ustavljen avto/.test(y1.toast)), JSON.stringify(y1));
+    const y1 = Object.assign(await hud(), await page.evaluate(() => { const c = window.__stop, P = window.__game.race.player, L = window.__game.race.track.len; return { stopped: c.name, fl: c.fl && { stopT: +c.fl.stopT.toFixed(2), v: +c.fl.v.toFixed(1) }, ahead: Math.round((((c.q.s - P.q.s) % L) + L) % L), said: window.__said2.splice(0) }; }));
+    T.check('a car stopped ahead: "RUMENA ZASTAVA" (or another message at the same moment, the rule told), a marshal waving the flag beside the track', y1.yel >= 1 && y1.marshals >= 1 && [y1.msg, y1.toast, ...y1.said].some(t => /RUMENA ZASTAVA/.test(t) || /^Rumena zastava: pred tabo je ustavljen avto/.test(t)), JSON.stringify(y1));
     // (on the way the autopilot may pass a rival that slowed in the zone: the warning then takes the HUD's flag; it is let go here, the
     // overtaking rule has its own part below)
     let y2 = null; for (let k = 0; k < 60; k++) { await page.evaluate(() => { const c = window.__stop, f = window.__game.race.player.fl; c.vx = c.vz = 0; c.locked = true; if (f) f.owe = null; }); await sim(0.25); y2 = await hud(); if (/yel/.test(y2.flag)) break; }

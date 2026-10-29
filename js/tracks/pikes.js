@@ -8,11 +8,18 @@ var TRACK_DEFS = TRACK_DEFS || [];
   //   start / finish / cps : [x, z] positions, snapped to the nearest centreline sample (cps = checkpoints CP1..CP4)
   //   elev                 : [x, z, h] keyframes (h = metres above the start line), snapped to samples, interpolated along s (not periodic)
   //   alt                  : real altitude shown in the HUD at the start line and at the finish (linear in h)
+  // Two ways to drive it (def.modes): the time trial first (def.timeTrial: its records, ghosts, boards, medals and lines are the hill climb's,
+  // as before), and the race up it against 21 rivals (Race: opts.tt false; ~40 m of road below the start line: the grid in rows four abreast, Race _gridWide).
   TRACK_DEFS.push({
-    id: 'pikes', name: 'Pikes Peak, ZDA', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 7,
-    desc: 'Vzpon na Pikes Peak: kronometer od starta na 2862 m do vrha na 4301 m. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom. Ni nasprotnikov, dirkaš proti uri.',
-    en: { name: 'Pikes Peak, USA', desc: 'The climb up Pikes Peak: a time trial from the start at 2862 m to the summit at 4301 m. Forest bends, the “W” hairpins, a fast ridge and switchbacks below the snowy summit. No rivals, you race against the clock.' },   // (the English page: Jezik · Language)
+    id: 'pikes', name: 'Pikes Peak, ZDA', theme: 'pikes', open: true, timeTrial: true, modes: ['tt', 'race'], laps: 1, halfWidth: 7,
+    desc: 'Vzpon na Pikes Peak od starta na 2862 m do vrha na 4301 m: kronometer proti uri ali dirka z 21 tekmeci. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom.',
+    en: { name: 'Pikes Peak, USA', desc: 'The climb up Pikes Peak from the start at 2862 m to the summit at 4301 m: a time trial against the clock or a race against 21 rivals. Forest bends, the “W” hairpins, a fast ridge and switchbacks below the snowy summit.' },   // (the English page: Jezik · Language)
     realKm: 19.99, alt: [2862, 4301],
+    // the commentator's own lines for the race up it (Comm; the time trial keeps the hill climb's: introTT, goTT ...)
+    comm: {
+      introPass: ["Welcome to {track}! {cars} cars racing to the clouds, and you start {grid}.", "Here we are at the foot of {track}. A race through the forest, up the W's and over the ridge to the summit, and you line up {grid}.", "Welcome to America's Mountain! {rivals} rivals between you and the summit, and you start {grid}."],
+      goPass: ["And away they go, up into the forest!", "And they're off! {cars} cars heading for the clouds!", "The race is on! Next stop, the summit!"],
+    },
     // the real course's 156 turns: every modelled corner between the start and the finish carries the number the real turn at its place would
     // have (from the share of the course before it, strictly rising), for the corner boards (World) and the HUD counter (Game): [{ s, n, sev, dir }] in road order
     turns: 156,

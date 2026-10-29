@@ -2,7 +2,9 @@
 // with its code; a fifth finds the room full). Every page lists the four players; the race: four cars on every page, on a grid of
 // two rows the same on every page, each page drives its own car (autopilot, in real time) and sees the others' cars move (the
 // friends' states go through the host), all four finish with the same four times on every page, the same order in the results. In a
-// second race a friend leaves: the others are told, its car leaves the track, the race goes on.
+// second race a friend leaves: the others are told, its car leaves the track, the race goes on. Two of them in vehicles of the fleet:
+// Cvet in the TITAN, Dan with a car saved as the retired model at index 5 (an older build's) that now is its heir, the LEV S; every page
+// lists them so and draws them as those vehicles (their own kit bodies).
 //   node tests/browser/online4.test.mjs
 import net from 'node:net';
 import { createRequire } from 'node:module';
@@ -18,13 +20,17 @@ const srv = await serve();
 const browser = await launch(['--disable-features=WebRtcHideLocalIpsWithMdns']);
 const init = { content: `window.__peerOpts = ${JSON.stringify({ host: '127.0.0.1', port, path: '/', secure: false, config: { iceServers: [] } })};` };
 const settings = { quality: 'retro', shadows: 0, camera: 'chase', zoom: 1.2, carV: 2 };
-const open = (name, car, color) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings), { width: 320, height: 240 }, { init });
+const open = (name, car, color, carId) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings, carId ? { carV: 3, carId } : null), { width: 320, height: 240 }, { init });   // (carId: a vehicle saved by its id)
 const until = (p, fn, arg, ms = 60000) => p.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).then(h => h.jsonValue());
 const NAMES = ['Ana', 'Bor', 'Cvet', 'Dan'];
 let P = [], X = null;
 try {
-  P = [await open('Ana', 0, 0), await open('Bor', 1, 1), await open('Cvet', 2, 2), await open('Dan', 3, 3)];
+  // (saved as the game saves them: a vehicle past the first 11 with the rally car's index for older builds; the retired model by its own)
+  P = [await open('Ana', 0, 0), await open('Bor', 1, 1), await open('Cvet', 4, 2, 'titan'), await open('Dan', 5, 3, 'p206')];
   const [A] = P, pages = P.map(x => x.page);
+  // (each page notes the grid as it builds its race, the places before anything moves: a page slow to build the vehicles' bodies, four
+  // software renderers at once, may be read only once its race runs)
+  for (const p of pages) await p.evaluate(() => { const R = Core.Race; Core.Race = class extends R { constructor(...a) { super(...a); this.gridD = this.cars.map(c => +c.dist.toFixed(2)); } }; });
 
   // 1. the room: the host's code, three friends join
   await A.page.evaluate(() => { window.__game.onAction('to-online'); window.__game.onAction('net-host'); });
@@ -33,8 +39,8 @@ try {
   await until(A.page, () => { const n = window.__game.net; return n && n.players.length === 4; });
   for (const p of pages.slice(1)) await until(p, () => { const n = window.__game.net; return !!(n && n.players.length === 4 && n.synced); });
   const rooms = await Promise.all(pages.map(p => p.evaluate(() => ({ players: document.getElementById('on-players').innerText.replace(/\s+/g, ' '), status: document.getElementById('on-status').textContent, me: window.__game.net.me }))));
-  T.check('the room: the host and three friends, every page lists all four (each itself as ti)', rooms.every((r, i) => NAMES.every(n => r.players.includes(n)) && r.players.includes(NAMES[i] + ' (ti)')) && rooms[0].me === 'h' && new Set(rooms.map(r => r.me)).size === 4 && /Prijatelji so v sobi/.test(rooms[0].status),
-    JSON.stringify(rooms));
+  T.check('the room: the host and three friends, every page lists all four (each itself as ti) with their cars (Cvet · TITAN, Dan · LEV S)', rooms.every((r, i) => NAMES.every(n => r.players.includes(n)) && r.players.includes(NAMES[i] + ' (ti)') && /Cvet( \(ti\))? · TITAN/.test(r.players) && /Dan( \(ti\))? · LEV S/.test(r.players)) &&
+    rooms[0].me === 'h' && new Set(rooms.map(r => r.me)).size === 4 && /Prijatelji so v sobi/.test(rooms[0].status), JSON.stringify(rooms));
 
   // 2. a fifth: the room is full
   X = await open('Eva', 0, 4);
@@ -48,10 +54,15 @@ try {
   for (const p of pages) await p.evaluate(() => { window.__game.autoDrive = true; });
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await Promise.all(pages.map(p => until(p, () => { const g = window.__game; return !!(g.race && g.net && g.net.race); }, null, 90000)));
-  const grids = await Promise.all(pages.map(p => p.evaluate(() => { const r = window.__game.race, n = window.__game.net; return { n: r.cars.length, me: n.me, grid: n.race.grid, mine: r.player.grid, d: r.cars.map(c => +c.dist.toFixed(2)).sort((a, b) => b - a), nums: r.cars.map(c => c.num).sort((a, b) => a - b), others: r.remotes.map(c => ({ id: c.netOf.id, grid: c.grid, name: c.name })) }; })));
+  const grids = await Promise.all(pages.map(p => p.evaluate(() => { const r = window.__game.race, n = window.__game.net; return { n: r.cars.length, me: n.me, grid: n.race.grid, mine: r.player.grid, d: (r.gridD || r.cars.map(c => +c.dist.toFixed(2))).slice().sort((a, b) => b - a), nums: r.cars.map(c => c.num).sort((a, b) => a - b), others: r.remotes.map(c => ({ id: c.netOf.id, grid: c.grid, name: c.name })) }; })));
   const g0 = grids[0].grid;
   T.check('the race: four cars on every page, the same grid everywhere (each at its place), two rows of two', grids.every(g => g.n === 4 && g.grid.join() === g0.join() && g.mine === g.grid.indexOf(g.me) + 1 && g.others.every(o => o.grid === g.grid.indexOf(o.id) + 1)) &&
     grids.every(g => g.d[0] === g.d[1] && g.d[2] === g.d[3] && g.d[0] - g.d[2] > 5) && grids.every(g => new Set(g.nums).size === 4), JSON.stringify(grids));
+  // the vehicles of the fleet: on every page the TITAN and the LEV S as those vehicles (the friends' too), drawn with their kit bodies
+  const kits = await Promise.all(pages.map(p => p.evaluate(() => { const r = window.__game.race, of = (c) => { const v = Render.viewOf(c); return c.name + ':' + c.m.id + (v && v.kit ? ':kit' : v ? ':old' : ':none'); };
+    return [r.player].concat(r.remotes).map(of).sort(); })));
+  T.check('the fleet online: every page has Cvet\'s TITAN and Dan\'s LEV S (his saved car, the retired model, came as its heir) as those vehicles, drawn with their own kit bodies; the others\' cars as they are',
+    kits.every(k => k.length === 4 && k.some(x => /:titan:kit$/.test(x)) && k.some(x => /:levs:kit$/.test(x)) && k.filter(x => /:old$/.test(x)).length === 2 && !k.some(x => /p206/.test(x))), JSON.stringify(kits));
   // (the pages draw slowly, four software renderers at once: each page is waited for until it sees all three others off the grid)
   const moved = await Promise.all(pages.map(p => until(p, () => { const r = window.__game.race; return r && r.remotes.every(c => c.dist > 5) ? r.remotes.map(c => c.dist) : null; }, null, 120000).catch(() => p.evaluate(() => window.__game.race.remotes.map(c => c.dist)))));
   T.check('every page sees the three others\' cars move (the friends\' states through the host)', moved.every(m => m.length === 3 && m.every(d => d > 5)), JSON.stringify(moved.map(m => m.map(d => +d.toFixed(1)))));

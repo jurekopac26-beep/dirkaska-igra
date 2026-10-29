@@ -1,11 +1,13 @@
 {
   "name": "dirkaska-igra",
   "private": true,
-  "description": "APEX RACING — dirkaška igra v brskalniku (three.js). Samo za teste: igra sama ne potrebuje namestitve.",
+  "description": "Real Roads Atlas (Racing Game) — dirkaška igra v brskalniku (three.js). Samo za teste: igra sama ne potrebuje namestitve.",
   "scripts": {
     "test": "node tests/run.js",
     "test:node": "node tests/run.js node",
     "test:browser": "node tests/run.js browser",
+    "test:fleet": "node tests/run.js fleet",
+    "test:related": "node tests/run.js --related --quiet",
     "icons": "node tools/icons.mjs",
     "golden:update": "node tests/golden.test.js --update && node tests/races.test.js --update && node tests/browser/world.test.mjs --update && node tests/browser/perf.test.mjs --update"
   },

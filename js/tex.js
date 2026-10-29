@@ -247,8 +247,8 @@ const Tex = (function () {
     const c = cv(64, 64), x = c.getContext('2d');
     x.fillStyle = bg || '#f4f4f0'; x.beginPath(); x.arc(32, 32, 29, 0, Math.PI * 2); x.fill();
     x.lineWidth = 3; x.strokeStyle = 'rgba(0,0,0,0.5)'; x.stroke();
-    x.fillStyle = fg || '#111'; x.font = '900 34px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText(String(n), 32, 35);
+    const t = String(n); x.fillStyle = fg || '#111'; x.font = '900 ' + (t.length > 2 ? 24 : 34) + 'px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';   // (100: smaller, inside the disc)
+    x.fillText(t, 32, t.length > 2 ? 34 : 35);
     return mk(c, false);
   }
 
@@ -332,15 +332,6 @@ const Tex = (function () {
     return mk(c, false);
   }
 
-  // Ljubljana dragon silhouette (coat-of-arms style: raised wings, open jaws, curled tail), drawn at (x,y) size s
-  function drawDragon(g, x, y, s, col) {
-    g.save(); g.translate(x, y); g.scale(s / 100, s / 100); g.fillStyle = col; g.beginPath();
-    g.moveTo(-30, 30); g.quadraticCurveTo(-10, 10, 5, 12); g.lineTo(18, -8); g.lineTo(34, -14); g.lineTo(42, -8); g.lineTo(30, -4); g.lineTo(38, 0); g.lineTo(24, 2);   // neck + open jaws
-    g.lineTo(16, 18); g.quadraticCurveTo(20, 34, 8, 40); g.lineTo(-4, 40); g.lineTo(0, 30);                                               // chest + leg
-    g.quadraticCurveTo(-24, 44, -40, 30); g.quadraticCurveTo(-52, 16, -40, 8); g.quadraticCurveTo(-30, 2, -34, 16); g.quadraticCurveTo(-36, 26, -30, 30);   // curled tail
-    g.fill(); g.beginPath(); g.moveTo(-6, 12); g.lineTo(-30, -38); g.lineTo(-18, -28); g.lineTo(-8, -44); g.lineTo(-2, -26); g.lineTo(8, -36); g.lineTo(6, 8); g.fill();   // wing
-    g.restore();
-  }
   // boards for the forest circuit (same 2 x 4 slot layout): yellow with red lettering and white with blue, like the reference; our own names
   function sponsorsFO() {
     const c = cv(512, 256), x = c.getContext('2d');
@@ -420,38 +411,6 @@ const Tex = (function () {
     return mk(c, false);
   }
 
-  // sponsor boards for the Ljubljana circuit (same 2 x 4 slot layout as sponsors())
-  function sponsorsLJ() {
-    const c = cv(512, 256), x = c.getContext('2d');
-    const slots = [['LJUBLJANA', '#141414', '#fff', 0], ['LJUBLJANA', '#f2f2f2', '#141414', 1], ['LJUBLJANA', '#d3202a', '#fff', 2], ['SLOVENIJA', '#ffffff', '#1f4fa8', 3],
-                   ['GRAND PRIX', '#141414', '#fff', 1], ['LJUBLJANA', '#141414', '#fff', 2], ['ZMAJ', '#d3202a', '#fff', 2], ['LJUBLJANA', '#141414', '#fff', 1]];
-    for (let k = 0; k < 8; k++) {
-      const bx = (k % 2) * 256, by = Math.floor(k / 2) * 64, [txt, bg, fg, deco] = slots[k];
-      x.fillStyle = bg; x.fillRect(bx, by, 256, 64);
-      let tx = bx + 128, tw = 230;
-      if (deco === 1) { for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { x.fillStyle = (i + j) % 2 ? '#fff' : '#111'; x.fillRect(bx + 6 + i * 8, by + 16 + j * 8, 8, 8); } tx = bx + 150; tw = 180; }
-      if (deco === 2) { drawDragon(x, bx + 34, by + 32, 42, fg); tx = bx + 150; tw = 180; }
-      if (deco === 3) { x.fillStyle = '#fff'; x.fillRect(bx, by, 256, 21); x.fillStyle = '#1f4fa8'; x.fillRect(bx, by + 21, 256, 22); x.fillStyle = '#d3202a'; x.fillRect(bx, by + 43, 256, 21); }
-      x.fillStyle = deco === 3 ? '#fff' : fg; x.font = 'italic 900 38px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      if (deco === 3) { x.strokeStyle = '#0d2350'; x.lineWidth = 5; }
-      x.save(); x.translate(tx, by + 34); x.scale(Math.min(1, tw / Math.max(1, x.measureText(txt).width)), 1); if (deco === 3) x.strokeText(txt, 0, 0); x.fillText(txt, 0, 0); x.restore();
-      x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(bx, by, 256, 5);
-      x.strokeStyle = 'rgba(0,0,0,0.35)'; x.lineWidth = 3; x.strokeRect(bx + 1.5, by + 1.5, 253, 61);
-    }
-    return mk(c, false);
-  }
-  // vertical street banners: left half red, right half black; white dragon, LJUBLJANA, chequered foot
-  function bannerLJ() {
-    const c = cv(128, 512), x = c.getContext('2d');
-    for (const [bx, bg] of [[0, '#cf1f29'], [64, '#151515']]) {
-      x.fillStyle = bg; x.fillRect(bx, 0, 64, 512);
-      drawDragon(x, bx + 32, 70, 52, '#fff');
-      x.save(); x.translate(bx + 34, 280); x.rotate(-Math.PI / 2); x.fillStyle = '#fff'; x.font = '900 30px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('LJUBLJANA', 0, 0); x.restore();
-      for (let i = 0; i < 4; i++) for (let j = 0; j < 5; j++) { x.fillStyle = (i + j) % 2 ? '#fff' : '#111'; x.fillRect(bx + 8 + i * 12, 420 + j * 12, 12, 12); }
-    }
-    return mk(c, false);
-  }
-
   // Riviera apartment facade: tall window + full-width balcony with a white railing on every bay (tinted by vertex colour)
   function facadeBal() {
     const c = cv(64, 64), g = c.getContext('2d');
@@ -465,10 +424,10 @@ const Tex = (function () {
   }
 
   // kerbs of the two newer circuits in the same style (a kerb quad runs u 0 at the asphalt .. 1 at its outer edge, v along the road, 3 m per repeat):
-  // Toskana: the Italian tricolour in long stripes (green by the asphalt, white, red on the outside, as in the reference); Gromski rt: red and yellow blocks
+  // Toskana: long stripes, cream by the asphalt and red on the outside (the green stripe next to the asphalt is gone); Gromski rt: red and yellow blocks
   function curbIT() {
     const c = cv(32, 64), x = c.getContext('2d');
-    x.fillStyle = '#588a72'; x.fillRect(0, 0, 12, 64); x.fillStyle = '#9daf94'; x.fillRect(12, 0, 9, 64); x.fillStyle = '#97524a'; x.fillRect(21, 0, 11, 64);   // (toned for Toskana's strong light: coral, cream and sage on screen, as in the reference)
+    x.fillStyle = '#9daf94'; x.fillRect(0, 0, 13, 64); x.fillStyle = '#97524a'; x.fillRect(13, 0, 19, 64);   // (toned for Toskana's strong light: coral and cream on screen)
     const g = x.createLinearGradient(0, 0, 32, 0);
     g.addColorStop(0, 'rgba(0,0,0,0.0)'); g.addColorStop(0.75, 'rgba(0,0,0,0.0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
     x.fillStyle = g; x.fillRect(0, 0, 32, 64);
@@ -583,7 +542,7 @@ const Tex = (function () {
     cache = { grass: grass(), asphalt: asphalt(), curb: curb(), gravel: gravel(), water: water(), crowd: crowd(), sponsors: sponsors(), tires: tires(), fence: fence(), checker: checker(), blob: blob(), sand: sand(), paving: paving(), facade: facade(), makadam: null, makadamBump: null };
     { const m = makadam(); cache.makadam = m.map; cache.makadamBump = m.bump; }
     cache.cracks = cracks(); cache.tiresRW = tiresRW(); cache.facadeBal = facadeBal();
-    cache.sponsorsLJ = sponsorsLJ(); cache.bannerLJ = bannerLJ(); cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
+    cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
     cache.curbIT = curbIT(); cache.curbRY = curbRY(); cache.sponsorsIT = sponsorsIT(); cache.sponsorsKP = sponsorsKP(); cache.boardsIT = boardsIT(); cache.boardsKP = boardsKP(); cache.flagKP = flagKP();
     cache.wear = wear();
     return cache;

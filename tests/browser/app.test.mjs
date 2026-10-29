@@ -2,9 +2,8 @@
 // - manifest.webmanifest: name, start address, full screen, icons of the stated size (the files exist)
 // - "Namesti igro" shows only when the browser offers to install the game, and asks for it; an offer during full screen
 //   does not take the full-screen buttons away
-// - the screen turns the camera's way (portrait for the chase camera, landscape for iso and kino): in full screen and in
-//   the installed app, not in a plain browser tab; a phone held the other way in a race: the notice to turn it says why, and
-//   its button plays on the way it is held (upright: the camera behind the car)
+// - the screen is never locked to one way (the one camera, behind the car, suits a phone held either way): not in a browser tab, not
+//   in full screen, not in the installed app; a race on a phone held either way: no notice to turn it, the camera behind the car
 // - offline, on a copy of the game in a folder as on GitHub Pages: once opened, the game starts without internet; a new
 //   version is used at once and saved complete; a save that breaks off leaves the previous version complete (never a mix);
 //   a server error or a network that does not answer brings the saved game (within seconds); a game left open loads a
@@ -25,7 +24,6 @@ const recordLocks = () => { window.__locks = []; Object.defineProperty(screen.or
 // (run in the page before the game) the page is the installed app: display-mode full screen
 const installed = () => { const mm = window.matchMedia.bind(window); window.matchMedia = (q) => /display-mode/.test(q) ? { matches: true, media: q, onchange: null, addEventListener() { }, removeEventListener() { }, addListener() { }, removeListener() { }, dispatchEvent() { return false; } } : mm(q); };
 const locks = (page) => page.evaluate(() => window.__locks.slice());
-const camera = (page, v) => page.evaluate((v) => { document.querySelector(`[data-set="camera"] button[data-v="${v}"]`).click(); }, v);
 let tmp = null;
 try {
   // 1. manifest and icons
@@ -38,7 +36,7 @@ try {
       return { man, icons, apple: await size(document.querySelector('link[rel="apple-touch-icon"]').href), tab: await size(document.querySelector('link[rel="icon"]').href) };
     });
     const { man, icons } = m;
-    T.check('manifest: name, start address and scope, full screen, colours', man.name === 'APEX RACING' && man.short_name.length <= 12 && man.start_url === './' && man.scope === './' && man.display === 'fullscreen' && !!man.theme_color && !!man.background_color,
+    T.check('manifest: name, start address and scope, full screen, colours', man.name === 'Real Roads Atlas' && man.short_name.length <= 12 && man.start_url === './' && man.scope === './' && man.display === 'fullscreen' && !!man.theme_color && !!man.background_color,
       `${man.name} / ${man.short_name}, start ${man.start_url}, display ${man.display}`);
     T.check('icons: 192 and 512 px and a maskable one for Android, each file the stated size', icons.every(i => i.real === i.sizes) && ['192x192', '512x512'].every(s => icons.some(i => i.sizes === s && i.purpose === 'any')) && icons.some(i => i.purpose === 'maskable'),
       icons.map(i => `${i.sizes} ${i.purpose}: ${i.real}`).join(', '));
@@ -60,32 +58,24 @@ try {
     await ctx.close();
   }
 
-  // 3. orientation in a browser tab: locked only in full screen (browsers allow it only there)
+  // 3. a browser tab and full screen: the screen is not locked to one way
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'chase' }, { width: 390, height: 844 }, { init: recordLocks });
-    await camera(page, 'iso'); await camera(page, 'chase');
     const tab = await locks(page);
     // (the browser reports full screen with the next frame: wait for the game's fullscreenchange handler to have run)
     const fsEvent = () => page.evaluate(() => new Promise(r => { document.addEventListener('fullscreenchange', () => setTimeout(r, 50), { once: true }); setTimeout(r, 15000); }));
     let ev = fsEvent(); await page.click('#btn-fs'); await ev;
     const full = await page.evaluate(() => !!document.fullscreenElement), inFs = await locks(page);
     await page.evaluate(() => { const e = new Event('beforeinstallprompt', { cancelable: true }); e.prompt = () => Promise.resolve(); window.dispatchEvent(e); });   // (Chrome's offer, during full screen)
-    await camera(page, 'iso'); await camera(page, 'kino'); await camera(page, 'chase'); await wait(100);
-    const turned = await locks(page);
     ev = fsEvent(); await page.evaluate(() => document.exitFullscreen()); await ev;
-    await camera(page, 'iso'); await wait(100);
-    const after = await locks(page);
-    const btns = await page.evaluate(() => ({ fullscreen: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => !b.classList.contains('off')), install: !document.getElementById('btn-install').classList.contains('off') }));
-    T.check('browser tab: no orientation lock while not in full screen', tab.length === 0, JSON.stringify(tab));
-    T.check('full screen: portrait for the chase camera', full && inPortrait(inFs), `full screen ${full}, locks ${JSON.stringify(inFs)}`);
-    T.check('full screen: the camera setting turns it (iso and kino landscape, chase portrait)', turned.slice(1).join() === 'landscape,landscape,portrait', JSON.stringify(turned));
-    T.check('full screen over: no more locks', after.length === turned.length, JSON.stringify(after));
+    const btns = await page.evaluate(() => ({ fullscreen: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => !b.classList.contains('off')), install: !document.getElementById('btn-install').classList.contains('off'), camSet: !!document.querySelector('[data-set="camera"]') }));
+    T.check('browser tab and full screen: no orientation lock (the camera behind the car suits both ways), no camera setting', tab.length === 0 && full && inFs.length === 0 && !btns.camSet, JSON.stringify({ tab, full, inFs, camSet: btns.camSet }));
     T.check('an install offer during full screen: afterwards the full-screen buttons and "Namesti igro" are there', btns.fullscreen.length >= 2 && btns.fullscreen.every(Boolean) && btns.install, JSON.stringify(btns));
     T.check('no page errors (browser tab)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
 
-  // 4. the installed app (display-mode full screen): locked from the start, no full-screen or install buttons
+  // 4. the installed app (display-mode full screen): not locked either, no full-screen or install buttons
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: 'iso' }, { width: 844, height: 390 }, { init: { content: `(${recordLocks})(); (${installed})();` } });
     await wait(300);
@@ -94,29 +84,25 @@ try {
       const ev = new Event('beforeinstallprompt', { cancelable: true }); ev.prompt = () => Promise.resolve(); window.dispatchEvent(ev);
       return { fullscreenHidden: [...document.querySelectorAll('[data-act="fullscreen"]')].map(b => b.classList.contains('off')), installHidden: document.getElementById('btn-install').classList.contains('off') };
     });
-    await camera(page, 'chase'); await wait(100);
-    const after = await locks(page);
-    T.check('installed app: locked from the start (landscape for iso)', start.join() === 'landscape', JSON.stringify(start));
+    T.check('installed app: no orientation lock', start.length === 0, JSON.stringify(start));
     T.check('installed app: no full-screen buttons, no install button', ui.fullscreenHidden.length >= 2 && ui.fullscreenHidden.every(Boolean) && ui.installHidden, JSON.stringify(ui));
-    T.check('installed app: the camera setting turns it (chase: portrait)', after.join() === 'landscape,portrait', JSON.stringify(after));
     T.check('no page errors (installed app)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
 
-  // 4b. a phone held upright in a race while the camera chosen is a landscape one (iso): the notice to turn the phone says why, and its
-  //     button plays on upright instead (the camera behind the car, kept as the setting)
-  {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
+  // 4b. a race on a phone held either way (an old setting of the isometric camera): the camera behind the car, no notice to turn the
+  //     phone, the race goes on; the old setting saved as the camera behind the car
+  for (const [w, h] of [[390, 844], [844, 390]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     await startTrack(page, 'jezero'); await wait(800);
-    const st = () => page.evaluate(() => ({ show: document.getElementById('rotate').classList.contains('show'), txt: document.getElementById('rotate-txt').textContent, why: document.getElementById('rotate-why').textContent, btn: document.getElementById('rotate-cam').textContent, cam: window.__game.S.camera }));
-    const before = await st(); await page.tap('#rotate-cam'); await wait(500); const after = await st();
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings')).camera);
-    T.check('a phone held upright in a race, the camera a landscape one: the notice says why, its button plays on upright (the camera behind the car, kept)',
-      before.show && /ležeči/.test(before.txt) && /izometrična/.test(before.why) && before.btn === 'Igraj pokončno' && !after.show && after.cam === 'chase' && saved === 'chase', JSON.stringify({ before, after, saved }));
-    T.check('no page errors (a phone held upright)', !errors.length, errors.slice(0, 5).join(' | '));
+    const st = await page.evaluate(() => ({ notice: !!document.getElementById('rotate'), cam: window.__game.S.camera, camBtn: !!document.getElementById('btn-cam'), screen: window.__game.screen, phase: window.__game.phase }));
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}').camera);
+    T.check(`a race on a phone ${h > w ? 'upright' : 'on its side'} (the setting was the isometric camera): the camera behind the car, no notice to turn it, no camera button`,
+      !st.notice && st.cam === 'chase' && !st.camBtn && st.screen === 'none' && (saved === undefined || saved === 'chase'), JSON.stringify({ st, saved }));
+    T.check(`no page errors (a phone ${h > w ? 'upright' : 'on its side'})`, !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
 
@@ -127,13 +113,13 @@ try {
     const dir = path.join(tmp, 'dirkaska-igra');
     fs.mkdirSync(dir);
     for (const f of ['index.html', 'manifest.webmanifest', 'sw.js']) fs.copyFileSync(path.join(ROOT, f), path.join(dir, f));
-    for (const d of ['css', 'js', 'icons']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
+    for (const d of ['css', 'js', 'icons', 'fonts']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
     const s2 = await serve(tmp), home = s2.base + '/dirkaska-igra/';
     const isPage = (req) => req.url === '/dirkaska-igra/' || req.url === '/dirkaska-igra/index.html';
     // publish version n: a changed script and title, stamped like a real change; returns the script's new address
     const publish = (n) => {
       fs.appendFileSync(path.join(dir, 'js', 'sfx.js'), `\n// version ${n}\n`);
-      fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace(/<title>[^<]*<\/title>/, `<title>APEX RACING ${n}</title>`));
+      fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace(/<title>[^<]*<\/title>/, `<title>Real Roads Atlas ${n}</title>`));
       const ok = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp.js')], { env: { ...process.env, GAME_ROOT: dir } }).status === 0;
       return ok && fs.readFileSync(path.join(dir, 'index.html'), 'utf8').match(/js\/sfx\.js\?v=[0-9a-f]{8}/)[0];
     };
@@ -155,10 +141,10 @@ try {
 
       await page.evaluate(() => navigator.serviceWorker.ready);
       let st = await until(x => x.page && x.complete);
-      T.check('first visit (in a folder, as on GitHub Pages): the page and every file it needs are saved', st.page === 'APEX RACING' && st.complete, `saved "${st.page}", ${st.keys.length} files, complete ${st.complete}`);
+      T.check('first visit (in a folder, as on GitHub Pages): the page and every file it needs are saved', st.page === 'Real Roads Atlas · Racing Game' && st.complete, `saved "${st.page}", ${st.keys.length} files, complete ${st.complete}`);
       s2.setOffline(true);
       let g = await reload();
-      T.check('offline: the game starts from the saved copy', g.title === 'APEX RACING' && g.screen === 'title', JSON.stringify(g));
+      T.check('offline: the game starts from the saved copy', g.title === 'Real Roads Atlas · Racing Game' && g.screen === 'title', JSON.stringify(g));
 
       // version 2, but the connection breaks while it is being saved (only the service worker's own download of the new
       // script fails; the page itself gets it): the saved game stays version 1, complete
@@ -166,25 +152,25 @@ try {
       const sfx1 = g.sfx, sfx2 = publish(2);
       s2.setFail((req) => !!sfx2 && req.url.endsWith(sfx2) && req.headers['sec-fetch-mode'] === 'cors');
       g = await reload();
-      T.check('online: version 2 is used at once', !!sfx2 && g.title === 'APEX RACING 2' && g.sfx.endsWith(sfx2), `${g.title}, ${g.sfx.split('/').pop()} (was ${sfx1.split('/').pop()})`);
+      T.check('online: version 2 is used at once', !!sfx2 && g.title === 'Real Roads Atlas 2' && g.sfx.endsWith(sfx2), `${g.title}, ${g.sfx.split('/').pop()} (was ${sfx1.split('/').pop()})`);
       await wait(1500); st = await saved();
-      T.check('a save that breaks off leaves the saved game as it was (version 1, complete)', st.page === 'APEX RACING' && st.complete, `saved "${st.page}", complete ${st.complete}`);
+      T.check('a save that breaks off leaves the saved game as it was (version 1, complete)', st.page === 'Real Roads Atlas · Racing Game' && st.complete, `saved "${st.page}", complete ${st.complete}`);
       s2.setOffline(true); g = await reload();
-      T.check('offline: version 1 starts, not a mix of both', g.title === 'APEX RACING' && g.sfx === sfx1, JSON.stringify(g));
+      T.check('offline: version 1 starts, not a mix of both', g.title === 'Real Roads Atlas · Racing Game' && g.sfx === sfx1, JSON.stringify(g));
 
       // back online: version 2 saved complete, the old file removed
       s2.setOffline(false); s2.setFail(null); g = await reload();
-      st = await until(x => x.page === 'APEX RACING 2' && x.complete && !x.keys.includes(sfx1));
-      T.check('online again: version 2 saved complete, the old file removed', g.title === 'APEX RACING 2' && st.page === 'APEX RACING 2' && st.complete && !st.keys.includes(sfx1), `saved "${st.page}", complete ${st.complete}, old file kept ${st.keys.includes(sfx1)}`);
+      st = await until(x => x.page === 'Real Roads Atlas 2' && x.complete && !x.keys.includes(sfx1));
+      T.check('online again: version 2 saved complete, the old file removed', g.title === 'Real Roads Atlas 2' && st.page === 'Real Roads Atlas 2' && st.complete && !st.keys.includes(sfx1), `saved "${st.page}", complete ${st.complete}, old file kept ${st.keys.includes(sfx1)}`);
       s2.setOffline(true); g = await reload();
-      T.check('offline: version 2 starts', g.title === 'APEX RACING 2' && g.screen === 'title', JSON.stringify(g));
+      T.check('offline: version 2 starts', g.title === 'Real Roads Atlas 2' && g.screen === 'title', JSON.stringify(g));
 
       // a server problem, and a network that does not answer (one bar of signal): the saved game, within seconds
       s2.setOffline(false); s2.setFail((req) => isPage(req) && 503); g = await reload();
-      T.check('server error (503): the saved game starts', g.title === 'APEX RACING 2' && g.screen === 'title', JSON.stringify(g));
+      T.check('server error (503): the saved game starts', g.title === 'Real Roads Atlas 2' && g.screen === 'title', JSON.stringify(g));
       s2.setFail((req) => isPage(req) && 'hang');
       const t0 = Date.now(); g = await reload(); const secs = (Date.now() - t0) / 1000;
-      T.check('no answer from the network: the saved game starts within seconds', g.title === 'APEX RACING 2' && secs < 20, `${g.title} after ${secs.toFixed(1)} s`);
+      T.check('no answer from the network: the saved game starts within seconds', g.title === 'Real Roads Atlas 2' && secs < 20, `${g.title} after ${secs.toFixed(1)} s`);
       s2.setFail(null); g = await reload(); await wait(1500);   // (online again, a clean start; whatever the step above left has settled)
 
       // the game left open (an installed app in the background): version 3 comes when it is back on the title screen
@@ -193,9 +179,9 @@ try {
       const steady = await page.evaluate(() => window.__before === 1).catch(() => false);   // (nothing reloaded it before it was back)
       const back = () => page.evaluate(() => { window.__before = 1; document.dispatchEvent(new Event('visibilitychange')); }).catch(() => { });
       await back();
-      let t3 = null; for (let i = 0; i < 100 && t3 !== 'APEX RACING 3'; i++) { await wait(300); try { t3 = await page.evaluate(() => (window.__game ? document.title : null)); } catch (_) { } }
+      let t3 = null; for (let i = 0; i < 100 && t3 !== 'Real Roads Atlas 3'; i++) { await wait(300); try { t3 = await page.evaluate(() => (window.__game ? document.title : null)); } catch (_) { } }
       const fresh = await page.waitForFunction(() => window.__game, null, { timeout: 30000 }).then(() => page.evaluate(() => !window.__before)).catch(() => false);
-      T.check('back in the open game: a new version loads by itself', !!sfx3 && steady && t3 === 'APEX RACING 3' && fresh, `title ${t3}, reloaded ${fresh}, untouched before ${steady}`);
+      T.check('back in the open game: a new version loads by itself', !!sfx3 && steady && t3 === 'Real Roads Atlas 3' && fresh, `title ${t3}, reloaded ${fresh}, untouched before ${steady}`);
       await back(); await wait(2500);
       const stayed = await page.evaluate(() => window.__before === 1).catch(() => false);
       T.check('back in the open game, nothing new: no reload', stayed, `stayed ${stayed}`);
@@ -209,4 +195,3 @@ try {
 }
 T.done();
 
-function inPortrait(l) { return l.length === 1 && l[0] === 'portrait'; }

@@ -1,4 +1,4 @@
-// A crossing on two levels (Suzuka's figure of eight: the back straight on a bridge over the link from Degner to the Hairpin), Core
+// A crossing on two levels (Suzuka's figure of eight: the back straight on a bridge over the link from the double right to the Hairpin), Core
 // only: the track finds the crossing (and no other track has one), narrows the barriers to the bridge's parapets and the underpass's
 // walls, the two roads' corridors do not cut into each other there; cars and loose parts on the bridge and under it do not touch; a
 // car keeps to its own level when it drives across, hits the parapet, is rescued or loses a panel there; a whole race never snaps a
@@ -19,7 +19,7 @@ const others = C.TRACKS.filter(d => d.id !== 'suzuka' && d.id !== 'tianmen').map
 check('no other track has a crossing (but Tianmen\'s loop)', !others.length, others.map(([id, k]) => id + ': ' + k).join(', '));
 const T = new C.Track(C.TRACKS.find(d => d.id === 'suzuka')), X = T.cross[0], ds = T.ds, sLo = X ? X.lo * ds : 0, sUp = X ? X.up * ds : 0;
 const dLo = ((sLo - T.startS) % T.len + T.len) % T.len, dUp = ((sUp - T.startS) % T.len + T.len) % T.len;
-check('Suzuka: one crossing, the lower road after Degner, the bridge on the back straight before 130R', T.cross.length === 1 && dLo > 2250 && dLo < 2400 && dUp > 4600 && dUp < 4760 && Math.hypot(X.x + 883, X.z + 69) < 8,
+check('Suzuka: one crossing, the lower road after the double right, the bridge on the back straight before 130R', T.cross.length === 1 && dLo > 2250 && dLo < 2400 && dUp > 4600 && dUp < 4760 && Math.hypot(X.x + 883, X.z + 69) < 8,
   X ? `lower road ${dLo.toFixed(0)} m, bridge ${dUp.toFixed(0)} m after the start line, at (${X.x.toFixed(1)}, ${X.z.toFixed(1)})` : 'none');
 check('the bridge 7.5-9 m over the lower road, the roads crossing at ~60 deg', X && X.dy > 7.5 && X.dy < 9 && X.sin > 0.8 && X.sin < 0.92,
   X ? `height gap ${X.dy.toFixed(2)} m, sin ${X.sin.toFixed(3)}` : '');

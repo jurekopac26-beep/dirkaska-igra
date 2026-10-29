@@ -2,9 +2,9 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Suzuka International Racing Course (Mie, Japan), the real 5.807 km Grand Prix layout: a figure of eight, the back straight on a
-  // bridge over the link from Degner to the Hairpin. Lap order: the start / finish straight downhill to the First Curve, the S Curves up
-  // the hill, Dunlop, Degner 1 and 2, under the bridge, the Hairpin, 200R, Spoon, the West Straight over the bridge, 130R, the Casio
-  // Triangle chicane and the Final Curve.
+  // bridge over the link from the double right to the Hairpin. Lap order: the start / finish straight downhill to the First Curve, the S Curves up
+  // the hill, the long left, the double right, under the bridge, the Hairpin, 200R, Spoon, the West Straight over the bridge, 130R, the
+  // chicane and the Final Curve.
   // Centre line: TUMFTM racetrack-database (LGPL-3.0; from OpenStreetMap, (c) OpenStreetMap contributors, ODbL), georeferenced on the
   // f1-circuits outline (MIT); metres, origin = the start line, x east, z south. points[0] is 235 m before the start line.
   // Heights (SUZ_H): Copernicus GLO-30 elevation along the line (lowest over the road's width, median 55 m, smoothed 20 m), every
@@ -13,23 +13,28 @@ var TRACK_DEFS = TRACK_DEFS || [];
   const SUZ_H = [392,392,391,389,386,382,378,375,372,370,368,367,366,366,365,364,363,361,359,357,355,352,349,345,340,335,330,325,321,317,313,308,302,296,292,288,285,283,280,277,273,269,264,260,256,252,248,245,242,239,236,233,230,228,225,223,221,219,217,215,213,210,206,202,199,195,191,187,184,181,179,177,176,174,173,173,172,173,173,173,174,175,176,177,179,180,182,184,187,190,193,196,198,199,200,201,202,203,205,206,207,208,209,210,212,214,217,220,222,223,224,225,225,226,228,231,235,240,246,252,257,262,267,270,273,276,280,284,288,292,297,302,306,311,317,323,329,336,342,348,354,359,365,371,376,381,385,389,391,393,394,395,395,394,394,394,393,392,391,390,389,387,385,383,381,379,378,377,378,379,382,385,388,392,397,402,409,416,424,433,441,449,457,465,473,480,487,494,500,505,509,512,512,511,508,504,500,495,492,490,489,490,491,492,493,493,493,493,492,491,490,489,488,487,486,485,484,483,482,480,479,477,475,472,471,469,468,467,467,466,466,465,465,463,461,459,457,454,453,451,450,449,447,446,445,444,444,443,442,442,441,441,440,440,440,440,440,439,439,439,438,438,438,439,440,441,443,445,449,453,458,463,470,476,483,489,494,500,506,511,517,522,527,533,538,543,547,550,552,554,555,555,554,553,552,550,548,547,547,547,546,546,545,545,544,544,544,545,546,548,549,551,553,555,558,561,565,567,570,571,572,572,573,573,573,573,573,572,571,569,566,562,558,554,550,546,543,541,539,537,535,533,531,530,529,529,530,531,532,534,536,538,541,544,547,551,554,557,559,560,562,563,565,566,568,569,570,571,571,571,572,572,572,573,573,573,572,572,571,571,571,572,573,575,576,577,579,581,583,585,586,586,585,584,583,581,579,578,577,575,574,571,568,565,561,556,552,548,544,540,535,529,522,514,506,499,493,491,490,490,489,489,489,490,491,493,495,496,497,498,498,498,497,496,494,492,490,488,486,485,484,484,484,484,485,486,487,489,490,492,493,495,497,498,500,503,505,507,510,512,515,517,519,521,522,523,524,525,526,527,527,527,528,528,528,528,528,528,528,527,527,527,526,526,525,525,524,523,523,522,522,521,520,520,519,518,517,515,514,513,512,510,510,509,508,508,508,509,510,512,514,516,518,520,522,524,525,526,527,528,529,531,532,534,535,536,537,538,538,539,539,539,539,539,539,539,539,540,541,542,542,542,542,542,541,540,539,537,535,532,528,524,520,515,511,507,501,495,488,479,471,463,457,451,446,441,436,431,425,420,415,411,406,402,398,395,393,392,392,392,392];
   TRACK_DEFS.push({
     id: 'suzuka', name: 'Suzuka, Japonska', theme: 'suzuka', laps: 2, halfWidth: 6.5,
-    desc: 'Suzuka na Japonskem, proga v obliki osmice, v pravem merilu (5,8 km): ciljna ravnina navzdol do prvega ovinka, S-zavoji navkreber, Dunlop, Degner, pod mostom do lasnice, 200R, dvojni levi Spoon, zadnja ravnina \u010dez most, hitri 130R, \u0161ikana Casio Triangle in zadnji ovinek. Za tribunami zabavi\u0161\u010de z velikim kolesom. Podatki: \u00a9 OpenStreetMap (ODbL), Copernicus DEM.',
-    en: { name: 'Suzuka, Japan', desc: 'Suzuka in Japan, the figure-of-eight circuit at full scale (5.8 km): the finish straight down to the first corner, the S curves uphill, Dunlop, Degner, under the bridge to the hairpin, 200R, the double left of Spoon, the back straight over the bridge, the fast 130R, the Casio Triangle chicane and the final corner. Behind the grandstands, an amusement park with a big wheel. Data: © OpenStreetMap (ODbL), Copernicus DEM.' },   // (the English page: Jezik · Language)
+    desc: 'Suzuka na Japonskem, proga v obliki osmice, v pravem merilu (5,8 km): ciljna ravnina navzdol do prvega ovinka, S-zavoji navkreber, dolgi levi, dvojni desni, pod mostom do lasnice, 200R, dvojni levi Spoon, zadnja ravnina \u010dez most, hitri 130R, \u0161ikana in zadnji ovinek. Za tribunami zabavi\u0161\u010de z velikim kolesom. Podatki: \u00a9 OpenStreetMap (ODbL), Copernicus DEM.',
+    en: { name: 'Suzuka, Japan', desc: 'Suzuka in Japan, the figure-of-eight circuit at full scale (5.8 km): the finish straight down to the first corner, the S curves uphill, the long left, the double right, under the bridge to the hairpin, 200R, the double left of Spoon, the back straight over the bridge, the fast 130R, the chicane and the final corner. Behind the grandstands, an amusement park with a big wheel. Data: © OpenStreetMap (ODbL), Copernicus DEM.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 6, realKm: 5.807,
+    // DRS (Track.drs): the Grand Prix's one zone, down the start / finish straight: detection 50 m before the Casio Triangle (Turn 16), open
+    // from 126 m after the Final Curve to the braking for the First Curve (the corners of names below, by their labels)
+    drs: [['Zadnji ovinek', -230, 126, 'Prvi ovinek']],
     elev: SUZ_H.map((h, i) => [i / SUZ_H.length, h / 10]),
+    // the HUD's corner signs (Core hudSigns), m after the start line: 'chicane' and 'ring' blue, 'bend' a named fast bend
+    hudSigns: [[5130, 5240, 'chicane']],   // the Casio Triangle
     // corner names ([HUD label, x, z, the commentator's lines]; the generic words in Slovenian, the proper names as at the circuit)
     names: [
       ['Prvi ovinek', 287.1, 366.4, ['Down the hill into the First Curve!', 'Turn one, the long right-hander at the bottom of the hill!', 'Through the First Curve and on into Turn Two!']],
       ['S-zavoji', 63.2, 311.8, ['Into the Esses! Left, right, left, right!', 'Climbing through the S Curves, the rhythm section!', 'Snaking up the hill through the Esses!']],
-      ['Dunlop', -265.3, -71.0, ['Dunlop Curve, the long left up the hill!', 'Up through Dunlop!', 'Dunlop, and on towards Degner!']],
-      ['Degner', -690.2, -2.5, ['Degner One, then Degner Two!', 'Careful at Degner, the gravel is waiting!', 'Through Degner, two quick right-handers!']],
+      ['Dolgi levi', -265.3, -71.0, ['The long left up the hill!', 'Up through the long left!', 'The long left, and on towards the double right!']],
+      ['Dvojni desni', -690.2, -2.5, ['The first right, then the second!', 'Careful at the double right, the gravel is waiting!', 'Through the double right, two quick right-handers!']],
       ['Pod mostom', -877.1, -41.9, ['Under the bridge! The only figure of eight in racing!', 'Down under the crossover bridge!', 'Under the bridge, and up to the Hairpin!']],
       ['Lasnica', -878.9, -409.4, ['The Hairpin! Hard on the brakes!', 'Round the Hairpin, the slowest corner of the lap!', 'Hairpin! Full lock!']],
       ['200R', -1030.8, -259.8, ['Flat out through 200R!', 'The long right, 200R!']],
       ['Spoon', -1515.2, -540.1, ['Spoon Curve, the long double left!', 'Round Spoon, a good exit is everything here!', 'Into Spoon Curve, two apexes!']],
       ['Zadnja ravnina', -1506.9, -320.3, ['Down the back straight, flat out!', 'Onto the West Straight, the longest flat-out run of the lap!']],
       ['130R', -848.7, -58.8, ['Over the bridge and into 130R! Flat out, if you dare!', '130R, the most famous corner in Japan!', 'Through 130R at full speed!']],
-      ['Casio Triangle', -503.3, -279.9, ['Hard on the brakes for the Casio Triangle!', 'Into the chicane, right and then left!', 'The Casio Triangle! Mind the kerbs!']],
+      ['\u0160ikana', -503.3, -279.9, ['Hard on the brakes for the chicane!', 'Into the chicane, right and then left!', 'The last chicane! Mind the kerbs!']],
       ['Zadnji ovinek', -367.5, -301.7, ['Through the Final Curve, back to the line!', 'Round the last corner, onto the main straight!']],
     ],
     // grandstands: [name, side (-1 left / 1 right), roof, [[metres after the start line, front offset, back offset], ...]] (OpenStreetMap outlines

@@ -1,0 +1,11 @@
+[
+  ["vrsic", "top", "isle-vrsic", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["pikes", "top", "isle-pikes", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["ouninpohja", "top", "isle-ouninpohja", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["riviera", "top", "isle-riviera", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["monaco", "top", "isle-monaco", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["rbring", "top", "isle-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["suzuka", "top", "isle-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["spa", "top", "isle-spa", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["nring", "top", "isle-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}]
+]

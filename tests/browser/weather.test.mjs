@@ -1,23 +1,28 @@
 // Sector times, the set-up, tyres and a changing weather in the game (the Red Bull Ring, the player on autopilot): the track screen's
 // set-up rows (wing and gears, kept per track, given to the race) and the "Menljivo" weather; a race where the rain starts at 20 s: the
-// message, the hint to come in for rain tyres, the tyres on the HUD (red: the wrong ones), a pit stop for rain tyres (the message, the new
-// set on the HUD); the sector times on the HUD (S1-S3); a race where the rain stops: the message, the drying road and the dry racing line.
+// message, the hint to come in for rain tyres, the tyres on the HUD (the compound's word, no %; on a red chip: the wrong ones), a pit stop
+// for rain tyres (the message, the new set on the HUD cold: the word and the dots light blue); the sector times on the HUD (S1-S3); a race
+// where the rain stops: the message, the drying road and the dry racing line.
 //   node tests/browser/weather.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('sectors, set-up, tyres and a changing weather');
+const COLD = 'rgb(127, 211, 255)';   // (a new set right after a stop, game.js tyreHUD)
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry' }, { width: 390, height: 844 });
+  // (no damage: on slicks in the wet the autopilot knocks the others, on the first lap and at the way into the pits, where the field comes in
+  // for rain tyres too; the knocks added up, the car was wrecked before the pit lane, and stood there for the rest of the race)
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry', damage: 0 }, { width: 390, height: 844 });
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const hud = () => page.evaluate(() => { const r = window.__game.race, P = r.player, el = (id) => document.getElementById(id);
     return { rain: r.rain, water: r.water, line: r.lineWater, ty: P.ty && { k: P.ty.k, wear: P.ty.wear }, pit: P.pitState, inPit: P.inPit, lap: P.lap,
-      msg: el('h-msg').textContent, msgOn: el('h-msg').classList.contains('show'), toast: el('toast').textContent, tyre: el('h-tyre').className + ':' + el('h-tyre').textContent,
+      msg: el('h-msg').textContent, msgOn: el('h-msg').classList.contains('show'), toast: el('toast').textContent, tyre: el('h-tyre').className + ':' + el('h-tyre').textContent, tyC: getComputedStyle(el('h-tyre').querySelector('b')).color, dotC: [...el('h-tyre').querySelectorAll('.dts i')].map(i => getComputedStyle(i).backgroundColor),
       sec: [...el('h-sec').children].map(i => i.className + ':' + i.textContent), setup: P.setup }; });
-  // step the race (paused, on autopilot), then let two frames draw the HUD (it is updated only while the race runs) and pause again
-  const sim = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); g.sim(t, true); g.resume();
-    requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
+  // step the race (paused, on autopilot), then draw the HUD as a frame of the running race would (g.hud: the race not stepped). Two real
+  // frames with the race resumed would step it on the real clock: on a slow machine the race ran differently each time (a rival's
+  // mistake, the safety car, the pit lane missed)
+  const sim = (t) => page.evaluate((t) => { const g = window.__game; g.pause(); g.sim(t, true); g.hud(); }, t);
   // on until the race clock (from the lights) reads t: however long the intro before the lights is (the Red Bull Ring's jets fly over first)
   // the HUD's messages as they come, each one (the line in the middle is shared: a rival's duel or mistake may follow the weather's news,
   // even within the same steps, so the line is not read at one moment but its log since the last look)
@@ -41,17 +46,17 @@ try {
   await startTrack(page, 'rbring');
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
-  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on dry c[SMH]:(MEHKE|SREDNJE|TRDE) 100%$/.test(h0.tyre) && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
+  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
   await msgs(); await simTo(22);
   const h1 = await hud(), m1 = await msgs();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && m1.includes('DEŽ') && /dežne gume/.test(h1.toast), JSON.stringify({ h1, m1 }));
   await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by)
   let h2 = null, hb = null; await msgs();
-  for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane, a knock on slicks in the wet may add a repair first)
+  for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane)
   const h2b = await hud(), m2 = await msgs();
-  T.check('slicks on a wet road: red on the HUD (the wrong tyres) until the stop', !!hb && /^on dry c[SMH] bad:(MEHKE|SREDNJE|TRDE) \d+%$/.test(hb.tyre), JSON.stringify(hb));
+  T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();
-  T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD', h2.ty.k === 'wet' && m2.some(m => /DEŽNE GUME/.test(m)) && /^on wet:DEŽNE (100|99)%$/.test(h3.tyre), JSON.stringify({ h2, h3, m2 }));
+  T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD and cold: the word and the four dots light blue', h2.ty.k === 'wet' && m2.some(m => /DEŽNE GUME/.test(m)) && /^on wet cold:DEŽNE$/.test(h3.tyre) && h3.tyC === COLD && h3.dotC.length === 4 && h3.dotC.every(c => c === COLD), JSON.stringify({ h2, h3, m2 }));
   T.check('sector times on the HUD: S1 with a time', /^(ob|pb|sl):S1 \d+\.\d+$/.test(h2b.sec[0]), h2b.sec.join(' | '));
   await page.evaluate(() => window.__game.resume());
 
@@ -62,9 +67,12 @@ try {
   const d0 = await hud();
   await msgs(); await simTo(21); const d1 = await hud(), m3 = await msgs();
   await sim(60); const d2 = await hud();
-  const line = await page.evaluate(() => { let m = null; Render.scene.traverse(o => { if (o.isMesh && o.renderOrder === 1 && o.geometry.attributes.color && o.geometry.attributes.color.itemSize === 4) m = o; }); return m && { vis: m.visible, op: +m.material.opacity.toFixed(2) }; });
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));   // (a frame drawn after the sim: the dry line's opacity follows the water of the last frame drawn)
+  const line = await page.evaluate(() => { const m = Render.scene.getObjectByName('dryline'), p = Render.scene.getObjectByName('rainpuddles');
+    return m && { vis: m.visible, op: +m.material.opacity.toFixed(2), ro: m.renderOrder, pud: p && { vis: p.visible, ro: p.renderOrder, dry: +p.material.uniforms.uDry.value.toFixed(2) } }; });
   T.check('the rain stops: rain tyres at the start, "DEŽ JE PONEHAL", the road still wet', d0.ty.k === 'wet' && d0.rain === 1 && d1.rain === 0 && m3.includes('DEŽ JE PONEHAL') && d1.water > 0.8, JSON.stringify({ d0: d0.ty, d1, m3 }));
   T.check('the road dries, the racing line first: the dry line drawn along it', d2.line < d2.water - 0.1 && line && line.vis && line.op > 0.3, JSON.stringify({ water: d2.water, line: d2.line, mesh: line }));
+  T.check('the puddles drawn over the dry line, gone on it as much as it has dried', !!line && !!line.pud && line.pud.vis && line.pud.ro > line.ro && line.pud.dry === line.op, JSON.stringify(line));
   await page.evaluate(() => window.__game.resume());
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));

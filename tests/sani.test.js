@@ -1,5 +1,5 @@
-// Sani Pass: an open gravel road with two ways to drive it on one card (def.modes: the time trial and the duel in the traffic; no race of 13
-// up a road this narrow). The road: its last ~5 km to the top in the real scale, gravel all the way (the asphalt only past the finish, at
+// Sani Pass: an open gravel road with three ways to drive it on one card (def.modes: the race against twelve rivals, the time trial and the
+// duel in the traffic; the road is narrow, so the grid's two columns stand closer together). The road: its last ~5 km to the top in the real scale, gravel all the way (the asphalt only past the finish, at
 // the border post: def.paved), the 13 hairpins numbered from the bottom in their order up the road (def.curves), steep (up to ~24 %) with the
 // hairpins flatter than their legs. The traffic of the open road keeps LEFT (def.leftHand: South Africa and Lesotho); Vršič's keeps right.
 // The time trial on autopilot reaches the top in every car (the truck, SAMUM 4x4, the quickest of them), the medal times are the stock rally
@@ -15,11 +15,11 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 const def = C.TRACKS.find(d => d.id === 'sani'), T = new C.Track(def);
 const opts = (o) => Object.assign({ numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
 const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
-const model = (name) => C.MODELS.find(m => m.name === name);
+const model = (name) => C.MODELS.find(m => m.name === name) || C.MODELS.find(m => m.id === name);   // (by its name, or by its id: the retired hatch at index 5, p206)
 
-// 1. the track: an open road, the time trial and the duel, at most 5 km, from ~2230 m to the top at ~2870 m; the traffic on the left
-check('track: an open road, two ways to drive it (def.modes: time trial, traffic), 4 checkpoints, 9 m wide, traffic on the left',
-  def.open && !def.timeTrial && (def.modes || []).join(',') === 'tt,traffic' && T.cpS.length === 4 && T.w === 4.5 && def.leftHand === true,
+// 1. the track: an open road, the race, the time trial and the duel, at most 5 km, from ~2230 m to the top at ~2870 m; the traffic on the left
+check('track: an open road, three ways to drive it (def.modes: race, time trial, traffic), 4 checkpoints, 9 m wide, traffic on the left',
+  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic' && T.cpS.length === 4 && T.w === 4.5 && def.leftHand === true,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, modes ${(def.modes || []).join(',')}`);
 check('track: at most 5 km, from ~2230 m to the top of the escarpment at ~2870 m', T.raceLen > 4900 && T.raceLen <= 5000 && Math.abs(def.alt[0] - 2230) < 20 && Math.abs(def.alt[1] - 2872) < 15 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
@@ -69,12 +69,17 @@ check('track: not in the big championship', !C.CHAMPS.find(s => s.id === 'veliko
   check('traffic: still on the left after 40 s', mov.length > 10 && mov.filter(v => v.d * v.dir < 0).length >= mov.length - 1, `${mov.filter(v => v.d * v.dir < 0).length}/${mov.length} moving vehicles on the left`);
 }
 
-// 5. the ways to drive it: the time trial (alone), the duel (one rival)
+// 5. the ways to drive it: the race (thirteen cars on the grid behind the line, its two columns on the narrow road), the time trial (alone),
+// the duel (one rival)
 {
   const orig = Math.random; Math.random = seeded(3);
-  const tt = new C.Race(T, opts({ tt: true })), duel = new C.Race(T, opts({ numAI: 1, playerGrid: 2, traffic: true }));
+  const tt = new C.Race(T, opts({ tt: true })), duel = new C.Race(T, opts({ numAI: 1, playerGrid: 2, traffic: true })), race = new C.Race(T, opts({ numAI: 12, playerGrid: 12 }));
   Math.random = orig;
+  race.start();
+  const backs = race.cars.map(c => -c.dist).sort((a, b) => a - b), lat = Math.max(...race.cars.map(c => Math.abs(c.q.d)));
   check('mode: opts.tt is the time trial (the player alone on the line), the duel two cars in the traffic', tt.timeTrial && tt.cars.length === 1 && !duel.timeTrial && duel.cars.length === 2 && !!duel.tf);
+  check('mode: without them the race, 13 cars on the grid behind the line, every one of them on the road', !race.timeTrial && race.cars.length === 13 && backs[0] > 0 && backs[12] < T.startS - 5 && lat + 1 < T.w,
+    'grid ' + backs.map(b => b.toFixed(0)).join(' ') + `, at most ${lat.toFixed(1)} m off the centre line`);
 }
 
 // 6. the time trial on autopilot to the top: every kind of car gets up without a rescue, the truck the quickest; the medal times the stock rally car's
@@ -85,7 +90,7 @@ const ttRun = (m, rain) => {
   Math.random = orig; return { t: P.finished ? P.finishTime : null, resc };
 };
 {
-  const names = ['BURJA R7', 'SAMUM 4x4', 'PICO TURBO', 'FORMULA ORKAN', 'VIHAR V8'], R = names.map(nm => ttRun(model(nm)));
+  const names = ['BURJA R7', 'SAMUM 4x4', 'PICO TURBO', 'p206', 'FORMULA ORKAN', 'VIHAR V8'], R = names.map(nm => ttRun(model(nm)));
   check('time trial: every car reaches the top on autopilot without a rescue, SAMUM 4x4 the quickest', R.every(r => r.t && !r.resc) && R[1].t < Math.min(...R.filter((_, k) => k !== 1).map(r => r.t)),
     names.map((nm, k) => `${nm} ${R[k].t ? R[k].t.toFixed(1) : '-'} s`).join(', '));
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2], wet = ttRun(model('BURJA R7'), 1);
