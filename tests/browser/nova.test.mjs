@@ -5,8 +5,10 @@
 // - switched back to Klasična during that race: the race keeps its physics, a toast says it applies from the next race; the next race classic
 // - the row Slog nove fizike (Običajen marked on a fresh profile; in English "New physics style: Normal / Sliding"): Drseč chosen with Nova,
 //   the next race's player car has the sliding style (Car.nvSl), the rivals not; with Klasična no car has it
-// - Preizkus: tekmeci in trki (Nastavitve: its own folded category after the profile row, with 5 rows Tekmeci and 4 rows Trki med avti;
-//   Core.setTest): the category folded and the nine rows inside it, all on Privzeto on a fresh profile, Core.TX all null; Trki: slog Težak sets the bounce, the rub and the turn (Core.TX), a row under it overrides it, a rival row sets its number; kept in the
+// - Preizkus: tekmeci in trki (Nastavitve: its own folded category after the profile row, with 5 rows Tekmeci and 8 rows Trki med avti;
+//   Core.setTest): the category folded and the 13 rows inside it, all on Privzeto on a fresh profile, Core.TX all null; Trki: slog Realističen, težak
+//   sets the bounce, the rub, the turn, the weight, the sparks, the flat bumpers and the tyres' hold (Core.TX), a row under it overrides it, every
+//   other row sets its number; kept in the
 //   settings (localStorage); in English; a race with the rivals' spread narrower deals out narrower paces, back on Privzeto the old ones and
 //   nothing set; the spread's toast says from the next race
 //   node tests/browser/nova.test.mjs
@@ -69,7 +71,7 @@ try {
   }
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', {}, { width: 640, height: 360 });
-    const KEYS = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrE', 'tCrMu', 'tCrYaw'];
+    const KEYS = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx'];
     const rows = () => page.evaluate((K) => K.map(k => { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row');
       return g ? { k, label: r.querySelector('.rlbl').textContent, n: g.querySelectorAll('button').length, sel: [...g.querySelectorAll('button')].filter(b => b.classList.contains('sel')).map(b => b.dataset.v + ':' + b.textContent).join() } : { k, missing: true }; }), KEYS);
     const tx = () => page.evaluate(() => Object.assign({}, Core.TX));
@@ -77,27 +79,29 @@ try {
     await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
     const cat = () => page.evaluate(() => { const d = document.getElementById('set-test'); return d ? { open: d.open, cat: d.querySelector('summary').textContent, subs: [...d.querySelectorAll('.set-sub')].map(e => e.textContent), inside: d.querySelectorAll('[data-set^="tAi"], [data-set^="tCr"]').length, after: !!d.previousElementSibling.querySelector('[data-act="prof-export"]') } : null; });
     const c0 = await cat(), r0 = await rows(), t0 = await tx();
-    T.check('Preizkus: its own category in the settings (after the profile row), folded, with the two groups Tekmeci and Trki med avti and the nine rows inside',
-      c0 && !c0.open && c0.cat === 'Preizkus: tekmeci in trki' && c0.subs.join() === 'Tekmeci,Trki med avti' && c0.inside === 9 && c0.after, JSON.stringify(c0));
+    T.check('Preizkus: its own category in the settings (after the profile row), folded, with the two groups Tekmeci and Trki med avti and the 13 rows inside',
+      c0 && !c0.open && c0.cat === 'Preizkus: tekmeci in trki' && c0.subs.join() === 'Tekmeci,Trki med avti' && c0.inside === 13 && c0.after, JSON.stringify(c0));
     await page.click('#set-test > summary'); await page.waitForTimeout(150);
     T.check('Preizkus: a tap on its title opens it, the rows can be pressed', (await cat()).open && await page.isVisible('#s-settings [data-set="tCrE"] [data-v="1"]'));
-    T.check('Preizkus: nine rows, each on Privzeto on a fresh profile, Core.TX all null',
-      r0.every(r => !r.missing && r.sel === '0:Privzeto') && r0.slice(0, 5).map(r => r.label).join() === 'Razpon hitrosti,Razmik za avtom,Pritisk na avto pred sabo,Prostor ob boku,Vožnja čez robnike' && r0.slice(5).map(r => r.label).join() === 'Slog trkov,Odboj med avti,Drgnjenje ob stiku,Vrtenje ob trku' && Object.values(t0).every(v => v === null), JSON.stringify({ rows: r0.map(r => r.label + ' ' + r.n + ' ' + r.sel), tx: t0 }));
+    T.check('Preizkus: 13 rows, each on Privzeto on a fresh profile, Core.TX all null',
+      r0.every(r => !r.missing && r.sel === '0:Privzeto') && r0.slice(0, 5).map(r => r.label).join() === 'Razpon hitrosti,Razmik za avtom,Pritisk na avto pred sabo,Prostor ob boku,Vožnja čez robnike' && r0.slice(5).map(r => r.label).join() === 'Slog trkov,Občutek teže,Odboj med avti,Drgnjenje ob stiku,Vrtenje ob trku,Oblika ob stiku,Potisk vstran,Iskre in blisk' && Object.values(t0).every(v => v === null), JSON.stringify({ rows: r0.map(r => r.label + ' ' + r.n + ' ' + r.sel), tx: t0 }));
     await pick('tCrStyle', 1);
-    const t1 = await tx(); await pick('tCrE', 4); const t2 = await tx(); await pick('tAiSpr', 3); await pick('tAiFol', 2); await pick('tAiKerb', 3); await pick('tAiPush', 1); await pick('tAiSide', 3); await pick('tCrMu', 1); await pick('tCrYaw', 4);
-    const t3 = await tx();
-    T.check('Preizkus: Težak, brez odboja sets the bounce 0, the rub 0.8, the turn 1.3; Velik bounce under it overrides (0.4)',
-      t1.cE === 0 && t1.cMu === 0.8 && t1.cYaw === 1.3 && t2.cE === 0.4 && t2.cMu === 0.8 && t2.cYaw === 1.3, JSON.stringify([t1, t2]));
-    T.check('Preizkus: each row sets its number (spread 0.3, gap 0.5 m, kerbs 2.2 m, push none, room 0.15 m, rub none, turn 1.6), kept in the settings',
-      t3.aiSpr === 0.3 && t3.aiFol === 0.5 && t3.aiKerb === 2.2 && t3.aiPush === 0 && t3.aiSide === 0.15 && t3.cMu === 0 && t3.cYaw === 1.6
-      && await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('tdgp-settings') || '{}'); return s.tAiSpr === 3 && s.tCrStyle === 1 && s.tCrE === 4 && s.tCrYaw === 4; }), JSON.stringify(t3));
+    const t1 = await tx(), note1 = await page.evaluate(() => document.getElementById('cr-note').textContent); await pick('tCrE', 4); const t2 = await tx(); await pick('tAiSpr', 3); await pick('tAiFol', 2); await pick('tAiKerb', 3); await pick('tAiPush', 1); await pick('tAiSide', 3); await pick('tCrMu', 1); await pick('tCrYaw', 4);
+    await pick('tCrMass', 5); await pick('tCrBox', 1); await pick('tCrScrub', 1); await pick('tCrFx', 1);
+    const t3 = await tx(); await pick('tCrMass', 1); const t4 = await tx();
+    T.check('Preizkus: Realističen, težak sets the bounce 0, the rub 0.5, the turn 1, the other car 8 times heavier, no sparks, flat bumpers, the tyres hold a push (the note under it says so); Velik bounce under it overrides (0.4)',
+      t1.cE === 0 && t1.cMu === 0.5 && t1.cYaw === 1 && t1.cMass === 8 && t1.cFx === 0 && t1.cBox === 1 && t1.cScrub === 1 && /8-krat težji/.test(note1) && t2.cMass === 8 && t2.cE === 0.4 && t2.cMu === 0.5 && t2.cBox === 1, JSON.stringify([t1, t2, note1]));
+    T.check('Preizkus: each row sets its number (spread 0.3, gap 0.5 m, kerbs 2.2 m, push none, room 0.15 m, rub none, turn 1.6, weight 16x and Enak 1, round shape, the car turns, sparks on), kept in the settings',
+      t3.aiSpr === 0.3 && t3.aiFol === 0.5 && t3.aiKerb === 2.2 && t3.aiPush === 0 && t3.aiSide === 0.15 && t3.cMu === 0 && t3.cYaw === 1.6 && t3.cMass === 16 && t3.cBox === 0 && t3.cScrub === 0 && t3.cFx === 1 && t4.cMass === 1
+      && await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('tdgp-settings') || '{}'); return s.tAiSpr === 3 && s.tCrStyle === 1 && s.tCrE === 4 && s.tCrYaw === 4 && s.tCrMass === 1 && s.tCrBox === 1 && s.tCrScrub === 1 && s.tCrFx === 1; }), JSON.stringify([t3, t4]));
+    await pick('tCrBox', 0); await pick('tCrScrub', 0);   // (the race below: the style's flat bumpers and the tyres' hold)
     await page.click('#s-settings [data-set="lang"] [data-v="en"]'); await page.waitForTimeout(300);
     const en = await rows();
     const enc = await cat();
-    T.check('Preizkus in English: Test: rivals and knocks (Rivals, Knocks between cars), Pace spread / Knock style, Heavy, no bounce marked',
-      enc.cat === 'Test: rivals and knocks' && enc.subs.join() === 'Rivals,Knocks between cars' && en[0].label === 'Pace spread' && en[5].label === 'Knock style' && en[5].sel === '1:Heavy, no bounce' && en[8].label === 'Turn in a knock', JSON.stringify([enc, en.map(r => r.label + ' ' + r.sel)]));
+    T.check('Preizkus in English: Test: rivals and knocks (Rivals, Knocks between cars), Pace spread / Knock style, Realistic, heavy marked / Weight feel ... Sparks and flash',
+      enc.cat === 'Test: rivals and knocks' && enc.subs.join() === 'Rivals,Knocks between cars' && en[0].label === 'Pace spread' && en[5].label === 'Knock style' && en[5].sel === '1:Realistic, heavy' && en[6].label === 'Weight feel' && en[6].sel === '1:Equal' && en[9].label === 'Turn in a knock' && en[10].label === 'Shape in a knock' && en[11].label === 'Push sideways' && en[12].label === 'Sparks and flash', JSON.stringify([enc, en.map(r => r.label + ' ' + r.sel)]));
     await page.click('#s-settings [data-set="lang"] [data-v="sl"]'); await page.waitForTimeout(200);
-    // a race with the rivals' spread narrow, the classic physics: the paces dealt out narrower, then back on Privzeto
+    // a race with the rivals' spread narrow, the classic physics, the realistic knocks (flat bumpers, the tyres' hold): the paces dealt out narrower, then back on Privzeto
     const spread = () => page.evaluate(() => { const k = window.__game.race.cars.filter(c => !c.isPlayer && !c.sc).map(c => c.skill); return { w: Math.max(...k) - Math.min(...k), phys: window.__game.race.opts.phys, n: k.length }; });
     await startTrack(page, 'bathurst');
     const a = await spread(), nanA = await simulate(page, 8), txA = await tx();
@@ -108,8 +112,8 @@ try {
     const tz = await tx();
     await startTrack(page, 'spa');
     const b = await spread();
-    T.check('Preizkus: a race with the spread 0.3: narrow paces (a third or less of the usual), nothing NaN, Core.TX kept through the race; back on Privzeto in the next race the usual spread, nothing set',
-      a.phys === 'cs' && a.n > 10 && a.w < 0.05 && !nanA && txA.aiSpr === 0.3 && b.w > 0.08 && Object.values(tz).every(v => v === null), JSON.stringify({ a, b, txA, tz, nanA }));
+    T.check('Preizkus: a race with the spread 0.3 and the realistic knocks: narrow paces (a third or less of the usual), nothing NaN, Core.TX kept through the race; back on Privzeto in the next race the usual spread, nothing set',
+      a.phys === 'cs' && a.n > 10 && a.w < 0.05 && !nanA && txA.aiSpr === 0.3 && txA.cBox === 1 && txA.cScrub === 1 && b.w > 0.08 && Object.values(tz).every(v => v === null), JSON.stringify({ a, b, txA, tz, nanA }));
     T.check('Preizkus: the spread row says in a race it applies from the next race', /naslednje dirke/.test(toast), toast);
     T.check('Preizkus: no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
