@@ -443,7 +443,12 @@
     /* ---- the special missions (js/missions.js) ---- */
     'Zmanjkalo je časa.': 'Out of time.', 'MISIJA NEUSPELA': 'MISSION FAILED', 'MISIJA {0}': 'MISSION {0}', 'Najboljši': 'Best', 'Ponovi': 'Again', 'Misije': 'Missions',
     'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
-    'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR', 'Vaja: na vrh': 'Practice: to the top',
+    'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR',
+    'Srce v hladilni torbi': 'A heart in the cool box', 'Ponoči moraš čez hribe pripeljati srce za presaditev. Pred tabo vozi policija.': 'At night you must take a heart for a transplant over the hills. The police drive ahead of you.',
+    'Za policijo dostavi organ v bolnišnico, dokler je hladen.': 'Follow the police and deliver the organ to the hospital while it is still cold.',
+    'Drži se policije: avti pred njo zapeljejo na rob in ustavijo.': 'Stay with the police: the cars ahead of it pull over to the edge and stop.',
+    'ORGAN': 'ORGAN', 'SPREMSTVO': 'ESCORT', 'BOLNIŠNICA': 'HOSPITAL', 'Organ se je preveč segrel.': 'The organ got too warm.', 'Izgubil si spremstvo.': 'You lost the escort.',
+    'Policija je daleč: dohiti jo, da ti odpira pot.': 'The police are far ahead: catch up so they clear the way for you.', 'Ne prehitevaj policije: promet se umika samo njej.': 'Do not pass the police: the traffic only pulls over for them.', 'Vaja: na vrh': 'Practice: to the top',
     'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
     'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
     'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',

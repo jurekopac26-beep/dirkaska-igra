@@ -26,7 +26,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/tex.js` | teksture (narisane v kodi) |
 | `js/journey.js`, `js/geo.js`, `js/intro-data.js`, `js/routes.js` | uvod pred dirko (globus, prelet); `geo/intro-data/routes` so narejeni z orodji, ne urejaj ročno |
 | `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane) |
-| `js/missions.js`, `css/missions.css` | posebne misije: seznam (`Missions.add`, vadbena misija `vaja`), potek misije (`Run`: ura, omejitev časa, `set`, `win`, `fail`), prikaz v HUD-u (`#mis`), rezultat (`#mis-res`), seznam misij (`#mis-list`), rekordi (`rra-misije`), hitri vstop `?misija=<id>`; priklopi v `js/game.js`: `MS`, `MisBridge` (opts in begin v `newRace`, step v `stepRace`, over v fazi racing, stop v `toTitle`) |
+| `js/missions.js`, `css/missions.css` | posebne misije: seznam (`Missions.add`, vadbena misija `vaja`), potek misije (`Run`: ura, omejitev časa, `set`, `win`, `fail`), prikaz v HUD-u (`#mis`), rezultat (`#mis-res`), seznam misij (`#mis-list`), rekordi (`rra-misije`), hitri vstop `?misija=<id>`; priklopi v `js/game.js`: `MS`, `MisBridge` (opts, made in begin v `newRace`, step v `stepRace`, over v fazi racing, stop v `toTitle`) |
+| `js/missions/m<nn>.js` | posamezne misije (`Missions.add`): `m06.js` Srce v hladilni torbi (spremstvo: dirkalni avto `race.escort` v podobi policije, `c.police`, promet se mu umika; `opts.tfCars`: promet samo avti in tovornjaki, v `Traffic._populate`; luči spremstva v `render.js` `updateRoad`; bolnišnica z reševalnim avtom ob cilju: `hospital`, `run.add`) |
 | `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
 | `js/cars/<id>.js` | vozila |
 | `js/data/` | podatki svetov (npr. OSM, višine) |
@@ -35,6 +36,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
 | `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/misija-slika.mjs` | slike posebne misije (`?misija=<id>`, avtopilot do `--t` s ali `--pred` m pred ciljem ali `--konec`, pokonci in ležeče, s prikazom misije; `test-results/misije/`) |
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
 | `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
@@ -45,6 +47,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
+| `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 
 ## Teme v `js/game.js`
 
