@@ -25,7 +25,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/net.js` | dirka s prijatelji prek interneta |
 | `js/tex.js` | teksture (narisane v kodi) |
 | `js/journey.js`, `js/geo.js`, `js/intro-data.js`, `js/routes.js` | uvod pred dirko (globus, prelet); `geo/intro-data/routes` so narejeni z orodji, ne urejaj ročno |
-| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane) |
+| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane; `nvwalls`: ograje, ki jih avto odrine, in trdne ovire `H3.solids`) |
+| `js/nvpark.js`, `js/nvbase.js`, `js/nvedge.js` | notranjost male proge na novem zemljevidu: lunapark z vulkanom (lava, vlakec), trgovina z igračami in stekleni most; reševalna baza s helidromom, pot do boksov in parkirišče; rob male proge in notranjih cest (robnik, črta, priključki) |
 | `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
 | `js/cars/<id>.js` | vozila |
 | `js/data/` | podatki svetov (npr. OSM, višine) |
