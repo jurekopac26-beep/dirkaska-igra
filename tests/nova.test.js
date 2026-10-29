@@ -30,7 +30,11 @@
 // - Preizkus: tekmeci in trki (Nastavitve; Core.setTest, TX), for either physics and nothing by default: the bounce of a knock (cE: the classic 0.1,
 //   the new 0.4, 0 none ... 0.6), the rub along the contact (cMu), the turn a knock gives (cYaw: the classic's attitude kick and the new one's
 //   spin, 0 none), the spread of the rivals' paces (aiSpr), the rivals over the kerbs (aiKerb: in the classic physics too, and off in the new one) and
-//   a close train with a wheel-to-wheel field (aiSpr, aiPush, aiSide, aiFol: more of the time a car is right behind another)
+//   a close train with a wheel-to-wheel field (aiSpr, aiPush, aiSide, aiFol: more of the time a car is right behind another); the weight (cMass:
+//   the other car heavier in a knock with the player only), the sparks (cFx 0: none, the scrape marks stay); the realistic knocks (cBox flat
+//   bumpers, cScrub the classic tyres' hold, cE 0, cMu 0.5): a racing bump does not throw the player's car aside, no bounce and no pop, a heavy
+//   car hardly moves when hit or leant on, a car driving along hit from the side keeps its direction; a race with them (Spa, Bathurst): nothing
+//   NaN, every car moving, knocks <= 1.5x the default's + 20, slides past 40 deg <= 6
 //   node tests/nova.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -157,11 +161,11 @@ for (const id of ['rally', 'kaze']) {
     C.carCollide(B, A); return Math.hypot(B.vx - A.vx, B.vz - A.vz); });
   const sc = [null, { cMu: 0.8 }].map(t => swipe(HC, t)), sn = [null, { cMu: 0 }].map(t => swipe(HN, t));
   ok('Preizkus: the rub along the contact: the classic cars share their speed more with cMu 0.8 than by default; the new physics with cMu 0 less than by default', sc[1] < 0.7 * sc[0] && sn[1] > 1.2 * sn[0], `classic ${f(sc[0])} -> ${f(sc[1])} m/s apart, new ${f(sn[0])} -> ${f(sn[1])}`);
-  // Težak's weight: the other car counts cMass times heavier in a knock with the player (and only then), no sparks with cFx 0
-  const heavyHit = (H, tx, pl) => test(tx, () => { const P = H.mkCar('rally', { v: 100 }), O = H.mkCar('rally', { v: 0 }); P.isPlayer = pl; O.isPlayer = false; O.place(0, 0, 0); P.place(-O.m.len - 0.02, 0, 0); P.vx = 27.8; P.fxCar = O.fxCar = 0; C.carCollide(P, O); return { p: P.vx, o: O.vx, fx: Math.max(P.fxCar, O.fxCar) }; });
+  // the weight: the other car counts cMass times heavier in a knock with the player (and only then), no sparks with cFx 0
+  const heavyHit = (H, tx, pl) => test(tx, () => { const P = H.mkCar('rally', { v: 100 }), O = H.mkCar('rally', { v: 0 }); P.isPlayer = pl; O.isPlayer = false; O.place(0, 0, 0); P.place(-O.m.len - 0.02, 0, 0); P.vx = 27.8; P.fxCar = O.fxCar = 0; P.fxQ = O.fxQ = 0; C.carCollide(P, O); return { p: P.vx, o: O.vx, fx: P.fxQ || O.fxQ ? 0 : Math.max(P.fxCar, O.fxCar), rec: Math.max(P.fxCar, O.fxCar) }; });
   const hv0 = heavyHit(HC, null, true), hv1 = heavyHit(HC, { cE: 0, cMass: 12, cFx: 0 }, true), hv2 = heavyHit(HC, { cE: 0, cMass: 12, cFx: 0 }, false), hv3 = heavyHit(HN, { cE: 0, cMass: 12 }, true);
-  ok('Preizkus: the other car 12 times heavier: the player\'s speed goes into it (both leave at about 1/13 of 100 km/h), between two rivals nothing changes, no sparks with cFx 0, sparks by default; the new physics the same',
-    Math.abs(hv1.p - 27.8 / 13) < 0.3 && Math.abs(hv1.o - 27.8 / 13) < 0.3 && Math.abs(hv2.o - hv0.o) > 1 && hv2.o > 5 && hv1.fx === 0 && hv0.fx > 3 && Math.abs(hv3.p - 27.8 / 13) < 0.3,
+  ok('Preizkus: the other car 12 times heavier: the player\'s speed goes into it (both leave at about 1/13 of 100 km/h), between two rivals nothing changes, no sparks with cFx 0 (the scrape marks stay: fxCar), sparks by default; the new physics the same',
+    Math.abs(hv1.p - 27.8 / 13) < 0.3 && Math.abs(hv1.o - 27.8 / 13) < 0.3 && Math.abs(hv2.o - hv0.o) > 1 && hv2.o > 5 && hv1.fx === 0 && hv1.rec > 3 && hv0.fx > 3 && Math.abs(hv3.p - 27.8 / 13) < 0.3,
     `by default ${f(hv0.p * 3.6)} / ${f(hv0.o * 3.6)} km/h, heavy ${f(hv1.p * 3.6)} / ${f(hv1.o * 3.6)}, two rivals ${f(hv2.p * 3.6)} / ${f(hv2.o * 3.6)}, new ${f(hv3.p * 3.6)} / ${f(hv3.o * 3.6)}`);
   // the turn: a light knock (the classic's attitude kick csKc is capped at 0.4 rad: 0.15 stays under it), the new physics' yaw rate
   const lite = (H, tx) => test(tx, () => { const A = H.mkCar('rally', { v: 60 }), B = H.mkCar('rally', { v: 60 }); A.place(0, 0, 0); A.vx = 16.7; B.place(A.m.len - 3.0, 1.55, -0.06); B.vx = 16.7 * Math.cos(-0.06); B.vz = 16.7 * Math.sin(-0.06); B.h = -0.06;
@@ -169,6 +173,42 @@ for (const id of ['rally', 'kaze']) {
   const yc = [null, { cYaw: 0 }, { cYaw: 0.15 }, { cYaw: 1.6 }].map(t => lite(HC, t)[0]), yn = [null, { cYaw: 0 }, { cYaw: 0.4 }].map(t => lite(HN, t)[1]);
   ok('Preizkus: the turn of a knock: the classic kick none with cYaw 0, small with 0.15, more than by default with 1.6 (its cap grows too); the new physics\' spin none with 0, less with 0.4', yc[1] === 0 && yc[2] > 0 && yc[2] < 0.5 * yc[0] && yc[3] > yc[0] + 0.1 && yn[1] === 0 && yn[2] > 0 && yn[2] < yn[0],
     `classic ${yc.map(x => f(x, 3)).join(' / ')} rad, new ${yn.map(x => f(x, 3)).join(' / ')} rad/s`);
+  // the realistic knocks (Realističen, težak): two cars on the plane stepped as a race does (both step, then the knock); lane: a driver holding its line
+  const REAL = { cE: 0, cMu: 0.5, cYaw: 1, cBox: 1, cScrub: 1 }, D = 180 / Math.PI;
+  const lane = (c, z0) => Math.max(-1, Math.min(1, -(0.35 * (c.z - z0) + 2.0 * c.h + 0.25 * c.vz / Math.max(5, c.speed))));
+  const duel = (H, tx, set, secs) => test(tx, () => { const S = set(H), P = S.P, O = S.O, x0 = O.x, z0 = O.z, h0 = O.h; let pop = 0, sep = 0, hP = 0, hO = 0, oz = 0, t1 = null;
+    for (let i = 1; i <= secs / DT; i++) { H.step(P, S.iP(i * DT)); H.step(O, S.iO(i * DT)); const x = P.x, z = P.z, m = C.carCollide(P, O); pop = Math.max(pop, Math.hypot(P.x - x, P.z - z));
+      oz = Math.max(oz, Math.abs(-(O.x - x0) * Math.sin(h0) + (O.z - z0) * Math.cos(h0)));   // (the other car pushed aside: from the start, a push without a knock too)
+      if (m > 0 && t1 == null) t1 = i; if (t1 == null) continue;
+      const dx = O.x - P.x, dz = O.z - P.z, d = Math.hypot(dx, dz); sep = Math.max(sep, ((O.vx - P.vx) * dx + (O.vz - P.vz) * dz) / d);
+      hP = Math.max(hP, Math.abs(P.h) * D); hO = Math.max(hO, Math.abs(O.h - h0) * D); }
+    return { hit: t1 != null, pop, sep, hP, hO, hE: Math.abs(O.h - h0) * D, oz, om: Math.hypot(O.x - x0, O.z - z0), pv: P.speed, ov: O.speed }; });
+  const car = (H, v, pl) => { const c = H.mkCar('rally', { v }); c.isPlayer = pl; c.noReverse = true; return c; };
+  // a racing bump: the player at 120 km/h into a car at 100, 0.6 m off its middle, both holding their lines
+  const bump = (H) => { const P = car(H, 120, true), O = car(H, 100, false); O.place(0, 0, 0); P.place(-O.m.len - 0.3, 0.6, 0); P.vx = 33.3; O.vx = 27.8;
+    return { P, O, iP: () => ({ st: lane(P, 0.6), thr: 'hold' }), iO: () => ({ st: lane(O, 0), thr: 'hold' }) }; };
+  // 50 km/h into a standing car (its brakes on), the player keeping the throttle
+  const stand = (H) => { const P = car(H, 50, true), O = car(H, 0, false); O.place(0, 0, 0); P.place(-O.m.len - 0.05, 0, 0); P.vx = 13.9;
+    return { P, O, iP: () => ({ st: lane(P, 0), thr: 'hold' }), iO: () => ({ st: 0, thr: 0, brk: 1 }) }; };
+  // side by side at 100 km/h, the player leaning on the other car for 1 s
+  const lean = (H) => { const P = car(H, 100, true), O = car(H, 100, false), w = O.m.wid + 0.15; P.place(0, 0, 0); O.place(0, w, 0); P.vx = O.vx = 27.8;
+    return { P, O, iP: (t) => ({ st: t < 1 ? 0.25 : lane(P, 0), thr: 'hold' }), iO: () => ({ st: lane(O, w), thr: 'hold' }) }; };
+  // a car driving along at 100 km/h hit in its flank by one at 20 deg to it (the other keeps its wheel straight)
+  const flank = (H) => { const P = car(H, 100, true), O = car(H, 100, false), a = 0.35, L = O.m.len; O.place(0, 0, 0); O.vx = 27.8; P.place(-Math.cos(a) * L / 2, -0.98 - Math.sin(a) * L / 2, a); P.vx = 27.8 * Math.cos(a); P.vz = 27.8 * Math.sin(a);
+    return { P, O, iP: () => ({ st: 0, thr: 0 }), iO: () => ({ st: 0, thr: 'hold' }) }; };
+  const bu0 = duel(HC, null, bump, 1.5), bu1 = duel(HC, REAL, bump, 1.5), bu8 = duel(HC, { ...REAL, cMass: 8 }, bump, 1.5);
+  ok('Preizkus: realistic knocks (classic): a racing bump 0.6 m off the middle does not throw the player\'s car aside (it turns under 3 deg, the old round ends 4 deg or more), no bounce apart; with the other car 8x heavier the player takes its speed',
+    bu0.hit && bu1.hit && bu1.hP < 3 && bu0.hP >= 4 && bu1.sep < 0.3 && bu8.hP < 3 && bu8.sep < 0.3 && Math.abs(bu8.pv - 27.8) < 1.5,
+    `the player turns ${f(bu0.hP, 1)} -> ${f(bu1.hP, 1)} deg (8x: ${f(bu8.hP, 1)}), apart at ${f(bu1.sep * 3.6, 1)} km/h, 8x: the player at ${f(bu8.pv * 3.6, 0)} km/h`);
+  const st0 = duel(HC, null, stand, 2), st8 = duel(HC, { ...REAL, cMass: 8 }, stand, 2), stn = duel(HN, { ...REAL, cMass: 8 }, stand, 2);
+  ok('Preizkus: realistic knocks: 50 km/h into a standing car 8x heavier: no pop (under 4 cm a step; the old 10 cm or more), no bounce, the player stopped, the other moved under 0.5 m (the old one: 3 m or more); the new physics the same',
+    st8.pop < 0.04 && st0.pop >= 0.1 && st8.sep < 0.3 && st8.pv < 1.5 && st8.om < 0.5 && st0.om >= 3 && stn.pop < 0.04 && stn.om < 0.5 && stn.pv < 1.5,
+    `pop ${f(st0.pop * 100, 0)} -> ${f(st8.pop * 100, 0)} cm, the other moved ${f(st0.om, 1)} -> ${f(st8.om, 2)} m, the player at ${f(st8.pv * 3.6, 1)} km/h; new: ${f(stn.pop * 100, 0)} cm, ${f(stn.om, 2)} m`);
+  const le0 = duel(HC, null, lean, 2.5), le8 = duel(HC, { ...REAL, cMass: 8 }, lean, 2.5);
+  ok('Preizkus: realistic knocks: leaning on a car 8x heavier at 100 km/h for 1 s pushes it aside under 0.2 m (the old: 0.6 m or more)', le8.hit && le8.oz < 0.2 && le0.oz >= 0.6, `${f(le0.oz, 2)} -> ${f(le8.oz, 2)} m`);
+  const fl0 = duel(HC, null, flank, 1.2), fl1 = duel(HC, REAL, flank, 1.2), fln = duel(HN, REAL, flank, 1.2);
+  ok('Preizkus: realistic knocks: a car driving along hit in its flank keeps its direction (under 6 deg at most; the old classic turns 9 deg or more): the tyres hold the push; the new physics back within 6 deg after 1.2 s',
+    fl0.hit && fl1.hit && fl1.hO < 6 && fl0.hO >= 9 && fln.hE < 6, `classic ${f(fl0.hO, 1)} -> ${f(fl1.hO, 1)} deg, new ${f(fln.hO, 1)} deg at most, ${f(fln.hE, 1)} after 1.2 s`);
   // the field: the paces' spread and the fastest one the same
   const sp = (phys, tx) => test(tx, () => { Math.random = seeded(5); const T = new C.Track(C.TRACKS.find(d => d.id === 'spa')), r = new C.Race(T, { numAI: 12, playerGrid: 13, laps: 1, phys, seed: 4, difficulty: 1 }), k = r.cars.filter(c => !c.isPlayer).map(c => c.skill); return [Math.min(...k), Math.max(...k)]; });
   const s0 = sp('cs'), s1 = sp('cs', { aiSpr: 0.3 }), s2 = sp('nova', { aiSpr: 1 }), s3 = sp('nova');
@@ -234,8 +274,8 @@ for (const id of ['rally', 'kaze']) {
 }
 
 // ---- races ----
-function pack(tid, phys) {
-  Math.random = seeded(64);
+function pack(tid, phys, tx) {
+  C.setTest(tx || null); Math.random = seeded(64);
   const T = new C.Track(C.TRACKS.find(d => d.id === tid));
   const race = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
   race.start();
@@ -248,6 +288,7 @@ function pack(tid, phys) {
       const sl = Math.abs(c.beta || 0) > 0.7 && c.speed > 8; if (sl && !ps.get(c)) slides++; ps.set(c, sl);
       if (!c.isPlayer) { tot++; if (c.onCurb) kerb++; } }
   }
+  C.setTest(null);
   return { hits, slides, nan, moving: race.cars.filter(c => c.speed > 5).length, n: race.cars.length, kerb: kerb / tot };
 }
 for (const tid of ['spa', 'bathurst']) {
@@ -255,6 +296,9 @@ for (const tid of ['spa', 'bathurst']) {
   ok(`race ${tid}: nothing NaN, every car moving, knocks between cars <= 1.5x cs's + 20, slides past 40 deg <= 6`, !n.nan && n.moving === n.n && n.hits <= 1.5 * s.hits + 20 && n.slides <= 6,
     `nova ${n.hits} knocks, ${n.slides} slides, ${n.moving}/${n.n} moving; cs ${s.hits} knocks, ${s.slides} slides`);
   ok(`race ${tid}: the rivals over the kerbs (a wheel on one 6 % of the time or more; cs under 3 %)`, n.kerb >= 0.06 && s.kerb < 0.03, `nova ${f(n.kerb * 100, 1)} %, cs ${f(s.kerb * 100, 1)} %`);
+  const r = pack(tid, 'cs', { cE: 0, cMu: 0.5, cYaw: 1, cBox: 1, cScrub: 1, cMass: 8, cFx: 0 });
+  ok(`race ${tid} with the realistic knocks (Realističen, težak; classic): nothing NaN, every car moving, knocks <= 1.5x the default's + 20, slides past 40 deg <= 6`, !r.nan && r.moving === r.n && r.hits <= 1.5 * s.hits + 20 && r.slides <= 6,
+    `${r.hits} knocks, ${r.slides} slides, ${r.moving}/${r.n} moving; by default ${s.hits} knocks`);
 }
 {
   const lap = (phys) => { Math.random = seeded(5); const T = new C.Track(C.TRACKS.find(d => d.id === 'bathurst'));
