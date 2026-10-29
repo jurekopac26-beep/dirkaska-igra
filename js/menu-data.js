@@ -65,7 +65,14 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "medvode": 300,
+  "baldy": 300,
+  "beartooth": 300,
+  "bigsur": 300,
+  "detroit": 240,
+  "maunakea": 300,
+  "moki": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -242,6 +249,57 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "medvode": {
+   "start": "Medvode",
+   "finish": "Smlednik",
+   "alt": [
+    317,
+    500
+   ]
+  },
+  "baldy": {
+   "start": "Mount Baldy",
+   "finish": "Manker Flat",
+   "alt": [
+    1282,
+    1917
+   ]
+  },
+  "beartooth": {
+   "start": "Rock Creek",
+   "finish": "Beartooth Plateau",
+   "alt": [
+    2631,
+    2849
+   ]
+  },
+  "bigsur": {
+   "start": "Rocky Creek",
+   "finish": "Hurricane Point",
+   "alt": [
+    71,
+    171
+   ]
+  },
+  "detroit": {
+   "base": 177
+  },
+  "maunakea": {
+   "start": "Mauna Kea",
+   "finish": "Summit Ridge",
+   "alt": [
+    3599,
+    4198
+   ]
+  },
+  "moki": {
+   "start": "Valley of the Gods",
+   "finish": "Cedar Mesa",
+   "alt": [
+    1624,
+    1961
+   ]
   }
  },
  "intro": {
