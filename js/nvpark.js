@@ -176,7 +176,7 @@ const NVPark = (function () {
         const m = Math.round((ZS - ZN) / 2.2); for (let j = 0; j <= m; j++) { const z = ZN + (ZS - ZN) * j / m; for (let k = 0; k < prof.length - 1; k++) rod(W, [prof[k][0], prof[k][1] + DECK, z], [prof[k + 1][0], prof[k + 1][1] + DECK, z], 0.06); }
         for (const k of [1, prof.length - 2, (prof.length - 1) >> 1]) rod(W, [prof[k][0], prof[k][1] + DECK, ZN], [prof[k][0], prof[k][1] + DECK, ZS], 0.05); for (const sx of [-1, 1]) rod(W, [sx * (hw - 0.08), DECK + 1.0, ZN], [sx * (hw - 0.08), DECK + 1.0, ZS], 0.035); }
       // a glass tower at each end: four steel corners, bands, a roof; a landing at the deck's height, the spiral (30 steps, one and a half turns) up to it, a door at the foot
-      for (const [zc, gE] of [[ZN - 2.6, gN], [ZS + 2.6, gS]]) { const y0 = gE - g0, hT = DECK + 3.4 - y0, dir = zc < 0 ? 1 : -1; bx(Gt, 0, y0 + hT / 2, zc, 5.2, hT, 5.2); for (const sx of [-1, 1]) for (const sz of [-1, 1]) bx(W, sx * 2.6, y0 + hT / 2, zc + sz * 2.6, 0.2, hT, 0.2); bx(W, 0, y0 + hT + 0.12, zc, 5.7, 0.28, 5.7);
+      for (const [zc, gE] of [[ZN - 2.6, gN], [ZS + 2.6, gS]]) { const y0 = gE - g0, hT = DECK + 3.4 - y0, dir = zc < 0 ? 1 : -1; bx(Gt, 0, y0 + hT / 2, zc, 5.2, hT, 5.2); for (const sx of [-1, 1]) for (const sz of [-1, 1]) bx(W, sx * 2.6, y0 + hT / 2, zc + sz * 2.6, 0.2, hT, 0.2); bx(W, 0, y0 + hT + 0.12, zc, 5.7, 0.28, 5.7); bx(Gt, 0, y0 + hT + 0.3, zc, 5.2, 0.06, 5.2);
         for (let k = 1; k <= 2; k++) { const yb = y0 + k * (DECK - y0) / 2; for (const sz of [-1, 1]) bx(W, 0, yb, zc + sz * 2.6, 5.25, 0.14, 0.12); for (const sx of [-1, 1]) bx(W, sx * 2.6, yb, zc, 0.12, 0.14, 5.25); }
         bx(D, 0, DECK - 0.12, zc + dir * 1.4, 5.0, 0.2, 2.4); bx(WOOD, 0, DECK - 0.02, zc + dir * 1.4, 5.0, 0.06, 2.4); bx(Gt, 0, DECK + 0.55, zc + dir * 0.22, 2.4, 1.1, 0.04); rod(W, [-1.2, DECK + 1.1, zc + dir * 0.22], [1.2, DECK + 1.1, zc + dir * 0.22], 0.04);
         const n = 30, dA = 3 * Math.PI / n; for (let k = 0; k < n; k++) { const a = -dir * (n - 1 - k) * dA, y = y0 + (DECK - y0) * (k + 1) / n - 0.05; bx(D, 1.25 * Math.cos(a), y, zc + 1.25 * Math.sin(a), 1.7, 0.1, 0.55, 0, -a, 0); }
@@ -271,6 +271,43 @@ const NVPark = (function () {
           const st = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.22, h, 6), L(0x1c1614)); st.position.set(x, gy(x, z) + h / 2, z); st.rotation.z = lean; put(st); } }
       // solid: its foot (where the rock is 0.3 m up) as a closed line the car stops at
       { const S = H3.solids || (H3.solids = []), N = 48; let p0 = sXZ(0, 0.03); for (let k = 1; k <= N; k++) { const p1 = sXZ(k / N * Math.PI * 2, 0.03); S.push({ ax: p0[0], az: p0[1], bx: p1[0], bz: p1[1], r: 0.2 }); p0 = p1; } }
+      // the little train's track round the volcano (the pictures' volcano-page.js): along the circuit's bend east and south of the volcano, 10.5 m in
+      // from the circuit's middle, and back round its west side past the station by lane 3; 2.4 m between the rails, sleepers; a portal where it passes
+      // under the flank. The station (a platform at the wagon's deck, a ramp up from the lane, a roof, its sign) and the train (a locomotive, a flat
+      // wagon for a car) on it; both solid. The park's stands where the station is go
+      { const CP = []; for (let i = 0; i < T.N; i += 2) CP.push([T.px[i], T.pz[i]]);
+        const onB = CP.map(([x, z]) => Math.hypot(x - CX, z - CZ) < 52 && (x > CX + 10 || z < CZ - 22)); let best = [0, 0];
+        for (let i = 0; i < CP.length; i++) { if (!onB[i]) continue; let j = i; while (j + 1 < CP.length && onB[j + 1]) j++; if (j - i > best[1] - best[0]) best = [i, j]; i = j; }
+        const BEND = CP.slice(best[0] + 3, best[1] - 3), OFF = 10.5, BO = [];
+        BEND.forEach(([x, z], i) => { const a = BEND[Math.max(0, i - 1)], b = BEND[Math.min(BEND.length - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1; let nx = -tz / l, nz = tx / l; if ((CX - x) * nx + (CZ - z) * nz < 0) { nx = -nx; nz = -nz; } if (i % 3 === 0) BO.push([x + nx * OFF, z + nz * OFF]); });
+        if (BO.length > 3) {
+          const angOf = ([x, z]) => Math.atan2((z - CZ) / RZ, (x - CX) / RX), aS = angOf(BO[0]), aE = angOf(BO[BO.length - 1]); let da = aS - aE; while (da <= 0) da += Math.PI * 2; if (Math.cos(aE + da / 2) > 0) da -= Math.PI * 2;   // (round the west, past the station)
+          const ARC = []; for (let k = 1; k < 14; k++) { const a = aE + da * k / 14; ARC.push([CX + Math.cos(a) * RX * 1.77, CZ + Math.sin(a) * RZ * 1.77]); }
+          const tc = new THREE.CatmullRomCurve3(BO.concat(ARC).map(([x, z]) => new THREE.Vector3(x, gy(x, z) + 0.25, z)), true), NS = 300, RL = PH(0x5a5e62);
+          for (const s2 of [-1.2, 1.2]) { const off = []; for (let i = 0; i <= NS; i++) { const u = i / NS, p = tc.getPointAt(u), t = tc.getTangentAt(u), l = Math.hypot(t.x, t.z) || 1; off.push(new THREE.Vector3(p.x - t.z / l * s2, p.y, p.z + t.x / l * s2)); } put(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(off, true), NS, 0.09, 4, true), RL), false); }
+          { const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.28, 0.14, 3.2), L(0x5a3a24), NS), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), Yv = new THREE.Vector3(0, 1, 0); for (let i = 0; i < NS; i++) { const u = i / NS, p = tc.getPointAt(u), t = tc.getTangentAt(u); q.setFromAxisAngle(Yv, -Math.atan2(t.z, t.x)); m4.compose(new THREE.Vector3(p.x, p.y - 0.12, p.z), q, new THREE.Vector3(1, 1, 1)); im.setMatrixAt(i, m4); } im.receiveShadow = true; MK.add(im); own.push(im); }
+          // a portal at each end of the stretch under the flank (where the rock over it is 3.6 m or more)
+          const coneH = (x, z) => { const rn = Math.hypot((x - CX) / (RX * 1.35), (z - CZ) / (RZ * 1.35)); if (rn >= 1) return 0; const q = Math.pow(Math.max(0, (1 - rn) / 0.78), 1 / 0.85); return q >= 1 ? HV : HV * Math.pow(q, 1.25) * (0.94 + 0.06 * q * 0.86); };
+          { let prev = coneH(tc.getPointAt(0).x, tc.getPointAt(0).z) > 3.6; for (let i = 1; i <= 400; i++) { const u = i / 400, p = tc.getPointAt(u), now = coneH(p.x, p.z) > 3.6; if (now === prev) continue; prev = now; const t = tc.getTangentAt(u), g = new THREE.Group();
+              const arch = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.9, 6, 14, Math.PI), L(0x3a3634)); arch.position.y = 1.0; g.add(arch); const dark = new THREE.Mesh(new THREE.CircleGeometry(3.0, 14, 0, Math.PI), new THREE.MeshBasicMaterial({ color: 0x0a0806 })); dark.position.set(0, 1.0, -0.2); g.add(dark);
+              const low = new THREE.Mesh(new THREE.BoxGeometry(6, 1.0, 0.4), new THREE.MeshBasicMaterial({ color: 0x0a0806 })); low.position.set(0, 0.5, -0.2); g.add(low); at(g, p.x, p.z, 0, -Math.atan2(t.z, t.x) + Math.PI / 2); } }
+          // the station at the track's west end, on the lane's side
+          let uSt = 0.5; { let bx = 1e9; for (let i = 0; i < 200; i++) { const p = tc.getPointAt(i / 200); if (p.x < bx) { bx = p.x; uSt = i / 200; } } }
+          const ST = tc.getPointAt(uSt), stT = tc.getTangentAt(uSt), hd = Math.atan2(stT.z, stT.x), nx = -stT.z, nz = stT.x, sx = ST.x - nx * 3.6, sz = ST.z - nz * 3.6, deckH = ST.y - gy(ST.x, ST.z) + 1.25;
+          { const g = new THREE.Group(), b = (w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), L(c)); m.position.set(x, y, z); g.add(m); return m; };
+            b(16, deckH, 3.4, 0xb9b5ad, 0, deckH / 2, 0); b(16, 0.04, 0.3, 0xf2c12e, 0, deckH + 0.02, 1.55); const rp = b(12, 0.3, 3.4, 0xa8a49c, -13.8, deckH / 2 - 0.1, 0); rp.rotation.z = Math.atan2(deckH, 12);
+            for (const x of [-7, 0, 7]) b(0.3, 4.2, 0.3, 0x8a2a1a, x, deckH + 2.1, -1.5); b(17, 0.3, 5.2, 0x3a2a24, 0, deckH + 4.3, 0.6);
+            const sg = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.3), new THREE.MeshBasicMaterial({ map: canvasTex(512, 96, (c, w, h) => { c.fillStyle = '#3a2a24'; c.fillRect(0, 0, w, h); c.fillStyle = '#ffb03a'; c.font = 'bold 60px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('VOLCANO TRAIN', w / 2, 50); }), side: THREE.DoubleSide })); sg.position.set(0, deckH + 5.1, 3.2); g.add(sg);
+            at(g, sx, sz, 0, -hd); const cx2 = Math.cos(hd), sz2 = Math.sin(hd); S.push({ ax: sx - cx2 * 19, az: sz - sz2 * 19, bx: sx + cx2 * 7, bz: sz + sz2 * 7, r: 1.8 });
+            for (const it of items) if (Math.hypot(it.x - sx, it.z - sz) < 22 && Math.abs((it.x - sx) * -sz2 + (it.z - sz) * cx2) < 4 && ((it.x - sx) * cx2 + (it.z - sz) * sz2) > -21 && ((it.x - sx) * cx2 + (it.z - sz) * sz2) < 9) { it.g.parent && it.g.parent.remove(it.g); it.gone = true; } }
+          // the train standing on its track: a red locomotive and a flat wagon with yellow side rails and a red gate
+          { const loco = new THREE.Group(), wagon = new THREE.Group(), b = (g, w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), L(c)); m.position.set(x, y, z); g.add(m); return m; }, cyl = (g, r, h, c, x, y, z, rx, rz) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 12), L(c)); m.position.set(x, y, z); m.rotation.set(rx || 0, 0, rz || 0); g.add(m); return m; };
+            b(loco, 6.0, 0.6, 2.6, 0x1c1c1e, 0, 0.6, 0); cyl(loco, 1.05, 4.0, 0x8a1a12, 0.6, 1.85, 0, 0, Math.PI / 2); b(loco, 2.0, 2.4, 2.6, 0x8a1a12, -2.0, 2.1, 0); b(loco, 2.3, 0.2, 2.9, 0x1c1c1e, -2.0, 3.4, 0); cyl(loco, 0.4, 1.3, 0x1c1c1e, 2.0, 3.2, 0);
+            for (const x of [-2, 0, 2]) for (const s of [-1.3, 1.3]) cyl(loco, 0.55, 0.2, 0x2a2a2e, x, 0.55, s, Math.PI / 2);
+            b(wagon, 7.2, 0.35, 2.9, 0x3a3e44, 0, 1.0, 0); b(wagon, 7.2, 0.06, 2.8, 0x8a8e94, 0, 1.2, 0); for (const s of [-1, 1]) b(wagon, 7.2, 0.45, 0.1, 0xf2c12e, 0, 1.45, s * 1.42); b(wagon, 0.1, 0.6, 2.8, 0xd8282a, -3.55, 1.5, 0);
+            for (const x of [-2.5, 2.5]) for (const s of [-1.3, 1.3]) cyl(wagon, 0.45, 0.2, 0x2a2a2e, x, 0.45, s, Math.PI / 2);
+            const L2 = tc.getLength(), place = (g, u) => { u = ((u % 1) + 1) % 1; const p = tc.getPointAt(u), t = tc.getTangentAt(u); g.position.set(p.x, p.y + 0.05, p.z); g.rotation.y = -Math.atan2(t.z, t.x); put(g); return p; };
+            const pL = place(loco, 0.62), pW = place(wagon, 0.62 - 8.2 / L2); S.push({ ax: pL.x, az: pL.z, bx: pW.x, bz: pW.z, r: 1.6 }); } } }
       // what moves, t in seconds
       const ph = SP.map(() => rnd() * 6.28), pb = BU.map(() => rnd()), _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), g0 = glow.material.opacity;
       volc = { x: CX, z: CZ, imS, imB, anim(t) {
@@ -282,7 +319,8 @@ const NVPark = (function () {
     // trees and people (on the plazas and the lanes), clear of the lanes, the rides and the volcano's ash
     { let sd = 21; const r3 = () => (sd = (sd * 16807) % 2147483647) / 2147483647, nearLane = (x, z) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 36));
       const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD], nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2) || plot(x, z);
-      const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 140; t++) { const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5) continue;   // (the trees also past the circuit's west side, on the meadow there)
+      const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 70; t++) {   // (as many as in the pictures' park)
+        const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5) continue;   // (the trees also past the circuit's west side, on the meadow there)
        
         at(new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), L(TC[nt % 4], { flatShading: true })), x, z, h + 1.6); at(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, h + 0.6, 4, 1, true), L(0x6a4a2a)), x, z, (h + 0.6) / 2); nt++; }
       const GP = { body: new THREE.CylinderGeometry(0.2, 0.24, 0.9, 5), legs: new THREE.CylinderGeometry(0.17, 0.17, 0.5, 5, 1, true), head: new THREE.IcosahedronGeometry(0.17, 0) };
