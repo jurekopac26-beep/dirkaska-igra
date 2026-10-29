@@ -28,6 +28,7 @@
 .nk-bar { max-width: 100%; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .nk-bar button { min-height: 42px; padding: 0 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; font: 700 clamp(13px, 3.6vh, 16px)/1 var(--f-ui); white-space: nowrap; cursor: pointer; }
 .nk-bar button:active { background: rgba(255,255,255,.18); }
+@media (max-width: 420px) { .nk-bar { gap: 6px; } .nk-bar button { padding: 0 9px; } }   /* (upright: Dodaj k zbirki, Zgodovina and Zapri in one row) */
 .nk-bar .nk-add { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
 .nk-bar .nk-close.warn { background: rgba(230,59,46,.85); border-color: rgba(255,255,255,.6); }
 
@@ -82,22 +83,29 @@
 .nk-acts button.first { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
 .nk-keep { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 600; }
 .nk-keep input { width: 20px; height: 20px; }
-.nk-end { display: flex; justify-content: flex-end; margin-top: 10px; }
+.nk-end { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .nk-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
 .nk-seg { display: inline-flex; border-radius: 9px; overflow: hidden; border: 2px solid rgba(255,255,255,.22); }
 .nk-box .nk-seg button { min-height: 36px; border: 0; border-radius: 0; background: transparent; color: rgba(255,255,255,.7); font-size: 13px; }
 .nk-box .nk-seg button + button { border-left: 2px solid rgba(255,255,255,.14); }
 .nk-box .nk-seg button.sel { background: #e8edf3; color: #14181f; }
 .nk-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-.nk-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; background: rgba(255,255,255,.05); }
+/* Zgodovina napak: a row for each collection kept (a tap opens it), its state in colour; the one record: its picture, the state, the text */
+.nk-box .nk-item { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 0; padding: 6px; border-radius: 8px; border: 0; background: rgba(255,255,255,.05); text-align: left; font: 600 13px/1.3 var(--f-ui); }
 .nk-item img, .nk-item i { width: 72px; height: 48px; object-fit: cover; border-radius: 4px; background: #2a313c; flex: none; }
-.nk-item > div { flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nk-it { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .nk-item b { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nk-item small { color: rgba(255,255,255,.65); font-size: 11px; }
-.nk-item em { font-style: normal; font-size: 11px; color: #FF9500; }
-.nk-item em.ok { color: #4cd964; }
-.nk-item span { display: flex; gap: 4px; flex: none; margin-left: auto; }   /* (narrow: under the name) */
-.nk-box .nk-item button { min-height: 34px; padding: 0 9px; font-size: 13px; }
+.nk-st { flex: none; padding: 3px 7px; border-radius: 7px; border: 1.5px solid currentColor; font: 700 11px/1 var(--f-ui); font-style: normal; }
+.st-neposlano { color: #FF9500; } .st-poslano { color: #2AA8FF; } .st-popravljeno { color: #4cd964; } .st-zaprto { color: #9aa3ae; }
+.nk-sts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.nk-box .nk-sts button { flex: 1 1 auto; min-height: 36px; padding: 0 8px; border-color: currentColor; font-size: 13px; opacity: .55; }
+.nk-box .nk-sts button.sel { opacity: 1; color: #14181f; }
+.nk-box .nk-sts button.sel.st-neposlano { background: #FF9500; } .nk-box .nk-sts button.sel.st-poslano { background: #2AA8FF; } .nk-box .nk-sts button.sel.st-popravljeno { background: #4cd964; } .nk-box .nk-sts button.sel.st-zaprto { background: #9aa3ae; }
+.nk-box .nk-back { min-height: 34px; margin: 0 0 6px; padding: 0 10px; font-size: 13px; }
+.nk-txt { max-height: 20vh; overflow: auto; margin: 0 0 10px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,.05); color: rgba(255,255,255,.8); font: 500 11px/1.35 ui-monospace, Consolas, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }
+.nk-box .nk-delb.warn, .nk-box .nk-delb:active { background: rgba(230,59,46,.85); }
+.nk-zg .nk-sub b { color: #fff; }
 html[lang="en"] .nk-setrow { display: none; }   /* (the tool is Slovenian only) */
 
 /* the tool's own flags (samodejne zastavice): grey with ! on the timeline, confirmed white; a tap shows what it is over the replay (Potrdi / Zavrzi) */
