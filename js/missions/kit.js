@@ -199,7 +199,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     const ring = pad.querySelector('.ring'), btn = pad.querySelector('.gasi');
     let drag = null;
     const at = (e) => { A.sx = clamp(e.clientX / innerWidth, 0, 1); A.sy = clamp(e.clientY / innerHeight, 0, 1); };
-    pad.addEventListener('pointerdown', (e) => { if (e.target === btn) return; drag = e.pointerId; at(e); e.preventDefault(); });
+    pad.addEventListener('pointerdown', (e) => { if (e.target === btn) return; drag = e.pointerId; A.touched = true; at(e); e.preventDefault(); });
     pad.addEventListener('pointermove', (e) => { if (drag === e.pointerId) { at(e); e.preventDefault(); } });
     const up = (e) => { if (drag === e.pointerId) drag = null; };
     pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
@@ -210,13 +210,14 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     A.on = (show) => {
       show = !!show; if (show === A.shown) return; A.shown = show; pad.classList.toggle('on', show); pad.classList.toggle('drive', !!A.o.drive);
       if (!A.o.drive) { if (touch) touch.classList.toggle('mis-hide', show); document.body.classList.toggle('mis-aiming', show); }
-      if (!show) off();
+      if (!show) off(); else A.touched = false;
       if (show && !A.o.drive && typeof Input !== 'undefined' && Input.reset) Input.reset();
     };
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), pl = new THREE.Plane(), hit = new THREE.Vector3(), n = new THREE.Vector3();
     A.step = () => {
       if (!A.shown) return;
       const C = Render.camera, f = A.o.focus; if (!C || !f) return;
+      if (!A.touched && !A.o.drive && A.toFocus) A.toFocus();   // (until the finger first moves it: on the fire, as the camera settles)
       ndc.set(A.sx * 2 - 1, -(A.sy * 2 - 1)); ray.setFromCamera(ndc, C);
       if (A.o.plane === 'g') n.set(0, 1, 0); else { C.getWorldDirection(n); n.y = 0; n.normalize().negate(); }
       pl.setFromNormalAndCoplanarPoint(n, f);

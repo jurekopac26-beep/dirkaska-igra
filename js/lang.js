@@ -470,6 +470,11 @@
     'OGENJ DO HIŠE': 'FIRE TO THE HOUSE', 'VETER': 'WIND', 'POGAŠENO': 'PUT OUT', 'Ogenj je preskočil cesto.': 'The fire jumped the road.', 'Zapeljal si mimo ognja.': 'You drove past the fire.',
     'Polnjenje vode.': 'Filling up with water.', 'Vode ni več: vrni se do jezerca na kmetiji.': 'No water left: go back to the pond on the farm.', 'Vode ni več: pelji do jezerca na kmetiji.': 'No water left: drive to the pond on the farm.',
     'Prehitro za gašenje: upočasni pod 30 km/h.': 'Too fast to spray: slow down under 30 km/h.', 'Predaleč: curek ne seže do tja.': 'Too far: the water does not reach that far.', 'Do ognja: {0} km': 'To the fire: {0} km',
+    'Požar v predoru': 'Fire in the tunnel', 'V predoru na gorski cesti gori tovornjak. Dim je tako gost, da se vidijo le utripalke ujetih avtov.': 'A lorry is burning in a tunnel on the mountain road. The smoke is so thick that only the hazard lights of the trapped cars show.',
+    'Reši ujete iz zadimljenega predora in pogasi ogenj.': 'Rescue the people trapped in the smoky tunnel and put out the fire.', 'V dimu sledi utripalkam ujetih avtov, ljudi naloži, nato pogasi ogenj.': 'In the smoke follow the hazard lights of the trapped cars, take the people on board, then put out the fire.',
+    'VIDLJIVOST V DIMU': 'VISIBILITY IN THE SMOKE', 'ZRAK V JEKLENKAH': 'AIR IN THE TANKS', 'DO OGNJA': 'TO THE FIRE', 'še {0} min': '{0} min left', 'pogašen': 'out',
+    'Zmanjkalo je zraka v jeklenkah.': 'The breathing air ran out.', 'Zapeljal si v ogenj.': 'You drove into the fire.', 'V predoru so ostali ljudje.': 'People were left in the tunnel.', 'Zapeljal si predaleč.': 'You drove too far.',
+    'Nalaganje ljudi.': 'Taking the people on board.', 'Do predora: {0} km': 'To the tunnel: {0} km', 'Ustavi pred gorečim tovornjakom in ga pogasi.': 'Stop in front of the burning lorry and put it out.', 'Ogenj je pogašen: pelji ven iz predora.': 'The fire is out: drive out of the tunnel.',
     'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
