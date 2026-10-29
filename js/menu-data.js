@@ -72,7 +72,13 @@ window.MENU = {
   "bigsur": 300,
   "detroit": 240,
   "maunakea": 300,
-  "moki": 300
+  "moki": 300,
+  "newcastle": 240,
+  "townsville": 240,
+  "marrakesh": 240,
+  "longford": 240,
+  "chapman": 300,
+  "sani": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -299,6 +305,34 @@ window.MENU = {
    "alt": [
     1624,
     1961
+   ]
+  },
+  "newcastle": {
+   "base": 3
+  },
+  "townsville": {
+   "base": 6
+  },
+  "marrakesh": {
+   "base": 502
+  },
+  "longford": {
+   "base": 163
+  },
+  "chapman": {
+   "start": "Hout Bay",
+   "finish": "Chapman's Peak",
+   "alt": [
+    19,
+    153
+   ]
+  },
+  "sani": {
+   "start": "Mkhomazana",
+   "finish": "Sani Pass",
+   "alt": [
+    2229,
+    2872
    ]
   }
  },

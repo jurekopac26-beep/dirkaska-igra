@@ -455,5 +455,11 @@
     1961
    ]
   }
- ]
+ ],
+  ["longford", {"kbps": 450, "speed": 251, "back": 326, "up": 206, "ahead": 163, "fogNear": 703, "fogFar": 2711, "places": [{"n": "Viaduct", "d": 1122}, {"n": "Tannery Corner", "d": 3600}, {"n": "Newry", "d": 4294}, {"n": "Mountford", "d": 6639}]}],
+  ["newcastle", {"kbps": 450, "speed": 130, "back": 169, "up": 107, "ahead": 84, "fogNear": 364, "fogFar": 1404, "places": [{"n": "Turn 2", "d": 756}, {"n": "Newcastle Beach", "d": 994}, {"n": "Turn 11", "d": 2115}]}],
+  ["townsville", {"kbps": 450, "speed": 130, "back": 169, "up": 107, "ahead": 84, "fogNear": 364, "fogFar": 1404, "places": [{"n": "Turn 2", "d": 638}, {"n": "Ross Creek", "d": 1158}, {"n": "Turn 11", "d": 2231}]}],
+  ["chapman", {"kbps": 450, "speed": 178, "back": 231, "up": 146, "ahead": 116, "fogNear": 498, "fogFar": 1922, "places": [{"n": "East Fort", "d": 847}, {"n": "Toll Plaza", "d": 2225}, {"n": "The Sentinel", "d": 3214}], "alt": [19, 153]}],
+  ["sani", {"kbps": 450, "speed": 178, "back": 231, "up": 146, "ahead": 116, "fogNear": 498, "fogFar": 1922, "places": [{"n": "Hairpin 1", "d": 3471}, {"n": "Twelve Apostles", "d": 4376}, {"n": "Hairpin 13", "d": 4692}], "alt": [2229, 2872]}],
+  ["marrakesh", {"kbps": 450, "speed": 130, "back": 169, "up": 107, "ahead": 84, "fogNear": 364, "fogFar": 1404, "places": [{"n": "Turn 1", "d": 236}, {"n": "Route de l'Ourika", "d": 1392}, {"n": "Hairpin", "d": 2086}]}]
 ]

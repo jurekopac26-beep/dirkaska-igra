@@ -507,5 +507,181 @@
    "d": 4950,
    "sub": "1,961 m"
   }
+ ],
+ "longford": [
+  {
+   "n": "Longford",
+   "ll": [
+    -41.596,
+    147.121
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "South Esk",
+   "d": 1316
+  },
+  {
+   "n": "Tannery Corner",
+   "d": 3600
+  },
+  {
+   "n": "Newry",
+   "d": 4294
+  }
+ ],
+ "newcastle": [
+  {
+   "n": "Newcastle",
+   "ll": [
+    -32.9275,
+    151.776
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Newcastle Beach",
+   "d": 994
+  },
+  {
+   "n": "Nobbys Head",
+   "ll": [
+    -32.919,
+    151.7985
+   ],
+   "snap": "peak",
+   "r": 300
+  },
+  {
+   "n": "Hunter River",
+   "ll": [
+    -32.922,
+    151.779
+   ],
+   "snap": "water",
+   "r": 600
+  }
+ ],
+ "townsville": [
+  {
+   "n": "Townsville",
+   "ll": [
+    -19.259,
+    146.8169
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Ross Creek",
+   "d": 1158
+  },
+  {
+   "n": "Castle Hill",
+   "ll": [
+    -19.2571,
+    146.8055
+   ],
+   "snap": "peak",
+   "r": 500
+  }
+ ],
+ "chapman": [
+  {
+   "n": "Hout Bay",
+   "d": 40
+  },
+  {
+   "n": "East Fort",
+   "d": 847
+  },
+  {
+   "n": "The Sentinel",
+   "ll": [
+    -34.058,
+    18.337
+   ],
+   "snap": "peak",
+   "r": 500
+  },
+  {
+   "n": "Atlantic Ocean",
+   "ll": [
+    -34.07,
+    18.33
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Chapman's Peak",
+   "d": 4975,
+   "sub": "153 m"
+  }
+ ],
+ "sani": [
+  {
+   "n": "Mkhomazana",
+   "d": 40,
+   "sub": "2,229 m"
+  },
+  {
+   "n": "Twelve Apostles",
+   "d": 4376
+  },
+  {
+   "n": "Sani Pass",
+   "d": 4984,
+   "sub": "2,872 m"
+  },
+  {
+   "n": "Lesotho",
+   "ll": [
+    -29.575,
+    29.255
+   ]
+  }
+ ],
+ "marrakesh": [
+  {
+   "n": "Marrakesh",
+   "ll": [
+    31.6295,
+    -7.9811
+   ],
+   "snap": "town",
+   "r": 1000
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Agdal Gardens",
+   "d": 1500
+  },
+  {
+   "n": "Menara Gardens",
+   "ll": [
+    31.614,
+    -8.023
+   ],
+   "snap": "water",
+   "r": 400
+  }
  ]
 }

@@ -28,7 +28,8 @@ SHADOW_K = 0.4   # how dark the sun's cast shadows are painted (the game's islan
 FEATHER = 18.0  # the island's soft edge: from opaque to clear over this many tile pixels
 RING_M = 150.0  # the made-up rim of ground-only cells round the island's trees, in metres: cut off before the soft edge starts
 RING_PX = {'monaco': 8, 'riviera': 18}   # (where the island is a whole town to the tile's edge: only a thin rim)
-WATER_OUT = {'monaco', 'riviera'}   # (the game's sea is a plane far wider than the harbour: the painted land's own sea is used)
+WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman'}   # (the game's sea is a plane far wider than the harbour: the painted land's own sea is used)
+STRIP_M = {'chapman': 260}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
 THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nring', 'spa': 'spa', 'rbring': 'rbring', 'suzuka': 'suzuka', 'monaco': 'monaco', 'riviera': 'city'}
 # the sun of each theme (routemap_page.js: THEMES sunOff, default [-80, 96, 70]; x east, y up, z south), its strength and the sky light
 SUN = {'ouni': ([-88, 72, 58], 1.18, 0.56), 'vrsic': ([-84, 70, 56], 1.16, 0.58), 'pikes': ([104, 48, -60], 1.58, 0.75), 'nring': ([-80, 76, 70], 1.1, 0.6),
@@ -236,6 +237,11 @@ def build(tid):
         wat = (isle_d[..., 2] > 110) & (isle_d[..., 2] > isle_d[..., 0] + 45) & (isle_d[..., 2] > isle_d[..., 1] + 20)
         wat = ndimage.binary_dilation(wat, iterations=1); a_d = a_d * (~wat)
     m = island_mask(a_d, F.mpp, RING_PX.get(tid))
+    if tid in STRIP_M:   # the strip round the road: the route drawn on the tile, the distance from it, a soft edge
+        road = np.ones((F.H, F.W), bool); r = F.route
+        for (x0, y0), (x1, y1) in zip(r[:-1], r[1:]):
+            k = int(max(abs(x1 - x0), abs(y1 - y0))) + 2; xs = np.clip(np.round(np.linspace(x0, x1, k)).astype(int), 0, F.W - 1); ys = np.clip(np.round(np.linspace(y0, y1, k)).astype(int), 0, F.H - 1); road[ys, xs] = False
+        d = ndimage.distance_transform_edt(road); t = np.clip((STRIP_M[tid] / F.mpp - d) / (3 * FEATHER) + 0.5, 0, 1); m = m * (t * t * (3 - 2 * t)).astype(np.float32)
     bg_t = to_tile(bg, F)
     lc_t = to_tile(lc, F, order=0)
     alb_t = to_tile(alb, F)

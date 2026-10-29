@@ -16,5 +16,11 @@
   ["bigsur", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
   ["detroit", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
   ["maunakea", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
-  ["moki", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}]
+  ["moki", {"mode": "demo", "warm": 2, "kbps": 900, "shots": []}],
+  ["longford", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["newcastle", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["townsville", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["chapman", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["sani", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}],
+  ["marrakesh", {"mode": "demo", "warm": 2, "kbps": 550, "shots": []}]
 ]
