@@ -389,6 +389,7 @@
     'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
     /* ---- the vehicle fleet (js/cars): the car screen, a destroyed car, a wheel off, retiring (Odstopi), the rivals of a championship ---- */
     'Motor zadaj': 'Rear-engined', 'Izberi': 'Choose', 'Izberi avto': 'Choose a car', 'Kategorije vozil': 'Vehicle categories', 'Vozila v kategoriji': 'Vehicles in the category',
+    'Tapni avto za garažo': 'Tap the car for the garage', 'Odpri garažo z izbranim avtom': 'Open the garage with this car', 'Garaža se odpre, ko je naprava povezana z internetom.': 'The garage opens when the device is online.',
     'VOZILO UNIČENO': 'VEHICLE DESTROYED', 'Odstopi': 'Retire', 'Odstop': 'Retired', 'odstop': 'retired', 'Ogled vozila': 'View the car',
     'Odstop po {0} km': 'Retired after {0} km', 'Odstop v {0} krogu': 'Retired on the {0} lap', ' Brez nagrade.': ' No prize money.',
     ' {0}: brez točk, skupaj {1} in {2} mesto': ' {0}: no points, {1} in total and {2} place', ' in še {0}': ' and {0} more', 'različni avti': 'various cars', ' · tekmeci: {0}': ' · rivals: {0}',
@@ -444,7 +445,7 @@
     'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
     'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes',
     'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
-    'Nazaj v meni (garaža bo kasneje povezana z menijem).': 'Back to the menu (the garage will be joined with the menu later).', 'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
+    'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
     'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
     'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',

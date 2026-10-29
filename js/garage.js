@@ -245,7 +245,7 @@
       case 'buy': buy(); break;
       case 'locked': toast(tr('{0} je na voljo v polni igri.', M().name)); break;
       case 'go': { const go = $('g-go'); go.classList.add('done'); go.textContent = tr('Izbran ✓'); toast(tr('{0} je izbran za naslednjo dirko.', M().name)); setTimeout(() => head(), 1600); break; }
-      case 'back': toast(tr('Nazaj v meni (garaža bo kasneje povezana z menijem).')); break;
+      case 'back': location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(GAME_CAR) : ''); break;   // (the game's car screen, on the car it opened the garage with)
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
       case 'reset': S = profile(S.mode); S.demo = true; save(); thumbs = {}; panel = 'home'; render(); G.swap(spec(S.car)); toast(tr('Profil je ponastavljen.')); break;
@@ -281,6 +281,17 @@
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); }
   function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2)); }
 
+  // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
+  // retired model's: its heir); the money and the cars stay the profile's (the mockup's for now). Without them: the profile's car
+  let GAME_CAR = null;
+  function fromGame() {
+    let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
+    const id = heirId((P.get('car') || '').trim().toLowerCase()); if (!ORDER.includes(id)) return;
+    GAME_CAR = id; S.car = id;
+    const hx = parseInt(P.get('color') || '', 16), ci = COLORS.findIndex(c => c[0] === hx); if (ci >= 0) S.cars[id].color = ci;
+    save();
+  }
+
   let last = 0, hold = false, skip = 0;   // (hold: the tests step the clock themselves, advance)
   function loop(t) {
     const dt = last ? (t - last) / 1000 : 0.016; last = t;
@@ -292,7 +303,7 @@
     requestAnimationFrame(loop);
   }
   function start() {
-    S = load(); Lang.set(S.lang);
+    S = load(); fromGame(); Lang.set(S.lang);
     if (S.demo === false) $('g-demo').classList.add('off');
     bind(); markMode(); setLang();
     $('g-snd').classList.toggle('mute', !S.sound);
@@ -301,7 +312,7 @@
     queueThumbs([S.car]);   // (the car shown: its picture on the Avto tile; the others when the car panel opens)
     render();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => $('g-load').classList.add('done'), 120); });
-    window.__garage = { get S() { return S; }, ORDER, G, onAct, pickCar, fitUpg, doService, doPaint, buy, get panel() { return panel; }, set panel(p) { panel = p; body(); }, thumbs: () => thumbs, render,
+    window.__garage = { get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, pickCar, fitUpg, doService, doPaint, buy, get panel() { return panel; }, set panel(p) { panel = p; body(); }, thumbs: () => thumbs, render,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

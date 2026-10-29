@@ -2,7 +2,8 @@
 // between it and the car steps aside), the demo profiles, buying a car and the credits, a new car
 // driving in, every upgrade with its parts on the car, the service (dirt and scratches gone, the engine), a new colour, the English page,
 // every car of the game's fleet (the car screen's list and order) on the turntable with all its parts, the car panel's categories and the
-// pictures of the cars, the profile kept after a reload; the single-post
+// pictures of the cars; the wide vehicles' way in and out (round the lift's column and the stands, or the stand stepping aside); the
+// garage opened from the game's car screen (a tap on its car: that car in its colour, the profile kept) and its back button; the single-post
 // lift behind the car (the tyres and the service's engine up on it, the turntable never rising nor turning); the permanent fixtures
 // (two industrial robots on floor rails, the tool stand ORODJA with its seven tools, the near robot's stand with six; the nano chamber,
 // the drying column, the paint drums, the tyre towers, the parts shelf, the rim stand, the kit stand) parked at rest, bolted down, out of
@@ -554,15 +555,72 @@ try {
     await page.evaluate(() => { __garage.panel = 'home'; });
   }
 
+  // 8b. the wide vehicles' way out and in (the monster truck, the lorries; the PICO and the RALLY as before): each car swapped in, the
+  // clock stepped a frame at a time (nothing drawn), every vertex of every car on the turntable (in its own frame, moved as it is)
+  // clear of the boxes the robots keep clear of (the stands', the lift's column) unless that stand has stepped aside; the monster truck
+  // crabs round the column and ORODJA (straight it would go into ORODJA), the tyre towers step aside on its way out and the near
+  // robot's stand on its way in; the lorries' way out straight, the towers stepping aside (they pass them by a hand's breadth); the
+  // narrow cars straight (no way of their own); every car on the table's middle after, everything back
+  {
+    const R = await page.evaluate(async (ids) => {
+      const V = THREE.Vector3, rest = new WeakMap(), out = { hits: {}, straight: {}, frames: 0, ways: {} }, D = Garage3D._dbg;
+      const restOf = (root) => { let r = rest.get(root); if (r) return r; root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), M = new THREE.Matrix4(), v = new V(), P = [], bb = new THREE.Box3();
+        root.traverse(o => { if (!o.isMesh || !o.geometry.attributes.position) return; for (let q = o; q && q !== root; q = q.parent) if (!q.visible) return; M.multiplyMatrices(inv, o.matrixWorld); const A = o.geometry.attributes.position;
+          for (let i = 0; i < A.count; i++) { v.fromBufferAttribute(A, i).applyMatrix4(M); if (v.y < 0.03) continue; P.push(v.x, v.y, v.z); bb.expandByPoint(v); } });   // (not its shadow on the floor)
+        rest.set(root, r = { P: new Float32Array(P), bb, id: root.userData.cv.M.id }); return r; };
+      const audit = (straight) => { const B = D.obstBoxes, tt = Garage3D.cur.root.parent;
+        for (const root of tt.children) { if (!root.userData.cv || !root.visible) continue; const r = restOf(root), p = root.position, z = straight ? 0 : p.z;
+          for (const b of B) { if (b.gone > 0.999) continue;
+            if (r.bb.max.x + p.x < b.min[0] || r.bb.min.x + p.x > b.max[0] || r.bb.max.y + p.y < b.min[1] || r.bb.min.y + p.y > b.max[1] || r.bb.max.z + z < b.min[2] || r.bb.min.z + z > b.max[2]) continue;
+            const P = r.P; let d = 0;
+            for (let i = 0; i < P.length; i += 3) { const x = P[i] + p.x, y = P[i + 1] + p.y, w = P[i + 2] + z; if (x > b.min[0] && x < b.max[0] && y > b.min[1] && y < b.max[1] && w > b.min[2] && w < b.max[2]) d = Math.max(d, Math.min(x - b.min[0], b.max[0] - x, y - b.min[1], b.max[1] - y, w - b.min[2], b.max[2] - w)); }
+            if (d > 0.005) { const H = straight ? out.straight : out.hits, key = r.id + ':' + b.k; H[key] = Math.max(H[key] || 0, +d.toFixed(3)); } } } };
+      for (const id of ids) {
+        const w0 = D.laneWay(1).way; __garage.pickCar(id); await new Promise(r => setTimeout(r, 0));   // (the way out of the car that goes)
+        for (let f = 0; f < 600; f++) { Garage3D.frame(1 / 30, true); audit(false); audit(true); out.frames++; if (!Garage3D.busy && f > 10) break; if (f % 20 === 0) await new Promise(r => setTimeout(r, 0)); }
+        for (let f = 0; f < 15; f++) Garage3D.frame(1 / 30, true);   // (what stepped aside back)
+        const sum = (w) => w && { max: w.max, fade: w.fade.join() }, w1 = D.laneWay(-1).way;   // (the way in of the car that came: as its swap made it)
+        out.ways[id] = { inWay: sum(w1), prevOut: sum(w0), z: +Garage3D.cur.root.position.z.toFixed(3), car: Garage3D.cur.M.id, standBack: D.stands.stand.gone === 0 };
+      }
+      return out;
+    }, ['goljat', 'kamen', 'titan', 'pico', 'rally']);
+    const W = R.ways, g = W.goljat, ok = !Object.keys(R.hits).length && (R.straight['goljat:rack'] || 0) > 0.03 &&
+      g.inWay && g.inWay.max > 0.2 && g.inWay.max < 0.35 && g.inWay.fade === 'stand' && W.kamen.prevOut && W.kamen.prevOut.max > 0.2 && W.kamen.prevOut.fade === 'towers' &&
+      W.titan.prevOut && W.titan.prevOut.max === 0 && W.titan.prevOut.fade === 'towers' && W.pico.prevOut && W.pico.prevOut.max === 0 && W.pico.prevOut.fade === 'towers' &&
+      !W.kamen.inWay && !W.titan.inWay && !W.pico.inWay && !W.rally.inWay && !W.rally.prevOut && Object.values(W).every(q => q.z === 0 && q.standBack);
+    T.check(`the wide vehicles' way in and out (${R.frames} frames): no car through a stand or the lift's column (straight the monster truck would go ${R.straight['goljat:rack']} m into ORODJA); the monster truck crabs round them, the tyre towers step aside on its way out, the near stand on its way in; the lorries straight out, the towers aside; the narrow cars straight`,
+      ok, JSON.stringify(R));
+  }
+
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
-  // 9. the profile is kept: after a reload the same credits and car
+  // 9. from the game (index.html): its car screen, the TITAN in green chosen, a tap on the car: the garage opens with that car in that
+  // colour (the profile kept: the same credits; its own MOCKUP bar); its back button: the game's car screen again on the same car (the
+  // address plain again)
   {
-    const before = await page.evaluate(() => ({ money: __garage.S.money, car: __garage.S.car }));
-    await page.reload(); await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
-    const after = await page.evaluate(() => ({ money: __garage.S.money, car: __garage.S.car, shown: Garage3D.info.car }));
-    T.check('after a reload: the same credits and car', after.money === before.money && after.car === before.car && after.shown === before.car, JSON.stringify({ before, after }));
+    const before = await page.evaluate(() => ({ money: __garage.S.money }));
+    await page.goto(srv.base + '/index.html');
+    await page.waitForFunction(() => window.__game && __game.screen === 'title', null, { timeout: 180000 });
+    await page.evaluate(() => __game.onAction('to-car')); await page.waitForTimeout(400);
+    await page.click('#car-cats [data-cat="tovornjaki"]'); await page.waitForTimeout(200);
+    await page.click('#car-strip [data-car="' + await page.evaluate(() => Core.MODELS.findIndex(m => m.id === 'titan')) + '"]'); await page.waitForTimeout(200);
+    await page.click('#car-colors [data-col="5"]'); await page.waitForTimeout(300);
+    const tap = await page.evaluate(() => { const b = document.getElementById('car-garage'), r = b.getBoundingClientRect(), s = Render.showRect(), pn = document.querySelector('#s-car .car-panel').getBoundingClientRect();
+      return { on: b.classList.contains('on'), hint: b.textContent.trim(), car: Core.MODELS[__game.S.car].id, color: __game.S.color, x: r.left + r.width / 2, y: r.top + r.height * 0.4, clear: r.bottom <= pn.top + 1, over: r.left <= (s.x0 + s.x1) / 2 && r.right >= (s.x0 + s.x1) / 2 && r.top <= (s.y0 + s.y1) / 2 && r.bottom >= (s.y0 + s.y1) / 2 }; });
+    await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.mouse.click(tap.x, tap.y)]);
+    const url1 = page.url();
+    await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
+    const g = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
+    T.check('from the game\'s car screen: the car (over its place, clear of the panel, "Tapni avto za garažo") tapped opens the garage with it, the TITAN in green; the profile kept (the same credits), the MOCKUP bar there',
+      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f$/.test(url1) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
+      JSON.stringify({ tap, url1, g, before }));
+    await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('.g-head .g-back')]);
+    await page.waitForFunction(() => window.__game && __game.screen === 'car', null, { timeout: 180000 });
+    await page.waitForTimeout(300);
+    const b = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, name: document.getElementById('car-name').textContent, url: location.search, on: document.getElementById('car-garage').classList.contains('on') }));
+    T.check('the garage\'s back button: the game\'s car screen again, on the TITAN (the address plain again)', b.screen === 'car' && b.car === 'titan' && b.name === 'TITAN' && b.url === '' && b.on, JSON.stringify(b));
   }
+  T.check('no page errors in the game and back', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 } finally {
   await browser.close(); await srv.close();

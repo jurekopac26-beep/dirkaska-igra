@@ -544,6 +544,7 @@ const Garage3D = (function () {
         else for (const q of _cp) { for (const b of p.robot.boxes) if (hides(_rbx.copy(b).expandByScalar(0.06 * h), c, q)) { want = true; break; } if (want) break; } }
       else if (bx.distanceToPoint(c) < p.near + 0.15 * h) want = true;
       else for (const q of _cp) if (hides(bx, c, q)) { want = true; break; }
+      if (p.away) want = true;   // (a stand a wide car cannot go round: aside while it passes, laneWay)
       p.want = want; p.k = want ? Math.min(1, p.k + dt * 5) : Math.max(0, p.k - dt * 5);
       p.u.value = p.k; if ((p.k < 0.999) !== p.root.visible) { p.root.visible = !p.root.visible; shadowDirty = 2; }   // (gone or back: its shadow too)
       for (const m of p.fades) m.opacity = m.userData.op * (1 - p.k);
@@ -2815,6 +2816,7 @@ const Garage3D = (function () {
   // starts at once; cv.lpG while it is measured (a lift asked for meanwhile waits for it); given up when the car goes or its parts change)
   // (then, the same way, its body's heights for the robots' plans: gridG)
   function planAhead(cv) {
+    if (cv) laneAhead(cv);   // (and the lane's fixtures, its way out if it is a wide one)
     if (!cv || (cv.lp && cv.hgrid) || cv.lpG) return; const tk = cv.lpG = {}, g = cv.lp ? null : planG(cv, 3), gg = cv.hgrid ? null : gridG(cv, 3);
     spawn((function* () { yield; for (;;) { if (cv.lpG !== tk || cv !== cur) break;
       if (!cv.lp && g) { const r = g.next(); if (r.done) cv.lp = r.value; } else if (!cv.hgrid && gg) { const r = gg.next(); if (r.done) { cv.hgrid = r.value; break; } } else break; yield; }
@@ -2982,7 +2984,7 @@ const Garage3D = (function () {
   // the robot takes its parts through its open back), the rim stand and the kit stand side by side before it, nearer the front wall (out
   // of the home view: under its buttons they would be in the way of a tap; low, under the lines from the camera to the car from anywhere
   // round it) (each: its middle, the way its face looks (ry: 0 +z), its width; the shelf's parts in the car's colour: their vertices)
-  const TWR = [[3.95, 1.75, 0], [4.65, 1.75, 1], [4.15, 2.45, 2], [4.85, 2.45, 3]];
+  const TWR = [[3.95, 1.75, 0], [4.65, 1.75, 1], [4.15, 2.45, 2], [4.85, 2.45, 3]];   // (a wide car's way past them: they step aside, laneWay)
   const SHF = { x0: -3.02, x1: -1.38, z0: 3.6, z1: 4.1, body: [], col: -1, mesh: null }, RMS = { x: -0.95, z: 4.85, ry: 0.2, w: 1.5 }, KTS = { x: -2.4, z: 4.85, ry: 0.2, w: 0.74 };
   const FXC = { W: [0.9, 0.91, 0.93], NV: [0.1, 0.13, 0.26], DK: [0.13, 0.14, 0.16], ST: [0.6, 0.62, 0.66], CY: [0.62, 1.72, 2.25], YL: [0.92, 0.7, 0.1], CHN: [0.15, 0.16, 0.18], BK: [0.07, 0.07, 0.08] };
   const FX = { rails: null, still: { fades: [] }, plates: [], plateLang: null, plateTxt: '', hide: [], dirty: { live: true }, ZERO: { value: 0 }, mats: {}, obst: [] };
@@ -4475,9 +4477,57 @@ const Garage3D = (function () {
     const meshes = []; v.bodyG.traverse(o => { if (o.isMesh && o.visible && o !== v.dec && !(v.dec && o.material === v.dec.material) && o !== v.tail) meshes.push(o); });
     return probeOf(meshes);
   }
+  // (the probes' rays along an axis without a look at every triangle: each geometry's triangles put once into a grid across that axis
+  // (its own frame, made the first time a ray asks), a ray tries the triangles of its cell only, with three.js's own test (the same faces
+  // culled, the same draw range and groups, the nearest first): the same points, a car's plans in a fraction of the time. A mesh it
+  // cannot do so (instanced, morphed, skinned, turned off the axis): three.js's raycast)
+  const RGRID = new WeakMap(), _rgRay = new THREE.Ray(), _rgInv = new THREE.Matrix4(), _rgSph = new THREE.Sphere(), _rgA = new V3(), _rgB = new V3(), _rgC = new V3(), _rgP = new V3(), _rgW = new V3(), _rgH = [];
+  function rayGrid(geo, ax) {
+    let G = RGRID.get(geo); if (!G) RGRID.set(geo, G = {});
+    const P = geo.attributes.position, I = geo.index, key = P.version + ':' + (I ? I.version : -1) + ':' + P.count;
+    if (G[ax] && G[ax].key === key) return G[ax];
+    if (geo.boundingBox === null) geo.computeBoundingBox();
+    const u = ax === 0 ? 1 : 0, v = ax === 2 ? 1 : 2, bb = geo.boundingBox, lo = [bb.min.x, bb.min.y, bb.min.z], hi = [bb.max.x, bb.max.y, bb.max.z];
+    const cs = Math.max(0.06, (hi[u] - lo[u]) / 256, (hi[v] - lo[v]) / 256), nu = Math.floor((hi[u] - lo[u]) / cs) + 1, nv = Math.floor((hi[v] - lo[v]) / cs) + 1, E = 1e-4;
+    const n = I ? I.count : P.count, A = P.array, st = P.isInterleavedBufferAttribute ? P.data.stride : 3, off = P.isInterleavedBufferAttribute ? P.offset : 0, cnt = new Int32Array(nu * nv + 1);
+    const at = (k, c) => A[(I ? I.array[k] : k) * st + off + c], span = (j, c) => { const a = at(j, c), b = at(j + 1, c), d = at(j + 2, c); return [Math.min(a, b, d) - E, Math.max(a, b, d) + E]; };
+    const each = (f) => { for (let j = 0; j + 2 < n; j += 3) { const [u0, u1] = span(j, u), [v0, v1] = span(j, v), i0 = Math.max(0, Math.floor((u0 - lo[u]) / cs)), i1 = Math.min(nu - 1, Math.floor((u1 - lo[u]) / cs)), k0 = Math.max(0, Math.floor((v0 - lo[v]) / cs)), k1 = Math.min(nv - 1, Math.floor((v1 - lo[v]) / cs));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) f(i * nv + k, j); } };
+    each((c) => cnt[c + 1]++); for (let c = 0; c < nu * nv; c++) cnt[c + 1] += cnt[c];
+    const tri = new Int32Array(cnt[nu * nv]), fill = cnt.slice(0, nu * nv); each((c, j) => { tri[fill[c]++] = j; });
+    return (G[ax] = { key, u, v, lu: lo[u], lv: lo[v], cs, nu, nv, cnt, tri });
+  }
+  // (the nearest point along world ray (o, d) (d along an axis) on these meshes within far, as Raycaster.intersectObjects(meshes, false)[0])
+  function castAxis(rc, meshes, o, d, far) {
+    let best = null, bd = Infinity;
+    rc.set(o, d); rc.near = 0; rc.far = far;
+    for (const m of meshes) {
+      if (!m.layers.test(rc.layers)) continue;
+      const geo = m.geometry, mat = m.material; if (mat === undefined) continue;
+      if (m.isInstancedMesh || m.isSkinnedMesh || !geo.isBufferGeometry || geo.morphAttributes.position || !geo.attributes.position) { _rgH.length = 0; m.raycast(rc, _rgH); for (const h of _rgH) if (h.distance < bd) { bd = h.distance; best = h.point; } continue; }
+      if (geo.boundingSphere === null) geo.computeBoundingSphere();
+      _rgSph.copy(geo.boundingSphere).applyMatrix4(m.matrixWorld); if (!rc.ray.intersectsSphere(_rgSph)) continue;
+      _rgInv.copy(m.matrixWorld).invert(); _rgRay.copy(rc.ray).applyMatrix4(_rgInv);
+      if (geo.boundingBox !== null && !_rgRay.intersectsBox(geo.boundingBox)) continue;
+      const ld = [_rgRay.direction.x, _rgRay.direction.y, _rgRay.direction.z], off = (j) => Math.abs(ld[(j + 1) % 3]) < 1e-6 && Math.abs(ld[(j + 2) % 3]) < 1e-6, lax = off(0) ? 0 : off(1) ? 1 : off(2) ? 2 : -1;   // (the others' drift over the ray: well inside a cell's margin)
+      if (lax < 0) { _rgH.length = 0; m.raycast(rc, _rgH); for (const h of _rgH) if (h.distance < bd) { bd = h.distance; best = h.point; } continue; }   // (turned off the axis)
+      const G = rayGrid(geo, lax), lo = [_rgRay.origin.x, _rgRay.origin.y, _rgRay.origin.z], i = Math.floor((lo[G.u] - G.lu) / G.cs), k = Math.floor((lo[G.v] - G.lv) / G.cs);
+      if (i < 0 || k < 0 || i >= G.nu || k >= G.nv) continue;
+      const P = geo.attributes.position, I = geo.index, dr = geo.drawRange, arr = Array.isArray(mat), c = i * G.nv + k;
+      for (let q = G.cnt[c]; q < G.cnt[c + 1]; q++) { const j = G.tri[q]; let mt = null;
+        if (arr) { for (const g of geo.groups) if (j >= Math.max(g.start, dr.start) && j < Math.min(g.start + g.count, dr.start + dr.count)) { mt = mat[g.materialIndex]; break; } }
+        else if (j >= Math.max(0, dr.start) && j < Math.min(I ? I.count : P.count, dr.start + dr.count)) mt = mat;
+        if (!mt) continue;
+        const a = I ? I.getX(j) : j, b = I ? I.getX(j + 1) : j + 1, e = I ? I.getX(j + 2) : j + 2; _rgA.fromBufferAttribute(P, a); _rgB.fromBufferAttribute(P, b); _rgC.fromBufferAttribute(P, e);
+        const hp = mt.side === THREE.BackSide ? _rgRay.intersectTriangle(_rgC, _rgB, _rgA, true, _rgP) : _rgRay.intersectTriangle(_rgA, _rgB, _rgC, mt.side !== THREE.DoubleSide, _rgP); if (hp === null) continue;
+        _rgW.copy(_rgP).applyMatrix4(m.matrixWorld); const dist = rc.ray.origin.distanceTo(_rgW); if (dist < rc.near || dist > rc.far) continue;
+        if (dist < bd) { bd = dist; best = _rgW.clone(); } }
+    }
+    return best;
+  }
   function probeOf(meshes, all) {
     const bb = new THREE.Box3(), rc = all ? rayAll : ray; for (const m of meshes) bb.expandByObject(m);
-    const hit = (o, d) => { rc.set(o, d); rc.far = 20; const h = rc.intersectObjects(meshes, false); return h.length ? h[0].point : null; };
+    const hit = (o, d) => castAxis(rc, meshes, o, d, 20);
     return {
       bb, meshes,
       top: (x, z) => { const p = hit(new V3(x, 6, z), new V3(0, -1, 0)); return p ? p.y : null; },
@@ -4494,7 +4544,7 @@ const Garage3D = (function () {
     for (const [list, front] of [[v.wf, true], [v.wr, false]]) for (const w of list) {
       box.setFromObject(w); box.getSize(sz); box.getCenter(ctr);
       const sd = w.position.z < 0 ? -1 : 1, outer = sd > 0 ? box.max.z : box.min.z;
-      const q = { obj: w, x: w.position.x, y: w.position.y, z: w.position.z, r: sz.y / 2, wd: sz.z, sd, outer, front, own: true };
+      const q = { obj: w, x: w.position.x, y: w.position.y, z: w.position.z, r: sz.y / 2, wd: sz.z, sd, outer, front, own: true, ry0: w.rotation.y };
       // its outer face measured with rays along the axle: the tyre's sidewall, the rim's dish deep in it and the spokes over the dish
       const at = (R, a) => { ray.set(new V3(q.x + Math.cos(a) * R, q.y + Math.sin(a) * R, q.z + sd * 1.5), new V3(0, 0, -sd)); ray.far = 3; const h = ray.intersectObject(w, true); return h.length ? Math.abs(h[0].point.z - q.z) : null; };
       const many = (R) => { const o = []; for (let k = 0; k < 40; k++) { const d = at(R, k / 40 * TAU + 0.03); if (d != null) o.push(d); } return o; };
@@ -4659,7 +4709,7 @@ const Garage3D = (function () {
     v.bodyG.rotation.z = cv.pitch + (sh ? (Math.random() - 0.5) * 0.004 * sh : 0);
     v.bodyG.rotation.x = cv.roll + (sh ? (Math.random() - 0.5) * 0.006 * sh : 0);
     v.bodyG.position.y = cv.bounce + (sh ? (Math.random() - 0.5) * 0.004 * sh : 0);
-    for (const w of cv.wheels) if (w.obj) w.obj.rotation.z = -cv.spin * (cv.M.rw / Math.max(0.2, w.r));
+    for (const w of cv.wheels) if (w.obj) { w.obj.rotation.z = -cv.spin * (cv.M.rw / Math.max(0.2, w.r)); if (cv.steer || w.obj.rotation.y !== w.ry0) w.obj.rotation.y = w.ry0 + (cv.steer || 0); }   // (steer: a wide car crabbing round the lane's fixtures, laneWay)
     const hy = v.grp.position.y; cv.contact.material.opacity = 0.85 * (1 - smooth(0, 0.07, hy));   // (up on the lift: the tyres off the floor)
     const k = smooth(0, 0.9, hy), pl = cv.parts.motor && cv.parts.motor.userData.pool;
     if (v.blob) { v.blob.position.y = 0.012 - hy; v.blob.material.opacity = 0.9 * (1 - 0.65 * k); v.blob.scale.set(1 + 0.2 * k, 1, 1 + 0.3 * k); }   // (its shadow stays on the floor, softer and fainter the higher it is)
@@ -5245,6 +5295,111 @@ const Garage3D = (function () {
     puffSmoke(cv, 1, bad);
   }
 
+  /* ---------------- the cars' way in and out: a wide one's (the monster truck's wheels, a lorry's mirrors) round what stands by the lane ----------------
+     The lane's fixtures as slices along it (6 cm) and bands up (10 cm) see them: the nearest to the lane's middle on the near side (+z)
+     and on the far side (-z), each stand (FREE: it may step aside, dissolving as when the camera looks through it) on its own, the rest
+     (the lift's column and arms, the robots parked, the room) together. A car's slices and bands (its body, its parts, its wheels). Its
+     way: how far across (s) it may be at each place along the lane, clear by LN.m; a way through those limits, as near the middle as
+     they let it and across only where they make it, crabbing at most LN.k across per metre along (on the table it first crabs across
+     as far as the way starts: the monster truck's wheels stand round the lift's column); none (straight) for a car narrow enough. A
+     stand it cannot go round (the tyre towers first: the monster truck between them and ORODJA), or one on the near side it passes
+     nearer than LN.fv (a lorry by the tyre towers), steps aside while it passes */
+  const LN = { st: 0.06, bh: 0.1, nb: 40, x0: -9.6, x1: 9.6, zr: 2.4, m: 0.06, fv: 0.3, k: 0.5, obs: null };   // (fv: a stand on the near side, the home view's, it passes nearer than this steps aside too: never seen as driven through)
+  // (the lane's fixtures measured once, with all of them parked and nothing up: in the background while the garage rests (laneAhead), a
+  // few milliseconds a frame (begun again if a show starts meanwhile), or at once when a wide car goes before that)
+  const laneQuiet = () => fxParked() && !LIFT.on && LIFT.s < 1e-3 && lift < 1e-3;
+  function laneObs() { if (!LN.obs) { const g = LN.gen || laneObsG(1e9); LN.gen = null; let r; do r = g.next(); while (!r.done); } return LN.obs; }
+  function* laneObsG(ms) {
+    const st = LN.st, nb = LN.nb, nx = Math.round((LN.x1 - LN.x0) / st), G = new Map(), soft = new Map(), PR = new Set(pieces.map(p => p.root));
+    for (const k in FREE) if (FREE[k] && FREE[k].root) soft.set(FREE[k].root, k);
+    const grp = (k) => { let g = G.get(k); if (!g) G.set(k, g = { zp: new Float32Array(nx * nb).fill(9), zn: new Float32Array(nx * nb).fill(-9) }); return g; };
+    const lane = new THREE.Box3(new V3(LN.x0, 0.03, -LN.zr), new V3(LN.x1, nb * LN.bh, LN.zr)), bx = new THREE.Box3(), M = new THREE.Matrix4(), a = new V3(), b = new V3(), c = new V3(), L = [];
+    scene.updateMatrixWorld(true);
+    const visit = (o, key) => { if (o.userData.cv || (!o.visible && !PR.has(o))) return;   // (the cars; what is hidden (a piece stepped aside now still counts))
+      if (soft.has(o)) key = soft.get(o); if (o.isMesh && o.geometry && o.geometry.attributes.position) L.push([o, key]); for (const ch of o.children) visit(ch, key); };
+    visit(scene, 'hard');
+    let t0 = performance.now();
+    for (const [o, key] of L) { const geo = o.geometry; if (!geo.boundingBox) geo.computeBoundingBox(); const P = geo.attributes.position, I = geo.index, cnt = I ? I.count : P.count;
+      for (let q = 0; q < (o.isInstancedMesh ? o.count : 1); q++) { if (o.isInstancedMesh) { o.getMatrixAt(q, M); M.premultiply(o.matrixWorld); } else M.copy(o.matrixWorld);
+        bx.copy(geo.boundingBox).applyMatrix4(M); if (!bx.intersectsBox(lane)) continue; const g = grp(key);
+        for (let j = 0; j + 2 < cnt; j += 3) { a.fromBufferAttribute(P, I ? I.getX(j) : j).applyMatrix4(M); b.fromBufferAttribute(P, I ? I.getX(j + 1) : j + 1).applyMatrix4(M); c.fromBufferAttribute(P, I ? I.getX(j + 2) : j + 2).applyMatrix4(M);
+          if (!(j % 3000) && performance.now() - t0 > ms) { yield; t0 = performance.now(); }
+          const x0 = Math.min(a.x, b.x, c.x), x1 = Math.max(a.x, b.x, c.x), y0 = Math.min(a.y, b.y, c.y), y1 = Math.max(a.y, b.y, c.y), z0 = Math.min(a.z, b.z, c.z), z1 = Math.max(a.z, b.z, c.z);
+          if (x1 < LN.x0 || x0 > LN.x1 || y1 < 0.03 || y0 > nb * LN.bh || z1 < -LN.zr || z0 > LN.zr) continue;
+          // (its slices and bands, one more each way: the margin along and up)
+          const i0 = Math.max(0, Math.floor((x0 - LN.x0) / st) - 1), i1 = Math.min(nx - 1, Math.floor((x1 - LN.x0) / st) + 1), k0 = Math.max(0, Math.floor(y0 / LN.bh) - 1), k1 = Math.min(nb - 1, Math.floor(y1 / LN.bh) + 1);
+          for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) { const e = i * nb + k;
+            if (z0 > 0) { if (z0 < g.zp[e]) g.zp[e] = z0; } else if (z1 < 0) { if (z1 > g.zn[e]) g.zn[e] = z1; } else { g.zp[e] = Math.min(g.zp[e], 0); g.zn[e] = Math.max(g.zn[e], 0); } } } } }   // (one across the middle: that band shut)
+    LN.obs = { nx, G };
+  }
+  // (in the background: the lane's fixtures, then the way out of the car on the table if it is a wide one (cv.way, kept while its parts stay))
+  const wideCar = (cv) => Math.max(cv.M.wid / 2, cv.kit.hw) + LN.m >= 1.3, wayKey = (cv) => JSON.stringify(cv.spec.upg);
+  function laneAhead(cv) {
+    if (LN.obs && (!wideCar(cv) || (cv.way && cv.way.key === wayKey(cv)))) return;
+    spawn((function* () { yield;
+      while (!LN.obs) { if (cv !== cur) { LN.gen = null; return; } if (!laneQuiet()) { LN.gen = null; yield; continue; } const g = LN.gen || (LN.gen = laneObsG(3)); if (g.next().done) LN.gen = null; yield; }
+      if (cv === cur && wideCar(cv) && laneQuiet()) cv.way = { key: wayKey(cv), w: laneWay(cv, 1) }; })(), true);
+  }
+  // (a car's slices and bands in its own frame (its root's, on the table): the lowest and the highest z of what it has there; its
+  // triangles' boxes, two looks: how long it is, then into its slices)
+  function carLane(cv) {
+    const st = LN.st, nb = LN.nb, inv = new THREE.Matrix4(), M = new THREE.Matrix4(), L = [];
+    cv.root.updateMatrixWorld(true); inv.copy(cv.root.matrixWorld).invert();
+    cv.root.traverse(o => { if (!o.isMesh || !o.geometry.attributes.position) return; for (let q = o; q && q !== cv.root; q = q.parent) if (!q.visible) return;
+      const P = o.geometry.attributes.position, I = o.geometry.index, n = I ? I.count : P.count, V = new Float32Array(P.count * 3), e = M.multiplyMatrices(inv, o.matrixWorld).elements;
+      for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i); V[i * 3] = e[0] * x + e[4] * y + e[8] * z + e[12]; V[i * 3 + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; V[i * 3 + 2] = e[2] * x + e[6] * y + e[10] * z + e[14]; }
+      L.push([V, I ? I.array : null, n]); });
+    let xa = 9, xb = -9; for (const [V] of L) for (let i = 0; i < V.length; i += 3) { if (V[i + 1] < 0.03) continue; if (V[i] < xa) xa = V[i]; if (V[i] > xb) xb = V[i]; }
+    const x0 = Math.floor(xa / st) * st, ns = Math.floor((xb - x0) / st) + 1, lo = new Float32Array(ns * nb).fill(9), hi = new Float32Array(ns * nb).fill(-9);
+    for (const [V, I, n] of L) for (let j = 0; j + 2 < n; j += 3) { const a = (I ? I[j] : j) * 3, b = (I ? I[j + 1] : j + 1) * 3, c = (I ? I[j + 2] : j + 2) * 3;
+      const y1 = Math.max(V[a + 1], V[b + 1], V[c + 1]); if (y1 < 0.03) continue;   // (its shadow, the tyres' patches on the floor)
+      const tx0 = Math.min(V[a], V[b], V[c]), tx1 = Math.max(V[a], V[b], V[c]), y0 = Math.min(V[a + 1], V[b + 1], V[c + 1]), z0 = Math.min(V[a + 2], V[b + 2], V[c + 2]), z1 = Math.max(V[a + 2], V[b + 2], V[c + 2]);
+      for (let i = Math.max(0, Math.floor((tx0 - x0) / st)), i1 = Math.min(ns - 1, Math.floor((tx1 - x0) / st)); i <= i1; i++)
+        for (let k = Math.max(0, Math.floor(y0 / LN.bh)), k1 = Math.min(nb - 1, Math.floor(y1 / LN.bh)); k <= k1; k++) { const f = i * nb + k; if (z0 < lo[f]) lo[f] = z0; if (z1 > hi[f]) hi[f] = z1; } }
+    return { x0, ns, lo, hi };
+  }
+  // (the limits across for a car along the lane (dir 1: out to the right, its root's x from the table on; -1: in from the left onto the
+  // table), each group of fixtures on its own: lo and hi at each place, j steps of st from the table)
+  function laneLims(C, dir, n) {
+    const O = laneObs(), st = LN.st, nb = LN.nb, a0 = Math.round((C.x0 - LN.x0) / st), out = new Map();
+    for (const [key, g] of O.G) { const lo = new Float32Array(n).fill(-9), hi = new Float32Array(n).fill(9); out.set(key, { lo, hi });
+      if (!g.any) { g.any = new Uint8Array(O.nx); for (let a = 0; a < O.nx; a++) for (let k = 0; k < nb; k++) if (g.zp[a * nb + k] < 9 || g.zn[a * nb + k] > -9) { g.any[a] = 1; break; } }
+      for (let j = 0; j < n; j++) { const da = a0 + dir * j;
+        for (let i = 0; i < C.ns; i++) { const a = da + i; if (a < 0 || a >= O.nx || !g.any[a]) continue;
+          for (let k = 0; k < nb; k++) { const e = i * nb + k; if (C.hi[e] < C.lo[e]) continue; const f = a * nb + k, p = g.zp[f], q = g.zn[f];
+            if (p < 9 && p - C.hi[e] - LN.m < hi[j]) hi[j] = p - C.hi[e] - LN.m; if (q > -9 && q - C.lo[e] + LN.m > lo[j]) lo[j] = q - C.lo[e] + LN.m; } } } }
+    return out;
+  }
+  function laneWay(cv, dir) {
+    if (!cv || !wideCar(cv)) return null;   // (narrow enough: straight, as ever)
+    if (dir > 0 && cv.way && cv.way.key === wayKey(cv)) return cv.way.w;   // (made while it stood)
+    const C = carLane(cv), st = LN.st, n = Math.ceil((dir > 0 ? LN.x1 - C.x0 : C.x0 + C.ns * st - LN.x0) / st) + 2, LL = laneLims(C, dir, n), keys = [...LL.keys()], soft = keys.filter(k => k !== 'hard');
+    const solve = (ks) => { const k = LN.k * st, a = new Float32Array(n).fill(-9), b = new Float32Array(n).fill(9);
+      for (const key of ks) { const L = LL.get(key); for (let j = 0; j < n; j++) { if (L.lo[j] > a[j]) a[j] = L.lo[j]; if (L.hi[j] < b[j]) b[j] = L.hi[j]; } }
+      for (let j = 1; j < n; j++) { a[j] = Math.max(a[j], a[j - 1] - k); b[j] = Math.min(b[j], b[j - 1] + k); }
+      for (let j = n - 2; j >= 0; j--) { a[j] = Math.max(a[j], a[j + 1] - k); b[j] = Math.min(b[j], b[j + 1] + k); }
+      for (let j = 0; j < n; j++) if (a[j] > b[j] + 1e-6) return null;
+      // (from where it starts (out: the table; in: the door) in the middle, then across only where its way makes it (no weaving))
+      const s = new Float32Array(n), j0 = dir > 0 ? 0 : n - 1, d = dir > 0 ? 1 : -1; s[j0] = Math.min(b[j0], Math.max(a[j0], 0));
+      for (let j = j0 + d; j >= 0 && j < n; j += d) s[j] = Math.min(b[j], Math.max(a[j], s[j - d])); return s; };
+    let s = null, used = null;
+    for (const ks of [keys, keys.filter(k => k !== 'towers'), ['hard']]) { s = solve(ks); if (s) { used = ks; break; } }
+    if (!s) { s = new Float32Array(n); used = ['hard']; console.error('garage: no clear way for ' + cv.M.id); }
+    const fade = soft.filter(k => { const L = LL.get(k), e = LN.fv - LN.m; for (let j = 0; j < n; j++) if (s[j] > L.hi[j] - e || s[j] < L.lo[j] - 1e-6) return true; return false; });
+    let mx = 0; for (let j = 0; j < n; j++) mx = Math.max(mx, Math.abs(s[j]));
+    return mx < 0.005 && !fade.length ? null : { dir, n, s, fade, max: mx };
+  }
+  // (where across a car on its way is when its root is at x along the lane)
+  const laneAt = (w, x) => { if (!w) return 0; const u = Math.min(w.n - 1, Math.max(0, x * w.dir / LN.st)), j = Math.min(w.n - 2, Math.floor(u)); return w.s[j] + (w.s[j + 1] - w.s[j]) * (u - j); };
+  // (a car on its way at x along the lane: across as its way says, its wheels turned along it (crabbing: the body stays straight), rolling)
+  function laneStep(cv, w, x) { const p = cv.root.position, z = laneAt(w, x), dx = x - p.x, dz = z - p.z, sl = (laneAt(w, x + 0.15 * w.dir) - z) / (0.15 * w.dir);
+    cv.spin += Math.sign(dx || 1) * Math.hypot(dx, dz) / cv.M.rw; p.z = z; cv.steer = lerp(cv.steer || 0, clamp(-Math.atan(sl), -0.6, 0.6), 0.25); }
+  // (a wide car crabbing across at the table (its wheels turned as far as they go, the monster truck's four-wheel steering) from z0 to z1)
+  function* crab(cv, z0, z1) { const d = z1 - z0, p = cv.root.position; if (Math.abs(d) < 0.005) { p.z = z1; return; } const a = -Math.sign(d) * 0.9;
+    yield* tween(0.3, (k) => { cv.steer = a * k; }, EZ.io);
+    yield* tween(0.35 + Math.abs(d) * 1.5, (k) => { const z = z0 + d * k; cv.spin += Math.abs(z - p.z) / cv.M.rw; p.z = z; }, EZ.io);
+    yield* tween(0.3, (k) => { cv.steer = a * (1 - k); }, EZ.io); }
+
   // a new car: the one on the table starts, drives out to the right; the new one comes in through the left door and stops on the table
   let swapNext = null, swapP = null;
   function swap(spec) {
@@ -5256,37 +5411,42 @@ const Garage3D = (function () {
       const old = cur, nw = makeCar(spec);
       // (the new car's shaders are made now, while the old one still stands: no stutter when it rolls in)
       nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);
+      let wIn = LN.obs ? laneWay(nw, -1) : undefined;   // (a wide one's way in: in the frame it is made in, when the lane's fixtures are measured)
       // away at once: the car pulls out the instant the arrow is tapped, the camera easing home (the lift is down and its arms stowed:
       // every show ends so; after one cut short the robots park first (what they hold back on the car), then the car comes down)
       if (!fxParked()) yield* fxPark(0.8);   // (the robots parked: their tools in their nests, folded over their carriages)
       if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(old, false);
+      // (a wide car's way round the lane's fixtures (none: straight), the stands it cannot go round stepped aside while it passes)
+      const wOut = laneWay(old, 1), aside = (w, on) => { if (w) for (const k of w.fade) FREE[k].away = on; }; if (wIn === undefined) wIn = laneWay(nw, -1);
       if (old) {
         engStart(old.M); lamps(old, 1, 0.3); old.shake = 0.6; eng.locked = false; eng.thr = 1;
         puffSmoke(old, 3, old.spec.cond.engine < 0.5);
         const acc = 7 + (old.M.kw || 250) / 110, T0 = 1.25;
+        aside(wOut, true); if (wOut) yield* crab(old, 0, laneAt(wOut, 0));   // (first across, off the lift's column)
         yield* par(home(0.6), (function* () {
           yield* tween(T0, (k, u) => {
-            const t = u * T0, vel = acc * t, x = 0.5 * acc * t * t; old.spin += (x - old.root.position.x) / old.M.rw; old.root.position.x = x;
+            const t = u * T0, vel = acc * t, x = 0.5 * acc * t * t; if (wOut) laneStep(old, wOut, x); else old.spin += (x - old.root.position.x) / old.M.rw; old.root.position.x = x;
             old.pitch = 0.035 * Math.exp(-u * 3) * (1 - Math.exp(-u * 20)); eng.speed = vel; eng.rpm = old.M.idle + (old.M.redline - old.M.idle) * clamp(0.35 + vel / 30, 0, 0.95);
             if (Math.random() < 0.35 && u < 0.5) puffSmoke(old, 1, false);
           });
         })());
-        lamps(old, 0, 0); old.root.visible = false;
+        lamps(old, 0, 0); old.root.visible = false; old.steer = 0; aside(wOut, false);
       } else yield* home(0.6);
       engStop();
       // in: from the left door, braking hard onto the table, the nose diving, the brake lamps on
       cur = nw; svcForget(); camFit(nw); engStart(nw.M); eng.locked = false; lamps(nw, 1, 0.5);
       const D = 15, T = 2.0, tx0 = rig.tx;
+      aside(wIn, true); if (wIn) nw.root.position.z = laneAt(wIn, -D);
       yield* tween(T, (k, u) => {
         const e = 1 - Math.pow(1 - u, 2.2), x = -D * (1 - e);
         const vel = 2.2 * D / T * Math.pow(1 - u, 1.2);
-        const dx = x - nw.root.position.x; nw.root.position.x = x; nw.spin += dx / nw.M.rw;
+        if (wIn) laneStep(nw, wIn, x); else nw.spin += (x - nw.root.position.x) / nw.M.rw; nw.root.position.x = x;
         eng.speed = vel; eng.thr = u < 0.25 ? 0.4 : 0; eng.rpm = nw.M.idle + (nw.M.redline - nw.M.idle) * clamp(vel / 30, 0.05, 0.8);
         nw.pitch = u > 0.45 ? -0.03 * Math.sin((u - 0.45) / 0.55 * Math.PI) : 0;
         lamps(nw, 1, u > 0.4 ? 1 : 0.5);
         rig.tx = lerp(tx0, HOME.tx, EZ.io(u)) - 0.5 * Math.sin(u * Math.PI) * (1 - u);
       });
-      nw.root.position.x = 0; hud('arrived', nw.spec);
+      nw.root.position.x = 0; if (wIn) { nw.steer = 0; yield* crab(nw, nw.root.position.z, 0); } aside(wIn, false); hud('arrived', nw.spec);   // (then across onto the table)
       yield* settle(nw, 0.025);
       eng.locked = true; eng.speed = 0; eng.rev = 0;
       yield* revs(nw, 1, false);
@@ -6013,6 +6173,7 @@ const Garage3D = (function () {
   // the car shown first: no drive-in, it stands there
   function show(spec) {
     svcStop(); if (!fxParked()) fxRest();   // (the robots parked: the tools in their nests, folded over their carriages; what they held back on the old car first)
+    for (const k in FREE) if (FREE[k]) FREE[k].away = false;   // (a stand stepped aside for a swap cut short: back)
     if (cur) freeCar(cur);
     if (lift || LIFT.on || LIFT.s || LIFT.c !== LIFT.c0) { lift = 0; Object.assign(LIFT, { s: 0, on: false, plan: null, c: LIFT.c0 }); poseLift(); }   // (the lift down, its arms stowed)
     cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2; svcForget(); camFit(cur, true);
@@ -6178,6 +6339,20 @@ const Garage3D = (function () {
           fx: { beams: SVX.beam.map(b => b.visible), oil: SVX.oilB.visible, marks: MK.alive, pan: { y: +SVX.panY.toFixed(3), visible: SVX.pan.visible }, wet: +SVWU.value.x.toFixed(3), layer: SVU.uSvZ.value.w, spin: RB.map(A => r2(A.sv || 0)) },
           loops: Object.keys(SV.loops).filter(k => SV.loops[k] > 0), lampLit: r2(SV.lampLit) }; },
       svcPlans(items) { SV.P = {}; if (!cur.lp) liftPlan(cur); for (const it of items) { const g = svcPlan(cur, it); let r; do r = g.next(0); while (!r.done); } return this.svc.plans; },   // (the lift's plan first: no frame runs to finish its measuring)
+      castAxis: (meshes, o, d) => castAxis(rayAll, meshes, o, d, 20),
+      // (the car on the table's way out (dir 1) and in (-1): how far across at each place along the lane (s, every 6 cm from the table),
+      // the stands that step aside; the time it took; ms0: the lane's fixtures measured (once))
+      laneWay(dir) { const t0 = performance.now(), had = !!LN.obs; laneObs(); const t1 = performance.now(), w = laneWay(cur, dir), t2 = performance.now();
+        return { ms0: had ? 0 : Math.round(t1 - t0), ms: Math.round(t2 - t1), way: w && { n: w.n, max: +w.max.toFixed(3), fade: w.fade, s: Array.from(w.s, v => +v.toFixed(3)) }, st: LN.st, m: LN.m }; },
+      laneRaw(dir) { const C = carLane(cur), n = Math.ceil((dir > 0 ? LN.x1 - C.x0 : C.x0 + C.ns * LN.st - LN.x0) / LN.st) + 2, LL = laneLims(C, dir, n), o = {}; for (const [k, L] of LL) o[k] = { lo: Array.from(L.lo, v => +v.toFixed(2)), hi: Array.from(L.hi, v => +v.toFixed(2)) }; return o; },
+      // (what the robots keep clear of, as boxes: the stands' (each with its stand's key and how far it has stepped aside now) and the lift's
+      // column (the tests' own look at a car's way in and out))
+      get obstBoxes() { const k0 = (k) => { const p = FREE[k.split('.')[0]]; return p ? +p.k.toFixed(3) : 0; };
+        return FX.obst.map(q => ({ k: q.k, gone: k0(q.k), min: q.b.min.toArray(), max: q.b.max.toArray() })).concat(COLB.map(b => ({ k: 'lift', gone: 0, min: b.min.toArray(), max: b.max.toArray() }))); },
+      get laneObs() { const O = laneObs(); return { nx: O.nx, nb: LN.nb, st: LN.st, bh: LN.bh, x0: LN.x0, keys: [...O.G.keys()] }; },   // (the probes' fast ray, for the tests' look against three.js's)
+      // (the plans as a show makes them, a frame's share at a time: the time each item's took, its longest step (a frame held up), its steps)
+      planSteps(items) { SV.P = {}; if (!cur.lp) liftPlan(cur); const out = {}; for (const it of items) { const g = svcPlan(cur, it); let r, n = 0, mx = 0, t = 0;
+        do { const t0 = performance.now(); SVT.t0 = t0; r = g.next(1 / 60); const d = performance.now() - t0; n++; t += d; mx = Math.max(mx, d); } while (!r.done); out[it] = { ms: Math.round(t), max: Math.round(mx), steps: n }; } return out; },
       svcRun(items, o) { if (cur) setCond(cur, o && o.worn || { clean: 0.15, body: 0.3, engine: 0.3 }); return service(items, { clean: 1, body: 1, engine: 1 }); },
       svcFace(x, z, R, mn) { return svcPts(cur).face(x, z, R, 0, null, null, mn); }, svcPts() { return svcPts(cur); },   // (a turning tool's face laid on the top there: the plans' look at a bonnet)
       tap() { if (busy) speed = 3; }, views() { return cur ? { S2: V_S2(), S: V_S(), POL: V_POL(), E: V_E(cur), HOME } : null; }, camAt: (v) => camAt(v).toArray(),
