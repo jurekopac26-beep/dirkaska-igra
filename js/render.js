@@ -5239,7 +5239,7 @@ const Render = (function () {
     let n = 0;   // (the men drawn so far: the next one's instance)
     for (let k = 0; k < c.men.length; k++) { const m = c.men[k];
       crewMan(m, dt);
-      if (lo && !m.role) { const dx = m.x - camera.position.x, dz = m.z - camera.position.z;
+      if (lo && !m.bx.mine) { const dx = m.x - camera.position.x, dz = m.z - camera.position.z;
         if (dx * dx + dz * dz > CREW_LO_D * CREW_LO_D || (dx * fx + dz * fz) / fl < -6) { if (m.gun) rel(M.gun, m.gunI, _zero); continue; } }
       const i = n++;
       if (lo) { CREW_PACK.forEach((key, q) => { const two = q > 2 ? 2 : 1, a = M[key].instanceColor.array, o = lo.col[q]; for (let t = 0; t < 3 * two; t++) a[i * 3 * two + t] = o[k * 3 * two + t]; });
