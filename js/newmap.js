@@ -2506,7 +2506,7 @@ body.mk-clean #h-msg { display: none !important; }
     s += `<circle cx="${X(262)}" cy="${Y(-334)}" r="${(40 * k).toFixed(1)}" fill="rgba(240,226,191,.85)"/>`;
     if (H3.snowEdge) s += `<path d="${pl(Array.from({ length: 33 }, (_, i) => { const a = i / 32 * Math.PI * 2, r = H3.snowEdge(a); return [-205 + Math.cos(a) * r, -105 + Math.sin(a) * r]; }))}Z" fill="rgba(240,244,248,.55)"/>`;
     const thin = (cv, col, wd) => { s += `<path d="${cvp(cv)}" fill="none" stroke="${col}" stroke-width="${wd}" stroke-linecap="round" stroke-linejoin="round"/>`; }, dirt = 'rgba(200,166,118,.9)';
-    for (const p of (H3.paths || [])) thin(p.cv, dirt, 1.1); if (H3.hill) for (const p of H3.hill.paths) thin(p.cv, dirt, 1.1); if (H3.forest) thin(H3.forest.cv, dirt, 1.1);
+    for (const p of (H3.paths || [])) if (p) thin(p.cv, dirt, 1.1); if (H3.hill) for (const p of H3.hill.paths) thin(p.cv, dirt, 1.1); if (H3.forest) thin(H3.forest.cv, dirt, 1.1);
     for (const r of Object.values(H3.roads || {})) thin(r.cv, r.style === 'forest' ? 'rgba(214,176,124,.95)' : 'rgba(205,209,214,.95)', r.style === 'forest' ? 1.6 : 2.1);
     let tp = ''; for (let i = 0; i < t.px.length; i += 5) tp += (i ? 'L' : 'M') + X(t.px[i]) + ',' + Y(t.pz[i]); s += `<path d="${tp}Z" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="4.2" stroke-linejoin="round"/><path d="${tp}Z" fill="none" stroke="#f4f4f0" stroke-width="2.4" stroke-linejoin="round"/>`;
     for (const st of Object.values(H3.st || {})) { const q = st && (st.ring || st.entry); if (!q || st.col == null) continue; s += `<circle cx="${X(q.x)}" cy="${Y(q.z)}" r="2.3" fill="#${new THREE.Color(st.col).getHexString()}" stroke="#111" stroke-width=".8"/>`; }
@@ -3460,6 +3460,9 @@ body.mk-clean #h-msg { display: none !important; }
       { const J = new THREE.CatmullRomCurve3(H3.RP.jump.map(([x, z]) => new THREE.Vector3(x, 0, z))), NJ = [], TE = [], TE2 = []; for (let u = 0; u <= 0.6; u += 0.005) { const q = J.getPointAt(u), tg = J.getTangentAt(u); let nx = -tg.z, nz = tg.x; if (nz < 0) { nx = -nx; nz = -nz; } const p = [q.x + nx * 6.9, q.z + nz * 6.9]; if (p[0] > -14) break; NJ.push(p); }
         const sg = (() => { const q = at(1150, w + 6); return H3.TL.inLoop(q.x, q.z) ? 1 : -1; })(); for (let d = 1104; d < 1400; d += 3) { const off = w + 0.8 + 21 * sst(1150, 1168, d) * (1 - sst(1212, 1222, d)) + 8 * sst(1212, 1222, d) * (1 - sst(1300, 1316, d)), q = at(d, sg * off); if (q.z > 145.5) { TE2.push([q.x, 145.5]); break; } TE2.push([q.x, q.z]); if (!TE.done) { if (q.z > 127) { TE.push([q.x, 127]); TE.done = 1; } else TE.push([q.x, q.z]); } }
         H3.sitePoly = [[-14, 127]].concat(NJ.slice().reverse()).concat(TE); const NJ2 = NJ.slice(); { const e = NJ2[NJ2.length - 1]; NJ2.push([-12, e[1]]); } H3.earthPoly = [[-12, 145.5]].concat(NJ2.reverse()).concat(TE2); }
+      // the park over the infield's south (js/nvpark.js, the user's lunapark from the pictures): the school's roads there (the roundabout, its arms, the
+      // hill start, the winding way north, the crossroads) not made; its lanes and the plazas' rings are asphalt for the cars
+      H3.PARKM = typeof NVPark !== 'undefined' && o.park !== false; if (H3.PARKM) for (const k of [0, 1, 2, 3, 4, 5, 11]) H3.Ppts[k] = null;
       const P = H3.PAD, mz = (P[2] + P[3]) / 2, hz = (P[3] - P[2]) / 2; netAdd('pad', [[P[0] + hz, mz], [P[1] - hz, mz]], hz, 'asph'); H3.YW = new Set([0, 1, 2, 3, 4, 5, 11, 13, 14, 15]); }
     H3.kartPts = [[-175.9,204.9],[-172.5,218.2],[-156.9,226.8],[-125.2,229.1],[-96.4,223.3],[-67.6,220.5],[-44.6,221.0],[-26.1,213.0],[-11.7,202.6],[0.4,192.2],[15.9,184.2],[36.1,180.7],[52.2,183.0],[55.7,189.9],[51.1,199.1],[54.5,207.2],[76.4,210.7],[99.5,213.0],[109.8,218.7],[107.5,226.8],[90.8,229.1],[67.8,225.6],[44.7,221.0],[21.7,215.3],[1.5,209.5],[-18.6,204.9],[-44.6,201.4],[-79.1,200.3],[-113.7,199.1],[-148.3,198.0],[-168.4,199.1]]; netAdd('kart', H3.kartPts.concat([H3.kartPts[0]]), 3.5, 'asph');
     H3.forestPts = [[-8.5, 292.7], [-14, 264], [4, 230], [-9, 197], [-4, 172], [-5, 158.4]];   // (from the ring road, between its loops: the user took away its stretch south of it) H3.boatPts = [[at(660, w + 1).x, at(660, w + 1).z], [50, -280], [50, -330], [47, -356], [48, -368], [52, -372]];
@@ -3468,7 +3471,8 @@ body.mk-clean #h-msg { display: none !important; }
     { const lineUp = (P, xm, zm, sg) => { const n = P.length; let acc = 0; const out = P.map(p => p.slice()); for (let k = n - 1; k >= 0; k--) { if (k < n - 1) acc += Math.hypot(P[k + 1][0] - P[k][0], P[k + 1][1] - P[k][1]); const f = 1 - sst(9, 24, acc); out[k][0] += f * (xm - out[k][0]); }
         out[n - 1] = [xm, zm]; const keep = out.filter((p, k) => k === n - 1 || Math.abs(p[1] - zm) > 6.5); keep.splice(keep.length - 1, 0, [xm, zm + sg * 6]); return keep; };
       if (H3.forestPts && H3.Ppts[10]) { const fe = H3.forestPts[H3.forestPts.length - 1], pe = H3.Ppts[10][H3.Ppts[10].length - 1]; if (Math.hypot(fe[0] + 5, fe[1] - 158.4) < 3 && Math.hypot(pe[0] + 13, pe[1] - 145.3) < 6) { H3.forestPts = lineUp(H3.forestPts, -9, 158.6, 1); H3.Ppts[10] = lineUp(H3.Ppts[10], -9, 145.4, -1); } } }
-    H3.Ppts.forEach((p, k) => netAdd('p' + k, p, YARD && H3.YW.has(k) ? 3.5 : YARD && k >= 16 ? 3 : k === 4 ? 3.1 : 2.6, 'dirt')); netAdd('home', H3.forestPts, 3.2, 'dirt'); if (YARD) H3.boatPts = [[-11.6, -298.3], [4, -308], [20, -312.6], [39, -317.3], [48.7, -325.3], [50, -336], [47, -356], [48, -368], [52, -372]]; netAdd('boat', H3.boatPts, 2.3, 'dirt');
+    if (H3.PARKM) { NVPark.J.LANES.forEach((p, k) => netAdd('park' + k, p, 3.25, 'asph')); for (const k of ['F', 'C', 'A']) { const [x, z, R] = NVPark.J.PL[k], ring = []; for (let q = 0; q <= 48; q++) ring.push([x + R * Math.cos(q / 48 * 6.283), z + R * Math.sin(q / 48 * 6.283)]); netAdd('plaza' + k, ring, 3.25, 'asph'); } }
+    H3.Ppts.forEach((p, k) => p && netAdd('p' + k, p, YARD && H3.YW.has(k) ? 3.5 : YARD && k >= 16 ? 3 : k === 4 ? 3.1 : 2.6, 'dirt')); netAdd('home', H3.forestPts, 3.2, 'dirt'); if (YARD) H3.boatPts = [[-11.6, -298.3], [4, -308], [20, -312.6], [39, -317.3], [48.7, -325.3], [50, -336], [47, -356], [48, -368], [52, -372]]; netAdd('boat', H3.boatPts, 2.3, 'dirt');
     yield 'y3';
     // the jumps are crests: a small hill, then the way falls away steeply behind its top
     { const RP = H3.RP, near = (pts, u0, u1, f) => { const cv = new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z))); let bu = u0, bd = 1e9; for (let u = u0; u <= u1; u += 0.001) { const d = f(cv.getPointAt(u)); if (d < bd) { bd = d; bu = u; } } return { u: bu, L: cv.getLength() }; };
@@ -3519,7 +3523,7 @@ body.mk-clean #h-msg { display: none !important; }
       for (const g of grp) { const d0 = g[0].d - (g[0].D || 0) / 2 - 1.8, d1 = g[g.length - 1].d + (g[0].D || 0) / 2 + 1.8, r = []; const a0 = at(d0, li), a1 = at(d1, li); r.push([a0.x, a0.z]); for (let d = d0; d <= d1 + 0.01; d += 2) { const q = at(d, lb); r.push([q.x, q.z]); } const q1 = at(d1, lb); r.push([q1.x, q1.z], [a1.x, a1.z]); fenceAlong(r); } }
     yield 'y7';
     // dirt roads over the field (instead of cones): you drive them freely and turn onto the track where they meet it
-    H3.paths = H3.Ppts.map((p, k) => dirtPath(p, { w: YARD && H3.YW.has(k) ? 7 : YARD && k >= 16 ? 6 : k === 4 ? 6.2 : undefined, id: 'p' + k, prio: k === 0 ? 2 : k === 4 ? 1 : 0, hy: k >= 6 ? (x, z) => H3.ground(x, z) + (H3.hill && H3.hill.bump(x, z) > 0.01 ? 0.1 : 0) : undefined }));
+    H3.paths = H3.Ppts.map((p, k) => p && dirtPath(p, { w: YARD && H3.YW.has(k) ? 7 : YARD && k >= 16 ? 6 : k === 4 ? 6.2 : undefined, id: 'p' + k, prio: k === 0 ? 2 : k === 4 ? 1 : 0, hy: k >= 6 ? (x, z) => H3.ground(x, z) + (H3.hill && H3.hill.bump(x, z) > 0.01 ? 0.1 : 0) : undefined }));
     // the gravel course (the gravel exam's first task: a lap against the clock, all of it on gravel)
     H3.gravelLap = YARD ? H3.paths[5] : H3.paths[4]; if (!YARD) dressGravel(H3.gravelLap, 6.2);
     yield 'y8';
@@ -3538,7 +3542,8 @@ body.mk-clean #h-msg { display: none !important; }
       if (!YARD) { const N9 = [[-30.1, 53.9], [-6, 40], [22, 19], [50.4, -0.8]]; netAdd('n9', N9, 2.3, 'dirt'); H3.n9 = dirtPath(N9, { w: 4.6, id: 'n9', prio: 1 }); }
       }
     yield 'y9';
-    if (YARD) { H3.site = yardSite(H3.sitePoly, H3.PIT); H3.pad = schoolPad(H3.PAD); H3.rb = roundIsland(55, 8); H3.hillRamp = hillRamp(55, -58, -Math.PI / 2); H3.signs = [roadSign(49, -44, Math.PI / 2, 'stop'), roadSign(61, -32, -Math.PI / 2, 'stop'), roadSign(39, 14, 0, 'yield'), roadSign(61, 24, -Math.PI / 2, 'yield'), roadSign(71, 2, Math.PI, 'yield'), roadSign(49, -8, Math.PI / 2, 'yield')]; }
+    if (YARD && H3.PARKM) { H3.site = yardSite(H3.sitePoly, H3.PIT); H3.pad = schoolPad(H3.PAD); H3.park = NVPark.build(window.MK); }
+    else if (YARD) { H3.site = yardSite(H3.sitePoly, H3.PIT); H3.pad = schoolPad(H3.PAD); H3.rb = roundIsland(55, 8); H3.hillRamp = hillRamp(55, -58, -Math.PI / 2); H3.signs = [roadSign(49, -44, Math.PI / 2, 'stop'), roadSign(61, -32, -Math.PI / 2, 'stop'), roadSign(39, 14, 0, 'yield'), roadSign(61, 24, -Math.PI / 2, 'yield'), roadSign(71, 2, Math.PI, 'yield'), roadSign(49, -8, Math.PI / 2, 'yield')]; }
     yield 'y10';
     if (H3.tun) H3.tunMesh = tunnelBuild(H3.tun);
     yield 'y11';
