@@ -958,7 +958,7 @@ const Napake = (function () {
   function zgZapri() { const el = $('nk-zg'); if (el) el.remove(); for (const u of zgUrls) URL.revokeObjectURL(u); zgUrls = []; zgId = ''; }
 
   return { init, open, close, sync, dirka, flag, tocke, konec, izbira, nastavitve, pripravi, zgodovina, shranjene: () => dbAll(),
-    zg: { put: dbPut, MAX: DB_MAX, FULL: DB_FULL },   // (the tests: Zgodovina napak's bounds) okvir, dev, zaznaj, porocilo: () => porocilo().text,
+    okvir, dev, zaznaj, porocilo: () => porocilo().text, zg: { put: dbPut, MAX: DB_MAX, FULL: DB_FULL },   // (zg: the tests, Zgodovina napak's bounds)
     // the recording as a file (the tests, tools/posnetek.mjs): write, read, open; pojdi: the replay to t (k the car followed, cam), slika: its picture
     rrp: { pisi: rrpPisi, beri: rrpBeri, odpri: rrpOdpri, shrani: rrpShrani, pack: rrpPack, unpack: rrpUnpack,
       pojdi: (t, k, cam) => { if (!G || !G.replay()) return false; G.view(k == null ? -1 : k, cam); G.seek(t); return true; },

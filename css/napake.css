@@ -28,6 +28,7 @@
 .nk-bar { max-width: 100%; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .nk-bar button { min-height: 42px; padding: 0 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(8,11,16,.66); color: #fff; font: 700 clamp(13px, 3.6vh, 16px)/1 var(--f-ui); white-space: nowrap; cursor: pointer; }
 .nk-bar button:active { background: rgba(255,255,255,.18); }
+@media (max-width: 420px) { .nk-bar { gap: 6px; } .nk-bar button { padding: 0 9px; } }   /* (upright: Dodaj k zbirki, Zgodovina and Zapri in one row) */
 .nk-bar .nk-add { background: rgba(34,170,85,.92); border-color: rgba(255,255,255,.6); }
 .nk-bar .nk-close.warn { background: rgba(230,59,46,.85); border-color: rgba(255,255,255,.6); }
 
