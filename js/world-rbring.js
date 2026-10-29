@@ -116,10 +116,16 @@
       vid: [], poles: [-56, 66, -1], runoff: ['LONDON', 'LONDON', 'LONDON'], straight: [-110, 160, -1],
       farm: { wall: [0.95, 0.94, 0.9], roof: [0.26, 0.24, 0.26], end: [0.92, 0.9, 0.86], barn: [0.52, 0.34, 0.2], barnRoof: [0.3, 0.28, 0.3], barnEnd: [0.5, 0.33, 0.2] },
       tvSkip: [], recov: [], photo: [], jets: null, screen: null,
-      tier: [[0.56, 0.44, 0.31], [0.44, 0.34, 0.24], [0.48, 0.37, 0.26]], roof: [[0.36, 0.38, 0.36], [0.3, 0.3, 0.3], [0.5, 0.48, 0.44]],   // (a timber stand under a dark felt roof)
-      colMod: (P) => (x, z, c) => {   // a London park in spring: lawns mown short, lush and even, a little darker under the old trees
+      mow: 0.45, tier: [[0.56, 0.44, 0.31], [0.44, 0.34, 0.24], [0.48, 0.37, 0.26]], roof: [[0.36, 0.38, 0.36], [0.3, 0.3, 0.3], [0.5, 0.48, 0.44]],   // (a timber stand under a dark felt roof)
+      colMod: (P) => (x, z, c, dd) => {   // a London park in spring: lawns mown short by the road, lush and even, a little darker under the old trees; further out drifts of longer grass, the banks the crowds stand on trodden
         const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.14 + (m - 0.5) * 0.08;
         c[0] *= k * 0.94; c[1] *= k * 1.03; c[2] *= k * 0.92;
+        const lw = nrLCf(x, z, 0), rough = sstep(0.46, 0.68, P.n3(x * 0.8 + 410, z * 0.8 - 160)) * sstep(6, 22, dd) * lw * 0.8, seed = rough * sstep(0.45, 0.7, P.n4(x * 0.9 + 33, z * 0.9 - 51));   // the uncut grass: paler and yellower, its seed heads in streaks
+        c[0] = lerp(c[0], c[0] * 1.16 + 0.06, rough) + seed * 0.07; c[1] = lerp(c[1], c[1] * 1.04 + 0.03, rough) + seed * 0.04; c[2] = lerp(c[2], c[2] * 0.76, rough) + seed * 0.02;
+        const tr = CPK ? CPK.trod(x, z) : 0;   // the spectators' banks: trodden flat, yellowed, worn to the soil in patches
+        if (tr > 0) { const so = sstep(0.5, 0.72, P.n4(x * 0.8 - 90, z * 0.8 + 140)) * tr * 0.7, t = tr * 0.7;
+          c[0] = lerp(c[0], c[0] * 1.14 + 0.06, t); c[1] = lerp(c[1], c[1] * 0.97, t); c[2] = lerp(c[2], c[2] * 0.82, t);
+          c[0] = lerp(c[0], 1.02, so); c[1] = lerp(c[1], 0.8, so); c[2] = lerp(c[2], 0.66, so); }
         const daisy = sstep(0.66, 0.84, P.n1(x * 1.3 - 210, z * 1.3 + 75)) * 0.25 * nrLCf(x, z, 0);   // a few daisies in the lawns
         c[0] = lerp(c[0], c[0] * 1.12 + 0.08, daisy); c[1] = lerp(c[1], c[1] * 1.05 + 0.08, daisy); c[2] = lerp(c[2], c[2] * 1.2 + 0.1, daisy);
       } },
@@ -1061,7 +1067,15 @@
       const w = wallAt(x, z); if (w) { const [p, d, past] = w, lo = d < 9, f = (lo ? sstep(-20, -10, d) : sstep(26, 18, d)) * sstep(8, 0, past); if (f > 0) h = lerp(h, lo ? p.lo : p.hi, f); }   // the lower lawn up to the wall, the upper one from 9 m behind it (the terrain's 8 m cells slope across there, under the upper lawn's edge cpPark lays)
       return h;
     };
-    return (CPK = { lakes, lakeAt, walls });
+    // the banks the crowds stand on (def.ga): points every 3 m along them, 3-15 m past the barrier, hashed (16 m cells)
+    const TH = new Map(), L = T.len;
+    for (const [a, b, sd] of T.def.ga || []) for (let d = a - 8; d <= b + 8; d += 3) {
+      const i = T.idx((((T.startS + d) % L) + L) % L), bar = sd > 0 ? T.br[i] : T.bl[i], e = sstep(a - 8, a + 6, d) * sstep(b + 8, b - 6, d);
+      for (let o = bar + 3; o <= bar + 15; o += 4) { const x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o, k = Math.floor(x / 16) + ',' + Math.floor(z / 16); let c = TH.get(k); if (!c) TH.set(k, c = []); c.push(x, z, e); } }
+    const trod = (x, z) => { let f = 0; const cx = Math.floor(x / 16), cz = Math.floor(z / 16);
+      for (let b = cz - 1; b <= cz + 1; b++) for (let a = cx - 1; a <= cx + 1; a++) { const c = TH.get(a + ',' + b); if (c) for (let q = 0; q < c.length; q += 3) { const d = Math.hypot(x - c[q], z - c[q + 1]); if (d < 6) f = Math.max(f, sstep(6, 2.5, d) * c[q + 2]); } }
+      return f; };
+    return (CPK = { lakes, lakeAt, walls, trod });
   }
   // a soft blob (an icosahedron with radii rx along its yaw, ry up, rz across; smooth normals), the sculptures' and the sphinxes' bodies
   function cpBlob(g, cx, cy, cz, rx, ry, rz, yaw, col, k0) {
@@ -1203,11 +1217,12 @@
   }
   function cpTreeGeo(kind) {   // unit trees (height 1): 0 a plane or an oak (a tall trunk, a broad crown of soft clumps), 1 a horse chestnut (a dense dark dome); 2, 3 the cheaper far ones
     const g = new GB(), R = rng(820 + kind), rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true;
-    const pl = [0.34, 0.5, 0.21], ch = [0.26, 0.42, 0.17], bk = [0.56, 0.52, 0.44];   // (the fresh greens of spring)
-    if (kind === 0) { cyl(g, 0, -0.02, 0, 0.035, 0.45, 5, bk, null, 0.025);
-      for (const [x, y, z, r] of [[0, 0.62, 0, 0.27], [0.18, 0.55, 0.08, 0.2], [-0.17, 0.58, -0.06, 0.21], [0.04, 0.78, -0.12, 0.18], [-0.06, 0.8, 0.13, 0.17]]) puff(g, x, y, z, r, 0.85, pl, R, 0.25, 0.62, 1.12); }
+    const pl = [0.34, 0.5, 0.21], ch = [0.26, 0.42, 0.17], bk = [0.4, 0.36, 0.3];   // (the fresh greens of spring; the bark a dark grey-brown, not a pale post from above)
+    if (kind === 0) { cyl(g, 0, -0.02, 0, 0.03, 0.36, 5, bk, null, 0.02);   // a broad old crown from a third of the height up, in clumps of their own greens (lighter and yellower to the sun, darker and bluer on the shaded side)
+      for (const [x, y, z, r, t] of [[0, 0.58, 0, 0.34, 0], [0.22, 0.5, 0.12, 0.2, 0.05], [-0.2, 0.52, -0.12, 0.21, -0.05], [0.04, 0.8, -0.06, 0.19, 0.06]])
+        puff(g, x, y, z, r, 0.82, [pl[0] * (1 + t * 1.2), pl[1] * (1 + t * 0.4), pl[2] * (1 - t)], R, t === 0 ? 0.12 : 0.22, 0.56, 1.06, t === 0); }   // (the middle clump subdivided: a rounder crown)
     else if (kind === 1) { cyl(g, 0, -0.02, 0, 0.04, 0.32, 5, [0.36, 0.3, 0.24], null, 0.03); puff(g, 0, 0.58, 0, 0.36, 0.95, ch, R, 0.2, 0.55, 1.05, true); }
-    else { cyl(g, 0, -0.02, 0, 0.035, 0.45, 4, bk, null, 0.025); puff(g, 0, 0.62, 0, 0.34, 0.88, [0.3, 0.46, 0.2], R, 0.25, 0.6, 1.08); }   // (far: one lump)
+    else { cyl(g, 0, -0.02, 0, 0.03, 0.36, 4, bk, null, 0.02); puff(g, 0, 0.6, 0, 0.36, 0.86, [0.3, 0.46, 0.2], R, 0.2, 0.58, 1.08); }   // (far: one lump)
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -1307,9 +1322,10 @@
     // asphalt tone: resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker still in the braking zones of the
     // slower corners (as on the Nordschleife; an F1 circuit is younger and more even)
     const secT = new Float32Array(N), brk = new Float32Array(N);
-    for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 97) * 70), t = 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
+    for (let i0 = 0, k = 0; i0 < N; k++) { const n = PER ? 18 + Math.floor(crH(k, 3, 97) * 50) : 60 + Math.floor(crH(k, 3, 97) * 70), t = PER ? 0.9 + crH(k, 5, 97) * 0.15 : 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }   // (the 1930s: tar macadam laid in shorter, more uneven stretches)
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    const shade = PER ? (i, o) => { const rl = T.rl[i]; let k = (0.84 - (0.1 + 0.08 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.6) k += 0.06 * sstep(w * 0.6, w, Math.abs(o)); return [k * 1.04, k, k * 0.92]; }   // (the 1930s: a warmer tar macadam, the racing line less rubbered, its edges paler where the cars seldom run and the dust settles)
+      : (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const MOW_D = LK.trees === 'rio' ? [0.12, 0.08, 0.1] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
     for (let c0 = 0; c0 < N; c0 += CH) {
@@ -1319,8 +1335,16 @@
         const i = ii % N, v = ii * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
         if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
+        if (PER) {   // the 1930s: no painted lines; along each edge a strip of dust and loose grit over the road's edge and the verge, its grass edge ragged
+          const ed = (sd) => { const q = ii * ds, j = 0.5 + 0.28 * Math.sin(q * 0.23 + sd * 2.1) + 0.14 * Math.sin(q * 0.71 + sd * 0.4) + (crH(i, sd, 41) - 0.5) * 0.22, v = 0.92 + crH(i, sd, 43) * 0.16;   // (j: how far the grit reaches, 0..1)
+            const o0 = w - 0.1, o1 = w + 0.08, o2 = w + 0.2 + 0.25 * j, o3 = w + 0.32 + 0.45 * j, hv = (o) => -0.04 * Math.max(0, o - w) / 1.2 + 0.03;
+            const C = [[0.42 * v, 0.41 * v, 0.38 * v], [0.54 * v, 0.51 * v, 0.45 * v], [0.5 * v, 0.48 * v, 0.4 * v], [0.4 * v, 0.44 * v, 0.29 * v]], O = [o0, o1, o2, o3];
+            return { p: O.map(o => Pt(i, sd * o, hv(o) + 0.004)), c: C }; };
+          const L = ed(-1), R = ed(1), l = gl.row([...L.p.slice().reverse(), ...R.p], [...L.c.slice().reverse(), ...R.c]);
+          if (pl >= 0) { gl.link(pl, l, 0, 3); gl.link(pl, l, 4, 7); } pl = l;
+        } else {
         const wl = [0.94, 0.94, 0.9], l = gl.row([Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], [wl, wl, wl, wl]);
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
+        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l; }
         for (const side of [-1, 1]) {
           const si = side > 0 ? 1 : 0;
           if (kerb[si][i]) {   // red/white kerb in 1 m blocks: a sloped inner edge, a flat top, a low outer lip
@@ -1455,12 +1479,13 @@
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.76, 0.76, 0.74], concD = [0.62, 0.62, 0.6], W1 = [1, 1, 1];
-    const railRow = (gr, i, side, k) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road)
+    const railRow = (gr, i, side, k, bi) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road; bi: the straw bale it closes, else sample i's)
       const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
       let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.88, 0.88, 0.86], [0.82, 0.82, 0.8]];
-      if (k === 3) { const o3 = side * (bar + 0.95), sh = i % 2 ? 1 : 0.9;   // straw bales: two courses, a seam between the bales every 2 m, the tops a lighter straw
-        p = [Pt(i, o, -0.2), Pt(i, o, 0.46), Pt(i, o, 0.9), Pt(i, o, 0.9), Pt(i, o3, 0.9)]; c = [[0.62 * sh, 0.5 * sh, 0.27 * sh], [0.8 * sh, 0.68 * sh, 0.39 * sh], [0.86 * sh, 0.74 * sh, 0.43 * sh], [0.93, 0.82, 0.52], [0.93, 0.82, 0.52]]; }   // (the top's edge twice: a sharp edge, not a rounded one)
+      if (k === 3) { const b = bi == null ? i : bi, u = crH(b, side, 51), sh = 0.84 + u * 0.24, gy = crH(b, side, 53) < 0.18 ? 0.88 : 1, ht = 0.86 + crH(b, side, 55) * 0.09, o3 = side * (bar + 0.9 + crH(b, side, 57) * 0.12);   // straw bales: two courses, each bale (a sample, 2 m) its own straw and height (a few weathered greyer), the tops lighter
+        const S = (r, g, bb) => [r * sh, g * sh * gy + r * sh * (1 - gy) * 0.9, bb * sh * gy + r * sh * (1 - gy) * 0.6];
+        p = [Pt(i, o, -0.2), Pt(i, o, 0.44), Pt(i, o, ht), Pt(i, o, ht), Pt(i, o3, ht)]; c = [S(0.6, 0.48, 0.26), S(0.8, 0.68, 0.39), S(0.86, 0.74, 0.43), S(0.95, 0.84, 0.54), S(0.93, 0.82, 0.52)]; }   // (the top's edge twice: a sharp edge, not a rounded one)
       else if (k === 4) { const o4 = side * (bar + 0.2), sh = i % 3 ? 1 : 0.86;   // a close-boarded timber fence, weathered, its palings in shades
         p = [Pt(i, o, -0.3), Pt(i, o, 0.15), Pt(i, o, 1.15), Pt(i, o, 1.15), Pt(i, o4, 1.15)]; c = [[0.3, 0.24, 0.18], [0.46 * sh, 0.37 * sh, 0.27 * sh], [0.53 * sh, 0.43 * sh, 0.31 * sh], [0.6, 0.5, 0.37], [0.6, 0.5, 0.37]]; }
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
@@ -1478,10 +1503,11 @@
         let prev = -1, pk = -2, acc = c0 * ds;
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++, acc += ds) {
           const i = ii % N, k = kindAt(i, side);
-          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, i, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, i, side, pk), 0, 4); prev = -1; }   // the old kind runs up to here
+          const ib = (i - 1 + N) % N;   // (the bale that ends at sample i)
+          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, i, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, i, side, pk, ib), 0, 4); prev = -1; }   // the old kind runs up to here
           if (k < 0) { pk = k; continue; }
           const r = k === 2 ? tyreRow(gt, i, side, acc / 3) : railRow(gr, i, side, k);
-          if (prev >= 0) { if (k === 2) gt.link(prev, r, 0, 2); else gr.link(prev, r, 0, 4); } prev = r; pk = k;
+          if (prev >= 0) { if (k === 2) gt.link(prev, r, 0, 2); else if (k === 3) gr.link(prev, railRow(gr, i, side, 3, ib), 0, 4); else gr.link(prev, r, 0, 4); } prev = r; pk = k;   // (bales: a row of its own closes the one before, so each bale has its own colour and height)
           if (k === 0 && ii % 2 === 0 && ii < c0 + CH) { const p = Pt(i, side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }
           if (k >= 1 && k <= 2) fence[side2(side)][i] = k;
         }
@@ -2241,7 +2267,9 @@
             const si = side > 0 ? 1 : 0, vr = rbVerge(i, side), [o1, h1] = vr[1], [o2, h2] = vr[2], band = [];
             for (let b = 1; b <= MOW_N; b++) { const o = Math.min(o1 + b * MOW_W, o2), h = h1 + (h2 - h1) * (o - o1) / (o2 - o1); band.push([o, h], [o, h]); }   // (each edge twice: a sharp change of colour)
             const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], nb = 2 + 2 * MOW_N;
-            const pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pr.map(([o], k) => { const p = pts[k]; if (k <= nb) return k < 2 ? vg : (Math.floor((k - 1) / 2) % 2 ? vg : vgD); const gc = nrGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
+            const pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pr.map(([o], k) => { const p = pts[k]; if (k <= nb) { const c = k < 2 ? vg : (Math.floor((k - 1) / 2) % 2 ? vg : vgD); if (!PER) return c;
+                const f = 1 + (P.n4(p[0] * 0.7, p[2] * 0.7) - 0.5) * 0.2 + (P.n3(p[0] * 1.5 + 80, p[2] * 1.5) - 0.5) * 0.12, y = sstep(0.58, 0.8, P.n4(p[0] * 0.5 - 300, p[2] * 0.5 + 120)) * 0.5;   // (the 1930s park: the verges in patches, some drier)
+                return [c[0] * f * (1 + y * 0.2), c[1] * f * (1 + y * 0.04), c[2] * f * (1 - y * 0.3)]; } const gc = nrGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));
             const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
