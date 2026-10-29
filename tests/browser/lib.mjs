@@ -69,7 +69,9 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-  page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
+  // (net::ERR_ABORTED is the browser's own cancel, no failure of the game or the server: a page reloaded while a script was still on its
+  // way, a video read in pieces; a missing file is a 404 answer, not a failed request)
+  page.on('requestfailed', r => { const why = (r.failure() || {}).errorText || ''; if (why !== 'net::ERR_ABORTED') errors.push('request failed: ' + r.url() + (why ? ' (' + why + ')' : '')); });
   // (the failures off unless a test asks for them: a cut tyre after a knock would change what the other tests see; the best moment's video
   // after a race too: it would play before the results)
   // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer;
