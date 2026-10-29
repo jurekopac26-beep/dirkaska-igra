@@ -4,9 +4,12 @@
 // ground until its friction stops it, pushes the pieces it runs into, and a wooden one hit hard falls over (then the car drives over it).
 // The solid things (H3.solids: the volcano's foot, the park's rides; js/nvpark.js) are lines with a thickness that do not move: the car
 // bounces off them. Stepped with the race (js/game.js stepRace); the pieces moved are drawn where they are (their instances).
-// The park's loose things (H3.loose: barrels, cones, the stalls; js/nvpark.js) are little rigid bodies as the trackside props (js/core.js
-// PROPK, propStep, propCarHit): they stand until the car knocks them, then fly off, tumble and lie where they land, a stall falling apart into
-// its counter, roof and posts; the car hardly slows. All of them one mesh (one draw call): the vertices of those that move put where they are.
+// The park's loose things (H3.loose: barrels, cones, stalls, crates, bins, benches, the low barriers' blocks, balloon stands, lamps; js/nvpark.js)
+// are little rigid bodies as the trackside props (js/core.js PROPK, propStep, propCarHit): they stand until the car knocks them, then fly off,
+// tumble and lie where they land, a stall falling apart into its counter, roof and posts, a stack of crates together, a knocked stand's balloons
+// floating up and away; the car hardly slows. The bouncy castles are solid (the car bounces off them). The park's people walk out of the car's
+// way (walkStep: off the lane onto the grass when it comes, back once it has gone; never hit). All of them one mesh (one draw call): the
+// vertices of those that move put where they are.
 const NVWalls = (function () {
   'use strict';
   const KIND = { plastic: { m: 160, mu: 0.55 }, wood: { m: 45, mu: 0.75, fall: 4 } };   // (kg; the friction on the ground; wood: the speed it is hit with that knocks it over, m/s)
@@ -23,6 +26,14 @@ const NVWalls = (function () {
     counter: { m: 35, rh: 1.1,  rb: 1.67, e: 0.15, mu: 0.75, lift: 0.35, I: 22,  pts: boxP(1.3, 0.55, 0.9), snd: 'crate' },
     roof:    { m: 8,  rh: 1.2,  rb: 1.83, e: 0.1,  mu: 0.8,  lift: 0.3,  I: 6,   pts: boxP(1.45, 0.06, 1.1), snd: 'crate', flat: true },
     post:    { m: 3,  rh: 0.1,  rb: 1.1,  e: 0.2,  mu: 0.6,  lift: 0.8,  I: 1.2, pts: boxP(0.04, 1.1, 0.04), snd: 'crate', flat: true },
+    crate:   { m: 12, rh: 0.42, rb: 0.7,  e: 0.2,  mu: 0.7,  lift: 0.35, I: 1.3, pts: boxP(0.4, 0.4, 0.4), snd: 'crate' },
+    bin:     { m: 9,  rh: 0.3,  rb: 0.55, e: 0.3,  mu: 0.6,  lift: 0.6,  I: 0.9, pts: cylP(0.3, -0.45, 0.45, 6), snd: 'barrel' },
+    bench:   { m: 20, rh: 0.9,  rb: 1.0,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 6,   pts: [[-0.9, -0.45, -0.25], [0.9, -0.45, -0.25], [-0.9, -0.45, 0.25], [0.9, -0.45, 0.25], [-0.9, 0.5, 0.26], [0.9, 0.5, 0.26], [-0.9, 0.05, -0.25], [0.9, 0.05, -0.25]], snd: 'bench', com: 0.45 },
+    block:   { m: 14, rh: 0.75, rb: 1.05, e: 0.25, mu: 0.6,  lift: 0.4,  I: 4.5, pts: boxP(0.95, 0.4, 0.25), snd: 'barrel' },
+    bstand:  { m: 8,  rh: 0.5,  rb: 0.7,  e: 0.2,  mu: 0.7,  lift: 0.4,  I: 0.8, pts: boxP(0.5, 0.4, 0.35), snd: 'crate' },
+    balloon: { m: 0.05, rh: 0.28, rb: 0.28, e: 0, mu: 0, lift: 0, I: 0.01, pts: [], float: true },   // (let go when its stand is knocked: floats up and away)
+    person:  { m: 70, rh: 0.3, rb: 1, e: 0, mu: 0, lift: 0, I: 1, pts: [], walker: true },   // (the park's people: they run out of the car's way, walkStep)
+    lamp:    { m: 25, rh: 0.12, rb: 2.0,  e: 0.15, mu: 0.6,  lift: 0.15, I: 30,  pts: cylP(0.1, -1.4, -1.4, 4).slice(0, 4).concat([[0, 2.58, 0]]), snd: 'lamp', com: 1.4 },
   };
   const G = 13;
   let LZ = null, rs = 1; const lgrid = new Map(), lmoving = new Set();
@@ -65,7 +76,7 @@ const NVWalls = (function () {
         const dx = q.bx - q.ax, dz = q.bz - q.az, L2 = dx * dx + dz * dz, u = L2 ? Math.max(0, Math.min(1, ((x - q.ax) * dx + (z - q.az) * dz) / L2)) : 0;
         const ex = x - q.ax - dx * u, ez = z - q.az - dz * u, d = Math.hypot(ex, ez), pen = r + q.r - d; if (pen <= 0) continue;
         const nx = d > 1e-6 ? ex / d : -s, nz = d > 1e-6 ? ez / d : c, vn = car.vx * nx + car.vz * nz, e = q.e != null ? q.e : E;
-        car.x += nx * pen; car.z += nz * pen; if (vn < 0) { car.vx -= (1 + e) * vn * nx; car.vz -= (1 + e) * vn * nz; }
+        car.x += nx * pen; car.z += nz * pen; if (vn < 0) { car.vx -= (1 + e) * vn * nx; car.vz -= (1 + e) * vn * nz; if (q.snd && vn < -1.5 && (!car.propSnd || -vn > car.propSndV)) { car.propSnd = q.snd; car.propSndV = -vn; } }   // (q.snd: a bouncy castle's thud)
       }
     }
     if (LZ) looseStep(dt, car, mc, c, s);
@@ -107,7 +118,7 @@ const NVWalls = (function () {
   function wake(b) {
     if (b.sleep) { b.sleep = false; b.t = 0; b.age = 0; lmoving.add(b); } b.knocked = true;
     const g = b.grp; if (!g || g.broken) return; g.broken = true;
-    for (const p of g.parts) if (p !== b) { p.sleep = false; p.t = 0; p.age = 0; p.knocked = true; lmoving.add(p); p.vx = b.vx * 0.35 + (rnd() - 0.5) * 1.6; p.vz = b.vz * 0.35 + (rnd() - 0.5) * 1.6; p.vy = rnd() * 1.4; p.wx = (rnd() - 0.5) * 4; p.wy = (rnd() - 0.5) * 3; p.wz = (rnd() - 0.5) * 4; }
+    for (const p of g.parts) if (p !== b) { p.sleep = false; p.t = 0; p.age = 0; p.knocked = true; lmoving.add(p); p.vx = b.vx * 0.35 + (rnd() - 0.5) * 1.6; p.vz = b.vz * 0.35 + (rnd() - 0.5) * 1.6; p.vy = p.K.float ? 0.4 + rnd() * 0.8 : rnd() * 1.4; p.wx = (rnd() - 0.5) * 4; p.wy = (rnd() - 0.5) * 3; p.wz = (rnd() - 0.5) * 4; if (p.K.float) { p.vx *= 0.2; p.vz *= 0.2; p.wx = p.wy = p.wz = 0; } }
   }
   function limp(b, jx, jy, jz, rx, ry, rz) { const K = b.K; b.vx += jx / K.m; b.vy += jy / K.m; b.vz += jz / K.m; b.wx += (ry * jz - rz * jy) / K.I; b.wy += (rz * jx - rx * jz) / K.I; b.wz += (rx * jy - ry * jx) / K.I; }
   const _r = [0, 0, 0];
@@ -125,7 +136,7 @@ const NVWalls = (function () {
     for (const o of [1.3, 0, -1.3]) {
       const x = car.x + c * o, z = car.z + s * o, r = 0.95;
       lnear(x, z, (b) => {
-        const K = b.K; if (b.y - K.rb > cy + 1.3 || b.y + K.rb < cy + 0.05 || (K.flat && b.knocked && b.y - b.fy < 0.35)) return;   // (far over it or under it; a roof or a post lying: driven over)
+        const K = b.K; if (K.float || K.walker || b.y - K.rb > cy + 1.3 || b.y + K.rb < cy + 0.05 || (K.flat && b.knocked && b.y - b.fy < 0.35)) return;   // (a balloon; far over it or under it; a roof or a post lying: driven over)
         let y0 = 1e9, y1 = -1e9; for (const p of K.pts) { const y = rot(b, p[0], p[1], p[2])[1]; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (b.y + y0 > cy + 1.3 || b.y + y1 < cy + 0.05) return;   // (its lowest corner over the car's roof: a stall's roof)
         const ex = b.x - x, ez = b.z - z, rr = r + K.rh, e2 = ex * ex + ez * ez; if (e2 >= rr * rr) return;
         const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e, rx = -nx * K.rh, rz = -nz * K.rh, pcx = b.x + rx - car.x, pcz = b.z + rz - car.z, w = car.w || 0;
@@ -141,10 +152,38 @@ const NVWalls = (function () {
       });
     }
     if (lmoving.size) for (const b of [...lmoving]) lstep(b, dt);
+    if (LZ.walkers.length) walkStep(dt, car, c, s, sp);
     if (hi > lo) { for (const a of [LZ.pos, LZ.nor]) { const R = a.updateRange; let o = lo * 3, e = hi * 3; if (R.count !== -1) { o = Math.min(o, R.offset); e = Math.max(e, R.offset + R.count); } R.offset = o; R.count = e - o; a.needsUpdate = true; } lo = Infinity; hi = -1; }   // (only what moved goes to the GPU: what is not there yet, with it)
   }
+  // the park's people: one in the car's way (ahead of it, across its path, the faster it comes the further ahead) runs out of it sideways, off the
+  // lane onto the grass (spot), and never lets the car touch them (out of its reach at once if it ever gets there); once the car is gone they
+  // walk back to where they stood. Running they bob and lean into it
+  const _y = new THREE.Vector3(0, 1, 0), _ax = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+  function walkStep(dt, car, c, s, sp) {
+    const hx = sp > 0.5 ? car.vx / sp : c, hz = sp > 0.5 ? car.vz / sp : s, reach = 6 + sp * 1.4;
+    const flee = (b, side, lat) => { for (const sd of [side, -side]) for (const extra of [0, 1.5, 3, 4.5]) { const out = 4.8 - sd * lat + extra, tx = b.x - hz * sd * out, tz = b.z + hx * sd * out; if (LZ.spot(tx, tz)) { b.tx = tx; b.tz = tz; b.st = 1; return; } }
+      b.tx = b.x - hz * side * (5 - side * lat); b.tz = b.z + hx * side * (5 - side * lat); b.st = 1; };   // (no grass in reach: out of the way all the same)
+    for (const b of LZ.walkers) {
+      const dx = b.x - car.x, dz = b.z - car.z, d2 = dx * dx + dz * dz; if (b.st === 0 && d2 > (reach + 12) * (reach + 12)) continue;
+      const along = dx * hx + dz * hz, lat = -dx * hz + dz * hx;   // (ahead of the car; to its left +)
+      if (sp > 1 && Math.abs(lat) < 3.4 && along > -2.5 && along < reach && (b.st !== 1 || Math.abs(-(b.tx - car.x) * hz + (b.tz - car.z) * hx) < 3.4)) flee(b, Math.sign(lat) || (b.v0 % 2 ? 1 : -1), lat);
+      let pushed = false; for (const o of [1.3, 0, -1.3]) { const ex = b.x - car.x - c * o, ez = b.z - car.z - s * o, e = Math.hypot(ex, ez); if (e < 1.35) { const k = (1.35 - e) / (e || 1); b.x += ex * k; b.z += ez * k; pushed = true; if (b.st !== 1) flee(b, Math.sign(lat) || 1, lat); } }   // (never touched)
+      if (b.st === 3) { b.t += dt; if (b.t > 3 && (d2 > 25 * 25 || (sp < 0.5 && d2 > 8 * 8))) b.st = 2; }
+      let mv = 0; if (b.st === 1 || b.st === 2) { const tx = b.st === 1 ? b.tx : b.home.x, tz = b.st === 1 ? b.tz : b.home.z, vx = tx - b.x, vz = tz - b.z, l = Math.hypot(vx, vz), v = b.st === 1 ? 5.5 : 1.3;
+        if (l < 0.05) { if (b.st === 1) { b.st = 3; b.t = 0; } else { b.st = 0; b.x = b.home.x; b.z = b.home.z; } } else { const st = Math.min(l, v * dt); b.x += vx / l * st; b.z += vz / l * st; b.dx = vx / l; b.dz = vz / l; mv = v; } }
+      if (!mv && !pushed) { if (b.still) continue; b.still = true; } else b.still = false;   // (standing: drawn once, upright)
+      b.ph += dt * (mv > 3 ? 12 : 7);
+      const gy = LZ.gy(b.x, b.z), bob = mv ? Math.abs(Math.sin(b.ph)) * (mv > 3 ? 0.09 : 0.04) : 0, lean = mv > 3 ? 0.22 : mv ? 0.06 : 0; b.y = gy + bob;
+      if (lean) { _ax.set(b.dz, 0, -b.dx).normalize(); _q1.setFromAxisAngle(_ax, lean); } else _q1.set(0, 0, 0, 1); b.qx = _q1.x; b.qy = _q1.y; b.qz = _q1.z; b.qw = _q1.w;
+      ltake(b); lput(b); draw2(b);
+    }
+  }
   function lstep(b, dt) {
-    const K = b.K; b.age += dt; b.hitT = (b.hitT || 0) + dt; b.vy -= G * dt;
+    const K = b.K; b.age += dt; b.hitT = (b.hitT || 0) + dt;
+    if (K.float) {   // (a balloon let go: up at 2 m/s or so, swaying in the breeze; out of sight above 45 m)
+      b.vy = Math.min(2.4, b.vy + 1.6 * dt); const k = Math.max(0, 1 - 0.8 * dt); b.vx = b.vx * k + Math.sin(b.age * 1.3 + b.v0) * 0.6 * dt; b.vz = b.vz * k + Math.cos(b.age * 1.1 + b.v0) * 0.6 * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; if (b.y - b.fy > 45) { b.gone = true; b.sleep = true; lmoving.delete(b); } ltake(b); lput(b); draw2(b); return; }
+    b.vy -= G * dt;
     b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
     const h = 0.5 * dt, qx = b.qx, qy = b.qy, qz = b.qz, qw = b.qw, wx = b.wx, wy = b.wy, wz = b.wz;   // (turned by its spin, the world's axes)
     b.qx = qx + h * (wx * qw + wy * qz - wz * qy); b.qy = qy + h * (wy * qw + wz * qx - wx * qz); b.qz = qz + h * (wz * qw + wx * qy - wy * qx); b.qw = qw - h * (wx * qx + wy * qy + wz * qz);
@@ -165,7 +204,7 @@ const NVWalls = (function () {
     }
     if (maxPen > 0) b.y += maxPen; if (b.vy > 8) b.vy = 8;
     if (touch) { const k = Math.max(0, 1 - 2.2 * dt), kv = Math.max(0, 1 - 1.4 * dt); b.wx *= k; b.wy *= k; b.wz *= k; b.vx *= kv; b.vz *= kv; } else { const kv = Math.max(0, 1 - 0.25 * dt); b.vx *= kv; b.vz *= kv; }
-    lnear(b.x, b.z, (o) => { if (o !== b && !(b.grp && o.grp === b.grp)) lpair(b, o); });   // (what it flies into: knocked too)
+    lnear(b.x, b.z, (o) => { if (o !== b && !o.K.float && !o.K.walker && !(b.grp && o.grp === b.grp)) lpair(b, o); });   // (what it flies into: knocked too)
     ltake(b); lput(b);
     const v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz, w2 = b.wx * b.wx + b.wy * b.wy + b.wz * b.wz;
     if (touch && v2 < 0.05 && w2 < 0.2) b.t += dt; else b.t = 0;
@@ -185,6 +224,7 @@ const NVWalls = (function () {
   // a loose thing's vertices where it is (its mesh's part: from b.v0, its kind's shape turned by its quaternion)
   function draw2(b) {
     const T = b.tp, P = LZ.pos.array, N = LZ.nor.array, x = b.qx, y = b.qy, z = b.qz, w = b.qw;
+    if (b.gone) { for (let i = 0, o = b.v0 * 3; i < T.p.length; i += 3, o += 3) { P[o] = b.x; P[o + 1] = b.y; P[o + 2] = b.z; } if (b.v0 < lo) lo = b.v0; if (b.v0 + T.p.length / 3 > hi) hi = b.v0 + T.p.length / 3; return; }   // (gone: its vertices one point)
     const m00 = 1 - 2 * (y * y + z * z), m01 = 2 * (x * y - w * z), m02 = 2 * (x * z + w * y), m10 = 2 * (x * y + w * z), m11 = 1 - 2 * (x * x + z * z), m12 = 2 * (y * z - w * x), m20 = 2 * (x * z - w * y), m21 = 2 * (y * z + w * x), m22 = 1 - 2 * (x * x + y * y);
     for (let i = 0, o = b.v0 * 3; i < T.p.length; i += 3, o += 3) { const px = T.p[i], py = T.p[i + 1], pz = T.p[i + 2], nx = T.n[i], ny = T.n[i + 1], nz = T.n[i + 2];
       P[o] = b.x + m00 * px + m01 * py + m02 * pz; P[o + 1] = b.y + m10 * px + m11 * py + m12 * pz; P[o + 2] = b.z + m20 * px + m21 * py + m22 * pz;
@@ -193,9 +233,11 @@ const NVWalls = (function () {
   }
   // the loose things' mesh (js/nvpark.js): list [{ kind, x, y, z (the middle of its mesh), q (its turn), col (its colour), col2 (a roof's stripes), grp (a
   // stall's: its parts) }]; gy(x, z): the floor they lie on. Their shapes: a barrel, a cone, a stall's counter, its striped roof, its posts
-  function looseBuild(list, gy) {
+  function looseBuild(list, gy, spot) {   // (spot(x, z): somewhere a person may stand out of the way: grass, not a way, a ride or the pond)
     const C = new THREE.Color(), shapes = new Map(), bits = [];
     const fromGeo = (g, col) => { const n = g.index ? g.toNonIndexed() : g, p = n.attributes.position.array, nn = n.attributes.normal.array, cc = new Float32Array(p.length); C.set(col); for (let i = 0; i < cc.length; i += 3) { cc[i] = C.r; cc[i + 1] = C.g; cc[i + 2] = C.b; } return { p: Float32Array.from(p), n: Float32Array.from(nn), c: cc }; };
+    const merge = (parts) => { const S = parts.map(([g, c]) => fromGeo(g, c)), n = S.reduce((a, t) => a + t.p.length, 0), out = { p: new Float32Array(n), n: new Float32Array(n), c: new Float32Array(n) }; let o = 0;   // (one shape of several: a bench's seat, back and legs, a lamp's pole and head)
+      for (const t of S) { out.p.set(t.p, o); out.n.set(t.n, o); out.c.set(t.c, o); o += t.p.length; } return out; };
     const stripes = (hx, hy, hz, n, cA, cB) => {   // (a box striped across: its top, its bottom, its front and back in n stripes, the ends in the stripes' colour)
       const p = [], nn = [], cc = [], A = new THREE.Color(cA), B = new THREE.Color(cB);
       const quad = (a, b, c, d, nx, ny, nz, col) => { for (const v of [a, b, c, a, c, d]) { p.push(...v); nn.push(nx, ny, nz); cc.push(col.r, col.g, col.b); } };
@@ -209,17 +251,28 @@ const NVWalls = (function () {
       else if (kind === 'cone') t = fromGeo(new THREE.ConeGeometry(0.22, 0.7, 8).translate(0, LOOSE.cone.off, 0), col);
       else if (kind === 'counter') t = fromGeo(new THREE.BoxGeometry(2.6, 1.1, 1.8), col);
       else if (kind === 'roof') t = stripes(1.45, 0.06, 1.1, 8, col2 || '#e8452c', '#f4f4f0');
+      else if (kind === 'crate') t = fromGeo(new THREE.BoxGeometry(0.8, 0.8, 0.8), col);
+      else if (kind === 'bin') t = fromGeo(new THREE.CylinderGeometry(0.3, 0.26, 0.9, 8), col);
+      else if (kind === 'block') t = fromGeo(new THREE.BoxGeometry(1.9, 0.8, 0.5), col);
+      else if (kind === 'bstand') t = fromGeo(new THREE.BoxGeometry(1, 0.8, 0.7), col);
+      else if (kind === 'balloon') t = fromGeo(new THREE.SphereGeometry(0.28, 6, 4), col);
+      else if (kind === 'bench') { const c = LOOSE.bench.com, P = [[new THREE.BoxGeometry(1.8, 0.1, 0.5), 0, 0.45, 0], [new THREE.BoxGeometry(1.8, 0.4, 0.08), 0, 0.75, 0.22]]; for (const sx of [-0.8, 0.8]) for (const sz of [-0.2, 0.2]) P.push([new THREE.BoxGeometry(0.08, 0.4, 0.08), sx, 0.2, sz]);
+        t = merge(P.map(([g, x, y, z]) => [g.translate(x, y - c, z), col])); }
+      else if (kind === 'lamp') { const c = LOOSE.lamp.com; t = merge([[new THREE.CylinderGeometry(0.07, 0.09, 3.6, 6).translate(0, 1.8 - c, 0), col], [new THREE.SphereGeometry(0.28, 6, 4).translate(0, 3.7 - c, 0), 0xfff8e0]]); }
+      else if (kind === 'person') t = merge([[new THREE.CylinderGeometry(0.2, 0.24, 0.9, 5).translate(0, 0.95, 0), col], [new THREE.CylinderGeometry(0.17, 0.17, 0.5, 5, 1, true).translate(0, 0.25, 0), 0x2a3a5a], [new THREE.IcosahedronGeometry(0.17, 0).translate(0, 1.55, 0), 0xe0b89a]]);   // (from the feet up: as js/nvpark.js drew them)
       else t = fromGeo(new THREE.BoxGeometry(0.08, 2.2, 0.08), col);
       shapes.set(k, t); return t; };
     let nv = 0; for (const it of list) { const K = LOOSE[it.kind]; if (!K) continue; const tp = shape(it.kind, it.col, it.col2), q = it.q;
       const b = { kind: it.kind, K, tp, v0: nv, x: it.x, y: it.y, z: it.z, qx: q.x, qy: q.y, qz: q.z, qw: q.w, vx: 0, vy: 0, vz: 0, wx: 0, wy: 0, wz: 0, sleep: true, knocked: false, t: 0, age: 0, fy: gy(it.x, it.z), grp: it.grp || null };
       if (K.off) { const d = rot(b, 0, -K.off, 0); b.x += d[0]; b.y += d[1]; b.z += d[2]; }   // (its middle: a cone's weight low)
+      if (K.com) { const d = rot(b, 0, K.com, 0); b.x += d[0]; b.y += d[1]; b.z += d[2]; }   // (a bench, a lamp: the list gives the spot it stands on)
       b.home = { x: b.x, y: b.y, z: b.z, qx: b.qx, qy: b.qy, qz: b.qz, qw: b.qw }; if (b.grp) b.grp.parts.push(b); nv += tp.p.length / 3; bits.push(b); }
     const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), col = new Float32Array(nv * 3);
     for (const b of bits) col.set(b.tp.c, b.v0 * 3);
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true })); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.dyn = 1; mesh.name = 'loose';
-    const out = { bits, mesh, gy, pos: geo.attributes.position, nor: geo.attributes.normal }, LZ0 = LZ; LZ = out; for (const b of bits) draw2(b); LZ = LZ0; lo = Infinity; hi = -1;
+    for (const b of bits) if (b.K.walker) { b.st = 0; b.ph = b.v0 % 7; b.home.yaw = 0; }
+    const out = { bits, mesh, gy, spot: spot || (() => true), walkers: bits.filter(b => b.K.walker), pos: geo.attributes.position, nor: geo.attributes.normal }, LZ0 = LZ; LZ = out; for (const b of bits) draw2(b); LZ = LZ0; lo = Infinity; hi = -1;
     geo.computeBoundingSphere(); if (geo.boundingSphere) geo.boundingSphere.radius += 30;   // (room for those that fly off)
     return out;
   }
@@ -232,6 +285,6 @@ const NVWalls = (function () {
   }
   // (the tests: the pieces, and those moving)
   const state = () => ({ solids: [...new Set([].concat(...solid.values()))].length, n: W ? W.pieces.length : 0, plastic: W ? W.pieces.filter(p => p.kind === 'plastic').length : 0, wood: W ? W.pieces.filter(p => p.kind === 'wood').length : 0, moving: moving.size,
-    loose: LZ ? LZ.bits.length : 0, looseKinds: LZ ? LZ.bits.reduce((o, b) => (o[b.kind] = (o[b.kind] || 0) + 1, o), {}) : {}, looseMoving: lmoving.size });
+    loose: LZ ? LZ.bits.length : 0, looseKinds: LZ ? LZ.bits.reduce((o, b) => (o[b.kind] = (o[b.kind] || 0) + 1, o), {}) : {}, looseMoving: lmoving.size, looseGone: LZ ? LZ.bits.filter(b => b.gone).length : 0 });
   return { init, step, state, pieces: () => (W ? W.pieces : []), loose: () => (LZ ? LZ.bits : []), looseBuild };
 })();

@@ -2,8 +2,9 @@
 // (cut 1.55 m short of the circuit and the ring road) with three lanes of asphalt (6.5 m) from the lane by the SE lot north to three round plazas,
 // each with a fountain on a lawn and trees round it; the rides by the lanes (the big wheel, two carousels, the cups, the swing tower, the drop tower,
 // the pendulum, the boat swing, the dark ride's house, the little train ring), a pond with pedal boats, stalls and benches along the lanes, bouncy
-// castles, trees, people. Built by js/newmap.js hub4G over the infield (its old gravel ways there are not made, H3.PARK), before the still meshes
-// are merged (js/nvbake.js). Loaded with the new map (js/game.js nvStart).
+// castles, trees, people. The things along the lanes the car knocks over and the people (they run out of its way) are loose (js/nvwalls.js
+// looseBuild); no tree, stand or person on another way. Built by js/newmap.js hub4G over the infield (its old gravel ways there are not made,
+// H3.PARK), before the still meshes are merged (js/nvbake.js). Loaded with the new map (js/game.js nvStart).
 const NVPark = (function () {
   'use strict';
   // where the park lies (the infield north of the big lot), what stands in it (from the pictures' lunapark 1, lp3d/build3e.js)
@@ -24,6 +25,11 @@ const NVPark = (function () {
     const H3 = MK.H3, T = MK.T(), TL = H3.TL, gy = (x, z) => H3.ground(x, z), tx = Tex.all(), own = [];
     const inP = (x, z) => inPark(x, z) && (!H3.inside || H3.inside(x, z));   // (the park within the circuit's infield: its outline reaches past the circuit's west side)
     const rd = (x, z) => Math.min(Math.abs(T.query(x, z).d) - T.w, TL ? TL.dist(x, z, 30) - T.w : 1e9), inG = (x, z) => inP(x, z) && rd(x, z) > 3.5, inGg = (x, z) => inP(x, z) && rd(x, z) > 1.55;
+    // how far (x, z) is from the nearest way's edge (negative: on it): the net's ways (own: the park's lanes and plazas too) and every way laid as a
+    // road (H3.rr: the inner roads, the garages' lanes): no tree, stand or person on another way
+    const segD = (P, x, z) => { let m = 1e18; for (let k = 0; k < P.length - 1; k++) { const ax = P[k][0], az = P[k][1], vx = P[k + 1][0] - ax, vz = P[k + 1][1] - az, u = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1))), dx = ax + vx * u - x, dz = az + vz * u - z; m = Math.min(m, dx * dx + dz * dz); } return Math.sqrt(m); };
+    const RR = (H3.rr || []).map(r => { const P = r.P2.map(p => [p.x, p.z]), xs = P.map(p => p[0]), zs = P.map(p => p[1]), m = r.wd / 2 + 8; return { P, hw: r.wd / 2, bb: [Math.min(...xs) - m, Math.max(...xs) + m, Math.min(...zs) - m, Math.max(...zs) + m] }; });
+    const wayGap = (x, z, own) => { let best = 1e9; for (const e of (H3.net || []).concat(RR)) { if (!own && e.id && /^(park|plaza)/.test(e.id)) continue; const b = e.bb; if (b && (x < b[0] || x > b[1] || z < b[2] || z > b[3])) continue; best = Math.min(best, segD(e.P, x, z) - e.hw); } return best; };
     MK.clearWorld(inG, -99);   // (the World's things in the park: trees, signs, tyres)
     const MC = new Map(), mkey = (p, c, o) => p + c + JSON.stringify(o, (k, v) => v && v.isTexture ? 'tex' + v.id : v);
     const L = (c, o = {}) => { const k = mkey('L', c, o); let m = MC.get(k); if (!m) MC.set(k, m = new THREE.MeshLambertMaterial(Object.assign({ color: c }, o))); return m; };   // (one material per colour and look: the still meshes merge by it, js/nvbake.js)
@@ -123,7 +129,7 @@ const NVPark = (function () {
     // the dark ride's house
     { const [x, z, w, d, a] = J.HISA; at(new THREE.Mesh(new THREE.BoxGeometry(w, 6, d), L(0x3a2a3a)), x, z, 3, -a); at(new THREE.Mesh(new THREE.ConeGeometry(w * 0.6, 4, 4), L(0x1a1a22)), x, z, 8, -a + Math.PI / 4); }
     // along every lane, both sides, 2-4 m off its edge: stalls, crates, barrels, balloons, bins, benches, cones, lamps, barriers; four bouncy castles
-    const items = []; let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const items = [], folk = [], trees = []; let seed = 7, spotFn = null; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const PM = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; }, PC = [0xe8452c, 0x2a7ad8, 0xf2c12e, 0x3fbf6a, 0xc86bff, 0xff8a2a];
     const mk = { stall: (g) => { g.add(PM(new THREE.BoxGeometry(2.6, 1.1, 1.8), L(0xf0ece2), 0, 0.55, 0)); const sc = ['#e8452c', '#2a7ad8', '#3fbf6a'][Math.floor(rnd() * 3)], a = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.12, 2.2), L(0xffffff)); a.userData.c = sc; a.position.y = 2.2; a.rotation.x = 0.15; g.add(a); for (const s of [-1.3, 1.3]) g.add(PM(new THREE.BoxGeometry(0.08, 2.2, 0.08), L(0xf4f4f0), s, 1.1, -0.9)); },
       crate: (g) => { for (const [u, v, h] of [[0, 0, 0], [0.9, 0.1, 0], [0.45, 0, 0.8]].slice(0, 1 + Math.floor(rnd() * 3))) g.add(PM(new THREE.BoxGeometry(0.8, 0.8, 0.8), L(0xb08046), u, 0.4 + h, v)); },
@@ -136,11 +142,12 @@ const NVPark = (function () {
       barrier: (g) => { for (let k = 0; k < 3; k++) g.add(PM(new THREE.BoxGeometry(1.9, 0.8, 0.5), L(k % 2 ? 0xf4f4f0 : 0xd8282a), k * 2 - 2, 0.4, 0)); },
       lamp: (g) => { g.add(PM(new THREE.CylinderGeometry(0.07, 0.09, 3.6, 6), L(0x2a2d30), 0, 1.8, 0)); g.add(PM(new THREE.SphereGeometry(0.28, 8, 6), L(0xfff4c8, { emissive: 0x806a30 }), 0, 3.7, 0)); } };
     const ORDER = ['stall', 'crate', 'barrel', 'balloons', 'bin', 'bench', 'cones', 'stall', 'lamp', 'barrier', 'crate', 'bench', 'barrel', 'bin'];
-    const LOOSE = { stall: 1, barrel: 1, cones: 1 };   // (knocked over by the car: js/nvwalls.js)
+    const LOOSE = { stall: 1, barrel: 1, cones: 1, crate: 1, bin: 1, bench: 1, barrier: 1, balloons: 1, lamp: 1 };   // (knocked over by the car: js/nvwalls.js; the bouncy castles stay, the car bounces off them)
     let ko = 0; for (const P of LP) for (let i = 2; i < P.length - 2; i += 3) for (const s of [-1, 1]) { const a = P[i - 1], b = P[i + 1], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, off = 3.25 + 1.4 + rnd() * 1.5, x = P[i].x + nx * s * off, z = P[i].z + nz * s * off; if (!inP(x, z)) continue;
       const k = ORDER[ko++ % ORDER.length], g = new THREE.Group(); mk[k](g); if (rd(x, z) < 1.5 || plot(x, z)) continue; g.position.set(x, gy(x, z) + 0.1, z); g.rotation.y = Math.atan2(-dz, dx) + (s > 0 ? Math.PI : 0);
+      if (wayGap(x, z, false) < 1.6) continue;   // (not on another way: road 2, the bend road)
       if (LOOSE[k]) { items.push({ g, k, x, z, loose: true }); continue; } put(g); items.push({ g, k, x, z }); }   // (the barrels, the cones and the stalls: loose, below)
-    for (const [x, z] of [[20, -110], [88, -150], [14, -160], [92, -40]]) { const g = new THREE.Group(); mk.inflat(g); g.position.set(x, gy(x, z), z); put(g); items.push({ g, k: 'inflat', x, z }); }
+    for (const [x, z] of [[20, -110], [88, -150], [14, -160], [92, -40]]) { if (wayGap(x, z, false) < 3.6) continue; const g = new THREE.Group(); mk.inflat(g); g.position.set(x, gy(x, z), z); put(g); items.push({ g, k: 'inflat', x, z }); (H3.solids || (H3.solids = [])).push({ ax: x, az: z, bx: x, bz: z, r: 2.7, e: 0.9, snd: 'bale' }); }   // (the car bounces off it)
     // the toy shop at the end of the lane by road 2 (the pictures' toy-page.js, the gift box the user chose): pink walls, a red lid with a yellow ribbon
     // and bow, a door and two windows under a striped awning, the sign (a bear and TOYS), a striped ball and a toy car by the door; a paved forecourt
     // from the lane's end to its door. Solid (H3.solids)
@@ -322,20 +329,24 @@ const NVPark = (function () {
     { let sd = 21; const r3 = () => (sd = (sd * 16807) % 2147483647) / 2147483647, nearLane = (x, z) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 36));
       const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD], nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2) || plot(x, z);
       const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 70; t++) {   // (as many as in the pictures' park)
-        const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5) continue;   // (the trees also past the circuit's west side, on the meadow there)
+        const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5 || wayGap(x, z, true) < s + 0.3) continue;   // (its crown not over any way)   // (the trees also past the circuit's west side, on the meadow there)
        
-        at(new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), L(TC[nt % 4], { flatShading: true })), x, z, h + 1.6); at(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, h + 0.6, 4, 1, true), L(0x6a4a2a)), x, z, (h + 0.6) / 2); nt++; }
-      const GP = { body: new THREE.CylinderGeometry(0.2, 0.24, 0.9, 5), legs: new THREE.CylinderGeometry(0.17, 0.17, 0.5, 5, 1, true), head: new THREE.IcosahedronGeometry(0.17, 0) };
+        trees.push([+x.toFixed(2), +z.toFixed(2), +s.toFixed(2)]); at(new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), L(TC[nt % 4], { flatShading: true })), x, z, h + 1.6); at(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, h + 0.6, 4, 1, true), L(0x6a4a2a)), x, z, (h + 0.6) / 2); nt++; }
       const PC2 = [0xe8452c, 0x2a7ad8, 0xf2c12e, 0x3fbf6a, 0xc86bff, 0xff8a2a, 0xf4f4f0, 0x2a2622]; for (let k = 0; k < 160; k++) { let x, z;
         if (k < 90) { const [px, pz, R] = J.PL[['F', 'C', 'A'][k % 3]], a = r3() * 6.28, rr = R - 3.5 + (r3() - 0.5) * 2.5; x = px + Math.cos(a) * rr; z = pz + Math.sin(a) * rr; } else { const P = LP[k % LP.length], p = P[Math.floor(r3() * P.length)]; x = p.x + (r3() - 0.5) * 7.5; z = p.z + (r3() - 0.5) * 7.5; }
-        const g = new THREE.Group(), c = PC2[Math.floor(r3() * 8)]; g.add(PM(GP.body, L(c), 0, 0.95, 0)); g.add(PM(GP.legs, L(0x2a3a5a), 0, 0.25, 0)); g.add(PM(GP.head, L(0xe0b89a), 0, 1.55, 0));
-        if (rd(x, z) < 1.5 || plot(x, z)) continue; g.position.set(x, gy(x, z), z); put(g, false); } }
-    // the loose ones (the barrels, the cones, the stalls: their counter, roof and two posts) as they stand, one mesh moved by js/nvwalls.js
+        const c = PC2[Math.floor(r3() * 8)]; if (rd(x, z) < 1.5 || plot(x, z) || wayGap(x, z, false) < 0.8) continue; folk.push({ x, z, c }); }   // (they run out of the car's way: js/nvwalls.js walkStep)
+      // where one may stand out of the way: the park's grass (no way, ride, the pond, the volcano, a fountain), off the circuit
+      spotFn = (x, z) => inP(x, z) && wayGap(x, z, true) > 0.5 && rd(x, z) > 2 && !plot(x, z) && !inPoly(J.LAKE, x, z) && !RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) && ((x - VC.x) / (VC.rx * 1.6)) ** 2 + ((z - VC.z) / (VC.rz * 1.6)) ** 2 >= 1 && !Object.values(J.PL).some(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 < 16); }
+    // the loose ones as they stand, one mesh moved by js/nvwalls.js: the barrels, the cones, the crates, the bins, the low barriers' blocks, the stalls (their
+    // counter, roof and two posts), the balloon stands (the stand; its balloons float away once it is knocked), a bench, a lamp each one piece
     { const list = [], P = new THREE.Vector3(), Q = new THREE.Quaternion(), S3 = new THREE.Vector3();
       for (const it of items) { if (!it.loose || it.gone) continue; it.g.updateMatrixWorld(true); const grp = it.k === 'stall' ? { parts: [], broken: false } : null;
-        it.g.children.forEach((m, i) => { m.matrixWorld.decompose(P, Q, S3); list.push({ kind: it.k === 'stall' ? ['counter', 'roof', 'post', 'post'][i] : it.k === 'barrel' ? 'barrel' : 'cone', x: P.x, y: P.y, z: P.z, q: Q.clone(), col: m.material.color.getHex(), col2: m.userData.c, grp }); }); }
-      if (list.length && typeof NVWalls !== 'undefined') { H3.loose = NVWalls.looseBuild(list, (x, z) => gy(x, z) + 0.08); MK.add(H3.loose.mesh); } }
-    built = { LP: LP.map(P => P.map(p => [p.x, p.z])), items, own, rides: own.filter(o => o.userData.ride), volc };
+        if (it.k === 'bench' || it.k === 'lamp') { it.g.matrixWorld.decompose(P, Q, S3); list.push({ kind: it.k, x: P.x, y: P.y, z: P.z, q: Q.clone(), col: it.g.children[0].material.color.getHex() }); continue; }   // (one piece: the spot it stands on)
+        const grp2 = grp || ((it.k === 'balloons' || (it.k === 'crate' && it.g.children.length > 1)) ? { parts: [], broken: false } : null), KD = { barrel: 'barrel', cones: 'cone', crate: 'crate', bin: 'bin', barrier: 'block' };   // (a stand and its balloons, a stack of crates: knocked together)
+        it.g.children.forEach((m, i) => { m.matrixWorld.decompose(P, Q, S3); list.push({ kind: it.k === 'stall' ? ['counter', 'roof', 'post', 'post'][i] : it.k === 'balloons' ? (i ? 'balloon' : 'bstand') : KD[it.k], x: P.x, y: P.y, z: P.z, q: Q.clone(), col: m.material.color.getHex(), col2: m.userData.c, grp: grp2 }); }); }
+      for (const f of folk) list.push({ kind: 'person', x: f.x, y: gy(f.x, f.z) + 0.08, z: f.z, q: new THREE.Quaternion(), col: f.c });
+      if (list.length && typeof NVWalls !== 'undefined') { H3.loose = NVWalls.looseBuild(list, (x, z) => gy(x, z) + 0.08, spotFn); MK.add(H3.loose.mesh); } }
+    built = { LP: LP.map(P => P.map(p => [p.x, p.z])), items, own, rides: own.filter(o => o.userData.ride), volc, trees, wayGap };   // (trees: [x, z, crown radius]; wayGap: the tests)
     return built;
   }
   // the volcano's place (the old mine train's mountain, the pictures' volcano-page.js): its middle, its half widths (x, z) before its foot's
