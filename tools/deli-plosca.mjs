@@ -1,10 +1,10 @@
 // The garage's parts (docs/deli.md): the plate the user confirms, from the real game (Render.carShot with car.deli). Per element: the stock
 // part and three wider views (the race camera behind the car, the whole car), then its 16 options (4 pages x 4) with their names, prices
 // and what they give (js/data/deli.js). Into test-results/deli/<car>-<elements>.jpg, 1600 px wide (one picture per sklop's step).
-//   node tools/deli-plosca.mjs krilo,platisca,zarometi [--car kolibri] [--title "…"] [--color 0x2f6fd6]
+//   node tools/deli-plosca.mjs krilo,platisca,zarometi [--car kolibri] [--ns 1,6,11,16] [--title "…"] [--color 0x2f6fd6]
 // The cameras (VIEWS, car frame in metres: x forward, y up, z right) are KOLIBRI's; on another car they are scaled by its length, height
 // and width. A new element gets its close-up in VIEWS (else the whole car from the front or the rear three quarters, by REAR) and which
-// options the top row shows in TOP.
+// options the top row shows in TOP. --ns 1,6,11,16: only those options (a row of 4 each: a smaller plate, e.g. a category of cars).
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -12,8 +12,9 @@ import { serve, launch, openGame } from '../tests/browser/lib.mjs';
 
 const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
-const car = flag('--car') || 'kolibri', title = flag('--title'), color = parseInt(flag('--color') || '0x2f6fd6'), els = (args[0] || '').split(',').filter(Boolean);
-if (!els.length) { console.log('usage: node tools/deli-plosca.mjs <element[,element …]> [--car kolibri] [--title "…"] [--color 0xRRGGBB]'); process.exit(2); }
+const car = flag('--car') || 'kolibri', title = flag('--title'), color = parseInt(flag('--color') || '0x2f6fd6'), NS = (flag('--ns') || '').split(',').filter(Boolean).map(Number);
+const els = (args[0] || '').split(',').filter(Boolean);
+if (!els.length || NS.some(n => !(n >= 1 && n <= 16))) { console.log('usage: node tools/deli-plosca.mjs <element[,element …]> [--car kolibri] [--ns 1,6,11,16] [--title "…"] [--color 0xRRGGBB]'); process.exit(2); }
 
 const VIEWS = {
   krilo: { p: [-4.35, 2.3, 2.45], t: [-0.95, 1.1, 0.08], fov: 32 },
@@ -45,26 +46,26 @@ try {
     const E = DATA.find(e => e.id === el); if (!E) throw new Error('no such element: ' + el);
     if (!M.mounts.includes(el)) { console.log(car + ' has no mount for ' + el + ' (mounts: ' + M.mounts.join(', ') + ')'); continue; }
     const all = E.kategorije.flatMap(k => k.moznosti), T = TOP[el] || { view: REAR.includes(el) ? 'car34r' : 'car34f', ns: [4, 9, 16] }, wide = T.view === 'chase' ? 'kamera za avtom' : 'cel avto';
-    const top = [{ src: await shot(el, null), name: 'SERIJSKO' + (E.serijsko && E.serijsko.ime ? ' · ' + E.serijsko.ime : '') }];
+    const top = [{ src: await shot(el, null), name: 'SERIJSKO' + (car === 'kolibri' && E.serijsko && E.serijsko.ime ? ' · ' + E.serijsko.ime : '') }];   // (the list's stock name is KOLIBRI's)
     for (const n of T.ns) top.push({ src: await shot(T.view, { [el]: n }), name: n + '. ' + all[n - 1].ime + ' · ' + wide });
     const opts = [];
-    for (let n = 1; n <= all.length; n++) {
+    for (const n of NS.length ? NS : all.map((m, i) => i + 1)) {
       const built = await page.evaluate(({ car, el, n }) => Render.kitInfo(car, { [el]: n }).deli, { car, el, n });
       if (built !== el + n) console.log(el + ' ' + n + ': not built (' + built + ')');
       const m = all[n - 1]; opts.push({ src: await shot(el, { [el]: n }), name: n + '. ' + m.ime, price: m.cena_eur.toLocaleString('de-DE') + ' €', stat: m.kaj_nudi });
     }
-    sections.push({ title: E.element.toUpperCase(), id: el, top, opts, cats: E.kategorije.map(k => k.ime) });
+    sections.push({ title: E.element.toUpperCase(), id: el, top, opts, cats: NS.length ? null : E.kategorije.map(k => k.ime), pages: Math.ceil(opts.length / 4) });
     console.log(el + ': done');
   }
   if (!sections.length) throw new Error('nothing to draw');
   const head = title || car.toUpperCase() + ' · ' + sections.map(s => s.title.toLowerCase()).join(', ');
   const data = await page.evaluate(async ({ sections, TW, TH, head }) => {
-    const W = 4 * TW, HEAD = 78, ST = 46, RH = 30, GAP = 8, secH = ST + TH + GAP + 4 * (RH + TH + 4) + 18, H = HEAD + sections.length * secH;
+    const W = 4 * TW, HEAD = 78, ST = 46, RH = 30, GAP = 8, secH = (S) => ST + TH + GAP + S.pages * (RH + TH + 4) + 18, H = HEAD + sections.reduce((a, S) => a + secH(S), 0);
     const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     x.fillStyle = '#0d1117'; x.fillRect(0, 0, W, H);
     for (let i = 0; i < W; i += 40) { x.fillStyle = (i / 40) % 2 ? '#e8e8e4' : '#d23a2f'; x.fillRect(i, 0, 40, 8); }
     x.fillStyle = '#ffd34d'; x.font = 'bold 30px sans-serif'; x.fillText(head, 16, 44);
-    x.fillStyle = '#9fb3c8'; x.font = '16px sans-serif'; x.fillText('Iz prave igre (js/deli.js, car.deli) · Visoki detajli · 16 možnosti: 4 strani × 4, od najcenejše do najdražje', 16, 68);
+    x.fillStyle = '#9fb3c8'; x.font = '16px sans-serif'; x.fillText('Iz prave igre (js/deli.js, car.deli) · Visoki detajli · ' + (sections[0].cats ? '16 možnosti: 4 strani × 4, od najcenejše do najdražje' : 'izbor možnosti (od najcenejše do najdražje)'), 16, 68);
     const img = (src) => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.src = src; });
     const tile = async (t, cx, cy) => {
       x.drawImage(await img(t.src), cx + 2, cy, TW - 4, TH);
@@ -84,13 +85,13 @@ try {
       for (let i = 0; i < 4; i++) await tile(S.top[i], i * TW, yy);
       x.strokeStyle = '#ffd34d'; x.lineWidth = 3; x.strokeRect(3, yy + 1, TW - 6, TH - 2);   // (the stock part framed)
       yy += TH + GAP;
-      for (let r = 0; r < 4; r++) {
-        x.fillStyle = '#7fb2ff'; x.font = 'bold 18px sans-serif'; x.fillText((r + 1) + '. stran · ' + S.cats[r], 12, yy + 22);
+      for (let r = 0; r < S.pages; r++) {
+        x.fillStyle = '#7fb2ff'; x.font = 'bold 18px sans-serif'; x.fillText(S.cats ? (r + 1) + '. stran · ' + S.cats[r] : 'izbor možnosti', 12, yy + 22);
         yy += RH;
-        for (let k = 0; k < 4; k++) await tile(S.opts[r * 4 + k], k * TW, yy);
+        for (let k = 0; k < 4 && S.opts[r * 4 + k]; k++) await tile(S.opts[r * 4 + k], k * TW, yy);
         yy += TH + 4;
       }
-      y += secH;
+      y += secH(S);
     }
     return c.toDataURL('image/jpeg', 0.88);
   }, { sections, TW, TH, head });

@@ -12,7 +12,7 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 | `js/render.js` | `K.deli`, `K.topY`, avto z deli (`kitEntry(M, hi, deli)`), `Render.deliMesh`, `Render.kitInfo(id, deli)`, `Render.carShot({ deli })`, `Render.setShowCar(model, barva, številka, deli)` |
 | `js/core.js` | `Core.applyDeli(car, deli)`: učinek na fiziko; `Car` (`opts.deli`), `Race` (`opts.playerDeli`); `mounts` v definiciji vozila |
 | `tests/deli.test.js` | test dogovora (seznam, učinki, fizika, vse možnosti na vseh avtih z `mounts`) |
-| `tools/deli-plosca.mjs` | plošča za uporabnika iz prave igre: serijski del, širši pogledi in 16 možnosti elementa z imeni, cenami in učinki (`node tools/deli-plosca.mjs krilo,zarometi [--car kolibri]` → `test-results/deli/`) |
+| `tools/deli-plosca.mjs` | plošča za uporabnika iz prave igre: serijski del, širši pogledi in 16 možnosti elementa (ali izbor `--ns`) z imeni, cenami in učinki (`node tools/deli-plosca.mjs krilo,zarometi [--car kolibri] [--ns 1,6,11,16]` → `test-results/deli/`) |
 
 ## Dogovor
 
@@ -52,7 +52,7 @@ Načrt je na veji garaže (`git fetch origin claude/3d-garage-cars-sum9uk`, nato
 | 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | čaka |
 
 Odločitve uporabnika (29. 10. 2026, po sklopu 1):
-- Deli ostanejo na PANTERJU, JASTREBU in TITANU; ostali avti pridejo na vrsto kasneje.
+- Deli ostanejo na PANTERJU, JASTREBU in TITANU. Drugi avti se delajo vzporedno, po kategorijah (razdelek »Drugi avti po kategorijah« spodaj).
 - Vsak sklop gre na `main` s svojim pull requestom, ko so testi zeleni in ga uporabnik potrdi.
 - Sklop 2 se dela takoj v kodi igre na svoji veji, brez prototipa, s slikami iz prave igre (`tools/deli-plosca.mjs`).
 - Plošče v sklopu 2: odločitev je še odprta. Možnosti sta ena plošča na skupino iz tabele (spredaj, zadaj, streha, bok in kolesa) s potrditvijo vmes ali ena plošča na koncu.
@@ -67,6 +67,19 @@ Kako se doda element (vzorec sta `krilo` in `zarometi` v `js/deli.js`):
 5. Na koncu `node tools/stamp.js`, `npm run test:related` in posodobi kazalo.
 
 Dokler sklop 1 ni na `main`, spoji vejo `claude/sleepy-newton-dlus7o` v svojo vejo.
+
+## Drugi avti po kategorijah (vzporedne seje)
+
+Odločitev uporabnika (29. 10. 2026): drugi avti se delajo vzporedno s sklopom 2, ena seja na kategorijo, vsaka s svojo vejo in pull requestom. Najprej Mali avti (`miska`, `raketa`, `levs`, `levk`) in Športni (`sokol`, `jelen`, `lisica`), da se morebitna napaka v dogovoru pokaže na 7 avtih. Ostale kategorije pridejo na vrsto, ko uporabnik ti dve pregleda. Seji zažene seja sklopa 1, ko je #192 na `main`, z navodilom »Naredi kategorijo <ime> po docs/deli.md (razdelek Drugi avti po kategorijah)«. Stari avti, ki niso narejeni iz kompleta (`formula`, `lm`, `muscle`, `ev`, `truck`), delov nimajo.
+
+Za vsak avto kategorije (en obisk datoteke `js/cars/<id>.js`):
+1. Razbijanje kot pri KOLIBRIJU (načrt, razdelek 4: »ločeni žarometi in zadnje luči, ki se razbijejo, spojler, antena, tablica, brisalci, ugrezanje strehe«). Vzorec je `js/cars/kolibri.js`: deli s svojimi imeni (`headL`, `headR`, `tailL`, `tailR`, `spoiler`, `aerial`, `plate`, `wiperFront`, `wiperRear`), njihova imena v `partNames` in mesta v `parts.over`. Gume vsaka zase (`Car.kt`) so fizika: dodaj jih samo, če uporabnik to potrdi (vprašaj v sliki).
+2. Mesta za tri gotove dele: `mounts.krilo`, `mounts.platisca`, `mounts.zarometi` in ovoja `K.deli('krilo', …)`, `K.deli('zarometi', …)` (vzorec KOLIBRI; avto z lastno obliko luči kot PANTER in JASTREB: `shape`, `bulge`). Avto, kjer element ne pride v poštev, ga v `mounts` nima.
+3. Serijski avto mora biti videti enako kot prej in ostati v mejah trikotnikov (`tests/kit.test.js`, `tests/fleet.test.js`, `tests/browser/fleet.test.mjs`). `tests/deli.test.js` sam preveri vseh 48 možnosti na vsakem avtu z `mounts`.
+4. Plošča na avto: `node tools/deli-plosca.mjs krilo,platisca,zarometi --car <id> --ns 1,6,11,16` (izbor možnosti; celotna plošča brez `--ns`) in razbitina z `node tools/carshots.mjs <id>`. Uporabniku pošlji eno ploščo za vso kategorijo in počakaj na njegovo potrditev.
+5. Pull request za kategorijo odpri, ko so povezani testi lokalno zeleni. Na `main` gre, ko so testi na GitHubu zeleni in uporabnik potrdi.
+
+Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Spremembe dogovora
 
