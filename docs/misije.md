@@ -11,6 +11,14 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 - Uporabniku odgovarjaj kratko, v slovenščini. Za vsako misijo napiši, koliko ur še potrebuješ, da bo na `main`.
 - Pravila iz `CLAUDE.md` veljajo tudi za misije (samo zemljepisna imena, nobenih znamk in imen resničnih oseb, ena kamera za avtom, obremenitev telefona).
 
+## Varčevanje s tokeni (odločitev uporabnika, 29. 10.: »uporabi vseh 6 predlogov«)
+1. **Ena seja na skupino** (tabela Stanje), ne ena dolga seja in ne seja na misijo.
+2. **Skupni gradniki v `js/missions/kit.js`** (ogenj, voda, sneg, vozila iz preprostih teles, merilniki): misija jih uporabi, ne piše in ne išče znova. Ko narediš gradnik, ki ga bo rabila še druga misija, ga daj tja in ga zapiši v razdelek Sistem misij.
+3. **Kratka predaja ob koncu seje** v razdelku Predaja: kje so gradniki, kaj je odločeno, kaj je odprto. Nova seja začne pri tem dokumentu in predaji misij, velikih datotek ne bere v celoti (`docs/kazalo.md`, grep).
+4. **Manj slik med delom:** ena slika na misijo za preverjanje (kamera za avtom), ostalo preverijo testi. Uporabniku slike samo za vprašanja in na koncu misije.
+5. **Vprašanja na začetku skupine:** vsa vprašanja skupine v eni sliki, preden se začne delo, da ni popravljanja.
+6. **Kratki odgovori v klepetu,** brez ponavljanja stanja; podrobnosti so v pull requestu in tem dokumentu.
+
 ## Odločitve
 1. **Kje igralec izbere misijo** (vprašanje 1): oboje. Na naslovnici ploščica MISSIONS (seznam vseh misij), na novi mapi pa so misije razdeljene po garažah; v vsaki garaži so misije od najlažje do najtežje. Razporeditev po garažah: vprašanje 5 (odprto: 6 garaž po poklicu ali 4 po celinah). Garaže na mapo postavi drugi račun; misije v `js/nvmenu.js` dobijo samo kratek priklop.
 2. **Gasilski avto** (vprašanje 2): verzija **C · Avtolestev** (`slike-predlogi/blender/modeli/v2.glb`, mere v `v2.json`). Uporabijo ga misije 01, 46, 47 in 49 (pri 49 se lestev dviga in izteguje).
