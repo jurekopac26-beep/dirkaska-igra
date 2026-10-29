@@ -195,8 +195,10 @@ try {
   }
 
   // 7. the saved car: carId and carV 3 (the rally car for what this build does not know); a new car saved as an index older builds know
+  // (no service worker: the page is loaded again a dozen times in a row, while a first visit's worker would still be saving the whole game;
+  // app.test.mjs is the one about it)
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', null, { width: 480, height: 270 });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', null, { width: 480, height: 270 }, { context: { serviceWorkers: 'block' } });
     const load = async (raw) => { await page.evaluate((raw) => localStorage.setItem('tdgp-settings', raw), raw); await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
       return page.evaluate(() => ({ car: Core.MODELS[window.__game.S.car].id, stored: JSON.parse(localStorage.getItem('tdgp-settings') || 'null') })); };
     const m1 = await load(JSON.stringify({ carV: 2, car: 35, sound: 0, comm: 0 }));
