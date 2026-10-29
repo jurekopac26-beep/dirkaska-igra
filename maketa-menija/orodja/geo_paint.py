@@ -16,7 +16,8 @@ DETAIL = {0: (38, 74, 116), 10: (44, 70, 34), 20: (92, 100, 56), 30: (108, 132, 
 # the season of a track's land as the game shows it (the same on the globe, in the drone's far land): Vršič in October, the larches and
 # beeches turning, the first snow from about 1350 m (drones.json's snow line for its far land, there in the game's heights: + 800.8 m)
 SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1480.0, 1570.0), 'game': True},
-          'monterey': {'dry': 1.0}, 'mulholland': {'dry': 1.0}, 'palomar': {'dry': 0.8}, 'riverside': {'dry': 1.0}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
+          'monterey': {'dry': 1.0}, 'mulholland': {'dry': 1.0}, 'palomar': {'dry': 0.8}, 'riverside': {'dry': 1.0},
+          'marrakesh': {'dry': 1.0}, 'longford': {'dry': 0.7}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
 
 def box_km(lat, lon, km):
     M, N = radii(lat); d = km * 500
