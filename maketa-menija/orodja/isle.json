@@ -14,5 +14,12 @@
   ["bigsur", "top", "isle-bigsur", {"W": 824, "H": 620, "wet": true, "skirt": false}],
   ["detroit", "top", "isle-detroit", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
   ["maunakea", "top", "isle-maunakea", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["moki", "top", "isle-moki", {"W": 824, "H": 620, "wet": true, "skirt": false}]
+  ["moki", "top", "isle-moki", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["monterey", "top", "isle-monterey", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["mulholland", "top", "isle-mulholland", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["palomar", "top", "isle-palomar", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["riverside", "top", "isle-riverside", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["uncompahgre", "top", "isle-uncompahgre", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["iroha", "top", "isle-iroha", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["harju", "top", "isle-harju", {"W": 824, "H": 620, "wet": true, "skirt": false}]
 ]

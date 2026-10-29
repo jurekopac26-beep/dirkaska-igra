@@ -15,6 +15,9 @@ GUESS = {
     'detroit': (42.3300, -83.0380, 800),
     'medvode': (46.1418, 14.4091, 300),     # (by the heights: geo_match.py, then here closer)
     'moki': (37.2651, -109.9335, 300),
+    'iroha': (36.7364, 139.5326, 300),      # (by the heights: geo_match.py, then here closer)
+    'uncompahgre': (38.0079, -107.6631, 300),
+    'harju': (62.2430, 25.7450, 300),       # the world's origin (25.745 E, 62.243 N: its own header), the town's streets
 }
 CELL = 2.0   # metres per cell of the distance map
 

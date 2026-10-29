@@ -83,5 +83,26 @@
  },
  "bigsur": {
   "sea": true
+ },
+ "monterey": {
+  "kbps": 550
+ },
+ "mulholland": {
+  "kbps": 550
+ },
+ "palomar": {
+  "kbps": 550
+ },
+ "riverside": {
+  "kbps": 550
+ },
+ "uncompahgre": {
+  "kbps": 550
+ },
+ "iroha": {
+  "kbps": 550
+ },
+ "harju": {
+  "kbps": 550
  }
 }

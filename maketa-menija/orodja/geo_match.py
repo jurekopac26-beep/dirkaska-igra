@@ -22,10 +22,10 @@ GUESS = {
     'moki': (37.2700, -109.9300, 2000),     # by the Valley of the Gods Road
     'monterey': (36.58646, -121.75664, 400),   # the start / finish (OpenStreetMap)
     'mulholland': (34.1080, -118.7830, 2000),  # Cornell, by Cornell School Road
-    'palomar': (33.3180, -116.9150, 1500),     # South Grade Road above State Route 76
+    'palomar': (33.2947, -116.8934, 1000),     # South Grade Road, 0.70 km above State Route 76 (OpenStreetMap)
     'riverside': (33.9367, -117.2726, 1500),   # the old circuit east of the town
     'uncompahgre': (38.0160, -107.6720, 1500), # above Ouray
-    'iroha': (36.7280, 139.5600, 2000),        # the second Irohazaka, its lower curves
+    'iroha': (36.7345, 139.5310, 1500),        # the second Irohazaka, its lower curves (OpenStreetMap: national road 120 up from Umagaeshi)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
