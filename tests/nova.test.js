@@ -157,6 +157,12 @@ for (const id of ['rally', 'kaze']) {
     C.carCollide(B, A); return Math.hypot(B.vx - A.vx, B.vz - A.vz); });
   const sc = [null, { cMu: 0.8 }].map(t => swipe(HC, t)), sn = [null, { cMu: 0 }].map(t => swipe(HN, t));
   ok('Preizkus: the rub along the contact: the classic cars share their speed more with cMu 0.8 than by default; the new physics with cMu 0 less than by default', sc[1] < 0.7 * sc[0] && sn[1] > 1.2 * sn[0], `classic ${f(sc[0])} -> ${f(sc[1])} m/s apart, new ${f(sn[0])} -> ${f(sn[1])}`);
+  // Težak's weight: the other car counts cMass times heavier in a knock with the player (and only then), no sparks with cFx 0
+  const heavyHit = (H, tx, pl) => test(tx, () => { const P = H.mkCar('rally', { v: 100 }), O = H.mkCar('rally', { v: 0 }); P.isPlayer = pl; O.isPlayer = false; O.place(0, 0, 0); P.place(-O.m.len - 0.02, 0, 0); P.vx = 27.8; P.fxCar = O.fxCar = 0; C.carCollide(P, O); return { p: P.vx, o: O.vx, fx: Math.max(P.fxCar, O.fxCar) }; });
+  const hv0 = heavyHit(HC, null, true), hv1 = heavyHit(HC, { cE: 0, cMass: 12, cFx: 0 }, true), hv2 = heavyHit(HC, { cE: 0, cMass: 12, cFx: 0 }, false), hv3 = heavyHit(HN, { cE: 0, cMass: 12 }, true);
+  ok('Preizkus: the other car 12 times heavier: the player\'s speed goes into it (both leave at about 1/13 of 100 km/h), between two rivals nothing changes, no sparks with cFx 0, sparks by default; the new physics the same',
+    Math.abs(hv1.p - 27.8 / 13) < 0.3 && Math.abs(hv1.o - 27.8 / 13) < 0.3 && Math.abs(hv2.o - hv0.o) > 1 && hv2.o > 5 && hv1.fx === 0 && hv0.fx > 3 && Math.abs(hv3.p - 27.8 / 13) < 0.3,
+    `by default ${f(hv0.p * 3.6)} / ${f(hv0.o * 3.6)} km/h, heavy ${f(hv1.p * 3.6)} / ${f(hv1.o * 3.6)}, two rivals ${f(hv2.p * 3.6)} / ${f(hv2.o * 3.6)}, new ${f(hv3.p * 3.6)} / ${f(hv3.o * 3.6)}`);
   // the turn: a light knock (the classic's attitude kick csKc is capped at 0.4 rad: 0.15 stays under it), the new physics' yaw rate
   const lite = (H, tx) => test(tx, () => { const A = H.mkCar('rally', { v: 60 }), B = H.mkCar('rally', { v: 60 }); A.place(0, 0, 0); A.vx = 16.7; B.place(A.m.len - 3.0, 1.55, -0.06); B.vx = 16.7 * Math.cos(-0.06); B.vz = 16.7 * Math.sin(-0.06); B.h = -0.06;
     C.carCollide(B, A); return [Math.abs(A.csKc), Math.abs(A.w)]; });

@@ -129,7 +129,7 @@ V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci 
 
 | Vrstica | Stopnje | Kaj pomeni |
 |---|---|---|
-| Slog | Težak, brez odboja | odboj 0, drgnjenje 0,8, vrtenje 1,3; avta se ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti; vrstice pod to vrstico slog preglasijo |
+| Slog | Težak, brez odboja | odboj 0, drgnjenje 0,8, vrtenje 1,3; avta se ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti. Drugi avto je ob trku z igralcem 12-krat težji (`TX.cMass`: tudi vztrajnost; igralec se ustavi ob njem, ta se komaj premakne; 100 km/h v stoječ avto: oba ~8 km/h) in trk ne sproži isker ali prahu (`TX.cFx` 0). Vrstice pod to vrstico preglasijo odboj, drgnjenje in vrtenje, težo in iskre ne |
 | Odboj med avti | Brez, majhen (0,1), srednji (0,25), velik (0,4), zelo velik (0,6) | kolikšen del hitrosti približevanja avta ohranita kot odmik; klasična privzeto 0,1, nova 0,4 |
 | Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); klasična privzeto brez, nova 0,35. Pri klasični se delita samo hitrosti (pravega vrtenja ni) |
 | Vrtenje ob trku | Brez, majhno (0,15), manjše (0,4), večje (1,6) | koliko trk zavrti avto: pri klasični je to sunek smeri (kot največ 23°, pri večjem tudi več), ki ga avto sam ujame, pri novi pravo vrtenje; privzeto 1 |

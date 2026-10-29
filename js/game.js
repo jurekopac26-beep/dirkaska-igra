@@ -52,7 +52,7 @@
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (as the driving physics has it: nothing changes); the numbers go to Core.setTest
   const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], tCrE: [null, 0, 0.1, 0.25, 0.4, 0.6], tCrMu: [null, 0, 0.35, 0.8], tCrYaw: [null, 0, 0.15, 0.4, 1.6] };
-  const TEST_HEAVY = { cE: 0, cMu: 0.8, cYaw: 1.3 };   // Trki: slog Težak (no bounce, the cars grind along each other, an off-centre knock turns them more); the rows under it override
+  const TEST_HEAVY = { cE: 0, cMu: 0.8, cYaw: 1.3, cMass: 12, cFx: 0 };   // Trki: slog Težak (no bounce, the cars grind along each other, an off-centre knock turns them more; the other car counts twelve times heavier and a knock throws no sparks); the rows under it override cE, cMu, cYaw
   for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
   S.tCrStyle = +S.tCrStyle === 1 ? 1 : 0;
   if (S.slide !== 1) S.slide = 0;   // (the new physics' style, Nastavitve → Slog nove fizike: 1 Drseč, the player's car only: Car.nvSl)
@@ -428,7 +428,7 @@
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
-    $('cr-note').textContent = tr(+S.tCrStyle === 1 ? 'Težak: odboj 0, drgnjenje 0,8, vrtenje 1,3. Vrstice spodaj to preglasijo.' : 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1).');
+    $('cr-note').textContent = tr(+S.tCrStyle === 1 ? 'Težak: odboj 0, drgnjenje 0,8, vrtenje 1,3, drugi avto 12-krat težji, brez isker. Vrstice spodaj preglasijo odboj, drgnjenje in vrtenje.' : 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1).');
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -488,7 +488,7 @@
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
   const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]], H = +S.tCrStyle === 1 ? TEST_HEAVY : {}, or = (a, b) => a != null ? a : b != null ? b : null;   // (Preizkus: the rivals and the knocks; never online, where both phones must drive the same)
-    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw) }; };
+    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw), cMass: or(null, H.cMass), cFx: or(null, H.cFx) }; };
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;

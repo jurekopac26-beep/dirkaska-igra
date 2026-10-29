@@ -167,7 +167,7 @@ Po preizkusu uporabnik ostaja pri klasični fiziki. Nastavitve tekmecev in trkov
 
 Tesnejša kolona poveča število stikov (klasična + nastavitve nove: 3,5-krat več močnih stikov kot klasična), zato je razmik za avtom nastavljiv.
 
-**Trki** (kontroliran trk na ravnini, reli avto BURJA R7, hitrosti po stiku; Težak = odboj 0, drgnjenje 0,8, vrtenje 1,3):
+**Trki** (kontroliran trk na ravnini, reli avto BURJA R7, hitrosti po stiku; Težak = odboj 0, drgnjenje 0,8, vrtenje 1,3; številke »Težak« so brez teže drugega avta, ki jo je Težak pozneje dobil: 12-krat težji drugi avto ob trku z igralcem, brez isker; 100 km/h v stoječ avto, sredina: igralec in drugi ~8 km/h):
 
 | Trk | Klasična | Klasična, Težak | Nova |
 |---|---|---|---|

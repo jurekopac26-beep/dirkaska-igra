@@ -86,8 +86,8 @@ try {
     await pick('tCrStyle', 1);
     const t1 = await tx(); await pick('tCrE', 4); const t2 = await tx(); await pick('tAiSpr', 3); await pick('tAiFol', 2); await pick('tAiKerb', 3); await pick('tAiPush', 1); await pick('tAiSide', 3); await pick('tCrMu', 1); await pick('tCrYaw', 4);
     const t3 = await tx();
-    T.check('Preizkus: Težak, brez odboja sets the bounce 0, the rub 0.8, the turn 1.3; Velik bounce under it overrides (0.4)',
-      t1.cE === 0 && t1.cMu === 0.8 && t1.cYaw === 1.3 && t2.cE === 0.4 && t2.cMu === 0.8 && t2.cYaw === 1.3, JSON.stringify([t1, t2]));
+    T.check('Preizkus: Težak, brez odboja sets the bounce 0, the rub 0.8, the turn 1.3, the other car 12 times heavier, no sparks; Velik bounce under it overrides (0.4)',
+      t1.cE === 0 && t1.cMu === 0.8 && t1.cYaw === 1.3 && t1.cMass === 12 && t1.cFx === 0 && t2.cMass === 12 && t2.cE === 0.4 && t2.cMu === 0.8 && t2.cYaw === 1.3, JSON.stringify([t1, t2]));
     T.check('Preizkus: each row sets its number (spread 0.3, gap 0.5 m, kerbs 2.2 m, push none, room 0.15 m, rub none, turn 1.6), kept in the settings',
       t3.aiSpr === 0.3 && t3.aiFol === 0.5 && t3.aiKerb === 2.2 && t3.aiPush === 0 && t3.aiSide === 0.15 && t3.cMu === 0 && t3.cYaw === 1.6
       && await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('tdgp-settings') || '{}'); return s.tAiSpr === 3 && s.tCrStyle === 1 && s.tCrE === 4 && s.tCrYaw === 4; }), JSON.stringify(t3));
