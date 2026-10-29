@@ -20,12 +20,18 @@ const VIEWS = {
   krilo: { p: [-4.35, 2.3, 2.45], t: [-0.95, 1.1, 0.08], fov: 32 },
   platisca: { p: [2.3, 0.5, 3.05], t: [1.15, 0.31, 0.62], fov: 17.5 },
   zarometi: { p: [3.55, 1.08, 1.75], t: [1.66, 0.67, 0.06], fov: 17 },
+  aero: { p: [4.0, 0.75, 3.4], t: [0.45, 0.33, 0.3], fov: 31 },
+  aeroR: { p: [-4.3, 0.85, 3.5], t: [-0.55, 0.34, 0.1], fov: 30 },   // (the rear's foot: the diffuser, the rear's lips)   // (the front's foot and the side's: the lip, the skirt, the flares)
+  hauba: { p: [4.1, 2.75, 2.1], t: [1.2, 0.86, 0], fov: 27 },
+  maska: { p: [3.8, 0.9, 0.75], t: [1.68, 0.68, 0], fov: 21 },
+  zmigavci: { p: [3.5, 0.85, 1.75], t: [1.4, 0.56, 0.5], fov: 24 },   // (the front's indicator and the fender's repeater)
+  relijske_luci: { p: [4.4, 1.8, 2.6], t: [0.95, 0.85, 0], fov: 27 },   // (the bumper, the nose, the roof's front edge)
   chase: { p: [-6.0, 2.15, 0], t: [0.4, 1.02, 0], fov: 29 },   // (as the game's camera behind the car sees it)
   car34f: { p: [5.2, 2.2, 4.3], t: [0.05, 0.68, 0], fov: 21 },   // (the whole car, front three quarters)
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
 };
 const REAR = ['krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
-const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] } };   // (else the whole car, options 4, 9, 16)
+const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, aero: { view: 'aeroR', ns: [4, 10, 16] } };   // (else the whole car, options 4, 9, 16)
 const TW = 400, TH = 236;
 
 const srv = await serve(ROOT), browser = await launch();

@@ -32,6 +32,18 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 - `mounts`: `krilo` (rob strehe, del `spoiler`), `zarometi` (luči `headL`, `headR`), `platisca`.
 - Serijski avto (odločitve uporabnika 29. 10. 2026): zelo majhen strešni spojler z zavorno lučjo (2B), bela črta od repa do nosu (4A), okvir šip brez zobcev (4A), nova notranjost (3A: armatura z merilniki, volan s tremi kraki, školjkasta sedeža, zadnja klop, konzola, obloge vrat; meja notranjih trikotnikov `look.budget` 1400, `look.budgetHi` 1750), razpoka v vsakem oknu posebej (4A, za vse avte, `crackPanes` v `js/render.js`).
 
+## Sklop 2 · spredaj (KOLIBRI)
+
+Elementi v `js/deli/spredaj.js` (`DELI.add`), mesta v `js/cars/kolibri.js` (polja so opisana na vrhu datoteke):
+- `aero`: kit ob vznožju avta namesto serijskih črnih robov pod odbijačema (`lipF`, `lipR`; možnost brez svojega kosa spredaj ali zadaj ju obdrži): sprednji spojler, pragovi (`body`, ne odpadejo), difuzor in zadnja robova (`bumperR`, mimo auspuha: `exh`), ravno krilce s ploščama in krilca na vogalih (`bumperF`), razširitve blatnikov (`K.flare`, `body`). Lakirani paketi so v barvi avta, karbonski v karbonu.
+- `hauba`: namesto serijske zajemalke, v delu `hood` (odpre se in odleti s haubo): koža po vrhu haube (`K.topY`) iz aluminija ali karbona (karbon v dveh odtenkih trikotnikov, na Visokih gostejši), reže, izboklina, zajemalka, hitre zaponke, črna proga.
+- `maska`: namesto serijske ozke maske med lučmi (na nagnjeni ploskvi kot luči): mreža, satje, letve, reže, okvir, svetleč rob.
+- `zmigavci`: namesto serijskih oranžnih stekel na odbijaču in na blatnikih; možnosti 7 in 16 imajo ponavljalnik na ogledalih (del `mirrorL` / `mirrorR`, mesto `mirror`: sprednja ploskev ohišja serijskega ogledala), 11, 13–16 tudi zadaj na odbijaču. Tekoči so stopnjevani od temnejše notranje do svetle zunanje lučke.
+- `relijske_luci` (serijsko jih ni): dve na odbijaču, štiri na cevi pred masko, letev na strehi (`body`), LED-letev v spodnji odprtini odbijača, pokrov z lučmi čez nos (`bumperF`). Luči ponoči ne svetijo (samo barva).
+- Trikotniki (Normalni / Visoki nad serijskim): največ `aero` 16 +272 / +352, `relijske_luci` 5–8 +220 / +360, `maska` 16 +170 / +294; vse v meji +300 (Normalni) in v proračunu Visokih.
+- Za druge seje: `zmigavci` 7 in 16 rišeta na ohišje serijskega ogledala (seja »bok«: če `ogledala` spremeni ohišje, mesto `zmigavci.mirror` velja za serijsko). Difuzor `aero` je v sredini pod zadnjim odbijačem (seja »zadaj«: auspuh na sredini bi šel skozenj). Letev `relijske_luci` 9, 11, 12 je na sprednjem robu strehe (x 0,1; seja »streha«: strešna zajemalka naj bo za njo).
+- `tests/deli.test.js` zdaj preveri vse elemente z mestom v `mounts`, ki jih `DELI` zna narisati (ne več samo `krilo`, `platisca`, `zarometi`).
+
 ## Poskus na treh drugih avtih (sklop 1)
 
 PANTER (športni), JASTREB (klasični), TITAN (tovornjak) imajo `mounts` za poskus.
