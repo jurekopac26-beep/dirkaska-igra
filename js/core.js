@@ -2367,8 +2367,8 @@ const Core = (function () {
     if (c.m.dmgK) amt *= c.m.dmgK;   // (a vehicle's own toughness, model.dmgK: a truck's frame, a kart's tubes)
     const d0 = c.dmg;
     c.dmg = Math.min(1, c.dmg + amt);
-    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, roofOf(c)); if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); } return; }
-    if (c.kt) ktHit(c, amt, lx, lz);   // (the Kolibri's tyres)
+    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, roofOf(c)); if (c.wreck) { wheelRule(c, d0, amt); if (c.kt) ktFire(c, d0, amt, -1); wreckCheck(c); } return; }
+    if (c.kt) ktHit(c, amt, lx, lz, d0);   // (the Kolibri's tyres)
     const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
@@ -2415,12 +2415,14 @@ const Core = (function () {
   // 0..1. The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean, whatever its length; a race on a circuit
   // KT.lap a metre (4 times the tyres' usual), a slide up to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times
   // (that wheel only: a gravel road is its road); the slicks' compound as theirs (K.wr). Worn: KT.loss of the wheel's grip (the slicks'
-  // compound: its own loss). The damage only from knocks with damage on (applyDamage: ktHit): the tyre at the knock's corner the most, the
-  // nearer one beside it a little, the far corner none; an average knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to
-  // none. One at 1 burns (kt.hot: the most knocked one, never more than one): less side grip for the whole car (KT.burn), the speed, the
-  // drive and the brakes as ever. The wear alone never sets one on fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop):
-  // KT.cold less grip meanwhile. A burning tyre's wheel comes off at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt)
-  const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4 };
+  // compound: its own loss). The damage only from knocks with damage on (applyDamage: ktHit), only to be seen (the dots' red, the user's:
+  // the car is not hurt by it): the tyre at the knock's corner the most, the nearer one beside it a little, the far corner none; an average
+  // knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to none, up to KT.dMax. A tyre burns (kt.hot, never more than
+  // one: ktFire) only where the car caught fire before, the wheel rule's first wheel (the car's damage at 80 %, a hard hit from 70 %): the
+  // most knocked one; less side grip for the whole car (KT.burn), the speed, the drive and the brakes as ever. The wear never sets one on
+  // fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop): KT.cold less grip meanwhile. A burning tyre's wheel comes off
+  // at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt)
+  const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4, dMax: 0.75 };
   const ktNew = (c, cold) => { const K = c.kt; for (let k = 0; k < 4; k++) { K.w[k] = 0; K.d[k] = 0; } K.hot = -1; K.cold = cold ? 1 : 0; K.d0 = c.dist; };
   const ktMk = (c) => { c.kt = { w: [0, 0, 0, 0], d: [0, 0, 0, 0], hot: -1, cold: 0, d0: 0, g: [1, 1, 1, 1, 1] }; };
   function ktGrip(c) {   // [the four wheels' grip shares, the side grip's share]
@@ -2437,9 +2439,10 @@ const Core = (function () {
     if (c.inPit) K.d0 = c.dist;   // (cold from the stop until a lap after the way out)
     if (K.cold > 0) K.cold = clamp(1 - (c.dist - K.d0) / T.len, 0, 1);
   }
-  // a knock on the Kolibri (applyDamage, from a point: lx, lz; amt with its knockK): a burning tyre's wheel off at a real one (a big one:
-  // two at once), the second wheel at once at a real one while it is due, else the damage to the tyres
-  function ktHit(c, amt, lx, lz) {
+  // a knock on the Kolibri (applyDamage, from a point: lx, lz; amt with its knockK; d0 the car's damage before it): a burning tyre's wheel
+  // off at a real one (a big one: two at once), the second wheel at once at a real one while it is due, else the tyres' damage (to be seen)
+  // and maybe a tyre on fire (ktFire)
+  function ktHit(c, amt, lx, lz, d0) {
     const K = c.kt, W = c.wreck, Q = W && W.rule;
     if (!K || W && W.dnf || c.finished) return;
     const real = amt >= KT.real;
@@ -2452,9 +2455,19 @@ const Core = (function () {
     }
     const hl = c.m.len * 0.5, hw = c.m.wid * 0.5, D = [0, 1, 2, 3].map(k => Math.hypot(lx - (k < 2 ? hl : -hl), lz - (k & 1 ? hw : -hw)));
     let k0 = 0; for (let k = 1; k < 4; k++) if (D[k] < D[k0]) k0 = k;
-    const f = 0.167 * Math.pow(amt / KT.avg, 0.6) * clamp((amt - 0.0015) / 0.004, 0, 1); if (!(f > 0)) return;
-    for (let k = 0; k < 4; k++) { if (k === (k0 ^ 3) || (W && W.wl & (1 << k))) continue; const wt = k === k0 ? 1 : 0.22 * (D[k0] + 0.3) / (D[k] + 0.3); K.d[k] = Math.min(1, K.d[k] + f * wt); }
-    if (K.hot < 0) { let m = -1; for (let k = 0; k < 4; k++) if (K.d[k] >= 1 && (m < 0 || K.d[k] > K.d[m])) m = k; if (m >= 0) K.hot = m; }
+    const f = 0.167 * Math.pow(amt / KT.avg, 0.6) * clamp((amt - 0.0015) / 0.004, 0, 1);
+    if (f > 0) for (let k = 0; k < 4; k++) { if (k === (k0 ^ 3) || (W && W.wl & (1 << k))) continue; const wt = k === k0 ? 1 : 0.22 * (D[k0] + 0.3) / (D[k] + 0.3); K.d[k] = Math.min(KT.dMax, K.d[k] + f * wt); }
+    ktFire(c, d0, amt, k0);
+  }
+  // a Kolibri's tyre catches fire where its car's old wheel rule (wheelRule) took the first wheel and set it burning: the car's damage at
+  // WRULE.d2 (after a change only when crossed again, rule.chg), a hit of WRULE.hit from WRULE.d1 at once. The most knocked tyre still on
+  // (ties: this knock's corner k0; without a point the front left); only in a race with its wheel rule (rule.kt), none while a wheel is off
+  function ktFire(c, d0, amt, k0) {
+    const K = c.kt, W = c.wreck, Q = W && W.rule, d1 = c.dmg;
+    if (!Q || !Q.kt || K.hot >= 0 || W.nL || W.dnf || c.finished) return;
+    if (!((d0 >= WRULE.d1 && amt >= WRULE.hit) || (d1 >= WRULE.d2 && !(Q.chg && d0 >= WRULE.d2)))) return;
+    let m = k0 >= 0 ? k0 : 0; for (let k = 0; k < 4; k++) if (K.d[k] > K.d[m]) m = k;
+    K.hot = m;
   }
   const ruleFire = (Q, lvl) => { if (!Q.burn) Q.fn = (Q.fn || 0) + 1; if ((Q.burn || 0) < lvl) Q.burn = lvl; };
   function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on

@@ -91,7 +91,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 
 - **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
 - **avto** fizika (`Car`; klasična `stepCS`, `CSK`; nova `stepNova`, `NVK`, `NVASSIST`, zdrs telesa v ovinku `Car.nvA`, drseči slog `Car.nvSl`, trki avtov `carCollide`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, `testOf` v `js/game.js`), nadgradnje `car upgrades`, deli vozil `a registered vehicle's parts`
-- **gume KOLIBRIJA** `KT`, `ktGrip`, `ktWear`, `ktHit` (`Car.kt`, možnost `tyreRule`; pravilo koles `rule.kt` v `wheelRule` / `_wreckStep`)
+- **gume KOLIBRIJA** `KT`, `ktGrip`, `ktWear`, `ktHit`, `ktFire` (guma zagori pri 80 % poškodbe; `Car.kt`, možnost `tyreRule`; pravilo koles `rule.kt` v `wheelRule` / `_wreckStep`)
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
 - **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
