@@ -2,7 +2,7 @@
 //  - KOLIBRI's mounts for the 18 elements; every one of their 16 options builds on it (its own body, no fallback, Normalni and Visoki),
 //    the visible ones within the room for one car with parts (outer <= stock + 300 triangles, the cabin unchanged), the hidden ones in
 //    the inner block (the outer shell unchanged, the inner <= stock + 300), the tyres within the parts' wheel budget (<= 600, Visoki 850)
-//  - the stock KOLIBRI exactly as before (its triangles; no part of the garage's in it)
+//  - the stock KOLIBRI within its budgets, no part of the garage's in it (kit.test.js: the same as before)
 //  - Render.deliMesh: each drawn element's part alone (the stripes on the top, the calipers at the four wheels, the hidden parts under
 //    the bonnet and in the arches), the car's look (barva, zatemnitev, luc_pod_avtom, gume) none
 //  - the looks: DELI.tyreLook, DELI.look (finishes, tints, glows), DELI.hupa (the horn's notes), DELI.dim (the smoke's colours) for all 16
@@ -39,7 +39,7 @@ const R = ctx.Render, D = ctx.DELI;
 const warns = [], warn = console.warn; console.warn = (m) => warns.push(String(m));
 
 const S0 = R.kitInfo('kolibri');
-check('stock KOLIBRI as before (1392 / 1390 triangles; Visoki 1546 / 1746), no part of the garage\'s in it', S0.status === 'ok' && S0.deli === '' && S0.tris.outer === 1392 && S0.tris.inner === 1390 && S0.hi.tris.outer === 1546 && S0.hi.tris.inner === 1746,
+check('stock KOLIBRI within its budgets, no part of the garage\'s in it (kit.test.js: as before)', S0.status === 'ok' && S0.deli === '' && S0.tris.outer <= S0.budget.outer && S0.tris.inner <= S0.budget.inner && S0.hi.tris.outer <= S0.hi.budget.outer && S0.hi.tris.inner <= S0.hi.budget.inner,
   `${S0.tris.outer}/${S0.tris.inner}, Visoki ${S0.hi.tris.outer}/${S0.hi.tris.inner}`);
 const fails = [], over = [], wheels = [], most = [];
 for (const id of ALL) for (let k = 1; k <= 16; k++) {
