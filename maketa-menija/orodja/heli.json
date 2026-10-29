@@ -80,5 +80,8 @@
  },
  "vrsic": {
   "edgeTint": true
+ },
+ "montreal": {
+  "sea": true
  }
 }

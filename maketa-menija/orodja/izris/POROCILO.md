@@ -8,6 +8,7 @@ Pomožna seja za predlog 5 (zemljevid od zgoraj, prelet, helikopter). Surovi izh
 - `geo_places.py`: CFG za tri proge, nova regija L1 `stlawrence` (44.6, -76.5, 800 km: Toronto in Montréal).
 - `routes.py`: TRACKS (+ toronto, medvode, montreal), ROADS (+ medvode), SUBST (Medvode).
 - `flyovers.json`, `landmarks.json`, `drones.json`: vnosi za tri proge.
+- `heli.json`: `montreal: {sea: true}` (brez tega je vodna ravnina sveta prekrila mesto Montréal čez reko: hiše so stale na vodi; s `sea` je pod njimi kopno; ostane nekaj zabrisanih zaplat kopna tik pod vodo ob obalah).
 
 ## Toronto, Kanada (`toronto`)
 - Umestitev: ravno dirkališče (razpon višin 12,3 m), postavljeno na štartno črto iz `js/tracks/toronto.js` (43.63408 N, 79.41205 W), zasuk 0 (svet proge je iz projiciranih črt OSM, x vzhod). Višine se ujemajo: mad 0,13 m, p90 0,3 m, odmik 81,3 m (= višina starta v datoteki proge); 100 m stran mad 0,65 m. moved 0 (ni iskanja). Zanesljivost: dobra (lega iz datoteke proge, višine 3DEP potrdijo).
@@ -24,3 +25,8 @@ Pomožna seja za predlog 5 (zemljevid od zgoraj, prelet, helikopter). Surovi izh
 - Umestitev: ravno dirkališče (višine v igri 0), postavljeno na štartno črto iz `js/tracks/montreal.js` (45.50178 N, 73.52325 W), zasuk 0. mad 0,36 m, odmik 9,9 m (otok ~10 m). Zanesljivost: lega iz datoteke proge; višine ne povedo nič, zasuk ni preverjen. Lasnica (d 2902) pride na 45.5142 N, 73.5275 W, na severni konec otoka, kot mora.
 - Imena: Zavoj N → Turn N; v preletu še »Rowing Basin« (ne »Olympic«).
 - Helikopter: Start · finish, Hairpin (Turn 10), Rowing basin, St. Lawrence, Montréal.
+
+## Stanje
+- Zemljevidi (top, isle, suho in dež), umestitev, far, lc: vse tri proge narejene.
+- Preleti (`fly-<id>.webm`, `.json`, poster): vse tri proge narejene.
+- Helikopter: predogledi v redu (proga vidna, brez lukenj); polni leti tečejo.
