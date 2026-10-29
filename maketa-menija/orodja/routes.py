@@ -126,7 +126,7 @@ for t in TRACKS:
         Image.open(os.path.join(RAW, 'fly-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'fly-%s.webp' % t), 'WEBP', quality=72, method=6)
         pd = []
         for nm in F['places']:
-            q = next((x for x in R['places'] if x[0] == nm or nm in x[0]), None)
+            q = next((x for x in R['places'] if x[0] == nm), None) or next((x for x in R['places'] if nm in x[0]), None)   # (the same name first, as the menu)
             pd.append(q[1] if q else L / 3 if nm == 'Split 1' else 2 * L / 3 if nm == 'Split 2' else -1e9)
         keep = lambda P, on: P if on and P and P[2] else 0
         fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
