@@ -1,6 +1,0 @@
-BRIEF AN-AUSPUH: THE ANIMATION OF A REGAL ELEMENT, STEP BY STEP
-Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/an_common.txt
-Your element: EXHAUST: Titanov / TITANIUM (on the regal's exhaust storeys) onto the car's tail (the old exhaust into the empty place).
-Your files: store copy P/concepts/_e_store2_an_auspuh.js, P/mk_base_an_auspuh.sh -> base_an_auspuh.js, body P/concepts/_an_auspuh_body.js, scripts
-P/mk_an_auspuh.sh, P/render_an_auspuh.sh, harness copy P/harness_an_auspuh.mjs; scratch folder /tmp/claude-0/-home-user-dirkaska-igra/
-d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/an_auspuh; progress file P/out/an_auspuh/notes.md.

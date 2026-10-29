@@ -1,6 +1,0 @@
-BRIEF AN-GUME: THE ANIMATION OF A REGAL ELEMENT, STEP BY STEP
-Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/an_common.txt
-Your element: TYRES: Dirkališče / TRACK (bay 3, storey A) onto the car (all four wheels; the old tyres back into the empty place).
-Your files: store copy P/concepts/_e_store2_an_gume.js, P/mk_base_an_gume.sh -> base_an_gume.js, body P/concepts/_an_gume_body.js, scripts
-P/mk_an_gume.sh, P/render_an_gume.sh, harness copy P/harness_an_gume.mjs; scratch folder /tmp/claude-0/-home-user-dirkaska-igra/
-d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/an_gume; progress file P/out/an_gume/notes.md.

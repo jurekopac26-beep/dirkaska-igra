@@ -1,7 +1,0 @@
-BRIEF XC: FRONT CABINET OPTIONS 5 and 6
-First read the common part: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/x_common.txt
-and the options: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/x_opts.txt
-You make options 5 and 6. Your scratch folder: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/xc ;
-progress file P/out/xc/notes.md. Your files: one store copy per option, P/concepts/_e_store2_om<k>.js (copies of _e_store2_w.js; change
-only the cabinets: the base part's cabinet functions, never the regal, never the PROPOSAL 1 section), P/mk_base_om<k>.sh -> base_om<k>.js,
-your body P/concepts/_xc_body.js (built on round W's _w_body.js machinery: copy what you need), P/mk_xc.sh, P/render_xc.sh.

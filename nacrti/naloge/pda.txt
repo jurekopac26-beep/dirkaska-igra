@@ -1,7 +1,0 @@
-BRIEF PDA: FRONT CABINETS WITH REAL DRAWERS, VERSIONS 1 and 2
-First read the common part: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/pd_common.txt
-and the versions: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/pd_vars.txt
-You make versions 1 and 2. Your scratch folder: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/pda ;
-progress file P/out/pda/notes.md. Your files: per version k a store copy P/concepts/_e_store2_pd<k>.js (from _e_store2_gm.js; change only
-the front cabinets (XC block, frontRegal's call) and hide the gift; never the regal, never the PROPOSAL 1 section), P/mk_base_pd<k>.sh ->
-base_pd<k>.js, your body P/concepts/_pda_body.js, P/mk_pda.sh, P/render_pda.sh, your own harness copy P/harness_pda.mjs.

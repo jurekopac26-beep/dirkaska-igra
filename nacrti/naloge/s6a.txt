@@ -1,7 +1,0 @@
-BRIEF S6A: GLASS SHOWCASE VARIANTS 1 and 2
-First read the common part: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/s6_common.txt
-and the variants: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/s6_vars.txt
-You make variants 1 and 2. Your scratch folder: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/s6a ;
-progress file P/out/s6a/notes.md. Your files: per variant k a store copy P/concepts/_e_store2_s6<k>.js (from _e_store2_om6.js; change only
-the front cabinets: XC's block and frontRegal's call; never the regal, never the PROPOSAL 1 section), P/mk_base_s6<k>.sh -> base_s6<k>.js,
-your body P/concepts/_s6a_body.js, P/mk_s6a.sh, P/render_s6a.sh, your own harness copy P/harness_s6a.mjs (long timeouts).

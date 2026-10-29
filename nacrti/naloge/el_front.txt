@@ -1,9 +1,0 @@
-BRIEF EL-FRONT: THE ELEMENTS IN FRONT OF THE CAR (the chest, its top, the service button, the colour pools, the trolleys)
-Read first: /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/wf/prompts/el_common.txt
-Your group: every tappable element in front of the car: on the chest's top the aero scale models and the SERVICE button (its card: the
-game's service rows, prices, condition); every element in the chest's drawers (headlamps, tail lamps, underglow, indicators, grilles,
-decals, calipers, discs, coloured nuts...); the ten colour pools in the floor (the paint: tapping a pool: what opens, the price, the paint
-booth or how the car gets painted); the trolleys if tappable (say). Folder P/out/el_spredaj, JSON group "spredaj". Files: store copy
-P/concepts/_e_store2_el_front.js, body P/concepts/_el_front_body.js, scripts P/mk_el_front.sh, P/render_el_front.sh, harness copy
-P/harness_el_front.mjs; scratch /tmp/claude-0/-home-user-dirkaska-igra/d198ab76-16fe-5fe4-9ec7-dde31bfe371f/scratchpad/el_front; progress
-P/out/el_spredaj/notes.md.
