@@ -5,6 +5,8 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
+  // the head lamp's outline for the garage's lamps: a round lens filling the nacelle's front (metres round z 0.41, y 0.6)
+  const LAMP = Array.from({ length: 8 }, (_, i) => [Math.cos(i * Math.PI / 4) * 0.074, Math.sin(i * Math.PI / 4) * 0.074]);
   VEHICLE_DEFS.push({
     id: 'miska', name: 'MIŠKA', cat: 'mali', ord: 1, drive: 'RR',
     desc: 'Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt.',
@@ -16,9 +18,28 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 6000, pk: 'ta1', field: ['miska'],
     snd: { kind: 'i2', hz: 1.3, loud: 0.8 },
     expect: { t100: [4.94, 5.8], vmax: [144, 153], latG: [2.05, 2.15], d100: [22.7, 25] },
-    // (where the look has them: the bullet mirrors on the front wings, the engine lid propped open behind the tail)
-    parts: { set: 'car', ht: 1.33, y0: 0.18, over: { mirrorL: { lx: 0.66, lz: -0.79, y: 0.84 }, mirrorR: { lx: 0.66, lz: 0.79, y: 0.84 }, trunk: { lx: -0.9, y: 0.76 },
-      fenderL: { h: 0.11 }, fenderR: { h: 0.11 } } },   // (a wing wraps round the nose's end and carries the lamp's nacelle: an L lying 0.31 m tall)
+    partNames: { headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wiper' },
+    parts: { set: 'car', ht: 1.33, y0: 0.18,
+      extra: {
+        // (the head lamps parts of their own, out of their nacelles in the wings (the nacelles and their chrome bezels stay); the tail lamps
+        // with their chrome rims out of the tail's face; the wipers on the cowl)
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.12, h: 0.06, lx: 1.02, lz: -0.62, y: 0.6 },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.12, h: 0.06, lx: 1.02, lz: 0.62, y: 0.6 },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.12, h: 0.04, lx: -1.0, lz: -0.68, y: 0.47 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.12, h: 0.04, lx: -1.0, lz: 0.68, y: 0.47 },
+        wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.3, h: 0.03, lx: 0.43, lz: -0.05, y: 0.88 },
+      },
+      // (where the look has them: the bullet mirrors on the front wings, the engine lid propped open behind the tail)
+      over: { mirrorL: { lx: 0.66, lz: -0.79, y: 0.84 }, mirrorR: { lx: 0.66, lz: 0.79, y: 0.84 }, trunk: { lx: -0.9, y: 0.76 },
+        fenderL: { h: 0.11 }, fenderR: { h: 0.11 } } },   // (a wing wraps round the nose's end and carries the lamp's nacelle: an L lying 0.31 m tall)
+    // where the garage's parts go (js/deli.js, look units): the wing over the roof's back edge (over the rear window; no part of its own: the
+    // body's); the head lamps on the nacelles' fronts, every option round as the stock lamp (LAMP: its colour, ring and details on the
+    // bulging lens) in the lamps' parts; the rims on its wheels
+    mounts: {
+      krilo: { x: -0.584, w: 0.5, part: 'body', s: 0.9 },
+      zarometi: { x: 1.52, y0: 0.6, lean: 0, zc: 0.41, yc: 0.6, s: 0.45, hosts: ['headL', 'headR'], socket: 'host', shape: LAMP, bulge: 0.02, ringW: 0.008 },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): a round bubble lofted through the sections below. The standard regions cut it
     // into the front lid (the bonnet over the luggage well), the front wings with their lamps, the (rear-hinged) doors with their glass, the
     // rear wings and the bumpers; the engine bay under the lid is open (its top panels null: lined, floored, the firewall a bulkhead) with
@@ -80,13 +101,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (let i = 0; i < 4; i++) { const x0 = xs[i], x1 = xs[i + 1], y0 = top(x0, 0) + 0.005, y1 = top(x1, 0) + 0.005;
             K.face([[x0, y0, -0.014], [x0, y0, 0.014], [x1, y1, 0.014], [x1, y1, -0.014]], CH); } }
         K.rect(1.493, 0.545, 0, 0.028, 0.33, CH);
+        //   (the lamps parts of their own; the garage's lamps in their place: K.deli, mounts.zarometi)
         for (const sd of [-1, 1]) {
           const f = sd < 0 ? 'fenderL' : 'fenderR', z = sd * 0.41;
           K.cyl([1.44, 0.6, z], [1.52, 0.6, z], 0.085, P, { n: 8, part: f, capA: null, capB: CH });   // the lamp's nacelle out of the wing, its chrome bezel
-          K.headLamp(1.524, 0.6, z, 0.066, { host: f, ring: null, n: 8 });
           K.rect(1.493, 0.47, sd * 0.43, 0.075, 0.035, K.rgb(0xff9a1e), { host: f });         // the indicator under it
         }
-        for (const z of [-0.3, 0.12]) K.bar([0.66, 0.876, z - 0.2], [0.63, 0.886, z + 0.2], 0.009, B, { n: 4, part: 'body' });   // the wipers
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(1.524, 0.6, sd * 0.41, 0.066, { host: sd < 0 ? 'headL' : 'headR', ring: null, n: 8 }); });
+        for (const z of [-0.3, 0.12]) K.bar([0.66, 0.876, z - 0.2], [0.63, 0.886, z + 0.2], 0.009, B, { n: 4, part: 'wiperFront' });   // the wipers (a part: both blades come off together)
         // ---- the bullet mirrors on the front wings (mirrorL / mirrorR): chrome, the glass their back face, on stalks ----
         for (const sd of [-1, 1]) { const part = sd < 0 ? 'mirrorL' : 'mirrorR', y0 = top(0.99, 0.52), y = y0 + 0.075, z = sd * 0.52;
           K.cyl([1.03, y, z], [0.95, y, z], 0.018, CH, { r2: 0.034, n: 6, capB: [0.42, 0.47, 0.54], part });
@@ -109,7 +131,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.box(x + s * 0.008, 0.25, sd * 0.25, 0.045, 0.16, 0.05, 0, CH);
         });
         // ---- the tail: the lamps either side of its face (chrome rims), the exhaust's tip ----
-        for (const sd of [-1, 1]) { K.rect(-1.482, 0.47, sd * 0.45, 0.09, 0.17, CH, { dir: '-x', part: sd < 0 ? 'quarterL' : 'quarterR' }); K.tailLamp(-1.484, 0.47, sd * 0.45, 0.07, 0.14); }
+        for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR';   // (parts of their own: the rim and the lit lens leave together)
+          K.rect(-1.482, 0.47, sd * 0.45, 0.09, 0.17, CH, { dir: '-x', part: tp }); K.tailLamp(-1.484, 0.47, sd * 0.45, 0.07, 0.14, { host: tp }); }
         K.exhaust(-1.545, 0.2, -0.16, 0.042, 0.2, { n: 8, part: 'body' });
         // ---- the engine lid ('trunk'): hinged under the rear window, propped open by 34 degrees on two stays; louvres in its upper half ----
         const H = [-1.157, 0.925], th = -34 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
@@ -127,6 +150,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           // the stays: from the lid's lower corners down to the bay's edge
           for (const sd of [-1, 1]) { const q = rot([lidC[2][0] + 0.03, lidC[2][1] + 0.01, sd * 0.3]); K.bar(q, [-1.425, 0.61, sd * 0.31], 0.01, CH, { n: 4 }); }
         }, { hinge: [[H[0], H[1], -0.3], [H[0], H[1], 0.3]] });
+        K.part('body', () => K.deli('krilo', () => {}));   // (the garage's wing over the roof's back edge: mounts.krilo; none stock)
         // ---- the twin in the open bay (the outer shell: in sight under the lid): its block, the cooling shroud, the air filter, the coil ----
         K.part('body', () => {
           K.box(-1.29, 0.26, 0, 0.2, 0.22, 0.5, 0, AL, null, true);                           // the crankcase, the finned sump

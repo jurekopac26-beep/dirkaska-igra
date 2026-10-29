@@ -17,7 +17,28 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 14000, pk: 'ta1', field: ['raketa'],
     snd: { kind: 'i4', hz: 1.15, turbo: 0, loud: 1 },
     expect: { t100: [3.02, 3.55], vmax: [228, 243], latG: [2.3, 2.4], d100: [22.7, 25.1] },   // (the LEV S's)
-    parts: { set: 'car', ht: 1.4, y0: 0.2, over: { trunk: { lx: -0.95, y: 0.94 } } },   // (the hatch's tailgate: at the tail, where the look has it)
+    partNames: { headL: 'left head lamps', headR: 'right head lamps', tailL: 'left tail lamp', tailR: 'right tail lamp', plate: 'number plate',
+      wiperFront: 'windscreen wiper', wiperRear: 'rear wiper' },
+    parts: { set: 'car', ht: 1.4, y0: 0.2,
+      extra: {
+        // (each side's pair of head lamps a part of its own (out of the grille: it stays); the tail lamps with their black surrounds; the
+        // number plate and the rear wiper mounted on the tailgate (on: they turn with it, go with it); the wipers on the cowl)
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.18, h: 0.08, lx: 0.99, lz: -0.64, y: 0.632 },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.18, h: 0.08, lx: 0.99, lz: 0.64, y: 0.632 },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.17, h: 0.05, lx: -0.98, lz: -0.74, y: 0.69 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.17, h: 0.05, lx: -0.98, lz: 0.74, y: 0.69 },
+        plate: { z: 1, th: 0.4, m: 1, r: 0.25, h: 0.02, lx: -0.98, lz: 0, y: 0.555, on: 'trunk' },
+        wiperRear: { z: 1, th: 0.45, m: 0.5, r: 0.25, h: 0.03, lx: -0.935, lz: 0, y: 1.085, on: 'trunk' },
+        wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.45, h: 0.03, lx: 0.27, lz: -0.1, y: 0.94 },
+      },
+      over: { trunk: { lx: -0.95, y: 0.94 } } },   // (the hatch's tailgate: at the tail, where the look has it)
+    // where the garage's parts go (js/deli.js, look units): the wing over the roof's back edge (no part of its own: the body's); the head
+    // lamps, one unit a side over the two round lamps' place in the grille, in the lamps' parts; the rims on its wheels
+    mounts: {
+      krilo: { x: -1.64, w: 0.64, part: 'body' },
+      zarometi: { x: 1.874, y0: 0.632, lean: 0, zc: 0.525, yc: 0.632, s: 0.85, hosts: ['headL', 'headR'] },
+      platisca: {},
+    },
     // the look: a loft through the sections below (look units = metres: body.len / wid are the vehicle's), the standard regions split it into
     // the parts (bumpers, bonnet, tailgate with its glass, fenders, quarters, doors with their glass), the details on top (KIT API v1, render.js)
     look: {
@@ -65,7 +86,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.355, 0.4, sd * 0.785, sd * 0.825, B);
         // the nose: a plain black grille right across, two round lamps a side, all four of one size
         K.grille(1.862, 0.63, 0, 1.5, 0.24, { slats: 3 });
-        for (const sd of [-1, 1]) for (const z of [0.62, 0.43]) K.headLamp(1.874, 0.632, sd * z, 0.075);
+        // (each side's pair a part of its own; the garage's lamps in their place: K.deli, mounts.zarometi)
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) for (const z of [0.62, 0.43]) K.headLamp(1.874, 0.632, sd * z, 0.075, { host: sd < 0 ? 'headL' : 'headR' }); });
         // the bumpers: black, wrapped round the corners, the red line along them (black over and under it); the front one with a small
         // spoiler under it, the indicators in its ends, the number plate
         K.part('bumperF', () => {
@@ -80,13 +102,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { const z = sd * 0.79; K.box(-1.73, 0.28, z, 0.2, 0.17, 0.05, 0, B); K.rect(-1.73, 0.405, z + sd * 0.028, 0.2, 0.025, R, { dir: sd < 0 ? '-z' : 'z' }); }
         });
         // the tail: the lamps in black surrounds at the corners (the lit lenses are the tail mesh), the plate on the tailgate, its wiper; the exhaust
-        for (const sd of [-1, 1]) { K.rect(-1.864, 0.69, sd * 0.6, 0.34, 0.18, B, { dir: '-x', part: 'body' }); K.tailLamp(-1.866, 0.69, sd * 0.6, 0.3, 0.14); }
-        K.rect(-1.864, 0.555, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'trunk' });
-        K.bar([-1.788, 1.06, -0.24], [-1.768, 1.11, 0.24], 0.012, B, { n: 4, part: 'trunk' });   // (on the glass's slope, just outside it)
+        //   (the lamps with their surrounds parts of their own; the plate and the wiper too, mounted on the tailgate)
+        for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR'; K.rect(-1.864, 0.69, sd * 0.6, 0.34, 0.18, B, { dir: '-x', part: tp }); K.tailLamp(-1.866, 0.69, sd * 0.6, 0.3, 0.14, { host: tp }); }
+        K.rect(-1.864, 0.555, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'plate' });
+        K.bar([-1.788, 1.06, -0.24], [-1.768, 1.11, 0.24], 0.012, B, { n: 4, part: 'wiperRear' });   // (on the glass's slope, just outside it)
         K.exhaust(-1.82, 0.25, -0.45, 0.032, 0.2, { part: 'body' });
         // the door mirrors (black), the wipers on the cowl
         for (const sd of [-1, 1]) K.mirror(0.38, 0.95, sd * 0.88, { col: B });
-        for (const z of [-0.36, 0.2]) K.bar([0.54, 0.93, z - 0.24], [0.5, 0.95, z + 0.24], 0.01, B, { n: 4, part: 'body' });
+        for (const z of [-0.36, 0.2]) K.bar([0.54, 0.93, z - 0.24], [0.5, 0.95, z + 0.24], 0.01, B, { n: 4, part: 'wiperFront' });   // (a part: both blades come off together)
+        K.part('body', () => K.deli('krilo', () => {}));   // (the garage's wing over the roof's back edge: mounts.krilo; none stock)
         K.hinge('hood', [0.52, 0.9, -0.6], [0.52, 0.9, 0.6]);
         K.hinge('trunk', [-1.64, 1.34, -0.6], [-1.64, 1.34, 0.6]);
         K.hinge('doorL', [0.46, 0.4, -0.8], [0.46, 0.85, -0.8]); K.hinge('doorR', [0.46, 0.4, 0.8], [0.46, 0.85, 0.8]);
