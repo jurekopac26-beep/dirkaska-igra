@@ -20,7 +20,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 6. **Kratki odgovori v klepetu,** brez ponavljanja stanja; podrobnosti so v pull requestu in tem dokumentu.
 
 ## Odločitve
-1. **Kje igralec izbere misijo** (vprašanje 1): oboje. Na naslovnici ploščica MISSIONS (seznam vseh misij), na novi mapi pa so misije razdeljene po garažah; v vsaki garaži so misije od najlažje do najtežje. Razporeditev po garažah (vprašanje 5): **4 garaže po celinah**, v vsaki od najlažje do najtežje: EVROPA 50, 29, 45, 10, 02, 51, 01, 54, 08, 09; SEVERNA AMERIKA 06, 34, 39, 55, 04, 33, 17, 52, 30, 46, 11; AVSTRALIJA IN AZIJA 26, 40, 35, 19, 49, 48, 37, 47; AFRIKA IN JUŽNA AMERIKA 23, 43, 53, 07. Garaže na mapo postavi drugi račun; misije v `js/nvmenu.js` dobijo samo kratek priklop.
+1. **Kje igralec izbere misijo** (vprašanje 1): oboje. Na naslovnici ploščica MISSIONS (seznam vseh misij), na novi mapi pa so misije razdeljene po garažah; v vsaki garaži so misije od najlažje do najtežje. Razporeditev po garažah (vprašanje 5): **6 garaž po poklicu**, v vsaki od najlažje do najtežje: GASILCI 01, 49, 46, 47; REŠEVALCI 06, 02, 35, 19, 48, 37; TOVOR 50, 39, 07, 43, 51, 52, 54, 09; ZIMA 29, 33, 17, 53, 30; NA CESTI 26, 34, 04, 45, 40; DIVJINA 10, 55, 08, 23, 11. Garaže na mapo postavi drugi račun; misije v `js/nvmenu.js` dobijo samo kratek priklop.
 2. **Gasilski avto** (vprašanje 2): verzija **C · Avtolestev** (`slike-predlogi/blender/modeli/v2.glb`, mere v `v2.json`). Uporabijo ga misije 01, 46, 47 in 49 (pri 49 se lestev dviga in izteguje).
 3. **Seje** (vprašanje 3): 10 sej po skupinah (tabela Stanje).
 4. **Cilj misije 06** (vprašanje 4): bolnišnica in reševalni avto ob cilju.
@@ -47,7 +47,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 | 8 · mirna vožnja | 02, 34, 50 | 7–11 | |
 | 9 · vleka, žaromet, led, baterija | 04, 08, 17, 26 | 10–14 | |
 | 10 · ostalo | 11, 23, 29, 40, 45 | 16–21 | |
-| – · garaže in naslovnica | 4 garaže po celinah, ploščica MISSIONS | 2–4 | |
+| – · garaže in naslovnica | 6 garaž po poklicu, ploščica MISSIONS | 2–4 | |
 
 ## Predaja
 - Po skupini 1: sistem in misija 06 sta narejena. Naslednja je skupina 2 (ogenj): gasilski avto C iz `v2.glb` (THREE je r128, `GLTFLoader` ni v repozitoriju: avto zgradi iz preprostih teles po merah v `v2.json` ali `blender/gas.py`), ogenj, curek vode, gašenje s prstom.
