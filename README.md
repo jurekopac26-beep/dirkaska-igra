@@ -8,7 +8,6 @@ Notranje oznake so ostale od prejšnjega imena (APEX Racing): `app: 'apex-racing
 
 Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, okolica, približki) je v svoji datoteki v [`docs/proge/`](docs/proge/); opis delov igre, ki niso vezani na eno progo (fizika, dirka, boksi, vreme, grafika, vozni park …), je v [`docs/igra.md`](docs/igra.md). Viri in licence so spodaj pod »Zasluge«.
 
-- Monte Carlo, Monako (opis še ni napisan)
 - [Pikes Peak, ZDA (asfalt in makadam: `pikes`, `pikesg`)](docs/proge/pikes.md)
 - [Ouninpohja, Finska](docs/proge/ouninpohja.md)
 - [Vršič, Slovenija](docs/proge/vrsic.md)
@@ -54,6 +53,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
 - Jezero Ring (opis še ni napisan)
 - Riviera, Francija (opis še ni napisan)
+- Monte Carlo, Monako (opis še ni napisan; od 29. 10. 2026 testna, se ne posodablja več)
 - Gorski reli (opis še ni napisan)
 - Bakreni gozd (opis še ni napisan)
 - [Toskana, Italija](docs/proge/toskana.md)

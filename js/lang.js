@@ -450,6 +450,13 @@
     'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
     'Športni izpuh': 'Sports exhaust', 'Dvojni izpuh, zračniki': 'Twin exhaust, bonnet vents', 'Štirje izpuhi, zajemalnik': 'Quad exhaust, bonnet scoop', 'Bel napis': 'White lettering', 'Rumen pas': 'Yellow band', 'Rdeč pas': 'Red band',
     'Rdeče čeljusti': 'Red calipers', 'Rumene čeljusti': 'Yellow calipers', 'Zlate, karbonski diski': 'Gold calipers, carbon discs', 'Spojler, spodnja ustnica': 'Spoiler, front lip', 'Zadnje krilo': 'Rear wing', 'Krilo GT, krilca, pragovi': 'GT wing, dive planes, side skirts',
+    /* ---- the special missions (js/missions.js) ---- */
+    'Zmanjkalo je časa.': 'Out of time.', 'MISIJA NEUSPELA': 'MISSION FAILED', 'MISIJA {0}': 'MISSION {0}', 'Najboljši': 'Best', 'Ponovi': 'Again', 'Misije': 'Missions',
+    'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
+    'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR', 'Vaja: na vrh': 'Practice: to the top',
+    'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
+    'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
+    'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
