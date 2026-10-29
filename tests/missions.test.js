@@ -1,4 +1,4 @@
-// The special missions (js/missions.js), no browser: the list (the practice one last, every mission on a real track, its texts in English),
+// The special missions (js/missions.js), no browser: the list (the practice one last, every mission's file in js/missions/, every mission on a real track, its texts in English),
 // the run of a mission (the clock, the time limit, the player over the finish, a mission's own win and fail, once only), the stars by the
 // time, the records (the best time and the most stars of a mission done; a failed run counts as a run only), the race's options a mission
 // gives (alone, one run, its vehicle), none without a mission.
@@ -10,13 +10,16 @@ const { loadCore, ROOT } = require('./lib/core.js');
 global.Core = loadCore();
 global.Lang = require(path.join(ROOT, 'js', 'lang.js'));
 const M = require(path.join(ROOT, 'js', 'missions.js'));
+global.Missions = M;
+const fs = require('fs');
+for (const f of fs.readdirSync(path.join(ROOT, 'js', 'missions')).filter(f => /\.js$/.test(f)).sort()) require(path.join(ROOT, 'js', 'missions', f));   // (every mission's own file)
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const has = (k) => Object.prototype.hasOwnProperty.call(Lang.EN, k);
 
 // the list
 M.add({ id: '99', title: 'Vaja: na vrh', track: 'vrsic', story: 'x', goal: 'x' });
-check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join() === '99,vaja', M.DEFS.map(d => d.id).join());
+check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join() === M.DEFS.filter(d => !d.test).map(d => d.id).sort().join() + ',vaja' && M.DEFS.map(d => d.id).indexOf('99') === M.DEFS.length - 2, M.DEFS.map(d => d.id).join());
 M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
