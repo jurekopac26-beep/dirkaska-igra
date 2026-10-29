@@ -4920,6 +4920,20 @@ const Render = (function () {
     out.disc = g.geometry();
     return out;
   }
+  // NIZKA: the man's parts again, coarse (~430 vertices a man instead of ~1500), for the men only a few pixels tall on the screen (updateCrew):
+  // the same joints, sizes and colour codes; no belt, patches, eyes, peak, reflective band or visor box (a dark front on the helmet instead)
+  function crewGeosLo() {
+    const G = () => new World.GB(), out = {}, TM = CR_TM, TD = CR_TD, W = CR_W, K = CR_K, sd = (k) => k === 1 || k === 4 ? TD : TM;   // (6 round, half a step turned: points 1 and 4 the sides)
+    let g = G(); crLoft(g, [{ y: -0.13, rx: 0.165, rz: 0.104, p: 3 }, { y: 0.5, rx: 0.212, rz: 0.115, p: 3, hard: true }, { y: 0.625, rx: 0.15, rz: 0.088, p: 2.4 }], 6, 0.5,
+      (s, k) => { if (s === 1) return W; const a = sd(k), b = sd((k + 1) % 6); return a === b ? a : [a, b, b, a]; }, { cap1: W, dome1: 0.025 }); out.trunk = g.geometry();
+    g = G(); crBall(g, 0, 0.165, 0.008, 0.092, 0.112, 0.103, 6, 3, (ux, uy) => uy > 0.4 ? TM : CR_SK); out.head = g.geometry();   // (the cap: the top in the team colour)
+    g = G(); crBall(g, 0, 0.17, 0.012, 0.13, 0.14, 0.145, 6, 3, (ux, uy, uz) => uz > 0.7 ? [0.05, 0.07, 0.1] : uy < -0.45 ? TD : TM); out.helmet = g.geometry();
+    g = G(); crLoft(g, [{ y: 0.035, rx: 0.06, rz: 0.061 }, { y: -0.3, rx: 0.044, rz: 0.047 }], 4, 0.5, () => TM); out.uarm = g.geometry();
+    g = G(); crLoft(g, [{ y: 0.01, rx: 0.048, rz: 0.05 }, { y: -0.3, rx: 0.042, rz: 0.046 }], 4, 0.5, () => TM, { cap1: K }); out.farm = g.geometry();   // (the glove: its dark end)
+    g = G(); crLoft(g, [{ y: 0.06, rx: 0.078, rz: 0.09, p: 2.5 }, { y: -0.46, rx: 0.06, rz: 0.066, p: 2.5 }], 4, 0.5, () => TM); out.thigh = g.geometry();
+    g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 4, 0.5, () => TM); crBall(g, 0, -0.415, 0.05, 0.058, 0.058, 0.135, 4, 2, [0.09, 0.09, 0.1]); out.shin = g.geometry();
+    return out;
+  }
   function crewMaterial(skin) {   // Lambert with vertex colours; the team (and skin) colour codes are resolved per instance in the vertex shader
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = (sh) => {
@@ -5060,8 +5074,9 @@ const Render = (function () {
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
     const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
-    const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true), farm: mk(geo.farm, nM * 2, true),
-      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
+    const lim = tierNow > 0;   // (NIZKA: the arms and legs cast no shadow, as a rival's small parts; the trunk's and the head's stay)
+    const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, lim), farm: mk(geo.farm, nM * 2, lim),
+      thigh: mk(geo.thigh, nM * 2, lim), shin: mk(geo.shin, nM * 2, lim), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
       rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
     const skinA = geo.head.attributes.crewSkin;
     men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
@@ -5075,9 +5090,16 @@ const Render = (function () {
       for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
     const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
     boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
+    // NIZKA: the coarse set for the far men (crewGeosLo, no shadows); each frame updateCrew packs the men drawn to the front of one set or
+    // the other, with their colours and skins (kept here, by man)
+    let lo = null;
+    if (tierNow === 0) ownRnd(() => { const gl = crewGeosLo(); gl.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));   // (ownRnd: their uuids without Math.random, the race runs as at the other tiers)
+      const F = { trunk: mk(gl.trunk, nM, false), head: mk(gl.head, nM, false, matS), helmet: mk(gl.helmet, nM, false), uarm: mk(gl.uarm, nM * 2, false), farm: mk(gl.farm, nM * 2, false),
+        thigh: mk(gl.thigh, nM * 2, false), shin: mk(gl.shin, nM * 2, false) };
+      lo = { F, col: CREW_PACK.map(k => M[k].instanceColor.array.slice()), skin: skinA.array.slice() }; });
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null, lo };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
@@ -5229,19 +5251,37 @@ const Render = (function () {
       _cv.set(_cv.x + (hubP[0] - _cv.x) * k, _cv.y + (hubP[1] - _cv.y) * k, _cv.z + (hubP[2] - _cv.z) * k); ang += wrapPi(hubA - ang) * k; }
     _cQ.setFromEuler(_ce.set(0, ang, 0, 'YXZ')); out.compose(_cv, _cQ, S); return true;
   }
+  // NIZKA (the phone budget): by a man's height on the screen (the camera's distance and field of view: the replay's TV cameras zoom in), a
+  // man of the other crews under CREW_PX_MIN pixels or behind the camera is not drawn (at the start the whole pit lane's men were in every
+  // frame, ~270k vertices with their shadows; behind the car on a phone held sideways that is ~110 m off, in the haze), one under CREW_PX_LO
+  // pixels (~34 m) is drawn from the coarse set (crewGeosLo, no shadow), the nearer ones as ever. The player's crew is always drawn. The men
+  // drawn are packed to the front of their set (CREW_PACK, one or two instances a man; a helmet only for the men who wear one) with their colours
+  const CREW_PX_MIN = 7.5, CREW_PX_LO = 24, CREW_PACK = ['trunk', 'head', 'helmet', 'uarm', 'farm', 'thigh', 'shin'];
+  function crPack(S, i, h, k, lo) {   // man k's colours and skin into instance i of set S (h: his helmet's instance, or -1)
+    for (let q = 0; q < CREW_PACK.length; q++) { if (q === 2) continue; const w = q > 2 ? 6 : 3, a = S[CREW_PACK[q]].instanceColor.array, o = lo.col[q]; for (let t = 0; t < w; t++) a[i * w + t] = o[k * w + t]; }
+    if (h >= 0) { const a = S.helmet.instanceColor.array, o = lo.col[2]; for (let t = 0; t < 3; t++) a[h * 3 + t] = o[k * 3 + t]; }
+    const sa = S.head.geometry.attributes.crewSkin.array; for (let t = 0; t < 3; t++) sa[i * 3 + t] = lo.skin[k * 3 + t];
+  }
   function updateCrew(dt) {
     if (!crew) return;
     const c = crew; crewLogic(dt);
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
     if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
-    const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
-    for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
-      crewMan(m, dt); crRig(m);
-      _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(M.trunk, i, _cM);
-      rel(M.head, i, CRM.neck); rel(M.helmet, i, m.helmet ? CRM.neck : _zero);
-      rel(M.uarm, i * 2, CRM.shL); rel(M.uarm, i * 2 + 1, CRM.shR); rel(M.farm, i * 2, CRM.elL); rel(M.farm, i * 2 + 1, CRM.elR);
-      rel(M.thigh, i * 2, CRM.hipL); rel(M.thigh, i * 2 + 1, CRM.hipR); rel(M.shin, i * 2, CRM.knL); rel(M.shin, i * 2 + 1, CRM.knR);
+    const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src), lo = c.lo;
+    const fx = cam.vcx - camera.position.x, fz = cam.vcz - camera.position.z, fl = Math.hypot(fx, fz) || 1;
+    const pxK = 1.8 * window.innerHeight / (2 * Math.tan(camera.fov * Math.PI / 360)), cnt = [0, 0, 0, 0];   // (pxK: a man's height on the screen 1 m off, in pixels; cnt: the men so far in the near set and the far one, and their helmets)
+    for (let k = 0; k < c.men.length; k++) { const m = c.men[k];
+      crewMan(m, dt);
+      let S = M, i = k, h = k;   // (his set, his instance in it and his helmet's)
+      if (lo) { const dx = m.x - camera.position.x, dz = m.z - camera.position.z, d = Math.hypot(dx, dz);
+        if (!m.bx.mine && (d * CREW_PX_MIN > pxK || (dx * fx + dz * fz) / fl < -6)) { if (m.gun) rel(M.gun, m.gunI, _zero); continue; }
+        const f = d * CREW_PX_LO > pxK ? 1 : 0; S = f ? lo.F : M; i = cnt[f]++; h = m.helmet ? cnt[2 + f]++ : -1; crPack(S, i, h, k, lo); }
+      crRig(m);
+      _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(S.trunk, i, _cM);
+      rel(S.head, i, CRM.neck); if (!lo) rel(M.helmet, i, m.helmet ? CRM.neck : _zero); else if (h >= 0) rel(S.helmet, h, CRM.neck);
+      rel(S.uarm, i * 2, CRM.shL); rel(S.uarm, i * 2 + 1, CRM.shR); rel(S.farm, i * 2, CRM.elL); rel(S.farm, i * 2 + 1, CRM.elR);
+      rel(S.thigh, i * 2, CRM.hipL); rel(S.thigh, i * 2 + 1, CRM.hipR); rel(S.shin, i * 2, CRM.knL); rel(S.shin, i * 2 + 1, CRM.knR);
       if (m.gun) rel(M.gun, m.gunI, CRM.hdR);
       if (m.role === 'G' && M.rod) {   // air hose: gun -> the floor behind him -> the garage
         _cv.set(0, 0.07, 0.05).applyMatrix4(CRM.hdR); const bx = m.x - Math.cos(m.yaw) * 0.55, bz = m.z - Math.sin(m.yaw) * 0.55;
@@ -5259,6 +5299,8 @@ const Render = (function () {
         _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(0, _cM); }
     }
     for (const t of c.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
+    if (lo) [M, lo.F].forEach((S, f) => { CREW_PACK.forEach((key, q) => { const im = S[key]; im.count = q === 2 ? cnt[2 + f] : cnt[f] * (q > 2 ? 2 : 1); im.visible = im.count > 0; im.instanceColor.needsUpdate = true; });
+      S.head.geometry.attributes.crewSkin.needsUpdate = true; });   // (an empty set not drawn at all)
     for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
   }
 
@@ -8584,8 +8626,8 @@ const Render = (function () {
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
-    if (c.fxCar > 3) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }
-    if (XC.dust && (c.fxWall > 4 || c.fxCar > 4)) { const w = c.fxCar > c.fxWall, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
+    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }   // (c.fxQ: Trki: iskre izklop, a knock between cars without sparks or dust)
+    if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }
     if (XC.drag && v.kit && spd > 4 && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (const bn of ['bumperF', 'bumperR']) if (v.kit.ajar[bn] && !v.kit.dead[bn]) {   // (Razbijanje · nov način: a bumper hanging loose drags on the road: sparks off its low end)
@@ -8594,7 +8636,7 @@ const Render = (function () {
       const acc = v.xDragA || (v.xDragA = {}); acc[bn] = (acc[bn] || 0) + dt * (60 + spd * 6);   // (a stream: more the faster it drags; by time, not by frame)
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
-    c.fxWall = 0; c.fxCar = 0;
+    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)
     if (v.kit && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {
