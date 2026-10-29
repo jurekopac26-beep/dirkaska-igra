@@ -34,7 +34,8 @@ const run = (page, fn, max, opt = {}) => page.evaluate(async ([src, max, opt]) =
     g.sim(0.25, true); g.hud(0.25);
     if (P.lap !== lap) { lap = P.lap; const pl = g.race.plan(P); out.lines.push({ lap, box: !!pl && pl.box, need: pl ? pl.need.join() : '', mk: !!g.race.mk }); }
     const s = st(), dE = dEOf(), pit = !!(P.inPit || P.pitG);
-    if (s !== last || pit !== lastPit) { last = s; lastPit = pit; out.ch.push({ lap: P.lap, dE: Math.round(dE), st: s, pit }); }
+    // (dE floored, not rounded: the warning goes the moment dE is under 0; a dE of -0.2 must not read as 0)
+    if (s !== last || pit !== lastPit) { last = s; lastPit = pit; out.ch.push({ lap: P.lap, dE: Math.floor(dE), st: s, pit }); }
     if (f(g, P, dE, opt)) { out.ok = true; break; }
   }
   out.lap = P.lap; out.L = Tk.len; out.st = st(); out.fuel = +P.fuel.toFixed(3);
