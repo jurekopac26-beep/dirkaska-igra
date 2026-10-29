@@ -29,7 +29,16 @@ const Garage3D = (function () {
   // the room's fixed lines (the room light's shader is made from them too): the window band (its height, a window's width, the windows'
   // middles along the back and the front wall), the wall washers on the back wall, the steel columns (x on the back and front walls,
   // z on the side walls, and the four corners; whatever stands at a wall keeps 0.2 m clear of them)
-  const WIN = [3.45, 4.3], WW = 1.9, BACKW = [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
+  // the regal behind the car (sklop 3, buildRegal; on: the regal and what made room for it: the back wall's furniture where it stands gone,
+  // the back windows walled up, the old wall over the back wall). left: how its two left bays stand: 'flat' bay 1 straight on from bay 2
+  // (5 cm back) and bay 0 turned from it as the concept's bays turn (clear of the far robot's rail and its chain's trough by 6 cm); 'arc' on
+  // the concept's arc as the user saw it (then the far rail's left metre stands in bays 0 and 1: RAILS[1] would have to end at x -2.55).
+  // clear: the back wall's things in x clear[0]..clear[1], under clear[2] m and less than clear[3] m off it go; backK: the light blue of
+  // the backs (unlit) x this (the concept's sheet base 236 / 255, and the brighter blue its pictures show in today's light); wz: the wings
+  // on the top this far toward the car from a bay's middle (the concept's 0.2 reached 0.3 m out over the top board's front: the far
+  // robot's arm passes there reaching the far rear corner of a car)
+  const RGL = { on: true, left: 'flat', L: 1.7034, D: 0.66, LV: [0.06, 0.705, 1.35, 1.995], TOP: 2.66, R: 4.75, A: 0.352, clear: [-4.94, 4.8, 4.25, 1.1], backK: 1.35, wz: 0.04, P: null, bays: [], body: [], names: [], col: -1, mesh: null, wall: null, atlas: null };
+  const WIN = [3.45, 4.3], WW = 1.9, BACKW = RGL.on ? [] : [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
   const WASH_X = [-7.4, -4.2, 1.3, 4.6, 7.6], COLS = { backFront: [-4.75, 5.0], sides: [-2.8, 2.8, 6.5], corners: true };
   // the light (init sets it from the renderer): HDR (a half-float target), how bright the luminous things glow (EMI), the outside's
   // exposure (OUTK); NOREFL: the layer only the main camera draws (not the floor's mirror, not the cube map); GLOW: the glows painted
@@ -425,7 +434,7 @@ const Garage3D = (function () {
       '  float sun = 0.0, ns = dot(n, rlS); if (ns > 0.0 && p.z < ' + f(zw - 0.01) + ') sun = ns * rlSun(p);',   // (the sun: on what faces it)
       // (the warm task lights: one under the bins' rail over the bench (on the bench, not the floor), one over the pegboard; the LED
       // line's cool wash down the tread plate under it, along the back wall and the side walls' back halves)
-      '  vec3 task = vec3(0.0); if (p.z < ' + f(z0 + 1.6) + ') task = vec3(1.0, 0.86, 0.68) * (0.22 * step(0.7, p.y) * rlTask(p, n, -3.9, -1.6, 1.27, ' + f(z0 + 0.19) + ') + 0.22 * rlTask(p, n, -7.35, -5.05, 2.66, ' + f(z0 + 0.26) + '));',
+      '  vec3 task = vec3(0.0); if (p.z < ' + f(z0 + 1.6) + ') task = vec3(1.0, 0.86, 0.68) * (' + (RGL.on ? '' : '0.22 * step(0.7, p.y) * rlTask(p, n, -3.9, -1.6, 1.27, ' + f(z0 + 0.19) + ') + ') + '0.22 * rlTask(p, n, -7.35, -5.05, 2.66, ' + f(z0 + 0.26) + '));',
       '  float led = p.z < ' + f(-door - 0.4) + ' && p.y < 1.0 ? smoothstep(0.55, 1.0, p.y) * (1.0 - smoothstep(0.0, 0.15, dw)) : 0.0;',
       '  return c * k + alb * (' + v3([0.55, 0.506, 0.44]) + ' * rlDoor(p, n, ' + f(x1) + ', 1.0) + ' + v3([0.213, 0.228, 0.248]) + ' * rlDoor(p, n, ' + f(x0) + ', -1.0)',   // (the doors: 0.55 x (1, 0.92, 0.8); 0.55 x 0.45 x (0.86, 0.92, 1))
       '    + vec3(0.9, 0.864, 0.81) * wash + vec3(1.0, 0.88, 0.7) * sun * ' + f(HDR ? 1.8 : 0.9) + ' + task + ' + v3([0.075, 0.1125, 0.135]) + ' * led',
@@ -503,10 +512,11 @@ const Garage3D = (function () {
     const ao = (geo) => { const P = geo.attributes.position, C = geo.attributes.color;   // (the low 0.4 m darker towards the floor)
       for (let i = 0; i < P.count; i++) { const y = P.getY(i); if (y < 0.4) { const a = 0.5 + 0.5 * smooth(0, 0.4, y); C.setXYZ(i, C.getX(i) * a, C.getY(i) * a, C.getZ(i) * a); } } return geo; };
     for (const p of pieces) {
-      if (p.g.P.length) { const geo = ao(p.g.geometry()), n = geo.attributes.position.count, gl = new Float32Array(n).fill(1);
-        p.gl.forEach(([i, k], j) => gl.fill(k, i, j + 1 < p.gl.length ? p.gl[j + 1][0] : n)); geo.setAttribute('gloss', new THREE.BufferAttribute(gl, 1));
+      if (p.keep) p.root.traverse(o => { if (!o.isMesh || !o.geometry.attributes.position) return; const b = new THREE.Box3().setFromObject(o); if (!b.isEmpty() && [0, 1, 2, 3, 4, 5, 6, 7].every(i => !p.keep(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z))) o.visible = false; });
+      if (p.g.P.length) { let geo = ao(p.g.geometry()); const n = geo.attributes.position.count, gl = new Float32Array(n).fill(1);
+        p.gl.forEach(([i, k], j) => gl.fill(k, i, j + 1 < p.gl.length ? p.gl[j + 1][0] : n)); geo.setAttribute('gloss', new THREE.BufferAttribute(gl, 1)); if (p.keep) geo = keepTris(geo, p.keep);
         const m = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 })); m.material.userData.gl = true; m.castShadow = m.receiveShadow = true; p.root.add(m); }
-      if (p.sm.P.length) { const mt = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0xffffff, shininess: 90, combine: THREE.MixOperation, reflectivity: 0.25 }); decorEnv.push(mt); const m = new THREE.Mesh(ao(p.sm.geometry()), mt); m.castShadow = m.receiveShadow = true; p.root.add(m); }
+      if (p.sm.P.length) { const mt = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0xffffff, shininess: 90, combine: THREE.MixOperation, reflectivity: 0.25 }); decorEnv.push(mt); const m = new THREE.Mesh(p.keep ? keepTris(ao(p.sm.geometry()), p.keep) : ao(p.sm.geometry()), mt); m.castShadow = m.receiveShadow = true; p.root.add(m); }
       const done = new Map();
       p.root.traverse(o => { if (!o.material) return; let m = done.get(o.material);
         if (!m) { m = o.material.clone(); if (decorEnv.includes(o.material)) decorEnv.push(m);
@@ -516,6 +526,15 @@ const Garage3D = (function () {
       p.g = p.sm = p.gl = null;   // (the builders' arrays: in the meshes now, the phone's memory back)
     }
   }
+  // (a non-indexed geometry's triangles whose middle fails keep(x, y, z) dropped, every attribute with them)
+  function keepTris(geo, keep) { const P = geo.attributes.position.array, n = P.length / 9, ok = new Uint8Array(n); let m = 0;
+    for (let t = 0; t < n; t++) { const i = t * 9; if (keep((P[i] + P[i + 3] + P[i + 6]) / 3, (P[i + 1] + P[i + 4] + P[i + 7]) / 3, (P[i + 2] + P[i + 5] + P[i + 8]) / 3)) { ok[t] = 1; m++; } }
+    if (m === n) return geo; const out = new THREE.BufferGeometry();
+    for (const k in geo.attributes) { const a = geo.attributes[k], w = a.itemSize * 3, src = a.array, dst = new src.constructor(m * w); let o = 0;
+      for (let t = 0; t < n; t++) if (ok[t]) { dst.set(src.subarray(t * w, t * w + w), o); o += w; } out.setAttribute(k, new THREE.BufferAttribute(dst, a.itemSize)); }
+    out.computeBoundingSphere(); geo.dispose(); return out; }
+  // (RGL: is (x, y, z) where the back wall's things go: before the wall, along the regal, under the washers)
+  const rglClear = (x, y, z) => x > RGL.clear[0] && x < RGL.clear[1] && y < RGL.clear[2] && z < ROOM.z0 + RGL.clear[3] && z > ROOM.z0 - 0.5;
   // (how near point c is to robot A's arm: its links, its carriage; under 0: in it)
   const _an = [];
   function armNear(A, c) { let m = A.boxes[0].distanceToPoint(c); for (const [a, b, r] of linksOf(A, 'whole', _an)) m = Math.min(m, segd(c, a, b) - r); return m; }
@@ -752,11 +771,11 @@ const Garage3D = (function () {
     // the sign: channel letters on a black acrylic backing with a brushed edge; its glow on the wall round it
     // (left of the lift's column as the home view sees it: from 0.2 m off the steel column to clear of the lift's)
     const SX0 = -3.2;
-    { const { T } = WF.back, s = SX0 - x0; g = PB.g; lbox(T, s - 1.15, s + 1.15, 2.2, 3.36, 0, 0.05, [0.55, 0.57, 0.6], null, 'b');
+    if (!RGL.on) { const { T } = WF.back, s = SX0 - x0; g = PB.g; lbox(T, s - 1.15, s + 1.15, 2.2, 3.36, 0, 0.05, [0.55, 0.57, 0.6], null, 'b');
       g.quadO(T(s - 1.13, 2.22, 0.0505), T(s + 1.13, 2.22, 0.0505), T(s + 1.13, 3.34, 0.0505), T(s - 1.13, 3.34, 0.0505), [0.06, 0.07, 0.09], T(s, 2.78, -1)); }
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.16, 1.08), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(SX0, 2.78, z0 + 0.06); PB.root.add(sign);
+    if (!RGL.on) { const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.16, 1.08), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(SX0, 2.78, z0 + 0.06); PB.root.add(sign);
     signGlow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.9), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: GLOW.sign }));
-    signGlow.position.set(SX0, 2.78, z0 + 0.03); PB.root.add(signGlow);
+    signGlow.position.set(SX0, 2.78, z0 + 0.03); PB.root.add(signGlow); }   // (RGL: the regal stands there, the sign and its glow gone)
     // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows; their light: the room light's,
     // their lenses: the lamps' mesh)
     g = PB.g;
@@ -897,7 +916,7 @@ const Garage3D = (function () {
     BLOBS.push([-6.75, z0 + 0.4, 1.9, 1.0, 0.9, 0, PB], [-5.45, z0 + 0.4, 1.3, 1.0, 0.9, 0, PB], [-2.6, z0 + 0.35, 3.6, 0.9, 0.8, 0, PB], [2.95, z0 + 0.25, 4.0, 0.8, 0.7, 0, PB], [6.51, z0 + 0.35, 2.9, 1.0, 0.9, 0, PB]);
     // (the back wall's piece steps aside too when the camera would be in its deep furniture: the chests and the bench, the rack, the
     // cabinets; a side view passes there)
-    for (const [a, b] of [[[-7.6, 0, z0], [-0.95, 1.4, z0 + 0.68]], [[1.1, 0, z0], [4.8, 2.25, z0 + 0.55]], [[5.22, 0, z0], [7.8, 2.06, z0 + 0.66]]]) PB.solid.push(new THREE.Box3(new V3(...a), new V3(...b)));
+    for (const [a, b] of RGL.on ? [[[-7.6, 0, z0], [RGL.clear[0], 1.4, z0 + 0.68]], [[5.22, 0, z0], [7.8, 2.06, z0 + 0.66]]] : [[[-7.6, 0, z0], [-0.95, 1.4, z0 + 0.68]], [[1.1, 0, z0], [4.8, 2.25, z0 + 0.55]], [[5.22, 0, z0], [7.8, 2.06, z0 + 0.66]]]) PB.solid.push(new THREE.Box3(new V3(...a), new V3(...b)));
     // the front wall: lockers in the team's navy (each door inset in its frame, vents, a handle, a blank number plate, a dark plinth), a
     // changing bench in front of them
     use(PF, PAINT); box(-1.45, 0, z1 - 0.3, 3.68, 0.1, 0.5, [0.05, 0.05, 0.06]);
@@ -1147,7 +1166,7 @@ const Garage3D = (function () {
     makePropTextures();
     // an engine on its stand behind the turntable, left: a race V8 (red cam covers, coil packs, eight trumpets, the headers tinted by the
     // heat), the stand's head on the bellhousing; a shop crane parked over it, its chain on the engine
-    { const P = use(piece()), X = -5.25, Z = -2.35, Y0 = 0.72, AL = [0.55, 0.57, 0.6], AL2 = [0.44, 0.46, 0.5], YL = [0.9, 0.6, 0.12], YL2 = [0.76, 0.5, 0.1], Z0 = -3.85, NS = [0.12, 0.15, 0.28], NS2 = [0.08, 0.1, 0.19]; P.near = 4.4;
+    if (!RGL.on) { const P = use(piece()), X = -5.25, Z = -2.35, Y0 = 0.72, AL = [0.55, 0.57, 0.6], AL2 = [0.44, 0.46, 0.5], YL = [0.9, 0.6, 0.12], YL2 = [0.76, 0.5, 0.1], Z0 = -3.85, NS = [0.12, 0.15, 0.28], NS2 = [0.08, 0.1, 0.19]; P.near = 4.4;
       gBox(g, null, X - 0.62, 0.1, Z, 0.08, 0.06, 0.92, NS); gBox(g, null, X - 0.06, 0.1, Z, 1.12, 0.06, 0.08, NS);   // the stand (the team's navy): its T on castors, the post, the head
       gBox(g, null, X - 0.62, 0.44, Z, 0.08, 0.62, 0.08, NS); gBox(g, null, X - 0.53, Y0, Z, 0.18, 0.07, 0.07, NS);
       gAdd(g, new THREE.CylinderGeometry(0.14, 0.14, 0.025, 16), M4(X - 0.44, Y0, Z, 0, 0, Math.PI / 2), NS2);
@@ -1210,7 +1229,7 @@ const Garage3D = (function () {
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) cylA(g, [X + sx * (w / 2 - 0.07), 0.045, Z + sz * (d / 2 - 0.07)], 'z', 0.045, 0.035, 8, DK);
       BLOBS.push([X, Z, 1.2, 0.9, 0.85, 0, P]); }
     // a trolley jack by the engine, its handle up; a mechanic's rolling stool by the bench
-    { const P = use(piece()), B = M4(-3.3, 0, -3.6, 0, -0.5, 0), L = (x, y, z) => new V3(x, y, z).applyMatrix4(B).toArray(), SX = -2.7, SZ = -4.1;
+    if (!RGL.on) { const P = use(piece()), B = M4(-3.3, 0, -3.6, 0, -0.5, 0), L = (x, y, z) => new V3(x, y, z).applyMatrix4(B).toArray(), SX = -2.7, SZ = -4.1;
       obox(g, L(-0.35, 0.1, 0), L(0.3, 0.1, 0), 0.26, 0.12, RED); obox(g, L(0.3, 0.14, 0), L(0.42, 0.22, 0), 0.12, 0.06, RED); obox(g, L(-0.33, 0.14, 0), L(-0.8, 0.85, 0.1), 0.04, 0.04, RED);
       gl(METAL); cylA(g, L(0.45, 0.24, 0), 'y', 0.07, 0.03, 10, STEEL); seg(g, [SX, 0.1, SZ], [SX, 0.44, SZ], 0.025, CHROME, 8);
       for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; seg(g, [SX, 0.1, SZ], [SX + Math.cos(a) * 0.26, 0.07, SZ + Math.sin(a) * 0.26], 0.014, [0.2, 0.21, 0.23]); }
@@ -1220,7 +1239,7 @@ const Garage3D = (function () {
       BLOBS.push([-3.3, -3.6, 1.1, 0.7, 0.7, 0.5, P], [SX, SZ, 0.7, 0.7, 0.6, 0, P]); }
     // a set of wheels in their warmers on a tyre trolley behind the table (its controller on the handle, the mains lead along the floor to
     // a socket on the wall); a set of bare slicks on a second trolley by the back right corner
-    { const P = use(piece()); P.near = 4.4; trolley(P, 1.75, -3.72, 0, true);   // (left of the tool stand's far end, back from the far robot's rail and its chain's trough)
+    if (!RGL.on) { const P = use(piece()); P.near = 4.4; trolley(P, 1.75, -3.72, 0, true);   // (left of the tool stand's far end, back from the far robot's rail and its chain's trough)
       gl(MATTE); tube(g, [[2.54, 0.67, -3.63], [2.6, 0.3, -3.76], [2.64, 0.012, -3.9], [2.42, 0.012, -4.3], [1.4, 0.012, -4.42], [0.95, 0.012, -4.72], [0.87, 0.14, -4.9], [0.85, 0.37, -4.95]], 0.008, DK, 48, 4);
       BLOBS.push([1.75, -3.72, 1.8, 1.1, 0.9, 0, P]); }
     { use(WALLS.back); box(0.85, 0.37, z0 + 0.03, 0.12, 0.16, 0.06, [0.5, 0.52, 0.55]); box(0.85, 0.42, z0 + 0.061, 0.07, 0.07, 0.004, [0.2, 0.21, 0.23]); }   // (the socket)
@@ -1297,7 +1316,7 @@ const Garage3D = (function () {
         const m = new THREE.Mesh(geo, fm); m.position.set(tip[0] + 0.012, tip[1], tip[2]); m.rotation.y = Math.PI / 2; if (sd < 0) m.scale.x = -1; WALLS.left.root.add(m);
       } }
     // the team's big screen on the back wall, right of the sign: the car on the table, its power, its parts (live)
-    { const c = document.createElement('canvas'); c.width = 512; c.height = 288; const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
+    if (!RGL.on) { const c = document.createElement('canvas'); c.width = 512; c.height = 288; const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
       screen = { c, g: c.getContext('2d'), t, key: '' }; use(WALLS.back);
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.91), new THREE.MeshBasicMaterial({ map: t, color: emi(0xffffff, EMI.screen) })); m.position.set(0.4, 2.5, z0 + 0.075); WALLS.back.root.add(m);
       box(0.4, 2.0, z0 + 0.03, 1.74, 1.03, 0.08, [0.05, 0.05, 0.06]);
@@ -1514,6 +1533,7 @@ const Garage3D = (function () {
         I.push(i, i + 2, i + 1, i, i + 3, i + 2); set(i, c); return i; };
       const shade = (k) => Math.round(clamp(k, 0, 1) * 11) - 1;   // (-1: none)
       const add = (p, e) => { if (!live.has(p)) live.set(p, []); live.get(p).push(e); };
+      if (RGL.on) for (let i = BLOBS.length - 1; i >= 0; i--) if (BLOBS[i][6] === WALLS.back && rglClear(BLOBS[i][0], 0, BLOBS[i][1])) BLOBS.splice(i, 1);   // (RGL: the back wall's things that went)
       for (const [x, z, w, d, k, ry, p] of BLOBS) add(p, [quad(x, z, w, d, ry || 0, Math.max(0, shade(k))), k]);
       [[-5.6, -1.6, 1.1], [4.6, 2.2, 0.8], [6.9, -1.95, 1.0], [-6.8, 3.4, 0.9]].forEach(([x, z, s], j) => quad(x, z, s, s, x, 12 + j));
       // the walls' contact shadows behind what stands tall against them (WALLAO; the furniture's here, the kits push their own): on the
@@ -1525,6 +1545,7 @@ const Garage3D = (function () {
       const wquad = (wl, sA, uA, sB, uB, y0, hh, c) => { const [nx, nz, pc] = WP[wl], i = P.length / 3, rs = nx ? -nx : nz, aR = (rs > 0) === (sA > sB);   // (corners 0, 3 at the end to the right seen from the room)
         const sR = aR ? sA : sB, sL = aR ? sB : sA, ua = aR ? uA : uB, ub = aR ? uB : uA, at = (s, y) => { if (nx) P.push(pc + nx * 0.003, y, s); else P.push(s, y, pc + nz * 0.003); U.push(0, 0); };
         at(sR, y0 - hh); at(sL, y0 - hh); at(sL, y0 + hh); at(sR, y0 + hh); I.push(i, i + 2, i + 1, i, i + 3, i + 2); set(i, c, ua, ub); return [i, ua, ub]; };
+      if (RGL.on) for (let i = WALLAO.length - 1; i >= 0; i--) { const q = WALLAO[i]; if (q[0] === 'b' && q[6] === WALLS.back && rglClear(q[1], 0, z0) && rglClear(q[2], 0, z0)) WALLAO.splice(i, 1); }
       for (const [wl, a, b, y0, y1, k, p] of WALLAO) { const lo = Math.min(a, b), hi = Math.max(a, b), m = Math.min(0.15, (hi - lo) / 2), um = 0.5 * (0.15 + m) / 0.3, hh = Math.max(0.15, (y1 - y0) * 1.1), c = Math.max(0, shade(k));
         const parts = [[lo - 0.15, 0, lo + m, um], [hi - m, um, hi + 0.15, 0]]; if (hi - lo > 2 * m + 1e-3) parts.push([lo + m, 0.5, hi - m, 0.5]);
         for (const [sA, uA, sB, uB] of parts) { const [i, ua, ub] = wquad(wl, sA, uA, sB, uB, y0, hh, c); add(p, [i, k, ua, ub]); } }
@@ -1647,7 +1668,7 @@ const Garage3D = (function () {
           quad(P(-0.043, -0.03), P(-0.02, -0.03), P(-0.02, 0.012), P(-0.043, 0.012), WH, N); quad(P(0.02, -0.03), P(0.043, -0.03), P(0.043, 0.012), P(0.02, 0.012), WH, N); } } }
 
     // a cord reel under the purlin over the bench, its cord down to a cage lamp (lit) hanging at head height
-    { use(PB); const X = -2.6, Z = -3.22, YR = 4.45, YL = [0.9, 0.7, 0.12], LZ = Z + 0.03;
+    if (!RGL.on) { use(PB); const X = -2.6, Z = -3.22, YR = 4.45, YL = [0.9, 0.7, 0.12], LZ = Z + 0.03;
       for (const s of [-1, 1]) sb(X + s * 0.072, YR, Z, 0.008, 4.64 - YR, 0.06, GR); sb(X, 4.625, Z, 0.16, 0.015, 0.06, GR);
       cyl([X, YR, Z], 'x', 0.16, 0.12, 12, YL, [0.78, 0.6, 0.1]); cyl([X, YR, Z], 'x', 0.05, 0.135, 6, DK); sb(X, YR - 0.19, LZ, 0.04, 0.03, 0.04, DK);
       gl(MATTE); cyl([X, (YR - 0.19 + 2.06) / 2, LZ], 'y', 0.007, YR - 0.19 - 2.06, 4, DK); cyl([X, 2.3, LZ], 'y', 0.018, 0.03, 6, [0.75, 0.12, 0.1]); cyl([X, 2.01, LZ], 'y', 0.024, 0.1, 6, [0.13, 0.13, 0.14]);
@@ -1658,7 +1679,7 @@ const Garage3D = (function () {
 
     // an extension reel on the floor by the bench's end (red sides, the cable wound on it, its frame and handle): one lead flat along the
     // floor to the tyre changer, one up the bench's end and over its top to the grinder
-    { use(PB); const X = -1.55, Y = 0.2, Z = -3.8;
+    if (!RGL.on) { use(PB); const X = -1.55, Y = 0.2, Z = -3.8;
       for (const s of [-1, 1]) cyl([X + s * 0.068, Y, Z], 'x', 0.15, 0.012, 10, [0.6, 0.1, 0.08]); gl(MATTE); cyl([X, Y, Z], 'x', 0.11, 0.124, 10, [0.08, 0.08, 0.09]);
       gl(METAL); for (const s of [-1, 1]) { for (const e of [-0.13, 0.13]) obox(g, [X + s * 0.085, Y, Z], [X + s * 0.085, 0.006, Z + e], 0.014, 0.014, STL); obox(g, [X + s * 0.085, Y, Z], [X + s * 0.085, 0.42, Z], 0.014, 0.014, STL); }
       gl(MATTE); obox(g, [X - 0.095, 0.42, Z], [X + 0.095, 0.42, Z], 0.022, 0.022, DK);
@@ -3743,6 +3764,354 @@ const Garage3D = (function () {
     { const p = new V3(0, L - 0.052, 0.004).applyMatrix4(B).applyMatrix4(M); addPlate(P, 3, p.x, p.y, p.z, KTS.ry, 0.35, -TILT); }
     BLOBS.push([KTS.x, KTS.z - 0.02, KTS.w + 0.4, 0.75, 0.6, KTS.ry, P]);
   }
+  /* ---------------- THE REGAL (sklop 3, the user's concept: the wall regal behind the car) ----------------
+     Five bays of navy shelving round the car's back (bay 0 at its left end in the home view): navy perforated posts at every corner up
+     to the top board, dark boards on four storeys with navy lips (A 0.06, B 0.705, C 1.35, D 1.995; the top board at 2.66), each
+     storey's back in the game's light blue with oblong slots and a soft shade under the board over it (unlit, as the concept's). On A
+     three tyre sets (SNOW, TRACK, MOUNTAIN; bays 1 and 2, the ones the car covers, empty), on B and C the six exhausts on their stands
+     (bays 0-2; the middle bay's two and the SPORT's tip grey) and the four rims in pairs on their stands (bays 3 and 4), on D the ten
+     tuning parts (two a bay), on the top the five rear wings in the car's colour (white stripes and edges, leaning toward the car),
+     before every element its name on a navy Toblerone prism with yellow edges (British English: in-world labels, no tr()). Behind it
+     the old wall (rglWall). The back wall's furniture where the regal stands is gone (its triangles dropped as its piece is finished:
+     WALLS.back.keep), with the sign, the big screen and the free things in the regal's way (the engine on its stand, the jack and the
+     stool, the tyre trolley); the back windows are walled up (BACKW).
+     One piece (RGL.P: it steps aside as every piece does, only when the camera is in it or it hides the car): its vertex-coloured mesh
+     (the frame, the parts; its gloss), one unlit mesh of the atlas RGL.tex (the backs, the prisms, the tyres' sides and stickers), one of
+     its soft shadows (see-through, the main camera's only); the robots plan round its bays (RGL.P.obst) ---------------- */
+  // (the elements: the tyre sets by bay [name, colour, kind, radius, width, the set's scale]; the exhausts of bays 0-2 [on B, on C]; the
+  // rims of bays 3, 4 [on B, on C]: [name, spokes, colour]; the tuning parts two a bay on D [name, kind, and the concept's box in the bay
+  // (x0, x1, its height, z0, z1): each made as big as its box lets it]; the wings by bay
+  // [name, kind, size, its stands' height]; each name's prism: its face's height (the concept's NP version 3, as big as the element lets it))
+  const RGL_TY = [['SNOW', 0x7dd3fc, 'snow', 0.31, 0.2, 0.9427], null, null, ['TRACK', 0xef4444, 'slick', 0.3, 0.24, 0.9742], ['MOUNTAIN', 0x22c55e, 'mtn', 0.33, 0.24, 0.8856]];
+  const RGL_EX = [['SPORT', 'CARBON'], ['RACE', 'TWIN'], ['TITANIUM', 'STRAIGHT']];
+  const RGL_RIM = { 3: [['CHROME 3-SPOKE', 3, 0xe6eaee], ['GOLD 5-SPOKE', 5, 0xd4a017]], 4: [['ORANGE 10-SPOKE', 10, 0xff7a1a], ['BLACK MESH', 0, 0x1d1e22]] };
+  const RGL_PT = [['AIR FILTER', 'filter', -0.549, -0.211, 0.479, -0.169, 0.169], ['ECU CHIP', 'chip', -0.002, 0.509, 0.414, -0.123, 0.154], ['TURBO', 'turbo', -0.589, 0.083, 0.521, -0.267, 0.29],
+    ['LIGHT BATTERY', 'batt', 0.158, 0.592, 0.406, -0.027, 0.237], ['SPRINGS', 'springs', -0.619, -0.151, 0.402, -0.036, 0.176], ['DAMPERS', 'dampers', -0.021, 0.371, 0.474, 0.029, 0.181],
+    ['ANTI-ROLL BARS', 'arb', -0.547, 0.057, 0.424, 0.015, 0.189], ['SPORT PADS', 'pads', 0.129, 0.571, 0.276, -0.072, 0.185], ['HORN', 'horn', -0.49, -0.12, 0.296, -0.213, 0.168],
+    ['TYRE SMOKE', 'smoke', 0.07, 0.59, 0.454, -0.074, 0.074]];
+  const RGL_WG = [['DUCKTAIL', 0, 0.9, 0.16], ['SHORT WING', 2, 1.0, 0.22], ['LOW WING', 1, 1.1, 0.28], ['GT WING', 3, 1.2, 0.34], ['DOUBLE WING', 4, 1.3, 0.4]];
+  const RGL_NP = { SNOW: 0.108, TRACK: 0.1011, MOUNTAIN: 0.0901, SPORT: 0.12, RACE: 0.12, TITANIUM: 0.12, CARBON: 0.12, TWIN: 0.12, STRAIGHT: 0.12, 'CHROME 3-SPOKE': 0.12,
+    'ORANGE 10-SPOKE': 0.12, 'GOLD 5-SPOKE': 0.12, 'BLACK MESH': 0.12, 'AIR FILTER': 0.0529, 'ECU CHIP': 0.0536, TURBO: 0.0653, 'LIGHT BATTERY': 0.0282, SPRINGS: 0.0528, DAMPERS: 0.04,
+    'ANTI-ROLL BARS': 0.0521, 'SPORT PADS': 0.0242, HORN: 0.0606, 'TYRE SMOKE': 0.0604, DUCKTAIL: 0.054, 'SHORT WING': 0.0491, 'LOW WING': 0.048, 'GT WING': 0.048, 'DOUBLE WING': 0.054 };
+  const _rv = new V3();
+  // (the concept's frame: u across the first view, w from the car toward the camera, about a point 0.2 m before the table's middle)
+  const CFR = (u, w) => [w * Math.sin(0.3) + u * Math.cos(0.3), 0.2 + w * Math.cos(0.3) - u * Math.sin(0.3)];
+  // the bays: each its middle on the floor (x, z), its turn (ry: the front of its frame, +z, toward the car) and its matrix. The concept's
+  // bay k stands on the arc at (k - 2) A; RGL.left 'flat': bay 1 straight on from bay 2 (their posts side by side; 5 cm further back: its
+  // lip 6 cm clear of the far rail's chain trough), bay 0 turned from bay 1 as the concept's bay 1 is from its bay 2
+  function rglBays() {
+    const { R, A, L } = RGL, out = [], arc = (a) => { const [x, z] = CFR(R * Math.sin(a), -R * Math.cos(a)); return { x, z, ry: 0.3 - a }; };
+    const off = (b, lx, lz, dry) => ({ x: b.x + lx * Math.cos(b.ry) + lz * Math.sin(b.ry), z: b.z - lx * Math.sin(b.ry) + lz * Math.cos(b.ry), ry: b.ry + dry });
+    for (let k = 0; k < 5; k++) out.push(arc((k - 2) * A));
+    if (RGL.left === 'flat') { out[1] = off(out[2], -(L + 0.065), -0.05, 0); out[0] = off(out[1], -R * Math.sin(A), R * (1 - Math.cos(A)), A); }
+    return out.map((b, k) => Object.assign(b, { k, M: M4(b.x, 0, b.z, 0, b.ry, 0) }));
+  }
+  // the regal's atlas (1024 x 1024): the backs' sheet, the names, the tyres' sides and stickers, the soft shadows, plain cells; at: each
+  // cell's uv box (u0 u1 v0 v1, its size in px)
+  function rglAtlas() {
+    const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d'), at = {}, U = (x, y, w, h) => ({ u0: x / 1024, u1: (x + w) / 1024, v0: 1 - (y + h) / 1024, v1: 1 - y / 1024, w, h });
+    // the backs' sheet: a storey's band (Wf wide: its bay's width and 5 cm behind the posts either side; 0.605 m high) in a plain light grey
+    // the vertex colours make the storey's blue: the slots (0.7 x 2.2 cm on a 3.4 x 4 cm grid, every second row half a step over: a well
+    // in the blue's own darker tone, its lower lip lit, its upper rim in shade), then the shade under the board over it, at the sides,
+    // at the foot and in the top corners
+    { const W = 1024, H = 336, Wf = RGL.L - 0.01 + 0.1, Hm = 0.605, sx = W / Wf, sy = H / Hm, X = (m) => (m + Wf / 2) * sx, Y = (m) => m * sy;
+      g.fillStyle = 'rgb(236,236,236)'; g.fillRect(0, 0, W, H);
+      const slot = (cx, cy, dy, grow) => { const w = 0.007 * sx + 2 * grow, h = 0.022 * sy + 2 * grow; g.beginPath(); if (g.roundRect) g.roundRect(cx - w / 2, cy + dy - h / 2, w, h, w / 2); else g.rect(cx - w / 2, cy + dy - h / 2, w, h); g.fill(); };
+      let row = 0; for (let yy = 0.02; yy < Hm; yy += 0.04, row++) { const off = row & 1 ? 0 : 0.017, n = Math.ceil(Wf / 2 / 0.034) + 1;
+        for (let j = -n; j <= n; j++) { const xx = j * 0.034 + off; if (Math.abs(xx) > Wf / 2 + 0.01) continue; const cx = X(xx), cy = Y(yy);
+          g.fillStyle = 'rgb(250,250,250)'; slot(cx, cy, 1.1, 0.25); g.fillStyle = 'rgb(190,199,213)'; slot(cx, cy, -0.8, 0.25); g.fillStyle = 'rgb(105,125,158)'; slot(cx, cy, 0, 0); g.fillStyle = 'rgba(0,0,0,0.14)'; slot(cx, cy, -0.9, -1); } }
+      const lin = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H); };
+      const W3 = RGL.L - 0.07, ux = W3 / 128, uy = Hm / 128, AX = (p) => X(-W3 / 2 + p * ux), AY = (p) => Y(p * uy);
+      lin(0, AY(0), 0, AY(52), 0.55); lin(AX(0), 0, AX(22), 0, 0.3); lin(AX(128), 0, AX(106), 0, 0.3); lin(0, AY(128), 0, AY(112), 0.22);
+      for (const p of [0, 128]) { g.save(); g.setTransform(ux * sx, 0, 0, uy * sy, AX(p), AY(0)); const gr = g.createRadialGradient(0, 0, 0, 0, 0, 46); gr.addColorStop(0, 'rgba(0,0,0,0.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(-60, 0, 120, 128); g.restore(); }
+      at.back = U(0, 0, W, H); at.back.Wf = Wf; }
+    // the names (white capitals on navy, a yellow line along the face's top and its foot), 48 px high in rows of 52
+    { const H = 48, cap = 24; g.font = `900 ${Math.round(cap / 0.729)}px Roboto, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+      let x = 0, y = 344; for (const t of Object.keys(RGL_NP)) { const w = Math.ceil(g.measureText(t).width + 0.36 * H); if (x + w > 1024) { x = 0; y += 52; }
+        g.fillStyle = '#16245a'; g.fillRect(x, y, w, H); g.fillStyle = '#ffd23f'; g.fillRect(x, y, w, 6); g.fillRect(x, y + H - 6, w, 6);
+        g.fillStyle = '#ffffff'; g.fillText(t, x + w / 2, y + 24 + cap / 2); at[t] = U(x, y, w, H); x += w + 6; }
+      if (y + H > 764) console.error('regal atlas: the names run over'); }
+    // the tyres' sides (a ring in the set's colour on the dark rubber, the dark hole) and their stickers (white, a band in the colour, a
+    // navy frame, the kind's sign: a snowflake, a chequered flag, a mountain)
+    RGL_TY.forEach((T, i) => { if (!T) return; const x = 8 + (i === 0 ? 0 : i - 2) * 136, y = 772, col = '#' + T[1].toString(16).padStart(6, '0'), cx = x + 64, cy = y + 64;
+      g.fillStyle = '#1b1d21'; g.fillRect(x, y, 128, 128); g.fillStyle = col; g.beginPath(); g.arc(cx, cy, 64 * 0.79, 0, TAU); g.arc(cx, cy, 64 * 0.7, 0, TAU, true); g.fill();
+      g.fillStyle = '#0b0c0e'; g.beginPath(); g.arc(cx, cy, 64 * 0.62, 0, TAU); g.fill(); at['side' + i] = U(x, y, 128, 128);
+      const sx = 424 + (i === 0 ? 0 : i - 2) * 76, sy = 772; g.fillStyle = '#f4f4f0'; g.fillRect(sx, sy, 64, 96); g.fillStyle = col; g.fillRect(sx, sy, 64, 24);
+      g.strokeStyle = '#0d1626'; g.lineWidth = 3; g.strokeRect(sx + 1.5, sy + 1.5, 61, 93); g.strokeStyle = col; g.lineWidth = 5; const ix = sx + 32, iy = sy + 60;
+      if (T[2] === 'snow') for (let a = 0; a < 3; a++) { g.beginPath(); g.moveTo(ix + Math.cos(a * 1.047) * 22, iy + Math.sin(a * 1.047) * 22); g.lineTo(ix - Math.cos(a * 1.047) * 22, iy - Math.sin(a * 1.047) * 22); g.stroke(); }
+      else if (T[2] === 'slick') for (let p = 0; p < 4; p++) for (let q = 0; q < 4; q++) { g.fillStyle = (p + q) % 2 ? '#0d1626' : '#ffffff'; g.fillRect(sx + 12 + p * 10, sy + 38 + q * 10, 10, 10); }
+      else { g.fillStyle = col; g.beginPath(); g.moveTo(sx + 8, sy + 86); g.lineTo(sx + 26, sy + 44); g.lineTo(sx + 36, sy + 62); g.lineTo(sx + 44, sy + 50); g.lineTo(sx + 58, sy + 86); g.fill(); }
+      at['stk' + i] = U(sx, sy, 64, 96); });
+    // the soft shadows (navy, their strength in the alpha: a box, a round one), plain navy, white
+    { const id = g.createImageData(64, 64), D = id.data, s = (t) => smooth(0, 1, t);
+      for (let k = 0; k < 2; k++) { for (let j = 0; j < 64; j++) for (let i = 0; i < 64; i++) { const u = (i + 0.5) / 32 - 1, v = (j + 0.5) / 32 - 1, a = k ? 1 - smooth(0.25, 1, Math.hypot(u, v)) : s((1 - Math.abs(u)) / 0.44) * s((1 - Math.abs(v)) / 0.44), o = (j * 64 + i) * 4;
+          D[o] = 8; D[o + 1] = 26; D[o + 2] = 52; D[o + 3] = Math.round(255 * a); }
+        g.putImageData(id, 696 + k * 72, 772); at[k ? 'shR' : 'shB'] = U(696 + k * 72, 772, 64, 64); } }
+    g.fillStyle = '#16245a'; g.fillRect(848, 772, 48, 48); at.navy = U(856, 780, 32, 32); g.fillStyle = '#ffffff'; g.fillRect(912, 772, 48, 48); at.white = U(920, 780, 32, 32);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return { tex: t, at };
+  }
+  // (a cell's middle: a plain colour from it)
+  const rglMid = (q) => [(q.u0 + q.u1) / 2, (q.v0 + q.v1) / 2];
+  function buildRegal() {
+    const P = RGL.P = piece(), g = P.g, gl = (k) => gloss(P, k), { L, D, LV, TOP } = RGL, hw = L / 2, BT = TOP - 0.0375, top = TOP - 0.0025, A = new World.GB(true), SH = new World.GB(true);
+    const NV = [0.106, 0.169, 0.361], BD = [0.2, 0.21, 0.235], BDT = [0.27, 0.28, 0.31], BK = [0.141, 0.22, 0.435], HOLE = [0.05, 0.055, 0.065], STE = [0.6, 0.635, 0.675], FOOT = [0.165, 0.176, 0.2];
+    const CHR = [0.84, 0.86, 0.89], TIG = [0.66, 0.66, 0.67], STL = [0.47, 0.48, 0.5], CB = [0.075, 0.075, 0.085], CB2 = [0.13, 0.13, 0.145], DKD = [0.04, 0.04, 0.045], WH = [0.95, 0.95, 0.93];
+    const box = (x0, x1, y0, y1, z0, z1, col, tp) => World.box(g, (x0 + x1) / 2, y0, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0, 0, col, tp);
+    const cbox = (m, x, y, z, sx, sy, sz, col) => gBox(g, m, x, y, z, sx, sy, sz, col);
+    const { tex, at } = RGL.atlas = rglAtlas(), bake = [];
+    // (an unlit quad of the atlas: corners a b c d (counter-clockwise seen from its front), the cell q's corners on them; lit: its colour
+    // x the key light's on its face (baked once it stands in the room))
+    const aq = (a, b, c, d, q, col, ins, lit, uvs) => { const v0 = A.P.length / 3; A.quadO(a, b, c, d, col, ins, uvs || [[q.u0, q.v0], [q.u1, q.v0], [q.u1, q.v1], [q.u0, q.v1]]); if (lit) bake.push([v0, A.P.length / 3]); };
+    const sq = (a, b, c, d, q, ins) => SH.quadO(a, b, c, d, [1, 1, 1], ins, [[q.u0, q.v0], [q.u1, q.v0], [q.u1, q.v1], [q.u0, q.v1]]);
+    // a soft shadow: on the back (z) or flat on a board (y), its core w x h (the cell's picture has a margin: the quad bigger), centred
+    const shBack = (x, y, w, h, round) => { const k = round ? 1.35 : 1.7, a = w * k / 2, b = h * k / 2, z = -D / 2 + 0.05; sq([x - a, y - b, z], [x + a, y - b, z], [x + a, y + b, z], [x - a, y + b, z], round ? at.shR : at.shB, [x, y, z - 1]); };
+    const shFlat = (x, y, z, w, h, round) => { const k = round ? 1.35 : 1.7, a = w * k / 2, b = h * k / 2; sq([x - a, y, z + b], [x + a, y, z + b], [x + a, y, z - b], [x - a, y, z - b], round ? at.shR : at.shB, [x, y - 1, z]); };
+    RGL.body = []; const body = (f) => { const v0 = g.P.length / 3; f(); RGL.body.push([v0, g.P.length / 3]); };
+    // (a stand of the concept: a foot plate, a post, a saddle (two cheeks) on top or nothing)
+    const stand = (x, z, h, saddle) => { gl(SATIN); box(x - 0.12, x + 0.12, 0, 0.02, z + 0.04 - 0.1, z + 0.04 + 0.1, FOOT); gl(METAL); cone2(g, [x, 0.02, z], [x, h, z], 0.022, 0.018, 8, STE, true);
+      if (saddle) { box(x - 0.05, x + 0.05, h, h + 0.02, z - 0.045, z + 0.045, STE); for (const s of [-1, 1]) box(x + s * 0.045 - 0.006, x + s * 0.045 + 0.006, h + 0.02, h + 0.05, z - 0.045, z + 0.045, STE); } };
+    // a prism with a name (NP version 3): h its face's height, before x on a board's top y, its front edge at z, as wide as the name
+    // asks (w at most wmax: then lower); the navy body, the yellow ridge and back foot lit by the key light, the face as it is
+    const plate = (nm, x, y, wmax, zf) => { const q = at[nm], asp = q.w / q.h; let h = RGL_NP[nm]; if (h * (asp + 0.16) > wmax) h = wmax / (asp + 0.16);
+      const w = h * (asp + 0.16), x0 = x - w / 2, x1 = x + w / 2, H = h * Math.sqrt(3) / 2, z = zf == null ? 0.32 : zf, nv = rglMid(at.navy), NUV = [nv, nv, nv, nv], ins = [x, y + H / 3, z - h / 2];
+      const P2 = (xx, zz, yy) => [xx, y + yy, z + zz];
+      aq(P2(x0, -h / 2, H), P2(x1, -h / 2, H), P2(x1, -h, 0), P2(x0, -h, 0), at.navy, NV, ins, true, NUV);   // (its back)
+      for (const xx of [x0, x1]) { const v0 = A.P.length / 3; A.triO(P2(xx, 0, 0), P2(xx, -h / 2, H), P2(xx, -h, 0), NV, ins, null, null, nv, nv, nv); bake.push([v0, A.P.length / 3]); }
+      const e = 0.0008, n = [0, 0.5, Math.sqrt(3) / 2], f = (t, xx) => [xx, y + t * H + n[1] * e, z - t * h / 2 + n[2] * e], wt = Math.min(w, h * asp), t0 = (w - wt) / 2;
+      const face = (xa, xb, uvs) => aq(f(0, xa), f(0, xb), f(1, xb), f(1, xa), q, [1, 1, 1], ins, false, uvs);
+      face(x0, x0 + t0, [[q.u0 + 0.002, q.v0], [q.u0 + 0.002, q.v0], [q.u0 + 0.002, q.v1], [q.u0 + 0.002, q.v1]]); face(x0 + t0, x1 - t0); face(x1 - t0, x1, [[q.u1 - 0.002, q.v0], [q.u1 - 0.002, q.v0], [q.u1 - 0.002, q.v1], [q.u1 - 0.002, q.v1]]);
+      // (the yellow ridge along its top, the yellow foot at its back: plain colour off the atlas' white, lit)
+      const yl = [0.95, 0.76, 0.19], wt2 = rglMid(at.white), WUV = [wt2, wt2, wt2, wt2], yy = 0.05 * h, rid = [[-h / 2 + yy, H - yy * 1.7], [-h / 2, H + 0.002], [-h / 2 - yy, H - yy * 1.7]], ri = [x, y + H - yy, z - h / 2];
+      for (let k = 0; k < 2; k++) aq(P2(x0 - 0.001, rid[k][0], rid[k][1]), P2(x1 + 0.001, rid[k][0], rid[k][1]), P2(x1 + 0.001, rid[k + 1][0], rid[k + 1][1]), P2(x0 - 0.001, rid[k + 1][0], rid[k + 1][1]), at.white, yl, ri, true, WUV);
+      const fb = [x, y + yy / 2, z - h + yy * 0.6]; aq(P2(x0 - 0.001, -h - 0.001, 0), P2(x1 + 0.001, -h - 0.001, 0), P2(x1 + 0.001, -h - 0.001, yy), P2(x0 - 0.001, -h - 0.001, yy), at.white, yl, fb, true, WUV);
+      aq(P2(x0 - 0.001, -h + yy * 1.2, yy), P2(x1 + 0.001, -h + yy * 1.2, yy), P2(x1 + 0.001, -h - 0.001, yy), P2(x0 - 0.001, -h - 0.001, yy), at.white, yl, fb, true, WUV);
+      RGL.names.push({ nm, bay: RGL.cb, x, y, h, w }); };
+    RGL.names = [];
+    // ---- the parts (built about their own frame, then put in place) ----
+    // a tyre standing on its tread, its axis across the bay (x), its middle at (x, y, z): the tread (blocks a shade apart on the snow
+    // and the mountain sets), its sides off the atlas (the ring in the set's colour), its sticker on the tread facing the car
+    const tyreUp = (x, y, z, T, i) => { const n = 16, r = T[3], w2 = T[4] / 2, R0 = [0.13, 0.13, 0.14], R1 = T[2] === 'mtn' ? [0.055, 0.055, 0.06] : [0.08, 0.08, 0.09], st = Math.PI / n, Q = (xx, a) => [x + xx, y + r * Math.sin(a), z + r * Math.cos(a)];
+      gl(MATTE); for (let k = 0; k < n; k++) { const a0 = st + k * 2 * st, a1 = a0 + 2 * st;   // (the slick's tread plain, the others' in blocks: three rows across, staggered)
+        if (T[2] === 'slick') g.quadO(Q(-w2, a0), Q(w2, a0), Q(w2, a1), Q(-w2, a1), R0, [x, y, z]); else for (let j = 0; j < 3; j++) { const xa = -w2 + j * w2 * 2 / 3, xb = xa + w2 * 2 / 3; g.quadO(Q(xa, a0), Q(xb, a0), Q(xb, a1), Q(xa, a1), (k + j) & 1 ? R1 : R0, [x, y, z]); } }
+      const q = at['side' + i], cu = (q.u0 + q.u1) / 2, cv = (q.v0 + q.v1) / 2, ru = (q.u1 - q.u0) / 2, rv = (q.v1 - q.v0) / 2;
+      for (const s of [-1, 1]) { const v0 = A.P.length / 3; for (let k = 0; k < n; k++) { const a0 = st + k * 2 * st, a1 = a0 + 2 * st, uv = (a) => [cu + ru * Math.cos(a), cv + rv * Math.sin(a)];
+          A.triO([x + s * w2, y, z], Q(s * w2, a0), Q(s * w2, a1), [1, 1, 1], [x, y, z], null, null, [cu, cv], uv(a0), uv(a1)); } bake.push([v0, A.P.length / 3]); }
+      const k2 = at['stk' + i], sh = Math.min(0.165, T[4] * 0.8) / 2, zf = z + r * Math.cos(st) + 0.003;   // (0.11 across the tread, up to 0.165 along it)
+      aq([x - 0.055, y - sh, zf], [x + 0.055, y - sh, zf], [x + 0.055, y + sh, zf], [x - 0.055, y + sh, zf], k2, [0.92, 0.92, 0.92], [x, y, z], false); };
+    // a rim facing the car (+z), its middle at (x, y, z), its face 0.235 m round x s: the barrel, the dark well, the lip, the spokes (n:
+    // 3, 5 or 10 straight ones; 0 the black mesh: ten pairs crossing), the hub and its cap
+    const rim = (x, y, z, n, hex, s) => { const c = hexRgb(hex), met = hex === 0xe6eaee || hex === 0xd4a017, R = 0.235 * s, F = (a, rr) => [Math.cos(a) * rr, Math.sin(a) * rr];
+      gl(METAL); cone2(g, [x, y, z - 0.17 * s], [x, y, z - 0.002], 0.232 * s, 0.232 * s, 16, [0.45, 0.48, 0.52], true); discZ(g, x, y, z - 0.15 * s, 0, 0.23 * s, 14, [0.07, 0.072, 0.08], 1);
+      gl(met ? METAL : PAINT); discZ(g, x, y, z + 0.004 * s, R - 0.03 * s, R + 0.012 * s, 18, c, 1); cone2(g, [x, y, z - 0.012 * s], [x, y, z + 0.004 * s], R + 0.012 * s, R + 0.012 * s, 18, c.map(v => v * 0.8), true);
+      const spoke = (r0, a0, r1, a1, w, dz) => { const [x0, y0] = F(a0, r0 * s), [x1, y1] = F(a1, r1 * s); cbox(M4(x + (x0 + x1) / 2, y + (y0 + y1) / 2, z + dz * s, 0, 0, Math.atan2(y1 - y0, x1 - x0)), 0, 0, 0, Math.hypot(x1 - x0, y1 - y0) + 0.01 * s, w * s, 0.02 * s, c); };
+      if (n === 3) for (let i = 0; i < 3; i++) spoke(0.04, i * 2.0944 + 1.5708, 0.22, i * 2.0944 + 1.5708, 0.11, -0.01);
+      else if (n === 5) for (let i = 0; i < 5; i++) spoke(0.04, i * 1.2566 + 1.5708, 0.22, i * 1.2566 + 1.5708, 0.06, -0.01);
+      else if (n === 10) for (let i = 0; i < 10; i++) spoke(0.045, i * 0.6283, 0.22, i * 0.6283, 0.02, -0.01);
+      else for (let i = 0; i < 10; i++) for (const sg of [-1, 1]) spoke(0.05, i * 0.6283, 0.22, i * 0.6283 + sg * 0.42, 0.016, -0.01 + sg * 0.004);
+      cylA(g, [x, y, z - 0.01 * s], 'z', 0.055 * s, 0.05 * s, 12, c); gl(PAINT); cylA(g, [x, y, z + 0.022 * s], 'z', 0.026 * s, 0.02 * s, 8, [0.1, 0.105, 0.12]); };
+    // an exhaust (the concept's, in its own frame: along x, its tips at -x, the inlet bent up at +x): k 0 SPORT (a polished can, a grey
+    // tip), 1 RACE (carbon, twin chrome tips), 2 TITANIUM (brushed titanium, grey), 3 CARBON (a big carbon can), 4 TWIN (two chrome cans),
+    // 5 STRAIGHT (a straight pipe with a resonator, dark steel)
+    const carbon = (a, b, r, n, m) => { const d = (b[0] - a[0]) / m; for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) { const t0 = i / n * TAU, t1 = (i + 1) / n * TAU, P3 = (x, t) => [x, a[1] + r * Math.sin(t), a[2] + r * Math.cos(t)];
+        g.quadO(P3(a[0] + j * d, t0), P3(a[0] + (j + 1) * d, t0), P3(a[0] + (j + 1) * d, t1), P3(a[0] + j * d, t1), (i + j) & 1 ? CB : CB2, [a[0] + (j + 0.5) * d, a[1], a[2]]); }
+      discZ2(a[0], a[1], a[2], r, n, CB, -1); discZ2(b[0], a[1], a[2], r, n, CB, 1); };
+    // (a disc across x at x facing sg (+1: +x))
+    const discZ2 = (x, y, z, r, n, col, sg) => { for (let i = 0; i < n; i++) { const t0 = i / n * TAU, t1 = (i + 1) / n * TAU; g.triO([x, y, z], [x, y + r * Math.sin(t0), z + r * Math.cos(t0)], [x, y + r * Math.sin(t1), z + r * Math.cos(t1)], col, [x - sg, y, z]); } };
+    const tipX = (x, y, z, r, col) => { gl(METAL); cone2(g, [x + 0.1, y, z], [x - 0.1, y, z], r * 0.92, r, 12, col, true); gl(MATTE); discZ2(x - 0.098, y, z, r * 0.82, 12, DKD, -1); };
+    const exhaust = (k) => { const R = 0.11, L2 = 0.25, y = R + 0.02;
+      if (k < 3) { const bodyC = [CHR, null, TIG][k];
+        if (k === 1) carbon([-L2, y, 0], [L2, y, 0], R, 16, 10); else { gl(METAL); cylA(g, [0, y, 0], 'x', R, 2 * L2, 18, bodyC); }
+        gl(METAL); for (const s of [-1, 1]) cylA(g, [s * L2, y, 0], 'x', R + 0.01, 0.02, 18, CHR);
+        cylA(g, [L2 + 0.11, y, 0], 'x', 0.03, 0.22, 8, CHR); cylA(g, [L2 + 0.22, y + 0.05, 0], 'y', 0.03, 0.14, 8, CHR);
+        if (k === 0) tipX(-L2 - 0.1, y, 0, 0.06, TIG); else for (const dz of [-0.05, 0.05]) tipX(-L2 - 0.1, y + dz * 0.9, dz, 0.045, k === 1 ? CHR : TIG);
+        gl(PAINT); for (const s of [-0.15, 0.15]) box(s - 0.015, s + 0.015, 2 * R + 0.0, 2 * R + 0.06, -0.015, 0.015, [0.42, 0.44, 0.47]); return; }
+      if (k === 3) { carbon([-0.25, 0.15, 0], [0.25, 0.15, 0], 0.13, 18, 10); gl(METAL); for (const s of [-1, 1]) cylA(g, [s * 0.25, 0.15, 0], 'x', 0.14, 0.024, 18, CHR);
+        carbon([-0.46, 0.15, 0], [-0.26, 0.15, 0], 0.085, 14, 4); gl(METAL); cylA(g, [-0.46, 0.15, 0], 'x', 0.095, 0.024, 14, CHR); gl(MATTE); discZ2(-0.473, 0.15, 0, 0.07, 12, DKD, -1); gl(METAL); cylA(g, [0.36, 0.15, 0], 'x', 0.03, 0.22, 8, CHR); return; }
+      if (k === 4) { gl(METAL); for (const z of [-0.1, 0.1]) { cylA(g, [0, 0.11, z], 'x', 0.085, 0.46, 16, CHR); tipX(-0.33, 0.11, z, 0.05, CHR); } cylA(g, [0.32, 0.11, 0], 'x', 0.03, 0.2, 8, CHR); box(0.21, 0.27, 0.09, 0.13, -0.12, 0.12, CHR); return; }
+      gl(METAL); cylA(g, [0, 0.09, 0], 'x', 0.045, 0.8, 12, STL); cylA(g, [0.05, 0.09, 0], 'x', 0.075, 0.22, 16, STL); tipX(-0.45, 0.09, 0, 0.07, STL); };
+    // the rear wings (the concept's: its stands, the main plane, its edge and two white stripes; the ducktail a block with its lip up; GT
+    // and DOUBLE endplates; DOUBLE a second plane): built in the wing's own frame, leaning 0.45 rad toward the car, the stands' feet flat
+    const wing = (k, sc, ph) => { const w = [1.15, 1.25, 1.0, 1.35, 1.4][k], PCB = [0.08, 0.08, 0.09], v0 = g.P.length / 3, Mw = M4(0, 0, 0, 0.45, 0, 0, sc), feet = [];
+      const stripes = (yy, zz, len, rx) => { for (const s of [-1, 1]) cbox(M4(s * 0.075, yy, zz, rx, 0, 0), 0, 0, 0, 0.055, 0.006, len, WH); };
+      gl(SATIN); for (const s of [-1, 1]) { box(s * w * 0.3 - 0.0175, s * w * 0.3 + 0.0175, 0, ph, -0.04, 0.04, PCB); feet.push(new V3(s * w * 0.3, 0, 0).applyMatrix4(Mw)); }
+      gl(PAINT); const yb = k === 0 ? ph : 0, vp = g.P.length / 3;
+      if (k === 0) { body(() => { box(-w / 2, w / 2, yb, yb + 0.05, -0.17, 0.17, [1, 1, 1]); cbox(M4(0, yb + 0.1, 0.1, -0.55, 0, 0), 0, 0, 0, w, 0.03, 0.18, [1, 1, 1]); }); box(-w / 2, w / 2, yb + 0.137, yb + 0.153, 0.167, 0.183, WH); stripes(yb + 0.052, 0, 0.34, 0); stripes(yb + 0.117, 0.093, 0.18, -0.55); }
+      else { body(() => cbox(M4(0, ph + 0.02, 0, -0.16, 0, 0), 0, 0, 0, w, 0.03, 0.36, [1, 1, 1])); box(-w / 2, w / 2, ph + 0.037, ph + 0.053, 0.172, 0.188, WH); stripes(ph + 0.037, 0, 0.37, -0.16);
+        if (k >= 3) for (const s of [-1, 1]) { body(() => box(s * w / 2 - 0.008, s * w / 2 + 0.008, ph - 0.06, ph + 0.14, -0.21, 0.21, [1, 1, 1])); box(s * w / 2 - 0.009, s * w / 2 + 0.009, ph + 0.13, ph + 0.15, -0.21, 0.21, WH); }
+        if (k === 4) { body(() => cbox(M4(0, ph + 0.11, -0.08, -0.4, 0, 0), 0, 0, 0, w - 0.04, 0.024, 0.18, [1, 1, 1])); box(-w / 2 + 0.02, w / 2 - 0.02, ph + 0.134, ph + 0.146, -0.006, 0.006, WH); } }
+      placeGB(g, v0, Mw); const vf = g.P.length / 3; gl(SATIN); for (const f of feet) box(f.x - 0.065 * sc, f.x + 0.065 * sc, 0, 0.014 * sc, f.z - 0.065 * sc, f.z + 0.065 * sc, PCB);
+      return { w: w * sc, vp, vf }; };   // (vp..vf: its planes and their edges; the rest its stands)
+    // the tuning parts (each about the middle of its foot, its face to +z; a thin dark plate under most)
+    const helix = (cx, cz, r, y0, y1, turns, wr, col) => { const pts = []; for (let i = 0; i <= turns * 10; i++) { const a = i / 10 * TAU; pts.push([cx + Math.cos(a) * r, y0 + (y1 - y0) * i / (turns * 10), cz + Math.sin(a) * r]); } tube(g, pts, wr, col, turns * 8, 3); };
+    const plinth = (w, d) => { gl(SATIN); box(-w / 2, w / 2, 0, 0.012, -d / 2, d / 2, [0.12, 0.125, 0.14]); };
+    const PART = {
+      filter: () => { plinth(0.2, 0.2); gl(METAL); cylA(g, [0, 0.03, 0], 'y', 0.075, 0.035, 16, CHR); gl(PAINT); const n = 20;
+        for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU, Q = (a, r, yy) => [Math.cos(a) * r, yy, Math.sin(a) * r]; g.quadO(Q(a0, 0.085, 0.047), Q(a1, 0.085, 0.047), Q(a1, 0.06, 0.24), Q(a0, 0.06, 0.24), i & 1 ? [0.62, 0.07, 0.07] : [0.8, 0.12, 0.1], [0, 0.14, 0]); }
+        gl(MATTE); cylA(g, [0, 0.255, 0], 'y', 0.066, 0.03, 16, [0.06, 0.06, 0.07]); cylA(g, [0, 0.27, 0], 'y', 0.03, 0.01, 10, [0.15, 0.15, 0.16]); },
+      chip: () => { plinth(0.24, 0.18); const m = M4(0, 0.02, 0.01, -0.55, 0, 0); gl(METAL); cbox(m, 0, 0.075, 0.018, 0.2, 0.15, 0.036, [0.62, 0.64, 0.67]); for (let i = 0; i < 5; i++) cbox(m, -0.085 + i * 0.022, 0.075, 0.04, 0.008, 0.13, 0.01, [0.7, 0.72, 0.75]);
+        gl(PAINT); cbox(m, 0.035, 0.075, 0.038, 0.11, 0.12, 0.006, [0.08, 0.5, 0.2]); for (const [cx, cy] of [[0.01, 0.1], [0.06, 0.1], [0.035, 0.05]]) cbox(m, cx, cy, 0.043, 0.035, 0.025, 0.006, [0.05, 0.05, 0.06]);
+        gl(METAL); cbox(m, 0.035, 0.022, 0.043, 0.09, 0.006, 0.004, [0.85, 0.7, 0.25]); gl(MATTE); tube(g, [[0.1, 0.06, -0.02], [0.13, 0.16, -0.06], [0.08, 0.24, -0.08], [0.0, 0.2, -0.07]], 0.008, [0.05, 0.05, 0.06], 10, 4); },
+      turbo: () => { plinth(0.22, 0.16); gl(METAL); cylA(g, [0, 0.11, 0.0], 'z', 0.09, 0.075, 16, [0.72, 0.74, 0.77]); cylA(g, [0.0, 0.11, 0.06], 'z', 0.055, 0.05, 16, [0.78, 0.8, 0.83]);
+        gl(MATTE); discZ(g, 0, 0.11, 0.086, 0, 0.045, 12, [0.08, 0.08, 0.09], 1); gl(METAL); for (let i = 0; i < 6; i++) cbox(M4(0, 0.11, 0.084, 0, 0, i / 6 * TAU), 0.02, 0, 0, 0.04, 0.008, 0.006, [0.7, 0.72, 0.75]);
+        cylA(g, [0.09, 0.17, 0.0], 'x', 0.03, 0.09, 10, [0.72, 0.74, 0.77]); cylA(g, [0, 0.11, -0.07], 'z', 0.07, 0.055, 14, [0.42, 0.4, 0.38]); gl(PAINT); box(-0.03, 0.03, 0.012, 0.03, -0.05, 0.05, [0.3, 0.31, 0.34]); },
+      batt: () => { gl(PAINT); box(-0.1, 0.1, 0, 0.12, -0.065, 0.065, [0.07, 0.075, 0.085]); box(-0.102, 0.102, 0.12, 0.14, -0.067, 0.067, [0.11, 0.37, 0.84]); gl(SATIN); box(-0.07, 0.07, 0.03, 0.09, 0.065, 0.067, [0.82, 0.83, 0.85]);
+        gl(PAINT); cylA(g, [-0.065, 0.152, 0.02], 'y', 0.014, 0.025, 8, [0.8, 0.12, 0.1]); cylA(g, [0.065, 0.152, 0.02], 'y', 0.014, 0.025, 8, [0.08, 0.08, 0.09]); box(0.05, 0.07, 0.05, 0.06, 0.066, 0.069, [0.2, 0.95, 0.35]);
+        gl(MATTE); for (const s of [-1, 1]) box(s * 0.045 - 0.006, s * 0.045 + 0.006, 0.14, 0.18, -0.008, 0.008, [0.06, 0.06, 0.07]); box(-0.051, 0.051, 0.175, 0.188, -0.008, 0.008, [0.06, 0.06, 0.07]); },
+      springs: () => { plinth(0.26, 0.15); gl(PAINT); for (const x of [-0.065, 0.065]) helix(x, 0, 0.052, 0.022, 0.24, 6, 0.009, [0.78, 0.08, 0.08]); },
+      dampers: () => { plinth(0.24, 0.13); for (const x of [-0.06, 0.06]) { gl(METAL); cylA(g, [x, 0.12, 0], 'y', 0.022, 0.2, 10, [0.72, 0.74, 0.77]); cylA(g, [x, 0.28, 0], 'y', 0.009, 0.12, 6, CHR);
+          gl(PAINT); helix(x, 0, 0.04, 0.12, 0.31, 5, 0.007, [0.93, 0.75, 0.1]); cylA(g, [x, 0.12, 0], 'y', 0.046, 0.016, 12, [0.75, 0.1, 0.1]); gl(MATTE); cylA(g, [x, 0.335, 0], 'y', 0.03, 0.04, 10, [0.07, 0.07, 0.08]); } },
+      arb: () => { plinth(0.32, 0.13); gl(PAINT); for (const z of [-0.025, 0.025]) tube(g, [[-0.13, 0.2, z], [-0.115, 0.1, z], [-0.08, 0.06, z], [0.08, 0.06, z], [0.115, 0.1, z], [0.13, 0.2, z]], 0.011, [0.93, 0.75, 0.1], 16, 6);
+        gl(MATTE); for (const s of [-1, 1]) box(s * 0.06 - 0.02, s * 0.06 + 0.02, 0.012, 0.065, -0.045, 0.045, [0.07, 0.07, 0.08]); gl(METAL); for (const s of [-1, 1]) cylA(g, [s * 0.13, 0.215, 0], 'z', 0.014, 0.08, 8, CHR); },
+      pads: () => { const m = M4(0, 0.012, 0, -0.5, 0, 0); gl(SATIN); cbox(m, 0, 0.065, 0, 0.21, 0.13, 0.016, [0.12, 0.125, 0.14]);
+        gl(PAINT); for (const [cx, cy] of [[-0.05, 0.035], [0.05, 0.035], [-0.05, 0.095], [0.05, 0.095]]) { cbox(m, cx, cy, 0.011, 0.085, 0.05, 0.006, [0.78, 0.1, 0.09]); cbox(m, cx, cy, 0.017, 0.07, 0.038, 0.006, [0.16, 0.15, 0.15]); } },
+      horn: () => { plinth(0.22, 0.14); gl(PAINT); box(-0.035, 0.035, 0.012, 0.075, -0.03, 0.03, [0.06, 0.06, 0.07]); gl(METAL);
+        for (const [y, s] of [[0.11, 1], [0.17, 0.85]]) cone2(g, [-0.03, y, -0.02], [0.12, y, 0.06], 0.012, 0.05 * s, 12, CHR, true); gl(MATTE); for (const [y, s] of [[0.11, 1], [0.17, 0.85]]) cylA(g, [-0.04, y, -0.025], 'x', 0.016, 0.03, 8, [0.06, 0.06, 0.07]); },
+      smoke: () => { gl(PAINT); box(-0.15, 0.15, 0, 0.05, -0.05, 0.05, [0.06, 0.06, 0.07]); [[0.92, 0.92, 0.9], [0.11, 0.37, 0.84], [0.8, 0.12, 0.1], [0.93, 0.75, 0.1], [0.55, 0.3, 0.85]].forEach((c, i) => { const x = -0.12 + i * 0.06;
+          gl(PAINT); cylA(g, [x, 0.15, 0], 'y', 0.024, 0.2, 10, c); gl(MATTE); cylA(g, [x, 0.26, 0], 'y', 0.017, 0.025, 8, [0.06, 0.06, 0.07]); box(x - 0.024, x + 0.024, 0.11, 0.125, -0.025, 0.025, [0.06, 0.06, 0.07]); }); } };
+    // ---- the five bays ----
+    RGL.bays = rglBays();
+    RGL.bays.forEach((b, k) => { const v0 = g.P.length / 3, a0 = A.P.length / 3, s0 = SH.P.length / 3; RGL.cb = k;
+      // the frame: the boards and their lips, the top board, the back, the posts (the front ones' slots)
+      gl(SATIN); for (const y of LV.concat([TOP - 0.02])) box(-hw - 0.03, hw + 0.03, y - 0.0175, y + 0.0175, -D / 2, D / 2, BD, BDT);
+      gl(PAINT); for (const y of LV.concat([TOP - 0.04])) box(-hw - 0.03, hw + 0.03, y - 0.035, y + 0.015, D / 2 - 0.015, D / 2 + 0.015, NV);
+      box(-hw, hw, 0, BT, -D / 2 - 0.01, -D / 2 + 0.01, BK);
+      for (const x of [-hw, hw]) for (const z of [-D / 2 + 0.03, D / 2 - 0.03]) { box(x - 0.03, x + 0.03, 0, TOP - 0.0375, z - 0.025, z + 0.025, NV);
+        if (z > 0) for (let y = 0.15; y < TOP - 0.15; y += 0.12) g.quadO([x - 0.01, y - 0.025, z + 0.0255], [x + 0.01, y - 0.025, z + 0.0255], [x + 0.01, y + 0.025, z + 0.0255], [x - 0.01, y + 0.025, z + 0.0255], HOLE, [x, y, z]); }
+      // the backs (each storey's band: the bay's width and 5 cm behind its posts where a bay stands next to it), the storeys' shades
+      { const q = at.back, Wm = L - 0.01, eL = k > 0 ? 0.05 : 0, eR = k < 4 ? 0.05 : 0, xa = -Wm / 2 - eL, xb = Wm / 2 + eR, ua = q.u0 + (xa + q.Wf / 2) / q.Wf * (q.u1 - q.u0), ub = q.u0 + (xb + q.Wf / 2) / q.Wf * (q.u1 - q.u0), z = -D / 2 + 0.045, BL = hexRgb(0x8fd0f5);
+        [0.78, 0.86, 0.94, 0.98].forEach((f, i) => { const y0 = LV[i] + 0.02, y1 = (i < 3 ? LV[i + 1] - 0.01 : BT + 0.01) - 0.01, c = BL.map(v => v * f * RGL.backK);
+          aq([xa, y0, z], [xb, y0, z], [xb, y1, z], [xa, y1, z], q, c, [0, (y0 + y1) / 2, z - 1], false, [[ua, q.v0], [ub, q.v0], [ub, q.v1], [ua, q.v1]]); }); }
+      const yA = LV[0] + 0.0175, yB = LV[1] + 0.0175, yC = LV[2] + 0.0175, yD = LV[3] + 0.0175, WMAX = 2 * (hw - 0.08);
+      // A: a tyre set (four standing in a row, the set a little smaller in its storey as the concept's)
+      const T = RGL_TY[k]; if (T) { const s = T[5], vt = g.P.length / 3, at0 = A.P.length / 3; for (let i = 0; i < 4; i++) tyreUp((i - 1.5) * 0.28, T[3], 0, T, k);
+        const Mt = M4(0, yA + 0.0005, 0.04, 0, 0, 0, s); placeGB(g, vt, Mt); placeGB(A, at0, Mt);
+        shBack(0.1, yA + 0.26, 1.22, 0.66); shFlat(0.05, yA + 0.002, 0, 1.18, 0.42); plate(T[0], 0, yA, Math.min(WMAX, 1.05 * s + 0.04)); }
+      // B and C: the exhausts on their stands (bays 0-2), the rims on theirs (bays 3, 4)
+      [yB, yC].forEach((y, li) => {
+        if (k < 3) { const ex = li * 3 + k, ve = g.P.length / 3; exhaust(ex); placeGB(g, ve, M4(0, y + 0.13, 0.02, 0, 0.08, 0, 1.22)); const vs = g.P.length / 3; for (const x of [-0.244, 0.244]) stand(x, 0.02, 0.13, true); placeGB(g, vs, M4(0, y, 0));
+          shBack(0.11, y + 0.2, 1.3, 0.42); shFlat(0.06, y + 0.002, 0, 1.2, 0.34); plate(RGL_EX[k][li], 0.03, y, WMAX); }
+        else { const [nm, n, hex] = RGL_RIM[k][li], s = 0.92, h = 0.03, ry = h + 0.255 * s, vr = g.P.length / 3;
+          for (const x of [-(L / 4 - 0.04), L / 4 - 0.04]) { rim(x, ry, 0.04, n, hex, s); stand(x, -0.12, ry, false); gl(METAL); cylA(g, [x, ry, -0.05], 'z', 0.02, 0.2, 8, CHR);
+            shBack(x + 0.11, y + ry - 0.08, 0.84 * s / 1.2, 0.8 * s / 1.2, true); shFlat(x + 0.05, y + 0.002, -0.02, 0.7, 0.4, true); }
+          placeGB(g, vr, M4(0, y, 0)); plate(nm, 0, y, WMAX); } });
+      // D: the two tuning parts, each as big as its place in the concept lets it (its foot on the board), a soft shadow under and behind it
+      RGL_PT.slice(2 * k, 2 * k + 2).forEach(([nm, kind, x0, x1, ph, z0, z1], j) => { const vp = g.P.length / 3; PART[kind](); const bb = new THREE.Box3(), Pp = g.P;
+        for (let v = vp * 3; v < Pp.length; v += 3) bb.expandByPoint(_rv.set(Pp[v], Pp[v + 1], Pp[v + 2])); const s = Math.min((x1 - x0) / (bb.max.x - bb.min.x), ph / bb.max.y, (z1 - z0) / (bb.max.z - bb.min.z)) * 0.97, x = (x0 + x1) / 2, z = (z0 + z1) / 2;
+        placeGB(g, vp, M4(x - (bb.min.x + bb.max.x) / 2 * s, yD, z - (bb.min.z + bb.max.z) / 2 * s, 0, 0, 0, s));
+        shFlat(x, yD + 0.002, z, (x1 - x0) * 0.8, (z1 - z0) * 0.6); shBack(x, yD + ph * 0.45, (x1 - x0) * 0.85, ph * 0.75); plate(nm, j ? Math.max(0.105, x) : Math.min(-0.105, x), yD, (hw - 0.08) * 0.98); });
+      // the top: the wing (its stands' feet on the top board, set back from the concept's 0.2 m: it does not reach out over the board's
+      // front much, the far robot's arm passes there), its name before it; b.wing: its box in the bay (x0 x1, y1, z0 z1)
+      { const [nm, kind, sc, ph] = RGL_WG[k], vw = g.P.length / 3, W = wing(kind, sc, ph); placeGB(g, vw, M4(0, top + 0.0005, RGL.wz)); shFlat(0.04, top + 0.002, RGL.wz - 0.02, 1.3 * sc * 0.9, 0.36); plate(nm, 0, top, Math.min(WMAX, W.w * 0.6), 0.32);
+        const bx2 = (a, z) => { const q = new THREE.Box3(); for (let v = a * 3; v < z * 3; v += 3) q.expandByPoint(_rv.set(g.P[v], g.P[v + 1], g.P[v + 2])); return q; };
+        b.wing = bx2(W.vp, W.vf); b.stands = bx2(vw, W.vp).union(bx2(W.vf, g.P.length / 3)); }
+      placeGB(g, v0, b.M); placeGB(A, a0, b.M); placeGB(SH, s0, b.M);
+    });
+    // the atlas' faces lit by the key light (baked: the mesh is unlit), the room's light on them as a whole
+    { const C = A.C, N = A.N, K = KEY_DIR; for (const [v0, v1] of bake) for (let v = v0; v < v1; v++) { const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2], k = 0.5 + 0.36 * Math.max(0, nx * K.x + ny * K.y + nz * K.z) + 0.14 * (0.5 + 0.5 * ny);
+        C[v * 3] *= k; C[v * 3 + 1] *= k; C[v * 3 + 2] *= k; } }
+    const am = new THREE.Mesh(A.geometry(), new THREE.MeshBasicMaterial({ map: tex, vertexColors: true })); P.root.add(am);
+    const sm = new THREE.Mesh(SH.geometry(), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.8, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); sm.renderOrder = 1; P.root.add(mainOnly(sm));
+    // (what the robots keep clear of: each bay's frame, its wing's stands and its wing (its planes, their edges and plates), three boxes
+    // turned with it (bxd))
+    P.obst = []; for (const b of RGL.bays) for (const [x0, x1, y0, y1, z0, z1] of [[-hw - 0.035, hw + 0.035, 0, TOP + 0.01, -D / 2 - 0.015, D / 2 + 0.02], ...[b.stands, b.wing].map(q => [q.min.x, q.max.x, q.min.y, q.max.y, q.min.z, q.max.z])]) {
+      const bb = new THREE.Box3(); for (const x of [x0, x1]) for (const z of [z0, z1]) bb.expandByPoint(new V3(x, 0, z).applyMatrix4(b.M)); bb.min.y = y0; bb.max.y = y1;
+      bb.ob = { x: b.x + (x0 + x1) / 2 * Math.cos(b.ry), z: b.z - (x0 + x1) / 2 * Math.sin(b.ry), c: Math.cos(b.ry), s: Math.sin(b.ry), hx: (x1 - x0) / 2, z0, z1 }; P.obst.push(bb); }
+    for (const b of RGL.bays) BLOBS.push([b.x, b.z, L + 0.3, D + 0.35, 0.7, b.ry, P]);
+    rglWall();
+  }
+  // (the wings' paint in the car's colour: the car on the table's, written again when it changes)
+  function rglColor(hex) { RGL.col = hex; const A = RGL.mesh.geometry.attributes, C = A.color.array, Y = A.position.array, c = hexRgb(hex);
+    for (const [v0, v1] of RGL.body) for (let v = v0; v < v1; v++) { const f = aoK(Y[v * 3 + 1]); C[v * 3] = c[0] * f; C[v * 3 + 1] = c[1] * f; C[v * 3 + 2] = c[2] * f; }
+    sendRange(A.color, RGL.body[0][0], RGL.body[RGL.body.length - 1][1]); }
+  // THE OLD WALL behind the regal (the concept's version 3: grey concrete blocks with old steel conduits): the blocks (one set again,
+  // newer; a stair-step crack through the joints; the porous face, damp ones darker), the conduits along it under the eaves with their
+  // clamps, two junction boxes and an electrical cabinet (a warning triangle, no words) and the rust run down from them, a cable sagging
+  // between two clips, a no-smoking pictogram (no words), stains from the top, soot under the roof. One canvas (RGL_SZ.TW x TH: a period
+  // of 9 m along the wall from x -6.75) on one plane just in front of the back wall's cladding over its tread-plate dado; the relief (the
+  // conduits, the boxes, the clamps) in the same mesh (their uv on a white patch, their colours the vertices'). In the back wall's piece:
+  // the room's light and grime on it, it goes with the wall
+  const RGL_SZ = { X0: -6.75, PER: 9, Y0: 1.03, Y1: 4.55, Z: -4.988, TW: 1024, TH: 512,
+    cd: { y0: 3.66, boxes: [[-4.1, 3.66, 0.16, 0.16, 0.085], [1.2, 3.18, 0.5, 0.66, 0.16], [-1.0, 3.66, 0.16, 0.16, 0.085]], clamps: [-6.2, -5.2, -3.2, -2.2, 0.1], cable: [-3.95, -2.3, 3.5],
+      runs: [[-6.95, 3.66, 2.95, 3.66, 0.024], [-6.95, 3.75, 2.95, 3.75, 0.017], [-4.1, 3.58, -4.1, 2.6, 0.02], [1.2, 3.51, 1.2, 3.66, 0.024], [-1.0, 3.58, -1.0, 2.9, 0.017]] }, crack: [-5.0, 2.62], nosmoke: [-2.75, 3.32] };
+  function rglWallTex() {
+    const Z = RGL_SZ, TW = Z.TW, TH = Z.TH, PXM = TW / Z.PER, PYM = TH / (Z.Y1 - Z.Y0), c = document.createElement('canvas'); c.width = TW; c.height = TH; const g = c.getContext('2d');
+    let seed = 1231 >>> 0; const R = () => { seed = (seed + 0x6D2B79F5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }, rr = (a, b) => a + (b - a) * R();
+    const M = () => g.setTransform(PXM, 0, 0, -PYM, -Z.X0 * PXM, Z.Y1 * PYM), Px = () => g.setTransform(1, 0, 0, 1, 0, 0), rgb = (q, a) => `rgba(${q.map(v => Math.max(0, Math.min(255, Math.round(v)))).join(',')},${a == null ? 1 : a})`;
+    const W = (x, r, f) => { f(x); if (x - r < Z.X0) f(x + Z.PER); if (x + r > Z.X0 + Z.PER) f(x - Z.PER); };   // (drawn again a period over where it crosses the seam)
+    // (a fractal value noise over the texture, periodic along x, 0..1)
+    const fbm = (nx0, ny0, oct, gain) => { const out = new Float32Array(TW * TH); let amp = 1, tot = 0;
+      for (let o = 0; o < oct; o++) { const nx = nx0 << o, ny = ny0 << o, G = new Float32Array(nx * (ny + 1)); for (let i = 0; i < G.length; i++) G[i] = R();
+        const ixA = new Int32Array(TW), sxA = new Float32Array(TW); for (let x = 0; x < TW; x++) { const fx = (x + 0.5) / TW * nx, ix = Math.floor(fx), t = fx - ix; ixA[x] = ix; sxA[x] = t * t * (3 - 2 * t); }
+        for (let y = 0; y < TH; y++) { const fy = (y + 0.5) / TH * ny, iy = Math.floor(fy), t = fy - iy, sy = t * t * (3 - 2 * t), r0 = iy * nx, r1 = (iy + 1) * nx, row = y * TW;
+          for (let x = 0; x < TW; x++) { const i0 = ixA[x], i1 = (i0 + 1) % nx, s = sxA[x], a = G[r0 + i0] + (G[r0 + i1] - G[r0 + i0]) * s, b = G[r1 + i0] + (G[r1 + i1] - G[r1 + i0]) * s; out[row + x] += (a + (b - a) * sy) * amp; } }
+        tot += amp; amp *= gain; }
+      for (let i = 0; i < out.length; i++) out[i] /= tot; return out; };
+    const pix = (fn) => { Px(); const id = g.getImageData(0, 0, TW, TH), d = id.data; for (let py = 0, i = 0; py < TH; py++) { const y = Z.Y1 - (py + 0.5) / PYM; for (let px = 0; px < TW; px++, i += 4) fn(d, i, px, py, y); } g.putImageData(id, 0, 0); };
+    const streak = (x, y, w, L, col, a) => { M(); for (let j = 0; j < 7; j++) { const xx = x + rr(-w, w) * 0.5, ww = w * rr(0.25, 0.7), ll = L * rr(0.4, 1.0), gr = g.createLinearGradient(0, y, 0, y - ll);
+      gr.addColorStop(0, rgb(col, a)); gr.addColorStop(0.7, rgb(col, a * 0.55)); gr.addColorStop(1, rgb(col, 0)); g.fillStyle = gr;
+      g.beginPath(); g.moveTo(xx - ww / 2, y); g.lineTo(xx + ww / 2, y); g.quadraticCurveTo(xx + ww * 0.3, y - ll * 0.6, xx + rr(-0.2, 0.2) * ww, y - ll); g.quadraticCurveTo(xx - ww * 0.3, y - ll * 0.6, xx - ww / 2, y); g.fill(); } };
+    const blot = (x, y, rx, ry, col, a) => { M(); W(x, rx, (xx) => { g.save(); g.translate(xx, y); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, rgb(col, a)); gr.addColorStop(1, rgb(col, 0)); g.fillStyle = gr; g.fillRect(-rx, -rx, rx * 2, rx * 2); g.restore(); }); };
+    const rust = (x, y, w, L, a) => streak(x, y, w, L, [118, 62, 30], a);
+    const n1 = fbm(10, 4, 5, 0.55), n2 = fbm(90, 36, 2, 0.7);
+    // the blocks (23 a period, 0.19 m high, the joints in shade under each, the top arris lit)
+    const n = 23, unit = Z.PER / n, hj = 0.011, l = unit - hj, h = 0.19, bj = 0.01, blocks = [];
+    M(); g.fillStyle = rgb([92, 92, 88]); g.fillRect(Z.X0 - 1, Z.Y0 - 0.1, Z.PER + 2, Z.Y1 - Z.Y0 + 0.2);
+    for (let k = 0, yb = Z.Y0 - 0.025; yb < Z.Y1; k++, yb += h + bj) { const off = (k % 2) * unit / 2, yt = yb + h;
+      for (let i = 0; i < n; i++) { const xa = Z.X0 + off + i * unit + hj / 2, xb = xa + l, tf = rr(0.9, 1.08), col = (R() < 0.12 ? [96, 98, 94] : [126, 126, 121]).map(v => v * tf); blocks.push({ x0: xa, x1: xb, y0: yb, y1: yt });
+        W((xa + xb) / 2, l / 2 + 0.02, (xm) => { const a = xm - l / 2; g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(a, yb - bj * 0.7, l, bj * 0.7); g.fillStyle = rgb(col); g.fillRect(a + 0.002, yb, l - 0.004, h);
+          const gr = g.createLinearGradient(0, yb, 0, yt); gr.addColorStop(0, 'rgba(0,0,0,0.12)'); gr.addColorStop(0.6, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(255,255,250,0.12)'); g.fillStyle = gr; g.fillRect(a + 0.002, yb, l - 0.004, h);
+          g.fillStyle = 'rgba(255,255,248,0.18)'; g.fillRect(a + 0.003, yt - 0.004, l - 0.006, 0.004); }); } }
+    const nb = blocks.find(b => b.x0 > -2.3 && b.y0 > 2.95 && b.y0 < 3.2); if (nb) { g.fillStyle = rgb([146, 146, 140]); g.fillRect(nb.x0, nb.y0, nb.x1 - nb.x0, nb.y1 - nb.y0); g.strokeStyle = rgb([160, 158, 150]); g.lineWidth = 0.012; g.strokeRect(nb.x0 - 0.005, nb.y0 - 0.005, nb.x1 - nb.x0 + 0.01, nb.y1 - nb.y0 + 0.01); }
+    { let x = Z.crack[0], y = Z.crack[1]; M(); g.strokeStyle = 'rgba(14,12,10,0.85)'; g.lineWidth = 0.007; g.beginPath(); g.moveTo(x, y); for (let s = 0; s < 6; s++) { y += 0.2; g.lineTo(x + rr(-0.01, 0.01), y); x += unit / 2; g.lineTo(x, y + rr(-0.004, 0.004)); } g.stroke(); }
+    pix((d, i, px, py) => { const v = (n2[py * TW + px] - 0.5) * 55; d[i] += v; d[i + 1] += v; d[i + 2] += v; });   // (the porous face)
+    // the conduits' and the boxes' shade and rust on the wall (painted under their relief), the boxes' faces (the relief's front shows them)
+    const CD = Z.cd; for (const b of CD.boxes) { rust(b[0], b[1] - b[3] / 2, b[2] * 0.6, 0.7, 0.3); M(); g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(b[0] - b[2] / 2 + 0.02, b[1] - b[3] / 2 - 0.05, b[2], b[3]); }
+    for (const r of CD.runs) { M(); g.fillStyle = 'rgba(0,0,0,0.35)'; if (r[1] === r[3]) g.fillRect(Math.min(r[0], r[2]), r[1] - r[4] - 0.035, Math.abs(r[2] - r[0]), 0.03); else g.fillRect(r[0] + r[4] * 0.6, Math.min(r[1], r[3]), 0.025, Math.abs(r[3] - r[1])); }
+    for (const x of CD.clamps) rust(x, CD.y0 - 0.03, 0.03, 0.35, 0.28);
+    for (const b of CD.boxes) { M(); const x0 = b[0] - b[2] / 2, y0 = b[1] - b[3] / 2, big = b[2] > 0.3; g.fillStyle = rgb(big ? [104, 108, 108] : [112, 114, 112]); g.fillRect(x0, y0, b[2], b[3]);
+      const gr = g.createLinearGradient(0, y0, 0, y0 + b[3]); gr.addColorStop(0, 'rgba(60,40,24,0.35)'); gr.addColorStop(0.25, 'rgba(0,0,0,0.05)'); gr.addColorStop(1, 'rgba(255,255,250,0.12)'); g.fillStyle = gr; g.fillRect(x0, y0, b[2], b[3]);
+      g.strokeStyle = 'rgba(20,20,20,0.6)'; g.lineWidth = 0.006; g.strokeRect(x0 + 0.006, y0 + 0.006, b[2] - 0.012, b[3] - 0.012);
+      if (!big) for (const [a2, b2] of [[0.02, 0.02], [b[2] - 0.02, 0.02], [0.02, b[3] - 0.02], [b[2] - 0.02, b[3] - 0.02]]) { g.beginPath(); g.ellipse(x0 + a2, y0 + b2, 0.007, 0.007, 0, 0, TAU); g.fillStyle = rgb([50, 50, 50]); g.fill(); }
+      else { g.fillStyle = 'rgba(20,20,20,0.75)'; g.fillRect(x0 + b[2] - 0.07, b[1] - 0.06, 0.022, 0.12); g.fillStyle = rgb([60, 60, 58]); for (const hy of [y0 + 0.1, y0 + b[3] - 0.1]) g.fillRect(x0 + 0.008, hy - 0.03, 0.014, 0.06);
+        const tx = b[0] - 0.04, ty = b[1] + 0.13, r = 0.075; g.beginPath(); g.moveTo(tx - r, ty - r * 0.6); g.lineTo(tx + r, ty - r * 0.6); g.lineTo(tx, ty + r * 1.1); g.closePath(); g.fillStyle = rgb([196, 160, 40]); g.fill(); g.strokeStyle = rgb([24, 24, 24]); g.lineWidth = 0.008; g.stroke();
+        g.beginPath(); g.moveTo(tx + 0.012, ty + 0.05); g.lineTo(tx - 0.016, ty - 0.002); g.lineTo(tx + 0.006, ty); g.lineTo(tx - 0.012, ty - 0.04); g.lineTo(tx + 0.018, ty + 0.012); g.lineTo(tx - 0.002, ty + 0.01); g.closePath(); g.fillStyle = rgb([20, 20, 20]); g.fill();
+        streak(b[0], y0 + 0.02, b[2] * 0.8, 0.25, [70, 46, 30], 0.3); blot(b[0] - 0.1, b[1] - 0.1, 0.12, 0.08, [60, 56, 50], 0.25); } }
+    M(); g.strokeStyle = rgb([22, 22, 22]); g.lineWidth = 0.012; g.beginPath(); g.moveTo(CD.cable[0], CD.cable[2]); g.quadraticCurveTo((CD.cable[0] + CD.cable[1]) / 2, CD.cable[2] - 0.32, CD.cable[1], CD.cable[2]); g.stroke();
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 0.02; g.beginPath(); g.moveTo(CD.cable[0], CD.cable[2] - 0.03); g.quadraticCurveTo((CD.cable[0] + CD.cable[1]) / 2, CD.cable[2] - 0.36, CD.cable[1], CD.cable[2] - 0.03); g.stroke();
+    // the no-smoking pictogram (no words): a white plate, a red ring and bar over a black cigarette and its smoke
+    { const [x, y] = Z.nosmoke; M(); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(x - 0.15, y - 0.17, 0.32, 0.32); g.fillStyle = rgb([206, 204, 196]); g.fillRect(x - 0.16, y - 0.16, 0.32, 0.32);
+      g.fillStyle = rgb([24, 24, 24]); g.fillRect(x - 0.09, y - 0.02, 0.15, 0.035); g.fillStyle = rgb([180, 90, 40]); g.fillRect(x + 0.06, y - 0.02, 0.025, 0.035);
+      g.strokeStyle = rgb([30, 30, 30]); g.lineWidth = 0.01; g.beginPath(); g.moveTo(x + 0.07, y + 0.03); g.bezierCurveTo(x + 0.03, y + 0.07, x + 0.1, y + 0.09, x + 0.06, y + 0.12); g.stroke();
+      g.strokeStyle = rgb([186, 30, 26]); g.lineWidth = 0.03; g.beginPath(); g.ellipse(x, y, 0.12, 0.12, 0, 0, TAU); g.stroke(); g.beginPath(); g.moveTo(x - 0.085, y + 0.085); g.lineTo(x + 0.085, y - 0.085); g.stroke(); }
+    streak(-3.6, 4.4, 0.6, 1.3, [50, 46, 40], 0.3); streak(0.3, 4.4, 0.5, 1.5, [50, 46, 40], 0.26); streak(-6.0, 4.4, 0.4, 1.0, [50, 46, 40], 0.22);
+    // the tone in blotches, the soot from the top, the grade (darker and a little greyer than the regal's light blue), the grain
+    pix((d, i, px, py, y) => { const k = py * TW + px, v = (n1[k] - 0.5) * 2 * 0.15, t = smooth(3.1, 4.4, y) * 0.6 * (0.55 + 0.9 * (n1[k] - 0.5) * 2 + 0.45), f = Math.max(0, Math.min(0.92, t));
+      for (let j = 0; j < 3; j++) { let q = d[i + j] * (1 + v * (j === 2 ? 0.95 : 1)); q += ([34, 34, 32][j] - q) * f; d[i + j] = q; }
+      const Lm = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2], gr = (R() - 0.5) * 12; for (let j = 0; j < 3; j++) d[i + j] = (Lm + (d[i + j] - Lm) * 0.9) * 0.74 + gr; });
+    Px(); g.fillStyle = '#fff'; g.fillRect(0, TH - 6, 8, 6);   // (the white patch the relief's uv points at)
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  function rglWall() {
+    const Z = RGL_SZ, P = [], N = [], U = [], C = [], uvW = (x, y) => [(x - Z.X0) / Z.PER, (y - Z.Y0) / (Z.Y1 - Z.Y0)], WP = [3 / Z.TW, 3 / Z.TH];
+    const tri = (a, b, c, n, col, w) => { for (const p of [a, b, c]) { P.push(...p); N.push(...n); C.push(...col); U.push(...(w ? uvW(p[0], p[1]) : WP)); } }, quad = (a, b, c, d, n, col, w) => { tri(a, b, c, n, col, w); tri(a, c, d, n, col, w); };
+    // the plane (x -9..9 at Z.Z, y Y0..Y1)
+    quad([ROOM.x0, Z.Y0, Z.Z], [ROOM.x1, Z.Y0, Z.Z], [ROOM.x1, Z.Y1, Z.Z], [ROOM.x0, Z.Y1, Z.Z], [0, 0, 1], [1, 1, 1], true);
+    // the relief: a box (no back: its front on the wall's picture when fw), a tube on the wall (its half against the wall left out)
+    const box = (x0, x1, y0, y1, z0, z1, col, fw) => { const s = (k) => col.map(v => v * k);
+      quad([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], [0, 0, 1], fw ? [0.92, 0.92, 0.92] : s(1), fw); quad([x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0], [0, 1, 0], s(1.12));
+      quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, -1, 0], s(0.5)); quad([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], s(0.78)); quad([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], s(0.78)); };
+    const tubeW = (a, b, r, n, col) => { const A = new V3(...a), B = new V3(...b), d = B.clone().sub(A).normalize(), u = Math.abs(d.z) < 0.9 ? new V3(0, 0, 1).cross(d).normalize() : new V3(1, 0, 0), w = d.clone().cross(u).normalize();
+      for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU, am = (a0 + a1) / 2, nm = u.clone().multiplyScalar(Math.cos(am)).addScaledVector(w, Math.sin(am)); if (nm.z < -0.35) continue;
+        const k = 0.62 + 0.42 * Math.max(-0.4, nm.y) + 0.12 * nm.z, cl = col.map(v => v * k), Q = (t) => u.clone().multiplyScalar(Math.cos(t) * r).addScaledVector(w, Math.sin(t) * r);
+        quad(A.clone().add(Q(a0)).toArray(), B.clone().add(Q(a0)).toArray(), B.clone().add(Q(a1)).toArray(), A.clone().add(Q(a1)).toArray(), nm.toArray(), cl); } };
+    const CD = Z.cd, z = Z.Z, ST = [0.42, 0.43, 0.44], BX = [0.3, 0.31, 0.31];
+    for (const r of CD.runs) tubeW([r[0], r[1], z + r[4] + 0.012], [r[2], r[3], z + r[4] + 0.012], r[4], 8, ST);
+    for (const b of CD.boxes) box(b[0] - b[2] / 2, b[0] + b[2] / 2, b[1] - b[3] / 2, b[1] + b[3] / 2, z, z + b[4], BX, true);
+    for (const x of CD.clamps) box(x - 0.015, x + 0.015, CD.y0 - 0.04, CD.y0 + 0.13, z, z + 0.055, [0.42, 0.4, 0.38]);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.computeBoundingSphere();
+    const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: rglWallTex(), vertexColors: true })); m.receiveShadow = true; WALLS.back.root.add(m); RGL.wall = m;
+  }
   // the plates: each a quad in its piece (P) at x, y, z facing ry (0: +z), w wide, its name (i: ORODJA, DELI, PLATIŠČA, AERO PAKETI) in the
   // page's language: drawPlates again when it changes
   function addPlate(P, i, x, y, z, ry, w, rx) { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
@@ -3840,7 +4209,10 @@ const Garage3D = (function () {
       const ca = va ? Math.cos(ps.a) : q.ca, sa = va ? Math.sin(ps.a) : q.sa, len = va ? ps.len : q.lc + 2 * q.d, ph = va ? ps.post - PB0 : q.ph, a = R.caps[i * 2], b = R.caps[i * 2 + 1];
       a[0].set(x, y, z); a[1].set(x + len * ca, y, z + len * sa); a[2] = 0.05; b[0].copy(a[1]); b[1].copy(a[1]).setY(y + PADH + Math.max(0, ph + 0.15) + 0.02); b[2] = 0.065; }
     return R; }
-  const bxd = (b, x, y, z) => { const dx = Math.max(b.min.x - x, x - b.max.x), dy = Math.max(b.min.y - y, y - b.max.y), dz = Math.max(b.min.z - z, z - b.max.z);
+  // (a point's distance to box b (under 0: in it): its min and max, or a box turned about y (b.ob: its middle x z, its turn's cos and sin,
+  // its half width hx, its depth z0..z1 in its own frame; min and max then hold its outline: the quick test))
+  const bxd = (b, x, y, z) => { let dx, dz; const o = b.ob; if (o) { const px = x - o.x, pz = z - o.z, lx = px * o.c - pz * o.s, lz = px * o.s + pz * o.c; dx = Math.abs(lx) - o.hx; dz = Math.max(o.z0 - lz, lz - o.z1); }
+    else { dx = Math.max(b.min.x - x, x - b.max.x); dz = Math.max(b.min.z - z, z - b.max.z); } const dy = Math.max(b.min.y - y, y - b.max.y);
     return dx > 0 || dy > 0 || dz > 0 ? Math.hypot(Math.max(0, dx), Math.max(0, dy), Math.max(0, dz)) : Math.max(dx, dy, dz); };
   const _sp = new V3(), _sq = new V3();
   const segd = (p, a, b) => { _sq.subVectors(b, a); const L = _sq.lengthSq(), t = L > 1e-9 ? clamp(_sp.subVectors(p, a).dot(_sq) / L, 0, 1) : 0; return _sp.copy(a).addScaledVector(_sq, t).distanceTo(p); };
@@ -4198,10 +4570,12 @@ const Garage3D = (function () {
     for (const A of RB) if (A.dirty) { A.dirty = false; poseRobot(A.i); }
     stepNests(dt); if (CH.dirty) poseChamber(); stepDryer(dts == null ? dt : dts);
     if (cur && SHF.mesh && cur.spec.color !== SHF.col) shelfColor(cur.spec.color);
+    if (cur && RGL.mesh && cur.spec.color !== RGL.col) rglColor(cur.spec.color);
     if (typeof Lang !== 'undefined' && Lang.cur !== FX.plateLang) drawPlates();
   }
   function buildFixtures() {
     buildRails(); buildRobot(0); buildRobot(1); buildRack(); buildStand(); buildChamber(); buildDryer(); buildDrums(); buildTowers(); buildShelf(); buildRims(); buildKits(); drawPlates();
+    if (RGL.on) { buildRegal(); WALLS.back.keep = (x, y, z) => !rglClear(x, y, z); }
     STANDS.push(FREE.drums, FREE.towers, FREE.shelf, FREE.rims, FREE.kits);
   }
   // (after the pieces are finished: the tools (each a mesh of its own, drawn while a robot holds it (it casts then, and shows in the
@@ -4223,6 +4597,7 @@ const Garage3D = (function () {
     // (the stands: the drums' and the shelf's meshes (their lights, the car's colour), the drums dark, the obstacles the robots plan round)
     const mm = (p) => p.root.children.find(o => o.isMesh && o.geometry.attributes.gloss); DRM.mesh = mm(FREE.drums); SHF.mesh = mm(FREE.shelf); DRM.list.forEach((d, i) => drumGlow(i, 0));
     FX.obst = []; for (const k of ['drums', 'towers', 'shelf', 'rims', 'kits', 'stand', 'rack']) { const P = FREE[k]; for (const b of P.obst || [P.box]) FX.obst.push({ b, k }); for (const q in P.bays || {}) FX.obst.push({ b: P.bays[q], k: q }); }
+    if (RGL.P) { RGL.mesh = mm(RGL.P); for (const b of RGL.P.obst) FX.obst.push({ b, k: 'regal' }); }
     FX.dirty.live = true; CH.dirty = DRY.dirty = true; for (const A of RB) A.dirty = true; stepFixtures(0);
   }
 
@@ -6191,7 +6566,7 @@ const Garage3D = (function () {
     puffs.update(dt); sparks.update(dt); stepFlames(dt);
     motes.material.uniforms.uT.value = time;
     ringGlow.material.uniforms.uK.value = GLOW.ring * (0.16 + 0.03 * Math.sin(time * 1.6));   // (the ring's halo breathing: within about 0.4 m)
-    signGlow.material.userData.op = GLOW.sign * (0.94 + 0.08 * Math.sin(time * 2.3));
+    if (signGlow) signGlow.material.userData.op = GLOW.sign * (0.94 + 0.08 * Math.sin(time * 2.3));
     if ((time * 4 | 0) !== ((time - dt) * 4 | 0)) drawScreen(time);   // (the big screen four times a second)
     if (autoSpin && !busy && !user.drag) rig.yaw += dt * 0.32;
     placeCamera(dt); stepPieces(dt); adaptExposure(dt);
@@ -6323,7 +6698,7 @@ const Garage3D = (function () {
           else { yield* robotTo(i, q, 0.8, 'straight'); robotRelease(i, m); L.push({ held: A.held.length, parent: m.parent === scene ? 'room' : m.parent === o.parent ? 'back' : 'other' }); yield* robotRest(i); } } }); },
       fxLog: [], RB, STN, RAILS, RK, NS, TL, TR, SLIDE, REST_X, nestPose, restPose, travelPose, robotPlan, robotClear, solveRobot, robotHold, robotRelease, carBox, bodyGrid, RLOG, GAPW, wayOf, wayCheck, WC, planCtx, routeNow(i, P0, P1, via, o) { const g = route(i, P0, P1, via, o, Infinity); let r; do r = g.next(); while (!r.done); return r.value; }, armGap, carPen, linksOf, roomBoxes, foldPose, robotBoxes, COLB,
       carProbe(cv) { cv = cv || cur; cv.v.grp.updateMatrixWorld(true); return probeOf(carMeshes(cv), true); },   // (the car's top, its sides as the robots see it: with its parts and its wheels)
-      CH, DRY, DRM, TWR, SHF, RMS, KTS, PAINTS, FREE, setChamber, chamberColor, setDryer, dryerHeat, drumGlow, tuckPose, shelfColor,
+      CH, DRY, DRM, TWR, SHF, RMS, KTS, PAINTS, FREE, RGL, get fxObst() { return FX.obst; }, setChamber, chamberColor, setDryer, dryerHeat, drumGlow, tuckPose, shelfColor,
       // (the service by the robots: where it is (its item, its step, its show time, the cues met, its log, the items done), each robot's
       // tool, its plans (each robot's carriage, out of reach, its clearance, how much of the car it hides; a lane's rung, its ends, the time
       // its slide takes), the paint's patch found (2), what its looks show, the loops on; svcPlans: the items' plans made at once on the

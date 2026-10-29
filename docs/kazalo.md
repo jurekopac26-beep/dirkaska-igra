@@ -20,7 +20,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem, `flag` na F za zastavico, `dev` na O za prikaz za razvijalca: `Input.onDev`), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
 | `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
-| `garaza.html`, `js/garage.js`, `js/garage3d.js`, `css/garage.css` | garaža (opis v `README.md`): odpre jo tap na avto na izbiri avta (`game.js` `carTapLay`, `garageOpen`; nazaj `garageBack`, `?zaslon=avto&avto=<id>`); v `garage3d.js` pot širokih vozil `laneWay` (`LN`, `laneObsG`, `carLane`, `crab`, stojala vstran `FREE[k].away`), hitri žarki proti avtu `castAxis` / `rayGrid` (v `probeOf`), načrti servisa `svcPlan` |
+| `garaza.html`, `js/garage.js`, `js/garage3d.js`, `css/garage.css` | garaža (opis v `README.md`): odpre jo tap na avto na izbiri avta (`game.js` `carTapLay`, `garageOpen`; nazaj `garageBack`, `?zaslon=avto&avto=<id>`); v `garage3d.js` regal za avtom `buildRegal` (`RGL`, predali `rglBays`, atlas `rglAtlas`, krila v barvi avta `rglColor`, star zid `rglWall`; kar je stalo na njegovem mestu, odpade pri `finishPieces` s `WALLS.back.keep` / `rglClear`), pot širokih vozil `laneWay` (`LN`, `laneObsG`, `carLane`, `crab`, stojala vstran `FREE[k].away`), hitri žarki proti avtu `castAxis` / `rayGrid` (v `probeOf`), načrti servisa `svcPlan` |
 | `js/sfx.js` | zvok (sintetiziran) |
 | `js/comm.js` | angleški komentator |
 | `js/net.js` | dirka s prijatelji prek interneta |

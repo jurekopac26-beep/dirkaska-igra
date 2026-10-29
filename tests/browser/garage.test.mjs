@@ -1,4 +1,5 @@
-// The garage (garaza.html): the page opens with the workshop and the car, the camera (left and right only, always as far; what is
+// The garage (garaza.html): the page opens with the workshop and the car (the regal behind it: its bays clear of the far robot's rail,
+// the names on its prisms in British English, its cost), the camera (left and right only, always as far; what is
 // between it and the car steps aside), the demo profiles, buying a car and the credits, a new car
 // driving in, every upgrade with its parts on the car, the service (dirt and scratches gone, the engine), a new colour, the English page,
 // every car of the game's fleet (the car screen's list and order) on the turntable with all its parts, the car panel's categories and the
@@ -70,6 +71,29 @@ try {
     T.check('the stands at rest: the chamber stored (glass over 3.4 m, one band drawn, its lights off), the drying column down (its lid flush with the floor), five paint drums, the tyre towers, the parts shelf, the rim and the kit stand bolted to the floor (their plates on it), out of the lane, none stepped aside (' + calls + ' draw calls)',
       S.ch.k === 0 && S.ch.low > 3.4 && S.ch.bands.every(y => y > 3.4) && S.ch.glassDrawn === S.ch.band0[0] && S.ch.frameDrawn === S.ch.band0[1] && S.ch.led.every(q => q === 0) && !S.ch.tucked.some(Boolean) && S.dr.k === 0 && !S.dr.drawn && !S.dr.cast && S.dr.lid <= 0.015 && S.drums.length === 5 && S.drums.every(d => d.glow === 0 && d.z < -1.7)
       && Object.values(S.st).every(x => x.low >= -1e-4 && x.low < 0.003 && x.bolts >= 4 && x.lane >= 1.3 && x.gone === 0), JSON.stringify(S));
+    // the regal behind the car (sklop 3, the user's concept): five bays round the car's back, clear of the far robot's rail and its
+    // chain's trough; on them the elements' names on navy prisms, in British English; in the home view (its bays on the stage, not stepped
+    // aside), the wings in the car's colour; its cost: its meshes (the frame and the parts, the atlas, the soft shadows; the old wall in
+    // the back wall's piece) and their vertices, the first view's draws and triangles
+    const RG = await page.evaluate(() => { const D = Garage3D._dbg, R = D.RGL, cam = Garage3D.camera, cv = Garage3D.renderer.domElement.getBoundingClientRect(), st = document.getElementById('g-stage').getBoundingClientRect();
+      const onStage = R.bays.map(b => { const p = new THREE.Vector3(b.x, 1.3, b.z).project(cam), x = cv.left + (p.x + 1) / 2 * cv.width, y = cv.top + (1 - p.y) / 2 * cv.height; return p.z < 1 && x >= st.left && x <= st.right && y >= st.top && y <= st.bottom; });
+      const ms = []; R.P.root.traverse(o => { if (o.isMesh) ms.push(o); });
+      // (the least gap between the far rail (its base plate, its end stops, its chain's trough) and the bays' footprints, on the floor)
+      const r = D.RAILS[1], pts = [], gap = (x, z) => Math.min(...R.bays.map(b => { const dx = x - b.x, dz = z - b.z, c = Math.cos(b.ry), s = Math.sin(b.ry), lx = dx * c - dz * s, lz = dx * s + dz * c;
+        const ox = Math.abs(lx) - (R.L / 2 + 0.03), oz = Math.abs(lz) - (R.D / 2 + 0.015); return ox > 0 || oz > 0 ? Math.hypot(Math.max(ox, 0), Math.max(oz, 0)) : Math.max(ox, oz); }));
+      for (let x = r.x0 - 0.18; x <= r.x1 + 0.18; x += 0.02) for (const z of [r.z - 0.31, r.z + 0.31]) pts.push(gap(x, z));
+      for (let x = r.x0 + 0.05; x <= r.x1 - 0.05; x += 0.02) for (const z of [r.tz - 0.065, r.tz + 0.065]) pts.push(gap(x, z));
+      for (const z of [r.z - 0.31, r.z - 0.15, r.z, r.z + 0.15, r.z + 0.31]) pts.push(gap(r.x0 - 0.18, z), gap(r.x1 + 0.18, z));
+      return { bays: R.bays.length, onStage, gone: R.P.k, visible: R.P.root.visible, names: R.names.map(n => n.nm), meshes: ms.length, verts: ms.reduce((q, m) => q + m.geometry.attributes.position.count, 0),
+        wall: R.wall.visible && R.wall.geometry.attributes.position.count, rail: +Math.min(...pts).toFixed(3), col: R.col === Garage3D.cur.spec.color, main: D.stats.main, tris: D.stats.tris }; });
+    const NAMES = ['SNOW', 'TRACK', 'MOUNTAIN', 'SPORT', 'RACE', 'TITANIUM', 'CARBON', 'TWIN', 'STRAIGHT', 'CHROME 3-SPOKE', 'GOLD 5-SPOKE', 'ORANGE 10-SPOKE', 'BLACK MESH', 'AIR FILTER', 'ECU CHIP', 'TURBO',
+      'LIGHT BATTERY', 'SPRINGS', 'DAMPERS', 'ANTI-ROLL BARS', 'SPORT PADS', 'HORN', 'TYRE SMOKE', 'DUCKTAIL', 'SHORT WING', 'LOW WING', 'GT WING', 'DOUBLE WING'];
+    T.check('the regal behind the car: five bays clear of the far robot\'s rail and its trough (' + RG.rail + ' m), at least four of them on the stage in the home view, not stepped aside, the wings in the car\'s colour',
+      RG.bays === 5 && RG.rail >= 0.04 && RG.onStage.filter(Boolean).length >= 4 && RG.gone === 0 && RG.visible && RG.col, JSON.stringify(RG));
+    T.check('the regal\'s labels: a prism before each of its 28 elements, the names in British English (TYRE SMOKE, no Slovenian letters), each once',
+      RG.names.length === NAMES.length && NAMES.every(n => RG.names.includes(n)) && RG.names.every(n => /^[A-Z0-9 -]+$/.test(n)), JSON.stringify(RG.names));
+    T.check('the regal\'s cost: 3 meshes (the frame and parts, the atlas, the shadows) under 60k vertices, the old wall one more; the first view\'s main pass under 90 draws and 150k triangles (' + RG.main + ', ' + RG.tris + ')',
+      RG.meshes === 3 && RG.verts < 60000 && RG.wall > 0 && RG.wall < 2000 && RG.main < 90 && RG.tris < 150000, JSON.stringify({ meshes: RG.meshes, verts: RG.verts, wall: RG.wall, main: RG.main, tris: RG.tris }));
   }
 
   // 1c. the fixtures' moves through the shows' queue, stepped finely (0.03 s, nothing drawn): the far robot rides from behind the lift's
@@ -228,8 +252,11 @@ try {
           rc.set(new V(x, -2, z), new V(0, 1, 0)); h = rc.intersectObjects(ms, false); bot[a * nz + b] = h.length ? h[0].point.y - ly0 : 9; }
         ms.forEach((m, i) => { m.material.side = sides[i]; });
         const COL = [[-0.175, 0.02, -1.83, 0.175, 2.97, -1.61], [-0.2, 2.985, -1.885, 0.2, 3.08, -1.555], [-0.14, 0.63, -1.99, 0.08, 1.34, -1.84], [0.185, 0.99, -1.82, 0.26, 1.21, -1.69]];
-        const bd = (b, x, y, z) => Math.hypot(Math.max(0, b[0] - x, x - b[3]), Math.max(0, b[1] - y, y - b[4]), Math.max(0, b[2] - z, z - b[5])) || -Math.min(x - b[0], b[3] - x, y - b[1], b[4] - y, z - b[2], b[5] - z);
-        const BXS = [0, 1].map(i => D.roomBoxes(null).filter(([b, k]) => !['lift', 'chamber', 'floor', 'liftc', D.STN[i].key].includes(k) && k.split('.')[0] !== D.STN[i].key).map(([b, k]) => [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, k]));
+        // (a box turned about y (b[7]: the regal's bays and wings): the point in its own frame first)
+        const bd = (b, x, y, z) => { const o = b[7]; if (o) { const px = x - o.x, pz = z - o.z, lx = px * o.c - pz * o.s, lz = px * o.s + pz * o.c, dx = Math.abs(lx) - o.hx, dy = Math.max(b[1] - y, y - b[4]), dz = Math.max(o.z0 - lz, lz - o.z1);
+            return dx > 0 || dy > 0 || dz > 0 ? Math.hypot(Math.max(0, dx), Math.max(0, dy), Math.max(0, dz)) : Math.max(dx, dy, dz); }
+          return Math.hypot(Math.max(0, b[0] - x, x - b[3]), Math.max(0, b[1] - y, y - b[4]), Math.max(0, b[2] - z, z - b[5])) || -Math.min(x - b[0], b[3] - x, y - b[1], b[4] - y, z - b[2], b[5] - z); };
+        const BXS = [0, 1].map(i => D.roomBoxes(null).filter(([b, k]) => !['lift', 'chamber', 'floor', 'liftc', D.STN[i].key].includes(k) && k.split('.')[0] !== D.STN[i].key).map(([b, k]) => [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, k, b.ob || null]));
         // (its own stand's plate (as 1c: the tools in and out through their forks): the far robot's ORODJA, the near one's stand)
         const inRack = (x, y, z) => { if (y < RK.S - 0.045 || y > RK.S + 0.002) return false; const rr = Math.hypot(x - RK.cx, z - RK.cz) - RK.r, a = Math.atan2(z - RK.cz, x - RK.cx);
           if (rr < -0.18 || rr > 0.18 || a > RK.e0 || a < RK.e1) return false; if (rr < 0.08) for (const aj of RK.a) if (Math.abs(a - aj) < RK.SW) return false; return true; };
@@ -345,11 +372,13 @@ try {
     const tr = (tap.frames - tap.tapAt) / Math.max(1, plain.frames - tap.tapAt);
     T.check('a tap during the wash: the show (the robots, the passes) runs about three times as fast to its end, everything as after any wash', tr <= 0.45 && !ends(tap).length, JSON.stringify({ plain: plain.frames, tap: tap.frames, at: tap.tapAt, tr: +tr.toFixed(2), bad: ends(tap) }));
     T.check('the electric car\'s engine: the wrench at the battery tray\'s bolts, no oil, no pan up; the same end state', !ends(ev).length && ev.cue['n.bolt0'] != null && ev.cue['n.plugIn'] != null && ev.cue['m.oil'] != null && sm.includes('n.bolt0') && ev.aud.pan === 0, JSON.stringify({ bad: ends(ev), cue: ev.cue }));
-    // draws while it runs (a full service on the PICO, drawn every half second of its time): at most 16 more than at rest
+    // draws while it runs (a full service on the PICO, drawn every half second of its time): at most 17 more than at rest (16 before the
+    // regal: the home view lost two of the room's things it saw then, the big screen and a tyre trolley, the service's oil view only one;
+    // the service's own draws are the same)
     const dc = await page.evaluate(async () => { const D = Garage3D._dbg, G = Garage3D; G.show({ M: Core.MODELS.find(m => m.id === 'pico'), color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(1.5); G.frame(1 / 30); const rest = D.stats.main;
       D.svcRun(['clean', 'body', 'engine']); G.fast = 3; let t = 0, k = 0, mx = 0, at = ''; while (G.busy && t < 60) { G.frame(1 / 30, true); t += 1 / 30; if (++k % 5 === 0) { G.frame(1 / 30); if (D.stats.main > mx) { mx = D.stats.main; at = D.svc.step; } } if (k % 20 === 0) await new Promise(r => setTimeout(r, 0)); }
       G.fast = 1; __garage.advance(3.0); G.frame(1 / 30); return { rest, max: mx, at, after: D.stats.main }; });
-    T.check('the draws while the full service runs: at most 16 more than at rest (its beams, marks, pan and the tools only while they show); at rest after it as before', dc.max <= dc.rest + 16 && dc.after === dc.rest, JSON.stringify(dc));
+    T.check('the draws while the full service runs: at most 17 more than at rest (its beams, marks, pan and the tools only while they show); at rest after it as before', dc.max <= dc.rest + 17 && dc.after === dc.rest, JSON.stringify(dc));
     // a car asked for during the service (the FORMULA while the PICO's body is scanned): it waits till the service has ended and
     // everything is parked (the lift down, the pan hidden, no loop), then drives in
     const sw = await page.evaluate(async () => { const D = Garage3D._dbg, G = Garage3D; G.show({ M: Core.MODELS.find(m => m.id === 'pico'), color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 0.2, body: 0.2, engine: 0.2 } }); __garage.advance(0.3);
