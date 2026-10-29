@@ -83,5 +83,21 @@
  },
  "bigsur": {
   "sea": true
+ },
+ "montreal": {
+  "kbps": 550
+ },
+ "toronto": {
+  "kbps": 550,
+  "sea": true
+ },
+ "troisrivieres": {
+  "kbps": 550
+ },
+ "greatalpine": {
+  "kbps": 550
+ },
+ "hotham": {
+  "kbps": 550
  }
 }

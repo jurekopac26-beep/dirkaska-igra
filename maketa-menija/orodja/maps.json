@@ -16,5 +16,10 @@
   ["bigsur", "top", "top-bigsur", {"W": 824, "H": 620, "wet": true}],
   ["detroit", "top", "top-detroit", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["maunakea", "top", "top-maunakea", {"W": 824, "H": 620, "wet": true}],
-  ["moki", "top", "top-moki", {"W": 824, "H": 620, "wet": true}]
+  ["moki", "top", "top-moki", {"W": 824, "H": 620, "wet": true}],
+  ["montreal", "top", "top-montreal", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["toronto", "top", "top-toronto", {"keepWide": true, "W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["troisrivieres", "top", "top-troisrivieres", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["greatalpine", "top", "top-greatalpine", {"W": 824, "H": 620, "wet": true}],
+  ["hotham", "top", "top-hotham", {"W": 824, "H": 620, "wet": true}]
 ]

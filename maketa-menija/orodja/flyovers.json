@@ -455,5 +455,151 @@
     1961
    ]
   }
+ ],
+ [
+  "montreal",
+  {
+   "kbps": 450,
+   "speed": 156,
+   "back": 203,
+   "up": 128,
+   "ahead": 101,
+   "fogNear": 437,
+   "fogFar": 1685,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 450
+    },
+    {
+     "n": "Turn 10",
+     "d": 2902
+    },
+    {
+     "n": "Turn 13",
+     "d": 4101
+    }
+   ]
+  }
+ ],
+ [
+  "toronto",
+  {
+   "kbps": 450,
+   "speed": 104,
+   "back": 135,
+   "up": 85,
+   "ahead": 68,
+   "fogNear": 291,
+   "fogFar": 1123,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 196
+    },
+    {
+     "n": "Turn 3",
+     "d": 1262
+    },
+    {
+     "n": "Turn 8",
+     "d": 2362
+    }
+   ]
+  }
+ ],
+ [
+  "troisrivieres",
+  {
+   "kbps": 450,
+   "speed": 87,
+   "back": 113,
+   "up": 71,
+   "ahead": 57,
+   "fogNear": 244,
+   "fogFar": 940,
+   "places": [
+    {
+     "n": "Turn 3",
+     "d": 622
+    },
+    {
+     "n": "Turn 6",
+     "d": 1302
+    },
+    {
+     "n": "Turn 9",
+     "d": 2051
+    }
+   ]
+  }
+ ],
+ [
+  "greatalpine",
+  {
+   "kbps": 450,
+   "speed": 286,
+   "back": 372,
+   "up": 235,
+   "ahead": 186,
+   "fogNear": 801,
+   "fogFar": 3089,
+   "places": [
+    {
+     "n": "Saint Patricks Creek",
+     "d": 776
+    },
+    {
+     "n": "Wild Dog Creek",
+     "d": 2825
+    },
+    {
+     "n": "Mullocky Creek",
+     "d": 4940
+    },
+    {
+     "n": "Top of the Climb · 337 m",
+     "d": 7980
+    }
+   ],
+   "alt": [
+    123,
+    337
+   ]
+  }
+ ],
+ [
+  "hotham",
+  {
+   "kbps": 450,
+   "speed": 283,
+   "back": 368,
+   "up": 232,
+   "ahead": 184,
+   "fogNear": 792,
+   "fogFar": 3056,
+   "places": [
+    {
+     "n": "Mount Blowhard",
+     "d": 2230
+    },
+    {
+     "n": "Ridge Lookout",
+     "d": 3541
+    },
+    {
+     "n": "Razorback",
+     "d": 5161
+    },
+    {
+     "n": "Mount Hotham · 1,831 m",
+     "d": 6425
+    }
+   ],
+   "alt": [
+    1495,
+    1753
+   ]
+  }
  ]
 ]

@@ -15,6 +15,11 @@ GUESS = {
     'detroit': (42.3300, -83.0380, 800),
     'medvode': (46.1418, 14.4091, 300),     # (by the heights: geo_match.py, then here closer)
     'moki': (37.2651, -109.9335, 300),
+    'montreal': (45.50178, -73.52325, 300),     # the start line on the pit straight (from the track's own header)
+    'toronto': (43.63408, -79.41205, 300),
+    'troisrivieres': (46.34737, -72.55930, 300),
+    'greatalpine': (-37.5517, 147.8764, 200),   # (by the heights: geo_match.py, then here closer)
+    'hotham': (-37.0029, 147.0940, 200),
 }
 CELL = 2.0   # metres per cell of the distance map
 

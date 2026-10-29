@@ -29,10 +29,16 @@ CFG = {
     'detroit': dict(kind='real', start='Detroit', country='USA', region='Michigan', l1='greatlakes'),
     'maunakea': dict(kind='real', start='Mauna Kea', finish='Summit', country='USA', region='Hawaii', l1='hawaii'),
     'moki': dict(kind='real', start='Valley of the Gods', finish='Cedar Mesa', country='USA', region='Utah', l1='utah'),
+    'montreal': dict(kind='real', start='Montréal', country='Canada', region='Quebec', l1='quebec'),
+    'toronto': dict(kind='real', start='Toronto', country='Canada', region='Ontario', l1='greatlakes'),
+    'troisrivieres': dict(kind='real', start='Trois-Rivières', country='Canada', region='Quebec', l1='quebec'),
+    'greatalpine': dict(kind='real', start='Tambo River', finish='Ash Range', country='Australia', region='Victoria', l1='victoria'),
+    'hotham': dict(kind='real', start='Mount Little Blowhard', finish='Hotham Heights', country='Australia', region='Victoria', l1='victoria'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
-      'california': (35.0, -119.3, 900), 'montana': (45.0, -109.4, 700), 'greatlakes': (43.0, -81.2, 800), 'hawaii': (19.7, -155.6, 400), 'utah': (37.6, -110.6, 600)}
+      'california': (35.0, -119.3, 900), 'montana': (45.0, -109.4, 700), 'greatlakes': (43.0, -81.2, 800), 'hawaii': (19.7, -155.6, 400), 'utah': (37.6, -110.6, 600),
+      'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

@@ -507,5 +507,165 @@
    "d": 4950,
    "sub": "1,961 m"
   }
+ ],
+ "montreal": [
+  {
+   "n": "Montréal",
+   "ll": [
+    45.5048,
+    -73.5617
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "St. Lawrence River",
+   "ll": [
+    45.51,
+    -73.515
+   ],
+   "snap": "water",
+   "r": 600
+  },
+  {
+   "n": "Rowing Basin",
+   "ll": [
+    45.4985,
+    -73.5265
+   ],
+   "snap": "water",
+   "r": 300
+  },
+  {
+   "n": "Île Sainte-Hélène",
+   "ll": [
+    45.517,
+    -73.532
+   ]
+  }
+ ],
+ "toronto": [
+  {
+   "n": "Toronto",
+   "ll": [
+    43.651,
+    -79.383
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Lake Ontario",
+   "ll": [
+    43.623,
+    -79.415
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Toronto Islands",
+   "ll": [
+    43.6215,
+    -79.378
+   ]
+  }
+ ],
+ "troisrivieres": [
+  {
+   "n": "Trois-Rivières",
+   "ll": [
+    46.343,
+    -72.543
+   ],
+   "snap": "town",
+   "r": 1000
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "St. Lawrence River",
+   "ll": [
+    46.335,
+    -72.535
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Saint-Maurice River",
+   "ll": [
+    46.36,
+    -72.53
+   ],
+   "snap": "water",
+   "r": 800
+  }
+ ],
+ "greatalpine": [
+  {
+   "n": "Tambo River",
+   "d": 20,
+   "sub": "valley"
+  },
+  {
+   "n": "Saint Patricks Creek",
+   "d": 776
+  },
+  {
+   "n": "Wild Dog Creek",
+   "d": 2825
+  },
+  {
+   "n": "Mullocky Creek",
+   "d": 4940
+  },
+  {
+   "n": "Ash Range",
+   "d": 7980,
+   "sub": "337 m"
+  }
+ ],
+ "hotham": [
+  {
+   "n": "Mount Little Blowhard",
+   "d": 1517
+  },
+  {
+   "n": "Mount Blowhard",
+   "d": 2230
+  },
+  {
+   "n": "Mount Feathertop",
+   "ll": [
+    -36.8947,
+    147.1308
+   ],
+   "snap": "peak",
+   "r": 800
+  },
+  {
+   "n": "Razorback",
+   "d": 5161
+  },
+  {
+   "n": "Mount Hotham",
+   "d": 6425,
+   "sub": "1,831 m"
+  },
+  {
+   "n": "Hotham Heights",
+   "d": 7900
+  }
  ]
 }
