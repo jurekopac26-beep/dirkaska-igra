@@ -13,11 +13,18 @@
   // the game's colours (game.js PLAYER_COLORS), their names
   const COLORS = [[0xd81f2a, 'Rdeča'], [0xf5f5f0, 'Bela'], [0x1c5fd6, 'Modra'], [0xf2c230, 'Rumena'], [0x1a1a1f, 'Črna'], [0x2fa84f, 'Zelena'], [0xff7a1a, 'Oranžna'], [0x8e3bd6, 'Vijolična']];
   const CSS = (h) => '#' + h.toString(16).padStart(6, '0');
-  // the cars in the garage's order: by price, the cheapest first
-  const ORDER = MODELS.map(m => m.id).sort((a, b) => (PRICE[a] || 0) - (PRICE[b] || 0));
+  // the cars in the game's display order (game.js's car screen: by category in Core.CATS' order, in each the cheapest first (the career
+  // price), then by id); a retired model never listed (a stored one is its heir's, Core.heirOf)
+  const CAT_IDS = Core.CATS.map(c => c.id), catIx = (M) => { const i = CAT_IDS.indexOf(M.cat); return i < 0 ? CAT_IDS.length : i; };
+  const ORDER = MODELS.filter(M => !M.retired).sort((A, B) => catIx(A) - catIx(B) || (PRICE[A.id] || 0) - (PRICE[B.id] || 0) || (A.id < B.id ? -1 : A.id > B.id ? 1 : 0)).map(M => M.id);
   const model = (id) => MODELS.find(m => m.id === id);
+  const heirId = (id) => { const M = model(id); return M ? Core.heirOf(M).id : id; };
+  const catOf = (id) => model(id).cat, CATS = Core.CATS.filter(c => ORDER.some(id => catOf(id) === c.id));   // (the categories with a car in them)
+  const catName = (cat) => { const c = Core.CATS.find(x => x.id === cat); return c ? tr(c.name) : ''; };
+  const descOf = (M) => M.desc || (M.def && M.def.desc) || '';   // (a registered vehicle: its def's text)
   const BODY = { coupe: 'Kupe', sedan: 'Limuzina', hatch: 'Hatchback', wedge: 'Športni avto', rally: 'Reli', formula: 'Formula', lm: 'Prototip', muscle: 'Muscle car', ev: 'Električni', truck: 'Terenec' };
-  const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 };
+  // each car's colour in a new profile (the 10 older ones as before; the others in turn round the colours by their place in the order)
+  const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
   const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
   // service prices (CR): a wash, the body (scratches, dents), the engine and its oil; a full service 15 % off
   const SRV = [
@@ -29,7 +36,7 @@
 
   /* ---------------- the state: money, the cars (bought or not), each car's parts, wear and colour ---------------- */
   const KEY = 'apex-garage';
-  const carNew = (id, own) => ({ own: !!own, upg: { motor: 0, gume: 0, zavore: 0, aero: 0 }, max: { motor: 0, gume: 0, zavore: 0, aero: 0 }, color: COLOR0[id] || 0, stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
+  const carNew = (id, own) => ({ own: !!own, upg: { motor: 0, gume: 0, zavore: 0, aero: 0 }, max: { motor: 0, gume: 0, zavore: 0, aero: 0 }, color: color0(id), stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
     const S = { v: 1, mode, money: 11500, car: 'pico', cars: {}, lang: S0lang(), sound: true };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
@@ -49,10 +56,13 @@
     let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { s = null; }
     if (!s || s.v !== 1 || !s.cars || !s.mode) return profile('full');
     const d = profile(s.mode);
-    for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c) continue; o.own = !!c.own; for (const k of ['motor', 'gume', 'zavore', 'aero']) { o.upg[k] = lv(c.upg && c.upg[k]); o.max[k] = Math.max(o.upg[k], lv(c.max && c.max[k])); }
+    for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; for (const k of ['motor', 'gume', 'zavore', 'aero']) { o.upg[k] = lv(c.upg && c.upg[k]); o.max[k] = Math.max(o.upg[k], lv(c.max && c.max[k])); }
       o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false;
       for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; }
-    d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(s.car) ? s.car : d.car; d.lang = s.lang === 'en' ? 'en' : 'sl'; d.sound = s.sound !== false; d.demo = s.demo !== false;
+    // (a stored retired model's car: its heir's, owned once; both kept: the better level of each part)
+    for (const id0 in s.cars) { const id = heirId(id0), c = s.cars[id0], o = d.cars[id]; if (id === id0 || !o || !c || typeof c !== 'object') continue;
+      o.own = o.own || !!c.own; for (const k of ['motor', 'gume', 'zavore', 'aero']) { o.upg[k] = Math.max(o.upg[k], lv(c.upg && c.upg[k])); o.max[k] = Math.max(o.max[k], o.upg[k], lv(c.max && c.max[k])); } }
+    d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; d.lang = s.lang === 'en' ? 'en' : 'sl'; d.sound = s.sound !== false; d.demo = s.demo !== false;
     if (!d.cars.pico.own) d.cars.pico.own = true;
     return d;
   }
@@ -84,7 +94,7 @@
   };
 
   /* ---------------- the card ---------------- */
-  let panel = 'home', thumbs = {}, thumbQ = [];
+  let panel = 'home', pcat = null, thumbs = {}, thumbQ = [];   // (pcat: the category the car panel shows, null: the shown car's)
   function head() {
     const Mm = M(), c = C(), st = Core.upgStats(Mm, c.upg), own = c.own;
     $('g-money').textContent = num(S.money);
@@ -118,16 +128,20 @@
         tile('p-paint', '<i style="width:30px;height:30px;border-radius:50%;background:' + CSS(col[0]) + ';border:2.5px solid #d8e0ea;display:block"></i>', tr('Barva'), tr(col[1]), '', !c.own) +
         '</div><p class="g-hint">' + esc(c.own ? tr('Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.') : locked(S.car) ? tr('{0} je na voljo v polni igri.', Mm.name) : tr('{0} še ni tvoj: kupiš ga z gumbom spodaj.', Mm.name)) + '</p>';
     } else if (panel === 'car') {
-      const st = Core.upgStats(Mm, c.upg), b0 = Core.upgStats(Mm, null);
-      b.innerHTML = ph(tr('Avto'), tr('{0} od {1}', ORDER.indexOf(S.car) + 1, ORDER.length)) + '<div class="g-cars" id="g-cars">' + ORDER.map(id => {
+      // the categories as chips (the game's car screen's), the cars of the one chosen as the strip (the shown car's at first); their
+      // pictures drawn only for the strip shown (a phone draws a few at a time, not the whole fleet)
+      const st = Core.upgStats(Mm, c.upg), b0 = Core.upgStats(Mm, null), cat = pcat || catOf(S.car), ids = ORDER.filter(id => catOf(id) === cat), i0 = ids.indexOf(S.car);
+      b.innerHTML = ph(tr('Avto'), tr('{0} od {1}', ORDER.indexOf(S.car) + 1, ORDER.length)) +
+        '<div class="g-cats" id="g-cats" aria-label="' + esc(tr('Kategorije vozil')) + '">' + CATS.map(q => '<button class="g-cat' + (q.id === cat ? ' sel' : '') + (q.id === catOf(S.car) ? ' here' : '') + '" data-cat="' + q.id + '">' + esc(tr(q.name)) + '</button>').join('') + '</div>' +
+        '<div class="g-cars" id="g-cars" aria-label="' + esc(tr('Vozila v kategoriji')) + '">' + ids.map(id => {
         const k = S.cars[id], m = model(id), t = thumbs[id] && thumbs[id][k.color + (k.stripe ? 's' : '')];
         const s2 = k.own ? '<small class="own">' + esc(tr('V GARAŽI')) + '</small>' : locked(id) ? '<small class="lock">🔒 ' + esc(tr('POLNA IGRA')) + '</small>' : '<small class="pr">' + num(PRICE[id] || 0) + ' CR</small>';
         return '<button class="g-car' + (id === S.car ? ' sel' : '') + (locked(id) ? ' locked' : '') + '" data-car="' + id + '"><div class="th">' + (t ? '<img alt="" src="' + t + '">' : '<i></i>') + '</div><b>' + esc(m.name) + '</b>' + s2 + '</button>';
       }).join('') + '</div>' + '<div class="g-meter">' + METER.map(([l, k]) =>
         '<small>' + esc(tr(l)) + '</small><span><i class="up" style="width:' + st[k] * 10 + '%"></i><i style="width:' + b0[k] * 10 + '%"></i></span><b>' + (Math.round(st[k] * 10) / 10).toFixed(1).replace('.', Lang.cur === 'en' ? '.' : ',') + '</b>').join('') + '</div>' +
-        '<p class="g-hint">' + esc(tr(Mm.desc)) + '</p>';
-      requestAnimationFrame(() => { const el = document.querySelector('.g-car.sel'); if (el) el.scrollIntoView({ block: 'nearest', inline: 'center' }); });
-      queueThumbs();
+        '<p class="g-hint">' + esc(catName(catOf(S.car)) + ' · ' + tr(descOf(Mm))) + '</p>';
+      requestAnimationFrame(() => { for (const [row, el] of [['g-cats', '.g-cat.sel'], ['g-cars', i0 >= 0 ? '.g-car.sel' : '.g-car']]) inView($(row), document.querySelector(el)); });
+      thumbQ = thumbQ.filter(q => ids.includes(q[0]) || q[0] === S.car); queueThumbs(ids);   // (another strip: the pictures still waiting for the last one dropped)
     } else if (panel === 'upg') {
       const tabs = ['motor', 'gume', 'zavore', 'aero'];
       b.innerHTML = ph(tr('Nadgradnje'), ['motor', 'gume', 'zavore', 'aero'].reduce((a, k) => a + c.upg[k], 0) + ' / 12') + tabs.map(k => {
@@ -148,6 +162,8 @@
         '<div class="g-row"><span class="ic">' + I.paint + '</span><span class="tx"><b>' + esc(tr('Dirkalne črte')) + '</b><small>' + esc(tr('Druga barva na pokrovu in bokih · {0} CR', num(STRIPE))) + '</small></span><span class="g-seg"><button data-stripe="1" class="' + (c.stripe ? 'sel' : '') + '">' + esc(tr('Da')) + '</button><button data-stripe="0" class="' + (c.stripe ? '' : 'sel') + '">' + esc(tr('Ne')) + '</button></span></div>';
     }
   }
+  // a row's chip in the middle of the row (only the row scrolls, not the page)
+  function inView(row, el) { if (!row || !el || !row.clientWidth) return; row.scrollLeft = Math.max(0, Math.min(row.scrollWidth - row.clientWidth, el.offsetLeft - row.offsetLeft - (row.clientWidth - el.offsetWidth) / 2)); }
   const condCol = (q) => q < 0.5 ? '#ff6b5b' : q < 0.75 ? '#f5c84c' : '#5fd38a';
   const METER = [['Moč', 'power'], ['Oprijem', 'grip'], ['Teža', 'weight'], ['Drift', 'drift']];   // (the stat bars of the car panel)
   const DONE_NAME = { gume: 'Gume', zavore: 'Zavore', aero: 'Aerodinamika', motor: 'Motor', clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' };
@@ -180,7 +196,7 @@
   function countMoney(a, b) { cancelAnimationFrame(moneyAnim); const t0 = performance.now(), el = $('g-money'); const st = (t) => { const k = Math.min(1, (t - t0) / 700); el.textContent = num(Math.round(a + (b - a) * (1 - Math.pow(1 - k, 3)))); if (k < 1) moneyAnim = requestAnimationFrame(st); }; moneyAnim = requestAnimationFrame(st); }
   function pickCar(id) {
     if (id === S.car) return;
-    S.car = id; save(); queueThumbs([id]); render();
+    S.car = id; pcat = null; save(); queueThumbs([id]); render();
     $('g-name').parentElement.classList.remove('new'); void $('g-name').offsetWidth; $('g-name').parentElement.classList.add('new');
     G.swap(spec(id));
   }
@@ -222,7 +238,7 @@
       case 'prev': step(-1); break;
       case 'next': step(1); break;
       case 'home': panel = 'home'; body(); break;
-      case 'p-car': panel = 'car'; body(); break;
+      case 'p-car': panel = 'car'; pcat = null; body(); break;
       case 'p-upg': if (!C().own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : tr('Najprej kupi avto.'), true); break; } panel = 'upg'; body(); break;
       case 'p-srv': if (!C().own) { toast(tr('Najprej kupi avto.'), true); break; } panel = 'srv'; body(); break;
       case 'p-paint': if (!C().own) { toast(tr('Najprej kupi avto.'), true); break; } panel = 'paint'; body(); break;
@@ -243,6 +259,7 @@
     document.addEventListener('click', (e) => {
       const t = e.target.closest('button'); if (!t) return;
       if (t.dataset.act) return onAct(t.dataset.act);
+      if (t.dataset.cat) { G.sound(S.sound); pcat = t.dataset.cat; body(); return; }   // (a category: its cars in the strip, the car shown stays)
       if (t.dataset.car) { G.sound(S.sound); pickCar(t.dataset.car); document.querySelectorAll('.g-car').forEach(x => x.classList.toggle('sel', x.dataset.car === S.car)); return; }
       if (t.dataset.upg) { G.sound(S.sound); return fitUpg(t.dataset.upg, +t.dataset.lv); }
       if (t.dataset.srv) { G.sound(S.sound); return doService(t.dataset.srv); }
@@ -284,7 +301,7 @@
     queueThumbs([S.car]);   // (the car shown: its picture on the Avto tile; the others when the car panel opens)
     render();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => $('g-load').classList.add('done'), 120); });
-    window.__garage = { get S() { return S; }, G, onAct, pickCar, fitUpg, doService, doPaint, buy, get panel() { return panel; }, set panel(p) { panel = p; body(); }, thumbs: () => thumbs, render,
+    window.__garage = { get S() { return S; }, ORDER, G, onAct, pickCar, fitUpg, doService, doPaint, buy, get panel() { return panel; }, set panel(p) { panel = p; body(); }, thumbs: () => thumbs, render,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

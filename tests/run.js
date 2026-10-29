@@ -33,7 +33,7 @@ const SECS = {
   'browser/atmos.test.mjs': 25, 'browser/champ.test.mjs': 25, 'browser/saver.test.mjs': 25, 'browser/rivals.test.mjs': 20, 'browser/medvode-castle.test.mjs': 20,
   'browser/medvode-props.test.mjs': 20, 'browser/pits.test.mjs': 20, 'browser/tower.test.mjs': 15, 'browser/kolibri.test.mjs': 120, 'browser/hudcol.test.mjs': 150, 'browser/kerb.test.mjs': 200, 'browser/marks.test.mjs': 120,
   'browser/covers.test.mjs': 250,
-  'browser/garage.test.mjs': 400,
+  'browser/garage.test.mjs': 900,
   'browser/boards.test.mjs': 40,
   'browser/roadside.test.mjs': 240,
   'browser/seams.test.mjs': 120,
@@ -123,7 +123,7 @@ if (opt.list) { for (const f of list) console.log(f); process.exit(0); }
 const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
 // (the memory test goes three times through every track, the smoke and the phone budget tests drive on each: they grow with each new track, so they get twice the time;
 // the browser fleet test the same: it grows with each vehicle, and with the fields it measures them in, 22 and 100 cars)
-const LIMIT_OF = (f) => (/memory\.test/.test(f) ? 3 : /smoke\.test|perf\.test|browser\/fleet\.test/.test(f) ? 2 : 1) * LIMIT;   // (the memory test: three times)
+const LIMIT_OF = (f) => (/memory\.test/.test(f) ? 3 : /smoke\.test|perf\.test|browser\/fleet\.test|browser\/garage\.test/.test(f) ? 2 : 1) * LIMIT;   // (the memory test: three times)
 
 const results = [];
 for (const f of list) {

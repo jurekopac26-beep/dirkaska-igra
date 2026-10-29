@@ -1,12 +1,14 @@
 // The garage (garaza.html): the page opens with the workshop and the car, the camera (left and right only, always as far; what is
 // between it and the car steps aside), the demo profiles, buying a car and the credits, a new car
 // driving in, every upgrade with its parts on the car, the service (dirt and scratches gone, the engine), a new colour, the English page,
-// every car of the game on the turntable with all its parts, the pictures of the cars, the profile kept after a reload; the single-post
+// every car of the game's fleet (the car screen's list and order) on the turntable with all its parts, the car panel's categories and the
+// pictures of the cars, the profile kept after a reload; the single-post
 // lift behind the car (the tyres and the service's engine up on it, the turntable never rising nor turning); the permanent fixtures
 // (two industrial robots on floor rails, the tool stand ORODJA with its seven tools, the near robot's stand with six; the nano chamber,
 // the drying column, the paint drums, the tyre towers, the parts shelf, the rim stand, the kit stand) parked at rest, bolted down, out of
 // the cars' lane, their moves through the shows' queue (a tool taken and put back, the chamber down and up, the column up and down), the
-// robots' reach round every car, the plates in English; the service by the two robots (each item and the full service on three cars,
+// robots' reach round every car, the plates in English; the service by the two robots (its plans on every car; each item and the full
+// service on the PICO, the FORMULA and the TRUCK, the full one on the KOLIBRI too, the electric car's engine,
 // every frame audited: nothing through anything, everything parked after, a car asked for meanwhile waits). The animations run on a
 // clock the test steps itself (software WebGL is slow).
 // Zero page errors allowed.
@@ -210,8 +212,8 @@ try {
   // the phone held the other way). Every frame the audit (1c's checks): every other vertex of the arms and of the held tools, and points
   // along each link and drum with its radius, never in the car (a tool only at its working end), the lift's column, a stand (its own
   // stand's plate: the tools out through their forks), the tyre towers, the drums, the lift's arms and carriage nor the floor; the robots
-  // at least 0.3 m apart; never out of reach, every way planned clear; the wrist under 3.6 m/s, the turret under 4.7 rad/s (the rides 1.8
-  // times their joints' own speed), no spin of the flange, the wrist's drum never jumping; each robot with its item's tools only (its nest
+  // at least 0.3 m apart; never out of reach, every way planned clear; the wrist under 3.6 m/s, the turret under 4.7 rad/s (the rides twice
+  // their joints' own speed), no spin of the flange, the wrist's drum never jumping; each robot with its item's tools only (its nest
   // amber while out); a working robot hides at most 12 % of the car, its tool's tip and the whole car in the picture, the column never
   // stepped aside
   {
@@ -313,20 +315,23 @@ try {
       if (A.seenN.some(q => !q) || A.off.some(q => q > 0.95) || A.carOff > 1) bad.push('view ' + JSON.stringify({ off: A.off, car: A.carOff, n: A.seenN, who: [A.who.off0, A.who.off1, A.who.carOff] }));
       if (A.apart < 0.3 || A.v.some(q => q >= 3.6) || A.hd.some(q => q >= 4.7) || A.hid.some(q => q > 0.12) || A.gone || A.colGone || A.pan || A.nan) bad.push('audit ' + JSON.stringify({ apart: A.apart, v: A.v, hd: A.hd, hid: A.hid, who: [A.who.hid0, A.who.hid1], gone: A.gone, col: A.colGone, pan: A.pan, nan: A.nan }));
       return bad; };
-    // (its plans on all ten cars, no show: every pose in reach and clear; the brush's and the pad's lanes found; the lance's carriage behind
-    // its tip, the lamp's by ORODJA, the wrench staged outside the car's footprint; the electric car's bolts)
-    const plans = await page.evaluate(() => Core.MODELS.map(M => { Garage3D.show({ M, color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(0.1); const P = Garage3D._dbg.svcPlans(['clean', 'body', 'engine']); return Object.assign({ id: M.id, ev: !!M.ev }, P); }));
+    // (its plans on every car of the fleet (the garage's list: the game's cars, the retired ones not), no show: every pose in reach and
+    // clear; the brush's and the pad's lanes found (on the bonnet, else along the top: the roof, the deck, a side pod; at the last held
+    // just over a kart); the lance's carriage behind its tip, the lamp's by ORODJA, the wrench staged outside the car's footprint; the
+    // electric cars' bolts)
+    const fleet = await page.evaluate(() => __garage.ORDER.slice());
+    const plans = await page.evaluate(() => __garage.ORDER.map(id => { const M = Core.MODELS.find(m => m.id === id); Garage3D.show({ M, color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(0.1); const P = Garage3D._dbg.svcPlans(['clean', 'body', 'engine']); return Object.assign({ id: M.id, ev: !!M.ev }, P); }));
     const okq = (q) => q && q.miss === 0 && q.clear >= 0, badPlans = plans.filter(p => !(okq(p.lance) && p.lance.x <= p.lance.T0x - 1.2 && okq(p.brush) && okq(p.scan) && okq(p.pol) && okq(p.wrench) && p.staged && p.staged.out && p.staged.clear >= 0 && okq(p.lamp) && p.lamp.x >= 1.15 && p.lamp.out && (!p.ev || p.bolts >= 1)));
-    T.check('the service\'s plans on all 10 cars (no show): the lance from the near side (its carriage 1.2 m behind its tip), the brush\'s and the pad\'s lanes on the bonnet, the scanner\'s station, the wrench at the drain plug (staged outside the car\'s footprint), the lamp by ORODJA; every pose in reach and clear; the electric car\'s bolts',
-      plans.length === 10 && !badPlans.length, JSON.stringify(badPlans.length ? badPlans : plans.map(p => [p.id, p.brush.rung, p.pol.rung, p.lance.x, p.lamp.x])));
+    T.check(`the service's plans on all ${fleet.length} cars of the fleet (no show): the lance from the near side (its carriage 1.2 m behind its tip), the brush's and the pad's lanes (the bonnet, else along the top), the scanner's station, the wrench at the drain plug (staged outside the car's footprint), the lamp by ORODJA; every pose in reach and clear; the electric cars' bolts`,
+      plans.length === fleet.length && fleet.length >= 43 && !fleet.includes('p206') && !badPlans.length, JSON.stringify(badPlans.length ? badPlans.map(p => ({ id: p.id, lance: p.lance, brush: p.brush && p.brush.rung, pol: p.pol && p.pol.rung, scan: p.scan, wrench: p.wrench, staged: p.staged, lamp: p.lamp, bolts: p.bolts, brushTry: p.brushTry, polTry: p.polTry })) : plans.map(p => [p.id, p.brush.rung, p.pol.rung, p.lance.x, p.lamp.x])));
     const res = [];
-    for (const id of ['pico', 'formula', 'truck']) for (const it of ['clean', 'body', 'engine']) res.push(await runSvc(id, [it], 3));
+    for (const id of ['pico', 'formula', 'truck']) for (const it of ['clean', 'body', 'engine']) res.push(await runSvc(id, [it], 3));   // (the KOLIBRI: its full service below)
     const bad1 = res.map(r => [r.id + '.' + r.items[0], ends(r)]).filter(q => q[1].length);
     T.check(`each item alone on the PICO, the FORMULA and the TRUCK (fast 3): done in order within its time (wash <= ${CEIL.clean} s, body <= ${CEIL.body} s, engine <= ${CEIL.engine} s), its beats in order, the condition 100 %, nothing skipped; after it the robots parked (tools in their nests, green), the lift down, every effect off, the camera home, the draws as before; the robots (every other vertex of their arms and tools) never in the car, the column, the stands (through their own stand's forks), the lift, the floor, apart, in reach, every way clear, within their speeds, each with its item's tool (its nest amber meanwhile), hiding at most 12 % of the car, the working tool's tip and the whole car in the picture`,
       !bad1.length, JSON.stringify(bad1.length ? bad1 : res.map(r => [r.id, r.items[0], r.done[0].t, r.aud.hid, r.aud.apart, r.aud.v, r.aud.hd, r.aud.roll, r.aud.a5, r.aud.off, r.aud.carOff])));
-    const full = [await runSvc('pico', ['clean', 'body', 'engine'], 1), await runSvc('formula', ['clean', 'body', 'engine'], 2), await runSvc('truck', ['clean', 'body', 'engine'], 2)];
+    const full = [await runSvc('pico', ['clean', 'body', 'engine'], 1), await runSvc('kolibri', ['clean', 'body', 'engine'], 2), await runSvc('formula', ['clean', 'body', 'engine'], 2), await runSvc('truck', ['clean', 'body', 'engine'], 2)];
     const bad2 = full.map(r => [r.id, ends(r).concat(r.done.length === 3 && r.done[2].t <= 36.5 ? [] : ['slow ' + JSON.stringify(r.done)], Object.keys(r.cue).filter(q => q === 'n.rest' || q === 'f.rest').length === 2 && ['n.rest', 'f.rest'].every(q => r.cue[q] > r.done[2].t) ? [] : ['parked between the items'])]).filter(q => q[1].length);
-    T.check('the full service on the PICO (fast 1), the FORMULA and the TRUCK (fast 2): wash, body, engine in a row (the last done <= 36.5 s), the tools swapped at the stands between the items (no parking till the end), the lift\'s arms swung in under the car during the body; the same end state and audit',
+    T.check('the full service on the PICO (fast 1), the KOLIBRI, the FORMULA and the TRUCK (fast 2): wash, body, engine in a row (the last done <= 36.5 s), the tools swapped at the stands between the items (no parking till the end), the lift\'s arms swung in under the car during the body; the same end state and audit',
       !bad2.length, JSON.stringify(bad2.length ? bad2 : full.map(r => [r.id, r.done.map(d => d.t), r.aud.hid, r.aud.apart, r.aud.off, r.aud.carOff])));
     // the phone held the other way (915 x 412; the service's views fitted to it): the full service on the TRUCK (the tallest, up on the lift)
     await page.setViewportSize({ width: 915, height: 412 }); await page.evaluate(() => __garage.advance(0.2));
@@ -458,7 +463,7 @@ try {
   {
     await page.evaluate(() => __garage.onAct('lang'));
     const t = await page.evaluate(() => ({ h: document.querySelector('.g-title h1').textContent, go: document.getElementById('g-go').textContent, tile: document.querySelector('.g-tile small').textContent, html: document.documentElement.lang, plate: (__garage.advance(0.1), Garage3D._dbg.fx.rack.plate), plates: Garage3D._dbg.plates }));
-    T.check('English: GARAGE, Select, the tiles in English, the plates TOOLS, PARTS, RIMS, AERO KITS', t.h === 'GARAGE' && t.go === 'Select' && t.tile === 'Car' && t.html === 'en' && t.plate === 'TOOLS' && t.plates.join() === 'TOOLS,PARTS,RIMS,AERO KITS', JSON.stringify(t));
+    T.check('English: GARAGE, Choose (the game\'s word), the tiles in English, the plates TOOLS, PARTS, RIMS, AERO KITS', t.h === 'GARAGE' && t.go === 'Choose' && t.tile === 'Car' && t.html === 'en' && t.plate === 'TOOLS' && t.plates.join() === 'TOOLS,PARTS,RIMS,AERO KITS', JSON.stringify(t));
     await page.evaluate(() => __garage.onAct('lang'));
     const pl = await page.evaluate(() => (__garage.advance(0.1), Garage3D._dbg.fx.rack.plate));
     T.check('back in Slovenian: the plate ORODJA again', pl === 'ORODJA', pl);
@@ -466,7 +471,7 @@ try {
 
   // 7. every car of the game on the turntable, all its upgrades at the top level: built, the parts measured onto it
   {
-    const r = await page.evaluate(() => Core.MODELS.map(M => { Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(0.1);
+    const r = await page.evaluate(() => __garage.ORDER.map(id => Core.MODELS.find(m => m.id === id)).map(M => { Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(0.1);
       const i = Garage3D.info; return { id: M.id, ok: i.car === M.id && i.parts.gume >= 4 && i.parts.aero >= 2 && (M.ev || i.parts.motor >= 4) }; }));
     const bad = r.filter(x => !x.ok);
     T.check(`all ${r.length} cars with every part at level 3`, !bad.length, JSON.stringify(bad));
@@ -475,8 +480,9 @@ try {
     // (each pad: clear of its axle's tyres (15 cm), within its arm's reach, its top on the underside over it: the body's lowest over the
     // rubber, a ray up at its middle (the cars' bodies are mostly open below: rays both ways) or else the sill's lower edge (the lowest
     // height the side covers the rubber, rays from the side); 3 cm either way; a low racer under its floor: up to 5 cm into it, or as
-    // low as the lift goes (the carriage at its lowest, the screw in))
-    const pl = await page.evaluate(() => Core.MODELS.map(M => { Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } });
+    // low as the lift goes (the carriage at its lowest, the screw in); a car the lift was not made for (a lorry, a monster truck, a narrow
+    // racer: its pads out of the arms' reach) lifted where the arms reach, its pads on what is over them)
+    const pl = await page.evaluate(() => __garage.ORDER.map(id => Core.MODELS.find(m => m.id === id)).map(M => { Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } });
       const D = Garage3D._dbg, cv = Garage3D.cur, p = D.liftPlan(cv), A = D.LIFT.arms, ms = [...cv.probe.meshes], rc = new THREE.Raycaster(), V = THREE.Vector3, bad = [];
       for (const k of ['aero', 'motor']) { const g = cv.parts[k]; if (g) g.traverse(o => { if (o.isMesh && o.visible && o !== g.userData.pool) ms.push(o); }); }
       if (p.pads.length !== 4 || !p.pads.every(q => q.every(Number.isFinite))) return { id: M.id, bad: ['pads ' + JSON.stringify(p.pads)] };
@@ -489,11 +495,11 @@ try {
         if (d < a.lc + 0.02 || d > 3 * a.lc - 0.5) bad.push(i + ': out of reach ' + d.toFixed(3));
         let u = 9; for (let y = 0; y < 1.3; y += 0.02) if (covers(x, y, z)) { u = y; for (let y2 = y - 0.02; y2 < y; y2 += 0.004) if (covers(x, y2, z)) { u = y2; break; } break; }
         const b = hit(new V(x, -1, z), new V(0, 1, 0)); if (b) u = Math.min(u, b.y);
-        const g = top - u, low = cv.kit.bottom < 0.12, least = p.cc <= D.PAD.cmin + 1e-4 && p.post[i] <= D.PAD.min + 1e-4;
+        const g = top - u, low = cv.kit.bottom < 0.12 || u < 0.12, least = p.cc <= D.PAD.cmin + 1e-4 && p.post[i] <= D.PAD.min + 1e-4;
         if (g < -0.03 || (g > (low ? 0.05 : 0.03) && !(low && least))) bad.push(i + ': pad top ' + top.toFixed(3) + ' underside ' + u.toFixed(3)); });
       ms.forEach((m, i) => { m.material.side = sides[i]; });
       return { id: M.id, bad }; })).then(a => a.filter(x => x.bad.length));
-    const ev = await page.evaluate(() => { const M = Core.MODELS.find(m => m.ev); Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } });
+    const ev = await page.evaluate(() => { const M = Core.MODELS.find(m => m.id === 'ev'); Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } });
       Garage3D._dbg.raise(0.55); __garage.advance(0.1); const cv = Garage3D.cur, w = new THREE.Vector3(), b = new THREE.Vector3(); cv.parts.motor.userData.pool.getWorldPosition(w); cv.v.blob.getWorldPosition(b);
       const o = { lift: Garage3D.info.lift, pool: +w.y.toFixed(3), blob: +b.y.toFixed(3) }; Garage3D.show(cv.spec); __garage.advance(0.1); return o; });
     T.check('the lift\'s pads planned on every car with all its parts (clear of the tyres, in the arms\' reach, on the underside); the electric car up on the lift: its light\'s pool and shadow on the floor', !pl.length && ev.lift >= 0.5 && ev.pool < 0.02 && ev.blob < 0.02, JSON.stringify({ pl, ev }));
@@ -503,30 +509,49 @@ try {
     // slant: the camera, a bar cannot lie along it; an open car's sill its side pod from over it, the near side's only), the mirror (from
     // the side, else at a slant or from over it), its half of the bonnet and of the boot (the gripper from over them, else at a slant:
     // their tops as the robots see the car, its wing over a boot with it), the front and the rear corner, the roof from the side (off the
-    // column too); the planned pose in reach and its arm clear (0 or more) of the column, the stands and the body, backed off its way in too
-    const reach = await page.evaluate(() => { const D = Garage3D._dbg, bad = []; let n = 0;
-      for (const M of Core.MODELS) { Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } });
+    // column too); the planned pose in reach and its arm clear (0 or more) of the column, the stands and the body, backed off its way in too.
+    // Every car of the fleet, the points in the robots' working room: none higher than 2.9 m (a lorry's or a monster truck's roof and
+    // bonnet, up on the lift: beyond their arms), none past 2.75 m along the car (a long one's ends stand at ORODJA, the tyre towers and the
+    // drums), the far mirror not by the column, no sill where the body stands high on a frame (its side measured on a chassis rail), no
+    // corner nor bed of a body standing 0.75 m and more over the floor (a monster truck's: among its huge tyres, up in its bed); a hub,
+    // a sill, a corner too low or too high for the arm level with it: at a slant from over it too (a kart's, a monster truck's)
+    const reach = await page.evaluate(() => { const D = Garage3D._dbg, bad = []; let n = 0, out = 0;
+      for (const M of __garage.ORDER.map(id => Core.MODELS.find(m => m.id === id))) { Garage3D.show({ M, color: 0xd81f2a, stripe: true, upg: { motor: 3, gume: 3, zavore: 3, aero: 3 }, cond: { clean: 1, body: 1, engine: 1 } });
         for (const h of [0, 1.0]) { if (h) D.raise(h); const cv = Garage3D.cur, K = cv.kit, ly = cv.v.grp.position.y, FP = D.carProbe(cv); const xm = (K.wfx + K.wrx) / 2, hoodEnd = 2 * (K.hoodX + 0.04) - K.front, hw = K.hw, bz = K.open ? K.sideZ * 0.5 : hw * 0.35;
           const top = (x, z, d) => { let m = -9; for (const dx of [-0.12, 0, 0.12]) for (const dz of [-0.12, 0, 0.12]) { const y = FP.top(x + dx, z + dz); if (y != null) m = Math.max(m, y - ly); } return m > -9 ? m : d; };   // (the panel's highest round the point: the gripper's width; with the car's parts)
           for (const sd of [1, -1]) { const i = sd > 0 ? 0 : 1, xs = sd > 0 ? xm : Math.max(xm, 0.45), sl = (x) => sd > 0 || Math.abs(x) > 0.75 ? [0, 0, -sd] : [x > 0 ? -0.6 : 0.6, 0, 0.8], P = [];
-            for (const w of cv.wheels) if (w.sd === sd && (sd > 0 || w.front || h)) P.push(['wheel', [w.x, w.y + ly, w.outer + sd * 0.02], [0, 0, -sd], 'wrench']);   // (the far rear wheel stands before the paint drums: worked with the car up)
+            const ov = [[0, -0.6, -sd * 0.8]];   // (from over it at a slant)
+            for (const w of cv.wheels) if (w.sd === sd && (sd > 0 || w.front || h)) P.push(['wheel', [w.x, w.y + ly, w.outer + sd * 0.02], [0, 0, -sd], 'wrench', ov]);   // (the far rear wheel stands before the paint drums: worked with the car up)
             if (K.open) { if (sd > 0) { const z = sd * (hw - 0.15); P.push(['sill', [xm, top(xm, z, K.bottom + 0.2) + ly + 0.03, z], [0, -1, 0], 'scanner']); } }   // (an open car's: its side pod, from over it)
-            else P.push(['sill', [xs, K.bottom + 0.12 + ly, sd * (K.sideZ + 0.04)], sl(xs), sd < 0 && Math.abs(xs) <= 0.75 ? 'camera' : 'scanner']);
-            P.push(['door', [xs + 0.2, (K.bottom + K.top) / 2 + ly, sd * (hw + 0.03)], sl(xs + 0.2), 'gripper'], ['mirror', [hoodEnd - 0.1, K.hoodY + 0.25 + ly, sd * (hw + 0.08)], [0, -0.3, -sd * 0.95], 'gripper', [[-0.55, -0.35, -sd * 0.76], [0.55, -0.35, -sd * 0.76], [0, -0.8, -sd * 0.6]]],
-              ['bonnet', [K.hoodX, top(K.hoodX, sd * bz, K.hoodY) + ly + 0.03, sd * bz], [0, -1, 0], 'gripper', [[0, -0.7, -sd * 0.7]]], ['boot', [K.deckX + 0.1, top(K.deckX + 0.1, sd * bz, K.deckY) + ly + 0.03, sd * bz], [0, -1, 0], 'gripper', [[0, -0.7, -sd * 0.7]]],
-              ['front', [K.front + 0.03, K.frontLow + 0.2 + ly, sd * (hw - 0.12)], [-0.7, 0, -sd * 0.7], 'scanner'], ['rear', [K.rear - 0.03, K.bottom + 0.25 + ly, sd * (hw - 0.12)], [0.7, 0, -sd * 0.7], 'scanner'],
+            else if (K.sideZ >= 0.5 * hw) P.push(['sill', [xs, K.bottom + 0.12 + ly, sd * (K.sideZ + 0.04)], sl(xs), sd < 0 && Math.abs(xs) <= 0.75 ? 'camera' : 'scanner', ov]);
+            P.push(['door', [xs + 0.2, (K.bottom + K.top) / 2 + ly, sd * (hw + 0.03)], sl(xs + 0.2), 'gripper']);
+            if (sd > 0 || hoodEnd - 0.1 >= 0.45) P.push(['mirror', [hoodEnd - 0.1, K.hoodY + 0.25 + ly, sd * (hw + 0.08)], [0, -0.3, -sd * 0.95], 'gripper', [[-0.55, -0.35, -sd * 0.76], [0.55, -0.35, -sd * 0.76], [0, -0.8, -sd * 0.6]]]);
+            P.push(['bonnet', [K.hoodX, top(K.hoodX, sd * bz, K.hoodY) + ly + 0.03, sd * bz], [0, -1, 0], 'gripper', [[0, -0.7, -sd * 0.7]]], ['boot', [K.deckX + 0.1, top(K.deckX + 0.1, sd * bz, K.deckY) + ly + 0.03, sd * bz], [0, -1, 0], 'gripper', [[0, -0.7, -sd * 0.7], [0.6, -0.7, -sd * 0.4]]],
+              ['front', [K.front + 0.03, K.frontLow + 0.2 + ly, sd * (hw - 0.12)], [-0.7, 0, -sd * 0.7], 'scanner', [[-0.5, -0.6, -sd * 0.6], [-1, 0, 0]]], ['rear', [K.rear - 0.03, K.bottom + 0.25 + ly, sd * (hw - 0.12)], [0.7, 0, -sd * 0.7], 'scanner', [[0.5, -0.6, -sd * 0.6]]],
               ['roof', [xs, K.top + ly + 0.02, sd * hw * 0.3], [0, -0.75, -sd * 0.66], 'scanner']);
-            for (const [nm, tip, dir, tool, dirs] of P) { const q = D.robotPlan(i, tip, dir, { tool, dirs }); n++; if (q.miss > 0.005 || q.clear < 0) bad.push({ car: M.id, h, i, nm, x: +q.x.toFixed(2), miss: q.miss, clear: q.clear }); } } } }
-      Garage3D.show(Garage3D.cur.spec); return { n, bad }; });
-    T.check(`the robots reach round every car, down and up 1 m on the lift (${reach.n} work points: wheels, sills, doors, mirrors, bonnet, boot, corners, roof), their arms clear of the lift's column, the stands and the body`, reach.n > 300 && !reach.bad.length, JSON.stringify(reach.bad.slice(0, 8)));
+            for (const [nm, tip, dir, tool, dirs] of P) { if (tip[1] > 2.9 || Math.abs(tip[0]) > 2.75 || (K.bottom > 0.75 && /^(boot|front|rear)$/.test(nm))) { out++; continue; }
+              const q = D.robotPlan(i, tip, dir, { tool, dirs }); n++; if (q.miss > 0.005 || q.clear < 0) bad.push({ car: M.id, h, i, nm, x: +q.x.toFixed(2), miss: q.miss, clear: q.clear, tip: tip.map(v => +v.toFixed(2)) }); } } } }
+      Garage3D.show(Garage3D.cur.spec); return { n, out, bad }; });
+    T.check(`the robots reach round every car of the fleet, down and up 1 m on the lift (${reach.n} work points: wheels, sills, doors, mirrors, bonnet, boot, corners, roof; ${reach.out} out of their room), their arms clear of the lift's column, the stands and the body`, reach.n > 1200 && !reach.bad.length, JSON.stringify(reach.bad.slice(0, 12)));
   }
 
-  // 8. the pictures of the cars in the car panel
+  // 8. the car panel: the game's categories as chips (the shown car's chosen), the cars of the chosen one in the strip in the game's order
+  // (its car screen's: by category, the cheapest first), a picture of each; every category in turn: every car of the fleet, its picture
   {
     await page.evaluate(() => { __garage.panel = 'car'; });
-    for (let i = 0; i < 30; i++) { await page.evaluate(() => __garage.advance(0.05)); await page.waitForTimeout(250); if (await page.evaluate(() => document.querySelectorAll('.g-car .th img').length) >= 10) break; }
-    const n = await page.evaluate(() => [...document.querySelectorAll('.g-car .th img')].filter(i => /^data:image\/png/.test(i.src)).length);
-    T.check('the car panel: a picture of each of the 10 cars', n === 10, n + ' pictures');
+    const cats = await page.evaluate(() => [...document.querySelectorAll('#g-cats .g-cat')].map(b => [b.dataset.cat, b.classList.contains('sel')]));
+    const seen = [], pics = {};
+    for (const [cat] of cats) {
+      await page.evaluate((c) => document.querySelector('#g-cats [data-cat="' + c + '"]').click(), cat);
+      let ids = [];
+      for (let i = 0; i < 60; i++) { await page.evaluate(() => __garage.advance(0.05)); await page.waitForTimeout(150);
+        ids = await page.evaluate(() => [...document.querySelectorAll('#g-cars .g-car')].map(b => [b.dataset.car, /^data:image\/png/.test((b.querySelector('.th img') || {}).src || '')]));
+        if (ids.length && ids.every(q => q[1])) break; }
+      for (const [id, ok] of ids) { seen.push(id); pics[id] = ok; } }
+    const want = await page.evaluate(() => __garage.ORDER.slice()), n = Object.values(pics).filter(Boolean).length;
+    T.check(`the car panel: the ${cats.length} categories as chips (the shown car's chosen), each one's cars in the game's order; every car of the fleet (${want.length}) with its picture`,
+      cats.length >= 9 && cats.filter(c => c[1]).length === 1 && seen.join() === want.join() && n === want.length, JSON.stringify({ cats, n, missing: want.filter(id => !pics[id]), order: seen.join() === want.join() }));
+    await page.evaluate(() => { __garage.panel = 'home'; });
   }
 
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));

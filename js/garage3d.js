@@ -2674,8 +2674,9 @@ const Garage3D = (function () {
       { p: [-0.64, -1.55], lv: 0, a0: 0, lc: 1.15, end: -1, sd: 1 }, { p: [-0.64, -1.55], lv: 1, a0: 0, lc: 0.58, end: -1, sd: -1 }] };
   // (a pad's top over its arm's middle, its screw left out: half the outer tube, the collar, the rubber; the screw's reach and its height
   // stowed; an arm's reach: each inner tube runs out till 8 cm of it are left in the one round it; the carriage's lowest (the arms'
-  // tubes 2 mm over the disc); the screw's run before an adapter goes on it, the screw the arms are built with)
-  const PADH = 0.0565, PMIN = 0.008, PMAX = 0.24, PDEF = 0.02, armMax = (A) => 3 * A.lc - 0.5, CMIN = 0.0245, SX = 0.06, PB0 = 0.15;
+  // tubes 2 mm over the disc); the screw's run before an adapter goes on it, the screw the arms are built with; PMAX: the screw with the
+  // tallest adapter (a vehicle standing high on its wheels: an off-road pickup, the monster truck))
+  const PADH = 0.0565, PMIN = 0.008, PMAX = 0.5, PDEF = 0.02, armMax = (A) => 3 * A.lc - 0.5, CMIN = 0.0245, SX = 0.06, PB0 = 0.15;
   const LBL = [0.08, 0.22, 0.58], LBLt = [0.12, 0.29, 0.69], LBLd = [0.05, 0.14, 0.4], LZN = [0.6, 0.62, 0.65], LAR = [0.35, 0.37, 0.41], LRB = [0.1, 0.1, 0.105], LYL = [0.92, 0.7, 0.1];   // (the lift's blue, its top faces, its ribs; the zinc of the inner tubes; dark steel; the rubber; safety yellow)
   // yellow and black stripes at 45 degrees on a rectangle: from its corner o along u (w long) and across it along v (h), a point inside
   // what they lie on; the yellow ones only (laid over black), each clipped to the rectangle
@@ -2828,34 +2829,44 @@ const Garage3D = (function () {
     const PB = probeOf(mesh, true), memo = new Map(); let t0 = performance.now();
     function* tick() { if (performance.now() - t0 > bm) { yield; t0 = performance.now(); } }
     const side = (x, y) => { const k = Math.round(x * 1000 + 5000) * 4096 + Math.round(y * 1000); let v = memo.get(k); if (v === undefined) memo.set(k, v = PB.side(x, y, 1) || 0); return v; };
-    function* low(x) { for (let y = 0.03; y < 0.9; y += 0.03) { yield* tick(); if (side(x, y)) { for (let y2 = y - 0.025; y2 < y; y2 += 0.005) if (side(x, y2)) return y2; return y; } } return null; }
+    function* low(x) { for (let y = 0.03; y < 1.4; y += 0.03) { yield* tick(); if (side(x, y)) { for (let y2 = y - 0.025; y2 < y; y2 += 0.005) if (side(x, y2)) return y2; return y; } } return null; }   // (up to a monster truck's frame)
     // the body's underside over a pad at (x, z): the lowest height where the body covers the whole rubber
     const covers = (x, y, z) => Math.min(side(x - 0.06, y), side(x, y), side(x + 0.06, y)) >= z + 0.05;
     function* under(x, z, y1) { for (let y = 0.02; y < y1; y += 0.03) { yield* tick(); if (covers(x, y, z)) { for (let y2 = y - 0.025; y2 < y; y2 += 0.005) if (covers(x, y2, z)) return y2; return y; } } return null; }
     // a pad at x: [z, its top]: just in from the sill; a low car: under its side pod if it has one, else under its floor where the body
     // over it is high enough to hide the pad going into it
-    function* padAt(x) { const y0 = yield* low(x); if (y0 == null) return null; const s0 = side(x, y0 + 0.01);
-      if (y0 < 0.12) { for (let y = y0 + 0.04; y < 0.24; y += 0.02) { yield* tick(); const sp = side(x, y); if (sp > s0 + 0.12) { const t = yield* under(x, sp - 0.08, 0.27); if (t != null) return [sp - 0.08, t]; break; } }
-        return [Math.max(0.08, Math.min(s0, side(x, 0.15)) - 0.08), y0, 1]; }
-      for (let z = s0 - 0.08; z > 0.08; z -= 0.03) { const t = yield* under(x, z, y0 + 0.2); if (t != null) return [z, t]; }
+    // (zr: how far out (|z|) both its arms reach it there: [in, out]; a wide car's far pad in from its sill where the short arm cannot
+    // fold that short, a narrow one's as far out as it stretches)
+    function* padAt(x, zr) { const y0 = yield* low(x); if (y0 == null) return null; const s0 = side(x, y0 + 0.01), z0 = zr ? zr[0] : 0.08, z1 = zr ? zr[1] : 9;
+      if (y0 < 0.12) { for (let y = y0 + 0.04; y < 0.24; y += 0.02) { yield* tick(); const sp = side(x, y); if (sp > s0 + 0.12) { if (sp - 0.08 > z1 || sp - 0.08 < z0) return null; const t = yield* under(x, sp - 0.08, 0.27); if (t != null) return [sp - 0.08, t]; break; } }
+        return [clamp(Math.max(0.08, Math.min(s0, side(x, 0.15)) - 0.08), z0, z1), y0, 1]; }
+      for (let z = Math.min(s0 - 0.08, z1); z > Math.max(0.08, z0 - 1e-6); z -= 0.03) { const t = yield* under(x, z, y0 + 0.2); if (t != null) return [z, t]; }
       return null; }
+    // (the |z| a pad at x may have for arm a, its pad on side sd (+1 the near side): its tubes neither folded shorter nor run out further
+    // than they go, 2.5 cm in from both)
+    const zRange = (a, x, sd) => { const dx = x - a.p[0], r0 = a.lc + 0.025, r1 = armMax(a) - 0.025, pz = -a.p[1] * sd, q0 = Math.sqrt(Math.max(0, r0 * r0 - dx * dx)), q1 = r1 * r1 - dx * dx;
+      if (q1 < 0) return [9, -9]; const q = Math.sqrt(q1); return sd > 0 ? [Math.max(0, q0 - pz), q - pz] : [Math.max(0, -pz - q), Math.max(0, -pz - q0)]; };
+    const zBoth = (lg, sh, x) => { const a = zRange(lg, x, 1), b = zRange(sh, x, -1); return [Math.max(a[0], b[0]), Math.min(a[1], b[1])]; };
     // the underside over the rubber found at height t, both sides (rays up at its middle and round its rim; where none meets the body near
     // t, it is open below: the sill's edge there at t): its lowest and highest
     function* face(x, z, t) { let lo = 9, hi = -9; for (const sd of [1, -1]) { for (let k = 0; k < 9; k++) { const a = k * TAU / 8, r = k ? 0.065 : 0, y = PB.bottom(x + Math.cos(a) * r, sd * z + Math.sin(a) * r), v = y == null || y > t + 0.1 ? t : y;
       lo = Math.min(lo, v); hi = Math.max(hi, v); } yield* tick(); } return [lo, hi]; }
     const reach = (a, x, z) => { const d = Math.hypot(x - a.p[0], z - a.p[1]); return d >= a.lc + 0.02 && d <= armMax(a) - 0.02; };
-    const pads = [];
+    const pads = [], tries = [];   // (tries: each place looked at, for the tests' notes)
     for (const end of [1, -1]) {
       const w = cv.wheels.filter(q => q.front === (end > 0)), ax = end > 0 ? K.wfx : K.wrx, r = w.length ? Math.max(...w.map(q => q.r)) : K.wr, x0 = ax - end * (r + 0.2);
       const lg = A.find(a => a.end === end && a.sd > 0), sh = A.find(a => a.end === end && a.sd < 0);
       let best = null, near = null, floor = null;
       for (const dx of [0, 0.03, -0.04, -0.08, -0.12, -0.16, -0.2, -0.24, -0.28, -0.32, -0.38, -0.44, -0.5, -0.56]) {   // (out a little while the tyre stays 15 cm off, else in)
         const x = x0 + end * dx; if (end * (ax - x) < r + 0.15 || end * x < 0.15) continue;
-        const pz = yield* padAt(x); if (!pz || !reach(lg, x, pz[0]) || !reach(sh, x, -pz[0])) continue;
+        const zr = zBoth(lg, sh, x); if (zr[0] > zr[1]) { tries.push([end, +x.toFixed(2), 'zr']); continue; } const pz = yield* padAt(x, zr); tries.push([end, +x.toFixed(2), zr.map(v => +v.toFixed(2)), pz && pz.map(v => +v.toFixed(3))]); if (!pz || !reach(lg, x, pz[0]) || !reach(sh, x, -pz[0])) continue;
         if (pz[2]) { floor = floor || [x, pz[0], pz[1]]; continue; }   // (under the floor: only if no side pod further in will do)
         const f = yield* face(x, pz[0], pz[1]), c = [x, pz[0], f[0], f[1] - f[0]]; if (c[3] < 0.03) { best = c; break; } if (!near || c[3] < near[3]) near = c;   // (a step, a lip, an edge over it: on along)
       }
-      best = best || floor || near; if (!best) { const pz = (yield* padAt(x0)) || [K.sideZ - 0.1, K.bottom]; best = [x0, pz[0], pz[1]]; }
+      best = best || floor || near;
+      if (!best) { const zr = zBoth(lg, sh, x0), in2 = zr[0] <= zr[1], pz = (yield* padAt(x0, in2 ? zr : null)) || [K.sideZ - 0.1, null], z = in2 ? clamp(pz[0], zr[0], zr[1]) : pz[0];   // (none fits: where the arms reach, under what is over the pad there (a frame too narrow for them: the body's side over it))
+        let t = pz[1]; if (t == null) { const u = yield* under(x0, z, 1.6), ys = [PB.bottom(x0, z), PB.bottom(x0, -z), u].filter(y => y != null && y < 1.6); t = ys.length ? Math.min(...ys) : K.bottom; }
+        best = [x0, z, t]; }
       pads[A.indexOf(lg)] = [best[0], best[1], best[2]]; pads[A.indexOf(sh)] = [best[0], -best[1], best[2]];
     }
     let cc = Math.min(K.bottom, cv.under.position.y) - 0.0275;
@@ -2867,7 +2878,7 @@ const Garage3D = (function () {
         if (az < K.hw + 0.05) for (const o of edge ? [-0.035, 0, 0.035] : [0]) { const y = PB.bottom(px + ux * r - uz * o, z + ux * o); if (y != null) cc = Math.min(cc, y - a.lv * L.du - 0.0275); }
         r += edge ? 0.025 : 0.1; yield* tick(); } }
     cc = Math.max(cc, CMIN);   // (a car on a low floor: the arms down by the disc, the pads up into the floor)
-    const plan = { pads, cc, cs: Math.min(L.c0, cc), post: [], ang: [], len: [] };
+    const plan = { pads, cc, cs: Math.min(L.c0, cc), post: [], ang: [], len: [], tries };
     for (let i = 0; i < 4; i++) { const [x, z, t] = pads[i], a = A[i]; plan.post[i] = clamp(t - cc - a.lv * L.du - PADH, PMIN, PMAX); plan.ang[i] = Math.atan2(z - a.p[1], x - a.p[0]); plan.len[i] = clamp(Math.hypot(x - a.p[0], z - a.p[1]), a.lc, armMax(a)); }
     return plan;
   }
@@ -4343,20 +4354,26 @@ const Garage3D = (function () {
   /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
   const HOME = { yaw: 0.55, pitch: 0.18, dist: 9.2, tx: -0.2, ty: 0.62, tz: 0, fov: 33 };
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0 };
+  // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
+  // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
+  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 };
+  function camFit(cv, now) { const K = cv && cv.kit; CAM.kw = K ? clamp(Math.max(1, (K.top - 0.27) / 1.66, (Math.max(K.front, -K.rear) + 0.5) / 3.2), 1, 1.9) : 1; CAM.dyw = K ? Math.max(0, K.top - 1.91) * 0.45 : 0;
+    if (now) { CAM.k = CAM.kw; CAM.dy = CAM.dyw; } }
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
+    { const e = 1 - Math.exp(-dt * 2.5); CAM.k += (CAM.kw - CAM.k) * e; CAM.dy += (CAM.dyw - CAM.dy) * e; }
     const aspect = W / H, fov = rig.fov, th = Math.tan(fov * Math.PI / 360), need = 3.5 / (th * aspect), fit = Math.max(1, need / HOME.dist);
-    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit;   // (under 0: a show's look up at the car on the lift)
+    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit * CAM.k;   // (under 0: a show's look up at the car on the lift)
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
-    const ty = rig.ty + Math.sin(time * 0.31) * 0.012;
+    const ty = rig.ty + CAM.dy + Math.sin(time * 0.31) * 0.012;
     camera.position.set(rig.tx + Math.sin(yaw) * Math.cos(pitch) * d, ty + Math.sin(pitch) * d, rig.tz + Math.cos(yaw) * Math.cos(pitch) * d);
     if (camera.position.y < 0.18) camera.position.y = 0.18;
     // (always as far from the car: out beyond a wall the wall's things step aside, stepPieces)
     camera.lookAt(rig.tx, ty, rig.tz);
   }
   // (where the camera stands for a rig (a view()), as placeCamera puts it, the camera itself not moved: the shows plan their robots for it)
-  function camAt(v, out) { const th = Math.tan(v.fov * Math.PI / 360), fit = Math.max(1, 3.5 / (th * W / H) / HOME.dist), p = clamp(v.pitch, -0.12, 1.2), d = v.dist * fit;
-    const c = (out || new V3()).set(v.tx + Math.sin(v.yaw) * Math.cos(p) * d, v.ty + Math.sin(p) * d, v.tz + Math.cos(v.yaw) * Math.cos(p) * d); if (c.y < 0.18) c.y = 0.18; return c; }
+  function camAt(v, out) { const th = Math.tan(v.fov * Math.PI / 360), fit = Math.max(1, 3.5 / (th * W / H) / HOME.dist), p = clamp(v.pitch, -0.12, 1.2), d = v.dist * fit * CAM.kw;
+    const c = (out || new V3()).set(v.tx + Math.sin(v.yaw) * Math.cos(p) * d, v.ty + CAM.dyw + Math.sin(p) * d, v.tz + Math.cos(v.yaw) * Math.cos(p) * d); if (c.y < 0.18) c.y = 0.18; return c; }
   // a camera position: round a point of the car (car space; the car at height lf on the lift), rel radians further round it than the
   // view's own yaw (the table used to turn the car by rel; the camera goes round it now, so every view is as it was seen from the car)
   function view(o, rel, lf) {
@@ -4521,9 +4538,11 @@ const Garage3D = (function () {
     'float svN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(svH(i), svH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(svH(i + vec3(0.0, 1.0, 0.0)), svH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y), mix(mix(svH(i + vec3(0.0, 0.0, 1.0)), svH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(svH(i + vec3(0.0, 1.0, 1.0)), svH(i + 1.0), f.x), f.y), f.z); }',
     'float svIn(vec4 w, float x, float tb) { vec2 r = mix(w.xy, w.zw, tb); return smoothstep(r.x - 0.05, r.x + 0.05, x) * (1.0 - smoothstep(r.y - 0.05, r.y + 0.05, x)); }'].join('\n');
   // (the scratches' last line (they come before the dirt): on the lane the marks red, wider, glowing, where the scan has passed and the
-  // polish and the check have not yet; the polish and the check take them away; the scanner's sheet a line where it cuts the paint)
+  // polish and the check have not yet; the polish and the check take them away; the scanner's sheet a line where it cuts the paint.
+  // SV_OUT: a kit body's outside only (its lining, cabin, engine bay, vIn, and a matte piece, vLam, get none of the layer, as none of the
+  // dirt and the scratches; a body without them: all of it))
   const SCR_OLD = 'diffuseColor.rgb = mix(diffuseColor.rgb, sc, s * 0.85); }', SCR_NEW = ['float svMk = 0.0;',
-    'if (uSvZ.w > 0.5) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, p.y);',
+    'if (uSvZ.w > 0.5) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, p.y) * SV_OUT;',
     '  float inL = tb * (1.0 - smoothstep(0.18, 0.22, abs(p.z - uSvZ.x))) * smoothstep(uPol.z - 0.05, uPol.z, p.x) * (1.0 - smoothstep(uPol.w, uPol.w + 0.05, p.x));',
     '  float th = atan(p.z - uScA.y, p.x - uScA.x), scn = step(uScA.z, th) * step(th, uScA.w), ver = step(uVeA.z, th) * step(th, uVeA.w);',
     '  svPol = inL * smoothstep(uPol.x - 0.04, uPol.x + 0.04, p.x) * (1.0 - smoothstep(uPol.y - 0.04, uPol.y + 0.04, p.x));',
@@ -4533,17 +4552,18 @@ const Garage3D = (function () {
     '  sc = mix(sc, vec3(0.85, 0.06, 0.04), svMk);',
     '  totalEmissiveRadiance += vec3(4.2, 0.3, 0.12) * s * svMk * (0.75 + 0.25 * sin(uSvB.w * 9.0));',
     '  float ln = (1.0 - smoothstep(0.006, 0.022, abs(dot(uScN.xyz, p) + uScN.w))) * uScD.x;',
-    '  totalEmissiveRadiance += mix(vec3(0.35, 1.8, 2.8), vec3(0.3, 2.4, 0.7), uScD.y) * ln; }',
+    '  totalEmissiveRadiance += mix(vec3(0.35, 1.8, 2.8), vec3(0.3, 2.4, 0.7), uScD.y) * ln * SV_OUT; }',
     'diffuseColor.rgb = mix(diffuseColor.rgb, sc, clamp(s * (0.85 + 0.6 * svMk), 0.0, 1.0)); }'].join('\n');
-  // (the dirt's last line: the stages' stretches (the front ragged by the dirt's own noise), the foam blanket over the paint (dirty till
-  // scrubbed, runs down the sides), wet paint darker with beads of water (tiny bright dots the bloom catches), dry and fresh glossier)
-  const DIRT_OLD = 'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = d; }', DIRT_NEW = ['float svF = 0.0, svD0 = d, svS = 0.0, svWt = 0.0;',
-    'if (uSvZ.w > 0.5) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, vLp.y), x = vLp.x + (n - 0.5) * 0.18;',
+  // (the dirt's last line (the clear coat's dullness there, cgD, as render.js has it: its own expression kept): the stages'
+  // stretches (the front ragged by the dirt's own noise), the foam blanket over the paint (dirty till scrubbed, runs down the sides), wet
+  // paint darker with beads of water (tiny bright dots the bloom catches), dry and fresh glossier)
+  const DIRT_OLD = /diffuseColor\.rgb = mix\(diffuseColor\.rgb, vec3\(0\.5, 0\.4, 0\.29\), d\); cgD = ([^;{}]+); \}/, DIRT_NEW = ['float svF = 0.0, svD0 = d, svS = 0.0, svWt = 0.0;',
+    'if (uSvZ.w > 0.5) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, vLp.y), x = vLp.x + (n - 0.5) * 0.18, svO = SV_OUT;',
     '  float s0 = svIn(uSvW0, x, tb), sR = svIn(uSvW3, x, tb), sD = svIn(uSvW4, x, tb);',
     '  svS = svIn(uSvW2, x, tb) * tb * (1.0 - smoothstep(0.37, 0.45, abs(vLp.z - uSvZ.y)));',
     '  d *= (1.0 - 0.45 * s0) * (1.0 - max(svS, sR));',
-    '  svF = svIn(uSvW1, x, tb) * (1.0 - sR); svWt = max(s0, sR) * (1.0 - sD) * uSvB.y; }',
-    'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = d;',
+    '  svF = svIn(uSvW1, x, tb) * (1.0 - sR) * svO; svWt = max(s0, sR) * (1.0 - sD) * uSvB.y * svO; }',
+    'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = $1;',
     'if (uSvZ.w > 0.5) {',
     '  if (svF > 0.001) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, vLp.y), b = svN(vLp * 16.0) * 0.6 + svN(vLp * 41.0) * 0.4, cl = svN(vLp * 4.5 + 3.0);',
     '    float run = smoothstep(0.55, 0.95, fract(vLp.x * 6.0 + svH(vec3(floor(vLp.x * 6.0), 1.0, 2.0)) * 3.0)) * (1.0 - tb);',
@@ -4554,8 +4574,9 @@ const Garage3D = (function () {
     '  totalEmissiveRadiance += vec3(0.55, 0.62, 0.7) * step(0.98, svH(floor(vLp * 64.0))) * svWt; }',
     '}'].join('\n');
   function svcPaint(c) { const ob = c.onBeforeCompile, k0 = c.customProgramCacheKey;
-    c.onBeforeCompile = (sh, r) => { ob.call(c, sh, r); Object.assign(sh.uniforms, SVU); const f = sh.fragmentShader, n = (f.includes(DIRT_OLD) ? 1 : 0) + (f.includes(SCR_OLD) ? 1 : 0);
-      sh.fragmentShader = f.replace('#include <common>', '#include <common>\n' + SV_HEAD).replace(DIRT_OLD, DIRT_NEW).replace(SCR_OLD, SCR_NEW);
+    c.onBeforeCompile = (sh, r) => { ob.call(c, sh, r); Object.assign(sh.uniforms, SVU); const f = sh.fragmentShader, n = (DIRT_OLD.test(f) ? 1 : 0) + (f.includes(SCR_OLD) ? 1 : 0);
+      const out = /varying float vIn;/.test(f) && /varying float vLam;/.test(f) ? '(1.0 - max(vIn, vLam))' : '1.0';   // (SV_OUT: the outside, as render.js's dirt has it)
+      sh.fragmentShader = f.replace('#include <common>', '#include <common>\n' + SV_HEAD + '\n#define SV_OUT ' + out).replace(DIRT_OLD, DIRT_NEW).replace(SCR_OLD, SCR_NEW);
       SV.patched = n; if (n !== 2) console.error('svc: the paint layer found ' + n + ' of its 2 lines'); };
     c.customProgramCacheKey = () => k0() + '|svc'; }
   function carMats(cv) {
@@ -4663,6 +4684,11 @@ const Garage3D = (function () {
     // the bonnet: the body's top a little over a quarter of the way back from the nose
     let hoodEnd = front - (front - rear) * 0.3, py = P.top(front - 0.1, 0);   // (where the windscreen rises: the body's top steeper than 1 in 2)
     for (let x = front - 0.15; x > rear + 0.6; x -= 0.05) { const y = P.top(x, 0); if (y != null && py != null && (y - py) / 0.05 > 0.5) { hoodEnd = x + 0.05; break; } py = y; }
+    // (found on the nose itself (a steep nose, a scoop or a bulge down the bonnet's middle): looked for again off the middle, either side
+    // of a bulge, from where the top first lies flatter than 1 in 2.5 (the bonnet's lip passed) to where it rises steeper again)
+    if (hoodEnd > front - 0.35) { const tz = (x) => { let m = null; for (const z of [-0.3 * hw, 0.3 * hw]) { const y = P.top(x, z); if (y != null && (m == null || y < m)) m = y; } return m; };
+      let on = false, qy = tz(front - 0.1); hoodEnd = front - (front - rear) * 0.3;
+      for (let x = front - 0.15; x > rear + 0.6; x -= 0.05) { const y = tz(x); if (y != null && qy != null) { const s = (y - qy) / 0.05; if (!on) on = s < 0.4 && x < front - 0.2; else if (s > 0.4) { hoodEnd = x + 0.05; break; } } qy = y; } }
     const hoodX = (front + hoodEnd) / 2 - 0.04, hoodY = P.top(hoodX, 0) || (bottom + 0.5), hoodY2 = P.top(hoodX - 0.3, 0) || hoodY;
     // the exhaust: a little over the bumper's lowest edge, the bumper's back there
     const exY = Math.min(rearLow + 0.075, deckY - 0.15), exX = P.back(exY, hw * 0.45) || rear, exXc = P.back(exY, 0) || rear;
@@ -5129,18 +5155,21 @@ const Garage3D = (function () {
 
   /* ---------------- the workshop's machines: the paint arch ---------------- */
   // an arch over the car on rails: two posts and a beam with nozzles; runs along the car (x) and sprays (paint)
-  function makeArch(cv, col) {   // (its legs inside 1.35 m of the middle: clear of the lift's stowed arms and its column; the truck's tyres clear)
-    const K = cv.kit, g = new THREE.Group(), hw = Math.min(K.hw + 0.5, 1.27), hgt = K.top + 0.45;
+  // (its legs inside 1.35 m of the middle: clear of the lift's stowed arms and its column; the truck's tyres clear. A car wider than that
+  // with its wheels (a lorry, a monster truck): a C-frame, its one leg out past the near side, its beam over the car to the far side's edge)
+  function makeArch(cv, col) {
+    const K = cv.kit, g = new THREE.Group(), wz = Math.max(K.hw, ...cv.wheels.map(w => Math.abs(w.z) + w.wd / 2)), wide = wz + 0.2 > 1.27, hw = wide ? wz + 0.3 : Math.min(K.hw + 0.5, 1.27), hgt = K.top + 0.45;
+    const zf = wide ? -(wz + 0.05) : -hw, zc = (hw + zf) / 2, bw = hw - zf, legs = wide ? [1] : [-1, 1];   // (the beam from zf to hw)
     const fm = new THREE.MeshPhongMaterial({ color: col || 0xd9dde4, specular: 0xffffff, shininess: 90, envMap: env.texture || env, combine: THREE.MixOperation, reflectivity: 0.3 }); fm.userData.own = true;
     const ym = new THREE.MeshLambertMaterial({ color: 0x1e2a3a }); ym.userData.own = true;
-    for (const sd of [-1, 1]) { mesh(bx(0.16, hgt, 0.16), fm, 0, hgt / 2, sd * hw, g); mesh(bx(0.5, 0.06, 0.16), ym, 0, 0.03, sd * hw, g); }
-    mesh(bx(0.18, 0.18, hw * 2 + 0.16), fm, 0, hgt, 0, g);
+    for (const sd of legs) { mesh(bx(0.16, hgt, 0.16), fm, 0, hgt / 2, sd * hw, g); mesh(bx(wide ? 0.9 : 0.5, 0.06, wide ? 0.5 : 0.16), ym, 0, 0.03, sd * hw, g); }
+    mesh(bx(0.18, 0.18, bw + 0.16), fm, 0, hgt, zc, g);
     const lm = new THREE.MeshBasicMaterial({ color: emi(0x47c6ff, EMI.led) }); lm.userData.own = true;
-    mesh(bx(0.03, 0.03, hw * 2 - 0.1), lm, 0.1, hgt - 0.1, 0, g);
-    for (const sd of [-1, 1]) mesh(bx(0.03, hgt - 0.3, 0.03), lm, 0.1, hgt / 2, sd * (hw - 0.08), g);
+    mesh(bx(0.03, 0.03, bw - 0.1), lm, 0.1, hgt - 0.1, zc, g);
+    for (const sd of legs) mesh(bx(0.03, hgt - 0.3, 0.03), lm, 0.1, hgt / 2, sd * (hw - 0.08), g);
     g.userData.noz = [];
-    for (let i = 0; i < 7; i++) g.userData.noz.push({ p: new V3(0, hgt - 0.1, (i / 6 - 0.5) * (hw * 2 - 0.3)), d: new V3(0, -1, 0) });
-    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) g.userData.noz.push({ p: new V3(0, 0.25 + i * (hgt - 0.5) / 3, sd * (hw - 0.08)), d: new V3(0, -0.15, -sd) });
+    for (let i = 0; i < 7; i++) g.userData.noz.push({ p: new V3(0, hgt - 0.1, zc + (i / 6 - 0.5) * (bw - 0.3)), d: new V3(0, -1, 0) });
+    for (const sd of legs) for (let i = 0; i < 4; i++) g.userData.noz.push({ p: new V3(0, 0.25 + i * (hgt - 0.5) / 3, sd * (hw - 0.08)), d: new V3(0, -0.15, -sd) });
     g.userData.h = hgt;
     cv.v.grp.add(g); return g;
   }
@@ -5246,7 +5275,7 @@ const Garage3D = (function () {
       } else yield* home(0.6);
       engStop();
       // in: from the left door, braking hard onto the table, the nose diving, the brake lamps on
-      cur = nw; svcForget(); engStart(nw.M); eng.locked = false; lamps(nw, 1, 0.5);
+      cur = nw; svcForget(); camFit(nw); engStart(nw.M); eng.locked = false; lamps(nw, 1, 0.5);
       const D = 15, T = 2.0, tx0 = rig.tx;
       yield* tween(T, (k, u) => {
         const e = 1 - Math.pow(1 - u, 2.2), x = -D * (1 - e);
@@ -5399,7 +5428,7 @@ const Garage3D = (function () {
      tests read them); every wait has a ceiling, a step that cannot be done (no clear way) is skipped and logged, never forced through
      anything, nobody left waiting. Between the items each robot swaps its tool at its own stand (no parking), at the end both park and
      the camera goes home. What it looks like is drawn from where the robots really are (svcFx) ---------------- */
-  const SV = { on: false, end: false, dirty: false, cv: null, items: [], item: null, step: null, t: 0, cue: {}, log: [], done: [], P: {}, bg: [], lampLit: 0, eng: false, patched: 0, loops: {}, old: null, cam: null, plug: false,
+  const SV = { on: false, end: false, dirty: false, cv: null, items: [], item: null, step: null, t: 0, cue: {}, log: [], mv: [], done: [], P: {}, bg: [], lampLit: 0, eng: false, patched: 0, loops: {}, old: null, cam: null, plug: false,
     fx: { lance: null, brush: 0, pad: 0, scan: null, lamp: 0, lampOk: 0, wrench: 0, oil: 0, pan: 0, rough: 0, wet: 0, drip: 0 } };
   const FX0 = Object.assign({}, SV.fx);
   // (a cue met (the first time only), the step it is; a note in the log (a skip, a late cue, a gate that timed out); waits: till a cue
@@ -5410,16 +5439,17 @@ const Garage3D = (function () {
   function* waitFor(f, max) { let t = 0; while (!f() && t < max) t += yield; return f(); }
   function* svcClock() { for (;;) { const dt = yield; SV.t += dt; for (let j = 0; j < SV.bg.length; j++) { const g = SV.bg[j]; if (!g.done && g.g.next(dt).done) g.done = true; } if (SV.end) return; } }
   const bgDone = () => { for (let j = 0; j < SV.bg.length; j++) if (!SV.bg[j].done) return false; return true; };
-  // (the robots' moves: rides between the stand and the car 1.8 times their joints' own speed, each one move (blended), never blinked
+  // (the robots' moves: rides between the stand and the car twice their joints' own speed, each one move (blended), never blinked
   // (skipped); one starting outside the car's footprint stays outside it (the lift may move meanwhile); the work on the car at their own
   // speed; the lift kept clear of all along; a tool swap's own moves quick). goOf: for a ride while the lift may move (the engine's: all
   // its rides go from outside the footprint to outside it or from under the car out)
-  const GO = { pace: 1.8, blend: true, noBlink: true, lift: true }, GOS = Object.assign({ sweep: true }, GO), WK = { pace: 1, noBlink: true, lift: true }, TP = 0.3;
+  const GO = { pace: 2, blend: true, noBlink: true, lift: true }, GOS = Object.assign({ sweep: true }, GO), WK = { pace: 1, noBlink: true, lift: true }, TP = 0.3;
   const goOf = (i) => SV.item === 'engine' && outOfFootprint(i, 0.1) ? GOS : GO;
   // (each robot's tool for each item)
   const TOOL_OF = [{ clean: 'nozzle', body: 'scanner', engine: 'wrench' }, { clean: 'brush', body: 'polisher', engine: 'camera' }];
   // (a robot's move in the service: not done (no clear way): noted, the beat goes on from where it is)
-  function* mv(i, q, s, via, o, beat) { const ok = yield* robotTo(i, q, s, via, o); if (!ok) note('fail:' + 'nf'[i] + ':' + beat); return ok; }
+  function* mv(i, q, s, via, o, beat) { const t0 = SV.t, ok = yield* robotTo(i, q, s, via, o); if (!ok) note('fail:' + 'nf'[i] + ':' + beat); const L = RB[i].lastPath;
+    SV.mv.push(['nf'[i] + ':' + beat, +t0.toFixed(2), +(SV.t - t0).toFixed(2), L ? L.mode + '/' + L.T : '']); return ok; }   // (the moves made: the tests' look at the show's pace)
   const back = (q, d) => ({ x: q.x, tip: q.tip.clone().addScaledVector(q.dir, -d), dir: q.dir.clone(), up: q.up ? q.up.clone() : null });
   // (a robot's plans for item it: once the main track has begun that item and made them (the near robot's part, .n, comes first);
   // never a half made one: a plan late is none (the robot skips its work and goes on))
@@ -5451,10 +5481,10 @@ const Garage3D = (function () {
   for (let k = 0; k < 4; k++) { FC[34 + k * 2] = 0.5 * Math.cos(TAU / 8 + k * TAU / 4); FC[35 + k * 2] = 0.5 * Math.sin(TAU / 8 + k * TAU / 4); }
   // (each turning tool's face on the paint: how far the top may fall away under it (the brush's bristles take up more than the pad's
   // foam), how far it is pressed in at its highest point; how far it tilts at the most, how much its tilt may turn in 5 cm)
-  const FACE = { brush: { res: 0.04, press: 0.006 }, polisher: { res: 0.025, press: 0.003 } }, FTILT = Math.tan(20 * Math.PI / 180), FDS = 0.06;
+  const XHOLD = 0.9, FACE = { brush: { res: 0.04, press: 0.006 }, polisher: { res: 0.025, press: 0.003 } }, FTILT = Math.tan(20 * Math.PI / 180), FTILT2 = Math.tan(30 * Math.PI / 180), FDS = 0.06;
   // (the plans' share of a frame: a few milliseconds, then on in the next (a phone's frame is not held up by their rays))
   const SVT = { t0: 0, ms: 4 };
-  function* tick() { if (performance.now() - SVT.t0 > SVT.ms) { yield; SVT.t0 = performance.now(); } }
+  function* tick() { if (performance.now() - SVT.t0 > SVT.ms * Math.min(2, showRate())) { yield; SVT.t0 = performance.now(); } }   // (a show hurried (a tap): its frames stand for more of its time, the plans get more of them)
   function svcPts(cv) {
     if (cv.svW) return cv.svW; cv.v.grp.updateMatrixWorld(true); const K = cv.kit, P = probeOf(carMeshes(cv), true), H = K.top - K.bottom, ly = cv.v.grp.position.y, yA = K.bottom + 0.35 * H;
     let zS = 0; for (let x = K.rear + 0.2; x <= K.front - 0.2; x += 0.1) zS = Math.max(zS, P.side(x, yA + ly, 1) || 0);
@@ -5465,43 +5495,67 @@ const Garage3D = (function () {
     // given), what falls far away under it left out and fitted again (a narrow nose, the bonnet's edge: its rim out over the sides), then
     // set on the highest of what is left (pressed in by press); res: how far the top falls away under it at the most (a step, the
     // windscreen's foot; a scoop under part of it: the rest falls away from it); null where too little of the car is under it)
-    const fit = (R, gx, gz) => { let n = 0, sx1 = 0, sz1 = 0, sy = 0, sxx = 0, szz = 0, sxz = 0, sxy = 0, szy = 0;
+    const fit = (R, gx, gz, mn) => { let n = 0, sx1 = 0, sz1 = 0, sy = 0, sxx = 0, szz = 0, sxz = 0, sxy = 0, szy = 0;
       for (let k = 0; k < FCN; k++) { if (!FK[k]) continue; const dx = FC[k * 2] * R, dz = FC[k * 2 + 1] * R, y = FY[k]; n++; sx1 += dx; sz1 += dz; sy += y; sxx += dx * dx; szz += dz * dz; sxz += dx * dz; sxy += dx * y; szy += dz * y; }
-      if (n < 13) return null; if (gx != null) { FSL[0] = gx; FSL[1] = gz; return FSL; }
+      if (n < (mn || 13)) return null; if (gx != null) { FSL[0] = gx; FSL[1] = gz; return FSL; }
       const m = [[sxx, sxz, sx1], [sxz, szz, sz1], [sx1, sz1, n]], r = [sxy, szy, sy], d = det3(m); if (Math.abs(d) < 1e-12) return null;   // (the plane y = c + sx dx + sz dz by least squares)
       FSL[0] = det3([[r[0], m[0][1], m[0][2]], [r[1], m[1][1], m[1][2]], [r[2], m[2][1], m[2][2]]]) / d; FSL[1] = det3([[m[0][0], r[0], m[0][2]], [m[1][0], r[1], m[1][2]], [m[2][0], r[2], m[2][2]]]) / d; return FSL; };
-    const face = (x, z, R, press, gx, gz) => { for (let k = 0; k < FCN; k++) { const y = hAt(x + FC[k * 2] * R, z + FC[k * 2 + 1] * R); FY[k] = y; FK[k] = y > -8 ? 1 : 0; } if (!FK[0]) return null;
+    const face = (x, z, R, press, gx, gz, mn) => { for (let k = 0; k < FCN; k++) { const y = hAt(x + FC[k * 2] * R, z + FC[k * 2 + 1] * R); FY[k] = y; FK[k] = y > -8 ? 1 : 0; } if (!FK[0]) return null;
       let hi = -9, lo = 9, S = null;
-      for (let it = 0; it < 3; it++) { S = fit(R, gx, gz); if (!S) return null; hi = -9; lo = 9; let cut = 0;
+      for (let it = 0; it < 3; it++) { S = fit(R, gx, gz, mn); if (!S) return null; hi = -9; lo = 9; let cut = 0;
         for (let k = 0; k < FCN; k++) if (FK[k]) { const v = FY[k] - (S[0] * FC[k * 2] + S[1] * FC[k * 2 + 1]) * R; FV[k] = v; if (v > hi) hi = v; }
         for (let k = 0; k < FCN; k++) if (FK[k] && FV[k] < hi - 0.06) { FK[k] = 0; cut++; }   // (6 cm under the highest: off the edge, left out)
         if (!FK[0]) return null; if (!cut) break; }
-      let n = 0; for (let k = 0; k < FCN; k++) if (FK[k]) { n++; if (FV[k] < lo) lo = FV[k]; } if (n < 13) return null;
+      let n = 0; for (let k = 0; k < FCN; k++) if (FK[k]) { n++; if (FV[k] < lo) lo = FV[k]; } if (n < (mn || 13)) return null;
       return { x, z, y: hi - press, sx: S[0], sz: S[1], res: hi - lo, tilt: Math.hypot(S[0], S[1]), on: n / FCN }; };
     const pose = (f) => ({ tip: new V3(f.x, f.y, f.z), dir: new V3(f.sx, -1, f.sz).normalize() });
+    // (a tool's face held level just over the car round (x, z): over the highest of the top under its disc (a third of its radius apart),
+    // null where a fifth of it is not over the car)
+    const over = (x, z, R) => { let m = -9, n = 0, N = 0; for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) { if (a * a + b * b > 9) continue; N++; const y = hAt(x + a * R / 3, z + b * R / 3); if (y > -8) { n++; if (y > m) m = y; } }
+      return n * 5 >= N ? { x, z, y: m + 0.01, sx: 0, sz: 0, res: 0, tilt: 0, on: n / N } : null; };
     // (a lane at z for a tool's face (radius R) from x0 back to x1, a sample every 5 cm: the longest run where the face lies flat (the top
     // within res of its plane all over it, tilted 20 deg at the most), its tilt turning little from one sample to the next, never over a
     // step; its tilts smoothed along it (no jerk of the wrist), each sample set on the top again for its smoothed plane: { a: its front
-    // end, b: its rear end, L, S: its samples front to rear }; a generator (its rays a few milliseconds a frame))
-    function* lane(z, R, x0, x1, tool) { const F = FACE[tool], S = [], ok = (f) => f && f.res <= F.res && f.tilt <= FTILT;
-      for (let x = x0; x >= x1 - 1e-6; x -= 0.05) { S.push(face(x, z, R, F.press)); yield* tick(); }
+    // end, b: its rear end, L, S: its samples front to rear }; a generator (its rays a few milliseconds a frame). loose: a curved panel
+    // or a narrow one (twice the fall-away under the face, 30 deg of tilt and its turn along the lane, a third of it on the car (the pad a
+    // quarter): the face on its highest points, the rest just over it); cap: a run longer kept to that much of it, from its front)
+    function* lane(z, R, x0, x1, tool, loose, cap) { const F = FACE[tool], rs = loose ? Math.max(2 * F.res, 0.06) : F.res, tl = loose ? FTILT2 : FTILT, ds = FDS * (loose ? 2 : 1), S = [], ok = (f) => f && f.res <= rs && f.tilt <= tl;
+      const mn = loose ? (tool === 'polisher' ? 5 : 7) : 13;   // (a top higher than 2.5 m (a lorry's roof): out of the far robot's reach, not measured)
+      for (let x = x0; x >= x1 - 1e-6; x -= 0.05) { S.push(hAt(x, z) > 2.5 ? null : loose === 'over' ? over(x, z, R) : face(x, z, R, F.press, null, null, mn)); yield* tick(); }
+      if (loose === 'over') for (const d of [1, -1]) for (let j = d > 0 ? 1 : S.length - 2; j >= 0 && j < S.length; j += d) { const p = S[j - d]; if (S[j] && p) S[j].y = Math.max(S[j].y, p.y - 0.03); }   // (no step over 3 cm from one to the next: up early, down late)
       let best = null;
       for (let a = 0; a < S.length; a++) { if (!ok(S[a])) continue; let b = a;
-        while (b + 1 < S.length && ok(S[b + 1]) && Math.abs(S[b + 1].y - S[b].y) <= 0.03 && Math.abs(S[b + 1].sx - S[b].sx) <= FDS && Math.abs(S[b + 1].sz - S[b].sz) <= FDS) b++;
-        if (!best || S[a].x - S[b].x > best.L + 1e-6) best = { i: a, j: b, L: S[a].x - S[b].x }; a = b; }
-      if (!best || best.L < 0.05) return null; const R0 = S.slice(best.i, best.j + 1), n = R0.length - 1;
-      const Q = R0.map((f, j) => { const p = R0[Math.max(0, j - 1)], q = R0[Math.min(n, j + 1)]; return face(f.x, z, R, F.press, (p.sx + 2 * f.sx + q.sx) / 4, (p.sz + 2 * f.sz + q.sz) / 4); });
+        while (b + 1 < S.length && ok(S[b + 1]) && Math.abs(S[b + 1].y - S[b].y) <= 0.03 && Math.abs(S[b + 1].sx - S[b].sx) <= ds && Math.abs(S[b + 1].sz - S[b].sz) <= ds) b++;
+        const L = S[a].x - S[b].x, sc = cap ? Math.min(L, cap) - 1.5 * Math.max(0, Math.max(...S.slice(a, b + 1).map(f => f.y)) - 1.5) : L;   // (along the whole top: the lower of two runs as long as it needs (in the arm's easy reach), not a truck's roof)
+        if (!best || sc > best.sc + 1e-6) best = { i: a, j: b, L, sc }; a = b; }
+      if (!best || best.L < 0.05) return null; if (cap && best.L > cap + 1e-6) { best.j = best.i + Math.round(cap / 0.05); best.L = S[best.i].x - S[best.j].x; }
+      const R0 = S.slice(best.i, best.j + 1), n = R0.length - 1;
+      const Q = loose === 'over' ? R0 : R0.map((f, j) => { const p = R0[Math.max(0, j - 1)], q = R0[Math.min(n, j + 1)]; return face(f.x, z, R, F.press, (p.sx + 2 * f.sx + q.sx) / 4, (p.sz + 2 * f.sz + q.sz) / 4, mn) || f; });   // (its own plane where the smoothed one leaves its middle off the top)
       return { a: Q[0].x, b: Q[n].x, L: best.L, z, R, tool, S: Q }; }
+    // (a lane picked (once): the tool's own rim just past the face's (the bristles splayed, their tips a little past its face) raised
+    // where the top comes up to its plane out there (a scoop's edge, a spoiler, the windscreen's foot), its tips never pressed in further
+    // than its face; the car's grid of heights there too (its thin parts between the rays, a wing's end plate; a cell's highest a little
+    // over its middle))
+    const rim = (ln) => { if (ln.rim) return ln; ln.rim = true;
+      const R = ln.R, z = ln.z, G = cv.hgrid || bodyGrid(cv), r0 = R * 0.75, r1 = R * 1.1, nc = Math.ceil(r1 / G.st);
+      for (const f of ln.S) { let e = 0; for (let k = 0; k < 24; k++) { const a = k * TAU / 24, dx = Math.cos(a) * r1, dz = Math.sin(a) * r1, y = hAt(f.x + dx, z + dz); if (y > -8) e = Math.max(e, y + 0.004 - (f.y + f.sx * dx + f.sz * dz)); }
+        const ci = Math.round((f.x - G.ox) / G.st), cj = Math.round((z - G.oz) / G.st);
+        for (let a = ci - nc; a <= ci + nc; a++) for (let b = cj - nc; b <= cj + nc; b++) { if (a < 0 || b < 0 || a >= G.nx || b >= G.nz) continue; const dx = G.ox + a * G.st - f.x, dz = G.oz + b * G.st - z, d = Math.hypot(dx, dz), y = G.h[a * G.nz + b];
+          if (d >= r0 && d <= r1 && y > -8) e = Math.max(e, y - 0.004 - (f.y + f.sx * dx + f.sz * dz)); }
+        if (e > 0) f.y += e; }
+      return ln; };
     const half = (ln) => { const n = Math.max(2, Math.ceil(ln.S.length / 2)); return Object.assign({}, ln, { b: ln.S[n - 1].x, L: ln.a - ln.S[n - 1].x, S: ln.S.slice(0, n) }); };
-    // (a pass along a lane's samples (back: from its rear end to its front): a pose every 10 cm, the carriage riding with the tip from q0's)
-    const pass = (q0, S, back) => { const L = back ? S.slice().reverse() : S, x0 = L[0].x, out = []; for (let j = 2; j < L.length; j += 2) out.push(L[j]); if (out[out.length - 1] !== L[L.length - 1]) out.push(L[L.length - 1]);
-      const ps = out.map(f => Object.assign(pose(f), { x: q0.x + (f.x - x0), up: q0.up })); return { mid: ps.slice(0, -1), end: ps[ps.length - 1] }; };
+    // (a pass along a lane's samples (back: from its rear end to its front): a pose every 10 cm, the carriage riding with the tip from q0's;
+    // held: never nearer the lift's column than XHOLD (a lane close to it: the arm slants back over it, its links kept off the column))
+    const pass = (q0, S, back, held) => { const L = back ? S.slice().reverse() : S, x0 = L[0].x, out = []; for (let j = 2; j < L.length; j += 2) out.push(L[j]); if (out[out.length - 1] !== L[L.length - 1]) out.push(L[L.length - 1]);
+      const cx = (x) => !held ? x : q0.x >= 0 ? Math.max(x, Math.min(q0.x, XHOLD)) : Math.min(x, Math.max(q0.x, -XHOLD));
+      const ps = out.map(f => Object.assign(pose(f), { x: cx(q0.x + (f.x - x0)), up: q0.up })); return { mid: ps.slice(0, -1), end: ps[ps.length - 1] }; };
     const aim = (x, t) => new V3(x, yA, zS).sub(t).normalize();
     // (the car's underside over a point: the lowest of the first surfaces met from below round it (r: a socket's rim; the dark panel under
     // an open body, a racer's floor), the car on the floor)
     let PU = null; const under = (x, z, r) => { PU = PU || probeOf(carMeshes(cv).concat(cv.under ? [cv.under] : []), true); let m = 9;
       for (let a = 0; a <= 8; a++) { const y = PU.bottom(x + (a ? Math.cos(a * 0.785) * r : 0), z + (a ? Math.sin(a * 0.785) * r : 0)); if (y != null) m = Math.min(m, y - ly); } return m < 8 ? m : K.bottom; };
-    return (cv.svW = { K, H, yA, zS, xm, xR, xF, T0, hAt, topAt, face, pose, lane, half, pass, aim, under }); }
+    return (cv.svW = { K, H, yA, zS, xm, xR, xF, T0, hAt, topAt, face, pose, lane, half, rim, pass, aim, under }); }
   // (a pose's clearance as if robot i stood there with tool (the robot left as it was): how near it comes to what is round it, out of
   // reach, outside the car's footprint)
   function poseCheck(i, tool, q, o) { const A = RB[i], J = A.J, keep = [A.p, A.tool, J.hd.clone(), J.a5.clone(), J.missMax]; A.tool = tool; A.p = full(i, q); solveRobot(i);
@@ -5515,7 +5569,7 @@ const Garage3D = (function () {
   // (where a point is seen on the stage from a rig: across and up from the middle in css pixels, how far; and how big a thing s metres
   // across shows there: the reticles spread so none hides another)
   const _pcam = new THREE.PerspectiveCamera(33, 1, 0.1, 100), _sv = new V3();
-  function seenAt(v, p, out) { const c = _pcam; c.fov = v.fov; c.aspect = W / H; c.updateProjectionMatrix(); camAt(v, c.position); c.lookAt(v.tx, v.ty, v.tz); c.updateMatrixWorld(true);
+  function seenAt(v, p, out) { const c = _pcam; c.fov = v.fov; c.aspect = W / H; c.updateProjectionMatrix(); camAt(v, c.position); c.lookAt(v.tx, v.ty + CAM.dyw, v.tz); c.updateMatrixWorld(true);
     const d = c.position.distanceTo(p), q = _sv.copy(p).project(c); return out.set(q.x * W / 2, q.y * H / 2, H / (2 * d * Math.tan(v.fov * Math.PI / 360))); }
   // an item's plans (SV.P[item]): each robot's poses for its work (its carriage where it does it best, seen from the view the camera will
   // be in), a contact lane's slides checked; one robot's plan or one check a frame, the rays a few milliseconds a frame (a generator); a
@@ -5524,15 +5578,32 @@ const Garage3D = (function () {
   // lift's arms there)
   function* svcPlan(cv, it) {
     SVT.t0 = performance.now(); const W = svcPts(cv), K = cv.kit, H = W.H, P = SV.P[it] = { it, W }, ok = (q) => q && q.miss === 0 && q.clear >= 0; yield;
-    // (a contact lane on the bonnet for the far robot (its tool's face): its far lane, its middle, the far lane's front half, a lane out by
-    // its far edge; one stroke a to b checked, its first pose planned for view v)
-    function* lanePick(tool, v) { const R = TR[tool], x0 = K.front - 0.3, x1 = Math.max(0.3, K.hoodX - 0.6), L1 = yield* W.lane(-0.15, R, x0, x1, tool), L2 = yield* W.lane(0, R, x0, x1, tool);
-      const rungs = [L1, L2, L1 && W.half(L1), null];
-      for (let k = 0; k < 4; k++) { if (k === 3) rungs[3] = yield* W.lane(-(0.45 + R), R, x0, x1, tool); const ln = rungs[k]; if (!ln || ln.L < 0.35) continue;   // (4: the far lane out past the bonnet's vents and scoop, its rim over the edge)
-        const s0 = W.pose(ln.S[0]), q0 = robotPlan(1, s0.tip, s0.dir, { tool, x: 1.1, xw: 0.3, cam: camAt(v), lift: true }); yield; if (!ok(q0)) continue;
-        const s1 = W.pass(q0, ln.S), c = slideCheck(1, tool, q0, s1.end, s1.mid, { lift: true }); yield; if (!c.ok) continue;
-        return { rung: k + 1, z: ln.z, a: ln.a, b: ln.b, ln, q0, mid: s1.mid, end: s1.end, T: c.T }; }
+    // (a contact lane for the far robot (its tool's face), a ladder: on the bonnet its far lane, its middle, the far lane's front half, a
+    // lane out by its far edge, one further in, one past the middle; the bonnet curved or narrow (loose); then along the whole top (a
+    // bonnet too short or too curved: the roof, the deck, a side pod; at most 0.9 m of it, the lower run of two), right of the lift's
+    // column, by it (a small car), then left of it (its arm never across it): flat, then curved; at the last held level just over the car
+    // (over: a kart, nothing it could lie on). One stroke a to b checked,
+    // its first pose planned for view v; each rung tried noted (lanes: its rung, length, out of reach, clearance, the stroke's way ok and
+    // what it met))
+    function* lanePick(tool, v, tried) { const R = TR[tool], x0 = Math.min(K.front - 0.3, 2.45), x1 = Math.max(0.3, K.hoodX - 0.6), xa = Math.min(K.front - 0.25, 2.45), xb = K.rear + 0.25, zo = -Math.min(0.45 + R, Math.max(0.3, K.hw - R - 0.05));   // (x0, xa: a long car's nose past the far robot's reach)
+      // (the ranges along the car (each with the most of it a stroke takes): the bonnet; right of the column; by it (a small car: the arm slanting in round it); left of it; held
+      // over a car from its nose on; z: the far lane, the middle, out by the far edge (a curved one: its far edge too, a kart's side pod))
+      let L1 = null; const BON = [x0, x1, 0.7], RT = [xa, Math.max(xb, 0.45), 0.9], BY = [Math.min(xa, 0.65), Math.max(xb, 0.15), 0.9], LT = [Math.min(xa, -0.45), xb, 0.9], OV = [Math.min(K.front, 2.6), Math.max(xb, 0.45), 0.9];
+      const ZS = [-0.15, 0, zo], ZL = [-0.15, 0, zo, -(K.hw - 0.12)], ZO = [-0.15, 0, -(K.hw - 0.12)], at = (zs, lo, rg) => zs.map(z => () => W.lane(z, R, rg[0], rg[1], tool, lo, rg[2]));
+      const rungs = [() => W.lane(-0.15, R, x0, x1, tool), () => W.lane(0, R, x0, x1, tool), function* () { return L1 && W.half(L1); }, () => W.lane(-(0.45 + R), R, x0, x1, tool),   // (4: the far lane out past the bonnet's vents and scoop, its rim over the edge)
+        () => W.lane(-0.3, R, x0, x1, tool), () => W.lane(0.15, R, x0, x1, tool)].concat(at(ZL, true, BON), ...[RT, BY, LT].map(rg => at(ZS, false, rg).concat(at(ZL, true, rg))),
+        at(ZO, 'over', OV), at(ZO, 'over', BY), at(ZO, 'over', LT));   // (last: no panel it lies on (a kart): held level just over the car's far side, its highest parts)
+      for (let k = 0; k < rungs.length; k++) { const ln = yield* rungs[k](); if (k === 0) L1 = ln; if (!ln || ln.L < 0.35 - 1e-6) { if (tried) tried.push([k + 1, ln ? +ln.L.toFixed(2) : null]); continue; }
+        W.rim(ln); const s0 = W.pose(ln.S[0]), q0 = robotPlan(1, s0.tip, s0.dir, { tool, x: k < 6 ? Math.min(1.1, ln.a) : ln.a <= -0.45 ? ln.a : ln.a >= 1.1 ? 1.1 : 1.25, xw: 0.3, cam: camAt(v), lift: true }); yield;   // (a lane by the column: the carriage well right of it)
+        if (tried) tried.push([k + 1, +ln.L.toFixed(2), q0.miss, q0.clear, +q0.x.toFixed(2), +ln.a.toFixed(2), +ln.z.toFixed(2)]); if (!ok(q0)) continue;
+        let held = false, s1 = W.pass(q0, ln.S), c = slideCheck(1, tool, q0, s1.end, s1.mid, { lift: true }); yield;
+        if (!c.ok && k >= 6 && Math.abs(q0.x) > 0.6) { held = true; s1 = W.pass(q0, ln.S, false, true); c = slideCheck(1, tool, q0, s1.end, s1.mid, { lift: true }); yield; }   // (the carriage held off the column)
+        if (tried) tried[tried.length - 1].push(c.ok, held, c.ok ? '' : c.who + ':' + (+c.pen.toFixed(3))); if (!c.ok) continue;
+        return { rung: k + 1, z: ln.z, a: ln.a, b: ln.b, ln, q0, mid: s1.mid, end: s1.end, T: c.T, held }; }
       return null; }
+    // (the far robot's lift off the paint at a stroke's end: back 20 cm along its tool, less where that is out of its reach (a long
+    // truck's nose))
+    const offOf = (tool, q) => { for (const d of [0.2, 0.14, 0.09]) { const b = back(q, d), c = poseCheck(1, tool, b, { lift: true }); if (c.miss === 0 && c.clear >= 0) return b; } return back(q, 0.06); };
     if (it === 'clean') {
       // the lance: from the near side, its tip riding 1.2 m with the jet's hit along the side (the carriage behind the tool)
       let q = robotPlan(0, W.T0, W.aim(W.xm, W.T0), { tool: 'nozzle', up: [0, 1, 0], cam: camAt(V_S()), lift: true }); yield;
@@ -5542,13 +5613,13 @@ const Garage3D = (function () {
       cue('plans.clean.n');
       // the brush: two strokes on the bonnet's far lane (out, then back on a lane a quarter metre nearer where its face lies as flat, else
       // back on the same one, else one stroke)
-      const B = yield* lanePick('brush', V_S());
-      if (B) { const L3 = yield* W.lane(B.z + 0.25, TR.brush, B.a + 1e-6, B.b, 'brush'); let s2 = null;
-        if (L3 && L3.L >= Math.max(0.35, B.ln.L - 0.15)) { const st = Object.assign(W.pose(L3.S[L3.S.length - 1]), { x: B.end.x + (L3.b - B.b), up: B.q0.up }), ps = W.pass(st, L3.S, true);
+      const B = yield* lanePick('brush', V_S(), P.brushTry = []);
+      if (B) { const L3 = yield* W.lane(B.z + 0.25, TR.brush, B.a + 1e-6, B.b, 'brush'); if (L3) W.rim(L3); let s2 = null;
+        if (L3 && L3.L >= Math.max(0.35, B.ln.L - 0.15)) { const st = Object.assign(W.pose(L3.S[L3.S.length - 1]), { x: B.held ? B.end.x : B.end.x + (L3.b - B.b), up: B.q0.up }), ps = W.pass(st, L3.S, true, B.held);
           const cs = slideCheck(1, 'brush', B.end, st, null, { lift: true }); yield; const c2 = cs.ok ? slideCheck(1, 'brush', st, ps.end, ps.mid, { lift: true }) : cs; yield;
           if (cs.ok && c2.ok) s2 = { start: st, mid: ps.mid, end: ps.end, T: c2.T, z: L3.z }; }
-        if (!s2) { const r1 = W.pass(B.end, B.ln.S, true), c3 = slideCheck(1, 'brush', B.end, r1.end, r1.mid, { lift: true }); yield; if (c3.ok) s2 = { start: null, mid: r1.mid, end: r1.end, T: c3.T, z: B.z }; else note('skip:stroke2'); }
-        B.s2 = s2; B.zc = s2 ? (B.z + s2.z) / 2 : B.z; SVU.uSvZ.value.y = B.zc; P.brush = B; }
+        if (!s2) { const r1 = W.pass(B.end, B.ln.S, true, B.held), c3 = slideCheck(1, 'brush', B.end, r1.end, r1.mid, { lift: true }); yield; if (c3.ok) s2 = { start: null, mid: r1.mid, end: r1.end, T: c3.T, z: B.z }; else note('skip:stroke2'); }
+        B.s2 = s2; B.zc = s2 ? (B.z + s2.z) / 2 : B.z; SVU.uSvZ.value.y = B.zc; B.off = offOf('brush', s2 ? s2.end : B.end); yield; P.brush = B; }
       else note('skip:brush');
     } else if (it === 'body') {
       // the scanner: a station beside the near side, its bar upright, turned from the nose to the tail and back
@@ -5558,8 +5629,8 @@ const Garage3D = (function () {
       cue('plans.body.n');
       // the polisher: one stroke on the bonnet; it waits beside its lane and over it (out of the scan's way: the marks it is to polish seen);
       // on its lane the marks the scan lights, up to three reticles on them, spread so that none hides another in the picture
-      const Q = yield* lanePick('polisher', V_POL());
-      if (Q) { P.pol = Q; SVU.uSvZ.value.x = Q.z; SVU.uPol.value.z = Q.b - 0.1; SVU.uPol.value.w = Q.a + 0.1; P.ret = [];
+      const Q = yield* lanePick('polisher', V_POL(), P.polTry = []);
+      if (Q) { P.pol = Q; Q.off = offOf('polisher', Q.end); SVU.uSvZ.value.x = Q.z; SVU.uPol.value.z = Q.b - 0.1; SVU.uPol.value.w = Q.a + 0.1; P.ret = [];
         const hv = { x: Q.q0.x, tip: Q.q0.tip.clone().add(new V3(0, 0.22, -0.32)), dir: Q.q0.dir.clone(), up: Q.q0.up }, hc = poseCheck(1, 'polisher', hv, { lift: true }), hs = hc.clear >= 0.02 && hc.miss === 0 ? slideCheck(1, 'polisher', hv, Q.q0, null, { lift: true }) : null; yield;
         Q.hov = hs && hs.ok ? hv : back(Q.q0, 0.15);
         const vp = V_POL(), pr = new V3(), pa = new V3();
@@ -5587,11 +5658,12 @@ const Garage3D = (function () {
       cue('plans.engine.n');
       const wf = cv.wheels.filter(w => w.front), wrr = wf.length ? Math.max(...wf.map(w => w.r)) : K.wr; let lamp = null;
       P.lampTry = [];
-      const xs = K.wfx - 0.05, xb = Math.max(0.6, K.wfx - wrr - 0.15), xf = K.wfx + wrr + 0.2;   // (beside the wheel, behind it, in front of it)
-      for (const [lx, dy] of [[xs, 0], [xb, 0], [xs, -0.15], [xb, -0.15], [xf, 0], [xs, -0.3], [xb, -0.3], [xs, -0.45], [xf, -0.3]]) {
-        const Lt = new V3(lx, K.bottom + h - 0.35 + dy, -(K.hw + 0.2)), wg = wheelGap(cv, h, Lt, D, 0.036, 0.3); P.lampTry.push([+lx.toFixed(2), dy, +wg.toFixed(3)]); if (wg < 0.02) continue;
-        const qC = robotPlan(1, Lt, D.clone().sub(Lt).normalize(), Object.assign({ tool: 'camera', x: 1.38 }, o)); yield; P.lampTry.push([qC.x, qC.miss, qC.clear]); if (!ok(qC)) continue;
-        const lm = Object.assign({}, qC, { x: Math.max(1.15, qC.x) }), lc = poseCheck(1, 'camera', lm, o); if (lc.clear >= 0 && lc.miss === 0) { lamp = lm; P.lampC = lc; break; } }
+      const xs = K.wfx - 0.05, xb = Math.max(0.6, K.wfx - wrr - 0.15), xf = K.wfx + wrr + 0.2, xg = Math.max(1.25, xf + 0.3);   // (beside the wheel, behind it, in front of it; a small car: further on, clear of the column)
+      for (const re of [0.3, 0.12]) { if (lamp) break;   // (its light's spread at the plug: 30 cm; a small car's wheels nearer the plug than that: 12 cm)
+      for (const [lx, dy] of [[xs, 0], [xb, 0], [xs, -0.15], [xb, -0.15], [xf, 0], [xs, -0.3], [xb, -0.3], [xs, -0.45], [xf, -0.3], [xg, 0], [xg, -0.3], [xg, 0.2]]) {
+        const Lt = new V3(lx, K.bottom + h - 0.35 + dy, -(K.hw + 0.2)), wg = wheelGap(cv, h, Lt, D, 0.036, re); P.lampTry.push([+lx.toFixed(2), dy, +wg.toFixed(3)]); if (wg < 0.02) continue;
+        const qC = robotPlan(1, Lt, D.clone().sub(Lt).normalize(), Object.assign({ tool: 'camera', x: 1.38 }, o)); yield; P.lampTry.push([qC.x, qC.miss, qC.clear, GAPW.k + GAPW.li]); if (!ok(qC)) continue;
+        const lm = Object.assign({}, qC, { x: Math.max(1.15, qC.x) }), lc = poseCheck(1, 'camera', lm, o); if (lc.clear >= 0 && lc.miss === 0) { lamp = lm; P.lampC = lc; break; } } }
       if (lamp) P.lamp = lamp; else note('skip:lamp');
     }
     cue('plans.' + it);
@@ -5602,7 +5674,7 @@ const Garage3D = (function () {
   function* svcMain(cv, items, cond) {
     for (let j = 0; j < items.length; j++) { const it = items[j], nx = items[j + 1]; SV.item = it; cue('m.' + it);
       const first = it === 'clean' ? 'n.rinse0.go' : it === 'body' ? 'n.scanAt' : null, nT = 'n.' + TOOL_OF[0][it], fT = 'f.' + TOOL_OF[1][it];
-      const stands = (function* () { yield* svcCam('S2', 1.2); yield* waitFor(() => SV.cue[nT] != null && SV.cue[fT] != null || first && SV.cue[first] != null, 8); yield* svcCam(it === 'engine' ? 'E' : 'S', it === 'engine' ? 1.2 : 1.4); })();
+      const stands = (function* () { yield* svcCam('S2', 1.2); yield* waitFor(() => SV.cue[nT] != null && SV.cue[fT] != null || first && SV.cue[first] != null, 8); if (it !== 'engine') yield* svcCam('S', 1.4); })();   // (the engine's view: as its engine starts)
       if (it === 'clean' || it === 'body') {
         yield* par(svcPlan(cv, it), stands);
         if (it === 'clean') { yield* until('n.air', 30); yield* until('f.scrubbed', 4); yield* wait(0.2); svcSparkle(cv); SFX.ping(2349); setCond(cv, { clean: cond.clean }); svcReset('clean'); svcDone('clean'); }
@@ -5616,20 +5688,20 @@ const Garage3D = (function () {
         // the lamp lights the plug; both robots out again, the car down with its mended engine running clean, a blip of the throttle
         const lg = (function* () { yield* waitFor(bgDone, 2); yield* gate('lift'); cue('lift.go'); yield* liftUp(cv, 1.35, false, 0.7); cue('lift.up'); })();
         yield* par(svcPlan(cv, 'engine'), stands, lg);
-        cue('m.rough'); SV.eng = true; engStart(cv.M);
-        if (cv.M.ev) yield* evPulse(cv, cv.parts.motor || cv.v.grp, 1);
-        else if (SV.old.engine < 0.5) { SV.fx.rough = 1; SVX.rough = 0; SVX.cough = 1; yield* wait(1.0); SV.fx.rough = 0; eng.rev = 0; cv.shake = 0; }
-        else yield* wait(0.6);
+        cue('m.rough'); SV.eng = true; engStart(cv.M);   // (the old engine started as the camera goes down to it)
+        yield* par(svcCam('E', 1.2), (function* () { if (cv.M.ev) yield* evPulse(cv, cv.parts.motor || cv.v.grp, 1);
+          else if (SV.old.engine < 0.5) { SV.fx.rough = 1; SVX.rough = 0; SVX.cough = 1; yield* wait(1.0); SV.fx.rough = 0; eng.rev = 0; cv.shake = 0; }
+          else yield* wait(0.6); })());
         engStop(); cv.shake = 0; cue('m.ran');
         if (cv.M.ev || !SV.P.engine.wr) { cue('m.oil', 'ev'); cue('m.oilEnd', 'ev'); }
         else { yield* until('n.plugOut', 14);
-          if (SV.plug) { cue('m.oil'); SV.fx.oil = 1; let t = 0; while (t < 2 && (t < 1.0 || SV.lampLit < 0.6)) t += yield; SV.fx.oil = 0; cue('m.oilEnd'); }   // (only with the plug really out)
+          if (SV.plug) { cue('m.oil'); SV.fx.oil = 1; let t = 0; while (t < 2 && (t < 0.8 || SV.lampLit < 0.6)) t += yield; SV.fx.oil = 0; cue('m.oilEnd'); }   // (only with the plug really out)
           else { cue('m.oil', 'skip'); cue('m.oilEnd', 'skip'); } }
         yield* until('n.out', 10); yield* until('f.out', 4); yield* gate('lower');
         setCond(cv, { engine: cond.engine }); cue('car.lower'); engStart(cv.M); lamps(cv, 1, 0);
-        yield* par((function* () { yield* lowerCar(cv, false, 0.7); cue('car.down'); })(), (function* () { while (lift > 1e-3) yield; svcDone('engine'); })(),
+        yield* par((function* () { yield* lowerCar(cv, false, 0.5); cue('car.down'); })(), (function* () { while (lift > 1e-3) yield; svcDone('engine'); lamps(cv, 0, 0); })(),
           (function* () { yield* wait(0.3); if (cv.M.ev) yield* evPulse(cv, cv.parts.motor || cv.v.grp, 1); else yield* revs(cv, 1, false); })(),
-          nx ? null : (function* () { yield* wait(0.5); yield* svcCam('S2', 1.4); })());
+          nx ? null : (function* () { while (lift > 1e-3) yield; yield* svcCam('S2', 1.4); })());   // (on its wheels: its lamps off, the camera to the stands)
         lamps(cv, 0, 0); engStop(); SV.eng = false; cv.shake = 0; yield* armsTo(0, 0.7); yield* carriageTo(LIFT.c0, 0.25);
       }
     }
@@ -5651,18 +5723,22 @@ const Garage3D = (function () {
       } else if (it === 'body') { yield* toolPick(0, 'scanner', TP, goOf(0)); cue('n.scanner'); const P = yield* plansOf('body', true);
         if (P.scan && (yield* mv(0, P.scanF, 0.8, null, goOf(0), 'scanAt'))) { f.scan = 'ready'; cue('n.scanAt'); yield* until('m.scan', 6);
           f.scan = 'scan'; cue('n.scan.go'); yield* mv(0, P.scanR, 1.33, 'straight', WK, 'scan'); f.scan = 'ready'; cue('n.scanned'); svcSnap('scan'); yield* until('f.pad.on', 3);
-          f.scan = 'verify'; cue('n.verify.go'); yield* mv(0, P.scanF, 1.5, 'straight', WK, 'verify'); f.scan = 'done'; svcSnap('verify'); cue('n.verified'); yield* wait(0.3); }
+          f.scan = 'verify'; cue('n.verify.go'); yield* mv(0, P.scanF, 1.35, 'straight', WK, 'verify'); f.scan = 'done'; svcSnap('verify'); cue('n.verified'); yield* wait(0.3); }
         else for (const n of ['scanAt', 'scan.go', 'scanned', 'verify.go', 'verified']) cue('n.' + n, 'skip');
         f.scan = null;
       } else { yield* toolPick(0, 'wrench', TP, goOf(0)); cue('n.wrench'); const P = yield* plansOf('engine', true);
-        if (P.wr && (yield* mv(0, P.stN, 0.8, null, goOf(0), 'staged'))) { cue('n.staged'); yield* until('m.ran', 20);
-          if (!cv.M.ev) { if ((yield* mv(0, back(P.wr, 0.2), 0.5, null, GO, 'plug')) && (yield* mv(0, P.wr, 0.3, 'straight', WK, 'plug'))) { SV.plug = true; f.pan = 1; SFX.hiss(0.4, 0.6); SFX.click(); cue('n.atPlug');
-              for (let k = 0; k < 3; k++) { f.wrench++; yield* wait(0.2); } yield* mv(0, back(P.wr, 0.07), 0.3, 'straight', WK, 'plugOut'); cue('n.plugOut');
-              yield* until('m.oilEnd', 4); yield* mv(0, P.wr, 0.25, 'straight', WK, 'plugIn'); for (let k = 0; k < 2; k++) { f.wrench++; yield* wait(0.2); } cue('n.plugIn');
+        // (staged beside the sill while the car goes up; the car up: in under it at once, by the plug while the engine runs. The car up
+        // already (a full service: the lift went up while it swapped its tool): straight in under it)
+        const b0 = P.wr && (cv.M.ev ? P.bolts[0] : P.wr), up = SV.cue['lift.up'] != null, bt = cv.M.ev ? 'bolt0' : 'plug'; let pre = false;
+        if (P.wr && (up ? (pre = yield* mv(0, back(b0, 0.2), 0.8, null, GO, bt)) : (yield* mv(0, P.stN, 0.8, null, goOf(0), 'staged')))) { cue('n.staged');
+          if (!up) { yield* until('lift.up', 20); pre = yield* mv(0, back(b0, 0.2), cv.M.ev ? 0.4 : 0.5, null, GO, bt); } yield* until('m.ran', 20);
+          if (!cv.M.ev) { if (pre && (yield* mv(0, P.wr, 0.3, 'straight', WK, 'plug'))) { SV.plug = true; f.pan = 1; SFX.hiss(0.4, 0.6); SFX.click(); cue('n.atPlug');
+              for (let k = 0; k < 3; k++) { f.wrench++; yield* wait(0.15); } yield* mv(0, back(P.wr, 0.07), 0.3, 'straight', WK, 'plugOut'); cue('n.plugOut');
+              yield* until('m.oilEnd', 4); yield* mv(0, P.wr, 0.25, 'straight', WK, 'plugIn'); for (let k = 0; k < 2; k++) { f.wrench++; yield* wait(0.15); } cue('n.plugIn');
               yield* mv(0, back(P.wr, 0.25), 0.35, 'straight', WK, 'plugIn'); f.pan = 0; SFX.hiss(0.3, 0.5); SFX.click(); }
             else for (const n of ['atPlug', 'plugOut', 'plugIn']) cue('n.' + n, 'skip'); }   // (never at the plug: no pan up, no oil)
-          else { cue('n.atPlug', 'ev'); for (let k = 0; k < P.bolts.length; k++) { const b = P.bolts[k]; yield* mv(0, back(b, 0.2), 0.4, null, GO, 'bolt' + k); yield* mv(0, b, 0.25, 'straight', WK, 'bolt' + k);
-              f.wrench++; yield* wait(0.25); yield* mv(0, back(b, 0.2), 0.25, 'straight', WK, 'bolt' + k); cue('n.bolt' + k); } cue('n.plugOut', 'ev'); cue('n.plugIn'); }
+          else { cue('n.atPlug', 'ev'); for (let k = 0; k < P.bolts.length; k++) { const b = P.bolts[k]; if (k || !pre) yield* mv(0, back(b, 0.2), 0.4, null, GO, 'bolt' + k); yield* mv(0, b, 0.25, 'straight', WK, 'bolt' + k);
+              f.wrench++; yield* wait(0.15); yield* mv(0, back(b, 0.2), 0.25, 'straight', WK, 'bolt' + k); cue('n.bolt' + k); } cue('n.plugOut', 'ev'); cue('n.plugIn'); }
           yield* mv(0, P.stN, 0.4, null, GO, 'out'); cue('n.out'); yield* mv(0, travelPose(0, -1.8, -1), 0.6, null, goOf(0), 'away'); cue('n.away'); }
         else for (const n of ['staged', 'atPlug', 'plugOut', 'plugIn', 'out', 'away']) cue('n.' + n, 'skip');
       }
@@ -5680,14 +5756,14 @@ const Garage3D = (function () {
           yield* waitFor(() => SVW[1].w >= B.a - 0.05, 1);   // (the foam over the lane's front end first)
           yield* mv(1, B.q0, 0.3, 'straight', WK, 'brush.on'); f.brush = 2; cue('f.brush.on');
           yield* mv(1, B.end, B.T, { slide: B.mid }, WK, 'stroke1'); cue('f.stroke1');
-          if (B.s2) { if (B.s2.start) yield* mv(1, B.s2.start, 0.3, 'straight', WK, 'stroke2'); cue('f.stroke2.go'); yield* mv(1, B.s2.end, B.s2.T, { slide: B.s2.mid }, WK, 'stroke2'); } else cue('f.stroke2.go', 'skip');
-          f.brush = 1; svcSnap('scrub'); yield* mv(1, back(B.s2 ? B.s2.end : B.end, 0.2), 0.3, 'straight', WK, 'scrubbed'); cue('f.scrubbed'); f.brush = 0; }
+          if (B.s2) { cue('f.stroke2.go'); if (B.s2.start) yield* mv(1, B.s2.start, 0.3, 'straight', WK, 'stroke2'); yield* mv(1, B.s2.end, B.s2.T, { slide: B.s2.mid }, WK, 'stroke2'); } else cue('f.stroke2.go', 'skip');   // (on to its second stroke: the rinse may follow)
+          f.brush = 1; svcSnap('scrub'); yield* mv(1, B.off, 0.3, 'straight', WK, 'scrubbed'); cue('f.scrubbed'); f.brush = 0; }
         else { for (const n of ['hover', 'brush.on', 'stroke1', 'stroke2.go', 'scrubbed']) cue('f.' + n, 'skip'); svcSnap('scrub'); }
       } else if (it === 'body') { yield* toolPick(1, 'polisher', TP, goOf(1)); cue('f.polisher'); const Q = (yield* plansOf('body')).pol;
         if (Q && (yield* mv(1, Q.hov, 0.8, null, goOf(1), 'hover2'))) { cue('f.hover2'); f.pad = 1; yield* until('n.scanned', 8);
           yield* mv(1, Q.q0, 0.4, 'straight', WK, 'pad.on'); f.pad = 2; cue('f.pad.on');
-          yield* mv(1, Q.end, Q.T > 1.6 ? 1.4 : Math.max(1.4, Q.T), { slide: Q.mid }, Q.T > 1.6 ? { pace: Math.min(1.8, Q.T / 1.4), noBlink: true, lift: true } : WK, 'polish'); cue('f.polished');   // (a long lane: a little quicker over it)
-          f.pad = 1; svcSnap('polish'); yield* mv(1, back(Q.end, 0.2), 0.3, 'straight', WK, 'padOff'); f.pad = 0; cue('f.padOff'); }
+          yield* mv(1, Q.end, Q.T > 1.6 ? 1.25 : Math.max(1.25, Q.T), { slide: Q.mid }, Q.T > 1.6 ? { pace: Math.min(1.8, Q.T / 1.25), noBlink: true, lift: true } : WK, 'polish'); cue('f.polished');   // (a long lane: a little quicker over it)
+          f.pad = 1; svcSnap('polish'); yield* mv(1, Q.off, 0.3, 'straight', WK, 'padOff'); f.pad = 0; cue('f.padOff'); }
         else { for (const n of ['hover2', 'pad.on', 'polished', 'padOff']) cue('f.' + n, 'skip'); svcSnap('polish'); }
       } else { yield* toolPick(1, 'camera', TP, goOf(1)); cue('f.camera'); const L = (yield* plansOf('engine')).lamp;
         if (L && (yield* mv(1, back(L, 0.25), 0.8, null, goOf(1), 'staged'))) { cue('f.staged'); yield* until('m.ran', 20);
@@ -5705,7 +5781,7 @@ const Garage3D = (function () {
     for (const A of RB) for (const h of A.held.slice()) robotRelease(A.i, h, 'home');
     if (CH.k > 0 || DRY.k > 0) yield* fxPark(0.8);
     if ((lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) && items[0] !== 'engine') yield* liftDown(cv, false);
-    Object.assign(SV, { on: true, end: false, dirty: true, cv, items, item: null, step: null, t: 0, cue: {}, log: [], done: [], P: {}, bg: [], lampLit: 0, eng: false, cam: null, plug: false, old: Object.assign({}, cv.spec.cond) }); Object.assign(SV.fx, FX0);
+    Object.assign(SV, { on: true, end: false, dirty: true, cv, items, item: null, step: null, t: 0, cue: {}, log: [], mv: [], done: [], P: {}, bg: [], lampLit: 0, eng: false, cam: null, plug: false, old: Object.assign({}, cv.spec.cond) }); Object.assign(SV.fx, FX0);
     svcFxBegin(cv);
   }
   function svcStop() {
@@ -5939,7 +6015,7 @@ const Garage3D = (function () {
     svcStop(); if (!fxParked()) fxRest();   // (the robots parked: the tools in their nests, folded over their carriages; what they held back on the old car first)
     if (cur) freeCar(cur);
     if (lift || LIFT.on || LIFT.s || LIFT.c !== LIFT.c0) { lift = 0; Object.assign(LIFT, { s: 0, on: false, plan: null, c: LIFT.c0 }); poseLift(); }   // (the lift down, its arms stowed)
-    cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2; svcForget();
+    cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2; svcForget(); camFit(cur, true);
     renderer.compile(scene, camera);   // (the shaders of what is hidden for now too: the lamps' glows, the sparks; no stutter when they show)
     planAhead(cur);
   }
@@ -6095,15 +6171,15 @@ const Garage3D = (function () {
       get svc() { const P = SV.P, r2 = (v) => v == null ? null : +v.toFixed(2), r3 = (v) => +v.toFixed(3), f = (q) => q ? { x: r2(q.x), miss: q.miss, clear: q.clear, hid: q.hid, tip: q.tip.toArray().map(r2), dir: q.dir.toArray().map(r3) } : null,
           ps = (q0, mid, end) => [q0].concat(mid, [end]).map(q => q.tip.toArray().concat(q.dir.toArray()).map(r3)),   // (a stroke's poses: tip and way, for the tests' look at the face on the paint)
           ln = (q) => q ? Object.assign(f(q.q0), { rung: q.rung, lane: [r2(q.a), r2(q.b)], z: q.z, T: r2(q.T), s2: q.s2 ? q.s2.z : null, poses: ps(q.q0, q.mid, q.end), poses2: q.s2 ? ps(q.s2.start || q.end, q.s2.mid, q.s2.end) : null }) : null, E = P.engine || {};
-        return { on: SV.on, item: SV.item, step: SV.step, t: r2(SV.t), items: SV.items.slice(), log: SV.log.map(q => q.slice()), cue: Object.assign({}, SV.cue), done: SV.done.slice(), tools: RB.map(A => A.tool), patched: SV.patched,
+        return { on: SV.on, item: SV.item, step: SV.step, t: r2(SV.t), items: SV.items.slice(), log: SV.log.map(q => q.slice()), moves: SV.mv.map(q => q.slice()), cue: Object.assign({}, SV.cue), done: SV.done.slice(), tools: RB.map(A => A.tool), patched: SV.patched,
           plans: { lance: P.clean && P.clean.lance ? Object.assign(f(P.clean.lance), { T0x: r2(P.clean.W.T0.x) }) : null, brush: ln(P.clean && P.clean.brush), scan: f(P.body && P.body.scan), pol: ln(P.body && P.body.pol),
-            wrench: f(E.wr), staged: E.stC || null, lamp: E.lamp ? Object.assign(f(E.lamp), E.lampC) : null, bolts: E.bolts ? E.bolts.length : null, D: E.D ? E.D.toArray().map(r3) : null, lampTry: E.lampTry || null, ret: P.body && P.body.ret ? P.body.ret.map(r => [r2(r.x), r2(r.z), r2(r.sx), r2(r.sy)]) : null },
+            wrench: f(E.wr), staged: E.stC || null, lamp: E.lamp ? Object.assign(f(E.lamp), E.lampC) : null, bolts: E.bolts ? E.bolts.length : null, D: E.D ? E.D.toArray().map(r3) : null, lampTry: E.lampTry || null, brushTry: P.clean && P.clean.brushTry || null, polTry: P.body && P.body.polTry || null, ret: P.body && P.body.ret ? P.body.ret.map(r => [r2(r.x), r2(r.z), r2(r.sx), r2(r.sy)]) : null },
           cam: SV.cam, plug: SV.plug, rests: RB.map(A => A.rests || 0),
           fx: { beams: SVX.beam.map(b => b.visible), oil: SVX.oilB.visible, marks: MK.alive, pan: { y: +SVX.panY.toFixed(3), visible: SVX.pan.visible }, wet: +SVWU.value.x.toFixed(3), layer: SVU.uSvZ.value.w, spin: RB.map(A => r2(A.sv || 0)) },
           loops: Object.keys(SV.loops).filter(k => SV.loops[k] > 0), lampLit: r2(SV.lampLit) }; },
       svcPlans(items) { SV.P = {}; if (!cur.lp) liftPlan(cur); for (const it of items) { const g = svcPlan(cur, it); let r; do r = g.next(0); while (!r.done); } return this.svc.plans; },   // (the lift's plan first: no frame runs to finish its measuring)
       svcRun(items, o) { if (cur) setCond(cur, o && o.worn || { clean: 0.15, body: 0.3, engine: 0.3 }); return service(items, { clean: 1, body: 1, engine: 1 }); },
-      svcFace(x, z, R) { return svcPts(cur).face(x, z, R, 0); },   // (a turning tool's face laid on the top there: the plans' look at a bonnet)
+      svcFace(x, z, R, mn) { return svcPts(cur).face(x, z, R, 0, null, null, mn); }, svcPts() { return svcPts(cur); },   // (a turning tool's face laid on the top there: the plans' look at a bonnet)
       tap() { if (busy) speed = 3; }, views() { return cur ? { S2: V_S2(), S: V_S(), POL: V_POL(), E: V_E(cur), HOME } : null; }, camAt: (v) => camAt(v).toArray(),
       liftCaps() { const r = liftObst(null); return r ? { caps: r.caps.map(c => [c[0].toArray(), c[1].toArray(), c[2]]), boxes: r.boxes.map(b => [b.min.toArray(), b.max.toArray()]) } : null; }, outOfFootprint, SVU, SVWU, MK, SVX },
     get renderer() { return renderer; }, get camera() { return camera; }, get scene() { return scene; },
