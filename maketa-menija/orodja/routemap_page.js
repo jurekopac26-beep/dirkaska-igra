@@ -58,9 +58,10 @@ window.RM = (function () {
     // land round the island is the made-up skirt (top) or the real land painted by wide_map.py (isle)
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
     const wide = Math.max(6000, 1.6 * Math.max(x1 - x0, z1 - z0) + 2000), hid = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
-    // (opt.keepWide: a lake or river whose plane is the water of the map itself, e.g. Toronto's lake by the circuit: kept, the wide map
-    // takes the painted water outside the island's own (wide_map.py WATER_OUT))
-    if (!(opt && opt.keepWide)) sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible) return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
+    // (opt.keepWide: a lake or river whose plane is the water of the map itself, e.g. Toronto's lake by the circuit: kept (true: all of
+    // them; a list: those by name), the wide map takes the painted water outside the island's own (wide_map.py WATER_OUT))
+    const keep = o => !!(opt && opt.keepWide) && (opt.keepWide === true || opt.keepWide.includes(o.name));
+    sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible || keep(o)) return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
     hid.forEach(o => { o.visible = false; }); if (hid.length) console.log('far backdrop left out: ' + hid.map(o => (o.name || o.type) + ' ' + Math.round(new THREE.Box3().setFromObject(o).getSize(sz).x)).join(', '));
     B = { id, def, T, sc, w, tex, open: T.finishS > T.startS };
     return B;
