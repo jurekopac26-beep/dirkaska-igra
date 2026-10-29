@@ -15,6 +15,36 @@ window.RM = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64 },
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, sunOff: [-86, 78, 52] },
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62 },
+    // (the real roads and circuits added later: the game's own race lighting, render.js THEMES)
+    medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, sunOff: [-80, 84, 58] },
+    baldy: { fog: 0xcbd6df, sun: 0xfff0d4, sunI: 1.24, sky: 0xb4cff0, gnd: 0x5c5a3c, hemiI: 0.6, sunOff: [-78, 96, 50] },
+    beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, sunOff: [-84, 90, 58] },
+    bigsur: { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, sunOff: [-86, 74, 58] },
+    maunakea: { fog: 0xcad9ec, sun: 0xfff6e8, sunI: 1.42, sky: 0x7aa6e8, gnd: 0x5a4a40, hemiI: 0.58, sunOff: [-62, 118, 44] },
+    moki: { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, sunOff: [-86, 82, 46] },
+    monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, sunOff: [-66, 74, 70] },
+    mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, sunOff: [-70, 104, 48] },
+    palomar: { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, sunOff: [-74, 98, 52] },
+    riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, sunOff: [-70, 74, 78] },
+    uncompahgre: { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, sunOff: [-70, 92, 62] },
+    iroha: { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, sunOff: [-80, 74, 60] },
+    harju: { fog: 0xcdd5dc, sun: 0xffcf96, sunI: 1.65, sky: 0xbad0ee, gnd: 0x58553f, hemiI: 0.58, sunOff: [-100, 33, -8] },
+    montreal: { fog: 0xc9d9e6, sun: 0xfff0d6, sunI: 1.16, sky: 0xcde1f6, gnd: 0x56603a, hemiI: 0.62, sunOff: [-82, 88, 60] },
+    toronto: { fog: 0xc9d8e6, sun: 0xfff0d8, sunI: 1.14, sky: 0xc8ddf4, gnd: 0x5d6448, hemiI: 0.62, sunOff: [-60, 88, 70] },
+    cpalace: { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, sunOff: [-60, 74, 66] },
+    greatalpine: { fog: 0xc4d2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0xaecbec, gnd: 0x5a5638, hemiI: 0.62, sunOff: [-74, 92, -56] },
+    hotham: { fog: 0xc4d4e4, sun: 0xfff2dc, sunI: 1.3, sky: 0xb2cdf0, gnd: 0x5a5e40, hemiI: 0.62, sunOff: [-64, 96, -58] },
+    longford: { fog: 0xcbd8e2, sun: 0xffe9c6, sunI: 1.24, sky: 0xc2d8f0, gnd: 0x56603a, hemiI: 0.56, sunOff: [-70, 76, -66] },
+    newcastle: { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, sunOff: [-58, 86, -66] },
+    townsville: { fog: 0xcfdde8, sun: 0xfff2da, sunI: 1.34, sky: 0xb4d2f4, gnd: 0x6f6a48, hemiI: 0.64, sunOff: [-62, 96, -66] },
+    chapman: { fog: 0xc9dbe8, sun: 0xfff0d6, sunI: 1.24, sky: 0xbcd6f4, gnd: 0x5e5a40, hemiI: 0.62, sunOff: [-92, 74, -40] },
+    sani: { fog: 0xc8d6e4, sun: 0xfff0d8, sunI: 1.28, sky: 0xb8d0f0, gnd: 0x5e5a40, hemiI: 0.6, sunOff: [-70, 92, -58] },
+    caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, sunOff: [-72, 98, -62] },
+    rastro: { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, sunOff: [-66, 92, -64] },
+    rio: { fog: 0xd3dfe6, sun: 0xfff3dc, sunI: 1.3, sky: 0xbfd8f4, gnd: 0x5d6a3a, hemiI: 0.62, sunOff: [-30, 120, -40] },
+    katu: { fog: 0xc9d5dd, sun: 0xfff0d4, sunI: 1.2, sky: 0xc9dcf3, gnd: 0x6b6040, hemiI: 0.58, sunOff: [96, 76, 18] },
+    tianmen: { fog: 0xc9d2d4, sun: 0xfff0dc, sunI: 1.02, sky: 0xd4dfe6, gnd: 0x4a5636, hemiI: 0.68, sunOff: [-70, 92, 60] },
+    bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, sunOff: [-74, 86, -56] },
   };
   const SEASONS = { vrsic: 'autumn' };
   let B = null, R = null, CV = null;
@@ -24,6 +54,12 @@ window.RM = (function () {
     const w = World.build(sc, T, tex, { density: 1, season: SEASONS[id] });   // (Vršič in its October colours, as the published maps show it; the others as built)
     sc.updateMatrixWorld(true);
     w.root.traverse(o => { if (o.isMesh || o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    // a world's far backdrop (the far hills, the sea or lake plane to the horizon: much wider than the track) is left out: the map's
+    // land round the island is the made-up skirt (top) or the real land painted by wide_map.py (isle)
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+    const wide = Math.max(6000, 1.6 * Math.max(x1 - x0, z1 - z0) + 2000), hid = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
+    sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible) return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
+    hid.forEach(o => { o.visible = false; }); if (hid.length) console.log('far backdrop left out: ' + hid.map(o => (o.name || o.type) + ' ' + Math.round(new THREE.Box3().setFromObject(o).getSize(sz).x)).join(', '));
     B = { id, def, T, sc, w, tex, open: T.finishS > T.startS };
     return B;
   }
@@ -78,9 +114,13 @@ window.RM = (function () {
     city: [[-0.2, 0x6f7a44], [1.2, 0x7d8450]], monaco: [[-0.2, 0x7a7a52], [0.8, 0x8a8666], [1.4, 0x9a9478]],
     nring: [[-0.2, 0x3e5a2a], [1.2, 0x4f6a32]], spa: [[-0.2, 0x44602e], [1.2, 0x52703a]], rbring: [[-0.2, 0x4f6c30], [0.8, 0x5b7a3a], [1.4, 0x6d7d58]], suzuka: [[-0.2, 0x55683a], [1.2, 0x62763f]],
   };
+  function trackBounds(T) {   // (a world without its own bounds, e.g. a city: the track's own box)
+    const b = { minX: 1e9, maxX: -1e9, minZ: 1e9, maxZ: -1e9 }; for (let i = 0; i < T.N; i++) { b.minX = Math.min(b.minX, T.px[i]); b.maxX = Math.max(b.maxX, T.px[i]); b.minZ = Math.min(b.minZ, T.pz[i]); b.maxZ = Math.max(b.maxZ, T.pz[i]); }
+    return b;
+  }
   function skirt(Bw, margin, cell) {
     if (Bw.skirt) return Bw.skirt;
-    const b = Bw.w.bounds, g = Bw.w.groundH, x0 = b.minX - margin, z0 = b.minZ - margin, nx = Math.ceil((b.maxX - b.minX + 2 * margin) / cell), nz = Math.ceil((b.maxZ - b.minZ + 2 * margin) / cell);
+    const b = Bw.w.bounds || trackBounds(Bw.T), g = Bw.w.groundH, x0 = b.minX - margin, z0 = b.minZ - margin, nx = Math.ceil((b.maxX - b.minX + 2 * margin) / cell), nz = Math.ceil((b.maxZ - b.minZ + 2 * margin) / cell);
     const T = Bw.T; let h0 = 1e9, h1 = -1e9; for (let i = 0; i < T.N; i++) { h0 = Math.min(h0, T.hy[i]); h1 = Math.max(h1, T.hy[i]); } if (h1 - h0 < 50) h1 = h0 + 50;
     const ramp = RAMPS[Bw.def.theme] || RAMPS.lake, C = ramp.map(r => [r[0], new THREE.Color(r[1])]), rock = new THREE.Color(0x857f76), c = new THREE.Color();
     const pos = new Float32Array((nx + 1) * (nz + 1) * 3), col = new Float32Array((nx + 1) * (nz + 1) * 3), H = new Float32Array((nx + 1) * (nz + 1));

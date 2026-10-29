@@ -7,5 +7,12 @@
   ["rbring", "top", "isle-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
   ["suzuka", "top", "isle-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
   ["spa", "top", "isle-spa", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["nring", "top", "isle-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}]
+  ["nring", "top", "isle-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["medvode", "top", "isle-medvode", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["baldy", "top", "isle-baldy", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["beartooth", "top", "isle-beartooth", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["bigsur", "top", "isle-bigsur", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["detroit", "top", "isle-detroit", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+  ["maunakea", "top", "isle-maunakea", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+  ["moki", "top", "isle-moki", {"W": 824, "H": 620, "wet": true, "skirt": false}]
 ]

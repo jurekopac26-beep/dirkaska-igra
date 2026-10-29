@@ -37,7 +37,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Longford, Avstralija](docs/proge/longford.md)
 - [Newcastle, Avstralija](docs/proge/newcastle.md)
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md)
-- Toronto, Kanada (opis še ni napisan)
+- [Toronto, Kanada](docs/proge/toronto.md)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)

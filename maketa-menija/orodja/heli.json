@@ -80,5 +80,8 @@
  },
  "vrsic": {
   "edgeTint": true
+ },
+ "bigsur": {
+  "sea": true
  }
 }

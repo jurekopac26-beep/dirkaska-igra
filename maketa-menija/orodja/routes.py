@@ -6,13 +6,14 @@ import json, math, os, re, shutil, subprocess, sys
 from PIL import Image, ImageEnhance
 
 RAW, SITE = 'raw/maps', sys.argv[1] if len(sys.argv) > 1 else '..'
+ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None   # (python3 routes.py <site> vrsic,spa: only these again, the others kept from <site>/routes.js)
 try:
     import imageio_ffmpeg; FF0 = imageio_ffmpeg.get_ffmpeg_exe()   # pip install imageio-ffmpeg (has VP9)
 except ImportError: FF0 = 'ffmpeg'
 FF = os.environ.get('FFMPEG', FF0)
 OUT = os.path.join(SITE, 'assets', 'maps')
 os.makedirs(OUT, exist_ok=True)
-TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring']
+TRACKS = [j[0] for j in json.load(open('maps.json'))]   # (every track with a map from above, in maps.json's order)
 ROADS = ('vrsic', 'pikes')   # the open roads (the others' corners, by number, name the places of a track that has no names of its own)
 # the game's own names of the places along a track, in English where they are Slovenian words (proper names stay)
 EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight',
@@ -26,11 +27,16 @@ def neutral(n):
     n = NEUTRAL.get(n, n)
     for a, b in SUBST: n = n.replace(a, b)
     return re.sub(r'(\d)\.(\d{3}) m\b', r'\1,\2 m', n)   # (1.158 m, the Slovene way: 1,158 m)
+GAME_EN = {}   # (the game's own English of the other names: Lang.place in js/lang.js, filled once per run)
+def game_en(names):
+    js = "global.window = {}; const L = require(process.argv[1]); L.set('en'); const N = JSON.parse(process.argv[2]); console.log(JSON.stringify(N.map(n => L.place(n))));"
+    out = subprocess.run(['node', '-e', js, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'js', 'lang.js')), json.dumps(names)], capture_output=True, text=True, check=True).stdout
+    GAME_EN.update(zip(names, json.loads(out)))
 def en(n):
     m = re.match(r'(Zavoj|Serpentina) (\d+)(.*)$', n)
-    if m: return ('Turn ' if m.group(1) == 'Zavoj' else 'Hairpin ') + m.group(2) + m.group(3)
+    if m and n not in GAME_EN: return ('Turn ' if m.group(1) == 'Zavoj' else 'Hairpin ') + m.group(2) + m.group(3)
     if n.startswith('Lasnica '): return n[8:] + ' Hairpin'
-    return EN.get(n, n)
+    return EN.get(n, GAME_EN.get(n, n))
 
 def grade(im):   # the rainy grade of the game (less saturated, a little cooler)
     rgb, a = im.convert('RGB'), im.split()[3]
@@ -70,8 +76,16 @@ def pace(route, d, mpp):   # the corners of a track from its route on the top ma
         else: i += 1
     return out
 
+def old_routes():
+    p = os.path.join(SITE, 'routes.js')
+    if not os.path.exists(p): return {}
+    s = open(p, encoding='utf-8').read(); return json.loads(s[s.index('{'):s.rstrip().rindex(';')])
+OLD = old_routes() if ONLY else {}
 data = {}
 for t in TRACKS:
+    if ONLY and t not in ONLY:
+        if t in OLD: data[t] = OLD[t]
+        continue
     R = {}
     if not os.path.exists(os.path.join(RAW, 'top-%s.json' % t)): print(t, 'no map yet'); continue
     # the map from above (map version 2): the land fills it (no transparency)
@@ -91,6 +105,8 @@ for t in TRACKS:
         prof.append(round(h[i], 1))
     R['prof'] = prof
     R['places'] = [[neutral(q['n']), round(q['d'])] for q in J['names'] if q.get('hud', True)]
+    if ONLY:   # (the tracks added later: their places in English as the game says them, as the flyover's labels name them)
+        game_en([q[0] for q in R['places']]); R['places'] = [[en(q[0]), q[1]] for q in R['places']]
     # the places the flyover's corner shows (the menu's own list in data.js comes first): the game's names, or the corners by number
     H = [[0, 'Start' if R['open'] else 'Start · finish']] + [[max(1, q[1] - 40), en(q[0])] for q in R['places']]
     if len(H) == 1 and t not in ROADS: H += [[max(1, round(c[0]) - 40), 'Turn %d' % (k + 1)] for k, c in enumerate(pace(J['route'], J['d'], J['mPerPx']))]

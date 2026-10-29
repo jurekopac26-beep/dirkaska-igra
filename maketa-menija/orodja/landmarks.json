@@ -331,5 +331,181 @@
    "d": 17912,
    "sub": "the long straight"
   }
+ ],
+ "medvode": [
+  {
+   "n": "Medvode",
+   "d": 200
+  },
+  {
+   "n": "Šmarna gora",
+   "ll": [
+    46.1278,
+    14.4636
+   ],
+   "snap": "peak",
+   "r": 600
+  },
+  {
+   "n": "Zbilje",
+   "d": 2234
+  },
+  {
+   "n": "Lake Zbilje",
+   "d": 2805
+  },
+  {
+   "n": "Smlednik",
+   "d": 4809
+  },
+  {
+   "n": "Old Castle",
+   "d": 6277,
+   "sub": "500 m"
+  }
+ ],
+ "baldy": [
+  {
+   "n": "Mount Baldy",
+   "d": 30,
+   "sub": "1,282 m"
+  },
+  {
+   "n": "Icehouse Canyon",
+   "d": 2734
+  },
+  {
+   "n": "Manker Flat",
+   "d": 6530
+  },
+  {
+   "n": "San Antonio Falls",
+   "d": 6935
+  },
+  {
+   "n": "Mount San Antonio",
+   "ll": [
+    34.2892,
+    -117.6462
+   ],
+   "snap": "peak",
+   "r": 800
+  }
+ ],
+ "beartooth": [
+  {
+   "n": "Rock Creek",
+   "d": 900,
+   "sub": "valley"
+  },
+  {
+   "n": "Rock Creek Vista",
+   "d": 3740
+  },
+  {
+   "n": "Beartooth Plateau",
+   "d": 4933,
+   "sub": "2,849 m"
+  }
+ ],
+ "bigsur": [
+  {
+   "n": "Rocky Creek Bridge",
+   "d": 989
+  },
+  {
+   "n": "Castle Rock",
+   "d": 1539
+  },
+  {
+   "n": "Bixby Creek Bridge",
+   "d": 2021
+  },
+  {
+   "n": "Hurricane Point",
+   "d": 3929,
+   "sub": "171 m"
+  }
+ ],
+ "detroit": [
+  {
+   "n": "Detroit",
+   "ll": [
+    42.3314,
+    -83.0458
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Detroit River",
+   "ll": [
+    42.3255,
+    -83.03
+   ],
+   "snap": "water",
+   "r": 500
+  },
+  {
+   "n": "Windsor",
+   "ll": [
+    42.3149,
+    -83.0364
+   ],
+   "snap": "town",
+   "r": 1200
+  }
+ ],
+ "maunakea": [
+  {
+   "n": "Mauna Kea",
+   "d": 10,
+   "sub": "3,599 m"
+  },
+  {
+   "n": "Lake Waiau",
+   "ll": [
+    19.8095,
+    -155.4769
+   ],
+   "snap": "water",
+   "r": 400
+  },
+  {
+   "n": "Puʻu Haukea",
+   "d": 3389
+  },
+  {
+   "n": "Puʻu Wēkiu",
+   "d": 5250,
+   "sub": "summit"
+  }
+ ],
+ "moki": [
+  {
+   "n": "Valley of the Gods",
+   "ll": [
+    37.248,
+    -109.905
+   ]
+  },
+  {
+   "n": "Moki Dugway",
+   "d": 2545,
+   "sub": "switchbacks"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 3714
+  },
+  {
+   "n": "Cedar Mesa",
+   "d": 4950,
+   "sub": "1,961 m"
+  }
  ]
 }

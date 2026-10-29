@@ -34,6 +34,7 @@ THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nri
 SUN = {'ouni': ([-88, 72, 58], 1.18, 0.56), 'vrsic': ([-84, 70, 56], 1.16, 0.58), 'pikes': ([104, 48, -60], 1.58, 0.75), 'nring': ([-80, 76, 70], 1.1, 0.6),
        'rbring': ([-86, 78, 52], 1.12, 0.6), 'spa': ([-80, 96, 70], 0.98, 0.64), 'suzuka': ([-80, 96, 70], 1.06, 0.62), 'monaco': ([-80, 96, 70], 1.08, 0.6),
        'city': ([-80, 96, 70], 1.04, 0.6)}
+SUN.update({'medvode': ([-80, 84, 58], 1.18, 0.6), 'baldy': ([-78, 96, 50], 1.24, 0.6), 'beartooth': ([-84, 90, 58], 1.26, 0.6), 'bigsur': ([-86, 74, 58], 1.14, 0.62), 'maunakea': ([-62, 118, 44], 1.42, 0.58), 'moki': ([-86, 82, 46], 1.3, 0.62), 'monterey': ([-66, 74, 70], 1.24, 0.64), 'mulholland': ([-70, 104, 48], 1.4, 0.62), 'palomar': ([-74, 98, 52], 1.36, 0.62), 'riverside': ([-70, 74, 78], 1.3, 0.62), 'uncompahgre': ([-70, 92, 62], 1.24, 0.6), 'iroha': ([-80, 74, 60], 1.12, 0.6), 'harju': ([-100, 33, -8], 1.65, 0.58), 'montreal': ([-82, 88, 60], 1.16, 0.62), 'toronto': ([-60, 88, 70], 1.14, 0.62), 'cpalace': ([-60, 74, 66], 1.08, 0.62), 'greatalpine': ([-74, 92, -56], 1.26, 0.62), 'hotham': ([-64, 96, -58], 1.3, 0.62), 'longford': ([-70, 76, -66], 1.24, 0.56), 'newcastle': ([-58, 86, -66], 1.2, 0.62), 'townsville': ([-62, 96, -66], 1.34, 0.64), 'chapman': ([-92, 74, -40], 1.24, 0.62), 'sani': ([-70, 92, -58], 1.28, 0.6), 'caracoles': ([-72, 98, -62], 1.32, 0.6), 'rastro': ([-66, 92, -64], 1.1, 0.66), 'rio': ([-30, 120, -40], 1.3, 0.62), 'katu': ([96, 76, 18], 1.2, 0.58), 'tianmen': ([-70, 92, 60], 1.02, 0.68), 'bathurst': ([-74, 86, -56], 1.22, 0.6)})   # (the real roads and circuits added later: render.js THEMES)
 
 def js_data(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()
@@ -103,7 +104,7 @@ def paint_land(F):
     else:
         alb, h, lc = _paint_land(F); os.makedirs(os.path.dirname(cache), exist_ok=True); np.savez(cache, alb=alb, h=h, lc=lc)
     # the sun in the output grid's axes: x right, z down in the tile; the world's vector (sx east, sz south) turned by the tile's fit
-    sv, sunI, hemiI = SUN[THEME[F.tid]]; sx, sy, sz = sv
+    sv, sunI, hemiI = SUN.get(THEME.get(F.tid, F.tid), ([-80, 96, 70], 0.98, 0.62)); sx, sy, sz = sv
     su = (F.A * sx - F.B * sz) / F.k; sv_ = (F.B * sx + F.A * sz) / F.k
     # (a shortened copy of a road has its world squeezed: the slopes are shaded as the real land's, not the squeezed ones)
     sh = shade(h, F.mpp / F.f * F.scale, [su, sy, sv_], sunI, hemiI)

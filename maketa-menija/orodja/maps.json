@@ -9,5 +9,12 @@
   ["rbring", "top", "top-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["suzuka", "top", "top-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["spa", "top", "top-spa", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["nring", "top", "top-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}]
+  ["nring", "top", "top-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["medvode", "top", "top-medvode", {"W": 824, "H": 620, "wet": true}],
+  ["baldy", "top", "top-baldy", {"W": 824, "H": 620, "wet": true}],
+  ["beartooth", "top", "top-beartooth", {"W": 824, "H": 620, "wet": true}],
+  ["bigsur", "top", "top-bigsur", {"W": 824, "H": 620, "wet": true}],
+  ["detroit", "top", "top-detroit", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["maunakea", "top", "top-maunakea", {"W": 824, "H": 620, "wet": true}],
+  ["moki", "top", "top-moki", {"W": 824, "H": 620, "wet": true}]
 ]

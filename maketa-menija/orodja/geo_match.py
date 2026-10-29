@@ -14,6 +14,18 @@ GUESS = {
     'suzuka': (34.8431, 136.5406, 1500),
     'spa': (50.4372, 5.9714, 1500),
     'nring': (50.3397, 6.9496, 2000),       # T13
+    'medvode': (46.1405, 14.4140, 1500),    # the football ground on Medvoška cesta
+    'baldy': (34.2370, -117.6585, 1500),    # Mount Baldy village, by Glendora Ridge Road
+    'beartooth': (45.0050, -109.4050, 2500),    # below the Rock Creek Vista
+    'bigsur': (36.3880, -121.9050, 1500),   # north of the Rocky Creek Bridge
+    'maunakea': (19.7950, -155.4620, 2000), # the end of the gravel above the visitor station
+    'moki': (37.2700, -109.9300, 2000),     # by the Valley of the Gods Road
+    'monterey': (36.58646, -121.75664, 400),   # the start / finish (OpenStreetMap)
+    'mulholland': (34.1080, -118.7830, 2000),  # Cornell, by Cornell School Road
+    'palomar': (33.3180, -116.9150, 1500),     # South Grade Road above State Route 76
+    'riverside': (33.9367, -117.2726, 1500),   # the old circuit east of the town
+    'uncompahgre': (38.0160, -107.6720, 1500), # above Ouray
+    'iroha': (36.7280, 139.5600, 2000),        # the second Irohazaka, its lower curves
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 

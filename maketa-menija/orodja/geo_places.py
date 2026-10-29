@@ -21,9 +21,18 @@ CFG = {
     'jezero': dict(kind='invented', c=(46.387448, 14.168398), start='Lesce', country='Slovenia', region='Upper Carniola', l1='alps'),
     'riviera': dict(kind='invented', o=(45.492821, 13.541245, 154.0), start='Piran', country='Slovenia', region='Slovenian coast', l1='alps'),
     'gora': dict(kind='invented', c=(46.3420, 13.9300), start='Pokljuka', country='Slovenia', region='Julian Alps', l1='alps'),
+    # (the real roads and circuits added later: placed by their heights (geo_match.py) or by their roads (geo_roads.py))
+    'medvode': dict(kind='real', start='Medvode', finish='Smlednik', country='Slovenia', region='Upper Carniola', l1='alps'),
+    'baldy': dict(kind='real', start='Mount Baldy', finish='Manker Flat', country='USA', region='California', l1='california'),
+    'beartooth': dict(kind='real', start='Rock Creek', finish='Beartooth Plateau', country='USA', region='Montana', l1='montana'),
+    'bigsur': dict(kind='real', start='Rocky Creek', finish='Hurricane Point', country='USA', region='California', l1='california'),
+    'detroit': dict(kind='real', start='Detroit', country='USA', region='Michigan', l1='greatlakes'),
+    'maunakea': dict(kind='real', start='Mauna Kea', finish='Summit', country='USA', region='Hawaii', l1='hawaii'),
+    'moki': dict(kind='real', start='Valley of the Gods', finish='Cedar Mesa', country='USA', region='Utah', l1='utah'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
-L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800)}
+L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
+      'california': (35.0, -119.3, 900), 'montana': (45.0, -109.4, 700), 'greatlakes': (43.0, -81.2, 800), 'hawaii': (19.7, -155.6, 400), 'utah': (37.6, -110.6, 600)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
