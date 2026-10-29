@@ -27,8 +27,9 @@ const NVPark = (function () {
     const put = (m, cast = true) => { m.traverse(o => { if (o.isMesh) { o.castShadow = cast; o.receiveShadow = true; } }); MK.add(m); own.push(m); return m; };
     const at = (m, x, z, y = 0, ry = 0) => { m.position.set(x, gy(x, z) + y, z); m.rotation.y = ry; return put(m); };
     const flat = (g, m) => { const me = new THREE.Mesh(g, m); me.receiveShadow = true; MK.add(me); own.push(me); return me; };
-    // the ground: the park's grass on a 3 m grid, its edge snapped onto the line where it stops (smooth along the circuit and the ring road)
-    { const xs = PARK.map(p => p[0]), zs = PARK.map(p => p[1]), X0 = Math.min(...xs) - 2, Z0 = Math.min(...zs) - 2, S = 3, NX = Math.ceil((Math.max(...xs) + 2 - X0) / S), NZ = Math.ceil((Math.max(...zs) + 2 - Z0) / S), IN = new Uint8Array((NX + 1) * (NZ + 1)), pos = [], uv = [], idx = [], vid = new Map();
+    // the ground: the park's grass on a 3 m grid, its edge snapped onto the line where it stops (smooth along the circuit and the ring road); not where
+    // the whole infield is grass already (js/newmap.js, H3.inGrass)
+    if (!H3.inGrass) { const xs = PARK.map(p => p[0]), zs = PARK.map(p => p[1]), X0 = Math.min(...xs) - 2, Z0 = Math.min(...zs) - 2, S = 3, NX = Math.ceil((Math.max(...xs) + 2 - X0) / S), NZ = Math.ceil((Math.max(...zs) + 2 - Z0) / S), IN = new Uint8Array((NX + 1) * (NZ + 1)), pos = [], uv = [], idx = [], vid = new Map();
       for (let a = 0; a <= NX; a++) for (let b = 0; b <= NZ; b++) IN[a * (NZ + 1) + b] = inGg(X0 + a * S, Z0 + b * S) ? 1 : 0;
       const vert = (a, b, na, nb) => { const key = a + ',' + b + ',' + na + ',' + nb; if (vid.has(key)) return vid.get(key); let x = X0 + a * S, z = Z0 + b * S;
         if (!IN[a * (NZ + 1) + b]) { let lo = 0, hi = 1; const xi = X0 + na * S, zi = Z0 + nb * S; for (let k = 0; k < 10; k++) { const m = (lo + hi) / 2; if (inGg(xi + (x - xi) * m, zi + (z - zi) * m)) lo = m; else hi = m; } x = xi + (x - xi) * lo; z = zi + (z - zi) * lo; }
