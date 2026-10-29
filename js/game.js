@@ -3552,7 +3552,9 @@
   }
   function pauseInfo() {
     const el = $('pause-info'), wx = $('pause-wx'), P = race && race.player, on = !!P && phase === 'racing' && !P.finished && !track.open;
-    const f = on ? race.forecast(P) : null, sp = on && !!tw && !!track.def.pit && !(mp && mp.race), w = f ? wxRow(f, P) : null;
+    // (a steady weather, nothing changing before the finish: Race.forecast gives null; the row is there all the same, an icon a lap that is all
+    // the same: the sun while it is dry, rain (heavy from PW_HARD) while it rains, and no stop for other tyres)
+    const f = on ? race.forecast(P) || { k: race.rain > 0 ? 'wet' : 'dry' } : null, sp = on && !!tw && !!track.def.pit && !(mp && mp.race), w = f ? wxRow(f, P) : null;
     if (w) {
       wx.querySelector('.pw-row').innerHTML = w.laps.map(([L, k]) => `<div class="pw-c${L === w.B ? ' pit' : ''}" data-k="${k}">${pwIcon(k)}${L === w.B ? '<i>P</i>' : ''}<b>${tr('Krog {0}', L)}</b></div>`).join('');
       wx.querySelector('.pw-more').textContent = tr('Povleci za vseh {0} krogov →', w.laps.length);

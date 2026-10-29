@@ -5392,7 +5392,7 @@ const Render = (function () {
   // and a marshal beside it who waves a blue flag while a car is on its way out of the lane and another comes along the circuit to where
   // they meet (within EX_BLUE s of the acceleration lane's end). Two meshes: the post, its lamp housing and the marshal (lit), the lamps and
   // the flag's cloth (unlit, as a lamp and a bright flag look in any light)
-  const EX_BLUE = 4, EX_NEAR = 300;   // (the blue flag: the car coming within 4 s; the exit drawn with the crew or from within 300 m of it)
+  const EX_BLUE = 4, EX_NEAR = 300, EX_S = 2;   // (the blue flag: the car coming within 4 s; the exit drawn with the crew or from within 300 m of it; EX_S: the light and the marshal twice their first size, to be seen from the camera behind the car, in the same places beside the exit)
   function crewExit(race) {
     const T = curTrack, J = T.pitJ ? T.pitJ() : null, P = T.def.pit; if (!J || !P) return null;
     const sd = P[0] < 0 ? -1 : 1, d = J.gb - 4, s = T.startS + d, pz = T.pitAt(s); if (!pz) return null;
@@ -5401,21 +5401,21 @@ const Render = (function () {
     const [lx, lz] = at(s, pz.wall + 0.35), [mx, mz] = at(s + 3, pz.wall + 0.55);   // (the light against the wall's end on the lane's side; the marshal a little on)
     const pos = [], nrm = [], col = [], add = (g0, c, M4) => { const g = g0.toNonIndexed(); g.applyMatrix4(M4); const A = g.attributes.position.array, N = g.attributes.normal.array; for (let i = 0; i < A.length; i++) { pos.push(A[i]); nrm.push(N[i]); col.push(c[i % 3]); } g.dispose(); g0.dispose(); };
     const yaw = Math.atan2(-tx, -tz), M4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));   // (facing back up the lane)
-    add(new THREE.CylinderGeometry(0.06, 0.07, 2.7, 6).translate(0, 1.35, 0), [0.25, 0.26, 0.28], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
-    add(new THREE.BoxGeometry(0.52, 1.15, 0.26).translate(0, 2.5, 0.02), [0.07, 0.07, 0.08], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.CylinderGeometry(0.06 * EX_S, 0.07 * EX_S, 2.7 * EX_S, 6).translate(0, 1.35 * EX_S, 0), [0.25, 0.26, 0.28], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.BoxGeometry(0.52 * EX_S, 1.15 * EX_S, 0.26 * EX_S).translate(0, 2.5 * EX_S, 0.02 * EX_S), [0.07, 0.07, 0.08], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
     const ym = yAt(s + 3), qm = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw + 0.5 * sd, 0));   // the marshal: as the yellow flag's (orange overalls, the pole), turned to the lane
-    add(new THREE.CylinderGeometry(0.2, 0.24, 1.55, 8).translate(0, 0.78, 0), [1, 0.48, 0.1], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
-    add(new THREE.SphereGeometry(0.14, 8, 6).translate(0, 1.7, 0), [0.95, 0.95, 0.95], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.CylinderGeometry(0.2 * EX_S, 0.24 * EX_S, 1.55 * EX_S, 8).translate(0, 0.78 * EX_S, 0), [1, 0.48, 0.1], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.SphereGeometry(0.14 * EX_S, 8, 6).translate(0, 1.7 * EX_S, 0), [0.95, 0.95, 0.95], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
     const body = new THREE.BufferGeometry(); body.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); body.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); body.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); body.computeBoundingSphere();
     const post = new THREE.Mesh(body, new THREE.MeshLambertMaterial({ vertexColors: true })); post.name = 'pitExit';
     // the lamps (two discs as squares on the housing's face) and the cloth (a quad off the marshal's hand, its far edge waving)
-    const fx = Math.sin(yaw), fz = Math.cos(yaw), F = 0.16, lamp = (yc) => { const h = 0.18, cx = lx + fx * F, cz = lz + fz * F, rx = fz, rz = -fx; return [cx - rx * h, y + yc - h, cz - rz * h, cx + rx * h, y + yc - h, cz + rz * h, cx - rx * h, y + yc + h, cz - rz * h, cx + rx * h, y + yc + h, cz + rz * h]; };
+    const fx = Math.sin(yaw), fz = Math.cos(yaw), F = 0.16 * EX_S, lamp = (yc) => { const h = 0.18 * EX_S, cx = lx + fx * F, cz = lz + fz * F, rx = fz, rz = -fx; return [cx - rx * h, y + yc - h, cz - rz * h, cx + rx * h, y + yc - h, cz + rz * h, cx - rx * h, y + yc + h, cz - rz * h, cx + rx * h, y + yc + h, cz + rz * h]; };
     const lp = new Float32Array(4 * 3 * 2 + 4 * 3), lc = new Float32Array(lp.length);
-    lp.set(lamp(2.78), 0); lp.set(lamp(2.24), 12);
+    lp.set(lamp(2.78 * EX_S), 0); lp.set(lamp(2.24 * EX_S), 12);
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(lp, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(lc, 3).setUsage(THREE.DynamicDrawUsage));
-    g.setIndex([0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11]); g.boundingSphere = new THREE.Sphere(new THREE.Vector3((lx + mx) / 2, y + 2, (lz + mz) / 2), 5);
+    g.setIndex([0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11]); g.boundingSphere = new THREE.Sphere(new THREE.Vector3((lx + mx) / 2, y + 2 * EX_S, (lz + mz) / 2), 5 * EX_S);
     const lm = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })); lm.name = 'pitExitLamps'; const eg = new THREE.Group(); eg.add(post, lm); scene.add(eg);   // (a group of its own, not the crew's: in sight from near the exit too, without the whole crew drawn from there)
-    const hand = [mx + nx * 0.3, ym + 1.55, mz + nz * 0.3];   // (his hand out towards the lane)
+    const hand = [mx + nx * 0.3 * EX_S, ym + 1.55 * EX_S, mz + nz * 0.3 * EX_S];   // (his hand out towards the lane)
     return { x: lx, z: lz, grp: eg, lm, lp, lc, hand, tx, tz, nx, nz, d, J, sd, red: -1, blue: 0, wave: 0, key: '' };
   }
   function crewExitStep(c, dt, near) {
@@ -5438,8 +5438,8 @@ const Render = (function () {
     const C = E.lc, set = (o, r, g, b) => { for (let i = 0; i < 4; i++) { C[o + i * 3] = r; C[o + i * 3 + 1] = g; C[o + i * 3 + 2] = b; } };
     set(0, red ? 1 : 0.22, red ? 0.12 : 0.04, red ? 0.08 : 0.04); set(12, red ? 0.03 : 0.2, red ? 0.12 : 1, red ? 0.05 : 0.35); set(24, 0.05, 0.3, 0.95);
     const Pp = E.lp, [hx, hy, hz] = E.hand, b = E.blue;   // the cloth: 0.95 x 0.62 off the hand, out over the lane and swinging (folded away when not shown)
-    const sw = Math.sin(E.wave * 7) * 0.9, ux = E.tx * Math.cos(sw) - E.nx * Math.sin(sw) * 0.6, uz = E.tz * Math.cos(sw) - E.nz * Math.sin(sw) * 0.6, Lf = 0.95 * b, Hf = 0.62 * b;
-    Pp.set([hx, hy, hz, hx + ux * Lf, hy + Math.sin(E.wave * 5.3) * 0.12 * b, hz + uz * Lf, hx, hy - Hf, hz, hx + ux * Lf, hy - Hf + Math.sin(E.wave * 5.3) * 0.12 * b, hz + uz * Lf], 24);
+    const sw = Math.sin(E.wave * 7) * 0.9, ux = E.tx * Math.cos(sw) - E.nx * Math.sin(sw) * 0.6, uz = E.tz * Math.cos(sw) - E.nz * Math.sin(sw) * 0.6, Lf = 0.95 * EX_S * b, Hf = 0.62 * EX_S * b;
+    Pp.set([hx, hy, hz, hx + ux * Lf, hy + Math.sin(E.wave * 5.3) * 0.12 * EX_S * b, hz + uz * Lf, hx, hy - Hf, hz, hx + ux * Lf, hy - Hf + Math.sin(E.wave * 5.3) * 0.12 * EX_S * b, hz + uz * Lf], 24);
     const g = E.lm.geometry; g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
   }
   function crDims(P) {   // the car's hubs, nose and tail (car frame: forward, right), as the car mesh builds them
@@ -9076,9 +9076,10 @@ const Render = (function () {
      Out of the box low beside the car, 2 m behind it, then it rises with the way out (smoothstep of the way to the hand-back's place, never
      down) to the camera behind the car, where it is
      exactly at the hand-back (VOZIŠ TI!: game.js pitNear). Out of the box always in the lane, PC.wall m or more from the pit wall's rail
-     (2B; in the swing too while it is low). Over the replay's TV cameras: cut in where the side view begins, cut out at the hand-back
-     (a view behind the car of its own to rise to). w (Render.pitCam): how much of the side view (0: behind the car, pulled back or not; 1:
-     the side view; over the TV cameras 1 while it has the view); a stop broken off (the race over, a rescue) fades back in 0.6 s ---------------- */
+     (2B; in the swing too while it is low). Over the replay's TV cameras the same camera has the view in the whole lane, from the way in
+     (a view behind the car of its own, pulled back, to start with: the TV post ahead of the car would look back at it, rule 1) to the
+     hand-back, where the TV cameras are cut in again. w (Render.pitCam): how much of the side view (0: behind the car, pulled back or
+     not; 1: the side view); a stop broken off (the race over, a rescue) fades back in 0.6 s ---------------- */
   const pcam = { w: 0, kM: 0, last: null, T: null, bd: null, sx: null, snap: false, dbg: null };
   const PC = { pull: 0.75, tau: 1.1, creep: 0.003, sw: 2, side: 2, dmin: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [0, 4], back: 2, jack: 2.2, orb: Math.PI / 180, psi0: 2 * Math.PI / 180, look: [-36, -25], fitM: 0.055, keep: Math.tan(2 * Math.PI / 180) }, PC_TAN = Math.tan(25 * Math.PI / 180);
   const smoother = (u) => u <= 0 ? 0 : u >= 1 ? 1 : u * u * u * (u * (u * 6 - 15) + 10);
@@ -9166,8 +9167,7 @@ const Render = (function () {
     // the side view and the way out: low beside the car up to the view behind it (k)
     const S = [Lp[0] + (px - Lp[0]) * k, Lp[1] + (py - Lp[1]) * k, Lp[2] + (pz - Lp[2]) * k, Lq[0] + (tx - Lq[0]) * k, Lq[1] + (ty - Lq[1]) * k, Lq[2] + (tz - Lq[2]) * k, fL + (fov0 - fL) * k];
     let R, w, f = 1, s = 1;
-    if (tv) { if (!side) { pcam.w = 0; pcam.last = null; pcam.dbg = { f: 1, s: 0, k, w: 0 }; return null; } R = S; w = 1; }   // (over a TV camera: cut in, the side view at once)
-    else {
+    {   // (the same over the replay's TV cameras: from the way in to the hand-back the pit stop's own camera has the view, from behind the car as it comes in, never a TV post, which would look back at the car from ahead of it, rule 1; the TV cameras again from the hand-back)
       // pulled back: the view behind the car scaled about the car on the ground (Kx, by, Kz) by f; less of it on the way out
       const tp = ps.pitApT != null ? Math.max(0, now - ps.pitApT) : 99, u = tp / PC.tau, cr = ps.pitApT == null || tp < 6 ? 0 : tp < 8 ? (tp - 6) * (tp - 6) / 4 : tp - 7;   // (cr: after 6 s on, ever so slowly, never still: the car held up in the lane, rule 2)
       f = 1 + (PC.pull * (1 - (1 + u) * Math.exp(-u)) + PC.creep * cr) * (1 - k);
@@ -9269,7 +9269,8 @@ const Render = (function () {
       if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); }
     }
     let pw = 0;   // (the pit stop's side view: how much of it; its haze as far off as a 30 m view's, the garages behind the car clear; its own floor)
-    if (!shot && mode === 'tv' && c.rpPit && pitOn(c)) chaseStep(c, dt, h, spd, 1, k2);   // (over a TV camera the pit stop's camera rises to a view behind the car of its own: kept up as behind the car)
+    if (!shot && mode === 'tv' && c.rpPit && pitOn(c)) { if (!cam.pitTv) { cam.pitTv = true; cam.hs = h; cam.zoom = 1; } chaseStep(c, dt, h, spd, 1, k2); }   // (over a TV camera the pit stop's camera has the view from the way in: a view behind the car of its own, kept up as behind the car, from the car's heading as it comes in)
+    else cam.pitTv = false;
     if (!shot && (mode !== 'tv' || c.rpPit)) { const vc = mode === 'tv' ? chasePose(c, x, z, baseY) : null, o = vc ? pitCine(c, cdt != null ? cdt : dt, vc[0], vc[1], vc[2], vc[3], vc[4], vc[5], vc[6], true, x, z, baseY) : pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz, camera.fov, false, x, z, baseY); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; pw = o[7]; near = o[8]; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
     if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4 - 3.4 * pw; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }

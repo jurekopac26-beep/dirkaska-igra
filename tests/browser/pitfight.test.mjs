@@ -142,7 +142,9 @@ try {
     // the hand-back: a rival 1 s behind on the circuit at 45 m/s (on the racing line, the player still in the lane)
     const o = H.rival(); if (!o) return Object.assign(out, { none: { t: R.time, lap: P.lap } }); out.hb = { t: +R.time.toFixed(2), lap: P.lap, hb: g.pitFight.hb, inPit: P.inPit, log: g.pitFight.log.length, ap: g.pitAuto.st, n: o.name, name: String(o.name).toUpperCase(), stop: P.repairN };
     H.put(o, -45, 45); out.hb.g = +H.gap(o).toFixed(2);
-    for (let k = 0; k < 40; k++) { H.step(0.25); out.st.push(Object.assign(H.pill(), { g: +H.gap(o).toFixed(2), d: +(o.dist - P.dist).toFixed(1), lane: P.inPit })); const f = g.pitFight; if (f.log.length && f.log[0].end && R.time > f.log[0].t1 + 0.5) break; }
+    // (a rival that has closed right up behind the player is held there by the AI's following, ~0.1-0.2 s, as often as it pulls out and passes: the pill's
+    // sign is under test here, not the overtaking. So once it is within 0.35 s it is put 6 m ahead, as if it had pulled out and passed: the pill must go to −, orange)
+    for (let k = 0; k < 40; k++) { const gp = out.st.length ? out.st[out.st.length - 1].g : 9; if (!out.pass && out.st.length >= 3 && gp > 0 && gp < 0.35 && !P.inPit) { H.put(o, 6, Math.max(20, P.speed), H.side()); out.pass = +R.time.toFixed(2); } H.step(0.25); out.st.push(Object.assign(H.pill(), { g: +H.gap(o).toFixed(2), d: +(o.dist - P.dist).toFixed(1), lane: P.inPit })); const f = g.pitFight; if (f.log.length && f.log[0].end && R.time > f.log[0].t1 + 0.5) break; }
     out.log = g.pitFight.log; out.out = g.pitFight.out; out.win = g.pitFight.hb;
     // one fight a stop: if the window is still open, another rival 0.5 s behind: none
     const left = out.out >= 0 ? out.out + 4 - R.time : 0; out.again = null;

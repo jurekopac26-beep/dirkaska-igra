@@ -16,7 +16,9 @@
 // 5. In English: Lap N, Swipe for all N laps →, the stop in English, Stops.
 // 6. P1A: a race's toast (a new achievement) is not shown while paused; it is held (still not there after its own time in the pause) and
 //    shown when the race goes on, for 1.5 s at least.
-// 7. A steady weather: no row, only the stops.
+// 7. A steady weather (dry all the race, rain all the race: Race.forecast is null): the row all the same, an icon for every lap after the one
+//    under way, all alike (the sun, rain), »Krog N« under each, no P and no words under it (nothing changes), the same swipe in a long race,
+//    it fits; the stops under it.
 //   node tests/browser/pauseinfo.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -40,7 +42,7 @@ const STATE = () => { const g = window.__game, wx = document.getElementById('pau
     box: { shown: !box.classList.contains('off'), hd: box.querySelector('.pi-hd').textContent, tabs: box.querySelectorAll('button, [role="tab"]').length, rows: box.querySelectorAll('.ps-l li').length },
     words: document.getElementById('s-pause').textContent.includes('Vreme do cilja') || document.getElementById('s-pause').textContent.includes('Weather to the finish') }; };
 // the icons as the forecast has them (the rule pauseInfo follows): the laps after the one under way
-const want = (s) => { const f = s.f, N = s.laps, cur = Math.min(N - 1, Math.floor(s.prog)) + 1, ch = f.k === 'rain' || f.k === 'stop', A = s.prog + (f.lo || 0), Z = s.prog + (f.hi || 0), M = (A + Z) / 2, out = [];
+const want = (s) => { const f = s.f || { k: s.rain > 0 ? 'wet' : 'dry' }, N = s.laps, cur = Math.min(N - 1, Math.floor(s.prog)) + 1, ch = f.k === 'rain' || f.k === 'stop', A = s.prog + (f.lo || 0), Z = s.prog + (f.hi || 0), M = (A + Z) / 2, out = [];
   const wetK = (r) => r >= 0.6 ? 'heavy' : 'rain';
   for (let L = cur + 1; L <= N; L++) out.push([L, !ch ? (f.k === 'wet' ? wetK(s.rain) : 'sun') : L <= A || L - 1 >= Z ? ((f.k === 'rain') === (L - 1 >= Z) ? wetK(f.k === 'rain' ? s.r1 : s.rain) : 'sun') : L - 1 <= M && M < L ? 'cloud' : (f.k === 'rain') === (L - 0.5 > M) ? 'rain' : 'part']);
   return { cur, laps: out }; };
@@ -152,12 +154,22 @@ try {
     T.check('prefers-reduced-motion: the icons without motion (no animation in the row)', s3.shown && s3.cells.length >= 1 && a2.n === 0, JSON.stringify({ cells: s3.cells.length, n: a2.n }));
     T.check('no page errors (reduced motion)', !e2.length, e2.slice(0, 5).join(' | ')); await p2.context().close(); }
 
-  // a steady weather: only the stops
-  { const { page: p3, errors: e3 } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', weather: 'dry', length: 'long' }, { width: 390, height: 844 });
+  // a steady weather: the row all the same, an icon alike for every lap to the finish; the stops under it
+  for (const [wx, kind] of [['dry', 'sun'], ['rain', 'rain']]) {
+    const { page: p3, errors: e3 } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', weather: wx, length: 'long' }, { width: 390, height: 844 });
     await startTrack(p3, 'bathurst'); await p3.evaluate(ON, [0.6, false]); await p3.evaluate(PAUSE);
-    const s4 = await p3.evaluate(STATE), f4 = await p3.evaluate(FIT);
-    T.check('a steady weather: no row, only the stops, it fits', !s4.f && !s4.shown && s4.cells.length === 0 && s4.box.shown && !f4.bad.length, JSON.stringify({ shown: s4.shown, box: s4.box, fit: f4 }));
-    T.check('no page errors (steady weather)', !e3.length, e3.slice(0, 5).join(' | ')); await p3.context().close(); }
+    const s4 = await p3.evaluate(STATE), f4 = await p3.evaluate(FIT), w4 = want(s4), ks = new Set(s4.cells.map(c => c.k));
+    T.check(`a steady weather (${wx} all the race): the row is there, an icon for every lap after the one under way (Krog ${w4.cur + 1} … Krog ${s4.laps}), all alike (${kind}), no P and no words under it, the stops under it, it fits`,
+      !s4.f && s4.shown && s4.cells.length === s4.laps - w4.cur && s4.cells.length >= 2 && s4.cells.every((c, i) => c.lbl === `Krog ${w4.laps[i][0]}` && c.k === w4.laps[i][1] && c.svg && !c.p) && ks.size === 1 && (kind === 'sun' ? ks.has('sun') : ks.has('rain') || ks.has('heavy')) && !s4.tip && s4.box.shown && !f4.bad.length,
+      JSON.stringify({ cells: s4.cells.map(c => c.lbl + ':' + c.k).join(' '), rain: s4.rain, tip: s4.tip, shown: s4.shown, box: s4.box, fit: f4 }));
+    // a long race: the same swipe as in a changing weather (the next icon cut at the edge, the line under the row, the last lap reachable)
+    await p3.evaluate(() => { window.__game.race.laps = 20; }); await p3.evaluate(PAUSE); await p3.waitForTimeout(150);
+    const s5 = await p3.evaluate(STATE), f5 = await p3.evaluate(FIT), w5 = want(s5), k5 = new Set(s5.cells.map(c => c.k));
+    T.check(`a steady weather (${wx}), 20 laps: an icon for every lap to the finish, all alike, the row swipes (the line under it says so), it fits`,
+      s5.cells.length === 20 - w5.cur && s5.cells.every((c, i) => c.lbl === `Krog ${w5.laps[i][0]}`) && k5.size === 1 && s5.long && s5.more.includes(String(s5.cells.length)) && !f5.bad.length,
+      JSON.stringify({ n: s5.cells.length, long: s5.long, more: s5.more, kinds: [...k5], fit: f5 }));
+    T.check(`no page errors (steady weather, ${wx})`, !e3.length, e3.slice(0, 5).join(' | ')); await p3.context().close();
+  }
 } finally {
   await browser.close(); await srv.close();
 }

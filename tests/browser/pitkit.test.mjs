@@ -73,7 +73,16 @@ try {
         B.forEach((b, i) => { for (let m = 0; m < 2; m++) { const o = i * per + m * 18, a0 = C[(o) * 4 + 3], a1 = C[(o + 16) * 4 + 3], w0 = (P[o * 3] - b.ox) * b.nx + (P[o * 3 + 2] - b.oz) * b.nz, w1 = (P[(o + 16) * 3] - b.ox) * b.nx + (P[(o + 16) * 3 + 2] - b.oz) * b.nz;
           if (!(a0 > 0.4 && a1 < 0.02 && w0 > b.base && w0 < b.base + 9 && w1 < w0 - 0.5)) out.bad.push('mark ' + i + '/' + m + ' ' + [a0, a1, w0 - b.base, w1 - b.base].map(x => x.toFixed(2))); } }); }
       // the exit's post
-      const E = c.exit, J = Tk.pitJ(); if (!E) out.bad.push('no exit post'); else { let d = ((Tk.query(E.x, E.z, -1, {}).s - Tk.startS) % Tk.len + Tk.len) % Tk.len; if (d > Tk.len / 2) d -= Tk.len; out.exitD = +(d - J.gb).toFixed(1); if (Math.abs(d - J.gb + 4) > 3) out.bad.push('exit post at ' + d.toFixed(1) + ' (the wall ends at ' + J.gb + ')'); }
+      const E = c.exit, J = Tk.pitJ(); if (!E) out.bad.push('no exit post'); else { let d = ((Tk.query(E.x, E.z, -1, {}).s - Tk.startS) % Tk.len + Tk.len) % Tk.len; if (d > Tk.len / 2) d -= Tk.len; out.exitD = +(d - J.gb).toFixed(1); if (Math.abs(d - J.gb + 4) > 3) out.bad.push('exit post at ' + d.toFixed(1) + ' (the wall ends at ' + J.gb + ')');
+        // its size, for the camera behind the car (P5: twice the first: the post with its housing 6.2 m, the lamps 0.72 m, the marshal 3.7 m with his hand at 3.1 m), all beside the wall's end
+        // on the lane's side (not over the circuit's edge: no more than 0.35 m past the wall's line towards it)
+        const pe = E.grp.children.find(o => o.name === 'pitExit'), PA = pe.geometry.attributes.position.array, LA = E.lm.geometry.attributes.position.array, sd = Tk.def.pit[0] < 0 ? -1 : 1, p0 = Tk.pitAt(Tk.startS + J.gb - 4), qq = {};
+        let lat = 1e9, y0 = 1e9, y1 = -1e9, m0 = 1e9, m1 = -1e9;
+        for (let i = 0; i < PA.length; i += 3) { const qd = Tk.query(PA[i], PA[i + 2], -1, qq); lat = Math.min(lat, qd.d * sd - (p0 ? p0.wall : 0)); y0 = Math.min(y0, PA[i + 1]); y1 = Math.max(y1, PA[i + 1]);
+          if (Math.hypot(PA[i] - E.hand[0], PA[i + 2] - E.hand[2]) < 1.2) { m0 = Math.min(m0, PA[i + 1]); m1 = Math.max(m1, PA[i + 1]); } }
+        const lampW = Math.hypot(LA[3] - LA[0], LA[5] - LA[2]);
+        out.exitSz = { post: +(y1 - y0).toFixed(2), marshal: +(m1 - m0).toFixed(2), hand: +(E.hand[1] - m0).toFixed(2), lamp: +lampW.toFixed(2), lat: +lat.toFixed(2) };
+        if (y1 - y0 < 5 || m1 - m0 < 3.4 || E.hand[1] - m0 < 2.9 || lampW < 0.6 || lat < -0.35) out.bad.push('exit size ' + JSON.stringify(out.exitSz)); }
       return out;
     }));
   }
@@ -83,7 +92,7 @@ try {
   T.check('95C the flags: at every garage by its left pillar, in its crew\'s colour, its driver\'s three letters (the player\'s ANA: Ana Lipnik, the profile name\'s first three, 5a), the cloth out towards the lane facing along it, ~2.6 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('72 the stack of used tyres: three by the right pillar to begin with, in two piles (2 + 1), lying flat, each up on the one below; the rest of its twelve not drawn', res.every(r => r.stack === '2+1' && !r.bad.some(b => /^tyre/.test(b))), res.map(r => `${r.id} ${r.stack} ${r.bad.filter(b => /^tyre/.test(b)).slice(0, 2).join('; ')}`).join(', '));
   T.check('48 the tyre marks: two in front of every crew\'s garage, from the box towards the lane, fading out', res.every(r => !r.bad.some(b => /mark/.test(b))), res.map(r => `${r.id} ${r.marks} ${r.bad.filter(b => /mark/.test(b)).slice(0, 2).join('; ')}`).join(', '));
-  T.check('5 and 76 the exit\'s post at the end of the pit wall on the way out', res.every(r => !r.bad.some(b => /exit/.test(b))), res.map(r => `${r.id} ${r.exitD} ${r.bad.filter(b => /exit/.test(b)).join('; ')}`).join(', '));
+  T.check('5 and 76 the exit\'s post at the end of the pit wall on the way out, twice as big as at first (the post with its housing 6.2 m, the lamps 0.72 m, the marshal 3.7 m, his hand 3.1 m up), on the lane\'s side of the wall', res.every(r => !r.bad.some(b => /exit/.test(b))), res.map(r => `${r.id} ${r.exitD} ${r.exitSz ? JSON.stringify(r.exitSz) : ''} ${r.bad.filter(b => /exit/.test(b)).join('; ')}`).join(', '));
 
   // 2. Bathurst step by step
   await startTrack(page, 'bathurst');

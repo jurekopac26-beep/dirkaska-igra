@@ -313,7 +313,9 @@ try {
       inside(g.go) && inside(g.foot) && g.card.bottom <= g.foot.top + 1 && g.card.top >= g.groups.bottom - 1 && g.drows.every(inside) && (side ? g.st.right <= g.card.left + 1 && g.st.height >= g.H - 2 : g.st.bottom <= g.card.top + 40), JSON.stringify({ st: g.st, card: g.card, go: g.go }));
     T.check(`${w}x${h}: the card shows its car and weather boxes without scrolling`, g.cardScroll <= 2, 'scroll ' + g.cardScroll);
     // the weather sheet: its four tiles (Dry, Rain, Random, Changing) in one row inside it, 44 px tall at least, no name cut
-    await click(page, 'pick-weather'); await page.waitForTimeout(300);
+    await click(page, 'pick-weather');
+    // (the sheet slides up in .25 s; measured on its way, in a slow frame, its foot is under the screen's: wait until its animation is over)
+    await page.waitForFunction(() => { const s = document.getElementById('menu-host').shadowRoot.querySelector('.sheet'); return !!s && s.getAnimations().every(a => a.playState === 'finished'); }, null, { timeout: 15000 }); await page.waitForTimeout(100);
     const ws = await ev(page, 'const b = [...root.querySelectorAll(".wopts button")], r = b.map(e => e.getBoundingClientRect()), s = root.querySelector(".sheet").getBoundingClientRect(); return { n: b.length, row: r.every(x => Math.abs(x.top - r[0].top) < 1), inside: r.every(x => x.left >= s.left - 0.5 && x.right <= s.right + 0.5) && s.top >= -0.5 && s.bottom <= innerHeight + 0.5 && s.left >= -0.5 && s.right <= innerWidth + 0.5, cut: b.filter(e => { const t = e.querySelector("b"); return t.scrollWidth > t.clientWidth + 1; }).map(e => e.textContent), h: Math.min(...r.map(x => x.height)) };');
     T.check(`${w}x${h}: the weather sheet: Dry, Rain, Random and Changing in one row inside it, 44 px tall at least, no name cut`, ws.n === 4 && ws.row && ws.inside && !ws.cut.length && ws.h >= 44, JSON.stringify(ws));
     await done(page);
