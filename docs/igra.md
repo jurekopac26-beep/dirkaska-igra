@@ -6,6 +6,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)
 - [Kje na progi si (proge po resničnih krajih)](#kje-na-progi-si-proge-po-resničnih-krajih)
 - [Fizika vožnje](#fizika-vožnje)
+- [Preizkus: tekmeci in trki](#preizkus-tekmeci-in-trki)
 - [Zelo veliko polje (avti daleč od tebe)](#zelo-veliko-polje-avti-daleč-od-tebe)
 - [Reakcija na štartu](#reakcija-na-štartu)
 - [Leteči start (odprte ceste in Nürburg)](#leteči-start-odprte-ceste-in-nürburg)
@@ -109,6 +110,33 @@ Igra ima dve fiziki; izbereš ju v Nastavitvah (**Fizika vožnje: Klasična / No
 Nova fizika je narejena po treh posnetkih arkadne dirkaške igre, ki jih je izbral uporabnik (skupaj okoli 85 minut, mestni in turni avti ter formule; brez imen, samo vožnja); meritve in primerjava z igro so v `docs/nova-fizika-meritve.md`. Na posnetkih: bočni pospešek na vrhu ovinka 1,3–2,5 g (mestni), 1,5–2,9 g (turni), formula 1,6–2,5 g; avto je proti kameri zasukan okoli 0,3° na vsako °/s vrtenja kamere (nad 50°/s okoli 21°), pretežno zaradi zdrsa; izleti na travo trajajo okoli pol sekunde; robnik nagne telo za 2–5°; pri dotiku dveh avtov skoči vrtenje za okoli 30°/s, smer se spremeni za okoli 2–4°. Tekmeci vozijo v tesnem vlaku (okoli 0,2 s narazen), 23–33 % časa je kdo ob tebi, med seboj prehitevajo okoli 10-krat na minuto, polje se razvleka počasi (2–3 s na začetku, nato 0,5–1 s na krog).
 
 **Klasična**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Ročne zavore v igri ni: ne gumba na zaslonu telefona (le **ZAVORA** in **PLIN**, enako visoka, drug ob drugem; pri upravljanju z nagibom je zavora levo), ne tipke ne gumba na igralnem plošku. Avto zadrsa z volanom, bolj pa, če v ovinku zaviraš. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj klasično; njeni stari rekordi se ne prikazujejo več).
+
+## Preizkus: tekmeci in trki
+
+V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) z devetimi vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« in »Trki med avti«: kako se vozijo tekmeci in kako se avti odbijajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vseh pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
+
+**Tekmeci** (`aiControl`, `Race`):
+
+| Vrstica | Stopnje | Kaj pomeni |
+|---|---|---|
+| Razpon hitrosti | Širok (1), Ožji (0,6), Zelo ožji (0,3) | koliko razlike je med najhitrejšim in najpočasnejšim po težavnosti; najhitrejši je vedno enak, klasična ima privzeto širok, nova 0,6 |
+| Razmik za avtom | Kot doslej, 0,5 m, 1,5 m, 3 m | prostor med odbijačema, ki ga tekmec pusti avtu pred sabo; »kot doslej« je najtesneje (vozi tik za odbijačem), nova ima privzeto 1,5 m |
+| Pritisk na avto pred sabo | Izklop, Majhen (2 %), Velik (4 %) | tik za drugim avtom vozi tekmec malo hitreje; klasična privzeto izklop, nova 2 % |
+| Prostor ob boku | 0,6 m, 0,35 m, 0,15 m | koliko prostora pusti avtu ob sebi; klasična privzeto 0,6 m, nova 0,35 m |
+| Vožnja čez robnike | Ne, do 1,2 m, do 2,2 m | na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m); klasična privzeto ne, nova do 1,2 m |
+
+**Trki** (`carCollide`, vsi stiki med avti, tudi med tekmeci):
+
+| Vrstica | Stopnje | Kaj pomeni |
+|---|---|---|
+| Slog | Težak, brez odboja | odboj 0, drgnjenje 0,8, vrtenje 1,3; avta se ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti; vrstice pod to vrstico slog preglasijo |
+| Odboj med avti | Brez, majhen (0,1), srednji (0,25), velik (0,4), zelo velik (0,6) | kolikšen del hitrosti približevanja avta ohranita kot odmik; klasična privzeto 0,1, nova 0,4 |
+| Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); klasična privzeto brez, nova 0,35. Pri klasični se delita samo hitrosti (pravega vrtenja ni) |
+| Vrtenje ob trku | Brez, majhno (0,15), manjše (0,4), večje (1,6) | koliko trk zavrti avto: pri klasični je to sunek smeri (kot največ 23°, pri večjem tudi več), ki ga avto sam ujame, pri novi pravo vrtenje; privzeto 1 |
+
+Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Nastavitev »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem.
+
+Meritve (klasična, klasična z nastavitvami nove, nova; slog Težak) so v `docs/nova-fizika-meritve.md`, razdelek 8.
 
 ## Zelo veliko polje (avti daleč od tebe)
 
@@ -329,7 +357,7 @@ Po cilju gumb **Posnetek** na zaslonu z rezultati predvaja celo dirko od štarta
 
 **Zastavica med dirko** (orodje za napake): okrogel rumen gumb levo od gumba za pavzo (ležeče in pokonci, mimo kontrol na zaslonu in zemljevida), tipka **F** (nastavljiva v Kontrolah) ali **Select** na ploščku. Igra si zapomni samo čas dirke, obvestilo pove »⚑ Zastavica N · čas – dirka teče naprej«; ni je v dirki s prijateljem. V posnetku so zastavice oranžne ⚑ na časovnici; **Zastavice (n)** jih predvaja eno za drugo, vsako od 2 s pred njo do 1 s po njej znova in znova, puščici ◀ ▶ zgoraj desno (⚑ 2/3) gresta na prejšnjo in naslednjo. Trenutek zbirke, shranjen blizu zastavice, jo nadomesti (oštevilčena zastavica namesto ⚑). Cel posnetek, časovnica, na začetek in ±5 s vrnejo cel posnetek.
 
-**Slika in pošiljanje** (orodje za napake): iz zbirke igra naredi **zbirno sliko** `napake_<proga>_<LLLLMMDD-UUMM>.png` (daljša stranica največ 1600 točk, v nastavitvah orodja tudi 2400): do trije trenutki na sliko (ležeče mreža 2 × 2 s poljem podatkov, pokonci trenutki drug ob drugem, podatki spodaj), pri vsakem slika z oznakami in oblački, vrstica »#n · čas · krog · metri od štarta« in štiri slike gibanja; v polju proga, način, vreme, različica (žig `js/game.js`), naprava (npr. Galaxy A25 · Chrome), zaslon, datum in zemljevid z oštevilčenimi mesti; spodaj besedilo za pogovor (`RRA-NAPAKE v=… proga=… način=…/… naprava=… ŠxV`, za vsak zapis vrstica `#n čas Kkrog s=…m barva »zapis«`, neoznačene zastavice z ⚑). Gumb **Deli (n)** zgoraj v posnetku ali konec posnetka po dirki odpre izbiro: **Deli zdaj** (telefon: meni Deli), na računalniku najprej **Kopiraj sliko** (za Ctrl + V), **Samo shrani sliko** (v Prenose) in **Kopiraj besedilo**; kljukica **Obdrži tudi v igri**. Zadnjih 20 slik ostane v igri (IndexedDB) z oznako neposlano ali poslano. **Nastavitve → Orodje za napake** (samo v slovenščini): orodje vklop/izklop, ob koncu posnetka (Vprašaj, Deli, Shrani), zastavica med dirko (Gumb + tipka F, Samo tipka, Izklop), velikost slike in shranjene napake (Deli, Shrani, Izbriši, Deli vse neposlane).
+**Slika in pošiljanje** (orodje za napake): iz zbirke igra naredi **zbirno sliko** `napake_<proga>_<LLLLMMDD-UUMM>.png` (daljša stranica največ 1600 točk, v nastavitvah orodja tudi 2400): do trije trenutki na sliko (ležeče mreža 2 × 2 s poljem podatkov, pokonci trenutki drug ob drugem, podatki spodaj), pri vsakem slika z oznakami in oblački, vrstica »#n · čas · krog · metri od štarta« in štiri slike gibanja; v polju proga, način, vreme, različica (žig `js/game.js`), naprava (npr. Galaxy A25 · Chrome), zaslon, datum in zemljevid z oštevilčenimi mesti; spodaj besedilo za pogovor (`RRA-NAPAKE v=… proga=… način=…/… naprava=… ŠxV`, za vsak zapis vrstica `#n čas Kkrog s=…m barva »zapis«`, neoznačene zastavice z ⚑). Gumb **Deli (n)** zgoraj v posnetku ali konec posnetka po dirki odpre izbiro: **Deli zdaj** (telefon: meni Deli), na računalniku najprej **Kopiraj sliko** (za Ctrl + V), **Samo shrani sliko** (v Prenose) in **Kopiraj besedilo**; kljukica **Obdrži tudi slike v igri**. **Zgodovina napak** (gumb Zgodovina v vrstici označevanja, v izbiri in v nastavitvah orodja): zadnjih 100 zbirk ostane v igri (IndexedDB), najnovejših 20 s polnimi slikami, starejše z malo sliko in besedilom; pri vsaki proga, datum, število trenutkov in zastavic ter stanje z barvo (Neposlano, Poslano samodejno ob deljenju ali Kopiraj sliko, Popravljeno in Zaprto ročno); dotik odpre sliko in besedilo z Deli, Shrani, Kopiraj besedilo in Izbriši. **Nastavitve → Orodje za napake** (samo v slovenščini): orodje vklop/izklop, ob koncu posnetka (Vprašaj, Deli, Shrani), zastavica med dirko (Gumb + tipka F, Samo tipka, Izklop), velikost slike in Zgodovina napak (Deli vse neposlane, Odpri; dotik na zapis ga odpre).
 
 **Najboljši trenutki:** gumb na zaslonu z rezultati (ali **★ Trenutki** v posnetku) predvaja povzetek dirke: štart, do štiri najboljše trenutke v vrstnem redu, kot so se zgodili, in zmagovalca v cilju. Igra med dirko zapisuje prehitevanja (ne v boksih in ne za varnostnim avtom) in hude nesreče; prednost imajo tvoja prehitevanja, boji za vodstvo, prehitevanja v ovinkih in izmenjave mest. Vsak trenutek kaže kamera posnetka (najprej tista, s katero si vozil; gumb za kamero jo zamenja, npr. na TV kamere, in povzetek teče naprej) z avtom, ki prehiteva (ali se je zaletel), nad gumbi piše, kaj se dogaja (npr. **PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto), komentator ga opiše. Po zadnjem se vrneš na rezultate; drug gumb (avto, na začetek) povzetek konča in posnetek teče naprej.
 
