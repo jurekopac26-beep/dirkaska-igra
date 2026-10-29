@@ -331,5 +331,185 @@
    "d": 17912,
    "sub": "the long straight"
   }
+ ],
+ "caracoles": [
+  {
+   "n": "Río Juncalillo",
+   "d": 318
+  },
+  {
+   "n": "Los Caracoles",
+   "d": 3020,
+   "sub": "29 hairpins"
+  },
+  {
+   "n": "Avalanche gallery",
+   "d": 6906
+  },
+  {
+   "n": "Portillo",
+   "d": 10770,
+   "sub": "2,866 m"
+  },
+  {
+   "n": "Laguna del Inca",
+   "ll": [
+    -32.835,
+    -70.137
+   ],
+   "snap": "water",
+   "r": 1500
+  }
+ ],
+ "katu": [
+  {
+   "n": "Katu-Jaryk Pass",
+   "d": 500,
+   "sub": "1,206 m"
+  },
+  {
+   "n": "Seven hairpins",
+   "d": 2100
+  },
+  {
+   "n": "Chulyshman",
+   "ll": [
+    50.9,
+    88.23
+   ],
+   "snap": "water",
+   "r": 2500,
+   "sub": "river"
+  },
+  {
+   "n": "Chulyshman valley",
+   "d": 4480,
+   "sub": "684 m"
+  }
+ ],
+ "harju": [
+  {
+   "n": "Start",
+   "d": 0
+  },
+  {
+   "n": "Harju ridge",
+   "d": 775,
+   "sub": "water tower"
+  },
+  {
+   "n": "Harju stadium",
+   "d": 1034
+  },
+  {
+   "n": "Jyväskylä",
+   "ll": [
+    62.2415,
+    25.747
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "Finish",
+   "d": 2427
+  }
+ ],
+ "chapman": [
+  {
+   "n": "Hout Bay",
+   "ll": [
+    -34.046,
+    18.357
+   ],
+   "snap": "town",
+   "r": 1500
+  },
+  {
+   "n": "East Fort",
+   "d": 847
+  },
+  {
+   "n": "Toll plaza",
+   "d": 2225
+  },
+  {
+   "n": "The Sentinel",
+   "ll": [
+    -34.059,
+    18.346
+   ],
+   "snap": "peak",
+   "r": 600
+  },
+  {
+   "n": "Chapman's Peak",
+   "d": 4975,
+   "sub": "153 m"
+  }
+ ],
+ "bigsur": [
+  {
+   "n": "Rocky Creek Bridge",
+   "d": 989
+  },
+  {
+   "n": "Castle Rock",
+   "d": 1539,
+   "sub": "viewpoint"
+  },
+  {
+   "n": "Bixby Creek Bridge",
+   "d": 2021
+  },
+  {
+   "n": "Hurricane Point",
+   "d": 3929,
+   "sub": "171 m"
+  }
+ ],
+ "tianmen": [
+  {
+   "n": "Turn 54",
+   "d": 72,
+   "sub": "736 m"
+  },
+  {
+   "n": "Hairpin ladder",
+   "d": 1600
+  },
+  {
+   "n": "The loop",
+   "d": 3931
+  },
+  {
+   "n": "Tianmen Cave",
+   "d": 4825,
+   "sub": "1,218 m"
+  }
+ ],
+ "uncompahgre": [
+  {
+   "n": "Ouray",
+   "ll": [
+    38.0228,
+    -107.6714
+   ],
+   "snap": "town",
+   "r": 1500
+  },
+  {
+   "n": "Bear Creek Falls",
+   "d": 986
+  },
+  {
+   "n": "Uncompahgre Gorge",
+   "d": 2000
+  },
+  {
+   "n": "Riverside Snowshed",
+   "d": 4858,
+   "sub": "2,860 m"
+  }
  ]
 }

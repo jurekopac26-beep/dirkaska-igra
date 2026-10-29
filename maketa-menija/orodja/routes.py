@@ -3,6 +3,7 @@
 # and the places. A track without its map from above yet is left out; one without its flyover yet goes without it. (The intro before
 # the race, the helicopter's flight: heli.mjs, intro_data.py, intro_assets.py.)
 import json, math, os, re, shutil, subprocess, sys
+from geo_lib import js_path, js_read
 from PIL import Image, ImageEnhance
 
 RAW, SITE = 'raw/maps', sys.argv[1] if len(sys.argv) > 1 else '..'
@@ -12,8 +13,10 @@ except ImportError: FF0 = 'ffmpeg'
 FF = os.environ.get('FFMPEG', FF0)
 OUT = os.path.join(SITE, 'assets', 'maps')
 os.makedirs(OUT, exist_ok=True)
-TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring']
-ROADS = ('vrsic', 'pikes')   # the open roads (the others' corners, by number, name the places of a track that has no names of its own)
+TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring',
+          'caracoles', 'katu', 'harju', 'chapman', 'bigsur', 'tianmen', 'uncompahgre']
+ONLY = os.environ.get('ONLY', '').split(',') if os.environ.get('ONLY') else None   # (only these again; the others kept as routes.js has them)
+ROADS = ('vrsic', 'pikes', 'caracoles', 'katu', 'harju', 'chapman', 'bigsur', 'tianmen', 'uncompahgre')   # the open roads (the others' corners, by number, name the places of a track that has no names of its own)
 # the game's own names of the places along a track, in English where they are Slovenian words (proper names stay)
 EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight',
       'Zadnji ovinek': 'Last Corner', 'Predor': 'Tunnel', 'tržnica': 'Market', 'mestni trg': 'Town Square', 'stari trg': 'Old Square',
@@ -21,14 +24,23 @@ EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under
 # the game's names of corners that are brands, people or a circuit's famous (some registered) corner names: plain English words in the
 # mockup instead, one name for a place everywhere (the game itself is not changed); its villages, mountains, streams and fields stay
 NEUTRAL = {"200R": "Fast Right", "Spoon": "Double Left", "130R": "Fast Left", "La Source": "First Hairpin", "Eau Rouge": "Steep Climb", "Raidillon": "Crest", "Kemmel": "Long Straight", "Les Combes": "Hilltop Chicane", "Malmedy": "Downhill Right", "Bruxelles": "Right Hairpin", "Pouhon": "Double Left", "Fagnes": "Forest Esses", "Campus": "Chicane", "Blanchimont": "Fast Left", "Bus Stop": "Last Chicane", "Beau Rivage": "Uphill Run", "Tabac": "Harbour Left", "Piscine": "Pool Chicane", "Karussell": "Banked Hairpin", "Kleines Karussell": "Small Banked Turn", "Schwalbenschwanz": "Fast Double Right", "Fuchsröhre": "Downhill Dip", "Kesselchen": "Valley Climb", "Eiskurve": "Cold Corner", "Brünnchen": "Spring Bend", "Pflanzgarten": "Big Jump", "Sprunghügel": "Small Jump", "Wippermann": "Twisty Section", "Antoniusbuche": "Long Straight End", "Naarajärvi": "Lake Naarajärvi", "Jasna": "Lake Jasna", "Eriški most": "Erika Bridge", "Dunlop": "Uphill Left", "Degner": "Double Right", "Casio Triangle": "Last Chicane", "Lasnica Fairmont": "Lasnica Grand", "Fairmont Hairpin": "Grand Hairpin", "Anthony Noghès": "Last Corner", "La Rascasse": "Harbour Corner", "Mirabeau": "Downhill Right", "Massenet": "Long Left", "Paul Frère": "Long Right", "Speaker's Corner": "Short Left", "Stefan-Bellof-S": "Fast Esses", "Hansen's Corner": "Reservoir Bend", "Amazon": "Fast Crest", "Mutanen": "Farm Bend"}
-SUBST = [["Ruska kapelica", "Russian Chapel"], ["Ruski križ", "Russian Cross"]]
-def neutral(n):
+SUBST = [["Ruska kapelica", "Russian Chapel"], ["Ruski križ", "Russian Cross"],
+         # (the later tracks: the game's Slovene words in English, a person's name made a plain one)
+         ["Galería", "Avalanche Gallery"], ["Prelaz Katu-Jaryk", "Katu-Jaryk Pass"], ["Prečka nad Čulišmanom", "Traverse above the Chulyshman"],
+         ["Dolina Čulišmana", "Chulyshman Valley"], ["Razgledišče Castle Rock", "Castle Rock Viewpoint"], ["Razgledišče", "Viewpoint"],
+         ["Cestninska postaja", "Toll Plaza"], ["Most Rocky Creek", "Rocky Creek Bridge"], ["Most Bixby Creek", "Bixby Creek Bridge"],
+         ["Tianmenska jama", "Tianmen Cave"], ["Zanka", "Loop"], ["Lasse Lammen puu", "Old Pine"],
+         ["Soteska Uncompahgre", "Uncompahgre Gorge"], ["Slap Bear Creek", "Bear Creek Falls"], ["Plaz Mother Cline", "Rock Slide"],
+         ["Galerija Riverside", "Riverside Snowshed"], ["Cilj · ", "Finish · "]]
+NEW_EN = [["Predor", "Tunnel"], ["Serpentina ", "Hairpin "], ["Ovinek ", "Turn "], ["Curva ", "Turn "]]   # (only on the later tracks: the first ones keep their places as they were)
+DROP = {"Lyseon lukio", "Keski-Suomen talo", "Normaalikoulu"}   # (schools and a public building: not shown)
+def neutral(n, t=None):
     n = NEUTRAL.get(n, n)
-    for a, b in SUBST: n = n.replace(a, b)
+    for a, b in SUBST + (NEW_EN if t in TRACKS[11:] else []): n = n.replace(a, b)
     return re.sub(r'(\d)\.(\d{3}) m\b', r'\1,\2 m', n)   # (1.158 m, the Slovene way: 1,158 m)
 def en(n):
-    m = re.match(r'(Zavoj|Serpentina) (\d+)(.*)$', n)
-    if m: return ('Turn ' if m.group(1) == 'Zavoj' else 'Hairpin ') + m.group(2) + m.group(3)
+    m = re.match(r'(Zavoj|Serpentina|Curva) (\d+)(.*)$', n)
+    if m: return ('Hairpin ' if m.group(1) == 'Serpentina' else 'Turn ') + m.group(2) + m.group(3)
     if n.startswith('Lasnica '): return n[8:] + ' Hairpin'
     return EN.get(n, n)
 
@@ -70,8 +82,9 @@ def pace(route, d, mpp):   # the corners of a track from its route on the top ma
         else: i += 1
     return out
 
-data = {}
+data = js_read(SITE, 'routes.js', 'window.ROUTES')
 for t in TRACKS:
+    if ONLY and t not in ONLY: continue
     R = {}
     if not os.path.exists(os.path.join(RAW, 'top-%s.json' % t)): print(t, 'no map yet'); continue
     # the map from above (map version 2): the land fills it (no transparency)
@@ -90,7 +103,7 @@ for t in TRACKS:
         s = L * k / 120; i = min(len(d) - 1, max(0, next((q for q in range(len(d)) if d[q] >= s), len(d) - 1)))
         prof.append(round(h[i], 1))
     R['prof'] = prof
-    R['places'] = [[neutral(q['n']), round(q['d'])] for q in J['names'] if q.get('hud', True)]
+    R['places'] = [[neutral(q['n'], t), round(q['d'])] for q in J['names'] if q.get('hud', True) and q['n'] not in DROP]
     # the places the flyover's corner shows (the menu's own list in data.js comes first): the game's names, or the corners by number
     H = [[0, 'Start' if R['open'] else 'Start · finish']] + [[max(1, q[1] - 40), en(q[0])] for q in R['places']]
     if len(H) == 1 and t not in ROADS: H += [[max(1, round(c[0]) - 40), 'Turn %d' % (k + 1)] for k, c in enumerate(pace(J['route'], J['d'], J['mPerPx']))]
@@ -100,7 +113,7 @@ for t in TRACKS:
     # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
     fj = os.path.join(RAW, 'fly-%s.json' % t)
     if os.path.exists(fj):
-        F = json.load(open(fj)); F['places'] = [neutral(x) for x in F['places']]
+        F = json.load(open(fj)); F['places'] = [neutral(x, t) for x in F['places']]
         src, dst = os.path.join(RAW, 'fly-%s.webm' % t), os.path.join(OUT, 'fly-%s.webm' % t)
         if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
             if F['W'] <= 720: shutil.copyfile(src, dst)   # drawn at the menu's size already
@@ -118,7 +131,8 @@ for t in TRACKS:
     data[t] = R
     print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R)
 
-with open(os.path.join(SITE, 'routes.js'), 'w') as f:
+data = {t: data[t] for t in TRACKS if t in data}   # (in the menu's order)
+with open(js_path(SITE, 'routes.js'), 'w') as f:
     f.write('/* The tracks: routes over the maps, heights, places and flyover frames (made by routes.py, do not edit). */\n')
     f.write('window.ROUTES = ' + json.dumps(data, separators=(',', ':'), ensure_ascii=False) + ';\n')
-print('routes.js', os.path.getsize(os.path.join(SITE, 'routes.js')) // 1024, 'KB')
+print('routes.js', os.path.getsize(js_path(SITE, 'routes.js')) // 1024, 'KB')

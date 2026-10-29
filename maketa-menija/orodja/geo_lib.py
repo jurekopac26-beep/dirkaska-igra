@@ -56,6 +56,30 @@ class DEM:
         a = self.a
         return (a[j, i] * (1 - fx) + a[j, i + 1] * fx) * (1 - fy) + (a[j + 1, i] * (1 - fx) + a[j + 1, i + 1] * fx) * fy
 
+class CopDEM:
+    """Copernicus DEM GLO-30 (© DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the
+    European Union and ESA; on AWS Open Data) over a lat/lon box, the same interface as DEM: for a track whose heights were taken from it
+    and whose steep land the terrain tiles have smoothed (the cliffs of Tianmen)."""
+    def __init__(self, lat0, lon0, lat1, lon1, z=None):
+        import rasterio
+        from rasterio.windows import from_bounds
+        la0, la1, lo0, lo1 = min(lat0, lat1), max(lat0, lat1), min(lon0, lon1), max(lon0, lon1)
+        if int(math.floor(la0)) != int(math.floor(la1)) or int(math.floor(lo0)) != int(math.floor(lo1)): raise ValueError('CopDEM: one 1-degree tile only')
+        la, lo = int(math.floor(la0)), int(math.floor(lo0))
+        name = 'Copernicus_DSM_COG_10_%s%02d_00_%s%03d_00_DEM' % ('N' if la >= 0 else 'S', abs(la), 'E' if lo >= 0 else 'W', abs(lo))
+        path = os.path.join(RAW, 'cop', name + '.tif')
+        fetch('https://copernicus-dem-30m.s3.amazonaws.com/%s/%s.tif' % (name, name), path)
+        with rasterio.open(path) as r:
+            w = from_bounds(lo0, la0, lo1, la1, r.transform).round_offsets().round_lengths()
+            self.a = r.read(1, window=w).astype(np.float64); t = r.window_transform(w)
+        self.lon0, self.dlon, self.lat0, self.dlat = t.c, t.a, t.f, t.e
+    def sample(self, lat, lon):
+        lat = np.asarray(lat, dtype=np.float64); lon = np.asarray(lon, dtype=np.float64)
+        px = (lon - self.lon0) / self.dlon - 0.5; py = (lat - self.lat0) / self.dlat - 0.5
+        H, W = self.a.shape; px = np.clip(px, 0, W - 1.001); py = np.clip(py, 0, H - 1.001)
+        i = np.floor(px).astype(int); j = np.floor(py).astype(int); fx = px - i; fy = py - j; a = self.a
+        return (a[j, i] * (1 - fx) + a[j, i + 1] * fx) * (1 - fy) + (a[j + 1, i] * (1 - fx) + a[j + 1, i + 1] * fx) * fy
+
 # ---------------- the game's flat world <-> the globe ----------------
 A_WGS, F_WGS = 6378137.0, 1 / 298.257223563
 E2 = F_WGS * (2 - F_WGS)
@@ -151,3 +175,13 @@ def hillshade(h, mpp, az=315, alt=42, z=1.0):
 def grid_ll(lat0, lon0, lat1, lon1, W, H):   # the lat/lon of each cell's centre of a W x H grid, north at the top
     lon = lon0 + (np.arange(W) + 0.5) / W * (lon1 - lon0); lat = lat1 - (np.arange(H) + 0.5) / H * (lat1 - lat0)
     return np.meshgrid(lat, lon, indexing='ij')
+
+# ---------------- the generated js files (routes.js, intro-data.js, geo.js) ----------------
+def js_path(site, name):   # the game keeps them in js/ (the mockup in its root)
+    return os.path.join(site, 'js', name) if os.path.isdir(os.path.join(site, 'js')) else os.path.join(site, name)
+
+def js_read(site, name, var):   # the object a generated js file holds ({} if none yet): the tracks made before are kept when only some are made again
+    p = js_path(site, name)
+    if not os.path.exists(p): return {}
+    s = open(p, encoding='utf-8').read(); i = s.index('{', s.index(var)); j = s.rindex('}')
+    return json.loads(s[i:j + 1])

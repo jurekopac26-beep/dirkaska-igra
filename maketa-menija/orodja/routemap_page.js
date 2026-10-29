@@ -16,6 +16,17 @@ window.RM = (function () {
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, sunOff: [-86, 78, 52] },
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62 },
   };
+  // (a theme not listed above: its lighting read from the game's own render.js, THEMES and the THEMES.<id> = {…} lines after it)
+  (function () {
+    try {
+      const x = new XMLHttpRequest(); x.open('GET', '/js/render.js', false); x.send(); const s = x.responseText, i = s.indexOf('const THEMES = {');
+      if (i < 0) return;
+      let j = s.indexOf('{', i), d = 0, k = j; for (; k < s.length; k++) { if (s[k] === '{') d++; else if (s[k] === '}' && !--d) break; }
+      const G = (new Function('return ' + s.slice(j, k + 1)))();
+      for (const m of s.slice(k).matchAll(/THEMES\.(\w+) = (\{[^\n]*?\});/g)) G[m[1]] = (new Function('return ' + m[2]))();
+      for (const id in G) if (!THEMES[id]) THEMES[id] = G[id];
+    } catch (e) { console.error('themes from render.js: ' + e.message); }
+  })();
   const SEASONS = { vrsic: 'autumn' };
   let B = null, R = null, CV = null;
   function build(id) {

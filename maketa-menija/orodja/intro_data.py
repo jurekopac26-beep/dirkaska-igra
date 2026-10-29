@@ -11,9 +11,10 @@ import json, math, os, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-from geo_lib import RAW, HERE, Geo, track
+from geo_lib import RAW, HERE, Geo, track, js_path, js_read
 
 SITE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..')
+ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None   # (only these again; the others kept as intro-data.js has them)
 MAPS = os.path.join(HERE, 'raw', 'maps')
 P = json.load(open(os.path.join(RAW, 'places.json')))['tracks']
 LM = json.load(open(os.path.join(HERE, 'landmarks.json')))
@@ -35,8 +36,9 @@ def fit_similarity(src, dst):   # dst ~ k R src + t (a proper turn: no mirror); 
     res = dst - (np.stack([A * src[:, 0] - B * src[:, 1], B * src[:, 0] + A * src[:, 1]], 1) + t)
     return float(A), float(B), float(t[0]), float(t[1]), float(np.sqrt((res ** 2).sum(1)).max())
 
-out = {}
+out = js_read(SITE, 'intro-data.js', 'window.INTRO') if ONLY else {}
 for tid, pl in P.items():
+    if ONLY and tid not in ONLY: continue
     T = track(tid); pts = np.array(T['pts'], dtype=np.float64); G = Geo(pl['lat0'], pl['lon0'], pl['rot']); off = pl['offset']
     rd = lambda d: at_s(T, pts, T['startS'] + d)
     run = T['raceLen'] if T['open'] else T['len']
@@ -138,7 +140,8 @@ for tid, pl in P.items():
         json.dump(o, open(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid), 'w'), separators=(',', ':'), ensure_ascii=False)
         print(tid, 'heli path', len(C), 'frames,', os.path.getsize(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid)) // 1024, 'KB')
 
-with open(os.path.join(SITE, 'intro-data.js'), 'w') as f:
+out = {t: out[t] for t in P if t in out}   # (in places.json's order)
+with open(js_path(SITE, 'intro-data.js'), 'w') as f:
     f.write('/* The intro before a race: each track\'s map placed on the Earth, its country (flag, music), its summit\'s name and the places marked over\n   the helicopter\'s flight (made by intro_data.py from landmarks.json, do not edit). */\n')
     f.write('window.INTRO = ' + json.dumps(out, separators=(',', ':'), ensure_ascii=False) + ';\n')
-print('intro-data.js', os.path.getsize(os.path.join(SITE, 'intro-data.js')) // 1024, 'KB')
+print('intro-data.js', os.path.getsize(js_path(SITE, 'intro-data.js')) // 1024, 'KB')

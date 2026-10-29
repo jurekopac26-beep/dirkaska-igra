@@ -4,7 +4,7 @@
 # Usage: python3 geo_match.py [vrsic,spa]  -> raw/geo/match.json (lat0, lon0, rot, the height offset, the fit)
 import json, math, os, sys
 import numpy as np
-from geo_lib import DEM, Geo, RAW, track, radii
+from geo_lib import DEM, CopDEM, Geo, RAW, track, radii
 
 # first guesses: the origin of each world (lat, lon) and how far round it to look (m)
 GUESS = {
@@ -14,17 +14,36 @@ GUESS = {
     'suzuka': (34.8431, 136.5406, 1500),
     'spa': (50.4372, 5.9714, 1500),
     'nring': (50.3397, 6.9496, 2000),       # T13
+    # (the later tracks: a known point of the road, 'start' or 'finish' of the race, or the world's 'origin', and how far round it to look;
+    # their worlds are OpenStreetMap's projected lines, x east and z south, so the first guess of the turn is 0)
+    'caracoles': ('finish', -32.8357, -70.1296, 4000),   # Portillo, by the Laguna del Inca
+    'katu': ('start', 50.9128, 88.2050, 4000),           # the plateau road above the canyon
+    'harju': ('origin', 62.243, 25.745, 400),            # (the track file's origin)
+    'chapman': ('start', -34.0487, 18.3619, 1500),       # the end of Main Road in Hout Bay
+    'bigsur': ('finish', 36.3600, -121.9010, 2500),      # Hurricane Point
+    'tianmen': ('finish', 29.0495, 110.4826, 3000),      # the platform under the cave
+    'uncompahgre': ('start', 38.0080, -107.6631, 800),
 }
+COP = {'tianmen'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
+def origin_guess(T, g):   # a guess given at the race's start or finish: the world's origin that puts that point there (no turn)
+    if not isinstance(g[0], str): return g
+    at, lat, lon, R = g
+    if at == 'origin': return (lat, lon, R)
+    P = np.array(T['pts'], dtype=np.float64); n = len(P); si = min(n - 1, int(round(T['startS'] / T['step']))); fi = min(n - 1, int(round(T['finishS'] / T['step']))) if T['open'] else si
+    x, z = P[si if at == 'start' else fi, :2]; M, N = radii(lat)
+    return (lat + math.degrees(z / M), lon - math.degrees(x / (N * math.cos(math.radians(lat)))), R)
+
 def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
+    coarse = max(coarse, R / 60)   # (a wide search: coarser first)
     P = np.array(T['pts'], dtype=np.float64); x, zz, y = P[:, 0], P[:, 1], P[:, 2]
     keep = np.ones(len(P), bool); n = len(P)
     for a, b in SKIP.get(T['id'], []): keep[int(a * n):int(b * n)] = False
     x, zz, y = x[keep], zz[keep], y[keep]
     ext = max(np.abs(x).max(), np.abs(zz).max()) + R + 400
     M, N = radii(g0[0]); dlat = math.degrees(ext / M); dlon = math.degrees(ext / (N * math.cos(math.radians(g0[0]))))
-    dem = DEM(g0[0] - dlat, g0[1] - dlon, g0[0] + dlat, g0[1] + dlon, z)
+    dem = (CopDEM if T['id'] in COP else DEM)(g0[0] - dlat, g0[1] - dlon, g0[0] + dlat, g0[1] + dlon, z)
     def score(lat0, lon0, rot):
         G = Geo(lat0, lon0, rot); la, lo = G.to_ll(x, zz); h = dem.sample(la, lo); d = h - y; c = np.median(d)
         return np.mean(np.abs(d - c)), c
@@ -56,7 +75,7 @@ out_p = os.path.join(RAW, 'match.json')
 out = json.load(open(out_p)) if os.path.exists(out_p) else {}
 ids = sys.argv[1].split(',') if len(sys.argv) > 1 else list(GUESS)
 for tid in ids:
-    T = track(tid); g = GUESS[tid]
+    T = track(tid); g = origin_guess(T, GUESS[tid])
     r = fit(T, g[:2], g[2])
     out[tid] = r; print(tid, json.dumps(r), flush=True)
     json.dump(out, open(out_p, 'w'), indent=1)

@@ -21,9 +21,18 @@ CFG = {
     'jezero': dict(kind='invented', c=(46.387448, 14.168398), start='Lesce', country='Slovenia', region='Upper Carniola', l1='alps'),
     'riviera': dict(kind='invented', o=(45.492821, 13.541245, 154.0), start='Piran', country='Slovenia', region='Slovenian coast', l1='alps'),
     'gora': dict(kind='invented', c=(46.3420, 13.9300), start='Pokljuka', country='Slovenia', region='Julian Alps', l1='alps'),
+    # (the later tracks: all real roads and circuits at real scale, placed by geo_match.py)
+    'caracoles': dict(kind='real', start='Juncalillo', finish='Portillo', country='Chile', region='Andes', l1='andes'),
+    'katu': dict(kind='real', start='Ulagan plateau', finish='Chulyshman valley', country='Russia', region='Altai', l1='altai'),
+    'harju': dict(kind='real', start='Jyväskylä', finish='Harju', country='Finland', region='Central Finland', l1='finland'),
+    'chapman': dict(kind='real', start='Hout Bay', finish="Chapman's Peak", country='South Africa', region='Cape Peninsula', l1='cape'),
+    'bigsur': dict(kind='real', start='Rocky Creek', finish='Hurricane Point', country='USA', region='California', l1='california'),
+    'tianmen': dict(kind='real', start='Tianmen Mountain', finish='Tianmen Cave', country='China', region='Hunan', l1='hunan'),
+    'uncompahgre': dict(kind='real', start='Ouray', finish='Uncompahgre Gorge', country='USA', region='Colorado', l1='colorado'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
-L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800)}
+L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
+      'andes': (-32.8, -70.1, 800), 'altai': (50.9, 88.2, 800), 'cape': (-34.1, 18.5, 800), 'california': (35.0, -119.4, 800), 'hunan': (29.05, 110.48, 800)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

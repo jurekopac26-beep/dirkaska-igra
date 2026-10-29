@@ -9,7 +9,7 @@ import numpy as np
 import shapefile
 from PIL import Image
 from shapely.geometry import shape, LineString, MultiLineString, Polygon, MultiPolygon
-from geo_lib import RAW, HERE, BM_PATH, Geo, track, radii
+from geo_lib import RAW, HERE, BM_PATH, Geo, track, radii, js_path
 from geo_paint import box_km, bm_palette, mix, paint, heights, save_heights, DETAIL, SEASON
 
 SITE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..')
@@ -34,6 +34,7 @@ def region_pal(r):
 
 if 'l1' in ONLY:
     for r, L in P['l1'].items():
+        if IDS and (r in G['l1'] or not any(P['tracks'][t]['l1'] == r for t in IDS if t in P['tracks'])): continue   # (only the new tracks' new regions)
         b = box_km(L['lat'], L['lon'], L['km']); pal = {k: tuple(min(255, c * 1.08) for c in v) for k, v in region_pal(r).items()}
         img, h, lc = paint(b, 2048, pal, 8, zfac=3.2, detail=0.0, lc_res=2048, water_fix=False)
         G['l1'][r] = {'box': rbox(b), 'img': 'assets/geo/l1-%s.webp' % r}
@@ -82,6 +83,7 @@ if 'vectors' in ONLY:
     G['borders'] = B
     # the countries: name, where to write it, how important (Natural Earth's label rank), and the outline of the ones with a track
     C, OUTL = [], {}
+    BIG = {'USA': 0.04, 'Russia': 0.08, 'China': 0.06, 'Canada': 0.08, 'Australia': 0.05, 'Brazil': 0.05, 'Chile': 0.04}   # (the big countries: coarser outlines, no small islands)
     keep = {t['names']['country'] for t in P['tracks'].values()}
     SHORT = {'United States of America': 'USA', "People's Republic of China": 'China', 'Democratic Republic of the Congo': 'DR Congo', 'Republic of the Congo': 'Congo',
              'The Bahamas': 'Bahamas', 'Federated States of Micronesia': 'Micronesia'}
@@ -89,8 +91,8 @@ if 'vectors' in ONLY:
         nm = rec.get('NAME_EN') or rec['NAME']; nm = SHORT.get(nm, nm)
         if rec['TYPE'] in ('Dependency', 'Lease') or (rec['TYPE'] == 'Indeterminate' and nm != 'Antarctica'): continue   # (no bases, leases and small dependencies)
         C.append([nm, round(rec['LABEL_X'], 3), round(rec['LABEL_Y'], 3), int(rec['LABELRANK']), round(float(rec.get('MIN_LABEL') or 0), 1)])
-        if nm in keep and nm != 'USA': OUTL[nm] = lines(g, 0.0005 if nm == 'Monaco' else 0.01, 4 if nm == 'Monaco' else 3)
-        if nm == 'USA': OUTL['USA'] = [l for l in lines(g, 0.04, 2) if len(l) >= 40]   # (the 48 states and Alaska, coarser: it is drawn from far up; no small islands)
+        if nm in keep and nm not in BIG: OUTL[nm] = lines(g, 0.0005 if nm == 'Monaco' else 0.01, 4 if nm == 'Monaco' else 3)
+        if nm in keep and nm in BIG: OUTL[nm] = [l for l in lines(g, BIG[nm], 2) if len(l) >= 40]   # (the 48 states and Alaska, coarser: it is drawn from far up; no small islands)
     for rec, g in read('ne_50m_admin_1_states_provinces'):
         if rec['name'] == 'Colorado': OUTL['Colorado'] = lines(g, 0.01); C.append(['Colorado', round(rec['longitude'], 3), round(rec['latitude'], 3), 6, 4.0])
     G['countries'] = C; G['outlines'] = OUTL
@@ -123,7 +125,7 @@ if 'vectors' in ONLY:
 
 # (the globe shows only the two countries of the journey: their outlines and names; the borders, towns and areas stay in geo.json)
 OUT_KEYS = ('tracks', 'l1', 'countries', 'outlines')
-with open(os.path.join(SITE, 'geo.js'), 'w') as f:
+with open(js_path(SITE, 'geo.js'), 'w') as f:
     f.write('/* The Earth for the journey before a race: where each track is, the land round it, the countries\' outlines and names (made by geo_build.py, do not edit). */\n')
     f.write('window.GEO = ' + json.dumps({k: G[k] for k in OUT_KEYS if k in G}, separators=(',', ':'), ensure_ascii=False) + ';\n')
-print('geo.js', os.path.getsize(os.path.join(SITE, 'geo.js')) // 1024, 'KB')
+print('geo.js', os.path.getsize(js_path(SITE, 'geo.js')) // 1024, 'KB')

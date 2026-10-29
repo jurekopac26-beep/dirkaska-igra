@@ -258,5 +258,231 @@
     }
    ]
   }
+ ],
+ [
+  "caracoles",
+  {
+   "kbps": 700,
+   "speed": 400,
+   "back": 520,
+   "up": 328,
+   "ahead": 260,
+   "fogNear": 920,
+   "fogFar": 3400,
+   "places": [
+    {
+     "n": "Río Juncalillo",
+     "d": 318
+    },
+    {
+     "n": "Turn 10",
+     "d": 3020
+    },
+    {
+     "n": "Avalanche Gallery",
+     "d": 6906
+    },
+    {
+     "n": "Turn 29",
+     "d": 9600
+    }
+   ],
+   "alt": [
+    2200,
+    2866
+   ]
+  }
+ ],
+ [
+  "katu",
+  {
+   "kbps": 700,
+   "speed": 190,
+   "back": 247,
+   "up": 156,
+   "ahead": 124,
+   "fogNear": 437,
+   "fogFar": 1615,
+   "places": [
+    {
+     "n": "Katu-Jaryk Pass",
+     "d": 500
+    },
+    {
+     "n": "Hairpin 3",
+     "d": 1884
+    },
+    {
+     "n": "Hairpin 7",
+     "d": 2810
+    },
+    {
+     "n": "Traverse above the Chulyshman",
+     "d": 3260
+    }
+   ],
+   "alt": [
+    1242,
+    683
+   ]
+  }
+ ],
+ [
+  "harju",
+  {
+   "kbps": 700,
+   "speed": 110,
+   "back": 143,
+   "up": 90,
+   "ahead": 72,
+   "fogNear": 253,
+   "fogFar": 935,
+   "places": [
+    {
+     "n": "Kilpisenkatu",
+     "d": 112
+    },
+    {
+     "n": "Neron portaat",
+     "d": 324
+    },
+    {
+     "n": "Vesilinna",
+     "d": 775
+    },
+    {
+     "n": "Harjun stadion",
+     "d": 1034
+    },
+    {
+     "n": "Norssin kulma",
+     "d": 2427
+    }
+   ]
+  }
+ ],
+ [
+  "chapman",
+  {
+   "kbps": 700,
+   "speed": 200,
+   "back": 260,
+   "up": 164,
+   "ahead": 130,
+   "fogNear": 460,
+   "fogFar": 1700,
+   "places": [
+    {
+     "n": "East Fort",
+     "d": 847
+    },
+    {
+     "n": "Toll Plaza",
+     "d": 2225
+    },
+    {
+     "n": "The Sentinel",
+     "d": 3214
+    }
+   ],
+   "alt": [
+    19,
+    153
+   ]
+  }
+ ],
+ [
+  "bigsur",
+  {
+   "kbps": 700,
+   "speed": 165,
+   "back": 214,
+   "up": 135,
+   "ahead": 107,
+   "fogNear": 379,
+   "fogFar": 1402,
+   "places": [
+    {
+     "n": "Rocky Creek Bridge",
+     "d": 989
+    },
+    {
+     "n": "Castle Rock Viewpoint",
+     "d": 1539
+    },
+    {
+     "n": "Bixby Creek Bridge",
+     "d": 2021
+    }
+   ],
+   "alt": [
+    71,
+    171
+   ]
+  }
+ ],
+ [
+  "tianmen",
+  {
+   "kbps": 700,
+   "speed": 190,
+   "back": 247,
+   "up": 156,
+   "ahead": 124,
+   "fogNear": 437,
+   "fogFar": 1615,
+   "places": [
+    {
+     "n": "Turn 54",
+     "d": 72
+    },
+    {
+     "n": "Turn 70",
+     "d": 1600
+    },
+    {
+     "n": "Loop",
+     "d": 3931
+    }
+   ],
+   "alt": [
+    729,
+    1218
+   ]
+  }
+ ],
+ [
+  "uncompahgre",
+  {
+   "kbps": 700,
+   "speed": 190,
+   "back": 247,
+   "up": 156,
+   "ahead": 124,
+   "fogNear": 437,
+   "fogFar": 1615,
+   "places": [
+    {
+     "n": "Tunnel",
+     "d": 523
+    },
+    {
+     "n": "Bear Creek Falls",
+     "d": 986
+    },
+    {
+     "n": "Alpine Loop",
+     "d": 2643
+    },
+    {
+     "n": "Riverside Snowshed",
+     "d": 4858
+    }
+   ],
+   "alt": [
+    2543,
+    2860
+   ]
+  }
  ]
 ]

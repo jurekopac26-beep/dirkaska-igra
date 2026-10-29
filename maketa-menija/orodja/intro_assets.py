@@ -5,7 +5,9 @@ import os, sys, subprocess
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); SITE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..')
 MAPS, MUS = os.path.join(HERE, 'raw', 'maps'), os.path.join(HERE, 'glasba', 'out')
-FF = '/usr/local/lib/python3.11/dist-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v7.0.2'
+try:
+    import imageio_ffmpeg; FF = imageio_ffmpeg.get_ffmpeg_exe()
+except ImportError: FF = 'ffmpeg'
 newer = lambda a, b: os.path.exists(a) and (not os.path.exists(b) or os.path.getmtime(a) > os.path.getmtime(b))
 os.makedirs(os.path.join(SITE, 'assets', 'maps'), exist_ok=True); os.makedirs(os.path.join(SITE, 'assets', 'music'), exist_ok=True)
 for f in sorted(os.listdir(MAPS)):
