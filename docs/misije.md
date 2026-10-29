@@ -2,7 +2,7 @@
 
 Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 2026). Nova seja dobi vse, kar potrebuje, iz tega dokumenta in iz predaje na veji `slike-predlogi` (spodaj), zato velikih datotek ne bere na pamet.
 
-**Kako se dela:** ena seja na skupino (tabela Stanje), navodilo »Naredi skupino N po docs/misije.md«. Vsaka misija ima svojo vejo iz svežega `main` (`misije/<nn>`) in svoj pull request, ki ga seja odpre sama, ko so zeleni testi, ki se nanašajo na spremembo (`npm run test:related`). Združi ga uporabnik. Ob koncu misije: posodobi Stanje, `docs/kazalo.md`, uporabniku napiši kratek seznam za preizkus na telefonu. Ob koncu skupine: kratka predaja za naslednjo skupino v razdelku Predaja.
+**Kako se dela:** ena seja na skupino (tabela Stanje), navodilo »Naredi skupino N po docs/misije.md«. Vsaka misija ima svojo vejo iz svežega `main` (`misije/<nn>`) in svoj pull request, ki ga seja odpre sama, ko so zeleni testi, ki se nanašajo na spremembo (`npm run test:related`). Združi ga seja sama, ko so zeleni vsi testi na GitHubu (odločitev uporabnika 29. 10.: »združi ti«). Ob koncu misije: posodobi Stanje, `docs/kazalo.md`, uporabniku napiši kratek seznam za preizkus na telefonu. Ob koncu skupine: kratka predaja za naslednjo skupino v razdelku Predaja.
 
 ## Pravila (uporabnik, 29. 10.)
 - Predaja misij: `git fetch origin slike-predlogi:refs/remotes/origin/slike-predlogi`, `git worktree add ../slike origin/slike-predlogi`, nato `../slike/slike-predlogi/PREDAJA-MISIJE.md` (za vsako misijo proga, vozilo, zgodba, cilj, prikaz na zaslonu, časi). Slike: `misije-10/misijaNN.webp` (maketa), `listi/vse46-posebne-misije-5/kamera-blizu/kNN.jpg` (vozilo skozi kamero igralca). Slike ne gredo na `main`.
@@ -20,7 +20,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 6. **Kratki odgovori v klepetu,** brez ponavljanja stanja; podrobnosti so v pull requestu in tem dokumentu.
 
 ## Odločitve
-1. **Kje igralec izbere misijo** (vprašanje 1): oboje. Na naslovnici ploščica MISSIONS (seznam vseh misij), na novi mapi pa so misije razdeljene po garažah; v vsaki garaži so misije od najlažje do najtežje. Razporeditev po garažah: vprašanje 5 (odprto: 6 garaž po poklicu ali 4 po celinah). Garaže na mapo postavi drugi račun; misije v `js/nvmenu.js` dobijo samo kratek priklop.
+1. **Kje igralec izbere misijo** (vprašanje 1): oboje. Na naslovnici ploščica MISSIONS (seznam vseh misij), na novi mapi pa so misije razdeljene po garažah; v vsaki garaži so misije od najlažje do najtežje. Razporeditev po garažah (vprašanje 5): **4 garaže po celinah**, v vsaki od najlažje do najtežje: EVROPA 50, 29, 45, 10, 02, 51, 01, 54, 08, 09; SEVERNA AMERIKA 06, 34, 39, 55, 04, 33, 17, 52, 30, 46, 11; AVSTRALIJA IN AZIJA 26, 40, 35, 19, 49, 48, 37, 47; AFRIKA IN JUŽNA AMERIKA 23, 43, 53, 07. Garaže na mapo postavi drugi račun; misije v `js/nvmenu.js` dobijo samo kratek priklop.
 2. **Gasilski avto** (vprašanje 2): verzija **C · Avtolestev** (`slike-predlogi/blender/modeli/v2.glb`, mere v `v2.json`). Uporabijo ga misije 01, 46, 47 in 49 (pri 49 se lestev dviga in izteguje).
 3. **Seje** (vprašanje 3): 10 sej po skupinah (tabela Stanje).
 4. **Cilj misije 06** (vprašanje 4): bolnišnica in reševalni avto ob cilju.
@@ -47,7 +47,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 | 8 · mirna vožnja | 02, 34, 50 | 7–11 | |
 | 9 · vleka, žaromet, led, baterija | 04, 08, 17, 26 | 10–14 | |
 | 10 · ostalo | 11, 23, 29, 40, 45 | 16–21 | |
-| – · garaže in naslovnica | po odgovoru na vprašanje 5 | 2–4 | čaka na odgovor |
+| – · garaže in naslovnica | 4 garaže po celinah, ploščica MISSIONS | 2–4 | |
 
 ## Predaja
 - Po skupini 1: sistem in misija 06 sta narejena. Naslednja je skupina 2 (ogenj): gasilski avto C iz `v2.glb` (THREE je r128, `GLTFLoader` ni v repozitoriju: avto zgradi iz preprostih teles po merah v `v2.json` ali `blender/gas.py`), ogenj, curek vode, gašenje s prstom.
