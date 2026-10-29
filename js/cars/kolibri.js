@@ -47,6 +47,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       krilo: { x: -1.585, w: 0.565, part: 'spoiler' },
       zarometi: { x: 1.6794, y0: 0.675, lean: 0.0615, zc: 0.475, yc: 0.668, s: 1, hosts: ['headL', 'headR'] },
       platisca: {},
+      // (sklop 2, each group's mounts after its line: js/deli/spredaj.js)
+
+      // (js/deli/zadaj.js)
+
+      // (js/deli/streha.js)
+
+      // (js/deli/bok.js)
+
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the rear bumper's face, the tailgate's lower panel
     // between the tail lamps' strips, its glass nearly upright, the long flat roof, the windscreen, the short bonnet, the lamp face leaning

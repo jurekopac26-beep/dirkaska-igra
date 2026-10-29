@@ -24,10 +24,11 @@ const { loadCore, ROOT } = require('./lib/core.js');
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const t0 = Date.now();
+const GROUPS = fs.readdirSync(path.join(ROOT, 'js/deli')).filter(f => f.endsWith('.js')).sort().map(f => 'js/deli/' + f);   // (js/deli/<group>.js: DELI.add)
 
 // ---- the list and the effects (DELI on its own) ----
 const D = (() => { const ctx = { console, Math, JSON, Object, Array, Number, String, isFinite, Set, Map }; vm.createContext(ctx);
-  for (const f of ['js/data/deli.js', 'js/deli.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  for (const f of ['js/data/deli.js', 'js/deli.js'].concat(GROUPS)) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
   return vm.runInContext('DELI', ctx); })();
 const EL = D.DATA.elementi;
 check('the list: 40 elements with unique ids', EL.length === 40 && new Set(EL.map(e => e.id)).size === 40, EL.length + ' elements');
@@ -90,6 +91,7 @@ function loadRender() {
     window: { innerWidth: 800, innerHeight: 450, addEventListener() {} }, document: { createElement: () => ({ getContext: () => null, width: 0, height: 0 }) } };
   ctx.globalThis = ctx; vm.createContext(ctx);
   for (const f of ['js/data/deli.js', 'js/deli.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8') + (f === 'js/deli.js' ? '\n;globalThis.DELI = DELI;' : '\n;globalThis.DELI_DATA = DELI_DATA;'), ctx, { filename: f });
+  for (const f of GROUPS) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
   for (const [f, name] of [['js/world.js', 'World'], ['js/render.js', 'Render']]) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8') + `\n;globalThis.${name} = ${name};`, ctx, { filename: f });
   return ctx;
 }

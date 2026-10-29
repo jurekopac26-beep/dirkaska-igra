@@ -8,6 +8,7 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 |---|---|
 | `js/data/deli.js` | seznam delov `DELI_DATA`: 40 elementov (krilo, platisca, zarometi … in servis), vsak 16 možnosti od najcenejše (1) do najdražje (16), imena SI/EN, cena, `kaj_nudi`, `na_regalu`. Kopija `nacrti/cene/cene.json` z veje garaže (commit 1998059), da sta meni garaže in igra isti seznam |
 | `js/deli.js` | `DELI`: risanje vseh možnosti, platišča, del posebej, učinek; naložen pred avti (`index.html`) |
+| `js/deli/<skupina>.js` | elementi sklopa 2 po skupinah (`spredaj`, `zadaj`, `streha`, `bok`): vsak element se prijavi z `DELI.add(id, build)`; naloženi za `js/deli.js` in pred avti (garaža jih naloži v istem vrstnem redu) |
 | `js/cars/<id>.js` | `mounts`: kje so mesta za dele na tem avtu; v `build(K)` ovoji `K.deli(id, serijski)` |
 | `js/render.js` | `K.deli`, `K.topY`, avto z deli (`kitEntry(M, hi, deli)`), `Render.deliMesh`, `Render.kitInfo(id, deli)`, `Render.carShot({ deli })`, `Render.setShowCar(model, barva, številka, deli)` |
 | `js/core.js` | `Core.applyDeli(car, deli)`: učinek na fiziko; `Car` (`opts.deli`), `Race` (`opts.playerDeli`); `mounts` v definiciji vozila |
@@ -47,15 +48,15 @@ Načrt je na veji garaže (`git fetch origin claude/3d-garage-cars-sum9uk`, nato
 | Sklop | Kaj | Stanje |
 |---|---|---|
 | 1 | dogovor; `krilo`, `platisca`, `zarometi` na KOLIBRIJU; poskus na PANTERJU, JASTREBU, TITANU | narejeno, pull request #192 (luč JASTREBA v enem kosu po izbiri uporabnika) |
-| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | čaka |
-| 3 | barve in nalepke (`barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`), skriti deli (načrt 2.6; učinki `lower`, `tint`, `tyre`), razbijanje novih delov | čaka |
+| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | vzporedno v 4 sejah (razdelek »Vzporedne seje«) |
+| 3 | barve in nalepke (`barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`), skriti deli (načrt 2.6; učinki `lower`, `tint`, `tyre`), razbijanje novih delov | barve in skriti deli vzporedno v 1 seji; razbijanje po sklopu 2 |
 | 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | čaka |
 
 Odločitve uporabnika (29. 10. 2026, po sklopu 1):
 - Deli ostanejo na PANTERJU, JASTREBU in TITANU. Drugi avti se delajo vzporedno, po kategorijah (razdelek »Drugi avti po kategorijah« spodaj).
 - Vsak sklop gre na `main` s svojim pull requestom, ko so testi zeleni in ga uporabnik potrdi.
 - Sklop 2 se dela takoj v kodi igre na svoji veji, brez prototipa, s slikami iz prave igre (`tools/deli-plosca.mjs`).
-- Plošče v sklopu 2: odločitev je še odprta. Možnosti sta ena plošča na skupino iz tabele (spredaj, zadaj, streha, bok in kolesa) s potrditvijo vmes ali ena plošča na koncu.
+- Plošče v sklopu 2: ena plošča na skupino (spredaj, zadaj, streha, bok in kolesa), vsaka s potrditvijo; skupine delajo štiri seje hkrati.
 - Vse seje delajo z naporom high.
 - Uporabnik dobi po vsakem koraku eno ploščo in nato počakaš na njegovo potrditev. Vprašanja mu postavljaš v slikah, odgovarjaš v slovenščini, kratko.
 
@@ -81,6 +82,28 @@ Za vsak avto kategorije (en obisk datoteke `js/cars/<id>.js`):
 
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
+## Vzporedne seje (29. 10. 2026)
+
+Želja uporabnika: do resetiranja žetonov naj čim več dela teče hkrati, v ločenih sejah. Ko uporabnik napiše, da se je resetiralo, seje spet delajo varčno, ena za drugo. Vse seje začnejo z veje `claude/sleepy-newton-dlus7o` (sklop 1, pull request #192), dokler ta ni na `main`. Vsaka seja ima svojo vejo in svoj pull request.
+
+| Seja | Elementi ali avti | Svoje datoteke |
+|---|---|---|
+| Sklop 2 · spredaj | `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci` | `js/deli/spredaj.js` |
+| Sklop 2 · zadaj | `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata` | `js/deli/zadaj.js` |
+| Sklop 2 · streha | `streha`, `stresna_zajemalka`, `antena`, `zaluzije` | `js/deli/streha.js` |
+| Sklop 2 · bok in kolesa | `ogledala`, `vrata`, `zavore`, `matice` | `js/deli/bok.js` |
+| Sklop 3 · barve in skriti deli | `barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`; skriti deli (načrt 2.6: `filter_zraka`, `cip`, `turbo`, `akumulator`, `vzmeti`, `amortizerji`, `stabilizatorji`, `hupa`, `dim_gum`) in učinki `lower`, `tint`, `tyre` | `js/deli/barve.js`, `js/deli/skriti.js` |
+| Avti · Mali avti | `miska`, `raketa`, `levs`, `levk` | `js/cars/<id>.js` |
+| Avti · Športni | `sokol`, `jelen`, `lisica` | `js/cars/<id>.js` |
+
+Pravila, da se seje ne motijo:
+- `js/deli.js` in dogovor ostaneta, kot sta. Sprememba dogovora gre v »Spremembe dogovora« in jo povej uporabniku.
+- V `js/cars/kolibri.js` vsaka seja sklopa 2 doda svoja mesta pod svojo vrstico v `mounts` (»sklop 2, … js/deli/<skupina>.js«) in ovoje `K.deli` okrog svojih serijskih delov.
+- V skupnih datotekah (`docs/deli.md`, `docs/kazalo.md`, `tests/README.md`, `index.html`) vsaka seja ureja samo svoj del. Spore ob spajanju razreši, žige pa z `node tools/stamp.js`.
+- Uporabniku pošlji eno ploščo za svojo skupino (`tools/deli-plosca.mjs`) in počakaj na potrditev. Vprašanja mu postavljaš v slikah, v slovenščini, kratko.
+- Pred pull requestom spoji `main` (ko je #192 tam). Na `main` gre, ko so testi zeleni in uporabnik potrdi.
+- Razbijanje novih delov (sklop 3) pride po sklopu 2; sklop 4 (pregled vseh 624 možnosti, stran za ogled) pride na koncu.
+
 ## Spremembe dogovora
 
 - 29. 10. 2026 (sklop 1): datoteki sta `js/deli.js` in `js/data/deli.js` (ne `js/cars/_deli.js`): mapa `js/cars/` sme imeti samo vozila (`tests/fleet.test.js`), podatki so v `js/data/` kot pri svetovih.
@@ -90,3 +113,4 @@ Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in n
 - 29. 10. 2026 (poskus, želje uporabnika): `zarometi` dobi `shape`, `bulge`, `ringW` (avtova lastna oblika luči), `krilo` dobi `s` in `top` (tovornjak); `K.headLamp` z obrisom zna izbočeno lečo (`bulge`) in obris z zarezo (zvezdast okrog sredine); `DELI.mesh` vzame trikotnike, ki jih je narisal `K.deli` (prej celoten del, kar je pri lučeh v krilih vrnilo celo krilo); `K.deli(id, stock, around)` z avtovim ohišjem okrog dela; `DELI.lampLook(n)` (barvi leče in obroča možnosti).
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
+- 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).

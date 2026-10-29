@@ -12,6 +12,8 @@
                                  applies them (Core.applyDeli)
      DELI.lampLook(n)            head lamp option n's lens and ring colours (a car keeping its own lamp housing colours it after them)
      DELI.option(id, n), DELI.element(id), DELI.has(id), DELI.clean(deli, M), DELI.key(deli, M)
+     DELI.add(id, build)         an element's options drawn by a file of its own (js/deli/<group>.js, loaded after this one): build(K, n, m, M)
+                                 as DELI.build calls it; DELI.seg(K, k) the segments of a round shape (Normalni 60 %, at least 6)
    Only the fitted option is drawn (never all 16); every option is simple: a few primitives in the body's one material, as the stock parts.
    docs/deli.md: the contract with the garage (garaza.html) */
 var DELI = (function () {
@@ -349,6 +351,8 @@ var DELI = (function () {
 
   // ================================================================ the elements drawn (the others: effects only, for now)
   const BUILD = { krilo, zarometi };
+  const add = (id, b) => { if (EL[id] && typeof b === 'function' && id !== 'platisca') BUILD[id] = b; };   // (js/deli/<group>.js: an element's options)
+  const seg = (K, k) => K.hi ? k : Math.max(6, Math.round(k * 0.6));   // (a round shape's segments: fewer on Normalni)
   const has = (id) => !!BUILD[id] || id === 'platisca';
   function build(K, id, n, m, M) { const b = BUILD[id]; if (!b || !m) return false; b(K, n, m, M); return true; }
   // a car's fitted parts as a vehicle can show them: an object of the elements DELI knows, options 1..16 (M: only those it has a mount for)
@@ -381,5 +385,5 @@ var DELI = (function () {
     return e;
   }
 
-  return { DATA, element, option, has, build, wheel, mesh, effect, clean, key, lampLook, mounts: (M) => (M && M.def && M.def.mounts) || null };
+  return { DATA, element, option, has, build, add, seg, wheel, mesh, effect, clean, key, lampLook, mounts: (M) => (M && M.def && M.def.mounts) || null };
 })();

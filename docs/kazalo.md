@@ -29,7 +29,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/missions.js`, `css/missions.css` | posebne misije: seznam (`Missions.add`, vadbena misija `vaja`), potek misije (`Run`: ura, omejitev časa, `set`, `win`, `fail`), prikaz v HUD-u (`#mis`), rezultat (`#mis-res`), seznam misij (`#mis-list`), rekordi (`rra-misije`), hitri vstop `?misija=<id>`; priklopi v `js/game.js`: `MS`, `MisBridge` (opts in begin v `newRace`, step v `stepRace`, over v fazi racing, stop v `toTitle`) |
 | `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
 | `js/cars/<id>.js` | vozila (`mounts`: mesta za dele iz garaže, ovoji `K.deli`) |
-| `js/deli.js`, `js/data/deli.js` | deli iz garaže: seznam `DELI_DATA` (40 elementov × 16 možnosti), risanje `DELI.build` (iz `K.deli` v `build(K)` avta; krilo `krilo`, luči `zarometi`), platišča `DELI.wheel`, del posebej `DELI.mesh` (`Render.deliMesh`), učinek `DELI.effect` (`Core.applyDeli`); dogovor `docs/deli.md` |
+| `js/deli.js`, `js/data/deli.js`, `js/deli/<skupina>.js` | deli iz garaže: seznam `DELI_DATA` (40 elementov × 16 možnosti), risanje `DELI.build` (iz `K.deli` v `build(K)` avta; krilo `krilo`, luči `zarometi`), platišča `DELI.wheel`, del posebej `DELI.mesh` (`Render.deliMesh`), učinek `DELI.effect` (`Core.applyDeli`); elementi sklopa 2 po skupinah v `js/deli/` (`DELI.add`); dogovor `docs/deli.md` |
 | `js/data/` | podatki svetov (npr. OSM, višine) |
 | `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`; gumbi v eni vrsti: pod 960 px ★ in Označi brez besede, pod 820 px tesneje) |
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
@@ -47,7 +47,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
-| `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, spremembe dogovora |
+| `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 
 ## Teme v `js/game.js`
 
