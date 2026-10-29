@@ -8,7 +8,7 @@ SITE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..', '..')
 G = js_read(SITE, 'geo.js', 'window.GEO')
 pp, gp = os.path.join(RAW, 'places.json'), os.path.join(RAW, 'geo.json')
 if not os.path.exists(pp):
-    src = open(os.path.join(HERE, 'geo_places.py'), encoding='utf-8').read(); i = src.index('L1 = {'); L1 = eval(src[i + 5:src.index('\n', i)])   # (its regional boxes)
+    src = open(os.path.join(HERE, 'geo_places.py'), encoding='utf-8').read(); i = src.index('L1 = {'); L1 = eval(src[i + 5:src.index('}\n', i) + 1])   # (its regional boxes)
     T = {}
     for tid, e in G['tracks'].items():
         b2, b3 = e['l2']['box'], e['l3']['box']; cla, clo = (b3[0] + b3[2]) / 2, (b3[1] + b3[3]) / 2; M, N = radii(cla)

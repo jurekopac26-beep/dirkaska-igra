@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": -19.2721,
+  "lon0": 146.81057,
+  "rot": 0.0,
+  "offset": 6.1,
+  "mad": 1.52,
+  "p90": 3.0,
+  "range": 3.1,
+  "moved": 0.0,
+  "away100": 1.74
+ },
+ "places": {
+  "kind": "real",
+  "lat0": -19.2721,
+  "lon0": 146.81057,
+  "rot": 0.0,
+  "offset": 6.1,
+  "start": [
+   -19.2721,
+   146.81057,
+   6
+  ],
+  "finish": [
+   -19.2721,
+   146.81057,
+   6
+  ],
+  "center": [
+   -19.27191,
+   146.809209
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "queensland",
+  "open": false,
+  "names": {
+   "start": "Townsville",
+   "finish": "Townsville",
+   "country": "Australia",
+   "region": "Queensland"
+  }
+ }
+}

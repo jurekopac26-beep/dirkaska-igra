@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": -37.002828,
+  "lon0": 147.094011,
+  "rot": 0.08,
+  "offset": 1495.3,
+  "mad": 3.35,
+  "p90": 7.3,
+  "range": 344.9,
+  "moved": 12.8,
+  "away100": 21.5
+ },
+ "places": {
+  "kind": "real",
+  "lat0": -37.002828,
+  "lon0": 147.094011,
+  "rot": 0.08,
+  "offset": 1495.3,
+  "start": [
+   -37.002828,
+   147.094012,
+   1492
+  ],
+  "finish": [
+   -36.981881,
+   147.142227,
+   1755
+  ],
+  "center": [
+   -36.988381,
+   147.119299
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "seaustralia",
+  "open": true,
+  "names": {
+   "start": "Dungeys Hollow",
+   "finish": "Hotham Heights",
+   "country": "Australia",
+   "region": "Victorian Alps"
+  }
+ }
+}

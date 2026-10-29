@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 46.34737,
+  "lon0": -72.5593,
+  "rot": 0.0,
+  "offset": 32.2,
+  "mad": 1.44,
+  "p90": 3.4,
+  "range": 6.6,
+  "moved": 0.0,
+  "away100": 1.95
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 46.34737,
+  "lon0": -72.5593,
+  "rot": 0.0,
+  "offset": 32.2,
+  "start": [
+   46.34737,
+   -72.5593,
+   32
+  ],
+  "finish": [
+   46.34737,
+   -72.5593,
+   32
+  ],
+  "center": [
+   46.34766,
+   -72.55932
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "greatlakes",
+  "open": false,
+  "names": {
+   "start": "Trois-Rivières",
+   "finish": "Trois-Rivières",
+   "country": "Canada",
+   "region": "Quebec"
+  }
+ }
+}

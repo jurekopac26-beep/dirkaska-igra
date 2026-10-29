@@ -16,5 +16,9 @@
   ["chapman", {"mode": "demo", "warm": 2}],
   ["bigsur", {"mode": "demo", "warm": 2}],
   ["tianmen", {"mode": "demo", "warm": 2}],
-  ["uncompahgre", {"mode": "demo", "warm": 2}]
+  ["uncompahgre", {"mode": "demo", "warm": 2}],
+  ["hotham", {"mode": "demo", "warm": 2}],
+  ["townsville", {"mode": "demo", "warm": 2}],
+  ["marrakesh", {"mode": "demo", "warm": 2}],
+  ["troisrivieres", {"mode": "demo", "warm": 2}]
 ]

@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 31.58102,
+  "lon0": -7.98273,
+  "rot": 0.0,
+  "offset": 503.9,
+  "mad": 0.87,
+  "p90": 1.8,
+  "range": 10.3,
+  "moved": 0.0,
+  "away100": 0.93
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 31.58102,
+  "lon0": -7.98273,
+  "rot": 0.0,
+  "offset": 503.9,
+  "start": [
+   31.58102,
+   -7.98273,
+   504
+  ],
+  "finish": [
+   31.58102,
+   -7.98273,
+   504
+  ],
+  "center": [
+   31.583048,
+   -7.983221
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "morocco",
+  "open": false,
+  "names": {
+   "start": "Marrakesh",
+   "finish": "Marrakesh",
+   "country": "Morocco",
+   "region": "Marrakesh-Safi"
+  }
+ }
+}

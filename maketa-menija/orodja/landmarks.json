@@ -511,5 +511,136 @@
    "d": 4858,
    "sub": "2,860 m"
   }
+ ],
+ "hotham": [
+  {
+   "n": "Valley lookout",
+   "d": 720
+  },
+  {
+   "n": "Mount Feathertop",
+   "ll": [
+    -36.8946,
+    147.1307
+   ],
+   "snap": "peak",
+   "r": 800,
+   "sub": "1,922 m"
+  },
+  {
+   "n": "Little Mount Baldy",
+   "d": 3986
+  },
+  {
+   "n": "Mount Hotham",
+   "ll": [
+    -36.9767,
+    147.1342
+   ],
+   "snap": "peak",
+   "r": 600,
+   "sub": "1,861 m"
+  },
+  {
+   "n": "Hotham Heights",
+   "d": 7936,
+   "sub": "1,753 m"
+  }
+ ],
+ "townsville": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Turn 2",
+   "d": 638
+  },
+  {
+   "n": "Ross Creek",
+   "ll": [
+    -19.2745,
+    146.8115
+   ],
+   "snap": "water",
+   "r": 600
+  },
+  {
+   "n": "Hairpin",
+   "d": 2231
+  },
+  {
+   "n": "Castle Hill",
+   "ll": [
+    -19.2572,
+    146.806
+   ],
+   "snap": "peak",
+   "r": 700,
+   "sub": "286 m"
+  }
+ ],
+ "marrakesh": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Chicane",
+   "d": 1156
+  },
+  {
+   "n": "Agdal Gardens",
+   "ll": [
+    31.598,
+    -7.982
+   ]
+  },
+  {
+   "n": "Hairpin",
+   "d": 2086
+  },
+  {
+   "n": "Marrakesh",
+   "ll": [
+    31.6295,
+    -7.9811
+   ],
+   "snap": "town",
+   "r": 1500,
+   "sub": "Medina"
+  }
+ ],
+ "troisrivieres": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Turn 3",
+   "d": 622
+  },
+  {
+   "n": "Hairpin",
+   "d": 2051
+  },
+  {
+   "n": "Trois-Rivières",
+   "ll": [
+    46.3432,
+    -72.5418
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "St. Lawrence River",
+   "ll": [
+    46.333,
+    -72.535
+   ],
+   "snap": "water",
+   "r": 1500
+  }
  ]
 }

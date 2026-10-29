@@ -29,10 +29,15 @@ CFG = {
     'bigsur': dict(kind='real', start='Rocky Creek', finish='Hurricane Point', country='USA', region='California', l1='california'),
     'tianmen': dict(kind='real', start='Tianmen Mountain', finish='Tianmen Cave', country='China', region='Hunan', l1='hunan'),
     'uncompahgre': dict(kind='real', start='Ouray', finish='Uncompahgre Gorge', country='USA', region='Colorado', l1='colorado'),
+    'hotham': dict(kind='real', start='Dungeys Hollow', finish='Hotham Heights', country='Australia', region='Victorian Alps', l1='seaustralia'),
+    'townsville': dict(kind='real', start='Townsville', country='Australia', region='Queensland', l1='queensland'),
+    'marrakesh': dict(kind='real', start='Marrakesh', country='Morocco', region='Marrakesh-Safi', l1='morocco'),
+    'troisrivieres': dict(kind='real', start='Trois-Rivières', country='Canada', region='Quebec', l1='greatlakes'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
-      'andes': (-32.8, -70.1, 800), 'altai': (50.9, 88.2, 800), 'cape': (-34.1, 18.5, 800), 'california': (35.0, -119.4, 800), 'hunan': (29.05, 110.48, 800)}
+      'andes': (-32.8, -70.1, 800), 'altai': (50.9, 88.2, 800), 'cape': (-34.1, 18.5, 800), 'california': (35.0, -119.4, 800), 'hunan': (29.05, 110.48, 800),
+      'seaustralia': (-37.2, 148.6, 1000), 'queensland': (-19.3, 146.8, 800), 'morocco': (31.6, -8.0, 800), 'greatlakes': (44.3, -77.8, 1000)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

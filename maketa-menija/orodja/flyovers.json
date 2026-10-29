@@ -484,5 +484,125 @@
     2860
    ]
   }
+ ],
+ [
+  "hotham",
+  {
+   "kbps": 700,
+   "speed": 290,
+   "back": 377,
+   "up": 238,
+   "ahead": 188,
+   "fogNear": 667,
+   "fogFar": 2465,
+   "places": [
+    {
+     "n": "Valley Lookout",
+     "d": 720
+    },
+    {
+     "n": "Mount Little Blowhard",
+     "d": 1517
+    },
+    {
+     "n": "Little Mount Baldy",
+     "d": 3986
+    },
+    {
+     "n": "Razorback",
+     "d": 5161
+    },
+    {
+     "n": "Mount Hotham",
+     "d": 6425
+    }
+   ],
+   "alt": [
+    1495,
+    1753
+   ]
+  }
+ ],
+ [
+  "townsville",
+  {
+   "kbps": 700,
+   "speed": 105,
+   "back": 136,
+   "up": 86,
+   "ahead": 68,
+   "fogNear": 241,
+   "fogFar": 892,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 638
+    },
+    {
+     "n": "Ross Creek",
+     "d": 1158
+    },
+    {
+     "n": "Turn 11",
+     "d": 2231
+    }
+   ]
+  }
+ ],
+ [
+  "marrakesh",
+  {
+   "kbps": 700,
+   "speed": 110,
+   "back": 143,
+   "up": 90,
+   "ahead": 72,
+   "fogNear": 253,
+   "fogFar": 935,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 236
+    },
+    {
+     "n": "Chicane",
+     "d": 1156
+    },
+    {
+     "n": "Route de l'Ourika",
+     "d": 1392
+    },
+    {
+     "n": "Hairpin",
+     "d": 2086
+    }
+   ]
+  }
+ ],
+ [
+  "troisrivieres",
+  {
+   "kbps": 700,
+   "speed": 90,
+   "back": 117,
+   "up": 74,
+   "ahead": 58,
+   "fogNear": 207,
+   "fogFar": 765,
+   "places": [
+    {
+     "n": "Turn 3",
+     "d": 622
+    },
+    {
+     "n": "Turn 6",
+     "d": 1302
+    },
+    {
+     "n": "Turn 9",
+     "d": 2051
+    }
+   ]
+  }
  ]
 ]

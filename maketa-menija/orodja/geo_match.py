@@ -23,8 +23,13 @@ GUESS = {
     'bigsur': ('finish', 36.3600, -121.9010, 2500),      # Hurricane Point
     'tianmen': ('finish', 29.0495, 110.4826, 3000),      # the platform under the cave
     'uncompahgre': ('start', 38.0080, -107.6631, 800),
+    'hotham': ('start', -37.0029, 147.0939, 1500),          # Dungeys Hollow (the start is ~400 m on, up the road)
+    'townsville': ('start', -19.27210, 146.81057, 400),     # the start line on Boundary Street (the track file)
+    'marrakesh': ('start', 31.58102, -7.98273, 400),        # the start line on the main straight (the track file)
+    'troisrivieres': ('start', 46.34737, -72.55930, 400),   # the start line in front of the old arena (the track file)
 }
 COP = {'tianmen'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)
+FIX = {'townsville', 'marrakesh', 'troisrivieres'}   # (flat circuits, their heights say little: kept at the known start line, no turn)
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
 def origin_guess(T, g):   # a guess given at the race's start or finish: the world's origin that puts that point there (no turn)
@@ -55,7 +60,7 @@ def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
                 s, c = score(lat0, lon0, rot)
                 if s < best[0]: best = (s, lat0, lon0, rot, c)
     # fine: 5 m and 0.1 degree round the best, then 1 m and 0.02
-    for step, rstep, span in ((5, 0.1, 3), (1, 0.02, 3)):
+    for step, rstep, span in ((5, 0.1, 3), (1, 0.02, 3)) if T['id'] not in FIX else ():
         s0, la0, lo0, r0, c0 = best
         for rot in np.arange(r0 - span * rstep * 3, r0 + span * rstep * 3 + 1e-9, rstep):
             for dx in np.arange(-span * step * 6, span * step * 6 + 0.1, step):
@@ -76,6 +81,6 @@ out = json.load(open(out_p)) if os.path.exists(out_p) else {}
 ids = sys.argv[1].split(',') if len(sys.argv) > 1 else list(GUESS)
 for tid in ids:
     T = track(tid); g = origin_guess(T, GUESS[tid])
-    r = fit(T, g[:2], g[2])
+    r = fit(T, g[:2], 0, rots=[0.0]) if tid in FIX else fit(T, g[:2], g[2])
     out[tid] = r; print(tid, json.dumps(r), flush=True)
     json.dump(out, open(out_p, 'w'), indent=1)
