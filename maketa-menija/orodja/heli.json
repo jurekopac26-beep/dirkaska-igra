@@ -96,6 +96,30 @@
  "tianmen": {
   "kbps": 550
  },
+ "monterey": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "mulholland": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "palomar": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "riverside": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
  "bangsaen": {
   "kbps": 550,
   "sea": true
