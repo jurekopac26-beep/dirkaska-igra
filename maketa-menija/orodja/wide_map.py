@@ -35,6 +35,17 @@ SUN = {'ouni': ([-88, 72, 58], 1.18, 0.56), 'vrsic': ([-84, 70, 56], 1.16, 0.58)
        'rbring': ([-86, 78, 52], 1.12, 0.6), 'spa': ([-80, 96, 70], 0.98, 0.64), 'suzuka': ([-80, 96, 70], 1.06, 0.62), 'monaco': ([-80, 96, 70], 1.08, 0.6),
        'city': ([-80, 96, 70], 1.04, 0.6)}
 
+def sun_of(tid):   # the theme's sun: the list above, or (a later track) its theme's line in the game's js/render.js (sunOff default as in routemap_page.js)
+    if tid in THEME: return SUN[THEME[tid]]
+    import re
+    th = re.search(r"theme: *'([^']+)'", open(os.path.join(ROOT, 'js', 'tracks', tid + '.js'), encoding='utf-8').read()).group(1)
+    src = open(os.path.join(ROOT, 'js', 'render.js'), encoding='utf-8').read()
+    m = re.search(r'(?:^\s*%s:\s*|THEMES\.%s = )(\{[^\n]*?\})' % (th, th), src, re.M)
+    if not m: return ([-80, 96, 70], 1.0, 0.6)
+    t = m.group(1); num = lambda k, d: float(re.search(k + r': *([\d.]+)', t).group(1)) if re.search(k + r': *([\d.]+)', t) else d
+    so = re.search(r'sunOff: *\[([^\]]+)\]', t); sv = [float(v) for v in so.group(1).split(',')] if so else [-80, 96, 70]
+    return (sv, num('sunI', 1.0), num('hemiI', 0.6))
+
 def js_data(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()
     i = s.index('{', s.index(var)); j = s.rindex('}')
@@ -103,7 +114,7 @@ def paint_land(F):
     else:
         alb, h, lc = _paint_land(F); os.makedirs(os.path.dirname(cache), exist_ok=True); np.savez(cache, alb=alb, h=h, lc=lc)
     # the sun in the output grid's axes: x right, z down in the tile; the world's vector (sx east, sz south) turned by the tile's fit
-    sv, sunI, hemiI = SUN[THEME[F.tid]]; sx, sy, sz = sv
+    sv, sunI, hemiI = sun_of(F.tid); sx, sy, sz = sv
     su = (F.A * sx - F.B * sz) / F.k; sv_ = (F.B * sx + F.A * sz) / F.k
     # (a shortened copy of a road has its world squeezed: the slopes are shaded as the real land's, not the squeezed ones)
     sh = shade(h, F.mpp / F.f * F.scale, [su, sy, sv_], sunI, hemiI)

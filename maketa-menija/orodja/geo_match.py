@@ -21,7 +21,7 @@ GUESS = {
     'harju': ('origin', 62.243, 25.745, 400),            # (the track file's origin)
     'chapman': ('start', -34.0487, 18.3619, 1500),       # the end of Main Road in Hout Bay
     'bigsur': ('finish', 36.3600, -121.9010, 2500),      # Hurricane Point
-    'tianmen': ('finish', 29.0495, 110.4826, 3000),      # the platform under the cave
+    'tianmen': ('origin', 29.049139, 110.468319, 300),   # (found by a search of ±30 degrees on Copernicus: the heights of the game's road are spread out, mad ~22 m)
     'uncompahgre': ('start', 38.0080, -107.6631, 800),
 }
 COP = {'tianmen'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)

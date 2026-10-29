@@ -65,7 +65,8 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "caracoles": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -242,7 +243,8 @@ window.MENU = {
   },
   "nring": {
    "base": 616
-  }
+  },
+  "caracoles": {"start": "Juncalillo", "finish": "Portillo", "alt": [2200, 2866]}
  },
  "intro": {
   "skip": "Skip",
