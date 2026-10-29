@@ -24,6 +24,9 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 2. **Gasilski avto** (vprašanje 2): verzija **C · Avtolestev** (`slike-predlogi/blender/modeli/v2.glb`, mere v `v2.json`). Uporabijo ga misije 01, 46, 47 in 49 (pri 49 se lestev dviga in izteguje).
 3. **Seje** (vprašanje 3): 10 sej po skupinah (tabela Stanje).
 4. **Cilj misije 06** (vprašanje 4): bolnišnica in reševalni avto ob cilju.
+5. **Napor pri lažjih misijah** (odločitev uporabnika 29. 10., vprašanje 6: 2): težje misije »high«, sedem lažjih (51, 54, 39, 02, 50, 17, 26) »medium«. Napor velja za celo sejo (`.claude/settings.json`: `effortLevel` je `high`); seji 6 in 8, kjer so večinoma lažje misije, uporabnik preklopi na »medium« v aplikaciji, ker ga seja pri zagonu nove seje ne more nastaviti.
+6. **Čakanje na teste** (vprašanje 7: 2): seja odpre PR in dela naslednjo misijo, medtem ko na GitHubu tečejo testi; ko so zeleni, PR združi. Če test pade, ga najprej popravi.
+7. **Preizkus na telefonu** (vprašanje 8: 2): po združitvi. Seja združi, ko so testi zeleni, in uporabniku napiše seznam za preizkus na `main`; napake popravi v naslednjem PR-ju.
 
 ## Sistem misij (`js/missions.js`)
 - `Missions.add(def)`: `id` ('06'), `title`, `story`, `goal`, `hint` (slovensko, angleščina v `js/lang.js`), `track`, `car`, `limit` (s), `stars` ([čas za 3, za 2]), `rows` (merilniki: `{ k, label, bar, col }`), `opts(def)` (možnosti dirke čez igrine: privzeto sam, ena vožnja, suho; npr. `traffic`, `numAI`, `tfCars`), `made(race)` (lastni avti, preden se narišejo), `begin(run)`, `step(run, dt)`, `finish(run)`.
