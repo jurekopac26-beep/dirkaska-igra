@@ -16,7 +16,7 @@ Uporabnik je določil: v kodi se nič ne spreminja, dokler ne napiše »začni«
 
 ## Obnova v novi seji (~30 min)
 
-1. Seja na tej veji (`claude/pensive-ride-8s9cun`).
+1. Seja na veji `slike-predlogi` (ta mapa ni na `main`).
 2. `bash slike-predlogi/obnovi.sh <delovna-mapa-seje>`: skopira `delo/`, popravi absolutne poti stare seje, naredi `fw4` (git worktree na `6f1e48c9` + patch) in v `live/` postavi 8 korakov nalaganja.
 3. Zaženi izrisovalnik, kot izpiše skripta: `(cd <mapa> && GAME_ROOT=<mapa>/fw4 nohup node live2.mjs > live.out 2>&1 &)`.
    Izvaja `live/q<N>.mjs` po vrsti in za vsako zapiše `live/q<N>.done`. Igra ostane odprta, zato se lahko dodajajo nove `q<N>.mjs`.
