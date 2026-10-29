@@ -16,6 +16,7 @@ Veja `claude/meni-zemljevidi-izris-1b`. Vnosi v orodjih za obe progi so že obst
 - Start 38.0079, -107.6631 (južni rob Ouraya), cilj 37.9709, -107.6576.
 - Zemljevid: proga cela, na sredini.
 - Imena: nespremenjena (vnosi že v orodjih).
+- Helikopter: narejen (`heli-uncompahgre.webm`, 4,4 MB, 981 sličic, brez sprememb nastavitev); predogled: proga vidna, pokrajina brez lukenj.
 
 ## Stanje
 - Lahki koraki (track, zemljevid, otok, umestitev, places, far, lc): narejeni za obe progi.
