@@ -33,3 +33,5 @@ Sredinske črte vseh štirih so projicirane iz OSM (x vzhod, z jug), zato je zas
 - Townsville in Trois-Rivières: svet igre pokrije cel okvir zemljevida, zato `isle-townsville.png` in `isle-troisrivieres.png` nimata prosojnih delov (`skirt: false` nima učinka; za `wide_map.py` je otok kar cel zemljevid). Townsville: zgoraj desno je bela gmota (oddaljena kulisa sveta igre, verjetno obris Castle Hill brez teksture, ko ga gledaš od zgoraj); v `top-` in `isle-`.
 
 ## Stanje
+- Lahki koraki (sredinske črte, zemljevidi od zgoraj in otoki, umestitev, kraji, `geo_far`, `geo_lc`): narejeni za vse štiri.
+- Preleti (`flyover.mjs`, hitrost ≈ dolžina/27 s: Hotham 290, Townsville 105, Marrakesh 110, Trois-Rivières 90 m/s, 700 kbps): narejeni za vse štiri (~1000 sličic, ~2,8 MB).
