@@ -156,8 +156,9 @@
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
-  function btPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of alpine grass and sedge, 1 a cushion of flowers
+  function btPlantGeo(kind, lo) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of alpine grass and sedge, 1 a cushion of flowers
     // (white, the instances tint it: pink moss campion, yellow cinquefoil, blue forget-me-not, white phlox), 2 a granite boulder, 3 a few stones
+    // (lo: the cushion on NIZKA, each flower a low four-sided dome for an icosahedron, at the same spots: 168 vertices for 600)
     const g = new GB(), R = rng(960 + kind), rs = API.ROCK_SMOOTH;
     if (kind === 0) {   // nine short blades from a tight base, fresh green with olive tips
       const base = [0.3, 0.42, 0.18], tip = [0.62, 0.68, 0.36];
@@ -165,13 +166,29 @@
         g.triO([bx - ox, 0, bz - oz], [bx + ox, 0, bz + oz], [tx, hh, tz], base, [tx * 0.5, hh * 0.2, tz * 0.5], base, tip); g.triO([bx - ox, 0, bz - oz], [tx, hh, tz], [bx + ox, 0, bz + oz], base, [-tx, hh * 0.4, -tz], tip, base); }
     } else if (kind === 1) {   // a low green mound dotted with flowers (pale: the instance colour is the flowers')
       API.ROCK_SMOOTH = true; ico(g, 0, 0.18, 0, 0.5, 0.45, [0.3, 0.42, 0.2], R, 0.2);
-      for (let k = 0; k < 9; k++) { const a = R() * TAU, d = Math.sqrt(R()) * 0.42, y = 0.2 + (0.45 - d) * 0.5; ico(g, Math.cos(a) * d, y, Math.sin(a) * d, 0.09, 0.6, [0.98, 0.98, 0.98], R, 0.1); }
+      for (let k = 0; k < 9; k++) { const a = R() * TAU, d = Math.sqrt(R()) * 0.42, y = 0.2 + (0.45 - d) * 0.5, x = Math.cos(a) * d, z = Math.sin(a) * d;
+        if (!lo) { ico(g, x, y, z, 0.09, 0.6, [0.98, 0.98, 0.98], R, 0.1); continue; }
+        for (let q = 0; q < 12; q++) R();   // (the icosahedron's jitter: the next flower where it was)
+        const r = 0.09, h = r * 0.6, top = [x, y + h, z], c0 = [0.98 * 0.97, 0.98 * 0.97, 0.98 * 0.97], c1 = [0.98 * 1.12, 0.98 * 1.12, 0.98 * 1.12], inn = [x, y - h, z];
+        const ring = [0, 1, 2, 3].map(q => { const b = a + q * TAU / 4 + 0.4; return [x + Math.cos(b) * r, y - h * 0.15, z + Math.sin(b) * r]; });
+        const nrm = (p) => { const nx = (p[0] - x) / r, ny = (p[1] - y) / (h * 0.6), nz = (p[2] - z) / r, l = Math.hypot(nx, ny, nz) || 1; return [nx / l, ny / l, nz / l]; };
+        for (let q = 0; q < 4; q++) { const p0 = ring[q], p1 = ring[(q + 1) % 4]; g.triON(p0, p1, top, nrm(p0), nrm(p1), [0, 1, 0], inn, c0, c0, c1); } }
     } else if (kind === 2) { API.ROCK_SMOOTH = false; rock(g, 0, 0.3, 0, 0.6, 0.55, 0.5, 0, [0.64, 0.61, 0.59], R, 0.28); }
-    else {   // three stones half sunk in the ground
-      for (let k = 0; k < 3; k++) { API.ROCK_SMOOTH = false; const a = R() * TAU, d = k ? 0.25 + R() * 0.25 : 0, r = k ? 0.1 + R() * 0.08 : 0.17; rock(g, Math.cos(a) * d, r * 0.2, Math.sin(a) * d, r, r * 0.7, r * 0.9, R() * TAU, [0.62, 0.6, 0.58], R, 0.3); }
+    else {   // three stones half sunk in the ground (lo, on NIZKA: each five-sided for seven, at the same spots: 207 vertices for 297)
+      for (let k = 0; k < 3; k++) { API.ROCK_SMOOTH = false; const a = R() * TAU, d = k ? 0.25 + R() * 0.25 : 0, r = k ? 0.1 + R() * 0.08 : 0.17;
+        (lo ? btStoneLo : rock)(g, Math.cos(a) * d, r * 0.2, Math.sin(a) * d, r, r * 0.7, r * 0.9, R() * TAU, [0.62, 0.6, 0.58], R, 0.3); }
     }
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // rock()'s chunky stone (flat shaded) with five sides for seven: 23 faces for 33; draws from r_ as rock() does (the next stone where it was)
+  function btStoneLo(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit) {
+    const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + 0.6 * ry, ym = yb + (yt - yb) * 0.52, n = 5;
+    const ring = (y, f) => { const out = []; for (let k = 0; k < n; k++) { const a = (k + (r_() - 0.5) * 0.5) / n * TAU, kk = f * (1 + (r_() - 0.5) * jit), lx = Math.cos(a) * rx * kk, lz = Math.sin(a) * rz * kk; out.push([cx + lx * c - lz * s, y + (r_() - 0.5) * jit * ry * 0.3, cz + lx * s + lz * c]); } return out; };
+    const B = ring(yb, 0.86), M = ring(ym, 1.0), U = ring(yt, 0.6), inn = [cx, (yb + yt) / 2, cz], sh = (k) => [col[0] * k, col[1] * k, col[2] * k];
+    for (let q = 0; q < 3 * 3 * (7 - n); q++) r_();
+    for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(B[k], B[j], M[j], M[k], sh(0.84), inn); g.quadO(M[k], M[j], U[j], U[k], sh(0.98), inn); }
+    for (let k = 1; k < n - 1; k++) g.triO(U[0], U[k], U[k + 1], sh(1.1), [cx, yb - 5, cz]);
   }
   // a mountain goat (x forward, ~1.5 m long): the shaggy white coat, the beard and the high shoulders, black horns and hooves; a kid: scaled down
   function btGoat(g, x, y, z, rot, k) {
@@ -473,7 +490,8 @@
     /* ---- the forest (instanced per 96 m chunk): spruce and fir with lodgepole pines low down, fewer and smaller higher up, whitebark pines and their silver
        snags near the treeline, krummholz mats on the tundra; none on the rock, the snow or the cliffs ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(btTreeGeo(k), tMatT, 96));
+    const lo = LOD.tier === 0;   // (NIZKA: the rare snags and the krummholz in bigger chunks, fewer draws)
+    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(btTreeGeo(k), tMatT, lo && k >= 3 ? 192 : 96));
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(90000 * dens), RT = rng(3961), SP = 5.2 / Math.sqrt(dens);
@@ -506,14 +524,14 @@
         }
       }
     }
-    for (const t of tk) t.addTo(root, true);
+    tk.forEach((t, k) => t.addTo(root, !(lo && k >= 3)));   // (NIZKA: no shadow from the thin snags and the low krummholz mats)
 
     /* ---- the tundra's plants (instanced per 96 m chunk): tufts of grass and sedge, cushions of flowers (pink moss campion, yellow cinquefoil, blue
        forget-me-not, white phlox), granite boulders; thicker near the road, none on the snow, under the trees or on the cliffs ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 2, 3].map(k => new IChunks(btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : 96));
+    const pk = [0, 1, 2, 3].map(k => new IChunks(lo && (k === 1 || k === 3) ? API.ownRnd(() => btPlantGeo(k, true)) : btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : !lo ? 96 : k === 0 ? 128 : k === 2 ? 192 : 96));   // (NIZKA: the cushions and the stones lighter, the grass and the boulders in bigger chunks)
     const flowerC = [[1.0, 0.55, 0.78], [1.0, 0.88, 0.3], [0.55, 0.7, 1.0], [1, 1, 1], [0.86, 0.5, 0.95]];
     let nPlants = 0;
     {
