@@ -4,6 +4,8 @@
 // dirko); an open line opens none; a second loop of a colour goes to the same bubble; undo and the eraser (and undo of the eraser); a
 // bubble moved by its top; Zapri with marks asks first; Dodaj k zbirki keeps the moment (its time, lap, metres from the start, the
 // picture, the notes) and puts a flag on the timeline; the flag's tap: the replay there; the collection kept through Nazaj v dirko.
+// Zgodovina napak (sklop 18): from the marking's bar and the choice; kept after Deli (the small picture and the text without Obdrži tudi
+// slike v igri); its state Neposlano → Poslano → Popravljeno → Zaprto (by hand), shared again; on its side and upright; the last 100, 20 with pictures.
 //   node tests/browser/napake.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -122,6 +124,65 @@ try {
   await tap('#nk-on'); await qf(1); await Q.keyboard.press('KeyI'); await qf(2);
   const k3 = await nk(), r6 = await rp();
   T.check('the key I while marking: the marking and the replay stay', k3.on && !!r6 && r6.here, JSON.stringify({ on: k3.on, rp: !!r6 }));
+
+  // Zgodovina napak (sklop 18): from the marking's bar, the choice and the settings; the collection kept after Deli (Obdrži tudi slike v igri
+  // off: the small picture and the text); its state by hand (Popravljeno, Zaprto), shared again (the state stays); at most 100 kept, the newest 20 with their pictures
+  await Q.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: srv.base });
+  await Q.evaluate(() => { window.__shared = null; Object.defineProperty(navigator, 'canShare', { configurable: true, value: (d) => !!(d && d.files && d.files.length) });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared = { names: d.files.map(f => f.name), types: d.files.map(f => f.type), text: d.text }; return Promise.resolve(); } }); });
+  await Q.waitForFunction(async () => (await Napake.shranjene()).length === 1, null, { timeout: 30000, polling: 200 });
+  const fits = () => Q.evaluate(() => { const box = document.querySelector('#nk-zg .nk-box'), b = box.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    const out = [...box.querySelectorAll('button')].filter(e => e.offsetParent).map(e => e.getBoundingClientRect()).filter(r => r.left < b.left - 0.5 || r.right > b.right + 0.5);
+    return { box: b.left >= 0 && b.top >= 0 && b.right <= W && b.bottom <= H, wide: box.scrollWidth <= box.clientWidth + 1, out: out.length, W, H }; });
+  const fitOk = (f) => f.box && f.wide && f.out === 0;
+  const zbar = await Q.evaluate(() => { const b = [...document.querySelectorAll('#nk-bar button')].map(e => e.getBoundingClientRect()); return { n: b.length, rows: new Set(b.map(r => Math.round(r.top))).size, in: b.every(r => r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight) }; });
+  await tap('#nk-bar [data-nk="zg"]'); await Q.waitForSelector('#nk-zg .nk-item');
+  const z0 = (await nk()).zg, zf0 = await fits();
+  T.check('Zgodovina in the marking\'s bar (Dodaj k zbirki, Zgodovina, Zapri in one row): the collection kept (the track, the date, 1 moment, 0 flags, Neposlano); inside the screen on its side',
+    zbar.n === 3 && zbar.rows === 1 && zbar.in && z0.items.length === 1 && /^Bathurst, Avstralija \d+\. \d+\. \d{4} \d\d:\d\d · 1 trenutek · 0 zastavic Neposlano$/.test(z0.items[0]) && fitOk(zf0), JSON.stringify({ zbar, z0, zf0 }));
+  await tap('#nk-zg [data-nk-d="zapri"]'); await tap('#nk-bar .nk-close');
+  // the choice: Obdrži tudi slike v igri off, Deli: still in Zgodovina napak, Poslano, the small picture and the text
+  await Q.evaluate(() => Napake.izbira()); await Q.waitForSelector('#nk-dlg [data-nk-d="deli"]');
+  await Q.click('#nk-dlg .nk-keep input'); await Q.click('#nk-dlg [data-nk-d="deli"]');
+  await Q.waitForFunction(() => window.__shared && !document.getElementById('nk-dlg'), null, { timeout: 30000, polling: 100 }); await Q.waitForTimeout(300);
+  const h1 = await Q.evaluate(async () => (await Napake.shranjene()).map(r => ({ status: r.status, files: r.files.length, nf: r.nf, thumb: !!r.thumb, text: /^RRA-NAPAKE /.test(r.text) })));
+  T.check('Deli with Obdrži tudi slike v igri off: the collection stays in Zgodovina napak as Poslano, its small picture and its text (the picture out)', h1.length === 1 && h1[0].status === 'poslano' && h1[0].files === 0 && h1[0].nf === 1 && h1[0].thumb && h1[0].text, JSON.stringify(h1));
+  // Zgodovina from the choice: over it; a tap opens the record (its picture, its state, its text, Deli / Shrani malo sliko / Kopiraj besedilo / Izbriši)
+  await Q.evaluate(() => Napake.izbira()); await Q.waitForSelector('#nk-dlg [data-nk-d="zg"]'); await tap('#nk-dlg [data-nk-d="zg"]');
+  await Q.waitForSelector('#nk-zg .nk-item');
+  const over = await Q.evaluate(() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return !!(e && e.closest('#nk-zg')) && !!document.getElementById('nk-dlg'); });
+  await tap('#nk-zg .nk-item'); await Q.waitForSelector('#nk-zg .nk-sts');
+  const y1 = (await nk()).zg, txt = await Q.evaluate(async () => (await Napake.shranjene())[0].text);
+  T.check('Zgodovina from the choice, over it; a tap opens the record: the small picture, Poslano, its text, Deli / Shrani malo sliko / Kopiraj besedilo / Izbriši',
+    over && y1.st === 'Poslano' && y1.text === txt && y1.acts.join() === 'Deli,Shrani malo sliko,Kopiraj besedilo,Izbriši' && (await Q.evaluate(() => { const i = document.querySelector('#nk-zg .nk-prev img'); return !!i && i.complete && i.naturalWidth === 320; })), JSON.stringify(y1));
+  await tap('#nk-zg .nk-sts [data-v="popravljeno"]'); await Q.waitForFunction(() => Napake.stanje.zg && Napake.stanje.zg.st === 'Popravljeno', null, { timeout: 10000 });
+  const w1 = await Q.evaluate(async () => (await Napake.shranjene())[0].status);
+  await tap('#nk-zg .nk-sts [data-v="zaprto"]'); await Q.waitForFunction(() => Napake.stanje.zg && Napake.stanje.zg.st === 'Zaprto', null, { timeout: 10000 });
+  await Q.evaluate(() => { window.__shared = null; }); await tap('#nk-zg [data-nk-d="deli"]');
+  await Q.waitForFunction(() => window.__shared, null, { timeout: 10000 }); await Q.waitForTimeout(200);
+  await tap('#nk-zg [data-nk-d="besedilo"]'); await Q.waitForTimeout(200);
+  const w2 = await Q.evaluate(async () => ({ st: (await Napake.shranjene())[0].status, sh: window.__shared, clip: await navigator.clipboard.readText().catch(() => '') }));
+  T.check('the state by hand: Popravljeno, Zaprto (kept); Deli again sends the small picture and the text, Zaprto stays; Kopiraj besedilo copies the text',
+    w1 === 'popravljeno' && w2.st === 'zaprto' && w2.sh.names.length === 1 && /^napake_bathurst_\d{8}-\d{4}_mala\.jpg$/.test(w2.sh.names[0]) && w2.sh.types[0] === 'image/jpeg' && w2.sh.text === txt && w2.clip === txt, JSON.stringify({ w1, w2: Object.assign({}, w2, { clip: w2.clip.slice(0, 40) }) }));
+  // upright (360 × 640): the record and the list inside the screen
+  await Q.setViewportSize({ width: 360, height: 640 }); await Q.waitForTimeout(200);
+  const zf1 = await fits(); await tap('#nk-zg [data-nk-d="nazaj"]'); await Q.waitForSelector('#nk-zg .nk-item'); const zf2 = await fits();
+  T.check('upright (360 × 640): Zgodovina napak inside the screen (the record, the list), nothing wider than its box', fitOk(zf1) && fitOk(zf2), JSON.stringify({ zf1, zf2 }));
+  await tap('#nk-zg [data-nk-d="zapri"]'); await Q.evaluate(() => { const d = document.querySelector('#nk-dlg [data-nk-d="zapri"]'); if (d) d.click(); });
+  await Q.setViewportSize({ width: 640, height: 360 });
+  // the bounds: 105 more (older) collections: 100 kept, the newest 20 with their pictures, the older ones the small picture and the text
+  const B = await Q.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 32; c.height = 20; c.getContext('2d').fillRect(0, 0, 8, 8);
+    const jpg = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.8)), png = await new Promise(r => c.toBlob(r, 'image/png')), now = Date.now();
+    for (let k = 0; k < 105; k++) await Napake.zg.put({ id: 't' + k, name: 'napake_t' + k, date: now - (k + 1) * 60000, track: 'bathurst', tname: 'Bathurst, Avstralija', n: 1, flags: 0, text: 'RRA-NAPAKE t' + k, status: 'neposlano', files: [{ name: 't' + k + '.png', blob: png, w: 32, h: 20 }], thumb: jpg });
+    const l = await Napake.shranjene();
+    return { n: l.length, MAX: Napake.zg.MAX, FULL: Napake.zg.FULL, first: l[0].id, full: l.slice(1, 20).every(r => r.files.length === 1), lite: l.slice(20).every(r => !r.files.length && r.nf === 1 && r.thumb && r.text), ids: l.map(r => r.id) };
+  });
+  T.check('the bounds: at most 100 kept (the oldest out), the newest 20 with their pictures, the older ones the small picture and the text', B.n === 100 && B.MAX === 100 && B.FULL === 20 && B.first !== 't0' && B.full && B.lite && B.ids.includes('t98') && !B.ids.includes('t99') && !B.ids.includes('t104'),
+    JSON.stringify(Object.assign({}, B, { ids: B.ids.slice(-3) })));
+  await Q.evaluate(() => Napake.zgodovina()); await Q.waitForSelector('#nk-zg .nk-item');
+  const zn = await Q.evaluate(() => ({ items: document.querySelectorAll('#nk-zg .nk-item').length, head: document.querySelector('#nk-zg .nk-zg-n').textContent }));
+  T.check('Zgodovina napak lists all 100', zn.items === 100 && zn.head === 'Shranjene zbirke (100)', JSON.stringify(zn));
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
   await Q.context().close();
 } catch (e) {

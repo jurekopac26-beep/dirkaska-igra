@@ -27,6 +27,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
 | 16 | Ponovljive dirke | končano (PR #175) |
 | 17 | Razdeljen world.js | končano (PR #176, #180) |
+| 18 | Zgodovina napak | končano |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -94,10 +95,11 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - **Deli zdaj** – na telefonu meni Deli (Web Share), na računalniku je prva izbira **Kopiraj sliko** za Ctrl + V;
   - **Samo shrani sliko** – v Prenose; obvestilo pove, kje je (Samsung: *Moje datoteke → Prenosi*, Edge: mapa *Prenosi*);
   - **Kopiraj besedilo** – oblika spodaj.
-- **Shranjene napake:**
-  - zadnjih 20 slik ostane v igri (IndexedDB), označenih z »neposlano« ali »poslano«;
+- **Shranjene napake** (od sklopa 18 **Zgodovina napak**):
+  - zadnjih 100 zbirk ostane v igri (IndexedDB), najnovejših 20 s polnimi slikami, starejše z malo sliko in besedilom;
+  - stanje Neposlano → Poslano → Popravljeno → Zaprto;
   - gumb »Deli vse neposlane«;
-  - kljukica »Obdrži tudi v igri«.
+  - kljukica »Obdrži tudi slike v igri«.
 - **Nastavitve → Orodje za napake:**
   - Vklop;
   - Ob koncu (Vprašaj / Deli / Shrani);
@@ -330,6 +332,19 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - **Igra** (`js/game.js`, `repro`, `grand`): v testnem načinu so iz semena še vreme, ki ga nastavitve prepustijo naključju (naključno, menljivo), megla na Big Suru in čakanje luči pred štartom, iz toka, ki je nov za vsako dirko (`newRace`); kvalifikacije in njihove simulacije tekmecev imajo isto seme. Ne v dirki s prijateljem. Vizualni učinki, komentar, radio in zvok ostanejo naključni.
   - **Za teste:** `window.__game.repro` (seme, ali je dirka ponovljiva), `window.__game.recSum()` (povzetek posnetka). Node: `repro: true` v nastavitvah `Core.Race`.
   - **Testi:** nov `tests/repro.test.js` (Bathurst s trčenjem: z `repro` nobenega klica `Math.random`, isto seme da isto dirko do zadnjega bita, drugo seme drugo), nov `tests/browser/repro.test.mjs` (dvakrat `?seme=5` enak posnetek in isti avti, `?seme=6` druga dirka), `quick.test.js` (`seme`). `golden` in `races` brez novih referenc.
+
+### Sklop 18 · Zgodovina napak — 1–1,5 h · 29. 10. 2026
+
+- **Naročilo uporabnika** (29. 10. 2026, glavna seja): »v urejevalniku ko shranim popravek ne morem kasneje gledati za nazaj stare popravke, naredi da imaš še zgodovino starih popravkov, pri katerih tudi piše status«. Veja `orodje-za-napake/sklop-18-zgodovina`, en pull request.
+- **Prej:** zapis v IndexedDB (zadnjih 20), stanje samo neposlano/poslano; po deljenju se je brez »Obdrži tudi v igri« izbrisal; seznam samo v Nastavitvah orodja.
+- **Narejeno:**
+  - **Zgodovina napak** (`zgodovina`, `#nk-zg`): gumb **Zgodovina** v vrstici označevanja (Dodaj k zbirki · Zgodovina · Zapri; vrstica gumbov posnetka ostane, kot je), v izbiri ob Zapri in v Nastavitvah orodja (vrstica Zgodovina napak: Deli vse neposlane, Odpri; seznam pod njo). Panel je nad posnetkom, izbiro in nastavitvami; Zapri vrne tja, od koder je bil odprt.
+  - **Seznam:** pri vsaki zbirki mala slika, proga (»Bathurst, Avstralija«), datum, število trenutkov in zastavic, stanje z barvo (Neposlano oranžno, Poslano modro, Popravljeno zeleno, Zaprto sivo); najnovejša prva. Dotik odpre zapis: slika, stanje (4 gumbi, ročna sprememba), besedilo `RRA-NAPAKE`, Kopiraj sliko (računalnik), Deli, Shrani sliko, Kopiraj besedilo, Izbriši (dvakrat v 3 s).
+  - **Stanje:** Neposlano ob nastanku in ob vsaki novi različici zbirke; Poslano samodejno ob Deli in Kopiraj sliko (samo iz Neposlano: Popravljeno in Zaprto ostaneta, tudi ko zapis znova deliš); Popravljeno in Zaprto ročno.
+  - **Nič se ne izgubi:** deljenje ali shranjevanje zapisa ne izbriše. Kljukica v izbiri je zdaj **Obdrži tudi slike v igri**: brez nje zapis po dejanju ostane z malo sliko (320 px JPEG) in besedilom. Hrani se do **100** zbirk (`DB_MAX`); najnovejših **20** (`DB_FULL`) ima polne slike, starejšim se slike odstranijo (`lite`, `nf`: koliko slik je imela), najstarejše nad 100 gredo ven. Zapis brez slik deli in shrani malo sliko (`<ime>_mala.jpg`) z besedilom.
+  - **Velikost:** mala slika in besedilo sta okoli 20–30 KB, 80 starejših zapisov okoli 2 MB; polne slike (20) kot doslej.
+  - **Testi:** `tests/browser/napake.test.mjs` (Zgodovina v vrstici označevanja in v izbiri, zapis po Deli brez slik, ročno stanje, ponovno Deli, Kopiraj besedilo, pokonci in ležeče, meja 100/20), `napake-slika.test.mjs` (seznam v Nastavitvah: dotik, Izbriši).
+  - **Opomba (moje odločitve):** Kopiraj besedilo stanja ne spremeni (kot doslej; poslano je, ko gre slika); ponovno deljenje iz zgodovine slik ne odstrani ne glede na kljukico. Gumb Zgodovina ni v vrstici gumbov posnetka (tam ni prostora), ampak v vrstici označevanja, ki se odpre z Označi.
 
 ### Sklop 17 · Razdeljen world.js — 3–5 h · 4.–5. 11.
 
