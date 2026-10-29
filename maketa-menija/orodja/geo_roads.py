@@ -15,7 +15,14 @@ GUESS = {
     'detroit': (42.3300, -83.0380, 800),
     'medvode': (46.1418, 14.4091, 300),     # (by the heights: geo_match.py, then here closer)
     'moki': (37.2651, -109.9335, 300),
+    'longford': (-41.5850, 147.1300, 1500),     # the Pit Straight on Illawarra Road, north of the town
+    'newcastle': (-32.9275, 151.7860, 700),     # Wharf Road along the harbour
+    'townsville': (-19.27210, 146.81057, 300),  # Boundary Street by the park (the track's own note)
+    'chapman': (-34.0485, 18.3560, 1200),       # Hout Bay, the end of Main Road by the beach
+    'sani': (-29.6150, 29.3250, 2500),          # the valley of the Mkhomazana under the hairpins
+    'marrakesh': (31.58102, -7.98273, 300),     # the start line (the track's own note)
 }
+SKIP = {'townsville': [(0.40, 0.89)]}   # parts of the lap whose road is not in Overture (the raceway through the park): left out of the score
 CELL = 2.0   # metres per cell of the distance map
 
 def roads(tid, la0, lo0, la1, lo1):
@@ -32,6 +39,9 @@ def roads(tid, la0, lo0, la1, lo1):
 
 def fit(tid, g, check=None):
     T = track(tid); P = np.array(T['pts'], dtype=np.float64); x, z = P[:, 0], P[:, 1]
+    u = np.arange(len(P)) / len(P); keep = np.ones(len(P), bool)
+    for a, b in SKIP.get(tid, []): keep &= ~((u >= a) & (u < b))
+    x, z = x[keep], z[keep]
     lat, lon, R = g; ext = max(np.abs(x).max(), np.abs(z).max()) + R + 300
     M, N = radii(lat); c = math.cos(math.radians(lat)); dlat = math.degrees(ext / M); dlon = math.degrees(ext / (N * c))
     L = roads(tid, lat - dlat, lon - dlon, lat + dlat, lon + dlon)
@@ -68,7 +78,7 @@ def fit(tid, g, check=None):
     v, e0, s0, rot = best
     la0, lo0 = G0.to_ll(e0, s0)   # (the guess's frame is not turned: east, south)
     G = Geo(float(la0), float(lo0), rot); la, lo = G.to_ll(x, z)
-    dem = DEM(la.min() - 0.01, lo.min() - 0.01, la.max() + 0.01, lo.max() + 0.01, 13); off = float(np.median(dem.sample(la, lo) - P[:, 2]))
+    dem = DEM(la.min() - 0.01, lo.min() - 0.01, la.max() + 0.01, lo.max() + 0.01, 13); off = float(np.median(dem.sample(la, lo) - P[keep, 2]))
     return {'lat0': round(float(la0), 6), 'lon0': round(float(lo0), 6), 'rot': round(float(rot), 2), 'offset': round(off, 1), 'roads': round(v, 2),
             'moved': round(math.hypot(e0, s0), 1), 'away20': round(float(np.mean([score(e0 + a, s0 + b, rot) for a, b in ((20, 0), (-20, 0), (0, 20), (0, -20))])), 2)}
 

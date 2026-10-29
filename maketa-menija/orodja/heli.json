@@ -102,5 +102,26 @@
  },
  "moki": {
   "kbps": 550
+ },
+ "longford": {
+  "kbps": 550
+ },
+ "newcastle": {
+  "sea": true,
+  "kbps": 550
+ },
+ "townsville": {
+  "sea": true,
+  "kbps": 550
+ },
+ "chapman": {
+  "sea": true,
+  "kbps": 550
+ },
+ "sani": {
+  "kbps": 550
+ },
+ "marrakesh": {
+  "kbps": 550
  }
 }

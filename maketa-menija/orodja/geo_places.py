@@ -29,10 +29,18 @@ CFG = {
     'detroit': dict(kind='real', start='Detroit', country='USA', region='Michigan', l1='greatlakes'),
     'maunakea': dict(kind='real', start='Mauna Kea', finish='Summit', country='USA', region='Hawaii', l1='hawaii'),
     'moki': dict(kind='real', start='Valley of the Gods', finish='Cedar Mesa', country='USA', region='Utah', l1='utah'),
+    'longford': dict(kind='real', start='Longford', country='Australia', region='Tasmania', l1='tasmania'),
+    'newcastle': dict(kind='real', start='Newcastle', country='Australia', region='New South Wales', l1='nsw'),
+    'townsville': dict(kind='real', start='Townsville', country='Australia', region='Queensland', l1='queensland'),
+    'chapman': dict(kind='real', start='Hout Bay', finish="Chapman's Peak", country='South Africa', region='Cape Peninsula', l1='cape'),
+    'sani': dict(kind='real', start='Mkhomazana', finish='Sani Pass', country='South Africa', region='Drakensberg', l1='drakensberg'),
+    'marrakesh': dict(kind='real', start='Marrakesh', country='Morocco', region='Marrakesh-Safi', l1='morocco'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
-      'california': (35.0, -119.3, 900), 'montana': (45.0, -109.4, 700), 'greatlakes': (43.0, -81.2, 800), 'hawaii': (19.7, -155.6, 400), 'utah': (37.6, -110.6, 600)}
+      'california': (35.0, -119.3, 900), 'montana': (45.0, -109.4, 700), 'greatlakes': (43.0, -81.2, 800), 'hawaii': (19.7, -155.6, 400), 'utah': (37.6, -110.6, 600),
+      'tasmania': (-42.0, 146.6, 500), 'nsw': (-33.0, 150.8, 700), 'queensland': (-19.6, 146.4, 600), 'cape': (-33.7, 19.4, 600), 'drakensberg': (-29.4, 29.5, 600),
+      'morocco': (31.7, -7.6, 800)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

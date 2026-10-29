@@ -16,5 +16,11 @@
   ["bigsur", "top", "top-bigsur", {"W": 824, "H": 620, "wet": true}],
   ["detroit", "top", "top-detroit", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
   ["maunakea", "top", "top-maunakea", {"W": 824, "H": 620, "wet": true}],
-  ["moki", "top", "top-moki", {"W": 824, "H": 620, "wet": true}]
+  ["moki", "top", "top-moki", {"W": 824, "H": 620, "wet": true}],
+  ["longford", "top", "top-longford", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["newcastle", "top", "top-newcastle", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["townsville", "top", "top-townsville", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+  ["chapman", "top", "top-chapman", {"W": 824, "H": 620, "wet": true}],
+  ["sani", "top", "top-sani", {"W": 824, "H": 620, "wet": true}],
+  ["marrakesh", "top", "top-marrakesh", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}]
 ]
