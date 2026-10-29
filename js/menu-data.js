@@ -65,7 +65,10 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "uncompahgre": 300,
+  "iroha": 300,
+  "harju": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -242,6 +245,30 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "uncompahgre": {
+   "start": "Ouray",
+   "finish": "Uncompahgre Gorge",
+   "alt": [
+    2543,
+    2860
+   ]
+  },
+  "iroha": {
+   "start": "Umagaeshi",
+   "finish": "Akechidaira",
+   "alt": [
+    918,
+    1240
+   ]
+  },
+  "harju": {
+   "start": "Jyväskylä",
+   "finish": "Flying finish",
+   "alt": [
+    110,
+    115
+   ]
   }
  },
  "intro": {
