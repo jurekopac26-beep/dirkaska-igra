@@ -85,7 +85,8 @@
   "sea": true
  },
  "montreal": {
-  "kbps": 550
+  "kbps": 550,
+  "sea": true
  },
  "toronto": {
   "kbps": 550,

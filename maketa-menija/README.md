@@ -141,7 +141,7 @@ Kje so proge na Zemlji:
 
 ### Glasba in zvok
 
-- Vsaka država ima svojo **izvirno elektronsko skladbo** (Slovenija, ZDA, Finska, Japonska, Monako, Avstrija, Belgija, Nemčija). Skladbe so narejene za igro: vsak zvok je izračunan v programu (sintetizator v Pythonu), brez posnetih vzorcev in brez tuje glasbe.
+- Vsaka država ima svojo **izvirno elektronsko skladbo** (Slovenija, ZDA, Finska, Japonska, Monako, Avstrija, Belgija, Nemčija, Kanada, Avstralija). Skladbe so narejene za igro: vsak zvok je izračunan v programu (sintetizator v Pythonu), brez posnetih vzorcev in brez tuje glasbe.
 - Vrhunec skladbe pride v trenutku, ko se helikopter zravna nad progo; glasba je ves čas usklajena s posnetkom.
 - Pod letom se sliši **rotor helikopterja** (zvok je prav tako izračunan).
 - Gumb z zvočnikom zgoraj glasbo izklopi ali vklopi, izbira se shrani. *Settings → Sound* izklopi ves zvok.
@@ -335,7 +335,7 @@ Prava proga je dokončana, ko ima vse, kar imajo Vršič, Pikes Peak, Ouninpohja
 3. `CFG` (kraj štarta in cilja, država, regija `l1`) in po potrebi nova regija v `L1` v `geo_places.py`, nato `python3 geo_places.py`. Za stare proge je `raw/geo/match.json` mogoče napolniti iz `js/geo.js` (polja `lat0`, `lon0`, `rot`, `offset`).
 4. `python3 geo_build.py raw/site l1,tracks,vectors <ids>` (z listo prog nariše samo regije, ki jih še ni; `raw/geo/geo.json` napolni iz `js/geo.js`), nato kopiraj `raw/site/geo.js` v `js/geo.js` in nove `raw/site/assets/geo/*` v `assets/geo/`.
 5. `python3 geo_far.py <ids>`: pokrajina okoli sveta igre za let s helikopterjem.
-6. Vrstice v `maps.json` in `isle.json` (ceste 824 × 620, dirkališča 1100 × 830 s `pad: 1.0`), `GAME=../game_main node routemap.mjs maps.json <ids>` in `... isle.json <ids>` (kulise, ki so veliko širše od proge, npr. oddaljeni hribi ali morje do obzorja, se izpustijo).
+6. Vrstice v `maps.json` in `isle.json` (ceste 824 × 620, dirkališča 1100 × 830 s `pad: 1.0`), `GAME=../game_main node routemap.mjs maps.json <ids>` in `... isle.json <ids>` (kulise, ki so veliko širše od proge, npr. oddaljeni hribi ali morje do obzorja, se izpustijo). Jezero ali reka, ki je del zemljevida (Toronto, Montréal), ostane z `keepWide` v vrstici (`true` ali imena ravnin, npr. `["mtWater"]`; enako v `flyovers.json`), v `wide_map.py` pa proga dobi `WATER_OUT` (zunaj otoka naslikana voda) in tanek rob `RING_PX` (ozki otoki med vodo).
 7. `python3 routes.py raw/site <ids>` in `python3 intro_data.py raw/site <ids>`, kopiraj `raw/site/routes.js`, `raw/site/intro-data.js` v `js/` in `raw/site/assets/maps/top-<id>*` v `assets/maps/`; `wideMaps` (300 za 824, 240 za 1100) in `routeMaps` (ceste: `start`, `finish`, `alt` [štart, cilj]; dirkališča: `base`, višina štarta) v `js/menu-data.js`; `python3 wide_map.py <ids> --write`.
 8. Prelet: vrstica v `flyovers.json` (hitrost ~dolžina/28 m/s, kamera in megla sorazmerno, kot pri drugih; `places` z angleškimi imeni iz `R.places` v `routes.js`; `kbps`), `GAME=../game_main node flyover.mjs flyovers.json <ids>`, nato znova korak 7 (`routes.py`, prenese tudi `fly-<id>.webm|webp`).
 9. Let s helikopterjem: kraji v `landmarks.json` (samo zemljepisna imena), vrstica v `drones.json` (`{"mode": "demo", "warm": 2, "kbps": …, "shots": []}`), po potrebi `heli.json` (`sea: true` ob morju), `EXPORT=1 node heli.mjs nring` enkrat, nato `GAME=../game_main node heli.mjs <ids>`, `python3 intro_data.py raw/site <ids>` in `python3 intro_assets.py raw/site` (kopiraj `heli-<id>.*` in glasbo v igro).
