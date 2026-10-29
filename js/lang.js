@@ -394,6 +394,7 @@
     'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
     /* ---- the vehicle fleet (js/cars): the car screen, a destroyed car, a wheel off, retiring (Odstopi), the rivals of a championship ---- */
     'Motor zadaj': 'Rear-engined', 'Izberi': 'Choose', 'Izberi avto': 'Choose a car', 'Kategorije vozil': 'Vehicle categories', 'Vozila v kategoriji': 'Vehicles in the category',
+    'Tapni avto za garažo': 'Tap the car for the garage', 'Odpri garažo z izbranim avtom': 'Open the garage with this car', 'Garaža se odpre, ko je naprava povezana z internetom.': 'The garage opens when the device is online.',
     'VOZILO UNIČENO': 'VEHICLE DESTROYED', 'Odstopi': 'Retire', 'Odstop': 'Retired', 'odstop': 'retired', 'Ogled vozila': 'View the car',
     'Odstop po {0} km': 'Retired after {0} km', 'Odstop v {0} krogu': 'Retired on the {0} lap', ' Brez nagrade.': ' No prize money.',
     ' {0}: brez točk, skupaj {1} in {2} mesto': ' {0}: no points, {1} in total and {2} place', ' in še {0}': ' and {0} more', 'različni avti': 'various cars', ' · tekmeci: {0}': ' · rivals: {0}',
@@ -440,6 +441,21 @@
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
     /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
+    /* ---- the garage (garaza.html, js/garage.js) ---- */
+    'GARAŽA': 'GARAGE', 'V GARAŽI {0}/{1}': 'IN THE GARAGE {0}/{1}', 'POGLED': 'VIEW', 'Odpiram garažo …': 'Opening the garage …', 'Brezplačno': 'Free', 'Polna igra': 'Full game', 'Skrij': 'Hide', 'Okoli avta': 'Round the car', 'Masa': 'Mass', 'Stanje': 'Condition', 'Teža': 'Weight', 'Izbran ✓': 'Selected ✓',
+    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Kupi · {0} CR': 'Buy · {0} CR', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
+    'Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.': 'Drag the picture left or right to turn the camera round the car. Tap during an animation to speed it up.',
+    '{0} je na voljo v polni igri.': '{0} comes with the full game.', '{0} še ni tvoj: kupiš ga z gumbom spodaj.': '{0} is not yours yet: buy it with the button below.',
+    '{0} od {1}': '{0} of {1}', 'V GARAŽI': 'IN GARAGE', 'NOV AVTO V GARAŽI': 'NEW CAR IN THE GARAGE', 'Najprej kupi avto.': 'Buy the car first.',
+    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
+    'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes',
+    'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
+    'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
+    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
+    'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
+    'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
+    'Športni izpuh': 'Sports exhaust', 'Dvojni izpuh, zračniki': 'Twin exhaust, bonnet vents', 'Štirje izpuhi, zajemalnik': 'Quad exhaust, bonnet scoop', 'Bel napis': 'White lettering', 'Rumen pas': 'Yellow band', 'Rdeč pas': 'Red band',
+    'Rdeče čeljusti': 'Red calipers', 'Rumene čeljusti': 'Yellow calipers', 'Zlate, karbonski diski': 'Gold calipers, carbon discs', 'Spojler, spodnja ustnica': 'Spoiler, front lip', 'Zadnje krilo': 'Rear wing', 'Krilo GT, krilca, pragovi': 'GT wing, dive planes, side skirts',
     /* ---- the special missions (js/missions.js) ---- */
     'Zmanjkalo je časa.': 'Out of time.', 'MISIJA NEUSPELA': 'MISSION FAILED', 'MISIJA {0}': 'MISSION {0}', 'Najboljši': 'Best', 'Ponovi': 'Again', 'Misije': 'Missions',
     'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
@@ -454,7 +470,7 @@
     'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
+  const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
