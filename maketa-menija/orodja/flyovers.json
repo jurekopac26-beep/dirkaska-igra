@@ -484,5 +484,111 @@
     2860
    ]
   }
+ ],
+ [
+  "toronto",
+  {
+   "kbps": 700,
+   "speed": 108,
+   "back": 140,
+   "up": 89,
+   "ahead": 70,
+   "fogNear": 248,
+   "fogFar": 918,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 196
+    },
+    {
+     "n": "Lake Ontario",
+     "d": 810
+    },
+    {
+     "n": "Turn 3",
+     "d": 1262
+    },
+    {
+     "n": "Turn 6",
+     "d": 1726
+    },
+    {
+     "n": "Turn 9",
+     "d": 2474
+    }
+   ]
+  }
+ ],
+ [
+  "medvode",
+  {
+   "kbps": 700,
+   "speed": 233,
+   "back": 303,
+   "up": 191,
+   "ahead": 151,
+   "fogNear": 536,
+   "fogFar": 1980,
+   "places": [
+    {
+     "n": "Medvode Roundabout",
+     "d": 343
+    },
+    {
+     "n": "Zbilje",
+     "d": 2234
+    },
+    {
+     "n": "Lake Zbilje",
+     "d": 2805
+    },
+    {
+     "n": "Sava Bridge",
+     "d": 3720
+    },
+    {
+     "n": "Smlednik",
+     "d": 4809
+    }
+   ],
+   "alt": [
+    317,
+    500
+   ]
+  }
+ ],
+ [
+  "montreal",
+  {
+   "kbps": 700,
+   "speed": 161,
+   "back": 209,
+   "up": 132,
+   "ahead": 105,
+   "fogNear": 370,
+   "fogFar": 1368,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 450
+    },
+    {
+     "n": "Turn 6",
+     "d": 1462
+    },
+    {
+     "n": "Turn 10",
+     "d": 2902
+    },
+    {
+     "n": "Rowing Basin",
+     "d": 3797
+    },
+    {
+     "n": "Turn 13",
+     "d": 4101
+    }
+   ]
+  }
  ]
 ]

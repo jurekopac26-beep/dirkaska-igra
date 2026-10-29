@@ -511,5 +511,106 @@
    "d": 4858,
    "sub": "2,860 m"
   }
+ ],
+ "toronto": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Lake Ontario",
+   "ll": [
+    43.626,
+    -79.414
+   ],
+   "snap": "water",
+   "r": 1500
+  },
+  {
+   "n": "Hairpin",
+   "d": 1262,
+   "sub": "Turn 3"
+  },
+  {
+   "n": "Expressway bend",
+   "d": 2050,
+   "sub": "Turn 7"
+  },
+  {
+   "n": "Toronto",
+   "ll": [
+    43.648,
+    -79.383
+   ],
+   "snap": "town",
+   "r": 1500
+  }
+ ],
+ "medvode": [
+  {
+   "n": "Medvode",
+   "ll": [
+    46.1418,
+    14.4114
+   ],
+   "snap": "town",
+   "r": 900
+  },
+  {
+   "n": "Lake Zbilje",
+   "ll": [
+    46.1575,
+    14.416
+   ],
+   "snap": "water",
+   "r": 700
+  },
+  {
+   "n": "Sava Bridge",
+   "d": 3720
+  },
+  {
+   "n": "Smlednik",
+   "d": 4809
+  },
+  {
+   "n": "Old Castle",
+   "d": 6277,
+   "sub": "500 m"
+  }
+ ],
+ "montreal": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Hairpin",
+   "d": 2902,
+   "sub": "Turn 10"
+  },
+  {
+   "n": "Rowing basin",
+   "d": 3797
+  },
+  {
+   "n": "St. Lawrence",
+   "ll": [
+    45.508,
+    -73.512
+   ],
+   "snap": "water",
+   "r": 1500,
+   "sub": "river"
+  },
+  {
+   "n": "Montréal",
+   "ll": [
+    45.505,
+    -73.556
+   ],
+   "snap": "town",
+   "r": 1500
+  }
  ]
 }

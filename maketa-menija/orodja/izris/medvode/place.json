@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 46.141829,
+  "lon0": 14.409114,
+  "rot": 0.36,
+  "offset": 317.1,
+  "mad": 3.29,
+  "p90": 8.5,
+  "range": 191.5,
+  "moved": 8.1,
+  "away100": 7.27
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 46.141829,
+  "lon0": 14.409114,
+  "rot": 0.36,
+  "offset": 317.1,
+  "start": [
+   46.141821,
+   14.409159,
+   317
+  ],
+  "finish": [
+   46.165007,
+   14.442126,
+   491
+  ],
+  "center": [
+   46.154874,
+   14.425366
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "alps",
+  "open": true,
+  "names": {
+   "start": "Medvode",
+   "finish": "Smlednik",
+   "country": "Slovenia",
+   "region": "Upper Carniola"
+  }
+ }
+}

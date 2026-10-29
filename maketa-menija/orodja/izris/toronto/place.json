@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 43.63408,
+  "lon0": -79.41205,
+  "rot": 0.0,
+  "offset": 81.3,
+  "mad": 0.13,
+  "p90": 0.3,
+  "range": 12.3,
+  "moved": 0.0,
+  "away100": 0.65
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 43.63408,
+  "lon0": -79.41205,
+  "rot": 0.0,
+  "offset": 81.3,
+  "start": [
+   43.63408,
+   -79.41205,
+   81
+  ],
+  "finish": [
+   43.63408,
+   -79.41205,
+   81
+  ],
+  "center": [
+   43.633213,
+   -79.415796
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "stlawrence",
+  "open": false,
+  "names": {
+   "start": "Toronto",
+   "finish": "Toronto",
+   "country": "Canada",
+   "region": "Ontario"
+  }
+ }
+}

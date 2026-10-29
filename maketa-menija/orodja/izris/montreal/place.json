@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 45.50178,
+  "lon0": -73.52325,
+  "rot": 0.0,
+  "offset": 9.9,
+  "mad": 0.36,
+  "p90": 1.0,
+  "range": 0.0,
+  "moved": 0.0,
+  "away100": 0.79
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 45.50178,
+  "lon0": -73.52325,
+  "rot": 0.0,
+  "offset": 9.9,
+  "start": [
+   45.50178,
+   -73.52325,
+   10
+  ],
+  "finish": [
+   45.50178,
+   -73.52325,
+   10
+  ],
+  "center": [
+   45.505627,
+   -73.525963
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "stlawrence",
+  "open": false,
+  "names": {
+   "start": "Montréal",
+   "finish": "Montréal",
+   "country": "Canada",
+   "region": "Quebec"
+  }
+ }
+}

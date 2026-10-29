@@ -23,6 +23,9 @@ GUESS = {
     'bigsur': ('finish', 36.3600, -121.9010, 2500),      # Hurricane Point
     'tianmen': ('finish', 29.0495, 110.4826, 3000),      # the platform under the cave
     'uncompahgre': ('start', 38.0080, -107.6631, 800),
+    'toronto': ('start', 43.63408, -79.41205, 0),        # the start line (the track file); flat (12 m): placed there, not searched
+    'medvode': ('finish', 46.1648, 14.4424, 800),        # the old castle above Smlednik (found first in 2.5 km round a guess)
+    'montreal': ('start', 45.50178, -73.52325, 0),       # the start line (the track file); flat: placed there, not searched
 }
 COP = {'tianmen'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
@@ -48,6 +51,8 @@ def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
         G = Geo(lat0, lon0, rot); la, lo = G.to_ll(x, zz); h = dem.sample(la, lo); d = h - y; c = np.median(d)
         return np.mean(np.abs(d - c)), c
     best = (1e9, 0, 0, 0, 0)
+    if R == 0:   # (a flat circuit: the heights tell nothing, so the known point and no turn, only scored)
+        s, c = score(g0[0], g0[1], 0.0); best = (s, g0[0], g0[1], 0.0, c); rots = []
     for rot in rots:
         for dx in np.arange(-R, R + 0.1, coarse):
             for dz in np.arange(-R, R + 0.1, coarse):
@@ -55,7 +60,7 @@ def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
                 s, c = score(lat0, lon0, rot)
                 if s < best[0]: best = (s, lat0, lon0, rot, c)
     # fine: 5 m and 0.1 degree round the best, then 1 m and 0.02
-    for step, rstep, span in ((5, 0.1, 3), (1, 0.02, 3)):
+    for step, rstep, span in ((5, 0.1, 3), (1, 0.02, 3)) if R else ():
         s0, la0, lo0, r0, c0 = best
         for rot in np.arange(r0 - span * rstep * 3, r0 + span * rstep * 3 + 1e-9, rstep):
             for dx in np.arange(-span * step * 6, span * step * 6 + 0.1, step):

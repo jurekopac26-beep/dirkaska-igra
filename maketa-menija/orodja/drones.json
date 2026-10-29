@@ -16,5 +16,8 @@
   ["chapman", {"mode": "demo", "warm": 2}],
   ["bigsur", {"mode": "demo", "warm": 2}],
   ["tianmen", {"mode": "demo", "warm": 2}],
-  ["uncompahgre", {"mode": "demo", "warm": 2}]
+  ["uncompahgre", {"mode": "demo", "warm": 2}],
+  ["toronto", {"mode": "demo", "warm": 2}],
+  ["medvode", {"mode": "demo", "warm": 2}],
+  ["montreal", {"mode": "demo", "warm": 2}]
 ]
