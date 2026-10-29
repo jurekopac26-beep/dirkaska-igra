@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 36.388404,
+  "lon0": -121.901187,
+  "rot": -0.02,
+  "offset": 70.8,
+  "mad": 3.92,
+  "p90": 4.2,
+  "range": 127.0,
+  "moved": 377.6,
+  "away100": 19.26
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 36.388404,
+  "lon0": -121.901187,
+  "rot": -0.02,
+  "offset": 70.8,
+  "start": [
+   36.388404,
+   -121.901187,
+   73
+  ],
+  "finish": [
+   36.35687,
+   -121.902664,
+   172
+  ],
+  "center": [
+   36.372516,
+   -121.902175
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "california",
+  "open": true,
+  "names": {
+   "start": "Rocky Creek",
+   "finish": "Hurricane Point",
+   "country": "USA",
+   "region": "California"
+  }
+ }
+}

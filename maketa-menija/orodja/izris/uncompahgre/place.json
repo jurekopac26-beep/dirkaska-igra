@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 38.007932,
+  "lon0": -107.663098,
+  "rot": 0.02,
+  "offset": 2542.5,
+  "mad": 2.02,
+  "p90": 3.8,
+  "range": 333.6,
+  "moved": 6.3,
+  "away100": 24.19
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 38.007932,
+  "lon0": -107.663098,
+  "rot": 0.02,
+  "offset": 2542.5,
+  "start": [
+   38.007946,
+   -107.663123,
+   2540
+  ],
+  "finish": [
+   37.970858,
+   -107.657555,
+   2862
+  ],
+  "center": [
+   37.989007,
+   -107.656584
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "colorado",
+  "open": true,
+  "names": {
+   "start": "Ouray",
+   "finish": "Uncompahgre Gorge",
+   "country": "USA",
+   "region": "Colorado"
+  }
+ }
+}
