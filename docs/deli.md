@@ -32,6 +32,14 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 - `mounts`: `krilo` (rob strehe, del `spoiler`), `zarometi` (luči `headL`, `headR`), `platisca`.
 - Serijski avto (odločitve uporabnika 29. 10. 2026): zelo majhen strešni spojler z zavorno lučjo (2B), bela črta od repa do nosu (4A), okvir šip brez zobcev (4A), nova notranjost (3A: armatura z merilniki, volan s tremi kraki, školjkasta sedeža, zadnja klop, konzola, obloge vrat; meja notranjih trikotnikov `look.budget` 1400, `look.budgetHi` 1750), razpoka v vsakem oknu posebej (4A, za vse avte, `crackPanes` v `js/render.js`).
 
+## Sklop 2 · streha (KOLIBRI, `js/deli/streha.js`)
+
+- `streha: { x0, x1, bead }`: folija, lak ali karbon čez streho od sprednjega roba spojlerja (`x0`) do vrha vetrobranskega stekla (`x1`), v delu `body` (zmečka se s streho). Folije in karbonska prevleka ostanejo znotraj obrob strehe, lak pokrije tudi obrobi (`bead`: pot obrobe vzdolž avta), karbonska streha seže do obrob; tovarniška in suhi karbon imata dva izbokla dela nad sedežema, levo in desno od štartne številke. Barvna folija in lak (3, 7) sta rumena, dokler garaža ne izbira barve.
+- `stresna_zajemalka: { x, z }`: zajemalka na sprednjem delu strehe z odprtino naprej (`x` odprtina, `z` sredina), v delu `body`. Serijsko je ni.
+- `antena: { x, z, fin: [x, z] }` v delu `aerial`: palice (1–4) stojijo, kjer stoji serijska antena, plavuti (5–15) in dirkalna antena (16) na sredini strehe pred spojlerjem (`fin`: zadnji konec plavuti). Vse ostanejo nizke (salon okvirja avto po višini).
+- `zaluzije: { x0, y0, x1, y1, w }` v delu `trunk` (gredo s prtljažnikom): letvice čez zadnje steklo (vznožje in vrh stekla, polovična širina). Z žaluzijami je zadnji brisalec pospravljen ob vznožju stekla (`around` ovoja: del `wiperRear` mora imeti geometrijo).
+- Serijski KOLIBRI ostane enak (ovoji brez serijskega dela za streho, zajemalko in žaluzije; serijska antena in brisalec kot prej). Največ trikotnikov: streha 16 (+220 nad serijskim).
+
 ## Poskus na treh drugih avtih (sklop 1)
 
 PANTER (športni), JASTREB (klasični), TITAN (tovornjak) imajo `mounts` za poskus.

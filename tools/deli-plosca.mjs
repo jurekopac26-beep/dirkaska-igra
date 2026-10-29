@@ -20,12 +20,16 @@ const VIEWS = {
   krilo: { p: [-4.35, 2.3, 2.45], t: [-0.95, 1.1, 0.08], fov: 32 },
   platisca: { p: [2.3, 0.5, 3.05], t: [1.15, 0.31, 0.62], fov: 17.5 },
   zarometi: { p: [3.55, 1.08, 1.75], t: [1.66, 0.67, 0.06], fov: 17 },
+  streha: { p: [-3.3, 3.3, 2.3], t: [-0.6, 1.3, 0], fov: 30 },   // (sklop 2 · streha: js/deli/streha.js)
+  stresna_zajemalka: { p: [3.0, 2.0, 1.3], t: [-0.15, 1.42, 0], fov: 14 },
+  antena: { p: [-2.7, 2.1, 1.9], t: [-1.3, 1.42, 0.15], fov: 15 },
+  zaluzije: { p: [-4.3, 1.75, 1.7], t: [-1.62, 1.1, 0], fov: 18 },
   chase: { p: [-6.0, 2.15, 0], t: [0.4, 1.02, 0], fov: 29 },   // (as the game's camera behind the car sees it)
   car34f: { p: [5.2, 2.2, 4.3], t: [0.05, 0.68, 0], fov: 21 },   // (the whole car, front three quarters)
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
 };
 const REAR = ['krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
-const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] } };   // (else the whole car, options 4, 9, 16)
+const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, streha: { view: 'chase', ns: [1, 8, 16] }, stresna_zajemalka: { view: 'chase', ns: [5, 13, 16] }, zaluzije: { view: 'chase', ns: [1, 9, 16] }, antena: { view: 'car34r', ns: [4, 9, 16] } };   // (else the whole car, options 4, 9, 16)
 const TW = 400, TH = 236;
 
 const srv = await serve(ROOT), browser = await launch();
