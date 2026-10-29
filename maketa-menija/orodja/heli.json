@@ -80,5 +80,10 @@
  },
  "vrsic": {
   "edgeTint": true
+ },
+ "maunakea": {
+  "hideNames": [
+   "maFar"
+  ]
  }
 }

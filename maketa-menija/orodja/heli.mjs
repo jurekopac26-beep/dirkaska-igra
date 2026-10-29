@@ -65,7 +65,7 @@ for (const track of ids) {
     const farP = path.join(RAW, 'geo', track + '-far.json'), far = Object.assign(fs.existsSync(farP) ? JSON.parse(fs.readFileSync(farP, 'utf8')) : { synth: true }, J.snow ? { snow: J.snow } : {});
     if (Hc.sea) far.sea = true;
     const lcF0 = 'raw/geo/' + track + '-far-lc.png';
-    const info = await page.evaluate((o) => window.DR.setup(Object.assign(o, { theme: o.theme || (window.__game && (window.__game.race || window.__game.demo).track.def.theme) })), { mode: J.mode, fps, extra: J.extra || 0, far, lc: fs.existsSync(path.join(HERE, lcF0)) ? lcF0 : null, edgeTint: Hc.edgeTint ? Object.assign({ margin: 300 }, Hc.edgeTint === true ? {} : Hc.edgeTint) : null, feather: Hc.feather || 0 });
+    const info = await page.evaluate((o) => window.DR.setup(Object.assign(o, { theme: o.theme || (window.__game && (window.__game.race || window.__game.demo).track.def.theme) })), { mode: J.mode, fps, extra: J.extra || 0, far, lc: fs.existsSync(path.join(HERE, lcF0)) ? lcF0 : null, edgeTint: Hc.edgeTint ? Object.assign({ margin: 300 }, Hc.edgeTint === true ? {} : Hc.edgeTint) : null, feather: Hc.feather || 0, hideNames: Hc.hideNames || null });
     // the flight: higher the faster it has to go (the whole run in `fly` s), behind the point it looks at by about as much as it is high
     const len = info.open ? info.raceLen : info.len, v = len / (fly - 3), Hh = Hc.Hh || Math.round(Math.min(950, Math.max(250, 1.6 * v + 150))), B = Hc.B || Math.round(1.05 * Hh);
     const S = Object.assign({ kind: 'heli', len, dur, go, fly, H: Hh, B, fov: 50, adur: 4.5, el0: 55 }, Hc.S || {});

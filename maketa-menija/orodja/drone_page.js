@@ -19,6 +19,10 @@ window.DR = (function () {
     target = mode === 'traffic' ? R.player : R.cars[0];
     if (R.tf && o.extra) more(o.extra);
     if (o.lc && o.far) lcAt = await loadLC(o.lc, o.far);
+    // (heli.json hideNames: the world's own far view left out, e.g. Mauna Kea's flanks and sea of clouds on the camera's far shell, which
+    // would cover the real land from up high; its material is hidden, the world's update shows the mesh itself every frame)
+    const hn = o.hideNames || (window.DR_CFG || {}).hideNames;
+    if (hn && Render.world && Render.world.root) Render.world.root.traverse((x) => { if (hn.includes(x.name) && x.material) { x.material.visible = false; x.userData.__drSkip = true; } });
     const land = o.far ? farLand(o.far, o.theme) : null;
     if (land && o.edgeTint) land.edge = edgeTint(o.edgeTint.margin || 300, o.edgeTint.iters || 2, o.edgeTint.strength);
     const fR = +(((window.DR_CFG || {}).feather != null ? window.DR_CFG.feather : o.feather) || 0);
@@ -81,7 +85,7 @@ window.DR = (function () {
     const put = (k) => { if (val === 1) M[k] = 1; else if (!M[k]) { M[k] = 2; WY[k] = wy; } };
     const mark = (x, z) => { const i = Math.floor((x - x0) / c), j = Math.floor((z - z0) / c); if (i >= 0 && j >= 0 && i < nx && j < nz) put(j * nx + i); };
     for (const pass of [1, 2]) W.root.traverse(o => {
-      if (!o.isMesh || o.isInstancedMesh || !o.geometry || !o.geometry.attributes.position) return;   // (hidden ones too: the world shows only the tiles near its camera)
+      if (!o.isMesh || o.isInstancedMesh || !o.geometry || !o.geometry.attributes.position || o.userData.__drSkip) return;   // (hidden ones too: the world shows only the tiles near its camera; not those left out, hideNames)
       if ((pass === 2) !== !!(wtex && o.material && o.material.map === wtex)) return;
       const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox(); const bb = g.boundingBox.clone().applyMatrix4(o.matrixWorld);
       if (!isFinite(bb.min.x) || Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) < 80) return;
