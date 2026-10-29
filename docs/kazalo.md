@@ -26,8 +26,10 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/net.js` | dirka s prijatelji prek interneta |
 | `js/tex.js` | teksture (narisane v kodi) |
 | `js/journey.js`, `js/geo.js`, `js/intro-data.js`, `js/routes.js` | uvod pred dirko (globus, prelet); `geo/intro-data/routes` so narejeni z orodji, ne urejaj ročno |
-| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane) |
-| `js/missions.js`, `css/missions.css` | posebne misije: seznam (`Missions.add`, vadbena misija `vaja`), potek misije (`Run`: ura, omejitev časa, `set`, `win`, `fail`), prikaz v HUD-u (`#mis`), rezultat (`#mis-res`), seznam misij (`#mis-list`), rekordi (`rra-misije`), hitri vstop `?misija=<id>`; priklopi v `js/game.js`: `MS`, `MisBridge` (opts in begin v `newRace`, step v `stepRace`, over v fazi racing, stop v `toTitle`) |
+| `js/newmap.js`, `js/nvbake.js`, `js/nvmenu.js`, `js/nvwalls.js` | NEW VERSION · TEST 1 (nov zemljevid Toskane; `nvwalls`: ograje, ki jih avto odrine, trdne ovire `H3.solids` (tudi napihljivi gradovi, od katerih se avto odbije), premične stvari v parku `H3.loose` (`looseBuild`, `looseStep`: se podrejo, baloni odletijo) in ljudje, ki se umaknejo (`walkStep`)) |
+| `js/nvpark.js`, `js/nvbase.js`, `js/nvedge.js` | notranjost male proge na novem zemljevidu: lunapark z vulkanom (lava, vlakec), trgovina z igračami in stekleni most; reševalna baza s helidromom, pot do boksov in parkirišče; rob male proge in notranjih cest (robnik, črta, priključki; vogal razcepa ceste 2: robnik proge teče v robnik ceste, `raceRoad` z `lead`) |
+| `js/missions.js`, `css/missions.css` | posebne misije: seznam (`Missions.add`, vadbena misija `vaja`), potek misije (`Run`: ura, omejitev časa, `set`, `win`, `fail`), prikaz v HUD-u (`#mis`), rezultat (`#mis-res`), seznam misij (`#mis-list`), rekordi (`rra-misije`), hitri vstop `?misija=<id>`; priklopi v `js/game.js`: `MS`, `MisBridge` (opts, made in begin v `newRace`, step v `stepRace`, over v fazi racing, stop v `toTitle`) |
+| `js/missions/m<nn>.js` | posamezne misije (`Missions.add`): `m06.js` Srce v hladilni torbi (spremstvo: dirkalni avto `race.escort` v podobi policije, `c.police`, promet se mu umika; `opts.tfCars`: promet samo avti in tovornjaki, v `Traffic._populate`; luči spremstva v `render.js` `updateRoad`; bolnišnica z reševalnim avtom ob cilju: `hospital`, `run.add`) |
 | `js/tracks/<id>.js` | podatki proge (`name`, `theme`, `test`, …) |
 | `js/cars/<id>.js` | vozila |
 | `js/data/` | podatki svetov (npr. OSM, višine) |
@@ -36,6 +38,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
 | `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/misija-slika.mjs` | slike posebne misije (`?misija=<id>`, avtopilot do `--t` s ali `--pred` m pred ciljem ali `--konec`, pokonci in ležeče, s prikazom misije; `test-results/misije/`) |
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
 | `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
@@ -46,6 +49,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
+| `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 
 ## Teme v `js/game.js`
 
@@ -93,7 +97,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 ## Teme v `js/core.js`
 
 - **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
-- **avto** fizika (`Car`; klasična `stepCS`, `CSK`; nova `stepNova`, `NVK`, `NVASSIST`, zdrs telesa v ovinku `Car.nvA`, drseči slog `Car.nvSl`, trki avtov `carCollide`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, `testOf` v `js/game.js`), nadgradnje `car upgrades`, deli vozil `a registered vehicle's parts`
+- **avto** fizika (`Car`; klasična `stepCS`, `CSK`; nova `stepNova`, `NVK`, `NVASSIST`, zdrs telesa v ovinku `Car.nvA`, drseči slog `Car.nvSl`, trki avtov `carCollide` in posledice trka `carKnockFx`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, slog `TEST_REAL`, `testOf` v `js/game.js`; realističen trk: ravni odbijači `rbCollide` / `rboxHit` / `RB_*`, občutek teže `heavyK`, gume ob potisku `cSlide` in `cSx`/`cSz` v `stepCS`, tekmeci z ravnimi odbijači `aiReach` / `RB_FOL`, brez isker `c.fxQ`), nadgradnje `car upgrades`, deli vozil `a registered vehicle's parts`
 - **gume KOLIBRIJA** `KT`, `ktGrip`, `ktWear`, `ktHit`, `ktFire` (guma zagori pri 80 % poškodbe; `Car.kt`, možnost `tyreRule`; pravilo koles `rule.kt` v `wheelRule` / `_wreckStep`)
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
