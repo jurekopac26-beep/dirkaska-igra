@@ -21,21 +21,23 @@ const NVBase = (function () {
     const cv = new THREE.CatmullRomCurve3(ROUTE.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal'), RP = cv.getSpacedPoints(Math.round(cv.getLength() / 0.5)).map(v => [v.x, v.z]);
     // the way's x at z (it runs north to south), the base's edge west of it
     const laneX = (z) => { let best = null; for (let i = 1; i < RP.length; i++) { const [ax, az] = RP[i - 1], [bx, bz] = RP[i]; if ((az - z) * (bz - z) <= 0 && az !== bz) { const x = ax + (bx - ax) * (z - az) / (bz - az); if (best === null || x > -80) best = x; } } return best === null ? -25 : best; };
-    const westEdge = (z) => laneX(z) - RW - 0.6;
+    const westEdge = (z) => laneX(z) - RW;
     // the apron: the old site's polygon west of the way; along the way its own edge (those points marked 1: no kerb there, a dashed line)
     const SPo = H3.sitePoly, apron = []; { const sd = (p) => p[0] - westEdge(p[1]); let exitZ = null;
       for (let i = 0; i < SPo.length; i++) { const a = SPo[i], b = SPo[(i + 1) % SPo.length], sa = sd(a), sb = sd(b); if (sa < 0) apron.push([a[0], a[1], 0]);
         if ((sa < 0) !== (sb < 0)) { let lo = 0, hi = 1; for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2, p = [a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m]; if ((sd(p) < 0) === (sa < 0)) lo = m; else hi = m; } const q = [a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo, 1];
           if (sa < 0) { apron.push(q); exitZ = q[1]; } else { if (exitZ !== null) { const n = Math.ceil(Math.abs(q[1] - exitZ)); for (let k = 1; k < n; k++) { const z = exitZ + (q[1] - exitZ) * k / n; apron.push([westEdge(z), z, 1]); } } apron.push(q); exitZ = null; } } } }
     const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z);
-    // the lot: east of the way, south of road 2 (its kerbs and strip), inside the circuit short of its edge, north of the garages along the start
-    // straight (round them their own room), not on the driving school's practice area nor the HOME lot (they are drawn by their own)
+    // the lot: either side of the way but not on the base's apron (everything there paved, the pictures), south of road 2 (under its kerb and strip,
+    // which hide the lot's edge, js/nvedge.js), inside the circuit short of its edge, up to the garages along the start straight, not on the driving
+    // school's practice area nor the HOME lot (they are drawn by their own)
     const jump = H3.net.find(e => e.id === 'jump'), JP = jump ? jump.P : [], JHW = jump ? jump.hw : 6.2;
     const GAR = [-146.8, -105.8, -64.8, 38, 88];   // (the garages along the start straight, z 139.9: cross, street, circuit, HOME, multi; js/nvmenu.js floors)
-    const PAD = H3.PAD, inPad = (x, z) => x > PAD[0] - 0.4 && x < PAD[1] + 0.4 && z > PAD[2] - 0.4 && z < PAD[3] + 0.4;
-    const lotIn = (x, z) => z > 40 && z < 138 && x > laneX(z) + RW - 0.05 && TL.inLoop(x, z) && TL.dist(x, z, 30) > w + 3.2 && segD(JP, x, z) > JHW + 2.6 && !GAR.some(gx => Math.abs(x - gx) < 11.5 && z > 125)
-      && !inPad(x, z) && !(x > 18 && x < 58 && z > 121 && z < 133) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z));   // (the HOME lot's lane: its own)
-    let lb = [1e9, -1e9, 1e9, -1e9]; for (let x = -20; x <= 175; x += 2) for (let z = 40; z <= 140; z += 2) if (lotIn(x, z)) lb = [Math.min(lb[0], x - 2), Math.max(lb[1], x + 2), Math.min(lb[2], z - 2), Math.max(lb[3], z + 2)];
+    const PAD = H3.PAD, inPad = (x, z, m = 0.4) => x > PAD[0] - m && x < PAD[1] + m && z > PAD[2] - m && z < PAD[3] + m;
+    const southJ = (x, z) => { for (let i = 1; i < JP.length; i++) { const [ax, az] = JP[i - 1], [bx, bz] = JP[i]; if ((ax - x) * (bx - x) <= 0 && ax !== bx) return z > az + (bz - az) * (x - ax) / (bx - ax); } return true; };   // (south of road 2: north of it the park)
+    const lotIn = (x, z) => z > 40 && z < 143 && southJ(x, z) && Math.abs(x - laneX(z)) > RW - 0.05 && !inApron(x, z) && TL.inLoop(x, z) && TL.dist(x, z, 30) > w + 3.2 && segD(JP, x, z) > JHW + 1.0 && !GAR.some(gx => Math.abs(x - gx) < 11.5 && z > 131.5)
+      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z));   // (the HOME lot's lane: its own)
+    let lb = [1e9, -1e9, 1e9, -1e9]; for (let x = -200; x <= 175; x += 2) for (let z = 40; z <= 140; z += 2) if (lotIn(x, z)) lb = [Math.min(lb[0], x - 2), Math.max(lb[1], x + 2), Math.min(lb[2], z - 2), Math.max(lb[3], z + 2)];
     let ab = [1e9, -1e9, 1e9, -1e9]; for (const [x, z] of AP) ab = [Math.min(ab[0], x), Math.max(ab[1], x), Math.min(ab[2], z), Math.max(ab[3], z)];
     R = { RP, laneX, westEdge, apron, AP, inApron, lotIn, inPad, lotBB: lb, apBB: ab };
     // the cars' asphalt: the way as a paved way of the net, the apron and the lot as paved areas
@@ -81,17 +83,11 @@ const NVBase = (function () {
 
     // ---- the way to the boxes: its asphalt, a dashed white line along both edges (only dashes between it and the base or the lot)
     const RP = R.RP; strip(RP, RW * 2, 0.1, ASPH); for (const s of [-1, 1]) strip(off(RP, s * (RW - 0.25)).slice(8, -8), 0.3, 0.13, WL, 3, 2.5);
-    // ---- the base: the apron (flat, its own level), its kerbs red and white along its edge but the way's
+    // ---- the base: the apron (flat, its own level; the circuit's kerb along its edge there, js/nvedge.js)
     const AP = R.apron, y0 = (() => { const v = R.AP.map(([x, z]) => gy(x, z)).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; })();
     { const sh = new THREE.Shape(R.AP.map(([x, z]) => new THREE.Vector2(x, z))), g = new THREE.ShapeGeometry(sh, 4), pa = g.attributes.position, uvA = new Float32Array(pa.count * 2);
       for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), z = pa.getY(i); pa.setXYZ(i, x, y0 + 0.08, z); uvA[2 * i] = x / 7; uvA[2 * i + 1] = z / 7; } g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2)); g.computeVertexNormals();
       if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let i = 0; i < I.count; i += 3) { const t = I.getX(i + 1); I.setX(i + 1, I.getX(i + 2)); I.setX(i + 2, t); } g.computeVertexNormals(); } flat(g, ASPH, 2); }
-    { let area = 0; const n = AP.length; for (let i = 0; i < n; i++) { const a = AP[i], b = AP[(i + 1) % n]; area += a[0] * b[1] - b[0] * a[1]; } const sg = area > 0 ? 1 : -1, W = 0.9, red = [], wht = [], ri = [], wi = []; let c = 0;
-      for (let i = 0; i < n; i++) { const a = AP[i], b = AP[(i + 1) % n]; if (a[2] && b[2]) continue; const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz); if (l < 0.05) continue; const ix = -dz / l * sg * W, iz = dx / l * sg * W;
-        for (let t = 0; t < l; t += 1.5) { const t1 = Math.min(l, t + 1.5), p0 = [a[0] + dx * t / l, a[1] + dz * t / l], p1 = [a[0] + dx * t1 / l, a[1] + dz * t1 / l], P = (c++ % 2) ? wht : red, I = P === wht ? wi : ri, q = P.length / 3;
-          for (const [x, z] of [p0, p1, [p1[0] + ix, p1[1] + iz], [p0[0] + ix, p0[1] + iz]]) P.push(x, y0 + 0.15, z); I.push(q, q + 1, q + 2, q, q + 2, q + 3); } }
-      const fix = (P, I) => { const g = geo(P, I); if (g.attributes.normal.getY(0) < 0) { for (let i = 0; i < I.length; i += 3) { const t = I[i + 1]; I[i + 1] = I[i + 2]; I[i + 2] = t; } return geo(P, I); } return g; };
-      flat(fix(red, ri), L(0xd8282a, { polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), 4); flat(fix(wht, wi), L(0xf4f4f0, { polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), 4); }
     // the H painted in the asphalt (a white ring, a big H, a yellow dashed ring), old drift marks round it, a yellow dashed line to it from the way
     const HY = y0 + 0.08;
     { const hT = tex(512, 512, (c, w, h) => { c.clearRect(0, 0, w, h); const cx = w / 2, cy = h / 2; c.strokeStyle = '#f4f4f0'; c.lineWidth = 13; c.beginPath(); c.arc(cx, cy, w * 0.4, 0, Math.PI * 2); c.stroke();
@@ -115,6 +111,13 @@ const NVBase = (function () {
 
     // ---- the lot: its asphalt up to the roads, bays (2.5 by 5 m) in pairs of rows back to back, 6.5 m aisles, a line between the pairs, lamps on it
     const LB = R.lotBB; sheet(R.lotIn, LB, 3, 0.05, ASPH);
+    // along road 2 (its edge, its kerb and its strip, js/nvedge.js) the lot behind a low kerb of red and white blocks (the pictures' fence 5)
+    { const JP = (H3.net.find(e => e.id === 'jump') || {}).P || [], hw = (H3.net.find(e => e.id === 'jump') || {}).hw || 6.2, TLc = H3.TL, red = [], ri = [], wht = [], wi = []; let acc = 0;
+      const Q = off(JP, hw + 2.3), Qo = off(JP, hw + 2.75), side = (P, I, a, b, c, d, y0, y1) => { const q = P.length / 3; P.push(a[0], gy(a[0], a[1]) + y0, a[1], b[0], gy(b[0], b[1]) + y0, b[1], c[0], gy(c[0], c[1]) + y1, c[1], d[0], gy(d[0], d[1]) + y1, d[1]); I.push(q, q + 1, q + 2, q, q + 2, q + 3, q, q + 2, q + 1, q, q + 3, q + 2); };
+      for (let i = 1; i < Q.length; i++) { const l = Math.hypot(Q[i][0] - Q[i - 1][0], Q[i][1] - Q[i - 1][1]), m = [(Q[i][0] + Qo[i][0]) / 2, (Q[i][1] + Qo[i][1]) / 2]; acc += l;
+        if (!R.lotIn(m[0] + (Qo[i][0] - Q[i][0]) * 1.5, m[1] + (Qo[i][1] - Q[i][1]) * 1.5) || (TLc && TLc.dist(m[0], m[1], 20) < MK.T().w + 3)) continue;
+        const [P, I] = Math.floor(acc / 1.2) % 2 ? [wht, wi] : [red, ri]; side(P, I, Q[i - 1], Q[i], Qo[i], Qo[i - 1], 0.16, 0.16); side(P, I, Q[i - 1], Q[i], Q[i], Q[i - 1], 0.05, 0.16); }
+      if (ri.length) flat(geo(red, ri), L(0xd8282a), 3); if (wi.length) flat(geo(wht, wi), L(0xf4f4f0), 3); }
     { const lines = [], li = [], mid = [], mi = [], lamps = [], BW = 2.5, BD = 5, AIS = 6.5, PER = 2 * BD + AIS, x0 = Math.ceil(LB[0] / BW) * BW, fits = (x, za, zb) => R.lotIn(x, za - 0.8) && R.lotIn(x, zb + 0.8) && R.lotIn(x + BW, za - 0.8) && R.lotIn(x + BW, zb + 0.8) && R.lotIn(x - 1.0, (za + zb) / 2) && R.lotIn(x + BW + 1.0, (za + zb) / 2);
       const quad = (P, I, xa, za, xb, zb, dy) => { const q = P.length / 3; P.push(xa, gy(xa, za) + dy, za, xb, gy(xb, za) + dy, za, xb, gy(xb, zb) + dy, zb, xa, gy(xa, zb) + dy, zb); I.push(q, q + 2, q + 1, q, q + 3, q + 2); };
       for (let zr = LB[2] + AIS; zr + 2 * BD < LB[3]; zr += PER) { const zm = zr + BD; for (const [za, zb] of [[zr, zm], [zm, zm + BD]]) { let run = null; const flush = () => { if (!run) return; const [xs, xe] = run;

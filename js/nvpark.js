@@ -16,11 +16,14 @@ const NVPark = (function () {
       [[58, -140], [56.5, -156], [51.5, -167], [49.5, -178], [47.5, -189], [40, -198.5], [31, -205], [22, -210]]] };
   const inPoly = (P, x, z) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, zi] = P[i], [xj, zj] = P[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; };
   const inPark = (x, z) => inPoly(PARK, x, z);
+  // the toy shop by road 2 and the glass footbridge over it (their feet, the path between): nothing of the park's stands there
+  const TOY = { x: 77, z: 33.4 }, GLB = { x: 58, z: 48.2 }, plot = (x, z) => (x > TOY.x - 8 && x < TOY.x + 8 && z > TOY.z - 8.4 && z < TOY.z + 4.6) || (x > GLB.x - 5.5 && x < GLB.x + 5.5 && z > GLB.z - 26.5 && z < GLB.z - 10) || (x > GLB.x - 2 && x < 71 && z > 23 && z < 31);
   let built = null, volc = null, vt = 0;
 
   function build(MK) {
     const H3 = MK.H3, T = MK.T(), TL = H3.TL, gy = (x, z) => H3.ground(x, z), tx = Tex.all(), own = [];
-    const rd = (x, z) => Math.min(Math.abs(T.query(x, z).d) - T.w, TL ? TL.dist(x, z, 30) - T.w : 1e9), inG = (x, z) => inPark(x, z) && rd(x, z) > 3.5, inGg = (x, z) => inPark(x, z) && rd(x, z) > 1.55;
+    const inP = (x, z) => inPark(x, z) && (!H3.inside || H3.inside(x, z));   // (the park within the circuit's infield: its outline reaches past the circuit's west side)
+    const rd = (x, z) => Math.min(Math.abs(T.query(x, z).d) - T.w, TL ? TL.dist(x, z, 30) - T.w : 1e9), inG = (x, z) => inP(x, z) && rd(x, z) > 3.5, inGg = (x, z) => inP(x, z) && rd(x, z) > 1.55;
     MK.clearWorld(inG, -99);   // (the World's things in the park: trees, signs, tyres)
     const MC = new Map(), mkey = (p, c, o) => p + c + JSON.stringify(o, (k, v) => v && v.isTexture ? 'tex' + v.id : v);
     const L = (c, o = {}) => { const k = mkey('L', c, o); let m = MC.get(k); if (!m) MC.set(k, m = new THREE.MeshLambertMaterial(Object.assign({ color: c }, o))); return m; };   // (one material per colour and look: the still meshes merge by it, js/nvbake.js)
@@ -133,9 +136,61 @@ const NVPark = (function () {
       barrier: (g) => { for (let k = 0; k < 3; k++) g.add(PM(new THREE.BoxGeometry(1.9, 0.8, 0.5), L(k % 2 ? 0xf4f4f0 : 0xd8282a), k * 2 - 2, 0.4, 0)); },
       lamp: (g) => { g.add(PM(new THREE.CylinderGeometry(0.07, 0.09, 3.6, 6), L(0x2a2d30), 0, 1.8, 0)); g.add(PM(new THREE.SphereGeometry(0.28, 8, 6), L(0xfff4c8, { emissive: 0x806a30 }), 0, 3.7, 0)); } };
     const ORDER = ['stall', 'crate', 'barrel', 'balloons', 'bin', 'bench', 'cones', 'stall', 'lamp', 'barrier', 'crate', 'bench', 'barrel', 'bin'];
-    let ko = 0; for (const P of LP) for (let i = 2; i < P.length - 2; i += 3) for (const s of [-1, 1]) { const a = P[i - 1], b = P[i + 1], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, off = 3.25 + 1.4 + rnd() * 1.5, x = P[i].x + nx * s * off, z = P[i].z + nz * s * off; if (!inPark(x, z)) continue;
-      const k = ORDER[ko++ % ORDER.length], g = new THREE.Group(); mk[k](g); if (rd(x, z) < 1.5) continue; g.position.set(x, gy(x, z) + 0.1, z); g.rotation.y = Math.atan2(-dz, dx) + (s > 0 ? Math.PI : 0); put(g); items.push({ g, k, x, z }); }
+    let ko = 0; for (const P of LP) for (let i = 2; i < P.length - 2; i += 3) for (const s of [-1, 1]) { const a = P[i - 1], b = P[i + 1], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, off = 3.25 + 1.4 + rnd() * 1.5, x = P[i].x + nx * s * off, z = P[i].z + nz * s * off; if (!inP(x, z)) continue;
+      const k = ORDER[ko++ % ORDER.length], g = new THREE.Group(); mk[k](g); if (rd(x, z) < 1.5 || plot(x, z)) continue; g.position.set(x, gy(x, z) + 0.1, z); g.rotation.y = Math.atan2(-dz, dx) + (s > 0 ? Math.PI : 0); put(g); items.push({ g, k, x, z }); }
     for (const [x, z] of [[20, -110], [88, -150], [14, -160], [92, -40]]) { const g = new THREE.Group(); mk.inflat(g); g.position.set(x, gy(x, z), z); put(g); items.push({ g, k: 'inflat', x, z }); }
+    // the toy shop at the end of the lane by road 2 (the pictures' toy-page.js, the gift box the user chose): pink walls, a red lid with a yellow ribbon
+    // and bow, a door and two windows under a striped awning, the sign (a bear and TOYS), a striped ball and a toy car by the door; a paved forecourt
+    // from the lane's end to its door. Solid (H3.solids)
+    const pave = tx.paving ? (() => { const t = tx.paving.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; return t; })() : null, PV = L(pave ? 0xece4d8 : 0xc8c0b4, { map: pave, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+    const S = H3.solids || (H3.solids = []);
+    { const { x: CX, z: CZ } = TOY, G = new THREE.Group(), B = (w, h, d, c, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof c === 'number' ? L(c) : c); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); G.add(m); return m; };
+      const stripes = (c1, n) => STR(c1, '#ffffff', n), signT = canvasTex(512, 128, (c, w, h) => { c.fillStyle = '#d83a3a'; c.fillRect(0, 0, w, h); c.lineWidth = 10; c.strokeStyle = '#ffffff'; c.strokeRect(5, 5, w - 10, h - 10);
+        c.fillStyle = '#a0663a'; for (const [x, y, r] of [[50, 38, 15], [94, 38, 15], [72, 70, 33]]) { c.beginPath(); c.arc(x, y, r, 0, 6.3); c.fill(); } c.fillStyle = '#e8c090'; c.beginPath(); c.arc(72, 80, 14, 0, 6.3); c.fill(); c.fillStyle = '#222'; for (const [x, y, r] of [[60, 62, 4.5], [84, 62, 4.5], [72, 75, 5]]) { c.beginPath(); c.arc(x, y, r, 0, 6.3); c.fill(); }
+        const cols = ['#e63946', '#ffd34d', '#3a86ff', '#2bb673']; c.font = 'bold 86px sans-serif'; c.textBaseline = 'middle'; let x = 132; for (let k = 0; k < 4; k++) { c.lineWidth = 10; c.strokeStyle = '#ffffff'; c.strokeText('TOYS'[k], x, 68); c.fillStyle = cols[k]; c.fillText('TOYS'[k], x, 68); x += c.measureText('TOYS'[k]).width + 10; } });
+      B(12, 4.8, 7.6, 0xf7c6d0, 0, 2.4, 0); B(12.8, 0.7, 8.4, 0xd83a3a, 0, 5.15, 0); B(12.9, 0.76, 1.3, 0xffd84a, 0, 5.15, 0); B(1.3, 0.76, 8.5, 0xffd84a, 0, 5.15, 0); for (const s of [-1, 1]) B(0.06, 4.8, 1.3, 0xffd84a, s * 6.02, 2.4, 0);
+      const tor = new THREE.TorusGeometry(1.15, 0.36, 6, 16); for (const s of [-1, 1]) { const m = new THREE.Mesh(tor, L(0xffd84a)); m.position.set(s * 1.05, 5.95, 0); m.rotation.order = 'YXZ'; m.rotation.set(-1.05, s * 0.5, 0); G.add(m); }
+      { const m = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), L(0xffc21a)); m.position.set(0, 5.75, 0); G.add(m); } for (const s of [-1, 1]) B(0.55, 0.1, 1.9, 0xffd84a, s * 0.55, 5.55, 1.0, 0, s * 0.35, 0);
+      B(1.8, 2.6, 0.12, 0x8a5a32, 0, 1.3, -3.86); for (const x of [-3.6, 3.6]) { B(3.35, 2.05, 0.06, 0xffffff, x, 1.75, -3.82); B(3.1, 1.8, 0.08, 0x9ad4f0, x, 1.75, -3.87); }
+      B(12, 0.12, 1.9, L(0xffffff, { map: stripes('#e63946', 12) }), 0, 3.2, -4.7, 0.35); { const s = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 1.1), L(0xffffff, { map: signT })); s.position.set(0, 4.2, -3.92); s.rotation.y = Math.PI; G.add(s); B(4.6, 1.3, 0.1, 0xffffff, 0, 4.2, -3.84); }
+      { const b = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 8), L(0xffffff, { map: stripes('#e63946', 6) })); b.position.set(-5.4, 0.9, -5.6); G.add(b); } B(1.3, 0.55, 2.2, 0xe63946, 5.2, 0.55, -5.4); B(1.1, 0.5, 1.1, 0x9ad4f0, 5.2, 1.05, -5.3);
+      for (const [a, b] of [[-0.6, -0.7], [0.6, -0.7], [-0.6, 0.7], [0.6, 0.7]]) { const w2 = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 10), L(0x222222)); w2.position.set(5.2 + a, 0.3, -5.4 + b); w2.rotation.z = Math.PI / 2; G.add(w2); }
+      at(G, CX, CZ); { const g = new THREE.PlaneGeometry(14.4, 3.8, 7, 2); g.rotateX(-Math.PI / 2); const P = g.attributes.position, uv = g.attributes.uv; for (let i = 0; i < P.count; i++) { const x = P.getX(i) + CX, z = P.getZ(i) + CZ - 5.5; P.setXYZ(i, x, gy(x, z) + 0.105, z); uv.setXY(i, x / 2.4, z / 2.4); } g.computeVertexNormals(); flat(g, PV); }
+      S.push({ ax: CX - 2.2, az: CZ, bx: CX + 2.2, bz: CZ, r: 3.9 }); }
+    // the glass footbridge over road 2 from the lot into the park by the toy shop (the pictures' glass2-page.js, the user's version 1: a glass tube on
+    // a timber deck 6 m up, a glass tower at each end with a spiral stair, light strips); a paved path from its north foot to the toy shop. Its parts
+    // merged per material; the towers and the piers solid
+    { const BX = GLB.x, BZ = GLB.z, g0 = gy(BX, BZ), DECK = 6.0, ZN = -11, ZS = 11, RUN = 11, gN = gy(BX, BZ + ZN - RUN), gS = gy(BX, BZ + ZS + RUN), Y = new THREE.Vector3(0, 1, 0);
+      const parts = new Map(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+      const put2 = (mat, geo, x, y, z, rx = 0, ry = 0, rz = 0) => { e.set(rx, ry, rz); q.setFromEuler(e); m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(1, 1, 1)); geo.applyMatrix4(m4); if (!parts.has(mat)) parts.set(mat, []); parts.get(mat).push(geo.index ? geo.toNonIndexed() : geo); };
+      const bx = (mat, x, y, z, sx, sy, sz, rx, ry, rz) => put2(mat, new THREE.BoxGeometry(sx, sy, sz), x, y, z, rx, ry, rz);
+      const rod = (mat, a, b, r, seg = 5) => { const A = new THREE.Vector3(...a), Bv = new THREE.Vector3(...b), d = Bv.clone().sub(A), len = d.length(); if (len < 1e-4) return; const geo = new THREE.CylinderGeometry(r, r, len, seg, 1, true); q.setFromUnitVectors(Y, d.normalize()); m4.compose(A.add(Bv).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1)); geo.applyMatrix4(m4); if (!parts.has(mat)) parts.set(mat, []); parts.get(mat).push(geo.toNonIndexed()); };
+      const sky = (() => { const face = (top) => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const c = cv.getContext('2d'), g = c.createLinearGradient(0, 0, 0, 32); if (top === 1) { g.addColorStop(0, '#7fa8d8'); g.addColorStop(1, '#a9c6e8'); } else if (top === -1) { g.addColorStop(0, '#5a7a4a'); g.addColorStop(1, '#4a6a3e'); } else { g.addColorStop(0, '#8fb2de'); g.addColorStop(0.5, '#dfe9f2'); g.addColorStop(0.56, '#9aa88a'); g.addColorStop(1, '#5a7a4a'); } c.fillStyle = g; c.fillRect(0, 0, 32, 32); return cv; };
+        const t = new THREE.CubeTexture([face(0), face(0), face(1), face(-1), face(0), face(0)]); t.needsUpdate = true; return t; })();
+      const glass = (tint, op) => new THREE.MeshPhongMaterial({ color: tint, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide, shininess: 140, specular: 0xffffff, envMap: sky, reflectivity: 0.55, combine: THREE.MixOperation });
+      const Gl = glass(0xa8dcef, 0.3), Gt = glass(0x9cd2ea, 0.34), W = PH(0xf4f6f8), D = PH(0x50565c), WOOD = L(0xb48a58), LED = new THREE.MeshBasicMaterial({ color: 0x9ff4ff }), w = 3.2, hw = w / 2, hWall = 1.15;
+      // the deck and the tube (a wall up to 1.15 m, then a half circle), its steel rings every 2.2 m
+      bx(D, 0, DECK - 0.32, 0, w + 0.4, 0.55, ZS - ZN + 0.2); bx(WOOD, 0, DECK - 0.02, 0, w, 0.06, ZS - ZN); for (const sx of [-1, 1]) bx(LED, sx * (hw - 0.12), DECK + 0.03, 0, 0.06, 0.03, ZS - ZN - 0.4);
+      { const n = 12, prof = [[-hw, 0], [-hw, hWall]]; for (let k = 1; k < n; k++) { const a = Math.PI - Math.PI * k / n; prof.push([hw * Math.cos(a), hWall + hw * Math.sin(a)]); } prof.push([hw, hWall], [hw, 0]);
+        const pos = [], idx = []; prof.forEach(([x, y]) => pos.push(x, y + DECK, ZN, x, y + DECK, ZS)); for (let k = 0; k < prof.length - 1; k++) { const b = k * 2; idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); } const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setIndex(idx); tg.computeVertexNormals(); put2(Gl, tg, 0, 0, 0);
+        const m = Math.round((ZS - ZN) / 2.2); for (let j = 0; j <= m; j++) { const z = ZN + (ZS - ZN) * j / m; for (let k = 0; k < prof.length - 1; k++) rod(W, [prof[k][0], prof[k][1] + DECK, z], [prof[k + 1][0], prof[k + 1][1] + DECK, z], 0.06); }
+        for (const k of [1, prof.length - 2, (prof.length - 1) >> 1]) rod(W, [prof[k][0], prof[k][1] + DECK, ZN], [prof[k][0], prof[k][1] + DECK, ZS], 0.05); for (const sx of [-1, 1]) rod(W, [sx * (hw - 0.08), DECK + 1.0, ZN], [sx * (hw - 0.08), DECK + 1.0, ZS], 0.035); }
+      // a glass tower at each end: four steel corners, bands, a roof; a landing at the deck's height, the spiral (30 steps, one and a half turns) up to it, a door at the foot
+      for (const [zc, gE] of [[ZN - 2.6, gN], [ZS + 2.6, gS]]) { const y0 = gE - g0, hT = DECK + 3.4 - y0, dir = zc < 0 ? 1 : -1; bx(Gt, 0, y0 + hT / 2, zc, 5.2, hT, 5.2); for (const sx of [-1, 1]) for (const sz of [-1, 1]) bx(W, sx * 2.6, y0 + hT / 2, zc + sz * 2.6, 0.2, hT, 0.2); bx(W, 0, y0 + hT + 0.12, zc, 5.7, 0.28, 5.7);
+        for (let k = 1; k <= 2; k++) { const yb = y0 + k * (DECK - y0) / 2; for (const sz of [-1, 1]) bx(W, 0, yb, zc + sz * 2.6, 5.25, 0.14, 0.12); for (const sx of [-1, 1]) bx(W, sx * 2.6, yb, zc, 0.12, 0.14, 5.25); }
+        bx(D, 0, DECK - 0.12, zc + dir * 1.4, 5.0, 0.2, 2.4); bx(WOOD, 0, DECK - 0.02, zc + dir * 1.4, 5.0, 0.06, 2.4); bx(Gt, 0, DECK + 0.55, zc + dir * 0.22, 2.4, 1.1, 0.04); rod(W, [-1.2, DECK + 1.1, zc + dir * 0.22], [1.2, DECK + 1.1, zc + dir * 0.22], 0.04);
+        const n = 30, dA = 3 * Math.PI / n; for (let k = 0; k < n; k++) { const a = -dir * (n - 1 - k) * dA, y = y0 + (DECK - y0) * (k + 1) / n - 0.05; bx(D, 1.25 * Math.cos(a), y, zc + 1.25 * Math.sin(a), 1.7, 0.1, 0.55, 0, -a, 0); }
+        bx(D, 0, y0 + (DECK - y0) / 2, zc, 0.3, DECK - y0, 0.3); { const pts = []; for (let k = 0; k <= 24; k++) { const t = k / 24, a = -dir * (n - 1) * dA * (1 - t), y = y0 + 1.0 + (DECK - y0) * t; pts.push([2.1 * Math.cos(a), y, zc + 2.1 * Math.sin(a)]); } for (let k = 0; k < 24; k++) rod(W, pts[k], pts[k + 1], 0.035); }
+        bx(W, -2.62, y0 + 1.15, zc, 0.12, 2.3, 1.5); bx(PH(0x3c4146), -2.66, y0 + 1.15, zc, 0.06, 2.1, 1.25); S.push({ ax: BX, az: BZ + zc, bx: BX, bz: BZ + zc, r: 2.75 }); }
+      for (const z of [-8.5, 10.6]) { bx(W, 0, (DECK - 0.6) / 2, z, 0.9, DECK - 0.6, 0.9); S.push({ ax: BX, az: BZ + z, bx: BX, bz: BZ + z, r: 0.55 }); }
+      const G = new THREE.Group(); for (const [mat, geos] of parts) { const pos = [], nrm = []; for (const gg of geos) { const P = gg.attributes.position, Nn = gg.attributes.normal; for (let i = 0; i < P.count; i++) { pos.push(P.getX(i), P.getY(i), P.getZ(i)); nrm.push(Nn.getX(i), Nn.getY(i), Nn.getZ(i)); } gg.dispose(); }
+        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); const me = new THREE.Mesh(bg, mat); me.castShadow = !mat.transparent; me.receiveShadow = true; G.add(me); }
+      G.position.set(BX, g0, BZ); MK.add(G); own.push(G);
+      // the paved path from its north foot to the toy shop's forecourt, a pad at each foot
+      { const A = [BX, BZ + ZN - RUN + 0.2], B2 = [70.2, 27.9], dx = B2[0] - A[0], dz = B2[1] - A[1], len = Math.hypot(dx, dz), nx = -dz / len, nz = dx / len, pos = [], uv = [], idx = [], n = Math.ceil(len / 1.5);
+        for (let k = 0; k <= n; k++) { const t = k / n, x = A[0] + dx * t, z = A[1] + dz * t; for (const s of [-1, 1]) { const px = x + nx * s * 1.4, pz = z + nz * s * 1.4; pos.push(px, gy(px, pz) + 0.105, pz); uv.push(px / 3, pz / 3); } if (k) { const b = (k - 1) * 2; idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); } }
+        for (const [x, z, oz0, oz1] of [[A[0], A[1], -2.2, 1.4], [BX, BZ + ZS + RUN - 0.2, -1.4, 2.2]]) { const b = pos.length / 3; for (const [ox, oz] of [[-2.2, oz0], [2.2, oz0], [2.2, oz1], [-2.2, oz1]]) { pos.push(x + ox, gy(x + ox, z + oz) + 0.105, z + oz); uv.push((x + ox) / 3, (z + oz) / 3); } idx.push(b, b + 2, b + 1, b, b + 3, b + 2); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let t = 0; t < I.count; t += 3) { const v = I.getX(t + 1); I.setX(t + 1, I.getX(t + 2)); I.setX(t + 2, v); } g.computeVertexNormals(); } flat(g, PV); } }
     // the volcano (the old mine train's mountain made one, the pictures' volcano-page.js; the user: no smoke, only the lava moves, lava-page.js):
     // a cone of 128 x 44 points from its foot to a jagged rim and down into the crater, sharp ridges and gullies, bands of rock by height (dark
     // basalt, rust, ochre ash), darker and redder near the top; a lava lake in the crater; five flows down the flanks from the rim's notches (a dark
@@ -152,7 +207,7 @@ const NVPark = (function () {
       const rad = (t) => t < 0.86 ? 1 - 0.78 * Math.pow(t / 0.86, 0.85) : 0.22 - (t - 0.86) / 0.14 * 0.16;
       const sXZ = (a, t) => { const r = rad(t) * (1 + noise(a, t) * (t < 0.86 ? 1 : 0.3)); return [CX + Math.cos(a) * RX * r * 1.35, CZ + Math.sin(a) * RZ * r * 1.35]; };
       const sY = (a, t) => G0 + prof(t, a) * (1 + 0.5 * noise(a, t) * (t < 0.86 ? 1 : 0.3));
-      const nearLn = (x, z, d) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < d * d)), clear = (x, z, d) => inPark(x, z) && rd(x, z) > 4 && !nearLn(x, z, d);
+      const nearLn = (x, z, d) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < d * d)), clear = (x, z, d) => inP(x, z) && rd(x, z) > 4 && !nearLn(x, z, d);
       // the cone: its facets flat (each triangle its own normal: the rock's edges), the foot sunk into the ground
       { const BAS = [0.17, 0.15, 0.145], RUST = [0.33, 0.17, 0.11], ASH = [0.37, 0.31, 0.23], TOP = [0.11, 0.09, 0.09], pos = [], col = [], idx = [];
         for (let j = 0; j <= NR; j++) { const t = j / NR; for (let i = 0; i <= NA; i++) { const a = i / NA * Math.PI * 2, [x, z] = sXZ(a, t); pos.push(x, j ? sY(a, t) : Math.min(G0, gy(x, z)) - 0.6, z);
@@ -201,9 +256,10 @@ const NVPark = (function () {
       const gs = new THREE.CircleGeometry(1, 14); gs.rotateX(-Math.PI / 2); const imS = inst(gs, HOT, SP), imB = inst(new THREE.SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), BUB, BU);
       // the glow over the crater (additive, no light), the ground round the foot ash-dark and fading out, the boulders, the burnt stumps
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: cvTex(64, 64, (c, w, h) => { const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(255,150,60,1)'); g.addColorStop(0.45, 'rgba(255,90,30,0.45)'); g.addColorStop(1, 'rgba(255,60,20,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.55 }));
-      glow.scale.set(RX * 1.1, RX * 0.7, 1); glow.position.set(CX, yLake + 3.5, CZ); MK.add(glow); own.push(glow);
+      glow.scale.set(RX * 1.1, RX * 0.7, 1); glow.position.set(CX, yLake + 3.5, CZ); glow.raycast = () => {};   // (a ray through the scene passes it: a sprite needs the camera for that)
+      MK.add(glow); own.push(glow);
       { const pos = [], col = [], idx = [], NAr = 96; for (let j = 0; j <= 6; j++) { const f = 1.0 + j / 6 * 0.55; for (let i = 0; i <= NAr; i++) { const a = i / NAr * Math.PI * 2, w5 = 1 + 0.06 * Math.sin(5 * a), x = CX + Math.cos(a) * RX * 1.35 * f * w5, z = CZ + Math.sin(a) * RZ * 1.35 * f * w5;
-            pos.push(x, gy(x, z) + 0.05, z); col.push(0.16, 0.14, 0.13, 0.85 * (1 - j / 6) * (inPark(x, z) ? Math.max(0, Math.min(1, (rd(x, z) - 2) / 4)) : 0)); } }
+            pos.push(x, gy(x, z) + 0.05, z); col.push(0.16, 0.14, 0.13, 0.85 * (1 - j / 6) * (inP(x, z) ? Math.max(0, Math.min(1, (rd(x, z) - 2) / 4)) : 0)); } }
         for (let j = 0; j < 6; j++) for (let i = 0; i < NAr; i++) { const a = j * (NAr + 1) + i; idx.push(a, a + NAr + 1, a + 1, a + 1, a + NAr + 1, a + NAr + 2); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx); g.computeVertexNormals();
         if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let t = 0; t < I.count; t += 3) { const q = I.getX(t + 1); I.setX(t + 1, I.getX(t + 2)); I.setX(t + 2, q); } g.computeVertexNormals(); }
@@ -225,14 +281,15 @@ const NVPark = (function () {
       volc.anim(0); }
     // trees and people (on the plazas and the lanes), clear of the lanes, the rides and the volcano's ash
     { let sd = 21; const r3 = () => (sd = (sd * 16807) % 2147483647) / 2147483647, nearLane = (x, z) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 36));
-      const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD], nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2);
-      const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 140; t++) { const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5) continue;
+      const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD], nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2) || plot(x, z);
+      const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 140; t++) { const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5) continue;   // (the trees also past the circuit's west side, on the meadow there)
+       
         at(new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), L(TC[nt % 4], { flatShading: true })), x, z, h + 1.6); at(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, h + 0.6, 4, 1, true), L(0x6a4a2a)), x, z, (h + 0.6) / 2); nt++; }
       const GP = { body: new THREE.CylinderGeometry(0.2, 0.24, 0.9, 5), legs: new THREE.CylinderGeometry(0.17, 0.17, 0.5, 5, 1, true), head: new THREE.IcosahedronGeometry(0.17, 0) };
       const PC2 = [0xe8452c, 0x2a7ad8, 0xf2c12e, 0x3fbf6a, 0xc86bff, 0xff8a2a, 0xf4f4f0, 0x2a2622]; for (let k = 0; k < 160; k++) { let x, z;
         if (k < 90) { const [px, pz, R] = J.PL[['F', 'C', 'A'][k % 3]], a = r3() * 6.28, rr = R - 3.5 + (r3() - 0.5) * 2.5; x = px + Math.cos(a) * rr; z = pz + Math.sin(a) * rr; } else { const P = LP[k % LP.length], p = P[Math.floor(r3() * P.length)]; x = p.x + (r3() - 0.5) * 7.5; z = p.z + (r3() - 0.5) * 7.5; }
         const g = new THREE.Group(), c = PC2[Math.floor(r3() * 8)]; g.add(PM(GP.body, L(c), 0, 0.95, 0)); g.add(PM(GP.legs, L(0x2a3a5a), 0, 0.25, 0)); g.add(PM(GP.head, L(0xe0b89a), 0, 1.55, 0));
-        if (rd(x, z) < 1.5) continue; g.position.set(x, gy(x, z), z); put(g, false); } }
+        if (rd(x, z) < 1.5 || plot(x, z)) continue; g.position.set(x, gy(x, z), z); put(g, false); } }
     built = { LP: LP.map(P => P.map(p => [p.x, p.z])), items, own, rides: own.filter(o => o.userData.ride), volc };
     return built;
   }
