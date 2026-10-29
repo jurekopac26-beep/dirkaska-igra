@@ -65,3 +65,5 @@
 - OZNAČEVANJE KONČNO (NOVO, nadomesti OZ7-2 in OZ8): vedno je MODER samo EN objekt, tisti, na katerega je bil klik (moder debel obris s sijem kot OZ8-3 / kot glava dvigala na uporabnikovi sliki); VSI ostali objekti iste skupine so ORANŽNI (tanek oranžen obris). V meniju je izbrana ploščica modra, ostale oranžne. Slike v delu: oz/oz9_en_moder.png.
 - Meni: siv gumb nazaj (‹) poleg KUPI IN NAMESTI naj bo DALJŠI (širši); verzije širine v delu (oz/nazaj_dolg.png).
 - OZNAČEVANJE SLOG (NOVO): videz po OZ8 verziji 4: kliknjen (edini moder) = moder obris s sijem in tanko belo notranjo črto; vsi ostali iz skupine = oranžna 30 % prosojna barva BREZ obrisa. (Pravilo en moder + ostali oranžni ostane.)
+- 29. 10.: uporabnik je napisal »začni sklop 1« (garaža na novo različico igre: združitev main, 33 avtov, servis z robotom dokončan in preverjen, testi). Sklop 2 in naprej šele po novem »začni«.
+- 29. 10.: igralcev še ni, zato garaže ni treba skrivati: ko gre na main (sklop 2), je lahko takoj povezana iz menija igre (npr. gumb »Nadgradnje ›« pri izbiri avta).

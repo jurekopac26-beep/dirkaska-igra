@@ -6,7 +6,9 @@
 // (two industrial robots on floor rails, the tool stand ORODJA with its seven tools, the near robot's stand with six; the nano chamber,
 // the drying column, the paint drums, the tyre towers, the parts shelf, the rim stand, the kit stand) parked at rest, bolted down, out of
 // the cars' lane, their moves through the shows' queue (a tool taken and put back, the chamber down and up, the column up and down), the
-// robots' reach round every car, the plates in English. The animations run on a clock the test steps itself (software WebGL is slow).
+// robots' reach round every car, the plates in English; the service by the two robots (each item and the full service on three cars,
+// every frame audited: nothing through anything, everything parked after, a car asked for meanwhile waits). The animations run on a
+// clock the test steps itself (software WebGL is slow).
 // Zero page errors allowed.
 //   node tests/browser/garage.test.mjs
 import { serve, launch, checker } from './lib.mjs';
@@ -202,6 +204,162 @@ try {
     T.check('a drum lit up (for the tap on it): its arc brighter than the others\' (its colours alone sent again); the chamber\'s lights in the paint\'s colour (green)', gl.drums[0].glow === 1 && gl.drums.slice(1).every(q => q.glow === 0 && gl.drums[0].arc > 1.8 * q.arc) && gl.ch.ring[1] > 1.5 * gl.ch.ring[0] && gl.ch.ring[1] > 1.5 * gl.ch.ring[2] && gl.ch.col[1] > 1.5 * gl.ch.col[0] && gl.range.count > 0 && gl.range.count < gl.range.n / 2, JSON.stringify(gl));
   }
 
+  // 1d. the service by the two floor robots (the near one: the nozzle's four passes along the near side, the scanner beside it, the
+  // wrench at the drain plug under the car up on the lift; the far one: the brush and the polisher on the bonnet, the lamp under the car),
+  // stepped at a high time scale on the PICO, the FORMULA and the TRUCK (worn first): each item alone and the full service (and once with
+  // the phone held the other way). Every frame the audit (1c's checks): every other vertex of the arms and of the held tools, and points
+  // along each link and drum with its radius, never in the car (a tool only at its working end), the lift's column, a stand (its own
+  // stand's plate: the tools out through their forks), the tyre towers, the drums, the lift's arms and carriage nor the floor; the robots
+  // at least 0.3 m apart; never out of reach, every way planned clear; the wrist under 3.6 m/s, the turret under 4.7 rad/s (the rides 1.8
+  // times their joints' own speed), no spin of the flange, the wrist's drum never jumping; each robot with its item's tools only (its nest
+  // amber while out); a working robot hides at most 12 % of the car, its tool's tip and the whole car in the picture, the column never
+  // stepped aside
+  {
+    await page.evaluate(() => {
+      window.SvcAud = function () {   // (the audit: a.frame(dts) after each frame, a.res() at the end)
+        const D = Garage3D._dbg, V = THREE.Vector3, cv = Garage3D.cur, K = cv.kit, RB = D.RB, { RK, NS } = D, ST = 0.04, ms = [];
+        cv.root.traverse(q => { if (q.isMesh && q.visible && q.material && !q.material.transparent && q.geometry.attributes.position.count > 30) ms.push(q); });
+        cv.root.updateMatrixWorld(true); const rc = new THREE.Raycaster(); rc.layers.enableAll(); const sides = ms.map(m => m.material.side); ms.forEach(m => { m.material.side = THREE.DoubleSide; });
+        const x0 = K.rear - 0.25, z0 = -K.hw - 0.25, nx = Math.ceil((K.front - K.rear + 0.5) / ST) + 1, nz = Math.ceil((2 * K.hw + 0.5) / ST) + 1, top = new Float32Array(nx * nz), bot = new Float32Array(nx * nz), ly0 = cv.v.grp.position.y, cx = cv.root.position.x;
+        for (let a = 0; a < nx; a++) for (let b = 0; b < nz; b++) { const x = cx + x0 + a * ST, z = z0 + b * ST; rc.set(new V(x, 9, z), new V(0, -1, 0)); rc.far = 12; let h = rc.intersectObjects(ms, false); top[a * nz + b] = h.length ? h[0].point.y - ly0 : -9;
+          rc.set(new V(x, -2, z), new V(0, 1, 0)); h = rc.intersectObjects(ms, false); bot[a * nz + b] = h.length ? h[0].point.y - ly0 : 9; }
+        ms.forEach((m, i) => { m.material.side = sides[i]; });
+        const COL = [[-0.175, 0.02, -1.83, 0.175, 2.97, -1.61], [-0.2, 2.985, -1.885, 0.2, 3.08, -1.555], [-0.14, 0.63, -1.99, 0.08, 1.34, -1.84], [0.185, 0.99, -1.82, 0.26, 1.21, -1.69]];
+        const bd = (b, x, y, z) => Math.hypot(Math.max(0, b[0] - x, x - b[3]), Math.max(0, b[1] - y, y - b[4]), Math.max(0, b[2] - z, z - b[5])) || -Math.min(x - b[0], b[3] - x, y - b[1], b[4] - y, z - b[2], b[5] - z);
+        const BXS = [0, 1].map(i => D.roomBoxes(null).filter(([b, k]) => !['lift', 'chamber', 'floor', 'liftc', D.STN[i].key].includes(k) && k.split('.')[0] !== D.STN[i].key).map(([b, k]) => [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, k]));
+        // (its own stand's plate (as 1c: the tools in and out through their forks): the far robot's ORODJA, the near one's stand)
+        const inRack = (x, y, z) => { if (y < RK.S - 0.045 || y > RK.S + 0.002) return false; const rr = Math.hypot(x - RK.cx, z - RK.cz) - RK.r, a = Math.atan2(z - RK.cz, x - RK.cx);
+          if (rr < -0.18 || rr > 0.18 || a > RK.e0 || a < RK.e1) return false; if (rr < 0.08) for (const aj of RK.a) if (Math.abs(a - aj) < RK.SW) return false; return true; };
+        const inStand = (x, y, z) => { if (y < NS.S - 0.045 || y > NS.S + 0.002) return false; const dx = x - NS.x; if (dx < -0.18 || dx > 0.18 || z < NS.e[0] || z > NS.e[1]) return false;
+          if (dx > -0.08) for (const zj of NS.z) if (Math.abs(z - zj) < 0.08) return false; return true; };
+        const sd2 = (p, a, b) => { const abx = b.x - a.x, aby = b.y - a.y, abz = b.z - a.z, L = abx * abx + aby * aby + abz * abz, t = L > 1e-9 ? Math.max(0, Math.min(1, ((p.x - a.x) * abx + (p.y - a.y) * aby + (p.z - a.z) * abz) / L)) : 0; return Math.hypot(a.x + abx * t - p.x, a.y + aby * t - p.y, a.z + abz * t - p.z); };
+        const segSeg = (p1, q1, p2, q2) => { let m = 9; for (let k = 0; k <= 16; k++) { const t = k / 16; m = Math.min(m, sd2({ x: p1.x + (q1.x - p1.x) * t, y: p1.y + (q1.y - p1.y) * t, z: p1.z + (q1.z - p1.z) * t }, p2, q2)); } return m; };
+        const R = { frames: 0, car: [0, 0], tool: [0, 0], col: [0, 0], lift: [0, 0], stand: [0, 0], plate: [0, 0], tower: [0, 0], drum: [0, 0], floor: [0, 0], apart: 9, v: [0, 0], hd: [0, 0], roll: [0, 0], a5: [0, 0], miss: [0, 0], notOk: [0, 0],
+          hid: [0, 0], off: [0, 0], carOff: 0, seenN: [0, 0], used: [[], []], led: [0, 0], gone: 0, colGone: 0, pan: 0, nan: 0, who: {} };
+        const keep = (k, i, d, why) => { if (d > R[k][i]) { R[k][i] = +d.toFixed(3); R.who[k + i] = [why, D.svc.step, D.svc.t]; } };
+        const v = new V(), pw = [null, null], ph = [null, null], pc = [null, null], p5 = [null, null], lp = RB.map(A => A.lastPath), vc = new Map(), PB = D.carProbe(cv), vp = [];
+        for (let i = 0; i <= 10; i++) { const x = K.rear + 0.1 + (K.front - K.rear - 0.2) * i / 10;   // (the car's points: along its top and both sides)
+          for (let j = 0; j <= 4; j++) { const z = (j / 4 - 0.5) * K.hw * 1.6, y = PB.top(x, z); if (y != null) vp.push([x, y - ly0 + 0.01, z]); }
+          for (let j = 0; j <= 3; j++) { const y = K.bottom + 0.05 + (K.top - K.bottom - 0.1) * j / 3; for (const s of [-1, 1]) { const z = PB.side(x, y + ly0, s); if (z != null) vp.push([x, y, s * (z + 0.01)]); } } }
+        const seen = (cam) => { const key = cam.toArray().map(q => q.toFixed(1)).join(); if (vc.has(key)) return vc.get(key); const ly = cv.v.grp.position.y, P = [], r2 = new THREE.Raycaster(), mm = D.carProbe(cv).meshes;   // (those seen from the camera there)
+          for (const [x, y, z] of vp) { const p = new V(cx + x, y + ly, z); r2.set(cam, p.clone().sub(cam).normalize()); r2.far = cam.distanceTo(p) - 0.03; if (!r2.intersectObjects(mm, false).length) P.push(p); } vc.set(key, P); return P; };
+        // (a robot at work on the car: from its first beat on the car to its last (the near one's passes, its scan and check, the plug; the far
+        // one's strokes, the pad, the lamp): its tool's tip in the picture)
+        const WORK = [[['n.rinse0.go', 'n.air'], ['n.scan.go', 'n.verified'], ['n.atPlug', 'n.plugIn']], [['f.brush.on', 'f.scrubbed'], ['f.pad.on', 'f.polished'], ['f.lamp', 'f.out']]];
+        const led = (S, k) => { const c = S.live.geometry.attributes.color.array, j = S.nests[k].led[0] * 3; return c[j] > c[j + 1] * 1.5 ? 'amber' : c[j + 1] > c[j] * 1.5 ? 'green' : '?'; };
+        return { frame(dt) { R.frames++; const LC = D.liftCaps(), Ls = RB.map(A => D.linksOf(A, 'whole', []).map(([a, b, r], j, L) => [a.clone(), b.clone(), r, L.k[j]])), ly = cv.v.grp.position.y, S = D.svc, cam = Garage3D.camera;
+            if (S.fx.pan.visible && ly < 1.3) R.pan++;
+            for (const i of [0, 1]) { const A = RB[i], J = A.J; if (['Wc', 'tipA', 'E', 'hd'].some(k => !Number.isFinite(J[k].x + J[k].y + J[k].z))) R.nan++;
+              if (A.lastPath !== lp[i]) { lp[i] = A.lastPath; if (lp[i] && !lp[i].ok) R.notOk[i]++; }
+              if (A.tool !== 'none') { if (!R.used[i].includes(A.tool)) R.used[i].push(A.tool); const S2 = D.STN[i]; if (S2.nests[A.tool].st !== 'out' || led(S2, A.tool) !== 'amber') R.led[i]++; }
+              if (A.rest) { pw[i] = null; continue; } if (A.P.k > 0.5) R.gone++; R.miss[i] = Math.max(R.miss[i], +J.miss.toFixed(3));
+              if (pw[i] && dt > 0) { R.v[i] = Math.max(R.v[i], +(pw[i].distanceTo(J.Wc) / dt).toFixed(2)); R.hd[i] = Math.max(R.hd[i], +(Math.acos(Math.min(1, ph[i].dot(J.hd))) / dt).toFixed(2));
+                R.roll[i] = Math.max(R.roll[i], +(Math.acos(Math.min(1, pc[i].dot(J.ac))) / dt).toFixed(2)); R.a5[i] = Math.max(R.a5[i], +(Math.acos(Math.min(1, Math.abs(p5[i].dot(J.a5)))) / dt).toFixed(2)); }
+              pw[i] = J.Wc.clone(); ph[i] = J.hd.clone(); pc[i] = J.ac.clone(); p5[i] = J.a5.clone();
+              const tip = J.tipA, test = (p, r, tl) => { const x = p.x, y = p.y, z = p.z;
+                for (const b of COL) keep('col', i, r - bd(b, x, y, z) - 0.005, 'col');
+                for (const b of BXS[i]) { const d = r - bd(b, x, y, z) - 0.005; if (d > 0) keep('stand', i, d, b[6]); }
+                if (!r && (i ? inRack : inStand)(x, y, z)) keep('plate', i, 1, tl ? 'tool' : 'arm');
+                for (const d of D.drums) if (y > 0.11 - r && y < 0.92 + r) keep('drum', i, d.r + r - Math.hypot(x - d.x, z - d.z) - 0.005, 'drum');
+                for (const [tx, tz] of D.TWR) if (y < 1.0 + r) keep('tower', i, 0.33 + r - Math.hypot(x - tx, z - tz) - 0.005, 'tower');
+                keep('floor', i, r - y - 0.005, 'floor');
+                if (LC) { for (const [a, b, rr] of LC.caps) keep('lift', i, r + rr - sd2(p, { x: a[0], y: a[1], z: a[2] }, { x: b[0], y: b[1], z: b[2] }) - 0.005, 'liftarm'); for (const [mn, mx] of LC.boxes) keep('lift', i, r - bd([mn[0], mn[1], mn[2], mx[0], mx[1], mx[2]], x, y, z) - 0.005, 'liftbox'); }
+                if (!(tl && p.distanceTo(tip) < 0.15)) { const a = Math.round((x - cx - x0) / ST), b = Math.round((z - z0) / ST); if (a >= 0 && a < nx && b >= 0 && b < nz) { const tp = top[a * nz + b], bt = bot[a * nz + b], yy = y - ly;
+                  if (tp > -8) { const d = Math.min(tp - (yy - r), yy + r - bt); if (d > 0) keep(tl ? 'tool' : 'car', i, d, 'car'); } } } };
+              // (as 1c: every other vertex of the arm (its links 1 to 7) and of the held tool, points along each link and drum with its radius)
+              const am = A.R.mesh.geometry.attributes.position.array; for (const [v0, v1, pk] of A.R.runs) if (pk >= 1 && pk <= 7) for (let j = v0; j < v1; j += 2) test(v.set(am[j * 3], am[j * 3 + 1], am[j * 3 + 2]), 0, false);
+              for (const [a, b, r, k] of Ls[i]) { if (k !== 'arm' && k !== 'tool') continue; const n = Math.max(1, Math.ceil(a.distanceTo(b) / 0.04)); for (let m = 0; m <= n; m++) test(v.copy(a).lerp(b, m / n), r * (k === 'tool' ? 0.6 : 0.8), k === 'tool'); }
+              if (A.tool !== 'none') { const m = D.STN[i].tools[A.tool].mesh, p = m.geometry.attributes.position.array; for (let j = 0; j < p.length; j += 6) test(v.set(p[j], p[j + 1], p[j + 2]).applyMatrix4(m.matrix), 0, true); }
+              if (S.on && WORK[i].some(([a, b]) => S.cue[a] != null && S.cue[b] == null)) { cam.updateMatrixWorld(); const q = v.copy(J.tipA).project(cam), o = Math.max(Math.abs(q.x), Math.abs(q.y)); R.seenN[i]++;
+                if (o > R.off[i]) { R.off[i] = +o.toFixed(2); R.who['off' + i] = [S.step, S.t]; }
+                for (const cx2 of [K.rear, K.front]) for (const cy of [K.bottom, K.top]) for (const cz of [-K.hw, K.hw]) { const c = v.set(cx + cx2, cy + ly, cz).project(cam), oc = Math.max(Math.abs(c.x), Math.abs(c.y)); if (oc > R.carOff) { R.carOff = +oc.toFixed(2); R.who.carOff = [S.step, S.t]; } } } }
+            if (!RB[0].rest && !RB[1].rest) { let m = 9; for (const [a, b, r, k] of Ls[0]) if (k === 'arm' || k === 'tool') for (const [c, d, r2, k2] of Ls[1]) if (k2 === 'arm' || k2 === 'tool') m = Math.min(m, segSeg(a, b, c, d) - r - r2); R.apart = Math.min(R.apart, +m.toFixed(3)); }
+            if (D.LIFT.piece.k > 0.5) R.colGone++;
+            if (S.on && R.frames % 3 === 0 && S.cue['m.home'] == null) { const cp = cam.position.clone(), P = seen(cp);
+              if (P.length) for (const i of [0, 1]) { if (RB[i].rest) continue; const L = Ls[i].filter(q => q[3] === 'arm'); let n = 0; for (const p of P) if (L.some(([a, b, r]) => segSeg(cp, p, a, b) < r)) n++; const h = n / P.length; if (h > R.hid[i]) { R.hid[i] = +h.toFixed(2); R.who['hid' + i] = [S.step, S.t]; } } } },
+          res() { return R; } }; };
+      // (a service on a car shown worn: stepped at fast k (frame 1/30 s), audited every frame; what it did and how everything is after it)
+      window.SvcRun = async function (id, items, k, o) { o = o || {}; const D = Garage3D._dbg, G = Garage3D;
+        G.show({ M: Core.MODELS.find(m => m.id === id), color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(1.5); G.frame(1 / 30); const rest = D.stats.main;
+        const au = SvcAud(), f0 = D.RB.map(A => A.fails || 0); G.fast = k; D.svcRun(items); let t = 0, n = 0, tapAt = null;
+        while (G.busy && t < 150) { G.frame(1 / 30, true); t += 1 / 30; n++; au.frame(k / 30 * (tapAt != null ? 3 : 1)); if (o.tap != null && tapAt == null && D.svc.on && D.svc.t >= o.tap) { D.tap(); tapAt = n; } if (n % 20 === 0) await new Promise(r => setTimeout(r, 0)); }
+        const doneN = n; G.fast = 1; __garage.advance(3.0); G.frame(1 / 30);   // (its last smoke gone)
+        const S = D.svc, L = D.lift, cv = G.cur, h = D.rig, H = D.views().HOME, fx = D.fx;
+        return { id, items, frames: doneN, tapAt, done: S.done, cue: S.cue, notes: S.log.filter(q => /^(fail|late|gate|skip)/.test(q[1])).map(q => q.join(' ')), fails: D.RB.map((A, i) => (A.fails || 0) - f0[i]), aud: au.res(),
+          cond: Object.assign({}, cv.spec.cond), dirt: G.info.dirt, scr: G.info.scr, patched: S.patched, parked: fx.parked, leds: [fx.stand.leds, fx.rack.leds], nests: [fx.stand.nests, fx.rack.nests],
+          lift: { h: G.info.lift, s: L.arms, on: L.on, c: L.carriage }, fx: S.fx, loops: S.loops, on: S.on, home: ['yaw', 'pitch', 'dist', 'tx', 'ty', 'tz', 'fov'].every(q => Math.abs(h[q] - H[q]) < 1e-3) && Math.abs(D.user.yaw) < 1e-3, rest, after: D.stats.main, plans: S.plans }; };
+    });
+    const runSvc = (id, items, k, o) => page.evaluate(([id, items, k, o]) => SvcRun(id, items, k, o), [id, items, k, o || {}]);
+    // (the end state every run must reach: each item done once, in order, within its time; the car's condition 100 %; no step skipped,
+    // late, failed or forced; the robots parked with their tools in their nests (all green), the lift down and stowed, the pan and the
+    // beams hidden, no mark, the paint's layer off, the floor dry, no loop, no tool turning, the camera home, the draws as before; the
+    // audit clean)
+    const TOOL = [{ clean: 'nozzle', body: 'scanner', engine: 'wrench' }, { clean: 'brush', body: 'polisher', engine: 'camera' }];   // (each robot's tool for each item)
+    const CEIL = { clean: 10.8, body: 9.6, engine: 11.8 }, ORDER = { clean: ['n.rinse0.go', 'n.rinse0', 'n.foam.go', 'f.stroke1', 'n.rinse', 'n.air'], body: ['n.scan.go', 'n.scanned', 'f.pad.on', 'n.verify.go', 'f.polished', 'n.verified'],
+      engine: ['lift.go', 'lift.up', 'm.rough', 'n.atPlug', 'n.plugOut', 'm.oil', 'n.plugIn', 'n.out', 'car.lower', 'car.down'] };   // (the electric car: no oil, its 'm.oil' at once)
+    const ends = (r) => { const A = r.aud, bad = [];
+      if (r.done.map(d => d.kind).join() !== r.items.join()) bad.push('done ' + JSON.stringify(r.done));
+      if (r.items.length === 1 && r.done[0] && r.done[0].t > CEIL[r.items[0]]) bad.push('slow ' + r.done[0].t);
+      for (const it of r.items) { const c = ORDER[it].filter(q => !(r.id === 'ev' && q === 'm.oil')).map(q => r.cue[q]); if (it === 'clean' && !(r.cue['n.foam'] <= r.cue['n.rinse.go'])) bad.push('foam'); if (c.some(q => q == null) || c.some((q, j) => j && q < c[j - 1])) bad.push('order ' + it + ' ' + JSON.stringify(c)); if (r.cond[it] !== 1) bad.push('cond ' + it); }
+      if (r.items.includes('clean') && r.dirt !== 0) bad.push('dirt'); if (r.items.includes('body') && r.scr !== 0) bad.push('scr');
+      if (r.notes.length || r.fails.some(q => q)) bad.push('notes ' + r.notes.join(', ') + ' fails ' + r.fails);
+      if (!r.parked || !r.leds.every(L => Object.values(L).every(c => c === 'green')) || !r.nests.every(N => Object.values(N).every(s => s === 'in'))) bad.push('not parked');
+      if (r.lift.h !== 0 || r.lift.s !== 0 || r.lift.on || r.lift.c !== 0.04) bad.push('lift ' + JSON.stringify(r.lift));
+      if (r.on || r.fx.pan.visible || r.fx.pan.y !== -0.095 || r.fx.beams.some(Boolean) || r.fx.oil || r.fx.marks || r.fx.layer || r.fx.wet || r.fx.spin.some(Boolean) || r.loops.length) bad.push('fx ' + JSON.stringify(r.fx) + ' loops ' + r.loops);
+      if (!r.home) bad.push('camera not home'); if (r.patched !== 2) bad.push('patched ' + r.patched); if (r.after !== r.rest) bad.push('draws ' + r.rest + ' -> ' + r.after);
+      for (const k of ['car', 'tool', 'col', 'lift', 'stand', 'plate', 'tower', 'drum', 'floor']) if (A[k].some(q => q > 0.01)) bad.push(k + ' ' + A[k] + ' ' + JSON.stringify([A.who[k + 0], A.who[k + 1]]));
+      if ([0, 1].some(i => A.used[i].join() !== r.items.map(it => TOOL[i][it]).join()) || A.led.some(Boolean)) bad.push('tools ' + JSON.stringify({ used: A.used, led: A.led }));
+      if (A.miss.some(q => q >= 0.005) || A.notOk.some(Boolean) || A.roll.some(q => q >= 8) || A.a5.some(q => q >= 11)) bad.push('moves ' + JSON.stringify({ miss: A.miss, notOk: A.notOk, roll: A.roll, a5: A.a5 }));
+      if (A.seenN.some(q => !q) || A.off.some(q => q > 0.95) || A.carOff > 1) bad.push('view ' + JSON.stringify({ off: A.off, car: A.carOff, n: A.seenN, who: [A.who.off0, A.who.off1, A.who.carOff] }));
+      if (A.apart < 0.3 || A.v.some(q => q >= 3.6) || A.hd.some(q => q >= 4.7) || A.hid.some(q => q > 0.12) || A.gone || A.colGone || A.pan || A.nan) bad.push('audit ' + JSON.stringify({ apart: A.apart, v: A.v, hd: A.hd, hid: A.hid, who: [A.who.hid0, A.who.hid1], gone: A.gone, col: A.colGone, pan: A.pan, nan: A.nan }));
+      return bad; };
+    // (its plans on all ten cars, no show: every pose in reach and clear; the brush's and the pad's lanes found; the lance's carriage behind
+    // its tip, the lamp's by ORODJA, the wrench staged outside the car's footprint; the electric car's bolts)
+    const plans = await page.evaluate(() => Core.MODELS.map(M => { Garage3D.show({ M, color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(0.1); const P = Garage3D._dbg.svcPlans(['clean', 'body', 'engine']); return Object.assign({ id: M.id, ev: !!M.ev }, P); }));
+    const okq = (q) => q && q.miss === 0 && q.clear >= 0, badPlans = plans.filter(p => !(okq(p.lance) && p.lance.x <= p.lance.T0x - 1.2 && okq(p.brush) && okq(p.scan) && okq(p.pol) && okq(p.wrench) && p.staged && p.staged.out && p.staged.clear >= 0 && okq(p.lamp) && p.lamp.x >= 1.15 && p.lamp.out && (!p.ev || p.bolts >= 1)));
+    T.check('the service\'s plans on all 10 cars (no show): the lance from the near side (its carriage 1.2 m behind its tip), the brush\'s and the pad\'s lanes on the bonnet, the scanner\'s station, the wrench at the drain plug (staged outside the car\'s footprint), the lamp by ORODJA; every pose in reach and clear; the electric car\'s bolts',
+      plans.length === 10 && !badPlans.length, JSON.stringify(badPlans.length ? badPlans : plans.map(p => [p.id, p.brush.rung, p.pol.rung, p.lance.x, p.lamp.x])));
+    const res = [];
+    for (const id of ['pico', 'formula', 'truck']) for (const it of ['clean', 'body', 'engine']) res.push(await runSvc(id, [it], 3));
+    const bad1 = res.map(r => [r.id + '.' + r.items[0], ends(r)]).filter(q => q[1].length);
+    T.check(`each item alone on the PICO, the FORMULA and the TRUCK (fast 3): done in order within its time (wash <= ${CEIL.clean} s, body <= ${CEIL.body} s, engine <= ${CEIL.engine} s), its beats in order, the condition 100 %, nothing skipped; after it the robots parked (tools in their nests, green), the lift down, every effect off, the camera home, the draws as before; the robots (every other vertex of their arms and tools) never in the car, the column, the stands (through their own stand's forks), the lift, the floor, apart, in reach, every way clear, within their speeds, each with its item's tool (its nest amber meanwhile), hiding at most 12 % of the car, the working tool's tip and the whole car in the picture`,
+      !bad1.length, JSON.stringify(bad1.length ? bad1 : res.map(r => [r.id, r.items[0], r.done[0].t, r.aud.hid, r.aud.apart, r.aud.v, r.aud.hd, r.aud.roll, r.aud.a5, r.aud.off, r.aud.carOff])));
+    const full = [await runSvc('pico', ['clean', 'body', 'engine'], 1), await runSvc('formula', ['clean', 'body', 'engine'], 2), await runSvc('truck', ['clean', 'body', 'engine'], 2)];
+    const bad2 = full.map(r => [r.id, ends(r).concat(r.done.length === 3 && r.done[2].t <= 36.5 ? [] : ['slow ' + JSON.stringify(r.done)], Object.keys(r.cue).filter(q => q === 'n.rest' || q === 'f.rest').length === 2 && ['n.rest', 'f.rest'].every(q => r.cue[q] > r.done[2].t) ? [] : ['parked between the items'])]).filter(q => q[1].length);
+    T.check('the full service on the PICO (fast 1), the FORMULA and the TRUCK (fast 2): wash, body, engine in a row (the last done <= 36.5 s), the tools swapped at the stands between the items (no parking till the end), the lift\'s arms swung in under the car during the body; the same end state and audit',
+      !bad2.length, JSON.stringify(bad2.length ? bad2 : full.map(r => [r.id, r.done.map(d => d.t), r.aud.hid, r.aud.apart, r.aud.off, r.aud.carOff])));
+    // the phone held the other way (915 x 412; the service's views fitted to it): the full service on the TRUCK (the tallest, up on the lift)
+    await page.setViewportSize({ width: 915, height: 412 }); await page.evaluate(() => __garage.advance(0.2));
+    const land = await runSvc('truck', ['clean', 'body', 'engine'], 2), bad3 = ends(land);
+    await page.setViewportSize({ width: 412, height: 915 }); await page.evaluate(() => __garage.advance(0.2));
+    T.check('the full service on the TRUCK with the phone held the other way (landscape): the same end state and audit (the working tool\'s tip and the whole car in the picture, the robots hiding at most 12 % of it)',
+      !bad3.length && land.done.length === 3, JSON.stringify(bad3.length ? bad3 : { done: land.done.map(d => d.t), hid: land.aud.hid, off: land.aud.off, car: land.aud.carOff, draws: land.rest }));
+    // a tap on the picture hurries the show (the robots and the lift with it); the electric car: the battery's bolts, no oil, no pan
+    const plain = await runSvc('pico', ['clean'], 2), tap = await runSvc('pico', ['clean'], 2, { tap: 2 }), ev = await runSvc('ev', ['engine'], 3), sm = await page.evaluate(() => Garage3D._dbg.svc.log.map(q => q[1]));
+    const tr = (tap.frames - tap.tapAt) / Math.max(1, plain.frames - tap.tapAt);
+    T.check('a tap during the wash: the show (the robots, the passes) runs about three times as fast to its end, everything as after any wash', tr <= 0.45 && !ends(tap).length, JSON.stringify({ plain: plain.frames, tap: tap.frames, at: tap.tapAt, tr: +tr.toFixed(2), bad: ends(tap) }));
+    T.check('the electric car\'s engine: the wrench at the battery tray\'s bolts, no oil, no pan up; the same end state', !ends(ev).length && ev.cue['n.bolt0'] != null && ev.cue['n.plugIn'] != null && ev.cue['m.oil'] != null && sm.includes('n.bolt0') && ev.aud.pan === 0, JSON.stringify({ bad: ends(ev), cue: ev.cue }));
+    // draws while it runs (a full service on the PICO, drawn every half second of its time): at most 16 more than at rest
+    const dc = await page.evaluate(async () => { const D = Garage3D._dbg, G = Garage3D; G.show({ M: Core.MODELS.find(m => m.id === 'pico'), color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 1, body: 1, engine: 1 } }); __garage.advance(1.5); G.frame(1 / 30); const rest = D.stats.main;
+      D.svcRun(['clean', 'body', 'engine']); G.fast = 3; let t = 0, k = 0, mx = 0, at = ''; while (G.busy && t < 60) { G.frame(1 / 30, true); t += 1 / 30; if (++k % 5 === 0) { G.frame(1 / 30); if (D.stats.main > mx) { mx = D.stats.main; at = D.svc.step; } } if (k % 20 === 0) await new Promise(r => setTimeout(r, 0)); }
+      G.fast = 1; __garage.advance(3.0); G.frame(1 / 30); return { rest, max: mx, at, after: D.stats.main }; });
+    T.check('the draws while the full service runs: at most 16 more than at rest (its beams, marks, pan and the tools only while they show); at rest after it as before', dc.max <= dc.rest + 16 && dc.after === dc.rest, JSON.stringify(dc));
+    // a car asked for during the service (the FORMULA while the PICO's body is scanned): it waits till the service has ended and
+    // everything is parked (the lift down, the pan hidden, no loop), then drives in
+    const sw = await page.evaluate(async () => { const D = Garage3D._dbg, G = Garage3D; G.show({ M: Core.MODELS.find(m => m.id === 'pico'), color: 0x1f6fd6, stripe: true, upg: {}, cond: { clean: 0.2, body: 0.2, engine: 0.2 } }); __garage.advance(0.3);
+      const old = G.cur, au = SvcAud(); D.svcRun(['clean', 'body', 'engine']); G.fast = 3; let t = 0, k = 0, asked = false, at = null;
+      while ((G.busy || !asked) && t < 120) { G.frame(1 / 30, true); t += 1 / 30; const S = D.svc; if (S.on) au.frame(3 / 30);
+        if (!asked && S.cue['n.scan.go'] != null) { asked = true; __garage.pickCar('formula'); }
+        if (asked && !at && old.root.position.x > 0.05) at = { done: S.done.map(d => d.kind), parked: D.fx.parked, lift: G.info.lift, arms: D.lift.arms, pan: S.fx.pan.visible, loops: S.loops, on: S.on };
+        if (++k % 20 === 0) await new Promise(r => setTimeout(r, 0)); }
+      G.fast = 1; __garage.advance(0.5); const A = au.res(); return { at, car: G.info.car, x: G.cur.root.position.x, cond: Object.assign({}, old.spec.cond), pen: ['car', 'tool', 'col', 'lift', 'stand', 'plate', 'tower', 'drum', 'floor'].filter(q => A[q].some(v => v > 0.01)), nan: A.nan }; });
+    T.check('a car asked for during the service: the service ends first (wash, body, engine done, the old car at 100 %, the robots never in anything meanwhile), everything parked (the lift down, the pan hidden, no loop), then the old car drives out and the new one in',
+      sw.at && sw.at.done.join() === 'clean,body,engine' && sw.at.parked && sw.at.lift === 0 && sw.at.arms === 0 && !sw.at.pan && !sw.at.loops.length && !sw.at.on && sw.car === 'formula' && sw.x === 0
+      && ['clean', 'body', 'engine'].every(q => sw.cond[q] === 1) && !sw.pen.length && !sw.nan, JSON.stringify(sw));
+    await page.evaluate(() => { Garage3D.show(window._spec0); __garage.advance(0.3); });
+    T.check('the service ran with no page error (no gate of the lift timed out, the paint\'s layer found in the car\'s shader)', !errors.length, errors.slice(0, 5).join(' | '));
+  }
+
   // 1b. the camera: dragged left or right it goes round the car; up and down, the wheel, a pinch: nothing (no zoom, the height stays)
   {
     const box = await page.evaluate(() => { const r = document.getElementById('g-gl').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
@@ -285,8 +443,9 @@ try {
     const u0 = await ui(), L0 = await page.evaluate(() => Garage3D._dbg.lift);
     T.check('a car asked for while the other is up on the lift: it comes down first, then the swap (the arms stowed)', rs.lift > 0 && rs.moved === 0 && u0.info.car === 'rally' && u0.info.lift === 0 && L0.arms === 0 && !L0.on && L0.carriage === 0.04, JSON.stringify({ rs, car: u0.info.car, arms: L0.arms }));
     await page.evaluate(() => __garage.doService('all')); const r = await run();
-    const u = await ui(), L = await page.evaluate(() => Garage3D._dbg.lift);
-    T.check('a full service: clean, no scratches, condition 100 %, paid', u0.info.dirt > 0.3 && u.info.dirt === 0 && u.info.scr === 0 && u.S.cars.rally.cond.engine === 1 && u.S.money < u0.S.money && u.info.lift === 0, JSON.stringify({ before: u0.info, after: u.info }));
+    const u = await ui(), L = await page.evaluate(() => Garage3D._dbg.lift), sv = await page.evaluate(() => { const D = Garage3D._dbg, S = D.svc; return { done: S.done.map(d => d.kind).join(), notes: S.log.filter(q => /^(fail|late|gate|skip)/.test(q[1])).length, parked: D.fx.parked }; });
+    T.check('a full service (the page\'s Popoln servis): the robots\' wash, body and engine in a row, nothing skipped, parked after; clean, no scratches, condition 100 %, paid', u0.info.dirt > 0.3 && u.info.dirt === 0 && u.info.scr === 0 && u.S.cars.rally.cond.engine === 1 && u.S.money < u0.S.money && u.info.lift === 0
+      && sv.done === 'clean,body,engine' && !sv.notes && sv.parked, JSON.stringify({ before: u0.info, after: u.info, sv }));
     T.check('the service: the lift raises the car for the engine (>= 1 m) and lowers it, its arms stowed; the table never rises nor turns', r.lift >= 1.0 && r.table === 0 && r.ang === 0 && u.info.lift === 0 && L.arms === 0 && !L.on, JSON.stringify({ r, arms: L.arms }));
     await page.evaluate(() => __garage.doPaint(5, false)); await run();
     const u2 = await ui();
