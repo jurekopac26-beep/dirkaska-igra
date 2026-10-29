@@ -511,5 +511,105 @@
    "d": 4858,
    "sub": "2,860 m"
   }
+ ],
+ "rastro": [
+  {
+   "n": "Serra do Rio do Rastro",
+   "d": 1500,
+   "sub": "hairpins"
+  },
+  {
+   "n": "Rio do Rastro Falls",
+   "d": 2953
+  },
+  {
+   "n": "Top of the Serra",
+   "d": 3880,
+   "sub": "1,389 m"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 4990,
+   "sub": "1,421 m"
+  }
+ ],
+ "moki": [
+  {
+   "n": "Valley of the Gods",
+   "d": 300
+  },
+  {
+   "n": "Moki Dugway",
+   "d": 2545,
+   "sub": "switchbacks"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 3714
+  },
+  {
+   "n": "Cedar Mesa",
+   "d": 4950,
+   "sub": "1,961 m"
+  }
+ ],
+ "maunakea": [
+  {
+   "n": "Lake Waiau",
+   "ll": [
+    19.8094,
+    -155.4776
+   ],
+   "snap": "water",
+   "r": 400
+  },
+  {
+   "n": "Puʻu Haukea",
+   "d": 3389
+  },
+  {
+   "n": "Puʻu Wēkiu",
+   "ll": [
+    19.8207,
+    -155.4681
+   ],
+   "snap": "peak",
+   "r": 400,
+   "sub": "4,207 m"
+  },
+  {
+   "n": "Summit Ridge",
+   "d": 5715,
+   "sub": "4,198 m"
+  }
+ ],
+ "baldy": [
+  {
+   "n": "Mount Baldy",
+   "ll": [
+    34.236,
+    -117.659
+   ],
+   "snap": "town",
+   "r": 1000
+  },
+  {
+   "n": "Icehouse Canyon",
+   "d": 2734
+  },
+  {
+   "n": "Manker Flat",
+   "d": 6530
+  },
+  {
+   "n": "Mount San Antonio",
+   "ll": [
+    34.2886,
+    -117.6467
+   ],
+   "snap": "peak",
+   "r": 800,
+   "sub": "3,069 m"
+  }
  ]
 }

@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 37.264992,
+  "lon0": -109.93376,
+  "rot": -1.42,
+  "offset": 1623.7,
+  "mad": 1.99,
+  "p90": 4.9,
+  "range": 353.5,
+  "moved": 3221.1,
+  "away100": 22.28
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 37.264992,
+  "lon0": -109.93376,
+  "rot": -1.42,
+  "offset": 1623.7,
+  "start": [
+   37.264989,
+   -109.933758,
+   1623
+  ],
+  "finish": [
+   37.278134,
+   -109.942584,
+   1961
+  ],
+  "center": [
+   37.271285,
+   -109.937926
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "utah",
+  "open": true,
+  "names": {
+   "start": "Valley of the Gods",
+   "finish": "Cedar Mesa",
+   "country": "USA",
+   "region": "Utah"
+  }
+ }
+}

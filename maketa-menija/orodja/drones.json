@@ -16,5 +16,9 @@
   ["chapman", {"mode": "demo", "warm": 2}],
   ["bigsur", {"mode": "demo", "warm": 2}],
   ["tianmen", {"mode": "demo", "warm": 2}],
-  ["uncompahgre", {"mode": "demo", "warm": 2}]
+  ["uncompahgre", {"mode": "demo", "warm": 2}],
+  ["rastro", {"mode": "demo", "warm": 2}],
+  ["moki", {"mode": "demo", "warm": 2}],
+  ["maunakea", {"mode": "demo", "warm": 2}],
+  ["baldy", {"mode": "demo", "warm": 2}]
 ]

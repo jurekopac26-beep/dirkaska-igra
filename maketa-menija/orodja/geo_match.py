@@ -23,8 +23,12 @@ GUESS = {
     'bigsur': ('finish', 36.3600, -121.9010, 2500),      # Hurricane Point
     'tianmen': ('finish', 29.0495, 110.4826, 3000),      # the platform under the cave
     'uncompahgre': ('start', 38.0080, -107.6631, 800),
+    'rastro': ('start', -28.395, -49.544, 1200),            # the road in the rainforest under the hairpins (docs/proge)
+    'moki': ('start', 37.236, -109.932, 3500),              # past the junction with the Valley of the Gods Road
+    'maunakea': ('finish', 19.8230, -155.4730, 2500),       # the end of the asphalt on the summit ridge
+    'baldy': ('start', 34.2362, -117.6596, 800),            # past the junction of Glendora Ridge Road
 }
-COP = {'tianmen'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)
+COP = {'tianmen', 'rastro'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
 def origin_guess(T, g):   # a guess given at the race's start or finish: the world's origin that puts that point there (no turn)

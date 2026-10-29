@@ -484,5 +484,149 @@
     2860
    ]
   }
+ ],
+ [
+  "rastro",
+  {
+   "kbps": 700,
+   "speed": 185,
+   "back": 240,
+   "up": 152,
+   "ahead": 120,
+   "fogNear": 425,
+   "fogFar": 1572,
+   "places": [
+    {
+     "n": "Hairpin 2",
+     "d": 406
+    },
+    {
+     "n": "Hairpin 8",
+     "d": 1998
+    },
+    {
+     "n": "Rio do Rastro Falls",
+     "d": 2953
+    },
+    {
+     "n": "Top of the Serra",
+     "d": 3880
+    }
+   ],
+   "alt": [
+    1010,
+    1421
+   ]
+  }
+ ],
+ [
+  "moki",
+  {
+   "kbps": 700,
+   "speed": 183,
+   "back": 238,
+   "up": 150,
+   "ahead": 119,
+   "fogNear": 421,
+   "fogFar": 1556,
+   "places": [
+    {
+     "n": "Pavement Ends",
+     "d": 1340
+    },
+    {
+     "n": "Hairpin 2",
+     "d": 2545
+    },
+    {
+     "n": "Viewpoint",
+     "d": 3714
+    },
+    {
+     "n": "Back on Asphalt",
+     "d": 4705
+    }
+   ],
+   "alt": [
+    1624,
+    1961
+   ]
+  }
+ ],
+ [
+  "maunakea",
+  {
+   "kbps": 700,
+   "speed": 212,
+   "back": 276,
+   "up": 174,
+   "ahead": 138,
+   "fogNear": 488,
+   "fogFar": 1802,
+   "places": [
+    {
+     "n": "Radio Antenna",
+     "d": 934
+    },
+    {
+     "n": "Lake Waiau",
+     "d": 2573
+    },
+    {
+     "n": "Puʻu Haukea",
+     "d": 3389
+    },
+    {
+     "n": "Hairpin 1",
+     "d": 3886
+    },
+    {
+     "n": "Puʻu Wēkiu",
+     "d": 5250
+    }
+   ],
+   "alt": [
+    3599,
+    4198
+   ]
+  }
+ ],
+ [
+  "baldy",
+  {
+   "kbps": 700,
+   "speed": 268,
+   "back": 348,
+   "up": 220,
+   "ahead": 174,
+   "fogNear": 616,
+   "fogFar": 2278,
+   "places": [
+    {
+     "n": "San Antonio Creek",
+     "d": 595
+    },
+    {
+     "n": "Icehouse Canyon",
+     "d": 2734
+    },
+    {
+     "n": "Switchbacks",
+     "d": 3203
+    },
+    {
+     "n": "Manker Flat",
+     "d": 6530
+    },
+    {
+     "n": "San Antonio Falls",
+     "d": 6935
+    }
+   ],
+   "alt": [
+    1282,
+    1917
+   ]
+  }
  ]
 ]

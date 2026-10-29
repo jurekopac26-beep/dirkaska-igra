@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 34.236105,
+  "lon0": -117.659642,
+  "rot": -0.0,
+  "offset": 1281.9,
+  "mad": 0.97,
+  "p90": 2.2,
+  "range": 665.9,
+  "moved": 13.6,
+  "away100": 12.45
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 34.236105,
+  "lon0": -117.659642,
+  "rot": -0.0,
+  "offset": 1281.9,
+  "start": [
+   34.2361,
+   -117.659687,
+   1282
+  ],
+  "finish": [
+   34.267454,
+   -117.62422,
+   1922
+  ],
+  "center": [
+   34.252196,
+   -117.64223
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "california",
+  "open": true,
+  "names": {
+   "start": "Mount Baldy",
+   "finish": "Manker Flat",
+   "country": "USA",
+   "region": "California"
+  }
+ }
+}

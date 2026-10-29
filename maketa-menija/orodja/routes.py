@@ -14,9 +14,9 @@ FF = os.environ.get('FFMPEG', FF0)
 OUT = os.path.join(SITE, 'assets', 'maps')
 os.makedirs(OUT, exist_ok=True)
 TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'monaco', 'rbring', 'suzuka', 'spa', 'nring',
-          'caracoles', 'katu', 'harju', 'chapman', 'bigsur', 'tianmen', 'uncompahgre']
+          'caracoles', 'katu', 'harju', 'chapman', 'bigsur', 'tianmen', 'uncompahgre', 'rastro', 'moki', 'maunakea', 'baldy']
 ONLY = os.environ.get('ONLY', '').split(',') if os.environ.get('ONLY') else None   # (only these again; the others kept as routes.js has them)
-ROADS = ('vrsic', 'pikes', 'caracoles', 'katu', 'harju', 'chapman', 'bigsur', 'tianmen', 'uncompahgre')   # the open roads (the others' corners, by number, name the places of a track that has no names of its own)
+ROADS = ('vrsic', 'pikes', 'caracoles', 'katu', 'harju', 'chapman', 'bigsur', 'tianmen', 'uncompahgre', 'rastro', 'moki', 'maunakea', 'baldy')   # the open roads (the others' corners, by number, name the places of a track that has no names of its own)
 # the game's own names of the places along a track, in English where they are Slovenian words (proper names stay)
 EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight',
       'Zadnji ovinek': 'Last Corner', 'Predor': 'Tunnel', 'tržnica': 'Market', 'mestni trg': 'Town Square', 'stari trg': 'Old Square',
@@ -31,7 +31,11 @@ SUBST = [["Ruska kapelica", "Russian Chapel"], ["Ruski križ", "Russian Cross"],
          ["Cestninska postaja", "Toll Plaza"], ["Most Rocky Creek", "Rocky Creek Bridge"], ["Most Bixby Creek", "Bixby Creek Bridge"],
          ["Tianmenska jama", "Tianmen Cave"], ["Zanka", "Loop"], ["Lasse Lammen puu", "Old Pine"],
          ["Soteska Uncompahgre", "Uncompahgre Gorge"], ["Slap Bear Creek", "Bear Creek Falls"], ["Plaz Mother Cline", "Rock Slide"],
-         ["Galerija Riverside", "Riverside Snowshed"], ["Cilj · ", "Finish · "]]
+         ["Galerija Riverside", "Riverside Snowshed"], ["Cilj · ", "Finish · "],
+         ["Cascata Rio do Rastro", "Rio do Rastro Falls"], ["Alto da Serra", "Top of the Serra"], ["Mirante", "Viewpoint"],
+         ["Konec asfalta", "Pavement Ends"], ["Konec makadama", "Back on Asphalt"],
+         ["Radijska antena", "Radio Antenna"], ["Jezero Waiau", "Lake Waiau"], ["Vrhnji greben", "Summit Ridge"],
+         ["Serpentine", "Switchbacks"], ["Žičnica", "Chairlift"]]
 NEW_EN = [["Predor", "Tunnel"], ["Serpentina ", "Hairpin "], ["Ovinek ", "Turn "], ["Curva ", "Turn "]]   # (only on the later tracks: the first ones keep their places as they were)
 DROP = {"Lyseon lukio", "Keski-Suomen talo", "Normaalikoulu"}   # (schools and a public building: not shown)
 def neutral(n, t=None):

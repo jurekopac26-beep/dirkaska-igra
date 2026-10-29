@@ -1,0 +1,44 @@
+{
+ "match": {
+  "lat0": 19.792022,
+  "lon0": -155.456412,
+  "rot": 0.08,
+  "offset": 3598.9,
+  "mad": 2.07,
+  "p90": 5.5,
+  "range": 611.0,
+  "moved": 406.0,
+  "away100": 11.77
+ },
+ "places": {
+  "kind": "real",
+  "lat0": 19.792022,
+  "lon0": -155.456412,
+  "rot": 0.08,
+  "offset": 3598.9,
+  "start": [
+   19.792005,
+   -155.45637,
+   3599
+  ],
+  "finish": [
+   19.823037,
+   -155.469169,
+   4196
+  ],
+  "center": [
+   19.807507,
+   -155.464623
+  ],
+  "l3km": 14.0,
+  "l2km": 80,
+  "l1": "hawaii",
+  "open": true,
+  "names": {
+   "start": "Mauna Kea",
+   "finish": "Puʻu Wēkiu",
+   "country": "USA",
+   "region": "Hawaii"
+  }
+ }
+}
