@@ -15,7 +15,7 @@ const st = (page) => page.evaluate(() => { const g = window.__game, R = g.race, 
     rows: m ? [...m.querySelectorAll('.mis-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) : [], tower: vis('#tw-strip') || vis('#h-tower'), lad: vis('#mis-lad'), touch: vis('#touch'), tags: document.querySelectorAll('#mis-tags.on i').length,
     res: document.getElementById('mis-res') && document.getElementById('mis-res').innerText.replace(/\s+/g, ' ') }; });
 const solve = (page) => page.evaluate(() => { const r = Missions.run, tk = r.truck, c = Missions.cur.target(r); if (!c) return null; let best = [1e9, 0, 0]; const L0 = tk.lift, E0 = tk.ext;
-  for (let a = 0; a <= 1.0001; a += 0.02) for (let e = 0; e <= 1.0001; e += 0.02) { tk.lift = a * r.def.K.LIFT; tk.ext = e; tk.step(0, true); const t = tk.tip(); const d = Math.hypot(t.x - c.x, t.y - c.y, t.z - c.z); if (d < best[0]) best = [d, a, e]; }
+  for (let a = 0; a <= 1.0001; a += 0.02) for (let e = 0; e <= 1.0001; e += 0.02) { tk.lift = a * r.def.K.LIFT; tk.ext = e; const t = tk.tipAt(); const d = Math.hypot(t.x - c.x, t.y - c.y, t.z - c.z); if (d < best[0]) best = [d, a, e]; }
   tk.lift = L0; tk.ext = E0; tk.step(0, true); r.auto = { lift: best[1], ext: best[2] }; return best[0]; });
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=49', {}, { width: 360, height: 640 }, { touch: true });
@@ -29,7 +29,8 @@ try {
   await page.evaluate(() => { const g = window.__game, r = Missions.run, T = g.race.track, dOf = () => { let d = r.P.q.s - (r.sW - r.def.K.AHEAD); if (d > T.len / 2) d -= T.len; if (d < -T.len / 2) d += T.len; return d; };
     for (let k = 0; k < 4000 && !r.end; k++) { const d = dOf(); if (d > -60 && d < 0 && r.t > 5) break; g.sim(0.25, true); }
     for (let k = 0; k < 300 && r.stage === 'drive' && !r.end; k++) { const d = dOf(), v = Math.hypot(r.P.vx, r.P.vz); Core.aiControl(r.P, g.race, 0.05); if (d < -35) g.sim(0.1, true); else g.sim(0.1, false, r.P.inSteer, v > 5 ? 0 : 0.35, v > 5 ? 1 : 0); } });
-  await page.evaluate(() => window.__game.sim(1, false, 0, 0, 0)); await page.waitForTimeout(400);
+  await page.evaluate(() => window.__game.sim(1, false, 0, 0, 0));
+  await page.waitForFunction(() => document.querySelectorAll('#mis-tags.on i').length > 0, null, { timeout: 8000 }).catch(() => {});   // (the camera settled behind the truck)
   s = await st(page);
   T.check('stopped by the wheel: the sliders shown, the driving controls hidden, the cabins tagged', s.stage === 'ladder' && s.lad && !s.touch && s.tags > 0, JSON.stringify({ stage: s.stage, lad: s.lad, touch: s.touch, tags: s.tags }));
   // the sliders (a real input event): the ladder follows

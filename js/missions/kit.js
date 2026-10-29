@@ -56,7 +56,20 @@ const MisKit = (function () {
   function fireTruck(run) {
     const P = run.P, R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null;
     const T = { lift: 0, ext: 0, yaw: 0, flash: 0, v };
-    if (!has3() || !v) return Object.assign(T, { step() {}, tip: () => null, nozzle: () => null, yawTo: (x, z) => Math.atan2(-(-(x - P.x) * Math.sin(P.h) + (z - P.z) * Math.cos(P.h)), (x - P.x) * Math.cos(P.h) + (z - P.z) * Math.sin(P.h)), len: () => LAD.L0 + T.ext * LAD.step * (LAD.sec - 1) });
+    // the basket's point from the physics (the car's place and heading, the ladder's angles), not the drawn truck: the same in a test's
+    // fast run as on the screen (the drawn one may lag a frame); the body's tilt on the slope (roll, pitch) and its height from the view
+    T.tipAt = () => {
+      const c = Math.cos(T.lift), s = Math.sin(T.lift), L = LAD.L0 + T.ext * LAD.step * (LAD.sec - 1);
+      const ax = 0.2 + c * L - s * 0.15 + 0.5, ay = LAD.piv[1] - 2.76 + s * L + c * 0.15 + 0.6;   // (the arm, along the ladder, the basket up from its floor; level)
+      const x = LAD.piv[0] + ax * Math.cos(T.yaw), y = 2.76 + ay, z = -ax * Math.sin(T.yaw);
+      const G = v && v.grp, rr = G ? G.rotation.x : 0, pp = G ? G.rotation.z : 0, y0 = G ? G.position.y : (P.y || 0);
+      const y1 = y * Math.cos(rr) - z * Math.sin(rr), z1 = y * Math.sin(rr) + z * Math.cos(rr), x2 = x * Math.cos(pp) - y1 * Math.sin(pp), y2 = x * Math.sin(pp) + y1 * Math.cos(pp);   // (the view's order YZX: the roll, the pitch, then the heading)
+      const ch = Math.cos(P.h), sh = Math.sin(P.h);
+      return { x: P.x + x2 * ch - z1 * sh, y: y0 + y2, z: P.z + x2 * sh + z1 * ch };
+    };
+    // the turntable's angle that points the ladder at a world point (x, z): from the turntable itself (behind the truck's middle), from the physics
+    T.yawTo = (x, z) => { const ch = Math.cos(P.h), sh = Math.sin(P.h), dx = x - (P.x + LAD.piv[0] * ch), dz = z - (P.z + LAD.piv[0] * sh); return Math.atan2(-(-dx * sh + dz * ch), dx * ch + dz * sh); };
+    if (!has3() || !v) return Object.assign(T, { step() {}, tip: () => null, nozzle: () => null, len: () => LAD.L0 + T.ext * LAD.step * (LAD.sec - 1) });
     // the physics' own body out of sight (its wheels too: the truck's six are its own)
     for (const o of [v.body, v.tail, v.dec].concat(v.wf || [], v.wr || [])) if (o) o.visible = false;
     if (v.marker) v.marker.visible = false;
@@ -118,8 +131,6 @@ const MisKit = (function () {
         T.lift = clamp(T.lift, 0, 1.4); T.ext = clamp(T.ext, 0, 1); pose();
         T.flash += dt; const a = lit !== false && (T.flash * 2.2) % 1 < 0.5; la.material = a ? on : off; lb.material = a || lit === false ? off : on;
       },
-      // the turntable's angle that points the ladder at a world point (x, z): from the turntable itself, not the truck's middle
-      yawTo(x, z) { turn.updateWorldMatrix(true, false); turn.getWorldPosition(_v); const h = P.h, dx = x - _v.x, dz = z - _v.z; return Math.atan2(-(-dx * Math.sin(h) + dz * Math.cos(h)), dx * Math.cos(h) + dz * Math.sin(h)); },
       tip() { bk.updateWorldMatrix(true, false); return bk.localToWorld(_v.set(0.5, 0.6, 0)).clone(); },
       nozzle() { bk.updateWorldMatrix(true, false); return bk.localToWorld(_v.set(1.15, 0.9, 0)).clone(); },
     });
