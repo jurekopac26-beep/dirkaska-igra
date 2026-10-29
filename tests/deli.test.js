@@ -131,7 +131,7 @@ check('a vehicle without the mount: no part drawn (deliMesh null, its body the s
 const shapeBad = [];
 for (const M of MOUNTED.filter(m => m.def.mounts.zarometi && m.def.mounts.zarometi.shape)) { const z = M.def.mounts.zarometi, S = z.shape;
   const u0 = Math.min(...S.map(q => q[0])), u1 = Math.max(...S.map(q => q[0])), v0 = Math.min(...S.map(q => q[1])), v1 = Math.max(...S.map(q => q[1])), mg = (z.ringW || 0.008) + 0.012;
-  for (let k = 1; k <= 16; k++) { const b = box(R.deliMesh(M, 'zarometi', k)), zr = [b[2], b[5]].map(Math.abs).sort((p, q) => p - q);   // (the right lamp: |z| of the box's far side)
+  for (let k = 1; k <= 16; k++) { const b = box(R.deliMesh(M, 'zarometi', k, null, true)), zr = [b[2], b[5]].map(Math.abs).sort((p, q) => p - q);   // (the right lamp: |z| of the box's far side)
     if (b[4] > z.yc + v1 + mg || b[1] < z.yc + v0 - mg || zr[1] > z.zc + u1 + mg || b[3] < z.x + 0.006 + 0.004 + z.bulge * 0.8) shapeBad.push(`${M.id} ${k}: y ${b[1].toFixed(3)}..${b[4].toFixed(3)} z ${zr[1].toFixed(3)} x ${b[3].toFixed(3)}`); } }
 check('a car\'s own lamp shape: every option within it, its lens bulging (PANTER, JASTREB)', !shapeBad.length && MOUNTED.some(m => m.id === 'panter'), shapeBad.slice(0, 3).join(', ') || 'all');
 console.warn = warn;

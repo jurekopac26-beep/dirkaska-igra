@@ -950,9 +950,11 @@ const Render = (function () {
        K.inner(fn)             everything fn draws goes into the inner block (of the part it is classified to)
        K.at(x, y, z, fn, o)    everything fn draws is ONE primitive classified at the point (x, y, z); o: { part, host, inner, noCrush, noDent }
        K.hinge(part, a, b)     the axis [x, y, z] -> [x, y, z] a loose part swings about (see BREAKING APART)
-       K.deli(id, stock)       the garage's parts (js/deli.js, docs/deli.md): option car.deli[id] of element id drawn where the def's
+       K.deli(id, stock, around)   the garage's parts (js/deli.js, docs/deli.md): option car.deli[id] of element id drawn where the def's
                                mounts[id] says (DELI.build, in the current scope: the stock part's ids), else stock() (the stock part, as
-                               ever); returns the option drawn (0: stock). The rims are not a call: car.deli.platisca is the wheels' look
+                               ever); around(n): the car's own housing round it, drawn either way after option n (0: stock; with an option
+                               its triangles are the part's, DELI.mesh shows them); returns the option drawn (0: stock). The rims are not a
+                               call: car.deli.platisca is the wheels' look
        K.topY(x, z)            the main loft's top at (x, z) (look units; after the main loft): what lies on the roof, a wing's feet
        K.regions(preset | list | fn(std))   the regions from here on (returns them, look units)
        -- the loft --
@@ -1007,7 +1009,7 @@ const Render = (function () {
        K.headLamp(x, y, z, r, o)       a head lamp at its lens' centre (z > 0 the right one): o { shape: 'rect' (w, h) | round, ring (colour,
                                null: none; default chrome), col (K.lampHead), host, dir (1), n (10) }; its lens is the sub-range lampFL / lampFR.
                                A lens of its own outline: o.pts (a convex outline [[u, v] ...] round (x, y, z), u out from the car's middle,
-                               v up) or o.polys (several convex pieces), o.d (its depth), its ring the outline grown by o.ringW, o.ringD deep; o.bulge: the
+                               v up; convex, or star-shaped round its middle) or o.polys (several pieces), o.d (its depth), its ring the outline grown by o.ringW, o.ringD deep; o.bulge: the
                                lens' front a dome that high in its middle (a lamp bulging out of its face)
        K.tailLamp(x, y, z, w, h, o)    a tail lamp (lights up when braking): the tail mesh's left / right range; o { round (a disc of
                                diameter w), d (depth), dir (-1), host (the part it sits on: its side goes and turns with it; default
@@ -1717,9 +1719,11 @@ const Render = (function () {
     // the main loft's top at (x, z) (look units: what lies on the roof, a part's wing); the parts fitted (js/deli.js): K.deli(id, stock) draws
     // option car.deli[id] of element id where the def's mounts[id] says (DELI.build), else stock() (the stock part, drawn as ever)
     K.topY = (x, z) => { const S = kx.mainS; if (!S) kitFail('topY: before the main loft'); const wt = kitProp(S, x, 'wt'); return kitProp(S, x, 'yt') + kitProp(S, x, 'cr') * clamp((wt - Math.abs(z)) / (wt * 0.62), 0, 1); };
-    K.deli = (id, stock) => { const n = kx.deli && kx.deli[id], m = M.def && M.def.mounts && M.def.mounts[id]; let ok = false;
+    K.deli = (id, stock, around) => { const n = kx.deli && kx.deli[id], m = M.def && M.def.mounts && M.def.mounts[id]; let ok = false;
       if (n && m && typeof DELI !== 'undefined') kx.scope('dl', id, () => { ok = DELI.build(K, id, n, m, M); });   // (its triangles tagged: Render.deliMesh)
-      if (ok) return n; stock(); return 0; };
+      if (!ok) stock();
+      if (around) kx.scope('dl', ok ? id + '+' : kx.dl || '', () => around(ok ? n : 0));   // (the car's own housing round it, drawn after the option fitted (0: stock); with an option, part of it: id + '+')
+      return ok ? n : 0; };
     K.hinge = (part, a, b) => { kx.partOk(part); if (![a, b].every(p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite))) kitFail('hinge: two points [x, y, z]'); kx.hinges[part] = [[a[0] * sx, a[1], a[2] * sz], [b[0] * sx, b[1], b[2] * sz]]; };
     K.regions = (r) => {
       if (typeof r === 'string') { if (['car', 'race', 'open', 'truck', 'std'].indexOf(r) >= 0) kx.regions = kitStdRegions(kx); else if (r === 'none') kx.regions = []; else kitFail('regions: car race open truck std none, a list or fn(std)'); }
@@ -1778,6 +1782,8 @@ const Render = (function () {
       if (o.pts || o.polys) {   // (a lens of its own outline: o.pts a convex outline [[u, v] ...] round (x, y, z), u out from the car's middle, v up; o.polys several convex pieces of one lamp; o.d its depth; the ring the outline grown by o.ringW behind it, o.ringD deep (a housing standing out of a curved face))
         const sd = z < 0 ? -1 : 1, PS = o.polys || [o.pts], d = o.d || 0.02;
         const prism = (pts, xa, xb, grow, col, bulge) => { const n = pts.length, cu = pts.reduce((a, q) => a + q[0], 0) / n, cv = pts.reduce((a, q) => a + q[1], 0) / n;
+          const cr = (i) => { const a = pts[i], b = pts[(i + 1) % n], c = pts[(i + 2) % n]; return (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]); };
+          let neg = 0, pos = 0; for (let i = 0; i < n; i++) { if (cr(i) < 0) neg++; else pos++; } const star = neg && pos;   // (an outline with a notch: star-shaped round its middle, a fan from there)
           const Q = pts.map(([u, v]) => { const du = u - cu, dv = v - cv, l = Math.hypot(du, dv) || 1; return [u + du / l * grow, v + dv / l * grow]; });
           const P = (q, xx) => [xx, y + q[1], z + sd * q[0]], inn = [(xa + xb) / 2, y + cv, z + sd * cu], F = Q.map(q => P(q, xb)), B = Q.map(q => P(q, xa));
           if (bulge) {   // (o.bulge: its front a dome, bulge high in the middle (1 - t^2 of it, t the share of the way out), smooth-shaded)
@@ -1786,7 +1792,8 @@ const Render = (function () {
             const R = [F].concat(T.map(t => Q.map(q => at(q, t)))), top = at([cu, cv], 0), nt = [dir, 0, 0];
             for (let r = 0; r < R.length - 1; r++) for (let i = 0; i < n; i++) { const j = (i + 1) % n, a = R[r][i], b = R[r][j], c = R[r + 1][j], e = R[r + 1][i]; g.quadON(a, b, c, e, nm(a), nm(b), nm(c), nm(e), inn, col, col, col, col); }
             const L = R[R.length - 1]; for (let i = 0; i < n; i++) { const j = (i + 1) % n; g.triON(L[i], L[j], top, nm(L[i]), nm(L[j]), nt, inn, col, col, col); }
-          } else for (let i = 1; i < n - 1; i++) g.triO(F[0], F[i], F[i + 1], col, inn);
+          } else if (star) { const M = P([cu, cv], xb); for (let i = 0; i < n; i++) g.triO(M, F[i], F[(i + 1) % n], col, inn); }
+          else for (let i = 1; i < n - 1; i++) g.triO(F[0], F[i], F[i + 1], col, inn);
           for (let i = 0; i < n; i++) { const j = (i + 1) % n; g.quadO(F[i], F[j], B[j], B[i], col, inn); } };
         if (ring) kx.prim(x, y, z, () => { for (const P of PS) prism(P, x - dir * (o.ringD || 0.014), x + dir * 0.0005, o.ringW || 0.012, ring); }, { host: o.host, part: o.part });
         kx.prim(x, y, z, () => { for (const P of PS) prism(P, x - dir * (d - 0.004), x + dir * 0.004, 0, o.col || K.lampHead, o.bulge || 0); }, { host: o.host, part: o.part, sub: 'lampF' + side });
@@ -2229,9 +2236,10 @@ const Render = (function () {
   }
   function kitStatus(id) { const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null; return kitEntry(M).status; }
   // (the garage, DELI.mesh) option n of part id alone where it sits on vehicle M (a model or its id): a THREE.Group in the car's frame
-  // (metres), the body built with it and only the part's own triangles kept (those K.deli drew: geo.userData.deli) in colour's paint; the
-  // rims: the four wheels on their hubs. null: M has no mount for it (or its build failed)
-  function deliMesh(M, id, n, color) {
+  // (metres), the body built with it and only the part's own triangles kept (those K.deli drew: geo.userData.deli, and the car's own
+  // housing round it, K.deli's around; own: the option's alone) in colour's paint; the rims: the four wheels on their hubs. null: M has no
+  // mount for it (or its build failed)
+  function deliMesh(M, id, n, color, own) {
     if (typeof M === 'string') M = Core.MODELS.find(m => m.id === M);
     if (!M || !M.kit || typeof DELI === 'undefined') return null;
     const E = kitEntry(M, true, { [id]: n }); if (!E.deli) return null;
@@ -2242,7 +2250,7 @@ const Render = (function () {
         f.position.set(M.a, M.rw, sd * E.body.hw); r.position.set(-M.b, M.rw, sd * E.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1; grp.add(f, r); }
       return grp;
     }
-    const g = kitRecolour(E.geo.clone(), color == null ? 0xc0392b : color, true, 0), keep = (g.userData.deli && g.userData.deli[id]) || [];
+    const g = kitRecolour(E.geo.clone(), color == null ? 0xc0392b : color, true, 0), D = g.userData.deli || {}, keep = (D[id] || []).concat(own ? [] : D[id + '+'] || []);
     let N = 0; for (const [a, b] of keep) N += b - a;
     const out = new THREE.BufferGeometry();
     for (const at of ['position', 'normal', 'color']) { const A = g.attributes[at], s = A.itemSize, arr = new Float32Array(N * s); let k = 0;

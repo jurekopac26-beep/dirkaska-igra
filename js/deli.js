@@ -10,6 +10,7 @@
      DELI.effect(id, n)          what it changes, in numbers (from its kaj_nudi): { kg, power, grip, kmh, brake, lower (m; higher: < 0), tint,
                                  tyre: { dry, wet, snow, gravel } } (power, grip, brake: fractions, +0.06 for +6 %); core.js: Car (opts.deli)
                                  applies them (Core.applyDeli)
+     DELI.lampLook(n)            head lamp option n's lens and ring colours (a car keeping its own lamp housing colours it after them)
      DELI.option(id, n), DELI.element(id), DELI.has(id), DELI.clean(deli, M), DELI.key(deli, M)
    Only the fitted option is drawn (never all 16); every option is simple: a few primitives in the body's one material, as the stock parts.
    docs/deli.md: the contract with the garage (garaza.html) */
@@ -263,8 +264,10 @@ var DELI = (function () {
       face([[u0 + ox, v0 + oy], [u1 + ox, v1 + oy], [u1 - ox, v1 - oy], [u0 - ox, v0 - oy]], col, off); };
     const lamp = (polys, col, ring, ringW) => {
       const PS = SH ? [SH] : polys.map(pp => pp.map(([u, v]) => [u * s, v * s]));   // (metres round its middle)
-      for (const pp of PS) { const P = pp.map(([u, v]) => [xAt(C[1] + v) + 0.002, C[1] + v * 1.04, sd * (C[0] + u * 1.04)]), a = P[0], b = P[1], c = P[2];
-        K.face(((b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])) < 0 ? P.reverse() : P, [0.05, 0.05, 0.055], m.socket === 'host' ? { host } : { part: m.socket || 'body' }); }   // (the socket)
+      for (const pp of PS) { const P = pp.map(([u, v]) => [xAt(C[1] + v) + 0.002, C[1] + v * 1.04, sd * (C[0] + u * 1.04)]), so = m.socket === 'host' ? { host } : { part: m.socket || 'body' };
+        const tri = (Q) => { const a = Q[0], b = Q[1], c = Q[2]; K.face(((b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])) < 0 ? Q.slice().reverse() : Q, [0.05, 0.05, 0.055], so); };
+        if (SH) { const M = P.reduce((a, q) => [a[0] + q[0] / P.length, a[1] + q[1] / P.length, a[2] + q[2] / P.length], [0, 0, 0]); for (let i = 0; i < P.length; i++) tri([M, P[i], P[(i + 1) % P.length]]); }
+        else tri(P); }   // (the socket; the car's own outline: a fan from its middle, it may have a notch)
       K.headLamp(xAt(C[1]) + 0.006, C[1], sd * C[0], 0.08 * s, { polys: PS, col, ring, ringW: SH ? m.ringW || 0.008 : (ringW || 0.012) * s, ringD: m.depth, bulge: BG, host, d: 0.024 }); };
     const L = 0.0015;   // (the details: just in front of the lens)
     switch (n) {
@@ -337,6 +340,13 @@ var DELI = (function () {
     }
   }
 
+  // the lamps' lens and ring colours, option by option (as zaromet draws them): a car that keeps its own lamp housing (JASTREB's glass
+  // teardrops and pods) colours it after the option fitted
+  const CHR = [0.8, 0.81, 0.84], BLK = [0.02, 0.02, 0.022], LW = [0.96, 0.93, 0.84], LD = [0.14, 0.15, 0.18], LS = [0.26, 0.27, 0.3];
+  const LOOKS = [[LW, CHR], [[0.84, 0.88, 0.93], CHR], [LW, BLK], [LW, CHR], [LD, BLK], [[1, 0.8, 0.16], CHR], [LS, BLK], [LD, BLK], [LD, BLK], [LS, BLK],
+    [LD, BLK], [[0.12, 0.13, 0.15], BLK], [[0.13, 0.14, 0.17], BLK], [[0.2, 0.21, 0.24], BLK], [[0.12, 0.13, 0.16], BLK], [[0.12, 0.13, 0.16], CF]];
+  const lampLook = (n) => LOOKS[n - 1] ? { col: LOOKS[n - 1][0], ring: LOOKS[n - 1][1] } : null;
+
   // ================================================================ the elements drawn (the others: effects only, for now)
   const BUILD = { krilo, zarometi };
   const has = (id) => !!BUILD[id] || id === 'platisca';
@@ -371,5 +381,5 @@ var DELI = (function () {
     return e;
   }
 
-  return { DATA, element, option, has, build, wheel, mesh, effect, clean, key, mounts: (M) => (M && M.def && M.def.mounts) || null };
+  return { DATA, element, option, has, build, wheel, mesh, effect, clean, key, lampLook, mounts: (M) => (M && M.def && M.def.mounts) || null };
 })();
