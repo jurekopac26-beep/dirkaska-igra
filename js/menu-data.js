@@ -78,7 +78,12 @@ window.MENU = {
   "marrakesh": 240,
   "longford": 240,
   "chapman": 300,
-  "sani": 300
+  "sani": 300,
+  "montreal": 240,
+  "toronto": 240,
+  "troisrivieres": 240,
+  "greatalpine": 300,
+  "hotham": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -333,6 +338,31 @@ window.MENU = {
    "alt": [
     2229,
     2872
+   ]
+  },
+  "montreal": {
+   "base": 10
+  },
+  "toronto": {
+   "base": 81
+  },
+  "troisrivieres": {
+   "base": 32
+  },
+  "greatalpine": {
+   "start": "Tambo River",
+   "finish": "Ash Range",
+   "alt": [
+    123,
+    337
+   ]
+  },
+  "hotham": {
+   "start": "Mount Little Blowhard",
+   "finish": "Hotham Heights",
+   "alt": [
+    1495,
+    1753
    ]
   }
  },

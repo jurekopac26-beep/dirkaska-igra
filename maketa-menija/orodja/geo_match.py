@@ -26,6 +26,8 @@ GUESS = {
     'riverside': (33.9367, -117.2726, 1500),   # the old circuit east of the town
     'uncompahgre': (38.0160, -107.6720, 1500), # above Ouray
     'iroha': (36.7280, 139.5600, 2000),        # the second Irohazaka, its lower curves
+    'greatalpine': (-37.5517, 147.8764, 400),  # where the road leaves the Tambo (its shape on the roads of OpenStreetMap)
+    'hotham': (-37.0029, 147.0940, 400),       # below Mount Little Blowhard (its shape on the roads of OpenStreetMap)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 

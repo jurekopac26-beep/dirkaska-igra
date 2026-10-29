@@ -21,6 +21,11 @@ GUESS = {
     'chapman': (-34.0485, 18.3560, 1200),       # Hout Bay, the end of Main Road by the beach
     'sani': (-29.6150, 29.3250, 2500),          # the valley of the Mkhomazana under the hairpins
     'marrakesh': (31.58102, -7.98273, 300),     # the start line (the track's own note)
+    'montreal': (45.50178, -73.52325, 300),     # the start line on the pit straight (from the track's own header)
+    'toronto': (43.63408, -79.41205, 300),
+    'troisrivieres': (46.34737, -72.55930, 300),
+    'greatalpine': (-37.5517, 147.8764, 200),   # (by the heights: geo_match.py, then here closer)
+    'hotham': (-37.0029, 147.0940, 200),
 }
 SKIP = {'townsville': [(0.40, 0.89)]}   # parts of the lap whose road is not in Overture (the raceway through the park): left out of the score
 CELL = 2.0   # metres per cell of the distance map

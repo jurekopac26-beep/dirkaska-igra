@@ -49,7 +49,7 @@ window.RM = (function () {
   const SEASONS = { vrsic: 'autumn' };
   const KEEP_SEA = new Set(['newcastle']);
   let B = null, R = null, CV = null;
-  function build(id) {
+  function build(id, opt) {
     if (B && B.id === id) return B;
     const def = Core.TRACKS.find(d => d.id === id), T = new Core.Track(def), sc = new THREE.Scene(), tex = Tex.all(1);
     const w = World.build(sc, T, tex, { density: 1, season: SEASONS[id] });   // (Vršič in its October colours, as the published maps show it; the others as built)
@@ -59,8 +59,10 @@ window.RM = (function () {
     // land round the island is the made-up skirt (top) or the real land painted by wide_map.py (isle)
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
     const wide = Math.max(6000, 1.6 * Math.max(x1 - x0, z1 - z0) + 2000), hid = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
-    const keepSea = KEEP_SEA.has(id);   // (a city by the sea whose ground goes on under the water as its bed: the sea plane stays, wide_map.py takes its water out)
-    sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible) return; if (keepSea && o.geometry && o.geometry.type === 'PlaneGeometry') return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
+    // (a city by the sea whose ground goes on under the water as its bed: the sea plane stays, wide_map.py takes its water out; opt.keepWide: a lake or
+    // river whose plane is the water of the map itself, e.g. Toronto's lake by the circuit: kept (true: all of them; a list: those by name))
+    const keepSea = KEEP_SEA.has(id), keep = o => (keepSea && o.geometry && o.geometry.type === 'PlaneGeometry') || (!!(opt && opt.keepWide) && (opt.keepWide === true || opt.keepWide.includes(o.name)));
+    sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible || keep(o)) return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
     hid.forEach(o => { o.visible = false; }); if (hid.length) console.log('far backdrop left out: ' + hid.map(o => (o.name || o.type) + ' ' + Math.round(new THREE.Box3().setFromObject(o).getSize(sz).x)).join(', '));
     B = { id, def, T, sc, w, tex, open: T.finishS > T.startS };
     return B;
@@ -212,7 +214,7 @@ window.RM = (function () {
   // in the lower part of the picture and the far land up to the haze above it
   function aerial(id, opt) {
     opt = Object.assign({ W: 824, H: 660, el: 34, fov: 34, az: 0, step: 12, fillW: 0.9, fillH: 0.62, yc: -0.16, rain: 0 }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 120), A = axis(pts); if (opt.skirt !== false) skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 120), A = axis(pts); if (opt.skirt !== false) skirt(Bw, 3000, 40);
     const th = A.th + opt.az * Math.PI / 180, rx = Math.cos(th), rz = Math.sin(th), fx = rz, fz = -rx;   // right along the run; forward: 90 degrees to it
     const e = opt.el * Math.PI / 180, cam = new THREE.PerspectiveCamera(opt.fov, opt.W / opt.H, 5, 80000), v = new THREE.Vector3();
     let tx = A.mx, tz = A.mz, ty = box.y, D = Math.hypot(box.x1 - box.x0, box.z1 - box.z0) * 1.2;
@@ -234,7 +236,7 @@ window.RM = (function () {
   // from straight above: north (or the run's long side) turned to fit the picture, the land round the run
   function top(id, opt) {
     opt = Object.assign({ W: 824, H: 700, step: 12, pad: 0.12, rot: null, rain: 0, grid: 0 }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 60); if (opt.skirt !== false) skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 60); if (opt.skirt !== false) skirt(Bw, 3000, 40);
     // the run's long axis along the picture's width, the start on the left
     const A = axis(pts), mx = A.mx, mz = A.mz, th = opt.rot != null ? opt.rot * Math.PI / 180 : A.th;
     const ux = Math.cos(th), uz = Math.sin(th), vx = -uz, vz = ux;   // u: along the picture's width, v: along its height (down)
@@ -261,7 +263,7 @@ window.RM = (function () {
   // land round it, soil down its sides, seen from above at an angle; transparent round it
   function block(id, opt) {
     opt = Object.assign({ W: 824, H: 700, el: 42, rot: 26, fov: 30, fill: 0.94, step: 12, margin: 0.1, soil: 0.1, rain: 0 }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, opt.step), A = axis(pts), sk = skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, opt.step), A = axis(pts), sk = skirt(Bw, 3000, 40);
     const ux = Math.cos(A.th), uz = Math.sin(A.th), vx = -uz, vz = ux;
     let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9; for (const p of pts) { const a = (p.x - A.mx) * ux + (p.z - A.mz) * uz, b = (p.x - A.mx) * vx + (p.z - A.mz) * vz; a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
     const L0 = (a1 - a0) / 2, m = L0 * opt.margin; a0 -= m; a1 += m; const bw = Math.max((b1 - b0) / 2 + m, (a1 - a0) / 2 * 0.36), bc = (b0 + b1) / 2; b0 = bc - bw; b1 = bc + bw;
@@ -348,7 +350,7 @@ window.RM = (function () {
     // cull: the trees and other repeated things are left out from this far into the haze (0 its start, 1 its end), where they hardly show
     // alt: the real heights at the start and the finish (the gradients of the line then as steep as the real road's)
     opt = Object.assign({ W: 704, H: 432, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, cull: 0.75, fov: 37, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, places: [], fogNear: 900, fogFar: 3400, alt: null }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
     const r = getR(opt.W, opt.H); wet(Bw, opt.rain);
     const L = lights(Bw, box, opt.rain); L[1].shadow.mapSize.set(opt.shadow, opt.shadow);
     r.shadowMap.autoUpdate = false; r.shadowMap.needsUpdate = true;   // nothing in the world moves: its shadows are drawn once

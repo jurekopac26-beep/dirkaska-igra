@@ -1,24 +1,255 @@
 [
-  ["vrsic", "top", "isle-vrsic", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["pikes", "top", "isle-pikes", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["ouninpohja", "top", "isle-ouninpohja", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["riviera", "top", "isle-riviera", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["monaco", "top", "isle-monaco", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["rbring", "top", "isle-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["suzuka", "top", "isle-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["spa", "top", "isle-spa", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["nring", "top", "isle-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["medvode", "top", "isle-medvode", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["baldy", "top", "isle-baldy", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["beartooth", "top", "isle-beartooth", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["bigsur", "top", "isle-bigsur", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["detroit", "top", "isle-detroit", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["maunakea", "top", "isle-maunakea", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["moki", "top", "isle-moki", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["longford", "top", "isle-longford", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["newcastle", "top", "isle-newcastle", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["townsville", "top", "isle-townsville", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
-  ["chapman", "top", "isle-chapman", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["sani", "top", "isle-sani", {"W": 824, "H": 620, "wet": true, "skirt": false}],
-  ["marrakesh", "top", "isle-marrakesh", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}]
+ [
+  "vrsic",
+  "top",
+  "isle-vrsic",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "pikes",
+  "top",
+  "isle-pikes",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "ouninpohja",
+  "top",
+  "isle-ouninpohja",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "riviera",
+  "top",
+  "isle-riviera",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "monaco",
+  "top",
+  "isle-monaco",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "rbring",
+  "top",
+  "isle-rbring",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "suzuka",
+  "top",
+  "isle-suzuka",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "spa",
+  "top",
+  "isle-spa",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "nring",
+  "top",
+  "isle-nring",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "medvode",
+  "top",
+  "isle-medvode",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "baldy",
+  "top",
+  "isle-baldy",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "beartooth",
+  "top",
+  "isle-beartooth",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "bigsur",
+  "top",
+  "isle-bigsur",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "detroit",
+  "top",
+  "isle-detroit",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "maunakea",
+  "top",
+  "isle-maunakea",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "moki",
+  "top",
+  "isle-moki",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "longford",
+  "top",
+  "isle-longford",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "newcastle",
+  "top",
+  "isle-newcastle",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "townsville",
+  "top",
+  "isle-townsville",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "chapman",
+  "top",
+  "isle-chapman",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "sani",
+  "top",
+  "isle-sani",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "marrakesh",
+  "top",
+  "isle-marrakesh",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ]
 ]
