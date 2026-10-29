@@ -1870,6 +1870,7 @@
       tyreRule: TYRE_RULE, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }, MS.opts()));   // (a special mission: its own race, js/missions.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
+    MS.made(race);   // (a special mission: its own cars, before they are drawn)
     if (track.def.mist) race.opts.mist = !race.rain && !W.wx && !quali && (S.tod === 'dawn' || ((S.weather === 'random' || S.weather === 'change') && grand() < track.def.mist));   // Big Sur: the marine layer (Render: dyn.bsMist), every morning and on some dry runs
     $('pit-row').classList.toggle('off', !(race.player && race.player.ty && race.player.ty.c));   // (the slicks for a stop: a race with tyres)
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
@@ -5448,7 +5449,7 @@
   };
 
   // the special missions (js/missions.js): a mission's race on its track (no menu, no qualifying), the game's actions for its buttons
-  const MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
+  const MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, made() {}, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
   const MisBridge = {
     start(id) { nv = null; if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; qual = null; ensureTrack(id, () => newRace()); },
     act: (a) => onAction(a), fmt: (t) => fmt(t, true), msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms), click: () => { Sfx.resume(); Sfx.click(); },

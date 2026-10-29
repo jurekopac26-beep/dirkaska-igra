@@ -4503,7 +4503,7 @@ const Render = (function () {
     birds.reset(birds.gull);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same)
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
-    for (const c of race.cars) views.push(makeView(c));
+    for (const c of race.cars) { const v = makeView(c); if (c.police && c.pol && c.pol.kind === 'car') polGear(v); views.push(v); }   // (a special mission's escort: a race car in the police's look)
     for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
@@ -5793,6 +5793,9 @@ const Render = (function () {
     // the patrol cars (and the unmarked car): a view each (as the race's cars); a patrol car's gear, its lamps flashing blue (two quick flashes
     // a side) while it chases, searches or stands at a strip or a roadblock (dark while it waits in an ambush); the unmarked car's hidden
     // lamps behind its grille and its windscreen once it has shown itself
+    for (const v of views) { const c = v.car; if (!v.polLamps || !c.police || R.pol && PC.indexOf(c) >= 0) continue;   // (a special mission's escort among the race's cars: its lamps flashing while it leads)
+      const on = c.pol.mode === 'chase' && !c.locked, a = on && flash(c.id, 0), b = on && flash(c.id, 1); v.polLamps[0].material = a ? matPolOn : matPolOff; v.polLamps[1].material = b ? matPolOn : matPolOff;
+      if ((a || b) && v.polBar.visible && !v.cull && Math.hypot(c.x - cx, c.z - cz) < 180) { v.polBar.updateMatrixWorld(true); _rv.setFromMatrixPosition(v.polLamps[a ? 0 : 1].matrixWorld); glows.add(_rv.x, _rv.y + 0.05, _rv.z, dusk ? 3.2 : 2.2, 0.25, 0.45, 1.0, dusk ? 1 : 0.85); } }
     if (R.pol) {
       for (const c of PC) if (!Q.pol.has(c) && (c.pol.kind === 'car' || c.pol.kind === 'uc')) { const v = makeView(c); if (c.pol.kind === 'car') polGear(v); else v.dec.visible = false; views.push(v); Q.pol.set(c, v); }
       for (const [c, v] of Q.pol) if (PC.indexOf(c) < 0) { const k = views.indexOf(v); if (k >= 0) views.splice(k, 1); disposeView(v, debrisRes()); Q.pol.delete(c); }   // (its loose panels on the road stay drawable: they share its panels' geometry and paint)
