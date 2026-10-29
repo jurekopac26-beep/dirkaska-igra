@@ -68,7 +68,10 @@ window.MENU = {
   "nring": 240,
   "newcastle": 240,
   "townsville": 240,
-  "marrakesh": 240
+  "marrakesh": 240,
+  "longford": 240,
+  "chapman": 300,
+  "sani": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -254,6 +257,25 @@ window.MENU = {
   },
   "marrakesh": {
    "base": 502
+  },
+  "longford": {
+   "base": 163
+  },
+  "chapman": {
+   "start": "Hout Bay",
+   "finish": "Chapman's Peak",
+   "alt": [
+    19,
+    153
+   ]
+  },
+  "sani": {
+   "start": "Mkhomazana",
+   "finish": "Sani Pass",
+   "alt": [
+    2229,
+    2872
+   ]
   }
  },
  "intro": {
