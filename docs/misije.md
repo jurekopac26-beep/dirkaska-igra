@@ -27,6 +27,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 5. **Napor pri lažjih misijah** (odločitev uporabnika 29. 10., vprašanje 6: 2): težje misije »high«, sedem lažjih (51, 54, 39, 02, 50, 17, 26) »medium«. Napor velja za celo sejo (`.claude/settings.json`: `effortLevel` je `high`) in ga seja pri zagonu nove seje ne more nastaviti; lažje misije so zdaj pomešane s težjimi (skupine 5, 6, 7), zato seja uporabnika ob zagonu skupine 6 opozori, da jo lahko v aplikaciji preklopi na »medium«.
 6. **Čakanje na teste** (vprašanje 7: 2): seja odpre PR in dela naslednjo misijo, medtem ko na GitHubu tečejo testi; ko so zeleni, PR združi. Če test pade, ga najprej popravi.
 7. **Preizkus na telefonu** (vprašanje 8: 2): po združitvi. Seja združi, ko so testi zeleni, in uporabniku napiše seznam za preizkus na `main`; napake popravi v naslednjem PR-ju.
+8. **Ena seja naenkrat** (vprašanje 11: 1): skupine se delajo ena za drugo, nobene vzporedne seje (najmanj tokenov, brez sporov v skupnih datotekah).
 
 ## Sistem misij (`js/missions.js`)
 - `Missions.add(def)`: `id` ('06'), `title`, `story`, `goal`, `hint` (slovensko, angleščina v `js/lang.js`), `track`, `car`, `limit` (s), `stars` ([čas za 3, za 2]), `rows` (merilniki: `{ k, label, bar, col }`), `opts(def)` (možnosti dirke čez igrine: privzeto sam, ena vožnja, suho; npr. `traffic`, `numAI`, `tfCars`), `made(race)` (lastni avti, preden se narišejo), `begin(run)`, `step(run, dt)`, `finish(run)`.
