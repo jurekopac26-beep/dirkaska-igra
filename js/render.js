@@ -5052,8 +5052,9 @@ const Render = (function () {
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
     const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
-    const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true), farm: mk(geo.farm, nM * 2, true),
-      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
+    const lim = tierNow > 0;   // (NIZKA: the arms and legs cast no shadow, as a rival's small parts; the trunk's and the head's stay)
+    const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, lim), farm: mk(geo.farm, nM * 2, lim),
+      thigh: mk(geo.thigh, nM * 2, lim), shin: mk(geo.shin, nM * 2, lim), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
       rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
     const skinA = geo.head.attributes.crewSkin;
     men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
@@ -5069,7 +5070,9 @@ const Render = (function () {
     boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    // NIZKA: each frame only the men in view are drawn (updateCrew packs them to the front of the meshes): their colours and skins kept here
+    const lo = tierNow === 0 ? { col: CREW_PACK.map(k => M[k].instanceColor.array.slice()), skin: skinA.array.slice() } : null;
+    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null, lo };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
@@ -5221,15 +5224,27 @@ const Render = (function () {
       _cv.set(_cv.x + (hubP[0] - _cv.x) * k, _cv.y + (hubP[1] - _cv.y) * k, _cv.z + (hubP[2] - _cv.z) * k); ang += wrapPi(hubA - ang) * k; }
     _cQ.setFromEuler(_ce.set(0, ang, 0, 'YXZ')); out.compose(_cv, _cQ, S); return true;
   }
+  // NIZKA (the phone budget): the men of the other crews more than CREW_LO_D m from the camera or behind it are not drawn (at the start the
+  // whole pit lane's men were in every frame, ~270k vertices with their shadows; at that distance a man is a few pixels in the haze). The
+  // player's crew is always drawn. The men drawn are packed to the front of the meshes (CREW_PACK, one or two instances a man) with their colours
+  const CREW_LO_D = 110, CREW_PACK = ['trunk', 'head', 'helmet', 'uarm', 'farm', 'thigh', 'shin'];
   function updateCrew(dt) {
     if (!crew) return;
     const c = crew; crewLogic(dt);
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
     if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
-    const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
-    for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
-      crewMan(m, dt); crRig(m);
+    const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src), lo = c.lo;
+    const fx = cam.vcx - camera.position.x, fz = cam.vcz - camera.position.z, fl = Math.hypot(fx, fz) || 1;
+    let n = 0;   // (the men drawn so far: the next one's instance)
+    for (let k = 0; k < c.men.length; k++) { const m = c.men[k];
+      crewMan(m, dt);
+      if (lo && !m.role) { const dx = m.x - camera.position.x, dz = m.z - camera.position.z;
+        if (dx * dx + dz * dz > CREW_LO_D * CREW_LO_D || (dx * fx + dz * fz) / fl < -6) { if (m.gun) rel(M.gun, m.gunI, _zero); continue; } }
+      const i = n++;
+      if (lo) { CREW_PACK.forEach((key, q) => { const two = q > 2 ? 2 : 1, a = M[key].instanceColor.array, o = lo.col[q]; for (let t = 0; t < 3 * two; t++) a[i * 3 * two + t] = o[k * 3 * two + t]; });
+        const sa = M.head.geometry.attributes.crewSkin.array; for (let t = 0; t < 3; t++) sa[i * 3 + t] = lo.skin[k * 3 + t]; }
+      crRig(m);
       _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(M.trunk, i, _cM);
       rel(M.head, i, CRM.neck); rel(M.helmet, i, m.helmet ? CRM.neck : _zero);
       rel(M.uarm, i * 2, CRM.shL); rel(M.uarm, i * 2 + 1, CRM.shR); rel(M.farm, i * 2, CRM.elL); rel(M.farm, i * 2 + 1, CRM.elR);
@@ -5251,6 +5266,7 @@ const Render = (function () {
         _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(0, _cM); }
     }
     for (const t of c.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
+    if (lo) { CREW_PACK.forEach((key, q) => { M[key].count = n * (q > 2 ? 2 : 1); M[key].instanceColor.needsUpdate = true; }); M.head.geometry.attributes.crewSkin.needsUpdate = true; }
     for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
   }
 
