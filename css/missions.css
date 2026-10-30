@@ -101,3 +101,4 @@ body.mis-aiming.mis-ladder #mis .mis-hint { max-width: calc(100% - min(46vw, 230
 #mis-btn.on { transform: scale(.95); filter: brightness(1.2); }
 #mis-btn.red { background: #e0452c; }
 body.mis-boat #h-spd, body.mis-boat #h-note { visibility: hidden; }   /* (a vessel of the mission driven: the parked car's speed and corner notes off the HUD) */
+#mis-tags i.edge { opacity: .8; }   /* (MisKit.tags: a place off the screen, its tag pinned to the edge) */
