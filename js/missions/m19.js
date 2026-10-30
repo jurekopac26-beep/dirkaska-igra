@@ -14,7 +14,7 @@
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
   const K = { ISL: 445, OFF: 36, R: 10, ZONE: 18, VSTOP: 1.5, WALK: 10, TREAT: 36, L0: -0.69, RISE: 0.0078, LOW: -0.22, SLIP: 0.35, DEEP: 0.78, SLIDE: 1.4,
-    DRY: [350, 740], C: 500, COFF: 0, R0: 140, R1: 190, DROP: 3.5, WY: -2.7, LIMIT: 200 };
+    DRY: [350, 740], C: 500, COFF: 0, R0: 140, R1: 190, DROP: 4, WY: -2.7, LIMIT: 200 };
   const sstep = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
   const sOf = (T, P) => { if (!P || !P.q) return 0; const L = T.len, d = (((P.q.s - (T.startS || 0)) % L) + L) % L; return d > L / 2 ? d - L : d; };   // (m from the start line: behind it on the grid < 0)
 
@@ -33,7 +33,8 @@
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
     const WM = typeof World !== 'undefined' && World.api && World.api.waterMat, TX = typeof Tex !== 'undefined' && Tex.all ? Tex.all() : null;
     const mat = WM && TX ? WM(TX, { color: 0x4d6a5c, len: 1.8, amp: 0.25, refl: 0.28, land: 0.5, shal: 0.4, lap: 0.2, surf: 0 }) : new THREE.MeshPhongMaterial({ color: 0x3f7a7a, shininess: 40 });
-    const m = new THREE.Mesh(g, mat); m.position.set(cx, y, cz); m.receiveShadow = true;
+    Object.assign(mat, { transparent: true, opacity: 0.74, depthWrite: false });   // (shallow over the road: its lines and the grass show through)
+    const m = new THREE.Mesh(g, mat); m.position.set(cx, y, cz); m.receiveShadow = true; m.renderOrder = 1;
     m.userData.misUndo = () => { mat.map = null; };   // (the picture is the world's, shared: not freed with the mission)
     r.add(m); W.mesh = m;
     return W;
@@ -124,7 +125,7 @@
       const off = s < K.DRY[0] || s > K.DRY[1];
       if (r.doc === 'back' && off && r.depth <= 0.02) { r.win(); this.show(r); return; }
       const i0 = T.idx(K.DRY[0] - 8), i1 = T.idx(K.DRY[1] + 8);
-      r.tags.set(r.doc === 'car' ? [{ x: r.isl.x, y: 9, z: r.isl.z, cls: 'go', html: '<b>' + tr('OTOK') + '</b>' + tr('ribič čaka') }]
+      r.tags.set(r.doc === 'car' ? [{ x: r.isl.x, y: 5, z: r.isl.z, cls: 'go', html: '<b>' + tr('OTOK') + '</b>' + tr('ribič čaka') }]
         : r.doc === 'back' ? [{ x: T.px[i0], y: T.hy[i0] + 4, z: T.pz[i0], cls: 'go', html: '<b>' + tr('SUHO') + '</b>' }, { x: T.px[i1], y: T.hy[i1] + 4, z: T.pz[i1], cls: 'go', html: '<b>' + tr('SUHO') + '</b>' }] : []);
       r.say(r.doc === 'car' ? (near ? (v < K.VSTOP ? this.hint : 'Ustavi ob brvi.') : s > K.ISL + K.ZONE && s < K.DRY[1] + 200 ? 'Otok je za tabo: obrni in se vrni do brvi.' : r.depth > K.SLIP ? 'Ko voda doseže kolesa, avto začne drseti.' : this.hint)
         : r.doc === 'back' ? (r.depth > K.SLIP ? 'Ko voda doseže kolesa, avto začne drseti.' : 'Zdravnik je v avtu: odpelji ga na suho, naprej ali nazaj.')

@@ -1,6 +1,6 @@
 /* Special mission 35 · Reševalci na plaži · Newcastle, Avstralija (js/missions.js; the kit: js/missions/kit.js, the water: MisKit.boat,
    skin, tags, button). A swimmer caught in a rip current off Newcastle Beach is being carried out beyond the waves. The lifeguard's quad
-   (the kart's physics, its own body of simple bodies: MisKit.skin) drives from the bottom of the climb after Turn 1, up the hill, round
+   (the kart's physics, its own body of simple bodies: MisKit.skin) drives from the pit straight, round Turn 1, up the hill, round
    Turn 2 and down along the beach to the place over it (s K.STOP, within K.ZONE m, slower than K.VSTOP m/s): PRESEDI NA SKUTER and the
    lifeguard is at the water's edge on the jet ski (a cut: the road is 15 m over the beach behind its wall). The jet ski (MisKit.boat: its
    own numbers on the sea at 0 m, steered with the player's controls, the camera behind it) goes out over the swell (its own mesh: long
@@ -20,8 +20,8 @@
   // the beach (world-newcastle.js: the sea a plane at 0 m, its bed at -2.5 m, the sand ~3 m): the water's edge E below the stop, the sea
   // outward along N, along the beach U (+: south-east, toward the rocks under the headland); d m out, u m along
   const E = [-96, 606], N = [0.6, 0.8], U = [0.8, -0.6];
-  const K = { S0: 300, STOP: 1000, ZONE: 22, VSTOP: 1.6, WAVE: 1.2, WLEN: 36, WV: 5.5, TOP: 0.55, NEAR: 16, SIGHT: 70, R0: 40, RMIN: 8,
-    PICK: 5, VPICK: 2.2, PULL: 1.6, HOME: 14, HOMEU: 70, SW: [95, 20], RIP: [0.18, 0.1], STR0: 0.62, TIRE: 0.002, VMAX: 15, VTOW: 9,
+  const K = { S0: 150, STOP: 1000, ZONE: 22, VSTOP: 1.6, WAVE: 1.2, WLEN: 36, WV: 5.5, TOP: 0.55, NEAR: 16, SIGHT: 45, R0: 40, RMIN: 8,
+    PICK: 5, VPICK: 2.2, PULL: 1.6, HOME: 14, HOMEU: 70, SW: [175, 20], RIP: [0.15, 0.1], STR0: 0.62, TIRE: 0.0019, VMAX: 15, VTOW: 7, BUMP: 3,
     UC: -50, UW: [110, 165], DMAX: [260, 330], DEEP: 0.6 };
   const seaD = (x, z) => (x - E[0]) * N[0] + (z - E[1]) * N[1];
   const seaU = (x, z) => (x - E[0]) * U[0] + (z - E[1]) * U[1];
@@ -74,16 +74,16 @@
     const nr = Math.round((K.DMAX[1] - 4) / ROW) + 1, nc = COLS.length, n = nr * nc, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), amp = new Float32Array(n), dd = new Float32Array(n), idx = [];
     for (let j = 0; j < nr; j++) for (let i = 0; i < nc; i++) { const k = j * nc + i, d = 4 + j * ROW, [x, z] = at(d, K.UC + COLS[i]); pos[k * 3] = x; pos[k * 3 + 2] = z; dd[k] = d;
       amp[k] = ampAt(x, z) * clamp((-gH(x, z) - 0.3) / 1.7, 0, 1); }   // (none over the sand and the rocks)
-    for (let j = 0; j < nr - 1; j++) for (let i = 0; i < nc - 1; i++) { const a = j * nc + i, b = a + 1, c = a + nc, e = c + 1; idx.push(a, b, c, b, e, c); }
+    for (let j = 0; j < nr - 1; j++) for (let i = 0; i < nc - 1; i++) { const a = j * nc + i, b = a + 1, c = a + nc, e = c + 1; idx.push(a, c, b, b, c, e); }   // (the faces up)
     const G = new THREE.BufferGeometry(); G.setAttribute('position', new THREE.BufferAttribute(pos, 3)); G.setAttribute('color', new THREE.BufferAttribute(col, 3)); G.setIndex(idx);
     G.computeVertexNormals(); const bc = at(K.DMAX[1] / 2, K.UC); G.boundingSphere = new THREE.Sphere(new THREE.Vector3(bc[0], 0.5, bc[1]), 240);
-    const m = new THREE.Mesh(G, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 40, specular: 0x30404a }));
+    const m = new THREE.Mesh(G, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 30, specular: 0x203038 }));
     m.renderOrder = 1; r.add(m);
-    const deep = [0.12, 0.36, 0.55], crest = [0.3, 0.6, 0.66], foam = [0.93, 0.96, 0.97];
+    const deep = [0.13, 0.38, 0.6], crest = [0.22, 0.55, 0.66], foam = [0.9, 0.95, 0.97];
     return { m, step(t) {
-      for (let k = 0; k < n; k++) { const a = amp[k], p = 0.5 * (1 + phase(dd[k], t)), h = K.WAVE * a * p, br = 1 - sstep(25, 70, dd[k]);
+      for (let k = 0; k < n; k++) { const a = amp[k], p = 0.5 * (1 + phase(dd[k], t)), h = K.WAVE * a * p, br = 1 - sstep(20, 45, dd[k]);
         pos[k * 3 + 1] = h - 0.12;
-        const c1 = p * p * a, f = clamp(sstep(0.62, 0.96, p) * (0.25 + 0.75 * br) * a * 1.4, 0, 1);
+        const c1 = p * p * a, f = clamp(sstep(0.8, 0.99, p) * (0.3 + 0.6 * br) * a, 0, 0.85);
         for (let q = 0; q < 3; q++) col[k * 3 + q] = (deep[q] + (crest[q] - deep[q]) * c1) * (1 - f) + foam[q] * f; }
       G.attributes.position.needsUpdate = true; G.attributes.color.needsUpdate = true; G.computeVertexNormals();
     } };
@@ -101,14 +101,14 @@
   }
 
   Missions.add({
-    id: '35', title: 'Reševalci na plaži', track: 'newcastle', stars: [125, 165], K,
+    id: '35', title: 'Reševalci na plaži', track: 'newcastle', stars: [150, 195], K,
     story: 'Poletje na plaži. Tok je plavalca odnesel za valove in zmanjkuje mu moči.',
     goal: 'S štirikolesnikom in skuterjem reši plavalca.',
     hint: 'Nad plažo presedi na skuter in pelji do plavalca.',
     rows: [{ k: 'dist', label: 'PLAVALEC' }, { k: 'moc', label: 'MOČ PLAVALCA', bar: true, col: '#e8452c' }, { k: 'val', label: 'VALOVI' }],
     // alone on the closed streets, by day, dry; the quad on the kart's physics (a little slower)
     opts: () => ({ tt: true, laps: 1, playerModel: KIT.truckModel('mravlja', { vLim: 75 }), playerColor: 0xd8282a, damage: 0 }),
-    // it starts at the bottom of the climb after Turn 1, K.STOP - K.S0 m before the place over the beach
+    // it starts on the pit straight before Turn 1, K.STOP - K.S0 m before the place over the beach
     made(race) {
       const T = race.track, c = race.player; if (!c) return;
       const s = (T.startS + K.S0) % T.len, i = T.idx(s);
@@ -149,7 +149,7 @@
       if (r.str <= 0) { r.str = 0; if (S.on) S.go(false); r.fail(tr('Plavalcu je zmanjkalo moči.')); }
       // seen when a crest lifts him: the ring goes round where he is, smaller when seen from close by
       const was = r.seen, dSw = Math.hypot(r.sw.x - S.x, r.sw.z - S.z);
-      r.seen = (r.stage === 'quad' || r.stage === 'ski') && phase(dS, st) > K.TOP;
+      r.seen = (r.stage === 'quad' || (r.stage === 'ski' && dSw < K.SIGHT)) && phase(dS, st) > K.TOP;   // (from the road high over the beach: always on a crest; low on the jet ski: only from close by)
       if (r.seen && !was) {
         r.nSeen++; if (r.stage === 'ski' && dSw < K.SIGHT) r.ring.R = Math.max(K.RMIN, r.ring.R * 0.7);
         const a = r.nSeen * 2.3, k = r.ring.R * 0.4; r.ring.x = r.sw.x + Math.cos(a) * k; r.ring.z = r.sw.z + Math.sin(a) * k;
@@ -169,6 +169,8 @@
         if (r.stage === 'sled') S.v = Math.min(S.v, K.VTOW);
         S.step(dt, I[0], I[1], I[2]);
         if (r.stage === 'sled') S.v = Math.min(S.v, K.VTOW);
+        // up the face of a crest the jet ski loses speed (out through the waves is slower than back in with them)
+        { const fx = Math.cos(S.h) * 2, fz = Math.sin(S.h) * 2, climb = (wave(S.x + fx, S.z + fz, st) - wave(S.x - fx, S.z - fz, st)) / 4; if (climb > 0 && S.v > 0) S.v *= Math.exp(-dt * climb * K.BUMP); }
         const dN = Math.hypot(r.sw.x - S.x, r.sw.z - S.z);
         if (r.stage === 'ski') {
           if (dN < K.PICK && S.speed < K.VPICK) { r.pull += dt; if (r.pull >= K.PULL) { r.stage = 'sled'; if (r.onSled) r.onSled.visible = true; } } else r.pull = 0;

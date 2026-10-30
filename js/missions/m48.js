@@ -16,7 +16,7 @@
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s);
   const K = { S0: 1100, FARM: 1300, TOWN: 1880, BR: [1433, 1523], RIV: 1480, ZONE: 22, VSTOP: 1.5, N: 9, CAP: 4, BOARD: 1.6, DROP: 0.8, TURN: 2.2,
-    DECK: -27.33, L0: -29.4, RISE: 2.07 / 480, VBR: 20 / 3.6, SPDMG: 0.5, HITGAP: 1.0, HITDMG: 6, LOGS: 7, LOGV: 2.4, LOGR: [-170, 110], HOUSE: [22, 34], LIMIT: 480 };
+    DECK: -27.33, L0: -29.4, RISE: 2.07 / 520, VBR: 20 / 3.6, SPDMG: 0.5, HITGAP: 1.0, HITDMG: 6, LOGS: 7, LOGV: 2.4, LOGR: [-170, 110], HOUSE: [38, 21] };
 
   // the rescue truck: a high cab-over cab (orange), the flatbed with its railings behind it (x forward, y up, z across)
   function truck(B) {
@@ -35,7 +35,7 @@
   const SEATS = [[-1.2, 0.55], [-1.2, -0.55], [-2.3, 0.55], [-2.3, -0.55], [-0.2, 0.55], [-0.2, -0.55]];
 
   Missions.add({
-    id: '48', title: 'Narasla reka', track: 'longford', limit: K.LIMIT, stars: [270, 330], K,
+    id: '48', title: 'Narasla reka', track: 'longford', limit: 0, stars: [300, 380], K,   // (no clock of its own: MOST ZDRŽI is the time left)
     story: 'Po dolgem deževju reka hitro narašča. Na kmetiji pred lesenim mostom čaka devet ljudi.',
     goal: 'Prepelji vse s kmetije čez lesen most v mesto, preden ga voda zalije.',
     hint: 'Čez most pelji počasi in po sredini; plavje udarja ob opornice.',
@@ -66,9 +66,9 @@
       r.W = KIT.water(r, { x: r.bx, z: r.bz, size: 1500, y: r.lvl, col: 0x6b5638, op: 0.92 });
       this.riverLook(r);
       // the farm (a house on the flats beside the road) and its people at the road's edge; the town's gathering place on the footpath
-      const pF = KIT.at(T, K.FARM + K.HOUSE[0], K.HOUSE[1]), wF = T.wS(K.FARM);
+      const pF = KIT.at(T, K.FARM + K.HOUSE[0], -K.HOUSE[1]), wF = T.wS(K.FARM);   // (on the left: the panel of the gauges covers the right of the view far ahead)
       r.H = KIT.house(r, { x: pF.x, y: pF.y - 0.3, z: pF.z }, { ry: pF.ry, L: 11, W: 8, roof: 0x7c8a92, wall: 0xe8e2d4 });
-      r.wait = KIT.at(T, K.FARM, wF + 3.2); r.dropAt = KIT.at(T, K.TOWN, -(T.wS(K.TOWN) + 1.8));
+      r.wait = KIT.at(T, K.FARM, -(wF + 3.2)); r.dropAt = KIT.at(T, K.TOWN, -(T.wS(K.TOWN) + 1.8));
       r.skin = KIT.skin(r, r.P, truck); r.crowd = KIT.crowd(r, K.N); r.ride = KIT.crowd(r, K.CAP); r.tags = KIT.tags(r); r.btn = KIT.button(r, 'ODPELJI');
       if (r.ride.g && r.skin) r.skin.add(r.ride.g);   // (the riders in the truck's own frame: they move with its body)
       r.who = []; for (let k = 0; k < K.N; k++) r.who.push({ k, at: 'farm', seat: -1 });
@@ -76,6 +76,7 @@
       // the logs: drifting down the river through the bridge (one draw)
       r.logs = []; for (let k = 0; k < K.LOGS; k++) r.logs.push({ d: K.LOGR[0] + (k + 0.3) * (K.LOGR[1] - K.LOGR[0]) / K.LOGS, o: ((k * 37) % 11) - 5, jam: 0, hit: false });
       if (typeof THREE !== 'undefined') { const g = new THREE.CylinderGeometry(0.3, 0.36, 5, 7); g.rotateZ(Math.PI / 2); r.logM = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: 0x5a4330 }), K.LOGS); r.logM.frustumCulled = false; r.add(r.logM); r._m = new THREE.Matrix4(); r._q = new THREE.Quaternion(); r._e = new THREE.Euler(); r._v = new THREE.Vector3(); r._s = new THREE.Vector3(1, 1, 1); }
+      this.logsDraw(r);
       // the race's spectators hidden while it lasts (an evacuation in the rain, not a race day)
       const W = typeof Render !== 'undefined' && Render.world;
       if (W && W.root && typeof THREE !== 'undefined') { const hid = []; W.root.traverse(o => { if (o.name === 'crowds' && o.visible) { o.visible = false; hid.push(o); } }); const g = new THREE.Group(); g.userData.misUndo = () => { for (const o of hid) o.visible = true; }; r.add(g); }
@@ -86,10 +87,18 @@
     riverLook(r) {
       const W = typeof Render !== 'undefined' && Render.world, M = r.W.mesh; if (!W || !W.root || !M) return;
       let wm = null;
-      W.root.traverse(o => { if (wm || !o.isMesh || !o.material || !o.material.onBeforeCompile || !/uWTop/.test(String(o.material.onBeforeCompile))) return;
-        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; if (r.bx >= b.min.x && r.bx <= b.max.x && r.bz >= b.min.z && r.bz <= b.max.z && b.max.y < -25) wm = o.material; });
+      W.root.traverse(o => { if (wm || !o.isMesh || o === M || !o.material || o.material.type !== 'MeshPhongMaterial' || o.material.map || !o.material.onBeforeCompile) return;
+        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; if (r.bx >= b.min.x && r.bx <= b.max.x && r.bz >= b.min.z && r.bz <= b.max.z && b.max.y < -25 && b.max.x - b.min.x > 400) wm = o.material; });   // (the rivers' surface: one mesh, low, kilometres long)
       if (!wm) return;
       const own = M.material; M.material = wm; M.userData.misUndo = () => { M.material = own; };
+    },
+    // the logs drawn: on the water, sunk at the ends of their run (no popping in), jammed ones turned across
+    logsDraw(r) {
+      if (!r.logM) return;
+      r.logs.forEach((L, k) => { const p = r.riv(L.d), nx = -p.tz, nz = p.tx, e = Math.min(L.d - K.LOGR[0], K.LOGR[1] - L.d), sink = e < 20 ? (1 - e / 20) * 0.9 : 0;
+        r._v.set(p.x + nx * L.o, r.lvl + 0.06 - sink + Math.sin(r.t * 1.3 + k) * 0.04, p.z + nz * L.o);
+        r._q.setFromEuler(r._e.set(0, Math.atan2(-p.tz, p.tx) + (L.jam > 0 ? 1.4 : 0.35 * Math.sin(k * 2.1 + r.t * 0.2)), 0)); r._m.compose(r._v, r._q, r._s); r.logM.setMatrixAt(k, r._m); });
+      r.logM.instanceMatrix.needsUpdate = true;
     },
     // the people where they are: at the farm in a row by the road, on the truck's back, at the gathering place in the town
     people(r) {
@@ -157,13 +166,7 @@
       this.people(r);
       if (r.safe >= K.N) r.win();
       else if (r.life <= 0) r.fail(tr('Voda je zalila most, ljudje so ostali na drugi strani.'));
-      // the logs drawn: on the water, sunk at the ends of their run (no popping in), jammed ones turned across
-      if (r.logM) {
-        r.logs.forEach((L, k) => { const p = r.riv(L.d), nx = -p.tz, nz = p.tx, e = Math.min(L.d - K.LOGR[0], K.LOGR[1] - L.d), sink = e < 20 ? (1 - e / 20) * 0.9 : 0;
-          r._v.set(p.x + nx * L.o, r.lvl + 0.06 - sink + Math.sin(r.t * 1.3 + k) * 0.04, p.z + nz * L.o);
-          r._q.setFromEuler(r._e.set(0, Math.atan2(-p.tz, p.tx) + (L.jam > 0 ? 1.4 : 0.35 * Math.sin(k * 2.1 + r.t * 0.2)), 0)); r._m.compose(r._v, r._q, r._s); r.logM.setMatrixAt(k, r._m); });
-        r.logM.instanceMatrix.needsUpdate = true;
-      }
+      this.logsDraw(r);
       // the tags: the people waiting at the farm, the gathering place
       const tg = [];
       if (r.farm > 0) tg.push({ x: r.wait.x, y: r.wait.y + 3.2, z: r.wait.z, cls: r.aboard === 0 ? 'go' : '', html: '<b>' + tr('ŠE {0} LJUDI', r.farm) + '</b>' + tr('čakajo na kmetiji') });

@@ -549,8 +549,9 @@
     }
 
     /* ---- the far view: Castle Hill (a granite dome over the town), the ranges to the south and west and Magnetic Island in the bay as a coarse
-       terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything and pulled in onto a
-       sphere just inside the camera's far plane (farUpdate), faded into the haze ---- */
+       terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything (where they stand, their
+       depth put just inside the far plane by the shader, so the far plane does not cut them and whatever is nearer covers them), faded into
+       the haze by the distance from the camera (farUpdate) ---- */
     let FAR = null;
     {
       const P0 = [], C = [], I = [], HZ = [];
@@ -568,7 +569,7 @@
           if (skip(x, z) && skip(x + F.cell, z) && skip(x, z + F.cell) && skip(x + F.cell, z + F.cell)) continue;
           const a = v0 + j * F.nx + i, b = a + 1, d2 = a + F.nx, e = d2 + 1; I.push(a, d2, b, b, d2, e); } };
       const Hp = D.far.hill, inHill = (x, z) => x >= Hp.x0 && x <= Hp.x0 + (Hp.nx - 1) * Hp.cell && z >= Hp.z0 && z <= Hp.z0 + (Hp.nz - 1) * Hp.cell;
-      grid(D.far, (x, z) => inner(x, z, 0) || inHill(x, z));   // (every cell the near terrain covers whole: one the camera stood in would be pulled onto the sphere as a plane just under it, hiding the road)
+      grid(D.far, (x, z) => inner(x, z, 200) || inHill(x, z));
       grid(Hp, (x, z) => inner(x, z, 120));
       // the taller buildings of the city (OpenStreetMap heights): boxes
       const quad = (a, b, cc, d, col) => { const v = P0.length / 3; for (const p of [a, b, cc, d]) { P0.push(p[0], p[1], p[2]); C.push(col[0], col[1], col[2]); HZ.push(0.1); } I.push(v, v + 1, v + 2, v, v + 2, v + 3); };
@@ -583,22 +584,22 @@
       g.setIndex(I); g.computeVertexNormals();
       const Uh = { uHz: { value: new THREE.Color(0xc9d8e6) } }, m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false });
       m.onBeforeCompile = (sh) => { sh.uniforms.uHz = Uh.uHz;
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;');
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\ngl_Position.z = gl_Position.w - 0.1;');   // (depth 1 - 0.1 / distance: behind all that is nearer, in its order)
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
       m.customProgramCacheKey = () => 'tsvFar';
       const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'tsvFar';
       mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) Uh.uHz.value.copy(sc.fog.color); };
-      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0, cf: 0 };
+      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0 };
     }
-    const farUpdate = (cam) => {   // (no camera: the far view in its own places, the world test's pose)
-      const F = FAR, g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
-      if (!cam) { if (F.cx !== 1e9) { p.set(P0); hz.set(F.HZ0); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
-      const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 9 && cam.far === F.cf) return;
-      F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
-      const R0 = cam.far - 60, R1 = cam.far - 6;
-      for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, Dd = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, Dd - 400) / 3000)), f = r / Dd;
-        p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
-      g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
+    const farUpdate = (cam) => {   // the haze by the distance from the camera (no camera: the far view's own haze, the world test's pose). (Its points stay
+      // where they are: pulled in onto a sphere round the camera, a cell the camera stood in became a plane just under it that hid the road.)
+      const F = FAR, g = F.mesh.geometry, hz = g.attributes.aHz.array, P0 = F.P0;
+      if (!cam) { if (F.cx !== 1e9) { hz.set(F.HZ0); g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
+      const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 9) return;
+      F.cx = c.x; F.cy = c.y; F.cz = c.z;
+      for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const Dd = Math.hypot(P0[k] - c.x, P0[k + 1] - c.y, P0[k + 2] - c.z); hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
+      g.attributes.aHz.needsUpdate = true;
     };
     farUpdate(null);
 
