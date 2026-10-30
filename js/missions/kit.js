@@ -446,4 +446,101 @@ Object.assign(MisKit, (function () {
 
   return { water, wade, boat, skin, crowd, tags, button };
 })());
+/* ---------------- the snow (group 4: missions 30, 33, 53) ----------------
+     MisKit.snowTex(kind): a canvas texture: 'ribs' (the groomed snow's fine ribs along the travel), 'fresh' (untouched powder, lumpy).
+     MisKit.band(run, max, o): a band on the ground (one draw, room for max cross-sections): add(x, y, z, ax, az) the next cross-section
+       (its centre, its half-width along ax, az), cut() ends the band (the next add starts a new one); o.tex, o.rep (the texture's metres
+       along), o.across (its repeats across), o.col, o.order. The groomed trail behind the snowcat, the tracks of chains.
+     MisKit.cover(run, T, s0, s1, o): a band over the road from s0 to s1 (one draw), o.w its half-width past the road's edge, o.lift m over
+       the road, o.tex (default the fresh snow), o.step m a cross-section; its cross-sections' s in .s (for a mission to change their look).
+     MisKit.piles(run, T, s0, s1, o): snow heaped along the road's edges (one draw: lumps every o.every m, o.side 1 / -1 / 0 both, o.off m past
+       the edge, o.h m high, o.skip(s) none there); returns the mesh (or null).
+     MisKit.block(P, o): a thing standing on the road as a box the car bumps into (o.x, o.z, o.h its heading, o.L long, o.W wide): the car
+       pushed out of it, its speed into it taken away; returns the speed it came in with (m/s, 0: no touch). */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined' && typeof document !== 'undefined';
+  const texs = {};
+  function snowTex(kind) {
+    if (!has3()) return null;
+    if (texs[kind]) return texs[kind];
+    const c = document.createElement('canvas'), n = 64; c.width = c.height = n; const g = c.getContext('2d');
+    if (kind === 'ribs') {
+      g.fillStyle = '#c3d0de'; g.fillRect(0, 0, n, n);
+      for (let x = 0; x < n; x += 8) { g.fillStyle = '#8196ad'; g.fillRect(x, 0, 3, n); g.fillStyle = '#f4f8fc'; g.fillRect(x + 4, 0, 2, n); }
+    } else {
+      g.fillStyle = '#f1f5f9'; g.fillRect(0, 0, n, n);
+      for (let k = 0; k < 90; k++) { const x = (k * 37) % n, y = (k * 53 + (k * k) % 17) % n, r = 2 + (k % 5); g.fillStyle = k % 3 ? 'rgba(170,186,204,.22)' : 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    return (texs[kind] = t);
+  }
+  function band(run, max, o) {
+    o = Object.assign({ tex: null, rep: 2, across: 6, col: 0xffffff, order: 1 }, o);
+    const B = { n: 0, add() {}, cut() {}, mesh: null };
+    if (!has3()) return B;
+    const pos = new Float32Array(max * 2 * 3), uv = new Float32Array(max * 2 * 2), idx = new Uint32Array((max - 1) * 6);
+    const G = new THREE.BufferGeometry();
+    const nor = new Float32Array(max * 2 * 3); for (let k = 1; k < nor.length; k += 3) nor[k] = 1;   // (lying flat: lit from above)
+    G.setAttribute('position', new THREE.BufferAttribute(pos, 3)); G.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); G.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); G.setIndex(new THREE.BufferAttribute(idx, 1));
+    G.setDrawRange(0, 0);
+    const M = new THREE.MeshLambertMaterial({ color: o.col, map: o.tex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const mesh = new THREE.Mesh(G, M); mesh.frustumCulled = false; mesh.renderOrder = o.order; mesh.receiveShadow = true;
+    run.add(mesh); B.mesh = mesh;
+    let open = false, lx = 0, lz = 0, v = 0, ni = 0;
+    B.add = (x, y, z, ax, az) => {
+      if (B.n >= max) return;
+      const k = B.n;
+      if (open) v += Math.hypot(x - lx, z - lz) / o.rep;
+      pos.set([x - ax, y, z - az, x + ax, y, z + az], k * 6); uv.set([0, v, o.across, v], k * 4);
+      if (open) { const a = (k - 1) * 2; idx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], ni); ni += 6; }
+      lx = x; lz = z; open = true; B.n++;
+      G.attributes.position.needsUpdate = G.attributes.uv.needsUpdate = G.index.needsUpdate = true;
+      G.setDrawRange(0, ni);
+    };
+    B.cut = () => { open = false; };
+    return B;
+  }
+  function cover(run, T, s0, s1, o) {
+    o = Object.assign({ w: 0.4, lift: 0.05, step: 3, tex: null, col: 0xffffff, rep: 6, across: 3 }, o);
+    const n = Math.max(2, Math.floor((s1 - s0) / o.step) + 1), C = { s: [], band: null };
+    for (let k = 0; k < n; k++) C.s.push(s0 + k * o.step);
+    if (!has3()) return C;
+    const B = C.band = band(run, n, { tex: o.tex || snowTex('fresh'), rep: o.rep, across: o.across, col: o.col, order: 0 });
+    for (const s of C.s) { const i = T.idx(s), w = T.wS(s) + o.w; B.add(T.px[i], T.hy[i] + o.lift, T.pz[i], T.nx[i] * w, T.nz[i] * w); }
+    return C;
+  }
+  function piles(run, T, s0, s1, o) {
+    o = Object.assign({ every: 4, side: 0, off: 0.6, h: 1.0, skip: null, col: 0xeef3f8 }, o);
+    if (!has3() || !MisKit.parts) return null;
+    const B = MisKit.parts(), W = typeof Render !== 'undefined' && Render.world, sides = o.side ? [o.side] : [-1, 1];
+    let k = 0;
+    for (let s = s0; s <= s1; s += o.every) {
+      if (o.skip && o.skip(s)) continue;
+      const i = T.idx(s);
+      for (const sd of sides) {
+        k++; const r = ((k * 0.6180339) % 1), off = T.wS(s) + o.off + r * 0.6, x = T.px[i] + T.nx[i] * off * sd, z = T.pz[i] + T.nz[i] * off * sd;
+        const gh = W && W.groundH ? W.groundH(x, z) : NaN, y = Math.max(Number.isFinite(gh) ? gh : -1e9, T.hy[i]);
+        const M = new THREE.Matrix4().compose(new THREE.Vector3(x, y + o.h * 0.15, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, r * 6.28, 0)), new THREE.Vector3(o.every * (0.65 + 0.3 * r), o.h * (0.7 + 0.6 * ((k * 0.414) % 1)), 1.2 + r));
+        B.L.push({ g: new THREE.IcosahedronGeometry(0.5, 0), m: M, c: o.col });
+      }
+    }
+    if (!B.L.length) return null;
+    const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); mesh.receiveShadow = true; run.add(mesh);
+    return mesh;
+  }
+  function block(P, o) {
+    const ch = Math.cos(o.h), sh = Math.sin(o.h), dx = P.x - o.x, dz = P.z - o.z;
+    const lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, r = Math.max(1, (P.m && P.m.wid) || 2) / 2 + 0.2, hx = o.L / 2 + r, hz = o.W / 2 + r;
+    if (Math.abs(lx) >= hx || Math.abs(lz) >= hz) return 0;
+    const px = hx - Math.abs(lx), pz = hz - Math.abs(lz);
+    let nx, nz, d;
+    if (px < pz) { nx = Math.sign(lx) * ch; nz = Math.sign(lx) * sh; d = px; } else { nx = -Math.sign(lz) * sh; nz = Math.sign(lz) * ch; d = pz; }
+    P.x += nx * d; P.z += nz * d;
+    const vn = (P.vx || 0) * nx + (P.vz || 0) * nz;
+    if (vn < 0) { P.vx -= vn * nx; P.vz -= vn * nz; return -vn; }
+    return 0.01;
+  }
+  return { snowTex, band, cover, piles, block };
+})());
 if (typeof module !== 'undefined') module.exports = MisKit;

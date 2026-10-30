@@ -536,6 +536,15 @@
     'Ustavi na zbirnem mestu.': 'Stop at the meeting point.', 'Ustavi pri kmetiji.': 'Stop at the farm.', 'Obrni: mesto je za teboj.': 'Turn round: the town is behind you.',
     'Obrni: kmetija je za teboj.': 'Turn round: the farm is behind you.', 'Odpelji ljudi čez most v mesto.': 'Take the people over the bridge to the town.',
     'Pelji na kmetijo po ljudi.': 'Drive to the farm for the people.',
+    /* (the snow missions: js/missions/kit.js, m30.js, m33.js, m53.js) */
+    'Ratrak': 'Snowcat', 'Ponoči je zapadlo pol metra snega, ob sedmih zjutraj pa pridejo prvi smučarji.': 'Half a metre of snow fell in the night, and the first skiers come at seven in the morning.',
+    'Z ratrakom uredi cesto do vrha, preden pridejo smučarji.': 'Groom the road to the top with the snowcat before the skiers come.',
+    'Za ratrakom ostane urejen sneg: ne izpusti nobenega dela ceste.': 'The snowcat leaves groomed snow behind it: do not miss any part of the road.',
+    'UREJENO': 'GROOMED', 'VITEL': 'WINCH', 'NAKLON': 'GRADE', 'SMUČARJI OB': 'SKIERS AT', 'prost': 'free',
+    'Na strmini drži vitel napet, sicer ratrak zdrsne.': 'On the steep part keep the winch tight, or the snowcat slides.',
+    'Vitel je ohlapen: počasneje, sicer ratrak zdrsne.': 'The winch is slack: slower, or the snowcat slides.',
+    'Vitel je prenapet: ne ustavljaj se na strmini.': 'The winch is too tight: do not stop on the steep part.',
+    'Jeklenica vitla se je strgala.': 'The winch cable snapped.', 'Cesta ni dovolj urejena: {0} %.': 'Not enough of the road is groomed: {0} %.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
