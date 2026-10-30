@@ -7,6 +7,7 @@ Uporabnik je določil: v kodi se nič ne spreminja, dokler ne napiše »začni«
 
 | Pot | Vsebina |
 |---|---|
+| `koda/PREDAJA-KODA.md` | **Za sklope v kodi (po »začni«):** stanje sklopov, kje so izbire za vsak sklop, orodja za slike prej/zdaj in pasti. |
 | `izbire.md` | **Najprej preberi.** Vse odločitve uporabnika (njegove besede v narekovajih), kaj je narejeno, s katero stranjo in kaj bo treba pri prenosu v kodo. |
 | `delo/` | Strani (`*-page.js`), ki spremembe dodajo v igro, ki teče v brskalniku; skripte za izris (`live2.mjs`), sestavljanje listov (`compose_*.py`), pomožna orodja. |
 | `delo/vrsta/` | Predloge vrste za izris (`q1192…q1197` = koraki nalaganja, `q1315` cela mapa v 15 slikah, `q1336` proge za čolne, `q1345` plaže). |
