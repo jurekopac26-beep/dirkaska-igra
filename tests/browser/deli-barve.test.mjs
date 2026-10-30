@@ -4,7 +4,6 @@
 //  - the underglow: its mesh under the car, lit (its colours change with the running rainbow), one draw of its own
 //  - the body lowered on the springs (vzmeti 16: 5 cm), the wheels where they were
 //  - the tyre smoke's colour (dim_gum 6: red) for the drift's smoke
-//  - the horn's sound plays (Sfx.hupa) without an error
 //  - nothing NaN, no errors on the page
 //   node tests/browser/deli-barve.test.mjs
 import { serve, launch, openGame, checker, simulate } from './lib.mjs';
@@ -15,7 +14,7 @@ const browser = await launch();
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=bathurst&avto=kolibri&t=4', {}, { width: 640, height: 360 });
   await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
-  const deli = { barva: 14, zatemnitev: 3, crte: 8, stevilke: 9, nalepke: 9, soncni_pas: 13, celjusti: 13, gume: 13, luc_pod_avtom: 11, vzmeti: 16, dim_gum: 6, turbo: 16, hupa: 16 };
+  const deli = { barva: 14, zatemnitev: 3, crte: 8, zamasek: 16, nalepke: 9, soncni_pas: 13, celjusti: 13, gume: 13, luc_pod_avtom: 11, vzmeti: 16, dim_gum: 6, turbo: 16 };
   const A = await page.evaluate((deli) => {
     const g = window.__game, P = g.race.player; Core.applyDeli(P, deli); Render.attachRace(g.race);
     let glow = null; Render.scene.traverse(m => { if (m.name === 'deli:luc_pod_avtom') glow = m; });
@@ -29,11 +28,10 @@ try {
   const B = await page.evaluate(() => {
     let glow = null; Render.scene.traverse(m => { if (m.name === 'deli:luc_pod_avtom') glow = m; });
     const bodyG = glow.parent.children[0], col = Array.from(glow.geometry.attributes.color.array.slice(0, 30));
-    const S = DELI.dim(6).at(2, 0); let horn = 'ok'; try { Sfx.hupa(DELI.hupa(16), 0.5); } catch (e) { horn = e.message; }
-    return { bodyY: bodyG.position.y, lit: col.some(v => v > 0.05), col, smoke: S, horn };
+    const S = DELI.dim(6).at(2, 0);     return { bodyY: bodyG.position.y, lit: col.some(v => v > 0.05), col, smoke: S };
   });
   T.check('a race with them: the body lower on its springs every frame (5 cm), the underglow lit and running round the car', B.bodyY < -0.03 && B.lit && JSON.stringify(B.col) !== JSON.stringify(A.c0), `body y ${B.bodyY.toFixed(3)}, glow ${B.col.slice(3, 9).map(v => v.toFixed(2)).join(' ')}`);
-  T.check('the tyre smoke red (dim_gum 6), the horn plays', B.smoke[0] > 0.8 && B.smoke[1] < 0.4 && B.horn === 'ok', JSON.stringify(B));
+  T.check('the tyre smoke red (dim_gum 6)', B.smoke[0] > 0.8 && B.smoke[1] < 0.4, JSON.stringify(B.smoke));
   T.check('nothing NaN, no errors on the page (the shaders compiled)', !nan && !errors.length, errors.slice(0, 3).join(' | '));
   await ctx.close();
 } finally {

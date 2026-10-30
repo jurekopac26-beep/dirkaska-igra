@@ -1,15 +1,14 @@
-/* Deli iz garaže, sklop 3 · barve: barva, crte, stevilke, nalepke, gume, soncni_pas, zatemnitev, luc_pod_avtom, celjusti (the contract:
+/* Deli iz garaže, sklop 3 · barve: barva, crte, nalepke, gume, soncni_pas, zatemnitev, luc_pod_avtom, celjusti, zamasek (the contract:
    docs/deli.md). Loaded after js/deli.js, before the cars.
      Drawn in the body (DELI.add, the car's build calls K.deli(id, stock) where its mounts say):
        crte        racing stripes over the bonnet, the roof and the tailgate (K.strp: the stripes' colour, car.stripeCol or the game's),
                    the stock side stripe kept (the car's around); mounts.crte { z: [in, out] the band they lie in across, beside a
                    bonnet's scoop }
-       stevilke    start number panels (K.number: the car's own number) on roundels: the roof (the stock decal then hidden), the doors,
-                   the tailgate's glass; mounts.stevilke { roof: [x, z], door: [x, y, h], glass: [x, y, z, lean] }
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
-       soncni_pas  a band across the windscreen's top (texts in a 5 x 7 pixel font: generic or fictional); mounts.soncni_pas { x: [top,
-                   foot], w: its half width }
+       soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
+                   mounts.soncni_pas { x: [top, foot] }
+       zamasek     the fuel cap on the side, in place of the stock one (flaps, aluminium, racing, carbon caps); mounts.zamasek { x, y, z, r }
        celjusti    the brake calipers behind the rims' spokes (in the body: they never spin; a steered wheel turns past them a little);
                    mounts.celjusti { r: [r0, r1] (m from the hub), a: [a0, a1] (degrees from forward, up) }
      The car's look (no shape of the body's: DELI.add with nothing to draw, so the vehicle shows them where its mounts have them):
@@ -120,78 +119,59 @@
     }
   }
 
-  // ================================================================ stevilke: start number panels on roundels
-  // each option: where (roof, doors, glass), the roundel's shape and colour, its ring, the digits' colour, the panel's height
-  const NUM = {
-    1: { at: 'r', disc: null, sq: WHT, col: BLK }, 2: { at: 'd', disc: WHT, col: BLK }, 3: { at: 'g', sq: [0.2, 0.21, 0.23], col: WHT }, 4: { at: 'rd', sq: WHT, col: BLK },
-    5: { at: 'rd', disc: WHT, col: BLK }, 6: { at: 'rd', disc: YEL, col: BLK }, 7: { at: 'rd', disc: 's', col: BLK }, 8: { at: 'rd', disc: WHT, ring: BLK, col: BLK },
-    9: { at: 'rd', disc: WHT, col: BLK, refl: true }, 10: { at: 'd', sq: WHT, col: BLK, big: 1.45 }, 11: { at: 'rd', disc: WHT, oval: 1.5, col: BLK }, 12: { at: 'rd', disc: WHT, col: BLK, name: true },
-    13: { at: 'rd', disc: CREAM, col: BLK }, 14: { at: 'rd', disc: CREAM, ring: 's', col: BLK }, 15: { at: 'rd', disc: BLK, ring: GOLD, col: GOLD }, 16: { at: 'rd', disc: WHT, ring: RED, ring2: BLK, col: BLK } };
-  function stevilke(K, n, m) {
-    const o = NUM[n]; if (!o) return; const ly = layer(K), LD = ly.LD, c = (q) => q === 's' ? K.strp : q;
-    const roundel = (put, cu, cv, h, rk) => {   // the disc (or the oval, the square panel), its rings, in a layer (put: side or top)
-      const R = h * 0.95 * (rk || 1), sv = 1 / (o.oval || 1);
-      if (o.disc) put(ell(cu, cv, R * (o.oval || 1), R * (o.oval || 1) * sv, K.hi ? 16 : 10), c(o.disc));
-      if (o.ring) for (const q of ring(cu, cv, R * (o.oval || 1), R * (o.oval || 1) + h * 0.12, K.hi ? 12 : 10, sv)) put(q, c(o.ring));
-      if (o.ring2 && K.hi) for (const q of ring(cu, cv, R + h * 0.12, R + h * 0.18, 12)) put(q, c(o.ring2));
-      if (o.name) { put(rect(cu - h * 0.9, cv + R + h * 0.06, cu + h * 0.9, cv + R + h * 0.3), BLK); for (let i = 0; i < 5; i++) put(rect(cu - h * 0.78 + i * h * 0.33, cv + R + h * 0.12, cu - h * 0.6 + i * h * 0.33, cv + R + h * 0.24), WHT); } };
-    const bg = (q) => q === 's' ? K.strp : q || [0.95, 0.95, 0.93];
-    if (o.at.includes('r') && m.roof) { const [x, z] = m.roof, h = 0.3, y = LD.topY(x, z);
-      roundel((poly, col) => ly.top(poly.map(([u, v]) => [u, v]), col, 0.008), x, z, h, 1.05);
-      if (o.sq) ly.top(rect(x - h * 0.62, z - h * 0.82, x + h * 0.62, z + h * 0.82), o.sq, 0.008);
-      K.number(x, y + 0.011, z, h, { dir: 'y', col: o.col, bg: bg(o.sq || o.disc) }); }
-    if (o.at.includes('d') && m.door) { const [x, y, h0] = m.door, h = h0 * (o.big || 1);
-      roundel((poly, col) => ly.side(poly, col, 0.009), x, y, h, 1);
-      if (o.sq) ly.side(rect(x - h * 0.75, y - h * 0.6, x + h * 0.75, y + h * 0.6), o.sq, 0.009);
-      for (const sd of [-1, 1]) K.number(x, y, sd * (LD.prop(x, 'w') + 0.0125), h, { dir: sd < 0 ? '-z' : 'z', col: o.col, bg: bg(o.sq || o.disc), host: sd < 0 ? 'doorL' : 'doorR' }); }
-    if (o.at.includes('g') && m.glass) { const [x, y, z, h] = m.glass; K.number(x, y, z, h, { dir: '-x', col: o.col, bg: o.sq, host: 'trunk' }); }
-  }
-
   // ================================================================ nalepke: decals
+  // each in two layers (a dark outline a little bigger under it, or flames' yellow cores over their red), cut clean, laid flat on the paint
+  const grow = (P, k, cu, cv) => { const n = P.length, c = cu != null ? [cu, cv] : [P.reduce((a, q) => a + q[0], 0) / n, P.reduce((a, q) => a + q[1], 0) / n]; return P.map(([u, v]) => [c[0] + (u - c[0]) * k, c[1] + (v - c[1]) * k]); };
   function nalepke(K, n, m) {
     const ly = layer(K), S = K.strp, sd = m.side || [[-0.33, 0.77]], Y = m.y || [0.55, 0.84], H = m.hood, RF = m.roof, y0 = Y[0], y1 = Y[1], ym = (y0 + y1) / 2, yh = y1 - y0;
     const door = sd[0], fen = sd[1] || sd[0], qua = sd[2] || sd[0];
-    const FL = [[1, 0.86, 0.12], [1, 0.52, 0.06], [0.86, 0.12, 0.04]];   // (flames: yellow at the root, orange, red at the tips)
-    const sideFlames = (x0, x1, k) => { flames(x0, x1, y0 + yh * 0.08, y1 - yh * 0.08, k, 1).forEach((P, i) => ly.side(P.map(([u, v]) => [u, v]), FL[i % 3])); };
-    const hoodSide = (fn) => { if (!H) return; const zc = (H.z[0] + H.z[1]) / 2, zw = H.z[1] - H.z[0], xc = (H.x[0] + H.x[1]) / 2, xw = H.x[1] - H.x[0]; fn(xc, zc, xw, zw); };
-    const chq = (put, u0, u1, v0, v1, nu, nv, c1, c2) => { const du = (u1 - u0) / nu, dv = (v1 - v0) / nv; for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) put(rect(u0 + i * du, v0 + j * dv, u0 + (i + 1) * du, v0 + (j + 1) * dv), (i + j) % 2 ? c1 : c2); };
+    const RD = [0.86, 0.14, 0.05], OR = [1, 0.5, 0.06], YE = [1, 0.88, 0.2];
+    // flames: red tongues, a yellow core over each (scaled towards the tongue's root)
+    const fire = (put, u0, u1, v0, v1, k, seed) => flames(u0, u1, v0, v1, k, seed).forEach((P) => { const N = P.length, vc = (P[0][1] + P[N - 1][1]) / 2;
+      put(P, RD, 0.006); put(grow(P, 0.6, u0, vc).map(([u, v]) => [u, vc + (v - vc) * 0.8]), YE, 0.008); });
+    const outlined = (put, P, col, k) => { put(grow(P, k || 1.14), BLK, 0.006); put(P, col, 0.008); };
+    const starO = (put, cu, cv, R, rot, col) => { for (const t of star(cu, cv, R * 1.16, rot)) put(t, BLK, 0.006); for (const t of star(cu, cv, R, rot)) put(t, col, 0.008); };
+    const sideP = (P, col, lift) => ly.side(P, col, lift), topP = (P, col, lift) => ly.topZ(P, col, lift);
+    const hoodSide = (fn) => { if (H) fn(H.x[0], H.x[1], H.z[0], H.z[1]); };
+    const chq = (put, u0, u1, v0, v1, nu, nv, shear) => { const du = (u1 - u0) / nu, dv = (v1 - v0) / nv, sh = shear || 0;   // (a chequered field, its columns leaning by shear: a flag waving)
+      put([[u0 - 0.008, v0 - 0.008], [u1 + 0.008 + sh * (v1 - v0), v0 - 0.008], [u1 + 0.008 + sh * (v1 - v0), v1 + 0.008], [u0 - 0.008, v1 + 0.008]].map(([u, v]) => [u + sh * (v - v0), v]), BLK, 0.006);
+      for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) if ((i + j) % 2) put(rect(u0 + i * du, v0 + j * dv, u0 + (i + 1) * du, v0 + (j + 1) * dv).map(([u, v]) => [u + sh * (v - v0), v]), WHT, 0.008); };
     switch (n) {
-      case 1: for (const t of star((qua[0] + qua[1]) / 2 + 0.1, ym, yh * 0.46, 0)) ly.side(t, S); break;
-      case 2: ly.side(bolt(door[0] + 0.1, y1 - 0.02, door[0] + 0.75, y0 + 0.02, 0.12), S); break;
-      case 3: chq((p, c) => ly.side(p, c), fen[0] + 0.05, fen[0] + 0.05 + 0.3, ym - 0.08, ym + 0.08, 6, 3, BLK, WHT); break;
-      case 4: sideFlames(fen[0] + 0.02, fen[1] - 0.05, 3); break;
-      case 5: hoodSide((xc, zc, xw, zw) => { for (const t of star(xc, zc, Math.min(xw, zw) * 0.45, Math.PI / 2)) ly.topZ(t, S); }); break;
-      case 6: hoodSide(() => { flames(H.x[1], H.x[0], H.z[0] + 0.02, H.z[1] - 0.01, 3, 2).forEach((P, i) => ly.topZ(P, FL[i % 3])); }); break;
-      case 7: hoodSide(() => { chq((p, c) => ly.topZ(p, c), H.x[1] - 0.15, H.x[1] - 0.01, H.z[0], H.z[1], 3, 7, BLK, WHT); }); break;
-      case 8: hoodSide(() => ly.topZ(bolt(H.x[1] - 0.04, H.z[0] + 0.03, H.x[0] + 0.05, H.z[1] - 0.03, 0.09).map(([u, v]) => [u, v]), S)); break;
-      case 9: sideFlames(door[1] - 0.02, door[0] + 0.02, 5); break;
-      case 10: chq((p, c) => ly.side(p, c), qua[0] + 0.05, fen[1] - 0.05, y1 - 0.12, y1 - 0.03, 24, 2, BLK, WHT); break;
-      case 11: {   // dirkalni vzorec: an arrow along each side, a wedge on the bonnet
-        ly.side([[fen[1] - 0.05, y1 - 0.03], [qua[0] + 0.25, y1 - 0.03], [qua[0] + 0.05, ym + 0.02], [qua[0] + 0.25, y0 + 0.04], [fen[1] - 0.25, y0 + 0.04]], S);
-        ly.side([[fen[1] - 0.05, y1 - 0.12], [fen[1] - 0.2, ym], [fen[1] - 0.05, y0 + 0.13], [fen[1] + 0.02, ym]], BLK);
-        hoodSide(() => ly.topZ([[H.x[1] - 0.02, H.z[0] + 0.02], [H.x[1] - 0.02, H.z[1] - 0.02], [H.x[0] + 0.1, H.z[0] + 0.06]], S)); break; }
-      case 12: for (const [a, b, col] of [[0.06, 0.1, RED], [0.15, 0.19, YEL], [0.24, 0.28, S]]) ly.side(rect(qua[0] + 0.05, y0 + a * yh / 0.34, fen[1] - 0.05, y0 + b * yh / 0.34), col); break;
+      case 1: starO(sideP, (qua[0] + qua[1]) / 2 + 0.1, ym, yh * 0.55, 0, S); break;   // majhna zvezda: a star with a dark outline on each rear quarter
+      case 2: outlined(sideP, [[door[0] + 0.12, y1 - 0.02], [door[0] + 0.42, y1 - 0.02], [door[0] + 0.33, ym + 0.03], [door[0] + 0.5, ym + 0.03], [door[0] + 0.18, y0 + 0.01], [door[0] + 0.27, ym - 0.03], [door[0] + 0.1, ym - 0.03]], YE, 1.1); break;   // strela: a lightning bolt on each door
+      case 3: { const u0 = fen[0] + 0.08; sideP(rect(u0 - 0.02, ym - 0.13, u0 - 0.008, ym + 0.11), BLK, 0.008); chq(sideP, u0, u0 + 0.26, ym - 0.02, ym + 0.11, 6, 3, 0.25); break; }   // mala šahovnica: a chequered flag on its pole
+      case 4: fire(sideP, fen[0] + 0.02, fen[1] - 0.05, y0 + yh * 0.12, y1 - yh * 0.12, 3, 1); break;   // majhni plameni: flames out of the front wheel arches
+      case 5: hoodSide((x0, x1, z0, z1) => starO(topP, (x0 + x1) / 2, (z0 + z1) / 2, Math.min(x1 - x0, z1 - z0) * 0.42, Math.PI / 2, S)); break;   // zvezda: a big star each side of the scoop
+      case 6: hoodSide((x0, x1, z0, z1) => fire(topP, x1, x0 + 0.15, z0 + 0.02, z1 - 0.01, 2, 2)); break;   // plameni: flames back from the bonnet's nose
+      case 7: hoodSide((x0, x1, z0, z1) => chq(topP, x1 - 0.16, x1 - 0.02, z0, z1, 3, 8)); break;   // šahovnica: a chequered band across the bonnet's nose
+      case 8: hoodSide((x0, x1, z0, z1) => outlined(topP, [[x1 - 0.03, z0 + 0.02], [x1 - 0.03, z0 + 0.12], [(x0 + x1) / 2 + 0.04, z0 + 0.1], [(x0 + x1) / 2 + 0.06, z1 - 0.02], [x0 + 0.04, z1 - 0.03], [(x0 + x1) / 2 - 0.04, (z0 + z1) / 2 + 0.03], [(x0 + x1) / 2 - 0.06, z0 + 0.04]], YE, 1.08)); break;   // velika strela
+      case 9: fire(sideP, door[1] - 0.02, door[0] + 0.02, y0 + 0.02, y1 - 0.02, 5, 1); break;   // plameni po bokih: flames along each side from the front of the door
+      case 10: { sideP(rect(qua[0] + 0.05, y1 - 0.15, fen[1] - 0.05, y1 - 0.14), S, 0.008); chq(sideP, qua[0] + 0.05, fen[1] - 0.05, y1 - 0.12, y1 - 0.04, 26, 2); break; }   // šahovnica po bokih: a chequered band, a line under it
+      case 11: {   // dirkalni vzorec: a swoosh tapering back along each side, three speed lines at its nose, a wedge on the bonnet
+        sideP([[fen[1] - 0.04, ym + 0.07], [qua[0] + 0.15, ym + 0.01], [qua[0] + 0.15, ym - 0.01], [fen[1] - 0.04, ym - 0.06]], S, 0.008);
+        for (let i = 0; i < 3; i++) sideP([[fen[1] - 0.06 - i * 0.07, y1 - 0.03], [fen[1] - 0.1 - i * 0.07, y1 - 0.03], [fen[1] - 0.17 - i * 0.07, ym + 0.1], [fen[1] - 0.13 - i * 0.07, ym + 0.1]], BLK, 0.008);
+        hoodSide((x0, x1, z0, z1) => topP([[x1 - 0.02, z0 + 0.02], [x1 - 0.02, z1 - 0.02], [x0 + 0.1, z0 + 0.04]], S, 0.008)); break; }
+      case 12: for (const [a, b, col] of [[0.06, 0.1, RD], [0.13, 0.17, OR], [0.2, 0.24, YE]]) sideP([[qua[0] + 0.05, y0 + a * yh / 0.34], [fen[1] - 0.05, y0 + a * yh / 0.34], [fen[1] - 0.12, y0 + b * yh / 0.34], [qua[0] + 0.05, y0 + b * yh / 0.34]], col, 0.008); break;   // retro pasovi: three bands, slanted at the front
       case 13: {   // dirkalna podoba: big swept blocks along the sides, over the bonnet's sides and the roof
-        ly.side([[fen[1] - 0.02, y0 + 0.02], [fen[1] - 0.02, y1 - 0.02], [door[0] + 0.3, y1 - 0.02], [door[0] - 0.05, y0 + 0.02]], S);
-        ly.side([[door[0] - 0.1, y0 + 0.02], [door[0] + 0.25, y1 - 0.02], [door[0] + 0.12, y1 - 0.02], [door[0] - 0.23, y0 + 0.02]], BLK);
-        ly.side([[qua[0] + 0.05, y0 + 0.02], [qua[1] - 0.2, y0 + 0.02], [qua[1] - 0.45, y1 - 0.02], [qua[0] + 0.05, y1 - 0.02]], RED);
-        hoodSide(() => ly.topZ(rect(H.x[0], H.z[0], H.x[1], H.z[1]), S));
-        if (RF) { ly.top(rect(RF.x[0], -0.22, RF.x[1], 0.22), S); ly.topZ(rect(RF.x[0], 0.22, RF.x[1], 0.28), BLK); } break; }
+        sideP([[fen[1] - 0.02, y0 + 0.02], [fen[1] - 0.02, y1 - 0.02], [door[0] + 0.3, y1 - 0.02], [door[0] - 0.05, y0 + 0.02]], S, 0.008);
+        sideP([[door[0] - 0.1, y0 + 0.02], [door[0] + 0.25, y1 - 0.02], [door[0] + 0.12, y1 - 0.02], [door[0] - 0.23, y0 + 0.02]], BLK, 0.008);
+        sideP([[qua[0] + 0.05, y0 + 0.02], [qua[1] - 0.2, y0 + 0.02], [qua[1] - 0.45, y1 - 0.02], [qua[0] + 0.05, y1 - 0.02]], RD, 0.008);
+        hoodSide((x0, x1, z0, z1) => topP(rect(x0, z0, x1, z1), S, 0.008));
+        if (RF) { ly.top(rect(RF.x[0], -0.22, RF.x[1], 0.22), S, 0.008); ly.topZ(rect(RF.x[0], 0.22, RF.x[1], 0.28), BLK, 0.008); } break; }
       case 14: {   // kamuflaža: blobs in greens and browns all over
         const R = rnd(14), C = [[0.24, 0.34, 0.14], [0.5, 0.4, 0.22], [0.08, 0.1, 0.06], [0.62, 0.62, 0.42]];
-        for (const [x0, x1] of [qua, door, fen]) for (let i = 0; i < 3; i++) { const u = x0 + 0.08 + R() * (x1 - x0 - 0.16), v = y0 + 0.06 + R() * (yh - 0.12); ly.side(ell(u, v, 0.11 + R() * 0.08, 0.06 + R() * 0.05, 5, R() * 3), C[i % 4]); }
-        hoodSide(() => { for (let i = 0; i < 3; i++) ly.topZ(ell(H.x[0] + 0.1 + R() * (H.x[1] - H.x[0] - 0.2), H.z[0] + 0.05 + R() * (H.z[1] - H.z[0] - 0.1), 0.08, 0.05, 7, R() * 3), C[(i + 1) % 4]); });
-        if (RF) for (let i = 0; i < 4; i++) ly.top(ell(RF.x[0] + 0.1 + R() * (RF.x[1] - RF.x[0] - 0.2), (R() - 0.5) * 0.7, 0.12, 0.07, 7, R() * 3), C[i % 4]); break; }
-      case 15: {   // retro dirkalna: a broad band over the roof and the bonnet's sides, a roundel-like disc on the doors, pinstripes along
-        if (RF) ly.top(rect(RF.x[0], -0.18, RF.x[1], 0.18), S);
-        hoodSide(() => ly.topZ(rect(H.x[0], H.z[0], H.x[1], H.z[0] + 0.12), S));
-        ly.side(rect(qua[0] + 0.05, y1 - 0.05, fen[1] - 0.05, y1 - 0.035), GOLD);
-        ly.side(ell((door[0] + door[1]) / 2 + 0.25, ym, yh * 0.4, yh * 0.4, K.hi ? 18 : 12), CREAM); break; }
-      case 16: {   // po meri: a pattern of triangles in the stripes' colour and black
-        const R = rnd(16); for (const [x0, x1] of [qua, door, fen]) for (let i = 0; i < 3; i++) { const u = x0 + 0.06 + i * (x1 - x0 - 0.12) / 3, w = (x1 - x0 - 0.12) / 3;
-          ly.side([[u, y0 + 0.03], [u + w * 0.9, y0 + 0.03 + R() * 0.05], [u + w * (0.3 + R() * 0.4), y1 - 0.03]], i % 2 ? BLK : S); }
-        hoodSide(() => ly.topZ([[H.x[0] + 0.05, H.z[0]], [H.x[1] - 0.03, (H.z[0] + H.z[1]) / 2], [H.x[0] + 0.05, H.z[1]]], BLK));
-        if (RF) ly.topZ([[RF.x[0] + 0.1, 0.05], [RF.x[1] - 0.1, 0.05], [RF.x[1] - 0.3, 0.45]], S); break; }
+        for (const [x0, x1] of [qua, door, fen]) for (let i = 0; i < 3; i++) { const u = x0 + 0.08 + R() * (x1 - x0 - 0.16), v = y0 + 0.06 + R() * (yh - 0.12); sideP(ell(u, v, 0.11 + R() * 0.08, 0.06 + R() * 0.05, 5, R() * 3), C[i % 4], 0.008); }
+        hoodSide((hx0, hx1, hz0, hz1) => { for (let i = 0; i < 3; i++) topP(ell(hx0 + 0.1 + R() * (hx1 - hx0 - 0.2), hz0 + 0.05 + R() * (hz1 - hz0 - 0.1), 0.08, 0.05, 7, R() * 3), C[(i + 1) % 4], 0.008); });
+        if (RF) for (let i = 0; i < 4; i++) ly.top(ell(RF.x[0] + 0.1 + R() * (RF.x[1] - RF.x[0] - 0.2), (R() - 0.5) * 0.7, 0.12, 0.07, 7, R() * 3), C[i % 4], 0.008); break; }
+      case 15: {   // retro dirkalna: a broad band over the roof and the bonnet's sides, a cream disc on the doors, a gold pinstripe along
+        if (RF) ly.top(rect(RF.x[0], -0.18, RF.x[1], 0.18), S, 0.008);
+        hoodSide((x0, x1, z0) => topP(rect(x0, z0, x1, z0 + 0.12), S, 0.008));
+        sideP(rect(qua[0] + 0.05, y1 - 0.05, fen[1] - 0.05, y1 - 0.035), GOLD, 0.008);
+        sideP(ell((door[0] + door[1]) / 2 + 0.25, ym, yh * 0.4, yh * 0.4, K.hi ? 18 : 12), CREAM, 0.008); break; }
+      case 16: {   // po meri: shards, parallel slashes in the stripes' colour and black down each side, one on each side of the bonnet
+        for (const [x0, x1] of [qua, door, fen]) { const k = 3, w = (x1 - x0 - 0.1) / k; for (let i = 0; i < k; i++) { const u = x0 + 0.05 + i * w;
+          sideP([[u, y0 + 0.03], [u + w * 0.55, y0 + 0.03], [u + w * 0.95, y1 - 0.03], [u + w * 0.4, y1 - 0.03]], i % 2 ? BLK : S, 0.008); } }
+        hoodSide((x0, x1, z0, z1) => topP([[x0 + 0.05, z0], [x1 - 0.03, (z0 + z1) / 2], [x0 + 0.05, z1]], BLK, 0.008)); break; }
     }
   }
 
@@ -219,15 +199,45 @@
     8: { rainbow: true }, 9: { c: BLK, txt: '07', tc: WHT }, 10: { c: BLK, txt: 'DRIVER', tc: WHT }, 11: { c: WHT, txt: 'SLOVENIJA', tc: [0.1, 0.25, 0.75] }, 12: { c: BLK, txt: 'DRIVER CO-DRIVER', tc: YEL },
     13: { c: WHT, refl: true }, 14: { c: 's', print: true }, 15: { c: [0.16, 0.16, 0.17], perf: true }, 16: { c: 's', print: true, refl: true } };
   function soncni_pas(K, n, m) {
-    const o = SUN[n]; if (!o) return; const ly = layer(K), X = m.x || [0.165, 0.31], W = m.w || 0.56, c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
-    if (o.rainbow) { const RB = [[0.85, 0.12, 0.1], [0.95, 0.55, 0.08], [0.95, 0.85, 0.1], [0.15, 0.6, 0.25], [0.15, 0.35, 0.85]]; RB.forEach((col, i) => ly.top(rect(x0 + d * i / 5 * 0.8, -W, x0 + d * (i + 1) / 5 * 0.8, W), col, 0.006)); return; }
-    if (o.fade) { ly.top(rect(x0, -W, x0 + d * 0.5, W), c(o.c), 0.006); ly.top(rect(x0 + d * 0.5, -W, x0 + d * 0.72, W), K.shade(c(o.c), 0.7), 0.006); ly.top(rect(x0 + d * 0.72, -W, x0 + d * 0.86, W), K.shade(c(o.c), 0.45), 0.006); return; }
-    if (o.perf) { ly.top(rect(x0, -W, x0 + d * 0.35, W), c(o.c), 0.006); const k = K.hi ? 22 : 14; for (let r = 0; r < 3; r++) for (let i = 0; i < k; i++) { const z = -W + (i + 0.5 + (r % 2) * 0.5) * 2 * W / (k + 0.5), xs = x0 + d * (0.42 + r * 0.17);
-      ly.top(rect(xs, z - 0.012, xs + d * 0.09, z + 0.012), c(o.c), 0.006); } return; }
-    ly.top(rect(x0, -W, x1, W), c(o.c), 0.006);
-    if (o.print) for (let i = 0; i < 8; i++) { const z = -W + (i + 0.5) * 2 * W / 8; ly.top([[x0 + d * 0.15, z - 0.05], [x1 - d * 0.15, z], [x0 + d * 0.15, z + 0.05]], i % 2 ? BLK : WHT, 0.008); }
-    if (o.txt) { const G = glyphRects(o.txt), px = Math.min(d * 0.8 / 7, 2 * W * 0.9 / G.cols), zs = G.cols * px / 2, xt = x0 + (d - 7 * px) / 2;   // (read from the front: left to right is the car's right to left)
+    // (the band from the windscreen's top edge down, over its whole width to the A-pillars: at each x out to the top's crease, wt)
+    const o = SUN[n]; if (!o) return; const ly = layer(K), LD = ly.LD, X = m.x || [0.16, 0.31], c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
+    const W = (x) => LD.prop(x, 'wt') + 0.004, band = (xa, xb, col, lift) => ly.top([[xa, -W(xa)], [xb, -W(xb)], [xb, W(xb)], [xa, W(xa)]], col, lift || 0.006), Wm = W(x0);
+    if (o.rainbow) { const RB = [[0.85, 0.12, 0.1], [0.95, 0.55, 0.08], [0.95, 0.85, 0.1], [0.15, 0.6, 0.25], [0.15, 0.35, 0.85]]; RB.forEach((col, i) => band(x0 + d * i / 5, x0 + d * (i + 1) / 5, col)); return; }
+    if (o.fade) { band(x0, x0 + d * 0.55, c(o.c)); band(x0 + d * 0.55, x0 + d * 0.78, K.shade(c(o.c), 0.7)); band(x0 + d * 0.78, x1, K.shade(c(o.c), 0.45)); return; }
+    if (o.perf) { band(x0, x0 + d * 0.4, c(o.c)); const k = K.hi ? 22 : 14; for (let r = 0; r < 3; r++) for (let i = 0; i < k; i++) { const xs = x0 + d * (0.45 + r * 0.19), z = -Wm + (i + 0.5 + (r % 2) * 0.5) * 2 * Wm / (k + 0.5);
+      ly.top(rect(xs, z - 0.012, xs + d * 0.1, z + 0.012), c(o.c), 0.006); } return; }
+    band(x0, x1, c(o.c));
+    if (o.print) for (let i = 0; i < 8; i++) { const z = -Wm + (i + 0.5) * 2 * Wm / 8; ly.top([[x0 + d * 0.15, z - 0.05], [x1 - d * 0.15, z], [x0 + d * 0.15, z + 0.05]], i % 2 ? BLK : WHT, 0.008); }
+    if (o.txt) { const G = glyphRects(o.txt), px = Math.min(d * 0.8 / 7, 2 * Wm * 0.9 / G.cols), zs = G.cols * px / 2, xt = x0 + (d - 7 * px) / 2;   // (read from the front: left to right is the car's right to left)
       for (const [c0, r0, c1, r1] of G.R) ly.top(rect(xt + r0 * px, zs - c1 * px, xt + r1 * px, zs - c0 * px), c(o.tc), 0.009); }
+  }
+
+  // ================================================================ zamasek: the fuel cap on the side (in place of the stock one)
+  // m { x, y, z: its middle on the side (z > 0 the right one), r: its radius }; each option: a flap or a cap, its ring, its details
+  const ZAM = { 1: { flap: [0.1, 0.1, 0.11] }, 2: { flap: [0.1, 0.1, 0.11], lock: true }, 3: { flap: 'p' }, 4: { flap: CHR },
+    5: { cap: [0.72, 0.73, 0.76], ring: [0.5, 0.51, 0.54], grip: 6 }, 6: { cap: [0.72, 0.73, 0.76], ring: [0.5, 0.51, 0.54], bolts: 6 }, 7: { cap: [0.82, 0.12, 0.12], ring: [0.55, 0.06, 0.06], grip: 6 }, 8: { cap: [0.15, 0.35, 0.85], ring: [0.08, 0.18, 0.5], grip: 6 },
+    9: { cap: 's', ring: BLK, grip: 4 }, 10: { cap: [0.78, 0.79, 0.82], ring: BLK, bolts: 8, lever: [0.82, 0.12, 0.12] }, 11: { cap: [0.68, 0.69, 0.72], ring: [0.86, 0.87, 0.9], lever: [0.15, 0.15, 0.16], big: 1.2 },
+    12: { cap: [0.82, 0.83, 0.86], ring: [0.3, 0.31, 0.34], bolts: 8, flush: true, big: 1.25 }, 13: { cap: [0.08, 0.08, 0.09], ring: [0.16, 0.16, 0.17], grip: 8, weave: true }, 14: { cap: [0.08, 0.08, 0.09], ring: CHR, grip: 8, weave: true },
+    15: { cap: [0.55, 0.56, 0.6], ring: [0.36, 0.37, 0.4], bolts: 8 }, 16: { cap: [0.86, 0.6, 0.12], ring: BLK, bolts: 8, lever: BLK, big: 1.35, quick: true } };
+  function zamasek(K, n, m) {
+    const o = ZAM[n]; if (!o) return; const r = (m.r || 0.045) * (o.big || 1), sd = Math.sign(m.z) || 1, x = m.x, y = m.y, z0 = m.z, c = (q) => q === 'p' ? K.paint : q === 's' ? K.strp : q;
+    const P = (u, v, l) => [x + u, y + v, z0 + sd * l], host = { part: 'body' };
+    const disc = (R, l, col, k, cu, cv) => { const q = K.hi ? k : Math.max(6, Math.round(k * 0.6)), pts = []; for (let i = 0; i < q; i++) { const a = i / q * Math.PI * 2; pts.push(P((cu || 0) + Math.cos(a) * R, (cv || 0) + Math.sin(a) * R, l)); }
+      K.face(sd > 0 ? pts : pts.slice().reverse(), col, host); };
+    const quad = (u0, v0, u1, v1, l, col) => { const pts = [P(u0, v0, l), P(u1, v0, l), P(u1, v1, l), P(u0, v1, l)]; K.face(sd > 0 ? pts : pts.slice().reverse(), col, host); };
+    if (o.flap) {   // (a flap: a rounded square over the filler, a thin dark gap round it, a lock's barrel)
+      const h = r * 1.15; quad(-h - 0.006, -h - 0.006, h + 0.006, h + 0.006, 0.0015, BLK); quad(-h, -h, h, h, 0.003, c(o.flap));
+      if (o.lock) disc(r * 0.28, 0.0045, CHR, 10, h * 0.5, 0); return; }
+    disc(r * 1.25, 0.0015, c(o.ring), 16); disc(r, o.flush ? 0.003 : 0.008, c(o.cap), 16);
+    if (!o.flush) for (let i = 0; i < (K.hi ? 8 : 6); i++) { const a0 = i / (K.hi ? 8 : 6) * Math.PI * 2, a1 = (i + 1) / (K.hi ? 8 : 6) * Math.PI * 2;   // (the cap's raised edge)
+      const pts = [P(Math.cos(a0) * r, Math.sin(a0) * r, 0.0015), P(Math.cos(a1) * r, Math.sin(a1) * r, 0.0015), P(Math.cos(a1) * r, Math.sin(a1) * r, 0.008), P(Math.cos(a0) * r, Math.sin(a0) * r, 0.008)]; K.face(sd > 0 ? pts : pts.slice().reverse(), K.shade(c(o.cap), 0.7), host); }
+    const top = o.flush ? 0.0045 : 0.0095;
+    if (o.grip) for (let i = 0; i < o.grip; i++) { const a = i / o.grip * Math.PI * 2, u = Math.cos(a) * r * 0.62, v = Math.sin(a) * r * 0.62; disc(r * 0.13, top, K.shade(c(o.cap), 0.6), 6, u, v); }   // (finger grips)
+    if (o.bolts) for (let i = 0; i < o.bolts; i++) { const a = i / o.bolts * Math.PI * 2 + 0.2; disc(r * 0.08, 0.003, [0.25, 0.26, 0.28], 6, Math.cos(a) * r * 1.12, Math.sin(a) * r * 1.12); }   // (the ring's bolts)
+    if (o.weave && K.hi) for (let i = -2; i <= 2; i++) quad(-r * 0.6, i * r * 0.2 - r * 0.05, r * 0.6, i * r * 0.2 + r * 0.05, top, i % 2 ? [0.13, 0.13, 0.14] : [0.06, 0.06, 0.07]);   // (the carbon's weave)
+    if (o.lever) quad(-r * 0.75, -r * 0.14, r * 0.75, r * 0.14, top + 0.002, c(o.lever));   // (a flip lever across it)
+    if (o.quick) disc(r * 0.3, top + 0.004, CHR, 10);
+    if (n === 9) disc(r * 0.35, top, BLK, 12);
   }
 
   // ================================================================ celjusti: the brake calipers behind each rim's spokes
@@ -344,10 +354,9 @@
     for (const id of Object.keys(D)) { const e = DELI.effect(id, D[id]); if (e && e.lower) out.low += e.lower; }
     if (out.low) o.bodyG.position.y = -out.low;   // (the showroom's; a race's every frame, updateCars)
     const fin = D.barva ? FIN[D.barva] || {} : {}, sfin = D.crte ? SFIN[D.crte] || {} : {}, tint = D.zatemnitev ? TINT[D.zatemnitev] : null;
-    const decals = []; if (D.stevilke === 9) decals.push('stevilke'); if (D.soncni_pas === 13 || D.soncni_pas === 16) decals.push('soncni_pas');
+    const decals = []; if (D.soncni_pas === 13 || D.soncni_pas === 16) decals.push('soncni_pas');
     let night = null;
     if (dirty && (D.barva || D.crte || D.zatemnitev || decals.length)) { night = dressMat(o.mat, fin, sfin, tint, decals); dressGeo(geo, decals, !!fin.jambs, o.car.color); }
-    if (o.dec && D.stevilke && /r/.test((NUM[D.stevilke] || {}).at || '')) o.dec.visible = false;   // (a roof number of its own: the stock roundel off)
     let G = null, gl = null;
     if (D.luc_pod_avtom && GLOW[D.luc_pod_avtom]) { G = GLOW[D.luc_pod_avtom]; gl = glowMesh(o.M, o.E, o.wf, o.wr, G); o.grp.add(gl.mesh); }
     const cols = G && G.c ? G.c.map(hex3) : null, col = gl ? gl.mesh.geometry.attributes.color : null;
@@ -378,6 +387,6 @@
   };
 
   // ---- the elements (DELI.add): those drawn in the body, those that are only the car's look (nothing to draw) ----
-  for (const [id, b] of [['crte', crte], ['stevilke', stevilke], ['nalepke', nalepke], ['soncni_pas', soncni_pas], ['celjusti', celjusti]]) DELI.add(id, b);
+  for (const [id, b] of [['crte', crte], ['nalepke', nalepke], ['soncni_pas', soncni_pas], ['celjusti', celjusti], ['zamasek', zamasek]]) DELI.add(id, b);
   for (const id of ['barva', 'zatemnitev', 'luc_pod_avtom', 'gume']) DELI.add(id, () => {});
 })();

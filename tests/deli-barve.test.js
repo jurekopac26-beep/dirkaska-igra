@@ -1,11 +1,11 @@
 // The garage's parts, sklop 3 (js/deli/barve.js, js/deli/skriti.js; docs/deli.md) in Node:
-//  - KOLIBRI's mounts for the 18 elements; every one of their 16 options builds on it (its own body, no fallback, Normalni and Visoki),
+//  - KOLIBRI's mounts for the 17 elements; every one of their 16 options builds on it (its own body, no fallback, Normalni and Visoki),
 //    the visible ones within the room for one car with parts (outer <= stock + 300 triangles, the cabin unchanged), the hidden ones in
 //    the inner block (the outer shell unchanged, the inner <= stock + 300), the tyres within the parts' wheel budget (<= 600, Visoki 850)
 //  - the stock KOLIBRI within its budgets, no part of the garage's in it (kit.test.js: the same as before)
 //  - Render.deliMesh: each drawn element's part alone (the stripes on the top, the calipers at the four wheels, the hidden parts under
 //    the bonnet and in the arches), the car's look (barva, zatemnitev, luc_pod_avtom, gume) none
-//  - the looks: DELI.tyreLook, DELI.look (finishes, tints, glows), DELI.hupa (the horn's notes), DELI.dim (the smoke's colours) for all 16
+//  - the looks: DELI.tyreLook, DELI.look (finishes, tints, glows), DELI.dim (the smoke's colours) for all 16
 //  - the effects in Core (applyDeli): lower (the springs), tint, tyre (the tyres' grip by surface: dry, wet, snow, gravel), the winter's
 //    snow grip; on the flat test plane a slick corners harder in the dry and less in the wet than the stock road tyre, a rally gravel
 //    tyre more on gravel
@@ -20,11 +20,11 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const t0 = Date.now();
 const GROUPS = fs.readdirSync(path.join(ROOT, 'js/deli')).filter(f => f.endsWith('.js')).sort().map(f => 'js/deli/' + f);
-const LOOK = ['barva', 'zatemnitev', 'luc_pod_avtom', 'gume'], DRAWN = ['crte', 'stevilke', 'nalepke', 'soncni_pas', 'celjusti'];
-const HIDDEN = ['filter_zraka', 'cip', 'turbo', 'akumulator', 'vzmeti', 'amortizerji', 'stabilizatorji', 'hupa', 'dim_gum'], ALL = LOOK.concat(DRAWN, HIDDEN);
+const LOOK = ['barva', 'zatemnitev', 'luc_pod_avtom', 'gume'], DRAWN = ['crte', 'nalepke', 'soncni_pas', 'celjusti', 'zamasek'];
+const HIDDEN = ['filter_zraka', 'cip', 'turbo', 'akumulator', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum'], ALL = LOOK.concat(DRAWN, HIDDEN);
 
 const C = loadCore(), KO = C.MODELS.find(m => m.id === 'kolibri'), MO = KO.def.mounts || {};
-check('KOLIBRI\'s mounts: the 18 elements of sklop 3', ALL.every(id => MO[id]), ALL.filter(id => !MO[id]).join(' ') || 'all');
+check('KOLIBRI\'s mounts: the 17 elements of sklop 3', ALL.every(id => MO[id]), ALL.filter(id => !MO[id]).join(' ') || 'all');
 
 // ---- the render kit in a sandbox (as deli.test.js) ----
 const THREE = require(path.join(ROOT, 'js/vendor/three.r128.min.js'));
@@ -51,7 +51,7 @@ for (const id of ALL) for (let k = 1; k <= 16; k++) {
   if (!ok) over.push(`${tag} ${dO}/${dI} Visoki ${hO}/${hI}`);
   if (I.wheels.hi.some(t => t > 600) || I.hi.wheels.some(t => t > 850)) wheels.push(tag + ' ' + I.wheels.hi.join('/') + ' ' + I.hi.wheels.join('/'));
 }
-check('every option of the 18 builds on KOLIBRI (its own body, no fallback), Normalni and Visoki', !fails.length, fails.slice(0, 4).join(', ') || ALL.length * 16 + ' options');
+check('every option of the 17 builds on KOLIBRI (its own body, no fallback), Normalni and Visoki', !fails.length, fails.slice(0, 4).join(', ') || ALL.length * 16 + ' options');
 check('each within its room: a visible one outer <= stock + 300 (the cabin unchanged), a hidden one only in the inner block (<= + 300)', !over.length,
   over.slice(0, 4).join(', ') || 'most: ' + most.sort((a, b) => b[1] - a[1]).slice(0, 3).map(r => r[0] + ' +' + r[1]).join(', '));
 check('the tyres within the parts\' wheel budget (<= 600 triangles, Visoki <= 850)', !wheels.length, wheels.slice(0, 4).join(', ') || 'all');
@@ -71,13 +71,12 @@ console.warn = warn;
 const col = (c) => Array.isArray(c) && c.length === 3 && c.every(v => Number.isFinite(v) && v >= 0 && v <= 1);
 const lk = [];
 for (let k = 1; k <= 16; k++) {
-  const t = D.tyreLook(k), h = D.hupa(k), dm = D.dim(k), L = D.look;
+  const t = D.tyreLook(k), dm = D.dim(k), L = D.look;
   if (!(t && (!t.band || col(t.band)) && (!t.tyre || col(t.tyre)))) lk.push('gume' + k);
-  if (!(h && h.notes.length && h.notes.every(ch => ch.length && ch.every(f => f > 80 && f < 2000)) && h.len > 0 && h.loud > 0 && h.loud <= 1)) lk.push('hupa' + k);
   if (!(dm && [0, 1, 2, 3].every(w => { const q = dm.at(w, k * 0.7); return col(q.slice(0, 3)) && q[3] > 0 && q[4] > 0; }))) lk.push('dim_gum' + k);
   if (!(L.FIN[k] && L.TINT[k] && col(L.TINT[k].c) && L.GLOW[k])) lk.push('look' + k);
 }
-check('the looks and the sounds: the tyres\' look, the horn\'s notes, the smoke\'s colours, the finishes, tints and glows, for all 16', !lk.length, lk.slice(0, 5).join(' ') || 'all');
+check('the looks: the tyres\' look, the smoke\'s colours, the finishes, tints and glows, for all 16', !lk.length, lk.slice(0, 5).join(' ') || 'all');
 const d13 = D.dim(13);
 check('the smoke: blue (5), red (6), two colours left and right (13)', D.dim(5).at(2, 0)[2] > 0.9 && D.dim(6).at(2, 0)[0] > 0.9 && d13.at(2, 0)[2] > 0.9 && d13.at(3, 0)[0] > 0.9);
 

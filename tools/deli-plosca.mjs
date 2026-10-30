@@ -27,7 +27,6 @@ const VIEWS = {
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
   // (sklop 3: barve, js/deli/barve.js; the hidden parts, js/deli/skriti.js, on the car drawn see-through: GHOST)
   crte: { p: [-3.7, 3.2, 3.7], t: [0.15, 0.75, 0], fov: 32 },
-  stevilke: { p: [-4.0, 3.3, 3.8], t: [-0.25, 0.8, 0], fov: 30 },
   nalepke: { p: [3.9, 2.7, 4.3], t: [0.2, 0.7, 0], fov: 30 },
   soncni_pas: { p: [4.3, 2.0, 1.3], t: [0.25, 1.15, 0], fov: 18 },
   celjusti: { p: [1.8, 0.42, 2.25], t: [1.15, 0.31, 0.64], fov: 15 },
@@ -36,12 +35,12 @@ const VIEWS = {
   zatemnitev: { p: [-4.6, 1.9, 3.4], t: [-0.3, 0.95, 0], fov: 26 },
   bay: { p: [3.3, 2.5, 2.3], t: [1.12, 0.48, 0], fov: 26 },
   arches: { p: [2.4, 2.2, 3.6], t: [0, 0.42, 0], fov: 36 },
-  hupa: { p: [3.4, 1.1, 1.7], t: [1.55, 0.33, 0.12], fov: 22 },
+  zamasek: { p: [-0.85, 0.95, 2.4], t: [-1.36, 0.74, 0.82], fov: 13 },   // (KOLIBRI's sizes: scaled to its own length and width, the cap at x -1.25, z 0.73)
   dim_gum: { p: [-2.4, 1.2, 3.0], t: [-1.18, 0.3, 0.45], fov: 22 },
 };
-const GHOST = { filter_zraka: 'bay', cip: 'bay', turbo: 'bay', akumulator: 'bay', vzmeti: 'arches', amortizerji: 'arches', stabilizatorji: 'arches', hupa: 'hupa', dim_gum: 'dim_gum' };
-const REAR = ['krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
-const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, crte: { view: 'chase', ns: [3, 11, 14] }, stevilke: { view: 'chase', ns: [4, 9, 16] }, nalepke: { view: 'car34f', ns: [9, 13, 14] },
+const GHOST = { filter_zraka: 'bay', cip: 'bay', turbo: 'bay', akumulator: 'bay', vzmeti: 'arches', amortizerji: 'arches', stabilizatorji: 'arches', dim_gum: 'dim_gum' };
+const REAR = ['zamasek', 'krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
+const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, crte: { view: 'chase', ns: [3, 11, 14] }, nalepke: { view: 'car34f', ns: [9, 13, 14] },
   luc_pod_avtom: { view: 'chase', ns: [5, 11, 16] }, barva: { view: 'car34f', ns: [5, 10, 14] } };   // (else the whole car, options 4, 9, 16)
 const TW = 400, TH = 236;
 

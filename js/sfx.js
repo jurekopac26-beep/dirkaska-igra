@@ -221,16 +221,6 @@ const Sfx = (function () {
     for (const f of [f0, f0 * 1.25]) { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(lp); o.start(now); o.stop(now + dur + 0.08); }
     lp.connect(g); if (ctx.createStereoPanner) { const pn = ctx.createStereoPanner(); pn.pan.value = clamp(pan || 0, -1, 1); g.connect(pn); pn.connect(bus); } else g.connect(bus);
   }
-  // the player's horn from the garage (js/deli/skriti.js, DELI.hupa(n): { notes: [[hz, ...], ...] one chord after another, len (s each),
-  // wave, loud (0..1), air: a truck's air horn's blare }); in the garage it plays whatever the race is doing (running or not)
-  function hupa(H, vol) {
-    if (!ctx || ctx.state !== 'running' || !H || !Array.isArray(H.notes)) return;
-    const v = clamp(Number.isFinite(vol) ? vol : 1, 0, 1) * (H.loud || 0.5) * 0.16, now = ctx.currentTime, len = H.len || 0.4;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = H.air ? 2400 : 1800; lp.connect(bus);
-    H.notes.forEach((ch, k) => { const t = now + k * len, g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.02); g.gain.setValueAtTime(v, t + len * 0.92); g.gain.exponentialRampToValueAtTime(0.0001, t + len); g.connect(lp);
-      for (const f of ch) for (const d of H.air ? [1, 1.006] : [1]) { const o = ctx.createOscillator(); o.type = H.wave || 'square'; o.frequency.value = f * d; o.connect(g); o.start(t); o.stop(t + len + 0.02); } });
-  }
   // someone on foot (or on a bicycle) knocked down: a dull, soft thump
   function thud(v) {
     if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(v)) return;
@@ -1602,7 +1592,7 @@ const Sfx = (function () {
   // (tests: the engines as they sound now; a rival in a registered vehicle: its preset)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.car && v.car.m.sndP ? v.car.m.sndP.kind : v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
-  const api = { resume, setEnabled, setRunning, setDuck, suspend, update, crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, hupa, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, setDuck, suspend, update, crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

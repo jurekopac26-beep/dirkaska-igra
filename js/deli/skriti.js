@@ -1,11 +1,11 @@
-/* Deli iz garaže, sklop 3 · skriti deli (načrt 2.6): filter_zraka, cip, turbo, akumulator, vzmeti, amortizerji, stabilizatorji, hupa,
+/* Deli iz garaže, sklop 3 · skriti deli (načrt 2.6): filter_zraka, cip, turbo, akumulator, vzmeti, amortizerji, stabilizatorji,
    dim_gum (the contract: docs/deli.md). Loaded after js/deli.js, before the cars.
-   Each is drawn where it really sits, in the inner block (the engine bay, the wheel arches, behind the bumper): unseen while the car is
+   Each is drawn where it really sits, in the inner block (the engine bay, the wheel arches): unseen while the car is
    whole (the inner block is drawn only once a part is off or a door open), so the garage's part alone (DELI.mesh) shows it as under a
    see-through bonnet or in a wheel arch. On the car only what it does shows: the power, the mass, the grip (js/deli.js DELI.effect,
-   core.js applyDeli), the body lower on its springs (vzmeti: DELI.dress, js/deli/barve.js), the horn's sound (DELI.hupa: Sfx.hupa), the
+   core.js applyDeli), the body lower on its springs (vzmeti: DELI.dress, js/deli/barve.js), the
    tyre smoke's colour (DELI.dim: render.js, the drift's smoke).
-   mounts (look units): filter_zraka, akumulator, turbo, cip, hupa { x, y, z } where it sits (its foot's middle); vzmeti, amortizerji,
+   mounts (look units): filter_zraka, akumulator, turbo, cip { x, y, z } where it sits (its foot's middle); vzmeti, amortizerji,
    stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height) */
 (function () {
   'use strict';
@@ -89,22 +89,7 @@
       K.at(A.x, K.rw, z, () => { for (let i = 0; i < 12; i++) { const a0 = i / 12 * Math.PI * 2, a1 = (i + 1) / 12 * Math.PI * 2, r0 = K.rw * 0.72, r1 = K.rw * 0.9, P = (a, rr) => [A.x + Math.cos(a) * rr / K.sx, K.rw + Math.sin(a) * rr, z];
         const f = [P(a0, r0), P(a1, r0), P(a1, r1), P(a0, r1)]; K.face(sd < 0 ? f : f.slice().reverse(), S.c.length > 2 ? S.c[i % S.c.length] : c); } }, IN); }   // (the tyre's inner wall: its band in the smoke's colour)
   }
-  // ================================================================ hupa: behind the bumper's grille, its horns and trumpets
-  function hupa(K, n, m) {
-    const { x, y, z } = m, col = n === 4 || n === 14 ? CHR : n >= 9 ? RED : BLK, k = n <= 2 ? 1 : n <= 8 ? 2 : n <= 12 ? 3 : 4;
-    for (let i = 0; i < k; i++) { const dz = (i - (k - 1) / 2) * 0.09, zz = z + dz;
-      if (n <= 8) { cyl(K, [x, y, zz], [x + 0.03, y, zz], 0.045, col, { capB: DK }); cyl(K, [x + 0.03, y, zz], [x + 0.05, y, zz], 0.025, col, { r2: 0.015 }); }   // (a snail)
-      else cyl(K, [x - 0.16 - i * 0.04, y, zz], [x + 0.04, y + 0.01, zz], 0.012, col, { r2: 0.04, capB: DK }); }   // (a trumpet, flared)
-    if (n >= 11) box(K, x - 0.25, y - 0.05, z, 0.16, 0.08, 0.1, n === 14 ? CHR : DK);   // (the air tank, the compressor)
-  }
-
-  // ---- the effects the car shows: the horn's sound, the tyre smoke's colour ----
-  // DELI.hupa(n): { notes: [[hz ...] ...] one chord after another, len (s each), wave, loud (0..1), air } (Sfx.hupa plays it)
-  const HUPA = { 1: [[[420]], 0.4, 'square', 0.45], 2: [[[420]], 0.45, 'square', 0.6], 3: [[[400, 500]], 0.45, 'square', 0.55], 4: [[[400, 500]], 0.45, 'square', 0.6],
-    5: [[[380, 476]], 0.5, 'square', 0.72], 6: [[[350, 440, 523]], 0.5, 'square', 0.7], 7: [[[523], [659], [784], [659]], 0.18, 'square', 0.6], 8: [[[330, 415, 494, 587]], 0.5, 'square', 0.72],
-    9: [[[185, 233]], 0.7, 'sawtooth', 0.85, true], 10: [[[185, 233], [220, 277]], 0.4, 'sawtooth', 0.88, true], 11: [[[185, 233]], 1.2, 'sawtooth', 0.88, true], 12: [[[175, 220, 262]], 0.7, 'sawtooth', 1, true],
-    13: [[[165, 208, 247]], 1.3, 'sawtooth', 1, true], 14: [[[165, 208, 247]], 0.8, 'sawtooth', 1, true], 15: [[[147, 185, 220, 277]], 0.8, 'sawtooth', 1, true], 16: [[[220, 277], [247, 311], [277, 330], [330, 415]], 0.25, 'sawtooth', 1, true] };
-  DELI.hupa = (n) => { const h = HUPA[n]; return h ? { notes: h[0], len: h[1], wave: h[2], loud: h[3], air: !!h[4] } : null; };
+  // ---- the effect the car shows: the tyre smoke's colour ----
   // DELI.dim(n): the drift's tyre smoke: { c: colours, at(k, t) -> [r, g, b, alpha x, life x] } (k the wheel: 2 rear left, 3 rear right)
   const DIM = { 1: { c: [[0.9, 0.9, 0.92]], a: 1, l: 1 }, 2: { c: [[0.94, 0.94, 0.95]], a: 1.35, l: 1 }, 3: { c: [[0.9, 0.9, 0.92]], a: 1, l: 1.5 }, 4: { c: [[0.94, 0.94, 0.95]], a: 1.35, l: 1.5 },
     5: { c: [[0.35, 0.6, 1]] }, 6: { c: [[1, 0.28, 0.2]] }, 7: { c: [[1, 0.88, 0.25]] }, 8: { c: [[0.7, 0.4, 1]] }, 9: { c: [[0.35, 0.6, 1]], a: 1.35 }, 10: { c: [[0.4, 1, 0.35]] },
@@ -113,5 +98,5 @@
   DELI.dim = (n) => { const S = DIM[n] || DIM[1], a = S.a || 1.15, l = S.l || 1.15;
     return { c: S.c, at: (k, t) => { const c = S.rb ? S.c[Math.floor((t || 0) * 2.5) % S.c.length] : S.c[S.c.length > 1 && k % 2 ? 1 : 0]; return [c[0], c[1], c[2], a, l]; } }; };
 
-  for (const [id, b] of [['filter_zraka', filter_zraka], ['cip', cip], ['turbo', turbo], ['akumulator', akumulator], ['vzmeti', vzmeti], ['amortizerji', amortizerji], ['stabilizatorji', stabilizatorji], ['hupa', hupa], ['dim_gum', dim_gum]]) DELI.add(id, b);
+  for (const [id, b] of [['filter_zraka', filter_zraka], ['cip', cip], ['turbo', turbo], ['akumulator', akumulator], ['vzmeti', vzmeti], ['amortizerji', amortizerji], ['stabilizatorji', stabilizatorji], ['dim_gum', dim_gum]]) DELI.add(id, b);
 })();
