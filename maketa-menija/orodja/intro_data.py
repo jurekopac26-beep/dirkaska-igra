@@ -19,7 +19,7 @@ MAPS = os.path.join(HERE, 'raw', 'maps')
 P = json.load(open(os.path.join(RAW, 'places.json')))['tracks']
 LM = json.load(open(os.path.join(HERE, 'landmarks.json')))
 SUMMIT = {'vrsic': 'Vršič', 'sani': 'Sani Pass', 'katu': 'Katu-Yaryk', 'rastro': 'Rio do Rastro'}   # (a mountain's name in the corner only where no trademark is near: the Colorado hill climb's mountain shows its height only)   # (a road over a mountain: its top's name; the circuits show the height only)
-NO_FLIGHT = set()   # (tracks without a helicopter flight: the intro goes straight to the start lights)
+NO_FLIGHT = set(['baldy', 'bangsaen', 'beartooth', 'bigsur', 'caracoles', 'chapman', 'detroit', 'greatalpine', 'harju', 'hotham', 'iroha', 'katu', 'longford', 'marrakesh', 'maunakea', 'medvode', 'moki', 'monterey', 'montreal', 'mulholland', 'newcastle', 'palomar', 'rastro', 'riverside', 'sani', 'tianmen', 'toronto', 'townsville', 'troisrivieres', 'uncompahgre'])   # (tracks without a helicopter flight: the intro goes straight to the start lights; these: their flights and flyovers later, the user's decision 30. 10. 2026)
 MUSIC = {'Slovenia': 'slovenia', 'USA': 'usa', 'Finland': 'finland', 'Japan': 'japan', 'Monaco': 'monaco', 'Austria': 'austria', 'Belgium': 'belgium', 'Germany': 'germany', 'Australia': 'australia', 'South Africa': 'southafrica', 'Morocco': 'morocco', 'Canada': 'canada', 'Chile': 'chile', 'Brazil': 'brazil', 'Russia': 'russia', 'China': 'china', 'Thailand': 'thailand'}
 
 def at_s(T, pts, s):   # the road at s metres from the track's own start: x, z, y

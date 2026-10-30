@@ -55,9 +55,9 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 
 // 4. the places on the HUD (only geographic names: the lookouts, the mountains, the ridge, the village), in order; the commentator knows them
 {
-  const N = T.names.map(q => q.n), want = ['Razgledišče Renes', 'Mount Little Blowhard', 'Mount Blowhard', "Razgledišče Danny's", 'Little Mount Baldy', 'Baldy Hollow', 'Razorback', 'Mount Hotham', 'Smučišče', 'Hotham Heights'];
+  const N = T.names.map(q => q.n), want = ['Spodnje razgledišče', 'Mount Little Blowhard', 'Mount Blowhard', "Razgledišče na grebenu", 'Little Mount Baldy', 'Baldy Hollow', 'Razorback', 'Mount Hotham', 'Smučišče', 'Hotham Heights'];
   const ok = want.every((w, k) => N[k] && N[k].startsWith(w)) && T.names.every((q, k) => q.say && (!k || q.d > T.names[k - 1].d)) && Math.abs(T.names[T.names.length - 1].d - T.raceLen) < 5;
-  check('places: from Renes Lookout to Hotham Heights at the finish, in order, the commentator knows them', ok, N.join(' | '));
+  check('places: from Valley Lookout to Hotham Heights at the finish, in order, the commentator knows them', ok, N.join(' | '));
   const sum = T.names.find(q => q.n.startsWith('Mount Hotham')), hi = Math.max(...Array.from(T.hy.slice(T.startIdx, T.finishIdx)));
   check('places: Mount Hotham at the road\'s highest point (its altitude the road\'s)', sum && Math.abs(T.hy[T.idx(T.startS + sum.d)] - hi) < 1.5 && sum.n.includes(Math.round(T.altAt(hi)).toLocaleString('de-DE')), sum ? sum.n : 'missing');
 }
@@ -74,8 +74,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     `dem ${D.nx}x${D.nz}, lc ${L.nx}x${L.nz} (${cells} cells: grass ${cnt[0]}, woodland ${cnt[1]}, heath ${cnt[2]}, built ${cnt[3]}, rock ${cnt[4]}, water ${cnt[5]})`);
   const at = (x, z) => { const q = T.query(x, z, T.nearestIdx(x, z), {}); return { s: q.s - T.startS, d: q.d }; };
   const v = (def.vistas || []).filter(a => a[2]).map(a => Object.assign(at(a[0], a[1]), { n: a[2] }));
-  const ren = v.find(a => a.n === 'Renes Lookout'), dan = v.find(a => a.n === "Danny's Lookout");
-  check('scenery: Renes Lookout (~0.7 km) and Danny\'s Lookout (~3.5 km) beside the road on the left, where the HUD names them', ren && dan && Math.abs(ren.s - 720) < 60 && Math.abs(dan.s - 3541) < 60 && ren.d < 0 && dan.d < 0 && Math.abs(ren.d) < 40 && Math.abs(dan.d) < 50,
+  const ren = v.find(a => a.n === 'Valley Lookout'), dan = v.find(a => a.n === "Ridge Lookout");
+  check('scenery: Valley Lookout (~0.7 km) and Ridge Lookout (~3.5 km) beside the road on the left, where the HUD names them', ren && dan && Math.abs(ren.s - 720) < 60 && Math.abs(dan.s - 3541) < 60 && ren.d < 0 && dan.d < 0 && Math.abs(ren.d) < 40 && Math.abs(dan.d) < 50,
     v.map(a => `${a.n} ${Math.round(a.s)} m / ${a.d.toFixed(0)} m`).join(', '));
   const pulls = (def.pulls || []).filter(([x, z]) => Math.abs(at(x, z).d) < 40);
   const lifts = (def.lifts || []).filter(([x0, z0, x1, z1]) => at(x0, z0).s > 6000 || at(x1, z1).s > 6000);

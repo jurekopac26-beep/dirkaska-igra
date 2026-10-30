@@ -142,7 +142,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
 | monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
-| mulholland | Mulholland Highway, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
+| mulholland | Santa Monica Mountains, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |

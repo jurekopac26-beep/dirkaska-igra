@@ -502,7 +502,7 @@
       }
     }
     /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road;
-       rows of timber snow fences high in the Mother Cline and Riverside slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
+       rows of timber snow fences high in the big slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
     let nNet = 0, nFence = 0;
     {
       const RF = rng(6113), steel = [0.3, 0.31, 0.33], mesh = [0.5, 0.51, 0.5], wood = [0.26, 0.2, 0.15], step = 5;

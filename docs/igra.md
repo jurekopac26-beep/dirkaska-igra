@@ -60,7 +60,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 
 ## Križišča in stranske ceste
 
-Na odprtih cestah (Vršič, Mulholland Highway, Big Sur, Chapman's Peak, Uncompahgre, Los Caracoles, Katu-Jaryk) so križišča, odcepi, dovozi in gozdne ali makadamske poti na pravih mestih, po OpenStreetMap (prek Overture Maps): vsaka stranska cesta leži na svoji pravi črti, pod pravim kotom in s pravo površino (asfalt ali makadam). Kako so narejena, je skupno vsem progam (prej jih je imel samo Vršič, ostale proge pa skoraj nobenih):
+Na odprtih cestah (Vršič, Santa Monica Mountains, Big Sur, Chapman's Peak, Uncompahgre, Los Caracoles, Katu-Jaryk) so križišča, odcepi, dovozi in gozdne ali makadamske poti na pravih mestih, po OpenStreetMap (prek Overture Maps): vsaka stranska cesta leži na svoji pravi črti, pod pravim kotom in s pravo površino (asfalt ali makadam). Kako so narejena, je skupno vsem progam (prej jih je imel samo Vršič, ostale proge pa skoraj nobenih):
 
 - **Ustje z zaobljenima vogaloma**: vsak vogal križišča je zaobljen z lokom, ki se dotika roba glavne ceste in roba stranske ceste (polmer ~6,5 m pri ulicah, ~4,5 m pri servisnih in gozdnih cestah, ~3 m pri ozkih dovozih). Pri poševnem odcepu je vogal na ostri strani dolg in položen, na topi strani kratek, kot v resnici; prej je bilo ustje pravokotno razširjeno.
 - **Oznake**: robna črta glavne ceste je čez ustje prekinjena (na Vršiču v 2 m črtah, kot pri nas), sredinska ostane. Na asfaltnih ulicah in servisnih cestah je na robu glavne ceste stop črta (na Vršiču prekinjena črta za prednost) samo čez vozni pas, ki pripelje do križišča (na levostranskem Chapman's Peaku čez levega); prej je segala čez celo razširjeno ustje in poševno na glavno cesto. Ozki dovozi in makadam nimajo črt.
@@ -71,7 +71,7 @@ Na odprtih cestah (Vršič, Mulholland Highway, Big Sur, Chapman's Peak, Uncompa
 
 Stranske ceste po progah (le v dolžini dirke; parkirišča razgledišč so v igri že narejena kot razširitve, ceste v gradnji niso vključene):
 
-- **Mulholland Highway** (17): štirikrako križišče s Cornell School Road in Simes Lane tik za startom, Cadenhorn Drive, Hazel Nut Court, Seminole Drive (kjer se začnejo ovinki), dovozi do hiš in rančev, makadamske poti in Lower Brewster Road pod vrhom.
+- **Santa Monica Mountains** (17): štirikrako križišče s Cornell School Road in Simes Lane tik za startom, Cadenhorn Drive, Hazel Nut Court, Seminole Drive (kjer se začnejo ovinki), dovozi do hiš in rančev, makadamske poti in Lower Brewster Road pod vrhom.
 - **Big Sur** (7): Old Coast Road (makadam) na severnem koncu mostu Bixby Creek, Coast Road pred vzponom na Hurricane Point, ulica in dovozi do hiš.
 - **Chapman's Peak** (9): Military Road v Hout Bayu, makadamska pot nad trdnjavo East Fort, servisne ceste ob pečinah (dve zanki, vsaka z dvema priključkoma).
 - **Uncompahgre** (1): Engineer Pass Road (odcep Alpine Loop, makadam).
@@ -93,7 +93,7 @@ Na vseh dirkališčih (krožne proge, ki niso testne; ne na odprtih cestah in re
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Katu-Jaryk, Chapman's Peak, Tianmen, Uncompahgre, Sani Pass, Irohazaka, Mulholland Highway, Moki Dugway, Nürburg, Spa, Štajerska, Suzuka, Bathurst, Crystal Palace, Riverside, Longford, Newcastle, Rio de Janeiro, Medvode, Bang Saen in Monterey se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Prelaz Katu-Jaryk · 1.206 m, Karussell, Eau Rouge, Zavoj 1), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Katu-Jaryk, Chapman's Peak, Tianmen, Uncompahgre, Sani Pass, Irohazaka, Santa Monica Mountains, Moki Dugway, Nürburg, Spa, Štajerska, Suzuka, Bathurst, Crystal Palace, Riverside, Longford, Newcastle, Rio de Janeiro, Medvode, Bang Saen in Monterey se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Prelaz Katu-Jaryk · 1.206 m, Karussell, Eau Rouge, Zavoj 1), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
