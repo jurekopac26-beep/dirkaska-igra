@@ -501,6 +501,19 @@
     'Obroč leti …': 'The ring is flying …', 'Oseba se spušča po vrvi …': 'A person is sliding down the line …', 'Ljudje so na suhem.': 'The people are on dry ground.', 'Vrzi obroč!': 'Throw the ring!',
     'Ustavi ob hiši in vrzi obroč.': 'Stop by the house and throw the ring.', 'Ustavi: ljudje izstopijo na suho.': 'Stop: the people get out onto dry ground.',
     'Odpelji ljudi na suho: do ovinka pod hribom.': 'Take the people to dry ground: to the hairpin at the foot of the hill.', 'Nekaj ljudi še čaka na strehah: vrni se po njih.': 'Some people are still waiting on the roofs: go back for them.',
+    'Narasla reka': 'River in Flood',
+    'Po dolgem deževju reka hitro narašča. Na kmetiji pred lesenim mostom čaka devet ljudi.': 'After days of rain the river is rising fast. Nine people are waiting at the farm before the wooden bridge.',
+    'Prepelji vse s kmetije čez lesen most v mesto, preden ga voda zalije.': 'Take everyone from the farm over the wooden bridge to the town before the water covers it.',
+    'Čez most pelji počasi in po sredini; plavje udarja ob opornice.': 'Cross the bridge slowly and in the middle; driftwood is hitting the piles.', 'VODA DO MOSTU': 'WATER TO DECK',
+    'EVAKUIRANI': 'EVACUATED', 'MOST ZDRŽI': 'BRIDGE HOLDS', 'PLAVJE': 'DRIFTWOOD', 'ODPELJI': 'GO',
+    'Voda je zalila most, ljudje so ostali na drugi strani.': 'The water covered the bridge; people were left on the other side.',
+    'Zapeljal si mimo, ljudje so ostali na kmetiji.': 'You drove on; people were left at the farm.', 'ŠE {0} LJUDI': '{0} PEOPLE LEFT', 'čakajo na kmetiji': 'waiting at the farm',
+    'ZBIRNO MESTO': 'MEETING POINT', 'v mestu': 'in the town', 'še {0}': '{0} left', 'pod mostom': 'under the bridge', 'udarja ob most': 'hitting the bridge', 'ob opornicah': 'at the piles',
+    'Posadka obrača tovornjak.': 'The crew is turning the truck round.', 'Ljudje se vkrcavajo.': 'People are climbing on.',
+    'Ljudje se vkrcavajo: ODPELJI, ko jih je dovolj.': 'People are climbing on: tap GO when there are enough.', 'Ljudje izstopajo na zbirnem mestu.': 'People are getting off at the meeting point.',
+    'Ustavi na zbirnem mestu.': 'Stop at the meeting point.', 'Ustavi pri kmetiji.': 'Stop at the farm.', 'Obrni: mesto je za teboj.': 'Turn round: the town is behind you.',
+    'Obrni: kmetija je za teboj.': 'Turn round: the farm is behind you.', 'Odpelji ljudi čez most v mesto.': 'Take the people over the bridge to the town.',
+    'Pelji na kmetijo po ljudi.': 'Drive to the farm for the people.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

@@ -20,11 +20,10 @@ const st = (page) => page.evaluate(() => { const g = window.__game, R = g.race, 
 // ahead in the way it goes (back to the farm: the wrong way), slow over the bridge with people on the back, stopped at the place; held
 // while they board or climb down and while the crew turns it; opt.until(r): stop there
 const drive = (page, opt) => page.evaluate((opt) => { const g = window.__game, r = Missions.run, K = r.def.K, T = g.race.track, until = opt.until ? new Function('r', 'return ' + opt.until) : () => false;
-  let yJump = 0;
   for (let k = 0; k < opt.n && !r.end; k++) {
     if (until(r)) return 'until';
     const P = r.P, s = P.q.s, v = Math.hypot(P.vx, P.vz);
-    if (r.stage === 'load' || r.stage === 'drop' || r.stage === 'turn') { const y0 = P.y; g.sim(0.1, false, 0, 0, 1); yJump = Math.max(yJump, Math.abs(P.y - y0)); continue; }
+    if (r.stage === 'load' || r.stage === 'drop' || r.stage === 'turn') { const y0 = P.y; g.sim(0.1, false, 0, 0, 1); window.__m48y = Math.max(window.__m48y || 0, Math.abs(P.y - y0)); continue; }
     if (r.aboard === 0) window.__m48town = false; else if (r.stage === 'go' || r.aboard >= K.CAP || r.farm === 0) window.__m48town = true;   // (off from the farm: to the town)
     const goal = window.__m48town ? K.TOWN : K.FARM;
     const ds = goal - s, dir = Math.sign(ds) || 1, i = T.idx(s + dir * (8 + v * 0.8));
@@ -34,7 +33,6 @@ const drive = (page, opt) => page.evaluate((opt) => { const g = window.__game, r
     let thr = 0, brk = 0; if (Math.abs(ds) < 5) brk = 1; else if (v < vt) thr = 0.8; else if (v > vt + 1) brk = 0.6;
     g.sim(0.1, false, steer, thr, brk);
   }
-  window.__m48y = Math.max(window.__m48y || 0, yJump);
   return r.end || 'n'; }, opt);
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=48', {}, { width: 360, height: 640 }, { touch: true });
@@ -65,7 +63,7 @@ try {
   T.check('the tap: off with two; the two standing on the flatbed (in the truck\'s frame), the other places empty', R1.aboard === 2 && R1.farm === 7 && R1.seats.slice(0, 2).every(p => p[0] < 0 && p[0] > -3 && Math.abs(p[1] - 1.22) < 0.01 && Math.abs(p[2]) < 1) && R1.seats.slice(2).every(p => p[1] === 0), JSON.stringify(R1));
   // over the bridge to the town, they climb down, the truck turned round; on the way back (the wrong way): no NAPAČNA SMER, no Na progo
   res = await drive(page, { n: 1500, until: 'r.safe >= 2 && r.stage === \'drive\' && r.P.q.s < 1700' });
-  const turned = await page.evaluate(() => { const r = Missions.run, P = r.P, T = window.__game.race.track; return { back: Math.cos(P.h - T.hd[T.idx(P.q.s)]) < -0.9, y: +(P.y - P.roadY).toFixed(2), jump: window.__m48y }; });
+  const turned = await page.evaluate(() => { const r = Missions.run, P = r.P, T = window.__game.race.track; return { back: Math.cos(P.h - T.hd[T.idx(P.q.s)]) < -0.9, y: +(P.y - P.roadY).toFixed(2), jump: window.__m48y || 0 }; });
   T.check('down in the town, turned round by the crew: back toward the farm, on the road (no fall, no jump while turning)', res === 'until' && turned.back && Math.abs(turned.y) < 0.3 && turned.jump < 0.3, JSON.stringify({ res, turned }));
   await page.evaluate(() => window.__game.sim(1, false, 0, 1, 0)); await page.waitForTimeout(1500);
   s = await st(page);
@@ -75,7 +73,7 @@ try {
   await page.waitForFunction(() => document.getElementById('mis-res'), null, { timeout: 20000 });
   s = await st(page);
   T.check('all 9 in the town: done', s.run.end === 'win' && s.run.safe === 9 && /MISIJA OPRAVLJENA/.test(s.res) && s.rows[1] === 'EVAKUIRANI 9 / 9', JSON.stringify({ run: s.run, res: s.res, rows: s.rows }));
-  T.check('no jump of the truck while held or turned', (await page.evaluate(() => window.__m48y)) < 0.3);
+  T.check('no jump of the truck while held or turned', (await page.evaluate(() => window.__m48y || 0)) < 0.3);
   await page.click('#mis-res [data-mis="title"]'); await page.waitForTimeout(600);
   const gone = await page.evaluate(([w, l]) => { let shown = 0, crowds = 0, river = null; Render.world.root.traverse(o => { if (o.name === 'crowds') { crowds++; if (o.visible) shown++; } if (o.isMesh && o.material && o.material.color && o.material.color.getHex && o.material.color.getHex() === 0x46503a) river = o; });
     return { water: !Render.scene.getObjectById(w), logs: !Render.scene.getObjectById(l), btn: !document.getElementById('mis-btn'), tags: !document.getElementById('mis-tags'), crowds: crowds === shown, river: !!river && !!river.parent }; }, [S.wid, S.logId]);
