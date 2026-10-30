@@ -24,6 +24,7 @@ const Garage3D = (function () {
   let floorMat = null, refl = null, keyLight = null;
   let cur = null;   // the car on the turntable: { M, spec, v (Render's view), root, kit, parts, ... }
   let hud = () => {};   // (the page's overlay: hud(kind, data))
+  let onTap = () => {};   // (a tap on the picture, no show playing: the page's (x, y in CSS px))
   const KEY_DIR = new V3(0.22, 1, 0.34).normalize();
   const SUN = new V3(0.48, 0.47, 0.74).normalize();   // (the sun outside: the key light's azimuth, 28 deg up, so the shadows inside and out fall alike)
   // the room's fixed lines (the room light's shader is made from them too): the window band (its height, a window's width, the windows'
@@ -2692,7 +2693,7 @@ const Garage3D = (function () {
   // tubes 2 mm over the disc); the screw's run before an adapter goes on it, the screw the arms are built with; PMAX: the screw with the
   // tallest adapter (a vehicle standing high on its wheels: an off-road pickup, the monster truck))
   const PADH = 0.0565, PMIN = 0.008, PMAX = 0.5, PDEF = 0.02, armMax = (A) => 3 * A.lc - 0.5, CMIN = 0.0245, SX = 0.06, PB0 = 0.15;
-  const LBL = [0.08, 0.22, 0.58], LBLt = [0.12, 0.29, 0.69], LBLd = [0.05, 0.14, 0.4], LZN = [0.6, 0.62, 0.65], LAR = [0.35, 0.37, 0.41], LRB = [0.1, 0.1, 0.105], LYL = [0.92, 0.7, 0.1];   // (the lift's blue, its top faces, its ribs; the zinc of the inner tubes; dark steel; the rubber; safety yellow)
+  const LBL = [0.86, 0.36, 0.06], LBLt = [0.96, 0.46, 0.1], LBLd = [0.6, 0.24, 0.04], LZN = [0.6, 0.62, 0.65], LAR = [0.35, 0.37, 0.41], LRB = [0.1, 0.1, 0.105], LYL = [0.92, 0.7, 0.1];   // (the lift's blue, its top faces, its ribs; the zinc of the inner tubes; dark steel; the rubber; safety yellow)
   // yellow and black stripes at 45 degrees on a rectangle: from its corner o along u (w long) and across it along v (h), a point inside
   // what they lie on; the yellow ones only (laid over black), each clipped to the rectangle
   function hazard(g, o, u, v, w, h, pitch, inside) {
@@ -3060,7 +3061,7 @@ const Garage3D = (function () {
       for (const x of [-0.131, 0.131]) World.box(g, x, yb0 + 0.05, (z0 + z1) / 2, 0.004, 0.018, z1 - z0 - 0.1, 0, CY);
       hazard(g, [-0.13, yb0, za], [1, 0, 0], [0, 1, 0], 0.26, yb1 - yb0, 0.06, [0, (yb0 + yb1) / 2, za - s * 0.5]);
       World.box(g, 0, yb1 - 0.02, zb - s * 0.12, 0.44, 0.12, 0.3, 0, DK, [0.2, 0.21, 0.24]);
-      rigGl(R, METAL); for (const x of [-0.16, 0.16]) cylA(g, [x, yb0 - 0.02, zb - s * 0.12], 'x', 0.05, 0.05, 12, ST);
+      rigGl(R, METAL); for (const x of [-0.16, 0.16]) cylA(g, [x, yb0 + 0.005, zb - s * 0.12], 'x', 0.034, 0.05, 12, ST);   // (its wheels on the ring's top)
       // the carriage (white, a navy band, its rollers on the beam's foot) and the housing under it (navy, a light ring at its foot)
       rigPart(R, b + 1); rigGl(R, PAINT); World.box(g, 0, yc + 0.12, 0, 0.32, yb0 - yc - 0.12, 0.3, 0, W, W); World.box(g, 0, yc + 0.2, 0, 0.325, 0.05, 0.305, 0, NV);
       World.box(g, 0, Y0 + 0.04, 0, 0.21, yc + 0.12 - Y0 - 0.04, 0.21, 0, NV, NV); World.box(g, 0, Y0 + 0.02, 0, 0.215, 0.025, 0.215, 0, CY);
@@ -3251,7 +3252,7 @@ const Garage3D = (function () {
   // rims of bays 3, 4 [on B, on C]: [name, spokes, colour]; the tuning parts two a bay on D [name, kind, and the concept's box in the bay
   // (x0, x1, its height, z0, z1): each made as big as its box lets it]; the wings by bay
   // [name, kind, size, its stands' height]; each name's prism: its face's height (the concept's NP version 3, as big as the element lets it))
-  const RGL_TY = [['SNOW', 0x7dd3fc, 'snow', 0.31, 0.2, 0.9427], null, null, ['TRACK', 0xef4444, 'slick', 0.3, 0.24, 0.9742], ['MOUNTAIN', 0x22c55e, 'mtn', 0.33, 0.24, 0.8856]];
+  const RGL_TY = [['SNOW', 0x7dd3fc, 'snow', 0.31, 0.2, 0.9427], null, null, ['TRACK SLICK', 0xef4444, 'slick', 0.3, 0.24, 0.9742], ['MOUNTAIN', 0x22c55e, 'mtn', 0.33, 0.24, 0.8856]];
   const RGL_EX = [['SPORT', 'CARBON'], ['RACE', 'TWIN'], ['TITANIUM', 'STRAIGHT']];
   const RGL_RIM = { 3: [['CHROME 3-SPOKE', 3, 0xe6eaee], ['GOLD 5-SPOKE', 5, 0xd4a017]], 4: [['ORANGE 10-SPOKE', 10, 0xff7a1a], ['BLACK MESH', 0, 0x1d1e22]] };
   const RGL_PT = [['AIR FILTER', 'filter', -0.549, -0.211, 0.479, -0.169, 0.169], ['ECU CHIP', 'chip', -0.002, 0.509, 0.414, -0.123, 0.154], ['TURBO', 'turbo', -0.589, 0.083, 0.521, -0.267, 0.29],
@@ -3259,7 +3260,7 @@ const Garage3D = (function () {
     ['ANTI-ROLL BARS', 'arb', -0.547, 0.057, 0.424, 0.015, 0.189], ['SPORT PADS', 'pads', 0.129, 0.571, 0.276, -0.072, 0.185], ['HORN', 'horn', -0.49, -0.12, 0.296, -0.213, 0.168],
     ['TYRE SMOKE', 'smoke', 0.07, 0.59, 0.454, -0.074, 0.074]];
   const RGL_WG = [['DUCKTAIL', 0, 0.9, 0.16], ['SHORT WING', 2, 1.0, 0.22], ['LOW WING', 1, 1.1, 0.28], ['GT WING', 3, 1.2, 0.34], ['DOUBLE WING', 4, 1.3, 0.4]];
-  const RGL_NP = { SNOW: 0.108, TRACK: 0.1011, MOUNTAIN: 0.0901, SPORT: 0.12, RACE: 0.12, TITANIUM: 0.12, CARBON: 0.12, TWIN: 0.12, STRAIGHT: 0.12, 'CHROME 3-SPOKE': 0.12,
+  const RGL_NP = { SNOW: 0.108, 'TRACK SLICK': 0.1011, MOUNTAIN: 0.0901, SPORT: 0.12, RACE: 0.12, TITANIUM: 0.12, CARBON: 0.12, TWIN: 0.12, STRAIGHT: 0.12, 'CHROME 3-SPOKE': 0.12,
     'ORANGE 10-SPOKE': 0.12, 'GOLD 5-SPOKE': 0.12, 'BLACK MESH': 0.12, 'AIR FILTER': 0.0529, 'ECU CHIP': 0.0536, TURBO: 0.0653, 'LIGHT BATTERY': 0.0282, SPRINGS: 0.0528, DAMPERS: 0.04,
     'ANTI-ROLL BARS': 0.0521, 'SPORT PADS': 0.0242, HORN: 0.0606, 'TYRE SMOKE': 0.0604, DUCKTAIL: 0.054, 'SHORT WING': 0.0491, 'LOW WING': 0.048, 'GT WING': 0.048, 'DOUBLE WING': 0.054 };
   const _rv = new V3();
@@ -3439,7 +3440,7 @@ const Garage3D = (function () {
           gl(PAINT); cylA(g, [x, 0.15, 0], 'y', 0.024, 0.2, 10, c); gl(MATTE); cylA(g, [x, 0.26, 0], 'y', 0.017, 0.025, 8, [0.06, 0.06, 0.07]); box(x - 0.024, x + 0.024, 0.11, 0.125, -0.025, 0.025, [0.06, 0.06, 0.07]); }); } };
     // ---- the five bays ----
     RGL.bays = rglBays();
-    RGL.bays.forEach((b, k) => { const v0 = g.P.length / 3, a0 = A.P.length / 3, s0 = SH.P.length / 3; RGL.cb = k;
+    RGL.items = []; RGL.bays.forEach((b, k) => { const v0 = g.P.length / 3, a0 = A.P.length / 3, s0 = SH.P.length / 3, its = []; RGL.cb = k;
       // the frame: the boards and their lips, the top board, the back, the posts (the front ones' slots)
       gl(SATIN); for (const y of LV.concat([TOP - 0.02])) box(-hw - 0.03, hw + 0.03, y - 0.0175, y + 0.0175, -D / 2, D / 2, BD, BDT);
       gl(PAINT); for (const y of LV.concat([TOP - 0.04])) box(-hw - 0.03, hw + 0.03, y - 0.035, y + 0.015, D / 2 - 0.015, D / 2 + 0.015, NV);
@@ -3453,27 +3454,30 @@ const Garage3D = (function () {
       const yA = LV[0] + 0.0175, yB = LV[1] + 0.0175, yC = LV[2] + 0.0175, yD = LV[3] + 0.0175, WMAX = 2 * (hw - 0.08);
       // A: a tyre set (four standing in a row, the set a little smaller in its storey as the concept's)
       const T = RGL_TY[k]; if (T) { const s = T[5], vt = g.P.length / 3, at0 = A.P.length / 3; for (let i = 0; i < 4; i++) tyreUp((i - 1.5) * 0.28, T[3], 0, T, k);
-        const Mt = M4(0, yA + 0.0005, 0.04, 0, 0, 0, s); placeGB(g, vt, Mt); placeGB(A, at0, Mt);
+        const Mt = M4(0, yA + 0.0005, 0.04, 0, 0, 0, s); placeGB(g, vt, Mt); placeGB(A, at0, Mt); its.push([T[0], 'tyre', vt, g.P.length / 3]);
         shBack(0.1, yA + 0.26, 1.22, 0.66); shFlat(0.05, yA + 0.002, 0, 1.18, 0.42); plate(T[0], 0, yA, Math.min(WMAX, 1.05 * s + 0.04)); }
       // B and C: the exhausts on their stands (bays 0-2), the rims on theirs (bays 3, 4)
       [yB, yC].forEach((y, li) => {
-        if (k < 3) { const ex = li * 3 + k, ve = g.P.length / 3; exhaust(ex); placeGB(g, ve, M4(0, y + 0.13, 0.02, 0, 0.08, 0, 1.22)); const vs = g.P.length / 3; for (const x of [-0.244, 0.244]) stand(x, 0.02, 0.13, true); placeGB(g, vs, M4(0, y, 0));
+        if (k < 3) { const ex = li * 3 + k, ve = g.P.length / 3; exhaust(ex); placeGB(g, ve, M4(0, y + 0.13, 0.02, 0, 0.08, 0, 1.22)); its.push([RGL_EX[k][li], 'exhaust', ve, g.P.length / 3]); const vs = g.P.length / 3; for (const x of [-0.244, 0.244]) stand(x, 0.02, 0.13, true); placeGB(g, vs, M4(0, y, 0));
           shBack(0.11, y + 0.2, 1.3, 0.42); shFlat(0.06, y + 0.002, 0, 1.2, 0.34); plate(RGL_EX[k][li], 0.03, y, WMAX); }
         else { const [nm, n, hex] = RGL_RIM[k][li], s = 0.92, h = 0.03, ry = h + 0.255 * s, vr = g.P.length / 3;
           for (const x of [-(L / 4 - 0.04), L / 4 - 0.04]) { rim(x, ry, 0.04, n, hex, s); stand(x, -0.12, ry, false); gl(METAL); cylA(g, [x, ry, -0.05], 'z', 0.02, 0.2, 8, CHR);
             shBack(x + 0.11, y + ry - 0.08, 0.84 * s / 1.2, 0.8 * s / 1.2, true); shFlat(x + 0.05, y + 0.002, -0.02, 0.7, 0.4, true); }
-          placeGB(g, vr, M4(0, y, 0)); plate(nm, 0, y, WMAX); } });
+          placeGB(g, vr, M4(0, y, 0)); its.push([nm, 'rim', vr, g.P.length / 3]); plate(nm, 0, y, WMAX); } });
       // D: the two tuning parts, each as big as its place in the concept lets it (its foot on the board), a soft shadow under and behind it
       RGL_PT.slice(2 * k, 2 * k + 2).forEach(([nm, kind, x0, x1, ph, z0, z1], j) => { const vp = g.P.length / 3; PART[kind](); const bb = new THREE.Box3(), Pp = g.P;
         for (let v = vp * 3; v < Pp.length; v += 3) bb.expandByPoint(_rv.set(Pp[v], Pp[v + 1], Pp[v + 2])); const s = Math.min((x1 - x0) / (bb.max.x - bb.min.x), ph / bb.max.y, (z1 - z0) / (bb.max.z - bb.min.z)) * 0.97, x = (x0 + x1) / 2, z = (z0 + z1) / 2;
-        placeGB(g, vp, M4(x - (bb.min.x + bb.max.x) / 2 * s, yD, z - (bb.min.z + bb.max.z) / 2 * s, 0, 0, 0, s));
+        placeGB(g, vp, M4(x - (bb.min.x + bb.max.x) / 2 * s, yD, z - (bb.min.z + bb.max.z) / 2 * s, 0, 0, 0, s)); its.push([nm, 'part', vp, g.P.length / 3]);
         shFlat(x, yD + 0.002, z, (x1 - x0) * 0.8, (z1 - z0) * 0.6); shBack(x, yD + ph * 0.45, (x1 - x0) * 0.85, ph * 0.75); plate(nm, j ? Math.max(0.105, x) : Math.min(-0.105, x), yD, (hw - 0.08) * 0.98); });
       // the top: the wing (its stands' feet on the top board, set back from the concept's 0.2 m: it does not reach out over the board's
       // front much, the far robot's arm passes there), its name before it; b.wing: its box in the bay (x0 x1, y1, z0 z1)
-      { const [nm, kind, sc, ph] = RGL_WG[k], vw = g.P.length / 3, W = wing(kind, sc, ph); placeGB(g, vw, M4(0, top + 0.0005, RGL.wz)); shFlat(0.04, top + 0.002, RGL.wz - 0.02, 1.3 * sc * 0.9, 0.36); plate(nm, 0, top, Math.min(WMAX, W.w * 0.6), 0.32);
+      { const [nm, kind, sc, ph] = RGL_WG[k], vw = g.P.length / 3, W = wing(kind, sc, ph); placeGB(g, vw, M4(0, top + 0.0005, RGL.wz)); its.push([nm, 'wing', vw, g.P.length / 3]); shFlat(0.04, top + 0.002, RGL.wz - 0.02, 1.3 * sc * 0.9, 0.36); plate(nm, 0, top, Math.min(WMAX, W.w * 0.6), 0.32);
         const bx2 = (a, z) => { const q = new THREE.Box3(); for (let v = a * 3; v < z * 3; v += 3) q.expandByPoint(_rv.set(g.P[v], g.P[v + 1], g.P[v + 2])); return q; };
         b.wing = bx2(W.vp, W.vf); b.stands = bx2(vw, W.vp).union(bx2(W.vf, g.P.length / 3)); }
       placeGB(g, v0, b.M); placeGB(A, a0, b.M); placeGB(SH, s0, b.M);
+      // (each part a thing to tap: its outline as it stands now, in the world)
+      for (const [nm, kind, a, z] of its) { const P = Float32Array.from(g.P.slice(a * 3, z * 3)), N = Float32Array.from(g.N.slice(a * 3, z * 3)), bb = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) bb.expandByPoint(_rv.set(P[i], P[i + 1], P[i + 2]));
+        RGL.items.push({ key: 'rgl:' + nm, kind, name: nm, bay: k, box: bb, P, N }); }
     });
     // the atlas' faces lit by the key light (baked: the mesh is unlit), the room's light on them as a whole
     { const C = A.C, N = A.N, K = KEY_DIR; for (const [v0, v1] of bake) for (let v = v0; v < v1; v++) { const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2], k = 0.5 + 0.36 * Math.max(0, nx * K.x + ny * K.y + nz * K.z) + 0.14 * (0.5 + 0.5 * ny);
@@ -3655,12 +3659,13 @@ const Garage3D = (function () {
   function stepFixtures(dt) {
     for (const A of RB) if (A.dirty) poseArm(A.i);
     if (CH.dirty) poseChamber();
+    stepFront(dt);
     if (cur && RGL.mesh && cur.spec.color !== RGL.col) rglColor(cur.spec.color);
   }
   function buildFixtures() {
     const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]); buildRing(g, gl);
     const geo = withGloss(g.geometry(), gls); geo.attributes.color.setUsage(THREE.DynamicDrawUsage); const m = FX.rails = new THREE.Mesh(geo, fxMat()); m.receiveShadow = true; scene.add(mainOnly(m));
-    buildChamber(); buildArms();
+    buildChamber(); buildArms(); buildFront();
     if (RGL.on) { buildRegal(); WALLS.back.keep = (x, y, z) => !rglClear(x, y, z); }
   }
   // (after the pieces are finished: the regal's mesh (the car's colour), the obstacles round the car; the arms posed)
@@ -3670,6 +3675,167 @@ const Garage3D = (function () {
     CH.dirty = true; for (const A of RB) A.dirty = true; stepFixtures(0);
   }
 
+  /* ---------------- the front: the cabinet before the car, the colour circles, the lift's head ----------------
+     THE CABINET (the concept's, under the page's buttons in the first view): a low navy cabinet across the room before the turntable, its
+     top a light grey deck. On it three round plinths with the car's maquettes in its aero kits (STREET, SPORT, RACE: each the car
+     itself drawn small with that kit, standing toward the camera), a sign over each on two posts, tilted back toward the camera (YOUR
+     CAR green; RENT A CAR blue with a red 450 € tag; FOR SALE blue with a red tag, its price), three lamps over each sign (lit over the
+     maquette whose kit the car has: FRONT.lit), the letters as reflective film; a ring of green light in the YOUR CAR plinth (the
+     player's car: its maquette's lamps on, it shakes a little as a running engine, a wisp from its exhaust), a padlock before a locked
+     one; on the right the big red SERVICE button (a white ring round it, a white wrench in relief on its dome). Its words in English
+     (generic). THE COLOUR CIRCLES: the game's eight colours as discs in the floor on an arc before the turntable, each in a white ring.
+     THE LIFT'S HEAD: a small orange plate with an arrow on the lift's carriage (the version 25 of the concept): a tap lifts the car
+     and lets it down. Each a thing to tap (FRONT.items, with the regal's: pick), its outline for the marks (mark) ---------------- */
+  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], lit: 0, lock: [false, false, true], price: ['450 €', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
+  const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
+  // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
+  function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
+  const _tv = new V3(), _yAx = new V3(0, 1, 0);
+  const gbSlice = (g, a, b) => [Float32Array.from(g.P.slice(a * 3, b * 3)), Float32Array.from(g.N.slice(a * 3, b * 3))];
+  // the signs' and the labels' atlas (512 x 256): YOUR CAR, RENT A CAR, FOR SALE, the two red tags (their prices: drawn again), the
+  // labels on the deck's edge (STREET, SPORT, RACE · LOCKED, AERO KITS, SERVICE)
+  const FRA = { YOUR: [0, 0, 256, 56], RENT: [256, 0, 256, 56], SALE: [0, 56, 256, 56], T0: [256, 56, 128, 44], T1: [384, 56, 128, 44], L0: [0, 112, 170, 34], L1: [170, 112, 170, 34], L2: [340, 112, 172, 34], AK: [0, 146, 256, 34], SV: [256, 146, 256, 34] };
+  function frontTex() {
+    const c = FRONT.cv || (FRONT.cv = document.createElement('canvas')); c.width = 512; c.height = 256; const g = c.getContext('2d');
+    g.clearRect(0, 0, 512, 256);
+    const sign = (r, bg, t) => { const [x, y, w, h] = r; g.fillStyle = bg; g.beginPath(); if (g.roundRect) g.roundRect(x + 3, y + 3, w - 6, h - 6, 7); else g.rect(x + 3, y + 3, w - 6, h - 6); g.fill();
+      g.strokeStyle = '#f4f6fa'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#ffffff'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 20); };
+    sign(FRA.YOUR, '#1f9a4a', 'YOUR CAR'); sign(FRA.RENT, '#1c4fb3', 'RENT A CAR'); sign(FRA.SALE, '#1c4fb3', 'FOR SALE');
+    for (const [r, t] of [[FRA.T0, FRONT.price[0]], [FRA.T1, FRONT.price[1]]]) { const [x, y, w, h] = r; g.fillStyle = '#d81f2a'; g.fillRect(x + 2, y + 2, w - 4, h - 4); g.strokeStyle = '#ffd9d6'; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, w - 6, h - 6);
+      g.fillStyle = '#fff'; g.font = '900 28px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 10); }
+    const lab = (r, t) => { const [x, y, w, h] = r; g.fillStyle = '#d6dde8'; g.font = 'italic 800 22px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 8); };
+    lab(FRA.L0, 'STREET'); lab(FRA.L1, 'SPORT'); lab(FRA.L2, FRONT.lock[2] ? 'RACE · LOCKED' : 'RACE'); lab(FRA.AK, 'AERO KITS'); lab(FRA.SV, 'SERVICE');
+    if (FRONT.tex) FRONT.tex.needsUpdate = true;
+  }
+  // (a quad of the atlas' cell r: its middle c, its right and up ways (world), its size w x h)
+  function atlasQuad(G, r, c, ri, up, w, h) { const [x, y, cw, ch] = r, u0 = x / 512, u1 = (x + cw) / 512, v1 = 1 - y / 256, v0 = 1 - (y + ch) / 256, P = (a, b) => [c.x + ri.x * a * w / 2 + up.x * b * h / 2, c.y + ri.y * a * w / 2 + up.y * b * h / 2, c.z + ri.z * a * w / 2 + up.z * b * h / 2];
+    const n = new V3().crossVectors(ri, up).normalize(), ins = [c.x - n.x, c.y - n.y, c.z - n.z]; G.quadO(P(-1, -1), P(1, -1), P(1, 1), P(-1, 1), [1, 1, 1], ins, [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+  function buildFront() {
+    const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]), S = new World.GB(true), L = new World.GB(), F = FRONT, { NV, W, DK, ST } = FXC, y1 = F.h;
+    const z0 = F.z - F.d / 2, z1 = F.z + F.d / 2, xm = (F.x0 + F.x1) / 2, wd = F.x1 - F.x0, GR = [0.62, 0.65, 0.7];
+    // the cabinet: its plinth, its navy body (the drawers' lines on its face), the deck (grey, a white lip at its front), a line of light
+    gl(PAINT); World.box(g, xm, 0, F.z, wd, 0.08, F.d - 0.06, 0, DK); World.box(g, xm, 0.08, F.z, wd, y1 - 0.12, F.d, 0, NV, NV);
+    for (let x = F.x0 + 0.6; x < F.x1 - 0.1; x += 0.6) World.box(g, x, 0.1, z1 + 0.002, 0.012, y1 - 0.16, 0.004, 0, [0.06, 0.08, 0.17]);
+    World.box(g, xm, 0.45, z1 + 0.002, wd - 0.04, 0.012, 0.004, 0, [0.06, 0.08, 0.17]);
+    gl(SATIN); World.box(g, xm, y1 - 0.04, F.z, wd + 0.04, 0.04, F.d + 0.04, 0, GR, [0.7, 0.73, 0.78]); World.box(g, xm, y1 - 0.045, z1 + 0.025, wd + 0.04, 0.05, 0.02, 0, W);
+    // the plinths (dark discs, a steel rim), the posts of the signs
+    const cam = camAt(HOME), q = new V3();
+    F.mq.forEach((x, i) => { gl(METAL); cylA(g, [x, y1 + 0.02, F.mz], 'y', 0.25, 0.04, 28, ST); gl(SATIN); cylA(g, [x, y1 + 0.045, F.mz], 'y', 0.23, 0.012, 28, [0.1, 0.11, 0.13]);
+      for (const s of [-1, 1]) cone2(g, [x - 0.2 + s * 0.17, y1, F.mz - 0.24], [x - 0.2 + s * 0.17, y1 + 0.42, F.mz - 0.24], 0.012, 0.012, 6, ST); });
+    // the SERVICE button: a white ring on a dark foot, the red dome, the wrench in relief (white, flat on the dome's top)
+    { const [x, z] = F.sv; gl(SATIN); cylA(g, [x, y1, z], 'y', 0.3, 0.05, 32, DK); gl(PAINT); cylA(g, [x, y1 + 0.05, z], 'y', 0.27, 0.05, 32, W);
+      const v0 = g.P.length / 3; gl(PAINT); gAdd(g, new THREE.SphereGeometry(0.23, 32, 10, 0, TAU, 0, Math.PI * 0.42).scale(1, 0.55, 1), M4(x, y1 + 0.04, z), [0.85, 0.08, 0.06]);
+      const sh = new THREE.Shape(); sh.moveTo(-0.11, -0.022); sh.lineTo(0.05, -0.022); sh.absarc(0.085, 0, 0.042, Math.PI * 1.25, Math.PI * 0.75, false); sh.lineTo(0.05, 0.022); sh.lineTo(-0.11, 0.022); sh.absarc(-0.11, 0, 0.022, Math.PI / 2, Math.PI * 1.5, false);
+      gAdd(g, new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: false, curveSegments: 8 }).rotateX(-Math.PI / 2).rotateY(0.35), M4(x, y1 + 0.18, z), [0.98, 0.98, 0.98]);
+      F.svR = [v0, g.P.length / 3]; }
+    // (all of it turned to face the camera's first view: built facing +z, turned by ry about the room's middle)
+    const MR = M4(0, 0, 0, 0, F.ry, 0), turn = (o) => o.applyMatrix4(MR); placeGB(g, 0, MR);
+    { const [P, N] = gbSlice(g, F.svR[0], F.svR[1]); tapItem('service', 'service', P, N); }
+    const geo = withGloss(g.geometry(), gls); const m = F.mesh = new THREE.Mesh(geo, fxMat()); m.receiveShadow = true; m.castShadow = true; scene.add(m);
+    // the signs, the tags and the labels: the atlas on quads facing the camera's first view (tilted back), unlit
+    frontTex(); F.tex = new THREE.CanvasTexture(F.cv); F.tex.anisotropy = 4;
+    const toCam = (p) => { const d = q.copy(cam).sub(p).normalize(), ri = new V3(d.z, 0, -d.x).normalize(), up = new V3().crossVectors(d, ri).normalize(); return [ri, up]; };
+    const SIGN = [FRA.YOUR, FRA.RENT, FRA.SALE];
+    F.mq.forEach((x, i) => { const c = turn(new V3(x - 0.2, y1 + 0.56, F.mz - 0.24)), [ri, up] = toCam(c); atlasQuad(S, SIGN[i], c, ri, up, 0.62, 0.136);
+      if (i) atlasQuad(S, i === 1 ? FRA.T0 : FRA.T1, c.clone().addScaledVector(ri, 0.24).addScaledVector(up, 0.125), ri, up, 0.24, 0.083);
+      const l = turn(new V3(x, y1 + 0.003, F.mz + 0.33)); atlasQuad(S, [FRA.L0, FRA.L1, FRA.L2][i], l, turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.5, 0.1); });
+    atlasQuad(S, FRA.AK, turn(new V3(F.mq[1], y1 + 0.003, F.mz + 0.43)), turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.56, 0.074);
+    atlasQuad(S, FRA.SV, turn(new V3(F.sv[0], y1 + 0.003, F.sv[1] + 0.38)), turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.56, 0.074);
+    const sg = S.geometry(); F.signs = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ map: F.tex, transparent: true, side: THREE.DoubleSide, color: new THREE.Color(1.05, 1.05, 1.05), polygonOffset: true, polygonOffsetFactor: -1 })); F.signs.renderOrder = 2; scene.add(mainOnly(F.signs));
+    // the lights: three lamps over each sign (their glass lit or dark: frontLamps), the YOUR CAR plinth's ring of green light
+    F.lamps = []; F.mq.forEach((x, i) => { const c = turn(new V3(x - 0.2, y1 + 0.66, F.mz - 0.27)), [ri] = toCam(c); const a = L.P.length / 3;
+      for (const s of [-1, 0, 1]) { const p = c.clone().addScaledVector(ri, s * 0.2); World.box(L, p.x, p.y, p.z, 0.07, 0.025, 0.05, Math.atan2(-ri.z, ri.x), [0.1, 0.1, 0.12]); World.box(L, p.x, p.y - 0.006, p.z, 0.06, 0.008, 0.042, Math.atan2(-ri.z, ri.x), [1, 1, 1]); }
+      F.lamps.push([a, L.P.length / 3]); });
+    F.ring = [L.P.length / 3]; { const p = turn(new V3(F.mq[0], y1 + 0.058, F.mz)); annulus(L, p.x, p.y, p.z, 0.2, 0.25, 32, [1, 1, 1]); } F.ring.push(L.P.length / 3);
+    const lg = L.geometry(); lg.attributes.color.setUsage(THREE.DynamicDrawUsage); F.glow = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ vertexColors: true })); scene.add(mainOnly(F.glow));
+    // the maquettes: sprites of the car drawn small in each kit (frontCars), their plinths' boxes the things to tap
+    F.mq.forEach((x, i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false })); sp.center.set(0.5, 0.1); sp.position.copy(turn(new V3(x, y1 + 0.05, F.mz))); sp.scale.set(0.84, 0.42, 1); sp.visible = false; scene.add(mainOnly(sp)); F.sprites.push(sp); sp.userData.p0 = sp.position.clone();
+      const P = [], N = [], q2 = new V3(); for (let k = 0; k < 24; k++) { const a = k / 24 * TAU, b = (k + 1) / 24 * TAU; for (const [aa, yy] of [[a, 0], [b, 0], [b, 0.4], [a, 0], [b, 0.4], [a, 0.4]]) { turn(q2.set(x + Math.cos(aa) * 0.26, y1 + 0.03 + yy, F.mz + Math.sin(aa) * 0.26)); P.push(q2.x, q2.y, q2.z); q2.set(Math.cos(aa), 0, Math.sin(aa)).applyAxisAngle(_yAx, F.ry); N.push(q2.x, q2.y, q2.z); } }
+      const it = tapItem('mq' + i, 'mq', new Float32Array(P), new Float32Array(N), { i }); it.box.expandByPoint(turn(new V3(x - 0.52, y1 + 0.66, F.mz - 0.26))).expandByPoint(turn(new V3(x + 0.12, y1 + 0.66, F.mz - 0.22))); });   // (its sign tapped: the maquette)
+    // a padlock before the locked maquette (a gold body, a steel shackle)
+    { const pl = new World.GB(), x = F.mq[2] + 0.17, z = F.mz + 0.2; World.box(pl, x, y1, z, 0.09, 0.07, 0.03, 0, [0.95, 0.72, 0.15]); cone2(pl, [x - 0.028, y1 + 0.07, z], [x - 0.028, y1 + 0.1, z], 0.008, 0.008, 6, ST); cone2(pl, [x + 0.028, y1 + 0.07, z], [x + 0.028, y1 + 0.1, z], 0.008, 0.008, 6, ST); cone2(pl, [x - 0.028, y1 + 0.1, z], [x + 0.028, y1 + 0.1, z], 0.008, 0.008, 6, ST);
+      placeGB(pl, 0, MR); F.lockM = new THREE.Mesh(pl.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); scene.add(mainOnly(F.lockM)); }
+    // the colour circles: a white ring, the colour in it, each a thing to tap
+    { const C = new World.GB(), c = F.circ; CIRC_COLS.forEach((hex, i) => { const a = lerp(c.a0, c.a1, i / (CIRC_COLS.length - 1)), x = Math.sin(a) * c.R, z = Math.cos(a) * c.R, v0 = C.P.length / 3;
+        cylA(C, [x, 0, z], 'y', c.r + 0.035, 0.012, 28, [0.92, 0.93, 0.95]); cylA(C, [x, 0.012, z], 'y', c.r, 0.004, 28, hexRgb(hex).map(v => v * 0.9)); placeGB(C, v0, MR);
+        const [P, N] = gbSlice(C, v0, C.P.length / 3); tapItem('col' + i, 'col', P, N, { i, hex }); });
+      const cm = F.cc = new THREE.Mesh(C.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: 0x666666 })); cm.receiveShadow = true; scene.add(cm); }
+    // the lift's head: an orange plate with a white arrow up (both ways: a tap lifts the car or lets it down), on the carriage
+    { const c = document.createElement('canvas'); c.width = c.height = 64; const x2 = c.getContext('2d'); x2.fillStyle = '#f07a1a'; x2.fillRect(0, 0, 64, 64); x2.strokeStyle = '#fff3e0'; x2.lineWidth = 4; x2.strokeRect(3, 3, 58, 58);
+      x2.fillStyle = '#fff'; x2.beginPath(); x2.moveTo(32, 10); x2.lineTo(50, 30); x2.lineTo(39, 30); x2.lineTo(39, 54); x2.lineTo(25, 54); x2.lineTo(25, 30); x2.lineTo(14, 30); x2.closePath(); x2.fill();
+      const t = new THREE.CanvasTexture(c), pm = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: t })); pm.position.set(0.02, 1.3, -1.5); const [ri] = toCam(pm.position); pm.rotation.y = Math.atan2(-ri.z, ri.x); scene.add(mainOnly(pm)); F.plate = pm;
+      const P = [], N = []; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) { P.push(a * 0.17, b * 0.17, 0); N.push(0, 0, 1); } F.plateIt = tapItem('lift', 'lift', new Float32Array(P), new Float32Array(N)); }
+    frontLamps();
+  }
+  // (the plate rides with the lift's carriage; its outline with it)
+  function frontPlate() { const F = FRONT, pm = F.plate; if (!pm) return; const y = 1.3 + Math.max(0, LIFT.c - LIFT.c0) + lift; if (Math.abs(pm.position.y - y) < 1e-4 && F.plateIt.P0) return; pm.position.y = y; pm.updateMatrixWorld();
+    const it = F.plateIt, P0 = it.P0 || (it.P0 = it.P.slice()), N0 = it.N0 || (it.N0 = it.N.slice()); it.box.makeEmpty(); for (let i = 0; i < P0.length; i += 3) { _tv.set(P0[i], P0[i + 1], P0[i + 2]).applyMatrix4(pm.matrixWorld); it.P[i] = _tv.x; it.P[i + 1] = _tv.y; it.P[i + 2] = _tv.z; it.box.expandByPoint(_tv); _tv.set(N0[i], N0[i + 1], N0[i + 2]).transformDirection(pm.matrixWorld); it.N[i] = _tv.x; it.N[i + 1] = _tv.y; it.N[i + 2] = _tv.z; } }
+  // the signs' lamps (lit over FRONT.lit's maquette: 3 for none), the ring under YOUR CAR; the padlock; the prices on the tags
+  function frontLamps() { const F = FRONT, a = F.glow.geometry.attributes.color, C = a.array;
+    for (let i = 0; i < 3; i++) { const [v0, v1] = F.lamps[i], n = (v1 - v0) / 3, lit = i === F.lit; for (let s = 0; s < 3; s++) { const b = v0 + s * n, h = n / 2; for (let v = b; v < b + n; v++) { const g2 = v >= b + h, c = lit ? (g2 ? [3.4, 3.2, 2.8] : [2.2, 2.05, 1.8]) : g2 ? [0.35, 0.36, 0.38] : [0.1, 0.1, 0.12]; C[v * 3] = c[0]; C[v * 3 + 1] = c[1]; C[v * 3 + 2] = c[2]; } } }
+    for (let v = F.ring[0]; v < F.ring[1]; v++) { C[v * 3] = 0.4; C[v * 3 + 1] = 2.6; C[v * 3 + 2] = 0.9; }
+    a.needsUpdate = true; F.lockM.visible = !!F.lock[2]; }
+  // the maquettes: the car drawn small in each kit (STREET 1, SPORT 2, RACE 3: the game's aero levels), from the camera's first view's
+  // side (the YOUR CAR one with its lamps on); again when the car or its colour changes
+  function frontCars(spec) { const F = FRONT; if (!spec) return; const key = spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false);
+    if (F.key === key) return; F.key = key;
+    F.sprites.forEach((sp, i) => { const c = thumbCanvas(Object.assign({}, spec, { upg: Object.assign({}, spec.upg, { aero: i + 1 }) }), 200, 100, { yaw: 0.62, lit: i === 0 });
+      if (sp.material.map) sp.material.map.dispose(); sp.material.map = new THREE.CanvasTexture(c); sp.material.needsUpdate = true; sp.visible = true; }); }
+  // each frame: the YOUR CAR maquette shakes a little (a running engine) and puffs a wisp now and then; the lift's plate
+  function stepFront(dt) { const F = FRONT, sp = F.sprites[0]; if (sp && sp.visible) { const p0 = sp.userData.p0; sp.position.set(p0.x + Math.sin(time * 41) * 0.0025, p0.y + Math.abs(Math.sin(time * 33)) * 0.002, p0.z);
+      if ((F.puff = (F.puff || 0) - dt) < 0) { F.puff = 0.35 + Math.random() * 0.4; puffs.emit(p0.x - 0.33, p0.y + 0.06, p0.z + 0.08, -0.12, 0.08, 0.02, 1.2, 0.03, 0.12, [0.75, 0.77, 0.8], 0.3, -0.05, 1.0, 0.02); } }
+    frontPlate(); if (!busy && cur) frontCars(cur.spec); }
+  /* ---------------- a tap on the picture: what it hits (pick), the marks on what a menu is for (mark), the new part seen through on the
+     car (ghost) ----------------
+     pick: every thing to tap (the regal's parts, the maquettes, the SERVICE button, the colour circles, the lift's plate) as its box on
+     the screen, at least 44 x 44 px (a small one's place grown round its middle), the nearest one the tap is in; the car before it
+     (a ray into its meshes): its wheels or its body. mark: the tapped one blue (a blue outline with a glow, a thin white line inside it,
+     a light blue sheen over it), the other things of its menu orange (a see-through orange over them, no outline); each mark a mesh
+     made from the thing's outline when asked, gone with the menu. ghost: the parts the car would get, see-through on it (its own of
+     that kind hidden meanwhile) */
+  const TAPM = { list: [], mats: null }, GH = { grp: null, hid: null, kind: null };
+  function tapMats() { if (TAPM.mats) return TAPM.mats;
+    const hull = (col, w) => new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color(col[0], col[1], col[2]) }, uW: { value: w } }, side: THREE.BackSide, depthWrite: false,
+      vertexShader: 'uniform float uW; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); mv.xyz += n * uW * (-mv.z) * 0.12; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform vec3 uC; void main(){ gl_FragColor = vec4(uC, 1.0); }' });
+    const sheen = new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color(0.35, 0.8, 1.6) } }, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
+      vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vV = -mv.xyz; vN = normalMatrix * normal; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform vec3 uC; varying vec3 vN; varying vec3 vV; void main(){ float f = 1.0 - abs(dot(normalize(vN), normalize(vV))); gl_FragColor = vec4(uC, 0.18 + 0.5 * f * f); }' });
+    const orange = new THREE.MeshBasicMaterial({ color: 0xff8a1a, transparent: true, opacity: 0.3, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+    return (TAPM.mats = { blue: hull([0.2, 0.7, 1.7], 0.022), white: hull([1.6, 1.6, 1.6], 0.008), sheen, orange }); }
+  // (an outline's mesh: its normals smoothed over the vertices at one place (a hull pushed out along them has no gaps at the edges))
+  function tapGeo(it, smooth) { const g = new THREE.BufferGeometry(), P = it.P; g.setAttribute('position', new THREE.BufferAttribute(P.slice(), 3));
+    let N = it.N; if (smooth) { const m = new Map(), key = (i) => Math.round(P[i] * 500) + ',' + Math.round(P[i + 1] * 500) + ',' + Math.round(P[i + 2] * 500);
+      for (let i = 0; i < P.length; i += 3) { const k = key(i); let s = m.get(k); if (!s) m.set(k, s = [0, 0, 0]); s[0] += N[i]; s[1] += N[i + 1]; s[2] += N[i + 2]; }
+      N = new Float32Array(P.length); for (let i = 0; i < P.length; i += 3) { const s = m.get(key(i)), l = Math.hypot(s[0], s[1], s[2]) || 1; N[i] = s[0] / l; N[i + 1] = s[1] / l; N[i + 2] = s[2] / l; } }
+    g.setAttribute('normal', new THREE.BufferAttribute(N.slice ? N.slice() : N, 3)); g.computeBoundingSphere(); return g; }
+  const tapAll = () => (RGL.items || []).concat(FRONT.items);
+  const tapOf = (key) => tapAll().find(it => it.key === key);
+  function tapMarkOff() { for (const m of TAPM.list) { scene.remove(m); m.geometry.dispose(); } TAPM.list.length = 0; }
+  function tapMark(blue, orange) { tapMarkOff(); const M = tapMats(), add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; scene.add(mainOnly(o)); TAPM.list.push(o); };
+    for (const k of orange || []) { const it = tapOf(k); if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
+    const it = blue && tapOf(blue); if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); } }
+  function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } GH.kind = null; shadowDirty = 2; }
+  function ghost(kind, lv) { ghostOff(); const cv = cur; if (!cv || !kind || busy) return; const g = partsFor(cv, kind, lv); partsK(g, 1);
+    const see = (o) => { if (!o.isMesh || !o.material) return; const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone(); m.transparent = true; m.opacity = 0.5; m.depthWrite = false;
+      if (m.color) m.color.lerp(new THREE.Color(0.55, 0.85, 1), 0.45); if (m.emissive) m.emissive.setRGB(0.05, 0.18, 0.3); m.userData = { own: true }; o.material = m; o.castShadow = false; o.renderOrder = 3; };
+    g.traverse(see); for (const e of g.userData.extra || []) e.traverse(see);
+    GH.grp = g; GH.kind = kind; const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; } shadowDirty = 2; }
+  // (a thing's box on the screen in CSS px (x, y, w, h), its depth; null behind the camera)
+  const _pk = new V3();
+  function screenBox(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box;
+    for (let i = 0; i < 8; i++) { _pk.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera); if (_pk.z > 1) return null; const x = (_pk.x + 1) / 2 * W, y = (1 - _pk.y) / 2 * H; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, d: b.getCenter(_pk).distanceTo(camera.position) }; }
+  const _rc = new THREE.Raycaster(), _rv2 = new THREE.Vector2();
+  function pick(x, y) {
+    // (a box the tap is in: the smallest (a small thing before a big one's box); none: the nearest middle of those grown to 44 x 44 px)
+    let best = null, ba = 1e12, bd = 1e9, near = null, nd = 1e9; for (const it of tapAll()) { const r = screenBox(it); if (!r) continue; const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) { const a = r.w * r.h; if (a < ba) { ba = a; best = it; bd = r.d; } }
+      else if (Math.abs(x - cx) <= Math.max(44, r.w) / 2 && Math.abs(y - cy) <= Math.max(44, r.h) / 2) { const e = Math.hypot(x - cx, y - cy); if (e < nd) { nd = e; near = it; } } }
+    if (!best && near) { best = near; bd = screenBox(near).d; }
+    const cv = cur; if (cv) { _rv2.set(x / W * 2 - 1, 1 - y / H * 2); _rc.setFromCamera(_rv2, camera); const hit = _rc.intersectObject(cv.v.grp, true).find(h => h.object.visible);
+      if (hit && hit.distance < bd - 0.3) { const p = hit.point, w = cv.wheels.find(w => cv.v.grp.localToWorld(_pk.set(w.x, w.y, w.z)).distanceTo(p) < w.r * 1.15); return { key: w ? 'car:wheel' : 'car:body', kind: 'car' }; } }
+    return best ? { key: best.key, kind: best.kind, name: best.name, i: best.i, hex: best.hex } : null; }
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
   // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): a pass (REF.gm) then writes the image again into REF.gt
   // with each texel's gap in its alpha (how far over the floor the reflected point is), so the floor's taps read both, filtered
@@ -3798,19 +3964,24 @@ const Garage3D = (function () {
   }
 
   /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
-  const HOME = { yaw: 0.55, pitch: 0.18, dist: 9.2, tx: -0.2, ty: 0.62, tz: 0, fov: 33 };
+  const HOME = { yaw: 0.3, pitch: 0.36, dist: 9.2, tx: -0.1, ty: 0.55, tz: 0, fov: 33 };
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0 };
   // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
   // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
-  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 };
+  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0 };
+  // (a picture narrower than AREF (the phone upright, the garage over the whole screen): as wide a view across as at AREF, more of it up
+  // and down (its own fov wider))
+  // (one wider than AWIDE (lying down): more of it up and down too, the cabinet before the car in it)
+  const AREF = 0.95, AWIDE = 1.25, tallFov = (f) => { const a = W / H, t = Math.tan(f * Math.PI / 360); return a < AREF ? 2 * Math.atan(t * AREF / a) * 180 / Math.PI : a > AWIDE ? 2 * Math.atan(t * Math.sqrt(a / AWIDE) * 1.25) * 180 / Math.PI : f; };
   function camFit(cv, now) { const K = cv && cv.kit; CAM.kw = K ? clamp(Math.max(1, (K.top - 0.27) / 1.66, (Math.max(K.front, -K.rear) + 0.5) / 3.2), 1, 1.9) : 1; CAM.dyw = K ? Math.max(0, K.top - 1.91) * 0.45 : 0;
     if (now) { CAM.k = CAM.kw; CAM.dy = CAM.dyw; } }
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
     { const e = 1 - Math.exp(-dt * 2.5); CAM.k += (CAM.kw - CAM.k) * e; CAM.dy += (CAM.dyw - CAM.dy) * e; }
-    const aspect = W / H, fov = rig.fov, th = Math.tan(fov * Math.PI / 360), need = 3.5 / (th * aspect), fit = Math.max(1, need / HOME.dist);
+    const aspect = W / H, fov = tallFov(rig.fov), th = Math.tan(rig.fov * Math.PI / 360), need = 3.5 / (th * Math.max(aspect, AREF)), fit = Math.max(1, need / HOME.dist);
     const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit * CAM.k;   // (under 0: a show's look up at the car on the lift)
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
+    if (SHIFT.y) camera.setViewOffset(W, H, 0, SHIFT.y, W, H); else if (camera.view) camera.clearViewOffset();   // (the picture raised: the page's buttons cover its foot)
     const ty = rig.ty + CAM.dy + Math.sin(time * 0.31) * 0.012;
     camera.position.set(rig.tx + Math.sin(yaw) * Math.cos(pitch) * d, ty + Math.sin(pitch) * d, rig.tz + Math.cos(yaw) * Math.cos(pitch) * d);
     if (camera.position.y < 0.18) camera.position.y = 0.18;
@@ -3818,7 +3989,7 @@ const Garage3D = (function () {
     camera.lookAt(rig.tx, ty, rig.tz);
   }
   // (where the camera stands for a rig (a view()), as placeCamera puts it, the camera itself not moved: the shows plan their robots for it)
-  function camAt(v, out) { const th = Math.tan(v.fov * Math.PI / 360), fit = Math.max(1, 3.5 / (th * W / H) / HOME.dist), p = clamp(v.pitch, -0.12, 1.2), d = v.dist * fit * CAM.kw;
+  function camAt(v, out) { const th = Math.tan(v.fov * Math.PI / 360), fit = Math.max(1, 3.5 / (th * Math.max(W / H, AREF)) / HOME.dist), p = clamp(v.pitch, -0.12, 1.2), d = v.dist * fit * CAM.kw;
     const c = (out || new V3()).set(v.tx + Math.sin(v.yaw) * Math.cos(p) * d, v.ty + CAM.dyw + Math.sin(p) * d, v.tz + Math.cos(v.yaw) * Math.cos(p) * d); if (c.y < 0.18) c.y = 0.18; return c; }
   // a camera position: round a point of the car (car space; the car at height lf on the lift), rel radians further round it than the
   // view's own yaw (the table used to turn the car by rel; the camera goes round it now, so every view is as it was seen from the car)
@@ -3857,7 +4028,7 @@ const Garage3D = (function () {
       user.yaw -= dx * k(); user.vy = -dx * k() * 60 * 0.5; tm = performance.now();
     });
     // (let go: it swings on as it was flicked; held still first (no moves for a while), it stays)
-    const up = (e) => { if (e.pointerId !== id) return; id = null; user.drag = false; if (performance.now() - tm > 80) user.vy = 0; if (moved < 8 && performance.now() - t0 < 300 && busy) speed = 3; };
+    const up = (e) => { if (e.pointerId !== id) return; id = null; user.drag = false; if (performance.now() - tm > 80) user.vy = 0; if (moved < 8 && performance.now() - t0 < 300) { if (busy) speed = 3; else { const r = el.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); } } };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
     el.addEventListener('wheel', (e) => { e.preventDefault(); if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) user.yaw += e.deltaX * (e.deltaMode ? 16 : 1) * k() * 0.6; }, { passive: false });
   }
@@ -5459,7 +5630,7 @@ const Garage3D = (function () {
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     const rw = Math.max(2, Math.round(W * pr * REF.size)), rh = Math.max(2, Math.round(H * pr * REF.size));
     REF.rt.setSize(rw, rh); if (REF.gt) REF.gt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
-    const sc = H * pr / (2 * Math.tan(HOME.fov * Math.PI / 360));
+    const sc = H * pr / (2 * Math.tan(tallFov(HOME.fov) * Math.PI / 360));
     puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc;
     sizePost(); shadowDirty = 2;
   }
@@ -5505,13 +5676,15 @@ const Garage3D = (function () {
   function liveCars() { live.clear(); tt.traverse(o => { if (o.userData.cv) live.add(o.userData.cv); }); return live; }
 
   // a picture of a car for the menu (its side, three quarters from the front), on the room's floor
-  function thumb(spec, w, h) {
-    const cv = makeCar(Object.assign({ cond: { clean: 1, body: 1, engine: 1 }, upg: {} }, spec)), sc = new THREE.Scene();
+  // a car's picture (a canvas w x h, drawn twice as big): o.yaw the side it is seen from (0.55: the list's), o.back how much further
+  // back it stands (m), o.lit its lamps on
+  function thumbCanvas(spec, w, h, o) {
+    o = o || {}; const cv = makeCar(Object.assign({ cond: { clean: 1, body: 1, engine: 1 }, upg: {} }, spec)), sc = new THREE.Scene();
     sc.add(new THREE.HemisphereLight(0xe8efff, 0x40444c, 0.8)); const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(3, 6, 4); sc.add(d);
     const r = new THREE.DirectionalLight(0x9fc8ff, 0.4); r.position.set(-4, 2, -5); sc.add(r);
-    sc.add(cv.root); cv.v.blob && (cv.v.blob.material.opacity = 0.85);
-    const cam = new THREE.PerspectiveCamera(24, w / h, 0.1, 50), L = Math.max(4, cv.M.len), g0 = GROUND.value;
-    cam.position.set(L * 0.95, L * 0.5, L * 1.55); cam.lookAt(0, 0.45, 0); cam.layers.enable(NOREFL); GROUND.value = 0;   // (its shadows too; on the floor)
+    sc.add(cv.root); cv.v.blob && (cv.v.blob.material.opacity = 0.85); if (o.lit) lamps(cv, 1, 1);
+    const cam = new THREE.PerspectiveCamera(24, w / h, 0.1, 60), L = Math.max(4, cv.M.len), g0 = GROUND.value, ya = o.yaw == null ? Math.atan2(0.95, 1.55) : o.yaw, R = L * 1.818 + (o.back || 0) * 1.82;
+    cam.position.set(Math.sin(ya) * R, L * 0.5 * R / (L * 1.818), Math.cos(ya) * R); cam.lookAt(0, 0.45, 0); cam.layers.enable(NOREFL); GROUND.value = 0;   // (its shadows too; on the floor)
     const rt = new THREE.WebGLRenderTarget(w * 2, h * 2, { format: THREE.RGBAFormat }); const old = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
     renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(sc, cam);
     const px = new Uint8Array(w * 2 * h * 2 * 4); renderer.readRenderTargetPixels(rt, 0, 0, w * 2, h * 2, px);
@@ -5519,12 +5692,19 @@ const Garage3D = (function () {
     const c = document.createElement('canvas'); c.width = w * 2; c.height = h * 2; const g = c.getContext('2d'), img = g.createImageData(w * 2, h * 2);
     for (let y = 0; y < h * 2; y++) img.data.set(px.subarray((h * 2 - 1 - y) * w * 2 * 4, (h * 2 - y) * w * 2 * 4), y * w * 2 * 4);
     g.putImageData(img, 0, 0); rt.dispose(); freeCar(cv);
-    return c.toDataURL('image/png');
+    return c;
   }
+  const thumb = (spec, w, h, o) => thumbCanvas(spec, w, h, o).toDataURL('image/png');
 
   return {
     init, resize, frame, show, swap, upgrade, service, paint, thumb, view: setView, sfx: (k) => { if (SFX[k]) SFX[k](); },
-    set onHud(f) { hud = f || (() => {}); },
+    set onHud(f) { hud = f || (() => {}); }, set onTap(f) { onTap = f || (() => {}); },
+    // (the page: the picture raised by px; what a tap hits; the marks; the parts seen through on the car; a thing's box on the screen;
+    // the things to tap; the cabinet's lamps (lit: the maquette 0..2, 3 none), its locked maquettes, its tags' prices; the lift's plate)
+    shift(px) { SHIFT.y = px || 0; }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
+    box(key) { const it = tapOf(key); return it ? screenBox(it) : null; }, get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex })); },
+    front(o) { if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },
+    lift() { return play(function* () { const cv = cur; if (!cv) return; if (lift > 0.01 || LIFT.on) yield* liftDown(cv, false); else { yield* liftUp(cv, LIFT_H, false); yield* wait(0.4); } }); },
     set fast(k) { fast = k > 0 ? k : 1; },
     get busy() { return busy > 0; }, get ready() { return ready; },
     get idle() { return !busy && !moving() && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
@@ -5572,7 +5752,7 @@ const Garage3D = (function () {
         if (kind === 'chamber') { yield* chamberTo(1); L.push({ k: CH.k, low: Math.min(...CH.bot), bands: CH.bot.slice(), tools: RB.map(A => A.tool) }); yield* wait(0.5); yield* chamberTo(0); L.push({ k: CH.k }); }
         else if (kind === 'tool') { yield* armTool(i, o.tool || ARM.tools[i][0]); L.push({ tool: A.tool, visible: FX.tools.filter(m => m.visible).length }); yield* armRest(i); L.push({ tool: A.tool, parked: fxParked() }); }
         else if (kind === 'go') { yield* armTool(i, o.tool || ARM.tools[i][0]); const q = armFor(i, A.tool, v3(o.tip), o.dir || [0, -1, 0]); yield* armGo(i, q); L.push({ s: Object.assign({}, A.s), tip: A.J.tipA.toArray() }); yield* armRest(i); } }); },
-      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, bodyGrid, carPen,
+      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice() }; },
       carProbe(cv) { cv = cv || cur; cv.v.grp.updateMatrixWorld(true); return probeOf(carMeshes(cv), true); },   // (the car's top, its sides: with its parts and its wheels)
       CH, FREE, RGL, get fxObst() { return FX.obst; }, setChamber, chamberColor,
       // (the service by the arms: where it is (its item, its step, its show time, the cues met, its log, the items done), each arm's tool,
