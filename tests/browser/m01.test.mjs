@@ -1,8 +1,8 @@
 // Special mission 01 · Požar na vrhu (js/missions/m01.js, the kit js/missions/kit.js) in the browser, upright (360 x 640): ?misija=01 on
 // Vršič, the fire engine C (the racing truck's physics, its own body: the cab, the ladder, the basket; the truck's own body hidden) on the
 // hairpins below the house; the panel (HIŠA, OGENJ, VODA), no timing tower; the house beside the road with its flames and smoke; on the
-// autopilot up to the house, slowed down: the crew works (the finger's pad and GASI shown, the driving controls kept: the truck not held,
-// the ladder up toward the house, the camera turned toward it); GASI held: water used; the water on the house: out, done. Back to the title: the truck's own body back, the house, the
+// autopilot up to the house, slowed down: the crew works (the finger's pad shown, the driving controls kept: the truck not held,
+// the ladder up toward the house, the camera turned toward it); a tap on the house: the water on it by itself; the water on the house: out, done. Back to the title: the truck's own body back, the house, the
 // pad gone. No errors on the page.
 //   node tests/browser/m01.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -31,14 +31,16 @@ try {
   s = await st(page);
   const look = await page.evaluate(() => Render.cam.look ? Render.cam.look.k : 0);
   T.check('near the house, slowed down: the crew works, the truck not held, the ladder up, the camera turned toward the house', s.stage === 'fight' && !s.locked && s.lift > 0.2 && !s.run.end && look > 0.15, JSON.stringify({ stage: s.stage, locked: s.locked, lift: s.lift, look }));
-  T.check('the finger\'s pad (over the road) and GASI shown, the driving controls kept', s.pad && s.gasi && s.touch && s.drive, JSON.stringify({ pad: s.pad, gasi: s.gasi, touch: s.touch, drive: s.drive }));
-  // GASI held (a real press): the water goes
-  const b = await page.$eval('#mis-aim .gasi', (e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
-  await page.mouse.move(b.x, b.y); await page.mouse.down();
+  T.check('the finger\'s pad (over the road) shown, no GASI button, the driving controls kept', s.pad && !s.gasi && s.touch && s.drive, JSON.stringify({ pad: s.pad, gasi: s.gasi, touch: s.touch, drive: s.drive }));
+  // a tap on the house (a real click where it is on the screen): the water goes there by itself
+  await page.waitForFunction(() => Math.abs(Render.cam.gy - Missions.run.P.y) < 1.5 && Render.cam.look && Render.cam.look.k > 0.5, null, { timeout: 30000 }).catch(() => {});   // (the camera settled behind the truck after the fast run)
+  await page.waitForTimeout(600);
+  const hp = await page.evaluate(() => { const H = Missions.run.H.center, v = new THREE.Vector3(H.x, H.y, H.z).project(Render.camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight }; });
+  await page.mouse.click(hp.x, hp.y);
   await page.evaluate(() => window.__game.sim(2, false, 0, 0, 0));
-  const w1 = (await st(page)).run.water; await page.mouse.up();
-  T.check('GASI held 2 s: 50 l of water used', Math.abs(1500 - w1 - 50) < 2, String(w1));
-  await page.evaluate(() => { const r = Missions.run; r.f = 1; });   // (the 2 s of water on the house: the whole fire again for the next check)
+  const w1 = (await st(page)).run.water, tg = await page.evaluate(() => !!Missions.run.tgt);
+  T.check('a tap on the house: the water on it by itself (2 s: 50 l)', tg && Math.abs(1500 - w1 - 50) < 2, JSON.stringify({ hp, tg, w1 }));
+  await page.evaluate(() => { const r = Missions.run; r.f = 1; r.tgt = null; });   // (the 2 s of water on the house: the whole fire again for the next check)
   // the water on every flame in turn: done
   const tOut = await page.evaluate(() => { const g = window.__game, r = Missions.run, H = r.H.center, t0 = r.t; r.autoSpray = new THREE.Vector3(H.x, H.y, H.z); for (let i = 0; i < 60 && !r.end; i++) g.sim(0.25, false, 0, 0, 0); return r.t - t0; });
   T.check('the water on the house: out in about 5 s', tOut > 3 && tOut < 7, tOut.toFixed(2));

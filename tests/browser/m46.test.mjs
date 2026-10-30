@@ -38,7 +38,7 @@ try {
       g.sim(0.1, false, P.inSteer, thr, brk);
     } });
   s = await st(page);
-  T.check('every car: everyone aboard; before the lorry: the crew sprays (the pad and GASI over the road, the driving controls kept)', s.run.aboard === 5 && s.pad && s.drive && s.touch, JSON.stringify({ run: s.run, pad: s.pad, drive: s.drive, touch: s.touch }));
+  T.check('every car: everyone aboard; before the lorry: the crew sprays (the pad over the road, the driving controls kept)', s.run.aboard === 5 && s.pad && s.drive && s.touch, JSON.stringify({ run: s.run, pad: s.pad, drive: s.drive, touch: s.touch }));
   const tOut = await page.evaluate(() => { const g = window.__game, r = Missions.run, L = r.lorry, t0 = r.t; r.autoSpray = new THREE.Vector3(L.x, L.y + 2, L.z); for (let i = 0; i < 60 && r.f > 0 && !r.end; i++) g.sim(0.25, false, 0, 0, 0); r.autoSpray = null; return r.t - t0; });
   T.check('the water on the lorry: out in about 5 s', tOut > 3 && tOut < 7, tOut.toFixed(2));
   s = await st(page);

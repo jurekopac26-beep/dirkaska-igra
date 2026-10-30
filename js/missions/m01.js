@@ -2,8 +2,8 @@
    on fire: the fire engine C (an aerial ladder, MisKit.fireTruck, on the racing truck's physics with its own limiter) starts on the
    hairpins K.S0 m below it and must get there before the house burns down. On the way the fire grows (K.GROW a second) and the house
    burns faster the bigger it is. Within K.NEAR m of the house the crew sprays while the truck may still drive (the user's choice, 30. 10.):
-   the ladder rises a little and turns to the house, the finger aims the stream over the road (MisKit.aim, drive: a wall through the
-   house facing the camera, the driving controls kept), GASI held sprays it (K.FLOW l/s from K.WATER l, within K.RANGE m of the truck);
+   the ladder rises a little and turns to the house, a tap on the fire (MisKit.aim, tap: over the road, the driving controls kept) sends
+   the stream there by itself until it is out (K.FLOW l/s from K.WATER l, within K.RANGE m of the truck; less above 25 km/h, MisKit.flowAt);
    the camera turns toward the house (MisKit.look, the more the slower the truck). The water anywhere on the house (within K.R m of a
    flame or its middle) puts the whole fire out in K.OUTT s; not on it, the fire grows back (K.BACK). The house at 0 %, the water gone
    while it still burns or the time up: failed. Driven past the finish (150 m past the house): failed. */
@@ -36,7 +36,7 @@
       const p = KIT.at(T, sH, side * (w + 4.5));
       r.H = KIT.house(r, { x: p.x, y: Math.max(p.y, p.ty) - 0.1, z: p.z }, { ry: p.ry });
       r.truck = KIT.fireTruck(r); r.fire = KIT.fire(r, K.SPOTS); r.jet = KIT.jet(r);
-      r.aim = KIT.aim(r, { plane: 'v', drive: true, focus: typeof THREE !== 'undefined' ? new THREE.Vector3(r.H.center.x, r.H.center.y, r.H.center.z) : null });
+      r.aim = KIT.aim(r, { plane: 'v', drive: true, tap: true, button: false, focus: typeof THREE !== 'undefined' ? new THREE.Vector3(r.H.center.x, r.H.center.y, r.H.center.z) : null });
       this.flames(r); this.show(r);
     },
     flames(r) { r.H.fl.forEach((p, k) => r.fire.spot(k, p[0], p[1], p[2], r.fl[k] > K.OUT ? 3 + 5 * r.fl[k] : 0)); },
@@ -52,18 +52,21 @@
       tk.yaw += ((up ? tk.yawTo(H.x, H.z) : 0) - tk.yaw) * Math.min(1, dt * 2);
       let spray = false, pt = null;
       if (r.stage === 'fight') {
-        if (r.aim.o.focus && r.aim.o.focus.set) r.aim.o.focus.set(H.x, H.y, H.z);
-        r.aim.step();
-        pt = r.autoSpray || r.aim.point;
-        const reach = pt && Math.hypot(pt.x - P.x, pt.z - P.z) < K.RANGE;
-        spray = (r.aim.spray || !!r.autoSpray) && r.water > 0 && reach;
-        if (spray) r.water = Math.max(0, r.water - K.FLOW * dt);
-        // the water on the house (anywhere within K.R of a flame or its middle): the whole fire down, out in K.OUTT s of water
+        // a tap on the fire (the house or a flame): the water goes there by itself until it is out (the user's choice, 30. 10.); a tap
+        // elsewhere stops it. The water by the truck's speed (MisKit.flowAt), within K.RANGE m of the truck
+        const A = r.aim; A.step();
+        if (A.taps !== r.tapN) { r.tapN = A.taps; const pts = [H].concat(r.H.fl.map(p => ({ x: p[0], y: p[1], z: p[2] }))), k = A.pick(pts, 80); r.tgt = k >= 0 ? pts[k] : null; }
+        if (r.autoSpray) r.tgt = r.autoSpray;
+        pt = r.tgt; A.ringAt = pt;
+        const reach = pt && Math.hypot(pt.x - P.x, pt.z - P.z) < K.RANGE, flow = KIT.flowAt(v);
+        spray = !!pt && r.water > 0 && reach && flow > 0;
+        if (spray) r.water = Math.max(0, r.water - K.FLOW * flow * dt);
+        // the water on the house (within K.R of a flame or its middle): the whole fire down, out in K.OUTT s of the full stream
         const hit = spray && (Math.hypot(H.x - pt.x, H.y - pt.y, H.z - pt.z) < K.R || r.H.fl.some(p => Math.hypot(p[0] - pt.x, p[1] - pt.y, p[2] - pt.z) < K.R));
-        r.f = hit ? Math.max(0, r.f - dt / K.OUTT) : Math.min(1, r.f + K.BACK * dt);
+        r.f = hit ? Math.max(0, r.f - flow * dt / K.OUTT) : Math.min(1, r.f + K.BACK * dt);
         if (r.f < K.OUT) r.f = 0;
-        r.say(r.water <= 0 ? 'Voda je pošla.' : (r.aim.spray || r.autoSpray) && !reach ? 'Predaleč: curek ne seže do tja.' : 'Povleci s prstom, da usmeriš curek na ogenj, in drži GASI.');
-        if (r.f <= 0) { r.stage = 'done'; r.aim.on(false); r.win(); }
+        r.say(r.water <= 0 ? 'Voda je pošla.' : !pt ? 'Tapni ogenj: curek gre tja sam.' : !reach ? 'Predaleč: curek ne seže do tja.' : flow < 1 ? 'Prehitro: nad 25 km/h teče manj vode, od 50 km/h nič.' : 'Curek gasi ogenj.');
+        if (r.f <= 0) { r.stage = 'done'; r.tgt = null; r.aim.on(false); r.win(); }
         else if (r.water <= 0) r.fail(tr('Zmanjkalo je vode.'));
       } else if (r.stage === 'drive') {
         r.f = Math.min(1, r.f + K.GROW * dt);

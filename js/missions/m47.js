@@ -1,8 +1,9 @@
 /* Special mission 47 · Gozdni požar · Great Alpine Road, Avstralija (js/missions.js; the kit: js/missions/kit.js). The wind drives a
    bushfire down the slope toward the road; past the road is a farm. The fire's edge is a row of K.N cells along K.LEN m of road on one
    side (each its distance from the road's edge and its strength), creeping toward the road with the wind (K.CREEP m/s at full strength),
-   growing back slowly where the water is not. The fire engine (MisKit.fireTruck) sprays while it drives slowly (under K.VMAX m/s): the
-   finger aims over the road (MisKit.aim, drive: the driving controls stay), GASI held sprays within K.RANGE m of the nozzle (K.FLOW l/s);
+   growing back slowly where the water is not. The fire engine (MisKit.fireTruck) sprays while it drives (the user's choice, 30. 10.):
+   a tap on a burning cell (MisKit.aim, tap: over the road, the driving controls kept) sends the water there by itself until it is out,
+   within K.RANGE m of the truck (K.FLOW l/s; all of it up to 25 km/h, less above, none from 50 km/h: MisKit.flowAt);
    a cell within K.R m of where the water lands goes down by K.HIT a second, out under K.OUT. Out of water: the pond on the farm (stopped
    beside it, it fills at K.FILL l/s). A cell reaching the road while still burning: the fire jumps it, failed; every cell out: done.
    Three kangaroos hop along the farm's paddock. The panel: the water, how far the fire is from the house (the nearest cell, over the road to the house), the wind, the share put out. */
@@ -11,7 +12,7 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  const K = { S0: 1700, LEN: 900, N: 30, D0: [14, 30], F0: [0.55, 1], CREEP: 0.035, BACK: 0.01, VMAX: 8.4, RANGE: 38, R: 7, HIT: 0.55, OUT: 0.05,
+  const K = { S0: 1700, LEN: 900, N: 30, D0: [14, 30], F0: [0.55, 1], CREEP: 0.035, BACK: 0.01, RANGE: 38, R: 7, HIT: 0.55, OUT: 0.05,
     WATER: 1500, FLOW: 30, FILL: 160, POND: 520, PZONE: [-25, 25], HOUSE: 560, HOFF: 48, WIND: 35, LOOK: 0.5 };
 
   Missions.add({
@@ -48,7 +49,7 @@
         r.roos.push({ m, s: r.sP - 60 + k * 14, o: -side * (T.wS(r.sP) + 26 + k * 6), ph: k * 0.37 });
       }
       r.truck = KIT.fireTruck(r); r.fire = KIT.fire(r, K.N, { per: 9, spread: 3 }); r.jet = KIT.jet(r);
-      r.aim = KIT.aim(r, { plane: 'g', drive: true, focus: typeof THREE !== 'undefined' ? new THREE.Vector3() : null });
+      r.aim = KIT.aim(r, { plane: 'g', drive: true, tap: true, button: false, focus: typeof THREE !== 'undefined' ? new THREE.Vector3() : null });
       if (typeof Render !== 'undefined' && Render.setAtmos) Render.setAtmos({ season: 'summer', tod: 'dusk' }, true);
       this.flames(r); this.show(r);
     },
@@ -66,26 +67,31 @@
       // the pond: stopped beside it, the tank fills
       const dp = s - r.sP, atPond = dp >= K.PZONE[0] && dp <= K.PZONE[1];
       if (atPond && v < 1.5 && r.water < K.WATER) { r.water = Math.min(K.WATER, r.water + K.FILL * dt); r.filling = true; } else r.filling = false;
-      // the water: the finger's aim, within reach of the nozzle, slowly enough
-      const A = r.aim; if (A.o.focus && A.o.focus.set) A.o.focus.set(P.x, P.y || 0, P.z); A.step();
-      const pt = r.autoSpray || A.point, noz = r.truck.nozzle ? r.truck.nozzle() : null;
-      const reach = pt && Math.hypot(pt.x - P.x, pt.z - P.z) < K.RANGE;   // (from the truck: its drawn nozzle may lag a step behind)
-      const spray = (A.spray || !!r.autoSpray) && r.water > 0 && v < K.VMAX && reach;
+      // the water: a tap on a burning cell sends it there by itself until that cell is out (the user's choice, 30. 10.), within K.RANGE m of
+      // the truck (from the truck: its drawn nozzle may lag a step behind), all of it up to 25 km/h, less above, none from 50 km/h
+      const A = r.aim; A.step();
+      if (A.taps !== r.tapN) { r.tapN = A.taps; const live = r.cells.filter(c => c.f > 0), k = A.pick(live, 70); r.tgt = k >= 0 ? live[k] : null; }
+      if (r.tgt && r.tgt.f <= 0) r.tgt = null;
+      const pt = r.autoSpray || (r.tgt ? { x: r.tgt.x, y: r.tgt.y + 1, z: r.tgt.z } : null), noz = r.truck.nozzle ? r.truck.nozzle() : null;
+      A.ringAt = pt;
+      const reach = !pt || Math.hypot(pt.x - P.x, pt.z - P.z) < K.RANGE, flow = KIT.flowAt(v);
+      const spray = !!pt && r.water > 0 && flow > 0 && reach;
       if (spray) {
-        r.water = Math.max(0, r.water - K.FLOW * dt);
-        for (const c of r.cells) if (c.f > 0 && Math.hypot(c.x - pt.x, c.z - pt.z) < K.R) { c.f -= K.HIT * dt; if (c.f < K.OUT) c.f = 0; }
+        r.water = Math.max(0, r.water - K.FLOW * flow * dt);
+        for (const c of r.cells) if (c.f > 0 && Math.hypot(c.x - pt.x, c.z - pt.z) < K.R) { c.f -= K.HIT * flow * dt; if (c.f < K.OUT) c.f = 0; }
       }
       // the ladder turned toward the water, a little up
       // the camera turned toward the nearest burning cell within reach, the more the slower the truck
       let nc = null, nd = K.RANGE; for (const c of r.cells) if (c.f > 0) { const q = Math.hypot(c.x - P.x, c.z - P.z); if (q < nd) { nd = q; nc = c; } }
-      KIT.look(r, nc, K.LOOK * Math.max(0, 1 - v / K.VMAX), dt);
+      KIT.look(r, nc, K.LOOK * Math.max(0, 1 - v / 8.4), dt);
       const tk = r.truck; if (pt) { tk.yaw += (tk.yawTo(pt.x, pt.z) - tk.yaw) * Math.min(1, dt * 3); tk.lift += (0.18 - tk.lift) * Math.min(1, dt); }
       if (r.jet) r.jet.set(noz, pt, spray);
       if (out === K.N && !r.end) { r.stage = 'done'; A.on(false); r.win(); }
       if (r.stage === 'drive' && !A.shown && s > r.s1 - 250) A.on(true);   // (the pad and GASI: once the fire is in sight)
       const inFire = s > r.s1 - 40 && s < r.s1 + K.LEN + 40;
       r.say(r.filling ? 'Polnjenje vode.' : r.water <= 0 ? (s > r.sP ? 'Vode ni več: vrni se do jezerca na kmetiji.' : 'Vode ni več: pelji do jezerca na kmetiji.')
-        : (A.spray || r.autoSpray) && v >= K.VMAX ? 'Prehitro za gašenje: upočasni pod 30 km/h.' : (A.spray || r.autoSpray) && !reach ? 'Predaleč: curek ne seže do tja.'
+        : pt && flow <= 0 ? 'Prehitro: od 50 km/h voda ne teče, pod 25 km/h teče vsa.' : pt && !reach ? 'Predaleč: curek ne seže do tja.' : pt && flow < 1 ? 'Prehitro: nad 25 km/h teče manj vode, od 50 km/h nič.'
+        : (inFire || s > r.s1) && !pt ? 'Tapni ogenj ob cesti: curek gre tja sam.'
         : inFire || s > r.s1 ? this.hint : tr('Do ognja: {0} km', dec((Math.max(0, r.s1 - s) / 1000).toFixed(1))));
       r.near = near;
       for (const q of r.roos) { q.s += 3.2 * dt; const p = KIT.at(T, q.s, q.o), h = Math.abs(Math.sin((r.t + q.ph) * 4.2)) * 0.9; q.m.position.set(p.x, p.y + h, p.z); q.m.rotation.y = p.ry; if (q.s > r.sP + 300) q.s -= 360; }   // (the kangaroos hop along the paddock, away from the fire)

@@ -45,7 +45,7 @@ near(F.player); r.f = 1; r.autoSpray = { x: r.H.fl[2][0], y: r.H.fl[2][1], z: r.
 let tOut = 0; for (let i = 0; i < 60 * 8 && !r.end; i++) { r.step(1 / 60); tOut += 1 / 60; }
 check('the water on the house: the whole fire out in K.OUTT s, done', r.end === 'win' && r.f === 0 && Math.abs(tOut - K.OUTT) < 0.3, `${r.end} ${tOut.toFixed(2)}`);
 // failed: the water, the house, past the house
-F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); { const H = r.H.center; F.player.q.s = sH - 30; F.player.x = H.x - 25; F.player.z = H.z; } r.step(1 / 60); r.water = 1; r.autoSpray = { x: r.H.center.x, y: r.H.center.y, z: r.H.center.z }; r.step(0.5);
+F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); { const H = r.H.center; F.player.q.s = sH - 30; F.player.x = H.x - 25; F.player.z = H.z; F.player.vx = 0; } r.step(1 / 60); r.water = 1; r.autoSpray = { x: r.H.center.x, y: r.H.center.y, z: r.H.center.z }; r.step(0.5);
 check('the water gone, the fire still on: failed', r.end === 'fail' && /vode/.test(r.why), r.why);
 F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); r.house = 0.001; r.f = 1; r.step(0.5);
 check('the house at 0 %: failed', r.end === 'fail' && /zgorela/.test(r.why), r.why);

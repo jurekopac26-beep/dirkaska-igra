@@ -4,7 +4,7 @@
    the hazard lamps of the trapped cars, the green exit signs on the walls and the fire's glow shine through it (dots over the overlay). The fire engine
    (MisKit.fireTruck) goes in on its breathing sets (K.AIR s of air while in the smoke): stopped beside each trapped car (within K.CAR m,
    K.LOAD s) its people are taken on board; within K.NEAR m before the lorry the crew sprays while the truck may still drive (the user's
-   choice, 30. 10.: the finger, GASI; the camera turned toward the lorry, MisKit.look), the water on it puts its whole fire out in
+   choice, 30. 10.: a tap on the fire's glow sends the water there, less above 25 km/h; the camera turned toward the lorry, MisKit.look), the water on it puts its whole fire out in
    K.OUTT s; then out of the far portal: done, if everyone is aboard. The air gone in the smoke, the lorry passed while burning, out of the
    tunnel with people left behind, the time up: failed. The tunnel's roof is not drawn while the truck is inside (the camera is above). */
 (function () {
@@ -76,7 +76,7 @@
       const fx = Math.cos(pl.ry), fz = -Math.sin(pl.ry);   // (along the road)
       r.flP = [-4, -1.5, 1, 3.4, -2.8].map((a, k) => [pl.x + fx * a, pl.ty + (k === 3 ? 2.6 : 3.4), pl.z + fz * a]);
       r.truck = KIT.fireTruck(r); r.fire = KIT.fire(r, K.SPOTS); r.jet = KIT.jet(r); r.smoke = smoke(r);
-      r.aim = KIT.aim(r, { plane: 'v', drive: true, focus: typeof THREE !== 'undefined' ? new THREE.Vector3(pl.x, pl.ty + 2.5, pl.z) : null });
+      r.aim = KIT.aim(r, { plane: 'v', drive: true, tap: true, button: false, focus: typeof THREE !== 'undefined' ? new THREE.Vector3(pl.x, pl.ty + 2.5, pl.z) : null });
       // the dots in the smoke: the cars' hazard lamps, the exit signs every 25 m on the walls (green, low)
       r.dots = [];
       for (const c of r.cars) r.dots.push({ x: c.x, y: c.y + 0.9, z: c.z, k: 'haz', c });
@@ -102,15 +102,19 @@
       if (fight !== r.aim.shown) r.aim.on(fight);
       KIT.look(r, fight ? r.lorry : null, K.LOOK * Math.max(0, 1 - v / K.VLOOK), dt);
       const tk = r.truck; tk.lift += ((fight ? 0.12 : 0) - tk.lift) * Math.min(1, dt * 1.5); tk.yaw += ((fight ? tk.yawTo(r.lorry.x, r.lorry.z) : 0) - tk.yaw) * Math.min(1, dt * 2);
-      let spray = false, pt = null;
+      let spray = false, pt = null, reach = true, flow = KIT.flowAt(v);
       if (fight) {
-        r.aim.step(); pt = r.autoSpray || r.aim.point;
-        const reach = pt && Math.hypot(pt.x - P.x, pt.z - P.z) < K.RANGE;
-        spray = (r.aim.spray || !!r.autoSpray) && r.water > 0 && reach;
-        if (spray) r.water = Math.max(0, r.water - K.FLOW * dt);
+        // a tap on the fire's glow (the lorry or a flame): the water goes there by itself until it is out (the user's choice, 30. 10.)
+        const A = r.aim; A.step();
+        if (A.taps !== r.tapN) { r.tapN = A.taps; const L0 = r.lorry, pts = [{ x: L0.x, y: L0.y + 2, z: L0.z }].concat(r.flP.map(p => ({ x: p[0], y: p[1], z: p[2] }))), k = A.pick(pts, 80); r.tgt = k >= 0 ? pts[k] : null; }
+        if (r.autoSpray) r.tgt = r.autoSpray;
+        pt = r.tgt; A.ringAt = pt;
+        reach = !pt || Math.hypot(pt.x - P.x, pt.z - P.z) < K.RANGE;
+        spray = !!pt && r.water > 0 && reach && flow > 0;
+        if (spray) r.water = Math.max(0, r.water - K.FLOW * flow * dt);
         const L = r.lorry, hit = spray && (Math.hypot(L.x - pt.x, L.z - pt.z) < K.R + 3 || r.flP.some(p => Math.hypot(p[0] - pt.x, p[1] - pt.y, p[2] - pt.z) < K.R));
-        r.f = hit ? Math.max(0, r.f - dt / K.OUTT) : Math.min(1, r.f + K.BACK * dt);
-        if (r.f < K.OUT) r.f = 0;
+        r.f = hit ? Math.max(0, r.f - flow * dt / K.OUTT) : Math.min(1, r.f + K.BACK * dt);
+        if (r.f < K.OUT) { r.f = 0; r.tgt = null; }
         if (r.water <= 0 && r.f > 0) r.fail(tr('Zmanjkalo je vode.'));
       }
       r.fl.fill(r.f);
@@ -118,7 +122,7 @@
       if (r.f > 0 && dl > -4) r.fail(tr('Zapeljal si v ogenj.'));
       if (s > r.s1 + 8 && !r.end) { if (r.aboard < r.total) r.fail(tr('V predoru so ostali ljudje.')); else if (r.f <= 0) { r.stage = 'done'; r.win(); } }
       const loading = r.cars.find(c => c.n > 0 && c.t > 0);
-      r.say(loading ? 'Nalaganje ljudi.' : fight && r.water <= 0 ? 'Voda je pošla.' : fight ? ((r.aim.spray || r.autoSpray) && pt && Math.hypot(pt.x - P.x, pt.z - P.z) >= K.RANGE ? 'Predaleč: curek ne seže do tja.' : 'Povleci s prstom, da usmeriš curek na ogenj, in drži GASI.')
+      r.say(loading ? 'Nalaganje ljudi.' : fight && r.water <= 0 ? 'Voda je pošla.' : fight ? (!pt ? 'Tapni ogenj: curek gre tja sam.' : !reach ? 'Predaleč: curek ne seže do tja.' : flow < 1 ? 'Prehitro: nad 25 km/h teče manj vode, od 50 km/h nič.' : 'Curek gasi ogenj.')
         : s < r.s0 - 30 ? tr('Do predora: {0} km', dec((Math.max(0, r.s0 - s) / 1000).toFixed(1))) : r.f > 0 && r.aboard < r.total ? this.hint
         : r.f > 0 ? 'Pelji do gorečega tovornjaka in ga pogasi.' : 'Ogenj je pogašen: pelji ven iz predora.');
       // the roof out of sight with the truck inside; the smoke's overlay

@@ -8,10 +8,13 @@
      MisKit.fire(run, max, { per, spread }): flames (one Points draw: the spots set with spot(i, x, y, z, size); size 0 is out; per flames a
        spot, spread over spread x its size), smoke over them (one more).
      MisKit.jet(run): the water's stream from a point to a point (one Points draw) and its splash; set(from, to, on).
-     MisKit.aim(run, o): the finger's aim on the screen (drag anywhere over the game) and the GASI button held; a ring where the water goes;
-       o.plane 'v' (a wall facing the camera through o.focus) or 'g' (the ground at o.focus's height). on(true) shows it, the driving
+     MisKit.aim(run, o): the finger on the screen (drag anywhere over the game) and the GASI button held (o.button); o.tap: taps only
+       (the mission picks its target with pick(points, px), the ring on ringAt); a ring where the water goes;
+       o.plane 'v' (a wall facing the camera through o.focus), 'g' (the ground at o.focus's height) or 'n' (through o.focus, normal o.normal).
+       on(true) shows it, the driving
        controls hidden (o.drive: kept, the pad over the upper part of the screen only, GASI over the pedals: aimed while driving); point: the world point aimed at; spray: GASI held.
      MisKit.look(run, point, k, dt): the camera behind the car turned toward point by k (eased; Render.cam.look), off at the run's end.
+     MisKit.flowAt(v): the share of the water at the truck's speed v (m/s): all up to 25 km/h, none from 50 km/h.
      MisKit.hold(car, on): the parked car held still (locked, no reverse) every step while the crew works; hold(car, false) lets it go.
    All of it is the run's own (run.add): out of the scene and freed when the run ends. Loadable without a browser (the tests: no THREE,
    the logic only). */
@@ -67,6 +70,23 @@ const MisKit = (function () {
       const y1 = y * Math.cos(rr) - z * Math.sin(rr), z1 = y * Math.sin(rr) + z * Math.cos(rr), x2 = x * Math.cos(pp) - y1 * Math.sin(pp), y2 = x * Math.sin(pp) + y1 * Math.cos(pp);   // (the view's order YZX: the roll, the pitch, then the heading)
       const ch = Math.cos(P.h), sh = Math.sin(P.h);
       return { x: P.x + x2 * ch - z1 * sh, y: y0 + y2, z: P.z + x2 * sh + z1 * ch };
+    };
+    // the ladder's angle and length for its basket at a world point (the finger's: mission 49): { yaw, lift (rad), ext (0..1) }, from the
+    // physics (tipAt), a first guess along the line to the point corrected three times
+    T.solve = (p) => {
+      const save = [T.yaw, T.lift, T.ext], ch = Math.cos(P.h), sh = Math.sin(P.h);
+      T.yaw = T.yawTo(p.x, p.z);
+      const bx = P.x + LAD.piv[0] * ch, bz = P.z + LAD.piv[0] * sh, dh = Math.hypot(p.x - bx, p.z - bz), base = T.tipAt;
+      T.lift = 0; T.ext = 0; const t0 = base(), dy = p.y - (t0.y - 0.6 - 0.15);
+      let a = Math.atan2(dy, Math.max(0.1, dh - 0.7)), L = Math.hypot(dy, dh - 0.7);
+      for (let k = 0; k < 3; k++) {
+        T.lift = clamp(a, 0, 1.4); T.ext = clamp((L - LAD.L0) / (LAD.step * (LAD.sec - 1)), 0, 1);
+        const t = base(), eh = Math.hypot(p.x - bx, p.z - bz) - Math.hypot(t.x - bx, t.z - bz), ev = p.y - t.y;
+        L += eh * Math.cos(a) + ev * Math.sin(a); a += (ev * Math.cos(a) - eh * Math.sin(a)) / Math.max(4, L);
+      }
+      const out = { yaw: T.yaw, lift: clamp(a, 0, 1.4), ext: clamp((L - LAD.L0) / (LAD.step * (LAD.sec - 1)), 0, 1) };
+      [T.yaw, T.lift, T.ext] = save;
+      return out;
     };
     // the turntable's angle that points the ladder at a world point (x, z): from the turntable itself (behind the truck's middle), from the physics
     T.yawTo = (x, z) => { const ch = Math.cos(P.h), sh = Math.sin(P.h), dx = x - (P.x + LAD.piv[0] * ch), dz = z - (P.z + LAD.piv[0] * sh); return Math.atan2(-(-dx * sh + dz * ch), dx * ch + dz * sh); };
@@ -203,21 +223,23 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
 
   /* ---------------- the finger's aim and the GASI button ---------------- */
   function aim(run, o) {
-    const A = { point: null, spray: false, shown: false, sx: 0.5, sy: 0.42, o: Object.assign({ plane: 'v', focus: null, label: 'GASI' }, o), on() {}, step() {} };
+    const A = { point: null, spray: false, shown: false, sx: 0.5, sy: 0.42, taps: 0, tapAt: null, ringAt: null, o: Object.assign({ plane: 'v', focus: null, normal: null, label: 'GASI', button: true, tap: false }, o), on() {}, step() {}, pick: () => -1 };
     if (typeof document === 'undefined' || !has3()) return A;
     const hud = document.getElementById('hud'); if (!hud) return A;
-    const pad = document.createElement('div'); pad.id = 'mis-aim'; pad.innerHTML = '<i class="ring"></i><button class="gasi" type="button">' + (typeof Lang !== 'undefined' ? Lang.tr(A.o.label) : A.o.label) + '</button>';
+    const pad = document.createElement('div'); pad.id = 'mis-aim'; pad.innerHTML = '<i class="ring"></i>' + (A.o.button ? '<button class="gasi" type="button">' + (typeof Lang !== 'undefined' ? Lang.tr(A.o.label) : A.o.label) + '</button>' : '');
     document.body.appendChild(pad);
     const ring = pad.querySelector('.ring'), btn = pad.querySelector('.gasi');
     let drag = null;
     const at = (e) => { A.sx = clamp(e.clientX / innerWidth, 0, 1); A.sy = clamp(e.clientY / innerHeight, 0, 1); };
-    pad.addEventListener('pointerdown', (e) => { if (e.target === btn) return; drag = e.pointerId; A.touched = true; at(e); e.preventDefault(); });
+    pad.addEventListener('pointerdown', (e) => { if (btn && e.target === btn) return; drag = e.pointerId; A.touched = true; at(e); if (A.o.tap) { A.taps++; A.tapAt = { sx: A.sx, sy: A.sy }; } e.preventDefault(); });
     pad.addEventListener('pointermove', (e) => { if (drag === e.pointerId) { at(e); e.preventDefault(); } });
     const up = (e) => { if (drag === e.pointerId) drag = null; };
     pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
-    btn.addEventListener('pointerdown', (e) => { A.spray = true; btn.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
-    const off = () => { A.spray = false; btn.classList.remove('on'); };
-    btn.addEventListener('pointerup', off); btn.addEventListener('pointercancel', off); btn.addEventListener('pointerleave', off);
+    const off = () => { A.spray = false; if (btn) btn.classList.remove('on'); };
+    if (btn) {
+      btn.addEventListener('pointerdown', (e) => { A.spray = true; btn.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+      btn.addEventListener('pointerup', off); btn.addEventListener('pointercancel', off); btn.addEventListener('pointerleave', off);
+    }
     const touch = document.getElementById('touch');
     A.on = (show) => {
       show = !!show; if (show === A.shown) return; A.shown = show; pad.classList.toggle('on', show); pad.classList.toggle('drive', !!A.o.drive);
@@ -225,23 +247,36 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
       if (!show) off(); else A.touched = false;
       if (show && !A.o.drive && typeof Input !== 'undefined' && Input.reset) Input.reset();
     };
-    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), pl = new THREE.Plane(), hit = new THREE.Vector3(), n = new THREE.Vector3();
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), pl = new THREE.Plane(), hit = new THREE.Vector3(), n = new THREE.Vector3(), q = new THREE.Vector3();
+    const ringTo = (p) => { if (!p) { ring.classList.remove('on'); return; } q.set(p.x, p.y, p.z).project(Render.camera); ring.style.left = ((q.x + 1) / 2 * 100).toFixed(2) + '%'; ring.style.top = ((1 - q.y) / 2 * 100).toFixed(2) + '%'; ring.classList.toggle('on', q.z < 1); };
     A.step = () => {
       if (!A.shown) return;
-      const C = Render.camera, f = A.o.focus; if (!C || !f) return;
+      const C = Render.camera, f = A.o.focus; if (!C) return;
+      if (A.o.tap) { ringTo(A.ringAt); return; }   // (tapped: the ring on the fire the water goes to, the mission's ringAt)
+      if (!f) return;
       if (!A.touched && A.o.plane === 'v' && A.toFocus) A.toFocus();   // (until the finger first moves it: on the fire, as the camera settles)
       ndc.set(A.sx * 2 - 1, -(A.sy * 2 - 1)); ray.setFromCamera(ndc, C);
-      if (A.o.plane === 'g') n.set(0, 1, 0); else { C.getWorldDirection(n); n.y = 0; n.normalize().negate(); }
+      if (A.o.plane === 'g') n.set(0, 1, 0); else if (A.o.plane === 'n' && A.o.normal) n.copy(A.o.normal); else { C.getWorldDirection(n); n.y = 0; n.normalize().negate(); }
       pl.setFromNormalAndCoplanarPoint(n, f);
       if (ray.ray.intersectPlane(pl, hit)) { A.point = hit.clone(); }
-      // the ring where the water goes
-      if (A.point) { const p = A.point.clone().project(C); ring.style.left = ((p.x + 1) / 2 * 100).toFixed(2) + '%'; ring.style.top = ((1 - p.y) / 2 * 100).toFixed(2) + '%'; ring.classList.toggle('on', p.z < 1); }
+      ringTo(A.point);   // (where the water or the basket goes)
+    };
+    // the tap's target: of the points (each [x, y, z] or { x, y, z }), the index of the one nearest the last tap on the screen, within px (else -1)
+    A.pick = (pts, px) => {
+      const C = Render.camera; if (!C || !A.tapAt) return -1;
+      let best = -1, bd = (px || 70) / innerHeight;
+      pts.forEach((p, k) => { if (!p) return; q.set(p.x != null ? p.x : p[0], p.y != null ? p.y : p[1], p.z != null ? p.z : p[2]).project(C); if (q.z > 1) return;
+        const d = Math.hypot(((q.x + 1) / 2 - A.tapAt.sx) * innerWidth / innerHeight, (1 - q.y) / 2 - A.tapAt.sy); if (d < bd) { bd = d; best = k; } });
+      return best;
     };
     // (the aim's start: on the focus, before the finger moves)
     A.toFocus = () => { const C = Render.camera, f = A.o.focus; if (!C || !f) return; const p = f.clone().project(C); A.sx = clamp((p.x + 1) / 2, 0, 1); A.sy = clamp((1 - p.y) / 2, 0, 1); };
     run.add(new THREE.Group()); run.props[run.props.length - 1].userData.misUndo = () => { pad.remove(); if (touch) touch.classList.remove('mis-hide'); document.body.classList.remove('mis-aiming'); };
     return A;
   }
+
+  // the water by the truck's speed (the user's choice, 30. 10.): all of it up to 25 km/h, less and less above, none from 50 km/h
+  const flowAt = (v) => clamp((50 / 3.6 - v) / (25 / 3.6), 0, 1);
 
   /* ---------------- places along the road, a house ---------------- */
   // a point off the road's centre line at s (off > 0 on the side of the normal), the ground's height there, the road's heading
@@ -298,6 +333,6 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
   // the parked truck held still while the crew works (the run's step, after the race's)
   function hold(c, on) { if (on === false) { c.locked = false; return; } c.locked = true; c.vx = 0; c.vz = 0; c.w = 0; c.inThr = 0; c.inBrk = 0; }
 
-  return { truckModel, fireTruck, fire, jet, aim, hold, look, at, house, prism, merged, parts, LAD };
+  return { truckModel, fireTruck, fire, jet, aim, flowAt, hold, look, at, house, prism, merged, parts, LAD };
 })();
 if (typeof module !== 'undefined') module.exports = MisKit;
