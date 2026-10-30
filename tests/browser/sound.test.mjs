@@ -1,4 +1,4 @@
-// The crowd's sound and a tunnel's ring (Monaco, the player on autopilot, the sound on): every test circuit's world knows where its crowds are (the real tracks have none)
+// The crowd's sound and a tunnel's ring (Monaco, the player on autopilot, the sound on): every circuit's world knows where its crowds are
 // (World.build: crowdPts, from the spectators and the grandstands); the crowd louder near them; in the tunnel under the hotel the engine
 // rings off its walls (a short reverb), outside it not. The engines: each car its own type (the rally car a turbo four with anti-lag: pops
 // and the blow-off off the throttle, a clack at each gear), the rivals' engines on the nearest cars with the Doppler shift, the formula a V10.
@@ -15,10 +15,9 @@ const srv = await serve();
 const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'monaco', sound: 1 }, { width: 844, height: 390 });
-  // 1. the crowds of every test circuit's world (not an open road: its fans have their own sound); the real tracks have no spectators (the user's
-  // decision, 30. 10. 2026: World's fansOn), so no crowd sound either
+  // 1. the crowds of every circuit's world (not an open road: its fans have their own sound)
   const pts = await page.evaluate(() => ['jezero', 'gozd', 'spa', 'rbring', 'suzuka', 'pikes', 'monaco'].map(id => { const W = Render.buildWorld(new Core.Track(Core.TRACKS.find(d => d.id === id)), 1); return [id, W.crowdPts ? W.crowdPts.length / 3 : 0]; }));   // (Monaco's last: the race below is there)
-  T.check('every test circuit\'s world: where its crowds are (dozens of places); none on an open road or a real track', pts.every(([id, n]) => ['pikes', 'spa', 'rbring', 'suzuka'].includes(id) ? n === 0 : n >= 30), pts.map(p => p.join(' ')).join(', '));
+  T.check('every circuit\'s world: where its crowds are (dozens of places), none on an open road', pts.every(([id, n]) => id === 'pikes' ? n === 0 : n >= 30), pts.map(p => p.join(' ')).join(', '));
 
   // 2. a race at Monaco with the sound on: the crowd's level, the tunnel's ring inside the tunnel only
   await page.evaluate(() => Sfx.resume());

@@ -162,19 +162,51 @@ const Tex = (function () {
         f('rgba(0,0,0,0.18)', X + 5, y0 + 11 - dy, 6, 1);   // (the chin's shadow)
       }
     }
-    const t = mk(c, true); t.crowdPic = true; return t;
+    const t = mk(c, true); t.crowdPic = true; t.crowdArgs = [cols, seed]; return t;
   }
-  // the grandstand tiers with nobody on them (the real tracks have no spectators: World's fansOn): crowdPic's 8 rows of 32 seats, every
-  // one empty, its seat colour kept along a stand's block (made once, shared)
-  let seatsC = null;
-  function seats() {
-    if (seatsC) return seatsC;
-    const W = 512, H = 256, c = cv(W, H), x = c.getContext('2d'), f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); }, SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4a'];
+  // the seated crowd drawn finer (the real tracks: their stands the only people left, World's crowdStands): crowdPic's layout (8 rows of 32
+  // people, the stands' shader maps a row on a tier) at twice the pixels, 32 x 64 a person: a face lit from above (the jaw in shade), hair, caps
+  // with a brim, sun hats, sunglasses, shirts in two tones, stripes or a darker collar, a phone held up, a scarf, flags and arms in the air now
+  // and then, the empty seats rarer; cols, seed: the stand's own palette (crowdPic's), so each stand keeps its colours
+  const crowdHiC = new Map();
+  function crowdHi(cols, seed) {
+    const key = cols.join() + '|' + seed; if (crowdHiC.has(key)) return crowdHiC.get(key);
+    const W = 1024, H = 512, c = cv(W, H), x = c.getContext('2d'), r = Core.rng(seed + 7), pick = (L) => L[Math.floor(r() * L.length)], f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
+    const SKIN = ['#f3cba6', '#e8b690', '#d29c74', '#b07a52', '#8a5a3a', '#5e3b26'], HAIR = ['#1c1410', '#2e1f16', '#4a2f1c', '#6b4524', '#a07a44', '#d8c29a', '#8a8580', '#b5462a'];
+    const LEG = ['#2b3346', '#1c1d22', '#4a5570', '#6e604c', '#39414f', '#59616f', '#c9c2b0'], SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4c'];
+    const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), cl = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return 'rgb(' + cl(n >> 16) + ',' + cl((n >> 8) & 255) + ',' + cl(n & 255) + ')'; };
     f('#3a3e47', 0, 0, W, H);
-    for (let row = 0; row < 8; row++) { const y0 = row * 32;
-      f('#23262d', 0, y0, W, 3); f('#4a4f59', 0, y0 + 27, W, 5);
-      for (let k = 0; k < 32; k++) { const X = k * 16, sc = SEAT[Math.floor(k / 8) % SEAT.length]; f(sc, X + 2, y0 + 10, 12, 12); f(sc, X + 2, y0 + 22, 12, 5); f('rgba(0,0,0,0.3)', X + 2, y0 + 21, 12, 1); } }
-    seatsC = mk(c, true); seatsC.crowdPic = true; return seatsC;
+    for (let row = 0; row < 8; row++) {
+      const y0 = row * 64;
+      f('#23262d', 0, y0, W, 6); f('#4a4f59', 0, y0 + 54, W, 10); f('#5a606b', 0, y0 + 54, W, 2);   // the step behind, the seat's front edge
+      for (let k = 0; k < 32; k++) {
+        const X = k * 32 + Math.round((r() - 0.5) * 4), t = r();
+        if (t < 0.035) { const sc = pick(SEAT); f(sc, X + 4, y0 + 20, 24, 24); f(sc, X + 4, y0 + 44, 24, 10); f('rgba(0,0,0,0.3)', X + 4, y0 + 42, 24, 2); f('rgba(255,255,255,0.15)', X + 4, y0 + 20, 24, 2); continue; }
+        const shirt = pick(cols), skin = SKIN[Math.floor(r() * r() * SKIN.length)], leg = pick(LEG), dy = Math.round(r() * 4), hr = r(), a = r(), st = r(), sleeve = r() < 0.55 ? shirt : skin, lean = Math.round((r() - 0.5) * 3);
+        const sh = (k2) => shade(shirt, k2);
+        f(leg, X + 6, y0 + 46, 8, 13); f(leg, X + 18, y0 + 46, 8, 13); f(shade(leg, 0.7), X + 6, y0 + 46, 20, 2); f('#17171b', X + 6, y0 + 58, 8, 4); f('#17171b', X + 18, y0 + 58, 8, 4);   // the legs, the shoes
+        const ty = y0 + 26 - dy;
+        f(shirt, X + 6 + lean, ty, 20, 22 + dy); f(shirt, X + 4 + lean, ty + 2, 24, 18 + dy);   // the shirt (rounded shoulders)
+        f(sh(1.18), X + 6 + lean, ty, 20, 3); f(sh(0.78), X + 4 + lean, ty + 16 + dy, 24, 4);   // the light on the shoulders, the shade at the waist
+        if (st < 0.18) { const s2 = pick(cols); for (let q = 0; q < 3; q++) f(s2, X + 4 + lean, ty + 5 + q * 6, 24, 2); }   // stripes
+        else if (st < 0.34) { const s2 = pick(cols); f(s2, X + 4 + lean, ty + 2, 5, 14); f(s2, X + 23 + lean, ty + 2, 5, 14); }   // a jersey: the sleeves in another colour
+        else if (st < 0.46) f(sh(0.6), X + 12 + lean, ty, 8, 3);   // a darker collar
+        if (a < 0.06) { f(skin, X + 2 + lean, y0 + 2 - dy, 4, 28); f(skin, X + 26 + lean, y0 + 2 - dy, 4, 28); f(skin, X + 1 + lean, y0 - dy, 6, 4); f(skin, X + 25 + lean, y0 - dy, 6, 4); }   // arms up
+        else if (a < 0.09) { const sf = pick(cols); f(sf, X - 4, y0 + 2 - dy, 40, 6); f('rgba(255,255,255,0.4)', X - 4, y0 + 4 - dy, 40, 2); f(skin, X + 2 + lean, y0 + 8 - dy, 4, 22); f(skin, X + 26 + lean, y0 + 8 - dy, 4, 22); }   // a scarf held up
+        else if (a < 0.13) { f(sleeve, X + 2 + lean, ty + 4, 4, 14); f(skin, X + 24 + lean, ty - 6, 4, 14); f('#15171c', X + 22 + lean, ty - 14, 8, 10); f('#5d7fa8', X + 23 + lean, ty - 13, 6, 7); }   // a phone held up, filming
+        else { f(sleeve, X + 2 + lean, ty + 4, 4, 14 + dy); f(sleeve, X + 26 + lean, ty + 4, 4, 14 + dy); f(skin, X + 8, y0 + 44, 6, 4); f(skin, X + 18, y0 + 44, 6, 4); }   // the arms down, the hands on the lap
+        const hx = X + 8 + lean, hy = y0 + 6 - dy;
+        f(skin, hx + 4, hy + 16, 8, 6);   // the neck
+        f(skin, hx, hy, 16, 16); f(skin, hx + 2, hy - 2, 12, 20);   // the head
+        f(shade(skin, 1.08), hx + 2, hy, 12, 5); f(shade(skin, 0.8), hx + 2, hy + 14, 12, 4);   // the forehead in the light, the jaw in shade
+        if (r() < 0.16) f('#121317', hx + 2, hy + 7, 12, 3);   // sunglasses
+        if (hr < 0.2) { const cc = pick(cols); f(cc, hx, hy - 4, 16, 7); f(shade(cc, 0.7), hx - 2, hy + 2, 20, 2); }   // a cap with its brim
+        else if (hr < 0.27) { const cc = pick(['#e9e2cf', '#d8c9a3', '#f2f2ee']); f(cc, hx - 3, hy - 4, 22, 3); f(cc, hx + 1, hy - 8, 14, 5); }   // a sun hat
+        else if (hr < 0.93) { const hc = pick(HAIR); f(hc, hx, hy - 2, 16, 6); f(hc, hx + 2, hy - 4, 12, 2); if (hr > 0.72) { f(hc, hx - 2, hy + 4, 4, 16); f(hc, hx + 14, hy + 4, 4, 16); } }   // hair (some long)
+        f('rgba(0,0,0,0.2)', hx + 2, hy + 20, 12, 2);   // (the chin's shadow)
+      }
+    }
+    const t = mk(c, true); t.crowdPic = true; t.crowdHi = true; crowdHiC.set(key, t); return t;
   }
 
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
@@ -559,6 +591,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, seats, SPONSORS };
+  return { all, number, crowdPic, crowdHi, SPONSORS };
 })();
 
