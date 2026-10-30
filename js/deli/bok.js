@@ -29,7 +29,7 @@
   // arm meets the body (out from the middle) }. Each option: K.mirror (its glass on the back, the arm; a thin box: the glass's backing, its
   // rim round the glass) and the housing round it: a skin of rings out along z (the profile's back just in front of the glass)
   function ogledala(K, n, m) {
-    const P = K.paint, weave = (a, b) => (k, e) => (e + k) % 2 ? a : b, CFm = [0.15, 0.155, 0.17], DCFm = [0.21, 0.215, 0.23];   // (the weave's light facets: stronger than the wing's, the mirrors small)
+    const P = K.paint, LD = K.decal(K.body.secs), weave = (a, b) => (k, e) => (e + k) % 2 ? a : b, CFm = [0.15, 0.155, 0.17], DCFm = [0.21, 0.215, 0.23];   // (the weave's light facets: stronger than the wing's, the mirrors small)
     // the options: w, h, d (sizes against the stock one), dx, dy, dz (moved), shape (round: a cap; tear: a sport mirror, pointed forward;
     // flat: a race mirror, thin and wide), col (the housing: a colour or fn(k, e)), cap (its front's own colour: caps over a black base),
     // rim (round the glass), stalk (a plate under it to the door: its colour), led (an indicator along its front: amber, the puddle lamp)
@@ -54,7 +54,7 @@
     if (!O) return;
     for (const sd of [-1, 1]) {
       const part = sd < 0 ? 'mirrorL' : 'mirrorR', o = { part }, w = m.w * (O.w || 1), h = m.h * (O.h || 1), d = m.d * (O.d || 1);
-      const x = m.x + (O.dx || 0), y = m.y + (O.dy || 0), zm = m.z + (O.dz || 0), z = sd * zm, bx = x - w / 2;   // (bx: the glass's plane, its back)
+      const x = m.x + (m.fwd || 0) + (O.dx || 0), y = m.y + (m.up || 0) + (O.dy || 0), zm = m.z + (O.dz || 0), z = sd * zm, bx = x - w / 2;   // (bx: the glass's plane, its back)
       const z0 = sd * (m.z0 != null ? m.z0 : m.z - m.d / 2 - 0.05);
       K.mirror(bx + 0.011, y, z, { col: O.rim || BLK, w: 0.022, h, d, crack: 1, arm: O.stalk || BLK, z0 });   // (the glass, its rim, the arm; its fold about the housing's inner rear corner)
       // the housing's profile (along x from the back, up from the middle): k points round, the back's two by the glass
@@ -78,10 +78,12 @@
         faceOut(K, [on(1, 0.12), on(2, 0.12), on(2, 0.72), on(1, 0.72)], [1, 0.72, 0.2], [1, -0.6, 0], o);
         if (O.led === 2) faceOut(K, [[x - w * 0.15, y - h / 2 - g - 0.001, z - d * 0.1], [x + w * 0.15, y - h / 2 - g - 0.001, z - d * 0.1], [x + w * 0.15, y - h / 2 - g - 0.001, z + d * 0.1], [x - w * 0.15, y - h / 2 - g - 0.001, z + d * 0.1]], WHT, [0, -1, 0], o);
       }
-      if (O.stalk) {   // (a plate from its underside down to the door's top, in front of the glass)
-        const zs = sd * (Math.abs(z) - d * 0.22), yb = y - h / 2 - g;
-        K.endplate([[x - w * 0.1, yb + 0.006], [x + w * 0.35, yb + 0.006], [x + w * 0.5, yb - 0.075], [x - w * 0.15, yb - 0.075]], zs, 0.012, O.stalk, o);
-      }
+      // its foot (every option, as the race mirrors'): the sail, a plate over the door glass's front corner (the triangle by the A-pillar) in
+      // the paint, the door's; a plate from it up to the housing's underside (the race ones' in their colour, else the paint: one with the car)
+      const W = (px, t, l) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];
+      if (m.sail) K.plate(m.sail.map(([px, t]) => W(px, t, 0.006)), 0.008, P, { host: sd < 0 ? 'doorL' : 'doorR' });
+      { const yb = y - h / 2 - g + 0.004, zh = sd * (zm - d * 0.2), f0 = W(x - w * 0.2, 0.06, 0.012), f1 = W(x + w * 0.25, 0.06, 0.012);
+        K.plate([[x - w * 0.2, yb, zh], [x + w * 0.3, yb, zh], [f1[0], f1[1], f1[2]], [f0[0], f1[1], f0[2]]], 0.012, O.stalk || P, o); }
     }
   }
   DELI.add('ogledala', ogledala);

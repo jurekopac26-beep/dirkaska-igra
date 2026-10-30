@@ -54,7 +54,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (js/deli/streha.js)
 
       // (js/deli/bok.js)
-      ogledala: { x: 0.7, y: 0.96, z: 0.8, w: 0.1, h: 0.085, d: 0.13 },   // (the stock mirror: its middle, its housing; the arm into the body at z 0.685)
+      ogledala: { x: 0.7, y: 0.96, z: 0.8, w: 0.1, h: 0.085, d: 0.13, fwd: 0.08, up: 0.02,   // (the stock mirror: its middle, its housing; the garage's 8 cm on, 2 cm up,
+        sail: [[0.85, 0], [0.57, 0], [0.64, 0.25], [0.8, 0.12]] },                                         // on a foot from the sail over the door glass's front corner)
       vrata: { x: [-0.35, 0.79], y: [0.33, 0.87], handle: [-0.24, 0.79, 0.739, 0.13, 0.026],   // (inside the shut lines, sill to belt; the handle; the door's glass
         win: [[-0.32, 0.07], [0.76, 0.07], [0.17, 0.9], [-0.32, 0.9]] },                    // from the B-pillar to the A-pillar's line, in the window band)
       zavore: { s: 1 },
