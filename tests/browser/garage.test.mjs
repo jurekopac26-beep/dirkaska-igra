@@ -1,6 +1,6 @@
 // The garage (garaza.html): the workshop over the whole screen (the page's buttons over it: Izberi progo and the coins at the top, the
 // car's name, the cars before and after it, back and Izberi at the bottom), the guide on the first visit; the regal behind the car (the
-// names on its prisms in British English, its cost), the cabinet before it (the maquettes in their aero kits, the signs, the SERVICE
+// names on its prisms in British English, its cost), the cabinet before it (the three cars' maquettes, the signs, the SERVICE
 // button), the colour circles, the lift's plate; ring 9 over the car with its two hanging arms (no robot nor stand on the floor), the
 // chamber's glass; the camera (left and right only); a tap on a part: its menu (four tabs with their prices, four tiles, the chosen one
 // blue and the others orange in the picture too, the new part seen through on the car, at the bottom when at the top it would cover
@@ -30,7 +30,7 @@ try {
     const g = await page.evaluate(async () => { const el = document.getElementById('g-guide'), out = { on: el.classList.contains('on'), steps: [] };
       for (let i = 0; i < 8 && el.classList.contains('on'); i++) { out.steps.push({ ring: el.querySelectorAll('.ring').length, t: el.querySelector('.bub b').textContent }); el.querySelector('[data-guide]').click(); }
       out.after = el.classList.contains('on'); out.saved = JSON.parse(localStorage.getItem('apex-garage')).guide; return out; });
-    T.check('the guide on the first visit: 5 steps (the regal, the aero kits, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 5 && g.steps.every((s, i) => s.ring === (i === 4 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
+    T.check('the guide on the first visit: 5 steps (the regal, the cabinet's cars, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 5 && g.steps.every((s, i) => s.ring === (i === 4 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
   }
   await page.evaluate(() => { __garage.hold = true; });
   // the animations to their end (the clock stepped half a second at a time while a show plays or waits); returns the seconds it took
@@ -90,8 +90,7 @@ try {
     T.check('the regal\'s cost: 3 meshes (the frame and parts, the atlas, the shadows) under 60k vertices, the old wall one more; the first view\'s main pass under 90 draws and 150k triangles (' + RG.main + ', ' + RG.tris + ')',
       RG.meshes === 3 && RG.verts < 60000 && RG.wall > 0 && RG.wall < 2000 && RG.main < 90 && RG.tris < 150000, JSON.stringify({ meshes: RG.meshes, verts: RG.verts, wall: RG.wall, main: RG.main, tris: RG.tris }));
     // the cabinet before the car and the colour circles: every thing to tap on the screen in the first view, clear of the page's buttons,
-    // at least 40 x 40 px to a tap (the small ones' places grown round their middles: pick); the maquettes drawn (the car in its kits),
-    // YOUR CAR's ring lit, the RACE one locked
+    // at least 40 x 40 px to a tap (the small ones' places grown round their middles: pick)
     const FR = await page.evaluate(() => { const G = Garage3D, st = document.getElementById('g-stage').getBoundingClientRect(), low = document.getElementById('g-low').getBoundingClientRect(), head = document.querySelector('.g-head').getBoundingClientRect();
       const keys = ['mq0', 'mq1', 'mq2', 'service', 'lift', ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => 'col' + i), 'rgl:TURBO', 'rgl:SNOW', 'rgl:GT WING'], out = {};
       for (const k of keys) { const b = G.box(k), cx = b.x + b.w / 2, cy = b.y + b.h / 2, h = G.pick(cx, cy); out[k] = { on: cx > 0 && cx < st.width && cy > head.bottom - st.top && cy < low.top - st.top, hit: h && h.key === k, w: Math.round(b.w), h: Math.round(b.h) }; }
@@ -187,8 +186,8 @@ try {
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
   // tiles (its option chosen: blue), at the bottom (the turbo is high on the regal: at the top the menu would cover it); in the picture
   // the turbo blue, the new parts seen through on the car (the engine's level would change); another tab, a dearer turbo bought: paid,
-  // the engine's level up, its show; ↺ SERIJSKO back to the stock one (free); the tyres on offer; the aero kits on the maquettes (RACE
-  // locked till SPORT is fitted); a tap on nothing closes the menu (its marks gone)
+  // the engine's level up, its show; ↺ SERIJSKO back to the stock one (free); the tyres on offer; the aero kits' menu (RACE locked till
+  // SPORT is fitted); a tap on nothing closes the menu (its marks gone); the cabinet's three cars (a maquette tapped: its car in)
   {
     await page.evaluate(() => __garage.pickCar('muscle')); await run();
     // (the stock tyres (Touring) are one of the options: fitted (✓), not for sale again, no ↺ SERIJSKO)
@@ -222,16 +221,26 @@ try {
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r2 = await run();
     const u3 = await ui();
     T.check('the track slicks (on offer: 1.600 € -> 1.300 €) bought: the tyres\' level 3 (DIRKALNE, from PREMIUM), the car up on the lift (>= 0.4 m) and down, the table still', d5.tabs[3][2] && d5.tabs[3][1] === '1.300–6.000 €' && d5.tiles[0].old && u2.S.money - u3.S.money === 1300 && u3.info.upg.gume === 3 && r2.lift >= 0.4 && u3.info.lift === 0 && r2.table === 0, JSON.stringify({ paid: u2.S.money - u3.S.money, upg: u3.info.upg, r2, d5 }));
-    // the aero kits on the maquettes: RACE locked; SPORT bought (its lamps lit over its maquette), then RACE open
-    const mR = await tap('mq2'), dR = await menuDom();
-    T.check('the RACE maquette: the aero kit\'s menu on its RACING tab, its tiles locked (nothing to buy), the menu at the top (the maquette low on the screen)', mR && mR.el === 'aero' && dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy) && !dR.bot, JSON.stringify({ mR, dR }));
-    await tap('mq1'); await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); await run();
-    const u4 = await ui(), fr = await page.evaluate(() => Garage3D._dbg.front);
-    T.check('the SPORT kit bought (2.600 €): the aero level from it, the SPORT sign\'s lamps lit, the RACE maquette unlocked', u3.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2 && fr.lit === 1 && !fr.lock[2], JSON.stringify({ paid: u3.S.money - u4.S.money, upg: u4.info.upg, fr }));
-    await tap('mq2'); const dR2 = await menuDom();
+    // the aero kits' menu (its place to tap is for later): RACE locked; SPORT bought, then RACE open
+    await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); const dR = await menuDom();
+    T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
+    await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
+    const u4 = await ui();
+    T.check('the SPORT kit bought (2.600 €): the aero level from it', u3.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: u3.S.money - u4.S.money, upg: u4.info.upg }));
+    await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); await page.waitForTimeout(100); const dR2 = await menuDom();
     await page.evaluate(() => { const b = Garage3D.box('mq0'); __garage.onTap(5, b.y - 120); });
     const shut = await page.evaluate(() => ({ menu: !!__garage.menu, marks: Garage3D._dbg.marks, on: document.getElementById('g-menu').classList.contains('on'), low: !document.getElementById('g-low').classList.contains('hide') }));
     T.check('RACE open now (its tile can be bought); a tap on the floor closes the menu (no marks, the bottom buttons back)', dR2.can && !shut.menu && shut.marks === 0 && !shut.on && shut.low, JSON.stringify({ dR2, shut }));
+    // the cabinet's three cars: YOUR CAR the muscle car (the lamps over it), FOR SALE and RENT A CAR the next two cars not owned (FOR SALE
+    // locked, its price on its tag; the rent on RENT A CAR's), their names under them, all three drawn; a tap on FOR SALE's maquette:
+    // that car drives onto the table (the lamps over FOR SALE); on YOUR CAR's: the muscle car back
+    const cab = await page.evaluate(() => { const S = __garage.S, O = __garage.ORDER, i0 = O.indexOf('muscle'), free = []; for (let k = 1; k < O.length && free.length < 2; k++) { const id = O[(i0 + k) % O.length]; if (!S.cars[id].own) free.push(id); }
+      __garage.advance(0.5); return { free, names: [S.car, ...free].map(id => Core.MODELS.find(m => m.id === id).name), fr: Garage3D._dbg.front }; });
+    T.check('the cabinet: YOUR CAR the muscle car (the lamps over it), RENT A CAR and FOR SALE the next two not owned (their names under them, FOR SALE locked with its price, the rent 450 €), all three drawn',
+      cab.free.length === 2 && cab.fr.names.join() === [cab.names[0], cab.names[2], cab.names[1]].join() && cab.fr.lit === 0 && cab.fr.lock[2] && /450/.test(cab.fr.price[0]) && /€/.test(cab.fr.price[1]) && cab.fr.shown.every(Boolean), JSON.stringify(cab));
+    await tap('mq2'); await run(); const c2 = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, fr: Garage3D._dbg.front }));
+    await tap('mq0'); await run(); const c3 = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, fr: Garage3D._dbg.front }));
+    T.check('FOR SALE\'s maquette tapped: that car drives onto the table (the lamps over FOR SALE, YOUR CAR still the muscle car); YOUR CAR\'s: the muscle car back', c2.car === cab.free[0] && c2.shown === cab.free[0] && c2.fr.lit === 2 && c2.fr.names[0] === cab.names[0] && c3.car === 'muscle' && c3.shown === 'muscle' && c3.fr.lit === 0, JSON.stringify({ c2, c3 }));
   }
 
   // 5. the service by the SERVICE button (the rally car: dirty, scratched, its engine worn): its prices by the wear and the car's worth,

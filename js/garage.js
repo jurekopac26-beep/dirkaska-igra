@@ -38,7 +38,7 @@
   const PROMO = 0.8;
   // (the game's four upgrades from the parts fitted: the tyres' category; the power, the grip of the aero kit and the wing, the braking
   // they add (%) past each level's threshold)
-  const LV = { motor: [8, 16, 25], aero: [3, 6, 9], zavore: [8, 16, 25] };   // (the aero kits STREET, SPORT, RACE: levels 1, 2, 3, as their maquettes)
+  const LV = { motor: [8, 16, 25], aero: [3, 6, 9], zavore: [8, 16, 25] };   // (the aero kits STREET, SPORT, RACE: levels 1, 2, 3)
   // (the regal's parts by their plates: the element, the option's English name; the maquettes' kits)
   const REGAL = { SNOW: ['gume', 'Snow'], 'TRACK SLICK': ['gume', 'Track Slick'], MOUNTAIN: ['gume', 'Mountain'],
     SPORT: ['auspuh', 'Sport'], CARBON: ['auspuh', 'Carbon'], RACE: ['auspuh', 'Racing'], TWIN: ['auspuh', 'Dual'], TITANIUM: ['auspuh', 'Titanium'], STRAIGHT: ['auspuh', 'Straight'],
@@ -46,7 +46,6 @@
     'AIR FILTER': ['filter_zraka', 'Air filter'], 'ECU CHIP': ['cip', 'Chip'], TURBO: ['turbo', 'Turbo'], 'LIGHT BATTERY': ['akumulator', 'Light battery'], SPRINGS: ['vzmeti', 'Springs'],
     DAMPERS: ['amortizerji', 'Coilovers'], 'ANTI-ROLL BARS': ['stabilizatorji', 'Anti-roll bars'], 'SPORT PADS': ['zavore', 'Sport pads'], HORN: ['hupa', 'Two-tone'], 'TYRE SMOKE': ['dim_gum', 'Blue'],
     DUCKTAIL: ['krilo', 'Ducktail'], 'SHORT WING': ['krilo', 'Short wing'], 'LOW WING': ['krilo', 'Low wing'], 'GT WING': ['krilo', 'GT wing'], 'DOUBLE WING': ['krilo', 'Double wing'] };
-  const KITS = ['Street', 'Sport', 'Race'];
   const findOpt = (el, en) => { const E = EL[el]; for (let t = 0; t < 4; t++) { const j = E.c[t][1].findIndex(o => o[0][1] === en); if (j >= 0) return [t, j]; } return null; };
   // (the stock part among the options (the tyres': Touring, docs/deli.md); what is on a car: its own part, else that one)
   const STOCK = { gume: findOpt('gume', 'Touring') }, has = (c, el) => c.parts[el] || STOCK[el] || null, isStock = (el, v) => !!v && !!STOCK[el] && STOCK[el][0] === v[0] && STOCK[el][1] === v[1];
@@ -97,8 +96,7 @@
   const worth = (id) => Math.max(20000, PRICE[id] || 48000);
   const srvPrice = (s, c, id) => { const w = 1 - c.cond[s.id]; if (w < 0.02) return 0; const f = Math.pow(worth(id) / 68000, s.e); return round((s.a + s.b * Math.pow(w, s.p)) * f); };
   const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
-  // (the aero kit the car has: 0 none or another, 1 STREET, 2 SPORT, 3 RACE; RACE is locked till SPORT or more is fitted)
-  const kitOf = (c) => { const p = c.parts.aero; if (!p) return 0; const n = opt('aero', p[0], p[1])[0][1]; return KITS.indexOf(n) + 1; };
+  // (the aero kits' RACE tab is locked till the SPORT kit or more is fitted)
   const raceLocked = (c) => { const p = c.parts.aero; return !p || (p[0] < 1 || (p[0] === 1 && p[1] < 2)); };
 
   /* ---------------- the parts' pictures in the menu's tiles (small drawings in the colours of the option's category) ---------------- */
@@ -128,6 +126,18 @@
       '<svg viewBox="0 0 44 44"><path d="M29 6a9 9 0 0 0-8 12L7 32v5h5l14-14a9 9 0 0 0 12-8l-5 2-4-4 2-5z" fill="#2f9e5b"/></svg>'][i],
   };
 
+  /* ---------------- the cabinet's three cars: YOUR CAR the player's (the one on the table when it is theirs, else the last that was),
+     RENT A CAR and FOR SALE two others they can have (not theirs, not only in the full game): the next ones after theirs in the order
+     (FOR SALE the first, RENT A CAR the second); none left: no maquette ---------------- */
+  const RENT = 450;   // (a rented car: a race's rent (odlocitve 30. 10.: no service after it))
+  let mineId = null;
+  function cabinet() {
+    if (C().own) mineId = S.car; if (!mineId || !S.cars[mineId] || !S.cars[mineId].own) mineId = ORDER.find(id => S.cars[id].own) || null;
+    const i0 = Math.max(0, ORDER.indexOf(mineId)), free = [];
+    for (let k = 1; k < ORDER.length && free.length < 2; k++) { const id = ORDER[(i0 + k) % ORDER.length]; if (!S.cars[id].own && !locked(id)) free.push(id); }
+    return [mineId, free[1] || null, free[0] || null];
+  }
+
   /* ---------------- the page's buttons: the money, the car's name, the cars before and after it, the go button ---------------- */
   let thumbs = {}, thumbQ = [];
   function head() {
@@ -146,8 +156,10 @@
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
     queueThumbs([pv, nx]);
     $('g-track').disabled = false;
-    // the cabinet: the lamps over the maquette of the kit the car has (YOUR CAR's for none), RACE locked till SPORT, the tags' prices
-    G.front({ lit: Math.max(0, kitOf(c) - 1), lock: [false, false, raceLocked(c)], price: [eur(450), eur(opt('aero', 2, 0)[1])] });
+    // the cabinet: the three cars' maquettes, the lamps over the one on the table (none: another car), the one for sale locked, the
+    // tags' prices (the rent, the car's price)
+    const cab = cabinet(), on = cab.indexOf(S.car);
+    G.front({ cars: cab.map(id => id && spec(id)), lit: on >= 0 ? on : 3, lock: [false, false, !!cab[2]], price: [cab[1] ? eur(RENT) : '', cab[2] ? eur(PRICE[cab[2]] || 0) : ''] });
   }
   function render() { head(); if (menu) drawMenu(); }
 
@@ -168,8 +180,8 @@
   let menu = null;   // { el, tab, sel: [t, j], key: the tapped thing, color (the paint's) }
   const tabRange = (el, t) => { const o = EL[el].c[t][1].map((q, j) => price(el, t, j)); return Lang.cur === 'en' ? eur(Math.min(...o)) + '–' + eur(Math.max(...o)) : num(Math.min(...o)) + '–' + num(Math.max(...o)) + '\u00a0€'; };
   // (the things on the screen of an element's menu: the regal's parts with its options, the maquettes for the aero kit, the circles)
-  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && REGAL[it.name] && REGAL[it.name][0] === el) || (el === 'aero' && it.kind === 'mq') || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
-  function keyOfOpt(el, t, j) { if (el === 'aero') { const k = KITS.indexOf(opt(el, t, j)[0][1]); return k >= 0 ? 'mq' + k : null; }
+  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && REGAL[it.name] && REGAL[it.name][0] === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
+  function keyOfOpt(el, t, j) {
     for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; } return null; }
   function openMenu(m) {
     const c = C(); if (!c.own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : tr('Najprej kupi avto.'), true); return; }
@@ -276,7 +288,7 @@
     S.cars[id].own = true; save(); render(); G.sfx('ping');
     chip(tr('NOV AVTO V GARAŽI'), esc(M().name));
   }
-  // a tap on the picture: a part of the regal (its element's menu, its option chosen), a maquette (the aero kit), the SERVICE button,
+  // a tap on the picture: a part of the regal (its element's menu, its option chosen), a maquette (its car onto the table), the SERVICE button,
   // a colour circle (the paint in that colour), the lift's plate (the car up or down), the car (its wheels: the tyres; its body: the
   // paint in its colour); elsewhere: the menu closed
   function onTap(x, y) {
@@ -284,8 +296,8 @@
     if (!h) { closeMenu(); return; }
     if (h.kind === 'lift') { closeMenu(); G.lift(); return; }
     let m = null;
-    if (h.kind === 'mq') m = { el: 'aero', key: h.key, sel: findOpt('aero', KITS[h.i]) };
-    else if (h.kind === 'service') m = { el: 'servis', key: h.key };
+    if (h.kind === 'mq') { const id = cabinet()[h.i]; closeMenu(); if (id) pickCar(id); return; }   // (a maquette: its car onto the table)
+    if (h.kind === 'service') m = { el: 'servis', key: h.key };
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null };
     else if (h.key === 'car:body') m = { el: 'barva', key: null, color: C().color, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
@@ -314,10 +326,10 @@
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
 
   /* ---------------- the guide on the first visit: what can be tapped, one thing at a time ---------------- */
-  const GUIDE_AT = ['rgl:TURBO', 'mq1', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: a thing in the picture, or the page's elements, each its own ring)
+  const GUIDE_AT = ['rgl:TURBO', 'mq0,mq1,mq2', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: things in the picture (one ring round them), or the page's elements, each its own ring)
   const GUIDE = [
     ['Deli na regalu', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.'],
-    ['Aero paketi', 'Makete na omarici so aero paketi tvojega avta. Tapni maketo, da ga izbereš.'],
+    ['Avti na omarici', 'Na omarici so tvoj avto, avto za najem in avto naprodaj. Tapni maketo in avto se pripelje na ploščo.'],
     ['Servis', 'Rdeči gumb SERVICE: pranje, karoserija, motor in olje.'],
     ['Barva', 'Tapni barvni krog: avto prebarvamo v stekleni komori.'],
     ['Drugi avti', 'Spodnja gumba pripeljeta prejšnji ali naslednji avto.'],
@@ -326,9 +338,10 @@
   function guide(i) {
     const el = $('g-guide'); gStep = i; if (i >= GUIDE.length) { el.className = 'g-guide'; el.innerHTML = ''; S.guide = 1; save(); return; }
     const k = GUIDE_AT[i], [t, p] = GUIDE[i], app = $('g-app').getBoundingClientRect(), pad = 10;
-    const rs = k[0] === '#' ? [...document.querySelectorAll(k)].map(e => e.getBoundingClientRect()).filter(b => b.width).map(b => ({ x: b.left - app.left, y: b.top - app.top, w: b.width, h: b.height })) : [G.box(k)].filter(Boolean);
+    const uni = (a, b) => { const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y); return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y }; }, bs = k[0] === '#' ? [] : k.split(',').map(q => G.box(q)).filter(Boolean);
+    const rs = k[0] === '#' ? [...document.querySelectorAll(k)].map(e => e.getBoundingClientRect()).filter(b => b.width).map(b => ({ x: b.left - app.left, y: b.top - app.top, w: b.width, h: b.height })) : bs.length ? [bs.reduce(uni)] : [];
     const ring = rs.map(r => '<i class="ring" style="left:' + (r.x - pad) + 'px;top:' + (r.y - pad) + 'px;width:' + (Math.max(44, r.w) + 2 * pad) + 'px;height:' + (Math.max(44, r.h) + 2 * pad) + 'px"></i>').join('');
-    const r = rs.length ? rs.reduce((a, b) => { const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y); return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y }; }) : null;
+    const r = rs.length ? rs.reduce(uni) : null;
     const below = !r || r.y < app.height * 0.5, by = below ? (r ? r.y + Math.max(44, r.h) + pad + 14 : 140) : null;
     // (upright: under or over the ring, the screen's width; lying down: beside it, on the other half, by the ring's height (over it, the
     // ring low on the screen))

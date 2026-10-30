@@ -3677,16 +3677,16 @@ const Garage3D = (function () {
 
   /* ---------------- the front: the cabinet before the car, the colour circles, the lift's head ----------------
      THE CABINET (the concept's, under the page's buttons in the first view): a low navy cabinet across the room before the turntable, its
-     top a light grey deck. On it three round plinths with the car's maquettes in its aero kits (STREET, SPORT, RACE: each the car
-     itself drawn small with that kit, standing toward the camera), a sign over each on two posts, tilted back toward the camera (YOUR
-     CAR green; RENT A CAR blue with a red 450 € tag; FOR SALE blue with a red tag, its price), three lamps over each sign (lit over the
-     maquette whose kit the car has: FRONT.lit), the letters as reflective film; a ring of green light in the YOUR CAR plinth (the
-     player's car: its maquette's lamps on, it shakes a little as a running engine, a wisp from its exhaust), a padlock before a locked
-     one; on the right the big red SERVICE button (a white ring round it, a white wrench in relief on its dome). Its words in English
+     top a light grey deck. On it three round plinths with three cars' maquettes (the player's car, one to rent, one for sale: each drawn
+     small, standing toward the camera; a tap brings it onto the turntable), a sign over each on two posts, tilted back toward the camera
+     (YOUR CAR green; RENT A CAR blue with a red tag, the rent; FOR SALE blue with a wide red tag, the car's price), three lamps over each
+     sign (lit over the maquette of the car on the turntable: FRONT.lit), the letters as reflective film; a ring of green light in the
+     YOUR CAR plinth (the player's car: its maquette's lamps on, it shakes a little as a running engine, a wisp from its exhaust), a
+     padlock before the one for sale (till it is bought); on the right the big red SERVICE button (a white ring round it, a white wrench in relief on its dome). Its words in English
      (generic). THE COLOUR CIRCLES: the game's eight colours as discs in the floor on an arc before the turntable, each in a white ring.
      THE LIFT'S HEAD: a small orange plate with an arrow on the lift's carriage (the version 25 of the concept): a tap lifts the car
      and lets it down. Each a thing to tap (FRONT.items, with the regal's: pick), its outline for the marks (mark) ---------------- */
-  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), todo: null, lit: 0, lock: [false, false, true], price: ['450 €', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
+  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450 €', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
   const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
   // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
   function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
@@ -3704,7 +3704,7 @@ const Garage3D = (function () {
     for (const [r, t] of [[FRA.T0, FRONT.price[0]], [FRA.T1, FRONT.price[1]]]) { const [x, y, w, h] = r; g.fillStyle = '#d81f2a'; g.fillRect(x + 2, y + 2, w - 4, h - 4); g.strokeStyle = '#ffd9d6'; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, w - 6, h - 6);
       g.fillStyle = '#fff'; g.font = '900 28px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 10); }
     const lab = (r, t) => { const [x, y, w, h] = r; g.fillStyle = '#d6dde8'; g.font = 'italic 800 22px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 8); };
-    lab(FRA.L0, 'STREET'); lab(FRA.L1, 'SPORT'); lab(FRA.L2, FRONT.lock[2] ? 'RACE · LOCKED' : 'RACE'); lab(FRA.AK, 'AERO KITS'); lab(FRA.SV, 'SERVICE');
+    [FRA.L0, FRA.L1, FRA.L2].forEach((r, i) => lab(r, FRONT.names[i] || '')); lab(FRA.SV, 'SERVICE');   // (under each maquette its car's name)
     if (FRONT.tex) FRONT.tex.needsUpdate = true;
   }
   // (a quad of the atlas' cell r: its middle c, its right and up ways (world), its size w x h)
@@ -3739,7 +3739,6 @@ const Garage3D = (function () {
     F.mq.forEach((x, i) => { const c = turn(new V3(x - 0.2, y1 + 0.56, F.mz - 0.24)), [ri, up] = toCam(c); atlasQuad(S, SIGN[i], c, ri, up, 0.62, 0.136);
       if (i) atlasQuad(S, i === 1 ? FRA.T0 : FRA.T1, c.clone().addScaledVector(ri, 0.24).addScaledVector(up, 0.125), ri, up, 0.24, 0.083);
       const l = turn(new V3(x, y1 + 0.003, F.mz + 0.33)); atlasQuad(S, [FRA.L0, FRA.L1, FRA.L2][i], l, turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.5, 0.1); });
-    atlasQuad(S, FRA.AK, turn(new V3(F.mq[1], y1 + 0.003, F.mz + 0.43)), turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.56, 0.074);
     atlasQuad(S, FRA.SV, turn(new V3(F.sv[0], y1 + 0.003, F.sv[1] + 0.38)), turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.56, 0.074);
     const sg = S.geometry(); F.signs = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ map: F.tex, transparent: true, side: THREE.DoubleSide, color: new THREE.Color(1.05, 1.05, 1.05), polygonOffset: true, polygonOffsetFactor: -1 })); F.signs.renderOrder = 2; scene.add(mainOnly(F.signs));
     // the lights: three lamps over each sign (their glass lit or dark: frontLamps), the YOUR CAR plinth's ring of green light
@@ -3748,7 +3747,7 @@ const Garage3D = (function () {
       F.lamps.push([a, L.P.length / 3]); });
     F.ring = [L.P.length / 3]; { const p = turn(new V3(F.mq[0], y1 + 0.058, F.mz)); annulus(L, p.x, p.y, p.z, 0.2, 0.25, 32, [1, 1, 1]); } F.ring.push(L.P.length / 3);
     const lg = L.geometry(); lg.attributes.color.setUsage(THREE.DynamicDrawUsage); F.glow = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ vertexColors: true })); scene.add(mainOnly(F.glow));
-    // the maquettes: sprites of the car drawn small in each kit (frontCars), their plinths' boxes the things to tap
+    // the maquettes: sprites of the three cars drawn small (frontCars), their plinths' boxes the things to tap
     F.mq.forEach((x, i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false })); sp.center.set(0.5, 0.1); sp.position.copy(turn(new V3(x, y1 + 0.05, F.mz))); sp.scale.set(0.84, 0.42, 1); sp.visible = false; scene.add(mainOnly(sp)); F.sprites.push(sp); sp.userData.p0 = sp.position.clone();
       const P = [], N = [], q2 = new V3(); for (let k = 0; k < 24; k++) { const a = k / 24 * TAU, b = (k + 1) / 24 * TAU; for (const [aa, yy] of [[a, 0], [b, 0], [b, 0.4], [a, 0], [b, 0.4], [a, 0.4]]) { turn(q2.set(x + Math.cos(aa) * 0.26, y1 + 0.03 + yy, F.mz + Math.sin(aa) * 0.26)); P.push(q2.x, q2.y, q2.z); q2.set(Math.cos(aa), 0, Math.sin(aa)).applyAxisAngle(_yAx, F.ry); N.push(q2.x, q2.y, q2.z); } }
       const it = tapItem('mq' + i, 'mq', new Float32Array(P), new Float32Array(N), { i }); it.box.expandByPoint(turn(new V3(x - 0.52, y1 + 0.66, F.mz - 0.26))).expandByPoint(turn(new V3(x + 0.12, y1 + 0.66, F.mz - 0.22))); });   // (its sign tapped: the maquette)
@@ -3775,21 +3774,23 @@ const Garage3D = (function () {
     for (let i = 0; i < 3; i++) { const [v0, v1] = F.lamps[i], n = (v1 - v0) / 3, lit = i === F.lit; for (let s = 0; s < 3; s++) { const b = v0 + s * n, h = n / 2; for (let v = b; v < b + n; v++) { const g2 = v >= b + h, c = lit ? (g2 ? [3.4, 3.2, 2.8] : [2.2, 2.05, 1.8]) : g2 ? [0.35, 0.36, 0.38] : [0.1, 0.1, 0.12]; C[v * 3] = c[0]; C[v * 3 + 1] = c[1]; C[v * 3 + 2] = c[2]; } } }
     for (let v = F.ring[0]; v < F.ring[1]; v++) { C[v * 3] = 0.4; C[v * 3 + 1] = 2.6; C[v * 3 + 2] = 0.9; }
     a.needsUpdate = true; F.lockM.visible = !!F.lock[2]; }
-  // the maquettes: the car drawn small in each kit (STREET 1, SPORT 2, RACE 3: the game's aero levels), from the camera's first view's
-  // side (the YOUR CAR one with its lamps on); again when the car or its colour changes: one a frame, none in a frame another picture of
-  // a car was drawn in (each a whole car built and drawn: on a phone a stutter if all at once), the last cars' kept (back and forth)
+  // the maquettes: three cars drawn small (FRONT.cars: YOUR CAR the player's, RENT A CAR one to rent, FOR SALE one to buy; none: no
+  // maquette), from the camera's first view's side (YOUR CAR's with its lamps on); again when a car, its colour, its parts or its state
+  // change: one a frame, none in a frame another picture of a car was drawn in (each a whole car built and drawn: on a phone a stutter
+  // if all at once), the last ones kept (back and forth)
   const THB = { at: -1, n: 0 };   // (the frame a car's picture was last drawn in; the frames drawn)
-  function frontCars(spec) { const F = FRONT; if (!spec) return; const u = spec.upg || {}, cd = spec.cond || {};
-    const key = spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false) + '|' + (u.motor | 0) + (u.gume | 0) + (u.zavore | 0) + '|' + ['clean', 'body', 'engine'].map(k => Math.round((cd[k] == null ? 1 : cd[k]) * 10)).join(',');
-    if (F.key !== key) { F.key = key; F.todo = [0, 1, 2]; }
-    while (F.todo && F.todo.length) { const i = F.todo[0], k = key + '|' + i, sp = F.sprites[i]; let c = F.cache.get(k);
-      if (!c) { if (THB.at === THB.n) return; c = thumbCanvas(Object.assign({}, spec, { upg: Object.assign({}, spec.upg, { aero: i + 1 }) }), 200, 100, { yaw: 0.62, lit: i === 0 }); }
+  const carKey = (spec) => { const u = spec.upg || {}, cd = spec.cond || {}; return spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false) + '|' + (u.motor | 0) + (u.gume | 0) + (u.zavore | 0) + (u.aero | 0) + '|' + ['clean', 'body', 'engine'].map(k => Math.round((cd[k] == null ? 1 : cd[k]) * 10)).join(','); };
+  function frontCars(specs) { const F = FRONT;
+    for (let i = 0; i < 3; i++) { const sp = F.sprites[i], spec = specs[i]; if (!sp) continue;
+      if (!spec) { sp.visible = false; F.keys[i] = null; continue; }
+      const k = carKey(spec) + '|' + (i === 0 ? 'lit' : ''); if (F.keys[i] === k) continue;
+      let c = F.cache.get(k); if (!c) { if (THB.at === THB.n) return; c = thumbCanvas(spec, 200, 100, { yaw: 0.62, lit: i === 0 }); }
       F.cache.delete(k); F.cache.set(k, c); if (F.cache.size > 9) F.cache.delete(F.cache.keys().next().value);
-      F.todo.shift(); if (sp.material.map) sp.material.map.dispose(); sp.material.map = new THREE.CanvasTexture(c); sp.material.needsUpdate = true; sp.visible = true; } }
+      F.keys[i] = k; if (sp.material.map) sp.material.map.dispose(); sp.material.map = new THREE.CanvasTexture(c); sp.material.needsUpdate = true; sp.visible = true; } }
   // each frame: the YOUR CAR maquette shakes a little (a running engine) and puffs a wisp now and then; the lift's plate
   function stepFront(dt) { const F = FRONT, sp = F.sprites[0]; if (sp && sp.visible) { const p0 = sp.userData.p0; sp.position.set(p0.x + Math.sin(time * 41) * 0.0025, p0.y + Math.abs(Math.sin(time * 33)) * 0.002, p0.z);
       if ((F.puff = (F.puff || 0) - dt) < 0) { F.puff = 0.35 + Math.random() * 0.4; puffs.emit(p0.x - 0.33, p0.y + 0.06, p0.z + 0.08, -0.12, 0.08, 0.02, 1.2, 0.03, 0.12, [0.75, 0.77, 0.8], 0.3, -0.05, 1.0, 0.02); } }
-    frontPlate(); if (!busy && cur) frontCars(cur.spec);
+    frontPlate(); if (!busy) frontCars(FRONT.cars);
     if (TAPM.list.length) { const on = !rglAway(); for (const o of TAPM.list) if (o.userData.rgl) o.visible = on; } }
   /* ---------------- a tap on the picture: what it hits (pick), the marks on what a menu is for (mark), the new part seen through on the
      car (ghost) ----------------
@@ -5713,11 +5714,12 @@ const Garage3D = (function () {
     set onHud(f) { hud = f || (() => {}); }, set onTap(f) { onTap = f || (() => {}); },
     // (the page: the picture raised by px (lying down: free, the part of its height free between the page's buttons); what a tap hits;
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
-    // the things to tap; the cabinet's lamps (lit: the maquette 0..2, 3 none), its locked maquettes, its tags' prices; the lift's plate)
+    // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
+    // locked maquettes, its tags' prices; the lift's plate)
     shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
     get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex })); },
-    front(o) { if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },
+    front(o) { if (o.cars) { FRONT.cars = o.cars.slice(); FRONT.names = o.cars.map(c => c ? c.M.name : ''); } if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },
     lift() { return play(function* () { const cv = cur; if (!cv) return; if (lift > 0.01 || LIFT.on) yield* liftDown(cv, false); else { yield* liftUp(cv, LIFT_H, false); yield* wait(0.4); } }); },
     set fast(k) { fast = k > 0 ? k : 1; },
     get busy() { return busy > 0; }, get thumbed() { return THB.at === THB.n; },   // (a car's picture drawn this frame already)
@@ -5768,7 +5770,7 @@ const Garage3D = (function () {
         if (kind === 'chamber') { yield* chamberTo(1); L.push({ k: CH.k, low: Math.min(...CH.bot), bands: CH.bot.slice(), tools: RB.map(A => A.tool) }); yield* wait(0.5); yield* chamberTo(0); L.push({ k: CH.k }); }
         else if (kind === 'tool') { yield* armTool(i, o.tool || ARM.tools[i][0]); L.push({ tool: A.tool, visible: FX.tools.filter(m => m.visible).length }); yield* armRest(i); L.push({ tool: A.tool, parked: fxParked() }); }
         else if (kind === 'go') { yield* armTool(i, o.tool || ARM.tools[i][0]); const q = armFor(i, A.tool, v3(o.tip), o.dir || [0, -1, 0]); yield* armGo(i, q); L.push({ s: Object.assign({}, A.s), tip: A.J.tipA.toArray() }); yield* armRest(i); } }); },
-      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice() }; },
+      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice(), names: FRONT.names.slice(), shown: FRONT.sprites.map(q => q.visible) }; },
       carProbe(cv) { cv = cv || cur; cv.v.grp.updateMatrixWorld(true); return probeOf(carMeshes(cv), true); },   // (the car's top, its sides: with its parts and its wheels)
       CH, FREE, RGL, get fxObst() { return FX.obst; }, setChamber, chamberColor,
       // (the service by the arms: where it is (its item, its step, its show time, the cues met, its log, the items done), each arm's tool,
