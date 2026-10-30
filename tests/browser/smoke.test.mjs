@@ -76,7 +76,8 @@ try {
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
-    // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
+    // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone). Upright with the tyre dots in row 2 (every
+    // player's car, Core Car.kt: row 2 4.5 px taller, the place's name under the clock under it) up to 5 px lower
     const sign = (s) => page.evaluate(async (s) => {
       const g = window.__game, T = g.race.track, P = g.race.player, $ = (id) => document.getElementById(id), hud = $('hud').classList;
       if (s == null) { const H = T.hudSigns(), ahead = (x) => T.open ? x.s0 - P.q.s : ((x.s0 - P.q.s) % T.len + T.len) % T.len, n = H.filter(x => ahead(x) > 25 && (!T.open || x.s0 < T.finishS)).sort((a, b) => ahead(a) - ahead(b))[0] || H[0]; s = n ? n.s0 - 20 : null; }
@@ -84,12 +85,12 @@ try {
       await new Promise(r => setTimeout(r, 250));
       const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
       while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
-      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
+      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc'), dots: $('h-tyre').classList.contains('on') };
     }, s);
     const n1 = await sign(null);
     {
       await page.setViewportSize({ width: 270, height: 480 });
-      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : 95;
+      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : n2.dots ? 100 : 95;
       await page.setViewportSize({ width: 480, height: 270 });
       T.check(`${id}: the corner sign shown high: lying in the top row (top ≤ 10 px), upright under the clock (top ≤ ${lim2} px)`, n1.s != null && /\bshow\b/.test(n1.cls) && n1.top <= 10 && /\bshow\b/.test(n2.cls) && n2.top <= lim2,
         `'${n1.cls}' top ${n1.top} px / upright '${n2.cls}' top ${n2.top} px`);
