@@ -21,14 +21,18 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
 |---|---|---|
 | 0 | Čiščenje veje (slike na to vejo) | na `main` |
 | 1 | Mala proga in okolica: lunapark z vulkanom, stekleni most, parkirišče z avtošolo, reševalna baza s helidromom, robovi, podiranje | na `main` ([PR #196](https://github.com/jurekopac26-beep/dirkaska-igra/pull/196)) |
-| 2 | Tla ob morju: plaža 4, ena trava, obali JV in SV, dno morja, travnik za robom mape | [PR #198](https://github.com/jurekopac26-beep/dirkaska-igra/pull/198), zelen, čaka »združi« |
-| 3 | Kmetija + nagnjena ovinka po sliki | naslednji |
+| 2 | Tla ob morju: plaža 4, ena trava, obali JV in SV, dno morja, travnik za robom mape | na `main` ([PR #198](https://github.com/jurekopac26-beep/dirkaska-igra/pull/198)) |
+| 3 | Kmetija + nagnjena ovinka po sliki | v delu (nova seja od 30. 10.) |
 | 4 | Helikopter, ki leti (meni, vzlet, let, pristanek) | |
 | 5+6 | Gradbišče in motokros + začetek igre (en PR) | |
 | 7 | Avtošola s 27 nalogami | |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) | |
 | 9 | Dodatki samo, če jih uporabnik želi: proga za čolne in plaža, gasilski avto, priključek motokrosa pri B | |
 | 10 | Za pozneje: ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | |
+
+## Odprta vprašanja
+Uporabnik je 30. 10. dobil predstavitev z vsemi odprtimi vprašanji (podrobnosti kmetije, helikopter, motokros, proga za čolne, gasilski avto …).
+Odgovori se zapišejo sem in v `izbire.md`; do takrat te dele pusti za konec sklopa.
 
 ## Kje so izbire
 - `slike-predlogi/izbire.md`: vse odločitve uporabnika z njegovimi besedami (razdelki po datumih; poišči z `grep`).
