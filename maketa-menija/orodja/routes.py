@@ -21,7 +21,7 @@ EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under
       'trg ob mostovih': 'Bridges Square', 'nabrežje': 'Riverside', 'Gozdni vrhovi': 'Forest crests', 'Ribnik': 'Pond', 'Vas': 'Village', 'Vrh za vasjo': 'Crest past the village'}
 # the game's names of corners that are brands, people or a circuit's famous (some registered) corner names: plain English words in the
 # mockup instead, one name for a place everywhere (the game itself is not changed); its villages, mountains, streams and fields stay
-NEUTRAL = {"200R": "Fast Right", "Spoon": "Double Left", "130R": "Fast Left", "La Source": "First Hairpin", "Eau Rouge": "Steep Climb", "Raidillon": "Crest", "Kemmel": "Long Straight", "Les Combes": "Hilltop Chicane", "Malmedy": "Downhill Right", "Bruxelles": "Right Hairpin", "Pouhon": "Double Left", "Fagnes": "Forest Esses", "Campus": "Chicane", "Blanchimont": "Fast Left", "Bus Stop": "Last Chicane", "Beau Rivage": "Uphill Run", "Tabac": "Harbour Left", "Piscine": "Pool Chicane", "Karussell": "Banked Hairpin", "Kleines Karussell": "Small Banked Turn", "Schwalbenschwanz": "Fast Double Right", "Fuchsröhre": "Downhill Dip", "Kesselchen": "Valley Climb", "Eiskurve": "Cold Corner", "Brünnchen": "Spring Bend", "Pflanzgarten": "Big Jump", "Sprunghügel": "Small Jump", "Wippermann": "Twisty Section", "Antoniusbuche": "Long Straight End", "Naarajärvi": "Lake Naarajärvi", "Jasna": "Lake Jasna", "Eriški most": "Erika Bridge", "Dunlop": "Uphill Left", "Degner": "Double Right", "Casio Triangle": "Last Chicane", "Lasnica Fairmont": "Lasnica Grand", "Fairmont Hairpin": "Grand Hairpin", "Anthony Noghès": "Last Corner", "La Rascasse": "Harbour Corner", "Mirabeau": "Downhill Right", "Massenet": "Long Left", "Paul Frère": "Long Right", "Speaker's Corner": "Short Left", "Stefan-Bellof-S": "Fast Esses", "Hansen's Corner": "Reservoir Bend", "Amazon": "Fast Crest", "Mutanen": "Farm Bend"}
+NEUTRAL = {"200R": "Fast Right", "Spoon": "Double Left", "130R": "Fast Left", "La Source": "First Hairpin", "Eau Rouge": "Steep Climb", "Raidillon": "Crest", "Kemmel": "Long Straight", "Les Combes": "Hilltop Chicane", "Malmedy": "Downhill Right", "Bruxelles": "Right Hairpin", "Pouhon": "Double Left", "Fagnes": "Forest Esses", "Campus": "Chicane", "Blanchimont": "Fast Left", "Bus Stop": "Last Chicane", "Beau Rivage": "Uphill Run", "Tabac": "Harbour Left", "Piscine": "Pool Chicane", "Karussell": "Banked Hairpin", "Kleines Karussell": "Small Banked Turn", "Schwalbenschwanz": "Fast Double Right", "Fuchsröhre": "Downhill Dip", "Kesselchen": "Valley Climb", "Eiskurve": "Cold Corner", "Brünnchen": "Spring Bend", "Pflanzgarten": "Big Jump", "Sprunghügel": "Small Jump", "Wippermann": "Twisty Section", "Antoniusbuche": "Long Straight End", "Naarajärvi": "Lake Naarajärvi", "Jasna": "Lake Jasna", "Eriški most": "Erika Bridge", "Dunlop": "Uphill Left", "Degner": "Double Right", "Casio Triangle": "Last Chicane", "Lasnica Fairmont": "Lasnica Grand", "Fairmont Hairpin": "Grand Hairpin", "Anthony Noghès": "Last Corner", "La Rascasse": "Harbour Corner", "Mirabeau": "Downhill Right", "Massenet": "Long Left", "Paul Frère": "Long Right", "Speaker's Corner": "Short Left", "Stefan-Bellof-S": "Fast Esses", "Hansen's Corner": "Reservoir Bend", "Amazon": "Fast Crest", "Mutanen": "Farm Bend", "Razgledišče Renes": "Valley Lookout", "Razgledišče Danny's": "Ridge Lookout"}
 SUBST = [["Ruska kapelica", "Russian Chapel"], ["Ruski križ", "Russian Cross"]]
 def neutral(n):
     n = NEUTRAL.get(n, n)
@@ -126,7 +126,7 @@ for t in TRACKS:
         Image.open(os.path.join(RAW, 'fly-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'fly-%s.webp' % t), 'WEBP', quality=72, method=6)
         pd = []
         for nm in F['places']:
-            q = next((x for x in R['places'] if x[0] == nm or nm in x[0]), None)
+            q = next((x for x in R['places'] if x[0] == nm), None) or next((x for x in R['places'] if nm in x[0]), None)   # (the same name first, as the menu)
             pd.append(q[1] if q else L / 3 if nm == 'Split 1' else 2 * L / 3 if nm == 'Split 2' else -1e9)
         keep = lambda P, on: P if on and P and P[2] else 0
         fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
@@ -134,6 +134,8 @@ for t in TRACKS:
     data[t] = R
     print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R)
 
+for t in OLD:   # (a track not in maps.json here: kept as it was)
+    if t not in data: data[t] = OLD[t]
 with open(os.path.join(SITE, 'routes.js'), 'w') as f:
     f.write('/* The tracks: routes over the maps, heights, places and flyover frames (made by routes.py, do not edit). */\n')
     f.write('window.ROUTES = ' + json.dumps(data, separators=(',', ':'), ensure_ascii=False) + ';\n')
