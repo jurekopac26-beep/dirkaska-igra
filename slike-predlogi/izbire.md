@@ -520,3 +520,11 @@ Popravki po pregledu slik (20. 10. ponoči):
   avtošola s 27 nalogami 16–24, preverjanje 6–10); po izbirah še 13–20 h (proga za čolne in plaža 8–12, gasilski avto 4–6, priključek
   motokrosa pri B 1–2); pozneje 28–44 h (ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku).
   Skupaj brez misij 133–199 h (okoli 17–25 delovnih dni po 8 h); nepravilnosti s 15 slik cele mape niso vštete.
+
+## 30. 10. – odgovori na predstavitev odprtih vprašanj (po »začni«, za kodo)
+- Uporabnik: »vprasanje 1, naredi razlike da vidim v sliki med igro igralca. 2-2, 3. siroko. 4-1, 5f, 6c. 1-7, 8-1« (»1-7« = 7-1).
+- Kmetija, podrobnosti: še odprto; slike razlik 1/2/3 s kamere igralca med igro naredi seja za sklop 3.
+- Helikopter: nalogi WATER RESCUE in FIREFIGHTING naredi drug račun z misijami (v meniju zaklenjeni); sklop 4 = let, pristanek, FREE FLIGHT.
+- D · priključek motokrosa pri B: 3 (široko). H · boks motokrosa: 1 (prevozni boks tik ob cesti, __BOXOPT(1)).
+- Proga za čolne: široka s plažami, plaža F (družinska, __BEACHV = 5). Gasilski avto: C (avtolestev).
+- Popravki s 15 slik cele mape: v sklopu 8 popravi vse sam. Stvari za pozneje (sklop 10): vse, po sklopu 8.

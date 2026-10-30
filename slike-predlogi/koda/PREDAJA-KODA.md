@@ -27,20 +27,22 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
 | 5+6 | Gradbišče in motokros + začetek igre (en PR) | |
 | 7 | Avtošola s 27 nalogami | |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) | |
-| 9 | Dodatki samo, če jih uporabnik želi: proga za čolne in plaža, gasilski avto, priključek motokrosa pri B | |
-| 10 | Za pozneje: ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | |
+| 9 | Dodatki (izbrani 30. 10.): proga za čolne s plažo F, gasilski avto C (priključek motokrosa pri B gre v sklop 5) | |
+| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | |
 
-## Odprta vprašanja
-Uporabnik je 30. 10. dobil predstavitev z 8 vprašanji (odgovor v obliki »1-2, 2-2, 3-1, …«). Ključ:
-1. Kmetija (sklop 3): 1 vse podrobnosti s slike · 2 kar se vidi iz avta, drobno poenostavljeno (priporočeno) · 3 vse, drobno šele od blizu.
-2. Helikopter (sklop 4): nalogi WATER RESCUE in FIREFIGHTING · 1 naredi ta veriga · 2 drug račun z misijami, do takrat zaklenjeni (priporočeno).
-3. Priključek motokrosa pri B (sklop 5): 1 makadam · 2 asfalt z robniki · 3 široko (slike `sh-mj6-*B*`, list vse15-novo/16).
-4. Boks motokrosa ob cesti (sklop 5): 1 prevozni tik ob cesti · 2 trije v vrsti · 3 prevozni južno od starta (`boxopt-page.js`, `__BOXOPT(1..3)`).
-5. Proga za čolne, široka s plažami (sklop 9): plaža A–F (`__BEACHV`, listi vse40) · 0 ne zdaj.
-6. Gasilski avto (sklop 9): verzija A–F (`blender/gas.py`, listi vse41) · 0 ne zdaj (drug račun).
-7. Popravki s 15 slik cele mape (sklop 8): 1 popravi vse sam (priporočeno) · 2 uporabnik najprej označi.
-8. Za pozneje (sklop 10: ravni garaž, naprave v lunaparku, premikanje na gradbišču, rampa v parku): 1 vse po sklopu 8 · 2 samo nekatere (črke a–d) · 3 ne zdaj.
-Odgovore zapiši tukaj in v `izbire.md`; dokler odgovora ni, te dele pusti za konec sklopa.
+## Odgovori na predstavitev vprašanj (30. 10.)
+Uporabnik: »vprasanje 1, naredi razlike da vidim v sliki med igro igralca. 2-2, 3. siroko. 4-1, 5f, 6c. 1-7, 8-1« (»1-7« = 7-1).
+1. Kmetija, koliko podrobnosti (sklop 3): **še odprto.** Uporabnik želi slike razlik med možnostmi 1 (vse s slike), 2 (kar se vidi iz avta,
+   drobno poenostavljeno) in 3 (vse, drobno šele od blizu), kot jih vidi igralec med igro (kamera za avtom, pokonci in ležeče). Naredi jih seja za sklop 3.
+2. Helikopter (sklop 4): **2.** Sklop 4 naredi let, pristanek in prosto letenje (FREE FLIGHT); nalogi WATER RESCUE in FIREFIGHTING naredi drug račun
+   skupaj z misijami, do takrat sta v meniju zaklenjeni.
+3. Priključek motokrosa pri B (sklop 5): **3 · široko** (trava odstranjena na 30–40 m, ena makadamska ploščad do roba ceste, robna črta črtkana;
+   slike `sh-mj6-*B2*`, list vse15-novo/16). Pri A ostane, kot je.
+4. Boks motokrosa ob cesti (sklop 5): **1 · prevozni boks tik ob cesti** (`boxopt-page.js`, `__BOXOPT(1)`, list vse24-boksi/34-B1).
+5. Proga za čolne (sklop 9): široka proga s plažami, **plaža F · družinska plaža** (`boat27-page.js` + `boat27d-page.js`, `__BOATK = 1`, `__BEACHV = 5`, list vse40/49-6).
+6. Gasilski avto (sklop 9): **C · avtolestev** (`blender/gas.py 2`, `blender/modeli/v2.glb`, list vse41/50-3).
+7. Popravki s 15 slik cele mape (sklop 8): **1** · popravi vse, kar najdeš, in pošlji slike prej/zdaj.
+8. Za pozneje (sklop 10: ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku): **1** · vse po sklopu 8.
 
 ## Kje so izbire
 - `slike-predlogi/izbire.md`: vse odločitve uporabnika z njegovimi besedami (razdelki po datumih; poišči z `grep`).
