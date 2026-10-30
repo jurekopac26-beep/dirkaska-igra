@@ -5,8 +5,6 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
-  // the head lamp's outline for the garage's lamps: a round lens filling the nacelle's front (metres round z 0.41, y 0.6)
-  const LAMP = Array.from({ length: 8 }, (_, i) => [Math.cos(i * Math.PI / 4) * 0.074, Math.sin(i * Math.PI / 4) * 0.074]);
   VEHICLE_DEFS.push({
     id: 'miska', name: 'MIŠKA', cat: 'mali', ord: 1, drive: 'RR',
     desc: 'Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt.',
@@ -33,11 +31,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       over: { mirrorL: { lx: 0.66, lz: -0.79, y: 0.84 }, mirrorR: { lx: 0.66, lz: 0.79, y: 0.84 }, trunk: { lx: -0.9, y: 0.76 },
         fenderL: { h: 0.11 }, fenderR: { h: 0.11 } } },   // (a wing wraps round the nose's end and carries the lamp's nacelle: an L lying 0.31 m tall)
     // where the garage's parts go (js/deli.js, look units): the wing over the roof's back edge (over the rear window; no part of its own: the
-    // body's); the head lamps on the nacelles' fronts, every option round as the stock lamp (LAMP: its colour, ring and details on the
-    // bulging lens) in the lamps' parts; the rims on its wheels
+    // body's); the head lamps set into the nacelles' fronts (each option its own shape, nearly flush with the face: the stock lamp and its
+    // chrome bezel gone, the face in the paint), in the lamps' parts; the rims on its wheels
     mounts: {
       krilo: { x: -0.584, w: 0.5, part: 'body', s: 0.9 },
-      zarometi: { x: 1.52, y0: 0.6, lean: 0, zc: 0.41, yc: 0.6, s: 0.45, hosts: ['headL', 'headR'], socket: 'host', shape: LAMP, bulge: 0.02, ringW: 0.008 },
+      zarometi: { x: 1.516, y0: 0.6, lean: 0, zc: 0.41, yc: 0.6, s: 0.4, hosts: ['headL', 'headR'], socket: 'host' },
       platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres): a round bubble lofted through the sections below. The standard regions cut it
@@ -101,13 +99,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (let i = 0; i < 4; i++) { const x0 = xs[i], x1 = xs[i + 1], y0 = top(x0, 0) + 0.005, y1 = top(x1, 0) + 0.005;
             K.face([[x0, y0, -0.014], [x0, y0, 0.014], [x1, y1, 0.014], [x1, y1, -0.014]], CH); } }
         K.rect(1.493, 0.545, 0, 0.028, 0.33, CH);
-        //   (the lamps parts of their own; the garage's lamps in their place: K.deli, mounts.zarometi)
-        for (const sd of [-1, 1]) {
-          const f = sd < 0 ? 'fenderL' : 'fenderR', z = sd * 0.41;
-          K.cyl([1.44, 0.6, z], [1.52, 0.6, z], 0.085, P, { n: 8, part: f, capA: null, capB: CH });   // the lamp's nacelle out of the wing, its chrome bezel
-          K.rect(1.493, 0.47, sd * 0.43, 0.075, 0.035, K.rgb(0xff9a1e), { host: f });         // the indicator under it
-        }
-        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(1.524, 0.6, sd * 0.41, 0.066, { host: sd < 0 ? 'headL' : 'headR', ring: null, n: 8 }); });
+        //   (the lamps parts of their own; the garage's lamps in their place, set into the nacelle's face: K.deli, mounts.zarometi; with one
+        //   the nacelle's face is the paint, no chrome bezel)
+        for (const sd of [-1, 1]) K.rect(1.493, 0.47, sd * 0.43, 0.075, 0.035, K.rgb(0xff9a1e), { host: sd < 0 ? 'fenderL' : 'fenderR' });   // the indicator under the lamp
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(1.524, 0.6, sd * 0.41, 0.066, { host: sd < 0 ? 'headL' : 'headR', ring: null, n: 8 }); },
+          (zn) => { for (const sd of [-1, 1]) K.cyl([1.44, 0.6, sd * 0.41], [1.52, 0.6, sd * 0.41], 0.085, P, { n: 8, part: sd < 0 ? 'fenderL' : 'fenderR', capA: null, capB: zn ? P : CH }); });   // the lamp's nacelle out of the wing, its chrome bezel
         for (const z of [-0.3, 0.12]) K.bar([0.66, 0.876, z - 0.2], [0.63, 0.886, z + 0.2], 0.009, B, { n: 4, part: 'wiperFront' });   // the wipers (a part: both blades come off together)
         // ---- the bullet mirrors on the front wings (mirrorL / mirrorR): chrome, the glass their back face, on stalks ----
         for (const sd of [-1, 1]) { const part = sd < 0 ? 'mirrorL' : 'mirrorR', y0 = top(0.99, 0.52), y = y0 + 0.075, z = sd * 0.52;

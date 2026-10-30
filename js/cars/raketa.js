@@ -33,10 +33,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       },
       over: { trunk: { lx: -0.95, y: 0.94 } } },   // (the hatch's tailgate: at the tail, where the look has it)
     // where the garage's parts go (js/deli.js, look units): the wing over the roof's back edge (no part of its own: the body's); the head
-    // lamps, one unit a side over the two round lamps' place in the grille, in the lamps' parts; the rims on its wheels
+    // lamps, one unit a side over the two round lamps' place, standing 2.6 cm out of the grille (the user's: they look out more than other
+    // cars' lamps; the ring reaches back to it), in the lamps' parts; the rims on its wheels
     mounts: {
       krilo: { x: -1.64, w: 0.64, part: 'body' },
-      zarometi: { x: 1.874, y0: 0.632, lean: 0, zc: 0.525, yc: 0.632, s: 0.85, hosts: ['headL', 'headR'] },
+      zarometi: { x: 1.9, y0: 0.632, lean: 0, zc: 0.525, yc: 0.632, s: 0.85, hosts: ['headL', 'headR'], depth: 0.045 },
       platisca: {},
     },
     // the look: a loft through the sections below (look units = metres: body.len / wid are the vehicle's), the standard regions split it into
