@@ -89,58 +89,86 @@
   DELI.add('ogledala', ogledala);
 
   // ================================================================ vrata: both doors of option n
-  // m: { x: [rear, front] the door's skin (inside its shut lines), y: [sill, belt], handle: [x, y, z (out), w, h], win: [[x, t] ...] the
-  // door's glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise) }. The door's panel a decal on the loft's side
-  // (lift 3.5 mm: the stripe, the shut lines over it); the handles (or none, a strap pull), the window's net or slider on its glass
+  // m: { x: [rear, front] the door's skin (on its shut lines), y: [sill, belt], handle: [x, y, z (out), w, h], win: [[x, t] ...] the door's
+  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise), frame: [x0, x1, t0, t1] its frame's rear upright from
+  // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar }. The door's panel a decal on the loft's side (lift 3.5 mm: the
+  // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
+  // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
+  // latch) or the light glass (lexan: clearer, its black printed border, a sliding hatch or a vent)
   function vrata(K, n, m) {
-    const P = K.paint, LD = K.decal(K.body.secs), PR = [0.42, 0.43, 0.44], GF = [0.9, 0.89, 0.84], AL2 = [0.6, 0.62, 0.66];
-    // skin: the panel's colour (null: the paint, as stock); handle: 'stock' (black), 'paint', 'alu' (a flush silver one), 'carbon', null (a strap
-    // pull); mould: the side moulding; crease: a pressed line; rivets; sheen: carbon's weave in light bands (Visoki); net; slider (light glass)
+    const P = K.paint, LD = K.decal(K.body.secs), PR = [0.42, 0.43, 0.44], GF = [0.9, 0.89, 0.84], AL2 = [0.6, 0.62, 0.66], D = [0.1, 0.1, 0.11];
+    // skin: the panel (null: the paint); frame: its window frame's colour (default: the skin, else the paint); handle: 'stock' (black),
+    // 'paint', 'alu' (a flush silver one), 'carbon', 'flush' (the paint, a dark slot), null (a strap pull); trim: a strip along the belt;
+    // mould: a rubbing strip (bolts on Visoki); crease: pressed lines; brush: brushed metal; rivets; seal: a rubber seal round its edge;
+    // sheen: carbon's weave in light bands (Visoki); net; lexan: 'slide' (a sliding hatch), 'vent' (a round vent); pins: quick releases
     const O = [null,
-      { skin: PR, handle: 'stock' },                                       // 1 jeklena, nadomestna (primer grey)
-      { skin: null, handle: 'paint' },                                     // 2 jeklena, lakirana
-      { skin: null, handle: 'stock', mould: BLK },                         // 3 jeklena, ojačana (its side moulding)
-      { skin: null, handle: 'stock', crease: true },                       // 4 lažja jeklena
-      { skin: AL, handle: 'stock' },                                       // 5 aluminijasta
-      { skin: null, handle: 'alu', trim: AL },                             // 6 aluminijasta, lakirana (its top edge bare)
-      { skin: AL, handle: 'alu', rivets: true },                           // 7 aluminijasta, lažja
-      { skin: GF, handle: 'stock' },                                       // 8 iz steklenih vlaken
-      { skin: CF, handle: 'stock', sheen: CF2 },                           // 9 karbonska
-      { skin: CF, handle: 'carbon', sheen: [0.16, 0.165, 0.18] },          // 10 karbonska, dvostranska (gloss)
-      { skin: CF, handle: 'stock', sheen: CF2, slider: true },             // 11 karbonska, lahko steklo
-      { skin: DCF, handle: 'carbon', sheen: DCF2 },                        // 12 karbonska, suha
-      { skin: CF, handle: null, sheen: CF2, net: true },                   // 13 dirkalna
-      { skin: null, handle: 'stock', net: true },                          // 14 vrata z mrežo
-      { skin: CF, handle: null, sheen: CF2, slider: true },                // 15 dirkalna, ultralahka
-      { skin: CF, handle: null, sheen: CF2, net: true, pins: true },       // 16 motošport
+      { skin: PR, handle: 'stock' },                                                   // 1 jeklena, nadomestna (primer grey)
+      { handle: 'paint', frame: CHR, trim: CHR },                                      // 2 jeklena, lakirana (chrome frame and belt trim)
+      { handle: 'stock', mould: BLK },                                                 // 3 jeklena, ojačana (a wide rubbing strip, bolted)
+      { handle: 'flush', crease: true },                                               // 4 lažja jeklena (pressed lines, a flush handle)
+      { skin: AL, handle: 'stock', brush: true },                                      // 5 aluminijasta (brushed)
+      { handle: 'alu', frame: AL, trim: AL },                                          // 6 aluminijasta, lakirana (its frame bare)
+      { skin: AL, handle: 'alu', rivets: true, brush: true },                          // 7 aluminijasta, lažja (riveted)
+      { skin: GF, handle: 'stock', seal: true },                                       // 8 iz steklenih vlaken (gelcoat, a rubber seal)
+      { skin: CF, frame: BLK, handle: 'stock', sheen: CF2 },                           // 9 karbonska
+      { skin: CF, handle: 'carbon', sheen: [0.17, 0.175, 0.19], trim: [0.17, 0.175, 0.19] },   // 10 karbonska, dvostranska (gloss, its frame carbon)
+      { skin: CF, handle: 'stock', sheen: CF2, lexan: 'slide' },                       // 11 karbonska, lahko steklo
+      { skin: DCF, handle: 'alu', sheen: DCF2 },                                       // 12 karbonska, suha (matte)
+      { skin: CF, handle: null, sheen: CF2, net: true },                               // 13 dirkalna
+      { handle: 'stock', net: true },                                                  // 14 vrata z mrežo
+      { skin: CF, handle: null, sheen: CF2, lexan: 'vent' },                           // 15 dirkalna, ultralahka
+      { skin: CF, handle: null, sheen: CF2, net: true, pins: true },                   // 16 motošport
     ][n];
     if (!O) return;
-    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle;
+    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = m.frame;
+    const u0 = Math.min(...W.map(q => q[0])), u1 = Math.max(...W.map(q => q[0])), t0 = Math.min(...W.map(q => q[1])), t1 = Math.max(...W.map(q => q[1]));
+    const pt = (px, t, l, sd) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];   // (a point of the window band)
     for (const sd of [-1, 1]) {
       const host = sd < 0 ? 'doorL' : 'doorR', o = { host }, dir = sd < 0 ? '-z' : 'z', S = [sd];
-      if (O.skin) LD.side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, S, 0.0035, o);
+      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); };
+      if (O.skin) side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, 0.0035);
+      // the frame: its rear upright and its top in the door's colour, the rear shut line on up to the roof
+      if (F) { const fc = O.frame || O.skin || P;
+        band([[F[0], 0], [F[1], 0], [F[1], F[3]], [F[0], F[3]]], fc, 0.011); band([[F[0], F[2]], [W[2][0] + 0.01, F[2]], [W[2][0] - 0.02, F[3]], [F[0], F[3]]], fc, 0.011);
+        band([[xa - 0.006, 0], [xa + 0.006, 0], [xa + 0.006, 1], [xa - 0.006, 1]], D, 0.013); }
       if (O.sheen && K.hi) for (let i = 0; i < 3; i++) { const u = xa + 0.16 + i * 0.36;   // (the weave catching the light: three bands across, slanting)
-        LD.side([[u, ya], [u + 0.07, ya], [u + 0.21, yb], [u + 0.14, yb]].map(([px, py]) => [Math.max(xa, Math.min(xb, px)), py]), O.sheen, S, 0.004, o); }
-      if (O.crease) { LD.side([[xa, 0.6], [xb, 0.6], [xb, 0.61], [xa, 0.61]], K.shade(P, 0.5), S, 0.0045, o); LD.side([[xa, 0.594], [xb, 0.594], [xb, 0.6], [xa, 0.6]], K.shade(P, 1.3), S, 0.0045, o); }   // (a pressed line: its shadow, its light edge under it)
-      if (O.trim) LD.side([[xa, yb - 0.02], [xb, yb - 0.02], [xb, yb - 0.004], [xa, yb - 0.004]], O.trim, S, 0.0045, o);
-      if (O.mould) LD.side([[xa + 0.02, 0.575], [xb - 0.02, 0.575], [xb - 0.02, 0.625], [xa + 0.02, 0.625]], O.mould, S, 0.007, o);
+        side([[u, ya], [u + 0.07, ya], [u + 0.21, yb], [u + 0.14, yb]].map(([px, py]) => [Math.max(xa, Math.min(xb, px)), py]), O.sheen, 0.004); }
+      if (O.brush && K.hi) for (let i = 0; i < 6; i++) { const y = ya + 0.06 + i * (yb - ya - 0.1) / 5; side([[xa, y], [xb, y], [xb, y + 0.004], [xa, y + 0.004]], AL2, 0.004); }
+      if (O.crease) for (const y of [0.6, 0.72]) { side([[xa, y], [xb, y], [xb, y + 0.01], [xa, y + 0.01]], K.shade(P, 0.5), 0.0045); side([[xa, y - 0.006], [xb, y - 0.006], [xb, y], [xa, y]], K.shade(P, 1.3), 0.0045); }   // (pressed lines: their shadow, their light edge under them)
+      if (O.trim) side([[xa, yb - 0.02], [xb, yb - 0.02], [xb, yb - 0.004], [xa, yb - 0.004]], O.trim, 0.0045);
+      if (O.mould) { side([[xa + 0.02, 0.56], [xb - 0.02, 0.56], [xb - 0.02, 0.63], [xa + 0.02, 0.63]], O.mould, 0.008);
+        side([[xa + 0.02, 0.589], [xb - 0.02, 0.589], [xb - 0.02, 0.601], [xa + 0.02, 0.601]], [0.16, 0.16, 0.17], 0.0095);
+        if (K.hi) for (let i = 0; i < 4; i++) K.discX(xa + 0.08 + i * (xb - xa - 0.16) / 3, 0.595, sd * (hz + 0.01), 0.009, 6, AL2, 1, o); }
+      if (O.seal) { side([[xa, ya], [xb, ya], [xb, ya + 0.012], [xa, ya + 0.012]], BLK, 0.0045); side([[xa, ya], [xa + 0.012, ya], [xa + 0.012, yb], [xa, yb]], BLK, 0.0045); side([[xb - 0.012, ya], [xb, ya], [xb, yb], [xb - 0.012, yb]], BLK, 0.0045); }
       if (O.rivets && K.hi) for (const ry of [ya + 0.05, yb - 0.04]) for (let i = 0; i < 9; i++) { const rx = xa + 0.04 + i * (xb - xa - 0.08) / 8;
-        LD.side([[rx - 0.006, ry - 0.006], [rx + 0.006, ry - 0.006], [rx + 0.006, ry + 0.006], [rx - 0.006, ry + 0.006]], AL2, S, 0.0045, o); }
+        side([[rx - 0.006, ry - 0.006], [rx + 0.006, ry - 0.006], [rx + 0.006, ry + 0.006], [rx - 0.006, ry + 0.006]], AL2, 0.0045); }
       // the handle
-      const hc = O.handle === 'stock' ? BLK : O.handle === 'paint' ? P : O.handle === 'alu' ? AL : O.handle === 'carbon' ? CF2 : null;
+      const hc = O.handle === 'stock' ? BLK : O.handle === 'paint' || O.handle === 'flush' ? P : O.handle === 'alu' ? AL : O.handle === 'carbon' ? CF2 : null;
       if (hc) { K.rect(hx, hy, sd * hz, hw, hh, hc, Object.assign({ dir }, o));
-        if (O.handle === 'alu') K.rect(hx, hy - hh * 0.25, sd * (hz + 0.001), hw * 0.8, hh * 0.3, BLK, Object.assign({ dir }, o)); }
+        if (O.handle === 'alu' || O.handle === 'flush') K.rect(hx, hy - hh * 0.25, sd * (hz + 0.001), hw * 0.8, hh * 0.3, BLK, Object.assign({ dir }, o)); }
       else K.rect(hx + 0.02, hy - 0.01, sd * (hz + 0.002), 0.09, 0.022, RED, Object.assign({ dir }, o));   // (a strap pull, red)
       if (O.pins) for (const py of [ya + 0.14, yb - 0.1]) K.discX(xa + 0.035, py, sd * (hz - 0.012), 0.014, 6, CHR, 1, o);   // (the quick-release pins at its rear edge)
-      // the window: a net (a black frame, straps across and up), the light glass's slider (a frame low at its rear)
-      const W = m.win;
-      if (O.net) { const lay = (poly) => { const c = clip(poly, W); if (c.length >= 3) LD.band(c, BLK, S, 0.014, o); };
-        const u0 = Math.min(...W.map(q => q[0])) + 0.03, u1 = Math.max(...W.map(q => q[0])), t0 = Math.min(...W.map(q => q[1])) + 0.03, t1 = Math.max(...W.map(q => q[1])) - 0.03;
-        for (let i = 0; i < 8; i++) { const u = u0 + i * 0.12; lay([[u, t0], [u + 0.013, t0], [u + 0.013, t1], [u, t1]]); }
-        for (let j = 0; j < 6; j++) { const t = t0 + j * (t1 - t0) / 5; lay([[u0, t - 0.013], [u1, t - 0.013], [u1, t + 0.013], [u0, t + 0.013]]); } }
-      if (O.slider) { const u0 = W[0][0] + 0.05, t0 = W[0][1] + 0.06, f = (a, b, c, e) => LD.band([[a, b], [c, b], [c, e], [a, e]], BLK, S, 0.013, o);
-        f(u0, t0, u0 + 0.3, t0 + 0.02); f(u0, t0 + 0.32, u0 + 0.3, t0 + 0.34); f(u0, t0, u0 + 0.02, t0 + 0.34); f(u0 + 0.28, t0, u0 + 0.3, t0 + 0.34);
-        f(u0 + 0.13, t0 + 0.15, u0 + 0.17, t0 + 0.19); }
+      // a window net: black webbing in squares (8 up, 5 across) inside its border, hung on a rod along the belt, its latch at the top front (red)
+      if (O.net) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
+        win([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); win([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); win([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);
+        for (let i = 1; i <= 8; i++) { const u = a + i * 0.1; win([[u - s, c], [u + s, c], [u + s, e], [u - s, e]], BLK, 0.0155); }
+        for (let j = 1; j <= 4; j++) { const t = c + j * (e - c) / 5; win([[a, t - s], [b, t - s], [b, t + s], [a, t + s]], BLK, 0.0145); }
+        const r0 = pt(a, c + 0.01, 0.022, sd), r1 = pt(W[1][0] - 0.06, c + 0.01, 0.022, sd); K.bar(r0, r1, 0.006, AL2, { n: 4, host });   // (its rod)
+        const q = clip([[a, e - 0.06], [b, e - 0.06], [b, e], [a, e]], W), qx = Math.max(...q.map(v => v[0])) - 0.05;
+        win([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
+      // the light glass (lexan): clearer than glass, its black printed border, a sliding hatch (open: dark inside, rails over and under
+      // it, a finger pull) or a round vent
+      if (O.lexan) { const LX = [0.46, 0.52, 0.6];
+        win([[u0, t0], [u1, t0], [u1, t1], [u0, t1]], LX, 0.012);
+        win([[u0, t0], [u1, t0], [u1, t0 + 0.035], [u0, t0 + 0.035]], BLK, 0.014); win([[u0, t1 - 0.035], [u1, t1 - 0.035], [u1, t1], [u0, t1]], BLK, 0.014); win([[u0, t0], [u0 + 0.03, t0], [u0 + 0.03, t1], [u0, t1]], BLK, 0.014);
+        if (O.lexan === 'slide') { const a = u0 + 0.06, b = a + 0.28, c = t0 + 0.08, e = c + 0.32;
+          win([[a, c], [b, c], [b, e], [a, e]], [0.04, 0.04, 0.045], 0.0145);   // (the opening, the cabin dark behind it)
+          for (const [p0, p1] of [[c - 0.02, c], [e, e + 0.02]]) win([[a - 0.04, p0], [b + 0.16, p0], [b + 0.16, p1], [a - 0.04, p1]], AL2, 0.017);   // (its rails)
+          win([[b, c], [b + 0.15, c], [b + 0.15, e], [b, e]], [0.56, 0.62, 0.7], 0.016);   // (the hatch, slid forward)
+          win([[b + 0.01, c + 0.13], [b + 0.03, c + 0.13], [b + 0.03, c + 0.19], [b + 0.01, c + 0.19]], BLK, 0.018); }   // (its finger pull)
+        else { const cu = u0 + 0.18, ct = (t0 + t1) / 2, k = 10, R = 0.07;   // (a round vent: a dark ring of slats)
+          win(Array.from({ length: k }, (_, i) => [cu + Math.cos(i / k * Math.PI * 2) * R, ct + Math.sin(i / k * Math.PI * 2) * R * 2.2]), [0.06, 0.06, 0.065], 0.0145);
+          for (const dt of [-0.06, 0, 0.06]) win([[cu - R * 0.8, ct + dt - 0.008], [cu + R * 0.8, ct + dt - 0.008], [cu + R * 0.8, ct + dt + 0.008], [cu - R * 0.8, ct + dt + 0.008]], AL2, 0.017); } }
     }
   }
   DELI.add('vrata', vrata);
