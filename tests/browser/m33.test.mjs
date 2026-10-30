@@ -35,7 +35,7 @@ try {
   T.check('?misija=33: Montréal, winter at night', s.track === 'montreal' && s.atmos.season === 'winter' && s.atmos.tod === 'night', JSON.stringify({ track: s.track, atmos: s.atmos }));
   T.check('the panel: CUREK, KIPER 0 %, POLNI KIPERJI 0 / 4; no timing tower', /^CUREK /.test(s.rows[0]) && s.rows[1] === 'KIPER 0 %' && s.rows[2] === 'POLNI KIPERJI 0 / 4' && !s.tower, JSON.stringify(s.rows));
   const S = await page.evaluate(() => { const r = Missions.run, has = (o) => !!o && !!Render.scene.getObjectById(o.id), v = Render.viewOf(r.P);
-    return { blower: has(r.bl), banks: r.banks.length > 10 && r.banks.every(b => has(b.m)), skin: !!r.skin && !!r.skin.parent, heap: !!r.heap, body: v.body.visible }; });
+    return { blower: has(r.bl), banks: r.banks.length > 8 && r.banks.every(b => has(b.m)), skin: !!r.skin && !!r.skin.parent, heap: !!r.heap, body: v.body.visible }; });
   T.check('in the scene: the blower, the banks, the dump truck\'s own body with its heap (the car\'s hidden)', S.blower && S.banks && S.skin && S.heap && !S.body, JSON.stringify(S));
   // standing back: the blower waits
   const fs0 = s.run.fs; await drive(page, 'false', 4, null, 0); s = await st(page);

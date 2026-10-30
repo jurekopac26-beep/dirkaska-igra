@@ -52,10 +52,10 @@
       r.fs = T.startS + K.S0; r.fill = 0; r.full = 0; r.swap = 0; r.hit = false; r.e = [0, 0]; r.near = false;
       if (typeof Render !== 'undefined' && Render.setAtmos) Render.setAtmos({ season: 'winter', tod: 'night' }, true);
       if (typeof THREE !== 'undefined' && typeof document !== 'undefined') {
-        // the banks: on the left all the way, on the blower's side in pieces of 100 m that go as it passes them
+        // the banks: on the left all the way, on the blower's side in pieces of 200 m that go as it passes them
         KIT.piles(r, T, r.fs - 60, r.fs + K.RUN, { side: -1, every: 4, h: 1.1 });
         r.banks = [];
-        for (let a = r.fs - 60; a < r.fs + K.RUN; a += 100) { const m = KIT.piles(r, T, a, Math.min(a + 96, r.fs + K.RUN), { side: 1, every: 4, h: 1.3 }); if (m) r.banks.push({ e: a + 100, m }); }
+        for (let a = r.fs - 60; a < r.fs + K.RUN; a += 200) { const m = KIT.piles(r, T, a, Math.min(a + 196, r.fs + K.RUN), { side: 1, every: 4, h: 1.3 }); if (m) r.banks.push({ e: a + 200, m }); }
         r.bl = blower(); r.add(r.bl);
         r.jet = KIT.jet(r);
         r.skin = KIT.skin(r, r.P, truck);
