@@ -18,10 +18,11 @@ Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 |---|---|
 | `index.html` | zaslon (`window.MOCK(T)` iz nastavitev proge) in zagon žive makete |
 | `wxfx.js` | vreme čez cel zaslon, senca avta, table 20 držav (`SIGNS`, `signLook`) |
+| `globe.js` | globus v glavi: osvetljen, odsev na morju, ozračje, oblaki, država zlata, pika na progi; ob menjavi proge se zavrti do nove države |
 | `proge.js` | 7 prog: nastavitve zaslona in slike treh kamer |
 | `table.html` | list tabel ene države z zastavo na 6 načinov |
 | `table-drzav.json` | raziskava tabel 20 držav (vrsta table, barve, okvir, pisava, viri) |
-| `mk/` | slike avtov iz igre (prozorno ozadje), zemljevid, prelet in zavoj Vršiča, črte vetra za BURJO |
+| `mk/` | `earth2k.webp` (tekstura Zemlje na pol velikosti), slike avtov iz igre (prozorno ozadje), zemljevid, prelet in zavoj Vršiča, črte vetra za BURJO |
 | `orodja/` | `vreme.mjs` (slike vremen), `video.mjs` (video prehodov), `table.mjs` (listi tabel), `avto.mjs` + `alfa.py` (slika avta iz igre), `proge/*.json` (nastavitve za orodja) |
 
 Orodja potrebujejo Playwright iz `npm install` in `ffmpeg` (video); slike gredo v začasno mapo ali v `OUT`.
