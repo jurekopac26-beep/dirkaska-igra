@@ -40,6 +40,11 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
   - `fire(run, max, { per, spread })`: plameni (Points, en klic risanja) in dim nad njimi (še en); `spot(i, x, y, z, velikost)`, 0 ugasne. `jet(run)`: curek vode (`set(od, do, vklop)`, `step`). `house(run, p, o)`: hiša z dvokapno streho (`burn(zgorelo, ogenj)`, mesta plamenov `fl`). `at(T, s, off)`: točka ob cesti (višina tal, smer ceste `ry`).
   - `aim(run, { plane: 'v' | 'g', focus, drive })`: merjenje s prstom (ploščica čez igro, obroč, gumb GASI), `on(true)` skrije gumbe za vožnjo (z `drive: true` ostanejo, ploščica samo nad cesto); `point`, `spray`; do prvega dotika merek na `focus`.
   - `hold(car)`, `hold(car, false)`: avto zadržan med delom posadke (`locked`, brez vzvratne).
+  - Voda (skupina 3): `water(run, { x, z, size, y, col, op })`: vodna gladina (en klic risanja), `set(y)` jo dvigne; `wade(P, globina, dt, { drag, slip, deep, cur })`: voda zadržuje avto, nad `slip` ga tok `cur` [x, z] odnaša, pri `deep` obstane.
+  - `boat(run, { x, z, h, y, vmax, acc, turn, wet(x, z), wave(x, z, t), mesh, D })`: plovilo s svojo kinematiko na vodi (skuter), `go(true)` ga da igralcu (krmilo, plin in zavora iz `P.inSteer`, `P.inThr`, `P.inBrk`, preberi jih pred `hold`), kamera za njim kot za avtom (`Render.setShot`), `go(false)` vrne kamero avtu.
+  - `skin(run, P, build)`: igralčev avto narisan kot drugo vozilo iz preprostih teles (`build(B)` z `B.box`, `B.cyl`, `B.disc`; telo avta skrito, fizika ostane; vrne skupino, npr. `position.y` za plovni trup).
+  - `crowd(run, max)`: ljudje (dva klica risanja za vse, `put(k, x, y, z, ry, barva)`, `hide(k)`); `tags(run)`: oznake nad kraji (`#mis-tags`, `set([{ x, y, z, html, cls }])`); `button(run, napis)`: velik gumb nad pedali (`#mis-btn`, `show`, `take()` enkrat na pritisk).
+  - Misija, ki dovoli vožnjo v nasprotno smer ali namerno stoji, vsak korak postavi `P.wrongT = 0` oziroma `P.stuckT = 0` (brez NAPAČNA SMER in gumba Na progo).
   - `run.add(o)` z `o.userData.misUndo`: funkcija, ki jo `Missions` pokliče ob koncu (odstrani DOM misije, vrne telo avta).
   - Ime metode misije ne sme biti `goal`, `title`, `story`, `hint` (to so besedila, ki jih preverja `tests/missions.test.js`).
 - Gradniki, ki jih misije že imajo: spremstvo kot dirkalni avto v podobi policije (`m06.js` `made`: `c.police`, `c.pol.mode = 'chase'`, promet se mu umakne; hitrost s `c.skCap`), promet samo avti in tovornjaki (`opts.tfCars`), noč (`Render.setAtmos`), stavbe in vozila iz preprostih teles (`m06.js` `hospital`).
@@ -53,7 +58,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 | 0 | Sistem misij | – | končano (PR #187) |
 | 1 | 06 | – | končano (PR #193) |
 | 2 · ogenj, gasilski avto C | 01, 49, 46, 47 | 13–20 | narejeno (veja `misije/skupina-2`) |
-| 3 · voda | 19, 35, 37, 48 | 14–20 | |
+| 3 · voda | 19, 35, 37, 48 | 14–20 | v delu (veja `misije/skupina-3`) |
 | 4 · sneg | 30, 33, 53 | 10–13 | |
 | 5 · tovor | 07, 09, 43, 51, 52, 54 | 16–23 | |
 | 6 · živali in mirna vožnja | 10, 39, 55, 02, 34, 50 | 16–23 | |
