@@ -89,14 +89,35 @@
   // ================================================================ crte: racing stripes over the top
   // each option: its bands across [z0, z1] (mirrored), the colour of each (S: the stripes' own), the sheen (DELI.dress: STRIPE_FIN)
   function crte(K, n, m) {
-    const Z = m.z || [0.27, 0.47], S = K.strp, k = (Z[1] - Z[0]) / 0.2, z = (a) => Z[0] + (a - 0.27) * k, ly = layer(K), runs = paintRuns(K);
-    const B = {
-      1: [[0.34, 0.38, S]], 2: [[0.29, 0.43, S]], 3: [[0.285, 0.3, BLK], [0.3, 0.42, S], [0.42, 0.435, BLK]], 4: [[0.29, 0.36, S], [0.36, 0.43, BLK]],
-      5: [[0.31, 0.41, S]], 6: [[0.29, 0.297, S], [0.31, 0.41, S], [0.423, 0.43, S]], 7: [[0.3, 0.42, S]], 8: [[0.3, 0.42, S]],
-      9: [[0.32, 0.4, S]], 10: [[0.3, 0.312, BLK], [0.312, 0.408, S], [0.408, 0.42, BLK]], 11: [[0.29, 0.43, S]], 12: [[0.29, 0.43, S]],
-      13: [[0.296, 0.302, GOLD], [0.31, 0.41, S], [0.418, 0.424, GOLD]], 14: [[0.29, 0.3, GOLD], [0.3, 0.42, S], [0.42, 0.43, BLK]],
-      15: [[0.27, 0.31, S], [0.33, 0.41, S], [0.43, 0.47, S]], 16: [[0.283, 0.29, CHR], [0.29, 0.43, S], [0.43, 0.437, CHR]] }[n] || [];
-    for (const [a, b, col] of B) for (const [xa, xb] of runs) ly.topZ(rect(xa, z(a), xb, z(b)), col, 0.007);
+    // (16 patterns that tell apart at a glance: centre, outboard, offset, tapered, full-width, bonnet-only, chequered, along the sides,
+    // diagonal; mounts.crte.z the outboard band beside the bonnet's scoop, the centre ones run over it)
+    const Z = m.z || [0.27, 0.47], S = K.strp, ly = layer(K), runs = paintRuns(K), X0 = runs.length ? runs[0][0] : -1.7, X1 = runs.length ? runs[runs.length - 1][1] : 1.7;
+    const band = (z0, z1, col, o) => { o = o || {}; for (const [xa, xb] of runs) { if (o.x && (xb < o.x[0] || xa > o.x[1])) continue; const a = Math.max(xa, o.x ? o.x[0] : -9), b = Math.min(xb, o.x ? o.x[1] : 9);
+      const P = rect(a, z0, b, z1); if (o.one) ly.top(P, col, 0.007); else ly.topZ(P, col, 0.007); } };
+    const taper = (zc, w0, w1, col) => { for (const [xa, xb] of runs) { const w = (x) => w1 + (w0 - w1) * (x - X0) / ((X1 - X0) || 1);   // (wide at the nose, narrow at the tail)
+      ly.topZ([[xa, zc - w(xa) / 2], [xb, zc - w(xb) / 2], [xb, zc + w(xb) / 2], [xa, zc + w(xa) / 2]], col, 0.007); } };
+    const side = (y0, y1, col, x0, x1) => ly.side(rect(x0 == null ? -1.48 : x0, y0, x1 == null ? 1.45 : x1, y1), col, 0.006);
+    const zo = Z[0], zi = Z[1];
+    switch (n) {
+      case 1: band(0.07, 0.11, S); break;                                                       // ozki črti: a narrow pair in the middle
+      case 2: band(zo + 0.02, zi - 0.04, S); break;                                             // široki črti: a wide pair outboard
+      case 3: band(0.035, 0.05, BLK); band(0.05, 0.15, S); band(0.15, 0.165, BLK); break;     // črte z robom: a centre pair, black edges
+      case 4: band(-0.16, 0.16, S, { one: true }); band(0.16, 0.19, BLK); break;               // dvobarvne: one broad band, black beside it
+      case 5: band(-zi + 0.02, -zo, S, { one: true }); break;                                   // folija: one stripe off-centre, on the left
+      case 6: band(-0.025, 0.025, S, { one: true }); band(0.07, 0.1, S); band(0.14, 0.155, S); break;   // folija z robom: three in the middle, the outer thinner
+      case 7: side(0.6, 0.66, S); side(0.68, 0.7, S); break;                                    // kovinska folija: two bands along the sides
+      case 8: for (const [x0, w] of [[0.55, 0.12], [0.3, 0.06]]) ly.side([[x0, 0.55], [x0 + w, 0.55], [x0 + w - 0.35, 0.84], [x0 - 0.35, 0.84]], S, 0.006); band(0.07, 0.15, S, { x: [0.82, 9] }); break;   // odsevna: diagonal slashes on the doors
+      case 9: taper(0.2, 0.2, 0.04, S); break;                                                  // lakirani črti: a pair narrowing from the nose to the tail
+      case 10: band(0.04, 0.15, S, { x: [0.82, 9] }); band(0.15, 0.165, BLK, { x: [0.82, 9] }); band(0.04, 0.15, S, { x: [-9, -1.6] }); break;   // lakirane z robom: on the bonnet and the tailgate only
+      case 11: band(-0.3, 0.3, S, { one: true }); break;                                        // kovinski lak: one band the width of the roof's middle
+      case 12: band(-0.08, 0.08, S, { one: true }); band(0.08, 0.16, K.shade(S, 0.78)); band(0.16, 0.22, K.shade(S, 0.55)); break;   // biserni lak: a band fading outwards
+      case 13: band(zi - 0.012, zi - 0.004, GOLD); band(zi + 0.012, zi + 0.02, GOLD); side(0.82, 0.83, GOLD); break;   // ročno lakirane: gold pinstripes along the top's edges and the waist
+      case 14: { const runR = runs.filter(r => r[1] - r[0] > 0.5)[0] || runs[0], k = 10, d = (runR[1] - runR[0]) / k;   // ročno z robom: a chequered band down the roof, edged
+        for (let i = 0; i < k; i++) for (let j = 0; j < 2; j++) ly.top(rect(runR[0] + i * d, -0.1 + j * 0.1, runR[0] + (i + 1) * d, j * 0.1), (i + j) % 2 ? BLK : WHT, 0.007);
+        band(0.1, 0.115, S, { x: [runR[0], runR[1]] }); band(0.04, 0.12, S, { x: [0.82, 9] }); break; }
+      case 15: band(0.12, 0.3, S, { one: true }); band(0.33, 0.37, S, { one: true }); break;   // večplastne: a wide and a narrow stripe off-centre, on the right
+      case 16: band(zo + 0.005, zo + 0.012, CHR); band(zo + 0.012, zi - 0.02, S); side(0.6, 0.64, S, -0.33, 0.77); break;   // tovarniške: a wide pair, a chrome line along its outer edge, a flash along the doors
+    }
   }
 
   // ================================================================ stevilke: start number panels on roundels
@@ -246,7 +267,7 @@
     6: { spec: 1.35, env: 1.25 }, 7: { spec: 1.2, metal: 0.6 }, 8: { spec: 1.2, cham: 0.8 }, 9: { spec: 1.4, env: 1.2 }, 10: { spec: 1.3, metal: 0.85 }, 11: { spec: 1.3, pearl: 0.8 },
     12: { spec: 1.4, env: 1.2, jambs: true }, 13: { spec: 1.5, pearl: 1, env: 1.2 }, 14: { spec: 1.5, cham: 1.25, env: 1.2 }, 15: { spec: 1.8, env: 1.4 }, 16: { spec: 2, env: 1.5, metal: 0.3 } };
   // crte: the stripes' sheen (spec, metal, pearl, refl: they glow back at night)
-  const SFIN = { 7: { spec: 1.3, metal: 0.8 }, 8: { refl: 1 }, 9: { spec: 1.3 }, 10: { spec: 1.3 }, 11: { spec: 1.4, metal: 0.9 }, 12: { spec: 1.4, pearl: 1 }, 15: { spec: 1.6 }, 16: { spec: 1.8, metal: 0.4 } };
+  const SFIN = { 7: { spec: 1.3, metal: 0.8 }, 8: { refl: 1 }, 9: { spec: 1.3 }, 10: { spec: 1.3 }, 11: { spec: 1.4, metal: 0.9 }, 12: { spec: 1.4, pearl: 1 }, 13: { spec: 1.3 }, 15: { spec: 1.6 }, 16: { spec: 1.8, metal: 0.4 } };
   // zatemnitev: the glass's tint colour and how much of it, mirror (its sky), cham (a hue turning with the angle)
   const TINT = { 1: { c: [0.03, 0.035, 0.04], a: 0.35 }, 2: { c: [0.03, 0.035, 0.04], a: 0.65 }, 3: { c: [0.015, 0.015, 0.02], a: 0.9 }, 4: { c: [0.18, 0.34, 0.62], a: 0.6, mirror: 1 },
     5: { c: [0.1, 0.1, 0.11], a: 0.4, mirror: 0.4 }, 6: { c: [0.06, 0.06, 0.07], a: 0.7, mirror: 0.4 }, 7: { c: [0.55, 0.57, 0.6], a: 0.65, mirror: 1.2 }, 8: { c: [0.02, 0.02, 0.025], a: 0.9, mirror: 0.4 },

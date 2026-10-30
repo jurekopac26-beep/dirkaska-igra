@@ -26,7 +26,7 @@ const VIEWS = {
   car34f: { p: [5.2, 2.2, 4.3], t: [0.05, 0.68, 0], fov: 21 },   // (the whole car, front three quarters)
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
   // (sklop 3: barve, js/deli/barve.js; the hidden parts, js/deli/skriti.js, on the car drawn see-through: GHOST)
-  crte: { p: [-4.6, 3.1, 1.9], t: [0.1, 0.85, 0], fov: 30 },
+  crte: { p: [-3.7, 3.2, 3.7], t: [0.15, 0.75, 0], fov: 32 },
   stevilke: { p: [-4.0, 3.3, 3.8], t: [-0.25, 0.8, 0], fov: 30 },
   nalepke: { p: [3.9, 2.7, 4.3], t: [0.2, 0.7, 0], fov: 30 },
   soncni_pas: { p: [4.3, 2.0, 1.3], t: [0.25, 1.15, 0], fov: 18 },
@@ -41,7 +41,7 @@ const VIEWS = {
 };
 const GHOST = { filter_zraka: 'bay', cip: 'bay', turbo: 'bay', akumulator: 'bay', vzmeti: 'arches', amortizerji: 'arches', stabilizatorji: 'arches', hupa: 'hupa', dim_gum: 'dim_gum' };
 const REAR = ['krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
-const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, crte: { view: 'chase', ns: [2, 8, 15] }, stevilke: { view: 'chase', ns: [4, 9, 16] }, nalepke: { view: 'car34f', ns: [9, 13, 14] },
+const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, crte: { view: 'chase', ns: [3, 11, 14] }, stevilke: { view: 'chase', ns: [4, 9, 16] }, nalepke: { view: 'car34f', ns: [9, 13, 14] },
   luc_pod_avtom: { view: 'chase', ns: [5, 11, 16] }, barva: { view: 'car34f', ns: [5, 10, 14] } };   // (else the whole car, options 4, 9, 16)
 const TW = 400, TH = 236;
 
