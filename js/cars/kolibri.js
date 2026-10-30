@@ -57,7 +57,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // the tailgate's window (its foot and top, its half width)
       streha: { x0: -1.42, x1: 0.15, xf: 0.11, xr: -1.0 },
       stresna_zajemalka: { x: 0.06, z: 0 },
-      antena: { x: -1.22, z: 0.36, fin: [-1.4, 0] },
+      antena: { x: -1.22, z: 0.36, fin: [-1.4, 0], front: [0.02, 0.44] },
       zaluzije: { x0: -1.655, y0: 0.875, x1: -1.585, y1: 1.335, w: 0.565 },
 
       // (js/deli/bok.js)

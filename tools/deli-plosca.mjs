@@ -22,7 +22,7 @@ const VIEWS = {
   zarometi: { p: [3.55, 1.08, 1.75], t: [1.66, 0.67, 0.06], fov: 17 },
   streha: { p: [-3.3, 3.3, 2.3], t: [-0.6, 1.3, 0], fov: 30 },   // (sklop 2 · streha: js/deli/streha.js)
   stresna_zajemalka: { p: [3.0, 2.0, 1.3], t: [-0.15, 1.42, 0], fov: 14 },
-  antena: { p: [-2.7, 2.1, 1.9], t: [-1.3, 1.42, 0.15], fov: 15 },
+  antena: { p: [-3.0, 2.4, 2.0], t: [-0.8, 1.42, 0.12], fov: 16 },
   zaluzije: { p: [-4.3, 1.75, 1.7], t: [-1.62, 1.1, 0], fov: 18 },
   chase: { p: [-6.0, 2.15, 0], t: [0.4, 1.02, 0], fov: 29 },   // (as the game's camera behind the car sees it)
   car34f: { p: [5.2, 2.2, 4.3], t: [0.05, 0.68, 0], fov: 21 },   // (the whole car, front three quarters)
