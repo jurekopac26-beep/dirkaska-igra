@@ -206,30 +206,43 @@
     // a strap: a loop of webbing out of the bumper, folded flat, down from the tow point; its stitching; its plate
     const strap = (x, y, z, d, w, col) => { K.box(x + d * 0.009, y - 0.1, z, 0.012, 0.12, w, 0, col, col);
       K.rect(x + d * 0.0156, y - 0.005, z, w + 0.004, 0.012, WHT, { dir: d > 0 ? 'x' : '-x' }); K.box(x + d * 0.004, y - 0.012, z, 0.012, 0.03, w + 0.02, 0, BLK); };
-    // a ring out of the face (an eye: its stem and its loop standing up), or folded flat against it
-    const ring = (x, y, z, d, R, th, col, flat) => { const k = q, pts = [];
-      for (let i = 0; i <= k; i++) { const a = i / k * Math.PI * 2; pts.push(flat ? [x + d * (th + 0.003), y - R + Math.cos(a) * R, z + Math.sin(a) * R] : [x + d * (R + 0.03 + Math.cos(a) * R), y + Math.sin(a) * R, z]); }
+    // a ring out of the face: its loop standing up (plane 'v'), lying flat out of it ('h') or folded down against the face ('f'); its stem or hinge
+    const ring = (x, y, z, d, R, th, col, plane) => { const k = q, pts = [], f = plane === 'f';
+      for (let i = 0; i <= k; i++) { const a = i / k * Math.PI * 2, c = Math.cos(a) * R, sn = Math.sin(a) * R;
+        pts.push(f ? [x + d * (th + 0.003), y - R + c, z + sn] : plane === 'h' ? [x + d * (R + 0.03 + c), y, z + sn] : [x + d * (R + 0.03 + c), y + sn, z]); }
       K.sweep([[-th, -th], [th, -th], [th, th], [-th, th]], pts, col);
-      if (!flat) K.cyl([x, y, z], [x + d * 0.032, y, z], th * 1.3, col, { n: 5 }); else K.box(x + d * 0.006, y - 0.012, z, 0.012, 0.03, 0.05, 0, BLK); };
-    // a flat hook: a plate out of the face (up on its edge), its hole
-    const plate = (x, y, z, d, l, col) => { K.endplate([[x - d * 0.004, y - 0.022], [x + d * l, y - 0.016], [x + d * (l + 0.012), y], [x + d * l, y + 0.016], [x - d * 0.004, y + 0.022]], z, 0.012, col);
-      for (const sd of [-1, 1]) K.face(Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2 * -sd * d; return [x + d * (l - 0.012) + Math.cos(a) * 0.01, y + Math.sin(a) * 0.01, z + sd * 0.0065]; }), HOLE); };
-    // the racing rules' arrow: a yellow triangle on the face pointing at the tow point
-    const arrow = (x, y, z, d) => faceOut(K, [[x + d * 0.003, y + 0.05, z], [x + d * 0.003, y + 0.1, z - 0.035], [x + d * 0.003, y + 0.1, z + 0.035]], YEL, [d, 0, 0]);   // (over it, pointing down)
+      if (!f) K.cyl([x, y, z], [x + d * 0.032, y, z], th * 1.3, col, { n: 5 }); else K.box(x + d * 0.006, y - 0.012, z, 0.012, 0.03, 0.05, 0, BLK); };
+    // a J-hook: a bar out of the face, down and curling back up
+    const jhook = (x, y, z, d, col, k) => { k = k || 1; K.sweep([[-0.008, -0.008], [0.008, -0.008], [0.008, 0.008], [-0.008, 0.008]],
+      [[0, 0], [0.04, 0], [0.058, -0.018], [0.06, -0.05], [0.045, -0.068], [0.026, -0.058]].map(([u, v]) => [x + d * u * k, y + v * k, z]), col); };
+    // a flat hook: a plate out of the face (on its edge, or lying flat: lie), its hole; tri: a triangle
+    const plate = (x, y, z, d, l, col, o) => { o = o || {}; const h = o.h || 0.022, P = o.tri ? [[x - d * 0.004, y - h * 1.6], [x + d * (l + 0.012), y], [x - d * 0.004, y + h * 1.6]]
+        : [[x - d * 0.004, y - h], [x + d * l, y - h * 0.72], [x + d * (l + 0.012), y], [x + d * l, y + h * 0.72], [x - d * 0.004, y + h]];
+      if (o.lie) { K.face(P.map(([px, py]) => [px, y, z + (py - y)]), col); K.face(P.map(([px, py]) => [px, y - 0.006, z + (py - y)]).reverse(), col);
+        faceOut(K, Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2; return [x + d * (l - 0.012) + Math.cos(a) * 0.01, y + 0.001, z + Math.sin(a) * 0.01]; }), HOLE, [0, 1, 0]); return; }
+      K.endplate(P, z, 0.012, col);
+      for (const sd of [-1, 1]) faceOut(K, Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2; return [x + d * (l - 0.012) + Math.cos(a) * 0.01, y + Math.sin(a) * 0.01, z + sd * 0.0065]; }), HOLE, [0, 0, sd]); };
+    // the racing rules' arrow: a yellow triangle on the face over the tow point, pointing down; a white sticker behind it (sticker)
+    const arrow = (x, y, z, d, sticker) => { if (sticker) K.rect(x + d * 0.002, y + 0.075, z, 0.1, 0.065, WHT, { dir: d > 0 ? 'x' : '-x' });
+      faceOut(K, [[x + d * 0.003, y + 0.05, z], [x + d * 0.003, y + 0.1, z - 0.035], [x + d * 0.003, y + 0.1, z + 0.035]], YEL, [d, 0, 0]); };
+    const ORA = [0.95, 0.4, 0.06], BLU = [0.12, 0.3, 0.85], ANO = [0.85, 0.12, 0.1];
     switch (n) {
-      case 1: case 2: at(-1, (x, y, z, d) => strap(x, y, z, d, n === 2 ? 0.07 : 0.045, RED)); break;            // vlečni trak (širok): the rear
-      case 3: for (const e of [1, -1]) at(e, (x, y, z, d) => strap(x, y, z, d, 0.05, RED)); break;               // spredaj in zadaj
-      case 4: at(-1, (x, y, z, d) => { strap(x, y, z, d, 0.05, RED); arrow(x, y, z, d); }); break;                // dirkalni trak
-      case 5: for (const e of [1, -1]) at(e, (x, y, z, d) => ring(x, y, z, d, 0.028, 0.006, STEEL)); break;     // kljuke za vleko: steel eyes
-      case 6: at(1, (x, y, z, d) => plate(x, y, z, d, 0.06, AL)); break;                                        // aluminijasta
-      case 7: at(1, (x, y, z, d) => plate(x, y - 0.01, z, d, 0.035, AL2)); break;                               // ploščata: short, low
-      case 8: at(1, (x, y, z, d) => plate(x, y, z, d, 0.06, K.strp)); break;                                    // barvna: the stripe's colour
-      case 9: case 10: case 11: case 12: {                                                                       // zložljive: folded down against the bumper
-        const col = n === 9 ? [0.16, 0.16, 0.17] : n === 10 ? [0.85, 0.12, 0.1] : n === 11 ? STEEL : CHR;
-        at(1, (x, y, z, d) => ring(x, y, z, d, 0.03, 0.006, col, true)); break; }
-      case 13: at(1, (x, y, z, d) => { ring(x, y, z, d, 0.034, 0.007, [0.95, 0.4, 0.06]); arrow(x, y, z, d); }); break;   // dirkalna, spredaj
-      case 14: case 15: for (const e of [1, -1]) at(e, (x, y, z, d) => { ring(x, y, z, d, 0.034, 0.007, n === 15 ? TIB : [0.95, 0.4, 0.06]); arrow(x, y, z, d); }); break;   // spredaj in zadaj (titanovi)
-      case 16: for (const e of [1, -1]) at(e, (x, y, z, d) => { strap(x, y, z, d, 0.05, RED); arrow(x, y, z, d); }); break;   // motošport: straps, the arrows
+      case 1: at(-1, (x, y, z, d) => strap(x, y, z, d, 0.04, RED)); break;                                                         // vlečni trak: thin, red, the rear
+      case 2: at(-1, (x, y, z, d) => strap(x, y, z, d, 0.08, YEL)); break;                                                         // širok: yellow
+      case 3: for (const e of [1, -1]) at(e, (x, y, z, d) => strap(x, y, z, d, 0.05, BLU)); break;                               // spredaj in zadaj: blue
+      case 4: at(-1, (x, y, z, d) => { strap(x, y, z, d, 0.05, RED); arrow(x, y, z, d, true); }); break;                          // dirkalni trak: the arrow on a sticker
+      case 5: for (const e of [1, -1]) at(e, (x, y, z, d) => jhook(x, y, z, d, [0.12, 0.12, 0.13])); break;                      // kljuke za vleko: black J-hooks
+      case 6: at(1, (x, y, z, d) => plate(x, y, z, d, 0.09, AL)); break;                                                           // aluminijasta: a long plate out
+      case 7: at(1, (x, y, z, d) => plate(x, y - 0.02, z, d, 0.08, AL, { lie: true, h: 0.04 })); break;                           // ploščata: lying flat, low
+      case 8: at(1, (x, y, z, d) => plate(x, y, z, d, 0.06, K.strp, { tri: true })); break;                                       // barvna: a triangle in the stripe's colour
+      case 9: at(1, (x, y, z, d) => ring(x, y, z, d, 0.024, 0.005, [0.16, 0.16, 0.17], 'f')); break;                              // zložljiva: small, black, folded
+      case 10: at(1, (x, y, z, d) => { K.box(x + d * 0.003, y - 0.07, z, 0.006, 0.09, 0.07, 0, ANO); ring(x, y, z, d, 0.032, 0.007, ANO, 'f'); }); break;   // eloksirana: red on a red plate
+      case 11: at(1, (x, y, z, d) => { ring(x, y, z, d, 0.03, 0.006, STEEL, 'f'); arrow(x, y, z, d); }); break;                  // nerjaveča: with the arrow
+      case 12: at(1, (x, y, z, d) => ring(x, y, z, d, 0.04, 0.007, CHR, 'h')); break;                                             // polirana: unfolded, lying out, chrome
+      case 13: at(1, (x, y, z, d) => { ring(x, y, z, d, 0.04, 0.008, ORA); arrow(x, y, z, d); }); break;                          // dirkalna, spredaj: a big orange loop
+      case 14: for (const e of [1, -1]) at(e, (x, y, z, d) => { ring(x, y, z, d, 0.034, 0.007, BLU); arrow(x, y, z, d); }); break;   // spredaj in zadaj: blue loops
+      case 15: for (const e of [1, -1]) at(e, (x, y, z, d) => { ring(x, y, z, d, 0.036, 0.007, TIB, 'h'); K.exhaust(x + d * 0.03, y, z, 0.014, 0.03, { col: TIG, hole: TIG, n: q, dir: d > 0 ? 1 : -1 }); arrow(x, y, z, d); }); break;   // titanovi: lying out, the heat colours
+      case 16: at(1, (x, y, z, d) => { ring(x, y, z, d, 0.04, 0.008, ORA); arrow(x, y, z, d, true); }); at(-1, (x, y, z, d) => { strap(x, y, z, d, 0.06, RED); arrow(x, y, z, d, true); }); break;   // motošport: a loop in front, a strap behind
     }
   }
 
