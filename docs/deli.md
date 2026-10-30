@@ -60,7 +60,7 @@ Načrt je na veji garaže (`git fetch origin claude/3d-garage-cars-sum9uk`, nato
 | Sklop | Kaj | Stanje |
 |---|---|---|
 | 1 | dogovor; `krilo`, `platisca`, `zarometi` na KOLIBRIJU; poskus na PANTERJU, JASTREBU, TITANU | narejeno, pull request #192 (luč JASTREBA v enem kosu po izbiri uporabnika) |
-| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | vzporedno v 4 sejah (razdelek »Vzporedne seje«) |
+| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | vzporedno v 4 sejah (razdelek »Vzporedne seje«); spredaj potrjeno 30. 10. 2026 (razdelek »Sklop 2 · spredaj«) |
 | 3 | barve in nalepke (`barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`), skriti deli (načrt 2.6; učinki `lower`, `tint`, `tyre`), razbijanje novih delov | barve in skriti deli vzporedno v 1 seji; razbijanje po sklopu 2 |
 | 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | čaka |
 
