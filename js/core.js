@@ -1574,6 +1574,28 @@ const Core = (function () {
       kw: model.kw * UPG_KW[m],
     };
   }
+  // ---- the garage's parts (js/deli.js; car.deli = { element: option 1..16 }, the rest stock): what their kaj_nudi says (DELI.effect),
+  // summed, on a CLONE of the car's model and ARC entry (applied once, by the Car being built with opts.deli): kg its mass (and the
+  // moment of inertia), power its power (kw, Tmax), grip its lateral limit (arc.amax; the autopilot's corner speed as an upgrade's,
+  // upgGrip), kmh its top speed (the drag that moves the speed its power holds against the air by that much: Car.stepCS's Kp / v =
+  // kD v^2; no faster than its top gear's revs), brake its brakes (brakeG). Returns the sums (null: no part known)
+  function applyDeli(car, deli) {
+    if (typeof DELI === 'undefined') return null;
+    const D = DELI.clean(deli || car.deli, null), ids = Object.keys(D); if (!ids.length) return null;
+    const e = { kg: 0, power: 0, grip: 0, kmh: 0, brake: 0 };
+    for (const id of ids) { const f = DELI.effect(id, D[id]); if (f) for (const k in e) e[k] += f[k] || 0; }
+    const M = Object.assign({}, car.m, { mass: Math.max(car.m.mass * 0.5, car.m.mass + e.kg), kw: car.m.kw * Math.max(0.5, 1 + e.power) });
+    M.Tmax = M.kw * 1000 / (M.redline * TAU / 60 * tqShape(1.0));
+    if (e.kmh) {
+      const pw = PWR_MULT * M.kw * 1000 * 0.88 / M.mass, vd = Math.cbrt(pw / (SW_DRAG * M.cDrag / 0.42)), vG = M.redline / (9.5493 * M.gears[M.gears.length - 1] * M.final) * M.rw;
+      const k = Math.pow(vd / Math.max(5, Math.min(vd, vG) + e.kmh / 3.6), 3);
+      M.cDrag *= e.kmh < 0 ? Math.max(1, k) : Math.min(1, k);
+    }
+    car.m = M; car.I = M.mass * M.kI * M.kI; car.deli = D;
+    if (e.grip) { car.arc = Object.assign({}, car.arc, { amax: car.arc.amax * (1 + e.grip) }); car.upgGrip = (car.upgGrip || 1) * (1 + e.grip); }
+    if (e.brake) car.brakeG *= 1 + e.brake;
+    return e;
+  }
   // ---- 'cs' handling (Circuit Superstars, target-driven kinematic drift; see Car.stepCS) ----
   // Every constant is either a measured CS signature (times in s, angles in rad, rates in rad/s: scale-free) or relative to the
   // car's lateral limit aL (option 1: CS handling at our speeds; aL = CSK.aL x arc.amax, 2.24-2.37 g). Option 2 = CSK.aL 1.70.
@@ -1844,6 +1866,7 @@ const Core = (function () {
       // knocked back onto the asphalt: the marshals move it after 8; fin: [x, z] where the marshals left it for want of a better spot, null
       // otherwise), hold: s left waiting for the marshals to refit its wheels, lt: s since a wheel came off
       if (kitParts(b)) this.wreck = wreck0({});
+      if (opts.deli) applyDeli(this, opts.deli);   // (the garage's parts: their effects; this.deli, the renderer draws them)
     }
 
     get speed() { return Math.hypot(this.vx, this.vz); }
@@ -5184,7 +5207,7 @@ const Core = (function () {
       for (let g = 1; g <= total; g++) {
         let c;
         if (g === playerGrid) {
-          c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide });
+          c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide, deli: opts.playerDeli });
           this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
@@ -6424,7 +6447,7 @@ const Core = (function () {
      entries, its career price and its expanded part table. An invalid one is skipped with a console warning and listed in DEFS_SKIPPED
      (the fleet test fails on any). A patch def ({ id, patch: true, ... }) attaches fields to a vehicle already registered, one of the 11
      included (its look, its part table, its field ...): cat, ord, desc, stats, price, pk, field, fieldN, snd, expect, partNames, parts,
-     glb, credit, retired, look, tank (the fuel it carries full, kg: fuelTank).
+     glb, credit, retired, look, tank (the fuel it carries full, kg: fuelTank), mounts (where the garage's parts go on it, js/deli.js).
      --------------------------------------------------------------------- */
   const DEFS = (typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS : []).slice(), DEFS_SKIPPED = [];
   const DRIVES = ['FR', 'FF', 'MR', 'AWD', 'RR'], PK_IDS = ['ta1', 'ppo', 'open', 'unl'];
@@ -6433,8 +6456,8 @@ const Core = (function () {
   const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
     dmgK: [0.3, 2], knockK: [0.1, 1], roof0: [0, 0.9], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
   const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
-  const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];
-  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank'];
+  const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank', 'mounts'];
+  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank', 'mounts'];
   const isNum = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
   const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
   // the checks of a def's fields ('' when fine); a patch def's fields get the same
@@ -6458,6 +6481,7 @@ const Core = (function () {
     retired: (v) => typeof v === 'boolean' ? '' : 'retired not true / false',
     look: (v) => v === null || isObj(v) ? '' : 'look: null or an object',
     tank: (v) => isNum(v, 0, 1000) ? '' : 'tank: the fuel it carries full, 0..1000 kg (fuelTank: by its category and mass when it has none)',
+    mounts: (v) => isObj(v) && Object.keys(v).every(k => /^[a-z_]{2,24}$/.test(k) && isObj(v[k])) ? '' : 'mounts: { element id (js/data/deli.js): { where its parts go } }',
   };
   function physBad(P) {
     if (!isObj(P)) return 'phys missing';
@@ -6572,7 +6596,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { setCrash, XR, setTest, TX, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, LOD, quickArgs };
 })();
