@@ -3972,7 +3972,8 @@ const Garage3D = (function () {
 
   /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
   const HOME = { yaw: 0.3, pitch: 0.36, dist: 9.2, tx: -0.1, ty: 0.55, tz: 0, fov: 33 };
-  const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0 };
+  const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0, zoom: 1 };
+  const ZOOM = [0.85, 1.3];   // (the user's zoom (the mouse's wheel, two fingers): a factor on every view's distance; in: the cabinet still seen, out: the room's walls step aside)
   // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
   // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
   const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0 };
@@ -3999,7 +4000,7 @@ const Garage3D = (function () {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
     { const e = 1 - Math.exp(-dt * 2.5); CAM.k += (CAM.kw - CAM.k) * e; CAM.dy += (CAM.dyw - CAM.dy) * e; }
     const aspect = W / H, fov = tallFov(rig.fov), th = Math.tan(rig.fov * Math.PI / 360), need = 3.5 / (th * Math.max(aspect, AREF)), fit = Math.max(1, need / HOME.dist);
-    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit * CAM.k;   // (under 0: a show's look up at the car on the lift)
+    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit * CAM.k * user.zoom;   // (under 0: a show's look up at the car on the lift)
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
     if (SHIFT.y) camera.setViewOffset(W, H, 0, SHIFT.y, W, H); else if (camera.view) camera.clearViewOffset();   // (the picture raised: the page's buttons cover its foot)
     const ty = rig.ty + CAM.dy + Math.sin(time * 0.31) * 0.012;
@@ -4039,18 +4040,26 @@ const Garage3D = (function () {
   /* ---------------- input: drag left or right to go round the car (only that: the camera's height and distance stay, no zoom);
      a sideways scroll (a touchpad, shift and the wheel) turns it too; a tap speeds an animation up ---------------- */
   function bindInput(el) {
-    let id = null, lastX = 0, moved = 0, t0 = 0, tm = 0;   // (one finger turns it: a second one is ignored)
-    const k = () => 3.2 / Math.max(240, el.clientWidth);
-    el.addEventListener('pointerdown', (e) => { if (id !== null) { moved += 10; return; } id = e.pointerId; el.setPointerCapture(id); lastX = e.clientX; moved = 0; t0 = performance.now(); user.drag = true; user.vy = 0; });
+    let id = null, lastX = 0, moved = 0, t0 = 0, tm = 0, pd = 0;   // (one finger turns it; two pinch it nearer or further)
+    const pts = new Map(), k = () => 3.2 / Math.max(240, el.clientWidth), zoomBy = (f) => { user.zoom = clamp(user.zoom * f, ZOOM[0], ZOOM[1]); };
+    const span = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    el.addEventListener('pointerdown', (e) => { pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { pd = span(); moved += 10; return; }   // (a second finger: a pinch, no tap)
+      if (id !== null) return; id = e.pointerId; try { el.setPointerCapture(id); } catch (_) { } lastX = e.clientX; moved = 0; t0 = performance.now(); user.drag = true; user.vy = 0; });
     el.addEventListener('pointermove', (e) => {
+      const p = pts.get(e.pointerId); if (!p) return; p.x = e.clientX; p.y = e.clientY;
+      if (pts.size >= 2) { const d = span(); if (pd > 0 && d > 0) zoomBy(pd / d); pd = d; user.vy = 0; return; }   // (fingers apart: nearer)
       if (e.pointerId !== id) return;
       const dx = e.clientX - lastX; lastX = e.clientX; moved += Math.abs(dx);
       user.yaw -= dx * k(); user.vy = -dx * k() * 60 * 0.5; tm = performance.now();
     });
-    // (let go: it swings on as it was flicked; held still first (no moves for a while), it stays)
-    const up = (e) => { if (e.pointerId !== id) return; id = null; user.drag = false; if (performance.now() - tm > 80) user.vy = 0; if (moved < 8 && performance.now() - t0 < 300) { if (busy) speed = 3; else { const r = el.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); } } };
+    // (let go: it swings on as it was flicked; held still first (no moves for a while), it stays; a pinch over: the finger left turns on)
+    const up = (e) => { pts.delete(e.pointerId); if (pts.size === 1 && id !== null && pts.has(id)) { lastX = pts.get(id).x; pd = 0; return; }
+      if (e.pointerId !== id) return; id = null; user.drag = false; if (performance.now() - tm > 80) user.vy = 0; if (moved < 8 && performance.now() - t0 < 300) { if (busy) speed = 3; else { const r = el.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); } } };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-    el.addEventListener('wheel', (e) => { e.preventDefault(); if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) user.yaw += e.deltaX * (e.deltaMode ? 16 : 1) * k() * 0.6; }, { passive: false });
+    // (the wheel: up and down nearer and further (a trackpad's pinch too), sideways round)
+    el.addEventListener('wheel', (e) => { e.preventDefault(); const m = e.deltaMode ? 16 : 1;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) user.yaw += e.deltaX * m * k() * 0.6; else zoomBy(Math.exp(e.deltaY * m * (e.ctrlKey ? 0.01 : 0.0012))); }, { passive: false });
   }
 
   /* ---------------- sound: the car's own engine (Sfx's, fed a car that stands still), and the workshop's noises ---------------- */
@@ -5785,7 +5794,7 @@ const Garage3D = (function () {
         if (kind === 'chamber') { yield* chamberTo(1); L.push({ k: CH.k, low: Math.min(...CH.bot), bands: CH.bot.slice(), tools: RB.map(A => A.tool) }); yield* wait(0.5); yield* chamberTo(0); L.push({ k: CH.k }); }
         else if (kind === 'tool') { yield* armTool(i, o.tool || ARM.tools[i][0]); L.push({ tool: A.tool, visible: FX.tools.filter(m => m.visible).length }); yield* armRest(i); L.push({ tool: A.tool, parked: fxParked() }); }
         else if (kind === 'go') { yield* armTool(i, o.tool || ARM.tools[i][0]); const q = armFor(i, A.tool, v3(o.tip), o.dir || [0, -1, 0]); yield* armGo(i, q); L.push({ s: Object.assign({}, A.s), tip: A.J.tipA.toArray() }); yield* armRest(i); } }); },
-      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice(), names: FRONT.names.slice(), shown: FRONT.sprites.map(q => q.visible) }; },
+      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, get zoom() { return user.zoom; }, set zoom(v) { user.zoom = v; }, ZOOM, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice(), names: FRONT.names.slice(), shown: FRONT.sprites.map(q => q.visible) }; },
       carProbe(cv) { cv = cv || cur; cv.v.grp.updateMatrixWorld(true); return probeOf(carMeshes(cv), true); },   // (the car's top, its sides: with its parts and its wheels)
       CH, FREE, RGL, get fxObst() { return FX.obst; }, setChamber, chamberColor,
       // (the service by the arms: where it is (its item, its step, its show time, the cues met, its log, the items done), each arm's tool,

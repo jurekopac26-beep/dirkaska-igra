@@ -384,6 +384,17 @@ try {
     T.check('lying down (640 × 360, 915 × 412): the car whole between the buttons at the top and its name; the maquettes, SERVICE and the colour circles in the picture over the name; the guide\'s rings round the buttons for the other cars, its bubble beside them; a menu at the bottom where it opens', R.every(x => x.ok), JSON.stringify(R));
   }
 
+  // 8d. the zoom (the user's wish, 30. 10.): the mouse's wheel nearer and further, within its bounds (the cabinet still seen, the room's
+  // walls stepping aside); two fingers apart: nearer, no tap
+  {
+    const z = await page.evaluate(() => { const c = document.getElementById('g-gl'), D = Garage3D._dbg, w = (dy) => c.dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true }));
+      for (let i = 0; i < 20; i++) w(-300); const near = D.zoom; for (let i = 0; i < 40; i++) w(300); const far = D.zoom;
+      const pe = (t, id, x) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, clientX: x, clientY: 400, bubbles: true, isPrimary: id === 11 }));
+      D.zoom = 1; pe('pointerdown', 11, 150); pe('pointerdown', 12, 250); pe('pointermove', 12, 330); pe('pointerup', 12, 330); pe('pointerup', 11, 150);
+      const pinch = D.zoom, menu = !!__garage.menu; D.zoom = 1; return { near, far, pinch, menu, Z: D.ZOOM }; });
+    T.check('the zoom: the wheel nearer and further within its bounds (' + z.Z.join('–') + '); two fingers apart nearer, no tap', z.near === z.Z[0] && z.far === z.Z[1] && z.pinch < 1 && !z.menu, JSON.stringify(z));
+  }
+
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
   // 9. from the game (index.html): its car screen, the TITAN in green chosen, a tap on the car: the garage opens with that car in that
