@@ -28,7 +28,7 @@ SHADOW_K = 0.4   # how dark the sun's cast shadows are painted (the game's islan
 FEATHER = 18.0  # the island's soft edge: from opaque to clear over this many tile pixels
 RING_M = 150.0  # the made-up rim of ground-only cells round the island's trees, in metres: cut off before the soft edge starts
 RING_PX = {'monaco': 8, 'riviera': 18, 'montreal': 6, 'toronto': 8}   # (where the island is a whole town to the tile's edge, or narrow land between water: only a thin rim)
-WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
+WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
 STRIP_M = {'chapman': 260}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
 THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nring', 'spa': 'spa', 'rbring': 'rbring', 'suzuka': 'suzuka', 'monaco': 'monaco', 'riviera': 'city'}
 # the sun of each theme (routemap_page.js: THEMES sunOff, default [-80, 96, 70]; x east, y up, z south), its strength and the sky light

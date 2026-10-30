@@ -147,6 +147,8 @@ for tid, pl in P.items():
         json.dump(o, open(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid), 'w'), separators=(',', ':'), ensure_ascii=False)
         print(tid, 'heli path', len(C), 'frames,', os.path.getsize(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid)) // 1024, 'KB')
 
+for tid in OLD:   # (a track not in places.json here: kept as it was)
+    if tid not in out: out[tid] = OLD[tid]
 with open(os.path.join(SITE, 'intro-data.js'), 'w') as f:
     f.write('/* The intro before a race: each track\'s map placed on the Earth, its country (flag, music), its summit\'s name and the places marked over\n   the helicopter\'s flight (made by intro_data.py from landmarks.json, do not edit). */\n')
     f.write('window.INTRO = ' + json.dumps(out, separators=(',', ':'), ensure_ascii=False) + ';\n')

@@ -134,6 +134,8 @@ for t in TRACKS:
     data[t] = R
     print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R)
 
+for t in OLD:   # (a track not in maps.json here: kept as it was)
+    if t not in data: data[t] = OLD[t]
 with open(os.path.join(SITE, 'routes.js'), 'w') as f:
     f.write('/* The tracks: routes over the maps, heights, places and flyover frames (made by routes.py, do not edit). */\n')
     f.write('window.ROUTES = ' + json.dumps(data, separators=(',', ':'), ensure_ascii=False) + ';\n')

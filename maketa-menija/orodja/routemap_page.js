@@ -47,7 +47,7 @@ window.RM = (function () {
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, sunOff: [-74, 86, -56] },
   };
   const SEASONS = { vrsic: 'autumn' };
-  const KEEP_SEA = new Set(['newcastle']);
+  const KEEP_SEA = new Set(['newcastle', 'detroit']);
   let B = null, R = null, CV = null;
   function build(id, opt) {
     if (B && B.id === id) return B;
@@ -59,9 +59,9 @@ window.RM = (function () {
     // land round the island is the made-up skirt (top) or the real land painted by wide_map.py (isle)
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
     const wide = Math.max(6000, 1.6 * Math.max(x1 - x0, z1 - z0) + 2000), hid = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
-    // (a city by the sea whose ground goes on under the water as its bed: the sea plane stays, wide_map.py takes its water out; opt.keepWide: a lake or
+    // (a city by the sea or a river whose ground goes on under the water as its bed: its flat water planes stay, wide_map.py takes its water out; opt.keepWide: a lake or
     // river whose plane is the water of the map itself, e.g. Toronto's lake by the circuit: kept (true: all of them; a list: those by name))
-    const keepSea = KEEP_SEA.has(id), keep = o => (keepSea && o.geometry && o.geometry.type === 'PlaneGeometry') || (!!(opt && opt.keepWide) && (opt.keepWide === true || opt.keepWide.includes(o.name)));
+    const keepSea = KEEP_SEA.has(id), keep = o => (keepSea && bb.setFromObject(o).getSize(sz).y < 1) || (!!(opt && opt.keepWide) && (opt.keepWide === true || opt.keepWide.includes(o.name)));
     sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible || keep(o)) return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
     hid.forEach(o => { o.visible = false; }); if (hid.length) console.log('far backdrop left out: ' + hid.map(o => (o.name || o.type) + ' ' + Math.round(new THREE.Box3().setFromObject(o).getSize(sz).x)).join(', '));
     B = { id, def, T, sc, w, tex, open: T.finishS > T.startS };
