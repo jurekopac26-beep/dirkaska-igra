@@ -122,11 +122,13 @@ try {
     // (held still at the end: no swing after it; small turns: the camera stays clear of the walls)
     const drag = async (dx, dy) => { await page.mouse.move(box.x, box.y); await page.mouse.down(); for (let i = 1; i <= 7; i++) await page.mouse.move(box.x + dx * Math.min(1, i / 6), box.y + dy * Math.min(1, i / 6)); await page.mouse.up(); };
     const c0 = await cam();
-    await drag(0, 120); await page.mouse.move(box.x, box.y); await page.mouse.wheel(0, 600);
+    await drag(0, 120);
     const c1 = await cam(), same = Math.hypot(c1.x - c0.x, c1.z - c0.z) < 0.02 && Math.abs(c1.y - c0.y) < 0.03;
+    await page.mouse.move(box.x, box.y); await page.mouse.wheel(0, 600); const cw = await cam(), further = cw.d > c0.d + 0.5;   // (the wheel: further (the zoom, 8d))
+    await page.evaluate(() => { Garage3D._dbg.zoom = 1; });
     await drag(-30, 20); await page.mouse.move(box.x, box.y); await page.mouse.wheel(50, 0);
     const c2 = await cam(), round = Math.hypot(c2.x - c0.x, c2.z - c0.z) > 1 && Math.abs(c2.y - c0.y) < 0.03 && Math.abs(c2.d - c0.d) < 0.03;
-    T.check('the camera: up and down and the wheel do nothing; left and right (a drag, a sideways scroll) it goes round, its height and distance kept', same && round, JSON.stringify({ c0, c1, c2 }));
+    T.check('the camera: a drag up and down does nothing, the wheel takes it further; left and right (a drag, a sideways scroll) it goes round, its height and distance kept', same && further && round, JSON.stringify({ c0, c1, cw, c2 }));
     // round to behind the car: out beyond the back wall, as far as ever (it never comes closer); the back wall's things stepped aside
     await drag(-180, 0); await drag(-180, 0);
     const c3 = await cam(), back = await page.evaluate(() => ({ hidden: !Garage3D._dbg.WALLS.back.root.visible, front: Garage3D._dbg.WALLS.front.root.visible }));
