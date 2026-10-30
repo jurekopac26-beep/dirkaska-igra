@@ -544,7 +544,7 @@
   "crowd": 3587,
   "world": "5effc72b",
   "propsHash": "97bf012",
-  "floor": "22497fba/7196",
+  "floor": "dda13ff3/7196",
   "groups": {
    "-:MeshLambertMaterial": "90115a4a",
    "-:MeshBasicMaterial": "d4686bf1",
@@ -663,7 +663,7 @@
   "crowd": 785,
   "world": "e90cbed2",
   "propsHash": "ef62cf3b",
-  "floor": "21680c7/5852",
+  "floor": "b55c0daa/5852",
   "groups": {
    "-:MeshLambertMaterial": "66286066",
    "-:MeshBasicMaterial": "d7139b92",
@@ -854,7 +854,7 @@
   "crowd": 592,
   "world": "c457e9c",
   "propsHash": "b4ef354d",
-  "floor": "a2a38d3f/5712",
+  "floor": "abca3bfe/5712",
   "groups": {
    "-:MeshLambertMaterial": "afeca92",
    "-:MeshBasicMaterial": "50dcdb3",
