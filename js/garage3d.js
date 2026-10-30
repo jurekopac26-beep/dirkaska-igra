@@ -3974,8 +3974,8 @@ const Garage3D = (function () {
   const HOME = { yaw: 0.3, pitch: 0.36, dist: 9.2, tx: -0.1, ty: 0.55, tz: 0, fov: 33 };
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0, zoom: 1 };
   const ZOOM = [0.55, 1.3];   // (the user's zoom (the mouse's wheel, two fingers): a factor on every view's distance; in: close to the car (odlocitve 30. 10.: »bolj približam«), out: the room's walls step aside)
-  // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
-  // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
+  // (a factor on every view's distance and a lift of its height for the car on the table: k, dy now (eased while a new car drives in),
+  // kw, dyw the car's own (the plans' views); every car as far (camFit))
   const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0 };
   // (a picture narrower than AREF (the phone upright, the garage over the whole screen): as wide a view across as at AREF, more of it up
   // and down (its own fov wider))
@@ -3994,7 +3994,8 @@ const Garage3D = (function () {
     const need = cab + 8 - bottom, room = roof - top - 6;
     SHIFT.y = Math.round(Math.max(0, Math.min(need, room))); SHIFT.free = 1; SHIFT.short = Math.max(0, Math.round(need - Math.max(0, room)));
   }
-  function camFit(cv, now) { const K = cv && cv.kit; CAM.kw = K ? clamp(Math.max(1, (K.top - 0.27) / 1.66, (Math.max(K.front, -K.rear) + 0.5) / 3.2), 1, 1.9) : 1; CAM.dyw = K ? Math.max(0, K.top - 1.91) * 0.45 : 0;
+  // (odlocitve 30. 10.: the camera always as far by default, a lorry's too (the user zooms out for it): no car framed from further off)
+  function camFit(cv, now) { CAM.kw = 1; CAM.dyw = 0;
     if (now) { CAM.k = CAM.kw; CAM.dy = CAM.dyw; } }
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
