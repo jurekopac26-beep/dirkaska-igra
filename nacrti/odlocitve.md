@@ -98,3 +98,4 @@
 - 30. 10. ŽELJA uporabnika (prek glavne seje): avto na plošči je VES ČAS prižgan, tudi med menjavo avtov (ko odpelje in se pripelje): luči ves čas gorijo, motor ves čas v prostem teku (zvok prostega teka, rahlo tresenje in dim iz auspuha kot pri prižgani maketi YOUR CAR).
 - 30. 10. ŽELJA uporabnika (prek glavne seje): v garaži se kamera približa in oddalji s kolescem miške (na telefonu z dvema prstoma), v razumnih mejah, da avto in omarica ostaneta lepo vidna in kamera ne gre skozi stene.
 - 30. 10. ŽELJA uporabnika (prek glavne seje): gumb IZBERI PROGO zgoraj levo pobarvan kot zastava (primer: nemška, črna-rdeča-zlata), brez napisa (kot gumbi z zastavami za menjavo proge). Do odgovora (A: vedno nemška, B: zastava države izbrane proge) narejeno B.
+- 30. 10. ŽELJA uporabnika: kamera se lahko bolj približa (spodnja meja približevanja 0,55 namesto 0,85; pri največjem približanju omarica ni več v sliki).
