@@ -550,8 +550,8 @@
 
     /* ---- the far view: Castle Hill (a granite dome over the town), the ranges to the south and west and Magnetic Island in the bay as a coarse
        terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything (where they stand, their
-       depth put just inside the far plane by the shader, so the far plane does not cut them and whatever is nearer covers them), faded into
-       the haze by the distance from the camera (farUpdate) ---- */
+       depth put just inside the far plane by the shader: the far plane does not cut them and whatever is nearer covers them), faded into the
+       haze by the distance from the camera (farUpdate) ---- */
     let FAR = null;
     {
       const P0 = [], C = [], I = [], HZ = [];
@@ -585,7 +585,7 @@
       const Uh = { uHz: { value: new THREE.Color(0xc9d8e6) } }, m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false });
       m.onBeforeCompile = (sh) => { sh.uniforms.uHz = Uh.uHz;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;')
-          .replace('#include <project_vertex>', '#include <project_vertex>\ngl_Position.z = gl_Position.w - 0.1;');   // (depth 1 - 0.1 / distance: behind all that is nearer, in its order)
+          .replace('#include <project_vertex>', '#include <project_vertex>\ngl_Position.z = gl_Position.w - 60.0 * ( - projectionMatrix[ 2 ][ 2 ] - 1.0 );');   // (its depth 1 - k / distance: behind all that is nearer than 60 m inside the far plane, over what is beyond, in its own order)
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
       m.customProgramCacheKey = () => 'tsvFar';
       const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'tsvFar';
