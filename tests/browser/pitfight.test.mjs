@@ -6,7 +6,7 @@
 // (pitFightOpen): a rival 1.8 s behind none, at 1.2 s one (held there: gone after 5 s); a slower rival 0.35 s ahead passed (gone);
 // a slow one 1.2 s behind left (gone past 2 s); a car a lap down alongside none; the window shut 4 s after the lane (a rival 0.5 s behind
 // then none), none in normal racing without a stop; in English FIGHT FOR POSITION, +0.8 s. Its place: upright (360x640) at the left under
-// the stack, on its side (640x360) under the clock (where BOKSI TA KROG is: hidden while it shows), with buttons, the wheel and tilting,
+// the stack, on its side (640x360) under the clock (where BOKSI is: hidden while it shows), with buttons, the wheel and tilting,
 // the other texts up: over nothing of the HUD or the controls, not over the car, in the screen, its letters at least 9 px.
 //   node tests/browser/pitfight.test.mjs            (SHOTS=<folder>: a picture of each place)
 import path from 'node:path';
@@ -62,8 +62,8 @@ const signOk = (p) => p.em[0] === '+' ? / behind$/.test(p.cls) && p.g > 0 : p.em
 const pillOk = (p, name, en) => p.on && /^on( behind| ahead)?$/.test(p.cls) && p.b === (en ? 'FIGHT FOR POSITION' : 'BOJ ZA MESTO') && p.n === name && (en ? GAP_EN : GAP).test(p.em) && signOk(p)
   && Math.abs(Math.abs(parseFloat(p.em.replace('−', '-').replace(',', '.'))) - Math.abs(p.g)) <= 0.051;
 
-// the place of the pill (as boxwarn.test.mjs places BOKSI TA KROG): the race held (paused, the pause menu out of the way, the camera behind
-// the car), the other texts up: the failures, a yellow flag, the corner sign, a split, a big message, a toast, BOKSI TA KROG
+// the place of the pill (as boxwarn.test.mjs places BOKSI): the race held (paused, the pause menu out of the way, the camera behind
+// the car), the other texts up: the failures, a yellow flag, the corner sign, a split, a big message, a toast, BOKSI
 const hold = (page) => page.evaluate(() => {
   const g = window.__game, $ = (id) => document.getElementById(id), P = g.race.player; g.pause();
   Render.resetCam(); for (let i = 0; i < 60; i++) Render.frame(1 / 60, 1, P, 'chase', {});
@@ -73,7 +73,7 @@ const hold = (page) => page.evaluate(() => {
   $('h-flag').className = 'on yel'; $('h-flag').textContent = 'RUMENA ZASTAVA';
   $('h-note').style.transition = 'none'; $('h-note').className = 'show sev3';
   $('h-split').textContent = 'SEKTOR 2  35.996'; $('h-split').className = 'show sp';
-  $('h-box').className = 'on near r'; $('h-box').firstElementChild.textContent = 'BOKSI TA KROG'; $('h-box').lastElementChild.textContent = '300 m';
+  $('h-box').className = 'on near r'; $('h-box').firstElementChild.textContent = 'BOKSI'; $('h-box').lastElementChild.textContent = '300 m';
   g.msg('ZADNJI KROG!', 'gold', 600); g.toast('Sedaj lahko spustiš plin, vse bo naredil sam.', 600000);
 });
 const PLACE = () => {
@@ -93,7 +93,7 @@ const PLACE = () => {
 function wrongPlace(x, k) {
   const bad = [], hit = (a, c) => Math.min(a.r, c.r) - Math.max(a.l, c.l) > 1 && Math.min(a.b, c.b) - Math.max(a.t, c.t) > 1, { b } = x;
   if (!x.on) return ['not shown'];
-  if (x.box) bad.push('BOKSI TA KROG shown with it');
+  if (x.box) bad.push('BOKSI shown with it');
   if (b.l < 0 || b.t < 0 || b.r > x.w || b.b > x.h) bad.push('out of the screen');
   for (const o of x.others) if (hit(b, o)) bad.push('over ' + o.id);
   if (hit(b, x.car)) bad.push('over the car ' + JSON.stringify(x.car));
@@ -207,7 +207,7 @@ try {
   await hold(page);
   await page.evaluate(() => { document.getElementById('h-fight').children[1].textContent = 'J. VAN DER BERGHE'; document.getElementById('h-fight').children[2].textContent = '−1.4 s'; });
   const pe = await places(page, 'en');
-  T.check('its place (FIGHT FOR POSITION, a long name): upright under the stack at the left, on its side under the clock, BOKSI TA KROG hidden; with buttons, the wheel and tilting over nothing of the HUD or the controls, not over the car, in the screen, at least 9 px',
+  T.check('its place (FIGHT FOR POSITION, a long name): upright under the stack at the left, on its side under the clock, BOKSI hidden; with buttons, the wheel and tilting over nothing of the HUD or the controls, not over the car, in the screen, at least 9 px',
     pe.length === 6 && pe.every(o => o.ok), JSON.stringify(pe.filter(o => !o.ok).concat(pe.slice(0, 2))));
   await page.evaluate(() => { Lang.set('sl'); const F = document.getElementById('h-fight'); F.children[0].textContent = 'BOJ ZA MESTO'; F.children[2].textContent = '−1,4 s'; });
   const ps = await places(page, 'sl');

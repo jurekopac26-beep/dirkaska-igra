@@ -3392,7 +3392,7 @@
     if (P.fuel <= 0 && !fuelTold.out) { fuelTold.out = true; showMsg(tr(P.m.ev ? 'PRAZNA BATERIJA!' : 'BREZ GORIVA!'), 'slow', 2.6); Comm.say(P.m.ev ? 'batteryOut' : 'fuelOut', null, 4); }
     if (P.fuel > 0.9) fuelTold.low = fuelTold.out = false;   // (filled up again)
   }
-  // BOKSI TA KROG (a race with fuel or with the slicks' compounds, on a track with pits; whatever the team radio's setting): on the lap the
+  // BOKSI (BOX; before: BOKSI TA KROG; a race with fuel or with the slicks' compounds, on a track with pits; whatever the team radio's setting): on the lap the
   // stop must be made for them a blue pill, as the sign at the way in (upright under the stack at the left, on its side under the clock); the
   // last BOX_NEAR m before the way in (def.pit[1]) an arrow to the lane's side (def.pit[0]: Montréal, Toronto, Bathurst, Trois-Rivières on the left) and the metres to it. Decided at the line,
   // as the team radio's call, for the whole lap (Core's Race.plan, box: the fuel would not reach the next way in, the slicks would be worn
@@ -3408,7 +3408,7 @@
     if (on && out && boxW.due) { const dE = cur * L + D[1] - P.dist, pz = dE < 0 ? track.pitAt(P.q.s) : null;   // (to the way in on this lap, along the race)
       if (dE < 0 && !(pz && pz.gap && pz.d < (D[1] + D[2]) / 2)) boxW.due = false;   // (past the way in: done for this lap; where the way out touches the circuit again, before the line at Trois-Rivières, not a way in)
       else key = dE > BOX_NEAR ? 'due' : (D[0] < 0 ? 'l' : 'r') + (dE > 25 ? Math.ceil(dE / 50) * 50 : 0); }   // (the metres in steps of 50)
-    const txt = key ? tr('BOKSI TA KROG') : '';
+    const txt = key ? (Lang.cur === 'en' ? 'BOX' : 'BOKSI') : '';   // (the short word, "BOKSI 250 m": the stop is due this lap; not tr('BOKSI'), the tower's and the message's PIT)
     if (key + txt === boxW.key) return; boxW.key = key + txt;
     const el = $('h-box'), m = key && key !== 'due' ? +key.slice(1) : 0;
     el.className = !key ? '' : key === 'due' ? 'on' : 'on near ' + key[0];

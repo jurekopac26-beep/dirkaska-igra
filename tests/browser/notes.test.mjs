@@ -2,7 +2,7 @@
 // HUD states, each as the game shows it (a race on a track with pits: the tyres and a two-digit lap; with the team radio, with the wreck
 // panel, with the column under the map; Nürburg's long lap, no tyres; qualifying on a track with pits: the tyres and KVALIFIKACIJE; a duel,
 // the police (POLICIJA, no total), the police's checkpoint, a time trial, Pikes Peak (its own class row), the driving school): high in the
-// top row (upright under the clock; the duel's and the police's lower, under the gap line and the panel under the clock's line), over nothing (also the column under the map: the pit stop's bar, the start's reaction, the big message, the splits, the toast; the pills at the left and in a race BOKSI TA KROG, on its side under the clock, or in its place BOJ ZA MESTO out of the pits;
+// top row (upright under the clock; the duel's and the police's lower, under the gap line and the panel under the clock's line), over nothing (also the column under the map: the pit stop's bar, the start's reaction, the big message, the splits, the toast; the pills at the left and in a race BOKSI, on its side under the clock, or in its place BOJ ZA MESTO out of the pits;
 // the pause and rescue buttons; the controls), measured once the HUD's face (ApexMenu) is loaded; (b) in a race: Medvode's
 // roundabout and Harju's and Monaco's chicanes blue with their own glyphs (upright), a red arrow before a slow corner; with the column under the map full (laid out by game.js hudCol: the
 // reaction, START!, the team radio, the toast) the sign over none of it, nor over the buttons and the controls; on Pikes Peak in a time
@@ -44,7 +44,7 @@ try {
       $('hud').classList.add('drs'); $('h-drs').className = 'arm';
       $('h-flag').className = 'on yel'; $('h-flag').textContent = 'RUMENA ZASTAVA'; $('h-fuel').className = 'on'; $('h-fuel').textContent = 'GORIVO 40 %';
       $('h-flt').className = 'on'; $('h-flt').innerHTML = '<span class="pk">PREDRTA GUMA</span><span class="br">VROČE ZAVORE</span><span class="en">VROČ MOTOR</span>';
-      $('h-box').className = 'on near r'; $('h-box').firstElementChild.textContent = 'BOKSI TA KROG'; $('h-box').lastElementChild.textContent = '400 m';   // (under the stack; on its side under the clock)
+      $('h-box').className = 'on near r'; $('h-box').firstElementChild.textContent = 'BOKSI'; $('h-box').lastElementChild.textContent = '400 m';   // (under the stack; on its side under the clock)
       $('hud').classList.add('tw');
       check('race');
       $('h-teamradio').style.transition = 'none'; $('h-teamradio').classList.add('on'); $('h-teamradio').lastElementChild.textContent = 'Box this lap. The rain is coming, inters are ready in the box.'; check('race+radio'); $('h-teamradio').classList.remove('on');
@@ -53,7 +53,7 @@ try {
       for (const [id, c, t] of [['h-pit', 'on', ''], ['h-react', 'show good', ''], ['h-msg', 'show', 'START!'], ['toast', 'show col', 'Sedaj lahko spustiš plin, vse bo naredil sam.']]) { $(id).style.transition = $(id).style.animation = 'none'; if (t) $(id).textContent = t; $(id).className = c; }
       $('h-react').firstElementChild.textContent = 'REAKCIJA'; $('h-react').lastElementChild.textContent = '0,23 s'; $('btn-rescue').classList.remove('off');
       check('race+column'); for (const id of ['h-pit', 'h-react', 'h-msg', 'toast']) $(id).className = ''; $('btn-rescue').classList.add('off');
-      $('hud').classList.add('fight'); $('h-fight').className = 'on ahead'; $('h-fight').children[0].textContent = 'FIGHT FOR POSITION'; $('h-fight').children[1].textContent = 'J. VAN DER BERGHE'; $('h-fight').children[2].textContent = '\u22121.4 s';   // (BOJ ZA MESTO out of the pits, in BOKSI TA KROG's place)
+      $('hud').classList.add('fight'); $('h-fight').className = 'on ahead'; $('h-fight').children[0].textContent = 'FIGHT FOR POSITION'; $('h-fight').children[1].textContent = 'J. VAN DER BERGHE'; $('h-fight').children[2].textContent = '\u22121.4 s';   // (BOJ ZA MESTO out of the pits, in BOKSI's place)
       check('race+fight'); $('hud').classList.remove('fight'); $('h-fight').className = '';
       $('hud').classList.remove('drs'); $('h-flt').className = '';
       $('h-box').className = '';   // (only in a race on a circuit with pits)

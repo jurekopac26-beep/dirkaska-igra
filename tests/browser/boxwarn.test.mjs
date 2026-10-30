@@ -1,18 +1,19 @@
-// BOKSI TA KROG on the HUD (game.js boxHUD, Core's Race.plan): a long race with fuel on a track with pits, the team radio switched off
+// BOKSI on the HUD (game.js boxHUD, Core's Race.plan): a long race with fuel on a track with pits, the team radio switched off
 // (the warning whatever its setting), the player on autopilot. The Red Bull Ring (the pit lane on the right): nothing on the first lap; at
-// the line of the lap the stop is due (the plan there: the fuel would not reach the next way in) BOKSI TA KROG, the last 400 m before the way
+// the line of the lap the stop is due (the plan there: the fuel would not reach the next way in) BOKSI, the last 400 m before the way
 // in an arrow to the right after the words and the metres to it in steps of 50, down to the way in; the player comes in: gone in the lane,
-// nothing on the next lap (a full tank). Trois-Rivières in English (the lane on the left; a stop due at the second lap's line): BOX THIS LAP,
+// nothing on the next lap (a full tank). Trois-Rivières in English (the lane on the left; a stop due at the second lap's line): BOX,
 // the arrow on the left before the words; the stop not made: gone once past the way in (not back where the way out joins the circuit, before
 // the line there), at the next line again. Its place: upright (360x640) at the left under the stack (the tyres, the fuel, the failures, the
 // flags), on its side (640x360) under the clock, with buttons, the wheel and tilting, with the tyres, the fuel, the failures, a yellow flag,
 // the corner sign, a split, a big message and a toast up: over nothing of the HUD or the controls, not over the car, in the screen, its
-// letters at least 9 px; the stack's pills as wide with it as without it.
+// letters at least 9 px; the stack's pills as wide with it as without it. And on a phone 390x844 upright, with the corner sign up too: the
+// warning (at the left, under the stack) and the sign (at the middle of the top) both shown and not one over the other, in every way of steering.
 //   node tests/browser/boxwarn.test.mjs            (SHOTS=<folder>: a picture of each place)
 import path from 'node:path';
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('BOKSI TA KROG');
+const T = checker('BOKSI');
 const SHOTS = process.env.SHOTS || '';
 const srv = await serve();
 const browser = await launch();
@@ -104,6 +105,21 @@ async function places(page, name, side) {
   await page.evaluate(() => Input.setMode('buttons'));
   return out;
 }
+// the warning and the corner sign (#h-note, up with hold) both shown on a phone 390x844 upright, not one over the other: the warning's right
+// edge left of the sign's left edge (clear sideways, so whatever the height of the stack above the warning: the sign at the middle of the top,
+// the warning at the left under the stack; the shorter words keep them apart), in every way of steering
+async function clearOfSign(page) {
+  const out = [];
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const m of ['buttons', 'wheel', 'tilt']) {
+    await page.evaluate((m) => Input.setMode(m), m); await frames(page, 3); await page.evaluate(() => Input.layout()); await frames(page, 2);
+    const x = await page.evaluate(PLACE), n = x.others.find(o => o.id === 'h-note'), b = x.b;
+    const gap = n ? +(n.l - b.r).toFixed(1) : null;   // (over 0: the warning ends before the sign begins)
+    out.push({ m, ok: !!x.on && !!n && gap > 0, w: x.w, h: x.h, gap, b, note: n || null });
+  }
+  await page.evaluate(() => Input.setMode('buttons'));
+  return out;
+}
 const unhold = (page) => page.evaluate(() => { const $ = (id) => document.getElementById(id); $('h-flt').className = ''; $('h-flag').className = ''; $('h-note').className = ''; $('h-split').className = ''; $('h-msg').className = ''; $('toast').classList.remove('show'); });
 
 try {
@@ -114,22 +130,25 @@ try {
   await toRacing(page);
   const a = await run(page, (g, P, dE) => P.lap >= 2 && /near/.test(document.getElementById('h-box').className) && dE < 300, 3000);
   const on = a.ch.filter(c => c.st.startsWith('on')), first = on[0], near = on.filter(c => /near r/.test(c.st)), due = a.lines.find(l => l.box);
-  T.check('no team radio, nothing on the first lap; at the line of the lap the stop is due (the plan there: box, the fuel; no race clock) BOKSI TA KROG, no arrow yet',
-    !!a.ok && a.ch.filter(c => c.lap === 1).every(c => c.st === '||') && !!due && due.need === 'fuel' && !due.mk && due.lap >= 2 && !!first && first.lap === due.lap && first.dE > a.L / 2 && first.st === 'on|BOKSI TA KROG|',
+  T.check('no team radio, nothing on the first lap; at the line of the lap the stop is due (the plan there: box, the fuel; no race clock) BOKSI, no arrow yet',
+    !!a.ok && a.ch.filter(c => c.lap === 1).every(c => c.st === '||') && !!due && due.need === 'fuel' && !due.mk && due.lap >= 2 && !!first && first.lap === due.lap && first.dE > a.L / 2 && first.st === 'on|BOKSI|',
     JSON.stringify({ lines: a.lines, ch: a.ch.slice(0, 4) }));
   T.check('... the last 400 m before the way in: the arrow to the right (the lane\'s side) and the metres to it in steps of 50, fewer and fewer',
-    near.length >= 2 && near[0].dE <= 400 && near[0].dE > 340 && near.every((c, i) => /^on near r\|BOKSI TA KROG\|\d+0 m$/.test(c.st) && +c.st.split('|')[2].slice(0, -2) % 50 === 0 && (!i || +c.st.split('|')[2].slice(0, -2) < +near[i - 1].st.split('|')[2].slice(0, -2))),
+    near.length >= 2 && near[0].dE <= 400 && near[0].dE > 340 && near.every((c, i) => /^on near r\|BOKSI\|\d+0 m$/.test(c.st) && +c.st.split('|')[2].slice(0, -2) % 50 === 0 && (!i || +c.st.split('|')[2].slice(0, -2) < +near[i - 1].st.split('|')[2].slice(0, -2))),
     JSON.stringify(near));
   await hold(page);
   const pr = await places(page, 'rbring', 1);
-  T.check('its place (BOKSI TA KROG ▶ 300 m): upright under the stack at the left (its pills as wide as without it), on its side under the clock; with buttons, the wheel and tilting over nothing of the HUD or the controls, not over the car, in the screen, at least 9 px',
+  T.check('its place (BOKSI ▶ 300 m): upright under the stack at the left (its pills as wide as without it), on its side under the clock; with buttons, the wheel and tilting over nothing of the HUD or the controls, not over the car, in the screen, at least 9 px',
     pr.length === 6 && pr.every(o => o.ok), JSON.stringify(pr.filter(o => !o.ok).concat(pr.slice(0, 2))));
+  const cs = await clearOfSign(page);
+  T.check('on a phone 390x844 upright, with the corner sign up: the warning (BOKSI \u25b6 300 m) shown and clear of the sign (#h-note), with buttons, the wheel and tilting',
+    cs.length === 3 && cs.every(o => o.ok), JSON.stringify(cs));
   await unhold(page);
   // the player comes in: gone in the lane; out of it with a full tank, nothing on the next lap
   const b = await run(page, (g, P, dE, o) => P.repairN > 0 && !P.inPit && !P.pitG && !g.pitAuto.st && P.lap > o.lap && dE < g.race.track.len * 0.7, 3000, { pit: true, lap: a.lap });
   const inLane = b.ch.filter(c => c.pit), atIn = inLane[0], after = b.ch.filter(c => c.lap > a.lap);
   T.check('the player comes in: the arrow down to the way in, gone in the lane (no warning there); out of it with a full tank, nothing on the next lap',
-    !!b.ok && !!atIn && atIn.st === '||' && b.ch.filter(c => c.pit).every(c => c.st === '||') && b.ch.filter(c => !c.pit && c.lap === a.lap && c.st !== '||').every(c => /^on near r\|BOKSI TA KROG\|(\d+0 m)?$/.test(c.st)) && after.every(c => c.st === '||') && b.st === '||' && b.fuel > 0.9,
+    !!b.ok && !!atIn && atIn.st === '||' && b.ch.filter(c => c.pit).every(c => c.st === '||') && b.ch.filter(c => !c.pit && c.lap === a.lap && c.st !== '||').every(c => /^on near r\|BOKSI\|(\d+0 m)?$/.test(c.st)) && after.every(c => c.st === '||') && b.st === '||' && b.fuel > 0.9,
     JSON.stringify({ ch: b.ch, st: b.st, fuel: b.fuel, lap: b.lap }));
 
   // 2. Trois-Rivières in English (the lane on the left): a stop due at the second lap's line (half a tank left at the end of the first, the
@@ -141,18 +160,21 @@ try {
   await page.evaluate(() => { window.__game.race.player.fuel = 0.5; });
   const c = await run(page, (g, P, dE) => P.lap === 2 && /near/.test(document.getElementById('h-box').className) && dE < 300, 2000);
   const cf = c.ch.find(x => x.st.startsWith('on')), cn = c.ch.filter(x => /near/.test(x.st));
-  T.check('Trois-Rivières in English: at the second lap\'s line BOX THIS LAP; the last 400 m the arrow to the left (the lane\'s side) and the metres',
-    !!c.ok && !!cf && cf.lap === 2 && cf.dE > c.L / 2 && cf.st === 'on|BOX THIS LAP|' && cn.length >= 1 && cn.every(x => /^on near l\|BOX THIS LAP\|\d+0 m$/.test(x.st)), JSON.stringify(c.ch));
+  T.check('Trois-Rivières in English: at the second lap\'s line BOX; the last 400 m the arrow to the left (the lane\'s side) and the metres',
+    !!c.ok && !!cf && cf.lap === 2 && cf.dE > c.L / 2 && cf.st === 'on|BOX|' && cn.length >= 1 && cn.every(x => /^on near l\|BOX\|\d+0 m$/.test(x.st)), JSON.stringify(c.ch));
   await hold(page);
   const pl = await places(page, 'troisrivieres-en', -1);
-  T.check('its place (◀ BOX THIS LAP 300 m): the arrow before the words; upright under the stack, on its side under the clock, over nothing of the HUD or the controls, not over the car',
-    pl.length === 6 && pl.every(o => o.ok && o.words === 'BOX THIS LAP'), JSON.stringify(pl.filter(o => !o.ok).concat(pl.slice(0, 2))));
+  T.check('its place (◀ BOX 300 m): the arrow before the words; upright under the stack, on its side under the clock, over nothing of the HUD or the controls, not over the car',
+    pl.length === 6 && pl.every(o => o.ok && o.words === 'BOX'), JSON.stringify(pl.filter(o => !o.ok).concat(pl.slice(0, 2))));
+  const cs2 = await clearOfSign(page);
+  T.check('on a phone 390x844 upright, with the corner sign up: the English warning (\u25c0 BOX 300 m) shown and clear of the sign (#h-note), with buttons, the wheel and tilting',
+    cs2.length === 3 && cs2.every(o => o.ok), JSON.stringify(cs2));
   await unhold(page);
   // the stop not made: gone once the way in is passed (the lane walled off beside the car), at the next line again
   const d = await run(page, (g, P, dE) => P.lap === 3 && dE < g.race.track.len / 2, 3000);
   const gone = d.ch.find(x => x.lap === 2 && x.st === '||'), back = d.ch.find(x => x.lap === 3 && x.st.startsWith('on'));
   T.check('... the stop not made: gone once past the way in (not in the lane), not back at the way out (it joins the circuit before the line here), at the third lap\'s line again',
-    !!d.ok && !!gone && !gone.pit && gone.dE < 0 && gone.dE > -120 && !!back && d.ch.slice(d.ch.indexOf(gone) + 1).find(x => x.st !== gone.st) === back && back.dE > d.L / 2 && back.st === 'on|BOX THIS LAP|' && d.lines.some(l => l.lap === 3 && l.box), JSON.stringify(d.ch));
+    !!d.ok && !!gone && !gone.pit && gone.dE < 0 && gone.dE > -120 && !!back && d.ch.slice(d.ch.indexOf(gone) + 1).find(x => x.st !== gone.st) === back && back.dE > d.L / 2 && back.st === 'on|BOX|' && d.lines.some(l => l.lap === 3 && l.box), JSON.stringify(d.ch));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' '));
