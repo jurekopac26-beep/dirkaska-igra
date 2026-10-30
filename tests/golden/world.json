@@ -497,15 +497,15 @@
  },
  "cpalace": {
   "meshes": 301,
-  "verts": 396715,
+  "verts": 403199,
   "instances": 6876,
   "props": 32,
   "crowd": 2457,
-  "world": "a4d3fbb3",
+  "world": "43326e88",
   "propsHash": "15736fc5",
   "floor": "5a965253/6440",
   "groups": {
-   "-:MeshLambertMaterial": "c778f034",
+   "-:MeshLambertMaterial": "8dcf039d",
    "-:MeshPhongMaterial": "ac8feb3b",
    "crowd:MeshLambertMaterial": "4a2d10fc",
    "-:MeshBasicMaterial": "b41923f5",

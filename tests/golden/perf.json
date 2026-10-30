@@ -170,9 +170,9 @@
  "cpalace": {
   "calls": 193,
   "maxCalls": 213,
-  "kverts": 509,
-  "maxKverts": 596,
-  "jsMs": 2.14
+  "kverts": 550,
+  "maxKverts": 667,
+  "jsMs": 2.06
  },
  "riverside": {
   "calls": 160,
