@@ -5,14 +5,14 @@
 // braking boards: on every circuit all of them (Track.brakeBoards) in one mesh without a shadow, each standing on the ground; none elsewhere.
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
-//   WORLD_ONLY=montreal,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
+//   WORLD_ONLY=vrsic,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
 import fs from 'node:fs';
 import path from 'node:path';
-import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
+import { REPO, serve, launch, openGame, startTrack, trackIds, checker, pwNote } from './lib.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'world.json');
 const update = process.argv.includes('--update');
-const only = process.env.WORLD_ONLY ? process.env.WORLD_ONLY.split(',') : null;   // (only these tracks)
+const only = process.env.WORLD_ONLY ? process.env.WORLD_ONLY.split(',') : null;
 const golden = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
 const T = checker('world fingerprint');
 const srv = await serve();
@@ -74,10 +74,12 @@ try {
     if (update) { console.log(`${id.padEnd(10)} meshes ${fp.meshes} verts ${fp.verts} instances ${fp.instances} props ${fp.props} crowd ${fp.crowd} world ${fp.world}`); continue; }
     if (!g) { T.check(`${id}: world as in the reference`, false, 'no reference'); continue; }
     const diffGroups = Object.keys(Object.assign({}, g.groups, fp.groups)).filter(k => g.groups[k] !== fp.groups[k]);
-    T.check(`${id}: world as in the reference`, g.world === fp.world && g.propsHash === fp.propsHash && g.floor === fp.floor,
+    const same = g.world === fp.world && g.propsHash === fp.propsHash && g.floor === fp.floor;
+    T.check(`${id}: world as in the reference`, same,
       `${fp.meshes} meshes, ${fp.verts} verts, ${fp.instances} instances, ${fp.props} props, ${fp.crowd} spectators` +
       (g.world !== fp.world ? `; changed mesh groups: ${diffGroups.slice(0, 8).join(', ')}${diffGroups.length > 8 ? ' …' : ''}` : '') +
-      (g.propsHash !== fp.propsHash ? '; props changed' : '') + (g.floor !== fp.floor ? '; prop floor changed' : ''));
+      (g.propsHash !== fp.propsHash ? '; props changed' : '') + (g.floor !== fp.floor ? '; prop floor changed' : '') +
+      (same || !pwNote() ? '' : ' (' + pwNote() + ')'));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

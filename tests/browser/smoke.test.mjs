@@ -350,6 +350,7 @@ try {
       document.querySelector('[data-track="katu"]').click(); await wait(150); g.onAction('start');
       for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'katu'); k++) await wait(100);
       await frame();
+      for (let k = 0; k < 60 && g.pkFly && !(g.pkFly.k >= 0); k++) await frame();   // (the first caption shows at 0.15 s: until then the flyover's is still hidden)
       const F = Render.pkFly, el = document.getElementById('pk-fly'), fly = { on: !!g.pkFly, show: el.className, cap: [el.children[1].textContent, el.children[2].textContent], names: [] };
       for (let t = 0, k = -1; t <= F.DUR; t += 0.05) { const o = F.at(t); if (o && o.k >= 0 && o.k !== k) { k = o.k; fly.names.push(F.caps[k].n); } }
       fly.y0 = F.at(0).shot.py; fly.y1 = F.at(F.DUR - 0.05).shot.py;   // (the camera: over the start, over the finish)

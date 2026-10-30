@@ -4,7 +4,7 @@
 // (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START, the others' choices and START say V IZDELAVI, HOME's box Garaža v izdelavi);
 // the small circuit's infield (the park with its solid volcano, the rescue base, the edges, road 2's fork) and the park's loose things the car knocks over
 // (barrels, cones, stalls, crates, bins, benches, blocks, balloon stands, lamps), its bouncy castles the car bounces off, its people who run out of the
-// car's way; back to the title the page loads again.
+// car's way; the ground by the sea (the beach's sand, one meadow, the new shores, the meadow beyond the map's edges); back to the title the page loads again.
 //   node tests/browser/newver.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -190,6 +190,22 @@ try {
     T.check('the car at a bouncy castle at 12 m/s: it bounces off (never into it, away at 6 m/s and more)', q2.castle.dmin > 3.5 && q2.castle.away > 6, JSON.stringify(q2.castle));
     T.check('a balloon stand knocked over: its balloons float up (metres in 5 s)', q2.balloons.n > 3 && q2.balloons.knocked && q2.balloons.up > 4, JSON.stringify(q2.balloons));
     T.check('no tree of the park over a way (its crown clear of every way\'s edge); road 2\'s fork: the circuit\'s kerb round its corner into the road\'s', q2.trees.n > 40 && !q2.trees.onWay && q2.fork.joints >= 1 && q2.fork.corner >= 1, JSON.stringify([q2.trees, q2.fork]));
+    // the ground by the sea (sklop 2): the beach's warm sand, darker towards the water (beach 4); one meadow (the grass shader's own lighter, darker and
+    // yellower patches off on all the World's grass); the new shores in the south-east and the north-east: the bed shallow by them, deeper out (no step
+    // to the deep by the shore), the World's grass not under their water; the meadow on beyond the map's edges (no sky under the land's end)
+    const q3 = await page.evaluate(() => { const H = __H3, W = H.water, out = {}, rc = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+      const mats = new Set(); Render.world.root.traverse(o => { const m = o.isMesh && !Array.isArray(o.material) ? o.material : null; if (m && m.userData.grassLook) mats.add(m); });
+      out.patches = { n: mats.size, off: [...mats].filter(m => m.userData.uPat && m.userData.uPat.value === 0).length };
+      out.sand = { dry: W.cS.toArray().map(v => +v.toFixed(3)), wet: W.cS2.toArray().map(v => +v.toFixed(3)) };
+      const d = (x, z) => +(W.WL - W.bedAt(x, z).y).toFixed(2); out.bed = { se2: d(300, 243.7), se30: d(300, 215.7), ne2: d(62, -350), ne40: d(100, -350) };
+      const worldAbove = (x, z) => { rc.set(new THREE.Vector3(x, 20, z), down); return rc.intersectObject(Render.world.root, true).filter(q => q.object.visible && q.object.isMesh && !q.object.isInstancedMesh && q.point.y > W.WL - 0.3).length; };
+      out.grassUnder = worldAbove(300, 242.5) + worldAbove(304, 247) + worldAbove(63.5, -350) + worldAbove(63.5, -300);
+      out.edges = [[0, -470], [-420, 0], [-100, 380], [420, 330]].map(([x, z]) => { rc.set(new THREE.Vector3(x, 30, z), down); return rc.intersectObject(Render.scene, true).filter(q => q.object.isMesh).length > 0; });   // (drawn or not: past the fog its cells are not drawn)
+      out.landNE = H.landNE ? H.landNE.n : 0; return out; });
+    T.check('the beach\'s sand: warm when dry (red over green over blue), darker by the water', q3.sand.dry[0] > q3.sand.dry[1] && q3.sand.dry[1] > q3.sand.dry[2] && q3.sand.dry[0] - q3.sand.dry[2] > 0.2 && q3.sand.wet.every((v, i) => v < q3.sand.dry[i]), JSON.stringify(q3.sand));
+    T.check('one meadow: the grass shader\'s own patches off on all the World\'s grass', q3.patches.n > 0 && q3.patches.off === q3.patches.n, JSON.stringify(q3.patches));
+    T.check('the new shores (south-east, north-east): 2 m out the water under a metre deep, 30-40 m out deeper; no grass of the World under their water', q3.bed.se2 > 0.1 && q3.bed.se2 < 1 && q3.bed.ne2 > 0.1 && q3.bed.ne2 < 1 && q3.bed.se30 > 1.2 && q3.bed.ne40 > 1.2 && !q3.grassUnder && q3.landNE > 0, JSON.stringify([q3.bed, q3.grassUnder, q3.landNE]));
+    T.check('beyond the map\'s edges (north, west, south, south-east) the meadow on: ground under every one of them', q3.edges.every(Boolean), JSON.stringify(q3.edges));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });
