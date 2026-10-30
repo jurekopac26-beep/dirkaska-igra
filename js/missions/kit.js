@@ -289,7 +289,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
      MisKit.skin(run, P, build): the player's car drawn as another vehicle of simple bodies (build(B): B.box / B.cyl / B.disc as for parts(),
        x forward, y up, z to the side), its own body hidden; the group returned (more can be added to it: people on the back ...).
      MisKit.crowd(run, max): people of simple bodies (two draws for all: InstancedMesh), put(k, x, y, z, ry, col) or hide(k).
-     MisKit.tags(run): labels over places in the world (DOM, #mis-tags): set([{ x, y, z, html, cls }]).
+     MisKit.tags(run): labels over places in the world (DOM, #mis-tags): set([{ x, y, z, html, cls }]); one off the screen is pinned to its edge (.edge).
      MisKit.button(run, label): a big button over the pedals (#mis-btn): show(on), take() true once for each press. */
 Object.assign(MisKit, (function () {
   'use strict';
@@ -411,8 +411,10 @@ Object.assign(MisKit, (function () {
     T.set = (list) => {
       const C = Render.camera; if (!C) return;
       let html = '';
-      for (const t of list || []) { v.set(t.x, t.y, t.z).project(C); if (v.z > 1 || Math.abs(v.x) > 1.2 || Math.abs(v.y) > 1.2) continue;
-        html += '<i class="' + (t.cls || '') + '" style="left:' + ((v.x + 1) * 50).toFixed(2) + '%;top:' + ((1 - v.y) * 50).toFixed(2) + '%">' + t.html + '</i>'; }
+      for (const t of list || []) { v.set(t.x, t.y, t.z).project(C); if (v.z > 1) continue;
+        // (off the screen: pinned to its edge, so the player sees which way it is)
+        const out = Math.abs(v.x) > 0.9 || v.y > 0.9 || v.y < -0.8, x = clamp(v.x, -0.8, 0.8), y = clamp(v.y, -0.7, 0.85);
+        html += '<i class="' + (t.cls || '') + (out ? ' edge' : '') + '" style="left:' + ((x + 1) * 50).toFixed(2) + '%;top:' + ((1 - y) * 50).toFixed(2) + '%">' + t.html + '</i>'; }
       if (html !== last) { el.innerHTML = html; last = html; }
     };
     undo(run, () => el.remove());
