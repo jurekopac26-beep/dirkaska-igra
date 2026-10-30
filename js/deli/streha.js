@@ -1,7 +1,7 @@
 /* Deli iz garaže, sklop 2 · streha: streha, stresna_zajemalka, antena, zaluzije. Each element registers its 16 options with DELI.add(id,
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars.
-     streha             m: { x0, x1 (the roof from its rear end to its front, look units), bead: [x ...] (the roof's edge mouldings: the
-                        painted roofs cover them too) }: a wrap, paint or a carbon skin laid over the roof (the stock: nothing, the body's)
+     streha             m: { x0, x1 (the roof from the spoiler's leading edge to the windscreen's top, look units), xf (the front edge of a
+                        window over the front seats) }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
      stresna_zajemalka  m: { x (the mouth, at the roof's front), z }: a scoop on the roof, its mouth forward (the stock: none)
      antena             m: { x, z (the rod's foot: the stock aerial's), fin: [x, z] (a shark fin's rear end) } in the aerial's part
      zaluzije           m: { x0, y0, x1, y1 (the rear window's foot and top, middle), w (its half width) } in the tailgate's part:
@@ -22,42 +22,60 @@
     const nn = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; K.face(nn[0] * out[0] + nn[1] * out[1] + nn[2] * out[2] < 0 ? pts.slice().reverse() : pts, col); };
   const weave = (a, b) => (i, j) => (i + j) % 2 ? a : b;   // (carbon: its cells in two shades, the weave catching the light)
 
-  // ================================================================ streha: the roof wrapped, painted or skinned in carbon
+  // ================================================================ streha: a sunroof (the user's: windows of every shape and size, not a
+  // roof finish), from a small round pane to the whole roof in glass
+  const GL = [0.12, 0.15, 0.19], GT = [0.05, 0.055, 0.065], GH = [0.28, 0.34, 0.42], RUB = [0.03, 0.03, 0.033], HOLE = [0.015, 0.015, 0.018];   // (glass, tinted, its sky glint; the seal; an open one's hole)
   function streha(K, n, m) {
-    const k = (n - 1) % 4, cat = (n - 1) >> 2;   // (the categories: wrap, paint, carbon skin, carbon roof; four options each)
-    const sx = [m.x0].concat(K.body.secs.map(r => r[0]).filter(x => x > m.x0 + 0.02 && x < m.x1 - 0.02), [m.x1]);   // (the sections in it: the panel bends there)
-    const xs = (nx) => { const out = []; for (let i = 0; i < sx.length - 1; i++) { const q = Math.max(1, Math.round(nx * (sx[i + 1] - sx[i]) / (m.x1 - m.x0)));
-      for (let j = 0; j < q; j++) out.push(lerp(sx[i], sx[i + 1], j / q)); } out.push(m.x1); return out; };
-    // the panel: cells over the roof from x0 to x1, across to inset off the roof's edge (at the crown's knee too: it lies flat on the
-    // roof), lift over the paint; col(i, j) the cell's colour; bump(t, z) raised (t 0 .. 1 from the rear end)
-    const panel = (o) => { const X = xs(o.nx || 1), sub = o.sub || 1;
-      const zs = (x) => { const wt = prop(K, x, 4), W = wt - o.inset, kn = 0.38 * wt, mid = []; for (let j = 0; j <= 2 * sub; j++) mid.push(lerp(-kn, kn, j / (2 * sub)));
-        const e = o.edge || 1, L = [], R = []; for (let j = 0; j < e; j++) { L.push(lerp(-W, -kn, j / e)); R.unshift(lerp(W, kn, j / e)); } return L.concat(mid, R); };
-      const P = X.map(x => zs(x).map(z => [x, K.topY(x, z) + o.lift + (o.bump ? o.bump((x - m.x0) / (m.x1 - m.x0), z) : 0), z]));
-      for (let i = 0; i < X.length - 1; i++) for (let j = 0; j < P[i].length - 1; j++) face(K, [P[i][j], P[i + 1][j], P[i + 1][j + 1], P[i][j + 1]], o.col(i, j), [0, 1, 0]);
+    const k = (n - 1) % 4, cat = (n - 1) >> 2;   // (fixed glass, tilting, sliding, panoramic; four options each)
+    const knots = K.body.secs.map(r => r[0]);
+    // a sheet over the roof from xb (rear) to xa (front), across z0 .. z1, lift(t) over the paint (t 0 at the front, 1 at the rear): its
+    // cells bend where the roof does (a section, the crown's knee), so it lies on it
+    const sheet = (xa, xb, z0, z1, lift, col) => { const L = typeof lift === 'number' ? () => lift : lift;
+      const X = [xa].concat(knots.filter(x => x < xa - 0.01 && x > xb + 0.01).reverse(), [xb]);
+      const Z = (x) => { const kn = 0.38 * prop(K, x, 4); return [z0].concat([-kn, kn].filter(z => z > z0 + 0.01 && z < z1 - 0.01), [z1]); };
+      const P = X.map(x => Z(x).map(z => [x, K.topY(x, z) + L((xa - x) / (xa - xb)), z]));
+      for (let i = 0; i < X.length - 1; i++) { const A = P[i], B = P[i + 1]; if (A.length !== B.length) { face(K, A.concat(B.slice().reverse()), col, [0, 1, 0]); continue; }
+        for (let j = 0; j < A.length - 1; j++) face(K, [A[j], B[j], B[j + 1], A[j + 1]], col, [0, 1, 0]); }
       return P; };
-    const P = K.paint, plain = (c) => () => c, L = DELI.roofLook(K, n);
-    // the edge mouldings in the finish too (the user's: the whole roof, the spoiler with it), a carbon skin's left in the paint round it
-    const beads = () => { if (m.bead) for (const sd of [-1, 1]) { const path = m.bead.map(x => [x, prop(K, x, 5) - 0.004, sd * (prop(K, x, 4) - 0.004)]), c = L.col(0, 1);
-      K.sweep([[0.008, -0.026], [0.026, -0.005], [0.019, 0.019], [-0.005, 0.028], [-0.024, 0.005]].map(([u, v]) => [u * sd, v]), path, (k2, e) => L.col(k2, e), { capA: c, capB: c }); } };
-    if (cat === 0) { panel({ inset: 0.014, lift: 0.004, col: k === 3 ? weave([0.1, 0.1, 0.11], [0.135, 0.135, 0.145]) : plain([MAT, WHT, WRAP][k]), nx: k === 3 ? 10 : 1, sub: k === 3 ? 2 : 1, edge: k === 3 ? 2 : 1 }); beads(); }
-    else if (cat === 1) { panel({ inset: 0.014, lift: 0.003, col: plain([DK, WHP, LAK, GM][k]) }); beads(); }
-    else if (cat === 2) {   // (a carbon skin: a panel inset off the edges, the paint round it; gloss, matt, with a lip along its sides)
-      const sh = [[CF, RF], [CF, RFG], [CFM, RFM], [CF, RF]][k], Pn = panel({ inset: 0.07, lift: 0.006, col: weave(sh[0], sh[1]), nx: 9, sub: 2, edge: 1 });
-      // its rim: the panel's thin edge all round, dark
-      const rim = (pts, out) => { for (let j = 0; j < pts.length - 1; j++) { const a = pts[j], b = pts[j + 1]; face(K, [a, b, [b[0], b[1] - 0.006, b[2]], [a[0], a[1] - 0.006, a[2]]], DK, out); } };
-      rim(Pn.map(r => r[0]), [0, 0, -1]); rim(Pn.map(r => r[r.length - 1]), [0, 0, 1]);
-      if (k === 3) for (const sd of [-1, 1]) {   // (the lip: a carbon fence along each side of the skin)
-        const r = Pn.map(q => q[sd < 0 ? 0 : q.length - 1]), ends = [0, Math.floor(r.length / 2), r.length - 1].map(i => r[i]);
-        for (let j = 0; j < ends.length - 1; j++) { const a = ends[j], b = ends[j + 1], up = (p, h, dz) => [p[0], p[1] + h, p[2] + dz];
-          face(K, [a, b, up(b, 0.02, sd * 0.004), up(a, 0.02, sd * 0.004)], CF2, [0, 0, -sd]);
-          face(K, [up(a, 0.02, sd * 0.004), up(b, 0.02, sd * 0.004), up(b, 0.02, sd * 0.016), up(a, 0.02, sd * 0.016)], CF, [0, 1, 0]);
-          face(K, [up(a, 0.02, sd * 0.016), up(b, 0.02, sd * 0.016), up(b, -0.004, sd * 0.016), up(a, -0.004, sd * 0.016)], CF, [0, 0, sd]); } }
-    } else {   // (a carbon roof: the whole roof to its edges; painted (its edges carbon); the factory's and the dry one with a double bubble)
-      // (the bubbles over the seats, either side of the start number: on the crown's slopes)
-      const bubble = k >= 2 ? (t, z) => { const s = Math.sin(Math.PI * Math.min(1, Math.max(0, t))) ** 0.6, d = (Math.abs(z) - 0.365) / 0.135; return 0.022 * s * Math.max(0, 1 - d * d * d * d); } : null;
-      const sh = k === 3 ? [[0.065, 0.067, 0.073], [0.12, 0.124, 0.136]] : [CF, RF], W = weave(sh[0], sh[1]), e = k >= 2 ? 4 : 2, s = 2;
-      panel({ inset: 0.012, lift: 0.005, col: k === 1 ? (i, j) => (j < e || j >= e + 2 * s ? W(i, j) : P) : W, nx: k === 3 ? 10 : 8, sub: s, edge: e, bump: bubble }); beads();
+    // a pane: its seal round it, the glass, a glint across it; tilt: its rear edge raised (the sides closed, dark); dark: tinted
+    const pane = (xm, zm, len, half, o) => { o = o || {}; const xa = xm + len / 2, xb = xm - len / 2, up = o.tilt || 0, b0 = o.lift || 0.004, lf = (t) => b0 + up * t, g = o.dark ? GT : GL;
+      sheet(xa + 0.016, xb - 0.016, zm - half - 0.016, zm + half + 0.016, b0 - 0.002, o.frame || RUB);
+      sheet(xa, xb, zm - half, zm + half, lf, g);
+      sheet(xa - len * 0.18, xa - len * 0.3, zm - half * 0.8, zm + half * 0.8, (t) => lf(0.18 + t * 0.12) + 0.0008, o.dark ? [0.14, 0.16, 0.2] : GH);   // (the glint)
+      if (up) for (const sd of [-1, 1]) { const z = zm + sd * half, y = (x) => K.topY(x, z);
+        face(K, [[xa, y(xa) + 0.004, z], [xb, y(xb) + 0.004 + up, z], [xb, y(xb) + 0.002, z]], RUB, [0, 0, sd]);
+        face(K, [[xb, y(xb) + 0.002, zm - half], [xb, y(xb) + 0.002, zm + half], [xb, y(xb) + 0.004 + up, zm + half], [xb, y(xb) + 0.004 + up, zm - half]], HOLE, [-1, 0, 0]); } };
+    // a round pane in the roof's flat middle: its seal, the glass, the glint
+    const round = (xm, zm, r) => { const q = DELI.seg(K, 16), ring = (rr, lift) => Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2, x = xm + Math.cos(a) * rr, z = zm + Math.sin(a) * rr; return [x, K.topY(x, z) + lift, z]; });
+      face(K, ring(r + 0.016, 0.002), RUB, [0, 1, 0]); face(K, ring(r, 0.004), GL, [0, 1, 0]);
+      face(K, [[xm + r * 0.55, 0, zm - r * 0.45], [xm + r * 0.35, 0, zm - r * 0.6], [xm - r * 0.15, 0, zm + r * 0.55], [xm + r * 0.1, 0, zm + r * 0.6]].map(([x, , z]) => [x, K.topY(x, z) + 0.0048, z]), GH, [0, 1, 0]); };
+    // sliding: the hole in front, the glass slid back over the roof on its rails
+    const slide = (xm, zm, len, half, dark) => { const xa = xm + len / 2, xb = xm - len / 2, back = len * 0.62;
+      sheet(xa + 0.016, xb - 0.016, zm - half - 0.016, zm + half + 0.016, 0.002, RUB);
+      sheet(xa, xb, zm - half, zm + half, 0.004, HOLE);
+      pane(xm - back, zm, len, half, { dark, lift: 0.02 });
+      for (const sd of [-1, 1]) { const z = zm + sd * (half + 0.008), y = (x) => K.topY(x, z); face(K, [[xa, y(xa) + 0.003, z], [xb - back, y(xb - back) + 0.003, z], [xb - back, y(xb - back) + 0.022, z], [xa - back, y(xa - back) + 0.022, z]], RUB, [0, 0, sd]); } };
+    const F = m.xf, at = (len) => F - len / 2, X0 = m.x0, X1 = m.x1;   // (a window's front edge over the front seats: its middle at(len); the roof from the spoiler's leading edge to the windscreen's top)
+    switch (n) {
+      case 1: round(at(0.26), 0, 0.13); break;
+      case 2: pane(at(0.3), 0, 0.3, 0.15); break;
+      case 3: pane(at(0.42), 0, 0.42, 0.3); break;
+      case 4: for (const z of [-0.29, 0.29]) pane(at(0.28), z, 0.28, 0.12); break;
+      case 5: pane(at(0.34), 0, 0.34, 0.17, { tilt: 0.03 }); break;
+      case 6: pane(at(0.38), 0, 0.38, 0.22, { tilt: 0.035 }); { const xa = F + 0.02, y = (z) => K.topY(xa, z);   // (the wind deflector: a black lip ahead of it)
+        face(K, [[xa, y(-0.25) + 0.002, -0.25], [xa, y(0.25) + 0.002, 0.25], [xa + 0.012, y(0.25) + 0.03, 0.25], [xa + 0.012, y(-0.25) + 0.03, -0.25]], RUB, [1, 0.3, 0]); } break;
+      case 7: pane(at(0.38), 0, 0.38, 0.22, { tilt: 0.035, dark: true }); break;
+      case 8: pane(at(0.5), 0, 0.5, 0.32, { tilt: 0.045 }); break;
+      case 9: slide(at(0.36), 0, 0.36, 0.2); break;
+      case 10: slide(at(0.46), 0, 0.46, 0.3); break;
+      case 11: for (const z of [-0.27, 0.27]) slide(at(0.34), z, 0.34, 0.13); break;
+      case 12: slide(at(0.42), 0, 0.42, 0.26, true); break;
+      case 13: case 14: pane((X1 - 0.04 + X0 + 0.25) / 2, 0, X1 - 0.04 - (X0 + 0.25), 0.44, { dark: n === 14 }); break;
+      case 15: pane((X1 - 0.02 + X0 + 0.06) / 2, 0, X1 - 0.02 - (X0 + 0.06), 0.53); break;
+      case 16: { const xm = (X1 - 0.04 + X0 + 0.25) / 2, len = X1 - 0.04 - (X0 + 0.25), CW = weave(CF, RF);   // (a carbon frame, a carbon bow across its middle)
+        sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, 0.5, 0.0015, CW(0, 0)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, -0.47, 0.0025, CW(0, 1)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, 0.47, 0.5, 0.0025, CW(0, 1));
+        pane(xm, 0, len, 0.44, { frame: CF });
+        sheet(xm + 0.03, xm - 0.03, -0.46, 0.46, 0.006, CW(1, 0)); break; }
     }
   }
 
@@ -150,14 +168,6 @@
       face(K, [[a[0] - ux * 0.012, a[1] - uy * 0.012, -Z], [a[0] - ux * 0.012, a[1] - uy * 0.012, Z], [e[0], e[1], Z], [e[0], e[1], -Z]], DK, [0, -1, 0]);   // (under it)
       for (const sd of [-1, 1]) face(K, [[a[0], a[1], sd * Z], [b[0], b[1], sd * Z], [e[0], e[1], sd * Z], [a[0] - ux * 0.04, a[1] - uy * 0.04, sd * Z]], CF, [0, 0, sd]); }
   }
-
-  // the roof's finish on the car's own roof spoiler (the user's: a roof fitted covers the stock spoiler with it): col(k, e) its facets'
-  // colour (k across, e round its profile), dark its trailing face's (kolibri.js: K.deli('streha') returns the option, the stock
-  // spoiler drawn in it)
-  DELI.roofLook = (K, n) => { const k = (n - 1) % 4, cat = (n - 1) >> 2, P = K.paint, W = (a, b) => (i, e) => (i + e) % 2 ? a : b, one = (c) => () => c;
-    const col = cat === 0 ? (k === 3 ? W([0.1, 0.1, 0.11], [0.135, 0.135, 0.145]) : one([MAT, WHT, WRAP][k])) : cat === 1 ? one([DK, WHP, LAK, GM][k])
-      : cat === 2 ? W(...[[CF, RF], [CF, RFG], [CFM, RFM], [CF, RF]][k]) : k === 1 ? one(P) : k === 3 ? W([0.065, 0.067, 0.073], [0.12, 0.124, 0.136]) : W(CF, RF);
-    const c0 = col(0, 0); return { col, dark: c0 === P ? K.shade(P, 0.5) : c0.map(v => v * 0.5) }; };
 
   DELI.add('streha', streha);
   DELI.add('stresna_zajemalka', zajemalka);

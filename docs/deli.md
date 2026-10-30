@@ -34,11 +34,11 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 
 ## Sklop 2 · streha (KOLIBRI, `js/deli/streha.js`)
 
-- `streha: { x0, x1, bead }`: folija, lak ali karbon čez celo streho od zadnjega roba (`x0`, pod spojlerjem) do vrha vetrobranskega stekla (`x1`), v delu `body` (zmečka se s streho). Želja uporabnika (30. 10. 2026): obdelava pokrije vso streho, obrobi (`bead`: pot obrobe vzdolž avta) in serijski strešni spojler (`DELI.roofLook(K, n)`: barve spojlerja; `K.deli('streha')` vrne nameščeno možnost, spojler v `js/cars/kolibri.js` se nariše v njej). Karbonska prevleka (9–12) ostane plošča, odmaknjena od robov. Tovarniška in suhi karbon imata dva izbokla dela nad sedežema, levo in desno od štartne številke. Barvna folija in lak (3, 7) sta rumena, dokler garaža ne izbira barve.
+- `streha: { x0, x1, xf }`: strešno okno (odločitev uporabnika 30. 10. 2026: namesto folij, lakov in karbonskih streh okna v različnih oblikah in velikostih; imena, cene in `kaj_nudi` v `js/data/deli.js`, id ostane `streha`): steklena (okroglo, kvadratno, pravokotno, dve), nagibna (zadnji rob dvignjen, deflektor, zatemnjeno), drsna (odprtina spredaj, steklo zdrsne nazaj) in panoramska (do cele steklene strehe, karbonski okvir). Majhna okna imajo sprednji rob pri `xf` nad sprednjima sedežema, panoramska segajo od spojlerja (`x0`) do vetrobranskega stekla (`x1`); v delu `body`. Štartna številka leži nad steklom kot nalepka. Serijsko okna ni.
 - `stresna_zajemalka: { x, z }`: zajemalka na sprednjem delu strehe z odprtino naprej (`x` odprtina, `z` sredina), v delu `body`. Serijsko je ni.
 - `antena: { x, z, fin: [x, z] }` v delu `aerial`: palice (1–4) stojijo, kjer stoji serijska antena, plavuti (5–15) in dirkalna antena (16) na sredini strehe pred spojlerjem (`fin`: zadnji konec plavuti). Vse ostanejo nizke (salon okvirja avto po višini).
 - `zaluzije: { x0, y0, x1, y1, w }` v delu `trunk` (gredo s prtljažnikom): letvice čez zadnje steklo (vznožje in vrh stekla, polovična širina). Z žaluzijami je zadnji brisalec pospravljen ob vznožju stekla (`around` ovoja: del `wiperRear` mora imeti geometrijo).
-- Serijski KOLIBRI ostane enak (ovoji brez serijskega dela za streho, zajemalko in žaluzije; serijska antena in brisalec kot prej). Največ trikotnikov: streha 16 (+220 nad serijskim).
+- Serijski KOLIBRI ostane enak (ovoji brez serijskega dela za streho, zajemalko in žaluzije; serijska antena in brisalec kot prej).
 
 ## Poskus na treh drugih avtih (sklop 1)
 
@@ -122,4 +122,4 @@ Pravila, da se seje ne motijo:
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
 - 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).
-- 30. 10. 2026 (sklop 2 · streha, želja uporabnika): `DELI.roofLook(K, n)` (v `js/deli/streha.js`): obdelava strehe na avtovem serijskem strešnem spojlerju.
+- 30. 10. 2026 (sklop 2 · streha, odločitev uporabnika): element `streha` so strešna okna (»Strešno okno«, 16 novih možnosti v `js/data/deli.js`); seznam v garaži (`nacrti/cene/cene.json` na veji garaže) mora prevzeti iste možnosti.
