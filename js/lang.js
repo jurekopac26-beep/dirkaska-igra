@@ -545,6 +545,14 @@
     'Vitel je ohlapen: počasneje, sicer ratrak zdrsne.': 'The winch is slack: slower, or the snowcat slides.',
     'Vitel je prenapet: ne ustavljaj se na strmini.': 'The winch is too tight: do not stop on the steep part.',
     'Jeklenica vitla se je strgala.': 'The winch cable snapped.', 'Cesta ni dovolj urejena: {0} %.': 'Not enough of the road is groomed: {0} %.',
+    'Odvoz snega': 'Snow removal', 'Po snežnem metežu mesto ponoči odvaža sneg. Freza ga meče v tovornjake ob sebi.': 'After the blizzard the city takes the snow away at night. The snowblower throws it into the trucks beside it.',
+    'S kiperjem vozi ob frezi, da curek snega pada v tvoj kiper.': 'Drive the dump truck beside the snowblower so its stream of snow falls into your truck.',
+    'Vozi enako hitro kot freza, da sneg pada v kiper.': 'Drive as fast as the snowblower so the snow falls into the truck.',
+    'CUREK': 'STREAM', 'KIPER': 'TRUCK', 'POLNI KIPERJI': 'FULL TRUCKS', 'ZADENEŠ': 'ON TARGET', 'zamenjava': 'swap', 'skoraj': 'almost', 'mimo': 'off',
+    'Kiper je poln: naslednji se postavlja pod curek.': 'The truck is full: the next one moves under the stream.', 'Dohiti frezo: čaka te.': 'Catch up with the snowblower: it is waiting for you.',
+    'Prehitel si frezo: počakaj jo.': 'You passed the snowblower: wait for it.', 'Zapelji na levi pas ob frezi.': 'Move into the left lane beside the snowblower.',
+    'Bolj desno, bliže frezi.': 'More to the right, closer to the snowblower.', 'Bolj levo, stran od freze.': 'More to the left, away from the snowblower.',
+    'Malo naprej.': 'A little forward.', 'Malo nazaj.': 'A little back.', 'Zadel si frezo.': 'You hit the snowblower.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
