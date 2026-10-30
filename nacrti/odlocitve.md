@@ -84,3 +84,4 @@
 - 30. 10. Gumb »IZBERI PROGO« zgoraj levo je SVETLO MODER (ne rdeč); oblika ostane kot KUPI IN NAMESTI / Race! (zaobljen, bel krepek ležeč napis).
 - 30. 10. ODGOVOR 12: DA, meni se odpre spodaj, kadar bi zgoraj pokril dele (npr. turbo na polici).
 - 30. 10. ODGOVOR 13: DA, prva stran menija gum (tri gume z regala) kaže akcijske cene: stara prečrtana, nova nižja.
+- 30. 10. ODGOVOR 16b (stroški dirkanja), NE prijavnina: dirka s SVOJIM avtom je brezplačna; po dirki igralec plača servis, če želi popravljen avto; bolj razbit avto = dražji servis (formula servisa po poškodbi in vrednosti avta, glej SERVIS zgoraj). SPOSOJEN avto (RENT A CAR): plača se cena izposoje (npr. 450 € za dirko), po dirki ni servisa, ker avto ni igralčev. Obraba gum kot strošek ni omenjena (ne dodajamo).
