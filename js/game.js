@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, tCrStyle: 0, tCrMass: 0, tCrE: 0, tCrMu: 0, tCrYaw: 0, tCrBox: 0, tCrScrub: 0, tCrFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, tCrStyle: 0, tCrMass: 0, tCrE: 0, tCrMu: 0, tCrYaw: 0, tCrBox: 0, tCrScrub: 0, tCrFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -50,14 +50,7 @@
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
-  // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (as the driving physics has it: nothing changes); the numbers go to Core.setTest
-  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], tCrE: [null, 0, 0.1, 0.25, 0.4, 0.6], tCrMu: [null, 0, 0.35, 0.8], tCrYaw: [null, 0, 0.15, 0.4, 1.6], tCrMass: [null, 1, 2, 4, 8, 16], tCrBox: [null, 0, 1], tCrScrub: [null, 0, 1], tCrFx: [null, 1, 0] };
-  const TEST_REAL = { cE: 0, cMu: 0.5, cYaw: 1, cMass: 8, cFx: 0, cBox: 1, cScrub: 1 };   // Trki: slog Realističen, težak (flat bumpers pushed apart softly, no bounce, the classic car's tyres hold a push sideways, the bodies rub, the other car counts eight times heavier in a knock with the player, no sparks); every row under it overrides its part
-  for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
-  S.tCrStyle = +S.tCrStyle === 1 ? 1 : 0;
-  if (S.slide !== 1) S.slide = 0;   // (the new physics' style, Nastavitve → Slog nove fizike: 1 Drseč, the player's car only: Car.nvSl)
-  if (S.phys !== 'nova') S.phys = 'cs';   // two driving physics (Nastavitve → Fizika vožnje): 'cs' the classic kinematic drift, 'nova' the new one (Car.stepNova); the old 'rally' and 'arcade' were removed, their saves get cs
-  const physOf = () => S.phys === 'nova' ? 'nova' : 'cs';
+  S.phys = 'cs';   // one driving physics: Circuit Superstars (the old 'rally' and 'arcade' were removed; old saves get cs)
   if (!['dry', 'rain', 'random', 'change', 'storm'].includes(S.weather)) S.weather = 'dry';
   for (const k of ['cmp', 'pitCmp']) if (!['auto', 'S', 'M', 'H'].includes(S[k])) S[k] = 'auto';   // (the slicks: for the start, for a pit stop)
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
@@ -86,13 +79,13 @@
   const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o), posNum = (v) => typeof v === 'number' && isFinite(v) && v > 0;
   if (!isObj(records)) records = {};
   if (!isObj(records.tracks)) { records.tracks = {}; if (records.bestLap) records.tracks.jezero = { bestLap: records.bestLap, bestRace: records.bestRace, bestPos: records.bestPos }; }
-  // records are kept under id@cs and id@nova, each physics its own (the plain track id holds the times of the removed arcade and rally physics, no longer shown)
+  // records are kept under id@cs (Circuit Superstars; the plain track id holds the times of the removed arcade and rally physics, no longer shown)
   // (def.recId: a track re-made so that its old times no longer compare keeps new records apart.) A time trial in the rain keeps its own records
   // and ghost (id-wet): the weather of the race on it, before a race the weather setting (the wet ones only with 'rain'). A track with
   // more ways to drive it (def.modes: Vršič) keeps the records of each apart from the race's (id-tt, id-tt-wet, id-traffic, id-police); a time
   // trial that can also be raced (def.timeTrial with def.modes: Pikes Peak) keeps the time trial's under its own key, as before, the race's apart (id-race)
   const wetRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain' || S.weather === 'storm');
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== (d.timeTrial ? 'tt' : 'race') ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== (d.timeTrial ? 'tt' : 'race') ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@cs'; };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
@@ -150,7 +143,7 @@
   const isDesc = (d) => !!(d && d.descent);
   // medal times of a time trial (def.medals.cs: [gold, silver, bronze] in s, .wet.cs in the rain): the medal of a time (0 gold .. 2 bronze, -1 none)
   const MEDAL = ['Zlata medalja', 'Srebrna medalja', 'Bronasta medalja'], MEDAL_EN = ['gold', 'silver', 'bronze'], MEDAL_ICON = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
-  const medalSet = (d) => { const M = d && d.medals && (wetRec(d) ? d.medals.wet : d.medals); return (M && (M[physOf()] || M.cs)) || null; };   // (the new physics: the classic one's medal times, its laps are as quick)
+  const medalSet = (d) => { const M = d && d.medals && (wetRec(d) ? d.medals.wet : d.medals); return (M && M[physOf()]) || null; };
   const medalOf = (d, t) => { const M = medalSet(d); if (!M || !(t > 0)) return -1; for (let k = 0; k < 3; k++) if (t <= M[k]) return k; return -1; };
   const medalLine = (d, t) => { const M = medalSet(d); if (!M) return ''; const k = medalOf(d, t), n = k < 0 ? 2 : k - 1;   // (won, and how far the next one is)
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + tr(MEDAL[k]) : tr('Brez medalje')) + (n >= 0 ? tr(k < 0 ? ' · do brona {0} ({1})' : n === 0 ? ' · do zlata {0} ({1})' : ' · do srebra {0} ({1})', fmt(M[n], true), sgn(t - M[n])) : '') + '.'; };
@@ -429,7 +422,6 @@
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
-    $('cr-note').textContent = tr(+S.tCrStyle === 1 ? 'Realističen, težak: ravni odbijači, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,5, drugi avto 8-krat težji, brez isker. Vrstice spodaj ga spremenijo.' : 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1), zaobljena oblika, enaka teža, iskre.');
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -488,14 +480,12 @@
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
-  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]], H = +S.tCrStyle === 1 ? TEST_REAL : {}, or = (a, b) => a != null ? a : b != null ? b : null;   // (Preizkus: the rivals and the knocks; never online, where both phones must drive the same)
-    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw), cMass: or(L('tCrMass'), H.cMass), cFx: or(L('tCrFx'), H.cFx), cBox: or(L('tCrBox'), H.cBox), cScrub: or(L('tCrScrub'), H.cScrub) }; };
+  const physOf = () => 'cs';
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;
     Render.setCrash({ body: +S.xBody, glass: +S.xGlass, paint: +S.xPaint, detail: S.carDet === 'high' ? 'full' : 'lite', parts: +S.xParts, drag: +S.xDrag, dust: +S.xDust });   // (Razbijanje · nov način: off by default; switched during a race the cars are built again)
     Core.setCrash(xPhys(race && race.player && race.cars.some(c => c.net)));   // (the rollover, the knocks, the attack, the handling: never online (a friend's car: net), where both phones must drive the same)
-    Core.setTest(testOf(race && race.player && race.cars.some(c => c.net)));   // (Preizkus: tekmeci in trki, at once: the spread of the rivals' paces from the next race, it is dealt out when the race is made)
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; kamera za avtom, kjer zaslon nima prostora, sorazmerno manj: Render updateCamera)
     Render.cam.userTilt = 0.3;   // (kamera za avtom je vedno 30 % manj nagnjena navzdol: gleda dlje naprej po cesti, razdalja ostane ista; brez nastavitve)
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
@@ -543,15 +533,13 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     if (key === 'saver') { perf.sum = perf.n = 0; perf.good = perf.slow = 0; }   // (the frame times measured again from now)
     if (key === 'tower') { twCls(); if (tw) { tw.html = ''; tw.at = 0; } }
     if (key === 'line') Render.setLine(!!race && lineWant());
-    if (key === 'tAiSpr' && race) toast(tr('Razpon hitrosti tekmecev velja od naslednje dirke.'), 2600);   // (dealt out when the race is made; the other rows of Preizkus act at once)
-    if ((key === 'phys' || key === 'slide') && race) toast(tr('Fizika velja od naslednje dirke.'), 2600);   // (a race keeps the physics it started with: its rivals' pace and lines are worked out for it)
     save(); applySettings();
     if (key === 'lang') relang();
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
@@ -1098,7 +1086,7 @@
     if (A[o + 6] >= 8) { const qa = Math.floor(A[o + 6] / 8) - 1, qb = B[o + 6] >= 8 ? Math.floor(B[o + 6] / 8) - 1 : -1, sa = (qa & 1023) / 1023, sb = qb >= 0 && (qb >> 10) === (qa >> 10) ? (qb & 1023) / 1023 : sa;   // (rolling over: posed as it was, Razbijanje · nov način)
       c.rl = { t: sa + (sb - sa) * u, T: 1, turns: qa & 1024 ? 2 : 1, dir: qa & 2048 ? 1 : -1, H: 0, k: 0 }; } else if (c.rl) delete c.rl;
     const gv = Math.abs(c.vl) / 14;   // (the gear and the revs as they might have been: a gear every 14 m/s; the cockpit's instruments)
-    c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0); c.nvY = c.nvR = c.nvP = 0;   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
+    c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0);   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
   }
   // every recorded car (and the safety car, where it was out) where the recording has it at time t; i: a sample near it to search from
@@ -1883,9 +1871,8 @@
     if (quali) { qual.lapShown = false; qual.wait = false; }
     const W = ch ? { rain: ch.cond.rain, wx: null, storm: false } : quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     const solo = tt || quali || !!ch, lapRun = !!ch && !tt;   // (alone: a time trial, qualifying, a challenge: its time trial or a circuit's flying lap)
-    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[S.color], playerNum: carNum(), playerSlide: physOf() === 'nova' && S.slide === 1, seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
+    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
     Core.setCrash(xPhys(on));   // (Razbijanje · nov način: its physics off in an online race)
-    Core.setTest(testOf(!!on));   // (Preizkus: tekmeci in trki: off online too)
     if (on) {   // online: the players on the grid in the host's order (in turn from race to race), no AI; the host's physics and damage for all
       const nums = netNums(on), rs = on.roster;
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: on.grid.indexOf(mp.me) + 1, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: nums[mp.me], slip: true, faults: !!on.faults,
@@ -4759,7 +4746,7 @@
   // a friend: the host starts. Load the track, then say ready (once the clocks are matched)
   function netPrepare(m) {
     const grid = Array.isArray(m.grid) ? m.grid.map(String).slice(0, Net.room) : [], rs = Array.isArray(m.roster) ? m.roster : [];
-    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'nova' ? 'nova' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), faults: m.faults === 1 ? 1 : 0, rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4),
+    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: 'cs', damage: Core.clamp(m.damage | 0, 0, 2), faults: m.faults === 1 ? 1 : 0, rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4),
       grid, roster: rs.filter(p => p && grid.includes(p.id)).map(p => Object.assign(peerOf(p), { id: String(p.id) })) };
     mp.track = m.track; mp.laps = mp.setup.laps;
     Net.hold(30000); buildRoom();

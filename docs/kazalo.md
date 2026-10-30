@@ -43,8 +43,6 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/misija-slika.mjs` | slike posebne misije (`?misija=<id>`, avtopilot do `--t` s ali `--pred` m pred ciljem ali `--konec`, pokonci in ležeče, s prikazom misije; `test-results/misije/`) |
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
-| `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
-| `tools/nova/` | merila nove fizike (Car.stepNova): `tune.js` (ravna plošča po razredih: poln zasuk na gumbih, zavora, plin, nizka pomoč; `'{"K":{…},"A":[…]}'` začasno spremeni NVK / NVASSIST), `ts2.js` (časovna vrsta enega manevra), `sweep.js` + `cmp.js` (dirke na vseh pravih progah, cs proti nova: dotiki, zdrsi, robniki, trava, časi), `pack.js` (trki med avti in vlak tekmecev, za primerjavo s posnetkom), `train.js` (vlak tekmecev kot na posnetku: razmik v dolžinah in s, tekmec ob avtu, prehitevanja AI–AI na minuto, razvlečenje polja na krog; igralec na avtopilotu v skupini), `cam.js` (zasuk avta proti kameri za avtom in koliko od tega je zdrs avta; `SL=1` drseči slog), `bench.js` (čas fizike 100 avtov), `races-nova.js` (`races.test.js` z novo fiziko proti referencam klasične; `TR=spa,…`) |
 | `.github/workflows/` | `tests.yml` testi, `posnetki.yml` posnetki pred/po ob pull requestu (artefakt in povzetek), `stran.yml` objava strani s predogledom vej |
 | `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek) |
 | `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
@@ -100,7 +98,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 ## Teme v `js/core.js`
 
 - **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
-- **avto** fizika (`Car`; klasična `stepCS`, `CSK`; nova `stepNova`, `NVK`, `NVASSIST`, zdrs telesa v ovinku `Car.nvA`, drseči slog `Car.nvSl`, trki avtov `carCollide` in posledice trka `carKnockFx`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, slog `TEST_REAL`, `testOf` v `js/game.js`; realističen trk: ravni odbijači `rbCollide` / `rboxHit` / `RB_*`, občutek teže `heavyK`, gume ob potisku `cSlide` in `cSx`/`cSz` v `stepCS`, tekmeci z ravnimi odbijači `aiReach` / `RB_FOL`, brez isker `c.fxQ`), nadgradnje `car upgrades`, deli iz garaže `the garage's parts` (`applyDeli`: `Car` z `opts.deli`, dirka `playerDeli`), deli vozil `a registered vehicle's parts`
+- **avto** fizika (`Car`, `stepCS`, trki avtov `carCollide`), nadgradnje `car upgrades`, deli iz garaže `the garage's parts` (`applyDeli`: `Car` z `opts.deli`, dirka `playerDeli`), deli vozil `a registered vehicle's parts`
 - **gume KOLIBRIJA** `KT`, `ktGrip`, `ktWear`, `ktHit`, `ktFire` (guma zagori pri 80 % poškodbe; `Car.kt`, možnost `tyreRule`; pravilo koles `rule.kt` v `wheelRule` / `_wreckStep`)
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
@@ -186,7 +184,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
-- **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
+- **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
 - **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
 - **Opis vseh testov:** `tests/README.md` (velik; išči po imenu testa)

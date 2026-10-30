@@ -6072,7 +6072,7 @@ const Render = (function () {
       if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
       let hy = 0; if (v.hop) { const H = v.hop; H.t += dt; if (H.t >= H.T) v.hop = null; else hy = H.h * Math.sin(Math.PI * H.t / H.T); }
-      v.grp.position.set(x, y + hy + (jk ? crew.lift : 0) + (c.nvY || 0), z);   // (nvY, nvR, nvP: the new physics' kerbs lift the car a little, Car.stepNova)
+      v.grp.position.set(x, y + hy + (jk ? crew.lift : 0), z);
       if (v.far) farStep(v, x, y, z);
       const lat = clamp(c.w * c.speed, -16, 16), sw = M.sway || 1;   // (sway: the truck's soft, tall body rolls and pitches more)
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
@@ -6082,7 +6082,7 @@ const Render = (function () {
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
       const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
-      v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
+      v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
       v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
       if (c.rl) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
@@ -8742,8 +8742,8 @@ const Render = (function () {
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
-    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }   // (c.fxQ: Trki: iskre izklop, a knock between cars without sparks or dust)
-    if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
+    if (c.fxCar > 3) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }
+    if (XC.dust && (c.fxWall > 4 || c.fxCar > 4)) { const w = c.fxCar > c.fxWall, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }
     if (XC.drag && v.kit && spd > 4 && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (const bn of ['bumperF', 'bumperR']) if (v.kit.ajar[bn] && !v.kit.dead[bn]) {   // (Razbijanje · nov način: a bumper hanging loose drags on the road: sparks off its low end)
@@ -8752,7 +8752,7 @@ const Render = (function () {
       const acc = v.xDragA || (v.xDragA = {}); acc[bn] = (acc[bn] || 0) + dt * (60 + spd * 6);   // (a stream: more the faster it drags; by time, not by frame)
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
-    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    c.fxWall = 0; c.fxCar = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)
     if (v.kit && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {
@@ -8860,12 +8860,8 @@ const Render = (function () {
     } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
       // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
       // travel, so a sliding car shows its angle)
-      // (the new physics, Car.stepNova: the car slides into a quick corner itself, NVK.attT, and the view follows the travel closely, 0.08 s
-      // behind: the car ~22 deg against the view above 50 deg/s of its turn, three quarters of it the car's own slide, as the reference video
-      // shows; the user's choice; the classic one as before)
-      const nv = c.phys === 'nova', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
-      const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
-      cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
+      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
+      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
       cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;

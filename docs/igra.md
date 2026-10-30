@@ -6,7 +6,6 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)
 - [Kje na progi si (proge po resničnih krajih)](#kje-na-progi-si-proge-po-resničnih-krajih)
 - [Fizika vožnje](#fizika-vožnje)
-- [Preizkus: tekmeci in trki](#preizkus-tekmeci-in-trki)
 - [Zelo veliko polje (avti daleč od tebe)](#zelo-veliko-polje-avti-daleč-od-tebe)
 - [Reakcija na štartu](#reakcija-na-štartu)
 - [Leteči start (odprte ceste in Nürburg)](#leteči-start-odprte-ceste-in-nürburg)
@@ -97,50 +96,7 @@ Na progah Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Katu-Ja
 
 ## Fizika vožnje
 
-Igra ima dve fiziki; izbereš ju v Nastavitvah (**Fizika vožnje: Klasična / Nova**). Izbira velja od naslednje dirke (dirka, ki teče, ostane pri svoji), rekordi in duh se hranijo posebej za vsako fiziko, meje za medalje so pri obeh enake (časi so podobni). Tekmeci vozijo z isto fiziko kot ti; na dirki s prijatelji velja fizika gostitelja.
-
-**Nova** je narejena po oprijemu gum: vsaka os ima svoj oprijem, ki z zdrsom gume raste do vrha in potem malo pade (avto v velikem zdrsu ohrani okoli 85 % oprijema), pogon in zavore porabijo del tega oprijema, pri zaviranju se teža premakne naprej, pri plinu nazaj. Zadnja os ima malo več oprijema kot sprednja (8 %), zato avto na meji oprijema malo zanaša naprej, ne odnese ga zadek. Zavore delijo silo po obremenitvi osi (zadnja kolesa nikoli ne blokirajo prva). Volan pove, kako hitro želiš zaviti (kot pri klasični), kolesa pa se zasukajo toliko, kolikor avto za to potrebuje. **Zdrs v ovinku**: avto se v ovinku zasuka z nosom v zavoj za 0,3 s × hitrost zavijanja (pri 60°/s okoli 18°, največ 26°), v fazi z zavijanjem (kot na posnetku: tam je zasuk avta proti kameri pretežno pravi zdrs); sile gum se računajo kot prej, zato so hitrosti v ovinkih, zavore in pomoč enake. **Pomoč pri driftu** pri novi fiziki samodejno protizavija in ne pusti, da bi zdrs zrasel čez ustaljenega za več kot okoli 6° (visoka), 11° (srednja) oziroma 17° (nizka); pri visoki pomoči pogonu da le toliko moči, kolikor je oprijem pusti v ovinku, in ga zmanjša, ko zadnja kolesa začnejo drseti (pri speljevanju ne). Pri **nizki** pomoči pogonska kolesa, ki se vrtijo v prazno, izgubijo del bočnega oprijema: avtu s pogonom zadaj s polnim plinom v ovinku zadek uide za 20–40° (V8, formula), a se ne zavrti; pri srednji le malo. Na **robniku** se kolo na tisti strani rahlo dvigne (do 5 cm, ob hitrem zaletu malo bolj) in za trenutek malo manj prime, telo se nagne stran od robnika (okoli 2–3°). Na **travi** avto zavira malo manj kot pri klasični (dve kolesi na travi okoli 0,1–0,15 g, kot na posnetku), neravnine trave pa ga premetavajo (vožnja je nemirnejša, telo poskakuje do 3 cm). **Slick gume** (formula, prototip) imajo na makadamu več bočnega oprijema kot prej, zato so na makadamskih etapah enako hitre kot pri klasični. Pri **trku z drugim avtom** se avta odbijeta (štirikrat bolj kot pri klasični) in udarec ju zavrti, tudi drgnjenje ob strani: vrtenje skoči tipično za okoli 34°/s, smer se v pol sekunde spremeni za okoli 5° (kot na posnetku); odboj od ograje je enak kot pri klasični.
-
-**Kamera za avtom** pri novi fiziki (odločitev uporabnika 27. 10. 2026): sledi smeri vožnje hitreje kot pri klasični (zamik okoli 0,08 s, vrti se največ 2,5 rad/s, da trk ne sune slike), zato je avto v hitrem ovinku proti sliki zasukan okoli 20–24° (nad 50°/s), od tega okoli tri četrtine pravi zdrs avta, kot na posnetku. Pri klasični je kamera taka kot prej.
-
-**Slog nove fizike** (Nastavitve, samo za tvoj avto): **Običajen** ali **Drseč**. Pri drsečem slogu se avto zasuka za 0,8 s × hitrost zavijanja, ki jo zahteva volan (do okoli 43°), zato zasuk prehiteva zavijanje (kot drugi avto na posnetku: okoli 45° v hitrem ovinku), zadnja os pa nima več oprijema kot sprednja, zato zadek ob zaviranju ali plinu uide prvi. Tekmeci vozijo vedno običajno.
-
-**Tekmeci** imajo vedno visoko pomoč. Pri novi fiziki so si po hitrosti bližje (razpon hitrosti po težavnosti je 60 % tistega pri klasični, najhitrejši so enako hitri), za avtom pred seboj pritisnejo (2 % hitreje, dokler ga ne prehitijo ali mu ne sledijo 1,5 m za odbijačem), na vrhu ovinka in na izhodu zapeljejo na robnik (nikoli bližje ograji kot pol avta in 0,6 m) in drug ob drugem pustijo manj prostora (0,35 m namesto 0,6 m). Zato vozijo v tesnejšem vlaku, večkrat prehitevajo in so pogosteje drug ob drugem (na dirki z 12 tekmeci, ti v skupini: okoli 9 prehitevanj na minuto, polje se razvleče za okoli 1,2 % kroga na krog, razmik v vlaku okoli 0,36 s, kdo ob tebi 18 % časa; pri klasični 6,5–7,5 na minuto, 2 %, 0,5 s in 10 %). Na težavnosti srednja in lahka so zato tudi najpočasnejši tekmeci hitrejši kot pri klasični. Proga, ki ima tekmece hitrejše kot običajno (`aiPace`, npr. Nürburg), jih ima tako hitre pri obeh fizikah.
-
-Nova fizika je narejena po treh posnetkih arkadne dirkaške igre, ki jih je izbral uporabnik (skupaj okoli 85 minut, mestni in turni avti ter formule; brez imen, samo vožnja); meritve in primerjava z igro so v `docs/nova-fizika-meritve.md`. Na posnetkih: bočni pospešek na vrhu ovinka 1,3–2,5 g (mestni), 1,5–2,9 g (turni), formula 1,6–2,5 g; avto je proti kameri zasukan okoli 0,3° na vsako °/s vrtenja kamere (nad 50°/s okoli 21°), pretežno zaradi zdrsa; izleti na travo trajajo okoli pol sekunde; robnik nagne telo za 2–5°; pri dotiku dveh avtov skoči vrtenje za okoli 30°/s, smer se spremeni za okoli 2–4°. Tekmeci vozijo v tesnem vlaku (okoli 0,2 s narazen), 23–33 % časa je kdo ob tebi, med seboj prehitevajo okoli 10-krat na minuto, polje se razvleka počasi (2–3 s na začetku, nato 0,5–1 s na krog).
-
-**Klasična**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Ročne zavore v igri ni: ne gumba na zaslonu telefona (le **ZAVORA** in **PLIN**, enako visoka, drug ob drugem; pri upravljanju z nagibom je zavora levo), ne tipke ne gumba na igralnem plošku. Avto zadrsa z volanom, bolj pa, če v ovinku zaviraš. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj klasično; njeni stari rekordi se ne prikazujejo več).
-
-## Preizkus: tekmeci in trki
-
-V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) s 13 vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« (5) in »Trki med avti« (8): kako se vozijo tekmeci in kako se avti obnašajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vseh pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
-
-**Tekmeci** (`aiControl`, `Race`):
-
-| Vrstica | Stopnje | Kaj pomeni |
-|---|---|---|
-| Razpon hitrosti | Širok (1), Ožji (0,6), Zelo ožji (0,3) | koliko razlike je med najhitrejšim in najpočasnejšim po težavnosti; najhitrejši je vedno enak, klasična ima privzeto širok, nova 0,6 |
-| Razmik za avtom | Kot doslej, 0,5 m, 1,5 m, 3 m | prostor med odbijačema, ki ga tekmec pusti avtu pred sabo; »kot doslej« je najtesneje (vozi tik za odbijačem), nova ima privzeto 1,5 m |
-| Pritisk na avto pred sabo | Izklop, Majhen (2 %), Velik (4 %) | tik za drugim avtom vozi tekmec malo hitreje; klasična privzeto izklop, nova 2 % |
-| Prostor ob boku | 0,6 m, 0,35 m, 0,15 m | koliko prostora pusti avtu ob sebi; klasična privzeto 0,6 m, nova 0,35 m |
-| Vožnja čez robnike | Ne, do 1,2 m, do 2,2 m | na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m); klasična privzeto ne, nova do 1,2 m |
-
-**Trki med avti** (`carCollide`, vsi stiki med avti, tudi med tekmeci; vrstica pod slogom vedno preglasi njegov del):
-
-| Vrstica | Stopnje | Kaj pomeni |
-|---|---|---|
-| Slog trkov | Realističen, težak | ravni odbijači, brez odboja (0), gume zadržijo potisk vstran, drgnjenje 0,5, vrtenje 1, drugi avto 8-krat težji, brez isker; pod vrstico je izpisano, kaj slog nastavi |
-| Občutek teže | Enak, 2×, 4×, 8×, 16× | kolikokrat težji je drugi avto v trku z igralcem (zaletiš se vanj ali on vate), tudi pri vrtenju: težji se težje premakne, igralec se ob njem ustavi; med dvema tekmecema se nič ne spremeni (`TX.cMass`, `heavyK`). Privzeto: enak, pri realističnem slogu 8× |
-| Odboj med avti | Brez, majhen (0,1), srednji (0,25), velik (0,4), zelo velik (0,6) | kolikšen del hitrosti približevanja avta ohranita kot odmik; klasična privzeto 0,1, nova 0,4 |
-| Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); klasična privzeto brez, nova 0,35, realističen slog 0,5 |
-| Vrtenje ob trku | Brez, majhno (0,15), manjše (0,4), večje (1,6) | koliko trk zavrti avto: pri klasični je to sunek smeri (kot največ 23°, pri večjem tudi več), ki ga avto sam ujame, pri novi pravo vrtenje; privzeto 1 |
-| Oblika ob stiku | Zaobljena, Ravni odbijači | zaobljena (kot doslej, trije krogi): konca avta sta okrogla, trk z zamikom avta odrine vstran. Ravni odbijači (`TX.cBox`, `rbCollide`, `rboxHit`): pravokotnik z zaobljenimi vogali (polmer 0,3 m), odbijač ali bok potisne naravnost, potisk gre skozi sredino dela, ki se dotika; prekrivanje se odpravi mehko (2 cm ostane, 40 % ostanka na korak, nad 20 cm takoj), zato avto ne poskoči nazaj; vrtenje s celo vztrajnostjo, pri klasični kot sunek smeri, ki traja toliko kot pri pravem avtu (0,0055 s na m/s hitrosti, 0,06–0,3 s; 0,15 s pri 100 km/h) in se pri trajnem potiskanju ne kopiči. Tekmeci z ravnimi odbijači puščajo med odbijačema vsaj 0,4 m in se umaknejo, če so preblizu (če vrstica Razmik za avtom ni nastavljena), prostor ob boku pa merijo z vogali zasukanega avta (`aiReach`) |
-| Potisk vstran | Avto zavije, Gume zadržijo | pri klasični fiziki: avto zavije (kot doslej) pomeni, da drsni zakon potisk vstran spremeni v smer vožnje in avto odpelje vstran. Gume zadržijo (`TX.cScrub`, `cSlide`, `stepCS`): bočni del potiska, ki ga dobi od drugega avta (ne tisti, ki le ustavi njegovo lastno približevanje), gre mimo drsnega zakona; gume ga odrgnejo v (0,006 × hitrost) s, največ s pojemkom, ki ga dovoli oprijem, ki ga ovinek pusti (vsaj tretjina). Avto malo zdrsne vstran, smer ostane. Nova fizika to dela sama s pnevmatikami |
-| Iskre in blisk | Vklop, Izklop | izklop: trk med avtoma ne sproži isker, bliska in prahu (`TX.cFx` 0, `c.fxQ` v `js/render.js`); praske na karoseriji ostanejo. Iskre ob ograji ostanejo |
-
-Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Nastavitev »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem. V boksih (avto v boksni stezi) ostane zaobljena oblika, da delo mehanikov in uvoz ostaneta kot doslej.
-
-Meritve (klasična, klasična z nastavitvami nove, nova; realistični slog) so v `docs/nova-fizika-meritve.md`, razdelek 8.
+Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Ročne zavore v igri ni: ne gumba na zaslonu telefona (le **ZAVORA** in **PLIN**, enako visoka, drug ob drugem; pri upravljanju z nagibom je zavora levo), ne tipke ne gumba na igralnem plošku. Avto zadrsa z volanom, bolj pa, če v ovinku zaviraš. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
 
 ## Zelo veliko polje (avti daleč od tebe)
 
