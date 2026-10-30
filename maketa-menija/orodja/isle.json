@@ -392,5 +392,61 @@
    "wet": true,
    "skirt": false
   }
+ ],
+ [
+  "caracoles",
+  "top",
+  "isle-caracoles",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "rastro",
+  "top",
+  "isle-rastro",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "katu",
+  "top",
+  "isle-katu",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "tianmen",
+  "top",
+  "isle-tianmen",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "bangsaen",
+  "top",
+  "isle-bangsaen",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
  ]
 ]

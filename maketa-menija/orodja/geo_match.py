@@ -28,6 +28,10 @@ GUESS = {
     'iroha': (36.7345, 139.5310, 1500),        # the second Irohazaka, its lower curves (OpenStreetMap: national road 120 up from Umagaeshi)
     'greatalpine': (-37.5517, 147.8764, 400),  # where the road leaves the Tambo (its shape on the roads of OpenStreetMap)
     'hotham': (-37.0029, 147.0940, 400),       # below Mount Little Blowhard (its shape on the roads of OpenStreetMap)
+    'caracoles': (-32.8630, -70.1580, 2500),   # by the Juncalillo river below the curves (from Portillo back along the road)
+    'rastro': (-28.3930, -49.5390, 2500),      # below the hairpins (from the viewpoint at the top back along the road)
+    'katu': (50.9100, 88.2200, 3000),          # the edge of the Ulagan plateau above the Chulyshman
+    'tianmen': (29.0570, 110.4800, 2500),      # bend 54 (from the square below the cave back along the road)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 

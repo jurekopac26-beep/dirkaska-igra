@@ -29,6 +29,11 @@ GUESS = {
     'iroha': (36.7364, 139.5326, 300),      # (by the heights: geo_match.py, then here closer)
     'uncompahgre': (38.0079, -107.6631, 300),
     'harju': (62.2430, 25.7450, 300),       # the world's origin (25.745 E, 62.243 N: its own header), the town's streets
+    'bangsaen': (13.2890, 100.9120, 1200),   # the beach road of Bang Saen
+    'rastro': (-28.395563, -49.543377, 300),  # (by the heights: geo_match.py, then here closer)
+    'tianmen': (29.0570, 110.4800, 2500),     # bend 54 (the heights on the cliffs say little: here by the road)
+    'caracoles': (-32.865047, -70.154688, 150),
+    'katu': (50.909479, 88.210047, 150),
 }
 SKIP = {'townsville': [(0.40, 0.89)]}   # parts of the lap whose road is not in Overture (the raceway through the park): left out of the score
 CELL = 2.0   # metres per cell of the distance map

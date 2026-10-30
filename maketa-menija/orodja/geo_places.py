@@ -47,13 +47,19 @@ CFG = {
     'uncompahgre': dict(kind='real', start='Ouray', finish='Uncompahgre Gorge', country='USA', region='Colorado', l1='colorado'),
     'iroha': dict(kind='real', start='Umagaeshi', finish='Akechidaira', country='Japan', region='Tochigi', l1='japan'),
     'harju': dict(kind='real', start='Jyväskylä', finish='Harju', country='Finland', region='Central Finland', l1='finland'),
+    'caracoles': dict(kind='real', start='Juncalillo', finish='Portillo', country='Chile', region='Valparaíso', l1='andes'),
+    'rastro': dict(kind='real', start='Rio do Rastro', finish='Bom Jardim da Serra', country='Brazil', region='Santa Catarina', l1='santacatarina'),
+    'katu': dict(kind='real', start='Katu-Yaryk Pass', finish='Chulyshman', country='Russia', region='Altai', l1='altai'),
+    'tianmen': dict(kind='real', start='Tianmen Mountain', finish='Tianmen Cave', country='China', region='Hunan', l1='hunan'),
+    'bangsaen': dict(kind='real', start='Bang Saen', country='Thailand', region='Chonburi', l1='gulfthailand'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
       'california': (35.0, -119.3, 900), 'montana': (45.0, -109.4, 700), 'greatlakes': (43.0, -81.2, 800), 'hawaii': (19.7, -155.6, 400), 'utah': (37.6, -110.6, 600),
       'tasmania': (-42.0, 146.6, 500), 'nsw': (-33.0, 150.8, 700), 'queensland': (-19.6, 146.4, 600), 'cape': (-33.7, 19.4, 600), 'drakensberg': (-29.4, 29.5, 600),
       'morocco': (31.7, -7.6, 800),
-      'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600)}
+      'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600),
+      'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

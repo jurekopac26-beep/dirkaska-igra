@@ -47,7 +47,7 @@ window.RM = (function () {
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, sunOff: [-74, 86, -56] },
   };
   const SEASONS = { vrsic: 'autumn' };
-  const KEEP_SEA = new Set(['newcastle', 'detroit']);
+  const KEEP_SEA = new Set(['newcastle', 'detroit', 'bangsaen']);
   let B = null, R = null, CV = null;
   function build(id, opt) {
     if (B && B.id === id) return B;

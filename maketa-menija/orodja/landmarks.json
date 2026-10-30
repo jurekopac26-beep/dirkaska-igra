@@ -1048,5 +1048,115 @@
    "snap": "water",
    "r": 1500
   }
+ ],
+ "caracoles": [
+  {
+   "n": "Río Juncalillo",
+   "d": 318
+  },
+  {
+   "n": "Los Caracoles",
+   "d": 2850,
+   "sub": "29 curves"
+  },
+  {
+   "n": "Mirador",
+   "d": 4742
+  },
+  {
+   "n": "Llano La Calavera",
+   "d": 9680
+  },
+  {
+   "n": "Portillo",
+   "d": 10773,
+   "sub": "2,866 m"
+  }
+ ],
+ "rastro": [
+  {
+   "n": "Rio do Rastro",
+   "d": 60
+  },
+  {
+   "n": "Serra do Rio do Rastro",
+   "d": 1450,
+   "sub": "hairpins"
+  },
+  {
+   "n": "Rio do Rastro Falls",
+   "d": 2953
+  },
+  {
+   "n": "Serra Geral",
+   "d": 3880,
+   "sub": "1,389 m"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 4990,
+   "sub": "1,421 m"
+  }
+ ],
+ "katu": [
+  {
+   "n": "Ulagan Plateau",
+   "d": 60
+  },
+  {
+   "n": "Katu-Yaryk Pass",
+   "d": 500,
+   "sub": "1,206 m"
+  },
+  {
+   "n": "Hairpins",
+   "d": 2100
+  },
+  {
+   "n": "Chulyshman",
+   "d": 4480,
+   "sub": "684 m"
+  }
+ ],
+ "tianmen": [
+  {
+   "n": "Tianmen Mountain",
+   "d": 60
+  },
+  {
+   "n": "99 Bends",
+   "d": 1600
+  },
+  {
+   "n": "The Loop",
+   "d": 3931
+  },
+  {
+   "n": "Tianmen Cave",
+   "d": 4825,
+   "sub": "1,218 m"
+  }
+ ],
+ "bangsaen": [
+  {
+   "n": "Bang Saen",
+   "d": 0
+  },
+  {
+   "n": "Khao Lam",
+   "d": 638
+  },
+  {
+   "n": "Khao Sam Muk",
+   "d": 2202
+  },
+  {
+   "n": "Laem Thaen",
+   "d": 2548
+  },
+  {
+   "n": "Hat Bang Saen",
+   "d": 3148
+  }
  ]
 }

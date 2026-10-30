@@ -173,5 +173,21 @@
  },
  "hotham": {
   "kbps": 550
+ },
+ "caracoles": {
+  "kbps": 550
+ },
+ "rastro": {
+  "kbps": 550
+ },
+ "katu": {
+  "kbps": 550
+ },
+ "tianmen": {
+  "kbps": 550
+ },
+ "bangsaen": {
+  "kbps": 550,
+  "sea": true
  }
 }
