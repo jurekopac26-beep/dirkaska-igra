@@ -13,8 +13,10 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
 3. **Sklopa 5 in 6 gresta skupaj** (ena seja, en pull request).
 - Možnosti 2 (manj slik) in 5 uporabnik ni izbral: kot v sklopu 2 pošlji liste »prej / zdaj« (običajno 2 na sklop), vprašanja o zasnovi kot slike
   z oštevilčenimi možnostmi.
-- Pull request seja odpre sama, ko so lokalni testi zeleni. Na `main` šele, ko so zeleni testi na GitHubu **in** uporabnik napiše »združi«
-  (ali vnaprej »ko bo zeleno, združi«).
+- Pull request seja odpre sama, ko so lokalni testi zeleni.
+- **Odločitev uporabnika 30. 10. 2026, njegove besede: »Po vrsti za vse«** (odgovor na vprašanje, ali naj sklopi tečejo hkrati in ali naj se
+  združijo sami): sklopi gredo **po vrsti**, ena seja naenkrat. Vsak sklop seja **združi na `main` sama**, ko so vsi testi na GitHubu zeleni
+  na zadnjem commitu in PR nima sporov z `main`, brez dodatnega »združi«. Nato posodobi Stanje in zažene sejo za naslednji sklop.
 
 ## Stanje
 Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je realno verjetno okoli 55–85 h; vsak sklop ima še ~1,5 h testov na GitHubu.
