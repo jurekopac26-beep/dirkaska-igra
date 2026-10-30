@@ -21,6 +21,13 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
   Dokler tega ne napiše, seja pred združitvijo počaka na njegov »združi«. Po združitvi posodobi Stanje in zažene sejo za naslednji sklop.
   Uporabnik je 30. 10. v nadrejeni seji (session_01GY6hGMr9T539RyQrVQMfCV) dodal: »Javi ti prosim vsem dovoljujem jaz«; ta seja dovoljenje
   sporoči vsaki novi seji, zato ji ob zagonu naslednje seje pošlji njen session_id.
+- **Sprememba 30. 10. (uporabnik: »Spremeni 2 hkrati«): hkrati tečeta dve seji** (okoli 5–10 % več žetonov, konec približno tretjino prej).
+  Vrsta: **4 in 7** (od 30. 10.), nato **5+6 in 9**, nato **8** (šele ko so 3–7 in 9 na `main`), na koncu **10** (po 8).
+  - Ko seja svoj PR združi: na `slike-predlogi` `git pull --rebase`, v Stanje zapiše »na `main`«, vzame prvi prost sklop iz vrste
+    (5+6 → 9 → 8 → 10, z zgornjima pogojema), ga označi »v delu (seja …)« in pushne; če push ne uspe, ker je druga seja hkrati kaj spremenila,
+    ponovi od pulla. Šele nato zažene sejo. Če prostega sklopa ni (8 čaka na drugo sejo), ne zažene ničesar.
+  - Ko druga seja svoj PR združi prej: spoji `main` v svojo vejo, reši spore (večinoma `js/newmap.js`), znova `node tools/stamp.js`
+    in lokalni testi nove mape, push in počakaj zelene teste.
 
 ## Stanje
 Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je realno verjetno okoli 55–85 h; vsak sklop ima še ~1,5 h testov na GitHubu.
@@ -33,7 +40,7 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 3 | Kmetija (in slike razlik za vprašanje 1) + nagnjena ovinka po sliki | 12–17 h | na `main` ([PR #203](https://github.com/jurekopac26-beep/dirkaska-igra/pull/203)) |
 | 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | 12–18 h | v delu (nova seja od 30. 10.) |
 | 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | 10–17 h | |
-| 7 | Avtošola s 27 nalogami | 16–24 h | |
+| 7 | Avtošola s 27 nalogami | 16–24 h | v delu (nova seja od 30. 10., hkrati s 4) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | |
 | 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | |
 | 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | 28–44 h | |
