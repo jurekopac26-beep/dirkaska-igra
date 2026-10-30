@@ -3534,15 +3534,15 @@ const World = (function () {
   function grassLook(m, sd, nat) {
     if (!m || m.userData.grassLook) return; m.userData.grassLook = true;
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) }; sh.uniforms.uNat = { value: nat || 0 };
+      sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) }; sh.uniforms.uNat = { value: nat || 0 }; sh.uniforms.uPat = m.userData.uPat || (m.userData.uPat = { value: 1 });   // (uPat: the patches' strength, 0 for one even meadow)
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw; varying float vGd;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nvGw = (modelMatrix * vec4(transformed, 1.0)).xz; vGd = -mvPosition.z;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GRASS_GLSL).replace('#include <color_fragment>', '#include <color_fragment>\n' + [
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GRASS_GLSL + '\nuniform float uPat;').replace('#include <color_fragment>', '#include <color_fragment>\n' + [
         '{ vec3 gc = diffuseColor.rgb; float gg = clamp((gc.g - max(gc.r, gc.b)) * 8.0, 0.0, 1.0);',   // (only where it is green: not the soil, the sand, the snow)
         '  if (gg > 0.0) {',
         '    float n1 = gNoise(vGw * 0.025) * 0.65 + gNoise(vGw * 0.07 + 13.1) * 0.35, n2 = gNoise(vGw * 0.045 + 57.3);',
-        '    gc *= mix(1.0, 0.84 + 0.3 * n1, gg);',   // lighter and darker patches
-        '    gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6);',   // drier, yellower ones
+        '    gc *= mix(1.0, 0.84 + 0.3 * n1, gg * uPat);',   // lighter and darker patches
+        '    gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6 * uPat);',   // drier, yellower ones
         // clumps a metre or two across, lighter and darker (near the camera: far away they would shimmer)
         '    float cl = gNoise(vGw * 0.55 + 3.7) * 0.6 + gNoise(vGw * 1.7 + 9.1) * 0.4;',
         '    gc *= 1.0 + gg * (cl - 0.5) * 0.22 * (1.0 - smoothstep(70.0, 160.0, vGd));',
