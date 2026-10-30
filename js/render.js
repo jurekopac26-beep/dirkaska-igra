@@ -2685,6 +2685,7 @@ const Render = (function () {
     bodyG.add(dec);
     if (M.body === 'formula') { dec.scale.set(0.36, 1, 0.36); dec.rotation.z = -0.075; }   // (on the chassis in front of the cockpit)
     if (def.decalY != null) dec.position.y = def.decalY + 0.012; if (def.decalRz) dec.rotation.z = def.decalRz; if (def.decalS) dec.scale.set(def.decalS, 1, def.decalS);   // (the new bodies: on a sloping bonnet or nose)
+    if (KE && KE.deli && DELI.clean(car.deli, M).streha) dec.visible = false;   // (a sunroof fitted, js/deli/streha.js: no start number over its glass, the user's)
     if (M.body === 'rally') {
       const sxr = M.len / def.len, szr = M.wid / def.wid;
       for (const sd of [-1, 1]) {
