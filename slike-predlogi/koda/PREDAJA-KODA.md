@@ -26,8 +26,8 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 0 | Čiščenje veje (slike na to vejo) | – | na `main` |
 | 1 | Mala proga in okolica: lunapark z vulkanom, stekleni most, parkirišče z avtošolo, reševalna baza s helidromom, robovi, podiranje | – | na `main` ([PR #196](https://github.com/jurekopac26-beep/dirkaska-igra/pull/196)) |
 | 2 | Tla ob morju: plaža 4, ena trava, obali JV in SV, dno morja, travnik za robom mape | ~5 h (ocena 12–18 h) | na `main` ([PR #198](https://github.com/jurekopac26-beep/dirkaska-igra/pull/198)) |
-| 3 | Kmetija (in slike razlik za vprašanje 1) + nagnjena ovinka po sliki | 12–17 h | v delu (nova seja od 30. 10.) |
-| 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | 12–18 h | |
+| 3 | Kmetija (in slike razlik za vprašanje 1) + nagnjena ovinka po sliki | 12–17 h | na `main` ([PR #203](https://github.com/jurekopac26-beep/dirkaska-igra/pull/203)) |
+| 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | 12–18 h | v delu (nova seja od 30. 10.) |
 | 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | 10–17 h | |
 | 7 | Avtošola s 27 nalogami | 16–24 h | |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | |
