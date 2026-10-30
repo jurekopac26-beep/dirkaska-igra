@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, tCrStyle: 0, tCrMass: 0, tCrE: 0, tCrMu: 0, tCrYaw: 0, tCrBox: 0, tCrScrub: 0, tCrFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', fps: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, tCrStyle: 0, tCrMass: 0, tCrE: 0, tCrMu: 0, tCrYaw: 0, tCrBox: 0, tCrScrub: 0, tCrFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -51,10 +51,14 @@
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (as the driving physics has it: nothing changes); the numbers go to Core.setTest
-  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], tCrE: [null, 0, 0.1, 0.25, 0.4, 0.6], tCrMu: [null, 0, 0.35, 0.8], tCrYaw: [null, 0, 0.15, 0.4, 1.6], tCrMass: [null, 1, 2, 4, 8, 16], tCrBox: [null, 0, 1], tCrScrub: [null, 0, 1], tCrFx: [null, 1, 0] };
-  const TEST_REAL = { cE: 0, cMu: 0.5, cYaw: 1, cMass: 8, cFx: 0, cBox: 1, cScrub: 1 };   // Trki: slog Realističen, težak (flat bumpers pushed apart softly, no bounce, the classic car's tyres hold a push sideways, the bodies rub, the other car counts eight times heavier in a knock with the player, no sparks); every row under it overrides its part
+  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], tCrE: [null, 0, 0.1, 0.25, 0.4, 0.6], tCrMu: [null, 0, 0.35, 0.8], tCrYaw: [null, 0, 0.15, 0.4, 1.6], tCrMass: [null, 1, 2, 4, 8, 16], tCrBox: [null, 0, 1], tCrScrub: [null, 0, 1, 0.5], tCrFx: [null, 1, 0], tCrSoft: [null, 0, 1], tAiErr: [null, 0, 0.5, 2], tAiPl: [null, 0, 0.5, 1, 2] };
+  // Trki: the styles (Slog trkov, tCrStyle 1..3); every row under it overrides its part. 1 Realističen, težak: flat bumpers pushed apart softly, no
+  // bounce, the tyres hold a push sideways, the bodies rub, the other car eight times heavier in a knock with the player, no sparks. 2 Realističen,
+  // mehak: the same shape and hold, softly apart, little rub and turn, the other car twice as heavy, sparks. 3 Brez odrivanja: flat bumpers pushed
+  // apart softly, no bounce, no rub, the tyres hold the push, a small turn, equal weight
+  const TEST_STYLE = [null, { cE: 0, cMu: 0.5, cYaw: 1, cMass: 8, cFx: 0, cBox: 1, cScrub: 1 }, { cE: 0, cMu: 0.3, cYaw: 0.4, cMass: 2, cBox: 1, cScrub: 1, cSoft: 1 }, { cE: 0, cMu: 0, cYaw: 0.15, cBox: 1, cScrub: 1, cSoft: 1 }];
   for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
-  S.tCrStyle = +S.tCrStyle === 1 ? 1 : 0;
+  S.tCrStyle = [1, 2, 3].includes(+S.tCrStyle) ? +S.tCrStyle : 0;
   S.phys = 'cs';   // one driving physics: Circuit Superstars (the old 'rally' and 'arcade' were removed; old saves get cs)
   const physOf = () => 'cs';   // (one driving physics: the records under id@cs)
   if (!['dry', 'rain', 'random', 'change', 'storm'].includes(S.weather)) S.weather = 'dry';
@@ -422,13 +426,17 @@
     if (inRace) requestAnimationFrame(() => Input.layout());
     hudCol(0);
   }
+  const CR_NOTE = ['Privzeto: odboj 0,1, brez drgnjenja, vrtenje 1, zaobljena oblika, enaka teža, iskre.',
+    'Realističen, težak: ravni odbijači, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,5, drugi avto 8-krat težji, brez isker. Vrstice spodaj ga spremenijo.',
+    'Realističen, mehak: ravni odbijači, mehak razmik, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,3, vrtenje 0,4, drugi avto 2-krat težji, iskre. Vrstice spodaj ga spremenijo.',
+    'Brez odrivanja: ravni odbijači, mehak razmik, brez odboja, gume zadržijo potisk vstran, brez drgnjenja, vrtenje 0,15, enaka teža. Vrstice spodaj ga spremenijo.'];   // (Trki: under the style row, what it sets)
   function refreshSegs() {
     for (const seg of document.querySelectorAll('.seg')) {
       const key = seg.dataset.set; if (!key) continue;   // (upgrade rows mark their own selection)
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
-    $('cr-note').textContent = tr(+S.tCrStyle === 1 ? 'Realističen, težak: ravni odbijači, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,5, drugi avto 8-krat težji, brez isker. Vrstice spodaj ga spremenijo.' : 'Privzeto: odboj 0,1, brez drgnjenja, vrtenje 1, zaobljena oblika, enaka teža, iskre.');
+    $('cr-note').textContent = tr(CR_NOTE[+S.tCrStyle] || CR_NOTE[0]);
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -487,8 +495,8 @@
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
-  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]], H = +S.tCrStyle === 1 ? TEST_REAL : {}, or = (a, b) => a != null ? a : b != null ? b : null;   // (Preizkus: the rivals and the knocks; never online, where both phones must drive the same)
-    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw), cMass: or(L('tCrMass'), H.cMass), cFx: or(L('tCrFx'), H.cFx), cBox: or(L('tCrBox'), H.cBox), cScrub: or(L('tCrScrub'), H.cScrub) }; };
+  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]], H = TEST_STYLE[+S.tCrStyle] || {}, or = (a, b) => a != null ? a : b != null ? b : null;   // (Preizkus: the rivals and the knocks; never online, where both phones must drive the same)
+    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw), cMass: or(L('tCrMass'), H.cMass), cFx: or(L('tCrFx'), H.cFx), cBox: or(L('tCrBox'), H.cBox), cScrub: or(L('tCrScrub'), H.cScrub), cSoft: or(L('tCrSoft'), H.cSoft), aiErr: L('tAiErr'), aiPl: L('tAiPl') }; };
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;
@@ -542,7 +550,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
+    const num = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx', 'tAiErr', 'tAiPl', 'tCrSoft', 'fps', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -5131,7 +5139,7 @@
   // the world's theme and its graphics tier, the physics' level of detail of a big field (Core LOD)
   const PH = (() => {
     let url = false; try { url = /[?&]fps\b/.test(location.search); } catch (_) { /* no location */ }
-    const o = { url, dev: false, get on() { return o.url || o.dev; }, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null, calls: 0, tris: 0, info: null };
+    const o = { url, dev: false, get on() { return o.url || o.dev || +S.fps === 1; }, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null, calls: 0, tris: 0, info: null };
     o.tick = (now) => {
       if (!o.on) { if (o.el) { o.el.remove(); o.el = null; } if (o.info) { o.info.autoReset = true; o.info = null; } o.t0 = o.last = 0; return; }
       if (!o.el) { o.el = document.createElement('div'); o.el.id = 'ph-fps'; o.el.style.cssText = 'position:fixed;left:10px;top:66px;z-index:99999;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.65);color:#7CFF8A;font:600 12px/1.35 monospace;pointer-events:none;white-space:pre'; document.body.appendChild(o.el); }

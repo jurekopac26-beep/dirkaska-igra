@@ -5,7 +5,9 @@
 //   the sparks (cFx 0: none, the scrape marks stay); the realistic knocks (cBox flat bumpers, cScrub the tyres' hold, cE 0, cMu 0.5): a
 //   racing bump does not throw the player's car aside, no bounce and no pop, a heavy car hardly moves when hit or leant on, a car driving
 //   along hit from the side keeps its direction
-// - the rivals: the spread of their paces (aiSpr), over the kerbs (aiKerb), a close train (aiSpr, aiPush, aiSide, aiFol)
+// - the rivals: the spread of their paces (aiSpr), over the kerbs (aiKerb), a close train (aiSpr, aiPush, aiSide, aiFol), their mistakes under
+//   pressure (aiErr: none with 0), the room they leave the player's car (aiPl)
+// - Mehak razmik (cSoft: no pop), Potisk vstran Polovično (cScrub 0.5), a deep knock with flat bumpers does not throw the car back
 // - races (Spa, Bathurst, 12 rivals, 150 s) with the realistic knocks and with the close train: nothing NaN, every car moving, knocks
 //   <= 1.5x the default's + 20 (the close train: more rubbing is its point), slides past 40 deg <= 6 (the close train 10)
 //   node tests/preizkus.test.js
@@ -102,6 +104,46 @@ const f = (v, d = 2) => Number.isFinite(v) ? v.toFixed(d) : String(v);
   ok('Preizkus: the rivals over the kerbs (aiKerb): 6 % of the time or more with 1.2, under 3 % by default', rck.kerb >= 0.06 && rcs.kerb < 0.03, `${f(rcs.kerb * 100, 1)} % -> ${f(rck.kerb * 100, 1)} %`);
   ok('Preizkus: a close train (aiSpr 0.3, aiPush 0.04, aiSide 0.15, aiFol 1.5): a car within half a second behind another 8 points of the time more than by default',
     rtight.near >= rcs.near + 0.08, `${f(rcs.near * 100, 1)} % -> ${f(rtight.near * 100, 1)} %`);
+}
+
+// ---- the newer rows: Mehak razmik (cSoft), Potisk vstran Polovično (cScrub 0.5), a deep knock with flat bumpers, the rivals' mistakes (aiErr)
+// and the room for the player's car (aiPl) ----
+{
+  const test = (tx, fn) => { C.setTest(tx || null); try { return fn(); } finally { C.setTest(null); } };
+  const D = 180 / Math.PI, lane = (c, z0) => Math.max(-1, Math.min(1, -(0.35 * (c.z - z0) + 2.0 * c.h + 0.25 * c.vz / Math.max(5, c.speed))));
+  const car = (v, pl) => { const c = HC.mkCar('rally', { v }); c.isPlayer = pl; c.noReverse = true; return c; };
+  const duel = (tx, set, secs) => test(tx, () => { const S = set(), P = S.P, O = S.O, h0 = O.h, z0 = O.z, x0 = O.x; let pop = 0, hO = 0, hit = false, oz = 0;
+    for (let i = 1; i <= secs / DT; i++) { HC.step(P, S.iP()); HC.step(O, S.iO()); const x = P.x, z = P.z, m = C.carCollide(P, O); pop = Math.max(pop, Math.hypot(P.x - x, P.z - z)); if (m > 0) hit = true; if (hit) hO = Math.max(hO, Math.abs(O.h - h0) * D); oz = Math.max(oz, Math.abs(-(O.x - x0) * Math.sin(h0) + (O.z - z0) * Math.cos(h0))); }
+    return { hit, pop, hO, oz }; });
+  const stand = () => { const P = car(50, true), O = car(0, false); O.place(0, 0, 0); P.place(-O.m.len - 0.05, 0, 0); P.vx = 13.9; return { P, O, iP: () => ({ st: lane(P, 0), thr: 'hold' }), iO: () => ({ st: 0, thr: 0, brk: 1 }) }; };
+  const flank = () => { const P = car(100, true), O = car(100, false), a = 0.35, L = O.m.len; O.place(0, 0, 0); O.vx = 27.8; P.place(-Math.cos(a) * L / 2, -0.98 - Math.sin(a) * L / 2, a); P.vx = 27.8 * Math.cos(a); P.vz = 27.8 * Math.sin(a); return { P, O, iP: () => ({ st: 0, thr: 0 }), iO: () => ({ st: 0, thr: 'hold' }) }; };
+  const s0 = duel(null, stand, 1.5), s1 = duel({ cSoft: 1 }, stand, 1.5);
+  ok('Preizkus: Mehak razmik (cSoft): 50 km/h into a standing car, the round ends pushed apart without the pop (under 4 cm a step; by default 10 cm or more)', s1.hit && s1.pop < 0.04 && s0.pop >= 0.1, `${f(s0.pop * 100, 0)} -> ${f(s1.pop * 100, 0)} cm`);
+  const REAL = { cE: 0, cMu: 0.5, cYaw: 1, cBox: 1, cScrub: 1 }, fr = duel(REAL, flank, 1.2);
+  ok('Preizkus: flat bumpers, a deep knock into a flank at 20 deg: the car is not thrown back (under 8 cm a step)', fr.hit && fr.pop < 0.08, f(fr.pop * 100, 0) + ' cm');
+  const z0 = duel(null, flank, 1.2).oz, z1 = duel({ cScrub: 1 }, flank, 1.2).oz, zh = duel({ cScrub: 0.5 }, flank, 1.2).oz;
+  ok('Preizkus: Potisk vstran Polovično (cScrub 0.5): the car hit in its flank is pushed aside between Avto zavije and Gume zadržijo', zh < z0 - 0.1 && zh > z1 + 0.1, `${f(z0)} / ${f(zh)} / ${f(z1)} m`);
+  // the rivals' mistakes under pressure and the room for the player (Spa, 12 rivals, the characters on: chars)
+  const spaRun = (tx) => test(tx, () => { Math.random = seeded(64); const T = new C.Track(C.TRACKS.find(d => d.id === 'spa'));
+    const race = new C.Race(T, { numAI: 12, playerGrid: 7, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, chars: true, slip: true }); race.start();
+    let mist = 0; if (race.chr) { const ev = race._chrEv.bind(race); race._chrEv = (k, c) => { if (k === 'mistake') mist++; ev(k, c); }; }
+    const P = race.player; let al = 0, alN = 0;
+    for (let k = 1; k <= 180 / DT; k++) { Math.random = seeded(1000 + k); C.aiControl(P, race, DT); race.step(DT);
+      if (k % 6 === 0 && k * DT > 8) for (const c of race.cars) { if (c === P || Math.abs(c.dist - P.dist) > (c.m.len + P.m.len) * 0.5) continue; const lat = Math.abs(c.q.d - P.q.d); if (lat < 4) { al += lat; alN++; } } }
+    return { mist, al: alN ? al / alN : 0, alN }; });
+  const m0 = spaRun(null), mN = spaRun({ aiErr: 0 }), m2 = spaRun({ aiErr: 2 });
+  ok('Preizkus: Napake tekmecev (aiErr): none with 0, more often with 2 than by default', mN.mist === 0 && m2.mist >= m0.mist && m2.mist > 0, `default ${m0.mist}, 0: ${mN.mist}, 2: ${m2.mist}`);
+  // the room for the player: a rival right beside the player's car on its line (Spa), its offset worked out again and again
+  const side = (tx) => test(tx, () => { Math.random = seeded(3); const T = new C.Track(C.TRACKS.find(d => d.id === 'spa'));
+    const race = new C.Race(T, { numAI: 1, playerGrid: 2, laps: 3, playerModel: C.MODELS[4], fieldModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 0 }); race.start();
+    const P = race.player, A = race.cars.find(c => c !== P), i = 300, r0 = T.rl[i], sd = r0 > 0 ? -1 : 1;
+    const put = (c, d) => { c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); c.vx = Math.cos(c.h) * 30; c.vz = Math.sin(c.h) * 30; c.q = T.query(c.x, c.z, i, c.q); c.vl = 30; };
+    put(P, r0); put(A, r0 + sd * 2.6); P.dist = A.dist = 1000; race.state = 'racing';
+    for (let k = 0; k < 40; k++) { Math.random = seeded(9 + k); C.aiControl(A, race, DT); }
+    return { by: A.alU === P || A.alD === P, d: Math.abs(A.aiOff + T.rl[i] - r0) }; });
+  const q0 = side(null), q1 = side({ aiPl: 1 }), q2 = side({ aiPl: 2 });
+  ok('Preizkus: Prostor za tvoj avto (aiPl): a rival beside the player keeps that much further across (1 m, 2 m more than by default)', q0.by && Math.abs(q1.d - q0.d - 1) < 0.05 && Math.abs(q2.d - q0.d - 2) < 0.05,
+    `${f(q0.d)} / ${f(q1.d)} / ${f(q2.d)} m from the player's line`);
 }
 
 // ---- races ----
