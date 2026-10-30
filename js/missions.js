@@ -10,7 +10,8 @@
      limit: the seconds to do it in (none: the clock runs up); stars: [the time for 3 stars, for 2] (else 3 for a mission done);
      opts: what the race is made with (Core.Race's options over the game's own: alone, no laps, the traffic ...), a function of the def;
      rows: the gauges of the panel [{ k, label, bar: true (a bar under it), col }], set with run.set(k, text, frac, col);
-     begin(run), step(run, dt): the mission's own logic; run.win(), run.fail(why) end it; the player over the finish line is a win
+     made(race): its own cars on the race before it is drawn; begin(run), step(run, dt): the mission's own logic (run.add(obj): a THREE
+     object of its own in the scene while the run lasts); run.win(), run.fail(why) end it; the player over the finish line is a win
      unless the mission's finish(run) says otherwise. */
 const Missions = (function () {
   'use strict';
@@ -62,6 +63,8 @@ const Missions = (function () {
     get left() { return this.def.limit > 0 ? Math.max(0, this.def.limit - this.t) : null; },
     set(k, text, frac, col) { this.vals[k] = { text: text == null ? '' : String(text), frac: frac == null ? null : Math.max(0, Math.min(1, frac)), col: col || null }; },
     say(text) { this.hint = text; },
+    // a thing of the mission's own in the world (a THREE object: a building, a vehicle standing there): in the scene while the run lasts
+    add(o) { (this.props || (this.props = [])).push(o); if (typeof Render !== 'undefined' && Render.scene) Render.scene.add(o); return o; },
     win() { if (this.end) return; this.end = 'win'; this.stars = starsOf(this.def, this.t); },
     fail(why) { if (this.end) return; this.end = 'fail'; this.why = why || ''; this.stars = 0; },
     // a step of the race (only while it is on: the clock runs from the start of the race)
@@ -94,8 +97,17 @@ const Missions = (function () {
     if (cur.car && typeof Core !== 'undefined') { const M = Core.MODELS.find(m => m.id === cur.car); if (M) o.playerModel = M; }
     return o;
   }
+  // the run's own things out of the scene, their geometry and paint freed
+  function unprops() {
+    if (!run || !run.props) return;
+    for (const o of run.props) { if (o.userData.misUndo) o.userData.misUndo(); if (o.parent) o.parent.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); for (const x of [].concat(m.material || [])) { if (x.map) x.map.dispose(); x.dispose(); } }); }
+    run.props = null;
+  }
+  // the race is made, not drawn yet: the mission's own cars (made(race), e.g. the escort)
+  function made(race) { if (cur && cur.made && race) cur.made(race); }
   // the race is made: the mission's run on it
   function begin(race) {
+    unprops();
     if (!cur || !race) { run = null; hud(false); return; }
     run = new Run(cur, race);
     if (cur.begin) cur.begin(run);
@@ -117,7 +129,7 @@ const Missions = (function () {
     return true;
   }
   // back to the title (or another race than the mission's): no mission
-  function stop() { cur = null; run = null; hud(false); closeResult(); closeList(); }
+  function stop() { unprops(); cur = null; run = null; hud(false); closeResult(); closeList(); }
   const on = () => !!cur;
 
   /* ---------------- the screens (a document only; their look in css/missions.css) ---------------- */
@@ -228,7 +240,7 @@ const Missions = (function () {
     },
   });
 
-  return { add, DEFS, byId, init, start, opts, begin, step, over, stop, on, openList, closeList, Run, recOf, starsOf, placeOf, clock,
+  return { add, DEFS, byId, init, start, opts, made, begin, step, over, stop, on, openList, closeList, Run, recOf, starsOf, placeOf, clock,
     get run() { return run; }, get cur() { return cur; } };
 })();
 if (typeof module !== 'undefined') module.exports = Missions;
