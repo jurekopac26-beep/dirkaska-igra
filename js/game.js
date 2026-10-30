@@ -410,6 +410,7 @@
     for (const s of document.querySelectorAll('.screen')) s.classList.toggle('show', s.id === 's-' + sid);
     if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
+    if (name === 'car') carTapLay();   // (the car's tap: over it once the screen is laid out)
     if (name === 'results') resMe();
     const inRace = name === 'none';
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
@@ -667,7 +668,41 @@
     $('car-colors').innerHTML = PLAYER_COLORS.map((c, i) => '<button data-col="' + i + '" class="' + (i === S.color ? 'sel' : '') + '" style="background:' + hexCss(c) + '" aria-label="' + tr('Barva {0}', i + 1) + '"></button>').join('');
     buildCarNav(M);
     Render.setShowCar(M, PLAYER_COLORS[S.color], carNum());
-    refreshSegs();
+    refreshSegs(); carTapLay();
+  }
+  // the car on the turntable: a tap opens the garage with it (garageOpen). Its button over the car's place on the screen for a whole turn
+  // (Render.showRect), kept between the rows and the panel (on its side: left of the panel, between the categories and the strip; upright:
+  // under the strip, over the panel); the rows, the arrows and the panel stay over it; none where there is no room for it
+  function carTapLay() {
+    const b = $('car-garage'), r = screen === 'car' && Render.showRect(), pn = document.querySelector('#s-car .car-panel').getBoundingClientRect();
+    if (!r || !pn.width) { b.classList.remove('on'); return; }
+    const sc = $('s-car').getBoundingClientRect(), cats = $('car-cats').getBoundingClientRect(), strip = $('car-strip').getBoundingClientRect(), land = r.w > r.h;
+    const x0 = Math.max(r.x0, sc.left + 4), x1 = Math.min(r.x1, (land ? pn.left : sc.right) - 6), y0 = Math.max(r.y0, (land ? cats.bottom : strip.bottom) + 6), y1 = Math.min(r.y1 + 30, (land ? strip.top : pn.top) - 6);   // (its hint under the car, on the ring, where there is room)
+    const ok = x1 - x0 >= 60 && y1 - y0 >= 40; b.classList.toggle('on', ok); if (!ok) return;
+    Object.assign(b.style, { left: Math.round(x0 - sc.left) + 'px', top: Math.round(y0 - sc.top) + 'px', width: Math.round(x1 - x0) + 'px', height: Math.round(y1 - y0) + 'px' });
+  }
+  // the garage (garaza.html) with the car screen's car in its colour: garaza.html?car=<id>&color=<rrggbb> (its money and cars are its own
+  // test profile for now); its Nazaj comes back to this screen on that car (garageBack), the way this screen's Nazaj led kept for it
+  // (sessionStorage GAR_KEY: the title, the new menu's track step, or the championship with the car the player had there)
+  const GAR_KEY = 'tdgp-garaza';
+  function garageOpen() {
+    if (navigator.onLine === false) { toast(tr('Garaža se odpre, ko je naprava povezana z internetom.'), 3200); return; }   // (the saved game, sw.js, has no garage)
+    const M = Core.MODELS[S.car]; save();
+    try { sessionStorage.setItem(GAR_KEY, JSON.stringify({ from: carFrom, track: !!(menuOn && Menu.fromTrack), before: (Core.MODELS[carBefore] || M).id })); } catch (_) { }
+    location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[S.color].toString(16).padStart(6, '0');
+  }
+  // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
+  // address plain again (a reload: the title)
+  function garageBack() {
+    let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
+    if (P.get('zaslon') !== 'avto' || P.has('proga') || screen !== 'title') return;
+    let o = null; try { o = JSON.parse(sessionStorage.getItem(GAR_KEY) || 'null'); sessionStorage.removeItem(GAR_KEY); } catch (_) { o = null; }
+    const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car) { S.car = k; save(); }
+    try { P.delete('zaslon'); P.delete('avto'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
+    const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1;
+    carFrom = ch ? 'champ' : 'title'; if (ch) carBefore = b >= 0 ? b : S.car;
+    if (o && o.track && menuOn) Menu.fromTrack = true;   // (the new menu's track step: its Nazaj there again)
+    bg = 'show'; buildCarScreen(); showScreen('car');
   }
 
   // stat bars: stock value, the gain from upgrades drawn in blue behind it
@@ -1931,7 +1966,7 @@
     if (on && mp.ch && mp.ch.on && !mp.ch.done) showMsg(tr('PRVENSTVO · DIRKA {0}/{1}', mp.ch.round + 1, mp.ch.tracks.length) + wetTxt, 'gold', 2.2);   // (a championship over the internet: which race)
     if (race.chal) { showMsg(tr('IZZIV: {0} · {1}', race.chal.name.toUpperCase(), fmt(race.chal.time, true)) + wetTxt, 'gold', 2.2); Comm.say('chalIntro', { name: race.chal.name, time: spkTime(race.chal.time) }, 3); }
     $('hud').classList.toggle('nv', !!race.nv);   // NEW VERSION · TEST 1: the new map over the track (once), then free driving from HOME (again after a restart)
-    if (race.nv) { if (nv.built && nv.home) race.player.place(nv.home.x, nv.home.z, nv.home.h); else if (!nv.built) nvStart(); }
+    if (race.nv) { if (nv.built && nv.home) { race.player.place(nv.home.x, nv.home.z, nv.home.h); if (typeof NVHeli !== 'undefined') NVHeli.reset(); } else if (!nv.built) nvStart(); }
     MS.begin(race);   // (a special mission: its panel and its run)
   }
   // NEW VERSION · TEST 1: js/newmap.js (loaded only now: its stamped address is a <link> of a kind the browser does not fetch), then the
@@ -1953,7 +1988,7 @@
       let g = null, H = null, k = 0; nv.times = window.__nvT = []; let t0 = performance.now();
       const tick = (name) => { const t = performance.now(); nv.times.push([name, Math.round(t - t0)]); t0 = t; };
       const hooks = () => { const H3 = H.H3; track.ground2 = H3.tun ? (x, z, y) => H3.tun.groundL(x, z, y) : (x, z) => H3.ground(x, z); if (H3.tun) track.wall2 = (x, z, y, out) => H3.tun.wall(x, z, y, out); if (H3.bankR) track.bank2 = (x, z, out) => H3.bankR.tilt(x, z, out); track.free = [-350, 411, -400, 314]; if (window.MK.surfGrid) track.surf2 = window.MK.surfGrid();
-        if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVWalls !== 'undefined') NVWalls.init(H3); };
+        if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVWalls !== 'undefined') NVWalls.init(H3); if (typeof NVHeli !== 'undefined') NVHeli.init(H3, track, { car: () => (race.player.m && race.player.m.name) || '' }); };
       const bake = () => { if (typeof NVBake !== 'undefined') nv.bake = NVBake.bake(Render.scene, { world: Render.world }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); };
       const tail = () => { try { hooks(); tick('hooks'); } catch (e) { fail(e); return; } setP(NV_STEPS.hooks); paint(() => { try { bake(); tick('bake'); } catch (e) { fail(e); return; } setP(1); paint(done); }); };
       const step = () => { let r; try { r = g.next(); } catch (e) { fail(e); return; } tick(r.done ? 'end' : r.value); k++;
@@ -1962,11 +1997,11 @@
       if (g) step(); else { setP(NV_STEPS.end); paint(tail); }
     };
     const later = () => { setP(NV_STEPS.load); paint(build); };   // (the wait screen on show before the long build)
-    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined' && typeof NVBake !== 'undefined' && typeof NVWalls !== 'undefined') { requestAnimationFrame(later); return; }
+    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined' && typeof NVBake !== 'undefined' && typeof NVWalls !== 'undefined' && typeof NVHeli !== 'undefined') { requestAnimationFrame(later); return; }
     const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
       sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = () => { setP(f + NV_STEPS.load / 4); next(); }; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
       document.head.appendChild(sc); };
-    load('newmap', () => load('nvpark', () => load('nvbase', () => load('nvedge', () => load('nvmenu', () => load('nvbake', () => load('nvwalls', later)))))));   // (the map, its park, its rescue base and lot, its garages' menus, the merging of its still meshes for the phones, its walls of fence the car pushes)
+    load('newmap', () => load('nvpark', () => load('nvbase', () => load('nvedge', () => load('nvmenu', () => load('nvbake', () => load('nvwalls', () => load('nvheli', later))))))));   // (the map, its park, its rescue base and lot, its garages' menus, the merging of its still meshes for the phones, its walls of fence the car pushes, its helicopter that flies)
   }
   // the wait bar: where it stands after loading the scripts, after each step of the build (hub4G's yields), after the map's hooks; from the build's times (nv.times)
   const NV_STEPS = { load: 0.06, y0: 0.086, y1: 0.087, y2: 0.095, y3: 0.096, y4: 0.104, y5: 0.156, y5a: 0.157, y5b: 0.171, y5c: 0.173, y5d: 0.177, y5e: 0.18, y5f: 0.182, y5g: 0.183, h0: 0.185, h1: 0.188, h2: 0.191, h3: 0.219, y6: 0.219, y7: 0.226, y8: 0.244, y9: 0.489, y10: 0.516, y11: 0.523, y12: 0.68, y13: 0.68, y14: 0.705, y15: 0.735, y16: 0.738, y17: 0.742, y18: 0.746, y19: 0.747, y20: 0.747, y21: 0.825, y22: 0.878, end: 0.88, hooks: 0.899 };
@@ -2326,13 +2361,17 @@
     pkF.on = true; pkF.k = -2; introLen += Render.pkFly.DUR;
     Render.pkFly.warm();   // (every shader of the world now, while the screen still changes over from the menu: none compiles mid-flight)
     Render.setShot(Render.pkFly.at(0).shot); $('hud').classList.add('shot'); document.body.classList.add('pkfly');
+    pkFlyCap(0);   // (the first place's caption at once, still hidden: not the last flyover's until it shows at 0.15 s)
     pkFlyStep();
+  }
+  function pkFlyCap(k) {   // the caption of place k: its name and height
+    const C = Render.pkFly.caps, c = C[k], el = $('pk-fly'), al = track.def.alt, a = al && !k ? al[0] : al && k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
+    el.children[1].textContent = tr(c.n); el.children[2].textContent = a != null ? numDot(al ? clamp(a, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : a) + ' m' : '';   // (a descent: its alt falls)
   }
   function pkFlyStep() {   // updatePhase, in the intro: the shot and its caption at this moment
     const o = Render.pkFly.at(phaseT), el = $('pk-fly');
     if (!o || phaseT >= Render.pkFly.DUR) { pkFlyEnd(); return; }
-    if (o.k !== pkF.k && o.k >= 0) { const C = Render.pkFly.caps, c = C[o.k], al = track.def.alt, a = al && !o.k ? al[0] : al && o.k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
-      el.children[1].textContent = tr(c.n); el.children[2].textContent = a != null ? numDot(al ? clamp(a, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : a) + ' m' : ''; }   // (a descent: its alt falls)
+    if (o.k !== pkF.k && o.k >= 0) pkFlyCap(o.k);
     pkF.k = o.k; el.className = 'show';
     el.style.opacity = Math.min(1, phaseT / 0.3, (Render.pkFly.DUR - phaseT) / 0.3).toFixed(2);
     const a = o.k >= 0 ? o.a.toFixed(2) : '0'; el.children[1].style.opacity = a; el.children[2].style.opacity = a;
@@ -2705,9 +2744,11 @@
       if (pit === 'merge') pitCount(dt);
     }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
+    if (race.nv && typeof NVHeli !== 'undefined') NVHeli.step(dt, P, inp);   // (NEW VERSION · TEST 1: the rescue helicopter flies, the car rides in it, js/nvheli.js)
     const ph0 = PH.on ? performance.now() : 0;
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     if (PH.on) PH.s += performance.now() - ph0;
+    if (race.nv && typeof NVHeli !== 'undefined') NVHeli.post(P);
     if (fly.on && !race.flyOn) flyStep();   // (the flying start: the player's own car the very step it is over the start line)
     if (race.nv && typeof NVWalls !== 'undefined') NVWalls.step(dt, P);   // (NEW VERSION · TEST 1: the walls of fence pushed by the car, js/nvwalls.js)
     if (race.nv && typeof NVPark !== 'undefined') NVPark.tick(dt, P);   // (the volcano's lava, js/nvpark.js)
@@ -3987,7 +4028,7 @@
       if (P.wrongT > 1.1 && !race.nv) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
       // stuck or the wrong way: back onto the road (stopped at the police checkpoint on purpose, or in a garage of the new map: no rescue); a lost wheel on a track without
       // pits (not a time trial): the marshals put it back on (6 s)
-      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !(race.nv && typeof NVMenu !== 'undefined' && NVMenu.on()), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0) && !W.rule) && !track.def.pit && !race.timeTrial && !P.finished;
+      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !(race.nv && typeof NVMenu !== 'undefined' && NVMenu.on()) && !(race.nv && typeof NVHeli !== 'undefined' && NVHeli.on()), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0) && !W.rule) && !track.def.pit && !race.timeTrial && !P.finished;
       const rb = $('btn-rescue'), rt = !stuck && wheel ? tr('\u21ba Namesti kolo') : tr('\u21ba Na progo');
       rb.classList.toggle('off', !(stuck || wheel)); if (rb.textContent !== rt) rb.textContent = rt;
     }
@@ -5173,12 +5214,14 @@
       updateHUD(dt); hudCol(dt); Comm.update(); Sfx.setDuck(Comm.talking());   // (the commentator over the engines: the rest lowered under the voice)
       Sfx.update(race, race.player, null, inp.thr);
       const pr0 = PH.on ? performance.now() : 0;
+      if (race.nv && nv && nv.built && typeof NVHeli !== 'undefined') NVHeli.frame(dt, acc / STEP, race.player, !paused && screen === 'none' && phase === 'racing');   // (NEW VERSION · TEST 1: the helicopter between the steps, its menu, its button, its height and speed, js/nvheli.js)
       ghShow(acc / STEP); Render.frame(dt, acc / STEP, race.player, S.camera, { marker: phase === 'intro' || phase === 'lights' || (phase === 'racing' && race.time < 2.5) });
       if (PH.on) PH.r += performance.now() - pr0;
       adaptive(dt);
     } else {
       if (mp && mp.race) netFrame(true);
       hudCol(0); Sfx.setDuck(Comm.talking());
+      if (race.nv && nv && nv.built && typeof NVHeli !== 'undefined') NVHeli.frame(0, 1, race.player, false);
       ghShow(1); if (!(nv && nv.loading)) Render.frame(0, 1, race.player, S.camera, { noFx: true });   // (not under the new map's wait screen: its build goes on between the frames)
       if (screen === 'settings') updateTiltLive();
     }
@@ -5268,6 +5311,7 @@
       case 'car-champ': if (!owned(Core.MODELS[S.car].id)) S.car = carBefore; carFrom = 'title'; save(); toTitle(); openChamp(); break;
       case 'to-track': if (!menuOn) buildTrackScreen(); showScreen('track'); break;
       case 'to-upg': buildUpgScreen(); showScreen('upg'); break;
+      case 'car-garage': garageOpen(); break;   // (the car on the car screen tapped: the garage with it)
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
@@ -5519,7 +5563,7 @@
     window.addEventListener('pointerup', unlock, { passive: true });
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); fitSegs();
-      if (screen === 'car') for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel'));   // (turned: the chosen chips in the middle again)
+      if (screen === 'car') { for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel')); carTapLay(); }   // (turned: the chosen chips in the middle again, the car's tap over it)
       if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: its title and its place for the new size)
     });
     window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); if (swapOn) { swapFit(); swapTop(); } }, 250));
@@ -5611,6 +5655,7 @@
       ghHash();   // (opened with a friend's ghost's link)
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       quickGo();   // (opened with a quick entry's address: straight on a race)
+      garageBack();   // (back from the garage: its car screen)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
       window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
