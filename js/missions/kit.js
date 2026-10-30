@@ -11,6 +11,7 @@
      MisKit.aim(run, o): the finger's aim on the screen (drag anywhere over the game) and the GASI button held; a ring where the water goes;
        o.plane 'v' (a wall facing the camera through o.focus) or 'g' (the ground at o.focus's height). on(true) shows it, the driving
        controls hidden (o.drive: kept, the pad over the upper part of the screen only, GASI over the pedals: aimed while driving); point: the world point aimed at; spray: GASI held.
+     MisKit.look(run, point, k, dt): the camera behind the car turned toward point by k (eased; Render.cam.look), off at the run's end.
      MisKit.hold(car, on): the parked car held still (locked, no reverse) every step while the crew works; hold(car, false) lets it go.
    All of it is the run's own (run.add): out of the scene and freed when the run ends. Loadable without a browser (the tests: no THREE,
    the logic only). */
@@ -228,7 +229,7 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     A.step = () => {
       if (!A.shown) return;
       const C = Render.camera, f = A.o.focus; if (!C || !f) return;
-      if (!A.touched && !A.o.drive && A.toFocus) A.toFocus();   // (until the finger first moves it: on the fire, as the camera settles)
+      if (!A.touched && A.o.plane === 'v' && A.toFocus) A.toFocus();   // (until the finger first moves it: on the fire, as the camera settles)
       ndc.set(A.sx * 2 - 1, -(A.sy * 2 - 1)); ray.setFromCamera(ndc, C);
       if (A.o.plane === 'g') n.set(0, 1, 0); else { C.getWorldDirection(n); n.y = 0; n.normalize().negate(); }
       pl.setFromNormalAndCoplanarPoint(n, f);
@@ -284,9 +285,19 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     return H;
   }
 
+  // the camera behind the car turned toward a target (the user's choice for the crews' work: the view swings toward the fire or the wheel,
+  // a little further back): look(run, { x, z } or null, k 0..1) eased each step; off at the end of the run
+  function look(run, p, k, dt) {
+    if (typeof Render === 'undefined' || !Render.cam) return;
+    const C = Render.cam, L = C.look || (C.look = { x: 0, z: 0, k: 0 });
+    if (!run.lookOn) { run.lookOn = true; run.add(has3() ? new THREE.Group() : { userData: {}, traverse() {} }); run.props[run.props.length - 1].userData.misUndo = () => { C.look = null; }; }
+    if (p) { L.x = p.x; L.z = p.z; }
+    L.k += ((p ? k : 0) - L.k) * Math.min(1, (dt || 0.016) * 1.2);
+  }
+
   // the parked truck held still while the crew works (the run's step, after the race's)
   function hold(c, on) { if (on === false) { c.locked = false; return; } c.locked = true; c.vx = 0; c.vz = 0; c.w = 0; c.inThr = 0; c.inBrk = 0; }
 
-  return { truckModel, fireTruck, fire, jet, aim, hold, at, house, prism, merged, parts, LAD };
+  return { truckModel, fireTruck, fire, jet, aim, hold, look, at, house, prism, merged, parts, LAD };
 })();
 if (typeof module !== 'undefined') module.exports = MisKit;

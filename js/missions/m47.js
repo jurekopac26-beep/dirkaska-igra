@@ -12,7 +12,7 @@
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
   const K = { S0: 1700, LEN: 900, N: 30, D0: [14, 30], F0: [0.55, 1], CREEP: 0.035, BACK: 0.01, VMAX: 8.4, RANGE: 38, R: 7, HIT: 0.55, OUT: 0.05,
-    WATER: 1500, FLOW: 30, FILL: 160, POND: 520, PZONE: [-25, 25], HOUSE: 560, HOFF: 48, WIND: 35 };
+    WATER: 1500, FLOW: 30, FILL: 160, POND: 520, PZONE: [-25, 25], HOUSE: 560, HOFF: 48, WIND: 35, LOOK: 0.5 };
 
   Missions.add({
     id: '47', title: 'Gozdni požar', track: 'greatalpine', limit: 540, stars: [330, 420], K,
@@ -76,6 +76,9 @@
         for (const c of r.cells) if (c.f > 0 && Math.hypot(c.x - pt.x, c.z - pt.z) < K.R) { c.f -= K.HIT * dt; if (c.f < K.OUT) c.f = 0; }
       }
       // the ladder turned toward the water, a little up
+      // the camera turned toward the nearest burning cell within reach, the more the slower the truck
+      let nc = null, nd = K.RANGE; for (const c of r.cells) if (c.f > 0) { const q = Math.hypot(c.x - P.x, c.z - P.z); if (q < nd) { nd = q; nc = c; } }
+      KIT.look(r, nc, K.LOOK * Math.max(0, 1 - v / K.VMAX), dt);
       const tk = r.truck; if (pt) { tk.yaw += (tk.yawTo(pt.x, pt.z) - tk.yaw) * Math.min(1, dt * 3); tk.lift += (0.18 - tk.lift) * Math.min(1, dt); }
       if (r.jet) r.jet.set(noz, pt, spray);
       if (out === K.N && !r.end) { r.stage = 'done'; A.on(false); r.win(); }

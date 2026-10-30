@@ -11,7 +11,7 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  const K = { AT: 4450, OFF: 4.5, AHEAD: 15, ZONE: [-14, 10], VSTOP: 2.5, VHELP: 7, R: 10, HUB: 13, N: 16, FULL: [3, 4, 5, 7, 8, 9, 11, 12], PER: 2, CAP: 4,
+  const K = { AT: 4450, OFF: 4.5, AHEAD: 15, ZONE: [-14, 10], VSTOP: 2.5, VHELP: 7, R: 10, HUB: 13, N: 16, FULL: [3, 4, 5, 7, 8, 9, 11, 12], PER: 2, CAP: 4, LOOK: 0.55,
     LIFT: 1.4, VLIFT: 0.28, VEXT: 0.16, REACH: 1.5, HOLD: 1.2, SWAY: 0.9, DOWN: [0.12, 0.06] };
 
   // the wheel: in its own frame (x along the road, y up, z across), its cabins' doors in the world
@@ -75,6 +75,7 @@
       r.sW = sW; r.stage = 'drive'; r.saved = 0; r.inB = 0; r.hold = 0; r.sway = 0; r.ph = 0; r.wind = 1;
       const p = KIT.at(T, sW, side * (T.wS(sW) + K.OFF));
       r.W = wheel(r, { x: p.x, y: Math.max(p.y, p.ty) - 0.2, z: p.z, ry: p.ry });
+      r.wc = { x: p.x, z: p.z };
       for (const k of K.FULL) r.W.cab[k].n = K.PER;
       r.total = K.FULL.length * K.PER;
       r.truck = KIT.fireTruck(r); r.ui = controls(r);
@@ -117,6 +118,7 @@
         r.say(r.inB >= K.CAP || (r.inB > 0 && !this.target(r)) ? 'Koš je poln: spusti lestev in jo potegni nazaj, da ljudje izstopijo.' : r.dGoal != null && r.dGoal < K.REACH * 2.5 ? 'Počakaj, da se koš umiri ob kabini.' : 'Lestev dvigni in iztegni počasi: v vetru se koš ziblje.');
         r.ui.tags(r.W.cab, goal);
       }
+      KIT.look(r, r.stage === 'ladder' ? r.wc : null, K.LOOK, dt);   // (the camera behind the truck turned toward the wheel while the ladder works: the user's choice, 30. 10.)
       if (r.stage !== 'ladder') tk.step(dt, r.stage !== 'done'); else tk.step(dt, true);
       this.show(r);
     },

@@ -490,8 +490,8 @@
     'Reši ujete iz zadimljenega predora in pogasi ogenj.': 'Rescue the people trapped in the smoky tunnel and put out the fire.', 'V dimu sledi utripalkam ujetih avtov, ljudi naloži, nato pogasi ogenj.': 'In the smoke follow the hazard lights of the trapped cars, take the people on board, then put out the fire.',
     'VIDLJIVOST V DIMU': 'VISIBILITY IN THE SMOKE', 'ZRAK V JEKLENKAH': 'AIR IN THE TANKS', 'DO OGNJA': 'TO THE FIRE', 'še {0} min': '{0} min left', 'pogašen': 'out',
     'Zmanjkalo je zraka v jeklenkah.': 'The breathing air ran out.', 'Zapeljal si v ogenj.': 'You drove into the fire.', 'V predoru so ostali ljudje.': 'People were left in the tunnel.', 'Zapeljal si predaleč.': 'You drove too far.',
-    'Nalaganje ljudi.': 'Taking the people on board.', 'Do predora: {0} km': 'To the tunnel: {0} km', 'Ustavi pred gorečim tovornjakom in ga pogasi.': 'Stop in front of the burning lorry and put it out.', 'Ogenj je pogašen: pelji ven iz predora.': 'The fire is out: drive out of the tunnel.',
-    'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
+    'Nalaganje ljudi.': 'Taking the people on board.', 'Do predora: {0} km': 'To the tunnel: {0} km', 'Pelji do gorečega tovornjaka in ga pogasi.': 'Drive up to the burning lorry and put it out.', 'Ogenj je pogašen: pelji ven iz predora.': 'The fire is out: drive out of the tunnel.',
+    'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
