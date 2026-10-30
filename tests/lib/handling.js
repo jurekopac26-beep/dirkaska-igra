@@ -3,14 +3,13 @@
 // 0-100 / 100-0 / top speed). Used by cs-handling.test.js (the Circuit Superstars signatures) and fleet.test.js (every vehicle
 // inside its category's envelope).
 //   const H = require('./lib/handling.js')(C);   H.steady('rally', 100, 1.0).ay ...   H.surf(5) (makadam) ... H.surf(0)
-//   require('./lib/handling.js')(C, 'nova'): the same rig with the new physics (Car.stepNova)
 'use strict';
 
 const DT = 1 / 120, G = 9.81, D = 180 / Math.PI;
 const tauLaw = (v) => Math.min(0.6, Math.max(0.35, 0.45 * Math.pow(v / 27.78, 0.4)));   // drift attitude time constant vs speed (m/s)
 const mean = (a, i0, i1) => { let s = 0, n = 0; for (let i = Math.max(0, i0); i < Math.min(a.length, i1); i++) { s += a[i]; n++; } return n ? s / n : NaN; };
 
-module.exports = function handling(C, phys = 'cs') {
+module.exports = function handling(C) {
   // flat, endless test plane; its surface: asphalt, or planeSurf (2 grass, 5 makadam: Core's CSSURF index)
   let planeSurf = 0;
   const plane = { hasElev: false, def: {}, open: false,
@@ -22,7 +21,7 @@ module.exports = function handling(C, phys = 'cs') {
 
   function mkCar(id, o) {
     const M = modelOf(id);
-    const c = new C.Car(M, { isPlayer: true, phys, assist: o.assist != null ? o.assist : 2 });
+    const c = new C.Car(M, { isPlayer: true, phys: 'cs', assist: o.assist != null ? o.assist : 2 });
     c.place(0, 0, 0); c.locked = false; c.q = { i: 0, s: 0, d: 0, tx: 1, tz: 0, nx: 0, nz: 1 };
     c.digitalSteer = !!o.digital;
     const v = (o.v || 0) / 3.6; c.vx = v; c.vz = 0;
