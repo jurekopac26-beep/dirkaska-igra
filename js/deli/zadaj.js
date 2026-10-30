@@ -148,6 +148,13 @@
         const q = [a, b, c, d], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - a[0], d[1] - a[1], d[2] - a[2]], cx = u[1] * v[2] - u[2] * v[1], cy = u[2] * v[0] - u[0] * v[2];
         K.face(cx * nn[0] + cy * nn[1] < 0 ? q.reverse() : q, typeof col === 'function' ? col(i) : col); } };
     const lid = (col, e) => { e = e || 0.012; patch(0.03, 0.97, -W + e, W - e, col); };
+    // the lid in pieces (nt up, nz across), each its own colour: carbon's weave in squares, wood's planks across
+    const grid = (nt, nz, col) => { const e = 0.012; for (let i = 0; i < nt; i++) for (let j = 0; j < nz; j++)
+      patch(0.03 + 0.94 * i / nt, 0.03 + 0.94 * (i + 1) / nt, -W + e + (2 * W - 2 * e) * j / nz, -W + e + (2 * W - 2 * e) * (j + 1) / nz, col(i, j)); };
+    const carbon = (matte) => grid(5, 8, (i, j) => (i + j) % 2 ? (matte ? [0.05, 0.052, 0.056] : CF) : (matte ? [0.09, 0.093, 0.1] : [0.17, 0.175, 0.19]));
+    const iron = (col) => { lid(col); for (const t of [0.35, 0.68]) patch(t - 0.008, t + 0.008, -W + 0.02, W - 0.02, [col[0] * 0.7, col[1] * 0.7, col[2] * 0.7], 0.0055); };   // (bare iron, its welded seams across)
+    const wood = () => { const A = [0.58, 0.38, 0.2], B = [0.49, 0.31, 0.15], G = [0.22, 0.13, 0.07]; grid(6, 1, (i) => i % 2 ? A : B);
+      for (let i = 1; i < 6; i++) { const t = 0.03 + 0.94 * i / 6; patch(t - 0.005, t + 0.005, -W + 0.014, W - 0.014, G, 0.0055); } };   // (varnished planks across, dark gaps between them)
     const garnish = (col) => { if (m.garnish) { const G = m.garnish; K.rect(G[0], G[1], 0, G[2], G[3], col, { dir: '-x' }); } };
     // the window's frame (its sides and top, k wide), a lexan's border (wider, black, rivets on it)
     const frame = (col, k) => { if (!XG) return; patch(1.02, 1.98, -W + 0.004, -W + 0.004 + k, col, 0.005); patch(1.02, 1.98, W - 0.004 - k, W - 0.004, col, 0.005); patch(1.9, 1.98, -W + 0.004, W - 0.004, col, 0.005); };
@@ -162,17 +169,17 @@
     const lines = (col) => { for (const t of [0.3, 0.55, 0.8]) patch(t - 0.01, t + 0.01, -W + 0.03, W - 0.03, col, 0.0055); };   // (brushed: the grain's lines across)
     K.part(m.part || 'trunk', () => {
       switch (n) {
-        case 1: case 2: lid([0.24, 0.25, 0.27]); garnish(DK); if (n === 2) lip([0.24, 0.25, 0.27]); break;   // jekleni (s spojlerjem): bare primer
+        case 1: case 2: iron([0.45, 0.46, 0.48]); garnish(DK); if (n === 2) lip([0.45, 0.46, 0.48]); break;   // jekleni (s spojlerjem): bare iron
         case 3: lid(P); garnish(P); patch(0.62, 0.64, -W + 0.05, W - 0.05, CHR, 0.0055); break;           // lakirani: the garnish in paint, a chrome line
-        case 4: lid([0.86, 0.85, 0.79]); garnish(DK); break;                                                // steklena vlakna: the gelcoat
+        case 4: wood(); garnish(DK); break;                                                                 // lesen (želja uporabnika 30. 10. 2026)
         case 5: case 6: lid(AL); lines(AL2); garnish(DK); if (n === 6) lip(AL); break;                     // aluminijast (s spojlerjem)
         case 7: case 8: lid(AL2); garnish(AL2); for (const t of [0.08, 0.92]) for (let i = 0; i < 9; i++) { const p = pt(t, -W + 0.05 + i * (W - 0.05) / 4, 0.006); K.rect(p[0], p[1], p[2], 0.012, 0.012, DK, { dir: '-x' }); }
           if (n === 8) lip(AL2); break;                                                                      // lažji: bare, riveted
-        case 9: case 10: lid(weave); frame(weave, 0.04); garnish(DK); if (n === 10) lip(CF); break;      // karbonski (s spojlerjem)
-        case 11: lid(weave); frame(weave, 0.05); garnish(CF2); patch(0.6, 0.66, -W + 0.03, W - 0.03, P, 0.0055); break;   // dvostranski: a band in paint
-        case 12: lid([0.06, 0.062, 0.066]); frame([0.06, 0.062, 0.066], 0.05); garnish([0.06, 0.062, 0.066]); break;   // suhi: matte
-        case 13: case 14: lid(weave); frame(weave, 0.04); garnish(DK); pins(); if (n === 14) lip(CF, true); break;   // dirkalni (s spojlerjem)
-        case 15: case 16: lid(weave); frame(BLK, 0.075); rivets(AL); garnish(n === 16 ? CF2 : DK); pins(); if (n === 16) lip(CF, true); break;   // ultralahek, motošport: the lexan's border
+        case 9: case 10: carbon(); frame(weave, 0.04); garnish(DK); if (n === 10) lip(CF); break;      // karbonski (s spojlerjem)
+        case 11: carbon(); frame(weave, 0.05); garnish(CF2); patch(0.6, 0.66, -W + 0.03, W - 0.03, P, 0.0055); break;   // dvostranski: a band in paint
+        case 12: carbon(true); frame([0.06, 0.062, 0.066], 0.05); garnish([0.06, 0.062, 0.066]); break;   // suhi: matte
+        case 13: case 14: carbon(); frame(weave, 0.04); garnish(DK); pins(); if (n === 14) lip(CF, true); break;   // dirkalni (s spojlerjem)
+        case 15: case 16: carbon(); frame(BLK, 0.075); rivets(AL); garnish(n === 16 ? CF2 : DK); pins(); if (n === 16) lip(CF, true); break;   // ultralahek, motošport: the lexan's border
       }
     });
   }
