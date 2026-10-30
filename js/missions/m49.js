@@ -81,7 +81,7 @@
       this.show(r);
     },
     // the cabin the ladder goes for (target): the nearest one with people (to the basket)
-    target(r) { let best = null, bd = 1e9; const t = r.tip || r.truck.tip && r.truck.tip(); for (const c of r.W.cab) if (c.n > 0) { const d = t ? Math.hypot(c.x - t.x, c.y - t.y, c.z - t.z) : c.y; if (d < bd) { bd = d; best = c; } } return best; },
+    target(r) { let best = null, bd = 1e9; const t = r.tip || r.truck.tipAt(); for (const c of r.W.cab) if (c.n > 0) { const d = t ? Math.hypot(c.x - t.x, c.y - t.y, c.z - t.z) : c.y; if (d < bd) { bd = d; best = c; } } return best; },
     step(r, dt) {
       const P = r.P, T = r.race.track, tk = r.truck;
       let d = (P.q ? P.q.s : 0) - (r.sW - K.AHEAD); if (d > T.len / 2) d -= T.len; if (d < -T.len / 2) d += T.len;
@@ -106,7 +106,7 @@
         r.sway += (target - r.sway) * Math.min(1, dt * (target > r.sway ? 1.2 : 0.35));
         r.ph += dt * 1.6;
         tk.step(0, true);
-        const t0 = tk.tip(); r.tip = t0 ? { x: t0.x + Math.cos(P.h + 1.57) * Math.sin(r.ph) * r.sway, y: t0.y, z: t0.z + Math.sin(P.h + 1.57) * Math.sin(r.ph) * r.sway } : (r.tipT || null);
+        const t0 = 'tipT' in r ? null : tk.tipAt(); r.tip = t0 ? { x: t0.x + Math.cos(P.h + 1.57) * Math.sin(r.ph) * r.sway, y: t0.y, z: t0.z + Math.sin(P.h + 1.57) * Math.sin(r.ph) * r.sway } : (r.tipT || null);
         if (r.tip && goal) {
           const dd = Math.hypot(goal.x - r.tip.x, goal.y - r.tip.y, goal.z - r.tip.z); r.dGoal = dd;
           if (dd < K.REACH) { r.hold += dt; if (r.hold >= K.HOLD) { const n = Math.min(goal.n, K.CAP - r.inB); goal.n -= n; r.inB += n; r.hold = 0; } } else r.hold = 0;
