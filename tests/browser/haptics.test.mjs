@@ -102,7 +102,7 @@ try {
     sw(1); const lv1 = lv(); g.sim(0.5, true);
     const basic = { handBack: got(() => Input.buzz('handBack')), go: got(() => Input.buzz('go')), pulse: got(() => Input.vibrate(90)), jackF: got(() => Input.buzz('jackF')), gunOn: got(() => Input.buzz('gunOn')), pitAP: got(() => Input.buzz('pitAP')), rattle: got(() => Input.buzz('rattle')) };
     sw(2); const lv2 = lv(); g.sim(0.5, true);
-    const all = { jackF: got(() => Input.buzz('jackF')), pitAP: got(() => Input.buzz('pitAP')), handBack: got(() => Input.buzz('handBack')) };
+    const all = { jackF: got(() => Input.buzz('jackF')), pitAP: got(() => Input.buzz('pitAP')), handBack: got(() => Input.buzz('handBack')), list: got(() => Input.vibrate([150.4, 100, 150, 100.6, 150])) };   // (list: the wheel swap's warning, game.js SWAP_BUZZ: a list of pulses, not one)
     sw(1);   // (the second stop: with Osnovno)
     return { played: n1 - n0, off, lv0, none, lv1, basic, lv2, all };
   });
@@ -111,6 +111,8 @@ try {
     set.played === 1 && set.off.length === 1 && set.off[0][0] === 0 && set.lv0.join() === '0,0,0' && !set.none.length, JSON.stringify({ played: set.played, off: set.off, lv0: set.lv0, none: set.none }));
   T.check('Vibracija · Osnovno (1, stored so): VOZIŠ TI!, the release and the old pulses felt; the crew\'s work, the way in, the rattle not',
     set.lv1.join() === '1,1,1' && ['handBack', 'go', 'pulse'].every(k => has(set.basic[k], k)) && ['jackF', 'gunOn', 'pitAP', 'rattle'].every(k => !has(set.basic[k], k)), JSON.stringify({ lv1: set.lv1, basic: set.basic }));
+  T.check('a list of pulses (the wheel swap\'s warning: on, off, on …) goes to navigator.vibrate whole, rounded, not as [NaN]',
+    set.all.list.length === 1 && JSON.stringify(set.all.list[0]) === '[150,100,150,101,150]', JSON.stringify(set.all.list));
   T.check('Vibracija · Vse (2): all of them again', set.lv2.join() === '2,2,2' && ['jackF', 'pitAP', 'handBack'].every(k => has(set.all[k], k)), JSON.stringify({ lv2: set.lv2, all: set.all }));
   // a second stop (the end of the second lap) with Osnovno: only the basic ones, each at its moment
   const B = await page.evaluate(() => window.__stop(false)), bn = B.log.map(e => e[0]).filter(k => k !== 'pulse'), LB = look(B);

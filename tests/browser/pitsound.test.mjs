@@ -61,7 +61,7 @@ try {
       const g = window.__game, P = g.race.player, Tk = g.race.track, L0 = Sfx.levels().pit, n0 = { log: L0.log.length };
       for (const k of ['gun', 'jackUp', 'jackDown', 'drop', 'release', 'hoseOn', 'hoseOff']) n0[k] = L0[k];
       g.S.sound = sound ? 1 : 0; Sfx.setEnabled(sound); Sfx.setRunning(true);
-      const s = { lane: [], laneSlow: 0, repair: [], track: [], after: [], hose: [], hoseAfter: [], fuel0: null, pitDur: 0, rep0: P.repairN || 0, paused: null, cam: [], lift: [0, 0] };
+      const s = { lane: [], laneSlow: 0, repair: [], track: [], after: [], hose: [], hoseAfter: [], fuel0: null, pitDur: 0, rep0: P.repairN || 0, paused: null, cam: [], lift: [0, 0], vh: false, vl: false, off: null };
       let near = false, done = false, t = 0;
       for (let k = 0; k < 6000 && !done; k++) {
         const pz = Tk.pitAt(P.q.s);
@@ -74,13 +74,15 @@ try {
         const L = Sfx.levels().pit, row = [+L.lim.toFixed(4), +(P.speed * 3.6).toFixed(1), P.pitState || '-'];
         if (P.pitAP && P.inPit && P.pitState !== 'repair' && P.speed > 0.95 * 22.2) s.lane.push(row);
         else if (P.pitAP && P.inPit && P.pitState !== 'repair' && P.speed < 8) s.laneSlow = Math.max(s.laneSlow, L.lim);
-        if (P.pitState === 'repair') { s.repair.push(L.lim); s.hose.push([+(P.pitT).toFixed(2), +L.hose.toFixed(3)]); }
+        if (P.pitState === 'repair') { s.repair.push(L.lim); s.hose.push([+(P.pitT).toFixed(2), +L.hose.toFixed(3)]); if (L.voices[0]) s.vh = true; }
+        if (P.pitAP && P.inPit && P.pitState !== 'repair' && P.speed > 0.95 * 22.2 && L.voices[1]) s.vl = true;
         if (P.pitState === 'done') s.hoseAfter.push(L.hose);
         if (!P.pitAP && (P.repairN || 0) > s.rep0) s.after.push(L.lim);
         if (P.pitState === 'repair' && sound) { const c = Render.camera.position; s.cam.push(+Math.hypot(c.x - P.x, c.z - P.z).toFixed(1)); }
         { const C = Render.crew; if (C && C.mode === 'work') { s.lift[0] = Math.max(s.lift[0], C.liftF); s.lift[1] = Math.max(s.lift[1], C.liftR); } }   // (how far the crew lifted each end: what the jacks' sounds follow)
         if (P.pitAP && P.inPit && P.pitDone && s.paused == null && P.speed > 0.95 * 22.2) {   // (paused, as the game does when the page is hidden: the race's sounds off)
-          Sfx.setRunning(false); Sfx.update(g.race, P, null, 0); s.paused = Sfx.levels().pit.lim; Sfx.setRunning(true); }
+          Sfx.setRunning(false); Sfx.update(g.race, P, null, 0); s.paused = Sfx.levels().pit.lim; Sfx.setRunning(true);
+          const vb = Sfx.levels().pit.voices; Sfx.setEnabled(false); const va = Sfx.levels().pit.voices; Sfx.setEnabled(sound); s.off = { before: vb, after: va }; }   // (the sound switched off: the loops' oscillators stopped, not left running muted)
       }
       P.pitWant = false; Render.scene.visible = true;
       const L1 = Sfx.levels().pit, d = {}; for (const k of Object.keys(n0)) if (k !== 'log') d[k] = L1[k] - n0[k];
@@ -96,6 +98,13 @@ try {
     T.check('the fuel hose: on at the stop\'s start (its clunk), the fuel heard till the tank is full, off (its clunk); quiet after the stop',
       A.d.hoseOn === 1 && A.d.hoseOff === 1 && hoseIn.length > 5 && hoseIn.every(([, v]) => v > 0.05) && hoseOut.every(([, v]) => v === 0) && s.hoseAfter.every(v => v === 0),
       JSON.stringify({ on: A.d.hoseOn, off: A.d.hoseOff, fill: +fT.toFixed(2), pitDur: s.pitDur, hose: s.hose.filter((h, i) => i % 6 === 0) }));
+    // the loops' oscillators: made at their first use, stopped when the sound is switched off and after 1.5 s of silence (not left running muted
+    // for the rest of the session); the next stop makes them again (the stop with the sound off below: nothing, as it has no use for them)
+    await page.evaluate(() => { const g = window.__game; Sfx.update(g.race, g.race.player, null, 0); });
+    await page.waitForTimeout(1900);
+    const VZ = await page.evaluate(() => { const g = window.__game; Sfx.update(g.race, g.race.player, null, 0); return Sfx.levels().pit.voices; });
+    T.check('the hose\'s and the limiter\'s loops run while in use, are stopped with the sound switched off and after 1.5 s of silence',
+      s.vh && s.vl && s.off && s.off.before[1] === true && s.off.after.every(v => v === false) && VZ.every(v => v === false), JSON.stringify({ hose: s.vh, lim: s.vl, off: s.off, later: VZ }));
     const offs = log.filter(e => e[0] === 'gunOff'), ons = log.filter(e => e[0] === 'gunOn'), wheels = (L) => L.map(e => e[1]).sort().join('');
     T.check('the wheel guns: each wheel\'s nut off, then on (eight bursts), all in the stop (off in its first quarter, on round its middle)',
       A.d.gun === 8 && offs.length === 4 && ons.length === 4 && wheels(offs) === '0123' && wheels(ons) === '0123' && Math.max(...idx(e => e[0] === 'gunOff')) < Math.min(...idx(e => e[0] === 'gunOn')) &&

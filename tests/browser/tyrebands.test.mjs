@@ -117,6 +117,32 @@ try {
   T.check('out of the box after one stop: the car on the hards, all four wheels in their white band (its body built afresh), none in the soft\'s; the crew\'s old set still red',
     b.rep === 1 && b.k === 'dry' && b.c === 'H' && b.s.band === H && b.s.body === 144 && b.s.wheels.every(n => n === 144) && b.soft === 0 && b.softW.every(n => n === 0) && b.old && b.nw, JSON.stringify(b));
   T.check('the stop seen from the camera behind the car (in the box, the new set on, out of the box)', shots.box && shots.on && shots.out, JSON.stringify(shots));
+  // ---- a second stop without new tyres (the player's own choice, pitPlan ty 'keep': the tyre men stay at the garage): the car keeps its set, so
+  // its wheels keep the band they have (the hards' white); not the soft's, the compound the next stop would otherwise fit (nextBand) ----
+  let kp = null, kw = null;
+  for (let k = 0; k < 1500 && !(kp && kp.done); k++) {
+    kp = await page.evaluate(([H, S]) => {
+      const g = window.__game, P = g.race.player, Tk = g.race.track, tb = window.__tb, o = { done: false, work: null, rep: P.repairN || 0, c: P.ty.c };
+      Render.scene.visible = false;
+      const near = P.inPit || Tk.pitAt(P.q.s), n = near ? 20 : 4, dt = near ? 0.05 : 0.5;
+      for (let i = 0; i < n; i++) {
+        g.sim(dt, true);
+        if (P.repairN === 1 && !P.inPit && !Tk.pitAt(P.q.s) && !window.__k2) { P.pitWant = true; P.pitCmp = 'S'; }   // (the next stop's compound the soft: what a stop without new tyres must not show)
+        if (P.repairN === 1 && P.inPit) window.__k2 = 1;
+        if (P.repairN === 1 && P.pitState === 'repair') P.pitPlan = { ty: 'keep', fuel: P.fuel, fix: 'all' };   // (the choice at the box, as the stop's panel gives it, before the crew's frame of the stop's start)
+        Render.frame(dt, 1, P, 'chase', { noFx: true });
+        const u = Core.repairU(P), c = Render.crew, v = Render.viewOf(P);
+        if (P.pitState === 'repair' && c.mode === 'work' && u > Core.REPAIR.wheel + 0.1 && !o.work && !window.__k2w) { window.__k2w = 1;
+          o.work = { u: +u.toFixed(2), keep: c.keepTy, ty: P.ty.c, frontH: v.wf.map(w => tb.count(w.geometry, H)), frontS: v.wf.map(w => tb.count(w.geometry, S)), bodyS: tb.count(v.body.geometry, S, (x, y, z) => Math.abs(z) > P.m.wid / 2 + 0.018 && y < 2 * P.m.rw + 0.05) }; }
+        if (P.repairN === 2 && !P.inPit) { o.done = true; break; }
+      }
+      Render.scene.visible = true; o.rep = P.repairN || 0; o.c = P.ty.c;
+      return o;
+    }, [H, S]);
+    if (kp.work) kw = kp.work;
+  }
+  T.check('a stop without new tyres (pitPlan keep): the tyre men stay at the garage (keepTy), the car keeps its set and its wheels the band they have (the hards\' white), not the soft\'s the next stop would fit',
+    !!kw && kw.keep === true && kw.ty === 'H' && kp.c === 'H' && kp.rep === 2 && kw.frontH.length === 2 && kw.frontH.every(n => n === 144) && kw.frontS.every(n => n === 0) && kw.bodyS === 0, JSON.stringify({ kw, c: kp.c, rep: kp.rep }));
   // ---- a car without tyres (no compounds): no band, the ring's 144 vertices fewer in its body and in each front wheel, the same meshes ----
   const n = await page.evaluate(() => {
     const g = window.__game, R = g.race, tb = window.__tb, A = R.cars.find(c => !c.isPlayer && !c.inPit), col = Core.TYRE_CMP[A.ty.c].col, s0 = tb.stock(A, col);

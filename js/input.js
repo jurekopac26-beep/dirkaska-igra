@@ -302,7 +302,7 @@ const Input = (function () {
     const H = Core.HAPTIC[k]; if (!vib || !(H || p) || (H && H.lv > vib)) return;
     hapGo(hq.buzz(k, p || H.p, pri || H.pri));
   }
-  function vibrate(ms) { buzz('pulse', [Math.round(ms)], 3); }
+  function vibrate(ms) { buzz('pulse', Array.isArray(ms) ? ms.map(Math.round) : [Math.round(ms)], 3); }   // (a number: one pulse; a list (game.js SWAP_BUZZ: on, off, on …): as it is. 'pulse' is no HAPTIC entry: p and pri are given)
   function buzzStep(dt) { hapGo(hq.step(dt)); }
   function buzzOff() { if (hq.off() && navigator.vibrate) { try { navigator.vibrate(0); } catch (_) { } } }
 

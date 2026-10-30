@@ -1306,7 +1306,7 @@ const Sfx = (function () {
     if (ctx.state !== 'running') { try { ctx.resume(); } catch (_) { } }
     idleKick();
   }
-  function setEnabled(v) { enabled = !!v; if (master) master.gain.setTargetAtTime(enabled ? volume : 0, ctx.currentTime, 0.05); idleKick(); }
+  function setEnabled(v) { enabled = !!v; if (master) master.gain.setTargetAtTime(enabled ? volume : 0, ctx.currentTime, 0.05); if (!enabled) pitFreeAll(); idleKick(); }
   function setRunning(v) { // race sounds audible?
     running = !!v;
     if (bus) bus.gain.setTargetAtTime(running ? 1 : 0, ctx.currentTime, running ? 0.08 : 0.03);
@@ -1675,7 +1675,7 @@ const Sfx = (function () {
     s.connect(lp); lp.connect(gl); gl.connect(out); s.connect(bp); bp.connect(gb); gb.connect(out);
     let pn = null; if (ac.createStereoPanner) { pn = ac.createStereoPanner(); out.connect(pn); pn.connect(dst); } else out.connect(dst);
     s.start(0, Math.random() * 0.5); l1.start(); l2.start();
-    return { out, pn };
+    return { out, pn, src: [s, l1, l2] };   // (src: what runs till it is stopped, pitFree)
   }
   // the pit-lane limiter (a loop, at its level while it holds the car): the engine at the limit, its ignition cut ~12 times a second (a
   // buzz at its firing, chopped)
@@ -1688,8 +1688,18 @@ const Sfx = (function () {
     const out = ac.createGain(); out.gain.value = 0;
     o.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(vca); vca.connect(out); out.connect(dst);
     o.start(); o2.start(); ch.start();
-    return { o, o2, out };
+    return { o, o2, out, src: [o, o2, ch] };
   }
+  // the pits' loops (the hose, the limiter) let go: the level down, then their sources stopped after the fade (a stop at once would click)
+  // and the nodes disconnected as the first ends; made again on the next use (pitStep). Without it their oscillators run for the rest of
+  // the session, muted, once a stop has used them
+  function pitFree(v) {
+    if (!v || !ctx) return;
+    set(v.out.gain, 0, 0.02);
+    const t = ctx.currentTime + 0.25; v.src[0].onended = () => { try { v.out.disconnect(); if (v.pn) v.pn.disconnect(); } catch (_) { } };
+    for (const n of v.src) { try { n.stop(t); } catch (_) { } }
+  }
+  function pitFreeAll() { pitFree(hoseV); pitFree(limV); hoseV = limV = null; }
   function pitDst(pan) { if (!ctx.createStereoPanner) return bus; const p = ctx.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(bus); return p; }   // (a one-shot's side)
   // per frame (update): the player's stop as it is now against last frame
   function pitStep(race, P, cam) {
@@ -1727,11 +1737,13 @@ const Sfx = (function () {
     if (PT.st === 'repair' && st === 'done' && on) { const [pn, a] = at(Wp(D ? D.nose + 1 : 0, 0)); pitWhistle(ctx, pitDst(pn), now + 0.32, PIT_LEV.release * a); log('release', 0); }
     // the loops: the hose while the tank fills, the limiter while the autopilot holds the car at the limit in the lane
     PT.hoseL = PT.hose && on ? PIT_LEV.hose * at(Wp(0, 0))[1] : 0;
-    if (PT.hoseL && !hoseV) hoseV = hoseVoice(ctx, bus);
-    if (hoseV) { set(hoseV.out.gain, PT.hoseL, 0.06); if (hoseV.pn && PT.hoseL) set(hoseV.pn.pan, at(Wp(0, 0))[0], 0.1); }
+    if (PT.hoseL && !hoseV) { hoseV = hoseVoice(ctx, bus); hoseV.idle = -1; }
+    if (hoseV) { set(hoseV.out.gain, PT.hoseL, 0.06); if (hoseV.pn && PT.hoseL) set(hoseV.pn.pan, at(Wp(0, 0))[0], 0.1);
+      hoseV.idle = PT.hoseL ? -1 : hoseV.idle >= 0 ? hoseV.idle : now; if (hoseV.idle >= 0 && now - hoseV.idle > 1.5) { pitFree(hoseV); hoseV = null; } }   // (silent for 1.5 s: let go)
     PT.lim = on && P.pitAP && P.inPit && st !== 'repair' ? PIT_LEV.lim * Core.sstep(0.6, 0.92, (P.speed || 0) / PIT_V) : 0;
-    if (PT.lim && !limV) limV = limVoice(ctx, bus);
-    if (limV) { const f = clamp((P.rpm || 0) / 30, 50, 200); set(limV.out.gain, PT.lim, 0.08); set(limV.o.frequency, f, 0.05); set(limV.o2.frequency, f * 1.008, 0.05); }   // (the buzz at a four's firing: rpm / 30)
+    if (PT.lim && !limV) { limV = limVoice(ctx, bus); limV.idle = -1; }
+    if (limV) { const f = clamp((P.rpm || 0) / 30, 50, 200); set(limV.out.gain, PT.lim, 0.08); set(limV.o.frequency, f, 0.05); set(limV.o2.frequency, f * 1.008, 0.05);
+      limV.idle = PT.lim ? -1 : limV.idle >= 0 ? limV.idle : now; if (limV.idle >= 0 && now - limV.idle > 1.5) { pitFree(limV); limV = null; } }   // (the buzz at a four's firing: rpm / 30)
     PT.st = st;
   }
   // (tests: a pit sound rendered offline at its level by the car: gunOff, gunOn, guns (the four off together, as at a stop), jackUp,
@@ -1754,7 +1766,7 @@ const Sfx = (function () {
     if (atmo) atmoOff(0.02);
     for (const V of [kitPl, ...kitAI]) if (V) kitOff(V, 0.02);   // (the fleet's: the engines with a preset, the fires and the hubs)
     for (const v of [...dFireV, ...dScrV]) if (v) { set(v.g.gain, 0, 0.02); if (v.amg) set(v.amg.gain, 0, 0.02); v.car = null; }
-    for (const v of [hoseV, limV]) if (v) set(v.out.gain, 0, 0.02);   // (the pits' loops)
+    pitFreeAll();   // (the pits' loops: stopped, not left running muted)
     if (duck) { duckOn = false; set(duck.gain, 1, 0.05); }
   }
 
@@ -1762,7 +1774,7 @@ const Sfx = (function () {
     engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
       : eng ? { kind: eng.kind, preset: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value, fs: [eng.o, eng.pm, eng.tw].map(o => o.frequency.value).concat(eng.lp.frequency.value, eng.nb.frequency.value) } : null,   // Pikes Peak's sounds, the player's engine note: preset its
     ai: aiSeen.map(a => a && { id: a[0], preset: a[1], dop: +a[2].toFixed(3), f: a[3] == null ? null : +a[3].toFixed(2) }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // engine type (ENG) / model.sndP.kind, a kit
-    pit: Object.assign({}, pitN, { log: pitN.log.slice(), hose: +PT.hoseL.toFixed(4), lim: +PT.lim.toFixed(4) }),
+    pit: Object.assign({}, pitN, { log: pitN.log.slice(), hose: +PT.hoseL.toFixed(4), lim: +PT.lim.toFixed(4), voices: [!!hoseV, !!limV] }),   // (voices: the hose's and the limiter's loops running)
     prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the three nearest rivals' (their Doppler factor; a preset's firing pitch, f); dest: what broke, heard; pit: the pit stop's sounds played (in order: [what, wheel or end, pitState, the stop's progress]) and the loops' levels; prep: what is still to be made ahead)
   // (tests: the engines as they sound now; a rival in a registered vehicle: its preset)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,

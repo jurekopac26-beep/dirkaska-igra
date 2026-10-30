@@ -148,6 +148,15 @@ try {
   T.check('paused, a jump to the middle of the repair: the crew at work at once, every man in his place, the old wheels in hand and the new ones on, the car on the jacks',
     !j1.play && j1.mode === 'work' && j1.off < 0.01 && j1.lift > 0.05 && j1.tyres === 'hidden,hidden,hidden,hidden,hands,hands,hands,hands', JSON.stringify(Object.assign({}, j1, { xs: undefined })));
   T.check('nothing moves while it stands', j2.xs === j1.xs && j2.lift === j1.lift && j2.tyres === j1.tyres, j2.xs === j1.xs ? '' : 'moved');
+  // the crew goes by the recorded stop, not by the car's plan as it is now: the stop had new tyres; with the plan 'keep' set on the car after
+  // the race (a later stop, no new tyres) the replay still shows the tyre men at work, jumped to the stop from before the way in (the crew
+  // at home: the stop's tyres taken up afresh); every recorded entry carries whether the stop was one without new tyres (recPit: keep)
+  const kept = await page.evaluate(() => window.__game.rpPit.log.map(e => e.keep));
+  await page.evaluate((t) => { window.__game.race.player.pitPlan = { ty: 'keep' }; window.__game.rpSeek(t); }, live.ap - 4); await frames(3);
+  await page.evaluate((t) => window.__game.rpSeek(t), live.rep + live.dur * 0.5); await frames(3);
+  const j3 = await crewNow(); await page.evaluate(() => { window.__game.race.player.pitPlan = null; });
+  T.check('the replay\'s crew goes by the recorded stop (new tyres: the tyre men at work, the old wheels in hand) whatever plan the car has now; every recorded entry says whether the stop kept its tyres',
+    kept.length > 3 && kept.every(k => k === false) && j3.mode === 'work' && j3.tyres === j1.tyres && j3.off < 0.01, JSON.stringify({ kept, j3: Object.assign({}, j3, { xs: undefined }) }));
   // the film camera there at once too; while it stands a tap on the camera (TV, then behind the car again) keeps the same picture, another
   // car has none of it, back on the player's it is there again at once
   const camNow = () => page.evaluate(() => { const g = window.__game, cm = Render.camera, P = g.race.player; return { w: +Render.pitCam.toFixed(3), d: +Math.hypot(cm.position.x - P.x, cm.position.z - P.z).toFixed(2), p: [cm.position.x, cm.position.y, cm.position.z], cam: g.replay.cam, k: g.replay.k, play: g.replay.play }; });

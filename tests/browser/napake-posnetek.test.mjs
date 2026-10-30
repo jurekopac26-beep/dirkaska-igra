@@ -73,6 +73,8 @@ try {
   T.check('Shrani greyed with no race; Odpri …: the replay of the file on Bathurst (the panel closed, its controls), the same samples, the same cars and player, the flag on the timeline (Zastavice (1))',
     sb && o1.sum.h === r0.sum.h && o1.sum.n === r0.sum.n && JSON.stringify(o1.cars) === JSON.stringify(r0.cars) && o1.pl === r0.pl && !o1.set && o1.ui && o1.screen === 'none' && o1.flags === 'Zastavice (1)' && o1.nflag === 1 && /^Ti · /.test(o1.info),
     JSON.stringify(Object.assign({}, o1, { cars: o1.cars.length, sum0: r0.sum })));
+  const rp1 = await P.evaluate(() => { const r = window.__game.rpPit; return r && { n: r.log.length, cur: r.cur }; });
+  T.check('a replay opened from a file has no pit log (the file holds none): __game.rpPit an empty list, none posed, no error', !!rp1 && rp1.n === 0 && rp1.cur === null, JSON.stringify(rp1));
   await P.waitForFunction(() => Napake.iskanje.done, null, { timeout: 60000, polling: 200 });
   const rep = await P.evaluate(() => Napake.porocilo().split('\n'));
   T.check('the tool on it: the scan done; the report\'s first line of the file (proga=bathurst, naprava of the file, posnetek=<name>), the race\'s flag in it (⚑1 … K1)',

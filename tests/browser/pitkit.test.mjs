@@ -34,6 +34,7 @@ try {
     res.push(await page.evaluate(() => {
       const g = window.__game; g.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none';
       const race = g.race, P = race.player, Tk = race.track, c = Render.crew, out = { id: Tk.def.id, bad: [] }; if (!c || !c.roles || !c.gar) return Object.assign(out, { bad: ['no garage'] });
+      { let n = 0; Render.scene.traverse(o => { if (o.name === 'pitExit') n++; }); out.exits = n; }   // (the exit's post of the track before is gone: setupCrew takes the crew's exit group out with the crew's)
       const bx = c.roles.bx, G = bx.gar || {}, X = c.gar, m4 = new THREE.Matrix4(), v = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), cl = new THREE.Color();
       const PAINT = new THREE.Color(P.color).getHex(), loc = (x, z) => ({ a: (x - bx.ox) * bx.tx + (z - bx.oz) * bx.tz, w: (x - bx.ox) * bx.nx + (z - bx.oz) * bx.nz });   // (along the box, out from the centre line)
       // the door
@@ -87,6 +88,7 @@ try {
     }));
   }
   T.check('13 circuits with pits', ids.length === 13 && res.length === 13, ids.join(', '));
+  T.check('one exit post in the scene on each circuit, after the ones before it (a new track takes the old exit\'s light and marshal out: setupCrew)', res.every(r => r.exits === 1), res.map(r => r.id + ' ' + r.exits).join(', '));
   T.check('44 the garage door: a closed front (gar.wall at the front) rolls, an open one between pillars gets a light grey roller door, none on the open tents and shed; down while no stop is under way',
     res.every(r => !r.bad.some(b => /^door/.test(b))), res.map(r => `${r.id} ${r.door || '-'}${r.doorH ? ' ' + r.doorH + ' m' : ''} ${r.bad.filter(b => /^door/.test(b)).join('; ')}`).join(', '));
   T.check('95C the flags: at every garage by its left pillar, in its crew\'s colour, its driver\'s three letters (the player\'s ANA: Ana Lipnik, the profile name\'s first three, 5a), the cloth out towards the lane facing along it, ~2.6 m tall', res.every(r => !r.bad.some(b => /^(flag|no flag)/.test(b))), res.map(r => `${r.id} ${r.flag} ${r.bad.filter(b => /flag/.test(b)).slice(0, 2).join('; ')}`).join(', '));

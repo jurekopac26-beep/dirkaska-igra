@@ -3567,6 +3567,12 @@ const Core = (function () {
   function distFrom(BD, d) { let lo = 0, hi = BD.length; while (lo < hi) { const m = (lo + hi) >> 1; if (BD[m].dist < d) lo = m + 1; else hi = m; } return lo; }
   // how far out to its side a car reaches as a box turned to the road (Trki: ravni odbijači, the AI's room alongside)
   const aiReach = (o) => { const st = Math.abs(Math.cos(o.h) * o.q.tz - Math.sin(o.h) * o.q.tx); return (o.m.len * st + o.m.wid * Math.sqrt(Math.max(0, 1 - st * st))) * 0.5; };
+  // a ghost off the lane onto the apron (its offset past the lane's edge, pz.lout) and on its way into a box that is not c's: the car behind it in the lane
+  // is not held by it (gT in aiControl)
+  function apronBound(o, c, race, T) {
+    const pa = T.pitAt(o.q.s); if (!pa || !(o.q.d * pa.sd > pa.lout) || o.pitDone) return false;
+    const bo = race._boxD(o); return bo != null && bo !== race._boxD(c);
+  }
   function aiControl(c, race, dt) { const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
   function aiDrive(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
@@ -3705,7 +3711,7 @@ const Core = (function () {
           if (xb != null && xb > -28 && xb < -2 && o.speed > 0.5 && g > -30 && g < 40 && o.q.d * pz.sd < pz.lout + o.m.wid * 0.5 + 0.3) { vT = 0; break; }   // (one turning into its box just ahead: until it is off the lane onto the apron, not while it creeps the last metres into its box)
           if (o.speed < 4 || (xb != null && xb > -6)) continue;
           if (g > -8 && g < 30 && Math.abs(o.q.d * pz.sd - pz.o) < 2.6) { vT = 0; break; } } } } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
-    const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiThreat.vl < 1 && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5);   // (a ghost on the pit road already level with a car standing at its box: on through it, not stopped in it)
+    const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5 && (c.aiThreat.vl < 1 || (c.aiThreat.vl < 4 && apronBound(c.aiThreat, c, race, T))));   // (a ghost on the pit road already level with a car standing at its box, or one off the lane onto the apron on its way into another box, at walking pace: on through it, not stopped in it)
     { const o = c.aiThreat, bx = TX.cBox === 1, f0 = txv('aiFol', -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
@@ -5566,7 +5572,7 @@ const Core = (function () {
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
         const K = W.tyres && c.ty ? tyreK(c.ty) : null;   // (a compound: its grip, and what wear takes from it)
         const wl = W.tyres && c.ty && !c.kt ? Math.min(1, c.ty.wear) : 0;   // (the compound's own loss up to a wear of 1; past 0.8 the cliff on top)
-        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * tyreCliff4(c.ty) : 1 - (1 - WET) * w) * this.cold.gk; }   // (each tyre's own cliff: tyreCliff4)
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w) * this.cold.gk; }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
       if (this.mb) this._marbles(dt);
@@ -6165,7 +6171,8 @@ const Core = (function () {
       // (a safe release: an AI car standing at its box after the stop is held there while a car comes down the lane beside it or less than
       // ~2.5 s behind it, else it would pull out into that one, two ghosts in each other; the busier lane of the rivals in for repairs)
       else if (c.pitDone && !c.isPlayer && bd != null && sp < 2 && Math.abs(T.boxX(q.s, bd)) < 5) {
-        for (const o of this.cars) { const g = c.dist - o.dist; if (o !== c && o.inPit && o.speed > 2 && g > -(o.m.len + c.m.len) * 0.5 && g < 8 + o.speed * 2.5) { c.vx = c.vz = 0; c.w = 0; c.stuckT = 0; return; } }
+        for (const o of this.cars) { if (o === c || !o.inPit || !(o.speed > 2)) continue; let g = c.dist - o.dist; g = ((g % T.len) + T.len) % T.len; if (g > T.len / 2) g -= T.len;   // (on the same lap: two in the pits, whatever lap each is on, as the pit road's gaps above)
+          if (g > -(o.m.len + c.m.len) * 0.5 && g < 8 + o.speed * 2.5) { c.vx = c.vz = 0; c.w = 0; c.stuckT = 0; return; } }
       }
       if (sp > vmax) { const k = Math.max(vmax / sp, 1 - 4 * dt); c.vx *= k; c.vz *= k; if (vmax < 1) c.w *= k; }   // the limiter (and the stop) take over smoothly
     }

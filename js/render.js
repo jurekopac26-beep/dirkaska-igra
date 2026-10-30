@@ -5611,7 +5611,7 @@ const Render = (function () {
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
     if (mode === 'home' && c.gar && c.gar.stack) crewStack(c.M, c.gar.stack, Math.min(CR_STACK, CR_STACK0 + 4 * (P.ty && P.ty.n || 0)));   // (P3: the used tyres of every stop with new ones on the stack, the crew back in)
     if (mode === 'clear') c.clearT += dt;
-    if (mode !== 'clear') c.keepTy = mode === 'home' ? false : mode === 'out' || prev !== 'work' ? Core.keepTyres(P, P.pitPlan) : c.keepTy;   // (the player's stop without new tyres, game.js: the tyre men and the jacks stay at the garage; as it was when the work began)
+    if (mode !== 'clear') c.keepTy = mode === 'home' ? false : mode === 'out' || prev !== 'work' ? (P.rpPit ? !!P.rpPit.keepTy : Core.keepTyres(P, P.pitPlan)) : c.keepTy;   // (the player's stop without new tyres, game.js: the tyre men and the jacks stay at the garage; as it was when the work began; in the replay the recording's: P.rpPit.keepTy, game.js recPit)
     const keep = c.keepTy;
     const F = c.frame, u = mode === 'work' ? clamp(ps.pitT / Math.max(0.1, ps.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
@@ -5717,7 +5717,7 @@ const Render = (function () {
       for (let k = 0; k < 4; k++) { M.tyre.setColorAt(k, nb != null ? _pc.setRGB(...colArr(nb)) : CR_NEW); M.tyre.setColorAt(4 + k, ob != null ? _pc.setRGB(...colArr(ob)) : CR_OLD); }   // (the wheels' own shades: their vertex colours)
       M.tyre.instanceColor.needsUpdate = true; }
     const v = views.find(v => v.car === P); if (!v || !v.bandGeo) return;
-    const on = mode === 'work' && u >= Core.REPAIR.wheel ? nb : (P.repairN || 0) !== v.repairN ? tyreBand(P) : v.band;   // (the stop just over, the car not yet built afresh: its new tyres)
+    const on = mode === 'work' && u >= Core.REPAIR.wheel && !c.keepTy ? nb : (P.repairN || 0) !== v.repairN ? tyreBand(P) : v.band;   // (the stop just over, the car not yet built afresh: its new tyres; a stop without new tyres, keepTy: the car keeps its own band, the next set's is not put on)
     if (v.bandW !== on) { v.bandW = on; const G = v.bandGeo(on); for (const w of v.wf) w.geometry = G.f; for (const w of v.wr) w.geometry = G.r; }
   }
   // the KOLIBRI's tyre on fire (Core Car.kt.hot): that wheel only a little red, a dark red and a faint glow of its own (emissive ~0.45), no

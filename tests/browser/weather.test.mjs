@@ -75,6 +75,17 @@ try {
   T.check('the puddles drawn over the dry line, gone on it as much as it has dried', !!line && !!line.pud && line.pud.vis && line.pud.ro > line.ro && line.pud.dry === line.op, JSON.stringify(line));
   await page.evaluate(() => window.__game.resume());
 
+  // 4. the start of a changing day, rolled when the menu shows it (rollWet), is for one start only: a start that does not use it (another
+  // weather) does not leave it for a later one
+  await act('to-title'); await page.waitForTimeout(200);
+  await page.evaluate(() => { const g = window.__game; g.wxNext = null; g.S.weather = 'change'; });
+  const wx1 = await page.evaluate(() => { const g = window.__game, wet = g.rollWet(); return { wet, held: g.wxWet }; });
+  await page.evaluate(() => window.__game.S.weather = 'dry');
+  await startTrack(page, 'rbring');
+  const wx2 = await page.evaluate(() => window.__game.wxWet);
+  T.check('a changing day\'s wet or dry start, rolled in the menu, is gone once a race has started (not kept for a later one)', typeof wx1.wet === 'boolean' && wx1.held === wx1.wet && wx2 === null, JSON.stringify({ wx1, wx2 }));
+  await page.evaluate(() => window.__game.resume());
+
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through', false, e.stack || String(e));
