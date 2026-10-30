@@ -52,10 +52,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (js/deli/zadaj.js)
 
       // (js/deli/streha.js)
-      // the sunroof between the spoiler's leading edge and the windscreen's top (xf: the front edge of one over the front seats); the roof scoop's
+      // the sunroof between the spoiler's leading edge and the windscreen's top (xf: the front edge of one over the front seats, xr: the rear bench's middle); the roof scoop's
       // mouth over the windscreen's top; the aerial's rod where the stock one stands, a shark fin ahead of the spoiler; the louvres on
       // the tailgate's window (its foot and top, its half width)
-      streha: { x0: -1.42, x1: 0.15, xf: 0.11 },
+      streha: { x0: -1.42, x1: 0.15, xf: 0.11, xr: -1.0 },
       stresna_zajemalka: { x: 0.06, z: 0 },
       antena: { x: -1.22, z: 0.36, fin: [-1.4, 0] },
       zaluzije: { x0: -1.655, y0: 0.875, x1: -1.585, y1: 1.335, w: 0.565 },

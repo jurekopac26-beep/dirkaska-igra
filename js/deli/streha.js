@@ -1,7 +1,7 @@
 /* Deli iz garaže, sklop 2 · streha: streha, stresna_zajemalka, antena, zaluzije. Each element registers its 16 options with DELI.add(id,
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars.
      streha             m: { x0, x1 (the roof from the spoiler's leading edge to the windscreen's top, look units), xf (the front edge of a
-                        window over the front seats) }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
+                        window over the front seats), xr (the rear bench's middle) }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
      stresna_zajemalka  m: { x (the mouth, at the roof's front), z }: a scoop on the roof, its mouth forward (the stock: none)
      antena             m: { x, z (the rod's foot: the stock aerial's), fin: [x, z] (a shark fin's rear end) } in the aerial's part
      zaluzije           m: { x0, y0, x1, y1 (the rear window's foot and top, middle), w (its half width) } in the tailgate's part:
@@ -32,7 +32,7 @@
     // cells bend where the roof does (a section, the crown's knee), so it lies on it
     const sheet = (xa, xb, z0, z1, lift, col) => { const L = typeof lift === 'number' ? () => lift : lift;
       const X = [xa].concat(knots.filter(x => x < xa - 0.01 && x > xb + 0.01).reverse(), [xb]);
-      const Z = (x) => { const kn = 0.38 * prop(K, x, 4); return [z0].concat([-kn, kn].filter(z => z > z0 + 0.01 && z < z1 - 0.01), [z1]); };
+      const Z = (x) => { const kn = 0.38 * prop(K, x, 4), a = typeof z0 === 'function' ? z0(x) : z0, b = typeof z1 === 'function' ? z1(x) : z1; return [a].concat([-kn, kn].filter(z => z > a + 0.01 && z < b - 0.01), [b]); };
       const P = X.map(x => Z(x).map(z => [x, K.topY(x, z) + L((xa - x) / (xa - xb)), z]));
       for (let i = 0; i < X.length - 1; i++) { const A = P[i], B = P[i + 1]; if (A.length !== B.length) { face(K, A.concat(B.slice().reverse()), col, [0, 1, 0]); continue; }
         for (let j = 0; j < A.length - 1; j++) face(K, [A[j], B[j], B[j + 1], A[j + 1]], col, [0, 1, 0]); }
@@ -45,10 +45,12 @@
       if (up) for (const sd of [-1, 1]) { const z = zm + sd * half, y = (x) => K.topY(x, z);
         face(K, [[xa, y(xa) + 0.004, z], [xb, y(xb) + 0.004 + up, z], [xb, y(xb) + 0.002, z]], RUB, [0, 0, sd]);
         face(K, [[xb, y(xb) + 0.002, zm - half], [xb, y(xb) + 0.002, zm + half], [xb, y(xb) + 0.004 + up, zm + half], [xb, y(xb) + 0.004 + up, zm - half]], HOLE, [-1, 0, 0]); } };
-    // a round pane in the roof's flat middle: its seal, the glass, the glint
-    const round = (xm, zm, r) => { const q = DELI.seg(K, 16), ring = (rr, lift) => Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2, x = xm + Math.cos(a) * rr, z = zm + Math.sin(a) * rr; return [x, K.topY(x, z) + lift, z]; });
-      face(K, ring(r + 0.016, 0.002), RUB, [0, 1, 0]); face(K, ring(r, 0.004), GL, [0, 1, 0]);
-      face(K, [[xm + r * 0.55, 0, zm - r * 0.45], [xm + r * 0.35, 0, zm - r * 0.6], [xm - r * 0.15, 0, zm + r * 0.55], [xm + r * 0.1, 0, zm + r * 0.6]].map(([x, , z]) => [x, K.topY(x, z) + 0.0048, z]), GH, [0, 1, 0]); };
+    // a band of glass across the whole roof from xa back to xb, out to its edges as the roof narrows (the user's: the window in the car's
+    // own shape, edge to edge; the edge beads frame it)
+    const band = (xa, xb, o) => { o = o || {}; const in0 = 0.03, side = (d) => [(x) => d - prop(K, x, 4), (x) => prop(K, x, 4) - d], L = xa - xb;
+      sheet(xa + 0.014, xb - 0.014, ...side(in0 - 0.012), 0.002, o.frame || RUB);
+      sheet(xa, xb, ...side(in0), 0.004, o.dark ? GT : GL);
+      sheet(xa - L * 0.14, xa - L * 0.22, ...side(in0 + 0.07), 0.0048, o.dark ? [0.14, 0.16, 0.2] : GH); };   // (the glint)
     // sliding: the hole in front, the glass slid back over the roof on its rails
     const slide = (xm, zm, len, half, dark) => { const xa = xm + len / 2, xb = xm - len / 2, back = len * 0.62;
       sheet(xa + 0.016, xb - 0.016, zm - half - 0.016, zm + half + 0.016, 0.002, RUB);
@@ -57,10 +59,10 @@
       for (const sd of [-1, 1]) { const z = zm + sd * (half + 0.008), y = (x) => K.topY(x, z); face(K, [[xa, y(xa) + 0.003, z], [xb - back, y(xb - back) + 0.003, z], [xb - back, y(xb - back) + 0.022, z], [xa - back, y(xa - back) + 0.022, z]], RUB, [0, 0, sd]); } };
     const F = m.xf, at = (len) => F - len / 2, X0 = m.x0, X1 = m.x1;   // (a window's front edge over the front seats: its middle at(len); the roof from the spoiler's leading edge to the windscreen's top)
     switch (n) {
-      case 1: round(at(0.26), 0, 0.13); break;
-      case 2: pane(at(0.3), 0, 0.3, 0.15); break;
-      case 3: pane(at(0.42), 0, 0.42, 0.3); break;
-      case 4: for (const z of [-0.29, 0.29]) pane(at(0.28), z, 0.28, 0.12); break;
+      case 1: band(F, F - 0.2); break;
+      case 2: band(F, F - 0.36); break;
+      case 3: band(F, F - 0.6); break;
+      case 4: band(F, F - 0.32); band(m.xr + 0.16, m.xr - 0.16); break;   // (over the front seats and over the rear bench)
       case 5: pane(at(0.34), 0, 0.34, 0.17, { tilt: 0.03 }); break;
       case 6: pane(at(0.38), 0, 0.38, 0.22, { tilt: 0.035 }); { const xa = F + 0.02, y = (z) => K.topY(xa, z);   // (the wind deflector: a black lip ahead of it)
         face(K, [[xa, y(-0.25) + 0.002, -0.25], [xa, y(0.25) + 0.002, 0.25], [xa + 0.012, y(0.25) + 0.03, 0.25], [xa + 0.012, y(-0.25) + 0.03, -0.25]], RUB, [1, 0.3, 0]); } break;
@@ -70,7 +72,7 @@
       case 10: slide(at(0.46), 0, 0.46, 0.3); break;
       case 11: for (const z of [-0.27, 0.27]) slide(at(0.34), z, 0.34, 0.13); break;
       case 12: slide(at(0.42), 0, 0.42, 0.26, true); break;
-      case 13: case 14: pane((X1 - 0.04 + X0 + 0.25) / 2, 0, X1 - 0.04 - (X0 + 0.25), 0.44, { dark: n === 14 }); break;
+      case 13: case 14: band(X1 - 0.03, X0 + 0.42, { dark: n === 14 }); break;
       case 15: pane((X1 - 0.02 + X0 + 0.06) / 2, 0, X1 - 0.02 - (X0 + 0.06), 0.53); break;
       case 16: { const xm = (X1 - 0.04 + X0 + 0.25) / 2, len = X1 - 0.04 - (X0 + 0.25), CW = weave(CF, RF);   // (a carbon frame, a carbon bow across its middle)
         sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, 0.5, 0.0015, CW(0, 0)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, -0.47, 0.0025, CW(0, 1)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, 0.47, 0.5, 0.0025, CW(0, 1));
