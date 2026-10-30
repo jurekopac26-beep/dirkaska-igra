@@ -3101,7 +3101,7 @@ const Core = (function () {
       if (!a.net) { a.vx += Jt * tx * ia; a.vz += Jt * tz * ia; a.w += rta * Jt / Ia * cy; }
       if (!b.net) { b.vx -= Jt * tx * ib; b.vz -= Jt * tz * ib; b.w -= rtb * Jt / Ib * cy; }
     } else {
-      if (TX.cMu) { const tx = -bnz, tz = bnx, vtr = (vax - vbx) * tx + (vaz - vbz) * tz, Jt = clamp(-vtr / (ia + ib), -TX.cMu * J, TX.cMu * J);   // (the setting Trki: drgnjenje; the classic cars' turn is not a free yaw: only the speeds share the rub)
+      if (TX.cMu && vrel < -RB_RUB) { const tx = -bnz, tz = bnx, vtr = (vax - vbx) * tx + (vaz - vbz) * tz, Jt = clamp(-vtr / (1 / a.m.mass + 1 / b.m.mass), -TX.cMu * J, TX.cMu * J);   // (the setting Trki: drgnjenje, in a knock only, RB_RUB, with the real masses; the classic cars' turn is not a free yaw: only the speeds share the rub)
         if (!a.net) { a.vx += Jt * tx * ia; a.vz += Jt * tz * ia; } if (!b.net) { b.vx -= Jt * tx * ib; b.vz -= Jt * tz * ib; } }
       const tm = CSK.tapMax * Math.max(1, ys);   // (the kick's cap grows with a stronger turn: Trki: vrtenje Večje)
       if (!a.air && !a.net) a.csKc = clamp(a.csKc + rna * J / Ia * CSK.tapT * ys, -tm, tm); if (!b.air && !b.net) b.csKc = clamp(b.csKc - rnb * J / Ib * CSK.tapT * ys, -tm, tm); }   // cs: a tap swings the tail, the car catches itself
@@ -3131,6 +3131,9 @@ const Core = (function () {
   // RB_FOL: with square ends (TX.cBox) a rival keeps at least that much between its bumper and the car's ahead (the old 3 m from middle to middle let
   // the round ends nest)
   const RB_FOL = 0.4;
+  // RB_RUB: the rub along the contact (cMu) only in a knock, the cars coming together faster than that (m/s): two cars leaning on each other side by side
+  // do not lock their speeds (with cMu 0.5 and 8 times the weight: 3 m/s apart to 0.3 in 0.4 s, glued for good, the player dragged along)
+  const RB_RUB = 0.5;
   function rbCollide(a, b) {
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = (Math.hypot(a.m.len, a.m.wid) + Math.hypot(b.m.len, b.m.wid)) * 0.5 + 0.05;   // (the two boxes' reach)
     if (dx0 * dx0 + dz0 * dz0 > R * R) return 0;
@@ -3145,8 +3148,8 @@ const Core = (function () {
     if (vrel >= 0) return 0;
     const nv = a.phys === 'nova' || b.phys === 'nova', e = TX.cE != null ? TX.cE : nv ? NVK.carE : CSK.carE, ys = TX.cYaw != null ? TX.cYaw : 1, aK = Math.min(1, ys);
     const rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx, J = -(1 + e) * vrel / (tot + (rna * rna / Ia + rnb * rnb / Ib) * aK);
-    const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = TX.cMu != null ? TX.cMu : nv ? NVK.carMu : 0;
-    const Jt = clamp(-vt / (tot + (rta * rta / Ia + rtb * rtb / Ib) * aK), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;
+    const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = vrel < -RB_RUB ? TX.cMu != null ? TX.cMu : nv ? NVK.carMu : 0 : 0;
+    const Jt = clamp(-vt / (1 / a.m.mass + 1 / b.m.mass + (rta * rta / a.I + rtb * rtb / b.I) * aK), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;   // (the rub with the real masses: a heavy car does not drag the player to its speed)
     if (TX.cScrub === 1) { cSlide(a, nx, nz, J * ia, -(a.vx * nx + a.vz * nz)); cSlide(b, -nx, -nz, J * ib, b.vx * nx + b.vz * nz); }   // (before the push: how fast each came at the other)
     if (!a.net) { a.vx += Px * ia; a.vz += Pz * ia; }
     if (!b.net) { b.vx -= Px * ib; b.vz -= Pz * ib; }
@@ -3345,8 +3348,13 @@ const Core = (function () {
   // LOD.k2-th (15 Hz) beyond. A car between its steps is touched where it would be by now (Race._lodPair: on along its speed since its last
   // step), so none drives into where another was a few steps ago; the turns spread by the grid slot, so each step has about the same work.
   // Alone, the cs physics and the AI drive a lap 0.2-0.3 % slower at 30 Hz, about 0.7 % at 15 Hz (Nürburg); lap, sector and finish times
-  // are taken where the line was crossed inside the longer step. The safety car on the track: the full rate within LOD.r m of it too
-  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 8 };
+  // are taken where the line was crossed inside the longer step. The safety car on the track: the full rate within LOD.r m of it too.
+  // fol: in such a field a rival follows a car that many metres bumper to bumper (as TX.aiFol; the old rule, M.aiGap from middle to middle,
+  // presses a car ahead in the dense column: Nürburg, 100 cars, 40 % fewer hard knocks, 17 % fewer passes). A car within 1 m of another's
+  // bumper or 0.6 m of its side, more by nrV s of their speed apart, stays at the full rate for nrT steps (Race._pairs, _lodPlan): no touch
+  // on an extrapolated place, and two far cars between their steps do not run through each other (Nürburg, 100 cars: hard knocks far ahead
+  // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0)
+  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 8, fol: 1, nrT: 60, nrV: 0.15, off: false };
   // the indices 0..n-1 in I sorted by cmp, ties by the index (what a stable sort of the list gives), by insertion from the order I had the last
   // time: from one step to the next only a few cars change places (Race._byDist, the order)
   function isortIx(I, n, cmp) {
@@ -3480,7 +3488,7 @@ const Core = (function () {
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
       const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x)); } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
     const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiThreat.vl < 1 && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5);   // (a ghost on the pit road already level with a car standing at its box: on through it, not stopped in it)
-    { const o = c.aiThreat, bx = TX.cBox === 1, f0 = txv('aiFol', -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
+    { const o = c.aiThreat, bx = TX.cBox === 1, f0 = txv('aiFol', race.cars.length > LOD.min ? LOD.fol : -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
       const a = c.flyA; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - (a.flyP ? (a.m.len + M.len) / 2 + 7 : FLY_KEEP * c.flyTg * Math.max(10, v))) * 0.45);
@@ -6008,16 +6016,17 @@ const Core = (function () {
     // car's last one, ex: how far one between its steps has gone on since (its speed over them). Null in any other race. The player, the cars
     // on the grid, in or for the pits, falling, rolling, in the air, retired or held by the marshals: the full rate. The safety car on the
     // track (driven every step, it touches every car): the full rate within LOD.r m of it as well; the queue further back as any other far car
-    // (Nürburg, 100 cars, the safety car out: as many knocks in the queue as at the full rate, at less than half the time)
+    // (Nürburg, 100 cars, the safety car out: as many knocks in the queue as at the full rate, at less than half the time). A car close to another
+    // one lately (nr, a count of steps down from LOD.nrT, Race._pairs) as well: a touch is never worked out on where a car would be by now
     _lodPlan(dt) {
       const cars = this.cars, P = this.player, n = cars.length;
-      if (n <= LOD.min || !P || this.remotes.length || this.timeTrial || this.pol || this.tf) { if (this._lod) this._lod.on = false; return null; }
-      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n) });
+      if (LOD.off || n <= LOD.min || !P || this.remotes.length || this.timeTrial || this.pol || this.tf) { if (this._lod) this._lod.on = false; return null; }
+      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n) });
       L.n++; L.on = true; L.h = dt;
       const go = this.state === 'racing', X = this.fl && this.fl.sc && this.fl.sc.car;   // (X: the safety car on the track)
       for (let i = 0; i < n; i++) {
         const c = cars[i]; let k = 1;
-        if (go && c !== P && !c.net && !c.locked && !c.inPit && !c.pitWant && !c.pitG && !c.pitState && !c.fall && !c.air && !c.rl && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) {
+        if (go && c !== P && !c.net && !c.locked && !c.inPit && !c.pitWant && !c.pitG && !c.pitState && !c.fall && !c.air && !c.rl && !L.nr[i] && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) {
           const g = c.dist - P.dist, dx = c.x - P.x, dz = c.z - P.z, d2 = dx * dx + dz * dz, sx = X ? c.x - X.x : 1e9, sz = X ? c.z - X.z : 0;
           if ((g > LOD.a || g < -LOD.b) && d2 > LOD.r * LOD.r && sx * sx + sz * sz > LOD.r * LOD.r) k = Math.abs(g) > LOD.r2 && d2 > LOD.r2 * LOD.r2 ? LOD.k2 : LOD.k;
         }
@@ -6052,18 +6061,25 @@ const Core = (function () {
     _bpO() { return this._bp || (this._bp = { x: [], p: [], tw: [], bd: null, bdA: [], bi: [], oi: [] }); }   // (the big field's lists in an object: the golden references digest only the plain fields)
     // the pairs of cars close enough to touch (carCollide's reach and a margin of 2.5 m for the pushes earlier in the same loop), as i << 10 | j
     // (i < j, indices in this.cars), in the order of the loop over all pairs: a sweep along x
-    _pairs(ST) {   // (ST: LOD, who is worked out this step; a car between its steps is touched where it would be by now, _lodPair: its reach so much longer, ex)
-      const cars = this.cars, n = cars.length, B0 = this._bpO(), X = B0.x, P = B0.p, M = 2.5, E = ST ? this._lod.ex : null;
-      X.length = 0; P.length = 0; let rM = 0;
+    _pairs(ST) {   // (ST: LOD, who is worked out this step; a car between its steps is touched where it would be by now, _lodPair: its reach so much longer, ex;
+      // NR: LOD, the cars of every pair within 1 m of each other's bumper or 0.6 m of its side, more by LOD.nrV s of their speed apart (where
+      // they would be by now, as _lodPair), two between their steps too: the full rate for LOD.nrT steps from the next one on, _lodPlan)
+      const cars = this.cars, n = cars.length, B0 = this._bpO(), X = B0.x, P = B0.p, M = 2.5, L = ST ? this._lod : null, E = L ? L.ex : null, NR = L ? L.nr : null;
+      X.length = 0; P.length = 0; let rM = 0; if (NR) for (let i = 0; i < n; i++) if (NR[i]) NR[i]--;
       for (let i = 0; i < n; i++) { const c = cars[i]; if (Number.isFinite(c.x) && Number.isFinite(c.z)) X.push(i); const r = c.circles[c.circles.length - 1] + c.rad + (E ? E[i] : 0); if (r > rM) rM = r; }
       X.sort((a, b) => cars[a].x - cars[b].x);
       for (let a = 0; a < X.length; a++) {
         const i = X[a], A = cars[i], rA = A.circles[A.circles.length - 1] + A.rad + (E ? E[i] : 0), lim = rA + rM + 0.1 + M;
         for (let b = a + 1; b < X.length; b++) {
           const j = X[b], B = cars[j], dx = B.x - A.x; if (dx > lim) break;
-          if (ST && !ST[i] && !ST[j]) continue;
           const R = rA + B.circles[B.circles.length - 1] + B.rad + (E ? E[j] : 0) + 0.1 + M, dz = B.z - A.z;
-          if (dx * dx + dz * dz <= R * R) P.push(i < j ? (i << 10) | j : (j << 10) | i);
+          if (dx * dx + dz * dz > R * R) continue;
+          if (NR) {
+            const ta = L.ow[i] * L.h, tb = L.ow[j] * L.h, ex = dx + (B.vx * tb - A.vx * ta), ez = dz + (B.vz * tb - A.vz * ta), ch = Math.cos(A.h), sh = Math.sin(A.h), mv = Math.hypot(B.vx - A.vx, B.vz - A.vz) * LOD.nrV;
+            if (Math.abs(ex * ch + ez * sh) < (A.m.len + B.m.len) * 0.5 + 1 + mv && Math.abs(ez * ch - ex * sh) < (A.m.wid + B.m.wid) * 0.5 + 0.6 + mv) { NR[i] = LOD.nrT; NR[j] = LOD.nrT; }   // (along A and across it)
+            if (!ST[i] && !ST[j]) continue;
+          }
+          P.push(i < j ? (i << 10) | j : (j << 10) | i);
         }
       }
       return P.sort((a, b) => a - b);
@@ -6582,7 +6598,7 @@ const Core = (function () {
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
     if (id == null) return null;
-    const q = { track: null, mode: null, t: null, weather: null, car: null, seed: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
+    const q = { track: null, mode: null, t: null, weather: null, car: null, seed: null, rivals: null, lod: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
@@ -6593,6 +6609,8 @@ const Core = (function () {
     if (P.has('vreme')) { const w = QUICK_WX[low('vreme')]; if (w) q.weather = w; else q.bad.push('vreme=' + P.get('vreme')); }
     if (P.has('seme')) { const v = P.get('seme').trim(); if (/^\d{1,10}$/.test(v) && +v >= 1 && +v <= 2147483647) q.seed = +v; else q.bad.push('seme=' + P.get('seme')); }   // (the test mode's seed: a whole number from 1)
     if (P.has('avto')) { const M = MODELS.find(m => m.id === low('avto')); if (M) q.car = heirOf(M).id; else q.bad.push('avto=' + P.get('avto')); }   // (a retired model's: its heir)
+    if (P.has('tekmeci')) { const v = P.get('tekmeci').trim(); if (/^\d{1,2}$/.test(v)) q.rivals = +v; else q.bad.push('tekmeci=' + P.get('tekmeci')); }   // (the race's rivals, 0-99: the Nordschleife's 100 cars against 22 or 1 on the same road)
+    if (P.has('lod')) { const v = low('lod'); if (v === '0' || v === '1') q.lod = +v; else q.bad.push('lod=' + P.get('lod')); }   // (0: a big field's cars all at the full rate, LOD off)
     return q;
   }
 

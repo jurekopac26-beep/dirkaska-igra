@@ -13,6 +13,10 @@
 //      safety car and the leader on the way (the queue further back stops behind a stopped car or in a pack two abreast and is rescued
 //      as often at the full rate: not checked here)
 //   4. A 22-car race: no LOD at all
+//   5. Nürburg, 100 cars as the game has them (the flying start, the player at the back), 2 × 90 s, with the default settings and with
+//      Trki: Realističen, težak: a car close to another (LOD.nr) worked out every step; few hard knocks far ahead of the player (a touch on
+//      an extrapolated place, or two far cars running through each other, as before: 0.42 and 0.23 a car-minute)
+//   6. LOD.off (the quick entry's lod=0): a 100-car race at the full rate
 //   node tests/lod.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -152,6 +156,39 @@ const tLin = (t, x, d0, d1, m) => t - DT * m * (d1 - x) / (d1 - d0);
   const r = race('spa', 21, {}); r.start();
   drive(r, 240, () => {});
   check('a 22-car race (Spa): no LOD (every car every step, as the golden references)', !r._lod, r._lod ? 'LOD on' : '');
+}
+
+// ---- 5. Nürburg, 100 cars as the game has them (the flying start, the player at the back): a car close to another at the full rate ----
+const REAL = { cE: 0, cMu: 0.5, cYaw: 1, cMass: 8, cFx: 0, cBox: 1, cScrub: 1 };   // (Nastavitve, Trki: Realističen, težak; js/game.js TEST_REAL)
+for (const [name, tx, lim] of [['the default settings', {}, 0.2], ['Trki: Realističen, težak', REAL, 0.2]]) {
+  C.setTest(tx);
+  let far = 0, hard = 0, nrN = 0, nrBad = 0;
+  for (const seed of [9, 21]) {
+    const r = race('nring', 99, { flying: 3, playerGrid: 999, seed }), P = r.player, N = r.cars.length, nr0 = new Uint8Array(N);
+    r.start();
+    drive(r, Math.round(90 / DT), (k) => {
+      const D = r._lod;
+      for (let i = 0; i < N; i++) {
+        const c = r.cars[i];
+        if (D && D.on && r.state === 'racing' && nr0[i] && !c.finished) { nrN++; if (D.kk[i] !== 1 || !D.st[i]) nrBad++; }
+        nr0[i] = D && D.nr ? D.nr[i] : 0;
+        if (k > 600 && c !== P && c.speed > 3 && c.dist - P.dist > L.r2) { far += DT / 60; if (c.hitCar > 3.5) hard++; }
+        c.hitCar = 0;
+      }
+    });
+  }
+  C.setTest({});
+  check(`${name}: a car within 1 m of another's bumper or 0.6 m of its side (Race._pairs, LOD.nr) worked out every step`, nrN > 1000 && nrBad === 0, `${nrBad} of ${nrN} car-steps`);
+  check(`${name}: hard knocks (over 3.5 m/s) more than ${L.r2} m ahead of the player under ${lim} a car-minute (touches on extrapolated places: 0.4-1.2)`,
+    far > 100 && hard / far < lim, `${hard} in ${far.toFixed(0)} car-minutes: ${(hard / far).toFixed(3)}`);
+}
+
+// ---- 6. LOD off for the visit (the quick entry's lod=0): a 100-car race at the full rate ----
+{
+  L.off = true; const r = race('nring', 99, { flying: 3, playerGrid: 999 }); r.start();
+  drive(r, 600, () => {});
+  L.off = false;
+  check('LOD.off (the quick entry\'s lod=0): Nürburg\'s 100 cars every one every step', !r._lod || !r._lod.on, r._lod && r._lod.on ? 'LOD on' : '');
 }
 
 console.log(`\n${n - bad}/${n} OK`);

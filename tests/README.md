@@ -23,9 +23,9 @@ node tests/run.js node --quiet                 # tih izpis: napake padlih testov
 test sam in teste iz kratkega seznama `RELATED` v `tests/run.js` za velike skupne datoteke (`js/core.js`, `js/game.js`, `js/render.js` …).
 `--quiet` ne izpiše ničesar za uspešen test; za padlega izpiše vrstice FAIL in zadnje vrstice (sled sklada), na koncu povzetek.
 
-**Hiter vstop** (za teste in orodja): naslov `index.html?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>` odpre igro naravnost
+**Hiter vstop** (za teste in orodja): naslov `index.html?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>&tekmeci=<n>&lod=0|1` odpre igro naravnost
 na dirki (brez menija, preleta in kvalifikacij). `nacin`: `dirka`, `kronometer`, `promet`, `policija` (ali `race`, `tt`, `traffic`,
-`police`), samo načini, ki jih proga ima; `t`: dirka na avtopilotu do `t` s po štartu, nato pavza; `avto`: id vozila (`js/cars/<id>.js`).
+`police`), samo načini, ki jih proga ima; `t`: dirka na avtopilotu do `t` s po štartu, nato pavza; `avto`: id vozila (`js/cars/<id>.js`); `tekmeci`: število tekmecev v dirki (0–99, največ toliko, kot jih ima proga; npr. Nordschleife s 100, 22 ali 1 avtom: `?proga=nring&tekmeci=21`); `lod=0`: vsi avti velikega polja s polno hitrostjo (brez LOD, za primerjavo).
 Način, vreme in avto se nastavijo kot v meniju. Napačen del javi obvestilo »Hitri vstop: neveljavno …«. Branje naslova: `Core.quickArgs`,
 v igri `quickGo` v `js/game.js`; `window.__game.quick` pove, kaj je naslov zahteval in ali je dirka že tam (`done`).
 
