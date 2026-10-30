@@ -28,6 +28,9 @@ window.MENU = {
    "img": "assets/menu/mode-trial.webp"
   }
  ],
+ "heads": {
+  "vrsic": 1388
+ },
  "mapVersions": [
   {
    "n": 1,

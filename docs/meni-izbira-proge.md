@@ -31,7 +31,7 @@ Od zgoraj navzdol:
 
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
-| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | narejen (veja `meni-izbira-proge/sklop-1`), lokalni testi zeleni; čaka potrditev uporabnika in odgovor na vprašanji 7 in B |
+| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | narejen (veja `meni-izbira-proge/sklop-1`), lokalni testi zeleni; čaka potrditev uporabnika |
 | 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | |
 | 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | |
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | |
@@ -40,7 +40,7 @@ Od zgoraj navzdol:
 
 ### Sklop 1: kaj je narejeno
 
-- `vTrack()` v `js/menu.js`: glava (`.thead`: hiška `data-act="home"` na naslovnico, `.where` država, kraj in višina vrha proge `heightOf`, globus je zaenkrat ikona), oder z vremenom ob desnem robu (`.wxv`, `weather:dry|rain|change|storm`, spodaj *···* odpre *Race options*), vrstica `.trow` (*Opponents* iz `G.rivals(d)`, v kronometru *Gold time*, v policijskem lovu *Police*), prostor `.yard` (tabla `.sign` z državo, testna proga z oznako *TEST*; avto `.car` = `pick-car`: slika iz `assets/cars/img` ali `G.carPic()` iz salona z izrezanim ozadjem), soseda `.nb` (`track:-1` / `track:1`, zastava ob drogu, zadnji stolpec raztegnjen: `flagFill`), noga.
+- `vTrack()` v `js/menu.js`: glava (`.thead`: hiška `data-act="home"` na naslovnico, `.where` država, kraj in višina `heightOf` (`MENU.heads`, sicer vrh proge), globus je zaenkrat ikona), oder z vremenom ob desnem robu (`.wxv`, `weather:dry|rain|change|storm`, spodaj *···* odpre *Race options*), vrstica `.trow` (*Opponents* iz `G.rivals(d)`, v kronometru *Gold time*, v policijskem lovu *Police*), prostor `.yard` (tabla `.sign` z državo, testna proga z oznako *TEST*; avto `.car` = `pick-car`: slika iz `assets/cars/img` ali `G.carPic()` iz salona z izrezanim ozadjem), soseda `.nb` (`track:-1` / `track:1`, zastava ob drogu, zadnji stolpec raztegnjen: `flagFill`), noga.
 - Skupin ni več (`group`, `D.groups`, `.groups`, `.card`, `.arrow`, `.pcount` odstranjeni); seznam `TRACKS()` = vse proge načina, razvrščene po `MENU.lens` (`tools/menu-lens.js`, test `tests/menu-lens.test.js`). Novi igralec začne na prvi pravi progi seznama (Trois-Rivières).
 - Kamera ostaja stikalo 1/2 (sklop 4), okvirček `.hud` preleta je na tem zaslonu skrit. Uvod pred dirko bere vrstico (`cardRect` → `#s-track .trow`).
 
@@ -71,5 +71,5 @@ Od zgoraj navzdol:
 | 4 | Ime avta? | samo v garaži |
 | 5 | Proga brez preleta ali videa zavoja | maketa proge |
 | 6 | Testne proge: oznaka TEST na tabli? | da |
-| 7 | Kam gredo dodatne možnosti (letni čas, čas dneva, dolžina) iz sedanjega lista vremena in *Gold time* kronometra? | vprašano v sliki (sklop 1); do odgovora *···* pod vremenom, *Gold time* na mestu *Opponents* |
-| B | Višina v glavi: 1,611 m (vrh iz podatkov igre), 1,388 m ali brez? | vprašano v sliki (sklop 1); do odgovora vrh proge (1,611 m) |
+| 7 | Kam gredo dodatne možnosti (letni čas, čas dneva, dolžina) iz sedanjega lista vremena in *Gold time* kronometra? | uporabnik (30. 10.): *···* pod vremenom ostane; *Gold time* na mestu *Opponents* |
+| B | Višina v glavi: 1,611 m (vrh iz podatkov igre), 1,388 m ali brez? | uporabnik (30. 10.): 1,388 m (`MENU.heads` v `js/menu-data.js`); druge proge vrh proge, dokler uporabnik ne reče drugače |

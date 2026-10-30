@@ -386,8 +386,10 @@
     im.src = url;
     return '';
   }
-  // the height in the head: the top of the run (an open road's summit, a circuit's highest point) where the game knows the real heights
+  // the height in the head: the one chosen for the track (MENU.heads: Vršič 1,388 m, the player's choice), else the top of the run (an
+  // open road's summit, a circuit's highest point) where the game knows the real heights
   function heightOf(t) {
+    if ((D.heads || {})[t.id]) return D.heads[t.id];
     const a = t.def.alt; if (a) return Math.max(a[0], a[1]);
     const R = RT[t.id], M = D.routeMaps[t.id] || {}; if (!R || (!M.alt && M.base == null)) return null;
     return Math.max(...R.prof.map(h => altOf(R, M, h)));
