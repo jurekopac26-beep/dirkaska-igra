@@ -98,7 +98,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 ## Teme v `js/core.js`
 
 - **proga** `Track` (`T.idx`, `T.ds`, `T.px/pz/hy`, `T.len`, `startS`), stranske ceste `side roads ("stubs")`, ograje Medvod
-- **avto** fizika (`Car`, `stepCS`, trki avtov `carCollide`), nadgradnje `car upgrades`, deli iz garaže `the garage's parts` (`applyDeli`: `Car` z `opts.deli`, dirka `playerDeli`), deli vozil `a registered vehicle's parts`
+- **avto** fizika (`Car`, `stepCS`, `CSK`, trki avtov `carCollide` in posledice trka `carKnockFx`), preizkusne nastavitve tekmecev in trkov `TX` / `setTest` / `txv` (Nastavitve: kategorija »Preizkus: tekmeci in trki«, `#set-test`; stopnje `TEST_LV`, slog `TEST_REAL`, `testOf` v `js/game.js`; realističen trk: ravni odbijači `rbCollide` / `rboxHit` / `RB_*`, občutek teže `heavyK`, gume ob potisku `cSlide` in `cSx`/`cSz` v `stepCS`, tekmeci z ravnimi odbijači `aiReach` / `RB_FOL`, brez isker `c.fxQ`), nadgradnje `car upgrades`, deli iz garaže `the garage's parts` (`applyDeli`: `Car` z `opts.deli`, dirka `playerDeli`), deli vozil `a registered vehicle's parts`
 - **gume KOLIBRIJA** `KT`, `ktGrip`, `ktWear`, `ktHit`, `ktFire` (guma zagori pri 80 % poškodbe; `Car.kt`, možnost `tyreRule`; pravilo koles `rule.kt` v `wheelRule` / `_wreckStep`)
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel`; vožnja po stranski cesti
@@ -184,7 +184,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
-- **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
+- **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, preizkusne nastavitve tekmecev in trkov `preizkus.test.js`, `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
 - **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
 - **Opis vseh testov:** `tests/README.md` (velik; išči po imenu testa)

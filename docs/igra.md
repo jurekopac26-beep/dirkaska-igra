@@ -6,6 +6,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)
 - [Kje na progi si (proge po resničnih krajih)](#kje-na-progi-si-proge-po-resničnih-krajih)
 - [Fizika vožnje](#fizika-vožnje)
+- [Preizkus: tekmeci in trki](#preizkus-tekmeci-in-trki)
 - [Zelo veliko polje (avti daleč od tebe)](#zelo-veliko-polje-avti-daleč-od-tebe)
 - [Reakcija na štartu](#reakcija-na-štartu)
 - [Leteči start (odprte ceste in Nürburg)](#leteči-start-odprte-ceste-in-nürburg)
@@ -97,6 +98,37 @@ Na progah Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Katu-Ja
 ## Fizika vožnje
 
 Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Ročne zavore v igri ni: ne gumba na zaslonu telefona (le **ZAVORA** in **PLIN**, enako visoka, drug ob drugem; pri upravljanju z nagibom je zavora levo), ne tipke ne gumba na igralnem plošku. Avto zadrsa z volanom, bolj pa, če v ovinku zaviraš. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
+
+## Preizkus: tekmeci in trki
+
+V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) s 13 vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« (5) in »Trki med avti« (8): kako se vozijo tekmeci in kako se avti obnašajo ob trkih. **Privzeto** pri vseh pomeni, da je vse natanko tako kot doslej, referenčne vožnje (golden) pa so zato nespremenjene. Vsaka vrstica ima svoje stopnje. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
+
+**Tekmeci** (`aiControl`, `Race`):
+
+| Vrstica | Stopnje | Kaj pomeni |
+|---|---|---|
+| Razpon hitrosti | Širok (1), Ožji (0,6), Zelo ožji (0,3) | koliko razlike je med najhitrejšim in najpočasnejšim po težavnosti; najhitrejši je vedno enak, privzeto širok |
+| Razmik za avtom | Kot doslej, 0,5 m, 1,5 m, 3 m | prostor med odbijačema, ki ga tekmec pusti avtu pred sabo; »kot doslej« je najtesneje (vozi tik za odbijačem) |
+| Pritisk na avto pred sabo | Izklop, Majhen (2 %), Velik (4 %) | tik za drugim avtom vozi tekmec malo hitreje; privzeto izklop |
+| Prostor ob boku | 0,6 m, 0,35 m, 0,15 m | koliko prostora pusti avtu ob sebi; privzeto 0,6 m |
+| Vožnja čez robnike | Ne, do 1,2 m, do 2,2 m | na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m); privzeto ne |
+
+**Trki med avti** (`carCollide`, vsi stiki med avti, tudi med tekmeci; vrstica pod slogom vedno preglasi njegov del):
+
+| Vrstica | Stopnje | Kaj pomeni |
+|---|---|---|
+| Slog trkov | Realističen, težak | ravni odbijači, brez odboja (0), gume zadržijo potisk vstran, drgnjenje 0,5, vrtenje 1, drugi avto 8-krat težji, brez isker; pod vrstico je izpisano, kaj slog nastavi |
+| Občutek teže | Enak, 2×, 4×, 8×, 16× | kolikokrat težji je drugi avto v trku z igralcem (zaletiš se vanj ali on vate), tudi pri vrtenju: težji se težje premakne, igralec se ob njem ustavi; med dvema tekmecema se nič ne spremeni (`TX.cMass`, `heavyK`). Privzeto: enak, pri realističnem slogu 8× |
+| Odboj med avti | Brez, majhen (0,1), srednji (0,25), velik (0,4), zelo velik (0,6) | kolikšen del hitrosti približevanja avta ohranita kot odmik; privzeto 0,1 |
+| Drgnjenje ob stiku | Brez, srednje (0,35), močno (0,8) | stik deli hitrost vzdolž stika (avta se vlečeta); privzeto brez, realističen slog 0,5 |
+| Vrtenje ob trku | Brez, majhno (0,15), manjše (0,4), večje (1,6) | koliko trk zavrti avto: sunek smeri (kot največ 23°, pri večjem tudi več), ki ga avto sam ujame; privzeto 1 |
+| Oblika ob stiku | Zaobljena, Ravni odbijači | zaobljena (kot doslej, trije krogi): konca avta sta okrogla, trk z zamikom avta odrine vstran. Ravni odbijači (`TX.cBox`, `rbCollide`, `rboxHit`): pravokotnik z zaobljenimi vogali (polmer 0,3 m), odbijač ali bok potisne naravnost, potisk gre skozi sredino dela, ki se dotika; prekrivanje se odpravi mehko (2 cm ostane, 40 % ostanka na korak, nad 20 cm takoj), zato avto ne poskoči nazaj; vrtenje s celo vztrajnostjo kot sunek smeri, ki traja toliko kot pri pravem avtu (0,0055 s na m/s hitrosti, 0,06–0,3 s; 0,15 s pri 100 km/h) in se pri trajnem potiskanju ne kopiči. Tekmeci z ravnimi odbijači puščajo med odbijačema vsaj 0,4 m in se umaknejo, če so preblizu (če vrstica Razmik za avtom ni nastavljena), prostor ob boku pa merijo z vogali zasukanega avta (`aiReach`) |
+| Potisk vstran | Avto zavije, Gume zadržijo | avto zavije (kot doslej) pomeni, da drsni zakon potisk vstran spremeni v smer vožnje in avto odpelje vstran. Gume zadržijo (`TX.cScrub`, `cSlide`, `stepCS`): bočni del potiska, ki ga dobi od drugega avta (ne tisti, ki le ustavi njegovo lastno približevanje), gre mimo drsnega zakona; gume ga odrgnejo v (0,006 × hitrost) s, največ s pojemkom, ki ga dovoli oprijem, ki ga ovinek pusti (vsaj tretjina). Avto malo zdrsne vstran, smer ostane. |
+| Iskre in blisk | Vklop, Izklop | izklop: trk med avtoma ne sproži isker, bliska in prahu (`TX.cFx` 0, `c.fxQ` v `js/render.js`); praske na karoseriji ostanejo. Iskre ob ograji ostanejo |
+
+Odboj in vrtenje ne spremenita škode: ta je odvisna od hitrosti približevanja. Odboj od ograje (`wallCollide`) se ne spreminja. Nastavitev »Razbijanje: odboji in vrtenje ob trku« je ločena: ta po trku avto za trenutek izgubi oprijem. V boksih (avto v boksni stezi) ostane zaobljena oblika, da delo mehanikov in uvoz ostaneta kot doslej.
+
+Preverja `tests/preizkus.test.js`.
 
 ## Zelo veliko polje (avti daleč od tebe)
 

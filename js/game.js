@@ -50,7 +50,13 @@
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
+  // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (as the driving physics has it: nothing changes); the numbers go to Core.setTest
+  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], tCrE: [null, 0, 0.1, 0.25, 0.4, 0.6], tCrMu: [null, 0, 0.35, 0.8], tCrYaw: [null, 0, 0.15, 0.4, 1.6], tCrMass: [null, 1, 2, 4, 8, 16], tCrBox: [null, 0, 1], tCrScrub: [null, 0, 1], tCrFx: [null, 1, 0] };
+  const TEST_REAL = { cE: 0, cMu: 0.5, cYaw: 1, cMass: 8, cFx: 0, cBox: 1, cScrub: 1 };   // Trki: slog Realističen, težak (flat bumpers pushed apart softly, no bounce, the classic car's tyres hold a push sideways, the bodies rub, the other car counts eight times heavier in a knock with the player, no sparks); every row under it overrides its part
+  for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
+  S.tCrStyle = +S.tCrStyle === 1 ? 1 : 0;
   S.phys = 'cs';   // one driving physics: Circuit Superstars (the old 'rally' and 'arcade' were removed; old saves get cs)
+  const physOf = () => 'cs';   // (one driving physics: the records under id@cs)
   if (!['dry', 'rain', 'random', 'change', 'storm'].includes(S.weather)) S.weather = 'dry';
   for (const k of ['cmp', 'pitCmp']) if (!['auto', 'S', 'M', 'H'].includes(S[k])) S[k] = 'auto';   // (the slicks: for the start, for a pit stop)
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
@@ -422,6 +428,7 @@
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
+    $('cr-note').textContent = tr(+S.tCrStyle === 1 ? 'Realističen, težak: ravni odbijači, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,5, drugi avto 8-krat težji, brez isker. Vrstice spodaj ga spremenijo.' : 'Privzeto: odboj 0,1, brez drgnjenja, vrtenje 1, zaobljena oblika, enaka teža, iskre.');
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -480,12 +487,14 @@
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
-  const physOf = () => 'cs';
+  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]], H = +S.tCrStyle === 1 ? TEST_REAL : {}, or = (a, b) => a != null ? a : b != null ? b : null;   // (Preizkus: the rivals and the knocks; never online, where both phones must drive the same)
+    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw), cMass: or(L('tCrMass'), H.cMass), cFx: or(L('tCrFx'), H.cFx), cBox: or(L('tCrBox'), H.cBox), cScrub: or(L('tCrScrub'), H.cScrub) }; };
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;
     Render.setCrash({ body: +S.xBody, glass: +S.xGlass, paint: +S.xPaint, detail: S.carDet === 'high' ? 'full' : 'lite', parts: +S.xParts, drag: +S.xDrag, dust: +S.xDust });   // (Razbijanje · nov način: off by default; switched during a race the cars are built again)
     Core.setCrash(xPhys(race && race.player && race.cars.some(c => c.net)));   // (the rollover, the knocks, the attack, the handling: never online (a friend's car: net), where both phones must drive the same)
+    Core.setTest(testOf(race && race.player && race.cars.some(c => c.net)));   // (Preizkus: tekmeci in trki, at once: the spread of the rivals' paces from the next race, it is dealt out when the race is made)
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; kamera za avtom, kjer zaslon nima prostora, sorazmerno manj: Render updateCamera)
     Render.cam.userTilt = 0.3;   // (kamera za avtom je vedno 30 % manj nagnjena navzdol: gleda dlje naprej po cesti, razdalja ostane ista; brez nastavitve)
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
@@ -533,13 +542,14 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
+    const num = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     if (key === 'saver') { perf.sum = perf.n = 0; perf.good = perf.slow = 0; }   // (the frame times measured again from now)
     if (key === 'tower') { twCls(); if (tw) { tw.html = ''; tw.at = 0; } }
     if (key === 'line') Render.setLine(!!race && lineWant());
+    if (key === 'tAiSpr' && race) toast(tr('Razpon hitrosti tekmecev velja od naslednje dirke.'), 2600);   // (dealt out when the race is made; the other rows of Preizkus act at once)
     save(); applySettings();
     if (key === 'lang') relang();
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
@@ -1873,6 +1883,7 @@
     const solo = tt || quali || !!ch, lapRun = !!ch && !tt;   // (alone: a time trial, qualifying, a challenge: its time trial or a circuit's flying lap)
     const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
     Core.setCrash(xPhys(on));   // (Razbijanje · nov način: its physics off in an online race)
+    Core.setTest(testOf(!!on));   // (Preizkus: tekmeci in trki: off online too)
     if (on) {   // online: the players on the grid in the host's order (in turn from race to race), no AI; the host's physics and damage for all
       const nums = netNums(on), rs = on.roster;
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: on.grid.indexOf(mp.me) + 1, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: nums[mp.me], slip: true, faults: !!on.faults,
