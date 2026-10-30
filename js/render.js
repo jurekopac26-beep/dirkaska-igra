@@ -1013,7 +1013,7 @@ const Render = (function () {
                                v up; convex, or star-shaped round its middle) or o.polys (several pieces), o.d (its depth), its ring the outline grown by o.ringW, o.ringD deep; o.bulge: the
                                lens' front a dome that high in its middle (a lamp bulging out of its face)
        K.tailLamp(x, y, z, w, h, o)    a tail lamp (lights up when braking): the tail mesh's left / right range; o { round (a disc of
-                               diameter w), d (depth), dir (-1), host (the part it sits on: its side goes and turns with it; default
+                               diameter w), pts (a convex outline [[dz, dy] ...] round (z, y): a prism), d (depth), dir (-1), host (the part it sits on: its side goes and turns with it; default
                                the part of the shell's surface nearest it) }. Its surround: draw it in the body (K.rect, K.box)
        K.grille(x, y, z, w, h, o)      a grille facing o.dir (1 forward, -1 back), centred there: o { col (K.black), slats (3), slatCol, slatH,
                                frame (a colour: a line over and under it), frameH, box (a solid panel instead of a flat one), host }
@@ -1817,7 +1817,11 @@ const Render = (function () {
     };
     K.tailLamp = (x, y, z, w, h, o) => {   // a tail lamp (lights up when braking): into the tail mesh, its left or right range; o.round: a disc (radius w / 2)
       o = o || {}; const side = z < 0 ? 'L' : 'R', T = kx.tails[side], dir = o.dir || -1, sc = (p) => [p[0] * sx, p[1], p[2] * sz], tg = { quadO: (a, b, c, d, cl, i) => T.quadO(sc(a), sc(b), sc(c), sc(d), cl, sc(i)), triO: (a, b, c, cl, i) => T.triO(sc(a), sc(b), sc(c), cl, sc(i)) };
-      if (o.round) discX(tg, x + dir * 0.006, y, z, w / 2, o.n || 10, [1, 1, 1], dir); else World.box(tg, x + dir * 0.008, y - h / 2, z, o.d || 0.03, h, w, 0, [1, 1, 1]);
+      if (o.pts) { const P = o.pts, n = P.length, d = o.d || 0.03, cy = y + P.reduce((a, q) => a + q[1], 0) / n, cz = z + P.reduce((a, q) => a + q[0], 0) / n, inn = [x + dir * 0.008, cy, cz];   // (o.pts: a convex outline [[dz, dy] ...] round (z, y), a prism d deep)
+        const F = P.map(([dz, dy]) => [x + dir * (0.008 + d / 2), y + dy, z + dz]), B = P.map(([dz, dy]) => [x + dir * (0.008 - d / 2), y + dy, z + dz]);
+        for (let i = 1; i < n - 1; i++) tg.triO(F[0], F[i], F[i + 1], [1, 1, 1], inn);
+        for (let i = 0; i < n; i++) { const j = (i + 1) % n; tg.quadO(F[i], F[j], B[j], B[i], [1, 1, 1], inn); } }
+      else if (o.round) discX(tg, x + dir * 0.006, y, z, w / 2, o.n || 10, [1, 1, 1], dir); else World.box(tg, x + dir * 0.008, y - h / 2, z, o.d || 0.03, h, w, 0, [1, 1, 1]);
       kx.tailAt.push([x * sx, y, z * sz]); if (kx.dl) (kx.tailDl || (kx.tailDl = {}))[kx.dl] = 1;   // (drawn by a garage part (K.deli): Render.deliMesh shows the tail mesh with it)
       if (o.host) { kx.partOk(o.host); if (!kx.tailHost[side]) kx.tailHost[side] = o.host; }   // (the part it sits on: its side of the tail mesh goes with it, turns with it)
     };

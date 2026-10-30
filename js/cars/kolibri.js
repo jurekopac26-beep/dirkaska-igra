@@ -49,10 +49,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       platisca: {},
       // (sklop 2, each group's mounts after its line: js/deli/spredaj.js)
 
-      // (js/deli/zadaj.js) the tail lamps in their strips (the room w x h round zc, yc; the LED band on the tailgate's garnish), the exhaust's tip
+      // (js/deli/zadaj.js) the tail lamps in their strips (the room w x h round zc, yc, its outline the black strip's: top and foot slanting; the LED band on the tailgate's garnish), the exhaust's tip
       // (the stock one on the left), the tailgate (its panel from the bumper to the window's foot, the window up to the roof's edge, its
       // garnish), the tow points on the bumpers' faces, the mud flaps behind the arches (the sills' guards between them)
-      zadnje_luci: { x: -1.642, zc: 0.64, yc: 0.705, w: 0.14, h: 0.3, hosts: ['tailL', 'tailR'], bar: { x: -1.661, y: 0.822, w: 0.55, part: 'trunk' } },
+      zadnje_luci: { x: -1.642, zc: 0.64, yc: 0.705, w: 0.14, h: 0.3, shape: [[-0.069, -0.154], [0.066, -0.174], [0.069, 0.149], [-0.069, 0.164]], hosts: ['tailL', 'tailR'], bar: { x: -1.661, y: 0.822, w: 0.55, part: 'trunk' } },
       auspuh: { x: -1.72, y: 0.25, z: 0.42, r: 0.03, len: 0.2, part: 'body' },
       prtljaznik: { x: [-1.66, -1.655], glass: -1.585, w: 0.565, part: 'trunk', garnish: [-1.663, 0.81, 1.1, 0.07] },
       vlecne_kljuke: { f: [1.703, 0.31, 0.56], r: [-1.692, 0.33, 0.42] },

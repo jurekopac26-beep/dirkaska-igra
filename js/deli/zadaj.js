@@ -30,14 +30,20 @@
     const s = m.s || 1, W = m.w, H = m.h, F = m.x - 0.023, SP = F + 0.003, DP = F - 0.002;   // (F: the lit face; SP: the glass round it; DP: details in front)
     const SMK = [0.1, 0.085, 0.09], LENS = [0.17, 0.025, 0.03], CLR = [0.84, 0.85, 0.88], AMB = [1, 0.58, 0.08], AMBD = [0.36, 0.2, 0.06], HOUS = [0.05, 0.05, 0.055];
     for (const sd of [-1, 1]) {
-      const host = m.hosts ? m.hosts[sd < 0 ? 0 : 1] : undefined, o = { host }, Z = (u) => sd * (m.zc + u * s), Y = (v) => m.yc + v * s;
+      const host = m.hosts ? m.hosts[sd < 0 ? 0 : 1] : undefined, o = { host };
+      // the room's own outline (m.shape: [inner foot, outer foot, outer top, inner top], metres round zc, yc: KOLIBRI's black strip, its top
+      // and foot slanting): every option laid into it, a point (u out, v up) of the W x H design box mapped onto it; none: the box itself
+      const SH = m.shape, L = (p, q, k) => [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
+      const map = (u, v) => { if (!SH) return [u * s, v * s]; const a = u / W + 0.5, b = v / H + 0.5; return L(L(SH[0], SH[1], a), L(SH[3], SH[2], a), b); };
+      const quad = (u, v, w, h) => [[u - w / 2, v - h / 2], [u + w / 2, v - h / 2], [u + w / 2, v + h / 2], [u - w / 2, v + h / 2]].map(([a, b]) => map(a, b));
+      const P3 = (x, q) => [x, m.yc + q[1], sd * (m.zc + q[0])];
       // a lit block (u out, v up, w x h; back: how far behind the lit face, at most the 5 mm to the body's face), a round one (diameter w)
-      const lit = (u, v, w, h, back) => K.tailLamp(F + 0.023 + (back || 0), Y(v), Z(u), w * s, h * s, { host });
-      const litR = (u, v, w, back) => K.tailLamp(F + 0.006 + (back || 0), Y(v), Z(u), w * s, w * s, { host, round: true, n: seg(K, 14) });
+      const lit = (u, v, w, h, back) => K.tailLamp(F + 0.023 + (back || 0), m.yc, sd * m.zc, w, h, { host, pts: quad(u, v, w, h).map(q => [sd * q[0], q[1]]) });
+      const litR = (u, v, w, back) => { const c = map(u, v); K.tailLamp(F + 0.006 + (back || 0), m.yc + c[1], sd * (m.zc + c[0]), w * s, w * s, { host, round: true, n: seg(K, 14) }); };
       const ring = (u, v, w, h, t, back) => { lit(u, v + (h - t) / 2, w, t, back); lit(u, v - (h - t) / 2, w, t, back); lit(u - (w - t) / 2, v, t, h - 2 * t, back); lit(u + (w - t) / 2, v, t, h - 2 * t, back); };   // (an outline of light)
-      const glass = (u, v, w, h, col, dx) => K.rect(SP + (dx || 0), Y(v), Z(u), w * s, h * s, col, Object.assign({ dir: '-x' }, o));
-      const det = (u, v, w, h, col, dx) => K.rect(DP - (dx || 0), Y(v), Z(u), w * s, h * s, col, Object.assign({ dir: '-x' }, o));
-      const disc = (u, v, r, col, x) => K.discX(x, Y(v), Z(u), r * s, seg(K, 14), col, -1, o);
+      const glass = (u, v, w, h, col, dx) => faceOut(K, quad(u, v, w, h).map(q => P3(SP + (dx || 0), q)), col, [-1, 0, 0], o);
+      const det = (u, v, w, h, col, dx) => faceOut(K, quad(u, v, w, h).map(q => P3(DP - (dx || 0), q)), col, [-1, 0, 0], o);
+      const disc = (u, v, r, col, x) => { const c = map(u, v); K.discX(x, m.yc + c[1], sd * (m.zc + c[0]), r * s, seg(K, 14), col, -1, o); };
       const tiles = (cells, w, h) => { for (const [u, v] of cells) lit(u, v, w, h); };
       switch (n) {
         case 1:   // rdeče, nadomestne: one tall red lens in a thin chrome frame, its ribs across
