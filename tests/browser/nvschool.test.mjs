@@ -14,7 +14,7 @@ try {
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
   await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
-  T.check('the school loaded with the new map: its cones (6 of the slalom, 4 of the parallel box), the built tasks', await page.evaluate(() => typeof NVSchool !== 'undefined' && NVSchool.cones().length === 10 && NVSchool.has('c', 3) && !NVSchool.has('m', 4)));
+  T.check('the school loaded with the new map: its cones (6 of the slalom, 4 of the parallel box), all 36 tasks built', await page.evaluate(() => typeof NVSchool !== 'undefined' && NVSchool.cones().length === 10 && ['c', 'm', 'k'].every(l => [...Array(12).keys()].every(i => NVSchool.has(l, i)))));
 
   // 1. from the menu: the school's floor, ROAD LICENCE, task 4 (the slalom), START
   await page.evaluate(() => { const f = NVMenu.floors().find(q => q.key === 'school'), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; });
@@ -95,6 +95,63 @@ try {
   const lap = await page.evaluate(() => { const t = MK.T(), n = t.px.length; let bi = 0, bd = 1e18; const P0 = NVSchool.PAD(); for (let i = 0; i < n; i += 2) { const d = (t.px[i] - P0[0] - 48) ** 2 + (t.pz[i] - P0[2]) ** 2; if (d < bd) { bd = d; bi = i; } } const o = []; for (let k = 4; k <= n + 6; k += 4) { const i = (bi + k) % n; o.push([t.px[i], t.pz[i], 30]); } return { o, len: t.len }; });
   const r8 = await drive('c', 0, lap.o);
   T.check('a lap of the track: through the 4 gates, back over the line: done', r8.st === 'end' && r8.place < 4 || (r8.place === 4 && /slow/.test(r8.why)), JSON.stringify({ ...r8, len: lap.len }));
+
+  // ROAD 8-10, GRAVEL, HILL: along the task's own way (plan: [metres along, speed m/s, seconds to stand there]; lat: off its middle, rev: backwards)
+  const wayDrive = (l, i, plan, opt = {}) => page.evaluate(async ({ l, i, plan, opt }) => {
+    const P = { x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, y: 0, m: { len: 4.4, wid: 1.9 }, place(x, z, h) { this.x = x; this.z = z; this.h = h; } }, dt = 1 / 30;
+    if (!NVSchool.start(l, i)) return { err: 'no task' };
+    await new Promise(r => setTimeout(r, 400));
+    let n = 0; while (NVSchool.state().st === 'count' && n++ < 200) NVSchool.tick(P, true, dt);
+    const latF = opt.lat ? (0, eval)(opt.lat) : null, W = NVSchool.way(); let k = 0; while (k < W.length - 1 && Math.hypot(W[k][0] - P.x, W[k][1] - P.z) > 1) k++;
+    let s = W[k][2], j = 0, hold = 0;
+    for (let t = 0; t < 6000 && NVSchool.state().st === 'go'; t++) {
+      const [to, v, st] = plan[Math.min(j, plan.length - 1)];
+      if (j < plan.length && Math.abs(to - s) < 0.05) { if (hold < (st || 0)) { hold += dt; P.vx = P.vz = 0; NVSchool.tick(P, true, dt); continue; } j++; hold = 0; continue; }
+      const dir = Math.sign(to - s) || 1, ds = Math.min(Math.abs(to - s), v * dt); s += dir * ds; if (j >= plan.length) s = to;
+      while (k < W.length - 2 && W[k + 1][2] <= s) k++; while (k > 0 && W[k][2] > s) k--;
+      const a = W[k], b = W[Math.min(W.length - 1, k + 1)], f = b[2] > a[2] ? (s - a[2]) / (b[2] - a[2]) : 0, h = a[3], off = latF ? latF(s) : 0;
+      P.x = a[0] + (b[0] - a[0]) * f - Math.sin(h) * off; P.z = a[1] + (b[1] - a[1]) * f + Math.cos(h) * off;
+      const mv = j >= plan.length ? 0 : v * dir; P.vx = Math.cos(h) * mv; P.vz = Math.sin(h) * mv; P.h = h + (dir < 0 ? Math.PI : 0) + (opt.turn ? Math.PI : 0);
+      NVSchool.tick(P, true, dt);
+    }
+    const r = NVSchool.state(); return { ...r, end: W[W.length - 1][2] };
+  }, { l, i, plan, opt: { lat: opt.lat ? opt.lat.toString() : null, turn: opt.turn } }).then(r => r);
+  const ok = (r) => r && r.st === 'end' && r.place < 4;
+  const E = async (l, i) => (await page.evaluate(({ l, i }) => { NVSchool.start(l, i); return new Promise(r => setTimeout(() => { const s = NVSchool.state(), W = NVSchool.way(); NVSchool.stop(true); r({ to: s.data.to, end: W && W[W.length - 1][2], s0: W && s.data.k != null ? W[s.data.k][2] : 0 }); }, 400)); }, { l, i }));
+  const ways = [['c', 7, 'the junction: up the way, right onto road 2, in the right lane', 10], ['m', 0, 'the gravel course end to end', 14], ['m', 2, 'the gravel corner through the 3 gates', 12], ['m', 7, 'the wiggles', 11], ['m', 10, 'the forest road', 11],
+    ['k', 0, 'the hill lap: up, round the top, down', 9], ['k', 2, 'the steady climb at 32 km/h', 9], ['k', 3, 'the first switchback', 8], ['k', 6, 'all the switchbacks up', 9], ['k', 8, 'all the switchbacks down', 9], ['k', 9, 'the snow climb', 8], ['k', 10, 'the snow descent at 29 km/h', 8], ['k', 11, 'the hill exam', 10], ['m', 6, 'the small jump at 43 km/h', 12]];
+  for (const [l, i, name, v] of ways) { const e = await E(l, i), r = await wayDrive(l, i, [[e.to + 0.6, v]]); T.check(name + ': done', ok(r), JSON.stringify({ ...r, e })); }
+  const eb = await E('m', 1), rb = await wayDrive('m', 1, [[70, 12, 2]]);
+  T.check('braking on gravel: 43 km/h at the yellow line, stopped in the box: done', ok(rb), JSON.stringify(rb));
+  const rb2 = await wayDrive('m', 1, [[40, 8], [70, 8, 2]]);
+  T.check('braking on gravel: 29 km/h at the yellow line: failed (too slow)', rb2.place === 4 && /too slow/.test(rb2.why), JSON.stringify(rb2));
+  const rd = await wayDrive('k', 4, [[150, 9, 2]]);
+  T.check('braking downhill: at 32 km/h, stopped in the box: done', ok(rd), JSON.stringify(rd));
+  const rd2 = await wayDrive('k', 4, [[150, 14, 2]]);
+  T.check('braking downhill: at 50 km/h: failed (over 40 km/h)', rd2.place === 4 && /over 40/.test(rd2.why), JSON.stringify(rd2));
+  const rh = await wayDrive('k', 1, [[100, 6, 2], [116, 4]]);
+  T.check('hill start: stopped in the box on the slope, then up 12 m: done', ok(rh), JSON.stringify(rh));
+  const rh2 = await wayDrive('k', 1, [[100, 6, 2], [98.5, 1]]);
+  T.check('hill start: rolled back 1.5 m: failed', rh2.place === 4 && /rolled back/.test(rh2.why), JSON.stringify(rh2));
+  const et = await E('k', 5), rt = await wayDrive('k', 5, [[et.end - 12, 6, 2]]);
+  T.check('stop at the top: stopped in the circle: done', ok(rt), JSON.stringify(rt));
+  const rr = await wayDrive('k', 7, [[118.6, 3]], { turn: true });
+  T.check('reverse uphill: 20 m backwards up the straight: done', ok(rr), JSON.stringify(rr));
+  const rn = await wayDrive('m', 8, [[46, 3], [30, 3]]);
+  T.check('turn on a narrow road: facing the other way, driving off: done', ok(rn), JSON.stringify(rn));
+  const rp = await wayDrive('m', 3, [[318, 10]], { lat: '(s) => { const k = Math.round((s - 235) / 12); return s < 225 || s > 300 ? 0 : (k % 2 ? -2.3 : 2.3); }' });
+  T.check('pole slalom on gravel: past the 6 poles: done', ok(rp), JSON.stringify(rp));
+  // the meadow: the gravel eight, the drift (the car 0.45 rad across its way), the handbrake turn
+  const AR = { x: -188, z: 24 };
+  const ge = await drive('m', 4, [[AR.x - 2, AR.z + 6, 8]].concat(ring(AR.x - 8, AR.z, 0, 2)).concat([[AR.x + 2, AR.z - 6, 8]]).concat(ring(AR.x + 8, AR.z, Math.PI, -2)));
+  T.check('gravel eight: twice round each pole, one each way: done', ok(ge), JSON.stringify(ge));
+  const hb = await drive('m', 9, [[AR.x - 14, AR.z + 5, 10], [AR.x + 6, AR.z + 5, 10]].concat(ring(AR.x + 6, AR.z, Math.PI / 2, -0.5, 5, 6)).concat([[AR.x - 18, AR.z - 5, 10]]));
+  T.check('handbrake turn: round the post and back over the line: done', ok(hb), JSON.stringify(hb));
+  // ROAD 10 · the roundabout: down lane 0, once round the fountain anticlockwise, out down lane 1
+  const J = await page.evaluate(() => NVPark.J), [fx, fz, fr] = J.PL.F;
+  const rbt = [[62, -7, 9], [fx + fr * 0.8, fz + 2, 9]].concat(ring(fx, fz, Math.atan2(2, fr * 0.8), -1.15, fr, 9)).concat([J.LANES[1][1].concat(9), J.LANES[1][2].concat(9), J.LANES[1][3].concat(9)]);
+  const ro = await drive('c', 9, rbt);
+  T.check('the roundabout: once round the fountain, out to the next plaza: done', ok(ro), JSON.stringify(ro));
 
   // 3. the result card: PONOVI starts it again; NAZAJ: the school's floor, its menu at ROAD LICENCE; the places kept
   await page.evaluate(() => { __game.resume && __game.resume(); });

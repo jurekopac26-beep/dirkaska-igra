@@ -1,7 +1,7 @@
 // NEW VERSION · TEST 1 (the title's button, js/game.js nvStart, js/newmap.js): the button top right on the title (upright and on its side),
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
 // the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
-// (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START, the others' choices and START say V IZDELAVI, HOME's box Garaža v izdelavi);
+// (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START starts it (js/nvschool.js), the others' choices say V IZDELAVI, HOME's box Garaža v izdelavi);
 // the small circuit's infield (the park with its solid volcano, the rescue base, the edges, road 2's fork) and the park's loose things the car knocks over
 // (barrels, cones, stalls, crates, bins, benches, blocks, balloon stands, lamps), its bouncy castles the car bounces off, its people who run out of the
 // car's way; the ground by the sea (the beach's sand, one meadow, the new shores, the meadow beyond the map's edges); back to the title the page loads again.
@@ -227,9 +227,9 @@ try {
     T.check('a tap on a task: its card with START', m2 && m2.lvl === 2 && m2.go && m2.rows.length === 0, JSON.stringify(m2));
     // (the note shows 1.4 s: read at the tap itself, a frame of the new map in a browser without a GPU takes seconds)
     const tapWip = (sel) => page.evaluate((sel) => { document.querySelector(sel).click(); const w = document.querySelector('#nvm .wip'); return { wip: w.classList.contains('on'), t: w.textContent }; }, sel);
-    const m3 = await tapWip('#nvm .go');
-    T.check('START: V IZDELAVI (the tasks are not built yet)', m3.wip && /izdelavi/i.test(m3.t), JSON.stringify(m3));
-    await page.click('#nvm [data-a="back"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
+    const m3 = await page.evaluate(() => { document.querySelector('#nvm .go').click(); return new Promise(r => setTimeout(() => { const s = NVSchool.state(); NVSchool.stop(); r(s); }, 600)); });
+    T.check('START: the task starts (GRAVEL LICENCE, task 5; js/nvschool.js, tests/browser/nvschool.test.mjs)', m3 && m3.l === 'm' && m3.i === 4, JSON.stringify(m3));
+    await go('school'); await page.click('#nvm [data-a="lic"][data-i="1"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
     T.check('back: the level\'s tasks (level 2), then the licences (GRAVEL LICENCE at level 2 now)', m4 && m4.lvl === 1 && m4.lv === 2 && m5 && m5.lvl === 0 && /level 2 · 2 \/ 12 tasks/.test(m5.rows[1]), JSON.stringify([m4 && m4.lv, m5 && m5.rows[1]]));
     const s6 = await go('circuit'), m6 = await menu(), w6 = await tapWip('#nvm [data-a="wip"][data-i="2"]');
     T.check('another garage (circuit race): its three choices; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.rows.length === 3 && w6.wip, JSON.stringify({ rows: m6 && m6.rows, w6 }));

@@ -113,8 +113,8 @@ const NVSchool = (function () {
     return true;
   }
   function begin() {
-    const R = run, def = R.def, P = G.player(); marksClear(); conesSet(def.cones ? def.cones() : DEF_CONES());
-    R.at = typeof def.at === 'function' ? def.at(R) : def.at; place(P, R.at); R.px = P.x; R.pz = P.z;
+    const R = run, def = R.def, P = G.player(); marksClear();
+    R.at = typeof def.at === 'function' ? def.at(R) : def.at; conesSet(def.cones ? def.cones(R) : DEF_CONES()); place(P, R.at); R.px = P.x; R.pz = P.z;
     if (def.setup) def.setup(R); R.st = 'count'; R.cdT = 3; drawHud(); drawCd();
   }
   function place(P, a) { const y = (H3.ground ? H3.ground(a[0], a[1]) : 0) + (H3.top || 0); P.place(a[0], a[1], a[2]); P.y = P.py = P.roadY = y; P.vx = P.vz = 0; P.w = 0; if (Render.resetCam) Render.resetCam(); }
@@ -225,7 +225,7 @@ const NVSchool = (function () {
       if (R.data.fast && R.hold(kmh(P) < 1, 0.6, dt)) { R.data.gap = L.stop - f.x; R.win(); } },
     grade: (R) => { const g = R.data.gap; return g <= 0.6 ? 1 : g <= 1.5 ? 2 : g <= 3 ? 3 : 4; } };
   // ROAD 4 · slalom: 6 cones, left of the first, right of the second ..., over the line after the last
-  T.slalom = { at: () => [PAD[0] + 2.5, pv(8), 0], lim: [11, 14, 19], hint: 'Weave through the 6 cones: the first on your right.',
+  T.slalom = { at: () => [PAD[0] + 2.5, pv(8), 0], lim: [12, 17, 25], hint: 'Weave through the 6 cones: the first on your right.',
     cones: () => DEF_CONES(), setup(R) { lineMark(pu(70), pv(8), 0, 9); R.data.k = 0; },
     step(R, P) { const S = SLALOM(); if (Math.abs(P.z - pv(8)) > 7.5) return R.fail('off the slalom');
       while (R.data.k < S.length && P.x >= S[R.data.k][0]) { const k = R.data.k, side = k % 2 ? 1 : -1; if ((P.z - S[k][1]) * side <= 0) return R.fail('wrong side of cone ' + (k + 1)); R.data.k++; }
@@ -280,8 +280,154 @@ const NVSchool = (function () {
       const off = H3.TL ? H3.TL.dist(P.x, P.z, 40) > w + 8 : false; D.off = off ? D.off + dt : 0; if (D.off > 2.5) return R.fail('off the track');
       if (crossed(R, P, t.px[i], t.pz[i], t.hd[i], w + 3)) { D.k++; if (D.k >= 4) return R.win(); this.gate(R); R.hint(D.k === 3 ? 'The last gate: the line.' : `Gate ${D.k + 1} of 4.`); } } };
 
+  // ---- tasks along a way (the gravel roads in the field, the hill's switchbacks, the snowy forest road): the way as points every metre
+  // (segs: [curve, u0, u1] one after another), the car kept on it (off by more than its half width and a bit for 1.5 s: failed), finished at its end
+  function wayPts(segs) {
+    const o = []; for (const [cv, u0, u1] of segs) { const n = Math.max(2, Math.ceil(cv.getLength() * Math.abs(u1 - u0))); for (let k = 0; k <= n; k++) { const q = cv.getPointAt(u0 + (u1 - u0) * k / n), b = o[o.length - 1]; if (!b || Math.hypot(q.x - b.x, q.z - b.z) > 0.5) o.push({ x: q.x, z: q.z }); } }
+    let s = 0; o.forEach((p, i) => { if (i) s += Math.hypot(p.x - o[i - 1].x, p.z - o[i - 1].z); p.s = s; const a = o[Math.max(0, i - 1)], b = o[Math.min(o.length - 1, i + 1)]; p.h = Math.atan2(b.z - a.z, b.x - a.x); }); return o;
+  }
+  // the nearest point of the way about the last one: its index, metres along, the car's offset to the right
+  function wayAt(W, x, z, k0) { let bk = k0, bd = 1e18; for (let k = Math.max(0, k0 - 20); k < Math.min(W.length, k0 + 30); k++) { const d = (W[k].x - x) ** 2 + (W[k].z - z) ** 2; if (d < bd) { bd = d; bk = k; } } const p = W[bk]; return { k: bk, s: p.s, p, lat: -(x - p.x) * Math.sin(p.h) + (z - p.z) * Math.cos(p.h) }; }
+  const wayK = (W, s) => { let k = 0; while (k < W.length - 1 && W[k].s < s) k++; return k; };
+  const wayPos = (W, s, off = 0) => { const p = W[wayK(W, s)]; return [p.x - Math.sin(p.h) * off, p.z + Math.cos(p.h) * off, p.h]; };
+  // the three times from the way's length and the speed of a 1st place (m/s): 1st, 2nd at 80 %, 3rd at 60 % of it
+  const limOf = (L, v) => [Math.round(L / v), Math.round(L / v / 0.8), Math.round(L / v / 0.6)];
+  // o: segs(H3), hw (half width), from / to (metres; to null: the end), v (1st place's speed) or lim, rev (driven in reverse), poles [[s, off]],
+  // gates [s] (through them), need { s, kmh } (at least), vmax (km/h, never over), box s (stop in it), back (end facing back), step(R, P, dt, w)
+  function wayTask(o) {
+    return { hint: o.hint, lim: o.lim, grade: o.grade,
+      at(R) { const W = R.data.W = wayPts(o.segs(H3)), sp = o.span ? o.span(W) : [o.from || 0, o.to != null ? o.to : W[W.length - 1].s], to = R.data.to = sp[1]; R.data.k = wayK(W, sp[0]); R.data.off = 0; R.data.vT = 0; R.data.g = 0;
+        if (!this.lim && !this.grade) this.lim = limOf(to - sp[0], o.v || 10);
+        const a = wayPos(W, sp[0]); return [a[0], a[1], a[2] + (o.rev ? Math.PI : 0)]; },
+      cones: (R) => (o.poles || []).map(([s, off]) => wayPos(R.data.W, s, off).slice(0, 2)),
+      setup(R) { const W = R.data.W; for (const g of (o.gates || [])) { const a = wayPos(W, g); gateMark(a[0], a[1], a[2], o.hw * 2 + 0.6); }
+        if (o.box != null) { const a = wayPos(W, o.box); boxMark(a[0], a[1], a[2], 6, Math.min(3.4, o.hw * 2)); }
+        if (o.need) { const a = wayPos(W, o.need.s); lineMark(a[0], a[1], a[2] + Math.PI / 2, o.hw * 2, 0xffd34d); }
+        if (o.box == null && !o.back) { const a = wayPos(W, R.data.to); lineMark(a[0], a[1], a[2] + Math.PI / 2, o.hw * 2); }
+        if (o.setup) o.setup(R); },
+      step(R, P, dt) { const D = R.data, W = D.W, w = wayAt(W, P.x, P.z, D.k); D.k = w.k; D.s = w.s;
+        D.off = Math.abs(w.lat) > o.hw + 1.2 ? D.off + dt : 0; if (D.off > 1.5) return R.fail('off the road');
+        const gs = o.gates || []; if (D.g < gs.length && w.s >= gs[D.g]) { if (Math.abs(w.lat) > o.hw + 0.3) return R.fail('missed gate ' + (D.g + 1)); D.g++; }
+        if (o.need && !D.need && w.s >= o.need.s) { if (kmh(P) < o.need.kmh) return R.fail('too slow: ' + Math.round(kmh(P)) + ' km/h, ' + o.need.kmh + ' needed'); D.need = 1; }
+        if (o.vmax) { D.vT = kmh(P) > o.vmax + 2 ? D.vT + dt : 0; if (D.vT > 0.4) return R.fail('over ' + o.vmax + ' km/h'); }
+        if (o.rev && kmh(P) > 2 && Math.cos(P.h - w.p.h) > -0.7) return R.fail('turned round: in reverse all the way');
+        if (o.step && o.step(R, P, dt, w) === false) return;
+        if (R.st === 'end') return;
+        if (o.box != null) { if (R.hold(Math.abs(w.s - o.box) < 1.4 && Math.abs(w.lat) < 1.2 && kmh(P) < 1.5, 1, dt)) R.win(); else if (w.s > o.box + 10) R.fail('past the box'); return; }
+        if (o.back) return;
+        if (w.s >= D.to - 0.5) R.win(); } };
+  }
+  const WAY = { p6: (h) => [[h.paths[6].cv, 0, 1]], over: (h) => [[h.roads.over.cv, 0, 1]], forest: (h) => [[h.roads.forest.cv, 0, 1]], p18: (h) => [[h.paths[18].cv, 0, 1]],
+    up: (h) => [[h.hill.paths[0].cv, 0, 1]], down: (h) => [[h.hill.paths[6].cv, 0, 1]], lap: (h) => [[h.hill.paths[0].cv, 0, 1], [h.hill.paths[1].cv, 0, 0.66], [h.hill.paths[6].cv, 0, 1]] };
+
+  // ---- the gravel arena: the open meadow west of the gravel road over the hill (the meadow drives as gravel: js/newmap.js surfGrid)
+  const AR = { x: -188, z: 24 }, arIn = [AR.x - 22, AR.x + 22, AR.z - 18, AR.z + 18];
+  // the car's slide: the angle between where it points and where it goes (0 when slow)
+  const slip = (P) => { const v = Math.hypot(P.vx, P.vz); if (v < 3) return 0; let d = Math.atan2(P.vz, P.vx) - P.h; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; return Math.abs(d); };
+  // the winding of the car round a point (radians, + one way): from its last spot to this one
+  const wind = (R, P, c, key) => { const a = Math.atan2(P.z - c[1], P.x - c[0]), b = Math.atan2(R.pz - c[1], R.px - c[0]); let d = a - b; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; R.data[key] = (R.data[key] || 0) + d; return R.data[key]; };
+
+  // GRAVEL 1 · the gravel course: the gravel road along the north, end to end
+  const M = [];
+  M[0] = wayTask({ segs: WAY.p6, hw: 2.7, v: 14, hint: 'The whole gravel road to the line, never off it.' });
+  // GRAVEL 2 · braking on gravel: 40 km/h at the yellow line, then stop inside the box
+  M[1] = wayTask({ segs: WAY.p6, hw: 2.7, from: 2, need: { s: 42, kmh: 40 }, box: 70, lim: [8, 10, 14], hint: '40 km/h at the yellow line, then stop inside the box: gravel needs longer.' });
+  // GRAVEL 3 · a gravel corner: through 3 gates round the bends
+  M[2] = wayTask({ segs: WAY.p6, hw: 2.7, from: 115, to: 215, gates: [140, 165, 190], v: 12, hint: 'Round the bends through the 3 gates.' });
+  // GRAVEL 4 · pole slalom: 6 poles on the road, touch none
+  M[3] = wayTask({ segs: WAY.p6, hw: 2.7, from: 215, to: 315, poles: [0, 1, 2, 3, 4, 5].map(k => [235 + k * 12, k % 2 ? 1.1 : -1.1]), v: 11, hint: 'Past the 6 poles, touch none.' });
+  // GRAVEL 5 · the gravel eight: twice round two poles on the meadow, one each way
+  const GE = () => ({ a: [AR.x - 8, AR.z], b: [AR.x + 8, AR.z] });
+  M[4] = { at: [AR.x, AR.z + 8, -Math.PI / 2], lim: [20, 26, 34], area: arIn, cones: () => [GE().a, GE().b], hint: 'Two figures of eight round the two poles.',
+    step(R, P) { const E = GE(), wa = P.x < AR.x + 2 ? wind(R, P, E.a, 'wa') : R.data.wa || 0, wb = P.x > AR.x - 2 ? wind(R, P, E.b, 'wb') : R.data.wb || 0, full = 4 * Math.PI * 0.88, n = (w) => Math.min(2, Math.floor(Math.abs(w) / (2 * Math.PI) + 0.08));
+      R.hint(`Round each pole twice, one each way: ${n(wa)} / 2 · ${n(wb)} / 2`);
+      if (Math.abs(wa) >= full && Math.abs(wb) >= full) { if (wa * wb > 0) return R.fail('both poles the same way round: a figure of eight goes one each way'); R.win(); } } };
+  // GRAVEL 6 · drift: round the cone sliding (the car 15° and more across its way) for 3 s in one go
+  M[5] = { at: [AR.x - 14, AR.z + 8, 0], lim: [8, 12, 18], area: arIn, cones: () => [[AR.x, AR.z]], hint: 'Slide round the cone: 3 seconds across.',
+    step(R, P, dt) { const d = Math.hypot(P.x - AR.x, P.z - AR.z), on = slip(P) > 0.26 && d > 3 && d < 14; R.data.dr = on ? (R.data.dr || 0) + dt : Math.max(0, (R.data.dr || 0) - dt * 2);
+      R.hint(`Slide round the cone: ${Math.min(3, R.data.dr).toFixed(1)} / 3 s`); if (R.data.dr >= 3) R.win(); } };
+  // GRAVEL 7 · a small jump: over the crest on the forest road, land straight on the road
+  const crestS = (W) => { const c = H3.kick2 || { x: -197, z: -79 }; let bk = 0, bd = 1e18; W.forEach((p, k) => { const d = (p.x - c.x) ** 2 + (p.z - c.z) ** 2; if (d < bd) { bd = d; bk = k; } }); return W[bk].s; };
+  M[6] = wayTask({ segs: WAY.forest, hw: 3.1, span: (W) => { const c = crestS(W); return [Math.max(0, c - 50), c + 40]; }, lim: [8, 10, 13], hint: 'Over the crest at speed, land straight on the road.',
+    setup(R) { R.data.cs = crestS(R.data.W); },
+    step(R, P, dt, w) { const D = R.data; if (!D.air && P.y > (H3.ground ? H3.ground(P.x, P.z) : 0) + 0.35) D.air = 1;
+      if (!D.top && w.s >= D.cs) { D.top = 1; if (kmh(P) < 30) { R.fail('too slow over the crest: ' + Math.round(kmh(P)) + ' km/h, 30 needed'); return false; } }
+      if (D.top && w.s > D.cs + 6 && Math.abs(Math.cos(P.h - w.p.h)) < 0.9) { R.fail('landed crooked'); return false; } } });
+  // GRAVEL 8 · wiggles: the winding gravel road over the hill's shoulder, under the time
+  M[7] = wayTask({ segs: WAY.over, hw: 3.1, to: 150, v: 11, hint: 'The winding road to the line, never off it.' });
+  // GRAVEL 9 · turn on a narrow road: face the other way without leaving it
+  M[8] = wayTask({ segs: WAY.p18, hw: 2.6, from: 36, back: true, lim: [10, 15, 22], hint: 'Turn the car round on the road, then drive off the other way.',
+    step(R, P) { const w = wayAt(R.data.W, P.x, P.z, R.data.k); if (Math.cos(P.h - w.p.h) < -0.9 && kmh(P) > 4 && P.vx * Math.cos(P.h) + P.vz * Math.sin(P.h) > 0) R.win(); } });
+  // GRAVEL 10 · handbrake turn: round the post and back over the line, in one go (never backwards)
+  M[9] = { at: [AR.x - 20, AR.z, 0], lim: [6, 8, 11], area: arIn, cones: () => [[AR.x + 6, AR.z]], hint: 'Round the post and back over the line, never backwards.',
+    setup() { lineMark(AR.x - 16, AR.z, Math.PI / 2, 8); },
+    step(R, P) { if (kmh(P) > 2 && P.vx * Math.cos(P.h) + P.vz * Math.sin(P.h) < 0) return R.fail('backwards: in one go'); const w = wind(R, P, [AR.x + 6, AR.z], 'w');
+      if (Math.abs(w) > Math.PI * 0.9 && P.x < AR.x - 16) R.win(); } };
+  // GRAVEL 11 · the forest road: all of it, up and over the hill's snowy shoulder
+  M[10] = wayTask({ segs: WAY.forest, hw: 3.1, v: 11, hint: 'The whole forest road to the line, never off it.' });
+  // GRAVEL 12 · the exam: the gravel course with 6 poles, under the time, at most 2 poles down
+  M[11] = wayTask({ segs: WAY.p6, hw: 2.7, poles: [0, 1, 2, 3, 4, 5].map(k => [235 + k * 12, k % 2 ? 1.1 : -1.1]), v: 13, hint: 'The gravel course: at most 2 poles down.',
+    step(R) { if (R.nHit > 2) { R.fail('3 poles down'); return false; } } });
+
+  // HILL: up the switchbacks (hill 0), the ring at the top (1), down the other side (6); the snowy forest road
+  const K = [];
+  K[0] = wayTask({ segs: WAY.lap, hw: 2.6, v: 9, hint: 'Up the switchbacks, round the top and down the other side.' });
+  // HILL 2 · hill start: stop in the box on the slope, then pull away up without rolling back
+  K[1] = wayTask({ segs: WAY.up, hw: 2.6, from: 85, back: true, lim: [10, 14, 20], hint: 'Stop inside the box on the slope.',
+    setup(R) { const a = wayPos(R.data.W, 100); boxMark(a[0], a[1], a[2], 6, 3.4); },
+    step(R, P, dt, w) { const D = R.data; if (!D.st0) { if (R.hold(Math.abs(w.s - 100) < 1.4 && kmh(P) < 1, 1.5, dt)) { D.st0 = w.s; R.hint('Now pull away up the hill: do not roll back.'); } else if (w.s > 112) { R.fail('past the box'); return false; } return; }
+      if (w.s < D.st0 - 0.6) { R.fail('rolled back'); return false; } if (w.s > D.st0 + 12) R.win(); } });
+  // HILL 3 · a steady climb: up to the first bend between 20 and 45 km/h
+  K[2] = wayTask({ segs: WAY.up, hw: 2.6, to: 60, v: 9, vmax: 45, hint: 'Up to the first bend between 20 and 45 km/h.',
+    step(R, P, dt) { if (R.t > 4) { R.data.slow = kmh(P) < 18 ? (R.data.slow || 0) + dt : 0; if (R.data.slow > 1) { R.fail('under 20 km/h'); return false; } } } });
+  // HILL 4 · the first switchback without leaving the road
+  K[3] = wayTask({ segs: WAY.up, hw: 2.6, from: 50, to: 130, v: 8, hint: 'Round the first switchback, stay on the road.' });
+  // HILL 5 · braking downhill: down to the box, never over 40 km/h
+  K[4] = wayTask({ segs: WAY.down, hw: 2.6, from: 90, box: 150, vmax: 40, lim: [12, 15, 20], hint: 'Down to the box, never over 40 km/h.' });
+  // HILL 6 · stop in the circle at the top
+  K[5] = wayTask({ segs: (h) => [[h.hill.paths[0].cv, 0, 1], [h.hill.paths[1].cv, 0, 0.3]], hw: 2.6, from: 200, back: true, lim: [9, 12, 17], hint: 'Stop in the circle at the top of the hill.',
+    setup(R) { const W = R.data.W, s = W[W.length - 1].s - 12, a = wayPos(W, s); R.data.cs = s; const g = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.15, 32), mm(0xffd34d)); g.rotation.x = -Math.PI / 2; g.position.set(a[0], gy(a[0], a[1]) + 0.05, a[1]); mark(g); R.data.c = a; },
+    step(R, P, dt) { const c = R.data.c; if (R.hold(Math.hypot(P.x - c[0], P.z - c[1]) < 1.8 && kmh(P) < 1, 1, dt)) R.win(); } });
+  // HILL 7 · all the switchbacks up
+  K[6] = wayTask({ segs: WAY.up, hw: 2.6, v: 9, hint: 'All the switchbacks up to the line at the top.' });
+  // HILL 8 · 20 m in reverse up the straight part
+  K[7] = wayTask({ segs: WAY.up, hw: 2.6, from: 98, to: 118, rev: true, lim: [8, 11, 16], hint: 'Back up the straight 20 m, in reverse all the way.' });
+  // HILL 9 · all the switchbacks down
+  K[8] = wayTask({ segs: WAY.down, hw: 2.6, v: 9, hint: 'All the switchbacks down to the line.' });
+  // HILL 10 · the snow climb: up the snowy forest road to its top
+  K[9] = wayTask({ segs: WAY.forest, hw: 3.1, from: 20, to: 113, v: 8, hint: 'Up the snowy road to the top, do not slide off.' });
+  // HILL 11 · the snow descent: down the snowy road, never over 40 km/h
+  K[10] = wayTask({ segs: WAY.forest, hw: 3.1, from: 113, to: 190, v: 8, vmax: 40, hint: 'Down the snowy road, never over 40 km/h.' });
+  // HILL 12 · the exam: up and down, under the time, never off the road
+  K[11] = wayTask({ segs: WAY.lap, hw: 2.6, v: 10, hint: 'The exam: up, round the top and down, never off the road.' });
+
+  // ROAD 8 · the junction: up the way to the boxes, right onto road 2, in your own lane (the right half)
+  const NV = () => (typeof NVBase !== 'undefined' && NVBase.ROUTE) || [[-41.5, 41], [-33, 72], [-21, 87]];
+  T.cross = wayTask({ segs: (h) => { const j = h.net.find(e => e.id === 'jump'), r = NV().slice().reverse(), c1 = new THREE.CatmullRomCurve3(r.map(([x, z]) => new THREE.Vector3(x, 0, z))), q = j.cv; let bu = 0, bd = 1e18; for (let u = 0; u <= 1; u += 0.002) { const p = q.getPointAt(u), d = (p.x - r[r.length - 1][0]) ** 2 + (p.z - r[r.length - 1][1]) ** 2; if (d < bd) { bd = d; bu = u; } } return [[c1, 0.55, 1], [q, bu, Math.min(1, bu + 0.25)]]; },
+    hw: 3.5, v: 9, hint: 'Up to the road, turn right, keep in your own lane.',
+    step(R, P, dt, w) { R.data.wr = w.lat < -0.3 ? (R.data.wr || 0) + dt : 0; if (R.data.wr > 1.2) { R.fail('in the wrong lane: keep right'); return false; } } });
+  // ROAD 9 · the emergency stop: speed up on the track, when the red board lights up stop before it
+  T.estop = { hint: 'Speed up to 80 km/h. When the red board lights up, stop before it!',
+    at(R) { const t = G.track(), n = t.px.length; let bi = 0, bd = 1e18; for (let i = 0; i < n; i += 2) { const d = (t.px[i] - pu(48)) ** 2 + (t.pz[i] - PAD[2]) ** 2; if (d < bd) { bd = d; bi = i; } } R.data.i0 = bi; return [t.px[bi], t.pz[bi], t.hd[bi]]; },
+    step(R, P, dt) { const t = G.track(), n = t.px.length, ds = t.ds || 1, D = R.data;
+      const near = H3.TL ? H3.TL.near(P.x, P.z, 40) : { k: -1, d: 0 }; if (near.k < 0 || near.d > (t.w || 7) + 8) return R.fail('off the track');
+      const go = ((near.k - D.i0 + n) % n) * ds;
+      if (!D.ob) { if (kmh(P) >= 75) { const i = (near.k + Math.round(45 / ds)) % n; D.ob = i; gateMark(t.px[i], t.pz[i], t.hd[i], (t.w || 7) * 2, 0xd8282a); R.hint('STOP! Stop before the red board.'); } else if (go > 400) R.fail('not up to 75 km/h in 400 m'); return; }
+      const i = D.ob, fr = front(P), c = Math.cos(t.hd[i]), s = Math.sin(t.hd[i]), gap = (t.px[i] - fr.x) * c + (t.pz[i] - fr.z) * s;
+      if (gap < -0.2) return R.fail('through the red board');
+      if (R.hold(kmh(P) < 1, 0.6, dt)) { D.gap = gap; R.win(); } },
+    grade: (R) => { const g = R.data.gap; return g <= 6 ? 1 : g <= 12 ? 2 : g <= 20 ? 3 : 4; } };
+  // ROAD 10 · the roundabout: the park's first plaza, once round the fountain anticlockwise, out to the next plaza
+  const RB = () => (typeof NVPark !== 'undefined' && NVPark.J) || null;
+  T.round = { hint: 'Into the roundabout, once round the fountain (on your left), out to the next plaza.', lim: [14, 18, 25],
+    at: () => [72, 3, Math.atan2(-10, -10)],
+    step(R, P, dt) { const J = RB(); if (!J) return R.fail('no roundabout'); const [cx, cz, r] = J.PL.F, d = Math.hypot(P.x - cx, P.z - cz), w = d < r + 8 ? wind(R, P, [cx, cz], 'w') : R.data.w || 0;
+      if (w > 0.6) return R.fail('the wrong way round: keep the fountain on your left');
+      const n = Math.min(1, -w / (2 * Math.PI)); R.hint(n > 0.85 ? 'Out to the next plaza.' : `Round the fountain: ${Math.round(n * 100)} %`);
+      const [ex, ez] = J.LANES[1][3]; if (Math.hypot(P.x - ex, P.z - ez) < 6) { if (-w < 2 * Math.PI * 0.8) return R.fail('out too soon: once round the fountain'); R.win(); } } };
+
   // the licences' tasks in the menu's order (null: not built yet, START says V IZDELAVI)
-  const TASKS = { c: [T.lap, T.startStop, T.brakeLine, T.slalom, T.eight, T.reversePark, T.parallel, null, null, null, T.laneChange, T.examRoad], m: [], k: [] };
+  const TASKS = { c: [T.lap, T.startStop, T.brakeLine, T.slalom, T.eight, T.reversePark, T.parallel, T.cross, T.estop, T.round, T.laneChange, T.examRoad], m: M, k: K };
 
   // ---- set up with the new map (from NVMenu.init): the bridge (player, track, the menu's names and colours, record a place, the menu again)
   function init(h3, o = {}) {
@@ -293,7 +439,8 @@ const NVSchool = (function () {
   }
   const has = (l, i) => !!(TASKS[l] && TASKS[l][i]);
   const active = () => !!run;
-  const state = () => run ? { l: run.l, i: run.i, st: run.st, t: +run.t.toFixed(2), pen: run.pen, place: run.place || 0, why: run.why || '', hint: run.hintTxt, data: Object.assign({}, run.data) } : null;
+  const state = () => run ? { l: run.l, i: run.i, st: run.st, t: +run.t.toFixed(2), pen: run.pen, place: run.place || 0, why: run.why || '', hint: run.hintTxt, data: Object.fromEntries(Object.entries(run.data).filter(([k]) => k !== 'W')) } : null;
+  const way = () => run && run.data.W ? run.data.W.map(p => [+p.x.toFixed(2), +p.z.toFixed(2), +p.s.toFixed(1), +p.h.toFixed(3)]) : null;   // (the tests: the task's way)
   const conesNow = () => cones.map(c => ({ x: +c.x.toFixed(2), z: +c.z.toFixed(2), hit: c.hit }));
-  return { init, tick, start, stop, has, active, state, cones: conesNow, TASKS, PAD: () => PAD, BAY, PBOX, LANE, SLALOM, E8, LC };
+  return { init, tick, start, stop, has, active, state, way, cones: conesNow, TASKS, PAD: () => PAD, BAY, PBOX, LANE, SLALOM, E8, LC };
 })();
