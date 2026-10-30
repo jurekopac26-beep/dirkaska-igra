@@ -79,3 +79,4 @@
 - 30. 10. ODGOVOR 9 (zavihki v meniju): vsak od 4 zavihkov (kot v brskalniku) pokaže IME kategorije + RAZPON CEN te kategorije, npr. »ŠPORTNE · 1.200–2.400 €« (cene iz cene/cene.json, od najcenejše do najdražje možnosti v kategoriji).
 - 30. 10. Gumba za avta (odgovor 0, dopolnitev): avto v gumbu je »parkiran« 0,5 m bolj nazaj kot na sliki v7 (sličica posneta z avtom 0,5 m globlje v prizoru: manjši, ves viden, nekaj prostora okoli, ne sega pod « / »).
 - 30. 10. ODGOVOR 10 (gumb nazaj ob KUPI IN NAMESTI v meniju): širina 25 % spodnje vrstice (kot različica 4 iz nazaj_dolg, le ožji), KUPI IN NAMESTI zavzame ostalo.
+- 30. 10. ODGOVOR 10 SPREMENJEN (nadomesti 25 %): gumb nazaj ob KUPI IN NAMESTI = različica 4 iz nazaj_dolg, 33 % širine z napisom »‹ NAZAJ«.
