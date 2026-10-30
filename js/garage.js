@@ -56,7 +56,7 @@
   const KEY = 'apex-garage';
   const carNew = (id, own) => ({ own: !!own, parts: {}, color: color0(id), stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
-    const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, lang: S0lang(), sound: true, guide: 0 };
+    const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, lang: S0lang(), sound: true, guide: 0, flag: '' };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
     S.cars.pico.cond = { clean: 0.35, body: 0.6, engine: 0.42 };
     if (mode === 'vet') {
@@ -81,7 +81,7 @@
       o.parts = fromDeli(c.deli);
       o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false;
       for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; }
-    d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; d.lang = s.lang === 'en' ? 'en' : 'sl'; d.sound = s.sound !== false; d.demo = s.demo !== false; d.guide = s.guide ? 1 : 0;
+    d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; d.lang = s.lang === 'en' ? 'en' : 'sl'; d.sound = s.sound !== false; d.demo = s.demo !== false; d.guide = s.guide ? 1 : 0; d.flag = typeof s.flag === 'string' ? s.flag : '';
     if (!d.cars.pico.own) d.cars.pico.own = true;
     return d;
   }
@@ -138,6 +138,40 @@
     return [mineId, free[1] || null, free[0] || null];
   }
 
+  /* ---------------- the IZBERI PROGO button: the flag of the selected track's country, no words (odlocitve 30. 10.); the country from the
+     game (index.html opens the garage with &drzava=, kept in the profile); none known: a chequered flag ---------------- */
+  // (each a flag in 30 x 20: [its field, stretched over the button; its emblem, kept in proportion; where the emblem stands])
+  const hz = (...c) => c.map((f, i) => '<rect y="' + (i * 20 / c.length).toFixed(2) + '" width="30" height="' + (20 / c.length + 0.05).toFixed(2) + '" fill="' + f + '"/>').join('');
+  const vt = (...c) => c.map((f, i) => '<rect x="' + (i * 10) + '" width="10.05" height="20" fill="' + f + '"/>').join('');
+  const star = (cx, cy, r, f) => { let d = ''; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.4 : r; d += (i ? 'L' : 'M') + (cx + Math.cos(a) * q).toFixed(2) + ' ' + (cy + Math.sin(a) * q).toFixed(2); } return '<path d="' + d + 'Z" fill="' + f + '"/>'; };
+  const FLAGS = {
+    'Slovenija': [hz('#fff', '#0b4ea2', '#ed1c24'), '<g transform="translate(3 0)"><path d="M5.6 3.6h6.4v5.8c0 2.9-1.6 4.4-3.2 5.1-1.6-.7-3.2-2.2-3.2-5.1z" fill="#0b4ea2" stroke="#ed1c24" stroke-width=".7"/><path d="M6.1 10.4l1.3-2.2.9 1.3.5-.8 1.6 2.6c-.6 1.4-1.4 2.1-1.6 2.3-.4-.2-2.1-1.3-2.7-3.2z" fill="#fff"/><g fill="#ffd200"><circle cx="7" cy="5.2" r=".45"/><circle cx="8.8" cy="4.7" r=".45"/><circle cx="10.6" cy="5.2" r=".45"/></g></g>', 'xMinYMid'],
+    'Nemčija': [hz('#000', '#dd0000', '#ffce00')], 'Avstrija': [hz('#c8102e', '#fff', '#c8102e')], 'Rusija': [hz('#fff', '#0039a6', '#d52b1e')], 'Monako': [hz('#ce1126', '#fff')],
+    'Belgija': [vt('#000', '#fdda24', '#ef3340')], 'Francija': [vt('#0055a4', '#fff', '#ef4135')], 'Italija': [vt('#009246', '#fff', '#ce2b37')],
+    'Tajska': ['<rect width="30" height="20" fill="#a51931"/><rect y="3.33" width="30" height="13.34" fill="#f4f5f8"/><rect y="6.67" width="30" height="6.67" fill="#2d2a4a"/>'],
+    'Finska': ['<rect width="30" height="20" fill="#fff"/><rect y="7.25" width="30" height="5.5" fill="#002f6c"/>', '<rect x="8" width="5.5" height="20" fill="#002f6c"/>', 'xMinYMid'],
+    'Anglija': ['<rect width="30" height="20" fill="#fff"/><rect y="8" width="30" height="4" fill="#ce1124"/>', '<rect x="13" width="4" height="20" fill="#ce1124"/>', 'xMidYMid'],
+    'Japonska': ['<rect width="30" height="20" fill="#fff"/>', '<circle cx="15" cy="10" r="6" fill="#bc002d"/>', 'xMidYMid'],
+    'ZDA': ['<rect width="30" height="20" fill="#fff"/>' + Array.from({ length: 7 }, (_, i) => '<rect y="' + (i * 40 / 13).toFixed(2) + '" width="30" height="' + (20 / 13).toFixed(2) + '" fill="#b22234"/>').join(''),
+      '<rect width="12" height="10.77" fill="#3c3b6e"/>' + Array.from({ length: 20 }, (_, i) => '<circle cx="' + (1.2 + (i % 5) * 2.4 + ((i / 5 | 0) % 2) * 1.2).toFixed(1) + '" cy="' + (1.3 + (i / 5 | 0) * 2.6).toFixed(1) + '" r=".42" fill="#fff"/>').join(''), 'xMinYMin'],
+    'Kanada': ['<rect width="30" height="20" fill="#fff"/><rect width="7.5" height="20" fill="#d52b1e"/><rect x="22.5" width="7.5" height="20" fill="#d52b1e"/>',
+      '<path d="M15 4l1 2.2 1.2-.6-.4 3 2.2-1.6-.4 1.4 2 .4-1 1.4.6.6-3.2 2.2.4 1-2.1-.3V16h-.6v-2.3l-2.1.3.4-1-3.2-2.2.6-.6-1-1.4 2-.4-.4-1.4 2.2 1.6-.4-3 1.2.6z" fill="#d52b1e"/>', 'xMidYMid'],
+    'Avstralija': ['<rect width="30" height="20" fill="#012169"/>', '<rect width="15" height="10" fill="#012169"/><path d="M0 0L15 10M15 0L0 10" stroke="#fff" stroke-width="2"/><path d="M0 0L15 10M15 0L0 10" stroke="#c8102e" stroke-width=".8"/><path d="M7.5 0V10M0 5H15" stroke="#fff" stroke-width="3.3"/><path d="M7.5 0V10M0 5H15" stroke="#c8102e" stroke-width="2"/>'
+      + star(7.5, 15, 2.2, '#fff') + star(22.5, 15.8, 1, '#fff') + star(20, 9.2, 1, '#fff') + star(22.5, 4.2, 1, '#fff') + star(25.4, 8, 1, '#fff') + star(23.6, 11, 0.55, '#fff'), 'xMinYMid'],
+    'Brazilija': ['<rect width="30" height="20" fill="#009c3b"/>', '<path d="M15 2.2L27.6 10 15 17.8 2.4 10z" fill="#ffdf00"/><circle cx="15" cy="10" r="4.4" fill="#002776"/><path d="M10.8 9.2q4.6-1.4 8.6 1.6" stroke="#fff" stroke-width=".7" fill="none"/>', 'xMidYMid'],
+    'Čile': [hz('#fff', '#d52b1e'), '<rect width="10" height="10" fill="#0039a6"/>' + star(5, 5, 2.4, '#fff'), 'xMinYMin'],
+    'Južna Afrika': ['<rect width="30" height="10" fill="#e03c31"/><rect y="10" width="30" height="10" fill="#001489"/><rect y="7" width="30" height="6" fill="#fff"/><rect y="8.2" width="30" height="3.6" fill="#007749"/>',
+      '<path d="M0 0h4.6L14 7h.2v6H14l-9.4 7H0z" fill="#fff"/><path d="M0 0h2.6l10 8.2v3.6l-10 8.2H0z" fill="#007749"/><path d="M0 3.4L9 10 0 16.6z" fill="#ffb81c"/><path d="M0 5L7 10 0 15z" fill="#000"/>', 'xMinYMid'],
+    'Kitajska': ['<rect width="30" height="20" fill="#de2910"/>', star(5, 5, 3, '#ffde00') + star(10, 2, 1, '#ffde00') + star(12, 4, 1, '#ffde00') + star(12, 7, 1, '#ffde00') + star(10, 9, 1, '#ffde00'), 'xMinYMin'],
+    'Maroko': ['<rect width="30" height="20" fill="#c1272d"/>', '<path d="M15 5.2L17.8 13.9 10.4 8.5h9.2L12.2 13.9z" stroke="#006233" stroke-width=".8" fill="none" stroke-linejoin="round"/>', 'xMidYMid'],
+  };
+  const CHECK = ['<rect width="30" height="20" fill="#fff"/>' + Array.from({ length: 30 }, (_, i) => (i % 10 + (i / 10 | 0)) % 2 ? '' : '<rect x="' + (i % 10) * 3 + '" y="' + (i / 10 | 0) * 6.67 + '" width="3" height="6.67" fill="#111"/>').join('')];
+  function flagButton() {
+    const b = $('g-track'), k = FLAGS[S.flag] ? S.flag : ''; b.setAttribute('aria-label', tr('Izberi progo')); b.title = tr('Izberi progo'); if (b.dataset.flag === k && b.firstElementChild) return;
+    const f = FLAGS[k] || CHECK; b.dataset.flag = k; b.classList.add('flag');
+    b.innerHTML = '<svg class="fl" viewBox="0 0 30 20" preserveAspectRatio="none" aria-hidden="true">' + f[0] + '</svg>' + (f[1] ? '<svg class="fl" viewBox="0 0 30 20" preserveAspectRatio="' + (f[2] || 'xMidYMid') + ' meet" aria-hidden="true">' + f[1] + '</svg>' : '');
+  }
+
   /* ---------------- the page's buttons: the money, the car's name, the cars before and after it, the go button ---------------- */
   let thumbs = {}, thumbQ = [];
   function head() {
@@ -155,7 +189,7 @@
     for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : '';
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
     queueThumbs([pv, nx]);
-    $('g-track').disabled = false;
+    $('g-track').disabled = false; flagButton();
     // the cabinet: the three cars' maquettes, the lamps over the one on the table (none: another car), the one for sale locked, the
     // tags' prices (the rent, the car's price)
     const cab = cabinet(), on = cab.indexOf(S.car);
@@ -319,7 +353,7 @@
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
-      case 'reset': { const g = S.guide; S = profile(S.mode); S.demo = true; S.guide = g; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
+      case 'reset': { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
       case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); break;
     }
   }
@@ -361,7 +395,7 @@
       if (t.dataset.tab) { G.sound(S.sound); if (menu) { menu.tab = +t.dataset.tab; drawMenu(); } return; }
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); return; }
-      if (t.dataset.mode) { const g = S.guide; S = profile(t.dataset.mode); S.demo = true; S.guide = g; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
+      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
     window.addEventListener('resize', resize);
@@ -395,6 +429,7 @@
     const id = heirId((P.get('car') || '').trim().toLowerCase()); if (!ORDER.includes(id)) return;
     GAME_CAR = id; S.car = id;
     const hx = parseInt(P.get('color') || '', 16), ci = COLORS.findIndex(c => c[0] === hx); if (ci >= 0) S.cars[id].color = ci;
+    const dz = (P.get('drzava') || '').trim(); if (FLAGS[dz]) S.flag = dz;   // (the selected track's country: its flag on IZBERI PROGO)
     save();
   }
 

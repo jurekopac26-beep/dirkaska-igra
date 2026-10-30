@@ -74,6 +74,9 @@ svg { display: block; }
 .g-track { flex: 1 1 auto; min-width: 0; height: 54px; border-radius: 15px; font: italic 900 clamp(19px, 6vw, 27px)/1 var(--f); text-transform: uppercase; color: #fff; letter-spacing: .01em;
   text-shadow: 0 2px 0 rgba(0, 0, 0, .3); background: linear-gradient(180deg, #6fd0ff, #2f9ee0); border: 2px solid #b5e8ff; box-shadow: 0 5px 0 #1b6aa0, 0 8px 20px rgba(47, 158, 224, .35); white-space: nowrap; }
 .g-track:active { transform: translateY(2px); box-shadow: 0 2px 0 #1b6aa0; }
+/* (a flag, no words: the selected track's country) */
+.g-track.flag { position: relative; overflow: hidden; padding: 0; background: #fff; border-color: rgba(255, 255, 255, .85); box-shadow: 0 5px 0 rgba(0, 0, 0, .35), 0 8px 20px rgba(0, 0, 0, .3); }
+.g-track .fl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .g-cr { flex: 0 0 33%; height: 54px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 8px; border-radius: 15px; min-width: 0;
   background: linear-gradient(180deg, #5d636d, #454a53); border: 2px solid #8d939d; box-shadow: 0 5px 0 #262a31; transition: transform .2s; }
 .g-cr.pay { animation: g-pay .6s ease; }

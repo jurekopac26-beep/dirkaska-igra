@@ -689,7 +689,8 @@
     if (navigator.onLine === false) { toast(tr('Garaža se odpre, ko je naprava povezana z internetom.'), 3200); return; }   // (the saved game, sw.js, has no garage)
     const M = Core.MODELS[S.car]; save();
     try { sessionStorage.setItem(GAR_KEY, JSON.stringify({ from: carFrom, track: !!(menuOn && Menu.fromTrack), before: (Core.MODELS[carBefore] || M).id })); } catch (_) { }
-    location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[S.color].toString(16).padStart(6, '0');
+    const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
+    location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[S.color].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
   }
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
   // address plain again (a reload: the title)

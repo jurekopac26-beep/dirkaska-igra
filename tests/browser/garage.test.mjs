@@ -44,7 +44,7 @@ try {
       if (i.lift > 0.01 || L.arms > 0) moved = Math.max(moved, Math.abs(Garage3D.cur.root.position.x)); await new Promise(r => setTimeout(r, 0)); } while (Garage3D.busy && t < 200);
     return { t, lift, table, ang, moved, low: +low.toFixed(3), ax: +ax.toFixed(3), az: +az.toFixed(3) }; });
   const ui = () => page.evaluate(() => ({ money: document.getElementById('g-money').textContent, name: document.getElementById('g-name').textContent, go: document.getElementById('g-go').textContent.replace(/\u00a0/g, ' ').trim(),
-    track: document.getElementById('g-track').textContent, info: Garage3D.info, S: JSON.parse(JSON.stringify(__garage.S)) }));
+    track: document.getElementById('g-track').getAttribute('aria-label'), flag: !!document.querySelector('#g-track svg.fl'), info: Garage3D.info, S: JSON.parse(JSON.stringify(__garage.S)) }));
   // (a tap on a thing of the picture (its box's middle on the screen): the menu it opened)
   // (the menu shown on the next frame: waited for)
   const tap = (key) => page.evaluate(async (key) => { const b = Garage3D.box(key); __garage.onTap(b.x + b.w / 2, b.y + b.h / 2); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return __garage.menu && JSON.parse(JSON.stringify(__garage.menu)); }, key);
@@ -56,7 +56,7 @@ try {
   // (the whole screen), the room drawn in a sensible number of draws
   {
     const u = await ui(), calls = await page.evaluate(() => { __garage.advance(0.1); return Garage3D.renderer.info.render.calls; });
-    T.check('opens: 11.500 by the gold coin, PICO TURBO on the turntable, the go button "Izberi", Izberi progo at the top', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.track === 'Izberi progo', JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
+    T.check('opens: 11.500 by the gold coin, PICO TURBO on the turntable, the go button "Izberi", Izberi progo at the top (a flag, no words: no track known yet, a chequered one)', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.track === 'Izberi progo' && u.flag, JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
     const L0 = await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), st = r('g-stage'), app = document.getElementById('g-app').getBoundingClientRect(), cr = r('g-cr'), hd = document.querySelector('.g-head').getBoundingClientRect();
       const pv = r('g-prev'), nx = r('g-next'), go = r('g-go'), nm = r('g-name');
       return { full: Math.abs(st.top - app.top) < 1 && Math.abs(st.bottom - app.bottom) < 1 && Math.abs(st.width - app.width) < 1, coin: +(cr.width / (hd.width - 28)).toFixed(2), cars: pv.bottom <= go.top && nx.bottom <= go.top && nm.bottom <= pv.top && Math.abs(pv.top - nx.top) < 1 && pv.right < nx.left,
@@ -278,7 +278,7 @@ try {
   {
     await page.evaluate(() => __garage.onAct('lang'));
     await tap('rgl:TURBO'); const d = await menuDom();
-    const t = await page.evaluate(() => ({ go: document.getElementById('g-go').textContent, track: document.getElementById('g-track').textContent, html: document.documentElement.lang }));
+    const t = await page.evaluate(() => ({ go: document.getElementById('g-go').textContent, track: document.getElementById('g-track').getAttribute('aria-label'), html: document.documentElement.lang }));
     T.check('English: Choose, Choose a track; the turbo\'s menu: REPLACEMENT, HYBRID, KITS, TWIN TURBO; Turbo · power +14 %; BUY AND FIT · €2,500 (the euros as the game writes them)', t.go === 'Choose' && t.track === 'Choose a track' && t.html === 'en' && d.tabs.map(q => q[0]).join() === 'REPLACEMENT,HYBRID,KITS,TWIN TURBO' && d.tiles[1].n === 'Turbo' && /BUY AND FIT · €2,500/.test(d.buy) && d.tabs[0][1] === '€500–€1,600', JSON.stringify({ t, d }));
     await page.evaluate(() => { __garage.closeMenu(); __garage.onAct('lang'); });
     const sl = await page.evaluate(() => document.getElementById('g-go').textContent);
@@ -415,9 +415,9 @@ try {
     await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.mouse.click(tap.x, tap.y)]);
     const url1 = page.url();
     await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
-    const g = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
+    const g = await page.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
     T.check('from the game\'s car screen: the car (over its place, clear of the panel, "Tapni avto za garažo") tapped opens the garage with it, the TITAN in green; the profile kept (the same credits), the MOCKUP bar there',
-      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f$/.test(url1) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
+      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f(&drzava=[^&]+)?$/.test(url1) && (!/drzava=/.test(url1) || g.flag === decodeURIComponent(url1.split('drzava=')[1])) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
       JSON.stringify({ tap, url1, g, before }));
     await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('.g-foot .g-btn-back')]);
     await page.waitForFunction(() => window.__game && __game.screen === 'car', null, { timeout: 180000 });
