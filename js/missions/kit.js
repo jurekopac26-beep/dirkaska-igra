@@ -455,8 +455,8 @@ Object.assign(MisKit, (function () {
        the road, o.tex (default the fresh snow), o.step m a cross-section; its cross-sections' s in .s (for a mission to change their look).
      MisKit.piles(run, T, s0, s1, o): snow heaped along the road's edges (one draw: lumps every o.every m, o.side 1 / -1 / 0 both, o.off m past
        the edge, o.h m high, o.skip(s) none there); returns the mesh (or null).
-     MisKit.block(P, o): a thing standing on the road as a box the car bumps into (o.x, o.z, o.h its heading, o.L long, o.W wide): the car
-       pushed out of it, its speed into it taken away; returns the speed it came in with (m/s, 0: no touch). */
+     MisKit.block(P, o): a thing standing on the road as a box the car bumps into (o.x, o.z, o.h its heading, o.L long, o.W wide; the car
+       its whole length, a bus too): the car pushed out of it, its speed into it taken away; returns the speed it came in with (m/s, 0: no touch). */
 Object.assign(MisKit, (function () {
   'use strict';
   const has3 = () => typeof THREE !== 'undefined' && typeof document !== 'undefined';
@@ -530,15 +530,21 @@ Object.assign(MisKit, (function () {
     return mesh;
   }
   function block(P, o) {
-    const ch = Math.cos(o.h), sh = Math.sin(o.h), dx = P.x - o.x, dz = P.z - o.z;
-    const lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, r = Math.max(1, (P.m && P.m.wid) || 2) / 2 + 0.2, hx = o.L / 2 + r, hz = o.W / 2 + r;
-    if (Math.abs(lx) >= hx || Math.abs(lz) >= hz) return 0;
-    const px = hx - Math.abs(lx), pz = hz - Math.abs(lz);
-    let nx, nz, d;
-    if (px < pz) { nx = Math.sign(lx) * ch; nz = Math.sign(lx) * sh; d = px; } else { nx = -Math.sign(lz) * sh; nz = Math.sign(lz) * ch; d = pz; }
-    P.x += nx * d; P.z += nz * d;
-    const vn = (P.vx || 0) * nx + (P.vz || 0) * nz;
-    if (vn < 0) { P.vx -= vn * nx; P.vz -= vn * nz; return -vn; }
+    // (the car as circles along its length, its width across: the deepest one in the box pushes the car out)
+    const ch = Math.cos(o.h), sh = Math.sin(o.h), cw = Math.cos(P.h || 0), sw = Math.sin(P.h || 0);
+    const r = Math.max(1, (P.m && P.m.wid) || 2) / 2 + 0.2, half = Math.max(0, ((P.m && P.m.len) || 4) / 2 - r), n = Math.max(1, Math.ceil(half / 1.5));
+    let best = null;
+    for (let k = -n; k <= n; k++) {
+      const u = half * k / n, dx = P.x + cw * u - o.x, dz = P.z + sw * u - o.z;
+      const lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, hx = o.L / 2 + r, hz = o.W / 2 + r;
+      if (Math.abs(lx) >= hx || Math.abs(lz) >= hz) continue;
+      const px = hx - Math.abs(lx), pz = hz - Math.abs(lz), d = Math.min(px, pz);
+      if (!best || d > best.d) best = px < pz ? { d, nx: Math.sign(lx) * ch, nz: Math.sign(lx) * sh } : { d, nx: -Math.sign(lz) * sh, nz: Math.sign(lz) * ch };
+    }
+    if (!best) return 0;
+    P.x += best.nx * best.d; P.z += best.nz * best.d;
+    const vn = (P.vx || 0) * best.nx + (P.vz || 0) * best.nz;
+    if (vn < 0) { P.vx -= vn * best.nx; P.vz -= vn * best.nz; return -vn; }
     return 0.01;
   }
   return { snowTex, band, cover, piles, block };

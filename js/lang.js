@@ -553,6 +553,15 @@
     'Prehitel si frezo: počakaj jo.': 'You passed the snowblower: wait for it.', 'Zapelji na levi pas ob frezi.': 'Move into the left lane beside the snowblower.',
     'Bolj desno, bliže frezi.': 'More to the right, closer to the snowblower.', 'Bolj levo, stran od freze.': 'More to the left, away from the snowblower.',
     'Malo naprej.': 'A little forward.', 'Malo nazaj.': 'A little back.', 'Zadel si frezo.': 'You hit the snowblower.',
+    'Snežne verige': 'Snow chains', 'Sneži in prelaz bodo kmalu zaprli. Avtobus s 46 potniki mora čez.': 'It is snowing and the pass will close soon. A coach with 46 passengers must get over.',
+    'Namesti verige in pripelji avtobus čez serpentine, preden prelaz zaprejo.': 'Fit the chains and drive the coach up the hairpins before the pass closes.',
+    'Na snegu vozi enakomerno: sunek plina zavrti kolesa tudi z verigami.': 'Drive steadily on the snow: a burst of throttle spins the wheels even with chains.',
+    'VERIGE': 'CHAINS', 'OPRIJEM': 'GRIP', 'ZAPORA': 'CLOSURE', 'POTNIKI': 'PASSENGERS', 'čez {0} min': 'in {0} min', 'čez {0} s': 'in {0} s',
+    'NAMESTI VERIGO': 'FIT A CHAIN', 'Drži NAMESTI VERIGO, da namestiš verigo na kolo.': 'Hold FIT A CHAIN to put a chain on a wheel.',
+    'ZDRSNIL': 'SLID OFF', 'brez verig': 'no chains', 'galerija': 'gallery',
+    'Kolesa se vrtijo v prazno: popusti plin.': 'The wheels are spinning: ease off the throttle.', 'Avtobus drsi: počasneje skozi ovinek.': 'The coach is sliding: slower through the bend.',
+    'Tovornjak brez verig je obstal počez: zapelji mimo po levi.': 'A truck without chains is stuck across the road: pass it on the left.',
+    'Prelaz so zaprli, preden si prišel čez.': 'The pass closed before you got over.', 'Avtobus je močno trčil: potniki so poškodovani.': 'The coach crashed hard: the passengers are hurt.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
