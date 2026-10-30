@@ -331,6 +331,7 @@ Object.assign(MisKit, (function () {
       go(on) {
         on = !!on; if (on === B.on) return; B.on = on;
         if (o.mesh) o.mesh.visible = on || !!o.keep;
+        if (hasDoc()) document.body.classList.toggle('mis-boat', on);   // (the parked car's speed and corner notes off the HUD while the vessel is driven)
         if (typeof Render !== 'undefined' && Render.setShot) { if (on) { B.shot = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 58, fogD: 40, near: 0.5, noCut: true }; B.cam(1); Render.setShot(B.shot); } else { Render.setShot(null); B.shot = null; } }
       },
       // a step: steer -1..1, thr, brk 0..1
@@ -365,7 +366,7 @@ Object.assign(MisKit, (function () {
       get speed() { return Math.abs(B.v); },
     };
     if (o.mesh) { o.mesh.visible = !!o.keep; run.add(o.mesh); }
-    undo(run, () => { if (B.on && typeof Render !== 'undefined' && Render.setShot) Render.setShot(null); B.on = false; });
+    undo(run, () => { if (B.on && typeof Render !== 'undefined' && Render.setShot) Render.setShot(null); B.on = false; if (hasDoc()) document.body.classList.remove('mis-boat'); });
     return B;
   }
 
