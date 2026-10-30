@@ -7,7 +7,7 @@ Mapa je bila pushana z izrecnim dovoljenjem uporabnika, da delo preživi menjavo
 - Na `main`: garaža s sklopoma 1 in 2 (PR #96, commit `0f3fb0ac`): 43 vozil, servis s talnima robotoma, tap na avto v izboru avtov odpre garažo.
 - Veja `claude/3d-garage-cars-sum9uk`: sklop 3A (regal, star zid, tablice-prizme, sivi auspuhi) v commitu `6490ca63`; test garaže 60/60. Zapiski agenta: primerjava koncepta in sedanje scene, kaj je umaknjeno, kako robota načrtujeta okoli regala (`RGL`, `buildRegal`, `rglBays`, `rglWall` v `js/garage3d.js`).
 - Naprej v ENEM pull requestu (odločitev 30. 10.): ostanek sklopa 3 (3B omarica z maketami STREET/SPORT/RACE, table, luč v krogu, prižgana maketa, gumb SERVICE s ključem KL 4; 3C dvigalo, obroč; velikost 3D slike), sklop 4 (meni in klik: 4 ploščice z zavihki, en moder ostali oranžni, prosojen predogled, gumba NAZAJ, kovanček, cene v €) in sklop 5 (barvanje: tap na barvni krog, komora, sušenje).
-- Odprta vprašanja in priporočila: zadnje vrstice `odlocitve.md` in predstavitev https://claude.ai/artifact/KhfHyeaC5JXxwFba8GETMt. Vprašanje 7 (roki na obroču ali talna robota) odloči tudi o sklopu 7.
+- Vsa vprašanja za sklope 3–5 so odgovorjena (30. 10.): zadnje vrstice `odlocitve.md` (od »29. 10.: »začni sklop 3«« naprej) so obvezne; novejša vrstica velja pred starejšo. Pregled odgovorov tudi v predstavitvi https://claude.ai/artifact/KhfHyeaC5JXxwFba8GETMt (stran »Že odgovorjeno«). Odgovor 7A (roki na obroču namesto talnih robotov) velja tudi za sklop 7.
 - Koncept izrisuješ na `09b9ce9` (worktree) s to mapo, kot piše spodaj; scena koncepta je težka (regal sam 677 mrež), zato v igro prenašaj obliko, ne kode.
 - Varčno: ena slika prej/potem ob koncu dela, vprašanja vsa naenkrat v eni predstavitvi.
 
