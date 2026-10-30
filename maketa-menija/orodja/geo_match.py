@@ -23,6 +23,10 @@ GUESS = {
     'bigsur': ('finish', 36.3600, -121.9010, 2500),      # Hurricane Point
     'tianmen': ('finish', 29.0495, 110.4826, 3000),      # the platform under the cave
     'uncompahgre': ('start', 38.0080, -107.6631, 800),
+    'riverside': ('origin', 33.9317, -117.2741, 1500),   # (the raceway's site, east of Riverside: the land is built over now)
+    'monterey': ('start', 36.58646, -121.75664, 300),    # the OSM node of the start / finish line
+    'longford': ('origin', -41.581, 147.129, 2500),      # the Pit Straight on Illawarra Road, north of the town
+    'newcastle': ('start', -32.9265, 151.7860, 800),     # Wharf Road along the harbour
 }
 COP = {'tianmen'}   # (matched on Copernicus DEM, the heights' own source: the terrain tiles have smoothed its cliffs)
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
