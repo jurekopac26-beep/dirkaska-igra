@@ -698,11 +698,14 @@
     if (P.get('zaslon') !== 'avto' || P.has('proga') || screen !== 'title') return;
     let o = null; try { o = JSON.parse(sessionStorage.getItem(GAR_KEY) || 'null'); sessionStorage.removeItem(GAR_KEY); } catch (_) { o = null; }
     const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car) { S.car = k; save(); }
-    try { P.delete('zaslon'); P.delete('avto'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
+    const next = P.get('naprej');   // (the garage's Izberi progo: on to the track screen with that car, when it is the player's)
+    try { P.delete('zaslon'); P.delete('avto'); P.delete('naprej'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
     const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1;
     carFrom = ch ? 'champ' : 'title'; if (ch) carBefore = b >= 0 ? b : S.car;
     if (o && o.track && menuOn) Menu.fromTrack = true;   // (the new menu's track step: its Nazaj there again)
     bg = 'show'; buildCarScreen(); showScreen('car');
+    if (next === 'proga' && owned(Core.MODELS[S.car].id)) {   // (from the championship's car: back to it, as the car screen's Izberi)
+      if (ch) { carFrom = 'title'; save(); toTitle(); openChamp(); } else { if (!menuOn) buildTrackScreen(); showScreen('track'); } }
   }
 
   // stat bars: stock value, the gain from upgrades drawn in blue behind it
