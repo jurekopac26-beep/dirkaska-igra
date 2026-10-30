@@ -41,12 +41,10 @@ try {
   let d = await drive(page, "r.doc !== 'car'", STOP, 20, 120);
   s = await st(page);
   T.check('stopped in the box: the doctor out, the car held, OTOK tukaj', s.run.doc === 'out' && s.run.locked && s.rows[1] === 'OTOK tukaj' && s.rows[2] === 'ZDRAVNIK na brvi', JSON.stringify({ d, rows: s.rows }));
-  // (the chase camera swings round after the stop: measured until it has settled, up to 4 s)
-  const look = () => page.evaluate(() => { const r = Missions.run, v = new THREE.Vector3(r.isl.x, 2, r.isl.z).project(Render.camera), c = document.getElementById('gl') || document.querySelector('canvas'), b = c.getBoundingClientRect();
+  await page.waitForFunction(() => { const r = Missions.run, v = new THREE.Vector3(r.isl.x, 2, r.isl.z).project(Render.camera); return Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95; }, null, { timeout: 8000 }).catch(() => {});   // (the camera follows the stopped car: checked once the view has caught up with it, as in missions 35, 37 and 48)
+  const V = await page.evaluate(() => { const r = Missions.run, v = new THREE.Vector3(r.isl.x, 2, r.isl.z).project(Render.camera), c = document.getElementById('gl') || document.querySelector('canvas'), b = c.getBoundingClientRect();
     const px = { x: b.left + (v.x + 1) / 2 * b.width, y: b.top + (1 - v.y) / 2 * b.height }, hit = (sel) => { const e = document.querySelector(sel); if (!e) return false; const q = e.getBoundingClientRect(); return px.x >= q.left && px.x <= q.right && px.y >= q.top && px.y <= q.bottom; };
     return { x: +v.x.toFixed(2), y: +v.y.toFixed(2), under: hit('#mis .mis-rows') || hit('#mis .mis-card') }; });
-  let V = null;
-  for (let k = 0; k < 20; k++) { await page.waitForTimeout(200); V = await look(); if (Math.abs(V.x) < 0.95 && Math.abs(V.y) < 0.95 && !V.under) break; }
   T.check('the island on the screen upright, not under the panel', Math.abs(V.x) < 0.95 && Math.abs(V.y) < 0.95 && !V.under, JSON.stringify(V));
   d = await drive(page, "r.doc === 'treat' && r.dt > 5", STOP, 0, 60);
   s = await st(page);
