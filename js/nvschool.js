@@ -237,7 +237,7 @@ const NVSchool = (function () {
     setup(R) { R.data.wa = 0; R.data.wb = 0; R.data.aa = null; R.data.ab = null; },
     step(R, P) { const E = E8(), D = R.data;
       for (const [c, k, ka] of [[E.a, 'wa', 'aa'], [E.b, 'wb', 'ab']]) { const a = Math.atan2(P.z - c[1], P.x - c[0]), near = (c === E.a ? P.z < E.mz + 2 : P.z > E.mz - 2) && Math.hypot(P.x - c[0], P.z - c[1]) < 14; if (near && D[ka] != null) { let d = a - D[ka]; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; D[k] += d; } D[ka] = near ? a : null; }
-      const full = 4 * Math.PI * 0.92; R.hint(`Round each cone twice, one each way: ${Math.min(2, Math.floor(Math.abs(D.wa) / (2 * Math.PI) + 0.08))} / 2 · ${Math.min(2, Math.floor(Math.abs(D.wb) / (2 * Math.PI) + 0.08))} / 2`);
+      const full = 4 * Math.PI * 0.88; R.hint(`Round each cone twice, one each way: ${Math.min(2, Math.floor(Math.abs(D.wa) / (2 * Math.PI) + 0.08))} / 2 · ${Math.min(2, Math.floor(Math.abs(D.wb) / (2 * Math.PI) + 0.08))} / 2`);
       if (Math.abs(D.wa) >= full && Math.abs(D.wb) >= full) { if (D.wa * D.wb > 0) return R.fail('both cones the same way round: a figure of eight goes one each way'); R.win(); } } };
   // ROAD 6 · reverse parking: back into bay 5 between the two cars
   T.reversePark = { at: () => [pu(4), pv(28), 0], lim: [13, 18, 26], hint: 'Back into the free bay between the two cars.', area: [PAD[0] - 1, PAD[1] + 1, PAD[2] - 1, PAD[3] + 1],
