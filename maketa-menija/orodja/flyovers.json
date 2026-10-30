@@ -773,5 +773,231 @@
     1753
    ]
   }
+ ],
+ [
+  "monterey",
+  {
+   "kbps": 450,
+   "speed": 128,
+   "back": 166,
+   "up": 105,
+   "ahead": 83,
+   "fogNear": 358,
+   "fogFar": 1382,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 506
+    },
+    {
+     "n": "Turn 8",
+     "d": 2466
+    },
+    {
+     "n": "Turn 11",
+     "d": 3290
+    }
+   ]
+  }
+ ],
+ [
+  "mulholland",
+  {
+   "kbps": 450,
+   "speed": 149,
+   "back": 194,
+   "up": 122,
+   "ahead": 97,
+   "fogNear": 417,
+   "fogFar": 1609,
+   "places": [
+    {
+     "n": "Elephant Rock",
+     "d": 748
+    },
+    {
+     "n": "La Sierra Canyon",
+     "d": 2200
+    },
+    {
+     "n": "Viewpoint",
+     "d": 3915
+    },
+    {
+     "n": "Top of the Climb",
+     "d": 4160
+    }
+   ],
+   "alt": [
+    256,
+    544
+   ]
+  }
+ ],
+ [
+  "palomar",
+  {
+   "kbps": 450,
+   "speed": 286,
+   "back": 372,
+   "up": 234,
+   "ahead": 186,
+   "fogNear": 801,
+   "fogFar": 3089,
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 394
+    },
+    {
+     "n": "Hairpin 6",
+     "d": 2852
+    },
+    {
+     "n": "Turnout",
+     "d": 3874
+    },
+    {
+     "n": "Hairpin 13",
+     "d": 7801
+    }
+   ],
+   "alt": [
+    859,
+    1435
+   ]
+  }
+ ],
+ [
+  "riverside",
+  {
+   "kbps": 450,
+   "speed": 188,
+   "back": 244,
+   "up": 154,
+   "ahead": 122,
+   "fogNear": 526,
+   "fogFar": 2030,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 624
+    },
+    {
+     "n": "Turn 6",
+     "d": 1502
+    },
+    {
+     "n": "Back Straight",
+     "d": 3424
+    },
+    {
+     "n": "Turn 9",
+     "d": 4808
+    }
+   ]
+  }
+ ],
+ [
+  "uncompahgre",
+  {
+   "kbps": 450,
+   "speed": 177,
+   "back": 230,
+   "up": 145,
+   "ahead": 115,
+   "fogNear": 496,
+   "fogFar": 1912,
+   "places": [
+    {
+     "n": "Tunnel",
+     "d": 523
+    },
+    {
+     "n": "Bear Creek Falls",
+     "d": 986
+    },
+    {
+     "n": "Alpine Loop",
+     "d": 2643
+    },
+    {
+     "n": "Riverside Snow Shed",
+     "d": 4858
+    }
+   ],
+   "alt": [
+    2543,
+    2860
+   ]
+  }
+ ],
+ [
+  "iroha",
+  {
+   "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 145,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
+   "places": [
+    {
+     "n": "Curve ほ (5)",
+     "d": 956
+    },
+    {
+     "n": "Curve ち (8)",
+     "d": 2279
+    },
+    {
+     "n": "Kurokamidaira lookout",
+     "d": 3862
+    },
+    {
+     "n": "Curve ね (20)",
+     "d": 4967
+    }
+   ],
+   "alt": [
+    918,
+    1240
+   ]
+  }
+ ],
+ [
+  "harju",
+  {
+   "kbps": 450,
+   "speed": 88,
+   "back": 114,
+   "up": 72,
+   "ahead": 57,
+   "fogNear": 246,
+   "fogFar": 950,
+   "places": [
+    {
+     "n": "Harjun nousu",
+     "d": 523
+    },
+    {
+     "n": "Vesilinna",
+     "d": 775
+    },
+    {
+     "n": "Harjun stadion",
+     "d": 1034
+    },
+    {
+     "n": "Pitkäkatu",
+     "d": 1636
+    }
+   ],
+   "alt": [
+    110,
+    115
+   ]
+  }
  ]
 ]

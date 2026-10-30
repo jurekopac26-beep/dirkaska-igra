@@ -83,7 +83,14 @@ window.MENU = {
   "toronto": 240,
   "troisrivieres": 240,
   "greatalpine": 300,
-  "hotham": 300
+  "hotham": 300,
+  "monterey": 240,
+  "mulholland": 300,
+  "palomar": 300,
+  "riverside": 240,
+  "uncompahgre": 300,
+  "iroha": 300,
+  "harju": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -363,6 +370,52 @@ window.MENU = {
    "alt": [
     1495,
     1753
+   ]
+  },
+  "monterey": {
+   "base": 234
+  },
+  "mulholland": {
+   "start": "Cornell",
+   "finish": "La Sierra Canyon",
+   "alt": [
+    256,
+    544
+   ]
+  },
+  "palomar": {
+   "start": "Pauma Valley",
+   "finish": "Palomar Mountain",
+   "alt": [
+    859,
+    1435
+   ]
+  },
+  "riverside": {
+   "base": 473
+  },
+  "uncompahgre": {
+   "start": "Ouray",
+   "finish": "Uncompahgre Gorge",
+   "alt": [
+    2543,
+    2860
+   ]
+  },
+  "iroha": {
+   "start": "Umagaeshi",
+   "finish": "Akechidaira",
+   "alt": [
+    918,
+    1240
+   ]
+  },
+  "harju": {
+   "start": "Jyväskylä",
+   "finish": "Flying finish",
+   "alt": [
+    110,
+    115
    ]
   }
  },

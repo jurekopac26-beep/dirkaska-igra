@@ -40,6 +40,13 @@ CFG = {
     'troisrivieres': dict(kind='real', start='Trois-Rivières', country='Canada', region='Quebec', l1='quebec'),
     'greatalpine': dict(kind='real', start='Tambo River', finish='Ash Range', country='Australia', region='Victoria', l1='victoria'),
     'hotham': dict(kind='real', start='Mount Little Blowhard', finish='Hotham Heights', country='Australia', region='Victoria', l1='victoria'),
+    'monterey': dict(kind='real', start='Monterey', country='USA', region='California', l1='california'),
+    'mulholland': dict(kind='real', start='Cornell', finish='La Sierra Canyon', country='USA', region='California', l1='california'),
+    'palomar': dict(kind='real', start='Pauma Valley', finish='Palomar Mountain', country='USA', region='California', l1='california'),
+    'riverside': dict(kind='real', start='Riverside', country='USA', region='California', l1='california'),
+    'uncompahgre': dict(kind='real', start='Ouray', finish='Uncompahgre Gorge', country='USA', region='Colorado', l1='colorado'),
+    'iroha': dict(kind='real', start='Umagaeshi', finish='Akechidaira', country='Japan', region='Tochigi', l1='japan'),
+    'harju': dict(kind='real', start='Jyväskylä', finish='Harju', country='Finland', region='Central Finland', l1='finland'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),

@@ -929,5 +929,68 @@
    "kbps": 550,
    "shots": []
   }
+ ],
+ [
+  "monterey",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
+ ],
+ [
+  "mulholland",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
+ ],
+ [
+  "palomar",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
+ ],
+ [
+  "riverside",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
+ ],
+ [
+  "uncompahgre",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
+ ],
+ [
+  "iroha",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
+ ],
+ [
+  "harju",
+  {
+   "mode": "demo",
+   "warm": 2,
+   "kbps": 900,
+   "shots": []
+  }
  ]
 ]
