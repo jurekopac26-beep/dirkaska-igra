@@ -523,7 +523,7 @@ Popravki po pregledu slik (20. 10. ponoči):
 
 ## 30. 10. – odgovori na predstavitev odprtih vprašanj (po »začni«, za kodo)
 - Uporabnik: »vprasanje 1, naredi razlike da vidim v sliki med igro igralca. 2-2, 3. siroko. 4-1, 5f, 6c. 1-7, 8-1« (»1-7« = 7-1).
-- Kmetija, podrobnosti: še odprto; slike razlik 1/2/3 s kamere igralca med igro naredi seja za sklop 3.
+- Kmetija, podrobnosti: po predstavitvi razlik 1/2/3 s kamere igralca (seja sklopa 3) uporabnik: »MOZNOSTO 1 VSE S SLIK« → možnost 1, vse podrobnosti s slik.
 - Helikopter: nalogi WATER RESCUE in FIREFIGHTING naredi drug račun z misijami (v meniju zaklenjeni); sklop 4 = let, pristanek, FREE FLIGHT.
 - D · priključek motokrosa pri B: 3 (široko). H · boks motokrosa: 1 (prevozni boks tik ob cesti, __BOXOPT(1)).
 - Proga za čolne: široka s plažami, plaža F (družinska, __BEACHV = 5). Gasilski avto: C (avtolestev).

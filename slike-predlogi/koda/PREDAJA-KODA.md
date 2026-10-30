@@ -35,8 +35,8 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 
 ## Odgovori na predstavitev vprašanj (30. 10.)
 Uporabnik: »vprasanje 1, naredi razlike da vidim v sliki med igro igralca. 2-2, 3. siroko. 4-1, 5f, 6c. 1-7, 8-1« (»1-7« = 7-1).
-1. Kmetija, koliko podrobnosti (sklop 3): **še odprto.** Uporabnik želi slike razlik med možnostmi 1 (vse s slike), 2 (kar se vidi iz avta,
-   drobno poenostavljeno) in 3 (vse, drobno šele od blizu), kot jih vidi igralec med igro (kamera za avtom, pokonci in ležeče). Naredi jih seja za sklop 3.
+1. Kmetija, koliko podrobnosti (sklop 3): **1** (vse s slik). Po predstavitvi razlik s kamere za avtom (https://claude.ai/artifact/UJEUES3ztsryeidVpitcTn)
+   uporabnik: »MOZNOSTO 1 VSE S SLIK«. V PR #203 SV kmetija z vsemi podrobnostmi s slik; SZ kmetija jih ima že vse.
 2. Helikopter (sklop 4): **2.** Sklop 4 naredi let, pristanek in prosto letenje (FREE FLIGHT); nalogi WATER RESCUE in FIREFIGHTING naredi drug račun
    skupaj z misijami, do takrat sta v meniju zaklenjeni.
 3. Priključek motokrosa pri B (sklop 5): **3 · široko** (trava odstranjena na 30–40 m, ena makadamska ploščad do roba ceste, robna črta črtkana;
