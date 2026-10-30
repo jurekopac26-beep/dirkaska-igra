@@ -168,7 +168,7 @@ try {
     await page.evaluate(() => __garage.buy());
     const u2 = await ui(), toast = await page.evaluate(() => document.getElementById('g-toast').textContent);
     T.check('too little money for it: refused, the money unchanged', u2.money === '11.500' && !u2.S.cars.kaze.own && /Premalo denarja/.test(toast), toast);
-    const m = await tap('mq1');
+    const m = await tap('rgl:TURBO');
     T.check('a part of a car not bought tapped: no menu, a word to buy the car first', !m && /Najprej kupi avto/.test(await page.evaluate(() => document.getElementById('g-toast').textContent)), JSON.stringify(m));
   }
 
@@ -221,7 +221,9 @@ try {
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r2 = await run();
     const u3 = await ui();
     T.check('the track slicks (on offer: 1.600 € -> 1.300 €) bought: the tyres\' level 3 (DIRKALNE, from PREMIUM), the car up on the lift (>= 0.4 m) and down, the table still', d5.tabs[3][2] && d5.tabs[3][1] === '1.300–6.000 €' && d5.tiles[0].old && u2.S.money - u3.S.money === 1300 && u3.info.upg.gume === 3 && r2.lift >= 0.4 && u3.info.lift === 0 && r2.table === 0, JSON.stringify({ paid: u2.S.money - u3.S.money, upg: u3.info.upg, r2, d5 }));
-    // the aero kits' menu (its place to tap is for later): RACE locked; SPORT bought, then RACE open
+    // the aero kits' menu (a tap on the car's body): RACE locked; SPORT bought, then RACE open
+    const mb = await page.evaluate(async () => { const b = Garage3D.box('car'); __garage.onTap(b.x + b.w / 2, b.y + b.h * 0.35); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const m = __garage.menu && __garage.menu.el; __garage.closeMenu(); return m; });
+    T.check('a tap on the car\'s body: the aero kits\' menu', mb === 'aero', mb);
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); const dR = await menuDom();
     T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
     await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();

@@ -290,7 +290,7 @@
   }
   // a tap on the picture: a part of the regal (its element's menu, its option chosen), a maquette (its car onto the table), the SERVICE button,
   // a colour circle (the paint in that colour), the lift's plate (the car up or down), the car (its wheels: the tyres; its body: the
-  // paint in its colour); elsewhere: the menu closed
+  // aero kits); elsewhere: the menu closed
   function onTap(x, y) {
     const h = G.pick(x, y); G.sound(S.sound);
     if (!h) { closeMenu(); return; }
@@ -300,7 +300,7 @@
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null };
-    else if (h.key === 'car:body') m = { el: 'barva', key: null, color: C().color, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
+    else if (h.key === 'car:body') m = { el: 'aero', key: null };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
     else if (h.name && REGAL[h.name]) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
