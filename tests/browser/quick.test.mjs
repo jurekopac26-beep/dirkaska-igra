@@ -2,6 +2,7 @@
 // opens the game straight on a race. Bathurst from the new menu (as a player's phone has it): the race at once, no menu, no qualifying.
 // Vršič in the traffic, in the rain, in the BIZON 70, driven on to 20 s after the start: there and paused.
 // An unknown track: the title, a toast that names what is not valid.
+// The Nordschleife with tekmeci=21&lod=0: 22 cars, LOD off.
 //   node tests/browser/quick.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -41,6 +42,15 @@ try {
     await there(page); await page.waitForTimeout(500);
     const s = await state(page), toasts = await page.evaluate(() => window.__toasts);
     T.check('?proga=nikjer&vreme=sneg: no race, the title; a toast names what is not valid', s.quick.q.track === null && s.track == null && s.screen === 'title' && toasts.some(t => /proga=nikjer, vreme=sneg/.test(t)), JSON.stringify({ s, toasts }));
+    T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+  // 4. the Nordschleife with 21 rivals and LOD off (the comparison of 100 / 22 / 1 cars on the same road)
+  {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=nring&tekmeci=21&lod=0', {}, { width: 640, height: 360 });
+    await there(page); await page.waitForTimeout(500);
+    const s = await state(page), off = await page.evaluate(() => Core.LOD.off);
+    T.check('?proga=nring&tekmeci=21&lod=0: the race on the Nordschleife with 22 cars (its own 100 otherwise), LOD off', s.track === 'nring' && s.cars === 22 && off === true && s.quick.q.rivals === 21 && !s.quick.q.bad.length, JSON.stringify({ track: s.track, cars: s.cars, off, q: s.quick.q }));
     T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
