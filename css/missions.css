@@ -95,3 +95,9 @@ body.mis-aiming.mis-ladder #mis .mis-hint { max-width: calc(100% - min(46vw, 230
 #mis-dots i.haz.off { background: #5a4012; box-shadow: none; }
 #mis-dots i.exit { width: 7px; height: 5px; border-radius: 1px; background: #4dff8a; box-shadow: 0 0 7px 2px rgba(77, 255, 138, .6); }
 #mis-dots i.fire { width: 26px; height: 26px; margin: -13px 0 0 -13px; background: radial-gradient(circle, #fff3b0 0, #ff9a2a 35%, rgba(255, 90, 20, 0) 70%); }
+/* group 3 (water): the big button over the pedals (MisKit.button: PRESEDI NA SKUTER, VRZI OBROČ, NALOŽI ...) */
+#mis-btn { position: fixed; right: calc(14px + var(--sr, 0px)); bottom: calc(clamp(96px, 35vh, 160px) + 34px + var(--sb, 0px)); z-index: 6; display: none; min-width: 150px; padding: 13px 20px; border: 0; border-radius: 28px; background: #2f5fd0; color: #fff; font: 900 16px var(--f-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); touch-action: none; user-select: none; -webkit-user-select: none; }
+#mis-btn.on-show { display: block; }
+#mis-btn.on { transform: scale(.95); filter: brightness(1.2); }
+#mis-btn.red { background: #e0452c; }
+body.mis-boat #h-spd, body.mis-boat #h-note { visibility: hidden; }   /* (a vessel of the mission driven: the parked car's speed and corner notes off the HUD) */

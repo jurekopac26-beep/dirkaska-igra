@@ -289,4 +289,161 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
 
   return { truckModel, fireTruck, fire, jet, aim, hold, at, house, prism, merged, parts, LAD };
 })();
+/* ---------------- the water (group 3: missions 19, 35, 37, 48) ----------------
+     MisKit.water(run, o): a plane of water (one draw: a flood, the tide, a river up its banks) round o.x, o.z, o.size m square, at o.y;
+       set(y) moves it; o.col, o.op its colour and how much it hides (muddy brown for a flood, blue-green for the sea).
+     MisKit.wade(P, depth, dt, o): the water on a car: the deeper the slower (o.drag), from o.slip m of it the car slides (its grip in
+       the water: the current o.cur [x, z] m/s pushes it); returns the depth's share 0..1 (1: o.deep m, the car stopped).
+     MisKit.boat(run, o): a vessel on the water of its own (no physics of the race: it moves on its own numbers, o.vmax m/s, o.acc, o.turn),
+       steered with the player's controls while on(true); the camera behind it as behind the car (Render.setShot); o.wet(x, z): may it be
+       there (false: it stops, e.g. on the beach); o.mesh its look; o.wave(x, z, t): the waves' height under it.
+     MisKit.skin(run, P, build): the player's car drawn as another vehicle of simple bodies (build(B): B.box / B.cyl / B.disc as for parts(),
+       x forward, y up, z to the side), its own body hidden; the group returned (more can be added to it: people on the back ...).
+     MisKit.crowd(run, max): people of simple bodies (two draws for all: InstancedMesh), put(k, x, y, z, ry, col) or hide(k).
+     MisKit.tags(run): labels over places in the world (DOM, #mis-tags): set([{ x, y, z, html, cls }]).
+     MisKit.button(run, label): a big button over the pedals (#mis-btn): show(on), take() true once for each press. */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined', hasDoc = () => typeof document !== 'undefined';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const tr = (s) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s) : s);
+  // the run's own DOM: taken off when the run ends
+  function undo(run, fn) { if (!has3()) return; const g = new THREE.Group(); g.userData.misUndo = fn; run.add(g); }
+
+  function water(run, o) {
+    o = Object.assign({ x: 0, z: 0, size: 2000, y: 0, col: 0x6b5a3e, op: 0.88, shine: 30 }, o);
+    const W = { y: o.y, mesh: null, set(y) { W.y = y; if (W.mesh) W.mesh.position.y = y; } };
+    if (!has3()) return W;
+    const g = new THREE.PlaneGeometry(o.size, o.size); g.rotateX(-Math.PI / 2);
+    const m = new THREE.MeshPhongMaterial({ color: o.col, specular: 0x8a8a80, shininess: o.shine, transparent: o.op < 1, opacity: o.op, depthWrite: true });
+    const mesh = new THREE.Mesh(g, m); mesh.position.set(o.x, o.y, o.z); mesh.receiveShadow = true; mesh.renderOrder = 1;
+    run.add(mesh); W.mesh = mesh;
+    return W;
+  }
+
+  function wade(P, depth, dt, o) {
+    o = Object.assign({ drag: 1.6, slip: 0.35, deep: 1.1, cur: null }, o);
+    if (!(depth > 0)) return 0;
+    const k = clamp(depth / o.deep, 0, 1), v = Math.hypot(P.vx, P.vz);
+    // the water holds the car back: more the deeper and the faster (a wave in front of it)
+    const f = Math.exp(-dt * (o.drag * k + 0.04 * v * k));
+    P.vx *= f; P.vz *= f; if (P.w) P.w *= Math.exp(-dt * 2 * k);
+    // over the wheels' hubs: the current takes it along, the car slides
+    if (depth > o.slip && o.cur) { const s = clamp((depth - o.slip) / (o.deep - o.slip), 0, 1); P.vx += o.cur[0] * s * dt * 1.2; P.vz += o.cur[1] * s * dt * 1.2; }
+    if (k >= 1) { P.vx *= Math.exp(-dt * 4); P.vz *= Math.exp(-dt * 4); }
+    return k;
+  }
+
+  function boat(run, o) {
+    o = Object.assign({ vmax: 16, acc: 5, brake: 7, turn: 1.4, drag: 0.35, wet: () => true, wave: () => 0, mesh: null, D: [30, 20] }, o);
+    const B = { x: o.x || 0, z: o.z || 0, h: o.h || 0, v: 0, y: o.y || 0, on: false, t: 0, hs: o.h || 0, shot: null, stuck: false,
+      // where it is now: the boat's own frame for its mesh
+      place(x, z, h) { B.x = x; B.z = z; B.h = h; B.hs = h; B.v = 0; },
+      go(on) {
+        on = !!on; if (on === B.on) return; B.on = on;
+        if (o.mesh) o.mesh.visible = on || !!o.keep;
+        if (hasDoc()) document.body.classList.toggle('mis-boat', on);   // (the parked car's speed and corner notes off the HUD while the vessel is driven)
+        if (typeof Render !== 'undefined' && Render.setShot) { if (on) { B.shot = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 58, fogD: 40, near: 0.5, noCut: true }; B.cam(1); Render.setShot(B.shot); } else { Render.setShot(null); B.shot = null; } }
+      },
+      // a step: steer -1..1, thr, brk 0..1
+      step(dt, steer, thr, brk) {
+        B.t += dt;
+        if (B.on) {
+          const a = thr * o.acc - brk * (B.v > 0 ? o.brake : o.acc * 0.4) - o.drag * B.v - 0.02 * B.v * Math.abs(B.v);
+          B.v = clamp(B.v + a * dt, -o.vmax * 0.25, o.vmax);
+          B.h += steer * o.turn * clamp(Math.abs(B.v) / 4, 0, 1) * Math.sign(B.v || 1) * dt;
+          const nx = B.x + Math.cos(B.h) * B.v * dt, nz = B.z + Math.sin(B.h) * B.v * dt;
+          if (o.wet(nx, nz)) { B.x = nx; B.z = nz; B.stuck = false; } else { B.v *= 0.3; B.stuck = true; }
+        }
+        const w = o.wave(B.x, B.z, B.t);
+        B.y = (o.y || 0) + w;
+        if (o.mesh) {
+          o.mesh.position.set(B.x, B.y, B.z); o.mesh.rotation.set(0, -B.h, 0);
+          // its pitch over the waves: the slope of the water under it, nose up at speed
+          const ahead = o.wave(B.x + Math.cos(B.h) * 1.5, B.z + Math.sin(B.h) * 1.5, B.t) - o.wave(B.x - Math.cos(B.h) * 1.5, B.z - Math.sin(B.h) * 1.5, B.t);
+          o.mesh.rotation.z = Math.atan2(ahead, 3) + clamp(B.v / o.vmax, 0, 1) * 0.08; o.mesh.rotation.order = 'YZX';
+        }
+        if (B.on && B.shot) B.cam(dt);
+      },
+      // the camera behind it, as behind the car (upright: higher and further back)
+      cam(dt) {
+        const C = typeof Render !== 'undefined' ? Render.camera : null, S = B.shot; if (!C || !S) return;
+        const up = C.aspect < 1, uc = Render.cam || {}, D = (up ? o.D[0] : o.D[1]) * (uc.userZoom || 1), pitch = (up ? 0.98 : 0.9) * (1 - (uc.userTilt || 0)), a0 = up ? 9 : 6;
+        B.hs += Math.atan2(Math.sin(B.h - B.hs), Math.cos(B.h - B.hs)) * (1 - Math.exp(-dt * 3));
+        const fx = Math.cos(B.hs), fz = Math.sin(B.hs), tx = B.x + fx * a0, tz = B.z + fz * a0, ty = (o.y || 0);
+        S.tx = tx; S.ty = ty; S.tz = tz; S.px = tx - fx * D * Math.cos(pitch); S.pz = tz - fz * D * Math.cos(pitch); S.py = ty + D * Math.sin(pitch);
+        S.fov = up ? 58 : 46; S.fogD = D; S.gy = ty;
+      },
+      get speed() { return Math.abs(B.v); },
+    };
+    if (o.mesh) { o.mesh.visible = !!o.keep; run.add(o.mesh); }
+    undo(run, () => { if (B.on && typeof Render !== 'undefined' && Render.setShot) Render.setShot(null); B.on = false; if (hasDoc()) document.body.classList.remove('mis-boat'); });
+    return B;
+  }
+
+  // the player's car as another vehicle of simple bodies on its own view (the physics its own)
+  function skin(run, P, build) {
+    const R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null;
+    if (!has3() || !v || !MisKit.parts) return null;
+    const hide = [v.body, v.tail, v.dec].concat(v.wf || [], v.wr || []);
+    for (const x of hide) if (x) x.visible = false;
+    if (v.marker) v.marker.visible = false;
+    const B = MisKit.parts(); build(B);
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), mesh = B.mesh(mat); mesh.castShadow = true;
+    const g = new THREE.Group(); g.name = 'misSkin'; g.add(mesh); v.bodyG.add(g);
+    undo(run, () => { v.bodyG.remove(g); g.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material && x.material !== mat) [].concat(x.material).forEach(m => m.dispose()); }); mat.dispose(); for (const x of hide) if (x) x.visible = true; });
+    return g;
+  }
+
+  // people: a body and a head each, all of them two draws; put(k, ...) shows the k-th there, hide(k)
+  function crowd(run, max) {
+    const C = { n: max, put() {}, hide() {}, g: null };
+    if (!has3()) return C;
+    const bodyG = new THREE.BoxGeometry(0.5, 1.15, 0.32); bodyG.translate(0, 0.58 + 0.3, 0);
+    const headG = new THREE.BoxGeometry(0.26, 0.28, 0.26); headG.translate(0, 1.68, 0);
+    const bm = new THREE.MeshLambertMaterial({ color: 0xffffff }), hm = new THREE.MeshLambertMaterial({ color: 0xd9a77e });
+    const body = new THREE.InstancedMesh(bodyG, bm, max), head = new THREE.InstancedMesh(headG, hm, max);
+    const g = new THREE.Group(); g.add(body, head); body.castShadow = true;
+    const M = new THREE.Matrix4(), Z = new THREE.Matrix4().makeScale(0, 0, 0), col = new THREE.Color();
+    for (let k = 0; k < max; k++) { body.setMatrixAt(k, Z); head.setMatrixAt(k, Z); body.setColorAt(k, col.setHex(0x3a6fd0)); }
+    C.put = (k, x, y, z, ry, c) => { M.makeRotationY(ry || 0); M.setPosition(x, y, z); body.setMatrixAt(k, M); head.setMatrixAt(k, M); if (c != null) { body.setColorAt(k, col.setHex(c)); body.instanceColor.needsUpdate = true; } body.instanceMatrix.needsUpdate = true; head.instanceMatrix.needsUpdate = true; };
+    C.hide = (k) => { body.setMatrixAt(k, Z); head.setMatrixAt(k, Z); body.instanceMatrix.needsUpdate = true; head.instanceMatrix.needsUpdate = true; };
+    body.frustumCulled = false; head.frustumCulled = false;
+    run.add(g); C.g = g;
+    return C;
+  }
+
+  // labels over places in the world: a list each frame
+  function tags(run) {
+    const T = { set() {} };
+    if (!hasDoc() || !has3()) return T;
+    const el = document.createElement('div'); el.id = 'mis-tags'; el.className = 'on'; document.body.appendChild(el);
+    const v = new THREE.Vector3(); let last = '';
+    T.set = (list) => {
+      const C = Render.camera; if (!C) return;
+      let html = '';
+      for (const t of list || []) { v.set(t.x, t.y, t.z).project(C); if (v.z > 1 || Math.abs(v.x) > 1.2 || Math.abs(v.y) > 1.2) continue;
+        html += '<i class="' + (t.cls || '') + '" style="left:' + ((v.x + 1) * 50).toFixed(2) + '%;top:' + ((1 - v.y) * 50).toFixed(2) + '%">' + t.html + '</i>'; }
+      if (html !== last) { el.innerHTML = html; last = html; }
+    };
+    undo(run, () => el.remove());
+    return T;
+  }
+
+  // a big button over the pedals: one press, one take()
+  function button(run, label) {
+    const K = { n: 0, shown: false, show() {}, take() { if (K.n > 0) { K.n = 0; return true; } return false; }, label() {} };
+    if (!hasDoc() || !has3()) return K;
+    const b = document.createElement('button'); b.id = 'mis-btn'; b.type = 'button'; b.textContent = tr(label); document.body.appendChild(b);
+    b.addEventListener('pointerdown', (e) => { K.n++; b.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+    const off = () => b.classList.remove('on'); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+    K.show = (on) => { on = !!on; if (on === K.shown) return; K.shown = on; b.classList.toggle('on-show', on); if (!on) K.n = 0; };
+    K.label = (s) => { const t = tr(s); if (b.textContent !== t) b.textContent = t; };
+    K.el = b;
+    undo(run, () => b.remove());
+    return K;
+  }
+
+  return { water, wade, boat, skin, crowd, tags, button };
+})());
 if (typeof module !== 'undefined') module.exports = MisKit;
