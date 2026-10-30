@@ -5755,7 +5755,7 @@ const Garage3D = (function () {
           ring: [rc[r0], rc[r0 + 1], rc[r0 + 2]].map(v => +v.toFixed(2)), glassDrawn: dr(CH.glass), frameDrawn: dr(CH.frame), band0: [CH.gv[0][1], CH.fv[0][1]], tools: RB.map(A => A.tool), mirror: !!(CH.frame.layers.mask & 1) || !!(CH.glass.layers.mask & 1) }; },
       chamberClear(car) { const sd = (x, z, d) => { const qx = Math.abs(x) - (CH.hx - CH.r), qz = Math.abs(z) - (CH.hz - CH.r); return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - (CH.r - d); };
         let m = 9; const v = new V3(), test = (x, y, z) => { for (let j = 0; j < CH.n; j++) if (y >= CH.bot[j] - 0.01 && y <= CH.bot[j] + CH.BH + 0.01) m = Math.min(m, Math.abs(sd(x, z, CH.IN * j))); };
-        for (const o of [FX.arms.mesh, LIFT.piece.root, LIFT.mesh, ...FX.tools, ...(car && cur ? [cur.root] : [])])   // (car: the car on the table too)
+        for (const o of car ? (cur ? [cur.root] : []) : [FX.arms.mesh, LIFT.piece.root, LIFT.mesh, ...FX.tools])   // (car: the car on the table's)
           o.traverse(q => { if (!q.isMesh || !q.visible) return; q.updateMatrixWorld(); const a = q.geometry.attributes.position.array, M = q.matrixAutoUpdate ? q.matrixWorld : q.matrix; for (let i = 0; i < a.length; i += 3) { v.set(a[i], a[i + 1], a[i + 2]).applyMatrix4(M); test(v.x, v.y, v.z); } });
         return +m.toFixed(3); },
       // (through the shows' queue, for the tests: 'chamber' down and up; 'tool' arm i takes tool k and puts it away; 'go' arm i to the

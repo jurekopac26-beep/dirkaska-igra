@@ -151,12 +151,12 @@ try {
       sv.done === 'clean,body,engine' && !sv.late.length && sv.parked && sv.info.dirt === 0 && sv.info.scr === 0 && sv.info.lift === 0 && r.lift >= 1.3 && r.table === 0 && r.ang === 0 && r.ax <= 2.701 && r.az <= 2.081 && r.low >= 0.3 && r.t < 60 && !sv.beams.some(Boolean) && !sv.oil,
       JSON.stringify({ r, sv }));
   }
-  // (the chamber down round the longest of the fleet (the KAMEN lorry, the PREDSEDNIK, the TITAN): its glass clear of the car too)
+  // (the chamber down round every car of the fleet (the longest: the KAMEN lorry, the PREDSEDNIK; the widest): its glass clear of each)
   {
-    const clr = await page.evaluate(() => { const D = Garage3D._dbg, out = {};
-      for (const id of ['kamen', 'predsednik', 'titan']) { Garage3D.show(Object.assign({}, Garage3D.cur.spec, { M: Core.MODELS.find(m => m.id === id) })); __garage.advance(0.1); D.setChamber(1); __garage.advance(0.1); out[id] = D.chamberClear(true); D.setChamber(0); __garage.advance(0.1); }
-      return out; });
-    T.check('the chamber down round the longest cars (the KAMEN, the PREDSEDNIK, the TITAN): its glass clear of each', Object.values(clr).every(c => c >= 0.05), JSON.stringify(clr));
+    const clr = await page.evaluate(() => { const D = Garage3D._dbg, out = [];
+      for (const M of Core.MODELS) { Garage3D.show(Object.assign({}, Garage3D.cur.spec, { M })); __garage.advance(0.1); D.setChamber(1); __garage.advance(0.1); out.push([M.id, D.chamberClear(true)]); D.setChamber(0); __garage.advance(0.1); }
+      return out.sort((a, b) => a[1] - b[1]); });
+    T.check(`the chamber down round every car of the fleet (${clr.length}): its glass clear of each (the closest ${clr[0][0]}, ${clr[0][1]} m)`, clr.length > 20 && clr[0][1] >= 0.05, JSON.stringify(clr.slice(0, 5)));
   }
   await page.evaluate(() => { const S = __garage.S; Garage3D.show(Object.assign({}, Garage3D.cur.spec, { M: Core.MODELS.find(m => m.id === S.car), cond: S.cars[S.car].cond })); __garage.advance(0.5); });
 
