@@ -20,7 +20,7 @@
   for (const e of DATA.elementi) { const S = SHOWN[e.id]; if (!S) continue;
     EL[e.id] = { n: S[0], k: S[1], c: e.kategorije.map(k => [[k.ime, k.ime_en], k.moznosti.map(m => { const o = [[m.ime, m.ime_en], m.cena_eur, [m.kaj_nudi || '', m.kaj_nudi_en || ''], pct(m.kaj_nudi)]; if (m.na_regalu) o.push(1); return o; })]) }; }
   // the service's four (the menu's tiles): [sl, en] name, what it is ([sl, en])
-  const SERVICE = [[['Pranje', 'Wash'], ['Pena, voda, vosek', 'Foam, water, wax']], [['Karoserija', 'Body'], ['Praske in udrtine', 'Scratches and dents']],
-    [['Motor in olje', 'Engine and oil'], ['Olje, filtri, svečke', 'Oil, filters, plugs']], [['Popoln servis', 'Full service'], ['Vse troje, −15 %', 'All three, −15 %']]];
+  const SERVICE = [[['Pranje', 'Wash'], ['Pena, voda, vosek', 'Foam, water, wax']], [['Karoserija', 'Bodywork'], ['Praske in udrtine', 'Scratches and dents']],
+    [['Motor in olje', 'Engine and oil'], ['Olje, filtri, svečke', 'Oil, filters, spark plugs']], [['Popoln servis', 'Full service'], ['Vse troje, −15 %', 'All three, −15 %']]];
   window.GarageShop = { EL, SERVICE };
 })();

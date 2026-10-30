@@ -2946,15 +2946,15 @@ const Garage3D = (function () {
   // in the ring (its foot at YS, its top in the slot), the others stored inside it; down each runs out of the one round it by step, the
   // inner one's foot on the floor at k 1, every band over the next by 5 cm: a closed wall from the floor into the ring); k 0 stored .. 1
   // down; col: its lights' colour)
-  const CH = { hx: 3.0, hz: 2.35, r: 0.65, y0: 4.02, y1: 4.4, o: 0.05, i: 0.16, n: 5, BH: 0.92, IN: 0.019, YS: 3.46, k: 0, col: hexRgb(0x47c6ff).map(v => v * 2.25), glass: null, frame: null, gv: [], fv: [], led: [], ring: null, bot: [], dirty: true };
+  const CH = { hx: 3.4, hz: 2.35, r: 0.65, y0: 4.02, y1: 4.4, o: 0.05, i: 0.16, n: 5, BH: 0.92, IN: 0.019, YS: 3.46, k: 0, col: hexRgb(0x47c6ff).map(v => v * 2.25), glass: null, frame: null, gv: [], fv: [], led: [], ring: null, bot: [], dirty: true };
   CH.step = CH.YS / (CH.n - 1);
   const FXC = { W: [0.9, 0.91, 0.93], NV: [0.1, 0.13, 0.26], DK: [0.13, 0.14, 0.16], ST: [0.6, 0.62, 0.66], CY: [0.62, 1.72, 2.25], YL: [0.92, 0.7, 0.1], CHN: [0.15, 0.16, 0.18], BK: [0.07, 0.07, 0.08] };
   const FX = { rails: null, ZERO: { value: 0 }, obst: [], tools: [] };
   // (the arms: the beams' top and foot (on the ring's top), the carriage's foot, the housing's foot (the wrist's height drawn in: Y0), the
   // stages' length and how far each may run out (EMAX the telescope's whole run), the wrist's drum, the forearm's length; each arm's way
   // along z (z0 .. z1), its beam's inner end; the travel along x; the parked place; each arm's tools)
-  const ARM = { yb0: 4.43, yb1: 4.6, yc: 4.06, Y0: 3.3, SL: 0.78, EMAX: 2.6, WR: 0.1, FA: 0.3, z0: [0.62, -2.08], z1: [2.08, 0.05], zin: [0.5, 0.2], x0: -2.3, x1: 2.3,
-    park: [{ x: -2.3, z: 2.08 }, { x: -2.3, z: -2.08 }], tools: [['nozzle', 'scanner', 'wrench'], ['brush', 'polisher', 'camera', 'nozzle']] };
+  const ARM = { yb0: 4.43, yb1: 4.6, yc: 4.06, Y0: 3.3, SL: 0.78, EMAX: 2.6, WR: 0.1, FA: 0.3, z0: [0.62, -2.08], z1: [2.08, 0.05], zin: [0.5, 0.2], x0: -2.7, x1: 2.7,
+    park: [{ x: -2.7, z: 2.08 }, { x: -2.7, z: -2.08 }], tools: [['nozzle', 'scanner', 'wrench'], ['brush', 'polisher', 'camera', 'nozzle']] };
   // (each arm: its state { x, z, y the wrist's height, yaw, pitch }, its tool, J (its tool's tip and way, a way across it: the service's
   // look), F (the tool's coupling as a matrix: a turning tool drawn from it), sv, sa (the brush's, the pad's turn))
   const RB = [0, 1].map(i => ({ i, s: { x: ARM.park[i].x, z: ARM.park[i].z, y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }, tool: 'none', rest: true, dirty: true, R: null, F: new THREE.Matrix4(),
@@ -3686,7 +3686,7 @@ const Garage3D = (function () {
      (generic). THE COLOUR CIRCLES: the game's eight colours as discs in the floor on an arc before the turntable, each in a white ring.
      THE LIFT'S HEAD: a small orange plate with an arrow on the lift's carriage (the version 25 of the concept): a tap lifts the car
      and lets it down. Each a thing to tap (FRONT.items, with the regal's: pick), its outline for the marks (mark) ---------------- */
-  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], lit: 0, lock: [false, false, true], price: ['450 €', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
+  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), todo: null, lit: 0, lock: [false, false, true], price: ['450 €', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
   const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
   // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
   function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
@@ -3776,11 +3776,15 @@ const Garage3D = (function () {
     for (let v = F.ring[0]; v < F.ring[1]; v++) { C[v * 3] = 0.4; C[v * 3 + 1] = 2.6; C[v * 3 + 2] = 0.9; }
     a.needsUpdate = true; F.lockM.visible = !!F.lock[2]; }
   // the maquettes: the car drawn small in each kit (STREET 1, SPORT 2, RACE 3: the game's aero levels), from the camera's first view's
-  // side (the YOUR CAR one with its lamps on); again when the car or its colour changes
+  // side (the YOUR CAR one with its lamps on); again when the car or its colour changes: one a frame, none in a frame another picture of
+  // a car was drawn in (each a whole car built and drawn: on a phone a stutter if all at once), the last cars' kept (back and forth)
+  const THB = { at: -1, n: 0 };   // (the frame a car's picture was last drawn in; the frames drawn)
   function frontCars(spec) { const F = FRONT; if (!spec) return; const key = spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false);
-    if (F.key === key) return; F.key = key;
-    F.sprites.forEach((sp, i) => { const c = thumbCanvas(Object.assign({}, spec, { upg: Object.assign({}, spec.upg, { aero: i + 1 }) }), 200, 100, { yaw: 0.62, lit: i === 0 });
-      if (sp.material.map) sp.material.map.dispose(); sp.material.map = new THREE.CanvasTexture(c); sp.material.needsUpdate = true; sp.visible = true; }); }
+    if (F.key !== key) { F.key = key; F.todo = [0, 1, 2]; }
+    while (F.todo && F.todo.length) { const i = F.todo[0], k = key + '|' + i, sp = F.sprites[i]; let c = F.cache.get(k);
+      if (!c) { if (THB.at === THB.n) return; c = thumbCanvas(Object.assign({}, spec, { upg: Object.assign({}, spec.upg, { aero: i + 1 }) }), 200, 100, { yaw: 0.62, lit: i === 0 }); }
+      F.cache.delete(k); F.cache.set(k, c); if (F.cache.size > 9) F.cache.delete(F.cache.keys().next().value);
+      F.todo.shift(); if (sp.material.map) sp.material.map.dispose(); sp.material.map = new THREE.CanvasTexture(c); sp.material.needsUpdate = true; sp.visible = true; } }
   // each frame: the YOUR CAR maquette shakes a little (a running engine) and puffs a wisp now and then; the lift's plate
   function stepFront(dt) { const F = FRONT, sp = F.sprites[0]; if (sp && sp.visible) { const p0 = sp.userData.p0; sp.position.set(p0.x + Math.sin(time * 41) * 0.0025, p0.y + Math.abs(Math.sin(time * 33)) * 0.002, p0.z);
       if ((F.puff = (F.puff || 0) - dt) < 0) { F.puff = 0.35 + Math.random() * 0.4; puffs.emit(p0.x - 0.33, p0.y + 0.06, p0.z + 0.08, -0.12, 0.08, 0.02, 1.2, 0.03, 0.12, [0.75, 0.77, 0.8], 0.3, -0.05, 1.0, 0.02); } }
@@ -3793,7 +3797,7 @@ const Garage3D = (function () {
      a light blue sheen over it), the other things of its menu orange (a see-through orange over them, no outline); each mark a mesh
      made from the thing's outline when asked, gone with the menu. ghost: the parts the car would get, see-through on it (its own of
      that kind hidden meanwhile) */
-  const TAPM = { list: [], mats: null }, GH = { grp: null, hid: null, kind: null };
+  const TAPM = { list: [], mats: null }, GH = { grp: null, hid: null, hidX: [], kind: null };
   function tapMats() { if (TAPM.mats) return TAPM.mats;
     const hull = (col, w) => new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color(col[0], col[1], col[2]) }, uW: { value: w } }, side: THREE.BackSide, depthWrite: false,
       vertexShader: 'uniform float uW; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); mv.xyz += n * uW * (-mv.z) * 0.12; gl_Position = projectionMatrix * mv; }',
@@ -3809,18 +3813,18 @@ const Garage3D = (function () {
       for (let i = 0; i < P.length; i += 3) { const k = key(i); let s = m.get(k); if (!s) m.set(k, s = [0, 0, 0]); s[0] += N[i]; s[1] += N[i + 1]; s[2] += N[i + 2]; }
       N = new Float32Array(P.length); for (let i = 0; i < P.length; i += 3) { const s = m.get(key(i)), l = Math.hypot(s[0], s[1], s[2]) || 1; N[i] = s[0] / l; N[i + 1] = s[1] / l; N[i + 2] = s[2] / l; } }
     g.setAttribute('normal', new THREE.BufferAttribute(N.slice ? N.slice() : N, 3)); g.computeBoundingSphere(); return g; }
-  const tapAll = () => (RGL.items || []).concat(FRONT.items);
+  const tapAll = () => (RGL.items && !(RGL.P && RGL.P.k > 0.5) ? RGL.items : []).concat(FRONT.items);   // (the regal not while it has stepped aside)
   const tapOf = (key) => tapAll().find(it => it.key === key);
   function tapMarkOff() { for (const m of TAPM.list) { scene.remove(m); m.geometry.dispose(); } TAPM.list.length = 0; }
   function tapMark(blue, orange) { tapMarkOff(); const M = tapMats(), add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; scene.add(mainOnly(o)); TAPM.list.push(o); };
     for (const k of orange || []) { const it = tapOf(k); if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
     const it = blue && tapOf(blue); if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); } }
-  function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } GH.kind = null; shadowDirty = 2; }
+  function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } for (const e of GH.hidX) e.visible = true; GH.hidX = []; GH.kind = null; shadowDirty = 2; }
   function ghost(kind, lv) { ghostOff(); const cv = cur; if (!cv || !kind || busy) return; const g = partsFor(cv, kind, lv); partsK(g, 1);
     const see = (o) => { if (!o.isMesh || !o.material) return; const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone(); m.transparent = true; m.opacity = 0.5; m.depthWrite = false;
       if (m.color) m.color.lerp(new THREE.Color(0.55, 0.85, 1), 0.45); if (m.emissive) m.emissive.setRGB(0.05, 0.18, 0.3); m.userData = { own: true }; o.material = m; o.castShadow = false; o.renderOrder = 3; };
     g.traverse(see); for (const e of g.userData.extra || []) e.traverse(see);
-    GH.grp = g; GH.kind = kind; const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; } shadowDirty = 2; }
+    GH.grp = g; GH.kind = kind; const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; GH.hidX = (old.userData.extra || []).filter(e => e.visible); for (const e of GH.hidX) e.visible = false; } shadowDirty = 2; }   // (its extras too: the tyres' bands on the wheels)
   // (a thing's box on the screen in CSS px (x, y, w, h), its depth; null behind the camera)
   const _pk = new V3();
   function screenBox(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box;
@@ -5065,13 +5069,13 @@ const Garage3D = (function () {
           if (up && hasZone(nw, zone)) yield* weld(cv, nw, zone);
           yield* partsIn(cv, nw, kind, 0.7, zone);
           if (zone === 'rear' || (zone === 'side' && cv.M.ev)) {
-            hud('power', { kind, lv, from });
+            hud('power', { kind, lv, from, kw: cv.M.kw });
             yield* start();
             if (cv.M.ev) yield* evPulse(cv, nw, up ? 2 : 1);
             else { yield* revs(cv, up ? 2 : 1, up && lv >= 2); if (up && lv === 3) yield* revs(cv, 1, true); }
           } else if (zone === 'front') { yield* start(); if (!cv.M.ev) yield* revs(cv, 1, false); }
         }
-        if (!running) { hud('power', { kind, lv, from }); yield* goZone(cv, kind, 'rear'); yield* start(); if (cv.M.ev) yield* evPulse(cv, nw, 1); else yield* revs(cv, 1, false); }
+        if (!running) { hud('power', { kind, lv, from, kw: cv.M.kw }); yield* goZone(cv, kind, 'rear'); yield* start(); if (cv.M.ev) yield* evPulse(cv, nw, 1); else yield* revs(cv, 1, false); }
         yield* wait(0.3); lamps(cv, 0, 0); engStop(); cv.shake = 0;
       } else if (kind === 'gume' || kind === 'zavore') {
         // the camera round to the wheel while the lift's arms swing in under the sills (the column's foot between the wheels, not under
@@ -5429,16 +5433,20 @@ const Garage3D = (function () {
     for (let j = 0; j < n; j++) { const q = () => (Math.random() - 0.5) * 1.4; puffs.emit(p.x, p.y, p.z, d.x * 2.2 + q(), d.y * 2.2 + q() * 0.6, d.z * 2.2 + q(), 0.45 + Math.random() * 0.4, 0.06, 0.55, col, 0.45, -0.2, 2.2, 0.02); } } }
   function paint(color, stripe) {
     return play(function* () {
-      const cv = cur; if (!cv) return;
-      if (cv.spec.color === color && (cv.spec.stripe !== false) === (stripe !== false)) return;
+      const cv = cur; if (!cv) return;   // (the same colour too: a new kind of work bought)
+      if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(cv, false);   // (painted on the floor)
       const K = cv.kit, W = svcPts(cv), zW = Math.max(W.zS, K.hw * 0.96);
       PAINT_C.on = true; hud('paint', { step: 'chamber' });
       yield* camTo(view({ at: [0, 0.9, 0], yaw: HOME.yaw, pitch: 0.26, dist: 8.4 }, 0.55, lift), 1.1);
       chamberColor(color);
       yield* par(chamberTo(1, 2.4), armTool(0, 'nozzle', 1.6), armTool(1, 'nozzle', 1.6));
       const col = hexRgb(color), x0 = K.front + 0.25, x1 = K.rear - 0.25, fwd = new V3(), o = new V3();
-      const near = (x) => armFor(0, 'nozzle', new V3(x, W.yA + 0.12, zW + 0.24), [0, -0.55, -0.83]), top = (x) => armFor(1, 'nozzle', new V3(x, K.top + lift + 0.32, -0.1), [0, -1, 0]);
-      yield* par(armGo(0, near(clamp(x0, ARM.x0, ARM.x1)), 1.4), armGo(1, top(clamp(x0, ARM.x0, ARM.x1)), 1.4));
+      // (the near nozzle along the side, the far one over the roof (a car too tall for it under the ring: along the far side's top); past
+      // the arms' reach (a long car's ends) each leans out to the colour's edge)
+      const tipD = ARM.Y0 - 0.07 - ARM.FA - TL.nozzle, tall = K.top + 0.32 > tipD, lean = (x) => clamp((x - clamp(x, ARM.x0 + 0.2, ARM.x1 - 0.2)) * 1.6, -0.9, 0.9);
+      const near = (x) => armFor(0, 'nozzle', new V3(x, W.yA + 0.12, zW + 0.24), [lean(x), -0.55, -0.83]);
+      const top = (x) => tall ? armFor(1, 'nozzle', new V3(x, Math.min(K.top - 0.3, tipD + 0.27), -(zW + 0.3)), [lean(x), -0.7, 0.7]) : armFor(1, 'nozzle', new V3(x, K.top + 0.32, -0.1), [lean(x), -1, 0]);
+      yield* par(armGo(0, near(x0), 1.4), armGo(1, top(x0), 1.4));
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
       // the new body only (its wheels, shadow and parts stay the old car's), cut the other way
@@ -5463,7 +5471,7 @@ const Garage3D = (function () {
       freeCar(cv);
       // drying: the arms up out of the way, the chamber's lights warm, a warm glow sweeping along the car, glints on the fresh paint
       hud('paint', { step: 'dry' });
-      yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2 }, 0.6));
+      yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: Math.PI / 2 }, 0.6));   // (level, across toward the car: not out through the chamber's ends)
       chamberColor(PAINT_C.warm); sLoop('dry', 'lowpass', 500, 0.7, 0.12);
       const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(7, 3, 1); scene.add(warm);
       yield* tween(1.8, (k, u) => { warm.material.opacity = 0.4 * Math.sin(u * Math.PI); warm.position.copy(carPt(nw, lerp(K.front, K.rear, u), K.top * 0.6, 0)); if (Math.random() < 0.5) sparkle(nw, 1); });
@@ -5647,7 +5655,7 @@ const Garage3D = (function () {
   }
   function frame(dt, noDraw) {
     if (!ready) return;
-    dt = Math.min(dt, 0.05); time += dt;
+    dt = Math.min(dt, 0.05); time += dt; THB.n++;
     const dts = dt * showRate(); runTasks(dts);   // (more shows waiting: this one hurries)
     if (cur) idleSmoke(cur, dt);
     for (const cv of liveCars()) poseCar(cv, dt);
@@ -5680,7 +5688,7 @@ const Garage3D = (function () {
   // a car's picture (a canvas w x h, drawn twice as big): o.yaw the side it is seen from (0.55: the list's), o.back how much further
   // back it stands (m), o.lit its lamps on
   function thumbCanvas(spec, w, h, o) {
-    o = o || {}; const cv = makeCar(Object.assign({ cond: { clean: 1, body: 1, engine: 1 }, upg: {} }, spec)), sc = new THREE.Scene();
+    o = o || {}; THB.at = THB.n; const cv = makeCar(Object.assign({ cond: { clean: 1, body: 1, engine: 1 }, upg: {} }, spec)), sc = new THREE.Scene();
     sc.add(new THREE.HemisphereLight(0xe8efff, 0x40444c, 0.8)); const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(3, 6, 4); sc.add(d);
     const r = new THREE.DirectionalLight(0x9fc8ff, 0.4); r.position.set(-4, 2, -5); sc.add(r);
     sc.add(cv.root); cv.v.blob && (cv.v.blob.material.opacity = 0.85); if (o.lit) lamps(cv, 1, 1);
@@ -5709,7 +5717,9 @@ const Garage3D = (function () {
     front(o) { if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },
     lift() { return play(function* () { const cv = cur; if (!cv) return; if (lift > 0.01 || LIFT.on) yield* liftDown(cv, false); else { yield* liftUp(cv, LIFT_H, false); yield* wait(0.4); } }); },
     set fast(k) { fast = k > 0 ? k : 1; },
-    get busy() { return busy > 0; }, get ready() { return ready; },
+    get busy() { return busy > 0; }, get thumbed() { return THB.at === THB.n; },   // (a car's picture drawn this frame already)
+    reshow(spec) { return play(function* () { show(spec); }); },   // (the car shown again at once (another profile), after the show that plays)
+    get ready() { return ready; },
     get idle() { return !busy && !moving() && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
     sound(on) { sndInit(); if (SND.out) SND.out.gain.value = on ? 0.7 : 0; SND.vol = on ? 0.7 : 0; if (typeof Sfx !== 'undefined') { Sfx.resume(); Sfx.setEnabled(on); } },
     setCond(c) { if (cur) setCond(cur, c); },
@@ -5743,9 +5753,9 @@ const Garage3D = (function () {
         const rc = FX.rails.geometry.attributes.color.array, r0 = CH.ring[0] * 3, dr = (m) => m.geometry.drawRange.count === Infinity ? m.geometry.attributes.position.count : m.geometry.drawRange.count;
         return { k: +CH.k.toFixed(3), low: +lo.toFixed(3), bands: CH.bot.map(v => +v.toFixed(3)), BH: CH.BH, header: [CH.y0, CH.y1], drawn: CH.glass.visible && CH.frame.visible, col: CH.col.map(v => +v.toFixed(2)), led: [fc[l0], fc[l0 + 1], fc[l0 + 2]].map(v => +v.toFixed(2)),
           ring: [rc[r0], rc[r0 + 1], rc[r0 + 2]].map(v => +v.toFixed(2)), glassDrawn: dr(CH.glass), frameDrawn: dr(CH.frame), band0: [CH.gv[0][1], CH.fv[0][1]], tools: RB.map(A => A.tool), mirror: !!(CH.frame.layers.mask & 1) || !!(CH.glass.layers.mask & 1) }; },
-      chamberClear() { const sd = (x, z, d) => { const qx = Math.abs(x) - (CH.hx - CH.r), qz = Math.abs(z) - (CH.hz - CH.r); return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - (CH.r - d); };
+      chamberClear(car) { const sd = (x, z, d) => { const qx = Math.abs(x) - (CH.hx - CH.r), qz = Math.abs(z) - (CH.hz - CH.r); return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - (CH.r - d); };
         let m = 9; const v = new V3(), test = (x, y, z) => { for (let j = 0; j < CH.n; j++) if (y >= CH.bot[j] - 0.01 && y <= CH.bot[j] + CH.BH + 0.01) m = Math.min(m, Math.abs(sd(x, z, CH.IN * j))); };
-        for (const o of [FX.arms.mesh, LIFT.piece.root, LIFT.mesh, ...FX.tools])
+        for (const o of [FX.arms.mesh, LIFT.piece.root, LIFT.mesh, ...FX.tools, ...(car && cur ? [cur.root] : [])])   // (car: the car on the table too)
           o.traverse(q => { if (!q.isMesh || !q.visible) return; q.updateMatrixWorld(); const a = q.geometry.attributes.position.array, M = q.matrixAutoUpdate ? q.matrixWorld : q.matrix; for (let i = 0; i < a.length; i += 3) { v.set(a[i], a[i + 1], a[i + 2]).applyMatrix4(M); test(v.x, v.y, v.z); } });
         return +m.toFixed(3); },
       // (through the shows' queue, for the tests: 'chamber' down and up; 'tool' arm i takes tool k and puts it away; 'go' arm i to the

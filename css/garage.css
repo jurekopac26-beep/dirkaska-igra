@@ -204,8 +204,8 @@ svg { display: block; }
   .g-foot { grid-column: 2; grid-row: 2; }
   .g-btn { height: 50px; }
   .g-menu { left: 50%; right: auto; width: min(560px, calc(100% - 20px)); top: calc(62px + var(--st)); transform: translate(-50%, -14px) scale(.98); }
-  .g-menu.on { transform: translate(-50%, 0); }
   .g-menu.bot { transform: translate(-50%, 14px) scale(.98); }
+  .g-menu.on { transform: translate(-50%, 0); }
   .g-tl { min-height: 54px; }
   .g-tl .pi, .g-tl .pi svg { width: 36px; height: 36px; }
   .g-mb .back, .g-mb .buy { height: 44px; }

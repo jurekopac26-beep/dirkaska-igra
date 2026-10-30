@@ -704,7 +704,8 @@
     carFrom = ch ? 'champ' : 'title'; if (ch) carBefore = b >= 0 ? b : S.car;
     if (o && o.track && menuOn) Menu.fromTrack = true;   // (the new menu's track step: its Nazaj there again)
     bg = 'show'; buildCarScreen(); showScreen('car');
-    if (next === 'proga' && owned(Core.MODELS[S.car].id)) { if (!menuOn) buildTrackScreen(); showScreen('track'); }
+    if (next === 'proga' && owned(Core.MODELS[S.car].id)) {   // (from the championship's car: back to it, as the car screen's Izberi)
+      if (ch) { carFrom = 'title'; save(); toTitle(); openChamp(); } else { if (!menuOn) buildTrackScreen(); showScreen('track'); } }
   }
 
   // stat bars: stock value, the gain from upgrades drawn in blue behind it
