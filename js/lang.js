@@ -492,6 +492,15 @@
     'Zmanjkalo je zraka v jeklenkah.': 'The breathing air ran out.', 'Zapeljal si v ogenj.': 'You drove into the fire.', 'V predoru so ostali ljudje.': 'People were left in the tunnel.', 'Zapeljal si predaleč.': 'You drove too far.',
     'Nalaganje ljudi.': 'Taking the people on board.', 'Do predora: {0} km': 'To the tunnel: {0} km', 'Ustavi pred gorečim tovornjakom in ga pogasi.': 'Stop in front of the burning lorry and put it out.', 'Ogenj je pogašen: pelji ven iz predora.': 'The fire is out: drive out of the tunnel.',
     'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
+    /* (the water missions: js/missions/kit.js, m19.js, m35.js, m37.js, m48.js) */
+    'Poplava': 'Flood', 'Monsunski dež je poplavil mesto. Voda še narašča, ljudje čakajo na strehah.': 'The monsoon rain has flooded the town. The water is still rising and people are waiting on the roofs.',
+    'Z dvoživko poberi ljudi s streh in jih odpelji na suho, preden voda naraste še za pol metra.': 'Pick up the people from the roofs with the amphibian and take them to dry ground before the water rises another half metre.',
+    'Pelji ob hišo, ustavi in vrzi obroč; tok te nosi proti morju.': 'Drive up to a house, stop and throw the ring; the current carries you toward the sea.',
+    'GLOBINA VODE': 'WATER DEPTH', 'VODA NARAŠČA': 'WATER RISING', 'VRZI OBROČ': 'THROW THE RING', 'POMOČ!': 'HELP!', '{0} oseba na strehi': '{0} person on the roof', '{0} osebi na strehi': '{0} people on the roof',
+    'Zapeljal si mimo, ljudje so ostali na strehah.': 'You drove past; people were left on the roofs.', 'Tok te je odnesel: vrni se k hiši in vrzi znova.': 'The current carried you off: go back to the house and throw again.',
+    'Obroč leti …': 'The ring is flying …', 'Oseba se spušča po vrvi …': 'A person is sliding down the line …', 'Ljudje so na suhem.': 'The people are on dry ground.', 'Vrzi obroč!': 'Throw the ring!',
+    'Ustavi ob hiši in vrzi obroč.': 'Stop by the house and throw the ring.', 'Ustavi: ljudje izstopijo na suho.': 'Stop: the people get out onto dry ground.',
+    'Odpelji ljudi na suho: do ovinka pod hribom.': 'Take the people to dry ground: to the hairpin at the foot of the hill.', 'Nekaj ljudi še čaka na strehah: vrni se po njih.': 'Some people are still waiting on the roofs: go back for them.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
