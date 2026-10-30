@@ -42,8 +42,8 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 1 | Mala proga in okolica: lunapark z vulkanom, stekleni most, parkirišče z avtošolo, reševalna baza s helidromom, robovi, podiranje | – | na `main` ([PR #196](https://github.com/jurekopac26-beep/dirkaska-igra/pull/196)) |
 | 2 | Tla ob morju: plaža 4, ena trava, obali JV in SV, dno morja, travnik za robom mape | ~5 h (ocena 12–18 h) | na `main` ([PR #198](https://github.com/jurekopac26-beep/dirkaska-igra/pull/198)) |
 | 3 | Kmetija (in slike razlik za vprašanje 1) + nagnjena ovinka po sliki | 12–17 h | na `main` ([PR #203](https://github.com/jurekopac26-beep/dirkaska-igra/pull/203)) |
-| 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | 12–18 h | v delu (nova seja od 30. 10.) |
-| 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | 10–17 h | |
+| 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | ~3 h (ocena 12–18 h) | na `main` ([PR #206](https://github.com/jurekopac26-beep/dirkaska-igra/pull/206)) |
+| 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | 10–17 h | v delu (nova seja od 30. 10., hkrati s 7) |
 | 7 | Avtošola s 27 nalogami | 16–24 h | v delu (nova seja od 30. 10., hkrati s 4) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | |
 | 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | |
@@ -82,6 +82,12 @@ Uporabnik: »vprasanje 1, naredi razlike da vidim v sliki med igro igralca. 2-2,
 
 **Nagnjena ovinka** (izbire.md vrstica 4 in razdelki z »nagnjen«): asfalt v skledi in zaplate mivke (`bank-page.js`), ovinek 1 male proge nagnjen asfalt,
 notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v mivki ob notranjem robniku. Del robov je v kodi iz sklopa 1: najprej primerjaj.
+
+## Sklop 4: helikopter (na `main`, PR #206)
+- `js/nvheli.js` (`NVHeli`): model iz `NVBase.helicopter()` (ni več združen z bazo), stanja `park` → `open` (meni) → `board` (1 s) → `air` → `land`,
+  `auto` (sam domov na H). Dno in rampi sta tla (`track.ground2`), lupina zid (`track.wall2`). Ne pristane na vodi (`H3.water.bedAt`),
+  strehi ali med drevesi (`topAt`: žarek navzdol po mrežah, ki mečejo senco). Meni: `NVHeli.ITEMS`; WATER RESCUE in FIREFIGHTING sta
+  zaklenjena (`data-a="lock"`): drug račun ju odklene in priklopi tu. Test `tests/browser/nvheli.test.mjs`.
 
 ## Orodja (`koda/`)
 - `node koda/posnetki.mjs <repo> <seznam.json> <predpona>`: posnetki od zgoraj in za avtom (opis v glavi datoteke). Cela mapa: `koda/ploscice.json`
