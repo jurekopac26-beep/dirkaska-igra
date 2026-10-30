@@ -57,7 +57,7 @@ try {
       const props = (W.props || []).map(q => [q.kind, q.x, q.z, q.yaw || 0, q.col || 0, q.i == null ? -1 : q.i].join(','));
       const ph = fnv(2166136261, str(props.join(';')));
       const F = race.propFloor; let fh = 2166136261, fn = 0;
-      if (F) { const q = { i: 0, d: 0, s: 0 }; for (let i = 0; i < Tr.N; i += 7) for (const sd of [-1, 1]) for (let e = 0.1; e < 12; e += 0.9) { q.i = i; q.s = i * Tr.ds; q.d = sd * (Tr.w + e); q.x = Tr.px[i] + Tr.nx[i] * q.d; q.z = Tr.pz[i] + Tr.nz[i] * q.d; fh = fnv(fh, u32([F(q)])); fn++; } }   // (x, z as a prop has them: Toronto's, Townsville's and Monterey's floors read the ground there; without them NaN, its bits as the engine's state left them)
+      if (F) { const q = { i: 0, d: 0, s: 0 }; for (let i = 0; i < Tr.N; i += 7) for (const sd of [-1, 1]) for (let e = 0.1; e < 12; e += 0.9) { q.i = i; q.s = i * Tr.ds; q.d = sd * (Tr.w + e); fh = fnv(fh, u32([F(q)])); fn++; } }
       // the braking boards (Track.brakeBoards, World's brakeBoards): on a circuit all in one mesh without a shadow; each plate above the road and
       // the ground under it, each leg's foot in the ground (not floating)
       const want = Tr.brakeBoards().reduce((a, z) => a + z.boards.length, 0), got = W.brakeBoards || [];
