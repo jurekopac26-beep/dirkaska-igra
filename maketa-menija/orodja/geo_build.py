@@ -92,7 +92,7 @@ if 'vectors' in ONLY:
         if rec['TYPE'] in ('Dependency', 'Lease') or (rec['TYPE'] == 'Indeterminate' and nm != 'Antarctica'): continue   # (no bases, leases and small dependencies)
         C.append([nm, round(rec['LABEL_X'], 3), round(rec['LABEL_Y'], 3), int(rec['LABELRANK']), round(float(rec.get('MIN_LABEL') or 0), 1)])
         if nm in keep and nm not in BIG: OUTL[nm] = lines(g, 0.0005 if nm == 'Monaco' else 0.01, 4 if nm == 'Monaco' else 3)
-        if nm in keep and nm in BIG: OUTL[nm] = [l for l in lines(g, 0.04, 2) if len(l) >= 40]   # (e.g. the 48 states and Alaska, coarser: it is drawn from far up; no small islands)
+        if nm in keep and nm in BIG: OUTL[nm] = [l for l in lines(g, 0.04 if nm in ('USA', 'Australia') else 0.12 if nm in ('Canada', 'Russia') else 0.08, 2) if len(l) >= (40 if nm in ('USA', 'Australia') else 160 if nm in ('Canada', 'Russia') else 80)]   # (e.g. the 48 states and Alaska, coarser: it is drawn from far up; no small islands)
     for rec, g in read('ne_50m_admin_1_states_provinces'):
         if rec['name'] == 'Colorado': OUTL['Colorado'] = lines(g, 0.01); C.append(['Colorado', round(rec['longitude'], 3), round(rec['latitude'], 3), 6, 4.0])
     G['countries'] = C; G['outlines'] = OUTL
