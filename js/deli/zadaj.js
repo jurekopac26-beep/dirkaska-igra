@@ -167,19 +167,33 @@
     const pins = () => { for (const t of XG ? [0.12, 1.86] : [0.12, 0.88]) for (const sd of [-1, 1]) { const p = pt(t, sd * (W - 0.07), 0.006);
       K.discX(p[0], p[1], p[2], 0.016, seg(K, 8), CHR, -1); K.rect(p[0] - 0.002, p[1] - 0.01, p[2], 0.006, 0.026, RED, { dir: '-x' }); } };
     const lines = (col) => { for (const t of [0.3, 0.55, 0.8]) patch(t - 0.01, t + 0.01, -W + 0.03, W - 0.03, col, 0.0055); };   // (brushed: the grain's lines across)
+    // raised ribs across (corrugated), louvres (dark slots, a slat over each), the window blanked off (a race car's: a slot of glass left),
+    // a pinstripe round the lid, the woodie's planks up and down in a wooden frame round the window
+    const ribs = (col) => { for (let i = 0; i < 6; i++) { const t = 0.1 + i * 0.15; patch(t - 0.02, t + 0.02, -W + 0.03, W - 0.03, col, 0.009); patch(t - 0.026, t - 0.02, -W + 0.03, W - 0.03, [0.3, 0.31, 0.33], 0.007); } };
+    const louvres = (t0, rows, cols, dark, slat) => { for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const t = t0 + r * 0.1, z0 = -W + 0.08 + c * (2 * W - 0.16) / cols, z1 = z0 + (2 * W - 0.16) / cols - 0.03;
+      patch(t, t + 0.06, z0, z1, dark, 0.0055); patch(t + 0.06, t + 0.075, z0, z1, slat, 0.009); } };
+    const blank = (col, slot) => { if (!XG) return; patch(1.0, 2.0, -W + 0.004, W - 0.004, col, 0.0045); if (slot) patch(1.55, 1.85, -W * 0.55, W * 0.55, [0.3, 0.36, 0.44], 0.0055); };
+    const stripe = (col) => { patch(0.04, 0.07, -W + 0.02, W - 0.02, col, 0.0055); patch(0.93, 0.96, -W + 0.02, W - 0.02, col, 0.0055); patch(0.07, 0.93, -W + 0.02, -W + 0.045, col, 0.0055); patch(0.07, 0.93, W - 0.045, W - 0.02, col, 0.0055); };
+    const woodie = () => { const A = [0.6, 0.4, 0.21], B = [0.5, 0.32, 0.16]; grid(1, 8, (i, j) => j % 2 ? A : B); frame((i) => i % 2 ? A : B, 0.06); };
+    const big = (col) => { lip(col, true); for (const sd of [-1, 1]) { const p = pt(0.97, sd * (W - 0.012), 0.002); K.box(p[0] - 0.035, p[1], p[2], 0.07, 0.07, 0.008, 0, col); } };   // (a ducktail with endplates)
     K.part(m.part || 'trunk', () => {
       switch (n) {
-        case 1: case 2: iron([0.45, 0.46, 0.48]); garnish(DK); if (n === 2) lip([0.45, 0.46, 0.48]); break;   // jekleni (s spojlerjem): bare iron
-        case 3: lid(P); garnish(P); patch(0.62, 0.64, -W + 0.05, W - 0.05, CHR, 0.0055); break;           // lakirani: the garnish in paint, a chrome line
-        case 4: wood(); garnish(DK); break;                                                                 // lesen (želja uporabnika 30. 10. 2026)
-        case 5: case 6: lid(AL); lines(AL2); garnish(DK); if (n === 6) lip(AL); break;                     // aluminijast (s spojlerjem)
-        case 7: case 8: lid(AL2); garnish(AL2); for (const t of [0.08, 0.92]) for (let i = 0; i < 9; i++) { const p = pt(t, -W + 0.05 + i * (W - 0.05) / 4, 0.006); K.rect(p[0], p[1], p[2], 0.012, 0.012, DK, { dir: '-x' }); }
-          if (n === 8) lip(AL2); break;                                                                      // lažji: bare, riveted
-        case 9: case 10: carbon(); frame(weave, 0.04); garnish(DK); if (n === 10) lip(CF); break;      // karbonski (s spojlerjem)
-        case 11: carbon(); frame(weave, 0.05); garnish(CF2); patch(0.6, 0.66, -W + 0.03, W - 0.03, P, 0.0055); break;   // dvostranski: a band in paint
-        case 12: carbon(true); frame([0.06, 0.062, 0.066], 0.05); garnish([0.06, 0.062, 0.066]); break;   // suhi: matte
-        case 13: case 14: carbon(); frame(weave, 0.04); garnish(DK); pins(); if (n === 14) lip(CF, true); break;   // dirkalni (s spojlerjem)
-        case 15: case 16: carbon(); frame(BLK, 0.075); rivets(AL); garnish(n === 16 ? CF2 : DK); pins(); if (n === 16) lip(CF, true); break;   // ultralahek, motošport: the lexan's border
+        case 1: iron([0.45, 0.46, 0.48]); garnish(DK); break;                                                       // jekleni: bare iron, welded
+        case 2: iron([0.45, 0.46, 0.48]); garnish(DK); big([0.4, 0.41, 0.43]); break;                               // s spojlerjem: a ducktail with endplates
+        case 3: lid(P); garnish(P); stripe(CHR); frame(CHR, 0.015); break;                                          // lakirani: smoothed, chrome trim round lid and window
+        case 4: woodie(); garnish([0.3, 0.19, 0.1]); break;                                                         // lesen: a woodie's planks, its window framed in wood
+        case 5: lid(AL); ribs(AL); garnish(DK); break;                                                              // aluminijast: corrugated
+        case 6: lid(AL); lines(AL2); garnish(DK); big(AL); break;                                                   // s spojlerjem
+        case 7: lid(AL2); louvres(0.12, 3, 3, BLK, AL); break;                                                      // lažji: louvred
+        case 8: lid(AL2); louvres(0.12, 3, 3, BLK, AL); big(AL2); break;                                            // lažji s spojlerjem
+        case 9: carbon(); frame(weave, 0.04); garnish(DK); break;                                                   // karbonski
+        case 10: carbon(); frame(weave, 0.04); garnish(DK); big(CF); break;                                         // s spojlerjem
+        case 11: carbon(); blank(CF2, true); garnish(CF2); break;                                                   // dvostranski: the window carbon too, a slot left
+        case 12: carbon(true); frame([0.06, 0.062, 0.066], 0.05); stripe(RED); garnish([0.06, 0.062, 0.066]); break;   // suhi: matte, a red pinstripe
+        case 13: carbon(); frame(weave, 0.04); louvres(0.14, 2, 2, BLK, AL2); pins(); break;                         // dirkalni: vents, quick pins
+        case 14: carbon(); frame(weave, 0.04); pins(); big(CF); garnish(RED); break;                                 // s spojlerjem: a red garnish
+        case 15: carbon(); frame(BLK, 0.075); rivets(AL); pins(); break;                                             // ultralahek: the lexan's black border, riveted
+        case 16: carbon(); blank(CF, true); louvres(0.14, 2, 3, BLK, AL2); pins(); big(CF); garnish(RED); break;     // motošport: blanked, vents, ducktail
       }
     });
   }
