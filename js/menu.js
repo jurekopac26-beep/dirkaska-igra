@@ -19,28 +19,20 @@
   const clock = (s) => Math.floor(s / 60) + ':' + (s % 60).toFixed(2).padStart(5, '0');
 
   /* ---------------- icons ---------------- */
-  const cupPath = (f, s) => '<path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="' + s + '" stroke-width="2.2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="' + s + '"/><path d="M10.5 23.5h11v3.8h-11z" fill="' + f + '" stroke="' + s + '" stroke-width="1.2"/>';
   const I = {
-    left: '<svg viewBox="0 0 20 20"><path d="M14 3.5v13L4 10z" fill="#fff"/></svg>',
     wheel: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#ffc629" stroke-width="2.6"/><circle cx="12" cy="12" r="2.4" fill="#ffc629"/><path d="M3.5 11h6M14.5 11h6M12 14.5v6" stroke="#ffc629" stroke-width="2.6"/></svg>',
-    right: '<svg viewBox="0 0 20 20"><path d="M6 3.5v13L16 10z" fill="#fff"/></svg>',
     back: '<svg viewBox="0 0 22 22"><path d="M14 4 7 11l7 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 18 18"><path d="m7 3 6 6-6 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     bigcup: '<svg class="bigcup" viewBox="0 0 32 32" aria-hidden="true"><path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="#ffc629" stroke="#8a6200" stroke-width=".8"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="#ffc629" stroke-width="2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="#e0a40a"/><path d="M10.5 23.5h11v3.8h-11z" fill="#ffc629" stroke="#8a6200" stroke-width=".8"/><path d="M12 6.5h2.2v6.2a2 2 0 0 1-2.2-2z" fill="rgba(255,255,255,.55)"/></svg>',
     lock: (c) => '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2" fill="' + c + '"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="' + c + '" stroke-width="2.4"/></svg>',
     coin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc629"/><circle cx="12" cy="12" r="7" fill="none" stroke="#b07d00" stroke-width="1.6"/><text x="12" y="15.4" text-anchor="middle" font-family="ApexMenu, Roboto, Arial" font-weight="900" font-size="8.4" fill="#7a5600">CR</text></svg>',
     check: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc629"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#1b1b1b" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    star: '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z" fill="#1b1b1b"/></svg>',
     bolt: '<svg width="20" height="24" viewBox="0 0 22 24"><path d="M13 1.5 3.5 14h6.5l-1.5 8.5L19 10h-6.8z" fill="#fff"/></svg>',
     weight: '<svg width="22" height="24" viewBox="0 0 22 24"><path d="M7.5 7a3.5 3.5 0 1 1 7 0" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M4.5 9h13l2.5 12.5H2z" fill="#fff"/><text x="11" y="19" text-anchor="middle" font-family="ApexMenu, Roboto, Arial" font-weight="900" font-size="7" fill="#0e1a2c">KG</text></svg>',
     drive: '<svg width="22" height="24" viewBox="0 0 22 24"><rect x="2" y="2.5" width="5" height="8" rx="1.5" fill="#fff"/><rect x="15" y="2.5" width="5" height="8" rx="1.5" fill="#fff"/><rect x="2" y="13.5" width="5" height="8" rx="1.5" fill="#fff"/><rect x="15" y="13.5" width="5" height="8" rx="1.5" fill="#fff"/><path d="M7 6.5h8M7 17.5h8M11 6.5v11" stroke="#fff" stroke-width="2"/></svg>',
     gears: '<svg width="21" height="24" viewBox="0 0 22 24"><path d="M4 4v16M11 4v16M18 4v8M4 12h14" stroke="#fff" stroke-width="2.3" fill="none" stroke-linecap="round"/><circle cx="18" cy="4" r="2.6" fill="#fff"/></svg>',
-    corners: '<svg width="19" height="24" viewBox="0 0 24 28"><path d="M5 26c0-7 13-6 13-13V6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M13.5 8.5 18 3.5l4.5 5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    flag: '<svg width="19" height="24" viewBox="0 0 24 28"><path d="M5 3v23" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M5.5 4h15v10h-15z" fill="#fff"/><path d="M5.5 4h5v3.3h-5zM15.5 4h5v3.3h-5zM10.5 7.3h5v3.4h-5zM5.5 10.7h5V14h-5zM15.5 10.7h5V14h-5z" fill="#0e1a2c"/></svg>',
     globe: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" fill="none" stroke="#fff" stroke-width="1.6"/></svg>',
     people: '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="#fff"/><path d="M2.5 20c.6-4 3.2-6 6.5-6s5.9 2 6.5 6z" fill="#fff"/><circle cx="17" cy="9" r="2.6" fill="rgba(255,255,255,.7)"/><path d="M15.6 13.4c3 .1 5.2 2 5.9 5.6h-4.6" fill="rgba(255,255,255,.7)"/></svg>',
-    medal: '<svg width="20" height="24" viewBox="0 0 22 26"><path d="M6 1.5h4l2 6h-4zM16 1.5h-4l-2 6h4z" fill="#3fd0ff"/><circle cx="11" cy="16" r="7" fill="#ffc629" stroke="#8a6200" stroke-width="1.2"/><path d="M11 12.3l1.1 2.3 2.5.3-1.9 1.7.5 2.5-2.2-1.2-2.2 1.2.5-2.5-1.9-1.7 2.5-.3z" fill="#8a6200"/></svg>',
-    trophy: (c) => '<svg width="24" height="24" viewBox="0 0 32 32">' + cupPath(c === 'gold' ? '#ffc629' : 'none', c === 'gold' ? '#ffc629' : '#fff') + '</svg>',
     motor: '<svg viewBox="0 0 24 24"><path d="M3 10h2.5V8H8V6h6v2h2.5l2 2H21v6h-2.5l-2 2.5H8.5L5.5 16H3z" fill="#fff"/></svg>',
     tyre: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="3.4"/><circle cx="12" cy="12" r="3.4" fill="#fff"/></svg>',
     brake: '<svg viewBox="0 0 24 24"><circle cx="11" cy="13" r="8" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="11" cy="13" r="2.6" fill="#fff"/><path d="M15 3.5a9.5 9.5 0 0 1 6 6.5" fill="none" stroke="#ff5145" stroke-width="3.2" stroke-linecap="round"/></svg>',
@@ -50,11 +42,8 @@
     wifi: '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.8 12.4a9.3 9.3 0 0 1 12.4 0M9 15.7a4.6 4.6 0 0 1 6 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="19.3" r="1.7" fill="#fff"/></svg>',
     key: '<svg width="26" height="26" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4.5" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M12.5 12H21M18 12v3.5M21 12v2.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>',
     bolt2: '<svg width="26" height="26" viewBox="0 0 22 24"><path d="M13 1.5 3.5 14h6.5l-1.5 8.5L19 10h-6.8z" fill="#fff"/></svg>',
-    sun: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.4" fill="#fff"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     rain: '<svg width="22" height="24" viewBox="0 0 24 24"><path d="M6.5 15a4.5 4.5 0 0 1 .7-8.9A6 6 0 0 1 18.4 8 3.6 3.6 0 0 1 18 15z" fill="#fff"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="#3fd0ff" stroke-width="2" stroke-linecap="round"/></svg>',
-    siren: '<svg width="22" height="24" viewBox="0 0 24 24"><path d="M6.5 19v-5.5a5.5 5.5 0 0 1 11 0V19z" fill="#ff4a4a"/><path d="M12 8a5.5 5.5 0 0 1 5.5 5.5V19H12z" fill="#3a78ff"/><rect x="4.5" y="19" width="15" height="3" rx="1" fill="#fff"/><path d="M12 1.8v2.6M4.4 4.8l1.8 1.8M19.6 4.8l-1.8 1.8M1.6 11.5h2.3M20.1 11.5h2.3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
     watch: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="12" cy="14" r="8" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 14V9.4" stroke="#3fd0ff" stroke-width="2.2" stroke-linecap="round"/><path d="M9.4 2.6h5.2M12 2.6v3.2M18.6 6.4l1.6-1.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
-    dice: '<svg width="22" height="24" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="17" rx="4" fill="#fff"/><g fill="#0b192b"><circle cx="8.6" cy="9.4" r="1.7"/><circle cx="12" cy="13" r="1.7"/><circle cx="15.4" cy="16.6" r="1.7"/><circle cx="15.4" cy="9.4" r="1.7"/><circle cx="8.6" cy="16.6" r="1.7"/></g></svg>',
     mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   };
   Object.assign(I, {   // (the career's four cards, the title's small buttons)
@@ -68,31 +57,32 @@
   /* ---------------- the game's tracks as the menu shows them ---------------- */
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' }]);
   const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel' };
-  const WEATHER = ['Dry', 'Rain', 'Random'], W_SET = ['dry', 'rain', 'random'];
-  const wIcon = (w) => [I.sun, I.rain, I.dice][Math.max(0, WEATHER.indexOf(w))];
+  const W_SET = ['dry', 'rain', 'random'];   // (the rain over the picture: none, falling, coming and going)
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
-  const GROUP_ORDER = ['circuit', 'road', 'rally', 'test'];
   let TR = [];
+  // every track in one list: the real ones from the shortest to the longest, then the test tracks the same way (equal lengths: by id). The
+  // lengths are the menu's table (MENU.lens, tools/menu-lens.js): building every track to measure it would take seconds on a phone
+  const lenOf = (d) => (D.lens || {})[d.id] || 0;
   function buildTracks() {
     const gr = (d) => d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
     TR = G.defs().filter(d => !d.variantOf).map(d => {
       const en = d.en || {}, full = en.name || d.name, k = full.lastIndexOf(', ');
-      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d),
+      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d), test: !!d.test,
         modes: d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
       Object.defineProperties(t, {
-        km: { get() { const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
+        km: { get() { if (lenOf(d)) return lenOf(d) / 1000; const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
         corners: { get() { return G.track(d.id).corners.length; } },
         laps: { get() { return d.open ? 1 : G.lapsOf(d); } },
         rec: { get() { return G.record(d); } },
       });
       return t;
     });
-    TR.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group));
+    TR.sort((a, b) => (a.test - b.test) || (lenOf(a.def) - lenOf(b.def)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
   const trackById = (id) => TR.find(t => t.id === id);
   // the track the game stands on. Its built-in first choice is a test track (Jezero), which a player who has never raced should not meet first
-  const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && !(c.group === 'test' && !G.S.lastTrack) ? c : TR.find(t => t.group !== 'test') || TR[0]; };
+  const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && !(c.test && !G.S.lastTrack) ? c : TR.find(t => !t.test) || TR[0]; };
   const carImg = (m, ci) => 'assets/cars/img/' + m.id + '-' + ci + '.webp';
   const HAS_CAR_IMG = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'formula'];
   const trackImg = (t, wet) => 'assets/tracks/' + t.id + (wet ? '-rain' : '') + '.webp';
@@ -103,10 +93,9 @@
   const money = () => G.career() ? G.career().money : null;
 
   /* ---------------- view state ---------------- */
-  let screen = 'title', shown = '', titleSub = null, panelH = 0, mode = 'race', group = 'circuit', trackIdx = 0, mapV = 1, sheet = null, sheetOn = false;
+  let screen = 'title', shown = '', titleSub = null, panelH = 0, mode = 'race', trackIdx = 0, mapV = 1, sheet = null, sheetOn = false;
   const inMode = (t) => t.modes.includes(GAME_MODE[mode]);
-  const groupList = (g) => TR.filter(t => t.group === g && inMode(t));
-  const TRACKS = () => groupList(group);
+  const TRACKS = () => TR.filter(inMode);   // (the list goes round: after the last track the first again)
   const curTrack = () => TRACKS()[trackIdx] || null;
   const wxMode = () => W_SET[weatherIdx()];
 
@@ -161,13 +150,7 @@
   /* ---------------- rendering helpers ---------------- */
   const eur = (x) => '€' + num(x);
   const moneyPill = () => money() == null ? '' : '<div class="money">' + I.coin + '<span>' + eur(money()) + '</span></div>';
-  // step: [n, of, what] -> "Step 1 of 2 · Mode" ("1/2 · Mode" on a narrow screen)
-  const topbar = (title, withMoney, step) => '<div class="topbar"><button class="sq" data-act="back" aria-label="Back">' + I.back + '</button><h2>' + esc(title) +
-    (step ? '<small><span class="sl">Step ' + step[0] + ' of ' + step[1] + '</span><span class="ss">' + step[0] + '/' + step[1] + '</span> · ' + esc(step[2]) + '</small>' : '') + '</h2>' + (withMoney ? moneyPill() : '') + '</div>';
   const foot = (goHtml) => '<div class="foot"><button class="back" data-act="back" aria-label="Back">' + I.back + '</button>' + (goHtml || '') + '</div>';
-  const info = (items) => '<div class="info">' + items.map(it => '<div class="' + (it[3] || '') + '">' + it[0] + '<div class="t"><small>' + esc(it[1]) + '</small><b>' + esc(it[2]) + '</b></div></div>').join('') + '</div>';
-  // where the player is in the list of tracks, as a number (3/14) between the arrows
-  const counter = (sel, n) => '<div class="pcount"><b>' + (sel + 1) + '</b><span>/' + n + '</span></div>';
 
   /* ---------------- main menu ---------------- */
   function vTitle() {
@@ -367,32 +350,91 @@
   }
 
 
-  // what the race is, under the weather: the laps of a circuit race, else the mode
-  const modeWhat = (t) => mode === 'race' && !t.def.open ? laps(t.laps).toUpperCase() : modeOf(mode).name.toUpperCase();
 
-  /* ---------------- single race, step 2: the tracks of the mode ---------------- */
+  /* ---------------- single race, step 2: the track ----------------
+     From the top: the head (the house back to the main menu; the country, the place and its height; the globe), the stage (the map, the
+     flyover or the model; the camera at its top left, the weather down its right side), the row of numbers (the opponents, the best, the
+     length, the climb or the corners, the country's flag), the yard (the player's car before a blue road sign with the country), the two
+     neighbouring tracks of the list (their flags), Back and Race!. The list goes round (track:-1 / track:1: the buttons, LB and RB, the
+     arrow keys, a swipe over the stage) */
+  const WX4 = [['dry', 'Dry'], ['rain', 'Rain'], ['change', 'Changing'], ['storm', 'Storm']];
+  const wxIcon = (w) => '<svg viewBox="0 0 32 32" aria-hidden="true">' + ({
+    dry: '<circle class="w-sun" cx="16" cy="16" r="6.4"/><path class="w-ray" d="M16 3v4.2M16 24.8V29M3 16h4.2M24.8 16H29M6.8 6.8l3 3M22.2 22.2l3 3M6.8 25.2l3-3M22.2 9.8l3-3"/>',
+    rain: '<path class="w-cl" d="M9 21a5.4 5.4 0 0 1 .8-10.7 7.3 7.3 0 0 1 13.7 2.2A4.3 4.3 0 0 1 23 21z"/><path class="w-dr" d="M11 24l-1.4 4M16 24l-1.4 4M21 24l-1.4 4"/>',
+    change: '<circle class="w-sun" cx="11.5" cy="11.5" r="5"/><path class="w-ray" d="M11.5 2.5v2.6M2.5 11.5h2.6M5.1 5.1l1.9 1.9M17.9 5.1 16 7"/><path class="w-cl" d="M11 25a4.6 4.6 0 0 1 .7-9.1 6.2 6.2 0 0 1 11.7 1.9A3.7 3.7 0 0 1 23 25z"/><path class="w-dr" d="M15 27.5l-.8 2.4M20 27.5l-.8 2.4"/>',
+    storm: '<path class="w-cl" d="M9 20a5.4 5.4 0 0 1 .8-10.7 7.3 7.3 0 0 1 13.7 2.2A4.3 4.3 0 0 1 23 20z"/><path class="w-bolt" d="M17.5 17 12.5 24h3.4l-1.6 6.5 5.6-8.2h-3.5l1.8-5.3z"/>',
+  })[w] + '</svg>';
+  const HOUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.2 12 3.5l9 7.7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.8 10v10h4.6v-5.6h3.2V20h4.6V10" fill="#fff"/></svg>';
+  const DBL = (dir) => '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="' + (dir < 0 ? 'M13 3 6 10l7 7M22 3l-7 7 7 7' : 'M6 3l7 7-7 7M15 3l7 7-7 7') + '" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // the flags of the countries (assets/flags, drawn to their official rules); a track in another country has none
+  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'japan', 'china', 'thailand', 'russia'];
+  const flagUrl = (c) => { const f = String(c || '').toLowerCase().replace(/\s+/g, '-'); return FLAG_FILES.includes(f) ? 'assets/flags/' + f + '.svg' : ''; };
+  // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
+  // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
+  const flagEdge = {};
+  function flagFill(url) {
+    if (url in flagEdge) return flagEdge[url];
+    flagEdge[url] = '';
+    const im = new Image();
+    im.onload = () => {
+      try {
+        const cv = document.createElement('canvas'); cv.width = 1; cv.height = 96; const c = cv.getContext('2d');
+        c.drawImage(im, -63, 0, 64, 96); flagEdge[url] = 'url(' + cv.toDataURL() + ')';
+        if (app) for (const b of app.querySelectorAll('.nb[data-flag="' + url + '"]')) b.style.backgroundImage = flagEdge[url];
+      } catch (_) { /* (a canvas that cannot be read: the button's own colour) */ }
+    };
+    im.src = url;
+    return '';
+  }
+  // the height in the head: the top of the run (an open road's summit, a circuit's highest point) where the game knows the real heights
+  function heightOf(t) {
+    const a = t.def.alt; if (a) return Math.max(a[0], a[1]);
+    const R = RT[t.id], M = D.routeMaps[t.id] || {}; if (!R || (!M.alt && M.base == null)) return null;
+    return Math.max(...R.prof.map(h => altOf(R, M, h)));
+  }
+  // the player's car in the yard: its picture (assets/cars/img), else the game's own showroom drawn once per car and colour
+  const carPics = {};
+  function carPicOf(car) {
+    if (HAS_CAR_IMG.includes(car.id)) return carImg(car, car.color);
+    const k = car.id + '-' + car.color;
+    if (!(k in carPics)) { carPics[k] = ''; try { carPics[k] = G.carPic ? G.carPic(640, 360) || '' : ''; } catch (_) { /* (no showroom: the letter) */ } }
+    return carPics[k];
+  }
   function vTrack() {
-    const list = TRACKS(), M = modeOf(mode);
-    let h = '<section class="scr" id="s-track" aria-label="Single race">' + topbar('Single race', false, [2, 2, M.name]);
-    h += '<div class="groups" role="tablist" aria-label="Track group">' + D.groups.filter(g => g.id !== 'test' || groupList('test').length).map(g => { const n = groupList(g.id).length; return '<button role="tab" aria-selected="' + (group === g.id) + '" data-act="group:' + g.id + '"' + (n ? '' : ' disabled') + '>' + esc(g.name) + '<i>' + n + '</i></button>'; }).join('') + '</div>';
-    if (!list.length) return h + '<div class="stage"><p class="empty">No tracks for this mode.</p></div>' + foot('') + '</section>';
+    const list = TRACKS();
+    let h = '<section class="scr" id="s-track" aria-label="Single race">';
+    if (!list.length) return h + '<div class="thead"><button class="sq home" data-act="home" aria-label="Main menu">' + HOUSE + '</button></div><div class="stage"><p class="empty">No tracks for this mode.</p></div>' + foot('') + '</section>';
     trackIdx = Math.min(trackIdx, list.length - 1);
-    const t = list[trackIdx], rec = t.rec, my = rec[1] !== '—' ? rec[1] : '';
-    const badge = my ? '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOUR ' + esc(rec[0].toUpperCase()) + ' · ' + esc(my) + '</span></div>' : '';
-    // the picture, and under it the bar with the arrows and the track's number (3/14): the same on every track
-    h += '<div class="stage navbar' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) +
-      '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + counter(trackIdx, list.length) + '</div>';
-    h += '<div class="card">' + badge + '<h1>' + esc(t.name) + '<span class="tag ghost">' + esc(t.tag) + '</span></h1><p class="desc">' + esc(t.desc) + '</p>';
-    const len = [I.flag, 'Length', t.km.toFixed(2) + ' km'], alt = t.def.alt, climb = alt ? [I.corners, alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m'] : [I.corners, 'Corners', String(t.corners)];
-    const recItem = [I.trophy(my ? 'gold' : ''), my ? 'Your ' + rec[0].toLowerCase() : rec[0], my || '—', my ? 'gold' : ''];
-    if (mode === 'chase') h += info([[I.siren, 'Police', 'on your tail'], recItem, len]);
-    else if (mode === 'trial') { const gold = G.medals(t.def); h += info([recItem, gold ? [I.medal, 'Gold time', clock(gold[0])] : [I.corners, 'Corners', String(t.corners)], len]); }
-    else h += info([recItem, len, climb]);
-    const car = G.car(), here = G.carHere();
-    h += '<div class="drows"><button class="drow choose" data-act="pick-car" aria-label="Your car: ' + esc(car.name) + '. Choose another car">' + (HAS_CAR_IMG.includes(car.id) ? '<img src="' + carImg(car, car.color) + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') +
-      '<div><small>YOUR CAR' + (here ? '' : ' · NOT IN GARAGE') + '</small><b>' + esc(car.name) + '</b></div>' + I.chev + '</button>' +
-      '<button class="drow choose" data-act="pick-weather" aria-label="' + esc(WEATHER[weatherIdx()]) + ', ' + esc(modeWhat(t).toLowerCase()) + '. Change the weather and more">' + wIcon(WEATHER[weatherIdx()]) + '<div><small>' + esc(modeWhat(t)) + '</small><b>' + WEATHER[weatherIdx()] + '</b></div>' + I.chev + '</button></div>';
-    h += '</div>';
+    const n = list.length, t = list[trackIdx], ctry = countryOf(t), hi = heightOf(t), fl = flagUrl(ctry);
+    // the head: the house (the main menu), the country and the place and its height on one line, the globe (its country: sklop 2)
+    h += '<div class="thead"><button class="sq home" data-act="home" aria-label="Main menu">' + HOUSE + '</button><h2 class="where"><span class="w1">' + (ctry ? esc(ctry) + ', ' : '') + '<span class="w2">' + esc(t.name) + '</span></span>' +
+      (hi != null ? ' <em>' + num(Math.round(hi)) + ' m</em>' : '') + '</h2><div class="globe" aria-hidden="true">' + I.globe + '</div></div>';
+    // the stage: the picture, the weather down its right side (the chosen one bigger, in its colours, named), the more options under it
+    const W = G.S.weather;
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) +
+      '<div class="wxv" role="group" aria-label="Weather">' + WX4.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
+      '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
+    // the row of numbers
+    const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', alt = t.def.alt, d = t.def;
+    const cell = (lbl, val, cls) => '<div class="' + (cls || '') + '"><small>' + esc(lbl) + '</small><b>' + esc(val) + '</b></div>';
+    let first;
+    if (mode === 'chase') first = cell('Police', 'On you', 'opp');
+    else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
+    else first = cell('Opponents', String(mode === 'duel' ? 1 : G.rivals ? G.rivals(d) : 21), 'opp');
+    h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
+      (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
+      (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
+    // the yard: the car before the road sign with the country (a test track: its name and TEST)
+    const car = G.car(), pic = carPicOf(car), here = G.carHere();
+    h += '<div class="yard"><div class="sign' + (t.test ? ' test' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
+      '<button class="car" data-act="pick-car" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Choose another car">' + (pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button></div>';
+    // the neighbours of the list: their flags (a track without one: its name)
+    const nb = (k) => {
+      const u = list[(trackIdx + k + n) % n], c = countryOf(u), f = flagUrl(c), fill = f ? flagFill(f) : '';
+      return '<button class="nb ' + (k < 0 ? 'l' : 'r') + (f ? '' : ' plain') + '" data-act="track:' + k + '"' + (f ? ' data-flag="' + f + '"' + (fill ? ' style="background-image:' + fill + '"' : '') : '') +
+        ' aria-label="' + (k < 0 ? 'Previous' : 'Next') + ' track: ' + esc(u.name + (c ? ', ' + c : '')) + '">' + (f ? '<img src="' + f + '" alt="">' : '<span>' + esc(u.name) + '</span>') + '<i>' + DBL(k) + '</i></button>';
+    };
+    h += '<div class="nbrs">' + nb(-1) + nb(1) + '</div>';
     return h + foot('<button class="go" data-act="race-single">Race!</button>') + '</section>';
   }
 
@@ -401,15 +443,7 @@
     return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
       D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
-  const LENS = ['short', 'normal', 'long', 'endurance'];
-  function weatherSheet() {
-    const t = curTrack() || TR[0], S = G.S;
-    let h = '<div class="sheet-bg clear" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Weather"><h2>Weather</h2><div class="wopts">' +
-      WEATHER.map((w, i) => '<button aria-pressed="' + (weatherIdx() === i && (i === 1 ? S.weather === 'rain' : i === 2 ? S.weather === 'random' : S.weather === 'dry')) + '" data-act="weather:' + i + '">' + wIcon(w) + '<b>' + w + '</b></button>').join('') + '</div>';
-    if (mode === 'race' && !t.def.open) h += '<div class="lapsrow"><span>LAPS</span><div class="stepper"><button data-act="laps:-1" aria-label="Fewer laps">−</button><b>' + t.laps + '</b><button data-act="laps:1" aria-label="More laps">+</button></div></div>';
-    return h + '<div class="row"><button class="back" data-act="more-options" aria-label="More options"><span class="dots3">···</span></button><button class="go" data-act="close-sheet">Done</button></div></div></div>';
-  }
-  // the rest of the old track screen's choices, in a sheet of their own
+  // the race's other choices (the weather column's ··· button), in a sheet of their own
   function optionsRows() {
     const t = curTrack() || TR[0], d = G.shown(t.def), S = G.S, su = G.setup(d.id), circuit = !d.open && mode === 'race', pk = d.theme === 'pikes';
     const R = [
@@ -480,7 +514,7 @@
   }
   // where the track screen's card is (the intro's numbers go there, down to the foot of the screen), or under the stage
   function cardRect(st) {
-    const A = app.getBoundingClientRect(), c = $('#s-track .card', app), r = c && c.getBoundingClientRect();
+    const A = app.getBoundingClientRect(), c = $('#s-track .trow', app), r = c && c.getBoundingClientRect();
     const ok = r && r.width > 100 && (r.top - A.top > st.y + st.h - 2 || r.left - A.left >= st.x + st.w - 2);   // (under the stage, or beside it where the screen is on its side)
     return ok ? { x: r.left - A.left, y: r.top - A.top, w: r.width } : { x: 12, y: st.y + st.h + 16, w: A.width - 24 };
   }
@@ -890,8 +924,8 @@
   // entering the track step in a mode: on the game's own track if it can be driven in it, else the first track there is
   function enterTrack() {
     const cur = gameTrack();
-    if (cur && inMode(cur)) { group = cur.group; trackIdx = Math.max(0, groupList(group).indexOf(cur)); }
-    else { group = GROUP_ORDER.find(g => groupList(g).length) || 'circuit'; trackIdx = 0; }
+    const L = TRACKS(), i = cur ? L.indexOf(cur) : -1;
+    trackIdx = i >= 0 ? i : Math.max(0, L.findIndex(t => !t.test));
     select();
   }
   function warmFor(t) {   // the intro's sounds, started silent in the tap itself
@@ -912,18 +946,16 @@
       case 'career': titleSub = 'career'; render(true); break;
       case 'tsub': titleSub = v || null; render(true); break;
       case 'mode': mode = v; enterTrack(); screen = 'track'; render(); break;   // (a tap on a mode goes straight to its tracks)
-      case 'group': group = v; trackIdx = 0; select(); render(true); break;
+      case 'home': sheet = null; screen = 'title'; titleSub = null; render(); break;
       case 'mapv': mapV = +v; G.setOption('mapV', mapV); render(true); break;
       case 'track': { const n = TRACKS().length; if (n) { trackIdx = (trackIdx + +v + n) % n; select(); render(); } break; }
-      case 'laps': { const i = Math.max(0, Math.min(LENS.length - 1, LENS.indexOf(G.S.length) + +v)); G.setOption('length', LENS[i]); render(true); break; }
-      case 'weather': G.setOption('weather', W_SET[+v]); render(true); break;
+      case 'weather': G.setOption('weather', v); render(true); break;
       case 'more-options': sheet = optionsSheet; render(true); break;
       case 'opt': {
         if (v === 'pkRoad') G.setPkRoad(w); else G.setOption(v, w);
         render(true); break;
       }
       case 'pick-car': carFrom = true; G.act('to-car'); break;   // (the garage of the game itself; Back and Next both come back to the track step)
-      case 'pick-weather': sheet = weatherSheet; render(true); break;
       case 'credits': sheet = creditsSheet; render(true); break;
       case 'newver': G.newVer(); break;   // NEW VERSION · TEST 1: straight to driving the new map (js/game.js nvStart), no menu after it
       case 'close-sheet': sheet = null; render(true); break;
@@ -997,7 +1029,7 @@
     else {
       const cur = gameTrack();
       screen = 'track'; sheet = null;
-      if (cur && inMode(cur) && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else if (!TRACKS().length || !(cur && inMode(cur))) enterTrack(); else { group = cur.group; trackIdx = TRACKS().indexOf(cur); }
+      if (cur && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else enterTrack();
     }
     mapV = G.S.mapV === 2 ? 2 : 1;   // (1 the flyover by default, 2 the map)
     render();
@@ -1032,5 +1064,5 @@
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id) }) };
 })();
