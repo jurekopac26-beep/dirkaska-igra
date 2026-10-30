@@ -40,7 +40,7 @@ try {
       let thr = 0, brk = 0; if (ds > 2) { if (v < vt) thr = 0.8; else brk = 0.6; } else brk = 1;
       g.sim(0.1, false, P.inSteer, thr, brk); }
     return r.end || 'n'; });
-  await page.waitForTimeout(400);   // (the tags follow the camera: a frame or two drawn)
+  await page.waitForFunction(() => [...document.querySelectorAll('#mis-tags i')].some(e => /USTAVI TU/.test(e.innerText)), null, { timeout: 8000 }).catch(() => {});   // (the tags follow the camera: drawn once the view has caught up with the stop, slower on a slow machine)
   s = await st(page);
   T.check('stopped over the beach: PRESEDI NA SKUTER shown, the USTAVI TU tag, the hint', res === 'btn' && s.btn && s.tags.some(t => /USTAVI TU/.test(t)) && /Presedi na skuter/.test(await page.evaluate(() => Missions.run.hint)), JSON.stringify({ res, btn: s.btn, tags: s.tags }));
   await page.tap('#mis-btn');

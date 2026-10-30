@@ -54,7 +54,7 @@ try {
   T.check('the race\'s spectators hidden', S.crowds > 0 && S.shown === 0, JSON.stringify({ crowds: S.crowds, shown: S.shown }));
   // to the farm: stopped, they board; ODPELJI shown; a tap on it with two on board
   let res = await drive(page, { n: 900, until: 'r.aboard >= 2' });
-  await page.waitForTimeout(400);
+  await page.waitForFunction(() => [...document.querySelectorAll('#mis-tags i')].some(e => /ŠE 7 LJUDI/.test(e.innerText.replace(/\s+/g, ' '))), null, { timeout: 8000 }).catch(() => {});   // (the tags follow the camera: drawn once the view has caught up with the stop, slower on a slow machine)
   s = await st(page);
   T.check('stopped at the farm: two on board, ODPELJI shown, the tag over the people', res === 'until' && s.run.stage === 'load' && s.btn && s.tags.some(t => /ŠE 7 LJUDI/.test(t)), JSON.stringify({ res, run: s.run, btn: s.btn, tags: s.tags }));
   await page.tap('#mis-btn');
