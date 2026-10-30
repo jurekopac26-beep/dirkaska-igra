@@ -3975,12 +3975,24 @@ const Garage3D = (function () {
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0 };
   // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
   // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
-  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1 };
+  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0 };
   // (a picture narrower than AREF (the phone upright, the garage over the whole screen): as wide a view across as at AREF, more of it up
   // and down (its own fov wider))
   // (one wider than AWIDE (lying down): more of it up and down too, the more the less of the picture is free between the page's buttons
   // (SHIFT.free: its part of the height), the car and the cabinet before it between them)
   const AREF = 0.95, AWIDE = 1.25, tallFov = (f) => { const a = W / H, t = Math.tan(f * Math.PI / 360); return a < AREF ? 2 * Math.atan(t * AREF / a) * 180 / Math.PI : a > AWIDE ? 2 * Math.atan(t * Math.sqrt(a / AWIDE) * clamp(0.93 / SHIFT.free, 1.25, 2.2)) * 180 / Math.PI : f; };
+  // upright: how far the picture is raised (fitShift: the page's buttons' edges in px, top: the top ones' foot, bottom: the car's name's
+  // top): the cabinet's front whole over the bottom ones (odlocitve 30. 10., V2), a car's roof (1.55 m over the table, the first view)
+  // under the top ones, the ceiling over the ring cut; both not possible: the roof first, SHIFT.short the cabinet's px left under them
+  function fitShift(top, bottom) {
+    const asp = W / H, th = Math.tan(HOME.fov * Math.PI / 360), d = HOME.dist * Math.max(1, 3.5 / (th * Math.max(asp, AREF)) / HOME.dist), p = HOME.pitch;
+    const c = new THREE.PerspectiveCamera(tallFov(HOME.fov), asp, 0.1, 200); c.position.set(HOME.tx + Math.sin(HOME.yaw) * Math.cos(p) * d, HOME.ty + Math.sin(p) * d, HOME.tz + Math.cos(HOME.yaw) * Math.cos(p) * d);
+    c.lookAt(HOME.tx, HOME.ty, HOME.tz); c.updateMatrixWorld(); c.updateProjectionMatrix();
+    const F = FRONT, MR = M4(0, 0, 0, 0, F.ry, 0), y = (x, h, z) => (1 - _pk.set(x, h, z).applyMatrix4(MR).project(c).y) / 2 * H, yw = (x, h, z) => (1 - _pk.set(x, h, z).project(c).y) / 2 * H;
+    const cab = Math.max(y(F.x0, 0, F.z + F.d / 2), y(F.x1, 0, F.z + F.d / 2)), roof = Math.min(...[-2.2, 2.2].flatMap(x => [-1, 1].map(z => yw(x, 1.55, z))));
+    const need = cab + 8 - bottom, room = roof - top - 6;
+    SHIFT.y = Math.round(Math.max(0, Math.min(need, room))); SHIFT.free = 1; SHIFT.short = Math.max(0, Math.round(need - Math.max(0, room)));
+  }
   function camFit(cv, now) { const K = cv && cv.kit; CAM.kw = K ? clamp(Math.max(1, (K.top - 0.27) / 1.66, (Math.max(K.front, -K.rear) + 0.5) / 3.2), 1, 1.9) : 1; CAM.dyw = K ? Math.max(0, K.top - 1.91) * 0.45 : 0;
     if (now) { CAM.k = CAM.kw; CAM.dy = CAM.dyw; } }
   function placeCamera(dt) {
@@ -5716,7 +5728,7 @@ const Garage3D = (function () {
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
     // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
     // locked maquettes, its tags' prices; the lift's plate)
-    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
+    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
     get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex })); },
     front(o) { if (o.cars) { FRONT.cars = o.cars.slice(); FRONT.names = o.cars.map(c => c ? c.M.name : ''); } if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },

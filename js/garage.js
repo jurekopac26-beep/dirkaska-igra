@@ -380,9 +380,12 @@
   // the picture over the whole page, raised a little (its foot under the buttons)
   // (lying down: raised more and its view taller by how little is free between the buttons at the top and the car's name, the car and
   // the cabinet between them)
+  // (upright: raised so the cabinet's front is whole over the car's name, the car under the buttons at the top (Garage3D.fitShift))
   function resize() { const st = $('g-stage'), r = st.getBoundingClientRect();
     const wide = r.width > r.height * 1.25, a = $('g-track').getBoundingClientRect(), b = $('g-name').getBoundingClientRect(), free = b.top > a.bottom ? (b.top - a.bottom) / r.height : 0.55;
-    G.shift(Math.round(wide ? r.height * 0.29 * free : Math.min(70, r.height * 0.08)), wide ? free : 1); G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2)); }   // (shift first: resize sizes the dust by the view)
+    if (wide) G.shift(Math.round(r.height * 0.29 * free), free);   // (first: resize sizes the dust by the view)
+    G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2));
+    if (!wide) G.fitShift(a.bottom - r.top, b.top - r.top); }
 
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
   // retired model's: its heir); the money and the cars stay the profile's (the mockup's for now). Without them: the profile's car
