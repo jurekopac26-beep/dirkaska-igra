@@ -4627,12 +4627,12 @@ const World = (function () {
   // C's spectators (the building footprints placed after them hide nobody) and the ground strips under them into a group of their own in
   // root (named 'crowds': the clouds' shader leaves their own alone); returns how many
   function crowdLayer(C, root) {
-    if (!fansOn()) return 0;   // (no spectators: see fansOn)
     if (C.blocks.length) {
       const bh = new Map(); for (const b of C.blocks) { const r = Math.hypot(b.hw, b.hd); for (let a = Math.floor((b.x - r) / 32); a <= Math.floor((b.x + r) / 32); a++) for (let c = Math.floor((b.z - r) / 32); c <= Math.floor((b.z + r) / 32); c++) { const k = a + ',' + c; let L = bh.get(k); if (!L) bh.set(k, L = []); L.push(b); } }
       C.culled = C.ppl.cull((x, z) => { const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
     }
     const grp = new THREE.Group(); grp.name = 'crowds'; root.add(grp);
+    if (!fansOn()) return 0;   // (no spectators: see fansOn; the group stays, empty, for the worlds that look into it)
     const n = C.ppl.addTo(grp);
     const sm = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
     C.strip.addTo(grp, sm, false, false);
