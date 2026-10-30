@@ -27,6 +27,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (where the look has them: the cab's doors and mirrors are far forward on a cab-over; a lost one flies off from there)
       over: { doorL: { lx: 0.64, y: 1.84 }, doorR: { lx: 0.64, y: 1.84 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 }, bumperF: { h: 0.2 } },
     },
+    // where the garage's parts go (js/deli.js, look units; a trial on a truck, sklop 1): the wing on the roof deflector's rear edge (its part;
+    // its top along x, a truck's size: s); the head lamps, one unit a side over the four lamps' place on the bumper's face (its part); the
+    // rims on its wheels (the truck's tyres kept)
+    mounts: {
+      krilo: { x: 0.74, w: 0.8, part: 'deflector', s: 2, top: [[0.74, 3.0], [2.3, 2.78]] },
+      zarometi: { x: 2.955, y0: 0.82, lean: 0, zc: 0.77, yc: 0.82, s: 1.35, hosts: ['bumperF', 'bumperF'] },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): two lofts, the cab (doors with their glass, the windscreen; its front face the
     // grille) and the low front module under it (the bumper with four lamps, the steps, the front wheel's arch); the roof deflector, the side
     // skirts, the stacks, the mirrors, the bare chassis behind the cab with its rear bumper bar, in their parts. The livery: the cab in the
@@ -84,11 +92,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             regions: [{ part: 'bumperF', x: [2.4, 3.2], bands: ['tuck', 'side', 'window', 'edge', 'crown'] }] });
         K.part('bumperF', () => {
           K.box(2.75, 0.33, 0, 0.26, 0.07, 2.3, 0, D);                                        // the lip under it
-          for (const sd of [-1, 1]) {
+          K.deli('zarometi', () => { for (const sd of [-1, 1]) {   // (the garage's head lamps in their place: mounts.zarometi)
             K.headLamp(2.955, 0.82, sd * 0.94, 0.07, { shape: 'rect', w: 0.3, h: 0.15, ring: B });   // four lamps: the outer pair, the inner pair
-            K.headLamp(2.955, 0.82, sd * 0.6, 0.07, { shape: 'rect', w: 0.3, h: 0.15, ring: B });
-            K.rect(2.955, 0.54, sd * 0.62, 0.42, 0.1, B);                                    // the brake ducts
-          }
+            K.headLamp(2.955, 0.82, sd * 0.6, 0.07, { shape: 'rect', w: 0.3, h: 0.15, ring: B }); } });
+          for (const sd of [-1, 1]) K.rect(2.955, 0.54, sd * 0.62, 0.42, 0.1, B);           // the brake ducts
           K.box(2.95, 0.5, 0, 0.06, 0.08, 0.12, 0, K.rgb(0xd8261c));                         // the towing eye
         }, { hinge: [[2.9, 0.4, -1.1], [2.9, 0.4, 1.1]] });
         K.part('body', () => { for (const sd of [-1, 1]) for (const yy of [0.58, 0.86]) K.box(0.9, yy, sd * 1.18, 0.26, 0.04, 0.12, 0, [0.42, 0.43, 0.45]); });   // the steps (under the door, behind the arch)
@@ -97,6 +104,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const rings = [[2.5, 2.69, 0.98], [2.3, 2.78, 1.07], [0.74, 3.0, 1.12]].map(([x, yt, w]) => [[x, 2.632, -w], [x, yt - 0.05, -w], [x, yt, -w * 0.72], [x, yt, w * 0.72], [x, yt - 0.05, w], [x, 2.632, w]]);
           K.skin(rings, (k, e) => e === 2 ? P : S, S, D);
           K.face([[0.76, 3.002, -0.62], [2.28, 2.787, -0.62], [2.28, 2.787, -0.54], [0.76, 3.002, -0.54]].reverse(), P); K.face([[0.76, 3.002, 0.54], [2.28, 2.787, 0.54], [2.28, 2.787, 0.62], [0.76, 3.002, 0.62]].reverse(), P);   // (two paint lines along it)
+          K.deli('krilo', () => {});   // (the garage's wing on its rear edge: mounts.krilo; none stock)
         }, { noCrush: true, hinge: [[2.4, 2.68, -0.9], [2.4, 2.68, 0.9]] });
         // ---- the mirrors on their arms ----
         for (const sd of [-1, 1]) K.mirror(2.56, 2.22, sd * 1.42, { w: 0.07, h: 0.4, d: 0.18, col: B, arm: D, z0: sd * 1.22 });

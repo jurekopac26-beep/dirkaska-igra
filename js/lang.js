@@ -30,9 +30,14 @@
     'Koliko prostora tekmec pusti avtu ob sebi, ko vozita vštric. Manj prostora: bolj se drgnejo in je več stikov': 'How much room a rival leaves a car alongside when they drive side by side. Less room: they rub more and there are more contacts',
     'Vožnja čez robnike': 'Driving over kerbs', 'Ne': 'No', 'Do 1,2 m': 'Up to 1.2 m', 'Do 2,2 m': 'Up to 2.2 m',
     'Ali tekmeci na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m)': 'Whether the rivals drive over the kerb at the apex and the exit of a corner (never nearer a barrier than half a car and 0.6 m)',
-    'Težak: odboj 0, drgnjenje 0,8, vrtenje 1,3. Vrstice spodaj to preglasijo.': 'Heavy: bounce 0, rub 0.8, spin 1.3. The rows below override this.', 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1).': 'Default: bounce, rub and spin follow the chosen physics (classic 0.1 / 0 / 1, new 0.4 / 0.35 / 1).',
-    'Slog trkov': 'Knock style', 'Težak, brez odboja': 'Heavy, no bounce',
-    'Težak: avta se ob trku skoraj ne odbijeta, ostaneta skupaj in se drgneta, zamaknjen trk ju bolj zavrti. Vrstice pod to vrstico to spremenijo. Velja za vse trke med avti': 'Heavy: the cars hardly bounce apart in a knock, they stay together and grind along each other, an off-centre knock turns them more. The rows under this one change that. For all knocks between cars',
+    'Realističen, težak: ravni odbijači, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,5, drugi avto 8-krat težji, brez isker. Vrstice spodaj ga spremenijo.': 'Realistic, heavy: flat bumpers, no bounce, the tyres hold a push sideways, rub 0.5, the other car 8 times heavier, no sparks. The rows below change it.',
+    'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1), zaobljena oblika, enaka teža, iskre.': 'Default: bounce, rub and spin follow the chosen physics (classic 0.1 / 0 / 1, new 0.4 / 0.35 / 1), round shape, equal weight, sparks.',
+    'Slog trkov': 'Knock style', 'Realističen, težak': 'Realistic, heavy',
+    'Realističen, težak: avta imata ravne odbijače, se ob trku ne odbijeta in ne poskočita narazen, gume zadržijo potisk vstran (avto ne zavije stran), drgneta se ob stiku, drugi avto je 8-krat težji in trk ne sproži isker. Vrstice pod to vrstico ga spremenijo. Težo ima samo drugi avto ob trku z igralcem, ostalo velja za vse trke med avti': 'Realistic, heavy: the cars have flat bumpers, they do not bounce or jump apart in a knock, the tyres hold a push sideways (the car does not turn away), the bodies rub at the contact, the other car is 8 times heavier and a knock throws no sparks. The rows under this one change it. The weight is only for the other car in a knock with the player, the rest holds for all knocks between cars',
+    'Občutek teže': 'Weight feel', 'Enak': 'Equal', 'Kolikokrat težji je drugi avto, ko se zaletiš vanj ali on vate: težji se težje premakne, ti pa se ob njem ustaviš. Enak: oba avta sta enako težka': 'How many times heavier the other car is when you run into it or it runs into you: a heavier one moves less, and you stop against it. Equal: both cars weigh the same',
+    'Oblika ob stiku': 'Shape in a knock', 'Zaobljena': 'Round', 'Ravni odbijači': 'Flat bumpers', 'Oblika avtov ob stiku. Zaobljena (kot doslej): konca avta sta okrogla, trk z zamikom avta odrine vstran. Ravni odbijači: avta sta pravokotna z zaobljenimi vogali, odbijač potisne naravnost, razmakneta se mehko, brez poskoka': 'The shape of the cars in a knock. Round (as before): the ends of a car are round, an off-centre knock pushes the car aside. Flat bumpers: the cars are boxes with round corners, a bumper pushes straight on, they part softly, without a jump',
+    'Potisk vstran': 'Push sideways', 'Avto zavije': 'Car turns', 'Gume zadržijo': 'Tyres hold', 'Kaj naredi potisk vstran pri klasični fiziki. Avto zavije (kot doslej): avto potisk spremeni v smer vožnje in odpelje vstran. Gume zadržijo: avto malo zdrsne vstran, gume ga ustavijo, smer ostane. Nova fizika to dela sama': 'What a push sideways does with the classic physics. Car turns (as before): the car turns the push into its direction and drives off to the side. Tyres hold: the car slides a little to the side, the tyres stop it, its direction stays. The new physics does this by itself',
+    'Iskre in blisk': 'Sparks and flash', 'Ali trk med avtoma sproži iskre, blisk in prah (praske na karoseriji ostanejo)': 'Whether a knock between two cars throws sparks, a flash and dust (the scratches on the body stay)',
     'Odboj med avti': 'Bounce between cars', 'Srednji': 'Medium', 'Zelo velik': 'Very big',
     'Koliko se avta odbijeta po trku (0 = nič, 0,1 = klasična, 0,4 = nova fizika)': 'How far the cars bounce apart after a knock (0 = none, 0.1 = classic, 0.4 = new physics)',
     'Drgnjenje ob stiku': 'Rubbing at the contact', 'Močno': 'Strong',
@@ -389,6 +394,7 @@
     'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
     /* ---- the vehicle fleet (js/cars): the car screen, a destroyed car, a wheel off, retiring (Odstopi), the rivals of a championship ---- */
     'Motor zadaj': 'Rear-engined', 'Izberi': 'Choose', 'Izberi avto': 'Choose a car', 'Kategorije vozil': 'Vehicle categories', 'Vozila v kategoriji': 'Vehicles in the category',
+    'Tapni avto za garažo': 'Tap the car for the garage', 'Odpri garažo z izbranim avtom': 'Open the garage with this car', 'Garaža se odpre, ko je naprava povezana z internetom.': 'The garage opens when the device is online.',
     'VOZILO UNIČENO': 'VEHICLE DESTROYED', 'Odstopi': 'Retire', 'Odstop': 'Retired', 'odstop': 'retired', 'Ogled vozila': 'View the car',
     'Odstop po {0} km': 'Retired after {0} km', 'Odstop v {0} krogu': 'Retired on the {0} lap', ' Brez nagrade.': ' No prize money.',
     ' {0}: brez točk, skupaj {1} in {2} mesto': ' {0}: no points, {1} in total and {2} place', ' in še {0}': ' and {0} more', 'različni avti': 'various cars', ' · tekmeci: {0}': ' · rivals: {0}',
@@ -435,16 +441,36 @@
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
     /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
+    /* ---- the garage (garaza.html, js/garage.js) ---- */
+    'GARAŽA': 'GARAGE', 'V GARAŽI {0}/{1}': 'IN THE GARAGE {0}/{1}', 'POGLED': 'VIEW', 'Odpiram garažo …': 'Opening the garage …', 'Brezplačno': 'Free', 'Polna igra': 'Full game', 'Skrij': 'Hide', 'Okoli avta': 'Round the car', 'Masa': 'Mass', 'Stanje': 'Condition', 'Teža': 'Weight', 'Izbran ✓': 'Selected ✓',
+    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Kupi · {0} CR': 'Buy · {0} CR', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
+    'Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.': 'Drag the picture left or right to turn the camera round the car. Tap during an animation to speed it up.',
+    '{0} je na voljo v polni igri.': '{0} comes with the full game.', '{0} še ni tvoj: kupiš ga z gumbom spodaj.': '{0} is not yours yet: buy it with the button below.',
+    '{0} od {1}': '{0} of {1}', 'V GARAŽI': 'IN GARAGE', 'NOV AVTO V GARAŽI': 'NEW CAR IN THE GARAGE', 'Najprej kupi avto.': 'Buy the car first.',
+    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
+    'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes',
+    'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
+    'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
+    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
+    'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
+    'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
+    'Športni izpuh': 'Sports exhaust', 'Dvojni izpuh, zračniki': 'Twin exhaust, bonnet vents', 'Štirje izpuhi, zajemalnik': 'Quad exhaust, bonnet scoop', 'Bel napis': 'White lettering', 'Rumen pas': 'Yellow band', 'Rdeč pas': 'Red band',
+    'Rdeče čeljusti': 'Red calipers', 'Rumene čeljusti': 'Yellow calipers', 'Zlate, karbonski diski': 'Gold calipers, carbon discs', 'Spojler, spodnja ustnica': 'Spoiler, front lip', 'Zadnje krilo': 'Rear wing', 'Krilo GT, krilca, pragovi': 'GT wing, dive planes, side skirts',
     /* ---- the special missions (js/missions.js) ---- */
     'Zmanjkalo je časa.': 'Out of time.', 'MISIJA NEUSPELA': 'MISSION FAILED', 'MISIJA {0}': 'MISSION {0}', 'Najboljši': 'Best', 'Ponovi': 'Again', 'Misije': 'Missions',
     'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
-    'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR', 'Vaja: na vrh': 'Practice: to the top',
+    'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR',
+    'Srce v hladilni torbi': 'A heart in the cool box', 'Ponoči moraš čez hribe pripeljati srce za presaditev. Pred tabo vozi policija.': 'At night you must take a heart for a transplant over the hills. The police drive ahead of you.',
+    'Za policijo dostavi organ v bolnišnico, dokler je hladen.': 'Follow the police and deliver the organ to the hospital while it is still cold.',
+    'Drži se policije: avti pred njo zapeljejo na rob in ustavijo.': 'Stay with the police: the cars ahead of it pull over to the edge and stop.',
+    'ORGAN': 'ORGAN', 'SPREMSTVO': 'ESCORT', 'BOLNIŠNICA': 'HOSPITAL', 'Organ se je preveč segrel.': 'The organ got too warm.', 'Izgubil si spremstvo.': 'You lost the escort.',
+    'Policija je daleč: dohiti jo, da ti odpira pot.': 'The police are far ahead: catch up so they clear the way for you.', 'Ne prehitevaj policije: promet se umika samo njej.': 'Do not pass the police: the traffic only pulls over for them.', 'Vaja: na vrh': 'Practice: to the top',
     'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
     'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
     'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
+  const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
