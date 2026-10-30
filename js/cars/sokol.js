@@ -4,11 +4,9 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
-  // the garage's head lamp in the nose's corner slot (its stadium, a little inside the black slot; u out from the car's middle, v up;
-  // metres round z 0.52, y 0.338): every option takes this outline
-  const SLOT = [];
-  for (let i = 0; i <= 3; i++) { const a = -Math.PI / 2 + Math.PI * i / 3; SLOT.push([0.034 + 0.044 * Math.cos(a), 0.044 * Math.sin(a)]); }
-  for (let i = 0; i <= 3; i++) { const a = Math.PI / 2 + Math.PI * i / 3; SLOT.push([-0.034 + 0.044 * Math.cos(a), 0.044 * Math.sin(a)]); }
+  // the garage's head lamp in the nose's corner slot: the black slot's own outline (the user's: the lamp fills it, no black seen round
+  // it; its ring a little over the slot's edge; u out from the car's middle, v up; metres round z 0.52, y 0.338): every option takes it
+  const SLOT = [[0.033, -0.052], [0.085, 0], [0.033, 0.052], [-0.033, 0.052], [-0.085, 0], [-0.033, -0.052]];
   VEHICLE_DEFS.push({
     id: 'sokol', name: 'SOKOL R', cat: 'sportni', ord: 1, drive: 'FR',
     desc: 'Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom.',
@@ -44,7 +42,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // lip's place); the head lamps in the nose's corner slots (every option in the slot's stadium, SLOT), in the lamps' parts; the rims
     mounts: {
       krilo: { x: -2.12, w: 0.69, part: 'wing' },
-      zarometi: { x: 2.147, y0: 0.338, lean: 0, zc: 0.52, yc: 0.338, s: 0.4, hosts: ['headL', 'headR'], shape: SLOT, bulge: 0, ringW: 0.004 },
+      zarometi: { x: 2.147, y0: 0.338, lean: 0, zc: 0.52, yc: 0.338, s: 0.4, hosts: ['headL', 'headR'], shape: SLOT, bulge: 0, ringW: 0.005 },
       platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the ducktail rising behind the glass hatch, the bubble

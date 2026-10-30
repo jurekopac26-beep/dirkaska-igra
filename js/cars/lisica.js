@@ -102,11 +102,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { const q = [[0.15, 0.35], [0.8, 0.35], [0.8, 0.41], [0.15, 0.41]].map(([t, y]) => [1.93 + 0.05 * t + 0.0038, y, sd * (0.665 - 0.145 * t + 0.0013)]);
             K.face(sd > 0 ? q : q.reverse(), AMB); }
         });
-        // ---- the pop-up lamps, raised: a box on each front corner (its face black, the lens in it), the body's (the lamp units stay when a
-        //      fender or the bonnet goes, as their mechanism does; on a fender its piece would not lie flat) ----
+        // ---- the pop-up lamps, raised: a pod on each front corner grown out of the body (the user's: one with the car): its tail rising out
+        //      of the bonnet, its outer side running down into the wing's shoulder, its face black (the lens in it, leaning forward as the
+        //      lamp's face: mounts.zarometi); the body's (the lamp units stay when a fender or the bonnet goes, as their mechanism does) ----
+        const surf = (x, z) => { const yt = L.prop(x, 'yt'), wt = L.prop(x, 'wt'); return Math.abs(z) <= wt ? K.topY(x, z) : yt + (L.prop(x, 'ybelt') - yt) * (Math.abs(z) - wt) / (L.prop(x, 'w') - wt); };
+        const xf = (y) => 1.656 + (y - 0.728) * 0.08;   // (the face: 4 mm behind the lamp's)
         for (const sd of [-1, 1]) {
-          const host = 'body', prof = [[1.47, 0.665], [1.655, 0.665], [1.665, 0.79], [1.63, 0.83], [1.47, 0.82]];
-          K.skin([0.47, 0.79].map(z => prof.map(([x, y]) => [x, y, sd * z])), (k, e) => e === 1 ? B : P, P, P, { host });
+          const ring = (x, top, k, fr) => { const X = (y) => fr ? xf(y) : x, w = L.prop(x, 'w'), yb = L.prop(x, 'ybelt'), at = (z, y) => [X(y), y, sd * z];
+            const ya = surf(x, 0.47) - 0.004, yi = surf(x, 0.49) + (top - surf(x, 0.49)) * k, yo = surf(x, 0.77) + (top - surf(x, 0.77)) * k;
+            return [at(0.47, ya), at(0.49, yi), at(0.77, yo), at(w, yb)]; };
+          K.skin([ring(1.27, 0.82, 0), ring(1.47, 0.82, 1), ring(1.63, 0.83, 1), ring(1.66, 0.79, 1, true)], P, null, P, { host: 'body' });
+          const q = [[0.665, 0.49], [0.665, 0.77], [0.787, 0.77], [0.787, 0.49]].map(([y, z]) => [xf(y) + 0.001, y, sd * z]);
+          K.face(sd > 0 ? q.reverse() : q, B, { host: 'body' });   // (the black face round the lens)
         }
         // (the lenses parts of their own: headL, headR; the garage's lamps in their place: K.deli, mounts.zarometi)
         K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(1.669, 0.728, sd * 0.63, 0.05, { shape: 'rect', w: 0.25, h: 0.095, ring: null, host: sd < 0 ? 'headL' : 'headR' }); });
