@@ -3973,7 +3973,7 @@ const Garage3D = (function () {
   /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
   const HOME = { yaw: 0.3, pitch: 0.36, dist: 9.2, tx: -0.1, ty: 0.55, tz: 0, fov: 33 };
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0, zoom: 1 };
-  const ZOOM = [0.85, 1.3];   // (the user's zoom (the mouse's wheel, two fingers): a factor on every view's distance; in: the cabinet still seen, out: the room's walls step aside)
+  const ZOOM = [0.55, 1.3];   // (the user's zoom (the mouse's wheel, two fingers): a factor on every view's distance; in: close to the car (odlocitve 30. 10.: »bolj približam«), out: the room's walls step aside)
   // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
   // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
   const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0 };
