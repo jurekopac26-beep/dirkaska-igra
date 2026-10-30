@@ -14,7 +14,7 @@ const NVWalls = (function () {
   'use strict';
   const KIND = { plastic: { m: 160, mu: 0.55 }, wood: { m: 45, mu: 0.75, fall: 4 } };   // (kg; the friction on the ground; wood: the speed it is hit with that knocks it over, m/s)
   const CELL = 6, E = 0.25;   // (the grid's cells, m; the bounce)
-  let W = null; const grid = new Map(), moving = new Set(), solid = new Map();
+  let W = null, FA = null; const grid = new Map(), moving = new Set(), solid = new Map();   // (FA: the farm's animals, js/newmap.js farmNW)
   // the loose things' kinds: m (kg), rh (their radius across: where the car's circles meet them), rb (their reach any way), e (the bounce), mu (the
   // friction), lift (how much of a hit throws them up), I (inertia), pts (the corners they rest on, from the middle), snd (the knock, js/sfx.js),
   // flat (knocked down and lying: driven over), off (the middle below the mesh's own: a cone's weight low); G: their gravity (js/core.js PROP_G)
@@ -42,7 +42,7 @@ const NVWalls = (function () {
   function put(p) { p.k = key(p.x, p.z); let l = grid.get(p.k); if (!l) grid.set(p.k, l = []); l.push(p); }
   function take(p) { const l = grid.get(p.k); if (l) { const i = l.indexOf(p); if (i >= 0) l.splice(i, 1); } }
   function init(H3) {
-    W = H3 && H3.walls; grid.clear(); moving.clear(); solid.clear();
+    W = H3 && H3.walls; FA = (H3 && H3.farmAnimals) || null; grid.clear(); moving.clear(); solid.clear();
     for (const q of (H3 && H3.solids) || []) {   // (in every cell the car's middle may be in when it touches one: its bounds and the car's 0.95 m)
       const m = q.r + 1; for (let i = Math.floor((Math.min(q.ax, q.bx) - m) / CELL); i <= Math.floor((Math.max(q.ax, q.bx) + m) / CELL); i++) for (let j = Math.floor((Math.min(q.az, q.bz) - m) / CELL); j <= Math.floor((Math.max(q.az, q.bz) + m) / CELL); j++) { const k = i * 100003 + j; let l = solid.get(k); if (!l) solid.set(k, l = []); l.push(q); }
     }
@@ -68,6 +68,7 @@ const NVWalls = (function () {
   }
   function step(dt, car) {
     if (!car) return;
+    if (FA) FA.step(dt);   // (grazing; out through a gap in their fence once the car has made one)
     // the car: three circles along it (front, middle, back)
     const mc = (car.m && car.m.mass) || 1200, c = Math.cos(car.h), s = Math.sin(car.h);
     if (solid.size) for (const o of [1.3, 0, -1.3]) {   // the solid things: the car out of them, its speed into them bounced back (q.e: how much, E if not given)
@@ -279,7 +280,7 @@ const NVWalls = (function () {
   // a piece's instance where the piece is: turned about the upright (its heading), then about its length (falling over)
   const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _t = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), X = new THREE.Vector3(1, 0, 0);
   function draw(p) {
-    const im = W.mesh[p.kind]; if (!im) return;
+    const im = p.im || W.mesh[p.kind]; if (!im) return;
     _q.setFromAxisAngle(Y, -p.ang); if (p.tilt) _q.multiply(_t.setFromAxisAngle(X, p.tilt * p.fall));
     _m.compose(_p.set(p.x, p.y, p.z), _q, _s.set(p.len / W.dims[p.kind].L, 1, 1)); im.setMatrixAt(p.i, _m); im.instanceMatrix.needsUpdate = true;
   }
