@@ -568,7 +568,7 @@
           if (skip(x, z) && skip(x + F.cell, z) && skip(x, z + F.cell) && skip(x + F.cell, z + F.cell)) continue;
           const a = v0 + j * F.nx + i, b = a + 1, d2 = a + F.nx, e = d2 + 1; I.push(a, d2, b, b, d2, e); } };
       const Hp = D.far.hill, inHill = (x, z) => x >= Hp.x0 && x <= Hp.x0 + (Hp.nx - 1) * Hp.cell && z >= Hp.z0 && z <= Hp.z0 + (Hp.nz - 1) * Hp.cell;
-      grid(D.far, (x, z) => inner(x, z, 200) || inHill(x, z));
+      grid(D.far, (x, z) => inner(x, z, 0) || inHill(x, z));   // (every cell the near terrain covers whole: one the camera stood in would be pulled onto the sphere as a plane just under it, hiding the road)
       grid(Hp, (x, z) => inner(x, z, 120));
       // the taller buildings of the city (OpenStreetMap heights): boxes
       const quad = (a, b, cc, d, col) => { const v = P0.length / 3; for (const p of [a, b, cc, d]) { P0.push(p[0], p[1], p[2]); C.push(col[0], col[1], col[2]); HZ.push(0.1); } I.push(v, v + 1, v + 2, v, v + 2, v + 3); };
