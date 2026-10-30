@@ -30,7 +30,7 @@ try {
     const g = await page.evaluate(async () => { const el = document.getElementById('g-guide'), out = { on: el.classList.contains('on'), steps: [] };
       for (let i = 0; i < 8 && el.classList.contains('on'); i++) { out.steps.push({ ring: el.querySelectorAll('.ring').length, t: el.querySelector('.bub b').textContent }); el.querySelector('[data-guide]').click(); }
       out.after = el.classList.contains('on'); out.saved = JSON.parse(localStorage.getItem('apex-garage')).guide; return out; });
-    T.check('the guide on the first visit: 5 steps (the regal, the cabinet's cars, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 5 && g.steps.every((s, i) => s.ring === (i === 4 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
+    T.check('the guide on the first visit: 5 steps (the regal, the cars on the cabinet, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 5 && g.steps.every((s, i) => s.ring === (i === 4 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
   }
   await page.evaluate(() => { __garage.hold = true; });
   // the animations to their end (the clock stepped half a second at a time while a show plays or waits); returns the seconds it took
