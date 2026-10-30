@@ -49,7 +49,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
 | `tools/nova/` | merila nove fizike (Car.stepNova): `tune.js` (ravna plošča po razredih: poln zasuk na gumbih, zavora, plin, nizka pomoč; `'{"K":{…},"A":[…]}'` začasno spremeni NVK / NVASSIST), `ts2.js` (časovna vrsta enega manevra), `sweep.js` + `cmp.js` (dirke na vseh pravih progah, cs proti nova: dotiki, zdrsi, robniki, trava, časi), `pack.js` (trki med avti in vlak tekmecev, za primerjavo s posnetkom), `train.js` (vlak tekmecev kot na posnetku: razmik v dolžinah in s, tekmec ob avtu, prehitevanja AI–AI na minuto, razvlečenje polja na krog; igralec na avtopilotu v skupini), `cam.js` (zasuk avta proti kameri za avtom in koliko od tega je zdrs avta; `SL=1` drseči slog), `bench.js` (čas fizike 100 avtov), `races-nova.js` (`races.test.js` z novo fiziko proti referencam klasične; `TR=spa,…`) |
 | `.github/workflows/` | `tests.yml` testi, `posnetki.yml` posnetki pred/po ob pull requestu (artefakt in povzetek), `stran.yml` objava strani s predogledom vej |
-| `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek) |
+| `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek); časi testov na GitHubu `SECS`, meja testa `LIMIT_OF` (`TEST_TIMEOUT_MIN`, `TEST_SLOW`) |
 | `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
@@ -188,7 +188,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`)
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
-- **Svet in grafika:** `world.test.mjs`, `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
+- **Svet in grafika:** `world.test.mjs` (samo nekatere proge: `WORLD_ONLY`; reference veljajo za Chromium Playwrighta iz `package.json`), `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; prave proge do 300 klicev in 900k oglišč v povprečju in na najzahtevnejšem mestu), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
 - **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
