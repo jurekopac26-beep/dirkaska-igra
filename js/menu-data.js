@@ -65,7 +65,12 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "caracoles": 300,
+  "rastro": 300,
+  "katu": 300,
+  "tianmen": 300,
+  "bangsaen": 240
  },
  "routeMaps": {
   "vrsic": {
@@ -242,6 +247,41 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "caracoles": {
+   "start": "Juncalillo",
+   "finish": "Portillo",
+   "alt": [
+    2200,
+    2866
+   ]
+  },
+  "rastro": {
+   "start": "Rio do Rastro",
+   "finish": "Serra Geral",
+   "alt": [
+    1010,
+    1421
+   ]
+  },
+  "katu": {
+   "start": "Katu-Yaryk Pass",
+   "finish": "Chulyshman",
+   "alt": [
+    1242,
+    683
+   ]
+  },
+  "tianmen": {
+   "start": "Tianmen Mountain",
+   "finish": "Tianmen Cave",
+   "alt": [
+    729,
+    1218
+   ]
+  },
+  "bangsaen": {
+   "base": 3
   }
  },
  "intro": {
