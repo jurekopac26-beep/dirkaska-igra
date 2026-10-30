@@ -21,7 +21,7 @@
   // outward along N, along the beach U (+: south-east, toward the rocks under the headland); d m out, u m along
   const E = [-96, 606], N = [0.6, 0.8], U = [0.8, -0.6];
   const K = { S0: 150, STOP: 1000, ZONE: 22, VSTOP: 1.6, WAVE: 1.2, WLEN: 36, WV: 5.5, TOP: 0.55, NEAR: 16, SIGHT: 45, R0: 40, RMIN: 8,
-    PICK: 5, VPICK: 2.2, PULL: 1.6, HOME: 14, HOMEU: 70, SW: [175, 20], RIP: [0.15, 0.1], STR0: 0.62, TIRE: 0.0019, VMAX: 15, VTOW: 7, BUMP: 3,
+    PICK: 5, VPICK: 2.2, PULL: 1.6, HOME: 14, HOMEU: 70, SW: [175, 20], RIP: [0.15, 0.1], STR0: 0.62, TIRE: 0.0019, VMAX: 15, ACC: 9, VTOW: 7, BUMP: 3,
     UC: -50, UW: [110, 165], DMAX: [260, 330], DEEP: 0.6 };
   const seaD = (x, z) => (x - E[0]) * N[0] + (z - E[1]) * N[1];
   const seaU = (x, z) => (x - E[0]) * U[0] + (z - E[1]) * U[1];
@@ -121,14 +121,14 @@
       r.stage = 'quad'; r.str = K.STR0; r.sw = { x: sw[0], z: sw[1] }; r.ring = { x: sw[0] + 14, z: sw[1] - 9, R: K.R0 }; r.seen = false; r.pull = 0; r.nSeen = 0; r.home = null;
       r.skin = KIT.skin(r, r.P, quad);
       const mesh = jetski(r);
-      r.ski = KIT.boat(r, { x: s0[0], z: s0[1], h: Math.atan2(N[1], N[0]), y: 0, vmax: K.VMAX, acc: 4.5, turn: 1.5, D: [24, 17], mesh, wave, wet: sea });
+      r.ski = KIT.boat(r, { x: s0[0], z: s0[1], h: Math.atan2(N[1], N[0]), y: 0, vmax: K.VMAX, acc: K.ACC, turn: 1.5, D: [24, 17], mesh, wave, wet: sea });
       r.ski.cam = skiCam(r.ski);
       r.tags = KIT.tags(r); r.btn = KIT.button(r, 'PRESEDI NA SKUTER');
       if (typeof THREE !== 'undefined') {
         r.swM = swimmer(); r.swM.visible = false; r.add(r.swM);
         const ring = new THREE.Mesh(new THREE.RingGeometry(0.93, 1, 48), new THREE.MeshBasicMaterial({ color: 0xff3030, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }));
         ring.rotation.x = -Math.PI / 2; ring.renderOrder = 3; r.ringM = ring; r.add(ring);
-        r.sea = swell(r);
+        r.sea = swell(r); r.sea.step(0);
         // the lifeguards' tower on the sand by the water's edge (four legs, the red hut, its roof, the window to the sea)
         const B = KIT.parts(); for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B.box(x, 1.6, z, 0.18, 3.2, 0.18, 0xe8eaee);
         B.box(0, 4.0, 0, 2.6, 1.8, 2.6, 0xc4301c); B.box(0, 5.05, 0, 3.1, 0.3, 3.1, 0xeeeeee); B.box(1.32, 4.15, 0, 0.04, 0.8, 1.9, 0x1d2733); B.box(1.9, 3.15, 0, 1.4, 0.1, 2.0, 0xd8d0b8);
