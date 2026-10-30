@@ -433,7 +433,7 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 - **Nebo:** pri kakovosti »Visoka« po nebu plujejo oblaki, isti, ki mečejo sence na tla (oblak na nebu je tam, kjer je njegova senca, gledano proti soncu). Podnevi so beli in kopasti, ob soncu z žarečim robom, zvečer in zjutraj rožnato in oranžno obsijani, ponoči temni s svetlejšimi robovi, med njimi zvezde, v dežju je nebo zaprto in sivo; v vzdržljivostni dirki se barve spreminjajo s časom dneva. Vidijo se s TV kamer, v posnetkih in na štartu proge Štajerska, ko kamera snema prelet letal.
 - **Sonce:** pri kakovosti »Visoka« na vseh progah z gozdom (ne le na Pikes Peaku) podnevi in zvečer med drevesi padajo poševni sončni žarki (nikoli nad cesto), s TV kamer pa se ob soncu v sliki pokaže odsev v objektivu. Poleti podnevi nad oddaljenim asfaltom tik pod obzorjem trepeta vroč zrak.
 - **Občutek hitrosti:** pri kakovosti »Visoka« se pri več kot ~110 km/h slika proti robovom zabriše v smeri vožnje (avto ostane oster; s kamero za avtom), na robnikih kamera rahlo zadrhti.
-- **Gledalci:** na tribunah sedijo vrste posameznih ljudi (32 na 12 m: glava z lasmi ali kapo, majica, roke v naročju, ponekod prazen sedež, dvignjene roke ali šal) in se rahlo zibljejo na sedežih; ob avtu vstajajo. Ko ugasnejo luči na štartu, ko koga prehitiš, in v cilju množica skače in maha z zastavami, na tribunah in ob progi.
+- **Gledalci (odločitev uporabnika 30. 10. 2026):** na pravih progah gledalcev ni: tribune imajo prazne sedeže, ob progi ni množic in njihovega zvoka (tudi redarjev in obiskovalcev, narisanih z istimi figurami, ne). Kraji, kjer so stali, ostanejo prosti (drevesa in okras so tam, kjer so bili). Opis spodaj velja le za testne proge. Na testnih progah na tribunah sedijo vrste posameznih ljudi (32 na 12 m: glava z lasmi ali kapo, majica, roke v naročju, ponekod prazen sedež, dvignjene roke ali šal) in se rahlo zibljejo na sedežih; ob avtu vstajajo. Ko ugasnejo luči na štartu, ko koga prehitiš, in v cilju množica skače in maha z zastavami, na tribunah in ob progi.
 
 ## Podrobnosti grafike (prilagodljiva kakovost)
 
@@ -492,7 +492,7 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 
 ## Zvok navijačev in predori
 
-Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji in Katu-Jaryku imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
+Na testnih dirkališčih (na pravih progah gledalcev ni) se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji in Katu-Jaryku imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
 
 ## Zvok motorjev
 

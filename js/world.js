@@ -35,6 +35,9 @@ const World = (function () {
   // swapped for World's own generator (never reset: the names stay unique), so a seeded race runs as it did before (as Render's ownRnd)
   const uuW = { s: 7919 };
   function ownRnd(fn) { const r = Math.random; Math.random = () => { uuW.s = (uuW.s * 48271) % 2147483647; return uuW.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
+  // no spectators on the real tracks (the user's decision, 30. 10. 2026): the crowds are placed as ever (the same exclusions, the trees and
+  // the props where they were) but not drawn, the grandstands' seats empty, no crowd sound; the tracks kept for testing (def.test) as they were
+  const fansOn = () => !!(T && T.def && T.def.test);
   // decorative meshes eligible for the runtime draw-distance cull (vegetation and trees only: Render hides the far ones on the lower tiers to
   // keep the draw-call count down; the base — road, terrain, barriers, buildings, signs — is never in this list). Each entry: {m, x, z, r}
   // (the mesh and its chunk centre and radius in world space). Filled during build(), handed out as out.cull in finish().
@@ -3725,6 +3728,7 @@ const World = (function () {
     '    texelColor = vec4(abs(crF.y - 0.72 - crW * 0.5) < 0.08 ? vec3(0.95) : fa * (0.85 + 0.3 * crW / 0.07 * 0.5), 1.0); }',
     '}',
     'texelColor = mapTexelToLinear( texelColor );', 'diffuseColor *= texelColor;', '#endif'].join('\n');
+  const STAND_FS0 = STAND_FS.replace(/float crJ = [^\n]*/, 'float crJ = 0.0;').replace('if (crH2 < 0.015 + 0.3 * crEx) {', 'if (false) {');   // (the empty seats: no jump, no flag)
   function crowdUV(m, u, pitch, slice) { m.userData.crowdUV = [u, pitch, slice]; return m; }   // (a stand material: how its uvs lay the crowd picture on the tiers)
   function crowdStands(o) {
     let U = o.dyn.crowd;
@@ -3732,13 +3736,14 @@ const World = (function () {
       const M = m.isMesh && !m.isInstancedMesh && m.material; if (!M || Array.isArray(M) || !M.map || !M.map.crowdPic || !M.isMeshLambertMaterial || M.userData.stand) return;
       if (!U) U = o.dyn.crowd = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
       if (!U.uHype) U.uHype = { value: 0 };
+      const empty = !fansOn(); if (empty) M.map = ownRnd(() => Tex.seats());   // (no spectators: the seats empty, nobody bobbing or waving)
       M.userData.stand = true; const cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], uCV = { value: new THREE.Vector3(cv[0], cv[1], cv[2]) };   // (how the stand maps the picture: see crowdUV)
       M.onBeforeCompile = (sh) => {
         sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype; sh.uniforms.uCV = uCV;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCrW;').replace('#include <project_vertex>', '#include <project_vertex>\nvCrW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform vec3 uCar;\nuniform float uHype;\nuniform vec3 uCV;\nvarying vec3 vCrW;').replace('#include <map_fragment>', STAND_FS);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform vec3 uCar;\nuniform float uHype;\nuniform vec3 uCV;\nvarying vec3 vCrW;').replace('#include <map_fragment>', empty ? STAND_FS0 : STAND_FS);
       };
-      M.customProgramCacheKey = () => 'standCrowd';
+      M.customProgramCacheKey = () => empty ? 'standSeats' : 'standCrowd';
     });
   }
   /* ---- soft contact shading (ambient occlusion), every world at the end of its build: at the foot of a wall, a barrier, a building, a
@@ -4025,7 +4030,7 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
+  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!fansOn()) o.crowdPts = new Float32Array(0); else if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4622,6 +4627,7 @@ const World = (function () {
   // C's spectators (the building footprints placed after them hide nobody) and the ground strips under them into a group of their own in
   // root (named 'crowds': the clouds' shader leaves their own alone); returns how many
   function crowdLayer(C, root) {
+    if (!fansOn()) return 0;   // (no spectators: see fansOn)
     if (C.blocks.length) {
       const bh = new Map(); for (const b of C.blocks) { const r = Math.hypot(b.hw, b.hd); for (let a = Math.floor((b.x - r) / 32); a <= Math.floor((b.x + r) / 32); a++) for (let c = Math.floor((b.z - r) / 32); c <= Math.floor((b.z + r) / 32); c++) { const k = a + ',' + c; let L = bh.get(k); if (!L) bh.set(k, L = []); L.push(b); } }
       C.culled = C.ppl.cull((x, z) => { const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
@@ -4636,7 +4642,7 @@ const World = (function () {
   function crowdFinish(C, root, out) {   // building footprints placed after the crowds hide nobody; the layer and the strips go into the world
     const n = crowdLayer(C, root);
     out.dyn.crowd = C.U; out.crowdN = n; out.crowdLog = C.log;
-    const cells = out.crowdCells = new Map();   // the fans per 24 m square (Sfx: how many stand near the car, the cheering on a rally stage)
+    const cells = out.crowdCells = new Map(); if (!fansOn()) return n;   // the fans per 24 m square (Sfx: how many stand near the car, the cheering on a rally stage)
     for (const L of C.sp.values()) for (let q = 0; q < L.length; q += 2) { const k = Math.floor(L[q] / 24) + ',' + Math.floor(L[q + 1] / 24); cells.set(k, (cells.get(k) || 0) + 1); }
     return n;
   }

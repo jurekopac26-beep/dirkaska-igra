@@ -164,6 +164,18 @@ const Tex = (function () {
     }
     const t = mk(c, true); t.crowdPic = true; return t;
   }
+  // the grandstand tiers with nobody on them (the real tracks have no spectators: World's fansOn): crowdPic's 8 rows of 32 seats, every
+  // one empty, its seat colour kept along a stand's block (made once, shared)
+  let seatsC = null;
+  function seats() {
+    if (seatsC) return seatsC;
+    const W = 512, H = 256, c = cv(W, H), x = c.getContext('2d'), f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); }, SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4a'];
+    f('#3a3e47', 0, 0, W, H);
+    for (let row = 0; row < 8; row++) { const y0 = row * 32;
+      f('#23262d', 0, y0, W, 3); f('#4a4f59', 0, y0 + 27, W, 5);
+      for (let k = 0; k < 32; k++) { const X = k * 16, sc = SEAT[Math.floor(k / 8) % SEAT.length]; f(sc, X + 2, y0 + 10, 12, 12); f(sc, X + 2, y0 + 22, 12, 5); f('rgba(0,0,0,0.3)', X + 2, y0 + 21, 12, 1); } }
+    seatsC = mk(c, true); seatsC.crowdPic = true; return seatsC;
+  }
 
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
   const SPONSORS = [
@@ -547,6 +559,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, SPONSORS };
+  return { all, number, crowdPic, seats, SPONSORS };
 })();
 
