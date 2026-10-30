@@ -117,15 +117,11 @@
       farm: { wall: [0.95, 0.94, 0.9], roof: [0.26, 0.24, 0.26], end: [0.92, 0.9, 0.86], barn: [0.52, 0.34, 0.2], barnRoof: [0.3, 0.28, 0.3], barnEnd: [0.5, 0.33, 0.2] },
       tvSkip: [], recov: [], photo: [], jets: null, screen: null,
       mow: 0.45, tier: [[0.56, 0.44, 0.31], [0.44, 0.34, 0.24], [0.48, 0.37, 0.26]], roof: [[0.36, 0.38, 0.36], [0.3, 0.3, 0.3], [0.5, 0.48, 0.44]],   // (a timber stand under a dark felt roof)
-      colMod: (P) => (x, z, c, dd) => {   // a London park in spring: lawns mown short by the road, lush and even, a little darker under the old trees; further out drifts of longer grass, the banks the crowds stand on trodden
+      colMod: (P) => (x, z, c, dd) => {   // a London park in spring: lawns mown short by the road, lush and even, a little darker under the old trees; further out drifts of longer grass
         const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.14 + (m - 0.5) * 0.08;
         c[0] *= k * 0.94; c[1] *= k * 1.03; c[2] *= k * 0.92;
         const lw = nrLCf(x, z, 0), rough = sstep(0.46, 0.68, P.n3(x * 0.8 + 410, z * 0.8 - 160)) * sstep(6, 22, dd) * lw * 0.8, seed = rough * sstep(0.45, 0.7, P.n4(x * 0.9 + 33, z * 0.9 - 51));   // the uncut grass: paler and yellower, its seed heads in streaks
         c[0] = lerp(c[0], c[0] * 1.16 + 0.06, rough) + seed * 0.07; c[1] = lerp(c[1], c[1] * 1.04 + 0.03, rough) + seed * 0.04; c[2] = lerp(c[2], c[2] * 0.76, rough) + seed * 0.02;
-        const tr = CPK ? CPK.trod(x, z) : 0;   // the spectators' banks: trodden flat, yellowed, worn to the soil in patches
-        if (tr > 0) { const so = sstep(0.5, 0.72, P.n4(x * 0.8 - 90, z * 0.8 + 140)) * tr * 0.7, t = tr * 0.7;
-          c[0] = lerp(c[0], c[0] * 1.14 + 0.06, t); c[1] = lerp(c[1], c[1] * 0.97, t); c[2] = lerp(c[2], c[2] * 0.82, t);
-          c[0] = lerp(c[0], 1.02, so); c[1] = lerp(c[1], 0.8, so); c[2] = lerp(c[2], 0.66, so); }
         const daisy = sstep(0.66, 0.84, P.n1(x * 1.3 - 210, z * 1.3 + 75)) * 0.25 * nrLCf(x, z, 0);   // a few daisies in the lawns
         c[0] = lerp(c[0], c[0] * 1.12 + 0.08, daisy); c[1] = lerp(c[1], c[1] * 1.05 + 0.08, daisy); c[2] = lerp(c[2], c[2] * 1.2 + 0.1, daisy);
       } },
@@ -1067,15 +1063,7 @@
       const w = wallAt(x, z); if (w) { const [p, d, past] = w, lo = d < 9, f = (lo ? sstep(-20, -10, d) : sstep(26, 18, d)) * sstep(8, 0, past); if (f > 0) h = lerp(h, lo ? p.lo : p.hi, f); }   // the lower lawn up to the wall, the upper one from 9 m behind it (the terrain's 8 m cells slope across there, under the upper lawn's edge cpPark lays)
       return h;
     };
-    // the banks the crowds stand on (def.ga): points every 3 m along them, 3-15 m past the barrier, hashed (16 m cells)
-    const TH = new Map(), L = T.len;
-    for (const [a, b, sd] of T.def.ga || []) for (let d = a - 8; d <= b + 8; d += 3) {
-      const i = T.idx((((T.startS + d) % L) + L) % L), bar = sd > 0 ? T.br[i] : T.bl[i], e = sstep(a - 8, a + 6, d) * sstep(b + 8, b - 6, d);
-      for (let o = bar + 3; o <= bar + 15; o += 4) { const x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o, k = Math.floor(x / 16) + ',' + Math.floor(z / 16); let c = TH.get(k); if (!c) TH.set(k, c = []); c.push(x, z, e); } }
-    const trod = (x, z) => { let f = 0; const cx = Math.floor(x / 16), cz = Math.floor(z / 16);
-      for (let b = cz - 1; b <= cz + 1; b++) for (let a = cx - 1; a <= cx + 1; a++) { const c = TH.get(a + ',' + b); if (c) for (let q = 0; q < c.length; q += 3) { const d = Math.hypot(x - c[q], z - c[q + 1]); if (d < 6) f = Math.max(f, sstep(6, 2.5, d) * c[q + 2]); } }
-      return f; };
-    return (CPK = { lakes, lakeAt, walls, trod });
+    return (CPK = { lakes, lakeAt, walls });
   }
   // a soft blob (an icosahedron with radii rx along its yaw, ry up, rz across; smooth normals), the sculptures' and the sphinxes' bodies
   function cpBlob(g, cx, cy, cz, rx, ry, rz, yaw, col, k0) {
