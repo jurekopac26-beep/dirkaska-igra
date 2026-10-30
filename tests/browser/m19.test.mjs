@@ -1,7 +1,7 @@
 // Special mission 19 · Pred plimo (js/missions/m19.js, the kit js/missions/kit.js) in the browser, upright (360 x 640, touch): ?misija=19
 // on Townsville in the doctor's MEDVED; the panel (MORJE, OTOK, ZDRAVNIK), no timing tower; the tide's water (the creek's own look), the
-// island with its footbridge, the lifeguard towers, the doctor and the fisherman, the tag over the island in the scene; a driver to the
-// footbridge, stopped: the doctor walks over, treats the fisherman and walks back (the car held meanwhile); the tide on the low road by then;
+// island (left of the road, in the creek) with its footbridge, the lifeguard towers and the yellow stop box, the doctor and the fisherman,
+// the tags in the scene; a driver to the stop box, stopped (the island ahead on the screen): the doctor walks over, treats the fisherman and walks back (the car held meanwhile); the tide on the low road by then;
 // on to the dry past Turn 1: done. Back to the title: the water, the island and the tags gone. No errors on the page.
 //   node tests/browser/m19.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -36,14 +36,20 @@ try {
     if (isl) isl.geometry.computeBoundingBox();
     return { water: has(W), creekLook: !!W.material.map && W.material.transparent, island: !!isl, bb: isl ? [isl.geometry.boundingBox.min.y, isl.geometry.boundingBox.max.y] : null, crowd: has(r.crowd.g), tags: !!document.getElementById('mis-tags'), n: ids.length, wid: W.id }; });
   T.check('in the scene: the tide\'s water (the creek\'s look), the island in the creek (its foot under the water), the people, the tags', S.water && S.creekLook && S.island && S.bb[0] < -2.7 && S.bb[1] > 0.9 && S.crowd && S.tags, JSON.stringify(S));
-  // to the footbridge, stopped: the doctor goes
-  let d = await drive(page, "r.doc !== 'car'", 445, 20, 120);
+  // to the yellow box before the footbridge, stopped: the doctor goes; the island ahead on the screen (not under the panel)
+  const STOP = await page.evaluate(() => Missions.run.def.K.STOP);
+  let d = await drive(page, "r.doc !== 'car'", STOP, 20, 120);
   s = await st(page);
-  T.check('stopped at the footbridge: the doctor out, the car held, OTOK tukaj', s.run.doc === 'out' && s.run.locked && s.rows[1] === 'OTOK tukaj' && s.rows[2] === 'ZDRAVNIK na brvi', JSON.stringify({ d, rows: s.rows }));
-  d = await drive(page, "r.doc === 'treat' && r.dt > 5", 445, 0, 60);
+  T.check('stopped in the box: the doctor out, the car held, OTOK tukaj', s.run.doc === 'out' && s.run.locked && s.rows[1] === 'OTOK tukaj' && s.rows[2] === 'ZDRAVNIK na brvi', JSON.stringify({ d, rows: s.rows }));
+  await page.waitForTimeout(300);
+  const V = await page.evaluate(() => { const r = Missions.run, v = new THREE.Vector3(r.isl.x, 2, r.isl.z).project(Render.camera), c = document.getElementById('gl') || document.querySelector('canvas'), b = c.getBoundingClientRect();
+    const px = { x: b.left + (v.x + 1) / 2 * b.width, y: b.top + (1 - v.y) / 2 * b.height }, hit = (sel) => { const e = document.querySelector(sel); if (!e) return false; const q = e.getBoundingClientRect(); return px.x >= q.left && px.x <= q.right && px.y >= q.top && px.y <= q.bottom; };
+    return { x: +v.x.toFixed(2), y: +v.y.toFixed(2), under: hit('#mis .mis-rows') || hit('#mis .mis-card') }; });
+  T.check('the island on the screen upright, not under the panel', Math.abs(V.x) < 0.95 && Math.abs(V.y) < 0.95 && !V.under, JSON.stringify(V));
+  d = await drive(page, "r.doc === 'treat' && r.dt > 5", STOP, 0, 60);
   s = await st(page);
   T.check('the treatment on the island (the car still held)', s.run.doc === 'treat' && s.run.locked && /^ZDRAVNIK oskrba \d+ %$/.test(s.rows[2]), JSON.stringify(s.rows));
-  d = await drive(page, "r.doc === 'back'", 445, 0, 90);
+  d = await drive(page, "r.doc === 'back'", STOP, 0, 90);
   s = await st(page);
   T.check('the doctor back: the car free, the tide on the low road by now', s.run.doc === 'back' && !s.run.locked && / na cesti$/.test(s.rows[0]) && s.rows[2] === 'ZDRAVNIK nazaj v avtu', JSON.stringify({ d, rows: s.rows, lvl: s.run.lvl }));
   // on through the water, past Turn 1 to the dry

@@ -77,9 +77,9 @@
     for (let j = 0; j < nr - 1; j++) for (let i = 0; i < nc - 1; i++) { const a = j * nc + i, b = a + 1, c = a + nc, e = c + 1; idx.push(a, c, b, b, c, e); }   // (the faces up)
     const G = new THREE.BufferGeometry(); G.setAttribute('position', new THREE.BufferAttribute(pos, 3)); G.setAttribute('color', new THREE.BufferAttribute(col, 3)); G.setIndex(idx);
     G.computeVertexNormals(); const bc = at(K.DMAX[1] / 2, K.UC); G.boundingSphere = new THREE.Sphere(new THREE.Vector3(bc[0], 0.5, bc[1]), 240);
-    const m = new THREE.Mesh(G, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 30, specular: 0x203038 }));
+    const m = new THREE.Mesh(G, new THREE.MeshLambertMaterial({ vertexColors: true }));
     m.renderOrder = 1; r.add(m);
-    const deep = [0.13, 0.38, 0.6], crest = [0.22, 0.55, 0.66], foam = [0.9, 0.95, 0.97];
+    const deep = [0.13, 0.38, 0.6], crest = [0.2, 0.48, 0.62], foam = [0.86, 0.92, 0.95];
     return { m, step(t) {
       for (let k = 0; k < n; k++) { const a = amp[k], p = 0.5 * (1 + phase(dd[k], t)), h = K.WAVE * a * p, br = 1 - sstep(20, 45, dd[k]);
         pos[k * 3 + 1] = h - 0.12;

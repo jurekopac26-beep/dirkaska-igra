@@ -1,6 +1,6 @@
 // Special mission 19 · Pred plimo (js/missions/m19.js, the kit js/missions/kit.js), no browser: its race (Townsville, alone, the doctor's
-// white MEDVED), the island in the creek's arm on the right of the low road of Turn 1, the tide's water over the low ground round it (none
-// at the start line), rising K.RISE m a second; the stop at the footbridge (too fast: no stop), the doctor's walk, the treatment and his
+// white MEDVED), the island in the creek on the left of the low road of Turn 1 (ahead of the yellow stop box: in view upright), the tide's water over the low ground round it (none
+// at the start line), rising K.RISE m a second; the stop in the box (too fast: no stop; short of it: no stop), the doctor's walk, the treatment and his
 // walk back with the car held; off the low road to the dry with the doctor: done (not while still on the low road); the water over the
 // wheels' hubs floats the car sideways, at K.DEEP it drowns: failed; past the island round the lap: failed; the time up: failed; the
 // numbers (a good run beats the tide, the tide drowns the low road before the time is up); the gauges.
@@ -33,19 +33,22 @@ const steps = (r, sec, each) => { for (let k = 0; k < Math.round(sec * 60) && !r
 let F = mk(-10), r = run(F);
 check('begin: the tide low, the doctor in the car; the panel', r.lvl === K.L0 && r.doc === 'car' && r.vals.sea.text === '0,5 m pod cesto' && r.vals.isl.text === Math.round(K.ISL + 10) + ' m' && r.vals.doc.text === 'v avtu', JSON.stringify(r.vals));
 { const i = T.idx(K.ISL), sc = (r.isl.x - T.px[i]) * T.nx[i] + (r.isl.z - T.pz[i]) * T.nz[i];
-  check('the island: right of the road (the normal\'s side), K.OFF m out, on the low road (Turn 1)', Math.abs(sc - K.OFF) < 0.01 && T.hy[i] < -0.15 && Math.abs(T.hy[i] - K.LOW) < 0.05, `${sc.toFixed(1)} ${T.hy[i].toFixed(2)}`); }
-check('the doctor\'s way: the road\'s edge, the footbridge, the island', r.walk.length === 4);
+  check('the island: left of the road (against the normal), K.OFF m out, on the low road (Turn 1)', K.SIDE === -1 && Math.abs(sc + K.OFF) < 0.01 && T.hy[i] < -0.15 && Math.abs(T.hy[i] - K.LOW) < 0.05, `${sc.toFixed(1)} ${T.hy[i].toFixed(2)}`); }
+check('the doctor\'s way: the road\'s edge, the footbridge, the island (all on the left)', r.walk.length === 4 && r.walk.every(p => { const i = T.idx(K.ISL); return (p.x - T.px[i]) * T.nx[i] + (p.z - T.pz[i]) * T.nz[i] < -5; }));
+check('the stop box before the footbridge: the island ahead of a car stopped in it', K.STOP + K.ZONE < K.ISL - 5 && K.STOP - K.ZONE > K.DRY[0]);
 { const W = r.W, at = (s, d) => { const i = T.idx(s); return W.at(T.px[i] + T.nx[i] * (d || 0), T.pz[i] + T.nz[i] * (d || 0)); };
   check('the tide\'s water: over the low road and the island, none at the start line nor up the hill past Turn 1', at(K.ISL) === K.L0 && at(K.ISL, K.OFF) === K.L0 && at(0) === -Infinity && at(1000) === -Infinity, `${at(K.ISL)} ${at(0)} ${at(1000)}`);
   check('its rim sinks under the creek\'s own water (no edge to see)', K.L0 + K.RISE * D.limit - K.DROP < K.WY && K.R1 > K.R0); }
 steps(r, 10);
 check('10 s: the tide up by K.RISE a second, still under the road', Math.abs(r.lvl - (K.L0 + 10 * K.RISE)) < 1e-9 && r.depth === 0 && /pod cesto/.test(r.vals.sea.text), r.vals.sea.text);
 
-// at the footbridge: too fast, no stop; slowly: the doctor out, the car held
-put(F.player, K.ISL - 5, 4); F.player.vx = K.VSTOP + 3; r.step(1 / 60);
-check('at the footbridge too fast: the doctor stays in the car', r.doc === 'car');
+// in the stop box: short of it, no stop; too fast, no stop; slowly: the doctor out, the car held
+put(F.player, K.STOP - K.ZONE - 3, -2); F.player.vx = 0; r.step(1 / 60);
+check('stopped short of the box: the doctor stays in the car', r.doc === 'car');
+put(F.player, K.STOP + 2, -2); F.player.vx = K.VSTOP + 3; r.step(1 / 60);
+check('in the box too fast: the doctor stays in the car', r.doc === 'car' && /okvirju/.test(r.hint), r.hint);
 F.player.vx = 0.5; r.step(1 / 60);
-check('stopped at the footbridge: the doctor out, the car held', r.doc === 'out' && F.player.locked && r.vals.isl.text === 'tukaj' && r.vals.doc.text === 'na brvi', JSON.stringify(r.vals));
+check('stopped in the box: the doctor out, the car held', r.doc === 'out' && F.player.locked && r.vals.isl.text === 'tukaj' && r.vals.doc.text === 'na brvi', JSON.stringify(r.vals));
 F.player.vx = 5; r.step(1 / 60);
 check('held: the car does not move', F.player.vx === 0 && F.player.locked);
 steps(r, K.WALK + 0.1);
@@ -82,9 +85,9 @@ F = mk(1500); r = run(F); F.player.finished = true; r.step(1 / 60);
 check('over the finish without the island: failed', r.end === 'fail' && /mimo otoka/.test(r.why), r.why);
 F = mk(1500); r = run(F); r.doc = 'back'; F.player.finished = true; r.step(1 / 60);
 check('over the finish with the doctor back: done', r.end === 'win');
-// past the island, the doctor still in the car: the hint to turn round
-F = mk(K.ISL + 60); r = run(F); r.step(1 / 60);
-check('past the island: turn round', /obrni/.test(r.hint), r.hint);
+// past the footbridge, the doctor still in the car: the hint to back up
+F = mk(K.ISL + 20); r = run(F); r.step(1 / 60);
+check('past the footbridge: back up to the box', /vzvratno/.test(r.hint), r.hint);
 // the time up
 F = mk(-10); r = run(F); r.t = D.limit - 0.01; r.lvl = K.L0; r.step(0.05);
 check('the time up: failed', r.end === 'fail' && /časa/.test(r.why), r.why);

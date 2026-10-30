@@ -1,9 +1,10 @@
 /* Special mission 19 · Pred plimo · Townsville, Avstralija (js/missions.js; the kit: js/missions/kit.js: crowd, tags, wade, hold). A sick
-   fisherman waits on a small island in the creek's arm beside the low road of Turn 1 (s K.ISL, K.OFF m right of the road: its own sand,
-   palms, a hut and a footbridge from the road). The tide is coming in: the sea (the mission's own water over the low ground round Turn 1:
+   fisherman waits on a small island in the creek where it passes under the low road of Turn 1 (s K.ISL, K.OFF m left of the road, K.SIDE:
+   ahead of the car on the left, in view on an upright phone; its own sand, palms, a hut and a footbridge from the road). The tide is coming in: the sea (the mission's own water over the low ground round Turn 1:
    flat within K.R0 m of its centre, its rim sinking K.DROP m under the ground by K.R1 m, so its edge never shows) rises K.RISE m a second
-   from K.L0 over the low road (its lowest at K.LOW). The doctor's 4x4 (the MEDVED, white) drives there from the start line, stops at the
-   footbridge (within K.ZONE m, slower than K.VSTOP), the doctor walks over to the island (K.WALK s), treats the fisherman (K.TREAT s) and
+   from K.L0 over the low road (its lowest at K.LOW). The doctor's 4x4 (the MEDVED, white) drives there from the start line, stops in the
+   yellow box painted on the road before the footbridge (s K.STOP ± K.ZONE, or on up to the footbridge; slower than K.VSTOP), the doctor walks
+   along the road's edge and over to the island (K.WALK s), treats the fisherman (K.TREAT s) and
    walks back; meanwhile the car waits (held). With the doctor back in it, the car must get off the low road to the dry (s past K.DRY[1]
    forward or before K.DRY[0] back, no water under it): done. The water on the road holds the car back (MisKit.wade), over K.SLIP m it
    floats and the tide carries it sideways (K.SLIDE m/s, inland), at K.DEEP m the engine drowns: failed; the time up: failed. The wrong way
@@ -13,7 +14,7 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  const K = { ISL: 445, OFF: 36, R: 10, ZONE: 18, VSTOP: 1.5, WALK: 10, TREAT: 36, L0: -0.69, RISE: 0.0078, LOW: -0.22, SLIP: 0.35, DEEP: 0.78, SLIDE: 1.4,
+  const K = { ISL: 418, OFF: 22, SIDE: -1, R: 7, STOP: 378, ZONE: 8, VSTOP: 1.5, WALK: 14, TREAT: 32, L0: -0.69, RISE: 0.0078, LOW: -0.22, SLIP: 0.35, DEEP: 0.78, SLIDE: 1.4,
     DRY: [350, 740], C: 500, COFF: 0, R0: 140, R1: 190, DROP: 4, WY: -2.7, LIMIT: 200 };
   const sstep = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
   const sOf = (T, P) => { if (!P || !P.q) return 0; const L = T.len, d = (((P.q.s - (T.startS || 0)) % L) + L) % L; return d > L / 2 ? d - L : d; };   // (m from the start line: behind it on the grid < 0)
@@ -44,47 +45,53 @@
   // (both in the island's frame: x across the road, away from it; one mesh each)
   function island(r, T) {
     if (typeof THREE === 'undefined') return;
-    const i = T.idx(K.ISL), nx = T.nx[i], nz = T.nz[i], ry = Math.atan2(-nz, nx), top = 0.9, base = K.WY - 0.8;
+    const i = T.idx(K.ISL), nx = T.nx[i], nz = T.nz[i], ry = Math.atan2(-nz * K.SIDE, nx * K.SIDE), top = 0.9, base = K.WY - 0.8;
     const B = KIT.parts(), SAND = 0xd6c08a, GR = 0x6f9a3c, TR = 0x7a5a3a, LF = 0x3f7a2a;
     B.L.push({ g: new THREE.CylinderGeometry(K.R * 0.8, K.R * 1.05, top - base, 22), m: new THREE.Matrix4().makeTranslation(0, (top + base) / 2, 0), c: SAND });
     B.L.push({ g: new THREE.CylinderGeometry(K.R * 0.6, K.R * 0.78, 0.25, 20), m: new THREE.Matrix4().makeTranslation(0.8, top + 0.1, 0.4), c: GR });
-    for (const [x, z, h, lean] of [[-4, -4, 7, 0.12], [-2.5, 4.5, 8, -0.1], [4.5, -3.5, 6.5, 0.15], [5.5, 3.5, 7.5, -0.12], [-5.8, 0.8, 6, 0.08]]) {
+    for (const [x, z, h, lean] of [[-3, -3.2, 7, 0.12], [-2, 3.6, 8, -0.1], [3.4, -3, 6.5, 0.15], [4.2, 2.8, 7.5, -0.12], [-4.4, 0.6, 6, 0.08]]) {
       const M = new THREE.Matrix4().makeRotationZ(lean); M.setPosition(x - Math.sin(lean) * h / 2, top + h / 2, z); B.L.push({ g: new THREE.CylinderGeometry(0.16, 0.24, h, 6), m: M, c: TR });
       const tx = x - Math.sin(lean) * h, ty = top + h;
       for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, L = 2.8, M2 = new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(-0.35)); M2.setPosition(tx + Math.cos(a) * L * 0.45, ty - 0.35, z + Math.sin(a) * L * 0.45); B.L.push({ g: new THREE.BoxGeometry(L, 0.08, 0.7), m: M2, c: LF }); }
     }
-    B.box(2.5, top + 1.2, -2, 3.4, 2.4, 2.8, 0xe6dcc6); B.box(2.5 - 1.71, top + 0.9, -2, 0.04, 1.6, 0.9, 0x5a4330);
-    { const M = new THREE.Matrix4().makeRotationY(Math.PI / 2); M.setPosition(2.5, top + 2.4, -2); B.L.push({ g: KIT.prism(3.4, 4.0, 1.3), m: M, c: 0x9aa3a8 }); }   // (a tin roof)
-    B.box(-1.5, top + 0.25, 3.5, 2.6, 0.12, 1.0, 0x8a6a48); B.box(-1.5, top + 0.12, 3.5, 2.4, 0.25, 0.8, 0x6a5038);   // (his boat, pulled up on the sand)
+    B.box(2, top + 1.2, -1.2, 3.2, 2.4, 2.6, 0xe6dcc6); B.box(2 - 1.61, top + 0.9, -1.2, 0.04, 1.6, 0.9, 0x5a4330);
+    { const M = new THREE.Matrix4().makeRotationY(Math.PI / 2); M.setPosition(2, top + 2.4, -1.2); B.L.push({ g: KIT.prism(3.2, 3.8, 1.3), m: M, c: 0x9aa3a8 }); }   // (a tin roof)
+    B.box(-1.8, top + 0.25, 2.6, 2.6, 0.12, 1.0, 0x8a6a48, 0.5); B.box(-1.8, top + 0.12, 2.6, 2.4, 0.25, 0.8, 0x6a5038, 0.5);   // (his boat, pulled up on the sand)
     const isl = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); isl.castShadow = true; isl.receiveShadow = true;
-    const p = KIT.at(T, K.ISL, K.OFF); isl.position.set(p.x, 0, p.z); isl.rotation.y = ry; r.add(isl);
+    const p = KIT.at(T, K.ISL, K.SIDE * K.OFF); isl.position.set(p.x, 0, p.z); isl.rotation.y = ry; r.add(isl);
     // the footbridge: from the road's edge (a step down from the deck) to the island's sand, on posts down into the creek
     const a0 = T.wS(K.ISL) + 0.6, a1 = K.OFF - K.R * 0.85, L = a1 - a0, y0 = T.hy[i] + 0.35, y1 = top + 0.15, F = KIT.parts(), WD = 0x9a7a55, PO = 0x5a4330;
     { const M = new THREE.Matrix4().makeRotationZ(Math.atan2(y1 - y0, L)); M.setPosition(0, (y0 + y1) / 2, 0); F.L.push({ g: new THREE.BoxGeometry(Math.hypot(L, y1 - y0), 0.14, 1.6), m: M, c: WD }); }
     for (let x = -L / 2 + 0.6; x <= L / 2; x += 3.2) { const yd = y0 + (y1 - y0) * (x + L / 2) / L; for (const sd of [-0.75, 0.75]) { F.box(x, (yd + 1.0 + K.WY - 0.5) / 2, sd, 0.16, yd + 1.0 - K.WY + 0.5, 0.16, PO); } }
     for (const sd of [-0.75, 0.75]) { const M = new THREE.Matrix4().makeRotationZ(Math.atan2(y1 - y0, L)); M.setPosition(0, (y0 + y1) / 2 + 0.95, sd); F.L.push({ g: new THREE.BoxGeometry(Math.hypot(L, y1 - y0), 0.07, 0.07), m: M, c: WD }); }
     const fb = F.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); fb.castShadow = true;
-    const pm = KIT.at(T, K.ISL, (a0 + a1) / 2); fb.position.set(pm.x, 0, pm.z); fb.rotation.y = ry; r.add(fb);
-    r.walk = [KIT.at(T, K.ISL, a0 - 0.8), KIT.at(T, K.ISL, a0), KIT.at(T, K.ISL, a1 + 0.5), KIT.at(T, K.ISL, K.OFF - 3)];
+    const pm = KIT.at(T, K.ISL, K.SIDE * (a0 + a1) / 2); fb.position.set(pm.x, 0, pm.z); fb.rotation.y = ry; r.add(fb);
+    r.walk = [KIT.at(T, K.ISL, K.SIDE * (a0 - 1.2)), KIT.at(T, K.ISL, K.SIDE * a0), KIT.at(T, K.ISL, K.SIDE * (a1 + 0.5)), KIT.at(T, K.ISL, K.SIDE * (K.OFF - 2))];
     r.walk[0].y = r.walk[1].y = T.hy[i]; r.walk[1].y = y0 + 0.07; r.walk[2].y = r.walk[3].y = top + 0.15;
   }
-  // the lifeguard towers by the low road: white posts, a red hut on top (the last shelter); one mesh for both
+  // the lifeguard towers by the low road: white posts, a red hut on top (the last shelter); the yellow box painted on the road where the
+  // car stops (two bars across the road, two along its edges); one mesh for all
   function towers(r, T) {
     if (typeof THREE === 'undefined') return;
     const B = KIT.parts(), o = KIT.at(T, K.ISL, 0);
-    for (const [s, off] of [[395, -14], [560, 13]]) {
+    for (const [s, off] of [[372, 14], [560, 13]]) {
       const p = KIT.at(T, s, off), dx = p.x - o.x, dz = p.z - o.z, y0 = K.WY - 0.5, H = 5.2 - y0;
       for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B.box(dx + x, y0 + H / 2, dz + z, 0.18, H, 0.18, 0xd8dbe0);
       B.box(dx, 5.4, dz, 2.4, 1.4, 2.4, 0xc4301c); B.box(dx, 6.2, dz, 2.9, 0.12, 2.9, 0xe8e2d6); B.box(dx, 4.65, dz, 2.9, 0.1, 2.9, 0xd8dbe0);
     }
-    const m = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); m.castShadow = true; m.position.set(o.x, 0, o.z); r.add(m);
+    const YL = 0xf2c42c, W = T.wS(K.STOP) - 0.5;
+    for (const [ds, off, lx, lz] of [[-K.ZONE, 0, 2 * W, 0.45], [K.ZONE, 0, 2 * W, 0.45], [0, -W + 0.2, 0.3, 2 * K.ZONE], [0, W - 0.2, 0.3, 2 * K.ZONE]]) {
+      const p = KIT.at(T, K.STOP + ds, off), i = T.idx(K.STOP + ds);
+      B.box(p.x - o.x, T.hy[i] + 0.05, p.z - o.z, lx, 0.02, lz, YL, Math.atan2(-T.nz[i], T.nx[i]));
+    }
+    const m = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); m.castShadow = true; m.position.set(o.x, 0, o.z); r.add(m);
   }
 
   Missions.add({
     id: '19', title: 'Pred plimo', track: 'townsville', car: 'medved', limit: K.LIMIT, stars: [110, 150], K,
     story: 'Na otočku v rokavu potoka čaka bolan ribič. Plima narašča: kmalu bo morje prekrilo nizko cesto ob prvem ovinku.',
     goal: 'Pripelji zdravnika do brvi na otok in ga odpelji na suho, preden morje zalije cesto.',
-    hint: 'Ustavi ob brvi: zdravnik gre sam na otok.',
+    hint: 'Ustavi v rumenem okvirju pred brvjo: zdravnik gre sam na otok.',
     rows: [{ k: 'sea', label: 'MORJE', bar: true, col: '#3d8cff' }, { k: 'isl', label: 'OTOK' }, { k: 'doc', label: 'ZDRAVNIK' }],
     // alone on the closed streets, dry, by day; the doctor's MEDVED 4x4 in white
     opts: () => ({ tt: true, laps: 1, playerColor: 0xf2f4f6, damage: 0 }),
@@ -93,10 +100,11 @@
       r.doc = 'car'; r.dt = 0; r.depth = 0;
       r.cur = [-T.nx[i] * K.SLIDE, -T.nz[i] * K.SLIDE];   // (the tide floods inland, over the road away from the creek)
       r.W = tide(r, c.x, c.z, K.L0); r.lvl = K.L0;
-      r.isl = KIT.at(T, K.ISL, K.OFF); island(r, T); towers(r, T);
-      if (!r.walk) r.walk = [0, 0, 0, 0].map((_, k) => KIT.at(T, K.ISL, [T.wS(K.ISL) - 0.2, T.wS(K.ISL) + 0.6, K.OFF - K.R * 0.85 + 0.5, K.OFF - 3][k]));
+      r.isl = KIT.at(T, K.ISL, K.SIDE * K.OFF); island(r, T); towers(r, T);
+      if (!r.walk) r.walk = [0, 0, 0, 0].map((_, k) => KIT.at(T, K.ISL, K.SIDE * [T.wS(K.ISL) - 0.6, T.wS(K.ISL) + 0.6, K.OFF - K.R * 0.85 + 0.5, K.OFF - 2][k]));
+      r.box = KIT.at(T, K.STOP, 0);
       r.crowd = KIT.crowd(r, 2); r.tags = KIT.tags(r);
-      { const f = KIT.at(T, K.ISL, K.OFF - 1); r.crowd.put(1, f.x + T.tx[i] * 2.2, 0.9, f.z + T.tz[i] * 2.2, Math.atan2(-T.nz[i], T.nx[i]) + Math.PI, 0x2f6f9e); }   // (the fisherman, by his hut)
+      { const f = KIT.at(T, K.ISL, K.SIDE * (K.OFF - 1)); r.crowd.put(1, f.x - T.tx[i] * 1.8, 0.9, f.z - T.tz[i] * 1.8, Math.atan2(-T.nz[i] * K.SIDE, T.nx[i] * K.SIDE) + Math.PI, 0x2f6f9e); }   // (the fisherman, by his hut)
       this.show(r);
     },
     // the depth of the sea under the car: the tide's surface there over the road
@@ -110,7 +118,7 @@
       KIT.wade(P, r.depth, dt, { drag: 1.4, deep: K.DEEP, slip: K.SLIP });
       if (r.depth > K.SLIP) { const f = Math.min(1, (r.depth - K.SLIP) / (K.DEEP - K.SLIP)); P.x += r.cur[0] * f * dt; P.z += r.cur[1] * f * dt; P.h += Math.sin(r.t * 1.7) * 0.25 * f * dt; }
       if (r.depth >= K.DEEP) { r.fail(tr('Morje je zalilo avto.')); this.show(r); return; }
-      const near = Math.abs(s - K.ISL) < K.ZONE;
+      const near = s > K.STOP - K.ZONE && s < K.ISL + 4;   // (in the yellow box, or on up to the footbridge)
       // at the footbridge: the doctor walks to the island, treats the fisherman, walks back (the car waits)
       if (r.doc === 'car' && near && v < K.VSTOP) { r.doc = 'out'; r.dt = 0; }
       if (r.doc === 'out' || r.doc === 'treat' || r.doc === 'in') {
@@ -125,9 +133,9 @@
       const off = s < K.DRY[0] || s > K.DRY[1];
       if (r.doc === 'back' && off && r.depth <= 0.02) { r.win(); this.show(r); return; }
       const i0 = T.idx(K.DRY[0] - 8), i1 = T.idx(K.DRY[1] + 8);
-      r.tags.set(r.doc === 'car' ? [{ x: r.isl.x, y: 5, z: r.isl.z, cls: 'go', html: '<b>' + tr('OTOK') + '</b>' + tr('ribič čaka') }]
+      r.tags.set(r.doc === 'car' ? [{ x: r.isl.x, y: 5, z: r.isl.z, cls: 'go', html: '<b>' + tr('OTOK') + '</b>' + tr('ribič čaka') }].concat(s < K.STOP - K.ZONE ? [{ x: r.box.x, y: T.hy[T.idx(K.STOP)] + 2, z: r.box.z, cls: 'go', html: '<b>' + tr('USTAVI') + '</b>' }] : [])
         : r.doc === 'back' ? [{ x: T.px[i0], y: T.hy[i0] + 4, z: T.pz[i0], cls: 'go', html: '<b>' + tr('SUHO') + '</b>' }, { x: T.px[i1], y: T.hy[i1] + 4, z: T.pz[i1], cls: 'go', html: '<b>' + tr('SUHO') + '</b>' }] : []);
-      r.say(r.doc === 'car' ? (near ? (v < K.VSTOP ? this.hint : 'Ustavi ob brvi.') : s > K.ISL + K.ZONE && s < K.DRY[1] + 200 ? 'Otok je za tabo: obrni in se vrni do brvi.' : r.depth > K.SLIP ? 'Ko voda doseže kolesa, avto začne drseti.' : this.hint)
+      r.say(r.doc === 'car' ? (near ? (v < K.VSTOP ? this.hint : 'Ustavi v rumenem okvirju.') : s >= K.ISL + 4 && s < K.DRY[1] + 200 ? 'Brv je za tabo: zapelji vzvratno do rumenega okvirja.' : r.depth > K.SLIP ? 'Ko voda doseže kolesa, avto začne drseti.' : this.hint)
         : r.doc === 'back' ? (r.depth > K.SLIP ? 'Ko voda doseže kolesa, avto začne drseti.' : 'Zdravnik je v avtu: odpelji ga na suho, naprej ali nazaj.')
         : r.doc === 'treat' ? 'Zdravnik oskrbuje ribiča …' : r.doc === 'out' ? 'Zdravnik gre po brvi na otok.' : 'Zdravnik se vrača v avto.');
       this.show(r);
