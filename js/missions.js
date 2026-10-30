@@ -93,7 +93,7 @@ const Missions = (function () {
   // the race's options over the game's own (newRace): alone, one run, dry, no lights' flying start ...; the mission's vehicle
   function opts() {
     if (!cur) return null;
-    const o = Object.assign({ numAI: 0, laps: 1, tt: true, flying: 0, rain: 0, weather: null, fuel: false, flags: false, chars: false, slip: false, faults: false, radio: false, traffic: false, police: false, tyreRule: undefined, wheelRule: undefined }, cur.opts ? cur.opts(cur) : null);
+    const o = Object.assign({ numAI: 0, laps: 1, tt: true, flying: 0, rain: 0, weather: null, fuel: false, flags: false, chars: false, slip: false, faults: false, radio: false, traffic: false, police: false, tyreRule: undefined, tyreAll: undefined, wheelRule: undefined }, cur.opts ? cur.opts(cur) : null);
     if (cur.car && typeof Core !== 'undefined') { const M = Core.MODELS.find(m => m.id === cur.car); if (M) o.playerModel = M; }
     return o;
   }

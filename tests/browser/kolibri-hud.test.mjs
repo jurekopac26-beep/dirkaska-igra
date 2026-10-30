@@ -22,14 +22,14 @@ async function screen(name, vp, touch) {
     const $ = (id) => document.getElementById(id), R = (id) => { const e = $(id); if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
     const st = $('tw-strip'), cells = [...st.querySelectorAll('.c')], O = window.__game.race.order, P = window.__game.race.player, pi = O.indexOf(P);
     const fs = (id) => parseFloat(getComputedStyle($(id)).fontSize);
-    return { strip: R('tw-strip'), cells: cells.map(c => +c.querySelector('b').textContent), me: cells.findIndex(c => c.classList.contains('me')), seps: st.querySelectorAll('.sep').length, pi,
+    return { strip: R('tw-strip'), cells: cells.map(c => +c.querySelector('b').textContent), me: cells.findIndex(c => c.classList.contains('me')), seps: st.querySelectorAll('.sep').length, pi, n: O.length,
       map: R('h-map'), pause: R('btn-pause'), rank: R('h-main'), pos: R('h-pos'), tot: R('h-tot'), spd: R('h-spd'), row2: R('h-row2'), times: R('h-times'), split: $('h-split') && getComputedStyle($('h-split')).marginTop,
       fPos: fs('h-pos'), fTot: fs('h-tot'), totCol: getComputedStyle($('h-tot')).color, tow: !!$('h-tow'), best: getComputedStyle($('h-best')).visibility,
       btn: ['c-left', 'c-right', 'c-brake', 'c-gas'].map(R), icons: ['c-brake', 'c-gas'].map(id => { const s = $(id).querySelector('svg'); return s ? s.getBoundingClientRect().width : 0; }),
       words: ['c-brake', 'c-gas'].map(id => $(id).textContent.trim()), oldTower: getComputedStyle($('h-tower')).display };
   });
   T.check(`${name}: the tower at the top, one row at the very top edge`, L.strip && L.strip.top <= 1 && Math.abs(L.strip.height - 32) < 1, JSON.stringify(L.strip));
-  const want = new Set([0, 1, 2, L.pi - 1, L.pi, L.pi + 1].filter(i => i >= 0)); const got = new Set(L.cells.map(n => n - 1));
+  const want = new Set([0, 1, 2, L.pi - 1, L.pi, L.pi + 1].filter(i => i >= 0 && i < L.n)); const got = new Set(L.cells.map(n => n - 1));   // (the player last: no one behind, one more ahead instead)
   T.check(`${name}: six drivers: the first three, the one ahead, you (yellow), the one behind; ⋯ between those not in a row`, L.cells.length === 6 && [...want].every(i => got.has(i)) && L.cells[L.me] === L.pi + 1 && L.seps === (L.pi > 4 ? 1 : 0), `${L.cells.join(' ')} you ${L.pi + 1}, ⋯ ${L.seps}`);
   T.check(`${name}: everything else under it (the top left, the clock, the map, the pause), the old tower not shown`, L.rank.top >= L.strip.bottom - 1 && L.times.top >= L.strip.bottom && L.map.top >= L.strip.bottom && L.pause.top >= L.strip.bottom && L.oldTower === 'none');
   T.check(`${name}: 21/22: the total as big as the place and yellow, the speed under them`, Math.abs(L.fPos - L.fTot) < 0.5 && /255, 210, 63/.test(L.totCol) && L.spd.top >= L.pos.bottom - 2 && Math.abs(L.pos.top - L.tot.top) < 2, `${L.fPos} / ${L.fTot}`);

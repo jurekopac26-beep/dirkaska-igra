@@ -2444,29 +2444,33 @@ const Core = (function () {
   // blow it out). With none left: no asking, the hub's fire, the second wheel in 3 s, the whole car on fire. After a change the 80 % mark
   // takes a wheel again only when crossed (rule.chg), a hit from 70 % at once
   const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08, t2: 3, hub: 0.2 };
-  // The Kolibri's tyres (Race opts.tyreRule: the vehicles they are for; Car.kt on the player's car): each its own wear (w) and damage (d),
-  // 0..1. The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean, whatever its length; a race on a circuit
-  // KT.lap a metre (4 times the tyres' usual), a slide up to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times
-  // (that wheel only: a gravel road is its road); the slicks' compound as theirs (K.wr). Worn: KT.loss of the wheel's grip (the slicks'
-  // compound: its own loss). The damage only from knocks with damage on (applyDamage: ktHit), only to be seen (the dots' red, the user's:
+  // The Kolibri's tyres (Race opts.tyreRule: the vehicles they are for; Car.kt on the player's car, kt.full): each its own wear (w) and
+  // damage (d), 0..1. Every other player's car (opts.tyreAll) its four tyres too, the wear only (no kt.full): no damage, no fire, its wheels
+  // off by the old rules (wheelRule, wreckCheck). The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean,
+  // whatever its length; a race on a circuit KT.lap a metre (4 times the tyres' usual; another car's a quarter of it, the usual), a slide up
+  // to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times (that wheel only: a gravel road is its road); the
+  // slicks' compound as theirs (K.wr). Worn: KT.loss of the wheel's grip (the slicks' compound: its own loss). The damage only from knocks
+  // with damage on (applyDamage: ktHit), only to be seen (the dots' red, the user's:
   // the car is not hurt by it): the tyre at the knock's corner the most, the nearer one beside it a little, the far corner none; an average
   // knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to none, up to KT.dMax. A tyre burns (kt.hot, never more than
   // one: ktFire) only where the car caught fire before, the wheel rule's first wheel (the car's damage at 80 %, a hard hit from 70 %): the
   // most knocked one; less side grip for the whole car (KT.burn), the speed, the drive and the brakes as ever. The wear never sets one on
-  // fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop): KT.cold less grip meanwhile. A burning tyre's wheel comes off
-  // at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt)
+  // fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop): KT.cold less grip meanwhile (the Kolibri's; another car's cold
+  // only to be seen, as the usual tyres'). A burning tyre's wheel comes off at the next real knock (KT.real, a wall or a car: the wheel
+  // rule, rule.kt)
   const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4, dMax: 0.75 };
   const ktNew = (c, cold) => { const K = c.kt; for (let k = 0; k < 4; k++) { K.w[k] = 0; K.d[k] = 0; } K.hot = -1; K.cold = cold ? 1 : 0; K.d0 = c.dist; };
-  const ktMk = (c) => { c.kt = { w: [0, 0, 0, 0], d: [0, 0, 0, 0], hot: -1, cold: 0, d0: 0, g: [1, 1, 1, 1, 1] }; };
+  const ktMk = (c, full) => { c.kt = { w: [0, 0, 0, 0], d: [0, 0, 0, 0], hot: -1, cold: 0, d0: 0, g: [1, 1, 1, 1, 1], full: !!full }; };   // (full: the Kolibri's whole rule, its tyres' damage and fire)
   function ktGrip(c) {   // [the four wheels' grip shares, the side grip's share]
-    const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = 1 - KT.cold * K.cold;
+    const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = K.full ? 1 - KT.cold * K.cold : 1;
     for (let k = 0; k < 4; k++) g[k] = (1 - loss * K.w[k]) * cd;
     g[4] = K.hot >= 0 ? KT.burn : 1; return g;
   }
   // the tyres' wear over ds metres (Race step), the set's on c.ty (the radio, the pits) the four's mean
   function ktWear(c, race, ds) {
     const K = c.kt, T = race.track, Ty = c.ty && tyreK(c.ty), sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
-    const base = (T.open ? KT.run / Math.max(500, T.raceLen) / 1.52 * (1 + KT.slide * sl) : KT.lap * (Ty ? Ty.wr : 1) * (1 + 5 * sl)) * ds;   // (a circuit: 4 times the usual tyres' wear, a slide as theirs)
+    const dry = !K.full && c.ty && c.ty.k === 'wet' && race.wst && race.wst.line < 0.25 ? 2.5 : 1;   // (another car's rain tyres on a drying road: as the usual ones')
+    const base = (T.open ? KT.run / Math.max(500, T.raceLen) / 1.52 * (1 + KT.slide * sl) : KT.lap * (K.full ? 1 : 0.25 * dry) * (Ty ? Ty.wr : 1) * (1 + 5 * sl)) * ds;   // (a circuit: the Kolibri 4 times the usual tyres' wear, another car the usual; a slide as theirs)
     let s = 0; for (let k = 0; k < 4; k++) { const off = c.ws && (c.ws[k] === 2 || c.ws[k] === 3); K.w[k] = Math.min(1, K.w[k] + base * (off ? KT.off : 1)); s += K.w[k]; }
     if (c.ty) c.ty.wear = s / 4;
     if (c.inPit) K.d0 = c.dist;   // (cold from the stop until a lap after the way out)
@@ -2474,10 +2478,10 @@ const Core = (function () {
   }
   // a knock on the Kolibri (applyDamage, from a point: lx, lz; amt with its knockK; d0 the car's damage before it): a burning tyre's wheel
   // off at a real one (a big one: two at once), the second wheel at once at a real one while it is due, else the tyres' damage (to be seen)
-  // and maybe a tyre on fire (ktFire)
+  // and maybe a tyre on fire (ktFire). Another car's tyres (no kt.full): nothing
   function ktHit(c, amt, lx, lz, d0) {
     const K = c.kt, W = c.wreck, Q = W && W.rule;
-    if (!K || W && W.dnf || c.finished) return;
+    if (!K || !K.full || W && W.dnf || c.finished) return;
     const real = amt >= KT.real;
     if (Q && Q.kt && W.nL === 1 && Q.due > 0) { if (real) { Q.due = -1; Q.ask = 0; ruleDrop(c, 1); ruleFire(Q, 2); } else Q.due -= 0.8 * Math.min(1, amt / KT.real); return; }
     if (Q && Q.kt && K.hot >= 0 && !W.nL && real) {
@@ -5235,10 +5239,11 @@ const Core = (function () {
       // its second wheel (-1: none coming), over: two wheels gone and the car stopped, the game is over (the game shows PONOVI IGRO); fn, burn:
       // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel); due0:
       // the time the second wheel was given (ZAMENJAJ KOLO's bar)
-      // The Kolibri's tyres (opts.tyreRule: its vehicles; KT, ktHit): on the player's car (Car.kt), its wheel rule (rule.kt) already with damage
-      // Samo videz: a burning tyre's wheel off at a real knock, the second 1-4 s later (sooner sliding and knocking, at once at a real knock)
-      { const P = this.player, TR = opts.tyreRule; if (P && !P.net && Array.isArray(TR) && TR.indexOf(P.m.id) >= 0) ktMk(P); }
-      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0, kt: !!P.kt }; }
+      // The Kolibri's tyres (opts.tyreRule: its vehicles; KT, ktHit): on the player's car (Car.kt, kt.full), its wheel rule (rule.kt) already with damage
+      // Samo videz: a burning tyre's wheel off at a real knock, the second 1-4 s later (sooner sliding and knocking, at once at a real knock).
+      // opts.tyreAll: every other player's car its four tyres too (Car.kt without full: the wear only), its wheel rule the old one
+      { const P = this.player, TR = opts.tyreRule, full = Array.isArray(TR) && !!P && TR.indexOf(P.m.id) >= 0; if (P && !P.net && (full || opts.tyreAll)) ktMk(P, full); }
+      { const P = this.player, WR = opts.wheelRule, ktf = !!(P && P.kt && P.kt.full); if (P && P.wreck && (P.dmgMode === 2 || (ktf && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0, kt: ktf }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -5655,7 +5660,7 @@ const Core = (function () {
         if (this.drsLast) this._drs(c, ds, cdt);
         if (this.secBest) this._sectors(c, ds, cdt);   // (TV sectors: the Red Bull Ring's)
         else if (!T.open && this.state !== 'grid') this._thirds(c, ds, m, dt);   // (elsewhere: the thirds of the lap)
-        if (c.kt && ds > 0 && this.state === 'racing') ktWear(c, this, ds);   // (the Kolibri's tyres, each its own: KT)
+        if (c.kt && ds > 0 && this.state === 'racing') ktWear(c, this, ds);   // (the player's tyres, each its own: KT)
         if (c.ty && ds > 0 && this.state === 'racing' && !c.kt) {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
           const K = tyreK(c.ty);
@@ -5784,7 +5789,7 @@ const Core = (function () {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
         if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left)
           this.repairCar(c);
-          if (c.kt) ktNew(c, true);   // (the Kolibri: four new tyres, cold)
+          if (c.kt) ktNew(c, true);   // (the player's own tyres: four new ones, cold)
           if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
           if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; }   // (fuel: a full tank)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';

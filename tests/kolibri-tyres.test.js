@@ -6,6 +6,9 @@
 // race with the wheel rule only; the wear never does. A burning tyre's wheel comes off at the next real knock, the second
 // 1-4 s later (at once at a real knock, sooner sliding), a big knock takes two at once; two gone: the car stops, the game is over.
 // ZAMENJAJ KOLO (Race.changeWheel) puts a new one on. A pit stop: four new tyres, cold for a lap. Damage off: the wear only.
+// Every other player's car (opts.tyreAll; the game: every track and way, not online, the driving school or NEW VERSION): its four tyres
+// too (kt without full), the wear only, a lap of a circuit the usual tyres' wear; no damage from knocks, no fire, no wheel rule of its own
+// with Samo videz (the old one with Vklop: a wheel off at 80 %).
 //   node tests/kolibri-tyres.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -90,6 +93,27 @@ function until(r, fn, s, slide) {   // steps until fn() or s seconds; the player
   P.kt.w = [0.5, 0.5, 0.5, 0.5]; P.kt.d = [1, 0.3, 0, 0]; P.kt.hot = 0; P.pitWant = true; let t = 0, stop = false, gc = 1, out = 0;
   while (t < 400 && !P.finished) { C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.pitState === 'done') stop = true; if (stop && !P.inPit && gc === 1) gc = C.ktGrip(P)[0]; if (stop && !P.inPit && (out += DT) > 20) break; }
   check('a pit stop: four new tyres, none burning; cold for a lap after it (less grip, warming up)', stop && P.kt.d.every(v => v === 0) && P.kt.hot === -1 && P.kt.cold > 0.2 && P.kt.cold < 0.95 && gc < 0.92 && P.kt.w[0] < 0.1, `grip cold ${gc.toFixed(2)}, 20 s on ${C.ktGrip(P)[0].toFixed(3)} (cold ${P.kt.cold.toFixed(2)}), wear ${f2(P.kt.w)}`);
+}
+// 6. every other player's car (opts.tyreAll): its four tyres, the wear only, the usual on a circuit; knocks give them nothing, the old wheel rule
+{
+  const SOK = C.MODELS.find(m => m.id === 'sokol'), all = { playerModel: SOK, tyreAll: true, wheelRule: ['sokol', 'kolibri'] }, SL = SOK.len / 2, SW = SOK.wid / 2;
+  const a = race(all), b = race({ tyreAll: true }), c = race({ playerModel: SOK }), m = race({ tyreAll: true, tyreRule: undefined });
+  check('tyreAll: another car of the player\'s its four tyres, the wear only (no kt.full); the KOLIBRI the whole rule; not the AI, not without the option', !!a.player.kt && a.player.kt.full === false && a.cars.every(x => x.isPlayer || !x.kt) && b.player.kt.full === true && !c.player.kt && m.player.kt.full === false);
+  const d = race(Object.assign({}, all, { damage: 2 }));
+  check('Samo videz: no wheel rule for another car (the KOLIBRI\'s only); Vklop: its old one (not the tyres\')', !a.player.wreck.rule && d.player.wreck.rule && d.player.wreck.rule.kt === false && a.player.dmgMode === 1 && d.player.dmgMode === 2, `Vklop rule.kt ${d.player.wreck.rule && d.player.wreck.rule.kt}`);
+  const s = setUp(all); for (let i = 0; i < 8; i++) C.applyDamage(s.P, 0.03, SL, -SW); s.P.dmg = 0.79; C.applyDamage(s.P, 0.03, -SL, SW); C.applyDamage(s.P, 0.05);
+  const v = setUp(Object.assign({}, all, { damage: 2 })); v.P.dmg = 0.79; C.applyDamage(v.P, 0.02, SL, -SW);
+  check('knocks: no tyre damage, none on fire, the grip as new (Samo videz up to 80 %); Vklop: a wheel off by the old rule at 80 %, no tyre on fire', s.K.d.every(x => x === 0) && s.K.hot === -1 && !s.W.wl && C.ktGrip(s.P).every(x => x === 1) && v.W.nL === 1 && v.K.hot === -1 && v.K.d.every(x => x === 0), `Samo videz ${f2(s.K.d)} hot ${s.K.hot}; Vklop ${v.W.nL} off, hot ${v.K.hot}`);
+  const P = setUp(all).P, Kf = setUp().P, K = P.kt; P.ws = Kf.ws = [0, 0, 0, 0]; C.ktWear(P, { track: J }, 100); C.ktWear(Kf, { track: J }, 100); const w0 = K.w[0];
+  P.beta = 0.4; C.ktWear(P, { track: J }, 100); const w1 = K.w[0] - w0; P.beta = 0; P.ws = [0, 3, 0, 2]; const v0 = K.w.slice(); C.ktWear(P, { track: J }, 100); const dw = K.w.map((w, i) => w - v0[i]);
+  check('the wear: on a circuit a quarter of the KOLIBRI\'s (the usual), a slide faster, a wheel on the grass or the gravel only that one', Math.abs(w0 / Kf.kt.w[0] - 0.25) < 1e-9 && w1 > 3 * w0 && dw[1] > 2.5 * dw[0] && dw[3] > 2.5 * dw[2], `x${(w0 / Kf.kt.w[0]).toFixed(2)}; slide x${(w1 / w0).toFixed(1)}; off ${f2(dw.map(x => x * 1e4))} (1e-4)`);
+  P.ws = [0, 0, 0, 0]; P.ty = { k: 'wet', wear: 0 }; const wet = (line) => { K.w = [0, 0, 0, 0]; C.ktWear(P, { track: J, wst: { line } }, 100); return K.w[0]; }, wd = wet(0.1) / wet(0.5); P.ty = null;
+  check('another car\'s rain tyres on a drying road: 2.5 times the wear, as the usual ones\'', Math.abs(wd - 2.5) < 1e-9, `x${wd.toFixed(2)}`);
+  const g0 = C.ktGrip(P)[0]; K.w = [1, 1, 1, 1]; const g1 = C.ktGrip(P)[0]; K.w = [0, 0, 0, 0]; K.cold = 1; const gc = C.ktGrip(P)[0]; K.cold = 0;
+  check('worn tyres grip less (10 %) on another car too; new cold ones after a stop only to be seen (the grip as ever, as the usual tyres\')', g1 < g0 - 0.09 && gc === 1, `worn ${g1.toFixed(2)}, cold ${gc}`);
+  const run = (id, o) => { const T = track(id), r = race(Object.assign({ numAI: 0, laps: 1, tt: !!T.open, playerModel: SOK, wheelRule: undefined }, o), T); r.start(); const Q = r.player; let t = 0; while (!Q.finished && t < 900) { C.aiControl(Q, r, DT); r.step(DT); t += DT; } return Q; };
+  const S = run('spa', { tyres: true, tyreAll: true }), O = run('spa', { tyres: true, tyreRule: undefined }), k = S.kt.w[0] / O.ty.wear, B = run('baldy', { tyreAll: true });
+  check('a lap of a circuit: about the usual tyres\' wear; a clean run up a road ~0.24 as the KOLIBRI\'s', k > 0.75 && k < 1.4 && Math.abs(S.ty.wear - S.kt.w.reduce((x, y) => x + y) / 4) < 1e-9 && B.kt.w.every(w => w > 0.19 && w < 0.29), `Spa: ${f2(S.kt.w)} against ${O.ty.wear.toFixed(3)} (x${k.toFixed(2)}); Mount Baldy ${f2(B.kt.w)}`);
 }
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;

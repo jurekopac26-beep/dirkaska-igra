@@ -1902,7 +1902,7 @@
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      tyreRule: TYRE_RULE, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      tyreRule: TYRE_RULE, tyreAll: true, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (tyreAll: every other car of the player's its four tyres, the wear only; the wheel rule a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }, MS.opts()));   // (a special mission: its own race, js/missions.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
     MS.made(race);   // (a special mission: its own cars, before they are drawn)
@@ -3271,9 +3271,10 @@
   const TY_COLD = [127, 211, 255], TY_OWN = { S: [232, 53, 43], M: [242, 198, 22], H: [244, 244, 240] }, TY_WET = [79, 168, 255], TY_DEF = [255, 210, 63];
   const hslRgb = (h, s, l) => { const a = s * Math.min(l, 1 - l), f = (n) => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0), f(8), f(4)].map(v => Math.round(v * 255)); };
   const tyMix = (c, k) => 'rgb(' + TY_COLD.map((a, i) => Math.round(a + (c[i] - a) * k)).join(', ') + ')';   // (k 0: the cold light blue, 1: the colour itself)
-  // the KOLIBRI (Core Car.kt): every track, each dot its own tyre (top the front ones, the rear under them), its colour how red it is (0 new,
-  // 1 on fire): the wear (at most .7 of it: worn alone never red) and the damage together, the hue by KT_HUE (HSL 78 %, 52 %); one on fire:
-  // light red, glowing, blinking (.hot); a wheel off: an empty ring (.miss); cold after a stop: the light blue first, as every car's
+  // the KOLIBRI and every other player's car (Core Car.kt; Race opts tyreRule, tyreAll): every track, each dot its own tyre (top the front
+  // ones, the rear under them), its colour how red it is (0 new, 1 on fire): the wear (at most .7 of it: worn alone never red) and the
+  // damage together (the KOLIBRI's only), the hue by KT_HUE (HSL 78 %, 52 %); one on fire (the KOLIBRI's only): light red, glowing,
+  // blinking (.hot); a wheel off: an empty ring (.miss); cold after a stop: the light blue first, as every car's
   const KT_HUE = [[0, 120], [0.15, 88], [0.35, 55], [0.55, 32], [0.75, 14], [0.9, 0]];
   const ktHue = (r) => { for (let i = 1; i < KT_HUE.length; i++) { const [a, ha] = KT_HUE[i - 1], [b, hb] = KT_HUE[i]; if (r <= b) return ha + (hb - ha) * clamp((r - a) / (b - a), 0, 1); } return 0; };
   const ktRed = (w, d) => 1 - (1 - 0.7 * clamp(w, 0, 1)) * (1 - clamp(d, 0, 1));
@@ -3784,7 +3785,7 @@
   // (the race again), the results (the player retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge
   // and the run from the police the rule is off (an ended run there would count as a time, a lap or an escape)
   const WHEEL_RULE = ['sokol', 'kolibri'];   // (the KOLIBRI's by its tyres, Core ktHit: a burning tyre's wheel at a real knock, already with damage Samo videz)
-  const TYRE_RULE = ['kolibri'];   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
+  const TYRE_RULE = ['kolibri'];   // (the vehicles with the whole rule of their own tyres: Core KT, every track and way, offline; every other car of the player's the wear only, Race opts tyreAll)
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
