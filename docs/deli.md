@@ -34,7 +34,7 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 
 ## Sklop 2 · streha (KOLIBRI, `js/deli/streha.js`)
 
-- `streha: { x0, x1, bead }`: folija, lak ali karbon čez streho od sprednjega roba spojlerja (`x0`) do vrha vetrobranskega stekla (`x1`), v delu `body` (zmečka se s streho). Folije in karbonska prevleka ostanejo znotraj obrob strehe, lak pokrije tudi obrobi (`bead`: pot obrobe vzdolž avta), karbonska streha seže do obrob; tovarniška in suhi karbon imata dva izbokla dela nad sedežema, levo in desno od štartne številke. Barvna folija in lak (3, 7) sta rumena, dokler garaža ne izbira barve.
+- `streha: { x0, x1, bead }`: folija, lak ali karbon čez celo streho od zadnjega roba (`x0`, pod spojlerjem) do vrha vetrobranskega stekla (`x1`), v delu `body` (zmečka se s streho). Želja uporabnika (30. 10. 2026): obdelava pokrije vso streho, obrobi (`bead`: pot obrobe vzdolž avta) in serijski strešni spojler (`DELI.roofLook(K, n)`: barve spojlerja; `K.deli('streha')` vrne nameščeno možnost, spojler v `js/cars/kolibri.js` se nariše v njej). Karbonska prevleka (9–12) ostane plošča, odmaknjena od robov. Tovarniška in suhi karbon imata dva izbokla dela nad sedežema, levo in desno od štartne številke. Barvna folija in lak (3, 7) sta rumena, dokler garaža ne izbira barve.
 - `stresna_zajemalka: { x, z }`: zajemalka na sprednjem delu strehe z odprtino naprej (`x` odprtina, `z` sredina), v delu `body`. Serijsko je ni.
 - `antena: { x, z, fin: [x, z] }` v delu `aerial`: palice (1–4) stojijo, kjer stoji serijska antena, plavuti (5–15) in dirkalna antena (16) na sredini strehe pred spojlerjem (`fin`: zadnji konec plavuti). Vse ostanejo nizke (salon okvirja avto po višini).
 - `zaluzije: { x0, y0, x1, y1, w }` v delu `trunk` (gredo s prtljažnikom): letvice čez zadnje steklo (vznožje in vrh stekla, polovična širina). Z žaluzijami je zadnji brisalec pospravljen ob vznožju stekla (`around` ovoja: del `wiperRear` mora imeti geometrijo).
@@ -122,3 +122,4 @@ Pravila, da se seje ne motijo:
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
 - 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).
+- 30. 10. 2026 (sklop 2 · streha, želja uporabnika): `DELI.roofLook(K, n)` (v `js/deli/streha.js`): obdelava strehe na avtovem serijskem strešnem spojlerju.

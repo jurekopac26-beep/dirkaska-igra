@@ -52,10 +52,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (js/deli/zadaj.js)
 
       // (js/deli/streha.js)
-      // the roof's wrap, paint or carbon from the spoiler's leading edge to the windscreen's top (bead: the roof's edge mouldings); the
+      // the roof's wrap, paint or carbon from its rear edge (under the spoiler, which takes it too) to the windscreen's top (bead: the
+      // roof's edge mouldings, covered with it); the
       // roof scoop's mouth over the windscreen's top; the aerial's rod where the stock one stands, a shark fin ahead of the spoiler; the
       // louvres on the tailgate's window (its foot and top, its half width)
-      streha: { x0: -1.42, x1: 0.15, bead: [-1.56, 0.16] },
+      streha: { x0: -1.58, x1: 0.15, bead: [-1.585, 0.16] },
       stresna_zajemalka: { x: 0.06, z: 0 },
       antena: { x: -1.22, z: 0.36, fin: [-1.4, 0] },
       zaluzije: { x0: -1.655, y0: 0.875, x1: -1.585, y1: 1.335, w: 0.565 },
@@ -197,12 +198,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the roof spoiler: a small lip on the roof's rear edge, following the roof's crown across, kicked up a little over the
         //      tailgate's window, its ends rounded down; its trailing face a shade darker, its underside dark, the high brake lamp in the
         //      trailing face (the garage's wing in its place: K.deli, mounts.krilo) ----
+        // ---- the roof (the garage's: its wrap, paint or carbon, mounts.streha, the stock spoiler in it too; a scoop on it,
+        //      mounts.stresna_zajemalka; stock: the body's paint, no scoop) ----
+        let roof = 0; K.part('body', () => { roof = K.deli('streha', () => {}); K.deli('stresna_zajemalka', () => {}); });
+        const RL = roof && DELI.roofLook ? DELI.roofLook(K, roof) : null;
         K.part('spoiler', () => K.deli('krilo', () => {
           const X0 = -1.585, W = 0.565, f = 0.16, o = 0.065, k = 0.022, T = (x, z) => L.topY(Math.max(x, X0), z);
           const prof = (z, kk) => { const y = (x) => T(x, z);
             return [[X0 + f, y(X0 + f) + 0.002], [X0 + f * 0.4, y(X0 + f * 0.4) + k * 0.35 * kk], [X0 - o + 0.012, y(X0) + k * 0.85 * kk], [X0 - o, y(X0) + k * kk],
               [X0 - o - 0.003, y(X0) + k * kk - 0.016], [X0 - 0.02, y(X0) - 0.01]].map(([x, yy]) => [x, yy, z]); };   // (its underside back to the leading edge under the roof)
-          K.skin([-W, -W + 0.05, -0.25, 0.25, W - 0.05, W].map((z, i) => prof(z, [0.35, 1, 1, 1, 1, 0.35][i])), (kk, e) => e === 4 ? K.shade(P, 0.5) : e === 5 ? D : P, P, P);
+          K.skin([-W, -W + 0.05, -0.25, 0.25, W - 0.05, W].map((z, i) => prof(z, [0.35, 1, 1, 1, 1, 0.35][i])), (kk, e) => e === 4 ? (RL ? RL.dark : K.shade(P, 0.5)) : e === 5 ? D : RL ? RL.col(kk, e) : P, RL ? RL.col(0, 1) : P, RL ? RL.col(0, 1) : P);
           K.rect(X0 - o - 0.0035, T(X0, 0) + k - 0.009, 0, 0.24, 0.011, RED, { dir: '-x' });
         }), { noCrush: true, noDent: true, hinge: [[-1.41, 1.39, -0.5], [-1.41, 1.39, 0.5]] });
         // ---- the tail: the lamps in their strips on the rear quarters (parts of their own: the lit lens, its dark copy in the body behind
@@ -230,9 +235,6 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('aerial', () => K.deli('antena', () => { const y0 = L.topY(-1.22, 0.36);
           K.box(-1.22, y0 - 0.004, 0.36, 0.05, 0.02, 0.024, 0, B, null, true);
           K.bar([-1.22, y0 + 0.012, 0.36], [-1.56, 1.425, 0.36], 0.0035, B, { n: K.hi ? 4 : 3 }); }), { noDent: true });
-        // ---- the roof (the garage's: its wrap, paint or carbon, mounts.streha; a scoop on it, mounts.stresna_zajemalka; stock: the
-        //      body's paint, no scoop) ----
-        K.part('body', () => { K.deli('streha', () => {}); K.deli('stresna_zajemalka', () => {}); });
         // ---- the underbody: a black floor pan under the whole car, narrowed between the wheels over the axles (no seeing the road
         //      through the car from a low angle or through an open door) ----
         K.part('body', () => { for (const [x0, x1, w, y] of [[-1.655, -1.505, 0.655, 0.226], [-1.505, -0.855, 0.52, 0.2], [-0.855, 0.825, 0.672, 0.186], [0.825, 1.475, 0.52, 0.19], [1.475, 1.686, 0.645, 0.226]])

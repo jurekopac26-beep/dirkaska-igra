@@ -36,14 +36,13 @@
       const P = X.map(x => zs(x).map(z => [x, K.topY(x, z) + o.lift + (o.bump ? o.bump((x - m.x0) / (m.x1 - m.x0), z) : 0), z]));
       for (let i = 0; i < X.length - 1; i++) for (let j = 0; j < P[i].length - 1; j++) face(K, [P[i][j], P[i + 1][j], P[i + 1][j + 1], P[i][j + 1]], o.col(i, j), [0, 1, 0]);
       return P; };
-    const P = K.paint, plain = (c) => () => c;
-    if (cat === 0) panel({ inset: 0.026, lift: 0.004, col: k === 3 ? weave([0.1, 0.1, 0.11], [0.135, 0.135, 0.145]) : plain([MAT, WHT, WRAP][k]), nx: k === 3 ? 10 : 1, sub: k === 3 ? 2 : 1, edge: k === 3 ? 2 : 1 });
-    else if (cat === 1) {   // (painted: over the roof's edge mouldings too)
-      const c = [DK, WHP, LAK, GM][k];
-      panel({ inset: 0.026, lift: 0.003, col: plain(c) });
-      if (m.bead) for (const sd of [-1, 1]) { const path = m.bead.map(x => [x, prop(K, x, 5) - 0.004, sd * (prop(K, x, 4) - 0.004)]);
-        K.sweep([[0.008, -0.026], [0.026, -0.005], [0.019, 0.019], [-0.005, 0.028], [-0.024, 0.005]].map(([u, v]) => [u * sd, v]), path, c, { capA: c, capB: c }); }
-    } else if (cat === 2) {   // (a carbon skin: a panel inset off the edges, the paint round it; gloss, matt, with a lip along its sides)
+    const P = K.paint, plain = (c) => () => c, L = DELI.roofLook(K, n);
+    // the edge mouldings in the finish too (the user's: the whole roof, the spoiler with it), a carbon skin's left in the paint round it
+    const beads = () => { if (m.bead) for (const sd of [-1, 1]) { const path = m.bead.map(x => [x, prop(K, x, 5) - 0.004, sd * (prop(K, x, 4) - 0.004)]), c = L.col(0, 1);
+      K.sweep([[0.008, -0.026], [0.026, -0.005], [0.019, 0.019], [-0.005, 0.028], [-0.024, 0.005]].map(([u, v]) => [u * sd, v]), path, (k2, e) => L.col(k2, e), { capA: c, capB: c }); } };
+    if (cat === 0) { panel({ inset: 0.014, lift: 0.004, col: k === 3 ? weave([0.1, 0.1, 0.11], [0.135, 0.135, 0.145]) : plain([MAT, WHT, WRAP][k]), nx: k === 3 ? 10 : 1, sub: k === 3 ? 2 : 1, edge: k === 3 ? 2 : 1 }); beads(); }
+    else if (cat === 1) { panel({ inset: 0.014, lift: 0.003, col: plain([DK, WHP, LAK, GM][k]) }); beads(); }
+    else if (cat === 2) {   // (a carbon skin: a panel inset off the edges, the paint round it; gloss, matt, with a lip along its sides)
       const sh = [[CF, RF], [CF, RFG], [CFM, RFM], [CF, RF]][k], Pn = panel({ inset: 0.07, lift: 0.006, col: weave(sh[0], sh[1]), nx: 9, sub: 2, edge: 1 });
       // its rim: the panel's thin edge all round, dark
       const rim = (pts, out) => { for (let j = 0; j < pts.length - 1; j++) { const a = pts[j], b = pts[j + 1]; face(K, [a, b, [b[0], b[1] - 0.006, b[2]], [a[0], a[1] - 0.006, a[2]]], DK, out); } };
@@ -58,7 +57,7 @@
       // (the bubbles over the seats, either side of the start number: on the crown's slopes)
       const bubble = k >= 2 ? (t, z) => { const s = Math.sin(Math.PI * Math.min(1, Math.max(0, t))) ** 0.6, d = (Math.abs(z) - 0.365) / 0.135; return 0.022 * s * Math.max(0, 1 - d * d * d * d); } : null;
       const sh = k === 3 ? [[0.065, 0.067, 0.073], [0.12, 0.124, 0.136]] : [CF, RF], W = weave(sh[0], sh[1]), e = k >= 2 ? 4 : 2, s = 2;
-      panel({ inset: 0.012, lift: 0.005, col: k === 1 ? (i, j) => (j < e || j >= e + 2 * s ? W(i, j) : P) : W, nx: k === 3 ? 10 : 8, sub: s, edge: e, bump: bubble });
+      panel({ inset: 0.012, lift: 0.005, col: k === 1 ? (i, j) => (j < e || j >= e + 2 * s ? W(i, j) : P) : W, nx: k === 3 ? 10 : 8, sub: s, edge: e, bump: bubble }); beads();
     }
   }
 
@@ -151,6 +150,14 @@
       face(K, [[a[0] - ux * 0.012, a[1] - uy * 0.012, -Z], [a[0] - ux * 0.012, a[1] - uy * 0.012, Z], [e[0], e[1], Z], [e[0], e[1], -Z]], DK, [0, -1, 0]);   // (under it)
       for (const sd of [-1, 1]) face(K, [[a[0], a[1], sd * Z], [b[0], b[1], sd * Z], [e[0], e[1], sd * Z], [a[0] - ux * 0.04, a[1] - uy * 0.04, sd * Z]], CF, [0, 0, sd]); }
   }
+
+  // the roof's finish on the car's own roof spoiler (the user's: a roof fitted covers the stock spoiler with it): col(k, e) its facets'
+  // colour (k across, e round its profile), dark its trailing face's (kolibri.js: K.deli('streha') returns the option, the stock
+  // spoiler drawn in it)
+  DELI.roofLook = (K, n) => { const k = (n - 1) % 4, cat = (n - 1) >> 2, P = K.paint, W = (a, b) => (i, e) => (i + e) % 2 ? a : b, one = (c) => () => c;
+    const col = cat === 0 ? (k === 3 ? W([0.1, 0.1, 0.11], [0.135, 0.135, 0.145]) : one([MAT, WHT, WRAP][k])) : cat === 1 ? one([DK, WHP, LAK, GM][k])
+      : cat === 2 ? W(...[[CF, RF], [CF, RFG], [CFM, RFM], [CF, RF]][k]) : k === 1 ? one(P) : k === 3 ? W([0.065, 0.067, 0.073], [0.12, 0.124, 0.136]) : W(CF, RF);
+    const c0 = col(0, 0); return { col, dark: c0 === P ? K.shade(P, 0.5) : c0.map(v => v * 0.5) }; };
 
   DELI.add('streha', streha);
   DELI.add('stresna_zajemalka', zajemalka);
