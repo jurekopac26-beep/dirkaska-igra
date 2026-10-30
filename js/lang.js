@@ -468,6 +468,30 @@
     'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
     'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
     'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
+    /* (the fire missions: js/missions/kit.js, m01.js) */
+    'GASI': 'SPRAY', 'Zmanjkalo je vode.': 'Out of water.', 'Voda je pošla.': 'The water has run out.',
+   
+    'Požar na vrhu': 'Fire at the top', 'V hiši na vrhu prelaza gori. Gasilci morajo po serpentinah gor, preden ogenj požre hišo.': 'A house at the top of the pass is on fire. The firefighters must get up the hairpins before the fire eats the house.',
+    'Pridi do hiše, preden zgori, in pogasi ogenj.': 'Get to the house before it burns down and put out the fire.', 'Pelji po serpentinah do hiše na vrhu prelaza.': 'Drive up the hairpins to the house at the top of the pass.',
+    'HIŠA': 'HOUSE', 'OGENJ': 'FIRE', 'VODA': 'WATER', 'Hiša je zgorela.': 'The house burnt down.', 'Zapeljal si mimo hiše.': 'You drove past the house.',
+    'Zataknjeno kolo': 'The stuck wheel', 'Ob dirkališču je obstalo panoramsko kolo. V kabinah visoko nad tlemi čakajo ljudje.': 'A Ferris wheel beside the circuit has stopped. People wait in its cabins high above the ground.',
+    'Z avtolestvijo reši ljudi iz kabin obstalega kolesa.': 'Rescue the people from the cabins of the stuck wheel with the aerial ladder.', 'Pelji po dirkališču do panoramskega kolesa ob zadnji ravnini.': 'Drive round the circuit to the Ferris wheel by the last straight.',
+    'DOLŽINA': 'LENGTH', 'KOT': 'ANGLE', 'NIHANJE KOŠA': 'BASKET SWAY', 'REŠENI': 'RESCUED', 'V KOŠU': 'IN THE BASKET',
+    'mirno': 'calm', 'vetrovno': 'windy', 'močno': 'strong', 'KABINA {0}': 'CABIN {0}', '{0} oseba': '{0} person', '{0} osebi': '{0} people',
+    'Ustavi ob kolesu.': 'Stop by the wheel.', 'Kolo si zgrešil: vrni se nazaj do njega.': 'You missed the wheel: go back to it.', 'Do kolesa: {0} km': 'To the wheel: {0} km', 'Zapeljal si mimo kolesa.': 'You drove past the wheel.',
+    'Koš je poln: spusti koš do tal, da ljudje izstopijo.': 'The basket is full: bring it down to the ground so the people can step out.', 'Počakaj, da se koš umiri ob kabini.': 'Wait for the basket to settle by the cabin.',
+    'Povleci s prstom do kabine: koš sledi prstu, v vetru se ziblje.': 'Drag your finger to a cabin: the basket follows it and sways in the wind.',
+    'Gozdni požar': 'Bushfire', 'Veter žene ogenj po pobočju navzdol proti kmetiji. Cesta je zadnja ovira pred hišo.': 'The wind drives the fire down the slope toward a farm. The road is the last thing between it and the house.',
+    'Ustavi ogenj pred kmetijo; vodo natoči v jezercu.': 'Stop the fire before the farm; refill the water at the pond.', 'Gasi rob ognja ob cesti; ko zmanjka vode, jo natoči v jezercu.': 'Put out the edge of the fire along the road; when the water runs out, refill it at the pond.',
+    'OGENJ DO HIŠE': 'FIRE TO THE HOUSE', 'VETER': 'WIND', 'POGAŠENO': 'PUT OUT', 'Ogenj je preskočil cesto.': 'The fire jumped the road.', 'Zapeljal si mimo ognja.': 'You drove past the fire.',
+    'Polnjenje vode.': 'Filling up with water.', 'Vode ni več: vrni se do jezerca na kmetiji.': 'No water left: go back to the pond on the farm.', 'Vode ni več: pelji do jezerca na kmetiji.': 'No water left: drive to the pond on the farm.',
+    'Tapni ogenj: curek gre tja sam.': 'Tap the fire: the water goes there by itself.', 'Tapni ogenj ob cesti: curek gre tja sam.': 'Tap the fire by the road: the water goes there by itself.', 'Curek gasi ogenj.': 'The water is on the fire.', 'Prehitro: nad 25 km/h teče manj vode, od 50 km/h nič.': 'Too fast: above 25 km/h less water flows, from 50 km/h none.', 'Prehitro: od 50 km/h voda ne teče, pod 25 km/h teče vsa.': 'Too fast: from 50 km/h no water flows, under 25 km/h all of it.', 'Predaleč: curek ne seže do tja.': 'Too far: the water does not reach that far.', 'Do ognja: {0} km': 'To the fire: {0} km',
+    'Požar v predoru': 'Fire in the tunnel', 'V predoru na gorski cesti gori tovornjak. Dim je tako gost, da se vidijo le utripalke ujetih avtov.': 'A lorry is burning in a tunnel on the mountain road. The smoke is so thick that only the hazard lights of the trapped cars show.',
+    'Reši ujete iz zadimljenega predora in pogasi ogenj.': 'Rescue the people trapped in the smoky tunnel and put out the fire.', 'V dimu sledi utripalkam ujetih avtov, ljudi naloži, nato pogasi ogenj.': 'In the smoke follow the hazard lights of the trapped cars, take the people on board, then put out the fire.',
+    'VIDLJIVOST V DIMU': 'VISIBILITY IN THE SMOKE', 'ZRAK V JEKLENKAH': 'AIR IN THE TANKS', 'DO OGNJA': 'TO THE FIRE', 'še {0} min': '{0} min left', 'pogašen': 'out',
+    'Zmanjkalo je zraka v jeklenkah.': 'The breathing air ran out.', 'Zapeljal si v ogenj.': 'You drove into the fire.', 'V predoru so ostali ljudje.': 'People were left in the tunnel.', 'Zapeljal si predaleč.': 'You drove too far.',
+    'Nalaganje ljudi.': 'Taking the people on board.', 'Do predora: {0} km': 'To the tunnel: {0} km', 'Pelji do gorečega tovornjaka in ga pogasi.': 'Drive up to the burning lorry and put it out.', 'Ogenj je pogašen: pelji ven iz predora.': 'The fire is out: drive out of the tunnel.',
+    'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

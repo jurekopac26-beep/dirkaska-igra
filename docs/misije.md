@@ -28,11 +28,22 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 6. **Čakanje na teste** (vprašanje 7: 2): seja odpre PR in dela naslednjo misijo, medtem ko na GitHubu tečejo testi; ko so zeleni, PR združi. Če test pade, ga najprej popravi.
 7. **Preizkus na telefonu** (vprašanje 8: 2): po združitvi. Seja združi, ko so testi zeleni, in uporabniku napiše seznam za preizkus na `main`; napake popravi v naslednjem PR-ju.
 8. **Ena seja naenkrat** (vprašanje 11: 1): skupine se delajo ena za drugo, nobene vzporedne seje (najmanj tokenov, brez sporov v skupnih datotekah).
+9. **Veriga sej** (vprašanje 9: 1): seja ob koncu skupine sama zažene naslednjo. Hitri način: tri verige A 2→5→8, B 3→6, C 4→7, seje z več podagenti hkrati za neodvisne dele (uporabnik 30. 10.: »Začni, ugasni varčni način«); na varčni način (ena seja za drugo) se preklopi, ko uporabnik reče.
+10. **Skupina 2** (uporabnik 30. 10., vprašanja na sliki): 1: kamera 2 (»kamera pri gasenju 2«: kamera za avtom se pri gašenju in reševanju zasuka proti cilju in malo odmakne, `MisKit.look`, bolj, ko avto počasneje vozi) in »avto lahko vozi medtem ko gasi. pozar se pogasi v 5 sekundah« (01, 46, 47 gasiš med vožnjo, gumbi za vožnjo ostanejo; voda na hiši ali tovornjaku pogasi ves ogenj v 5 s); 2: 2 (tapni ogenj, curek gre tja sam, dokler ne ugasne; brez gumba GASI); 3: »če voziš več kot 25 km/h, potem s časom vse manj teče voda, pri 50 km/h voda ne teče več« (`MisKit.flowAt`, za vse tri gašenja); 4: 2 (pri 49 koš sledi prstu na ravnini kolesa, `fireTruck.solve`; avto stoji); 5: 1 (težak, do ~105 km/h).
 
 ## Sistem misij (`js/missions.js`)
 - `Missions.add(def)`: `id` ('06'), `title`, `story`, `goal`, `hint` (slovensko, angleščina v `js/lang.js`), `track`, `car`, `limit` (s), `stars` ([čas za 3, za 2]), `rows` (merilniki: `{ k, label, bar, col }`), `opts(def)` (možnosti dirke čez igrine: privzeto sam, ena vožnja, suho; npr. `traffic`, `numAI`, `tfCars`), `made(race)` (lastni avti, preden se narišejo), `begin(run)`, `step(run, dt)`, `finish(run)`.
 - `run`: `t`, `left`, `set(k, besedilo, delež, barva)`, `say(namig)`, `win()`, `fail(zakaj)`, `add(obj)` (THREE predmet misije v sceni, odstrani se sam ob koncu).
 - Igra: hitri vstop `index.html?misija=<id>`; priklopi v `js/game.js` (`MS`, `MisBridge`). Rezultat: zvezdice, čas, rekord (`localStorage` `rra-misije`).
+- **Skupni gradniki v `js/missions/kit.js` (`MisKit`)**, naloži se pred misijami (`index.html`); v Node: `const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js')`:
+  - `truckModel(id, over)`: vozilo misije kot kopija modela (npr. `truckModel('titan', { vLim: 105, kw: 560, len: 8.4 })`: gasilski avto na fiziki TITANA); v `opts` kot `playerModel`.
+  - `fireTruck(run)`: gasilski avto C (avtolestev) iz preprostih teles na pogledu igralčevega avta (telo TITANA skrito, ~8 klicev risanja): lestev s petimi deli (`lift` 0–1,4 rad, `ext` 0–1: 7,2–33,6 m, `yaw`), koš, modre luči; `yawTo(x, z)` (kot vrtljive plošče proti točki), `tipAt()` (koš iz fizike), `solve(točka)` (kot in dolžina lestve za koš v točki), `tip()`, `nozzle()`, `len()`, `step(dt, luči)`.
+  - `fire(run, max, { per, spread })`: plameni (Points, en klic risanja) in dim nad njimi (še en); `spot(i, x, y, z, velikost)`, 0 ugasne. `jet(run)`: curek vode (`set(od, do, vklop)`, `step`). `house(run, p, o)`: hiša z dvokapno streho (`burn(zgorelo, ogenj)`, mesta plamenov `fl`). `at(T, s, off)`: točka ob cesti (višina tal, smer ceste `ry`).
+  - `aim(run, { plane: 'v' | 'g' | 'n', focus, normal, drive, tap, button })`: prst na zaslonu (ploščica čez igro, obroč; `button`: gumb GASI), `on(true)` skrije gumbe za vožnjo (z `drive: true` ostanejo, ploščica samo nad cesto); `point` (vlečenje), s `tap: true` samo dotiki: `pick(točke, px)` vrne cilj ob zadnjem dotiku, obroč na `ringAt`. `flowAt(v)`: delež vode pri hitrosti (vsa do 25 km/h, nič od 50 km/h).
+  - `look(run, točka, k, dt)`: kamera za avtom zasukana proti točki (`Render.cam.look`, v `js/render.js` kratek priklop v `updateCamera`), ob koncu misije izklopljena.
+  - `hold(car)`, `hold(car, false)`: avto zadržan med delom posadke (`locked`, brez vzvratne).
+  - `run.add(o)` z `o.userData.misUndo`: funkcija, ki jo `Missions` pokliče ob koncu (odstrani DOM misije, vrne telo avta).
+  - Ime metode misije ne sme biti `goal`, `title`, `story`, `hint` (to so besedila, ki jih preverja `tests/missions.test.js`).
 - Gradniki, ki jih misije že imajo: spremstvo kot dirkalni avto v podobi policije (`m06.js` `made`: `c.police`, `c.pol.mode = 'chase'`, promet se mu umakne; hitrost s `c.skCap`), promet samo avti in tovornjaki (`opts.tfCars`), noč (`Render.setAtmos`), stavbe in vozila iz preprostih teles (`m06.js` `hospital`).
 - Slike za preverjanje: `node tools/misija-slika.mjs <id> [--t 20,60] [--pred 60] [--konec] [--pokonci] [--lezece]` (kamera za avtom s prikazom misije, v `test-results/misije/`, z vrstico stanja misije); ne piši svoje skripte.
 - Testi: `tests/missions.test.js` (sistem in besedila vseh misij), za vsako misijo `tests/m<nn>.test.js` (brez brskalnika) in `tests/browser/m<nn>.test.mjs`; dodaj jih v `tests/run.js` (`SUITES`, `RELATED`) in `tests/README.md`.
@@ -42,8 +53,8 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 | Skupina (seja) | Misije | Ocena (h) | Stanje |
 |---|---|---|---|
 | 0 | Sistem misij | – | končano (PR #187) |
-| 1 | 06 | – | narejeno (veja `misije/06`) |
-| 2 · ogenj, gasilski avto C | 01, 49, 46, 47 | 13–20 | |
+| 1 | 06 | – | končano (PR #193) |
+| 2 · ogenj, gasilski avto C | 01, 49, 46, 47 | 13–20 | narejeno (veja `misije/skupina-2`) |
 | 3 · voda | 19, 35, 37, 48 | 14–20 | |
 | 4 · sneg | 30, 33, 53 | 10–13 | |
 | 5 · tovor | 07, 09, 43, 51, 52, 54 | 16–23 | |
@@ -53,3 +64,4 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 
 ## Predaja
 - Po skupini 1: sistem in misija 06 sta narejena. Naslednja je skupina 2 (ogenj): gasilski avto C iz `v2.glb` (THREE je r128, `GLTFLoader` ni v repozitoriju: avto zgradi iz preprostih teles po merah v `v2.json` ali `blender/gas.py`), ogenj, curek vode, gašenje s prstom.
+- Po skupini 2: gasilski avto C, ogenj, dim, curek in merjenje s prstom so v `js/missions/kit.js` (Sistem misij). Misije: 01 Vršič (hiša pod vrhom, gašenje med vožnjo), 49 Suzuka (lastno panoramsko kolo ob zadnji ravnini, koš sledi prstu), 46 Uncompahgre (lastni predor, dim kot prekrivalo s pikami utripalk in izhodov), 47 Great Alpine Road (rob ognja iz celic, gašenje med vožnjo s tapom na celico, jezerce). Testi brskalnika vozijo z avtopilotom in `r.autoSpray` / `r.auto` (curek in lestev brez prsta); med `sim` pogled avta zaostaja, zato logika misije računa doseg iz fizike (`P.x`, `P.z`), ne iz narisanega avta. Kamera ostaja za avtom (cilj stoji pred avtom). Naslednja v verigi A je skupina 5 (tovor); skupini 3 in 4 delata verigi B in C. Za skupino 3 (voda): začni od veje `misije/skupina-3` (ustavljena veriga B je tam pustila vodne gradnike v `js/missions/kit.js` in osnutke m19, m35, m37, m48, brez testov, prevodov in dokumentov; spoji svež `main`). Javljeno: na `main` daljni teren `tsvFar` v `js/world-townsville.js` od s ≈ 1470 m naprej zakrije pogled (misija 19).
