@@ -213,3 +213,15 @@ Nova fizika z realističnim slogom: 50 km/h v težak stoječ avto: skok 2 cm, dr
 | Bathurst | 6 | 41 | 14 / 14 |
 
 Močnih stikov (nad 14 km/h) je približno toliko kot privzeto (0–3 na dirko), zasukov čez 40° ni, vrednosti NaN ni. Pri 8× je v Monaku več dotikov, ker avtopilot igralca v lasnicah potiska težke avte. `tests/nova.test.js` preverja trke na ravnini in dirki na Spa in Bathurstu z realističnim slogom.
+
+## 9. Polje 100 avtov: »magnet« (30. 10. 2026)
+
+Uporabnik: pri 100 tekmovalcih (Nordschleife) trki in tekmeci delujejo slabo, avti se vlečejo kot magnet. Meritve v Node (klasična fizika, leteči štart kot v igri, igralec zadaj na avtopilotu; skripte v seji, ne v repozitoriju):
+
+- **Zatikanje in grafika nista vzrok**: fizika teče v stalnih korakih 1/120 s, ista dirka pri 60, 20 in 8 sličicah na sekundo da enake stike. Pod ~12 sličicami na sekundo igra teče počasneje (največ 10 korakov na sličico).
+- **Čas fizike** (računalnik): 1 avto 0,02 ms na korak, 22 avtov 0,19–0,30, 100 avtov 0,29–0,35 (z LOD), brez LOD 0,65–1,1.
+- **Tekmeci v gneči** (`train.js`, Bathurst, 2 kroga, za primerjavo gostote): 22 / 100 avtov: tekmec ob igralcu 23 / 49 %, prehitevanja na tekmeca na minuto 1,4 / 3,5, razvlečenje polja na krog 1,27 / 0,13 % kroga (video 23–33 %, ≈ 0,8, 1,1–2,2 %). Na Nordschleife (100 avtov na 20,8 km) je polje redkejše: zaklenjenih kolon ni (0,01 % časa), zavetrje ni krivo (brez njega enako poravnav).
+- **LOD** (avti daleč od igralca s 30 / 15 Hz): 92 % trdih trkov (nad 3,5 m/s) je bilo med avtom s 15 Hz, premaknjenim na mesto, kjer bi bil (`_lodPair`), in drugim; dva oddaljena avta med koraki sta šla drug skozi drugega. Popravek `LOD.nr`: avto blizu drugega se 0,5 s računa vsak korak. Trdi trki daleč pred igralcem 0,42–1,18 → 0,04–0,10 na avto na minuto (brez LOD 0,03–0,06), vsi trdi trki v 120 s 46–177 → 6–16 (6 semen), čas fizike +20–40 % (0,29–0,35 → 0,40–0,42 ms na korak).
+- **Sledenje** (tekmec je ciljal 3 m med sredinama, stik se začne pri 4,1–4,6 m, zato je avto pred sabo potiskal): v poljih nad 30 avtov 1 m od odbijača (`LOD.fol`).
+- **Realističen, težak** (Preizkus: Trki): avta vštric, 3 m/s narazen, sta se zlepila (stik 100 % časa, hitrosti v 0,4 s enaki), igralca je 8-krat težji tekmec potegnil s 30 na 33,5 m/s. Drgnjenje zdaj samo ob udarcu (nad 0,5 m/s) in s pravima masama (`RB_RUB`): stik 28–36 % časa, igralec obdrži svojo hitrost. V dirki s 100 avti s tem slogom (6 semen, 120 s) trdi trki 14–70 → 6–28.
+- Odprto: s 15 Hz tekmec v hitrem ovinku včasih vijuga (volan do konca, zdrs ±20°), 3–4 % časa pri vseh hitrostih izračuna; ni povezano s trki.
