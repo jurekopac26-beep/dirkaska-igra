@@ -81,3 +81,4 @@
 - 30. 10. ODGOVOR 10 (gumb nazaj ob KUPI IN NAMESTI v meniju): širina 25 % spodnje vrstice (kot različica 4 iz nazaj_dolg, le ožji), KUPI IN NAMESTI zavzame ostalo.
 - 30. 10. ODGOVOR 10 SPREMENJEN (nadomesti 25 %): gumb nazaj ob KUPI IN NAMESTI = različica 4 iz nazaj_dolg, 33 % širine z napisom »‹ NAZAJ«.
 - 30. 10. GLAVA ZGORAJ (nadomesti »v gumbu samo NAZAJ«): rdeč gumb zgoraj levo (slog KUPI IN NAMESTI / igrin Race!) ima napis »IZBERI PROGO«; desno ob njem gumb za kovance, širok 33 % (slog enak kot sivi gumb nazaj spodaj v meniju, različica 4), v njem zlat kovanček in število kovancev, ki jih ima igralec (nadomesti dosedanjo zlato tablico s kovančkom).
+- 30. 10. Gumb »IZBERI PROGO« zgoraj levo je SVETLO MODER (ne rdeč); oblika ostane kot KUPI IN NAMESTI / Race! (zaobljen, bel krepek ležeč napis).
