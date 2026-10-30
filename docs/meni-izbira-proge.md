@@ -47,6 +47,31 @@ Makete: `VRŠIČ` v vseh vremenih in 6 prog s 6 avti (seja 30. 10. 2026).
   - *Snow* (izbran slog **snežni metež**): zasnežena slika (travniki beli, drevesa s snegom na osvetljenih ploskvah, cesta steptan sneg, megla), veter in poševno sneženje, sneg na vrhu vseh gumbov, vrstice, table in avta (nametan na zavetrno stran), zaledenela stekla in sneg na spodnjem delu avta, avto stoji v snegu, sneg na tabli, ledeni kristali v kotih.
   - Prehod ob dotiku ikone: krog na ikoni, nato se vreme v ≈ 1 s pretopi, voda in sneg se nabirata ≈ 2,5 s. Smer vetra: dež in sneg gresta z desne proti levi (uporabnik je smer prezrcalil).
 
+- **Tabla vsake države v njenem slogu** (uporabnik, 30. 10. 2026: »najdi točno take table kot so v tej državi«). Raziskava 20 držav iz pravilnikov in Wikipedije (vrsta table, barve, okvir, pisava, obraba, viri) je v `maketa-menija/izbira-proge/table-drzav.json`, slogi v `wxfx.js` (`SIGNS`). Ime države je **vedno na sredini table**, tudi če ga avto delno prekrije. Slovenija ima rumeno tablo naselja (črn okvir), ne modre. Zastava na tabli: 6 predlogov (na koncu, na obeh koncih, trak v barvah zastave, ploščica nad tablo, mejna tabla EU oz. zastava v krogu, cela tabla v barvah zastave); izbira je odprta, privzeto **brez zastave** (zastava je v vrstici).
+
+| Država | Tabla | Ozadje / napis | Zanesljivost |
+|---|---|---|---|
+| Slovenija | Settlement sign III-14 'Naselje' | `#F0CA00` / `#1E1E1E` | high |
+| Avstrija | Town-entry sign 'Ortstafel' | `#F6F6F6` / `#1E1E1E` | medium |
+| Nemčija | Town-entry sign 'Ortstafel', Zeichen 310 | `#F0CA00` / `#1E1E1E` | high |
+| Belgija | Direction sign F29 | `#0E518D` / `#F6F6F6` | medium |
+| Finska | Place-name sign F27.1 'Paikannimi' | `#0A5CA8` / `#FFFFFF` | medium |
+| Anglija | Green primary-route direction sign used on main A-roads | `#33533B` / `#FFFFFF` | high |
+| Francija | Town-entry sign EB10 | `#F6F6F6` / `#1E1E1E` | high |
+| Italija | Blue arrow-pointed direction sign for extra-urban roads. Blue for extr | `#0E518D` / `#FFFFFF` | medium |
+| Monako | French EB10-style place sign | `#F6F6F6` / `#1E1E1E` | low |
+| Rusija | Blue advance direction sign 6.9.1 / 6.10.1 outside built-up areas | `#1C5AA6` / `#FFFFFF` | medium |
+| ZDA | Green guide | `#006747` / `#FFFFFF` | high |
+| Kanada | Green destination | `#006747` / `#FFFFFF` | medium |
+| Brazilija | Placa de identificacao de municipio | `#003166` / `#FFFFFF` | medium |
+| Čile | Green informative destination sign on conventional | `#006747` / `#FFFFFF` | medium |
+| Avstralija | Green direction | `#005A3C` / `#FFFFFF` | medium |
+| Južna Afrika | Direction | `#00683F` / `#FFFFFF` | medium |
+| Maroko | Town-entry | `#FFFFFF` / `#000000` | low |
+| Japonska | Guide sign on general and national roads | `#005898` / `#FFFFFF` | medium |
+| Kitajska | Guide | `#1450A0` / `#FFFFFF` | medium |
+| Tajska | Guide | `#006A3A` / `#FFFFFF` | low |
+
 **Pravna opomba:** posnetek preleta `assets/maps/fly-rbring.webm` in `.webp` (5. 10. 2026) na stavbi ob progi kaže napis z imenom znamke (starejša različica sveta; zdajšnji transparenti v `js/world-rbring.js` so zemljepisni: MURTAL, SPIELBERG, STEIERMARK). Pred objavo ga posnemi znova (sklop 4, kamere).
 
 ## Sklopi

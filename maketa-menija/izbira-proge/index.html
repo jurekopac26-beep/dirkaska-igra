@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<base href="../../">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Izbira proge</title>
+<link rel="stylesheet" href="css/fonts.css">
+<style>
+:root { color-scheme: dark; --gold: #ffc629; --gold-hi: #ffe07a; --gold-lo: #f0ad0c; --gold-sh: #9a7300; --lbl: #9fb3d6; --lav: #aeb5f7; --curb-hi: #ff5145; --curb-lo: #c9191a; --curb-sh: #8c1212;
+  --steel1: #666d7b; --steel2: #3b414d; --steel-sh: #1f232b; --f-ui: 'ApexMenu', Roboto, Arial, sans-serif; }
+* { box-sizing: border-box; }
+canvas { pointer-events: none; }
+html { background: #0b1424; }
+html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; background: #0b1424; font-family: var(--f-ui); color: #fff; }
+.abs { position: absolute; }
+/* the header: back, the track's facts, the flag */
+.head { left: 0; right: 0; top: 0; height: 74px; background: linear-gradient(180deg, #13213a, #0d1829); display: flex; align-items: center; gap: 10px; padding: 0 14px; }
+.sq { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 11px; background: linear-gradient(180deg, var(--steel1), var(--steel2)); border: 1.5px solid rgba(255,255,255,.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 0 var(--steel-sh); display: flex; align-items: center; justify-content: center; }
+.sq svg { width: 26px; height: 26px; }
+.hstats { flex: 1 1 auto; min-width: 0; display: flex; }
+.hstats > div { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 5px; border-left: 1px solid rgba(255,255,255,.12); }
+.hstats > div:first-child { border-left: 0; }
+.hstats small { font: 600 11.5px/1 var(--f-ui); color: var(--lbl); } .hstats b { font: 800 italic 17px/1 var(--f-ui); white-space: nowrap; }
+.hstats > div:first-child small, .hstats > div:first-child b { color: var(--gold); }
+.hflag { flex: 0 0 auto; width: 52px; height: 34px; border-radius: 3px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+.hflag svg { width: 100%; height: 100%; display: block; }
+/* the map */
+.map { left: 0; right: 0; top: 74px; height: 370px; overflow: hidden; }
+.map img { width: 100%; display: block; }
+.map img.zoom { width: 110%; margin-left: -5%; margin-top: 0; }
+.views { left: 10px; top: 10px; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px dashed rgba(255,198,41,.6); }
+.views i { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 italic 15px/1 var(--f-ui); font-style: normal; color: #cfd8ea; }
+.views i.on { background: var(--gold); color: #1b1b1b; }
+.wx { right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; padding: 6px 5px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px dashed rgba(255,198,41,.6); }
+.wx i { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.wx i.on { box-shadow: 0 0 10px rgba(255,198,41,.75), inset 0 0 8px rgba(255,198,41,.35); }
+.wx svg { width: 24px; height: 24px; }
+/* the menu under the map: a room (a wall, a floor) */
+.room { left: 0; right: 0; top: 444px; bottom: 0; }
+.row { left: 14px; right: 14px; top: 454px; height: 60px; border-radius: 13px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); border: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 8px; z-index: 2; }
+.row canvas { width: 46px; height: 46px; }
+.opp { display: flex; flex-direction: column; align-items: center; gap: 4px; border-left: 1px solid rgba(255,255,255,.12); padding-left: 16px; }
+.rname { flex: 1 1 auto; text-align: center; font: 900 italic 30px/1 var(--f-ui); letter-spacing: -.3px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.mg { position: absolute; z-index: 2; pointer-events: none; overflow: visible; }
+.mg .ln { fill: none; stroke: #ffd23a; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.mg .base { stroke: rgba(255,255,255,.55); stroke-width: 1; }
+.mg .kt { stroke: rgba(255,255,255,.7); stroke-width: 1; }
+.mg .gl { stroke: rgba(255,255,255,.45); stroke-width: 1; stroke-dasharray: 3 4; }
+.mg text { font: 800 10px/1 var(--f-ui); fill: #fff; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: rgba(0,0,0,.7); stroke-width: 2.6px; stroke-linejoin: round; }
+.mg text.hi, .mg text.lo { font: 800 italic 11px/1 var(--f-ui); }
+.mg .halo { fill: rgba(255,210,58,.4); } .mg .pt circle + circle { fill: #fff; stroke: #ffd23a; stroke-width: 1.6; }
+.opp small { font: 600 12px/1 var(--f-ui); color: var(--lbl); } .opp b { font: 900 italic 22px/1 var(--f-ui); }
+/* the boards behind the car (as the garage's YOUR CAR / RENT A CAR boards) */
+.bd { position: absolute; border: 2.5px solid #fff; border-radius: 5px; box-shadow: 0 0 0 1.5px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.28), 3px 4px 0 rgba(0,0,0,.35); color: #fff;
+  font: 800 23px/1 var(--f-ui); display: flex; align-items: center; justify-content: center; text-shadow: 0 1px 0 rgba(0,0,0,.35); filter: brightness(.86) saturate(.9); }
+.bd.g { background: linear-gradient(180deg, #2fae50, #17803a); font-size: 19px; }
+.bd.b { background: linear-gradient(180deg, #3576e6, #1c4db6); font-size: 36px; }
+.post { position: absolute; width: 6px; border-radius: 2px; background: linear-gradient(90deg, #6f7888, #e3e7ee 45%, #7b8494); filter: brightness(.86); }
+.car { z-index: 3; }
+.fl { position: absolute; pointer-events: none; }
+.fl.behind { z-index: 1; } #boards .bd, #boards .post { z-index: 2; } .fl.front { z-index: 5; } .fl.top { z-index: 4; }
+.pole { position: absolute; width: 4px; border-radius: 2px; background: linear-gradient(90deg, #6f7888, #eef1f5 45%, #7b8494); }
+.knob { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff3b0, #ffc629 60%, #a87400); }
+.fl canvas { position: absolute; filter: drop-shadow(2px 3px 0 rgba(0,0,0,.3)); }
+.flow { z-index: 4; pointer-events: none; }
+.graph { z-index: 5; left: 0; width: 412px; pointer-events: none; }
+/* the neighbours' flags, back and Race! */
+.nb { position: absolute; top: 752px; width: 186px; height: 58px; border-radius: 13px; overflow: hidden; border: 1.5px solid rgba(255,255,255,.5); box-shadow: 0 4px 0 #0a1220, 0 8px 18px rgba(0,0,0,.45); z-index: 6; }
+.nb svg.f { position: absolute; inset: 0; width: 100%; height: 100%; }
+.nb svg.ar { position: absolute; top: 14px; width: 38px; height: 30px; filter: drop-shadow(0 0 1.5px #000) drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.nb svg.ar path { fill: none; stroke: #fff; stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
+.back { left: 14px; top: 824px; width: 78px; height: 56px; border-radius: 12px; background: linear-gradient(180deg, var(--steel1), var(--steel2)); border: 1.5px solid rgba(255,255,255,.4); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 0 var(--steel-sh); display: flex; align-items: center; justify-content: center; z-index: 6; }
+.go { left: 102px; right: 14px; top: 824px; height: 56px; border-radius: 13px; background: linear-gradient(180deg, var(--curb-hi), #e0231f 55%, var(--curb-lo)); border: 1px solid rgba(255,140,120,.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 5px 0 var(--curb-sh), 0 12px 26px rgba(224,35,31,.3); display: flex; align-items: center; justify-content: center; font: 900 italic 28px/1 var(--f-ui); text-shadow: 0 2px 0 rgba(120,0,0,.45); z-index: 6; }
+
+/* v2: the country in the header, the facts in the row, the weather as four tabs at the top, the views at the map's bottom left */
+.htitle { flex: 1 1 auto; text-align: center; font: 900 italic 30px/1 var(--f-ui); letter-spacing: -.3px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.row.v2 { padding: 0 6px 0 6px; gap: 0; justify-content: flex-start; }
+.row.v2 canvas { flex: 0 0 auto; width: 42px; height: 42px; margin-right: 4px; }
+.row.v2 .c { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; border-left: 1px solid rgba(255,255,255,.12); }
+.row.v2 .c:first-of-type { border-left: 0; }
+.row.v2 .c small { font: 600 11px/1 var(--f-ui); color: var(--lbl); white-space: nowrap; } .row.v2 .c b { font: 800 italic 15px/1 var(--f-ui); white-space: nowrap; }
+.row.v2 .c.best small, .row.v2 .c.best b { color: var(--gold); }
+.row.v2 .opp { padding-left: 10px; }
+.row.v2.v3 { padding: 0 8px; } .row.v2.v3 .c b { font-size: 14px; } .row.v2.v3 .c small { font-size: 10.5px; } .row.v2.v3 canvas { width: 36px; height: 36px; } .row.v2.v3 .c { padding: 0 2px; } .row.v2 .opp b { font-size: 21px; } .row.v2.bigopp .opp b { font-size: 30px; font-weight: 900; }
+.views.bl { top: auto !important; bottom: 10px; }
+.views.br { top: auto !important; bottom: 10px; left: auto !important; right: 10px; }
+.views.big { gap: 6px; padding: 5px; } .views.big i { width: 40px; height: 40px; font-size: 19px; }
+.views.camS i svg { width: 20px; height: 20px; } .views.camS i.on svg * { stroke: #1b1b1b; } .views.camS i.on svg .fill { fill: #1b1b1b; }
+.views.cam i { width: 40px; height: 40px; } .views.cam i svg { width: 26px; height: 26px; } .views.cam i.on svg * { stroke: #1b1b1b; } .views.cam i.on svg .fill { fill: #1b1b1b; }
+.wxb { position: absolute; z-index: 6; display: flex; }
+.wxb i { display: flex; align-items: center; justify-content: center; gap: 6px; font: 800 italic 12px/1 var(--f-ui); font-style: normal; color: #dfe8f6; }
+.wxb i em { font: 800 italic 12px/1 var(--f-ui); }
+.wxb svg { width: 24px; height: 24px; flex: 0 0 auto; }
+/* 1: the old group tabs */
+.wxb.s1 { left: 12px; right: 12px; top: 80px; height: 40px; gap: 6px; }
+.wxb.s1 i { flex: 1 1 0; border-radius: 11px; background: rgba(16,27,45,.95); border: 1px solid rgba(120,150,205,.3); }
+.wxb.s1 i.on { border: 1.5px solid #3fd0ff; box-shadow: 0 0 12px rgba(63,208,255,.45), inset 0 0 10px rgba(63,208,255,.18); color: #fff; }
+/* 2: chunky 3D keys, the chosen one gold */
+.wxb.s2 { left: 12px; right: 12px; top: 78px; height: 40px; gap: 8px; }
+.wxb.s2 i { flex: 1 1 0; border-radius: 11px; background: linear-gradient(180deg, #666d7b, #3b414d); border: 1.5px solid rgba(255,255,255,.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 0 #1f232b; }
+.wxb.s2 i.on { background: linear-gradient(180deg, #ffe07a, #ffc629 50%, #f0ad0c); border-color: #fff0b0; color: #1b1b1b; box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 2px 0 #9a7300; transform: translateY(2px); }
+.wxb.s2 i.on svg * { fill: #1b1b1b !important; stroke: #1b1b1b !important; }
+/* 3: folder tabs standing on the map's top edge */
+.wxb.s3 { left: 8px; right: 8px; top: 82px; height: 42px; gap: 4px; align-items: flex-end; }
+.wxb.s3 i { flex: 1 1 0; height: 36px; border-radius: 12px 12px 0 0; background: linear-gradient(180deg, #22324f, #172338); border: 1px solid rgba(120,150,205,.3); border-bottom: 0; }
+.wxb.s3 i.on { height: 42px; background: linear-gradient(180deg, #3a5a8f, #2a4167); border-color: rgba(190,215,255,.55); color: #fff; box-shadow: 0 -4px 12px rgba(63,140,255,.25); }
+.wxb.s3 i.on::after { content: ''; position: absolute; }
+/* 4: no buttons: the icons over the map's top, the chosen one glowing with a gold bar under it */
+.wxb.s4 { left: 0; right: 0; top: 74px; height: 58px; padding: 0 30px; justify-content: space-between; background: linear-gradient(180deg, rgba(8,13,22,.85), rgba(8,13,22,0)); }
+.wxb.s4 i { flex: 0 0 auto; width: 64px; flex-direction: column; gap: 4px; padding-top: 8px; opacity: .72; }
+.wxb.s4 i svg { width: 28px; height: 28px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.wxb.s4 i.on { opacity: 1; } .wxb.s4 i.on svg { filter: drop-shadow(0 0 6px rgba(255,210,58,.95)) drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.wxb.s4 i.on::after { content: ''; width: 30px; height: 3px; border-radius: 2px; background: #ffd23a; box-shadow: 0 0 8px rgba(255,210,58,.9); }
+/* 5: one rail, a gold thumb sliding under the chosen icon (floating over the map) */
+.wxb.s5 { left: 50%; transform: translateX(-50%); top: 84px; height: 44px; padding: 4px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 6px 16px rgba(0,0,0,.45); }
+.wxb.s5 i { width: 66px; border-radius: 999px; position: relative; }
+.wxb.s5 i.on { background: linear-gradient(180deg, #ffe07a, #ffc629 55%, #f0ad0c); box-shadow: 0 0 10px rgba(255,198,41,.55); }
+.wxb.s5 i.on svg * { fill: #1b1b1b !important; stroke: #1b1b1b !important; }
+/* 6: 3D plates tipped back in perspective, standing on the map's top edge */
+.wxb.s6 { left: 10px; right: 10px; top: 76px; height: 46px; gap: 8px; perspective: 260px; }
+.wxb.s6 i { flex: 1 1 0; border-radius: 10px; transform: rotateX(28deg); transform-origin: 50% 100%; background: linear-gradient(180deg, #2f4570, #1a2944); border: 1px solid rgba(160,190,255,.35); box-shadow: 0 6px 0 #0c1424, 0 10px 14px rgba(0,0,0,.5); }
+.wxb.s6 i.on { background: linear-gradient(180deg, #4a7fd8, #2a56a8); border-color: #bcd6ff; box-shadow: 0 6px 0 #10264f, 0 0 16px rgba(80,150,255,.6), 0 10px 14px rgba(0,0,0,.5); color: #fff; }
+
+/* option 4 without the gold bar: the chosen one shown by its colour and light */
+.wxb.s4.k i.on::after { display: none; }
+.wxb.s4.k i { opacity: 1; }
+.wxb.s4.k i em { color: rgba(223,232,246,.7); }
+.wxb.s4.k i.on em { color: #fff; font-weight: 900; }
+.wxb.s4.k1 i:not(.on) svg { filter: grayscale(1) brightness(.8) drop-shadow(0 2px 3px rgba(0,0,0,.9)); opacity: .55; }
+.wxb.s4.k1 i.on svg { filter: drop-shadow(0 0 7px rgba(255,180,40,.95)) drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+.wxb.s4.k1 i.on em { color: #ffd23a; }
+.wxb.s4.k2 i:not(.on) svg { filter: grayscale(1) brightness(1.6) drop-shadow(0 2px 3px rgba(0,0,0,.9)); opacity: .7; }
+.wxb.s4.k2 i.on svg { width: 38px; height: 38px; margin-top: -6px; filter: drop-shadow(0 0 10px rgba(255,255,255,.9)) drop-shadow(0 0 4px rgba(255,200,60,.9)); }
+.wxb.s4.k3 i { position: relative; }
+.wxb.s4.k3 i.on::before { content: ''; position: absolute; left: 50%; top: 18px; width: 74px; height: 74px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,80,.6), rgba(255,170,40,.25) 55%, transparent); }
+.wxb.s4.k3 i > * { position: relative; }
+.wxb.s4.k3 i:not(.on) svg { filter: grayscale(1) drop-shadow(0 2px 3px rgba(0,0,0,.9)); opacity: .5; }
+.wxb.s4.k3 i.on em { color: #ffe07a; }
+.wxb.s4.k4 i:not(.on) svg { filter: brightness(0) drop-shadow(0 0 1px rgba(255,255,255,.5)); opacity: .55; }
+.wxb.s4.k4 i:not(.on) em { color: rgba(223,232,246,.45); }
+.wxb.s4.k4 i.on svg { width: 32px; height: 32px; filter: drop-shadow(0 0 9px rgba(255,170,30,1)) drop-shadow(0 0 3px rgba(255,240,180,.9)); }
+.wxb.s4.k5 i:not(.on) svg { width: 22px; height: 22px; margin-top: 4px; filter: grayscale(1) brightness(1.3) drop-shadow(0 2px 3px rgba(0,0,0,.9)); opacity: .6; }
+.wxb.s4.k5 i:not(.on) em { visibility: hidden; }
+.wxb.s4.k5 i.on svg { width: 34px; height: 34px; transform: translateY(-3px); filter: drop-shadow(0 9px 4px rgba(0,0,0,.55)) drop-shadow(0 0 5px rgba(255,190,50,.8)); }
+.wxb.s4.k5 i.on em { color: #ffd23a; }
+.wxb.s4.k6 { background: linear-gradient(180deg, rgba(150,90,10,.75), rgba(90,55,10,.35) 60%, rgba(8,13,22,0)); }
+.wxb.s4.k6 i:not(.on) svg { filter: grayscale(1) brightness(1.4) drop-shadow(0 2px 3px rgba(0,0,0,.9)); opacity: .6; }
+.wxb.s4.k6 i.on svg { filter: drop-shadow(0 0 8px rgba(255,200,60,.95)); }
+.wxb.s4.k6 i.on em { color: #ffe07a; }
+
+/* the weather as a column at the top right, opening downwards */
+.wxc { position: absolute; z-index: 6; right: 10px; display: flex; flex-direction: column; align-items: center; }
+.wxc i { display: flex; align-items: center; justify-content: center; font-style: normal; }
+.wxc em { font: 800 italic 11px/1 var(--f-ui); color: #ffd23a; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+.wxc.c1 { gap: 8px; } .wxc.c1 i { flex-direction: column; gap: 3px; } .wxc.c1 i svg { width: 22px; height: 22px; filter: grayscale(1) brightness(1.3) drop-shadow(0 2px 3px rgba(0,0,0,.9)); opacity: .65; }
+.wxc.c1.big { gap: 12px; } .wxc.c1.big i svg { width: 32px; height: 32px; } .wxc.c1.big em { font-size: 14px; }
+.wxc.c1.big i.on svg { width: 54px; height: 54px; }
+.wxc.c1 i.on svg { width: 36px; height: 36px; filter: drop-shadow(0 0 5px rgba(255,190,50,.8)) drop-shadow(0 3px 3px rgba(0,0,0,.6)); opacity: 1; }
+.wxc.c3 { align-items: stretch; width: 128px; border-radius: 14px; background: rgba(8,12,20,.86); border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 8px 20px rgba(0,0,0,.5); overflow: hidden; }
+.wxc.c3 .head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(255,198,41,.16); border-bottom: 1px solid rgba(255,255,255,.12); }
+.wxc.c3 .head svg { width: 26px; height: 26px; } .wxc.c3 .head em { font-size: 13px; flex: 1; } .wxc.c3 .car { color: #ffd23a; font: 900 14px/1 var(--f-ui); transform: rotate(180deg); }
+.wxc.c3 .list i { justify-content: flex-start; gap: 8px; padding: 7px 10px; border-top: 1px solid rgba(255,255,255,.06); } .wxc.c3 .list svg { width: 22px; height: 22px; } .wxc.c3 .list em { color: #dfe8f6; font-size: 12px; }
+.wxc.c4 { gap: 6px; align-items: stretch; }
+.wxc.c4 i { justify-content: flex-start; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(8,12,20,.8); border: 1px solid rgba(255,255,255,.16); }
+.wxc.c4 i svg { width: 22px; height: 22px; } .wxc.c4 i em { color: #dfe8f6; font-size: 12px; }
+.wxc.c4 i.on { background: linear-gradient(180deg, #ffe07a, #ffc629 55%, #f0ad0c); border-color: #fff0b0; } .wxc.c4 i.on em { color: #1b1b1b; text-shadow: none; }
+.wxc.c4 i.on svg * { fill: #1b1b1b !important; stroke: #1b1b1b !important; }
+.wxc.c5 { gap: 12px; } .wxc.c5 i { width: 38px; height: 38px; border-radius: 50%; position: relative; }
+.wxc.c5 i svg { width: 26px; height: 26px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.95)); }
+.wxc.c5 i.on { background: radial-gradient(closest-side, rgba(255,214,80,.75), rgba(255,170,40,.3) 60%, transparent); } .wxc.c5 i.on svg { width: 30px; height: 30px; }
+.wxc.c5 .lab { margin-top: -54px; margin-bottom: 40px; display: none; }
+.wxc.c6 { position: absolute; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 6px 16px rgba(0,0,0,.45); }
+.wxc.c6 .thumb { position: absolute; left: 4px; right: 4px; top: 4px; height: 40px; border-radius: 999px; background: linear-gradient(180deg, #ffe07a, #ffc629 55%, #f0ad0c); box-shadow: 0 0 10px rgba(255,198,41,.55); }
+.wxc.c6 i { width: 40px; height: 40px; position: relative; } .wxc.c6 i svg { width: 24px; height: 24px; }
+</style></head>
+<body>
+<div class="abs head">
+  <div class="sq" id="homeBtn"><svg viewBox="0 0 24 24"><path d="M15 4.5L7.5 12l7.5 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="hstats" id="hstats"></div>
+  <div class="hflag" id="hflag"></div>
+</div>
+<div class="abs map" id="map"><img id="mapimg">
+  <div class="abs views"><i>1</i><i class="on">2</i><i>3</i></div>
+  <div class="abs wx" id="wx"></div>
+</div>
+<div class="abs room" id="room"></div>
+<div class="abs row"><canvas id="globe" width="92" height="92"></canvas><div class="rname" id="rname"></div><div class="opp"><small>Opponents</small><b>12</b></div></div>
+<div id="boards"></div>
+<img class="abs car" id="car">
+<canvas class="abs flow" id="flow"></canvas>
+<canvas class="abs graph" id="graph"></canvas>
+<div id="flags"></div>
+<div id="nbs"></div>
+<div class="abs back"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M15 4.5L7.5 12l7.5 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="abs go">Race!</div>
+<script src="js/routes.js"></script>
+<script src="js/menu-data.js"></script>
+<script src="js/geo.js"></script>
+<script src="maketa-menija/izbira-proge/wxfx.js"></script>
+<script src="maketa-menija/izbira-proge/proge.js"></script>
+<script>
+window.MOCK = async (T) => {
+  const $ = (id) => document.getElementById(id);
+  // the header
+  $('hstats').innerHTML = T.stats.map(([a, b]) => '<div><small>' + a + '</small><b>' + b + '</b></div>').join('');
+  $('hflag').innerHTML = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + T.flag + '</svg>';
+  // the map
+  $('mapimg').src = T.map; await $('mapimg').decode();
+  const ico = { dry: '<circle cx="12" cy="12" r="4.2" fill="#fff"/><g stroke="#fff" stroke-width="2" stroke-linecap="round">' + [0, 45, 90, 135, 180, 225, 270, 315].map(a => { const r = Math.PI * a / 180; return '<line x1="' + (12 + 6.6 * Math.cos(r)) + '" y1="' + (12 + 6.6 * Math.sin(r)) + '" x2="' + (12 + 9.4 * Math.cos(r)) + '" y2="' + (12 + 9.4 * Math.sin(r)) + '"/>'; }).join('') + '</g>',
+    cloud: (y) => '<path d="M6.5 ' + (16 + y) + 'h11a3.6 3.6 0 0 0 0-7.2 5 5 0 0 0-9.6-1.2A3.9 3.9 0 0 0 6.5 ' + (16 + y) + 'z" fill="#fff"/>' };
+  const rain = '<g stroke="#5fc8ff" stroke-width="1.8" stroke-linecap="round"><line x1="9" y1="18" x2="8" y2="21"/><line x1="12.5" y1="18" x2="11.5" y2="21"/><line x1="16" y1="18" x2="15" y2="21"/></g>';
+  $('wx').innerHTML = ['<svg viewBox="0 0 24 24">' + ico.dry + '</svg>', '<svg viewBox="0 0 24 24">' + ico.cloud(0) + rain + '</svg>',
+    '<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.4" fill="#ffd23a"/>' + ico.cloud(1) + rain + '</svg>', '<svg viewBox="0 0 24 24">' + ico.cloud(0) + '<path d="M12.5 16.5l-2.4 4h2.4l-1.2 3.5 4-5h-2.5l1.4-2.5z" fill="#ffd23a"/></svg>'].map((s, i) => '<i class="' + (i ? '' : 'on') + '">' + s + '</i>').join('');
+  const mapTop = T.mapTop || 74, mapH = T.mapH || 370, roomTop = mapTop + mapH; $('map').style.top = mapTop + 'px';
+  $('map').style.height = mapH + 'px'; $('room').style.top = roomTop + 'px'; document.querySelector('.row').style.top = (roomTop + 10) + 'px';
+  // the room: a wall down to the car's waist, then the floor
+  const hz = T.hz;
+  $('room').style.background = 'radial-gradient(56% 26px at 28% ' + (T.carFloor - roomTop - 4) + 'px, rgba(120,160,230,.16), transparent 100%), linear-gradient(180deg, #14223b 0, #0f1b2f ' + (hz - roomTop) + 'px, #1d2d4a ' + (hz - roomTop) + 'px, #152239 ' + (hz - roomTop + 38) + 'px, #0b1320 100%)';
+  $('room').style.boxShadow = '0 -8px 18px rgba(0,0,0,.45)';
+  // the boards: the place and the length (green), the country (blue), on two posts standing on the floor behind the car
+  const B = T.board, bx0 = B.x0, bx1 = 412 - 12, by = B.y, bh = 58, tagY = by - 36;
+  $('boards').innerHTML = '<i class="post" style="left:' + (bx0 + 50) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i><i class="post" style="left:' + (bx1 - 56) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i>' +
+    '<i class="post" style="left:' + (bx0 + 40) + 'px;top:' + (tagY + 28) + 'px;height:10px"></i><i class="post" style="left:' + (bx0 + 92) + 'px;top:' + (tagY + 28) + 'px;height:10px"></i><i class="post" style="left:' + (bx1 - 104) + 'px;top:' + (tagY + 28) + 'px;height:10px"></i><i class="post" style="left:' + (bx1 - 40) + 'px;top:' + (tagY + 28) + 'px;height:10px"></i>' +
+    '<div class="bd g" id="placeTag" style="left:' + (bx0 + 14) + 'px;top:' + tagY + 'px;height:32px;padding:0 12px">' + T.place + '</div>' +
+    (T.bg ? '<div class="bd g" style="right:' + (412 - bx1 + 10) + 'px;top:' + (by - 6 - T.bg.h) + 'px;width:' + T.bg.w + 'px;height:' + T.bg.h + 'px;padding:0;overflow:hidden;filter:none' + (T.bg.dark ? ';background:linear-gradient(180deg,#123a22,#0b2a17)' : '') + '"><canvas id="bgr"></canvas></div>'
+      : '<div class="bd g" style="right:' + (412 - bx1 + 14) + 'px;top:' + tagY + 'px;height:32px;padding:0 12px">' + T.lenm + '</div>') +
+    '<div class="bd b" style="left:' + bx0 + 'px;width:' + (bx1 - bx0) + 'px;top:' + by + 'px;height:' + bh + 'px">' + T.country + '</div>';
+  const bx1b = T.boardX1 || bx1, txtPad = T.flagV === 5 ? 'padding-right:70px;' : '';
+  T.boardBox = { x0: bx0, x1: bx1b, y: by, h: bh };
+  if (T.noTags) $('boards').innerHTML = '<i class="post" style="left:' + (bx0 + 50) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i><i class="post" style="left:' + (bx1b - 56) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i><div class="bd b" style="left:' + bx0 + 'px;width:' + (bx1b - bx0) + 'px;' + txtPad + 'top:' + by + 'px;height:' + bh + 'px">' + (T.alt ? (T.altStyle === 'below' ? '<span style="display:flex;flex-direction:column;align-items:center;gap:3px"><span>' + T.country + '</span><small style="font:800 15px/1 var(--f-ui);letter-spacing:.06em">' + T.alt + '</small></span>' : '<span>' + T.country + '</span><small style="margin-left:' + (T.altGap != null ? T.altGap : 14) + 'px;font:800 20px/1 var(--f-ui);opacity:.92">' + T.alt + '</small>') : T.country) + '</div>';
+  // the car and the air over it
+  const car = $('car'); car.src = T.car; await car.decode();
+  const cw = T.carW, ch = cw * car.naturalHeight / car.naturalWidth, cx = T.carX, cy = T.carFloor - ch;
+  Object.assign(car.style, { left: cx + 'px', top: cy + 'px', width: cw + 'px' });
+  T.carBox = { x: cx, y: cy, w: cw, h: ch, ant: [cx + cw * 345 / 712, cy + 1] };
+  if (T.flow3d) await flowLines3d($('flow'), car, cx, cy, cw, ch, T); else flowLines($('flow'), car, cx, cy, cw, ch, T);
+  // the graph
+  if (T.bg && T.bg.same) { await document.fonts.ready; const pt = $('placeTag'), gb = $('bgr').parentNode; T.bg.w = pt.offsetWidth; T.bg.h = pt.offsetHeight; Object.assign(gb.style, { width: T.bg.w + 'px', height: T.bg.h + 'px', top: pt.style.top }); const ps = document.querySelectorAll('#boards .post'), pp = [...document.querySelectorAll('#boards .post')].slice(2, 4); ps[4].style.left = (gb.offsetLeft + pt.offsetWidth * 0.25) + 'px'; ps[5].style.left = (gb.offsetLeft + pt.offsetWidth * 0.75 - 6) + 'px'; ps[2].style.left = (pt.offsetLeft + pt.offsetWidth * 0.25) + 'px'; ps[3].style.left = (pt.offsetLeft + pt.offsetWidth * 0.75 - 6) + 'px'; }
+  if (T.rowName) $('rname').textContent = T.rowName;
+  if (T.v2) layoutV2(T);
+  if (T.bigOpp) document.querySelector('.row').classList.add('bigopp');
+  if (T.oppSize) Object.assign(document.querySelector('.row .opp b').style, { fontSize: T.oppSize + 'px', lineHeight: '1' });
+  if (T.titleSize) { const h = document.querySelector('.htitle'); h.style.fontSize = T.titleSize + 'px'; h.style.whiteSpace = 'nowrap'; }
+  if (T.rowV3) {   // Opponents first, then the facts, the globe and the flag (the flag leaves the header)
+    const row = document.querySelector('.row'), opp = row.querySelector('.opp'), g = row.querySelector('canvas'), cells = [...row.querySelectorAll('.c')];
+    opp.style.cssText = 'border-left:0;padding-left:4px;padding-right:10px;border-right:1px solid rgba(255,255,255,.12)';
+    row.classList.add('v3'); row.innerHTML = ''; row.appendChild(opp); cells.forEach(c => row.appendChild(c)); g.style.marginLeft = '6px'; if (T.globeTop) { const hf = $('hflag'); hf.innerHTML = ''; hf.style.cssText = 'visibility:visible;width:52px;height:52px;box-shadow:none;overflow:visible'; g.style.cssText = 'width:52px;height:52px;margin:0'; hf.appendChild(g); } else row.appendChild(g);
+    const fl = document.createElement('div'); fl.style.cssText = 'flex:0 0 auto;width:36px;height:24px;margin-left:6px;border-radius:3px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.5)'; fl.innerHTML = '<svg viewBox="0 0 30 20" preserveAspectRatio="none" style="width:100%;height:100%;display:block">' + T.flag + '</svg>'; row.appendChild(fl);
+    if (!T.globeTop) $('hflag').style.visibility = 'hidden';
+  }
+  if (T.home) $('homeBtn').innerHTML = '<svg viewBox="0 0 24 24"><path d="M3.5 11.2L12 4l8.5 7.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9.5h4.5v-5.5h3v5.5H18V10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>';
+  if (T.zoom) $('mapimg').classList.add('zoom');
+  if (T.camLook === 'big') document.querySelector('.views').classList.add('big');
+  if (T.camLook === 'cam' || T.camLook === 'camS') { const vw = document.querySelector('.views'); vw.classList.add(T.camLook === 'cam' ? 'cam' : 'camS');
+    const ic = ['<path d="M4 17c3-6 6-9 9-9s5 2 7 5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M15 5l4 1-1 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+      '<rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M8 17c2-3 1-6 4-8s4-1 5-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
+      '<rect x="3" y="7" width="13" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M16 11l5-3v8l-5-3z" class="fill" fill="#fff"/>'];
+    if (T.icon2) ic[0] = T.icon2;   // the flyover's icon (camera 2)
+    const ord = T.camOrder || [0, 1, 2]; vw.querySelectorAll('i').forEach((e, i) => e.innerHTML = '<svg viewBox="0 0 24 24">' + ic[ord[i]] + '</svg>'); }
+  if (T.view) document.querySelectorAll('.views i').forEach((e, i) => e.classList.toggle('on', i === T.view - 1));
+  if (T.oppTag) {   // no "Opponents" over the number: a short word in small letters beside it
+    const o = document.querySelector('.row .opp'), sm = o.querySelector('small'); o.style.flexDirection = 'row'; o.style.alignItems = 'baseline'; o.style.gap = '3px';
+    if (T.oppBefore) o.insertBefore(sm, o.firstChild); else o.appendChild(sm); if (T.oppHtml) sm.innerHTML = T.oppHtml; else sm.textContent = T.oppTag; sm.style.cssText = 'font:700 14px/1 var(--f-ui);color:var(--lbl);text-transform:lowercase';
+  }
+  if (T.strip) {   // the digital strip on the top edge: the track's height difference (lit share of the scale), the more the redder
+    const S = T.strip, n = S.n || 34, lit = Math.round(Math.min(1, S.climb / (S.max || 1500)) * n), GR = [[0, [47, 191, 74]], [.35, [255, 210, 58]], [.65, [255, 138, 42]], [.85, [232, 52, 42]], [1, [178, 22, 34]]];
+    const col = (q) => { for (let i = 1; i < GR.length; i++) if (q <= GR[i][0]) { const t = (q - GR[i - 1][0]) / (GR[i][0] - GR[i - 1][0]); return 'rgb(' + GR[i - 1][1].map((c, k) => Math.round(c + (GR[i][1][k] - c) * t)) + ')'; } return 'rgb(178,22,34)'; };
+    const d = document.createElement('div'); d.style.cssText = 'position:absolute;left:0;right:0;top:0;height:' + (S.h || 6) + 'px;z-index:9;display:flex;gap:2px;padding:0 2px;background:rgba(0,0,0,.35)';
+    for (let i = 0; i < n; i++) { const c = col((i + .5) / n), on = i < lit; d.insertAdjacentHTML('beforeend', '<i style="flex:1;border-radius:0 0 2px 2px;background:' + (on ? c + ';box-shadow:0 0 6px ' + c : 'rgba(255,255,255,.12)') + '"></i>'); }
+    document.body.appendChild(d);
+  }
+  if (T.titleHtml) { const h = document.querySelector('.htitle'); h.innerHTML = T.titleHtml; }
+  if (T.viewsCss) { const vw = document.querySelector('.views'); vw.style.cssText += ';' + T.viewsCss; vw.style.zIndex = 7; }
+  if (T.css) document.head.insertAdjacentHTML('beforeend', '<style>' + T.css + '</style>');
+  if (T.signShadow) {   // a soft shadow of the car on the country sign behind it
+    const S = T.signShadow, car = $('car'), sg = document.querySelector('#boards .bd.b'), cr = car.getBoundingClientRect(), sr = sg.getBoundingClientRect();
+    sg.style.overflow = 'hidden'; const im = new Image(); im.src = car.src;
+    Object.assign(im.style, { position: 'absolute', left: (cr.left - sr.left - sg.clientLeft + S.dx) + 'px', top: (cr.top - sr.top - sg.clientTop + S.dy) + 'px', width: cr.width + 'px', filter: 'brightness(0) blur(' + S.blur + 'px)', opacity: S.a, pointerEvents: 'none' });
+    sg.appendChild(im); await im.decode();
+  }
+  if (T.counter === 'buttons') document.querySelectorAll('.nb').forEach((e, i) => e.insertAdjacentHTML('beforeend', '<span style="position:absolute;' + (i ? 'left' : 'right') + ':12px;bottom:6px;font:900 italic 14px/1 var(--f-ui);color:#fff;text-shadow:0 0 2px #000,0 1px 3px #000">' + (i ? T.idx + 1 : T.idx - 1) + ' / ' + T.total + '</span>'));
+  if (T.counter === 'head') { const h = document.querySelector('.htitle'); h.innerHTML = h.textContent + '<small style="display:block;margin-top:5px;font:800 12px/1 var(--f-ui);letter-spacing:.14em;color:var(--lbl)">TRACK ' + T.idx + ' / ' + T.total + '</small>'; }
+  if (T.counter === 'map') document.getElementById('map').insertAdjacentHTML('beforeend', '<div style="position:absolute;z-index:6;left:50%;transform:translateX(-50%);bottom:12px;padding:5px 12px;border-radius:999px;background:rgba(8,12,20,.8);border:1.5px solid rgba(255,255,255,.2);font:900 italic 14px/1 var(--f-ui)">' + T.idx + ' / ' + T.total + '</div>');
+  if (T.endStop) { const nb = document.querySelectorAll('.nb')[1]; nb.style.filter = 'grayscale(1) brightness(.45)'; }
+  if (T.flagV) await placeFlag(T);
+  if (T.mg) mapGraph($('map'), T); else if (T.bg) boardGraph($('bgr'), T); else drawGraph($('graph'), T);
+  // the neighbours
+  const A = (d) => '<svg class="ar" viewBox="0 0 29 24"><path d="' + (d < 0 ? 'M13 5L6 12l7 7M22 5l-7 7 7 7' : 'M7 5l7 7-7 7M16 5l7 7-7 7') + '"/></svg>';
+  $('nbs').innerHTML = '<div class="nb" style="left:14px"><svg class="f" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid slice">' + T.prev + '</svg>' + A(-1).replace('class="ar"', 'class="ar" style="left:12px"') + '</div>' +
+    '<div class="nb" style="right:14px"><svg class="f" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid slice">' + T.next + '</svg>' + A(1).replace('class="ar"', 'class="ar" style="right:12px"') + '</div>';
+  if (T.flagFix) for (const [i, svg] of [[0, T.prev], [1, T.next]]) {
+    const nb = document.querySelectorAll('.nb')[i], old = nb.querySelector('svg.f'), W = nb.clientWidth, H = nb.clientHeight, sc = 2, fw = Math.round(H * 1.5);
+    const img = new Image(); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="' + fw * sc + '" height="' + H * sc + '" preserveAspectRatio="none">' + svg + '</svg>'); await img.decode();
+    const c = document.createElement('canvas'); c.width = W * sc; c.height = H * sc; c.className = 'f'; Object.assign(c.style, { position: 'absolute', inset: '0', width: W + 'px', height: H + 'px' });
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.drawImage(img, fw * sc - 2, 0, 1, H * sc, fw * sc - 1, 0, (W - fw) * sc + 2, H * sc); old.replaceWith(c);
+  }
+  await globe($('globe'), T);
+  await document.fonts.ready;
+  if (T.wxfx && window.WXFX) await WXFX.init(T);
+  return true;
+};
+
+// the wind in 3D: streamlines in the car's own frame (x along it, the nose at +x; y up; z across, +z the side towards the camera) over a
+// surface made from the car's side profile (the game's side view), lifted over it like air over a bump (a short rise before the nose, a long
+// wake behind the tail), projected with the very camera the car's picture was taken with; the lines on the far side hide behind the body
+async function flowLines3d(cv, img, cx, cy, cw, ch, T) {
+  const F = await (await fetch(T.flow3d)).json(), C = F.cam, hw = F.info.wid / 2;
+  const W = 412, top = cy - 34, H = ch + 74, s = 2; cv.width = W * s; cv.height = H * s; Object.assign(cv.style, { left: '0px', top: top + 'px', width: W + 'px', height: H + 'px' });
+  const g = cv.getContext('2d'); g.scale(s, s);
+  // the profile: the side view's top edge, a median (no aerial) and a smoothing
+  const PX = F.prof.x, PT = F.prof.top, n = PX.length, med = PT.map((_, i) => { const a = PT.slice(Math.max(0, i - 4), i + 5).sort((p, q) => p - q); return a[a.length >> 1]; });
+  const sm = med.map((_, i) => { let a = 0, w = 0; for (let d = -4; d <= 4; d++) { const v = med[i + d]; if (v == null) continue; const k = Math.exp(-d * d / 8); a += v * k; w += k; } return a / w; });
+  const x0 = PX[0], dx = (PX[n - 1] - PX[0]) / (n - 1), hAt = (x) => { const f = (x - x0) / dx; if (f < 0 || f > n - 1) return 0; const i = Math.min(n - 2, Math.floor(f)); return sm[i] + (sm[i + 1] - sm[i]) * (f - i); };
+  const env = (x) => { let m = 0; for (let i = 0; i < n; i += 2) { const d = x - PX[i], v = sm[i] - (d > 0 ? 0.85 * d : -0.28 * d); if (v > m) m = v; } return m; };   // (ahead of the nose x > x': a short rise; behind: a long wake)
+  const fall = (z) => { const a = Math.abs(z), t = Math.min(1, Math.max(0, (a - 0.55) / 1.05)); return 1 - t * t * (3 - 2 * t); };
+  // the camera
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], nrm = (a) => { const l = Math.hypot(...a); return a.map(v => v / l); }, crs = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const fw = nrm(sub(C.t, C.p)), rt = nrm(crs(fw, [0, 1, 0])), up = crs(rt, fw), tf = Math.tan(C.fov * Math.PI / 360), [SW, SH] = F.shot, asp = SW / SH, k = cw / (F.crop[2] - F.crop[0]);
+  const proj = (P) => { const v = sub(P, C.p), zc = dot(v, fw), X = dot(v, rt) / (zc * tf * asp), Y = dot(v, up) / (zc * tf); const px = (X + 1) / 2 * SW, py = (1 - Y) / 2 * SH; return [cx + (px - F.crop[0]) * k, cy + (py - F.crop[1]) * k - top]; };
+  // the car's picture: where it covers the screen
+  const tc = document.createElement('canvas'); tc.width = img.naturalWidth; tc.height = img.naturalHeight; const tx = tc.getContext('2d'); tx.drawImage(img, 0, 0); const D = tx.getImageData(0, 0, tc.width, tc.height).data;
+  const onCar = (q) => { const ix = Math.round((q[0] - cx) / k), iy = Math.round((q[1] + top - cy) / k); return ix >= 0 && iy >= 0 && ix < tc.width && iy < tc.height && D[(iy * tc.width + ix) * 4 + 3] > 120; };
+  const L = [[1.3, .3], [1.1, .6], [.9, .9], [.7, .2], [.5, 1.12], [.3, .45], [.12, 1.32], [0, .1], [-.2, .78], [-.4, 1.5], [-.55, .35], [-.7, 1.08]];
+  const cols = ['#6fe3ff', '#3fd0ff', '#5be3a8', '#3fa0ff', '#8cf0d0', '#2f7dff', '#4fc6ff', '#7af0b8', '#3d8cff', '#5fd8ff', '#2fb6ff', '#6ee6c4', '#4fb0ff', '#7fe0ff'];
+  g.lineWidth = 1.7; g.lineCap = 'round'; g.lineJoin = 'round';
+  L.forEach(([z, y0], j) => {
+    g.strokeStyle = cols[j]; g.globalAlpha = T.flowA || 0.5; g.beginPath(); let pen = false;
+    for (let x = 12; x >= -14; x -= 0.06) {
+      const e = env(x) * fall(z), y = Math.sqrt(y0 * y0 + (e * 1.06 + (e > 0.01 ? 0.06 : 0)) ** 2), q = proj([x, y, z]);
+      const hidden = z < -0.3 && y < hAt(x) * 1.02 && onCar(q);
+      if (hidden || q[0] < -20 || q[0] > W + 20) { pen = false; continue; }
+      if (pen) g.lineTo(q[0], q[1]); else { g.moveTo(q[0], q[1]); pen = true; }
+    }
+    g.stroke();
+  });
+  g.globalAlpha = 1;
+}
+
+// the wind: lines from the right edge (the air ahead of the nose) over the body to the left edge, hugging its top; speed colours, faint
+function flowLines(cv, img, cx, cy, cw, ch, T) {
+  const W = 412, top = cy - 40, H = ch + 60, s = 2; cv.width = W * s; cv.height = H * s; Object.assign(cv.style, { left: '0px', top: top + 'px', width: W + 'px', height: H + 'px' });
+  const g = cv.getContext('2d'); g.scale(s, s);
+  const tc = document.createElement('canvas'); tc.width = img.naturalWidth; tc.height = img.naturalHeight; const tx = tc.getContext('2d'); tx.drawImage(img, 0, 0);
+  const D = tx.getImageData(0, 0, tc.width, tc.height).data, k = cw / tc.width;
+  const prof = new Array(W).fill(null);   // the body's top, in this canvas's pixels, per column
+  for (let X = 0; X < W; X++) { const ix = Math.floor((X - cx) / k); if (ix < 0 || ix >= tc.width) continue; for (let iy = 0; iy < tc.height; iy++) if (D[(iy * tc.width + ix) * 4 + 3] > 140) { prof[X] = cy - top + iy * k; break; } }
+  const floorY = cy - top + ch - 6;
+  const env = []; for (let X = 0; X < W; X++) { let m = floorY; for (let d = -26; d <= 26; d++) { const p = prof[X + d]; if (p != null) m = Math.min(m, p + Math.abs(d) * (d > 0 ? 0.55 : 0.35)); } env.push(m); }   // a soft envelope over the body (blunter ahead, longer wake)
+  const sm = env.map((_, i) => { let a = 0, n = 0; for (let d = -8; d <= 8; d++) { const v = env[i + d]; if (v != null) { a += v; n++; } } return a / n; });
+  const cols = ['#6fe3ff', '#3fd0ff', '#5be3a8', '#3fa0ff', '#8cf0d0', '#2f7dff', '#4fc6ff', '#7af0b8', '#3d8cff', '#5fd8ff', '#2fb6ff', '#6ee6c4'];
+  const N = 12;
+  for (let j = 0; j < N; j++) {
+    const far = floorY - 10 - j * (ch * 0.92 / N), gap = 4 + j * 3.2;
+    g.beginPath();
+    for (let X = 0; X <= W; X += 2) { const e = sm[Math.min(W - 1, X)] - gap, kk = 9, y = -kk * Math.log(Math.exp(-far / kk) + Math.exp(-e / kk)) * -1 > 0 ? Math.min(far, e) : 0, sy = Math.min(far, e) - kk * Math.log(1 + Math.exp(-Math.abs(far - e) / kk)); X ? g.lineTo(X, sy) : g.moveTo(X, sy); }
+    g.strokeStyle = cols[j]; g.globalAlpha = 0.5 - j * 0.015; g.lineWidth = 1.8; g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+
+function wxColumn(T, icons, names, wx) {
+  const sun = '<svg viewBox="0 0 24 24"><defs><radialGradient id="sunc2" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fff7c8"/><stop offset=".5" stop-color="#ffd23a"/><stop offset="1" stop-color="#ff8f1a"/></radialGradient></defs><circle cx="12" cy="12" r="4.8" fill="url(#sunc2)"/><g stroke="#ffbf2e" stroke-width="2.2" stroke-linecap="round">' + [0, 45, 90, 135, 180, 225, 270, 315].map(a => { const r = Math.PI * a / 180; return '<line x1="' + (12 + 7 * Math.cos(r)).toFixed(2) + '" y1="' + (12 + 7 * Math.sin(r)).toFixed(2) + '" x2="' + (12 + 10 * Math.cos(r)).toFixed(2) + '" y2="' + (12 + 10 * Math.sin(r)).toFixed(2) + '"/>'; }).join('') + '</g></svg>';
+  const v = T.wxCol, top = (T.mapTop || 74) + 10, ic = icons.slice(); if (v !== 2 && v !== 4 && v !== 6) ic[0] = sun;
+  if (v === 2) { wx.style.display = ''; return; }   // (as before: the dark column with the dashed gold edge, the chosen one glowing)
+  const box = document.createElement('div'); box.className = 'wxc c' + v + (T.wxBig ? ' big' : ''); box.style.top = top + 'px';
+  const sel = T.wxSel || 0; window.WXC = { ic, names, box, v };
+  if (v === 1) box.innerHTML = ic.map((h, k) => '<i class="' + (k !== sel ? '' : 'on') + '">' + h + (k !== sel ? '' : '<em>' + names[k] + '</em>') + '</i>').join('');
+  if (v === 3) box.innerHTML = '<b class="head">' + ic[0] + '<em>' + names[0] + '</em><span class="car">&#9662;</span></b><div class="list">' + ic.slice(1).map((h, k) => '<i>' + h + '<em>' + names[k + 1] + '</em></i>').join('') + '</div>';
+  if (v === 4) box.innerHTML = ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '<em>' + names[k] + '</em></i>').join('');
+  if (v === 5) box.innerHTML = ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '</i>').join('') + '<em class="lab">' + names[0] + '</em>';
+  if (v === 6) box.innerHTML = '<span class="thumb"></span>' + ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '</i>').join('');
+  document.body.appendChild(box);
+}
+function layoutV2(T) {
+  const $ = (id) => document.getElementById(id);
+  document.querySelector('.hstats').outerHTML = '<div class="htitle">' + T.title + (T.titleAlt ? '<span style="text-transform:none' + (T.altSize ? ';font-size:' + T.altSize + 'px' : '') + '">' + (T.altSep != null ? T.altSep : ', ') + T.titleAlt + '</span>' : '') + '</div>';
+  const row = document.querySelector('.row'); row.classList.add('v2');
+  row.querySelector('.rname').outerHTML = T.stats.map(([a, b], i) => '<div class="c' + (i ? '' : ' best') + '"><small>' + a + '</small><b>' + b + '</b></div>').join('');
+  if (T.viewsPos !== 'tl') document.querySelector('.views').classList.add(T.viewsRight ? 'br' : 'bl');
+  const wx = $('wx'), icons = [...wx.querySelectorAll('i')].map(i => i.innerHTML), names = ['Dry', 'Rain', 'Changing', 'Storm']; wx.style.display = 'none';
+  if (T.wxSnow) { icons.push('<svg viewBox="0 0 24 24"><g stroke="#e4f3ff" stroke-width="1.9" stroke-linecap="round" fill="none"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.6 3.9L12 6l2.4-2.1M9.6 20.1L12 18l2.4 2.1M3.3 10.4l3.1-.7-1-3M20.7 13.6l-3.1.7 1 3M3.3 13.6l3.1.7-1 3M20.7 10.4l-3.1-.7 1-3"/></g></svg>'); names.push('Snow'); }
+  const st = T.v2;
+  if (T.wxCol) { wxColumn(T, icons, names, wx); return; }
+  if (st === 4 && T.wx4) {   // the chosen icon in full colour: the sun gold and orange, its rays warm
+    icons[0] = '<svg viewBox="0 0 24 24"><defs><radialGradient id="sunc" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fff7c8"/><stop offset=".5" stop-color="#ffd23a"/><stop offset="1" stop-color="#ff8f1a"/></radialGradient></defs><circle cx="12" cy="12" r="4.8" fill="url(#sunc)"/><g stroke="#ffbf2e" stroke-width="2.2" stroke-linecap="round">' + [0, 45, 90, 135, 180, 225, 270, 315].map(a => { const r = Math.PI * a / 180; return '<line x1="' + (12 + 7 * Math.cos(r)).toFixed(2) + '" y1="' + (12 + 7 * Math.sin(r)).toFixed(2) + '" x2="' + (12 + 10 * Math.cos(r)).toFixed(2) + '" y2="' + (12 + 10 * Math.sin(r)).toFixed(2) + '"/>'; }).join('') + '</g></svg>';
+  }
+  document.body.insertAdjacentHTML('beforeend', '<div class="wxb s' + st + (st === 4 && T.wx4 ? ' k k' + T.wx4 : '') + '">' + icons.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + (st === 4 || st === 5 || st === 6 ? (st === 4 ? '<em>' + names[k] + '</em>' : '') : '<em>' + names[k] + '</em>') + '</i>').join('') + '</div>');
+}
+
+// a flag flying in the wind: the hoist at the right (the wind blows from the car's nose to its tail, right to left), so its back is seen
+// (mirrored); each column lifted on a wave growing away from the hoist, lit by the wave's slope
+async function flagCanvas(svg, w, h, amp, waves) {
+  const s = 2, img = new Image(); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="' + w * s + '" height="' + h * s + '" preserveAspectRatio="none">' + svg + '</svg>'); await img.decode();
+  const src = document.createElement('canvas'); src.width = w * s; src.height = h * s; const sx = src.getContext('2d'); sx.translate(w * s, 0); sx.scale(-1, 1); sx.drawImage(img, 0, 0);
+  const A = amp * s, cv = document.createElement('canvas'); cv.width = w * s; cv.height = h * s + 2 * A; cv.style.width = w + 'px'; cv.style.height = (h + 2 * amp) + 'px';
+  const g = cv.getContext('2d'), k = 2 * Math.PI * waves;
+  for (let x = 0; x < w * s; x++) { const t = 1 - x / (w * s), e = Math.pow(t, 0.85), dy = A + A * Math.sin(k * t - 0.6) * e, sl = Math.cos(k * t - 0.6) * e;
+    g.drawImage(src, x, 0, 1, h * s, x, dy, 1, h * s);
+    g.fillStyle = sl > 0 ? 'rgba(255,255,255,' + (sl * .22).toFixed(3) + ')' : 'rgba(0,0,0,' + (-sl * .3).toFixed(3) + ')'; g.fillRect(x, dy, 1, h * s); }
+  return cv;
+}
+async function placeFlag(T) {
+  const host = document.getElementById('flags'), v = T.flagV, put = (cls, x, y, html) => { const d = document.createElement('div'); d.className = 'fl ' + cls; d.style.left = x + 'px'; d.style.top = y + 'px'; d.innerHTML = html || ''; host.appendChild(d); return d; };
+  const pole = (x, y0, y1) => '<i class="pole" style="left:' + (x - 2) + 'px;top:' + y0 + 'px;height:' + (y1 - y0) + 'px"></i><i class="knob" style="left:' + (x - 4) + 'px;top:' + (y0 - 6) + 'px"></i>';
+  const flag = async (d, x, y, w, h, amp, waves) => { const c = await flagCanvas(T.flag, w, h, amp, waves); c.style.left = (x - w) + 'px'; c.style.top = (y - amp) + 'px'; d.appendChild(c); };   // (x, y: the hoist's top)
+  const C = T.carBox, B = T.boardBox;
+  if (v === 1) { const d = put('behind', 0, 0, pole(78, 578, 700)); await flag(d, 76, 582, 58, 39, 4, 1.1); }   // behind the car, over its roof
+  if (v === 2) { const d = put('front', 0, 0, pole(306, 636, 750)); await flag(d, 304, 640, 64, 43, 4.5, 1.15); }   // in front of the car, over its nose
+  if (v === 3) { const d = put('top', 0, 0, pole(386, 596, 726)); await flag(d, 384, 600, 64, 43, 4.5, 1.15); }   // in front of the board, at its right end
+  if (v === 4) { const d = put('behind', 0, 0, pole(394, 584, 708)); await flag(d, 392, 588, 66, 44, 4.5, 1.15); }   // behind the board (the board shorter)
+  if (v === 5) { const d = put('top', 0, 0, ''); await flag(d, B.x1 - 8, B.y + 9, 58, 38, 2.5, 1); }   // on the board, its right end a flag
+  if (v === 6) { const d = put('front', 0, 0, ''); await flag(d, C.ant[0] + 1, C.ant[1] + 1, 33, 22, 2.5, 1); }   // on the car's aerial
+}
+
+// the height profile on the map (as the intro's, over the helicopter's video): the run's real heights, a yellow line over a soft yellow
+// fill, the top's and the start's heights at the right, the kilometres under it, the point where the map's dot is
+function mapGraph(host, T) {
+  if (T.mg.hide) return;
+  if (T.mg.box && !T.mg._in) {
+    const vw = document.querySelector('.views');
+    const B = T.mg.box, vr = vw.getBoundingClientRect(), hr = host.getBoundingClientRect(), w = Math.round(vr.width), h = Math.round(w * B.ratio) + (B.join ? Math.round(vr.height) : 0), d = document.createElement('div');
+    d.className = 'mgbox'; Object.assign(d.style, { position: 'absolute', zIndex: 6, left: (B.right != null ? hr.width - w - B.right : B.left != null ? B.left : vr.left - hr.left) + 'px', top: (B.top != null ? B.top : B.join ? vr.top - hr.top : vr.bottom - hr.top + (B.gap || 6)) + 'px', width: w + 'px', height: h + 'px', overflow: 'hidden', boxSizing: 'border-box' });
+    d.style.cssText += ';' + B.css; host.appendChild(d);
+    const ib = d.clientWidth, ih = d.clientHeight, pad = B.pad || 0;
+    mapGraph(d, Object.assign({}, T, { mg: Object.assign({}, T.mg, { _in: true, w: ib - 2 * pad, h: ih - (B.padT || 0) - (B.join ? Math.round(vr.height) : 0), l: pad, t: (B.padT || 0) + (B.join ? Math.round(vr.height) : 0) }) }));
+    return;
+  }
+  const G = T.mg, W = G.w, Hh = G.h, R = window.ROUTES[T.id], M = window.MENU.routeMaps[T.id] || {}, P = R.prof, n = P.length;
+  const Hs = M.alt && Math.abs(P[n - 1] - P[0]) > 1 ? P.map(h => M.alt[0] + (h - P[0]) * (M.alt[1] - M.alt[0]) / (P[n - 1] - P[0])) : P.map(h => (T.altBase || 0) + h - P[0]), lo = Math.min(...Hs), hi = Math.max(...Hs), span = Math.max(hi - lo, 120), a = G.pb != null ? lo : (lo + hi) / 2 - span / 2, b = a + span;
+  const num = (v) => Math.round(v).toLocaleString('en-US');
+  const PX = G._in ? W : G.full ? W - 2 : W - 50, PT = G.full ? 18 : 8, PB = G.bare ? Hh : Hh - 16, x = (f) => f * PX, pb = G.pb || 0, y = (h) => PB - pb - (h - a) / (b - a) * (PB - pb - PT), hAt = (f) => { const i = Math.min(n - 1, Math.max(0, f * (n - 1))), i0 = Math.min(n - 2, Math.floor(i)); return Hs[i0] + (Hs[i0 + 1] - Hs[i0]) * (i - i0); };
+  const line = Hs.map((h, i) => (i ? 'L' : 'M') + x(i / (n - 1)).toFixed(1) + ' ' + y(h).toFixed(1)).join('');
+  const km = R.len / 1000, stp = [0.5, 1, 2, 2.5, 5, 10, 20].find(v => km / v <= 4.6) || 20, ticks = []; for (let d = 0; d <= km + 1e-6; d += stp) ticks.push(d);
+  const axis = ticks.map((d, i) => { const xx = x(d / km); return '<text x="' + xx.toFixed(1) + '" y="' + (Hh - 3) + '" text-anchor="' + (i ? 'middle' : 'start') + '">' + d + (i === ticks.length - 1 ? ' km' : '') + '</text><path class="kt" d="M' + xx.toFixed(1) + ' ' + PB + 'v3"/>'; }).join('');
+  const yl = (h, cls) => (G.dash === false ? '' : '<path class="gl" d="M0 ' + y(h).toFixed(1) + 'H' + PX + '"/>') + '<text class="' + cls + '" x="' + (W - 2) + '" y="' + (y(h) + 3.6).toFixed(1) + '" text-anchor="end">' + num(h) + ' m</text>';
+  const f0 = G.f != null ? G.f : 0.46, [px, py] = [x(f0), y(hAt(f0))], op = G.fill == null ? .42 : G.fill;
+  let trail = '';
+  if (G.trail) {   // the run driven so far: each piece in its grade's colour (the flyover's trail: green on the flat, yellow, orange, red where it climbs)
+    const GR = [[0.01, [47, 191, 74]], [0.03, [154, 209, 58]], [0.05, [255, 210, 58]], [0.07, [255, 138, 42]], [0.09, [232, 52, 42]], [0.12, [158, 20, 32]]];
+    const col = (q) => { if (q <= GR[0][0]) return GR[0][1]; for (let i = 1; i < GR.length; i++) if (q <= GR[i][0]) { const t = (q - GR[i - 1][0]) / (GR[i][0] - GR[i - 1][0]); return GR[i - 1][1].map((c, k) => c + (GR[i][1][k] - c) * t); } return GR[GR.length - 1][1]; };
+    const step = R.len / (n - 1), grade = (i) => { const j0 = Math.max(0, i - 2), j1 = Math.min(n - 1, i + 3); return (Hs[j1] - Hs[j0]) / (step * (j1 - j0)); };
+    const last = f0 * (n - 1);
+    for (let i = 0; i < n - 1 && i < last; i++) { const e = Math.min(i + 1, last), c = 'rgb(' + col(grade(i)).map(Math.round) + ')', x0 = x(i / (n - 1)), x1 = x(e / (n - 1)), y0 = y(Hs[i]), y1 = y(e === i + 1 ? Hs[i + 1] : hAt(e / (n - 1)));
+      trail += (G.lineOnly ? '' : '<path d="M' + x0.toFixed(1) + ' ' + y0.toFixed(1) + 'L' + (x1 + .4).toFixed(1) + ' ' + y1.toFixed(1) + 'L' + (x1 + .4).toFixed(1) + ' ' + PB + 'L' + x0.toFixed(1) + ' ' + PB + 'z" fill="' + c + '" fill-opacity=".38"/>') +
+        '<path d="M' + x0.toFixed(1) + ' ' + y0.toFixed(1) + 'L' + x1.toFixed(1) + ' ' + y1.toFixed(1) + '" stroke="' + c + '" stroke-width="3.4" stroke-linecap="round" fill="none"/>'; }
+  }
+  const back = G.panel === 'glass' ? '<rect x="-10" y="-8" width="' + (W + 18) + '" height="' + (Hh + 14) + '" rx="12" fill="rgba(10,18,31,.62)" stroke="rgba(255,255,255,.16)"/>'
+    : G.panel === 'fade' ? '<defs><radialGradient id="mgf" cx=".5" cy=".55" r=".62"><stop offset="0" stop-color="#08101c" stop-opacity=".62"/><stop offset="1" stop-color="#08101c" stop-opacity="0"/></radialGradient></defs><rect x="-40" y="-26" width="' + (W + 70) + '" height="' + (Hh + 46) + '" fill="url(#mgf)"/>' : '';
+  const svg = '<svg class="mg" style="' + (G.l != null ? 'left:' + G.l : 'right:' + G.r) + 'px;top:' + G.t + 'px" viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '">' + back +
+    '<defs><linearGradient id="mgg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity="' + op + '"/><stop offset="1" stop-color="#ffd23a" stop-opacity="' + (G._in ? op * .5 : 0) + '"/></linearGradient></defs>' +
+    (G.full ? '<text class="lo" x="' + (G.pb ? 4 : 2) + '" y="' + (G.pb && !G.loTop ? PB - 4 : y(lo) - (G.loUp || 6)).toFixed(1) + '"' + (G.fs ? ' style="font-size:' + G.fs + 'px"' : '') + '>' + num(lo) + ' m</text><text class="hi" x="' + (W - (G.pb ? 4 : 2)) + '" y="' + (y(hi) - 6).toFixed(1) + '" text-anchor="end"' + (G.fs ? ' style="font-size:' + G.fs + 'px"' : '') + '>' + num(hi) + ' m</text>' : yl(hi, 'hi') + yl(lo, 'lo')) + (G.split ? '<defs><clipPath id="mgA"><rect x="0" y="0" width="' + px.toFixed(1) + '" height="' + Hh + '"/></clipPath><clipPath id="mgB"><rect x="' + px.toFixed(1) + '" y="0" width="' + (PX - px + 1).toFixed(1) + '" height="' + Hh + '"/></clipPath><linearGradient id="mgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".82"/><stop offset="1" stop-color="#ffc21a" stop-opacity=".62"/></linearGradient></defs><path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgS)" clip-path="url(#mgA)"/><path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgg)" clip-path="url(#mgB)"/>' : '<path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgg)"/>') + (G.bare ? '' : '<path class="base" d="M0 ' + PB + 'H' + PX + '"/>' + axis) +
+    '<path class="ln" d="' + line + '"' + (G.trail ? ' style="stroke:rgba(255,255,255,.55);stroke-width:1.8"' : '') + '/>' + trail + '<g class="pt" transform="translate(' + px.toFixed(1) + ' ' + py.toFixed(1) + ')"><circle r="7.5" class="halo"/><circle r="3.8"/></g></svg>';
+  host.insertAdjacentHTML('beforeend', svg);
+}
+
+// the graph on the green board: the profile from start to finish, in the board's frame
+function boardGraph(cv, T) {
+  const B = T.bg, W = B.w - 5, H = B.h - 5, s = 2; cv.width = W * s; cv.height = H * s; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.style.display = 'block';
+  const g = cv.getContext('2d'); g.scale(s, s);
+  const R = window.ROUTES[T.id], Mm = window.MENU.routeMaps[T.id] || {}, P = R.prof, n = P.length, a0 = Mm.alt[0], a1 = Mm.alt[1];
+  const alt = P.map(h => a0 + (h - P[0]) * (a1 - a0) / (P[n - 1] - P[0])), lo = Math.min(...alt), hi = Math.max(...alt), step = R.len / (n - 1);
+  const GR = [[0.01, [47, 191, 74]], [0.03, [154, 209, 58]], [0.05, [255, 210, 58]], [0.07, [255, 138, 42]], [0.09, [232, 52, 42]], [0.12, [158, 20, 32]]];
+  const col = (q) => { if (q <= GR[0][0]) return GR[0][1]; for (let i = 1; i < GR.length; i++) if (q <= GR[i][0]) { const t = (q - GR[i - 1][0]) / (GR[i][0] - GR[i - 1][0]); return GR[i - 1][1].map((c, k) => c + (GR[i][1][k] - c) * t); } return GR[GR.length - 1][1]; };
+  const grade = (i) => { const j0 = Math.max(0, i - 2), j1 = Math.min(n - 1, i + 3); return (alt[j1] - alt[j0]) / (step * (j1 - j0)); };
+  const fmt = (a) => Math.round(a).toLocaleString('en-US') + ' m';
+  const small = H < 40, padL = small ? 5 : 8, padR = small ? 5 : 8, top = small ? 4 : 18, bot = H - (small ? 4 : 6), X = (i) => padL + i / (n - 1) * (W - padL - padR), Y = (a) => bot - (a - lo) / (hi - lo) * (bot - top);
+  const st = B.style, rgb = (c, a) => 'rgba(' + c.map(Math.round) + ',' + a + ')';
+  for (let i = 0; i < n - 1; i++) {
+    const c = st === 'white' ? [255, 255, 255] : col(grade(i)), gr = g.createLinearGradient(0, Y(alt[i]), 0, bot);
+    gr.addColorStop(0, rgb(c, st === 'white' ? .55 : .95)); gr.addColorStop(1, rgb(c, st === 'white' ? .08 : .35));
+    g.fillStyle = gr; g.beginPath(); g.moveTo(X(i), Y(alt[i])); g.lineTo(X(i + 1) + .5, Y(alt[i + 1])); g.lineTo(X(i + 1) + .5, bot); g.lineTo(X(i), bot); g.fill();
+    if (st === '3d') { g.fillStyle = rgb(c.map(v => v * .55), .9); g.beginPath(); g.moveTo(X(i), Y(alt[i])); g.lineTo(X(i + 1), Y(alt[i + 1])); g.lineTo(X(i + 1) + 4, Y(alt[i + 1]) - 3); g.lineTo(X(i) + 4, Y(alt[i]) - 3); g.fill(); }
+  }
+  g.lineWidth = 2; g.lineCap = 'round'; for (let i = 0; i < n - 1; i++) { g.strokeStyle = st === 'white' ? '#fff' : rgb(col(grade(i)).map(v => Math.min(255, v * 1.25)), 1); g.beginPath(); g.moveTo(X(i), Y(alt[i])); g.lineTo(X(i + 1), Y(alt[i + 1])); g.stroke(); }
+  g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(padL, bot, W - padL - padR, 1.5);
+  const f0 = 0.46, xi = f0 * (n - 1), i0 = Math.floor(xi), ad = alt[i0] + (alt[i0 + 1] - alt[i0]) * (xi - i0), px = X(xi), py = Y(ad);
+  g.beginPath(); g.arc(px, py, 4, 0, 7); g.fillStyle = '#fff8d0'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#ffd23a'; g.stroke();
+  g.font = '800 11px ApexMenu, Roboto, sans-serif'; g.fillStyle = '#fff'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 2;
+  if (!small) { g.textAlign = 'left'; g.fillText(fmt(a0), padL, 13); g.textAlign = 'right'; g.fillText(fmt(a1), W - padR, 13); } g.shadowBlur = 0;
+}
+
+// the elevation graph: the road (straightened, a fifth of its bends kept) as a wall standing on the floor, coloured by its grade
+function drawGraph(cv, T) {
+  const G = T.graph, W = 412, H = G.h + 34, s = 2; cv.width = W * s; cv.height = H * s; Object.assign(cv.style, { top: (G.base - H + 8) + 'px', height: H + 'px' });
+  const g = cv.getContext('2d'); g.scale(s, s);
+  const R = window.ROUTES[T.id], Mm = window.MENU.routeMaps[T.id] || {}, P = R.prof, n = P.length, a0 = Mm.alt[0], a1 = Mm.alt[1];
+  const alt = P.map(h => a0 + (h - P[0]) * (a1 - a0) / (P[n - 1] - P[0])), lo = Math.min(...alt), hi = Math.max(...alt), step = R.len / (n - 1);
+  const GR = [[0.01, [47, 191, 74]], [0.03, [154, 209, 58]], [0.05, [255, 210, 58]], [0.07, [255, 138, 42]], [0.09, [232, 52, 42]], [0.12, [158, 20, 32]]];
+  const col = (s) => { if (s <= GR[0][0]) return GR[0][1]; for (let i = 1; i < GR.length; i++) if (s <= GR[i][0]) { const t = (s - GR[i - 1][0]) / (GR[i][0] - GR[i - 1][0]); return GR[i - 1][1].map((c, k) => c + (GR[i][1][k] - c) * t); } return GR[GR.length - 1][1]; };
+  const grade = (i) => { const j0 = Math.max(0, i - 2), j1 = Math.min(n - 1, i + 3); return (alt[j1] - alt[j0]) / (step * (j1 - j0)); };
+  const rgb = (c, k = 1, a = 1) => 'rgba(' + c.map(x => Math.round(Math.min(255, x * k))) + ',' + a + ')';
+  const altAt = (f) => { const x = f * (n - 1), i = Math.min(n - 2, Math.floor(x)); return alt[i] + (alt[i + 1] - alt[i]) * (x - i); };
+  const fmt = (a) => Math.round(a).toLocaleString('en-US') + ' m';
+  const txt = (x, y, s, al, sz, c) => { g.font = '800 italic ' + (sz || 11) + 'px ApexMenu, Roboto, sans-serif'; g.textAlign = al || 'left'; g.fillStyle = c || '#fff'; g.shadowColor = 'rgba(0,0,0,.9)'; g.shadowBlur = 3; g.fillText(s, x, y); g.shadowBlur = 0; };
+  // the route, straightened along its own start-finish line, its bends kept at a fifth, seen a little from above
+  const Tp = R.top, raw = Tp.route.map(p => [p[0] * Tp.mpp, p[1] * Tp.mpp]), m = raw.length;
+  const ux = raw[m - 1][0] - raw[0][0], uz = raw[m - 1][1] - raw[0][1], ul = Math.hypot(ux, uz), ex0 = ux / ul, ez0 = uz / ul, KEEP = G.keep == null ? 0.2 : G.keep;
+  const pts = raw.map(p => { const dx = p[0] - raw[0][0], dz = p[1] - raw[0][1], a = dx * ex0 + dz * ez0, b = -dx * ez0 + dz * ex0; return [a, b * KEEP]; });
+  const cum = [0]; for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const hAt = (i) => altAt(cum[i] / cum[m - 1]), gAt = (i) => grade(Math.min(n - 2, Math.round(cum[i] / cum[m - 1] * (n - 1))));
+  const pitch = 0.28, x0 = 0, x1 = pts[m - 1][0], ky = G.h / (hi - lo), kx = (W - 6) / (x1 - x0), base = H - (G.style === 'band' ? 18 : 8);
+  const zs = 0.5 * Math.sin(pitch);   // the depth seen from a little above: a point further away stands higher
+  const S = (p, h) => [3 + (p[0] - x0) * kx, base - (h - lo) * ky - p[1] * kx * zs];
+  const Gd = pts.map(p => S(p, lo)), Tt = pts.map((p, i) => S(p, hAt(i)));
+  const st = G.style;
+  if (st === 'band') { const gr = g.createLinearGradient(0, base - 4, 0, H); gr.addColorStop(0, '#2a3d63'); gr.addColorStop(1, '#0d1626'); g.fillStyle = gr; g.fillRect(0, base - 2, W, H - base + 2); g.fillStyle = 'rgba(170,200,255,.7)'; g.fillRect(0, base - 2, W, 2); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, H - 3, W, 3); }
+  if (st === 'glass') { g.save(); g.fillStyle = 'rgba(30,48,80,.62)'; g.strokeStyle = 'rgba(190,215,255,.45)'; g.lineWidth = 1.5; g.beginPath(); g.roundRect(4, 2, W - 8, H - 4, 12); g.fill(); g.stroke(); g.restore(); }
+  // a short hard shadow of the wall on the floor in front of it
+  if (st !== 'line' && st !== 'bars') { g.save(); g.filter = 'blur(.6px)'; g.fillStyle = 'rgba(0,0,0,' + (st === 'solid' ? .35 : .25) + ')'; g.beginPath();
+    Gd.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); for (let i = m - 1; i >= 0; i--) { const hh = Gd[i][1] - Tt[i][1]; g.lineTo(Gd[i][0] + hh * .08, Gd[i][1] + Math.min(6, hh * .06)); } g.closePath(); g.fill(); g.restore(); }
+  if (st === 'bars') { const nb = Math.round(R.len / 250); for (let b = 0; b < nb; b++) { const f = (b + .5) / nb, i = Math.round(f * (m - 1)), x = 3 + f * (W - 6), bw = (W - 6) / nb - 2, h = (hAt(i) - lo) * ky + 3, cc = col(gAt(i));
+      const gr = g.createLinearGradient(0, base - h, 0, base); gr.addColorStop(0, rgb(cc, 1.15, .95)); gr.addColorStop(1, rgb(cc, .5, .45)); g.fillStyle = gr; g.beginPath(); g.roundRect(x - bw / 2, base - h, bw, h, [2, 2, 0, 0]); g.fill(); }
+    const f0b = 0.46, ib = Math.round(f0b * (m - 1)), xb = 3 + f0b * (W - 6), yb = base - (hAt(ib) - lo) * ky - 3; Tt[ib] = [xb, yb]; Tt[0] = [3, base - 3]; Tt[m - 1] = [W - 3, base - (hAt(m - 1) - lo) * ky - 3]; }
+  const aTop = st === 'solid' || st === 'band' ? 1 : st === 'flat' ? .75 : st === 'line' ? .22 : .9, aBot = st === 'solid' || st === 'band' ? 1 : st === 'flat' ? .12 : st === 'line' ? 0 : .3;
+  if (st !== 'bars') for (let i = 0; i < m - 1; i++) { const a = Gd[i], b = Gd[i + 1], c = Tt[i + 1], d = Tt[i], cc = col(gAt(i));
+    const gr = g.createLinearGradient(0, d[1], 0, a[1]); gr.addColorStop(0, rgb(cc, st === 'solid' || st === 'band' ? 1 : 1.05, aTop)); gr.addColorStop(1, rgb(cc, st === 'solid' || st === 'band' ? .45 : .4, aBot));
+    g.fillStyle = gr; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0] + .5, b[1]); g.lineTo(c[0] + .5, c[1]); g.lineTo(d[0], d[1]); g.closePath(); g.fill(); }
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (st === 'line') { g.save(); g.filter = 'blur(3px)'; g.lineWidth = 6; for (let i = 0; i < m - 1; i++) { const a = Tt[i], b = Tt[i + 1]; g.strokeStyle = rgb(col(gAt(i)), 1.2, .8); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); } g.restore(); }
+  g.lineWidth = st === 'line' ? 2.6 : st === 'solid' ? 2.4 : 1.8;
+  if (st !== 'bars') for (let i = 0; i < m - 1; i++) { const a = Tt[i], b = Tt[i + 1]; g.strokeStyle = st === 'solid' ? 'rgba(255,255,255,.9)' : rgb(col(gAt(i)), 1.3); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+  // the dot (where the map's dot is), the start's and the top's heights
+  const f0 = 0.46, i0 = Math.round(f0 * (m - 1)), s0 = Tt[i0];
+  g.beginPath(); g.arc(s0[0], s0[1], 8, 0, 7); g.fillStyle = 'rgba(255,210,58,.3)'; g.fill(); g.beginPath(); g.arc(s0[0], s0[1], 4, 0, 7); g.fillStyle = '#fff8d0'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#ffd23a'; g.stroke();
+  g.font = '900 italic 10.5px ApexMenu, Roboto, sans-serif'; const lt = fmt(altAt(f0)), lw = g.measureText(lt).width + 12; g.fillStyle = '#ffd23a'; g.beginPath(); g.roundRect(s0[0] - lw / 2, s0[1] - 26, lw, 15, 4); g.fill(); g.fillStyle = '#2a1d00'; g.textAlign = 'center'; g.fillText(lt, s0[0], s0[1] - 15);
+  const sa = Tt[0], sb = Tt[m - 1]; txt(8, Math.min(sa[1] - 7, base - 10), 'ELEVATION  ' + fmt(a0), 'left', 10); txt(W - 6, Math.max(12, sb[1] - 6), fmt(a1), 'right', 11);
+}
+
+// the globe: the Earth turned to the country, the country in gold, a point at the track
+async function globe(cv, T) {
+  const img = new Image(); img.src = 'assets/geo/earth.webp'; await img.decode();
+  const TW = 1024, TH = 512, tc = document.createElement('canvas'); tc.width = TW; tc.height = TH; const tx = tc.getContext('2d'); tx.drawImage(img, 0, 0, TW, TH); const Tx = tx.getImageData(0, 0, TW, TH).data;
+  const S = cv.width, x = cv.getContext('2d'), out = x.createImageData(S, S), D = Math.PI / 180, lat0 = T.glat * D, lon0 = T.glon * D, r = S / 2 - 3, sp0 = Math.sin(lat0), cp0 = Math.cos(lat0);
+  for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+    const u = (px + 0.5 - S / 2) / r, v = -(py + 0.5 - S / 2) / r, rho2 = u * u + v * v, o = (py * S + px) * 4;
+    if (rho2 <= 1) { const rho = Math.sqrt(rho2), z = Math.sqrt(1 - rho2), phi = Math.asin(z * sp0 + (rho ? v * rho * cp0 / rho : 0)), lam = lon0 + Math.atan2(u * rho, rho * z * cp0 - v * rho * sp0);
+      const tu = Math.floor(((lam / D + 180) / 360 % 1 + 1) % 1 * TW), tv = Math.min(TH - 1, Math.max(0, Math.floor((90 - phi / D) / 180 * TH))), q = (tv * TW + tu) * 4, sh = 0.38 + 0.62 * Math.pow(z, 0.55);
+      out.data[o] = Tx[q] * sh; out.data[o + 1] = Tx[q + 1] * sh; out.data[o + 2] = Tx[q + 2] * sh * 1.05; out.data[o + 3] = 255; } }
+  x.putImageData(out, 0, 0);
+  const P = (lon, lat) => { const l = lon * D - lon0, p = lat * D; return [S / 2 + r * Math.cos(p) * Math.sin(l), S / 2 - r * (cp0 * Math.sin(p) - sp0 * Math.cos(p) * Math.cos(l))]; };
+  for (const ring of (window.GEO.outlines[T.countryKey] || [])) { x.beginPath(); for (let i = 0; i < ring.length; i += 2) { const [a, c] = P(ring[i], ring[i + 1]); i ? x.lineTo(a, c) : x.moveTo(a, c); } x.closePath(); x.fillStyle = '#ffd23a'; x.fill(); }
+  const [qx, qy] = P(T.lon, T.lat); x.beginPath(); x.arc(qx, qy, 6, 0, 7); x.strokeStyle = 'rgba(255,240,190,.9)'; x.lineWidth = 2; x.stroke();
+  x.beginPath(); x.arc(S / 2, S / 2, r, 0, 7); x.strokeStyle = 'rgba(110,175,255,.6)'; x.lineWidth = 2; x.stroke();
+}
+</script>
+<script>
+// the live mockup (not the game): #t=<track>&cam=<1-3>&wx=<weather>. A tap on a weather icon changes the whole screen (wxfx.js);
+// the camera buttons and the neighbours' flags open another picture or track; the page is scaled to fit the window
+(async () => {
+  if (!window.PROGE || location.search.includes('static')) return;
+  // (the choice also kept for the tab: some viewers keep only a plain #name in the address)
+  let saved = ''; try { saved = sessionStorage.getItem('izbira-proge') || ''; } catch (e) {}
+  const P = window.PROGE, q = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : saved), id = P.tracks[q.get('t')] ? q.get('t') : 'vrsic';
+  const cam = [1, 2, 3].includes(+q.get('cam')) ? +q.get('cam') : 1, wx0 = WXFX.KEYS.includes(q.get('wx')) ? q.get('wx') : 'dry';
+  const tr = P.tracks[id], c = tr.cams[cam], T = JSON.parse(JSON.stringify(tr.T));
+  Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(wx0) });
+  await window.MOCK(T);
+  const o = { flash: null, hz: T.hz, carFloor: T.carFloor, snowStyle: 'blizzard', live: true }, t0 = performance.now(), now = () => (performance.now() - t0) / 1000;
+  WXFX.setTimeline([{ t: -30, k: wx0 }]); WXFX.frame(0, o);
+  const fit = () => { const s = Math.min(innerWidth / 412, innerHeight / 892); document.body.style.transform = 'translateX(' + Math.max(0, (innerWidth - 412 * s) / 2) + 'px) scale(' + s + ')'; };
+  document.body.style.transformOrigin = '0 0'; document.documentElement.style.width = '100%'; document.documentElement.style.height = '100%'; fit(); addEventListener('resize', fit);
+  let cur = wx0;
+  const loop = () => { WXFX.frame(now()); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+  // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)
+  const here = location.pathname + location.search, hash = (p) => { const n = new URLSearchParams({ t: id, cam, wx: cur }); for (const k in p) n.set(k, p[k]); return here + '#' + n; };
+  const go = (p) => { const h = hash(p); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h); location.reload(); };
+  document.querySelector('.wxc').addEventListener('click', (e) => {
+    const i = e.target.closest('i'); if (!i) return;
+    const k = WXFX.KEYS[[...i.parentNode.children].indexOf(i)]; if (!k || k === cur) return;
+    cur = k; WXFX.tap(k, now()); const h = hash({}); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h);
+  });
+  document.querySelectorAll('.views i').forEach((el, i) => el.addEventListener('click', () => { if (i + 1 !== cam) go({ cam: i + 1 }); }));
+  const k = P.order.indexOf(id), n = P.order.length, nb = document.querySelectorAll('.nb');
+  nb[0].addEventListener('click', () => go({ t: P.order[(k - 1 + n) % n] }));
+  nb[1].addEventListener('click', () => go({ t: P.order[(k + 1) % n] }));
+  const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:50%;top:420px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
+  document.querySelector('.go').addEventListener('click', () => toast('Race! (in the game the race starts)'));
+  document.querySelector('#homeBtn').addEventListener('click', () => toast('Back to the main menu'));
+  for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn')]) el.style.cursor = 'pointer';
+})();
+</script>
+</body></html>

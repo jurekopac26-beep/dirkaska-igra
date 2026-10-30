@@ -54,6 +54,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
+| `maketa-menija/izbira-proge/` | interaktivna maketa zaslona za izbiro proge: vreme čez cel zaslon (`wxfx.js`), table 20 držav (`SIGNS`, raziskava v `table-drzav.json`), 7 prog (`proge.js`), orodja za slike in video (`orodja/`) |
 
 ## Teme v `js/game.js`
 

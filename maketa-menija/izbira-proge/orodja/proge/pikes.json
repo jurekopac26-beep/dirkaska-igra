@@ -1,0 +1,125 @@
+{
+ "track": {
+  "id": "pikes",
+  "stats": [
+   [
+    "Best race",
+    "04:05.917"
+   ],
+   [
+    "Length",
+    "6.12 km"
+   ],
+   [
+    "Climb",
+    "+1,439 m"
+   ]
+  ],
+  "countryKey": "USA",
+  "prevKey": "Japan",
+  "nextKey": "Belgium",
+  "map": "maketa-menija/izbira-proge/mk/map_vrsicpad.webp",
+  "car": "maketa-menija/izbira-proge/mk/car_truck.webp",
+  "carW": 320,
+  "carX": 6,
+  "carFloor": 734,
+  "hz": 668,
+  "board": {
+   "x0": 112,
+   "y": 590,
+   "floor": 712
+  },
+  "place": "VR\u0160I\u010c",
+  "lenm": "12,300 m",
+  "country": "USA",
+  "glat": 27,
+  "glon": -105,
+  "lat": 38.9135,
+  "lon": -105.0368,
+  "graph": {
+   "base": 744,
+   "h": 50,
+   "style": "glass3d"
+  },
+  "noTags": true,
+  "rowName": "USA",
+  "mapH": 430,
+  "title": "Pikes Peak",
+  "v2": 1,
+  "zoom": true,
+  "flow3d": null,
+  "flowA": 0.45,
+  "flagFix": true,
+  "titleAlt": "",
+  "altSep": " ",
+  "altBase": 2862,
+  "signStyle": "us"
+ },
+ "variants": [
+  {
+   "out": "trk_pikes",
+   "mg": {
+    "box": {
+     "ratio": 0.6,
+     "css": "background:rgba(10,14,20,.45);border-radius:8px;",
+     "padT": 6,
+     "gap": 6,
+     "right": 10
+    },
+    "panel": "none",
+    "fill": 0.3,
+    "dash": false,
+    "trail": true,
+    "f": 0.9,
+    "full": true,
+    "bare": true,
+    "pb": 0,
+    "fs": 10,
+    "loTop": true,
+    "loUp": 12,
+    "lineOnly": true,
+    "split": true
+   },
+   "set": {
+    "v2": 4,
+    "wx4": 5,
+    "mapTop": 0.01,
+    "mapH": 504,
+    "map": "assets/maps/fly-pikes.webp",
+    "viewsRight": true,
+    "view": 2,
+    "camLook": "camS",
+    "altGap": 6,
+    "camOrder": [
+     1,
+     0,
+     2
+    ],
+    "zoom": false,
+    "viewsPos": "tl",
+    "wxCol": 1,
+    "home": false,
+    "bigOpp": true,
+    "rowV3": true,
+    "globeTop": true,
+    "wxBig": true,
+    "signShadow": {
+     "dx": 38,
+     "dy": -28,
+     "blur": 9,
+     "a": 0.36
+    },
+    "oppSize": 42,
+    "viewsCss": "background:rgba(10,14,20,.45);border:0;border-radius:8px;",
+    "css": ".views.camS i.on { width: 40px; border-radius: 6px; } .head{z-index:8!important;background:linear-gradient(180deg,rgba(8,13,24,.92),rgba(8,13,24,.55) 70%,rgba(8,13,24,0))!important;height:96px!important;align-items:flex-start!important;padding-top:14px!important} .views{top:88px!important;bottom:auto!important;left:auto!important;right:10px!important} .wxc{left:14px!important;right:auto!important;top:86px!important;gap:8px!important} .wxc.c1 i{width:52px} .wxc.c1 i svg{width:40px!important;height:40px!important} .wxc.c1 i.on svg{width:52px!important;height:52px!important} .wxc.c1 em{font-size:13px!important} #map{overflow:hidden} #mapimg{width:100%!important;height:100%!important;object-fit:cover;margin:0!important} .row.v3 > div:last-child{order:-1;margin:0 10px 0 4px!important} .row .opp{order:10;border-right:0!important;border-left:1px solid rgba(255,255,255,.12)!important;padding-left:12px!important;padding-right:4px!important} .back{display:none!important} .go{left:14px!important} #homeBtn{width:78px!important} .wxc{left:27px!important} #room{border-radius:13px 13px 0 0} #map{height:520px!important} #flow{display:none}",
+    "icon2": "<g fill=\"none\" stroke=\"#fff\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 21l7-6.5 3 3 4-4.5 6 8\"/></g><path d=\"M2 3.5l9 3.8-9 3.8 2-3.8z\" class=\"fill\" fill=\"#fff\"/>",
+    "oppTag": "ikona",
+    "oppHtml": "<svg viewBox=\"0 0 18 17\" style=\"width:17px;height:16px;vertical-align:baseline;overflow:visible\"><rect x=\"2\" y=\"1.0\" width=\"7\" height=\"4\" rx=\"1.6\" fill=\"#9fb0c8\" opacity=\"1.0\"/><rect x=\"11\" y=\"3.6\" width=\"7\" height=\"4\" rx=\"1.6\" fill=\"#9fb0c8\" opacity=\"1.0\"/><rect x=\"2\" y=\"6.2\" width=\"7\" height=\"4\" rx=\"1.6\" fill=\"#9fb0c8\" opacity=\"0.75\"/><rect x=\"11\" y=\"8.8\" width=\"7\" height=\"4\" rx=\"1.6\" fill=\"#9fb0c8\" opacity=\"0.75\"/><rect x=\"2\" y=\"11.4\" width=\"7\" height=\"4\" rx=\"1.6\" fill=\"#9fb0c8\" opacity=\"0.5\"/><rect x=\"11\" y=\"14.0\" width=\"7\" height=\"4\" rx=\"1.6\" fill=\"#9fb0c8\" opacity=\"0.5\"/></svg>",
+    "titleSize": 44,
+    "altSize": 22,
+    "wxfx": true,
+    "wxSnow": true
+   }
+  }
+ ]
+}
