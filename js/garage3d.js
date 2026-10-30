@@ -3968,11 +3968,12 @@ const Garage3D = (function () {
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0 };
   // (every view framed for the car on the table: one taller than the SAMUM (a lorry, a monster truck) or longer, from further off (k) and
   // a little higher (dy); the others as they are. k, dy: now (eased while a new car drives in), kw, dyw: the car's own (the plans' views))
-  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0 };
+  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1 };
   // (a picture narrower than AREF (the phone upright, the garage over the whole screen): as wide a view across as at AREF, more of it up
   // and down (its own fov wider))
-  // (one wider than AWIDE (lying down): more of it up and down too, the cabinet before the car in it)
-  const AREF = 0.95, AWIDE = 1.25, tallFov = (f) => { const a = W / H, t = Math.tan(f * Math.PI / 360); return a < AREF ? 2 * Math.atan(t * AREF / a) * 180 / Math.PI : a > AWIDE ? 2 * Math.atan(t * Math.sqrt(a / AWIDE) * 1.25) * 180 / Math.PI : f; };
+  // (one wider than AWIDE (lying down): more of it up and down too, the more the less of the picture is free between the page's buttons
+  // (SHIFT.free: its part of the height), the car and the cabinet before it between them)
+  const AREF = 0.95, AWIDE = 1.25, tallFov = (f) => { const a = W / H, t = Math.tan(f * Math.PI / 360); return a < AREF ? 2 * Math.atan(t * AREF / a) * 180 / Math.PI : a > AWIDE ? 2 * Math.atan(t * Math.sqrt(a / AWIDE) * clamp(0.93 / SHIFT.free, 1.25, 2.2)) * 180 / Math.PI : f; };
   function camFit(cv, now) { const K = cv && cv.kit; CAM.kw = K ? clamp(Math.max(1, (K.top - 0.27) / 1.66, (Math.max(K.front, -K.rear) + 0.5) / 3.2), 1, 1.9) : 1; CAM.dyw = K ? Math.max(0, K.top - 1.91) * 0.45 : 0;
     if (now) { CAM.k = CAM.kw; CAM.dy = CAM.dyw; } }
   function placeCamera(dt) {
@@ -5701,8 +5702,8 @@ const Garage3D = (function () {
     set onHud(f) { hud = f || (() => {}); }, set onTap(f) { onTap = f || (() => {}); },
     // (the page: the picture raised by px; what a tap hits; the marks; the parts seen through on the car; a thing's box on the screen;
     // the things to tap; the cabinet's lamps (lit: the maquette 0..2, 3 none), its locked maquettes, its tags' prices; the lift's plate)
-    shift(px) { SHIFT.y = px || 0; }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
-    box(key) { const it = tapOf(key); return it ? screenBox(it) : null; }, get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex })); },
+    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
+    box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },   // ('car': the car on the table) get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex })); },
     front(o) { if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },
     lift() { return play(function* () { const cv = cur; if (!cv) return; if (lift > 0.01 || LIFT.on) yield* liftDown(cv, false); else { yield* liftUp(cv, LIFT_H, false); yield* wait(0.4); } }); },
     set fast(k) { fast = k > 0 ? k : 1; },

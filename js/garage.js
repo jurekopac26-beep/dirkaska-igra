@@ -310,7 +310,7 @@
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
 
   /* ---------------- the guide on the first visit: what can be tapped, one thing at a time ---------------- */
-  const GUIDE_AT = ['rgl:TURBO', 'mq1', 'service', 'col0', '.g-cars2'];   // (what each step rings: a thing in the picture, or a page's element)
+  const GUIDE_AT = ['rgl:TURBO', 'mq1', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: a thing in the picture, or the page's elements, each its own ring)
   const GUIDE = [
     ['Deli na regalu', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.'],
     ['Aero paketi', 'Makete na omarici so aero paketi tvojega avta. Tapni maketo, da ga izbereš.'],
@@ -321,10 +321,14 @@
   let gStep = -1;
   function guide(i) {
     const el = $('g-guide'); gStep = i; if (i >= GUIDE.length) { el.className = 'g-guide'; el.innerHTML = ''; S.guide = 1; save(); return; }
-    const k = GUIDE_AT[i], [t, p] = GUIDE[i], page = k[0] === '.', r0 = page ? document.querySelector(k).getBoundingClientRect() : G.box(k), app = $('g-app').getBoundingClientRect();
-    const r = r0 ? (page ? { x: r0.left - app.left, y: r0.top - app.top, w: r0.width, h: r0.height } : r0) : null, pad = 10;
-    const ring = r ? '<i class="ring" style="left:' + (r.x - pad) + 'px;top:' + (r.y - pad) + 'px;width:' + (Math.max(44, r.w) + 2 * pad) + 'px;height:' + (Math.max(44, r.h) + 2 * pad) + 'px"></i>' : '';
-    const below = !r || r.y < app.height * 0.5, by = below ? (r ? r.y + Math.max(44, r.h) + pad + 14 : 140) : null, ty = below ? 'top:' + Math.min(by, app.height - 190) + 'px' : 'bottom:' + Math.max(16, app.height - r.y + pad + 14) + 'px';
+    const k = GUIDE_AT[i], [t, p] = GUIDE[i], app = $('g-app').getBoundingClientRect(), pad = 10;
+    const rs = k[0] === '#' ? [...document.querySelectorAll(k)].map(e => e.getBoundingClientRect()).filter(b => b.width).map(b => ({ x: b.left - app.left, y: b.top - app.top, w: b.width, h: b.height })) : [G.box(k)].filter(Boolean);
+    const ring = rs.map(r => '<i class="ring" style="left:' + (r.x - pad) + 'px;top:' + (r.y - pad) + 'px;width:' + (Math.max(44, r.w) + 2 * pad) + 'px;height:' + (Math.max(44, r.h) + 2 * pad) + 'px"></i>').join('');
+    const r = rs.length ? rs.reduce((a, b) => { const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y); return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y }; }) : null;
+    const below = !r || r.y < app.height * 0.5, by = below ? (r ? r.y + Math.max(44, r.h) + pad + 14 : 140) : null;
+    // (upright: under or over the ring, the screen's width; lying down: beside it, on the other half, by the ring's height)
+    const ty = app.width > app.height * 1.25 ? (r && r.x + r.w / 2 > app.width / 2 ? 'right:auto;' : 'left:auto;') + 'width:' + Math.round(Math.min(380, app.width * 0.42)) + 'px;top:' + Math.round(Math.max(56, Math.min((r ? r.y + r.h / 2 : app.height / 2) - 70, app.height - 180))) + 'px'
+      : below ? 'top:' + Math.min(by, app.height - 190) + 'px' : 'bottom:' + Math.max(16, app.height - r.y + pad + 14) + 'px';
     el.innerHTML = '<div class="veil"></div>' + ring + '<div class="bub" style="' + ty + '"><b>' + esc(tr(t)) + '</b><p>' + esc(tr(p)) + '</p><div><small>' + (i + 1) + ' / ' + GUIDE.length + '</small><button data-guide="1">' + esc(tr(i + 1 < GUIDE.length ? 'Naprej' : 'Razumem')) + '</button></div></div>';
     el.className = 'g-guide on';
   }
@@ -355,7 +359,11 @@
   }
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); }
   // the picture over the whole page, raised a little (its foot under the buttons)
-  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2)); G.shift(Math.round(r.width > r.height * 1.25 ? r.height * 0.24 : Math.min(70, r.height * 0.08))); }   // (lying down: raised more, the cabinet over the buttons)
+  // (lying down: raised more and its view taller by how little is free between the buttons at the top and the car's name, the car and
+  // the cabinet between them)
+  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2));
+    const wide = r.width > r.height * 1.25, a = $('g-track').getBoundingClientRect(), b = $('g-name').getBoundingClientRect(), free = b.top > a.bottom ? (b.top - a.bottom) / r.height : 0.55;
+    G.shift(Math.round(wide ? r.height * 0.29 * free : Math.min(70, r.height * 0.08)), wide ? free : 1); }
 
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
   // retired model's: its heir); the money and the cars stay the profile's (the mockup's for now). Without them: the profile's car

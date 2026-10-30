@@ -28,9 +28,9 @@ try {
   // the guide on the first visit (a fresh profile): five steps, each a ring round what to tap and a bubble; done, it is not shown again
   {
     const g = await page.evaluate(async () => { const el = document.getElementById('g-guide'), out = { on: el.classList.contains('on'), steps: [] };
-      for (let i = 0; i < 8 && el.classList.contains('on'); i++) { out.steps.push({ ring: !!el.querySelector('.ring'), t: el.querySelector('.bub b').textContent }); el.querySelector('[data-guide]').click(); }
+      for (let i = 0; i < 8 && el.classList.contains('on'); i++) { out.steps.push({ ring: el.querySelectorAll('.ring').length, t: el.querySelector('.bub b').textContent }); el.querySelector('[data-guide]').click(); }
       out.after = el.classList.contains('on'); out.saved = JSON.parse(localStorage.getItem('apex-garage')).guide; return out; });
-    T.check('the guide on the first visit: 5 steps (the regal, the aero kits, the service, the paint, the other cars), each with its ring; then gone, remembered', g.on && g.steps.length === 5 && g.steps.every(s => s.ring) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
+    T.check('the guide on the first visit: 5 steps (the regal, the aero kits, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 5 && g.steps.every((s, i) => s.ring === (i === 4 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
   }
   await page.evaluate(() => { __garage.hold = true; });
   // the animations to their end (the clock stepped half a second at a time while a show plays or waits); returns the seconds it took
@@ -333,6 +333,23 @@ try {
       ok, JSON.stringify(R));
   }
 
+  // 8c. lying down (640 × 360, 915 × 412): the picture's view taller by how little is free between the page's buttons: the car whole
+  // under the buttons at the top, the maquettes, the SERVICE button and the colour circles in the picture over the car's name
+  {
+    const R = [];
+    for (const [w, h] of [[640, 360], [915, 412]]) {
+      await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(600);
+      R.push(await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), app = document.getElementById('g-app').getBoundingClientRect(), top = r('g-track').bottom - app.top, name = r('g-name').top - app.top;
+        const car = Garage3D.box('car'), b = ['mq0', 'mq1', 'mq2', 'service', 'col0', 'col7'].map(k => Garage3D.box(k));
+        return { car: __garage.S.car, top: Math.round(top), name: Math.round(name), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]),
+          ok: !!car && car.y >= top - 2 && car.y + car.h <= name && b.every(x => x && x.y >= top && x.y + 20 <= name) }; }));
+      // (the guide's last step: a ring round each of the buttons for the other cars, its bubble beside them, clear of them)
+      R.push(await page.evaluate(() => { __garage.guide(4); const el = document.getElementById('g-guide'), rings = [...el.querySelectorAll('.ring')].map(e => e.getBoundingClientRect()), bub = el.querySelector('.bub').getBoundingClientRect(); __garage.guide(5);
+        return { rings: rings.map(r => [Math.round(r.left), Math.round(r.top), Math.round(r.width)]), bub: [Math.round(bub.left), Math.round(bub.top), Math.round(bub.width), Math.round(bub.bottom)], ok: rings.length === 2 && rings.every(r => r.width > 60 && bub.bottom <= r.top) }; }));
+    }
+    await page.setViewportSize({ width: 412, height: 915 }); await page.waitForTimeout(600);
+    T.check('lying down (640 × 360, 915 × 412): the car whole between the buttons at the top and its name; the maquettes, SERVICE and the colour circles in the picture over the name; the guide\'s rings round the buttons for the other cars, its bubble beside them', R.every(x => x.ok), JSON.stringify(R));
+  }
 
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
