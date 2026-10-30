@@ -1,6 +1,7 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
 // Leaderboard, Credits), the four modes, the tracks of every mode in their groups (each with its picture: the map from above, or the
-// model of the land), the weather and the race options, the car (the game's own screen and back), a race from the menu (the intro
+// model of the land), the weather and the race options, the car (the game's own screen and back; the car tapped there: the garage and
+// back to it, its Back the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
@@ -391,6 +392,29 @@ try {
     await page.setViewportSize({ width: 600, height: 400 }); await page.waitForTimeout(300);   // (a window that changes its size, the new menu not built)
     await page.setViewportSize({ width: 412, height: 915 }); await page.waitForTimeout(300);
     T.check('the old track screen lists the tracks; the window changing its size is no error', (await page.evaluate(() => document.querySelectorAll('[data-track]').length)) > 20 && !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 10. the car tapped on the car screen opened from the track step: the garage (here a stand-in page that goes back as the garage's back
+  // button does: index.html?zaslon=avto&avto=<id>), then the car screen again on that car, its hint there; its Back: the track step
+  {
+    const { ctx, page, errors } = await open();
+    await ready(page);
+    let gar = null;
+    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + new URLSearchParams(location.search).get("car"))</script>' }); });
+    await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
+    await click(page, 'pick-car'); await page.waitForTimeout(400);
+    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
+    const bb = await page.locator('#car-garage').boundingBox();
+    await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), page.mouse.click(bb.x + bb.width / 2, bb.y + bb.height * 0.4)]);
+    await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
+    await page.waitForTimeout(300);
+    const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
+    T.check('the car tapped on the car screen: the garage with it (garaza.html?car=<id>&color=<its colour>), its back: the car screen again on that car (the address plain again)',
+      gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, g }));
+    await page.click('#car-back'); await page.waitForTimeout(400);
+    const back = await ev(page, 'return { scr: Menu.debug().screen, card: !!root.querySelector(".card h1") };');
+    T.check('back from the garage, the car screen\'s Back: the track step it was opened from', back.scr === 'track' && back.card && (await shown(page)).join() === 's-menu' && !real(errors).length, JSON.stringify({ back, errors: real(errors) }));
     await ctx.close();
   }
 } finally {
