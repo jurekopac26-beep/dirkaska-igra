@@ -4894,6 +4894,9 @@ const Garage3D = (function () {
     eng.speed = 0; eng.thr = 0; cv.roll = 0;
   }
   // the exhaust's smoke while the engine runs: blue-grey and heavy when it is worn (its condition under half)
+  // the car on the table always running (odlocitve 30. 10.): its engine idling (its sound, a light shake, a wisp from its exhaust now and
+  // then: idleSmoke), its lamps on; after every show and when it is shown, and while it drives in and out
+  function idleOn(cv) { if (!cv || cv !== cur) return; if (!eng.on || eng.M !== cv.M) engStart(cv.M); eng.locked = true; eng.speed = 0; eng.thr = 0; eng.rev = 0; lamps(cv, 1, 0.35); cv.shake = 0.35; }
   function idleSmoke(cv, dt) {
     if (!eng.on || cv !== cur || cv.M.ev) return;
     cv.smokeT = (cv.smokeT || 0) - dt; if (cv.smokeT > 0) return;
@@ -5057,8 +5060,8 @@ const Garage3D = (function () {
       eng.locked = true; eng.speed = 0; eng.rev = 0;
       yield* revs(nw, 1, false);
       lamps(nw, 1, 0.4); yield* wait(0.5);
-      yield* tween(0.4, (k) => { lamps(nw, 1 - k, 0.4 * (1 - k)); nw.shake = 1 - k; });
-      engStop(); nw.shake = 0;
+      yield* tween(0.4, (k) => { lamps(nw, 1, 0.4 - 0.05 * k); nw.shake = 1 - 0.65 * k; });
+      idleOn(nw);
       if (old) freeCar(old);
       rig.tx = HOME.tx;
       planAhead(nw);   // (where the lift's pads go under it, measured while it stands: its first lift starts at once)
@@ -5091,7 +5094,7 @@ const Garage3D = (function () {
           } else if (zone === 'front') { yield* start(); if (!cv.M.ev) yield* revs(cv, 1, false); }
         }
         if (!running) { hud('power', { kind, lv, from, kw: cv.M.kw }); yield* goZone(cv, kind, 'rear'); yield* start(); if (cv.M.ev) yield* evPulse(cv, nw, 1); else yield* revs(cv, 1, false); }
-        yield* wait(0.3); lamps(cv, 0, 0); engStop(); cv.shake = 0;
+        yield* wait(0.3); idleOn(cv);
       } else if (kind === 'gume' || kind === 'zavore') {
         // the camera round to the wheel while the lift's arms swing in under the sills (the column's foot between the wheels, not under
         // this one); the car up on the lift, the wheels free, the camera with it, looking up at it a little: from under the sills' line,
@@ -5356,9 +5359,9 @@ const Garage3D = (function () {
         else { yield* until('n.plugOut', 14); cue('m.oil'); SV.fx.oil = 1; let t = 0; while (t < 2 && (t < 0.8 || SV.lampLit < 0.6)) t += yield; SV.fx.oil = 0; cue('m.oilEnd'); }
         yield* until('n.out', 10); yield* until('f.out', 6);
         setCond(cv, { engine: cond.engine }); cue('car.lower'); engStart(cv.M); lamps(cv, 1, 0);
-        yield* par((function* () { yield* lowerCar(cv, false, 0.5); cue('car.down'); })(), (function* () { while (lift > 1e-3) yield; svcDone('engine'); lamps(cv, 0, 0); })(),
+        yield* par((function* () { yield* lowerCar(cv, false, 0.5); cue('car.down'); })(), (function* () { while (lift > 1e-3) yield; svcDone('engine'); })(),
           (function* () { yield* wait(0.3); if (cv.M.ev) yield* evPulse(cv, cv.parts.motor || cv.v.grp, 1); else yield* revs(cv, 1, false); })());
-        lamps(cv, 0, 0); engStop(); SV.eng = false; cv.shake = 0; yield* armsTo(0, 0.7); yield* carriageTo(LIFT.c0, 0.25);
+        SV.eng = false; idleOn(cv); yield* armsTo(0, 0.7); yield* carriageTo(LIFT.c0, 0.25);
       }
     }
     yield* svcCam('HOME', 1.2); cue('m.home');
@@ -5425,7 +5428,7 @@ const Garage3D = (function () {
     svuOff(); SVX.snaps.length = 0; SVX.wa = SVX.gloss = 0; SVWU.value.x = SVX.wet = 0; SVX.lst = SVX.scn = null; SVX.wr = 0; SVX.kick[0] = SVX.kick[1] = 0;
     for (const A of RB) { A.sv = 0; if (A.sa) { A.sa = 0; A.dirty = true; } }
     GLK.want = 0.3; if (GLK.k !== 0.3) glintK(0.3);
-    if (SV.cv) { SV.cv.shake = 0; if (SV.eng) { engStop(); lamps(SV.cv, 0, 0); } } SV.eng = false;
+    if (SV.cv) { if (SV.cv === cur) idleOn(SV.cv); else { SV.cv.shake = 0; if (SV.eng) { engStop(); lamps(SV.cv, 0, 0); } } } SV.eng = false;
   }
   // (a car gone from the table (a swap, a car shown): the service's hold on it let go (its plans, its points))
   const svcForget = () => { if (SV.cv && SV.cv !== cur) { SV.cv = null; SV.P = {}; } };
@@ -5483,7 +5486,7 @@ const Garage3D = (function () {
       if (!spec.num) { nw.v.dec.visible = false; nw.v.bodyG.traverse(o2 => { if (o2.isMesh && o2.material === nw.v.dec.material) o2.visible = false; }); }
       nw.clip.set(new V3(-1, 0, 0), 1e4);
       for (const k in nw.parts) nw.parts[k].visible = true;
-      tt.add(nw.root); nw.root.position.copy(cv.root.position); cur = nw; tt.remove(cv.root); nw.lp = cv.lp; planAhead(nw);   // (the same body, the same parts: the lift's pads where they were (not measured yet: now))
+      tt.add(nw.root); nw.root.position.copy(cv.root.position); cur = nw; tt.remove(cv.root); nw.lp = cv.lp; planAhead(nw); idleOn(nw);   // (the same body, the same parts: the lift's pads where they were (not measured yet: now))
       freeCar(cv);
       // drying: the arms up out of the way, the chamber's lights warm, a warm glow sweeping along the car, glints on the fresh paint
       hud('paint', { step: 'dry' });
@@ -5665,7 +5668,7 @@ const Garage3D = (function () {
     for (const k in FREE) if (FREE[k]) FREE[k].away = false;   // (a stand stepped aside for a swap cut short: back)
     if (cur) freeCar(cur);
     if (lift || LIFT.on || LIFT.s || LIFT.c !== LIFT.c0) { lift = 0; Object.assign(LIFT, { s: 0, on: false, plan: null, c: LIFT.c0 }); poseLift(); }   // (the lift down, its arms stowed)
-    cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2; svcForget(); camFit(cur, true);
+    cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2; svcForget(); camFit(cur, true); idleOn(cur);
     renderer.compile(scene, camera);   // (the shaders of what is hidden for now too: the lamps' glows, the sparks; no stutter when they show)
     planAhead(cur);
   }
