@@ -44,7 +44,7 @@ try {
   T.check('every person standing on a roof (a ray down hits the roof at their feet, the roof over the water)', S.feet.every(f => f.roof != null && Math.abs(f.roof - f.y) < 0.12 && f.y > 4 && f.put < 0 && f.put > -0.35), JSON.stringify(S.feet));
   // to the first house, stopped: VRZI OBROČ shown; a tap on it: the ring flies, the person down the line onto the deck
   let res = await drive(page, { n: 900, stopAtBtn: true });
-  await page.waitForTimeout(400);   // (the tags follow the camera: a frame or two drawn)
+  await page.waitForFunction(() => /POMOČ!/.test((document.querySelector('#mis-tags i') || {}).innerText || ''), null, { timeout: 8000 }).catch(() => {});   // (the tags follow the camera: drawn once the view has caught up with the stop, slower on a slow machine)
   s = await st(page);
   T.check('stopped by the first house: VRZI OBROČ shown, POMOČ! over the roof', res === 'btn' && s.btn && s.tags >= 1 && /POMOČ!/.test(s.tagText), JSON.stringify({ res, btn: s.btn, tags: s.tags, tag: s.tagText }));
   await page.tap('#mis-btn');
