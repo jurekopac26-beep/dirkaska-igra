@@ -3779,7 +3779,8 @@ const Garage3D = (function () {
   // side (the YOUR CAR one with its lamps on); again when the car or its colour changes: one a frame, none in a frame another picture of
   // a car was drawn in (each a whole car built and drawn: on a phone a stutter if all at once), the last cars' kept (back and forth)
   const THB = { at: -1, n: 0 };   // (the frame a car's picture was last drawn in; the frames drawn)
-  function frontCars(spec) { const F = FRONT; if (!spec) return; const key = spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false);
+  function frontCars(spec) { const F = FRONT; if (!spec) return; const u = spec.upg || {}, cd = spec.cond || {};
+    const key = spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false) + '|' + (u.motor | 0) + (u.gume | 0) + (u.zavore | 0) + '|' + ['clean', 'body', 'engine'].map(k => Math.round((cd[k] == null ? 1 : cd[k]) * 10)).join(',');
     if (F.key !== key) { F.key = key; F.todo = [0, 1, 2]; }
     while (F.todo && F.todo.length) { const i = F.todo[0], k = key + '|' + i, sp = F.sprites[i]; let c = F.cache.get(k);
       if (!c) { if (THB.at === THB.n) return; c = thumbCanvas(Object.assign({}, spec, { upg: Object.assign({}, spec.upg, { aero: i + 1 }) }), 200, 100, { yaw: 0.62, lit: i === 0 }); }
@@ -3788,7 +3789,8 @@ const Garage3D = (function () {
   // each frame: the YOUR CAR maquette shakes a little (a running engine) and puffs a wisp now and then; the lift's plate
   function stepFront(dt) { const F = FRONT, sp = F.sprites[0]; if (sp && sp.visible) { const p0 = sp.userData.p0; sp.position.set(p0.x + Math.sin(time * 41) * 0.0025, p0.y + Math.abs(Math.sin(time * 33)) * 0.002, p0.z);
       if ((F.puff = (F.puff || 0) - dt) < 0) { F.puff = 0.35 + Math.random() * 0.4; puffs.emit(p0.x - 0.33, p0.y + 0.06, p0.z + 0.08, -0.12, 0.08, 0.02, 1.2, 0.03, 0.12, [0.75, 0.77, 0.8], 0.3, -0.05, 1.0, 0.02); } }
-    frontPlate(); if (!busy && cur) frontCars(cur.spec); }
+    frontPlate(); if (!busy && cur) frontCars(cur.spec);
+    if (TAPM.list.length) { const on = !rglAway(); for (const o of TAPM.list) if (o.userData.rgl) o.visible = on; } }
   /* ---------------- a tap on the picture: what it hits (pick), the marks on what a menu is for (mark), the new part seen through on the
      car (ghost) ----------------
      pick: every thing to tap (the regal's parts, the maquettes, the SERVICE button, the colour circles, the lift's plate) as its box on
@@ -3813,12 +3815,12 @@ const Garage3D = (function () {
       for (let i = 0; i < P.length; i += 3) { const k = key(i); let s = m.get(k); if (!s) m.set(k, s = [0, 0, 0]); s[0] += N[i]; s[1] += N[i + 1]; s[2] += N[i + 2]; }
       N = new Float32Array(P.length); for (let i = 0; i < P.length; i += 3) { const s = m.get(key(i)), l = Math.hypot(s[0], s[1], s[2]) || 1; N[i] = s[0] / l; N[i + 1] = s[1] / l; N[i + 2] = s[2] / l; } }
     g.setAttribute('normal', new THREE.BufferAttribute(N.slice ? N.slice() : N, 3)); g.computeBoundingSphere(); return g; }
-  const tapAll = () => (RGL.items && !(RGL.P && RGL.P.k > 0.5) ? RGL.items : []).concat(FRONT.items);   // (the regal not while it has stepped aside)
+  const tapAll = () => (RGL.items || []).concat(FRONT.items), rglAway = () => !!(RGL.P && RGL.P.k > 0.5);   // (the regal stepped aside: not tapped, its marks hidden)
   const tapOf = (key) => tapAll().find(it => it.key === key);
   function tapMarkOff() { for (const m of TAPM.list) { scene.remove(m); m.geometry.dispose(); } TAPM.list.length = 0; }
-  function tapMark(blue, orange) { tapMarkOff(); const M = tapMats(), add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; scene.add(mainOnly(o)); TAPM.list.push(o); };
-    for (const k of orange || []) { const it = tapOf(k); if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
-    const it = blue && tapOf(blue); if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); } }
+  function tapMark(blue, orange) { tapMarkOff(); const M = tapMats(); let rg = false; const add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; o.userData.rgl = rg; scene.add(mainOnly(o)); TAPM.list.push(o); };
+    for (const k of orange || []) { const it = tapOf(k); rg = !!it && it.bay != null; if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
+    const it = blue && tapOf(blue); rg = !!it && it.bay != null; if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); } }
   function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } for (const e of GH.hidX) e.visible = true; GH.hidX = []; GH.kind = null; shadowDirty = 2; }
   function ghost(kind, lv) { ghostOff(); const cv = cur; if (!cv || !kind || busy) return; const g = partsFor(cv, kind, lv); partsK(g, 1);
     const see = (o) => { if (!o.isMesh || !o.material) return; const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone(); m.transparent = true; m.opacity = 0.5; m.depthWrite = false;
@@ -3833,7 +3835,7 @@ const Garage3D = (function () {
   const _rc = new THREE.Raycaster(), _rv2 = new THREE.Vector2();
   function pick(x, y) {
     // (a box the tap is in: the smallest (a small thing before a big one's box); none: the nearest middle of those grown to 44 x 44 px)
-    let best = null, ba = 1e12, bd = 1e9, near = null, nd = 1e9; for (const it of tapAll()) { const r = screenBox(it); if (!r) continue; const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    let best = null, ba = 1e12, bd = 1e9, near = null, nd = 1e9; for (const it of tapAll()) { if (it.bay != null && rglAway()) continue; const r = screenBox(it); if (!r) continue; const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
       if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) { const a = r.w * r.h; if (a < ba) { ba = a; best = it; bd = r.d; } }
       else if (Math.abs(x - cx) <= Math.max(44, r.w) / 2 && Math.abs(y - cy) <= Math.max(44, r.h) / 2) { const e = Math.hypot(x - cx, y - cy); if (e < nd) { nd = e; near = it; } } }
     if (!best && near) { best = near; bd = screenBox(near).d; }
@@ -4998,7 +5000,7 @@ const Garage3D = (function () {
     swapNext = spec;
     return (swapP = play(function* () {
       const spec = swapNext; swapNext = null; swapP = null; svcStop();
-      if (cur && cur.M === spec.M && cur.spec.color === spec.color && (cur.spec.stripe !== false) === (spec.stripe !== false)) return;
+      if (cur && cur.M === spec.M && cur.spec.color === spec.color && (cur.spec.stripe !== false) === (spec.stripe !== false)) { if (spec.again) show(spec); return; }   // (again: shown as it is now)
       const old = cur, nw = makeCar(spec);
       // (the new car's shaders are made now, while the old one still stands: no stutter when it rolls in)
       nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);
@@ -5445,7 +5447,8 @@ const Garage3D = (function () {
       // the arms' reach (a long car's ends) each leans out to the colour's edge)
       const tipD = ARM.Y0 - 0.07 - ARM.FA - TL.nozzle, tall = K.top + 0.32 > tipD, lean = (x) => clamp((x - clamp(x, ARM.x0 + 0.2, ARM.x1 - 0.2)) * 1.6, -0.9, 0.9);
       const near = (x) => armFor(0, 'nozzle', new V3(x, W.yA + 0.12, zW + 0.24), [lean(x), -0.55, -0.83]);
-      const top = (x) => tall ? armFor(1, 'nozzle', new V3(x, Math.min(K.top - 0.3, tipD + 0.27), -(zW + 0.3)), [lean(x), -0.7, 0.7]) : armFor(1, 'nozzle', new V3(x, K.top + 0.32, -0.1), [lean(x), -1, 0]);
+      const L = ARM.FA + TL.nozzle, dz = clamp((-ARM.z0[1] - K.hw - 0.1) / L, 0.3, 0.7), dy = -Math.sqrt(1 - dz * dz);   // (tall: the wrist out at the ring's far edge, the tip 0.1 m out from the car's widest)
+      const top = (x) => tall ? armFor(1, 'nozzle', new V3(x, Math.min(K.top - 0.3, ARM.Y0 - 0.07 + dy * L), -(K.hw + 0.1)), [lean(x), dy, dz]) : armFor(1, 'nozzle', new V3(x, K.top + 0.32, -0.1), [lean(x), -1, 0]);
       yield* par(armGo(0, near(x0), 1.4), armGo(1, top(x0), 1.4));
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
@@ -5471,7 +5474,7 @@ const Garage3D = (function () {
       freeCar(cv);
       // drying: the arms up out of the way, the chamber's lights warm, a warm glow sweeping along the car, glints on the fresh paint
       hud('paint', { step: 'dry' });
-      yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: Math.PI / 2 }, 0.6));   // (level, across toward the car: not out through the chamber's ends)
+      yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: tall ? Math.PI / 2 : -Math.PI / 2 }, 0.6));   // (level, not out through the chamber's ends; the far one away from the near one's (over the car: toward the far side))
       chamberColor(PAINT_C.warm); sLoop('dry', 'lowpass', 500, 0.7, 0.12);
       const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(7, 3, 1); scene.add(warm);
       yield* tween(1.8, (k, u) => { warm.material.opacity = 0.4 * Math.sin(u * Math.PI); warm.position.copy(carPt(nw, lerp(K.front, K.rear, u), K.top * 0.6, 0)); if (Math.random() < 0.5) sparkle(nw, 1); });
@@ -5718,7 +5721,7 @@ const Garage3D = (function () {
     lift() { return play(function* () { const cv = cur; if (!cv) return; if (lift > 0.01 || LIFT.on) yield* liftDown(cv, false); else { yield* liftUp(cv, LIFT_H, false); yield* wait(0.4); } }); },
     set fast(k) { fast = k > 0 ? k : 1; },
     get busy() { return busy > 0; }, get thumbed() { return THB.at === THB.n; },   // (a car's picture drawn this frame already)
-    reshow(spec) { return play(function* () { show(spec); }); },   // (the car shown again at once (another profile), after the show that plays)
+    reshow(spec) { if (swapP) { swapNext = Object.assign({}, spec, { again: true }); return swapP; } return play(function* () { show(spec); }); },   // (the car shown again at once (another profile), after the show that plays)
     get ready() { return ready; },
     get idle() { return !busy && !moving() && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
     sound(on) { sndInit(); if (SND.out) SND.out.gain.value = on ? 0.7 : 0; SND.vol = on ? 0.7 : 0; if (typeof Sfx !== 'undefined') { Sfx.resume(); Sfx.setEnabled(on); } },
