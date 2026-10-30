@@ -66,6 +66,10 @@ window.MENU = {
   "suzuka": 240,
   "spa": 240,
   "nring": 240,
+  "monterey": 240,
+  "mulholland": 300,
+  "palomar": 300,
+  "riverside": 240,
   "uncompahgre": 300,
   "iroha": 300,
   "harju": 300
@@ -245,6 +249,28 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "monterey": {
+   "base": 234
+  },
+  "mulholland": {
+   "start": "Cornell",
+   "finish": "La Sierra Canyon",
+   "alt": [
+    256,
+    544
+   ]
+  },
+  "palomar": {
+   "start": "Pauma Valley",
+   "finish": "Palomar Mountain",
+   "alt": [
+    859,
+    1435
+   ]
+  },
+  "riverside": {
+   "base": 473
   },
   "uncompahgre": {
    "start": "Ouray",
