@@ -446,7 +446,7 @@ svg { display: block; }
   .nbrs { padding-top: 6px; } .nb { height: 44px; }
   #s-track .foot { padding-top: 8px; } #s-track .back { height: 44px; } #s-track .go { height: 48px; }
 }
-@media (max-width: 380px) { .trow small { font-size: 10.5px; } .trow b { font-size: 13.5px; } .trow > div { padding: 0 3px; } }
+@media (max-width: 380px), (orientation: landscape) and (max-width: 760px) { .trow small { font-size: 10.5px; } .trow b { font-size: 13.5px; } .trow > div { padding: 0 3px; } }
 /* version 1: the flyover video and the names over it */
 .dio.fly { background: #0b1626; }
 .dio.fly video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .7s ease; }

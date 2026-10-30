@@ -28,24 +28,6 @@ window.MENU = {
    "img": "assets/menu/mode-trial.webp"
   }
  ],
- "groups": [
-  {
-   "id": "circuit",
-   "name": "Circuits"
-  },
-  {
-   "id": "road",
-   "name": "Open roads"
-  },
-  {
-   "id": "rally",
-   "name": "Rally"
-  },
-  {
-   "id": "test",
-   "name": "Test"
-  }
- ],
  "mapVersions": [
   {
    "n": 1,
