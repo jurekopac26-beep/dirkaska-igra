@@ -27,6 +27,28 @@ Od zgoraj navzdol:
 
 **Zastave:** `assets/flags/<država>.svg` (20 držav: slovenia, austria, germany, belgium, finland, england, france, italy, monaco, usa, canada, brazil, chile, australia, south-africa, morocco, japan, china, thailand, russia). Narisane po uradnih predpisih (razmerje = `viewBox`, uradne barve, znaki), vsako je preveril drug agent (popravljena Brazilija in Maroko). Anglija ima križ sv. Jurija, ne britanske zastave.
 
+## Zadnje odločitve (veljajo pred zgornjimi, kjer se razlikujejo)
+
+Makete: `VRŠIČ` v vseh vremenih in 6 prog s 6 avti (seja 30. 10. 2026).
+
+- **Glava:** levo **puščica nazaj** (ne hiška), široka 78 px (kot prejšnji spodnji gumb nazaj), visoka 52 px; na sredini samo **kraj** (npr. `VRŠIČ`, 44 px; daljše ime se zmanjša, da ne seže v globus); desno globus. Brez višine in brez digitalnega traku.
+- **Slika** sega od vrha zaslona do vrstice (glava leži na njej s temnim prelivom). Temni del menija pod sliko ima **zgoraj zaobljena vogala** z enakim polmerom kot okvir vrstice (13 px), slika se vidi v vogalih.
+- **Vreme levo** pod puščico (na sredini pod njo), v prejšnji obliki: izbrana ikona 52 px v barvi z napisom, ostale 40 px sive, brez okvirjev. Pet možnosti: *Dry*, *Rain*, *Changing*, *Storm*, *Snow* (Snow = letni čas zima in sneženje; odprto vprašanje 1).
+- **Gumbi kamer desno zgoraj** (88 px od vrha, 10 px od roba), pod njimi **graf** (6 px niže, enako širok). Graf v **vseh treh kamerah**: pika pri vrhu (prevoženi del), črta prevoženega dela obarvana po strmini, polnilo pod prevoženim delom **močno rumeno** (manj prosojno, da se vidi višina), naprej svetlo rumeno; najnižja točka na spodnjem robu okvirja. Proge brez `alt` v `menu-data.js` (krožne): višine = začetna višina iz `geo.js` + profil.
+- **Vrstica:** zastava levo, Best race, Length, Climb, desno **12** z ikono štartne mreže.
+- **Spodaj** samo **Race!** čez vso širino (gumba nazaj ni več, ker je puščica zgoraj).
+- **Senca avta na tleh:** široka mehka senca okoli avta (v soncu malo v levo), temnejša pod karoserijo med kolesi, temna in ozka pod vsakim kolesom (kolesa se poiščejo v sliki avta: najnižji neprosojni stolpci). V snegu modrikasta.
+- **Tabla po državi** (odprto vprašanje 8, privzeto da): vsaka država svoj slog in malo obrabe: Nemčija rumena s črnim robom, Finska modra (zbledela, praske), ZDA zelena z belim robom (odsevni delci, rja pod vijaki), Avstrija bela kovinska z rdečim robom, Belgija bela s črnim robom (mah, okrušeni robovi), Japonska zelena s kovinskim okvirjem; vijaki, odsev, zrno folije. Ime države stoji v delu table, ki ga avto ne zakrije (visok avto, npr. tovornjak, jo zakrije levo), in se po potrebi zmanjša.
+- **Vreme spremeni cel meni** (odprto vprašanje 2: kdaj; predlog nov sklop 7, ≈ 5–6 h):
+  - *Dry:* toplo sonce, žarki in odsev iz sonca.
+  - *Rain:* temnejša slika in oblaki, poševen dež čez cel zaslon, kaplje na leči, kapljice in pljuski na gumbih in vrstici, moker sijoč pod z odsevom avta in krogi v lužah, kaplje in curki na tabli.
+  - *Changing:* deloma sonce, rahel dež, mavrica.
+  - *Storm:* zelo temno, močan poševen dež, strela z bliskom.
+  - *Snow* (izbran slog **snežni metež**): zasnežena slika (travniki beli, drevesa s snegom na osvetljenih ploskvah, cesta steptan sneg, megla), veter in poševno sneženje, sneg na vrhu vseh gumbov, vrstice, table in avta (nametan na zavetrno stran), zaledenela stekla in sneg na spodnjem delu avta, avto stoji v snegu, sneg na tabli, ledeni kristali v kotih.
+  - Prehod ob dotiku ikone: krog na ikoni, nato se vreme v ≈ 1 s pretopi, voda in sneg se nabirata ≈ 2,5 s. Smer vetra: dež in sneg gresta z desne proti levi (uporabnik je smer prezrcalil).
+
+**Pravna opomba:** posnetek preleta `assets/maps/fly-rbring.webm` in `.webp` (5. 10. 2026) na stavbi ob progi kaže napis z imenom znamke (starejša različica sveta; zdajšnji transparenti v `js/world-rbring.js` so zemljepisni: MURTAL, SPIELBERG, STEIERMARK). Pred objavo ga posnemi znova (sklop 4, kamere).
+
 ## Sklopi
 
 | Sklop | Vsebina | Čas |
