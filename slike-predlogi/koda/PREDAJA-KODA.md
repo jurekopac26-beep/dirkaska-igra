@@ -21,6 +21,10 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
   Dokler tega ne napiše, seja pred združitvijo počaka na njegov »združi«. Po združitvi posodobi Stanje in zažene sejo za naslednji sklop.
   Uporabnik je 30. 10. v nadrejeni seji (session_01GY6hGMr9T539RyQrVQMfCV) dodal: »Javi ti prosim vsem dovoljujem jaz«; ta seja dovoljenje
   sporoči vsaki novi seji, zato ji ob zagonu naslednje seje pošlji njen session_id.
+  **Kdo združi:** ker seja dovoljenja iz sporočila ne sprejme, PR-je združuje nadrejena seja (session_01GY6hGMr9T539RyQrVQMfCV), ki ji je
+  uporabnik dovoljenje dal neposredno. Ko so vsi testi na GitHubu zeleni na zadnjem commitu in PR nima sporov z `main`, ji pošlji številko
+  PR-ja in SHA ter ne pushaj več; ko sporoči, da je združen, nadaljuj (Stanje, naslednji prost sklop). Če uporabnik »za vse« ali »združi«
+  napiše neposredno tebi, lahko združiš sama in nadrejeni seji samo sporočiš.
 - **Sprememba 30. 10. (uporabnik: »Spremeni 2 hkrati«): hkrati tečeta dve seji** (okoli 5–10 % več žetonov, konec približno tretjino prej).
   Vrsta: **4 in 7** (od 30. 10.), nato **5+6 in 9**, nato **8** (šele ko so 3–7 in 9 na `main`), na koncu **10** (po 8).
   - Ko seja svoj PR združi: na `slike-predlogi` `git pull --rebase`, v Stanje zapiše »na `main`«, vzame prvi prost sklop iz vrste
