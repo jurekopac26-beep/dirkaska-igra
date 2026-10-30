@@ -1323,13 +1323,14 @@
         const i = ii % N, v = ii * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
         if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
-        if (PER) {   // the 1930s: no painted lines; along each edge a strip of dust and loose grit over the road's edge and the verge, its grass edge ragged
+        if (PER) {   // the 1930s: along each edge a strip of dust and loose grit over the road's edge and the verge, its grass edge ragged
           const ed = (sd) => { const q = ii * ds, j = 0.5 + 0.28 * Math.sin(q * 0.23 + sd * 2.1) + 0.14 * Math.sin(q * 0.71 + sd * 0.4) + (crH(i, sd, 41) - 0.5) * 0.22, v = 0.92 + crH(i, sd, 43) * 0.16;   // (j: how far the grit reaches, 0..1)
             const o0 = w - 0.1, o1 = w + 0.08, o2 = w + 0.2 + 0.25 * j, o3 = w + 0.32 + 0.45 * j, hv = (o) => -0.04 * Math.max(0, o - w) / 1.2 + 0.03;
             const C = [[0.42 * v, 0.41 * v, 0.38 * v], [0.54 * v, 0.51 * v, 0.45 * v], [0.5 * v, 0.48 * v, 0.4 * v], [0.4 * v, 0.44 * v, 0.29 * v]], O = [o0, o1, o2, o3];
             return { p: O.map(o => Pt(i, sd * o, hv(o) + 0.004)), c: C }; };
-          const L = ed(-1), R = ed(1), l = gl.row([...L.p.slice().reverse(), ...R.p], [...L.c.slice().reverse(), ...R.c]);
-          if (pl >= 0) { gl.link(pl, l, 0, 3); gl.link(pl, l, 4, 7); } pl = l;
+          const L = ed(-1), R = ed(1), wl = [0.94, 0.94, 0.9], W = [Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)];   // (the white edge lines inside it, as on the other circuits: the user's choice)
+          const l = gl.row([...L.p.slice().reverse(), ...W, ...R.p], [...L.c.slice().reverse(), wl, wl, wl, wl, ...R.c]);
+          if (pl >= 0) { gl.link(pl, l, 0, 3); gl.link(pl, l, 4, 5); gl.link(pl, l, 6, 7); gl.link(pl, l, 8, 11); } pl = l;
         } else {
         const wl = [0.94, 0.94, 0.9], l = gl.row([Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], [wl, wl, wl, wl]);
         if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l; }
