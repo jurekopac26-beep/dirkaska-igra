@@ -326,8 +326,10 @@
     const ring = rs.map(r => '<i class="ring" style="left:' + (r.x - pad) + 'px;top:' + (r.y - pad) + 'px;width:' + (Math.max(44, r.w) + 2 * pad) + 'px;height:' + (Math.max(44, r.h) + 2 * pad) + 'px"></i>').join('');
     const r = rs.length ? rs.reduce((a, b) => { const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y); return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y }; }) : null;
     const below = !r || r.y < app.height * 0.5, by = below ? (r ? r.y + Math.max(44, r.h) + pad + 14 : 140) : null;
-    // (upright: under or over the ring, the screen's width; lying down: beside it, on the other half, by the ring's height)
-    const ty = app.width > app.height * 1.25 ? (r && r.x + r.w / 2 > app.width / 2 ? 'right:auto;' : 'left:auto;') + 'width:' + Math.round(Math.min(380, app.width * 0.42)) + 'px;top:' + Math.round(Math.max(56, Math.min((r ? r.y + r.h / 2 : app.height / 2) - 70, app.height - 180))) + 'px'
+    // (upright: under or over the ring, the screen's width; lying down: beside it, on the other half, by the ring's height (over it, the
+    // ring low on the screen))
+    const ty = app.width > app.height * 1.25 ? (r && r.x + r.w / 2 > app.width / 2 ? 'right:auto;' : 'left:auto;') + 'width:' + Math.round(Math.min(380, app.width * 0.42)) + 'px;'
+        + (r && r.y + r.h / 2 > app.height * 0.6 ? 'bottom:' + Math.round(app.height - r.y + pad + 14) + 'px' : 'top:' + Math.round(Math.max(56, Math.min((r ? r.y + r.h / 2 : app.height / 2) - 70, app.height - 180))) + 'px')
       : below ? 'top:' + Math.min(by, app.height - 190) + 'px' : 'bottom:' + Math.max(16, app.height - r.y + pad + 14) + 'px';
     el.innerHTML = '<div class="veil"></div>' + ring + '<div class="bub" style="' + ty + '"><b>' + esc(tr(t)) + '</b><p>' + esc(tr(p)) + '</p><div><small>' + (i + 1) + ' / ' + GUIDE.length + '</small><button data-guide="1">' + esc(tr(i + 1 < GUIDE.length ? 'Naprej' : 'Razumem')) + '</button></div></div>';
     el.className = 'g-guide on';
