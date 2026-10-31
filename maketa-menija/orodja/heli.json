@@ -80,5 +80,114 @@
  },
  "vrsic": {
   "edgeTint": true
+ },
+ "bigsur": {
+  "sea": true,
+  "kbps": 550
+ },
+ "medvode": {
+  "kbps": 550
+ },
+ "baldy": {
+  "kbps": 550
+ },
+ "beartooth": {
+  "kbps": 550
+ },
+ "detroit": {
+  "kbps": 550
+ },
+ "maunakea": {
+  "kbps": 550
+ },
+ "moki": {
+  "kbps": 550
+ },
+ "monterey": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "mulholland": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "palomar": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "riverside": {
+  "kbps": 550,
+  "edgeTint": {
+   "margin": 1500
+  }
+ },
+ "uncompahgre": {
+  "kbps": 550
+ },
+ "iroha": {
+  "kbps": 550
+ },
+ "harju": {
+  "kbps": 550
+ },
+ "longford": {
+  "kbps": 550
+ },
+ "newcastle": {
+  "sea": true,
+  "kbps": 550
+ },
+ "townsville": {
+  "sea": true,
+  "kbps": 550
+ },
+ "chapman": {
+  "sea": true,
+  "kbps": 550
+ },
+ "sani": {
+  "kbps": 550
+ },
+ "marrakesh": {
+  "kbps": 550
+ },
+ "montreal": {
+  "kbps": 550,
+  "sea": true
+ },
+ "toronto": {
+  "kbps": 550,
+  "sea": true
+ },
+ "troisrivieres": {
+  "kbps": 550
+ },
+ "greatalpine": {
+  "kbps": 550
+ },
+ "hotham": {
+  "kbps": 550
+ },
+ "caracoles": {
+  "kbps": 550
+ },
+ "rastro": {
+  "kbps": 550
+ },
+ "katu": {
+  "kbps": 550
+ },
+ "tianmen": {
+  "kbps": 550
+ },
+ "bangsaen": {
+  "kbps": 550,
+  "sea": true
  }
 }

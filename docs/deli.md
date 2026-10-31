@@ -86,13 +86,13 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 
 | Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
 |---|---|---|---|
-| MIŠKA | `headL` / `headR` (luč iz gondole v blatniku; gondola s kromiranim robom ostane), `tailL` / `tailR` (s kromiranim robom), `wiperFront` | nad zadnjim robom strehe (nad zadnjim steklom), v `body`, `s` 0,9 | v čelu gondole, skoraj poravnan z njim; vsaka možnost svoje oblike (`s` 0,4), z lučjo iz garaže je čelo v barvi karoserije brez kromiranega roba (`around`; želja uporabnika 30. 10.: prave druge luči, ne luč, nalepljena na luč). Možnost 4 je +356 trikotnikov (meja +300): odločitev uporabnika čaka |
+| MIŠKA | `headL` / `headR` (luč iz gondole v blatniku; gondola s kromiranim robom ostane), `tailL` / `tailR` (s kromiranim robom), `wiperFront` | nad zadnjim robom strehe (nad zadnjim steklom), v `body`, `s` 0,9 | v čelu gondole, skoraj poravnan z njim; vsaka možnost svoje oblike (`s` 0,4), z lučjo iz garaže je čelo v barvi karoserije brez kromiranega roba (`around`; želja uporabnika 30. 10.: prave druge luči, ne luč, nalepljena na luč). Možnost 4 na Normalnem z osmimi odseki (+284; izbira uporabnika 30. 10.) |
 | RAKETA | `headL` / `headR` (par okroglih luči na strani; maska ostane), `tailL` / `tailR` (s črnim okvirjem), `plate` in `wiperRear` (`on: 'trunk'`), `wiperFront` | nad zadnjim robom strehe, v `body` | en sklop na stran čez par okroglih luči; stoji 2,6 cm iz maske, obroč sega nazaj do nje (`depth`; želja uporabnika 30. 10.: bolj štrlijo kot pri drugih avtih) |
 | LEV S | `headL` / `headR` (mandelj s projektorjema), `tailL` / `tailR`, `spoiler` in `wiperRear` (`on: 'trunk'`), `wiperFront` | v delu `spoiler` (namesto serijskega spojlerja) | glej spodaj |
 | LEV KABRIO | `headL` / `headR`, `tailL` / `tailR`, `plate` (`on: 'bumperR'`), `wiperFront` | na zadnjem robu dolgega pokrova prtljažnika, v `trunk` (odpre se in odpade z njim) | kot LEV S |
 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
-- Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) so pri KOLIBRIJU odločitve uporabnika; Mali avti jih nimajo, dokler uporabnik ne potrdi.
+- Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
@@ -127,5 +127,7 @@ Pravila, da se seje ne motijo:
 - 29. 10. 2026 (poskus, želje uporabnika): `zarometi` dobi `shape`, `bulge`, `ringW` (avtova lastna oblika luči), `krilo` dobi `s` in `top` (tovornjak); `K.headLamp` z obrisom zna izbočeno lečo (`bulge`) in obris z zarezo (zvezdast okrog sredine); `DELI.mesh` vzame trikotnike, ki jih je narisal `K.deli` (prej celoten del, kar je pri lučeh v krilih vrnilo celo krilo); `K.deli(id, stock, around)` z avtovim ohišjem okrog dela; `DELI.lampLook(n)` (barvi leče in obroča možnosti).
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
+- 30. 10. 2026 (Mali avti, izbira uporabnika): žaromet 4 (okrogli, klasični) ima na Normalnem osem odsekov na luč (prej deset), da je na avtu z majhno serijsko lučjo (MIŠKA) v meji 300 trikotnikov; Visoki ostane 16.
+- Mali avti: gume vsaka zase (`Car.kt`) in streha od prvega odstotka (`roof0`) ne (izbira uporabnika 30. 10.).
 - 29. 10. 2026 (Mali avti): rezervno kolo v avtu (`K.tyre`, MIŠKA v prtljažniku) ostane serijsko, ko so nameščena platišča iz garaže (`render.js`: `kx.spare`); prej je dobilo platišča in spremenilo notranjost (test: »the cabin unchanged«).
 - 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).
