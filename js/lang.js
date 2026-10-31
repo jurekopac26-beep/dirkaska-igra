@@ -607,7 +607,7 @@
     'Zlata ura': 'The Golden Hour', 'Na obalni cesti se je zgodila nesreča. Z reševalnim vozilom prideš do ponesrečenca in ga naložiš.': 'There has been an accident on the coast road. You reach the injured person in the ambulance and load them.',
     'Odpelji ponesrečenca v bolnišnico. Če si prepočasen ali sunkovit, ponesrečenec umre.': 'Take the injured person to the hospital. If you are too slow or too rough, they will die.',
     'Vozi mirno: vsak sunek in trk dvigne utrip.': 'Drive calmly: every jolt and knock raises the pulse.',
-    'UTRIP': 'PULSE', 'STANJE': 'CONDITION', 'CILJ': 'DESTINATION', 'NALOŽI': 'LOAD', 'NESREČA': 'ACCIDENT', 'nesreča': 'accident', 'bolnišnica': 'hospital',
+    'UTRIP': 'PULSE', 'STANJE': 'CONDITION', 'NALOŽI': 'LOAD', 'nesreča': 'accident', 'bolnišnica': 'hospital',
     'stabilno': 'stable', 'resno': 'serious', 'KRITIČNO': 'CRITICAL', 'nalaganje': 'loading', 'čaka pomoč': 'waiting for help',
     'Naloži ponesrečenca.': 'Load the injured person.', 'Ustavi ob kraju nesreče.': 'Stop at the accident.', 'Pelji do kraja nesreče ob obalni cesti.': 'Drive to the accident on the coast road.',
     'Posadka nalaga ponesrečenca …': 'The crew is loading the injured person …', 'Ponesrečenec ni preživel.': 'The injured person did not survive.',
