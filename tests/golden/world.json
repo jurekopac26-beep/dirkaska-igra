@@ -827,21 +827,21 @@
   }
  },
  "hotham": {
-  "meshes": 3167,
-  "verts": 2078177,
-  "instances": 74511,
+  "meshes": 3169,
+  "verts": 2091646,
+  "instances": 75628,
   "props": 354,
   "crowd": 1078,
-  "world": "85e8abfa",
+  "world": "adf814f0",
   "propsHash": "3b135c37",
-  "floor": "2dca58ac/17276",
+  "floor": "592d0606/17276",
   "groups": {
-   "-:MeshLambertMaterial": "19c8c84a",
+   "-:MeshLambertMaterial": "91a6df40",
    "-:MeshPhongMaterial": "1981b361",
    "-:MeshBasicMaterial": "137646c4",
    "irFar:MeshLambertMaterial": "2ea2ee05",
    "crowd:MeshLambertMaterial": "89add167",
-   "ao:MeshBasicMaterial": "c338cf9f",
+   "ao:MeshBasicMaterial": "4cd167c1",
    "tyremarks:MeshBasicMaterial": "f3bb1eb4",
    "roadwear:MeshLambertMaterial": "c7874105"
   }
