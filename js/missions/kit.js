@@ -335,4 +335,266 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
 
   return { truckModel, fireTruck, fire, jet, aim, flowAt, hold, look, at, house, prism, merged, parts, LAD };
 })();
+/* ---------------- the water (group 3: missions 19, 35, 37, 48) ----------------
+     MisKit.water(run, o): a plane of water (one draw: a flood, the tide, a river up its banks) round o.x, o.z, o.size m square, at o.y;
+       set(y) moves it; o.col, o.op its colour and how much it hides (muddy brown for a flood, blue-green for the sea).
+     MisKit.wade(P, depth, dt, o): the water on a car: the deeper the slower (o.drag), from o.slip m of it the car slides (its grip in
+       the water: the current o.cur [x, z] m/s pushes it); returns the depth's share 0..1 (1: o.deep m, the car stopped).
+     MisKit.boat(run, o): a vessel on the water of its own (no physics of the race: it moves on its own numbers, o.vmax m/s, o.acc, o.turn),
+       steered with the player's controls while on(true); the camera behind it as behind the car (Render.setShot); o.wet(x, z): may it be
+       there (false: it stops, e.g. on the beach); o.mesh its look; o.wave(x, z, t): the waves' height under it.
+     MisKit.skin(run, P, build): the player's car drawn as another vehicle of simple bodies (build(B): B.box / B.cyl / B.disc as for parts(),
+       x forward, y up, z to the side), its own body hidden; the group returned (more can be added to it: people on the back ...).
+     MisKit.crowd(run, max): people of simple bodies (two draws for all: InstancedMesh), put(k, x, y, z, ry, col) or hide(k).
+     MisKit.tags(run): labels over places in the world (DOM, #mis-tags): set([{ x, y, z, html, cls }]); one off the screen is pinned to its edge (.edge).
+     MisKit.button(run, label): a big button over the pedals (#mis-btn): show(on), take() true once for each press. */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined', hasDoc = () => typeof document !== 'undefined';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const tr = (s) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s) : s);
+  // the run's own DOM: taken off when the run ends
+  function undo(run, fn) { if (!has3()) return; const g = new THREE.Group(); g.userData.misUndo = fn; run.add(g); }
+
+  function water(run, o) {
+    o = Object.assign({ x: 0, z: 0, size: 2000, y: 0, col: 0x6b5a3e, op: 0.88, shine: 30 }, o);
+    const W = { y: o.y, mesh: null, set(y) { W.y = y; if (W.mesh) W.mesh.position.y = y; } };
+    if (!has3()) return W;
+    const g = new THREE.PlaneGeometry(o.size, o.size); g.rotateX(-Math.PI / 2);
+    const m = new THREE.MeshPhongMaterial({ color: o.col, specular: 0x8a8a80, shininess: o.shine, transparent: o.op < 1, opacity: o.op, depthWrite: true });
+    const mesh = new THREE.Mesh(g, m); mesh.position.set(o.x, o.y, o.z); mesh.receiveShadow = true; mesh.renderOrder = 1;
+    run.add(mesh); W.mesh = mesh;
+    return W;
+  }
+
+  function wade(P, depth, dt, o) {
+    o = Object.assign({ drag: 1.6, slip: 0.35, deep: 1.1, cur: null }, o);
+    if (!(depth > 0)) return 0;
+    const k = clamp(depth / o.deep, 0, 1), v = Math.hypot(P.vx, P.vz);
+    // the water holds the car back: more the deeper and the faster (a wave in front of it)
+    const f = Math.exp(-dt * (o.drag * k + 0.04 * v * k));
+    P.vx *= f; P.vz *= f; if (P.w) P.w *= Math.exp(-dt * 2 * k);
+    // over the wheels' hubs: the current takes it along, the car slides
+    if (depth > o.slip && o.cur) { const s = clamp((depth - o.slip) / (o.deep - o.slip), 0, 1); P.vx += o.cur[0] * s * dt * 1.2; P.vz += o.cur[1] * s * dt * 1.2; }
+    if (k >= 1) { P.vx *= Math.exp(-dt * 4); P.vz *= Math.exp(-dt * 4); }
+    return k;
+  }
+
+  function boat(run, o) {
+    o = Object.assign({ vmax: 16, acc: 5, brake: 7, turn: 1.4, drag: 0.35, wet: () => true, wave: () => 0, mesh: null, D: [30, 20] }, o);
+    const B = { x: o.x || 0, z: o.z || 0, h: o.h || 0, v: 0, y: o.y || 0, on: false, t: 0, hs: o.h || 0, shot: null, stuck: false,
+      // where it is now: the boat's own frame for its mesh
+      place(x, z, h) { B.x = x; B.z = z; B.h = h; B.hs = h; B.v = 0; },
+      go(on) {
+        on = !!on; if (on === B.on) return; B.on = on;
+        if (o.mesh) o.mesh.visible = on || !!o.keep;
+        if (hasDoc()) document.body.classList.toggle('mis-boat', on);   // (the parked car's speed and corner notes off the HUD while the vessel is driven)
+        if (typeof Render !== 'undefined' && Render.setShot) { if (on) { B.shot = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 58, fogD: 40, near: 0.5, noCut: true }; B.cam(1); Render.setShot(B.shot); } else { Render.setShot(null); B.shot = null; } }
+      },
+      // a step: steer -1..1, thr, brk 0..1
+      step(dt, steer, thr, brk) {
+        B.t += dt;
+        if (B.on) {
+          const a = thr * o.acc - brk * (B.v > 0 ? o.brake : o.acc * 0.4) - o.drag * B.v - 0.02 * B.v * Math.abs(B.v);
+          B.v = clamp(B.v + a * dt, -o.vmax * 0.25, o.vmax);
+          B.h += steer * o.turn * clamp(Math.abs(B.v) / 4, 0, 1) * Math.sign(B.v || 1) * dt;
+          const nx = B.x + Math.cos(B.h) * B.v * dt, nz = B.z + Math.sin(B.h) * B.v * dt;
+          if (o.wet(nx, nz)) { B.x = nx; B.z = nz; B.stuck = false; } else { B.v *= 0.3; B.stuck = true; }
+        }
+        const w = o.wave(B.x, B.z, B.t);
+        B.y = (o.y || 0) + w;
+        if (o.mesh) {
+          o.mesh.position.set(B.x, B.y, B.z); o.mesh.rotation.set(0, -B.h, 0);
+          // its pitch over the waves: the slope of the water under it, nose up at speed
+          const ahead = o.wave(B.x + Math.cos(B.h) * 1.5, B.z + Math.sin(B.h) * 1.5, B.t) - o.wave(B.x - Math.cos(B.h) * 1.5, B.z - Math.sin(B.h) * 1.5, B.t);
+          o.mesh.rotation.z = Math.atan2(ahead, 3) + clamp(B.v / o.vmax, 0, 1) * 0.08; o.mesh.rotation.order = 'YZX';
+        }
+        if (B.on && B.shot) B.cam(dt);
+      },
+      // the camera behind it, as behind the car (upright: higher and further back)
+      cam(dt) {
+        const C = typeof Render !== 'undefined' ? Render.camera : null, S = B.shot; if (!C || !S) return;
+        const up = C.aspect < 1, uc = Render.cam || {}, D = (up ? o.D[0] : o.D[1]) * (uc.userZoom || 1), pitch = (up ? 0.98 : 0.9) * (1 - (uc.userTilt || 0)), a0 = up ? 9 : 6;
+        B.hs += Math.atan2(Math.sin(B.h - B.hs), Math.cos(B.h - B.hs)) * (1 - Math.exp(-dt * 3));
+        const fx = Math.cos(B.hs), fz = Math.sin(B.hs), tx = B.x + fx * a0, tz = B.z + fz * a0, ty = (o.y || 0);
+        S.tx = tx; S.ty = ty; S.tz = tz; S.px = tx - fx * D * Math.cos(pitch); S.pz = tz - fz * D * Math.cos(pitch); S.py = ty + D * Math.sin(pitch);
+        S.fov = up ? 58 : 46; S.fogD = D; S.gy = ty;
+      },
+      get speed() { return Math.abs(B.v); },
+    };
+    if (o.mesh) { o.mesh.visible = !!o.keep; run.add(o.mesh); }
+    undo(run, () => { if (B.on && typeof Render !== 'undefined' && Render.setShot) Render.setShot(null); B.on = false; if (hasDoc()) document.body.classList.remove('mis-boat'); });
+    return B;
+  }
+
+  // the player's car as another vehicle of simple bodies on its own view (the physics its own)
+  function skin(run, P, build) {
+    const R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null;
+    if (!has3() || !v || !MisKit.parts) return null;
+    const hide = [v.body, v.tail, v.dec].concat(v.wf || [], v.wr || []);
+    for (const x of hide) if (x) x.visible = false;
+    if (v.marker) v.marker.visible = false;
+    const B = MisKit.parts(); build(B);
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), mesh = B.mesh(mat); mesh.castShadow = true;
+    const g = new THREE.Group(); g.name = 'misSkin'; g.add(mesh); v.bodyG.add(g);
+    undo(run, () => { v.bodyG.remove(g); g.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material && x.material !== mat) [].concat(x.material).forEach(m => m.dispose()); }); mat.dispose(); for (const x of hide) if (x) x.visible = true; });
+    return g;
+  }
+
+  // people: a body and a head each, all of them two draws; put(k, ...) shows the k-th there, hide(k)
+  function crowd(run, max) {
+    const C = { n: max, put() {}, hide() {}, g: null };
+    if (!has3()) return C;
+    const bodyG = new THREE.BoxGeometry(0.5, 1.15, 0.32); bodyG.translate(0, 0.58 + 0.3, 0);
+    const headG = new THREE.BoxGeometry(0.26, 0.28, 0.26); headG.translate(0, 1.68, 0);
+    const bm = new THREE.MeshLambertMaterial({ color: 0xffffff }), hm = new THREE.MeshLambertMaterial({ color: 0xd9a77e });
+    const body = new THREE.InstancedMesh(bodyG, bm, max), head = new THREE.InstancedMesh(headG, hm, max);
+    const g = new THREE.Group(); g.add(body, head); body.castShadow = true;
+    const M = new THREE.Matrix4(), Z = new THREE.Matrix4().makeScale(0, 0, 0), col = new THREE.Color();
+    for (let k = 0; k < max; k++) { body.setMatrixAt(k, Z); head.setMatrixAt(k, Z); body.setColorAt(k, col.setHex(0x3a6fd0)); }
+    C.put = (k, x, y, z, ry, c) => { M.makeRotationY(ry || 0); M.setPosition(x, y, z); body.setMatrixAt(k, M); head.setMatrixAt(k, M); if (c != null) { body.setColorAt(k, col.setHex(c)); body.instanceColor.needsUpdate = true; } body.instanceMatrix.needsUpdate = true; head.instanceMatrix.needsUpdate = true; };
+    C.hide = (k) => { body.setMatrixAt(k, Z); head.setMatrixAt(k, Z); body.instanceMatrix.needsUpdate = true; head.instanceMatrix.needsUpdate = true; };
+    body.frustumCulled = false; head.frustumCulled = false;
+    run.add(g); C.g = g;
+    return C;
+  }
+
+  // labels over places in the world: a list each frame
+  function tags(run) {
+    const T = { set() {} };
+    if (!hasDoc() || !has3()) return T;
+    const el = document.createElement('div'); el.id = 'mis-tags'; el.className = 'on'; document.body.appendChild(el);
+    const v = new THREE.Vector3(); let last = '';
+    T.set = (list) => {
+      const C = Render.camera; if (!C) return;
+      let html = '';
+      for (const t of list || []) { v.set(t.x, t.y, t.z).project(C); if (v.z > 1) continue;
+        // (off the screen: pinned to its edge, so the player sees which way it is)
+        const out = Math.abs(v.x) > 0.9 || v.y > 0.9 || v.y < -0.8, x = clamp(v.x, -0.8, 0.8), y = clamp(v.y, -0.7, 0.85);
+        html += '<i class="' + (t.cls || '') + (out ? ' edge' : '') + '" style="left:' + ((x + 1) * 50).toFixed(2) + '%;top:' + ((1 - y) * 50).toFixed(2) + '%">' + t.html + '</i>'; }
+      if (html !== last) { el.innerHTML = html; last = html; }
+    };
+    undo(run, () => el.remove());
+    return T;
+  }
+
+  // a big button over the pedals: one press, one take()
+  function button(run, label) {
+    const K = { n: 0, shown: false, show() {}, take() { if (K.n > 0) { K.n = 0; return true; } return false; }, label() {} };
+    if (!hasDoc() || !has3()) return K;
+    const b = document.createElement('button'); b.id = 'mis-btn'; b.type = 'button'; b.textContent = tr(label); document.body.appendChild(b);
+    b.addEventListener('pointerdown', (e) => { K.n++; b.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+    const off = () => b.classList.remove('on'); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+    K.show = (on) => { on = !!on; if (on === K.shown) return; K.shown = on; b.classList.toggle('on-show', on); if (!on) K.n = 0; };
+    K.label = (s) => { const t = tr(s); if (b.textContent !== t) b.textContent = t; };
+    K.el = b;
+    undo(run, () => b.remove());
+    return K;
+  }
+
+  return { water, wade, boat, skin, crowd, tags, button };
+})());
+/* ---------------- the snow (group 4: missions 30, 33, 53) ----------------
+     MisKit.snowTex(kind): a canvas texture: 'ribs' (the groomed snow's fine ribs along the travel), 'fresh' (untouched powder, lumpy).
+     MisKit.band(run, max, o): a band on the ground (one draw, room for max cross-sections): add(x, y, z, ax, az) the next cross-section
+       (its centre, its half-width along ax, az), cut() ends the band (the next add starts a new one); o.tex, o.rep (the texture's metres
+       along), o.across (its repeats across), o.col, o.order. The groomed trail behind the snowcat, the tracks of chains.
+     MisKit.cover(run, T, s0, s1, o): a band over the road from s0 to s1 (one draw), o.w its half-width past the road's edge, o.lift m over
+       the road, o.tex (default the fresh snow), o.step m a cross-section; its cross-sections' s in .s (for a mission to change their look).
+     MisKit.piles(run, T, s0, s1, o): snow heaped along the road's edges (one draw: lumps every o.every m, o.side 1 / -1 / 0 both, o.off m past
+       the edge, o.h m high, o.skip(s) none there); returns the mesh (or null).
+     MisKit.block(P, o): a thing standing on the road as a box the car bumps into (o.x, o.z, o.h its heading, o.L long, o.W wide; the car
+       its whole length, a bus too): the car pushed out of it, its speed into it taken away; returns the speed it came in with (m/s, 0: no touch). */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined' && typeof document !== 'undefined';
+  const texs = {};
+  function snowTex(kind) {
+    if (!has3()) return null;
+    if (texs[kind]) return texs[kind];
+    const c = document.createElement('canvas'), n = 64; c.width = c.height = n; const g = c.getContext('2d');
+    if (kind === 'ribs') {
+      g.fillStyle = '#c3d0de'; g.fillRect(0, 0, n, n);
+      for (let x = 0; x < n; x += 8) { g.fillStyle = '#8196ad'; g.fillRect(x, 0, 3, n); g.fillStyle = '#f4f8fc'; g.fillRect(x + 4, 0, 2, n); }
+    } else {
+      g.fillStyle = '#f1f5f9'; g.fillRect(0, 0, n, n);
+      for (let k = 0; k < 90; k++) { const x = (k * 37) % n, y = (k * 53 + (k * k) % 17) % n, r = 2 + (k % 5); g.fillStyle = k % 3 ? 'rgba(170,186,204,.22)' : 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    return (texs[kind] = t);
+  }
+  function band(run, max, o) {
+    o = Object.assign({ tex: null, rep: 2, across: 6, col: 0xffffff, order: 1 }, o);
+    const B = { n: 0, add() {}, cut() {}, mesh: null };
+    if (!has3()) return B;
+    const pos = new Float32Array(max * 2 * 3), uv = new Float32Array(max * 2 * 2), idx = new Uint32Array((max - 1) * 6);
+    const G = new THREE.BufferGeometry();
+    const nor = new Float32Array(max * 2 * 3); for (let k = 1; k < nor.length; k += 3) nor[k] = 1;   // (lying flat: lit from above)
+    G.setAttribute('position', new THREE.BufferAttribute(pos, 3)); G.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); G.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); G.setIndex(new THREE.BufferAttribute(idx, 1));
+    G.setDrawRange(0, 0);
+    const M = new THREE.MeshLambertMaterial({ color: o.col, map: o.tex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const mesh = new THREE.Mesh(G, M); mesh.frustumCulled = false; mesh.renderOrder = o.order; mesh.receiveShadow = true;
+    run.add(mesh); B.mesh = mesh;
+    let open = false, lx = 0, lz = 0, v = 0, ni = 0;
+    B.add = (x, y, z, ax, az) => {
+      if (B.n >= max) return;
+      const k = B.n;
+      if (open) v += Math.hypot(x - lx, z - lz) / o.rep;
+      pos.set([x - ax, y, z - az, x + ax, y, z + az], k * 6); uv.set([0, v, o.across, v], k * 4);
+      if (open) { const a = (k - 1) * 2; idx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], ni); ni += 6; }
+      lx = x; lz = z; open = true; B.n++;
+      G.attributes.position.needsUpdate = G.attributes.uv.needsUpdate = G.index.needsUpdate = true;
+      G.setDrawRange(0, ni);
+    };
+    B.cut = () => { open = false; };
+    return B;
+  }
+  function cover(run, T, s0, s1, o) {
+    o = Object.assign({ w: 0.4, lift: 0.05, step: 3, tex: null, col: 0xffffff, rep: 6, across: 3 }, o);
+    const n = Math.max(2, Math.floor((s1 - s0) / o.step) + 1), C = { s: [], band: null };
+    for (let k = 0; k < n; k++) C.s.push(s0 + k * o.step);
+    if (!has3()) return C;
+    const B = C.band = band(run, n, { tex: o.tex || snowTex('fresh'), rep: o.rep, across: o.across, col: o.col, order: 0 });
+    for (const s of C.s) { const i = T.idx(s), w = T.wS(s) + o.w; B.add(T.px[i], T.hy[i] + o.lift, T.pz[i], T.nx[i] * w, T.nz[i] * w); }
+    return C;
+  }
+  function piles(run, T, s0, s1, o) {
+    o = Object.assign({ every: 4, side: 0, off: 0.6, h: 1.0, skip: null, col: 0xeef3f8 }, o);
+    if (!has3() || !MisKit.parts) return null;
+    const B = MisKit.parts(), W = typeof Render !== 'undefined' && Render.world, sides = o.side ? [o.side] : [-1, 1];
+    let k = 0;
+    for (let s = s0; s <= s1; s += o.every) {
+      if (o.skip && o.skip(s)) continue;
+      const i = T.idx(s);
+      for (const sd of sides) {
+        k++; const r = ((k * 0.6180339) % 1), off = T.wS(s) + o.off + r * 0.6, x = T.px[i] + T.nx[i] * off * sd, z = T.pz[i] + T.nz[i] * off * sd;
+        const gh = W && W.groundH ? W.groundH(x, z) : NaN, y = Math.max(Number.isFinite(gh) ? gh : -1e9, T.hy[i]);
+        const M = new THREE.Matrix4().compose(new THREE.Vector3(x, y + o.h * 0.15, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, r * 6.28, 0)), new THREE.Vector3(o.every * (0.65 + 0.3 * r), o.h * (0.7 + 0.6 * ((k * 0.414) % 1)), 1.2 + r));
+        B.L.push({ g: new THREE.IcosahedronGeometry(0.5, 0), m: M, c: o.col });
+      }
+    }
+    if (!B.L.length) return null;
+    const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); mesh.receiveShadow = true; run.add(mesh);
+    return mesh;
+  }
+  function block(P, o) {
+    // (the car as circles along its length, its width across: the deepest one in the box pushes the car out)
+    const ch = Math.cos(o.h), sh = Math.sin(o.h), cw = Math.cos(P.h || 0), sw = Math.sin(P.h || 0);
+    const r = Math.max(1, (P.m && P.m.wid) || 2) / 2 + 0.2, half = Math.max(0, ((P.m && P.m.len) || 4) / 2 - r), n = Math.max(1, Math.ceil(half / 1.5));
+    let best = null;
+    for (let k = -n; k <= n; k++) {
+      const u = half * k / n, dx = P.x + cw * u - o.x, dz = P.z + sw * u - o.z;
+      const lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, hx = o.L / 2 + r, hz = o.W / 2 + r;
+      if (Math.abs(lx) >= hx || Math.abs(lz) >= hz) continue;
+      const px = hx - Math.abs(lx), pz = hz - Math.abs(lz), d = Math.min(px, pz);
+      if (!best || d > best.d) best = px < pz ? { d, nx: Math.sign(lx) * ch, nz: Math.sign(lx) * sh } : { d, nx: -Math.sign(lz) * sh, nz: Math.sign(lz) * ch };
+    }
+    if (!best) return 0;
+    P.x += best.nx * best.d; P.z += best.nz * best.d;
+    const vn = (P.vx || 0) * best.nx + (P.vz || 0) * best.nz;
+    if (vn < 0) { P.vx -= vn * best.nx; P.vz -= vn * best.nz; return -vn; }
+    return 0.01;
+  }
+  return { snowTex, band, cover, piles, block };
+})());
 if (typeof module !== 'undefined') module.exports = MisKit;

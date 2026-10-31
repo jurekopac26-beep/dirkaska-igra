@@ -116,7 +116,11 @@ const NVBake = (function () {
     const empty = (o) => !o.isMesh && !o.isSprite && !o.isLine && !o.isPoints && !o.isLight && o.children.length === 0;
     for (const top of tops) { const rm = []; top.traverse(o => { if (o !== top && empty(o)) rm.push(o); }); for (const o of rm) if (o.parent) o.parent.remove(o); if (empty(top)) scene.remove(top); }
     scene.add(root);
-    if (opt.world) opt.world.cullFog = cells;   // (js/render.js cullByDistance: every frame, the cells past the fog not drawn, nor in the shadows)
+    // (and what moves but stays in a place of its own, userData.fogSphere [x, z, r, near]: a farm's fences and animals, js/newmap.js; past the fog not drawn
+    // either, nor further than near m from their place: small things, a few pixels there)
+    const roam = []; scene.traverse(o => { const f = o.userData && o.userData.fogSphere; if (!f) return; const s = new THREE.Sphere(new THREE.Vector3(f[0], 0, f[1]), f[2]);
+      roam.push({ geometry: { boundingSphere: s }, get visible() { return o.visible; }, set visible(v) { const c = typeof Render !== 'undefined' && Render.camera && Render.camera.position; o.visible = v && (!f[3] || !c || Math.hypot(c.x - f[0], c.z - f[1]) - f[2] < f[3]); } }); });
+    if (opt.world) opt.world.cullFog = cells.concat(roam);   // (js/render.js cullByDistance: every frame, the cells past the fog not drawn, nor in the shadows)
     let nv = 0; const seen = new Set(); for (const c of cells) { const a = c.geometry.attributes.position; if (!seen.has(a)) { seen.add(a); nv += a.count; } }
     return (last = { merged: n, instances: ni, kept, whys, meshes: cells.length, kverts: Math.round(nv / 1000), mats: mats.size, src: Object.entries(src).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => Math.round(v / 1000) + 'k ' + k) });   // (src: what the indices come from, the most first)
   }

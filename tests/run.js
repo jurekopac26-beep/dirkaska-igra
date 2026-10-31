@@ -8,37 +8,37 @@
 //   node tests/run.js --related   only the tests related to what changed against main (npm run test:related; see RELATED below)
 //   node tests/run.js --related --files js/lang.js,docs/proge/spa.md --list   the same for the files given (no git)
 //   --quiet   only the failures (a failed test's FAIL lines and its last lines) and the summary
-// A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15) is stopped and counted as failed, so a hung test
-// still ends with the summary.
+// A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15), or than TEST_SLOW (default 4) times its usual time on GitHub (SECS)
+// if that is longer, is stopped and counted as failed, so a hung test still ends with the summary (LIMIT_OF).
 'use strict';
 const { spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
-  node: ['stamp.test.js', 'shards.test.js', 'golden.test.js', 'repro.test.js', 'roll.test.js', 'corner.test.js', 'knock.test.js', 'races.test.js', 'cs-handling.test.js', 'nova.test.js', 'net-core.test.js', 'crossover.test.js', 'champ.test.js', 'rally.test.js', 'quali.test.js', 'weather.test.js', 'compounds.test.js', 'flags.test.js', 'vrsic.test.js', 'pikes.test.js', 'junctions.test.js', 'katu.test.js', 'traffic.test.js', 'police.test.js', 'caracoles.test.js', 'bathurst.test.js', 'chapman.test.js', 'bigsur.test.js', 'tianmen.test.js', 'uncompahgre.test.js', 'sani.test.js', 'iroha.test.js', 'mulholland.test.js', 'palomar.test.js', 'beartooth.test.js', 'rastro.test.js', 'moki.test.js', 'greatalpine.test.js', 'maunakea.test.js', 'baldy.test.js', 'cpalace.test.js', 'riverside.test.js', 'detroit.test.js', 'monterey.test.js', 'longford.test.js', 'newcastle.test.js', 'rio.test.js', 'toronto.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'montreal.test.js', 'bangsaen.test.js', 'troisrivieres.test.js', 'marrakesh.test.js', 'townsville.test.js', 'hotham.test.js', 'lang.test.js', 'fuel.test.js', 'rivals.test.js', 'slip.test.js', 'faults.test.js', 'radio.test.js', 'pits.test.js', 'boards.test.js', 'start.test.js', 'grid.test.js', 'field.test.js', 'hudsigns.test.js', 'wheels.test.js', 'debris.test.js', 'lod.test.js', 'quick.test.js', 'shot.test.js', 'missions.test.js', 'm06.test.js', 'm01.test.js', 'm49.test.js', 'm47.test.js', 'm46.test.js'],
+  node: ['stamp.test.js', 'shards.test.js', 'golden.test.js', 'repro.test.js', 'roll.test.js', 'corner.test.js', 'knock.test.js', 'races.test.js', 'cs-handling.test.js', 'nova.test.js', 'net-core.test.js', 'crossover.test.js', 'champ.test.js', 'rally.test.js', 'quali.test.js', 'weather.test.js', 'compounds.test.js', 'flags.test.js', 'vrsic.test.js', 'pikes.test.js', 'junctions.test.js', 'katu.test.js', 'traffic.test.js', 'police.test.js', 'caracoles.test.js', 'bathurst.test.js', 'chapman.test.js', 'bigsur.test.js', 'tianmen.test.js', 'uncompahgre.test.js', 'sani.test.js', 'iroha.test.js', 'mulholland.test.js', 'palomar.test.js', 'beartooth.test.js', 'rastro.test.js', 'moki.test.js', 'greatalpine.test.js', 'maunakea.test.js', 'baldy.test.js', 'cpalace.test.js', 'riverside.test.js', 'detroit.test.js', 'monterey.test.js', 'longford.test.js', 'newcastle.test.js', 'rio.test.js', 'toronto.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'montreal.test.js', 'bangsaen.test.js', 'troisrivieres.test.js', 'marrakesh.test.js', 'townsville.test.js', 'hotham.test.js', 'lang.test.js', 'fuel.test.js', 'rivals.test.js', 'slip.test.js', 'faults.test.js', 'radio.test.js', 'pits.test.js', 'boards.test.js', 'start.test.js', 'grid.test.js', 'field.test.js', 'hudsigns.test.js', 'wheels.test.js', 'debris.test.js', 'lod.test.js', 'quick.test.js', 'shot.test.js', 'missions.test.js', 'm06.test.js', 'm01.test.js', 'm49.test.js', 'm47.test.js', 'm46.test.js', 'm19.test.js', 'm35.test.js', 'm37.test.js', 'm48.test.js', 'm30.test.js', 'm33.test.js', 'm53.test.js'],
   fleet: ['kit.test.js', 'deli.test.js', 'fleet.test.js', 'browser/fleet.test.mjs', 'browser/cars-ui.test.mjs'],
-  browser: ['browser/garage.test.mjs', 'browser/smoke.test.mjs', 'browser/repro.test.mjs', 'browser/flystart.test.mjs', 'browser/newver.test.mjs', 'browser/app.test.mjs', 'browser/crash.test.mjs', 'browser/nova.test.mjs', 'browser/kolibri.test.mjs', 'browser/wheels.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/repair.test.mjs', 'browser/carcull.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/flags.test.mjs', 'browser/career.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/sound.test.mjs', 'browser/fire.test.mjs', 'browser/gfx.test.mjs', 'browser/look.test.mjs', 'browser/look2.test.mjs', 'browser/carlow.test.mjs', 'browser/camtilt.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs', 'browser/online4.test.mjs', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs', 'browser/lang.test.mjs', 'browser/menu.test.mjs', 'browser/saver.test.mjs', 'browser/tower.test.mjs', 'browser/share.test.mjs', 'browser/sky.test.mjs', 'browser/fuel.test.mjs', 'browser/rivals.test.mjs', 'browser/school.test.mjs', 'browser/slip.test.mjs', 'browser/faults.test.mjs', 'browser/radio.test.mjs', 'browser/chal.test.mjs', 'browser/onchamp.test.mjs', 'browser/hlvid.test.mjs', 'browser/ctrl.test.mjs', 'browser/rio.test.mjs', 'browser/townsville.test.mjs', 'browser/start.test.mjs', 'browser/hudcol.test.mjs', 'browser/hud.test.mjs', 'browser/notes.test.mjs', 'browser/kerb.test.mjs', 'browser/marks.test.mjs', 'browser/boards.test.mjs', 'browser/covers.test.mjs', 'browser/roadside.test.mjs', 'browser/quick.test.mjs', 'browser/seams.test.mjs', 'browser/napake.test.mjs', 'browser/napake-slika.test.mjs', 'browser/napake-zastavice.test.mjs', 'browser/napake-samodejno.test.mjs', 'browser/napake-posnetek.test.mjs', 'browser/missions.test.mjs', 'browser/m06.test.mjs', 'browser/m01.test.mjs', 'browser/m49.test.mjs', 'browser/m47.test.mjs', 'browser/m46.test.mjs'],
+  browser: ['browser/garage.test.mjs', 'browser/smoke.test.mjs', 'browser/repro.test.mjs', 'browser/flystart.test.mjs', 'browser/newver.test.mjs', 'browser/nvheli.test.mjs', 'browser/app.test.mjs', 'browser/crash.test.mjs', 'browser/nova.test.mjs', 'browser/kolibri.test.mjs', 'browser/wheels.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/repair.test.mjs', 'browser/carcull.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/flags.test.mjs', 'browser/career.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/sound.test.mjs', 'browser/fire.test.mjs', 'browser/gfx.test.mjs', 'browser/look.test.mjs', 'browser/look2.test.mjs', 'browser/carlow.test.mjs', 'browser/camtilt.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs', 'browser/online4.test.mjs', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs', 'browser/lang.test.mjs', 'browser/menu.test.mjs', 'browser/saver.test.mjs', 'browser/tower.test.mjs', 'browser/share.test.mjs', 'browser/sky.test.mjs', 'browser/fuel.test.mjs', 'browser/rivals.test.mjs', 'browser/school.test.mjs', 'browser/slip.test.mjs', 'browser/faults.test.mjs', 'browser/radio.test.mjs', 'browser/chal.test.mjs', 'browser/onchamp.test.mjs', 'browser/hlvid.test.mjs', 'browser/ctrl.test.mjs', 'browser/rio.test.mjs', 'browser/townsville.test.mjs', 'browser/start.test.mjs', 'browser/hudcol.test.mjs', 'browser/hud.test.mjs', 'browser/notes.test.mjs', 'browser/kerb.test.mjs', 'browser/marks.test.mjs', 'browser/boards.test.mjs', 'browser/covers.test.mjs', 'browser/roadside.test.mjs', 'browser/quick.test.mjs', 'browser/seams.test.mjs', 'browser/napake.test.mjs', 'browser/napake-slika.test.mjs', 'browser/napake-zastavice.test.mjs', 'browser/napake-samodejno.test.mjs', 'browser/napake-posnetek.test.mjs', 'browser/missions.test.mjs', 'browser/m06.test.mjs', 'browser/m01.test.mjs', 'browser/m49.test.mjs', 'browser/m47.test.mjs', 'browser/m46.test.mjs', 'browser/m19.test.mjs', 'browser/m35.test.mjs', 'browser/m37.test.mjs', 'browser/m48.test.mjs', 'browser/m30.test.mjs', 'browser/m33.test.mjs', 'browser/m53.test.mjs'],
 };
-// How long each browser test takes on GitHub (seconds, a fast machine; a slow one takes up to twice as long): --shard deals the tests out
-// by it. Update it from a run's summary when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not
-// listed counts as DEF_SECS
+// How long each browser test takes on GitHub (seconds, from the run of main on 29. 10. 2026, Chromium 141): --shard deals the tests out by it,
+// and a test's time limit grows with it (LIMIT_OF). Update it from a run's summary when a test grows a lot (smoke, memory, perf, gfx and
+// world grow with every track); a test not listed counts as DEF_SECS
 const SECS = {
-  'browser/memory.test.mjs': 1290, 'browser/perf.test.mjs': 900, 'browser/smoke.test.mjs': 830, 'browser/gfx.test.mjs': 420, 'browser/world.test.mjs': 385,
-  'browser/menu.test.mjs': 245, 'browser/online.test.mjs': 175, 'browser/online4.test.mjs': 165, 'browser/onchamp.test.mjs': 145, 'browser/school.test.mjs': 100,
-  'browser/carlow.test.mjs': 150, 'browser/share.test.mjs': 85, 'browser/sound.test.mjs': 75, 'browser/chal.test.mjs': 75, 'browser/radio.test.mjs': 75,
-  'browser/look2.test.mjs': 70, 'browser/quali.test.mjs': 70, 'browser/look.test.mjs': 70, 'browser/sky.test.mjs': 65,
-  'browser/fuel.test.mjs': 65, 'browser/app.test.mjs': 60, 'browser/replay.test.mjs': 60, 'browser/medvode-fence.test.mjs': 55, 'browser/slip.test.mjs': 50,
-  'browser/weather.test.mjs': 50, 'browser/flags.test.mjs': 45, 'browser/ctrl.test.mjs': 45, 'browser/camtilt.test.mjs': 45, 'browser/rio.test.mjs': 40, 'browser/townsville.test.mjs': 30,
-  'browser/hlvid.test.mjs': 40, 'browser/career.test.mjs': 35, 'browser/lang.test.mjs': 30, 'browser/pad.test.mjs': 30, 'browser/faults.test.mjs': 25,
-  'browser/atmos.test.mjs': 25, 'browser/champ.test.mjs': 25, 'browser/saver.test.mjs': 25, 'browser/rivals.test.mjs': 20, 'browser/medvode-castle.test.mjs': 20,
-  'browser/medvode-props.test.mjs': 20, 'browser/pits.test.mjs': 20, 'browser/tower.test.mjs': 15, 'browser/kolibri.test.mjs': 120, 'browser/hudcol.test.mjs': 150, 'browser/kerb.test.mjs': 200, 'browser/marks.test.mjs': 120,
-  'browser/covers.test.mjs': 250,
+  'browser/memory.test.mjs': 2656, 'browser/perf.test.mjs': 1860, 'browser/crash.test.mjs': 1100, 'browser/smoke.test.mjs': 996, 'browser/gfx.test.mjs': 736,
+  'browser/world.test.mjs': 674, 'browser/covers.test.mjs': 653, 'browser/marks.test.mjs': 348, 'browser/hudcol.test.mjs': 342, 'browser/menu.test.mjs': 324,
+  'browser/online4.test.mjs': 320, 'browser/notes.test.mjs': 249, 'browser/kerb.test.mjs': 223, 'browser/kolibri.test.mjs': 209, 'browser/school.test.mjs': 194,
+  'browser/share.test.mjs': 190, 'browser/onchamp.test.mjs': 188, 'browser/online.test.mjs': 181, 'browser/quali.test.mjs': 169, 'browser/radio.test.mjs': 168,
+  'browser/nova.test.mjs': 160, 'browser/chal.test.mjs': 155, 'browser/replay.test.mjs': 147, 'browser/carlow.test.mjs': 140, 'browser/wheels.test.mjs': 138,
+  'browser/pad.test.mjs': 134, 'browser/flags.test.mjs': 121, 'browser/slip.test.mjs': 114, 'browser/look.test.mjs': 113, 'browser/roadside.test.mjs': 112,
+  'browser/look2.test.mjs': 108, 'browser/fuel.test.mjs': 102, 'browser/rio.test.mjs': 96, 'browser/flystart.test.mjs': 94, 'browser/sound.test.mjs': 87,
+  'browser/napake.test.mjs': 81, 'browser/newver.test.mjs': 72, 'browser/weather.test.mjs': 71, 'browser/hlvid.test.mjs': 70, 'browser/app.test.mjs': 70,
+  'browser/sky.test.mjs': 70, 'browser/pits.test.mjs': 66, 'browser/medvode-fence.test.mjs': 65, 'browser/carcull.test.mjs': 62, 'browser/seams.test.mjs': 61,
+  'browser/camtilt.test.mjs': 58, 'browser/napake-slika.test.mjs': 54, 'browser/lang.test.mjs': 53, 'browser/repair.test.mjs': 52, 'browser/napake-posnetek.test.mjs': 50,
+  'browser/ctrl.test.mjs': 50, 'browser/fire.test.mjs': 49, 'browser/champ.test.mjs': 48, 'browser/napake-samodejno.test.mjs': 48, 'browser/faults.test.mjs': 47,
+  'browser/boards.test.mjs': 44, 'browser/repro.test.mjs': 43, 'browser/hud.test.mjs': 43, 'browser/start.test.mjs': 42, 'browser/saver.test.mjs': 42,
+  'browser/career.test.mjs': 41, 'browser/medvode-props.test.mjs': 37, 'browser/medvode-castle.test.mjs': 36, 'browser/tower.test.mjs': 35,
+  'browser/townsville.test.mjs': 29, 'browser/napake-zastavice.test.mjs': 28, 'browser/rivals.test.mjs': 27, 'browser/quick.test.mjs': 26,
+  'browser/atmos.test.mjs': 23,
   'browser/garage.test.mjs': 900,
-  'browser/boards.test.mjs': 40,
-  'browser/roadside.test.mjs': 240,
-  'browser/seams.test.mjs': 120,
-  'browser/repro.test.mjs': 80,
-  'browser/napake.test.mjs': 75, 'browser/napake-slika.test.mjs': 90, 'browser/napake-zastavice.test.mjs': 75, 'browser/napake-samodejno.test.mjs': 90, 'browser/napake-posnetek.test.mjs': 150,
 };
 const DEF_SECS = 60, secs = (f) => SECS[f] || DEF_SECS;
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
@@ -73,7 +73,7 @@ const RELATED = [
   [/\.md$/, ['fleet.test.js']],   // (every .md checked for a car maker's name)
   [/^tests\/run\.js$|^\.github\/workflows\//, ['shards.test.js']],
   [/^js\/missions(\.js$|\/)|^css\/missions\.css$/, ['missions.test.js', 'browser/missions.test.mjs']],   // (the special missions: the system and each mission's texts)
-  [/^js\/missions\/kit\.js$/, ['m01.test.js', 'browser/m01.test.mjs', 'm49.test.js', 'browser/m49.test.mjs', 'm47.test.js', 'browser/m47.test.mjs', 'm46.test.js', 'browser/m46.test.mjs']],   // (the missions' shared kit: the fire engine, the fire, the water, the aim)
+  [/^js\/missions\/kit\.js$/, ['m01.test.js', 'browser/m01.test.mjs', 'm49.test.js', 'browser/m49.test.mjs', 'm47.test.js', 'browser/m47.test.mjs', 'm46.test.js', 'browser/m46.test.mjs', 'm19.test.js', 'browser/m19.test.mjs', 'm35.test.js', 'browser/m35.test.mjs', 'm37.test.js', 'browser/m37.test.mjs', 'm48.test.js', 'browser/m48.test.mjs', 'm30.test.js', 'browser/m30.test.mjs', 'm33.test.js', 'browser/m33.test.mjs', 'm53.test.js', 'browser/m53.test.mjs']],   // (the missions' shared kit: the fire engine, the fire, the water, the aim; group 3's water, the boat, the skins)
   [/^tests\/lib\//, ['quick.test.js']],
   [/^tests\/browser\/lib\.mjs$/, ['browser/quick.test.mjs']],
 ];
@@ -118,14 +118,17 @@ if (opt.shard != null) {
   const m = /^(\d+)\/(\d+)$/.exec(opt.shard), k = m ? +m[1] : 0, n = m ? +m[2] : 0;
   if (!(n >= 1 && k >= 1 && k <= n)) { console.error('bad --shard: ' + opt.shard + ' (k/n, 1 <= k <= n)'); process.exit(2); }
   const { mine, load } = shareOf(list, k, n);
-  console.log(`share ${k}/${n}: ${mine.length} of ${list.length} tests, ~${Math.round(load[k - 1] / 60)} min on a fast machine (the shares: ${load.map(l => Math.round(l / 60)).join(', ')} min)`);
+  console.log(`share ${k}/${n}: ${mine.length} of ${list.length} tests, ~${Math.round(load[k - 1] / 60)} min on GitHub (the shares: ${load.map(l => Math.round(l / 60)).join(', ')} min)`);
   list = mine;
 }
 if (opt.list) { for (const f of list) console.log(f); process.exit(0); }
 const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
 // (the memory test goes three times through every track, the smoke and the phone budget tests drive on each: they grow with each new track, so they get twice the time;
 // the browser fleet test the same: it grows with each vehicle, and with the fields it measures them in, 22 and 100 cars)
-const LIMIT_OF = (f) => (/memory\.test/.test(f) ? 3 : /smoke\.test|perf\.test|browser\/fleet\.test|browser\/garage\.test/.test(f) ? 2 : 1) * LIMIT;   // (the memory test: three times)
+// TEST_SLOW: a test may also take that many times its SECS (default 4: a cloud session's machine takes 2 to 2.5 times as long as GitHub's,
+// e.g. world and gfx ~25-30 min; GitHub's browser tests 2, tests.yml), so a long test is not stopped only because the machine is slow
+const SLOW = +process.env.TEST_SLOW || 4;
+const LIMIT_OF = (f) => Math.round(Math.max((/memory\.test/.test(f) ? 3 : /smoke\.test|perf\.test|browser\/fleet\.test|browser\/garage\.test/.test(f) ? 2 : 1) * LIMIT, SLOW * secs(f) * 1000) / 60000) * 60000;   // (the memory test: three times; in whole minutes)
 
 const results = [];
 for (const f of list) {
@@ -137,7 +140,7 @@ for (const f of list) {
     const out = ((r.stdout || '') + '\n' + (r.stderr || '')).split('\n').filter(l => l.trim() && !/^OK\b/.test(l)), fails = out.filter(l => /\bFAIL\b/.test(l));
     console.log(`\n### ${f}`); for (const l of [...new Set([...fails.slice(0, 40), ...out.slice(-15)])]) console.log(l);
   }
-  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN)`);
+  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN, TEST_SLOW)`);
   results.push({ f, ok: r.status === 0, s: ((Date.now() - t0) / 1000).toFixed(0), timedOut });
   if (r.status !== 0 && process.env.GITHUB_ACTIONS) console.log(`::error title=${f}::${timedOut ? `stopped after ${LIMIT_OF(f) / 60000} min` : `exit ${r.status != null ? r.status : r.signal}`} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);   // (on GitHub: an annotation of the check run, readable where the job's log is not)
 }
