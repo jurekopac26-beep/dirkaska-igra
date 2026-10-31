@@ -129,6 +129,20 @@ Za vsak avto kategorije (en obisk datoteke `js/cars/<id>.js`):
 - Gume vsaka zase (`Car.kt`) jih nimajo (odločitev uporabnika 31. 10. 2026). Uporabnik je kategorijo potrdil 31. 10. 2026.
 - Serijski avti so videti enako kot prej (isti trikotniki z barvami, isti sij luči; preverjeno s prstnim odtisom geometrije), razen LISIČINIH zlitih žarometov; tablica je zdaj tanka ploščica kot pri KOLIBRIJU (+8 trikotnikov: odpadel kos ima prostornino, `tests/browser/fleet.test.mjs`). Možnosti: krilo do +220, žarometi do +240 trikotnikov nad serijskim (meja 300).
 
+### Mali avti (veja `deli/avti-mali`)
+
+Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, tudi notranjost), meja 1400 trikotnikov ostane (MIŠKA 1380, RAKETA 1338, LEV S 1390, LEV KABRIO 1396). Razbijanje: ločeni deli iz obstoječih kosov (nič novega ni narisano), imena v `partNames`, mesta v `parts.extra`. Tablica, antena in spojler so samo tam, kjer jih avto že ima.
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| MIŠKA | `headL` / `headR` (luč iz gondole v blatniku; gondola s kromiranim robom ostane), `tailL` / `tailR` (s kromiranim robom), `wiperFront` | nad zadnjim robom strehe (nad zadnjim steklom), v `body`, `s` 0,9 | v čelu gondole, skoraj poravnan z njim; vsaka možnost svoje oblike (`s` 0,4), z lučjo iz garaže je čelo v barvi karoserije brez kromiranega roba (`around`; želja uporabnika 30. 10.: prave druge luči, ne luč, nalepljena na luč). Možnost 4 na Normalnem z osmimi odseki (+284; izbira uporabnika 30. 10.) |
+| RAKETA | `headL` / `headR` (par okroglih luči na strani; maska ostane), `tailL` / `tailR` (s črnim okvirjem), `plate` in `wiperRear` (`on: 'trunk'`), `wiperFront` | nad zadnjim robom strehe, v `body` | en sklop na stran čez par okroglih luči; stoji 2,6 cm iz maske, obroč sega nazaj do nje (`depth`; želja uporabnika 30. 10.: bolj štrlijo kot pri drugih avtih) |
+| LEV S | `headL` / `headR` (mandelj s projektorjema), `tailL` / `tailR`, `spoiler` in `wiperRear` (`on: 'trunk'`), `wiperFront` | v delu `spoiler` (namesto serijskega spojlerja) | glej spodaj |
+| LEV KABRIO | `headL` / `headR`, `tailL` / `tailR`, `plate` (`on: 'bumperR'`), `wiperFront` | na zadnjem robu dolgega pokrova prtljažnika, v `trunk` (odpre se in odpade z njim) | kot LEV S |
+
+- Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
+- Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
@@ -171,6 +185,9 @@ Pravila, da se seje ne motijo:
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
 - 29. 10. 2026 (Športni): rezervno kolo (`K.tyre`, LISICA v prtljažniku) ostane z avtovimi serijskimi platišči (`kx.spare` v `js/render.js`), platišča iz garaže so samo na štirih kolesih: notranjost avta z deli ostane enaka (`tests/deli.test.js`). `tools/deli-plosca.mjs` usmeri bližnji pogled žarometov na višino in ploskev `mounts.zarometi` avta.
+- 30. 10. 2026 (Mali avti, izbira uporabnika): žaromet 4 (okrogli, klasični) ima na Normalnem osem odsekov na luč (prej deset), da je na avtu z majhno serijsko lučjo (MIŠKA) v meji 300 trikotnikov; Visoki ostane 16.
+- Mali avti: gume vsaka zase (`Car.kt`) in streha od prvega odstotka (`roof0`) ne (izbira uporabnika 30. 10.).
+- 29. 10. 2026 (Mali avti): rezervno kolo v avtu (`K.tyre`, MIŠKA v prtljažniku) ostane serijsko, ko so nameščena platišča iz garaže (`render.js`: `kx.spare`); prej je dobilo platišča in spremenilo notranjost (test: »the cabin unchanged«).
 - 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).
 - 30. 10. 2026 (sklop 2 · streha, odločitev uporabnika): element `streha` so strešna okna (»Strešno okno«, 16 novih možnosti v `js/data/deli.js`); seznam v garaži (`nacrti/cene/cene.json` na veji garaže) mora prevzeti iste možnosti.
 - 29. 10. 2026 (sklop 2 · bok): zavore in matice sta dela na kolesih (`KIT_WHEEL_DELI` v `js/render.js`): `DELI.build(h, …)` s pomočnikom lica kolesa namesto `K`, `h.still` za čeljusti (svoj mesh na kolesu, ki sledi samo zasuku: `kitWheelMesh`; `Render.kitInfo(id, deli).wheels.still` trikotniki čeljusti), `DELI.mesh` vrne štiri kolesa; meja kolesa z vsemi tremi deli na kolesih 800 (Visoki 1150). `tests/deli.test.js` preveri vse elemente z mestom v `mounts` (ne samo `krilo`, `platisca`, `zarometi`).
