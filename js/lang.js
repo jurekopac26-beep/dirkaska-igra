@@ -576,6 +576,15 @@
     'Sonce je zašlo, preden si prišel do lipe.': 'The sun set before you reached the lime tree.', 'Čebele so se razjezile.': 'The bees got angry.',
     'Luknja! Čebele brenčijo: luknje obvozi.': 'A pothole! The bees are buzzing: steer round the holes.', 'Trk! Čebele so se vznemirile.': 'A knock! The bees got upset.',
     'Prehitro v ovinek: čebelnjak se ziba.': 'Too fast into the bend: the bee house is rocking.', 'Čebele so nemirne: pelji čisto mirno.': 'The bees are restless: drive very smoothly.',
+    'Mestni avtobus': 'City Bus', 'Jutranja konica. Na postajah čakajo potniki, avtobus pa že malo zamuja.': 'The morning rush hour. Passengers are waiting at the stops and the bus is already a little late.',
+    'Ustavi ob vsaki postaji tako, da so vrata ob rumeni črti. Vozi mehko, da potniki ne padejo.': 'Stop at every stop with the doors at the yellow line. Drive gently so the passengers do not fall.',
+    'Ustavi tako, da so vrata ob rumeni črti, in zaviraj mehko.': 'Stop with the doors at the yellow line and brake gently.',
+    'POSTAJA': 'STOP', 'ZAMUDA': 'DELAY', 'UDOBJE': 'COMFORT', 'ODPRI VRATA': 'OPEN DOORS', 'vrata ob rumeni črti': 'doors at the yellow line',
+    'Potniki so padli: vozil si presunkovito.': 'The passengers fell: your driving was too jerky.', 'Potniki vstopajo …': 'Passengers are boarding …', 'Odpri vrata.': 'Open the doors.',
+    'Zapelji bliže pločniku.': 'Pull in closer to the kerb.', 'Ustavi tako, da so vrata ob rumeni črti.': 'Stop with the doors at the yellow line.',
+    'Prevozil si črto: vrata niso ob njej.': 'You drove past the line: the doors are not at it.', 'Zgrešil si postajo: +{0} s.': 'You missed the stop: +{0} s.',
+    'Trk! Potniki so padli po avtobusu.': 'A knock! The passengers fell over in the bus.', 'Zaviraj mehko: potniki stojijo.': 'Brake gently: the passengers are standing.',
+    'Prehitro v ovinek: potniki se držijo.': 'Too fast into the bend: the passengers are holding on.', 'Nisi ustavil na vseh postajah.': 'You did not stop at every stop.', 'Zgrešil si preveč postaj.': 'You missed too many stops.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
