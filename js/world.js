@@ -3574,7 +3574,7 @@ const World = (function () {
   }
   const GRASS_NAT = { spa: 0.85, suzuka: 0.9, lake: 0.75, nring: 0.6, rbring: 0.45, bathurst: 0.7, cpalace: 0.6, riverside: 1, rio: 0.75, monterey: 1 };   // how much of the loud green to tone down, per theme
   function grassWorld(o, tex) {
-    const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring', 'cpalace'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own)
+    const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own; not Crystal Palace's park: its builder mows only the verges)
     let sd = null; if (lawn) { const i = T.idx(T.startS); sd = [-T.tz[i], T.tx[i]]; }   // (the stripes run along the start straight)
     const nat = GRASS_NAT[THEME] || 0;
     o.root.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return; const t = m.material.map; if (t && (t === tex.grass || t.grassPic)) grassLook(m.material, sd, nat); });
