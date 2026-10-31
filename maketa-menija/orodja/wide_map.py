@@ -27,13 +27,17 @@ EXT = {824: 300, 1100: 240}   # the margin round the tile, in tile pixels, by th
 SHADOW_K = 0.4   # how dark the sun's cast shadows are painted (the game's island has only its own; a mountain's long shadow would not fit it)
 FEATHER = 18.0  # the island's soft edge: from opaque to clear over this many tile pixels
 RING_M = 150.0  # the made-up rim of ground-only cells round the island's trees, in metres: cut off before the soft edge starts
-RING_PX = {'monaco': 8, 'riviera': 18}   # (where the island is a whole town to the tile's edge: only a thin rim)
-WATER_OUT = {'monaco', 'riviera'}   # (the game's sea is a plane far wider than the harbour: the painted land's own sea is used)
+RING_PX = {'monaco': 8, 'riviera': 18, 'montreal': 6, 'toronto': 8}   # (where the island is a whole town to the tile's edge, or narrow land between water: only a thin rim)
+WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit', 'bangsaen'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
+STRIP_M = {'chapman': 260}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
+BEACH = {'bangsaen'}   # (a beach between the road and the sea: the island goes on to the shore there, no rim cut; the painted sea flat, no seabed in its shading)
+H_SMOOTH = {'rastro': 5.0, 'tianmen': 6.0, 'bangsaen': 2.0}   # (output pixels: where the heights are coarse for the tile's scale, their steps would show in the shading)
 THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nring', 'spa': 'spa', 'rbring': 'rbring', 'suzuka': 'suzuka', 'monaco': 'monaco', 'riviera': 'city'}
 # the sun of each theme (routemap_page.js: THEMES sunOff, default [-80, 96, 70]; x east, y up, z south), its strength and the sky light
 SUN = {'ouni': ([-88, 72, 58], 1.18, 0.56), 'vrsic': ([-84, 70, 56], 1.16, 0.58), 'pikes': ([104, 48, -60], 1.58, 0.75), 'nring': ([-80, 76, 70], 1.1, 0.6),
        'rbring': ([-86, 78, 52], 1.12, 0.6), 'spa': ([-80, 96, 70], 0.98, 0.64), 'suzuka': ([-80, 96, 70], 1.06, 0.62), 'monaco': ([-80, 96, 70], 1.08, 0.6),
        'city': ([-80, 96, 70], 1.04, 0.6)}
+SUN.update({'medvode': ([-80, 84, 58], 1.18, 0.6), 'baldy': ([-78, 96, 50], 1.24, 0.6), 'beartooth': ([-84, 90, 58], 1.26, 0.6), 'bigsur': ([-86, 74, 58], 1.14, 0.62), 'maunakea': ([-62, 118, 44], 1.42, 0.58), 'moki': ([-86, 82, 46], 1.3, 0.62), 'monterey': ([-66, 74, 70], 1.24, 0.64), 'mulholland': ([-70, 104, 48], 1.4, 0.62), 'palomar': ([-74, 98, 52], 1.36, 0.62), 'riverside': ([-70, 74, 78], 1.3, 0.62), 'uncompahgre': ([-70, 92, 62], 1.24, 0.6), 'iroha': ([-80, 74, 60], 1.12, 0.6), 'harju': ([-100, 33, -8], 1.65, 0.58), 'montreal': ([-82, 88, 60], 1.16, 0.62), 'toronto': ([-60, 88, 70], 1.14, 0.62), 'cpalace': ([-60, 74, 66], 1.08, 0.62), 'greatalpine': ([-74, 92, -56], 1.26, 0.62), 'hotham': ([-64, 96, -58], 1.3, 0.62), 'longford': ([-70, 76, -66], 1.24, 0.56), 'newcastle': ([-58, 86, -66], 1.2, 0.62), 'townsville': ([-62, 96, -66], 1.34, 0.64), 'chapman': ([-92, 74, -40], 1.24, 0.62), 'sani': ([-70, 92, -58], 1.28, 0.6), 'caracoles': ([-72, 98, -62], 1.32, 0.6), 'rastro': ([-66, 92, -64], 1.1, 0.66), 'rio': ([-30, 120, -40], 1.3, 0.62), 'katu': ([96, 76, 18], 1.2, 0.58), 'tianmen': ([-70, 92, 60], 1.02, 0.68), 'bathurst': ([-74, 86, -56], 1.22, 0.6)})   # (the real roads and circuits added later: render.js THEMES)
 
 def js_data(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()
@@ -102,8 +106,10 @@ def paint_land(F):
     if z is not None and 'lc' in z.files: alb, h, lc = z['alb'], z['h'], z['lc']
     else:
         alb, h, lc = _paint_land(F); os.makedirs(os.path.dirname(cache), exist_ok=True); np.savez(cache, alb=alb, h=h, lc=lc)
+    if F.tid in BEACH: h = np.where(np.isin(lc, (0, 80)), 0.0, h).astype(np.float32)
+    if F.tid in H_SMOOTH: h = ndimage.gaussian_filter(h, H_SMOOTH[F.tid])
     # the sun in the output grid's axes: x right, z down in the tile; the world's vector (sx east, sz south) turned by the tile's fit
-    sv, sunI, hemiI = SUN[THEME[F.tid]]; sx, sy, sz = sv
+    sv, sunI, hemiI = SUN.get(THEME.get(F.tid, F.tid), ([-80, 96, 70], 0.98, 0.62)); sx, sy, sz = sv
     su = (F.A * sx - F.B * sz) / F.k; sv_ = (F.B * sx + F.A * sz) / F.k
     # (a shortened copy of a road has its world squeezed: the slopes are shaded as the real land's, not the squeezed ones)
     sh = shade(h, F.mpp / F.f * F.scale, [su, sy, sv_], sunI, hemiI)
@@ -235,6 +241,14 @@ def build(tid):
         wat = (isle_d[..., 2] > 110) & (isle_d[..., 2] > isle_d[..., 0] + 45) & (isle_d[..., 2] > isle_d[..., 1] + 20)
         wat = ndimage.binary_dilation(wat, iterations=1); a_d = a_d * (~wat)
     m = island_mask(a_d, F.mpp, RING_PX.get(tid))
+    if tid in BEACH:   # by the sea the island goes on to the shore (no rim cut there: its beach and its palms stay), fading back to the cut further off
+        r1 = RING_M / F.mpp; w = np.clip((ndimage.distance_transform_edt(~wat) - r1) / 30.0, 0, 1)
+        m = island_mask(a_d, F.mpp, 10) * (1 - w) + m * w   # (a rim of 10 pixels at least: a thinner one leaves a veil over the empty pixels)
+    if tid in STRIP_M:   # the strip round the road: the route drawn on the tile, the distance from it, a soft edge
+        road = np.ones((F.H, F.W), bool); r = F.route
+        for (x0, y0), (x1, y1) in zip(r[:-1], r[1:]):
+            k = int(max(abs(x1 - x0), abs(y1 - y0))) + 2; xs = np.clip(np.round(np.linspace(x0, x1, k)).astype(int), 0, F.W - 1); ys = np.clip(np.round(np.linspace(y0, y1, k)).astype(int), 0, F.H - 1); road[ys, xs] = False
+        d = ndimage.distance_transform_edt(road); t = np.clip((STRIP_M[tid] / F.mpp - d) / (3 * FEATHER) + 0.5, 0, 1); m = m * (t * t * (3 - 2 * t)).astype(np.float32)
     bg_t = to_tile(bg, F)
     lc_t = to_tile(lc, F, order=0)
     alb_t = to_tile(alb, F)
