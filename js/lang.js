@@ -598,7 +598,7 @@
     'Premalo prostora na levi: bolj desno.': 'Too little room on the left: more to the right.', 'Premalo prostora na desni: bolj levo.': 'Too little room on the right: more to the left.',
     'Most prevozi po sredini.': 'Cross the bridge in the middle.',
     'Dirka tovornjakov': 'Truck race', 'Dirka težkih dirkalnih tovornjakov. Zavore se pregrejejo hitreje kot pri avtih.': 'A race of heavy racing trucks. Their brakes overheat sooner than a car\'s.',
-    'Zmagaj na zadnjih desetih kilometrih severne zanke. Pred ovinki zaviraj zgodaj in zavore ohladi z vodo, dokler je je kaj v rezervoarju.': 'Win over the last ten kilometres of the north loop. Brake early before the bends and cool the brakes with water while there is some in the tank.',
+    'Zmagaj na zadnjih petih kilometrih severne zanke. Pred ovinki zaviraj zgodaj in zavore ohladi z vodo, dokler je je kaj v rezervoarju.': 'Win over the last five kilometres of the north loop. Brake early before the bends and cool the brakes with water while there is some in the tank.',
     'Pred ovinkom zaviraj zgodaj in zavore ohladi z vodo.': 'Brake early before a bend and cool the brakes with water.',
     'OMEJEVALNIK': 'LIMITER', 'HLADI': 'COOL', 'BREZ VODE': 'NO WATER', 'Končal si na {0}. mestu.': 'You finished in place {0}.',
     'Zavore so pregrete: hladi jih z vodo in zaviraj prej.': 'The brakes are overheated: cool them with water and brake earlier.', 'Zavore so vroče: drži HLADI.': 'The brakes are hot: hold COOL.',

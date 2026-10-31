@@ -33,9 +33,9 @@ const mk = () => ({ player: { q: { s: T.startS + K.S0, d: 0 }, x: 0, z: 0, h: 0,
 let F = mk(), r = new Missions.Run(D, F); D.begin.call(D, r);
 check('the start: OMEJEVALNIK 160, POLOŽAJ 5 / 10, ZAVORE 0 %, VODA 100 %', r.vals.omej.text === '160' && r.vals.pol.text === '5 / 10' && r.vals.zavore.text === '0 %' && r.vals.voda.text === '100 %', JSON.stringify(r.vals));
 const brake = (r, sec) => { for (let k = 0; k < sec * 20; k++) { r.P.vx = 40; r.P.vz = 0; r.P.inBrk = 1; r.step(0.05); } r.P.inBrk = 0; };
-brake(r, 1.5);
-check('a hard braking from 144 km/h for 1.5 s: ZAVORE ' + r.vals.zavore.text, r.br.heat > 0.6 && r.br.heat < 1, r.br.heat.toFixed(2));
-brake(r, 1.5); r.P.vx = 40; r.P.inBrk = 1; const v0 = r.P.vx; r.step(0.05);
+brake(r, 0.6);
+check('a hard braking from 144 km/h for 0.6 s: ZAVORE ' + r.vals.zavore.text, r.br.heat > 0.6 && r.br.heat < 1, r.br.heat.toFixed(2));
+brake(r, 0.6); r.P.vx = 40; r.P.inBrk = 1; const v0 = r.P.vx; r.step(0.05);
 check('another: over-hot, they fade (some of the braking given back), the hint says so', r.br.fade > 0 && r.P.vx > v0 && /pregrete/.test(r.hint), r.br.fade.toFixed(2));
 // cooling: with the water faster, the tank draining
 const cool = (water, sec) => { const x = mk(), q = new Missions.Run(D, x); D.begin.call(D, q); q.br.heat = 1; q.autoCool = water; for (let k = 0; k < sec * 20; k++) { x.player.inBrk = 0; q.step(0.05); } return q; };

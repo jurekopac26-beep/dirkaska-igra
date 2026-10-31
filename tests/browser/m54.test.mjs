@@ -18,7 +18,7 @@ try {
   await ready(page); await page.waitForTimeout(300);
   let s = await st(page);
   T.check('?misija=54: Nürburg', s.track === 'nring', s.track);
-  T.check('the panel: OMEJEVALNIK 160, POLOŽAJ 5 / 10, ZAVORE 0 %, VODA 100 %; the button HLADI', s.rows[0] === 'OMEJEVALNIK 160' && s.rows[1] === 'POLOŽAJ 5 / 10' && s.rows[2] === 'ZAVORE 0 %' && s.rows[3] === 'VODA 100 %' && s.btn === 'HLADI', JSON.stringify(s.rows) + ' ' + s.btn);
+  T.check('the panel: OMEJEVALNIK 160, POLOŽAJ 2 / 10, ZAVORE 0 %, VODA 100 %; the button HLADI', s.rows[0] === 'OMEJEVALNIK 160' && s.rows[1] === 'POLOŽAJ 2 / 10' && s.rows[2] === 'ZAVORE 0 %' && s.rows[3] === 'VODA 100 %' && s.btn === 'HLADI', JSON.stringify(s.rows) + ' ' + s.btn);
   const G = await page.evaluate(() => { const R = window.__game.race, K = Missions.run.def.K, Tr = R.track; return { n: R.cars.length, titans: R.cars.every(c => c.m.id === 'titan'), near: R.cars.every(c => c.q.s <= Tr.startS + K.S0 && c.q.s > Tr.startS + K.S0 - 60) }; });
   T.check('the ' + G.n + ' trucks on the grid at K.S0, all TITANs', G.titans && G.near && G.n === 10, JSON.stringify(G));
   await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 2000 && Missions.run.t < 0.3; k++) g.sim(0.05, false, 0, 0, 0); });

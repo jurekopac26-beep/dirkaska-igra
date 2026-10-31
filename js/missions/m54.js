@@ -8,12 +8,12 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s);
-  const K = { S0: 10800, N: 9, GRID: 5, ROW: 9, HEAT: 0.016, COOL: 0.02, OUT: 0.6, USE: 1 / 14, VLIM: 160, DIFF: 0 };
+  const K = { S0: 15700, N: 9, GRID: 2, ROW: 9, HEAT: 0.03, COOL: 0.02, OUT: 0.6, USE: 1 / 14, VLIM: 160, DIFF: 0 };
 
   Missions.add({
-    id: '54', title: 'Dirka tovornjakov', track: 'nring', limit: 600, stars: [283, 295], K,
+    id: '54', title: 'Dirka tovornjakov', track: 'nring', limit: 300, stars: [133, 140], K,
     story: 'Dirka težkih dirkalnih tovornjakov. Zavore se pregrejejo hitreje kot pri avtih.',
-    goal: 'Zmagaj na zadnjih desetih kilometrih severne zanke. Pred ovinki zaviraj zgodaj in zavore ohladi z vodo, dokler je je kaj v rezervoarju.',
+    goal: 'Zmagaj na zadnjih petih kilometrih severne zanke. Pred ovinki zaviraj zgodaj in zavore ohladi z vodo, dokler je je kaj v rezervoarju.',
     hint: 'Pred ovinkom zaviraj zgodaj in zavore ohladi z vodo.',
     rows: [{ k: 'omej', label: 'OMEJEVALNIK' }, { k: 'pol', label: 'POLOŽAJ' }, { k: 'zavore', label: 'ZAVORE', bar: true }, { k: 'voda', label: 'VODA', bar: true, col: '#3fa8e0' }],
     // a race of TITANs (the truck's own field) from a standing start, one run to the line, dry, the easy rivals
