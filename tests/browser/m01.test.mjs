@@ -37,9 +37,10 @@ try {
   await page.waitForTimeout(600);
   const hp = await page.evaluate(() => { const H = Missions.run.H.center, v = new THREE.Vector3(H.x, H.y, H.z).project(Render.camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight }; });
   await page.mouse.click(hp.x, hp.y);
-  await page.evaluate(() => window.__game.sim(2, false, 0, 0, 0));
+  // (the water used in the 2 s simulated, counted from just before them: the real frames since the click may have used some already)
+  const used = await page.evaluate(() => { const r = Missions.run, w0 = r.water; window.__game.sim(2, false, 0, 0, 0); return w0 - r.water; });
   const w1 = (await st(page)).run.water, tg = await page.evaluate(() => !!Missions.run.tgt);
-  T.check('a tap on the house: the water on it by itself (2 s: 50 l)', tg && Math.abs(1500 - w1 - 50) < 2, JSON.stringify({ hp, tg, w1 }));
+  T.check('a tap on the house: the water on it by itself (2 s: 50 l)', tg && Math.abs(used - 50) < 2, JSON.stringify({ hp, tg, used, w1 }));
   await page.evaluate(() => { const r = Missions.run; r.f = 1; r.tgt = null; });   // (the 2 s of water on the house: the whole fire again for the next check)
   // the water on every flame in turn: done
   const tOut = await page.evaluate(() => { const g = window.__game, r = Missions.run, H = r.H.center, t0 = r.t; r.autoSpray = new THREE.Vector3(H.x, H.y, H.z); for (let i = 0; i < 60 && !r.end; i++) g.sim(0.25, false, 0, 0, 0); return r.t - t0; });
