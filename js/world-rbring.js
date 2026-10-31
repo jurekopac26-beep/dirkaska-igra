@@ -10,7 +10,7 @@
   const {
     Chunks, GB, ICO1, IChunks, NRC, NRT, RB, TAU, WSKY, addShore, atS, atSf, box, clamp, cone, crAt, crH, crowdCtx, crowdFinish, crowdPut,
     crowdRun, crowdUV, cyl, gable, ico, inPoly, lerp, mergeBands, nrDecalTex, nrDem, nrDist, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf,
-    nrLump, nrNear, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
+    nrLump, nrNear, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
     shoreBand, sstep, tvHeli, vary, waterMat, waterline, wrapS
   } = API;
   let LOD, T, THEME;   // (World's, for the build under way)
@@ -82,20 +82,21 @@
         if (f > 0) { const crop = P.n1(x * 0.35 + 1200, z * 0.35), col = crop < 0.42 ? [0.62, 0.86, 0.5] : crop < 0.64 ? [1.5, 1.08, 0.5] : [1.2, 1.0, 0.72];
           c[0] = lerp(c[0], col[0], f * 0.85); c[1] = lerp(c[1], col[1], f * 0.85); c[2] = lerp(c[2], col[2], f * 0.85); }
       } },
-    bathurst: { ban: BT_BAN, at: BT_AT, nums: 18, shirts: BT_SHIRTS, smoke: false, camps: 9, trees: 'bt', seC: [1.22, 1.06, 0.8],
-      pitBox: [-215, 235, -1], town: 150, vg: [0.98, 0.97, 0.8], mow: 0.35, wear: [1700, 3820, 3], cut: [1790, 1905],   // (mow: fainter mowing stripes; wear: more patches and tyre marks between the walls on the hill; cut: the rock cutting at Turn 4)
+    bathurst: { ban: BT_BAN, at: BT_AT, nums: 18, shirts: BT_SHIRTS, smoke: false, camps: 9, trees: 'bt', grass: 'bt', seC: [1.22, 1.06, 0.8],
+      pitBox: [-215, 235, -1], town: 150, vg: [0.98, 0.97, 0.8], edge: [1.1, 0.96, 0.92], mow: 0.35, wear: [1700, 3820, 3], cut: [1790, 1905],   // (grass: its own pasture under the vertex colours; edge: the verge worn and dusty by the asphalt; mow: fainter mowing stripes; wear: more patches and tyre marks between the walls on the hill; cut: the rock cutting at Turn 4)
       roos: true, hillCamp: [2620, 3060, 1], street: [380, 1250],   // (kangaroos on the pastures, the fans' camp on the top of the hill, houses along the climb)   // the pit building as scenery (from, to, side), houses on the built-up land past 150 m, the verge's drier grass
       flags: { stand: [{ gg: 0.6, au: 0.4 }, { gg: 0.5, au: 0.3, tm: 0.2 }], ga: { gg: 0.45, au: 0.3, tm: 0.25 }, camp: { gg: 0.4, au: 0.35, tm: 0.25 }, pole: 'au', podium: 'au' },
       vid: [['GRANDSTAND', -1]], poles: [-190, 190, 1], runoff: ['BATHURST', 'NEW SOUTH WALES', 'BATHURST'], straight: [-250, 250, 1],
       farm: { wall: [0.93, 0.9, 0.82], roof: [0.62, 0.2, 0.14], end: [0.9, 0.87, 0.8], barn: [0.66, 0.67, 0.68], barnRoof: [0.72, 0.73, 0.75], barnEnd: [0.62, 0.63, 0.64] },   // a homestead: weatherboard under red iron, a corrugated iron shed
       tvSkip: [2, 5, 8, 9, 11, 12, 13, 16], recov: [0, 3, 15], photo: [0, 3, 7, 15], jets: [[0.97, 0.97, 0.97], [0.97, 0.97, 0.97], [0.97, 0.97, 0.97]],
       screen: { name: ['BATHURST', ''], km: '6,213 km', sub: '172 m', fans: ['#0b6b38', '#f2c21a', '#13336c', '#f4f4f0', '#e2202c', '#8a6a44', '#0b6b38'], glow: '242,194,26' },
-      colMod: (P) => (x, z, c) => {   // the open land is sheep pasture in spring: pale and dry, golden where it is already drying off, greener in the hollows
-        const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.94 + (n - 0.5) * 0.18 + (m - 0.5) * 0.1, fm = nrLCf(x, z, 0);
-        c[0] *= k * 1.08; c[1] *= k; c[2] *= k * 0.82;
-        const dry = sstep(0.42, 0.7, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.8 * fm, lush = sstep(0.62, 0.8, P.n1(x * 1.2 - 210, z * 1.2 + 75)) * 0.45 * fm;
-        c[0] = lerp(c[0], c[0] * 1.32 + 0.1, dry); c[1] = lerp(c[1], c[1] * 1.1 + 0.04, dry); c[2] = lerp(c[2], c[2] * 0.62, dry);
-        c[0] = lerp(c[0], c[0] * 0.86, lush); c[1] = lerp(c[1], c[1] * 1.02, lush); c[2] = lerp(c[2], c[2] * 0.9, lush);
+      colMod: (P) => (x, z, c) => {   // the open land is sheep pasture in spring: green after the winter's rain, olive, straw where it is drying off, greener in the hollows
+        const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.2 + (m - 0.5) * 0.12, fm = nrLCf(x, z, 0);
+        { const L = (c[0] + c[1] + c[2]) / 3; c[0] = lerp(c[0], L, 0.45); c[1] = lerp(c[1], L, 0.45); c[2] = lerp(c[2], L, 0.45); }   // (half the tint of the hay and stubble fields: these are pastures, and red on the soil in the grass turns rusty)
+        c[0] *= k * 0.97; c[1] *= k; c[2] *= k * 0.95;
+        const dry = sstep(0.5, 0.74, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.7 * fm, lush = sstep(0.6, 0.8, P.n1(x * 1.2 - 210, z * 1.2 + 75)) * 0.5 * fm;
+        c[0] = lerp(c[0], c[0] * 1.2 + 0.04, dry); c[1] = lerp(c[1], c[1] * 1.06 + 0.02, dry); c[2] = lerp(c[2], c[2] * 1.1 + 0.04, dry);   // (drying off: paler and yellower, not orange)
+        c[0] = lerp(c[0], c[0] * 0.84, lush); c[2] = lerp(c[2], c[2] * 0.92, lush);
       } },
     rio: { ban: RIO_BAN, at: RIO_AT, nums: 11, shirts: RIO_SHIRTS, smoke: false, camps: 0, trees: 'rio', seC: [1.12, 1.04, 0.86], gravel: true, noVid: true, pits80: true, heliFin: true,
       flags: { stand: [{ br: 0.75, tm: 0.25 }, { br: 0.6, gg: 0.2, tm: 0.2 }], ga: { br: 0.8, tm: 0.2 }, camp: { br: 1 }, pole: 'br', podium: 'br' },
@@ -644,6 +645,27 @@
       D.mesh.setMatrixAt(k, _rM.compose(_rP, _rQ, _rS));
     }
     D.mesh.instanceMatrix.needsUpdate = true;
+  }
+  function btGrassTex(aniso) {   // Bathurst's pasture under the vertex colours (256 px = 14 m, tileable): short spring grass mottled in patches of a metre or two,
+    // tussocks dark at the heart and dry at the tips, straw blades, specks of the red-brown soil (made for the high camera: half a metre and more)
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(4801);
+    const n1 = nrPN(4, 4802), n2 = nrPN(12, 4803), n3 = nrPN(40, 4804), n4 = nrPN(8, 4805);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+      const u = i / S, v = j / S, n = n1(u, v) * 0.35 + n2(u, v) * 0.4 + n3(u, v) * 0.25, k = 0.8 + n * 0.38 + (r() - 0.5) * 0.12, dry = sstep(0.55, 0.82, n4(u, v)) * 0.6, o = (j * S + i) * 4;
+      d[o] = clamp(lerp(86, 132, dry) * k, 0, 255); d[o + 1] = clamp(lerp(120, 118, dry) * k, 0, 255); d[o + 2] = clamp(lerp(54, 70, dry) * k, 0, 255); d[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0); const avg = pixAvg(d);
+    const wrap = (px, py, rad, fn) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -rad && qx < S + rad && qy > -rad && qy < S + rad) fn(qx, qy); } };   // (across the edges too: tileable)
+    for (let k = 0; k < 150; k++) { const px = r() * S, py = r() * S, rad = 3 + r() * 8, dr = r() < 0.35;   // tussocks (a third with dry tops)
+      wrap(px, py, rad, (qx, qy) => { const g = x.createRadialGradient(qx, qy, 0, qx, qy, rad); g.addColorStop(0, dr ? 'rgba(150,132,80,0.5)' : 'rgba(40,58,24,0.5)'); g.addColorStop(0.65, dr ? 'rgba(170,150,92,0.3)' : 'rgba(64,80,34,0.3)'); g.addColorStop(1, 'rgba(150,140,90,0)');
+        x.fillStyle = g; x.beginPath(); x.arc(qx, qy, rad, 0, TAU); x.fill(); }); }
+    x.lineWidth = 1;
+    for (const [st, n] of [['rgba(42,62,26,0.5)', 700], ['rgba(170,156,98,0.45)', 520], ['rgba(196,178,120,0.4)', 220]]) {   // blades: dark green, straw
+      x.strokeStyle = st; x.beginPath();
+      for (let k = 0; k < n; k++) { const px = r() * S, py = r() * S, dx = (r() - 0.5) * 2.4, dy = -(1.5 + r() * 3); wrap(px, py, 6, (qx, qy) => { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); }); }
+      x.stroke(); }
+    for (const [st, n, sz] of [['rgba(112,90,66,0.6)', 40, 3], ['rgba(126,104,78,0.5)', 60, 2], ['#e9d64e', 40, 1], ['#efeee2', 50, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - 3)), Math.floor(r() * (S - 3)), sz, sz); }   // the soil, a few capeweed and clover flowers
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
   function btGumGeo(kind) {   // Bathurst's gums (height 1): 0 near, 2 far: a pale trunk, darker and shedding low down, forking into three limbs, loose drooping clumps of blue-grey leaves at their ends; 1, 3 the wattles (auTreeGeo)
     if (kind === 1 || kind === 3) return auTreeGeo(kind);
@@ -1293,7 +1315,7 @@
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(nrGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];   // (the Nordschleife's meadow grass: no mowing stripes; the vertex colours make it Styrian)
+    const gMat = new THREE.MeshLambertMaterial({ map: ownTex((LK.grass === 'bt' ? btGrassTex : nrGrassTex)(tex.grass.anisotropy)), vertexColors: true }), tiles = [];   // (the Nordschleife's meadow grass: no mowing stripes; the vertex colours make it Styrian; Bathurst: its own pasture)
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt, white edge lines, red and white kerbs (256 m chunks, culled; the grass verges out past the barriers at the end) ---- */
@@ -2108,19 +2130,27 @@
         exclPush(x, z, 4); CR.avoid(x, z, 3); nCamp++;
       }
     }
-    if (LK.cut) {   // Bathurst: the rock cutting at Turn 4: a raw face of rock behind the wall on the hill's side, low enough not to hide the road from the high camera, a few fallen boulders at its foot
-      const [c0, c1] = LK.cut, RK = rng(4342), rk = (k) => [0.66 + 0.08 * k, 0.55 + 0.07 * k, 0.44 + 0.05 * k], im = T.idx(sAt((c0 + c1) / 2));
+    const cutBank = [];   // (Bathurst: the bank over the cutting, rows of points; built with the terrain, in its grass and colours)
+    if (LK.cut) {   // Bathurst: the rock cutting at Turn 4: a raw face of shale, clay and sandstone in layers behind the wall on the hill's side, low enough
+      // not to hide the road from the high camera, leaning back so the camera sees it, its top a bank of grass sloping back to the hillside (cutBank), a few fallen boulders at its foot
+      const [c0, c1] = LK.cut, RK = rng(4342), im = T.idx(sAt((c0 + c1) / 2));
       const up = (sd) => { const [x, z] = atSf(sAt((c0 + c1) / 2), sd * ((sd > 0 ? T.br[im] : T.bl[im]) + 25)); return nrGround(x, z); };
+      const RC = [[0.36, 0.32, 0.28], [0.62, 0.47, 0.31], [0.53, 0.5, 0.45], [0.55, 0.37, 0.27]];   // dark shale, ochre clay, grey sandstone, red-brown
+      const rockAt = (x, z, y) => { const t = y * 1.15 + P.n2(x * 0.6, z * 0.6) * 2.4, b = Math.floor(t), A = RC[((b % 4) + 4) % 4], B = RC[(((b + 1) % 4) + 4) % 4], k = 0.86 + 0.26 * P.n1(x * 1.9 + 40, z * 1.9);
+        return [0, 1, 2].map(q => lerp(A[q], B[q], sstep(0.72, 1, t - b)) * k); };   // (the layers by height, wavy; lighter and darker in patches)
       for (const side of [up(1) > up(-1) ? 1 : -1]) {
         let prev = null;
         for (let d = c0; d <= c1 + 0.01; d += 2) {
-          const s0 = sAt(d), i = T.idx(s0), bar = side > 0 ? T.br[i] : T.bl[i], f = Math.min(sstep(c0, c0 + 25, d), sstep(c1, c1 - 25, d)), h = (2.6 + 2.6 * P.n4(T.px[i] * 3, T.pz[i] * 3)) * f;
-          const row = [[bar + 1.0, -0.3], [bar + 1.9, h * 0.55], [bar + 3.1, h], [bar + 9, h * 0.85]].map(([o, y]) => { const [x, z] = atSf(s0, side * o); return [x, hyS(s0) + y, z]; });
-          const ins = (() => { const [x, z] = atSf(s0, side * (bar - 2)); return [x, hyS(s0) - 3, z]; })(), g = scen.get(row[0][0], row[0][2]);
-          if (prev) for (let e = 0; e < 3; e++) g.quadO(prev.row[e], row[e], row[e + 1], prev.row[e + 1], e === 2 ? [0.5, 0.52, 0.32] : rk(prev.k + (e ? 0.12 : 0)), ins);
-          prev = { row, k: (RK() - 0.5) * 0.6 };
-          if (f > 0.5 && RK() < 0.12) { const [x, z] = atSf(s0, side * (bar + 1.6)); rock(g, x, hyS(s0) + 0.3, z, 0.6 + RK() * 0.6, 0.5 + RK() * 0.4, 0.6 + RK() * 0.5, RK() * TAU, rk(prev.k), RK, 0.3); }
-          const [ex, ez] = atSf(s0, side * (bar + 4)); exclPush(ex, ez, 5);
+          const s0 = sAt(d), i = T.idx(s0), bar = side > 0 ? T.br[i] : T.bl[i], f = Math.min(sstep(c0, c0 + 25, d), sstep(c1, c1 - 25, d)), h = (2.8 + 2.4 * P.n4(T.px[i] * 0.4, T.pz[i] * 0.4)) * f, y0 = hyS(s0);
+          const at = (o, y) => { const [x, z] = atSf(s0, side * o); return [x, y0 + y, z]; };
+          const row = [at(bar + 1.0, -0.3), at(bar + 1.8, h * 0.3), at(bar + 3.0, h * 0.62), at(bar + 4.3, h * 0.88), at(bar + 5.2, h)], cols = row.map(q => rockAt(q[0], q[2], q[1] - y0));
+          cols[0] = cols[0].map(v => v * 0.62);   // (the foot damp, in the wall's shadow)
+          const ins = (() => { const [x, z] = atSf(s0, side * (bar - 2)); return [x, y0 - 3, z]; })(), g = scen.get(row[0][0], row[0][2]);
+          if (prev) for (let e = 0; e < 4; e++) g.quadO(prev.row[e], row[e], row[e + 1], prev.row[e + 1], null, ins, null, [prev.cols[e], cols[e], cols[e + 1], prev.cols[e + 1]]);
+          prev = { row, cols };
+          cutBank.push({ side, pts: [[bar + 5.2, h], [bar + 7.5, h * 1.02], [bar + 13, h * 0.8], [bar + 24, null]].map(([o, y]) => { const [x, z] = atSf(s0, side * o), gy = nrGround(x, z) + 0.05; return [x, y == null ? gy : Math.max(y0 + y, gy), z]; }) });
+          if (f > 0.5 && RK() < 0.12) { const [x, z] = atSf(s0, side * (bar + 1.6)); rock(g, x, y0 + 0.3, z, 0.6 + RK() * 0.6, 0.5 + RK() * 0.4, 0.6 + RK() * 0.5, RK() * TAU, rockAt(x, z, 0.5), RK, 0.3); }
+          for (const o of [5, 12]) { const [ex, ez] = atSf(s0, side * (bar + o)); exclPush(ex, ez, 5); }
         }
       }
     }
@@ -2241,7 +2271,8 @@
             const si = side > 0 ? 1 : 0, vr = rbVerge(i, side), [o1, h1] = vr[1], [o2, h2] = vr[2], band = [];
             for (let b = 1; b <= MOW_N; b++) { const o = Math.min(o1 + b * MOW_W, o2), h = h1 + (h2 - h1) * (o - o1) / (o2 - o1); band.push([o, h], [o, h]); }   // (each edge twice: a sharp change of colour)
             const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], nb = 2 + 2 * MOW_N;
-            const pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pr.map(([o], k) => { const p = pts[k]; if (k <= nb) return k < 2 ? vg : (Math.floor((k - 1) / 2) % 2 ? vg : vgD); const gc = nrGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
+            const pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pr.map(([o], k) => { const p = pts[k]; if (k === 0 && LK.edge) { const e = LK.edge, q = 0.75 + 0.5 * P.n3(p[0] * 0.6 + 50, p[2] * 0.6); return [vg[0] * lerp(1, e[0], q), vg[1] * lerp(1, e[1], q), vg[2] * lerp(1, e[2], q)]; }   // (Bathurst: the edge by the asphalt worn and dusty, in patches)
+              if (k <= nb) return k < 2 ? vg : (Math.floor((k - 1) / 2) % 2 ? vg : vgD); const gc = nrGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));
             const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
@@ -2252,6 +2283,15 @@
         addM(gv, gMat);
       }
       if (PK.gTop && !PK.gTop.empty) addM(PK.gTop, gMat);   // (Crystal Palace: the upper lawns over the terrace walls' cut)
+      if (cutBank.length) {   // Bathurst: the bank over the rock cutting, in the hillside's grass: its edge dry, then the hillside's own colours
+        const gb = new RB(true); let pr = -1;
+        for (const { side, pts } of cutBank) {
+          const cs = pts.map((q, k) => { const c = nrGCol(q[0], q[2]); return k === 0 ? [c[0] * 1.08, c[1] * 0.96, c[2] * 0.86] : c; }), o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];   // (rows run left -> right)
+          const r = gb.row(o.map(k => pts[k]), o.map(k => cs[k]), o.map(k => [pts[k][0] / 14, -pts[k][2] / 14]));
+          if (pr >= 0) gb.link(pr, r, 0, 3); pr = r;
+        }
+        addM(gb, gMat);
+      }
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
