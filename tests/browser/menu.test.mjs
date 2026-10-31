@@ -196,9 +196,9 @@ try {
     const gImg = await ev(page, tile);
     await click(page, 'single'); await click(page, 'mode:trial');
     const gDesc = await ev(page, desc);
-    await click(page, 'more-options'); await page.click('.sheet [data-act="opt:pkRoad:pikes"]'); await page.click('.sheet button.go[data-act="close-sheet"]'); await page.waitForTimeout(300);
+    await click(page, 'pick-weather'); await click(page, 'more-options'); await click(page, 'opt:pkRoad:pikes'); await done(page); await page.waitForTimeout(300);
     const aDesc = await ev(page, desc);
-    await click(page, 'back'); await page.waitForTimeout(300); await click(page, 'back'); await page.waitForTimeout(300);
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
     const aImg = await ev(page, tile);
     T.check('Pikes Peak: on Gravel the Single race tile shows its own model (pikesg.webp) and the card its own description; on Asphalt the road\'s own',
       /\/pikesg\.webp$/.test(gImg) && /gravel/i.test(gDesc) && aDesc !== gDesc && /\/pikes\.webp$/.test(aImg), JSON.stringify({ gImg, gDesc, aDesc, aImg }));
