@@ -252,7 +252,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('bumperR', () => {
           strip(0.64, [-1.82], [-1.93, 0.54], -1.955, null, true);                             // (its ends on the quarters: the path never more than 1.4 cm into the rounded corners)
           K.rect(-1.954, 0.36, 0, 0.1, 0.035, RED, { dir: '-x' });                              // the fog lamp
-          K.rect(-1.953, 0.49, 0, 0.44, 0.1, [0.9, 0.9, 0.86], { dir: '-x', part: 'plate' });   // the number plate (blank; a part of its own, on the bumper)
+          F([[-1.953, 0.44, -0.22], [-1.953, 0.44, 0.22], [-1.945, 0.54, 0.22], [-1.945, 0.54, -0.22]], [0.9, 0.9, 0.86], [-1, 0, 0], { part: 'plate' });   // the number plate (blank; a part of its own, on the bumper: leaning back 8 mm, its piece on the road not flat)
           K.exhaust(-1.95, 0.27, -0.48, 0.035, 0.2, { n: 6 });
         });
         // ---- the sails between the A-pillars' feet and the doors' front corners (the paint outside, the lining in), the mirrors on them ----
