@@ -101,3 +101,4 @@
 - 30. 10. ŽELJA uporabnika: kamera se lahko bolj približa (spodnja meja približevanja 0,55 namesto 0,85; pri največjem približanju omarica ni več v sliki).
 - 30. 10. ŽELJA uporabnika: kamera je privzeto vedno enako oddaljena, tudi ko pride v garažo tovornjak (brez samodejnega odmika za visoka in dolga vozila; oddalji jo uporabnik).
 - 31. 10. ŽELJA uporabnika (PRIORITETA): ob tapu na element se VSA ostala garaža zatemni (prej zapisano 58 %); tapnjeni element in elementi iste skupine ostanejo svetli (en moder, ostali oranžni).
+- 31. 10. ŽELJA uporabnika: pri zatemnitvi je tudi avto temen; svetel ostane le, ko je avto tapnjen (kolesa: gume, karoserija: aero); prosojen predogled novega dela ostane svetel.
