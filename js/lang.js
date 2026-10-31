@@ -604,6 +604,15 @@
     'Preveč krav je pobegnilo v gozd.': 'Too many cows escaped into the forest.', 'Prehitro! Krave so se razbežale.': 'Too fast! The cows scattered.',
     'Krave se razhajajo proti gozdu: zapelji bliže.': 'The cows are wandering off toward the forest: drive closer.',
     'Zapelji za čredo in jo počasi potiskaj naprej.': 'Get behind the herd and push it slowly forward.',
+    'Zlata ura': 'The Golden Hour', 'Na obalni cesti se je zgodila nesreča. Z reševalnim vozilom prideš do ponesrečenca in ga naložiš.': 'There has been an accident on the coast road. You reach the injured person in the ambulance and load them.',
+    'Odpelji ponesrečenca v bolnišnico. Če si prepočasen ali sunkovit, ponesrečenec umre.': 'Take the injured person to the hospital. If you are too slow or too rough, they will die.',
+    'Vozi mirno: vsak sunek in trk dvigne utrip.': 'Drive calmly: every jolt and knock raises the pulse.',
+    'UTRIP': 'PULSE', 'STANJE': 'CONDITION', 'CILJ': 'DESTINATION', 'NALOŽI': 'LOAD', 'NESREČA': 'ACCIDENT', 'nesreča': 'accident', 'bolnišnica': 'hospital',
+    'stabilno': 'stable', 'resno': 'serious', 'KRITIČNO': 'CRITICAL', 'nalaganje': 'loading', 'čaka pomoč': 'waiting for help',
+    'Naloži ponesrečenca.': 'Load the injured person.', 'Ustavi ob kraju nesreče.': 'Stop at the accident.', 'Pelji do kraja nesreče ob obalni cesti.': 'Drive to the accident on the coast road.',
+    'Posadka nalaga ponesrečenca …': 'The crew is loading the injured person …', 'Ponesrečenec ni preživel.': 'The injured person did not survive.',
+    'Trk! Utrip je poskočil.': 'A knock! The pulse jumped.', 'Ne zaviraj tako ostro.': 'Do not brake so hard.', 'Prehitro v ovinek: utrip raste.': 'Too fast into the bend: the pulse is rising.',
+    'Kritično! Vozi čisto mirno.': 'Critical! Drive very calmly.', 'Ponesrečenca nisi naložil.': 'You did not load the injured person.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

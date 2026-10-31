@@ -93,6 +93,7 @@
         say = 'Potniki vstopajo …';
         if (r.board >= K.BOARD) { r.st = 'drive'; KIT.hold(P, false); r.served++; r.delay = r.t - p.sched; r.k++; }
       } else if (p) {
+        if (D && D.along > -60 && D.along < K.MISS) P.stuckT = 0;   // (waiting at a stop is no getting stuck: no Na progo)
         const at = D && Math.abs(D.along) < K.DOOR && D.kerb > -0.5 && D.kerb < K.KERB;
         r.btn.show(at && v < K.VSTOP + 1);
         if (at && v < K.VSTOP) { if (r.btn.take() || r.autoDoor) { r.st = 'board'; r.board = 0; r.btn.show(false); } else say = 'Odpri vrata.'; }
