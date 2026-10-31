@@ -50,7 +50,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `.github/workflows/` | `tests.yml` testi, `posnetki.yml` posnetki pred/po ob pull requestu (artefakt in povzetek), `stran.yml` objava strani s predogledom vej |
 | `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek); časi testov na GitHubu `SECS`, meja testa `LIMIT_OF` (`TEST_TIMEOUT_MIN`, `TEST_SLOW`) |
 | `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
-| `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `pikes.md` tudi `pikesg`, `toskana.md` tudi `grom` |
+| `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |

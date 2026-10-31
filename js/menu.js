@@ -78,9 +78,11 @@
     const gr = (d) => d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
     TR = G.defs().filter(d => !d.variantOf).map(d => {
       const en = d.en || {}, full = en.name || d.name, k = full.lastIndexOf(', ');
-      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d),
+      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', group: gr(d),
         modes: d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
+      const vd = G.defs().find(v => v.variantOf === d.id);   // (Pikes Peak on gravel: its own picture and description while the Road option says Gravel)
       Object.defineProperties(t, {
+        desc: { get() { const v = vd && shownId(t) === vd.id ? vd : d; return shortDesc((v.en || {}).desc || v.desc); } },
         km: { get() { const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
         corners: { get() { return G.track(d.id).corners.length; } },
         laps: { get() { return d.open ? 1 : G.lapsOf(d); } },
@@ -95,7 +97,8 @@
   const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && !(c.group === 'test' && !G.S.lastTrack) ? c : TR.find(t => t.group !== 'test') || TR[0]; };
   const carImg = (m, ci) => 'assets/cars/img/' + m.id + '-' + ci + '.webp';
   const HAS_CAR_IMG = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'formula'];
-  const trackImg = (t, wet) => 'assets/tracks/' + t.id + (wet ? '-rain' : '') + '.webp';
+  const shownId = (t) => t.id === 'pikes' && G.S.pkRoad === 'pikesg' ? 'pikesg' : t.id;
+  const trackImg = (t, wet) => 'assets/tracks/' + shownId(t) + (wet ? '-rain' : '') + '.webp';
   const dio = (t) => '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div><div class="dio"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +
     '<img src="' + trackImg(t) + '" alt="3D model of the ' + esc(t.name) + ' track"><img class="wet" src="' + trackImg(t, true) + '" alt=""></div></div>';
   const weatherIdx = () => { const w = G.S.weather; return w === 'rain' || w === 'storm' ? 1 : w === 'random' || w === 'change' ? 2 : 0; };

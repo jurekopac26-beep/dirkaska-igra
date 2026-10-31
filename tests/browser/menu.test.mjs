@@ -189,6 +189,22 @@ try {
     T.check('no page errors in the intro', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
+  {   // (Pikes Peak on gravel: the title's Single race tile shows its own model and the track card its own description; Asphalt the road's own again)
+    const { ctx, page, errors } = await open({ track: 'pikesg', pkRoad: 'pikesg', mode: 'tt', lastTrack: 'pikes' });
+    await ready(page);
+    const tile = 'return root.querySelector(".t-single .im img").getAttribute("src");', desc = 'return root.querySelector(".card .desc").textContent;';
+    const gImg = await ev(page, tile);
+    await click(page, 'single'); await click(page, 'mode:trial');
+    const gDesc = await ev(page, desc);
+    await click(page, 'more-options'); await page.click('.sheet [data-act="opt:pkRoad:pikes"]'); await page.click('.sheet button.go[data-act="close-sheet"]'); await page.waitForTimeout(300);
+    const aDesc = await ev(page, desc);
+    await click(page, 'back'); await page.waitForTimeout(300); await click(page, 'back'); await page.waitForTimeout(300);
+    const aImg = await ev(page, tile);
+    T.check('Pikes Peak: on Gravel the Single race tile shows its own model (pikesg.webp) and the card its own description; on Asphalt the road\'s own',
+      /\/pikesg\.webp$/.test(gImg) && /gravel/i.test(gDesc) && aDesc !== gDesc && /\/pikes\.webp$/.test(aImg), JSON.stringify({ gImg, gDesc, aDesc, aImg }));
+    T.check('no page errors on Pikes Peak\'s Road option', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
 
   // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Monte Carlo: its helicopter's first frame behind it).
   //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
