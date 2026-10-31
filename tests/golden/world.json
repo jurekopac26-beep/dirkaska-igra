@@ -244,23 +244,23 @@
   }
  },
  "bathurst": {
-  "meshes": 989,
-  "verts": 653428,
+  "meshes": 990,
+  "verts": 653906,
   "instances": 14720,
   "props": 103,
   "crowd": 4198,
-  "world": "d7b6c6ce",
+  "world": "52607f8",
   "propsHash": "31c86d06",
   "floor": "8a20442b/12404",
   "groups": {
-   "-:MeshLambertMaterial": "b027d7a7",
+   "-:MeshLambertMaterial": "e595d515",
    "-:MeshBasicMaterial": "62b945ac",
    "kangaroos:MeshLambertMaterial": "c1cb820e",
    "crowd:MeshLambertMaterial": "da9a57dd",
    "smoke:ShaderMaterial": "19e50f77",
    "flags:MeshLambertMaterial": "88cd2272",
    "jet smoke:MeshBasicMaterial": "684b759b",
-   "ao:MeshBasicMaterial": "b4f912c0",
+   "ao:MeshBasicMaterial": "3518880c",
    "roadwear:MeshLambertMaterial": "8cb1e885",
    "worn:MeshLambertMaterial": "1a992b4a",
    "brakeBoards:MeshLambertMaterial": "379f179a"
