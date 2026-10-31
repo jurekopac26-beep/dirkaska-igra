@@ -16,15 +16,15 @@
   API.sync.push(() => { ({ T } = API); });
 
   /* ================= MOUNT HOTHAM (theme 'hotham') =================
-     The top of the Great Alpine Road over the Victorian Alps (Australia): from below Mount Little Blowhard (~1495 m) along the ridge past Renes
-     Lookout, Mount Blowhard, Danny's Lookout, Little Mount Baldy and the Razorback to the road's highest point under Mount Hotham (~1831 m) and
+     The top of the Great Alpine Road over the Victorian Alps (Australia): from below Mount Little Blowhard (~1495 m) along the ridge past the valley
+     lookout, Mount Blowhard, Ridge Lookout, Little Mount Baldy and the Razorback to the road's highest point under Mount Hotham (~1831 m) and
      down under the ski bridge into the village of Hotham Heights (~1753 m), on a clear afternoon of the southern summer (the sun from the north).
      Built on Vršič's corridor (vrPrep, vrStubs and the terrain helpers read the same forms: def.dem, def.lc, def.bld, def.lakes, def.sideRoads),
      with a look of its own: the snow gum woodland (twisted many-stemmed trees with pale, streaked bark and grey-green crowns, the silver stags the
      bushfires left with their green regrowth at the foot), alpine ash a little lower down, the treeless tops in tussock grass, heath and snow
      daisies, grey rock in tors and boulders; the road with the white lines of Australia (a broken centre line, the double unbroken one through the
      bends), the orange snow poles along both edges, the yellow curve signs with their advisory speeds, green guide boards, guardrails where the
-     ground falls away, stone retaining walls under the road; Renes and Danny's lookouts with their car parks, the pull-outs by the road, the
+     ground falls away, stone retaining walls under the road; the valley and ridge lookouts with their car parks, the pull-outs by the road, the
      snowmaking reservoir, the lifts of the resort, the ski bridge over the road and the lodges of Hotham Heights; beyond the corridor the real
      ranges (Mount Feathertop and the valleys: irFar). Only geographic names; the signs and boards are generic. No helicopter, no birds. */
   let HOS = 'summer';   // the season the world is painted in ('summer' or 'autumn': the tussocks golden; winter: the autumn look, the render's season code snows it over)
@@ -108,7 +108,7 @@
     txt('GREAT ALPINE ROAD', 512, 930, 54, '#16181c', 960); txt('MOUNT HOTHAM · ' + topA, 512, 994, 44, '#fff', 900);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (hoATex = t);
   }
-  const HO_BOARDS = [['KEEP LEFT UNLESS OVERTAKING', '#f2f2ee'], ['HOTHAM HEIGHTS  8', '#1d5e46'], ['RENES LOOKOUT', '#6b3e1e'], ["DANNY'S LOOKOUT", '#6b3e1e'], ['CARRY SNOW CHAINS', '#f2f2ee'], ['ICE ON ROAD', '#f1c21b'], ['ALPINE NATIONAL PARK', '#6b3e1e'], ['DINNER PLAIN  →', '#1d5e46']];
+  const HO_BOARDS = [['KEEP LEFT UNLESS OVERTAKING', '#f2f2ee'], ['HOTHAM HEIGHTS  8', '#1d5e46'], ['VALLEY LOOKOUT', '#6b3e1e'], ["RIDGE LOOKOUT", '#6b3e1e'], ['CARRY SNOW CHAINS', '#f2f2ee'], ['ICE ON ROAD', '#f1c21b'], ['ALPINE NATIONAL PARK', '#6b3e1e'], ['DINNER PLAIN  →', '#1d5e46']];
   function hoAtlas2() {   // the small signs: row 0 the curve warnings (a yellow diamond with the bent arrow, both ways) and the advisory speeds (35, 45, 55, 65 km/h),
     // the chevrons both ways; row 1 the kilometre plates (1-8: green, white digits); rows 4-7 the road's boards (two a row, 512 x 128)
     if (hoA2Tex) return hoA2Tex;
@@ -452,7 +452,7 @@
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
     }
 
-    /* ---- the lookouts (Renes, Danny's): the car park beside the road (the nearest of def.pulls) with its cars, a low wall of the grey stone round the edge
+    /* ---- the lookouts (the valley and the ridge one): the car park beside the road (the nearest of def.pulls) with its cars, a low wall of the grey stone round the edge
        towards the view, a railing on it, an information board, the visitors looking out; the brown board before each turn-off ---- */
     for (const [vx, vz, vn] of P.vistas) {
       const pad = pulls.reduce((a, p) => (!a || Math.hypot(p.x - vx, p.z - vz) < Math.hypot(a.x - vx, a.z - vz) ? p : a), null); if (!pad) continue;
@@ -466,7 +466,7 @@
       { const bx = ox - ux * 2.5 + uz * 4, bz = oz - uz * 2.5 - ux * 4, by = vrGround(bx, bz); for (const u of [-0.6, 0.6]) box(g, bx - uz * u, by - 0.2, bz + ux * u, 0.1, 1.5, 0.1, ang, [0.36, 0.24, 0.14]);   // the information board (its face blank brown)
         box(g, bx, by + 0.9, bz, 0.08, 0.8, 1.5, ang, [0.42, 0.26, 0.14]); }
       exclPush(ox, oz, 6); for (let k = 0; k < 7; k++) { const a = (RC() - 0.5) * 2.4, r = 1.5 + RC() * 2.5; person(ox - ux * r + (-uz) * a * 3, oz - uz * r + ux * a * 3, ang - PI / 2 + (RC() - 0.5)); }
-      const bk = vn === 'Renes Lookout' ? 2 : 3;
+      const bk = vn === 'Valley Lookout' ? 2 : 3;
       signPost(i * T.ds - 160, -1, 1.4, 32 + bk, 3.4, 0.85, 2.6);
     }
     for (const p of pulls) {   // the other car parks and pull-outs: a few cars

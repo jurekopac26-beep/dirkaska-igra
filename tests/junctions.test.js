@@ -1,7 +1,7 @@
 // The junctions of the open roads (def.sideRoads, Track.stubs): the streets, service roads, driveways and tracks that meet the road, from
-// OpenStreetMap, on every track that has them (Vršič, Mulholland Highway, Big Sur, Chapman's Peak, Uncompahgre, Los Caracoles, Katu-Jaryk, Palomar Mountain).
+// OpenStreetMap, on every track that has them (Vršič, the Santa Monica Mountains road, Big Sur, Chapman's Peak, Uncompahgre, Los Caracoles, Katu-Jaryk, Palomar Mountain).
 // 1. the data: in order along the road, both sides, a sensible width and length, within the race, inside the terrain's map; a few of the real
-//    ones by name (Cornell School Road at the start of Mulholland, the Old Coast Road at Bixby Creek, Engineer Pass Road ...)
+//    ones by name (Cornell School Road at the start of the Santa Monica Mountains, the Old Coast Road at Bixby Creek, Engineer Pass Road ...)
 // 2. the mouths as on the real roads: each corner rounded by the kerb return (an arc of radius S.cr tangent to the road's edge and to the
 //    side road's, Track.stubHw), the sharper the corner the longer its arc, the side road its own width past both arcs; the cones across it
 //    span its whole width there (none on the road's own asphalt)
