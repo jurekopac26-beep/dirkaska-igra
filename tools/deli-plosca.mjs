@@ -20,12 +20,16 @@ const VIEWS = {
   krilo: { p: [-4.35, 2.3, 2.45], t: [-0.95, 1.1, 0.08], fov: 32 },
   platisca: { p: [2.3, 0.5, 3.05], t: [1.15, 0.31, 0.62], fov: 17.5 },
   zarometi: { p: [3.55, 1.08, 1.75], t: [1.66, 0.67, 0.06], fov: 17 },
+  ogledala: { p: [1.75, 1.02, 2.4], t: [0.76, 0.93, 0.76], fov: 15 },
+  vrata: { p: [-1.6, 1.3, 3.0], t: [0.2, 0.85, 0.72], fov: 30 },
+  zavore: { p: [1.85, 0.42, 1.75], t: [1.16, 0.28, 0.7], fov: 16.5 },
+  matice: { p: [1.55, 0.34, 1.62], t: [1.16, 0.27, 0.74], fov: 11 },
   chase: { p: [-6.0, 2.15, 0], t: [0.4, 1.02, 0], fov: 29 },   // (as the game's camera behind the car sees it)
   car34f: { p: [5.2, 2.2, 4.3], t: [0.05, 0.68, 0], fov: 21 },   // (the whole car, front three quarters)
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
 };
 const REAR = ['krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
-const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] } };   // (else the whole car, options 4, 9, 16)
+const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, ogledala: { view: 'car34f', ns: [5, 13, 16] }, zavore: { view: 'platisca', ns: [4, 9, 13] }, matice: { view: 'platisca', ns: [2, 7, 14] } };   // (else the whole car, options 4, 9, 16)
 const TW = 400, TH = 236;
 
 const srv = await serve(ROOT), browser = await launch();
@@ -45,7 +49,7 @@ try {
   for (const el of els) {
     const E = DATA.find(e => e.id === el); if (!E) throw new Error('no such element: ' + el);
     if (!M.mounts.includes(el)) { console.log(car + ' has no mount for ' + el + ' (mounts: ' + M.mounts.join(', ') + ')'); continue; }
-    const all = E.kategorije.flatMap(k => k.moznosti), T = TOP[el] || { view: REAR.includes(el) ? 'car34r' : 'car34f', ns: [4, 9, 16] }, wide = T.view === 'chase' ? 'kamera za avtom' : 'cel avto';
+    const all = E.kategorije.flatMap(k => k.moznosti), T = TOP[el] || { view: REAR.includes(el) ? 'car34r' : 'car34f', ns: [4, 9, 16] }, wide = T.view === 'chase' ? 'kamera za avtom' : T.view === 'platisca' ? 'kolo' : 'cel avto';
     const top = [{ src: await shot(el, null), name: 'SERIJSKO' + (car === 'kolibri' && E.serijsko && E.serijsko.ime ? ' · ' + E.serijsko.ime : '') }];   // (the list's stock name is KOLIBRI's)
     for (const n of T.ns) top.push({ src: await shot(T.view, { [el]: n }), name: n + '. ' + all[n - 1].ime + ' · ' + wide });
     const opts = [];
