@@ -200,9 +200,26 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 }
 #h-lights { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); display: flex; gap: 8px; padding: 8px 12px; background: rgba(8, 10, 14, .78); border-radius: 12px; opacity: 0; transition: opacity .25s; }
 #h-lights.show { opacity: 1; }
-#h-lights i { width: clamp(20px, 7vh, 34px); height: clamp(20px, 7vh, 34px); border-radius: 50%; background: #3a0b0b; box-shadow: inset 0 -3px 0 rgba(0,0,0,.4); }
+#h-lights { --lz: clamp(20px, 7vh, 34px); }
+#h-lights i { width: var(--lz); height: var(--lz); border-radius: 50%; background: #3a0b0b; box-shadow: inset 0 -3px 0 rgba(0,0,0,.4); }
 #h-lights i.on { background: #ff2a1c; box-shadow: 0 0 14px #ff3a20, inset 0 -3px 0 rgba(0,0,0,.25); }
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
+/* the camera before the start (game.js startCamPick, Render.startCamGo): each of its six flights has its own start lights, so a tester knows
+   which one played; never wider than the usual five (hudCol stops the column above them): 1 square lamps, 2 a double row (two lamps in each
+   of five housings), 3 amber lamps in white rings on a pill, 4 tall narrow bars, 5 diamonds, 6 the pits' yellow and black stripes round them */
+#h-lights.sc1 { border-radius: 3px; background: #050608; }
+#h-lights.sc1 i { border-radius: 3px; }
+#h-lights.sc2 i { height: calc(var(--lz) * 1.9); border-radius: calc(var(--lz) / 2); background: radial-gradient(circle at 50% 26%, #3a0b0b 0 34%, transparent 36%), radial-gradient(circle at 50% 74%, #3a0b0b 0 34%, transparent 36%), #15171b; box-shadow: none; }
+#h-lights.sc2 i.on { background: radial-gradient(circle at 50% 26%, #ff2a1c 0 34%, transparent 36%), radial-gradient(circle at 50% 74%, #ff2a1c 0 34%, transparent 36%), #15171b; box-shadow: 0 0 12px rgba(255, 58, 32, .7); }
+#h-lights.sc2.go i { background: radial-gradient(circle at 50% 26%, #29e05a 0 34%, transparent 36%), radial-gradient(circle at 50% 74%, #29e05a 0 34%, transparent 36%), #15171b; box-shadow: 0 0 12px rgba(44, 255, 102, .7); }
+#h-lights.sc3 { border-radius: 999px; background: rgba(40, 44, 54, .86); }
+#h-lights.sc3 i { box-sizing: border-box; border: 3px solid rgba(255, 255, 255, .75); background: #3a2500; }
+#h-lights.sc3 i.on { background: #ffa51a; box-shadow: 0 0 14px #ffb020; }
+#h-lights.sc3.go i { background: #29e05a; }
+#h-lights.sc4 { gap: 10px; padding-left: 16px; padding-right: 16px; }
+#h-lights.sc4 i { width: calc(var(--lz) * .42); height: calc(var(--lz) * 1.5); border-radius: 3px; }
+#h-lights.sc5 i { transform: rotate(45deg) scale(.74); border-radius: 3px; }
+#h-lights.sc6 { padding: 3px 5px; border: 4px solid transparent; background: linear-gradient(#0b0d11, #0b0d11) padding-box, repeating-linear-gradient(45deg, #ffcc00 0 8px, #111 8px 16px) border-box; }
 /* the flying start's countdown (game.js flyHUD): three amber lights in the middle, one goes out each second, the words under them */
 #h-fly { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; }
 #h-fly.show { opacity: 1; visibility: visible; }
@@ -546,7 +563,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   #h-fly i { width: clamp(24px, 8.5vw, 42px); height: clamp(24px, 8.5vw, 42px); }
   #h-fly b { font-size: clamp(14px, 4.6vw, 24px); }
   #h-lights { top: 36%; gap: 5px; padding: 6px 9px; }   /* (narrow enough that it never reaches under the column at the right: hudCol stops the column above it) */
-  #h-lights i { width: clamp(18px, 6vw, 30px); height: clamp(18px, 6vw, 30px); }
+  #h-lights { --lz: clamp(18px, 6vw, 30px); }
   #touch { --cw: clamp(70px, 21.5vw, 104px); --ch: clamp(100px, 32vw, 150px); --cb: calc(18px + var(--sb)); }
   #c-wheel { width: clamp(120px, 44vw, 190px); height: clamp(120px, 44vw, 190px); bottom: calc(14px + var(--sb)); }
   #tilt-ind { bottom: calc(12px + var(--cb) + var(--ch)); }
