@@ -8,25 +8,34 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 
 | Sklop | Ime | Stanje |
 |---|---|---|
-| 0 | Zasebnost (Cloudflare) | odloženo |
+| 0 | Zasebnost (Cloudflare) | odloženo (uporabnik 29. 10.: pozneje, ko bo res potrebno) |
 | 1 | Načrt, kazalo, pravila | končano (PR #165) |
 | 2 | Razdeljen README | končano |
 | 3 | Hitrejši testi, hiter vstop | končano |
 | 3b | Stabilni testi | končano (PR #170) |
 | 4 | Posnetek | končano |
 | 5 | Označevanje | končano |
-| 6 | Slika in pošiljanje | čaka |
-| 7 | Zastavica med dirko | čaka |
-| 8 | Skrito v izdaji za Google Play | odloženo |
-| 9 | Dnevnik napak, prikaz za razvijalca | čaka |
-| 10 | G · V krogu | čaka |
-| 11 | D · Samodejne zastavice | čaka |
-| 12 | E · Datoteka s posnetkom | čaka |
-| 13 | F · Seznam napak | čaka |
-| 14 | Posnetki zaslona, predogled pred mainom | čaka |
-| 15 | Posnetki pred/po na GitHubu | čaka |
-| 16 | Ponovljive dirke | čaka |
-| 17 | Razdeljen world.js | čaka |
+| 6 | Slika in pošiljanje | končano (skupaj s 7) |
+| 7 | Zastavica med dirko | končano (skupaj s 6) |
+| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog) |
+| 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
+| 10 | G · V krogu | končano (skupaj z 9 in 11) |
+| 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
+| 12 | E · Datoteka s posnetkom | končano (veriga orodja je končana) |
+| 13 | F · Seznam napak | končano (zasebna spletna stran glavne seje, ni v repozitoriju) |
+| 14 | Posnetki zaslona, predogled pred mainom | končano (PR #174) |
+| 15 | Posnetki pred/po na GitHubu | končano (PR #174) |
+| 16 | Ponovljive dirke | končano (PR #175) |
+| 17 | Razdeljen world.js | končano (PR #176, #180) |
+| 18 | Zgodovina napak | končano |
+
+**Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
+
+- **Veriga orodja** (sklop za sklopom, ker vsi urejajo `js/napake.js` in posnetek v `js/game.js`): 5 → **6+7** → **9+10+11** → **12**. Združeni sklopi so ena seja, ena veja (`orodje-za-napake/sklop-06-07-<ime>`, `…/sklop-09-10-11-<ime>`) in en pull request. Ko je korak na `main`, seja zažene sejo za naslednji korak verige z navodilom »Naredi sklope 6 in 7 po docs/orodje-za-napake.md« (oz. »sklope 9, 10 in 11«, »sklop 12«). Po sklopu 12 se veriga konča.
+- **Vzporedno**, vsak v svoji seji in veji, takoj: **14+15** (orodja za posnetke zaslona in delovni tok), **16** (ponovljive dirke), **17** (razdeljen `world.js`, lahko več pull requestov). Te seje po koncu ne zaženejo nove seje.
+- **13** (seznam napak) naredi glavna seja kot zasebno spletno stran; ni v repozitoriju.
+- **Pred združitvijo v `main`** vsaka seja vanjo združi svežo `main` in še enkrat lokalno požene teste, povezane s spremembo. Spori so najverjetnejši v `index.html`, `sw.js`, `tools/stamp.js`, `docs/kazalo.md` in v tej tabeli: obdrži spremembe obeh strani. Če sklop 16 spremeni reference (`golden`, `races`), jih ustvari znova z orodji repozitorija; sklop 17 pa ne sme spremeniti sveta (reference ostanejo enake kot na `main`).
+- **GitHub** požene največ okoli 20 opravil hkrati, en pull request jih ima 6, zato lahko testi pri več hkratnih pull requestih nekaj časa čakajo v vrsti.
 
 ## Odločitve (veljajo za vse sklope)
 
@@ -42,7 +51,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 - **Potrditev vnaprej (26. 10. 2026):** uporabnik je potrdil vse sklope. Vsak sklop gre na `main`, ko so testi zeleni (lokalno in na GitHubu), in takoj se začne naslednji; ne čakaj na potrditev med sklopi. Uporabnik preizkuša sproti in javi napake, ki se popravijo v naslednjem sklopu ali posebej.
 - **Sklopi se začnejo sami (26. 10. 2026, uporabnik: »Vseh 17 sklopov začni sam in ne sprašuj, če lahko začneš naslednjega«):** ko je sklop na `main`, seja brez vprašanja zažene sejo za naslednji sklop iz tabele Stanje (model `claude-opus-5-5`) in ji to navodilo prenese, tudi ta stavek. Sklopa 0 in 8 ostaneta odložena in se preskočita, razen če uporabnik reče drugače. Uporabnika se med sklopi ne sprašuje za potrditev, samo pri odločitvah, ki so res njegove (npr. sprememba zasnove); ob koncu vsakega sklopa dobi kratek seznam za preizkus.
 - **Napor high (26. 10. 2026, uporabnik: »nastavi high za vse seje«):** `.claude/settings.json` z `{"effortLevel": "high"}`; vsaka seja, ki klonira `main`, dela z naporom high.
-- **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop.
+- **Veje:** `orodje-za-napake/sklop-NN-<ime>`, en pull request na sklop oziroma na združen korak (glej Pospešitev pod Stanjem); sklop 17 ima lahko več pull requestov.
 - **Vsak popravljen hrošč** dobi svoj test (`tests/napake/<št>.test.js` ali v obstoječem testu teme), okoli 10 min na popravek.
 - **Odloženo:** sklop 0 (repozitorij zaseben, igra na Cloudflare Pages z dostopom samo za uporabnika; GitHub Pro bi stal okoli 4 $/mesec, če bi kdaj izbrali samo zasebno kodo) in sklop 8 (orodje skrito v izdaji za Google Play). Do sklopa 8 je orodje privzeto vklopljeno.
 
@@ -86,10 +95,11 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - **Deli zdaj** – na telefonu meni Deli (Web Share), na računalniku je prva izbira **Kopiraj sliko** za Ctrl + V;
   - **Samo shrani sliko** – v Prenose; obvestilo pove, kje je (Samsung: *Moje datoteke → Prenosi*, Edge: mapa *Prenosi*);
   - **Kopiraj besedilo** – oblika spodaj.
-- **Shranjene napake:**
-  - zadnjih 20 slik ostane v igri (IndexedDB), označenih z »neposlano« ali »poslano«;
+- **Shranjene napake** (od sklopa 18 **Zgodovina napak**):
+  - zadnjih 100 zbirk ostane v igri (IndexedDB), najnovejših 20 s polnimi slikami, starejše z malo sliko in besedilom;
+  - stanje Neposlano → Poslano → Popravljeno → Zaprto;
   - gumb »Deli vse neposlane«;
-  - kljukica »Obdrži tudi v igri«.
+  - kljukica »Obdrži tudi slike v igri«.
 - **Nastavitve → Orodje za napake:**
   - Vklop;
   - Ob koncu (Vprašaj / Deli / Shrani);
@@ -212,6 +222,15 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Shranjene napake** v IndexedDB (zadnjih 20) in razdelek v Nastavitvah.
 - **Testi:** `napake.test.mjs`, `share.test.mjs`; GitHub vse.
 - **Preizkus:** Deli → Claude na obeh telefonih, Samo shrani (najdi v Prenosih), Kopiraj sliko v Edgu.
+- **Narejeno** (skupaj s sklopom 7, ena veja in en pull request):
+  - **Slike gibanja:** Dodaj k zbirki posname še tri slike posnetka (−0,6, −0,3 in +0,3 s; 400 px) prek `rpShotAt` (posnetek se postavi na tisti čas, `Render.snapshot`, nato nazaj); 0 s je slika trenutka. Trenutek ima tudi x, z sledenega avta (zemljevid).
+  - **Zbirna slika** (`sestavi`, `list`): do 3 trenutki na sliko; ležeče mreža 2 × 2 (en trenutek: trenutek in polje v vrsti; dva: polje čez celo širino spodaj; trije: polje v četrtem polju), pokonci trenutki drug ob drugem (en trenutek: polje desno), polje spodaj; pri več trenutkih več slik (`_1`, `_2`). Daljša stranica največ 1600 px (nastavitev 2400). Oznake in oblački so narisani v velikosti slike (oblaček zraste z besedilom). Polje B: proga, način/vreme, različica (žig `js/game.js` iz `tools/stamp.js`: `git log -S 'game.js?v=<žig>' index.html` najde spremembo), naprava (model telefona iz `navigator.userAgentData`, npr. SM-A256B → Galaxy A25; brskalnik), zaslon, datum, število trenutkov in zastavic, zemljevid (črta proge, štart rdeč, trenutki oštevilčeni, neoznačene zastavice oranžne).
+  - **Besedilo** kot v zasnovi; vsak zapis (barva) svoja vrstica `#n čas Kkrog s=…m barva »zapis«` (čas na tisočinko), trenutek brez zapisa `(brez zapisa)`, sledeni tekmec ` avto=<ime>`; neoznačene zastavice dirke `⚑n čas Kkrog s=…m (zastavica med dirko, ni označena)` (krog in metri iz posnetka, `rpWhere`). Naprava v prvi vrstici brez presledkov (`Galaxy-A25/Chrome-141`).
+  - **Izbira** (`izbira`, `#nk-dlg`): predogled, na telefonu (dotik) Deli zdaj, Samo shrani sliko, Kopiraj besedilo; na računalniku najprej Kopiraj sliko (za vsako sliko svoj gumb), Deli zdaj le, če brskalnik zna deliti datoteke; kljukica Obdrži tudi v igri. Deli pošlje sliko(e) in besedilo; če deljenje ne gre, se slika shrani. Odpre jo gumb **Deli (n)** zgoraj desno v posnetku (v drugi vrsti, ob ◀ ⚑ ▶) ali konec posnetka po dirki (`replayEnd` → `Napake.konec`, glede na nastavitev Vprašaj / Deli / Shrani; ista zbirka po deljenju ali shranjevanju ne vpraša znova).
+  - **Shranjene napake:** slika se naredi takoj po Dodaj k zbirki (`pripravi`, enkrat na različico zbirke) in shrani v IndexedDB (`rra-napake`, zadnjih 20) kot neposlano; Deli zdaj in Kopiraj sliko jo označita poslano; brez Obdrži tudi v igri se po dejanju izbriše.
+  - **Nastavitve → Orodje za napake** (vrstica na koncu Nastavitev, v angleščini skrita, ker je orodje samo slovensko; svoj panel `#nk-set`, shranjeno v `tdgp-napake`): Orodje vklop/izklop (brez Označi, Deli, zastavic), Ob koncu posnetka, Zastavica med dirko, Velikost slike, Shranjene napake (sličica, ime, datum, neposlano/poslano, Deli, Shrani, Izbriši, Deli vse neposlane).
+  - **Testi:** nov `tests/browser/napake-slika.test.mjs` (15 preverjanj).
+  - **Opomba (moje odločitve):** trenutek zbirke, shranjen do 2 s po zastavici ali 1 s pred njo, nadomesti najbližjo zastavico dirke (ni dvakrat v Zastavicah in v besedilu); neoznačene zastavice dirke so samo v besedilu in na zemljevidu (brez slike). Kopiraj sliko šteje kot poslano, Samo shrani ne. Vrstica orodja v Nastavitvah je v angleščini skrita (`tests/browser/lang.test.mjs` ne dovoli slovenščine na angleških zaslonih).
 
 ### Sklop 7 · Zastavica med dirko — 1–1,5 h · 30. 10. · **različica 5 je cela**
 
@@ -219,6 +238,13 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Shranjevanje:** zastavice se shranijo z dirko in so na časovnici; način Zastavice deluje (skoki, ponavljanje).
 - **Testi:** `ctrl`, `pad`, `replay`, `napake`; GitHub vse.
 - **Preizkus:** 3 zastavice med dirko, nato Zastavice v posnetku; gumb ne moti vožnje na A25.
+- **Narejeno** (skupaj s sklopom 6):
+  - **Gumb** `#nk-fl`: okrogel, rumen, 44 px, levo od gumba za pavzo (ležeče levo od pavze ob zemljevidu, pokonci levo od pavze nad zemljevidom); s pavzo vred skrit (css `#btn-pause.off + #nk-fl`), zato ga ni v pavzi, posnetku in menijih; ni ga v dirki s prijateljem (`showScreen` → `Napake.dirka`). Odzove se ob dotiku (`pointerdown`, ne gre do kontrol na zaslonu).
+  - **Tipka F** (`KEY_DEF.flag`, v Kontrolah »Zastavica (napaka)«, angleško »Flag (a bug)«) in **Select / Back** na ploščku (fiksno, `padFrame`). Zastavica samo med vožnjo (zaslon brez menija, dirka teče ali je končana).
+  - **Ob zastavici:** `recd.flags.push({ t })`, obvestilo »⚑ Zastavica N · 00:41.3 – dirka teče naprej« (1,8 s), gumb kratko utripne; nič drugega (nobene slike med dirko).
+  - **Posnetek:** zastavice dirke so oranžne ⚑ na časovnici (tap skoči tja); **Zastavice (n)** šteje zastavice dirke in trenutke zbirke. Način Zastavice (`rpZGo`): začne pri prvi zastavici od trenutnega časa naprej, predvaja od 2 s pred njo do 1 s po njej in znova (`replayFrame`); ◀ ⚑ 2/3 ▶ zgoraj desno (`#rp-fnav` v `index.html`, prevoda Prejšnja / Naslednja zastavica). Cel posnetek, časovnica, na začetek in ±5 s vrnejo cel posnetek; sličica naprej/nazaj ostane v načinu Zastavice (posnetek stoji).
+  - **Testi:** nov `tests/browser/napake-zastavice.test.mjs` (15 preverjanj), `ctrl` in `pad` (nova tipka F na seznamu dejanj).
+  - **Opomba:** lokalno `pad.test.mjs` pade v treh preverjanjih menijev tudi na `main` (okolje tu); preverjanje tipk (z novo F) je zeleno.
 
 ### Sklop 9 · Dnevnik napak, prikaz za razvijalca — 1,5–2 h · 31. 10.
 
@@ -227,6 +253,12 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Gradi na obstoječem števcu sličic** (main, PR #164): naslov `?fps` vklopi `PH` v `js/game.js` (iskanje: `grep -n "the frame counter" js/game.js`). Okvirček zgoraj levo pod podatkom o krogu kaže sličice na sekundo, najpočasnejšo sličico zadnje sekunde ter povprečni čas korakov dirke (`PH.s`) in risanja (`PH.r`, `Render.frame`); osvežuje se enkrat na sekundo (`PH.tick` v glavni zanki). Prikaz s tipko O naj uporabi isti `PH` (vklop tudi s tipko, ne samo z naslovom) in mu doda vrstice; meritev zatikanj za dnevnik (pod 20 sličic/s več kot 1 s) naj bere iste čase sličic. Fizika velikih polj ima svoj nivo podrobnosti (`LOD` in `Race._lodPlan` v `js/core.js`, samo nad 30 avti, npr. Nürburg s 100 avti): prikaz naj pove, ali je vklopljen.
 - **Testi:** `napake.test.mjs`; GitHub vse.
 - **Preizkus:** prikaz na A25 med dirko na pravi progi (npr. Bathurst, Spa).
+- **Narejeno** (skupaj s sklopoma 10 in 11, ena veja in en pull request):
+  - **Dnevnik napak** (`D`, `zapis`): napake strani (`window` `error`: sporočilo, datoteka:vrstica:stolpec brez `?v=`), zavrnjene obljube (`unhandledrejection`) in zatikanja (`okvir`: sličice več kot 50 ms narazen več kot 1 s; samo med vožnjo dirke, ne v pavzi, posnetku, menijih in ko je stran skrita). Vsak zapis ima čas dirke, progo, krog in `s`, če je bil v dirki. Isto sporočilo zapored se samo šteje (×n). Zadnjih 50 ostane v igri (`tdgp-napake-dnevnik`), da so po sesutju še tam ob naslednjem obisku.
+  - **V poročilu** vrstice `D …` (ta dirka in napake tega obiska zunaj dirk), npr. `D 00:25.0 K1 s=863m zatik 2,6 s · 3,4 sličic/s · najdaljša 633 ms`, `D 00:12.3 K1 s=230m napaka »TypeError: …« js/render.js:123:45 (×3)`.
+  - **Nastavitve orodja:** Prikaz za razvijalca (Vklop / Izklop) in Dnevnik napak (vsi zapisi, najnovejši zgoraj; Kopiraj, Počisti).
+  - **Prikaz za razvijalca** (tipka **O** v Kontrolah, `KEY_DEF.dev`; ali v nastavitvah orodja; shranjen kot `dev`): isti števec sličic `PH` kot `?fps` (sličice/s, najpočasnejša sličica, koraki, risanje) in vrstice `phMore`: klici risanja in oglišča na sličico (`renderer.info` vseh prehodov sličice; oglišča = 3 na trikotnik), `s` in krog (v posnetku sledenega avta), tema in podrobnosti (NIZKA / SREDNJA / VISOKA, samodejno), fizika LOD (vklopljen ali ne) in število avtov.
+  - **Opomba (moje odločitve):** O deluje samo, ko je orodje vklopljeno. Zatikanje šteje sličice, ki jih igra res nariše (z varčevanjem baterije 30 na sekundo, kar je nad mejo). Na počasnem stroju (testi) je zatikanje skoraj ves čas: test `napake-slika` zato vrstic `D` ne šteje.
 
 ### Sklop 10 · G · V krogu — 1,5–2,5 h · 31. 10.
 
@@ -238,6 +270,10 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Imena** so tista iz kode, da se jih najde z grepom; razlaga imen je v `docs/kazalo.md`.
 - **Testi:** `napake.test.mjs`; GitHub vse.
 - **Preizkus:** obkroži tekmeca in tablo, preveri besedilo.
+- **Narejeno:**
+  - **Dodaj k zbirki** za vsako barvo izračuna, kaj je v njenih krogih (`rpInLoops` v `js/game.js`, pred slikami, s kamero, kot je na zaslonu): avti (`ti`, `tekmec#n` = `race.cars[n]`, `varnostni_avto`; sredina ali dva vogala avta), podrti predmeti (`predmet:<kind>#j` = `race.props[j]`, največ 8, nato `+n predmetov`), poimenovani kraji (`kraj:<ime>` iz `def.names`), boksi (`boksi`, `def.pit`) in odseki ceste (`cesta:i0-i1`: vzorci proge `track.px[i]`, sredina ali rob v krogu, do 700 m od kamere).
+  - **Besedilo:** vsaka vrstica zapisa ima na koncu `v_krogu=[tekmec#9, cesta:463-468]` (prazen krog `v_krogu=[]`). Razlaga imen je v `docs/kazalo.md` (»Imena v poročilih o napakah«).
+  - **Opomba:** table ob progi niso podrti predmeti in nimajo imena; v krogu je cesta pod njimi ali ob njih. Predmeti so tam, kjer so ob koncu posnetka (posnetek jih ne hrani).
 
 ### Sklop 11 · D · Samodejne zastavice — 1–1,5 h · 1. 11.
 
@@ -249,12 +285,26 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Iz dnevnika:** zatikanje.
 - **V posnetku:** sive zastavice s klicajem, Potrdi / Zavrzi.
 - **Testi:** `napake.test.mjs` (umetno sestavljen posnetek); GitHub vse.
+- **Narejeno:**
+  - **Posnetek** ima v bitih avta še 2 (postavljen nazaj na cesto od prejšnje sličice: `Race.putBack` (`race.putT`) v `Race.rescue`, montaža koles ob cesti in šola vožnje) in 4 (ne dirka: boksi, cilj, odstop).
+  - **`zaznaj`** pregleda sličice posnetka (meje `AZ`): avto stoji več kot 5 s, potem ko je že vozil (`obtical`; ne v boksih, po cilju ali odstopu); preskok v eni sličici za več, kot ga nese hitrost, in 2,5 m (`preskok`; ne ob postavitvi nazaj); navpično več kot 2,5 m v eni sličici (`poskok`); več kot 1 m pod cesto na cesti vsaj 0,2 s (`pod_cesto`; nagnjeni ovinki upoštevani); tekmec v napačno smer hitreje od 3 m/s več kot 2 s (`nazaj`). Ista vrsta istega avta v 10 s je ena zastavica, največ 40. Iz dnevnika: zatikanja te dirke (`zatik`).
+  - **Kdaj:** samo v posnetku (po dirki ali Posnetek do sem), po kosih po 6 ms, med dirko nič; Posnetek do sem nadaljuje, kjer je ostal.
+  - **V posnetku:** sive zastavice s klicajem na časovnici (`.nk-auto`, ločeno od `recd.flags` in zbirke); tap skoči tja in nad časovnico pokaže, kaj je (npr. »! Avto stoji · 00:41.3 · tekmec#5 (ime) · stoji 6,2 s«), s **Potrdi** in **Zavrzi**. Potrjena je bela, šteje v Zastavice (n), način Zastavice jo predvaja in je v poročilu: `!1 00:41.300 K2 s=1284m obtical tekmec#5 »stoji 6,2 s« (samodejna zastavica)` ter siva na zemljevidu slike. Zavržena izgine. Nepotrjene niso v poročilu.
+  - **Testi:** nov `tests/browser/napake-samodejno.test.mjs` (sklopi 9, 10, 11: prikaz O, dnevnik, zatikanje iz danih časov sličic, v krogu, `zaznaj` na umetnem posnetku na pravi progi, tudi v dveh kosih, Potrdi / Zavrzi, poročilo, nastavitve), `napake-slika` (`v_krogu`, vrstice `D`), `ctrl` in `pad` (nova tipka O).
 
 ### Sklop 12 · E · Datoteka s posnetkom — 1,5–2 h · 1. 11.
 
 - **Zapis:** posnetek (`recd`: avti, `frames`, dogodki) v datoteko `posnetek_<proga>_<datum>.rrp`: glava JSON (proga, način, žig, naprava) in sličice Float32, stisnjeno z `CompressionStream` (gzip). Okoli 1–1,5 MB za 3 min.
 - **Odpiranje:** Nastavitve orodja → Odpri posnetek; za Clauda prek `tools/` in Playwrighta.
 - **Testi:** zapis in branje dasta enak posnetek; GitHub vse.
+- **Narejeno:**
+  - **Datoteka** `posnetek_<proga>_<LLLLMMDD-UUMM>.rrp` (`js/napake.js`: `rrpPisi`, `rrpPack`): gzip (`CompressionStream`) iz `RRP1`, dolžine glave, glave JSON in vzorcev. Glava (`rrpOf` v `js/game.js`): različica, proga, način, vreme, krogi, letni čas in čas dneva, avti (model, ime, barva, številka, štartno mesto, igralec, krogi za `rpLap`, cilj), vrstni red na cilju, dogodki za Najboljše trenutke (`ev`), zastavice dirke (`flags`), naprava, datum in dnevnik te dirke (`dn`). Vzorci so `recd.frames` z vsemi biti avta (zavira, postavljen nazaj, ne dirka, prevračanje), zato `zaznaj` deluje tudi na odprtem posnetku.
+  - **Velikost:** vzorci po številkah (vsi časi, nato x prvega avta v vseh vzorcih …), vsaka številka kot druga razlika bitov od prejšnjih dveh (zigzag) v 4 ravninah bajtov; prebrani so enaki do zadnjega bita. Bathurst, 22 avtov: 25 s je 130 KB (surovo 292 KB), 3 min okoli 1 MB.
+  - **Shrani:** Nastavitve → Orodje za napake → Posnetek dirke → **Shrani** (siv brez posnetka) in v izbiri zbirke **Shrani posnetek (.rrp)**; datoteka gre v Prenose (obvestilo pove ime, velikost in kje je).
+  - **Odpri:** Nastavitve orodja → Posnetek dirke → **Odpri …** (izbira datoteke; med dirko drugi tap v 3 s, ker se dirka konča). Igra naloži progo, postavi dirko s temi avti (`rrpOpen`; se ne stopa) in predvaja posnetek: Označi, zastavice, Deli, samodejne zastavice in dnevnik kot po dirki. Poročilo ima napravo iz datoteke in na koncu prve vrstice `posnetek=<ime>`. **Končaj** ponudi zbirko (kot po dirki) in vrne naslovnico. Datoteka iz druge različice igre se odpre z obvestilom (svet je lahko malo drugačen); ne-posnetek ali poškodovana datoteka pove zakaj.
+  - **Za Clauda:** `node tools/posnetek.mjs <datoteka> [--t 41.3,00:52.1] [--zastavice] [--avto ti|<k>] [--kamera chase|tv] [--pokonci] [--lezece]` (Playwright) izpiše glavo, zastavice dirke, samodejne zastavice s krogom in `s`, dnevnik in besedilo poročila ter naredi slike posnetka; v `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`). Opis v `tests/README.md`, pravilo v `CLAUDE.md`.
+  - **Testi:** nov `tests/browser/napake-posnetek.test.mjs` (10 preverjanj), `napake-slika` (nov gumb v izbiri).
+  - **Opomba (moje odločitve):** trenutki zbirke (slike, oznake) niso v datoteki, samo zastavice dirke; na odprtem posnetku se označijo znova. Promet in policija odprte ceste nista posneta (samo avti dirke).
 
 ### Sklop 13 · F · Seznam napak — ~1 h · 1. 11.
 
@@ -276,6 +326,25 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Kje:** `Math.random` v `js/core.js` (npr. odpadanje koles, razbitine) zamenja `rng` iz `Core` s semenom dirke (`race.opts.seed`).
 - **Vizualni učinki** v `js/game.js` in `js/render.js` lahko ostanejo naključni.
 - **Testi:** ista dirka dvakrat da enak posnetek; `races.test.js`, `golden`.
+- **Narejeno:**
+  - **Testni način** je hitri vstop (`?proga=…`): vklopi se za ves obisk. Seme dirke je `seme=<n>` iz naslova (celo število od 1, privzeto 1; `Core.quickArgs` → `q.seed`). Isti naslov dvakrat da isto dirko in enak posnetek; tudi ponovni začetek dirke v istem obisku je ista dirka.
+  - **Jedro** (`js/core.js`): vseh 15 `Math.random` je zdaj `rand()`, številke dirke, ki se stopa (`Race.rnd`; `RAND` nastavita `Race.step` in `aiControl` in ga po koncu vrneta). Z `opts.repro` je `Race.rnd` tok iz `opts.seed`, brez njega `Math.random` kot doslej, zato se zunaj testnega načina igra in reference (`golden`, `races`) ne spremenijo.
+  - **Igra** (`js/game.js`, `repro`, `grand`): v testnem načinu so iz semena še vreme, ki ga nastavitve prepustijo naključju (naključno, menljivo), megla na Big Suru in čakanje luči pred štartom, iz toka, ki je nov za vsako dirko (`newRace`); kvalifikacije in njihove simulacije tekmecev imajo isto seme. Ne v dirki s prijateljem. Vizualni učinki, komentar, radio in zvok ostanejo naključni.
+  - **Za teste:** `window.__game.repro` (seme, ali je dirka ponovljiva), `window.__game.recSum()` (povzetek posnetka). Node: `repro: true` v nastavitvah `Core.Race`.
+  - **Testi:** nov `tests/repro.test.js` (Bathurst s trčenjem: z `repro` nobenega klica `Math.random`, isto seme da isto dirko do zadnjega bita, drugo seme drugo), nov `tests/browser/repro.test.mjs` (dvakrat `?seme=5` enak posnetek in isti avti, `?seme=6` druga dirka), `quick.test.js` (`seme`). `golden` in `races` brez novih referenc.
+
+### Sklop 18 · Zgodovina napak — 1–1,5 h · 29. 10. 2026
+
+- **Naročilo uporabnika** (29. 10. 2026, glavna seja): »v urejevalniku ko shranim popravek ne morem kasneje gledati za nazaj stare popravke, naredi da imaš še zgodovino starih popravkov, pri katerih tudi piše status«. Veja `orodje-za-napake/sklop-18-zgodovina`, en pull request.
+- **Prej:** zapis v IndexedDB (zadnjih 20), stanje samo neposlano/poslano; po deljenju se je brez »Obdrži tudi v igri« izbrisal; seznam samo v Nastavitvah orodja.
+- **Narejeno:**
+  - **Zgodovina napak** (`zgodovina`, `#nk-zg`): gumb **Zgodovina** v vrstici označevanja (Dodaj k zbirki · Zgodovina · Zapri; vrstica gumbov posnetka ostane, kot je), v izbiri ob Zapri in v Nastavitvah orodja (vrstica Zgodovina napak: Deli vse neposlane, Odpri; seznam pod njo). Panel je nad posnetkom, izbiro in nastavitvami; Zapri vrne tja, od koder je bil odprt.
+  - **Seznam:** pri vsaki zbirki mala slika, proga (»Bathurst, Avstralija«), datum, število trenutkov in zastavic, stanje z barvo (Neposlano oranžno, Poslano modro, Popravljeno zeleno, Zaprto sivo); najnovejša prva. Dotik odpre zapis: slika, stanje (4 gumbi, ročna sprememba), besedilo `RRA-NAPAKE`, Kopiraj sliko (računalnik), Deli, Shrani sliko, Kopiraj besedilo, Izbriši (dvakrat v 3 s).
+  - **Stanje:** Neposlano ob nastanku in ob vsaki novi različici zbirke; Poslano samodejno ob Deli in Kopiraj sliko (samo iz Neposlano: Popravljeno in Zaprto ostaneta, tudi ko zapis znova deliš); Popravljeno in Zaprto ročno.
+  - **Nič se ne izgubi:** deljenje ali shranjevanje zapisa ne izbriše. Kljukica v izbiri je zdaj **Obdrži tudi slike v igri**: brez nje zapis po dejanju ostane z malo sliko (320 px JPEG) in besedilom. Hrani se do **100** zbirk (`DB_MAX`); najnovejših **20** (`DB_FULL`) ima polne slike, starejšim se slike odstranijo (`lite`, `nf`: koliko slik je imela), najstarejše nad 100 gredo ven. Zapis brez slik deli in shrani malo sliko (`<ime>_mala.jpg`) z besedilom.
+  - **Velikost:** mala slika in besedilo sta okoli 20–30 KB, 80 starejših zapisov okoli 2 MB; polne slike (20) kot doslej.
+  - **Testi:** `tests/browser/napake.test.mjs` (Zgodovina v vrstici označevanja in v izbiri, zapis po Deli brez slik, ročno stanje, ponovno Deli, Kopiraj besedilo, pokonci in ležeče, meja 100/20), `napake-slika.test.mjs` (seznam v Nastavitvah: dotik, Izbriši).
+  - **Opomba (moje odločitve):** Kopiraj besedilo stanja ne spremeni (kot doslej; poslano je, ko gre slika); ponovno deljenje iz zgodovine slik ne odstrani ne glede na kljukico. Gumb Zgodovina ni v vrstici gumbov posnetka (tam ni prostora), ampak v vrstici označevanja, ki se odpre z Označi.
 
 ### Sklop 17 · Razdeljen world.js — 3–5 h · 4.–5. 11.
 
@@ -295,7 +364,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je.
 
 ## Skupaj
 

@@ -1,6 +1,7 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
 // Leaderboard, Credits), the four modes, the tracks of every mode in their groups (each with its picture: the map from above, or the
-// model of the land), the weather and the race options, the car (the game's own screen and back), a race from the menu (the intro
+// model of the land), the weather and the race options, the car (the game's own screen and back; the car tapped there: the garage and
+// back to it, its Back the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
@@ -97,7 +98,7 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
-    // the map switch over a route track (Monte Carlo, the first real circuit): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
+    // the map switch over a route track (Nürburg, the first real circuit; Monte Carlo is a test track since 29 Oct 2026): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
     const stageUI = await ev(page, 'const m = root.querySelector(".mapv"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.textContent) : null, text: m ? m.textContent.replace(/\\s+/g, "") : "", pressed: pr ? pr.textContent : "", ribbon: !!root.querySelector("#track-stage .ribbon") };');
     T.check('the track stage: the map switch is only "1" and "2" (no MAP/Flyover words), the flyover (1) is lit by default, no mode ribbon', JSON.stringify(stageUI.btns) === '["1","2"]' && stageUI.text === '12' && stageUI.pressed === '1' && !stageUI.ribbon, JSON.stringify(stageUI));
     await click(page, 'pick-weather');
@@ -136,9 +137,9 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     const name = await ev(page, 'return root.querySelector(".card h1").firstChild.textContent;');
     await click(page, 'race-single');
-    await raceOn(page, 'monaco').catch(() => null);
+    await raceOn(page, 'nring').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, laps: __game.race && __game.race.laps, tt: __game.race && !!__game.race.timeTrial, last: __game.S.lastTrack, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id) }));
-    T.check(`Race! (${name}, the intro off): the race runs on that track, 2 laps, the menu gone, the track remembered`, r.id === 'monaco' && r.laps === 2 && !r.tt && r.last === 'monaco' && r.shown.length === 0, JSON.stringify(r));
+    T.check(`Race! (${name}, the intro off): the race runs on that track, 1 lap, the menu gone, the track remembered`, r.id === 'nring' && r.laps === 1 && !r.tt && r.last === 'nring' && r.shown.length === 0, JSON.stringify(r));
     await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(500);
     const t = await ev(page, 'return { scr: Menu.debug().screen, sub: Menu.debug().titleSub, shown: [...document.querySelectorAll(".screen.show")].map(e => e.id), race: !!window.__game.race, tile: !!root.querySelector(".t-single") };');
     T.check('after the race: back on the new title', t.scr === 'title' && !t.sub && t.shown.join() === 's-menu' && !t.race && t.tile, JSON.stringify(t));
@@ -266,19 +267,19 @@ try {
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    T.check('pad, A: the highlighted mode is chosen (the track step, the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Monte Carlo', JSON.stringify(g));
+    T.check('pad, A: the highlighted mode is chosen (the track step, the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Nürburg', JSON.stringify(g));
     g = await press(5);
     const next = g.name;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== 'Monte Carlo' && next !== '' && g.name === 'Monte Carlo', JSON.stringify({ next, g }));
+    T.check('pad, RB and LB: the next track and back', next !== 'Nürburg' && next !== '' && g.name === 'Nürburg', JSON.stringify({ next, g }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, 'monaco').catch(() => null);
+    await raceOn(page, 'nring').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'monaco', JSON.stringify(r));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'nring', JSON.stringify(r));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -341,7 +342,7 @@ try {
       if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); }
       await click(page, 'track:1');
     }
-    T.check(`${w}x${h}: on every circuit's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
+    T.check(`${w}x${h}: on every circuit's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 4 && !cut.length, JSON.stringify(cut));
     T.check(`${w}x${h}: on every circuit's map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
@@ -391,6 +392,29 @@ try {
     await page.setViewportSize({ width: 600, height: 400 }); await page.waitForTimeout(300);   // (a window that changes its size, the new menu not built)
     await page.setViewportSize({ width: 412, height: 915 }); await page.waitForTimeout(300);
     T.check('the old track screen lists the tracks; the window changing its size is no error', (await page.evaluate(() => document.querySelectorAll('[data-track]').length)) > 20 && !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 10. the car tapped on the car screen opened from the track step: the garage (here a stand-in page that goes back as the garage's back
+  // button does: index.html?zaslon=avto&avto=<id>), then the car screen again on that car, its hint there; its Back: the track step
+  {
+    const { ctx, page, errors } = await open();
+    await ready(page);
+    let gar = null;
+    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + new URLSearchParams(location.search).get("car"))</script>' }); });
+    await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
+    await click(page, 'pick-car'); await page.waitForTimeout(400);
+    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
+    const bb = await page.locator('#car-garage').boundingBox();
+    await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), page.mouse.click(bb.x + bb.width / 2, bb.y + bb.height * 0.4)]);
+    await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
+    await page.waitForTimeout(300);
+    const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
+    T.check('the car tapped on the car screen: the garage with it (garaza.html?car=<id>&color=<its colour>), its back: the car screen again on that car (the address plain again)',
+      gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, g }));
+    await page.click('#car-back'); await page.waitForTimeout(400);
+    const back = await ev(page, 'return { scr: Menu.debug().screen, card: !!root.querySelector(".card h1") };');
+    T.check('back from the garage, the car screen\'s Back: the track step it was opened from', back.scr === 'track' && back.card && (await shown(page)).join() === 's-menu' && !real(errors).length, JSON.stringify({ back, errors: real(errors) }));
     await ctx.close();
   }
 } finally {
