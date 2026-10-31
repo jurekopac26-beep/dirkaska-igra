@@ -47,8 +47,9 @@ const SETUPS = {
 // player's own crash must lose one: Tianmen, Sani and Monterey (from 6 s the left lock only dents that car against the barrier: earlier, or
 // Sani's prototype later), Riverside from 6.5 s (from 6 s the formula only grazes the barrier)
 // (the cars' boxes pushed apart in a contact, carCollide, moved the pack a little at the start: NürburgRing rally 6.5, Chapman ev 5, Tianmen muscle 5, Sani Pass
-// rally 5.5 and truck 5.5, Maunakea truck 6.5, Riverside formula 6, Detroit truck 5: before, from 6 s these only grazed, no panel off)
-const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 5, 'tianmen/muscle': 5, 'sani/rally': 5.5, 'sani/lm': 8, 'sani/truck': 5.5, 'monterey/rally': 5, 'nring/rally': 6.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'detroit/truck': 5 };
+// rally 5.5 and truck 5.5, Maunakea truck 6.5, Riverside formula 6, Detroit truck 5: before, from 6 s these only grazed, no panel off; Bâlea rally 6.5:
+// from 6 s the left lock only dents the car, no panel off)
+const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 5, 'tianmen/muscle': 5, 'sani/rally': 5.5, 'sani/lm': 8, 'sani/truck': 5.5, 'monterey/rally': 5, 'nring/rally': 6.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'detroit/truck': 5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

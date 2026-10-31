@@ -2398,5 +2398,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "d84dcb3f2b845ce46e96c9ce"
+ },
+ "balea/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 134.61,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a6a8aed87b6c53e174017924"
+ },
+ "balea/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 145.54,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "cab1d12be5cdd4d2d096563c"
+ },
+ "balea/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 121.8,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1a250360fe3ba605d3345c51"
+ },
+ "balea/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 123.69,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4002d26a90c843868571e720"
+ },
+ "balea/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 135.22,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "48f7dfe11f5d696308ca0830"
  }
 }

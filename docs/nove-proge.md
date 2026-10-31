@@ -108,15 +108,18 @@ Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, k
 - **Izhodišče:** `README.md` »Nova proga«; `docs/kazalo.md` (Proge in graditelji sveta, Testi po temah); hitri vstop `index.html?proga=<id>` (`tests/README.md`).
 - **Vzori:** Vršič (`js/tracks/vrsic.js`, `js/world-vrsic.js`, `docs/proge/vrsic.md`: OpenStreetMap prek Overture, Copernicus), Medvode (krošnje odstranjene iz višin), Harju (drevesa po karti višin krošenj), Chapman's Peak (levostranski promet), Bathurst (videz po PR #210, boksi), Newcastle in Detroit (ulični progi, za Pau).
 - **Orodja, ki že obstajajo:** `maketa-menija/orodja/` (`geo_roads.py` ceste iz Overture, `geo_lib.py` višine, slike za meni `dio2.mjs` in `mkwebp.py`, glej `maketa-menija/README.md`), `tools/shot.mjs` (posnetki zaslona).
-- *(Seja 1A sem zapiše orodje za podatke proge, ukaze in pasti.)*
+- **Orodje za podatke** (seja 1A): `tools/proga/proga.py <id> [--zapisi]` (opis, polja in pasti v `tools/proga/README.md`). Nastavitve v `tools/proga/proge.json`: točke `pot`, `start`, `cilj`, `zalet` ~160 m, `po_cilju` ~190 m (mesta avtov po cilju), polširina, višine, posnetek Sentinel-2 (`s2_scenes` v `lib.py`). Napiše sredinsko črto, `<ID>_H`, `alt`, `realKm`, `finish`, `cps`, `curves` (serpentine nad 150°) in podatke okolice v blok datoteke proge; imena, komentator, opis, medalje so ročni. Pregled: `pregled.py <id>`. Vse bere po kosih (brez GDAL), ~10 min, ~150 MB v `tools/proga/raw/`.
+- **Skupna okolica prelazov**: `js/world-prelaz.js` (`buildPrelaz`): nov prelaz = podatki iz orodja + vnos v `PL_LOOK` (barve tal in skal, snežna meja, table države, `portal`, `sheep`) + `theme: '<id>'` v datoteki proge + vrstica v `THEMES`/`SPLIT` v `js/render.js`. Kar potrebuje samo ena proga, gre pod zastavico v `PL_LOOK`, ne v kopijo graditelja.
+- **Pasti (1A)**: Overture `connectors.at` je delež dolžine v metrih; brez filtra razredov pot ubere pešpot čez serpentine; `elevSmooth` v datoteki proge naj bo ~6 m (sicer se serpentine spet zgladijo v krake in test »serpentine položnejše« pade); test `golden.test.js` zahteva, da »crash« odtrga del (`CRASH_AT` v `tests/lib/sim.js`, za Bâleo `'balea/rally': 6.5`). Nova proga gre na konec seznama v `index.html` (pred tem bi zamaknila avte »/car« drugih prog). Reference samo za novo progo: `--only=<id>` (golden, races), `WORLD_ONLY`, `PERF_ONLY`. Slika za meni: kopija igre v `maketa-menija/game_main/`, `dio2.mjs` z enim opravilom, `mkwebp.py ../../assets/tracks <id>`, vrstica v `proge_igra.json`.
+- **Fotografije**: Wikimedia Commons in Mapillary iz ukazne vrstice niso dosegljivi (proxy); poskusi podagenta `web-fetch`.
 
 ## Stanje
 
 | Seja | Proga | Kaj | Ocena (h) | Stanje |
 |---|---|---|---|---|
 | 0 | – | načrt (ta dokument, `CLAUDE.md`) | – | na veji `ccr-097527bb-9u5usy`; na `main` gre s pull requestom Bâlee |
-| 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | v delu |
-| 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | čaka |
+| 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | končano (PR #PRNUM) |
+| 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | naslednja |
 | 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | čaka |
 | 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | čaka |
 | 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | čaka |

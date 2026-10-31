@@ -79,7 +79,7 @@ Stranske ceste po progah (le v dolžini dirke; parkirišča razgledišč so v ig
 - **Katu-Jaryk** (4): makadamske poti na planoti in v dolini Čulišmana ter dovoz do kampa.
 - **Vršič** (37): ulice Kranjske Gore, dovozi in gozdne ceste (glej zgoraj).
 
-Sani Pass, Tianmen, Irohazaka in Beartooth v dolžini dirke nimajo cestnih odcepov (le pešpoti in parkirišča razgledišč, ki so že v igri).
+Sani Pass, Tianmen, Irohazaka in Beartooth v dolžini dirke nimajo cestnih odcepov (le pešpoti in parkirišča razgledišč, ki so že v igri). Bâlea, Romunija zaenkrat nima stranskih cest (dovozi h kočam in k žičnici ob jezeru še niso narejeni).
 
 ## Table pred zaviranjem (dirkališča)
 
