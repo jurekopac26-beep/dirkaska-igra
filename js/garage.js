@@ -251,7 +251,7 @@
     box.innerHTML = html; void en;
     // the marks: the thing of the chosen tile blue (else the one tapped), the others of this menu orange; the new part seen on the car
     const kb = (el === 'barva' ? 'col' + (m.color != null ? m.color : c.color) : keyOfOpt(el, m.sel[0], m.sel[1])) || m.key;
-    G.mark(kb, keysOf(el));
+    G.mark(kb, keysOf(el), !!m.car);   // (the car bright in the veil only when it was tapped)
     const E = EL[el]; if (E && E.k) { const P = Object.assign({}, c.parts, { [el]: m.sel }), L0 = levels(c.parts), L1 = levels(P); if (L1[E.k] !== L0[E.k]) G.ghost(E.k, L1[E.k]); else G.ghostOff(); } else G.ghostOff();
     // the menu at the bottom when at the top it would cover what was tapped
     box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330; box.classList.toggle('bot', !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
@@ -333,8 +333,8 @@
     if (h.kind === 'mq') { const id = cabinet()[h.i]; closeMenu(); if (id) pickCar(id); return; }   // (a maquette: its car onto the table)
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
-    else if (h.key === 'car:wheel') m = { el: 'gume', key: null };
-    else if (h.key === 'car:body') m = { el: 'aero', key: null };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
+    else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
+    else if (h.key === 'car:body') m = { el: 'aero', key: null, car: true };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
     else if (h.name && REGAL[h.name]) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];

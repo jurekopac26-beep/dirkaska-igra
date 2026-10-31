@@ -3820,13 +3820,13 @@ const Garage3D = (function () {
   const tapOf = (key) => tapAll().find(it => it.key === key);
   function tapMarkOff() { for (const m of TAPM.list) { scene.remove(m); m.geometry.dispose(); } TAPM.list.length = 0; dimSet(false); }
   // the rest of the garage darkened while a menu's things are marked (odlocitve 31. 10., 58 %): the post pass darkens what a mask leaves
-  // dark; the mask (half the picture's size, drawn after the main pass): the marked things' shapes (their mask meshes) and the car (what
-  // every menu is for: the new part seen through on it) in white on the layer DIM_L. Without the post pass no veil
-  const DIM_L = 6, DIM = { on: false, k: 0.58, rt: null, mat: null, car: [] };
-  function dimSet(on) {
-    on = !!on && POST.on && !!POST.rt; if (on === DIM.on) return; DIM.on = on;
+  // dark; the mask (half the picture's size, drawn after the main pass): the marked things' shapes (their mask meshes), the new parts
+  // seen through on the car and the car itself only when it was tapped (car), in white on the layer DIM_L. Without the post pass no veil
+  const DIM_L = 6, DIM = { on: false, k: 0.58, rt: null, mat: null, car: [], lit: false };
+  function dimSet(on, car) {
+    on = !!on && POST.on && !!POST.rt; if (car !== undefined) DIM.lit = !!car; if (on === DIM.on && !on) return; DIM.on = on;
     for (const o of DIM.car) o.layers.disable(DIM_L); DIM.car = [];
-    if (on) for (const g of [cur && cur.root, GH.grp, ...((GH.grp && GH.grp.userData.extra) || [])]) if (g) g.traverse(o => { if (o.isMesh || o.isSprite) { o.layers.enable(DIM_L); DIM.car.push(o); } });
+    if (on) for (const g of [DIM.lit && cur && cur.root, GH.grp, ...((GH.grp && GH.grp.userData.extra) || [])]) if (g) g.traverse(o => { if (o.isMesh || o.isSprite) { o.layers.enable(DIM_L); DIM.car.push(o); } });
     if (POST.comp) POST.comp.uniforms.uDim.value = on ? DIM.k : 0;
   }
   function dimMask() {
@@ -3837,11 +3837,11 @@ const Garage3D = (function () {
     renderer.setRenderTarget(DIM.rt); renderer.clear(); renderer.render(scene, camera);
     scene.background = bg; scene.overrideMaterial = ov; camera.layers.mask = ly; renderer.shadowMap.enabled = sh; renderer.setClearColor(cc, ca);
   }
-  function tapMark(blue, orange) { tapMarkOff(); const M = tapMats(); let rg = false; const add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; o.userData.rgl = rg; scene.add(mainOnly(o)); TAPM.list.push(o); };
+  function tapMark(blue, orange, car) { tapMarkOff(); const M = tapMats(); let rg = false; const add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; o.userData.rgl = rg; scene.add(mainOnly(o)); TAPM.list.push(o); };
     for (const k of orange || []) { const it = tapOf(k); rg = !!it && it.bay != null; if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
     const it = blue && tapOf(blue); rg = !!it && it.bay != null; if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); }
     for (const k of new Set([blue, ...(orange || [])])) { const q = k && tapOf(k); if (q) { const o = new THREE.Mesh(tapGeo(q), TAPM.mats.orange); o.layers.set(DIM_L); o.frustumCulled = false; o.userData.rgl = q.bay != null; scene.add(o); TAPM.list.push(o); } }   // (the marked things in the veil's mask)
-    dimSet(true); }
+    dimSet(true, car); }
   function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } for (const e of GH.hidX) e.visible = true; GH.hidX = []; GH.kind = null; shadowDirty = 2; }
   function ghost(kind, lv) { ghostOff(); const cv = cur; if (!cv || !kind || busy) return; const g = partsFor(cv, kind, lv); partsK(g, 1);
     const see = (o) => { if (!o.isMesh || !o.material) return; const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone(); m.transparent = true; m.opacity = 0.5; m.depthWrite = false;
