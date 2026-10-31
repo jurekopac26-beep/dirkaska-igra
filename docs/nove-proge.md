@@ -121,16 +121,18 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 - **Orodje za podatke** (seja 1A): `tools/proga/proga.py <id> [--zapisi]` (opis, polja in pasti v `tools/proga/README.md`). Nastavitve v `tools/proga/proge.json`: točke `pot`, `start`, `cilj`, `zalet` ~160 m, `po_cilju` ~190 m (mesta avtov po cilju), polširina, višine, posnetek Sentinel-2 (`s2_scenes` v `lib.py`). Napiše sredinsko črto, `<ID>_H`, `alt`, `realKm`, `finish`, `cps`, `curves` (serpentine nad 150°) in podatke okolice v blok datoteke proge; imena, komentator, opis, medalje so ročni. Pregled: `pregled.py <id>`. Vse bere po kosih (brez GDAL), ~10 min, ~150 MB v `tools/proga/raw/`.
 - **Skupna okolica prelazov**: `js/world-prelaz.js` (`buildPrelaz`): nov prelaz = podatki iz orodja + vnos v `PL_LOOK` (barve tal in skal, snežna meja, table države, `portal`, `sheep`) + `theme: '<id>'` v datoteki proge + vrstica v `THEMES`/`SPLIT` v `js/render.js`. Kar potrebuje samo ena proga, gre pod zastavico v `PL_LOOK`, ne v kopijo graditelja.
 - **Pasti (1A)**: Overture `connectors.at` je delež dolžine v metrih; brez filtra razredov pot ubere pešpot čez serpentine; `elevSmooth` v datoteki proge naj bo ~6 m (sicer se serpentine spet zgladijo v krake in test »serpentine položnejše« pade); test `golden.test.js` zahteva, da »crash« odtrga del (`CRASH_AT` v `tests/lib/sim.js`, za Bâleo `'balea/rally': 6.5`). Nova proga gre na konec seznama v `index.html` (pred tem bi zamaknila avte »/car« drugih prog). Reference samo za novo progo: `--only=<id>` (golden, races), `WORLD_ONLY`, `PERF_ONLY`. Slika za meni: kopija igre v `maketa-menija/game_main/`, `dio2.mjs` z enim opravilom, `mkwebp.py ../../assets/tracks <id>`, vrstica v `proge_igra.json`.
-- **Fotografije**: Wikimedia Commons in Mapillary iz ukazne vrstice niso dosegljivi (proxy); poskusi podagenta `web-fetch`.
+- **Fotografije**: Wikimedia Commons in Mapillary iz ukazne vrstice niso dosegljivi (proxy), tudi podagent `web-fetch` ne (1B: `commons.wikimedia.org` ni na seznamu dovoljenih domen okolja). Brez njih: videz po podatkih in poznavanju kraja, zapis v `docs/proge/<id>.md`.
+- **Kamera (1B)**: kamera za avtom gleda strmo navzdol; s posnetkov (`tools/shot.mjs <id> --m …`) se vidi predvsem cesta, robovi, teren ob njej in pobočja, obzorje komaj. Grafiko dodelaj tam.
+- **Kraki serpentin (1B)**: cesta v igri (11 m) je širša od prave, zato se ograji dveh krakov skoraj dotikata in teren med njima je bil temna stena nad »zobmi« 5-metrske mreže. Rešitev v `buildPrelaz`: zid iz zidanega kamna (`bk`, `plWallTex`) od roba zgornjega kraka do police ob spodnjem, teren pod njim spuščen prek `API.caBank` (kljuka v `caH`, velja samo za progo, ki jo je nastavila). Za diagnozo: `World.api` v brskalniku (`caGround`, `vrNear`, `T`) in začasna kričeča barva mreže. Nova proga dobi zidove sama, če ima tesne serpentine.
 
 ## Stanje
 
 | Seja | Proga | Kaj | Ocena (h) | Stanje |
 |---|---|---|---|---|
-| 0 | – | načrt (ta dokument, `CLAUDE.md`) | – | na veji `ccr-097527bb-9u5usy`; na `main` gre s pull requestom Bâlee |
+| 0 | – | načrt (ta dokument, `CLAUDE.md`) | – | na `main` s pull requestom Bâlee (#226) |
 | 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | končano (PR #226) |
-| 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | naslednja |
-| 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | čaka |
+| 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | končano (PR #226) |
+| 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | naslednja (2A) |
 | 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | čaka |
 | 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | čaka |
 | 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka |

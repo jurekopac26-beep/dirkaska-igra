@@ -28,7 +28,7 @@
       grass: [0.4, 0.5, 0.24], grassDry: [0.55, 0.55, 0.32], grassLush: [0.33, 0.48, 0.2], shrub: [0.17, 0.27, 0.14],
       rock: [0.5, 0.48, 0.45], rockWarm: [0.56, 0.5, 0.44], lichen: [0.34, 0.34, 0.3], scree: [0.62, 0.6, 0.56],
       sat: 0.5, satV: 1.35, snowLine: 2120, snowC: [1.0, 1.02, 1.06],
-      rockCols: [[0.5, 0.48, 0.45], [0.56, 0.52, 0.47], [0.44, 0.43, 0.41], [0.6, 0.57, 0.52], [0.48, 0.44, 0.4]],
+      rockCols: [[0.47, 0.47, 0.46], [0.53, 0.52, 0.5], [0.41, 0.41, 0.41], [0.57, 0.56, 0.54], [0.46, 0.44, 0.42], [0.44, 0.45, 0.42]],   // (the schist: grey, a little brown, lichened)
       centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed 3 m / 6 m, solid through the hairpins)
       chev: ['#d8261c', '#ffffff'], warn: 'tri', rail: 'steel', shoulder: [0.5, 0.51, 0.49],
       fans: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.12, 0.24, 0.62], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
@@ -116,6 +116,34 @@
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('steep', new THREE.BufferAttribute(stp, 1)); g.setIndex(new THREE.BufferAttribute(idx, 1));
     g.computeBoundingSphere(); return g;
+  }
+  let plWT = null;
+  function plWallTex() {   // the retaining walls' masonry on a 3.5 m tile (256 px, seamless): courses of rough schist blocks of the valley's greys and
+    // brown-greys, each stone its own tone with a lit top edge and a shadowed foot, dark mortar joints, lichen and damp streaks
+    if (plWT) return plWT;
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(7307);
+    x.fillStyle = '#3c3a35'; x.fillRect(0, 0, S, S);
+    const hs = []; let tot = 0; for (let k = 0; k < 9; k++) { const h = 0.6 + r() * 0.9; hs.push(h); tot += h; }
+    let y = 0;
+    for (let k = 0; k < hs.length; k++) {
+      const hh = hs[k] / tot * S, nB = 4 + Math.floor(r() * 3), ws = []; let tw = 0; for (let q = 0; q < nB; q++) { const w = 0.5 + r(); ws.push(w); tw += w; }
+      let xx = r() * S;
+      for (let q = 0; q < nB; q++) {
+        const ww = ws[q] / tw * S, L0 = 112 + r() * 70, wm = (r() - 0.4) * 14, g = 2 + r() * 2.5, col = (l) => `rgb(${Math.round(l + wm)},${Math.round(l + wm * 0.4)},${Math.round(l - wm * 0.3)})`;
+        for (const ox of [0, -S]) {
+          const x0 = xx + ox + g, y0 = y + g, w0 = ww - 2 * g, h0 = hh - 2 * g; if (w0 < 2 || h0 < 2) continue;
+          x.fillStyle = col(L0); x.beginPath(); x.moveTo(x0 + r() * 3, y0 + r() * 2); x.lineTo(x0 + w0 - r() * 3, y0 + r() * 2); x.lineTo(x0 + w0 - r() * 2, y0 + h0 - r() * 3); x.lineTo(x0 + r() * 2, y0 + h0 - r() * 2); x.closePath(); x.fill();
+          x.fillStyle = 'rgba(255,255,255,0.13)'; x.fillRect(x0 + 2, y0 + 1, w0 - 4, Math.max(1.5, h0 * 0.12));   // (the lit top)
+          x.fillStyle = 'rgba(0,0,0,0.2)'; x.fillRect(x0 + 1, y0 + h0 * 0.8, w0 - 2, h0 * 0.2);   // (the shadowed foot)
+          for (let d = 0; d < 10; d++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)'; x.fillRect(x0 + r() * w0, y0 + r() * h0, 1 + r() * 4, 1 + r() * 2); }
+          if (r() < 0.25) { x.fillStyle = 'rgba(150,160,96,0.28)'; x.fillRect(x0 + r() * w0 * 0.5, y0 + r() * h0 * 0.4, w0 * 0.3, h0 * 0.35); }   // (lichen)
+        }
+        xx = (xx + ww) % S;
+      }
+      y += hh;
+    }
+    for (let d = 0; d < 7; d++) { const sx = r() * S; x.fillStyle = 'rgba(20,18,14,0.12)'; x.fillRect(sx, 0, 4 + r() * 10, S); }   // (damp streaks down the face)
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (plWT = t);
   }
   const plATex = {};   // (the board atlases of each look, made once and reused by every build of the road)
   function plAtlas(cps, finA) {   // text boards (8 rows of 1024 x 128): START, FINISH, CP1-CP4 with the altitude, the pass's board, the race's banner
@@ -220,6 +248,36 @@
     exclPush(padF.x, padF.z, padF.r + 4);
     out.marks = {};   // (where the landmarks stand: the tests look for them)
 
+    /* ---- the retaining walls between the legs of the hairpins: the game's road is wider than the real one (11 m against ~7 m), so where two
+       legs lie close the lower one's barrier comes within a few metres of the upper one's (or under its verge) and ~10-25 m of the climb fall
+       in between: the terrain's 5 m grid could only draw that as a dark sheer face over jagged teeth. There, as on the real road where it is
+       built into the hillside, a masonry wall stands under the upper verge's edge (bar + 0.42), battered 1 in 20, its foot on a level shelf at
+       the lower leg's height; from the road alone, before the terrain, and the terrain kept down to the shelf from under the upper verge out
+       to the lower leg's barrier (API.caBank in caH), so no tooth of the grid shows in front of it. bk[si][i]: { p: [[offset, height above the
+       road] top, foot], o1: where the level shelf ends, hl: the lower leg's height } or null ---- */
+    const BKC = 24, BKH = new Map(), bk = [-1, 1].map((side, si) => { const a = new Array(N).fill(null);
+      for (let i = 0; i < N; i++) {
+        const bar = side > 0 ? T.br[i] : T.bl[i], o0 = bar + 0.42, y = T.hy[i], at = (o) => [T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o];
+        const other = (o) => { const [x, z] = at(o), n = vrNear(x, z); return n.i >= 0 && Math.abs(n.i - i) * T.ds > 40 && T.hy[n.i] < y - 4 ? n : null; };
+        if (![1, 6, 12, 18].some(d => { const n = other(o0 + d); return n && n.dd < 3; })) continue;   // (a quick look first: most of the road has no leg below it)
+        let oL = -1, hl = 0;
+        for (let o = o0; o < o0 + 26; o += 0.5) { const n = other(o); if (n && n.dd < 0.5) { oL = o; hl = T.hy[n.i]; break; } }
+        const H = y - hl; if (oL < 0 || H / Math.max(0.5, oL - o0) < 1.2) continue;
+        const ob = o0 + 0.05 * H; a[i] = { p: [[o0, -0.08], [ob, -H - 0.6]], o1: Math.max(ob + 0.8, oL + 0.4), hl }; }
+      for (let i = 1; i < N - 1; i++) if (a[i] && !a[i - 1] && !a[i + 1]) a[i] = null;   // (no lone slivers)
+      for (let i = 0; i < N; i++) if (a[i]) { const o0 = a[i].p[0][0];   // (hashed by the cells the shelf crosses, for the terrain's look-up)
+        for (const o of [o0 - 6, o0, a[i].o1]) { const k = Math.floor((T.px[i] + T.nx[i] * side * o) / BKC) * 65536 + Math.floor((T.pz[i] + T.nz[i] * side * o) / BKC);
+          for (let da = -1; da <= 1; da++) for (let db = -1; db <= 1; db++) { const kk = k + da * 65536 + db; let Lq = BKH.get(kk); if (!Lq) BKH.set(kk, Lq = []); if (Lq[Lq.length - 1] !== si * N + i) Lq.push(si * N + i); } } }
+      return a; });
+    // the terrain at a wall: at most the lower leg's shelf, from under the upper verge (6 m in from the wall: out of sight under it) to the lower barrier
+    API.caBank = !BKH.size ? null : { T, f: (x, z, h) => {
+      const Lq = BKH.get(Math.floor(x / BKC) * 65536 + Math.floor(z / BKC)); if (!Lq) return h;
+      for (let q = 0; q < Lq.length; q++) { const si = Lq[q] >= N ? 1 : 0, i = Lq[q] - si * N, side = si ? 1 : -1, b = bk[si][i], dx = x - T.px[i], dz = z - T.pz[i];
+        if (Math.abs(dx * T.tx[i] + dz * T.tz[i]) > T.ds * 0.75) continue;
+        const o = (dx * T.nx[i] + dz * T.nz[i]) * side; if (o < b.p[0][0] - 6 || o > b.o1) continue;
+        if (b.hl - 0.35 < h) h = b.hl - 0.35; }
+      return h; } };
+
     /* ---- terrain tiles; the lakes (def.lakes: OpenStreetMap's shores, the water a little below them) ---- */
     let nFar = 0;
     const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
@@ -258,6 +316,7 @@
     const sw = 0.45;
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       const y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
+      if (bk[side > 0 ? 1 : 0][i]) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, -0.08], [bar + 0.42, -0.08], [bar + 0.42, -0.08]];   // (a bank down to the leg below: the wall's coping, then the bank)
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
@@ -268,9 +327,15 @@
       const wht = [0.95, 0.95, 0.92], gc = L.shoulder;
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
-          const wl = vp[si][i][2][1] < -2.6; if (wl && (k === 1 || k === 2)) { const q = 0.9 + 0.14 * rpHash(i >> 1, 43 + si); return k === 1 ? [0.62 * q, 0.6 * q, 0.56 * q] : [0.47 * q, 0.45 * q, 0.42 * q]; }   // (the wall's coping, its stones)
+          const wl = vp[si][i][2][1] < -2.6 || bk[si][i]; if (wl && (k === 1 || k === 2)) { const q = 0.9 + 0.14 * rpHash(i >> 1, 43 + si); return k === 1 ? [0.62 * q, 0.6 * q, 0.56 * q] : [0.47 * q, 0.45 * q, 0.42 * q]; }   // (the wall's coping, its stones)
           if (k === 4) return plGCol(x, z);
           const sl = k === 2 ? caSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return plCol(x, z, T.hy[i] + y, 1 / l, 0, Math.max(0, o - bar), 0).slice(); })); } return a; });
+      // the retaining walls (between the legs and wherever the ground drops away under the barrier): one mesh of masonry for the whole road, the
+      // stones' picture on 3.5 m along the road and up the face, a little lighter at the coping and darker and damper at the foot
+      const gW = new GB(true), wMat2 = new THREE.MeshLambertMaterial({ map: plWallTex(), vertexColors: true }); out.ownTex.push(wMat2.map);
+      const wallQ = (i, j, ti, bi, tj, bj, side) => { const si = side > 0 ? 1 : 0, s0 = i * T.ds / 3.5, s1 = j * T.ds / 3.5, a = Pt(i, side * ti[0], ti[1]), b = Pt(i, side * bi[0], bi[1]), c = Pt(j, side * bj[0], bj[1]), d = Pt(j, side * tj[0], tj[1]);
+        const q = (k) => 0.92 + 0.12 * rpHash(k >> 2, 47 + si), top = [1.38 * q(i), 1.36 * q(i), 1.32 * q(i)], foot = [1.05 * q(i), 1.04 * q(i), 1.0 * q(i)], topj = [1.38 * q(j), 1.36 * q(j), 1.32 * q(j)], footj = [1.05 * q(j), 1.04 * q(j), 1.0 * q(j)];
+        gW.quadO(a, b, c, d, null, Pt(i, side * (ti[0] - 3), (ti[1] + bi[1]) / 2), [[s0, a[1] / 3.5], [s0, b[1] / 3.5], [s1, c[1] / 3.5], [s1, d[1] / 3.5]], [top, foot, footj, topj]); };
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       const solid = (s) => hairS.some(h => Math.abs(s - h) < L.solidNear) || s < sStart + 20 || s > sFin - 10;
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
@@ -286,12 +351,15 @@
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j];
             gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [gc, gc, gc, gc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
             for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
-              if (k === 1 && (qi[2][1] < -2.6 || qj[2][1] < -2.6)) gv.quadO(a, b, c, d, null, Pt(i, 0, Math.min(qi[2][1], qj[2][1]) * 0.5), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the wall's face: out, towards the slope below)
+              if (k === 1 && (qi[2][1] < -2.6 || qj[2][1] < -2.6) && !bk[si][i] && !bk[si][j]) wallQ(i, j, qi[1], qi[2], qj[1], qj[2], side);   // (the wall's face: out, towards the slope below)
               else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
+            const bi = bk[si][i], bj = bk[si][j];
+            if (bi || bj) { const pe = (k, d) => { const o = (side > 0 ? T.br[k] : T.bl[k]) + 0.42; return [[o, -0.08], [o - 0.05 * d, d]]; }, pi = bi ? bi.p : pe(i, bj.p[1][1]), pj = bj ? bj.p : pe(j, bi.p[1][1]); wallQ(i, j, pi[0], pi[1], pj[0], pj[1], side); }   // (a wall down to the leg below; at its ends down to that depth too)
           }
         }
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
       }
+      addM(gW, wMat2);
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;

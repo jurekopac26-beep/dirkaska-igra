@@ -343,10 +343,10 @@
   "jsMs": 0
  },
  "balea": {
-  "calls": 159,
-  "maxCalls": 185,
-  "kverts": 381,
-  "maxKverts": 514,
-  "jsMs": 1.48
+  "calls": 161,
+  "maxCalls": 187,
+  "kverts": 395,
+  "maxKverts": 536,
+  "jsMs": 1.8
  }
 }

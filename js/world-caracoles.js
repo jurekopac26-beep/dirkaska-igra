@@ -57,6 +57,7 @@
       if (al < b.half + 14 && lat < 60) h = Math.min(h, lerp(h, b.y, sstep(60, 22, lat)) + Math.max(0, al - b.bw / 2) * 1.2);
     }
     if (i >= 0) h = Math.min(h, n.env);
+    const B = API.caBank; if (B && B.T === T) h = B.f(x, z, h);   // (the shared world of the passes: the ground kept under its banks between the hairpins' legs, js/world-prelaz.js)
     if (API.STG) h = API.vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     return h;
   }
