@@ -70,11 +70,11 @@
   "jsMs": 0.88
  },
  "harju": {
-  "calls": 182,
-  "maxCalls": 218,
-  "kverts": 607,
-  "maxKverts": 900,
-  "jsMs": 0.58
+  "calls": 180,
+  "maxCalls": 216,
+  "kverts": 533,
+  "maxKverts": 801,
+  "jsMs": 0.76
  },
  "bathurst": {
   "calls": 163,
@@ -119,25 +119,25 @@
   "jsMs": 1.83
  },
  "iroha": {
-  "calls": 202,
-  "maxCalls": 269,
-  "kverts": 653,
-  "maxKverts": 842,
-  "jsMs": 3.69
+  "calls": 200,
+  "maxCalls": 265,
+  "kverts": 611,
+  "maxKverts": 779,
+  "jsMs": 1.67
  },
  "mulholland": {
-  "calls": 147,
-  "maxCalls": 169,
-  "kverts": 575,
-  "maxKverts": 891,
-  "jsMs": 2.52
+  "calls": 149,
+  "maxCalls": 171,
+  "kverts": 490,
+  "maxKverts": 730,
+  "jsMs": 1.24
  },
  "beartooth": {
-  "calls": 182,
-  "maxCalls": 280,
-  "kverts": 340,
-  "maxKverts": 499,
-  "jsMs": 2.42
+  "calls": 170,
+  "maxCalls": 257,
+  "kverts": 318,
+  "maxKverts": 461,
+  "jsMs": 1.69
  },
  "rastro": {
   "calls": 179,
@@ -252,11 +252,11 @@
   "jsMs": 3.52
  },
  "bangsaen": {
-  "calls": 220,
-  "maxCalls": 287,
-  "kverts": 613,
-  "maxKverts": 784,
-  "jsMs": 3.01
+  "calls": 216,
+  "maxCalls": 280,
+  "kverts": 626,
+  "maxKverts": 808,
+  "jsMs": 1.49
  },
  "hotham": {
   "calls": 148,
