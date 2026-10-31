@@ -35,6 +35,14 @@ const World = (function () {
   // swapped for World's own generator (never reset: the names stay unique), so a seeded race runs as it did before (as Render's ownRnd)
   const uuW = { s: 7919 };
   function ownRnd(fn) { const r = Math.random; Math.random = () => { uuW.s = (uuW.s * 48271) % 2147483647; return uuW.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
+  // a parked vehicle (fn(g, x, y, z, rot, ...)) only where the ground under it is level enough: its four corners (length L, 2 m wide) within
+  // 0.35 m of the ground under its middle on gH, else left out (half up a bank beside a car park); its arguments (and so the draws of the
+  // builder's random numbers for its colour) are taken as ever
+  function parkOn(fn, gH, L, g, x, y, z, rot, ...rest) {
+    const c = Math.cos(rot), s = Math.sin(rot), y0 = gH(x, z);
+    for (const [a, b] of [[L / 2, 1], [L / 2, -1], [-L / 2, 1], [-L / 2, -1]]) if (Math.abs(gH(x + c * a - s * b, z + s * a + c * b) - y0) > 0.35) return false;
+    fn(g, x, y, z, rot, ...rest); return true;
+  }
   // no spectators beside the road on the real tracks (the user's decision, 30. 10. 2026): the crowds are placed as ever (the same exclusions,
   // the trees and the props where they were) but not drawn, nor the visitors at the viewpoints; the marshals and the cameramen stay (31. 10.:
   // CrowdChunks.put tells them apart); the grandstands keep their people, drawn finer (Tex.crowdHi), and their sound;
@@ -4808,7 +4816,7 @@ const World = (function () {
     clearance, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
-    nrTileOn, nrTreeGeo, nringProps, ownRnd, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
+    nrTileOn, nrTreeGeo, nringProps, ownRnd, parkOn, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
     shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wrapS
   };
   Object.defineProperties(API, {

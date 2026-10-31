@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caGH, caGround, caSlope, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl,
     gable, ico, lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, starCone, tuftWindMat, valueNoise2,
-    vary, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear, vrPrep
+    vary, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear, vrPrep, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -389,8 +389,8 @@
         exclPush(bx, bz, 2.5); }
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh), RC = rng(3941);
       for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -5 : 5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5) continue;
-        if (k === 2 || k === 7) camper(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
-        else if (k !== 4) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], R, 0.15)); }
+        if (k === 2 || k === 7) parkOn(camper, caGround, 7.2, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
+        else if (k !== 4) parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], R, 0.15)); }
       for (let k = 0; k < 18; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road towards the pass: concrete barriers across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
@@ -402,8 +402,8 @@
       const RC = rng(3951), i = vPad.i, hh = T.hd[i], c = Math.cos(hh), sn = Math.sin(hh);
       for (let k = 0; k < 9; k++) { const a = -12 + (k % 5) * 6, b = (k < 5 ? -1 : 1) * 5, px = vPad.x - sn * b + c * a, pz = vPad.z + c * b + sn * a;
         if (vrNear(px, pz).dd < 1.5 || excluded(px, pz) && Math.hypot(px - vPad.x, pz - vPad.z) > vPad.r) continue;
-        if (k % 4 === 1) camper(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
-        else caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], RC, 0.15)); }
+        if (k % 4 === 1) parkOn(camper, caGround, 7.2, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
+        else parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], RC, 0.15)); }
       for (let k = 0; k < 10; k++) { const px = vPad.x + (RC() - 0.5) * vPad.r * 1.6, pz = vPad.z + (RC() - 0.5) * vPad.r * 1.6; if (vrNear(px, pz).dd < 1.2) continue; person(px, pz, RC() * TAU); }
       const v = P.vista, dx = v[0] - vPad.x, dz = v[1] - vPad.z, L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L, stone = [0.62, 0.58, 0.55];
       for (let t = vPad.r; t < L; t += 3) { const x = vPad.x + ux * t, z = vPad.z + uz * t; if (vrDist(x, z) > 600) break;   // the walk: a paved strip, kerbs of granite

@@ -10,7 +10,7 @@
   const {
     CA_SNC, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caCondorGeo, caCondors, caGH, caGround, caPlantGeo, caSlope, caTileOn, clamp,
     cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, ouCutMat, ouRoadTex, pkGroundMat, propFloorTable, rng, roadsideProps,
-    rock, sstep, tuftWindMat, valueNoise2, vary, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear, vrPrep
+    rock, sstep, tuftWindMat, valueNoise2, vary, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear, vrPrep, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -250,7 +250,7 @@
       out.dyn.lights = lights;
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road below: concrete blocks across it
       for (let o = -T.bl[0]; o < T.br[0]; o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
-      for (let k = 0; k < 4; k++) { const [px, pz, ii] = onSide(sStart - 30 - k * 9, k % 2 ? 1 : -1, 3), h = T.hd[ii]; if (excluded(px, pz)) continue; caCar(scen.get(px, pz), px, caGround(px, pz), pz, h, vary(carCols[k % carCols.length], R, 0.15)); exclPush(px, pz, 4); }
+      for (let k = 0; k < 4; k++) { const [px, pz, ii] = onSide(sStart - 30 - k * 9, k % 2 ? 1 : -1, 3), h = T.hd[ii]; if (excluded(px, pz)) continue; parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, h, vary(carCols[k % carCols.length], R, 0.15)); exclPush(px, pz, 4); }
     }
     T.cpS.forEach((s, k) => arch(s, 2 + k, [0.86, 0.86, 0.88], [0.45, 0.2, 0.1]));
     {
@@ -262,7 +262,7 @@
       exclPush(sx, sz, 4);
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh);
       for (let k = 0; k < 8; k++) { const a = -12 + (k % 4) * 8, b = (k < 4 ? -4 : 4) * padF.sd, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5 || k === 5) continue;
-        caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[k % carCols.length], R, 0.2)); }
+        parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[k % carCols.length], R, 0.2)); }
       // the border post: the office on its yard, a booth by the road, the boom raised over the road
       const g = scen.get(padB.x, padB.z), hb = T.hd[iB];
       box(g, padB.x, padB.h - 0.4, padB.z, 9, 3.4, 5.5, hb, [0.86, 0.84, 0.78], null, true); box(g, padB.x, padB.h + 3.0, padB.z, 9.8, 0.3, 6.3, hb, [0.46, 0.48, 0.5], [0.52, 0.54, 0.56], true);
