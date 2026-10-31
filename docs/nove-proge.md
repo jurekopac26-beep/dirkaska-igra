@@ -128,7 +128,7 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 | Seja | Proga | Kaj | Ocena (h) | Stanje |
 |---|---|---|---|---|
 | 0 | – | načrt (ta dokument, `CLAUDE.md`) | – | na veji `ccr-097527bb-9u5usy`; na `main` gre s pull requestom Bâlee |
-| 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | končano (PR #PRNUM) |
+| 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | končano (PR #226) |
 | 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | naslednja |
 | 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | čaka |
 | 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | čaka |
