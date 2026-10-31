@@ -52,6 +52,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (js/deli/zadaj.js)
 
       // (js/deli/streha.js)
+      // the sunroof between the spoiler's leading edge and the windscreen's top (xf: the front edge of one over the front seats, xr: the rear bench's middle); the roof scoop's
+      // mouth over the windscreen's top; the aerial's rod where the stock one stands, a shark fin ahead of the spoiler; the louvres on
+      // the tailgate's window (its foot and top, its half width)
+      streha: { x0: -1.42, x1: 0.15, xf: 0.11, xr: -1.0 },
+      stresna_zajemalka: { x: 0.06, z: 0 },
+      antena: { x: -1.22, z: 0.36, fin: [-1.4, 0], front: [0.02, 0.44] },
+      zaluzije: { x0: -1.655, y0: 0.875, x1: -1.585, y1: 1.335, w: 0.565 },
 
       // (js/deli/bok.js)
       ogledala: { x: 0.7, y: 0.96, z: 0.8, w: 0.1, h: 0.085, d: 0.13, fwd: 0.08, up: 0.02,   // (the stock mirror: its middle, its housing; the garage's 8 cm on, 2 cm up,
@@ -194,6 +201,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the roof spoiler: a small lip on the roof's rear edge, following the roof's crown across, kicked up a little over the
         //      tailgate's window, its ends rounded down; its trailing face a shade darker, its underside dark, the high brake lamp in the
         //      trailing face (the garage's wing in its place: K.deli, mounts.krilo) ----
+        // ---- the roof (the garage's: a sunroof in it, mounts.streha; a scoop on it, mounts.stresna_zajemalka; stock: neither) ----
+        K.part('body', () => { K.deli('streha', () => {}); K.deli('stresna_zajemalka', () => {}); });
         K.part('spoiler', () => K.deli('krilo', () => {
           const X0 = -1.585, W = 0.565, f = 0.16, o = 0.065, k = 0.022, T = (x, z) => L.topY(Math.max(x, X0), z);
           const prof = (z, kk) => { const y = (x) => T(x, z);
@@ -213,7 +222,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }
         K.part('trunk', () => K.rect(-1.661, 0.81, 0, 1.1, 0.07, D, { dir: '-x' }));
         K.box(-1.663, 0.625, 0, 0.006, 0.11, 0.32, 0, WH, null, true, { part: 'plate' });
-        K.bar([-1.668, 0.862, 0], [-1.638, 1.12, 0.34], 0.01, B, { n: 4, part: 'wiperRear' });   // (its pivot on the panel under the glass; 2 cm off the glass: over a broken window's crack decal)
+        // (the garage's louvres over the window: K.deli, mounts.zaluzije; the wiper then parked along the window's foot, under them)
+        K.part('trunk', () => K.deli('zaluzije', () => {}, (n) => K.bar([-1.668, 0.862, 0], n ? [-1.667, 0.868, 0.32] : [-1.638, 1.12, 0.34], 0.01, B, { n: 4, part: 'wiperRear' })));   // (its pivot on the panel under the glass; 2 cm off the glass: over a broken window's crack decal)
         // ---- the rear bumper: the black valance, the reflectors; the exhaust under it ----
         K.part('bumperR', () => {
           K.box(-1.63, 0.2, 0, 0.13, 0.045, 1.24, 0, B);
@@ -221,10 +231,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         K.exhaust(-1.72, 0.25, -0.42, 0.03, 0.2, { part: 'body' });
         // ---- the aerial (a part of its own): a foot on the roof by the spoiler, the whip raked far back, under the spoiler's top (the
-        //      showroom frames the car by its height); it sinks with a crushed roof ----
-        K.part('aerial', () => { const y0 = L.topY(-1.22, 0.36);
+        //      showroom frames the car by its height); it sinks with a crushed roof (the garage's antennas in its place: K.deli,
+        //      mounts.antena) ----
+        K.part('aerial', () => K.deli('antena', () => { const y0 = L.topY(-1.22, 0.36);
           K.box(-1.22, y0 - 0.004, 0.36, 0.05, 0.02, 0.024, 0, B, null, true);
-          K.bar([-1.22, y0 + 0.012, 0.36], [-1.56, 1.425, 0.36], 0.0035, B, { n: K.hi ? 4 : 3 }); }, { noDent: true });
+          K.bar([-1.22, y0 + 0.012, 0.36], [-1.56, 1.425, 0.36], 0.0035, B, { n: K.hi ? 4 : 3 }); }), { noDent: true });
         // ---- the underbody: a black floor pan under the whole car, narrowed between the wheels over the axles (no seeing the road
         //      through the car from a low angle or through an open door) ----
         K.part('body', () => { for (const [x0, x1, w, y] of [[-1.655, -1.505, 0.655, 0.226], [-1.505, -0.855, 0.52, 0.2], [-0.855, 0.825, 0.672, 0.186], [0.825, 1.475, 0.52, 0.19], [1.475, 1.686, 0.645, 0.226]])

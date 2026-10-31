@@ -20,6 +20,10 @@ const VIEWS = {
   krilo: { p: [-4.35, 2.3, 2.45], t: [-0.95, 1.1, 0.08], fov: 32 },
   platisca: { p: [2.3, 0.5, 3.05], t: [1.15, 0.31, 0.62], fov: 17.5 },
   zarometi: { p: [3.55, 1.08, 1.75], t: [1.66, 0.67, 0.06], fov: 17 },
+  streha: { p: [-3.3, 3.3, 2.3], t: [-0.6, 1.3, 0], fov: 30 },   // (sklop 2 · streha: js/deli/streha.js)
+  stresna_zajemalka: { p: [3.0, 2.0, 1.3], t: [-0.15, 1.42, 0], fov: 14 },
+  antena: { p: [-3.0, 2.4, 2.0], t: [-0.8, 1.42, 0.12], fov: 16 },
+  zaluzije: { p: [-4.3, 1.75, 1.7], t: [-1.62, 1.1, 0], fov: 18 },
   ogledala: { p: [1.75, 1.02, 2.4], t: [0.76, 0.93, 0.76], fov: 15 },
   vrata: { p: [-1.6, 1.3, 3.0], t: [0.2, 0.85, 0.72], fov: 30 },
   zavore: { p: [1.85, 0.42, 1.75], t: [1.16, 0.28, 0.7], fov: 16.5 },
@@ -29,7 +33,8 @@ const VIEWS = {
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
 };
 const REAR = ['krilo', 'zadnje_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'zaluzije'];
-const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, ogledala: { view: 'car34f', ns: [5, 13, 16] }, zavore: { view: 'platisca', ns: [4, 9, 13] }, matice: { view: 'platisca', ns: [2, 7, 14] } };   // (else the whole car, options 4, 9, 16)
+const TOP = { krilo: { view: 'chase', ns: [5, 10, 16] }, streha: { view: 'chase', ns: [1, 8, 16] }, stresna_zajemalka: { view: 'chase', ns: [5, 13, 16] }, zaluzije: { view: 'chase', ns: [1, 9, 16] }, antena: { view: 'car34r', ns: [4, 9, 16] },
+  ogledala: { view: 'car34f', ns: [5, 13, 16] }, zavore: { view: 'platisca', ns: [4, 9, 13] }, matice: { view: 'platisca', ns: [2, 7, 14] } };   // (else the whole car, options 4, 9, 16)
 const TW = 400, TH = 236;
 
 const srv = await serve(ROOT), browser = await launch();

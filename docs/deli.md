@@ -35,6 +35,14 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 - `mounts`: `krilo` (rob strehe, del `spoiler`), `zarometi` (luči `headL`, `headR`), `platisca`.
 - Serijski avto (odločitve uporabnika 29. 10. 2026): zelo majhen strešni spojler z zavorno lučjo (2B), bela črta od repa do nosu (4A), okvir šip brez zobcev (4A), nova notranjost (3A: armatura z merilniki, volan s tremi kraki, školjkasta sedeža, zadnja klop, konzola, obloge vrat; meja notranjih trikotnikov `look.budget` 1400, `look.budgetHi` 1750), razpoka v vsakem oknu posebej (4A, za vse avte, `crackPanes` v `js/render.js`).
 
+## Sklop 2 · streha (KOLIBRI, `js/deli/streha.js`)
+
+- `streha: { x0, x1, xf }`: strešno okno (odločitev uporabnika 30. 10. 2026: namesto folij, lakov in karbonskih streh okna v različnih oblikah in velikostih; imena, cene in `kaj_nudi` v `js/data/deli.js`, id ostane `streha`): steklena (pasovi stekla čez vso širino strehe v obliki avta, do roba), nagibna (zadnji rob dvignjen, deflektor, zatemnjeno), drsna (odprtina spredaj, steklo zdrsne nazaj) in panoramska (13, 14 v obliki strehe do roba; cela steklena streha; karbonski okvir). Majhna okna imajo sprednji rob pri `xf` nad sprednjima sedežema, panoramska segajo od spojlerja (`x0`) do vetrobranskega stekla (`x1`); v delu `body`. Z nameščenim oknom avto nima štartne številke na strehi (želja uporabnika 30. 10. 2026; `makeCarMesh` v `js/render.js` skrije številko, ko je v `car.deli` element `streha`). Serijsko okna ni.
+- `stresna_zajemalka: { x, z }`: zajemalke na sprednjem delu strehe z odprtino naprej (`x` odprtina, `z` sredina), v delu `body`: z enim, dvema ali tremi vhodi, kapljica, snorkel, z loputo ali mrežo, dve ob robu strehe, dolge oblikovane (želja uporabnika 30. 10. 2026: bolj različne). Serijsko je ni.
+- `antena: { x, z, fin: [x, z], front: [x, z] }` v delu `aerial`: palice na mestu serijske antene, sredi strehe in spredaj desno (`front`), plavuti, dve plavuti, ploščica za GPS in antena za radijsko zvezo na sredini strehe pred spojlerjem (`fin`: zadnji konec plavuti). Vse ostanejo nizke (salon okvirja avto po višini).
+- `zaluzije: { x0, y0, x1, y1, w }` v delu `trunk` (gredo s prtljažnikom): letvice čez zadnje steklo (vznožje in vrh stekla, polovična širina). Z žaluzijami je zadnji brisalec pospravljen ob vznožju stekla (`around` ovoja: del `wiperRear` mora imeti geometrijo).
+- Serijski KOLIBRI ostane enak (ovoji brez serijskega dela za streho, zajemalko in žaluzije; serijska antena in brisalec kot prej).
+
 ## Bok in kolesa (sklop 2, `js/deli/bok.js`)
 
 Na KOLIBRIJU (mesta pod vrstico »js/deli/bok.js« v `mounts`, ovoja `K.deli('ogledala', …)` okrog serijskih ogledal in `K.deli('vrata', …)` okrog kljuk; z nameščenimi vrati Visoki ne nariše serijskih ročajev):
@@ -126,4 +134,5 @@ Pravila, da se seje ne motijo:
 - 29. 10. 2026: meje trikotnikov za avto z deli (točka 6 zgoraj).
 - 29. 10. 2026 (izbira uporabnika): JASTREBOVA luč je en kos (kupola in nos), `mounts.zarometi.shape` je prerez kupole namesto kroga; `K.skin` zna gladko senčenje (`o.smooth`).
 - 29. 10. 2026 (vzporedne seje): `DELI.add(id, build)` (element v svoji datoteki `js/deli/<skupina>.js`, naloženi za `js/deli.js`) in `DELI.seg(K, k)` (odseki okrogle oblike, na Normalnem manj).
+- 30. 10. 2026 (sklop 2 · streha, odločitev uporabnika): element `streha` so strešna okna (»Strešno okno«, 16 novih možnosti v `js/data/deli.js`); seznam v garaži (`nacrti/cene/cene.json` na veji garaže) mora prevzeti iste možnosti.
 - 29. 10. 2026 (sklop 2 · bok): zavore in matice sta dela na kolesih (`KIT_WHEEL_DELI` v `js/render.js`): `DELI.build(h, …)` s pomočnikom lica kolesa namesto `K`, `h.still` za čeljusti (svoj mesh na kolesu, ki sledi samo zasuku: `kitWheelMesh`; `Render.kitInfo(id, deli).wheels.still` trikotniki čeljusti), `DELI.mesh` vrne štiri kolesa; meja kolesa z vsemi tremi deli na kolesih 800 (Visoki 1150). `tests/deli.test.js` preveri vse elemente z mestom v `mounts` (ne samo `krilo`, `platisca`, `zarometi`).
