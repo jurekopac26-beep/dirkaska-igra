@@ -1077,16 +1077,16 @@
   "instances": 32923,
   "props": 59,
   "crowd": 1156,
-  "world": "61a915f8",
+  "world": "ee0ac845",
   "propsHash": "4ecba816",
-  "floor": "bec39309/8792",
+  "floor": "44e8fdb6/8792",
   "groups": {
-   "-:MeshLambertMaterial": "4b038a7d",
+   "-:MeshLambertMaterial": "de554653",
    "-:MeshPhongMaterial": "fd4c9d",
    "-:MeshBasicMaterial": "345bb027",
    "irFar:MeshLambertMaterial": "8a8678bc",
    "crowd:MeshLambertMaterial": "6f673b9d",
-   "ao:MeshBasicMaterial": "40d1c7ff",
+   "ao:MeshBasicMaterial": "46634bfc",
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }

@@ -130,19 +130,22 @@
       let xx = r() * S;
       for (let q = 0; q < nB; q++) {
         const ww = ws[q] / tw * S, L0 = 112 + r() * 70, wm = (r() - 0.4) * 14, g = 2 + r() * 2.5, col = (l) => `rgb(${Math.round(l + wm)},${Math.round(l + wm * 0.4)},${Math.round(l - wm * 0.3)})`;
-        for (const ox of [0, -S]) {
-          const x0 = xx + ox + g, y0 = y + g, w0 = ww - 2 * g, h0 = hh - 2 * g; if (w0 < 2 || h0 < 2) continue;
-          x.fillStyle = col(L0); x.beginPath(); x.moveTo(x0 + r() * 3, y0 + r() * 2); x.lineTo(x0 + w0 - r() * 3, y0 + r() * 2); x.lineTo(x0 + w0 - r() * 2, y0 + h0 - r() * 3); x.lineTo(x0 + r() * 2, y0 + h0 - r() * 2); x.closePath(); x.fill();
+        const w0 = ww - 2 * g, h0 = hh - 2 * g, jt = [r() * 3, r() * 2, r() * 3, r() * 2, r() * 2, r() * 3, r() * 2, r() * 2], dt = [];   // (every stone's random values once: the copy past the edge the same)
+        for (let d = 0; d < 10; d++) dt.push([r() < 0.5 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', r() * w0, r() * h0, 1 + r() * 4, 1 + r() * 2]);
+        const lc = r() < 0.25 ? [r() * w0 * 0.5, r() * h0 * 0.4] : null;
+        if (w0 >= 2 && h0 >= 2) for (const ox of [0, -S]) {
+          const x0 = xx + ox + g, y0 = y + g;
+          x.fillStyle = col(L0); x.beginPath(); x.moveTo(x0 + jt[0], y0 + jt[1]); x.lineTo(x0 + w0 - jt[2], y0 + jt[3]); x.lineTo(x0 + w0 - jt[4], y0 + h0 - jt[5]); x.lineTo(x0 + jt[6], y0 + h0 - jt[7]); x.closePath(); x.fill();
           x.fillStyle = 'rgba(255,255,255,0.13)'; x.fillRect(x0 + 2, y0 + 1, w0 - 4, Math.max(1.5, h0 * 0.12));   // (the lit top)
           x.fillStyle = 'rgba(0,0,0,0.2)'; x.fillRect(x0 + 1, y0 + h0 * 0.8, w0 - 2, h0 * 0.2);   // (the shadowed foot)
-          for (let d = 0; d < 10; d++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)'; x.fillRect(x0 + r() * w0, y0 + r() * h0, 1 + r() * 4, 1 + r() * 2); }
-          if (r() < 0.25) { x.fillStyle = 'rgba(150,160,96,0.28)'; x.fillRect(x0 + r() * w0 * 0.5, y0 + r() * h0 * 0.4, w0 * 0.3, h0 * 0.35); }   // (lichen)
+          for (const [c, a, b, e, f] of dt) { x.fillStyle = c; x.fillRect(x0 + a, y0 + b, e, f); }
+          if (lc) { x.fillStyle = 'rgba(150,160,96,0.28)'; x.fillRect(x0 + lc[0], y0 + lc[1], w0 * 0.3, h0 * 0.35); }   // (lichen)
         }
         xx = (xx + ww) % S;
       }
       y += hh;
     }
-    for (let d = 0; d < 7; d++) { const sx = r() * S; x.fillStyle = 'rgba(20,18,14,0.12)'; x.fillRect(sx, 0, 4 + r() * 10, S); }   // (damp streaks down the face)
+    for (let d = 0; d < 7; d++) { const sx = r() * S, sw = 4 + r() * 10; x.fillStyle = 'rgba(20,18,14,0.12)'; x.fillRect(sx, 0, sw, S); x.fillRect(sx - S, 0, sw, S); }   // (damp streaks down the face)
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (plWT = t);
   }
   const plATex = {};   // (the board atlases of each look, made once and reused by every build of the road)
@@ -263,7 +266,7 @@
         let oL = -1, hl = 0;
         for (let o = o0; o < o0 + 26; o += 0.5) { const n = other(o); if (n && n.dd < 0.5) { oL = o; hl = T.hy[n.i]; break; } }
         const H = y - hl; if (oL < 0 || H / Math.max(0.5, oL - o0) < 1.2) continue;
-        const ob = o0 + 0.05 * H; a[i] = { p: [[o0, -0.08], [ob, -H - 0.6]], o1: Math.max(ob + 0.8, oL + 0.4), hl }; }
+        const ob = Math.max(o0, Math.min(o0 + 0.05 * H, oL - 0.5)); a[i] = { p: [[o0, -0.08], [ob, -H - 0.6]], o1: Math.max(ob + 0.8, oL + 0.4), hl }; }
       for (let i = 1; i < N - 1; i++) if (a[i] && !a[i - 1] && !a[i + 1]) a[i] = null;   // (no lone slivers)
       for (let i = 0; i < N; i++) if (a[i]) { const o0 = a[i].p[0][0];   // (hashed by the cells the shelf crosses, for the terrain's look-up)
         for (const o of [o0 - 6, o0, a[i].o1]) { const k = Math.floor((T.px[i] + T.nx[i] * side * o) / BKC) * 65536 + Math.floor((T.pz[i] + T.nz[i] * side * o) / BKC);
@@ -502,7 +505,7 @@
           if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.12, 1.13, 0.12, T.hd[i], postC, null, true); }
         }
       }
-      out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => vp[side > 0 ? 1 : 0][i]);
+      out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => { const si = side > 0 ? 1 : 0, b = bk[si][i], q = vp[si][i]; return b ? [q[0], q[1], q[2], [b.p[1][0] + 0.01, b.p[1][1]], [b.o1, b.hl - T.hy[i] - 0.35]] : q; });   // (at a wall between the legs: down its face to the shelf)
       const spots = [];
       for (let i = T.idx(sStart + 30); i < T.idx(sFin - 30); i += 25) for (const side of [-1, 1]) if (!need[side > 0 ? 1 : 0][i] && !near(i)) spots.push([i, side]);   // (white delineator posts where there is no rail)
       out.propStats = roadsideProps(out.props, { spots, postEdge: [1.2, 1.6], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
