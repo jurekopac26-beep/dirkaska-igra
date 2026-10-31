@@ -407,14 +407,15 @@ try {
     await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + new URLSearchParams(location.search).get("car"))</script>' }); });
     await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
     await click(page, 'pick-car'); await page.waitForTimeout(400);
-    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
+    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0'),
+      dz: Core.TRACKS.find(d => d.id === __game.S.track).name.split(', ').pop() }));   // (the selected track's country: the flag on the garage's IZBERI PROGO)
     const bb = await page.locator('#car-garage').boundingBox();
     await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), page.mouse.click(bb.x + bb.width / 2, bb.y + bb.height * 0.4)]);
     await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
     await page.waitForTimeout(300);
     const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
-    T.check('the car tapped on the car screen: the garage with it (garaza.html?car=<id>&color=<its colour>), its back: the car screen again on that car (the address plain again)',
-      gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, g }));
+    T.check('the car tapped on the car screen: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track\'s country>), its back: the car screen again on that car (the address plain again)',
+      gar && car0.dz && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex + '&drzava=' + encodeURIComponent(car0.dz)) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, g }));
     await page.click('#car-back'); await page.waitForTimeout(400);
     const back = await ev(page, 'return { scr: Menu.debug().screen, card: !!root.querySelector(".card h1") };');
     T.check('back from the garage, the car screen\'s Back: the track step it was opened from', back.scr === 'track' && back.card && (await shown(page)).join() === 's-menu' && !real(errors).length, JSON.stringify({ back, errors: real(errors) }));
