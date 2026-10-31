@@ -60,7 +60,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 |---|---|---|---|
 | 0 | Sistem misij | – | končano (PR #187) |
 | 1 | 06 | – | končano (PR #193) |
-| 2 · ogenj, gasilski avto C | 01, 49, 46, 47 | 13–20 | narejeno (veja `misije/skupina-2`) |
+| 2 · ogenj, gasilski avto C | 01, 49, 46, 47 | 13–20 | končano (PR #197) |
 | 3 · voda | 19, 35, 37, 48 | 14–20 | narejeno (veja `misije/skupina-3`) |
 | 4 · sneg | 30, 33, 53 | 10–13 | narejeno (veja `misije/skupina-4`) |
 | 5 · tovor | 07, 09, 43, 51, 52, 54 | 16–23 | |
