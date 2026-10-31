@@ -105,7 +105,7 @@ check('stock KOLIBRI: built ok, within its budgets (outer 1400; its cabin\'s inn
 // every vehicle with mounts (KOLIBRI; the trial's PANTER, JASTREB, TITAN): each element it has a mount for, all 16 options
 const MOUNTED = C.MODELS.filter(m => m.kit && m.def.mounts), rows = [], fails = [], over = [], wheelsBad = [], rangeBad = [];
 for (const M of MOUNTED) { const S0 = R.kitInfo(M.id), mo = M.def.mounts;
-  for (const id of Object.keys(mo).filter(id => D.has(id))) for (let k = 1; k <= 16; k++) {
+  for (const id of Object.keys(mo).filter(id => D.has(id))) for (let k = 1; k <= 16; k++) {   // (every element drawn that it has a mount for: sklop 2's too)
     const I = R.kitInfo(M.id, { [id]: k }), tag = M.id + ' ' + id + k;
     if (I.status !== 'ok' || I.deli !== id + k || (I.hi && I.hi.status !== 'ok')) { fails.push(tag + ' ' + I.status + ' ' + I.deli); continue; }
     rows.push([tag, I.tris.outer - S0.tris.outer]);

@@ -3,7 +3,7 @@
 // and what they give (js/data/deli.js). Into test-results/deli/<car>-<elements>.jpg, 1600 px wide (one picture per sklop's step).
 //   node tools/deli-plosca.mjs krilo,platisca,zarometi [--car kolibri] [--ns 1,6,11,16] [--title "…"] [--color 0x2f6fd6]
 // The cameras (VIEWS, car frame in metres: x forward, y up, z right) are KOLIBRI's; on another car they are scaled by its length, height
-// and width. A new element gets its close-up in VIEWS (else the whole car from the front or the rear three quarters, by REAR) and which
+// and width. A new element gets its close-up in VIEWS (two cameras: the tile in two halves, e.g. the tow hooks front and rear, the tail lamps off and lit (brake); else the whole car from the front or the rear three quarters, by REAR) and which
 // options the top row shows in TOP. --ns 1,6,11,16: only those options (a row of 4 each: a smaller plate, e.g. a category of cars).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,6 +34,11 @@ const VIEWS = {
   maska: { p: [3.8, 0.9, 0.75], t: [1.68, 0.68, 0], fov: 21 },
   zmigavci: { p: [3.5, 0.85, 1.75], t: [1.4, 0.56, 0.5], fov: 24 },   // (the front's indicator and the fender's repeater)
   relijske_luci: { p: [4.4, 1.8, 2.6], t: [0.95, 0.85, 0], fov: 27 },   // (the bumper, the nose, the roof's front edge)
+  zadnje_luci: [{ p: [-3.7, 0.95, 2.0], t: [-1.65, 0.7, 0.62], fov: 12 }, { p: [-3.7, 0.95, 2.0], t: [-1.65, 0.7, 0.62], fov: 12, brake: true }],   // (off, lit as when braking)
+  auspuh: { p: [-3.4, 0.68, -1.0], t: [-1.62, 0.26, -0.06], fov: 24 },
+  prtljaznik: { p: [-4.4, 1.5, 1.2], t: [-1.62, 0.92, 0], fov: 25 },
+  vlecne_kljuke: [{ p: [3.0, 0.5, 1.9], t: [1.66, 0.3, 0.52], fov: 17 }, { p: [-3.0, 0.5, 1.9], t: [-1.65, 0.3, 0.4], fov: 17 }],   // (two halves: the front, the rear)
+  lovilci_blata: { p: [-4.0, 0.55, 2.0], t: [-1.3, 0.2, 0.62], fov: 22 },
   chase: { p: [-6.0, 2.15, 0], t: [0.4, 1.02, 0], fov: 29 },   // (as the game's camera behind the car sees it)
   car34f: { p: [5.2, 2.2, 4.3], t: [0.05, 0.68, 0], fov: 21 },   // (the whole car, front three quarters)
   car34r: { p: [-5.2, 2.3, 4.3], t: [-0.05, 0.72, 0], fov: 21 },   // (the whole car, rear three quarters)
@@ -50,12 +55,13 @@ try {
   const M = await page.evaluate((id) => { const m = Core.MODELS.find(m => m.id === id); return m && { len: m.len, wid: m.wid, ht: Render.kitInfo(id) ? Render.kitInfo(id).bbox.max[1] : 1.4, mounts: Object.keys((m.def && m.def.mounts) || {}) }; }, car);
   if (!M) throw new Error('no such vehicle: ' + car);
   const K = { len: 3.7, wid: 1.65, ht: 1.36 }, sc = (v) => [v[0] * M.len / K.len, v[1] * M.ht / K.ht, v[2] * M.wid / K.wid];   // (KOLIBRI's size: its cameras on another car)
-  const cam = (el) => { const v = VIEWS[el] || VIEWS[REAR.includes(el) ? 'car34r' : 'car34f']; return { p: sc(v.p), t: sc(v.t), fov: v.fov }; };
-  const shot = (view, deli) => page.evaluate(({ car, color, c, deli }) => {
-    const s = Render.carShot({ id: car, deli, color, cam: c, w: 800, h: 472, grid: false });
-    const o = document.createElement('canvas'); o.width = 400; o.height = 236; const x = o.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(s, 0, 0, 400, 236);
+  const cam = (el) => { const v = VIEWS[el] || VIEWS[REAR.includes(el) ? 'car34r' : 'car34f'], f = (v) => ({ p: sc(v.p), t: sc(v.t), fov: v.fov, brake: v.brake }); return Array.isArray(v) ? v.map(f) : [f(v)]; };
+  const shot = (view, deli) => page.evaluate(({ car, color, cs, deli }) => {   // (a view of two cameras: two halves side by side)
+    const o = document.createElement('canvas'); o.width = 400; o.height = 236; const x = o.getContext('2d'); x.imageSmoothingQuality = 'high';
+    cs.forEach((c, i) => { const w = 400 / cs.length, s = Render.carShot({ id: car, deli, color, cam: c, w: w * 2, h: 472, grid: false, brake: !!c.brake }); x.drawImage(s, i * w, 0, w, 236); });
+    if (cs.length > 1) { x.fillStyle = '#0d1117'; x.fillRect(199, 0, 2, 236); }
     return o.toDataURL('image/jpeg', 0.9);
-  }, { car, color, c: cam(view), deli });
+  }, { car, color, cs: cam(view), deli });
   const DATA = await page.evaluate(() => DELI.DATA.elementi), sections = [];
   for (const el of els) {
     const E = DATA.find(e => e.id === el); if (!E) throw new Error('no such element: ' + el);
