@@ -13,7 +13,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 ## Kamere in grafika (odločitev uporabnika)
 - V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere **izometrična**, **kino** in **kokpit** so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
 - Grafiko izboljšuj za kamero za avtom: obzorje, nebo, oddaljeni griči, cesta pred avtom in njeni robovi, teren ob njej. Detajli, ki jih s te kamere ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi, strehe od zgoraj), so odveč: poenostavi jih, da je telefon manj obremenjen.
-- **Gledalcev ob cesti na pravih progah ni** (odločitev uporabnika 30. 10. 2026): `fansOn` v `js/world.js` jih na progah brez `test: true` ne nariše; gledalci so samo na tribunah (podrobnejša slika `Tex.crowdHi`). Nove proge gledalcev ob cesti ne dodajajo.
+- **Gledalcev ob cesti na pravih progah ni** (odločitev uporabnika 30. 10. 2026): `fansOn` v `js/world.js` jih na progah brez `test: true` ne nariše (redarji in snemalci ostanejo: `crowdPut(…, { staff: true })`); gledalci so samo na tribunah (podrobnejša slika `Tex.crowdHi`). Nove proge gledalcev ob cesti ne dodajajo.
 - Obremenitev telefona: proga naj ima do ~300 klicev risanja in ~900 tisoč oglišč, v povprečju in v najbolj obremenjenem trenutku (`tests/golden/perf.json`: `maxCalls`, `maxKverts`; preverja `perf.test.mjs`), nova proga ali izboljšava pa ne sme povečati obremenitve drugih prog.
 
 ## Pravna varnost (igra gre na Google Play)

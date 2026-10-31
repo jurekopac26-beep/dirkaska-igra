@@ -36,7 +36,8 @@ const World = (function () {
   const uuW = { s: 7919 };
   function ownRnd(fn) { const r = Math.random; Math.random = () => { uuW.s = (uuW.s * 48271) % 2147483647; return uuW.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
   // no spectators beside the road on the real tracks (the user's decision, 30. 10. 2026): the crowds are placed as ever (the same exclusions,
-  // the trees and the props where they were) but not drawn; the grandstands keep their people, drawn finer (Tex.crowdHi), and their sound;
+  // the trees and the props where they were) but not drawn, nor the visitors at the viewpoints; the marshals and the cameramen stay (31. 10.:
+  // CrowdChunks.put tells them apart); the grandstands keep their people, drawn finer (Tex.crowdHi), and their sound;
   // the tracks kept for testing (def.test) as they were
   const fansOn = () => !!(T && T.def && T.def.test);
   // decorative meshes eligible for the runtime draw-distance cull (vegetation and trees only: Render hides the far ones on the lower tiers to
@@ -4478,9 +4479,15 @@ const World = (function () {
     m.customProgramCacheKey = () => 'crowd2';
     return m;
   }
+  // who a figure is (no spectators beside the road on the real tracks, fansOn): CRD inside crowdRun / crowdAt (a crowd's rows: spectators);
+  // CRP inside crowdPut, CRS its figure staff (a marshal, a cameraman: the world's o.staff); a world's own put (Spa's marshals and cameramen)
+  // staff by its colour (hi-vis orange or yellow) or the filming pose
+  let CRD = 0, CRP = 0, CRS = false;
+  const hiVis = (c) => !!c && ((c[0] > 0.75 && c[1] > 0.3 * c[0] && c[1] < 0.75 * c[0] && c[2] < 0.25 * c[0]) || (c[1] > 0.75 && c[0] > 0.55 && c[2] < 0.3 * c[1]));
   class CrowdChunks extends IChunks {   // IChunks plus a per-instance (pose + phase, variant) attribute
     constructor(U, size) { super(crowdGeo(), crowdMat(U), size || 128); this.aux = new Map(); }   // (size: the chunk, 128 m unless a world asks for finer culling)
     put(x, y, z, rot, sxz, sy, col, pose, variant) {
+      if (CRD || !(CRP ? CRS : Math.floor(pose) === 3 || hiVis(col))) (this.fans || (this.fans = new Set())).add(x + ',' + z);   // (a spectator: not drawn on the real tracks, crowdLayer)
       this.add(x, y, z, rot, sxz, sy, col);
       const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size); let A = this.aux.get(k); if (!A) this.aux.set(k, A = []); A.push(pose, variant);
     }
@@ -4527,13 +4534,18 @@ const World = (function () {
     const kid = h(3) < 0.04, sxz = kid ? 0.8 : 0.92 + 0.16 * h(4), sy = kid ? 0.7 : 0.9 + 0.2 * h(5);
     const pal = (o && o.shirts) || C.shirts, sc = (o && o.col) || pal[Math.floor(h(6) * pal.length)], k = 0.88 + 0.22 * h(7), sk = h(11);
     const variant = (sk < 0.42 ? 0 : sk < 0.72 ? 1 : sk < 0.9 ? 2 : 3) + 4 * Math.floor(h(10) * 256);
+    CRP = 1; CRS = !!(o && o.staff);
     C.ppl.put(x, y, z, Math.atan2(fx, fz) + (h(8) - 0.5) * 0.5, sxz, sy, [sc[0] * k, sc[1] * k, sc[2] * k], pose + h(9) * 0.998, variant);
+    CRP = 0;
     const key = Math.floor(x / 0.8) + ',' + Math.floor(z / 0.8); let L = C.sp.get(key); if (!L) C.sp.set(key, L = []); L.push(x, z);
     C.n++; return true;
   }
   // one spectator of an existing crowd loop at track distance s, 'extra' beyond the barrier on 'side': interpolated between the samples (the old
   // loops snap to the 2 m samples, so neighbours would stand inside each other); falls back to the loop's own spot (x0, z0) when ok(x, z) fails there
   function crowdAt(C, s, side, extra, x0, z0, o, row, ok) {
+    CRD++; try { return crowdAt0(C, s, side, extra, x0, z0, o, row, ok); } finally { CRD--; }
+  }
+  function crowdAt0(C, s, side, extra, x0, z0, o, row, ok) {
     const q = crAt(s); if (!q) return false;
     const off = (side > 0 ? q.br : q.bl) + extra, nx = q.nx, nz = q.nz, tx = q.tx, tz = q.tz; let x = q.px + nx * side * off, z = q.pz + nz * side * off;
     if (ok && !ok(x, z)) { x = x0; z = z0; }
@@ -4577,7 +4589,7 @@ const World = (function () {
     const fv = o.first == null ? 1.2 : o.first, first = typeof fv === 'function' ? fv : () => fv;
     const below = o.below == null ? 1.5 : o.below, above = o.above == null ? 6 : o.above, maxS = o.maxSlope == null ? C.maxSlope : o.maxSlope, look = o.look == null ? 0.3 : o.look;
     const gH = o.gH || C.gH, near = o.near || C.near, exc = o.excluded || C.excluded, seed = ++C.runs * 13.37, segs = new Map();
-    let n = 0; C.busy = true;
+    let n = 0; C.busy = true; CRD++;
     for (let s = sa; s < sb; s += step) for (let row = 0; row < rows; row++) {
       const keep = dens * (1 - clump + 2 * clump * crNoise(s / 7 + seed + side * 5.3)) - row * (o.rowFall == null ? 0.06 : o.rowFall);
       if (crH(s, row * 7 + side, seed) >= keep) continue;
@@ -4593,7 +4605,7 @@ const World = (function () {
       if (!crowdPut(C, x, y, z, -side * nx - tx * lk, -side * nz - tz * lk, o, row)) continue;
       n++; const k = Math.floor(sj / 2); segs.set(k, Math.max(segs.get(k) || 0, row + 1));
     }
-    C.busy = false;
+    C.busy = false; CRD--;
     if (n && (o.strip != null ? o.strip : dens >= 0.3)) crStrip(C, segs, side, first, gap, gH, near, o.dark == null ? 0.58 : o.dark);   // (none under thin, scattered crowds)
     if (n && o.excl !== false) {   // tree exclusion circles along the run, overlapping (keepBar: how far they stay off the barrier line)
       const depth = (rows - 1) * gap;
@@ -4632,7 +4644,7 @@ const World = (function () {
       C.culled = C.ppl.cull((x, z) => { const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
     }
     const grp = new THREE.Group(); grp.name = 'crowds'; root.add(grp);
-    if (!fansOn()) return 0;   // (no spectators: see fansOn; the group stays, empty, for the worlds that look into it)
+    if (!fansOn()) { const F = C.ppl.fans; if (F) C.ppl.cull((x, z) => F.has(x + ',' + z)); return C.ppl.addTo(grp); }   // (no spectators: see fansOn; the marshals and the cameramen stay; the group stays for the worlds that look into it)
     const n = C.ppl.addTo(grp);
     const sm = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
     C.strip.addTo(grp, sm, false, false);
