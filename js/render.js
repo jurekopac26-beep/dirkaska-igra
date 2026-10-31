@@ -1786,7 +1786,7 @@ const Render = (function () {
     K.tyre = (x, y, z, o) => {
       o = o || {}; const ax = o.axis || 'z', fc = o.face === -1 ? -1 : 1;
       if (['x', 'y', 'z'].indexOf(ax) < 0) kitFail('tyre: axis x, y or z');
-      const Wt = Object.assign({}, W, o.style ? { style: o.style } : {}); if (KIT_STYLES.indexOf(Wt.style) < 0) kitFail('tyre: style not one of ' + KIT_STYLES.join(' '));
+      const Wt = Object.assign({}, kx.spare || W, o.style ? { style: o.style } : {}); if (KIT_STYLES.indexOf(Wt.style) < 0) kitFail('tyre: style not one of ' + KIT_STYLES.join(' '));
       const geo = kitWheelGeo(Wt, o.r || M.rw, o.w || W.w, !!o.hi, false), pa = geo.attributes.position.array, ca = geo.attributes.color.array, cm = new Map();
       const T = (i) => { const u = pa[i], v = pa[i + 1], w = pa[i + 2] * fc;   // (the wheel's frame: the axle along z, the face to +z) -> the look's: metres over the scale
         const m = ax === 'z' ? [u, v, w] : ax === 'x' ? [w, v, -u] : [u, w, -v]; return [x + m[0] / sx, y + m[1], z + m[2] / sz]; };
@@ -2037,9 +2037,10 @@ const Render = (function () {
   const KIT_WHEEL_DELI = ['zavore', 'matice'];   // (the garage's parts drawn on the wheels, not in build(K): the brakes, the wheel nuts; the rims are the wheels' look)   // (kitCacheHi: the Visoki bodies, Nastavitve · Detajli avtov)
   function kitBuild(M, look, fb, hi, deli) {
     const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb);
+    kx.spare = Object.assign({}, kx.wheels);   // (a spare wheel's look, K.tyre: the vehicle's own rims, never the garage's)
     if (deli) { kx.deli = deli; if (deli.platisca && typeof DELI !== 'undefined') Object.assign(kx.wheels, DELI.wheel(deli.platisca));
       if (deli.gume && typeof DELI !== 'undefined' && DELI.tyreLook) Object.assign(kx.wheels, DELI.tyreLook(deli.gume)); }   // (the tyres: their tread, colour and sidewall band, js/deli/barve.js)   // (the parts fitted: K.deli draws them; the rims: the wheels' look)
-    if (hi && kx.wheels.segHi) kx.wheels.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
+    if (hi && kx.wheels.segHi) kx.wheels.seg = kx.spare.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
     const wd = deli && typeof DELI !== 'undefined' ? KIT_WHEEL_DELI.filter(id => deli[id] && DELI.has(id) && M.def.mounts && M.def.mounts[id]) : [];
     if (wd.length) kx.wheels.deliW = wd.map(id => [id, deli[id], M.def.mounts[id], M, !!hi, deli]);   // (the wheel parts: drawn on the player's wheels, kitWheelGeo)
     kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
