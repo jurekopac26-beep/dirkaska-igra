@@ -1,5 +1,5 @@
 // Mockup only: the maps of the open roads and the rally stages (routemap_page.js in the game's page) -> raw/maps/<name>.png + .json,
-// and <name>-rain.png for the same view in the rain. Usage: node routemap.mjs maps.json   (maps.json: [[track, "aerial"|"top", name, options], …])
+// and <name>-rain.png for the same view in the rain. Usage: node routemap.mjs maps.json [vrsic,spa]   (maps.json: [[track, "aerial"|"top", name, options], …])
 // The game comes from ../game_vrsic (env GAME: another copy), the branch with the Vršič road.
 import { createRequire } from 'node:module';
 import http from 'node:http';
@@ -18,14 +18,14 @@ const server = http.createServer((req, res) => {
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}`;
-const JOBS = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const JOBS = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).filter(j => !process.argv[3] || process.argv[3].split(',').includes(j[0]));   // (node routemap.mjs maps.json vrsic,spa: only these)
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const byTrack = new Map(); for (const j of JOBS) { if (!byTrack.has(j[0])) byTrack.set(j[0], []); byTrack.get(j[0]).push(j); }
 for (const [track, jobs] of byTrack) {
   const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 1, colorScheme: 'dark' });
   const page = await ctx.newPage();
   page.on('pageerror', e => console.log('pageerror:', e.message));
-  page.on('console', m => { if (m.type() === 'error') console.log('console:', m.text().slice(0, 200)); });
+  page.on('console', m => { if (m.type() === 'error' || m.text().startsWith('far backdrop')) console.log('console:', m.text().slice(0, 200)); });
   const raw = JSON.stringify({ sound: 0, comm: 0, camera: 'chase', zoom: 1.2, quality: 'high', shadows: 1, carV: 2, name: 'Player', track: 'jezero', car: 0, color: 0 });
   await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-pikes-w7', '1'); localStorage.setItem('tdgp-settings', raw); }, raw);
   await page.goto(base + '/', { waitUntil: 'domcontentloaded' });
