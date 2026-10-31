@@ -1,0 +1,19 @@
+{
+  "balea": {
+    "ime": "Bâlea, Romunija",
+    "okvir": [45.575, 24.56, 45.68, 24.68],
+    "pot": [[45.6116644, 24.613546], [45.6024757, 24.6140093]],
+    "start": [45.6107785, 24.6144425],
+    "cilj": [45.6042455, 24.6137231],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 5.5,
+    "gauss": 2.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.11, "serpentine": 0.3, "serpentine_m": 22 },
+    "s2": "S2C_35TLL_20250726_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "BALEA_H"
+  }
+}

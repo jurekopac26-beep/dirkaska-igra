@@ -88,7 +88,8 @@
   function irFar(colFn) {   // (colFn(A, slope, q): a road's own colours of the land, Mount Hotham's; else Nikko's)
     const F = T.def.farDem; if (!F) return null;
     const nx = F.nx, nz = F.nz, n = nx * nz, b = atob(F.b64), base = API.VR.D.base, H = new Float32Array(n), wet = new Uint8Array(n), dr = new Float32Array(n);
-    for (let k = 0; k < n; k++) H[k] = 400 + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
+    const lo = F.lo != null ? F.lo : 400;   // (the lowest height of the grid: 400 m unless the data says otherwise, tools/proga)
+    for (let k = 0; k < n; k++) H[k] = lo + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
     for (let k = 0, p = 0, v = 0; k < F.lake.length; k++) { if (v) wet.fill(1, p, p + F.lake[k]); p += F.lake[k]; v ^= 1; }
     const lakeH = T.def.far && T.def.far.lake ? T.def.far.lake[2] - base : 0;
     for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH;
@@ -110,7 +111,7 @@
     for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) { const a = j * nx + i, b2 = a + 1, c = a + nx, d = c + 1;
       if (Math.min(dr[a], dr[b2], dr[c], dr[d]) < 470) continue; I.push(a, c, b2, b2, c, d); }
     // the Kegon falls: a white ribbon down the cliff below the lake's outlet (97 m), a little out from the model's face, towards the road
-    const K = T.def.far.kegon; if (K) { const cx = (API.VR.bx0 + API.VR.bx1) / 2, cz = (API.VR.bz0 + API.VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
+    const K = T.def.far && T.def.far.kegon; if (K) { const cx = (API.VR.bx0 + API.VR.bx1) / 2, cz = (API.VR.bz0 + API.VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
       const v0 = P0.length / 3; for (const [u, y] of [[-hw, y0], [hw, y0], [hw * 1.4, y0 - 97], [-hw * 1.4, y0 - 97]]) { P0.push(K[0] + ux * o + px * u, y, K[1] + uz * o + pz * u); C.push(0.93, 0.95, 0.98); }
       I.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3, v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2); }
     const g = new THREE.BufferGeometry(), nv = P0.length / 3;
