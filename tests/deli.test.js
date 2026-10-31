@@ -54,8 +54,8 @@ check('by hand: krilo 16 grip +19 % and -7 km/h, platisca 15 -14 kg, zavore 16 b
 const C = loadCore(), KO = C.MODELS.find(m => m.id === 'kolibri'), MO = KO.def.mounts || {};
 check('the defs: none skipped (mounts a known key)', !C.DEFS_SKIPPED.length, C.DEFS_SKIPPED.map(s => s.id + ': ' + s.why).join('; ') || 'none');
 check('KOLIBRI\'s mounts: krilo (on the spoiler), zarometi (the lamps\' parts), platisca', MO.krilo && MO.krilo.part === 'spoiler' && MO.zarometi && MO.zarometi.hosts.join() === 'headL,headR' && !!MO.platisca);
-const cleanK = D.clean({ krilo: 3, platisca: '7', zarometi: 17, nic: 2, aero: 4 }, KO);
-check('DELI.clean on KOLIBRI: the options it can show (unknown, out of range and unmounted ones out); the key sorted', JSON.stringify(cleanK) === '{"krilo":3,"platisca":7}' && D.key({ platisca: 7, krilo: 3 }, KO) === 'krilo3.platisca7' && D.key({ aero: 4 }, KO) === '' && D.key(null, KO) === '',
+const cleanK = D.clean({ krilo: 3, platisca: '7', zarometi: 17, nic: 2, hupa: 4 }, KO);
+check('DELI.clean on KOLIBRI: the options it can show (unknown, out of range and unmounted ones out); the key sorted', JSON.stringify(cleanK) === '{"krilo":3,"platisca":7}' && D.key({ platisca: 7, krilo: 3 }, KO) === 'krilo3.platisca7' && D.key({ hupa: 4 }, KO) === '' && D.key(null, KO) === '',
   JSON.stringify(cleanK));
 const ARC0 = JSON.stringify(C.ARC ? C.ARC.kolibri : null), M0 = JSON.stringify([KO.mass, KO.kw, KO.cDrag, KO.Tmax]);
 const stock = new C.Car(KO, { id: 1 }), withP = new C.Car(KO, { id: 2, deli: { krilo: 16, platisca: 15, zavore: 16 } }), junk = new C.Car(KO, { id: 3, deli: { nic: 3, krilo: 40 } });
@@ -103,7 +103,7 @@ check('stock KOLIBRI: built ok, within its budgets (outer 1400; its cabin\'s inn
 // every vehicle with mounts (KOLIBRI; the trial's PANTER, JASTREB, TITAN): each element it has a mount for, all 16 options
 const MOUNTED = C.MODELS.filter(m => m.kit && m.def.mounts), rows = [], fails = [], over = [], wheelsBad = [], rangeBad = [];
 for (const M of MOUNTED) { const S0 = R.kitInfo(M.id), mo = M.def.mounts;
-  for (const id of ['krilo', 'platisca', 'zarometi']) if (mo[id]) for (let k = 1; k <= 16; k++) {
+  for (const id of Object.keys(mo).filter(id => X.DELI.has(id))) for (let k = 1; k <= 16; k++) {
     const I = R.kitInfo(M.id, { [id]: k }), tag = M.id + ' ' + id + k;
     if (I.status !== 'ok' || I.deli !== id + k || (I.hi && I.hi.status !== 'ok')) { fails.push(tag + ' ' + I.status + ' ' + I.deli); continue; }
     rows.push([tag, I.tris.outer - S0.tris.outer]);
@@ -113,7 +113,7 @@ for (const M of MOUNTED) { const S0 = R.kitInfo(M.id), mo = M.def.mounts;
     if (id === 'krilo' && !(len(rg[mo.krilo.part]) > 0)) rangeBad.push(tag + ' ' + mo.krilo.part);
     if (id === 'zarometi') { const [hl, hr] = mo.zarometi.hosts; if (!(len(rg[hl]) > 0 && len(rg[hr]) > 0 && rg[hl].subs.some(s => s.name === 'lampFL') && rg[hr].subs.some(s => s.name === 'lampFR'))) rangeBad.push(tag + ' lamps'); }
   } }
-check('every option builds on every vehicle with its mount (its own body: no fallback to the stock one), Normalni and Visoki', !fails.length && rows.length === MOUNTED.reduce((a, M) => a + ['krilo', 'platisca', 'zarometi'].filter(id => M.def.mounts[id]).length * 16, 0),
+check('every option builds on every vehicle with its mount (its own body: no fallback to the stock one), Normalni and Visoki', !fails.length && rows.length === MOUNTED.reduce((a, M) => a + Object.keys(M.def.mounts).filter(id => X.DELI.has(id)).length * 16, 0),
   fails.slice(0, 4).join(', ') || rows.length + ' options on ' + MOUNTED.map(m => m.id).join(' '));
 check('each within the room for one car with parts (outer <= stock + 300 triangles, the cabin unchanged; Visoki within its budget)', !over.length,
   over.slice(0, 4).join(', ') || 'most: ' + rows.slice().sort((a, b) => b[1] - a[1]).slice(0, 3).map(r => r[0] + ' +' + r[1]).join(', '));
