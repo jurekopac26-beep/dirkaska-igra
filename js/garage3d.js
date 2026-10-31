@@ -3818,16 +3818,36 @@ const Garage3D = (function () {
     g.setAttribute('normal', new THREE.BufferAttribute(N.slice ? N.slice() : N, 3)); g.computeBoundingSphere(); return g; }
   const tapAll = () => (RGL.items || []).concat(FRONT.items), rglAway = () => !!(RGL.P && RGL.P.k > 0.5);   // (the regal stepped aside: not tapped, its marks hidden)
   const tapOf = (key) => tapAll().find(it => it.key === key);
-  function tapMarkOff() { for (const m of TAPM.list) { scene.remove(m); m.geometry.dispose(); } TAPM.list.length = 0; }
+  function tapMarkOff() { for (const m of TAPM.list) { scene.remove(m); m.geometry.dispose(); } TAPM.list.length = 0; dimSet(false); }
+  // the rest of the garage darkened while a menu's things are marked (odlocitve 31. 10., 58 %): the post pass darkens what a mask leaves
+  // dark; the mask (half the picture's size, drawn after the main pass): the marked things' shapes (their mask meshes) and the car (what
+  // every menu is for: the new part seen through on it) in white on the layer DIM_L. Without the post pass no veil
+  const DIM_L = 6, DIM = { on: false, k: 0.58, rt: null, mat: null, car: [] };
+  function dimSet(on) {
+    on = !!on && POST.on && !!POST.rt; if (on === DIM.on) return; DIM.on = on;
+    for (const o of DIM.car) o.layers.disable(DIM_L); DIM.car = [];
+    if (on) for (const g of [cur && cur.root, GH.grp, ...((GH.grp && GH.grp.userData.extra) || [])]) if (g) g.traverse(o => { if (o.isMesh || o.isSprite) { o.layers.enable(DIM_L); DIM.car.push(o); } });
+    if (POST.comp) POST.comp.uniforms.uDim.value = on ? DIM.k : 0;
+  }
+  function dimMask() {
+    if (!DIM.rt) { DIM.rt = new THREE.WebGLRenderTarget(2, 2, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat }); DIM.rt.texture.generateMipmaps = false; DIM.mat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false, side: THREE.DoubleSide }); POST.comp.uniforms.tM.value = DIM.rt.texture; }
+    renderer.getDrawingBufferSize(_sz); const w = Math.max(2, _sz.x >> 1), h = Math.max(2, _sz.y >> 1); if (DIM.rt.width !== w || DIM.rt.height !== h) DIM.rt.setSize(w, h);
+    const bg = scene.background, ov = scene.overrideMaterial, ly = camera.layers.mask, sh = renderer.shadowMap.enabled, cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
+    scene.background = null; scene.overrideMaterial = DIM.mat; camera.layers.set(DIM_L); renderer.shadowMap.enabled = false; renderer.setClearColor(0x000000, 1);
+    renderer.setRenderTarget(DIM.rt); renderer.clear(); renderer.render(scene, camera);
+    scene.background = bg; scene.overrideMaterial = ov; camera.layers.mask = ly; renderer.shadowMap.enabled = sh; renderer.setClearColor(cc, ca);
+  }
   function tapMark(blue, orange) { tapMarkOff(); const M = tapMats(); let rg = false; const add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; o.userData.rgl = rg; scene.add(mainOnly(o)); TAPM.list.push(o); };
     for (const k of orange || []) { const it = tapOf(k); rg = !!it && it.bay != null; if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
-    const it = blue && tapOf(blue); rg = !!it && it.bay != null; if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); } }
+    const it = blue && tapOf(blue); rg = !!it && it.bay != null; if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); }
+    for (const k of new Set([blue, ...(orange || [])])) { const q = k && tapOf(k); if (q) { const o = new THREE.Mesh(tapGeo(q), TAPM.mats.orange); o.layers.set(DIM_L); o.frustumCulled = false; o.userData.rgl = q.bay != null; scene.add(o); TAPM.list.push(o); } }   // (the marked things in the veil's mask)
+    dimSet(true); }
   function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } for (const e of GH.hidX) e.visible = true; GH.hidX = []; GH.kind = null; shadowDirty = 2; }
   function ghost(kind, lv) { ghostOff(); const cv = cur; if (!cv || !kind || busy) return; const g = partsFor(cv, kind, lv); partsK(g, 1);
     const see = (o) => { if (!o.isMesh || !o.material) return; const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone(); m.transparent = true; m.opacity = 0.5; m.depthWrite = false;
       if (m.color) m.color.lerp(new THREE.Color(0.55, 0.85, 1), 0.45); if (m.emissive) m.emissive.setRGB(0.05, 0.18, 0.3); m.userData = { own: true }; o.material = m; o.castShadow = false; o.renderOrder = 3; };
     g.traverse(see); for (const e of g.userData.extra || []) e.traverse(see);
-    GH.grp = g; GH.kind = kind; const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; GH.hidX = (old.userData.extra || []).filter(e => e.visible); for (const e of GH.hidX) e.visible = false; } shadowDirty = 2; }   // (its extras too: the tyres' bands on the wheels)
+    GH.grp = g; GH.kind = kind; if (DIM.on) { dimSet(false); dimSet(true); } const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; GH.hidX = (old.userData.extra || []).filter(e => e.visible); for (const e of GH.hidX) e.visible = false; } shadowDirty = 2; }   // (its extras too: the tyres' bands on the wheels)
   // (a thing's box on the screen in CSS px (x, y, w, h), its depth; null behind the camera)
   const _pk = new V3();
   function screenBox(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box;
@@ -5569,8 +5589,8 @@ const Garage3D = (function () {
     POST.blur = [[1, 0], [0, 1], [2.4, 0], [0, 2.4]].map(([x, y], i) => fsMat({ tD: { value: (i % 2 ? bB : bA).texture }, uDir: { value: new THREE.Vector2(x, y) }, uPx: { value: bpx } },
       'uniform sampler2D tD; uniform vec2 uDir; uniform vec2 uPx; varying vec2 vUv; void main(){ vec2 d = uDir * uPx;'
       + ' gl_FragColor = vec4(texture2D(tD, vUv).rgb * 0.227 + (texture2D(tD, vUv + d * 1.385).rgb + texture2D(tD, vUv - d * 1.385).rgb) * 0.316 + (texture2D(tD, vUv + d * 3.231).rgb + texture2D(tD, vUv - d * 3.231).rgb) * 0.07, 1.0); }'));
-    POST.comp = fsMat({ tD: { value: rt.texture }, tB: { value: bA.texture }, uExpo: { value: POST.expo }, uBloom: { value: 0.5 }, uPx: { value: px } }, [
-      'uniform sampler2D tD; uniform sampler2D tB; uniform float uExpo; uniform float uBloom; uniform vec2 uPx; varying vec2 vUv;',
+    POST.comp = fsMat({ tD: { value: rt.texture }, tB: { value: bA.texture }, uExpo: { value: POST.expo }, uBloom: { value: 0.5 }, uPx: { value: px }, tM: { value: null }, uDim: { value: 0 } }, [
+      'uniform sampler2D tD; uniform sampler2D tB; uniform sampler2D tM; uniform float uDim; uniform float uExpo; uniform float uBloom; uniform vec2 uPx; varying vec2 vUv;',
       'float lum(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }',
       'const float K = 0.72; vec3 sh(vec3 x){ return mix(x, K + (1.0 - K) * (1.0 - exp((K - x) / (1.0 - K))), step(K, x)); }',   // (a soft shoulder over 0.72; under it nothing changes)
       'void main(){ vec3 c = texture2D(tD, vUv).rgb;',
@@ -5585,6 +5605,7 @@ const Garage3D = (function () {
       // (cool shade, warm light, but only on the greys: the colours keep their hue, the whites stay white)
       '  float s = (max(max(c.r, c.g), max(c.b, 1e-4)) - min(min(c.r, c.g), c.b)) / max(max(c.r, c.g), max(c.b, 1e-4));',
       '  c *= 1.0 + (mix(vec3(0.995, 1.0, 1.01), vec3(1.02, 1.0, 0.98), smoothstep(0.15, 0.6, l)) - 1.0) * (1.0 - s) * (1.0 - smoothstep(0.7, 0.95, l));',
+      '  c *= 1.0 - uDim * (1.0 - texture2D(tM, vUv).r);',   // (the veil over the rest while a menu's things are marked: DIM)
       '  vec2 q = vUv - 0.5; c *= 1.0 - 0.44 * dot(q, q);',   // (the vignette)
       '  c += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;',   // (a still dither: no bands in the dark gradients)
       '  gl_FragColor = vec4(c, 1.0); }'].join('\n'));
@@ -5706,6 +5727,7 @@ const Garage3D = (function () {
     renderer.info.reset(); renderer.shadowMap.needsUpdate = dirty;
     renderer.setRenderTarget(post ? POST.rt : null); renderer.render(scene, camera);
     STATS.main = ri.calls - STATS.shadow; STATS.tris = ri.triangles - shT;
+    if (post && DIM.on) dimMask();
     if (post) postPass();
     STATS.post = ri.calls - STATS.main - STATS.shadow;
   }
@@ -5795,7 +5817,7 @@ const Garage3D = (function () {
         if (kind === 'chamber') { yield* chamberTo(1); L.push({ k: CH.k, low: Math.min(...CH.bot), bands: CH.bot.slice(), tools: RB.map(A => A.tool) }); yield* wait(0.5); yield* chamberTo(0); L.push({ k: CH.k }); }
         else if (kind === 'tool') { yield* armTool(i, o.tool || ARM.tools[i][0]); L.push({ tool: A.tool, visible: FX.tools.filter(m => m.visible).length }); yield* armRest(i); L.push({ tool: A.tool, parked: fxParked() }); }
         else if (kind === 'go') { yield* armTool(i, o.tool || ARM.tools[i][0]); const q = armFor(i, A.tool, v3(o.tip), o.dir || [0, -1, 0]); yield* armGo(i, q); L.push({ s: Object.assign({}, A.s), tip: A.J.tipA.toArray() }); yield* armRest(i); } }); },
-      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, get zoom() { return user.zoom; }, set zoom(v) { user.zoom = v; }, ZOOM, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice(), names: FRONT.names.slice(), shown: FRONT.sprites.map(q => q.visible) }; },
+      fxLog: [], RB, STN, ARM, TL, TR, armFor, carBox, get dim() { return DIM.on; }, get zoom() { return user.zoom; }, set zoom(v) { user.zoom = v; }, ZOOM, bodyGrid, carPen, get marks() { return TAPM.list.length; }, get front() { return { lit: FRONT.lit, lock: FRONT.lock.slice(), price: FRONT.price.slice(), names: FRONT.names.slice(), shown: FRONT.sprites.map(q => q.visible) }; },
       carProbe(cv) { cv = cv || cur; cv.v.grp.updateMatrixWorld(true); return probeOf(carMeshes(cv), true); },   // (the car's top, its sides: with its parts and its wheels)
       CH, FREE, RGL, get fxObst() { return FX.obst; }, setChamber, chamberColor,
       // (the service by the arms: where it is (its item, its step, its show time, the cues met, its log, the items done), each arm's tool,

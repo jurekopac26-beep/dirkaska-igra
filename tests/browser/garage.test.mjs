@@ -199,18 +199,18 @@ try {
         __garage.closeMenu(); if (g0) c.parts.gume = g0; return out; });
       T.check('the stock tyres (Touring): the tyres\' menu opens on them, fitted (✓), not to be bought again, no ↺ SERIJSKO', st.sel.join() === '0,2' && st.fit.join() === 'false,false,true,false' && st.buy === 'NAMEŠČENO ✓' && !st.can && !st.stock, JSON.stringify(st));
     }
-    const m = await tap('rgl:TURBO'), d = await menuDom(), mk = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted }));
-    T.check('the turbo tapped: its menu (4 tabs: name and prices, its own tab chosen; 4 tiles, Turbo · 2.500 € blue), at the bottom; the turbo marked blue in the picture, the engine\'s new parts seen through on the car',
+    const m = await tap('rgl:TURBO'), d = await menuDom(), mk = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, dim: Garage3D._dbg.dim }));
+    T.check('the turbo tapped: its menu (4 tabs: name and prices, its own tab chosen; 4 tiles, Turbo · 2.500 € blue), at the bottom; the turbo marked blue in the picture, the rest of the garage darkened, the engine\'s new parts seen through on the car',
       m && m.el === 'turbo' && d.on && d.bot && d.tabs.length === 4 && d.tabs[1][2] && d.tabs[0][1] === '500–1.600 €' && d.tiles.length === 4 && d.tiles.filter(t => t.sel).length === 1 && d.tiles[1].sel && d.tiles[1].n === 'Turbo' && d.tiles[1].p === '2.500 €'
-      && /KUPI IN NAMESTI · 2\.500 €/.test(d.buy) && d.can && !d.stock && mk.marks >= 3 && mk.ghost === 'motor', JSON.stringify({ m, d, mk }));
+      && /KUPI IN NAMESTI · 2\.500 €/.test(d.buy) && d.can && !d.stock && mk.marks >= 3 && mk.ghost === 'motor' && mk.dim, JSON.stringify({ m, d, mk }));
     const m0 = (await ui()).S.money;
     await page.evaluate(() => { document.querySelector('#g-menu [data-tab="3"]').click(); document.querySelector('#g-menu [data-tile="3,3"]').click(); });
     const d2 = await menuDom();
     T.check('another tab (DVOJNI TURBO): its four tiles, the last one chosen (12.000 €)', d2.tabs[3][2] && d2.tiles[3].sel && /12\.000 €/.test(d2.buy), JSON.stringify(d2));
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r = await run();
-    const u = await ui(), mk2 = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, menu: !!__garage.menu }));
+    const u = await ui(), mk2 = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, menu: !!__garage.menu, dim: Garage3D._dbg.dim }));
     T.check('bought and fitted: 12.000 € paid, the menu closed (no marks, nothing seen through), the engine\'s level 3 (twin turbo +25 %, the dual exhaust +1,5 %), its show played (its parts on the car), the table still',
-      m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && u.info.upg.motor === 3 && u.info.parts.motor >= 6 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
+      m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && !mk2.dim && u.info.upg.motor === 3 && u.info.parts.motor >= 6 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
     await tap('rgl:TURBO'); await page.evaluate(() => { document.querySelector('#g-menu [data-tab="3"]').click(); document.querySelector('#g-menu [data-tile="3,3"]').click(); }); const d3 = await menuDom();
     T.check('the turbo again (the regal\'s turbo chosen; on the twin turbo\'s tab): the fitted option ticked, chosen: FITTED, nothing to buy; ↺ SERIJSKO offered', d3.tiles[3].fit && d3.tiles[3].sel && !d3.can && /NAMEŠČENO/.test(d3.buy) && d3.stock, JSON.stringify(d3));
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="stock"]').click()); await run();
