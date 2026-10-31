@@ -1,5 +1,5 @@
 /* =========================================================================
-   WORLD — Mulholland Highway (theme 'mulholland'): its own builder (World.ext.mulholland), moved out of js/world.js as it was. What it uses of World comes from
+   WORLD — the Santa Monica Mountains road (theme 'mulholland'): its own builder (World.ext.mulholland), moved out of js/world.js as it was. What it uses of World comes from
    World.api: the helpers bound here once, the state that changes as API.<name>, the track being built and its theme (LOD, T)
    copied in at each build.
    ========================================================================= */
@@ -16,7 +16,7 @@
   API.sync.push(() => { ({ LOD, T } = API); });
 
   /* ================= MULHOLLAND HIGHWAY (theme 'mulholland') =================
-     Mulholland Highway (California): the twisting two-lane road up from Cornell to Kanan Road along the slopes and canyons of the Santa Monica
+     the Santa Monica Mountains road (California): the twisting two-lane road up from Cornell to Kanan Road along the slopes and canyons of the Santa Monica
      Mountains, on a hot, clear summer afternoon: golden dry grass on the open slopes, dense dark chaparral (the low evergreen scrub) over most of
      the hills, coast live oaks in the hollows and on the flats, sycamores with pale trunks along the creeks (def.creeks), outcrops and boulders of
      tan and grey sandstone (Elephant Rock by the road: def.rocks), houses of Cornell and a few ranches (def.bld). Built on Vršič's corridor (vrPrep

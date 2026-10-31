@@ -1,4 +1,4 @@
-/* Special mission 06 · Srce v hladilni torbi · Mulholland Highway, ZDA (js/missions.js). At night a heart for a transplant goes over the
+/* Special mission 06 · Srce v hladilni torbi · Santa Monica Mountains, ZDA (js/missions.js). At night a heart for a transplant goes over the
    hills in a sports car behind a patrol car: the escort leads with its lights and siren, the traffic (cars, vans and trucks only, nobody
    on foot, no bicycles: opts.tfCars) pulls over to the edge and stops for it (Traffic._yield), the oncoming one on its own edge. The organ
    warms up as the time goes by, faster after a hard knock and while the escort is far ahead; at 8 °C it is lost. The escort waits for
