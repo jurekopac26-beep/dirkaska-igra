@@ -1,5 +1,5 @@
 // Medvode to Smlednik: the real road widened to the usual width of the race tracks (an open road with four ways to drive it on one card, as
-// Mulholland Highway: def.modes, the race, the time trial, the duel in the traffic and the run from the police). The road: from the football
+// the Santa Monica Mountains road: def.modes, the race, the time trial, the duel in the traffic and the run from the police). The road: from the football
 // ground on Medvoška cesta in Medvode to the old castle above Smlednik (~6.2 km, ~320 -> ~500 m), ~14.8 m wide on average (the usual width +30 %) with the real
 // widths' order kept (18.2 m on Gorenjska cesta, 16.3 m on Medvoška cesta, 11.1 m up the castle road: def.widths), gravel (makadam) where OSM
 // has it unpaved (the castle road: def.surf), the sidewalks, the bridge over the Sava (118 m) with its parapets close to the road, Gorenjska

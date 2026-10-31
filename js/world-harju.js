@@ -23,7 +23,7 @@
      model (the old Scots pines of the ridge, spruces, birches and lindens), filled in where the canopy is closed. The stage: tarmac with its
      lines, the esker's gravel, the school yard's paving stones, granite kerbs and sidewalks; on race day fences and tape, straw bale chicanes,
      spectators on the slopes and along the streets, the start with its lights, the split and finish gantries, the TV. Landmarks: the
-     Vesilinna water tower on the summit, the Harju stadium, the Nero steps. Hot loops live in these small functions (as for Ouninpohja). */
+     Vesilinna water tower on the summit, the Harju stadium, the hillside steps. Hot loops live in these small functions (as for Ouninpohja). */
   const HJC = 2.5, HJT = 64, HJHC = 32;        // terrain cell (m), tile size (cells: 160 m), road-sample hash cell (m)
   let HJ = null;                               // per-build data: sample hash, height grids, lakes, the terrain grid and its rasters
   const HJN = { i: -1, d: 1e9, dd: 1e9, lat: 0, h: 0, hn: 0 };   // hjNear: nearest sample, its distance, distance beyond the barrier, lateral offset, blended and exact road height
@@ -668,7 +668,7 @@
       nBld++;
     }
     function polyArea(p) { let a = 0; for (let k = 0; k < p.length; k++) { const [ax, az] = p[k], [bx, bz] = p[(k + 1) % p.length]; a += ax * bz - bx * az; } return a / 2; }
-    if (vesi) {   // Vesilinna (Olavi Kivimaa, 1953): a water and observation tower of red brick, 34 m, on the summit: the Natural History Museum in the low wing
+    if (vesi) {   // Vesilinna (1953): a water and observation tower of red brick, 34 m, on the summit: the Natural History Museum in the low wing
       // over the whole footprint, the 3 000 m3 tanks in the shaft rising from its middle, up top the café and the restaurant behind a band of big windows,
       // the observation deck on the roof (its railing), the lift's machine room, the telecom masts and a flag; the whole Harju comes up here to watch
       const g = bch.get(vesi.cx, vesi.cz); g.dUV = UV7;
@@ -801,9 +801,9 @@
           const [v0, v1] = row(6); bannerQ(px, py + 1.25, pz, T.nx[ii] * side, T.nz[ii] * side, 3.2, 0.8, v0, v1, 0.5, 1); exclPush(px, pz, 2.5); closedAt.push([px, pz, ii, side]); } } }
     }
 
-    /* ---- the spectators: the start, the boulevard past the Nero steps, the lane change and the corner onto the gravel, both sides of the climb, round the water
-       tower, down past the stadium, the gravel kink at its corner, the hairpins by the Lyseo school, Pitkäkatu's chicanes, Lasse Lampi's pine, the park, the corner at
-       the school and Norssi corner (def.crowds); people on the Nero steps and on the tower's terrace ---- */
+    /* ---- the spectators: the start, the boulevard past the hillside steps, the lane change and the corner onto the gravel, both sides of the climb, round the water
+       tower, down past the stadium, the gravel kink at its corner, the hairpins by the Lyseo school, Pitkäkatu's chicanes, the old pine, the park, the corner at
+       the school and Norssi corner (def.crowds); people on the hillside steps and on the tower's terrace ---- */
     // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the islands the hairpins turn round (def.hairpin [[x, z, r], ...])
     const HP = def.hairpin ? (Array.isArray(def.hairpin[0]) ? def.hairpin : [def.hairpin]) : [], crowdOut = (x, z) => { if (hard(x, z)) return true; for (const h of HP) if (Math.hypot(x - h[0], z - h[1]) < h[2] + 1.5) return true;
       const n = hjNear(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
@@ -814,7 +814,7 @@
     const run = (d0, d1, side, o) => { const a = Math.max(sAt(d0), 2), b = Math.min(sAt(d1), T.len - 4); if (b <= a) return 0; return crowdRun(CR, a, b, side, Object.assign({}, M, o)); };
     const C1 = def.crowds || [];   // (def.crowds [d0, d1, rows, share])
     for (const [a, b, rows, dn] of C1) for (const sd of [-1, 1]) run(a, b, sd, { rows, dens: dn * (sd > 0 ? 0.86 : 0.78), label: 'HJ ' + a + (sd > 0 ? 'R' : 'L') });
-    for (const r of roads) { if (r.cls !== 8) continue;   // on the steps (the Nero steps and the ridge's other flights): people standing along them, looking towards the stage
+    for (const r of roads) { if (r.cls !== 8) continue;   // on the steps (the hillside steps and the ridge's other flights): people standing along them, looking towards the stage
       for (let q = 0; q < r.d.length; q++) { const [x, z] = r.d[q], n = hjNear(x, z); if (n.i < 0 || n.d > 70 || n.dd < 2) continue;
         for (const o of [-0.7, 0.7]) { const a = r.d[Math.max(0, q - 1)], b = r.d[Math.min(r.d.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, px = x - dz / l * o, pz = z + dx / l * o;
           if (crH(px, pz, 31) > 0.55) continue; crowdPut(CR, px, hjGround(px, pz), pz, T.px[n.i] - px, T.pz[n.i] - pz, { flag: 0.1 }, 1); } } }
