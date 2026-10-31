@@ -46,8 +46,8 @@ const World = (function () {
   // no spectators beside the road on the real tracks (the user's decision, 30. 10. 2026): the crowds are placed as ever (the same exclusions,
   // the trees and the props where they were) but not drawn, nor the visitors at the viewpoints; the marshals and the cameramen stay (31. 10.:
   // CrowdChunks.put tells them apart); the grandstands keep their people, drawn finer (Tex.crowdHi), and their sound;
-  // the tracks kept for testing (def.test) as they were
-  const fansOn = () => !!(T && T.def && T.def.test);
+  // the tracks kept for testing (def.test) as they were, and a real track with def.fans (Harju: its crowds but those by the blocks, 31. 10.)
+  const fansOn = () => !!(T && T.def && (T.def.test || T.def.fans));   // (def.fans: a real track whose crowds stay, Harju's)
   // decorative meshes eligible for the runtime draw-distance cull (vegetation and trees only: Render hides the far ones on the lower tiers to
   // keep the draw-call count down; the base — road, terrain, barriers, buildings, signs — is never in this list). Each entry: {m, x, z, r}
   // (the mesh and its chunk centre and radius in world space). Filled during build(), handed out as out.cull in finish().
