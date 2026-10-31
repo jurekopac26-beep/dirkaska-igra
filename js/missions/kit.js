@@ -516,6 +516,10 @@ Object.assign(MisKit, (function () {
     if (kind === 'ribs') {
       g.fillStyle = '#c3d0de'; g.fillRect(0, 0, n, n);
       for (let x = 0; x < n; x += 8) { g.fillStyle = '#8196ad'; g.fillRect(x, 0, 3, n); g.fillStyle = '#f4f8fc'; g.fillRect(x + 4, 0, 2, n); }
+    } else if (kind === 'ice') {   // (group 7: the river's ice, swept: blue-grey, the snow's streaks blown along it, white cracks)
+      g.fillStyle = '#5f8a9e'; g.fillRect(0, 0, n, n);
+      for (let k = 0; k < 40; k++) { const x = (k * 29) % n, y = (k * 41 + (k * k) % 13) % n; g.fillStyle = k % 2 ? 'rgba(220,234,244,.35)' : 'rgba(60,88,112,.25)'; g.fillRect(x, y, 2 + (k % 4), 10 + (k % 7) * 3); }
+      g.strokeStyle = 'rgba(235,245,252,.55)'; g.lineWidth = 1; g.beginPath(); g.moveTo(5, 60); g.lineTo(22, 38); g.lineTo(20, 20); g.lineTo(40, 4); g.moveTo(22, 38); g.lineTo(52, 44); g.stroke();
     } else {
       g.fillStyle = '#f1f5f9'; g.fillRect(0, 0, n, n);
       for (let k = 0; k < 90; k++) { const x = (k * 37) % n, y = (k * 53 + (k * k) % 17) % n, r = 2 + (k % 5); g.fillStyle = k % 3 ? 'rgba(170,186,204,.22)' : 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
@@ -596,5 +600,43 @@ Object.assign(MisKit, (function () {
     return 0.01;
   }
   return { snowTex, band, cover, piles, block };
+})());
+/* ---------------- the road both ways (group 7: missions 04, 08, 17, 26) ----------------
+     MisKit.place(c, T, s, back): the player's car put at s on the centre line (made(race), before it is drawn), facing up the road or with
+       back down it (the missions that go down a road made to be driven up: 04 Pikes Peak, 26 Tianmen); its checkpoints passed as if driven there.
+     MisKit.pilot(P, T, o): an autopilot for the tests and the pictures (tools/misija-slika.mjs: a mission's def.pilot) along the road up
+       (o.dir 1) or down it (o.dir -1) at o.v m/s, slower before the bends (o.lat m/s2 across) and o.off m off the centre line; returns
+       [steer, throttle, brake] for the game's sim.
+     MisKit.backRoad(run): the road driven the other way (begin): the pace notes' arrow hidden while the run lasts (body.mis-back). */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  function place(c, T, s, back) {
+    const i = T.idx(s);
+    c.place(T.px[i], T.pz[i], T.hd[i] + (back ? Math.PI : 0)); if (T.hasElev) { c.y = c.py = T.hy[i]; c.roadY = c.y; }
+    c.dist = s - T.startS; c.q = T.query(T.px[i], T.pz[i], i, {}); c.sPrev = c.q.s;
+    while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }
+  }
+  function pilot(P, T, o) {
+    o = Object.assign({ dir: 1, v: 12, lat: 3, off: 0, look: 7 }, o);
+    const q = P.q; if (!q) return [0, 0, 1];
+    const v = Math.hypot(P.vx || 0, P.vz || 0), s = q.s, d = o.dir < 0 ? -1 : 1;
+    // the point ahead on the road (its centre line, o.off to the side), the steer to it by the heading's error
+    const sa = s + d * (o.look + v * 0.6), j = T.idx(sa), ax = T.px[j] + T.nx[j] * o.off, az = T.pz[j] + T.nz[j] * o.off;
+    let e = Math.atan2(az - P.z, ax - P.x) - (P.h || 0); while (e > Math.PI) e -= 2 * Math.PI; while (e < -Math.PI) e += 2 * Math.PI;
+    const steer = clamp(e * 1.6 - (P.w || 0) * 0.2, -1, 1);
+    // the speed: o.v, less before a bend (the sharpest of the next 60 m: v = sqrt(lat / curvature))
+    let vt = o.v;
+    for (let k = 0; k <= 60; k += 3) { const c = Math.abs(T.k[T.idx(s + d * (k + v * 0.5))]) || 0; if (c > 1e-4) vt = Math.min(vt, Math.sqrt(o.lat / c) + k * 0.12); }
+    vt = Math.max(3, vt);
+    return v < vt - 0.5 ? [steer, 0.8, 0] : v > vt + 0.8 ? [steer, 0, clamp((v - vt) / 4, 0.25, 1)] : [steer, 0, 0];
+  }
+  // driven the other way: the pace notes' arrow (made for the way up) hidden while the run lasts (body.mis-back, css/missions.css)
+  function backRoad(run) {
+    if (typeof document === 'undefined' || typeof THREE === 'undefined') return;
+    document.body.classList.add('mis-back');
+    const g = new THREE.Group(); g.userData.misUndo = () => document.body.classList.remove('mis-back'); run.add(g);
+  }
+  return { place, pilot, backRoad };
 })());
 if (typeof module !== 'undefined') module.exports = MisKit;

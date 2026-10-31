@@ -96,3 +96,7 @@ body.mis-aiming #mis .mis-hint { left: calc(12px + var(--sl)); transform: none; 
 #mis-btn.red { background: #e0452c; }
 body.mis-boat #h-spd, body.mis-boat #h-note { visibility: hidden; }   /* (a vessel of the mission driven: the parked car's speed and corner notes off the HUD) */
 #mis-tags i.edge { opacity: .8; }   /* (MisKit.tags: a place off the screen, its tag pinned to the edge) */
+body.mis-back #h-note { visibility: hidden; }   /* (MisKit.backRoad: a road driven the other way, its pace notes made for the way up) */
+#mis .mis-thermo { margin: 0 0 6px; }   /* (mission 08: the thermal camera's window at the top of the panel) */
+#mis .mis-thermo span { display: block; font: 700 10px var(--f-ui); letter-spacing: .06em; color: #c9b8ff; margin-bottom: 2px; }
+#mis .mis-thermo canvas { display: block; width: 100%; aspect-ratio: 5 / 3; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .5); }
