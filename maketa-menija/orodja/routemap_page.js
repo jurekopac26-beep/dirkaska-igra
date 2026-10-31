@@ -15,15 +15,55 @@ window.RM = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64 },
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, sunOff: [-86, 78, 52] },
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62 },
+    // (the real roads and circuits added later: the game's own race lighting, render.js THEMES)
+    medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, sunOff: [-80, 84, 58] },
+    baldy: { fog: 0xcbd6df, sun: 0xfff0d4, sunI: 1.24, sky: 0xb4cff0, gnd: 0x5c5a3c, hemiI: 0.6, sunOff: [-78, 96, 50] },
+    beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, sunOff: [-84, 90, 58] },
+    bigsur: { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, sunOff: [-86, 74, 58] },
+    maunakea: { fog: 0xcad9ec, sun: 0xfff6e8, sunI: 1.42, sky: 0x7aa6e8, gnd: 0x5a4a40, hemiI: 0.58, sunOff: [-62, 118, 44] },
+    moki: { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, sunOff: [-86, 82, 46] },
+    monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, sunOff: [-66, 74, 70] },
+    mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, sunOff: [-70, 104, 48] },
+    palomar: { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, sunOff: [-74, 98, 52] },
+    riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, sunOff: [-70, 74, 78] },
+    uncompahgre: { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, sunOff: [-70, 92, 62] },
+    iroha: { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, sunOff: [-80, 74, 60] },
+    harju: { fog: 0xcdd5dc, sun: 0xffcf96, sunI: 1.65, sky: 0xbad0ee, gnd: 0x58553f, hemiI: 0.58, sunOff: [-100, 33, -8] },
+    montreal: { fog: 0xc9d9e6, sun: 0xfff0d6, sunI: 1.16, sky: 0xcde1f6, gnd: 0x56603a, hemiI: 0.62, sunOff: [-82, 88, 60] },
+    toronto: { fog: 0xc9d8e6, sun: 0xfff0d8, sunI: 1.14, sky: 0xc8ddf4, gnd: 0x5d6448, hemiI: 0.62, sunOff: [-60, 88, 70] },
+    cpalace: { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, sunOff: [-60, 74, 66] },
+    greatalpine: { fog: 0xc4d2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0xaecbec, gnd: 0x5a5638, hemiI: 0.62, sunOff: [-74, 92, -56] },
+    hotham: { fog: 0xc4d4e4, sun: 0xfff2dc, sunI: 1.3, sky: 0xb2cdf0, gnd: 0x5a5e40, hemiI: 0.62, sunOff: [-64, 96, -58] },
+    longford: { fog: 0xcbd8e2, sun: 0xffe9c6, sunI: 1.24, sky: 0xc2d8f0, gnd: 0x56603a, hemiI: 0.56, sunOff: [-70, 76, -66] },
+    newcastle: { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, sunOff: [-58, 86, -66] },
+    townsville: { fog: 0xcfdde8, sun: 0xfff2da, sunI: 1.34, sky: 0xb4d2f4, gnd: 0x6f6a48, hemiI: 0.64, sunOff: [-62, 96, -66] },
+    chapman: { fog: 0xc9dbe8, sun: 0xfff0d6, sunI: 1.24, sky: 0xbcd6f4, gnd: 0x5e5a40, hemiI: 0.62, sunOff: [-92, 74, -40] },
+    sani: { fog: 0xc8d6e4, sun: 0xfff0d8, sunI: 1.28, sky: 0xb8d0f0, gnd: 0x5e5a40, hemiI: 0.6, sunOff: [-70, 92, -58] },
+    caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, sunOff: [-72, 98, -62] },
+    rastro: { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, sunOff: [-66, 92, -64] },
+    rio: { fog: 0xd3dfe6, sun: 0xfff3dc, sunI: 1.3, sky: 0xbfd8f4, gnd: 0x5d6a3a, hemiI: 0.62, sunOff: [-30, 120, -40] },
+    katu: { fog: 0xc9d5dd, sun: 0xfff0d4, sunI: 1.2, sky: 0xc9dcf3, gnd: 0x6b6040, hemiI: 0.58, sunOff: [96, 76, 18] },
+    tianmen: { fog: 0xc9d2d4, sun: 0xfff0dc, sunI: 1.02, sky: 0xd4dfe6, gnd: 0x4a5636, hemiI: 0.68, sunOff: [-70, 92, 60] },
+    bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, sunOff: [-74, 86, -56] },
   };
   const SEASONS = { vrsic: 'autumn' };
+  const KEEP_SEA = new Set(['newcastle', 'detroit', 'bangsaen']);
   let B = null, R = null, CV = null;
-  function build(id) {
+  function build(id, opt) {
     if (B && B.id === id) return B;
     const def = Core.TRACKS.find(d => d.id === id), T = new Core.Track(def), sc = new THREE.Scene(), tex = Tex.all(1);
     const w = World.build(sc, T, tex, { density: 1, season: SEASONS[id] });   // (Vršič in its October colours, as the published maps show it; the others as built)
     sc.updateMatrixWorld(true);
     w.root.traverse(o => { if (o.isMesh || o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    // a world's far backdrop (the far hills, the sea or lake plane to the horizon: much wider than the track) is left out: the map's
+    // land round the island is the made-up skirt (top) or the real land painted by wide_map.py (isle)
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+    const wide = Math.max(6000, 1.6 * Math.max(x1 - x0, z1 - z0) + 2000), hid = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
+    // (a city by the sea or a river whose ground goes on under the water as its bed: its flat water planes stay, wide_map.py takes its water out; opt.keepWide: a lake or
+    // river whose plane is the water of the map itself, e.g. Toronto's lake by the circuit: kept (true: all of them; a list: those by name))
+    const keepSea = KEEP_SEA.has(id), keep = o => (keepSea && bb.setFromObject(o).getSize(sz).y < 1) || (!!(opt && opt.keepWide) && (opt.keepWide === true || opt.keepWide.includes(o.name)));
+    sc.traverse(o => { if (!(o.isMesh || o.isInstancedMesh) || !o.visible || keep(o)) return; bb.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > wide) hid.push(o); });
+    hid.forEach(o => { o.visible = false; }); if (hid.length) console.log('far backdrop left out: ' + hid.map(o => (o.name || o.type) + ' ' + Math.round(new THREE.Box3().setFromObject(o).getSize(sz).x)).join(', '));
     B = { id, def, T, sc, w, tex, open: T.finishS > T.startS };
     return B;
   }
@@ -78,9 +118,13 @@ window.RM = (function () {
     city: [[-0.2, 0x6f7a44], [1.2, 0x7d8450]], monaco: [[-0.2, 0x7a7a52], [0.8, 0x8a8666], [1.4, 0x9a9478]],
     nring: [[-0.2, 0x3e5a2a], [1.2, 0x4f6a32]], spa: [[-0.2, 0x44602e], [1.2, 0x52703a]], rbring: [[-0.2, 0x4f6c30], [0.8, 0x5b7a3a], [1.4, 0x6d7d58]], suzuka: [[-0.2, 0x55683a], [1.2, 0x62763f]],
   };
+  function trackBounds(T) {   // (a world without its own bounds, e.g. a city: the track's own box)
+    const b = { minX: 1e9, maxX: -1e9, minZ: 1e9, maxZ: -1e9 }; for (let i = 0; i < T.N; i++) { b.minX = Math.min(b.minX, T.px[i]); b.maxX = Math.max(b.maxX, T.px[i]); b.minZ = Math.min(b.minZ, T.pz[i]); b.maxZ = Math.max(b.maxZ, T.pz[i]); }
+    return b;
+  }
   function skirt(Bw, margin, cell) {
     if (Bw.skirt) return Bw.skirt;
-    const b = Bw.w.bounds, g = Bw.w.groundH, x0 = b.minX - margin, z0 = b.minZ - margin, nx = Math.ceil((b.maxX - b.minX + 2 * margin) / cell), nz = Math.ceil((b.maxZ - b.minZ + 2 * margin) / cell);
+    const b = Bw.w.bounds || trackBounds(Bw.T), g = Bw.w.groundH, x0 = b.minX - margin, z0 = b.minZ - margin, nx = Math.ceil((b.maxX - b.minX + 2 * margin) / cell), nz = Math.ceil((b.maxZ - b.minZ + 2 * margin) / cell);
     const T = Bw.T; let h0 = 1e9, h1 = -1e9; for (let i = 0; i < T.N; i++) { h0 = Math.min(h0, T.hy[i]); h1 = Math.max(h1, T.hy[i]); } if (h1 - h0 < 50) h1 = h0 + 50;
     const ramp = RAMPS[Bw.def.theme] || RAMPS.lake, C = ramp.map(r => [r[0], new THREE.Color(r[1])]), rock = new THREE.Color(0x857f76), c = new THREE.Color();
     const pos = new Float32Array((nx + 1) * (nz + 1) * 3), col = new Float32Array((nx + 1) * (nz + 1) * 3), H = new Float32Array((nx + 1) * (nz + 1));
@@ -170,7 +214,7 @@ window.RM = (function () {
   // in the lower part of the picture and the far land up to the haze above it
   function aerial(id, opt) {
     opt = Object.assign({ W: 824, H: 660, el: 34, fov: 34, az: 0, step: 12, fillW: 0.9, fillH: 0.62, yc: -0.16, rain: 0 }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 120), A = axis(pts); if (opt.skirt !== false) skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 120), A = axis(pts); if (opt.skirt !== false) skirt(Bw, 3000, 40);
     const th = A.th + opt.az * Math.PI / 180, rx = Math.cos(th), rz = Math.sin(th), fx = rz, fz = -rx;   // right along the run; forward: 90 degrees to it
     const e = opt.el * Math.PI / 180, cam = new THREE.PerspectiveCamera(opt.fov, opt.W / opt.H, 5, 80000), v = new THREE.Vector3();
     let tx = A.mx, tz = A.mz, ty = box.y, D = Math.hypot(box.x1 - box.x0, box.z1 - box.z0) * 1.2;
@@ -192,7 +236,7 @@ window.RM = (function () {
   // from straight above: north (or the run's long side) turned to fit the picture, the land round the run
   function top(id, opt) {
     opt = Object.assign({ W: 824, H: 700, step: 12, pad: 0.12, rot: null, rain: 0, grid: 0 }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 60); if (opt.skirt !== false) skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, opt.step), box = boxOf(pts, 60); if (opt.skirt !== false) skirt(Bw, 3000, 40);
     // the run's long axis along the picture's width, the start on the left
     const A = axis(pts), mx = A.mx, mz = A.mz, th = opt.rot != null ? opt.rot * Math.PI / 180 : A.th;
     const ux = Math.cos(th), uz = Math.sin(th), vx = -uz, vz = ux;   // u: along the picture's width, v: along its height (down)
@@ -219,7 +263,7 @@ window.RM = (function () {
   // land round it, soil down its sides, seen from above at an angle; transparent round it
   function block(id, opt) {
     opt = Object.assign({ W: 824, H: 700, el: 42, rot: 26, fov: 30, fill: 0.94, step: 12, margin: 0.1, soil: 0.1, rain: 0 }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, opt.step), A = axis(pts), sk = skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, opt.step), A = axis(pts), sk = skirt(Bw, 3000, 40);
     const ux = Math.cos(A.th), uz = Math.sin(A.th), vx = -uz, vz = ux;
     let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9; for (const p of pts) { const a = (p.x - A.mx) * ux + (p.z - A.mz) * uz, b = (p.x - A.mx) * vx + (p.z - A.mz) * vz; a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
     const L0 = (a1 - a0) / 2, m = L0 * opt.margin; a0 -= m; a1 += m; const bw = Math.max((b1 - b0) / 2 + m, (a1 - a0) / 2 * 0.36), bc = (b0 + b1) / 2; b0 = bc - bw; b1 = bc + bw;
@@ -306,7 +350,7 @@ window.RM = (function () {
     // cull: the trees and other repeated things are left out from this far into the haze (0 its start, 1 its end), where they hardly show
     // alt: the real heights at the start and the finish (the gradients of the line then as steep as the real road's)
     opt = Object.assign({ W: 704, H: 432, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, cull: 0.75, fov: 37, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, places: [], fogNear: 900, fogFar: 3400, alt: null }, opt || {});
-    const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
+    const Bw = build(id, opt), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
     const r = getR(opt.W, opt.H); wet(Bw, opt.rain);
     const L = lights(Bw, box, opt.rain); L[1].shadow.mapSize.set(opt.shadow, opt.shadow);
     r.shadowMap.autoUpdate = false; r.shadowMap.needsUpdate = true;   // nothing in the world moves: its shadows are drawn once

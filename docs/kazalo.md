@@ -115,7 +115,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 
 ## Teme v `js/render.js`
 
-Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil (deli iz garaže: `K.deli`, telo z deli `kitEntry(M, hi, deli)`, `deliMesh`; razpoka v vsakem oknu `crackPanes`; gladko senčenje `K.skin` z `smooth`), `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (mehaniki pri Nizki po velikosti na zaslonu: `updateCrew`, preprosti komplet `crewGeosLo`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`**, prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
+Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil (deli iz garaže: `K.deli`, telo z deli `kitEntry(M, hi, deli)`, `deliMesh`; razpoka v vsakem oknu `crackPanes`; gladko senčenje `K.skin` z `smooth`), `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (mehaniki pri Nizki po velikosti na zaslonu: `updateCrew`, preprosti komplet `crewGeosLo`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`**, prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto. Videz prog je v `THEMES` (meglica, sonce, nebo, `tint`, `sat`; `fogK`: daljši pogled, meglica dlje od kamere, npr. Bathurst) in `SPLIT` (barvni odtenek senc in svetlih delov).
 
 ## Proge in graditelji sveta
 
@@ -125,7 +125,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 |---|---|---|---|
 | baldy | Mount Baldy, ZDA | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | bangsaen | Bang Saen, Tajska | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
-| bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`, videz `RB_LOOK`) |
+| bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`, videz `RB_LOOK`: tekstura pašnika `btGrassTex`, obrabljen rob ob asfaltu `edge`, usek pri 4. zavoju `cut` in breg nad njim `cutBank`) |
 | beartooth | Beartooth, ZDA | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
 | bigsur | Big Sur, ZDA | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
 | caracoles | Los Caracoles, Čile | caracoles | `js/world-caracoles.js` (`buildCaracoles`) |
@@ -145,7 +145,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
 | monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
-| mulholland | Mulholland Highway, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
+| mulholland | Santa Monica Mountains, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |
@@ -153,7 +153,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `js/world-pikes.js` (`buildPikes`) |
 | rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
 | rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
-| rio | Rio de Janeiro, Brazilija | rio | `js/world-rbring.js` (`buildRbring`, `RB_LOOK`) |
+| rio | Rio de Janeiro, Brazilija | rio | `js/world-rbring.js` (`buildRbring`, `RB_LOOK`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | riverside | Riverside, ZDA | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | sani | Sani Pass, Južna Afrika | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
