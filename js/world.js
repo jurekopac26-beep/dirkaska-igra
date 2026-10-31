@@ -4651,13 +4651,17 @@ const World = (function () {
       C.culled = C.ppl.cull((x, z) => { const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
     }
     const grp = new THREE.Group(); grp.name = 'crowds'; root.add(grp);
-    if (fewFans() && C.ppl.fans) {   // (the real tracks: the spectators in a few groups only, the others gone, and from the crowd's sound too)
-      const F = C.ppl.fans, gone = (x, z) => F.has(x + ',' + z) && crH(Math.floor(x / 30), Math.floor(z / 30), 77) >= CR_KEEP;
-      C.ppl.cull(gone); for (const [k, L] of [...C.sp]) { const L2 = []; for (let q = 0; q < L.length; q += 2) if (!gone(L[q], L[q + 1])) L2.push(L[q], L[q + 1]); if (L2.length) C.sp.set(k, L2); else C.sp.delete(k); }
+    const sm = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+    if (fewFans()) {   // (the real tracks: the spectators in a few groups only, the others gone, and from the crowd's sound too; no shade strips)
+      // the meshes made first as they were (three.js names each with Math.random, which a seeded race shares: it runs as it did) and let go,
+      // the few groups' own made under ownRnd
+      const c0 = CULLM.length, tmp = ownRnd(() => new THREE.Group()); C.ppl.addTo(tmp); C.strip.addTo(tmp, sm, false, false); CULLM.length = c0;
+      const F = C.ppl.fans, gone = (x, z) => !!F && F.has(x + ',' + z) && crH(Math.floor(x / 30), Math.floor(z / 30), 77) >= CR_KEEP;
+      if (F) { C.ppl.cull(gone); for (const [k, L] of [...C.sp]) { const L2 = []; for (let q = 0; q < L.length; q += 2) if (!gone(L[q], L[q + 1])) L2.push(L[q], L[q + 1]); if (L2.length) C.sp.set(k, L2); else C.sp.delete(k); } }
+      return ownRnd(() => C.ppl.addTo(grp));
     }
     const n = C.ppl.addTo(grp);
-    const sm = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
-    if (!fewFans()) C.strip.addTo(grp, sm, false, false);   // (the shade under the rows: not under the few groups left on the real tracks)
+    C.strip.addTo(grp, sm, false, false);
     for (const m of grp.children) if (m.material === sm) m.renderOrder = 1.5;   // (ROAD DECAL ORDER: the strips' shade over every road decal under them, Harju's evening shadows over its covers and paint)
     return n;
   }
