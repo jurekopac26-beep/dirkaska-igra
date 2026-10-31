@@ -597,4 +597,120 @@ Object.assign(MisKit, (function () {
   }
   return { snowTex, band, cover, piles, block };
 })());
+/* ---------------- the cargo (group 5: missions 07, 09, 43, 51, 52, 54) ----------------
+     MisKit.keys(run, list, o): a row of buttons over the driving controls (o.side 'left': over the steering, else over the pedals; above
+       the #mis-btn when o.high): list [{ k, label }]; held(k) while a finger is on it, take(k) true once for each press (two presses: two takes), show(on),
+       label(k, text). Taps from the tests: press(k, on).
+     MisKit.trailer(P, o): a trailer behind the vehicle on its own kinematics (no physics: it follows the hitch, o.hitch m behind the
+       vehicle's centre; o.len m from the hitch to its axle): step(steer) each step (steer: its rear axle turned, rad; > 0 its rear goes to
+       the right), at(u): the point u m behind the hitch along it, rel: its angle to the vehicle, h: its heading; reset() straight behind.
+     MisKit.tow(run, P, tr, build): the trailer's look (build(B) as for parts(), x forward from the hitch, y up) placed every frame after
+       the car's drawn view (so it does not lag it); tr.pitch its slope (set by the mission from the ground under its axle).
+     MisKit.brakes(o): the brakes' heat: step(P, dt, cool) every step: heat 0..1.3 (1: hot, over it they fade: of the braking the share
+       fade given back to the speed; o.heat, o.cool, o.out: the heat in from the braking, the cooling, the extra cooling given by cool 0..1).
+     MisKit.pilot(run, T, o): an escort car with its amber beacons (two draws) on the road: put(s, d, dir, t) (dir -1: facing back along the
+       road), hidden with hide(). */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined', hasDoc = () => typeof document !== 'undefined';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const tr = (s) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s) : s);
+  function undo(run, fn) { if (!has3()) return; const g = new THREE.Group(); g.userData.misUndo = fn; run.add(g); }
+
+  function keys(run, list, o) {
+    o = o || {};
+    const st = {}; for (const it of list) st[it.k] = { held: false, n: 0 };
+    const K = { el: null, shown: false, held: (k) => !!(st[k] && st[k].held), take: (k) => { const x = st[k]; if (x && x.n > 0) { x.n--; return true; } return false; },
+      press: (k, on) => { const x = st[k]; if (!x) return; if (on && !x.held) x.n++; x.held = !!on; }, show() {}, label() {} };
+    if (!hasDoc() || !has3()) return K;
+    const box = document.createElement('div'); box.id = 'mis-keys'; box.className = (o.side === 'left' ? 'left' : 'right') + (o.high ? ' high' : '');
+    const btn = {};
+    for (const it of list) {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.k = it.k; b.textContent = tr(it.label); box.appendChild(b); btn[it.k] = b;
+      const up = () => { K.press(it.k, false); b.classList.remove('on'); };
+      b.addEventListener('pointerdown', (e) => { K.press(it.k, true); b.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+      b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+    }
+    document.body.appendChild(box);
+    K.el = box;
+    K.show = (on) => { on = !!on; if (on === K.shown) return; K.shown = on; box.classList.toggle('on-show', on); if (!on) for (const k in st) { st[k].held = false; st[k].n = 0; } };
+    K.label = (k, s) => { const b = btn[k], t = tr(s); if (b && b.textContent !== t) b.textContent = t; };
+    undo(run, () => box.remove());
+    return K;
+  }
+
+  function trailer(P, o) {
+    o = Object.assign({ hitch: 1.5, len: 12 }, o);
+    const R = { hitch: o.hitch, len: o.len, h: P.h || 0, rel: 0, pitch: 0, hx: 0, hz: 0 };
+    const hit = () => [P.x - Math.cos(P.h) * R.hitch, P.z - Math.sin(P.h) * R.hitch];
+    R.reset = () => { R.h = P.h || 0; R.rel = 0; [R.hx, R.hz] = hit(); };
+    // the hitch moved by dx, dz: the axle (turned by steer) rolls along its own wheels' way, the trailer turns about the hitch
+    R.step = (steer) => {
+      const [x, z] = hit(), dx = x - R.hx, dz = z - R.hz; R.hx = x; R.hz = z;
+      const d = clamp(steer || 0, -1.2, 1.2), a = R.h + d;
+      if (Math.abs(dx) + Math.abs(dz) < 5) R.h += (-dx * Math.sin(a) + dz * Math.cos(a)) / (R.len * Math.cos(d));
+      R.rel = Math.atan2(Math.sin(R.h - P.h), Math.cos(R.h - P.h));
+      if (Math.abs(R.rel) > 1.45) { R.rel = Math.sign(R.rel) * 1.45; R.h = P.h + R.rel; }   // (jack-knifed no further than its stop)
+    };
+    R.at = (u) => [R.hx - Math.cos(R.h) * u, R.hz - Math.sin(R.h) * u];
+    R.reset();
+    return R;
+  }
+
+  function tow(run, P, R, build) {
+    if (!has3() || typeof Render === 'undefined') return null;
+    const v = Render.viewOf ? Render.viewOf(P) : null, B = MisKit.parts(); build(B);
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), mesh = B.mesh(mat);
+    mesh.castShadow = true; mesh.frustumCulled = false; mesh.matrixAutoUpdate = false;
+    // (every frame, from where the car is drawn: its hitch, the trailer's angle to it)
+    mesh.onBeforeRender = () => {
+      const g = v && v.grp, x = g ? g.position.x : P.x, y = g ? g.position.y : P.y, z = g ? g.position.z : P.z, h = g ? -g.rotation.y : P.h;
+      mesh.position.set(x - Math.cos(h) * R.hitch, y, z - Math.sin(h) * R.hitch); mesh.rotation.set(0, -(h + R.rel), R.pitch || 0, 'YZX');
+      mesh.updateMatrix(); mesh.matrixWorld.copy(mesh.matrix);
+    };
+    mesh.onBeforeRender();
+    run.add(mesh);
+    return mesh;
+  }
+
+  function brakes(o) {
+    o = Object.assign({ heat: 0.006, cool: 0.03, out: 0.35, dec: 13 }, o);
+    const H = { heat: 0, fade: 0,
+      step(P, dt, cool) {
+        const v = Math.hypot(P.vx || 0, P.vz || 0), b = P.locked ? 0 : clamp(P.inBrk || 0, 0, 1);
+        H.heat += b * v * o.heat * dt - (o.cool * (0.25 + H.heat) + o.out * clamp(cool || 0, 0, 1)) * dt;
+        H.heat = clamp(H.heat, 0, 1.3);
+        H.fade = clamp((H.heat - 1) / 0.25, 0, 1) * 0.85;
+        // (fading: of the braking just done the share fade given back, never past the speed it had)
+        if (H.fade > 0 && b > 0 && v > 0.5) { const back = Math.min(H.fade * o.dec * b * dt, v * 0.5); P.vx += P.vx / v * back; P.vz += P.vz / v * back; }
+        return H.heat;
+      } };
+    return H;
+  }
+
+  function pilot(run, T, o) {
+    o = Object.assign({ col: 0xf2f2ee }, o);
+    const Pl = { put() {}, hide() {}, g: null };
+    if (!has3()) return Pl;
+    const B = MisKit.parts();
+    B.box(0, 0.75, 0, 4.9, 0.7, 1.9, o.col); B.box(0.6, 1.4, 0, 2.2, 0.62, 1.8, o.col); B.box(0.62, 1.42, 0, 2.0, 0.46, 1.82, 0x1d2733);
+    B.box(-1.5, 1.15, 0, 1.8, 0.1, 1.8, 0x3a3e44);
+    for (const x of [1.55, -1.55]) for (const sd of [-1, 1]) B.cyl(x, 0.38, sd * 0.8, 0.38, 0.28, 0x1b1d21);
+    B.box(-2.46, 0.85, 0.7, 0.04, 0.16, 0.3, 0xff3a2a); B.box(-2.46, 0.85, -0.7, 0.04, 0.16, 0.3, 0xff3a2a);
+    const g = new THREE.Group(), m = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); m.castShadow = true; g.add(m);
+    const L = MisKit.parts(); L.box(0.6, 1.78, 0.45, 0.4, 0.16, 0.5, 0); L.box(0.6, 1.78, -0.45, 0.4, 0.16, 0.5, 0); L.box(0.6, 1.73, 0, 0.3, 0.06, 1.4, 0);
+    const on = new THREE.MeshBasicMaterial({ color: 0xffa21a }), off = new THREE.MeshLambertMaterial({ color: 0x6a4a10 }), lamps = new THREE.Mesh(MisKit.merged(L.L), on);
+    g.add(lamps); g.visible = false; run.add(g); Pl.g = g;
+    Pl.put = (s, d, dir, t) => {
+      const i = T.idx(s), a = Math.atan2(T.tz[i], T.tx[i]) + (dir < 0 ? Math.PI : 0);
+      g.position.set(T.px[i] + T.nx[i] * (d || 0), T.hy[i], T.pz[i] + T.nz[i] * (d || 0)); g.rotation.y = -a; g.visible = true;
+      lamps.material = ((t || 0) * 2.2) % 1 < 0.5 ? on : off;
+    };
+    Pl.hide = () => { g.visible = false; };
+    undo(run, () => { on.dispose(); off.dispose(); });
+    return Pl;
+  }
+
+  return { keys, trailer, tow, brakes, pilot };
+})());
 if (typeof module !== 'undefined') module.exports = MisKit;

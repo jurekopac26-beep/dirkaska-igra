@@ -96,3 +96,12 @@ body.mis-aiming #mis .mis-hint { left: calc(12px + var(--sl)); transform: none; 
 #mis-btn.red { background: #e0452c; }
 body.mis-boat #h-spd, body.mis-boat #h-note { visibility: hidden; }   /* (a vessel of the mission driven: the parked car's speed and corner notes off the HUD) */
 #mis-tags i.edge { opacity: .8; }   /* (MisKit.tags: a place off the screen, its tag pinned to the edge) */
+/* MisKit.keys: a row of buttons over the driving controls (right: over the pedals, left: over the steering; high: above the #mis-btn) */
+#mis-keys { position: fixed; bottom: calc(clamp(96px, 35vh, 160px) + 34px + var(--sb, 0px)); z-index: 6; display: none; gap: 6px; touch-action: none; user-select: none; -webkit-user-select: none; }
+#mis-keys.right { right: calc(14px + var(--sr, 0px)); }
+#mis-keys.left { left: calc(14px + var(--sl, 0px)); }
+#mis-keys.high { bottom: calc(clamp(96px, 35vh, 160px) + 96px + var(--sb, 0px)); }
+#mis-keys.on-show { display: flex; }
+#mis-keys button { min-width: 72px; padding: 12px 12px; border: 0; border-radius: 22px; background: #2f5fd0; color: #fff; font: 900 14px var(--f-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); touch-action: none; }
+#mis-keys button.on { transform: scale(.95); filter: brightness(1.2); }
+#mis-keys button.sel { background: #ffb020; color: #111; }
